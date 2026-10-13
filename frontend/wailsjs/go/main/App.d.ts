@@ -34,6 +34,10 @@ export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):P
 
 export function SetHodnoceni(arg1:number,arg2:number):Promise<boolean>;
 
+export function SetHodnoceniFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
+
+export function SetPopisAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
+
 export function SetRotaceFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 
 export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean):Promise<boolean>;

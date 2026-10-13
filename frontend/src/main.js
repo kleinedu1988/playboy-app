@@ -1,6 +1,6 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetHodnoceni, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
-import { WindowMinimise, WindowToggleMaximise, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { WindowMinimise, WindowToggleMaximise, WindowIsMaximised, WindowIsFullscreen, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 
 let aktualniModelka = null;
 let nacteneModelky = [];
@@ -90,10 +90,16 @@ document.querySelector('#app').innerHTML = `
     </div>
 
     <!-- Kalendář vydání -->
-    <div id="calendar" class="calendar hidden"></div>
+    <div id="calendar" class="calendar hidden">
+      <nav id="calNav"></nav>
+      <div id="calList"></div>
+    </div>
 
     <!-- Covery časopisů po ročnících -->
-    <div id="covers" class="covers hidden"></div>
+    <div id="covers" class="covers hidden">
+      <nav id="coversNav"></nav>
+      <div id="coversList"></div>
+    </div>
 
     <!-- Detailní profil modelky -->
     <div id="detailView" class="detail-container hidden">
@@ -108,6 +114,8 @@ document.querySelector('#app').innerHTML = `
           <h3>Alba a fotogalerie</h3>
           <button id="addAlbumBtn" class="btn btn-secondary btn-small">+ Přidat fotky / album</button>
         </div>
+        <!-- Lišta alb: zůstává při rolování nahoře a skáče na vybrané album -->
+        <nav id="albumNav"></nav>
         <div id="photosGrid"></div>
       </section>
     </div>
@@ -301,12 +309,19 @@ document.querySelector('#app').innerHTML = `
           <label for="selectAlbumModelka">Modelka</label>
           <select id="selectAlbumModelka"></select>
         </div>
-        <div id="albumTypGroup" class="form-group">
-          <label for="selectTyp">Typ obsahu</label>
-          <select id="selectTyp">
-            <option value="Pictorial">Pictorial (Fotostory)</option>
-            <option value="Centerfold">Centerfold (Plakát)</option>
-          </select>
+        <div class="form-row">
+          <div id="albumTypGroup" class="form-group">
+            <label for="selectTyp">Typ obsahu</label>
+            <select id="selectTyp">
+              <option value="Pictorial">Pictorial (Fotostory)</option>
+              <option value="Centerfold">Centerfold (Plakát)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inputAlbumFotograf">Fotograf (nepovinné)</label>
+            <input type="text" id="inputAlbumFotograf" list="seznamFotografu" autocomplete="off" />
+            <datalist id="seznamFotografu"></datalist>
+          </div>
         </div>
         <div id="albumNazevGroup" class="form-group">
           <label for="inputAlbumName">Název alba</label>
@@ -328,7 +343,11 @@ document.querySelector('#app').innerHTML = `
         </div>
         <div class="form-group">
           <label id="bulkLinksLabel">Vložte odkazy z Google Disku (libovolné množství)</label>
-          <textarea id="inputBulkLinks" rows="6" placeholder="Vložte zkopírované odkazy z Disku (můžete vložit více odkazů naráz)..." required></textarea>
+          <textarea id="inputBulkLinks" rows="4" placeholder="Vložte zkopírované odkazy z Disku (můžete vložit více odkazů naráz)..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="inputAlbumPopis">Průvodní text alba (nepovinné)</label>
+          <textarea id="inputAlbumPopis" rows="4" placeholder="Text, který album v časopise uvádí"></textarea>
         </div>
         <div class="modal-actions">
           <button type="submit" id="albumSubmitBtn" class="btn btn-primary">Uložit fotky</button>
@@ -406,6 +425,7 @@ document.querySelector('#app').innerHTML = `
     <div class="lightbox-top">
       <span id="lbCaption" class="lb-caption"></span>
       <span id="lbCounter" class="lb-counter"></span>
+      <span id="lbHearts" title="Hodnocení fotky (klávesy 1–5, 0 ruší)"></span>
       <button id="lbFill" class="lb-btn" title="Rozložit přes celé okno (F)">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
       </button>
@@ -420,6 +440,7 @@ document.querySelector('#app').innerHTML = `
     </div>
     <button id="lbPrev" class="lb-nav lb-prev" title="Předchozí (šipka vlevo)">&#8249;</button>
     <button id="lbNext" class="lb-nav lb-next" title="Další (šipka vpravo)">&#8250;</button>
+    <nav id="lbNav"></nav>
     <div id="lbProgress" class="lb-progress"></div>
   </div>
 
@@ -441,6 +462,8 @@ const searchInput = document.getElementById('searchInput');
 const backBtn = document.getElementById('backBtn');
 const wall = document.getElementById('wall');
 const covers = document.getElementById('covers');
+const coversList = document.getElementById('coversList');
+const calList = document.getElementById('calList');
 const issueView = document.getElementById('issueView');
 const calendar = document.getElementById('calendar');
 
@@ -530,12 +553,43 @@ function prepnoutRezim(novy) {
 }
 
 // Hodnocení 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší
-function htmlSrdicka(modelka) {
+function htmlSrdicek(hodnoceni, atribut) {
     const srdicka = [1, 2, 3, 4, 5].map(n => `
-        <button class="heart ${n <= modelka.hodnoceni ? 'on' : ''}" data-hodnota="${n}"
-            title="${n === modelka.hodnoceni ? 'Zrušit hodnocení' : `Ohodnotit ${n} z 5`}">${n <= modelka.hodnoceni ? '&#9829;' : '&#9825;'}</button>`).join('');
-    return `<span class="hearts ${modelka.hodnoceni ? 'rated' : ''}" data-hodnoceni="${modelka.id}">${srdicka}</span>`;
+        <button class="heart ${n <= hodnoceni ? 'on' : ''}" data-hodnota="${n}"
+            title="${n === hodnoceni ? 'Zrušit hodnocení' : `Ohodnotit ${n} z 5`}"></button>`).join('');
+    return `<span class="hearts ${hodnoceni ? 'rated' : ''}" ${atribut}>${srdicka}</span>`;
 }
+
+function htmlSrdicka(modelka) {
+    return htmlSrdicek(modelka.hodnoceni, `data-hodnoceni="${modelka.id}"`);
+}
+
+// Srdíčka fotky; index míří do seznamu položek právě zobrazeného pohledu
+function htmlSrdickaFotky(polozka, index) {
+    return htmlSrdicek(polozka.hodnoceni, `data-hodnoceni-fotky="${index}"`);
+}
+
+async function ohodnotitPolozku(polozka, zvoleno) {
+    const nove = zvoleno === polozka.hodnoceni ? 0 : zvoleno;
+    if (!await SetHodnoceniFotek(polozka.fotky.map(f => f.id), nove)) return false;
+    polozka.hodnoceni = nove;
+    polozka.fotky.forEach(f => { f.hodnoceni = nove; });
+    return true;
+}
+
+// Srdíčka na dlaždici fotky v profilu a na stránce vydání
+document.querySelector('main').addEventListener('click', async (e) => {
+    const srdicko = e.target.closest('[data-hodnoceni-fotky] .heart');
+    if (!srdicko) return;
+    const rada = srdicko.closest('.hearts');
+    const naStranceVydani = Boolean(rada.closest('#issueView'));
+    const polozka = (naStranceVydani ? vydaniPolozky : aktualniPolozky)[parseInt(rada.dataset.hodnoceniFotky)];
+    if (!polozka || !await ohodnotitPolozku(polozka, parseInt(srdicko.dataset.hodnota))) return;
+
+    // V profilu se fotky podle nového hodnocení hned přeřadí; stránka vydání by přitom odskočila nahoru
+    if (naStranceVydani) rada.outerHTML = htmlSrdickaFotky(polozka, parseInt(rada.dataset.hodnoceniFotky));
+    else nacistFotkyModelky(aktualniModelka.id);
+});
 
 // Srdíčka na kartě i v profilu
 document.querySelector('main').addEventListener('click', async (e) => {
@@ -671,7 +725,7 @@ async function otevritDetailModelky(modelka) {
         ? `<button class="link" data-hledat="${esc(hodnota)}" title="Vyhledat modelky se stejnou hodnotou">${esc(hodnota)}</button>`
         : '';
     // Vydání se odvozují z alb a centerfoldů; starší ručně psané údaje se ukážou, jen když odvozená chybí
-    const prvniVydani = modelka.vydani[0] || (/^\d{4}-\d{2}$/.test(modelka.vystoupeni) ? modelka.vystoupeni : '');
+    const prvniVydani = modelka.vydani.find(v => /^\d{4}-\d{2}$/.test(v)) || (/^\d{4}-\d{2}$/.test(modelka.vystoupeni) ? modelka.vystoupeni : '');
     const vydani = modelka.vydani.length
         ? modelka.vydani.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít vydání">${esc(nazevVydani(v))}</button>`).join(' ')
         : esc([modelka.vystoupeni, ...modelka.pictorialVydani.split('\n')].map(v => v.trim()).filter(Boolean).join(', '));
@@ -719,7 +773,7 @@ function sestavitAlba(fotky) {
     fotky.forEach(f => {
         const klic = `${f.modelkaId}\n${f.album}\n${f.typ}`;
         if (!mapa.has(klic)) {
-            mapa.set(klic, { modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, album: f.album, typ: f.typ, vydani: f.vydani, fotky: [] });
+            mapa.set(klic, { modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, album: f.album, typ: f.typ, vydani: f.vydani, popis: f.popis || '', fotograf: f.fotograf || '', fotky: [] });
         }
         mapa.get(klic).fotky.push(f);
     });
@@ -736,10 +790,40 @@ function sestavitAlba(fotky) {
             modelkaId: a.modelkaId,
             jmenoModelky: a.jmenoModelky,
             rotace: stranky[0].rotace,
+            hodnoceni: stranky[0].hodnoceni || 0,
         }));
+        // Lépe hodnocené fotky jdou v albu první, takže právě ony jsou vidět ve zkráceném náhledu;
+        // při stejném hodnocení zůstává původní pořadí
+        a.polozky.sort((x, y) => y.hodnoceni - x.hodnoceni);
     });
     return alba;
 }
+
+// Průvodní text alba a fotograf; delší text je zkrácený a rozbaluje se kliknutím
+function htmlPopisuAlba(a) {
+    if (!a.popis && !a.fotograf) return '';
+    return `
+        <div class="album-desc">
+            ${a.popis ? `<p class="album-desc-text">${esc(a.popis)}</p>
+            <button class="link album-desc-more hidden" data-rozbalit>více</button>` : ''}
+            ${a.fotograf ? `<p class="album-credit">Foto: <button class="link" data-hledat="${esc(a.fotograf)}" title="Vyhledat modelky, které fotil">${esc(a.fotograf)}</button></p>` : ''}
+        </div>
+    `;
+}
+
+// Tlačítko „více" má smysl jen u textu, který se do zkrácené podoby nevešel
+function pripravitPopisy(pohled) {
+    pohled.querySelectorAll('.album-desc-text').forEach(text => {
+        text.nextElementSibling.classList.toggle('hidden', text.scrollHeight <= text.clientHeight + 1);
+    });
+}
+
+document.querySelector('main').addEventListener('click', (e) => {
+    const tlacitko = e.target.closest('[data-rozbalit]');
+    if (!tlacitko) return;
+    const rozbaleno = tlacitko.previousElementSibling.classList.toggle('open');
+    tlacitko.textContent = rozbaleno ? 'méně' : 'více';
+});
 
 // Plakát: jedna nebo více stránek spojených bez mezer, volitelně otočený
 function htmlPlakatu(polozka, velikost, atributy = '') {
@@ -801,15 +885,16 @@ async function nacistFotkyModelky(modelkaId) {
         const popis = sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek');
 
         return `
-            <section class="album" data-album="${aktualniAlba.indexOf(a)}">
+            <section class="album" data-album="${aktualniAlba.indexOf(a)}" data-cast="${aktualniAlba.indexOf(a)}">
                 ${centerfold ? '' : `
                     <div class="album-header">
                         <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
                         <span>${esc(a.typ)} · ${popis}</span>
                         ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít vydání">${esc(nazevVydani(a.vydani))}</button>` : ''}
                     </div>
+                    ${htmlPopisuAlba(a)}
                 `}
-                <div class="${centerfold ? 'posters' : 'photos-grid'}">
+                <div class="${centerfold ? 'posters' : 'photos-grid'}" ${centerfold ? '' : atributyMrizky(a)}>
                     ${a.polozky.map(p => {
                         const index = aktualniPolozky.indexOf(p);
                         // Centerfold se zobrazuje celý jako plakát, ostatní fotky jako oříznuté dlaždice
@@ -817,9 +902,11 @@ async function nacistFotkyModelky(modelkaId) {
                             ? htmlPlakatu(p, VELIKOST_PLAKATU, `data-index="${index}"`)
                             : `<div class="photo-item" data-index="${index}" data-foto-id="${p.fotky[0].id}">
                                    <img src="${esc(p.fotky[0].url)}${VELIKOST_NAHLEDU}" loading="lazy" draggable="false" />
+                                   ${htmlSrdickaFotky(p, index)}
                                </div>`;
                     }).join('')}
                 </div>
+                ${centerfold ? htmlPopisuAlba(a) : ''}
             </section>
         `;
     };
@@ -830,8 +917,161 @@ async function nacistFotkyModelky(modelkaId) {
     detailView.classList.toggle('bez-titulni', centerfoldy.length > 0);
     photosGrid.innerHTML = ostatni.map(htmlAlba).join('') || prazdno;
 
+    // Lišta má smysl až od dvou alb; centerfoldy jsou v levém sloupci stále vidět
+    listaAlb.naplnit(ostatni.map(a => ({ klic: aktualniAlba.indexOf(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })));
+
     detailView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
+    pripravitPopisy(detailView);
+    zkratitAlba(detailView);
+    listaAlb.sledovat();
 }
+
+// Dlouhé album ukazuje jen první řádky; poslední viditelná dlaždice nese počet skrytých fotek a album rozbalí
+const RADKU_NAHLEDU = 2;
+const rozbalenaAlba = new Set();
+const klicAlba = a => `${a.modelkaId}\n${a.album}\n${a.typ}`;
+const atributyMrizky = a => `data-klic="${esc(klicAlba(a))}"`;
+
+function zkratitAlba(pohled) {
+    pohled.querySelectorAll('.photos-grid').forEach(mrizka => {
+        // Počet sloupců jde zjistit jen u mřížky, která je vidět
+        if (!mrizka.offsetParent) return;
+        const dlazdice = [...mrizka.children];
+        const limit = getComputedStyle(mrizka).gridTemplateColumns.split(' ').length * RADKU_NAHLEDU;
+        const zkratit = dlazdice.length > limit && !rozbalenaAlba.has(mrizka.dataset.klic);
+
+        dlazdice.forEach((d, i) => {
+            d.classList.toggle('skryta', zkratit && i >= limit);
+            d.classList.toggle('dalsi', zkratit && i === limit - 1);
+            if (zkratit && i === limit - 1) d.dataset.dalsich = `+${dlazdice.length - limit}`;
+        });
+        mrizka.classList.toggle('zkracena', zkratit);
+        mrizka.classList.toggle('rozbalena', dlazdice.length > limit && !zkratit);
+    });
+}
+
+function prepnoutRozbaleniAlba(mrizka, rozbalit) {
+    if (rozbalit) rozbalenaAlba.add(mrizka.dataset.klic);
+    else rozbalenaAlba.delete(mrizka.dataset.klic);
+    zkratitAlba(mrizka.parentElement);
+    listaAlb.sledovat();
+}
+
+// Klik na dlaždici s počtem skrytých fotek album rozbalí, místo aby otevřel fotku
+function rozbalitKliknute(e) {
+    const dlazdice = e.target.closest('.photo-item.dalsi');
+    if (dlazdice) prepnoutRozbaleniAlba(dlazdice.parentElement, true);
+    return Boolean(dlazdice);
+}
+
+// Lišta částí: řádek tlačítek, který šipkami a ztrácejícími se okraji ukazuje, že pokračuje mimo okno.
+// Používá ji profil modelky (alba), přehled coverů (ročníky), kalendář (desetiletí) a prohlížeč fotek (alba).
+function vytvoritListu(nav, poKliku) {
+    nav.className = 'album-nav hidden';
+    nav.innerHTML = `
+        <button class="album-nav-arrow" data-posun="-1" title="Předchozí">&#8249;</button>
+        <div class="album-nav-list"></div>
+        <button class="album-nav-arrow" data-posun="1" title="Další">&#8250;</button>`;
+    const seznam = nav.querySelector('.album-nav-list');
+    const [sipkaVlevo, sipkaVpravo] = nav.querySelectorAll('.album-nav-arrow');
+
+    // Bez přetečení šipky nejsou vůbec
+    const upravitSipky = () => {
+        const presah = seznam.scrollWidth - seznam.clientWidth;
+        const vlevo = seznam.scrollLeft > 1;
+        const vpravo = seznam.scrollLeft < presah - 1;
+        nav.classList.toggle('pretekla', presah > 1);
+        seznam.classList.toggle('dalsi-vlevo', vlevo);
+        seznam.classList.toggle('dalsi-vpravo', vpravo);
+        sipkaVlevo.disabled = !vlevo;
+        sipkaVpravo.disabled = !vpravo;
+    };
+    seznam.addEventListener('scroll', upravitSipky, { passive: true });
+
+    nav.addEventListener('click', (e) => {
+        const sipka = e.target.closest('[data-posun]');
+        const skok = e.target.closest('[data-skok]');
+        if (sipka) seznam.scrollBy({ left: parseInt(sipka.dataset.posun) * seznam.clientWidth * 0.8, behavior: 'smooth' });
+        else if (skok) poKliku(skok.dataset.skok);
+    });
+
+    // Kolečko nad lištou ji posouvá do stran, když se do ní všechno nevejde
+    nav.addEventListener('wheel', (e) => {
+        if (seznam.scrollWidth <= seznam.clientWidth) return;
+        e.preventDefault();
+        e.stopPropagation();
+        seznam.scrollLeft += e.deltaY || e.deltaX;
+    }, { passive: false });
+
+    return {
+        nav,
+        upravitSipky,
+        // polozky: [{ klic, nazev, pocet }]; lišta má smysl až od dvou položek
+        naplnit(polozky) {
+            seznam.innerHTML = polozky.map(p => `
+                <button class="chip" data-skok="${esc(p.klic)}" title="${esc(p.nazev)}"><b>${esc(p.nazev)}</b>${p.pocet === undefined ? '' : `<span>${p.pocet}</span>`}</button>`).join('');
+            nav.classList.toggle('hidden', polozky.length < 2);
+            upravitSipky();
+        },
+        oznacit(klic) {
+            seznam.querySelectorAll('[data-skok]').forEach(tlacitko => {
+                const aktivni = tlacitko.dataset.skok === String(klic);
+                if (aktivni && !tlacitko.classList.contains('active')) {
+                    // Zvýrazněná položka má být v liště vidět
+                    seznam.scrollLeft = tlacitko.offsetLeft - (seznam.clientWidth - tlacitko.offsetWidth) / 2;
+                }
+                tlacitko.classList.toggle('active', aktivni);
+            });
+        },
+    };
+}
+
+// Lišta nad rolovanou stránkou: skáče na její části (prvky s data-cast) a zvýrazňuje tu, která je právě nahoře
+const hlavniOblast = document.querySelector('main');
+const listyStranky = [];
+
+function vytvoritListuStranky(nav, pohled) {
+    const casti = () => [...pohled.querySelectorAll('[data-cast]')];
+    const lista = vytvoritListu(nav, (klic) => {
+        const cast = casti().find(c => c.dataset.cast === klic);
+        if (!cast) return;
+        const posun = cast.getBoundingClientRect().top - hlavniOblast.getBoundingClientRect().top - nav.offsetHeight - 8;
+        hlavniOblast.scrollTo({ top: hlavniOblast.scrollTop + posun, behavior: 'smooth' });
+    });
+    lista.sledovat = () => {
+        // Skrytá lišta ani lišta ve skrytém pohledu se nesleduje
+        if (!nav.offsetParent) return;
+        const hranice = nav.getBoundingClientRect().bottom + 40;
+        const vsechny = casti();
+        // Na konci stránky už poslední část výš nevyjede, i tak je to ta aktuální
+        const naKonci = hlavniOblast.scrollTop > 0 && hlavniOblast.scrollTop >= hlavniOblast.scrollHeight - hlavniOblast.clientHeight - 1;
+        const aktualni = naKonci ? vsechny.at(-1) : vsechny.filter(c => c.getBoundingClientRect().top <= hranice).pop() || vsechny[0];
+        lista.oznacit(aktualni?.dataset.cast);
+    };
+    listyStranky.push(lista);
+    return lista;
+}
+
+const listaAlb = vytvoritListuStranky(document.getElementById('albumNav'), document.getElementById('photosGrid'));
+const listaCoveru = vytvoritListuStranky(document.getElementById('coversNav'), covers);
+const listaKalendare = vytvoritListuStranky(document.getElementById('calNav'), calendar);
+
+let cekaNaOznaceni = false;
+hlavniOblast.addEventListener('scroll', () => {
+    if (cekaNaOznaceni) return;
+    cekaNaOznaceni = true;
+    requestAnimationFrame(() => {
+        cekaNaOznaceni = false;
+        listyStranky.forEach(l => l.sledovat());
+    });
+}, { passive: true });
+
+// Počet sloupců mřížky, a tím i počet fotek v náhledu, závisí na šířce okna
+window.addEventListener('resize', () => {
+    zkratitAlba(detailView);
+    zkratitAlba(issueView);
+    listyStranky.forEach(l => { l.sledovat(); l.upravitSipky(); });
+});
 
 // Stěna centerfoldů napříč všemi modelkami
 async function nacistStenu(dotaz = '') {
@@ -874,7 +1114,8 @@ async function nacistCovery(dotaz = '') {
     coveryPolozky = sestavitAlba((fotky || []).filter(vyhovuje)).flatMap(a => a.polozky);
 
     if (coveryPolozky.length === 0) {
-        covers.innerHTML = `<div class="empty-state">${fotky?.length ? 'Hledání neodpovídá žádný cover.' : 'Zatím žádné covery. Přidej je pravým tlačítkem myši.'}</div>`;
+        listaCoveru.naplnit([]);
+        coversList.innerHTML = `<div class="empty-state">${fotky?.length ? 'Hledání neodpovídá žádný cover.' : 'Zatím žádné covery. Přidej je pravým tlačítkem myši.'}</div>`;
         return;
     }
 
@@ -885,8 +1126,9 @@ async function nacistCovery(dotaz = '') {
         rocniky.get(rok).push(i);
     });
 
-    covers.innerHTML = [...rocniky].map(([rok, indexy]) => `
-        <section class="cover-year">
+    listaCoveru.naplnit([...rocniky].map(([rok, indexy]) => ({ klic: rok, nazev: rok, pocet: indexy.length })));
+    coversList.innerHTML = [...rocniky].map(([rok, indexy]) => `
+        <section class="cover-year" data-cast="${esc(rok)}">
             <h3>${esc(rok)}</h3>
             <div class="covers-grid">
                 ${indexy.map(i => {
@@ -905,6 +1147,7 @@ async function nacistCovery(dotaz = '') {
         </section>
     `).join('');
     covers.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
+    listaCoveru.sledovat();
 }
 
 covers.addEventListener('click', (e) => {
@@ -926,6 +1169,8 @@ async function otevritVydani(vydani) {
     // Pořadí pro prohlížeč: cover, centerfold, pictorialy
     vydaniPolozky = [...coveryVydani, ...centerfoldy, ...ostatni].flatMap(a => a.polozky);
     const index = p => vydaniPolozky.indexOf(p);
+    // Ročník bez měsíce sdružuje jen pictorialy; cover ani centerfold nemá
+    const jenRocnik = !vydani.includes('-');
     const odkazNaModelku = a => `<button class="chip" data-modelka="${a.modelkaId}" title="Otevřít profil modelky">${esc(a.jmenoModelky)}</button>`;
     const sklonovat = (n, jedna, dve, pet) => `${n} ${n === 1 ? jedna : n < 5 ? dve : pet}`;
 
@@ -934,10 +1179,11 @@ async function otevritVydani(vydani) {
             ${coveryVydani.flatMap(a => a.polozky).map(p => htmlPlakatu(p, VELIKOST_PLAKATU, `data-index="${index(p)}"`)).join('')
                 || `<div class="profile-cover"><img src="${BEZ_FOTKY}" alt="Bez coveru" draggable="false" /></div>`}
         </div>
-        <h2>${esc(nazevVydani(vydani))}</h2>
+        <h2>${jenRocnik ? 'Ročník ' : ''}${esc(nazevVydani(vydani))}</h2>
         <dl class="profile-info">
+            ${jenRocnik ? '' : `
             <div><dt>Cover</dt><dd>${coveryVydani.length ? 'Ano' : 'Zatím chybí'}</dd></div>
-            <div><dt>Centerfold</dt><dd>${centerfoldy.map(a => esc(a.jmenoModelky)).join(', ') || 'Zatím chybí'}</dd></div>
+            <div><dt>Centerfold</dt><dd>${centerfoldy.map(a => esc(a.jmenoModelky)).join(', ') || 'Zatím chybí'}</dd></div>`}
             <div><dt>Pictorialy</dt><dd>${ostatni.length}</dd></div>
             <div><dt>Fotek celkem</dt><dd>${fotky.length}</dd></div>
         </dl>
@@ -950,6 +1196,7 @@ async function otevritVydani(vydani) {
                     <h4>Centerfold</h4>
                     ${odkazNaModelku(a)}
                 </div>
+                ${htmlPopisuAlba(a)}
                 <div class="posters">${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU, `data-index="${index(p)}"`)).join('')}</div>
             </section>
         `),
@@ -960,10 +1207,12 @@ async function otevritVydani(vydani) {
                     <span>${esc(a.typ)} · ${sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek')}</span>
                     ${odkazNaModelku(a)}
                 </div>
-                <div class="photos-grid">
+                ${htmlPopisuAlba(a)}
+                <div class="photos-grid" ${atributyMrizky(a)}>
                     ${a.polozky.map(p => `
                         <div class="photo-item" data-index="${index(p)}">
                             <img src="${esc(p.fotky[0].url)}${VELIKOST_NAHLEDU}" loading="lazy" draggable="false" />
+                            ${htmlSrdickaFotky(p, index(p))}
                         </div>
                     `).join('')}
                 </div>
@@ -972,10 +1221,12 @@ async function otevritVydani(vydani) {
     ].join('') || '<p class="empty-state">K tomuto vydání zatím není přiřazený žádný centerfold ani pictorial. Centerfold se přiřadí měsícem a rokem, pictorial v úpravě alba.</p>';
 
     issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
+    pripravitPopisy(issueView);
+    zkratitAlba(issueView);
 }
 
 issueView.addEventListener('click', (e) => {
-    if (e.target.closest('[data-modelka], [data-vydani]')) return;
+    if (e.target.closest('[data-modelka], [data-vydani], .hearts') || rozbalitKliknute(e)) return;
     const polozka = e.target.closest('[data-index]');
     if (polozka) otevritLightbox(parseInt(polozka.dataset.index), false, vydaniPolozky);
 });
@@ -991,6 +1242,8 @@ async function nacistKalendar(dotaz = '') {
     // Co je ke kterému vydání k dispozici
     const vydani = new Map();
     fotky.forEach(f => {
+        // Pictorial přiřazený jen k ročníku nemá v kalendáři své políčko
+        if (!/^\d{4}-\d{2}$/.test(f.vydani)) return;
         const v = vydani.get(f.vydani) || { cover: null, centerfold: null, pictorial: null };
         if (f.typ === 'Cover') v.cover ??= f;
         else if (f.typ === 'Centerfold') v.centerfold ??= f;
@@ -999,13 +1252,16 @@ async function nacistKalendar(dotaz = '') {
     });
 
     if (vydani.size === 0) {
-        calendar.innerHTML = '<div class="empty-state">Kalendář je zatím prázdný. Naplní se covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.</div>';
+        listaKalendare.naplnit([]);
+        calList.innerHTML = '<div class="empty-state">Kalendář je zatím prázdný. Naplní se covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.</div>';
         return;
     }
 
     const roky = [...vydani.keys()].map(v => parseInt(v.slice(0, 4)));
     const hledat = dotaz.trim();
     const radky = [];
+    // Desetiletí pro lištu: kolik vydání v něm je; skáče se na jeho nejnovější rok
+    const desetileti = new Map();
     for (let rok = Math.max(...roky); rok >= Math.min(...roky); rok--) {
         if (hledat && !String(rok).includes(hledat)) continue;
 
@@ -1034,18 +1290,24 @@ async function nacistKalendar(dotaz = '') {
             `;
         }).join('');
 
+        const dekada = Math.floor(rok / 10) * 10;
+        const prvniVDekade = !desetileti.has(dekada);
+        desetileti.set(dekada, (desetileti.get(dekada) || 0) + obsazeno);
+
         radky.push(`
-            <section class="cal-year">
+            <section class="cal-year" ${prvniVDekade ? `data-cast="${dekada}"` : ''}>
                 <div class="cal-year-label"><strong>${rok}</strong><span>${obsazeno} z 12</span></div>
                 <div class="cal-months">${policka}</div>
             </section>
         `);
     }
 
-    calendar.innerHTML = `
+    listaKalendare.naplnit([...desetileti].map(([dekada, pocet]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet })));
+    calList.innerHTML = `
         <p class="cal-legend">Tečky v políčku: <i class="on"></i> cover <i class="on"></i> centerfold <i class="on"></i> pictorial. Prázdné políčko = vydání ve sbírce chybí.</p>
         ${radky.join('') || '<div class="empty-state">Hledanému roku neodpovídá žádné vydání.</div>'}
     `;
+    listaKalendare.sledovat();
 }
 
 calendar.addEventListener('click', (e) => {
@@ -1112,7 +1374,8 @@ viewToggle.addEventListener('click', (e) => {
     nacistGalerii(searchInput.value);
 });
 
-// Prohlížeč fotek: šipky listují, mezerník spouští slideshow, F rozkládá plakát, R otáčí, Esc zavírá
+// Prohlížeč fotek: šipky vlevo a vpravo listují, nahoru a dolů (PgUp, PgDn) skáčou mezi alby,
+// mezerník spouští slideshow, F rozkládá plakát, R otáčí, Esc zavírá
 const lightbox = document.getElementById('lightbox');
 const lbStage = document.getElementById('lbStage');
 const lbProgress = document.getElementById('lbProgress');
@@ -1148,9 +1411,11 @@ function lbRozvrhnout() {
     const sw = lightbox.clientWidth;
     const sh = lightbox.clientHeight;
     const okrajX = sw > 560 ? 70 : 0;
+    // Fotka, která se má vejít celá, nesmí zajíždět pod lištu alb
+    const spodek = lbLista.nav.classList.contains('hidden') ? 16 : lbLista.nav.offsetHeight + 4;
     const meritko = lbRozlozeno
         ? Math.max(sw / r.W, sh / r.H)
-        : Math.min((sw - 2 * okrajX) / r.W, (sh - LB_LISTA - 16) / r.H);
+        : Math.min((sw - 2 * okrajX) / r.W, (sh - LB_LISTA - spodek) / r.H);
 
     const w = r.W * meritko;
     const h = r.H * meritko;
@@ -1159,7 +1424,7 @@ function lbRozvrhnout() {
     const left = presahX > 1 ? -lbPosun * presahX : (sw - w) / 2;
     const top = lbRozlozeno
         ? (presahY > 1 ? -lbPosun * presahY : (sh - h) / 2)
-        : LB_LISTA + (sh - LB_LISTA - 16 - h) / 2;
+        : LB_LISTA + (sh - LB_LISTA - spodek - h) / 2;
 
     Object.assign(lbPlakat.style, { left: `${left}px`, top: `${top}px`, width: `${w}px`, height: `${h}px` });
     lbZobrazeno = { sirka: w, presah: Math.max(presahX, presahY), osa: presahX > presahY ? 'x' : 'y' };
@@ -1267,12 +1532,58 @@ function lbZobrazit(index) {
     document.getElementById('lbCaption').textContent =
         [polozka.jmenoModelky, nazevAlba(polozka.album, polozka.typ), polozka.typ].filter(Boolean).join(' · ');
     document.getElementById('lbCounter').textContent = `${lbIndex + 1} / ${pocet}`;
+    lbVykreslitSrdicka();
+    lbLista.oznacit(lbZacatkyAlb().filter(i => i <= lbIndex).pop());
     lbAktualizovatTlacitka();
 
     // Přednačtení další položky, aby listování neproblikávalo
     lbPolozky[(lbIndex + 1) % pocet].fotky.forEach(f => { new Image().src = f.url + PLNE_ROZLISENI; });
 
     if (lbCasovac) lbSpustitCasovac();
+}
+
+function lbVykreslitSrdicka() {
+    document.getElementById('lbHearts').innerHTML = htmlSrdicek(lbPolozky[lbIndex].hodnoceni, '');
+}
+
+// Hodnocení právě zobrazené fotky; pořadí v přehledu se podle něj upraví po zavření prohlížeče
+async function lbOhodnotit(zvoleno) {
+    const polozka = lbPolozky[lbIndex];
+    if (!polozka || !await ohodnotitPolozku(polozka, zvoleno)) return;
+    lbZmeneno = true;
+    if (lbPolozky[lbIndex] === polozka) lbVykreslitSrdicka();
+}
+
+document.getElementById('lbHearts').addEventListener('click', (e) => {
+    const srdicko = e.target.closest('.heart');
+    if (srdicko) lbOhodnotit(parseInt(srdicko.dataset.hodnota));
+});
+
+// Indexy prvních fotek jednotlivých alb v právě prohlíženém seznamu
+function lbZacatkyAlb() {
+    return lbPolozky.map((p, i) => i).filter(i => i === 0 || klicAlba(lbPolozky[i]) !== klicAlba(lbPolozky[i - 1]));
+}
+
+// Skok na první fotku předchozího nebo dalšího alba
+function lbSkokAlba(smer) {
+    const zacatky = lbZacatkyAlb();
+    if (zacatky.length < 2) return;
+    const soucasne = zacatky.filter(i => i <= lbIndex).length - 1;
+    lbZobrazit(zacatky[(soucasne + smer + zacatky.length) % zacatky.length]);
+}
+
+// Lišta alb dole v prohlížeči: ukazuje, ve kterém albu listování je, a skáče na jiné
+const lbLista = vytvoritListu(document.getElementById('lbNav'), klic => lbZobrazit(parseInt(klic)));
+
+function lbNaplnitListu() {
+    const zacatky = lbZacatkyAlb();
+    // Kde je každá položka vlastním albem (stěna centerfoldů, covery), by lišta jen opakovala fotky
+    const maSmysl = zacatky.length > 1 && zacatky.length < lbPolozky.length;
+    lbLista.naplnit(maSmysl ? zacatky.map((zacatek, i) => ({
+        klic: zacatek,
+        nazev: nazevAlba(lbPolozky[zacatek].album, lbPolozky[zacatek].typ),
+        pocet: (zacatky[i + 1] ?? lbPolozky.length) - zacatek,
+    })) : []);
 }
 
 function lbSpustitCasovac() {
@@ -1297,6 +1608,7 @@ function otevritLightbox(index, slideshow = false, polozky = aktualniPolozky) {
     lbPolozky = polozky;
     lbZmeneno = false;
     lightbox.classList.remove('hidden');
+    lbNaplnitListu();
     lbPrepnoutSlideshow(slideshow);
     lbZobrazit(index);
 }
@@ -1329,6 +1641,7 @@ lbZoomBtn.onclick = () => lbPrepnoutLupu(!lbLupa);
 window.addEventListener('resize', () => {
     if (lightbox.classList.contains('hidden')) return;
     lbPrepnoutLupu(false);
+    lbLista.upravitSipky();
     lbRozvrhnout();
 });
 
@@ -1386,7 +1699,7 @@ document.querySelector('main').addEventListener('click', (e) => {
 });
 
 detailView.addEventListener('click', (e) => {
-    if (e.target.closest('[data-vydani]')) return;
+    if (e.target.closest('[data-vydani], .hearts') || rozbalitKliknute(e)) return;
     const polozka = e.target.closest('[data-index]');
     if (polozka) otevritLightbox(parseInt(polozka.dataset.index));
 });
@@ -1396,6 +1709,10 @@ document.addEventListener('keydown', (e) => {
     const klavesa = e.key.toLowerCase();
     if (klavesa === 'arrowright') lbZobrazit(lbIndex + 1);
     else if (klavesa === 'arrowleft') lbZobrazit(lbIndex - 1);
+    else if (klavesa === 'arrowdown' || klavesa === 'pagedown') lbSkokAlba(1);
+    else if (klavesa === 'arrowup' || klavesa === 'pageup') lbSkokAlba(-1);
+    else if (/^[1-5]$/.test(klavesa)) lbOhodnotit(parseInt(klavesa));
+    else if (klavesa === '0') lbOhodnotit(lbPolozky[lbIndex].hodnoceni);
     else if (klavesa === ' ') lbPrepnoutSlideshow();
     else if (klavesa === 'f') lbPrepnoutRozlozeni();
     else if (klavesa === 'r') lbOtocit();
@@ -1421,6 +1738,18 @@ document.getElementById('closeAlbumModalBtn').onclick = () => albumModal.classLi
 document.getElementById('winMinBtn').onclick = () => WindowMinimise();
 document.getElementById('winMaxBtn').onclick = () => WindowToggleMaximise();
 document.getElementById('winCloseBtn').onclick = () => Quit();
+
+// Okno přes celou obrazovku má ostré rohy, zakulacení by v rozích ukazovalo plochu
+async function upravitRohyOkna() {
+    const cele = await WindowIsMaximised() || await WindowIsFullscreen();
+    document.getElementById('app').classList.toggle('cele-okno', cele);
+}
+window.addEventListener('resize', () => {
+    upravitRohyOkna();
+    // Stav okna se někdy změní až po události změny velikosti
+    setTimeout(upravitRohyOkna, 250);
+});
+upravitRohyOkna();
 document.querySelector('.navbar').addEventListener('dblclick', (e) => {
     if (!e.target.closest('input, button')) WindowToggleMaximise();
 });
@@ -1817,7 +2146,7 @@ function prepnoutPoleAlba() {
     document.getElementById('albumVydaniGroup').classList.remove('hidden');
     // U pictorialu je vydání nepovinné
     document.getElementById('albumMesicLabel').textContent = centerfold ? 'Měsíc vydání' : 'Měsíc vydání (nepovinné)';
-    document.getElementById('albumRokLabel').textContent = centerfold ? 'Rok vydání' : 'Rok vydání (nepovinné)';
+    document.getElementById('albumRokLabel').textContent = centerfold ? 'Rok vydání' : 'Rok vydání (nepovinné, stačí bez měsíce)';
     document.getElementById('inputAlbumName').required = !centerfold;
     document.getElementById('selectAlbumMesic').required = centerfold;
     document.getElementById('inputAlbumRok').required = centerfold;
@@ -1851,14 +2180,20 @@ function otevritAlbumModal(modelka, album = null) {
         }
         vyberTypu.value = album.typ;
         document.getElementById('inputAlbumName').value = album.album;
+        document.getElementById('inputAlbumFotograf').value = album.fotograf || '';
+        document.getElementById('inputAlbumPopis').value = album.popis || '';
 
-        const vydani = /^(\d{4})-(\d{2})$/.exec(album.vydani || album.album);
+        const vydani = /^(\d{4})(?:-(\d{2}))?$/.exec(album.vydani || album.album);
         if (vydani) {
             document.getElementById('inputAlbumRok').value = vydani[1];
-            document.getElementById('selectAlbumMesic').value = vydani[2];
+            document.getElementById('selectAlbumMesic').value = vydani[2] || '';
         }
     }
     prepnoutPoleAlba();
+    // Našeptávání fotografů, kteří už jsou u alb otevřené modelky
+    document.getElementById('seznamFotografu').innerHTML = [...new Set(aktualniAlba.map(a => a.fotograf).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, 'cs'))
+        .map(f => `<option value="${esc(f)}"></option>`).join('');
     albumModal.classList.remove('hidden');
     vyberTypu.focus();
 }
@@ -2035,6 +2370,11 @@ document.addEventListener('contextmenu', (e) => {
                 },
             });
         }
+        const mrizka = e.target.closest('.album').querySelector('.photos-grid.zkracena, .photos-grid.rozbalena');
+        if (mrizka) {
+            const zkracena = mrizka.classList.contains('zkracena');
+            polozky.push({ text: zkracena ? 'Rozbalit album' : 'Sbalit album', akce: () => prepnoutRozbaleniAlba(mrizka, zkracena) });
+        }
         polozky.push(
             { text: 'Spustit slideshow alba', akce: () => otevritLightbox(aktualniPolozky.indexOf(album.polozky[0]), true) },
             { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(aktualniModelka, album) },
@@ -2183,16 +2523,17 @@ document.getElementById('addAlbumForm').onsubmit = async (e) => {
     const typ = document.getElementById('selectTyp').value;
     const rok = document.getElementById('inputAlbumRok').value;
     const mesic = document.getElementById('selectAlbumMesic').value;
-    if (Boolean(rok) !== Boolean(mesic)) {
-        oznamit('Vydání potřebuje měsíc i rok. Vyplň obojí, nebo nech obojí prázdné.');
+    // Pictorialu stačí ročník, měsíc bez roku ale nedává smysl
+    if (mesic && !rok) {
+        oznamit('K měsíci vydání chybí rok.');
         return;
     }
-    const vydani = rok ? `${rok}-${mesic}` : '';
+    const vydani = rok ? (mesic ? `${rok}-${mesic}` : rok) : '';
     const album = typ === 'Centerfold' ? vydani : document.getElementById('inputAlbumName').value.trim();
     const links = document.getElementById('inputBulkLinks').value;
 
     if (editovaneAlbum && !await UpdateAlbum(aktualniModelka.id, editovaneAlbum.album, editovaneAlbum.typ, album, typ)) {
-        oznamit('Album se nepodařilo uložit do databáze.');
+        oznamit('Album se nepodařilo uložit. Modelka už nejspíš má jiné album se stejným názvem a typem.');
         return;
     }
     if (links.trim()) {
@@ -2201,6 +2542,12 @@ document.getElementById('addAlbumForm').onsubmit = async (e) => {
     // Centerfold má vydání přímo v názvu alba, ostatním se přiřazuje zvlášť
     if (typ !== 'Centerfold') {
         await SetVydaniAlba(aktualniModelka.id, album, typ, vydani);
+    }
+    // Při přidávání fotek do existujícího alba prázdná pole jeho text nemažou
+    const popis = document.getElementById('inputAlbumPopis').value;
+    const fotograf = document.getElementById('inputAlbumFotograf').value;
+    if (editovaneAlbum || popis.trim() || fotograf.trim()) {
+        await SetPopisAlba(aktualniModelka.id, album, typ, popis, fotograf);
     }
     albumModal.classList.add('hidden');
     document.getElementById('addAlbumForm').reset();

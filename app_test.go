@@ -574,3 +574,97 @@ func TestPrevodOblibenychNaHodnoceni(t *testing.T) {
 		t.Fatalf("hodnocení po převodu: %v", hodnoceni)
 	}
 }
+
+func TestPopisAlba(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Leanna"})
+	a.AddModelka(Modelka{Jmeno: "Jiná"})
+	id := a.GetModelky("Leanna")[0].ID
+
+	// Album bez fotek popis mít nemůže
+	if a.SetPopisAlba(id, "Karkulka", "Pictorial", "text", "") {
+		t.Fatal("popis se uložil k albu bez fotek")
+	}
+
+	a.AddBulkPhotos(id, "Karkulka", "Pictorial", odkazA+" "+odkazB)
+	a.AddBulkPhotos(id, "Druhé", "Pictorial", odkazA)
+	if !a.SetPopisAlba(id, "Karkulka", "Pictorial", "  Little Red Riding Hood\n\ndruhý odstavec ", "Jan Novák") {
+		t.Fatal("popis se neuložil")
+	}
+	a.SetPopisAlba(id, "Karkulka", "Pictorial", "Little Red Riding Hood", "Jan Novák")
+
+	for _, f := range a.GetFotografieModelky(id) {
+		chtenyPopis, chtenyFotograf := "", ""
+		if f.Album == "Karkulka" {
+			chtenyPopis, chtenyFotograf = "Little Red Riding Hood", "Jan Novák"
+		}
+		if f.Popis != chtenyPopis || f.Fotograf != chtenyFotograf {
+			t.Fatalf("album %s má popis %q a fotografa %q", f.Album, f.Popis, f.Fotograf)
+		}
+	}
+
+	// Popis i fotograf se prohledávají s modelkou
+	for _, dotaz := range []string{"riding hood", "novak"} {
+		if nalezene := a.GetModelky(dotaz); len(nalezene) != 1 || nalezene[0].Jmeno != "Leanna" {
+			t.Fatalf("hledání %q našlo: %+v", dotaz, nalezene)
+		}
+	}
+
+	// Přejmenování na název jiného alba se odmítne, jinak by se alba slila
+	if a.UpdateAlbum(id, "Karkulka", "Pictorial", "Druhé", "Pictorial") {
+		t.Fatal("přejmenování na existující album prošlo")
+	}
+	// Popis se přejmenováním alba neztratí a je vidět i na stránce vydání
+	if !a.UpdateAlbum(id, "Karkulka", "Pictorial", "Red", "Pictorial") {
+		t.Fatal("přejmenování selhalo")
+	}
+	a.SetVydaniAlba(id, "Red", "Pictorial", "2013-05")
+	veVydani := a.GetVydani("2013-05")
+	if len(veVydani) != 2 || veVydani[0].Popis != "Little Red Riding Hood" || veVydani[0].JmenoModelky != "Leanna" {
+		t.Fatalf("vydání: %+v", veVydani)
+	}
+
+	// Po odebrání poslední fotky popis nepřežije pro nové album téhož jména
+	for _, f := range veVydani {
+		a.DeleteFotografie(f.ID)
+	}
+	a.AddBulkPhotos(id, "Red", "Pictorial", odkazA)
+	for _, f := range a.GetFotografieModelky(id) {
+		if f.Popis != "" {
+			t.Fatalf("nové album zdědilo popis: %+v", f)
+		}
+	}
+
+	// Hodnocení fotky se drží v rozsahu 0–5
+	druhe := a.GetFotografieModelky(id)[0]
+	if !a.SetHodnoceniFotek([]int{druhe.ID}, 9) || a.GetFotografieModelky(id)[0].Hodnoceni != 5 {
+		t.Fatal("hodnocení fotky se neuložilo nebo nebylo omezeno na 5")
+	}
+	a.SetHodnoceniFotek([]int{druhe.ID}, 0)
+	if a.GetFotografieModelky(id)[0].Hodnoceni != 0 {
+		t.Fatal("hodnocení fotky se nezrušilo")
+	}
+
+	// Pictorialu stačí ročník bez měsíce; má i svou stránku
+	if !a.SetVydaniAlba(id, "Druhé", "Pictorial", "2012") || a.SetVydaniAlba(id, "Druhé", "Pictorial", "2012-13") {
+		t.Fatal("vydání alba: ročník má projít, neplatný měsíc ne")
+	}
+	if rocnik := a.GetVydani("2012"); len(rocnik) != 1 || rocnik[0].Album != "Druhé" {
+		t.Fatalf("stránka ročníku: %+v", rocnik)
+	}
+
+	// Prázdné údaje řádek alba ruší, smazání modelky také
+	a.SetPopisAlba(id, "Red", "Pictorial", "x", "")
+	a.SetPopisAlba(id, "Druhé", "Pictorial", "y", "")
+	a.SetPopisAlba(id, "Red", "Pictorial", "", "")
+	var radku int
+	a.db.QueryRow("SELECT COUNT(*) FROM alba").Scan(&radku)
+	if radku != 1 {
+		t.Fatalf("v tabulce alb je %d řádků", radku)
+	}
+	a.DeleteModelka(id)
+	a.db.QueryRow("SELECT COUNT(*) FROM alba").Scan(&radku)
+	if radku != 0 {
+		t.Fatalf("po smazání modelky zbylo %d řádků alb", radku)
+	}
+}

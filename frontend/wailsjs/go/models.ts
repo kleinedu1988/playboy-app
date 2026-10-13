@@ -10,6 +10,9 @@ export namespace main {
 	    spojit: boolean;
 	    jmenoModelky: string;
 	    vydani: string;
+	    popis: string;
+	    fotograf: string;
+	    hodnoceni: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Fotografie(source);
@@ -26,6 +29,9 @@ export namespace main {
 	        this.spojit = source["spojit"];
 	        this.jmenoModelky = source["jmenoModelky"];
 	        this.vydani = source["vydani"];
+	        this.popis = source["popis"];
+	        this.fotograf = source["fotograf"];
+	        this.hodnoceni = source["hodnoceni"];
 	    }
 	}
 	export class NedostupnySoubor {

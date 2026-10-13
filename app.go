@@ -80,6 +80,9 @@ type Modelka struct {
 	DalsiJmena string `json:"dalsiJmena"` // pseudonymy oddělené čárkou
 	Poznamka   string `json:"poznamka"`
 	Hodnoceni  int    `json:"hodnoceni"` // 0 = nehodnoceno, 1–5 srdíček
+
+	// Popisy a fotografové alb modelky, jen pro hledání
+	textyAlb string
 }
 
 type Fotografie struct {
@@ -94,6 +97,11 @@ type Fotografie struct {
 	JmenoModelky string `json:"jmenoModelky"` // vyplněno jen v přehledech napříč modelkami
 	// Vydání časopisu RRRR-MM, ke kterému fotka patří; u centerfoldu a coveru je to přímo album
 	Vydani string `json:"vydani"`
+	// Průvodní text a fotograf alba; vyplněno jen v profilu modelky a na stránce vydání
+	Popis    string `json:"popis"`
+	Fotograf string `json:"fotograf"`
+	// 0 = nehodnoceno, 1–5 srdíček; lépe hodnocené fotky jsou v albu vpředu
+	Hodnoceni int `json:"hodnoceni"`
 }
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
@@ -334,7 +342,7 @@ func (a *App) startup(ctx context.Context) {
 		FOREIGN KEY(modelka_id) REFERENCES modelky(id)
 	);`)
 
-	for _, sloupec := range [][2]string{{"rotace", "INTEGER"}, {"spojit", "INTEGER"}, {"vydani", "TEXT"}} {
+	for _, sloupec := range [][2]string{{"rotace", "INTEGER"}, {"spojit", "INTEGER"}, {"vydani", "TEXT"}, {"hodnoceni", "INTEGER"}} {
 		if a.maSloupec("fotografie", sloupec[0]) {
 			continue
 		}
@@ -342,6 +350,18 @@ func (a *App) startup(ctx context.Context) {
 			a.chyba("migrace DB", err)
 		}
 	}
+
+	// Údaje alba jako celku; album je určeno modelkou, názvem a typem stejně jako u fotek
+	a.db.Exec(`
+	CREATE TABLE IF NOT EXISTS alba (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		modelka_id INTEGER NOT NULL,
+		album TEXT NOT NULL,
+		typ TEXT NOT NULL,
+		popis TEXT,
+		fotograf TEXT,
+		UNIQUE(modelka_id, album, typ)
+	);`)
 }
 
 // Vytažení všech Drive ID z jakéhokoliv textu/odkazů
@@ -400,6 +420,19 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 		radky.Close()
 	}
 
+	// Popisy alb se prohledávají spolu s údaji modelky
+	textyAlb := map[int]string{}
+	if radky, err := a.db.Query("SELECT modelka_id, COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba"); err == nil {
+		for radky.Next() {
+			var id int
+			var popis, fotograf string
+			if radky.Scan(&id, &popis, &fotograf) == nil {
+				textyAlb[id] += popis + "\n" + fotograf + "\n"
+			}
+		}
+		radky.Close()
+	}
+
 	query := "SELECT " + strings.Join(vyber, ", ") + " FROM modelky"
 
 	rows, err := a.db.Query(query)
@@ -430,6 +463,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 			m.CoverID = ids[0]
 			m.CoverURL = fmt.Sprintf("https://lh3.googleusercontent.com/d/%s", ids[0])
 		}
+		m.textyAlb = textyAlb[m.ID]
 		m.Vydani = vydaniModelek[m.ID]
 		if m.Vydani == nil {
 			m.Vydani = []string{}
@@ -462,7 +496,7 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 	udaje := zjednodusit(strings.Join([]string{
 		m.Jmeno, m.Narodnost, m.Etnicita, m.NarozeniMisto, m.NarozeniDatum, m.VlasyBarva, m.OciBarva,
 		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Miry, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags,
-		m.DalsiJmena, m.Poznamka, strings.Join(m.Vydani, " "),
+		m.DalsiJmena, m.Poznamka, strings.Join(m.Vydani, " "), m.textyAlb,
 	}, "\n"))
 	for _, slovo := range strings.Fields(zjednodusit(vyhledavani)) {
 		if !strings.Contains(udaje, slovo) {
@@ -581,6 +615,23 @@ func (a *App) SetHodnoceni(id, hodnoceni int) bool {
 	return err == nil
 }
 
+// Hodnocení fotek 1–5 srdíček (u spojeného plakátu všech jeho stránek najednou); 0 hodnocení ruší
+func (a *App) SetHodnoceniFotek(ids []int, hodnoceni int) bool {
+	if hodnoceni < 0 {
+		hodnoceni = 0
+	}
+	if hodnoceni > 5 {
+		hodnoceni = 5
+	}
+	for _, id := range ids {
+		if _, err := a.db.Exec(`UPDATE fotografie SET hodnoceni = ? WHERE id = ?`, hodnoceni, id); err != nil {
+			a.chyba("SetHodnoceniFotek", err)
+			return false
+		}
+	}
+	return true
+}
+
 // Titulní fotkou modelky se stane fotka z některého jejího alba
 func (a *App) SetTitulniFotka(modelkaID, fotoID int) bool {
 	vysledek, err := a.db.Exec(`
@@ -614,6 +665,10 @@ func (a *App) DeleteModelka(id int) bool {
 		a.chyba("DeleteModelka", err)
 		return false
 	}
+	if _, err := tx.Exec("DELETE FROM alba WHERE modelka_id = ?", id); err != nil {
+		a.chyba("DeleteModelka", err)
+		return false
+	}
 	if _, err := tx.Exec("DELETE FROM modelky WHERE id = ?", id); err != nil {
 		a.chyba("DeleteModelka", err)
 		return false
@@ -641,9 +696,10 @@ func (a *App) DeleteVse() bool {
 
 	dotazy := []string{
 		"DELETE FROM fotografie",
+		"DELETE FROM alba",
 		"DELETE FROM modelky",
 		// Číslování ID začne znovu od 1
-		"DELETE FROM sqlite_sequence WHERE name IN ('fotografie', 'modelky')",
+		"DELETE FROM sqlite_sequence WHERE name IN ('fotografie', 'alba', 'modelky')",
 	}
 	for _, dotaz := range dotazy {
 		if _, err := tx.Exec(dotaz); err != nil {
@@ -661,9 +717,19 @@ func (a *App) DeleteVse() bool {
 // Vydání fotky: centerfold a cover ho mají v názvu alba, ostatní ve vlastním sloupci
 const vydaniFotky = "CASE WHEN f.typ IN ('Centerfold', 'Cover') THEN f.album ELSE COALESCE(f.vydani, '') END"
 
-const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky
+const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky + ", COALESCE(f.hodnoceni, 0)"
 
-func (a *App) nacistFotografie(query string, sJmenem bool, args ...interface{}) []Fotografie {
+// Připojení údajů alba k fotce; sloupce se přidávají na konec výběru
+const (
+	vyberPopisu     = ", COALESCE(a.popis, ''), COALESCE(a.fotograf, '')"
+	pripojeniPopisu = " LEFT JOIN alba a ON a.modelka_id = COALESCE(f.modelka_id, 0) AND a.album = f.album AND a.typ = f.typ"
+)
+
+// Řádek alba, ke kterému už nejsou žádné fotky, nesmí zůstat: jeho popis by se objevil u nového alba téhož jména
+const smazatPrazdnaAlba = `DELETE FROM alba WHERE NOT EXISTS (
+	SELECT 1 FROM fotografie f WHERE COALESCE(f.modelka_id, 0) = alba.modelka_id AND f.album = alba.album AND f.typ = alba.typ)`
+
+func (a *App) nacistFotografie(query string, sJmenem, sPopisem bool, args ...interface{}) []Fotografie {
 	rows, err := a.db.Query(query, args...)
 	if err != nil {
 		a.chyba("načtení fotografií", err)
@@ -675,9 +741,12 @@ func (a *App) nacistFotografie(query string, sJmenem bool, args ...interface{}) 
 	for rows.Next() {
 		var f Fotografie
 		var driveID string
-		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani}
+		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani, &f.Hodnoceni}
 		if sJmenem {
 			cile = append(cile, &f.JmenoModelky)
+		}
+		if sPopisem {
+			cile = append(cile, &f.Popis, &f.Fotograf)
 		}
 		if err := rows.Scan(cile...); err != nil {
 			a.chyba("načtení fotografií", err)
@@ -691,7 +760,7 @@ func (a *App) nacistFotografie(query string, sJmenem bool, args ...interface{}) 
 
 // Načtení fotek konkrétní modelky pro její detailní profil
 func (a *App) GetFotografieModelky(modelkaID int) []Fotografie {
-	return a.nacistFotografie(vyberFotografii+" FROM fotografie f WHERE f.modelka_id = ? ORDER BY f.id", false, modelkaID)
+	return a.nacistFotografie(vyberFotografii+vyberPopisu+" FROM fotografie f"+pripojeniPopisu+" WHERE f.modelka_id = ? ORDER BY f.id", false, true, modelkaID)
 }
 
 // Všechny centerfoldy napříč modelkami pro stěnu plakátů
@@ -699,16 +768,19 @@ func (a *App) GetCenterfoldy() []Fotografie {
 	return a.nacistFotografie(vyberFotografii+`, m.jmeno FROM fotografie f
 		JOIN modelky m ON m.id = f.modelka_id
 		WHERE f.typ = 'Centerfold'
-		ORDER BY m.jmeno COLLATE NOCASE, f.album, f.id`, true)
+		ORDER BY m.jmeno COLLATE NOCASE, f.album, f.id`, true, false)
 }
 
 // Covery časopisů nepatří k modelce (modelka_id = 0); album je vydání ve tvaru RRRR-MM
 var vzorVydani = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
 
+// Pictorial může patřit jen k ročníku bez měsíce (např. „Cybergirl of the Year 2012")
+var vzorVydaniAlba = regexp.MustCompile(`^\d{4}(-(0[1-9]|1[0-2]))?$`)
+
 func (a *App) GetCovery() []Fotografie {
 	return a.nacistFotografie(vyberFotografii+` FROM fotografie f
 		WHERE f.typ = 'Cover' AND COALESCE(f.modelka_id, 0) = 0
-		ORDER BY f.album DESC, f.id`, false)
+		ORDER BY f.album DESC, f.id`, false, false)
 }
 
 // Přidání coveru (nebo více coverů) k vydání časopisu
@@ -740,13 +812,13 @@ func (a *App) UpdateCover(id int, vydani, rawLink string) bool {
 
 // Vše, co patří k jednomu vydání časopisu: covery, centerfoldy i pictorialy napříč modelkami
 func (a *App) GetVydani(vydani string) []Fotografie {
-	if !vzorVydani.MatchString(vydani) {
+	if !vzorVydaniAlba.MatchString(vydani) {
 		return nil
 	}
-	return a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '') FROM fotografie f
-		LEFT JOIN modelky m ON m.id = f.modelka_id
+	return a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
+		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
 		WHERE `+vydaniFotky+` = ?
-		ORDER BY m.jmeno COLLATE NOCASE, f.album, f.id`, true, vydani)
+		ORDER BY m.jmeno COLLATE NOCASE, f.album, f.id`, true, true, vydani)
 }
 
 // Všechny fotky přiřazené k nějakému vydání, pro kalendář vydání
@@ -754,12 +826,12 @@ func (a *App) GetPrehledVydani() []Fotografie {
 	return a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '') FROM fotografie f
 		LEFT JOIN modelky m ON m.id = f.modelka_id
 		WHERE `+vydaniFotky+` <> ''
-		ORDER BY `+vydaniFotky+`, f.id`, true)
+		ORDER BY `+vydaniFotky+`, f.id`, true, false)
 }
 
 // Přiřazení alba (typicky pictorialu) k vydání časopisu; prázdné vydání přiřazení ruší
 func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
-	if vydani != "" && !vzorVydani.MatchString(vydani) {
+	if vydani != "" && !vzorVydaniAlba.MatchString(vydani) {
 		return false
 	}
 	_, err := a.db.Exec("UPDATE fotografie SET vydani = ? WHERE modelka_id = ? AND album = ? AND typ = ?", vydani, modelkaID, album, typ)
@@ -794,10 +866,62 @@ func (a *App) SetSpojeniAlba(modelkaID int, album, typ string, spojit bool) bool
 
 // Přejmenování alba nebo změna jeho typu; album je určeno modelkou, názvem a typem
 func (a *App) UpdateAlbum(modelkaID int, staryAlbum, staryTyp, novyAlbum, novyTyp string) bool {
-	_, err := a.db.Exec("UPDATE fotografie SET album = ?, typ = ? WHERE modelka_id = ? AND album = ? AND typ = ?",
-		novyAlbum, novyTyp, modelkaID, staryAlbum, staryTyp)
+	if staryAlbum == novyAlbum && staryTyp == novyTyp {
+		return true
+	}
+	// Dvě alba se přejmenováním nesmí tiše slít do jednoho
+	var obsazeno int
+	a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, novyAlbum, novyTyp).Scan(&obsazeno)
+	if obsazeno > 0 {
+		return false
+	}
+
+	tx, err := a.db.Begin()
 	if err != nil {
 		a.chyba("UpdateAlbum", err)
+		return false
+	}
+	defer tx.Rollback()
+
+	dotazy := []string{
+		// Pozůstatek po dřívějším albu cílového jména by přejmenování zablokoval
+		"DELETE FROM alba WHERE modelka_id = ?3 AND album = ?1 AND typ = ?2",
+		"UPDATE alba SET album = ?1, typ = ?2 WHERE modelka_id = ?3 AND album = ?4 AND typ = ?5",
+		"UPDATE fotografie SET album = ?1, typ = ?2 WHERE modelka_id = ?3 AND album = ?4 AND typ = ?5",
+	}
+	for _, dotaz := range dotazy {
+		if _, err := tx.Exec(dotaz, novyAlbum, novyTyp, modelkaID, staryAlbum, staryTyp); err != nil {
+			a.chyba("UpdateAlbum", err)
+			return false
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		a.chyba("UpdateAlbum", err)
+		return false
+	}
+	return true
+}
+
+// Průvodní text a fotograf alba; obojí prázdné údaje alba ruší
+func (a *App) SetPopisAlba(modelkaID int, album, typ, popis, fotograf string) bool {
+	popis, fotograf = strings.TrimSpace(popis), strings.TrimSpace(fotograf)
+
+	var err error
+	if popis == "" && fotograf == "" {
+		_, err = a.db.Exec("DELETE FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
+	} else {
+		// Popis patří jen k albu, které má aspoň jednu fotku
+		var fotek int
+		a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&fotek)
+		if fotek == 0 {
+			return false
+		}
+		_, err = a.db.Exec(`INSERT INTO alba (modelka_id, album, typ, popis, fotograf) VALUES (?, ?, ?, ?, ?)
+			ON CONFLICT(modelka_id, album, typ) DO UPDATE SET popis = excluded.popis, fotograf = excluded.fotograf`,
+			modelkaID, album, typ, popis, fotograf)
+	}
+	if err != nil {
+		a.chyba("SetPopisAlba", err)
 	}
 	return err == nil
 }
@@ -810,6 +934,9 @@ func (a *App) DeleteAlbum(modelkaID int, album, typ string) bool {
 		return false
 	}
 	_, err := a.db.Exec("DELETE FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
+	if err == nil {
+		_, err = a.db.Exec(smazatPrazdnaAlba)
+	}
 	if err != nil {
 		a.chyba("DeleteAlbum", err)
 	}
@@ -819,6 +946,9 @@ func (a *App) DeleteAlbum(modelkaID int, album, typ string) bool {
 // Odebrání jedné fotky z alba
 func (a *App) DeleteFotografie(id int) bool {
 	_, err := a.db.Exec("DELETE FROM fotografie WHERE id = ?", id)
+	if err == nil {
+		_, err = a.db.Exec(smazatPrazdnaAlba)
+	}
 	if err != nil {
 		a.chyba("DeleteFotografie", err)
 	}

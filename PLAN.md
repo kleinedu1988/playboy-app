@@ -5,7 +5,6 @@ Sem se zapisuje, co se má udělat později, aby se to neztratilo. Hotové věci
 ## Později
 
 ### Alba podrobněji
-- Popis alba a jméno fotografa.
 - Výběr více fotek najednou pro hromadné odebrání.
 
 ### Kalendář vydání

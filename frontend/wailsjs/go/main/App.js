@@ -66,6 +66,14 @@ export function SetHodnoceni(arg1, arg2) {
   return window['go']['main']['App']['SetHodnoceni'](arg1, arg2);
 }
 
+export function SetHodnoceniFotek(arg1, arg2) {
+  return window['go']['main']['App']['SetHodnoceniFotek'](arg1, arg2);
+}
+
+export function SetPopisAlba(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['SetPopisAlba'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function SetRotaceFotek(arg1, arg2) {
   return window['go']['main']['App']['SetRotaceFotek'](arg1, arg2);
 }

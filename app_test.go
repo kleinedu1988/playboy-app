@@ -418,6 +418,23 @@ func TestVydaniSpojujeCoverCenterfoldAPictorial(t *testing.T) {
 	}
 }
 
+// K založení modelky stačí jméno; titulní fotka se dá vybrat později z alba
+func TestModelkaJenSeJmenem(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	if !a.AddModelka(Modelka{Jmeno: "Jen Jméno", Tetovani: -1, Piercing: -1}) {
+		t.Fatal("AddModelka jen se jménem selhalo")
+	}
+	m := a.GetModelky("")[0]
+	if m.CoverID != "" || m.CoverURL != "" {
+		t.Fatalf("modelka bez fotky má titulní fotku %q", m.CoverURL)
+	}
+
+	a.AddBulkPhotos(m.ID, "Album", "Pictorial", odkazA)
+	if !a.SetTitulniFotka(m.ID, a.GetFotografieModelky(m.ID)[0].ID) || a.GetModelky("")[0].CoverID != idA {
+		t.Fatal("titulní fotku se nepodařilo vybrat z alba")
+	}
+}
+
 func TestHledaniARazeniModelek(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	a.AddModelka(Modelka{Jmeno: "zuzana Nová", Narodnost: "Česká", VlasyBarva: "Hnědá", Tags: "modelka, playmate"})

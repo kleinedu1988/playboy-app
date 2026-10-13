@@ -251,8 +251,8 @@ document.querySelector('#app').innerHTML = `
           <section class="form-section">
             <h4>Titulní fotka</h4>
             <div class="form-group">
-              <label for="inputDriveID">Google Drive ID nebo odkaz</label>
-              <input type="text" id="inputDriveID" required />
+              <label for="inputDriveID">Google Drive ID nebo odkaz (nepovinné – titulní fotku jde později vybrat z alba)</label>
+              <input type="text" id="inputDriveID" />
             </div>
           </section>
 
@@ -1579,8 +1579,6 @@ function otevritModelModal(modelka) {
     editovanaModelka = modelka;
     document.getElementById('addModelForm').reset();
     document.getElementById('modelModalTitle').textContent = modelka ? 'Upravit modelku' : 'Přidat novou modelku';
-    // Při úpravě lze titulní fotku nechat prázdnou – zůstane původní
-    document.getElementById('inputDriveID').required = !modelka;
 
     if (modelka) {
         poleModelky.forEach(([vlastnost, id, typ]) => {

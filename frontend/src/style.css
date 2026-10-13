@@ -675,6 +675,16 @@ input:focus, select:focus, textarea:focus {
     text-align: right;
 }
 
+/* Malé okno rychlého přidání */
+.modal-narrow {
+    width: 400px;
+    max-width: calc(100% - 48px);
+}
+
+.modal-actions-split {
+    justify-content: space-between;
+}
+
 /* Velký formulář modelky: pevná hlavička a patička, obsah roluje */
 .modal-wide {
     display: flex;

@@ -113,6 +113,26 @@ document.querySelector('#app').innerHTML = `
     </div>
   </main>
 
+  <!-- Rychlé přidání modelky: stačí jméno, ostatní se doplní v profilu -->
+  <div id="quickModal" class="modal-overlay hidden">
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h3>Nová modelka</h3>
+        <button id="closeQuickModalBtn" class="close-btn">&times;</button>
+      </div>
+      <form id="quickForm">
+        <div class="form-group">
+          <label for="inputQuickJmeno">Jméno</label>
+          <input type="text" id="inputQuickJmeno" required autocomplete="off" />
+        </div>
+        <div class="modal-actions modal-actions-split">
+          <button type="button" id="quickMoreBtn" class="btn btn-secondary">Vyplnit další údaje…</button>
+          <button type="submit" class="btn btn-primary">Přidat</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Modal 1: Přidat / upravit modelku -->
   <div id="modelModal" class="modal-overlay hidden">
     <div class="modal-card modal-wide">
@@ -1548,6 +1568,48 @@ function upravitVyrez(modelka) {
     info.addEventListener('click', naAkci);
 }
 
+// Stejná modelka se nemá omylem založit dvakrát; vrací, zda se má pokračovat
+async function neniDuplicitni(modelka) {
+    const jmena = m => [m.jmeno, ...(m.dalsiJmena || '').split(',')].map(sjednotit).filter(Boolean);
+    const nova = jmena(modelka);
+    const stejna = (await GetModelky('') || []).find(m => jmena(m).some(j => nova.includes(j)));
+    return !stejna || potvrdit('Modelka už existuje', `V databázi už je modelka „${stejna.jmeno}" se stejným jménem nebo pseudonymem. Opravdu přidat další?`, 'Přesto přidat');
+}
+
+// Rychlé přidání: jen jméno, po uložení se rovnou otevře profil, kde se doplní fotky a údaje
+const quickModal = document.getElementById('quickModal');
+
+function otevritRychlePridani() {
+    document.getElementById('quickForm').reset();
+    quickModal.classList.remove('hidden');
+    document.getElementById('inputQuickJmeno').focus();
+}
+
+document.getElementById('closeQuickModalBtn').onclick = () => quickModal.classList.add('hidden');
+document.getElementById('quickMoreBtn').onclick = () => {
+    const jmeno = document.getElementById('inputQuickJmeno').value;
+    quickModal.classList.add('hidden');
+    otevritModelModal(null);
+    document.getElementById('inputJmeno').value = jmeno;
+};
+document.getElementById('quickForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const modelka = { jmeno: document.getElementById('inputQuickJmeno').value.trim(), tetovani: -1, piercing: -1 };
+    if (!modelka.jmeno || !await neniDuplicitni(modelka)) return;
+    if (!await AddModelka(modelka)) {
+        oznamit('Modelku se nepodařilo uložit do databáze.');
+        return;
+    }
+    quickModal.classList.add('hidden');
+
+    // Nově přidaná modelka má nejvyšší ID
+    const nova = (await GetModelky('') || []).reduce((a, b) => (a && a.id > b.id ? a : b), null);
+    if (nova) {
+        prepnoutRezim('modelky');
+        otevritDetailModelky(nova);
+    }
+};
+
 // Pole formuláře modelky: [vlastnost modelky, id prvku, typ]
 const poleModelky = [
     ['jmeno', 'inputJmeno', 'text'],
@@ -1704,7 +1766,7 @@ document.getElementById('confirmDeleteBtn').onclick = async () => {
 async function pridatCenterfold() {
     const modelky = await GetModelky('') || [];
     if (modelky.length === 0) {
-        otevritModelModal(null);
+        otevritRychlePridani();
         return;
     }
     modelky.sort((a, b) => a.jmeno.localeCompare(b.jmeno, 'cs'));
@@ -2017,7 +2079,7 @@ document.addEventListener('contextmenu', (e) => {
         ];
     } else {
         polozky = [
-            { text: 'Přidat modelku', akce: () => otevritModelModal(null) },
+            { text: 'Přidat modelku', akce: otevritRychlePridani },
             { text: 'Obnovit galerii', akce: () => nacistGalerii(searchInput.value) },
             { text: 'Zkontrolovat soubory na Disku', akce: () => zkontrolovatSoubory() },
             { text: 'Vymazat mezipaměť obrázků', akce: vymazatMezipamet },
@@ -2066,13 +2128,7 @@ document.getElementById('addModelForm').onsubmit = async (e) => {
 
     if (!await odkazJeVPoradku(modelka.coverId)) return;
 
-    // Stejná modelka se nemá omylem založit dvakrát
-    if (!editovanaModelka) {
-        const jmena = m => [m.jmeno, ...m.dalsiJmena.split(',')].map(sjednotit).filter(Boolean);
-        const nova = jmena(modelka);
-        const stejna = (await GetModelky('') || []).find(m => jmena(m).some(j => nova.includes(j)));
-        if (stejna && !await potvrdit('Modelka už existuje', `V databázi už je modelka „${stejna.jmeno}" se stejným jménem nebo pseudonymem. Opravdu přidat další?`, 'Přesto přidat')) return;
-    }
+    if (!editovanaModelka && !await neniDuplicitni(modelka)) return;
 
     const ulozeno = editovanaModelka ? await UpdateModelka(modelka) : await AddModelka(modelka);
     if (!ulozeno) {

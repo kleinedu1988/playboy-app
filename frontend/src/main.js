@@ -140,14 +140,16 @@ document.querySelector('#app').innerHTML = `
         <h3 id="modelModalTitle">Přidat novou modelku</h3>
         <button id="closeModalBtn" class="close-btn">&times;</button>
       </div>
-      <form id="addModelForm">
-        <div class="form-body">
+      <form id="addModelForm" novalidate>
+        <div class="form-layout">
+          <nav id="modelTabs" class="form-tabs"></nav>
+          <div class="form-body">
           <section class="form-section">
             <h4>Základní údaje</h4>
             <div class="form-grid cols-2">
               <div class="form-group span-2">
                 <label for="inputJmeno">Celé jméno</label>
-                <input type="text" id="inputJmeno" required />
+                <input type="text" id="inputJmeno" />
               </div>
               <div class="form-group span-2">
                 <label for="inputDalsiJmena">Další jména a pseudonymy (oddělené čárkou)</label>
@@ -169,11 +171,15 @@ document.querySelector('#app').innerHTML = `
                 <label for="inputEtnicita">Etnicita</label>
                 <input type="text" id="inputEtnicita" list="seznamEtnicita" />
               </div>
+              <div class="form-group span-2">
+                <label for="inputDriveID">Titulní fotka – odkaz z Google Disku (nepovinné, jde později vybrat z alba)</label>
+                <input type="text" id="inputDriveID" />
+              </div>
             </div>
           </section>
 
           <section class="form-section">
-            <h4>Vzhled</h4>
+            <h4>Vzhled a míry</h4>
             <div class="form-grid cols-4">
               <div class="form-group">
                 <label for="inputVyska">Výška (cm)</label>
@@ -217,10 +223,7 @@ document.querySelector('#app').innerHTML = `
                 </select>
               </div>
             </div>
-          </section>
-
-          <section class="form-section">
-            <h4>Míry</h4>
+            <h5 class="form-subtitle">Míry</h5>
             <div class="form-grid cols-3">
               <div class="form-group">
                 <label for="inputHrudnik">Hrudník (cm)</label>
@@ -268,13 +271,6 @@ document.querySelector('#app').innerHTML = `
             </div>
           </section>
 
-          <section class="form-section">
-            <h4>Titulní fotka</h4>
-            <div class="form-group">
-              <label for="inputDriveID">Google Drive ID nebo odkaz (nepovinné – titulní fotku jde později vybrat z alba)</label>
-              <input type="text" id="inputDriveID" />
-            </div>
-          </section>
 
           <!-- Našeptávání hodnot, které už v databázi jsou, aby se stejný údaj psal vždy stejně -->
           <datalist id="seznamVlasy"></datalist>
@@ -283,6 +279,7 @@ document.querySelector('#app').innerHTML = `
           <datalist id="seznamEtnicita"></datalist>
           <datalist id="seznamMisto"></datalist>
           <datalist id="seznamRole"></datalist>
+          </div>
         </div>
         <div class="modal-actions">
           <button type="button" id="cancelModelBtn" class="btn btn-secondary">Zrušit</button>
@@ -1591,6 +1588,7 @@ document.getElementById('quickMoreBtn').onclick = () => {
     quickModal.classList.add('hidden');
     otevritModelModal(null);
     document.getElementById('inputJmeno').value = jmeno;
+    oznacitVyplneneZalozky();
 };
 document.getElementById('quickForm').onsubmit = async (e) => {
     e.preventDefault();
@@ -1652,10 +1650,38 @@ function otevritModelModal(modelka) {
         });
     }
     modelModal.classList.remove('hidden');
-    document.querySelector('#modelModal .form-body').scrollTop = 0;
+    ukazatZalozku(0);
+    oznacitVyplneneZalozky();
     document.getElementById('inputJmeno').focus();
     naplnitNapovedu();
 }
+
+// Formulář modelky je rozdělený do záložek, aby se nemusel rolovat
+const sekceFormulare = [...document.querySelectorAll('#addModelForm .form-section')];
+const modelTabs = document.getElementById('modelTabs');
+modelTabs.innerHTML = sekceFormulare.map((sekce, i) =>
+    `<button type="button" data-zalozka="${i}">${esc(sekce.querySelector('h4').textContent)}<i></i></button>`).join('');
+
+function ukazatZalozku(index) {
+    sekceFormulare.forEach((sekce, i) => sekce.classList.toggle('active', i === index));
+    modelTabs.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', i === index));
+    document.querySelector('#modelModal .form-body').scrollTop = 0;
+}
+
+// Tečka u záložky, ve které už je něco vyplněno
+function oznacitVyplneneZalozky() {
+    sekceFormulare.forEach((sekce, i) => {
+        const vyplneno = [...sekce.querySelectorAll('input, select, textarea')]
+            .some(p => p.value.trim() && p.value !== '-1');
+        modelTabs.children[i].classList.toggle('filled', vyplneno);
+    });
+}
+
+modelTabs.addEventListener('click', (e) => {
+    const zalozka = e.target.closest('[data-zalozka]');
+    if (zalozka) ukazatZalozku(parseInt(zalozka.dataset.zalozka));
+});
+document.getElementById('addModelForm').addEventListener('input', oznacitVyplneneZalozky);
 
 // Našeptávání: hodnoty už zapsané u jiných modelek, doplněné o několik obvyklých
 async function naplnitNapovedu() {
@@ -2126,7 +2152,17 @@ document.getElementById('addModelForm').onsubmit = async (e) => {
         else modelka[vlastnost] = prvek.value.trim();
     });
 
-    if (!await odkazJeVPoradku(modelka.coverId)) return;
+    // Jméno je jediný povinný údaj; leží na první záložce, která nemusí být zrovna vidět
+    if (!modelka.jmeno) {
+        ukazatZalozku(0);
+        document.getElementById('inputJmeno').focus();
+        oznamit('Vyplň jméno modelky.');
+        return;
+    }
+    if (!await odkazJeVPoradku(modelka.coverId)) {
+        ukazatZalozku(0);
+        return;
+    }
 
     if (!editovanaModelka && !await neniDuplicitni(modelka)) return;
 

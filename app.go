@@ -79,7 +79,7 @@ type Modelka struct {
 
 	DalsiJmena string `json:"dalsiJmena"` // pseudonymy oddělené čárkou
 	Poznamka   string `json:"poznamka"`
-	Oblibena   bool   `json:"oblibena"`
+	Hodnoceni  int    `json:"hodnoceni"` // 0 = nehodnoceno, 1–5 srdíček
 }
 
 type Fotografie struct {
@@ -302,9 +302,15 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}
 
-	if !a.maSloupec("modelky", "oblibena") {
-		if _, err := a.db.Exec(`ALTER TABLE modelky ADD COLUMN oblibena INTEGER`); err != nil {
+	if !a.maSloupec("modelky", "hodnoceni") {
+		if _, err := a.db.Exec(`ALTER TABLE modelky ADD COLUMN hodnoceni INTEGER`); err != nil {
 			a.chyba("migrace DB", err)
+		}
+		// Starší verze znala jen ano/ne: oblíbená modelka dostane plné hodnocení
+		if a.maSloupec("modelky", "oblibena") {
+			if _, err := a.db.Exec(`UPDATE modelky SET hodnoceni = 5 WHERE oblibena = 1`); err != nil {
+				a.chyba("migrace DB", err)
+			}
 		}
 	}
 
@@ -379,7 +385,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], s[1]))
 	}
 
-	vyber = append(vyber, "(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id)", "COALESCE(oblibena, 0)")
+	vyber = append(vyber, "(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id)", "COALESCE(hodnoceni, 0)")
 
 	// Vydání každé modelky odvozená z jejích fotek
 	vydaniModelek := map[int][]string{}
@@ -413,7 +419,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
 			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
 			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &driveID,
-			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Oblibena)
+			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Hodnoceni)
 		if err != nil {
 			a.chyba("GetModelky", err)
 			continue
@@ -560,11 +566,17 @@ func (a *App) SetCoverVyrez(id int, zoom, x, y float64) bool {
 	return err == nil
 }
 
-// Označení modelky jako oblíbené
-func (a *App) SetOblibena(id int, oblibena bool) bool {
-	_, err := a.db.Exec(`UPDATE modelky SET oblibena = ? WHERE id = ?`, oblibena, id)
+// Hodnocení modelky 1–5 srdíček; 0 hodnocení ruší
+func (a *App) SetHodnoceni(id, hodnoceni int) bool {
+	if hodnoceni < 0 {
+		hodnoceni = 0
+	}
+	if hodnoceni > 5 {
+		hodnoceni = 5
+	}
+	_, err := a.db.Exec(`UPDATE modelky SET hodnoceni = ? WHERE id = ?`, hodnoceni, id)
 	if err != nil {
-		a.chyba("SetOblibena", err)
+		a.chyba("SetHodnoceni", err)
 	}
 	return err == nil
 }

@@ -62,8 +62,8 @@ export function SetCoverVyrez(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SetCoverVyrez'](arg1, arg2, arg3, arg4);
 }
 
-export function SetOblibena(arg1, arg2) {
-  return window['go']['main']['App']['SetOblibena'](arg1, arg2);
+export function SetHodnoceni(arg1, arg2) {
+  return window['go']['main']['App']['SetHodnoceni'](arg1, arg2);
 }
 
 export function SetRotaceFotek(arg1, arg2) {

@@ -32,7 +32,7 @@ export function OveritOdkaz(arg1:string):Promise<number>;
 
 export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):Promise<boolean>;
 
-export function SetOblibena(arg1:number,arg2:boolean):Promise<boolean>;
+export function SetHodnoceni(arg1:number,arg2:number):Promise<boolean>;
 
 export function SetRotaceFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 

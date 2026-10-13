@@ -1,5 +1,5 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetOblibena, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetHodnoceni, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
 import { WindowMinimise, WindowToggleMaximise, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 
 let aktualniModelka = null;
@@ -7,7 +7,7 @@ let nacteneModelky = [];
 let editovanaModelka = null;
 let potvrzenaAkce = null;
 let zrusenaAkce = null;
-let jenOblibene = false;
+let minHodnoceni = 0; // galerie ukazuje jen modelky s aspoň tolika srdíčky; 0 = všechny
 let zrusitUpravuVyrezu = null;
 let aktualniAlba = [];
 let aktualniPolozky = [];
@@ -68,7 +68,7 @@ document.querySelector('#app').innerHTML = `
     </div>
     <div class="nav-controls">
       <input type="text" id="searchInput" placeholder="Hledat…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Centerfoldy a covery: jméno nebo vydání. Více slov zužuje výběr." />
-      <button id="favBtn" class="nav-fav" title="Zobrazit jen oblíbené modelky">&#9829;</button>
+      <button id="favBtn" class="nav-fav"></button>
     </div>
     <div class="window-controls">
       <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
@@ -512,26 +512,45 @@ function prepnoutRezim(novy) {
     document.querySelector('main').scrollTop = 0;
 }
 
+// Hodnocení 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší
 function htmlSrdicka(modelka) {
-    return `<button class="heart ${modelka.oblibena ? 'on' : ''}" data-oblibena="${modelka.id}" title="${modelka.oblibena ? 'Odebrat z oblíbených' : 'Přidat mezi oblíbené'}">&#9829;</button>`;
+    const srdicka = [1, 2, 3, 4, 5].map(n => `
+        <button class="heart ${n <= modelka.hodnoceni ? 'on' : ''}" data-hodnota="${n}"
+            title="${n === modelka.hodnoceni ? 'Zrušit hodnocení' : `Ohodnotit ${n} z 5`}">${n <= modelka.hodnoceni ? '&#9829;' : '&#9825;'}</button>`).join('');
+    return `<span class="hearts ${modelka.hodnoceni ? 'rated' : ''}" data-hodnoceni="${modelka.id}">${srdicka}</span>`;
 }
 
-// Srdíčko na kartě i v profilu přepíná oblíbenou modelku
+// Srdíčka na kartě i v profilu
 document.querySelector('main').addEventListener('click', async (e) => {
-    const srdicko = e.target.closest('[data-oblibena]');
+    const srdicko = e.target.closest('.hearts .heart');
     if (!srdicko) return;
-    const id = parseInt(srdicko.dataset.oblibena);
+    const rada = srdicko.closest('.hearts');
+    const id = parseInt(rada.dataset.hodnoceni);
     const modelka = [aktualniModelka, ...nacteneModelky].find(m => m && m.id === id);
-    if (!modelka || !await SetOblibena(id, !modelka.oblibena)) return;
+    if (!modelka) return;
+
+    const zvoleno = parseInt(srdicko.dataset.hodnota);
+    const nove = zvoleno === modelka.hodnoceni ? 0 : zvoleno;
+    if (!await SetHodnoceni(id, nove)) return;
 
     // Tatáž modelka může být načtená v galerii i otevřená v profilu
-    [aktualniModelka, ...nacteneModelky].filter(m => m && m.id === id).forEach(m => { m.oblibena = !srdicko.classList.contains('on'); });
-    srdicko.outerHTML = htmlSrdicka(modelka);
-    if (jenOblibene && !gallery.classList.contains('hidden')) nacistGalerii(searchInput.value);
+    [aktualniModelka, ...nacteneModelky].filter(m => m && m.id === id).forEach(m => { m.hodnoceni = nove; });
+    rada.outerHTML = htmlSrdicka(modelka);
+    if (minHodnoceni && !gallery.classList.contains('hidden')) nacistGalerii(searchInput.value);
 });
 
+// Tlačítko v liště zvyšuje minimální hodnocení: vše -> 1+ -> … -> 5 -> vše
+function vykreslitFiltrHodnoceni() {
+    const tlacitko = document.getElementById('favBtn');
+    tlacitko.classList.toggle('active', minHodnoceni > 0);
+    tlacitko.innerHTML = minHodnoceni ? `&#9829; ${minHodnoceni}${minHodnoceni < 5 ? '+' : ''}` : '&#9825;';
+    tlacitko.title = minHodnoceni
+        ? `Zobrazeny modelky s hodnocením ${minHodnoceni}${minHodnoceni < 5 ? ' a více' : ''}. Klik: ${minHodnoceni < 5 ? 'přísnější' : 'zobrazit všechny'}.`
+        : 'Zobrazit jen hodnocené modelky';
+}
+
 document.getElementById('favBtn').onclick = () => {
-    jenOblibene = !jenOblibene;
+    minHodnoceni = (minHodnoceni + 1) % 6;
     nacistGalerii(searchInput.value);
 };
 
@@ -569,7 +588,7 @@ function vekPriVydani(narozeni, vydani) {
 
 // Klik na údaj v profilu vyhledá všechny modelky se stejnou hodnotou
 function hledatHodnotu(hodnota) {
-    jenOblibene = false;
+    minHodnoceni = 0;
     searchInput.value = hodnota;
     prepnoutRezim('modelky');
     nacistGalerii(hodnota);
@@ -582,15 +601,17 @@ async function nacistGalerii(dotaz = '') {
     if (rezim === 'kalendar') return nacistKalendar(dotaz);
 
     const vsechny = await GetModelky(dotaz) || [];
-    const modelky = vsechny.filter(m => !jenOblibene || m.oblibena);
+    const modelky = vsechny.filter(m => m.hodnoceni >= minHodnoceni);
+    // Se zapnutým filtrem jdou nejlépe hodnocené první, při shodě zůstává pořadí podle jména
+    if (minHodnoceni) modelky.sort((a, b) => b.hodnoceni - a.hodnoceni);
     nacteneModelky = modelky;
-    document.getElementById('favBtn').classList.toggle('active', jenOblibene);
+    vykreslitFiltrHodnoceni();
     zrusitUpravuVyrezu = null;
     ukazatPohled(gallery);
 
     if (modelky.length === 0) {
         gallery.innerHTML = `<div class="empty-state">${
-            jenOblibene ? 'Žádná oblíbená modelka. Oblíbenou označíš srdíčkem na kartě nebo v profilu.'
+            minHodnoceni ? `Žádná modelka nemá hodnocení ${minHodnoceni}${minHodnoceni < 5 ? ' nebo vyšší' : ''}. Hodnotí se srdíčky na kartě nebo v profilu.`
             : dotaz.trim() ? 'Hledání neodpovídá žádná modelka.'
             : 'Zatím žádné modelky. Přidej první pravým tlačítkem myši.'}</div>`;
         return;
@@ -611,7 +632,7 @@ async function nacistGalerii(dotaz = '') {
     // Přidání kliku na kartu -> Otevření profilu modelky
     document.querySelectorAll('.card').forEach(card => {
         card.addEventListener('click', (e) => {
-            if (card.classList.contains('editing') || e.target.closest('.heart')) return;
+            if (card.classList.contains('editing') || e.target.closest('.hearts')) return;
             const id = parseInt(card.getAttribute('data-id'));
             const modelka = modelky.find(item => item.id === id);
             otevritDetailModelky(modelka);
@@ -662,10 +683,8 @@ async function otevritDetailModelky(modelka) {
 
     document.getElementById('modelHeader').innerHTML = `
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
-        <div class="profile-name">
-            <h2>${esc(modelka.jmeno)}</h2>
-            ${htmlSrdicka(modelka)}
-        </div>
+        <h2>${esc(modelka.jmeno)}</h2>
+        ${htmlSrdicka(modelka)}
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
         <dl class="profile-info">

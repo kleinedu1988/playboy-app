@@ -115,7 +115,7 @@ export namespace main {
 	    vydani: string[];
 	    dalsiJmena: string;
 	    poznamka: string;
-	    oblibena: boolean;
+	    hodnoceni: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -155,7 +155,7 @@ export namespace main {
 	        this.vydani = source["vydani"];
 	        this.dalsiJmena = source["dalsiJmena"];
 	        this.poznamka = source["poznamka"];
-	        this.oblibena = source["oblibena"];
+	        this.hodnoceni = source["hodnoceni"];
 	    }
 	}
 	

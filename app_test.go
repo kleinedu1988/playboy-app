@@ -486,9 +486,15 @@ func TestDoplnkoveUdajeModelky(t *testing.T) {
 		t.Fatalf("tetování mimo rozsah = %d", anna.Tetovani)
 	}
 
-	// Oblíbená
-	if kelley.Oblibena || !a.SetOblibena(kelley.ID, true) || !a.GetModelky("kelley")[0].Oblibena {
-		t.Fatal("označení oblíbené se neuložilo")
+	// Hodnocení 0–5, hodnoty mimo rozsah se oříznou
+	if kelley.Hodnoceni != 0 {
+		t.Fatalf("nová modelka má hodnocení %d", kelley.Hodnoceni)
+	}
+	for nastavit, chci := range map[int]int{3: 3, 9: 5, -2: 0} {
+		a.SetHodnoceni(kelley.ID, nastavit)
+		if mam := a.GetModelky("kelley")[0].Hodnoceni; mam != chci {
+			t.Fatalf("SetHodnoceni(%d) uložilo %d, chci %d", nastavit, mam, chci)
+		}
 	}
 
 	// Vydání se odvozují z alb a centerfoldů a jdou vyhledat
@@ -522,5 +528,32 @@ func TestDoplnkoveUdajeModelky(t *testing.T) {
 	anna := a.GetModelky("anna")[0]
 	if a.SetTitulniFotka(anna.ID, pictorial.ID) || a.GetModelky("anna")[0].CoverID != idA {
 		t.Fatal("titulní fotku šlo nastavit z cizí fotky")
+	}
+}
+
+// Starší verze měla jen příznak oblíbené; ten se převádí na pět srdíček
+func TestPrevodOblibenychNaHodnoceni(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+	t.Chdir(t.TempDir())
+	os.MkdirAll(slozkaDat(), 0o755)
+
+	stara, err := sql.Open("sqlite", filepath.Join(slozkaDat(), "playboy.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	stara.Exec(`CREATE TABLE modelky (id INTEGER PRIMARY KEY AUTOINCREMENT, jmeno TEXT NOT NULL, oblibena INTEGER)`)
+	stara.Exec(`INSERT INTO modelky (jmeno, oblibena) VALUES ('Oblíbená', 1), ('Běžná', 0), ('Neznámá', NULL)`)
+	stara.Close()
+
+	a := NewApp()
+	a.startup(context.Background())
+	defer a.db.Close()
+
+	hodnoceni := map[string]int{}
+	for _, m := range a.GetModelky("") {
+		hodnoceni[m.Jmeno] = m.Hodnoceni
+	}
+	if hodnoceni["Oblíbená"] != 5 || hodnoceni["Běžná"] != 0 || hodnoceni["Neznámá"] != 0 {
+		t.Fatalf("hodnocení po převodu: %v", hodnoceni)
 	}
 }

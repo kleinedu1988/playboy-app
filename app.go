@@ -21,6 +21,24 @@ import (
 type App struct {
 	ctx context.Context
 	db  *sql.DB
+
+	// Hlášení chyb do okna aplikace; v testech zůstává prázdné
+	naChybu func(zprava string)
+	// Chyba, kvůli které se nepodařilo otevřít databázi
+	chybaStartu string
+}
+
+// Chyba se vypíše do konzole a zároveň se ukáže uživateli
+func (a *App) chyba(kde string, err error) {
+	fmt.Printf("Chyba %s: %v\n", kde, err)
+	if a.naChybu != nil {
+		a.naChybu(fmt.Sprintf("Chyba (%s): %v", kde, err))
+	}
+}
+
+// Stav databáze po spuštění; prázdný text znamená, že je vše v pořádku
+func (a *App) StavDatabaze() string {
+	return a.chybaStartu
 }
 
 type Modelka struct {
@@ -194,7 +212,15 @@ func (a *App) zalohovat(duvod string) error {
 		return err
 	}
 
-	cil := filepath.Join(slozkaZaloh(), fmt.Sprintf("playboy-%s-%s.db", time.Now().Format("2006-01-02-150405.000"), duvod))
+	// Dvě zálohy ve stejné milisekundě se nesmí přepsat ani srazit
+	zaklad := filepath.Join(slozkaZaloh(), fmt.Sprintf("playboy-%s", time.Now().Format("2006-01-02-150405.000")))
+	cil := fmt.Sprintf("%s-%s.db", zaklad, duvod)
+	for i := 2; ; i++ {
+		if _, err := os.Stat(cil); os.IsNotExist(err) {
+			break
+		}
+		cil = fmt.Sprintf("%s-%d-%s.db", zaklad, i, duvod)
+	}
 	if _, err := a.db.Exec("VACUUM INTO '" + strings.ReplaceAll(cil, "'", "''") + "'"); err != nil {
 		return err
 	}
@@ -217,16 +243,19 @@ func (a *App) SlozkaZaloh() string {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	cesta, err := pripravitDatabazi()
-	if err != nil {
-		fmt.Printf("Chyba přípravy databáze: %v\n", err)
-		return
+	if err == nil {
+		a.db, err = sql.Open("sqlite", cesta)
 	}
-	db, err := sql.Open("sqlite", cesta)
-	if err != nil {
-		fmt.Printf("Chyba DB: %v\n", err)
-		return
+	if err == nil {
+		err = a.db.Ping()
 	}
-	a.db = db
+	if err != nil {
+		// Bez databáze aplikace poběží nad prázdnou dočasnou, aby šla aspoň otevřít a chybu ukázat
+		a.chybaStartu = fmt.Sprintf("Databázi se nepodařilo otevřít (%v). Aplikace běží s prázdnou dočasnou databází, změny se neuloží.", err)
+		fmt.Println(a.chybaStartu)
+		a.db, _ = sql.Open("sqlite", ":memory:")
+		a.db.SetMaxOpenConns(1)
+	}
 
 	// Tabulka modelek
 	a.db.Exec(`
@@ -238,7 +267,7 @@ func (a *App) startup(ctx context.Context) {
 	// Migrace starší verze tabulky, kde se sloupec jmenoval drive_file_id
 	if !a.maSloupec("modelky", "drive_cover_id") && a.maSloupec("modelky", "drive_file_id") {
 		if _, err := a.db.Exec(`ALTER TABLE modelky RENAME COLUMN drive_file_id TO drive_cover_id`); err != nil {
-			fmt.Printf("Chyba migrace DB: %v\n", err)
+			a.chyba("migrace DB", err)
 		}
 	}
 
@@ -248,7 +277,7 @@ func (a *App) startup(ctx context.Context) {
 			continue
 		}
 		if _, err := a.db.Exec(fmt.Sprintf(`ALTER TABLE modelky ADD COLUMN %s %s`, s[0], s[1])); err != nil {
-			fmt.Printf("Chyba migrace DB: %v\n", err)
+			a.chyba("migrace DB", err)
 		}
 	}
 
@@ -257,7 +286,7 @@ func (a *App) startup(ctx context.Context) {
 			continue
 		}
 		if _, err := a.db.Exec(fmt.Sprintf(`ALTER TABLE modelky ADD COLUMN %s REAL`, s[0])); err != nil {
-			fmt.Printf("Chyba migrace DB: %v\n", err)
+			a.chyba("migrace DB", err)
 		}
 	}
 
@@ -277,7 +306,7 @@ func (a *App) startup(ctx context.Context) {
 			continue
 		}
 		if _, err := a.db.Exec(fmt.Sprintf(`ALTER TABLE fotografie ADD COLUMN %s INTEGER`, sloupec)); err != nil {
-			fmt.Printf("Chyba migrace DB: %v\n", err)
+			a.chyba("migrace DB", err)
 		}
 	}
 }
@@ -330,7 +359,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 
 	rows, err := a.db.Query(query, args...)
 	if err != nil {
-		fmt.Printf("Chyba GetModelky: %v\n", err)
+		a.chyba("GetModelky", err)
 		return nil
 	}
 	defer rows.Close()
@@ -347,7 +376,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &driveID,
 			&m.CoverZoom, &m.CoverX, &m.CoverY)
 		if err != nil {
-			fmt.Printf("Chyba GetModelky: %v\n", err)
+			a.chyba("GetModelky", err)
 			continue
 		}
 
@@ -355,8 +384,6 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 		if len(ids) > 0 {
 			m.CoverID = ids[0]
 			m.CoverURL = fmt.Sprintf("https://lh3.googleusercontent.com/d/%s", ids[0])
-		} else {
-			m.CoverURL = "https://via.placeholder.com/300x400?text=Bez+Fotky"
 		}
 		vysledky = append(vysledky, m)
 	}
@@ -398,7 +425,7 @@ func (a *App) AddModelka(m Modelka) bool {
 
 	_, err := a.db.Exec(query, args...)
 	if err != nil {
-		fmt.Printf("Chyba AddModelka: %v\n", err)
+		a.chyba("AddModelka", err)
 	}
 	return err == nil
 }
@@ -426,7 +453,7 @@ func (a *App) UpdateModelka(m Modelka) bool {
 	query := fmt.Sprintf(`UPDATE modelky SET %s WHERE id = ?`, strings.Join(nastaveni, ", "))
 	_, err := a.db.Exec(query, args...)
 	if err != nil {
-		fmt.Printf("Chyba UpdateModelka: %v\n", err)
+		a.chyba("UpdateModelka", err)
 		return false
 	}
 
@@ -452,7 +479,7 @@ func (a *App) SetCoverVyrez(id int, zoom, x, y float64) bool {
 	_, err := a.db.Exec(`UPDATE modelky SET cover_zoom = ?, cover_x = ?, cover_y = ? WHERE id = ?`,
 		omezit(zoom, 1, 4), omezit(x, 0, 100), omezit(y, 0, 100), id)
 	if err != nil {
-		fmt.Printf("Chyba SetCoverVyrez: %v\n", err)
+		a.chyba("SetCoverVyrez", err)
 	}
 	return err == nil
 }
@@ -461,26 +488,26 @@ func (a *App) SetCoverVyrez(id int, zoom, x, y float64) bool {
 func (a *App) DeleteModelka(id int) bool {
 	// Bez zálohy se nemaže
 	if err := a.zalohovat("pred-smazanim-modelky"); err != nil {
-		fmt.Printf("Chyba zálohy: %v\n", err)
+		a.chyba("zálohy", err)
 		return false
 	}
 	tx, err := a.db.Begin()
 	if err != nil {
-		fmt.Printf("Chyba DeleteModelka: %v\n", err)
+		a.chyba("DeleteModelka", err)
 		return false
 	}
 	defer tx.Rollback()
 
 	if _, err := tx.Exec("DELETE FROM fotografie WHERE modelka_id = ?", id); err != nil {
-		fmt.Printf("Chyba DeleteModelka: %v\n", err)
+		a.chyba("DeleteModelka", err)
 		return false
 	}
 	if _, err := tx.Exec("DELETE FROM modelky WHERE id = ?", id); err != nil {
-		fmt.Printf("Chyba DeleteModelka: %v\n", err)
+		a.chyba("DeleteModelka", err)
 		return false
 	}
 	if err := tx.Commit(); err != nil {
-		fmt.Printf("Chyba DeleteModelka: %v\n", err)
+		a.chyba("DeleteModelka", err)
 		return false
 	}
 	return true
@@ -490,12 +517,12 @@ func (a *App) DeleteModelka(id int) bool {
 func (a *App) DeleteVse() bool {
 	// Bez zálohy se nemaže
 	if err := a.zalohovat("pred-smazanim-databaze"); err != nil {
-		fmt.Printf("Chyba zálohy: %v\n", err)
+		a.chyba("zálohy", err)
 		return false
 	}
 	tx, err := a.db.Begin()
 	if err != nil {
-		fmt.Printf("Chyba DeleteVse: %v\n", err)
+		a.chyba("DeleteVse", err)
 		return false
 	}
 	defer tx.Rollback()
@@ -508,12 +535,12 @@ func (a *App) DeleteVse() bool {
 	}
 	for _, dotaz := range dotazy {
 		if _, err := tx.Exec(dotaz); err != nil {
-			fmt.Printf("Chyba DeleteVse: %v\n", err)
+			a.chyba("DeleteVse", err)
 			return false
 		}
 	}
 	if err := tx.Commit(); err != nil {
-		fmt.Printf("Chyba DeleteVse: %v\n", err)
+		a.chyba("DeleteVse", err)
 		return false
 	}
 	return true
@@ -524,7 +551,7 @@ const vyberFotografii = "SELECT f.id, f.modelka_id, f.album, f.typ, f.drive_file
 func (a *App) nacistFotografie(query string, sJmenem bool, args ...interface{}) []Fotografie {
 	rows, err := a.db.Query(query, args...)
 	if err != nil {
-		fmt.Printf("Chyba načtení fotografií: %v\n", err)
+		a.chyba("načtení fotografií", err)
 		return nil
 	}
 	defer rows.Close()
@@ -538,7 +565,7 @@ func (a *App) nacistFotografie(query string, sJmenem bool, args ...interface{}) 
 			cile = append(cile, &f.JmenoModelky)
 		}
 		if err := rows.Scan(cile...); err != nil {
-			fmt.Printf("Chyba načtení fotografií: %v\n", err)
+			a.chyba("načtení fotografií", err)
 			continue
 		}
 		f.URL = fmt.Sprintf("https://lh3.googleusercontent.com/d/%s", driveID)
@@ -591,7 +618,7 @@ func (a *App) UpdateCover(id int, vydani, rawLink string) bool {
 
 	_, err := a.db.Exec(query, args...)
 	if err != nil {
-		fmt.Printf("Chyba UpdateCover: %v\n", err)
+		a.chyba("UpdateCover", err)
 	}
 	return err == nil
 }
@@ -601,7 +628,7 @@ func (a *App) SetRotaceFotek(ids []int, rotace int) bool {
 	rotace = ((rotace % 360) + 360) % 360
 	for _, id := range ids {
 		if _, err := a.db.Exec("UPDATE fotografie SET rotace = ? WHERE id = ?", rotace, id); err != nil {
-			fmt.Printf("Chyba SetRotaceFotek: %v\n", err)
+			a.chyba("SetRotaceFotek", err)
 			return false
 		}
 	}
@@ -614,7 +641,7 @@ func (a *App) SetSpojeniAlba(modelkaID int, album, typ string, spojit bool) bool
 	_, err := a.db.Exec("UPDATE fotografie SET spojit = ?, rotace = 0 WHERE modelka_id = ? AND album = ? AND typ = ?",
 		spojit, modelkaID, album, typ)
 	if err != nil {
-		fmt.Printf("Chyba SetSpojeniAlba: %v\n", err)
+		a.chyba("SetSpojeniAlba", err)
 	}
 	return err == nil
 }
@@ -624,7 +651,7 @@ func (a *App) UpdateAlbum(modelkaID int, staryAlbum, staryTyp, novyAlbum, novyTy
 	_, err := a.db.Exec("UPDATE fotografie SET album = ?, typ = ? WHERE modelka_id = ? AND album = ? AND typ = ?",
 		novyAlbum, novyTyp, modelkaID, staryAlbum, staryTyp)
 	if err != nil {
-		fmt.Printf("Chyba UpdateAlbum: %v\n", err)
+		a.chyba("UpdateAlbum", err)
 	}
 	return err == nil
 }
@@ -633,12 +660,12 @@ func (a *App) UpdateAlbum(modelkaID int, staryAlbum, staryTyp, novyAlbum, novyTy
 func (a *App) DeleteAlbum(modelkaID int, album, typ string) bool {
 	// Bez zálohy se nemaže
 	if err := a.zalohovat("pred-smazanim-alba"); err != nil {
-		fmt.Printf("Chyba zálohy: %v\n", err)
+		a.chyba("zálohy", err)
 		return false
 	}
 	_, err := a.db.Exec("DELETE FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
 	if err != nil {
-		fmt.Printf("Chyba DeleteAlbum: %v\n", err)
+		a.chyba("DeleteAlbum", err)
 	}
 	return err == nil
 }
@@ -647,7 +674,7 @@ func (a *App) DeleteAlbum(modelkaID int, album, typ string) bool {
 func (a *App) DeleteFotografie(id int) bool {
 	_, err := a.db.Exec("DELETE FROM fotografie WHERE id = ?", id)
 	if err != nil {
-		fmt.Printf("Chyba DeleteFotografie: %v\n", err)
+		a.chyba("DeleteFotografie", err)
 	}
 	return err == nil
 }
@@ -662,7 +689,7 @@ const (
 var klientDisku = &http.Client{Timeout: 20 * time.Second}
 
 // Malý náhled stačí; smazaný nebo nesdílený soubor vrací místo obrázku stránku
-func overitSoubor(driveID string) int {
+func overitSouborNaDisku(driveID string) int {
 	resp, err := klientDisku.Get(fmt.Sprintf("https://lh3.googleusercontent.com/d/%s=w64", driveID))
 	if err != nil {
 		return souborNeoveren
@@ -676,6 +703,9 @@ func overitSoubor(driveID string) int {
 	}
 	return souborDostupny
 }
+
+// Ověřování je vyměnitelné, aby testy nepotřebovaly síť
+var overitSoubor = overitSouborNaDisku
 
 // Souběžné ověření více souborů; výsledky jsou ve stejném pořadí jako vstup
 func overitSoubory(driveIDs []string) []int {
@@ -720,7 +750,7 @@ func (a *App) VymazatMezipamet() int64 {
 		return nil
 	})
 	if err := os.RemoveAll(slozka); err != nil {
-		fmt.Printf("Chyba VymazatMezipamet: %v\n", err)
+		a.chyba("VymazatMezipamet", err)
 		return 0
 	}
 	return velikost
@@ -755,7 +785,7 @@ func (a *App) ZkontrolovatSoubory() KontrolaSouboru {
 		UNION ALL
 		SELECT 0, id, jmeno, '', 'Titulní fotka', drive_cover_id FROM modelky WHERE COALESCE(drive_cover_id, '') <> ''`)
 	if err != nil {
-		fmt.Printf("Chyba ZkontrolovatSoubory: %v\n", err)
+		a.chyba("ZkontrolovatSoubory", err)
 		return KontrolaSouboru{}
 	}
 	for rows.Next() {
@@ -818,7 +848,7 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 		}
 		_, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id, spojit, rotace) VALUES (?, ?, ?, ?, ?, ?)", modelkaID, album, typ, ids[i], spojit, rotace)
 		if err != nil {
-			fmt.Printf("Chyba AddBulkPhotos: %v\n", err)
+			a.chyba("AddBulkPhotos", err)
 			continue
 		}
 		vysledek.Vlozeno++

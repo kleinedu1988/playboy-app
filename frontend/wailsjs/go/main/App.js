@@ -66,6 +66,10 @@ export function SlozkaZaloh() {
   return window['go']['main']['App']['SlozkaZaloh']();
 }
 
+export function StavDatabaze() {
+  return window['go']['main']['App']['StavDatabaze']();
+}
+
 export function UpdateAlbum(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['UpdateAlbum'](arg1, arg2, arg3, arg4, arg5);
 }

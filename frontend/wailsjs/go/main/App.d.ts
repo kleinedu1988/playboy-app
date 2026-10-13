@@ -34,6 +34,8 @@ export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean)
 
 export function SlozkaZaloh():Promise<string>;
 
+export function StavDatabaze():Promise<string>;
+
 export function UpdateAlbum(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
 
 export function UpdateCover(arg1:number,arg2:string,arg3:string):Promise<boolean>;

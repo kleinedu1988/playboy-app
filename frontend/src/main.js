@@ -1,6 +1,6 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, OveritOdkaz, VymazatMezipamet, SlozkaZaloh } from '../wailsjs/go/main/App';
-import { WindowMinimise, WindowToggleMaximise, Quit, BrowserOpenURL } from '../wailsjs/runtime/runtime';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { WindowMinimise, WindowToggleMaximise, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 
 let aktualniModelka = null;
 let nacteneModelky = [];
@@ -20,6 +20,31 @@ const MESICE = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Če
 // Google Disk bez přípony vrací nejvýše 1600 px; =s0 je originál, =w600 úsporný náhled
 const VELIKOST_NAHLEDU = '=w600';
 const VELIKOST_PLAKATU = '=w1200';
+// Titulní fotka na kartě; rezerva pro přiblížení výřezu
+const VELIKOST_TITULNI = '=w800';
+
+// Zástupný obrázek pro modelku bez titulní fotky nebo pro fotku, která se nenačetla
+const BEZ_FOTKY = 'data:image/svg+xml,' + encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
+        <rect width="300" height="400" fill="#18181c"/>
+        <g fill="none" stroke="#3a3a42" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="95" y="150" width="110" height="90" rx="10"/>
+            <circle cx="130" cy="182" r="10"/>
+            <path d="M102 232l34-30 22 18 18-14 22 26"/>
+        </g>
+        <text x="150" y="275" fill="#5a5a62" font-family="sans-serif" font-size="16" text-anchor="middle">Bez fotky</text>
+    </svg>`);
+
+function adresaTitulni(modelka) {
+    return modelka.coverUrl ? modelka.coverUrl + VELIKOST_TITULNI : BEZ_FOTKY;
+}
+
+// Fotka, která se nenačte (smazaná na Disku, bez připojení), se nahradí zástupným obrázkem
+document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (img.tagName !== 'IMG' || img.src === BEZ_FOTKY || img.closest('.lightbox')) return;
+    img.src = BEZ_FOTKY;
+}, true);
 const PLNE_ROZLISENI = '=s0';
 
 document.querySelector('#app').innerHTML = `
@@ -459,7 +484,7 @@ async function nacistGalerii(dotaz = '') {
     gallery.innerHTML = modelky.map(m => `
         <div class="card" data-id="${m.id}">
             <div class="card-image-wrap">
-                <img src="${esc(m.coverUrl)}" alt="${esc(m.jmeno)}" style="${stylVyrezu(m)}" draggable="false" loading="lazy" />
+                <img src="${esc(adresaTitulni(m))}" alt="${esc(m.jmeno)}" style="${stylVyrezu(m)}" draggable="false" loading="lazy" />
             </div>
             <div class="card-info">
                 <h3>${esc(m.jmeno)}</h3>
@@ -513,7 +538,7 @@ async function otevritDetailModelky(modelka) {
     const tagy = modelka.tags.split(',').map(t => t.trim()).filter(Boolean);
 
     document.getElementById('modelHeader').innerHTML = `
-        <div class="profile-cover"><img src="${esc(modelka.coverUrl)}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
+        <div class="profile-cover"><img src="${esc(adresaTitulni(modelka))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
         <h2>${esc(modelka.jmeno)}</h2>
         <div class="profile-tags">${tagy.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
         <dl class="profile-info">
@@ -1674,5 +1699,11 @@ document.getElementById('addAlbumForm').onsubmit = async (e) => {
 };
 
 searchInput.addEventListener('input', (e) => nacistGalerii(e.target.value));
+// Chyby z backendu se ukazují v okně, ne jen v konzoli
+EventsOn('chyba', (zprava) => oznamit(zprava));
+StavDatabaze().then((chyba) => {
+    if (chyba) oznamit(chyba, { text: 'Rozumím', akce: () => {} });
+});
+
 nacistGalerii();
 kontrolaPoSpusteni();

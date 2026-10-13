@@ -1,19 +1,30 @@
-# README
+# Playboy Database
 
-## About
+Desktopová aplikace (Wails v2: Go + Vanilla JS) pro osobní katalog modelek, alb, centerfoldů
+a coverů časopisů. Fotky se neukládají do aplikace, načítají se z Google Disku podle odkazu.
 
-This is the official Wails Vanilla template.
+## Spuštění
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+```
+wails dev      # vývoj s automatickým obnovením
+wails build    # výsledný program v build/bin/playboy-app
+go test ./...  # testy backendu (nepotřebují síť)
+```
 
-## Live Development
+Značka `webkit2_41`, kterou vyžaduje Fedora, je nastavená ve `wails.json`.
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+## Kde jsou data
 
-## Building
+| Co | Kde |
+|---|---|
+| Databáze | `~/.local/share/playboy-app/playboy.db` |
+| Zálohy před mazáním (posledních 20) | `~/.local/share/playboy-app/zalohy/` |
+| Mezipaměť obrázků | `~/.cache/<název programu>/WebKitCache` |
 
-To build a redistributable, production mode package, use `wails build`.
+Soubory na Disku musí být sdílené „kdokoli s odkazem", aplikace se k Disku nepřihlašuje.
+
+## Struktura
+
+- `app.go` – databáze a veškerá logika (modelky, fotky, alba, covery, zálohy, kontrola odkazů)
+- `main.go` – okno aplikace
+- `frontend/src/main.js`, `style.css` – celé rozhraní

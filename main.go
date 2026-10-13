@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"embed"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
+	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 //go:embed all:frontend/dist
@@ -18,7 +20,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "playboy-app",
+		Title:  "Playboy Database",
 		Width:  1024,
 		Height: 768,
 		// Okno nejde zmenšit pod jednu kartu modelky v nejmenší velikosti (včetně lišty a okrajů)
@@ -34,7 +36,10 @@ func main() {
 		Linux: &linux.Options{
 			WindowIsTranslucent: true,
 		},
-		OnStartup: app.startup,
+		OnStartup: func(ctx context.Context) {
+			app.naChybu = func(zprava string) { runtime.EventsEmit(ctx, "chyba", zprava) }
+			app.startup(ctx)
+		},
 		Bind: []interface{}{
 			app,
 		},

@@ -71,6 +71,8 @@ type Modelka struct {
 	CoverZoom float64 `json:"coverZoom"`
 	CoverX    float64 `json:"coverX"`
 	CoverY    float64 `json:"coverY"`
+	// Počet fotek modelky ve všech albech (jen pro čtení)
+	PocetFotek int `json:"pocetFotek"`
 }
 
 type Fotografie struct {
@@ -351,6 +353,8 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], s[1]))
 	}
 
+	vyber = append(vyber, "(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id)")
+
 	query := "SELECT " + strings.Join(vyber, ", ") + " FROM modelky"
 
 	rows, err := a.db.Query(query)
@@ -370,7 +374,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
 			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
 			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &driveID,
-			&m.CoverZoom, &m.CoverX, &m.CoverY)
+			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek)
 		if err != nil {
 			a.chyba("GetModelky", err)
 			continue
@@ -663,6 +667,14 @@ func (a *App) GetVydani(vydani string) []Fotografie {
 		LEFT JOIN modelky m ON m.id = f.modelka_id
 		WHERE `+vydaniFotky+` = ?
 		ORDER BY m.jmeno COLLATE NOCASE, f.album, f.id`, true, vydani)
+}
+
+// Všechny fotky přiřazené k nějakému vydání, pro kalendář vydání
+func (a *App) GetPrehledVydani() []Fotografie {
+	return a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '') FROM fotografie f
+		LEFT JOIN modelky m ON m.id = f.modelka_id
+		WHERE `+vydaniFotky+` <> ''
+		ORDER BY `+vydaniFotky+`, f.id`, true)
 }
 
 // Přiřazení alba (typicky pictorialu) k vydání časopisu; prázdné vydání přiřazení ruší

@@ -395,6 +395,18 @@ func TestVydaniSpojujeCoverCenterfoldAPictorial(t *testing.T) {
 		t.Fatalf("vydání 2009-11 obsahuje %v", typy)
 	}
 
+	// Kalendář vidí všechna vydání, fotky bez vydání do něj nepatří
+	prehled := map[string]int{}
+	for _, f := range a.GetPrehledVydani() {
+		prehled[f.Vydani]++
+	}
+	if len(prehled) != 2 || prehled["2009-11"] != 4 || prehled["2009-12"] != 1 {
+		t.Fatalf("přehled vydání: %v", prehled)
+	}
+	if modelky := a.GetModelky(""); modelky[0].Jmeno != "Anna" || modelky[0].PocetFotek != 1 || modelky[1].PocetFotek != 3 {
+		t.Fatalf("počty fotek modelek: %d a %d", modelky[0].PocetFotek, modelky[1].PocetFotek)
+	}
+
 	// Zrušení přiřazení pictorial z vydání vyřadí
 	a.SetVydaniAlba(1, "Playmate of the Month", "Pictorial", "")
 	if len(a.GetVydani("2009-11")) != 2 {

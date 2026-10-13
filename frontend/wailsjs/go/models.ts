@@ -111,6 +111,7 @@ export namespace main {
 	    coverZoom: number;
 	    coverX: number;
 	    coverY: number;
+	    pocetFotek: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -146,6 +147,7 @@ export namespace main {
 	        this.coverZoom = source["coverZoom"];
 	        this.coverX = source["coverX"];
 	        this.coverY = source["coverY"];
+	        this.pocetFotek = source["pocetFotek"];
 	    }
 	}
 	

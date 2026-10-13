@@ -218,6 +218,63 @@ body {
     }
 }
 
+/* Lišta filtrů a řazení nad galerií modelek */
+.filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 8px;
+    padding: 8px 32px;
+    background-color: #141417;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.filter-bar select {
+    height: 28px;
+    padding: 0 28px 0 10px;
+    background-position: right 8px center;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.filter-bar select.active {
+    border-color: var(--accent);
+    color: var(--text-main);
+}
+
+.filter-reset {
+    height: 28px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--accent);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.filter-reset:hover {
+    background-color: var(--bg-modal);
+}
+
+.filter-count {
+    margin-left: auto;
+}
+
+.filter-sort {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.filter-sort select {
+    color: var(--text-main);
+}
+
 /* Tlačítka okna */
 .window-controls {
     display: flex;
@@ -775,8 +832,46 @@ input:focus, select:focus, textarea:focus {
     padding: 2px 10px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
+    background: none;
+    font-family: inherit;
     font-size: 11px;
     color: var(--text-muted);
+}
+
+button.tag {
+    cursor: pointer;
+}
+
+button.tag:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Údaj v profilu, podle kterého jde filtrovat */
+.link {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    cursor: pointer;
+}
+
+.link:hover {
+    color: var(--accent);
+    text-decoration: underline;
+}
+
+/* Nabídka už použitých tagů pod polem ve formuláři */
+.tag-suggest {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.tag-suggest:empty {
+    display: none;
 }
 
 .profile-info {
@@ -1028,6 +1123,134 @@ input:focus, select:focus, textarea:focus {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/* Kalendář vydání: roky × měsíce */
+.cal-legend {
+    margin: 0 0 20px 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.cal-legend i,
+.cal-dots i {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.cal-legend i:nth-of-type(1), .cal-dots i.on:nth-child(1) { background-color: var(--accent); }
+.cal-legend i:nth-of-type(2), .cal-dots i.on:nth-child(2) { background-color: #f5b041; }
+.cal-legend i:nth-of-type(3), .cal-dots i.on:nth-child(3) { background-color: #4fc3f7; }
+
+.cal-legend i {
+    margin-left: 6px;
+}
+
+.cal-year {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.cal-year + .cal-year {
+    margin-top: 16px;
+}
+
+.cal-year-label strong {
+    display: block;
+    font-size: 18px;
+}
+
+.cal-year-label span {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.cal-months {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.cal-cell {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.15s;
+}
+
+.cal-cell:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+}
+
+.cal-cell.empty {
+    border-style: dashed;
+    background: none;
+}
+
+.cal-cell img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cal-month {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px 6px 4px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    font-size: 11px;
+    color: var(--text-main);
+    text-align: left;
+}
+
+.cal-cell.empty .cal-month {
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    background: none;
+    color: var(--text-muted);
+}
+
+.cal-dots {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+    gap: 3px;
+    padding: 3px 4px;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.cal-dots i {
+    display: block;
+}
+
+@media (max-width: 900px) {
+    .cal-months { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+
+@media (max-width: 520px) {
+    .cal-year { grid-template-columns: 1fr; }
+    .cal-year-label { display: flex; align-items: baseline; gap: 8px; }
+    .cal-months { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .filter-bar { padding: 8px 16px; }
 }
 
 /* Stěna centerfoldů */

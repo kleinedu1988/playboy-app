@@ -46,6 +46,10 @@ export function GetModelky(arg1) {
   return window['go']['main']['App']['GetModelky'](arg1);
 }
 
+export function GetPrehledVydani() {
+  return window['go']['main']['App']['GetPrehledVydani']();
+}
+
 export function GetVydani(arg1) {
   return window['go']['main']['App']['GetVydani'](arg1);
 }

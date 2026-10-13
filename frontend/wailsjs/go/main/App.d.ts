@@ -24,6 +24,8 @@ export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
+export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
+
 export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
 
 export function OveritOdkaz(arg1:string):Promise<number>;

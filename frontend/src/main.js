@@ -1,5 +1,5 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, SetVydaniAlba, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
 import { WindowMinimise, WindowToggleMaximise, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 
 let aktualniModelka = null;
@@ -58,6 +58,7 @@ document.querySelector('#app').innerHTML = `
         <button data-rezim="modelky" data-kratce="Mod" class="active">Modelky</button>
         <button data-rezim="centerfoldy" data-kratce="Cf">Centerfoldy</button>
         <button data-rezim="covery" data-kratce="Cov">Covery</button>
+        <button data-rezim="kalendar" data-kratce="Kal">Kalendář</button>
       </div>
       <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
     </div>
@@ -71,6 +72,9 @@ document.querySelector('#app').innerHTML = `
     </div>
   </header>
 
+  <!-- Filtry a řazení galerie modelek -->
+  <div id="filterBar" class="filter-bar hidden"></div>
+
   <main>
     <div id="gallery" class="gallery-grid"></div>
 
@@ -82,6 +86,9 @@ document.querySelector('#app').innerHTML = `
       <aside id="issueSide" class="profile-side"></aside>
       <section id="issueMain" class="profile-main"></section>
     </div>
+
+    <!-- Kalendář vydání -->
+    <div id="calendar" class="calendar hidden"></div>
 
     <!-- Covery časopisů po ročnících -->
     <div id="covers" class="covers hidden"></div>
@@ -126,15 +133,15 @@ document.querySelector('#app').innerHTML = `
               </div>
               <div class="form-group">
                 <label for="inputNarozeniMisto">Místo narození</label>
-                <input type="text" id="inputNarozeniMisto" />
+                <input type="text" id="inputNarozeniMisto" list="seznamMisto" />
               </div>
               <div class="form-group">
                 <label for="inputNarodnost">Národnost</label>
-                <input type="text" id="inputNarodnost" />
+                <input type="text" id="inputNarodnost" list="seznamNarodnost" />
               </div>
               <div class="form-group">
                 <label for="inputEtnicita">Etnicita</label>
-                <input type="text" id="inputEtnicita" />
+                <input type="text" id="inputEtnicita" list="seznamEtnicita" />
               </div>
             </div>
           </section>
@@ -219,7 +226,7 @@ document.querySelector('#app').innerHTML = `
               </div>
               <div class="form-group">
                 <label for="inputRole">Role</label>
-                <input type="text" id="inputRole" />
+                <input type="text" id="inputRole" list="seznamRole" />
               </div>
               <div class="form-group span-2">
                 <label for="inputPictorial">Pictorial vydání (jedno na řádek)</label>
@@ -228,6 +235,7 @@ document.querySelector('#app').innerHTML = `
               <div class="form-group span-2">
                 <label for="inputTags">Tagy (oddělené čárkou)</label>
                 <input type="text" id="inputTags" />
+                <div id="tagyNapoveda" class="tag-suggest"></div>
               </div>
             </div>
           </section>
@@ -240,12 +248,13 @@ document.querySelector('#app').innerHTML = `
             </div>
           </section>
 
-          <datalist id="seznamVlasy">
-            <option>Blond</option><option>Hnědá</option><option>Černá</option><option>Zrzavá</option>
-          </datalist>
-          <datalist id="seznamOci">
-            <option>Modrá</option><option>Hnědá</option><option>Zelená</option><option>Šedá</option>
-          </datalist>
+          <!-- Našeptávání hodnot, které už v databázi jsou, aby se stejný údaj psal vždy stejně -->
+          <datalist id="seznamVlasy"></datalist>
+          <datalist id="seznamOci"></datalist>
+          <datalist id="seznamNarodnost"></datalist>
+          <datalist id="seznamEtnicita"></datalist>
+          <datalist id="seznamMisto"></datalist>
+          <datalist id="seznamRole"></datalist>
         </div>
         <div class="modal-actions">
           <button type="button" id="cancelModelBtn" class="btn btn-secondary">Zrušit</button>
@@ -408,14 +417,16 @@ const backBtn = document.getElementById('backBtn');
 const wall = document.getElementById('wall');
 const covers = document.getElementById('covers');
 const issueView = document.getElementById('issueView');
+const calendar = document.getElementById('calendar');
 
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají v liště tlačítko zpět místo přepínače
 function ukazatPohled(pohled) {
-    [gallery, wall, covers, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
+    [gallery, wall, covers, calendar, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
+    document.getElementById('filterBar').classList.toggle('hidden', pohled !== gallery);
     const podstranka = pohled === detailView || pohled === issueView;
     backBtn.classList.toggle('hidden', !podstranka);
     viewToggle.classList.toggle('hidden', podstranka);
-    backBtn.innerHTML = `&larr; ${{ modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Covery' }[rezim]}`;
+    backBtn.innerHTML = `&larr; ${{ modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Covery', kalendar: 'Kalendář' }[rezim]}`;
 }
 const viewToggle = document.getElementById('viewToggle');
 
@@ -483,18 +494,130 @@ function stylVyrezu({ coverZoom, coverX, coverY }) {
     return `object-position: ${coverX}% ${coverY}%; transform-origin: ${coverX}% ${coverY}%; transform: scale(${coverZoom});`;
 }
 
+// Filtry galerie modelek. Hodnoty se berou z toho, co je v databázi skutečně zapsané.
+const FILTRY = [
+    { klic: 'narodnost', nazev: 'Národnost', hodnoty: m => [m.narodnost] },
+    { klic: 'vlasy', nazev: 'Vlasy', hodnoty: m => [m.vlasyBarva] },
+    { klic: 'oci', nazev: 'Oči', hodnoty: m => [m.ociBarva] },
+    { klic: 'dekada', nazev: 'Dekáda', hodnoty: m => [dekada(m.vystoupeni)] },
+    { klic: 'tag', nazev: 'Tag', hodnoty: m => m.tags.split(',') },
+];
+
+const RAZENI = {
+    jmeno: { nazev: 'Jméno', porovnat: null }, // pořadí z backendu
+    pridane: { nazev: 'Naposledy přidané', porovnat: (a, b) => b.id - a.id },
+    vydani: { nazev: 'První vydání', porovnat: (a, b) => (a.vystoupeni || '9999').localeCompare(b.vystoupeni || '9999') },
+    narozeni: { nazev: 'Nejmladší', porovnat: (a, b) => (b.narozeniDatum || '0000').localeCompare(a.narozeniDatum || '0000') },
+    vyska: { nazev: 'Výška', porovnat: (a, b) => b.vyskaCm - a.vyskaCm },
+    fotky: { nazev: 'Počet fotek', porovnat: (a, b) => b.pocetFotek - a.pocetFotek },
+};
+
+let aktivniFiltry = {}; // klíč filtru -> hodnota bez ohledu na velikost písmen
+let razeni = RAZENI[localStorage.getItem('razeni')] ? localStorage.getItem('razeni') : 'jmeno';
+let vsechnyModelky = [];
+
+// Dekáda prvního vydání, např. „1990–1999"
+function dekada(vystoupeni) {
+    const rok = /\d{4}/.exec(vystoupeni || '');
+    if (!rok) return '';
+    const zacatek = Math.floor(parseInt(rok[0]) / 10) * 10;
+    return `${zacatek}–${zacatek + 9}`;
+}
+
+const sjednotit = text => String(text || '').trim().toLowerCase();
+
+function vyhovujeFiltrum(modelka) {
+    return FILTRY.every(f => !aktivniFiltry[f.klic] || f.hodnoty(modelka).some(h => sjednotit(h) === aktivniFiltry[f.klic]));
+}
+
+// Hodnoty jednoho údaje napříč modelkami s počty; různá velikost písmen se počítá jako jedna hodnota
+function hodnotyFiltru(filtr, modelky) {
+    const hodnoty = new Map();
+    modelky.forEach(m => {
+        new Set(filtr.hodnoty(m).map(sjednotit).filter(Boolean)).forEach(klic => {
+            const zapis = filtr.hodnoty(m).find(h => sjednotit(h) === klic).trim();
+            const polozka = hodnoty.get(klic) || { zapis, pocet: 0 };
+            polozka.pocet++;
+            hodnoty.set(klic, polozka);
+        });
+    });
+    return [...hodnoty].sort((a, b) => a[1].zapis.localeCompare(b[1].zapis, 'cs'));
+}
+
+function vykreslitFiltry(zobrazeno) {
+    const filterBar = document.getElementById('filterBar');
+    const vybery = FILTRY.map(f => {
+        const hodnoty = hodnotyFiltru(f, vsechnyModelky);
+        if (hodnoty.length === 0) return '';
+        return `
+            <select data-filtr="${f.klic}" class="${aktivniFiltry[f.klic] ? 'active' : ''}" title="${f.nazev}">
+                <option value="">${f.nazev}</option>
+                ${hodnoty.map(([klic, h]) => `<option value="${esc(klic)}" ${aktivniFiltry[f.klic] === klic ? 'selected' : ''}>${esc(h.zapis)} (${h.pocet})</option>`).join('')}
+            </select>
+        `;
+    }).join('');
+
+    const filtruje = Object.values(aktivniFiltry).some(Boolean) || searchInput.value.trim();
+    filterBar.innerHTML = `
+        ${vybery}
+        ${Object.values(aktivniFiltry).some(Boolean) ? '<button id="zrusitFiltry" class="filter-reset">Zrušit filtry</button>' : ''}
+        <span class="filter-count">${filtruje ? `${zobrazeno} z ${vsechnyModelky.length}` : `${vsechnyModelky.length}`} modelek</span>
+        <label class="filter-sort">Řadit
+            <select id="selectRazeni">
+                ${Object.entries(RAZENI).map(([klic, r]) => `<option value="${klic}" ${razeni === klic ? 'selected' : ''}>${r.nazev}</option>`).join('')}
+            </select>
+        </label>
+    `;
+}
+
+document.getElementById('filterBar').addEventListener('change', (e) => {
+    if (e.target.id === 'selectRazeni') {
+        razeni = e.target.value;
+        localStorage.setItem('razeni', razeni);
+    } else if (e.target.dataset.filtr) {
+        aktivniFiltry[e.target.dataset.filtr] = e.target.value;
+    }
+    nacistGalerii(searchInput.value);
+});
+document.getElementById('filterBar').addEventListener('click', (e) => {
+    if (e.target.id !== 'zrusitFiltry') return;
+    aktivniFiltry = {};
+    nacistGalerii(searchInput.value);
+});
+
+function prepnoutRezim(novy) {
+    rezim = novy;
+    viewToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.rezim === novy));
+    document.querySelector('main').scrollTop = 0;
+}
+
+// Klik na údaj v profilu ukáže všechny modelky se stejnou hodnotou
+function filtrovatPodle(klic, hodnota) {
+    aktivniFiltry = { [klic]: sjednotit(hodnota) };
+    searchInput.value = '';
+    prepnoutRezim('modelky');
+    nacistGalerii();
+}
+
 // Načtení Hlavní Galerie
 async function nacistGalerii(dotaz = '') {
     if (rezim === 'centerfoldy') return nacistStenu(dotaz);
     if (rezim === 'covery') return nacistCovery(dotaz);
+    if (rezim === 'kalendar') return nacistKalendar(dotaz);
 
-    const modelky = await GetModelky(dotaz);
-    nacteneModelky = modelky || [];
+    // Nabídky filtrů se staví ze všech modelek, ne jen z výsledku hledání
+    const [nalezene, vsechny] = await Promise.all([GetModelky(dotaz), dotaz.trim() ? GetModelky('') : null]);
+    vsechnyModelky = vsechny || nalezene || [];
+
+    const modelky = (nalezene || []).filter(vyhovujeFiltrum);
+    if (RAZENI[razeni].porovnat) modelky.sort(RAZENI[razeni].porovnat);
+    nacteneModelky = modelky;
     zrusitUpravuVyrezu = null;
     ukazatPohled(gallery);
+    vykreslitFiltry(modelky.length);
 
-    if (!modelky || modelky.length === 0) {
-        gallery.innerHTML = '<div class="empty-state">Žádné modelky v DB.</div>';
+    if (modelky.length === 0) {
+        gallery.innerHTML = `<div class="empty-state">${vsechnyModelky.length ? 'Výběru neodpovídá žádná modelka.' : 'Zatím žádné modelky. Přidej první pravým tlačítkem myši.'}</div>`;
         return;
     }
 
@@ -531,12 +654,12 @@ async function otevritDetailModelky(modelka) {
 
     const udaje = [
         ['Narození', [formatDatum(modelka.narozeniDatum), modelka.narozeniMisto].filter(Boolean).join(', ')],
-        ['Národnost', modelka.narodnost],
+        ['Národnost', modelka.narodnost, 'narodnost'],
         ['Etnicita', modelka.etnicita],
         ['Výška', modelka.vyskaCm ? `${modelka.vyskaCm} cm` : ''],
         ['Váha', modelka.vahaKg ? `${modelka.vahaKg} kg` : ''],
-        ['Vlasy', modelka.vlasyBarva],
-        ['Oči', modelka.ociBarva],
+        ['Vlasy', modelka.vlasyBarva, 'vlasy'],
+        ['Oči', modelka.ociBarva, 'oci'],
         ['Míry', modelka.miry],
         ['Prsa', [modelka.velikostPrsou, modelka.prsaTyp].filter(Boolean).join(', ')],
         ['Ochlupení', modelka.ochlupeni],
@@ -552,9 +675,16 @@ async function otevritDetailModelky(modelka) {
     document.getElementById('modelHeader').innerHTML = `
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
         <h2>${esc(modelka.jmeno)}</h2>
-        <div class="profile-tags">${tagy.map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <div class="profile-tags">${tagy.map(t => `<button class="tag" data-filtr="tag" data-hodnota="${esc(t)}" title="Ukázat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
         <dl class="profile-info">
-            ${udaje.map(([nazev, hodnota]) => `<div><dt>${nazev}</dt><dd>${esc(hodnota)}</dd></div>`).join('')}
+            ${udaje.map(([nazev, hodnota, filtr]) => `
+                <div>
+                    <dt>${nazev}</dt>
+                    <dd>${filtr
+                        ? `<button class="link" data-filtr="${filtr}" data-hodnota="${esc(hodnota)}" title="Ukázat modelky se stejnou hodnotou">${esc(hodnota)}</button>`
+                        : esc(hodnota)}</dd>
+                </div>
+            `).join('')}
         </dl>
     `;
 
@@ -828,10 +958,83 @@ issueView.addEventListener('click', (e) => {
     if (polozka) otevritLightbox(parseInt(polozka.dataset.index), false, vydaniPolozky);
 });
 
+// Kalendář vydání: roky × měsíce. Prázdná políčka ukazují, co ve sbírce chybí.
+const ZKRATKY_MESICU = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
+
+async function nacistKalendar(dotaz = '') {
+    const fotky = await GetPrehledVydani() || [];
+    zrusitUpravuVyrezu = null;
+    ukazatPohled(calendar);
+
+    // Co je ke kterému vydání k dispozici
+    const vydani = new Map();
+    fotky.forEach(f => {
+        const v = vydani.get(f.vydani) || { cover: null, centerfold: null, pictorial: null };
+        if (f.typ === 'Cover') v.cover ??= f;
+        else if (f.typ === 'Centerfold') v.centerfold ??= f;
+        else v.pictorial ??= f;
+        vydani.set(f.vydani, v);
+    });
+
+    if (vydani.size === 0) {
+        calendar.innerHTML = '<div class="empty-state">Kalendář je zatím prázdný. Naplní se covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.</div>';
+        return;
+    }
+
+    const roky = [...vydani.keys()].map(v => parseInt(v.slice(0, 4)));
+    const hledat = dotaz.trim();
+    const radky = [];
+    for (let rok = Math.max(...roky); rok >= Math.min(...roky); rok--) {
+        if (hledat && !String(rok).includes(hledat)) continue;
+
+        let obsazeno = 0;
+        const policka = ZKRATKY_MESICU.map((zkratka, i) => {
+            const klic = `${rok}-${String(i + 1).padStart(2, '0')}`;
+            const v = vydani.get(klic);
+            if (!v) {
+                return `<button class="cal-cell empty" data-prazdne="${klic}" title="${nazevVydani(klic)} – chybí, klikni pro přidání coveru"><span class="cal-month">${zkratka}</span></button>`;
+            }
+            obsazeno++;
+            const obrazek = v.cover || v.centerfold || v.pictorial;
+            const popis = [
+                v.cover && 'cover',
+                v.centerfold && `centerfold: ${v.centerfold.jmenoModelky}`,
+                v.pictorial && 'pictorial',
+            ].filter(Boolean).join(', ');
+            return `
+                <button class="cal-cell" data-vydani="${klic}" title="${esc(nazevVydani(klic))} – ${esc(popis)}">
+                    <img src="${esc(obrazek.url)}=w300" loading="lazy" draggable="false" />
+                    <span class="cal-month">${zkratka}</span>
+                    <span class="cal-dots">
+                        <i class="${v.cover ? 'on' : ''}"></i><i class="${v.centerfold ? 'on' : ''}"></i><i class="${v.pictorial ? 'on' : ''}"></i>
+                    </span>
+                </button>
+            `;
+        }).join('');
+
+        radky.push(`
+            <section class="cal-year">
+                <div class="cal-year-label"><strong>${rok}</strong><span>${obsazeno} z 12</span></div>
+                <div class="cal-months">${policka}</div>
+            </section>
+        `);
+    }
+
+    calendar.innerHTML = `
+        <p class="cal-legend">Tečky v políčku: <i class="on"></i> cover <i class="on"></i> centerfold <i class="on"></i> pictorial. Prázdné políčko = vydání ve sbírce chybí.</p>
+        ${radky.join('') || '<div class="empty-state">Hledanému roku neodpovídá žádné vydání.</div>'}
+    `;
+}
+
+calendar.addEventListener('click', (e) => {
+    const prazdne = e.target.closest('[data-prazdne]');
+    if (prazdne) otevritCoverModal(null, prazdne.dataset.prazdne);
+});
+
 // Formulář coveru slouží pro přidání (polozka = null) i úpravu vydání
 const coverModal = document.getElementById('coverModal');
 
-function otevritCoverModal(polozka = null) {
+function otevritCoverModal(polozka = null, predvyplnitVydani = '') {
     editovanyCover = polozka;
     document.getElementById('coverForm').reset();
     document.getElementById('coverModalTitle').textContent = polozka ? 'Upravit cover' : 'Přidat cover';
@@ -840,13 +1043,14 @@ function otevritCoverModal(polozka = null) {
         : 'Odkaz na cover z Google Disku';
     document.getElementById('inputCoverLink').required = !polozka;
 
-    const vydani = polozka && /^(\d{4})-(\d{2})$/.exec(polozka.album);
+    const vydani = /^(\d{4})-(\d{2})$/.exec(polozka ? polozka.album : predvyplnitVydani);
     if (vydani) {
         document.getElementById('inputCoverRok').value = vydani[1];
         document.getElementById('selectCoverMesic').value = vydani[2];
     }
     coverModal.classList.remove('hidden');
-    document.getElementById('selectCoverMesic').focus();
+    // S předvyplněným vydáním zbývá jen vložit odkaz
+    document.getElementById(vydani && !polozka ? 'inputCoverLink' : 'selectCoverMesic').focus();
 }
 
 document.getElementById('closeCoverModalBtn').onclick = () => coverModal.classList.add('hidden');
@@ -865,7 +1069,8 @@ document.getElementById('coverForm').onsubmit = async (e) => {
         oznamitVlozeni(await AddCover(vydani, odkaz), 'coverů');
     }
     coverModal.classList.add('hidden');
-    nacistCovery(searchInput.value);
+    // Cover se přidává z přehledu coverů i z kalendáře
+    nacistGalerii(searchInput.value);
 };
 
 async function otevritProfilPodleId(modelkaId) {
@@ -881,9 +1086,7 @@ wall.addEventListener('click', (e) => {
 viewToggle.addEventListener('click', (e) => {
     const tlacitko = e.target.closest('[data-rezim]');
     if (!tlacitko) return;
-    rezim = tlacitko.dataset.rezim;
-    viewToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === tlacitko));
-    document.querySelector('main').scrollTop = 0;
+    prepnoutRezim(tlacitko.dataset.rezim);
     nacistGalerii(searchInput.value);
 });
 
@@ -1154,8 +1357,10 @@ lightbox.addEventListener('wheel', (e) => {
 document.querySelector('main').addEventListener('click', (e) => {
     const vydani = e.target.closest('[data-vydani]');
     const modelka = e.target.closest('[data-modelka]');
+    const filtr = e.target.closest('main [data-filtr]');
     if (vydani) otevritVydani(vydani.dataset.vydani);
     else if (modelka) otevritProfilPodleId(parseInt(modelka.dataset.modelka));
+    else if (filtr) filtrovatPodle(filtr.dataset.filtr, filtr.dataset.hodnota);
 });
 
 detailView.addEventListener('click', (e) => {
@@ -1383,7 +1588,44 @@ function otevritModelModal(modelka) {
     modelModal.classList.remove('hidden');
     document.querySelector('#modelModal .form-body').scrollTop = 0;
     document.getElementById('inputJmeno').focus();
+    naplnitNapovedu();
 }
+
+// Našeptávání: hodnoty už zapsané u jiných modelek, doplněné o několik obvyklých
+async function naplnitNapovedu() {
+    const modelky = await GetModelky('') || [];
+    const seznamy = [
+        ['seznamVlasy', m => m.vlasyBarva, ['Blond', 'Hnědá', 'Černá', 'Zrzavá']],
+        ['seznamOci', m => m.ociBarva, ['Modrá', 'Hnědá', 'Zelená', 'Šedá']],
+        ['seznamNarodnost', m => m.narodnost, []],
+        ['seznamEtnicita', m => m.etnicita, []],
+        ['seznamMisto', m => m.narozeniMisto, []],
+        ['seznamRole', m => m.role, []],
+    ];
+    seznamy.forEach(([id, hodnota, obvykle]) => {
+        const hodnoty = new Map();
+        [...modelky.map(hodnota), ...obvykle].forEach(h => {
+            if (sjednotit(h) && !hodnoty.has(sjednotit(h))) hodnoty.set(sjednotit(h), h.trim());
+        });
+        document.getElementById(id).innerHTML = [...hodnoty.values()]
+            .sort((a, b) => a.localeCompare(b, 'cs'))
+            .map(h => `<option value="${esc(h)}"></option>`).join('');
+    });
+
+    // Tagy se přidávají kliknutím, protože pole jich obsahuje víc najednou
+    const tagy = hodnotyFiltru(FILTRY.find(f => f.klic === 'tag'), modelky).map(([, h]) => h.zapis);
+    document.getElementById('tagyNapoveda').innerHTML = tagy
+        .map(t => `<button type="button" class="tag" data-tag="${esc(t)}">${esc(t)}</button>`).join('');
+}
+
+document.getElementById('tagyNapoveda').addEventListener('click', (e) => {
+    const tag = e.target.closest('[data-tag]')?.dataset.tag;
+    if (!tag) return;
+    const pole = document.getElementById('inputTags');
+    const soucasne = pole.value.split(',').map(t => t.trim()).filter(Boolean);
+    if (!soucasne.some(t => sjednotit(t) === sjednotit(tag))) soucasne.push(tag);
+    pole.value = soucasne.join(', ');
+});
 
 const deleteModal = document.getElementById('deleteModal');
 
@@ -1708,6 +1950,20 @@ document.addEventListener('contextmenu', (e) => {
             { text: 'Upravit cover', akce: () => otevritCoverModal(cover) },
             { text: 'Smazat cover', akce: () => smazatCover(cover) },
         ];
+    } else if (!calendar.classList.contains('hidden')) {
+        // Kalendář vydání
+        const obsazene = e.target.closest('[data-vydani]');
+        const prazdne = e.target.closest('[data-prazdne]');
+        polozky = [];
+        if (obsazene) polozky.push({ text: `Otevřít vydání ${nazevVydani(obsazene.dataset.vydani)}`, akce: () => otevritVydani(obsazene.dataset.vydani) });
+        if (obsazene || prazdne) {
+            const klic = (obsazene || prazdne).dataset.vydani || prazdne.dataset.prazdne;
+            polozky.push({ text: `Přidat cover: ${nazevVydani(klic)}`, akce: () => otevritCoverModal(null, klic) }, null);
+        }
+        polozky.push(
+            { text: 'Přidat cover', akce: () => otevritCoverModal() },
+            { text: 'Obnovit', akce: () => nacistGalerii(searchInput.value) }
+        );
     } else if (!covers.classList.contains('hidden')) {
         // Volný prostor v přehledu coverů
         polozky = [

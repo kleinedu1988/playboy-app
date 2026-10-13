@@ -66,7 +66,7 @@ func TestParseDriveIDs(t *testing.T) {
 func TestModelkaZivotniCyklus(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 
-	m := Modelka{Jmeno: "Test O'Hara", ObvodHrudnikCm: 86, ObvodPasCm: 61, ObvodBokyCm: 89, Tetovani: true, CoverID: odkazA}
+	m := Modelka{Jmeno: "Test O'Hara", ObvodHrudnikCm: 86, ObvodPasCm: 61, ObvodBokyCm: 89, Tetovani: 1, Piercing: -1, CoverID: odkazA}
 	if !a.AddModelka(m) {
 		t.Fatal("AddModelka selhalo")
 	}
@@ -77,7 +77,8 @@ func TestModelkaZivotniCyklus(t *testing.T) {
 		t.Fatalf("hledání vrátilo %d modelek, chci 1", len(nalezene))
 	}
 	ulozena := nalezene[0]
-	if ulozena.Miry != "86-61-89" || !ulozena.Tetovani || ulozena.CoverID != idA {
+	// Tetování je vyplněné, piercing zůstal neuvedený
+	if ulozena.Miry != "86-61-89" || ulozena.Tetovani != 1 || ulozena.Piercing != -1 || ulozena.CoverID != idA {
 		t.Fatalf("špatně uložená modelka: %+v", ulozena)
 	}
 	if ulozena.CoverZoom != 1 || ulozena.CoverX != 50 || ulozena.CoverY != 50 {
@@ -461,5 +462,65 @@ func TestHledaniARazeniModelek(t *testing.T) {
 	}
 	if mam := jmena("neexistuje"); len(mam) != 0 {
 		t.Fatalf("hledání bez výsledku: %v", mam)
+	}
+}
+
+func TestDoplnkoveUdajeModelky(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Kelley Thompson", DalsiJmena: "Kelly T., Miss November", Poznamka: "Playmate roku", Tetovani: 0, Piercing: -1, CoverID: odkazA})
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: 7, CoverID: odkazA})
+
+	// Hledání najde modelku i podle pseudonymu a poznámky
+	for _, dotaz := range []string{"miss november", "playmate roku"} {
+		if nalezene := a.GetModelky(dotaz); len(nalezene) != 1 || nalezene[0].Jmeno != "Kelley Thompson" {
+			t.Fatalf("hledání %q: %+v", dotaz, nalezene)
+		}
+	}
+
+	kelley := a.GetModelky("kelley")[0]
+	if kelley.Tetovani != 0 || kelley.Piercing != -1 || kelley.DalsiJmena != "Kelly T., Miss November" {
+		t.Fatalf("uložené údaje: %+v", kelley)
+	}
+	// Nesmyslná hodnota se uloží jako neuvedeno
+	if anna := a.GetModelky("anna")[0]; anna.Tetovani != -1 {
+		t.Fatalf("tetování mimo rozsah = %d", anna.Tetovani)
+	}
+
+	// Oblíbená
+	if kelley.Oblibena || !a.SetOblibena(kelley.ID, true) || !a.GetModelky("kelley")[0].Oblibena {
+		t.Fatal("označení oblíbené se neuložilo")
+	}
+
+	// Vydání se odvozují z alb a centerfoldů a jdou vyhledat
+	a.AddBulkPhotos(kelley.ID, "2009-11", "Centerfold", odkazA)
+	a.AddBulkPhotos(kelley.ID, "Pictorial", "Pictorial", odkazB)
+	a.SetVydaniAlba(kelley.ID, "Pictorial", "Pictorial", "2008-03")
+	kelley = a.GetModelky("kelley")[0]
+	if len(kelley.Vydani) != 2 || kelley.Vydani[0] != "2008-03" || kelley.Vydani[1] != "2009-11" {
+		t.Fatalf("odvozená vydání: %v", kelley.Vydani)
+	}
+	if nalezene := a.GetModelky("2008-03"); len(nalezene) != 1 {
+		t.Fatalf("hledání podle vydání vrátilo %d modelek", len(nalezene))
+	}
+
+	// Titulní fotka z alba: jen z fotek téže modelky, výřez se vrací na výchozí
+	fotky := a.GetFotografieModelky(kelley.ID)
+	a.SetCoverVyrez(kelley.ID, 3, 10, 10)
+	var pictorial Fotografie
+	for _, f := range fotky {
+		if f.Typ == "Pictorial" {
+			pictorial = f
+		}
+	}
+	if !a.SetTitulniFotka(kelley.ID, pictorial.ID) {
+		t.Fatal("SetTitulniFotka selhalo")
+	}
+	kelley = a.GetModelky("kelley")[0]
+	if kelley.CoverID != idB || kelley.CoverZoom != 1 {
+		t.Fatalf("titulní fotka po změně: %s, výřez %v", kelley.CoverID, kelley.CoverZoom)
+	}
+	anna := a.GetModelky("anna")[0]
+	if a.SetTitulniFotka(anna.ID, pictorial.ID) || a.GetModelky("anna")[0].CoverID != idA {
+		t.Fatal("titulní fotku šlo nastavit z cizí fotky")
 	}
 }

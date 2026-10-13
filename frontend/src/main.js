@@ -1,11 +1,13 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetOblibena, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
 import { WindowMinimise, WindowToggleMaximise, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 
 let aktualniModelka = null;
 let nacteneModelky = [];
 let editovanaModelka = null;
 let potvrzenaAkce = null;
+let zrusenaAkce = null;
+let jenOblibene = false;
 let zrusitUpravuVyrezu = null;
 let aktualniAlba = [];
 let aktualniPolozky = [];
@@ -61,9 +63,12 @@ document.querySelector('#app').innerHTML = `
         <button data-rezim="kalendar" data-kratce="Kal">Kalendář</button>
       </div>
       <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
+      <button id="prevModelBtn" class="nav-back nav-step hidden" title="Předchozí modelka (šipka vlevo)">&#8249;</button>
+      <button id="nextModelBtn" class="nav-back nav-step hidden" title="Další modelka (šipka vpravo)">&#8250;</button>
     </div>
     <div class="nav-controls">
       <input type="text" id="searchInput" placeholder="Hledat…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Centerfoldy a covery: jméno nebo vydání. Více slov zužuje výběr." />
+      <button id="favBtn" class="nav-fav" title="Zobrazit jen oblíbené modelky">&#9829;</button>
     </div>
     <div class="window-controls">
       <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
@@ -124,6 +129,10 @@ document.querySelector('#app').innerHTML = `
                 <label for="inputJmeno">Celé jméno</label>
                 <input type="text" id="inputJmeno" required />
               </div>
+              <div class="form-group span-2">
+                <label for="inputDalsiJmena">Další jména a pseudonymy (oddělené čárkou)</label>
+                <input type="text" id="inputDalsiJmena" />
+              </div>
               <div class="form-group">
                 <label for="inputNarozeniDatum">Datum narození</label>
                 <input type="date" id="inputNarozeniDatum" />
@@ -171,16 +180,22 @@ document.querySelector('#app').innerHTML = `
                   <option>Přírodní</option>
                 </select>
               </div>
-              <label class="switch">
-                <input type="checkbox" id="inputTetovani" />
-                <span class="switch-track"></span>
-                <span>Tetování</span>
-              </label>
-              <label class="switch">
-                <input type="checkbox" id="inputPiercing" />
-                <span class="switch-track"></span>
-                <span>Piercing</span>
-              </label>
+              <div class="form-group">
+                <label for="selectTetovani">Tetování</label>
+                <select id="selectTetovani">
+                  <option value="-1">Neuvedeno</option>
+                  <option value="1">Ano</option>
+                  <option value="0">Ne</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="selectPiercing">Piercing</label>
+                <select id="selectPiercing">
+                  <option value="-1">Neuvedeno</option>
+                  <option value="1">Ano</option>
+                  <option value="0">Ne</option>
+                </select>
+              </div>
             </div>
           </section>
 
@@ -215,24 +230,20 @@ document.querySelector('#app').innerHTML = `
           </section>
 
           <section class="form-section">
-            <h4>Playboy</h4>
+            <h4>Zařazení a poznámky</h4>
             <div class="form-grid cols-2">
-              <div class="form-group">
-                <label for="inputVystoupeni">První vydání</label>
-                <input type="text" id="inputVystoupeni" placeholder="RRRR-MM" />
-              </div>
-              <div class="form-group">
+              <div class="form-group span-2">
                 <label for="inputRole">Role</label>
                 <input type="text" id="inputRole" list="seznamRole" />
-              </div>
-              <div class="form-group span-2">
-                <label for="inputPictorial">Pictorial vydání (jedno na řádek)</label>
-                <textarea id="inputPictorial" rows="3"></textarea>
               </div>
               <div class="form-group span-2">
                 <label for="inputTags">Tagy (oddělené čárkou)</label>
                 <input type="text" id="inputTags" />
                 <div id="tagyNapoveda" class="tag-suggest"></div>
+              </div>
+              <div class="form-group span-2">
+                <label for="inputPoznamka">Poznámka</label>
+                <textarea id="inputPoznamka" rows="4"></textarea>
               </div>
             </div>
           </section>
@@ -421,6 +432,9 @@ function ukazatPohled(pohled) {
     [gallery, wall, covers, calendar, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
     const podstranka = pohled === detailView || pohled === issueView;
     backBtn.classList.toggle('hidden', !podstranka);
+    document.getElementById('prevModelBtn').classList.toggle('hidden', pohled !== detailView);
+    document.getElementById('nextModelBtn').classList.toggle('hidden', pohled !== detailView);
+    document.getElementById('favBtn').classList.toggle('hidden', pohled !== gallery);
     viewToggle.classList.toggle('hidden', podstranka);
     backBtn.innerHTML = `&larr; ${{ modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Covery', kalendar: 'Kalendář' }[rezim]}`;
 }
@@ -498,8 +512,64 @@ function prepnoutRezim(novy) {
     document.querySelector('main').scrollTop = 0;
 }
 
+function htmlSrdicka(modelka) {
+    return `<button class="heart ${modelka.oblibena ? 'on' : ''}" data-oblibena="${modelka.id}" title="${modelka.oblibena ? 'Odebrat z oblíbených' : 'Přidat mezi oblíbené'}">&#9829;</button>`;
+}
+
+// Srdíčko na kartě i v profilu přepíná oblíbenou modelku
+document.querySelector('main').addEventListener('click', async (e) => {
+    const srdicko = e.target.closest('[data-oblibena]');
+    if (!srdicko) return;
+    const id = parseInt(srdicko.dataset.oblibena);
+    const modelka = [aktualniModelka, ...nacteneModelky].find(m => m && m.id === id);
+    if (!modelka || !await SetOblibena(id, !modelka.oblibena)) return;
+
+    // Tatáž modelka může být načtená v galerii i otevřená v profilu
+    [aktualniModelka, ...nacteneModelky].filter(m => m && m.id === id).forEach(m => { m.oblibena = !srdicko.classList.contains('on'); });
+    srdicko.outerHTML = htmlSrdicka(modelka);
+    if (jenOblibene && !gallery.classList.contains('hidden')) nacistGalerii(searchInput.value);
+});
+
+document.getElementById('favBtn').onclick = () => {
+    jenOblibene = !jenOblibene;
+    nacistGalerii(searchInput.value);
+};
+
+// Předchozí a další modelka v pořadí, v jakém jsou v galerii
+async function krokModelky(smer) {
+    if (!aktualniModelka) return;
+    let seznam = nacteneModelky;
+    if (!seznam.some(m => m.id === aktualniModelka.id)) {
+        seznam = nacteneModelky = await GetModelky('') || [];
+    }
+    const index = seznam.findIndex(m => m.id === aktualniModelka.id);
+    if (index < 0 || seznam.length < 2) return;
+    otevritDetailModelky(seznam[(index + smer + seznam.length) % seznam.length]);
+}
+document.getElementById('prevModelBtn').onclick = () => krokModelky(-1);
+document.getElementById('nextModelBtn').onclick = () => krokModelky(1);
+
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const zamestnano = detailView.classList.contains('hidden')
+        || !lightbox.classList.contains('hidden')
+        || document.querySelector('.modal-overlay:not(.hidden)')
+        || e.target.closest('input, textarea, select');
+    if (!zamestnano) krokModelky(e.key === 'ArrowRight' ? 1 : -1);
+});
+
+// Věk v letech k danému vydání (RRRR-MM), pokud je známé datum narození
+function vekPriVydani(narozeni, vydani) {
+    const n = /^(\d{4})-(\d{2})/.exec(narozeni || '');
+    const v = /^(\d{4})-(\d{2})/.exec(vydani || '');
+    if (!n || !v) return '';
+    const vek = parseInt(v[1]) - parseInt(n[1]) - (parseInt(v[2]) < parseInt(n[2]) ? 1 : 0);
+    return vek > 0 && vek < 120 ? `${vek} let` : '';
+}
+
 // Klik na údaj v profilu vyhledá všechny modelky se stejnou hodnotou
 function hledatHodnotu(hodnota) {
+    jenOblibene = false;
     searchInput.value = hodnota;
     prepnoutRezim('modelky');
     nacistGalerii(hodnota);
@@ -511,13 +581,18 @@ async function nacistGalerii(dotaz = '') {
     if (rezim === 'covery') return nacistCovery(dotaz);
     if (rezim === 'kalendar') return nacistKalendar(dotaz);
 
-    const modelky = await GetModelky(dotaz) || [];
+    const vsechny = await GetModelky(dotaz) || [];
+    const modelky = vsechny.filter(m => !jenOblibene || m.oblibena);
     nacteneModelky = modelky;
+    document.getElementById('favBtn').classList.toggle('active', jenOblibene);
     zrusitUpravuVyrezu = null;
     ukazatPohled(gallery);
 
     if (modelky.length === 0) {
-        gallery.innerHTML = `<div class="empty-state">${dotaz.trim() ? 'Hledání neodpovídá žádná modelka.' : 'Zatím žádné modelky. Přidej první pravým tlačítkem myši.'}</div>`;
+        gallery.innerHTML = `<div class="empty-state">${
+            jenOblibene ? 'Žádná oblíbená modelka. Oblíbenou označíš srdíčkem na kartě nebo v profilu.'
+            : dotaz.trim() ? 'Hledání neodpovídá žádná modelka.'
+            : 'Zatím žádné modelky. Přidej první pravým tlačítkem myši.'}</div>`;
         return;
     }
 
@@ -525,6 +600,7 @@ async function nacistGalerii(dotaz = '') {
         <div class="card" data-id="${m.id}">
             <div class="card-image-wrap">
                 <img src="${esc(adresaTitulni(m))}" alt="${esc(m.jmeno)}" style="${stylVyrezu(m)}" draggable="false" loading="lazy" />
+                ${htmlSrdicka(m)}
             </div>
             <div class="card-info">
                 <h3>${esc(m.jmeno)}</h3>
@@ -534,8 +610,8 @@ async function nacistGalerii(dotaz = '') {
 
     // Přidání kliku na kartu -> Otevření profilu modelky
     document.querySelectorAll('.card').forEach(card => {
-        card.addEventListener('click', () => {
-            if (card.classList.contains('editing')) return;
+        card.addEventListener('click', (e) => {
+            if (card.classList.contains('editing') || e.target.closest('.heart')) return;
             const id = parseInt(card.getAttribute('data-id'));
             const modelka = modelky.find(item => item.id === id);
             otevritDetailModelky(modelka);
@@ -552,40 +628,50 @@ async function otevritDetailModelky(modelka) {
     detailView.classList.add('bez-titulni');
     document.querySelector('main').scrollTop = 0;
 
+    const anoNe = hodnota => hodnota === 1 ? 'Ano' : hodnota === 0 ? 'Ne' : '';
+    const hledatelne = hodnota => hodnota
+        ? `<button class="link" data-hledat="${esc(hodnota)}" title="Vyhledat modelky se stejnou hodnotou">${esc(hodnota)}</button>`
+        : '';
+    // Vydání se odvozují z alb a centerfoldů; starší ručně psané údaje se ukážou, jen když odvozená chybí
+    const prvniVydani = modelka.vydani[0] || (/^\d{4}-\d{2}$/.test(modelka.vystoupeni) ? modelka.vystoupeni : '');
+    const vydani = modelka.vydani.length
+        ? modelka.vydani.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít vydání">${esc(nazevVydani(v))}</button>`).join(' ')
+        : esc([modelka.vystoupeni, ...modelka.pictorialVydani.split('\n')].map(v => v.trim()).filter(Boolean).join(', '));
+
+    // [popisek, hotové HTML hodnoty]; prázdné řádky se nezobrazují
     const udaje = [
-        ['Narození', [formatDatum(modelka.narozeniDatum), modelka.narozeniMisto].filter(Boolean).join(', ')],
-        ['Národnost', modelka.narodnost, true],
-        ['Etnicita', modelka.etnicita],
+        ['Narození', esc([formatDatum(modelka.narozeniDatum), modelka.narozeniMisto].filter(Boolean).join(', '))],
+        ['Věk při prvním vydání', esc(vekPriVydani(modelka.narozeniDatum, prvniVydani))],
+        ['Národnost', hledatelne(modelka.narodnost)],
+        ['Etnicita', esc(modelka.etnicita)],
         ['Výška', modelka.vyskaCm ? `${modelka.vyskaCm} cm` : ''],
         ['Váha', modelka.vahaKg ? `${modelka.vahaKg} kg` : ''],
-        ['Vlasy', modelka.vlasyBarva, true],
-        ['Oči', modelka.ociBarva, true],
-        ['Míry', modelka.miry],
-        ['Prsa', [modelka.velikostPrsou, modelka.prsaTyp].filter(Boolean).join(', ')],
-        ['Ochlupení', modelka.ochlupeni],
-        ['Tetování', modelka.tetovani ? 'Ano' : 'Ne'],
-        ['Piercing', modelka.piercing ? 'Ano' : 'Ne'],
-        ['První vydání', modelka.vystoupeni],
-        ['Pictorial vydání', modelka.pictorialVydani.split('\n').map(v => v.trim()).filter(Boolean).join(', ')],
-        ['Role', modelka.role],
+        ['Vlasy', hledatelne(modelka.vlasyBarva)],
+        ['Oči', hledatelne(modelka.ociBarva)],
+        ['Míry', esc(modelka.miry)],
+        ['Prsa', esc([modelka.velikostPrsou, modelka.prsaTyp].filter(Boolean).join(', '))],
+        ['Ochlupení', esc(modelka.ochlupeni)],
+        ['Tetování', anoNe(modelka.tetovani)],
+        ['Piercing', anoNe(modelka.piercing)],
+        ['Vydání', vydani],
+        ['Role', esc(modelka.role)],
     ].filter(([, hodnota]) => hodnota);
 
     const tagy = modelka.tags.split(',').map(t => t.trim()).filter(Boolean);
+    const dalsiJmena = modelka.dalsiJmena.split(',').map(j => j.trim()).filter(Boolean);
 
     document.getElementById('modelHeader').innerHTML = `
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
-        <h2>${esc(modelka.jmeno)}</h2>
+        <div class="profile-name">
+            <h2>${esc(modelka.jmeno)}</h2>
+            ${htmlSrdicka(modelka)}
+        </div>
+        ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
         <dl class="profile-info">
-            ${udaje.map(([nazev, hodnota, hledat]) => `
-                <div>
-                    <dt>${nazev}</dt>
-                    <dd>${hledat
-                        ? `<button class="link" data-hledat="${esc(hodnota)}" title="Vyhledat modelky se stejnou hodnotou">${esc(hodnota)}</button>`
-                        : esc(hodnota)}</dd>
-                </div>
-            `).join('')}
+            ${udaje.map(([nazev, hodnota]) => `<div><dt>${nazev}</dt><dd>${hodnota}</dd></div>`).join('')}
         </dl>
+        ${modelka.poznamka ? `<p class="profile-note">${esc(modelka.poznamka)}</p>` : ''}
     `;
 
     nacistFotkyModelky(modelka.id);
@@ -1446,6 +1532,8 @@ function upravitVyrez(modelka) {
 // Pole formuláře modelky: [vlastnost modelky, id prvku, typ]
 const poleModelky = [
     ['jmeno', 'inputJmeno', 'text'],
+    ['dalsiJmena', 'inputDalsiJmena', 'text'],
+    ['poznamka', 'inputPoznamka', 'text'],
     ['narozeniDatum', 'inputNarozeniDatum', 'text'],
     ['narozeniMisto', 'inputNarozeniMisto', 'text'],
     ['narodnost', 'inputNarodnost', 'text'],
@@ -1455,16 +1543,14 @@ const poleModelky = [
     ['vlasyBarva', 'inputVlasy', 'text'],
     ['ociBarva', 'inputOci', 'text'],
     ['ochlupeni', 'selectOchlupeni', 'text'],
-    ['tetovani', 'inputTetovani', 'prepinac'],
-    ['piercing', 'inputPiercing', 'prepinac'],
+    ['tetovani', 'selectTetovani', 'cislo'],
+    ['piercing', 'selectPiercing', 'cislo'],
     ['obvodHrudnikCm', 'inputHrudnik', 'cislo'],
     ['obvodPasCm', 'inputPas', 'cislo'],
     ['obvodBokyCm', 'inputBoky', 'cislo'],
     ['velikostPrsou', 'inputVelikost', 'text'],
     ['prsaTyp', 'selectPrsaTyp', 'text'],
-    ['vystoupeni', 'inputVystoupeni', 'text'],
     ['role', 'inputRole', 'text'],
-    ['pictorialVydani', 'inputPictorial', 'text'],
     ['tags', 'inputTags', 'text'],
     ['coverId', 'inputDriveID', 'text'],
 ];
@@ -1480,7 +1566,8 @@ function otevritModelModal(modelka) {
     if (modelka) {
         poleModelky.forEach(([vlastnost, id, typ]) => {
             const prvek = document.getElementById(id);
-            if (typ === 'prepinac') prvek.checked = modelka[vlastnost];
+            // Výběr ano/ne/neuvedeno potřebuje i nulu, číselné pole nulu zobrazuje jako prázdné
+            if (prvek.tagName === 'SELECT') prvek.value = String(modelka[vlastnost]);
             else if (typ === 'cislo') prvek.value = modelka[vlastnost] || '';
             else prvek.value = modelka[vlastnost];
         });
@@ -1539,12 +1626,27 @@ function otevritDeleteModal(nadpis, text, akce, poDokonceni = () => nacistGaleri
         if (await akce() === false) oznamit('Smazání se nepodařilo, nic se nezměnilo.');
         poDokonceni();
     };
+    document.getElementById('confirmDeleteBtn').textContent = 'Smazat';
     document.getElementById('deleteModalTitle').textContent = nadpis;
     document.getElementById('deleteModalText').textContent = text;
     deleteModal.classList.remove('hidden');
 }
 
+// Obecná otázka ano/ne ve stejném okně; vrací, zda uživatel potvrdil
+function potvrdit(nadpis, text, popisTlacitka) {
+    return new Promise((vyreseno) => {
+        potvrzenaAkce = () => { zrusenaAkce = null; vyreseno(true); };
+        zrusenaAkce = () => vyreseno(false);
+        document.getElementById('confirmDeleteBtn').textContent = popisTlacitka;
+        document.getElementById('deleteModalTitle').textContent = nadpis;
+        document.getElementById('deleteModalText').textContent = text;
+        deleteModal.classList.remove('hidden');
+    });
+}
+
 function zavritDeleteModal() {
+    zrusenaAkce?.();
+    zrusenaAkce = null;
     potvrzenaAkce = null;
     deleteModal.classList.add('hidden');
 }
@@ -1573,7 +1675,10 @@ document.getElementById('closeDeleteModalBtn').onclick = zavritDeleteModal;
 document.getElementById('cancelDeleteBtn').onclick = zavritDeleteModal;
 document.getElementById('confirmDeleteBtn').onclick = async () => {
     if (!potvrzenaAkce) return;
-    await potvrzenaAkce();
+    // Potvrzeno: zavření okna už nesmí akci ohlásit jako zrušenou
+    const akce = potvrzenaAkce;
+    zrusenaAkce = null;
+    await akce();
     zavritDeleteModal();
 };
 
@@ -1801,6 +1906,14 @@ document.addEventListener('contextmenu', (e) => {
 
             const fotka = prvekFotky && album.fotky.find(f => f.id === parseInt(prvekFotky.dataset.fotoId));
             if (fotka) {
+                polozky.push({
+                    text: 'Nastavit jako titulní fotku',
+                    akce: async () => {
+                        if (!await SetTitulniFotka(aktualniModelka.id, fotka.id)) return;
+                        oznamit('Titulní fotka změněna. Výřez na kartě se vrátil na výchozí.');
+                        otevritProfilPodleId(aktualniModelka.id);
+                    },
+                });
                 polozky.push({ text: album.spojit ? 'Odebrat tuto stránku' : 'Odebrat fotku', akce: () => smazatFotku(fotka) });
             }
             polozky.push(null);
@@ -1820,7 +1933,9 @@ document.addEventListener('contextmenu', (e) => {
         polozky.push(
             { text: 'Spustit slideshow alba', akce: () => otevritLightbox(aktualniPolozky.indexOf(album.polozky[0]), true) },
             { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(aktualniModelka, album) },
-            { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length) }
+            { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length) },
+            null,
+            { text: 'Editovat modelku', akce: () => otevritModelModal(aktualniModelka) }
         );
     } else if (!issueView.classList.contains('hidden')) {
         // Stránka vydání: úpravy se dělají v profilu modelky a v přehledu coverů
@@ -1841,6 +1956,7 @@ document.addEventListener('contextmenu', (e) => {
         );
     } else if (!detailView.classList.contains('hidden')) {
         polozky = [
+            { text: 'Editovat modelku', akce: () => otevritModelModal(aktualniModelka) },
             { text: 'Přidat fotky / album', akce: () => otevritAlbumModal(aktualniModelka) },
             { text: 'Zpět', akce: () => nacistGalerii(searchInput.value) },
         ];
@@ -1921,16 +2037,25 @@ window.addEventListener('resize', zavritKontextovouNabidku);
 // Formulář: Přidat Modelku
 document.getElementById('addModelForm').onsubmit = async (e) => {
     e.preventDefault();
-    // Míry bez vyplněných obvodů zůstávají při úpravě původní
-    const modelka = { id: editovanaModelka ? editovanaModelka.id : 0, miry: editovanaModelka ? editovanaModelka.miry : '' };
+    // Údaje, které ve formuláři nejsou (míry bez obvodů, starší textová vydání), zůstávají při úpravě původní
+    const modelka = editovanaModelka
+        ? { ...editovanaModelka }
+        : { id: 0, miry: '', vystoupeni: '', pictorialVydani: '' };
     poleModelky.forEach(([vlastnost, id, typ]) => {
         const prvek = document.getElementById(id);
-        if (typ === 'prepinac') modelka[vlastnost] = prvek.checked;
-        else if (typ === 'cislo') modelka[vlastnost] = parseInt(prvek.value) || 0;
+        if (typ === 'cislo') modelka[vlastnost] = parseInt(prvek.value) || 0;
         else modelka[vlastnost] = prvek.value.trim();
     });
 
     if (!await odkazJeVPoradku(modelka.coverId)) return;
+
+    // Stejná modelka se nemá omylem založit dvakrát
+    if (!editovanaModelka) {
+        const jmena = m => [m.jmeno, ...m.dalsiJmena.split(',')].map(sjednotit).filter(Boolean);
+        const nova = jmena(modelka);
+        const stejna = (await GetModelky('') || []).find(m => jmena(m).some(j => nova.includes(j)));
+        if (stejna && !await potvrdit('Modelka už existuje', `V databázi už je modelka „${stejna.jmeno}" se stejným jménem nebo pseudonymem. Opravdu přidat další?`, 'Přesto přidat')) return;
+    }
 
     const ulozeno = editovanaModelka ? await UpdateModelka(modelka) : await AddModelka(modelka);
     if (!ulozeno) {
@@ -1938,7 +2063,9 @@ document.getElementById('addModelForm').onsubmit = async (e) => {
         return;
     }
     modelModal.classList.add('hidden');
-    nacistGalerii(searchInput.value);
+    // Úprava z profilu se vrací do profilu, jinak do přehledu
+    if (editovanaModelka && !detailView.classList.contains('hidden')) otevritProfilPodleId(editovanaModelka.id);
+    else nacistGalerii(searchInput.value);
 };
 
 // Formulář: Hromadné fotky do alba

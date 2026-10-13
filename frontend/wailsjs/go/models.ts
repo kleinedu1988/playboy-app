@@ -100,8 +100,8 @@ export namespace main {
 	    velikostPrsou: string;
 	    prsaTyp: string;
 	    ochlupeni: string;
-	    tetovani: boolean;
-	    piercing: boolean;
+	    tetovani: number;
+	    piercing: number;
 	    vystoupeni: string;
 	    pictorialVydani: string;
 	    role: string;
@@ -112,6 +112,10 @@ export namespace main {
 	    coverX: number;
 	    coverY: number;
 	    pocetFotek: number;
+	    vydani: string[];
+	    dalsiJmena: string;
+	    poznamka: string;
+	    oblibena: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -148,6 +152,10 @@ export namespace main {
 	        this.coverX = source["coverX"];
 	        this.coverY = source["coverY"];
 	        this.pocetFotek = source["pocetFotek"];
+	        this.vydani = source["vydani"];
+	        this.dalsiJmena = source["dalsiJmena"];
+	        this.poznamka = source["poznamka"];
+	        this.oblibena = source["oblibena"];
 	    }
 	}
 	

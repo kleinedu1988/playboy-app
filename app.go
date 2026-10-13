@@ -42,25 +42,26 @@ func (a *App) StavDatabaze() string {
 }
 
 type Modelka struct {
-	ID              int    `json:"id"`
-	Jmeno           string `json:"jmeno"`
-	NarozeniDatum   string `json:"narozeniDatum"` // RRRR-MM-DD
-	NarozeniMisto   string `json:"narozeniMisto"`
-	Narodnost       string `json:"narodnost"`
-	Etnicita        string `json:"etnicita"`
-	VyskaCm         int    `json:"vyskaCm"`
-	VahaKg          int    `json:"vahaKg"`
-	VlasyBarva      string `json:"vlasyBarva"`
-	OciBarva        string `json:"ociBarva"`
-	Miry            string `json:"miry"` // "Hrudník-Pas-Boky", skládá se z obvodů
-	ObvodHrudnikCm  int    `json:"obvodHrudnikCm"`
-	ObvodPasCm      int    `json:"obvodPasCm"`
-	ObvodBokyCm     int    `json:"obvodBokyCm"`
-	VelikostPrsou   string `json:"velikostPrsou"`
-	PrsaTyp         string `json:"prsaTyp"`
-	Ochlupeni       string `json:"ochlupeni"`
-	Tetovani        bool   `json:"tetovani"`
-	Piercing        bool   `json:"piercing"`
+	ID             int    `json:"id"`
+	Jmeno          string `json:"jmeno"`
+	NarozeniDatum  string `json:"narozeniDatum"` // RRRR-MM-DD
+	NarozeniMisto  string `json:"narozeniMisto"`
+	Narodnost      string `json:"narodnost"`
+	Etnicita       string `json:"etnicita"`
+	VyskaCm        int    `json:"vyskaCm"`
+	VahaKg         int    `json:"vahaKg"`
+	VlasyBarva     string `json:"vlasyBarva"`
+	OciBarva       string `json:"ociBarva"`
+	Miry           string `json:"miry"` // "Hrudník-Pas-Boky", skládá se z obvodů
+	ObvodHrudnikCm int    `json:"obvodHrudnikCm"`
+	ObvodPasCm     int    `json:"obvodPasCm"`
+	ObvodBokyCm    int    `json:"obvodBokyCm"`
+	VelikostPrsou  string `json:"velikostPrsou"`
+	PrsaTyp        string `json:"prsaTyp"`
+	Ochlupeni      string `json:"ochlupeni"`
+	// Tetování a piercing: 1 = ano, 0 = ne, -1 = neuvedeno
+	Tetovani        int    `json:"tetovani"`
+	Piercing        int    `json:"piercing"`
 	Vystoupeni      string `json:"vystoupeni"`
 	PictorialVydani string `json:"pictorialVydani"` // jedno vydání na řádek
 	Role            string `json:"role"`
@@ -73,6 +74,12 @@ type Modelka struct {
 	CoverY    float64 `json:"coverY"`
 	// Počet fotek modelky ve všech albech (jen pro čtení)
 	PocetFotek int `json:"pocetFotek"`
+	// Vydání časopisu, ve kterých modelka je, odvozená z jejích alb a centerfoldů (jen pro čtení)
+	Vydani []string `json:"vydani"`
+
+	DalsiJmena string `json:"dalsiJmena"` // pseudonymy oddělené čárkou
+	Poznamka   string `json:"poznamka"`
+	Oblibena   bool   `json:"oblibena"`
 }
 
 type Fotografie struct {
@@ -112,6 +119,8 @@ var sloupceModelky = [][2]string{
 	{"pictorial_vydani", "TEXT"},
 	{"role", "TEXT"},
 	{"tags", "TEXT"},
+	{"dalsi_jmena", "TEXT"},
+	{"poznamka", "TEXT"},
 	{"drive_cover_id", "TEXT"},
 }
 
@@ -120,6 +129,14 @@ var sloupceVyrezu = [][2]string{
 	{"cover_zoom", "1"},
 	{"cover_x", "50"},
 	{"cover_y", "50"},
+}
+
+// Stav „neuvedeno" se u tetování a piercingu ukládá jako NULL
+func anoNeDoDatabaze(hodnota int) interface{} {
+	if hodnota != 0 && hodnota != 1 {
+		return nil
+	}
+	return hodnota
 }
 
 func NewApp() *App {
@@ -285,6 +302,12 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}
 
+	if !a.maSloupec("modelky", "oblibena") {
+		if _, err := a.db.Exec(`ALTER TABLE modelky ADD COLUMN oblibena INTEGER`); err != nil {
+			a.chyba("migrace DB", err)
+		}
+	}
+
 	for _, s := range sloupceVyrezu {
 		if a.maSloupec("modelky", s[0]) {
 			continue
@@ -346,6 +369,9 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 		if s[1] == "INTEGER" {
 			vychozi = "0"
 		}
+		if s[0] == "tetovani" || s[0] == "piercing" {
+			vychozi = "-1"
+		}
 		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], vychozi))
 	}
 
@@ -353,7 +379,20 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], s[1]))
 	}
 
-	vyber = append(vyber, "(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id)")
+	vyber = append(vyber, "(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id)", "COALESCE(oblibena, 0)")
+
+	// Vydání každé modelky odvozená z jejích fotek
+	vydaniModelek := map[int][]string{}
+	if radky, err := a.db.Query("SELECT DISTINCT f.modelka_id, " + vydaniFotky + " AS v FROM fotografie f WHERE f.modelka_id > 0 AND " + vydaniFotky + " <> '' ORDER BY v"); err == nil {
+		for radky.Next() {
+			var id int
+			var v string
+			if radky.Scan(&id, &v) == nil {
+				vydaniModelek[id] = append(vydaniModelek[id], v)
+			}
+		}
+		radky.Close()
+	}
 
 	query := "SELECT " + strings.Join(vyber, ", ") + " FROM modelky"
 
@@ -373,8 +412,8 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 			&m.VyskaCm, &m.VahaKg, &m.VlasyBarva, &m.OciBarva,
 			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
 			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
-			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &driveID,
-			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek)
+			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &driveID,
+			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Oblibena)
 		if err != nil {
 			a.chyba("GetModelky", err)
 			continue
@@ -384,6 +423,10 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 		if len(ids) > 0 {
 			m.CoverID = ids[0]
 			m.CoverURL = fmt.Sprintf("https://lh3.googleusercontent.com/d/%s", ids[0])
+		}
+		m.Vydani = vydaniModelek[m.ID]
+		if m.Vydani == nil {
+			m.Vydani = []string{}
 		}
 		if odpovidaHledani(m, vyhledavani) {
 			vysledky = append(vysledky, m)
@@ -413,6 +456,7 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 	udaje := zjednodusit(strings.Join([]string{
 		m.Jmeno, m.Narodnost, m.Etnicita, m.NarozeniMisto, m.NarozeniDatum, m.VlasyBarva, m.OciBarva,
 		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Miry, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags,
+		m.DalsiJmena, m.Poznamka, strings.Join(m.Vydani, " "),
 	}, "\n"))
 	for _, slovo := range strings.Fields(zjednodusit(vyhledavani)) {
 		if !strings.Contains(udaje, slovo) {
@@ -439,8 +483,8 @@ func hodnotyModelky(m Modelka) []interface{} {
 		m.NarozeniDatum, m.NarozeniMisto, m.Narodnost, m.Etnicita,
 		m.VyskaCm, m.VahaKg, m.VlasyBarva, m.OciBarva,
 		miry, m.ObvodHrudnikCm, m.ObvodPasCm, m.ObvodBokyCm,
-		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Tetovani, m.Piercing,
-		m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags, coverID,
+		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, anoNeDoDatabaze(m.Tetovani), anoNeDoDatabaze(m.Piercing),
+		m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags, m.DalsiJmena, m.Poznamka, coverID,
 	}
 }
 
@@ -514,6 +558,30 @@ func (a *App) SetCoverVyrez(id int, zoom, x, y float64) bool {
 		a.chyba("SetCoverVyrez", err)
 	}
 	return err == nil
+}
+
+// Označení modelky jako oblíbené
+func (a *App) SetOblibena(id int, oblibena bool) bool {
+	_, err := a.db.Exec(`UPDATE modelky SET oblibena = ? WHERE id = ?`, oblibena, id)
+	if err != nil {
+		a.chyba("SetOblibena", err)
+	}
+	return err == nil
+}
+
+// Titulní fotkou modelky se stane fotka z některého jejího alba
+func (a *App) SetTitulniFotka(modelkaID, fotoID int) bool {
+	vysledek, err := a.db.Exec(`
+		UPDATE modelky SET cover_zoom = NULL, cover_x = NULL, cover_y = NULL,
+			drive_cover_id = (SELECT drive_file_id FROM fotografie WHERE id = ? AND modelka_id = ?)
+		WHERE id = ? AND EXISTS (SELECT 1 FROM fotografie WHERE id = ? AND modelka_id = ?)`,
+		fotoID, modelkaID, modelkaID, fotoID, modelkaID)
+	if err != nil {
+		a.chyba("SetTitulniFotka", err)
+		return false
+	}
+	zmeneno, _ := vysledek.RowsAffected()
+	return zmeneno == 1
 }
 
 // Smazání modelky včetně všech jejích fotografií

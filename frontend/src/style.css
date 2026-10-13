@@ -218,6 +218,35 @@ body {
     }
 }
 
+/* Šipky pro předchozí a další modelku */
+.nav-step {
+    margin-left: 4px;
+    padding: 0 9px;
+    font-size: 15px;
+    line-height: 1;
+}
+
+/* Přepínač „jen oblíbené" vedle hledání */
+.nav-fav {
+    flex-shrink: 0;
+    width: 28px;
+    height: 24px;
+    margin-left: 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.nav-fav:hover,
+.nav-fav.active {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
 /* Tlačítka okna */
 .window-controls {
     display: flex;
@@ -370,6 +399,52 @@ main {
     aspect-ratio: 3 / 4;
     overflow: hidden;
     background-color: var(--bg-main);
+}
+
+/* Srdíčko oblíbené modelky: na kartě je vidět, když je zapnuté nebo při najetí myší */
+.heart {
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.heart.on,
+.heart:hover {
+    color: var(--accent);
+}
+
+.card-image-wrap {
+    position: relative;
+}
+
+.card .heart {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.55);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 15px;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.card:hover .heart,
+.card .heart.on {
+    opacity: 1;
+}
+
+.card .heart.on {
+    color: var(--accent);
+}
+
+.card.editing .heart {
+    display: none;
 }
 
 /* Úprava výřezu titulní fotky na kartě */
@@ -673,59 +748,6 @@ input:focus, select:focus, textarea:focus {
     font-style: italic;
 }
 
-/* Přepínač Ano / Ne */
-.switch {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    height: 38px;
-    font-size: 13px;
-    color: var(--text-main);
-    cursor: pointer;
-}
-
-.switch input {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    opacity: 0;
-}
-
-.switch-track {
-    position: relative;
-    flex-shrink: 0;
-    width: 36px;
-    height: 20px;
-    border-radius: 10px;
-    background-color: var(--border-color);
-    transition: background-color 0.15s;
-}
-
-.switch-track::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background-color: var(--text-main);
-    transition: transform 0.15s;
-}
-
-.switch input:checked + .switch-track {
-    background-color: var(--accent);
-}
-
-.switch input:checked + .switch-track::after {
-    transform: translateX(16px);
-}
-
-.switch input:focus-visible + .switch-track {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
 @media (max-width: 640px) {
     .form-grid.cols-3,
     .form-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
@@ -758,6 +780,40 @@ input:focus, select:focus, textarea:focus {
 .profile-side h2 {
     margin: 16px 0 0 0;
     font-size: 22px;
+}
+
+.profile-name {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.profile-name .heart {
+    padding: 0 0 2px 0;
+    font-size: 22px;
+}
+
+.profile-aliases {
+    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.profile-note {
+    margin: 16px 0 0 0;
+    padding: 12px 14px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-muted);
+    white-space: pre-wrap;
+}
+
+.profile-info dd .chip {
+    margin: 0 0 4px 4px;
 }
 
 .profile-tags {

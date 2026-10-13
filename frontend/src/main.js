@@ -1,5 +1,5 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetPoradiFotek, ZrusitPoradiAlba, ExportovatDoSouboru, VybratSouborImportu, ImportovatZeSouboru, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
 import { WindowMinimise, WindowToggleMaximise, WindowIsMaximised, WindowIsFullscreen, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 
 let aktualniModelka = null;
@@ -793,8 +793,9 @@ function sestavitAlba(fotky) {
             hodnoceni: stranky[0].hodnoceni || 0,
         }));
         // Lépe hodnocené fotky jdou v albu první, takže právě ony jsou vidět ve zkráceném náhledu;
-        // při stejném hodnocení zůstává původní pořadí
-        a.polozky.sort((x, y) => y.hodnoceni - x.hodnoceni);
+        // při stejném hodnocení zůstává původní pořadí. Ručně seřazené album se podle srdíček nepřeskupuje.
+        a.rucniPoradi = a.fotky.some(f => f.poradi > 0);
+        if (!a.rucniPoradi) a.polozky.sort((x, y) => y.hodnoceni - x.hodnoceni);
     });
     return alba;
 }
@@ -924,6 +925,84 @@ async function nacistFotkyModelky(modelkaId) {
     pripravitPopisy(detailView);
     zkratitAlba(detailView);
     listaAlb.sledovat();
+}
+
+// Ruční pořadí fotek: dlaždice se v albu profilu přetáhne na nové místo
+let tazenaFotka = null;
+let praveTazeno = false;
+
+function zrusitZnackyVlozeni() {
+    document.querySelectorAll('.vlozit-pred, .vlozit-za').forEach(d => d.classList.remove('vlozit-pred', 'vlozit-za'));
+}
+
+document.getElementById('photosGrid').addEventListener('pointerdown', (e) => {
+    const dlazdice = e.target.closest('.photo-item');
+    if (e.button !== 0 || !dlazdice || dlazdice.classList.contains('dalsi') || e.target.closest('.hearts')) return;
+    tazenaFotka = { dlazdice, x: e.clientX, y: e.clientY, tahne: false, cil: null, pred: false };
+});
+
+window.addEventListener('pointermove', (e) => {
+    const t = tazenaFotka;
+    if (!t) return;
+    // Malý pohyb při kliknutí ještě není tažení
+    if (!t.tahne) {
+        if (Math.hypot(e.clientX - t.x, e.clientY - t.y) < 8) return;
+        t.tahne = true;
+        t.dlazdice.classList.add('tazena');
+        document.body.classList.add('razeni');
+    }
+    zrusitZnackyVlozeni();
+    const pod = document.elementFromPoint(e.clientX, e.clientY)?.closest('.photo-item');
+    // Přesouvá se jen uvnitř téhož alba
+    t.cil = pod && pod !== t.dlazdice && pod.parentElement === t.dlazdice.parentElement ? pod : null;
+    if (!t.cil) return;
+    const obdelnik = t.cil.getBoundingClientRect();
+    t.pred = e.clientX < obdelnik.left + obdelnik.width / 2;
+    t.cil.classList.add(t.pred ? 'vlozit-pred' : 'vlozit-za');
+});
+
+async function dokoncitTazeniFotky(zrusit = false) {
+    const t = tazenaFotka;
+    tazenaFotka = null;
+    if (!t || !t.tahne) return;
+    zrusitZnackyVlozeni();
+    t.dlazdice.classList.remove('tazena');
+    document.body.classList.remove('razeni');
+    // Uvolnění tlačítka po tažení nesmí fotku otevřít
+    praveTazeno = true;
+    setTimeout(() => { praveTazeno = false; }, 0);
+    if (zrusit || !t.cil) return;
+
+    // Výchozí je pořadí, v jakém jsou fotky právě vidět; tím se z alba stává ručně seřazené
+    const album = aktualniAlba[parseInt(t.dlazdice.closest('.album').dataset.album)];
+    const ids = album.polozky.map(p => p.fotky[0].id);
+    const tazena = parseInt(t.dlazdice.dataset.fotoId);
+    const cilova = parseInt(t.cil.dataset.fotoId);
+    ids.splice(ids.indexOf(tazena), 1);
+    ids.splice(ids.indexOf(cilova) + (t.pred ? 0 : 1), 0, tazena);
+
+    if (!await SetPoradiFotek(ids)) return;
+    if (!album.rucniPoradi) oznamit('Album má teď ruční pořadí a podle srdíček se už nepřeskupuje. Zpět: pravé tlačítko na albu → Řadit album podle srdíček.');
+    nacistFotkyModelky(aktualniModelka.id);
+}
+window.addEventListener('pointerup', () => dokoncitTazeniFotky());
+window.addEventListener('pointercancel', () => dokoncitTazeniFotky(true));
+window.addEventListener('blur', () => dokoncitTazeniFotky(true));
+
+document.getElementById('photosGrid').addEventListener('click', (e) => {
+    if (!praveTazeno) return;
+    e.stopPropagation();
+    e.preventDefault();
+}, true);
+
+// Posun stránky spojeného plakátu o jedno místo; smer -1 = dřív, 1 = později
+async function posunoutStranku(album, fotka, smer) {
+    const ids = album.fotky.map(f => f.id);
+    const odkud = ids.indexOf(fotka.id);
+    const kam = odkud + smer;
+    if (kam < 0 || kam >= ids.length) return;
+    [ids[odkud], ids[kam]] = [ids[kam], ids[odkud]];
+    if (await SetPoradiFotek(ids)) nacistFotkyModelky(aktualniModelka.id);
 }
 
 // Dlouhé album ukazuje jen první řádky; poslední viditelná dlaždice nese počet skrytých fotek a album rozbalí
@@ -2261,6 +2340,32 @@ document.getElementById('checkRemoveBtn').onclick = async () => {
     else nacistGalerii(searchInput.value);
 };
 
+// Export celé sbírky do souboru YAML, který jde upravovat v textovém editoru
+async function exportovatData() {
+    const cesta = await ExportovatDoSouboru();
+    if (cesta) oznamit(`Sbírka je uložená v souboru ${cesta}`);
+}
+
+// Import ze souboru YAML: doplňuje a opravuje, nic nemaže
+async function importovatData() {
+    const cesta = await VybratSouborImportu();
+    if (!cesta) return;
+    const soubor = cesta.split('/').pop();
+    if (!await potvrdit('Importovat sbírku', `Načíst data ze souboru „${soubor}“? Stávající modelky a alba se doplní a opraví, nové se přidají, nic se nemaže. Před importem se uloží záloha.`, 'Importovat')) return;
+
+    const v = await ImportovatZeSouboru(cesta);
+    if (v.selhalo) {
+        oznamit(v.selhalo, { text: 'Rozumím', akce: () => {} });
+        return;
+    }
+    const shrnuti = `Import hotov. Nové modelky: ${v.noveModelky}, upravené: ${v.upraveneModelky}, alba: ${v.alba}, nové fotky: ${v.noveFotky}.`;
+    // Co se nepodařilo převzít, zůstane vidět, dokud to uživatel nezavře
+    if (v.chyby.length) oznamit(`${shrnuti} Přeskočeno (${v.chyby.length}): ${v.chyby.slice(0, 5).join('; ')}${v.chyby.length > 5 ? '; …' : ''}`, { text: 'Rozumím', akce: () => {} });
+    else oznamit(shrnuti);
+    prepnoutRezim('modelky');
+    nacistGalerii(searchInput.value);
+}
+
 // Mezipaměť jsou jen kopie obrázků stažené z Disku; po vymazání se načtou znovu
 async function vymazatMezipamet() {
     const bajty = await VymazatMezipamet();
@@ -2355,6 +2460,12 @@ document.addEventListener('contextmenu', (e) => {
                     },
                 });
                 polozky.push({ text: album.spojit ? 'Odebrat tuto stránku' : 'Odebrat fotku', akce: () => smazatFotku(fotka) });
+                // Stránky spojeného plakátu se nedají přetáhnout, řadí se po jedné
+                if (album.spojit) {
+                    const misto = album.fotky.indexOf(fotka);
+                    if (misto > 0) polozky.push({ text: 'Posunout stránku dřív', akce: () => posunoutStranku(album, fotka, -1) });
+                    if (misto < album.fotky.length - 1) polozky.push({ text: 'Posunout stránku později', akce: () => posunoutStranku(album, fotka, 1) });
+                }
             }
             polozky.push(null);
         }
@@ -2366,6 +2477,15 @@ document.addEventListener('contextmenu', (e) => {
                 text: album.spojit ? 'Rozdělit plakát na samostatné fotky' : 'Spojit stránky do jednoho plakátu',
                 akce: async () => {
                     await SetSpojeniAlba(aktualniModelka.id, album.album, album.typ, !album.spojit);
+                    nacistFotkyModelky(aktualniModelka.id);
+                },
+            });
+        }
+        if (album.rucniPoradi && !centerfold) {
+            polozky.push({
+                text: 'Řadit album podle srdíček',
+                akce: async () => {
+                    await ZrusitPoradiAlba(aktualniModelka.id, album.album, album.typ);
                     nacistFotkyModelky(aktualniModelka.id);
                 },
             });
@@ -2450,6 +2570,9 @@ document.addEventListener('contextmenu', (e) => {
             { text: 'Zkontrolovat soubory na Disku', akce: () => zkontrolovatSoubory() },
             { text: 'Vymazat mezipaměť obrázků', akce: vymazatMezipamet },
             { text: 'Otevřít složku se zálohami', akce: async () => BrowserOpenURL('file://' + await SlozkaZaloh()) },
+            null,
+            { text: 'Exportovat sbírku (YAML)…', akce: exportovatData },
+            { text: 'Importovat sbírku (YAML)…', akce: importovatData },
             null,
             { text: 'Smazat celou databázi', akce: smazatDatabazi },
         ];

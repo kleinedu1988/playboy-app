@@ -13,6 +13,7 @@ export namespace main {
 	    popis: string;
 	    fotograf: string;
 	    hodnoceni: number;
+	    poradi: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Fotografie(source);
@@ -32,6 +33,7 @@ export namespace main {
 	        this.popis = source["popis"];
 	        this.fotograf = source["fotograf"];
 	        this.hodnoceni = source["hodnoceni"];
+	        this.poradi = source["poradi"];
 	    }
 	}
 	export class NedostupnySoubor {
@@ -165,6 +167,28 @@ export namespace main {
 	    }
 	}
 	
+	export class VysledekImportu {
+	    noveModelky: number;
+	    upraveneModelky: number;
+	    alba: number;
+	    noveFotky: number;
+	    chyby: string[];
+	    selhalo: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new VysledekImportu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.noveModelky = source["noveModelky"];
+	        this.upraveneModelky = source["upraveneModelky"];
+	        this.alba = source["alba"];
+	        this.noveFotky = source["noveFotky"];
+	        this.chyby = source["chyby"];
+	        this.selhalo = source["selhalo"];
+	    }
+	}
 	export class VysledekVlozeni {
 	    vlozeno: number;
 	    nedostupne: number;

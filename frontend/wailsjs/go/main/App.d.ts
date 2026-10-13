@@ -16,6 +16,8 @@ export function DeleteModelka(arg1:number):Promise<boolean>;
 
 export function DeleteVse():Promise<boolean>;
 
+export function ExportovatDoSouboru():Promise<string>;
+
 export function GetCenterfoldy():Promise<Array<main.Fotografie>>;
 
 export function GetCovery():Promise<Array<main.Fotografie>>;
@@ -28,6 +30,8 @@ export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
 
 export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
 
+export function ImportovatZeSouboru(arg1:string):Promise<main.VysledekImportu>;
+
 export function OveritOdkaz(arg1:string):Promise<number>;
 
 export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):Promise<boolean>;
@@ -37,6 +41,8 @@ export function SetHodnoceni(arg1:number,arg2:number):Promise<boolean>;
 export function SetHodnoceniFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 
 export function SetPopisAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
+
+export function SetPoradiFotek(arg1:Array<number>):Promise<boolean>;
 
 export function SetRotaceFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 
@@ -56,6 +62,10 @@ export function UpdateCover(arg1:number,arg2:string,arg3:string):Promise<boolean
 
 export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
 
+export function VybratSouborImportu():Promise<string>;
+
 export function VymazatMezipamet():Promise<number>;
 
 export function ZkontrolovatSoubory():Promise<main.KontrolaSouboru>;
+
+export function ZrusitPoradiAlba(arg1:number,arg2:string,arg3:string):Promise<boolean>;

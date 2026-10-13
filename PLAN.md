@@ -14,7 +14,6 @@ Sem se zapisuje, co se má udělat později, aby se to neztratilo. Hotové věci
 
 ## Zatím přeskočeno
 - Obnovení databáze ze zálohy na kliknutí (zálohy jsou v `~/.local/share/playboy-app/zalohy/`).
-- Změna pořadí fotek v albu a stránek spojeného plakátu.
 - Přesun fotky mezi alby a změna typu jedné fotky.
 
 ## Rozhodnuto nedělat

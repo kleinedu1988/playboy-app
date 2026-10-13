@@ -102,6 +102,8 @@ type Fotografie struct {
 	Fotograf string `json:"fotograf"`
 	// 0 = nehodnoceno, 1–5 srdíček; lépe hodnocené fotky jsou v albu vpředu
 	Hodnoceni int `json:"hodnoceni"`
+	// Ručně určené pořadí v albu od 1; 0 = pořadí neurčeno (fotka je za seřazenými podle vložení)
+	Poradi int `json:"poradi"`
 }
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
@@ -342,7 +344,7 @@ func (a *App) startup(ctx context.Context) {
 		FOREIGN KEY(modelka_id) REFERENCES modelky(id)
 	);`)
 
-	for _, sloupec := range [][2]string{{"rotace", "INTEGER"}, {"spojit", "INTEGER"}, {"vydani", "TEXT"}, {"hodnoceni", "INTEGER"}} {
+	for _, sloupec := range [][2]string{{"rotace", "INTEGER"}, {"spojit", "INTEGER"}, {"vydani", "TEXT"}, {"hodnoceni", "INTEGER"}, {"poradi", "INTEGER"}} {
 		if a.maSloupec("fotografie", sloupec[0]) {
 			continue
 		}
@@ -632,6 +634,37 @@ func (a *App) SetHodnoceniFotek(ids []int, hodnoceni int) bool {
 	return true
 }
 
+// Ruční pořadí fotek alba (nebo stránek spojeného plakátu): fotky dostanou pořadí podle místa v seznamu
+func (a *App) SetPoradiFotek(ids []int) bool {
+	tx, err := a.db.Begin()
+	if err != nil {
+		a.chyba("SetPoradiFotek", err)
+		return false
+	}
+	defer tx.Rollback()
+
+	for i, id := range ids {
+		if _, err := tx.Exec(`UPDATE fotografie SET poradi = ? WHERE id = ?`, i+1, id); err != nil {
+			a.chyba("SetPoradiFotek", err)
+			return false
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		a.chyba("SetPoradiFotek", err)
+		return false
+	}
+	return true
+}
+
+// Zrušení ručního pořadí: album se znovu řadí podle hodnocení a vložení
+func (a *App) ZrusitPoradiAlba(modelkaID int, album, typ string) bool {
+	_, err := a.db.Exec("UPDATE fotografie SET poradi = NULL WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
+	if err != nil {
+		a.chyba("ZrusitPoradiAlba", err)
+	}
+	return err == nil
+}
+
 // Titulní fotkou modelky se stane fotka z některého jejího alba
 func (a *App) SetTitulniFotka(modelkaID, fotoID int) bool {
 	vysledek, err := a.db.Exec(`
@@ -717,7 +750,10 @@ func (a *App) DeleteVse() bool {
 // Vydání fotky: centerfold a cover ho mají v názvu alba, ostatní ve vlastním sloupci
 const vydaniFotky = "CASE WHEN f.typ IN ('Centerfold', 'Cover') THEN f.album ELSE COALESCE(f.vydani, '') END"
 
-const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky + ", COALESCE(f.hodnoceni, 0)"
+const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky + ", COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0)"
+
+// Pořadí fotek v albu: nejdřív ručně seřazené, za nimi ostatní podle vložení
+const razeniFotek = "f.poradi IS NULL, f.poradi, f.id"
 
 // Připojení údajů alba k fotce; sloupce se přidávají na konec výběru
 const (
@@ -741,7 +777,7 @@ func (a *App) nacistFotografie(query string, sJmenem, sPopisem bool, args ...int
 	for rows.Next() {
 		var f Fotografie
 		var driveID string
-		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani, &f.Hodnoceni}
+		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani, &f.Hodnoceni, &f.Poradi}
 		if sJmenem {
 			cile = append(cile, &f.JmenoModelky)
 		}
@@ -760,7 +796,7 @@ func (a *App) nacistFotografie(query string, sJmenem, sPopisem bool, args ...int
 
 // Načtení fotek konkrétní modelky pro její detailní profil
 func (a *App) GetFotografieModelky(modelkaID int) []Fotografie {
-	return a.nacistFotografie(vyberFotografii+vyberPopisu+" FROM fotografie f"+pripojeniPopisu+" WHERE f.modelka_id = ? ORDER BY f.id", false, true, modelkaID)
+	return a.nacistFotografie(vyberFotografii+vyberPopisu+" FROM fotografie f"+pripojeniPopisu+" WHERE f.modelka_id = ? ORDER BY "+razeniFotek, false, true, modelkaID)
 }
 
 // Všechny centerfoldy napříč modelkami pro stěnu plakátů
@@ -768,7 +804,7 @@ func (a *App) GetCenterfoldy() []Fotografie {
 	return a.nacistFotografie(vyberFotografii+`, m.jmeno FROM fotografie f
 		JOIN modelky m ON m.id = f.modelka_id
 		WHERE f.typ = 'Centerfold'
-		ORDER BY m.jmeno COLLATE NOCASE, f.album, f.id`, true, false)
+		ORDER BY m.jmeno COLLATE NOCASE, f.album, `+razeniFotek, true, false)
 }
 
 // Covery časopisů nepatří k modelce (modelka_id = 0); album je vydání ve tvaru RRRR-MM
@@ -818,7 +854,7 @@ func (a *App) GetVydani(vydani string) []Fotografie {
 	return a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
 		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
 		WHERE `+vydaniFotky+` = ?
-		ORDER BY m.jmeno COLLATE NOCASE, f.album, f.id`, true, true, vydani)
+		ORDER BY m.jmeno COLLATE NOCASE, f.album, `+razeniFotek, true, true, vydani)
 }
 
 // Všechny fotky přiřazené k nějakému vydání, pro kalendář vydání

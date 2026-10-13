@@ -1823,3 +1823,25 @@ button.tag:hover {
 .lightbox.zoomed .album-nav {
     display: none;
 }
+
+/* Ruční řazení fotek tažením: tažená dlaždice zprůhlední, čára ukazuje místo vložení */
+body.razeni {
+    user-select: none;
+    cursor: grabbing;
+}
+
+body.razeni .photo-item {
+    cursor: grabbing;
+}
+
+.photo-item.tazena {
+    opacity: 0.35;
+}
+
+.photo-item.vlozit-pred {
+    box-shadow: -6px 0 0 -2px var(--accent);
+}
+
+.photo-item.vlozit-za {
+    box-shadow: 6px 0 0 -2px var(--accent);
+}

@@ -26,5 +26,6 @@ Soubory na Disku musí být sdílené „kdokoli s odkazem", aplikace se k Disku
 ## Struktura
 
 - `app.go` – databáze a veškerá logika (modelky, fotky, alba, covery, zálohy, kontrola odkazů)
+- `export.go` – export a import sbírky v YAML
 - `main.go` – okno aplikace
 - `frontend/src/main.js`, `style.css` – celé rozhraní

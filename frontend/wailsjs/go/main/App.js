@@ -30,6 +30,10 @@ export function DeleteVse() {
   return window['go']['main']['App']['DeleteVse']();
 }
 
+export function ExportovatDoSouboru() {
+  return window['go']['main']['App']['ExportovatDoSouboru']();
+}
+
 export function GetCenterfoldy() {
   return window['go']['main']['App']['GetCenterfoldy']();
 }
@@ -54,6 +58,10 @@ export function GetVydani(arg1) {
   return window['go']['main']['App']['GetVydani'](arg1);
 }
 
+export function ImportovatZeSouboru(arg1) {
+  return window['go']['main']['App']['ImportovatZeSouboru'](arg1);
+}
+
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
 }
@@ -72,6 +80,10 @@ export function SetHodnoceniFotek(arg1, arg2) {
 
 export function SetPopisAlba(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['SetPopisAlba'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function SetPoradiFotek(arg1) {
+  return window['go']['main']['App']['SetPoradiFotek'](arg1);
 }
 
 export function SetRotaceFotek(arg1, arg2) {
@@ -110,10 +122,18 @@ export function UpdateModelka(arg1) {
   return window['go']['main']['App']['UpdateModelka'](arg1);
 }
 
+export function VybratSouborImportu() {
+  return window['go']['main']['App']['VybratSouborImportu']();
+}
+
 export function VymazatMezipamet() {
   return window['go']['main']['App']['VymazatMezipamet']();
 }
 
 export function ZkontrolovatSoubory() {
   return window['go']['main']['App']['ZkontrolovatSoubory']();
+}
+
+export function ZrusitPoradiAlba(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ZrusitPoradiAlba'](arg1, arg2, arg3);
 }

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	_ "modernc.org/sqlite"
@@ -645,6 +646,31 @@ func TestPopisAlba(t *testing.T) {
 		t.Fatal("hodnocení fotky se nezrušilo")
 	}
 
+	// Ruční pořadí: seřazené fotky jdou první, později přidaná za ně; zrušení vrací pořadí vložení
+	a.AddBulkPhotos(id, "Pořadí", "Pictorial", odkazA+" "+odkazB)
+	idsAlba := func() []int {
+		var ids []int
+		for _, f := range a.GetFotografieModelky(id) {
+			if f.Album == "Pořadí" {
+				ids = append(ids, f.ID)
+			}
+		}
+		return ids
+	}
+	puvodni := idsAlba()
+	if !a.SetPoradiFotek([]int{puvodni[1], puvodni[0]}) {
+		t.Fatal("pořadí se neuložilo")
+	}
+	a.AddBulkPhotos(id, "Pořadí", "Pictorial", "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view")
+	if ted := idsAlba(); len(ted) != 3 || ted[0] != puvodni[1] || ted[1] != puvodni[0] || ted[2] <= puvodni[1] {
+		t.Fatalf("ruční pořadí: %v, původně %v", ted, puvodni)
+	}
+	a.ZrusitPoradiAlba(id, "Pořadí", "Pictorial")
+	if ted := idsAlba(); ted[0] != puvodni[0] || ted[1] != puvodni[1] {
+		t.Fatalf("po zrušení pořadí: %v", ted)
+	}
+	a.DeleteAlbum(id, "Pořadí", "Pictorial")
+
 	// Pictorialu stačí ročník bez měsíce; má i svou stránku
 	if !a.SetVydaniAlba(id, "Druhé", "Pictorial", "2012") || a.SetVydaniAlba(id, "Druhé", "Pictorial", "2012-13") {
 		t.Fatal("vydání alba: ročník má projít, neplatný měsíc ne")
@@ -666,5 +692,104 @@ func TestPopisAlba(t *testing.T) {
 	a.db.QueryRow("SELECT COUNT(*) FROM alba").Scan(&radku)
 	if radku != 0 {
 		t.Fatalf("po smazání modelky zbylo %d řádků alb", radku)
+	}
+}
+
+func TestExportAImport(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{
+		Jmeno: "Leanna Decker", Narodnost: "USA", NarozeniDatum: "1991-08-01", VyskaCm: 157,
+		ObvodHrudnikCm: 86, ObvodPasCm: 61, ObvodBokyCm: 86, Tetovani: 0, Piercing: -1, Tags: "zrzka, cybergirl", CoverID: odkazA,
+	})
+	a.AddModelka(Modelka{Jmeno: "Druhá", Tetovani: -1, Piercing: 1})
+	id := a.GetModelky("Leanna")[0].ID
+	a.SetHodnoceni(id, 5)
+	a.SetCoverVyrez(id, 2, 30, 40)
+
+	a.AddBulkPhotos(id, "Karkulka", "Pictorial", odkazA+" "+odkazB)
+	a.SetPopisAlba(id, "Karkulka", "Pictorial", "První odstavec.\n\nDruhý odstavec.", "Jan Novák")
+	a.SetVydaniAlba(id, "Karkulka", "Pictorial", "2012")
+	fotky := a.GetFotografieModelky(id)
+	a.SetPoradiFotek([]int{fotky[1].ID, fotky[0].ID})
+	a.SetHodnoceniFotek([]int{fotky[0].ID}, 4)
+	a.AddBulkPhotos(id, "2013-05", "Centerfold", odkazA+" "+odkazB)
+	a.SetSpojeniAlba(id, "2013-05", "Centerfold", true)
+	a.SetRotaceFotek([]int{a.GetCenterfoldy()[0].ID, a.GetCenterfoldy()[1].ID}, 90)
+	a.AddCover("2013-05", odkazA)
+
+	export, err := a.exportovat()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Soubor má jít číst a upravovat ručně: víceřádkový popis je blok, ne řádek s \n
+	if text := string(export); !strings.Contains(text, "popis: |-\n") || !strings.Contains(text, "rucni_poradi: true") || strings.Contains(text, "miry:") {
+		t.Fatalf("export nemá čekanou podobu:\n%s", text)
+	}
+
+	// Import do prázdné databáze dá po novém exportu totéž (až na hlavičku s časem)
+	bezHlavicky := func(data []byte) string { return string(data[strings.Index(string(data), "verze:"):]) }
+	b := novaTestovaciApp(t, nil)
+	vysledek := b.importovat(export)
+	if vysledek.Selhalo != "" || len(vysledek.Chyby) != 0 || vysledek.NoveModelky != 2 || vysledek.NoveFotky != 5 || vysledek.Alba != 2 {
+		t.Fatalf("import: %+v", vysledek)
+	}
+	znovu, _ := b.exportovat()
+	if bezHlavicky(znovu) != bezHlavicky(export) {
+		t.Fatalf("po importu se export liší:\n%s\n---\n%s", znovu, export)
+	}
+
+	// Opakovaný import nic nezdvojí
+	if podruhe := b.importovat(export); podruhe.NoveModelky != 0 || podruhe.NoveFotky != 0 || podruhe.UpraveneModelky != 2 {
+		t.Fatalf("druhý import: %+v", podruhe)
+	}
+
+	// Ručně psaný soubor: doplní a opraví, chybějící údaje nechá, nic nesmaže; neplatné části ohlásí
+	rucni := `
+modelky:
+  - jmeno: leanna decker
+    narodnost: Kanada
+    vyska_cm: 160
+    tetovani: ano
+    alba:
+      - nazev: Karkulka
+        typ: Pictorial
+        vydani: 2012-10
+        popis: Nový text
+        fotky:
+          - id: https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view
+            hodnoceni: 3
+      - nazev: špatně
+        typ: Centerfold
+        fotky: [{id: DDDDDDDDDDDDDDDDDDDDDDDDDDDDD}]
+  - jmeno: Třetí
+covery:
+  - vydani: 2014
+    fotky: [{id: EEEEEEEEEEEEEEEEEEEEEEEEEEEEE}]
+`
+	vysledek = b.importovat([]byte(rucni))
+	if vysledek.NoveModelky != 1 || vysledek.UpraveneModelky != 1 || vysledek.NoveFotky != 1 || len(vysledek.Chyby) != 2 {
+		t.Fatalf("ruční import: %+v", vysledek)
+	}
+	m := b.GetModelky("leanna")[0]
+	if m.Narodnost != "Kanada" || m.VyskaCm != 160 || m.Tetovani != 1 || m.NarozeniDatum != "1991-08-01" || m.Tags != "zrzka, cybergirl" ||
+		m.Hodnoceni != 5 || m.CoverID != idA || m.CoverZoom != 2 || m.Miry != "86-61-86" {
+		t.Fatalf("modelka po ručním importu: %+v", m)
+	}
+	var karkulka []Fotografie
+	for _, f := range b.GetFotografieModelky(m.ID) {
+		if f.Album == "Karkulka" {
+			karkulka = append(karkulka, f)
+		}
+	}
+	if len(karkulka) != 3 || karkulka[0].Popis != "Nový text" || karkulka[0].Fotograf != "Jan Novák" || karkulka[0].Vydani != "2012-10" {
+		t.Fatalf("album po ručním importu: %+v", karkulka)
+	}
+	if len(b.GetModelky("")) != 3 || len(b.GetCovery()) != 1 {
+		t.Fatal("ruční import něco smazal nebo přidal neplatný cover")
+	}
+
+	// Nečitelný soubor databázi nezmění
+	if spatny := b.importovat([]byte("modelky: [nedokončeno")); spatny.Selhalo == "" {
+		t.Fatal("neplatný YAML prošel")
 	}
 }

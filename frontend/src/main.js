@@ -72,9 +72,6 @@ document.querySelector('#app').innerHTML = `
     </div>
   </header>
 
-  <!-- Filtry a řazení galerie modelek -->
-  <div id="filterBar" class="filter-bar hidden"></div>
-
   <main>
     <div id="gallery" class="gallery-grid"></div>
 
@@ -422,7 +419,6 @@ const calendar = document.getElementById('calendar');
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají v liště tlačítko zpět místo přepínače
 function ukazatPohled(pohled) {
     [gallery, wall, covers, calendar, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
-    document.getElementById('filterBar').classList.toggle('hidden', pohled !== gallery);
     const podstranka = pohled === detailView || pohled === issueView;
     backBtn.classList.toggle('hidden', !podstranka);
     viewToggle.classList.toggle('hidden', podstranka);
@@ -494,96 +490,7 @@ function stylVyrezu({ coverZoom, coverX, coverY }) {
     return `object-position: ${coverX}% ${coverY}%; transform-origin: ${coverX}% ${coverY}%; transform: scale(${coverZoom});`;
 }
 
-// Filtry galerie modelek. Hodnoty se berou z toho, co je v databázi skutečně zapsané.
-const FILTRY = [
-    { klic: 'narodnost', nazev: 'Národnost', hodnoty: m => [m.narodnost] },
-    { klic: 'vlasy', nazev: 'Vlasy', hodnoty: m => [m.vlasyBarva] },
-    { klic: 'oci', nazev: 'Oči', hodnoty: m => [m.ociBarva] },
-    { klic: 'dekada', nazev: 'Dekáda', hodnoty: m => [dekada(m.vystoupeni)] },
-    { klic: 'tag', nazev: 'Tag', hodnoty: m => m.tags.split(',') },
-];
-
-const RAZENI = {
-    jmeno: { nazev: 'Jméno', porovnat: null }, // pořadí z backendu
-    pridane: { nazev: 'Naposledy přidané', porovnat: (a, b) => b.id - a.id },
-    vydani: { nazev: 'První vydání', porovnat: (a, b) => (a.vystoupeni || '9999').localeCompare(b.vystoupeni || '9999') },
-    narozeni: { nazev: 'Nejmladší', porovnat: (a, b) => (b.narozeniDatum || '0000').localeCompare(a.narozeniDatum || '0000') },
-    vyska: { nazev: 'Výška', porovnat: (a, b) => b.vyskaCm - a.vyskaCm },
-    fotky: { nazev: 'Počet fotek', porovnat: (a, b) => b.pocetFotek - a.pocetFotek },
-};
-
-let aktivniFiltry = {}; // klíč filtru -> hodnota bez ohledu na velikost písmen
-let razeni = RAZENI[localStorage.getItem('razeni')] ? localStorage.getItem('razeni') : 'jmeno';
-let vsechnyModelky = [];
-
-// Dekáda prvního vydání, např. „1990–1999"
-function dekada(vystoupeni) {
-    const rok = /\d{4}/.exec(vystoupeni || '');
-    if (!rok) return '';
-    const zacatek = Math.floor(parseInt(rok[0]) / 10) * 10;
-    return `${zacatek}–${zacatek + 9}`;
-}
-
 const sjednotit = text => String(text || '').trim().toLowerCase();
-
-function vyhovujeFiltrum(modelka) {
-    return FILTRY.every(f => !aktivniFiltry[f.klic] || f.hodnoty(modelka).some(h => sjednotit(h) === aktivniFiltry[f.klic]));
-}
-
-// Hodnoty jednoho údaje napříč modelkami s počty; různá velikost písmen se počítá jako jedna hodnota
-function hodnotyFiltru(filtr, modelky) {
-    const hodnoty = new Map();
-    modelky.forEach(m => {
-        new Set(filtr.hodnoty(m).map(sjednotit).filter(Boolean)).forEach(klic => {
-            const zapis = filtr.hodnoty(m).find(h => sjednotit(h) === klic).trim();
-            const polozka = hodnoty.get(klic) || { zapis, pocet: 0 };
-            polozka.pocet++;
-            hodnoty.set(klic, polozka);
-        });
-    });
-    return [...hodnoty].sort((a, b) => a[1].zapis.localeCompare(b[1].zapis, 'cs'));
-}
-
-function vykreslitFiltry(zobrazeno) {
-    const filterBar = document.getElementById('filterBar');
-    const vybery = FILTRY.map(f => {
-        const hodnoty = hodnotyFiltru(f, vsechnyModelky);
-        if (hodnoty.length === 0) return '';
-        return `
-            <select data-filtr="${f.klic}" class="${aktivniFiltry[f.klic] ? 'active' : ''}" title="${f.nazev}">
-                <option value="">${f.nazev}</option>
-                ${hodnoty.map(([klic, h]) => `<option value="${esc(klic)}" ${aktivniFiltry[f.klic] === klic ? 'selected' : ''}>${esc(h.zapis)} (${h.pocet})</option>`).join('')}
-            </select>
-        `;
-    }).join('');
-
-    const filtruje = Object.values(aktivniFiltry).some(Boolean) || searchInput.value.trim();
-    filterBar.innerHTML = `
-        ${vybery}
-        ${Object.values(aktivniFiltry).some(Boolean) ? '<button id="zrusitFiltry" class="filter-reset">Zrušit filtry</button>' : ''}
-        <span class="filter-count">${filtruje ? `${zobrazeno} z ${vsechnyModelky.length}` : `${vsechnyModelky.length}`} modelek</span>
-        <label class="filter-sort">Řadit
-            <select id="selectRazeni">
-                ${Object.entries(RAZENI).map(([klic, r]) => `<option value="${klic}" ${razeni === klic ? 'selected' : ''}>${r.nazev}</option>`).join('')}
-            </select>
-        </label>
-    `;
-}
-
-document.getElementById('filterBar').addEventListener('change', (e) => {
-    if (e.target.id === 'selectRazeni') {
-        razeni = e.target.value;
-        localStorage.setItem('razeni', razeni);
-    } else if (e.target.dataset.filtr) {
-        aktivniFiltry[e.target.dataset.filtr] = e.target.value;
-    }
-    nacistGalerii(searchInput.value);
-});
-document.getElementById('filterBar').addEventListener('click', (e) => {
-    if (e.target.id !== 'zrusitFiltry') return;
-    aktivniFiltry = {};
-    nacistGalerii(searchInput.value);
-});
 
 function prepnoutRezim(novy) {
     rezim = novy;
@@ -591,12 +498,11 @@ function prepnoutRezim(novy) {
     document.querySelector('main').scrollTop = 0;
 }
 
-// Klik na údaj v profilu ukáže všechny modelky se stejnou hodnotou
-function filtrovatPodle(klic, hodnota) {
-    aktivniFiltry = { [klic]: sjednotit(hodnota) };
-    searchInput.value = '';
+// Klik na údaj v profilu vyhledá všechny modelky se stejnou hodnotou
+function hledatHodnotu(hodnota) {
+    searchInput.value = hodnota;
     prepnoutRezim('modelky');
-    nacistGalerii();
+    nacistGalerii(hodnota);
 }
 
 // Načtení Hlavní Galerie
@@ -605,19 +511,13 @@ async function nacistGalerii(dotaz = '') {
     if (rezim === 'covery') return nacistCovery(dotaz);
     if (rezim === 'kalendar') return nacistKalendar(dotaz);
 
-    // Nabídky filtrů se staví ze všech modelek, ne jen z výsledku hledání
-    const [nalezene, vsechny] = await Promise.all([GetModelky(dotaz), dotaz.trim() ? GetModelky('') : null]);
-    vsechnyModelky = vsechny || nalezene || [];
-
-    const modelky = (nalezene || []).filter(vyhovujeFiltrum);
-    if (RAZENI[razeni].porovnat) modelky.sort(RAZENI[razeni].porovnat);
+    const modelky = await GetModelky(dotaz) || [];
     nacteneModelky = modelky;
     zrusitUpravuVyrezu = null;
     ukazatPohled(gallery);
-    vykreslitFiltry(modelky.length);
 
     if (modelky.length === 0) {
-        gallery.innerHTML = `<div class="empty-state">${vsechnyModelky.length ? 'Výběru neodpovídá žádná modelka.' : 'Zatím žádné modelky. Přidej první pravým tlačítkem myši.'}</div>`;
+        gallery.innerHTML = `<div class="empty-state">${dotaz.trim() ? 'Hledání neodpovídá žádná modelka.' : 'Zatím žádné modelky. Přidej první pravým tlačítkem myši.'}</div>`;
         return;
     }
 
@@ -654,12 +554,12 @@ async function otevritDetailModelky(modelka) {
 
     const udaje = [
         ['Narození', [formatDatum(modelka.narozeniDatum), modelka.narozeniMisto].filter(Boolean).join(', ')],
-        ['Národnost', modelka.narodnost, 'narodnost'],
+        ['Národnost', modelka.narodnost, true],
         ['Etnicita', modelka.etnicita],
         ['Výška', modelka.vyskaCm ? `${modelka.vyskaCm} cm` : ''],
         ['Váha', modelka.vahaKg ? `${modelka.vahaKg} kg` : ''],
-        ['Vlasy', modelka.vlasyBarva, 'vlasy'],
-        ['Oči', modelka.ociBarva, 'oci'],
+        ['Vlasy', modelka.vlasyBarva, true],
+        ['Oči', modelka.ociBarva, true],
         ['Míry', modelka.miry],
         ['Prsa', [modelka.velikostPrsou, modelka.prsaTyp].filter(Boolean).join(', ')],
         ['Ochlupení', modelka.ochlupeni],
@@ -675,13 +575,13 @@ async function otevritDetailModelky(modelka) {
     document.getElementById('modelHeader').innerHTML = `
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
         <h2>${esc(modelka.jmeno)}</h2>
-        <div class="profile-tags">${tagy.map(t => `<button class="tag" data-filtr="tag" data-hodnota="${esc(t)}" title="Ukázat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
+        <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
         <dl class="profile-info">
-            ${udaje.map(([nazev, hodnota, filtr]) => `
+            ${udaje.map(([nazev, hodnota, hledat]) => `
                 <div>
                     <dt>${nazev}</dt>
-                    <dd>${filtr
-                        ? `<button class="link" data-filtr="${filtr}" data-hodnota="${esc(hodnota)}" title="Ukázat modelky se stejnou hodnotou">${esc(hodnota)}</button>`
+                    <dd>${hledat
+                        ? `<button class="link" data-hledat="${esc(hodnota)}" title="Vyhledat modelky se stejnou hodnotou">${esc(hodnota)}</button>`
                         : esc(hodnota)}</dd>
                 </div>
             `).join('')}
@@ -1357,10 +1257,10 @@ lightbox.addEventListener('wheel', (e) => {
 document.querySelector('main').addEventListener('click', (e) => {
     const vydani = e.target.closest('[data-vydani]');
     const modelka = e.target.closest('[data-modelka]');
-    const filtr = e.target.closest('main [data-filtr]');
+    const hodnota = e.target.closest('[data-hledat]');
     if (vydani) otevritVydani(vydani.dataset.vydani);
     else if (modelka) otevritProfilPodleId(parseInt(modelka.dataset.modelka));
-    else if (filtr) filtrovatPodle(filtr.dataset.filtr, filtr.dataset.hodnota);
+    else if (hodnota) hledatHodnotu(hodnota.dataset.hledat);
 });
 
 detailView.addEventListener('click', (e) => {
@@ -1613,8 +1513,12 @@ async function naplnitNapovedu() {
     });
 
     // Tagy se přidávají kliknutím, protože pole jich obsahuje víc najednou
-    const tagy = hodnotyFiltru(FILTRY.find(f => f.klic === 'tag'), modelky).map(([, h]) => h.zapis);
-    document.getElementById('tagyNapoveda').innerHTML = tagy
+    const tagy = new Map();
+    modelky.flatMap(m => m.tags.split(',')).forEach(t => {
+        if (sjednotit(t) && !tagy.has(sjednotit(t))) tagy.set(sjednotit(t), t.trim());
+    });
+    document.getElementById('tagyNapoveda').innerHTML = [...tagy.values()]
+        .sort((a, b) => a.localeCompare(b, 'cs'))
         .map(t => `<button type="button" class="tag" data-tag="${esc(t)}">${esc(t)}</button>`).join('');
 }
 

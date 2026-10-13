@@ -218,63 +218,6 @@ body {
     }
 }
 
-/* Lišta filtrů a řazení nad galerií modelek */
-.filter-bar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    flex-shrink: 0;
-    gap: 8px;
-    padding: 8px 32px;
-    background-color: #141417;
-    border-bottom: 1px solid var(--border-color);
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.filter-bar select {
-    height: 28px;
-    padding: 0 28px 0 10px;
-    background-position: right 8px center;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.filter-bar select.active {
-    border-color: var(--accent);
-    color: var(--text-main);
-}
-
-.filter-reset {
-    height: 28px;
-    padding: 0 10px;
-    border: none;
-    border-radius: 6px;
-    background: none;
-    color: var(--accent);
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.filter-reset:hover {
-    background-color: var(--bg-modal);
-}
-
-.filter-count {
-    margin-left: auto;
-}
-
-.filter-sort {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-}
-
-.filter-sort select {
-    color: var(--text-main);
-}
-
 /* Tlačítka okna */
 .window-controls {
     display: flex;
@@ -1250,7 +1193,6 @@ button.tag:hover {
     .cal-year { grid-template-columns: 1fr; }
     .cal-year-label { display: flex; align-items: baseline; gap: 8px; }
     .cal-months { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .filter-bar { padding: 8px 16px; }
 }
 
 /* Stěna centerfoldů */

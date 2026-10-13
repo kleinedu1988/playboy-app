@@ -19,6 +19,7 @@ Značka `webkit2_41`, kterou vyžaduje Fedora, je nastavená ve `wails.json`.
 |---|---|
 | Databáze | `~/.local/share/playboy-app/playboy.db` |
 | Zálohy před mazáním (posledních 20) | `~/.local/share/playboy-app/zalohy/` |
+| Velikost a stav okna při posledním zavření | `~/.local/share/playboy-app/okno.json` |
 | Mezipaměť obrázků | `~/.cache/<název programu>/WebKitCache` |
 
 Soubory na Disku musí být sdílené „kdokoli s odkazem", aplikace se k Disku nepřihlašuje.
@@ -29,3 +30,14 @@ Soubory na Disku musí být sdílené „kdokoli s odkazem", aplikace se k Disku
 - `export.go` – export a import sbírky v YAML
 - `main.go` – okno aplikace
 - `frontend/src/main.js`, `style.css` – celé rozhraní
+
+## Heslo
+
+Program jde zamknout heslem (pravé tlačítko na volném místě galerie → „Nastavit heslo…"). Zámek chrání
+rozhraní; soubor databáze šifrovaný není a fotky zůstávají na Disku sdílené odkazem.
+
+Zapomenuté heslo se zruší smazáním jeho otisku z databáze:
+
+```
+sqlite3 ~/.local/share/playboy-app/playboy.db "DELETE FROM nastaveni WHERE klic = 'heslo'"
+```

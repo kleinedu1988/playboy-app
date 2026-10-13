@@ -81,6 +81,9 @@ type Modelka struct {
 	Poznamka   string `json:"poznamka"`
 	Hodnoceni  int    `json:"hodnoceni"` // 0 = nehodnoceno, 1–5 srdíček
 
+	// Kdy byla modelka přidána (RRRR-MM-DD HH:MM:SS); prázdné u záznamů starších než tento údaj
+	Pridano string `json:"pridano"`
+
 	// Popisy a fotografové alb modelky, jen pro hledání
 	textyAlb string
 }
@@ -104,6 +107,8 @@ type Fotografie struct {
 	Hodnoceni int `json:"hodnoceni"`
 	// Ručně určené pořadí v albu od 1; 0 = pořadí neurčeno (fotka je za seřazenými podle vložení)
 	Poradi int `json:"poradi"`
+	// Kdy byla fotka přidána (RRRR-MM-DD HH:MM:SS); prázdné u záznamů starších než tento údaj
+	Pridano string `json:"pridano"`
 }
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
@@ -147,6 +152,11 @@ func anoNeDoDatabaze(hodnota int) interface{} {
 		return nil
 	}
 	return hodnota
+}
+
+// Okamžik pro údaj „přidáno"; text se řadí stejně jako čas
+func ted() string {
+	return time.Now().Format("2006-01-02 15:04:05")
 }
 
 func NewApp() *App {
@@ -312,6 +322,13 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}
 
+	// Datum přidání se zapisuje při vložení; starší záznamy ho nemají a zpětně zjistit nejde
+	if !a.maSloupec("modelky", "pridano") {
+		if _, err := a.db.Exec(`ALTER TABLE modelky ADD COLUMN pridano TEXT`); err != nil {
+			a.chyba("migrace DB", err)
+		}
+	}
+
 	if !a.maSloupec("modelky", "hodnoceni") {
 		if _, err := a.db.Exec(`ALTER TABLE modelky ADD COLUMN hodnoceni INTEGER`); err != nil {
 			a.chyba("migrace DB", err)
@@ -344,7 +361,7 @@ func (a *App) startup(ctx context.Context) {
 		FOREIGN KEY(modelka_id) REFERENCES modelky(id)
 	);`)
 
-	for _, sloupec := range [][2]string{{"rotace", "INTEGER"}, {"spojit", "INTEGER"}, {"vydani", "TEXT"}, {"hodnoceni", "INTEGER"}, {"poradi", "INTEGER"}} {
+	for _, sloupec := range [][2]string{{"rotace", "INTEGER"}, {"spojit", "INTEGER"}, {"vydani", "TEXT"}, {"hodnoceni", "INTEGER"}, {"poradi", "INTEGER"}, {"pridano", "TEXT"}} {
 		if a.maSloupec("fotografie", sloupec[0]) {
 			continue
 		}
@@ -352,6 +369,9 @@ func (a *App) startup(ctx context.Context) {
 			a.chyba("migrace DB", err)
 		}
 	}
+
+	// Nastavení programu (zatím jen otisk hesla)
+	a.db.Exec(`CREATE TABLE IF NOT EXISTS nastaveni (klic TEXT PRIMARY KEY, hodnota TEXT);`)
 
 	// Údaje alba jako celku; album je určeno modelkou, názvem a typem stejně jako u fotek
 	a.db.Exec(`
@@ -407,7 +427,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], s[1]))
 	}
 
-	vyber = append(vyber, "(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id)", "COALESCE(hodnoceni, 0)")
+	vyber = append(vyber, "(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id)", "COALESCE(hodnoceni, 0)", "COALESCE(pridano, '')")
 
 	// Vydání každé modelky odvozená z jejích fotek
 	vydaniModelek := map[int][]string{}
@@ -454,7 +474,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
 			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
 			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &driveID,
-			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Hodnoceni)
+			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Hodnoceni, &m.Pridano)
 		if err != nil {
 			a.chyba("GetModelky", err)
 			continue
@@ -531,15 +551,20 @@ func hodnotyModelky(m Modelka) []interface{} {
 }
 
 func (a *App) AddModelka(m Modelka) bool {
-	sloupce := []string{"jmeno"}
-	otazniky := []string{"?"}
+	sloupce := []string{"jmeno", "pridano"}
+	otazniky := []string{"?", "?"}
 	for _, s := range sloupceModelky {
 		sloupce = append(sloupce, s[0])
 		otazniky = append(otazniky, "?")
 	}
 
 	query := fmt.Sprintf(`INSERT INTO modelky (%s) VALUES (%s)`, strings.Join(sloupce, ", "), strings.Join(otazniky, ", "))
-	args := append([]interface{}{m.Jmeno}, hodnotyModelky(m)...)
+	// Import předává původní datum přidání, jinak platí okamžik vložení
+	pridano := m.Pridano
+	if pridano == "" {
+		pridano = ted()
+	}
+	args := append([]interface{}{m.Jmeno, pridano}, hodnotyModelky(m)...)
 
 	_, err := a.db.Exec(query, args...)
 	if err != nil {
@@ -750,7 +775,7 @@ func (a *App) DeleteVse() bool {
 // Vydání fotky: centerfold a cover ho mají v názvu alba, ostatní ve vlastním sloupci
 const vydaniFotky = "CASE WHEN f.typ IN ('Centerfold', 'Cover') THEN f.album ELSE COALESCE(f.vydani, '') END"
 
-const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky + ", COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0)"
+const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky + ", COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0), COALESCE(f.pridano, '')"
 
 // Pořadí fotek v albu: nejdřív ručně seřazené, za nimi ostatní podle vložení
 const razeniFotek = "f.poradi IS NULL, f.poradi, f.id"
@@ -777,7 +802,7 @@ func (a *App) nacistFotografie(query string, sJmenem, sPopisem bool, args ...int
 	for rows.Next() {
 		var f Fotografie
 		var driveID string
-		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani, &f.Hodnoceni, &f.Poradi}
+		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani, &f.Hodnoceni, &f.Poradi, &f.Pridano}
 		if sJmenem {
 			cile = append(cile, &f.JmenoModelky)
 		}
@@ -1162,7 +1187,7 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 			vysledek.Nedostupne++
 			continue
 		}
-		_, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id, spojit, rotace, vydani) VALUES (?, ?, ?, ?, ?, ?, ?)", modelkaID, album, typ, ids[i], spojit, rotace, vydani)
+		_, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id, spojit, rotace, vydani, pridano) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", modelkaID, album, typ, ids[i], spojit, rotace, vydani, ted())
 		if err != nil {
 			a.chyba("AddBulkPhotos", err)
 			continue

@@ -23,6 +23,7 @@ type exportFotka struct {
 type exportAlbum struct {
 	Nazev    string `yaml:"nazev"`
 	Typ      string `yaml:"typ"`
+	Pridano  string `yaml:"pridano,omitempty"` // kdy přibyla první fotka alba
 	Vydani   string `yaml:"vydani,omitempty"`
 	Fotograf string `yaml:"fotograf,omitempty"`
 	Popis    string `yaml:"popis,omitempty"`
@@ -40,6 +41,7 @@ type exportVyrez struct {
 
 type exportModelka struct {
 	Jmeno           string        `yaml:"jmeno"`
+	Pridano         string        `yaml:"pridano,omitempty"`
 	DalsiJmena      string        `yaml:"dalsi_jmena,omitempty"`
 	Hodnoceni       int           `yaml:"hodnoceni,omitempty"`
 	NarozeniDatum   string        `yaml:"narozeni_datum,omitempty"`
@@ -113,12 +115,15 @@ func seskupitDoAlb(fotky []Fotografie) []exportAlbum {
 		if !znam {
 			i = len(alba)
 			kde[klic] = i
-			album := exportAlbum{Nazev: f.Album, Typ: f.Typ, Fotograf: f.Fotograf, Popis: f.Popis}
+			album := exportAlbum{Nazev: f.Album, Typ: f.Typ, Fotograf: f.Fotograf, Popis: f.Popis, Pridano: f.Pridano}
 			// Centerfold má vydání přímo v názvu alba
 			if f.Typ != "Centerfold" && f.Typ != "Cover" {
 				album.Vydani = f.Vydani
 			}
 			alba = append(alba, album)
+		}
+		if f.Pridano != "" && (alba[i].Pridano == "" || f.Pridano < alba[i].Pridano) {
+			alba[i].Pridano = f.Pridano
 		}
 		alba[i].Spojit = alba[i].Spojit || f.Spojit
 		alba[i].RucniPoradi = alba[i].RucniPoradi || f.Poradi > 0
@@ -134,7 +139,7 @@ func (a *App) exportovat() ([]byte, error) {
 
 	for _, m := range a.GetModelky("") {
 		e := exportModelka{
-			Jmeno: m.Jmeno, DalsiJmena: m.DalsiJmena, Hodnoceni: m.Hodnoceni,
+			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: m.Hodnoceni,
 			NarozeniDatum: m.NarozeniDatum, NarozeniMisto: m.NarozeniMisto, Narodnost: m.Narodnost, Etnicita: m.Etnicita,
 			VyskaCm: m.VyskaCm, VahaKg: m.VahaKg, VlasyBarva: m.VlasyBarva, OciBarva: m.OciBarva,
 			ObvodHrudnikCm: m.ObvodHrudnikCm, ObvodPasCm: m.ObvodPasCm, ObvodBokyCm: m.ObvodBokyCm, Miry: m.Miry,
@@ -207,8 +212,9 @@ func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *Vysled
 		err := a.db.QueryRow("SELECT id FROM fotografie WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND drive_file_id = ?",
 			modelkaID, album.Nazev, album.Typ, ids[0]).Scan(&id)
 		if err != nil {
-			vlozeno, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id) VALUES (?, ?, ?, ?)",
-				modelkaID, album.Nazev, album.Typ, ids[0])
+			// Nová fotka přebírá datum alba ze souboru, bez něj okamžik importu
+			vlozeno, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id, pridano) VALUES (?, ?, ?, ?, ?)",
+				modelkaID, album.Nazev, album.Typ, ids[0], prvniNeprazdny(album.Pridano, ted()))
 			if err != nil {
 				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: %v", kde, err))
 				continue
@@ -297,7 +303,7 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 
 		m, existuje := stavajici[zjednodusit(jmeno)]
 		if !existuje {
-			if !a.AddModelka(Modelka{Jmeno: jmeno, Tetovani: -1, Piercing: -1}) {
+			if !a.AddModelka(Modelka{Jmeno: jmeno, Tetovani: -1, Piercing: -1, Pridano: strings.TrimSpace(e.Pridano)}) {
 				vysledek.Chyby = append(vysledek.Chyby, jmeno+": modelku se nepodařilo založit")
 				continue
 			}

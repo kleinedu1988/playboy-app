@@ -1845,3 +1845,242 @@ body.razeni .photo-item {
 .photo-item.vlozit-za {
     box-shadow: 6px 0 0 -2px var(--accent);
 }
+
+/* Přehled sbírky */
+.stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 28px;
+}
+
+.stat-tile {
+    padding: 16px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.stat-tile strong {
+    display: block;
+    font-size: 28px;
+    line-height: 1.1;
+}
+
+.stat-tile span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.stat-section + .stat-section {
+    margin-top: 32px;
+}
+
+.stat-section h3 {
+    margin: 0 0 12px 0;
+    font-size: 18px;
+}
+
+.stat-section h3 span {
+    margin-left: 10px;
+    font-size: 12px;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+/* Tabulka toho, co chybí: řádek je modelka nebo vydání a celý je odkaz */
+.stat-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    /* Zakulacení rohů u tabulky se spojenými okraji drží jen přes obrys */
+    border-style: hidden;
+    box-shadow: 0 0 0 1px var(--border-color);
+    font-size: 13px;
+    overflow: hidden;
+}
+
+.stat-table-narrow {
+    max-width: 520px;
+}
+
+.stat-table th,
+.stat-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.stat-table th:first-child {
+    width: 100%;
+    text-align: left;
+    white-space: normal;
+}
+
+.stat-table thead th {
+    font-size: 11px;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+.stat-table tbody th {
+    font-weight: 600;
+}
+
+.stat-table tbody tr {
+    cursor: pointer;
+}
+
+.stat-table tbody tr:last-child th,
+.stat-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.stat-table tbody tr:hover {
+    background-color: var(--bg-modal);
+}
+
+.stat-table tbody tr:hover th {
+    color: var(--accent);
+}
+
+.stat-table td.ok {
+    color: #4a4a52;
+}
+
+.stat-table td.chybi {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* Buňka, která nabízí doplnění, se při najetí chová jako tlačítko */
+.stat-table td[data-akce]:hover {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.stat-table td.stat-text {
+    text-align: left;
+    white-space: normal;
+    color: var(--text-muted);
+}
+
+.stat-note {
+    margin: 8px 0 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Ročníky: dlaždice s pruhem, který ukazuje podíl měsíců ve sbírce */
+.stat-years {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 8px;
+}
+
+.stat-year {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 10px 12px 12px;
+    overflow: hidden;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-main);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.stat-year:hover {
+    border-color: var(--accent);
+}
+
+.stat-year span {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Dvanáct políček ročníku: vyplněné jsou měsíce, které ve sbírce jsou */
+.stat-year .stat-months {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2px;
+    flex-basis: 100%;
+    margin-top: 8px;
+}
+
+.stat-months i {
+    height: 8px;
+    border-radius: 2px;
+    background-color: var(--border-color);
+}
+
+.stat-months i.on {
+    background-color: var(--accent);
+}
+
+/* Zámek: zakrývá vše pod hlavičkou okna; okno jde dál přesouvat a zavřít */
+.lock {
+    position: absolute;
+    inset: 36px 0 0 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-main);
+}
+
+.lock form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 260px;
+    text-align: center;
+}
+
+.lock h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+}
+
+.lock-icon {
+    font-size: 36px;
+}
+
+.lock p {
+    min-height: 18px;
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Zamčený program nenabízí v hlavičce nic kromě tlačítek okna */
+#app.zamceno .logo > :not(.logo-icon):not(h2),
+#app.zamceno .nav-controls > * {
+    visibility: hidden;
+}
+
+.pass-hint {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+/* Tabulka „Ke kontrole": úzký sloupec se jménem, zbytek šířky patří popisu */
+.stat-table-text th:first-child {
+    width: auto;
+    white-space: nowrap;
+}
+
+.stat-table-text th:last-child,
+.stat-table-text td.stat-text {
+    width: 100%;
+    text-align: left;
+}

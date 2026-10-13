@@ -1,5 +1,5 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetPoradiFotek, ZrusitPoradiAlba, ExportovatDoSouboru, VybratSouborImportu, ImportovatZeSouboru, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetPoradiFotek, ZrusitPoradiAlba, ExportovatDoSouboru, VybratSouborImportu, ImportovatZeSouboru, GetPrehled, MaZamek, Odemknout, NastavitHeslo, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
 import { WindowMinimise, WindowToggleMaximise, WindowIsMaximised, WindowIsFullscreen, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 
 let aktualniModelka = null;
@@ -12,7 +12,9 @@ let zrusitUpravuVyrezu = null;
 let aktualniAlba = [];
 let aktualniPolozky = [];
 let stenaPolozky = [];
-let rezim = 'modelky'; // přehled na hlavní stránce: 'modelky', 'centerfoldy' nebo 'covery'
+let rezim = 'modelky'; // přehled na hlavní stránce: 'modelky', 'centerfoldy', 'covery', 'kalendar' nebo 'prehled'
+let maZamek = false;
+let zamceno = false;
 let coveryPolozky = [];
 let vydaniPolozky = [];
 let aktualniVydani = null;
@@ -61,6 +63,7 @@ document.querySelector('#app').innerHTML = `
         <button data-rezim="centerfoldy" data-kratce="Cf">Centerfoldy</button>
         <button data-rezim="covery" data-kratce="Cov">Covery</button>
         <button data-rezim="kalendar" data-kratce="Kal">Kalendář</button>
+        <button data-rezim="prehled" data-kratce="Př">Přehled</button>
       </div>
       <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
       <button id="prevModelBtn" class="nav-back nav-step hidden" title="Předchozí modelka (šipka vlevo)">&#8249;</button>
@@ -94,6 +97,9 @@ document.querySelector('#app').innerHTML = `
       <nav id="calNav"></nav>
       <div id="calList"></div>
     </div>
+
+    <!-- Přehled sbírky: počty a co chybí doplnit -->
+    <div id="stats" class="stats hidden"></div>
 
     <!-- Covery časopisů po ročnících -->
     <div id="covers" class="covers hidden">
@@ -388,6 +394,45 @@ document.querySelector('#app').innerHTML = `
     </div>
   </div>
 
+  <!-- Modal: Nastavení, změna nebo zrušení hesla -->
+  <div id="passModal" class="modal-overlay hidden">
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h3 id="passModalTitle">Nastavit heslo</h3>
+        <button id="closePassModalBtn" class="close-btn">&times;</button>
+      </div>
+      <form id="passForm">
+        <div id="passOldGroup" class="form-group">
+          <label for="inputPassOld">Stávající heslo</label>
+          <input type="password" id="inputPassOld" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label id="passNewLabel" for="inputPassNew">Nové heslo</label>
+          <input type="password" id="inputPassNew" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="inputPassNew2">Nové heslo znovu</label>
+          <input type="password" id="inputPassNew2" autocomplete="off" />
+        </div>
+        <p class="pass-hint">Heslo se vyžádá při každém spuštění. Chrání rozhraní programu, soubor databáze na disku šifrovaný není.</p>
+        <div class="modal-actions">
+          <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Zámek: bez hesla se ze sbírky nic nenačte -->
+  <div id="lockScreen" class="lock hidden">
+    <form id="lockForm">
+      <div class="lock-icon">&#128274;</div>
+      <h3>Sbírka je zamčená</h3>
+      <input type="password" id="inputLock" placeholder="Heslo" autocomplete="off" />
+      <button type="submit" class="btn btn-primary">Odemknout</button>
+      <p id="lockMsg"></p>
+    </form>
+  </div>
+
   <!-- Modal: Kontrola souborů na Google Disku -->
   <div id="checkModal" class="modal-overlay hidden">
     <div class="modal-card">
@@ -466,17 +511,18 @@ const coversList = document.getElementById('coversList');
 const calList = document.getElementById('calList');
 const issueView = document.getElementById('issueView');
 const calendar = document.getElementById('calendar');
+const stats = document.getElementById('stats');
 
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají v liště tlačítko zpět místo přepínače
 function ukazatPohled(pohled) {
-    [gallery, wall, covers, calendar, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
+    [gallery, wall, covers, calendar, stats, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
     const podstranka = pohled === detailView || pohled === issueView;
     backBtn.classList.toggle('hidden', !podstranka);
     document.getElementById('prevModelBtn').classList.toggle('hidden', pohled !== detailView);
     document.getElementById('nextModelBtn').classList.toggle('hidden', pohled !== detailView);
     document.getElementById('favBtn').classList.toggle('hidden', pohled !== gallery);
     viewToggle.classList.toggle('hidden', podstranka);
-    backBtn.innerHTML = `&larr; ${{ modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Covery', kalendar: 'Kalendář' }[rezim]}`;
+    backBtn.innerHTML = `&larr; ${{ modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Covery', kalendar: 'Kalendář', prehled: 'Přehled' }[rezim]}`;
 }
 const viewToggle = document.getElementById('viewToggle');
 
@@ -549,6 +595,8 @@ const sjednotit = text => String(text || '').trim().toLowerCase();
 function prepnoutRezim(novy) {
     rezim = novy;
     viewToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.rezim === novy));
+    // Při příštím spuštění se program otevře ve stejném přehledu
+    try { localStorage.setItem('posledniRezim', novy); } catch { /* bez úložiště se jen nezapamatuje */ }
     document.querySelector('main').scrollTop = 0;
 }
 
@@ -670,6 +718,7 @@ async function nacistGalerii(dotaz = '') {
     if (rezim === 'centerfoldy') return nacistStenu(dotaz);
     if (rezim === 'covery') return nacistCovery(dotaz);
     if (rezim === 'kalendar') return nacistKalendar(dotaz);
+    if (rezim === 'prehled') return nacistPrehled();
 
     const vsechny = await GetModelky(dotaz) || [];
     const modelky = vsechny.filter(m => m.hodnoceni >= minHodnoceni);
@@ -1392,6 +1441,236 @@ async function nacistKalendar(dotaz = '') {
 calendar.addEventListener('click', (e) => {
     const prazdne = e.target.closest('[data-prazdne]');
     if (prazdne) otevritCoverModal(null, prazdne.dataset.prazdne);
+});
+
+// Přehled sbírky: kolik čeho je a co ještě chybí doplnit.
+// Každá modelka a každé vydání má jeden řádek, sloupce říkají, co u nich chybí.
+const NEJVYS_V_PREHLEDU = 60;
+// Údaje modelky, které přehled hlídá, po skupinách shodných se záložkami formuláře: [vlastnost, název, pole formuláře].
+// Další jména a poznámka se nehlídají, většina modelek je mít nemusí.
+const SKUPINY_UDAJU = [
+    { nazev: 'Základní údaje', zalozka: 0, udaje: [
+        ['narozeniDatum', 'datum narození', 'inputNarozeniDatum'],
+        ['narozeniMisto', 'místo narození', 'inputNarozeniMisto'],
+        ['narodnost', 'národnost', 'inputNarodnost'],
+        ['etnicita', 'etnicita', 'inputEtnicita'],
+    ] },
+    { nazev: 'Vzhled a míry', zalozka: 1, udaje: [
+        ['vyskaCm', 'výška', 'inputVyska'],
+        ['vahaKg', 'váha', 'inputVaha'],
+        ['vlasyBarva', 'barva vlasů', 'inputVlasy'],
+        ['ociBarva', 'barva očí', 'inputOci'],
+        ['ochlupeni', 'ochlupení', 'selectOchlupeni'],
+        ['tetovani', 'tetování', 'selectTetovani'],
+        ['piercing', 'piercing', 'selectPiercing'],
+        ['obvodHrudnikCm', 'hrudník', 'inputHrudnik'],
+        ['obvodPasCm', 'pas', 'inputPas'],
+        ['obvodBokyCm', 'boky', 'inputBoky'],
+        ['velikostPrsou', 'velikost prsou', 'inputVelikost'],
+        ['prsaTyp', 'typ prsou', 'selectPrsaTyp'],
+    ] },
+    { nazev: 'Zařazení', zalozka: 2, udaje: [
+        ['role', 'role', 'inputRole'],
+        ['tags', 'tagy', 'inputTags'],
+    ] },
+];
+
+// U tetování a piercingu je „ne" (0) vyplněná hodnota, nevyplněno je -1; u ostatních čísel nula znamená prázdné
+function udajChybi(modelka, vlastnost) {
+    const hodnota = modelka[vlastnost];
+    if (vlastnost === 'tetovani' || vlastnost === 'piercing') return hodnota !== 0 && hodnota !== 1;
+    return !hodnota;
+}
+
+// Modelky a jejich nedoplněná alba pro akce v buňkách přehledu
+let prehledModelky = new Map();
+let prehledAlba = new Map();
+
+async function nacistPrehled() {
+    const [p, vsechnyModelky] = await Promise.all([GetPrehled(), GetModelky('')]);
+    prehledModelky = new Map((vsechnyModelky || []).map(m => [m.id, m]));
+    zrusitUpravuVyrezu = null;
+    ukazatPohled(stats);
+
+    const dlazdice = (cislo, popis) => `<div class="stat-tile"><strong>${cislo}</strong><span>${popis}</span></div>`;
+    const ano = '<td class="ok" title="V pořádku">&#10003;</td>';
+    // Buňka s chybějícím údajem je zároveň tlačítko, které ho nabídne doplnit
+    const chybi = (akce, napoveda) => `<td class="chybi" data-akce="${akce}" title="${napoveda}">chybí</td>`;
+    const NAPOVEDY = {
+        titulni: 'Doplnit titulní fotku',
+        centerfold: 'Přidat centerfold',
+        hodnoceni: 'Otevřít profil a ohodnotit',
+    };
+    const zbytek = (pocet) => pocet > NEJVYS_V_PREHLEDU ? `<p class="stat-note">Zobrazeno prvních ${NEJVYS_V_PREHLEDU}, dalších ${pocet - NEJVYS_V_PREHLEDU} se ukáže, až tyto doplníš.</p>` : '';
+
+    // Modelky: co chybí přímo u nich a kolik jejich alb nemá text nebo vydání
+    const modelky = new Map();
+    const radek = (m) => {
+        if (!modelky.has(m.modelkaId)) modelky.set(m.modelkaId, { id: m.modelkaId, jmeno: m.jmeno, chybi: new Set(), bezPopisu: [], bezVydani: [] });
+        return modelky.get(m.modelkaId);
+    };
+    [['titulni', p.bezTitulni], ['centerfold', p.bezCenterfoldu], ['hodnoceni', p.bezHodnoceni]]
+        .forEach(([co, seznam]) => seznam.forEach(m => radek(m).chybi.add(co)));
+    // Údaje z formuláře: které v každé skupině chybí
+    prehledModelky.forEach(m => {
+        const chybejici = SKUPINY_UDAJU.map(s => s.udaje.filter(([vlastnost]) => udajChybi(m, vlastnost)));
+        if (chybejici.some(skupina => skupina.length)) radek({ modelkaId: m.id, jmeno: m.jmeno }).udaje = chybejici;
+    });
+    p.albaBezPopisu.forEach(a => radek(a).bezPopisu.push(a));
+    p.albaBezVydani.forEach(a => radek(a).bezVydani.push(a));
+    prehledAlba = new Map([...modelky].map(([id, m]) => [id, { popis: m.bezPopisu, vydani: m.bezVydani }]));
+
+    const vaha = m => m.chybi.size + (m.bezPopisu.length ? 1 : 0) + (m.bezVydani.length ? 1 : 0)
+        + (m.udaje || []).reduce((soucet, skupina) => soucet + skupina.length, 0);
+    // Skupina údajů: počet chybějících, v nápovědě jejich výčet; klik otevře formulář na první z nich
+    const skupina = (m, i) => {
+        const chybejici = m.udaje?.[i] || [];
+        if (!chybejici.length) return ano;
+        const vse = chybejici.length === SKUPINY_UDAJU[i].udaje.length;
+        return `<td class="chybi" data-akce="udaje" data-zalozka="${SKUPINY_UDAJU[i].zalozka}" data-pole="${chybejici[0][2]}"
+            title="Chybí: ${esc(chybejici.map(u => u[1]).join(', '))}">${vse ? 'chybí vše' : `chybí ${chybejici.length} z ${SKUPINY_UDAJU[i].udaje.length}`}</td>`;
+    };
+    const radkyModelek = [...modelky.values()].sort((a, b) => vaha(b) - vaha(a) || a.jmeno.localeCompare(b.jmeno, 'cs'));
+    const alba = (seznam, akce) => seznam.length
+        ? `<td class="chybi" data-akce="${akce}" title="Doplnit: ${esc(seznam.map(a => nazevAlba(a.album, a.typ)).join(', '))}">${seznam.length}</td>`
+        : ano;
+
+    // Vydání, kterým chybí cover nebo centerfold
+    const vydani = new Map();
+    p.vydaniBezCoveru.forEach(v => vydani.set(v, { cover: true }));
+    p.vydaniBezCenterfoldu.forEach(v => vydani.set(v, { ...vydani.get(v), centerfold: true }));
+    const radkyVydani = [...vydani].sort(([a], [b]) => b.localeCompare(a));
+
+    stats.innerHTML = `
+        <div class="stat-tiles">
+            ${dlazdice(p.modelek, 'modelek')}
+            ${dlazdice(p.alb, 'alb')}
+            ${dlazdice(p.fotek, 'fotek')}
+            ${dlazdice(p.hodnocenychFotek, 'fotek se srdíčky')}
+            ${dlazdice(p.coveru, 'coverů')}
+            ${dlazdice(p.vydani, 'vydání')}
+        </div>
+
+        <section class="stat-section">
+            <h3>Modelky <span>${p.modelek - radkyModelek.length} z ${p.modelek} má vše vyplněné</span></h3>
+            ${radkyModelek.length ? `
+            <table class="stat-table">
+                <thead><tr>
+                    <th>Modelka</th><th>Titulní fotka</th>${SKUPINY_UDAJU.map(s => `<th title="${esc(s.udaje.map(u => u[1]).join(', '))}">${s.nazev}</th>`).join('')}<th>Centerfold</th><th>Hodnocení</th>
+                    <th title="Počet alb bez průvodního textu">Alba bez textu</th><th title="Počet alb bez přiřazeného vydání">Alba bez vydání</th>
+                </tr></thead>
+                <tbody>
+                    ${radkyModelek.slice(0, NEJVYS_V_PREHLEDU).map(m => `
+                        <tr data-modelka="${m.id}" title="Otevřít profil">
+                            <th>${esc(m.jmeno)}</th>
+                            ${m.chybi.has('titulni') ? chybi('titulni', NAPOVEDY.titulni) : ano}
+                            ${SKUPINY_UDAJU.map((s, i) => skupina(m, i)).join('')}
+                            ${['centerfold', 'hodnoceni'].map(co => m.chybi.has(co) ? chybi(co, NAPOVEDY[co]) : ano).join('')}
+                            ${alba(m.bezPopisu, 'popis')}${alba(m.bezVydani, 'vydani')}
+                        </tr>`).join('')}
+                </tbody>
+            </table>${zbytek(radkyModelek.length)}` : ''}
+        </section>
+
+        <section class="stat-section">
+            <h3>Vydání <span>${p.vydani - radkyVydani.length} z ${p.vydani} má cover i centerfold</span></h3>
+            ${radkyVydani.length ? `
+            <table class="stat-table stat-table-narrow">
+                <thead><tr><th>Vydání</th><th>Cover</th><th>Centerfold</th></tr></thead>
+                <tbody>
+                    ${radkyVydani.slice(0, NEJVYS_V_PREHLEDU).map(([v, co]) => `
+                        <tr data-vydani="${esc(v)}" title="Otevřít vydání">
+                            <th>${esc(nazevVydani(v))}</th>${co.cover ? chybi('cover', 'Přidat cover') : ano}${co.centerfold ? chybi('centerfold', 'Přidat centerfold') : ano}
+                        </tr>`).join('')}
+                </tbody>
+            </table>${zbytek(radkyVydani.length)}` : ''}
+        </section>
+
+        ${p.rocniky.length ? `
+        <section class="stat-section">
+            <h3>Ročníky <span>které měsíce ve sbírce jsou</span></h3>
+            <div class="stat-years">
+                ${p.rocniky.map(r => `
+                    <button class="stat-year" data-rocnik="${r.rok}" title="Zobrazit ročník ${r.rok} v kalendáři">
+                        <strong>${r.rok}</strong><span>${r.vydani} z 12</span>
+                        <span class="stat-months">${r.mesice.map((je, i) => `<i class="${je ? 'on' : ''}" title="${MESICE[i]}${je ? '' : ' – chybí'}"></i>`).join('')}</span>
+                    </button>`).join('')}
+            </div>
+        </section>` : ''}
+
+        ${p.podezrele.length ? `
+        <section class="stat-section">
+            <h3>Ke kontrole <span>údaje, které vypadají jako chyba při zadávání</span></h3>
+            <table class="stat-table stat-table-text">
+                <thead><tr><th>Modelka</th><th>Co zkontrolovat</th></tr></thead>
+                <tbody>
+                    ${p.podezrele.slice(0, NEJVYS_V_PREHLEDU).map(u => `
+                        <tr data-modelka="${u.modelkaId}" title="Otevřít profil">
+                            <th>${esc(u.jmeno)}</th><td class="stat-text">${esc(u.popis)}</td>
+                        </tr>`).join('')}
+                </tbody>
+            </table>${zbytek(p.podezrele.length)}
+        </section>` : ''}
+    `;
+}
+
+// Klik na ročník ho ukáže v kalendáři
+stats.addEventListener('click', (e) => {
+    const rocnik = e.target.closest('[data-rocnik]')?.dataset.rocnik;
+    if (!rocnik) return;
+    searchInput.value = rocnik;
+    prepnoutRezim('kalendar');
+    nacistGalerii(rocnik);
+});
+
+// Klik na buňku „chybí" otevře rovnou místo, kde se údaj doplňuje; klik jinam do řádku otevírá profil nebo vydání
+stats.addEventListener('click', async (e) => {
+    const bunka = e.target.closest('td[data-akce]');
+    if (!bunka) return;
+    e.stopPropagation();
+    const radek = bunka.closest('tr');
+    const akce = bunka.dataset.akce;
+
+    if (radek.dataset.vydani) {
+        const vydani = /^(\d{4})-(\d{2})$/.exec(radek.dataset.vydani);
+        if (akce === 'cover') {
+            otevritCoverModal(null, radek.dataset.vydani);
+        } else {
+            // Centerfold potřebuje vybrat modelku; vydání je už dané
+            await pridatCenterfold();
+            document.getElementById('inputAlbumRok').value = vydani[1];
+            document.getElementById('selectAlbumMesic').value = vydani[2];
+        }
+        return;
+    }
+
+    const modelka = prehledModelky.get(parseInt(radek.dataset.modelka));
+    if (!modelka) return;
+    if (akce === 'titulni') {
+        otevritModelModal(modelka);
+        document.getElementById('inputDriveID').focus();
+    } else if (akce === 'udaje') {
+        // Formulář se otevře na záložce skupiny, s kurzorem v prvním chybějícím poli
+        otevritModelModal(modelka);
+        ukazatZalozku(parseInt(bunka.dataset.zalozka));
+        document.getElementById(bunka.dataset.pole).focus();
+    } else if (akce === 'centerfold') {
+        otevritAlbumModal(modelka);
+        document.getElementById('selectTyp').value = 'Centerfold';
+        prepnoutPoleAlba();
+        document.getElementById('selectAlbumMesic').focus();
+    } else if (akce === 'hodnoceni') {
+        otevritDetailModelky(modelka);
+    } else {
+        // První album, kterému text nebo vydání chybí, se otevře k úpravě v profilu modelky
+        const cil = prehledAlba.get(modelka.id)?.[akce][0];
+        await otevritDetailModelky(modelka);
+        await nacistFotkyModelky(modelka.id);
+        const album = cil && aktualniAlba.find(a => a.album === cil.album && a.typ === cil.typ);
+        if (!album) return;
+        otevritAlbumModal(modelka, album);
+        document.getElementById(akce === 'popis' ? 'inputAlbumPopis' : 'selectAlbumMesic').focus();
+    }
 });
 
 // Formulář coveru slouží pro přidání (polozka = null) i úpravu vydání
@@ -2366,6 +2645,67 @@ async function importovatData() {
     nacistGalerii(searchInput.value);
 }
 
+// Heslo: nastavení, změna a zrušení. Chrání rozhraní, databáze na disku šifrovaná není.
+const passModal = document.getElementById('passModal');
+
+function otevritHeslo() {
+    document.getElementById('passForm').reset();
+    document.getElementById('passModalTitle').textContent = maZamek ? 'Změnit nebo zrušit heslo' : 'Nastavit heslo';
+    document.getElementById('passOldGroup').classList.toggle('hidden', !maZamek);
+    document.getElementById('passNewLabel').textContent = maZamek ? 'Nové heslo (prázdné zámek zruší)' : 'Nové heslo';
+    passModal.classList.remove('hidden');
+    document.getElementById(maZamek ? 'inputPassOld' : 'inputPassNew').focus();
+}
+
+document.getElementById('closePassModalBtn').onclick = () => passModal.classList.add('hidden');
+document.getElementById('passForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const nove = document.getElementById('inputPassNew').value;
+    if (nove !== document.getElementById('inputPassNew2').value) {
+        oznamit('Nové heslo a jeho zopakování se liší.');
+        return;
+    }
+    if (!nove && !maZamek) {
+        oznamit('Zadej heslo, kterým se má program zamykat.');
+        return;
+    }
+    if (!await NastavitHeslo(document.getElementById('inputPassOld').value, nove)) {
+        oznamit('Stávající heslo nesouhlasí, nic se nezměnilo.');
+        return;
+    }
+    maZamek = Boolean(nove);
+    passModal.classList.add('hidden');
+    oznamit(maZamek ? 'Heslo je nastavené, vyžádá se při příštím spuštění.' : 'Zámek je zrušený.');
+};
+
+// Zamčený program neukáže nic ze sbírky, dokud heslo nesouhlasí
+function odemknoutPriStartu() {
+    const obrazovka = document.getElementById('lockScreen');
+    const pole = document.getElementById('inputLock');
+    const zprava = document.getElementById('lockMsg');
+    zamceno = true;
+    document.getElementById('app').classList.add('zamceno');
+    obrazovka.classList.remove('hidden');
+    pole.focus();
+
+    return new Promise((odemceno) => {
+        document.getElementById('lockForm').onsubmit = async (e) => {
+            e.preventDefault();
+            zprava.textContent = 'Ověřuji…';
+            if (!await Odemknout(pole.value)) {
+                zprava.textContent = 'Heslo nesouhlasí.';
+                pole.select();
+                return;
+            }
+            pole.value = '';
+            zamceno = false;
+            document.getElementById('app').classList.remove('zamceno');
+            obrazovka.classList.add('hidden');
+            odemceno();
+        };
+    });
+}
+
 // Mezipaměť jsou jen kopie obrázků stažené z Disku; po vymazání se načtou znovu
 async function vymazatMezipamet() {
     const bajty = await VymazatMezipamet();
@@ -2411,6 +2751,7 @@ document.addEventListener('contextmenu', (e) => {
     // V textových polích a v modálních oknech vlastní nabídku nezobrazujeme
     if (e.target.closest('input, textarea, select')) return;
     e.preventDefault();
+    if (zamceno) return;
     if (e.target.closest('.modal-overlay, .lightbox')) {
         zavritKontextovouNabidku();
         return;
@@ -2571,6 +2912,10 @@ document.addEventListener('contextmenu', (e) => {
             { text: 'Vymazat mezipaměť obrázků', akce: vymazatMezipamet },
             { text: 'Otevřít složku se zálohami', akce: async () => BrowserOpenURL('file://' + await SlozkaZaloh()) },
             null,
+            { text: maZamek ? 'Změnit nebo zrušit heslo…' : 'Nastavit heslo…', akce: otevritHeslo },
+            // Nové načtení okna znovu vyžádá heslo
+            ...(maZamek ? [{ text: 'Zamknout', akce: () => window.location.reload() }] : []),
+            null,
             { text: 'Exportovat sbírku (YAML)…', akce: exportovatData },
             { text: 'Importovat sbírku (YAML)…', akce: importovatData },
             null,
@@ -2676,6 +3021,8 @@ document.getElementById('addAlbumForm').onsubmit = async (e) => {
     document.getElementById('addAlbumForm').reset();
     // Na stěně centerfoldů se obnoví stěna, jinak alba modelky
     if (!wall.classList.contains('hidden')) nacistStenu(searchInput.value);
+    // Z přehledu se doplňuje centerfold; po uložení má z tabulky zmizet
+    else if (!stats.classList.contains('hidden')) nacistPrehled();
     else nacistFotkyModelky(aktualniModelka.id);
 };
 
@@ -2686,5 +3033,14 @@ StavDatabaze().then((chyba) => {
     if (chyba) oznamit(chyba, { text: 'Rozumím', akce: () => {} });
 });
 
-nacistGalerii();
-kontrolaPoSpusteni();
+// Spuštění: nejdřív případný zámek, potom přehled, ve kterém se program naposledy zavřel
+(async () => {
+    maZamek = await MaZamek();
+    if (maZamek) await odemknoutPriStartu();
+
+    let posledni = null;
+    try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
+    if (viewToggle.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
+    nacistGalerii();
+    kontrolaPoSpusteni();
+})();

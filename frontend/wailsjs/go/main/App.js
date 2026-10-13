@@ -50,6 +50,10 @@ export function GetModelky(arg1) {
   return window['go']['main']['App']['GetModelky'](arg1);
 }
 
+export function GetPrehled() {
+  return window['go']['main']['App']['GetPrehled']();
+}
+
 export function GetPrehledVydani() {
   return window['go']['main']['App']['GetPrehledVydani']();
 }
@@ -60,6 +64,18 @@ export function GetVydani(arg1) {
 
 export function ImportovatZeSouboru(arg1) {
   return window['go']['main']['App']['ImportovatZeSouboru'](arg1);
+}
+
+export function MaZamek() {
+  return window['go']['main']['App']['MaZamek']();
+}
+
+export function NastavitHeslo(arg1, arg2) {
+  return window['go']['main']['App']['NastavitHeslo'](arg1, arg2);
+}
+
+export function Odemknout(arg1) {
+  return window['go']['main']['App']['Odemknout'](arg1);
 }
 
 export function OveritOdkaz(arg1) {

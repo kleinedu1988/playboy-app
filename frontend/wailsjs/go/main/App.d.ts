@@ -26,11 +26,19 @@ export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
+export function GetPrehled():Promise<main.Prehled>;
+
 export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
 
 export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
 
 export function ImportovatZeSouboru(arg1:string):Promise<main.VysledekImportu>;
+
+export function MaZamek():Promise<boolean>;
+
+export function NastavitHeslo(arg1:string,arg2:string):Promise<boolean>;
+
+export function Odemknout(arg1:string):Promise<boolean>;
 
 export function OveritOdkaz(arg1:string):Promise<number>;
 

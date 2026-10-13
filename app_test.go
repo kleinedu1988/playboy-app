@@ -793,3 +793,121 @@ covery:
 		t.Fatal("neplatný YAML prošel")
 	}
 }
+
+func TestStavOknaSeUklada(t *testing.T) {
+	t.Setenv("XDG_DATA_HOME", t.TempDir())
+
+	// Bez souboru nebo s nesmyslným obsahem se otevře výchozí okno
+	if stav := nacistStavOkna(); stav.Sirka != vychoziSirka || stav.Vyska != vychoziVyska || stav.Maximalizovane {
+		t.Fatalf("výchozí okno: %+v", stav)
+	}
+	ulozitStavOkna(StavOkna{Sirka: 10, Vyska: 10})
+	if stav := nacistStavOkna(); stav.Sirka != vychoziSirka {
+		t.Fatalf("příliš malé okno se převzalo: %+v", stav)
+	}
+
+	chtene := StavOkna{Sirka: 1400, Vyska: 900, X: 30, Y: 40, Maximalizovane: true, MaPolohu: true}
+	if err := ulozitStavOkna(chtene); err != nil {
+		t.Fatal(err)
+	}
+	if stav := nacistStavOkna(); stav != chtene {
+		t.Fatalf("okno: %+v", stav)
+	}
+}
+
+func TestZamekHeslem(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	zdrzeniSpatnehoHesla = 0
+
+	if a.MaZamek() || a.Odemknout("") {
+		t.Fatal("nová databáze nemá mít zámek a prázdné heslo nesmí nic odemknout")
+	}
+	if !a.NastavitHeslo("", "tajné") || !a.MaZamek() {
+		t.Fatal("heslo se nenastavilo")
+	}
+	if a.Odemknout("spatne") || a.Odemknout("") || !a.Odemknout("tajné") {
+		t.Fatal("odemykání nefunguje")
+	}
+	// Heslo samotné v databázi není
+	if ulozene := a.nastaveni("heslo"); strings.Contains(ulozene, "tajné") || len(ulozene) < 64 {
+		t.Fatalf("uložené heslo: %q", ulozene)
+	}
+	// Změna i zrušení vyžadují stávající heslo
+	if a.NastavitHeslo("spatne", "jiné") || a.NastavitHeslo("spatne", "") {
+		t.Fatal("heslo šlo změnit bez znalosti stávajícího")
+	}
+	if !a.NastavitHeslo("tajné", "jiné") || a.Odemknout("tajné") || !a.Odemknout("jiné") {
+		t.Fatal("změna hesla selhala")
+	}
+	if !a.NastavitHeslo("jiné", "") || a.MaZamek() {
+		t.Fatal("zrušení hesla selhalo")
+	}
+}
+
+func TestPrehledSbirky(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Úplná", NarozeniDatum: "1990-01-01", CoverID: odkazA})
+	a.AddModelka(Modelka{Jmeno: "Prázdná"})
+	uplna := a.GetModelky("Úplná")[0].ID
+	a.SetHodnoceni(uplna, 4)
+
+	a.AddBulkPhotos(uplna, "2010-03", "Centerfold", odkazA)
+	a.AddBulkPhotos(uplna, "S popisem", "Pictorial", odkazA+" "+odkazB)
+	a.SetPopisAlba(uplna, "S popisem", "Pictorial", "text", "")
+	a.SetVydaniAlba(uplna, "S popisem", "Pictorial", "2010-04")
+	a.AddBulkPhotos(uplna, "Holé", "Pictorial", odkazA)
+	a.SetHodnoceniFotek([]int{a.GetFotografieModelky(uplna)[0].ID}, 5)
+	a.AddCover("2010-03", odkazA)
+	a.AddCover("2011-01", odkazA)
+
+	p := a.GetPrehled()
+	if p.Modelek != 2 || p.Alb != 3 || p.Fotek != 4 || p.HodnocenychFotek != 1 || p.Coveru != 2 || p.Vydani != 3 {
+		t.Fatalf("počty: %+v", p)
+	}
+	jmena := func(polozky []PolozkaPrehledu) string {
+		var text []string
+		for _, polozka := range polozky {
+			text = append(text, polozka.Jmeno+"/"+polozka.Album)
+		}
+		return strings.Join(text, ",")
+	}
+	for nazev, dvojice := range map[string][2]string{
+		"bez titulní":            {jmena(p.BezTitulni), "Prázdná/"},
+		"bez narození":           {jmena(p.BezNarozeni), "Prázdná/"},
+		"bez centerfoldu":        {jmena(p.BezCenterfoldu), "Prázdná/"},
+		"bez hodnocení":          {jmena(p.BezHodnoceni), "Prázdná/"},
+		"alba bez popisu":        {jmena(p.AlbaBezPopisu), "Úplná/Holé"},
+		"alba bez vydání":        {jmena(p.AlbaBezVydani), "Úplná/Holé"},
+		"bez coveru":             {strings.Join(p.VydaniBezCoveru, ","), "2010-04"},
+		"bez centerfoldu vydání": {strings.Join(p.VydaniBezCenterfoldu, ","), "2010-04,2011-01"},
+	} {
+		if dvojice[0] != dvojice[1] {
+			t.Errorf("%s: %q, čekáno %q", nazev, dvojice[0], dvojice[1])
+		}
+	}
+	brezenADuben := [12]bool{2: true, 3: true}
+	if len(p.Rocniky) != 2 || p.Rocniky[0] != (RocnikPrehledu{Rok: 2010, Vydani: 2, Mesice: brezenADuben}) || p.Rocniky[1] != (RocnikPrehledu{Rok: 2011, Vydani: 1, Mesice: [12]bool{0: true}}) {
+		t.Fatalf("ročníky: %+v", p.Rocniky)
+	}
+
+	// Ke kontrole: album s jednou fotkou; po doplnění dalších údajů i duplicitní jméno a nesmyslný věk
+	if len(p.Podezrele) != 1 || !strings.Contains(p.Podezrele[0].Popis, "Holé") {
+		t.Fatalf("podezřelé údaje: %+v", p.Podezrele)
+	}
+	a.AddModelka(Modelka{Jmeno: "Jiná", DalsiJmena: "x, úplná", NarozeniDatum: "2000-06-15"})
+	jina := a.GetModelky("Jiná")[0].ID
+	a.AddBulkPhotos(jina, "2010-03", "Centerfold", odkazB)
+	var popisy []string
+	for _, u := range a.GetPrehled().Podezrele {
+		popisy = append(popisy, u.Jmeno+": "+u.Popis)
+	}
+	vse := strings.Join(popisy, " | ")
+	if len(popisy) != 3 || !strings.Contains(vse, "má i modelka Jiná") || !strings.Contains(vse, "vychází na 9 let") {
+		t.Fatalf("podezřelé údaje: %s", vse)
+	}
+
+	// Nově přidané záznamy mají datum přidání
+	if m := a.GetModelky("Jiná")[0]; len(m.Pridano) != 19 || len(a.GetFotografieModelky(jina)[0].Pridano) != 19 {
+		t.Fatalf("datum přidání chybí: %+v", m)
+	}
+}

@@ -14,6 +14,7 @@ export namespace main {
 	    fotograf: string;
 	    hodnoceni: number;
 	    poradi: number;
+	    pridano: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Fotografie(source);
@@ -34,6 +35,7 @@ export namespace main {
 	        this.fotograf = source["fotograf"];
 	        this.hodnoceni = source["hodnoceni"];
 	        this.poradi = source["poradi"];
+	        this.pridano = source["pridano"];
 	    }
 	}
 	export class NedostupnySoubor {
@@ -124,6 +126,7 @@ export namespace main {
 	    dalsiJmena: string;
 	    poznamka: string;
 	    hodnoceni: number;
+	    pridano: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -164,7 +167,119 @@ export namespace main {
 	        this.dalsiJmena = source["dalsiJmena"];
 	        this.poznamka = source["poznamka"];
 	        this.hodnoceni = source["hodnoceni"];
+	        this.pridano = source["pridano"];
 	    }
+	}
+	
+	export class PodezrelyUdaj {
+	    modelkaId: number;
+	    jmeno: string;
+	    popis: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PodezrelyUdaj(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.popis = source["popis"];
+	    }
+	}
+	export class PolozkaPrehledu {
+	    modelkaId: number;
+	    jmeno: string;
+	    album: string;
+	    typ: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PolozkaPrehledu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	    }
+	}
+	export class RocnikPrehledu {
+	    rok: number;
+	    vydani: number;
+	    mesice: boolean[];
+	
+	    static createFrom(source: any = {}) {
+	        return new RocnikPrehledu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rok = source["rok"];
+	        this.vydani = source["vydani"];
+	        this.mesice = source["mesice"];
+	    }
+	}
+	export class Prehled {
+	    modelek: number;
+	    alb: number;
+	    fotek: number;
+	    hodnocenychFotek: number;
+	    coveru: number;
+	    vydani: number;
+	    bezTitulni: PolozkaPrehledu[];
+	    bezNarozeni: PolozkaPrehledu[];
+	    bezCenterfoldu: PolozkaPrehledu[];
+	    bezHodnoceni: PolozkaPrehledu[];
+	    albaBezPopisu: PolozkaPrehledu[];
+	    albaBezVydani: PolozkaPrehledu[];
+	    vydaniBezCoveru: string[];
+	    vydaniBezCenterfoldu: string[];
+	    rocniky: RocnikPrehledu[];
+	    podezrele: PodezrelyUdaj[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Prehled(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelek = source["modelek"];
+	        this.alb = source["alb"];
+	        this.fotek = source["fotek"];
+	        this.hodnocenychFotek = source["hodnocenychFotek"];
+	        this.coveru = source["coveru"];
+	        this.vydani = source["vydani"];
+	        this.bezTitulni = this.convertValues(source["bezTitulni"], PolozkaPrehledu);
+	        this.bezNarozeni = this.convertValues(source["bezNarozeni"], PolozkaPrehledu);
+	        this.bezCenterfoldu = this.convertValues(source["bezCenterfoldu"], PolozkaPrehledu);
+	        this.bezHodnoceni = this.convertValues(source["bezHodnoceni"], PolozkaPrehledu);
+	        this.albaBezPopisu = this.convertValues(source["albaBezPopisu"], PolozkaPrehledu);
+	        this.albaBezVydani = this.convertValues(source["albaBezVydani"], PolozkaPrehledu);
+	        this.vydaniBezCoveru = source["vydaniBezCoveru"];
+	        this.vydaniBezCenterfoldu = source["vydaniBezCenterfoldu"];
+	        this.rocniky = this.convertValues(source["rocniky"], RocnikPrehledu);
+	        this.podezrele = this.convertValues(source["podezrele"], PodezrelyUdaj);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	
 	export class VysledekImportu {

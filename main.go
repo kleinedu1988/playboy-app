@@ -17,12 +17,19 @@ var assets embed.FS
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
+	// Okno se otevře tak, jak bylo naposledy zavřeno
+	okno := nacistStavOkna()
+	stavOkna := options.Normal
+	if okno.Maximalizovane {
+		stavOkna = options.Maximised
+	}
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "Playboy Database",
-		Width:  1024,
-		Height: 768,
+		Title:            "Playboy Database",
+		Width:            okno.Sirka,
+		Height:           okno.Vyska,
+		WindowStartState: stavOkna,
 		// Okno nejde zmenšit pod jednu kartu modelky v nejmenší velikosti (včetně lišty a okrajů)
 		MinWidth:  280,
 		MinHeight: 420,
@@ -39,6 +46,13 @@ func main() {
 		OnStartup: func(ctx context.Context) {
 			app.naChybu = func(zprava string) { runtime.EventsEmit(ctx, "chyba", zprava) }
 			app.startup(ctx)
+			if okno.MaPolohu && !okno.Maximalizovane {
+				runtime.WindowSetPosition(ctx, okno.X, okno.Y)
+			}
+		},
+		OnBeforeClose: func(ctx context.Context) bool {
+			zapamatovatOkno(ctx)
+			return false
 		},
 		Bind: []interface{}{
 			app,

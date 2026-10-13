@@ -62,7 +62,7 @@ document.querySelector('#app').innerHTML = `
       <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
     </div>
     <div class="nav-controls">
-      <input type="text" id="searchInput" placeholder="Hledat (jméno, košíčky)..." />
+      <input type="text" id="searchInput" placeholder="Hledat…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Centerfoldy a covery: jméno nebo vydání. Více slov zužuje výběr." />
     </div>
     <div class="window-controls">
       <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>

@@ -352,14 +352,8 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 	}
 
 	query := "SELECT " + strings.Join(vyber, ", ") + " FROM modelky"
-	var args []interface{}
-	if vyhledavani != "" {
-		query += " WHERE jmeno LIKE ? OR velikost_prsou LIKE ?"
-		vzor := "%" + vyhledavani + "%"
-		args = append(args, vzor, vzor)
-	}
 
-	rows, err := a.db.Query(query, args...)
+	rows, err := a.db.Query(query)
 	if err != nil {
 		a.chyba("GetModelky", err)
 		return nil
@@ -387,9 +381,41 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 			m.CoverID = ids[0]
 			m.CoverURL = fmt.Sprintf("https://lh3.googleusercontent.com/d/%s", ids[0])
 		}
-		vysledky = append(vysledky, m)
+		if odpovidaHledani(m, vyhledavani) {
+			vysledky = append(vysledky, m)
+		}
 	}
+
+	// Řazení podle jména bez ohledu na velikost písmen a diakritiku
+	sort.SliceStable(vysledky, func(i, j int) bool {
+		return zjednodusit(vysledky[i].Jmeno) < zjednodusit(vysledky[j].Jmeno)
+	})
 	return vysledky
+}
+
+var bezDiakritiky = strings.NewReplacer(
+	"á", "a", "č", "c", "ď", "d", "é", "e", "ě", "e", "í", "i", "ň", "n", "ó", "o",
+	"ř", "r", "š", "s", "ť", "t", "ú", "u", "ů", "u", "ý", "y", "ž", "z",
+)
+
+// Text pro porovnávání: malá písmena bez české diakritiky
+func zjednodusit(text string) string {
+	return bezDiakritiky.Replace(strings.ToLower(text))
+}
+
+// Každé hledané slovo se musí najít v některém údaji modelky; na velikosti písmen ani diakritice nezáleží.
+// Filtruje se tady a ne v SQL, protože LIKE v SQLite neumí malá a velká písmena s diakritikou.
+func odpovidaHledani(m Modelka, vyhledavani string) bool {
+	udaje := zjednodusit(strings.Join([]string{
+		m.Jmeno, m.Narodnost, m.Etnicita, m.NarozeniMisto, m.NarozeniDatum, m.VlasyBarva, m.OciBarva,
+		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Miry, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags,
+	}, "\n"))
+	for _, slovo := range strings.Fields(zjednodusit(vyhledavani)) {
+		if !strings.Contains(udaje, slovo) {
+			return false
+		}
+	}
+	return true
 }
 
 // Hodnoty modelky ve stejném pořadí jako sloupceModelky

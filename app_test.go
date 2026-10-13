@@ -404,3 +404,50 @@ func TestVydaniSpojujeCoverCenterfoldAPictorial(t *testing.T) {
 		t.Fatal("neplatné vydání má vrátit prázdný výsledek")
 	}
 }
+
+func TestHledaniARazeniModelek(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "zuzana Nová", Narodnost: "Česká", VlasyBarva: "Hnědá", Tags: "modelka, playmate"})
+	a.AddModelka(Modelka{Jmeno: "Anna Bílá", Narodnost: "Brazilská", VlasyBarva: "Hnědá", VelikostPrsou: "34B"})
+	a.AddModelka(Modelka{Jmeno: "Šárka Malá", Narodnost: "Česká", VlasyBarva: "Blond"})
+
+	jmena := func(dotaz string) []string {
+		var vysledek []string
+		for _, m := range a.GetModelky(dotaz) {
+			vysledek = append(vysledek, m.Jmeno)
+		}
+		return vysledek
+	}
+	stejne := func(mam []string, chci ...string) bool {
+		if len(mam) != len(chci) {
+			return false
+		}
+		for i := range mam {
+			if mam[i] != chci[i] {
+				return false
+			}
+		}
+		return true
+	}
+
+	if mam := jmena(""); !stejne(mam, "Anna Bílá", "Šárka Malá", "zuzana Nová") {
+		t.Fatalf("řazení podle jména: %v", mam)
+	}
+	// Hledá se ve všech údajích, bez ohledu na velikost písmen a diakritiku
+	if mam := jmena("ceska"); !stejne(mam, "Šárka Malá", "zuzana Nová") {
+		t.Fatalf("hledání národnosti: %v", mam)
+	}
+	// Více slov se musí najít všechna
+	if mam := jmena("ČESKÁ blond"); !stejne(mam, "Šárka Malá") {
+		t.Fatalf("hledání dvou slov: %v", mam)
+	}
+	if mam := jmena("34b"); !stejne(mam, "Anna Bílá") {
+		t.Fatalf("hledání velikosti: %v", mam)
+	}
+	if mam := jmena("playmate"); !stejne(mam, "zuzana Nová") {
+		t.Fatalf("hledání tagu: %v", mam)
+	}
+	if mam := jmena("neexistuje"); len(mam) != 0 {
+		t.Fatalf("hledání bez výsledku: %v", mam)
+	}
+}

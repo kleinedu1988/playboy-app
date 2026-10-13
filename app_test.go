@@ -359,3 +359,48 @@ func TestPrevzetiStareDatabaze(t *testing.T) {
 		t.Fatalf("neočekávaná chyba startu: %s", b.StavDatabaze())
 	}
 }
+
+func TestVydaniSpojujeCoverCenterfoldAPictorial(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Kelley", CoverID: odkazA})
+	a.AddModelka(Modelka{Jmeno: "Anna", CoverID: odkazA})
+
+	a.AddCover("2009-11", odkazA)
+	a.AddCover("2009-12", odkazA)
+	a.AddBulkPhotos(1, "2009-11", "Centerfold", odkazA)
+	a.AddBulkPhotos(1, "Playmate of the Month", "Pictorial", odkazA)
+	a.AddBulkPhotos(2, "Jiný pictorial", "Pictorial", odkazA)
+
+	if a.SetVydaniAlba(1, "Playmate of the Month", "Pictorial", "listopad") {
+		t.Fatal("SetVydaniAlba přijalo neplatné vydání")
+	}
+	if !a.SetVydaniAlba(1, "Playmate of the Month", "Pictorial", "2009-11") {
+		t.Fatal("SetVydaniAlba selhalo")
+	}
+	// Fotka přidaná později vydání alba přebírá
+	a.AddBulkPhotos(1, "Playmate of the Month", "Pictorial", odkazB)
+
+	vydani := a.GetVydani("2009-11")
+	typy := map[string]int{}
+	for _, f := range vydani {
+		typy[f.Typ]++
+		if f.Vydani != "2009-11" {
+			t.Fatalf("fotka %d má vydání %q", f.ID, f.Vydani)
+		}
+		if f.Typ != "Cover" && f.JmenoModelky != "Kelley" {
+			t.Fatalf("fotka %d patří modelce %q", f.ID, f.JmenoModelky)
+		}
+	}
+	if typy["Cover"] != 1 || typy["Centerfold"] != 1 || typy["Pictorial"] != 2 || len(vydani) != 4 {
+		t.Fatalf("vydání 2009-11 obsahuje %v", typy)
+	}
+
+	// Zrušení přiřazení pictorial z vydání vyřadí
+	a.SetVydaniAlba(1, "Playmate of the Month", "Pictorial", "")
+	if len(a.GetVydani("2009-11")) != 2 {
+		t.Fatal("pictorial po zrušení přiřazení ve vydání zůstal")
+	}
+	if a.GetVydani("neplatne") != nil {
+		t.Fatal("neplatné vydání má vrátit prázdný výsledek")
+	}
+}

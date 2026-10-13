@@ -1,5 +1,5 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, SetVydaniAlba, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
 import { WindowMinimise, WindowToggleMaximise, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
 
 let aktualniModelka = null;
@@ -12,6 +12,8 @@ let aktualniPolozky = [];
 let stenaPolozky = [];
 let rezim = 'modelky'; // přehled na hlavní stránce: 'modelky', 'centerfoldy' nebo 'covery'
 let coveryPolozky = [];
+let vydaniPolozky = [];
+let aktualniVydani = null;
 let editovanyCover = null;
 let editovaneAlbum = null;
 
@@ -57,7 +59,7 @@ document.querySelector('#app').innerHTML = `
         <button data-rezim="centerfoldy" data-kratce="Cf">Centerfoldy</button>
         <button data-rezim="covery" data-kratce="Cov">Covery</button>
       </div>
-      <button id="backBtn" class="nav-back hidden" title="Zpět na výběr modelek (Esc)">&larr; Modelky</button>
+      <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
     </div>
     <div class="nav-controls">
       <input type="text" id="searchInput" placeholder="Hledat (jméno, košíčky)..." />
@@ -74,6 +76,12 @@ document.querySelector('#app').innerHTML = `
 
     <!-- Stěna centerfoldů -->
     <div id="wall" class="wall hidden"></div>
+
+    <!-- Stránka vydání časopisu: cover, centerfold a pictorialy -->
+    <div id="issueView" class="detail-container hidden">
+      <aside id="issueSide" class="profile-side"></aside>
+      <section id="issueMain" class="profile-main"></section>
+    </div>
 
     <!-- Covery časopisů po ročnících -->
     <div id="covers" class="covers hidden"></div>
@@ -270,17 +278,17 @@ document.querySelector('#app').innerHTML = `
           <label for="inputAlbumName">Název alba</label>
           <input type="text" id="inputAlbumName" placeholder="např. Pictorial 1995-04" required />
         </div>
-        <!-- Centerfold nemá název, určuje ho vydání časopisu -->
+        <!-- Centerfold nemá název, určuje ho vydání časopisu; pictorial může k vydání patřit volitelně -->
         <div id="albumVydaniGroup" class="form-row hidden">
           <div class="form-group">
-            <label for="selectAlbumMesic">Měsíc vydání</label>
+            <label id="albumMesicLabel" for="selectAlbumMesic">Měsíc vydání</label>
             <select id="selectAlbumMesic">
               <option value="">Vyber měsíc</option>
               ${MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('')}
             </select>
           </div>
           <div class="form-group">
-            <label for="inputAlbumRok">Rok vydání</label>
+            <label id="albumRokLabel" for="inputAlbumRok">Rok vydání</label>
             <input type="number" id="inputAlbumRok" min="1953" max="2100" placeholder="RRRR" />
           </div>
         </div>
@@ -399,6 +407,16 @@ const searchInput = document.getElementById('searchInput');
 const backBtn = document.getElementById('backBtn');
 const wall = document.getElementById('wall');
 const covers = document.getElementById('covers');
+const issueView = document.getElementById('issueView');
+
+// Vždy je vidět jeden pohled; profil modelky a stránka vydání mají v liště tlačítko zpět místo přepínače
+function ukazatPohled(pohled) {
+    [gallery, wall, covers, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
+    const podstranka = pohled === detailView || pohled === issueView;
+    backBtn.classList.toggle('hidden', !podstranka);
+    viewToggle.classList.toggle('hidden', podstranka);
+    backBtn.innerHTML = `&larr; ${{ modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Covery' }[rezim]}`;
+}
 const viewToggle = document.getElementById('viewToggle');
 
 // Album centerfoldu a coveru je uložené jako vydání časopisu RRRR-MM; zobrazuje se jako „Listopad 2009"
@@ -445,6 +463,10 @@ async function odkazJeVPoradku(odkaz) {
     return false;
 }
 
+function nazevVydani(vydani) {
+    return nazevAlba(vydani, 'Cover');
+}
+
 // Ošetření textu vkládaného do HTML
 function esc(text) {
     return String(text ?? '').replace(/[&<>"']/g, z => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[z]));
@@ -469,12 +491,7 @@ async function nacistGalerii(dotaz = '') {
     const modelky = await GetModelky(dotaz);
     nacteneModelky = modelky || [];
     zrusitUpravuVyrezu = null;
-    gallery.classList.remove('hidden');
-    detailView.classList.add('hidden');
-    wall.classList.add('hidden');
-    covers.classList.add('hidden');
-    backBtn.classList.add('hidden');
-    viewToggle.classList.remove('hidden');
+    ukazatPohled(gallery);
 
     if (!modelky || modelky.length === 0) {
         gallery.innerHTML = '<div class="empty-state">Žádné modelky v DB.</div>';
@@ -506,12 +523,7 @@ async function nacistGalerii(dotaz = '') {
 // Otevření profilu modelky s fotogalerií
 async function otevritDetailModelky(modelka) {
     aktualniModelka = modelka;
-    gallery.classList.add('hidden');
-    wall.classList.add('hidden');
-    covers.classList.add('hidden');
-    detailView.classList.remove('hidden');
-    backBtn.classList.remove('hidden');
-    viewToggle.classList.add('hidden');
+    ukazatPohled(detailView);
     // Dokud nejsou načtené fotky, není jasné, zda se ukáže titulní fotka, nebo centerfold
     document.getElementById('centerfoldsSide').innerHTML = '';
     detailView.classList.add('bez-titulni');
@@ -555,7 +567,7 @@ function sestavitAlba(fotky) {
     fotky.forEach(f => {
         const klic = `${f.modelkaId}\n${f.album}\n${f.typ}`;
         if (!mapa.has(klic)) {
-            mapa.set(klic, { modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, album: f.album, typ: f.typ, fotky: [] });
+            mapa.set(klic, { modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, album: f.album, typ: f.typ, vydani: f.vydani, fotky: [] });
         }
         mapa.get(klic).fotky.push(f);
     });
@@ -642,6 +654,7 @@ async function nacistFotkyModelky(modelkaId) {
                     <div class="album-header">
                         <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
                         <span>${esc(a.typ)} · ${popis}</span>
+                        ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít vydání">${esc(nazevVydani(a.vydani))}</button>` : ''}
                     </div>
                 `}
                 <div class="${centerfold ? 'posters' : 'photos-grid'}">
@@ -672,12 +685,7 @@ async function nacistFotkyModelky(modelkaId) {
 async function nacistStenu(dotaz = '') {
     const fotky = await GetCenterfoldy() || [];
     zrusitUpravuVyrezu = null;
-    gallery.classList.add('hidden');
-    detailView.classList.add('hidden');
-    covers.classList.add('hidden');
-    wall.classList.remove('hidden');
-    backBtn.classList.add('hidden');
-    viewToggle.classList.remove('hidden');
+    ukazatPohled(wall);
 
     const hledat = dotaz.trim().toLowerCase();
     const vyhovuje = f => !hledat || [f.jmenoModelky, f.album, nazevAlba(f.album, f.typ)].some(t => t.toLowerCase().includes(hledat));
@@ -704,12 +712,7 @@ async function nacistStenu(dotaz = '') {
 async function nacistCovery(dotaz = '') {
     const [fotky, centerfoldy] = await Promise.all([GetCovery(), GetCenterfoldy()]);
     zrusitUpravuVyrezu = null;
-    gallery.classList.add('hidden');
-    detailView.classList.add('hidden');
-    wall.classList.add('hidden');
-    covers.classList.remove('hidden');
-    backBtn.classList.add('hidden');
-    viewToggle.classList.remove('hidden');
+    ukazatPohled(covers);
 
     // Modelka z centerfoldu téhož vydání, pokud už je v databázi
     const playmate = new Map((centerfoldy || []).map(f => [f.album, f.jmenoModelky]));
@@ -754,7 +757,75 @@ async function nacistCovery(dotaz = '') {
 
 covers.addEventListener('click', (e) => {
     const polozka = e.target.closest('.cover-item');
-    if (polozka) otevritLightbox(parseInt(polozka.dataset.index), false, coveryPolozky);
+    if (polozka) otevritVydani(coveryPolozky[parseInt(polozka.dataset.index)].album);
+});
+
+// Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
+async function otevritVydani(vydani) {
+    const fotky = await GetVydani(vydani) || [];
+    aktualniVydani = vydani;
+    ukazatPohled(issueView);
+    document.querySelector('main').scrollTop = 0;
+
+    const alba = sestavitAlba(fotky);
+    const coveryVydani = alba.filter(a => a.typ === 'Cover');
+    const centerfoldy = alba.filter(a => a.typ === 'Centerfold');
+    const ostatni = alba.filter(a => a.typ !== 'Cover' && a.typ !== 'Centerfold');
+    // Pořadí pro prohlížeč: cover, centerfold, pictorialy
+    vydaniPolozky = [...coveryVydani, ...centerfoldy, ...ostatni].flatMap(a => a.polozky);
+    const index = p => vydaniPolozky.indexOf(p);
+    const odkazNaModelku = a => `<button class="chip" data-modelka="${a.modelkaId}" title="Otevřít profil modelky">${esc(a.jmenoModelky)}</button>`;
+    const sklonovat = (n, jedna, dve, pet) => `${n} ${n === 1 ? jedna : n < 5 ? dve : pet}`;
+
+    document.getElementById('issueSide').innerHTML = `
+        <div class="posters">
+            ${coveryVydani.flatMap(a => a.polozky).map(p => htmlPlakatu(p, VELIKOST_PLAKATU, `data-index="${index(p)}"`)).join('')
+                || `<div class="profile-cover"><img src="${BEZ_FOTKY}" alt="Bez coveru" draggable="false" /></div>`}
+        </div>
+        <h2>${esc(nazevVydani(vydani))}</h2>
+        <dl class="profile-info">
+            <div><dt>Cover</dt><dd>${coveryVydani.length ? 'Ano' : 'Zatím chybí'}</dd></div>
+            <div><dt>Centerfold</dt><dd>${centerfoldy.map(a => esc(a.jmenoModelky)).join(', ') || 'Zatím chybí'}</dd></div>
+            <div><dt>Pictorialy</dt><dd>${ostatni.length}</dd></div>
+            <div><dt>Fotek celkem</dt><dd>${fotky.length}</dd></div>
+        </dl>
+    `;
+
+    document.getElementById('issueMain').innerHTML = [
+        ...centerfoldy.map(a => `
+            <section class="issue-album">
+                <div class="album-header">
+                    <h4>Centerfold</h4>
+                    ${odkazNaModelku(a)}
+                </div>
+                <div class="posters">${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU, `data-index="${index(p)}"`)).join('')}</div>
+            </section>
+        `),
+        ...ostatni.map(a => `
+            <section class="issue-album">
+                <div class="album-header">
+                    <h4>${esc(a.album)}</h4>
+                    <span>${esc(a.typ)} · ${sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek')}</span>
+                    ${odkazNaModelku(a)}
+                </div>
+                <div class="photos-grid">
+                    ${a.polozky.map(p => `
+                        <div class="photo-item" data-index="${index(p)}">
+                            <img src="${esc(p.fotky[0].url)}${VELIKOST_NAHLEDU}" loading="lazy" draggable="false" />
+                        </div>
+                    `).join('')}
+                </div>
+            </section>
+        `),
+    ].join('') || '<p class="empty-state">K tomuto vydání zatím není přiřazený žádný centerfold ani pictorial. Centerfold se přiřadí měsícem a rokem, pictorial v úpravě alba.</p>';
+
+    issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
+}
+
+issueView.addEventListener('click', (e) => {
+    if (e.target.closest('[data-modelka], [data-vydani]')) return;
+    const polozka = e.target.closest('[data-index]');
+    if (polozka) otevritLightbox(parseInt(polozka.dataset.index), false, vydaniPolozky);
 });
 
 // Formulář coveru slouží pro přidání (polozka = null) i úpravu vydání
@@ -1018,6 +1089,7 @@ function zavritLightbox() {
         if (!detailView.classList.contains('hidden')) nacistFotkyModelky(aktualniModelka.id);
         else if (!wall.classList.contains('hidden')) nacistStenu(searchInput.value);
         else if (!covers.classList.contains('hidden')) nacistCovery(searchInput.value);
+        else if (!issueView.classList.contains('hidden')) otevritVydani(aktualniVydani);
     }
 }
 
@@ -1078,7 +1150,16 @@ lightbox.addEventListener('wheel', (e) => {
     }
 }, { passive: false });
 
+// Odkazy na vydání a na modelku fungují v profilu i na stránce vydání
+document.querySelector('main').addEventListener('click', (e) => {
+    const vydani = e.target.closest('[data-vydani]');
+    const modelka = e.target.closest('[data-modelka]');
+    if (vydani) otevritVydani(vydani.dataset.vydani);
+    else if (modelka) otevritProfilPodleId(parseInt(modelka.dataset.modelka));
+});
+
 detailView.addEventListener('click', (e) => {
+    if (e.target.closest('[data-vydani]')) return;
     const polozka = e.target.closest('[data-index]');
     if (polozka) otevritLightbox(parseInt(polozka.dataset.index));
 });
@@ -1377,7 +1458,10 @@ async function pridatCenterfold() {
 function prepnoutPoleAlba() {
     const centerfold = document.getElementById('selectTyp').value === 'Centerfold';
     document.getElementById('albumNazevGroup').classList.toggle('hidden', centerfold);
-    document.getElementById('albumVydaniGroup').classList.toggle('hidden', !centerfold);
+    document.getElementById('albumVydaniGroup').classList.remove('hidden');
+    // U pictorialu je vydání nepovinné
+    document.getElementById('albumMesicLabel').textContent = centerfold ? 'Měsíc vydání' : 'Měsíc vydání (nepovinné)';
+    document.getElementById('albumRokLabel').textContent = centerfold ? 'Rok vydání' : 'Rok vydání (nepovinné)';
     document.getElementById('inputAlbumName').required = !centerfold;
     document.getElementById('selectAlbumMesic').required = centerfold;
     document.getElementById('inputAlbumRok').required = centerfold;
@@ -1412,7 +1496,7 @@ function otevritAlbumModal(modelka, album = null) {
         vyberTypu.value = album.typ;
         document.getElementById('inputAlbumName').value = album.album;
 
-        const vydani = /^(\d{4})-(\d{2})$/.exec(album.album);
+        const vydani = /^(\d{4})-(\d{2})$/.exec(album.vydani || album.album);
         if (vydani) {
             document.getElementById('inputAlbumRok').value = vydani[1];
             document.getElementById('selectAlbumMesic').value = vydani[2];
@@ -1555,6 +1639,7 @@ document.addEventListener('contextmenu', (e) => {
         polozky = [
             { text: 'Otevřít centerfold', akce: () => otevritLightbox(index, false, stenaPolozky) },
             { text: 'Otevřít profil modelky', akce: () => otevritProfilPodleId(stenaPolozky[index].modelkaId) },
+            { text: `Otevřít vydání ${nazevVydani(stenaPolozky[index].album)}`, akce: () => otevritVydani(stenaPolozky[index].album) },
         ];
     } else if (e.target.closest('.album')) {
         // Album v profilu modelky, případně konkrétní fotka v něm
@@ -1574,6 +1659,9 @@ document.addEventListener('contextmenu', (e) => {
             }
             polozky.push(null);
         }
+        if (album.vydani) {
+            polozky.push({ text: `Otevřít vydání ${nazevVydani(album.vydani)}`, akce: () => otevritVydani(album.vydani) });
+        }
         if (centerfold && album.fotky.length > 1) {
             polozky.push({
                 text: album.spojit ? 'Rozdělit plakát na samostatné fotky' : 'Spojit stránky do jednoho plakátu',
@@ -1588,17 +1676,35 @@ document.addEventListener('contextmenu', (e) => {
             { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(aktualniModelka, album) },
             { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length) }
         );
+    } else if (!issueView.classList.contains('hidden')) {
+        // Stránka vydání: úpravy se dělají v profilu modelky a v přehledu coverů
+        const prvekPolozky = e.target.closest('[data-index]');
+        polozky = [];
+        if (prvekPolozky) {
+            const index = parseInt(prvekPolozky.dataset.index);
+            const polozka = vydaniPolozky[index];
+            polozky.push({ text: 'Otevřít fotku', akce: () => otevritLightbox(index, false, vydaniPolozky) });
+            if (polozka.modelkaId) {
+                polozky.push({ text: `Otevřít profil: ${polozka.jmenoModelky}`, akce: () => otevritProfilPodleId(polozka.modelkaId) });
+            }
+            polozky.push(null);
+        }
+        polozky.push(
+            { text: 'Spustit slideshow vydání', akce: () => otevritLightbox(0, true, vydaniPolozky) },
+            { text: 'Zpět', akce: () => nacistGalerii(searchInput.value) }
+        );
     } else if (!detailView.classList.contains('hidden')) {
         polozky = [
             { text: 'Přidat fotky / album', akce: () => otevritAlbumModal(aktualniModelka) },
-            { text: rezim === 'centerfoldy' ? 'Zpět na centerfoldy' : rezim === 'covery' ? 'Zpět na covery' : 'Zpět na výběr modelek', akce: () => nacistGalerii(searchInput.value) },
+            { text: 'Zpět', akce: () => nacistGalerii(searchInput.value) },
         ];
     } else if (e.target.closest('.cover-item')) {
         // Cover časopisu
         const index = parseInt(e.target.closest('.cover-item').dataset.index);
         const cover = coveryPolozky[index];
         polozky = [
-            { text: 'Otevřít cover', akce: () => otevritLightbox(index, false, coveryPolozky) },
+            { text: 'Otevřít vydání', akce: () => otevritVydani(cover.album) },
+            { text: 'Zobrazit cover', akce: () => otevritLightbox(index, false, coveryPolozky) },
             { text: 'Upravit cover', akce: () => otevritCoverModal(cover) },
             { text: 'Smazat cover', akce: () => smazatCover(cover) },
         ];
@@ -1645,7 +1751,7 @@ document.addEventListener('keydown', (e) => {
         else zavritLightbox();
     } else if (zrusitUpravuVyrezu) {
         zrusitUpravuVyrezu();
-    } else if (!detailView.classList.contains('hidden') && !document.querySelector('.modal-overlay:not(.hidden)')) {
+    } else if ((!detailView.classList.contains('hidden') || !issueView.classList.contains('hidden')) && !document.querySelector('.modal-overlay:not(.hidden)')) {
         nacistGalerii(searchInput.value);
     }
 });
@@ -1679,9 +1785,14 @@ document.getElementById('addModelForm').onsubmit = async (e) => {
 document.getElementById('addAlbumForm').onsubmit = async (e) => {
     e.preventDefault();
     const typ = document.getElementById('selectTyp').value;
-    const album = typ === 'Centerfold'
-        ? `${document.getElementById('inputAlbumRok').value}-${document.getElementById('selectAlbumMesic').value}`
-        : document.getElementById('inputAlbumName').value.trim();
+    const rok = document.getElementById('inputAlbumRok').value;
+    const mesic = document.getElementById('selectAlbumMesic').value;
+    if (Boolean(rok) !== Boolean(mesic)) {
+        oznamit('Vydání potřebuje měsíc i rok. Vyplň obojí, nebo nech obojí prázdné.');
+        return;
+    }
+    const vydani = rok ? `${rok}-${mesic}` : '';
+    const album = typ === 'Centerfold' ? vydani : document.getElementById('inputAlbumName').value.trim();
     const links = document.getElementById('inputBulkLinks').value;
 
     if (editovaneAlbum && !await UpdateAlbum(aktualniModelka.id, editovaneAlbum.album, editovaneAlbum.typ, album, typ)) {
@@ -1690,6 +1801,10 @@ document.getElementById('addAlbumForm').onsubmit = async (e) => {
     }
     if (links.trim()) {
         oznamitVlozeni(await AddBulkPhotos(aktualniModelka.id, album, typ, links), 'fotek');
+    }
+    // Centerfold má vydání přímo v názvu alba, ostatním se přiřazuje zvlášť
+    if (typ !== 'Centerfold') {
+        await SetVydaniAlba(aktualniModelka.id, album, typ, vydani);
     }
     albumModal.classList.add('hidden');
     document.getElementById('addAlbumForm').reset();

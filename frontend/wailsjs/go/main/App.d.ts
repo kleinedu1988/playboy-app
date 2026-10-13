@@ -24,6 +24,8 @@ export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
+export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
+
 export function OveritOdkaz(arg1:string):Promise<number>;
 
 export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):Promise<boolean>;
@@ -31,6 +33,8 @@ export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):P
 export function SetRotaceFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 
 export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean):Promise<boolean>;
+
+export function SetVydaniAlba(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
 
 export function SlozkaZaloh():Promise<string>;
 

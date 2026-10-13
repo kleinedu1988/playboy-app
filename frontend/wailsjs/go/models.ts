@@ -9,6 +9,7 @@ export namespace main {
 	    rotace: number;
 	    spojit: boolean;
 	    jmenoModelky: string;
+	    vydani: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Fotografie(source);
@@ -24,6 +25,7 @@ export namespace main {
 	        this.rotace = source["rotace"];
 	        this.spojit = source["spojit"];
 	        this.jmenoModelky = source["jmenoModelky"];
+	        this.vydani = source["vydani"];
 	    }
 	}
 	export class NedostupnySoubor {

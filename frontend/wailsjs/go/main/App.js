@@ -46,6 +46,10 @@ export function GetModelky(arg1) {
   return window['go']['main']['App']['GetModelky'](arg1);
 }
 
+export function GetVydani(arg1) {
+  return window['go']['main']['App']['GetVydani'](arg1);
+}
+
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
 }
@@ -60,6 +64,10 @@ export function SetRotaceFotek(arg1, arg2) {
 
 export function SetSpojeniAlba(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SetSpojeniAlba'](arg1, arg2, arg3, arg4);
+}
+
+export function SetVydaniAlba(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SetVydaniAlba'](arg1, arg2, arg3, arg4);
 }
 
 export function SlozkaZaloh() {

@@ -82,7 +82,9 @@ type Fotografie struct {
 	Rotace    int    `json:"rotace"` // otočení při zobrazení: 0, 90, 180, 270
 	// Stránky centerfoldu v albu se zobrazují spojené do jednoho plakátu
 	Spojit       bool   `json:"spojit"`
-	JmenoModelky string `json:"jmenoModelky"` // vyplněno jen v přehledu centerfoldů
+	JmenoModelky string `json:"jmenoModelky"` // vyplněno jen v přehledech napříč modelkami
+	// Vydání časopisu RRRR-MM, ke kterému fotka patří; u centerfoldu a coveru je to přímo album
+	Vydani string `json:"vydani"`
 }
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
@@ -301,11 +303,11 @@ func (a *App) startup(ctx context.Context) {
 		FOREIGN KEY(modelka_id) REFERENCES modelky(id)
 	);`)
 
-	for _, sloupec := range []string{"rotace", "spojit"} {
-		if a.maSloupec("fotografie", sloupec) {
+	for _, sloupec := range [][2]string{{"rotace", "INTEGER"}, {"spojit", "INTEGER"}, {"vydani", "TEXT"}} {
+		if a.maSloupec("fotografie", sloupec[0]) {
 			continue
 		}
-		if _, err := a.db.Exec(fmt.Sprintf(`ALTER TABLE fotografie ADD COLUMN %s INTEGER`, sloupec)); err != nil {
+		if _, err := a.db.Exec(fmt.Sprintf(`ALTER TABLE fotografie ADD COLUMN %s %s`, sloupec[0], sloupec[1])); err != nil {
 			a.chyba("migrace DB", err)
 		}
 	}
@@ -546,7 +548,10 @@ func (a *App) DeleteVse() bool {
 	return true
 }
 
-const vyberFotografii = "SELECT f.id, f.modelka_id, f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0)"
+// Vydání fotky: centerfold a cover ho mají v názvu alba, ostatní ve vlastním sloupci
+const vydaniFotky = "CASE WHEN f.typ IN ('Centerfold', 'Cover') THEN f.album ELSE COALESCE(f.vydani, '') END"
+
+const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky
 
 func (a *App) nacistFotografie(query string, sJmenem bool, args ...interface{}) []Fotografie {
 	rows, err := a.db.Query(query, args...)
@@ -560,7 +565,7 @@ func (a *App) nacistFotografie(query string, sJmenem bool, args ...interface{}) 
 	for rows.Next() {
 		var f Fotografie
 		var driveID string
-		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit}
+		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani}
 		if sJmenem {
 			cile = append(cile, &f.JmenoModelky)
 		}
@@ -619,6 +624,29 @@ func (a *App) UpdateCover(id int, vydani, rawLink string) bool {
 	_, err := a.db.Exec(query, args...)
 	if err != nil {
 		a.chyba("UpdateCover", err)
+	}
+	return err == nil
+}
+
+// Vše, co patří k jednomu vydání časopisu: covery, centerfoldy i pictorialy napříč modelkami
+func (a *App) GetVydani(vydani string) []Fotografie {
+	if !vzorVydani.MatchString(vydani) {
+		return nil
+	}
+	return a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '') FROM fotografie f
+		LEFT JOIN modelky m ON m.id = f.modelka_id
+		WHERE `+vydaniFotky+` = ?
+		ORDER BY m.jmeno COLLATE NOCASE, f.album, f.id`, true, vydani)
+}
+
+// Přiřazení alba (typicky pictorialu) k vydání časopisu; prázdné vydání přiřazení ruší
+func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
+	if vydani != "" && !vzorVydani.MatchString(vydani) {
+		return false
+	}
+	_, err := a.db.Exec("UPDATE fotografie SET vydani = ? WHERE modelka_id = ? AND album = ? AND typ = ?", vydani, modelkaID, album, typ)
+	if err != nil {
+		a.chyba("SetVydaniAlba", err)
 	}
 	return err == nil
 }
@@ -840,13 +868,17 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 	var spojit, rotace int
 	a.db.QueryRow("SELECT COALESCE(MAX(spojit), 0), COALESCE(MAX(rotace), 0) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND spojit = 1",
 		modelkaID, album, typ).Scan(&spojit, &rotace)
+	// ... a také vydání, ke kterému album patří
+	var vydani string
+	a.db.QueryRow("SELECT COALESCE(MAX(vydani), '') FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?",
+		modelkaID, album, typ).Scan(&vydani)
 
 	for i, stav := range overitSoubory(ids) {
 		if stav == souborNedostupny {
 			vysledek.Nedostupne++
 			continue
 		}
-		_, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id, spojit, rotace) VALUES (?, ?, ?, ?, ?, ?)", modelkaID, album, typ, ids[i], spojit, rotace)
+		_, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id, spojit, rotace, vydani) VALUES (?, ?, ?, ?, ?, ?, ?)", modelkaID, album, typ, ids[i], spojit, rotace, vydani)
 		if err != nil {
 			a.chyba("AddBulkPhotos", err)
 			continue

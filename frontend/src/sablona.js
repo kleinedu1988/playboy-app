@@ -11,6 +11,7 @@ export const SABLONA_OKNA = `
         <button data-rezim="centerfoldy" data-kratce="Cf">Centerfoldy</button>
         <button data-rezim="covery" data-kratce="Cov">Covery</button>
         <button data-rezim="kalendar" data-kratce="Kal">Kalendář</button>
+        <button data-rezim="nejlepsi" data-kratce="Nej">Nejlepší</button>
         <button data-rezim="prehled" data-kratce="Př">Přehled</button>
       </div>
       <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
@@ -36,12 +37,23 @@ export const SABLONA_OKNA = `
     <div id="gallery" class="gallery-grid"></div>
 
     <!-- Stěna centerfoldů -->
+    <nav id="wallNav"></nav>
     <div id="wall" class="wall hidden"></div>
+
+    <!-- Nejlépe hodnocené fotky napříč sbírkou -->
+    <div id="best" class="best hidden">
+      <nav id="bestNav"></nav>
+      <div id="bestList"></div>
+    </div>
 
     <!-- Stránka vydání časopisu: cover, centerfold a pictorialy -->
     <div id="issueView" class="detail-container hidden">
       <aside id="issueSide" class="profile-side"></aside>
-      <section id="issueMain" class="profile-main"></section>
+      <section class="profile-main">
+        <!-- Lišta měsíců ročníku nebo alb fotografa -->
+        <nav id="issueNav"></nav>
+        <div id="issueMain"></div>
+      </section>
     </div>
 
     <!-- Kalendář vydání -->
@@ -497,6 +509,7 @@ export const SABLONA_OKNA = `
       <button id="lbZoom" class="lb-btn" disabled>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M10.5 7.5v6M7.5 10.5h6"/></svg>
       </button>
+      <button id="lbShuffle" class="lb-btn" title="Zamíchat pořadí (S)">&#8644;</button>
       <button id="lbPlay" class="lb-btn" title="Slideshow (mezerník)">&#9654;</button>
       <button id="lbClose" class="lb-btn" title="Zavřít (Esc)">&times;</button>
     </div>

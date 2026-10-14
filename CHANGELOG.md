@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.8.0] – 2026-10-14
+
+Etapa 5 roadmapy: prohlížení napříč sbírkou. Schéma databáze ani formát exportu se nemění.
+
+### Přidáno
+- Přehled Nejlepší: fotky s 3, 4 nebo 5 srdíčky napříč sbírkou po modelkách, s lištou modelek a slideshow.
+- Stránka ročníku: všechna čísla roku po měsících i pictorialy přiřazené jen k ročníku; otevírá se
+  klikem na rok v kalendáři.
+- Stránka fotografa: jeho alba napříč modelkami chronologicky; otevírá se klikem na „Foto:“ u alba.
+- Stěna centerfoldů podle vydání jako časová osa s lištou desetiletí.
+- Zamíchané pořadí v prohlížeči (tlačítko nebo klávesa S), nastavitelný interval slideshow, náhodná modelka.
+
 ## [0.7.0] – 2026-10-14
 
 Etapa 4 roadmapy: sbírka o stovkách modelek. Schéma databáze: úprava č. 4.
@@ -101,6 +113,7 @@ První verze: katalog modelek s alby, centerfoldy a covery časopisů, fotky z G
 - Hodnocení modelek 1–5 srdíčky, rychlé přidání modelky jen jménem, formulář na záložkách.
 - Zálohy před mazáním, kontrola dostupnosti souborů na Disku.
 
+[0.8.0]: v0.8.0
 [0.7.0]: v0.7.0
 [0.6.0]: v0.6.0
 [0.5.0]: v0.5.0

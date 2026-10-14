@@ -2301,3 +2301,69 @@ body.razeni .photo-item {
     border-color: var(--accent);
     color: var(--accent);
 }
+
+/* Nejlepší fotky a ročník: nástrojová lišta a oddíly */
+.best-toolbar,
+.wall-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.best-toolbar .chip.active,
+.wall-toolbar .chip.active {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.best-model + .best-model,
+.issue-month + .issue-month {
+    margin-top: 32px;
+}
+
+.issue-month > h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px 0;
+    font-size: 18px;
+}
+
+.issue-month .issue-album + .issue-album {
+    margin-top: 18px;
+}
+
+/* Lišta nástrojů přes celou šířku stěny i ve sloupcovém rozvržení */
+.wall .wall-toolbar {
+    column-span: all;
+}
+
+/* Stěna podle vydání: mřížka čtená po řádcích jako časová osa */
+.wall.chronologicky {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    align-items: start;
+    columns: auto;
+}
+
+.wall.chronologicky .wall-toolbar,
+.wall.chronologicky .empty-state {
+    grid-column: 1 / -1;
+}
+
+.wall.chronologicky .wall-item {
+    margin: 0;
+}
+
+.cal-year-link strong {
+    font-size: 18px;
+}
+
+.cal-year-link:hover strong {
+    color: var(--accent);
+}

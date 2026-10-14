@@ -1383,14 +1383,65 @@ func (a *App) UpdateCover(id int, vydani, rawLink string) bool {
 }
 
 // Vše, co patří k jednomu vydání časopisu: covery, centerfoldy i pictorialy napříč modelkami
+// Vydání RRRR-MM: vše z jednoho čísla. Ročník RRRR (s edicí RRRR-CZ): vše z celého roku dané edice,
+// tedy čísla po měsících i pictorialy přiřazené jen k ročníku.
 func (a *App) GetVydani(vydani string) []Fotografie {
 	if !vzorVydaniAlba.MatchString(vydani) {
 		return nil
 	}
+	podminka, args := vydaniFotky+" = ?", []interface{}{vydani}
+	if rok, edice, jenRocnik := rozlozitRocnik(vydani); jenRocnik {
+		vzor := rok + "-[0-1][0-9]"
+		if edice != "" {
+			vzor += "-" + edice
+		}
+		podminka, args = "("+vydaniFotky+" = ? OR "+vydaniFotky+" GLOB ?)", []interface{}{vydani, vzor}
+	}
 	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
 		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
-		WHERE `+vydaniFotky+` = ?
-		ORDER BY m.jmeno COLLATE NOCASE, f.album, `+razeniFotek, true, true, vydani))
+		WHERE `+podminka+`
+		ORDER BY `+vydaniFotky+`, m.jmeno COLLATE NOCASE, f.album, `+razeniFotek, true, true, args...))
+}
+
+// „1975" → 1975, "", true; „1975-CZ" → 1975, "CZ", true; vydání s měsícem → false
+func rozlozitRocnik(vydani string) (rok, edice string, jenRocnik bool) {
+	if len(vydani) == 4 {
+		return vydani, "", true
+	}
+	if len(vydani) == 7 && vydani[4] == '-' && vydani[5] >= 'A' {
+		return vydani[:4], vydani[5:], true
+	}
+	return "", "", false
+}
+
+// Fotky s aspoň minHodnoceni srdíčky napříč sbírkou, po modelkách od nejlépe hodnocených
+func (a *App) GetNejlepsiFotky(minHodnoceni int) []Fotografie {
+	if minHodnoceni < 1 {
+		minHodnoceni = 1
+	}
+	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
+		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
+		WHERE COALESCE(f.hodnoceni, 0) >= ?
+		ORDER BY m.jmeno IS NULL, m.jmeno COLLATE NOCASE, f.hodnoceni DESC, f.album, f.id`, true, true, minHodnoceni))
+}
+
+// Alba jednoho fotografa napříč modelkami (na velikosti písmen a diakritice ve jméně nezáleží)
+func (a *App) GetAlbaFotografa(fotograf string) []Fotografie {
+	hledany := zjednodusit(strings.TrimSpace(fotograf))
+	fotky := []Fotografie{}
+	if hledany == "" {
+		return fotky
+	}
+	vsechny := a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
+		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
+		WHERE COALESCE(a.fotograf, '') <> ''
+		ORDER BY `+vydaniFotky+`, m.jmeno COLLATE NOCASE, f.album, `+razeniFotek, true, true)
+	for _, f := range vsechny {
+		if zjednodusit(strings.TrimSpace(f.Fotograf)) == hledany {
+			fotky = append(fotky, f)
+		}
+	}
+	return a.doplnitDalsiModelky(fotky)
 }
 
 // Všechny fotky přiřazené k nějakému vydání, pro kalendář vydání

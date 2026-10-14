@@ -1413,3 +1413,48 @@ func TestVerzeSouhlasi(t *testing.T) {
 		t.Errorf("vydaná verze %s nemá v CHANGELOG.md datum", cisla)
 	}
 }
+
+func TestProhlizeniNapricSbirkou(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	odkazC := "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view"
+	a.AddModelka(Modelka{Jmeno: "Bára"})
+	a.AddModelka(Modelka{Jmeno: "Adéla"})
+	a.AddBulkPhotos(1, "1975-03", "Centerfold", odkazA)
+	a.AddBulkPhotos(1, "Pictorial", "Pictorial", odkazB+" "+odkazC)
+	a.SetVydaniAlba(1, "Pictorial", "Pictorial", "1975")
+	a.AddBulkPhotos(2, "CZ pictorial", "Pictorial", odkazA)
+	a.SetVydaniAlba(2, "CZ pictorial", "Pictorial", "1975-06-CZ")
+	a.AddCover("1975-03", odkazC)
+	a.AddCover("1976-01", odkazB)
+
+	// Ročník: čísla po měsících i pictorial jen k ročníku; jiná edice a jiný rok ne
+	if n := len(a.GetVydani("1975")); n != 4 {
+		t.Fatalf("ročník 1975 US má %d fotek, čekám 4", n)
+	}
+	if cz := a.GetVydani("1975-CZ"); len(cz) != 1 || cz[0].JmenoModelky != "Adéla" {
+		t.Fatalf("ročník 1975 CZ: %+v", cz)
+	}
+	if n := len(a.GetVydani("1975-03")); n != 2 {
+		t.Fatalf("číslo 1975-03 má %d fotek", n)
+	}
+
+	// Nejlepší fotky: jen s dost srdíčky, napříč modelkami
+	fotky := a.GetFotografieModelky(1)
+	a.SetHodnoceniFotek([]int{fotky[0].ID}, 5)
+	a.SetHodnoceniFotek([]int{fotky[1].ID}, 3)
+	a.SetHodnoceniFotek([]int{a.GetFotografieModelky(2)[0].ID}, 4)
+	if n := len(a.GetNejlepsiFotky(4)); n != 2 {
+		t.Fatalf("fotek se 4+ srdíčky: %d", n)
+	}
+	if nej := a.GetNejlepsiFotky(1); len(nej) != 3 || nej[0].JmenoModelky != "Adéla" {
+		t.Fatalf("nejlepší po modelkách: %+v", nej)
+	}
+
+	// Fotograf: jeho alba napříč modelkami
+	a.SetPopisAlba(1, "Pictorial", "Pictorial", "", "Arny Freytag")
+	a.SetPopisAlba(2, "CZ pictorial", "Pictorial", "", "arny  freytag")
+	a.SetPopisAlba(2, "CZ pictorial", "Pictorial", "", "Arny Freytag")
+	if alba := a.GetAlbaFotografa("ARNY FREYTAG"); len(alba) != 3 {
+		t.Fatalf("alba fotografa: %d fotek", len(alba))
+	}
+}

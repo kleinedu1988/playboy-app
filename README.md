@@ -81,3 +81,11 @@ ostatní s příponou: `2009-11-CZ`. Edice se volí ve formuláři alba a coveru
 
 Do hledání modelek jde psát i `pole:hodnota`, např. `vlasy:blond`, `fotograf:"arny freytag"`, `rok:1975`
 (rok vydání), `narozena:1990`, `edice:CZ`, `tag:`, `role:`, `narodnost:`, `oci:`, `misto:`. Slova se kombinují.
+
+## Prohlížení
+
+- **Nejlepší** (přepínač v hlavičce): fotky s 3, 4 nebo 5 srdíčky napříč sbírkou.
+- **Ročník**: klik na rok v kalendáři; všechna čísla roku po měsících.
+- **Fotograf**: klik na „Foto:“ u alba; všechna jeho alba.
+- **Prohlížeč fotek**: šipky listují, nahoru/dolů skáčou mezi alby, mezerník spouští slideshow, S míchá pořadí,
+  F rozkládá plakát, R otáčí, 1–5 hodnotí, Esc zavírá. Interval slideshow je v nabídce ⋯.

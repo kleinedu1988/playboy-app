@@ -99,7 +99,7 @@ Cíl: ve stovkách karet se neztratíte a údaje se doplňují v řadě za sebou
 | Kalendář a přehled z agregovaných dat | Dnes se kvůli kalendáři posílá každá fotka přiřazená k vydání | M |
 | Šablona adresy obrázku na jednom místě | Adresa Googlu je natvrdo na čtyřech místech; po změně na jejich straně je nutný nový build | S–M |
 
-## Etapa 5 – Prohlížení napříč sbírkou
+## Etapa 5 – Prohlížení napříč sbírkou (hotovo 14. 10. 2026, verze 0.8.0)
 
 Cíl: pustit si to nejlepší, celý ročník, práci jednoho fotografa nebo náhodný výběr. Malé položky jdou vzít kdykoli dřív.
 

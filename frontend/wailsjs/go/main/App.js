@@ -38,6 +38,10 @@ export function ExportovatDoSouboru() {
   return window['go']['main']['App']['ExportovatDoSouboru']();
 }
 
+export function GetAlbaFotografa(arg1) {
+  return window['go']['main']['App']['GetAlbaFotografa'](arg1);
+}
+
 export function GetCenterfoldy() {
   return window['go']['main']['App']['GetCenterfoldy']();
 }
@@ -60,6 +64,10 @@ export function GetKalendar() {
 
 export function GetModelky(arg1) {
   return window['go']['main']['App']['GetModelky'](arg1);
+}
+
+export function GetNejlepsiFotky(arg1) {
+  return window['go']['main']['App']['GetNejlepsiFotky'](arg1);
 }
 
 export function GetPrehled(arg1) {

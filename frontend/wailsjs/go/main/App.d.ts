@@ -20,6 +20,8 @@ export function DeleteVse():Promise<boolean>;
 
 export function ExportovatDoSouboru():Promise<string>;
 
+export function GetAlbaFotografa(arg1:string):Promise<Array<main.Fotografie>>;
+
 export function GetCenterfoldy():Promise<Array<main.Fotografie>>;
 
 export function GetCovery():Promise<Array<main.Fotografie>>;
@@ -31,6 +33,8 @@ export function GetFotografove():Promise<Array<string>>;
 export function GetKalendar():Promise<Array<main.VydaniKalendare>>;
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
+
+export function GetNejlepsiFotky(arg1:number):Promise<Array<main.Fotografie>>;
 
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 

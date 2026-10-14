@@ -646,9 +646,9 @@ main {
     bottom: 8px;
     z-index: 3;
     display: flex;
-    align-items: center;
-    gap: 2px;
-    padding: 4px 4px 4px 10px;
+    flex-direction: column;
+    gap: 4px;
+    padding: 8px 6px 4px;
     border: 1px solid var(--panel-okraj);
     border-radius: 10px;
     background-color: var(--panel-bg);
@@ -656,14 +656,22 @@ main {
     cursor: default;
 }
 
+/* Dva řádky: nahoře posuvník přiblížení přes celou šířku, pod ním tlačítka */
 .crop-zoom {
-    flex: 1;
-    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0;
     height: auto;
     padding: 0;
     border: none;
     background: none;
     accent-color: var(--accent);
+}
+
+.crop-tlacitka {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
 }
 
 .crop-panel .panel-btn {
@@ -3301,7 +3309,7 @@ body.razeni .photo-item {
     color: var(--text-main);
 }
 
-/* Karta modelky, centerfold a cover: fotka přes celou kartu, popisek je plovoucí panel dole
+/* Karta modelky, centerfold a cover: fotka přes celou kartu, popisek je průhledný pruh přes spodek fotky
    a ukáže se až po najetí myší (nebo při výběru klávesnicí) */
 .card,
 .wall-item,
@@ -3313,16 +3321,16 @@ body.razeni .photo-item {
 .wall-item figcaption,
 .cover-item figcaption {
     position: absolute;
-    left: 8px;
-    bottom: 8px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 2;
-    max-width: calc(100% - 16px);
     box-sizing: border-box;
-    padding: 6px 10px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 8px;
-    background: var(--panel-bg);
-    box-shadow: var(--panel-stin);
+    padding: 12px 16px;
+    border-top: 1px solid var(--panel-okraj);
+    background: rgba(24, 24, 28, 0.82);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s;
@@ -3338,7 +3346,7 @@ body.razeni .photo-item {
 }
 
 .card-info h3 {
-    font-size: 14px;
+    font-size: 15px;
 }
 
 .wall-item figcaption strong,

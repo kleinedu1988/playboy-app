@@ -3369,13 +3369,13 @@ body.razeni .photo-item {
     display: none;
 }
 
-/* Srdíčka na kartě modelky se ukážou jen po najetí myší (nebo při výběru klávesnicí), i když je hodnocená */
-.card .hearts.rated {
-    opacity: 0;
+/* Karta modelky: jméno je vidět pořád, srdíčka u hodnocené modelky pořád, u nehodnocené jen po najetí myší */
+.card .card-info {
+    opacity: 1;
 }
 
+.card .hearts.rated,
 .card:hover .hearts,
-.card:hover .hearts.rated,
 .card:focus-visible .hearts,
 .card .hearts:focus-within {
     opacity: 1;

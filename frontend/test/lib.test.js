@@ -95,3 +95,14 @@ test('novinky z changelogu', async () => {
     assert.ok(html.includes('<h5>Přidáno</h5>') && html.includes('<li>Okno <code>?</code> s nápovědou.</li>') && html.includes('<p>Nápověda.</p>'));
     assert.ok(telaNaHtml(novinkyMezi(text, '0.12.0', '0.13.0')).includes('14. 10. 2026'));
 });
+
+test('porovnání předběžných verzí', async () => {
+    const { porovnatVerze, novinkyMezi } = await import('../src/lib/changelog.js');
+    assert.ok(porovnatVerze('1.0.0-alpha.2', '1.0.0-alpha.1') > 0);
+    assert.ok(porovnatVerze('1.0.0-beta.1', '1.0.0-alpha.9') > 0);
+    assert.ok(porovnatVerze('1.0.0', '1.0.0-rc.1') > 0);
+    assert.ok(porovnatVerze('1.0.0-alpha.1', '0.14.3') > 0);
+    assert.equal(porovnatVerze('0.14.3-dev', '0.14.3'), 0);
+    const text = '## [1.0.0-alpha.2] – 2026-11-01\n\n- B\n\n## [1.0.0-alpha.1] – 2026-10-20\n\n- A\n';
+    assert.deepEqual(novinkyMezi(text, '1.0.0-alpha.1', '1.0.0-alpha.2').map(v => v.verze), ['1.0.0-alpha.2']);
+});

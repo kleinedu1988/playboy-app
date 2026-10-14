@@ -188,28 +188,33 @@ func (a *App) SmazatVyber(id int) bool {
 // Přidání fotek na konec výběru; fotka, která už ve výběru je, se přeskočí. Vrací počet přidaných.
 func (a *App) PridatDoVyberu(vyberID int, fotoIDs []int) int {
 	pridano := 0
-	for _, id := range fotoIDs {
-		vysledek, err := a.db.Exec(`INSERT OR IGNORE INTO vybery_fotky (vyber_id, fotografie_id, poradi)
-			SELECT ?, ?, COALESCE(MAX(poradi), 0) + 1 FROM vybery_fotky WHERE vyber_id = ?`, vyberID, id, vyberID)
-		if err != nil {
-			a.chyba("PridatDoVyberu", err)
-			continue
+	if !a.vTransakci("PridatDoVyberu", func(tx dotazovac) error {
+		for _, id := range fotoIDs {
+			vysledek, err := tx.Exec(`INSERT OR IGNORE INTO vybery_fotky (vyber_id, fotografie_id, poradi)
+				SELECT ?, ?, COALESCE(MAX(poradi), 0) + 1 FROM vybery_fotky WHERE vyber_id = ?`, vyberID, id, vyberID)
+			if err != nil {
+				return err
+			}
+			if n, _ := vysledek.RowsAffected(); n > 0 {
+				pridano++
+			}
 		}
-		if n, _ := vysledek.RowsAffected(); n > 0 {
-			pridano++
-		}
+		return nil
+	}) {
+		return 0
 	}
 	return pridano
 }
 
 func (a *App) OdebratZVyberu(vyberID int, fotoIDs []int) bool {
-	for _, id := range fotoIDs {
-		if _, err := a.db.Exec("DELETE FROM vybery_fotky WHERE vyber_id = ? AND fotografie_id = ?", vyberID, id); err != nil {
-			a.chyba("OdebratZVyberu", err)
-			return false
+	return a.vTransakci("OdebratZVyberu", func(tx dotazovac) error {
+		for _, id := range fotoIDs {
+			if _, err := tx.Exec("DELETE FROM vybery_fotky WHERE vyber_id = ? AND fotografie_id = ?", vyberID, id); err != nil {
+				return err
+			}
 		}
-	}
-	return true
+		return nil
+	})
 }
 
 // Fotky výběru v pořadí, v jakém byly přidány

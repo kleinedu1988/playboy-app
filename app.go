@@ -23,8 +23,12 @@ import (
 )
 
 type App struct {
-	ctx context.Context
-	db  *sql.DB
+	// Kopie aplikace nad spojením s transakcí importu: hromadné zápisy jdou do ní, ne do nové transakce
+	vImportu bool
+	// Připravené příkazy importu (viz pripraveny)
+	pripravene map[string]*sql.Stmt
+	ctx        context.Context
+	db         *sql.DB
 	// Soubor databáze; prázdný u dočasné databáze v paměti
 	cestaDb string
 
@@ -408,6 +412,15 @@ func (a *App) SeznamZaloh() []Zaloha {
 
 // Návrat databáze do stavu zálohy. Současný stav se předtím uloží jako další záloha a heslo zůstává současné.
 // Vrací text chyby, prázdný při úspěchu.
+// Databáze, které program nerozumí nebo je poškozená, se otevře znovu jen pro čtení
+func (a *App) prepnoutJenProCteni() {
+	if ro, err := sql.Open("sqlite", "file:"+a.cestaDb+"?mode=ro&_pragma=busy_timeout(5000)"); err == nil && ro.Ping() == nil {
+		a.db.Close()
+		a.db = ro
+		a.chybaStartu += " Program běží jen pro čtení, změny se neuloží."
+	}
+}
+
 func (a *App) ObnovitZalohu(soubor string) string {
 	// Jen soubor ze složky záloh, žádná cesta zvenku
 	if soubor != filepath.Base(soubor) || !vzorZalohy.MatchString(soubor) {
@@ -426,6 +439,14 @@ func (a *App) ObnovitZalohu(soubor string) string {
 		return fmt.Sprintf("Záloha je poškozená (%s), databáze zůstala beze změny.", stav)
 	}
 
+	// Obnovovaná záloha se nejdřív zkopíruje stranou: záloha současného stavu spouští úklid záloh,
+	// který by mohl smazat právě ji (nejstarší v plném počtu)
+	docasna := filepath.Join(slozkaDat(), "obnovovana.db.tmp")
+	if err := kopirovatSoubor(zaloha, docasna); err != nil {
+		return fmt.Sprintf("Zálohu se nepodařilo připravit, databáze zůstala beze změny: %v", err)
+	}
+	defer os.Remove(docasna)
+	zaloha = docasna
 	if err := a.zalohovat("pred-obnovenim"); err != nil {
 		return fmt.Sprintf("Současný stav se nepodařilo zazálohovat, obnovení se neprovedlo: %v", err)
 	}
@@ -444,7 +465,10 @@ func (a *App) ObnovitZalohu(soubor string) string {
 	stare.Close()
 	// Starší záloha může mít starší schéma
 	if err := a.migrovat(); err != nil {
-		return fmt.Sprintf("Obnovenou databázi se nepodařilo připravit: %v", err)
+		// Do schématu, které se nepodařilo upravit, se nezapisuje
+		a.chybaStartu = fmt.Sprintf("Obnovenou databázi se nepodařilo připravit (%v). Záloha stavu před obnovením je ve složce %s.", err, slozkaZaloh())
+		a.prepnoutJenProCteni()
+		return a.chybaStartu
 	}
 	if err := a.ulozitNastaveni("heslo", heslo); err != nil {
 		return fmt.Sprintf("Databáze je obnovená, ale nepodařilo se zachovat současné heslo: %v", err)
@@ -649,11 +673,7 @@ func (a *App) startup(ctx context.Context) {
 	}
 	// S chybou běží program jen pro čtení, aby nezapisoval do databáze, které nerozumí nebo která je poškozená
 	if a.chybaStartu != "" && a.cestaDb != "" {
-		if ro, err := sql.Open("sqlite", "file:"+a.cestaDb+"?mode=ro&_pragma=busy_timeout(5000)"); err == nil && ro.Ping() == nil {
-			a.db.Close()
-			a.db = ro
-			a.chybaStartu += " Program běží jen pro čtení, změny se neuloží."
-		}
+		a.prepnoutJenProCteni()
 		fmt.Println(a.chybaStartu)
 	}
 
@@ -1296,13 +1316,37 @@ func (a *App) SetHodnoceniFotek(ids []int, hodnoceni int) bool {
 	if hodnoceni > 5 {
 		hodnoceni = 5
 	}
-	for _, id := range ids {
-		if _, err := a.db.Exec(`UPDATE fotky SET hodnoceni = ? WHERE id = ?`, hodnoceni, id); err != nil {
-			a.chyba("SetHodnoceniFotek", err)
+	return a.vTransakci("SetHodnoceniFotek", func(tx dotazovac) error {
+		for _, id := range ids {
+			if _, err := tx.Exec(`UPDATE fotky SET hodnoceni = ? WHERE id = ?`, hodnoceni, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// Hromadný zápis v jedné transakci: jeden zápis na disk místo jednoho za každou fotku, a buď vše, nebo nic.
+// Import už běží ve vlastní transakci, tam se zapisuje přímo do ní.
+func (a *App) vTransakci(kde string, fn func(q dotazovac) error) bool {
+	if a.vImportu {
+		if err := fn(a.db); err != nil {
+			a.chyba(kde, err)
 			return false
 		}
+		return true
 	}
-	return true
+	tx, err := a.db.Begin()
+	if err == nil {
+		defer tx.Rollback()
+		if err = fn(tx); err == nil {
+			err = tx.Commit()
+		}
+	}
+	if err != nil {
+		a.chyba(kde, err)
+	}
+	return err == nil
 }
 
 // Ruční pořadí fotek alba (nebo stránek spojeného plakátu): fotky dostanou pořadí podle místa v seznamu
@@ -1383,10 +1427,14 @@ func (a *App) DeleteModelka(id int) bool {
 		rows.Close()
 	}
 	for _, p := range predat {
+		var err error
+		// Stejnojmenné album už další modelka má: sdílené se s ním sloučí, fotky se neztratí
 		if pocetFotekAlba(tx, p.komu, p.album, p.typ) > 0 {
-			continue // stejnojmenné album už má, sdílené se smaže s modelkou
+			err = sloucitAlbaTx(tx, id, p.album, p.typ, p.komu, p.album, p.typ)
+		} else {
+			err = presunoutAlbumTx(tx, id, p.album, p.typ, p.komu)
 		}
-		if err := presunoutAlbumTx(tx, id, p.album, p.typ, p.komu); err != nil {
+		if err != nil {
 			a.chyba("DeleteModelka", err)
 			return false
 		}
@@ -1517,8 +1565,11 @@ func (a *App) nactiFotografie(query string, sJmenem, sPopisem bool, args ...inte
 
 // Načtení fotek konkrétní modelky pro její detailní profil
 // Fotky modelky včetně alb, ve kterých je vedená jako další modelka
-const dotazFotekModelky = vyberFotografii + vyberPopisu + " FROM fotografie f" + pripojeniPopisu + ` WHERE f.modelka_id = ?1
-	OR EXISTS (SELECT 1 FROM alba_modelky am WHERE am.album_id = a.id AND am.modelka_id = ?1) ORDER BY ` + razeniFotek
+// Alba modelky (hlavní i další) se vyberou přes index alb a vazeb; podmínka s OR nad spojením
+// procházela všechna alba sbírky a export (po modelkách) byl kvadratický
+const dotazFotekModelky = vyberFotografii + vyberPopisu + " FROM fotografie f" + pripojeniPopisu + ` WHERE f.album_id IN (
+	SELECT id FROM alba WHERE COALESCE(modelka_id, 0) = ?1 UNION SELECT album_id FROM alba_modelky WHERE modelka_id = ?1)
+	ORDER BY ` + razeniFotek
 
 func (a *App) GetFotografieModelky(modelkaID int) []Fotografie {
 	return a.doplnitDalsiModelky(a.nacistFotografie(dotazFotekModelky, false, true, modelkaID))
@@ -1676,13 +1727,14 @@ func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
 // Uložení otočení fotek (u spojeného plakátu všech jeho stránek najednou)
 func (a *App) SetRotaceFotek(ids []int, rotace int) bool {
 	rotace = ((rotace % 360) + 360) % 360
-	for _, id := range ids {
-		if _, err := a.db.Exec("UPDATE fotky SET rotace = ? WHERE id = ?", rotace, id); err != nil {
-			a.chyba("SetRotaceFotek", err)
-			return false
+	return a.vTransakci("SetRotaceFotek", func(tx dotazovac) error {
+		for _, id := range ids {
+			if _, err := tx.Exec("UPDATE fotky SET rotace = ? WHERE id = ?", rotace, id); err != nil {
+				return err
+			}
 		}
-	}
-	return true
+		return nil
+	})
 }
 
 // Zapnutí nebo vypnutí spojení stránek alba do jednoho plakátu

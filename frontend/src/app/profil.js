@@ -15,9 +15,13 @@ import { selectionBar } from './vyber';
 
 // Otevření profilu modelky s fotogalerií
 export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}) {
-    if (!bezHistorie) zapamatovatMisto({ modelka });
     // Opožděná odpověď přehledu, ze kterého se sem přišlo, už profil nesmí přepsat
-    stav.cisloNacteni++;
+    const moje = ++stav.cisloNacteni;
+    // Galerie a historie drží objekty z doby načtení; po úpravě by profil i formulář ukázaly staré údaje
+    modelka = (await vsechnyModelky()).find(m => m.id === modelka.id) || modelka;
+    // Mezitím otevřený jiný pohled má přednost
+    if (moje !== stav.cisloNacteni) return;
+    if (!bezHistorie) zapamatovatMisto({ modelka });
     stav.aktualniModelka = modelka;
     ukazatPohled(detailView);
     // Dokud nejsou načtené fotky, není jasné, zda se ukáže titulní fotka, nebo centerfold

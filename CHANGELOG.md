@@ -5,6 +5,30 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.14.3] – 2026-10-14
+
+Opravy nálezů auditu před alfou. Schéma databáze ani formát exportu se nemění.
+
+### Opraveno
+- Data: import v režimu jen pro čtení (poškozená nebo novější databáze) už nezapisuje; sloučení modelek
+  nesmaže album, kterému zůstal jen text; smazání modelky sloučí sdílené album se stejnojmenným albem další
+  modelky místo smazání jeho fotek; obnovení nejstarší zálohy ji už nesmaže dřív, než se zkopíruje; po
+  nezdařené úpravě obnovené zálohy přejde program do režimu jen pro čtení; export a import zachovají datum
+  přidání coverů.
+- Import ručně psaných souborů: řádek „Zdroj: …“ uvnitř neodsazené poznámky zůstane v poznámce; blok kódu
+  jiného jazyka (json…) v Markdownu už nepřebere okolní text.
+- Rozhraní: okna (Přidat do výběru…, formuláře) se z prohlížeče otevírají nad ním; profil po šipkách a Zpět
+  ukazuje čerstvé údaje a formulář už nepřepíše dřívější úpravu; „Odebrat“ a Delete ve vlastním výběru
+  odebírají jen z výběru; po uložení alba se obnoví i vydání a věk v hlavičce profilu; okno alba zůstane
+  otevřené, když se neuloží žádná fotka; ⋯ na plakátu centerfoldu nabízí akce s fotkou; Esc zavře prohlížeč
+  dřív než výběr pod ním; „Otevřít profil“ z prohlížeče prohlížeč zavře; klávesa nabídky v prohlížeči ukáže
+  akce s fotkou; Alt+← a ? nefungují nad oknem, prohlížečem a zámkem; ročník nepočítá speciály mezi 12 čísel;
+  rok s označeným číslem se v kalendáři nesbalí; zrušený „Nový speciál…“ vrátí původní měsíc; „Co je nového“
+  rozliší předběžné verze (alpha, beta, rc).
+- Výkon: profil modelky se načítá přes index alb (na sbírce 500 modelek a 20 000 fotek z 14–48 ms na 6 ms),
+  export celé sbírky z 10,7 s na 2,2 s, import z 12,4 s na 4,6 s, převod staré databáze schématu 5 z 12 s
+  na desetiny sekundy; hromadné zápisy (srdíčka, otočení, výběry) v jedné transakci.
+
 ## [0.14.2] – 2026-10-14
 
 ### Opraveno

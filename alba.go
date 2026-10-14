@@ -104,7 +104,11 @@ func (a *App) dalsiModelkyAlb() map[string][]OdkazModelky {
 
 // Fotkám doplní další modelky jejich alba
 func (a *App) doplnitDalsiModelky(fotky []Fotografie) []Fotografie {
-	dalsi := a.dalsiModelkyAlb()
+	return doplnitDalsiModelkyZ(fotky, a.dalsiModelkyAlb())
+}
+
+// Totéž s předem načtenými vazbami (export je načte jednou pro všechny modelky)
+func doplnitDalsiModelkyZ(fotky []Fotografie, dalsi map[string][]OdkazModelky) []Fotografie {
 	for i := range fotky {
 		fotky[i].DalsiModelky = dalsi[fmt.Sprintf("%d\n%s\n%s", fotky[i].ModelkaID, fotky[i].Album, fotky[i].Typ)]
 		if fotky[i].DalsiModelky == nil {
@@ -363,7 +367,8 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 
 	type klicAlba struct{ album, typ string }
 	var alba []klicAlba
-	rows, err := tx.Query("SELECT DISTINCT album, typ FROM fotografie WHERE modelka_id = ?", zdrojID)
+	// Všechna alba zdroje, i ta bez fotek (jen s textem nebo dalšími modelkami); jinak by je smazala kaskáda
+	rows, err := tx.Query("SELECT album, typ FROM alba WHERE modelka_id = ?", zdrojID)
 	if err == nil {
 		for rows.Next() {
 			var k klicAlba

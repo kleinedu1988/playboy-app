@@ -6,6 +6,7 @@ import { detailView } from './prvky';
 import { otevritProfilPodleId } from './cover';
 import { pridatDoVyberu } from './nejlepsi';
 import { smazatFotku } from './sprava';
+import { lightbox, zavritLightbox } from './prohlizec';
 import { kopirovatText, odkazNaDisk } from './ulozeni';
 
 // Tlačítko ⋯ na dlaždici; nabídku otevře nabidky.js
@@ -19,7 +20,11 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
     const vProfilu = !detailView.classList.contains('hidden') && stav.aktualniModelka?.id === polozka.modelkaId;
     return [
         ...(profil && polozka.modelkaId && !vProfilu
-            ? [{ text: `Otevřít profil${polozka.jmenoModelky ? ': ' + polozka.jmenoModelky : ' modelky'}`, akce: () => otevritProfilPodleId(polozka.modelkaId) }] : []),
+            ? [{ text: `Otevřít profil${polozka.jmenoModelky ? ': ' + polozka.jmenoModelky : ' modelky'}`, akce: () => {
+                // Profil se otevře pod prohlížečem, proto ho nejdřív zavřít
+                if (!lightbox.classList.contains('hidden')) zavritLightbox();
+                otevritProfilPodleId(polozka.modelkaId);
+            } }] : []),
         { text: 'Přidat do výběru…', akce: () => pridatDoVyberu(stranky.map(f => f.id)) },
         { text: 'Otevřít na Google Disku', akce: () => BrowserOpenURL(odkazNaDisk(prvni)) },
         { text: 'Kopírovat odkaz', akce: () => kopirovatText(odkazNaDisk(prvni)) },

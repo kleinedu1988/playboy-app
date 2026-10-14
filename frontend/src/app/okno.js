@@ -22,7 +22,8 @@ export function pripravit() {
 
     // Alt + šipka vlevo jako v prohlížeči
     document.addEventListener('keydown', (e) => {
-        if (e.altKey && e.key === 'ArrowLeft' && !backBtn.classList.contains('hidden')) {
+        if (e.altKey && e.key === 'ArrowLeft' && !backBtn.classList.contains('hidden')
+            && !document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) {
             e.preventDefault();
             zpet();
         }

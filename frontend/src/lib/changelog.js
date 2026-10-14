@@ -7,10 +7,18 @@ export function cislaVerze(verze) {
     return m ? m.slice(1).map(Number) : null;
 }
 
+// Předběžná verze je nižší než vydaná (1.0.0-alpha.2 < 1.0.0-beta.1 < 1.0.0-rc.1 < 1.0.0); -dev se nepočítá
+const PORADI_PREDBEZNYCH = { alpha: 1, beta: 2, rc: 3 };
+function predbezna(verze) {
+    const m = /^\d+\.\d+\.\d+-(alpha|beta|rc)\.(\d+)/.exec(verze || '');
+    return m ? [PORADI_PREDBEZNYCH[m[1]], Number(m[2])] : [9, 0];
+}
+
 export function porovnatVerze(a, b) {
     const x = cislaVerze(a) || [0, 0, 0], y = cislaVerze(b) || [0, 0, 0];
     for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
-    return 0;
+    const [pa, na] = predbezna(a), [pb, nb] = predbezna(b);
+    return pa !== pb ? pa - pb : na - nb;
 }
 
 // [{ verze, datum, telo }] od nejnovější; úvod souboru před první verzí se vynechá

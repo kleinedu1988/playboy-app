@@ -157,7 +157,7 @@ export function vykreslitRocnik(vydani, fotky) {
         if (!podleMesicu.has(mesic(a))) podleMesicu.set(mesic(a), []);
         podleMesicu.get(mesic(a)).push(a);
     });
-    const cisel = [...podleMesicu.keys()].filter(Boolean).length;
+    const cisel = [...podleMesicu.keys()].filter(m => m && !m.startsWith('S')).length;
     const pocet = typ => alba.filter(a => typ === 'Pictorial' ? a.typ !== 'Cover' && a.typ !== 'Centerfold' : a.typ === typ).length;
 
     document.getElementById('issueSide').innerHTML = `

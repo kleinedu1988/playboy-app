@@ -82,7 +82,9 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
             const popis = v ? [v.cover && 'cover', v.centerfold && `centerfold: ${v.modelka}`, v.pictorial && 'pictorial'].filter(Boolean).join(', ') : 'zatím prázdný';
             return `<button class="cal-special ${v ? '' : 'empty'} ${udaje?.stav || ''}" data-${v ? 'vydani' : 'prazdne'}="${klic}" title="${esc(nazev)} ${rok} – speciál, ${esc(popis)}${udaje?.stav ? ' · ' + NAZVY_STAVU[udaje.stav].toLowerCase() : ''}">${esc(nazev)}</button>`;
         }).join('');
-        rokyKalendare.push({ rok, obsazeno, obsazenoSpecialu, policka, stitky });
+        // Označená chybějící čísla (mám výtisk, sháním) rok nesbalí, jinak by označení nebylo vidět
+        const oznaceno = ZKRATKY_MESICU.some((_, i) => stavCisla.get(slozitVydani(String(rok), String(i + 1).padStart(2, '0'), stav.kalendarEdice))?.stav);
+        rokyKalendare.push({ rok, obsazeno, obsazenoSpecialu, policka, stitky, oznaceno });
     }
 
     // Souvislá řada aspoň dvou prázdných roků se sbalí do jednoho řádku (při hledání roku ne)
@@ -96,7 +98,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     };
     for (let i = 0; i < rokyKalendare.length; i++) {
         let konec = i;
-        const prazdny = r => r.obsazeno === 0 && !r.stitky;
+        const prazdny = r => r.obsazeno === 0 && !r.stitky && !r.oznaceno;
         while (!hledat && konec + 1 < rokyKalendare.length && prazdny(rokyKalendare[i]) && prazdny(rokyKalendare[konec + 1])) konec++;
         const klicMezery = `${rokyKalendare[konec].rok}-${rokyKalendare[i].rok}`;
         if (konec > i && !rozbaleneMezery.has(klicMezery)) {
@@ -143,11 +145,14 @@ export const pridatKVydani = klic => [
     { text: `Přidat pictorial: ${nazevVydani(klic)}`, akce: () => pridatPictorial(klic) },
 ];
 // Prázdné políčko nabízí i označení čísla
+// Po zápisu se kalendář obnoví, jen když je pořád vidět (uživatel mezitím mohl odejít jinam)
+const obnovitKalendar = () => { if (!calendar.classList.contains('hidden')) nacistKalendar(searchInput.value, true); };
+
 export const oznacitCislo = klic => [
-    { text: 'Mám výtisk', akce: async () => { await SetStavVydani(klic, 'mam'); nacistKalendar(searchInput.value, true); } },
-    { text: 'Sháním toto číslo', akce: async () => { await SetStavVydani(klic, 'shanim'); nacistKalendar(searchInput.value, true); } },
-    { text: 'Nezajímá mě', akce: async () => { await SetStavVydani(klic, 'nezajima'); nacistKalendar(searchInput.value, true); } },
-    { text: 'Zrušit označení', akce: async () => { await SetStavVydani(klic, ''); nacistKalendar(searchInput.value, true); } },
+    { text: 'Mám výtisk', akce: async () => { await SetStavVydani(klic, 'mam'); obnovitKalendar(); } },
+    { text: 'Sháním toto číslo', akce: async () => { await SetStavVydani(klic, 'shanim'); obnovitKalendar(); } },
+    { text: 'Nezajímá mě', akce: async () => { await SetStavVydani(klic, 'nezajima'); obnovitKalendar(); } },
+    { text: 'Zrušit označení', akce: async () => { await SetStavVydani(klic, ''); obnovitKalendar(); } },
 ];
 
 // Rozbalené řady prázdných roků (klíč „od-do")

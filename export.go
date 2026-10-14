@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -210,6 +211,7 @@ func (a *App) exportovat() ([]byte, error) {
 		}
 		rows.Close()
 	}
+	dalsiModelky := a.dalsiModelkyAlb()
 	for _, m := range modelky {
 		vsechny, err := a.nactiFotografie(dotazFotekModelky, false, true, m.ID)
 		if err != nil {
@@ -217,7 +219,7 @@ func (a *App) exportovat() ([]byte, error) {
 		}
 		// Sdílené album se zapisuje jen u hlavní modelky, u ostatních je jen jejich jméno v dalsi_modelky
 		var fotky []Fotografie
-		for _, f := range a.doplnitDalsiModelky(vsechny) {
+		for _, f := range doplnitDalsiModelkyZ(vsechny, dalsiModelky) {
 			if f.ModelkaID == m.ID {
 				fotky = append(fotky, f)
 			}
@@ -254,6 +256,12 @@ func (a *App) exportovat() ([]byte, error) {
 	}
 	exportovanoFotek += len(covery)
 	for _, album := range seskupitDoAlb(covery, odkazy, netykaSeAlb) {
+		// Cover nemá v exportu datum alba, proto každá fotka nese své
+		for i := range album.Fotky {
+			if album.Fotky[i].Pridano == "" {
+				album.Fotky[i].Pridano = album.Pridano
+			}
+		}
 		data.Covery = append(data.Covery, exportCover{Vydani: album.Nazev, Spojit: album.Spojit, RucniPoradi: album.RucniPoradi, Fotky: album.Fotky})
 	}
 
@@ -306,7 +314,49 @@ func prvniNenulove(nove, puvodni int) int {
 }
 
 // Vložení fotek alba, které v databázi ještě nejsou, a převzetí jejich hodnocení, otočení a pořadí
+// Příkaz připravený jednou pro celý import; SQLite by jinak sestavoval stejný dotaz u každé fotky znovu.
+// Mimo import (nebo když příprava selže) se vrátí obal, který dotaz pošle obyčejně.
+func (a *App) pripraveny(dotaz string) pripravenyDotaz {
+	if a.vImportu {
+		if a.pripravene == nil {
+			a.pripravene = map[string]*sql.Stmt{}
+		}
+		if stmt, ok := a.pripravene[dotaz]; ok {
+			return stmt
+		}
+		if stmt, err := a.db.Prepare(dotaz); err == nil {
+			a.pripravene[dotaz] = stmt
+			return stmt
+		}
+	}
+	return obycejnyDotaz{a.db, dotaz}
+}
+
+type pripravenyDotaz interface {
+	Exec(args ...interface{}) (sql.Result, error)
+	QueryRow(args ...interface{}) *sql.Row
+}
+
+type obycejnyDotaz struct {
+	db    dotazovac
+	dotaz string
+}
+
+func (o obycejnyDotaz) Exec(args ...interface{}) (sql.Result, error) {
+	return o.db.Exec(o.dotaz, args...)
+}
+func (o obycejnyDotaz) QueryRow(args ...interface{}) *sql.Row { return o.db.QueryRow(o.dotaz, args...) }
+
 func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *VysledekImportu, kde string) {
+	if len(album.Fotky) == 0 {
+		return
+	}
+	// Album se zjistí (nebo založí) jednou; fotky se pak hledají a zapisují přímo v tabulce fotek
+	albumID, err := zajistitAlbum(a.db, modelkaID, album.Nazev, album.Typ)
+	if err != nil {
+		a.chyba("import "+kde, err)
+		return
+	}
 	for i, f := range album.Fotky {
 		ids := parseDriveIDs(f.ID)
 		if len(ids) == 0 {
@@ -314,35 +364,29 @@ func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *Vysled
 			continue
 		}
 
-		var id int
-		err := a.db.QueryRow("SELECT id FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND drive_file_id = ?",
-			modelkaID, album.Nazev, album.Typ, ids[0]).Scan(&id)
-		if err != nil {
-			// Nová fotka přebírá datum alba ze souboru, bez něj okamžik importu
-			// Přímo do tabulky fotek, aby bylo známé id nové fotky
-			albumID, err := zajistitAlbum(a.db, modelkaID, album.Nazev, album.Typ)
-			var vlozeno sql.Result
-			if err == nil {
-				vlozeno, err = a.db.Exec("INSERT INTO fotky (album_id, drive_file_id, pridano) VALUES (?, ?, ?)",
-					albumID, ids[0], prvniNeprazdny(f.Pridano, prvniNeprazdny(album.Pridano, ted())))
-			}
+		var id int64
+		if err := a.pripraveny("SELECT id FROM fotky WHERE album_id = ? AND drive_file_id = ?").QueryRow(albumID, ids[0]).Scan(&id); err != nil {
+			// Nová fotka přebírá datum ze souboru (fotky, jinak alba), bez něj okamžik importu
+			vlozeno, err := a.pripraveny("INSERT INTO fotky (album_id, drive_file_id, pridano) VALUES (?, ?, ?)").Exec(
+				albumID, ids[0], prvniNeprazdny(f.Pridano, prvniNeprazdny(album.Pridano, ted())))
 			if err != nil {
 				a.chyba("import "+kde, err)
 				continue
 			}
-			nove, _ := vlozeno.LastInsertId()
-			id = int(nove)
+			id, _ = vlozeno.LastInsertId()
 			vysledek.NoveFotky++
 		}
 
-		if f.Hodnoceni != 0 {
-			a.SetHodnoceniFotek([]int{id}, f.Hodnoceni)
-		}
-		if f.Rotace != 0 {
-			a.SetRotaceFotek([]int{id}, f.Rotace)
-		}
+		// Srdíčka, otočení a ruční pořadí jedním zápisem; prázdný údaj ponechá stávající
+		hodnoceni := min(max(f.Hodnoceni, 0), 5)
+		var poradi interface{}
 		if album.RucniPoradi {
-			a.db.Exec("UPDATE fotky SET poradi = ? WHERE id = ?", i+1, id)
+			poradi = i + 1
+		}
+		if _, err := a.pripraveny(`UPDATE fotky SET hodnoceni = CASE WHEN ?1 > 0 THEN ?1 ELSE hodnoceni END,
+			rotace = CASE WHEN ?2 <> 0 THEN ?2 ELSE rotace END, poradi = COALESCE(?3, poradi) WHERE id = ?4`).Exec(
+			hodnoceni, ((f.Rotace%360)+360)%360, poradi, id); err != nil {
+			a.chyba("import "+kde, err)
 		}
 	}
 }
@@ -392,9 +436,30 @@ func yamlZTextu(nazev, text string) []string {
 	if !strings.HasSuffix(strings.ToLower(nazev), ".md") {
 		return []string{text}
 	}
+	// Bloky kódu po řádcích: otevírací ``` nebo ~~~ s jazykem yaml, yml nebo bez jazyka; blok jiného jazyka
+	// (json…) se přeskočí celý, aby jeho zavírací čára neotevřela falešný blok
 	var bloky []string
-	for _, m := range vzorBlokuYaml.FindAllStringSubmatch(text, -1) {
-		bloky = append(bloky, m[2])
+	var blok []string
+	otevreny, vzit := "", false
+	for _, radek := range strings.Split(text, "\n") {
+		orezany := strings.TrimSpace(radek)
+		if otevreny == "" {
+			if m := vzorOteviraniBloku.FindStringSubmatch(orezany); m != nil {
+				otevreny = m[1]
+				jazyk := strings.ToLower(m[2])
+				vzit = jazyk == "" || jazyk == "yaml" || jazyk == "yml"
+				blok = nil
+			}
+			continue
+		}
+		if strings.HasPrefix(orezany, otevreny) && strings.Trim(orezany, otevreny[:1]) == "" {
+			if vzit {
+				bloky = append(bloky, strings.Join(blok, "\n")+"\n")
+			}
+			otevreny = ""
+			continue
+		}
+		blok = append(blok, radek)
 	}
 	if len(bloky) > 0 {
 		return bloky
@@ -406,9 +471,9 @@ func yamlZTextu(nazev, text string) []string {
 }
 
 var (
-	// Blok kódu v Markdownu: ``` nebo ~~~, se slovem yaml/yml nebo bez označení jazyka
-	vzorBlokuYaml  = regexp.MustCompile("(?ms)^(```|~~~)[ \\t]*(?:yaml|yml)?[ \\t]*$\n(.*?)^(?:```|~~~)[ \\t]*$")
-	vzorHlavickyMd = regexp.MustCompile(`(?s)\A---[ \t]*\n(.*?)\n---[ \t]*(?:\n|\z)`)
+	// Otevření bloku kódu v Markdownu: ``` nebo ~~~ (i delší) a případně jazyk
+	vzorOteviraniBloku = regexp.MustCompile("^(```+|~~~+)[ \\t]*([A-Za-z0-9_+-]*)[ \\t]*$")
+	vzorHlavickyMd     = regexp.MustCompile(`(?s)\A---[ \t]*\n(.*?)\n---[ \t]*(?:\n|\z)`)
 )
 
 // Ručně psaný YAML: tabulátor v odsazení nahradí dvěma mezerami, odrážku Markdownu „* “ nebo „+ “ před
@@ -417,6 +482,27 @@ var (
 var vzorOdrazkyMd = regexp.MustCompile(`^(\s*)[*+] ([A-Za-z_]+:)`)
 
 var vzorRadkuHodnoty = regexp.MustCompile(`^(\s*(?:- )?[A-Za-z_]+):[ \t]+(.+?)[ \t]*$`)
+
+// Klíče formátu exportu (podle značek yaml ve strukturách); řádek „Zdroj: Wikipedie“ uvnitř textu klíčem není
+var znameKlice = func() map[string]bool {
+	klice := map[string]bool{}
+	for _, v := range []interface{}{exportDat{}, exportModelka{}, exportAlbum{}, exportFotka{}, exportVyrez{}, exportCover{}, exportVydani{}, exportVyberu{}, exportFotkyVyberu{}} {
+		t := reflect.TypeOf(v)
+		for i := 0; i < t.NumField(); i++ {
+			if nazev := strings.Split(t.Field(i).Tag.Get("yaml"), ",")[0]; nazev != "" {
+				klice[nazev] = true
+			}
+		}
+	}
+	return klice
+}()
+
+var vzorKlice = regexp.MustCompile(`^\s*(?:- )?([A-Za-z_]+):(?:\s|$)`)
+
+func jeZnamyKlic(radek string) bool {
+	m := vzorKlice.FindStringSubmatch(radek)
+	return m != nil && znameKlice[m[1]]
+}
 
 func opravitRucniYaml(text string) string {
 	radky := strings.Split(text, "\n")
@@ -428,7 +514,7 @@ func opravitRucniYaml(text string) string {
 		odsazeni = len(r) - len(strings.TrimLeft(r, " "))
 		if blokOdsazeni >= 0 {
 			obsah := strings.TrimSpace(r)
-			if obsah != "" && odsazeni <= blokOdsazeni && (vzorRadkuHodnoty.MatchString(r) || vzorOdrazkyMd.MatchString(r) || strings.HasPrefix(obsah, "- ") || strings.HasPrefix(obsah, "#")) {
+			if obsah != "" && odsazeni <= blokOdsazeni && (jeZnamyKlic(r) || strings.HasPrefix(obsah, "- ") || strings.HasPrefix(obsah, "* ")) {
 				blokOdsazeni = -1
 			} else {
 				if obsah != "" && odsazeni <= blokOdsazeni {
@@ -447,7 +533,7 @@ func opravitRucniYaml(text string) string {
 				if strings.HasPrefix(strings.TrimLeft(m[1], " "), "- ") {
 					blokOdsazeni += 2
 				}
-			} else if !strings.ContainsAny(hodnota[:1], `"'|>[{&*!%@`+"`") && strings.Contains(hodnota, ": ") {
+			} else if k := strings.Index(hodnota, " #"); !strings.ContainsAny(hodnota[:1], `"'|>[{&*!%@`+"`") && strings.Contains(hodnota, ": ") && (k < 0 || strings.Index(hodnota, ": ") < k) {
 				r = m[1] + ": " + strconv.Quote(hodnota)
 			}
 		}
@@ -522,6 +608,11 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 
 func (a *App) importovatCelek(data exportDat) VysledekImportu {
 	vysledek := VysledekImportu{Chyby: []string{}}
+	// Import zapisuje na vlastním spojení; v režimu jen pro čtení (poškozená nebo novější databáze) nesmí
+	if a.chybaStartu != "" {
+		vysledek.Selhalo = "Program běží jen pro čtení, import se neprovedl. " + a.chybaStartu
+		return vysledek
+	}
 	// Bez zálohy se do databáze hromadně nezapisuje
 	if err := a.zalohovat("pred-importem"); err != nil {
 		vysledek.Selhalo = fmt.Sprintf("Nepodařilo se vytvořit zálohu, import se neprovedl: %v", err)
@@ -548,7 +639,7 @@ func (a *App) importovatCelek(data exportDat) VysledekImportu {
 
 	// Kopie aplikace nad spojením s transakcí; chyba zápisu kdekoli v pomocných funkcích import zruší
 	var chybyZapisu []string
-	imp := &App{ctx: a.ctx, db: db, naChybu: func(zprava string) { chybyZapisu = append(chybyZapisu, zprava) }}
+	imp := &App{ctx: a.ctx, db: db, vImportu: true, naChybu: func(zprava string) { chybyZapisu = append(chybyZapisu, zprava) }}
 	func() {
 		defer func() {
 			if r := recover(); r != nil {

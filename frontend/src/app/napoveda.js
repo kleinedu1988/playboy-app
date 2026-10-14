@@ -4,6 +4,7 @@ import changelog from '../../../CHANGELOG.md?raw';
 import { GetVerze } from './backend';
 import { novinkyMezi, telaNaHtml } from '../lib/changelog';
 import { lightbox } from './prohlizec';
+import { stav } from './stav';
 
 export const helpModal = document.getElementById('helpModal');
 export const newsModal = document.getElementById('newsModal');
@@ -36,7 +37,7 @@ export async function ukazatNovinkyPoAktualizaci() {
 export function pripravit() {
     // Klávesa ? otevře nápovědu (ne při psaní, nad oknem ani v prohlížeči)
     document.addEventListener('keydown', (e) => {
-        if (e.key !== '?' || e.ctrlKey || e.altKey || e.metaKey || e.target.closest('input, textarea, select')
+        if (e.key !== '?' || stav.zamceno || e.ctrlKey || e.altKey || e.metaKey || e.target.closest('input, textarea, select')
             || document.querySelector('.modal-overlay:not(.hidden)') || !lightbox.classList.contains('hidden')) return;
         e.preventDefault();
         otevritNapovedu();

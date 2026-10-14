@@ -1,6 +1,6 @@
 // Výběr více fotek v profilu a lišta hromadných akcí
 import { jednou, oznamit } from '../ui/oznameni';
-import { OdebratFotky, PresunoutFotky, SetHodnoceniFotek } from './backend';
+import { OdebratFotky, PresunoutFotky, SetHodnoceniFotek, OdebratZVyberu } from './backend';
 import { nazevAlba } from '../lib/format';
 import { stav } from './stav';
 import { best, detailView, issueView, searchInput } from './prvky';
@@ -23,7 +23,7 @@ function kontextVyberu() {
         return { koren: document.getElementById('photosGrid'), polozky: stav.aktualniPolozky, presun: true, obnovit: () => nacistFotkyModelky(stav.aktualniModelka.id) };
     }
     if (!issueView.classList.contains('hidden')) return { koren: issueView, polozky: stav.vydaniPolozky, presun: false, obnovit: obnovitStranku };
-    if (!best.classList.contains('hidden')) return { koren: best, polozky: stav.nejlepsiPolozky, presun: false, obnovit: () => nacistNejlepsi(searchInput.value) };
+    if (!best.classList.contains('hidden')) return { koren: best, polozky: stav.nejlepsiPolozky, presun: false, vyber: stav.nejlepsiVyber, obnovit: () => nacistNejlepsi(searchInput.value) };
     return null;
 }
 
@@ -41,6 +41,7 @@ export function aktualizovatVyber() {
     selectionBar.classList.toggle('hidden', pocet === 0);
     document.getElementById('selectionCount').textContent = `Vybráno: ${pocet}`;
     selectionBar.querySelector('[data-vyber="presunout"]').classList.toggle('hidden', !kontextVyberu()?.presun);
+    selectionBar.querySelector('[data-vyber="odebrat"]').textContent = kontextVyberu()?.vyber ? 'Odebrat z výběru' : 'Odebrat';
 }
 
 export function zrusitVyber() {
@@ -79,6 +80,14 @@ async function odebratVybrane() {
     const kontext = kontextVyberu();
     const ids = vybraneFotky().map(f => f.id);
     if (!kontext || !ids.length) return;
+    // Ve vlastním výběru (Nejlepší) se fotky odebírají jen z výběru, ve sbírce zůstanou
+    if (kontext.vyber) {
+        if (!await OdebratZVyberu(kontext.vyber, ids)) return;
+        zrusitVyber();
+        kontext.obnovit();
+        oznamit(`Z výběru odebráno fotek: ${ids.length}. Ve sbírce zůstaly.`);
+        return;
+    }
     const obnova = await OdebratFotky(ids) || [];
     if (!obnova.length) return;
     zrusitVyber();

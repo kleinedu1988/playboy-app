@@ -29,9 +29,15 @@ export function pripojitVyberSpecialu(idMesice, idRoku, idEdice) {
     rok.addEventListener('input', poZmene);
     edice.addEventListener('change', poZmene);
 
+    // Poslední skutečná volba; po zrušení dialogu „Nový speciál…“ se vrátí
+    let predchozi = mesic.value;
+    mesic.addEventListener('focus', () => { predchozi = mesic.value; });
     mesic.addEventListener('change', async () => {
-        if (mesic.value !== 'novy') return;
-        mesic.value = '';
+        if (mesic.value !== 'novy') {
+            predchozi = mesic.value;
+            return;
+        }
+        mesic.value = predchozi;
         const klic = await zalozitSpecial(rok.value, edice.value);
         if (klic) obnovit(rozlozitVydani(klic).mesic);
     });

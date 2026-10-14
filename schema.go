@@ -96,11 +96,13 @@ var krokyAlbumJakoZaznam = []string{
 		SELECT DISTINCT NULLIF(modelka_id, 0), album, typ FROM fotografie`,
 	// Alba modelek, které už neexistují, nejsou v programu vidět a cizí klíč by je nepřijal
 	`DELETE FROM alba_nova WHERE modelka_id IS NOT NULL AND modelka_id NOT IN (SELECT id FROM modelky)`,
+	// Stará tabulka má modelku 0 místo NULL (úprava č. 2); porovnání bez COALESCE na její straně použije
+	// index fotografie_soubor_v_albu, jinak by každé album procházelo všechny fotky
 	`UPDATE alba_nova SET
 		vydani = CASE WHEN typ IN ('Centerfold', 'Cover') THEN album ELSE COALESCE((SELECT MAX(f.vydani) FROM fotografie f
-			WHERE COALESCE(f.modelka_id, 0) = COALESCE(alba_nova.modelka_id, 0) AND f.album = alba_nova.album AND f.typ = alba_nova.typ), '') END,
+			WHERE f.modelka_id = COALESCE(alba_nova.modelka_id, 0) AND f.album = alba_nova.album AND f.typ = alba_nova.typ), '') END,
 		spojit = COALESCE((SELECT MAX(f.spojit) FROM fotografie f
-			WHERE COALESCE(f.modelka_id, 0) = COALESCE(alba_nova.modelka_id, 0) AND f.album = alba_nova.album AND f.typ = alba_nova.typ), 0)`,
+			WHERE f.modelka_id = COALESCE(alba_nova.modelka_id, 0) AND f.album = alba_nova.album AND f.typ = alba_nova.typ), 0)`,
 	`CREATE TABLE fotky (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		album_id INTEGER NOT NULL REFERENCES alba_nova(id) ON DELETE CASCADE,

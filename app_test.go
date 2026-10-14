@@ -2074,3 +2074,95 @@ func TestImportRucnePsanychSouboru(t *testing.T) {
 		}
 	}
 }
+
+// Regresní testy nálezů auditu před alfou
+func TestAuditOpravyDat(t *testing.T) {
+	// Sloučení modelek nesmaže album zdroje, kterému zůstal jen text
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Cil", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Zdroj", Tetovani: -1, Piercing: -1})
+	a.AddBulkPhotos(2, "Les", "Pictorial", odkazA)
+	a.SetPopisAlba(2, "Les", "Pictorial", "Dlouhý text alba", "Fotograf")
+	for _, f := range a.GetFotografieModelky(2) {
+		a.DeleteFotografie(f.ID)
+	}
+	if e := a.SloucitModelky(1, 2); e != "" {
+		t.Fatal(e)
+	}
+	var n int
+	a.db.QueryRow("SELECT COUNT(*) FROM alba WHERE popis = 'Dlouhý text alba' AND modelka_id = 1").Scan(&n)
+	if n != 1 {
+		t.Fatal("text alba zdrojové modelky po sloučení zmizel")
+	}
+
+	// Smazání modelky: sdílené album se sloučí se stejnojmenným albem další modelky, fotky zůstanou
+	b := novaTestovaciApp(t, nil)
+	b.AddModelka(Modelka{Jmeno: "A", Tetovani: -1, Piercing: -1})
+	b.AddModelka(Modelka{Jmeno: "B", Tetovani: -1, Piercing: -1})
+	b.AddBulkPhotos(1, "Les", "Pictorial", odkazA)
+	b.AddBulkPhotos(2, "Les", "Pictorial", odkazB)
+	b.PridatModelkuKAlbu(1, "Les", "Pictorial", 2)
+	b.DeleteModelka(1)
+	if f := b.GetFotografieModelky(2); len(f) != 2 {
+		t.Fatalf("po smazání modelky má B %d fotek, čekám 2", len(f))
+	}
+
+	// Datum přidání coveru projde exportem a importem
+	c := novaTestovaciApp(t, nil)
+	c.AddCover("2014-02", odkazA)
+	c.db.Exec("UPDATE fotky SET pridano = '2019-05-05 10:00:00'")
+	export, _ := c.exportovat()
+	d := novaTestovaciApp(t, nil)
+	d.importovat(export)
+	var p string
+	d.db.QueryRow("SELECT pridano FROM fotky").Scan(&p)
+	if p != "2019-05-05 10:00:00" {
+		t.Fatalf("datum coveru: %q", p)
+	}
+
+	// Obnovení nejstarší zálohy v plném počtu: úklid ji nesmaže dřív, než se zkopíruje
+	e := novaTestovaciApp(t, nil)
+	e.AddModelka(Modelka{Jmeno: "Anna"})
+	for i := 0; i < pocetZaloh; i++ {
+		if err := e.zalohovat("pred-obnovenim"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	z := e.SeznamZaloh()
+	if chyba := e.ObnovitZalohu(z[len(z)-1].Soubor); chyba != "" {
+		t.Fatalf("obnovení nejstarší zálohy: %s", chyba)
+	}
+}
+
+func TestAuditImportVRezimuJenProCteni(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Modelka"})
+	a.db.Exec(fmt.Sprintf("PRAGMA user_version = %d", len(migrace)+5))
+	a.db.Close()
+	b := NewApp()
+	b.startup(context.Background())
+	defer b.db.Close()
+	if v := b.importovat([]byte("modelky:\n  - jmeno: Vetrelec\n")); v.Selhalo == "" {
+		t.Fatalf("import v režimu jen pro čtení prošel: %+v", v)
+	}
+	var n int
+	db, _ := sql.Open("sqlite", b.cestaDb)
+	db.QueryRow("SELECT COUNT(*) FROM modelky").Scan(&n)
+	db.Close()
+	if n != 1 {
+		t.Fatalf("import zapsal: %d modelek", n)
+	}
+}
+
+func TestAuditOpravyImportu(t *testing.T) {
+	// Řádek „Slovo: text“ uvnitř neodsazeného bloku patří k textu
+	data, err := nacistDokument("- jmeno: Anna\n  poznamka: |\n  Prvni radek\n  Zdroj: Wikipedie\n  narodnost: USA\n")
+	if err != nil || !strings.Contains(data.Modelky[0].Poznamka, "Zdroj: Wikipedie") || data.Modelky[0].Narodnost != "USA" {
+		t.Fatalf("blok: %+v %v", data.Modelky, err)
+	}
+	// Blok jiného jazyka v Markdownu nepřebere okolní text
+	md := "# Pozn\n\n```json\n{}\n```\n\nNějaký text: s dvojtečkou\n\n```yaml\n- jmeno: Anna\n```\n"
+	if d, err := slozitSoubory(map[string][]byte{"x.md": []byte(md)}, []string{"x.md"}); err != nil || len(d.Modelky) != 1 {
+		t.Fatalf("markdown s blokem json: %v", err)
+	}
+}

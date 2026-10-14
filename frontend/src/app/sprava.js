@@ -314,7 +314,7 @@ export function polozkySpravy() {
         { text: 'Obnovit ze zálohy…', akce: otevritZalohy },
         { text: 'Otevřít složku se zálohami', akce: async () => BrowserOpenURL('file://' + await SlozkaZaloh()) },
         { text: 'Exportovat sbírku (YAML)…', akce: exportovatData },
-        { text: 'Importovat sbírku (YAML)…', akce: importovatData },
+        { text: 'Importovat (YAML nebo Markdown)…', akce: importovatData },
         null,
         { text: 'Adresa obrázků…', akce: zmenitSablonuObrazku },
         { text: 'Přejmenovat fotografa…', akce: () => prejmenovatVeSbirce('fotograf') },
@@ -348,6 +348,8 @@ export const NAZVY_ZALOH = {
     'pred-importem': 'Před importem',
     'pred-obnovenim': 'Před obnovením',
     'pred-migraci': 'Před úpravou databáze',
+    'pred-sloucenim': 'Před sloučením alb',
+    'pred-sloucenim-modelek': 'Před sloučením modelek',
 };
 export const backupModal = document.getElementById('backupModal');
 export const casZalohy = z => `${formatDatum(z.cas.slice(0, 10))} ${z.cas.slice(11, 16)}`;

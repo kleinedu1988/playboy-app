@@ -7,7 +7,7 @@ import { stav } from './stav';
 import { calendar, detailView, issueView, searchInput, stats, wall } from './prvky';
 import { jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepnoutRezim, zapamatovatMisto } from './navigace';
 import { nacistGalerii } from './galerie';
-import { nacistFotkyModelky } from './profil';
+import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { nacistStenu } from './stena';
 import { obnovitStranku } from './vydani';
 import { nacistKalendar } from './kalendar';
@@ -82,9 +82,15 @@ export function zavritOkno(okno) {
 }
 
 // Po uložení alba se obnoví to, co je vidět
-export function obnovitPoUlozeniAlba(modelka) {
-    // Profil se překreslí vždy: album mohlo patřit jiné hlavní modelce a být jen sdílené s otevřenou
-    if (!detailView.classList.contains('hidden')) nacistFotkyModelky(stav.aktualniModelka.id);
+export async function obnovitPoUlozeniAlba(modelka) {
+    // Profil se překreslí vždy (album mohlo patřit jiné hlavní modelce a být jen sdílené s otevřenou), i s hlavičkou:
+    // vydání a věk při prvním vydání se odvozují z alb. Místo na stránce zůstane.
+    if (!detailView.classList.contains('hidden')) {
+        const oblast = document.querySelector('main');
+        const posun = oblast.scrollTop;
+        await otevritDetailModelky(stav.aktualniModelka, { bezHistorie: true });
+        oblast.scrollTop = posun;
+    }
     else if (!wall.classList.contains('hidden')) nacistStenu(searchInput.value);
     // Z přehledu se doplňuje centerfold; po uložení má z tabulky zmizet
     else if (!stats.classList.contains('hidden')) nacistPrehled();
@@ -197,7 +203,10 @@ export function pripravit() {
             return;
         }
         if (links.trim()) {
-            oznamitVlozeni(await AddBulkPhotos(modelka.id, album, typ, links), 'fotek');
+            const vysledek = await AddBulkPhotos(modelka.id, album, typ, links);
+            oznamitVlozeni(vysledek, 'fotek');
+            // Nové album bez jediné uložené fotky: okno zůstane otevřené i s vyplněným textem, ať jde odkazy opravit
+            if (!stav.editovaneAlbum && vysledek.vlozeno === 0 && !vysledek.duplicitni) return;
         }
         // Centerfold má vydání přímo v názvu alba, ostatním se přiřazuje zvlášť
         // Při přidávání fotek do existujícího alba prázdné pole jeho vydání nemaže; zrušit ho jde jen úpravou alba

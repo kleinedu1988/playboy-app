@@ -26,8 +26,8 @@ import { akceFotky } from './akce-fotky';
 export function otevritNabidku(cil, x, y) {
     if (stav.zamceno) return;
 
-    // Tlačítko ⋯ v prohlížeči: akce s fotkou, která je právě vidět
-    if (cil.closest('#lbMore')) {
+    // Tlačítko ⋯ v prohlížeči (i klávesa nabídky nad otevřeným prohlížečem): akce s fotkou, která je vidět
+    if (cil.closest('#lbMore') || (!lightbox.classList.contains('hidden') && !cil.closest('.modal-overlay'))) {
         const polozka = stav.lbPolozky[stav.lbIndex];
         if (polozka) otevritKontextovouNabidku(x, y, akceFotky(polozka, null, { poOdebrani: zavritLightbox }));
         return;
@@ -115,6 +115,9 @@ export function otevritNabidku(cil, x, y) {
                     if (misto > 0) polozky.push({ text: 'Posunout stránku dřív', akce: () => posunoutStranku(album, fotka, -1) });
                     if (misto < album.fotky.length - 1) polozky.push({ text: 'Posunout stránku později', akce: () => posunoutStranku(album, fotka, 1) });
                 }
+            } else {
+                // Plakát jako celek (tlačítko ⋯, klávesa nabídky): akce se všemi jeho stránkami
+                polozky.push(...akceFotky(stav.aktualniPolozky[index], null, { profil: false }));
             }
             polozky.push(null);
         }
@@ -263,12 +266,12 @@ export function pripravit() {
             zavritKontextovouNabidku();
         } else if (okno) {
             zavritOkno(okno);
-        } else if (!selectionBar.classList.contains('hidden')) {
-            zrusitVyber();
         } else if (!lightbox.classList.contains('hidden')) {
-            // Esc nejdřív vypne lupu, teprve potom zavře prohlížeč
+            // Esc nejdřív vypne lupu, teprve potom zavře prohlížeč; výběr pod ním zůstane
             if (stav.lbLupa) lbPrepnoutLupu(false);
             else zavritLightbox();
+        } else if (!selectionBar.classList.contains('hidden')) {
+            zrusitVyber();
         } else if (stav.zrusitUpravuVyrezu) {
             stav.zrusitUpravuVyrezu();
         } else if ((!detailView.classList.contains('hidden') || !issueView.classList.contains('hidden')) && !document.querySelector('.modal-overlay:not(.hidden)')) {

@@ -167,6 +167,13 @@ Rozhodnuto 14. 10. 2026: album jako záznam (1, hotovo v 0.10.0); řazení galer
 přidané, rok prvního vydání (2); stav čísla „mám výtisk“ (3); speciály evidovat zvlášť, národní edice zatím
 jen US a CZ (4). Vše je v 0.13.0.
 
+Rozhodnuto po auditu 14. 10. 2026 (poslední úprava schématu č. 8 a export verze 6 před alfou):
+album bez fotek je plnohodnotné (počítá se jeho vydání, samo nezmizí); dvě modelky stejného jména se musí lišit
+datem narození, odkazy na ně v exportu jsou „Jméno (RRRR-MM-DD)“; více odkazů odděleno čárkou nebo novým
+řádkem, více fotografů čárkou; datum narození RRRR, RRRR-MM nebo RRRR-MM-DD; u čísla textové pole „na obálce“;
+datum úmrtí u modelky; hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý
+klíč s upozorněním, neznámý klíč se ohlásí.
+
 5. **Instalace:** skript `instalovat.sh` (nabídka aplikací, ikona, odinstalace) je připravený v 0.13.0; zda ho používat, je na uživateli.
 
 ## Nedělat

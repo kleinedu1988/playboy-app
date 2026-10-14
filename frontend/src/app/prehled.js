@@ -195,7 +195,7 @@ export async function oznacitNetykaSe(bunka, netyka) {
     // U vydání je „netýká se" stav čísla „nezajímá mě"; zrušit ho jde na stránce vydání nebo v kalendáři
     if (radek.dataset.vydani) {
         await SetStavVydani(radek.dataset.vydani, netyka ? 'nezajima' : '');
-        nacistPrehled();
+        if (!stats.classList.contains('hidden')) nacistPrehled();
         return;
     }
     const modelkaId = parseInt(radek.dataset.modelka);
@@ -206,7 +206,7 @@ export async function oznacitNetykaSe(bunka, netyka) {
     } else {
         await SetNetykaSe(modelkaId, klic, netyka);
     }
-    nacistPrehled();
+    if (!stats.classList.contains('hidden')) nacistPrehled();
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů

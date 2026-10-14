@@ -5,6 +5,19 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.9.0] – 2026-10-14
+
+Etapa 6 roadmapy: vydání a vazby. Schéma databáze: úprava č. 5. Formát exportu: verze 3.
+
+### Přidáno
+- Údaje čísla časopisu: poznámka, modelka z obálky a stav „sháním / nezajímá mě“ (Upravit číslo… na stránce
+  vydání, pravé tlačítko v kalendáři). Kalendář chybějící čísla podle stavu zvýrazní nebo ztlumí,
+  Přehled čísla „nezajímá mě“ nedoplňuje. Profil modelky ukazuje, na kterých obálkách je.
+- Odkazy u modelky (Wikipedie a podobně), v profilu jako štítky s názvem webu.
+- Vlastní výběry fotek napříč modelkami: „Do výběru…“ u vybraných fotek a v nabídce fotky, prohlížení
+  a správa v přehledu Nejlepší.
+- Export a import zahrnují údaje čísel, výběry a odkazy.
+
 ## [0.8.0] – 2026-10-14
 
 Etapa 5 roadmapy: prohlížení napříč sbírkou. Schéma databáze ani formát exportu se nemění.
@@ -113,6 +126,7 @@ První verze: katalog modelek s alby, centerfoldy a covery časopisů, fotky z G
 - Hodnocení modelek 1–5 srdíčky, rychlé přidání modelky jen jménem, formulář na záložkách.
 - Zálohy před mazáním, kontrola dostupnosti souborů na Disku.
 
+[0.9.0]: v0.9.0
 [0.8.0]: v0.8.0
 [0.7.0]: v0.7.0
 [0.6.0]: v0.6.0

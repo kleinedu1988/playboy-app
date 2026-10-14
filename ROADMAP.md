@@ -111,7 +111,7 @@ Cíl: pustit si to nejlepší, celý ročník, práci jednoho fotografa nebo ná
 | Stěna centerfoldů chronologicky s lištou desetiletí | Stěna jako časová osa | S |
 | Stránka fotografa | Až bude fotograf vyplněný u více alb | M |
 
-## Etapa 6 – Vydání a vazby
+## Etapa 6 – Vydání a vazby (hotovo 14. 10. 2026, verze 0.9.0)
 
 Cíl: každé číslo má vlastní záznam s poznámkou a stavem. Navazuje na edice z etapy 1 a na album jako záznam z etapy 3.
 

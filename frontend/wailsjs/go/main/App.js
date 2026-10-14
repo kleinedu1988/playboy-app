@@ -50,6 +50,10 @@ export function GetCovery() {
   return window['go']['main']['App']['GetCovery']();
 }
 
+export function GetFotkyVyberu(arg1) {
+  return window['go']['main']['App']['GetFotkyVyberu'](arg1);
+}
+
 export function GetFotografieModelky(arg1) {
   return window['go']['main']['App']['GetFotografieModelky'](arg1);
 }
@@ -82,6 +86,10 @@ export function GetSablonaObrazku() {
   return window['go']['main']['App']['GetSablonaObrazku']();
 }
 
+export function GetStavyVydani() {
+  return window['go']['main']['App']['GetStavyVydani']();
+}
+
 export function GetTagy() {
   return window['go']['main']['App']['GetTagy']();
 }
@@ -90,8 +98,16 @@ export function GetVerze() {
   return window['go']['main']['App']['GetVerze']();
 }
 
+export function GetVybery() {
+  return window['go']['main']['App']['GetVybery']();
+}
+
 export function GetVydani(arg1) {
   return window['go']['main']['App']['GetVydani'](arg1);
+}
+
+export function GetVydaniInfo(arg1) {
+  return window['go']['main']['App']['GetVydaniInfo'](arg1);
 }
 
 export function ImportovatZeSouboru(arg1) {
@@ -118,6 +134,10 @@ export function OdebratModelkuZAlba(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['OdebratModelkuZAlba'](arg1, arg2, arg3, arg4);
 }
 
+export function OdebratZVyberu(arg1, arg2) {
+  return window['go']['main']['App']['OdebratZVyberu'](arg1, arg2);
+}
+
 export function Odemknout(arg1) {
   return window['go']['main']['App']['Odemknout'](arg1);
 }
@@ -134,12 +154,20 @@ export function PrejmenovatTag(arg1, arg2) {
   return window['go']['main']['App']['PrejmenovatTag'](arg1, arg2);
 }
 
+export function PrejmenovatVyber(arg1, arg2) {
+  return window['go']['main']['App']['PrejmenovatVyber'](arg1, arg2);
+}
+
 export function PresunoutAlbum(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PresunoutAlbum'](arg1, arg2, arg3, arg4);
 }
 
 export function PresunoutFotky(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PresunoutFotky'](arg1, arg2, arg3, arg4);
+}
+
+export function PridatDoVyberu(arg1, arg2) {
+  return window['go']['main']['App']['PridatDoVyberu'](arg1, arg2);
 }
 
 export function PridatModelkuKAlbu(arg1, arg2, arg3, arg4) {
@@ -186,12 +214,20 @@ export function SetSpojeniAlba(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SetSpojeniAlba'](arg1, arg2, arg3, arg4);
 }
 
+export function SetStavVydani(arg1, arg2) {
+  return window['go']['main']['App']['SetStavVydani'](arg1, arg2);
+}
+
 export function SetTitulniFotka(arg1, arg2) {
   return window['go']['main']['App']['SetTitulniFotka'](arg1, arg2);
 }
 
 export function SetVydaniAlba(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SetVydaniAlba'](arg1, arg2, arg3, arg4);
+}
+
+export function SetVydaniInfo(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SetVydaniInfo'](arg1, arg2, arg3, arg4);
 }
 
 export function SeznamZaloh() {
@@ -210,6 +246,10 @@ export function SlozkaZaloh() {
   return window['go']['main']['App']['SlozkaZaloh']();
 }
 
+export function SmazatVyber(arg1) {
+  return window['go']['main']['App']['SmazatVyber'](arg1);
+}
+
 export function StavDatabaze() {
   return window['go']['main']['App']['StavDatabaze']();
 }
@@ -224,6 +264,10 @@ export function UpdateCover(arg1, arg2, arg3) {
 
 export function UpdateModelka(arg1) {
   return window['go']['main']['App']['UpdateModelka'](arg1);
+}
+
+export function VyberPodleNazvu(arg1) {
+  return window['go']['main']['App']['VyberPodleNazvu'](arg1);
 }
 
 export function VybratSouborImportu() {

@@ -168,6 +168,8 @@ export namespace main {
 	    hodnoceni: number;
 	    pridano: string;
 	    netykaSe: string;
+	    odkazy: string;
+	    obalky: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -210,6 +212,8 @@ export namespace main {
 	        this.hodnoceni = source["hodnoceni"];
 	        this.pridano = source["pridano"];
 	        this.netykaSe = source["netykaSe"];
+	        this.odkazy = source["odkazy"];
+	        this.obalky = source["obalky"];
 	    }
 	}
 	
@@ -363,6 +367,42 @@ export namespace main {
 		}
 	}
 	
+	export class Vyber {
+	    id: number;
+	    nazev: string;
+	    pocet: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Vyber(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.nazev = source["nazev"];
+	        this.pocet = source["pocet"];
+	    }
+	}
+	export class VydaniInfo {
+	    vydani: string;
+	    poznamka: string;
+	    stav: string;
+	    modelkaObalky: number;
+	    jmenoObalky: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new VydaniInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vydani = source["vydani"];
+	        this.poznamka = source["poznamka"];
+	        this.stav = source["stav"];
+	        this.modelkaObalky = source["modelkaObalky"];
+	        this.jmenoObalky = source["jmenoObalky"];
+	    }
+	}
 	export class VydaniKalendare {
 	    vydani: string;
 	    cover: boolean;

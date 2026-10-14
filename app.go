@@ -92,6 +92,10 @@ type Modelka struct {
 
 	// Údaje, které se u modelky nesledují (centerfold neměla…): klíče oddělené čárkou
 	NetykaSe string `json:"netykaSe"`
+	// Odkazy na zdroje údajů (Wikipedie a podobně), jeden na řádek
+	Odkazy string `json:"odkazy"`
+	// Vydání, na jejichž obálce modelka je (jen pro čtení)
+	Obalky []string `json:"obalky"`
 
 	// Popisy a fotografové alb modelky, jen pro hledání
 	textyAlb       string
@@ -150,6 +154,8 @@ var sloupceModelky = [][2]string{
 	{"tags", "TEXT"},
 	{"dalsi_jmena", "TEXT"},
 	{"poznamka", "TEXT"},
+	{"odkazy", "TEXT"},
+	// Musí zůstat poslední: UpdateModelka podle ní pozná změnu titulní fotky
 	{"drive_cover_id", "TEXT"},
 }
 
@@ -633,6 +639,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceIndexy,
 	(*App).migraceSdilenaAlba,
 	(*App).migraceNetykaSe,
+	(*App).migraceVydaniAVybery,
 }
 
 func (a *App) migrovat() error {
@@ -867,6 +874,18 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 	// Popisy alb se prohledávají spolu s údaji modelky
 	textyAlb := map[int]string{}
 	fotografoveAlb := map[int]string{}
+	// Modelky z obálek vydání
+	obalky := map[int][]string{}
+	if radky, err := a.db.Query("SELECT modelka_obalky, vydani FROM vydani WHERE modelka_obalky IS NOT NULL ORDER BY vydani"); err == nil {
+		for radky.Next() {
+			var id int
+			var v string
+			if radky.Scan(&id, &v) == nil {
+				obalky[id] = append(obalky[id], v)
+			}
+		}
+		radky.Close()
+	}
 	if radky, err := a.db.Query("SELECT modelka_id, COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba UNION ALL SELECT am.modelka_id, COALESCE(al.popis, ''), COALESCE(al.fotograf, '') FROM alba_modelky am JOIN alba al ON al.id = am.album_id"); err == nil {
 		for radky.Next() {
 			var id int
@@ -896,7 +915,7 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 			&m.VyskaCm, &m.VahaKg, &m.VlasyBarva, &m.OciBarva,
 			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
 			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
-			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &driveID,
+			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &m.Odkazy, &driveID,
 			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Hodnoceni, &m.Pridano, &m.NetykaSe)
 		if err != nil {
 			if prvniChyba == nil {
@@ -911,6 +930,10 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 			m.CoverURL = adresaObrazku(ids[0])
 		}
 		m.textyAlb = textyAlb[m.ID]
+		m.Obalky = obalky[m.ID]
+		if m.Obalky == nil {
+			m.Obalky = []string{}
+		}
 		m.fotografoveAlb = fotografoveAlb[m.ID]
 		m.Vydani = vydaniModelek[m.ID]
 		if m.Vydani == nil {
@@ -1034,7 +1057,7 @@ func hodnotyModelky(m Modelka) []interface{} {
 		m.VyskaCm, m.VahaKg, m.VlasyBarva, m.OciBarva,
 		miry, m.ObvodHrudnikCm, m.ObvodPasCm, m.ObvodBokyCm,
 		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, anoNeDoDatabaze(m.Tetovani), anoNeDoDatabaze(m.Piercing),
-		m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags, m.DalsiJmena, m.Poznamka, coverID,
+		m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags, m.DalsiJmena, m.Poznamka, m.Odkazy, coverID,
 	}
 }
 
@@ -1244,6 +1267,8 @@ func (a *App) DeleteVse() bool {
 	dotazy := []string{
 		"DELETE FROM fotografie",
 		"DELETE FROM alba",
+		"DELETE FROM vydani",
+		"DELETE FROM vybery",
 		"DELETE FROM modelky",
 		// Číslování ID začne znovu od 1
 		"DELETE FROM sqlite_sequence WHERE name IN ('fotografie', 'alba', 'modelky')",

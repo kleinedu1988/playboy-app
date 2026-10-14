@@ -2367,3 +2367,39 @@ body.razeni .photo-item {
 .cal-year-link:hover strong {
     color: var(--accent);
 }
+
+/* Odkazy modelky v profilu */
+.profile-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.issue-edit {
+    margin-top: 12px;
+}
+
+/* Kalendář: chybějící číslo, které sháním, a číslo, které mě nezajímá */
+.cal-cell.empty.shanim {
+    border-color: var(--accent);
+}
+
+.cal-cell.empty.shanim .cal-month {
+    flex-direction: column;
+    color: var(--accent);
+}
+
+.cal-cell.empty.shanim em {
+    font-size: 10px;
+    font-style: normal;
+}
+
+.cal-cell.empty.nezajima {
+    opacity: 0.25;
+}
+
+.best-toolbar .chip span {
+    margin-left: 6px;
+    color: var(--text-muted);
+}

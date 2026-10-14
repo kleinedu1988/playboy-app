@@ -89,3 +89,10 @@ Do hledání modelek jde psát i `pole:hodnota`, např. `vlasy:blond`, `fotograf
 - **Fotograf**: klik na „Foto:“ u alba; všechna jeho alba.
 - **Prohlížeč fotek**: šipky listují, nahoru/dolů skáčou mezi alby, mezerník spouští slideshow, S míchá pořadí,
   F rozkládá plakát, R otáčí, 1–5 hodnotí, Esc zavírá. Interval slideshow je v nabídce ⋯.
+
+## Čísla časopisu a výběry
+
+- **Údaje čísla**: na stránce vydání „Upravit číslo…“ (poznámka, modelka z obálky, stav sháním / nezajímá mě);
+  stav jde nastavit i pravým tlačítkem na políčku kalendáře.
+- **Výběry**: v profilu vybrat fotky (Ctrl/Shift + klik) → „Do výběru…“, nebo pravým tlačítkem na fotce;
+  výběry se prohlížejí v přehledu Nejlepší.

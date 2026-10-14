@@ -333,11 +333,16 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 
 	// Ročník je rok v jedné edici
 	rocniky := map[string]int{}
+	// Vydání označené „nezajímá mě" se nedoplňuje
+	nezajima := map[string]bool{}
+	for _, v := range a.GetStavyVydani() {
+		nezajima[v.Vydani] = v.Stav == "nezajima"
+	}
 	for _, v := range poradi {
-		if !vydani[v].cover {
+		if !vydani[v].cover && !nezajima[v] {
 			p.VydaniBezCoveru = append(p.VydaniBezCoveru, v)
 		}
-		if !vydani[v].centerfold {
+		if !vydani[v].centerfold && !nezajima[v] {
 			p.VydaniBezCenterfoldu = append(p.VydaniBezCenterfoldu, v)
 		}
 		var rok int

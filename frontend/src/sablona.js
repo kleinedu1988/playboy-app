@@ -247,7 +247,11 @@ export const SABLONA_OKNA = `
               </div>
               <div class="form-group span-2">
                 <label for="inputPoznamka">Poznámka</label>
-                <textarea id="inputPoznamka" rows="4"></textarea>
+                <textarea id="inputPoznamka" rows="3"></textarea>
+              </div>
+              <div class="form-group span-2">
+                <label for="inputOdkazy">Odkazy (Wikipedie a podobně, jeden na řádek)</label>
+                <textarea id="inputOdkazy" rows="2" placeholder="https://…"></textarea>
               </div>
             </div>
           </section>
@@ -443,8 +447,44 @@ export const SABLONA_OKNA = `
     <span id="selectionCount"></span>
     <span class="selection-hearts">${[1, 2, 3, 4, 5].map(n => `<button class="heart on" data-vyber-hodnoceni="${n}" title="Ohodnotit vybrané ${n} z 5"></button>`).join('')}</span>
     <button class="btn btn-secondary btn-small" data-vyber="presunout">Přesunout do alba…</button>
+    <button class="btn btn-secondary btn-small" data-vyber="dovyberu">Do výběru…</button>
     <button class="btn btn-secondary btn-small" data-vyber="odebrat">Odebrat</button>
     <button class="btn btn-secondary btn-small" data-vyber="zrusit">Zrušit výběr</button>
+  </div>
+
+  <!-- Modal: údaje vydání (poznámka, stav, modelka z obálky) -->
+  <div id="issueModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="issueModalTitle">Číslo časopisu</h3>
+        <button class="close-btn" data-zavrit>&times;</button>
+      </div>
+      <form id="issueForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="selectIssueStav">Stav ve sbírce</label>
+            <select id="selectIssueStav">
+              <option value="">Běžné</option>
+              <option value="shanim">Sháním</option>
+              <option value="nezajima">Nezajímá mě</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inputIssueObalka">Na obálce</label>
+            <input type="text" id="inputIssueObalka" list="seznamModelekObalky" autocomplete="off" placeholder="Jméno modelky" />
+            <datalist id="seznamModelekObalky"></datalist>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputIssuePoznamka">Poznámka</label>
+          <textarea id="inputIssuePoznamka" rows="4"></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
+          <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Modal: Obnovení ze zálohy -->

@@ -1458,3 +1458,79 @@ func TestProhlizeniNapricSbirkou(t *testing.T) {
 		t.Fatalf("alba fotografa: %d fotek", len(alba))
 	}
 }
+
+func TestVydaniOdkazyAVybery(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Obálková", Odkazy: "https://cs.wikipedia.org/wiki/X\nhttps://www.imdb.com/name/y"})
+	a.AddModelka(Modelka{Jmeno: "Druhá"})
+	a.AddCover("2009-11", odkazA)
+	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA+" "+odkazB)
+	a.AddBulkPhotos(2, "Druhé", "Pictorial", odkazA)
+
+	// Odkazy se uloží s modelkou a přežijí úpravu
+	m := a.GetModelky("Obálková")[0]
+	m.Narodnost = "Česká"
+	a.UpdateModelka(m)
+	if m := a.GetModelky("Obálková")[0]; !strings.Contains(m.Odkazy, "imdb") || m.Narodnost != "Česká" {
+		t.Fatalf("odkazy po úpravě: %+v", m)
+	}
+
+	// Vydání: poznámka, stav a modelka z obálky; neplatný stav ani vydání neprojdou
+	if !a.SetVydaniInfo("2009-11", "Výroční číslo", "", 1) || a.SetVydaniInfo("2009-11", "", "jiny", 0) || a.SetVydaniInfo("2009", "x", "", 0) {
+		t.Fatal("uložení vydání")
+	}
+	if info := a.GetVydaniInfo("2009-11"); info.Poznamka != "Výroční číslo" || info.JmenoObalky != "Obálková" {
+		t.Fatalf("vydání: %+v", info)
+	}
+	if obalky := a.GetModelky("Obálková")[0].Obalky; len(obalky) != 1 || obalky[0] != "2009-11" {
+		t.Fatalf("obálky modelky: %v", obalky)
+	}
+	// Chybějící číslo označené „sháním“ a vydání „nezajímá mě“ mimo přehled toho, co chybí
+	a.SetStavVydani("1999-04", "shanim")
+	a.SetStavVydani("2009-11", "nezajima")
+	if stavy := a.GetStavyVydani(); len(stavy) != 2 || stavy[0].Stav != "shanim" || stavy[1].Poznamka != "Výroční číslo" {
+		t.Fatalf("stavy vydání: %+v", stavy)
+	}
+	if p := a.GetPrehled(false); len(p.VydaniBezCenterfoldu) != 0 || len(p.Rocniky) != 1 {
+		t.Fatalf("přehled se stavem nezajímá: %+v", p)
+	}
+
+	// Výběry: založení podle názvu, pořadí přidání, bez zdvojení, úklid po smazané fotce
+	vyber := a.VyberPodleNazvu("Nej léta")
+	if vyber == 0 || a.VyberPodleNazvu("nej leta") != vyber {
+		t.Fatal("výběr podle názvu")
+	}
+	fotkyB := a.GetFotografieModelky(2)
+	fotkyA := a.GetFotografieModelky(1)
+	if n := a.PridatDoVyberu(vyber, []int{fotkyB[0].ID, fotkyA[1].ID, fotkyB[0].ID}); n != 2 {
+		t.Fatalf("přidáno %d fotek", n)
+	}
+	if ve := a.GetFotkyVyberu(vyber); len(ve) != 2 || ve[0].JmenoModelky != "Druhá" {
+		t.Fatalf("fotky výběru: %+v", ve)
+	}
+
+	// Export a import zachovají vydání, výběry i odkazy
+	export, err := a.exportovat()
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := novaTestovaciApp(t, nil)
+	if v := b.importovat(export); v.Selhalo != "" || len(v.Chyby) != 0 {
+		t.Fatalf("import: %+v", v)
+	}
+	if bv := b.GetVybery(); len(bv) != 1 || bv[0].Pocet != 2 || b.GetVydaniInfo("2009-11").JmenoObalky != "Obálková" || !strings.Contains(b.GetModelky("Obálková")[0].Odkazy, "wikipedia") {
+		t.Fatalf("po importu: výběry %+v, vydání %+v", bv, b.GetVydaniInfo("2009-11"))
+	}
+
+	a.DeleteFotografie(fotkyA[1].ID)
+	if v := a.GetVybery(); v[0].Pocet != 1 {
+		t.Fatalf("po smazání fotky má výběr %d fotek", v[0].Pocet)
+	}
+	a.DeleteModelka(1)
+	if info := a.GetVydaniInfo("2009-11"); info.ModelkaObalky != 0 {
+		t.Fatal("smazaná modelka zůstala na obálce")
+	}
+	if !a.SmazatVyber(vyber) || len(a.GetVybery()) != 0 {
+		t.Fatal("smazání výběru")
+	}
+}

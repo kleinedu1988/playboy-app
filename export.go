@@ -69,6 +69,7 @@ type exportModelka struct {
 	Vystoupeni      string        `yaml:"vystoupeni,omitempty"`
 	PictorialVydani string        `yaml:"pictorial_vydani,omitempty"`
 	Poznamka        string        `yaml:"poznamka,omitempty"`
+	Odkazy          string        `yaml:"odkazy,omitempty"`
 	TitulniFotka    string        `yaml:"titulni_fotka,omitempty"`
 	Vyrez           *exportVyrez  `yaml:"vyrez,omitempty"`
 	Alba            []exportAlbum `yaml:"alba,omitempty"`
@@ -83,6 +84,8 @@ type exportDat struct {
 	Verze   int             `yaml:"verze"`
 	Modelky []exportModelka `yaml:"modelky"`
 	Covery  []exportCover   `yaml:"covery,omitempty"`
+	Vydani  []exportVydani  `yaml:"vydani,omitempty"`
+	Vybery  []exportVyberu  `yaml:"vybery,omitempty"`
 }
 
 func anoNeDoTextu(hodnota int) string {
@@ -139,7 +142,7 @@ func seskupitDoAlb(fotky []Fotografie) []exportAlbum {
 }
 
 func (a *App) exportovat() ([]byte, error) {
-	data := exportDat{Verze: 2, Modelky: []exportModelka{}}
+	data := exportDat{Verze: 3, Modelky: []exportModelka{}}
 	exportovanoFotek := 0
 
 	// Chyba čtení nesmí skončit neúplným souborem, který vypadá jako úspěšný export
@@ -168,7 +171,7 @@ func (a *App) exportovat() ([]byte, error) {
 			VelikostPrsou: m.VelikostPrsou, PrsaTyp: m.PrsaTyp, Ochlupeni: m.Ochlupeni,
 			Tetovani: anoNeDoTextu(m.Tetovani), Piercing: anoNeDoTextu(m.Piercing),
 			Role: m.Role, Tags: m.Tags, Vystoupeni: m.Vystoupeni, PictorialVydani: m.PictorialVydani,
-			Poznamka: m.Poznamka, TitulniFotka: m.CoverID,
+			Poznamka: m.Poznamka, Odkazy: m.Odkazy, TitulniFotka: m.CoverID,
 			Alba: seskupitDoAlb(fotky),
 		}
 		// Míry složené z obvodů se při importu složí znovu
@@ -191,6 +194,8 @@ func (a *App) exportovat() ([]byte, error) {
 	for _, album := range seskupitDoAlb(covery) {
 		data.Covery = append(data.Covery, exportCover{Vydani: album.Nazev, Fotky: album.Fotky})
 	}
+
+	data.Vydani, data.Vybery = a.exportovatVydaniAVybery()
 
 	// Kontrola úplnosti proti databázi: fotky modelek a covery časopisů
 	var modelekVDb, fotekVDb int
@@ -317,7 +322,7 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 		vysledek.Selhalo = fmt.Sprintf("Soubor není platný YAML: %v", err)
 		return vysledek
 	}
-	if len(data.Modelky) == 0 && len(data.Covery) == 0 {
+	if len(data.Modelky) == 0 && len(data.Covery) == 0 && len(data.Vydani) == 0 && len(data.Vybery) == 0 {
 		vysledek.Selhalo = "V souboru nejsou žádné modelky ani covery."
 		return vysledek
 	}
@@ -412,6 +417,7 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 		m.Vystoupeni = prvniNeprazdny(e.Vystoupeni, m.Vystoupeni)
 		m.PictorialVydani = prvniNeprazdny(e.PictorialVydani, m.PictorialVydani)
 		m.Poznamka = prvniNeprazdny(e.Poznamka, m.Poznamka)
+		m.Odkazy = prvniNeprazdny(e.Odkazy, m.Odkazy)
 
 		// Výřez patří ke konkrétní titulní fotce: nová fotka bez výřezu v souboru dostane výchozí
 		if ids := parseDriveIDs(e.TitulniFotka); len(ids) > 0 {
@@ -466,6 +472,9 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 		}
 		a.importovatFotky(0, exportAlbum{Nazev: vydani, Typ: "Cover", Fotky: c.Fotky}, &vysledek, "cover "+vydani)
 	}
+
+	// Vydání a výběry až po modelkách a fotkách, na které odkazují
+	a.importovatVydaniAVybery(data.Vydani, data.Vybery, stavajici, &vysledek)
 	return vysledek
 }
 

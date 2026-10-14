@@ -26,6 +26,8 @@ export function GetCenterfoldy():Promise<Array<main.Fotografie>>;
 
 export function GetCovery():Promise<Array<main.Fotografie>>;
 
+export function GetFotkyVyberu(arg1:number):Promise<Array<main.Fotografie>>;
+
 export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>>;
 
 export function GetFotografove():Promise<Array<string>>;
@@ -42,11 +44,17 @@ export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
 
 export function GetSablonaObrazku():Promise<string>;
 
+export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
+
 export function GetTagy():Promise<Array<string>>;
 
 export function GetVerze():Promise<string>;
 
+export function GetVybery():Promise<Array<main.Vyber>>;
+
 export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
+
+export function GetVydaniInfo(arg1:string):Promise<main.VydaniInfo>;
 
 export function ImportovatZeSouboru(arg1:string):Promise<main.VysledekImportu>;
 
@@ -60,6 +68,8 @@ export function ObnovitZalohu(arg1:string):Promise<string>;
 
 export function OdebratModelkuZAlba(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
 
+export function OdebratZVyberu(arg1:number,arg2:Array<number>):Promise<boolean>;
+
 export function Odemknout(arg1:string):Promise<boolean>;
 
 export function OveritOdkaz(arg1:string):Promise<number>;
@@ -68,9 +78,13 @@ export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
 
 export function PrejmenovatTag(arg1:string,arg2:string):Promise<number>;
 
+export function PrejmenovatVyber(arg1:number,arg2:string):Promise<boolean>;
+
 export function PresunoutAlbum(arg1:number,arg2:string,arg3:string,arg4:number):Promise<string>;
 
 export function PresunoutFotky(arg1:Array<number>,arg2:number,arg3:string,arg4:string):Promise<main.VysledekPresunu>;
+
+export function PridatDoVyberu(arg1:number,arg2:Array<number>):Promise<number>;
 
 export function PridatModelkuKAlbu(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
 
@@ -94,9 +108,13 @@ export function SetSablonaObrazku(arg1:string):Promise<boolean>;
 
 export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean):Promise<boolean>;
 
+export function SetStavVydani(arg1:string,arg2:string):Promise<boolean>;
+
 export function SetTitulniFotka(arg1:number,arg2:number):Promise<boolean>;
 
 export function SetVydaniAlba(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
+
+export function SetVydaniInfo(arg1:string,arg2:string,arg3:string,arg4:number):Promise<boolean>;
 
 export function SeznamZaloh():Promise<Array<main.Zaloha>>;
 
@@ -106,6 +124,8 @@ export function SloucitModelky(arg1:number,arg2:number):Promise<string>;
 
 export function SlozkaZaloh():Promise<string>;
 
+export function SmazatVyber(arg1:number):Promise<boolean>;
+
 export function StavDatabaze():Promise<string>;
 
 export function UpdateAlbum(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
@@ -113,6 +133,8 @@ export function UpdateAlbum(arg1:number,arg2:string,arg3:string,arg4:string,arg5
 export function UpdateCover(arg1:number,arg2:string,arg3:string):Promise<boolean>;
 
 export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
+
+export function VyberPodleNazvu(arg1:string):Promise<number>;
 
 export function VybratSouborImportu():Promise<string>;
 

@@ -1,0 +1,286 @@
+package main
+
+import (
+	"fmt"
+	"strings"
+)
+
+// Etapa 6: vydání jako záznam (poznámka, stav, modelka z obálky) a vlastní výběry fotek napříč modelkami.
+
+// Úprava č. 5: tabulka vydání, výběry fotek a odkazy u modelky
+func (a *App) migraceVydaniAVybery() error {
+	kroky := []string{
+		`CREATE TABLE IF NOT EXISTS vydani (
+			vydani TEXT PRIMARY KEY,
+			poznamka TEXT,
+			stav TEXT,
+			modelka_obalky INTEGER
+		)`,
+		`CREATE TABLE IF NOT EXISTS vybery (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			nazev TEXT NOT NULL UNIQUE,
+			pridano TEXT
+		)`,
+		`CREATE TABLE IF NOT EXISTS vybery_fotky (
+			vyber_id INTEGER NOT NULL,
+			fotografie_id INTEGER NOT NULL,
+			poradi INTEGER,
+			PRIMARY KEY (vyber_id, fotografie_id)
+		)`,
+		// Smazaná fotka zmizí z výběrů, smazaný výběr vezme své vazby, smazaná modelka z obálek
+		`CREATE TRIGGER IF NOT EXISTS vybery_po_fotce AFTER DELETE ON fotografie
+			BEGIN DELETE FROM vybery_fotky WHERE fotografie_id = OLD.id; END`,
+		`CREATE TRIGGER IF NOT EXISTS vybery_po_vyberu AFTER DELETE ON vybery
+			BEGIN DELETE FROM vybery_fotky WHERE vyber_id = OLD.id; END`,
+		`CREATE TRIGGER IF NOT EXISTS obalky_po_modelce AFTER DELETE ON modelky
+			BEGIN UPDATE vydani SET modelka_obalky = NULL WHERE modelka_obalky = OLD.id; END`,
+	}
+	for _, krok := range kroky {
+		if _, err := a.db.Exec(krok); err != nil {
+			return err
+		}
+	}
+	if !a.maSloupec("modelky", "odkazy") {
+		if _, err := a.db.Exec("ALTER TABLE modelky ADD COLUMN odkazy TEXT"); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Stav vydání ve sbírce: prázdný = běžný, „shanim" = chybí a hledám ho, „nezajima" = chybí záměrně
+var stavyVydani = map[string]bool{"": true, "shanim": true, "nezajima": true}
+
+type VydaniInfo struct {
+	Vydani        string `json:"vydani"`
+	Poznamka      string `json:"poznamka"`
+	Stav          string `json:"stav"`
+	ModelkaObalky int    `json:"modelkaObalky"` // 0 = neuvedeno
+	JmenoObalky   string `json:"jmenoObalky"`
+}
+
+func (a *App) GetVydaniInfo(vydani string) VydaniInfo {
+	info := VydaniInfo{Vydani: vydani}
+	a.db.QueryRow(`SELECT COALESCE(v.poznamka, ''), COALESCE(v.stav, ''), COALESCE(v.modelka_obalky, 0), COALESCE(m.jmeno, '')
+		FROM vydani v LEFT JOIN modelky m ON m.id = v.modelka_obalky WHERE v.vydani = ?`, vydani).
+		Scan(&info.Poznamka, &info.Stav, &info.ModelkaObalky, &info.JmenoObalky)
+	return info
+}
+
+// Poznámka, stav a modelka z obálky; prázdné údaje řádek vydání ruší
+func (a *App) SetVydaniInfo(vydani, poznamka, stav string, modelkaObalky int) bool {
+	poznamka = strings.TrimSpace(poznamka)
+	if !vzorVydani.MatchString(vydani) || !stavyVydani[stav] || (modelkaObalky != 0 && a.jmenoModelky(modelkaObalky) == "") {
+		return false
+	}
+	var err error
+	if poznamka == "" && stav == "" && modelkaObalky == 0 {
+		_, err = a.db.Exec("DELETE FROM vydani WHERE vydani = ?", vydani)
+	} else {
+		var obalka interface{}
+		if modelkaObalky != 0 {
+			obalka = modelkaObalky
+		}
+		_, err = a.db.Exec(`INSERT INTO vydani (vydani, poznamka, stav, modelka_obalky) VALUES (?, NULLIF(?, ''), NULLIF(?, ''), ?)
+			ON CONFLICT(vydani) DO UPDATE SET poznamka = excluded.poznamka, stav = excluded.stav, modelka_obalky = excluded.modelka_obalky`,
+			vydani, poznamka, stav, obalka)
+	}
+	if err != nil {
+		a.chyba("SetVydaniInfo", err)
+	}
+	return err == nil
+}
+
+// Jen stav (z kalendáře), poznámka a obálka zůstávají
+func (a *App) SetStavVydani(vydani, stav string) bool {
+	info := a.GetVydaniInfo(vydani)
+	return a.SetVydaniInfo(vydani, info.Poznamka, stav, info.ModelkaObalky)
+}
+
+// Vydání se stavem nebo poznámkou pro kalendář (i ta, ke kterým zatím nic není)
+func (a *App) GetStavyVydani() []VydaniInfo {
+	stavy := []VydaniInfo{}
+	rows, err := a.db.Query("SELECT vydani, COALESCE(poznamka, ''), COALESCE(stav, ''), COALESCE(modelka_obalky, 0) FROM vydani ORDER BY vydani")
+	if err != nil {
+		a.chyba("GetStavyVydani", err)
+		return stavy
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var v VydaniInfo
+		if rows.Scan(&v.Vydani, &v.Poznamka, &v.Stav, &v.ModelkaObalky) == nil {
+			stavy = append(stavy, v)
+		}
+	}
+	return stavy
+}
+
+// Vlastní výběry fotek
+
+type Vyber struct {
+	ID    int    `json:"id"`
+	Nazev string `json:"nazev"`
+	Pocet int    `json:"pocet"`
+}
+
+func (a *App) GetVybery() []Vyber {
+	vybery := []Vyber{}
+	rows, err := a.db.Query(`SELECT v.id, v.nazev, (SELECT COUNT(*) FROM vybery_fotky vf WHERE vf.vyber_id = v.id)
+		FROM vybery v ORDER BY v.nazev COLLATE NOCASE`)
+	if err != nil {
+		a.chyba("GetVybery", err)
+		return vybery
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var v Vyber
+		if rows.Scan(&v.ID, &v.Nazev, &v.Pocet) == nil {
+			vybery = append(vybery, v)
+		}
+	}
+	return vybery
+}
+
+// Výběr podle názvu (bez ohledu na velikost písmen a diakritiku); neexistující se založí. Vrací id, 0 při chybě.
+func (a *App) VyberPodleNazvu(nazev string) int {
+	nazev = strings.TrimSpace(nazev)
+	if nazev == "" {
+		return 0
+	}
+	for _, v := range a.GetVybery() {
+		if zjednodusit(v.Nazev) == zjednodusit(nazev) {
+			return v.ID
+		}
+	}
+	vysledek, err := a.db.Exec("INSERT INTO vybery (nazev, pridano) VALUES (?, ?)", nazev, ted())
+	if err != nil {
+		a.chyba("VyberPodleNazvu", err)
+		return 0
+	}
+	id, _ := vysledek.LastInsertId()
+	return int(id)
+}
+
+func (a *App) PrejmenovatVyber(id int, nazev string) bool {
+	nazev = strings.TrimSpace(nazev)
+	if nazev == "" {
+		return false
+	}
+	_, err := a.db.Exec("UPDATE vybery SET nazev = ? WHERE id = ?", nazev, id)
+	return err == nil
+}
+
+func (a *App) SmazatVyber(id int) bool {
+	_, err := a.db.Exec("DELETE FROM vybery WHERE id = ?", id)
+	if err != nil {
+		a.chyba("SmazatVyber", err)
+	}
+	return err == nil
+}
+
+// Přidání fotek na konec výběru; fotka, která už ve výběru je, se přeskočí. Vrací počet přidaných.
+func (a *App) PridatDoVyberu(vyberID int, fotoIDs []int) int {
+	pridano := 0
+	for _, id := range fotoIDs {
+		vysledek, err := a.db.Exec(`INSERT OR IGNORE INTO vybery_fotky (vyber_id, fotografie_id, poradi)
+			SELECT ?, ?, COALESCE(MAX(poradi), 0) + 1 FROM vybery_fotky WHERE vyber_id = ?`, vyberID, id, vyberID)
+		if err != nil {
+			a.chyba("PridatDoVyberu", err)
+			continue
+		}
+		if n, _ := vysledek.RowsAffected(); n > 0 {
+			pridano++
+		}
+	}
+	return pridano
+}
+
+func (a *App) OdebratZVyberu(vyberID int, fotoIDs []int) bool {
+	for _, id := range fotoIDs {
+		if _, err := a.db.Exec("DELETE FROM vybery_fotky WHERE vyber_id = ? AND fotografie_id = ?", vyberID, id); err != nil {
+			a.chyba("OdebratZVyberu", err)
+			return false
+		}
+	}
+	return true
+}
+
+// Fotky výběru v pořadí, v jakém byly přidány
+func (a *App) GetFotkyVyberu(vyberID int) []Fotografie {
+	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM vybery_fotky vf
+		JOIN fotografie f ON f.id = vf.fotografie_id
+		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
+		WHERE vf.vyber_id = ? ORDER BY vf.poradi, f.id`, true, true, vyberID))
+}
+
+// Názvy výběrů pro export: fotka je určená modelkou, albem, typem a souborem
+type exportVyberu struct {
+	Nazev string              `yaml:"nazev"`
+	Fotky []exportFotkyVyberu `yaml:"fotky"`
+}
+
+type exportFotkyVyberu struct {
+	Modelka string `yaml:"modelka,omitempty"`
+	Album   string `yaml:"album"`
+	Typ     string `yaml:"typ"`
+	ID      string `yaml:"id"`
+}
+
+type exportVydani struct {
+	Vydani        string `yaml:"vydani"`
+	Stav          string `yaml:"stav,omitempty"`
+	ModelkaObalky string `yaml:"modelka_obalky,omitempty"`
+	Poznamka      string `yaml:"poznamka,omitempty"`
+}
+
+func (a *App) exportovatVydaniAVybery() ([]exportVydani, []exportVyberu) {
+	var vydani []exportVydani
+	for _, v := range a.GetStavyVydani() {
+		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Stav: v.Stav, ModelkaObalky: a.jmenoModelky(v.ModelkaObalky), Poznamka: v.Poznamka})
+	}
+	var vybery []exportVyberu
+	for _, v := range a.GetVybery() {
+		e := exportVyberu{Nazev: v.Nazev, Fotky: []exportFotkyVyberu{}}
+		for _, f := range a.GetFotkyVyberu(v.ID) {
+			e.Fotky = append(e.Fotky, exportFotkyVyberu{Modelka: f.JmenoModelky, Album: f.Album, Typ: f.Typ, ID: f.DriveID})
+		}
+		vybery = append(vybery, e)
+	}
+	return vydani, vybery
+}
+
+// Import vydání a výběrů po importu modelek a fotek; nenalezené se ohlásí
+func (a *App) importovatVydaniAVybery(vydani []exportVydani, vybery []exportVyberu, modelky map[string]Modelka, vysledek *VysledekImportu) {
+	idModelky := func(jmeno string) int {
+		if strings.TrimSpace(jmeno) == "" {
+			return 0
+		}
+		return modelky[zjednodusit(strings.TrimSpace(jmeno))].ID
+	}
+	for _, v := range vydani {
+		stavajici := a.GetVydaniInfo(v.Vydani)
+		obalka := idModelky(v.ModelkaObalky)
+		if obalka == 0 {
+			obalka = stavajici.ModelkaObalky
+		}
+		if !a.SetVydaniInfo(v.Vydani, prvniNeprazdny(v.Poznamka, stavajici.Poznamka), prvniNeprazdny(v.Stav, stavajici.Stav), obalka) {
+			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("vydání „%s“: neplatné vydání nebo stav", v.Vydani))
+		}
+	}
+	for _, v := range vybery {
+		id := a.VyberPodleNazvu(v.Nazev)
+		if id == 0 {
+			continue
+		}
+		for _, f := range v.Fotky {
+			var fotoID int
+			a.db.QueryRow("SELECT id FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND drive_file_id = ?",
+				idModelky(f.Modelka), f.Album, f.Typ, f.ID).Scan(&fotoID)
+			if fotoID == 0 {
+				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("výběr „%s“: fotka %s v albu „%s“ ve sbírce není", v.Nazev, f.ID, f.Album))
+				continue
+			}
+			a.PridatDoVyberu(id, []int{fotoID})
+		}
+	}
+}

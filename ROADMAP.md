@@ -59,7 +59,10 @@ Cíl: celé číslo časopisu se zpracuje z jedné stránky a nová modelka se �
 | Hledání zvlášť pro každý pohled | Text z Modelek dnes po přepnutí filtruje kalendář | S |
 | Srozumitelná hláška na odkaz složky Disku | Dnes skončí jako „nefunkční odkaz“ | S |
 
-## Etapa 3 – Opravy bez mazání
+## Etapa 3 – Opravy bez mazání (hotovo 14. 10. 2026)
+
+Album dostalo stálou identitu v tabulce `alba` (na ní visí další modelky), fotky ho dál určují hlavní
+modelkou, názvem a typem; úplný převod alba na záznam, na který fotky odkazují, zatím nebyl potřeba.
 
 Cíl: fotka ve špatném albu, album u špatné modelky i duplicitní modelka se opraví bez nového vkládání odkazů a bez ztráty srdíček.
 

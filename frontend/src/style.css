@@ -2201,3 +2201,67 @@ body.razeni .photo-item {
     font-style: normal;
     color: var(--accent);
 }
+
+/* Další modelky sdíleného alba v jeho hlavičce */
+.album-spolu {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* Vybraná fotka (Ctrl nebo Shift + klik) */
+.photo-item.vybrana {
+    outline: 3px solid var(--accent);
+    outline-offset: -3px;
+}
+
+.photo-item.vybrana::before {
+    content: "\2713";
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    z-index: 1;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 13px;
+    line-height: 22px;
+    text-align: center;
+}
+
+/* Lišta akcí pro vybrané fotky, dole uprostřed okna */
+.selection-bar {
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    transform: translateX(-50%);
+    background-color: var(--bg-modal);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.selection-hearts .heart {
+    font-size: 16px;
+}
+
+/* Hlavička alba se štítky (vydání, další modelky) se zalomí, štítky samy ne */
+.album-header {
+    flex-wrap: wrap;
+}
+
+.album-header .chip {
+    white-space: nowrap;
+}

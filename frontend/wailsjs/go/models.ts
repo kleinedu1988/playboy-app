@@ -1,5 +1,19 @@
 export namespace main {
 	
+	export class OdkazModelky {
+	    id: number;
+	    jmeno: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OdkazModelky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.jmeno = source["jmeno"];
+	    }
+	}
 	export class Fotografie {
 	    id: number;
 	    modelkaId: number;
@@ -15,6 +29,7 @@ export namespace main {
 	    hodnoceni: number;
 	    poradi: number;
 	    pridano: string;
+	    dalsiModelky: OdkazModelky[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Fotografie(source);
@@ -36,7 +51,26 @@ export namespace main {
 	        this.hodnoceni = source["hodnoceni"];
 	        this.poradi = source["poradi"];
 	        this.pridano = source["pridano"];
+	        this.dalsiModelky = this.convertValues(source["dalsiModelky"], OdkazModelky);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class NedostupnySoubor {
 	    fotoId: number;
@@ -44,6 +78,7 @@ export namespace main {
 	    jmeno: string;
 	    album: string;
 	    typ: string;
+	    opakovane: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new NedostupnySoubor(source);
@@ -56,12 +91,14 @@ export namespace main {
 	        this.jmeno = source["jmeno"];
 	        this.album = source["album"];
 	        this.typ = source["typ"];
+	        this.opakovane = source["opakovane"];
 	    }
 	}
 	export class KontrolaSouboru {
 	    zkontrolovano: number;
 	    nedostupne: NedostupnySoubor[];
 	    neovereno: number;
+	    davka: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new KontrolaSouboru(source);
@@ -72,6 +109,7 @@ export namespace main {
 	        this.zkontrolovano = source["zkontrolovano"];
 	        this.nedostupne = this.convertValues(source["nedostupne"], NedostupnySoubor);
 	        this.neovereno = source["neovereno"];
+	        this.davka = source["davka"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -168,6 +206,41 @@ export namespace main {
 	        this.poznamka = source["poznamka"];
 	        this.hodnoceni = source["hodnoceni"];
 	        this.pridano = source["pridano"];
+	    }
+	}
+	
+	export class ObnovaFotky {
+	    modelkaId: number;
+	    album: string;
+	    typ: string;
+	    url: string;
+	    vydani: string;
+	    rotace: number;
+	    spojit: boolean;
+	    hodnoceni: number;
+	    poradi: number;
+	    pridano: string;
+	    popis: string;
+	    fotograf: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ObnovaFotky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	        this.url = source["url"];
+	        this.vydani = source["vydani"];
+	        this.rotace = source["rotace"];
+	        this.spojit = source["spojit"];
+	        this.hodnoceni = source["hodnoceni"];
+	        this.poradi = source["poradi"];
+	        this.pridano = source["pridano"];
+	        this.popis = source["popis"];
+	        this.fotograf = source["fotograf"];
 	    }
 	}
 	
@@ -304,6 +377,20 @@ export namespace main {
 	        this.noveFotky = source["noveFotky"];
 	        this.chyby = source["chyby"];
 	        this.selhalo = source["selhalo"];
+	    }
+	}
+	export class VysledekPresunu {
+	    presunuto: number;
+	    duplicitni: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new VysledekPresunu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.presunuto = source["presunuto"];
+	        this.duplicitni = source["duplicitni"];
 	    }
 	}
 	export class VysledekVlozeni {

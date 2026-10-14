@@ -24,6 +24,8 @@ import (
 type App struct {
 	ctx context.Context
 	db  *sql.DB
+	// Soubor databáze; prázdný u dočasné databáze v paměti
+	cestaDb string
 
 	// Hlášení chyb do okna aplikace; v testech zůstává prázdné
 	naChybu func(zprava string)
@@ -112,6 +114,8 @@ type Fotografie struct {
 	Poradi int `json:"poradi"`
 	// Kdy byla fotka přidána (RRRR-MM-DD HH:MM:SS); prázdné u záznamů starších než tento údaj
 	Pridano string `json:"pridano"`
+	// Další modelky alba kromě hlavní (vyplněno v profilu a na stránce vydání)
+	DalsiModelky []OdkazModelky `json:"dalsiModelky"`
 }
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
@@ -460,6 +464,7 @@ func (a *App) otevritDatabazi(cesta string) error {
 		return err
 	}
 	a.db = db
+	a.cestaDb = cesta
 	// Data jsou jen pro vlastníka účtu
 	os.Chmod(slozkaDat(), 0o700)
 	os.Chmod(cesta, 0o600)
@@ -488,6 +493,7 @@ func kontrolaSouboru(db *sql.DB) string {
 var migrace = []func(a *App) error{
 	(*App).migraceZaklad,
 	(*App).migraceIndexy,
+	(*App).migraceSdilenaAlba,
 }
 
 func (a *App) migrovat() error {
@@ -701,11 +707,14 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], s[1]))
 	}
 
-	vyber = append(vyber, "(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id)", "COALESCE(hodnoceni, 0)", "COALESCE(pridano, '')")
+	vyber = append(vyber, `(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id OR EXISTS (SELECT 1 FROM alba al JOIN alba_modelky am ON am.album_id = al.id
+		WHERE am.modelka_id = modelky.id AND al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ))`, "COALESCE(hodnoceni, 0)", "COALESCE(pridano, '')")
 
 	// Vydání každé modelky odvozená z jejích fotek
 	vydaniModelek := map[int][]string{}
-	if radky, err := a.db.Query("SELECT DISTINCT f.modelka_id, " + vydaniFotky + " AS v FROM fotografie f WHERE f.modelka_id > 0 AND " + vydaniFotky + " <> '' ORDER BY v"); err == nil {
+	if radky, err := a.db.Query("SELECT DISTINCT f.modelka_id, " + vydaniFotky + " AS v FROM fotografie f WHERE f.modelka_id > 0 AND " + vydaniFotky + " <> ''" +
+		" UNION SELECT am.modelka_id, " + vydaniFotky + " FROM fotografie f JOIN alba al ON al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ" +
+		" JOIN alba_modelky am ON am.album_id = al.id WHERE " + vydaniFotky + " <> '' ORDER BY 2"); err == nil {
 		for radky.Next() {
 			var id int
 			var v string
@@ -718,7 +727,7 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 
 	// Popisy alb se prohledávají spolu s údaji modelky
 	textyAlb := map[int]string{}
-	if radky, err := a.db.Query("SELECT modelka_id, COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba"); err == nil {
+	if radky, err := a.db.Query("SELECT modelka_id, COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba UNION ALL SELECT am.modelka_id, COALESCE(al.popis, ''), COALESCE(al.fotograf, '') FROM alba_modelky am JOIN alba al ON al.id = am.album_id"); err == nil {
 		for radky.Next() {
 			var id int
 			var popis, fotograf string
@@ -977,9 +986,10 @@ func (a *App) ZrusitPoradiAlba(modelkaID int, album, typ string) bool {
 func (a *App) SetTitulniFotka(modelkaID, fotoID int) bool {
 	vysledek, err := a.db.Exec(`
 		UPDATE modelky SET cover_zoom = NULL, cover_x = NULL, cover_y = NULL,
-			drive_cover_id = (SELECT drive_file_id FROM fotografie WHERE id = ? AND modelka_id = ?)
-		WHERE id = ? AND EXISTS (SELECT 1 FROM fotografie WHERE id = ? AND modelka_id = ?)`,
-		fotoID, modelkaID, modelkaID, fotoID, modelkaID)
+			drive_cover_id = (SELECT drive_file_id FROM fotografie WHERE id = ?1)
+		WHERE id = ?2 AND EXISTS (SELECT 1 FROM fotografie f LEFT JOIN alba al ON al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ
+			WHERE f.id = ?1 AND (f.modelka_id = ?2 OR EXISTS (SELECT 1 FROM alba_modelky am WHERE am.album_id = al.id AND am.modelka_id = ?2)))`,
+		fotoID, modelkaID)
 	if err != nil {
 		a.chyba("SetTitulniFotka", err)
 		return false
@@ -1117,10 +1127,12 @@ func (a *App) nactiFotografie(query string, sJmenem, sPopisem bool, args ...inte
 }
 
 // Načtení fotek konkrétní modelky pro její detailní profil
-const dotazFotekModelky = vyberFotografii + vyberPopisu + " FROM fotografie f" + pripojeniPopisu + " WHERE f.modelka_id = ? ORDER BY " + razeniFotek
+// Fotky modelky včetně alb, ve kterých je vedená jako další modelka
+const dotazFotekModelky = vyberFotografii + vyberPopisu + " FROM fotografie f" + pripojeniPopisu + ` WHERE f.modelka_id = ?1
+	OR EXISTS (SELECT 1 FROM alba_modelky am WHERE am.album_id = a.id AND am.modelka_id = ?1) ORDER BY ` + razeniFotek
 
 func (a *App) GetFotografieModelky(modelkaID int) []Fotografie {
-	return a.nacistFotografie(dotazFotekModelky, false, true, modelkaID)
+	return a.doplnitDalsiModelky(a.nacistFotografie(dotazFotekModelky, false, true, modelkaID))
 }
 
 // Všechny centerfoldy napříč modelkami pro stěnu plakátů
@@ -1178,10 +1190,10 @@ func (a *App) GetVydani(vydani string) []Fotografie {
 	if !vzorVydaniAlba.MatchString(vydani) {
 		return nil
 	}
-	return a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
+	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
 		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
 		WHERE `+vydaniFotky+` = ?
-		ORDER BY m.jmeno COLLATE NOCASE, f.album, `+razeniFotek, true, true, vydani)
+		ORDER BY m.jmeno COLLATE NOCASE, f.album, `+razeniFotek, true, true, vydani))
 }
 
 // Všechny fotky přiřazené k nějakému vydání, pro kalendář vydání
@@ -1271,7 +1283,11 @@ func (a *App) SetPopisAlba(modelkaID int, album, typ, popis, fotograf string) bo
 
 	var err error
 	if popis == "" && fotograf == "" {
-		_, err = a.db.Exec("DELETE FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
+		// Řádek sdíleného alba nese vazby na další modelky, proto se jen vyprázdní
+		_, err = a.db.Exec("DELETE FROM alba WHERE modelka_id = ? AND album = ? AND typ = ? AND NOT EXISTS (SELECT 1 FROM alba_modelky WHERE album_id = alba.id)", modelkaID, album, typ)
+		if err == nil {
+			_, err = a.db.Exec("UPDATE alba SET popis = NULL, fotograf = NULL WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
+		}
 	} else {
 		// Popis patří jen k albu, které má aspoň jednu fotku
 		var fotek int
@@ -1454,6 +1470,8 @@ type NedostupnySoubor struct {
 	Jmeno     string `json:"jmeno"`
 	Album     string `json:"album"`
 	Typ       string `json:"typ"`
+	// Nedostupný i při kontrole v některý předchozí den; jen takové soubory se nabízí odebrat
+	Opakovane bool `json:"opakovane"`
 }
 
 type KontrolaSouboru struct {
@@ -1461,44 +1479,74 @@ type KontrolaSouboru struct {
 	Nedostupne    []NedostupnySoubor `json:"nedostupne"`
 	// Soubory, u kterých se kontrola nepovedla (např. výpadek připojení); nepočítají se jako nedostupné
 	Neovereno int `json:"neovereno"`
+	// Kontrola jen části souborů (denní dávka)
+	Davka bool `json:"davka"`
 }
 
-// Ověření, že Google Disk všechny uložené soubory stále vrací jako obrázek
+// Kolik fotek ověří denní kontrola; za dávku se prostřídají všechny a Google nedostane tisíce požadavků najednou
+const velikostDenniDavky = 300
+
+// Ruční kontrola všech souborů včetně titulních fotek
 func (a *App) ZkontrolovatSoubory() KontrolaSouboru {
+	return a.zkontrolovat(`
+		SELECT f.id, f.modelka_id, COALESCE(m.jmeno, ''), f.album, f.typ, f.drive_file_id, COALESCE(f.nedostupne_od, '')
+		FROM fotografie f LEFT JOIN modelky m ON m.id = f.modelka_id
+		UNION ALL
+		SELECT 0, id, jmeno, '', 'Titulní fotka', drive_cover_id, '' FROM modelky WHERE COALESCE(drive_cover_id, '') <> ''`, false)
+}
+
+// Denní kontrola: nejdéle neověřené fotky, nejdřív ty, které už nedostupné byly
+func (a *App) ZkontrolovatDavku() KontrolaSouboru {
+	return a.zkontrolovat(fmt.Sprintf(`
+		SELECT f.id, f.modelka_id, COALESCE(m.jmeno, ''), f.album, f.typ, f.drive_file_id, COALESCE(f.nedostupne_od, '')
+		FROM fotografie f LEFT JOIN modelky m ON m.id = f.modelka_id
+		ORDER BY f.nedostupne_od IS NULL, COALESCE(f.overeno, ''), f.id LIMIT %d`, velikostDenniDavky), true)
+}
+
+// Ověření souborů a zápis výsledku k fotkám: dostupná dostane datum ověření, nedostupná si pamatuje, od kdy
+// nedostupná je. Titulní fotky se jen hlásí, nikam se nezapisují.
+func (a *App) zkontrolovat(dotaz string, davka bool) KontrolaSouboru {
 	type polozka struct {
-		soubor  NedostupnySoubor
-		driveID string
+		soubor       NedostupnySoubor
+		driveID      string
+		nedostupneOd string
 	}
 	var polozky []polozka
 
-	rows, err := a.db.Query(`
-		SELECT f.id, COALESCE(f.modelka_id, 0), COALESCE(m.jmeno, ''), f.album, f.typ, f.drive_file_id
-		FROM fotografie f LEFT JOIN modelky m ON m.id = f.modelka_id
-		UNION ALL
-		SELECT 0, id, jmeno, '', 'Titulní fotka', drive_cover_id FROM modelky WHERE COALESCE(drive_cover_id, '') <> ''`)
+	rows, err := a.db.Query(dotaz)
 	if err != nil {
 		a.chyba("ZkontrolovatSoubory", err)
-		return KontrolaSouboru{}
+		return KontrolaSouboru{Nedostupne: []NedostupnySoubor{}}
 	}
 	for rows.Next() {
 		var p polozka
-		if err := rows.Scan(&p.soubor.FotoID, &p.soubor.ModelkaID, &p.soubor.Jmeno, &p.soubor.Album, &p.soubor.Typ, &p.driveID); err == nil {
+		if err := rows.Scan(&p.soubor.FotoID, &p.soubor.ModelkaID, &p.soubor.Jmeno, &p.soubor.Album, &p.soubor.Typ, &p.driveID, &p.nedostupneOd); err == nil {
 			polozky = append(polozky, p)
 		}
 	}
 	rows.Close()
 
-	vysledek := KontrolaSouboru{Zkontrolovano: len(polozky), Nedostupne: []NedostupnySoubor{}}
+	vysledek := KontrolaSouboru{Zkontrolovano: len(polozky), Nedostupne: []NedostupnySoubor{}, Davka: davka}
 	driveIDs := make([]string, len(polozky))
 	for i, p := range polozky {
 		driveIDs[i] = p.driveID
 	}
+	den := dnes()
 	for i, stav := range overitSoubory(driveIDs) {
+		p := polozky[i]
 		switch stav {
 		case souborNeoveren:
 			vysledek.Neovereno++
+		case souborDostupny:
+			if p.soubor.FotoID != 0 {
+				a.db.Exec("UPDATE fotografie SET overeno = ?, nedostupne_od = NULL WHERE id = ?", den, p.soubor.FotoID)
+			}
 		case souborNedostupny:
-			vysledek.Nedostupne = append(vysledek.Nedostupne, polozky[i].soubor)
+			p.soubor.Opakovane = p.nedostupneOd != "" && p.nedostupneOd < den
+			if p.soubor.FotoID != 0 {
+				a.db.Exec("UPDATE fotografie SET overeno = ?, nedostupne_od = COALESCE(nedostupne_od, ?) WHERE id = ?", den, den, p.soubor.FotoID)
+			}
+			vysledek.Nedostupne = append(vysledek.Nedostupne, p.soubor)
 		}
 	}
 	return vysledek

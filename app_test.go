@@ -1135,3 +1135,187 @@ func TestEdiceVydani(t *testing.T) {
 		t.Fatalf("holá ID: %v", ids)
 	}
 }
+
+func TestOpravyBezMazani(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	odkazC := "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view"
+	a.AddModelka(Modelka{Jmeno: "Anna", Tags: "blond, zrzka"})
+	a.AddModelka(Modelka{Jmeno: "Bára", NarozeniDatum: "1990-01-01", Tags: "Blond"})
+	a.AddModelka(Modelka{Jmeno: "Anna Duplicitní", Narodnost: "USA", DalsiJmena: "Annie"})
+	anna, bara, dup := 1, 2, 3
+	a.AddBulkPhotos(anna, "Spolu", "Pictorial", odkazA+" "+odkazB)
+	a.SetPopisAlba(anna, "Spolu", "Pictorial", "Společný pictorial", "Fotograf X")
+	a.SetVydaniAlba(anna, "Spolu", "Pictorial", "2010-05")
+
+	// Sdílené album: ukáže se i v profilu druhé modelky, počítá se jí a dá se najít podle textu
+	if !a.PridatModelkuKAlbu(anna, "Spolu", "Pictorial", bara) || a.PridatModelkuKAlbu(anna, "Spolu", "Pictorial", anna) {
+		t.Fatal("přidání další modelky k albu")
+	}
+	fotkyBary := a.GetFotografieModelky(bara)
+	if len(fotkyBary) != 2 || fotkyBary[0].ModelkaID != anna || len(fotkyBary[0].DalsiModelky) != 1 || fotkyBary[0].DalsiModelky[0].Jmeno != "Bára" {
+		t.Fatalf("sdílené album v profilu druhé modelky: %+v", fotkyBary)
+	}
+	if m := a.GetModelky("spolecny")[0]; len(a.GetModelky("spolecny")) != 2 || a.GetModelky("Bára")[0].PocetFotek != 2 || len(a.GetModelky("Bára")[0].Vydani) != 1 {
+		t.Fatalf("sdílené album v počtech a hledání: %+v", m)
+	}
+	// Vyprázdnění textu sdílené album nerozbije
+	a.SetPopisAlba(anna, "Spolu", "Pictorial", "", "")
+	if len(a.GetFotografieModelky(bara)) != 2 {
+		t.Fatal("vyprázdnění textu zrušilo sdílení")
+	}
+	a.SetPopisAlba(anna, "Spolu", "Pictorial", "Společný pictorial", "Fotograf X")
+
+	// Export zapíše sdílené album jednou, import vazbu obnoví
+	export, err := a.exportovat()
+	if err != nil || strings.Count(string(export), "nazev: Spolu") != 1 || !strings.Contains(string(export), "dalsi_modelky:") {
+		t.Fatalf("export sdíleného alba (%v):\n%s", err, export)
+	}
+	b := novaTestovaciApp(t, nil)
+	if v := b.importovat(export); v.Selhalo != "" || len(b.GetFotografieModelky(b.GetModelky("Bára")[0].ID)) != 2 {
+		t.Fatalf("import sdíleného alba: %+v", v)
+	}
+
+	// Přesun alba k jiné modelce: srdíčka i text zůstanou; kolize se stejnojmenným albem se odmítne
+	a.SetHodnoceniFotek([]int{a.GetFotografieModelky(anna)[0].ID}, 5)
+	if chyba := a.PresunoutAlbum(anna, "Spolu", "Pictorial", dup); chyba != "" {
+		t.Fatal(chyba)
+	}
+	presunute := a.GetFotografieModelky(dup)
+	if len(presunute) != 2 || presunute[0].Hodnoceni != 5 || presunute[0].Popis != "Společný pictorial" || len(a.GetFotografieModelky(bara)) != 2 {
+		t.Fatalf("po přesunu alba: %+v", presunute)
+	}
+	a.AddBulkPhotos(anna, "Spolu", "Pictorial", odkazC)
+	if a.PresunoutAlbum(anna, "Spolu", "Pictorial", dup) == "" {
+		t.Fatal("přesun na stejnojmenné album prošel")
+	}
+
+	// Sloučení alb: duplicitní soubor se nezdvojí, text cílového alba má přednost
+	a.AddBulkPhotos(dup, "Spolu překlep", "Pictorial", odkazA+" "+odkazC)
+	a.SetPopisAlba(dup, "Spolu překlep", "Pictorial", "jiný text", "")
+	if chyba := a.SloucitAlba(dup, "Spolu překlep", "Pictorial", "Spolu", "Pictorial"); chyba != "" {
+		t.Fatal(chyba)
+	}
+	slouceno := a.GetFotografieModelky(dup)
+	if len(slouceno) != 3 || slouceno[2].Vydani != "2010-05" || slouceno[0].Popis != "Společný pictorial" {
+		t.Fatalf("po sloučení alb: %+v", slouceno)
+	}
+
+	// Přesun vybraných fotek do jiného alba
+	if v := a.PresunoutFotky([]int{slouceno[2].ID}, anna, "Spolu", "Pictorial"); v.Presunuto != 0 || v.Duplicitni != 1 {
+		t.Fatalf("přesun duplicitní fotky: %+v", v)
+	}
+	if v := a.PresunoutFotky([]int{slouceno[0].ID}, anna, "Nové album", "Pictorial"); v.Presunuto != 1 {
+		t.Fatalf("přesun do nového alba: %+v", v)
+	}
+
+	// Zpět po odebrání: fotka se vrátí i se srdíčky a textem alba, který zmizel s poslední fotkou
+	jedina := a.GetFotografieModelky(anna)
+	var nove Fotografie
+	for _, f := range jedina {
+		if f.Album == "Nové album" {
+			nove = f
+		}
+	}
+	a.SetPopisAlba(anna, "Nové album", "Pictorial", "text nového", "")
+	nove = func() Fotografie {
+		for _, f := range a.GetFotografieModelky(anna) {
+			if f.ID == nove.ID {
+				return f
+			}
+		}
+		return nove
+	}()
+	a.DeleteFotografie(nove.ID)
+	if n := a.ObnovitFotky([]ObnovaFotky{{ModelkaID: anna, Album: nove.Album, Typ: nove.Typ, URL: nove.URL, Hodnoceni: nove.Hodnoceni, Popis: nove.Popis, Fotograf: nove.Fotograf}}); n != 1 {
+		t.Fatalf("vráceno %d fotek", n)
+	}
+	for _, f := range a.GetFotografieModelky(anna) {
+		if f.Album == "Nové album" && (f.Hodnoceni != 5 || f.Popis != "text nového") {
+			t.Fatalf("vrácená fotka: %+v", f)
+		}
+	}
+
+	// Sloučení modelek: alba přejdou, prázdné údaje se doplní, jméno se přidá mezi pseudonymy
+	if chyba := a.SloucitModelky(anna, dup); chyba != "" {
+		t.Fatal(chyba)
+	}
+	if len(a.GetModelky("")) != 2 {
+		t.Fatal("zdrojová modelka po sloučení zůstala")
+	}
+	m := a.GetModelky("Anna")[0]
+	if m.Narodnost != "USA" || !strings.Contains(m.DalsiJmena, "Anna Duplicitní") || !strings.Contains(m.DalsiJmena, "Annie") {
+		t.Fatalf("modelka po sloučení: %+v", m)
+	}
+	// Stejnojmenné album „Spolu" se sloučilo, společný soubor C v něm zůstal jednou
+	if fotky := a.GetFotografieModelky(anna); len(fotky) != 3 {
+		t.Fatalf("po sloučení modelek má %d fotek", len(fotky))
+	}
+
+	// Přejmenování fotografa a tagu v celé sbírce
+	if a.PrejmenovatFotografa("fotograf x", "Fotograf Y") != 1 || a.GetFotografove()[0] != "Fotograf Y" {
+		t.Fatalf("fotografové: %v", a.GetFotografove())
+	}
+	if n := a.PrejmenovatTag("blond", "Blondýna"); n != 2 || a.GetModelky("Bára")[0].Tags != "Blondýna" || !strings.HasPrefix(a.GetModelky("Anna")[0].Tags, "Blondýna") {
+		t.Fatalf("tagy po přejmenování (%d): %v", n, a.GetTagy())
+	}
+
+	// Smazání modelky uklidí i její vazby na alba
+	a.DeleteModelka(bara)
+	var vazeb int
+	a.db.QueryRow("SELECT COUNT(*) FROM alba_modelky").Scan(&vazeb)
+	if vazeb != 0 {
+		t.Fatalf("po smazání modelky zůstalo %d vazeb", vazeb)
+	}
+}
+
+func TestImportVJedneTransakci(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Stávající"})
+	soubor := []byte("modelky:\n  - jmeno: První\n  - jmeno: Druhá\n  - jmeno: Stávající\n    narodnost: Kanada\n")
+
+	pocet := 0
+	poImportuModelky = func() error {
+		if pocet++; pocet == 2 {
+			return fmt.Errorf("simulovaná chyba")
+		}
+		return nil
+	}
+	defer func() { poImportuModelky = nil }()
+
+	if v := a.importovat(soubor); v.Selhalo == "" {
+		t.Fatal("import se simulovanou chybou neohlásil selhání")
+	}
+	if modelky := a.GetModelky(""); len(modelky) != 1 || modelky[0].Narodnost != "" {
+		t.Fatalf("po neúspěšném importu zůstala část změn: %+v", modelky)
+	}
+	poImportuModelky = nil
+	if v := a.importovat(soubor); v.Selhalo != "" || len(a.GetModelky("")) != 3 {
+		t.Fatalf("import bez chyby: %+v", v)
+	}
+}
+
+func TestOpakovanaNedostupnost(t *testing.T) {
+	a := novaTestovaciApp(t, map[string]int{idB: souborNedostupny})
+	a.AddModelka(Modelka{Jmeno: "Modelka"})
+	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA)
+	a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id) VALUES (1, 'Album', 'Pictorial', ?)", idB)
+
+	// Poprvé nedostupná: hlásí se, ale odebrat se zatím nenabízí
+	k := a.ZkontrolovatDavku()
+	if len(k.Nedostupne) != 1 || k.Nedostupne[0].Opakovane || !k.Davka {
+		t.Fatalf("první kontrola: %+v", k)
+	}
+	// Nedostupná i v jiný den: teprve teď opakovaně
+	a.db.Exec("UPDATE fotografie SET nedostupne_od = '2020-01-01' WHERE drive_file_id = ?", idB)
+	if k := a.ZkontrolovatSoubory(); len(k.Nedostupne) != 1 || !k.Nedostupne[0].Opakovane {
+		t.Fatalf("opakovaná kontrola: %+v", k)
+	}
+	// Znovu dostupná se z nedostupných vyřadí
+	overitSoubor = func(string) int { return souborDostupny }
+	a.ZkontrolovatDavku()
+	var nedostupnych int
+	a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE nedostupne_od IS NOT NULL").Scan(&nedostupnych)
+	if nedostupnych != 0 {
+		t.Fatal("dostupná fotka zůstala označená jako nedostupná")
+	}
+}

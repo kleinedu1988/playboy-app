@@ -1,5 +1,5 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetPoradiFotek, ZrusitPoradiAlba, ExportovatDoSouboru, VybratSouborImportu, ImportovatZeSouboru, DeleteFotografieHromadne, SeznamZaloh, ObnovitZalohu, GetFotografove, GetPrehled, MaZamek, Odemknout, NastavitHeslo, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, GetPrehledVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetPoradiFotek, ZrusitPoradiAlba, ExportovatDoSouboru, VybratSouborImportu, ImportovatZeSouboru, DeleteFotografieHromadne, SeznamZaloh, ObnovitZalohu, GetFotografove, GetTagy, PridatModelkuKAlbu, OdebratModelkuZAlba, PresunoutAlbum, SloucitAlba, PresunoutFotky, SloucitModelky, ObnovitFotky, PrejmenovatFotografa, PrejmenovatTag, ZkontrolovatDavku, GetPrehled, MaZamek, Odemknout, NastavitHeslo, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
 import { MESICE, nazevAlba, nazevVydani, esc, formatDatum, bezDiakritiky, sjednotit, vekPriVydani, udajChybi, EDICE, VYCHOZI_EDICE, rozlozitVydani, slozitVydani, prevestVysku, prevestVahu, rozlozitMiry } from './lib/format';
 import { klicAlba, sestavitAlba, zacatkyAlb, novePoradi } from './lib/alba';
 import { WindowMinimise, WindowToggleMaximise, WindowIsMaximised, WindowIsFullscreen, Quit, BrowserOpenURL, EventsOn } from '../wailsjs/runtime/runtime';
@@ -462,6 +462,37 @@ document.querySelector('#app').innerHTML = `
     </form>
   </div>
 
+  <!-- Modal: výběr nebo zadání jedné hodnoty (modelka, album, nové jméno) -->
+  <div id="pickModal" class="modal-overlay hidden">
+    <div class="modal-card modal-narrow">
+      <div class="modal-header">
+        <h3 id="pickModalTitle"></h3>
+        <button class="close-btn" data-zavrit>&times;</button>
+      </div>
+      <form id="pickForm">
+        <p id="pickModalText" class="pass-hint"></p>
+        <div class="form-group">
+          <label id="pickModalLabel" for="inputPick"></label>
+          <input type="text" id="inputPick" list="seznamPick" autocomplete="off" />
+          <datalist id="seznamPick"></datalist>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
+          <button type="submit" id="pickSubmitBtn" class="btn btn-primary"></button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Lišta s akcemi pro vybrané fotky (Ctrl nebo Shift + klik) -->
+  <div id="selectionBar" class="selection-bar hidden">
+    <span id="selectionCount"></span>
+    <span class="selection-hearts">${[1, 2, 3, 4, 5].map(n => `<button class="heart on" data-vyber-hodnoceni="${n}" title="Ohodnotit vybrané ${n} z 5"></button>`).join('')}</span>
+    <button class="btn btn-secondary btn-small" data-vyber="presunout">Přesunout do alba…</button>
+    <button class="btn btn-secondary btn-small" data-vyber="odebrat">Odebrat</button>
+    <button class="btn btn-secondary btn-small" data-vyber="zrusit">Zrušit výběr</button>
+  </div>
+
   <!-- Modal: Obnovení ze zálohy -->
   <div id="backupModal" class="modal-overlay hidden">
     <div class="modal-card modal-backup">
@@ -559,6 +590,8 @@ const stats = document.getElementById('stats');
 
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají v liště tlačítko zpět místo přepínače
 function ukazatPohled(pohled) {
+    // Výběr fotek patří jen k otevřenému profilu
+    if (pohled !== detailView) document.getElementById('selectionBar')?.classList.add('hidden');
     [gallery, wall, covers, calendar, stats, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
     const podstranka = pohled === detailView || pohled === issueView;
     backBtn.classList.toggle('hidden', !podstranka);
@@ -875,6 +908,12 @@ async function otevritDetailModelky(modelka) {
 }
 
 
+// Ostatní modelky sdíleného alba (hlavní i další kromě té, jejíž profil je otevřený) jako odkazy na jejich profil
+function htmlSpoluModelek(a, krome = aktualniModelka?.id) {
+    const ostatni = [{ id: a.modelkaId, jmeno: a.jmenoModelky }, ...a.dalsiModelky].filter(m => m.id !== krome && m.jmeno);
+    return ostatni.length ? `<span class="album-spolu">s ${ostatni.map(m => `<button class="chip" data-modelka="${m.id}" title="Otevřít profil">${esc(m.jmeno)}</button>`).join(' ')}</span>` : '';
+}
+
 // Průvodní text alba a fotograf; delší text je zkrácený a rozbaluje se kliknutím
 function htmlPopisuAlba(a) {
     if (!a.popis && !a.fotograf) return '';
@@ -950,11 +989,20 @@ async function nacistFotkyModelky(modelkaId) {
     // pod jménem jiné modelky, úpravy by pak šly na špatnou
     if (aktualniModelka?.id !== modelkaId) return;
     const photosGrid = document.getElementById('photosGrid');
+    // Překreslení alb výběr ruší
+    posledniVybrana = null;
+    selectionBar.classList.add('hidden');
 
     const centerfoldsSide = document.getElementById('centerfoldsSide');
     const prazdno = '<p class="empty-state">Tato modelka zatím nemá nahraná žádná alba. Přidej je pravým tlačítkem myši.</p>';
 
     aktualniAlba = sestavitAlba(fotky || []);
+    // Jméno hlavní modelky sdíleného alba (fotky profilu jména nenesou)
+    const jmenaModelek = new Map((nacteneModelky || []).map(m => [m.id, m.jmeno]));
+    jmenaModelek.set(aktualniModelka.id, aktualniModelka.jmeno);
+    const neznama = aktualniAlba.filter(a => !jmenaModelek.has(a.modelkaId));
+    if (neznama.length) (await GetModelky('') || []).forEach(m => jmenaModelek.set(m.id, m.jmeno));
+    aktualniAlba.forEach(a => { a.jmenoModelky = jmenaModelek.get(a.modelkaId) || ''; });
     // Alba v profilu chronologicky podle vydání, bez vydání na konci v pořadí, jak přibyla;
     // ruční přeřazení fotek uvnitř alba tak pořadí alb nemění
     const klicPoradi = a => {
@@ -980,6 +1028,7 @@ async function nacistFotkyModelky(modelkaId) {
                         <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
                         <span>${esc(a.typ)} · ${popis}</span>
                         ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít vydání">${esc(nazevVydani(a.vydani))}</button>` : ''}
+                        ${htmlSpoluModelek(a)}
                         <button class="album-more" data-nabidka-alba title="Akce alba (také pravým tlačítkem)">&#8943;</button>
                     </div>
                     ${htmlPopisuAlba(a)}
@@ -1026,7 +1075,8 @@ function zrusitZnackyVlozeni() {
 
 document.getElementById('photosGrid').addEventListener('pointerdown', (e) => {
     const dlazdice = e.target.closest('.photo-item');
-    if (e.button !== 0 || !dlazdice || dlazdice.classList.contains('dalsi') || e.target.closest('.hearts')) return;
+    // S Ctrl nebo Shift se fotky vybírají, netahají
+    if (e.button !== 0 || !dlazdice || dlazdice.classList.contains('dalsi') || e.target.closest('.hearts') || e.ctrlKey || e.metaKey || e.shiftKey) return;
     tazenaFotka = { dlazdice, x: e.clientX, y: e.clientY, tahne: false, cil: null, pred: false };
 });
 
@@ -1347,7 +1397,8 @@ async function otevritVydani(vydani) {
     const index = p => vydaniPolozky.indexOf(p);
     // Ročník bez měsíce sdružuje jen pictorialy; cover ani centerfold nemá
     const jenRocnik = !rozlozitVydani(vydani)?.mesic;
-    const odkazNaModelku = a => `<button class="chip" data-modelka="${a.modelkaId}" title="Otevřít profil modelky">${esc(a.jmenoModelky)}</button>`;
+    const odkazNaModelku = a => [{ id: a.modelkaId, jmeno: a.jmenoModelky }, ...a.dalsiModelky]
+        .map(m => `<button class="chip" data-modelka="${m.id}" title="Otevřít profil modelky">${esc(m.jmeno)}</button>`).join(' ');
     const sklonovat = (n, jedna, dve, pet) => `${n} ${n === 1 ? jedna : n < 5 ? dve : pet}`;
 
     document.getElementById('issueSide').innerHTML = `
@@ -2203,7 +2254,82 @@ document.querySelector('main').addEventListener('click', (e) => {
     else if (hodnota) hledatHodnotu(hodnota.dataset.hledat);
 });
 
+// Výběr více fotek v profilu: Ctrl (Cmd) + klik přidá nebo odebere fotku, Shift + klik vybere úsek alba
+const selectionBar = document.getElementById('selectionBar');
+let posledniVybrana = null;
+
+const vybraneDlazdice = () => [...document.querySelectorAll('#photosGrid .photo-item.vybrana')];
+
+function aktualizovatVyber() {
+    const pocet = vybraneDlazdice().length;
+    selectionBar.classList.toggle('hidden', pocet === 0);
+    document.getElementById('selectionCount').textContent = `Vybráno: ${pocet}`;
+}
+
+function zrusitVyber() {
+    vybraneDlazdice().forEach(d => d.classList.remove('vybrana'));
+    posledniVybrana = null;
+    aktualizovatVyber();
+}
+
+function vybratKliknutim(e) {
+    const dlazdice = e.target.closest('#photosGrid .photo-item');
+    if (!dlazdice || !(e.ctrlKey || e.metaKey || e.shiftKey)) return false;
+    if (e.shiftKey && posledniVybrana && posledniVybrana.parentElement === dlazdice.parentElement) {
+        const vsechny = [...dlazdice.parentElement.children].filter(d => d.offsetParent);
+        const [od, po] = [vsechny.indexOf(posledniVybrana), vsechny.indexOf(dlazdice)].sort((x, y) => x - y);
+        vsechny.slice(od, po + 1).forEach(d => d.classList.add('vybrana'));
+    } else {
+        dlazdice.classList.toggle('vybrana');
+    }
+    posledniVybrana = dlazdice;
+    aktualizovatVyber();
+    return true;
+}
+
+// Vybraná fotka podle dlaždice: [fotka, album]
+function fotkaDlazdice(dlazdice) {
+    const album = aktualniAlba[parseInt(dlazdice.closest('.album').dataset.album)];
+    return [album.fotky.find(f => f.id === parseInt(dlazdice.dataset.fotoId)), album];
+}
+
+selectionBar.addEventListener('click', jednou(async (e) => {
+    const vybrane = vybraneDlazdice().map(fotkaDlazdice).filter(([f]) => f);
+    const ids = vybrane.map(([f]) => f.id);
+    if (!ids.length) return;
+    const hodnoceni = e.target.closest('[data-vyber-hodnoceni]')?.dataset.vyberHodnoceni;
+    const akce = e.target.closest('[data-vyber]')?.dataset.vyber;
+
+    if (hodnoceni) {
+        await SetHodnoceniFotek(ids, parseInt(hodnoceni));
+        oznamit(`Ohodnoceno fotek: ${ids.length}.`);
+    } else if (akce === 'zrusit') {
+        zrusitVyber();
+        return;
+    } else if (akce === 'odebrat') {
+        const obnova = vybrane.map(([f, album]) => obnovaFotky(f, album));
+        if (!await DeleteFotografieHromadne(ids)) return;
+        oznamit(`Odebráno fotek: ${ids.length}. Soubory na Google Disku zůstaly.`, { text: 'Vrátit', akce: async () => {
+            await ObnovitFotky(obnova);
+            nacistFotkyModelky(aktualniModelka.id);
+        } });
+    } else if (akce === 'presunout') {
+        // Cílem je album otevřené modelky, nebo nové album; nové je pictorial
+        const alba = aktualniAlba.filter(a => a.modelkaId === aktualniModelka.id);
+        const nazev = await vybratHodnotu({ nadpis: 'Přesunout do alba', text: 'Vyber album ze seznamu, nebo napiš název nového alba.', popisek: 'Album', moznosti: alba.map(a => nazevAlba(a.album, a.typ)), tlacitko: 'Přesunout' });
+        if (!nazev) return;
+        const cil = alba.find(a => nazevAlba(a.album, a.typ) === nazev || a.album === nazev);
+        const v = await PresunoutFotky(ids, aktualniModelka.id, cil ? cil.album : nazev, cil ? cil.typ : 'Pictorial');
+        oznamit(`Přesunuto fotek: ${v.presunuto}.` + (v.duplicitni ? ` V cílovém albu už bylo: ${v.duplicitni} – zůstaly na místě.` : ''));
+    } else {
+        return;
+    }
+    zrusitVyber();
+    nacistFotkyModelky(aktualniModelka.id);
+}));
+
 detailView.addEventListener('click', (e) => {
+    if (vybratKliknutim(e)) return;
     if (e.target.closest('[data-vydani], .hearts') || rozbalitKliknute(e)) return;
     const polozka = e.target.closest('[data-index]');
     if (polozka) otevritLightbox(parseInt(polozka.dataset.index));
@@ -2762,7 +2888,7 @@ function smazatAlbum(album, pocet) {
     otevritDeleteModal(
         'Smazat album',
         `Opravdu smazat album „${nazevAlba(album.album, album.typ)}" (${album.typ}, počet fotek: ${pocet})? Fotky na Google Disku zůstanou. Před smazáním se uloží záloha.`,
-        () => DeleteAlbum(aktualniModelka.id, album.album, album.typ),
+        () => DeleteAlbum(album.modelkaId, album.album, album.typ),
         () => nacistFotkyModelky(aktualniModelka.id)
     );
 }
@@ -2800,11 +2926,14 @@ async function zkontrolovatSoubory(hotovyVysledek = null) {
         const kde = n.fotoId === 0
             ? `titulní fotka (změň ji přes Editovat)`
             : `${n.typ} · ${nazevAlba(n.album, n.typ)}`;
-        return `<li><strong>${esc(n.jmeno || 'Cover časopisu')}</strong><span>${esc(kde)}</span></li>`;
+        return `<li><strong>${esc(n.jmeno || 'Cover časopisu')}</strong><span>${esc(kde)}${n.fotoId !== 0 && !n.opakovane ? ' · poprvé' : ''}</span></li>`;
     }).join('');
 
-    // Titulní fotky se neodebírají, modelka by zůstala bez obrázku bez vědomí uživatele
-    nedostupneFotky = vysledek.nedostupne.filter(n => n.fotoId !== 0);
+    // Odebrat se nabízí jen fotky nedostupné i při některé dřívější kontrole; poprvé nedostupná může být jen výpadek.
+    // Titulní fotky se neodebírají, modelka by zůstala bez obrázku bez vědomí uživatele.
+    nedostupneFotky = vysledek.nedostupne.filter(n => n.fotoId !== 0 && n.opakovane);
+    const poprve = vysledek.nedostupne.filter(n => n.fotoId !== 0 && !n.opakovane).length;
+    if (poprve) text.textContent += ` Poprvé nedostupných: ${poprve} – ověří se znovu při další kontrole, odebrat půjdou, jen když budou nedostupné i jindy.`;
     odebrat.classList.toggle('hidden', nedostupneFotky.length === 0);
     odebrat.textContent = nedostupnychPodezreleMnoho
         ? `Přesto odebrat z databáze (${nedostupneFotky.length})…`
@@ -2932,13 +3061,16 @@ async function kontrolaPoSpusteni() {
     const DEN = 24 * 60 * 60 * 1000;
     if (Date.now() - Number(localStorage.getItem('posledniKontrola') || 0) < DEN) return;
 
-    const vysledek = await ZkontrolovatSoubory();
+    // Denně jen dávka nejdéle neověřených fotek, aby Google nedostal tisíce požadavků najednou
+    const vysledek = await ZkontrolovatDavku();
     // Při výpadku připojení se kontrola zopakuje při dalším spuštění
     if (vysledek.zkontrolovano > 0 && vysledek.neovereno === vysledek.zkontrolovano) return;
     localStorage.setItem('posledniKontrola', String(Date.now()));
 
-    if (vysledek.nedostupne.length > 0) {
-        oznamit(`Souborů, které už na Google Disku nejsou dostupné: ${vysledek.nedostupne.length}.`,
+    // Hlásí se jen soubory nedostupné opakovaně
+    const opakovane = vysledek.nedostupne.filter(n => n.opakovane).length;
+    if (opakovane > 0) {
+        oznamit(`Souborů, které na Google Disku opakovaně nejsou dostupné: ${opakovane}.`,
             { text: 'Zobrazit', akce: () => zkontrolovatSoubory(vysledek) });
     }
 }
@@ -2952,13 +3084,89 @@ function smazatCover(cover) {
     );
 }
 
-function smazatFotku(fotka) {
-    otevritDeleteModal(
-        'Odebrat fotku',
-        `Opravdu odebrat tuto fotku z alba „${nazevAlba(fotka.album, fotka.typ)}"? Soubor na Google Disku zůstane.`,
-        () => DeleteFotografie(fotka.id),
-        () => nacistFotkyModelky(aktualniModelka.id)
-    );
+// Sdílené album: další modelka ho uvidí i ve svém profilu
+async function pridatModelkuKAlbu(album) {
+    const modelka = await vybratModelku('Přidat modelku k albu', `Album „${nazevAlba(album.album, album.typ)}“ se ukáže i v jejím profilu; fotky, srdíčka a text zůstanou společné.`,
+        'Přidat', [album.modelkaId, ...album.dalsiModelky.map(m => m.id)]);
+    if (!modelka) return;
+    if (!await PridatModelkuKAlbu(album.modelkaId, album.album, album.typ, modelka.id)) {
+        oznamit('Modelku se k albu nepodařilo přidat.');
+        return;
+    }
+    nacistFotkyModelky(aktualniModelka.id);
+}
+
+async function presunoutAlbum(album) {
+    const modelka = await vybratModelku('Přesunout album', `Album „${nazevAlba(album.album, album.typ)}“ přejde i se srdíčky, pořadím a textem k jiné modelce.`, 'Přesunout', [album.modelkaId]);
+    if (!modelka) return;
+    const chyba = await PresunoutAlbum(album.modelkaId, album.album, album.typ, modelka.id);
+    if (chyba) {
+        oznamit(chyba);
+        return;
+    }
+    oznamit(`Album je teď u modelky ${modelka.jmeno}.`, { text: 'Otevřít její profil', akce: () => otevritProfilPodleId(modelka.id) });
+    nacistFotkyModelky(aktualniModelka.id);
+}
+
+async function sloucitAlbum(album) {
+    const jina = aktualniAlba.filter(a => a !== album && a.modelkaId === album.modelkaId);
+    const popisAlba = a => `${nazevAlba(a.album, a.typ)} (${a.typ})`;
+    const vybrane = await vybratHodnotu({
+        nadpis: 'Sloučit s albem',
+        text: `Fotky alba „${nazevAlba(album.album, album.typ)}“ přejdou do vybraného alba; soubory, které tam už jsou, se nezdvojí. Před sloučením se uloží záloha.`,
+        popisek: 'Cílové album', moznosti: jina.map(popisAlba), tlacitko: 'Sloučit',
+    });
+    if (!vybrane) return;
+    const cil = jina.find(a => popisAlba(a) === vybrane || sjednotit(a.album) === sjednotit(vybrane));
+    if (!cil) {
+        oznamit('Takové album modelka nemá. Vyber ho ze seznamu.');
+        return;
+    }
+    const chyba = await SloucitAlba(album.modelkaId, album.album, album.typ, cil.album, cil.typ);
+    if (chyba) oznamit(chyba);
+    nacistFotkyModelky(aktualniModelka.id);
+}
+
+// Duplicitní modelka se sloučí do otevřené: alba přejdou, prázdné údaje se doplní
+async function sloucitModelku(modelka) {
+    const zdroj = await vybratModelku('Sloučit s jinou modelkou', `Vybraná modelka se sloučí do modelky ${modelka.jmeno}: její alba přejdou sem, prázdné údaje se doplní a její jméno se přidá mezi pseudonymy. Před sloučením se uloží záloha.`, 'Vybrat', [modelka.id]);
+    if (!zdroj) return;
+    if (!await potvrdit('Sloučit modelky', `Sloučit modelku „${zdroj.jmeno}“ do „${modelka.jmeno}“? Modelka „${zdroj.jmeno}“ pak jako samostatná zmizí.`, 'Sloučit')) return;
+    const chyba = await SloucitModelky(modelka.id, zdroj.id);
+    if (chyba) {
+        oznamit(chyba);
+        return;
+    }
+    oznamit(`Modelka ${zdroj.jmeno} je sloučená do ${modelka.jmeno}.`);
+    otevritProfilPodleId(modelka.id);
+}
+
+// Hromadné přejmenování fotografa nebo tagu v celé sbírce
+async function prejmenovatVeSbirce(co) {
+    const fotograf = co === 'fotograf';
+    const moznosti = await (fotograf ? GetFotografove() : GetTagy()) || [];
+    if (!moznosti.length) {
+        oznamit(fotograf ? 'Ve sbírce zatím není žádný fotograf.' : 'Ve sbírce zatím není žádný tag.');
+        return;
+    }
+    const stary = await vybratHodnotu({ nadpis: fotograf ? 'Přejmenovat fotografa' : 'Přejmenovat tag', popisek: fotograf ? 'Fotograf' : 'Tag', moznosti, tlacitko: 'Pokračovat' });
+    if (!stary) return;
+    const novy = await vybratHodnotu({ nadpis: fotograf ? 'Přejmenovat fotografa' : 'Přejmenovat tag', text: `Nový zápis pro „${stary}“ v celé sbírce.`, popisek: 'Nově', tlacitko: 'Přejmenovat', vychozi: stary });
+    if (!novy || novy === stary) return;
+    const pocet = fotograf ? await PrejmenovatFotografa(stary, novy) : await PrejmenovatTag(stary, novy);
+    oznamit(fotograf ? `Upraveno alb: ${pocet}.` : `Upraveno modelek: ${pocet}.`);
+    if (!detailView.classList.contains('hidden')) otevritProfilPodleId(aktualniModelka.id);
+}
+
+// Fotka se odebere hned; oznámení nabídne vrátit ji i se srdíčky, pořadím a textem alba
+async function smazatFotku(fotka, album) {
+    const obnova = obnovaFotky(fotka, album);
+    if (!await DeleteFotografie(fotka.id)) return;
+    nacistFotkyModelky(aktualniModelka.id);
+    oznamit('Fotka odebrána z alba. Soubor na Google Disku zůstal.', { text: 'Vrátit', akce: async () => {
+        await ObnovitFotky([obnova]);
+        nacistFotkyModelky(aktualniModelka.id);
+    } });
 }
 
 // Správa sbírky: stejné položky nabízí pravé tlačítko na volném místě galerie i tlačítko ⋯ v hlavičce
@@ -2972,6 +3180,9 @@ function polozkySpravy() {
         { text: 'Otevřít složku se zálohami', akce: async () => BrowserOpenURL('file://' + await SlozkaZaloh()) },
         { text: 'Exportovat sbírku (YAML)…', akce: exportovatData },
         { text: 'Importovat sbírku (YAML)…', akce: importovatData },
+        null,
+        { text: 'Přejmenovat fotografa…', akce: () => prejmenovatVeSbirce('fotograf') },
+        { text: 'Přejmenovat tag…', akce: () => prejmenovatVeSbirce('tag') },
         null,
         { text: maZamek ? 'Změnit nebo zrušit heslo…' : 'Nastavit heslo…', akce: otevritHeslo },
         // Nové načtení okna znovu vyžádá heslo
@@ -3007,6 +3218,7 @@ document.getElementById('menuBtn').onclick = (e) => {
     nabidkaPodTlacitkem(e, [
         ...(vProfilu ? [
             { text: `Upravit modelku: ${aktualniModelka.jmeno}`, akce: () => otevritModelModal(aktualniModelka) },
+            { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(aktualniModelka) },
             { text: 'Smazat modelku', akce: () => smazatModelku(aktualniModelka) },
             null,
         ] : []),
@@ -3127,7 +3339,11 @@ document.addEventListener('contextmenu', (e) => {
                         otevritProfilPodleId(aktualniModelka.id);
                     },
                 });
-                polozky.push({ text: album.spojit ? 'Odebrat tuto stránku' : 'Odebrat fotku', akce: () => smazatFotku(fotka) });
+                polozky.push({ text: album.spojit ? 'Odebrat tuto stránku' : 'Odebrat fotku', akce: () => smazatFotku(fotka, album) });
+                polozky.push(
+                    { text: 'Otevřít na Google Disku', akce: () => BrowserOpenURL(odkazNaDisk(fotka)) },
+                    { text: 'Kopírovat odkaz', akce: () => kopirovatText(odkazNaDisk(fotka)) },
+                );
                 // Stránky spojeného plakátu se nedají přetáhnout, řadí se po jedné
                 if (album.spojit) {
                     const misto = album.fotky.indexOf(fotka);
@@ -3144,7 +3360,7 @@ document.addEventListener('contextmenu', (e) => {
             polozky.push({
                 text: album.spojit ? 'Rozdělit plakát na samostatné fotky' : 'Spojit stránky do jednoho plakátu',
                 akce: async () => {
-                    await SetSpojeniAlba(aktualniModelka.id, album.album, album.typ, !album.spojit);
+                    await SetSpojeniAlba(album.modelkaId, album.album, album.typ, !album.spojit);
                     nacistFotkyModelky(aktualniModelka.id);
                 },
             });
@@ -3153,7 +3369,7 @@ document.addEventListener('contextmenu', (e) => {
             polozky.push({
                 text: 'Řadit album podle srdíček',
                 akce: async () => {
-                    await ZrusitPoradiAlba(aktualniModelka.id, album.album, album.typ);
+                    await ZrusitPoradiAlba(album.modelkaId, album.album, album.typ);
                     nacistFotkyModelky(aktualniModelka.id);
                 },
             });
@@ -3163,12 +3379,23 @@ document.addEventListener('contextmenu', (e) => {
             const zkracena = mrizka.classList.contains('zkracena');
             polozky.push({ text: zkracena ? 'Rozbalit album' : 'Sbalit album', akce: () => prepnoutRozbaleniAlba(mrizka, zkracena) });
         }
+        // Úpravy alba jdou vždy na jeho hlavní modelku, i když je otevřený profil další modelky
+        const vlastnik = { id: album.modelkaId, jmeno: '' };
         polozky.push(
             { text: 'Spustit slideshow alba', akce: () => otevritLightbox(aktualniPolozky.indexOf(album.polozky[0]), true) },
-            { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(aktualniModelka, album) },
+            { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(vlastnik, album) },
+            null,
+            { text: 'Přidat další modelku k albu…', akce: () => pridatModelkuKAlbu(album) },
+            ...album.dalsiModelky.map(m => ({ text: `Odebrat z alba: ${m.jmeno}`, akce: async () => {
+                await OdebratModelkuZAlba(album.modelkaId, album.album, album.typ, m.id);
+                nacistFotkyModelky(aktualniModelka.id);
+            } })),
+            { text: 'Přesunout k jiné modelce…', akce: () => presunoutAlbum(album) },
+            ...(aktualniAlba.some(a => a !== album && a.modelkaId === album.modelkaId)
+                ? [{ text: 'Sloučit s jiným albem…', akce: () => sloucitAlbum(album) }] : []),
             { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length) },
             null,
-            { text: 'Editovat modelku', akce: () => otevritModelModal(aktualniModelka) }
+            { text: 'Upravit modelku', akce: () => otevritModelModal(aktualniModelka) }
         );
     } else if (!issueView.classList.contains('hidden')) {
         // Stránka vydání: úpravy se dělají v profilu modelky a v přehledu coverů
@@ -3249,6 +3476,8 @@ document.addEventListener('keydown', (e) => {
         zavritKontextovouNabidku();
     } else if (okno) {
         zavritOkno(okno);
+    } else if (vybraneDlazdice().length) {
+        zrusitVyber();
     } else if (!lightbox.classList.contains('hidden')) {
         // Esc nejdřív vypne lupu, teprve potom zavře prohlížeč
         if (lbLupa) lbPrepnoutLupu(false);
@@ -3262,10 +3491,77 @@ document.addEventListener('keydown', (e) => {
 window.addEventListener('blur', zavritKontextovouNabidku);
 window.addEventListener('resize', zavritKontextovouNabidku);
 
+// Výběr nebo zadání jedné hodnoty s našeptáváním; vrací napsaný text, nebo null po zrušení
+const pickModal = document.getElementById('pickModal');
+let pickVyreseni = null;
+
+function vybratHodnotu({ nadpis, text = '', popisek, moznosti = [], tlacitko = 'Pokračovat', vychozi = '' }) {
+    pickVyreseni?.(null);
+    document.getElementById('pickModalTitle').textContent = nadpis;
+    document.getElementById('pickModalText').textContent = text;
+    document.getElementById('pickModalLabel').textContent = popisek;
+    document.getElementById('pickSubmitBtn').textContent = tlacitko;
+    document.getElementById('seznamPick').innerHTML = moznosti.map(m => `<option value="${esc(m)}"></option>`).join('');
+    const pole = document.getElementById('inputPick');
+    pole.value = vychozi;
+    pickModal.classList.remove('hidden');
+    pole.focus();
+    pole.select();
+    return new Promise(vyreseno => { pickVyreseni = vyreseno; });
+}
+
+document.getElementById('pickForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const hodnota = document.getElementById('inputPick').value.trim();
+    if (!hodnota) return;
+    pickModal.classList.add('hidden');
+    pickVyreseni?.(hodnota);
+    pickVyreseni = null;
+});
+
+// Modelka podle jména z výběrového okna (jiná než vynechané)
+async function vybratModelku(nadpis, text, tlacitko, vynechat = []) {
+    const modelky = (await GetModelky('') || []).filter(m => !vynechat.includes(m.id));
+    const jmeno = await vybratHodnotu({ nadpis, text, popisek: 'Modelka', moznosti: modelky.map(m => m.jmeno), tlacitko });
+    if (!jmeno) return null;
+    const modelka = modelky.find(m => sjednotit(m.jmeno) === sjednotit(jmeno));
+    if (!modelka) oznamit(`Modelka „${jmeno}“ ve sbírce není. Napiš jméno tak, jak ho nabízí seznam.`);
+    return modelka || null;
+}
+
+// Údaje odebrané fotky, aby ji šlo tlačítkem Vrátit vrátit
+const obnovaFotky = (f, album) => ({
+    modelkaId: f.modelkaId, album: f.album, typ: f.typ, url: f.url, vydani: f.vydani || '', rotace: f.rotace || 0,
+    spojit: Boolean(f.spojit), hodnoceni: f.hodnoceni || 0, poradi: f.poradi || 0, pridano: f.pridano || '',
+    popis: album?.popis || '', fotograf: album?.fotograf || '',
+});
+
+// Odkaz na fotku na Google Disku
+const odkazNaDisk = f => `https://drive.google.com/file/d/${f.url.split('/d/')[1]}/view`;
+
+async function kopirovatText(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+    } catch {
+        // Bez přístupu ke schránce přes skryté pole
+        const pole = document.createElement('textarea');
+        pole.value = text;
+        document.body.appendChild(pole);
+        pole.select();
+        document.execCommand('copy');
+        pole.remove();
+    }
+    oznamit('Odkaz je zkopírovaný.');
+}
+
 // Zavření modálního okna klávesou Esc nebo tlačítkem Zrušit; potvrzovací okno přitom ohlásí zrušení
 function zavritOkno(okno) {
     if (okno === deleteModal) zavritDeleteModal();
     else okno.classList.add('hidden');
+    if (okno === pickModal) {
+        pickVyreseni?.(null);
+        pickVyreseni = null;
+    }
 }
 document.addEventListener('click', (e) => {
     const zrusit = e.target.closest('[data-zavrit]');

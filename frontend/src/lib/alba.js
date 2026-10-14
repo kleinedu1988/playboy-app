@@ -9,7 +9,7 @@ export function sestavitAlba(fotky) {
     fotky.forEach(f => {
         const klic = `${f.modelkaId}\n${f.album}\n${f.typ}`;
         if (!mapa.has(klic)) {
-            mapa.set(klic, { modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, album: f.album, typ: f.typ, vydani: f.vydani, popis: f.popis || '', fotograf: f.fotograf || '', fotky: [] });
+            mapa.set(klic, { modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, album: f.album, typ: f.typ, vydani: f.vydani, popis: f.popis || '', fotograf: f.fotograf || '', dalsiModelky: f.dalsiModelky || [], fotky: [] });
         }
         mapa.get(klic).fotky.push(f);
     });

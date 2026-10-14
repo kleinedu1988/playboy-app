@@ -277,6 +277,17 @@ func (a *App) GetPrehled() Prehled {
 		}
 	}
 
+	// Centerfold sdíleného alba patří i dalším modelkám
+	if radky, err := a.db.Query("SELECT am.modelka_id FROM alba_modelky am JOIN alba al ON al.id = am.album_id WHERE al.typ = 'Centerfold'"); err == nil {
+		for radky.Next() {
+			var id int
+			if radky.Scan(&id) == nil {
+				maCenterfold[id] = true
+			}
+		}
+		radky.Close()
+	}
+
 	for _, m := range a.GetModelky("") {
 		p.Modelek++
 		polozka := PolozkaPrehledu{ModelkaID: m.ID, Jmeno: m.Jmeno}

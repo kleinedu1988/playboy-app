@@ -5,16 +5,10 @@ Větší plán po etapách je v `ROADMAP.md`; tady zůstávají drobné nápady 
 
 ## Později
 
-### Alba podrobněji
-- Výběr více fotek najednou pro hromadné odebrání.
-
 ### Kalendář vydání
-- Základní verze existuje (roky × měsíce, tečky cover / centerfold / pictorial, klik na prázdné políčko přidá cover).
+- Základní verze existuje (roky × měsíce, tečky cover / centerfold / pictorial, klik na prázdné políčko nabídne cover, centerfold a pictorial, přepínač edic).
 - Potřebuje lépe rozpracovat. Známé slabiny: mezi nejstarším a nejnovějším vydáním vzniká dlouhá řada
   prázdných roků; hledání filtruje jen podle roku.
-
-## Zatím přeskočeno
-- Přesun fotky mezi alby a změna typu jedné fotky.
 
 ## Rozhodnuto nedělat
 - Lišta filtrů nad galerií modelek (byla hotová a zrušena; hledání prohledává všechny údaje).

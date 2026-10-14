@@ -66,6 +66,10 @@ export function GetPrehledVydani() {
   return window['go']['main']['App']['GetPrehledVydani']();
 }
 
+export function GetTagy() {
+  return window['go']['main']['App']['GetTagy']();
+}
+
 export function GetVydani(arg1) {
   return window['go']['main']['App']['GetVydani'](arg1);
 }
@@ -82,8 +86,16 @@ export function NastavitHeslo(arg1, arg2) {
   return window['go']['main']['App']['NastavitHeslo'](arg1, arg2);
 }
 
+export function ObnovitFotky(arg1) {
+  return window['go']['main']['App']['ObnovitFotky'](arg1);
+}
+
 export function ObnovitZalohu(arg1) {
   return window['go']['main']['App']['ObnovitZalohu'](arg1);
+}
+
+export function OdebratModelkuZAlba(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['OdebratModelkuZAlba'](arg1, arg2, arg3, arg4);
 }
 
 export function Odemknout(arg1) {
@@ -92,6 +104,26 @@ export function Odemknout(arg1) {
 
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
+}
+
+export function PrejmenovatFotografa(arg1, arg2) {
+  return window['go']['main']['App']['PrejmenovatFotografa'](arg1, arg2);
+}
+
+export function PrejmenovatTag(arg1, arg2) {
+  return window['go']['main']['App']['PrejmenovatTag'](arg1, arg2);
+}
+
+export function PresunoutAlbum(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['PresunoutAlbum'](arg1, arg2, arg3, arg4);
+}
+
+export function PresunoutFotky(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['PresunoutFotky'](arg1, arg2, arg3, arg4);
+}
+
+export function PridatModelkuKAlbu(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['PridatModelkuKAlbu'](arg1, arg2, arg3, arg4);
 }
 
 export function SetCoverVyrez(arg1, arg2, arg3, arg4) {
@@ -134,6 +166,14 @@ export function SeznamZaloh() {
   return window['go']['main']['App']['SeznamZaloh']();
 }
 
+export function SloucitAlba(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['SloucitAlba'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function SloucitModelky(arg1, arg2) {
+  return window['go']['main']['App']['SloucitModelky'](arg1, arg2);
+}
+
 export function SlozkaZaloh() {
   return window['go']['main']['App']['SlozkaZaloh']();
 }
@@ -160,6 +200,10 @@ export function VybratSouborImportu() {
 
 export function VymazatMezipamet() {
   return window['go']['main']['App']['VymazatMezipamet']();
+}
+
+export function ZkontrolovatDavku() {
+  return window['go']['main']['App']['ZkontrolovatDavku']();
 }
 
 export function ZkontrolovatSoubory() {

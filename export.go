@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"math"
 	"os"
@@ -29,8 +30,10 @@ type exportAlbum struct {
 	Popis    string `yaml:"popis,omitempty"`
 	Spojit   bool   `yaml:"spojit,omitempty"`
 	// Fotky jsou v souboru v ručně určeném pořadí; bez toho se album řadí podle srdíček
-	RucniPoradi bool          `yaml:"rucni_poradi,omitempty"`
-	Fotky       []exportFotka `yaml:"fotky"`
+	RucniPoradi bool `yaml:"rucni_poradi,omitempty"`
+	// Další modelky alba; album je zapsané jen u hlavní modelky
+	DalsiModelky []string      `yaml:"dalsi_modelky,omitempty"`
+	Fotky        []exportFotka `yaml:"fotky"`
 }
 
 type exportVyrez struct {
@@ -120,6 +123,9 @@ func seskupitDoAlb(fotky []Fotografie) []exportAlbum {
 			if f.Typ != "Centerfold" && f.Typ != "Cover" {
 				album.Vydani = f.Vydani
 			}
+			for _, dalsi := range f.DalsiModelky {
+				album.DalsiModelky = append(album.DalsiModelky, dalsi.Jmeno)
+			}
 			alba = append(alba, album)
 		}
 		if f.Pridano != "" && (alba[i].Pridano == "" || f.Pridano < alba[i].Pridano) {
@@ -135,7 +141,7 @@ func seskupitDoAlb(fotky []Fotografie) []exportAlbum {
 }
 
 func (a *App) exportovat() ([]byte, error) {
-	data := exportDat{Verze: 1, Modelky: []exportModelka{}}
+	data := exportDat{Verze: 2, Modelky: []exportModelka{}}
 	exportovanoFotek := 0
 
 	// Chyba čtení nesmí skončit neúplným souborem, který vypadá jako úspěšný export
@@ -144,9 +150,16 @@ func (a *App) exportovat() ([]byte, error) {
 		return nil, fmt.Errorf("modelky se nepodařilo přečíst: %w", err)
 	}
 	for _, m := range modelky {
-		fotky, err := a.nactiFotografie(dotazFotekModelky, false, true, m.ID)
+		vsechny, err := a.nactiFotografie(dotazFotekModelky, false, true, m.ID)
 		if err != nil {
 			return nil, fmt.Errorf("fotky modelky %s se nepodařilo přečíst: %w", m.Jmeno, err)
+		}
+		// Sdílené album se zapisuje jen u hlavní modelky, u ostatních je jen jejich jméno v dalsi_modelky
+		var fotky []Fotografie
+		for _, f := range a.doplnitDalsiModelky(vsechny) {
+			if f.ModelkaID == m.ID {
+				fotky = append(fotky, f)
+			}
 		}
 		exportovanoFotek += len(fotky)
 		e := exportModelka{
@@ -316,12 +329,47 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 		return vysledek
 	}
 
+	// Celý import běží v jedné transakci: když selže uprostřed, v databázi nezůstane napůl.
+	// Pomocné funkce zapisují přes a.db, proto se pro dobu importu podstrčí spojení s jediným připojením,
+	// na kterém transakce běží.
+	if a.cestaDb != "" {
+		puvodni := a.db
+		db, err := sql.Open("sqlite", a.cestaDb+"?_pragma=busy_timeout(5000)")
+		if err == nil {
+			db.SetMaxOpenConns(1)
+			_, err = db.Exec("BEGIN IMMEDIATE")
+		}
+		if err != nil {
+			vysledek.Selhalo = fmt.Sprintf("Import se nepodařilo zahájit: %v", err)
+			return vysledek
+		}
+		a.db = db
+		defer func() {
+			if vysledek.Selhalo == "" {
+				if _, err := db.Exec("COMMIT"); err != nil {
+					vysledek.Selhalo = fmt.Sprintf("Import se nepodařilo uložit, nic se nezměnilo: %v", err)
+				}
+			}
+			if vysledek.Selhalo != "" {
+				db.Exec("ROLLBACK")
+				vysledek = VysledekImportu{Chyby: []string{}, Selhalo: vysledek.Selhalo}
+			}
+			db.Close()
+			a.db = puvodni
+		}()
+	}
+
 	// Modelky se párují podle jména bez ohledu na velikost písmen a diakritiku
 	stavajici := map[string]Modelka{}
 	for _, m := range a.GetModelky("") {
 		stavajici[zjednodusit(m.Jmeno)] = m
 	}
 
+	type sdileneAlbum struct {
+		modelkaID int
+		album     exportAlbum
+	}
+	var sdilena []sdileneAlbum
 	for _, e := range data.Modelky {
 		jmeno := strings.TrimSpace(e.Jmeno)
 		if jmeno == "" {
@@ -386,6 +434,29 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 
 		for _, album := range e.Alba {
 			a.importovatAlbum(m.ID, jmeno, album, &vysledek)
+			sdilena = append(sdilena, sdileneAlbum{m.ID, album})
+		}
+		if poImportuModelky != nil {
+			if err := poImportuModelky(); err != nil {
+				vysledek.Selhalo = fmt.Sprintf("Import selhal, nic se nezměnilo: %v", err)
+				return vysledek
+			}
+		}
+	}
+
+	// Další modelky alb až po založení všech modelek ze souboru; neznámé jméno založí modelku
+	for _, s := range sdilena {
+		for _, jmeno := range s.album.DalsiModelky {
+			jmeno = strings.TrimSpace(jmeno)
+			dalsi, znama := stavajici[zjednodusit(jmeno)]
+			if !znama && jmeno != "" && a.AddModelka(Modelka{Jmeno: jmeno, Tetovani: -1, Piercing: -1}) {
+				a.db.QueryRow("SELECT id FROM modelky WHERE jmeno = ? ORDER BY id DESC LIMIT 1", jmeno).Scan(&dalsi.ID)
+				stavajici[zjednodusit(jmeno)] = dalsi
+				vysledek.NoveModelky++
+			}
+			if dalsi.ID != 0 {
+				a.PridatModelkuKAlbu(s.modelkaID, strings.TrimSpace(s.album.Nazev), strings.TrimSpace(s.album.Typ), dalsi.ID)
+			}
 		}
 	}
 
@@ -399,6 +470,9 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 	}
 	return vysledek
 }
+
+// Testy jím mohou import uprostřed shodit a ověřit, že se nic nezměnilo
+var poImportuModelky func() error
 
 var filtrYaml = []runtime.FileFilter{{DisplayName: "YAML (*.yaml, *.yml)", Pattern: "*.yaml;*.yml"}}
 

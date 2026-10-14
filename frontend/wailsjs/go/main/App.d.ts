@@ -34,6 +34,8 @@ export function GetPrehled():Promise<main.Prehled>;
 
 export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
 
+export function GetTagy():Promise<Array<string>>;
+
 export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
 
 export function ImportovatZeSouboru(arg1:string):Promise<main.VysledekImportu>;
@@ -42,11 +44,25 @@ export function MaZamek():Promise<boolean>;
 
 export function NastavitHeslo(arg1:string,arg2:string):Promise<boolean>;
 
+export function ObnovitFotky(arg1:Array<main.ObnovaFotky>):Promise<number>;
+
 export function ObnovitZalohu(arg1:string):Promise<string>;
+
+export function OdebratModelkuZAlba(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
 
 export function Odemknout(arg1:string):Promise<boolean>;
 
 export function OveritOdkaz(arg1:string):Promise<number>;
+
+export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
+
+export function PrejmenovatTag(arg1:string,arg2:string):Promise<number>;
+
+export function PresunoutAlbum(arg1:number,arg2:string,arg3:string,arg4:number):Promise<string>;
+
+export function PresunoutFotky(arg1:Array<number>,arg2:number,arg3:string,arg4:string):Promise<main.VysledekPresunu>;
+
+export function PridatModelkuKAlbu(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
 
 export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):Promise<boolean>;
 
@@ -68,6 +84,10 @@ export function SetVydaniAlba(arg1:number,arg2:string,arg3:string,arg4:string):P
 
 export function SeznamZaloh():Promise<Array<main.Zaloha>>;
 
+export function SloucitAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<string>;
+
+export function SloucitModelky(arg1:number,arg2:number):Promise<string>;
+
 export function SlozkaZaloh():Promise<string>;
 
 export function StavDatabaze():Promise<string>;
@@ -81,6 +101,8 @@ export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
 export function VybratSouborImportu():Promise<string>;
 
 export function VymazatMezipamet():Promise<number>;
+
+export function ZkontrolovatDavku():Promise<main.KontrolaSouboru>;
 
 export function ZkontrolovatSoubory():Promise<main.KontrolaSouboru>;
 

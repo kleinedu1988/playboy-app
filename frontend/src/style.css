@@ -3300,3 +3300,61 @@ body.razeni .photo-item {
     background-color: var(--panel-hover);
     color: var(--text-main);
 }
+
+/* Karta modelky, centerfold a cover: fotka přes celou kartu, popisek je plovoucí panel dole
+   a ukáže se až po najetí myší (nebo při výběru klávesnicí) */
+.card,
+.wall-item,
+.cover-item {
+    position: relative;
+}
+
+.card-info,
+.wall-item figcaption,
+.cover-item figcaption {
+    position: absolute;
+    left: 8px;
+    bottom: 8px;
+    z-index: 2;
+    max-width: calc(100% - 16px);
+    box-sizing: border-box;
+    padding: 6px 10px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+}
+
+.card:hover .card-info,
+.card:focus-visible .card-info,
+.wall-item:hover figcaption,
+.wall-item:focus-visible figcaption,
+.cover-item:hover figcaption,
+.cover-item:focus-visible figcaption {
+    opacity: 1;
+}
+
+.card-info h3 {
+    font-size: 14px;
+}
+
+.wall-item figcaption strong,
+.cover-item figcaption strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Na kartě je dole jméno, srdíčka proto v levém horním rohu */
+.card .hearts {
+    top: 8px;
+    bottom: auto;
+}
+
+/* Při úpravě výřezu je dole panel výřezu, jméno se neukazuje */
+.card.editing .card-info {
+    display: none;
+}

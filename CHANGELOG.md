@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.6] – 2026-10-14
+
+Fotky přes celé karty. Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Karty modelek, centerfoldů a coverů ukazují jen fotku přes celou kartu. Jméno (u centerfoldu a coveru
+  i vydání) je v plovoucím panelu vlevo dole a objeví se po najetí myší nebo při výběru klávesnicí.
+- Srdíčka na kartě modelky jsou v levém horním rohu.
+
 ## [0.17.5] – 2026-10-14
 
 Plovoucí panely na fotkách a v dialozích. Schéma databáze ani formát exportu se nemění.

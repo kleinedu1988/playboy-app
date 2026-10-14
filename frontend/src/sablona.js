@@ -3,12 +3,19 @@ import { MESICE, EDICE } from './lib/format';
 
 export const SABLONA_OKNA = `
   <header class="navbar">
-    <!-- Horní řádek: název okna, cesta zpět z podstránky a tlačítka okna; slouží i k přesouvání okna -->
+    <!-- Horní řádek: šipky na další modelku, hledání a tlačítka okna; slouží i k přesouvání okna -->
     <div class="titulek-okna">
       <div class="logo">
         <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
         <button id="prevModelBtn" class="nav-back nav-step hidden" title="Předchozí modelka (šipka vlevo)">&#8249;</button>
         <button id="nextModelBtn" class="nav-back nav-step hidden" title="Další modelka (šipka vpravo)">&#8250;</button>
+      </div>
+      <!-- Hledání přesně uprostřed šířky okna -->
+      <div class="nav-controls">
+        <label class="hledani">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
+        </label>
       </div>
       <div class="window-controls">
         <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
@@ -16,7 +23,7 @@ export const SABLONA_OKNA = `
         <button id="winCloseBtn" class="win-btn win-close" title="Zavřít">&times;</button>
       </div>
     </div>
-    <!-- Hlavní lišta: přehledy jako záložky, hledání a akce -->
+    <!-- Hlavní lišta: přehledy jako záložky, volby přehledu a akce -->
     <div class="hlavni-lista">
       <div id="viewToggle" class="view-toggle">
         <button data-rezim="modelky" title="Modelky" data-kratce="Mod" class="active">Modelky</button>
@@ -28,12 +35,6 @@ export const SABLONA_OKNA = `
       </div>
       <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾…); plní je ui/volby.js -->
       <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
-      <div class="nav-controls">
-        <label class="hledani">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
-        </label>
-      </div>
       <div class="nav-akce">
         <button id="addBtn" class="nav-fav" title="Přidat…">+</button>
         <button id="menuBtn" class="nav-fav" title="Další akce">&#8943;</button>

@@ -105,9 +105,10 @@ textarea {
 }
 
 .titulek-okna {
+    position: relative;
     display: flex;
     align-items: center;
-    height: 32px;
+    height: 40px;
     padding-left: 12px;
 }
 
@@ -235,12 +236,14 @@ textarea {
     background-color: var(--text-muted);
 }
 
+/* Hledání v řádku okna přesně uprostřed šířky okna, nezávisle na tom, co je vlevo a vpravo */
 .nav-controls {
+    position: absolute;
+    left: 50%;
+    top: 50%;
     display: flex;
-    justify-content: center;
-    flex: 1;
-    min-width: 0;
-    padding: 0 16px;
+    width: min(440px, calc(100% - 2 * 130px));
+    transform: translate(-50%, -50%);
 }
 
 .hledani {
@@ -266,7 +269,7 @@ textarea {
 
 .nav-controls input {
     width: 100%;
-    height: 30px;
+    height: 28px;
     padding: 0 12px 0 32px;
     border-radius: 6px;
     border: 1px solid var(--border-color);
@@ -288,6 +291,7 @@ textarea {
     display: flex;
     flex: none;
     gap: 4px;
+    margin-left: auto;
 }
 
 /* Akce v liště (+, ⋯): ikonová tlačítka bez rámečku */
@@ -312,16 +316,13 @@ textarea {
     color: var(--text-main);
 }
 
-/* Užší okno: postupně ubývá šířka záložek, jejich text a nakonec hledání */
+/* Užší okno: postupně ubývá šířka záložek a jejich text; hledání se zužuje a v nejužším okně zmizí */
 @media (max-width: 900px) {
     .view-toggle button {
         padding: 0 7px;
         font-size: 13px;
     }
 
-    .nav-controls {
-        padding: 0 10px;
-    }
 }
 
 @media (max-width: 760px) {
@@ -347,16 +348,15 @@ textarea {
 }
 
 @media (max-width: 520px) {
-    .nav-controls {
-        display: none;
-    }
-
-    .nav-akce {
-        margin-left: auto;
-    }
-
     .hlavni-lista {
         padding-left: 4px;
+    }
+}
+
+/* V nejužším okně se hledání do řádku okna mezi šipky a tlačítka okna nevejde */
+@media (max-width: 420px) {
+    .nav-controls {
+        display: none;
     }
 }
 

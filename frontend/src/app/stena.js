@@ -9,6 +9,7 @@ import { VELIKOST_PLAKATU_MALA } from './obrazky';
 import { ukazatPohled } from './navigace';
 import { htmlPlakatu, pripravitPlakat } from './profil';
 import { otevritVydani } from './vydani';
+import { prevestNaVolby } from '../ui/volby';
 
 export async function nacistStenu(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
@@ -32,6 +33,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     if (stav.stenaPolozky.length === 0) {
         listaSteny.naplnit([]);
         wall.innerHTML = razeni + `<div class="empty-state">${fotky.length ? 'Hledání neodpovídá žádný centerfold.' : 'Zatím žádné centerfoldy. Přidej je tlačítkem + nahoře.'}</div>`;
+        prevestNaVolby(wall.querySelector('.wall-toolbar'));
         return;
     }
 
@@ -54,6 +56,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
             </figcaption>
         </figure>
     `).join('');
+    prevestNaVolby(wall.querySelector('.wall-toolbar'));
     listaSteny.naplnit([...dekady].map(([dekada, pocet]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet })));
     listaSteny.sledovat();
     wall.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));

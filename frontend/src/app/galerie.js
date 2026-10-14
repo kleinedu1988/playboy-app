@@ -18,6 +18,7 @@ import { nacistPrehled } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
 import { lightbox } from './prohlizec';
 import { vybraneDlazdice } from './vyber';
+import { prevestNaVolby } from '../ui/volby';
 
 // Hodnocení 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší
 export function htmlSrdicek(hodnoceni, atribut) {
@@ -129,6 +130,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
             stav.minHodnoceni ? `Žádná modelka nemá hodnocení ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? ' nebo vyšší' : ''}. Hodnotí se srdíčky na kartě nebo v profilu.`
             : dotaz.trim() ? 'Hledání neodpovídá žádná modelka.'
             : 'Zatím žádné modelky. Přidej první tlačítkem + nahoře.'}</div>`;
+        prevestNaVolby(gallery.querySelector('.gallery-toolbar'));
         return;
     }
 
@@ -143,6 +145,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
             </div>
         </div>
     `).join('');
+    prevestNaVolby(gallery.querySelector('.gallery-toolbar'));
 
     // Lišta částí: písmena, měsíce přidání nebo desetiletí; první karta každé části je cíl skoku.
     // Při řazení podle jména se zapnutým ♡ jsou karty seřazené podle srdíček a části nedávají smysl.

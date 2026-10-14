@@ -3,9 +3,23 @@ import { MESICE, EDICE } from './lib/format';
 
 export const SABLONA_OKNA = `
   <header class="navbar">
-    <div class="logo">
-      <span class="logo-icon">🔥</span>
-      <h2>Playboy Database</h2>
+    <!-- Horní řádek: název okna, cesta zpět z podstránky a tlačítka okna; slouží i k přesouvání okna -->
+    <div class="titulek-okna">
+      <div class="logo">
+        <span class="logo-icon">🔥</span>
+        <h2>Playboy Database</h2>
+        <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
+        <button id="prevModelBtn" class="nav-back nav-step hidden" title="Předchozí modelka (šipka vlevo)">&#8249;</button>
+        <button id="nextModelBtn" class="nav-back nav-step hidden" title="Další modelka (šipka vpravo)">&#8250;</button>
+      </div>
+      <div class="window-controls">
+        <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
+        <button id="winMaxBtn" class="win-btn" title="Maximalizovat">&#9633;</button>
+        <button id="winCloseBtn" class="win-btn win-close" title="Zavřít">&times;</button>
+      </div>
+    </div>
+    <!-- Hlavní lišta: přehledy jako záložky, hledání a akce -->
+    <div class="hlavni-lista">
       <div id="viewToggle" class="view-toggle">
         <button data-rezim="modelky" title="Modelky" data-kratce="Mod" class="active">Modelky</button>
         <button data-rezim="centerfoldy" title="Centerfoldy" data-kratce="Cf">Centerfoldy</button>
@@ -14,19 +28,16 @@ export const SABLONA_OKNA = `
         <button data-rezim="nejlepsi" title="Nejlepší" data-kratce="Nej">Nejlepší</button>
         <button data-rezim="prehled" title="Přehled" data-kratce="Př">Přehled</button>
       </div>
-      <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
-      <button id="prevModelBtn" class="nav-back nav-step hidden" title="Předchozí modelka (šipka vlevo)">&#8249;</button>
-      <button id="nextModelBtn" class="nav-back nav-step hidden" title="Další modelka (šipka vpravo)">&#8250;</button>
-    </div>
-    <div class="nav-controls">
-      <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
-      <button id="addBtn" class="nav-fav" title="Přidat…">+</button>
-      <button id="menuBtn" class="nav-fav" title="Další akce">&#8943;</button>
-    </div>
-    <div class="window-controls">
-      <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
-      <button id="winMaxBtn" class="win-btn" title="Maximalizovat">&#9633;</button>
-      <button id="winCloseBtn" class="win-btn win-close" title="Zavřít">&times;</button>
+      <div class="nav-controls">
+        <label class="hledani">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
+        </label>
+      </div>
+      <div class="nav-akce">
+        <button id="addBtn" class="nav-fav" title="Přidat…">+</button>
+        <button id="menuBtn" class="nav-fav" title="Další akce">&#8943;</button>
+      </div>
     </div>
   </header>
 
@@ -596,7 +607,7 @@ export const SABLONA_OKNA = `
         <h4>Prohlížení</h4>
         <ul>
           <li><strong>Přepínač v hlavičce</strong>: Modelky, Centerfoldy, Covery, Kalendář, Nejlepší, Přehled.</li>
-          <li><strong>Řazení galerie</strong> štítky nad kartami: abecedně, naposledy přidané, podle roku prvního vydání. Štítky <strong>♥ 1+ až ♥ 5</strong> ukážou jen modelky s aspoň tolika srdíčky, dalším klikem se filtr zruší.</li>
+          <li><strong>Volby přehledu</strong> nad obsahem: <strong>Řazení ▾</strong> (abecedně, nově přidané, podle roku prvního vydání) a <strong>Srdíčka ▾</strong> (jen modelky s aspoň tolika srdíčky; Vše filtr zruší). <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klik na vydání, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
         </ul>

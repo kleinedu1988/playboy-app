@@ -19,7 +19,7 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
     }, { svisla });
     lista.sledovat = () => {
         // Skrytá lišta ani lišta ve skrytém pohledu se nesleduje
-        if (!nav.offsetParent) return;
+        if (!nav.getClientRects().length) return;
         const hranice = horniOkraj() + 40;
         const vsechny = casti();
         // Na konci stránky už poslední část výš nevyjede, i tak je to ta aktuální
@@ -30,6 +30,19 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
     listyStranky.push(lista);
     return lista;
 }
+
+// Svislý rejstřík u pravého okraje se ukáže při rolování (a chvíli po něm) a když je myš u pravého okraje
+const svisleListy = () => listyStranky.filter(l => l.svisla && l.nav.getClientRects().length);
+let skrytiPoRolovani = null;
+hlavniOblast.addEventListener('scroll', () => {
+    svisleListy().forEach(l => l.nav.classList.add('rolovani'));
+    clearTimeout(skrytiPoRolovani);
+    skrytiPoRolovani = setTimeout(() => listyStranky.forEach(l => l.nav.classList.remove('rolovani')), 1200);
+}, { passive: true });
+document.addEventListener('mousemove', (e) => {
+    const blizko = e.clientX > window.innerWidth - 80 && e.clientY > hlavniOblast.getBoundingClientRect().top;
+    listyStranky.forEach(l => { if (l.svisla) l.nav.classList.toggle('blizko', blizko); });
+}, { passive: true });
 
 export const listaAlb = vytvoritListuStranky(document.getElementById('albumNav'), document.getElementById('photosGrid'));
 export const listaCoveru = vytvoritListuStranky(document.getElementById('coversNav'), covers, { svisla: true });

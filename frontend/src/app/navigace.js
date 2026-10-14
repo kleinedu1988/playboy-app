@@ -9,7 +9,7 @@ import { otevritDetailModelky } from './profil';
 import { otevritFotografa, otevritVydani } from './vydani';
 import { zrusitVyber } from './vyber';
 
-// Vždy je vidět jeden pohled; profil modelky a stránka vydání mají v liště tlačítko zpět místo přepínače
+// Vždy je vidět jeden pohled; profil modelky a stránka vydání mají navíc v řádku okna tlačítko zpět
 export function ukazatPohled(pohled) {
     // Výběr fotek patří k pohledu, ve kterém vznikl; při odchodu se zruší, aby neovlivňoval Esc, šipky ani Delete
     if (document.querySelector('.photo-item.vybrana, .poster.vybrana')) zrusitVyber();
@@ -19,7 +19,8 @@ export function ukazatPohled(pohled) {
     backBtn.classList.toggle('hidden', !podstranka && !historie.length);
     document.getElementById('prevModelBtn').classList.toggle('hidden', pohled !== detailView);
     document.getElementById('nextModelBtn').classList.toggle('hidden', pohled !== detailView);
-    viewToggle.classList.toggle('hidden', podstranka);
+    // Záložky přehledů zůstávají vidět i na podstránce (jedním klikem jinam); zvolená je tam jen tlumená
+    viewToggle.classList.toggle('podstranka', podstranka);
     // Přehled sbírky nemá co hledat; z profilu otevřeného z Přehledu se hledá dál
     searchInput.disabled = pohled === stats;
     backBtn.innerHTML = `&larr; ${esc(popisZpet())}`;

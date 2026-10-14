@@ -82,13 +82,11 @@ textarea {
     display: none !important;
 }
 
-/* Horní Hlavička – tenká lišta okna */
+/* Hlavička okna ve dvou řádcích (jako Fotky ve Windows): tenký řádek okna a hlavní lišta se záložkami */
 .navbar {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     flex-shrink: 0;
-    height: 36px;
-    padding-left: 12px;
     background-color: #141417;
     border-bottom: 1px solid var(--border-color);
     /* Hlavička slouží i k přesouvání okna */
@@ -101,11 +99,17 @@ textarea {
     --wails-draggable: no-drag;
 }
 
-/* Název a přepínač si berou jen své místo; zbytek patří hledání. Tlačítka okna se nikdy nezmenšují. */
+.titulek-okna {
+    display: flex;
+    align-items: center;
+    height: 32px;
+    padding-left: 12px;
+}
+
 .logo {
     display: flex;
     align-items: center;
-    flex: 0 1 auto;
+    flex: 1;
     min-width: 0;
     gap: 8px;
     font-size: 13px;
@@ -113,74 +117,16 @@ textarea {
 
 .logo h2 {
     margin: 0;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 500;
     color: var(--text-muted);
     white-space: nowrap;
 }
 
-.nav-controls {
-    display: flex;
-    justify-content: center;
-    flex: 1;
-    min-width: 0;
-    padding: 0 12px;
-}
-
-.nav-controls input {
-    width: 100%;
-    max-width: 420px;
-    height: 24px;
-    padding: 0 12px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-card);
-    color: var(--text-main);
-    font-size: 12px;
-    text-align: center;
-    outline: none;
-}
-
-.nav-controls input:focus {
-    border-color: var(--accent);
-}
-
-.nav-controls input:disabled {
-    opacity: 0.5;
-}
-
-/* Přepínač přehledu: samostatná tlačítka ve stejném stylu jako lišta alb */
-.view-toggle {
-    display: flex;
-    gap: 6px;
-    margin-left: 8px;
-}
-
-.view-toggle button {
-    height: 24px;
-    padding: 0 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    background: none;
-    color: var(--text-main);
-    font-size: 12px;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.view-toggle button:hover {
-    border-color: var(--text-muted);
-}
-
-.view-toggle button.active {
-    border-color: var(--accent);
-    background-color: var(--accent-soft);
-    color: var(--accent-text);
-}
-
+/* Cesta zpět z profilu a stránky vydání: v řádku okna vedle názvu */
 .nav-back {
-    height: 24px;
-    margin-left: 8px;
+    height: 22px;
+    margin-left: 4px;
     padding: 0 10px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
@@ -188,126 +134,28 @@ textarea {
     color: var(--text-main);
     font-size: 12px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 260px;
     cursor: pointer;
 }
 
 .nav-back:hover {
     background-color: var(--bg-modal);
-    border-color: var(--accent);
-}
-
-/* Užší okno: postupně ubývá název, šířka přepínačů a nakonec jejich text, aby se vešlo hledání a tlačítka okna */
-@media (max-width: 1100px) {
-    .logo h2 {
-        display: none;
-    }
-}
-
-@media (max-width: 900px) {
-    .view-toggle {
-        gap: 4px;
-    }
-
-    .view-toggle button {
-        padding: 0 7px;
-        font-size: 11px;
-    }
-}
-
-@media (max-width: 760px) {
-    /* Přepínače přehledu mají jen zkratky; celý název je v nápovědě */
-    .view-toggle button {
-        font-size: 0;
-    }
-
-    .view-toggle button::after {
-        content: attr(data-kratce);
-        font-size: 11px;
-    }
-
-    .nav-controls {
-        padding: 0 6px;
-    }
-
-    .win-btn {
-        width: 36px;
-    }
-}
-
-@media (max-width: 560px) {
-    main {
-        padding: 24px 32px;
-    }
-}
-
-@media (max-width: 540px) {
-    .nav-controls input {
-        display: none;
-    }
-
-    /* Bez hledání zbudou jen tlačítka + a ⋯; ta se nezmenšují, ustoupí přepínač přehledu */
-    .nav-controls {
-        flex: 0 0 auto;
-        margin-left: auto;
-    }
-}
-
-/* Nejužší okno: přepínač přehledu se posouvá do stran, tlačítka okna zůstanou vidět */
-@media (max-width: 460px) {
-    .logo-icon {
-        display: none;
-    }
-
-    .view-toggle {
-        min-width: 0;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .view-toggle::-webkit-scrollbar {
-        display: none;
-    }
-
-    .view-toggle button {
-        flex: none;
-    }
+    border-color: var(--text-muted);
 }
 
 /* Šipky pro předchozí a další modelku */
 .nav-step {
-    margin-left: 4px;
-    padding: 0 9px;
+    margin-left: 0;
+    padding: 0 8px;
     font-size: 15px;
     line-height: 1;
-}
-
-/* Přepínač „jen oblíbené" vedle hledání */
-.nav-fav {
-    flex-shrink: 0;
-    min-width: 28px;
-    height: 24px;
-    padding: 0 6px;
-    white-space: nowrap;
-    margin-left: 6px;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    background: none;
-    color: var(--text-muted);
-    font-size: 13px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.nav-fav:hover,
-.nav-fav.active {
-    border-color: var(--accent);
-    color: var(--accent-text);
 }
 
 /* Tlačítka okna */
 .window-controls {
     display: flex;
-    justify-content: flex-end;
     flex: 0 0 auto;
     height: 100%;
 }
@@ -331,6 +179,192 @@ textarea {
 .win-btn.win-close:hover {
     background-color: var(--accent);
     color: white;
+}
+
+/* Hlavní lišta: záložky vlevo, hledání uprostřed, akce vpravo */
+.hlavni-lista {
+    display: flex;
+    align-items: center;
+    height: 44px;
+    padding: 0 12px 0 16px;
+}
+
+.view-toggle {
+    display: flex;
+    flex: none;
+    align-self: stretch;
+    gap: 4px;
+}
+
+/* Záložka přehledu: text s podtržením zvolené, jako ve Fotkách */
+.view-toggle button {
+    position: relative;
+    padding: 0 10px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.view-toggle button:hover {
+    color: var(--text-main);
+}
+
+.view-toggle button.active {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.view-toggle button.active::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 6px;
+    width: 18px;
+    height: 3px;
+    margin-left: -9px;
+    border-radius: 2px;
+    background-color: var(--accent);
+}
+
+/* Na podstránce (profil, vydání) zůstává vidět, odkud se přišlo, ale tlumeně */
+.view-toggle.podstranka button.active {
+    font-weight: 500;
+}
+
+.view-toggle.podstranka button.active::before {
+    background-color: var(--text-muted);
+}
+
+.nav-controls {
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    min-width: 0;
+    padding: 0 16px;
+}
+
+.hledani {
+    position: relative;
+    display: flex;
+    width: 100%;
+    max-width: 440px;
+}
+
+.hledani svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    width: 14px;
+    height: 14px;
+    margin-top: -7px;
+    fill: none;
+    stroke: var(--text-muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+.nav-controls input {
+    width: 100%;
+    height: 30px;
+    padding: 0 12px 0 32px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    font-size: 13px;
+    outline: none;
+}
+
+.nav-controls input:focus {
+    border-color: var(--accent);
+}
+
+.nav-controls input:disabled {
+    opacity: 0.5;
+}
+
+.nav-akce {
+    display: flex;
+    flex: none;
+    gap: 4px;
+}
+
+/* Akce v liště (+, ⋯): ikonová tlačítka bez rámečku */
+.nav-fav {
+    flex-shrink: 0;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.nav-fav:hover,
+.nav-fav.active {
+    background-color: var(--bg-modal);
+    color: var(--text-main);
+}
+
+/* Užší okno: postupně ubývá šířka záložek, jejich text a nakonec hledání */
+@media (max-width: 900px) {
+    .view-toggle button {
+        padding: 0 7px;
+        font-size: 13px;
+    }
+
+    .nav-controls {
+        padding: 0 10px;
+    }
+}
+
+@media (max-width: 760px) {
+    /* Záložky mají jen zkratky; celý název je v nápovědě */
+    .view-toggle button {
+        font-size: 0;
+    }
+
+    .view-toggle button::after {
+        content: attr(data-kratce);
+        font-size: 13px;
+    }
+
+    .win-btn {
+        width: 36px;
+    }
+}
+
+@media (max-width: 560px) {
+    main {
+        padding: 24px 32px;
+    }
+
+    .logo h2 {
+        display: none;
+    }
+}
+
+@media (max-width: 520px) {
+    .nav-controls {
+        display: none;
+    }
+
+    .nav-akce {
+        margin-left: auto;
+    }
+
+    .hlavni-lista {
+        padding-left: 4px;
+    }
 }
 
 /* Oznámení o výsledku akce */
@@ -1817,34 +1851,38 @@ button.tag:hover {
 }
 
 /* Přehledy (galerie, stěna, covery, kalendář, nejlepší): lišta je svislý sloupec vlevo vedle obsahu */
-/* Úzký pruh rejstříku (písmena, roky) s pevnou šířkou i bez lišty, aby obsah při jejím zmizení neposkočil */
+/* Přehledy: obsah přes celou šířku; rejstřík (písmena, roky) leží u pravého okraje nad obsahem */
 .se-sloupcem {
-    display: grid;
-    grid-template-columns: 52px minmax(0, 1fr);
-    column-gap: 16px;
-    align-items: start;
+    display: block;
 }
 
-.se-sloupcem > nav {
-    grid-column: 1;
-    grid-row: 1;
-}
-
-.se-sloupcem > :not(nav) {
-    grid-column: 2;
-    grid-row: 1;
-}
-
-/* Pruh drží při rolování u horního okraje a je vysoký nejvýš jako okno; co se nevejde, roluje se v něm */
+/* Rejstřík je vidět jen při rolování a po najetí myší k pravému okraji (jako časová osa ve Fotkách) */
 .album-nav.svisla {
-    top: 0;
+    position: fixed;
+    top: 92px;
+    right: 6px;
+    z-index: 20;
     flex-direction: column;
     align-items: stretch;
     gap: 2px;
-    max-height: calc(100vh - 36px - 32px);
+    width: 52px;
+    max-height: calc(100vh - 92px - 16px);
     margin: 0;
-    padding: 0;
-    border-bottom: none;
+    padding: 6px 4px;
+    border: none;
+    border-radius: 10px;
+    background-color: rgba(20, 20, 23, 0.85);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+}
+
+/* Skrytý rejstřík nesmí brát kliknutí obsahu pod sebou; ukáže se při rolování, u pravého okraje a s fokusem */
+.album-nav.svisla:focus-within,
+.album-nav.svisla.rolovani,
+.album-nav.svisla.blizko {
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .album-nav.svisla .album-nav-list {
@@ -2811,4 +2849,42 @@ body.razeni .photo-item {
 .album-nav.svisla .chip.active {
     border-color: transparent;
     font-weight: 600;
+}
+
+/* Volby přehledu: rozbalovací tlačítka „Řazení: A–Z ▾“ */
+.volba {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.volba span {
+    color: var(--text-muted);
+}
+
+.volba b {
+    font-weight: 500;
+}
+
+.volba i {
+    font-style: normal;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.volba:hover {
+    border-color: var(--text-muted);
+}
+
+.volba.zapnuto {
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
 }

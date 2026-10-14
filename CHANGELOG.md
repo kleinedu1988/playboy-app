@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.0] – 2026-10-14
+
+Nová navigace ve stylu Fotek ve Windows. Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Hlavička okna má dva řádky: nahoře název programu, cesta zpět z profilu nebo vydání a tlačítka okna; pod ním
+  hlavní lišta se záložkami přehledů (podtržená je zvolená), hledáním s lupou uprostřed a akcemi + a ⋯.
+- Záložky přehledů zůstávají vidět i v profilu modelky a na stránce vydání, jinam se jde jedním klikem.
+- Volby přehledu jsou rozbalovací tlačítka nad obsahem: Řazení ▾, Srdíčka ▾, Výběr ▾, Edice ▾ místo řad štítků.
+- Rejstřík (písmena, roky, měsíce) se ukáže u pravého okraje jen při rolování nebo po najetí myší k okraji;
+  jinak obsah zabírá celou šířku okna.
+
 ## [0.16.1] – 2026-10-14
 
 Méně nevyužitého místa v přehledech. Schéma databáze ani formát exportu se nemění.

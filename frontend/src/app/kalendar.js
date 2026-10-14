@@ -10,6 +10,7 @@ import { ukazatPohled } from './navigace';
 import { NAZVY_STAVU } from './vydani';
 import { otevritCoverModal } from './cover';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
+import { prevestNaVolby } from '../ui/volby';
 
 // Kalendář vydání: roky × měsíce. Prázdná políčka ukazují, co ve sbírce chybí.
 export const ZKRATKY_MESICU = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
@@ -36,6 +37,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     if (vydani.size === 0) {
         listaKalendare.naplnit([]);
         calList.innerHTML = prepinacEdic + `<div class="empty-state">V edici ${stav.kalendarEdice} zatím nic není. Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání; prázdné políčko se objeví u prvního přidaného čísla.</div>`;
+        prevestNaVolby(calList.querySelector('.cal-editions'));
         return;
     }
 
@@ -126,6 +128,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         <p class="cal-legend">Tečky v políčku: <i class="on"></i> cover <i class="on"></i> centerfold <i class="on"></i> pictorial. Prázdné políčko = vydání ve sbírce chybí.</p>
         ${radky.join('') || '<div class="empty-state">Hledanému roku neodpovídá žádné vydání.</div>'}
     `;
+    prevestNaVolby(calList.querySelector('.cal-editions'));
     listaKalendare.sledovat();
 }
 

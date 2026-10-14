@@ -12,6 +12,7 @@ import { htmlDlazdice } from './vydani';
 import { otevritLightbox } from './prohlizec';
 import { potvrdit } from './formular-modelky';
 import { vybratHodnotu } from './ulozeni';
+import { prevestNaVolby } from '../ui/volby';
 
 // Přidání fotek do vlastního výběru (existujícího, nebo nového podle napsaného názvu)
 export async function pridatDoVyberu(ids) {
@@ -68,6 +69,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
             : vyber ? 'Výběr je prázdný. Fotky se do něj přidávají odkudkoli: tlačítkem ⋯ na fotce, v prohlížeči nebo u vybraných fotek „Přidat do výběru…“.'
             : `Zatím žádná fotka nemá ${stav.nejlepsiMin} a více srdíček. Fotky se hodnotí srdíčky na dlaždici nebo v prohlížeči klávesami 1–5.`}</p>`}
     `;
+    prevestNaVolby(document.querySelector('#bestList .best-toolbar'));
     listaNejlepsich.naplnit([...podleModelek].map(([jmeno, { indexy }], i) => ({ klic: i, nazev: jmeno, pocet: indexy.length })));
     listaNejlepsich.sledovat();
 }

@@ -27,6 +27,7 @@ export const poleModelky = [
     ['poznamka', 'inputPoznamka', 'text'],
     ['odkazy', 'inputOdkazy', 'text'],
     ['narozeniDatum', 'inputNarozeniDatum', 'text'],
+    ['umrtiDatum', 'inputUmrtiDatum', 'text'],
     ['narozeniMisto', 'inputNarozeniMisto', 'text'],
     ['narodnost', 'inputNarodnost', 'text'],
     ['etnicita', 'inputEtnicita', 'text'],

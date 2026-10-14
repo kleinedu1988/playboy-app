@@ -154,7 +154,11 @@ export const SABLONA_OKNA = `
               </div>
               <div class="form-group">
                 <label for="inputNarozeniDatum">Datum narození</label>
-                <input type="date" id="inputNarozeniDatum" />
+                <input type="text" id="inputNarozeniDatum" placeholder="RRRR-MM-DD, RRRR-MM nebo RRRR" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="inputUmrtiDatum">Datum úmrtí</label>
+                <input type="text" id="inputUmrtiDatum" placeholder="RRRR-MM-DD, RRRR-MM nebo RRRR" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="inputNarozeniMisto">Místo narození</label>
@@ -506,7 +510,7 @@ export const SABLONA_OKNA = `
           </div>
           <div class="form-group">
             <label for="inputIssueObalka">Na obálce</label>
-            <input type="text" id="inputIssueObalka" list="seznamModelekObalky" autocomplete="off" placeholder="Jméno modelky" />
+            <input type="text" id="inputIssueObalka" list="seznamModelekObalky" autocomplete="off" placeholder="Jméno modelky (i mimo sbírku)" />
             <datalist id="seznamModelekObalky"></datalist>
           </div>
         </div>

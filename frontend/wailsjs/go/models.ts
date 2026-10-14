@@ -138,6 +138,7 @@ export namespace main {
 	    id: number;
 	    jmeno: string;
 	    narozeniDatum: string;
+	    umrtiDatum: string;
 	    narozeniMisto: string;
 	    narodnost: string;
 	    etnicita: string;
@@ -182,6 +183,7 @@ export namespace main {
 	        this.id = source["id"];
 	        this.jmeno = source["jmeno"];
 	        this.narozeniDatum = source["narozeniDatum"];
+	        this.umrtiDatum = source["umrtiDatum"];
 	        this.narozeniMisto = source["narozeniMisto"];
 	        this.narodnost = source["narodnost"];
 	        this.etnicita = source["etnicita"];
@@ -444,6 +446,7 @@ export namespace main {
 	    stav: string;
 	    modelkaObalky: number;
 	    jmenoObalky: string;
+	    naObalce: string;
 	    nazev: string;
 	
 	    static createFrom(source: any = {}) {
@@ -457,6 +460,7 @@ export namespace main {
 	        this.stav = source["stav"];
 	        this.modelkaObalky = source["modelkaObalky"];
 	        this.jmenoObalky = source["jmenoObalky"];
+	        this.naObalce = source["naObalce"];
 	        this.nazev = source["nazev"];
 	    }
 	}
@@ -488,6 +492,7 @@ export namespace main {
 	    alba: number;
 	    noveFotky: number;
 	    chyby: string[];
+	    opravy: string[];
 	    selhalo: string;
 	
 	    static createFrom(source: any = {}) {
@@ -501,6 +506,7 @@ export namespace main {
 	        this.alba = source["alba"];
 	        this.noveFotky = source["noveFotky"];
 	        this.chyby = source["chyby"];
+	        this.opravy = source["opravy"];
 	        this.selhalo = source["selhalo"];
 	    }
 	}

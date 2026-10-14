@@ -43,6 +43,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     const udaje = [
         ['Narození', esc([formatDatum(modelka.narozeniDatum), modelka.narozeniMisto].filter(Boolean).join(', '))],
         ['Věk při prvním vydání', esc(vekPriVydani(modelka.narozeniDatum, prvniVydani))],
+        ['Úmrtí', esc([formatDatum(modelka.umrtiDatum), vekPriVydani(modelka.narozeniDatum, modelka.umrtiDatum) && `ve věku ${vekPriVydani(modelka.narozeniDatum, modelka.umrtiDatum)}`].filter(Boolean).join(', '))],
         ['Národnost', hledatelne(modelka.narodnost)],
         ['Etnicita', esc(modelka.etnicita)],
         ['Výška', modelka.vyskaCm ? `${modelka.vyskaCm} cm` : ''],

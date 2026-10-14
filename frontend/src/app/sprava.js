@@ -73,14 +73,14 @@ export async function exportovatData() {
     if (cesta) oznamit(`Sbírka je uložená v souboru ${cesta}`);
 }
 
-// Import ze souboru YAML: doplňuje a opravuje, nic nemaže
+// Import ze souboru YAML: doplňuje a opravuje; smaže jen údaje s hodnotou „-“, modelky, alba ani fotky nemaže
 export async function importovatData() {
     // Jeden nebo více souborů YAML či Markdown; načtou se jako jeden celek
     const cesty = await VybratSouboryImportu() || [];
     if (!cesty.length) return;
     const nazvy = cesty.map(c => c.split('/').pop());
     const co = nazvy.length === 1 ? `ze souboru „${nazvy[0]}“` : `z ${nazvy.length} souborů (${nazvy.slice(0, 3).join(', ')}${nazvy.length > 3 ? ', …' : ''})`;
-    if (!await potvrdit('Importovat do sbírky', `Načíst data ${co}? Stávající modelky a alba se doplní a opraví, nové se přidají, nic se nemaže. Před importem se uloží záloha.`, 'Importovat')) return;
+    if (!await potvrdit('Importovat do sbírky', `Načíst data ${co}? Stávající modelky a alba se doplní a opraví, nové se přidají. Smažou se jen údaje, které mají v souboru hodnotu „-“; modelky, alba ani fotky se nemažou. Před importem se uloží záloha.`, 'Importovat')) return;
 
     const v = await ImportovatSoubory(cesty);
     if (v.selhalo) {
@@ -88,8 +88,14 @@ export async function importovatData() {
         return;
     }
     const shrnuti = `Import hotov. Nové modelky: ${v.noveModelky}, upravené: ${v.upraveneModelky}, alba: ${v.alba}, nové fotky: ${v.noveFotky}.`;
-    // Co se nepodařilo převzít, zůstane vidět, dokud to uživatel nezavře
-    if (v.chyby.length) oznamit(`${shrnuti} Přeskočeno (${v.chyby.length}): ${v.chyby.slice(0, 5).join('; ')}${v.chyby.length > 5 ? '; …' : ''}`, { text: 'Rozumím', akce: () => {} });
+    const vypis = (seznam) => `${seznam.slice(0, 5).join('; ')}${seznam.length > 5 ? '; …' : ''}`;
+    const opravy = v.opravy || [];
+    // Co se nepodařilo převzít nebo co se opravilo (překlepy v klíčích), zůstane vidět, dokud to uživatel nezavře
+    const podrobnosti = [
+        v.chyby.length ? `Přeskočeno (${v.chyby.length}): ${vypis(v.chyby)}` : '',
+        opravy.length ? `Klíče v souboru (${opravy.length}): ${vypis(opravy)}` : '',
+    ].filter(Boolean).join(' ');
+    if (podrobnosti) oznamit(`${shrnuti} ${podrobnosti}`, { text: 'Rozumím', akce: () => {} });
     else oznamit(shrnuti);
     prepnoutRezim('modelky');
     nacistGalerii(searchInput.value);

@@ -56,18 +56,19 @@ type exportModelka struct {
 	NetykaSe        string        `yaml:"netyka_se,omitempty"`
 	Pridano         string        `yaml:"pridano,omitempty"`
 	DalsiJmena      string        `yaml:"dalsi_jmena,omitempty"`
-	Hodnoceni       int           `yaml:"hodnoceni,omitempty"`
+	Hodnoceni       cisloUdaje    `yaml:"hodnoceni,omitempty"`
 	NarozeniDatum   string        `yaml:"narozeni_datum,omitempty"`
+	UmrtiDatum      string        `yaml:"umrti_datum,omitempty"`
 	NarozeniMisto   string        `yaml:"narozeni_misto,omitempty"`
 	Narodnost       string        `yaml:"narodnost,omitempty"`
 	Etnicita        string        `yaml:"etnicita,omitempty"`
-	VyskaCm         int           `yaml:"vyska_cm,omitempty"`
-	VahaKg          int           `yaml:"vaha_kg,omitempty"`
+	VyskaCm         cisloUdaje    `yaml:"vyska_cm,omitempty"`
+	VahaKg          cisloUdaje    `yaml:"vaha_kg,omitempty"`
 	VlasyBarva      string        `yaml:"vlasy,omitempty"`
 	OciBarva        string        `yaml:"oci,omitempty"`
-	ObvodHrudnikCm  int           `yaml:"hrudnik_cm,omitempty"`
-	ObvodPasCm      int           `yaml:"pas_cm,omitempty"`
-	ObvodBokyCm     int           `yaml:"boky_cm,omitempty"`
+	ObvodHrudnikCm  cisloUdaje    `yaml:"hrudnik_cm,omitempty"`
+	ObvodPasCm      cisloUdaje    `yaml:"pas_cm,omitempty"`
+	ObvodBokyCm     cisloUdaje    `yaml:"boky_cm,omitempty"`
 	Miry            string        `yaml:"miry,omitempty"`
 	VelikostPrsou   string        `yaml:"velikost_prsou,omitempty"`
 	PrsaTyp         string        `yaml:"prsa_typ,omitempty"`
@@ -93,7 +94,7 @@ type exportCover struct {
 }
 
 // Verze formátu exportu, kterou program zapisuje a nejvýš umí načíst; popis je v EXPORT.md
-const verzeExportu = 5
+const verzeExportu = 6
 
 // Odkaz na modelku v exportu (další modelka alba, obálka, výběr): jméno, u jmen, která má víc modelek,
 // doplněné o číslo modelky v hranatých závorkách („Anna [12]“)
@@ -122,6 +123,8 @@ type exportDat struct {
 	Covery  []exportCover   `yaml:"covery,omitempty"`
 	Vydani  []exportVydani  `yaml:"vydani,omitempty"`
 	Vybery  []exportVyberu  `yaml:"vybery,omitempty"`
+	// Opravené a přeskočené klíče ze souboru (do souboru se nezapisuje)
+	Opravy []string `yaml:"-"`
 }
 
 func anoNeDoTextu(hodnota int) string {
@@ -226,10 +229,10 @@ func (a *App) exportovat() ([]byte, error) {
 		}
 		exportovanoFotek += len(fotky)
 		e := exportModelka{
-			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: m.Hodnoceni,
-			NarozeniDatum: m.NarozeniDatum, NarozeniMisto: m.NarozeniMisto, Narodnost: m.Narodnost, Etnicita: m.Etnicita,
-			VyskaCm: m.VyskaCm, VahaKg: m.VahaKg, VlasyBarva: m.VlasyBarva, OciBarva: m.OciBarva,
-			ObvodHrudnikCm: m.ObvodHrudnikCm, ObvodPasCm: m.ObvodPasCm, ObvodBokyCm: m.ObvodBokyCm, Miry: m.Miry,
+			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: cisloUdaje{Hodnota: m.Hodnoceni},
+			NarozeniDatum: m.NarozeniDatum, UmrtiDatum: m.UmrtiDatum, NarozeniMisto: m.NarozeniMisto, Narodnost: m.Narodnost, Etnicita: m.Etnicita,
+			VyskaCm: cisloUdaje{Hodnota: m.VyskaCm}, VahaKg: cisloUdaje{Hodnota: m.VahaKg}, VlasyBarva: m.VlasyBarva, OciBarva: m.OciBarva,
+			ObvodHrudnikCm: cisloUdaje{Hodnota: m.ObvodHrudnikCm}, ObvodPasCm: cisloUdaje{Hodnota: m.ObvodPasCm}, ObvodBokyCm: cisloUdaje{Hodnota: m.ObvodBokyCm}, Miry: m.Miry,
 			VelikostPrsou: m.VelikostPrsou, PrsaTyp: m.PrsaTyp, Ochlupeni: m.Ochlupeni,
 			Tetovani: anoNeDoTextu(m.Tetovani), Piercing: anoNeDoTextu(m.Piercing),
 			Role: m.Role, Tags: m.Tags, Vystoupeni: m.Vystoupeni, PictorialVydani: m.PictorialVydani,
@@ -295,6 +298,8 @@ type VysledekImportu struct {
 	NoveFotky       int `json:"noveFotky"`
 	// Co se z souboru nepodařilo převzít; prázdné, když prošlo vše
 	Chyby []string `json:"chyby"`
+	// Opravené překlepy v klíčích a přeskočené neznámé klíče
+	Opravy []string `json:"opravy"`
 	// Soubor nešel přečíst vůbec, v databázi se nic nezměnilo
 	Selhalo string `json:"selhalo"`
 }
@@ -417,7 +422,9 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 		}
 	}
 	if vydani := strings.TrimSpace(album.Vydani); vydani != "" && album.Typ != "Centerfold" {
-		if !a.SetVydaniAlba(modelkaID, album.Nazev, album.Typ, vydani) {
+		if vydani == smazatUdaj {
+			a.SetVydaniAlba(modelkaID, album.Nazev, album.Typ, "")
+		} else if !a.SetVydaniAlba(modelkaID, album.Nazev, album.Typ, vydani) {
 			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: vydání „%s“ není ve tvaru RRRR-MM ani RRRR", kde, vydani))
 		}
 	}
@@ -425,7 +432,7 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 		var popis, fotograf string
 		a.db.QueryRow("SELECT COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?",
 			modelkaID, album.Nazev, album.Typ).Scan(&popis, &fotograf)
-		a.SetPopisAlba(modelkaID, album.Nazev, album.Typ, prvniNeprazdny(album.Popis, popis), prvniNeprazdny(album.Fotograf, fotograf))
+		a.SetPopisAlba(modelkaID, album.Nazev, album.Typ, hodnotaZImportu(album.Popis, popis), hodnotaZImportu(album.Fotograf, fotograf))
 	}
 }
 
@@ -477,8 +484,8 @@ var (
 )
 
 // Ručně psaný YAML: tabulátor v odsazení nahradí dvěma mezerami, odrážku Markdownu „* “ nebo „+ “ před
-// položkou (převod z Google Dokumentů) pomlčkou a hodnotu s dvojtečkou uprostřed (např. „poznamka: Playmate
-// měsíce: září“) dá do uvozovek. Použije se, jen když se text bez úprav načíst nedá.
+// položkou (převod z Google Dokumentů) pomlčkou, hodnotu s dvojtečkou uprostřed (např. „poznamka: Playmate
+// měsíce: září“) a samotnou pomlčku (smazání údaje) dá do uvozovek. Použije se, jen když se text bez úprav načíst nedá.
 var vzorOdrazkyMd = regexp.MustCompile(`^(\s*)[*+] ([A-Za-z_]+:)`)
 
 var vzorRadkuHodnoty = regexp.MustCompile(`^(\s*(?:- )?[A-Za-z_]+):[ \t]+(.+?)[ \t]*$`)
@@ -533,6 +540,9 @@ func opravitRucniYaml(text string) string {
 				if strings.HasPrefix(strings.TrimLeft(m[1], " "), "- ") {
 					blokOdsazeni += 2
 				}
+			} else if hodnota == smazatUdaj {
+				// „klíč: -“ (smazání údaje) je v YAML začátek seznamu; hodnotou se stane až v uvozovkách
+				r = m[1] + `: "-"`
 			} else if k := strings.Index(hodnota, " #"); !strings.ContainsAny(hodnota[:1], `"'|>[{&*!%@`+"`") && strings.Contains(hodnota, ": ") && (k < 0 || strings.Index(hodnota, ": ") < k) {
 				r = m[1] + ": " + strconv.Quote(hodnota)
 			}
@@ -558,17 +568,31 @@ func nacistDokument(text string) (exportDat, error) {
 
 func nacistDokumentPresne(text string) (exportDat, error) {
 	var data exportDat
-	errCely := yaml.Unmarshal([]byte(text), &data)
+	// Nejdřív strom dokumentu: překlepy v klíčích se opraví dřív, než se údaje přiřadí k polím
+	var koren yaml.Node
+	if err := yaml.Unmarshal([]byte(text), &koren); err != nil {
+		return data, fmt.Errorf("není platný YAML: %v", err)
+	}
+	var opravy []string
+	opravitKlice(&koren, &opravy)
+
+	errCely := koren.Decode(&data)
 	if errCely == nil && (len(data.Modelky) > 0 || len(data.Covery) > 0 || len(data.Vydani) > 0 || len(data.Vybery) > 0) {
+		data.Opravy = opravy
 		return data, nil
 	}
 	var seznam []exportModelka
-	if yaml.Unmarshal([]byte(text), &seznam) == nil && len(seznam) > 0 {
-		return exportDat{Verze: verzeExportu, Modelky: seznam}, nil
+	if koren.Decode(&seznam) == nil && len(seznam) > 0 {
+		return exportDat{Verze: verzeExportu, Modelky: seznam, Opravy: opravy}, nil
 	}
 	var jedna exportModelka
-	if yaml.Unmarshal([]byte(text), &jedna) == nil && strings.TrimSpace(jedna.Jmeno) != "" {
-		return exportDat{Verze: data.Verze, Modelky: []exportModelka{jedna}}, nil
+	errJedna := koren.Decode(&jedna)
+	if errJedna == nil && strings.TrimSpace(jedna.Jmeno) != "" {
+		return exportDat{Verze: data.Verze, Modelky: []exportModelka{jedna}, Opravy: opravy}, nil
+	}
+	// Jedna modelka s chybným údajem (např. text místo čísla): hláška řekne, co je špatně
+	if errJedna != nil && strings.TrimSpace(jedna.Jmeno) != "" {
+		return data, fmt.Errorf("má u modelky „%s“ chybný údaj: %v", strings.TrimSpace(jedna.Jmeno), errJedna)
 	}
 	if errCely != nil {
 		return data, fmt.Errorf("není platný YAML: %v", errCely)
@@ -593,6 +617,9 @@ func slozitSoubory(soubory map[string][]byte, poradi []string) (exportDat, error
 			celek.Covery = append(celek.Covery, data.Covery...)
 			celek.Vydani = append(celek.Vydani, data.Vydani...)
 			celek.Vybery = append(celek.Vybery, data.Vybery...)
+			for _, oprava := range data.Opravy {
+				celek.Opravy = append(celek.Opravy, fmt.Sprintf("%s, %s", kratky, oprava))
+			}
 		}
 	}
 	return celek, nil
@@ -601,13 +628,13 @@ func slozitSoubory(soubory map[string][]byte, poradi []string) (exportDat, error
 func (a *App) importovat(yamlData []byte) VysledekImportu {
 	data, err := slozitSoubory(map[string][]byte{"import.yaml": yamlData}, []string{"import.yaml"})
 	if err != nil {
-		return VysledekImportu{Chyby: []string{}, Selhalo: err.Error()}
+		return VysledekImportu{Chyby: []string{}, Opravy: []string{}, Selhalo: err.Error()}
 	}
 	return a.importovatCelek(data)
 }
 
 func (a *App) importovatCelek(data exportDat) VysledekImportu {
-	vysledek := VysledekImportu{Chyby: []string{}}
+	vysledek := VysledekImportu{Chyby: []string{}, Opravy: append([]string{}, data.Opravy...)}
 	// Import zapisuje na vlastním spojení; v režimu jen pro čtení (poškozená nebo novější databáze) nesmí
 	if a.chybaStartu != "" {
 		vysledek.Selhalo = "Program běží jen pro čtení, import se neprovedl. " + a.chybaStartu
@@ -658,7 +685,7 @@ func (a *App) importovatCelek(data exportDat) VysledekImportu {
 	}
 	if vysledek.Selhalo != "" {
 		db.Exec("ROLLBACK")
-		return VysledekImportu{Chyby: []string{}, Selhalo: vysledek.Selhalo}
+		return VysledekImportu{Chyby: []string{}, Opravy: []string{}, Selhalo: vysledek.Selhalo}
 	}
 	return vysledek
 }
@@ -747,50 +774,68 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 			}
 		}
 
-		m.DalsiJmena = prvniNeprazdny(e.DalsiJmena, m.DalsiJmena)
-		m.NarozeniDatum = prvniNeprazdny(e.NarozeniDatum, m.NarozeniDatum)
-		m.NarozeniMisto = prvniNeprazdny(e.NarozeniMisto, m.NarozeniMisto)
-		m.Narodnost = prvniNeprazdny(e.Narodnost, m.Narodnost)
-		m.Etnicita = prvniNeprazdny(e.Etnicita, m.Etnicita)
-		m.VyskaCm = prvniNenulove(e.VyskaCm, m.VyskaCm)
-		m.VahaKg = prvniNenulove(e.VahaKg, m.VahaKg)
-		m.VlasyBarva = prvniNeprazdny(e.VlasyBarva, m.VlasyBarva)
-		m.OciBarva = prvniNeprazdny(e.OciBarva, m.OciBarva)
-		m.ObvodHrudnikCm = prvniNenulove(e.ObvodHrudnikCm, m.ObvodHrudnikCm)
-		m.ObvodPasCm = prvniNenulove(e.ObvodPasCm, m.ObvodPasCm)
-		m.ObvodBokyCm = prvniNenulove(e.ObvodBokyCm, m.ObvodBokyCm)
-		m.Miry = prvniNeprazdny(e.Miry, m.Miry)
-		m.VelikostPrsou = prvniNeprazdny(e.VelikostPrsou, m.VelikostPrsou)
+		m.DalsiJmena = hodnotaZImportu(e.DalsiJmena, m.DalsiJmena)
+		// Datum v jiném tvaru se ohlásí a stávající zůstane
+		for _, pole := range []struct {
+			nazev   string
+			ze, kam *string
+		}{{"narozeni_datum", &e.NarozeniDatum, &m.NarozeniDatum}, {"umrti_datum", &e.UmrtiDatum, &m.UmrtiDatum}} {
+			if hodnota := hodnotaZImportu(*pole.ze, *pole.kam); platneDatum(hodnota) {
+				*pole.kam = hodnota
+			} else {
+				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: %s „%s“ není ve tvaru RRRR, RRRR-MM nebo RRRR-MM-DD", jmeno, pole.nazev, hodnota))
+			}
+		}
+		m.NarozeniMisto = hodnotaZImportu(e.NarozeniMisto, m.NarozeniMisto)
+		m.Narodnost = hodnotaZImportu(e.Narodnost, m.Narodnost)
+		m.Etnicita = hodnotaZImportu(e.Etnicita, m.Etnicita)
+		m.VyskaCm = cisloZImportu(e.VyskaCm, m.VyskaCm)
+		m.VahaKg = cisloZImportu(e.VahaKg, m.VahaKg)
+		m.VlasyBarva = hodnotaZImportu(e.VlasyBarva, m.VlasyBarva)
+		m.OciBarva = hodnotaZImportu(e.OciBarva, m.OciBarva)
+		m.ObvodHrudnikCm = cisloZImportu(e.ObvodHrudnikCm, m.ObvodHrudnikCm)
+		m.ObvodPasCm = cisloZImportu(e.ObvodPasCm, m.ObvodPasCm)
+		m.ObvodBokyCm = cisloZImportu(e.ObvodBokyCm, m.ObvodBokyCm)
+		m.Miry = hodnotaZImportu(e.Miry, m.Miry)
+		m.VelikostPrsou = hodnotaZImportu(e.VelikostPrsou, m.VelikostPrsou)
 		// Hodnota mimo nabídku formuláře by se při další úpravě ve formuláři ztratila: ohlásí se a stávající zůstane
 		for _, pole := range []struct {
 			nazev    string
 			ze, kam  *string
 			moznosti []string
 		}{{"prsa_typ", &e.PrsaTyp, &m.PrsaTyp, moznostiPrsaTyp}, {"ochlupeni", &e.Ochlupeni, &m.Ochlupeni, moznostiOchlupeni}} {
-			if hodnota, ok := volbaZNabidky(*pole.ze, pole.moznosti); !ok {
+			if strings.TrimSpace(*pole.ze) == smazatUdaj {
+				*pole.kam = ""
+			} else if hodnota, ok := volbaZNabidky(*pole.ze, pole.moznosti); !ok {
 				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: %s „%s“ není v nabídce (%s)", jmeno, pole.nazev, hodnota, strings.Join(pole.moznosti, ", ")))
 			} else {
-				*pole.kam = prvniNeprazdny(hodnota, *pole.kam)
+				*pole.kam = hodnotaZImportu(hodnota, *pole.kam)
 			}
 		}
-		m.Tetovani = anoNeZTextu(e.Tetovani, m.Tetovani)
-		m.Piercing = anoNeZTextu(e.Piercing, m.Piercing)
-		m.Role = prvniNeprazdny(e.Role, m.Role)
-		m.Tags = prvniNeprazdny(e.Tags, m.Tags)
-		m.Vystoupeni = prvniNeprazdny(e.Vystoupeni, m.Vystoupeni)
-		m.PictorialVydani = prvniNeprazdny(e.PictorialVydani, m.PictorialVydani)
-		m.Poznamka = prvniNeprazdny(e.Poznamka, m.Poznamka)
-		m.Odkazy = prvniNeprazdny(e.Odkazy, m.Odkazy)
+		m.Tetovani = anoNeZImportu(e.Tetovani, m.Tetovani)
+		m.Piercing = anoNeZImportu(e.Piercing, m.Piercing)
+		m.Role = hodnotaZImportu(e.Role, m.Role)
+		m.Tags = hodnotaZImportu(e.Tags, m.Tags)
+		m.Vystoupeni = hodnotaZImportu(e.Vystoupeni, m.Vystoupeni)
+		m.PictorialVydani = hodnotaZImportu(e.PictorialVydani, m.PictorialVydani)
+		m.Poznamka = hodnotaZImportu(e.Poznamka, m.Poznamka)
+		m.Odkazy = hodnotaZImportu(e.Odkazy, m.Odkazy)
 
 		// Výřez patří ke konkrétní titulní fotce: nová fotka bez výřezu v souboru dostane výchozí
+		smazatTitulni := strings.TrimSpace(e.TitulniFotka) == smazatUdaj
 		if ids := parseDriveIDs(e.TitulniFotka); len(ids) > 0 {
 			m.CoverID = ids[0]
-		} else if strings.TrimSpace(e.TitulniFotka) != "" {
+		} else if strings.TrimSpace(e.TitulniFotka) != "" && !smazatTitulni {
 			vysledek.Chyby = append(vysledek.Chyby, jmeno+": titulní fotka nemá platné ID z Disku")
 		}
 		if !a.UpdateModelka(m) {
 			vysledek.Chyby = append(vysledek.Chyby, jmeno+": údaje modelky se nepodařilo uložit")
 			continue
+		}
+		// Prázdná titulní fotka v UpdateModelka stávající ponechá; pomlčka ji smaže i s výřezem
+		if smazatTitulni {
+			a.db.Exec("UPDATE modelky SET drive_cover_id = NULL, cover_zoom = NULL, cover_x = NULL, cover_y = NULL WHERE id = ?", m.ID)
+			m.CoverID, m.CoverURL = "", ""
 		}
 		// Další výskyt téže modelky (v jiném souboru importu) navazuje na právě uložené údaje
 		for i, k := range podleJmena[zjednodusit(jmeno)] {
@@ -801,8 +846,8 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 		if e.Vyrez != nil && m.CoverID != "" {
 			a.SetCoverVyrez(m.ID, e.Vyrez.Zoom, e.Vyrez.X, e.Vyrez.Y)
 		}
-		if e.Hodnoceni != 0 {
-			a.SetHodnoceni(m.ID, e.Hodnoceni)
+		if e.Hodnoceni.Smazat || e.Hodnoceni.Hodnota != 0 {
+			a.SetHodnoceni(m.ID, e.Hodnoceni.Hodnota)
 		}
 
 		for _, album := range e.Alba {
@@ -914,13 +959,13 @@ func (a *App) ImportovatSoubory(cesty []string) VysledekImportu {
 	for _, cesta := range cesty {
 		data, err := os.ReadFile(cesta)
 		if err != nil {
-			return VysledekImportu{Chyby: []string{}, Selhalo: fmt.Sprintf("Soubor „%s“ se nepodařilo přečíst: %v", filepath.Base(cesta), err)}
+			return VysledekImportu{Chyby: []string{}, Opravy: []string{}, Selhalo: fmt.Sprintf("Soubor „%s“ se nepodařilo přečíst: %v", filepath.Base(cesta), err)}
 		}
 		soubory[cesta] = data
 	}
 	data, err := slozitSoubory(soubory, cesty)
 	if err != nil {
-		return VysledekImportu{Chyby: []string{}, Selhalo: err.Error()}
+		return VysledekImportu{Chyby: []string{}, Opravy: []string{}, Selhalo: err.Error()}
 	}
 	return a.importovatCelek(data)
 }

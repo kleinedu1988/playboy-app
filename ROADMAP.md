@@ -173,6 +173,10 @@ datem narození, odkazy na ně v exportu jsou „Jméno (RRRR-MM-DD)“; více o
 řádkem, více fotografů čárkou; datum narození RRRR, RRRR-MM nebo RRRR-MM-DD; u čísla textové pole „na obálce“;
 datum úmrtí u modelky; hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý
 klíč s upozorněním, neznámý klíč se ohlásí.
+Hotovo v 0.18.0 (úprava schématu č. 8, export verze 6): datum úmrtí, data narození a úmrtí RRRR, RRRR-MM nebo
+RRRR-MM-DD, textové pole „na obálce“, „-“ v importu údaj smaže, oprava překlepů v klíčích. Zbývá rozhodnout
+a udělat před alfou: dvě modelky stejného jména rozlišené datem narození a odkazy „Jméno (RRRR-MM-DD)“, více
+odkazů oddělených čárkou nebo novým řádkem, více fotografů oddělených čárkou.
 
 5. **Instalace:** skript `instalovat.sh` (nabídka aplikací, ikona, odinstalace) je připravený v 0.13.0; zda ho používat, je na uživateli.
 

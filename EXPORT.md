@@ -1,7 +1,7 @@
-# Formát exportu (verze 5)
+# Formát exportu (verze 6)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 5** (program 0.13.0 a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 6** (program 0.18.0 a novější).
 
 Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-exportu.yaml); jde rovnou načíst importem.
 
@@ -20,10 +20,16 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
   ```
 - Modelka uvedená víckrát (třeba ve dvou souborech) se páruje podle jména a údaje se doplňují postupně.
 
-- Import údaje **doplňuje a opravuje, nic nemaže**. Prázdný nebo chybějící údaj ponechá ten stávající.
+- Import údaje **doplňuje a opravuje**. Prázdný nebo chybějící údaj ponechá ten stávající; údaj s hodnotou
+  `-` se smaže (`narodnost: -`, `vyska_cm: -`, `tetovani: -` = neuvedeno, `titulni_fotka: -`, u alba
+  `popis: -`, `fotograf: -`, `vydani: -`, u čísla `poznamka: -`, `stav: -`, `na_obalce: -`). Alba, fotky
+  ani modelky import nemaže.
+- Překlep v klíči (`narodnot:`) se opraví na nejbližší známý klíč (`narodnost:`), pokud se liší nejvýš
+  o dva znaky (u krátkých klíčů o jeden) a nejbližší klíč je jen jeden. Neznámý klíč se přeskočí.
+  Obojí import vypíše s číslem řádku.
 - Opakovaný import téhož souboru nic nezdvojí.
 - Před importem se uloží záloha. Při jakékoli chybě zápisu se import vrátí celý a databáze zůstane, jak byla.
-- Soubor s vyšší verzí formátu, než program zná, se odmítne celý (aktualizuj program). Starší verze 1–3
+- Soubor s vyšší verzí formátu, než program zná, se odmítne celý (aktualizuj program). Starší verze 1–5
   se načtou; údaje, které v nich ještě nebyly, zůstanou nezměněné.
 - Údaje se kontrolují stejně jako při zadávání v programu. Chybné album nebo fotka se přeskočí a import
   vypíše, co a proč.
@@ -31,7 +37,7 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 ## Celek
 
 ```yaml
-verze: 4
+verze: 6
 modelky: [...]   # modelky s jejich alby
 covery: [...]    # obálky časopisu, nepatří k modelce
 vydani: [...]    # stav a poznámky k jednotlivým číslům
@@ -47,7 +53,8 @@ vybery: [...]    # vlastní výběry fotek napříč sbírkou
 | `pridano` | Kdy byla modelka přidána (`RRRR-MM-DD HH:MM:SS`) |
 | `dalsi_jmena`, `poznamka`, `odkazy`, `tagy` | Volný text (tagy oddělené čárkou) |
 | `hodnoceni` | 1–5 srdíček |
-| `narozeni_datum` (`RRRR-MM-DD`), `narozeni_misto`, `narodnost`, `etnicita` | Základní údaje |
+| `narozeni_datum`, `umrti_datum` | Datum narození a úmrtí: `RRRR-MM-DD`, `RRRR-MM` nebo jen `RRRR`; úmrtí nesmí být před narozením, jiný tvar se ohlásí a stávající údaj zůstane |
+| `narozeni_misto`, `narodnost`, `etnicita` | Základní údaje |
 | `vyska_cm`, `vaha_kg`, `hrudnik_cm`, `pas_cm`, `boky_cm`, `miry`, `velikost_prsou`, `prsa_typ`, `vlasy`, `oci`, `ochlupeni` | Vzhled; `miry` se zapisují jen bez všech tří obvodů |
 | `tetovani`, `piercing` | `ano` / `ne` |
 | `prsa_typ` | `Přírodní` / `Silikonová` |
@@ -95,8 +102,10 @@ vydani:
     nazev: Playmate Review  # název má jen speciál
   - vydani: 2014-02
     stav: shanim          # mam (mám výtisk) | shanim | nezajima
-    modelka_obalky: Anna  # odkaz na modelku
+    modelka_obalky: Anna  # odkaz na modelku ze sbírky; jméno, které ve sbírce není, se uloží jako na_obalce
     poznamka: ...
+  - vydani: 1980-05
+    na_obalce: Jméno Příjmení   # na obálce je někdo, kdo ve sbírce není (volný text)
 vybery:
   - nazev: Nejlepší
     fotky:
@@ -113,6 +122,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 6 | 0.18.0 | `umrti_datum` u modelky, data narození a úmrtí i neúplná (`RRRR`, `RRRR-MM`), `na_obalce` u čísla, `-` údaj smaže, oprava překlepů v klíčích |
 | 5 | 0.13.0 | Speciály (`RRRR-Snn`) a jejich `nazev` u vydání, stav čísla `mam` |
 | 4 | 0.10.0 | Kontrola verze, `cislo` a odkazy `Jméno [číslo]`, `netyka_se` u modelky i alba, `pridano` u fotky, `spojit` a `rucni_poradi` u coveru, alba bez fotek |
 | 3 | 0.9.0 | Odkazy modelky, vydání (stav, obálka, poznámka), výběry |

@@ -58,39 +58,46 @@ type VydaniInfo struct {
 	Stav          string `json:"stav"`
 	ModelkaObalky int    `json:"modelkaObalky"` // 0 = neuvedeno
 	JmenoObalky   string `json:"jmenoObalky"`
+	// Kdo je na obálce, když to není modelka ze sbírky (volný text); s modelkou ze sbírky je prázdný
+	NaObalce string `json:"naObalce"`
 	// Název speciálu (u měsíčního čísla prázdný)
 	Nazev string `json:"nazev"`
 }
 
 func (a *App) GetVydaniInfo(vydani string) VydaniInfo {
 	info := VydaniInfo{Vydani: vydani}
-	a.db.QueryRow(`SELECT COALESCE(v.poznamka, ''), COALESCE(v.stav, ''), COALESCE(v.modelka_obalky, 0), COALESCE(m.jmeno, ''), COALESCE(v.nazev, '')
-		FROM vydani v LEFT JOIN modelky m ON m.id = v.modelka_obalky WHERE v.vydani = ?`, vydani).
-		Scan(&info.Poznamka, &info.Stav, &info.ModelkaObalky, &info.JmenoObalky, &info.Nazev)
+	a.db.QueryRow(`SELECT COALESCE(v.poznamka, ''), COALESCE(v.stav, ''), COALESCE(v.modelka_obalky, 0), COALESCE(m.jmeno, ''), COALESCE(v.nazev, ''),
+		COALESCE(v.na_obalce, '') FROM vydani v LEFT JOIN modelky m ON m.id = v.modelka_obalky WHERE v.vydani = ?`, vydani).
+		Scan(&info.Poznamka, &info.Stav, &info.ModelkaObalky, &info.JmenoObalky, &info.Nazev, &info.NaObalce)
 	return info
 }
 
-// Poznámka, stav a modelka z obálky; prázdné údaje řádek vydání ruší
-func (a *App) SetVydaniInfo(vydani, poznamka, stav string, modelkaObalky int) bool {
-	poznamka = strings.TrimSpace(poznamka)
+// Poznámka, stav a kdo je na obálce (modelka ze sbírky, nebo jméno textem); prázdné údaje řádek vydání ruší
+func (a *App) SetVydaniInfo(vydani, poznamka, stav string, modelkaObalky int, naObalce string) bool {
+	poznamka, naObalce = strings.TrimSpace(poznamka), strings.TrimSpace(naObalce)
 	if !vzorVydani.MatchString(vydani) || !stavyVydani[stav] || (modelkaObalky != 0 && a.jmenoModelky(modelkaObalky) == "") {
 		return false
 	}
+	// Modelka ze sbírky má přednost před textem
+	if modelkaObalky != 0 {
+		naObalce = ""
+	}
 	var err error
-	if poznamka == "" && stav == "" && modelkaObalky == 0 {
+	if poznamka == "" && stav == "" && modelkaObalky == 0 && naObalce == "" {
 		// Speciál si řádek ponechá kvůli názvu
 		_, err = a.db.Exec("DELETE FROM vydani WHERE vydani = ? AND COALESCE(nazev, '') = ''", vydani)
 		if err == nil {
-			_, err = a.db.Exec("UPDATE vydani SET poznamka = NULL, stav = NULL, modelka_obalky = NULL WHERE vydani = ?", vydani)
+			_, err = a.db.Exec("UPDATE vydani SET poznamka = NULL, stav = NULL, modelka_obalky = NULL, na_obalce = NULL WHERE vydani = ?", vydani)
 		}
 	} else {
 		var obalka interface{}
 		if modelkaObalky != 0 {
 			obalka = modelkaObalky
 		}
-		_, err = a.db.Exec(`INSERT INTO vydani (vydani, poznamka, stav, modelka_obalky) VALUES (?, NULLIF(?, ''), NULLIF(?, ''), ?)
-			ON CONFLICT(vydani) DO UPDATE SET poznamka = excluded.poznamka, stav = excluded.stav, modelka_obalky = excluded.modelka_obalky`,
-			vydani, poznamka, stav, obalka)
+		_, err = a.db.Exec(`INSERT INTO vydani (vydani, poznamka, stav, modelka_obalky, na_obalce) VALUES (?, NULLIF(?, ''), NULLIF(?, ''), ?, NULLIF(?, ''))
+			ON CONFLICT(vydani) DO UPDATE SET poznamka = excluded.poznamka, stav = excluded.stav, modelka_obalky = excluded.modelka_obalky,
+				na_obalce = excluded.na_obalce`,
+			vydani, poznamka, stav, obalka, naObalce)
 	}
 	if err != nil {
 		a.chyba("SetVydaniInfo", err)
@@ -101,13 +108,13 @@ func (a *App) SetVydaniInfo(vydani, poznamka, stav string, modelkaObalky int) bo
 // Jen stav (z kalendáře), poznámka a obálka zůstávají
 func (a *App) SetStavVydani(vydani, stav string) bool {
 	info := a.GetVydaniInfo(vydani)
-	return a.SetVydaniInfo(vydani, info.Poznamka, stav, info.ModelkaObalky)
+	return a.SetVydaniInfo(vydani, info.Poznamka, stav, info.ModelkaObalky, info.NaObalce)
 }
 
 // Vydání se stavem nebo poznámkou pro kalendář (i ta, ke kterým zatím nic není)
 func (a *App) GetStavyVydani() []VydaniInfo {
 	stavy := []VydaniInfo{}
-	rows, err := a.db.Query("SELECT vydani, COALESCE(poznamka, ''), COALESCE(stav, ''), COALESCE(modelka_obalky, 0), COALESCE(nazev, '') FROM vydani ORDER BY vydani")
+	rows, err := a.db.Query("SELECT vydani, COALESCE(poznamka, ''), COALESCE(stav, ''), COALESCE(modelka_obalky, 0), COALESCE(nazev, ''), COALESCE(na_obalce, '') FROM vydani ORDER BY vydani")
 	if err != nil {
 		a.chyba("GetStavyVydani", err)
 		return stavy
@@ -115,7 +122,7 @@ func (a *App) GetStavyVydani() []VydaniInfo {
 	defer rows.Close()
 	for rows.Next() {
 		var v VydaniInfo
-		if rows.Scan(&v.Vydani, &v.Poznamka, &v.Stav, &v.ModelkaObalky, &v.Nazev) == nil {
+		if rows.Scan(&v.Vydani, &v.Poznamka, &v.Stav, &v.ModelkaObalky, &v.Nazev, &v.NaObalce) == nil {
 			stavy = append(stavy, v)
 		}
 	}
@@ -243,7 +250,9 @@ type exportVydani struct {
 	Nazev         string `yaml:"nazev,omitempty"` // název speciálu
 	Stav          string `yaml:"stav,omitempty"`
 	ModelkaObalky string `yaml:"modelka_obalky,omitempty"`
-	Poznamka      string `yaml:"poznamka,omitempty"`
+	// Kdo je na obálce, když to není modelka ze sbírky
+	NaObalce string `yaml:"na_obalce,omitempty"`
+	Poznamka string `yaml:"poznamka,omitempty"`
 }
 
 func (a *App) exportovatVydaniAVybery(odkazy odkazyNaModelky) ([]exportVydani, []exportVyberu) {
@@ -253,7 +262,7 @@ func (a *App) exportovatVydaniAVybery(odkazy odkazyNaModelky) ([]exportVydani, [
 		if v.ModelkaObalky != 0 {
 			obalka = odkazy.odkaz(v.ModelkaObalky, a.jmenoModelky(v.ModelkaObalky))
 		}
-		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Nazev: v.Nazev, Stav: v.Stav, ModelkaObalky: obalka, Poznamka: v.Poznamka})
+		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Nazev: v.Nazev, Stav: v.Stav, ModelkaObalky: obalka, NaObalce: v.NaObalce, Poznamka: v.Poznamka})
 	}
 	var vybery []exportVyberu
 	for _, v := range a.GetVybery() {
@@ -280,15 +289,26 @@ func (a *App) importovatVydaniAVybery(vydani []exportVydani, vybery []exportVybe
 	}
 	for _, v := range vydani {
 		stavajici := a.GetVydaniInfo(v.Vydani)
-		obalka := idModelky(v.ModelkaObalky)
-		if obalka == 0 {
-			obalka = stavajici.ModelkaObalky
+		// Na obálce: modelka ze sbírky, jinak jméno textem; pomlčka obojí smaže
+		obalka, naObalce := stavajici.ModelkaObalky, stavajici.NaObalce
+		switch {
+		case strings.TrimSpace(v.ModelkaObalky) == smazatUdaj || strings.TrimSpace(v.NaObalce) == smazatUdaj:
+			obalka, naObalce = 0, ""
+		case strings.TrimSpace(v.ModelkaObalky) != "":
+			if id := idModelky(v.ModelkaObalky); id != 0 {
+				obalka, naObalce = id, ""
+			} else {
+				// Modelka, která ve sbírce není, se zapíše textem
+				obalka, naObalce = 0, strings.TrimSpace(v.ModelkaObalky)
+			}
+		case strings.TrimSpace(v.NaObalce) != "":
+			obalka, naObalce = 0, strings.TrimSpace(v.NaObalce)
 		}
 		if strings.TrimSpace(v.Nazev) != "" && !a.SetNazevSpecialu(v.Vydani, v.Nazev) {
 			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("vydání „%s“: název má jen speciál (RRRR-Snn)", v.Vydani))
 			continue
 		}
-		if !a.SetVydaniInfo(v.Vydani, prvniNeprazdny(v.Poznamka, stavajici.Poznamka), prvniNeprazdny(v.Stav, stavajici.Stav), obalka) {
+		if !a.SetVydaniInfo(v.Vydani, hodnotaZImportu(v.Poznamka, stavajici.Poznamka), hodnotaZImportu(v.Stav, stavajici.Stav), obalka, naObalce) {
 			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("vydání „%s“: neplatné vydání nebo stav", v.Vydani))
 		}
 	}

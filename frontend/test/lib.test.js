@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nazevAlba, esc, formatDatum, sjednotit, vekPriVydani, udajChybi } from '../src/lib/format.js';
+import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi } from '../src/lib/format.js';
 import { sestavitAlba, zacatkyAlb, novePoradi } from '../src/lib/alba.js';
 
 test('názvy a formáty', () => {
@@ -105,4 +105,12 @@ test('porovnání předběžných verzí', async () => {
     assert.equal(porovnatVerze('0.14.3-dev', '0.14.3'), 0);
     const text = '## [1.0.0-alpha.2] – 2026-11-01\n\n- B\n\n## [1.0.0-alpha.1] – 2026-10-20\n\n- A\n';
     assert.deepEqual(novinkyMezi(text, '1.0.0-alpha.1', '1.0.0-alpha.2').map(v => v.verze), ['1.0.0-alpha.2']);
+});
+
+test('neúplná data modelky', () => {
+    assert.equal(formatDatum('1975-03'), 'březen 1975');
+    assert.equal(formatDatum('1975'), '1975');
+    for (const d of ['', '1975', '1975-03', '1975-03-09']) assert.equal(platneDatum(d), true, d);
+    for (const d of ['1975-13', '75', '9. 3. 1975', '1975-3']) assert.equal(platneDatum(d), false, d);
+    assert.equal(vekPriVydani('1950-08', '2001-07'), '50 let');
 });

@@ -5,6 +5,25 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.0] – 2026-10-14
+
+Poslední úprava schématu před alfou podle rozhodnutí z auditu. Schéma databáze: úprava č. 8. Formát exportu:
+verze 6 (starší verze 1–5 se dál načtou).
+
+### Přidáno
+- Datum úmrtí u modelky: ve formuláři vedle data narození, v profilu i s věkem, v exportu jako `umrti_datum`.
+- U čísla časopisu jde do „Na obálce“ napsat i jméno, které ve sbírce není; uloží se jako text (v exportu
+  `na_obalce`). Jméno modelky ze sbírky se dál propojí s jejím profilem.
+- Import: hodnota `-` údaj smaže (text, čísla, ano/ne, titulní fotku, text a fotografa alba, údaje čísla).
+- Import: překlep v klíči (`narodnot:`) se opraví na nejbližší známý klíč, neznámý klíč se přeskočí; obojí
+  se po importu vypíše s číslem řádku.
+
+### Změněno
+- Data narození a úmrtí smí být neúplná: `RRRR`, `RRRR-MM` nebo `RRRR-MM-DD`. Formulář má místo kalendáře
+  textové pole a jiný tvar (nebo úmrtí před narozením) nepustí; v profilu se neúplné datum ukáže jako
+  „srpen 1950“ nebo „1950“. Import datum v jiném tvaru ohlásí a stávající ponechá.
+- Soubor s jedinou modelkou a chybným údajem (např. text místo čísla) import odmítne s hláškou, co je špatně.
+
 ## [0.17.16] – 2026-10-14
 
 Schéma databáze ani formát exportu se nemění.

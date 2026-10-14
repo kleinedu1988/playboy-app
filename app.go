@@ -54,7 +54,8 @@ func (a *App) StavDatabaze() string {
 type Modelka struct {
 	ID             int    `json:"id"`
 	Jmeno          string `json:"jmeno"`
-	NarozeniDatum  string `json:"narozeniDatum"` // RRRR-MM-DD
+	NarozeniDatum  string `json:"narozeniDatum"` // RRRR, RRRR-MM nebo RRRR-MM-DD
+	UmrtiDatum     string `json:"umrtiDatum"`    // ve stejném tvaru; prázdné u žijící nebo neznámé
 	NarozeniMisto  string `json:"narozeniMisto"`
 	Narodnost      string `json:"narodnost"`
 	Etnicita       string `json:"etnicita"`
@@ -138,6 +139,7 @@ type Fotografie struct {
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
 var sloupceModelky = [][2]string{
 	{"narozeni_datum", "TEXT"},
+	{"umrti_datum", "TEXT"},
 	{"narozeni_misto", "TEXT"},
 	{"narodnost", "TEXT"},
 	{"etnicita", "TEXT"},
@@ -744,6 +746,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceVydaniAVybery,
 	(*App).migraceAlbumJakoZaznam,
 	(*App).migraceSpecialy,
+	(*App).migraceUmrtiAObalka,
 }
 
 func (a *App) migrovat() error {
@@ -1059,7 +1062,7 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		var m Modelka
 		var driveID string
 		err := rows.Scan(&m.ID, &m.Jmeno,
-			&m.NarozeniDatum, &m.NarozeniMisto, &m.Narodnost, &m.Etnicita,
+			&m.NarozeniDatum, &m.UmrtiDatum, &m.NarozeniMisto, &m.Narodnost, &m.Etnicita,
 			&m.VyskaCm, &m.VahaKg, &m.VlasyBarva, &m.OciBarva,
 			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
 			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
@@ -1208,7 +1211,7 @@ func hodnotyModelky(m Modelka) []interface{} {
 	m.Ochlupeni, _ = volbaZNabidky(m.Ochlupeni, moznostiOchlupeni)
 
 	return []interface{}{
-		m.NarozeniDatum, m.NarozeniMisto, m.Narodnost, m.Etnicita,
+		strings.TrimSpace(m.NarozeniDatum), strings.TrimSpace(m.UmrtiDatum), m.NarozeniMisto, m.Narodnost, m.Etnicita,
 		m.VyskaCm, m.VahaKg, m.VlasyBarva, m.OciBarva,
 		miry, m.ObvodHrudnikCm, m.ObvodPasCm, m.ObvodBokyCm,
 		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, anoNeDoDatabaze(m.Tetovani), anoNeDoDatabaze(m.Piercing),
@@ -1217,6 +1220,10 @@ func hodnotyModelky(m Modelka) []interface{} {
 }
 
 func (a *App) AddModelka(m Modelka) bool {
+	if err := overitDataModelky(m); err != nil {
+		a.chyba("AddModelka", err)
+		return false
+	}
 	sloupce := []string{"jmeno", "pridano"}
 	otazniky := []string{"?", "?"}
 	for _, s := range sloupceModelky {
@@ -1241,6 +1248,10 @@ func (a *App) AddModelka(m Modelka) bool {
 
 // Úprava údajů modelky; prázdná titulní fotka ponechá tu stávající
 func (a *App) UpdateModelka(m Modelka) bool {
+	if err := overitDataModelky(m); err != nil {
+		a.chyba("UpdateModelka", err)
+		return false
+	}
 	hodnoty := hodnotyModelky(m)
 	nastaveni := []string{"jmeno = ?"}
 	args := []interface{}{m.Jmeno}

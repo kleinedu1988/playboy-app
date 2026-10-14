@@ -418,7 +418,7 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 		}
 	}
 	for _, dvojice := range [][2]*string{
-		{&m.NarozeniDatum, &zdroj.NarozeniDatum}, {&m.NarozeniMisto, &zdroj.NarozeniMisto}, {&m.Narodnost, &zdroj.Narodnost},
+		{&m.NarozeniDatum, &zdroj.NarozeniDatum}, {&m.UmrtiDatum, &zdroj.UmrtiDatum}, {&m.NarozeniMisto, &zdroj.NarozeniMisto}, {&m.Narodnost, &zdroj.Narodnost},
 		{&m.Etnicita, &zdroj.Etnicita}, {&m.VlasyBarva, &zdroj.VlasyBarva}, {&m.OciBarva, &zdroj.OciBarva}, {&m.Miry, &zdroj.Miry},
 		{&m.VelikostPrsou, &zdroj.VelikostPrsou}, {&m.PrsaTyp, &zdroj.PrsaTyp}, {&m.Ochlupeni, &zdroj.Ochlupeni},
 		{&m.Vystoupeni, &zdroj.Vystoupeni}, {&m.PictorialVydani, &zdroj.PictorialVydani}, {&m.Role, &zdroj.Role},

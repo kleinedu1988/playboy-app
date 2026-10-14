@@ -62,7 +62,8 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
             <div><dt>Centerfold</dt><dd>${centerfoldy.map(a => esc(a.jmenoModelky)).join(', ') || 'Zatím chybí'}</dd></div>`}
             <div><dt>Pictorialy</dt><dd>${ostatni.length}</dd></div>
             <div><dt>Fotek celkem</dt><dd>${fotky.length}</dd></div>
-            ${info.jmenoObalky ? `<div><dt>Na obálce</dt><dd><button class="chip" data-modelka="${info.modelkaObalky}">${esc(info.jmenoObalky)}</button></dd></div>` : ''}
+            ${info.jmenoObalky ? `<div><dt>Na obálce</dt><dd><button class="chip" data-modelka="${info.modelkaObalky}">${esc(info.jmenoObalky)}</button></dd></div>`
+                : info.naObalce ? `<div><dt>Na obálce</dt><dd>${esc(info.naObalce)}</dd></div>` : ''}
             ${info.stav ? `<div><dt>Stav</dt><dd>${NAZVY_STAVU[info.stav]}</dd></div>` : ''}
         </dl>
         ${info.poznamka ? `<p class="profile-note">${esc(info.poznamka)}</p>` : ''}
@@ -238,7 +239,7 @@ export async function upravitVydani(vydani) {
     document.getElementById('issueNazevGroup').classList.toggle('hidden', !jeSpecial(vydani));
     document.getElementById('inputIssueNazev').value = info.nazev || '';
     document.getElementById('inputIssueNazev').required = jeSpecial(vydani);
-    document.getElementById('inputIssueObalka').value = info.jmenoObalky;
+    document.getElementById('inputIssueObalka').value = info.jmenoObalky || info.naObalce;
     document.getElementById('inputIssuePoznamka').value = info.poznamka;
     document.getElementById('seznamModelekObalky').innerHTML = (modelky || []).map(m => `<option value="${esc(m.jmeno)}"></option>`).join('');
     issueModal.classList.remove('hidden');
@@ -249,17 +250,14 @@ export async function upravitVydani(vydani) {
 export function pripravit() {
     document.getElementById('issueForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
+        // Modelka ze sbírky se propojí s profilem; jméno, které ve sbírce není, se uloží jako text
         const jmeno = document.getElementById('inputIssueObalka').value.trim();
         const modelka = jmeno ? (await vsechnyModelky()).find(m => sjednotit(m.jmeno) === sjednotit(jmeno)) : null;
-        if (jmeno && !modelka) {
-            oznamit(`Modelka „${jmeno}“ ve sbírce není. Vyber ji ze seznamu, nebo ji nejdřív založ.`);
-            return;
-        }
         if (jeSpecial(stav.upravovaneVydani) && !await SetNazevSpecialu(stav.upravovaneVydani, document.getElementById('inputIssueNazev').value)) {
             oznamit('Název speciálu se nepodařilo uložit.');
             return;
         }
-        if (!await SetVydaniInfo(stav.upravovaneVydani, document.getElementById('inputIssuePoznamka').value, document.getElementById('selectIssueStav').value, modelka?.id || 0)) {
+        if (!await SetVydaniInfo(stav.upravovaneVydani, document.getElementById('inputIssuePoznamka').value, document.getElementById('selectIssueStav').value, modelka?.id || 0, modelka ? '' : jmeno)) {
             oznamit('Údaje čísla se nepodařilo uložit.');
             return;
         }

@@ -1479,7 +1479,7 @@ func TestVydaniOdkazyAVybery(t *testing.T) {
 	}
 
 	// Vydání: poznámka, stav a modelka z obálky; neplatný stav ani vydání neprojdou
-	if !a.SetVydaniInfo("2009-11", "Výroční číslo", "", 1) || a.SetVydaniInfo("2009-11", "", "jiny", 0) || a.SetVydaniInfo("2009", "x", "", 0) {
+	if !a.SetVydaniInfo("2009-11", "Výroční číslo", "", 1, "") || a.SetVydaniInfo("2009-11", "", "jiny", 0, "") || a.SetVydaniInfo("2009", "x", "", 0, "") {
 		t.Fatal("uložení vydání")
 	}
 	if info := a.GetVydaniInfo("2009-11"); info.Poznamka != "Výroční číslo" || info.JmenoObalky != "Obálková" {
@@ -1617,7 +1617,7 @@ func TestOpravyEtapy7(t *testing.T) {
 	}
 
 	// Sloučení modelek: obálka přejde, odkazy se sloučí bez opakování
-	a.SetVydaniInfo("2002-02", "", "", emilie)
+	a.SetVydaniInfo("2002-02", "", "", emilie, "")
 	if chyba := a.SloucitModelky(zoe, emilie); chyba != "" {
 		t.Fatal(chyba)
 	}
@@ -1822,7 +1822,7 @@ func TestExportVerze4(t *testing.T) {
 	a.SetNetykaSeAlba(1, "Les", "Pictorial", "text", true)
 	a.AddCover("2014-02", odkazA+" "+odkazB)
 	a.SetSpojeniAlba(0, "2014-02", "Cover", true)
-	a.SetVydaniInfo("2014-02", "", "", 2)
+	a.SetVydaniInfo("2014-02", "", "", 2, "")
 	// Album, kterému zbyl jen text a další modelka
 	a.AddBulkPhotos(3, "Prázdné", "Pictorial", odkazA)
 	a.SetPopisAlba(3, "Prázdné", "Pictorial", "Jen text", "")
@@ -2017,8 +2017,8 @@ func TestSpecialy(t *testing.T) {
 	}
 
 	// Vymazání údajů čísla název speciálu nesmaže; přejmenování
-	a.SetVydaniInfo(prvni, "poznámka", "mam", 0)
-	a.SetVydaniInfo(prvni, "", "", 0)
+	a.SetVydaniInfo(prvni, "poznámka", "mam", 0, "")
+	a.SetVydaniInfo(prvni, "", "", 0, "")
 	if info := a.GetVydaniInfo(prvni); info.Nazev != "Playmate Review" {
 		t.Fatalf("název po vymazání údajů: %+v", info)
 	}
@@ -2164,5 +2164,149 @@ func TestAuditOpravyImportu(t *testing.T) {
 	md := "# Pozn\n\n```json\n{}\n```\n\nNějaký text: s dvojtečkou\n\n```yaml\n- jmeno: Anna\n```\n"
 	if d, err := slozitSoubory(map[string][]byte{"x.md": []byte(md)}, []string{"x.md"}); err != nil || len(d.Modelky) != 1 {
 		t.Fatalf("markdown s blokem json: %v", err)
+	}
+}
+
+// Úprava č. 8: datum úmrtí, neúplná data a jméno na obálce textem
+func TestUmrtiANeuplnaData(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	var verze int
+	a.db.QueryRow("PRAGMA user_version").Scan(&verze)
+	if verze != 8 || !a.maSloupec("modelky", "umrti_datum") || !a.maSloupec("vydani", "na_obalce") {
+		t.Fatalf("schéma %d bez nových sloupců", verze)
+	}
+
+	for _, datum := range []string{"", "1975", "1975-03", "1975-03-09"} {
+		if !a.AddModelka(Modelka{Jmeno: "Platné " + datum, NarozeniDatum: datum, Tetovani: -1, Piercing: -1}) {
+			t.Fatalf("datum %q neprošlo", datum)
+		}
+	}
+	for _, m := range []Modelka{
+		{Jmeno: "A", NarozeniDatum: "1975-13"}, {Jmeno: "B", NarozeniDatum: "3. 9. 1975"}, {Jmeno: "C", UmrtiDatum: "75"},
+		{Jmeno: "D", NarozeniDatum: "1975-03-09", UmrtiDatum: "1974"},
+	} {
+		if a.AddModelka(m) {
+			t.Fatalf("neplatná data prošla: %+v", m)
+		}
+	}
+	a.AddModelka(Modelka{Jmeno: "Anna", NarozeniDatum: "1950", UmrtiDatum: "2001-07", Tetovani: -1, Piercing: -1})
+	anna := a.GetModelky("Anna")[0]
+	if anna.UmrtiDatum != "2001-07" || anna.NarozeniDatum != "1950" {
+		t.Fatalf("data se neuložila: %+v", anna)
+	}
+
+	// Na obálce: modelka ze sbírky má přednost před textem, jinak se zapíše jméno
+	a.SetVydaniInfo("1980-05", "", "", 0, "Neznámá Playmate")
+	if v := a.GetVydaniInfo("1980-05"); v.NaObalce != "Neznámá Playmate" || v.ModelkaObalky != 0 {
+		t.Fatalf("obálka textem: %+v", v)
+	}
+	a.SetVydaniInfo("1980-05", "", "", anna.ID, "Neznámá Playmate")
+	if v := a.GetVydaniInfo("1980-05"); v.NaObalce != "" || v.ModelkaObalky != anna.ID {
+		t.Fatalf("obálka modelkou: %+v", v)
+	}
+	a.SetVydaniInfo("1980-06", "", "", 0, "Jiná")
+
+	// Export verze 6 a import kruhem
+	data, err := a.exportovat()
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	if !strings.Contains(text, "verze: 6") || !strings.Contains(text, "umrti_datum: 2001-07") || !strings.Contains(text, "na_obalce: Jiná") {
+		t.Fatalf("export:\n%s", text)
+	}
+	b := novaTestovaciApp(t, nil)
+	if v := b.importovat(data); v.Selhalo != "" || len(v.Chyby) != 0 {
+		t.Fatalf("import exportu: %+v", v)
+	}
+	if m := b.GetModelky("Anna"); len(m) != 1 || m[0].UmrtiDatum != "2001-07" || m[0].NarozeniDatum != "1950" {
+		t.Fatalf("po importu: %+v", m)
+	}
+	if v := b.GetVydaniInfo("1980-06"); v.NaObalce != "Jiná" {
+		t.Fatalf("obálka po importu: %+v", v)
+	}
+	// Modelka na obálce, která ve sbírce není, se zapíše textem
+	b.importovat([]byte("vydani:\n  - vydani: 1981-01\n    modelka_obalky: Cizí Modelka\n"))
+	if v := b.GetVydaniInfo("1981-01"); v.NaObalce != "Cizí Modelka" || v.ModelkaObalky != 0 {
+		t.Fatalf("neznámá modelka na obálce: %+v", v)
+	}
+	// Neplatné datum v importu se ohlásí a stávající zůstane
+	if v := b.importovat([]byte("jmeno: Anna\nnarozeni_datum: 1.1.1950\n")); len(v.Chyby) != 1 || b.GetModelky("Anna")[0].NarozeniDatum != "1950" {
+		t.Fatalf("neplatné datum v importu: %+v", v)
+	}
+}
+
+// Pomlčka v importu údaj smaže; prázdný nebo chybějící ho nechá
+func TestImportPomlckaSmaze(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Narodnost: "USA", Poznamka: "zůstane", VyskaCm: 170, ObvodPasCm: 60, Tetovani: 1, Piercing: 0,
+		PrsaTyp: "Přírodní", NarozeniDatum: "1990", CoverID: odkazA})
+	a.SetHodnoceni(1, 4)
+	a.AddBulkPhotos(1, "Les", "Pictorial", odkazB)
+	a.SetPopisAlba(1, "Les", "Pictorial", "Text alba", "Arny")
+	a.SetVydaniAlba(1, "Les", "Pictorial", "1999-04")
+	a.SetVydaniInfo("1999-04", "Poznámka čísla", "mam", 0, "Někdo")
+
+	soubor := `modelky:
+  - jmeno: Anna
+    narodnost: "-"
+    vyska_cm: "-"
+    pas_cm: -
+    tetovani: "-"
+    prsa_typ: "-"
+    narozeni_datum: "-"
+    hodnoceni: "-"
+    titulni_fotka: "-"
+    poznamka: ""
+    alba:
+      - nazev: Les
+        typ: Pictorial
+        popis: "-"
+        vydani: "-"
+        fotky: []
+vydani:
+  - vydani: 1999-04
+    poznamka: "-"
+    na_obalce: "-"
+`
+	if v := a.importovat([]byte(soubor)); v.Selhalo != "" || len(v.Chyby) != 0 {
+		t.Fatalf("import: %+v", v)
+	}
+	m := a.GetModelky("Anna")[0]
+	if m.Narodnost != "" || m.VyskaCm != 0 || m.ObvodPasCm != 0 || m.Tetovani != -1 || m.PrsaTyp != "" || m.NarozeniDatum != "" ||
+		m.Hodnoceni != 0 || m.CoverID != "" || m.Poznamka != "zůstane" || m.Piercing != 0 {
+		t.Fatalf("modelka po importu s pomlčkami: %+v", m)
+	}
+	f := a.GetFotografieModelky(1)
+	if len(f) != 1 || f[0].Popis != "" || f[0].Fotograf != "Arny" || f[0].Vydani != "" {
+		t.Fatalf("album po importu s pomlčkami: %+v", f)
+	}
+	if v := a.GetVydaniInfo("1999-04"); v.Poznamka != "" || v.NaObalce != "" || v.Stav != "mam" {
+		t.Fatalf("číslo po importu s pomlčkami: %+v", v)
+	}
+	// Číslo ani pomlčka v číselném údaji: celý soubor se odmítne se srozumitelnou hláškou
+	if v := a.importovat([]byte("jmeno: Anna\nvyska_cm: vysoká\n")); !strings.Contains(v.Selhalo, "celé číslo") {
+		t.Fatalf("nečíselný údaj: %+v", v)
+	}
+}
+
+// Překlep v klíči se opraví na nejbližší známý klíč a ohlásí; neznámý klíč se ohlásí a přeskočí
+func TestImportOpravaKlicu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	v := a.importovat([]byte("modelky:\n  - jmeno: Anna\n    narodnot: USA\n    vyska_mc: 170\n    barva_auta: červená\n"))
+	if v.Selhalo != "" {
+		t.Fatalf("import: %+v", v)
+	}
+	m := a.GetModelky("Anna")
+	if len(m) != 1 || m[0].Narodnost != "USA" || m[0].VyskaCm != 170 {
+		t.Fatalf("opravené klíče se nepřevzaly: %+v", m)
+	}
+	hlaseni := strings.Join(v.Opravy, "\n")
+	if len(v.Opravy) != 3 || !strings.Contains(hlaseni, "„narodnot“ opraven na „narodnost“") ||
+		!strings.Contains(hlaseni, "„vyska_mc“ opraven na „vyska_cm“") || !strings.Contains(hlaseni, "neznámý klíč „barva_auta“") {
+		t.Fatalf("hlášení oprav: %q", v.Opravy)
+	}
+	if nejblizsiKlic("jmno") != "jmeno" || nejblizsiKlic("xy") != "" || nejblizsiKlic("tagy") != "tagy" {
+		t.Fatal("nejbližší klíč")
 	}
 }

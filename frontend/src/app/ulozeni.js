@@ -1,5 +1,5 @@
 // Výběrová okna, ukládání formulářů a hledání
-import { esc, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
+import { esc, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
 import { AddBulkPhotos, AddModelka, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -148,15 +148,27 @@ export function pripravit() {
         // Pole, které neopustil (a nepřevedlo se), se převede teď
         modelka.vyskaCm = prevestVysku(document.getElementById('inputVyska').value) ?? modelka.vyskaCm;
         modelka.vahaKg = prevestVahu(document.getElementById('inputVaha').value) ?? modelka.vahaKg;
-        // Neúplné datum narození (jen rok) pole pro datum neumí zobrazit; prázdné pole ho proto nesmí smazat
-        const puvodniDatum = stav.editovanaModelka?.narozeniDatum || '';
-        if (!modelka.narozeniDatum && puvodniDatum && !/^\d{4}-\d{2}-\d{2}$/.test(puvodniDatum)) modelka.narozeniDatum = puvodniDatum;
 
         // Jméno je jediný povinný údaj; leží na první záložce, která nemusí být zrovna vidět
         if (!modelka.jmeno) {
             ukazatZalozku(0);
             document.getElementById('inputJmeno').focus();
             oznamit('Vyplň jméno modelky.');
+            return;
+        }
+        // Data smí být neúplná (jen rok nebo rok a měsíc), ale jen v tomto tvaru
+        for (const [vlastnost, id, nazev] of [['narozeniDatum', 'inputNarozeniDatum', 'narození'], ['umrtiDatum', 'inputUmrtiDatum', 'úmrtí']]) {
+            if (!platneDatum(modelka[vlastnost])) {
+                ukazatZalozku(0);
+                document.getElementById(id).focus();
+                oznamit(`Datum ${nazev} napiš jako RRRR-MM-DD, RRRR-MM nebo jen rok RRRR.`);
+                return;
+            }
+        }
+        if (modelka.narozeniDatum && modelka.umrtiDatum && modelka.umrtiDatum.slice(0, modelka.narozeniDatum.length) < modelka.narozeniDatum.slice(0, modelka.umrtiDatum.length)) {
+            ukazatZalozku(0);
+            document.getElementById('inputUmrtiDatum').focus();
+            oznamit('Datum úmrtí je před datem narození.');
             return;
         }
         if (!await odkazJeVPoradku(modelka.coverId)) {

@@ -1,13 +1,14 @@
-# Vzor souboru pro import – formát verze 4 (popis všech klíčů je v EXPORT.md)
+# Vzor souboru pro import – formát verze 6 (popis všech klíčů je v EXPORT.md)
 #
 # Pravidla zápisu:
 # - odsazení mezerami (ne tabulátorem), vždy o dvě; každá položka seznamu začíná „- “
 # - text s dvojtečkou, čárkou na začátku, # nebo uvozovkami dej do uvozovek; datum a vydání vždy v uvozovkách
 # - víceřádkový text: „klíč: |“ a pod ním odsazené řádky (prázdný řádek = nový odstavec)
 # - nepovinné klíče stačí vynechat; prázdný nebo chybějící údaj ponechá ten, který už v programu je
+# - hodnota - (pomlčka) údaj smaže, např. „narodnost: -“; překlep v klíči import opraví a vypíše
 # - řádky začínající # jsou komentáře, import je přeskočí
 
-verze: 4
+verze: 6
 
 modelky:
   # Modelka se všemi údaji
@@ -17,7 +18,8 @@ modelky:
     dalsi_jmena: "Jacqueline Rainbow, Jackie Emery"
 
     # Základní údaje
-    narozeni_datum: "1933-06-06"            # RRRR-MM-DD
+    narozeni_datum: "1933-06-06"            # RRRR-MM-DD, RRRR-MM nebo jen RRRR
+    umrti_datum: "2019"                     # datum úmrtí ve stejném tvaru; u žijící vynech
     narozeni_misto: "Santa Monica, California, USA"
     narodnost: "USA"
     etnicita: "kavkazská"
@@ -127,7 +129,8 @@ vydani:
     modelka_obalky: "Anna [15]"             # u jména, které má víc modelek, číslo v hranatých závorkách
     poznamka: "Mám originál."
   - vydani: "1955-01"
-    stav: shanim                            # shanim | nezajima
+    stav: shanim                            # mam | shanim | nezajima
+    na_obalce: "Bettie Page"                # na obálce je někdo, kdo ve sbírce není (volný text)
 
 # Vlastní výběry fotek napříč sbírkou
 vybery:

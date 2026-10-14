@@ -120,7 +120,7 @@ export function SetTitulniFotka(arg1:number,arg2:number):Promise<boolean>;
 
 export function SetVydaniAlba(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
 
-export function SetVydaniInfo(arg1:string,arg2:string,arg3:string,arg4:number):Promise<boolean>;
+export function SetVydaniInfo(arg1:string,arg2:string,arg3:string,arg4:number,arg5:string):Promise<boolean>;
 
 export function SeznamZaloh():Promise<Array<main.Zaloha>>;
 

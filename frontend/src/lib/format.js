@@ -102,11 +102,18 @@ export function esc(text) {
     return String(text ?? '').replace(/[&<>"']/g, z => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[z]));
 }
 
-// RRRR-MM-DD -> D. M. RRRR
+// RRRR-MM-DD -> D. M. RRRR, RRRR-MM -> březen RRRR, samotný rok zůstává
 export function formatDatum(datum) {
     const casti = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datum || '');
-    return casti ? `${parseInt(casti[3])}. ${parseInt(casti[2])}. ${casti[1]}` : (datum || '');
+    if (casti) return `${parseInt(casti[3])}. ${parseInt(casti[2])}. ${casti[1]}`;
+    const mesic = /^(\d{4})-(\d{2})$/.exec(datum || '');
+    if (mesic && MESICE[parseInt(mesic[2]) - 1]) return `${MESICE[parseInt(mesic[2]) - 1].toLowerCase()} ${mesic[1]}`;
+    return datum || '';
 }
+
+// Datum modelky (narození, úmrtí) smí být neúplné: RRRR, RRRR-MM nebo RRRR-MM-DD; prázdné je v pořádku
+const VZOR_DATUMU = /^\d{4}(-(0[1-9]|1[0-2])(-(0[1-9]|[12]\d|3[01]))?)?$/;
+export const platneDatum = datum => !String(datum || '').trim() || VZOR_DATUMU.test(String(datum).trim());
 
 // Text pro porovnávání: malá písmena bez diakritiky
 // Písmena, která se na základní tvar nerozkládají sama (stejně jako v Go)

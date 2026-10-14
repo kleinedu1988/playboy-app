@@ -217,7 +217,7 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 			COALESCE(MAX(f.vydani), ''), COALESCE(MAX(al.popis), ''), COALESCE(MAX(al.netyka_se), '')
 		FROM fotografie f
 		JOIN modelky m ON m.id = f.modelka_id
-		LEFT JOIN alba al ON al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ
+		LEFT JOIN alba al ON al.id = f.album_id
 		GROUP BY f.modelka_id, f.album, f.typ
 		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album`)
 	if err != nil {

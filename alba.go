@@ -58,11 +58,13 @@ func (a *App) migraceSdilenaAlba() error {
 
 // Řádek alba (vytvoří se, pokud ještě není); vrací jeho id
 func zajistitAlbum(q dotazovac, modelkaID int, album, typ string) (int64, error) {
-	if _, err := q.Exec("INSERT OR IGNORE INTO alba (modelka_id, album, typ) VALUES (?, ?, ?)", modelkaID, album, typ); err != nil {
+	// Cover časopisu je album bez modelky
+	if _, err := q.Exec(`INSERT OR IGNORE INTO alba (modelka_id, album, typ, vydani) VALUES (NULLIF(?, 0), ?, ?,
+		CASE WHEN ? IN ('Centerfold', 'Cover') THEN ? ELSE '' END)`, modelkaID, album, typ, typ, album); err != nil {
 		return 0, err
 	}
 	var id int64
-	err := q.QueryRow("SELECT id FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&id)
+	err := q.QueryRow("SELECT id FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&id)
 	return id, err
 }
 
@@ -114,7 +116,9 @@ func (a *App) doplnitDalsiModelky(fotky []Fotografie) []Fotografie {
 
 // Další modelka alba: album se ukáže i v jejím profilu
 func (a *App) PridatModelkuKAlbu(modelkaID int, album, typ string, dalsiID int) bool {
-	if dalsiID == modelkaID || a.jmenoModelky(dalsiID) == "" || pocetFotekAlba(a.db, modelkaID, album, typ) == 0 {
+	var existuje int
+	a.db.QueryRow("SELECT COUNT(*) FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&existuje)
+	if dalsiID == modelkaID || a.jmenoModelky(dalsiID) == "" || existuje == 0 {
 		return false
 	}
 	id, err := zajistitAlbum(a.db, modelkaID, album, typ)
@@ -142,17 +146,25 @@ func presunoutAlbumTx(tx *sql.Tx, modelkaID int, album, typ string, cilID int) e
 		dotaz string
 		args  []interface{}
 	}{
-		// Pozůstatek prázdného alba téhož jména u cílové modelky by přesun zablokoval
-		{"DELETE FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?", []interface{}{cilID, album, typ}},
+		// Pozůstatek prázdného alba téhož jména u cílové modelky by přesun zablokoval; album s obsahem
+		// zablokuje přesun dřív, u volajícího. Fotky odkazují na album, změní se jen jeho modelka.
+		{"DELETE FROM alba WHERE modelka_id = ? AND album = ? AND typ = ? AND " + albumBezObsahu, []interface{}{cilID, album, typ}},
 		{"UPDATE alba SET modelka_id = ? WHERE modelka_id = ? AND album = ? AND typ = ?", []interface{}{cilID, modelkaID, album, typ}},
-		{"UPDATE fotografie SET modelka_id = ? WHERE modelka_id = ? AND album = ? AND typ = ?", []interface{}{cilID, modelkaID, album, typ}},
 		// Hlavní modelka už nemusí být vedená i jako další
 		{`DELETE FROM alba_modelky WHERE modelka_id = ?
 			AND album_id = (SELECT id FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?)`, []interface{}{cilID, cilID, album, typ}},
 	}
-	for _, krok := range kroky {
+	for i, krok := range kroky {
 		if _, err := tx.Exec(krok.dotaz, krok.args...); err != nil {
 			return err
+		}
+		// Cílová modelka má stejnojmenné album s textem nebo vazbami, ale bez fotek: alba se sloučí
+		if i == 0 {
+			var obsazeno int
+			tx.QueryRow("SELECT COUNT(*) FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?", cilID, album, typ).Scan(&obsazeno)
+			if obsazeno > 0 {
+				return sloucitAlbaTx(tx, modelkaID, album, typ, cilID, album, typ)
+			}
 		}
 	}
 	return nil
@@ -184,67 +196,58 @@ func (a *App) PresunoutAlbum(modelkaID int, album, typ string, cilID int) string
 // Fotky jednoho alba do jiného (i jiné modelky). Soubor, který v cílovém albu už je, se nepřesouvá, ale smaže,
 // aby nevznikl dvakrát. Přesunuté fotky přebírají vydání a spojení plakátu cílového alba a řadí se za jeho fotky.
 func sloucitAlbaTx(tx *sql.Tx, zModelka int, zAlbum, zTyp string, doModelka int, doAlbum, doTyp string) error {
-	var vydani string
+	var zdrojID int64
+	var vydani, popis, fotograf, netykaSe string
+	err := tx.QueryRow("SELECT id, vydani, COALESCE(popis, ''), COALESCE(fotograf, ''), COALESCE(netyka_se, '') FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?",
+		zModelka, zAlbum, zTyp).Scan(&zdrojID, &vydani, &popis, &fotograf, &netykaSe)
+	if err == sql.ErrNoRows {
+		return nil
+	} else if err != nil {
+		return err
+	}
+	cilID, err := zajistitAlbum(tx, doModelka, doAlbum, doTyp)
+	if err != nil {
+		return err
+	}
+	// Spojený plakát cílového alba určuje otočení přidaných stránek
 	var spojit, rotace int
-	tx.QueryRow("SELECT COALESCE(MAX(vydani), ''), COALESCE(MAX(spojit), 0), COALESCE(MAX(CASE WHEN spojit = 1 THEN rotace END), 0) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?",
-		doModelka, doAlbum, doTyp).Scan(&vydani, &spojit, &rotace)
+	tx.QueryRow("SELECT spojit, COALESCE((SELECT MAX(rotace) FROM fotky WHERE album_id = alba.id), 0) FROM alba WHERE id = ?", cilID).Scan(&spojit, &rotace)
 
 	// Soubor, který v cílovém albu už je: cílová fotka převezme vyšší hodnocení a členství ve výběrech, zdrojová zmizí
 	kroky := []string{
-		`UPDATE fotografie AS c SET hodnoceni = MAX(COALESCE(c.hodnoceni, 0), COALESCE(z.hodnoceni, 0))
-			FROM fotografie AS z WHERE z.modelka_id = ?1 AND z.album = ?2 AND z.typ = ?3
-			AND c.modelka_id = ?4 AND c.album = ?5 AND c.typ = ?6 AND c.drive_file_id = z.drive_file_id`,
+		`UPDATE fotky AS c SET hodnoceni = MAX(c.hodnoceni, z.hodnoceni)
+			FROM fotky AS z WHERE z.album_id = ?1 AND c.album_id = ?2 AND c.drive_file_id = z.drive_file_id`,
 		`INSERT OR IGNORE INTO vybery_fotky (vyber_id, fotografie_id, poradi)
 			SELECT vf.vyber_id, c.id, vf.poradi FROM vybery_fotky vf
-			JOIN fotografie z ON z.id = vf.fotografie_id AND z.modelka_id = ?1 AND z.album = ?2 AND z.typ = ?3
-			JOIN fotografie c ON c.modelka_id = ?4 AND c.album = ?5 AND c.typ = ?6 AND c.drive_file_id = z.drive_file_id`,
-		`DELETE FROM fotografie WHERE modelka_id = ?1 AND album = ?2 AND typ = ?3 AND drive_file_id IN
-			(SELECT drive_file_id FROM fotografie WHERE modelka_id = ?4 AND album = ?5 AND typ = ?6)`,
+			JOIN fotky z ON z.id = vf.fotografie_id AND z.album_id = ?1
+			JOIN fotky c ON c.album_id = ?2 AND c.drive_file_id = z.drive_file_id`,
+		`DELETE FROM fotky WHERE album_id = ?1 AND drive_file_id IN (SELECT drive_file_id FROM fotky WHERE album_id = ?2)`,
+		`UPDATE fotky SET album_id = ?2, rotace = CASE WHEN ?3 = 1 THEN ?4 ELSE rotace END, poradi = NULL WHERE album_id = ?1`,
+		// Vydání, text a fotograf cílového alba mají přednost, chybějící doplní zdrojové
+		`UPDATE alba SET vydani = CASE WHEN vydani = '' AND typ NOT IN ('Centerfold', 'Cover') THEN ?5 ELSE vydani END,
+			popis = COALESCE(NULLIF(popis, ''), NULLIF(?6, '')), fotograf = COALESCE(NULLIF(fotograf, ''), NULLIF(?7, ''))
+		WHERE id = ?2`,
+		`INSERT OR IGNORE INTO alba_modelky (album_id, modelka_id)
+			SELECT ?2, modelka_id FROM alba_modelky WHERE album_id = ?1 AND modelka_id <> ?8`,
 	}
 	for _, krok := range kroky {
-		if _, err := tx.Exec(krok, zModelka, zAlbum, zTyp, doModelka, doAlbum, doTyp); err != nil {
+		if _, err := tx.Exec(krok, zdrojID, cilID, spojit, rotace, vydani, popis, fotograf, doModelka); err != nil {
 			return err
 		}
 	}
-	if _, err := tx.Exec(`UPDATE fotografie SET modelka_id = ?, album = ?, typ = ?, vydani = ?, spojit = ?,
-		rotace = CASE WHEN ? = 1 THEN ? ELSE rotace END, poradi = NULL
-		WHERE modelka_id = ? AND album = ? AND typ = ?`, doModelka, doAlbum, doTyp, vydani, spojit, spojit, rotace, zModelka, zAlbum, zTyp); err != nil {
+	// „Netýká se" zdrojového alba se přidá k cílovému
+	var cilovy string
+	tx.QueryRow("SELECT COALESCE(netyka_se, '') FROM alba WHERE id = ?", cilID).Scan(&cilovy)
+	for _, klic := range strings.Split(netykaSe, ",") {
+		if klic = strings.TrimSpace(klic); klic != "" {
+			cilovy = prepnoutKlic(cilovy, klic, true)
+		}
+	}
+	if _, err := tx.Exec("UPDATE alba SET netyka_se = NULLIF(?, '') WHERE id = ?", cilovy, cilID); err != nil {
 		return err
 	}
-
-	// Text a další modelky zdrojového alba přejdou na cílové; vlastní text cílového alba má přednost
-	var zdrojID int64
-	var popis, fotograf, netykaSe string
-	if err := tx.QueryRow("SELECT id, COALESCE(popis, ''), COALESCE(fotograf, ''), COALESCE(netyka_se, '') FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?",
-		zModelka, zAlbum, zTyp).Scan(&zdrojID, &popis, &fotograf, &netykaSe); err == nil {
-		cilID, err := zajistitAlbum(tx, doModelka, doAlbum, doTyp)
-		if err != nil {
-			return err
-		}
-		if _, err := tx.Exec(`UPDATE alba SET popis = COALESCE(NULLIF(popis, ''), NULLIF(?, '')), fotograf = COALESCE(NULLIF(fotograf, ''), NULLIF(?, '')) WHERE id = ?`,
-			popis, fotograf, cilID); err != nil {
-			return err
-		}
-		// „Netýká se" zdrojového alba se přidá k cílovému
-		var cilovy string
-		tx.QueryRow("SELECT COALESCE(netyka_se, '') FROM alba WHERE id = ?", cilID).Scan(&cilovy)
-		for _, klic := range strings.Split(netykaSe, ",") {
-			if klic = strings.TrimSpace(klic); klic != "" {
-				cilovy = prepnoutKlic(cilovy, klic, true)
-			}
-		}
-		if _, err := tx.Exec("UPDATE alba SET netyka_se = NULLIF(?, '') WHERE id = ?", cilovy, cilID); err != nil {
-			return err
-		}
-		if _, err := tx.Exec(`INSERT OR IGNORE INTO alba_modelky (album_id, modelka_id)
-			SELECT ?, modelka_id FROM alba_modelky WHERE album_id = ? AND modelka_id <> ?`, cilID, zdrojID, doModelka); err != nil {
-			return err
-		}
-		if _, err := tx.Exec("DELETE FROM alba WHERE id = ?", zdrojID); err != nil {
-			return err
-		}
-	}
-	return nil
+	_, err = tx.Exec("DELETE FROM alba WHERE id = ?", zdrojID)
+	return err
 }
 
 // Sloučení dvou alb téže modelky (typicky album s jedinou fotkou vzniklé překlepem v názvu)
@@ -282,7 +285,8 @@ type VysledekPresunu struct {
 func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) VysledekPresunu {
 	var vysledek VysledekPresunu
 	album, typ = strings.TrimSpace(album), strings.TrimSpace(typ)
-	if album == "" || typ == "" || (modelkaID != 0 && a.jmenoModelky(modelkaID) == "") {
+	if err := a.overitKlicAlba(modelkaID, album, typ); err != nil {
+		a.chyba("PresunoutFotky", err)
 		return vysledek
 	}
 	tx, err := a.db.Begin()
@@ -292,10 +296,14 @@ func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) Vysled
 	}
 	defer tx.Rollback()
 
-	var vydani string
+	// Cílové album (případně nové); fotky přebírají jeho spojení plakátu a otočení
+	cilID, err := zajistitAlbum(tx, modelkaID, album, typ)
+	if err != nil {
+		a.chyba("PresunoutFotky", err)
+		return vysledek
+	}
 	var spojit, rotace int
-	tx.QueryRow("SELECT COALESCE(MAX(vydani), ''), COALESCE(MAX(spojit), 0), COALESCE(MAX(CASE WHEN spojit = 1 THEN rotace END), 0) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?",
-		modelkaID, album, typ).Scan(&vydani, &spojit, &rotace)
+	tx.QueryRow("SELECT spojit, COALESCE((SELECT MAX(rotace) FROM fotky WHERE album_id = alba.id), 0) FROM alba WHERE id = ?", cilID).Scan(&spojit, &rotace)
 	for _, id := range ids {
 		var stejny int
 		tx.QueryRow(`SELECT COUNT(*) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND id <> ?
@@ -304,8 +312,8 @@ func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) Vysled
 			vysledek.Duplicitni++
 			continue
 		}
-		zmena, err := tx.Exec(`UPDATE fotografie SET modelka_id = ?, album = ?, typ = ?, vydani = ?, spojit = ?,
-			rotace = CASE WHEN ? = 1 THEN ? ELSE rotace END, poradi = NULL WHERE id = ?`, modelkaID, album, typ, vydani, spojit, spojit, rotace, id)
+		zmena, err := tx.Exec(`UPDATE fotky SET album_id = ?, rotace = CASE WHEN ? = 1 THEN ? ELSE rotace END, poradi = NULL WHERE id = ?`,
+			cilID, spojit, rotace, id)
 		if err != nil {
 			a.chyba("PresunoutFotky", err)
 			return VysledekPresunu{}
@@ -497,7 +505,7 @@ func (a *App) OdebratFotky(ids []int) []ObnovaFotky {
 		var spojit, poradi int
 		err := a.db.QueryRow(`SELECT f.modelka_id, f.album, f.typ, f.drive_file_id, COALESCE(f.vydani, ''), COALESCE(f.rotace, 0), COALESCE(f.spojit, 0),
 				COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0), COALESCE(f.pridano, ''), COALESCE(al.popis, ''), COALESCE(al.fotograf, ''), COALESCE(al.netyka_se, '')
-			FROM fotografie f LEFT JOIN alba al ON al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ WHERE f.id = ?`, id).
+			FROM fotografie f LEFT JOIN alba al ON al.id = f.album_id WHERE f.id = ?`, id).
 			Scan(&o.ModelkaID, &o.Album, &o.Typ, &o.DriveID, &o.Vydani, &o.Rotace, &spojit, &o.Hodnoceni, &poradi, &o.Pridano, &o.Popis, &o.Fotograf, &o.NetykaSe)
 		if err != nil {
 			continue
@@ -554,8 +562,15 @@ func (a *App) ObnovitFotky(fotky []ObnovaFotky) int {
 		if f.Poradi > 0 {
 			poradi = f.Poradi
 		}
-		vysledek, err := a.db.Exec(`INSERT OR IGNORE INTO fotografie (modelka_id, album, typ, drive_file_id, vydani, rotace, spojit, hodnoceni, poradi, pridano)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, f.ModelkaID, f.Album, f.Typ, ids[0], vydani, f.Rotace, f.Spojit, f.Hodnoceni, poradi, prvniNeprazdny(f.Pridano, ted()))
+		albumID, err := zajistitAlbum(a.db, f.ModelkaID, f.Album, f.Typ)
+		if err != nil {
+			a.chyba("ObnovitFotky", err)
+			continue
+		}
+		// Album, které zmizelo s poslední fotkou, dostane zpět vydání a spojení
+		a.db.Exec(`UPDATE alba SET vydani = CASE WHEN vydani = '' THEN ? ELSE vydani END, spojit = MAX(spojit, ?) WHERE id = ?`, vydani, f.Spojit, albumID)
+		vysledek, err := a.db.Exec(`INSERT OR IGNORE INTO fotky (album_id, drive_file_id, rotace, hodnoceni, poradi, pridano) VALUES (?, ?, ?, ?, ?, ?)`,
+			albumID, ids[0], f.Rotace, f.Hodnoceni, poradi, prvniNeprazdny(f.Pridano, ted()))
 		if err != nil {
 			a.chyba("ObnovitFotky", err)
 			continue

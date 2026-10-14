@@ -31,6 +31,7 @@ export namespace main {
 	    pridano: string;
 	    dalsiModelky: OdkazModelky[];
 	    driveId: string;
+	    albumId: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Fotografie(source);
@@ -54,6 +55,7 @@ export namespace main {
 	        this.pridano = source["pridano"];
 	        this.dalsiModelky = this.convertValues(source["dalsiModelky"], OdkazModelky);
 	        this.driveId = source["driveId"];
+	        this.albumId = source["albumId"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

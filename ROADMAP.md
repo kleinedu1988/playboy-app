@@ -52,10 +52,13 @@ Bez změny schématu a formátu exportu.
 | Řazení a hledání s cizími písmeny (Ł, Ø) stejně v Go, SQL i v rozhraní; ochrana cíleného hledání před krátkými hodnotami vydání | „Émilie“ se na stěně řadí za Z, jedna stará hodnota by hledání shodila | S |
 | Mezipaměť pohledu se zapíše až po kontrole, že odpověď není zastaralá | Nejlepší mohou po rychlém přepnutí ukázat jiná data | S |
 
-## Etapa 8 – Pevné schéma (0.10.0)
+## Etapa 8 – Pevné schéma (0.10.0) – hotovo
+
+Album jako záznam přijato („pokračuj“ = ano rozhodnutí 1). Edice a stavy čísla jsou uzavřené výčty v kódu
+(rozšíření nevyžaduje změnu schématu), takže rozhodnutí 3 a 4 tuto etapu neblokují.
 
 Cíl: databáze a formát exportu mají podobu, která se po 1.0.0 už nebude lámat; export → úprava v editoru →
-import neztratí nic. Podmínka verze 1.0.0, uživatel nové funkce neuvidí. **Čeká na rozhodnutí 1.**
+import neztratí nic. Podmínka verze 1.0.0, uživatel nové funkce neuvidí.
 
 | Co | Proč | Prac. |
 |---|---|---|

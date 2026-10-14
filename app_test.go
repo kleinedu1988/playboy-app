@@ -113,21 +113,24 @@ func TestModelkaZivotniCyklus(t *testing.T) {
 	}
 
 	// Smazání modelky bere s sebou její fotky, cizí nechává
+	a.AddModelka(Modelka{Jmeno: "Cizí", Tetovani: -1, Piercing: -1})
+	cizi := a.GetModelky("Cizí")[0].ID
 	a.AddBulkPhotos(ulozena.ID, "Album", "Pictorial", odkazA)
-	a.AddBulkPhotos(ulozena.ID+1, "Album", "Pictorial", odkazA)
+	a.AddBulkPhotos(cizi, "Album", "Pictorial", odkazA)
 	if !a.DeleteModelka(ulozena.ID) {
 		t.Fatal("DeleteModelka selhalo")
 	}
-	if len(a.GetModelky("")) != 0 || len(a.GetFotografieModelky(ulozena.ID)) != 0 {
+	if len(a.GetModelky("")) != 1 || len(a.GetFotografieModelky(ulozena.ID)) != 0 {
 		t.Fatal("modelka nebo její fotky po smazání zůstaly")
 	}
-	if len(a.GetFotografieModelky(ulozena.ID+1)) != 1 {
+	if len(a.GetFotografieModelky(cizi)) != 1 {
 		t.Fatal("smazání modelky smazalo i cizí fotky")
 	}
 }
 
 func TestVkladaniFotekOverujeOdkazy(t *testing.T) {
 	a := novaTestovaciApp(t, map[string]int{idB: souborNedostupny})
+	a.AddModelka(Modelka{Jmeno: "Modelka"})
 
 	v := a.AddBulkPhotos(1, "Album", "Pictorial", odkazA+" "+odkazB)
 	if v.Vlozeno != 1 || v.Nedostupne != 1 || v.Duplicitni != 0 {
@@ -146,6 +149,7 @@ func TestVkladaniFotekOverujeOdkazy(t *testing.T) {
 
 func TestVkladaniBezPripojeniUklada(t *testing.T) {
 	a := novaTestovaciApp(t, map[string]int{idA: souborNeoveren})
+	a.AddModelka(Modelka{Jmeno: "Modelka"})
 
 	v := a.AddBulkPhotos(1, "Album", "Pictorial", odkazA)
 	if v.Vlozeno != 1 || v.Neovereno != 1 {
@@ -628,15 +632,27 @@ func TestPopisAlba(t *testing.T) {
 		t.Fatalf("vydání: %+v", veVydani)
 	}
 
-	// Po odebrání poslední fotky popis nepřežije pro nové album téhož jména
+	// Album je samostatný záznam: odebrání poslední fotky text ani vydání nesmaže, nové fotky ho zase ukážou
 	for _, f := range veVydani {
 		a.DeleteFotografie(f.ID)
 	}
-	a.AddBulkPhotos(id, "Red", "Pictorial", odkazA)
-	for _, f := range a.GetFotografieModelky(id) {
-		if f.Popis != "" {
-			t.Fatalf("nové album zdědilo popis: %+v", f)
+	album := func() (vysledek []Fotografie) {
+		for _, f := range a.GetFotografieModelky(id) {
+			if f.Album == "Red" {
+				vysledek = append(vysledek, f)
+			}
 		}
+		return
+	}
+	a.AddBulkPhotos(id, "Red", "Pictorial", odkazA)
+	if f := album(); len(f) != 1 || f[0].Popis != "Little Red Riding Hood" || f[0].Vydani != "2013-05" {
+		t.Fatalf("album po odebrání fotek ztratilo údaje: %+v", f)
+	}
+	// Smazání alba jako celku smaže i text
+	a.DeleteAlbum(id, "Red", "Pictorial")
+	a.AddBulkPhotos(id, "Red", "Pictorial", odkazA)
+	if f := album(); len(f) != 1 || f[0].Popis != "" {
+		t.Fatalf("smazané album zdědilo popis: %+v", f)
 	}
 
 	// Hodnocení fotky se drží v rozsahu 0–5
@@ -687,7 +703,7 @@ func TestPopisAlba(t *testing.T) {
 	a.SetPopisAlba(id, "Druhé", "Pictorial", "y", "")
 	a.SetPopisAlba(id, "Red", "Pictorial", "", "")
 	var radku int
-	a.db.QueryRow("SELECT COUNT(*) FROM alba").Scan(&radku)
+	a.db.QueryRow("SELECT COUNT(*) FROM alba WHERE popis IS NOT NULL").Scan(&radku)
 	if radku != 1 {
 		t.Fatalf("v tabulce alb je %d řádků", radku)
 	}
@@ -985,7 +1001,7 @@ func TestPojistkyZaloh(t *testing.T) {
 	os.Remove(slozkaZaloh())
 
 	// Nezjistitelný obsah databáze není „není co zálohovat": záloha musí ohlásit chybu, export také
-	a.db.Exec("ALTER TABLE fotografie RENAME TO fotografie_pryc")
+	a.db.Exec("DROP VIEW fotografie")
 	if a.zalohovat("test") == nil {
 		t.Fatal("záloha nad nečitelnou databází vrátila úspěch")
 	}
@@ -1076,20 +1092,6 @@ func TestMigraceAObnoveni(t *testing.T) {
 		t.Fatalf("záloha před obnovením: %+v", predObnovenim)
 	}
 
-	// Stará databáze bez indexu a se zdvojenou fotkou: úprava ji uklidí a předem zazálohuje
-	a.db.Exec("DROP INDEX fotografie_soubor_v_albu")
-	a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id) VALUES (1, 'Album', 'Pictorial', ?)", idA)
-	a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id) VALUES (NULL, '2009-11', 'Cover', ?)", idA)
-	a.db.Exec("PRAGMA user_version = 1")
-	if err := a.migrovat(); err != nil {
-		t.Fatal(err)
-	}
-	if len(a.GetFotografieModelky(1)) != 2 || len(a.GetCovery()) != 1 || verze() != len(migrace) {
-		t.Fatalf("po úpravě: %d fotek, %d coverů, schéma %d", len(a.GetFotografieModelky(1)), len(a.GetCovery()), verze())
-	}
-	if zalohy, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "*-pred-migraci.db")); len(zalohy) != 1 {
-		t.Fatalf("záloha před migrací: %v", zalohy)
-	}
 }
 
 func TestEdiceVydani(t *testing.T) {
@@ -1633,7 +1635,7 @@ func TestImportSeVratiPriChybeZapisu(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	a.AddModelka(Modelka{Jmeno: "Stávající"})
 	// Databáze odmítne vložit jeden konkrétní soubor
-	a.db.Exec(`CREATE TRIGGER zakazany BEFORE INSERT ON fotografie WHEN NEW.drive_file_id = '` + idB + `' BEGIN SELECT RAISE(ABORT, 'test'); END`)
+	a.db.Exec(`CREATE TRIGGER zakazany BEFORE INSERT ON fotky WHEN NEW.drive_file_id = '` + idB + `' BEGIN SELECT RAISE(ABORT, 'test'); END`)
 	soubor := "modelky:\n  - jmeno: Nová\n    alba:\n      - nazev: Album\n        typ: Pictorial\n        fotky:\n          - id: " + idA + "\n          - id: " + idB + "\n"
 	if v := a.importovat([]byte(soubor)); v.Selhalo == "" {
 		t.Fatalf("import s chybou zápisu prošel: %+v", v)
@@ -1657,5 +1659,275 @@ func TestStartNadDatabaziZNovejsiVerze(t *testing.T) {
 	}
 	if len(b.GetModelky("")) != 1 || b.AddModelka(Modelka{Jmeno: "Nová"}) {
 		t.Fatal("databáze z novější verze se dala upravit")
+	}
+}
+
+// Databáze ve schématu 5 (fotky s textovým klíčem alba, cover s modelkou 0) přejde na album jako záznam
+// beze ztráty: id fotek i alb zůstanou, výběry a další modelky alb platí dál
+func TestPrechodNaAlbumJakoZaznam(t *testing.T) {
+	puvodni := migrace
+	migrace = puvodni[:5]
+	a := novaTestovaciApp(t, nil)
+	migrace = puvodni
+
+	// Stará databáze cover s modelkou 0 i fotku smazané modelky obsahovat mohla
+	a.db.SetMaxOpenConns(1)
+	a.db.Exec("PRAGMA foreign_keys = OFF")
+	for _, prikaz := range []string{
+		`INSERT INTO modelky (id, jmeno) VALUES (1, 'Anna'), (2, 'Bára')`,
+		`INSERT INTO fotografie (id, modelka_id, album, typ, drive_file_id, vydani, spojit, rotace, hodnoceni, poradi, pridano, overeno)
+			VALUES (10, 1, 'Pláž', 'Pictorial', 'AAAAAAAAAAAAAAAAAAAAAAAAA1', '2012-03', 0, 0, 4, 2, '2020-01-01', '2026-01-01'),
+			       (11, 1, 'Pláž', 'Pictorial', 'AAAAAAAAAAAAAAAAAAAAAAAAA2', NULL, 0, 90, 0, 1, '2020-01-02', NULL),
+			       (12, 1, '2012-03', 'Centerfold', 'AAAAAAAAAAAAAAAAAAAAAAAAA3', NULL, 1, 90, 0, NULL, '2020-01-03', NULL),
+			       (13, 0, '2012-03', 'Cover', 'AAAAAAAAAAAAAAAAAAAAAAAAA4', NULL, 0, 0, 0, NULL, '2020-01-04', NULL),
+			       (14, 7, 'Sirotek', 'Pictorial', 'AAAAAAAAAAAAAAAAAAAAAAAAA5', NULL, 0, 0, 0, NULL, NULL, NULL)`,
+		`INSERT INTO alba (id, modelka_id, album, typ, popis, fotograf, netyka_se) VALUES (5, 1, 'Pláž', 'Pictorial', 'Text', 'Jan', 'text')`,
+		`INSERT INTO alba_modelky (album_id, modelka_id) VALUES (5, 2)`,
+		`INSERT INTO vybery (id, nazev) VALUES (1, 'Nej')`,
+		`INSERT INTO vybery_fotky (vyber_id, fotografie_id, poradi) VALUES (1, 10, 1), (1, 14, 2)`,
+	} {
+		if _, err := a.db.Exec(prikaz); err != nil {
+			t.Fatalf("%v\n%s", err, prikaz)
+		}
+	}
+
+	a.db.SetMaxOpenConns(0)
+	if err := a.migrovat(); err != nil {
+		t.Fatal(err)
+	}
+	var verze int
+	a.db.QueryRow("PRAGMA user_version").Scan(&verze)
+	if verze != len(migrace) {
+		t.Fatalf("schéma %d", verze)
+	}
+	if zalohy, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "*-pred-migraci.db")); len(zalohy) != 1 {
+		t.Fatalf("záloha před přechodem: %v", zalohy)
+	}
+
+	// Album s popisem si nechalo id, vydání a další modelku
+	var albumID int64
+	var vydani, popis string
+	a.db.QueryRow("SELECT album_id FROM fotky WHERE id = 10").Scan(&albumID)
+	a.db.QueryRow("SELECT vydani, popis FROM alba WHERE id = ?", albumID).Scan(&vydani, &popis)
+	if albumID != 5 || vydani != "2012-03" || popis != "Text" {
+		t.Fatalf("album: id %d, vydání %q, popis %q", albumID, vydani, popis)
+	}
+	if dalsi := a.GetFotografieModelky(2); len(dalsi) != 2 {
+		t.Fatalf("další modelka alba vidí %d fotek", len(dalsi))
+	}
+	// Cover je album bez modelky, centerfold má vydání z názvu a spojení
+	var bezModelky, spojit int
+	a.db.QueryRow("SELECT COUNT(*) FROM alba WHERE modelka_id IS NULL AND typ = 'Cover' AND vydani = '2012-03'").Scan(&bezModelky)
+	a.db.QueryRow("SELECT spojit FROM alba WHERE typ = 'Centerfold'").Scan(&spojit)
+	if bezModelky != 1 || spojit != 1 {
+		t.Fatalf("cover bez modelky %d, spojení centerfoldu %d", bezModelky, spojit)
+	}
+	if c := a.GetCovery(); len(c) != 1 || c[0].ModelkaID != 0 || c[0].Album != "2012-03" {
+		t.Fatalf("covery: %+v", c)
+	}
+	// Fotky si nechaly id, pořadí, srdíčka, otočení i ověření
+	fotky := a.GetFotografieModelky(1)
+	if len(fotky) != 3 || fotky[0].ID != 11 || fotky[1].ID != 10 || fotky[1].Hodnoceni != 4 || fotky[0].Rotace != 90 {
+		t.Fatalf("fotky: %+v", fotky)
+	}
+	// Fotka modelky, která neexistuje, zmizela i z výběru; ostatní ve výběru zůstala
+	if ve := a.GetFotkyVyberu(1); len(ve) != 1 || ve[0].ID != 10 {
+		t.Fatalf("výběr: %+v", ve)
+	}
+	if err := kontrolaCizichKlicu(a.db); err != nil {
+		t.Fatal(err)
+	}
+
+	// Smazání modelky smaže její centerfold; sdílené album přejde na další modelku, cover zůstane
+	a.DeleteModelka(1)
+	var fotek, centerfoldu int
+	a.db.QueryRow("SELECT COUNT(*) FROM fotky").Scan(&fotek)
+	a.db.QueryRow("SELECT COUNT(*) FROM alba WHERE typ = 'Centerfold'").Scan(&centerfoldu)
+	if fotek != 3 || centerfoldu != 0 || len(a.GetFotografieModelky(2)) != 2 {
+		t.Fatalf("po smazání modelky: %d fotek, %d centerfoldů", fotek, centerfoldu)
+	}
+}
+
+// Nezdařená úprava schématu se vrátí celá a číslo schématu se nezmění
+func TestNezdarenaUpravaSeVrati(t *testing.T) {
+	puvodni := migrace
+	migrace = puvodni[:5]
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna"})
+	migrace = append(append([]func(*App) error{}, puvodni[:5]...), func(a *App) error {
+		a.db.Exec("CREATE TABLE pokus (x)")
+		return fmt.Errorf("schválně")
+	})
+	defer func() { migrace = puvodni }()
+
+	if a.migrovat() == nil {
+		t.Fatal("chyba úpravy se ztratila")
+	}
+	var verze, tabulek int
+	a.db.QueryRow("PRAGMA user_version").Scan(&verze)
+	a.db.QueryRow("SELECT COUNT(*) FROM sqlite_master WHERE name = 'pokus'").Scan(&tabulek)
+	if verze != 5 || tabulek != 0 {
+		t.Fatalf("schéma %d, zbytek úpravy %d", verze, tabulek)
+	}
+}
+
+func TestEtapa8Validace(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna"})
+	pripady := []struct {
+		modelka    int
+		album, typ string
+	}{
+		{99, "Album", "Pictorial"},      // modelka neexistuje
+		{1, "Album", "Plakát"},          // neznámý typ
+		{1, "", "Pictorial"},            // bez názvu
+		{1, "jaro", "Centerfold"},       // centerfold bez vydání
+		{1, "2012-03", "Cover"},         // cover u modelky
+		{1, "2012-03-DE", "Centerfold"}, // neznámá edice
+	}
+	for _, p := range pripady {
+		if v := a.AddBulkPhotos(p.modelka, p.album, p.typ, odkazA); v.Vlozeno != 0 {
+			t.Errorf("přijato %+v", p)
+		}
+	}
+	if v := a.AddBulkPhotos(1, "2012-03-CZ", "Centerfold", odkazA); v.Vlozeno != 1 {
+		t.Fatalf("české vydání: %+v", v)
+	}
+	if a.SetNetykaSe(1, "neco", true) || a.SetNetykaSeAlba(1, "2012-03-CZ", "Centerfold", "neco", true) {
+		t.Fatal("neznámý klíč „netýká se“ prošel")
+	}
+}
+
+// Export verze 4: novější formát se odmítne, modelky stejného jména se nespletou, „netýká se“,
+// datum přidání fotek a spojení coveru projdou; obsah databáze po importu odpovídá původní
+func TestExportVerze4(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	if v := a.importovat([]byte("verze: 99\nmodelky:\n  - jmeno: X\n")); v.Selhalo == "" || len(a.GetModelky("")) != 0 {
+		t.Fatalf("novější formát: %+v", v)
+	}
+
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1, Poznamka: "druhá"})
+	a.AddModelka(Modelka{Jmeno: "Bára", Tetovani: -1, Piercing: -1})
+	a.AddBulkPhotos(1, "Les", "Pictorial", odkazA+" "+odkazB)
+	a.db.Exec("UPDATE fotky SET pridano = '2019-05-05 10:00:00' WHERE drive_file_id = ?", idB)
+	a.PridatModelkuKAlbu(1, "Les", "Pictorial", 2)
+	a.SetNetykaSe(3, "vzhled", true)
+	a.SetNetykaSeAlba(1, "Les", "Pictorial", "text", true)
+	a.AddCover("2014-02", odkazA+" "+odkazB)
+	a.SetSpojeniAlba(0, "2014-02", "Cover", true)
+	a.SetVydaniInfo("2014-02", "", "", 2)
+	// Album, kterému zbyl jen text a další modelka
+	a.AddBulkPhotos(3, "Prázdné", "Pictorial", odkazA)
+	a.SetPopisAlba(3, "Prázdné", "Pictorial", "Jen text", "")
+	a.PridatModelkuKAlbu(3, "Prázdné", "Pictorial", 1)
+	for _, f := range a.GetFotografieModelky(3) {
+		a.DeleteFotografie(f.ID)
+	}
+
+	export, err := a.exportovat()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if text := string(export); !strings.Contains(text, "verze: 4") || !strings.Contains(text, "Anna [2]") {
+		t.Fatalf("export:\n%s", text)
+	}
+	b := novaTestovaciApp(t, nil)
+	if v := b.importovat(export); v.Selhalo != "" || len(v.Chyby) != 0 {
+		t.Fatalf("import: %+v", v)
+	}
+
+	obsah := func(x *App) string {
+		var radky []string
+		for _, dotaz := range []string{
+			`SELECT m.jmeno, COALESCE(m.poznamka, ''), COALESCE(m.netyka_se, '') FROM modelky m ORDER BY m.id`,
+			`SELECT COALESCE(m.jmeno, '-'), COALESCE(m.poznamka, ''), a.album, a.typ, a.vydani, a.spojit, COALESCE(a.netyka_se, ''), f.drive_file_id, f.pridano
+				FROM fotky f JOIN alba a ON a.id = f.album_id LEFT JOIN modelky m ON m.id = a.modelka_id ORDER BY a.album, a.typ, f.drive_file_id`,
+			`SELECT COALESCE(m.jmeno, '-'), a.album, a.typ, a.vydani, COALESCE(a.popis, ''), COALESCE(a.netyka_se, '') FROM alba a LEFT JOIN modelky m ON m.id = a.modelka_id ORDER BY 1, 2, 3`,
+			`SELECT m.jmeno, COALESCE(m.poznamka, ''), a.album FROM alba_modelky am JOIN modelky m ON m.id = am.modelka_id JOIN alba a ON a.id = am.album_id`,
+			`SELECT v.vydani, COALESCE(m.poznamka, '') FROM vydani v LEFT JOIN modelky m ON m.id = v.modelka_obalky`,
+		} {
+			rows, err := x.db.Query(dotaz)
+			if err != nil {
+				t.Fatal(err)
+			}
+			sloupce, _ := rows.Columns()
+			for rows.Next() {
+				hodnoty := make([]interface{}, len(sloupce))
+				ukazatele := make([]interface{}, len(sloupce))
+				for i := range hodnoty {
+					ukazatele[i] = &hodnoty[i]
+				}
+				rows.Scan(ukazatele...)
+				radky = append(radky, fmt.Sprint(hodnoty...))
+			}
+			rows.Close()
+		}
+		return strings.Join(radky, "\n")
+	}
+	if obsah(a) != obsah(b) {
+		t.Fatalf("obsah databáze po importu se liší:\n%s\n---\n%s", obsah(b), obsah(a))
+	}
+}
+
+// Databáze z každé starší verze schématu (0 = nejstarší, ještě bez čísla) přejde na současné beze ztráty
+func TestPrechodZeVsechSchemat(t *testing.T) {
+	puvodni := migrace
+	defer func() { migrace = puvodni }()
+	for k := 0; k < len(puvodni); k++ {
+		migrace = puvodni[:k]
+		a := novaTestovaciApp(t, nil)
+		migrace = puvodni
+		a.db.SetMaxOpenConns(1)
+		a.db.Exec("PRAGMA foreign_keys = OFF")
+		prikazy := []string{
+			`INSERT INTO modelky (id, jmeno) VALUES (1, 'Anna')`,
+			`INSERT INTO fotografie (modelka_id, album, typ, drive_file_id) VALUES (1, 'Les', 'Pictorial', 'AAAAAAAAAAAAAAAAAAAAAAAAA1'),
+				(1, '2012-03', 'Centerfold', 'AAAAAAAAAAAAAAAAAAAAAAAAA2'), (0, '2012-03', 'Cover', 'AAAAAAAAAAAAAAAAAAAAAAAAA3')`,
+		}
+		if k == 0 {
+			prikazy = append([]string{
+				`CREATE TABLE modelky (id INTEGER PRIMARY KEY AUTOINCREMENT, jmeno TEXT NOT NULL, drive_file_id TEXT)`,
+				`CREATE TABLE fotografie (id INTEGER PRIMARY KEY AUTOINCREMENT, modelka_id INTEGER, album TEXT, typ TEXT, drive_file_id TEXT)`,
+			}, prikazy...)
+		}
+		for _, p := range prikazy {
+			if _, err := a.db.Exec(p); err != nil {
+				t.Fatalf("schéma %d: %v", k, err)
+			}
+		}
+		a.db.SetMaxOpenConns(0)
+		if err := a.migrovat(); err != nil {
+			t.Fatalf("přechod ze schématu %d: %v", k, err)
+		}
+		if f := a.GetFotografieModelky(1); len(f) != 2 {
+			t.Fatalf("schéma %d: modelka má %d fotek", k, len(f))
+		}
+		if c := a.GetCovery(); len(c) != 1 {
+			t.Fatalf("schéma %d: %d coverů", k, len(c))
+		}
+		if v := a.GetVydani("2012-03"); len(v) != 2 {
+			t.Fatalf("schéma %d: vydání má %d fotek", k, len(v))
+		}
+		if err := kontrolaCizichKlicu(a.db); err != nil {
+			t.Fatalf("schéma %d: %v", k, err)
+		}
+		a.db.Close()
+	}
+}
+
+// Údaje s pevnou nabídkou se ukládají v tvaru z formuláře bez ohledu na velikost písmen; neznámá hodnota se ohlásí
+func TestVolbyZNabidkyPriImportu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	v := a.importovat([]byte("verze: 4\nmodelky:\n  - jmeno: Jackie\n    prsa_typ: přírodní\n    ochlupeni: ZASTŘIŽENÉ\n  - jmeno: Druhá\n    prsa_typ: velká\n"))
+	if len(v.Chyby) != 1 || !strings.Contains(v.Chyby[0], "velká") {
+		t.Fatalf("import: %+v", v)
+	}
+	m := a.GetModelky("Jackie")[0]
+	if m.PrsaTyp != "Přírodní" || m.Ochlupeni != "Zastřižené" {
+		t.Fatalf("uloženo %q, %q", m.PrsaTyp, m.Ochlupeni)
+	}
+	if a.GetModelky("Druhá")[0].PrsaTyp != "" {
+		t.Fatal("hodnota mimo nabídku se uložila")
 	}
 }

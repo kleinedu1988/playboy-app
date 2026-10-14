@@ -233,16 +233,24 @@ type exportVydani struct {
 	Poznamka      string `yaml:"poznamka,omitempty"`
 }
 
-func (a *App) exportovatVydaniAVybery() ([]exportVydani, []exportVyberu) {
+func (a *App) exportovatVydaniAVybery(odkazy odkazyNaModelky) ([]exportVydani, []exportVyberu) {
 	var vydani []exportVydani
 	for _, v := range a.GetStavyVydani() {
-		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Stav: v.Stav, ModelkaObalky: a.jmenoModelky(v.ModelkaObalky), Poznamka: v.Poznamka})
+		obalka := ""
+		if v.ModelkaObalky != 0 {
+			obalka = odkazy.odkaz(v.ModelkaObalky, a.jmenoModelky(v.ModelkaObalky))
+		}
+		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Stav: v.Stav, ModelkaObalky: obalka, Poznamka: v.Poznamka})
 	}
 	var vybery []exportVyberu
 	for _, v := range a.GetVybery() {
 		e := exportVyberu{Nazev: v.Nazev, Fotky: []exportFotkyVyberu{}}
 		for _, f := range a.GetFotkyVyberu(v.ID) {
-			e.Fotky = append(e.Fotky, exportFotkyVyberu{Modelka: f.JmenoModelky, Album: f.Album, Typ: f.Typ, ID: f.DriveID})
+			modelka := ""
+			if f.ModelkaID != 0 {
+				modelka = odkazy.odkaz(f.ModelkaID, f.JmenoModelky)
+			}
+			e.Fotky = append(e.Fotky, exportFotkyVyberu{Modelka: modelka, Album: f.Album, Typ: f.Typ, ID: f.DriveID})
 		}
 		vybery = append(vybery, e)
 	}
@@ -250,12 +258,12 @@ func (a *App) exportovatVydaniAVybery() ([]exportVydani, []exportVyberu) {
 }
 
 // Import vydání a výběrů po importu modelek a fotek; nenalezené se ohlásí
-func (a *App) importovatVydaniAVybery(vydani []exportVydani, vybery []exportVyberu, modelky map[string]Modelka, vysledek *VysledekImportu) {
-	idModelky := func(jmeno string) int {
-		if strings.TrimSpace(jmeno) == "" {
+func (a *App) importovatVydaniAVybery(vydani []exportVydani, vybery []exportVyberu, idPodleOdkazu func(string) int, vysledek *VysledekImportu) {
+	idModelky := func(odkaz string) int {
+		if strings.TrimSpace(odkaz) == "" {
 			return 0
 		}
-		return modelky[zjednodusit(strings.TrimSpace(jmeno))].ID
+		return idPodleOdkazu(odkaz)
 	}
 	for _, v := range vydani {
 		stavajici := a.GetVydaniInfo(v.Vydani)

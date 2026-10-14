@@ -127,6 +127,8 @@ type Fotografie struct {
 	DalsiModelky []OdkazModelky `json:"dalsiModelky"`
 	// ID souboru na Disku; adresu obrázku skládá URL ze šablony
 	DriveID string `json:"driveId"`
+	// Album, do kterého fotka patří
+	AlbumID int64 `json:"albumId"`
 }
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
@@ -538,6 +540,9 @@ func obsahujeKlic(seznam, klic string) bool {
 }
 
 func (a *App) SetNetykaSe(modelkaID int, klic string, netyka bool) bool {
+	if !klicNetykaSeModelky[klic] {
+		return false
+	}
 	var seznam string
 	a.db.QueryRow("SELECT COALESCE(netyka_se, '') FROM modelky WHERE id = ?", modelkaID).Scan(&seznam)
 	_, err := a.db.Exec("UPDATE modelky SET netyka_se = NULLIF(?, '') WHERE id = ?", prepnoutKlic(seznam, klic, netyka), modelkaID)
@@ -548,6 +553,9 @@ func (a *App) SetNetykaSe(modelkaID int, klic string, netyka bool) bool {
 }
 
 func (a *App) SetNetykaSeAlba(modelkaID int, album, typ, klic string, netyka bool) bool {
+	if !klicNetykaSeAlba[klic] {
+		return false
+	}
 	id, err := zajistitAlbum(a.db, modelkaID, album, typ)
 	if err == nil {
 		var seznam string
@@ -660,7 +668,7 @@ func (a *App) startup(ctx context.Context) {
 // Otevření souboru databáze; volá se při startu a znovu po obnovení ze zálohy
 func (a *App) otevritDatabazi(cesta string) error {
 	// Souběžná volání z rozhraní na sebe chvíli počkají, místo aby hned selhala na zamčené databázi
-	db, err := sql.Open("sqlite", cesta+"?_pragma=busy_timeout(5000)")
+	db, err := sql.Open("sqlite", cesta+"?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)")
 	if err == nil {
 		err = db.Ping()
 	}
@@ -676,6 +684,20 @@ func (a *App) otevritDatabazi(cesta string) error {
 	if stav := kontrolaSouboru(a.db); stav != "" {
 		a.chybaStartu = fmt.Sprintf("Soubor databáze je poškozený (%s). Nic neupravuj a obnov poslední zálohu.", stav)
 		fmt.Println(a.chybaStartu)
+	}
+	return nil
+}
+
+// Od tohoto čísla schématu databáze drží cizí klíče
+const schemaSCizimiKlici = 6
+
+// Po úpravě schématu nesmí zůstat řádek odkazující na neexistující záznam
+func kontrolaCizichKlicu(db dotazovac) error {
+	var tabulka string
+	var radek, rodic interface{}
+	var fk int
+	if err := db.QueryRow("PRAGMA foreign_key_check").Scan(&tabulka, &radek, &rodic, &fk); err == nil {
+		return fmt.Errorf("tabulka %s odkazuje na neexistující záznam v %v", tabulka, rodic)
 	}
 	return nil
 }
@@ -700,6 +722,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceSdilenaAlba,
 	(*App).migraceNetykaSe,
 	(*App).migraceVydaniAVybery,
+	(*App).migraceAlbumJakoZaznam,
 }
 
 func (a *App) migrovat() error {
@@ -720,11 +743,30 @@ func (a *App) migrovat() error {
 			return fmt.Errorf("záloha před úpravou schématu selhala: %w", err)
 		}
 	}
+	// Každá úprava běží v transakci spolu se zápisem čísla schématu: buď proběhne celá, nebo vůbec.
+	// Všechny příkazy jdou přes jedno spojení, aby transakce platila pro celou úpravu; přestavba tabulek
+	// potřebuje vypnuté cizí klíče, a to jde jen mimo transakci.
+	a.db.SetMaxOpenConns(1)
+	defer a.db.SetMaxOpenConns(0)
+	a.db.Exec("PRAGMA foreign_keys = OFF")
+	defer a.db.Exec("PRAGMA foreign_keys = ON")
 	for cislo := verze + 1; cislo <= len(migrace); cislo++ {
-		if err := migrace[cislo-1](a); err != nil {
+		if _, err := a.db.Exec("BEGIN"); err != nil {
+			return err
+		}
+		err := migrace[cislo-1](a)
+		if err == nil {
+			_, err = a.db.Exec(fmt.Sprintf("PRAGMA user_version = %d", cislo))
+		}
+		// Cizí klíče platí od úpravy č. 6; starší schémata vedla cover pod modelkou 0
+		if err == nil && cislo >= schemaSCizimiKlici {
+			err = kontrolaCizichKlicu(a.db)
+		}
+		if err != nil {
+			a.db.Exec("ROLLBACK")
 			return fmt.Errorf("úprava schématu č. %d: %w", cislo, err)
 		}
-		if _, err := a.db.Exec(fmt.Sprintf("PRAGMA user_version = %d", cislo)); err != nil {
+		if _, err := a.db.Exec("COMMIT"); err != nil {
 			return err
 		}
 	}
@@ -733,46 +775,58 @@ func (a *App) migrovat() error {
 
 // Úprava č. 1: schéma, jak vznikalo do zavedení číslování. Každý krok si sám zjistí, zda je potřeba,
 // takže projde nad jakkoli starou databází.
+// Sloupce modelky, jak je zakládala úprava č. 1; zmrazené, další sloupce přidávají až pozdější úpravy
+var sloupceModelkySchema1 = [][2]string{
+	{"narozeni_datum", "TEXT"}, {"narozeni_misto", "TEXT"}, {"narodnost", "TEXT"}, {"etnicita", "TEXT"},
+	{"vyska_cm", "INTEGER"}, {"vaha_kg", "INTEGER"}, {"vlasy_barva", "TEXT"}, {"oci_barva", "TEXT"}, {"miry", "TEXT"},
+	{"obvod_hrudnik_cm", "INTEGER"}, {"obvod_pas_cm", "INTEGER"}, {"obvod_boky_cm", "INTEGER"}, {"velikost_prsou", "TEXT"},
+	{"prsa_typ", "TEXT"}, {"ochlupeni", "TEXT"}, {"tetovani", "INTEGER"}, {"piercing", "INTEGER"}, {"vystoupeni", "TEXT"},
+	{"pictorial_vydani", "TEXT"}, {"role", "TEXT"}, {"tags", "TEXT"}, {"dalsi_jmena", "TEXT"}, {"poznamka", "TEXT"},
+	{"drive_cover_id", "TEXT"},
+}
+
 func (a *App) migraceZaklad() error {
 	// Tabulka modelek
-	a.db.Exec(`
+	if _, err := a.db.Exec(`
 	CREATE TABLE IF NOT EXISTS modelky (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		jmeno TEXT NOT NULL
-	);`)
+	);`); err != nil {
+		return err
+	}
 
 	// Migrace starší verze tabulky, kde se sloupec jmenoval drive_file_id
 	if !a.maSloupec("modelky", "drive_cover_id") && a.maSloupec("modelky", "drive_file_id") {
 		if _, err := a.db.Exec(`ALTER TABLE modelky RENAME COLUMN drive_file_id TO drive_cover_id`); err != nil {
-			a.chyba("migrace DB", err)
+			return err
 		}
 	}
 
 	// Doplnění sloupců, které v tabulce ještě nejsou
-	for _, s := range sloupceModelky {
+	for _, s := range sloupceModelkySchema1 {
 		if a.maSloupec("modelky", s[0]) {
 			continue
 		}
 		if _, err := a.db.Exec(fmt.Sprintf(`ALTER TABLE modelky ADD COLUMN %s %s`, s[0], s[1])); err != nil {
-			a.chyba("migrace DB", err)
+			return err
 		}
 	}
 
 	// Datum přidání se zapisuje při vložení; starší záznamy ho nemají a zpětně zjistit nejde
 	if !a.maSloupec("modelky", "pridano") {
 		if _, err := a.db.Exec(`ALTER TABLE modelky ADD COLUMN pridano TEXT`); err != nil {
-			a.chyba("migrace DB", err)
+			return err
 		}
 	}
 
 	if !a.maSloupec("modelky", "hodnoceni") {
 		if _, err := a.db.Exec(`ALTER TABLE modelky ADD COLUMN hodnoceni INTEGER`); err != nil {
-			a.chyba("migrace DB", err)
+			return err
 		}
 		// Starší verze znala jen ano/ne: oblíbená modelka dostane plné hodnocení
 		if a.maSloupec("modelky", "oblibena") {
 			if _, err := a.db.Exec(`UPDATE modelky SET hodnoceni = 5 WHERE oblibena = 1`); err != nil {
-				a.chyba("migrace DB", err)
+				return err
 			}
 		}
 	}
@@ -782,7 +836,7 @@ func (a *App) migraceZaklad() error {
 			continue
 		}
 		if _, err := a.db.Exec(fmt.Sprintf(`ALTER TABLE modelky ADD COLUMN %s REAL`, s[0])); err != nil {
-			a.chyba("migrace DB", err)
+			return err
 		}
 	}
 
@@ -802,7 +856,7 @@ func (a *App) migraceZaklad() error {
 			continue
 		}
 		if _, err := a.db.Exec(fmt.Sprintf(`ALTER TABLE fotografie ADD COLUMN %s %s`, sloupec[0], sloupec[1])); err != nil {
-			a.chyba("migrace DB", err)
+			return err
 		}
 	}
 
@@ -824,13 +878,8 @@ func (a *App) migraceZaklad() error {
 }
 
 // Úprava č. 2: index pro hledání fotek alba a jedinečnost souboru v albu
+// Běží v transakci, kterou kolem každé úpravy otevírá migrovat
 func (a *App) migraceIndexy() error {
-	tx, err := a.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
 	kroky := []string{
 		// Cover časopisu má modelku 0; NULL ze starších verzí by index i porovnávání obcházel
 		`UPDATE fotografie SET modelka_id = 0 WHERE modelka_id IS NULL`,
@@ -840,11 +889,11 @@ func (a *App) migraceIndexy() error {
 		`CREATE INDEX IF NOT EXISTS fotografie_vydani ON fotografie(vydani)`,
 	}
 	for _, krok := range kroky {
-		if _, err := tx.Exec(krok); err != nil {
+		if _, err := a.db.Exec(krok); err != nil {
 			return err
 		}
 	}
-	return tx.Commit()
+	return nil
 }
 
 // Zavření databáze při ukončení programu
@@ -918,9 +967,8 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 	// Počet fotek: vlastní a ze sdílených alb, dvěma souhrnnými dotazy (poddotaz pro každou modelku byl kvadratický)
 	pocetFotek := map[int]int{}
 	for _, dotaz := range []string{
-		"SELECT modelka_id, COUNT(*) FROM fotografie WHERE modelka_id > 0 GROUP BY modelka_id",
-		`SELECT am.modelka_id, COUNT(*) FROM alba_modelky am JOIN alba al ON al.id = am.album_id
-			JOIN fotografie f ON f.modelka_id = al.modelka_id AND f.album = al.album AND f.typ = al.typ GROUP BY am.modelka_id`,
+		"SELECT al.modelka_id, COUNT(*) FROM fotky f JOIN alba al ON al.id = f.album_id WHERE al.modelka_id IS NOT NULL GROUP BY al.modelka_id",
+		`SELECT am.modelka_id, COUNT(*) FROM alba_modelky am JOIN fotky f ON f.album_id = am.album_id GROUP BY am.modelka_id`,
 	} {
 		radky, err := a.db.Query(dotaz)
 		if err != nil {
@@ -938,7 +986,7 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 	// Vydání každé modelky odvozená z jejích fotek
 	vydaniModelek := map[int][]string{}
 	if radky, err := a.db.Query("SELECT DISTINCT f.modelka_id, " + vydaniFotky + " AS v FROM fotografie f WHERE f.modelka_id > 0 AND " + vydaniFotky + " <> ''" +
-		" UNION SELECT am.modelka_id, " + vydaniFotky + " FROM fotografie f JOIN alba al ON al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ" +
+		" UNION SELECT am.modelka_id, " + vydaniFotky + " FROM fotografie f JOIN alba al ON al.id = f.album_id" +
 		" JOIN alba_modelky am ON am.album_id = al.id WHERE " + vydaniFotky + " <> '' ORDER BY 2"); err == nil {
 		for radky.Next() {
 			var id int
@@ -1135,6 +1183,9 @@ func hodnotyModelky(m Modelka) []interface{} {
 		coverID = ids[0]
 	}
 
+	m.PrsaTyp, _ = volbaZNabidky(m.PrsaTyp, moznostiPrsaTyp)
+	m.Ochlupeni, _ = volbaZNabidky(m.Ochlupeni, moznostiOchlupeni)
+
 	return []interface{}{
 		m.NarozeniDatum, m.NarozeniMisto, m.Narodnost, m.Etnicita,
 		m.VyskaCm, m.VahaKg, m.VlasyBarva, m.OciBarva,
@@ -1245,7 +1296,7 @@ func (a *App) SetHodnoceniFotek(ids []int, hodnoceni int) bool {
 		hodnoceni = 5
 	}
 	for _, id := range ids {
-		if _, err := a.db.Exec(`UPDATE fotografie SET hodnoceni = ? WHERE id = ?`, hodnoceni, id); err != nil {
+		if _, err := a.db.Exec(`UPDATE fotky SET hodnoceni = ? WHERE id = ?`, hodnoceni, id); err != nil {
 			a.chyba("SetHodnoceniFotek", err)
 			return false
 		}
@@ -1263,7 +1314,7 @@ func (a *App) SetPoradiFotek(ids []int) bool {
 	defer tx.Rollback()
 
 	for i, id := range ids {
-		if _, err := tx.Exec(`UPDATE fotografie SET poradi = ? WHERE id = ?`, i+1, id); err != nil {
+		if _, err := tx.Exec(`UPDATE fotky SET poradi = ? WHERE id = ?`, i+1, id); err != nil {
 			a.chyba("SetPoradiFotek", err)
 			return false
 		}
@@ -1277,7 +1328,7 @@ func (a *App) SetPoradiFotek(ids []int) bool {
 
 // Zrušení ručního pořadí: album se znovu řadí podle hodnocení a vložení
 func (a *App) ZrusitPoradiAlba(modelkaID int, album, typ string) bool {
-	_, err := a.db.Exec("UPDATE fotografie SET poradi = NULL WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
+	_, err := a.db.Exec("UPDATE fotky SET poradi = NULL WHERE album_id = (SELECT id FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?)", modelkaID, album, typ)
 	if err != nil {
 		a.chyba("ZrusitPoradiAlba", err)
 	}
@@ -1289,7 +1340,7 @@ func (a *App) SetTitulniFotka(modelkaID, fotoID int) bool {
 	vysledek, err := a.db.Exec(`
 		UPDATE modelky SET cover_zoom = NULL, cover_x = NULL, cover_y = NULL,
 			drive_cover_id = (SELECT drive_file_id FROM fotografie WHERE id = ?1)
-		WHERE id = ?2 AND EXISTS (SELECT 1 FROM fotografie f LEFT JOIN alba al ON al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ
+		WHERE id = ?2 AND EXISTS (SELECT 1 FROM fotografie f LEFT JOIN alba al ON al.id = f.album_id
 			WHERE f.id = ?1 AND (f.modelka_id = ?2 OR EXISTS (SELECT 1 FROM alba_modelky am WHERE am.album_id = al.id AND am.modelka_id = ?2)))`,
 		fotoID, modelkaID)
 	if err != nil {
@@ -1340,7 +1391,7 @@ func (a *App) DeleteModelka(id int) bool {
 		}
 	}
 
-	if _, err := tx.Exec("DELETE FROM fotografie WHERE modelka_id = ?", id); err != nil {
+	if _, err := tx.Exec("DELETE FROM fotky WHERE album_id IN (SELECT id FROM alba WHERE modelka_id = ?)", id); err != nil {
 		a.chyba("DeleteModelka", err)
 		return false
 	}
@@ -1374,13 +1425,13 @@ func (a *App) DeleteVse() bool {
 	defer tx.Rollback()
 
 	dotazy := []string{
-		"DELETE FROM fotografie",
+		"DELETE FROM fotky",
 		"DELETE FROM alba",
 		"DELETE FROM vydani",
 		"DELETE FROM vybery",
 		"DELETE FROM modelky",
 		// Číslování ID začne znovu od 1
-		"DELETE FROM sqlite_sequence WHERE name IN ('fotografie', 'alba', 'modelky')",
+		"DELETE FROM sqlite_sequence WHERE name IN ('fotky', 'alba', 'modelky', 'vybery')",
 	}
 	for _, dotaz := range dotazy {
 		if _, err := tx.Exec(dotaz); err != nil {
@@ -1396,9 +1447,9 @@ func (a *App) DeleteVse() bool {
 }
 
 // Vydání fotky: centerfold a cover ho mají v názvu alba, ostatní ve vlastním sloupci
-const vydaniFotky = "CASE WHEN f.typ IN ('Centerfold', 'Cover') THEN f.album ELSE COALESCE(f.vydani, '') END"
+const vydaniFotky = "f.vydani"
 
-const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky + ", COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0), COALESCE(f.pridano, '')"
+const vyberFotografii = "SELECT f.id, COALESCE(f.modelka_id, 0), f.album, f.typ, f.drive_file_id, COALESCE(f.rotace, 0), COALESCE(f.spojit, 0), " + vydaniFotky + ", COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0), COALESCE(f.pridano, ''), f.album_id"
 
 // Pořadí fotek v albu: nejdřív ručně seřazené, za nimi ostatní podle vložení
 const razeniFotek = "f.poradi IS NULL, f.poradi, f.id"
@@ -1406,12 +1457,18 @@ const razeniFotek = "f.poradi IS NULL, f.poradi, f.id"
 // Připojení údajů alba k fotce; sloupce se přidávají na konec výběru
 const (
 	vyberPopisu     = ", COALESCE(a.popis, ''), COALESCE(a.fotograf, '')"
-	pripojeniPopisu = " LEFT JOIN alba a ON a.modelka_id = f.modelka_id AND a.album = f.album AND a.typ = f.typ"
+	pripojeniPopisu = " LEFT JOIN alba a ON a.id = f.album_id"
 )
 
 // Řádek alba, ke kterému už nejsou žádné fotky, nesmí zůstat: jeho popis by se objevil u nového alba téhož jména
-const smazatPrazdnaAlba = `DELETE FROM alba WHERE NOT EXISTS (
-	SELECT 1 FROM fotografie f WHERE f.modelka_id = alba.modelka_id AND f.album = alba.album AND f.typ = alba.typ)`
+// Podmínka alba, které nemá fotky ani nic dalšího
+const albumBezObsahu = `NOT EXISTS (SELECT 1 FROM fotky f WHERE f.album_id = alba.id)
+	AND COALESCE(popis, '') = '' AND COALESCE(fotograf, '') = '' AND COALESCE(netyka_se, '') = ''
+	AND NOT EXISTS (SELECT 1 FROM alba_modelky am WHERE am.album_id = alba.id)`
+
+// Album bez fotek zmizí, jen když nenese nic dalšího: text, fotograf, „netýká se“ i další modelky přežijí
+// odebrání poslední fotky a vrátí se s novými fotkami. Smazat album jako celek umí DeleteAlbum.
+const smazatPrazdnaAlba = `DELETE FROM alba WHERE ` + albumBezObsahu
 
 func (a *App) nacistFotografie(query string, sJmenem, sPopisem bool, args ...interface{}) []Fotografie {
 	fotky, err := a.nactiFotografie(query, sJmenem, sPopisem, args...)
@@ -1434,7 +1491,7 @@ func (a *App) nactiFotografie(query string, sJmenem, sPopisem bool, args ...inte
 	for rows.Next() {
 		var f Fotografie
 		var driveID string
-		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani, &f.Hodnoceni, &f.Poradi, &f.Pridano}
+		cile := []interface{}{&f.ID, &f.ModelkaID, &f.Album, &f.Typ, &driveID, &f.Rotace, &f.Spojit, &f.Vydani, &f.Hodnoceni, &f.Poradi, &f.Pridano, &f.AlbumID}
 		if sJmenem {
 			cile = append(cile, &f.JmenoModelky)
 		}
@@ -1502,14 +1559,21 @@ func (a *App) UpdateCover(id int, vydani, rawLink string) bool {
 	if !vzorVydani.MatchString(vydani) {
 		return false
 	}
-	query := "UPDATE fotografie SET album = ? WHERE id = ? AND typ = 'Cover'"
-	args := []interface{}{vydani, id}
-	if ids := parseDriveIDs(rawLink); len(ids) > 0 {
-		query = "UPDATE fotografie SET album = ?, drive_file_id = ? WHERE id = ? AND typ = 'Cover'"
-		args = []interface{}{vydani, ids[0], id}
+	var typ string
+	if a.db.QueryRow("SELECT typ FROM fotografie WHERE id = ?", id).Scan(&typ); typ != "Cover" {
+		return false
 	}
-
-	_, err := a.db.Exec(query, args...)
+	// Cover přejde do alba svého vydání (případně nového), staré prázdné zmizí
+	albumID, err := zajistitAlbum(a.db, 0, vydani, "Cover")
+	if err == nil {
+		_, err = a.db.Exec("UPDATE fotky SET album_id = ? WHERE id = ?", albumID, id)
+	}
+	if ids := parseDriveIDs(rawLink); err == nil && len(ids) > 0 {
+		_, err = a.db.Exec("UPDATE fotky SET drive_file_id = ? WHERE id = ?", ids[0], id)
+	}
+	if err == nil {
+		_, err = a.db.Exec(smazatPrazdnaAlba)
+	}
 	if err != nil {
 		a.chyba("UpdateCover", err)
 	}
@@ -1591,7 +1655,9 @@ func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
 	if vydani != "" && !vzorVydaniAlba.MatchString(vydani) {
 		return false
 	}
-	_, err := a.db.Exec("UPDATE fotografie SET vydani = ? WHERE modelka_id = ? AND album = ? AND typ = ?", vydani, modelkaID, album, typ)
+	// Centerfold a cover mají vydání v názvu
+	_, err := a.db.Exec("UPDATE alba SET vydani = ? WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ NOT IN ('Centerfold', 'Cover')",
+		vydani, modelkaID, album, typ)
 	if err != nil {
 		a.chyba("SetVydaniAlba", err)
 	}
@@ -1602,7 +1668,7 @@ func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
 func (a *App) SetRotaceFotek(ids []int, rotace int) bool {
 	rotace = ((rotace % 360) + 360) % 360
 	for _, id := range ids {
-		if _, err := a.db.Exec("UPDATE fotografie SET rotace = ? WHERE id = ?", rotace, id); err != nil {
+		if _, err := a.db.Exec("UPDATE fotky SET rotace = ? WHERE id = ?", rotace, id); err != nil {
 			a.chyba("SetRotaceFotek", err)
 			return false
 		}
@@ -1613,8 +1679,13 @@ func (a *App) SetRotaceFotek(ids []int, rotace int) bool {
 // Zapnutí nebo vypnutí spojení stránek alba do jednoho plakátu
 func (a *App) SetSpojeniAlba(modelkaID int, album, typ string, spojit bool) bool {
 	// Spojený plakát se otáčí jako celek, proto se otočení stránek sjednotí
-	_, err := a.db.Exec("UPDATE fotografie SET spojit = ?, rotace = 0 WHERE modelka_id = ? AND album = ? AND typ = ?",
-		spojit, modelkaID, album, typ)
+	id, err := zajistitAlbum(a.db, modelkaID, album, typ)
+	if err == nil {
+		_, err = a.db.Exec("UPDATE alba SET spojit = ? WHERE id = ?", spojit, id)
+	}
+	if err == nil {
+		_, err = a.db.Exec("UPDATE fotky SET rotace = 0 WHERE album_id = ?", id)
+	}
 	if err != nil {
 		a.chyba("SetSpojeniAlba", err)
 	}
@@ -1626,9 +1697,14 @@ func (a *App) UpdateAlbum(modelkaID int, staryAlbum, staryTyp, novyAlbum, novyTy
 	if staryAlbum == novyAlbum && staryTyp == novyTyp {
 		return true
 	}
-	// Dvě alba se přejmenováním nesmí tiše slít do jednoho
+	if err := a.overitKlicAlba(modelkaID, novyAlbum, novyTyp); err != nil {
+		a.chyba("UpdateAlbum", err)
+		return false
+	}
+	// Dvě alba se přejmenováním nesmí tiše slít do jednoho; prázdný pozůstatek bez obsahu nevadí
+	a.db.Exec("DELETE FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND "+albumBezObsahu, modelkaID, novyAlbum, novyTyp)
 	var obsazeno int
-	a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, novyAlbum, novyTyp).Scan(&obsazeno)
+	a.db.QueryRow("SELECT COUNT(*) FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, novyAlbum, novyTyp).Scan(&obsazeno)
 	if obsazeno > 0 {
 		return false
 	}
@@ -1640,11 +1716,11 @@ func (a *App) UpdateAlbum(modelkaID int, staryAlbum, staryTyp, novyAlbum, novyTy
 	}
 	defer tx.Rollback()
 
+	// Fotky odkazují na album, přejmenuje se jen jeho záznam; vydání centerfoldu je jeho název
 	dotazy := []string{
-		// Pozůstatek po dřívějším albu cílového jména by přejmenování zablokoval
-		"DELETE FROM alba WHERE modelka_id = ?3 AND album = ?1 AND typ = ?2",
-		"UPDATE alba SET album = ?1, typ = ?2 WHERE modelka_id = ?3 AND album = ?4 AND typ = ?5",
-		"UPDATE fotografie SET album = ?1, typ = ?2 WHERE modelka_id = ?3 AND album = ?4 AND typ = ?5",
+		`UPDATE alba SET album = ?1, typ = ?2,
+			vydani = CASE WHEN ?2 IN ('Centerfold', 'Cover') THEN ?1 WHEN typ IN ('Centerfold', 'Cover') THEN '' ELSE vydani END
+		WHERE COALESCE(modelka_id, 0) = ?3 AND album = ?4 AND typ = ?5`,
 	}
 	for _, dotaz := range dotazy {
 		if _, err := tx.Exec(dotaz, novyAlbum, novyTyp, modelkaID, staryAlbum, staryTyp); err != nil {
@@ -1663,24 +1739,17 @@ func (a *App) UpdateAlbum(modelkaID int, staryAlbum, staryTyp, novyAlbum, novyTy
 func (a *App) SetPopisAlba(modelkaID int, album, typ, popis, fotograf string) bool {
 	popis, fotograf = strings.TrimSpace(popis), strings.TrimSpace(fotograf)
 
-	var err error
-	if popis == "" && fotograf == "" {
-		// Řádek sdíleného alba nese vazby na další modelky, proto se jen vyprázdní
-		_, err = a.db.Exec(`DELETE FROM alba WHERE modelka_id = ? AND album = ? AND typ = ? AND COALESCE(netyka_se, '') = ''
-			AND NOT EXISTS (SELECT 1 FROM alba_modelky WHERE album_id = alba.id)`, modelkaID, album, typ)
-		if err == nil {
-			_, err = a.db.Exec("UPDATE alba SET popis = NULL, fotograf = NULL WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
-		}
-	} else {
-		// Popis patří jen k albu, které má aspoň jednu fotku
-		var fotek int
-		a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&fotek)
-		if fotek == 0 {
-			return false
-		}
-		_, err = a.db.Exec(`INSERT INTO alba (modelka_id, album, typ, popis, fotograf) VALUES (?, ?, ?, ?, ?)
-			ON CONFLICT(modelka_id, album, typ) DO UPDATE SET popis = excluded.popis, fotograf = excluded.fotograf`,
-			modelkaID, album, typ, popis, fotograf)
+	// Popis patří k existujícímu albu; vymazání ho jen vyprázdní, album nese i fotky, vydání a vazby
+	var id int64
+	err := a.db.QueryRow("SELECT id FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&id)
+	if err == sql.ErrNoRows {
+		return popis == "" && fotograf == ""
+	}
+	if err == nil {
+		_, err = a.db.Exec("UPDATE alba SET popis = NULLIF(?, ''), fotograf = NULLIF(?, '') WHERE id = ?", popis, fotograf, id)
+	}
+	if err == nil && popis == "" && fotograf == "" {
+		_, err = a.db.Exec(smazatPrazdnaAlba)
 	}
 	if err != nil {
 		a.chyba("SetPopisAlba", err)
@@ -1714,10 +1783,8 @@ func (a *App) DeleteAlbum(modelkaID int, album, typ string) bool {
 		a.chyba("zálohy", err)
 		return false
 	}
-	_, err := a.db.Exec("DELETE FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ)
-	if err == nil {
-		_, err = a.db.Exec(smazatPrazdnaAlba)
-	}
+	// Fotky, další modelky i výběry odejdou s albem přes cizí klíče a spouštěče
+	_, err := a.db.Exec("DELETE FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, album, typ)
 	if err != nil {
 		a.chyba("DeleteAlbum", err)
 	}
@@ -1742,7 +1809,7 @@ func (a *App) DeleteFotografieHromadne(ids []int) bool {
 	defer tx.Rollback()
 
 	for _, id := range ids {
-		if _, err := tx.Exec("DELETE FROM fotografie WHERE id = ?", id); err != nil {
+		if _, err := tx.Exec("DELETE FROM fotky WHERE id = ?", id); err != nil {
 			a.chyba("DeleteFotografieHromadne", err)
 			return false
 		}
@@ -1760,7 +1827,7 @@ func (a *App) DeleteFotografieHromadne(ids []int) bool {
 
 // Odebrání jedné fotky z alba
 func (a *App) DeleteFotografie(id int) bool {
-	_, err := a.db.Exec("DELETE FROM fotografie WHERE id = ?", id)
+	_, err := a.db.Exec("DELETE FROM fotky WHERE id = ?", id)
 	if err == nil {
 		_, err = a.db.Exec(smazatPrazdnaAlba)
 	}
@@ -1929,12 +1996,12 @@ func (a *App) zkontrolovat(dotaz string, davka bool) KontrolaSouboru {
 			vysledek.Neovereno++
 		case souborDostupny:
 			if p.soubor.FotoID != 0 {
-				tx.Exec("UPDATE fotografie SET overeno = ?, nedostupne_od = NULL WHERE id = ?", den, p.soubor.FotoID)
+				tx.Exec("UPDATE fotky SET overeno = ?, nedostupne_od = NULL WHERE id = ?", den, p.soubor.FotoID)
 			}
 		case souborNedostupny:
 			p.soubor.Opakovane = p.nedostupneOd != "" && p.nedostupneOd < den
 			if p.soubor.FotoID != 0 {
-				tx.Exec("UPDATE fotografie SET overeno = ?, nedostupne_od = COALESCE(nedostupne_od, ?) WHERE id = ?", den, den, p.soubor.FotoID)
+				tx.Exec("UPDATE fotky SET overeno = ?, nedostupne_od = COALESCE(nedostupne_od, ?) WHERE id = ?", den, den, p.soubor.FotoID)
 			}
 			vysledek.Nedostupne = append(vysledek.Nedostupne, p.soubor)
 		}
@@ -1952,6 +2019,10 @@ type VysledekVlozeni struct {
 // Hromadné vložení fotek/odkazů do alba modelky
 func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) VysledekVlozeni {
 	var vysledek VysledekVlozeni
+	if err := a.overitKlicAlba(modelkaID, album, typ); err != nil {
+		a.chyba("AddBulkPhotos", err)
+		return vysledek
+	}
 
 	// Soubory, které v tomto albu už jsou, se nevkládají podruhé
 	var ids []string
@@ -1966,21 +2037,26 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 		ids = append(ids, id)
 	}
 
-	// Nové stránky přebírají nastavení spojeného plakátu, do kterého se přidávají
-	var spojit, rotace int
-	a.db.QueryRow("SELECT COALESCE(MAX(spojit), 0), COALESCE(MAX(rotace), 0) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND spojit = 1",
-		modelkaID, album, typ).Scan(&spojit, &rotace)
-	// ... a také vydání, ke kterému album patří
-	var vydani string
-	a.db.QueryRow("SELECT COALESCE(MAX(vydani), '') FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?",
-		modelkaID, album, typ).Scan(&vydani)
+	// Nové stránky přebírají otočení spojeného plakátu, do kterého se přidávají; vydání a spojení jsou u alba
+	var albumID int64
+	var rotace int
+	if len(ids) > 0 {
+		var err error
+		if albumID, err = zajistitAlbum(a.db, modelkaID, album, typ); err != nil {
+			a.chyba("AddBulkPhotos", err)
+			return vysledek
+		}
+		a.db.QueryRow("SELECT CASE WHEN spojit = 1 THEN COALESCE((SELECT MAX(rotace) FROM fotky WHERE album_id = alba.id), 0) ELSE 0 END FROM alba WHERE id = ?",
+			albumID).Scan(&rotace)
+	}
 
 	for i, stav := range overitSoubory(ids) {
 		if stav == souborNedostupny {
 			vysledek.Nedostupne++
 			continue
 		}
-		_, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id, spojit, rotace, vydani, pridano, overeno) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", modelkaID, album, typ, ids[i], spojit, rotace, vydani, ted(), map[bool]interface{}{true: dnes(), false: nil}[stav == souborDostupny])
+		_, err := a.db.Exec("INSERT INTO fotky (album_id, drive_file_id, rotace, pridano, overeno) VALUES (?, ?, ?, ?, ?)",
+			albumID, ids[i], rotace, ted(), map[bool]interface{}{true: dnes(), false: nil}[stav == souborDostupny])
 		if err != nil {
 			a.chyba("AddBulkPhotos", err)
 			continue

@@ -41,7 +41,9 @@ Soubory na Disku musí být sdílené „kdokoli s odkazem", aplikace se k Disku
 ## Struktura
 
 - `app.go` – databáze a veškerá logika (modelky, fotky, alba, covery, zálohy, kontrola odkazů)
-- `export.go` – export a import sbírky v YAML
+- `export.go` – export a import sbírky v YAML; formát popisuje `EXPORT.md`
+- `schema.go` – úprava č. 6 (album jako záznam) a uzavřené výčty s kontrolou vstupu
+- `vydani.go` – údaje čísel časopisu a výběry
 - `nastaveni.go` – zapamatování okna, zámek heslem, přehled sbírky
 - `instance.go` – zámek jediné instance
 - `frontend/src/main.js` – pohledy, prohlížeč fotek, formuláře
@@ -49,12 +51,17 @@ Soubory na Disku musí být sdílené „kdokoli s odkazem", aplikace se k Disku
 - `frontend/src/ui/` – sdílené prvky rozhraní: oznámení, lišta částí, kontextová nabídka
 - `frontend/src/lib/` – čisté funkce rozhraní (texty, alba), které jdou testovat bez okna
 - `alba.go` – sdílená alba, přesuny a slučování, vrácení odebraných fotek
-
-Změny schématu databáze jsou očíslované úpravy v `migrace` (`app.go`); databáze si číslo poslední
-provedené pamatuje v `PRAGMA user_version` a před každou čekající úpravou se uloží záloha. Nová úprava
-se přidává na konec seznamu, hotové se nemění.
 - `main.go` – okno aplikace
 - `frontend/src/style.css` – vzhled
+
+Změny schématu databáze jsou očíslované úpravy v `migrace` (`app.go`); databáze si číslo poslední
+provedené pamatuje v `PRAGMA user_version` a před čekajícími úpravami se uloží záloha. Každá úprava běží
+v transakci spolu se zápisem čísla, takže se buď provede celá, nebo vůbec. Nová úprava se přidává na konec
+seznamu, hotové se nemění; test `TestPrechodZeVsechSchemat` ověřuje přechod z každého staršího schématu.
+
+Od schématu 6 fotky (`fotky`) odkazují na album (`alba`), které nese vydání, spojení plakátu, text,
+fotografa a „netýká se“; cover je album bez modelky. Cizí klíče jsou zapnuté. Pohled `fotografie`
+skládá obojí do dřívější podoby pro čtení; zapisuje se přímo do tabulek.
 
 ## Heslo
 

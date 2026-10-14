@@ -5,6 +5,30 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.10.0] – 2026-10-14
+
+Etapa 8 roadmapy: pevné schéma. Schéma databáze: úprava č. 6. Formát exportu: verze 4 (popis v [EXPORT.md](EXPORT.md)).
+Vzhled programu se nemění.
+
+### Změněno
+- Album je samostatný záznam: fotky na něj odkazují, vydání a spojení plakátu jsou údaje alba. Text, fotograf,
+  „netýká se“ i další modelky přežijí odebrání poslední fotky a vrátí se s novými fotkami; celé album maže
+  jen Smazat album.
+- Cover časopisu je album bez modelky (dřív zástupná modelka 0); databáze hlídá vazby cizími klíči.
+- Vydání je uložené u všech typů alb a má index.
+- Každá úprava schématu běží v transakci spolu s číslem schématu: nezdařená úprava se vrátí celá.
+  Úprava č. 1 je zmrazená a chyby už nezamlčuje.
+- Export verze 4: novější soubor se odmítne celý, modelky stejného jména se rozliší číslem, přibylo
+  „netýká se“, datum přidání každé fotky, spojení a pořadí coverů a alba bez fotek.
+
+### Opraveno
+- Import do sbírky se dvěma modelkami stejného jména je už nesloučí.
+- Backend kontroluje typ alba, název centerfoldu a coveru, edici a klíče „netýká se“ jedním pravidlem
+  pro zadávání i import; dřív přijal i to, co import pak odmítl.
+- Typ prsou a ochlupení z importu se uloží v tvaru z nabídky formuláře bez ohledu na velikost písmen
+  („přírodní“ → „Přírodní“); dřív je formulář nepoznal a další uložení údaj smazalo. Hodnota mimo nabídku
+  se ohlásí.
+
 ## [0.9.1] – 2026-10-14
 
 Etapa 7 roadmapy: opravy chyb nalezených při ověření verze 0.9.0. Schéma databáze ani formát exportu se nemění.

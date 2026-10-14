@@ -1,0 +1,142 @@
+# Vzor souboru pro import – formát verze 4 (popis všech klíčů je v EXPORT.md)
+#
+# Pravidla zápisu:
+# - odsazení mezerami (ne tabulátorem), vždy o dvě; každá položka seznamu začíná „- “
+# - text s dvojtečkou, čárkou na začátku, # nebo uvozovkami dej do uvozovek; datum a vydání vždy v uvozovkách
+# - víceřádkový text: „klíč: |“ a pod ním odsazené řádky (prázdný řádek = nový odstavec)
+# - nepovinné klíče stačí vynechat; prázdný nebo chybějící údaj ponechá ten, který už v programu je
+# - řádky začínající # jsou komentáře, import je přeskočí
+
+verze: 4
+
+modelky:
+  # Modelka se všemi údaji
+  - jmeno: "Jackie Rainbow"
+    pridano: "2026-10-14 09:00:00"         # kdy přibyla do sbírky; bez něj okamžik importu
+    hodnoceni: 4                            # 1–5 srdíček
+    dalsi_jmena: "Jacqueline Rainbow, Jackie Emery"
+
+    # Základní údaje
+    narozeni_datum: "1933-06-06"            # RRRR-MM-DD
+    narozeni_misto: "Santa Monica, California, USA"
+    narodnost: "USA"
+    etnicita: "kavkazská"
+
+    # Vzhled
+    vyska_cm: 165
+    vaha_kg: 45
+    vlasy: "světle hnědá"
+    oci: "hnědá"
+    hrudnik_cm: 86
+    pas_cm: 61
+    boky_cm: 94                             # se všemi třemi obvody se míry složí samy, „miry“ netřeba
+    velikost_prsou: "70C"
+    prsa_typ: "Přírodní"                    # Přírodní | Silikonová (velikost písmen nevadí)
+    ochlupeni: "Přírodní"                   # Oholené | Zastřižené | Přírodní
+    tetovani: "ne"                          # ano | ne
+    piercing: "ne"                          # ano | ne
+
+    # Zařazení
+    role: "PMOTM, Model"
+    pictorial_vydani: "1954-09"
+    vystoupeni: "Playboy září 1954"
+    tagy: "1950s, 1954, carlyle blackwell, windmill theatre"
+
+    # Volný text
+    poznamka: |
+      Playmate měsíce září 1954. Snímek nafotil Carlyle Blackwell pro Publix Pictorial Service.
+
+      Oficiální data jsou na sběratelských fórech diskutována; alternativní stopa vede k tanečnici
+      z londýnského Windmill Theatre.
+    odkazy: "https://en.wikipedia.org/wiki/List_of_Playboy_Playmates_of_1954, https://www.babepedia.com/babe/Jackie_Rainbow"
+
+    # Titulní fotka (ID souboru na Disku nebo celý odkaz) a její výřez
+    titulni_fotka: "1AbCdEfGhIjKlMnOpQrStUvWxYz012345"
+    vyrez:
+      zoom: 1.5
+      poloha_x: 50                          # 0–100 %
+      poloha_y: 30
+
+    # Co se modelky netýká (Přehled to nehlásí): titulni, zakladni, vzhled, zarazeni, centerfold, hodnoceni
+    netyka_se: "hodnoceni"
+
+    alba:
+      # Centerfold: název je vydání RRRR-MM (české vydání RRRR-MM-CZ)
+      - nazev: "1954-09"
+        typ: Centerfold
+        pridano: "2026-10-14 09:05:00"
+        spojit: true                        # stránky tvoří jeden spojený plakát
+        fotky:
+          - id: "1CenterfoldStrana1xxxxxxxxxxxxxxxx"
+            rotace: 90                      # 90 | 180 | 270
+          - id: "1CenterfoldStrana2xxxxxxxxxxxxxxxx"
+            rotace: 90
+
+      # Pictorial s textem, fotografem, ručním pořadím a další modelkou
+      - nazev: "Na pláži"
+        typ: Pictorial
+        pridano: "2026-10-14 09:10:00"
+        vydani: "1954-09"                   # RRRR-MM, RRRR (jen ročník) nebo s edicí: 1994-05-CZ, 1994-CZ
+        fotograf: "Carlyle Blackwell"
+        popis: |
+          První odstavec textu z časopisu.
+
+          Druhý odstavec.
+        rucni_poradi: true                  # fotky se ukážou v pořadí, v jakém jsou tady
+        dalsi_modelky:
+          - "Anna [12]"                     # odkaz na modelku: jméno, u stejných jmen s číslem
+        fotky:
+          - id: "1PlazFotka1xxxxxxxxxxxxxxxxxxxxxxx"
+            hodnoceni: 5
+          - id: "https://drive.google.com/file/d/1PlazFotka2xxxxxxxxxxxxxxxxxxxxxxx/view"   # celý odkaz jde také
+          - id: "1PlazFotka3xxxxxxxxxxxxxxxxxxxxxxx"
+            pridano: "2026-10-15 20:00:00"  # jen když fotka přibyla jindy než album
+
+      # Album, kterému zůstal jen text (fotky zatím nemá)
+      - nazev: "Zákulisí"
+        typ: Pictorial
+        popis: "Text čeká na fotky."
+        netyka_se: "vydani"                 # u alba: text, vydani
+        fotky: []
+
+  # Dvě modelky stejného jména rozliší „cislo“ (číslo z databáze, ze které soubor vznikl)
+  - jmeno: "Anna"
+    cislo: 12
+    narodnost: "Česko"
+
+  - jmeno: "Anna"
+    cislo: 15
+    narodnost: "USA"
+    poznamka: "Na tuto modelku odkazuje „Anna [15]“ níže."
+
+# Obálky časopisu; nepatří k modelce
+covery:
+  - vydani: "1954-09"
+    fotky:
+      - id: "1Cover195409xxxxxxxxxxxxxxxxxxxxxx"
+  - vydani: "1994-05-CZ"
+    spojit: true                            # přední a zadní strana jako jeden obrázek
+    rucni_poradi: true
+    fotky:
+      - id: "1Cover199405CZpredxxxxxxxxxxxxxxxx"
+      - id: "1Cover199405CZzadxxxxxxxxxxxxxxxxx"
+
+# Údaje k jednotlivým číslům časopisu
+vydani:
+  - vydani: "1954-09"
+    modelka_obalky: "Anna [15]"             # u jména, které má víc modelek, číslo v hranatých závorkách
+    poznamka: "Mám originál."
+  - vydani: "1955-01"
+    stav: shanim                            # shanim | nezajima
+
+# Vlastní výběry fotek napříč sbírkou
+vybery:
+  - nazev: "Nejlepší"
+    fotky:
+      - modelka: "Jackie Rainbow"
+        album: "Na pláži"
+        typ: Pictorial
+        id: "1PlazFotka1xxxxxxxxxxxxxxxxxxxxxxx"
+      - album: "1954-09"                    # cover: bez modelky
+        typ: Cover
+        id: "1Cover195409xxxxxxxxxxxxxxxxxxxxxx"

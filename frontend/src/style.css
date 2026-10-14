@@ -3381,3 +3381,8 @@ body.razeni .photo-item {
     opacity: 0;
     pointer-events: none;
 }
+
+/* Tlačítko Zpět v řádku okna není vidět; zpět vede Esc a Alt+šipka vlevo. Šipky na další modelku zůstávají. */
+#backBtn {
+    display: none !important;
+}

@@ -89,11 +89,11 @@ bez chyb typu „akce v jednom pohledu překreslí jiný“.
 ## Cesta k 1.0.0
 
 Mezi 0.11 a 1.0 je velký skok, proto jde po etapách s předběžnými verzemi podle sémantického verzování:
-poslední funkční etapa (0.13.0; import více souborů a Markdownu vyšel už v 0.12.0), alfa (`1.0.0-alpha.N`), beta (`1.0.0-beta.N`) a vydání 1.0.0. Od alfy se
+poslední funkční etapa (0.12.0–0.14.0: import v 0.12.0, rozhodnutí a instalace v 0.13.0, nápověda a úvod v 0.14.0), alfa (`1.0.0-alpha.N`), beta (`1.0.0-beta.N`) a vydání 1.0.0. Od alfy se
 nemění schéma databáze ani formát exportu; od bety ani funkce a texty. Před alfou je proto potřeba uzavřít
 rozhodnutí, která schéma nebo export ovlivňují (3 a 4, případně 2).
 
-## Etapa 10 – Příprava k vydání (0.13.0)
+## Etapa 10 – Příprava k vydání (0.13.0–0.14.0)
 
 Cíl: program jde nainstalovat do nabídky aplikací a začít s prázdnou sbírkou bez README; nápověda a novinky
 jsou v programu. Poslední etapa, ve které smí přibýt funkce a změnit se schéma nebo export.

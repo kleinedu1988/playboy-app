@@ -638,14 +638,27 @@ main {
     cursor: grabbing;
 }
 
-.crop-hint {
-    margin: 0 0 8px 0;
-    font-size: 11px;
-    color: var(--text-muted);
+/* Ovládání výřezu: plovoucí panel dole na fotce karty */
+.crop-panel {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 4px 4px 10px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 10px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+    cursor: default;
 }
 
 .crop-zoom {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     height: auto;
     padding: 0;
     border: none;
@@ -653,15 +666,18 @@ main {
     accent-color: var(--accent);
 }
 
-.crop-actions {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-    margin-top: 8px;
+.crop-panel .panel-btn {
+    width: 30px;
+    height: 30px;
 }
 
-.crop-actions .btn-small {
-    padding: 6px 8px;
+.crop-panel .crop-ulozit {
+    background-color: var(--accent);
+    color: white;
+}
+
+.crop-panel .crop-ulozit:hover {
+    background-color: var(--accent-hover);
 }
 
 .card-image-wrap img {
@@ -3215,4 +3231,72 @@ body.razeni .photo-item {
 /* Oznámení: plovoucí panel dole uprostřed */
 .toast {
     padding: 10px 10px 10px 16px;
+}
+
+/* Tlačítka na dlaždici fotky a na kartě modelky: malé plovoucí panely v rozích fotky, čitelné i na světlé fotce */
+.photo-item .hearts,
+.card .hearts {
+    left: 8px;
+    right: auto;
+    bottom: 8px;
+    padding: 3px 7px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.photo-item .heart,
+.card .heart {
+    font-size: 13px;
+}
+
+.photo-item .tile-more,
+.poster .tile-more {
+    top: 8px;
+    right: 8px;
+    width: 30px;
+    height: 26px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 8px;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+    color: var(--text-main);
+    line-height: 22px;
+}
+
+.photo-item .tile-more:hover,
+.poster .tile-more:hover,
+.tile-more:focus-visible {
+    background: #3a3a40;
+    color: var(--text-main);
+}
+
+/* Dialogová okna: stejný povrch jako plovoucí panely; rozložení oken se nemění */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-card {
+    border: 1px solid var(--panel-okraj);
+    border-radius: 12px;
+    background-color: var(--panel-bg);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+}
+
+.close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 6px;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
 }

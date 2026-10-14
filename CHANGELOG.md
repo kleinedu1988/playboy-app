@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.5] – 2026-10-14
+
+Plovoucí panely na fotkách a v dialozích. Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Úprava výřezu titulní fotky má ovládání v plovoucím panelu přímo na fotce karty (posuvník přiblížení,
+  výchozí výřez, zrušit, uložit); jméno modelky pod fotkou zůstává vidět.
+- Srdíčka a tlačítko ⋯ na dlaždici fotky a na kartě modelky jsou malé plovoucí panely v rozích fotky,
+  čitelné i na světlé fotce.
+- Dialogová okna mají stejný povrch, okraj a stín jako plovoucí panely; pozadí za nimi je méně tmavé
+  a křížek se po najetí myší podbarví. Rozložení oken se nemění.
+
 ## [0.17.4] – 2026-10-14
 
 Plovoucí panely i mimo prohlížeč. Schéma databáze ani formát exportu se nemění.

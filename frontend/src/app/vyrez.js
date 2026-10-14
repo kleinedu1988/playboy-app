@@ -18,21 +18,25 @@ export function upravitVyrez(modelka) {
     const img = ram.querySelector('img');
     // Při úpravě se přibližuje až čtyřikrát, karta proto dostane větší obrázek
     if (modelka.coverUrl) img.src = obrazek(modelka.coverUrl, VELIKOST_TITULNI);
-    const info = card.querySelector('.card-info');
-    const puvodniInfo = info.innerHTML;
     const vyrez = { coverZoom: modelka.coverZoom, coverX: modelka.coverX, coverY: modelka.coverY };
 
     card.classList.add('editing');
-    info.innerHTML = `
-        <p class="crop-hint">Tažením posuň, kolečkem přibliž</p>
+    // Ovládání v plovoucím panelu přímo na fotce; jméno pod fotkou zůstává
+    const ik = (d) => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const panel = document.createElement('div');
+    panel.className = 'crop-panel';
+    panel.title = 'Fotku posuň tažením, přibliž kolečkem nebo posuvníkem';
+    panel.innerHTML = `
         <input type="range" class="crop-zoom" min="1" max="4" step="0.01" title="Přiblížení" />
-        <div class="crop-actions">
-            <button type="button" class="btn btn-secondary btn-small" data-akce="reset">Výchozí</button>
-            <button type="button" class="btn btn-secondary btn-small" data-akce="zrusit">Zrušit</button>
-            <button type="button" class="btn btn-primary btn-small" data-akce="ulozit">Uložit</button>
-        </div>
+        <span class="panel-oddelovac"></span>
+        <button type="button" class="panel-btn" data-akce="reset" title="Výchozí výřez">${ik('<path d="M4 12a8 8 0 1 0 2.3-5.7"/><path d="M4 4v5h5"/>')}</button>
+        <button type="button" class="panel-btn" data-akce="zrusit" title="Zrušit (Esc)">${ik('<path d="M6 6l12 12M18 6L6 18"/>')}</button>
+        <button type="button" class="panel-btn crop-ulozit" data-akce="ulozit" title="Uložit výřez">${ik('<path d="M5 12l5 5 9-10"/>')}</button>
     `;
-    const posuvnik = info.querySelector('.crop-zoom');
+    ram.append(panel);
+    // Panel leží na fotce: jeho ovládání nesmí fotku posouvat ani přibližovat
+    ['pointerdown', 'wheel', 'click'].forEach(typ => panel.addEventListener(typ, (e) => e.stopPropagation()));
+    const posuvnik = panel.querySelector('.crop-zoom');
 
     const omezit = (hodnota, min, max) => Math.min(max, Math.max(min, hodnota));
     const vykreslit = () => {
@@ -85,14 +89,14 @@ export function upravitVyrez(modelka) {
 
     let naAkci = null;
     const ukoncit = () => {
-        info.removeEventListener('click', naAkci);
+        panel.removeEventListener('click', naAkci, true);
         ram.removeEventListener('pointerdown', naStisk);
         ram.removeEventListener('pointermove', naPohyb);
         ram.removeEventListener('pointerup', naUvolneni);
         ram.removeEventListener('pointercancel', naUvolneni);
         ram.removeEventListener('wheel', naKolecko);
         card.classList.remove('editing');
-        info.innerHTML = puvodniInfo;
+        panel.remove();
         img.style.cssText = stylVyrezu(modelka);
         stav.zrusitUpravuVyrezu = null;
     };
@@ -115,7 +119,7 @@ export function upravitVyrez(modelka) {
             ukoncit();
         }
     };
-    info.addEventListener('click', naAkci);
+    panel.addEventListener('click', naAkci, true);
 }
 
 // Stejná modelka se nemá omylem založit dvakrát; vrací, zda se má pokračovat

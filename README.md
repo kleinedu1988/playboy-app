@@ -28,6 +28,23 @@ Vydání verze:
 3. `go test ./...` (test hlídá, že verze souhlasí), commit a značka `git tag -a vX.Y.Z`,
 4. po vydání zvednout verzi na další s příponou `-dev` a v changelogu založit oddíl „nevydáno“.
 
+## Instalace
+
+```
+./instalovat.sh                  # sestaví program a nainstaluje ho do nabídky aplikací (i aktualizace)
+./instalovat.sh --bez-sestaveni  # nainstaluje už sestavený build/bin/playboy-app
+./instalovat.sh --odinstalovat   # odebere program; data a zálohy zůstanou
+```
+
+Instaluje se jen do domovské složky, bez sudo: program do `~/.local/bin/playboy-app`, ikona do
+`~/.local/share/icons/hicolor/256x256/apps/`, položka „Playboy Database“ do `~/.local/share/applications/`.
+Aktualizace je totéž spuštění znovu; databáze se při prvním startu nové verze sama upraví (před úpravou se
+uloží záloha).
+
+**Přenos na jiný počítač:** program zavřít, zkopírovat celou složku `~/.local/share/playboy-app` (databáze,
+zálohy, stav okna) na stejné místo na novém počítači a tam program nainstalovat. Heslo, pokud je nastavené,
+platí dál. Mezipaměť obrázků se nepřenáší, vytvoří se znovu.
+
 ## Kde jsou data
 
 | Co | Kde |

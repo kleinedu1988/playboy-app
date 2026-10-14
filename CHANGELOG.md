@@ -13,6 +13,8 @@ Etapa 10 roadmapy: příprava k vydání.
 - Řazení galerie jedním tlačítkem vedle ♡: abecedně, naposledy přidané, podle roku prvního vydání; lišta nad
   galerií ukazuje podle řazení písmena, měsíce přidání nebo desetiletí. Volba se pamatuje.
 - Stav čísla „mám výtisk“ vedle „sháním“ a „nezajímá mě“; v kalendáři zelený rámeček.
+- Instalace do nabídky aplikací skriptem `instalovat.sh` (bez sudo, i aktualizace a odinstalace); v README
+  postup přenosu dat na jiný počítač.
 - Speciály (Playmate Review, Lingerie…): čísla mimo měsíční řadu s vlastním názvem, klíč `RRRR-Snn`
   (s edicí `RRRR-Snn-CZ`). Zakládají se v okně alba a coveru nebo z kalendáře, v kalendáři jsou štítky pod
   měsíci, ročník je zahrnuje, Přehled je mezi čísly bez centerfoldu nepočítá.

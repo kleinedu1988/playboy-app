@@ -103,7 +103,7 @@ jsou v programu. Poslední etapa, ve které smí přibýt funkce a změnit se sc
 | Úvod prázdné sbírky: sdílení na Disku „kdokoli s odkazem“, první modelka, import YAML, volitelně heslo | Dnes jediný řádek s odkazem na tlačítko + | S–M |
 | Okno nápovědy (klávesa `?` a položka v ⋯): klávesy prohlížeče, cílené hledání, srdíčka, Přehled, výběry | Dnes jen v nápovědách po najetí a v README | S–M |
 | „Co je nového“: changelog vložený do programu, po aktualizaci se jednou ukáže | Položka Verze dnes odkazuje na soubor v repozitáři | S |
-| Instalace do `~/.local/bin` s položkou v nabídce aplikací a ikonou; v README odinstalace a přenos dat na jiný počítač | Program dnes existuje jen jako soubor v `build/bin` | S |
+| ~~Instalace do `~/.local/bin` s položkou v nabídce aplikací a ikonou; v README odinstalace a přenos dat na jiný počítač~~ – hotovo v 0.13.0 (`instalovat.sh`) | Program dnes existuje jen jako soubor v `build/bin` | S |
 | „Smazat celou databázi“ hlouběji nebo s napsáním potvrzovacího slova | Pohodlí a jistota | S |
 | ~~Rozhodnutí 2–4 promítnout do kódu (řazení galerie, výtisky, speciály)~~ – hotovo v 0.13.0 | Po alfě už to nepůjde bez nové hlavní verze | S–M |
 | Předběžné verze v číslování: `TestVerzeSouhlasi` a `wails.json` přijmou `1.0.0-alpha.N` a `1.0.0-beta.N` | Připravit číslování pro další etapy | S |
@@ -167,7 +167,7 @@ Rozhodnuto 14. 10. 2026: album jako záznam (1, hotovo v 0.10.0); řazení galer
 přidané, rok prvního vydání (2); stav čísla „mám výtisk“ (3); speciály evidovat zvlášť, národní edice zatím
 jen US a CZ (4). Vše je v 0.13.0.
 
-5. **Instalace:** spouštět dál z `build/bin`, nebo položka v nabídce aplikací? (Etapa 10 počítá s nabídkou.)
+5. **Instalace:** skript `instalovat.sh` (nabídka aplikací, ikona, odinstalace) je připravený v 0.13.0; zda ho používat, je na uživateli.
 
 ## Nedělat
 

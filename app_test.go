@@ -2042,3 +2042,35 @@ func TestSpecialy(t *testing.T) {
 		t.Fatalf("speciál po importu: %d fotek", len(v))
 	}
 }
+
+// Ručně psané soubory: tabulátory, dvojtečka v textu, blok v Markdownu bez označení jazyka
+func TestImportRucnePsanychSouboru(t *testing.T) {
+	pripady := map[string]string{
+		"tabulatory.yaml":      "modelky:\n\t- jmeno: Anna\n\t  narodnost: USA\n",
+		"dvojtecka.yaml":       "jmeno: Anna\npoznamka: Playmate měsíce: září 1954\nodkazy: https://cs.wikipedia.org/wiki/Playboy\n",
+		"vlnovky.md":           "# Anna\n\nPoznámky.\n\n~~~yaml\njmeno: Anna\n~~~\n",
+		"bez_jazyka.md":        "# Anna\n\n```\njmeno: Anna\nnarodnost: USA\n```\n\nDalší text.\n",
+		"blok_bez_odsazeni.md": "modelky:\n\n* jmeno: \"Anna\"\n  poznamka: |\n  První odstavec: s dvojtečkou.\n\n  Druhý odstavec.\n  odkazy: \"https://example.com\"\n",
+		"hvezdicky.md":         "verze: 4\n\nmodelky:\n\n* jmeno: \"Anna\"\n  narodnost: \"USA\"\n\n  # Vzhled\n  vyska_cm: 165\n\n* jmeno: \"Bára\"\n",
+	}
+	for soubor, text := range pripady {
+		a := novaTestovaciApp(t, nil)
+		data, err := slozitSoubory(map[string][]byte{soubor: []byte(text)}, []string{soubor})
+		if err != nil {
+			t.Fatalf("%s: %v", soubor, err)
+		}
+		if v := a.importovatCelek(data); v.Selhalo != "" || len(a.GetModelky("Anna")) != 1 {
+			t.Fatalf("%s: %+v", soubor, v)
+		}
+		if soubor == "blok_bez_odsazeni.md" {
+			if m := a.GetModelky("Anna")[0]; m.Poznamka != "První odstavec: s dvojtečkou.\n\nDruhý odstavec." || m.Odkazy != "https://example.com" {
+				t.Fatalf("blok: %q / %q", m.Poznamka, m.Odkazy)
+			}
+		}
+		if soubor == "dvojtecka.yaml" {
+			if m := a.GetModelky("Anna")[0]; m.Poznamka != "Playmate měsíce: září 1954" || m.Odkazy != "https://cs.wikipedia.org/wiki/Playboy" {
+				t.Fatalf("dvojtečka: %+v", m)
+			}
+		}
+	}
+}

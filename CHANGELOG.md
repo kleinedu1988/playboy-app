@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.14.2] – 2026-10-14
+
+### Opraveno
+- Import ručně psaných a převedených souborů (např. Markdown z Google Dokumentů): položka seznamu začínající
+  odrážkou `*` nebo `+` místo pomlčky, víceřádkový text pod `|`, který ztratil odsazení, odsazení tabulátorem,
+  dvojtečka uvnitř hodnoty a blok kódu v Markdownu bez označení `yaml` (i s `~~~`). Správně napsané soubory
+  se čtou beze změny.
+
 ## [0.14.1] – 2026-10-14
 
 Oprava chyby z verze 0.14.0. Schéma databáze ani formát exportu se nemění.

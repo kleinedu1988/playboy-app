@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -393,7 +394,7 @@ func yamlZTextu(nazev, text string) []string {
 	}
 	var bloky []string
 	for _, m := range vzorBlokuYaml.FindAllStringSubmatch(text, -1) {
-		bloky = append(bloky, m[1])
+		bloky = append(bloky, m[2])
 	}
 	if len(bloky) > 0 {
 		return bloky
@@ -405,12 +406,71 @@ func yamlZTextu(nazev, text string) []string {
 }
 
 var (
-	vzorBlokuYaml  = regexp.MustCompile("(?ms)^```\\s*(?:yaml|yml)\\s*$\n(.*?)^```")
+	// Blok kódu v Markdownu: ``` nebo ~~~, se slovem yaml/yml nebo bez označení jazyka
+	vzorBlokuYaml  = regexp.MustCompile("(?ms)^(```|~~~)[ \\t]*(?:yaml|yml)?[ \\t]*$\n(.*?)^(?:```|~~~)[ \\t]*$")
 	vzorHlavickyMd = regexp.MustCompile(`(?s)\A---[ \t]*\n(.*?)\n---[ \t]*(?:\n|\z)`)
 )
 
+// Ručně psaný YAML: tabulátor v odsazení nahradí dvěma mezerami, odrážku Markdownu „* “ nebo „+ “ před
+// položkou (převod z Google Dokumentů) pomlčkou a hodnotu s dvojtečkou uprostřed (např. „poznamka: Playmate
+// měsíce: září“) dá do uvozovek. Použije se, jen když se text bez úprav načíst nedá.
+var vzorOdrazkyMd = regexp.MustCompile(`^(\s*)[*+] ([A-Za-z_]+:)`)
+
+var vzorRadkuHodnoty = regexp.MustCompile(`^(\s*(?:- )?[A-Za-z_]+):[ \t]+(.+?)[ \t]*$`)
+
+func opravitRucniYaml(text string) string {
+	radky := strings.Split(text, "\n")
+	// Blok textu („klíč: |“), jehož řádky ztratily odsazení: odsadí se až po další klíč na úrovni klíče bloku
+	blokOdsazeni := -1
+	for i, r := range radky {
+		odsazeni := len(r) - len(strings.TrimLeft(r, " \t"))
+		r = strings.ReplaceAll(r[:odsazeni], "\t", "  ") + r[odsazeni:]
+		odsazeni = len(r) - len(strings.TrimLeft(r, " "))
+		if blokOdsazeni >= 0 {
+			obsah := strings.TrimSpace(r)
+			if obsah != "" && odsazeni <= blokOdsazeni && (vzorRadkuHodnoty.MatchString(r) || vzorOdrazkyMd.MatchString(r) || strings.HasPrefix(obsah, "- ") || strings.HasPrefix(obsah, "#")) {
+				blokOdsazeni = -1
+			} else {
+				if obsah != "" && odsazeni <= blokOdsazeni {
+					r = strings.Repeat(" ", blokOdsazeni+2) + obsah
+				}
+				radky[i] = r
+				continue
+			}
+		}
+		r = vzorOdrazkyMd.ReplaceAllString(r, "$1- $2")
+		if m := vzorRadkuHodnoty.FindStringSubmatch(r); m != nil {
+			hodnota := m[2]
+			if hodnota == "|" || hodnota == ">" || hodnota == "|-" || hodnota == ">-" || hodnota == "|+" || hodnota == ">+" {
+				// Úroveň klíče bloku (u položky seznamu „- klíč“ je klíč o dvě pozice dál)
+				blokOdsazeni = len(m[1]) - len(strings.TrimLeft(m[1], " "))
+				if strings.HasPrefix(strings.TrimLeft(m[1], " "), "- ") {
+					blokOdsazeni += 2
+				}
+			} else if !strings.ContainsAny(hodnota[:1], `"'|>[{&*!%@`+"`") && strings.Contains(hodnota, ": ") {
+				r = m[1] + ": " + strconv.Quote(hodnota)
+			}
+		}
+		radky[i] = r
+	}
+	return strings.Join(radky, "\n")
+}
+
 // Jeden dokument: celý export, seznam modelek, nebo jedna modelka s údaji přímo nahoře (bez „modelky:“)
 func nacistDokument(text string) (exportDat, error) {
+	data, err := nacistDokumentPresne(text)
+	if err == nil {
+		return data, nil
+	}
+	if opraveny := opravitRucniYaml(text); opraveny != text {
+		if data, errOpraveny := nacistDokumentPresne(opraveny); errOpraveny == nil {
+			return data, nil
+		}
+	}
+	return data, err
+}
+
+func nacistDokumentPresne(text string) (exportDat, error) {
 	var data exportDat
 	errCely := yaml.Unmarshal([]byte(text), &data)
 	if errCely == nil && (len(data.Modelky) > 0 || len(data.Covery) > 0 || len(data.Vydani) > 0 || len(data.Vybery) > 0) {

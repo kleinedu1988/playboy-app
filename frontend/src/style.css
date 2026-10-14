@@ -3330,9 +3330,8 @@ body.razeni .photo-item {
     box-sizing: border-box;
     padding: 12px 16px;
     border-top: 1px solid var(--panel-okraj);
-    background: rgba(24, 24, 28, 0.82);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* Bez rozmazání pozadí: u stovek karet najednou s ním WebKitGTK nevykreslí galerii */
+    background: rgba(20, 20, 24, 0.86);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.15s;

@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.11] – 2026-10-14
+
+Schéma databáze ani formát exportu se nemění.
+
+### Opraveno
+- Galerie modelek se nemusela vykreslit: pruh se jménem na každé kartě rozmazával pozadí a se stovkami
+  karet najednou to WebKitGTK nezvládl. Pruh má teď obyčejné poloprůhledné pozadí.
+
 ## [0.17.10] – 2026-10-14
 
 Schéma databáze ani formát exportu se nemění.

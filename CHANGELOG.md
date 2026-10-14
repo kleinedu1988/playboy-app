@@ -5,6 +5,33 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.9.1] – 2026-10-14
+
+Etapa 7 roadmapy: opravy chyb nalezených při ověření verze 0.9.0. Schéma databáze ani formát exportu se nemění.
+
+### Opraveno
+- Výkon velké sbírky: galerie, kalendář a Přehled už nepoužívají dotazy rostoucí se součinem modelek a fotek
+  (na 500 modelkách a 20 000 fotkách galerie z 15,7 s na 0,09 s, kalendář z 8,2 s na 0,15 s, Přehled z 38 s
+  na 0,4 s); výkonnostní test hlídá, že to tak zůstane.
+- Import běží na vlastním spojení a při jakékoli chybě zápisu se celý vrátí; souběžné změny se do něj nepřimíchají.
+  Obnovení ze zálohy nejdřív vymění soubor a staré spojení zavře až potom; adresa obrázků zůstává současná.
+- Vrátit po odebrání fotky už nepřepíše jiné oznámení a vrátí i členství ve výběrech, další modelky alba
+  a „netýká se“.
+- „Netýká se“ u alba přežije uložení prázdného textu; v tabulce Vydání znamená stav „nezajímá mě“.
+- Sloučení alb ponechá duplicitní fotce vyšší hodnocení a místo ve výběrech; sloučení modelek převede obálky
+  a sloučí odkazy.
+- Smazání hlavní modelky sdíleného alba ho předá další modelce; profil se po úpravě sdíleného alba překreslí,
+  smazání sdíleného alba varuje.
+- Alt + šipka vlevo už nelistuje modelkami, šipky nefungují při výběru fotek ani nad otevřenou nabídkou, Esc
+  nezruší neviditelný výběr, klávesy prohlížeče neplatí při psaní do pole.
+- Hledání z profilu nebo stránky vydání hledá modelky a Zpět vrací tam, odkud se hledalo.
+- „Uložit a další“ prochází pevnou frontu modelek, kterým chybí právě daný údaj.
+- Nad poškozenou databází nebo databází z novější verze běží program jen pro čtení.
+- Kontrola dostupnosti nevyhladoví na trvale nedostupných fotkách a zapisuje v jedné transakci; ověřená fotka
+  si při vložení uloží datum. Šablona adresy obrázků se před uložením ověří na fotce ze sbírky.
+- Řazení a hledání s písmeny jako Ł, Ø, ß stejně v databázi i v rozhraní („Émilie“ už se neřadí za Z).
+- Zastaralá odpověď už nepřepíše mezipaměť přehledu.
+
 ## [0.9.0] – 2026-10-14
 
 Etapa 6 roadmapy: vydání a vazby. Schéma databáze: úprava č. 5. Formát exportu: verze 3.
@@ -126,6 +153,7 @@ První verze: katalog modelek s alby, centerfoldy a covery časopisů, fotky z G
 - Hodnocení modelek 1–5 srdíčky, rychlé přidání modelky jen jménem, formulář na záložkách.
 - Zálohy před mazáním, kontrola dostupnosti souborů na Disku.
 
+[0.9.1]: v0.9.1
 [0.9.0]: v0.9.0
 [0.8.0]: v0.8.0
 [0.7.0]: v0.7.0

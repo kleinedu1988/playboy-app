@@ -66,6 +66,8 @@ export function ObnovitFotky(arg1:Array<main.ObnovaFotky>):Promise<number>;
 
 export function ObnovitZalohu(arg1:string):Promise<string>;
 
+export function OdebratFotky(arg1:Array<number>):Promise<Array<main.ObnovaFotky>>;
+
 export function OdebratModelkuZAlba(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
 
 export function OdebratZVyberu(arg1:number,arg2:Array<number>):Promise<boolean>;
@@ -104,7 +106,7 @@ export function SetPoradiFotek(arg1:Array<number>):Promise<boolean>;
 
 export function SetRotaceFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 
-export function SetSablonaObrazku(arg1:string):Promise<boolean>;
+export function SetSablonaObrazku(arg1:string):Promise<string>;
 
 export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean):Promise<boolean>;
 

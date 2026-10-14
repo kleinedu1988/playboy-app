@@ -2,8 +2,19 @@
 
 // Krátké oznámení dole v okně; s akcí zůstane, dokud ho uživatel nezavře
 let toastCasovac = null;
+let infoCasovac = null;
+
 export function oznamit(text, akce = null) {
     const toast = document.getElementById('toast');
+    // Oznámení s akcí (Vrátit) se nesmí přepsat obyčejným oznámením: to se ukáže zvlášť nad ním
+    if (!akce && !toast.classList.contains('hidden') && !document.getElementById('toastAction').classList.contains('hidden')) {
+        const info = document.getElementById('toastInfo');
+        document.getElementById('toastInfoText').textContent = text;
+        info.classList.remove('hidden');
+        clearTimeout(infoCasovac);
+        infoCasovac = setTimeout(() => info.classList.add('hidden'), 7000);
+        return;
+    }
     const tlacitko = document.getElementById('toastAction');
     document.getElementById('toastText').textContent = text;
     tlacitko.classList.toggle('hidden', !akce);

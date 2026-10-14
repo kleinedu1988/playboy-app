@@ -217,7 +217,24 @@ export namespace main {
 	    }
 	}
 	
+	export class VyberFotky {
+	    vyberId: number;
+	    poradi: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new VyberFotky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vyberId = source["vyberId"];
+	        this.poradi = source["poradi"];
+	    }
+	}
 	export class ObnovaFotky {
+	    vybery: VyberFotky[];
+	    dalsiModelky: number[];
+	    netykaSe: string;
 	    modelkaId: number;
 	    album: string;
 	    typ: string;
@@ -237,6 +254,9 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vybery = this.convertValues(source["vybery"], VyberFotky);
+	        this.dalsiModelky = source["dalsiModelky"];
+	        this.netykaSe = source["netykaSe"];
 	        this.modelkaId = source["modelkaId"];
 	        this.album = source["album"];
 	        this.typ = source["typ"];
@@ -250,6 +270,24 @@ export namespace main {
 	        this.popis = source["popis"];
 	        this.fotograf = source["fotograf"];
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	
 	export class PodezrelyUdaj {
@@ -383,6 +421,7 @@ export namespace main {
 	        this.pocet = source["pocet"];
 	    }
 	}
+	
 	export class VydaniInfo {
 	    vydani: string;
 	    poznamka: string;

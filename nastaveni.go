@@ -219,7 +219,7 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		JOIN modelky m ON m.id = f.modelka_id
 		LEFT JOIN alba al ON al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ
 		GROUP BY f.modelka_id, f.album, f.typ
-		ORDER BY m.jmeno COLLATE NOCASE, f.album`)
+		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album`)
 	if err != nil {
 		a.chyba("GetPrehled", err)
 		return p
@@ -252,9 +252,12 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 	}
 	rows.Close()
 
+	// Modelky se načtou jednou pro kontrolu i pro seznamy toho, co chybí
+	modelky := a.GetModelky("")
+
 	// Stejné jméno nebo pseudonym u dvou modelek bývá dvakrát založená tatáž
 	podleJmena := map[string]Modelka{}
-	for _, m := range a.GetModelky("") {
+	for _, m := range modelky {
 		for _, jmeno := range append([]string{m.Jmeno}, strings.Split(m.DalsiJmena, ",")...) {
 			klic := zjednodusit(strings.TrimSpace(jmeno))
 			if klic == "" {
@@ -300,7 +303,7 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		radky.Close()
 	}
 
-	for _, m := range a.GetModelky("") {
+	for _, m := range modelky {
 		p.Modelek++
 		polozka := PolozkaPrehledu{ModelkaID: m.ID, Jmeno: m.Jmeno}
 		if m.CoverID == "" {

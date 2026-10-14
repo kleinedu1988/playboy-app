@@ -130,6 +130,10 @@ export function ObnovitZalohu(arg1) {
   return window['go']['main']['App']['ObnovitZalohu'](arg1);
 }
 
+export function OdebratFotky(arg1) {
+  return window['go']['main']['App']['OdebratFotky'](arg1);
+}
+
 export function OdebratModelkuZAlba(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['OdebratModelkuZAlba'](arg1, arg2, arg3, arg4);
 }

@@ -29,3 +29,9 @@ test('převod měr', () => {
     assert.deepEqual(rozlozitMiry('86-58-86'), { hrudnik: 86, pas: 58, boky: 86, velikost: '' });
     assert.equal(rozlozitMiry('34B'), null);
 });
+
+test('diakritika jako v Go včetně písmen, která se nerozkládají', async () => {
+    const { bezDiakritiky } = await import('../src/lib/format.js');
+    assert.equal(bezDiakritiky('Łucja Øster Straße'), 'lucja oster strasse');
+    assert.equal(bezDiakritiky('Zoë Émilie'), 'zoe emilie');
+});

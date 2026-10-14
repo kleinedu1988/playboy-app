@@ -559,6 +559,9 @@ export const SABLONA_OKNA = `
     <div id="lbProgress" class="lb-progress"></div>
   </div>
 
+  <!-- Krátké oznámení, když je hlavní oznámení obsazené nabídkou akce (Vrátit) -->
+  <div id="toastInfo" class="toast toast-info hidden"><span id="toastInfoText"></span></div>
+
   <!-- Oznámení o výsledku akce -->
   <div id="toast" class="toast hidden">
     <span id="toastText"></span>

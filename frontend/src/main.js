@@ -1,5 +1,5 @@
 import './style.css';
-import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetPoradiFotek, ZrusitPoradiAlba, ExportovatDoSouboru, VybratSouborImportu, ImportovatZeSouboru, DeleteFotografieHromadne, SeznamZaloh, ObnovitZalohu, GetFotografove, GetTagy, PridatModelkuKAlbu, OdebratModelkuZAlba, PresunoutAlbum, SloucitAlba, PresunoutFotky, SloucitModelky, ObnovitFotky, PrejmenovatFotografa, PrejmenovatTag, ZkontrolovatDavku, GetKalendar, SetNetykaSe, SetNetykaSeAlba, GetSablonaObrazku, SetSablonaObrazku, GetVerze, GetNejlepsiFotky, GetAlbaFotografa, GetVydaniInfo, SetVydaniInfo, SetStavVydani, GetStavyVydani, GetVybery, VyberPodleNazvu, PrejmenovatVyber, SmazatVyber, PridatDoVyberu, OdebratZVyberu, GetFotkyVyberu, GetPrehled, MaZamek, Odemknout, NastavitHeslo, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
+import { GetModelky, AddModelka, UpdateModelka, DeleteModelka, DeleteVse, SetCoverVyrez, GetFotografieModelky, GetCenterfoldy, AddBulkPhotos, UpdateAlbum, DeleteAlbum, DeleteFotografie, SetRotaceFotek, SetSpojeniAlba, GetCovery, AddCover, UpdateCover, ZkontrolovatSoubory, GetVydani, SetVydaniAlba, SetPopisAlba, SetHodnoceni, SetHodnoceniFotek, SetPoradiFotek, ZrusitPoradiAlba, ExportovatDoSouboru, VybratSouborImportu, ImportovatZeSouboru, DeleteFotografieHromadne, SeznamZaloh, ObnovitZalohu, GetFotografove, GetTagy, PridatModelkuKAlbu, OdebratModelkuZAlba, PresunoutAlbum, SloucitAlba, PresunoutFotky, SloucitModelky, ObnovitFotky, PrejmenovatFotografa, PrejmenovatTag, ZkontrolovatDavku, GetKalendar, SetNetykaSe, SetNetykaSeAlba, GetSablonaObrazku, SetSablonaObrazku, GetVerze, OdebratFotky, GetNejlepsiFotky, GetAlbaFotografa, GetVydaniInfo, SetVydaniInfo, SetStavVydani, GetStavyVydani, GetVybery, VyberPodleNazvu, PrejmenovatVyber, SmazatVyber, PridatDoVyberu, OdebratZVyberu, GetFotkyVyberu, GetPrehled, MaZamek, Odemknout, NastavitHeslo, SetTitulniFotka, OveritOdkaz, VymazatMezipamet, SlozkaZaloh, StavDatabaze } from '../wailsjs/go/main/App';
 import { MESICE, nazevAlba, nazevVydani, esc, formatDatum, bezDiakritiky, sjednotit, vekPriVydani, udajChybi, EDICE, VYCHOZI_EDICE, rozlozitVydani, slozitVydani, prevestVysku, prevestVahu, rozlozitMiry, obrazek } from './lib/format';
 import { klicAlba, sestavitAlba, zacatkyAlb, novePoradi } from './lib/alba';
 import { SABLONA_OKNA } from './sablona';
@@ -87,11 +87,12 @@ const best = document.getElementById('best');
 
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají v liště tlačítko zpět místo přepínače
 function ukazatPohled(pohled) {
-    // Výběr fotek patří jen k otevřenému profilu
-    if (pohled !== detailView) document.getElementById('selectionBar')?.classList.add('hidden');
+    // Výběr fotek patří jen k otevřenému profilu; při odchodu se zruší, aby neovlivňoval Esc ani šipky
+    if (pohled !== detailView && document.querySelector('#photosGrid .photo-item.vybrana')) zrusitVyber();
     [gallery, wall, covers, calendar, stats, best, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
     const podstranka = pohled === detailView || pohled === issueView;
-    backBtn.classList.toggle('hidden', !podstranka);
+    // Zpět je vidět na podstránkách a v přehledu, kam se přešlo hledáním z profilu nebo vydání
+    backBtn.classList.toggle('hidden', !podstranka && !historie.length);
     document.getElementById('prevModelBtn').classList.toggle('hidden', pohled !== detailView);
     document.getElementById('nextModelBtn').classList.toggle('hidden', pohled !== detailView);
     document.getElementById('favBtn').classList.toggle('hidden', pohled !== gallery);
@@ -292,9 +293,13 @@ document.getElementById('nextModelBtn').onclick = () => krokModelky(1);
 
 document.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    // Alt + šipka je Zpět, s Ctrl a ve výběru fotek se šipkami nelistuje
     const zamestnano = detailView.classList.contains('hidden')
+        || e.altKey || e.ctrlKey || e.metaKey
         || !lightbox.classList.contains('hidden')
+        || !contextMenu.classList.contains('hidden')
         || document.querySelector('.modal-overlay:not(.hidden)')
+        || vybraneDlazdice().length
         || e.target.closest('input, textarea, select');
     if (!zamestnano) krokModelky(e.key === 'ArrowRight' ? 1 : -1);
 });
@@ -303,6 +308,7 @@ document.addEventListener('keydown', (e) => {
 // Klik na údaj v profilu vyhledá všechny modelky se stejnou hodnotou
 function hledatHodnotu(hodnota) {
     minHodnoceni = 0;
+    zapamatovatMisto({});
     prepnoutRezim('modelky');
     searchInput.value = hodnota;
     nacistGalerii(hodnota);
@@ -776,8 +782,8 @@ let stenaData = null;
 async function nacistStenu(dotaz = '', zMezipameti = false) {
     const moje = ++cisloNacteni;
     const fotky = zMezipameti && stenaData ? stenaData : await GetCenterfoldy() || [];
-    stenaData = fotky;
     if (moje !== cisloNacteni) return;
+    stenaData = fotky;
     zrusitUpravuVyrezu = null;
     ukazatPohled(wall);
 
@@ -840,8 +846,8 @@ let coveryData = null;
 async function nacistCovery(dotaz = '', zMezipameti = false) {
     const moje = ++cisloNacteni;
     const [fotky, centerfoldy] = zMezipameti && coveryData ? coveryData : await Promise.all([GetCovery(), GetCenterfoldy()]);
-    coveryData = [fotky, centerfoldy];
     if (moje !== cisloNacteni) return;
+    coveryData = [fotky, centerfoldy];
     zrusitUpravuVyrezu = null;
     ukazatPohled(covers);
 
@@ -1165,10 +1171,10 @@ async function nacistKalendar(dotaz = '', zMezipameti = false) {
     const moje = ++cisloNacteni;
     const [kalendar, stavy] = zMezipameti && kalendarData && stavyVydaniData ? [kalendarData, stavyVydaniData]
         : await Promise.all([GetKalendar().then(k => k || []), GetStavyVydani().then(s => s || [])]);
+    if (moje !== cisloNacteni) return;
     kalendarData = kalendar;
     stavyVydaniData = stavy;
     const stavCisla = new Map(stavy.map(s => [s.vydani, s]));
-    if (moje !== cisloNacteni) return;
     zrusitUpravuVyrezu = null;
     ukazatPohled(calendar);
 
@@ -1340,6 +1346,7 @@ let prehledModelky = new Map();
 let prehledAlba = new Map();
 // Pořadí modelek v tabulce pro „Uložit a další"
 let prehledPoradi = [];
+let prehledRadky = [];
 // Zobrazit i údaje označené „netýká se" (aby šlo označení zrušit) a kolik řádků tabulek ukázat
 let prehledSkryte = false;
 let prehledLimit = 60;
@@ -1402,6 +1409,7 @@ async function nacistPrehled() {
     const radkyModelek = [...modelky.values()].filter(m => prehledSkryte || vaha(m) > 0)
         .sort((a, b) => vaha(b) - vaha(a) || a.jmeno.localeCompare(b.jmeno, 'cs'));
     prehledPoradi = radkyModelek.map(m => m.id);
+    prehledRadky = radkyModelek;
     const alba = (seznam, akce) => {
         const aktivni = seznam.filter(a => !a.netykaSe);
         if (aktivni.length) return `<td class="chybi" data-akce="${akce}" data-klic="${akce === 'popis' ? 'text' : 'vydani'}" title="Doplnit: ${esc(aktivni.map(a => nazevAlba(a.album, a.typ)).join(', '))} (pravým tlačítkem: netýká se)">${aktivni.length}</td>`;
@@ -1503,6 +1511,13 @@ stats.addEventListener('click', (e) => {
 // „Netýká se" u buňky: modelka (centerfold neměla, údaj nejde zjistit) nebo všechna alba v buňce
 async function oznacitNetykaSe(bunka, netyka) {
     const radek = bunka.closest('tr');
+    // U vydání je „netýká se" stav čísla „nezajímá mě"; zrušit ho jde na stránce vydání nebo v kalendáři
+    if (radek.dataset.vydani) {
+        await SetStavVydani(radek.dataset.vydani, netyka ? 'nezajima' : '');
+        stavyVydaniData = null;
+        nacistPrehled();
+        return;
+    }
     const modelkaId = parseInt(radek.dataset.modelka);
     const klic = bunka.dataset.klic;
     if (klic === 'text' || klic === 'vydani') {
@@ -1541,12 +1556,15 @@ stats.addEventListener('click', async (e) => {
 
     const modelka = prehledModelky.get(parseInt(radek.dataset.modelka));
     if (!modelka) return;
+    // Fronta pro „Uložit a další": modelky z tabulky, kterým chybí právě tento údaj, zafixované při otevření
+    const frontaPro = klic => prehledRadky.filter(r => !r.netyka.has(klic)
+        && (klic === 'titulni' ? r.chybi.has('titulni') : (r.udaje?.[KLICE_SKUPIN.indexOf(klic)] || []).length > 0)).map(r => r.id);
     if (akce === 'titulni') {
-        otevritModelModal(modelka, { zalozka: 0 });
+        otevritModelModal(modelka, { zalozka: 0, klic: 'titulni', ids: frontaPro('titulni') });
         document.getElementById('inputDriveID').focus();
     } else if (akce === 'udaje') {
         // Formulář se otevře na záložce skupiny, s kurzorem v prvním chybějícím poli
-        otevritModelModal(modelka, { zalozka: parseInt(bunka.dataset.zalozka) });
+        otevritModelModal(modelka, { zalozka: parseInt(bunka.dataset.zalozka), klic: bunka.dataset.klic, ids: frontaPro(bunka.dataset.klic) });
         ukazatZalozku(parseInt(bunka.dataset.zalozka));
         document.getElementById(bunka.dataset.pole).focus();
     } else if (akce === 'centerfold') {
@@ -1593,9 +1611,9 @@ async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     const moje = ++cisloNacteni;
     const [fotky, vybery] = zMezipameti && nejlepsiData ? [nejlepsiData, vyberyData]
         : await Promise.all([(nejlepsiVyber ? GetFotkyVyberu(nejlepsiVyber) : GetNejlepsiFotky(nejlepsiMin)).then(f => f || []), GetVybery().then(v => v || [])]);
+    if (moje !== cisloNacteni) return;
     nejlepsiData = fotky;
     vyberyData = vybery;
-    if (moje !== cisloNacteni) return;
     const vyber = vybery.find(v => v.id === nejlepsiVyber);
     if (nejlepsiVyber && !vyber) nejlepsiVyber = 0;
     zrusitUpravuVyrezu = null;
@@ -2211,12 +2229,9 @@ selectionBar.addEventListener('click', jednou(async (e) => {
         zrusitVyber();
         return;
     } else if (akce === 'odebrat') {
-        const obnova = vybrane.map(([f, album]) => obnovaFotky(f, album));
-        if (!await DeleteFotografieHromadne(ids)) return;
-        oznamit(`Odebráno fotek: ${ids.length}. Soubory na Google Disku zůstaly.`, { text: 'Vrátit', akce: async () => {
-            await ObnovitFotky(obnova);
-            nacistFotkyModelky(aktualniModelka.id);
-        } });
+        const obnova = await OdebratFotky(ids) || [];
+        if (!obnova.length) return;
+        nabidnoutVraceni(`Odebráno fotek: ${ids.length}. Soubory na Google Disku zůstaly.`, obnova);
     } else if (akce === 'dovyberu') {
         if (!await pridatDoVyberu(ids)) return;
     } else if (akce === 'presunout') {
@@ -2242,7 +2257,9 @@ detailView.addEventListener('click', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
-    if (lightbox.classList.contains('hidden') || e.ctrlKey || e.altKey || e.metaKey) return;
+    // Klávesy prohlížeče neplatí při psaní do pole ani nad otevřeným oknem
+    if (lightbox.classList.contains('hidden') || e.ctrlKey || e.altKey || e.metaKey
+        || e.target.closest('input, textarea, select') || document.querySelector('.modal-overlay:not(.hidden)')) return;
     const klavesa = e.key.toLowerCase();
     if (klavesa === 'arrowright') lbZobrazit(lbIndex + 1);
     else if (klavesa === 'arrowleft') lbZobrazit(lbIndex - 1);
@@ -2635,7 +2652,7 @@ function zavritDeleteModal() {
 function smazatModelku(modelka) {
     otevritDeleteModal(
         'Smazat modelku',
-        `Opravdu smazat modelku „${modelka.jmeno}" včetně všech jejích fotek a alb? Před smazáním se uloží záloha.`,
+        `Opravdu smazat modelku „${modelka.jmeno}" včetně všech jejích fotek a alb? Alba sdílená s dalšími modelkami zůstanou jim. Před smazáním se uloží záloha.`,
         () => DeleteModelka(modelka.id)
     );
 }
@@ -2773,7 +2790,11 @@ document.getElementById('inputAlbumModelka').addEventListener('input', (e) => {
 function smazatAlbum(album, pocet) {
     otevritDeleteModal(
         'Smazat album',
-        `Opravdu smazat album „${nazevAlba(album.album, album.typ)}" (${album.typ}, počet fotek: ${pocet})? Fotky na Google Disku zůstanou. Před smazáním se uloží záloha.`,
+        `Opravdu smazat album „${nazevAlba(album.album, album.typ)}" (${album.typ}, počet fotek: ${pocet})?`
+            + (album.dalsiModelky.length || album.modelkaId !== aktualniModelka?.id
+                ? ` Album je sdílené (${[album.jmenoModelky, ...album.dalsiModelky.map(m => m.jmeno)].filter(Boolean).join(', ')}) a zmizí všem.` : '')
+            + ' Fotky na Google Disku zůstanou. Před smazáním se uloží záloha.',
+
         () => DeleteAlbum(album.modelkaId, album.album, album.typ),
         () => nacistFotkyModelky(aktualniModelka.id)
     );
@@ -3053,8 +3074,9 @@ async function zmenitSablonuObrazku() {
         popisek: 'Šablona', tlacitko: 'Uložit', vychozi: await GetSablonaObrazku(),
     });
     if (sablona === null) return;
-    if (!await SetSablonaObrazku(sablona)) {
-        oznamit('Šablona musí obsahovat {id}.');
+    const chyba = await SetSablonaObrazku(sablona);
+    if (chyba) {
+        oznamit(chyba);
         return;
     }
     window.location.reload();
@@ -3079,13 +3101,26 @@ async function prejmenovatVeSbirce(co) {
 
 // Fotka se odebere hned; oznámení nabídne vrátit ji i se srdíčky, pořadím a textem alba
 async function smazatFotku(fotka, album) {
-    const obnova = obnovaFotky(fotka, album);
-    if (!await DeleteFotografie(fotka.id)) return;
-    nacistFotkyModelky(aktualniModelka.id);
-    oznamit('Fotka odebrána z alba. Soubor na Google Disku zůstal.', { text: 'Vrátit', akce: async () => {
-        await ObnovitFotky([obnova]);
-        nacistFotkyModelky(aktualniModelka.id);
+    const obnova = await OdebratFotky([fotka.id]) || [];
+    if (!obnova.length) return;
+    obnovitCoJeVidet();
+    nabidnoutVraceni('Fotka odebrána z alba. Soubor na Google Disku zůstal.', obnova);
+}
+
+// Oznámení s tlačítkem Vrátit; obnova přichází z backendu i s výběry a dalšími modelkami alba
+function nabidnoutVraceni(text, obnova) {
+    oznamit(text, { text: 'Vrátit', akce: async () => {
+        await ObnovitFotky(obnova);
+        obnovitCoJeVidet();
     } });
+}
+
+// Překreslí pohled, který je právě vidět (po změně, která se ho mohla týkat)
+function obnovitCoJeVidet() {
+    stenaData = coveryData = kalendarData = nejlepsiData = null;
+    if (!detailView.classList.contains('hidden')) nacistFotkyModelky(aktualniModelka.id);
+    else if (!issueView.classList.contains('hidden')) obnovitStranku();
+    else nacistGalerii(searchInput.value);
 }
 
 // Správa sbírky: stejné položky nabízí pravé tlačítko na volném místě galerie i tlačítko ⋯ v hlavičce
@@ -3443,7 +3478,7 @@ document.addEventListener('keydown', (e) => {
         zavritKontextovouNabidku();
     } else if (okno) {
         zavritOkno(okno);
-    } else if (vybraneDlazdice().length) {
+    } else if (!selectionBar.classList.contains('hidden')) {
         zrusitVyber();
     } else if (!lightbox.classList.contains('hidden')) {
         // Esc nejdřív vypne lupu, teprve potom zavře prohlížeč
@@ -3576,19 +3611,18 @@ document.getElementById('addModelForm').onsubmit = jednou(async (e) => {
     // Doplňování v řadě: další modelka z tabulky Přehledu, na stejné záložce a v prvním chybějícím poli
     if (e.submitter?.id === 'modelNextBtn' && frontaDoplnovani) {
         const fronta = frontaDoplnovani;
-        const poradi = prehledPoradi;
-        const dalsiId = poradi[poradi.indexOf(editovanaModelka.id) + 1];
+        const dalsiId = fronta.ids[fronta.ids.indexOf(editovanaModelka.id) + 1];
         const dalsi = dalsiId && (await GetModelky('') || []).find(m => m.id === dalsiId);
         if (dalsi) {
             otevritModelModal(dalsi, fronta);
             ukazatZalozku(fronta.zalozka);
             const skupina = SKUPINY_UDAJU.find(sk => sk.zalozka === fronta.zalozka);
-            const prvni = skupina?.udaje.find(([vlastnost]) => udajChybi(dalsi, vlastnost));
+            const prvni = fronta.klic === 'titulni' ? ['', '', 'inputDriveID'] : skupina?.udaje.find(([vlastnost]) => udajChybi(dalsi, vlastnost));
             document.getElementById(prvni ? prvni[2] : 'inputJmeno').focus();
             if (!stats.classList.contains('hidden')) nacistPrehled();
             return;
         }
-        oznamit('To byla poslední modelka v tabulce.');
+        oznamit('To byla poslední modelka, které tento údaj chyběl.');
     }
     modelModal.classList.add('hidden');
     // Úprava z profilu se vrací do profilu, jinak do přehledu
@@ -3653,9 +3687,9 @@ document.getElementById('addAlbumForm').onsubmit = jednou(async (e) => {
 // Po uložení alba se obnoví to, co je vidět
 function obnovitPoUlozeniAlba(modelka) {
     stenaData = coveryData = kalendarData = null;
-    if (!detailView.classList.contains('hidden')) {
-        if (aktualniModelka?.id === modelka.id) nacistFotkyModelky(modelka.id);
-    } else if (!wall.classList.contains('hidden')) nacistStenu(searchInput.value);
+    // Profil se překreslí vždy: album mohlo patřit jiné hlavní modelce a být jen sdílené s otevřenou
+    if (!detailView.classList.contains('hidden')) nacistFotkyModelky(aktualniModelka.id);
+    else if (!wall.classList.contains('hidden')) nacistStenu(searchInput.value);
     // Z přehledu se doplňuje centerfold; po uložení má z tabulky zmizet
     else if (!stats.classList.contains('hidden')) nacistPrehled();
     else if (!issueView.classList.contains('hidden')) obnovitStranku();
@@ -3667,6 +3701,15 @@ let casovacHledani = null;
 searchInput.addEventListener('input', () => {
     clearTimeout(casovacHledani);
     casovacHledani = setTimeout(() => {
+        // Z profilu nebo stránky vydání se hledají modelky; odkud se hledalo, zůstane v historii
+        if (!detailView.classList.contains('hidden') || !issueView.classList.contains('hidden')) {
+            const text = searchInput.value;
+            zapamatovatMisto({});
+            prepnoutRezim('modelky');
+            searchInput.value = text;
+            nacistGalerii(text);
+            return;
+        }
         if (rezim !== 'prehled') nacistGalerii(searchInput.value, true);
     }, 180);
 });

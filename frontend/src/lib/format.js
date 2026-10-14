@@ -46,7 +46,10 @@ export function formatDatum(datum) {
 }
 
 // Text pro porovnávání: malá písmena bez diakritiky
-export const bezDiakritiky = text => String(text || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+// Písmena, která se na základní tvar nerozkládají sama (stejně jako v Go)
+const ZVLASTNI_PISMENA = { 'ł': 'l', 'ø': 'o', 'đ': 'd', 'ß': 'ss', 'æ': 'ae', 'œ': 'oe', 'þ': 'th', 'ı': 'i' };
+export const bezDiakritiky = text => String(text || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
+    .replace(/[łøđßæœþı]/g, z => ZVLASTNI_PISMENA[z]);
 export const sjednotit = text => bezDiakritiky(text).trim();
 
 // Věk v letech k danému vydání (RRRR-MM), pokud je známé datum narození

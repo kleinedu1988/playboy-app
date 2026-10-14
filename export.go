@@ -260,7 +260,7 @@ func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *Vysled
 			vlozeno, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id, pridano) VALUES (?, ?, ?, ?, ?)",
 				modelkaID, album.Nazev, album.Typ, ids[0], prvniNeprazdny(album.Pridano, ted()))
 			if err != nil {
-				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: %v", kde, err))
+				a.chyba("import "+kde, err)
 				continue
 			}
 			nove, _ := vlozeno.LastInsertId()
@@ -332,36 +332,52 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 		return vysledek
 	}
 
-	// Celý import běží v jedné transakci: když selže uprostřed, v databázi nezůstane napůl.
-	// Pomocné funkce zapisují přes a.db, proto se pro dobu importu podstrčí spojení s jediným připojením,
-	// na kterém transakce běží.
-	if a.cestaDb != "" {
-		puvodni := a.db
-		db, err := sql.Open("sqlite", a.cestaDb+"?_pragma=busy_timeout(5000)")
-		if err == nil {
-			db.SetMaxOpenConns(1)
-			_, err = db.Exec("BEGIN IMMEDIATE")
-		}
-		if err != nil {
-			vysledek.Selhalo = fmt.Sprintf("Import se nepodařilo zahájit: %v", err)
-			return vysledek
-		}
-		a.db = db
-		defer func() {
-			if vysledek.Selhalo == "" {
-				if _, err := db.Exec("COMMIT"); err != nil {
-					vysledek.Selhalo = fmt.Sprintf("Import se nepodařilo uložit, nic se nezměnilo: %v", err)
-				}
-			}
-			if vysledek.Selhalo != "" {
-				db.Exec("ROLLBACK")
-				vysledek = VysledekImportu{Chyby: []string{}, Selhalo: vysledek.Selhalo}
-			}
-			db.Close()
-			a.db = puvodni
-		}()
+	// Celý import běží v jedné transakci na vlastním spojení: když cokoli selže, v databázi nezůstane nic.
+	// Ostatní volání z okna pracují dál se svým spojením; zápisy během importu počkají na jeho konec
+	// a nic z nich se nepřimíchá do transakce importu.
+	if a.cestaDb == "" {
+		a.importovatData(data, &vysledek)
+		return vysledek
 	}
+	db, err := sql.Open("sqlite", a.cestaDb+"?_pragma=busy_timeout(5000)")
+	if err == nil {
+		db.SetMaxOpenConns(1)
+		_, err = db.Exec("BEGIN IMMEDIATE")
+	}
+	if err != nil {
+		vysledek.Selhalo = fmt.Sprintf("Import se nepodařilo zahájit: %v", err)
+		return vysledek
+	}
+	defer db.Close()
 
+	// Kopie aplikace nad spojením s transakcí; chyba zápisu kdekoli v pomocných funkcích import zruší
+	var chybyZapisu []string
+	imp := &App{ctx: a.ctx, db: db, naChybu: func(zprava string) { chybyZapisu = append(chybyZapisu, zprava) }}
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				vysledek.Selhalo = fmt.Sprintf("Import selhal, nic se nezměnilo: %v", r)
+			}
+		}()
+		imp.importovatData(data, &vysledek)
+	}()
+	if vysledek.Selhalo == "" && len(chybyZapisu) > 0 {
+		vysledek.Selhalo = "Import se nepodařilo zapsat, nic se nezměnilo: " + chybyZapisu[0]
+	}
+	if vysledek.Selhalo == "" {
+		if _, err := db.Exec("COMMIT"); err != nil {
+			vysledek.Selhalo = fmt.Sprintf("Import se nepodařilo uložit, nic se nezměnilo: %v", err)
+		}
+	}
+	if vysledek.Selhalo != "" {
+		db.Exec("ROLLBACK")
+		return VysledekImportu{Chyby: []string{}, Selhalo: vysledek.Selhalo}
+	}
+	return vysledek
+}
+
+// Vlastní import do databáze aplikace (u importu do souboru je to spojení s transakcí)
+func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 	// Modelky se párují podle jména bez ohledu na velikost písmen a diakritiku
 	stavajici := map[string]Modelka{}
 	for _, m := range a.GetModelky("") {
@@ -437,13 +453,13 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 		}
 
 		for _, album := range e.Alba {
-			a.importovatAlbum(m.ID, jmeno, album, &vysledek)
+			a.importovatAlbum(m.ID, jmeno, album, vysledek)
 			sdilena = append(sdilena, sdileneAlbum{m.ID, album})
 		}
 		if poImportuModelky != nil {
 			if err := poImportuModelky(); err != nil {
 				vysledek.Selhalo = fmt.Sprintf("Import selhal, nic se nezměnilo: %v", err)
-				return vysledek
+				return
 			}
 		}
 	}
@@ -470,12 +486,11 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("cover: vydání „%s“ není ve tvaru RRRR-MM", vydani))
 			continue
 		}
-		a.importovatFotky(0, exportAlbum{Nazev: vydani, Typ: "Cover", Fotky: c.Fotky}, &vysledek, "cover "+vydani)
+		a.importovatFotky(0, exportAlbum{Nazev: vydani, Typ: "Cover", Fotky: c.Fotky}, vysledek, "cover "+vydani)
 	}
 
 	// Vydání a výběry až po modelkách a fotkách, na které odkazují
-	a.importovatVydaniAVybery(data.Vydani, data.Vybery, stavajici, &vysledek)
-	return vysledek
+	a.importovatVydaniAVybery(data.Vydani, data.Vybery, stavajici, vysledek)
 }
 
 // Testy jím mohou import uprostřed shodit a ověřit, že se nic nezměnilo

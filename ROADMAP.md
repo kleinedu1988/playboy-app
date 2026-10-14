@@ -29,7 +29,9 @@ Všechny etapy jsou v kódu, většina položek je hotová. Část ale nese chyb
 
 Otevřené zůstalo: přepínač řazení galerie (čeká na rozhodnutí), dokončení rozdělení `main.js`, kontrola typů.
 
-## Etapa 7 – Opravy (0.9.1)
+## Etapa 7 – Opravy (0.9.1, hotovo 14. 10. 2026)
+
+Jeden dispečer kláves odložen do rozdělení `main.js` (etapa 9); kolize kláves jsou opravené jednotlivě.
 
 Cíl: všechno, co verze 0.9.0 slibuje, funguje i při stovkách modelek a nic se tiše neztrácí.
 Bez změny schématu a formátu exportu.

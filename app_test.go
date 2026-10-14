@@ -1370,10 +1370,10 @@ func TestEtapa4Backend(t *testing.T) {
 	}
 
 	// Šablona adresy obrázků: jedno místo, změna se projeví všude; bez {id} se odmítne
-	if a.GetSablonaObrazku() != vychoziSablonaObrazku || a.SetSablonaObrazku("https://jinde/obrazek") {
+	if a.GetSablonaObrazku() != vychoziSablonaObrazku || a.SetSablonaObrazku("https://jinde/obrazek") == "" {
 		t.Fatal("šablona bez {id} prošla nebo výchozí nesedí")
 	}
-	if !a.SetSablonaObrazku("https://drive.google.com/thumbnail?id={id}&sz={velikost}") {
+	if a.SetSablonaObrazku("https://drive.google.com/thumbnail?id={id}&sz={velikost}") != "" {
 		t.Fatal("platná šablona se neuložila")
 	}
 	if f := a.GetFotografieModelky(1)[0]; f.URL != "https://drive.google.com/thumbnail?id="+idA+"&sz={velikost}" || f.DriveID != idA {
@@ -1532,5 +1532,130 @@ func TestVydaniOdkazyAVybery(t *testing.T) {
 	}
 	if !a.SmazatVyber(vyber) || len(a.GetVybery()) != 0 {
 		t.Fatal("smazání výběru")
+	}
+}
+
+func TestOpravyEtapy7(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	odkazC := "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view"
+	a.AddModelka(Modelka{Jmeno: "Zoe", Odkazy: "https://a.example"})
+	a.AddModelka(Modelka{Jmeno: "Émilie", Odkazy: "https://b.example\nhttps://a.example"})
+	a.AddModelka(Modelka{Jmeno: "Třetí"})
+	zoe, emilie, treti := 1, 2, 3
+
+	// Řazení v SQL bez ohledu na diakritiku: Émilie před Zoe
+	a.AddBulkPhotos(zoe, "2001-01", "Centerfold", odkazA)
+	a.AddBulkPhotos(emilie, "2002-02", "Centerfold", odkazB)
+	if cf := a.GetCenterfoldy(); cf[0].JmenoModelky != "Émilie" {
+		t.Fatalf("řazení stěny: %s je první", cf[0].JmenoModelky)
+	}
+
+	// Vrátit obnoví i výběr, další modelku a „netýká se" alba, které zmizelo s poslední fotkou
+	a.AddBulkPhotos(zoe, "Jediná", "Pictorial", odkazC)
+	a.PridatModelkuKAlbu(zoe, "Jediná", "Pictorial", treti)
+	a.SetNetykaSeAlba(zoe, "Jediná", "Pictorial", "vydani", true)
+	jedina := func() *Fotografie {
+		for _, f := range a.GetFotografieModelky(zoe) {
+			if f.Album == "Jediná" {
+				return &f
+			}
+		}
+		return nil
+	}
+	vyber := a.VyberPodleNazvu("Top")
+	a.PridatDoVyberu(vyber, []int{jedina().ID})
+	obnova := a.OdebratFotky([]int{jedina().ID})
+	if len(obnova) != 1 || jedina() != nil || len(a.GetFotografieModelky(treti)) != 0 {
+		t.Fatalf("odebrání: %+v", obnova)
+	}
+	if n := a.ObnovitFotky(obnova); n != 1 || len(a.GetFotkyVyberu(vyber)) != 1 || len(a.GetFotografieModelky(treti)) != 1 {
+		t.Fatalf("Vrátit: vráceno %d, ve výběru %d, u další modelky %d", n, len(a.GetFotkyVyberu(vyber)), len(a.GetFotografieModelky(treti)))
+	}
+	var netyka string
+	a.db.QueryRow("SELECT COALESCE(netyka_se, '') FROM alba WHERE modelka_id = ? AND album = 'Jediná'", zoe).Scan(&netyka)
+	if netyka != "vydani" {
+		t.Fatalf("„netýká se“ po vrácení: %q", netyka)
+	}
+
+	// Prázdný text alba „netýká se" nesmaže
+	a.SetPopisAlba(zoe, "Jediná", "Pictorial", "", "")
+	a.db.QueryRow("SELECT COALESCE(netyka_se, '') FROM alba WHERE modelka_id = ? AND album = 'Jediná'", zoe).Scan(&netyka)
+	if netyka != "vydani" {
+		t.Fatal("uložení prázdného textu smazalo „netýká se“")
+	}
+
+	// Sloučení alb: duplicitní fotka si nechá vyšší hodnocení a místo ve výběru
+	a.AddBulkPhotos(zoe, "Cíl", "Pictorial", odkazA)
+	a.AddBulkPhotos(zoe, "Zdroj", "Pictorial", odkazA+" "+odkazB)
+	var zdrojA int
+	for _, f := range a.GetFotografieModelky(zoe) {
+		if f.Album == "Zdroj" && f.DriveID == idA {
+			zdrojA = f.ID
+		}
+	}
+	a.SetHodnoceniFotek([]int{zdrojA}, 5)
+	vyber2 := a.VyberPodleNazvu("Druhý")
+	a.PridatDoVyberu(vyber2, []int{zdrojA})
+	if chyba := a.SloucitAlba(zoe, "Zdroj", "Pictorial", "Cíl", "Pictorial"); chyba != "" {
+		t.Fatal(chyba)
+	}
+	for _, f := range a.GetFotografieModelky(zoe) {
+		if f.Album == "Cíl" && f.DriveID == idA && f.Hodnoceni != 5 {
+			t.Fatalf("duplicitní fotka po sloučení má hodnocení %d", f.Hodnoceni)
+		}
+	}
+	if ve := a.GetFotkyVyberu(vyber2); len(ve) != 1 || ve[0].Album != "Cíl" {
+		t.Fatalf("výběr po sloučení alb: %+v", ve)
+	}
+
+	// Sloučení modelek: obálka přejde, odkazy se sloučí bez opakování
+	a.SetVydaniInfo("2002-02", "", "", emilie)
+	if chyba := a.SloucitModelky(zoe, emilie); chyba != "" {
+		t.Fatal(chyba)
+	}
+	if info := a.GetVydaniInfo("2002-02"); info.ModelkaObalky != zoe {
+		t.Fatalf("obálka po sloučení modelek: %+v", info)
+	}
+	if m := a.GetModelky("Zoe")[0]; m.Odkazy != "https://a.example\nhttps://b.example" {
+		t.Fatalf("odkazy po sloučení: %q", m.Odkazy)
+	}
+
+	// Smazání hlavní modelky předá sdílené album další modelce
+	if !a.DeleteModelka(zoe) {
+		t.Fatal("smazání modelky")
+	}
+	if fotky := a.GetFotografieModelky(treti); len(fotky) != 1 || fotky[0].ModelkaID != treti {
+		t.Fatalf("sdílené album po smazání hlavní modelky: %+v", fotky)
+	}
+}
+
+func TestImportSeVratiPriChybeZapisu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Stávající"})
+	// Databáze odmítne vložit jeden konkrétní soubor
+	a.db.Exec(`CREATE TRIGGER zakazany BEFORE INSERT ON fotografie WHEN NEW.drive_file_id = '` + idB + `' BEGIN SELECT RAISE(ABORT, 'test'); END`)
+	soubor := "modelky:\n  - jmeno: Nová\n    alba:\n      - nazev: Album\n        typ: Pictorial\n        fotky:\n          - id: " + idA + "\n          - id: " + idB + "\n"
+	if v := a.importovat([]byte(soubor)); v.Selhalo == "" {
+		t.Fatalf("import s chybou zápisu prošel: %+v", v)
+	}
+	if len(a.GetModelky("")) != 1 {
+		t.Fatal("po neúspěšném importu zůstala nová modelka")
+	}
+}
+
+func TestStartNadDatabaziZNovejsiVerze(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Modelka"})
+	a.db.Exec(fmt.Sprintf("PRAGMA user_version = %d", len(migrace)+5))
+	a.db.Close()
+
+	b := NewApp()
+	b.startup(context.Background())
+	defer b.db.Close()
+	if !strings.Contains(b.StavDatabaze(), "jen pro čtení") {
+		t.Fatalf("stav databáze: %q", b.StavDatabaze())
+	}
+	if len(b.GetModelky("")) != 1 || b.AddModelka(Modelka{Jmeno: "Nová"}) {
+		t.Fatal("databáze z novější verze se dala upravit")
 	}
 }

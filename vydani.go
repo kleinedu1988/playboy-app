@@ -126,7 +126,7 @@ type Vyber struct {
 func (a *App) GetVybery() []Vyber {
 	vybery := []Vyber{}
 	rows, err := a.db.Query(`SELECT v.id, v.nazev, (SELECT COUNT(*) FROM vybery_fotky vf WHERE vf.vyber_id = v.id)
-		FROM vybery v ORDER BY v.nazev COLLATE NOCASE`)
+		FROM vybery v ORDER BY v.nazev COLLATE BEZDIAKRITIKY`)
 	if err != nil {
 		a.chyba("GetVybery", err)
 		return vybery

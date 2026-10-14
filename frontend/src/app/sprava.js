@@ -1,5 +1,5 @@
 // Kontrola Disku, export a import, heslo, zálohy a nabídka ⋯
-import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatZeSouboru, NastavitHeslo, ObnovitFotky, ObnovitZalohu, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouborImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
+import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
@@ -74,12 +74,14 @@ export async function exportovatData() {
 
 // Import ze souboru YAML: doplňuje a opravuje, nic nemaže
 export async function importovatData() {
-    const cesta = await VybratSouborImportu();
-    if (!cesta) return;
-    const soubor = cesta.split('/').pop();
-    if (!await potvrdit('Importovat sbírku', `Načíst data ze souboru „${soubor}“? Stávající modelky a alba se doplní a opraví, nové se přidají, nic se nemaže. Před importem se uloží záloha.`, 'Importovat')) return;
+    // Jeden nebo více souborů YAML či Markdown; načtou se jako jeden celek
+    const cesty = await VybratSouboryImportu() || [];
+    if (!cesty.length) return;
+    const nazvy = cesty.map(c => c.split('/').pop());
+    const co = nazvy.length === 1 ? `ze souboru „${nazvy[0]}“` : `z ${nazvy.length} souborů (${nazvy.slice(0, 3).join(', ')}${nazvy.length > 3 ? ', …' : ''})`;
+    if (!await potvrdit('Importovat do sbírky', `Načíst data ${co}? Stávající modelky a alba se doplní a opraví, nové se přidají, nic se nemaže. Před importem se uloží záloha.`, 'Importovat')) return;
 
-    const v = await ImportovatZeSouboru(cesta);
+    const v = await ImportovatSoubory(cesty);
     if (v.selhalo) {
         oznamit(v.selhalo, { text: 'Rozumím', akce: () => {} });
         return;

@@ -56,7 +56,7 @@ export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
 
 export function GetVydaniInfo(arg1:string):Promise<main.VydaniInfo>;
 
-export function ImportovatZeSouboru(arg1:string):Promise<main.VysledekImportu>;
+export function ImportovatSoubory(arg1:Array<string>):Promise<main.VysledekImportu>;
 
 export function MaZamek():Promise<boolean>;
 
@@ -138,7 +138,7 @@ export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
 
 export function VyberPodleNazvu(arg1:string):Promise<number>;
 
-export function VybratSouborImportu():Promise<string>;
+export function VybratSouboryImportu():Promise<Array<string>>;
 
 export function VymazatMezipamet():Promise<number>;
 

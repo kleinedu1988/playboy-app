@@ -110,8 +110,8 @@ export function GetVydaniInfo(arg1) {
   return window['go']['main']['App']['GetVydaniInfo'](arg1);
 }
 
-export function ImportovatZeSouboru(arg1) {
-  return window['go']['main']['App']['ImportovatZeSouboru'](arg1);
+export function ImportovatSoubory(arg1) {
+  return window['go']['main']['App']['ImportovatSoubory'](arg1);
 }
 
 export function MaZamek() {
@@ -274,8 +274,8 @@ export function VyberPodleNazvu(arg1) {
   return window['go']['main']['App']['VyberPodleNazvu'](arg1);
 }
 
-export function VybratSouborImportu() {
-  return window['go']['main']['App']['VybratSouborImportu']();
+export function VybratSouboryImportu() {
+  return window['go']['main']['App']['VybratSouboryImportu']();
 }
 
 export function VymazatMezipamet() {

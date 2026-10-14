@@ -5,6 +5,20 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.12.0] – 2026-10-14
+
+Import více souborů a Markdownu (vydáno samostatně před zbytkem etapy 10). Schéma databáze se nemění, formát
+exportu zůstává verze 4; import jen přijímá víc podob souboru.
+
+### Přidáno
+- Import více souborů najednou (jedna záloha, jedna transakce: buď vše, nebo nic). Kromě `.yaml` a `.yml`
+  bere i `.md`: YAML z bloků ```yaml, z úvodní hlavičky mezi `---`, jinak celý soubor.
+- Soubor může obsahovat jen jednu modelku s údaji přímo nahoře (bez `modelky:`), nebo seznam modelek.
+
+### Opraveno
+- Modelka uvedená v importu dvakrát (třeba ve dvou souborech) se doplní, nezaloží se podruhé a druhý výskyt
+  nesmaže údaje z prvního.
+
 ## [0.11.0] – 2026-10-14
 
 Etapa 9 roadmapy: rozhraní na dlouhou trať. Schéma databáze ani formát exportu se nemění.

@@ -29,7 +29,7 @@ const CTENI = new Set([
     'SeznamZaloh',
     'SlozkaZaloh',
     'StavDatabaze',
-    'VybratSouborImportu',
+    'VybratSouboryImportu',
     'ExportovatDoSouboru',
 ]);
 
@@ -71,7 +71,7 @@ export const GetVerze = /** @type {typeof App.GetVerze} */ (obalit('GetVerze'));
 export const GetVybery = /** @type {typeof App.GetVybery} */ (obalit('GetVybery'));
 export const GetVydani = /** @type {typeof App.GetVydani} */ (obalit('GetVydani'));
 export const GetVydaniInfo = /** @type {typeof App.GetVydaniInfo} */ (obalit('GetVydaniInfo'));
-export const ImportovatZeSouboru = /** @type {typeof App.ImportovatZeSouboru} */ (obalit('ImportovatZeSouboru'));
+export const ImportovatSoubory = /** @type {typeof App.ImportovatSoubory} */ (obalit('ImportovatSoubory'));
 export const MaZamek = /** @type {typeof App.MaZamek} */ (obalit('MaZamek'));
 export const NastavitHeslo = /** @type {typeof App.NastavitHeslo} */ (obalit('NastavitHeslo'));
 export const ObnovitFotky = /** @type {typeof App.ObnovitFotky} */ (obalit('ObnovitFotky'));
@@ -112,7 +112,7 @@ export const UpdateAlbum = /** @type {typeof App.UpdateAlbum} */ (obalit('Update
 export const UpdateCover = /** @type {typeof App.UpdateCover} */ (obalit('UpdateCover'));
 export const UpdateModelka = /** @type {typeof App.UpdateModelka} */ (obalit('UpdateModelka'));
 export const VyberPodleNazvu = /** @type {typeof App.VyberPodleNazvu} */ (obalit('VyberPodleNazvu'));
-export const VybratSouborImportu = /** @type {typeof App.VybratSouborImportu} */ (obalit('VybratSouborImportu'));
+export const VybratSouboryImportu = /** @type {typeof App.VybratSouboryImportu} */ (obalit('VybratSouboryImportu'));
 export const VymazatMezipamet = /** @type {typeof App.VymazatMezipamet} */ (obalit('VymazatMezipamet'));
 export const ZkontrolovatDavku = /** @type {typeof App.ZkontrolovatDavku} */ (obalit('ZkontrolovatDavku'));
 export const ZkontrolovatSoubory = /** @type {typeof App.ZkontrolovatSoubory} */ (obalit('ZkontrolovatSoubory'));

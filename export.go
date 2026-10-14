@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -383,22 +384,84 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 	}
 }
 
-func (a *App) importovat(yamlData []byte) VysledekImportu {
-	vysledek := VysledekImportu{Chyby: []string{}}
+// YAML v textu souboru. V Markdownu bloky ```yaml (každý zvlášť), jinak úvodní hlavička mezi řádky ---,
+// jinak celý soubor; v souboru YAML celý obsah.
+func yamlZTextu(nazev, text string) []string {
+	text = strings.ReplaceAll(strings.TrimPrefix(text, "\ufeff"), "\r\n", "\n")
+	if !strings.HasSuffix(strings.ToLower(nazev), ".md") {
+		return []string{text}
+	}
+	var bloky []string
+	for _, m := range vzorBlokuYaml.FindAllStringSubmatch(text, -1) {
+		bloky = append(bloky, m[1])
+	}
+	if len(bloky) > 0 {
+		return bloky
+	}
+	if m := vzorHlavickyMd.FindStringSubmatch(text); m != nil {
+		return []string{m[1]}
+	}
+	return []string{text}
+}
 
+var (
+	vzorBlokuYaml  = regexp.MustCompile("(?ms)^```\\s*(?:yaml|yml)\\s*$\n(.*?)^```")
+	vzorHlavickyMd = regexp.MustCompile(`(?s)\A---[ \t]*\n(.*?)\n---[ \t]*(?:\n|\z)`)
+)
+
+// Jeden dokument: celý export, seznam modelek, nebo jedna modelka s údaji přímo nahoře (bez „modelky:“)
+func nacistDokument(text string) (exportDat, error) {
 	var data exportDat
-	if err := yaml.Unmarshal(yamlData, &data); err != nil {
-		vysledek.Selhalo = fmt.Sprintf("Soubor není platný YAML: %v", err)
-		return vysledek
+	errCely := yaml.Unmarshal([]byte(text), &data)
+	if errCely == nil && (len(data.Modelky) > 0 || len(data.Covery) > 0 || len(data.Vydani) > 0 || len(data.Vybery) > 0) {
+		return data, nil
 	}
-	if data.Verze > verzeExportu {
-		vysledek.Selhalo = fmt.Sprintf("Soubor je z novější verze programu (formát %d, tato verze umí nejvýš %d). Nic se nenačetlo; aktualizuj program.", data.Verze, verzeExportu)
-		return vysledek
+	var seznam []exportModelka
+	if yaml.Unmarshal([]byte(text), &seznam) == nil && len(seznam) > 0 {
+		return exportDat{Verze: verzeExportu, Modelky: seznam}, nil
 	}
-	if len(data.Modelky) == 0 && len(data.Covery) == 0 && len(data.Vydani) == 0 && len(data.Vybery) == 0 {
-		vysledek.Selhalo = "V souboru nejsou žádné modelky ani covery."
-		return vysledek
+	var jedna exportModelka
+	if yaml.Unmarshal([]byte(text), &jedna) == nil && strings.TrimSpace(jedna.Jmeno) != "" {
+		return exportDat{Verze: data.Verze, Modelky: []exportModelka{jedna}}, nil
 	}
+	if errCely != nil {
+		return data, fmt.Errorf("není platný YAML: %v", errCely)
+	}
+	return data, fmt.Errorf("nejsou v něm žádné modelky ani covery (každá modelka v seznamu začíná „- jmeno:“)")
+}
+
+// Obsah všech souborů importu jako jeden celek; chyba říká, který soubor je špatně
+func slozitSoubory(soubory map[string][]byte, poradi []string) (exportDat, error) {
+	celek := exportDat{Verze: verzeExportu}
+	for _, nazev := range poradi {
+		kratky := filepath.Base(nazev)
+		for _, text := range yamlZTextu(nazev, string(soubory[nazev])) {
+			data, err := nacistDokument(text)
+			if err != nil {
+				return celek, fmt.Errorf("Soubor „%s“ %v. Nic se nenačetlo.", kratky, err)
+			}
+			if data.Verze > verzeExportu {
+				return celek, fmt.Errorf("Soubor „%s“ je z novější verze programu (formát %d, tato verze umí nejvýš %d). Nic se nenačetlo; aktualizuj program.", kratky, data.Verze, verzeExportu)
+			}
+			celek.Modelky = append(celek.Modelky, data.Modelky...)
+			celek.Covery = append(celek.Covery, data.Covery...)
+			celek.Vydani = append(celek.Vydani, data.Vydani...)
+			celek.Vybery = append(celek.Vybery, data.Vybery...)
+		}
+	}
+	return celek, nil
+}
+
+func (a *App) importovat(yamlData []byte) VysledekImportu {
+	data, err := slozitSoubory(map[string][]byte{"import.yaml": yamlData}, []string{"import.yaml"})
+	if err != nil {
+		return VysledekImportu{Chyby: []string{}, Selhalo: err.Error()}
+	}
+	return a.importovatCelek(data)
+}
+
+func (a *App) importovatCelek(data exportDat) VysledekImportu {
+	vysledek := VysledekImportu{Chyby: []string{}}
 	// Bez zálohy se do databáze hromadně nezapisuje
 	if err := a.zalohovat("pred-importem"); err != nil {
 		vysledek.Selhalo = fmt.Sprintf("Nepodařilo se vytvořit zálohu, import se neprovedl: %v", err)
@@ -471,6 +534,10 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 			if !sparovana[m.ID] {
 				volne = append(volne, m)
 			}
+		}
+		// Jméno bez čísla, které má ve sbírce jediná modelka: je to ona, i když už ji doplnil jiný soubor téhož importu
+		if cislo == 0 && len(kandidati) == 1 {
+			return kandidati[0], true
 		}
 		if len(volne) == 1 && len(kandidati) == 1 {
 			return volne[0], true
@@ -574,6 +641,12 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 			vysledek.Chyby = append(vysledek.Chyby, jmeno+": údaje modelky se nepodařilo uložit")
 			continue
 		}
+		// Další výskyt téže modelky (v jiném souboru importu) navazuje na právě uložené údaje
+		for i, k := range podleJmena[zjednodusit(jmeno)] {
+			if k.ID == m.ID {
+				podleJmena[zjednodusit(jmeno)][i] = m
+			}
+		}
 		if e.Vyrez != nil && m.CoverID != "" {
 			a.SetCoverVyrez(m.ID, e.Vyrez.Zoom, e.Vyrez.X, e.Vyrez.Y)
 		}
@@ -665,22 +738,40 @@ func (a *App) ExportovatDoSouboru() string {
 }
 
 // Výběr souboru k importu; prázdný text znamená, že uživatel výběr zrušil
-func (a *App) VybratSouborImportu() string {
-	cesta, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{Title: "Importovat sbírku", Filters: filtrYaml})
+var filtrImportu = []runtime.FileFilter{
+	{DisplayName: "YAML a Markdown (*.yaml, *.yml, *.md)", Pattern: "*.yaml;*.yml;*.md"},
+	{DisplayName: "Všechny soubory", Pattern: "*"},
+}
+
+// Výběr jednoho nebo více souborů k importu
+func (a *App) VybratSouboryImportu() []string {
+	cesty, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{Title: "Importovat do sbírky", Filters: filtrImportu})
 	if err != nil {
 		a.chyba("import", err)
-		return ""
+		return []string{}
 	}
-	return cesta
+	if cesty == nil {
+		return []string{}
+	}
+	return cesty
 }
 
 // Import sbírky ze souboru: doplňuje a opravuje, nic nemaže; předtím se uloží záloha
-func (a *App) ImportovatZeSouboru(cesta string) VysledekImportu {
-	data, err := os.ReadFile(cesta)
-	if err != nil {
-		return VysledekImportu{Chyby: []string{}, Selhalo: fmt.Sprintf("Soubor se nepodařilo přečíst: %v", err)}
+// Import jednoho nebo více souborů jako jeden celek: jedna záloha, jedna transakce, buď vše, nebo nic
+func (a *App) ImportovatSoubory(cesty []string) VysledekImportu {
+	soubory := map[string][]byte{}
+	for _, cesta := range cesty {
+		data, err := os.ReadFile(cesta)
+		if err != nil {
+			return VysledekImportu{Chyby: []string{}, Selhalo: fmt.Sprintf("Soubor „%s“ se nepodařilo přečíst: %v", filepath.Base(cesta), err)}
+		}
+		soubory[cesta] = data
 	}
-	return a.importovat(data)
+	data, err := slozitSoubory(soubory, cesty)
+	if err != nil {
+		return VysledekImportu{Chyby: []string{}, Selhalo: err.Error()}
+	}
+	return a.importovatCelek(data)
 }
 
 func (a *App) prazdnaAlba(modelkaID int, odkazy odkazyNaModelky) []exportAlbum {

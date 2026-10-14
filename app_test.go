@@ -1931,3 +1931,37 @@ func TestVolbyZNabidkyPriImportu(t *testing.T) {
 		t.Fatal("hodnota mimo nabídku se uložila")
 	}
 }
+
+// Import více souborů najednou, včetně Markdownu a souboru s jedinou modelkou bez „modelky:“
+func TestImportViceSouboruAMarkdown(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	d := t.TempDir()
+	zapsat := func(nazev, obsah string) string {
+		cesta := filepath.Join(d, nazev)
+		os.WriteFile(cesta, []byte(obsah), 0o600)
+		return cesta
+	}
+	jedna := zapsat("jackie.yaml", "jmeno: Jackie Rainbow\nnarodnost: USA\nprsa_typ: přírodní\n")
+	blok := zapsat("poznamky.md", "# Moje poznámky\n\nText.\n\n```yaml\nmodelky:\n  - jmeno: Anna\n    narodnost: Česko\n```\n\nDalší text.\n\n```yml\njmeno: Jackie Rainbow\nvyska_cm: 165\n```\n")
+	hlavicka := zapsat("bara.md", "---\njmeno: Bára\npoznamka: z hlavičky\n---\n\n# Bára\n\nPovídání o modelce.\n")
+
+	v := a.ImportovatSoubory([]string{jedna, blok, hlavicka})
+	if v.Selhalo != "" || len(v.Chyby) != 0 || v.NoveModelky != 3 {
+		t.Fatalf("import: %+v", v)
+	}
+	// Jackie je ve dvou souborech: jedna modelka s údaji z obou
+	j := a.GetModelky("Jackie")
+	if len(j) != 1 || j[0].Narodnost != "USA" || j[0].VyskaCm != 165 || j[0].PrsaTyp != "Přírodní" {
+		t.Fatalf("Jackie: %+v", j)
+	}
+	if b := a.GetModelky("Bára"); len(b) != 1 || b[0].Poznamka != "z hlavičky" {
+		t.Fatalf("Bára: %+v", b)
+	}
+
+	// Chybný soubor zastaví celý import a hláška ho jmenuje
+	spatny := zapsat("spatny.md", "```yaml\nmodelky: [\n```\n")
+	nova := zapsat("nova.yaml", "jmeno: Nová\n")
+	if v := a.ImportovatSoubory([]string{nova, spatny}); !strings.Contains(v.Selhalo, "spatny.md") || len(a.GetModelky("Nová")) != 0 {
+		t.Fatalf("chybný soubor: %+v", v)
+	}
+}

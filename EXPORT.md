@@ -7,6 +7,19 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 
 ## Pravidla importu
 
+- Najednou jde vybrat víc souborů; načtou se jako jeden celek (jedna záloha, buď vše, nebo nic). Když je
+  některý soubor chybný, hláška ho jmenuje a nezmění se nic.
+- Přípony `.yaml`, `.yml` a `.md`. Z Markdownu se berou bloky ```yaml (každý zvlášť), jinak úvodní hlavička
+  mezi řádky `---`, jinak celý soubor. Poznámky kolem bloků se ignorují.
+- Soubor (nebo blok) může být celý export, seznam modelek, nebo jedna modelka s údaji přímo nahoře:
+
+  ```yaml
+  jmeno: "Jackie Rainbow"
+  narodnost: "USA"
+  vyska_cm: 165
+  ```
+- Modelka uvedená víckrát (třeba ve dvou souborech) se páruje podle jména a údaje se doplňují postupně.
+
 - Import údaje **doplňuje a opravuje, nic nemaže**. Prázdný nebo chybějící údaj ponechá ten stávající.
 - Opakovaný import téhož souboru nic nezdvojí.
 - Před importem se uloží záloha. Při jakékoli chybě zápisu se import vrátí celý a databáze zůstane, jak byla.

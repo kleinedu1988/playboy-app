@@ -7,7 +7,6 @@ export const SABLONA_OKNA = `
     <div class="titulek-okna">
       <div class="logo">
         <span class="logo-icon">🔥</span>
-        <h2>Playboy Database</h2>
         <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
         <button id="prevModelBtn" class="nav-back nav-step hidden" title="Předchozí modelka (šipka vlevo)">&#8249;</button>
         <button id="nextModelBtn" class="nav-back nav-step hidden" title="Další modelka (šipka vpravo)">&#8250;</button>

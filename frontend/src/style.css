@@ -120,14 +120,6 @@ textarea {
     font-size: 13px;
 }
 
-.logo h2 {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-
 /* Cesta zpět z profilu a stránky vydání: v řádku okna vedle názvu */
 .nav-back {
     height: 22px;
@@ -351,10 +343,6 @@ textarea {
 @media (max-width: 560px) {
     main {
         padding: 24px 32px;
-    }
-
-    .logo h2 {
-        display: none;
     }
 }
 

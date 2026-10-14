@@ -565,22 +565,31 @@ export const SABLONA_OKNA = `
   <div id="lightbox" class="lightbox hidden">
     <div id="lbStage"></div>
     <div class="lightbox-top">
+      <!-- Vlevo nahoře popisek fotky, vpravo zavření; nástroje jsou v plovoucím panelu uprostřed -->
       <span id="lbCaption" class="lb-caption"></span>
       <span id="lbCounter" class="lb-counter"></span>
-      <span id="lbHearts" title="Hodnocení fotky (klávesy 1–5, 0 ruší)"></span>
-      <button id="lbFill" class="lb-btn" title="Rozložit přes celé okno (F)">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
-      </button>
-      <button id="lbRot" class="lb-btn" title="Otočit o 90° (R)">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 4v7h-7"/></svg>
-      </button>
-      <button id="lbZoom" class="lb-btn" disabled>
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M10.5 7.5v6M7.5 10.5h6"/></svg>
-      </button>
-      <button id="lbMore" class="lb-btn tile-more" title="Akce s fotkou: do výběru, profil, Disk, odebrat">&#8943;</button>
-      <button id="lbShuffle" class="lb-btn" title="Zamíchat pořadí (S)">&#8644;</button>
-      <button id="lbPlay" class="lb-btn" title="Slideshow (mezerník)">&#9654;</button>
-      <button id="lbClose" class="lb-btn" title="Zavřít (Esc)">&times;</button>
+      <div class="lb-panel">
+        <span id="lbHearts" title="Hodnocení fotky (klávesy 1–5, 0 ruší)"></span>
+        <span class="lb-oddelovac"></span>
+        <button id="lbFill" class="lb-btn" title="Rozložit přes celé okno (F)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+        <button id="lbRot" class="lb-btn" title="Otočit o 90° (R)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 6.3"/><path d="M20 4v7h-7"/></svg>
+        </button>
+        <button id="lbZoom" class="lb-btn" disabled>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M10.5 7.5v6M7.5 10.5h6"/></svg>
+        </button>
+        <span class="lb-oddelovac"></span>
+        <button id="lbShuffle" class="lb-btn" title="Zamíchat pořadí (S)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h3c4 0 6 10 10 10h5M3 17h3c1.6 0 2.8-1.5 4-3.5M14 9.5C15.2 8 16.4 7 18 7h3M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>
+        </button>
+        <button id="lbPlay" class="lb-btn" title="Slideshow (mezerník)">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5l12 7-12 7z"/></svg>
+        </button>
+        <button id="lbMore" class="lb-btn tile-more" title="Akce s fotkou: do výběru, profil, Disk, odebrat">&#8943;</button>
+      </div>
+      <button id="lbClose" class="lb-btn lb-zavrit" title="Zavřít (Esc)">&times;</button>
     </div>
     <button id="lbPrev" class="lb-nav lb-prev" title="Předchozí (šipka vlevo)">&#8249;</button>
     <button id="lbNext" class="lb-nav lb-next" title="Další (šipka vpravo)">&#8250;</button>

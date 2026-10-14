@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.3] – 2026-10-14
+
+Prohlížeč fotek s plovoucími panely. Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Nástroje prohlížeče jsou v plovoucím panelu nahoře uprostřed (srdíčka, rozložení, otočení, lupa,
+  zamíchání, slideshow, ⋯) s ikonami a oddělenými skupinami; popisek a počítadlo jsou nenápadně vlevo
+  nahoře, Zavřít vpravo.
+- Lišta alb dole je plovoucí panel uprostřed, jen tak široký, jak je potřeba.
+- Šipky na předchozí a další fotku jsou nenápadné, po najetí myší mají kulaté podbarvení. Průběh slideshow
+  je tenká čára nahoře.
+
 ## [0.17.2] – 2026-10-14
 
 Čistší vzhled štítků. Schéma databáze ani formát exportu se nemění.

@@ -22,7 +22,7 @@ export const lbStage = document.getElementById('lbStage');
 export const lbProgress = document.getElementById('lbProgress');
 export const lbZoomBtn = document.getElementById('lbZoom');
 export const lbFillBtn = document.getElementById('lbFill');
-export const LB_LISTA = 44; // výška horní lišty prohlížeče
+export const LB_LISTA = 64; // místo nahoře pro plovoucí panel nástrojů prohlížeče
 
 export const lbOmezit = (hodnota, min, max) => Math.min(max, Math.max(min, hodnota));
 
@@ -33,6 +33,11 @@ export function lbRozmer() {
     return stav.lbPolozky[stav.lbIndex].rotace % 180 ? { W: r.H, H: r.W } : r;
 }
 
+// Ikony tlačítka slideshow v plovoucím panelu prohlížeče
+const ikona = (d) => `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const IKONA_PREHRAT = ikona('<path d="M7 5l12 7-12 7z"/>');
+const IKONA_PAUZA = ikona('<path d="M8 5v14M16 5v14"/>');
+
 // Umístění plakátu: buď se vejde celý, nebo (rozložený) vyplní okno a přesahuje po délce
 export function lbRozvrhnout() {
     const r = lbRozmer();
@@ -41,7 +46,7 @@ export function lbRozvrhnout() {
     const sh = lightbox.clientHeight;
     const okrajX = sw > 560 ? 70 : 0;
     // Fotka, která se má vejít celá, nesmí zajíždět pod lištu alb
-    const spodek = lbLista.nav.classList.contains('hidden') ? 16 : lbLista.nav.offsetHeight + 4;
+    const spodek = lbLista.nav.classList.contains('hidden') ? 16 : lbLista.nav.offsetHeight + 24;
     const meritko = stav.lbRozlozeno
         ? Math.max(sw / r.W, sh / r.H)
         : Math.min((sw - 2 * okrajX) / r.W, (sh - LB_LISTA - spodek) / r.H);
@@ -277,7 +282,7 @@ export function lbPrepnoutSlideshow(zapnout = !stav.lbCasovac) {
     stav.lbCasovac = null;
     lbProgress.classList.remove('running');
     if (zapnout) lbSpustitCasovac();
-    document.getElementById('lbPlay').innerHTML = zapnout ? '&#10074;&#10074;' : '&#9654;';
+    document.getElementById('lbPlay').innerHTML = zapnout ? IKONA_PAUZA : IKONA_PREHRAT;
 }
 
 export function lbZamichat() {

@@ -2990,3 +2990,129 @@ body.razeni .photo-item {
 .lightbox .album-nav .chip.active {
     background-color: var(--accent-soft);
 }
+
+/* Prohlížeč fotek: nástroje a lišta alb jako plovoucí panely nad fotkou (jako Fotky ve Windows) */
+.lightbox {
+    --lb-panel: rgba(32, 32, 36, 0.92);
+    --lb-panel-okraj: rgba(255, 255, 255, 0.08);
+}
+
+.lightbox-top {
+    height: 64px;
+    padding: 0 8px 0 16px;
+    background: none;
+    pointer-events: none;
+}
+
+.lightbox-top > * {
+    pointer-events: auto;
+}
+
+.lb-caption {
+    flex: 0 1 auto;
+    max-width: calc(50% - 260px);
+    color: var(--text-muted);
+    font-size: 12px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.lb-counter {
+    margin-right: auto;
+    font-size: 12px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.lb-panel {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 6px;
+    border: 1px solid var(--lb-panel-okraj);
+    border-radius: 10px;
+    background-color: var(--lb-panel);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    transform: translateX(-50%);
+}
+
+.lb-panel .lb-btn {
+    width: 36px;
+    height: 34px;
+    border-radius: 6px;
+    color: var(--text-main);
+}
+
+.lb-panel .lb-btn:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.lb-oddelovac {
+    width: 1px;
+    height: 20px;
+    margin: 0 4px;
+    background-color: var(--lb-panel-okraj);
+}
+
+.lightbox #lbHearts {
+    margin: 0 6px;
+}
+
+.lb-zavrit {
+    margin-left: auto;
+    width: 40px;
+    height: 36px;
+    font-size: 22px;
+}
+
+/* Lišta alb dole: plovoucí panel uprostřed, jen tak široký, jak je potřeba */
+.lightbox .album-nav {
+    left: 50%;
+    right: auto;
+    bottom: 16px;
+    width: max-content;
+    max-width: calc(100% - 48px);
+    padding: 6px 8px;
+    border: 1px solid var(--lb-panel-okraj);
+    border-radius: 10px;
+    background: var(--lb-panel);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+    transform: translateX(-50%);
+}
+
+.lightbox .album-nav .chip {
+    background-color: transparent;
+}
+
+.lightbox .album-nav .chip.active {
+    background-color: var(--accent-soft);
+}
+
+/* Šipky na předchozí a další fotku: kulaté plovoucí tlačítko jen po najetí myší */
+.lightbox .lb-nav {
+    width: 44px;
+    height: 44px;
+    margin-top: -22px;
+    border-radius: 50%;
+    font-size: 30px;
+    color: var(--text-main);
+    opacity: 0.55;
+}
+
+.lightbox .lb-nav:hover {
+    background-color: var(--lb-panel);
+    opacity: 1;
+}
+
+.lb-progress {
+    bottom: auto;
+    top: 0;
+}
+
+@media (max-width: 760px) {
+    .lb-caption,
+    .lb-counter {
+        display: none;
+    }
+}

@@ -1,147 +1,142 @@
 # Roadmapa
 
-Sestaveno 14. 10. 2026 ze tří auditů kódu (backend a data, frontend, funkce a pracovní postupy).
-Nálezy vycházejí ze čtení kódu a z měření na syntetických datech, ne z provozu; prahy „od kdy to vadí“
-jsou odhady. Drobné nápady a rozhodnutí „nedělat“ zůstávají v `PLAN.md`.
+Stav k 14. 10. 2026, verze 0.9.0. Sestaveno ze tří auditů kódu (backend a data, frontend, produkt).
+Nálezy vycházejí ze čtení kódu a z měření na syntetické sbírce (500 modelek, 20 000 fotek v nativním SQLite);
+aplikace se při auditu nespouštěla. Drobné nápady a rozhodnutí zůstávají v `PLAN.md`, hotové změny
+v `CHANGELOG.md`. Předchozí roadmapa (etapy 0–6) je ve značce `v0.9.0`.
 
-Pracnost: **S** do 2 hodin, **M** půl dne, **L** den a víc.
+Pracnost: **S** do 2 hodin, **M** půl dne, **L** den a víc. **[DM]** = mění schéma databáze nebo formát exportu.
 
-## Etapa 0 – Pojistky dat (hotovo 14. 10. 2026)
+## Výsledek ověření etap 0–6
 
-Cíl: žádná běžná akce nesmí tiše zničit nebo ztratit data.
+Všechny etapy jsou v kódu, většina položek je hotová. Část ale nese chyby, které audit našel:
 
-| Co | Proč | Prac. |
-|---|---|---|
-| Záloha a pojistka před „Odebrat nedostupné z databáze“ | Dnes maže po jedné bez zálohy; když Disk omezí požadavky, zmizí alba i s texty a srdíčky. Při podezřele velkém počtu nedostupných akci vůbec nenabízet. | S |
-| Přidání fotek do existujícího alba nesmí smazat jeho vydání | Formulář volá uložení vydání vždy, i s prázdným rokem (`main.js`, odeslání formuláře alba) | S |
-| Zablokovat tlačítko během ukládání | Druhý klik při pomalém ověřování odkazů vloží fotky nebo modelku dvakrát | S |
-| Ochrana proti zastaralé odpovědi | Při rychlém listování modelkami může hlavička patřit jedné a alba jiné; úpravy pak jdou na špatnou modelku | S |
-| Záloha se nesmí tiše přeskočit | Selže-li počítací dotaz, `zalohovat` vrátí úspěch a mazání pokračuje bez zálohy | S |
-| Denní záloha při startu, rotace podle důvodu | Dnes záloha vzniká jen při mazání a jedna fronta 20 kusů se při úklidu zaplní za večer | S |
-| Export nesmí zapsat prázdný soubor jako úspěch | Chyba čtení se dnes neprojeví; kontrolovat chyby a po zápisu porovnat počty | S |
-| Zámek jediné instance, `busy_timeout`, kontrola databáze při startu | Dvě spuštěné instance nad jednou databází; poškozený soubor se ukáže jako prázdná sbírka | S |
-| Formulář modelky nesmí tiše smazat hodnotu, kterou nezná | Hodnota mimo nabídku (typicky z importu) se uložením přepíše prázdnou | S |
-| Soubory s daty jen pro vlastníka (práva 0600) | Export i zálohy jsou dnes čitelné pro všechny uživatele počítače | S |
+- **Výkon při velké sbírce.** Počet fotek u modelek, profil a kalendář používají dotazy, které rostou se součinem
+  modelek a fotek. Při 500 modelkách a 20 000 fotkách trvá jedno načtení galerie 16,6 s, profil 13,4 s,
+  kalendář 5,7 s. Dnešní 4 modelky to nepocítí, při 100 modelkách už asi 0,7 s.
+- **Import v transakci** se potvrdí i po chybě zápisu a po dobu importu vyměňuje sdílené připojení k databázi
+  bez zámku; souběžná denní kontrola nebo úprava v okně se tak může ztratit. Stejně vyměňuje připojení obnovení
+  ze zálohy.
+- **„Netýká se“** se smaže uložením alba s prázdným textem, chybí v exportu a v tabulce Vydání nic neudělá.
+- **Vrátit po odebrání fotky** může zmizet, když hned po něm přijde jiné oznámení; vrácená fotka navíc
+  nedostane zpět členství ve výběrech ani další modelky alba.
+- **Slučování** (alb i modelek) ztrácí srdíčka duplicitních fotek, jejich výběry, obálky, odkazy a „netýká se“.
+- **Sdílená alba:** smazání hlavní modelky smaže album i ostatním, úprava z profilu další modelky se nepřekreslí.
+- **Ovládání:** Esc a Alt+← kolidují s výběrem fotek a s listováním modelek, hledání z profilu hledá v přehledu,
+  odkud se přišlo, „Uložit a další“ může modelku přeskočit nebo vrátit.
+- **Album a vydání** jsou dál textový klíč u fotek; cover visí na zástupné modelce 0, takže nejdou zapnout cizí
+  klíče. Před verzí 1.0.0, která má zmrazit schéma, je potřeba rozhodnout, jestli to tak zůstane.
 
-## Etapa 1 – Základy, na kterých stojí zbytek (hotovo 14. 10. 2026 kromě kontroly typů)
+Otevřené zůstalo: přepínač řazení galerie (čeká na rozhodnutí), dokončení rozdělení `main.js`, kontrola typů.
 
-Cíl: změny schématu jsou bezpečné, program snese růst sbírky a frontend má první testy.
-Kontrola typů ve frontendu je odložená do rozdělení `main.js` (etapa 4). Edice jsou u každého vydání
-(cover, centerfold i pictorial) jako přípona: `2009-11` je US, `2009-11-CZ` česká edice.
+## Etapa 7 – Opravy (0.9.1)
 
-| Co | Proč | Prac. |
-|---|---|---|
-| Číslované migrace (`user_version`) se zálohou předem | Podmínka všech dalších změn databáze | S–M |
-| Index na fotky podle modelky a alba, jedinečnost souboru v albu | `GetModelky` při 500 modelkách a 20 000 fotkách: 0,35 s → pod 1 ms (měřeno v nativním SQLite) | S |
-| Prohlížeč fotek: velikost podle okna, originál až pro lupu, brzda kolečka | Dnes vždy stahuje originál a přednačítá další; největší spotřeba paměti v programu | M |
-| Líné načítání plakátů na stěně a v coverech, menší náhledy | Stěna a covery se stahují celé najednou; karty berou zbytečně velký obrázek | S |
-| Prodleva u hledání, filtrování bez nového načítání | Každý stisk klávesy dnes znovu načte a přestaví celý pohled | S |
-| Esc a tlačítko Zrušit ve všech oknech | Esc dnes nezavře žádné modální okno | S |
-| Viditelná tlačítka „+“ a „⋯“ v hlavičce a u alba | Většina akcí včetně celé správy je jen pod pravým tlačítkem | M |
-| Testy čistých funkcí frontendu a kontrola typů | Frontend nemá žádný test; pojistka před dělením `main.js` | S–M |
-| Hledání a řazení i s cizí diakritikou | „Zoë“ se nenajde pod „zoe“ | S |
-| Obnovení ze zálohy z programu | Ruční přepsání souboru za běhu hrozí poškozením a vrátí i staré heslo. Před obnovou se uloží současný stav, heslo zůstane současné. | M |
-| Edice u vydání (US a CZ) | Sbírka obsahuje obě edice, ale vydání je dnes jen rok a měsíc: US a CZ číslo téhož měsíce se slijí do jednoho. Týká se coverů, centerfoldů, pictorialů, kalendáře, stránky vydání i exportu. Čím později, tím víc ruční opravy už zadaných dat. | L |
-
-## Etapa 2 – Zakládání bez opakování (hotovo 14. 10. 2026)
-
-Cíl: celé číslo časopisu se zpracuje z jedné stránky a nová modelka se čtyřmi alby se založí bez opakovaného psaní.
+Cíl: všechno, co verze 0.9.0 slibuje, funguje i při stovkách modelek a nic se tiše neztrácí.
+Bez změny schématu a formátu exportu.
 
 | Co | Proč | Prac. |
 |---|---|---|
-| Přidávání ze stránky vydání (cover, centerfold, pictorial) | Vydání se dnes zadává u každé položky znovu a přechází se mezi třemi pohledy | M |
-| Výběr modelky s našeptáváním a „založit novou“ přímo v okně alba | Bez modelky je dnes nutné okno zavřít a začít jinde | S–M |
-| „Uložit a přidat další album“, pamatovat fotografa a vydání | U nové modelky třikrát méně otevírání | S |
-| Našeptávač fotografů z celé sbírky | Dnes bere jen alba naposledy otevřené modelky; stejné jméno se píše různě | S |
-| Chytrá pole: stopy, libry, „34B-24-34“ | Odpadá ruční přepočet z amerických zdrojů | S |
-| Prázdné políčko kalendáře nabídne i centerfold a pictorial | Kalendář jako vstup pro doplňování mezer | S |
-| Alba v profilu ve stálém pořadí podle vydání | Dnes se pořadí alb změní po ručním seřazení fotek | S |
-| Hledání zvlášť pro každý pohled | Text z Modelek dnes po přepnutí filtruje kalendář | S |
-| Srozumitelná hláška na odkaz složky Disku | Dnes skončí jako „nefunkční odkaz“ | S |
+| Odstranit kvadratické dotazy (počet fotek, profil, kalendář, dvojí načítání modelek v Přehledu) a přidat výkonnostní test 500 / 20 000 | Galerie by při 500 modelkách naběhla za 16 s | S–M |
+| Import bez výměny připojení: transakce předávaná pomocným funkcím, vrácení i při chybě zápisu, zámek proti souběžným voláním; totéž u obnovení ze zálohy | Polovičatý import, ztracené souběžné zápisy | M |
+| Oznámení s tlačítkem Vrátit nesmí přepsat jiné oznámení; Vrátit obnoví i výběry a další modelky alba | Vrátit je u odebrání jedné fotky jediná pojistka | S–M |
+| „Netýká se“: neztrácet ho při uložení alba, v tabulce Vydání ho nahradit stavem „nezajímá mě“ | Práce v Přehledu se tiše ztrácí | S |
+| Slučování beze ztrát: nejvyšší hodnocení a výběry duplicitní fotky, obálky, odkazy, „netýká se“ | Sloučení teď maže údaje | S–M |
+| Sdílená alba: smazání hlavní modelky album předá další modelce (nebo varuje), překreslení z profilu další modelky, varování při mazání sdíleného alba | Ztráta společného pictorialu bez varování | S–M |
+| Jeden dispečer kláves s pořadím okno > nabídka > prohlížeč > výběr > stránka; výběr fotek se při odchodu z profilu zruší | Esc a Alt+← dnes dělají něco jiného, než se čeká | S–M |
+| Hledání z profilu nebo vydání přepne na Modelky a zapíše se do historie; totéž klik na štítek | Hledání z podstránky hledá ve špatném přehledu | S |
+| „Uložit a další“ nad pevnou frontou modelek, kterým chybí právě daná skupina | Modelka se teď může přeskočit nebo vrátit | S–M |
+| Start nad poškozenou databází nebo databází z novější verze: jen čtení, žádné úpravy schématu | Dnes se po varování dál zapisuje | S |
+| Kontrola dostupnosti: dávka bez vyhladovění, zápisy v transakci, ověření při vložení se uloží; šablona adresy obrázků se před uložením ověří a po obnovení ze zálohy znovu načte | Chybná šablona by označila celou sbírku jako nedostupnou | S |
+| Řazení a hledání s cizími písmeny (Ł, Ø) stejně v Go, SQL i v rozhraní; ochrana cíleného hledání před krátkými hodnotami vydání | „Émilie“ se na stěně řadí za Z, jedna stará hodnota by hledání shodila | S |
+| Mezipaměť pohledu se zapíše až po kontrole, že odpověď není zastaralá | Nejlepší mohou po rychlém přepnutí ukázat jiná data | S |
 
-## Etapa 3 – Opravy bez mazání (hotovo 14. 10. 2026)
+## Etapa 8 – Pevné schéma (0.10.0)
 
-Album dostalo stálou identitu v tabulce `alba` (na ní visí další modelky), fotky ho dál určují hlavní
-modelkou, názvem a typem; úplný převod alba na záznam, na který fotky odkazují, zatím nebyl potřeba.
-
-Cíl: fotka ve špatném albu, album u špatné modelky i duplicitní modelka se opraví bez nového vkládání odkazů a bez ztráty srdíček.
-
-| Co | Proč | Prac. |
-|---|---|---|
-| Album jako samostatný záznam, covery bez zástupné modelky | Dnes je album jen shodný text u fotek: prázdné album nemůže existovat a text mizí s poslední fotkou. Zjednoduší všechno níže. | L |
-| Více modelek u jednoho alba | Ve sbírce takové pictorialy jsou; dnes se musí vložit každé modelce zvlášť a srdíčka, pořadí i texty se rozejdou. Navazuje na album jako záznam. | L |
-| Přesunout album k jiné modelce, sloučit dvě alba | Dnes jen smazat a vložit znovu | S–M |
-| Výběr více fotek: odebrat, přesunout, ohodnotit | Jedna mechanika pokryje hromadné odebrání i přesun fotek | M |
-| Zpět po odebrání fotky místo potvrzovacího okna | Rychlejší probírka alba a ochrana před omylem | M |
-| „Otevřít na Disku“ a „Kopírovat odkaz“ u fotky | Program dnes odkaz nikde neukáže | S |
-| Sloučit dvě modelky | Duplicitu dnes program jen ohlásí | M |
-| Přejmenovat fotografa nebo tag v celé sbírce | Oprava nejednotného zápisu jednou akcí | S–M |
-| Import a hromadné vkládání v jedné transakci | Po chybě uprostřed dnes zůstane půlka | M |
-| Stav dostupnosti u fotky, kontrola Disku po dávkách | Fotka se neodebere po první neúspěšné kontrole; 20 000 požadavků denně by Google omezil | M |
-
-## Etapa 4 – Sbírka o stovkách modelek (hotovo 14. 10. 2026 kromě přepínače řazení a úplného rozdělení `main.js`)
-
-Z `main.js` je zatím vyčleněná kostra okna (`sablona.js`), oznámení, lišta částí a kontextová nabídka
-(`ui/`); pohledy, prohlížeč a formuláře v něm zůstávají. Kontrola typů čeká na jejich vyčlenění.
-
-Cíl: ve stovkách karet se neztratíte a údaje se doplňují v řadě za sebou.
+Cíl: databáze a formát exportu mají podobu, která se po 1.0.0 už nebude lámat; export → úprava v editoru →
+import neztratí nic. Podmínka verze 1.0.0, uživatel nové funkce neuvidí. **Čeká na rozhodnutí 1.**
 
 | Co | Proč | Prac. |
 |---|---|---|
-| Zpět na předchozí stránku a na stejné místo v galerii | Dnes Zpět vždy vede na začátek přehledu | M |
-| Lišta písmen A–Z nad galerií | Skok na písmeno; od zhruba 50 modelek | S |
-| Přepínač řazení galerie (nerozhodnuto, viz níže) | Naposledy přidané, podle roku prvního vydání, podle hodnocení, podle počtu fotek | S |
-| Cílené hledání (`vlasy:blond`, `fotograf:…`, `rok:1975`) | Konec falešných zásahů bez lišty filtrů | S–M |
-| Formulář modelky: „Uložit a další“ podle pořadí Přehledu | Doplňování bez návratů do tabulky | S–M |
-| „Netýká se“ v Přehledu, stránkování místo limitu 60 | Modelka, která centerfold nikdy neměla, jinak svítí trvale | S–M |
-| Kalendář: sbalit souvislé prázdné roky | Slabina zapsaná v `PLAN.md` | S–M |
-| Rozdělit `main.js` na moduly | 3 000 řádků v jednom souboru; postupně, s testy z etapy 1 | L |
-| Kalendář a přehled z agregovaných dat | Dnes se kvůli kalendáři posílá každá fotka přiřazená k vydání | M |
-| Šablona adresy obrázku na jednom místě | Adresa Googlu je natvrdo na čtyřech místech; po změně na jejich straně je nutný nový build | S–M |
+| Album jako záznam: fotky odkazují na `album_id`, vydání a fotograf jsou u alba, prázdné album smí existovat **[DM]** | S poslední fotkou dnes mizí text, „netýká se“ i další modelky alba; ~30 dotazů spojuje tabulky přes text | L |
+| Cover bez zástupné modelky 0, zapnuté cizí klíče **[DM]** | Integritu dnes drží jen spouštěče | L (spolu s předchozím) |
+| Vydání jako sloupec u všech typů s indexem, edice zvlášť nebo jako uzavřený výčet **[DM]** | Dnešní výraz neumí index, US a CZ jsou jen přípona | M–L |
+| Rámec migrací: zmrazit úpravu č. 1, chyby nezamlčovat, každá úprava v transakci s číslem schématu, testy na databázích z verzí 0.4–0.9 | Dnes neúspěšná úprava stejně zvýší číslo schématu | S–M |
+| Formát exportu verze 4 **[DM]**: kontrola verze (novější soubor se odmítne), stálé identifikátory místo jmen, chybějící údaje („netýká se“, datum přidání každé fotky, pořadí coverů), test kruhu porovnávající obsah databáze, popis v `EXPORT.md` | Dvě modelky stejného jména se dnes při importu slijí, novější soubor se tiše načte bez nových údajů | M |
+| Kontrola vstupu v backendu jedním pravidlem pro zápis i import (typ alba, název centerfoldu, vydání, klíče „netýká se“) | Backend dnes přijme, co import pak odmítne | S |
+| Uzavřít výčty: edice, stavy čísla, typy alb **[DM]** | Po 1.0 jen rozšiřovat, neměnit | S |
 
-## Etapa 5 – Prohlížení napříč sbírkou (hotovo 14. 10. 2026, verze 0.8.0)
+## Etapa 9 – Rozhraní na dlouhou trať (0.11.0)
 
-Cíl: pustit si to nejlepší, celý ročník, práci jednoho fotografa nebo náhodný výběr. Malé položky jdou vzít kdykoli dřív.
+Cíl: každou akci jde udělat odkudkoli a bez pravého tlačítka, rozhraní snese stovky modelek a jde dál rozvíjet
+bez chyb typu „akce v jednom pohledu překreslí jiný“.
 
 | Co | Proč | Prac. |
 |---|---|---|
-| Pohled „Nejlepší“: fotky s N a více srdíčky napříč sbírkou | Hodnocení fotek dnes slouží jen k řazení uvnitř alba | M |
-| Stránka ročníku: vše z jednoho roku po měsících | „Co mám z roku 1975“ na jeden klik | S–M |
-| Náhodná modelka, zamíchaná slideshow, nastavitelný interval | Znovuobjevování sbírky | S |
-| Stěna centerfoldů chronologicky s lištou desetiletí | Stěna jako časová osa | S |
-| Stránka fotografa | Až bude fotograf vyplněný u více alb | M |
+| Dokončit rozdělení `main.js`: sdílený stav (`stav.js`), mezipaměť modelek (`data/modelky.js`), sběrnice změn (`udalosti.js`), navigace a historie, prohlížeč, klávesy, pohledy a formuláře po souborech | 3 700 řádků a 63 globálních proměnných v jednom souboru; `GetModelky` se volá ze 14 míst | L |
+| Kontrola typů (`tsc` s JSDoc po souborech, typy z `wailsjs/go/models.ts`) | Překlepy ve vlastnostech a volání backendu | M |
+| Akce fotky bez pravého tlačítka: ⋯ na dlaždici, lišta v prohlížeči (Do výběru, profil, Disk, Odebrat); výběry přidávat odkudkoli | Dnes jen pravým tlačítkem a jen z profilu | M |
+| Výběr více fotek i na stránce vydání, ročníku, fotografa a v Nejlepších; Delete a „vybrat vše“ | Dnes jen v profilu | M |
+| Výkon Nejlepších a výběrů (zkrácení po modelkách nebo `content-visibility`), odstranit O(n²) skládání indexů | Při prahu 3+ desítky tisíc prvků najednou | M |
+| Přístupnost klávesnicí: fokusovatelné karty a dlaždice, nabídka ovladatelná šipkami, fokus v modálních oknech | Profil ani fotku dnes nejde otevřít klávesnicí | M |
+| Sjednotit texty („Upravit“ vs. „Editovat“, „Do výběru“), skloňování v `lib/` s testem, hlášky „přidej pravým tlačítkem“ | Drobné nekonzistence | S |
 
-## Etapa 6 – Vydání a vazby (hotovo 14. 10. 2026, verze 0.9.0)
+## Etapa 10 – Vydání 1.0.0
 
-Cíl: každé číslo má vlastní záznam s poznámkou a stavem. Navazuje na edice z etapy 1 a na album jako záznam z etapy 3.
+Cíl: program jde nainstalovat do nabídky aplikací a začít s prázdnou sbírkou bez README; nápověda a novinky
+jsou v programu. **Žádné nové funkce ani změny schématu** – to je podmínka čísla 1.0.
 
 | Co | Proč | Prac. |
 |---|---|---|
-| Vydání jako záznam: poznámka, modelka z obálky, stav „sháním / nezajímá mě“ | Kalendář rozliší mezeru od nezájmu | M–L |
-| Odkazy u modelky | Zdroj údajů po ruce | S |
-| Vlastní výběry fotek napříč modelkami | Až pohled „Nejlepší“ přestane stačit | M–L |
+| Úvod prázdné sbírky: sdílení na Disku „kdokoli s odkazem“, první modelka, import YAML, volitelně heslo | Dnes jediný řádek odkazující na pravé tlačítko | S–M |
+| Okno nápovědy (klávesa `?` a položka v ⋯): klávesy prohlížeče, cílené hledání, srdíčka, Přehled, výběry | Dnes jen v nápovědách po najetí a v README | S–M |
+| „Co je nového“: changelog vložený do programu, po aktualizaci se jednou ukáže | Položka Verze dnes odkazuje na soubor v repozitáři | S |
+| Instalace do `~/.local/bin` s položkou v nabídce aplikací a ikonou; v README odinstalace a přenos dat na jiný počítač | Program dnes existuje jen jako soubor v `build/bin` | S |
+| „Smazat celou databázi“ hlouběji nebo s napsáním potvrzovacího slova; závěrečná kontrola na syntetické sbírce | Pohodlí a jistota před vydáním | S–M |
 
-## Rozhodnuto 14. 10. 2026
+## Etapa 11 – Každodenní práce (1.1.0)
 
-- **Edice:** sbírka má US i CZ edici → edice u vydání zařazena do etapy 1.
-- **Obnovení ze zálohy z programu:** ano → etapa 1.
-- **Skupinové pictorialy:** ve sbírce jsou → více modelek u alba přesunuto z etapy 6 do etapy 3.
-- **Místní kopie titulních fotek:** ne.
-- **Zálohy na jiný disk:** ne.
+Cíl: navázat tam, kde jsem včera skončil, nezaložit duplicitní fotku a mít sháněná čísla po ruce.
+
+| Co | Proč | Prac. |
+|---|---|---|
+| Pohled „Naposledy přidané“ (podle data přidání, po dnech) | Datum přidání se ukládá od verze 0.4, nikde se neukazuje | S |
+| Upozornění, že fotka už ve sbírce je u jiné modelky nebo v jiném albu | Duplicity napříč sbírkou dnes program nehlídá | S |
+| Skok do hledání klávesou `/` nebo Ctrl+F | Rychlost | S |
+| Automatické zamčení po nečinnosti | Okno nechané otevřené zůstává přístupné | S |
+| Seznam „Sháním“ po edicích a letech ke zkopírování | Praktický nákupní seznam | S |
+| Hledání v kalendáři i podle modelky a stavu; předchozí a další rok na stránce ročníku; stav a „Upravit číslo…“ u měsíců ročníku | Slabina z `PLAN.md` | S |
+| Řádek s rokem prvního vydání a edicí na kartě modelky | Orientace ve stovkách karet bez filtrů | S |
+| Přepínač řazení galerie (jedno tlačítko vedle ♡) | Jen pokud ano, viz rozhodnutí 2 | S |
+
+## Etapa 12 – Velká sbírka (1.2.0)
+
+Cíl: sbírku o stovkách modelek rozebírat a hlídat kvalitu dat bez ručního procházení.
+
+| Co | Proč | Prac. |
+|---|---|---|
+| Rozbory v Přehledu: věk při centerfoldu, desetiletí, fotografové, národnosti, US a CZ vedle sebe | „Encyklopedický“ pohled na sbírku | M |
+| Rozšířené kontroly: centerfold bez data narození, cover bez modelky z obálky, stejný fotograf zapsaný různě | Kvalita dat ve velkém | M |
+| Seznam fotografů k procházení | Stránka fotografa jde dnes otevřít jen z alba | S |
+| Titulní fotka alba pro stránky fotografa a ročníku | Hezčí přehledy alb mimo profil | S–M |
 
 ## K rozhodnutí
 
-1. **Přepínač řazení galerie.** Galerie se dnes řadí jen podle jména. Přepínač by umožnil „naposledy přidané“
-   (co jsem zadal včera), podle roku prvního vydání (chronologický průchod), podle hodnocení a podle počtu fotek.
-   Smysl má až od desítek modelek. Řazení zmizelo spolu se zrušenou lištou filtrů; samotný přepínač zamítnutý není.
+1. **Album jako plný záznam před 1.0.0** (etapa 8): den až dva práce bez viditelné novinky. Všechny tři audity
+   doporučují ano; bez toho se 1.0 zmrazí s dnešním textovým klíčem a zástupnou modelkou u coverů.
+2. **Přepínač řazení galerie:** ano, nebo ne? Pokud ano, která řazení (naposledy přidané, rok prvního vydání,
+   počet fotek, hodnocení)?
+3. **Fyzické výtisky:** evidovat u čísla „mám výtisk“ (případně stav nebo cenu), nebo stačí „sháním / nezajímá mě“?
+   Rozhoduje o formátu exportu, který se v 1.0 zmrazí.
+4. **Edice:** zůstane US a CZ, nebo počítat s dalšími (DE…) a se zvláštními čísly (speciály, Newsstand)?
+5. **Instalace:** spouštět dál z `build/bin`, nebo položka v nabídce aplikací?
 
 ## Nedělat
 
-- Přihlášení k Disku a import celé složky přes OAuth.
-- Automatické stahování údajů o modelkách z webu.
-- Tagy a popisky u jednotlivých fotek.
-- Strukturovaný obsah čísla (seznam článků).
-- Tabulkový editor údajů v aplikaci – YAML v editoru a „Uložit a další“ dělají totéž.
-- Rozpoznávání obličejů, více uživatelů, synchronizace, mobilní verze.
-- Místní kopie fotek ani titulních fotek; zálohy na jiný disk.
+- Lištu filtrů nad galerií ani boční panel s filtry; přepínač řazení zůstane jedním tlačítkem.
+- Obecné Zpět pro všechny úpravy (deník změn) – denní zálohy a Vrátit u fotek stačí.
+- Místní kopie fotek, náhledy na disku, zálohy na jiný disk.
+- Šifrovanou databázi – zvolen zámek rozhraní.
+- Půlsrdíčka.
+- Přihlášení k Disku a import celé složky, stahování údajů z webu, rozpoznávání obličejů.
+- Nové funkce v etapě 10 (1.0.0) – ta je jen o stabilitě, nápovědě a instalaci.
 - Vše z oddílu „Rozhodnuto nedělat“ v `PLAN.md`.

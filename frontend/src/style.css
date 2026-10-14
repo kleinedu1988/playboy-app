@@ -3386,3 +3386,99 @@ body.razeni .photo-item {
 #backBtn {
     display: none !important;
 }
+
+/* Údaje modelky v profilu: bloky Playboy, Osobní, Vzhled v jedné kartě */
+.udaje-modelky {
+    margin-top: 16px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background-color: var(--bg-card);
+}
+
+.udaje-blok {
+    padding: 12px 14px;
+}
+
+.udaje-blok + .udaje-blok {
+    border-top: 1px solid var(--border-color);
+}
+
+.udaje-blok h4 {
+    margin: 0 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.udaje-radek {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    line-height: 22px;
+    font-size: 13px;
+}
+
+.udaje-radek + .udaje-radek {
+    margin-top: 6px;
+}
+
+.udaje-popis {
+    flex: none;
+    width: 64px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.udaje-stitky {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-width: 0;
+    align-items: center;
+}
+
+.udaje-veta {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.udaje-veta + .udaje-veta {
+    margin-top: 2px;
+}
+
+.udaje-mrizka {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+    margin: 0;
+}
+
+.udaje-mrizka dt {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.udaje-mrizka dd {
+    margin: 1px 0 0;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.udaje-znamky {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.udaje-znamka {
+    padding: 2px 10px;
+    border: 1px solid transparent;
+    line-height: normal;
+    border-radius: 10px;
+    background-color: var(--bg-modal);
+    color: var(--text-main);
+    font-size: 12px;
+}

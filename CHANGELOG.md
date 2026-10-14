@@ -5,6 +5,13 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.1] – 2026-10-14
+
+### Změněno
+- Údaje v levém panelu profilu modelky jsou v jedné kartě rozdělené do bloků **Playboy** (vydání, role a obálky
+  jako štítky), **Osobní** (narození s věkem v prvním vydání, úmrtí, národnost) a **Vzhled** (mřížka ve dvou
+  sloupcích). Tetování a piercing se ukážou jen jako štítek, když je odpověď „ano“; prázdné bloky se skryjí.
+
 ## [0.18.0] – 2026-10-14
 
 Poslední úprava schématu před alfou podle rozhodnutí z auditu. Schéma databáze: úprava č. 8. Formát exportu:

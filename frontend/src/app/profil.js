@@ -29,7 +29,6 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     detailView.classList.add('bez-titulni');
     document.querySelector('main').scrollTop = 0;
 
-    const anoNe = hodnota => hodnota === 1 ? 'Ano' : hodnota === 0 ? 'Ne' : '';
     const hledatelne = hodnota => hodnota
         ? `<button class="link" data-hledat="${esc(hodnota)}" title="Vyhledat modelky se stejnou hodnotou">${esc(hodnota)}</button>`
         : '';
@@ -39,26 +38,46 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         ? modelka.vydani.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít vydání">${esc(nazevVydani(v))}</button>`).join(' ')
         : esc([modelka.vystoupeni, ...modelka.pictorialVydani.split('\n')].map(v => v.trim()).filter(Boolean).join(', '));
 
-    // [popisek, hotové HTML hodnoty]; prázdné řádky se nezobrazují
-    const udaje = [
-        ['Narození', esc([formatDatum(modelka.narozeniDatum), modelka.narozeniMisto].filter(Boolean).join(', '))],
-        ['Věk při prvním vydání', esc(vekPriVydani(modelka.narozeniDatum, prvniVydani))],
-        ['Úmrtí', esc([formatDatum(modelka.umrtiDatum), vekPriVydani(modelka.narozeniDatum, modelka.umrtiDatum) && `ve věku ${vekPriVydani(modelka.narozeniDatum, modelka.umrtiDatum)}`].filter(Boolean).join(', '))],
-        ['Národnost', hledatelne(modelka.narodnost)],
-        ['Etnicita', esc(modelka.etnicita)],
+    // Údaje ve třech blocích: Playboy (nejdůležitější pro sbírku), Osobní, Vzhled; prázdné části se nezobrazí
+    const stitkyVydani = vydaniKody => vydaniKody.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít vydání">${esc(nazevVydani(v))}</button>`).join(' ');
+    const playboy = [
+        ['Vydání', vydani],
+        ['Role', modelka.role ? `<span class="udaje-znamka">${esc(modelka.role)}</span>` : ''],
+        ['Na obálce', stitkyVydani(modelka.obalky || [])],
+    ].filter(([, hodnota]) => hodnota);
+
+    // Osobní údaje jako věty: „12. 3. 1975, Praha · v prvním vydání 20 let“
+    const vekVydani = vekPriVydani(modelka.narozeniDatum, prvniVydani);
+    const vekUmrti = vekPriVydani(modelka.narozeniDatum, modelka.umrtiDatum);
+    const osobni = [
+        [esc([formatDatum(modelka.narozeniDatum), modelka.narozeniMisto].filter(Boolean).join(', ')), vekVydani && `v prvním vydání ${esc(vekVydani)}`]
+            .filter(Boolean).join(' · '),
+        modelka.umrtiDatum ? `† ${esc(formatDatum(modelka.umrtiDatum))}${vekUmrti ? `, ve věku ${esc(vekUmrti)}` : ''}` : '',
+        [hledatelne(modelka.narodnost), esc(modelka.etnicita)].filter(Boolean).join(' · '),
+    ].filter(Boolean);
+
+    // Vzhled jako mřížka dvojic; tetování a piercing jen jako štítek, když je odpověď „ano“
+    const vzhled = [
         ['Výška', modelka.vyskaCm ? `${modelka.vyskaCm} cm` : ''],
         ['Váha', modelka.vahaKg ? `${modelka.vahaKg} kg` : ''],
-        ['Vlasy', hledatelne(modelka.vlasyBarva)],
-        ['Oči', hledatelne(modelka.ociBarva)],
         ['Míry', esc(modelka.miry)],
         ['Prsa', esc([modelka.velikostPrsou, modelka.prsaTyp].filter(Boolean).join(', '))],
+        ['Vlasy', hledatelne(modelka.vlasyBarva)],
+        ['Oči', hledatelne(modelka.ociBarva)],
         ['Ochlupení', esc(modelka.ochlupeni)],
-        ['Tetování', anoNe(modelka.tetovani)],
-        ['Piercing', anoNe(modelka.piercing)],
-        ['Vydání', vydani],
-        ['Role', esc(modelka.role)],
-        ['Na obálce', (modelka.obalky || []).map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít vydání">${esc(nazevVydani(v))}</button>`).join(' ')],
     ].filter(([, hodnota]) => hodnota);
+    const znamky = [modelka.tetovani === 1 ? 'Tetování' : '', modelka.piercing === 1 ? 'Piercing' : ''].filter(Boolean);
+
+    const bloky = [
+        playboy.length ? `<section class="udaje-blok"><h4>Playboy</h4>
+            ${playboy.map(([nazev, hodnota]) => `<div class="udaje-radek"><span class="udaje-popis">${nazev}</span><div class="udaje-stitky">${hodnota}</div></div>`).join('')}
+        </section>` : '',
+        osobni.length ? `<section class="udaje-blok"><h4>Osobní</h4>${osobni.map(veta => `<p class="udaje-veta">${veta}</p>`).join('')}</section>` : '',
+        vzhled.length || znamky.length ? `<section class="udaje-blok"><h4>Vzhled</h4>
+            ${vzhled.length ? `<dl class="udaje-mrizka">${vzhled.map(([nazev, hodnota]) => `<div><dt>${nazev}</dt><dd>${hodnota}</dd></div>`).join('')}</dl>` : ''}
+            ${znamky.length ? `<div class="udaje-znamky">${znamky.map(z => `<span class="udaje-znamka">${z}</span>`).join('')}</div>` : ''}
+        </section>` : '',
+    ].filter(Boolean);
 
     const tagy = modelka.tags.split(',').map(t => t.trim()).filter(Boolean);
     const dalsiJmena = modelka.dalsiJmena.split(',').map(j => j.trim()).filter(Boolean);
@@ -69,9 +88,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         ${htmlSrdicka(modelka)}
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
-        <dl class="profile-info">
-            ${udaje.map(([nazev, hodnota]) => `<div><dt>${nazev}</dt><dd>${hodnota}</dd></div>`).join('')}
-        </dl>
+        ${bloky.length ? `<div class="udaje-modelky">${bloky.join('')}</div>` : ''}
         ${modelka.poznamka ? `<p class="profile-note">${esc(modelka.poznamka)}</p>` : ''}
         ${htmlOdkazu(modelka.odkazy)}
     `;

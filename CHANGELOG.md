@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.2] – 2026-10-14
+
+### Změněno
+- Tlačítka **Upravit modelku** a **+ Přidat fotky / album** jsou v profilu pod jménem modelky v levém panelu,
+  u údajů, které upravují. Nadpis „Alba a fotogalerie“ nad alby je pryč, lišta alb začíná hned nahoře.
+
+### Opraveno
+- V úzkém okně (pod 760 px) profil modelky přetékal vpravo za okraj okna kvůli široké liště alb.
+
 ## [0.18.1] – 2026-10-14
 
 ### Změněno

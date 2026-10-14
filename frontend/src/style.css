@@ -1168,16 +1168,16 @@ button.tag:hover {
     overflow-wrap: anywhere;
 }
 
-.album-actions {
+/* Upravit modelku a Přidat fotky pod jménem v levém panelu profilu */
+.profile-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
 }
 
-.album-actions h3 {
-    margin: 0;
-    font-size: 18px;
+.profile-actions .btn {
+    flex: 1 1 auto;
 }
 
 .btn-small {
@@ -1236,7 +1236,7 @@ button.tag:hover {
 
 @media (max-width: 760px) {
     .detail-container {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 
@@ -2309,12 +2309,6 @@ body.razeni .photo-item {
 /* Prohlížeč čeká na originál fotky pro lupu */
 .lightbox.nacita .poster {
     cursor: progress;
-}
-
-/* Tlačítka vedle nadpisu alb v profilu */
-.album-actions-buttons {
-    display: flex;
-    gap: 8px;
 }
 
 /* Tlačítko ⋯ v hlavičce alba: tatáž nabídka jako pravé tlačítko */

@@ -82,16 +82,22 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     const tagy = modelka.tags.split(',').map(t => t.trim()).filter(Boolean);
     const dalsiJmena = modelka.dalsiJmena.split(',').map(j => j.trim()).filter(Boolean);
 
+    // Tlačítka profilu (Upravit modelku, Přidat fotky) jsou v šabloně s obsluhou; před přepsáním hlavičky se vezmou
+    // a vloží zpět pod jméno
+    const akce = document.getElementById('profileActions');
     document.getElementById('modelHeader').innerHTML = `
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
         <h2>${esc(modelka.jmeno)}</h2>
         ${htmlSrdicka(modelka)}
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
+        <div class="profile-actions-misto"></div>
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
         ${bloky.length ? `<div class="udaje-modelky">${bloky.join('')}</div>` : ''}
         ${modelka.poznamka ? `<p class="profile-note">${esc(modelka.poznamka)}</p>` : ''}
         ${htmlOdkazu(modelka.odkazy)}
     `;
+
+    document.querySelector('#modelHeader .profile-actions-misto').replaceWith(akce);
 
     await nacistFotkyModelky(modelka.id);
 }

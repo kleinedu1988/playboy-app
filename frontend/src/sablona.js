@@ -460,14 +460,27 @@ export const SABLONA_OKNA = `
   </div>
 
   <!-- Lišta s akcemi pro vybrané fotky (Ctrl nebo Shift + klik) -->
-  <div id="selectionBar" class="selection-bar hidden">
+  <div id="selectionBar" class="selection-bar plovouci-panel hidden">
     <span id="selectionCount"></span>
-    <span class="selection-hearts">${[1, 2, 3, 4, 5].map(n => `<button class="heart on" data-vyber-hodnoceni="${n}" title="Ohodnotit vybrané ${n} z 5"></button>`).join('')}</span>
-    <button class="btn btn-secondary btn-small" data-vyber="presunout">Přesunout do alba…</button>
-    <button class="btn btn-secondary btn-small" data-vyber="dovyberu">Přidat do výběru…</button>
-    <button class="btn btn-secondary btn-small" data-vyber="odebrat" title="Delete">Odebrat</button>
-    <button class="btn btn-secondary btn-small" data-vyber="vse" title="Ctrl+A">Vybrat vše</button>
-    <button class="btn btn-secondary btn-small" data-vyber="zrusit" title="Esc">Zrušit výběr</button>
+    <span class="panel-oddelovac"></span>
+    <span class="hearts selection-hearts" title="Ohodnotit vybrané">${[1, 2, 3, 4, 5].map(n => `<button class="heart" data-vyber-hodnoceni="${n}" title="Ohodnotit vybrané ${n} z 5"></button>`).join('')}</span>
+    <span class="panel-oddelovac"></span>
+    <button class="panel-btn" data-vyber="presunout" title="Přesunout do alba…">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M10 13h6M13 10l3 3-3 3"/></svg>
+    </button>
+    <button class="panel-btn" data-vyber="dovyberu" title="Přidat do výběru…">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/><path d="M12 7v6M9 10h6"/></svg>
+    </button>
+    <button class="panel-btn" data-vyber="vse" title="Vybrat vše (Ctrl+A)">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/></svg>
+    </button>
+    <span class="panel-oddelovac"></span>
+    <button class="panel-btn nebezpecne" data-vyber="odebrat" title="Odebrat (Delete)">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>
+    </button>
+    <button class="panel-btn" data-vyber="zrusit" title="Zrušit výběr (Esc)">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
   </div>
 
   <!-- Modal: údaje vydání (poznámka, stav, modelka z obálky) -->

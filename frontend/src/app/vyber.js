@@ -41,7 +41,8 @@ export function aktualizovatVyber() {
     selectionBar.classList.toggle('hidden', pocet === 0);
     document.getElementById('selectionCount').textContent = `Vybráno: ${pocet}`;
     selectionBar.querySelector('[data-vyber="presunout"]').classList.toggle('hidden', !kontextVyberu()?.presun);
-    selectionBar.querySelector('[data-vyber="odebrat"]').textContent = kontextVyberu()?.vyber ? 'Odebrat z výběru' : 'Odebrat';
+    // Tlačítko má ikonu; co odebrání udělá, říká nápověda
+    selectionBar.querySelector('[data-vyber="odebrat"]').title = kontextVyberu()?.vyber ? 'Odebrat z výběru (Delete)' : 'Odebrat (Delete)';
 }
 
 export function zrusitVyber() {

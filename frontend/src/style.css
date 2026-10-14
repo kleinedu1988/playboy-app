@@ -13,6 +13,11 @@
     --danger: #c62828;
     --danger-hover: #a31f1f;
     --danger-text: #ff6b6b;
+    /* Plovoucí panely (lišta výběru, nabídky, oznámení, nástroje prohlížeče): jeden povrch v celém programu */
+    --panel-bg: rgba(32, 32, 36, 0.96);
+    --panel-okraj: rgba(255, 255, 255, 0.08);
+    --panel-stin: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --panel-hover: rgba(255, 255, 255, 0.08);
     --text-main: #f0f0f5;
     --text-muted: #9a9a9e;
     --border-color: #2a2a30;
@@ -2993,8 +2998,8 @@ body.razeni .photo-item {
 
 /* Prohlížeč fotek: nástroje a lišta alb jako plovoucí panely nad fotkou (jako Fotky ve Windows) */
 .lightbox {
-    --lb-panel: rgba(32, 32, 36, 0.92);
-    --lb-panel-okraj: rgba(255, 255, 255, 0.08);
+    --lb-panel: var(--panel-bg);
+    --lb-panel-okraj: var(--panel-okraj);
 }
 
 .lightbox-top {
@@ -3115,4 +3120,99 @@ body.razeni .photo-item {
     .lb-counter {
         display: none;
     }
+}
+
+/* Plovoucí panel: stejný povrch pro lištu výběru, nabídky a oznámení */
+.selection-bar,
+.context-menu,
+.toast {
+    border: 1px solid var(--panel-okraj);
+    border-radius: 10px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+/* Lišta pro vybrané fotky: počet, srdíčka a ikonová tlačítka ve skupinách */
+.selection-bar {
+    gap: 4px;
+    padding: 4px 6px 4px 14px;
+}
+
+#selectionCount {
+    margin-right: 4px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.selection-bar .selection-hearts {
+    margin: 0 6px;
+}
+
+.selection-hearts .heart {
+    font-size: 18px;
+}
+
+.panel-oddelovac {
+    width: 1px;
+    height: 20px;
+    margin: 0 4px;
+    background-color: var(--panel-okraj);
+}
+
+.panel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.panel-btn:hover {
+    background-color: var(--panel-hover);
+}
+
+.panel-btn.nebezpecne {
+    color: var(--danger-text);
+}
+
+.panel-btn.nebezpecne:hover {
+    background-color: rgba(198, 40, 40, 0.25);
+}
+
+/* Nabídky: položky s jemným podbarvením po najetí místo plné barvy */
+.context-menu {
+    padding: 6px;
+}
+
+.context-item {
+    padding: 7px 12px;
+    border-radius: 6px;
+}
+
+.context-item:hover,
+.context-item:focus-visible {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.context-item.nebezpecne:hover,
+.context-item.nebezpecne:focus-visible {
+    background-color: rgba(198, 40, 40, 0.25);
+    color: var(--danger-text);
+}
+
+.context-menu hr {
+    margin: 6px 4px;
+    border-top-color: var(--panel-okraj);
+}
+
+/* Oznámení: plovoucí panel dole uprostřed */
+.toast {
+    padding: 10px 10px 10px 16px;
 }

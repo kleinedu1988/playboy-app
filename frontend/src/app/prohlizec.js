@@ -22,7 +22,6 @@ export const lbStage = document.getElementById('lbStage');
 export const lbProgress = document.getElementById('lbProgress');
 export const lbZoomBtn = document.getElementById('lbZoom');
 export const lbFillBtn = document.getElementById('lbFill');
-export const LB_LISTA = 64; // místo nahoře pro plovoucí panel nástrojů prohlížeče
 
 export const lbOmezit = (hodnota, min, max) => Math.min(max, Math.max(min, hodnota));
 
@@ -44,12 +43,10 @@ export function lbRozvrhnout() {
     if (!r) return;
     const sw = lightbox.clientWidth;
     const sh = lightbox.clientHeight;
-    const okrajX = sw > 560 ? 70 : 0;
-    // Fotka, která se má vejít celá, nesmí zajíždět pod lištu alb
-    const spodek = lbLista.nav.classList.contains('hidden') ? 16 : lbLista.nav.offsetHeight + 24;
+    // Celá fotka sahá od horního po spodní okraj (nebo od kraje ke kraji); ovládání leží přes ni a samo se skrývá
     const meritko = stav.lbRozlozeno
         ? Math.max(sw / r.W, sh / r.H)
-        : Math.min((sw - 2 * okrajX) / r.W, (sh - LB_LISTA - spodek) / r.H);
+        : Math.min(sw / r.W, sh / r.H);
 
     const w = r.W * meritko;
     const h = r.H * meritko;
@@ -58,7 +55,7 @@ export function lbRozvrhnout() {
     const left = presahX > 1 ? -stav.lbPosun * presahX : (sw - w) / 2;
     const top = stav.lbRozlozeno
         ? (presahY > 1 ? -stav.lbPosun * presahY : (sh - h) / 2)
-        : LB_LISTA + (sh - LB_LISTA - spodek - h) / 2;
+        : (sh - h) / 2;
 
     Object.assign(stav.lbPlakat.style, { left: `${left}px`, top: `${top}px`, width: `${w}px`, height: `${h}px` });
     stav.lbZobrazeno = { sirka: w, presah: Math.max(presahX, presahY), osa: presahX > presahY ? 'x' : 'y' };
@@ -304,6 +301,16 @@ export function lbZamichat() {
     lbZobrazit(stav.lbPolozky.indexOf(aktualni));
 }
 
+// Ovládání prohlížeče (panely, šipky, popisek) se ukáže po pohybu myší a po chvíli zase skryje.
+// Listování klávesami ho neukazuje. Nad ovládáním zůstává vidět, dokud tam myš je.
+const CAS_OVLADANI = 2500;
+let skrytiOvladani = null;
+function ukazatOvladani(zustat = false) {
+    lightbox.classList.add('ovladani');
+    clearTimeout(skrytiOvladani);
+    if (!zustat) skrytiOvladani = setTimeout(() => lightbox.classList.remove('ovladani'), CAS_OVLADANI);
+}
+
 export function otevritLightbox(index, slideshow = false, polozky = stav.aktualniPolozky) {
     if (polozky.length === 0) return;
     stav.lbPuvodniPoradi = null;
@@ -311,6 +318,7 @@ export function otevritLightbox(index, slideshow = false, polozky = stav.aktualn
     stav.lbPolozky = polozky;
     stav.lbZmeneno = false;
     lightbox.classList.remove('hidden');
+    ukazatOvladani();
     lbNaplnitListu();
     lbPrepnoutSlideshow(slideshow);
     lbZobrazit(index);
@@ -336,6 +344,15 @@ export function zavritLightbox() {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    lightbox.addEventListener('mousemove', (e) => {
+        ukazatOvladani(Boolean(e.target.closest('.lightbox-top, .album-nav, .lb-nav')));
+    });
+    // Ovládání klávesnicí (Tab do panelu) ho také ukáže
+    lightbox.addEventListener('focusin', (e) => {
+        // Jen zaměření z klávesnice; fokus, který prohlížeč nastaví sám při otevření, ovládání nedrží
+        if (e.target.closest('.lightbox-top, .album-nav') && e.target.matches(':focus-visible')) ukazatOvladani(true);
+    });
+
     try { stav.intervalSlideshow = parseInt(localStorage.getItem('intervalSlideshow')) || 4000; } catch { /* výchozí 4 s */ }
 
     document.getElementById('lbHearts').addEventListener('click', (e) => {

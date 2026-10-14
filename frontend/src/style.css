@@ -3379,3 +3379,17 @@ body.razeni .photo-item {
 .card .hearts:focus-within {
     opacity: 1;
 }
+
+/* Prohlížeč: ovládání (panely, šipky, popisek, zavření) je vidět jen chvíli po pohybu myší */
+.lightbox .lightbox-top,
+.lightbox .lb-nav,
+.lightbox .album-nav {
+    transition: opacity 0.25s;
+}
+
+.lightbox:not(.ovladani) .lightbox-top,
+.lightbox:not(.ovladani) .lb-nav,
+.lightbox:not(.ovladani) .album-nav {
+    opacity: 0;
+    pointer-events: none;
+}

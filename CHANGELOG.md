@@ -5,6 +5,16 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.12] – 2026-10-14
+
+Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Prohlížeč fotek: ovládání (panel nástrojů, lišta alb, šipky, popisek, zavření) je vidět po otevření
+  a po pohybu myší a asi po 2,5 s nečinnosti zmizí; nad ovládáním zůstává, dokud tam je myš. Listování
+  klávesami ho neukazuje.
+- Fotka v prohlížeči sahá od horního po spodní okraj okna (nebo od kraje ke kraji); ovládání leží přes ni.
+
 ## [0.17.11] – 2026-10-14
 
 Schéma databáze ani formát exportu se nemění.

@@ -5,3 +5,6 @@ frontend/dist
 # Databáze a její kopie nepatří do repozitáře
 *.db
 *.db.presunuta
+
+# Program sestavený přímo přes go build (wails build ho dává do build/bin)
+/playboy-app

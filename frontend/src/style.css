@@ -2851,7 +2851,22 @@ body.razeni .photo-item {
     font-weight: 600;
 }
 
-/* Volby přehledu: rozbalovací tlačítka „Řazení: A–Z ▾“ */
+/* Volby přehledu v horní liště hned za záložkami: rozbalovací tlačítka „Řazení: A–Z ▾“ a počet */
+.volby-prehledu {
+    display: flex;
+    align-items: center;
+    flex: none;
+    gap: 6px;
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left: 1px solid var(--border-color);
+}
+
+/* Řádek štítků, ze kterého se volby složily, v obsahu není vidět */
+.volby-v-liste {
+    display: none !important;
+}
+
 .volba {
     display: inline-flex;
     align-items: center;
@@ -2863,6 +2878,7 @@ body.razeni .photo-item {
     background-color: var(--bg-card);
     color: var(--text-main);
     font-size: 13px;
+    white-space: nowrap;
     cursor: pointer;
 }
 
@@ -2887,4 +2903,29 @@ body.razeni .photo-item {
 .volba.zapnuto {
     border-color: var(--accent);
     background-color: var(--accent-soft);
+}
+
+.volby-pocet {
+    margin-left: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* Užší okno: nejdřív zmizí počet, potom popisky (zůstane jen hodnota s ▾) */
+@media (max-width: 1180px) {
+    .volby-pocet {
+        display: none;
+    }
+}
+
+@media (max-width: 1000px) {
+    .volba span {
+        display: none;
+    }
+
+    .volby-prehledu {
+        margin-left: 8px;
+        padding-left: 8px;
+    }
 }

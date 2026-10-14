@@ -8,6 +8,7 @@ import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { otevritFotografa, otevritVydani } from './vydani';
 import { zrusitVyber } from './vyber';
+import { obnovitVolby } from '../ui/volby';
 
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají navíc v řádku okna tlačítko zpět
 export function ukazatPohled(pohled) {
@@ -23,6 +24,8 @@ export function ukazatPohled(pohled) {
     viewToggle.classList.toggle('podstranka', podstranka);
     // Přehled sbírky nemá co hledat; z profilu otevřeného z Přehledu se hledá dál
     searchInput.disabled = pohled === stats;
+    // Volby v liště patří ukázanému přehledu; profil a stránka vydání žádné nemají
+    obnovitVolby(pohled);
     backBtn.innerHTML = `&larr; ${esc(popisZpet())}`;
     // Lišta písmen patří jen ke galerii modelek, lišta desetiletí jen ke stěně
     if (pohled !== gallery) document.getElementById('galleryNav')?.classList.add('hidden');

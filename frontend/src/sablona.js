@@ -28,6 +28,8 @@ export const SABLONA_OKNA = `
         <button data-rezim="nejlepsi" title="Nejlepší" data-kratce="Nej">Nejlepší</button>
         <button data-rezim="prehled" title="Přehled" data-kratce="Př">Přehled</button>
       </div>
+      <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾…); plní je ui/volby.js -->
+      <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
       <div class="nav-controls">
         <label class="hledani">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
@@ -607,7 +609,7 @@ export const SABLONA_OKNA = `
         <h4>Prohlížení</h4>
         <ul>
           <li><strong>Přepínač v hlavičce</strong>: Modelky, Centerfoldy, Covery, Kalendář, Nejlepší, Přehled.</li>
-          <li><strong>Volby přehledu</strong> nad obsahem: <strong>Řazení ▾</strong> (abecedně, nově přidané, podle roku prvního vydání) a <strong>Srdíčka ▾</strong> (jen modelky s aspoň tolika srdíčky; Vše filtr zruší). <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
+          <li><strong>Volby přehledu</strong> v horní liště za záložkami: <strong>Řazení ▾</strong> (abecedně, nově přidané, podle roku prvního vydání) a <strong>Srdíčka ▾</strong> (jen modelky s aspoň tolika srdíčky; Vše filtr zruší). <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klik na vydání, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
         </ul>

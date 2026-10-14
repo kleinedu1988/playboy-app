@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.1] – 2026-10-14
+
+Volby přehledu v horní liště. Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Řazení, Srdíčka, Výběr a Edice jsou rozbalovací tlačítka přímo v horní liště za záložkami, i s počtem
+  (22 modelek); nad obsahem už žádný samostatný řádek není. V Nejlepších je v liště i Spustit slideshow
+  a přejmenování a smazání výběru je v nabídce Výběr. V užším okně ubude počet a popisky voleb.
+
 ## [0.17.0] – 2026-10-14
 
 Nová navigace ve stylu Fotek ve Windows. Schéma databáze ani formát exportu se nemění.

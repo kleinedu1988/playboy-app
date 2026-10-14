@@ -136,8 +136,19 @@ func seskupitDoAlb(fotky []Fotografie) []exportAlbum {
 
 func (a *App) exportovat() ([]byte, error) {
 	data := exportDat{Verze: 1, Modelky: []exportModelka{}}
+	exportovanoFotek := 0
 
-	for _, m := range a.GetModelky("") {
+	// Chyba čtení nesmí skončit neúplným souborem, který vypadá jako úspěšný export
+	modelky, err := a.nactiModelky("")
+	if err != nil {
+		return nil, fmt.Errorf("modelky se nepodařilo přečíst: %w", err)
+	}
+	for _, m := range modelky {
+		fotky, err := a.nactiFotografie(dotazFotekModelky, false, true, m.ID)
+		if err != nil {
+			return nil, fmt.Errorf("fotky modelky %s se nepodařilo přečíst: %w", m.Jmeno, err)
+		}
+		exportovanoFotek += len(fotky)
 		e := exportModelka{
 			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: m.Hodnoceni,
 			NarozeniDatum: m.NarozeniDatum, NarozeniMisto: m.NarozeniMisto, Narodnost: m.Narodnost, Etnicita: m.Etnicita,
@@ -147,7 +158,7 @@ func (a *App) exportovat() ([]byte, error) {
 			Tetovani: anoNeDoTextu(m.Tetovani), Piercing: anoNeDoTextu(m.Piercing),
 			Role: m.Role, Tags: m.Tags, Vystoupeni: m.Vystoupeni, PictorialVydani: m.PictorialVydani,
 			Poznamka: m.Poznamka, TitulniFotka: m.CoverID,
-			Alba: seskupitDoAlb(a.GetFotografieModelky(m.ID)),
+			Alba: seskupitDoAlb(fotky),
 		}
 		// Míry složené z obvodů se při importu složí znovu
 		if m.ObvodHrudnikCm > 0 && m.ObvodPasCm > 0 && m.ObvodBokyCm > 0 {
@@ -161,8 +172,25 @@ func (a *App) exportovat() ([]byte, error) {
 		data.Modelky = append(data.Modelky, e)
 	}
 
-	for _, album := range seskupitDoAlb(a.GetCovery()) {
+	covery, err := a.nactiFotografie(dotazCoveru, false, false)
+	if err != nil {
+		return nil, fmt.Errorf("covery se nepodařilo přečíst: %w", err)
+	}
+	exportovanoFotek += len(covery)
+	for _, album := range seskupitDoAlb(covery) {
 		data.Covery = append(data.Covery, exportCover{Vydani: album.Nazev, Fotky: album.Fotky})
+	}
+
+	// Kontrola úplnosti proti databázi: fotky modelek a covery časopisů
+	var modelekVDb, fotekVDb int
+	err = a.db.QueryRow(`SELECT (SELECT COUNT(*) FROM modelky), (SELECT COUNT(*) FROM fotografie f
+		WHERE (f.typ = 'Cover' AND f.modelka_id = 0) OR EXISTS (SELECT 1 FROM modelky m WHERE m.id = f.modelka_id))`).Scan(&modelekVDb, &fotekVDb)
+	if err != nil {
+		return nil, fmt.Errorf("úplnost exportu se nepodařilo ověřit: %w", err)
+	}
+	if modelekVDb != len(data.Modelky) || fotekVDb != exportovanoFotek {
+		return nil, fmt.Errorf("export není úplný: v databázi je %d modelek a %d fotek, načetlo se %d a %d",
+			modelekVDb, fotekVDb, len(data.Modelky), exportovanoFotek)
 	}
 
 	yamlData, err := yaml.Marshal(data)
@@ -209,7 +237,7 @@ func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *Vysled
 		}
 
 		var id int
-		err := a.db.QueryRow("SELECT id FROM fotografie WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND drive_file_id = ?",
+		err := a.db.QueryRow("SELECT id FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND drive_file_id = ?",
 			modelkaID, album.Nazev, album.Typ, ids[0]).Scan(&id)
 		if err != nil {
 			// Nová fotka přebírá datum alba ze souboru, bez něj okamžik importu
@@ -389,9 +417,13 @@ func (a *App) ExportovatDoSouboru() string {
 		return ""
 	}
 
+	// Nejdřív do dočasného souboru: přerušený zápis nesmí zničit starší export téhož jména
 	data, err := a.exportovat()
 	if err == nil {
-		err = os.WriteFile(cesta, data, 0o644)
+		err = os.WriteFile(cesta+".tmp", data, 0o600)
+	}
+	if err == nil {
+		err = os.Rename(cesta+".tmp", cesta)
 	}
 	if err != nil {
 		a.chyba("export", err)

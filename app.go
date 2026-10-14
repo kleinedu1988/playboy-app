@@ -14,6 +14,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+
+	"golang.org/x/text/unicode/norm"
 
 	_ "modernc.org/sqlite"
 )
@@ -213,7 +216,7 @@ func kopirovatSoubor(zdroj, cil string) error {
 // Cesta k databázi; při prvním spuštění převezme databázi starší verze,
 // která ležela ve složce spuštění nebo vedle programu
 func pripravitDatabazi() (string, error) {
-	if err := os.MkdirAll(slozkaDat(), 0o755); err != nil {
+	if err := os.MkdirAll(slozkaDat(), 0o700); err != nil {
 		return "", err
 	}
 	cil := filepath.Join(slozkaDat(), "playboy.db")
@@ -242,14 +245,26 @@ func pripravitDatabazi() (string, error) {
 	return cil, nil
 }
 
-// Záloha databáze před nevratným mazáním; uchovává se posledních pocetZaloh kopií
+// Název zálohy: playboy-RRRR-MM-DD-HHMMSS.mmm-[pořadí-]důvod.db
+var vzorZalohy = regexp.MustCompile(`^playboy-(\d{4}-\d{2}-\d{2})-\d{6}\.\d{3}-(?:\d+-)?(.+)\.db$`)
+
+const (
+	duvodDenni        = "denni"
+	pocetDennichZaloh = 7
+	pocetTydnuZaloh   = 4
+)
+
+// Záloha databáze. Bez úspěšné zálohy se nesmí pokračovat v mazání, proto se chyba nikdy nezamlčí.
 func (a *App) zalohovat(duvod string) error {
 	var zaznamu int
-	a.db.QueryRow("SELECT (SELECT COUNT(*) FROM modelky) + (SELECT COUNT(*) FROM fotografie)").Scan(&zaznamu)
+	if err := a.db.QueryRow("SELECT (SELECT COUNT(*) FROM modelky) + (SELECT COUNT(*) FROM fotografie)").Scan(&zaznamu); err != nil {
+		return fmt.Errorf("nelze zjistit obsah databáze: %w", err)
+	}
+	// Prázdnou databázi není proč zálohovat
 	if zaznamu == 0 {
 		return nil
 	}
-	if err := os.MkdirAll(slozkaZaloh(), 0o755); err != nil {
+	if err := os.MkdirAll(slozkaZaloh(), 0o700); err != nil {
 		return err
 	}
 
@@ -265,30 +280,155 @@ func (a *App) zalohovat(duvod string) error {
 	if _, err := a.db.Exec("VACUUM INTO '" + strings.ReplaceAll(cil, "'", "''") + "'"); err != nil {
 		return err
 	}
+	os.Chmod(cil, 0o600)
 
-	zalohy, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-*.db"))
-	sort.Strings(zalohy)
-	for len(zalohy) > pocetZaloh {
-		os.Remove(zalohy[0])
-		zalohy = zalohy[1:]
-	}
+	uklidZaloh()
 	return nil
+}
+
+// Každý důvod zálohy má vlastní frontu, aby úklid alb nevytlačil zálohu před importem nebo smazáním databáze.
+// Denních záloh zůstává posledních pocetDennichZaloh a k nim nejnovější z každého z dalších pocetTydnuZaloh týdnů.
+func uklidZaloh() {
+	soubory, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-*.db"))
+	// Od nejnovější
+	sort.Sort(sort.Reverse(sort.StringSlice(soubory)))
+
+	podleDuvodu := map[string][]string{}
+	for _, soubor := range soubory {
+		duvod := ""
+		if casti := vzorZalohy.FindStringSubmatch(filepath.Base(soubor)); casti != nil {
+			duvod = casti[2]
+		}
+		podleDuvodu[duvod] = append(podleDuvodu[duvod], soubor)
+	}
+
+	for duvod, zalohy := range podleDuvodu {
+		if duvod != duvodDenni {
+			for _, stara := range zalohy[min(len(zalohy), pocetZaloh):] {
+				os.Remove(stara)
+			}
+			continue
+		}
+		tydny := map[string]bool{}
+		for i, zaloha := range zalohy {
+			if i < pocetDennichZaloh {
+				continue
+			}
+			den, _ := time.Parse("2006-01-02", vzorZalohy.FindStringSubmatch(filepath.Base(zaloha))[1])
+			rok, tyden := den.ISOWeek()
+			klic := fmt.Sprintf("%d-%d", rok, tyden)
+			if tydny[klic] || len(tydny) >= pocetTydnuZaloh {
+				os.Remove(zaloha)
+				continue
+			}
+			tydny[klic] = true
+		}
+	}
+}
+
+// Jedna záloha denně při spuštění: pojistka proti chybám, které nejsou smazáním (špatné přejmenování, chybný import)
+func (a *App) denniZaloha() {
+	dnes := time.Now().Format("2006-01-02")
+	if dnesni, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-"+dnes+"-*-"+duvodDenni+".db")); len(dnesni) > 0 {
+		return
+	}
+	if err := a.zalohovat(duvodDenni); err != nil {
+		a.chyba("denní záloha", err)
+	}
 }
 
 // Složka se zálohami pro zobrazení v aplikaci
 func (a *App) SlozkaZaloh() string {
-	os.MkdirAll(slozkaZaloh(), 0o755)
+	os.MkdirAll(slozkaZaloh(), 0o700)
 	return slozkaZaloh()
+}
+
+type Zaloha struct {
+	Soubor  string `json:"soubor"`
+	Cas     string `json:"cas"`   // RRRR-MM-DD HH:MM:SS
+	Duvod   string `json:"duvod"` // denni, pred-smazanim-alba, pred-importem…
+	Modelek int    `json:"modelek"`
+	Fotek   int    `json:"fotek"`
+	// Záloha, kterou se nepodařilo přečíst; obnovit z ní nejde
+	Poskozena bool `json:"poskozena"`
+}
+
+// Zálohy od nejnovější, s počty, aby šlo poznat, ke které se vrátit
+func (a *App) SeznamZaloh() []Zaloha {
+	soubory, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-*.db"))
+	sort.Sort(sort.Reverse(sort.StringSlice(soubory)))
+
+	zalohy := []Zaloha{}
+	for _, soubor := range soubory {
+		nazev := filepath.Base(soubor)
+		casti := vzorZalohy.FindStringSubmatch(nazev)
+		if casti == nil {
+			continue
+		}
+		z := Zaloha{Soubor: nazev, Duvod: casti[2]}
+		if cas, err := time.Parse("2006-01-02-150405", nazev[len("playboy-"):len("playboy-")+17]); err == nil {
+			z.Cas = cas.Format("2006-01-02 15:04:05")
+		}
+		db, err := sql.Open("sqlite", soubor+"?mode=ro")
+		if err == nil {
+			err = db.QueryRow("SELECT (SELECT COUNT(*) FROM modelky), (SELECT COUNT(*) FROM fotografie)").Scan(&z.Modelek, &z.Fotek)
+			db.Close()
+		}
+		z.Poskozena = err != nil
+		zalohy = append(zalohy, z)
+	}
+	return zalohy
+}
+
+// Návrat databáze do stavu zálohy. Současný stav se předtím uloží jako další záloha a heslo zůstává současné.
+// Vrací text chyby, prázdný při úspěchu.
+func (a *App) ObnovitZalohu(soubor string) string {
+	// Jen soubor ze složky záloh, žádná cesta zvenku
+	if soubor != filepath.Base(soubor) || !vzorZalohy.MatchString(soubor) {
+		return "Neplatný název zálohy."
+	}
+	zaloha := filepath.Join(slozkaZaloh(), soubor)
+	cil := filepath.Join(slozkaDat(), "playboy.db")
+
+	overeni, err := sql.Open("sqlite", zaloha+"?mode=ro")
+	if err != nil {
+		return fmt.Sprintf("Zálohu se nepodařilo otevřít: %v", err)
+	}
+	stav := kontrolaSouboru(overeni)
+	overeni.Close()
+	if stav != "" {
+		return fmt.Sprintf("Záloha je poškozená (%s), databáze zůstala beze změny.", stav)
+	}
+
+	if err := a.zalohovat("pred-obnovenim"); err != nil {
+		return fmt.Sprintf("Současný stav se nepodařilo zazálohovat, obnovení se neprovedlo: %v", err)
+	}
+	heslo := a.nastaveni("heslo")
+
+	// Soubor se vyměňuje jen nad zavřenou databází; výměna je přejmenováním, takže buď proběhne celá, nebo vůbec
+	a.db.Close()
+	chybaKopie := kopirovatSoubor(zaloha, cil)
+	if err := a.otevritDatabazi(cil); err != nil {
+		return fmt.Sprintf("Databázi se po obnovení nepodařilo otevřít: %v", err)
+	}
+	if chybaKopie != nil {
+		return fmt.Sprintf("Zálohu se nepodařilo zkopírovat, databáze zůstala beze změny: %v", chybaKopie)
+	}
+	// Starší záloha může mít starší schéma
+	if err := a.migrovat(); err != nil {
+		return fmt.Sprintf("Obnovenou databázi se nepodařilo připravit: %v", err)
+	}
+	if err := a.ulozitNastaveni("heslo", heslo); err != nil {
+		return fmt.Sprintf("Databáze je obnovená, ale nepodařilo se zachovat současné heslo: %v", err)
+	}
+	return ""
 }
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	cesta, err := pripravitDatabazi()
 	if err == nil {
-		a.db, err = sql.Open("sqlite", cesta)
-	}
-	if err == nil {
-		err = a.db.Ping()
+		err = a.otevritDatabazi(cesta)
 	}
 	if err != nil {
 		// Bez databáze aplikace poběží nad prázdnou dočasnou, aby šla aspoň otevřít a chybu ukázat
@@ -298,6 +438,90 @@ func (a *App) startup(ctx context.Context) {
 		a.db.SetMaxOpenConns(1)
 	}
 
+	if err := a.migrovat(); err != nil && a.chybaStartu == "" {
+		a.chybaStartu = fmt.Sprintf("Databázi se nepodařilo připravit (%v). Nic neupravuj; záloha před úpravou je ve složce %s.", err, slozkaZaloh())
+		fmt.Println(a.chybaStartu)
+	}
+
+	// Až po migracích a jen nad databází, která se otevřela v pořádku
+	if a.chybaStartu == "" {
+		a.denniZaloha()
+	}
+}
+
+// Otevření souboru databáze; volá se při startu a znovu po obnovení ze zálohy
+func (a *App) otevritDatabazi(cesta string) error {
+	// Souběžná volání z rozhraní na sebe chvíli počkají, místo aby hned selhala na zamčené databázi
+	db, err := sql.Open("sqlite", cesta+"?_pragma=busy_timeout(5000)")
+	if err == nil {
+		err = db.Ping()
+	}
+	if err != nil {
+		return err
+	}
+	a.db = db
+	// Data jsou jen pro vlastníka účtu
+	os.Chmod(slozkaDat(), 0o700)
+	os.Chmod(cesta, 0o600)
+	// Poškozený soubor by se jinak ukázal jako prázdná sbírka bez jakékoli hlášky
+	if stav := kontrolaSouboru(a.db); stav != "" {
+		a.chybaStartu = fmt.Sprintf("Soubor databáze je poškozený (%s). Nic neupravuj a obnov poslední zálohu.", stav)
+		fmt.Println(a.chybaStartu)
+	}
+	return nil
+}
+
+// Rychlá kontrola celistvosti; prázdný text znamená, že je soubor v pořádku
+func kontrolaSouboru(db *sql.DB) string {
+	var stav string
+	if err := db.QueryRow("PRAGMA quick_check").Scan(&stav); err != nil {
+		return err.Error()
+	}
+	if stav != "ok" {
+		return stav
+	}
+	return ""
+}
+
+// Úpravy schématu jdou za sebou a databáze si v user_version pamatuje, kolik jich už má za sebou.
+// Nová úprava se přidává na konec seznamu; hotové se nemění.
+var migrace = []func(a *App) error{
+	(*App).migraceZaklad,
+	(*App).migraceIndexy,
+}
+
+func (a *App) migrovat() error {
+	var verze int
+	if err := a.db.QueryRow("PRAGMA user_version").Scan(&verze); err != nil {
+		return err
+	}
+	if verze > len(migrace) {
+		return fmt.Errorf("databáze je z novější verze programu (schéma %d, program zná %d)", verze, len(migrace))
+	}
+	if verze == len(migrace) {
+		return nil
+	}
+
+	// Před první čekající úpravou záloha; nová prázdná databáze ještě tabulky nemá a zálohovat není co
+	if a.maSloupec("modelky", "id") && a.maSloupec("fotografie", "id") {
+		if err := a.zalohovat("pred-migraci"); err != nil {
+			return fmt.Errorf("záloha před úpravou schématu selhala: %w", err)
+		}
+	}
+	for cislo := verze + 1; cislo <= len(migrace); cislo++ {
+		if err := migrace[cislo-1](a); err != nil {
+			return fmt.Errorf("úprava schématu č. %d: %w", cislo, err)
+		}
+		if _, err := a.db.Exec(fmt.Sprintf("PRAGMA user_version = %d", cislo)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Úprava č. 1: schéma, jak vznikalo do zavedení číslování. Každý krok si sám zjistí, zda je potřeba,
+// takže projde nad jakkoli starou databází.
+func (a *App) migraceZaklad() error {
 	// Tabulka modelek
 	a.db.Exec(`
 	CREATE TABLE IF NOT EXISTS modelky (
@@ -384,7 +608,41 @@ func (a *App) startup(ctx context.Context) {
 		fotograf TEXT,
 		UNIQUE(modelka_id, album, typ)
 	);`)
+	return nil
 }
+
+// Úprava č. 2: index pro hledání fotek alba a jedinečnost souboru v albu
+func (a *App) migraceIndexy() error {
+	tx, err := a.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	kroky := []string{
+		// Cover časopisu má modelku 0; NULL ze starších verzí by index i porovnávání obcházel
+		`UPDATE fotografie SET modelka_id = 0 WHERE modelka_id IS NULL`,
+		// Tentýž soubor dvakrát v jednom albu (dvojí odeslání formuláře): zůstává dříve vložený
+		`DELETE FROM fotografie WHERE id NOT IN (SELECT MIN(id) FROM fotografie GROUP BY modelka_id, album, typ, drive_file_id)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS fotografie_soubor_v_albu ON fotografie(modelka_id, album, typ, drive_file_id)`,
+		`CREATE INDEX IF NOT EXISTS fotografie_vydani ON fotografie(vydani)`,
+	}
+	for _, krok := range kroky {
+		if _, err := tx.Exec(krok); err != nil {
+			return err
+		}
+	}
+	return tx.Commit()
+}
+
+// Zavření databáze při ukončení programu
+func (a *App) shutdown() {
+	if a.db != nil {
+		a.db.Close()
+	}
+}
+
+var vzorHolehoID = regexp.MustCompile(`^[a-zA-Z0-9_-]{25,}$`)
 
 // Vytažení všech Drive ID z jakéhokoliv textu/odkazů
 func parseDriveIDs(rawInput string) []string {
@@ -402,14 +660,30 @@ func parseDriveIDs(rawInput string) []string {
 	}
 
 	// Pokud uživatel vložil pouze jedno čisté ID bez URL
-	if len(ids) == 0 && len(strings.TrimSpace(rawInput)) >= 25 {
-		ids = append(ids, strings.TrimSpace(rawInput))
+	// Holá ID bez odkazu, jedno nebo víc oddělených mezerami či řádky; odkaz na složku ani jiný text ID není
+	if len(ids) == 0 {
+		for _, slovo := range strings.Fields(rawInput) {
+			if vzorHolehoID.MatchString(slovo) && !seen[slovo] {
+				seen[slovo] = true
+				ids = append(ids, slovo)
+			}
+		}
 	}
 
 	return ids
 }
 
 func (a *App) GetModelky(vyhledavani string) []Modelka {
+	modelky, err := a.nactiModelky(vyhledavani)
+	if err != nil {
+		a.chyba("GetModelky", err)
+	}
+	return modelky
+}
+
+// Vrací, co se přečíst podařilo, a první chybu; export podle ní pozná, že seznam není úplný
+func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
+	var prvniChyba error
 	// Starší řádky mohou mít ve sloupcích NULL
 	vyber := []string{"id", "jmeno"}
 	for _, s := range sloupceModelky {
@@ -459,8 +733,7 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 
 	rows, err := a.db.Query(query)
 	if err != nil {
-		a.chyba("GetModelky", err)
-		return nil
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -476,7 +749,9 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &driveID,
 			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Hodnoceni, &m.Pridano)
 		if err != nil {
-			a.chyba("GetModelky", err)
+			if prvniChyba == nil {
+				prvniChyba = err
+			}
 			continue
 		}
 
@@ -499,17 +774,25 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 	sort.SliceStable(vysledky, func(i, j int) bool {
 		return zjednodusit(vysledky[i].Jmeno) < zjednodusit(vysledky[j].Jmeno)
 	})
-	return vysledky
+	if err := rows.Err(); err != nil && prvniChyba == nil {
+		prvniChyba = err
+	}
+	return vysledky, prvniChyba
 }
 
-var bezDiakritiky = strings.NewReplacer(
-	"á", "a", "č", "c", "ď", "d", "é", "e", "ě", "e", "í", "i", "ň", "n", "ó", "o",
-	"ř", "r", "š", "s", "ť", "t", "ú", "u", "ů", "u", "ý", "y", "ž", "z",
-)
+// Písmena, která se na základní tvar nerozkládají sama
+var zvlastniPismena = strings.NewReplacer("ł", "l", "ø", "o", "đ", "d", "ß", "ss", "æ", "ae", "œ", "oe", "þ", "th", "ı", "i")
 
-// Text pro porovnávání: malá písmena bez české diakritiky
+// Text pro porovnávání a řazení: malá písmena bez diakritiky jakéhokoli jazyka (Zoë = zoe, Ödegaard = odegaard)
 func zjednodusit(text string) string {
-	return bezDiakritiky.Replace(strings.ToLower(text))
+	rozlozeny := norm.NFD.String(strings.ToLower(text))
+	bez := strings.Map(func(znak rune) rune {
+		if unicode.Is(unicode.Mn, znak) {
+			return -1
+		}
+		return znak
+	}, rozlozeny)
+	return zvlastniPismena.Replace(bez)
 }
 
 // Každé hledané slovo se musí najít v některém údaji modelky; na velikosti písmen ani diakritice nezáleží.
@@ -783,21 +1066,30 @@ const razeniFotek = "f.poradi IS NULL, f.poradi, f.id"
 // Připojení údajů alba k fotce; sloupce se přidávají na konec výběru
 const (
 	vyberPopisu     = ", COALESCE(a.popis, ''), COALESCE(a.fotograf, '')"
-	pripojeniPopisu = " LEFT JOIN alba a ON a.modelka_id = COALESCE(f.modelka_id, 0) AND a.album = f.album AND a.typ = f.typ"
+	pripojeniPopisu = " LEFT JOIN alba a ON a.modelka_id = f.modelka_id AND a.album = f.album AND a.typ = f.typ"
 )
 
 // Řádek alba, ke kterému už nejsou žádné fotky, nesmí zůstat: jeho popis by se objevil u nového alba téhož jména
 const smazatPrazdnaAlba = `DELETE FROM alba WHERE NOT EXISTS (
-	SELECT 1 FROM fotografie f WHERE COALESCE(f.modelka_id, 0) = alba.modelka_id AND f.album = alba.album AND f.typ = alba.typ)`
+	SELECT 1 FROM fotografie f WHERE f.modelka_id = alba.modelka_id AND f.album = alba.album AND f.typ = alba.typ)`
 
 func (a *App) nacistFotografie(query string, sJmenem, sPopisem bool, args ...interface{}) []Fotografie {
-	rows, err := a.db.Query(query, args...)
+	fotky, err := a.nactiFotografie(query, sJmenem, sPopisem, args...)
 	if err != nil {
 		a.chyba("načtení fotografií", err)
-		return nil
+	}
+	return fotky
+}
+
+// Vrací, co se přečíst podařilo, a první chybu
+func (a *App) nactiFotografie(query string, sJmenem, sPopisem bool, args ...interface{}) ([]Fotografie, error) {
+	rows, err := a.db.Query(query, args...)
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 
+	var prvniChyba error
 	var fotky []Fotografie
 	for rows.Next() {
 		var f Fotografie
@@ -810,18 +1102,25 @@ func (a *App) nacistFotografie(query string, sJmenem, sPopisem bool, args ...int
 			cile = append(cile, &f.Popis, &f.Fotograf)
 		}
 		if err := rows.Scan(cile...); err != nil {
-			a.chyba("načtení fotografií", err)
+			if prvniChyba == nil {
+				prvniChyba = err
+			}
 			continue
 		}
 		f.URL = fmt.Sprintf("https://lh3.googleusercontent.com/d/%s", driveID)
 		fotky = append(fotky, f)
 	}
-	return fotky
+	if err := rows.Err(); err != nil && prvniChyba == nil {
+		prvniChyba = err
+	}
+	return fotky, prvniChyba
 }
 
 // Načtení fotek konkrétní modelky pro její detailní profil
+const dotazFotekModelky = vyberFotografii + vyberPopisu + " FROM fotografie f" + pripojeniPopisu + " WHERE f.modelka_id = ? ORDER BY " + razeniFotek
+
 func (a *App) GetFotografieModelky(modelkaID int) []Fotografie {
-	return a.nacistFotografie(vyberFotografii+vyberPopisu+" FROM fotografie f"+pripojeniPopisu+" WHERE f.modelka_id = ? ORDER BY "+razeniFotek, false, true, modelkaID)
+	return a.nacistFotografie(dotazFotekModelky, false, true, modelkaID)
 }
 
 // Všechny centerfoldy napříč modelkami pro stěnu plakátů
@@ -833,15 +1132,18 @@ func (a *App) GetCenterfoldy() []Fotografie {
 }
 
 // Covery časopisů nepatří k modelce (modelka_id = 0); album je vydání ve tvaru RRRR-MM
-var vzorVydani = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])$`)
+// Vydání je RRRR-MM, u jiné než výchozí (US) edice s příponou, např. 2009-11-CZ
+var vzorVydani = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])(-[A-Z]{2})?$`)
 
 // Pictorial může patřit jen k ročníku bez měsíce (např. „Cybergirl of the Year 2012")
-var vzorVydaniAlba = regexp.MustCompile(`^\d{4}(-(0[1-9]|1[0-2]))?$`)
+var vzorVydaniAlba = regexp.MustCompile(`^\d{4}(-(0[1-9]|1[0-2]))?(-[A-Z]{2})?$`)
+
+const dotazCoveru = vyberFotografii + ` FROM fotografie f
+		WHERE f.typ = 'Cover' AND f.modelka_id = 0
+		ORDER BY f.album DESC, f.id`
 
 func (a *App) GetCovery() []Fotografie {
-	return a.nacistFotografie(vyberFotografii+` FROM fotografie f
-		WHERE f.typ = 'Cover' AND COALESCE(f.modelka_id, 0) = 0
-		ORDER BY f.album DESC, f.id`, false, false)
+	return a.nacistFotografie(dotazCoveru, false, false)
 }
 
 // Přidání coveru (nebo více coverů) k vydání časopisu
@@ -973,7 +1275,7 @@ func (a *App) SetPopisAlba(modelkaID int, album, typ, popis, fotograf string) bo
 	} else {
 		// Popis patří jen k albu, které má aspoň jednu fotku
 		var fotek int
-		a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&fotek)
+		a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&fotek)
 		if fotek == 0 {
 			return false
 		}
@@ -985,6 +1287,25 @@ func (a *App) SetPopisAlba(modelkaID int, album, typ, popis, fotograf string) bo
 		a.chyba("SetPopisAlba", err)
 	}
 	return err == nil
+}
+
+// Fotografové ze všech alb sbírky pro našeptávání, aby se stejné jméno psalo vždy stejně
+func (a *App) GetFotografove() []string {
+	fotografove := []string{}
+	rows, err := a.db.Query("SELECT DISTINCT TRIM(fotograf) FROM alba WHERE TRIM(COALESCE(fotograf, '')) <> ''")
+	if err != nil {
+		a.chyba("GetFotografove", err)
+		return fotografove
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var jmeno string
+		if rows.Scan(&jmeno) == nil {
+			fotografove = append(fotografove, jmeno)
+		}
+	}
+	sort.Slice(fotografove, func(i, j int) bool { return zjednodusit(fotografove[i]) < zjednodusit(fotografove[j]) })
+	return fotografove
 }
 
 // Smazání celého alba (všech jeho fotek) z databáze
@@ -1002,6 +1323,40 @@ func (a *App) DeleteAlbum(modelkaID int, album, typ string) bool {
 		a.chyba("DeleteAlbum", err)
 	}
 	return err == nil
+}
+
+// Odebrání více fotek najednou (nedostupné soubory): jedna záloha předem a jedna transakce
+func (a *App) DeleteFotografieHromadne(ids []int) bool {
+	if len(ids) == 0 {
+		return true
+	}
+	// Bez zálohy se nemaže
+	if err := a.zalohovat("pred-odebranim-fotek"); err != nil {
+		a.chyba("zálohy", err)
+		return false
+	}
+	tx, err := a.db.Begin()
+	if err != nil {
+		a.chyba("DeleteFotografieHromadne", err)
+		return false
+	}
+	defer tx.Rollback()
+
+	for _, id := range ids {
+		if _, err := tx.Exec("DELETE FROM fotografie WHERE id = ?", id); err != nil {
+			a.chyba("DeleteFotografieHromadne", err)
+			return false
+		}
+	}
+	if _, err := tx.Exec(smazatPrazdnaAlba); err != nil {
+		a.chyba("DeleteFotografieHromadne", err)
+		return false
+	}
+	if err := tx.Commit(); err != nil {
+		a.chyba("DeleteFotografieHromadne", err)
+		return false
+	}
+	return true
 }
 
 // Odebrání jedné fotky z alba
@@ -1164,7 +1519,7 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 	var ids []string
 	for _, id := range parseDriveIDs(rawLinks) {
 		var pocet int
-		a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND drive_file_id = ?",
+		a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND drive_file_id = ?",
 			modelkaID, album, typ, id).Scan(&pocet)
 		if pocet > 0 {
 			vysledek.Duplicitni++

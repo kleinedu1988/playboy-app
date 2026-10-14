@@ -354,6 +354,12 @@ body {
     cursor: pointer;
 }
 
+/* Vypnuté tlačítko: ukládání právě běží */
+.btn:disabled {
+    opacity: 0.5;
+    cursor: progress;
+}
+
 .btn-primary {
     background-color: var(--accent);
     color: white;
@@ -1661,6 +1667,10 @@ button.tag:hover {
     display: none;
 }
 
+.album-nav-list {
+    scrollbar-width: none;
+}
+
 /* Alba pokračující mimo lištu se na té straně ztrácejí do pozadí */
 .album-nav-list.dalsi-vlevo {
     -webkit-mask-image: linear-gradient(to right, transparent, #000 48px);
@@ -2083,4 +2093,111 @@ body.razeni .photo-item {
 .stat-table-text td.stat-text {
     width: 100%;
     text-align: left;
+}
+
+/* Prohlížeč čeká na originál fotky pro lupu */
+.lightbox.nacita .poster {
+    cursor: progress;
+}
+
+/* Tlačítka vedle nadpisu alb v profilu */
+.album-actions-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+/* Tlačítko ⋯ v hlavičce alba: tatáž nabídka jako pravé tlačítko */
+.album-more {
+    margin-left: auto;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 20px;
+    cursor: pointer;
+}
+
+.album-more:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Obnovení ze zálohy */
+.modal-backup {
+    width: 620px;
+    max-width: calc(100% - 48px);
+}
+
+.backup-list {
+    max-height: 340px;
+    margin: 16px 0 0 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.backup-list:empty {
+    display: none;
+}
+
+.backup-list li {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 4px 8px 0;
+    border-top: 1px solid var(--border-color);
+    font-size: 13px;
+}
+
+.backup-list span {
+    color: var(--text-muted);
+}
+
+/* Řádek formuláře se třemi poli: měsíc, rok, edice */
+.form-row-3 {
+    grid-template-columns: 1fr 1fr 90px;
+}
+
+/* Když se typ obsahu nevybírá, fotograf zabere celý řádek */
+.form-row > .hidden + .form-group {
+    grid-column: 1 / -1;
+}
+
+.field-hint:empty {
+    display: none;
+}
+
+/* Drobná nápověda pod polem */
+.field-hint {
+    font-size: 11px;
+    color: var(--accent);
+}
+
+/* Přidávání ze stránky vydání */
+.issue-add {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 0 0;
+}
+
+/* Přepínač edice nad kalendářem */
+.cal-editions {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.cal-editions .chip.active {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.stat-year strong em {
+    font-size: 11px;
+    font-style: normal;
+    color: var(--accent);
 }

@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	_ "modernc.org/sqlite"
 )
@@ -886,7 +888,7 @@ func TestPrehledSbirky(t *testing.T) {
 		}
 	}
 	brezenADuben := [12]bool{2: true, 3: true}
-	if len(p.Rocniky) != 2 || p.Rocniky[0] != (RocnikPrehledu{Rok: 2010, Vydani: 2, Mesice: brezenADuben}) || p.Rocniky[1] != (RocnikPrehledu{Rok: 2011, Vydani: 1, Mesice: [12]bool{0: true}}) {
+	if len(p.Rocniky) != 2 || p.Rocniky[0] != (RocnikPrehledu{Rok: 2010, Edice: "US", Vydani: 2, Mesice: brezenADuben}) || p.Rocniky[1] != (RocnikPrehledu{Rok: 2011, Edice: "US", Vydani: 1, Mesice: [12]bool{0: true}}) {
 		t.Fatalf("ročníky: %+v", p.Rocniky)
 	}
 
@@ -909,5 +911,227 @@ func TestPrehledSbirky(t *testing.T) {
 	// Nově přidané záznamy mají datum přidání
 	if m := a.GetModelky("Jiná")[0]; len(m.Pridano) != 19 || len(a.GetFotografieModelky(jina)[0].Pridano) != 19 {
 		t.Fatalf("datum přidání chybí: %+v", m)
+	}
+}
+
+func TestPojistkyZaloh(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Modelka"})
+	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA+" "+odkazB)
+	a.SetPopisAlba(1, "Album", "Pictorial", "text", "")
+	zalohy := func(vzor string) []string {
+		soubory, _ := filepath.Glob(filepath.Join(slozkaZaloh(), vzor))
+		return soubory
+	}
+
+	// Denní záloha vznikne jednou za den, i když se program spustí víckrát
+	a.denniZaloha()
+	a.denniZaloha()
+	if denni := zalohy("*-denni.db"); len(denni) != 1 {
+		t.Fatalf("denní zálohy: %v", denni)
+	} else if info, _ := os.Stat(denni[0]); info.Mode().Perm() != 0o600 {
+		t.Fatalf("záloha má práva %v, chci jen pro vlastníka", info.Mode().Perm())
+	}
+
+	// Každý důvod má vlastní frontu: úklid alb nevytlačí zálohu před importem
+	if err := a.zalohovat("pred-importem"); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < pocetZaloh+3; i++ {
+		a.zalohovat("pred-smazanim-alba")
+	}
+	if len(zalohy("*-pred-importem.db")) != 1 || len(zalohy("*-pred-smazanim-alba.db")) != pocetZaloh || len(zalohy("*-denni.db")) != 1 {
+		t.Fatalf("po úklidu: import %d, alba %d, denní %d", len(zalohy("*-pred-importem.db")), len(zalohy("*-pred-smazanim-alba.db")), len(zalohy("*-denni.db")))
+	}
+
+	// Denní zálohy: posledních sedm a k nim nejnovější z každého ze čtyř dalších týdnů
+	for _, soubor := range zalohy("*.db") {
+		os.Remove(soubor)
+	}
+	den := time.Date(2026, 3, 31, 12, 0, 0, 0, time.UTC)
+	for i := 0; i < 60; i++ {
+		nazev := fmt.Sprintf("playboy-%s-120000.000-denni.db", den.AddDate(0, 0, -i).Format("2006-01-02"))
+		os.WriteFile(filepath.Join(slozkaZaloh(), nazev), nil, 0o600)
+	}
+	uklidZaloh()
+	zbyle := zalohy("*-denni.db")
+	if len(zbyle) != pocetDennichZaloh+pocetTydnuZaloh {
+		t.Fatalf("zbylo %d denních záloh: %v", len(zbyle), zbyle)
+	}
+	if nejstarsi := filepath.Base(zbyle[0]); nejstarsi < "playboy-2026-02-20" {
+		t.Fatalf("zůstala příliš stará záloha %s", nejstarsi)
+	}
+
+	// Hromadné odebrání fotek: záloha předem, text alba mizí až s poslední fotkou
+	fotky := a.GetFotografieModelky(1)
+	if !a.DeleteFotografieHromadne([]int{fotky[0].ID, fotky[1].ID}) || len(a.GetFotografieModelky(1)) != 0 {
+		t.Fatal("hromadné odebrání selhalo")
+	}
+	if len(zalohy("*-pred-odebranim-fotek.db")) != 1 {
+		t.Fatal("před hromadným odebráním nevznikla záloha")
+	}
+
+	// Když se záloha nepovede, mazání se nesmí provést
+	a.AddBulkPhotos(1, "Druhé", "Pictorial", odkazA)
+	os.RemoveAll(slozkaZaloh())
+	os.WriteFile(slozkaZaloh(), nil, 0o600) // místo složky soubor: zálohu není kam zapsat
+	if a.DeleteAlbum(1, "Druhé", "Pictorial") || a.DeleteModelka(1) || a.DeleteVse() || a.DeleteFotografieHromadne([]int{a.GetFotografieModelky(1)[0].ID}) {
+		t.Fatal("mazání proběhlo bez zálohy")
+	}
+	if len(a.GetModelky("")) != 1 || len(a.GetFotografieModelky(1)) != 1 {
+		t.Fatal("po neúspěšné záloze zmizela data")
+	}
+	os.Remove(slozkaZaloh())
+
+	// Nezjistitelný obsah databáze není „není co zálohovat": záloha musí ohlásit chybu, export také
+	a.db.Exec("ALTER TABLE fotografie RENAME TO fotografie_pryc")
+	if a.zalohovat("test") == nil {
+		t.Fatal("záloha nad nečitelnou databází vrátila úspěch")
+	}
+	if _, err := a.exportovat(); err == nil {
+		t.Fatal("export nad nečitelnou databází vrátil úspěch")
+	}
+}
+
+func TestMigraceAObnoveni(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	verze := func() (v int) { a.db.QueryRow("PRAGMA user_version").Scan(&v); return }
+	if verze() != len(migrace) {
+		t.Fatalf("nová databáze má schéma %d, chci %d", verze(), len(migrace))
+	}
+
+	a.AddModelka(Modelka{Jmeno: "Zoë Ödegaard"})
+	a.AddModelka(Modelka{Jmeno: "Adéla"})
+	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA+" "+odkazB)
+	a.NastavitHeslo("", "současné")
+
+	// Hledání a řazení nezávisí na diakritice žádného jazyka
+	if nalezene := a.GetModelky("zoe odegaard"); len(nalezene) != 1 {
+		t.Fatalf("hledání bez diakritiky: %+v", nalezene)
+	}
+	if vsechny := a.GetModelky(""); vsechny[0].Jmeno != "Adéla" {
+		t.Fatalf("řazení: %s je první", vsechny[0].Jmeno)
+	}
+
+	// Tentýž soubor v albu podruhé databáze nepřijme, ani kdyby kontrola v programu selhala
+	if _, err := a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id) VALUES (1, 'Album', 'Pictorial', ?)", idA); err == nil {
+		t.Fatal("databáze přijala tentýž soubor v albu dvakrát")
+	}
+
+	// Opakované spuštění migrací nic nemění a nedělá zálohu
+	if err := a.migrovat(); err != nil {
+		t.Fatal(err)
+	}
+	if zalohy, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "*-pred-migraci.db")); len(zalohy) != 0 {
+		t.Fatalf("zbytečná záloha před migrací: %v", zalohy)
+	}
+
+	// Databáze z novější verze programu se neupravuje
+	a.db.Exec(fmt.Sprintf("PRAGMA user_version = %d", len(migrace)+1))
+	if a.migrovat() == nil {
+		t.Fatal("novější schéma prošlo bez chyby")
+	}
+	a.db.Exec(fmt.Sprintf("PRAGMA user_version = %d", len(migrace)))
+
+	// Obnovení: záloha se dvěma fotkami, potom změny, potom návrat
+	if err := a.zalohovat("test"); err != nil {
+		t.Fatal(err)
+	}
+	a.DeleteAlbum(1, "Album", "Pictorial")
+	a.AddModelka(Modelka{Jmeno: "Přidaná po záloze"})
+	a.NastavitHeslo("současné", "nové")
+
+	seznam := a.SeznamZaloh()
+	var testovaci Zaloha
+	for _, z := range seznam {
+		if z.Duvod == "test" {
+			testovaci = z
+		}
+	}
+	if testovaci.Modelek != 2 || testovaci.Fotek != 2 || testovaci.Poskozena || len(testovaci.Cas) != 19 {
+		t.Fatalf("seznam záloh: %+v", seznam)
+	}
+	if a.ObnovitZalohu("../playboy.db") == "" || a.ObnovitZalohu("neexistuje.db") == "" {
+		t.Fatal("obnovení přijalo soubor mimo složku záloh")
+	}
+	if chyba := a.ObnovitZalohu(testovaci.Soubor); chyba != "" {
+		t.Fatal(chyba)
+	}
+	if len(a.GetModelky("")) != 2 || len(a.GetFotografieModelky(1)) != 2 {
+		t.Fatal("obnovení nevrátilo stav zálohy")
+	}
+	// Heslo zůstává to, které platilo před obnovením, ne to ze zálohy
+	if !a.Odemknout("nové") || a.Odemknout("současné") {
+		t.Fatal("obnovení vrátilo staré heslo")
+	}
+	// Stav před obnovením jde vrátit také
+	var predObnovenim Zaloha
+	for _, z := range a.SeznamZaloh() {
+		if z.Duvod == "pred-obnovenim" {
+			predObnovenim = z
+		}
+	}
+	if predObnovenim.Modelek != 3 || predObnovenim.Fotek != 0 {
+		t.Fatalf("záloha před obnovením: %+v", predObnovenim)
+	}
+
+	// Stará databáze bez indexu a se zdvojenou fotkou: úprava ji uklidí a předem zazálohuje
+	a.db.Exec("DROP INDEX fotografie_soubor_v_albu")
+	a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id) VALUES (1, 'Album', 'Pictorial', ?)", idA)
+	a.db.Exec("INSERT INTO fotografie (modelka_id, album, typ, drive_file_id) VALUES (NULL, '2009-11', 'Cover', ?)", idA)
+	a.db.Exec("PRAGMA user_version = 1")
+	if err := a.migrovat(); err != nil {
+		t.Fatal(err)
+	}
+	if len(a.GetFotografieModelky(1)) != 2 || len(a.GetCovery()) != 1 || verze() != len(migrace) {
+		t.Fatalf("po úpravě: %d fotek, %d coverů, schéma %d", len(a.GetFotografieModelky(1)), len(a.GetCovery()), verze())
+	}
+	if zalohy, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "*-pred-migraci.db")); len(zalohy) != 1 {
+		t.Fatalf("záloha před migrací: %v", zalohy)
+	}
+}
+
+func TestEdiceVydani(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Americká"})
+	a.AddModelka(Modelka{Jmeno: "Česká"})
+
+	// Stejný měsíc v US a CZ edici jsou dvě různá vydání
+	a.AddCover("2009-11", odkazA)
+	a.AddCover("2009-11-CZ", odkazB)
+	a.AddBulkPhotos(1, "2009-11", "Centerfold", odkazA)
+	a.AddBulkPhotos(2, "2009-11-CZ", "Centerfold", odkazB)
+	a.AddBulkPhotos(2, "Pictorial", "Pictorial", odkazA)
+	if !a.SetVydaniAlba(2, "Pictorial", "Pictorial", "2009-11-CZ") || !a.SetVydaniAlba(2, "Pictorial", "Pictorial", "2012-CZ") {
+		t.Fatal("vydání s edicí se nepřijalo")
+	}
+	a.SetVydaniAlba(2, "Pictorial", "Pictorial", "2009-11-CZ")
+	if a.SetVydaniAlba(2, "Pictorial", "Pictorial", "2009-11-cz") || a.AddCover("2009-13-CZ", odkazA).Vlozeno != 0 {
+		t.Fatal("neplatná edice nebo měsíc prošly")
+	}
+
+	us, cz := a.GetVydani("2009-11"), a.GetVydani("2009-11-CZ")
+	if len(us) != 2 || len(cz) != 3 {
+		t.Fatalf("US vydání má %d položek, CZ %d", len(us), len(cz))
+	}
+
+	p := a.GetPrehled()
+	if p.Vydani != 2 || len(p.Rocniky) != 2 || p.Rocniky[0].Edice != "US" || p.Rocniky[1].Edice != "CZ" || p.Rocniky[1].Vydani != 1 {
+		t.Fatalf("přehled: %d vydání, ročníky %+v", p.Vydani, p.Rocniky)
+	}
+
+	// Fotografové z celé sbírky, každý jednou
+	a.SetPopisAlba(2, "Pictorial", "Pictorial", "", "Arny Freytag")
+	a.SetPopisAlba(1, "2009-11", "Centerfold", "", " Arny Freytag ")
+	if f := a.GetFotografove(); len(f) != 1 || f[0] != "Arny Freytag" {
+		t.Fatalf("fotografové: %q", f)
+	}
+
+	// Odkaz na složku není ID fotky; holá ID oddělená řádky ano
+	if ids := parseDriveIDs("https://drive.google.com/drive/folders/1AbCdEfGhIjKlMnOpQrStUvWxYz012345"); len(ids) != 0 {
+		t.Fatalf("odkaz na složku dal ID %v", ids)
+	}
+	if ids := parseDriveIDs(idA + "\n" + idB); len(ids) != 2 {
+		t.Fatalf("holá ID: %v", ids)
 	}
 }

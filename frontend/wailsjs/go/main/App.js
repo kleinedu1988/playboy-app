@@ -22,6 +22,10 @@ export function DeleteFotografie(arg1) {
   return window['go']['main']['App']['DeleteFotografie'](arg1);
 }
 
+export function DeleteFotografieHromadne(arg1) {
+  return window['go']['main']['App']['DeleteFotografieHromadne'](arg1);
+}
+
 export function DeleteModelka(arg1) {
   return window['go']['main']['App']['DeleteModelka'](arg1);
 }
@@ -44,6 +48,10 @@ export function GetCovery() {
 
 export function GetFotografieModelky(arg1) {
   return window['go']['main']['App']['GetFotografieModelky'](arg1);
+}
+
+export function GetFotografove() {
+  return window['go']['main']['App']['GetFotografove']();
 }
 
 export function GetModelky(arg1) {
@@ -72,6 +80,10 @@ export function MaZamek() {
 
 export function NastavitHeslo(arg1, arg2) {
   return window['go']['main']['App']['NastavitHeslo'](arg1, arg2);
+}
+
+export function ObnovitZalohu(arg1) {
+  return window['go']['main']['App']['ObnovitZalohu'](arg1);
 }
 
 export function Odemknout(arg1) {
@@ -116,6 +128,10 @@ export function SetTitulniFotka(arg1, arg2) {
 
 export function SetVydaniAlba(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SetVydaniAlba'](arg1, arg2, arg3, arg4);
+}
+
+export function SeznamZaloh() {
+  return window['go']['main']['App']['SeznamZaloh']();
 }
 
 export function SlozkaZaloh() {

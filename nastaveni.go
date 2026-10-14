@@ -54,11 +54,11 @@ func nacistStavOkna() StavOkna {
 }
 
 func ulozitStavOkna(stav StavOkna) error {
-	if err := os.MkdirAll(slozkaDat(), 0o755); err != nil {
+	if err := os.MkdirAll(slozkaDat(), 0o700); err != nil {
 		return err
 	}
 	data, _ := json.MarshalIndent(stav, "", "  ")
-	return os.WriteFile(souborOkna(), data, 0o644)
+	return os.WriteFile(souborOkna(), data, 0o600)
 }
 
 // Zapsání stavu okna těsně před zavřením
@@ -155,6 +155,7 @@ type PolozkaPrehledu struct {
 
 type RocnikPrehledu struct {
 	Rok    int      `json:"rok"`
+	Edice  string   `json:"edice"`  // US, CZ…
 	Vydani int      `json:"vydani"` // kolik měsíců ročníku ve sbírce je
 	Mesice [12]bool `json:"mesice"` // které to jsou, od ledna
 }
@@ -315,7 +316,8 @@ func (a *App) GetPrehled() Prehled {
 	}
 	p.Vydani = len(poradi)
 
-	rocniky := map[int]int{}
+	// Ročník je rok v jedné edici
+	rocniky := map[string]int{}
 	for _, v := range poradi {
 		if !vydani[v].cover {
 			p.VydaniBezCoveru = append(p.VydaniBezCoveru, v)
@@ -327,15 +329,20 @@ func (a *App) GetPrehled() Prehled {
 		for _, znak := range v[:4] {
 			rok = rok*10 + int(znak-'0')
 		}
-		if rocniky[rok] == 0 {
-			p.Rocniky = append(p.Rocniky, RocnikPrehledu{Rok: rok})
+		edice := "US"
+		if len(v) > 7 {
+			edice = v[8:]
 		}
-		rocniky[rok]++
+		klic := fmt.Sprintf("%d-%s", rok, edice)
+		i, znamy := rocniky[klic]
+		if !znamy {
+			i = len(p.Rocniky)
+			rocniky[klic] = i
+			p.Rocniky = append(p.Rocniky, RocnikPrehledu{Rok: rok, Edice: edice})
+		}
 		mesic := int(v[5]-'0')*10 + int(v[6]-'0')
-		p.Rocniky[len(p.Rocniky)-1].Mesice[mesic-1] = true
-	}
-	for i := range p.Rocniky {
-		p.Rocniky[i].Vydani = rocniky[p.Rocniky[i].Rok]
+		p.Rocniky[i].Mesice[mesic-1] = true
+		p.Rocniky[i].Vydani++
 	}
 	return p
 }

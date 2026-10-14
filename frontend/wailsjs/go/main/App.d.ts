@@ -12,6 +12,8 @@ export function DeleteAlbum(arg1:number,arg2:string,arg3:string):Promise<boolean
 
 export function DeleteFotografie(arg1:number):Promise<boolean>;
 
+export function DeleteFotografieHromadne(arg1:Array<number>):Promise<boolean>;
+
 export function DeleteModelka(arg1:number):Promise<boolean>;
 
 export function DeleteVse():Promise<boolean>;
@@ -23,6 +25,8 @@ export function GetCenterfoldy():Promise<Array<main.Fotografie>>;
 export function GetCovery():Promise<Array<main.Fotografie>>;
 
 export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>>;
+
+export function GetFotografove():Promise<Array<string>>;
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
@@ -37,6 +41,8 @@ export function ImportovatZeSouboru(arg1:string):Promise<main.VysledekImportu>;
 export function MaZamek():Promise<boolean>;
 
 export function NastavitHeslo(arg1:string,arg2:string):Promise<boolean>;
+
+export function ObnovitZalohu(arg1:string):Promise<string>;
 
 export function Odemknout(arg1:string):Promise<boolean>;
 
@@ -59,6 +65,8 @@ export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean)
 export function SetTitulniFotka(arg1:number,arg2:number):Promise<boolean>;
 
 export function SetVydaniAlba(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
+
+export function SeznamZaloh():Promise<Array<main.Zaloha>>;
 
 export function SlozkaZaloh():Promise<string>;
 

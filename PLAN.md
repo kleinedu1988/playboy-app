@@ -1,6 +1,7 @@
 # Plán a odložené nápady
 
 Sem se zapisuje, co se má udělat později, aby se to neztratilo. Hotové věci se odsud mažou.
+Větší plán po etapách je v `ROADMAP.md`; tady zůstávají drobné nápady a rozhodnutí.
 
 ## Později
 
@@ -13,7 +14,6 @@ Sem se zapisuje, co se má udělat později, aby se to neztratilo. Hotové věci
   prázdných roků; hledání filtruje jen podle roku.
 
 ## Zatím přeskočeno
-- Obnovení databáze ze zálohy na kliknutí (zálohy jsou v `~/.local/share/playboy-app/zalohy/`).
 - Přesun fotky mezi alby a změna typu jedné fotky.
 
 ## Rozhodnuto nedělat

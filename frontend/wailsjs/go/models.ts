@@ -207,6 +207,7 @@ export namespace main {
 	}
 	export class RocnikPrehledu {
 	    rok: number;
+	    edice: string;
 	    vydani: number;
 	    mesice: boolean[];
 	
@@ -217,6 +218,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.rok = source["rok"];
+	        this.edice = source["edice"];
 	        this.vydani = source["vydani"];
 	        this.mesice = source["mesice"];
 	    }
@@ -320,6 +322,28 @@ export namespace main {
 	        this.nedostupne = source["nedostupne"];
 	        this.duplicitni = source["duplicitni"];
 	        this.neovereno = source["neovereno"];
+	    }
+	}
+	export class Zaloha {
+	    soubor: string;
+	    cas: string;
+	    duvod: string;
+	    modelek: number;
+	    fotek: number;
+	    poskozena: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Zaloha(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.soubor = source["soubor"];
+	        this.cas = source["cas"];
+	        this.duvod = source["duvod"];
+	        this.modelek = source["modelek"];
+	        this.fotek = source["fotek"];
+	        this.poskozena = source["poskozena"];
 	    }
 	}
 

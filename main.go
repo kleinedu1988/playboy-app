@@ -54,6 +54,17 @@ func main() {
 			zapamatovatOkno(ctx)
 			return false
 		},
+		OnShutdown: func(ctx context.Context) { app.shutdown() },
+		// Druhé spuštění nad stejnou složkou dat jen ukáže už otevřené okno
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId: idInstance(),
+			OnSecondInstanceLaunch: func(options.SecondInstanceData) {
+				if app.ctx != nil {
+					runtime.WindowUnminimise(app.ctx)
+					runtime.WindowShow(app.ctx)
+				}
+			},
+		},
 		Bind: []interface{}{
 			app,
 		},

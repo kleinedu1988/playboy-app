@@ -10,5 +10,10 @@
   "author": {
     "name": "",
     "email": ""
+  },
+  "info": {
+    "productName": "Playboy Database",
+    "productVersion": "0.7.0",
+    "comments": "Osobní katalog modelek, alb, centerfoldů a coverů"
   }
 }

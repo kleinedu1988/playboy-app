@@ -436,7 +436,7 @@ type ObnovaFotky struct {
 	ModelkaID int    `json:"modelkaId"`
 	Album     string `json:"album"`
 	Typ       string `json:"typ"`
-	URL       string `json:"url"`
+	DriveID   string `json:"driveId"`
 	Vydani    string `json:"vydani"`
 	Rotace    int    `json:"rotace"`
 	Spojit    bool   `json:"spojit"`
@@ -451,7 +451,7 @@ type ObnovaFotky struct {
 func (a *App) ObnovitFotky(fotky []ObnovaFotky) int {
 	vraceno := 0
 	for _, f := range fotky {
-		ids := parseDriveIDs(f.URL)
+		ids := parseDriveIDs(f.DriveID)
 		if len(ids) == 0 {
 			continue
 		}

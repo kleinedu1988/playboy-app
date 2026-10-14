@@ -79,7 +79,10 @@ Cíl: fotka ve špatném albu, album u špatné modelky i duplicitní modelka se
 | Import a hromadné vkládání v jedné transakci | Po chybě uprostřed dnes zůstane půlka | M |
 | Stav dostupnosti u fotky, kontrola Disku po dávkách | Fotka se neodebere po první neúspěšné kontrole; 20 000 požadavků denně by Google omezil | M |
 
-## Etapa 4 – Sbírka o stovkách modelek
+## Etapa 4 – Sbírka o stovkách modelek (hotovo 14. 10. 2026 kromě přepínače řazení a úplného rozdělení `main.js`)
+
+Z `main.js` je zatím vyčleněná kostra okna (`sablona.js`), oznámení, lišta částí a kontextová nabídka
+(`ui/`); pohledy, prohlížeč a formuláře v něm zůstávají. Kontrola typů čeká na jejich vyčlenění.
 
 Cíl: ve stovkách karet se neztratíte a údaje se doplňují v řadě za sebou.
 

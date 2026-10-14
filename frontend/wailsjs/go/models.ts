@@ -30,6 +30,7 @@ export namespace main {
 	    poradi: number;
 	    pridano: string;
 	    dalsiModelky: OdkazModelky[];
+	    driveId: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Fotografie(source);
@@ -52,6 +53,7 @@ export namespace main {
 	        this.poradi = source["poradi"];
 	        this.pridano = source["pridano"];
 	        this.dalsiModelky = this.convertValues(source["dalsiModelky"], OdkazModelky);
+	        this.driveId = source["driveId"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -165,6 +167,7 @@ export namespace main {
 	    poznamka: string;
 	    hodnoceni: number;
 	    pridano: string;
+	    netykaSe: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -206,6 +209,7 @@ export namespace main {
 	        this.poznamka = source["poznamka"];
 	        this.hodnoceni = source["hodnoceni"];
 	        this.pridano = source["pridano"];
+	        this.netykaSe = source["netykaSe"];
 	    }
 	}
 	
@@ -213,7 +217,7 @@ export namespace main {
 	    modelkaId: number;
 	    album: string;
 	    typ: string;
-	    url: string;
+	    driveId: string;
 	    vydani: string;
 	    rotace: number;
 	    spojit: boolean;
@@ -232,7 +236,7 @@ export namespace main {
 	        this.modelkaId = source["modelkaId"];
 	        this.album = source["album"];
 	        this.typ = source["typ"];
-	        this.url = source["url"];
+	        this.driveId = source["driveId"];
 	        this.vydani = source["vydani"];
 	        this.rotace = source["rotace"];
 	        this.spojit = source["spojit"];
@@ -261,6 +265,7 @@ export namespace main {
 	    }
 	}
 	export class PolozkaPrehledu {
+	    netykaSe: boolean;
 	    modelkaId: number;
 	    jmeno: string;
 	    album: string;
@@ -272,6 +277,7 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.netykaSe = source["netykaSe"];
 	        this.modelkaId = source["modelkaId"];
 	        this.jmeno = source["jmeno"];
 	        this.album = source["album"];
@@ -357,6 +363,28 @@ export namespace main {
 		}
 	}
 	
+	export class VydaniKalendare {
+	    vydani: string;
+	    cover: boolean;
+	    centerfold: boolean;
+	    pictorial: boolean;
+	    nahled: string;
+	    modelka: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new VydaniKalendare(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vydani = source["vydani"];
+	        this.cover = source["cover"];
+	        this.centerfold = source["centerfold"];
+	        this.pictorial = source["pictorial"];
+	        this.nahled = source["nahled"];
+	        this.modelka = source["modelka"];
+	    }
+	}
 	export class VysledekImportu {
 	    noveModelky: number;
 	    upraveneModelky: number;

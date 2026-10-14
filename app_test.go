@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -222,10 +223,10 @@ func TestCovery(t *testing.T) {
 	a.UpdateCover(covery[0].ID, "1999-05", "")
 	a.UpdateCover(covery[1].ID, "1999-06", "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view")
 	covery = a.GetCovery()
-	if covery[0].Album != "1999-06" || covery[0].URL != "https://lh3.googleusercontent.com/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC" {
+	if covery[0].Album != "1999-06" || covery[0].DriveID != "CCCCCCCCCCCCCCCCCCCCCCCCCCCCC" {
 		t.Fatalf("úprava coveru s novým odkazem: %+v", covery[0])
 	}
-	if covery[1].Album != "1999-05" || covery[1].URL != "https://lh3.googleusercontent.com/d/"+idB {
+	if covery[1].Album != "1999-05" || covery[1].DriveID != idB {
 		t.Fatalf("úprava coveru bez odkazu změnila obrázek: %+v", covery[1])
 	}
 }
@@ -862,7 +863,7 @@ func TestPrehledSbirky(t *testing.T) {
 	a.AddCover("2010-03", odkazA)
 	a.AddCover("2011-01", odkazA)
 
-	p := a.GetPrehled()
+	p := a.GetPrehled(false)
 	if p.Modelek != 2 || p.Alb != 3 || p.Fotek != 4 || p.HodnocenychFotek != 1 || p.Coveru != 2 || p.Vydani != 3 {
 		t.Fatalf("počty: %+v", p)
 	}
@@ -900,7 +901,7 @@ func TestPrehledSbirky(t *testing.T) {
 	jina := a.GetModelky("Jiná")[0].ID
 	a.AddBulkPhotos(jina, "2010-03", "Centerfold", odkazB)
 	var popisy []string
-	for _, u := range a.GetPrehled().Podezrele {
+	for _, u := range a.GetPrehled(false).Podezrele {
 		popisy = append(popisy, u.Jmeno+": "+u.Popis)
 	}
 	vse := strings.Join(popisy, " | ")
@@ -1115,7 +1116,7 @@ func TestEdiceVydani(t *testing.T) {
 		t.Fatalf("US vydání má %d položek, CZ %d", len(us), len(cz))
 	}
 
-	p := a.GetPrehled()
+	p := a.GetPrehled(false)
 	if p.Vydani != 2 || len(p.Rocniky) != 2 || p.Rocniky[0].Edice != "US" || p.Rocniky[1].Edice != "CZ" || p.Rocniky[1].Vydani != 1 {
 		t.Fatalf("přehled: %d vydání, ročníky %+v", p.Vydani, p.Rocniky)
 	}
@@ -1226,7 +1227,7 @@ func TestOpravyBezMazani(t *testing.T) {
 		return nove
 	}()
 	a.DeleteFotografie(nove.ID)
-	if n := a.ObnovitFotky([]ObnovaFotky{{ModelkaID: anna, Album: nove.Album, Typ: nove.Typ, URL: nove.URL, Hodnoceni: nove.Hodnoceni, Popis: nove.Popis, Fotograf: nove.Fotograf}}); n != 1 {
+	if n := a.ObnovitFotky([]ObnovaFotky{{ModelkaID: anna, Album: nove.Album, Typ: nove.Typ, DriveID: nove.DriveID, Hodnoceni: nove.Hodnoceni, Popis: nove.Popis, Fotograf: nove.Fotograf}}); n != 1 {
 		t.Fatalf("vráceno %d fotek", n)
 	}
 	for _, f := range a.GetFotografieModelky(anna) {
@@ -1317,5 +1318,98 @@ func TestOpakovanaNedostupnost(t *testing.T) {
 	a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE nedostupne_od IS NOT NULL").Scan(&nedostupnych)
 	if nedostupnych != 0 {
 		t.Fatal("dostupná fotka zůstala označená jako nedostupná")
+	}
+}
+
+func TestEtapa4Backend(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Blondýna Nováková", VlasyBarva: "Blond", Narodnost: "Česká", NarozeniDatum: "1975-03-01", Poznamka: "zrzavá kamarádka"})
+	a.AddModelka(Modelka{Jmeno: "Zrzka", VlasyBarva: "Zrzavá", Poznamka: "blond paruka"})
+	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA)
+	a.SetPopisAlba(1, "Album", "Pictorial", "", "Arny Freytag")
+	a.SetVydaniAlba(1, "Album", "Pictorial", "1999-04-CZ")
+	a.AddBulkPhotos(2, "1975-06", "Centerfold", odkazB)
+
+	// Cílené hledání: hodnota jen v daném údaji; obyčejné slovo všude
+	for dotaz, cekano := range map[string]int{
+		"blond": 2, "vlasy:blond": 1, "vlasy:zrzava": 1, `fotograf:"arny freytag"`: 1, "fotograf:freytag": 1,
+		"rok:1975": 1, "rok:1999": 1, "narozena:1975": 1, "edice:cz": 1, "edice:us": 1, "vlasy:blond rok:1975": 0,
+		"neznamepole:blond": 0,
+	} {
+		if n := len(a.GetModelky(dotaz)); n != cekano {
+			t.Errorf("hledání %q našlo %d, čekáno %d", dotaz, n, cekano)
+		}
+	}
+
+	// Netýká se: položka zmizí z přehledu, se skrytými se ukáže s příznakem
+	if len(a.GetPrehled(false).BezCenterfoldu) != 1 {
+		t.Fatal("modelka bez centerfoldu chybí v přehledu")
+	}
+	a.SetNetykaSe(1, "centerfold", true)
+	a.SetNetykaSe(1, "titulni", true)
+	a.SetNetykaSeAlba(1, "Album", "Pictorial", "text", true)
+	p := a.GetPrehled(false)
+	if len(p.BezCenterfoldu) != 0 || len(p.AlbaBezPopisu) != 0 {
+		t.Fatalf("označené „netýká se“ zůstalo v přehledu: %+v", p)
+	}
+	if s := a.GetPrehled(true); len(s.BezCenterfoldu) != 1 || !s.BezCenterfoldu[0].NetykaSe || !s.AlbaBezPopisu[0].NetykaSe {
+		t.Fatalf("přehled se skrytými: %+v", s)
+	}
+	if m := a.GetModelky("Blondýna")[0]; m.NetykaSe != "centerfold,titulni" {
+		t.Fatalf("netýká se u modelky: %q", m.NetykaSe)
+	}
+	a.SetNetykaSe(1, "centerfold", false)
+	if len(a.GetPrehled(false).BezCenterfoldu) != 1 {
+		t.Fatal("zrušené označení se neprojevilo")
+	}
+
+	// Kalendář: jeden řádek na vydání s náhledem a jménem z centerfoldu
+	k := a.GetKalendar()
+	if len(k) != 2 || k[0].Vydani != "1975-06" || !k[0].Centerfold || k[0].Modelka != "Zrzka" || !strings.Contains(k[0].Nahled, idB) || !k[1].Pictorial {
+		t.Fatalf("kalendář: %+v", k)
+	}
+
+	// Šablona adresy obrázků: jedno místo, změna se projeví všude; bez {id} se odmítne
+	if a.GetSablonaObrazku() != vychoziSablonaObrazku || a.SetSablonaObrazku("https://jinde/obrazek") {
+		t.Fatal("šablona bez {id} prošla nebo výchozí nesedí")
+	}
+	if !a.SetSablonaObrazku("https://drive.google.com/thumbnail?id={id}&sz={velikost}") {
+		t.Fatal("platná šablona se neuložila")
+	}
+	if f := a.GetFotografieModelky(1)[0]; f.URL != "https://drive.google.com/thumbnail?id="+idA+"&sz={velikost}" || f.DriveID != idA {
+		t.Fatalf("adresa podle šablony: %s", f.URL)
+	}
+	a.SetSablonaObrazku("")
+	if a.GetSablonaObrazku() != vychoziSablonaObrazku {
+		t.Fatal("prázdná šablona nevrátila výchozí")
+	}
+}
+
+// Verze v programu, ve wails.json, ve frontend/package.json a v changelogu musí souhlasit
+func TestVerzeSouhlasi(t *testing.T) {
+	cisla := strings.TrimSuffix(Verze, "-dev")
+	if !regexp.MustCompile(`^\d+\.\d+\.\d+$`).MatchString(cisla) {
+		t.Fatalf("verze %q není MAJOR.MINOR.PATCH", Verze)
+	}
+	precist := func(cesta string) string {
+		data, err := os.ReadFile(cesta)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return string(data)
+	}
+	if !strings.Contains(precist("wails.json"), `"productVersion": "`+cisla+`"`) {
+		t.Errorf("wails.json nemá productVersion %s", cisla)
+	}
+	if !strings.Contains(precist("frontend/package.json"), `"version": "`+cisla+`"`) {
+		t.Errorf("frontend/package.json nemá version %s", cisla)
+	}
+	changelog := precist("CHANGELOG.md")
+	if !strings.Contains(changelog, "## ["+cisla+"]") {
+		t.Errorf("CHANGELOG.md nemá oddíl pro %s", cisla)
+	}
+	// Vydaná verze (bez -dev) musí mít v changelogu datum
+	if !strings.HasSuffix(Verze, "-dev") && !regexp.MustCompile(`## \[`+regexp.QuoteMeta(cisla)+`\] – \d{4}-\d{2}-\d{2}`).MatchString(changelog) {
+		t.Errorf("vydaná verze %s nemá v CHANGELOG.md datum", cisla)
 	}
 }

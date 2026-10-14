@@ -2265,3 +2265,39 @@ body.razeni .photo-item {
 .album-header .chip {
     white-space: nowrap;
 }
+
+/* Přehled: údaj označený „netýká se" */
+.stat-table td.netyka {
+    color: #4a4a52;
+}
+
+.stat-toggle {
+    margin-left: 12px;
+    font-size: 12px;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+/* Kalendář: sbalená řada prázdných roků */
+.cal-gap + .cal-year,
+.cal-year + .cal-gap,
+.cal-gap + .cal-gap {
+    margin-top: 16px;
+}
+
+.cal-gap-btn {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px dashed var(--border-color);
+    border-radius: 8px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.cal-gap-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}

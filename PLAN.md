@@ -7,8 +7,7 @@ Větší plán po etapách je v `ROADMAP.md`; tady zůstávají drobné nápady 
 
 ### Kalendář vydání
 - Základní verze existuje (roky × měsíce, tečky cover / centerfold / pictorial, klik na prázdné políčko nabídne cover, centerfold a pictorial, přepínač edic).
-- Potřebuje lépe rozpracovat. Známé slabiny: mezi nejstarším a nejnovějším vydáním vzniká dlouhá řada
-  prázdných roků; hledání filtruje jen podle roku.
+- Hledání v kalendáři filtruje jen podle roku.
 
 ## Rozhodnuto nedělat
 - Lišta filtrů nad galerií modelek (byla hotová a zrušena; hledání prohledává všechny údaje).

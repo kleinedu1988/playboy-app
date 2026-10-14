@@ -144,9 +144,20 @@ func (a *App) NastavitHeslo(stare, nove string) bool {
 	return true
 }
 
+// Chybějící údaj do seznamu; označený „netýká se" jen při zobrazení skrytých
+func pridatChybejici(seznam *[]PolozkaPrehledu, polozka PolozkaPrehledu, netykaSe, vcetneSkrytych bool) {
+	if netykaSe && !vcetneSkrytych {
+		return
+	}
+	polozka.NetykaSe = netykaSe
+	*seznam = append(*seznam, polozka)
+}
+
 // Přehled sbírky: počty a seznamy toho, co ještě chybí doplnit
 
 type PolozkaPrehledu struct {
+	// Označeno „netýká se"; v seznamech jen při zobrazení skrytých
+	NetykaSe  bool   `json:"netykaSe"`
 	ModelkaID int    `json:"modelkaId"`
 	Jmeno     string `json:"jmeno"`
 	Album     string `json:"album"` // prázdné u položky, která se týká celé modelky
@@ -190,7 +201,8 @@ type Prehled struct {
 	Podezrele []PodezrelyUdaj `json:"podezrele"`
 }
 
-func (a *App) GetPrehled() Prehled {
+// vcetneSkrytych: i položky označené „netýká se" (s příznakem), aby šlo označení zrušit
+func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 	p := Prehled{
 		BezTitulni: []PolozkaPrehledu{}, BezNarozeni: []PolozkaPrehledu{}, BezCenterfoldu: []PolozkaPrehledu{},
 		BezHodnoceni: []PolozkaPrehledu{}, AlbaBezPopisu: []PolozkaPrehledu{}, AlbaBezVydani: []PolozkaPrehledu{},
@@ -202,7 +214,7 @@ func (a *App) GetPrehled() Prehled {
 	maCenterfold := map[int]bool{}
 	rows, err := a.db.Query(`
 		SELECT f.modelka_id, m.jmeno, f.album, f.typ, COUNT(*), COALESCE(SUM(COALESCE(f.hodnoceni, 0) > 0), 0),
-			COALESCE(MAX(f.vydani), ''), COALESCE(MAX(al.popis), '')
+			COALESCE(MAX(f.vydani), ''), COALESCE(MAX(al.popis), ''), COALESCE(MAX(al.netyka_se), '')
 		FROM fotografie f
 		JOIN modelky m ON m.id = f.modelka_id
 		LEFT JOIN alba al ON al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ
@@ -215,8 +227,8 @@ func (a *App) GetPrehled() Prehled {
 	for rows.Next() {
 		var polozka PolozkaPrehledu
 		var fotek, hodnocenych int
-		var vydani, popis string
-		if err := rows.Scan(&polozka.ModelkaID, &polozka.Jmeno, &polozka.Album, &polozka.Typ, &fotek, &hodnocenych, &vydani, &popis); err != nil {
+		var vydani, popis, netykaSe string
+		if err := rows.Scan(&polozka.ModelkaID, &polozka.Jmeno, &polozka.Album, &polozka.Typ, &fotek, &hodnocenych, &vydani, &popis, &netykaSe); err != nil {
 			continue
 		}
 		p.Alb++
@@ -232,10 +244,10 @@ func (a *App) GetPrehled() Prehled {
 			continue
 		}
 		if popis == "" {
-			p.AlbaBezPopisu = append(p.AlbaBezPopisu, polozka)
+			pridatChybejici(&p.AlbaBezPopisu, polozka, obsahujeKlic(netykaSe, "text"), vcetneSkrytych)
 		}
 		if vydani == "" {
-			p.AlbaBezVydani = append(p.AlbaBezVydani, polozka)
+			pridatChybejici(&p.AlbaBezVydani, polozka, obsahujeKlic(netykaSe, "vydani"), vcetneSkrytych)
 		}
 	}
 	rows.Close()
@@ -292,16 +304,16 @@ func (a *App) GetPrehled() Prehled {
 		p.Modelek++
 		polozka := PolozkaPrehledu{ModelkaID: m.ID, Jmeno: m.Jmeno}
 		if m.CoverID == "" {
-			p.BezTitulni = append(p.BezTitulni, polozka)
+			pridatChybejici(&p.BezTitulni, polozka, obsahujeKlic(m.NetykaSe, "titulni"), vcetneSkrytych)
 		}
 		if m.NarozeniDatum == "" {
-			p.BezNarozeni = append(p.BezNarozeni, polozka)
+			pridatChybejici(&p.BezNarozeni, polozka, obsahujeKlic(m.NetykaSe, "zakladni"), vcetneSkrytych)
 		}
 		if !maCenterfold[m.ID] {
-			p.BezCenterfoldu = append(p.BezCenterfoldu, polozka)
+			pridatChybejici(&p.BezCenterfoldu, polozka, obsahujeKlic(m.NetykaSe, "centerfold"), vcetneSkrytych)
 		}
 		if m.Hodnoceni == 0 {
-			p.BezHodnoceni = append(p.BezHodnoceni, polozka)
+			pridatChybejici(&p.BezHodnoceni, polozka, obsahujeKlic(m.NetykaSe, "hodnoceni"), vcetneSkrytych)
 		}
 	}
 
@@ -309,22 +321,14 @@ func (a *App) GetPrehled() Prehled {
 	type obsah struct{ cover, centerfold bool }
 	vydani := map[string]*obsah{}
 	var poradi []string
-	for _, f := range a.GetPrehledVydani() {
-		if !vzorVydani.MatchString(f.Vydani) {
+	for _, v := range a.GetKalendar() {
+		if !vzorVydani.MatchString(v.Vydani) {
 			continue
 		}
-		if vydani[f.Vydani] == nil {
-			vydani[f.Vydani] = &obsah{}
-			poradi = append(poradi, f.Vydani)
-		}
-		switch f.Typ {
-		case "Cover":
-			vydani[f.Vydani].cover = true
-			p.Coveru++
-		case "Centerfold":
-			vydani[f.Vydani].centerfold = true
-		}
+		vydani[v.Vydani] = &obsah{v.Cover, v.Centerfold}
+		poradi = append(poradi, v.Vydani)
 	}
+	a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE typ = 'Cover'").Scan(&p.Coveru)
 	p.Vydani = len(poradi)
 
 	// Ročník je rok v jedné edici

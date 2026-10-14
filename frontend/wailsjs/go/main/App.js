@@ -54,20 +54,32 @@ export function GetFotografove() {
   return window['go']['main']['App']['GetFotografove']();
 }
 
+export function GetKalendar() {
+  return window['go']['main']['App']['GetKalendar']();
+}
+
 export function GetModelky(arg1) {
   return window['go']['main']['App']['GetModelky'](arg1);
 }
 
-export function GetPrehled() {
-  return window['go']['main']['App']['GetPrehled']();
+export function GetPrehled(arg1) {
+  return window['go']['main']['App']['GetPrehled'](arg1);
 }
 
 export function GetPrehledVydani() {
   return window['go']['main']['App']['GetPrehledVydani']();
 }
 
+export function GetSablonaObrazku() {
+  return window['go']['main']['App']['GetSablonaObrazku']();
+}
+
 export function GetTagy() {
   return window['go']['main']['App']['GetTagy']();
+}
+
+export function GetVerze() {
+  return window['go']['main']['App']['GetVerze']();
 }
 
 export function GetVydani(arg1) {
@@ -138,6 +150,14 @@ export function SetHodnoceniFotek(arg1, arg2) {
   return window['go']['main']['App']['SetHodnoceniFotek'](arg1, arg2);
 }
 
+export function SetNetykaSe(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetNetykaSe'](arg1, arg2, arg3);
+}
+
+export function SetNetykaSeAlba(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['SetNetykaSeAlba'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function SetPopisAlba(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['SetPopisAlba'](arg1, arg2, arg3, arg4, arg5);
 }
@@ -148,6 +168,10 @@ export function SetPoradiFotek(arg1) {
 
 export function SetRotaceFotek(arg1, arg2) {
   return window['go']['main']['App']['SetRotaceFotek'](arg1, arg2);
+}
+
+export function SetSablonaObrazku(arg1) {
+  return window['go']['main']['App']['SetSablonaObrazku'](arg1);
 }
 
 export function SetSpojeniAlba(arg1, arg2, arg3, arg4) {

@@ -14,6 +14,19 @@ cd frontend && npm test  # testy čistých funkcí rozhraní (frontend/src/lib)
 
 Značka `webkit2_41`, kterou vyžaduje Fedora, je nastavená ve `wails.json`.
 
+## Verze
+
+Program se verzuje podle sémantického verzování; seznam změn je v `CHANGELOG.md`, verze se ukazuje
+v nabídce ⋯. Do 1.0.0 zvyšuje MINOR každá změna schématu databáze nebo formátu exportu.
+
+Vydání verze:
+
+1. v `verze.go` odstranit příponu `-dev` (nebo nastavit novou verzi), stejné číslo dát do
+   `wails.json` (`info.productVersion`) a `frontend/package.json` (`version`),
+2. v `CHANGELOG.md` nahradit „nevydáno“ datem,
+3. `go test ./...` (test hlídá, že verze souhlasí), commit a značka `git tag -a vX.Y.Z`,
+4. po vydání zvednout verzi na další s příponou `-dev` a v changelogu založit oddíl „nevydáno“.
+
 ## Kde jsou data
 
 | Co | Kde |
@@ -31,13 +44,17 @@ Soubory na Disku musí být sdílené „kdokoli s odkazem", aplikace se k Disku
 - `export.go` – export a import sbírky v YAML
 - `nastaveni.go` – zapamatování okna, zámek heslem, přehled sbírky
 - `instance.go` – zámek jediné instance
+- `frontend/src/main.js` – pohledy, prohlížeč fotek, formuláře
+- `frontend/src/sablona.js` – kostra okna (HTML)
+- `frontend/src/ui/` – sdílené prvky rozhraní: oznámení, lišta částí, kontextová nabídka
 - `frontend/src/lib/` – čisté funkce rozhraní (texty, alba), které jdou testovat bez okna
+- `alba.go` – sdílená alba, přesuny a slučování, vrácení odebraných fotek
 
 Změny schématu databáze jsou očíslované úpravy v `migrace` (`app.go`); databáze si číslo poslední
 provedené pamatuje v `PRAGMA user_version` a před každou čekající úpravou se uloží záloha. Nová úprava
 se přidává na konec seznamu, hotové se nemění.
 - `main.go` – okno aplikace
-- `frontend/src/main.js`, `style.css` – celé rozhraní
+- `frontend/src/style.css` – vzhled
 
 ## Heslo
 
@@ -59,3 +76,8 @@ Tlačítko ⋯ v hlavičce → „Obnovit ze zálohy…". Před obnovením se ul
 
 Vydání je uložené jako `RRRR-MM` (nebo jen `RRRR` u pictorialu), výchozí edice US bez přípony,
 ostatní s příponou: `2009-11-CZ`. Edice se volí ve formuláři alba a coveru; kalendář ukazuje vždy jednu.
+
+## Cílené hledání
+
+Do hledání modelek jde psát i `pole:hodnota`, např. `vlasy:blond`, `fotograf:"arny freytag"`, `rok:1975`
+(rok vydání), `narozena:1990`, `edice:CZ`, `tag:`, `role:`, `narodnost:`, `oci:`, `misto:`. Slova se kombinují.

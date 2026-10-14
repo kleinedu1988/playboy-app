@@ -28,13 +28,19 @@ export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>
 
 export function GetFotografove():Promise<Array<string>>;
 
+export function GetKalendar():Promise<Array<main.VydaniKalendare>>;
+
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
-export function GetPrehled():Promise<main.Prehled>;
+export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
 export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
 
+export function GetSablonaObrazku():Promise<string>;
+
 export function GetTagy():Promise<Array<string>>;
+
+export function GetVerze():Promise<string>;
 
 export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
 
@@ -70,11 +76,17 @@ export function SetHodnoceni(arg1:number,arg2:number):Promise<boolean>;
 
 export function SetHodnoceniFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 
+export function SetNetykaSe(arg1:number,arg2:string,arg3:boolean):Promise<boolean>;
+
+export function SetNetykaSeAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5:boolean):Promise<boolean>;
+
 export function SetPopisAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
 
 export function SetPoradiFotek(arg1:Array<number>):Promise<boolean>;
 
 export function SetRotaceFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
+
+export function SetSablonaObrazku(arg1:string):Promise<boolean>;
 
 export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean):Promise<boolean>;
 

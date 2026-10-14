@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode"
 
@@ -89,8 +90,12 @@ type Modelka struct {
 	// Kdy byla modelka přidána (RRRR-MM-DD HH:MM:SS); prázdné u záznamů starších než tento údaj
 	Pridano string `json:"pridano"`
 
+	// Údaje, které se u modelky nesledují (centerfold neměla…): klíče oddělené čárkou
+	NetykaSe string `json:"netykaSe"`
+
 	// Popisy a fotografové alb modelky, jen pro hledání
-	textyAlb string
+	textyAlb       string
+	fotografoveAlb string
 }
 
 type Fotografie struct {
@@ -116,6 +121,8 @@ type Fotografie struct {
 	Pridano string `json:"pridano"`
 	// Další modelky alba kromě hlavní (vyplněno v profilu a na stránce vydání)
 	DalsiModelky []OdkazModelky `json:"dalsiModelky"`
+	// ID souboru na Disku; adresu obrázku skládá URL ze šablony
+	DriveID string `json:"driveId"`
 }
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
@@ -428,6 +435,135 @@ func (a *App) ObnovitZalohu(soubor string) string {
 	return ""
 }
 
+// Adresa obrázku na Disku: šablona s {id} a {velikost} (velikost doplní rozhraní, např. w600 nebo s0).
+// Je na jednom místě a jde změnit v nastavení, kdyby Google adresu náhledů změnil.
+const vychoziSablonaObrazku = "https://lh3.googleusercontent.com/d/{id}={velikost}"
+
+var sablonaObrazku atomic.Value
+
+func adresaObrazku(driveID string) string {
+	sablona, _ := sablonaObrazku.Load().(string)
+	if sablona == "" {
+		sablona = vychoziSablonaObrazku
+	}
+	return strings.ReplaceAll(sablona, "{id}", driveID)
+}
+
+func (a *App) GetSablonaObrazku() string {
+	return adresaObrazku("{id}")
+}
+
+// Nová šablona adresy obrázků; musí obsahovat {id}, prázdná vrací výchozí
+func (a *App) SetSablonaObrazku(sablona string) bool {
+	sablona = strings.TrimSpace(sablona)
+	if sablona != "" && !strings.Contains(sablona, "{id}") {
+		return false
+	}
+	if sablona == vychoziSablonaObrazku {
+		sablona = ""
+	}
+	if err := a.ulozitNastaveni("sablona_obrazku", sablona); err != nil {
+		a.chyba("SetSablonaObrazku", err)
+		return false
+	}
+	sablonaObrazku.Store(sablona)
+	return true
+}
+
+// Úprava č. 4: údaje označené „netýká se" u modelky a u alba
+func (a *App) migraceNetykaSe() error {
+	for _, tabulka := range []string{"modelky", "alba"} {
+		if !a.maSloupec(tabulka, "netyka_se") {
+			if _, err := a.db.Exec("ALTER TABLE " + tabulka + " ADD COLUMN netyka_se TEXT"); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Klíče „netýká se": u modelky titulni, zakladni, vzhled, zarazeni, centerfold, hodnoceni; u alba text, vydani
+func prepnoutKlic(seznam, klic string, pridat bool) string {
+	var klice []string
+	for _, k := range strings.Split(seznam, ",") {
+		if k = strings.TrimSpace(k); k != "" && k != klic {
+			klice = append(klice, k)
+		}
+	}
+	if pridat {
+		klice = append(klice, klic)
+	}
+	sort.Strings(klice)
+	return strings.Join(klice, ",")
+}
+
+func obsahujeKlic(seznam, klic string) bool {
+	for _, k := range strings.Split(seznam, ",") {
+		if strings.TrimSpace(k) == klic {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *App) SetNetykaSe(modelkaID int, klic string, netyka bool) bool {
+	var seznam string
+	a.db.QueryRow("SELECT COALESCE(netyka_se, '') FROM modelky WHERE id = ?", modelkaID).Scan(&seznam)
+	_, err := a.db.Exec("UPDATE modelky SET netyka_se = NULLIF(?, '') WHERE id = ?", prepnoutKlic(seznam, klic, netyka), modelkaID)
+	if err != nil {
+		a.chyba("SetNetykaSe", err)
+	}
+	return err == nil
+}
+
+func (a *App) SetNetykaSeAlba(modelkaID int, album, typ, klic string, netyka bool) bool {
+	id, err := zajistitAlbum(a.db, modelkaID, album, typ)
+	if err == nil {
+		var seznam string
+		a.db.QueryRow("SELECT COALESCE(netyka_se, '') FROM alba WHERE id = ?", id).Scan(&seznam)
+		_, err = a.db.Exec("UPDATE alba SET netyka_se = NULLIF(?, '') WHERE id = ?", prepnoutKlic(seznam, klic, netyka), id)
+	}
+	if err != nil {
+		a.chyba("SetNetykaSeAlba", err)
+	}
+	return err == nil
+}
+
+// Kalendář: jeden řádek na vydání, co k němu je a jeden náhled; místo každé fotky přiřazené k vydání
+type VydaniKalendare struct {
+	Vydani     string `json:"vydani"`
+	Cover      bool   `json:"cover"`
+	Centerfold bool   `json:"centerfold"`
+	Pictorial  bool   `json:"pictorial"`
+	Nahled     string `json:"nahled"`  // adresa obrázku: cover, jinak centerfold, jinak pictorial
+	Modelka    string `json:"modelka"` // jméno modelky z centerfoldu
+}
+
+func (a *App) GetKalendar() []VydaniKalendare {
+	vysledek := []VydaniKalendare{}
+	rows, err := a.db.Query(`
+		SELECT v, MAX(typ = 'Cover'), MAX(typ = 'Centerfold'), MAX(typ NOT IN ('Cover', 'Centerfold')),
+			(SELECT f2.drive_file_id FROM fotografie f2 WHERE ` + strings.ReplaceAll(vydaniFotky, "f.", "f2.") + ` = v
+				ORDER BY CASE f2.typ WHEN 'Cover' THEN 0 WHEN 'Centerfold' THEN 1 ELSE 2 END, f2.id LIMIT 1),
+			COALESCE(MAX(CASE WHEN typ = 'Centerfold' THEN jmeno END), '')
+		FROM (SELECT ` + vydaniFotky + ` AS v, f.typ, m.jmeno FROM fotografie f LEFT JOIN modelky m ON m.id = f.modelka_id)
+		WHERE v <> '' GROUP BY v ORDER BY v`)
+	if err != nil {
+		a.chyba("GetKalendar", err)
+		return vysledek
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var v VydaniKalendare
+		var nahled string
+		if rows.Scan(&v.Vydani, &v.Cover, &v.Centerfold, &v.Pictorial, &nahled, &v.Modelka) == nil {
+			v.Nahled = adresaObrazku(nahled)
+			vysledek = append(vysledek, v)
+		}
+	}
+	return vysledek
+}
+
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 	cesta, err := pripravitDatabazi()
@@ -446,6 +582,8 @@ func (a *App) startup(ctx context.Context) {
 		a.chybaStartu = fmt.Sprintf("Databázi se nepodařilo připravit (%v). Nic neupravuj; záloha před úpravou je ve složce %s.", err, slozkaZaloh())
 		fmt.Println(a.chybaStartu)
 	}
+
+	sablonaObrazku.Store(a.nastaveni("sablona_obrazku"))
 
 	// Až po migracích a jen nad databází, která se otevřela v pořádku
 	if a.chybaStartu == "" {
@@ -494,6 +632,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceZaklad,
 	(*App).migraceIndexy,
 	(*App).migraceSdilenaAlba,
+	(*App).migraceNetykaSe,
 }
 
 func (a *App) migrovat() error {
@@ -708,7 +847,7 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 	}
 
 	vyber = append(vyber, `(SELECT COUNT(*) FROM fotografie f WHERE f.modelka_id = modelky.id OR EXISTS (SELECT 1 FROM alba al JOIN alba_modelky am ON am.album_id = al.id
-		WHERE am.modelka_id = modelky.id AND al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ))`, "COALESCE(hodnoceni, 0)", "COALESCE(pridano, '')")
+		WHERE am.modelka_id = modelky.id AND al.modelka_id = f.modelka_id AND al.album = f.album AND al.typ = f.typ))`, "COALESCE(hodnoceni, 0)", "COALESCE(pridano, '')", "COALESCE(netyka_se, '')")
 
 	// Vydání každé modelky odvozená z jejích fotek
 	vydaniModelek := map[int][]string{}
@@ -727,12 +866,14 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 
 	// Popisy alb se prohledávají spolu s údaji modelky
 	textyAlb := map[int]string{}
+	fotografoveAlb := map[int]string{}
 	if radky, err := a.db.Query("SELECT modelka_id, COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba UNION ALL SELECT am.modelka_id, COALESCE(al.popis, ''), COALESCE(al.fotograf, '') FROM alba_modelky am JOIN alba al ON al.id = am.album_id"); err == nil {
 		for radky.Next() {
 			var id int
 			var popis, fotograf string
 			if radky.Scan(&id, &popis, &fotograf) == nil {
 				textyAlb[id] += popis + "\n" + fotograf + "\n"
+				fotografoveAlb[id] += fotograf + "\n"
 			}
 		}
 		radky.Close()
@@ -756,7 +897,7 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
 			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
 			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &driveID,
-			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Hodnoceni, &m.Pridano)
+			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.PocetFotek, &m.Hodnoceni, &m.Pridano, &m.NetykaSe)
 		if err != nil {
 			if prvniChyba == nil {
 				prvniChyba = err
@@ -767,9 +908,10 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		ids := parseDriveIDs(driveID)
 		if len(ids) > 0 {
 			m.CoverID = ids[0]
-			m.CoverURL = fmt.Sprintf("https://lh3.googleusercontent.com/d/%s", ids[0])
+			m.CoverURL = adresaObrazku(ids[0])
 		}
 		m.textyAlb = textyAlb[m.ID]
+		m.fotografoveAlb = fotografoveAlb[m.ID]
 		m.Vydani = vydaniModelek[m.ID]
 		if m.Vydani == nil {
 			m.Vydani = []string{}
@@ -804,16 +946,70 @@ func zjednodusit(text string) string {
 	return zvlastniPismena.Replace(bez)
 }
 
-// Každé hledané slovo se musí najít v některém údaji modelky; na velikosti písmen ani diakritice nezáleží.
-// Filtruje se tady a ne v SQL, protože LIKE v SQLite neumí malá a velká písmena s diakritikou.
+// Pole pro cílené hledání („vlasy:blond", „fotograf:\"arny freytag\"", „rok:1975"); hodnota se hledá jen v daném údaji
+func poleHledani(m Modelka) map[string]string {
+	roky, edice := []string{}, []string{}
+	for _, v := range m.Vydani {
+		roky = append(roky, v[:4])
+		if len(v) > 4 && v[len(v)-3] == '-' && v[len(v)-2] >= 'A' {
+			edice = append(edice, v[len(v)-2:])
+		} else {
+			edice = append(edice, "US")
+		}
+	}
+	narozena := ""
+	if len(m.NarozeniDatum) >= 4 {
+		narozena = m.NarozeniDatum[:4]
+	}
+	return map[string]string{
+		"jmeno": m.Jmeno + "\n" + m.DalsiJmena, "vlasy": m.VlasyBarva, "oci": m.OciBarva, "narodnost": m.Narodnost,
+		"etnicita": m.Etnicita, "misto": m.NarozeniMisto, "tag": m.Tags, "tagy": m.Tags, "role": m.Role,
+		"fotograf": m.fotografoveAlb, "rok": strings.Join(roky, " "), "vydani": strings.Join(m.Vydani, " "),
+		"narozena": narozena, "edice": strings.Join(edice, " "), "prsa": m.VelikostPrsou + " " + m.PrsaTyp,
+		"ochlupeni": m.Ochlupeni, "poznamka": m.Poznamka,
+	}
+}
+
+// Slova hledání; „pole:hodnota" i „pole:\"víc slov\"" zůstanou pohromadě
+var vzorSlovaHledani = regexp.MustCompile(`([\p{L}]+):"([^"]*)"|"([^"]*)"|(\S+)`)
+
+// Každé hledané slovo se musí najít v některém údaji modelky, cílené slovo v daném údaji; na velikosti písmen
+// ani diakritice nezáleží. Filtruje se tady a ne v SQL, protože LIKE v SQLite neumí malá a velká písmena s diakritikou.
 func odpovidaHledani(m Modelka, vyhledavani string) bool {
 	udaje := zjednodusit(strings.Join([]string{
 		m.Jmeno, m.Narodnost, m.Etnicita, m.NarozeniMisto, m.NarozeniDatum, m.VlasyBarva, m.OciBarva,
 		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Miry, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags,
 		m.DalsiJmena, m.Poznamka, strings.Join(m.Vydani, " "), m.textyAlb,
 	}, "\n"))
-	for _, slovo := range strings.Fields(zjednodusit(vyhledavani)) {
-		if !strings.Contains(udaje, slovo) {
+	var pole map[string]string
+	for _, casti := range vzorSlovaHledani.FindAllStringSubmatch(vyhledavani, -1) {
+		klic, hodnota := casti[1], casti[2]
+		if klic == "" {
+			slovo := casti[3] + casti[4]
+			if i := strings.Index(slovo, ":"); i > 0 && i < len(slovo)-1 {
+				klic, hodnota = slovo[:i], slovo[i+1:]
+			} else {
+				hodnota = slovo
+			}
+		}
+		hodnota = zjednodusit(strings.TrimSpace(hodnota))
+		if hodnota == "" {
+			continue
+		}
+		if klic != "" {
+			if pole == nil {
+				pole = poleHledani(m)
+			}
+			if text, zname := pole[zjednodusit(klic)]; zname {
+				if !strings.Contains(zjednodusit(text), hodnota) {
+					return false
+				}
+				continue
+			}
+			// Neznámé pole: hledá se celé slovo jako obyčejný text
+			hodnota = zjednodusit(klic) + ":" + hodnota
+		}
+		if !strings.Contains(udaje, hodnota) {
 			return false
 		}
 	}
@@ -1117,7 +1313,8 @@ func (a *App) nactiFotografie(query string, sJmenem, sPopisem bool, args ...inte
 			}
 			continue
 		}
-		f.URL = fmt.Sprintf("https://lh3.googleusercontent.com/d/%s", driveID)
+		f.DriveID = driveID
+		f.URL = adresaObrazku(driveID)
 		fotky = append(fotky, f)
 	}
 	if err := rows.Err(); err != nil && prvniChyba == nil {
@@ -1398,7 +1595,7 @@ var klientDisku = &http.Client{Timeout: 20 * time.Second}
 
 // Malý náhled stačí; smazaný nebo nesdílený soubor vrací místo obrázku stránku
 func overitSouborNaDisku(driveID string) int {
-	resp, err := klientDisku.Get(fmt.Sprintf("https://lh3.googleusercontent.com/d/%s=w64", driveID))
+	resp, err := klientDisku.Get(strings.ReplaceAll(adresaObrazku(driveID), "{velikost}", "w64"))
 	if err != nil {
 		return souborNeoveren
 	}

@@ -24,6 +24,11 @@ export function nazevVydani(vydani) {
     return (v.mesic ? `${MESICE[parseInt(v.mesic) - 1]} ${v.rok}` : v.rok) + (v.edice !== VYCHOZI_EDICE ? ` · ${v.edice}` : '');
 }
 
+// Adresa obrázku v požadované velikosti; šablonu adresy (s {velikost}) skládá backend
+export function obrazek(adresa, velikost) {
+    return String(adresa || '').replace('{velikost}', velikost);
+}
+
 // Album centerfoldu a coveru je uložené jako vydání časopisu; zobrazuje se jako vydání
 export function nazevAlba(album, typ) {
     return (typ === 'Centerfold' || typ === 'Cover') && rozlozitVydani(album)?.mesic ? nazevVydani(album) : album;

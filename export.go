@@ -85,8 +85,6 @@ type exportDat struct {
 	Covery  []exportCover   `yaml:"covery,omitempty"`
 }
 
-const adresaObrazku = "https://lh3.googleusercontent.com/d/"
-
 func anoNeDoTextu(hodnota int) string {
 	switch hodnota {
 	case 1:
@@ -134,7 +132,7 @@ func seskupitDoAlb(fotky []Fotografie) []exportAlbum {
 		alba[i].Spojit = alba[i].Spojit || f.Spojit
 		alba[i].RucniPoradi = alba[i].RucniPoradi || f.Poradi > 0
 		alba[i].Fotky = append(alba[i].Fotky, exportFotka{
-			ID: strings.TrimPrefix(f.URL, adresaObrazku), Hodnoceni: f.Hodnoceni, Rotace: f.Rotace,
+			ID: f.DriveID, Hodnoceni: f.Hodnoceni, Rotace: f.Rotace,
 		})
 	}
 	return alba

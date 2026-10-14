@@ -30,6 +30,11 @@ export function obrazek(adresa, velikost) {
 }
 
 // Album centerfoldu a coveru je uložené jako vydání časopisu; zobrazuje se jako vydání
+// Počet s podstatným jménem ve správném tvaru: 1 fotka, 2–4 fotky, 0 a 5+ fotek
+export function sklonovat(n, jedna, dve, pet) {
+    return `${n} ${n === 1 ? jedna : n > 1 && n < 5 ? dve : pet}`;
+}
+
 export function nazevAlba(album, typ) {
     return (typ === 'Centerfold' || typ === 'Cover') && rozlozitVydani(album)?.mesic ? nazevVydani(album) : album;
 }
@@ -76,7 +81,7 @@ export function prevestVysku(text) {
     const cm = /^(\d+(?:\.\d+)?)\s*cm$/i.exec(t);
     if (cm) return Math.round(parseFloat(cm[1]));
     const stopy = /^(\d)\s*(?:'|′|ft|feet)\s*(?:(\d{1,2}(?:\.\d+)?)\s*(?:"|″|''|in|inch|inches)?)?$/i.exec(t);
-    if (stopy) return Math.round((parseInt(stopy[1]) * 12 + parseFloat(stopy[2] || 0)) * 2.54);
+    if (stopy) return Math.round((parseInt(stopy[1]) * 12 + parseFloat(stopy[2] || '0')) * 2.54);
     return null;
 }
 

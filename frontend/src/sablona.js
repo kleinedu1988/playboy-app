@@ -447,9 +447,10 @@ export const SABLONA_OKNA = `
     <span id="selectionCount"></span>
     <span class="selection-hearts">${[1, 2, 3, 4, 5].map(n => `<button class="heart on" data-vyber-hodnoceni="${n}" title="Ohodnotit vybrané ${n} z 5"></button>`).join('')}</span>
     <button class="btn btn-secondary btn-small" data-vyber="presunout">Přesunout do alba…</button>
-    <button class="btn btn-secondary btn-small" data-vyber="dovyberu">Do výběru…</button>
-    <button class="btn btn-secondary btn-small" data-vyber="odebrat">Odebrat</button>
-    <button class="btn btn-secondary btn-small" data-vyber="zrusit">Zrušit výběr</button>
+    <button class="btn btn-secondary btn-small" data-vyber="dovyberu">Přidat do výběru…</button>
+    <button class="btn btn-secondary btn-small" data-vyber="odebrat" title="Delete">Odebrat</button>
+    <button class="btn btn-secondary btn-small" data-vyber="vse" title="Ctrl+A">Vybrat vše</button>
+    <button class="btn btn-secondary btn-small" data-vyber="zrusit" title="Esc">Zrušit výběr</button>
   </div>
 
   <!-- Modal: údaje vydání (poznámka, stav, modelka z obálky) -->
@@ -549,6 +550,7 @@ export const SABLONA_OKNA = `
       <button id="lbZoom" class="lb-btn" disabled>
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21M10.5 7.5v6M7.5 10.5h6"/></svg>
       </button>
+      <button id="lbMore" class="lb-btn tile-more" title="Akce s fotkou: do výběru, profil, Disk, odebrat">&#8943;</button>
       <button id="lbShuffle" class="lb-btn" title="Zamíchat pořadí (S)">&#8644;</button>
       <button id="lbPlay" class="lb-btn" title="Slideshow (mezerník)">&#9654;</button>
       <button id="lbClose" class="lb-btn" title="Zavřít (Esc)">&times;</button>

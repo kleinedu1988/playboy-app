@@ -15,7 +15,7 @@ export function sestavitAlba(fotky) {
     });
 
     // Centerfoldy patří nahoru, ostatní alba zůstávají v původním pořadí
-    const alba = [...mapa.values()].sort((a, b) => (b.typ === 'Centerfold') - (a.typ === 'Centerfold'));
+    const alba = [...mapa.values()].sort((a, b) => Number(b.typ === 'Centerfold') - Number(a.typ === 'Centerfold'));
     alba.forEach(a => {
         a.spojit = a.typ === 'Centerfold' && a.fotky.length > 1 && a.fotky.some(f => f.spojit);
         const skupiny = a.spojit ? [a.fotky] : a.fotky.map(f => [f]);

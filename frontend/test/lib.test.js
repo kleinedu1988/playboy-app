@@ -41,3 +41,12 @@ test('začátky alb a nové pořadí po přetažení', () => {
     assert.deepEqual(novePoradi([1, 2, 3, 4], 4, 2, true), [1, 4, 2, 3]);
     assert.deepEqual(novePoradi([1, 2, 3, 4], 1, 3, false), [2, 3, 1, 4]);
 });
+
+test('skloňování počtu', async () => {
+    const { sklonovat } = await import('../src/lib/format.js');
+    assert.equal(sklonovat(0, 'fotka', 'fotky', 'fotek'), '0 fotek');
+    assert.equal(sklonovat(1, 'fotka', 'fotky', 'fotek'), '1 fotka');
+    assert.equal(sklonovat(3, 'fotka', 'fotky', 'fotek'), '3 fotky');
+    assert.equal(sklonovat(5, 'fotka', 'fotky', 'fotek'), '5 fotek');
+    assert.equal(sklonovat(12, 'rok', 'roky', 'roků'), '12 roků');
+});

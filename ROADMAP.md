@@ -70,7 +70,7 @@ import neztratí nic. Podmínka verze 1.0.0, uživatel nové funkce neuvidí.
 | Kontrola vstupu v backendu jedním pravidlem pro zápis i import (typ alba, název centerfoldu, vydání, klíče „netýká se“) | Backend dnes přijme, co import pak odmítne | S |
 | Uzavřít výčty: edice, stavy čísla, typy alb **[DM]** | Po 1.0 jen rozšiřovat, neměnit | S |
 
-## Etapa 9 – Rozhraní na dlouhou trať (0.11.0)
+## Etapa 9 – Rozhraní na dlouhou trať (0.11.0) – hotovo
 
 Cíl: každou akci jde udělat odkudkoli a bez pravého tlačítka, rozhraní snese stovky modelek a jde dál rozvíjet
 bez chyb typu „akce v jednom pohledu překreslí jiný“.

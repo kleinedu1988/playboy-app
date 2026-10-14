@@ -9,7 +9,8 @@ a coverů časopisů. Fotky se neukládají do aplikace, načítají se z Google
 wails dev      # vývoj s automatickým obnovením
 wails build    # výsledný program v build/bin/playboy-app
 go test ./...  # testy backendu (nepotřebují síť)
-cd frontend && npm test  # testy čistých funkcí rozhraní (frontend/src/lib)
+cd frontend && npm test  # testy čistých funkcí rozhraní (frontend/src/lib) a obalu backendu
+cd frontend && npm run typy  # kontrola typů (TypeScript nad JS s JSDoc, typy backendu z wailsjs)
 ```
 
 Značka `webkit2_41`, kterou vyžaduje Fedora, je nastavená ve `wails.json`.
@@ -46,7 +47,11 @@ Soubory na Disku musí být sdílené „kdokoli s odkazem", aplikace se k Disku
 - `vydani.go` – údaje čísel časopisu a výběry
 - `nastaveni.go` – zapamatování okna, zámek heslem, přehled sbírky
 - `instance.go` – zámek jediné instance
-- `frontend/src/main.js` – pohledy, prohlížeč fotek, formuláře
+- `frontend/src/main.js` – start: načte moduly, zaregistruje obsluhu událostí v pevném pořadí, spustí program
+- `frontend/src/app/` – moduly rozhraní po pohledech a oknech (galerie, profil, prohlížeč, kalendář, přehled,
+  formuláře…). Sdílený stav je jeden objekt v `stav.js`; backend se volá jen přes `backend.js`, který po každém
+  zápisu ohlásí změnu (`udalosti.js`) a mezipaměti pohledů a seznam modelek (`mezipamet.js`) se zahodí na jednom
+  místě. Akce s fotkou skládá `akce-fotky.js`, ovládání klávesnicí `klavesnice.js`.
 - `frontend/src/sablona.js` – kostra okna (HTML)
 - `frontend/src/ui/` – sdílené prvky rozhraní: oznámení, lišta částí, kontextová nabídka
 - `frontend/src/lib/` – čisté funkce rozhraní (texty, alba), které jdou testovat bez okna
@@ -96,6 +101,11 @@ Do hledání modelek jde psát i `pole:hodnota`, např. `vlasy:blond`, `fotograf
 - **Fotograf**: klik na „Foto:“ u alba; všechna jeho alba.
 - **Prohlížeč fotek**: šipky listují, nahoru/dolů skáčou mezi alby, mezerník spouští slideshow, S míchá pořadí,
   F rozkládá plakát, R otáčí, 1–5 hodnotí, Esc zavírá. Interval slideshow je v nabídce ⋯.
+- **Akce s fotkou** (do výběru, profil, Disk, odkaz, odebrat): tlačítko ⋯ na dlaždici a v prohlížeči, pravé
+  tlačítko nebo klávesa nabídky.
+- **Výběr více fotek** v profilu, na stránce vydání, ročníku, fotografa a v Nejlepších: Ctrl/Shift + klik,
+  Ctrl+A vybere vše, Delete vybrané odebere (s možností vrátit), Esc výběr zruší.
+- **Klávesnice**: Tab prochází karty a dlaždice, Enter otevírá, v nabídce fungují šipky; okna drží fokus uvnitř.
 
 ## Čísla časopisu a výběry
 

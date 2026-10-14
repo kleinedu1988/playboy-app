@@ -2929,3 +2929,64 @@ body.razeni .photo-item {
         padding-left: 8px;
     }
 }
+
+/* Vzhled rejstříku v celém programu: štítky bez rámečků, tlumený text, jemné podbarvení po najetí a u zvoleného.
+   Mění jen vzhled, rozložení lišt a štítků zůstává. */
+.chip,
+.album-nav .chip {
+    border-color: transparent;
+    border-radius: 6px;
+    background-color: var(--bg-card);
+    color: var(--text-muted);
+}
+
+.chip:hover,
+.album-nav .chip:hover {
+    border-color: transparent;
+    background-color: var(--bg-modal);
+    color: var(--text-main);
+}
+
+.chip.active,
+.chip.active:hover,
+.album-nav .chip.active {
+    border-color: transparent;
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+/* Lišty pro skákání (alba v profilu, jména v Nejlepších, stránka vydání): jen text, bez dělicí čáry */
+.album-nav {
+    border-bottom: none;
+}
+
+.album-nav .chip {
+    background-color: transparent;
+}
+
+.album-nav .chip span {
+    color: inherit;
+    opacity: 0.6;
+}
+
+.album-nav-arrow {
+    border-color: transparent;
+    background-color: transparent;
+    color: var(--text-muted);
+}
+
+.album-nav-arrow:hover:not(:disabled) {
+    border-color: transparent;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+
+/* V prohlížeči leží lišta přes fotku: štítky potřebují tmavý podklad, aby byly čitelné */
+.lightbox .album-nav .chip {
+    background-color: rgba(8, 8, 10, 0.6);
+}
+
+.lightbox .album-nav .chip.active {
+    background-color: var(--accent-soft);
+}

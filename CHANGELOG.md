@@ -5,6 +5,16 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.2] – 2026-10-14
+
+Čistší vzhled štítků. Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Štítky v celém programu (alba v profilu, jména v Nejlepších, stránka vydání, lišta alb v prohlížeči, vydání
+  v údajích modelky) mají vzhled rejstříku: bez rámečků, tlumený text, jemné podbarvení po najetí myší;
+  zvolený má růžové podbarvení a tučný text. Lišty alb nemají dělicí čáru, šipky jsou bez kroužků.
+  Rozložení se nemění.
+
 ## [0.17.1] – 2026-10-14
 
 Volby přehledu v horní liště. Schéma databáze ani formát exportu se nemění.

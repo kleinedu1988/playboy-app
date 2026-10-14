@@ -1,7 +1,7 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
 import { GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
 import { contextMenu } from '../ui/nabidka';
-import { bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, seraditModelky } from '../lib/format';
+import { bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, seraditModelky, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { otevritRychlePridani } from './formular-modelky';
@@ -44,7 +44,6 @@ export async function ohodnotitPolozku(polozka, zvoleno) {
     return true;
 }
 
-// Tlačítko v liště zvyšuje minimální hodnocení: vše -> 1+ -> … -> 5 -> vše
 const HTML_UVODU = `
     <section class="uvod">
         <h2>Vítej v Playboy Database</h2>
@@ -65,22 +64,15 @@ const HTML_UVODU = `
         <p class="uvod-pozn">Data jsou v ~/.local/share/playboy-app; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
     </section>`;
 
-export function vykreslitRazeni() {
-    const tlacitko = document.getElementById('sortBtn');
-    const poradi = Object.keys(RAZENI_GALERIE);
-    const dalsi = poradi[(poradi.indexOf(stav.razeniGalerie) + 1) % poradi.length];
-    tlacitko.textContent = RAZENI_GALERIE[stav.razeniGalerie].popisek;
-    tlacitko.classList.toggle('active', stav.razeniGalerie !== 'jmeno');
-    tlacitko.title = `Řazení: ${RAZENI_GALERIE[stav.razeniGalerie].nazev}. Klik: ${RAZENI_GALERIE[dalsi].nazev}.`;
-}
-
-export function vykreslitFiltrHodnoceni() {
-    const tlacitko = document.getElementById('favBtn');
-    tlacitko.classList.toggle('active', stav.minHodnoceni > 0);
-    tlacitko.innerHTML = stav.minHodnoceni ? `&#9829; ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? '+' : ''}` : '&#9825;';
-    tlacitko.title = stav.minHodnoceni
-        ? `Zobrazeny modelky s hodnocením ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? ' a více' : ''}. Klik: ${stav.minHodnoceni < 5 ? 'přísnější' : 'zobrazit všechny'}.`
-        : 'Zobrazit jen hodnocené modelky';
+// Řádek voleb nad kartami (řazení a filtr srdíček), stejně jako u stěny centerfoldů a nejlepších fotek
+function htmlNastroju(pocet) {
+    const razeni = Object.entries(RAZENI_GALERIE).map(([klic, r]) => `
+        <button class="chip ${klic === stav.razeniGalerie ? 'active' : ''}" data-razeni-galerie="${klic}" title="Řadit ${r.nazev}">${r.popisek}</button>`).join('');
+    const srdicka = [1, 2, 3, 4, 5].map(n => `
+        <button class="chip ${n === stav.minHodnoceni ? 'active' : ''}" data-min-hodnoceni="${n}"
+            title="${n === stav.minHodnoceni ? 'Zobrazit všechny modelky' : `Jen modelky s hodnocením ${n}${n < 5 ? ' a více' : ''}`}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('');
+    return `<div class="gallery-toolbar">${razeni}<span class="oddelovac"></span>${srdicka}
+        <span>${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</span></div>`;
 }
 
 // Předchozí a další modelka v pořadí, v jakém jsou v galerii
@@ -122,8 +114,6 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     const modelky = seraditModelky(vsechny.filter(m => m.hodnoceni >= stav.minHodnoceni), stav.razeniGalerie);
     if (stav.minHodnoceni && stav.razeniGalerie === 'jmeno') modelky.sort((a, b) => b.hodnoceni - a.hodnoceni);
     stav.nacteneModelky = modelky;
-    vykreslitFiltrHodnoceni();
-    vykreslitRazeni();
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(gallery);
 
@@ -135,14 +125,14 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     }
     if (modelky.length === 0) {
         listaGalerie.naplnit([]);
-        gallery.innerHTML = `<div class="empty-state">${
+        gallery.innerHTML = htmlNastroju(0) + `<div class="empty-state">${
             stav.minHodnoceni ? `Žádná modelka nemá hodnocení ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? ' nebo vyšší' : ''}. Hodnotí se srdíčky na kartě nebo v profilu.`
             : dotaz.trim() ? 'Hledání neodpovídá žádná modelka.'
             : 'Zatím žádné modelky. Přidej první tlačítkem + nahoře.'}</div>`;
         return;
     }
 
-    gallery.innerHTML = modelky.map(m => `
+    gallery.innerHTML = htmlNastroju(modelky.length) + modelky.map(m => `
         <div class="card" data-id="${m.id}" tabindex="0" aria-label="${esc(m.jmeno)}">
             <div class="card-image-wrap">
                 <img src="${esc(adresaTitulni(m))}" alt="${esc(m.jmeno)}" style="${stylVyrezu(m)}" draggable="false" loading="lazy" />
@@ -194,6 +184,19 @@ export function pripravit() {
         else if (akce === 'import') importovatData();
         else if (akce === 'heslo') otevritHeslo();
         else if (akce === 'napoveda') otevritNapovedu();
+
+        // Řádek voleb nad kartami
+        const razeni = e.target.closest('[data-razeni-galerie]')?.dataset.razeniGalerie;
+        const minimum = e.target.closest('[data-min-hodnoceni]')?.dataset.minHodnoceni;
+        if (razeni) {
+            stav.razeniGalerie = razeni;
+            try { localStorage.setItem('razeniGalerie', razeni); } catch { /* jen pro toto spuštění */ }
+            nacistGalerii(searchInput.value);
+        } else if (minimum) {
+            // Klik na zvolený filtr ho zruší
+            stav.minHodnoceni = Number(minimum) === stav.minHodnoceni ? 0 : Number(minimum);
+            nacistGalerii(searchInput.value);
+        }
     });
 
     // Srdíčka na dlaždici fotky v profilu a na stránce vydání
@@ -234,18 +237,6 @@ export function pripravit() {
         const ulozene = localStorage.getItem('razeniGalerie');
         if (RAZENI_GALERIE[ulozene]) stav.razeniGalerie = ulozene;
     } catch { /* výchozí řazení podle jména */ }
-    document.getElementById('sortBtn').onclick = () => {
-        const poradi = Object.keys(RAZENI_GALERIE);
-        stav.razeniGalerie = poradi[(poradi.indexOf(stav.razeniGalerie) + 1) % poradi.length];
-        try { localStorage.setItem('razeniGalerie', stav.razeniGalerie); } catch { /* jen pro toto spuštění */ }
-        nacistGalerii(searchInput.value);
-    };
-
-    document.getElementById('favBtn').onclick = () => {
-        stav.minHodnoceni = (stav.minHodnoceni + 1) % 6;
-        nacistGalerii(searchInput.value);
-    };
-
     document.getElementById('prevModelBtn').onclick = () => krokModelky(-1);
 
     document.getElementById('nextModelBtn').onclick = () => krokModelky(1);

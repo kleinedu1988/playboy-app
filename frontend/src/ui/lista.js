@@ -1,21 +1,25 @@
 import { esc } from '../lib/format';
 
 // Lišta částí: řádek tlačítek, který šipkami a ztrácejícími se okraji ukazuje, že pokračuje mimo okno.
-// Používá ji profil modelky (alba), přehled coverů (ročníky), kalendář (desetiletí) a prohlížeč fotek (alba).
-export function vytvoritListu(nav, poKliku) {
-    nav.className = 'album-nav hidden';
+// Používá ji profil modelky (alba), stránka vydání a prohlížeč fotek (alba).
+// svisla: sloupec u okraje přehledu (galerie, stěna, covery, kalendář, nejlepší); položky jsou pod sebou
+export function vytvoritListu(nav, poKliku, { svisla = false } = {}) {
+    nav.className = `album-nav${svisla ? ' svisla' : ''} hidden`;
     nav.innerHTML = `
-        <button class="album-nav-arrow" data-posun="-1" title="Předchozí">&#8249;</button>
+        <button class="album-nav-arrow" data-posun="-1" title="Předchozí">${svisla ? '&#8963;' : '&#8249;'}</button>
         <div class="album-nav-list"></div>
-        <button class="album-nav-arrow" data-posun="1" title="Další">&#8250;</button>`;
+        <button class="album-nav-arrow" data-posun="1" title="Další">${svisla ? '&#8964;' : '&#8250;'}</button>`;
     const seznam = nav.querySelector('.album-nav-list');
     const [sipkaVlevo, sipkaVpravo] = nav.querySelectorAll('.album-nav-arrow');
+    // Rozměry ve směru lišty: do stran u vodorovné, nahoru a dolů u svislé
+    const delka = () => svisla ? seznam.clientHeight : seznam.clientWidth;
+    const posunuto = () => svisla ? seznam.scrollTop : seznam.scrollLeft;
 
     // Bez přetečení šipky nejsou vůbec
     const upravitSipky = () => {
-        const presah = seznam.scrollWidth - seznam.clientWidth;
-        const vlevo = seznam.scrollLeft > 1;
-        const vpravo = seznam.scrollLeft < presah - 1;
+        const presah = (svisla ? seznam.scrollHeight : seznam.scrollWidth) - delka();
+        const vlevo = posunuto() > 1;
+        const vpravo = posunuto() < presah - 1;
         nav.classList.toggle('pretekla', presah > 1);
         seznam.classList.toggle('dalsi-vlevo', vlevo);
         seznam.classList.toggle('dalsi-vpravo', vpravo);
@@ -27,20 +31,25 @@ export function vytvoritListu(nav, poKliku) {
     nav.addEventListener('click', (e) => {
         const sipka = e.target.closest('[data-posun]');
         const skok = e.target.closest('[data-skok]');
-        if (sipka) seznam.scrollBy({ left: parseInt(sipka.dataset.posun) * seznam.clientWidth * 0.8, behavior: 'smooth' });
+        const krok = sipka && parseInt(sipka.dataset.posun) * delka() * 0.8;
+        if (sipka) seznam.scrollBy({ [svisla ? 'top' : 'left']: krok, behavior: 'smooth' });
         else if (skok) poKliku(skok.dataset.skok);
     });
 
-    // Kolečko nad lištou ji posouvá do stran, když se do ní všechno nevejde
+    // Kolečko nad lištou ji posouvá do stran, když se do ní všechno nevejde (svislou posouvá samo)
     nav.addEventListener('wheel', (e) => {
-        if (seznam.scrollWidth <= seznam.clientWidth) return;
+        if (svisla || seznam.scrollWidth <= seznam.clientWidth) return;
         e.preventDefault();
         e.stopPropagation();
         seznam.scrollLeft += e.deltaY || e.deltaX;
     }, { passive: false });
 
+    // Svislá lišta po změně velikosti okna znovu zjistí, zda se do ní všechno vejde
+    if (svisla) new ResizeObserver(upravitSipky).observe(seznam);
+
     return {
         nav,
+        svisla,
         upravitSipky,
         // polozky: [{ klic, nazev, pocet }]; lišta má smysl až od dvou položek
         naplnit(polozky) {
@@ -54,7 +63,8 @@ export function vytvoritListu(nav, poKliku) {
                 const aktivni = tlacitko.dataset.skok === String(klic);
                 if (aktivni && !tlacitko.classList.contains('active')) {
                     // Zvýrazněná položka má být v liště vidět
-                    seznam.scrollLeft = tlacitko.offsetLeft - (seznam.clientWidth - tlacitko.offsetWidth) / 2;
+                    if (svisla) seznam.scrollTop = tlacitko.offsetTop - (seznam.clientHeight - tlacitko.offsetHeight) / 2;
+                    else seznam.scrollLeft = tlacitko.offsetLeft - (seznam.clientWidth - tlacitko.offsetWidth) / 2;
                 }
                 tlacitko.classList.toggle('active', aktivni);
             });

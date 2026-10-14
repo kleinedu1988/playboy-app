@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.15.0] – 2026-10-14
+
+Jednotné volby v přehledech a svislá lišta pro skákání. Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Řazení a filtr srdíček u Modelek jsou štítky nad kartami (abecedně, nově přidané, podle roku; ♥ 1+ až ♥ 5)
+  jako volby u Centerfoldů a Nejlepších, ne tlačítka v horní liště. Klik na zvolený filtr srdíček ho zruší;
+  vedle je počet zobrazených modelek.
+- Lišta pro skákání v přehledech (písmena nebo měsíce u Modelek, desetiletí u Centerfoldů, ročníky coverů,
+  kalendář, modelky v Nejlepších) je svislý sloupec vlevo, který při rolování zůstává na místě. Když se do
+  okna nevejde, roluje se sám a má šipky nahoru a dolů. Lišta alb v profilu zůstává nahoře.
+
 ## [0.14.3] – 2026-10-14
 
 Opravy nálezů auditu před alfou. Schéma databáze ani formát exportu se nemění.

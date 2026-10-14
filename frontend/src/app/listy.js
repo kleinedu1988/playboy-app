@@ -6,18 +6,21 @@ import { best, calendar, covers, gallery, wall } from './prvky';
 export const hlavniOblast = document.querySelector('main');
 export const listyStranky = [];
 
-export function vytvoritListuStranky(nav, pohled) {
+// svisla: lišta je sloupec vedle obsahu, ne řádek nad ním
+export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
     const casti = () => [...pohled.querySelectorAll('[data-cast]')];
+    // Kde začíná viditelný obsah: pod vodorovnou lištou, u svislé hned nahoře
+    const horniOkraj = () => svisla ? hlavniOblast.getBoundingClientRect().top : nav.getBoundingClientRect().bottom;
     const lista = vytvoritListu(nav, (klic) => {
         const cast = casti().find(c => c.dataset.cast === klic);
         if (!cast) return;
-        const posun = cast.getBoundingClientRect().top - hlavniOblast.getBoundingClientRect().top - nav.offsetHeight - 8;
+        const posun = cast.getBoundingClientRect().top - hlavniOblast.getBoundingClientRect().top - (svisla ? 0 : nav.offsetHeight) - 8;
         hlavniOblast.scrollTo({ top: hlavniOblast.scrollTop + posun, behavior: 'smooth' });
-    });
+    }, { svisla });
     lista.sledovat = () => {
         // Skrytá lišta ani lišta ve skrytém pohledu se nesleduje
         if (!nav.offsetParent) return;
-        const hranice = nav.getBoundingClientRect().bottom + 40;
+        const hranice = horniOkraj() + 40;
         const vsechny = casti();
         // Na konci stránky už poslední část výš nevyjede, i tak je to ta aktuální
         const naKonci = hlavniOblast.scrollTop > 0 && hlavniOblast.scrollTop >= hlavniOblast.scrollHeight - hlavniOblast.clientHeight - 1;
@@ -29,9 +32,9 @@ export function vytvoritListuStranky(nav, pohled) {
 }
 
 export const listaAlb = vytvoritListuStranky(document.getElementById('albumNav'), document.getElementById('photosGrid'));
-export const listaCoveru = vytvoritListuStranky(document.getElementById('coversNav'), covers);
-export const listaKalendare = vytvoritListuStranky(document.getElementById('calNav'), calendar);
-export const listaGalerie = vytvoritListuStranky(document.getElementById('galleryNav'), gallery);
-export const listaSteny = vytvoritListuStranky(document.getElementById('wallNav'), wall);
+export const listaCoveru = vytvoritListuStranky(document.getElementById('coversNav'), covers, { svisla: true });
+export const listaKalendare = vytvoritListuStranky(document.getElementById('calNav'), calendar, { svisla: true });
+export const listaGalerie = vytvoritListuStranky(document.getElementById('galleryNav'), gallery, { svisla: true });
+export const listaSteny = vytvoritListuStranky(document.getElementById('wallNav'), wall, { svisla: true });
 export const listaStranky = vytvoritListuStranky(document.getElementById('issueNav'), document.getElementById('issueMain'));
-export const listaNejlepsich = vytvoritListuStranky(document.getElementById('bestNav'), best);
+export const listaNejlepsich = vytvoritListuStranky(document.getElementById('bestNav'), best, { svisla: true });

@@ -20,8 +20,6 @@ export const SABLONA_OKNA = `
     </div>
     <div class="nav-controls">
       <input type="text" id="searchInput" placeholder="Hledat…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
-      <button id="sortBtn" class="nav-fav nav-sort"></button>
-      <button id="favBtn" class="nav-fav"></button>
       <button id="addBtn" class="nav-fav" title="Přidat…">+</button>
       <button id="menuBtn" class="nav-fav" title="Další akce">&#8943;</button>
     </div>
@@ -33,16 +31,21 @@ export const SABLONA_OKNA = `
   </header>
 
   <main>
-    <!-- Lišta písmen: skok na první modelku daného písmene -->
-    <nav id="galleryNav"></nav>
-    <div id="gallery" class="gallery-grid"></div>
+    <!-- Přehledy mají lištu pro skákání jako svislý sloupec vlevo; obsah je vedle ní -->
+    <div class="se-sloupcem">
+      <!-- Lišta písmen: skok na první modelku daného písmene -->
+      <nav id="galleryNav"></nav>
+      <div id="gallery" class="gallery-grid"></div>
+    </div>
 
     <!-- Stěna centerfoldů -->
-    <nav id="wallNav"></nav>
-    <div id="wall" class="wall hidden"></div>
+    <div class="se-sloupcem">
+      <nav id="wallNav"></nav>
+      <div id="wall" class="wall hidden"></div>
+    </div>
 
     <!-- Nejlépe hodnocené fotky napříč sbírkou -->
-    <div id="best" class="best hidden">
+    <div id="best" class="best se-sloupcem hidden">
       <nav id="bestNav"></nav>
       <div id="bestList"></div>
     </div>
@@ -58,7 +61,7 @@ export const SABLONA_OKNA = `
     </div>
 
     <!-- Kalendář vydání -->
-    <div id="calendar" class="calendar hidden">
+    <div id="calendar" class="calendar se-sloupcem hidden">
       <nav id="calNav"></nav>
       <div id="calList"></div>
     </div>
@@ -67,7 +70,7 @@ export const SABLONA_OKNA = `
     <div id="stats" class="stats hidden"></div>
 
     <!-- Covery časopisů po ročnících -->
-    <div id="covers" class="covers hidden">
+    <div id="covers" class="covers se-sloupcem hidden">
       <nav id="coversNav"></nav>
       <div id="coversList"></div>
     </div>
@@ -593,7 +596,7 @@ export const SABLONA_OKNA = `
         <h4>Prohlížení</h4>
         <ul>
           <li><strong>Přepínač v hlavičce</strong>: Modelky, Centerfoldy, Covery, Kalendář, Nejlepší, Přehled.</li>
-          <li><strong>Řazení galerie</strong> tlačítkem vedle ♡: A–Z, Nové (naposledy přidané), Rok (prvního vydání). <strong>♡</strong> ukáže jen modelky s aspoň tolika srdíčky.</li>
+          <li><strong>Řazení galerie</strong> štítky nad kartami: abecedně, naposledy přidané, podle roku prvního vydání. Štítky <strong>♥ 1+ až ♥ 5</strong> ukážou jen modelky s aspoň tolika srdíčky, dalším klikem se filtr zruší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klik na vydání, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
         </ul>

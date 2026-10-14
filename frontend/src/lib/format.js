@@ -58,8 +58,8 @@ export function obrazek(adresa, velikost) {
 // Řazení galerie: abecedně, naposledy přidané, podle roku prvního vydání; modelky bez údaje jdou na konec
 export const RAZENI_GALERIE = {
     jmeno: { popisek: 'A–Z', nazev: 'abecedně' },
-    pridano: { popisek: 'Nové', nazev: 'naposledy přidané' },
-    rok: { popisek: 'Rok', nazev: 'podle roku prvního vydání' },
+    pridano: { popisek: 'Nově přidané', nazev: 'naposledy přidané' },
+    rok: { popisek: 'Podle roku', nazev: 'podle roku prvního vydání' },
 };
 
 export function prvniRok(modelka) {

@@ -1740,6 +1740,66 @@ button.tag:hover {
     color: var(--accent);
 }
 
+/* Přehledy (galerie, stěna, covery, kalendář, nejlepší): lišta je svislý sloupec vlevo vedle obsahu */
+.se-sloupcem {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+}
+
+.se-sloupcem > nav {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.se-sloupcem > :not(nav) {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+/* Sloupec drží při rolování u horního okraje a je vysoký nejvýš jako okno; co se nevejde, roluje se v něm */
+.album-nav.svisla {
+    top: 0;
+    flex-direction: column;
+    align-items: stretch;
+    width: max-content;
+    min-width: 72px;
+    max-width: 200px;
+    max-height: calc(100vh - 36px - 32px);
+    margin: 0 24px 0 0;
+    padding: 0 12px 0 0;
+    border-bottom: none;
+    border-right: 1px solid var(--border-color);
+}
+
+.album-nav.svisla .album-nav-list {
+    flex-direction: column;
+    gap: 6px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.album-nav.svisla .album-nav-list.dalsi-vlevo {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40px);
+}
+
+.album-nav.svisla .album-nav-list.dalsi-vpravo {
+    -webkit-mask-image: linear-gradient(to top, transparent, #000 40px);
+}
+
+.album-nav.svisla .album-nav-list.dalsi-vlevo.dalsi-vpravo {
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+}
+
+.album-nav.svisla .album-nav-arrow {
+    align-self: center;
+}
+
+.album-nav.svisla .chip {
+    justify-content: space-between;
+    max-width: none;
+}
+
 /* Zkrácené album: fotky za náhledem jsou skryté, poslední viditelná ukazuje jejich počet */
 .photo-item.skryta {
     display: none;
@@ -2307,7 +2367,8 @@ body.razeni .photo-item {
 
 /* Nejlepší fotky a ročník: nástrojová lišta a oddíly */
 .best-toolbar,
-.wall-toolbar {
+.wall-toolbar,
+.gallery-toolbar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -2318,9 +2379,27 @@ body.razeni .photo-item {
 }
 
 .best-toolbar .chip.active,
-.wall-toolbar .chip.active {
+.wall-toolbar .chip.active,
+.gallery-toolbar .chip.active {
     border-color: var(--accent);
     color: var(--accent);
+}
+
+/* Řádek voleb galerie zabírá celou šířku mřížky karet */
+.gallery-grid > .gallery-toolbar,
+.gallery-grid > .empty-state {
+    grid-column: 1 / -1;
+}
+
+.gallery-grid > .gallery-toolbar {
+    margin-bottom: 0;
+}
+
+.gallery-toolbar .oddelovac {
+    width: 1px;
+    height: 16px;
+    margin: 0 4px;
+    background-color: var(--border-color);
 }
 
 .best-model + .best-model,

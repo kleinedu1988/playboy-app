@@ -19,8 +19,6 @@ export function ukazatPohled(pohled) {
     backBtn.classList.toggle('hidden', !podstranka && !historie.length);
     document.getElementById('prevModelBtn').classList.toggle('hidden', pohled !== detailView);
     document.getElementById('nextModelBtn').classList.toggle('hidden', pohled !== detailView);
-    document.getElementById('favBtn').classList.toggle('hidden', pohled !== gallery);
-    document.getElementById('sortBtn').classList.toggle('hidden', pohled !== gallery);
     viewToggle.classList.toggle('hidden', podstranka);
     backBtn.innerHTML = `&larr; ${esc(popisZpet())}`;
     // Lišta písmen patří jen ke galerii modelek, lišta desetiletí jen ke stěně

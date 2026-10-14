@@ -275,15 +275,17 @@ export function pripravit() {
 
     // Napsané slovo odemkne tlačítko Smazat; Enter v poli potvrdí
     const poleSlova = document.getElementById('inputDeleteSlovo');
+    // Bez požadovaného slova platí vždy; stav tlačítka se kontrolovat nedá, jednou() ho při kliknutí vypne
+    const slovoNapsane = () => !poleSlova.dataset.slovo || poleSlova.value.trim().toUpperCase() === poleSlova.dataset.slovo;
     poleSlova.addEventListener('input', () => {
-        document.getElementById('confirmDeleteBtn').disabled = poleSlova.value.trim().toUpperCase() !== poleSlova.dataset.slovo;
+        document.getElementById('confirmDeleteBtn').disabled = !slovoNapsane();
     });
     poleSlova.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !document.getElementById('confirmDeleteBtn').disabled) document.getElementById('confirmDeleteBtn').click();
+        if (e.key === 'Enter' && slovoNapsane()) document.getElementById('confirmDeleteBtn').click();
     });
 
     document.getElementById('confirmDeleteBtn').onclick = jednou(async () => {
-        if (!stav.potvrzenaAkce || document.getElementById('confirmDeleteBtn').disabled) return;
+        if (!stav.potvrzenaAkce || !slovoNapsane()) return;
         // Potvrzeno: zavření okna už nesmí akci ohlásit jako zrušenou
         const akce = stav.potvrzenaAkce;
         stav.zrusenaAkce = null;

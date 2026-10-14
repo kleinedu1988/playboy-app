@@ -50,3 +50,36 @@ test('skloňování počtu', async () => {
     assert.equal(sklonovat(5, 'fotka', 'fotky', 'fotek'), '5 fotek');
     assert.equal(sklonovat(12, 'rok', 'roky', 'roků'), '12 roků');
 });
+
+test('řazení galerie a části lišty', async () => {
+    const { seraditModelky, castGalerie, prvniRok } = await import('../src/lib/format.js');
+    const modelky = [
+        { id: 1, jmeno: 'Anna', pridano: '2026-01-05 10:00:00', vydani: ['1994-05-CZ', '1990-02'] },
+        { id: 2, jmeno: 'Bára', pridano: '2026-10-14 09:00:00', vydani: [] },
+        { id: 3, jmeno: 'Čeňka', pridano: '', vydani: ['1975-07'] },
+    ];
+    assert.deepEqual(seraditModelky(modelky, 'jmeno').map(m => m.id), [1, 2, 3]);
+    assert.deepEqual(seraditModelky(modelky, 'pridano').map(m => m.id), [2, 1, 3]);
+    assert.deepEqual(seraditModelky(modelky, 'rok').map(m => m.id), [3, 1, 2]);
+    assert.equal(prvniRok(modelky[0]), 1990);
+    assert.equal(castGalerie(modelky[0], 'rok'), '1990s');
+    assert.equal(castGalerie(modelky[1], 'rok'), 'Bez vydání');
+    assert.equal(castGalerie(modelky[1], 'pridano'), 'Říjen 2026');
+    assert.equal(castGalerie(modelky[2], 'pridano'), 'Bez data');
+    assert.equal(castGalerie(modelky[2], 'jmeno'), 'C');
+});
+
+test('speciály: klíč, název a speciály roku', async () => {
+    const { rozlozitVydani, slozitVydani, nazevVydani, nastavitNazvySpecialu, specialyRoku, jeSpecial } = await import('../src/lib/format.js');
+    assert.deepEqual(rozlozitVydani('1995-S01-CZ'), { rok: '1995', mesic: 'S01', edice: 'CZ' });
+    assert.equal(slozitVydani('1995', 'S02', 'US'), '1995-S02');
+    assert.equal(jeSpecial('1995-S02'), true);
+    assert.equal(jeSpecial('1995-02'), false);
+    assert.equal(nazevVydani('1995-S01'), 'Speciál 1 1995');
+    nastavitNazvySpecialu([{ vydani: '1995-S01', nazev: 'Playmate Review' }, { vydani: '1995-S01-CZ', nazev: 'Léto' }, { vydani: '1996-S01', nazev: 'Lingerie' }]);
+    assert.equal(nazevVydani('1995-S01'), 'Playmate Review 1995');
+    assert.equal(nazevVydani('1995-S01-CZ'), 'Léto 1995 · CZ');
+    assert.deepEqual(specialyRoku('1995', 'US'), [{ vydani: '1995-S01', nazev: 'Playmate Review' }]);
+    assert.deepEqual(specialyRoku(1995, 'CZ').map(s => s.nazev), ['Léto']);
+    nastavitNazvySpecialu([]);
+});

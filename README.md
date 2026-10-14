@@ -89,6 +89,13 @@ Tlačítko ⋯ v hlavičce → „Obnovit ze zálohy…". Před obnovením se ul
 Vydání je uložené jako `RRRR-MM` (nebo jen `RRRR` u pictorialu), výchozí edice US bez přípony,
 ostatní s příponou: `2009-11-CZ`. Edice se volí ve formuláři alba a coveru; kalendář ukazuje vždy jednu.
 
+**Speciály** (Playmate Review, Lingerie, Calendar…) jsou čísla mimo měsíční řadu: `RRRR-Snn`, tedy rok, `S`
+a pořadí v roce (`1995-S01`, české `1995-S01-CZ`); název je uložený u čísla. Zakládají se ve formuláři alba
+nebo coveru (v nabídce měsíce „Nový speciál…“) nebo z nabídky kalendáře; v kalendáři jsou jako štítky pod
+měsíci roku, na stránce ročníku mají vlastní oddíl. Přejmenovat je jde v okně „Upravit číslo…“.
+
+Stav čísla: **mám výtisk** (fyzický výtisk, v kalendáři zelený rámeček), **sháním**, **nezajímá mě**.
+
 ## Cílené hledání
 
 Do hledání modelek jde psát i `pole:hodnota`, např. `vlasy:blond`, `fotograf:"arny freytag"`, `rok:1975`

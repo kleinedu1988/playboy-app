@@ -1,6 +1,6 @@
 // Stránka vydání, ročníku a fotografa; údaje čísla
-import { GetAlbaFotografa, GetVydani, GetVydaniInfo, SetVydaniInfo } from './backend';
-import { MESICE, esc, nazevAlba, nazevVydani, obrazek, rozlozitVydani, sjednotit, slozitVydani, sklonovat } from '../lib/format';
+import { GetAlbaFotografa, GetVydani, GetVydaniInfo, SetVydaniInfo, SetNazevSpecialu } from './backend';
+import { MESICE, esc, nazevAlba, nazevVydani, obrazek, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -171,7 +171,7 @@ export function vykreslitRocnik(vydani, fotky) {
             <div><dt>Fotek celkem</dt><dd>${fotky.length}</dd></div>
         </dl>
     `;
-    const nazevMesice = m => m ? MESICE[parseInt(m) - 1] : 'Celý ročník';
+    const nazevMesice = m => !m ? 'Celý ročník' : m.startsWith('S') ? nazevVydani(slozitVydani(casti.rok, m, casti.edice)).replace(/ \d{4}( · .*)?$/, '') : MESICE[parseInt(m) - 1];
     document.getElementById('issueMain').innerHTML = [...podleMesicu].map(([m, albaMesice]) => `
         <section class="issue-month" data-cast="${m || 'rok'}">
             <h3>${esc(nazevMesice(m))}
@@ -227,7 +227,7 @@ export async function otevritFotografa(jmeno, { bezHistorie = false } = {}) {
 }
 
 // Údaje čísla: stav ve sbírce, modelka z obálky, poznámka
-export const NAZVY_STAVU = { shanim: 'Sháním', nezajima: 'Nezajímá mě' };
+export const NAZVY_STAVU = { mam: 'Mám výtisk', shanim: 'Sháním', nezajima: 'Nezajímá mě' };
 export const issueModal = document.getElementById('issueModal');
 
 export async function upravitVydani(vydani) {
@@ -235,6 +235,9 @@ export async function upravitVydani(vydani) {
     const [info, modelky] = await Promise.all([GetVydaniInfo(vydani), vsechnyModelky()]);
     document.getElementById('issueModalTitle').textContent = nazevVydani(vydani);
     document.getElementById('selectIssueStav').value = info.stav;
+    document.getElementById('issueNazevGroup').classList.toggle('hidden', !jeSpecial(vydani));
+    document.getElementById('inputIssueNazev').value = info.nazev || '';
+    document.getElementById('inputIssueNazev').required = jeSpecial(vydani);
     document.getElementById('inputIssueObalka').value = info.jmenoObalky;
     document.getElementById('inputIssuePoznamka').value = info.poznamka;
     document.getElementById('seznamModelekObalky').innerHTML = (modelky || []).map(m => `<option value="${esc(m.jmeno)}"></option>`).join('');
@@ -250,6 +253,10 @@ export function pripravit() {
         const modelka = jmeno ? (await vsechnyModelky()).find(m => sjednotit(m.jmeno) === sjednotit(jmeno)) : null;
         if (jmeno && !modelka) {
             oznamit(`Modelka „${jmeno}“ ve sbírce není. Vyber ji ze seznamu, nebo ji nejdřív založ.`);
+            return;
+        }
+        if (jeSpecial(stav.upravovaneVydani) && !await SetNazevSpecialu(stav.upravovaneVydani, document.getElementById('inputIssueNazev').value)) {
+            oznamit('Název speciálu se nepodařilo uložit.');
             return;
         }
         if (!await SetVydaniInfo(stav.upravovaneVydani, document.getElementById('inputIssuePoznamka').value, document.getElementById('selectIssueStav').value, modelka?.id || 0)) {

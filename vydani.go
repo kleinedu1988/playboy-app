@@ -48,8 +48,9 @@ func (a *App) migraceVydaniAVybery() error {
 	return nil
 }
 
-// Stav vydání ve sbírce: prázdný = běžný, „shanim" = chybí a hledám ho, „nezajima" = chybí záměrně
-var stavyVydani = map[string]bool{"": true, "shanim": true, "nezajima": true}
+// Stav vydání ve sbírce: prázdný = běžný, „shanim" = chybí a hledám ho, „nezajima" = chybí záměrně,
+// „mam" = mám fyzický výtisk (bez ohledu na to, jestli jsou fotky ve sbírce)
+var stavyVydani = map[string]bool{"": true, "shanim": true, "nezajima": true, "mam": true}
 
 type VydaniInfo struct {
 	Vydani        string `json:"vydani"`
@@ -57,13 +58,15 @@ type VydaniInfo struct {
 	Stav          string `json:"stav"`
 	ModelkaObalky int    `json:"modelkaObalky"` // 0 = neuvedeno
 	JmenoObalky   string `json:"jmenoObalky"`
+	// Název speciálu (u měsíčního čísla prázdný)
+	Nazev string `json:"nazev"`
 }
 
 func (a *App) GetVydaniInfo(vydani string) VydaniInfo {
 	info := VydaniInfo{Vydani: vydani}
-	a.db.QueryRow(`SELECT COALESCE(v.poznamka, ''), COALESCE(v.stav, ''), COALESCE(v.modelka_obalky, 0), COALESCE(m.jmeno, '')
+	a.db.QueryRow(`SELECT COALESCE(v.poznamka, ''), COALESCE(v.stav, ''), COALESCE(v.modelka_obalky, 0), COALESCE(m.jmeno, ''), COALESCE(v.nazev, '')
 		FROM vydani v LEFT JOIN modelky m ON m.id = v.modelka_obalky WHERE v.vydani = ?`, vydani).
-		Scan(&info.Poznamka, &info.Stav, &info.ModelkaObalky, &info.JmenoObalky)
+		Scan(&info.Poznamka, &info.Stav, &info.ModelkaObalky, &info.JmenoObalky, &info.Nazev)
 	return info
 }
 
@@ -75,7 +78,11 @@ func (a *App) SetVydaniInfo(vydani, poznamka, stav string, modelkaObalky int) bo
 	}
 	var err error
 	if poznamka == "" && stav == "" && modelkaObalky == 0 {
-		_, err = a.db.Exec("DELETE FROM vydani WHERE vydani = ?", vydani)
+		// Speciál si řádek ponechá kvůli názvu
+		_, err = a.db.Exec("DELETE FROM vydani WHERE vydani = ? AND COALESCE(nazev, '') = ''", vydani)
+		if err == nil {
+			_, err = a.db.Exec("UPDATE vydani SET poznamka = NULL, stav = NULL, modelka_obalky = NULL WHERE vydani = ?", vydani)
+		}
 	} else {
 		var obalka interface{}
 		if modelkaObalky != 0 {
@@ -100,7 +107,7 @@ func (a *App) SetStavVydani(vydani, stav string) bool {
 // Vydání se stavem nebo poznámkou pro kalendář (i ta, ke kterým zatím nic není)
 func (a *App) GetStavyVydani() []VydaniInfo {
 	stavy := []VydaniInfo{}
-	rows, err := a.db.Query("SELECT vydani, COALESCE(poznamka, ''), COALESCE(stav, ''), COALESCE(modelka_obalky, 0) FROM vydani ORDER BY vydani")
+	rows, err := a.db.Query("SELECT vydani, COALESCE(poznamka, ''), COALESCE(stav, ''), COALESCE(modelka_obalky, 0), COALESCE(nazev, '') FROM vydani ORDER BY vydani")
 	if err != nil {
 		a.chyba("GetStavyVydani", err)
 		return stavy
@@ -108,7 +115,7 @@ func (a *App) GetStavyVydani() []VydaniInfo {
 	defer rows.Close()
 	for rows.Next() {
 		var v VydaniInfo
-		if rows.Scan(&v.Vydani, &v.Poznamka, &v.Stav, &v.ModelkaObalky) == nil {
+		if rows.Scan(&v.Vydani, &v.Poznamka, &v.Stav, &v.ModelkaObalky, &v.Nazev) == nil {
 			stavy = append(stavy, v)
 		}
 	}
@@ -228,6 +235,7 @@ type exportFotkyVyberu struct {
 
 type exportVydani struct {
 	Vydani        string `yaml:"vydani"`
+	Nazev         string `yaml:"nazev,omitempty"` // název speciálu
 	Stav          string `yaml:"stav,omitempty"`
 	ModelkaObalky string `yaml:"modelka_obalky,omitempty"`
 	Poznamka      string `yaml:"poznamka,omitempty"`
@@ -240,7 +248,7 @@ func (a *App) exportovatVydaniAVybery(odkazy odkazyNaModelky) ([]exportVydani, [
 		if v.ModelkaObalky != 0 {
 			obalka = odkazy.odkaz(v.ModelkaObalky, a.jmenoModelky(v.ModelkaObalky))
 		}
-		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Stav: v.Stav, ModelkaObalky: obalka, Poznamka: v.Poznamka})
+		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Nazev: v.Nazev, Stav: v.Stav, ModelkaObalky: obalka, Poznamka: v.Poznamka})
 	}
 	var vybery []exportVyberu
 	for _, v := range a.GetVybery() {
@@ -271,6 +279,10 @@ func (a *App) importovatVydaniAVybery(vydani []exportVydani, vybery []exportVybe
 		if obalka == 0 {
 			obalka = stavajici.ModelkaObalky
 		}
+		if strings.TrimSpace(v.Nazev) != "" && !a.SetNazevSpecialu(v.Vydani, v.Nazev) {
+			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("vydání „%s“: název má jen speciál (RRRR-Snn)", v.Vydani))
+			continue
+		}
 		if !a.SetVydaniInfo(v.Vydani, prvniNeprazdny(v.Poznamka, stavajici.Poznamka), prvniNeprazdny(v.Stav, stavajici.Stav), obalka) {
 			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("vydání „%s“: neplatné vydání nebo stav", v.Vydani))
 		}
@@ -291,4 +303,83 @@ func (a *App) importovatVydaniAVybery(vydani []exportVydani, vybery []exportVybe
 			a.PridatDoVyberu(id, []int{fotoID})
 		}
 	}
+}
+
+// Úprava č. 7: speciály (RRRR-Snn) mají u čísla název
+func (a *App) migraceSpecialy() error {
+	if a.maSloupec("vydani", "nazev") {
+		return nil
+	}
+	_, err := a.db.Exec("ALTER TABLE vydani ADD COLUMN nazev TEXT")
+	return err
+}
+
+type Special struct {
+	Vydani string `json:"vydani"`
+	Nazev  string `json:"nazev"`
+}
+
+// Všechny speciály: pojmenované u čísla i ty, ke kterým jsou jen alba (třeba ze staršího importu)
+func (a *App) GetSpecialy() []Special {
+	specialy := []Special{}
+	rows, err := a.db.Query(`SELECT vydani, MAX(nazev) FROM (
+			SELECT vydani, COALESCE(nazev, '') AS nazev FROM vydani WHERE vydani GLOB '[0-9][0-9][0-9][0-9]-S[0-9][0-9]*'
+			UNION ALL SELECT DISTINCT vydani, '' FROM alba WHERE vydani GLOB '[0-9][0-9][0-9][0-9]-S[0-9][0-9]*'
+		) GROUP BY vydani ORDER BY vydani`)
+	if err != nil {
+		a.chyba("GetSpecialy", err)
+		return specialy
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var s Special
+		if rows.Scan(&s.Vydani, &s.Nazev) == nil && vzorVydani.MatchString(s.Vydani) {
+			specialy = append(specialy, s)
+		}
+	}
+	return specialy
+}
+
+// Nový speciál v roce a edici (prázdná edice = US); vrací jeho klíč, při chybě prázdný text
+func (a *App) ZalozitSpecial(rok int, edice, nazev string) string {
+	nazev = strings.TrimSpace(nazev)
+	if edice == "US" {
+		edice = ""
+	}
+	if nazev == "" || rok < 1953 || rok > 2100 || (edice != "" && !dalsiEdice[edice]) {
+		return ""
+	}
+	pripona := ""
+	if edice != "" {
+		pripona = "-" + edice
+	}
+	obsazena := map[string]bool{}
+	for _, s := range a.GetSpecialy() {
+		obsazena[s.Vydani] = true
+	}
+	for cislo := 1; cislo <= 99; cislo++ {
+		klic := fmt.Sprintf("%04d-S%02d%s", rok, cislo, pripona)
+		if obsazena[klic] {
+			continue
+		}
+		if _, err := a.db.Exec("INSERT INTO vydani (vydani, nazev) VALUES (?, ?)", klic, nazev); err != nil {
+			a.chyba("ZalozitSpecial", err)
+			return ""
+		}
+		return klic
+	}
+	return ""
+}
+
+// Přejmenování speciálu; název nesmí být prázdný
+func (a *App) SetNazevSpecialu(vydani, nazev string) bool {
+	nazev = strings.TrimSpace(nazev)
+	if !vzorVydani.MatchString(vydani) || !jeSpecial(vydani) || nazev == "" {
+		return false
+	}
+	_, err := a.db.Exec(`INSERT INTO vydani (vydani, nazev) VALUES (?, ?) ON CONFLICT(vydani) DO UPDATE SET nazev = excluded.nazev`, vydani, nazev)
+	if err != nil {
+		a.chyba("SetNazevSpecialu", err)
+	}
+	return err == nil
 }

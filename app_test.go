@@ -1496,6 +1496,11 @@ func TestVydaniOdkazyAVybery(t *testing.T) {
 	if p := a.GetPrehled(false); len(p.VydaniBezCenterfoldu) != 0 || len(p.Rocniky) != 1 {
 		t.Fatalf("přehled se stavem nezajímá: %+v", p)
 	}
+	// Fyzický výtisk je další stav; neznámý stav se nepřijme
+	if !a.SetStavVydani("1988-12", "mam") || a.SetStavVydani("1988-12", "prodano") || a.GetVydaniInfo("1988-12").Stav != "mam" {
+		t.Fatalf("stav mám výtisk: %+v", a.GetVydaniInfo("1988-12"))
+	}
+	a.SetStavVydani("1988-12", "")
 
 	// Výběry: založení podle názvu, pořadí přidání, bez zdvojení, úklid po smazané fotce
 	vyber := a.VyberPodleNazvu("Nej léta")
@@ -1829,7 +1834,7 @@ func TestExportVerze4(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if text := string(export); !strings.Contains(text, "verze: 4") || !strings.Contains(text, "Anna [2]") {
+	if text := string(export); !strings.Contains(text, fmt.Sprintf("verze: %d", verzeExportu)) || !strings.Contains(text, "Anna [2]") {
 		t.Fatalf("export:\n%s", text)
 	}
 	b := novaTestovaciApp(t, nil)
@@ -1963,5 +1968,76 @@ func TestImportViceSouboruAMarkdown(t *testing.T) {
 	nova := zapsat("nova.yaml", "jmeno: Nová\n")
 	if v := a.ImportovatSoubory([]string{nova, spatny}); !strings.Contains(v.Selhalo, "spatny.md") || len(a.GetModelky("Nová")) != 0 {
 		t.Fatalf("chybný soubor: %+v", v)
+	}
+}
+
+// Speciály: klíč RRRR-Snn s názvem u čísla; alba, ročník, přehled, export a import s nimi počítají
+func TestSpecialy(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+
+	prvni := a.ZalozitSpecial(1995, "US", "Playmate Review")
+	druhy := a.ZalozitSpecial(1995, "", "Lingerie")
+	cesky := a.ZalozitSpecial(1995, "CZ", "Speciál léto")
+	if prvni != "1995-S01" || druhy != "1995-S02" || cesky != "1995-S01-CZ" {
+		t.Fatalf("klíče: %q %q %q", prvni, druhy, cesky)
+	}
+	if a.ZalozitSpecial(1995, "DE", "X") != "" || a.ZalozitSpecial(1995, "", " ") != "" {
+		t.Fatal("neznámá edice nebo prázdný název prošly")
+	}
+	if s := a.GetSpecialy(); len(s) != 3 || s[0].Nazev != "Playmate Review" {
+		t.Fatalf("speciály: %+v", s)
+	}
+
+	// Centerfold, cover i pictorial ke speciálu
+	if v := a.AddBulkPhotos(1, prvni, "Centerfold", odkazA); v.Vlozeno != 1 {
+		t.Fatalf("centerfold ke speciálu: %+v", v)
+	}
+	a.AddCover(prvni, odkazB)
+	a.AddBulkPhotos(1, "Pláž", "Pictorial", odkazB)
+	if !a.SetVydaniAlba(1, "Pláž", "Pictorial", prvni) {
+		t.Fatal("vydání pictorialu ve speciálu")
+	}
+	if v := a.GetVydani(prvni); len(v) != 3 {
+		t.Fatalf("stránka speciálu: %d fotek", len(v))
+	}
+	// Ročník zahrnuje speciály své edice
+	a.AddBulkPhotos(1, "1995-03", "Centerfold", odkazB)
+	if v := a.GetVydani("1995"); len(v) != 4 {
+		t.Fatalf("ročník: %d fotek", len(v))
+	}
+	// Speciál bez centerfoldu se v přehledu nehlásí a do měsíců ročníku se nepočítá
+	a.AddCover(druhy, odkazA)
+	p := a.GetPrehled(false)
+	for _, v := range p.VydaniBezCenterfoldu {
+		if jeSpecial(v) {
+			t.Fatalf("speciál mezi čísly bez centerfoldu: %v", p.VydaniBezCenterfoldu)
+		}
+	}
+
+	// Vymazání údajů čísla název speciálu nesmaže; přejmenování
+	a.SetVydaniInfo(prvni, "poznámka", "mam", 0)
+	a.SetVydaniInfo(prvni, "", "", 0)
+	if info := a.GetVydaniInfo(prvni); info.Nazev != "Playmate Review" {
+		t.Fatalf("název po vymazání údajů: %+v", info)
+	}
+	if !a.SetNazevSpecialu(prvni, "Playmate Review 1995") || a.SetNazevSpecialu("1995-03", "X") {
+		t.Fatal("přejmenování speciálu")
+	}
+
+	// Export a import přenesou speciál i s názvem
+	export, err := a.exportovat()
+	if err != nil {
+		t.Fatal(err)
+	}
+	b := novaTestovaciApp(t, nil)
+	if v := b.importovat(export); v.Selhalo != "" || len(v.Chyby) != 0 {
+		t.Fatalf("import: %+v", v)
+	}
+	if info := b.GetVydaniInfo(prvni); info.Nazev != "Playmate Review 1995" {
+		t.Fatalf("název po importu: %+v", info)
+	}
+	if v := b.GetVydani(prvni); len(v) != 3 {
+		t.Fatalf("speciál po importu: %d fotek", len(v))
 	}
 }

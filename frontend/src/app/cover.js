@@ -10,6 +10,10 @@ import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
 import { otevritLightbox } from './prohlizec';
+import { pripojitVyberSpecialu } from './specialy';
+
+// Výběr měsíce nabízí i speciály zvoleného roku
+let obnovitSpecialyCoveru = (_vybrat) => {};
 
 // Formulář coveru slouží pro přidání (polozka = null) i úpravu vydání
 export const coverModal = document.getElementById('coverModal');
@@ -24,12 +28,10 @@ export function otevritCoverModal(polozka = null, predvyplnitVydani = '') {
     document.getElementById('inputCoverLink').required = !polozka;
 
     const vydani = rozlozitVydani(polozka ? polozka.album : predvyplnitVydani);
-    if (vydani?.mesic) {
-        document.getElementById('inputCoverRok').value = vydani.rok;
-        document.getElementById('selectCoverMesic').value = vydani.mesic;
-    }
+    if (vydani?.mesic) document.getElementById('inputCoverRok').value = vydani.rok;
     // Bez předvyplněného vydání se nabídne edice zobrazená v kalendáři
     document.getElementById('selectCoverEdice').value = vydani?.edice || stav.kalendarEdice;
+    obnovitSpecialyCoveru(vydani?.mesic || '');
     coverModal.classList.remove('hidden');
     // S předvyplněným vydáním zbývá jen vložit odkaz
     document.getElementById(vydani && !polozka ? 'inputCoverLink' : 'selectCoverMesic').focus();
@@ -42,6 +44,8 @@ export async function otevritProfilPodleId(modelkaId) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    obnovitSpecialyCoveru = pripojitVyberSpecialu('selectCoverMesic', 'inputCoverRok', 'selectCoverEdice');
+
     document.getElementById('closeCoverModalBtn').onclick = () => coverModal.classList.add('hidden');
 
     document.getElementById('coverForm').onsubmit = jednou(async (e) => {

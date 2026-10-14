@@ -12,6 +12,7 @@ export const stav = {
     aktualniAlba: [],
     aktualniPolozky: [],
     stenaPolozky: [],
+    razeniGalerie: 'jmeno', // 'jmeno', 'pridano' (naposledy přidané) nebo 'rok' (rok prvního vydání)
     rezim: 'modelky', // přehled na hlavní stránce: 'modelky', 'centerfoldy', 'covery', 'kalendar' nebo 'prehled'
     maZamek: false,
     // Pořadové číslo posledního načítání pohledu; odpověď, kterou mezitím předběhlo novější načítání, se zahodí

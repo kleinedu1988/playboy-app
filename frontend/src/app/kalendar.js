@@ -1,8 +1,9 @@
 // Kalendář vydání po rocích a měsících
 import { GetKalendar, GetStavyVydani, SetStavVydani } from './backend';
-import { EDICE, VYCHOZI_EDICE, esc, nazevVydani, obrazek, rozlozitVydani, slozitVydani, sklonovat } from '../lib/format';
+import { EDICE, VYCHOZI_EDICE, esc, nazevVydani, obrazek, rozlozitVydani, slozitVydani, sklonovat, specialyRoku } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
+import { zalozitSpecial } from './specialy';
 import { calList, calendar, searchInput } from './prvky';
 import { listaKalendare } from './listy';
 import { ukazatPohled } from './navigace';
@@ -49,15 +50,16 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
             const klic = slozitVydani(String(rok), String(i + 1).padStart(2, '0'), stav.kalendarEdice);
             const v = vydani.get(klic);
             if (!v) {
-                // Chybějící číslo může být označené „sháním“ nebo „nezajímá mě“
+                // Chybějící číslo může být označené „mám výtisk“, „sháním“ nebo „nezajímá mě“
                 const udaje = stavCisla.get(klic);
                 const popisStavu = udaje?.stav ? ` – ${NAZVY_STAVU[udaje.stav].toLowerCase()}` : ' – chybí, klikni pro přidání';
-                return `<button class="cal-cell empty ${udaje?.stav || ''}" data-prazdne="${klic}" title="${nazevVydani(klic)}${popisStavu}${udaje?.poznamka ? `\n${esc(udaje.poznamka)}` : ''}"><span class="cal-month">${zkratka}${udaje?.stav === 'shanim' ? '<em>sháním</em>' : ''}</span></button>`;
+                return `<button class="cal-cell empty ${udaje?.stav || ''}" data-prazdne="${klic}" title="${nazevVydani(klic)}${popisStavu}${udaje?.poznamka ? `\n${esc(udaje.poznamka)}` : ''}"><span class="cal-month">${zkratka}${udaje?.stav === 'shanim' ? '<em>sháním</em>' : udaje?.stav === 'mam' ? '<em>výtisk</em>' : ''}</span></button>`;
             }
             obsazeno++;
             const popis = [v.cover && 'cover', v.centerfold && `centerfold: ${v.modelka}`, v.pictorial && 'pictorial'].filter(Boolean).join(', ');
+            const vytisk = stavCisla.get(klic)?.stav === 'mam';
             return `
-                <button class="cal-cell" data-vydani="${klic}" title="${esc(nazevVydani(klic))} – ${esc(popis)}">
+                <button class="cal-cell ${vytisk ? 'mam' : ''}" data-vydani="${klic}" title="${esc(nazevVydani(klic))} – ${esc(popis)}${vytisk ? ' · mám výtisk' : ''}">
                     <img src="${esc(obrazek(v.nahled, 'w300'))}" loading="lazy" draggable="false" />
                     <span class="cal-month">${zkratka}</span>
                     <span class="cal-dots">
@@ -66,7 +68,21 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
                 </button>
             `;
         }).join('');
-        rokyKalendare.push({ rok, obsazeno, policka });
+
+        // Speciály roku: pojmenované i ty, ke kterým jsou jen alba; pod měsíci jako štítky
+        const specialy = new Map(specialyRoku(rok, stav.kalendarEdice).map(s => [s.vydani, s.nazev]));
+        for (const klic of vydani.keys()) {
+            if (klic.startsWith(`${rok}-S`) && !specialy.has(klic)) specialy.set(klic, nazevVydani(klic).replace(` ${rok}`, ''));
+        }
+        let obsazenoSpecialu = 0;
+        const stitky = [...specialy].sort(([a], [b]) => a.localeCompare(b)).map(([klic, nazev]) => {
+            const v = vydani.get(klic);
+            const udaje = stavCisla.get(klic);
+            if (v) obsazenoSpecialu++;
+            const popis = v ? [v.cover && 'cover', v.centerfold && `centerfold: ${v.modelka}`, v.pictorial && 'pictorial'].filter(Boolean).join(', ') : 'zatím prázdný';
+            return `<button class="cal-special ${v ? '' : 'empty'} ${udaje?.stav || ''}" data-${v ? 'vydani' : 'prazdne'}="${klic}" title="${esc(nazev)} ${rok} – speciál, ${esc(popis)}${udaje?.stav ? ' · ' + NAZVY_STAVU[udaje.stav].toLowerCase() : ''}">${esc(nazev)}</button>`;
+        }).join('');
+        rokyKalendare.push({ rok, obsazeno, obsazenoSpecialu, policka, stitky });
     }
 
     // Souvislá řada aspoň dvou prázdných roků se sbalí do jednoho řádku (při hledání roku ne)
@@ -80,7 +96,8 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     };
     for (let i = 0; i < rokyKalendare.length; i++) {
         let konec = i;
-        while (!hledat && konec + 1 < rokyKalendare.length && rokyKalendare[i].obsazeno === 0 && rokyKalendare[konec + 1].obsazeno === 0) konec++;
+        const prazdny = r => r.obsazeno === 0 && !r.stitky;
+        while (!hledat && konec + 1 < rokyKalendare.length && prazdny(rokyKalendare[i]) && prazdny(rokyKalendare[konec + 1])) konec++;
         const klicMezery = `${rokyKalendare[konec].rok}-${rokyKalendare[i].rok}`;
         if (konec > i && !rozbaleneMezery.has(klicMezery)) {
             const odRoku = rokyKalendare[konec].rok, doRoku = rokyKalendare[i].rok;
@@ -92,11 +109,12 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
             i = konec;
             continue;
         }
-        const { rok, obsazeno, policka } = rokyKalendare[i];
+        const { rok, obsazeno, obsazenoSpecialu, policka, stitky } = rokyKalendare[i];
         radky.push(`
-            <section class="cal-year" ${oznacitDekadu(rok, obsazeno)}>
+            <section class="cal-year" ${oznacitDekadu(rok, obsazeno + obsazenoSpecialu)}>
                 <div class="cal-year-label"><button class="link cal-year-link" data-vydani="${slozitVydani(String(rok), '', stav.kalendarEdice)}" title="Celý ročník"><strong>${rok}</strong></button><span>${obsazeno} z 12</span></div>
                 <div class="cal-months">${policka}</div>
+                ${stitky ? `<div class="cal-specials" title="Speciály ${rok}">${stitky}</div>` : ''}
             </section>
         `);
     }
@@ -117,12 +135,16 @@ export function nastavitEdiciKalendare(edice) {
 
 // Co jde přidat k jednomu vydání; nabízí prázdné políčko kalendáře i pravé tlačítko na něm
 export const pridatKVydani = klic => [
+    ...(rozlozitVydani(klic) ? [{ text: `Nový speciál roku ${rozlozitVydani(klic).rok}…`, akce: async () => {
+        if (await zalozitSpecial(rozlozitVydani(klic).rok, rozlozitVydani(klic).edice)) nacistKalendar(searchInput.value);
+    } }] : []),
     { text: `Přidat cover: ${nazevVydani(klic)}`, akce: () => otevritCoverModal(null, klic) },
     { text: `Přidat centerfold: ${nazevVydani(klic)}`, akce: () => pridatCenterfold(klic) },
     { text: `Přidat pictorial: ${nazevVydani(klic)}`, akce: () => pridatPictorial(klic) },
 ];
 // Prázdné políčko nabízí i označení čísla
 export const oznacitCislo = klic => [
+    { text: 'Mám výtisk', akce: async () => { await SetStavVydani(klic, 'mam'); nacistKalendar(searchInput.value, true); } },
     { text: 'Sháním toto číslo', akce: async () => { await SetStavVydani(klic, 'shanim'); nacistKalendar(searchInput.value, true); } },
     { text: 'Nezajímá mě', akce: async () => { await SetStavVydani(klic, 'nezajima'); nacistKalendar(searchInput.value, true); } },
     { text: 'Zrušit označení', akce: async () => { await SetStavVydani(klic, ''); nacistKalendar(searchInput.value, true); } },

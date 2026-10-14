@@ -723,6 +723,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceNetykaSe,
 	(*App).migraceVydaniAVybery,
 	(*App).migraceAlbumJakoZaznam,
+	(*App).migraceSpecialy,
 }
 
 func (a *App) migrovat() error {
@@ -1532,11 +1533,17 @@ func (a *App) GetCenterfoldy() []Fotografie {
 }
 
 // Covery časopisů nepatří k modelce (modelka_id = 0); album je vydání ve tvaru RRRR-MM
-// Vydání je RRRR-MM, u jiné než výchozí (US) edice s příponou, např. 2009-11-CZ
-var vzorVydani = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2])(-[A-Z]{2})?$`)
+// Číslo časopisu je RRRR-MM, speciál RRRR-Snn (pořadí speciálu v roce, název je u čísla); u jiné než
+// výchozí (US) edice s příponou, např. 2009-11-CZ nebo 1995-S01-CZ
+var vzorVydani = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?$`)
 
-// Pictorial může patřit jen k ročníku bez měsíce (např. „Cybergirl of the Year 2012")
-var vzorVydaniAlba = regexp.MustCompile(`^\d{4}(-(0[1-9]|1[0-2]))?(-[A-Z]{2})?$`)
+// Pictorial může patřit i jen k ročníku bez měsíce (např. „Cybergirl of the Year 2012")
+var vzorVydaniAlba = regexp.MustCompile(`^\d{4}(-(0[1-9]|1[0-2]|S\d{2}))?(-[A-Z]{2})?$`)
+
+// Speciál (RRRR-Snn): nemá měsíc, proto se nepočítá mezi měsíční čísla ročníku
+func jeSpecial(vydani string) bool {
+	return len(vydani) >= 8 && vydani[4] == '-' && vydani[5] == 'S'
+}
 
 const dotazCoveru = vyberFotografii + ` FROM fotografie f
 		WHERE f.typ = 'Cover' AND f.modelka_id = 0
@@ -1589,11 +1596,13 @@ func (a *App) GetVydani(vydani string) []Fotografie {
 	}
 	podminka, args := vydaniFotky+" = ?", []interface{}{vydani}
 	if rok, edice, jenRocnik := rozlozitRocnik(vydani); jenRocnik {
-		vzor := rok + "-[0-1][0-9]"
+		// Ročník: měsíční čísla i speciály roku v dané edici
+		vzor, vzorSpecialu := rok+"-[0-1][0-9]", rok+"-S[0-9][0-9]"
 		if edice != "" {
 			vzor += "-" + edice
+			vzorSpecialu += "-" + edice
 		}
-		podminka, args = "("+vydaniFotky+" = ? OR "+vydaniFotky+" GLOB ?)", []interface{}{vydani, vzor}
+		podminka, args = "("+vydaniFotky+" = ? OR "+vydaniFotky+" GLOB ? OR "+vydaniFotky+" GLOB ?)", []interface{}{vydani, vzor, vzorSpecialu}
 	}
 	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
 		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`

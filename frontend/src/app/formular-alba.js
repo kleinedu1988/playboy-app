@@ -7,6 +7,7 @@ import { stav } from './stav';
 import { nacistFotkyModelky } from './profil';
 import { albumModal } from './okno';
 import { otevritDeleteModal } from './formular-modelky';
+import { pripojitVyberSpecialu } from './specialy';
 
 // Formulář alba slouží pro přidání fotek (album = null) i úpravu alba ({ album, typ })
 // Přidání centerfoldu ze stěny plakátů: modelka se jen vybere ze seznamu už zadaných
@@ -36,6 +37,9 @@ export async function vybratNeboZalozitModelku(jmeno) {
     return await najit();
 }
 
+// Výběr měsíce nabízí i speciály zvoleného roku
+let obnovitSpecialyAlba = (_vybrat) => {};
+
 // Centerfold se místo názvu určuje měsícem a rokem vydání
 export function prepnoutPoleAlba() {
     const centerfold = document.getElementById('selectTyp').value === 'Centerfold';
@@ -43,7 +47,7 @@ export function prepnoutPoleAlba() {
     document.getElementById('albumVydaniGroup').classList.remove('hidden');
     // U pictorialu je vydání nepovinné
     // U pictorialu stačí i samotný rok
-    document.getElementById('albumMesicLabel').textContent = centerfold ? 'Měsíc vydání' : 'Měsíc (nepovinné)';
+    document.getElementById('albumMesicLabel').textContent = centerfold ? 'Měsíc nebo speciál' : 'Měsíc nebo speciál (nepovinné)';
     document.getElementById('albumRokLabel').textContent = centerfold ? 'Rok vydání' : 'Rok (nepovinné)';
     document.getElementById('inputAlbumName').required = !centerfold;
     document.getElementById('selectAlbumMesic').required = centerfold;
@@ -88,8 +92,8 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     if (moznosti.typ) vyberTypu.value = moznosti.typ;
     const vydani = rozlozitVydani(album ? (album.vydani || (album.typ === 'Centerfold' ? album.album : '')) : moznosti.vydani);
     document.getElementById('inputAlbumRok').value = vydani?.rok || '';
-    document.getElementById('selectAlbumMesic').value = vydani?.mesic || '';
     document.getElementById('selectAlbumEdice').value = vydani?.edice || stav.kalendarEdice;
+    obnovitSpecialyAlba(vydani?.mesic || '');
     prepnoutPoleAlba();
 
     // Našeptávání fotografů z celé sbírky, aby se stejné jméno psalo vždy stejně
@@ -121,6 +125,8 @@ export function smazatAlbum(album, pocet) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumMesic', 'inputAlbumRok', 'selectAlbumEdice');
+
     document.getElementById('selectTyp').addEventListener('change', prepnoutPoleAlba);
 
     // Nápověda, že napsané jméno zatím ve sbírce není a uložením vznikne nová modelka

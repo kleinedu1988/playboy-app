@@ -17,6 +17,7 @@ const CTENI = new Set([
     'GetPrehled',
     'GetPrehledVydani',
     'GetSablonaObrazku',
+    'GetSpecialy',
     'GetStavyVydani',
     'GetTagy',
     'GetVerze',
@@ -117,3 +118,6 @@ export const VymazatMezipamet = /** @type {typeof App.VymazatMezipamet} */ (obal
 export const ZkontrolovatDavku = /** @type {typeof App.ZkontrolovatDavku} */ (obalit('ZkontrolovatDavku'));
 export const ZkontrolovatSoubory = /** @type {typeof App.ZkontrolovatSoubory} */ (obalit('ZkontrolovatSoubory'));
 export const ZrusitPoradiAlba = /** @type {typeof App.ZrusitPoradiAlba} */ (obalit('ZrusitPoradiAlba'));
+export const GetSpecialy = /** @type {typeof App.GetSpecialy} */ (obalit('GetSpecialy'));
+export const SetNazevSpecialu = /** @type {typeof App.SetNazevSpecialu} */ (obalit('SetNazevSpecialu'));
+export const ZalozitSpecial = /** @type {typeof App.ZalozitSpecial} */ (obalit('ZalozitSpecial'));

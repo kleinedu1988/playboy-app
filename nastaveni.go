@@ -273,7 +273,7 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 
 		// Věk při prvním vydání mimo běžný rozsah ukazuje na překlep v datu narození nebo ve vydání
 		for _, v := range m.Vydani {
-			if !vzorVydani.MatchString(v) || len(m.NarozeniDatum) < 7 {
+			if !vzorVydani.MatchString(v) || jeSpecial(v) || len(m.NarozeniDatum) < 7 {
 				continue
 			}
 			var rokVydani, mesicVydani, rokNarozeni, mesicNarozeni int
@@ -344,6 +344,10 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 	for _, v := range poradi {
 		if !vydani[v].cover && !nezajima[v] {
 			p.VydaniBezCoveru = append(p.VydaniBezCoveru, v)
+		}
+		// Speciál nemá jediný centerfold ani měsíc v ročníku
+		if jeSpecial(v) {
+			continue
 		}
 		if !vydani[v].centerfold && !nezajima[v] {
 			p.VydaniBezCenterfoldu = append(p.VydaniBezCenterfoldu, v)

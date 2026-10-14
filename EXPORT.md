@@ -1,7 +1,7 @@
-# Formát exportu (verze 4)
+# Formát exportu (verze 5)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 4** (program 0.10.0 a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 5** (program 0.13.0 a novější).
 
 Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-exportu.yaml); jde rovnou načíst importem.
 
@@ -91,8 +91,10 @@ covery:
     rucni_poradi: true    # nepovinné
     fotky: [{id: ...}]
 vydani:
+  - vydani: 1995-S01      # speciál: rok, S a pořadí v roce (s edicí 1995-S01-CZ)
+    nazev: Playmate Review  # název má jen speciál
   - vydani: 2014-02
-    stav: shanim          # shanim | nezajima
+    stav: shanim          # mam (mám výtisk) | shanim | nezajima
     modelka_obalky: Anna  # odkaz na modelku
     poznamka: ...
 vybery:
@@ -111,6 +113,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 5 | 0.13.0 | Speciály (`RRRR-Snn`) a jejich `nazev` u vydání, stav čísla `mam` |
 | 4 | 0.10.0 | Kontrola verze, `cislo` a odkazy `Jméno [číslo]`, `netyka_se` u modelky i alba, `pridano` u fotky, `spojit` a `rucni_poradi` u coveru, alba bez fotek |
 | 3 | 0.9.0 | Odkazy modelky, vydání (stav, obálka, poznámka), výběry |
 | 2 | 0.6.0 | Další modelky alba |

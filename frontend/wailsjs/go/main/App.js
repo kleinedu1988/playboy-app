@@ -86,6 +86,10 @@ export function GetSablonaObrazku() {
   return window['go']['main']['App']['GetSablonaObrazku']();
 }
 
+export function GetSpecialy() {
+  return window['go']['main']['App']['GetSpecialy']();
+}
+
 export function GetStavyVydani() {
   return window['go']['main']['App']['GetStavyVydani']();
 }
@@ -190,6 +194,10 @@ export function SetHodnoceniFotek(arg1, arg2) {
   return window['go']['main']['App']['SetHodnoceniFotek'](arg1, arg2);
 }
 
+export function SetNazevSpecialu(arg1, arg2) {
+  return window['go']['main']['App']['SetNazevSpecialu'](arg1, arg2);
+}
+
 export function SetNetykaSe(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetNetykaSe'](arg1, arg2, arg3);
 }
@@ -280,6 +288,10 @@ export function VybratSouboryImportu() {
 
 export function VymazatMezipamet() {
   return window['go']['main']['App']['VymazatMezipamet']();
+}
+
+export function ZalozitSpecial(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ZalozitSpecial'](arg1, arg2, arg3);
 }
 
 export function ZkontrolovatDavku() {

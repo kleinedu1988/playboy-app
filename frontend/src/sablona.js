@@ -20,6 +20,7 @@ export const SABLONA_OKNA = `
     </div>
     <div class="nav-controls">
       <input type="text" id="searchInput" placeholder="Hledat…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
+      <button id="sortBtn" class="nav-fav nav-sort"></button>
       <button id="favBtn" class="nav-fav"></button>
       <button id="addBtn" class="nav-fav" title="Přidat…">+</button>
       <button id="menuBtn" class="nav-fav" title="Další akce">&#8943;</button>
@@ -353,7 +354,7 @@ export const SABLONA_OKNA = `
       <form id="coverForm">
         <div class="form-row form-row-3">
           <div class="form-group">
-            <label for="selectCoverMesic">Měsíc vydání</label>
+            <label for="selectCoverMesic">Měsíc nebo speciál</label>
             <select id="selectCoverMesic" required>
               <option value="">Vyber měsíc</option>
               ${MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('')}
@@ -461,11 +462,16 @@ export const SABLONA_OKNA = `
         <button class="close-btn" data-zavrit>&times;</button>
       </div>
       <form id="issueForm">
+        <div id="issueNazevGroup" class="form-group hidden">
+          <label for="inputIssueNazev">Název speciálu</label>
+          <input type="text" id="inputIssueNazev" placeholder="např. Playmate Review" />
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label for="selectIssueStav">Stav ve sbírce</label>
             <select id="selectIssueStav">
               <option value="">Běžné</option>
+              <option value="mam">Mám výtisk</option>
               <option value="shanim">Sháním</option>
               <option value="nezajima">Nezajímá mě</option>
             </select>

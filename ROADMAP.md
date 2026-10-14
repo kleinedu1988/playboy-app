@@ -105,7 +105,7 @@ jsou v programu. Poslední etapa, ve které smí přibýt funkce a změnit se sc
 | „Co je nového“: changelog vložený do programu, po aktualizaci se jednou ukáže | Položka Verze dnes odkazuje na soubor v repozitáři | S |
 | Instalace do `~/.local/bin` s položkou v nabídce aplikací a ikonou; v README odinstalace a přenos dat na jiný počítač | Program dnes existuje jen jako soubor v `build/bin` | S |
 | „Smazat celou databázi“ hlouběji nebo s napsáním potvrzovacího slova | Pohodlí a jistota | S |
-| Rozhodnutí 2–4 promítnout do kódu (řazení galerie, výtisky, edice), dokud se schéma a export smí měnit | Po alfě už to nepůjde bez nové hlavní verze | S–M |
+| ~~Rozhodnutí 2–4 promítnout do kódu (řazení galerie, výtisky, speciály)~~ – hotovo v 0.13.0 | Po alfě už to nepůjde bez nové hlavní verze | S–M |
 | Předběžné verze v číslování: `TestVerzeSouhlasi` a `wails.json` přijmou `1.0.0-alpha.N` a `1.0.0-beta.N` | Připravit číslování pro další etapy | S |
 
 ## Etapa 11 – Alfa (1.0.0-alpha)
@@ -163,14 +163,11 @@ Cíl: sbírku o stovkách modelek rozebírat a hlídat kvalitu dat bez ručního
 
 ## K rozhodnutí
 
-1. **Album jako plný záznam před 1.0.0** (etapa 8): den až dva práce bez viditelné novinky. Všechny tři audity
-   doporučují ano; bez toho se 1.0 zmrazí s dnešním textovým klíčem a zástupnou modelkou u coverů.
-2. **Přepínač řazení galerie:** ano, nebo ne? Pokud ano, která řazení (naposledy přidané, rok prvního vydání,
-   počet fotek, hodnocení)?
-3. **Fyzické výtisky:** evidovat u čísla „mám výtisk“ (případně stav nebo cenu), nebo stačí „sháním / nezajímá mě“?
-   Rozhoduje o formátu exportu, který se zmrazí v alfě – potřeba rozhodnout do etapy 10.
-4. **Edice:** zůstane US a CZ, nebo počítat s dalšími (DE…) a se zvláštními čísly (speciály, Newsstand)?
-5. **Instalace:** spouštět dál z `build/bin`, nebo položka v nabídce aplikací?
+Rozhodnuto 14. 10. 2026: album jako záznam (1, hotovo v 0.10.0); řazení galerie jen tři – abecedně, naposledy
+přidané, rok prvního vydání (2); stav čísla „mám výtisk“ (3); speciály evidovat zvlášť, národní edice zatím
+jen US a CZ (4). Vše je v 0.13.0.
+
+5. **Instalace:** spouštět dál z `build/bin`, nebo položka v nabídce aplikací? (Etapa 10 počítá s nabídkou.)
 
 ## Nedělat
 

@@ -1,7 +1,7 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
 import { GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
 import { contextMenu } from '../ui/nabidka';
-import { bezDiakritiky, esc } from '../lib/format';
+import { bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, seraditModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { detailView, gallery, searchInput } from './prvky';
@@ -42,6 +42,15 @@ export async function ohodnotitPolozku(polozka, zvoleno) {
 }
 
 // Tlačítko v liště zvyšuje minimální hodnocení: vše -> 1+ -> … -> 5 -> vše
+export function vykreslitRazeni() {
+    const tlacitko = document.getElementById('sortBtn');
+    const poradi = Object.keys(RAZENI_GALERIE);
+    const dalsi = poradi[(poradi.indexOf(stav.razeniGalerie) + 1) % poradi.length];
+    tlacitko.textContent = RAZENI_GALERIE[stav.razeniGalerie].popisek;
+    tlacitko.classList.toggle('active', stav.razeniGalerie !== 'jmeno');
+    tlacitko.title = `Řazení: ${RAZENI_GALERIE[stav.razeniGalerie].nazev}. Klik: ${RAZENI_GALERIE[dalsi].nazev}.`;
+}
+
 export function vykreslitFiltrHodnoceni() {
     const tlacitko = document.getElementById('favBtn');
     tlacitko.classList.toggle('active', stav.minHodnoceni > 0);
@@ -85,11 +94,13 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
     const vsechny = await GetModelky(dotaz) || [];
     if (moje !== stav.cisloNacteni) return;
-    const modelky = vsechny.filter(m => m.hodnoceni >= stav.minHodnoceni);
-    // Se zapnutým filtrem jdou nejlépe hodnocené první, při shodě zůstává pořadí podle jména
-    if (stav.minHodnoceni) modelky.sort((a, b) => b.hodnoceni - a.hodnoceni);
+    // Zvolené řazení (stabilní: při shodě zůstává pořadí podle jména z backendu). Se zapnutým filtrem ♡
+    // jdou při řazení podle jména nejlépe hodnocené první.
+    const modelky = seraditModelky(vsechny.filter(m => m.hodnoceni >= stav.minHodnoceni), stav.razeniGalerie);
+    if (stav.minHodnoceni && stav.razeniGalerie === 'jmeno') modelky.sort((a, b) => b.hodnoceni - a.hodnoceni);
     stav.nacteneModelky = modelky;
     vykreslitFiltrHodnoceni();
+    vykreslitRazeni();
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(gallery);
 
@@ -114,20 +125,21 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
         </div>
     `).join('');
 
-    // Lišta písmen: první karta každého písmene je část stránky; při řazení podle srdíček nedává smysl
-    if (!stav.minHodnoceni && modelky.length >= MODELEK_PRO_PISMENA) {
-        const pismena = new Map();
-        const pismeno = m => (/^\p{L}/u.test(bezDiakritiky(m.jmeno)) ? bezDiakritiky(m.jmeno)[0].toUpperCase() : '#');
-        modelky.forEach(m => pismena.set(pismeno(m), (pismena.get(pismeno(m)) || 0) + 1));
+    // Lišta částí: písmena, měsíce přidání nebo desetiletí; první karta každé části je cíl skoku.
+    // Při řazení podle jména se zapnutým ♡ jsou karty seřazené podle srdíček a části nedávají smysl.
+    if (!(stav.minHodnoceni && stav.razeniGalerie === 'jmeno') && modelky.length >= MODELEK_PRO_PISMENA) {
+        const casti = new Map();
+        const podleId = new Map(modelky.map(m => [m.id, m]));
+        modelky.forEach(m => { const c = castGalerie(m, stav.razeniGalerie); casti.set(c, (casti.get(c) || 0) + 1); });
         const videna = new Set();
         gallery.querySelectorAll('.card').forEach(karta => {
-            const p = pismeno(modelky.find(m => m.id === parseInt(karta.dataset.id)));
-            if (!videna.has(p)) {
-                videna.add(p);
-                karta.dataset.cast = p;
+            const c = castGalerie(podleId.get(parseInt(karta.dataset.id)), stav.razeniGalerie);
+            if (!videna.has(c)) {
+                videna.add(c);
+                karta.dataset.cast = c;
             }
         });
-        listaGalerie.naplnit([...pismena].map(([p, pocet]) => ({ klic: p, nazev: p, pocet })));
+        listaGalerie.naplnit([...casti].map(([c, pocet]) => ({ klic: c, nazev: c, pocet })));
         listaGalerie.sledovat();
     } else {
         listaGalerie.naplnit([]);
@@ -179,6 +191,17 @@ export function pripravit() {
         rada.outerHTML = htmlSrdicka(modelka);
         if (stav.minHodnoceni && !gallery.classList.contains('hidden')) nacistGalerii(searchInput.value);
     });
+
+    try {
+        const ulozene = localStorage.getItem('razeniGalerie');
+        if (RAZENI_GALERIE[ulozene]) stav.razeniGalerie = ulozene;
+    } catch { /* výchozí řazení podle jména */ }
+    document.getElementById('sortBtn').onclick = () => {
+        const poradi = Object.keys(RAZENI_GALERIE);
+        stav.razeniGalerie = poradi[(poradi.indexOf(stav.razeniGalerie) + 1) % poradi.length];
+        try { localStorage.setItem('razeniGalerie', stav.razeniGalerie); } catch { /* jen pro toto spuštění */ }
+        nacistGalerii(searchInput.value);
+    };
 
     document.getElementById('favBtn').onclick = () => {
         stav.minHodnoceni = (stav.minHodnoceni + 1) % 6;

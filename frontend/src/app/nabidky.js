@@ -1,6 +1,6 @@
 // Kontextové nabídky pravého tlačítka
 import { contextMenu, otevritKontextovouNabidku, zavritKontextovouNabidku } from '../ui/nabidka';
-import { OdebratModelkuZAlba, OdebratZVyberu, SetSpojeniAlba, SetStavVydani, SetTitulniFotka, ZrusitPoradiAlba } from './backend';
+import { OdebratModelkuZAlba, OdebratZVyberu, SetSpojeniAlba, SetTitulniFotka, ZrusitPoradiAlba } from './backend';
 import { nazevVydani } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
 import { stav } from './stav';
@@ -9,7 +9,7 @@ import { zpet } from './navigace';
 import { nacistGalerii } from './galerie';
 import { nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba } from './profil';
 import { otevritVydani, upravitVydani } from './vydani';
-import { nacistKalendar, pridatKVydani } from './kalendar';
+import { oznacitCislo, pridatKVydani } from './kalendar';
 import { oznacitNetykaSe } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
 import { otevritCoverModal, otevritProfilPodleId } from './cover';
@@ -202,14 +202,8 @@ export function otevritNabidku(cil, x, y) {
         if (obsazene) polozky.push({ text: `Otevřít vydání ${nazevVydani(obsazene.dataset.vydani)}`, akce: () => otevritVydani(obsazene.dataset.vydani) });
         if (obsazene || prazdne) {
             const klic = (obsazene || prazdne).dataset.vydani || prazdne.dataset.prazdne;
-            const oznacit = stavCisla => async () => {
-                await SetStavVydani(klic, stavCisla);
-                nacistKalendar(searchInput.value, true);
-            };
             polozky.push(...pridatKVydani(klic), null,
-                { text: 'Sháním toto číslo', akce: oznacit('shanim') },
-                { text: 'Nezajímá mě', akce: oznacit('nezajima') },
-                { text: 'Zrušit označení', akce: oznacit('') },
+                ...oznacitCislo(klic),
                 { text: 'Upravit číslo…', akce: () => upravitVydani(klic) },
                 null);
         }

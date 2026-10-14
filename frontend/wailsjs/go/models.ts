@@ -407,6 +407,20 @@ export namespace main {
 		}
 	}
 	
+	export class Special {
+	    vydani: string;
+	    nazev: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Special(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vydani = source["vydani"];
+	        this.nazev = source["nazev"];
+	    }
+	}
 	export class Vyber {
 	    id: number;
 	    nazev: string;
@@ -430,6 +444,7 @@ export namespace main {
 	    stav: string;
 	    modelkaObalky: number;
 	    jmenoObalky: string;
+	    nazev: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new VydaniInfo(source);
@@ -442,6 +457,7 @@ export namespace main {
 	        this.stav = source["stav"];
 	        this.modelkaObalky = source["modelkaObalky"];
 	        this.jmenoObalky = source["jmenoObalky"];
+	        this.nazev = source["nazev"];
 	    }
 	}
 	export class VydaniKalendare {

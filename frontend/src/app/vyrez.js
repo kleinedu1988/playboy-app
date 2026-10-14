@@ -34,9 +34,10 @@ export function upravitVyrez(modelka) {
             <button type="button" class="panel-btn crop-ulozit" data-akce="ulozit" title="Uložit výřez">${ik('<path d="M5 12l5 5 9-10"/>')}</button>
         </div>
     `;
-    ram.append(panel);
-    // Panel leží na fotce: jeho ovládání nesmí fotku posouvat ani přibližovat
-    ['pointerdown', 'wheel', 'click'].forEach(typ => panel.addEventListener(typ, (e) => e.stopPropagation()));
+    // Panel leží na kartě nad fotkou, ne v rámu fotky: přiblížená fotka je samostatná vrstva a ve WebKitu
+    // by panel v témže rámu překryla. Kliknutí ani tažení v panelu fotku neposouvá.
+    card.append(panel);
+    ['pointerdown', 'click'].forEach(typ => panel.addEventListener(typ, (e) => e.stopPropagation()));
     const posuvnik = panel.querySelector('.crop-zoom');
 
     const omezit = (hodnota, min, max) => Math.min(max, Math.max(min, hodnota));
@@ -83,6 +84,8 @@ export function upravitVyrez(modelka) {
     ram.addEventListener('pointerup', naUvolneni);
     ram.addEventListener('pointercancel', naUvolneni);
     ram.addEventListener('wheel', naKolecko, { passive: false });
+    // Kolečko nad panelem také přibližuje, stránka se přitom neposouvá
+    panel.addEventListener('wheel', naKolecko, { passive: false });
     posuvnik.addEventListener('input', () => {
         vyrez.coverZoom = parseFloat(posuvnik.value);
         vykreslit();

@@ -654,6 +654,8 @@ main {
     background-color: var(--panel-bg);
     box-shadow: var(--panel-stin);
     cursor: default;
+    /* Vlastní vrstva nad přiblíženou fotkou */
+    transform: translateZ(0);
 }
 
 /* Dva řádky: nahoře posuvník přiblížení přes celou šířku, pod ním tlačítka */

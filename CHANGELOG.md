@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.9] – 2026-10-14
+
+Schéma databáze ani formát exportu se nemění.
+
+### Opraveno
+- Při přibližování výřezu titulní fotky kolečkem myši mohl panel výřezu zmizet pod přiblíženou fotkou.
+  Panel teď leží nad fotkou v samostatné vrstvě; kolečko přibližuje i nad panelem a stránka se přitom
+  neposouvá.
+
 ## [0.17.8] – 2026-10-14
 
 Schéma databáze ani formát exportu se nemění.

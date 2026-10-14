@@ -4,6 +4,9 @@ import { contextMenu } from '../ui/nabidka';
 import { bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, seraditModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
+import { otevritRychlePridani } from './formular-modelky';
+import { importovatData, otevritHeslo } from './sprava';
+import { otevritNapovedu } from './napoveda';
 import { detailView, gallery, searchInput } from './prvky';
 import { listaGalerie } from './listy';
 import { adresaTitulni } from './obrazky';
@@ -42,6 +45,26 @@ export async function ohodnotitPolozku(polozka, zvoleno) {
 }
 
 // Tlačítko v liště zvyšuje minimální hodnocení: vše -> 1+ -> … -> 5 -> vše
+const HTML_UVODU = `
+    <section class="uvod">
+        <h2>Vítej v Playboy Database</h2>
+        <p>Katalog sbírky: modelky, alba fotek, centerfoldy, covery a čísla časopisu. Fotky zůstávají na Google
+            Disku, program si pamatuje jen odkazy a údaje.</p>
+        <ol>
+            <li><strong>Sdílej fotky na Disku</strong> jako „kdokoli s odkazem“ (u složky stačí jednou) – jinak je program neuvidí.</li>
+            <li><strong>Přidej první modelku</strong> a k ní album: vložíš odkazy na fotky z Disku, klidně víc naráz.</li>
+            <li>Nebo <strong>načti hotová data</strong> ze souborů YAML či Markdown (export z programu nebo vlastní poznámky).</li>
+            <li>Volitelně <strong>nastav heslo</strong>, aby se sbírka ukázala až po odemčení.</li>
+        </ol>
+        <div class="uvod-akce">
+            <button class="btn btn-primary" data-uvod="modelka">Přidat modelku</button>
+            <button class="btn btn-secondary" data-uvod="import">Importovat soubory…</button>
+            <button class="btn btn-secondary" data-uvod="heslo">Nastavit heslo…</button>
+            <button class="btn btn-secondary" data-uvod="napoveda">Nápověda (?)</button>
+        </div>
+        <p class="uvod-pozn">Data jsou v ~/.local/share/playboy-app; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
+    </section>`;
+
 export function vykreslitRazeni() {
     const tlacitko = document.getElementById('sortBtn');
     const poradi = Object.keys(RAZENI_GALERIE);
@@ -104,6 +127,12 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(gallery);
 
+    // Prázdná sbírka: úvod s prvními kroky místo prázdné galerie
+    if (vsechny.length === 0 && !dotaz.trim()) {
+        listaGalerie.naplnit([]);
+        gallery.innerHTML = HTML_UVODU;
+        return;
+    }
     if (modelky.length === 0) {
         listaGalerie.naplnit([]);
         gallery.innerHTML = `<div class="empty-state">${
@@ -158,6 +187,15 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    // Tlačítka úvodu prázdné sbírky
+    gallery.addEventListener('click', (e) => {
+        const akce = e.target.closest('[data-uvod]')?.dataset.uvod;
+        if (akce === 'modelka') otevritRychlePridani();
+        else if (akce === 'import') importovatData();
+        else if (akce === 'heslo') otevritHeslo();
+        else if (akce === 'napoveda') otevritNapovedu();
+    });
+
     // Srdíčka na dlaždici fotky v profilu a na stránce vydání
     document.querySelector('main').addEventListener('click', async (e) => {
         const srdicko = e.target.closest('[data-hodnoceni-fotky] .heart');

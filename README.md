@@ -28,6 +28,10 @@ Vydání verze:
 3. `go test ./...` (test hlídá, že verze souhlasí), commit a značka `git tag -a vX.Y.Z`,
 4. po vydání zvednout verzi na další s příponou `-dev` a v changelogu založit oddíl „nevydáno“.
 
+Před 1.0.0 následují předběžné verze `1.0.0-alpha.N`, `1.0.0-beta.N` (případně `-rc.N`); postup je stejný.
+Novinky z `CHANGELOG.md` se při sestavení vloží do programu (okno „Co je nového“), proto se changelog píše
+pro uživatele.
+
 ## Instalace
 
 ```
@@ -119,6 +123,8 @@ Do hledání modelek jde psát i `pole:hodnota`, např. `vlasy:blond`, `fotograf
 (rok vydání), `narozena:1990`, `edice:CZ`, `tag:`, `role:`, `narodnost:`, `oci:`, `misto:`. Slova se kombinují.
 
 ## Prohlížení
+
+Nápověda je přímo v programu: klávesa `?` nebo ⋯ → Nápověda.
 
 - **Nejlepší** (přepínač v hlavičce): fotky s 3, 4 nebo 5 srdíčky napříč sbírkou.
 - **Ročník**: klik na rok v kalendáři; všechna čísla roku po měsících.

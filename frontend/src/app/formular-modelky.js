@@ -1,7 +1,7 @@
 // Rychlé přidání modelky, formulář modelky a potvrzení mazání
 import { jednou, oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteModelka, DeleteVse, SlozkaZaloh } from './backend';
-import { esc, prevestVahu, prevestVysku, rozlozitMiry, sjednotit } from '../lib/format';
+import { esc, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { searchInput } from './prvky';
@@ -131,7 +131,8 @@ export async function naplnitNapovedu() {
 export const deleteModal = document.getElementById('deleteModal');
 
 // Potvrzovací okno pro nevratné mazání; akce se provede až po potvrzení
-export function otevritDeleteModal(nadpis, text, akce, poDokonceni = () => nacistGalerii(searchInput.value)) {
+// slovo: když je zadané, tlačítko Smazat se odemkne až po jeho napsání
+export function otevritDeleteModal(nadpis, text, akce, poDokonceni = () => nacistGalerii(searchInput.value), slovo = '') {
     stav.potvrzenaAkce = async () => {
         if (await akce() === false) oznamit('Smazání se nepodařilo, nic se nezměnilo.');
         poDokonceni();
@@ -139,7 +140,18 @@ export function otevritDeleteModal(nadpis, text, akce, poDokonceni = () => nacis
     document.getElementById('confirmDeleteBtn').textContent = 'Smazat';
     document.getElementById('deleteModalTitle').textContent = nadpis;
     document.getElementById('deleteModalText').textContent = text;
+    nastavitPotvrzovaciSlovo(slovo);
     deleteModal.classList.remove('hidden');
+    if (slovo) document.getElementById('inputDeleteSlovo').focus();
+}
+
+function nastavitPotvrzovaciSlovo(slovo) {
+    const pole = document.getElementById('inputDeleteSlovo');
+    document.getElementById('deleteSlovoGroup').classList.toggle('hidden', !slovo);
+    document.getElementById('deleteSlovoLabel').textContent = `Pro potvrzení napiš ${slovo}`;
+    pole.value = '';
+    pole.dataset.slovo = slovo;
+    document.getElementById('confirmDeleteBtn').disabled = Boolean(slovo);
 }
 
 // Obecná otázka ano/ne ve stejném okně; vrací, zda uživatel potvrdil
@@ -150,6 +162,7 @@ export function potvrdit(nadpis, text, popisTlacitka) {
         document.getElementById('confirmDeleteBtn').textContent = popisTlacitka;
         document.getElementById('deleteModalTitle').textContent = nadpis;
         document.getElementById('deleteModalText').textContent = text;
+        nastavitPotvrzovaciSlovo('');
         deleteModal.classList.remove('hidden');
     });
 }
@@ -169,15 +182,18 @@ export function smazatModelku(modelka) {
     );
 }
 
-export function smazatDatabazi() {
+export async function smazatDatabazi() {
+    const modelky = await vsechnyModelky();
     otevritDeleteModal(
         'Smazat celou databázi',
-        `Opravdu smazat celou databázi? Odstraní se všechny modelky, jejich fotky a alba i covery. Před smazáním se uloží záloha.`,
+        `Smaže se celá sbírka: ${sklonovat(modelky.length, 'modelka', 'modelky', 'modelek')} se všemi fotkami a alby, covery, údaje čísel a výběry. Před smazáním se uloží záloha, ze které jde sbírku obnovit (⋯ → Obnovit ze zálohy).`,
         async () => {
             const smazano = await DeleteVse();
             if (smazano) oznamit(`Databáze smazána. Záloha před smazáním je ve složce ${await SlozkaZaloh()}`);
             return smazano;
-        }
+        },
+        () => nacistGalerii(searchInput.value),
+        'SMAZAT'
     );
 }
 
@@ -257,8 +273,17 @@ export function pripravit() {
 
     document.getElementById('cancelDeleteBtn').onclick = zavritDeleteModal;
 
+    // Napsané slovo odemkne tlačítko Smazat; Enter v poli potvrdí
+    const poleSlova = document.getElementById('inputDeleteSlovo');
+    poleSlova.addEventListener('input', () => {
+        document.getElementById('confirmDeleteBtn').disabled = poleSlova.value.trim().toUpperCase() !== poleSlova.dataset.slovo;
+    });
+    poleSlova.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !document.getElementById('confirmDeleteBtn').disabled) document.getElementById('confirmDeleteBtn').click();
+    });
+
     document.getElementById('confirmDeleteBtn').onclick = jednou(async () => {
-        if (!stav.potvrzenaAkce) return;
+        if (!stav.potvrzenaAkce || document.getElementById('confirmDeleteBtn').disabled) return;
         // Potvrzeno: zavření okna už nesmí akci ohlásit jako zrušenou
         const akce = stav.potvrzenaAkce;
         stav.zrusenaAkce = null;

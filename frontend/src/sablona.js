@@ -533,6 +533,11 @@ export const SABLONA_OKNA = `
         <button id="closeDeleteModalBtn" class="close-btn">&times;</button>
       </div>
       <p id="deleteModalText"></p>
+      <!-- U nevratných hromadných akcí se smazání potvrzuje napsáním slova -->
+      <div id="deleteSlovoGroup" class="form-group hidden">
+        <label id="deleteSlovoLabel" for="inputDeleteSlovo"></label>
+        <input type="text" id="inputDeleteSlovo" autocomplete="off" spellcheck="false" />
+      </div>
       <div class="modal-actions">
         <button id="cancelDeleteBtn" class="btn btn-secondary">Zrušit</button>
         <button id="confirmDeleteBtn" class="btn btn-primary">Smazat</button>
@@ -575,6 +580,79 @@ export const SABLONA_OKNA = `
     <span id="toastText"></span>
     <button id="toastAction" class="btn btn-primary btn-small hidden"></button>
     <button id="toastClose" class="close-btn" title="Zavřít">&times;</button>
+  </div>
+
+  <!-- Nápověda (klávesa ?) -->
+  <div id="helpModal" class="modal-overlay hidden">
+    <div class="modal-card modal-siroky">
+      <div class="modal-header">
+        <h3>Nápověda</h3>
+        <button class="close-btn" data-zavrit>&times;</button>
+      </div>
+      <div class="napoveda">
+        <h4>Prohlížení</h4>
+        <ul>
+          <li><strong>Přepínač v hlavičce</strong>: Modelky, Centerfoldy, Covery, Kalendář, Nejlepší, Přehled.</li>
+          <li><strong>Řazení galerie</strong> tlačítkem vedle ♡: A–Z, Nové (naposledy přidané), Rok (prvního vydání). <strong>♡</strong> ukáže jen modelky s aspoň tolika srdíčky.</li>
+          <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
+          <li>Klik na vydání, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
+        </ul>
+        <h4>Prohlížeč fotek</h4>
+        <ul>
+          <li><kbd>←</kbd> <kbd>→</kbd> listování, <kbd>↑</kbd> <kbd>↓</kbd> skok mezi alby, <kbd>mezerník</kbd> slideshow, <kbd>S</kbd> zamíchat.</li>
+          <li><kbd>F</kbd> rozložit plakát přes okno, <kbd>R</kbd> otočit, klik na fotku lupa, <kbd>1</kbd>–<kbd>5</kbd> srdíčka, <kbd>0</kbd> zrušit, <kbd>Esc</kbd> zavřít.</li>
+          <li>Tlačítko <strong>⋯</strong> nahoře: přidat do výběru, profil, Google Disk, odkaz, odebrat.</li>
+        </ul>
+        <h4>Akce a výběr</h4>
+        <ul>
+          <li>Akce s fotkou, albem, modelkou nebo číslem: tlačítko <strong>⋯</strong>, pravé tlačítko myši nebo klávesa nabídky.</li>
+          <li>Výběr více fotek (profil, vydání, ročník, fotograf, Nejlepší): <kbd>Ctrl</kbd>+klik, <kbd>Shift</kbd>+klik úsek, <kbd>Ctrl</kbd>+<kbd>A</kbd> vše, <kbd>Delete</kbd> odebrat (jde vrátit), <kbd>Esc</kbd> zrušit.</li>
+          <li><kbd>Tab</kbd> prochází karty a fotky, <kbd>Enter</kbd> otevírá; v nabídce fungují šipky.</li>
+          <li>Odebraná fotka jde vrátit tlačítkem Vrátit v oznámení; soubor na Disku zůstává vždy.</li>
+        </ul>
+        <h4>Hledání</h4>
+        <ul>
+          <li>Více slov zužuje výběr: jméno, národnost, vlasy, míry, tagy…</li>
+          <li>Cíleně: <code>vlasy:blond</code>, <code>oci:</code>, <code>narodnost:</code>, <code>tag:</code>, <code>role:</code>, <code>fotograf:"arny freytag"</code>, <code>rok:1975</code>, <code>narozena:1990</code>, <code>edice:CZ</code>.</li>
+        </ul>
+        <h4>Čísla časopisu</h4>
+        <ul>
+          <li>Kalendář ukazuje jednu edici (US nebo CZ). Tečky: cover, centerfold, pictorial; prázdné políčko = číslo chybí, klik ho přidá.</li>
+          <li>Stav čísla: <strong>mám výtisk</strong> (zelený rámeček), <strong>sháním</strong>, <strong>nezajímá mě</strong> – v nabídce políčka nebo v „Upravit číslo…“.</li>
+          <li><strong>Speciály</strong> (Playmate Review, Lingerie…) jsou štítky pod měsíci roku; nový založíš v okně alba nebo coveru („Nový speciál…“) nebo z nabídky kalendáře.</li>
+        </ul>
+        <h4>Přehled a hodnocení</h4>
+        <ul>
+          <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou.</li>
+          <li>Přehled ukazuje, co chybí doplnit; klik na „chybí“ otevře formulář, pravým tlačítkem „netýká se“.</li>
+          <li>Vlastní výběry fotek jsou v Nejlepších vedle prahů srdíček.</li>
+        </ul>
+        <h4>Import a zálohy</h4>
+        <ul>
+          <li>Nabídka ⋯ → Importovat: jeden nebo více souborů <code>.yaml</code>, <code>.yml</code> nebo <code>.md</code>; soubor může obsahovat i jen jednu modelku. Nic se nemaže, jen doplňuje.</li>
+          <li>Zálohy vznikají denně a před každou hromadnou změnou; obnovení v ⋯ → Obnovit ze zálohy.</li>
+          <li>Fotky musí být na Google Disku sdílené „kdokoli s odkazem“.</li>
+        </ul>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="helpNewsBtn" class="btn btn-secondary">Co je nového</button>
+        <button type="button" class="btn btn-primary" data-zavrit>Zavřít</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Co je nového (po aktualizaci a z nabídky ⋯) -->
+  <div id="newsModal" class="modal-overlay hidden">
+    <div class="modal-card modal-siroky">
+      <div class="modal-header">
+        <h3 id="newsModalTitle">Co je nového</h3>
+        <button class="close-btn" data-zavrit>&times;</button>
+      </div>
+      <div id="newsModalBody" class="napoveda"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" data-zavrit>Zavřít</button>
+      </div>
+    </div>
   </div>
 
   <!-- Kontextová nabídka (pravé tlačítko) -->

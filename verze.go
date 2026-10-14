@@ -4,7 +4,8 @@ package main
 // exportu ještě mění; každá verze, která je mění, zvyšuje MINOR. Neuvolněný stav nese příponu -dev.
 // Při vydání se verze změní tady, ve wails.json (info.productVersion) a ve frontend/package.json
 // a v CHANGELOG.md dostane datum; test hlídá, že spolu souhlasí.
-const Verze = "0.13.0"
+// Předběžné verze před 1.0.0: 1.0.0-alpha.N, 1.0.0-beta.N, 1.0.0-rc.N (viz ROADMAP.md, Cesta k 1.0.0).
+const Verze = "0.14.0"
 
 // Verze pro zobrazení v programu
 func (a *App) GetVerze() string {

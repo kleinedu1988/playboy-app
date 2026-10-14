@@ -6,6 +6,7 @@ import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
+import { otevritNapovedu, otevritNovinky } from './napoveda';
 import { detailView, issueView, searchInput } from './prvky';
 import { prepnoutRezim } from './navigace';
 import { nacistGalerii } from './galerie';
@@ -325,7 +326,8 @@ export function polozkySpravy() {
         null,
         { text: 'Smazat celou databázi', akce: smazatDatabazi },
         null,
-        { text: `Verze ${stav.verzeProgramu}`, akce: () => oznamit(`Playboy Database ${stav.verzeProgramu}. Co je v které verzi nového, popisuje CHANGELOG.md v repozitáři.`) },
+        { text: 'Nápověda (?)', akce: otevritNapovedu },
+        { text: `Verze ${stav.verzeProgramu} – co je nového`, akce: () => otevritNovinky() },
     ];
 }
 

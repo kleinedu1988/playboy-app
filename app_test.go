@@ -1389,9 +1389,10 @@ func TestEtapa4Backend(t *testing.T) {
 
 // Verze v programu, ve wails.json, ve frontend/package.json a v changelogu musí souhlasit
 func TestVerzeSouhlasi(t *testing.T) {
+	// MAJOR.MINOR.PATCH, před 1.0.0 i předběžné verze alfa, beta a kandidát (1.0.0-alpha.1); -dev = rozpracováno
 	cisla := strings.TrimSuffix(Verze, "-dev")
-	if !regexp.MustCompile(`^\d+\.\d+\.\d+$`).MatchString(cisla) {
-		t.Fatalf("verze %q není MAJOR.MINOR.PATCH", Verze)
+	if !regexp.MustCompile(`^\d+\.\d+\.\d+(-(alpha|beta|rc)\.\d+)?$`).MatchString(cisla) {
+		t.Fatalf("verze %q není MAJOR.MINOR.PATCH ani předběžná verze (-alpha.N, -beta.N, -rc.N)", Verze)
 	}
 	precist := func(cesta string) string {
 		data, err := os.ReadFile(cesta)

@@ -2402,6 +2402,102 @@ body.razeni .photo-item {
     opacity: 0.25;
 }
 
+/* Úvod prázdné sbírky */
+.uvod {
+    grid-column: 1 / -1;
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 28px 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    background-color: var(--bg-card);
+    line-height: 1.55;
+}
+
+.uvod h2 {
+    margin: 0 0 10px;
+}
+
+.uvod ol {
+    padding-left: 20px;
+}
+
+.uvod li + li {
+    margin-top: 6px;
+}
+
+.uvod-akce {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 18px 0 12px;
+}
+
+.uvod-pozn {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Nápověda a novinky: širší okno s rolovaným textem */
+.modal-card.modal-siroky {
+    width: min(720px, 92vw);
+}
+
+.napoveda {
+    max-height: min(62vh, 640px);
+    overflow-y: auto;
+    padding-right: 8px;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.napoveda h4 {
+    margin: 16px 0 6px;
+    color: var(--accent);
+    font-size: 14px;
+}
+
+.napoveda h4:first-child {
+    margin-top: 0;
+}
+
+.napoveda h4 span {
+    margin-left: 8px;
+    color: var(--text-muted);
+    font-weight: normal;
+    font-size: 12px;
+}
+
+.napoveda h5 {
+    margin: 10px 0 4px;
+    font-size: 13px;
+}
+
+.napoveda ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.napoveda li + li {
+    margin-top: 3px;
+}
+
+.napoveda kbd,
+.napoveda code {
+    padding: 1px 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-card);
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.novinky-verze + .novinky-verze {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
 /* Speciály roku: štítky pod měsíci */
 .cal-specials {
     grid-column: 2;

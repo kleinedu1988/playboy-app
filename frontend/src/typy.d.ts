@@ -12,3 +12,9 @@ interface EventTarget {
     tagName?: string;
     dataset?: DOMStringMap;
 }
+
+// Textový obsah souboru vložený při sestavení (import 'soubor?raw')
+declare module '*?raw' {
+    const obsah: string;
+    export default obsah;
+}

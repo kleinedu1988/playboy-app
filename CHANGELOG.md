@@ -5,6 +5,22 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.14.0] – 2026-10-14
+
+Dokončení etapy 10 roadmapy: nápověda, novinky a úvod v programu. Schéma databáze ani formát exportu se nemění.
+
+### Přidáno
+- Nápověda v programu: klávesa `?` nebo ⋯ → Nápověda. Klávesy prohlížeče, akce a výběr, cílené hledání,
+  čísla časopisu a speciály, Přehled, import a zálohy.
+- „Co je nového“: po aktualizaci se jednou ukáže, co přibylo od naposledy viděné verze; z nabídky ⋯ (položka
+  Verze) posledních pět verzí. Text se bere z CHANGELOG.md při sestavení programu.
+- Úvod prázdné sbírky: první kroky (sdílení na Disku, první modelka, import, heslo) s tlačítky.
+
+### Změněno
+- Číslování připravené na předběžné verze `1.0.0-alpha.N`, `1.0.0-beta.N` a `1.0.0-rc.N`.
+- Smazání celé databáze se potvrzuje napsáním slova SMAZAT; okno řekne, kolik modelek se smaže a jak sbírku
+  obnovit ze zálohy.
+
 ## [0.13.0] – 2026-10-14
 
 První část etapy 10 roadmapy (příprava k vydání): rozhodnutí o řazení, výtiscích a speciálech a instalace.

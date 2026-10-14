@@ -83,3 +83,15 @@ test('speciály: klíč, název a speciály roku', async () => {
     assert.deepEqual(specialyRoku(1995, 'CZ').map(s => s.nazev), ['Léto']);
     nastavitNazvySpecialu([]);
 });
+
+test('novinky z changelogu', async () => {
+    const { porovnatVerze, novinkyMezi, telaNaHtml } = await import('../src/lib/changelog.js');
+    const text = `# Changelog\n\nÚvod.\n\n## [0.14.0] – nevydáno\n\nNápověda.\n\n### Přidáno\n- Okno \`?\`\n  s nápovědou.\n\n## [0.13.0] – 2026-10-14\n\n- Speciály.\n\n## [0.12.0] – 2026-10-14\n\n- Import.\n`;
+    assert.ok(porovnatVerze('0.14.0-dev', '0.13.0') > 0);
+    assert.equal(porovnatVerze('0.13.0', '0.13.0'), 0);
+    assert.deepEqual(novinkyMezi(text, '0.12.0', '0.14.0-dev').map(v => v.verze), ['0.14.0', '0.13.0']);
+    assert.deepEqual(novinkyMezi(text, '', '0.12.0').map(v => v.verze), ['0.12.0']);
+    const html = telaNaHtml(novinkyMezi(text, '0.13.0', '0.14.0'));
+    assert.ok(html.includes('<h5>Přidáno</h5>') && html.includes('<li>Okno <code>?</code> s nápovědou.</li>') && html.includes('<p>Nápověda.</p>'));
+    assert.ok(telaNaHtml(novinkyMezi(text, '0.12.0', '0.13.0')).includes('14. 10. 2026'));
+});

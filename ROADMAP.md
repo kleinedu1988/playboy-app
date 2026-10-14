@@ -93,20 +93,20 @@ poslední funkční etapa (0.12.0–0.14.0: import v 0.12.0, rozhodnutí a insta
 nemění schéma databáze ani formát exportu; od bety ani funkce a texty. Před alfou je proto potřeba uzavřít
 rozhodnutí, která schéma nebo export ovlivňují (3 a 4, případně 2).
 
-## Etapa 10 – Příprava k vydání (0.13.0–0.14.0)
+## Etapa 10 – Příprava k vydání (0.13.0–0.14.0) – hotovo
 
 Cíl: program jde nainstalovat do nabídky aplikací a začít s prázdnou sbírkou bez README; nápověda a novinky
 jsou v programu. Poslední etapa, ve které smí přibýt funkce a změnit se schéma nebo export.
 
 | Co | Proč | Prac. |
 |---|---|---|
-| Úvod prázdné sbírky: sdílení na Disku „kdokoli s odkazem“, první modelka, import YAML, volitelně heslo | Dnes jediný řádek s odkazem na tlačítko + | S–M |
-| Okno nápovědy (klávesa `?` a položka v ⋯): klávesy prohlížeče, cílené hledání, srdíčka, Přehled, výběry | Dnes jen v nápovědách po najetí a v README | S–M |
-| „Co je nového“: changelog vložený do programu, po aktualizaci se jednou ukáže | Položka Verze dnes odkazuje na soubor v repozitáři | S |
+| ~~Úvod prázdné sbírky: sdílení na Disku „kdokoli s odkazem“, první modelka, import YAML, volitelně heslo~~ – hotovo v 0.14.0 | Dnes jediný řádek s odkazem na tlačítko + | S–M |
+| ~~Okno nápovědy (klávesa `?` a položka v ⋯): klávesy prohlížeče, cílené hledání, srdíčka, Přehled, výběry~~ – hotovo v 0.14.0 | Dnes jen v nápovědách po najetí a v README | S–M |
+| ~~„Co je nového“: changelog vložený do programu, po aktualizaci se jednou ukáže~~ – hotovo v 0.14.0 | Položka Verze dnes odkazuje na soubor v repozitáři | S |
 | ~~Instalace do `~/.local/bin` s položkou v nabídce aplikací a ikonou; v README odinstalace a přenos dat na jiný počítač~~ – hotovo v 0.13.0 (`instalovat.sh`) | Program dnes existuje jen jako soubor v `build/bin` | S |
-| „Smazat celou databázi“ hlouběji nebo s napsáním potvrzovacího slova | Pohodlí a jistota | S |
+| ~~„Smazat celou databázi“ hlouběji nebo s napsáním potvrzovacího slova~~ – hotovo v 0.14.0 | Pohodlí a jistota | S |
 | ~~Rozhodnutí 2–4 promítnout do kódu (řazení galerie, výtisky, speciály)~~ – hotovo v 0.13.0 | Po alfě už to nepůjde bez nové hlavní verze | S–M |
-| Předběžné verze v číslování: `TestVerzeSouhlasi` a `wails.json` přijmou `1.0.0-alpha.N` a `1.0.0-beta.N` | Připravit číslování pro další etapy | S |
+| ~~Předběžné verze v číslování: `TestVerzeSouhlasi` a `wails.json` přijmou `1.0.0-alpha.N` a `1.0.0-beta.N`~~ – hotovo v 0.14.0 | Připravit číslování pro další etapy | S |
 
 ## Etapa 11 – Alfa (1.0.0-alpha)
 

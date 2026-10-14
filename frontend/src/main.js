@@ -25,6 +25,7 @@ import * as sprava from './app/sprava';
 import * as nabidky from './app/nabidky';
 import * as ulozeni from './app/ulozeni';
 import * as klavesnice from './app/klavesnice';
+import * as napoveda from './app/napoveda';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru
 obrazky.pripravit();
@@ -45,6 +46,7 @@ sprava.pripravit();
 nabidky.pripravit();
 ulozeni.pripravit();
 klavesnice.pripravit();
+napoveda.pripravit();
 
 // Chyby z backendu se ukazují v okně, ne jen v konzoli
 EventsOn('chyba', (zprava) => oznamit(zprava));
@@ -56,6 +58,8 @@ StavDatabaze().then((chyba) => {
 (async () => {
     stav.maZamek = await MaZamek();
     if (stav.maZamek) await odemknoutPriStartu();
+    // Po aktualizaci jednou ukáže, co je nového (až po odemčení)
+    napoveda.ukazatNovinkyPoAktualizaci();
 
     await nacistSpecialy();
     let posledni = null;

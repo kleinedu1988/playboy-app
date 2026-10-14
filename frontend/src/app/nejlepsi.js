@@ -78,7 +78,7 @@ export async function upravitVyber(akce) {
     if (akce === 'prejmenovat') {
         const nazev = await vybratHodnotu({ nadpis: 'Přejmenovat výběr', popisek: 'Název', tlacitko: 'Přejmenovat', vychozi: vyber.nazev });
         if (nazev && !await PrejmenovatVyber(vyber.id, nazev)) oznamit('Výběr s tímto názvem už existuje.');
-    } else if (await potvrdit('Smazat výběr', `Smazat výběr „${vyber.nazev}“? Fotky ve sbírce zůstanou, zmizí jen tento výběr.`, 'Smazat')) {
+    } else if (await potvrdit('Smazat výběr', `Smazat výběr „${vyber.nazev}“? Fotky ve sbírce zůstanou, zmizí jen tento výběr.`, 'Smazat', { nebezpecne: true })) {
         await SmazatVyber(vyber.id);
         stav.nejlepsiVyber = 0;
     }

@@ -4,6 +4,7 @@ import { stav } from './stav';
 import { backBtn } from './prvky';
 import { zpet } from './navigace';
 import { otevritAlbumModal } from './formular-alba';
+import { zavritOkno } from './ulozeni';
 
 // Ovládání Modalů
 export const modelModal = document.getElementById('modelModal');
@@ -29,13 +30,13 @@ export function pripravit() {
         }
     });
 
-    document.getElementById('closeModalBtn').onclick = () => modelModal.classList.add('hidden');
+    document.getElementById('closeModalBtn').onclick = () => zavritOkno(modelModal);
 
-    document.getElementById('cancelModelBtn').onclick = () => modelModal.classList.add('hidden');
+    document.getElementById('cancelModelBtn').onclick = () => zavritOkno(modelModal);
 
     document.getElementById('addAlbumBtn').onclick = () => otevritAlbumModal(stav.aktualniModelka);
 
-    document.getElementById('closeAlbumModalBtn').onclick = () => albumModal.classList.add('hidden');
+    document.getElementById('closeAlbumModalBtn').onclick = () => zavritOkno(albumModal);
 
     // Ovládání okna (náhrada za systémovou lištu)
     document.getElementById('winMinBtn').onclick = () => WindowMinimise();

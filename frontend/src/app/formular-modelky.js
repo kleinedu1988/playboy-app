@@ -138,11 +138,13 @@ export function otevritDeleteModal(nadpis, text, akce, poDokonceni = () => nacis
         poDokonceni();
     };
     document.getElementById('confirmDeleteBtn').textContent = 'Smazat';
+    // Mazání je červené a výchozí volba je Zrušit, aby ho Enter neprovedl omylem
+    document.getElementById('confirmDeleteBtn').classList.add('btn-danger');
     document.getElementById('deleteModalTitle').textContent = nadpis;
     document.getElementById('deleteModalText').textContent = text;
     nastavitPotvrzovaciSlovo(slovo);
     deleteModal.classList.remove('hidden');
-    if (slovo) document.getElementById('inputDeleteSlovo').focus();
+    document.getElementById(slovo ? 'inputDeleteSlovo' : 'cancelDeleteBtn').focus();
 }
 
 function nastavitPotvrzovaciSlovo(slovo) {
@@ -155,15 +157,19 @@ function nastavitPotvrzovaciSlovo(slovo) {
 }
 
 // Obecná otázka ano/ne ve stejném okně; vrací, zda uživatel potvrdil
-export function potvrdit(nadpis, text, popisTlacitka) {
+// nebezpecne: hlavní tlačítko je červené a výchozí volba (fokus) je Zrušit
+export function potvrdit(nadpis, text, popisTlacitka, { nebezpecne = false } = {}) {
     return new Promise((vyreseno) => {
         stav.potvrzenaAkce = () => { stav.zrusenaAkce = null; vyreseno(true); };
         stav.zrusenaAkce = () => vyreseno(false);
         document.getElementById('confirmDeleteBtn').textContent = popisTlacitka;
+        // Obyčejná otázka: hlavní tlačítko v barvě akcentu a s fokusem
+        document.getElementById('confirmDeleteBtn').classList.toggle('btn-danger', nebezpecne);
         document.getElementById('deleteModalTitle').textContent = nadpis;
         document.getElementById('deleteModalText').textContent = text;
         nastavitPotvrzovaciSlovo('');
         deleteModal.classList.remove('hidden');
+        document.getElementById(nebezpecne ? 'cancelDeleteBtn' : 'confirmDeleteBtn').focus();
     });
 }
 
@@ -177,7 +183,7 @@ export function zavritDeleteModal() {
 export function smazatModelku(modelka) {
     otevritDeleteModal(
         'Smazat modelku',
-        `Opravdu smazat modelku „${modelka.jmeno}" včetně všech jejích fotek a alb? Alba sdílená s dalšími modelkami zůstanou jim. Před smazáním se uloží záloha.`,
+        `Opravdu smazat modelku „${modelka.jmeno}“ včetně všech jejích fotek a alb? Alba sdílená s dalšími modelkami zůstanou jim. Před smazáním se uloží záloha.`,
         () => DeleteModelka(modelka.id)
     );
 }

@@ -113,7 +113,7 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
 export function smazatAlbum(album, pocet) {
     otevritDeleteModal(
         'Smazat album',
-        `Opravdu smazat album „${nazevAlba(album.album, album.typ)}" (${album.typ}, počet fotek: ${pocet})?`
+        `Opravdu smazat album „${nazevAlba(album.album, album.typ)}“ (${album.typ}, počet fotek: ${pocet})?`
             + (album.dalsiModelky.length || album.modelkaId !== stav.aktualniModelka?.id
                 ? ` Album je sdílené (${[album.jmenoModelky, ...album.dalsiModelky.map(m => m.jmeno)].filter(Boolean).join(', ')}) a zmizí všem.` : '')
             + ' Fotky na Google Disku zůstanou. Před smazáním se uloží záloha.',

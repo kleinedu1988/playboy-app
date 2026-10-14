@@ -20,6 +20,8 @@ export function ukazatPohled(pohled) {
     document.getElementById('prevModelBtn').classList.toggle('hidden', pohled !== detailView);
     document.getElementById('nextModelBtn').classList.toggle('hidden', pohled !== detailView);
     viewToggle.classList.toggle('hidden', podstranka);
+    // Přehled sbírky nemá co hledat; z profilu otevřeného z Přehledu se hledá dál
+    searchInput.disabled = pohled === stats;
     backBtn.innerHTML = `&larr; ${esc(popisZpet())}`;
     // Lišta písmen patří jen ke galerii modelek, lišta desetiletí jen ke stěně
     if (pohled !== gallery) document.getElementById('galleryNav')?.classList.add('hidden');
@@ -106,7 +108,20 @@ export function stylVyrezu({ coverZoom, coverX, coverY }) {
 // Každý přehled si pamatuje své hledání; text z Modelek by v kalendáři filtroval roky
 export const hledaniPodleRezimu = {};
 
+// Hledání prohledává v každém přehledu něco jiného; pole to říká textem a nápovědou
+const HLEDANI_PODLE_REZIMU = {
+    modelky: ['Hledat modelku…', document.getElementById('searchInput').title],
+    centerfoldy: ['Jméno nebo vydání…', 'Centerfoldy podle jména modelky nebo vydání (např. březen 1995).'],
+    covery: ['Jméno nebo vydání…', 'Covery podle vydání (např. 1995) nebo jména playmate čísla.'],
+    kalendar: ['Rok, např. 1975…', 'Kalendář: ročníky, jejichž číslo obsahuje napsaný text (1975, 197…).'],
+    nejlepsi: ['Jméno modelky…', 'Nejlepší fotky modelek, jejichž jméno obsahuje napsaný text.'],
+    prehled: ['V Přehledu se nehledá', ''],
+};
+
 export function prepnoutRezim(novy) {
+    const [text, napoveda] = HLEDANI_PODLE_REZIMU[novy] || HLEDANI_PODLE_REZIMU.modelky;
+    searchInput.placeholder = text;
+    searchInput.title = napoveda;
     if (novy !== stav.rezim) {
         hledaniPodleRezimu[stav.rezim] = searchInput.value;
         searchInput.value = hledaniPodleRezimu[novy] || '';

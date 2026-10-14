@@ -7,19 +7,19 @@ export const SABLONA_OKNA = `
       <span class="logo-icon">🔥</span>
       <h2>Playboy Database</h2>
       <div id="viewToggle" class="view-toggle">
-        <button data-rezim="modelky" data-kratce="Mod" class="active">Modelky</button>
-        <button data-rezim="centerfoldy" data-kratce="Cf">Centerfoldy</button>
-        <button data-rezim="covery" data-kratce="Cov">Covery</button>
-        <button data-rezim="kalendar" data-kratce="Kal">Kalendář</button>
-        <button data-rezim="nejlepsi" data-kratce="Nej">Nejlepší</button>
-        <button data-rezim="prehled" data-kratce="Př">Přehled</button>
+        <button data-rezim="modelky" title="Modelky" data-kratce="Mod" class="active">Modelky</button>
+        <button data-rezim="centerfoldy" title="Centerfoldy" data-kratce="Cf">Centerfoldy</button>
+        <button data-rezim="covery" title="Covery" data-kratce="Cov">Covery</button>
+        <button data-rezim="kalendar" title="Kalendář" data-kratce="Kal">Kalendář</button>
+        <button data-rezim="nejlepsi" title="Nejlepší" data-kratce="Nej">Nejlepší</button>
+        <button data-rezim="prehled" title="Přehled" data-kratce="Př">Přehled</button>
       </div>
       <button id="backBtn" class="nav-back hidden" title="Zpět (Esc)">&larr; Modelky</button>
       <button id="prevModelBtn" class="nav-back nav-step hidden" title="Předchozí modelka (šipka vlevo)">&#8249;</button>
       <button id="nextModelBtn" class="nav-back nav-step hidden" title="Další modelka (šipka vpravo)">&#8250;</button>
     </div>
     <div class="nav-controls">
-      <input type="text" id="searchInput" placeholder="Hledat…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
+      <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
       <button id="addBtn" class="nav-fav" title="Přidat…">+</button>
       <button id="menuBtn" class="nav-fav" title="Další akce">&#8943;</button>
     </div>
@@ -523,7 +523,7 @@ export const SABLONA_OKNA = `
       <ul id="checkModalList" class="check-list"></ul>
       <div class="modal-actions">
         <button id="checkCloseBtn" class="btn btn-secondary">Zavřít</button>
-        <button id="checkRemoveBtn" class="btn btn-primary hidden">Odebrat nedostupné z databáze</button>
+        <button id="checkRemoveBtn" class="btn btn-danger hidden">Odebrat nedostupné z databáze</button>
       </div>
     </div>
   </div>

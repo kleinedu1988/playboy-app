@@ -11,6 +11,7 @@ import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
 import { otevritLightbox } from './prohlizec';
 import { pripojitVyberSpecialu } from './specialy';
+import { zavritOkno } from './ulozeni';
 
 // Výběr měsíce nabízí i speciály zvoleného roku
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -46,7 +47,7 @@ export async function otevritProfilPodleId(modelkaId) {
 export function pripravit() {
     obnovitSpecialyCoveru = pripojitVyberSpecialu('selectCoverMesic', 'inputCoverRok', 'selectCoverEdice');
 
-    document.getElementById('closeCoverModalBtn').onclick = () => coverModal.classList.add('hidden');
+    document.getElementById('closeCoverModalBtn').onclick = () => zavritOkno(coverModal);
 
     document.getElementById('coverForm').onsubmit = jednou(async (e) => {
         e.preventDefault();

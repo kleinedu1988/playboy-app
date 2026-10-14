@@ -29,6 +29,6 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
         { text: 'Otevřít na Google Disku', akce: () => BrowserOpenURL(odkazNaDisk(prvni)) },
         { text: 'Kopírovat odkaz', akce: () => kopirovatText(odkazNaDisk(prvni)) },
         ...(odebrat && stranky.length === 1
-            ? [{ text: polozka.fotky.length > 1 ? 'Odebrat tuto stránku' : 'Odebrat fotku', akce: () => { poOdebrani(); smazatFotku(prvni); } }] : []),
+            ? [{ text: polozka.fotky.length > 1 ? 'Odebrat tuto stránku' : 'Odebrat fotku', akce: () => { poOdebrani(); smazatFotku(prvni); }, nebezpecne: true }] : []),
     ];
 }

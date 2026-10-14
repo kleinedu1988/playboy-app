@@ -123,5 +123,5 @@ export async function neniDuplicitni(modelka) {
     const jmena = m => [m.jmeno, ...(m.dalsiJmena || '').split(',')].map(sjednotit).filter(Boolean);
     const nova = jmena(modelka);
     const stejna = (await vsechnyModelky()).find(m => jmena(m).some(j => nova.includes(j)));
-    return !stejna || potvrdit('Modelka už existuje', `V databázi už je modelka „${stejna.jmeno}" se stejným jménem nebo pseudonymem. Opravdu přidat další?`, 'Přesto přidat');
+    return !stejna || potvrdit('Modelka už existuje', `V databázi už je modelka „${stejna.jmeno}“ se stejným jménem nebo pseudonymem. Opravdu přidat další?`, 'Přesto přidat');
 }

@@ -31,16 +31,25 @@ export function zavritKontextovouNabidku() {
     fokusPredOtevrenim = null;
 }
 
+// Položky s příznakem nebezpecne (mazání) jdou vždy na konec za oddělovač a jsou červené,
+// aby nestály uprostřed běžných akcí. Oddělovače na začátku, na konci a dva za sebou se vynechají.
+function seraditPolozky(polozky) {
+    const bezne = polozky.filter(p => !p?.nebezpecne);
+    const nebezpecne = polozky.filter(p => p?.nebezpecne);
+    const vse = nebezpecne.length ? [...bezne, null, ...nebezpecne] : bezne;
+    return vse.filter((p, i) => p !== null || (i > 0 && i < vse.length - 1 && vse[i - 1] !== null));
+}
+
 export function otevritKontextovouNabidku(x, y, polozky) {
     if (contextMenu.classList.contains('hidden')) fokusPredOtevrenim = document.activeElement;
     contextMenu.innerHTML = '';
-    polozky.forEach(p => {
+    seraditPolozky(polozky).forEach(p => {
         if (p === null) {
             contextMenu.appendChild(document.createElement('hr'));
             return;
         }
         const btn = document.createElement('button');
-        btn.className = 'context-item';
+        btn.className = p.nebezpecne ? 'context-item nebezpecne' : 'context-item';
         btn.setAttribute('role', 'menuitem');
         btn.textContent = p.text;
         btn.onclick = () => {

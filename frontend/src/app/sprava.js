@@ -164,7 +164,7 @@ export async function kontrolaPoSpusteni() {
 export function smazatCover(cover) {
     otevritDeleteModal(
         'Smazat cover',
-        `Opravdu smazat cover vydání „${nazevAlba(cover.album, cover.typ)}"? Soubor na Google Disku zůstane.`,
+        `Opravdu smazat cover vydání „${nazevAlba(cover.album, cover.typ)}“? Soubor na Google Disku zůstane.`,
         () => DeleteFotografie(cover.fotky[0].id),
         () => nacistCovery(searchInput.value)
     );
@@ -217,7 +217,7 @@ export async function sloucitAlbum(album) {
 export async function sloucitModelku(modelka) {
     const zdroj = await vybratModelku('Sloučit s jinou modelkou', `Vybraná modelka se sloučí do modelky ${modelka.jmeno}: její alba přejdou sem, prázdné údaje se doplní a její jméno se přidá mezi pseudonymy. Před sloučením se uloží záloha.`, 'Vybrat', [modelka.id]);
     if (!zdroj) return;
-    if (!await potvrdit('Sloučit modelky', `Sloučit modelku „${zdroj.jmeno}“ do „${modelka.jmeno}“? Modelka „${zdroj.jmeno}“ pak jako samostatná zmizí.`, 'Sloučit')) return;
+    if (!await potvrdit('Sloučit modelky', `Sloučit modelku „${zdroj.jmeno}“ do „${modelka.jmeno}“? Modelka „${zdroj.jmeno}“ pak jako samostatná zmizí.`, 'Sloučit', { nebezpecne: true })) return;
     const chyba = await SloucitModelky(modelka.id, zdroj.id);
     if (chyba) {
         oznamit(chyba);
@@ -324,7 +324,7 @@ export function polozkySpravy() {
         // Nové načtení okna znovu vyžádá heslo
         ...(stav.maZamek ? [{ text: 'Zamknout', akce: () => window.location.reload() }] : []),
         null,
-        { text: 'Smazat celou databázi', akce: smazatDatabazi },
+        { text: 'Smazat celou databázi', akce: smazatDatabazi, nebezpecne: true },
         null,
         { text: 'Nápověda (?)', akce: otevritNapovedu },
         { text: `Verze ${stav.verzeProgramu} – co je nového`, akce: () => otevritNovinky() },
@@ -376,7 +376,7 @@ export function pripravit() {
 
     document.getElementById('checkRemoveBtn').onclick = jednou(async () => {
         if (stav.nedostupnychPodezreleMnoho && !await potvrdit('Odebrat nedostupné fotky',
-            `Opravdu odebrat ${stav.nedostupneFotky.length} fotek z databáze? Je jich podezřele mnoho najednou; pokud jde jen o výpadek Disku, přijdeš o jejich zařazení do alb, pořadí i srdíčka. Před odebráním se uloží záloha.`, 'Přesto odebrat')) return;
+            `Opravdu odebrat ${stav.nedostupneFotky.length} fotek z databáze? Je jich podezřele mnoho najednou; pokud jde jen o výpadek Disku, přijdeš o jejich zařazení do alb, pořadí i srdíčka. Před odebráním se uloží záloha.`, 'Přesto odebrat', { nebezpecne: true })) return;
 
         // Jedna záloha a jedno odebrání pro všechny
         if (!await DeleteFotografieHromadne(stav.nedostupneFotky.map(n => n.fotoId))) {
@@ -434,7 +434,7 @@ export function pripravit() {
             ...(vProfilu ? [
                 { text: `Upravit modelku: ${stav.aktualniModelka.jmeno}`, akce: () => otevritModelModal(stav.aktualniModelka) },
                 { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(stav.aktualniModelka) },
-                { text: 'Smazat modelku', akce: () => smazatModelku(stav.aktualniModelka) },
+                { text: 'Smazat modelku', akce: () => smazatModelku(stav.aktualniModelka), nebezpecne: true },
                 null,
             ] : []),
             ...polozkySpravy(),
@@ -455,7 +455,7 @@ export function pripravit() {
     document.getElementById('backupModalList').addEventListener('click', async (e) => {
         const tlacitko = e.target.closest('[data-obnovit]');
         if (!tlacitko || tlacitko.disabled) return;
-        if (!await potvrdit('Obnovit ze zálohy', `Vrátit databázi do stavu z ${tlacitko.dataset.popis}? Vše, co bylo změněno potom, zmizí; současný stav se ale předtím uloží jako záloha „Před obnovením“.`, 'Obnovit')) return;
+        if (!await potvrdit('Obnovit ze zálohy', `Vrátit databázi do stavu z ${tlacitko.dataset.popis}? Vše, co bylo změněno potom, zmizí; současný stav se ale předtím uloží jako záloha „Před obnovením“.`, 'Obnovit', { nebezpecne: true })) return;
 
         // Druhý klik během obnovování nesmí spustit další
         tlacitko.disabled = true;

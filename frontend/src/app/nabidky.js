@@ -73,7 +73,7 @@ export function otevritNabidku(cil, x, y) {
         polozky = [
             { text: 'Upravit modelku', akce: () => otevritModelModal(modelka) },
             { text: 'Upravit výřez titulní fotky', akce: () => upravitVyrez(modelka) },
-            { text: 'Smazat modelku', akce: () => smazatModelku(modelka) },
+            { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },
             { text: 'Přidat fotky / album', akce: () => otevritAlbumModal(modelka) },
         ];
     } else if (cil.closest('.wall-item')) {
@@ -161,7 +161,7 @@ export function otevritNabidku(cil, x, y) {
             { text: 'Přesunout k jiné modelce…', akce: () => presunoutAlbum(album) },
             ...(stav.aktualniAlba.some(a => a !== album && a.modelkaId === album.modelkaId)
                 ? [{ text: 'Sloučit s jiným albem…', akce: () => sloucitAlbum(album) }] : []),
-            { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length) },
+            { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length), nebezpecne: true },
             null,
             { text: 'Upravit modelku', akce: () => otevritModelModal(stav.aktualniModelka) }
         );
@@ -195,7 +195,7 @@ export function otevritNabidku(cil, x, y) {
             { text: 'Otevřít vydání', akce: () => otevritVydani(cover.album) },
             { text: 'Zobrazit cover', akce: () => otevritLightbox(index, false, stav.coveryPolozky) },
             { text: 'Upravit cover', akce: () => otevritCoverModal(cover) },
-            { text: 'Smazat cover', akce: () => smazatCover(cover) },
+            { text: 'Smazat cover', akce: () => smazatCover(cover), nebezpecne: true },
         ];
     } else if (!calendar.classList.contains('hidden')) {
         // Kalendář vydání

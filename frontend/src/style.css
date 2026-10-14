@@ -3,8 +3,16 @@
     --bg-main: #0f0f12;
     --bg-card: #18181c;
     --bg-modal: #222226;
-    --accent: #e91e63;
-    --accent-hover: #c2185b;
+    /* Akcent pro výplně a okraje (bílý text na něm má kontrast 4,9:1) a světlejší pro růžový text na tmavém pozadí */
+    --accent: #d81b60;
+    --accent-hover: #ad1457;
+    --accent-text: #ff4081;
+    /* Podbarvení zvolené volby: odliší ji od pouhého najetí myší */
+    --accent-soft: rgba(216, 27, 96, 0.18);
+    /* Nevratné akce (mazání): výplň s bílým textem a červený text na tmavém pozadí */
+    --danger: #c62828;
+    --danger-hover: #a31f1f;
+    --danger-text: #ff6b6b;
     --text-main: #f0f0f5;
     --text-muted: #9a9a9e;
     --border-color: #2a2a30;
@@ -49,6 +57,14 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
+/* Tlačítka a pole mají písmo okna, ne výchozí písmo prohlížeče */
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
 /* Rámeček okna ve stylu karty modelky */
 #app {
     position: relative;
@@ -85,10 +101,12 @@ body {
     --wails-draggable: no-drag;
 }
 
+/* Název a přepínač si berou jen své místo; zbytek patří hledání. Tlačítka okna se nikdy nezmenšují. */
 .logo {
     display: flex;
     align-items: center;
-    flex: 1;
+    flex: 0 1 auto;
+    min-width: 0;
     gap: 8px;
     font-size: 13px;
 }
@@ -104,8 +122,9 @@ body {
 .nav-controls {
     display: flex;
     justify-content: center;
-    flex: 2;
+    flex: 1;
     min-width: 0;
+    padding: 0 12px;
 }
 
 .nav-controls input {
@@ -124,6 +143,10 @@ body {
 
 .nav-controls input:focus {
     border-color: var(--accent);
+}
+
+.nav-controls input:disabled {
+    opacity: 0.5;
 }
 
 /* Přepínač přehledu: samostatná tlačítka ve stejném stylu jako lišta alb */
@@ -145,10 +168,14 @@ body {
     cursor: pointer;
 }
 
-.view-toggle button:hover,
+.view-toggle button:hover {
+    border-color: var(--text-muted);
+}
+
 .view-toggle button.active {
     border-color: var(--accent);
-    color: var(--accent);
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
 }
 
 .nav-back {
@@ -169,26 +196,14 @@ body {
     border-color: var(--accent);
 }
 
-/* V úzkém okně zůstane z názvu jen ikona, aby se vešlo hledání a tlačítka okna */
-@media (max-width: 560px) {
-    .logo,
-    .window-controls {
-        flex: 0 0 auto;
-    }
-
+/* Užší okno: postupně ubývá název, šířka přepínačů a nakonec jejich text, aby se vešlo hledání a tlačítka okna */
+@media (max-width: 1100px) {
     .logo h2 {
         display: none;
     }
+}
 
-    .nav-controls {
-        flex: 1;
-        padding: 0 8px;
-    }
-
-    .win-btn {
-        width: 36px;
-    }
-
+@media (max-width: 900px) {
     .view-toggle {
         gap: 4px;
     }
@@ -197,18 +212,10 @@ body {
         padding: 0 7px;
         font-size: 11px;
     }
-
-    main {
-        padding: 24px 32px;
-    }
 }
 
-@media (max-width: 420px) {
-    .nav-controls input {
-        display: none;
-    }
-
-    /* V nejužším okně mají přepínače přehledu jen zkratky */
+@media (max-width: 760px) {
+    /* Přepínače přehledu mají jen zkratky; celý název je v nápovědě */
     .view-toggle button {
         font-size: 0;
     }
@@ -216,6 +223,60 @@ body {
     .view-toggle button::after {
         content: attr(data-kratce);
         font-size: 11px;
+    }
+
+    .nav-controls {
+        padding: 0 6px;
+    }
+
+    .win-btn {
+        width: 36px;
+    }
+}
+
+@media (max-width: 640px) {
+    .se-sloupcem {
+        grid-template-columns: 104px minmax(0, 1fr);
+        column-gap: 16px;
+    }
+}
+
+@media (max-width: 560px) {
+    main {
+        padding: 24px 32px;
+    }
+}
+
+@media (max-width: 540px) {
+    .nav-controls input {
+        display: none;
+    }
+
+    /* Bez hledání zbudou jen tlačítka + a ⋯; ta se nezmenšují, ustoupí přepínač přehledu */
+    .nav-controls {
+        flex: 0 0 auto;
+        margin-left: auto;
+    }
+}
+
+/* Nejužší okno: přepínač přehledu se posouvá do stran, tlačítka okna zůstanou vidět */
+@media (max-width: 460px) {
+    .logo-icon {
+        display: none;
+    }
+
+    .view-toggle {
+        min-width: 0;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .view-toggle::-webkit-scrollbar {
+        display: none;
+    }
+
+    .view-toggle button {
+        flex: none;
     }
 }
 
@@ -247,14 +308,14 @@ body {
 .nav-fav:hover,
 .nav-fav.active {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Tlačítka okna */
 .window-controls {
     display: flex;
     justify-content: flex-end;
-    flex: 1;
+    flex: 0 0 auto;
     height: 100%;
 }
 
@@ -335,8 +396,21 @@ body {
     cursor: pointer;
 }
 
-.context-item:hover {
+.context-item:hover,
+.context-item:focus-visible {
     background-color: var(--accent);
+    color: white;
+    outline: none;
+}
+
+/* Mazání: červeně a vždy na konci nabídky za oddělovačem */
+.context-item.nebezpecne {
+    color: var(--danger-text);
+}
+
+.context-item.nebezpecne:hover,
+.context-item.nebezpecne:focus-visible {
+    background-color: var(--danger);
     color: white;
 }
 
@@ -351,6 +425,7 @@ body {
     padding: 10px 20px;
     border-radius: 8px;
     border: none;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
 }
@@ -368,6 +443,18 @@ body {
 
 .btn-primary:hover {
     background-color: var(--accent-hover);
+}
+
+/* Potvrzení nevratné akce */
+.btn-danger,
+.btn-primary.btn-danger {
+    background-color: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover,
+.btn-primary.btn-danger:hover {
+    background-color: var(--danger-hover);
 }
 
 .btn-secondary {
@@ -426,7 +513,7 @@ main {
 }
 
 .heart.on {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Tvar srdíčka kreslí styl: plné u udělených, obrys u ostatních */
@@ -449,7 +536,7 @@ main {
 
 /* Při najetí se zvýrazní srdíčka až po to pod kurzorem, aby bylo vidět, co se nastaví */
 .hearts:hover .heart {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .hearts .heart:hover ~ .heart {
@@ -484,7 +571,7 @@ main {
 
 .card .heart.on,
 .card .hearts:hover .heart {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .card .hearts .heart:hover ~ .heart {
@@ -633,7 +720,6 @@ input, select, textarea {
 /* Jednotný vzhled polí: stejná výška a písmo, vlastní šipka u výběru, bez systémových šipek u čísel */
 input, select {
     height: 40px;
-    font-family: inherit;
     font-size: 13px;
 }
 
@@ -853,7 +939,6 @@ input:focus, select:focus, textarea:focus {
 .form-section textarea {
     width: 100%;
     background-color: var(--bg-card);
-    font-family: inherit;
     font-size: 13px;
     color-scheme: dark;
 }
@@ -967,7 +1052,6 @@ input:focus, select:focus, textarea:focus {
     border: 1px solid var(--border-color);
     border-radius: 10px;
     background: none;
-    font-family: inherit;
     font-size: 11px;
     color: var(--text-muted);
 }
@@ -978,7 +1062,7 @@ button.tag {
 
 button.tag:hover {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Údaj v profilu, podle kterého jde filtrovat */
@@ -993,7 +1077,7 @@ button.tag:hover {
 }
 
 .link:hover {
-    color: var(--accent);
+    color: var(--accent-text);
     text-decoration: underline;
 }
 
@@ -1071,9 +1155,9 @@ button.tag:hover {
     cursor: pointer;
 }
 
+/* Najetí myší jen zvýrazní okraj; zvolená volba má navíc podbarvení (viz .chip.active níž) */
 .chip:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: var(--text-muted);
 }
 
 /* Cover na stránce vydání zabírá celý levý sloupec */
@@ -1473,7 +1557,7 @@ button.tag:hover {
 }
 
 .lb-btn.active {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .lb-btn:disabled {
@@ -1631,7 +1715,6 @@ button.tag:hover {
 
 #albumModal textarea {
     resize: vertical;
-    font-family: inherit;
 }
 
 /* Okno přes celou obrazovku nemá zakulacené rohy ani rámeček */
@@ -1707,7 +1790,7 @@ button.tag:hover {
 
 .album-nav-arrow:hover:not(:disabled) {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .album-nav-arrow:disabled {
@@ -1737,13 +1820,15 @@ button.tag:hover {
 
 .album-nav .chip.active {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Přehledy (galerie, stěna, covery, kalendář, nejlepší): lišta je svislý sloupec vlevo vedle obsahu */
+/* Sloupec má pevnou šířku i bez lišty, aby obsah při jejím zmizení neposkočil a začínal všude stejně */
 .se-sloupcem {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: 148px minmax(0, 1fr);
+    column-gap: 24px;
     align-items: start;
 }
 
@@ -1762,11 +1847,8 @@ button.tag:hover {
     top: 0;
     flex-direction: column;
     align-items: stretch;
-    width: max-content;
-    min-width: 72px;
-    max-width: 200px;
     max-height: calc(100vh - 36px - 32px);
-    margin: 0 24px 0 0;
+    margin: 0;
     padding: 0 12px 0 0;
     border-bottom: none;
     border-right: 1px solid var(--border-color);
@@ -1846,7 +1928,7 @@ button.tag:hover {
 
 .photo-item .heart.on,
 .photo-item .hearts:hover .heart {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .photo-item .hearts .heart:hover ~ .heart {
@@ -2015,7 +2097,7 @@ body.razeni .photo-item {
 }
 
 .stat-table tbody tr:hover th {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .stat-table td.ok {
@@ -2023,7 +2105,7 @@ body.razeni .photo-item {
 }
 
 .stat-table td.chybi {
-    color: var(--accent);
+    color: var(--accent-text);
     font-weight: 600;
 }
 
@@ -2182,7 +2264,7 @@ body.razeni .photo-item {
 
 .album-more:hover {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Obnovení ze zálohy */
@@ -2234,7 +2316,7 @@ body.razeni .photo-item {
 /* Drobná nápověda pod polem */
 .field-hint {
     font-size: 11px;
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Přidávání ze stránky vydání */
@@ -2254,13 +2336,13 @@ body.razeni .photo-item {
 
 .cal-editions .chip.active {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .stat-year strong em {
     font-size: 11px;
     font-style: normal;
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Další modelky sdíleného alba v jeho hlavičce */
@@ -2362,7 +2444,7 @@ body.razeni .photo-item {
 
 .cal-gap-btn:hover {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Nejlepší fotky a ročník: nástrojová lišta a oddíly */
@@ -2382,7 +2464,7 @@ body.razeni .photo-item {
 .wall-toolbar .chip.active,
 .gallery-toolbar .chip.active {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Řádek voleb galerie zabírá celou šířku mřížky karet */
@@ -2438,6 +2520,11 @@ body.razeni .photo-item {
     grid-column: 1 / -1;
 }
 
+/* Mřížka má vlastní mezery mezi řádky; řádek voleb pod sebou další okraj nepotřebuje */
+.wall.chronologicky .wall-toolbar {
+    margin-bottom: 0;
+}
+
 .wall.chronologicky .wall-item {
     margin: 0;
 }
@@ -2447,7 +2534,7 @@ body.razeni .photo-item {
 }
 
 .cal-year-link:hover strong {
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 /* Odkazy modelky v profilu */
@@ -2469,7 +2556,7 @@ body.razeni .photo-item {
 
 .cal-cell.empty.shanim .cal-month {
     flex-direction: column;
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .cal-cell.empty.shanim em {
@@ -2532,7 +2619,7 @@ body.razeni .photo-item {
 
 .napoveda h4 {
     margin: 16px 0 6px;
-    color: var(--accent);
+    color: var(--accent-text);
     font-size: 14px;
 }
 
@@ -2606,7 +2693,7 @@ body.razeni .photo-item {
 
 .cal-special.shanim {
     border-color: var(--accent);
-    color: var(--accent);
+    color: var(--accent-text);
 }
 
 .cal-special.mam {
@@ -2700,4 +2787,12 @@ body.razeni .photo-item {
 /* V prohlížeči má fotka vlastní tlačítko ⋯ v horní liště */
 #lbStage .tile-more {
     display: none;
+}
+
+/* Zvolená volba ve všech lištách a řádcích štítků: podbarvení, které se od najetí myší liší */
+.chip.active,
+.chip.active:hover {
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
 }

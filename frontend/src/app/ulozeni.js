@@ -15,7 +15,7 @@ import { SKUPINY_UDAJU, nacistPrehled } from './prehled';
 import { otevritProfilPodleId } from './cover';
 import { albumModal, modelModal } from './okno';
 import { neniDuplicitni } from './vyrez';
-import { deleteModal, otevritModelModal, poleModelky, ukazatZalozku, zavritDeleteModal } from './formular-modelky';
+import { deleteModal, otevritModelModal, poleModelky, potvrdit, ukazatZalozku, zavritDeleteModal } from './formular-modelky';
 import { vybratNeboZalozitModelku } from './formular-alba';
 
 // Výběr nebo zadání jedné hodnoty s našeptáváním; vrací napsaný text, nebo null po zrušení
@@ -71,9 +71,18 @@ export async function kopirovatText(text) {
     oznamit('Odkaz je zkopírovaný.');
 }
 
-// Zavření modálního okna klávesou Esc nebo tlačítkem Zrušit; potvrzovací okno přitom ohlásí zrušení
+// Okna s formulářem: když v nich uživatel něco změnil, zavření se nejdřív zeptá, zda změny zahodit
+const oknaSFormularem = () => [modelModal, albumModal, document.getElementById('coverModal')];
+
+async function zavritRozepsane(okno) {
+    if (!await potvrdit('Zahodit změny?', 'Rozepsané údaje v okně se neuloží.', 'Zahodit', { nebezpecne: true })) return;
+    okno.classList.add('hidden');
+}
+
+// Zavření modálního okna klávesou Esc, křížkem nebo tlačítkem Zrušit; potvrzovací okno přitom ohlásí zrušení
 export function zavritOkno(okno) {
     if (okno === deleteModal) zavritDeleteModal();
+    else if (okno.dataset.zmeneno) zavritRozepsane(okno);
     else okno.classList.add('hidden');
     if (okno === pickModal) {
         stav.pickVyreseni?.(null);
@@ -100,6 +109,16 @@ export async function obnovitPoUlozeniAlba(modelka) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    // Změnu poznají jen zásahy uživatele (vyplnění formuláře při otevření události nevyvolá); otevření ji vynuluje
+    oknaSFormularem().forEach(okno => {
+        const zmeneno = () => { okno.dataset.zmeneno = '1'; };
+        okno.addEventListener('input', zmeneno);
+        okno.addEventListener('change', zmeneno);
+        new MutationObserver(() => {
+            if (!okno.classList.contains('hidden')) delete okno.dataset.zmeneno;
+        }).observe(okno, { attributes: true, attributeFilter: ['class'] });
+    });
+
     document.getElementById('pickForm').addEventListener('submit', (e) => {
         e.preventDefault();
         const hodnota = document.getElementById('inputPick').value.trim();

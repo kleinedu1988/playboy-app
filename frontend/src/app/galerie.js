@@ -11,7 +11,7 @@ import { detailView, gallery, searchInput } from './prvky';
 import { listaGalerie } from './listy';
 import { adresaTitulni } from './obrazky';
 import { prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
-import { MODELEK_PRO_PISMENA, nacistFotkyModelky, otevritDetailModelky } from './profil';
+import { MODELEK_PRO_PISMENA, otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
 import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
@@ -199,19 +199,26 @@ export function pripravit() {
         }
     });
 
+    // Nová řada srdíček místo staré; fokus zůstane na srdíčku se stejnou hodnotou (ovládání klávesnicí)
+    const nahraditSrdicka = (rada, html, hodnota) => {
+        const rodic = rada.parentElement;
+        const meloFokus = rada.contains(document.activeElement);
+        rada.outerHTML = html;
+        if (meloFokus) rodic.querySelector(`.hearts .heart[data-hodnota="${hodnota}"]`)?.focus({ preventScroll: true });
+    };
+
     // Srdíčka na dlaždici fotky v profilu a na stránce vydání
     document.querySelector('main').addEventListener('click', async (e) => {
         const srdicko = e.target.closest('[data-hodnoceni-fotky] .heart');
         if (!srdicko) return;
         const rada = srdicko.closest('.hearts');
-        const naStranceVydani = Boolean(rada.closest('#issueView, #best'));
         const seznam = rada.closest('#best') ? stav.nejlepsiPolozky : rada.closest('#issueView') ? stav.vydaniPolozky : stav.aktualniPolozky;
         const polozka = seznam[parseInt(rada.dataset.hodnoceniFotky)];
         if (!polozka || !await ohodnotitPolozku(polozka, parseInt(srdicko.dataset.hodnota))) return;
 
-        // V profilu se fotky podle nového hodnocení hned přeřadí; stránka vydání by přitom odskočila nahoru
-        if (naStranceVydani) rada.outerHTML = htmlSrdickaFotky(polozka, parseInt(rada.dataset.hodnoceniFotky));
-        else nacistFotkyModelky(stav.aktualniModelka.id);
+        // Mění se jen srdíčka: překreslení by fotku přeřadilo pod rukama a stránka by odskočila.
+        // Podle nového hodnocení se album seřadí při příštím otevření.
+        nahraditSrdicka(rada, htmlSrdickaFotky(polozka, parseInt(rada.dataset.hodnoceniFotky)), srdicko.dataset.hodnota);
     });
 
     // Srdíčka na kartě i v profilu
@@ -229,7 +236,7 @@ export function pripravit() {
 
         // Tatáž modelka může být načtená v galerii i otevřená v profilu
         [stav.aktualniModelka, ...stav.nacteneModelky].filter(m => m && m.id === id).forEach(m => { m.hodnoceni = nove; });
-        rada.outerHTML = htmlSrdicka(modelka);
+        nahraditSrdicka(rada, htmlSrdicka(modelka), srdicko.dataset.hodnota);
         if (stav.minHodnoceni && !gallery.classList.contains('hidden')) nacistGalerii(searchInput.value);
     });
 

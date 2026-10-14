@@ -2282,8 +2282,8 @@ body.razeni .photo-item {
 }
 
 /* Zamčený program nenabízí v hlavičce nic kromě tlačítek okna */
-#app.zamceno .logo > :not(.logo-icon):not(h2),
-#app.zamceno .nav-controls > * {
+#app.zamceno .logo > *,
+#app.zamceno .hlavni-lista > * {
     visibility: hidden;
 }
 

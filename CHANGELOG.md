@@ -5,6 +5,17 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.14] – 2026-10-14
+
+Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- V horním řádku okna už není ani ikona programu; zůstávají jen tlačítka okna (a v profilu cesta zpět).
+
+### Opraveno
+- Zamčený program (s heslem) od verze 0.17.0 ukazoval v hlavičce záložky přehledů, volby, + a ⋯. Před
+  odemčením jsou zase vidět jen tlačítka okna.
+
 ## [0.17.13] – 2026-10-14
 
 Schéma databáze ani formát exportu se nemění.

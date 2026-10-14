@@ -1,6 +1,7 @@
 # Roadmapa
 
-Stav k 14. 10. 2026, verze 0.9.0. Sestaveno ze tří auditů kódu (backend a data, frontend, produkt).
+Stav k 14. 10. 2026, verze 0.11.0 (sestaveno po verzi 0.9.0 ze tří auditů kódu: backend a data, frontend, produkt;
+cesta k 1.0.0 rozdělena na přípravu, alfu a betu po verzi 0.11.0).
 Nálezy vycházejí ze čtení kódu a z měření na syntetické sbírce (500 modelek, 20 000 fotek v nativním SQLite);
 aplikace se při auditu nespouštěla. Drobné nápady a rozhodnutí zůstávají v `PLAN.md`, hotové změny
 v `CHANGELOG.md`. Předchozí roadmapa (etapy 0–6) je ve značce `v0.9.0`.
@@ -85,20 +86,56 @@ bez chyb typu „akce v jednom pohledu překreslí jiný“.
 | Přístupnost klávesnicí: fokusovatelné karty a dlaždice, nabídka ovladatelná šipkami, fokus v modálních oknech | Profil ani fotku dnes nejde otevřít klávesnicí | M |
 | Sjednotit texty („Upravit“ vs. „Editovat“, „Do výběru“), skloňování v `lib/` s testem, hlášky „přidej pravým tlačítkem“ | Drobné nekonzistence | S |
 
-## Etapa 10 – Vydání 1.0.0
+## Cesta k 1.0.0
+
+Mezi 0.11 a 1.0 je velký skok, proto jde po etapách s předběžnými verzemi podle sémantického verzování:
+poslední funkční etapa (0.12.0), alfa (`1.0.0-alpha.N`), beta (`1.0.0-beta.N`) a vydání 1.0.0. Od alfy se
+nemění schéma databáze ani formát exportu; od bety ani funkce a texty. Před alfou je proto potřeba uzavřít
+rozhodnutí, která schéma nebo export ovlivňují (3 a 4, případně 2).
+
+## Etapa 10 – Příprava k vydání (0.12.0)
 
 Cíl: program jde nainstalovat do nabídky aplikací a začít s prázdnou sbírkou bez README; nápověda a novinky
-jsou v programu. **Žádné nové funkce ani změny schématu** – to je podmínka čísla 1.0.
+jsou v programu. Poslední etapa, ve které smí přibýt funkce a změnit se schéma nebo export.
 
 | Co | Proč | Prac. |
 |---|---|---|
-| Úvod prázdné sbírky: sdílení na Disku „kdokoli s odkazem“, první modelka, import YAML, volitelně heslo | Dnes jediný řádek odkazující na pravé tlačítko | S–M |
+| Úvod prázdné sbírky: sdílení na Disku „kdokoli s odkazem“, první modelka, import YAML, volitelně heslo | Dnes jediný řádek s odkazem na tlačítko + | S–M |
 | Okno nápovědy (klávesa `?` a položka v ⋯): klávesy prohlížeče, cílené hledání, srdíčka, Přehled, výběry | Dnes jen v nápovědách po najetí a v README | S–M |
 | „Co je nového“: changelog vložený do programu, po aktualizaci se jednou ukáže | Položka Verze dnes odkazuje na soubor v repozitáři | S |
 | Instalace do `~/.local/bin` s položkou v nabídce aplikací a ikonou; v README odinstalace a přenos dat na jiný počítač | Program dnes existuje jen jako soubor v `build/bin` | S |
-| „Smazat celou databázi“ hlouběji nebo s napsáním potvrzovacího slova; závěrečná kontrola na syntetické sbírce | Pohodlí a jistota před vydáním | S–M |
+| „Smazat celou databázi“ hlouběji nebo s napsáním potvrzovacího slova | Pohodlí a jistota | S |
+| Rozhodnutí 2–4 promítnout do kódu (řazení galerie, výtisky, edice), dokud se schéma a export smí měnit | Po alfě už to nepůjde bez nové hlavní verze | S–M |
+| Předběžné verze v číslování: `TestVerzeSouhlasi` a `wails.json` přijmou `1.0.0-alpha.N` a `1.0.0-beta.N` | Připravit číslování pro další etapy | S |
 
-## Etapa 11 – Každodenní práce (1.1.0)
+## Etapa 11 – Alfa (1.0.0-alpha)
+
+Cíl: zmrazit schéma a formát exportu a program používat na skutečné sbírce; vše, co se najde, je oprava.
+**Nová úprava schématu ani nová verze exportu už nevznikne.**
+
+| Co | Proč | Prac. |
+|---|---|---|
+| Zmrazení: test, že poslední úprava schématu je č. N a export verze M; jejich popis v `EXPORT.md` a README jako závazný | Pojistka proti nechtěné změně | S |
+| Audit agenty proti kódu (data, rozhraní, výkon) a oprava nálezů | Stejně jako po 0.9.0 | M |
+| Používání na skutečné sbírce (v kopii), zápis chyb do `PLAN.md` a jejich oprava v `alpha.2`, `alpha.3`… | Chyby, které testy nenajdou | M |
+| Kontrola na syntetické sbírce (500 modelek, 20 000 fotek): výkon, Přehled, export a import kruhem | Velká sbírka před zmrazením | S |
+
+## Etapa 12 – Beta (1.0.0-beta)
+
+Cíl: nic nového, jen jistota. Zmrazené jsou i funkce a texty.
+
+| Co | Proč | Prac. |
+|---|---|---|
+| Instalace na čistém uživatelském účtu podle README, přenos dat na jiný počítač, obnovení ze zálohy | Ověřit, že postupy v README fungují | S |
+| Přechod databáze ze všech dřívějších verzí (0.4–0.12) a import exportů verzí 1–4 | Nikdo nesmí přijít o data aktualizací | S |
+| Kontrola textů a nápovědy, závěrečné opravy chyb z bety (`beta.2`…) | Dojem z vydané verze | S |
+
+## Vydání 1.0.0
+
+Beta bez otevřených chyb se vydá jako 1.0.0: jen číslo verze, datum v CHANGELOGu a značka. Od té doby platí
+sémantické verzování naplno: změna schématu nebo exportu, která by starší verzi rozbila, znamená 2.0.0.
+
+## Etapa 13 – Každodenní práce (1.1.0)
 
 Cíl: navázat tam, kde jsem včera skončil, nezaložit duplicitní fotku a mít sháněná čísla po ruce.
 
@@ -113,7 +150,7 @@ Cíl: navázat tam, kde jsem včera skončil, nezaložit duplicitní fotku a mí
 | Řádek s rokem prvního vydání a edicí na kartě modelky | Orientace ve stovkách karet bez filtrů | S |
 | Přepínač řazení galerie (jedno tlačítko vedle ♡) | Jen pokud ano, viz rozhodnutí 2 | S |
 
-## Etapa 12 – Velká sbírka (1.2.0)
+## Etapa 14 – Velká sbírka (1.2.0)
 
 Cíl: sbírku o stovkách modelek rozebírat a hlídat kvalitu dat bez ručního procházení.
 
@@ -131,7 +168,7 @@ Cíl: sbírku o stovkách modelek rozebírat a hlídat kvalitu dat bez ručního
 2. **Přepínač řazení galerie:** ano, nebo ne? Pokud ano, která řazení (naposledy přidané, rok prvního vydání,
    počet fotek, hodnocení)?
 3. **Fyzické výtisky:** evidovat u čísla „mám výtisk“ (případně stav nebo cenu), nebo stačí „sháním / nezajímá mě“?
-   Rozhoduje o formátu exportu, který se v 1.0 zmrazí.
+   Rozhoduje o formátu exportu, který se zmrazí v alfě – potřeba rozhodnout do etapy 10.
 4. **Edice:** zůstane US a CZ, nebo počítat s dalšími (DE…) a se zvláštními čísly (speciály, Newsstand)?
 5. **Instalace:** spouštět dál z `build/bin`, nebo položka v nabídce aplikací?
 
@@ -143,5 +180,5 @@ Cíl: sbírku o stovkách modelek rozebírat a hlídat kvalitu dat bez ručního
 - Šifrovanou databázi – zvolen zámek rozhraní.
 - Půlsrdíčka.
 - Přihlášení k Disku a import celé složky, stahování údajů z webu, rozpoznávání obličejů.
-- Nové funkce v etapě 10 (1.0.0) – ta je jen o stabilitě, nápovědě a instalaci.
+- Nové funkce v alfě a betě (etapy 11 a 12) a změny schématu nebo exportu od alfy.
 - Vše z oddílu „Rozhodnuto nedělat“ v `PLAN.md`.

@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.17.8] – 2026-10-14
+
+Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Srdíčka na kartě modelky se ukážou jen po najetí myší (nebo při výběru klávesnicí), i u hodnocené modelky;
+  bez myši je na kartě jen fotka.
+
 ## [0.17.7] – 2026-10-14
 
 Schéma databáze ani formát exportu se nemění.

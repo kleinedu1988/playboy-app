@@ -3366,3 +3366,15 @@ body.razeni .photo-item {
 .card.editing .card-info {
     display: none;
 }
+
+/* Srdíčka na kartě modelky se ukážou jen po najetí myší (nebo při výběru klávesnicí), i když je hodnocená */
+.card .hearts.rated {
+    opacity: 0;
+}
+
+.card:hover .hearts,
+.card:hover .hearts.rated,
+.card:focus-visible .hearts,
+.card .hearts:focus-within {
+    opacity: 1;
+}

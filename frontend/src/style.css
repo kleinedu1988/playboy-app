@@ -234,13 +234,6 @@ textarea {
     }
 }
 
-@media (max-width: 640px) {
-    .se-sloupcem {
-        grid-template-columns: 104px minmax(0, 1fr);
-        column-gap: 16px;
-    }
-}
-
 @media (max-width: 560px) {
     main {
         padding: 24px 32px;
@@ -471,8 +464,8 @@ main {
 
 .gallery-grid {
     display: grid;
-    /* Karta má pevný rozsah šířky a pevný poměr stran, nepřizpůsobuje se fotce */
-    grid-template-columns: repeat(auto-fill, minmax(200px, 260px));
+    /* Karty vyplní celou šířku (aspoň 200 px); poměr stran je pevný, nepřizpůsobuje se fotce */
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 24px;
     align-items: start;
 }
@@ -1824,11 +1817,11 @@ button.tag:hover {
 }
 
 /* Přehledy (galerie, stěna, covery, kalendář, nejlepší): lišta je svislý sloupec vlevo vedle obsahu */
-/* Sloupec má pevnou šířku i bez lišty, aby obsah při jejím zmizení neposkočil a začínal všude stejně */
+/* Úzký pruh rejstříku (písmena, roky) s pevnou šířkou i bez lišty, aby obsah při jejím zmizení neposkočil */
 .se-sloupcem {
     display: grid;
-    grid-template-columns: 148px minmax(0, 1fr);
-    column-gap: 24px;
+    grid-template-columns: 52px minmax(0, 1fr);
+    column-gap: 16px;
     align-items: start;
 }
 
@@ -1842,21 +1835,21 @@ button.tag:hover {
     grid-row: 1;
 }
 
-/* Sloupec drží při rolování u horního okraje a je vysoký nejvýš jako okno; co se nevejde, roluje se v něm */
+/* Pruh drží při rolování u horního okraje a je vysoký nejvýš jako okno; co se nevejde, roluje se v něm */
 .album-nav.svisla {
     top: 0;
     flex-direction: column;
     align-items: stretch;
+    gap: 2px;
     max-height: calc(100vh - 36px - 32px);
     margin: 0;
-    padding: 0 12px 0 0;
+    padding: 0;
     border-bottom: none;
-    border-right: 1px solid var(--border-color);
 }
 
 .album-nav.svisla .album-nav-list {
     flex-direction: column;
-    gap: 6px;
+    gap: 1px;
     overflow-x: hidden;
     overflow-y: auto;
 }
@@ -1877,9 +1870,27 @@ button.tag:hover {
     align-self: center;
 }
 
+/* Položky rejstříku: jen text bez rámečku, zvolená s podbarvením */
 .album-nav.svisla .chip {
-    justify-content: space-between;
+    justify-content: center;
     max-width: none;
+    padding: 3px 2px;
+    border-color: transparent;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.album-nav.svisla .chip:hover {
+    border-color: transparent;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+}
+
+.album-nav.svisla .album-nav-arrow {
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
 }
 
 /* Zkrácené album: fotky za náhledem jsou skryté, poslední viditelná ukazuje jejich počet */
@@ -2795,4 +2806,9 @@ body.razeni .photo-item {
     border-color: var(--accent);
     background-color: var(--accent-soft);
     color: var(--accent-text);
+}
+
+.album-nav.svisla .chip.active {
+    border-color: transparent;
+    font-weight: 600;
 }

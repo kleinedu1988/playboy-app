@@ -45,7 +45,7 @@ export const SABLONA_OKNA = `
     </div>
 
     <!-- Nejlépe hodnocené fotky napříč sbírkou -->
-    <div id="best" class="best se-sloupcem hidden">
+    <div id="best" class="best hidden">
       <nav id="bestNav"></nav>
       <div id="bestList"></div>
     </div>

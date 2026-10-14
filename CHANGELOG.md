@@ -5,6 +5,16 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.16.1] – 2026-10-14
+
+Méně nevyužitého místa v přehledech. Schéma databáze ani formát exportu se nemění.
+
+### Změněno
+- Svislá lišta vlevo je úzký rejstřík: jen písmeno, rok nebo měsíc (A, 1970, Bře 26) bez rámečků; celý název
+  a počet jsou v nápovědě po najetí myší. Zabírá zhruba třetinu dřívější šířky.
+- Nejlepší mají lištu jmen modelek zase vodorovně nahoře; celá jména se do úzkého pruhu nevejdou.
+- Karty v galerii modelek vyplní celou šířku okna, vpravo nezůstává prázdný pruh.
+
 ## [0.16.0] – 2026-10-14
 
 První fáze sjednocení rozhraní podle průchodu celým programem. Schéma databáze ani formát exportu se nemění.

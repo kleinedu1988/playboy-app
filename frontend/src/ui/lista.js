@@ -3,6 +3,17 @@ import { esc } from '../lib/format';
 // Lišta částí: řádek tlačítek, který šipkami a ztrácejícími se okraji ukazuje, že pokračuje mimo okno.
 // Používá ji profil modelky (alba), stránka vydání a prohlížeč fotek (alba).
 // svisla: sloupec u okraje přehledu (galerie, stěna, covery, kalendář, nejlepší); položky jsou pod sebou
+// Zkratka do úzkého svislého pruhu: desetiletí „1970–1979“ jako 1970, měsíc „Březen 2026“ jako Bře 26
+export function zkratka(nazev) {
+    const desetileti = nazev.match(/^(\d{4})–\d{4}$/);
+    if (desetileti) return desetileti[1];
+    const mesic = nazev.match(/^(\p{L}{3})\p{L}* \d{2}(\d{2})$/u);
+    if (mesic) return `${mesic[1]} ${mesic[2]}`;
+    // „Bez data“, „Bez vydání“: do pruhu se nevejde, celý název je v nápovědě
+    if (nazev.startsWith('Bez ')) return '—';
+    return nazev;
+}
+
 export function vytvoritListu(nav, poKliku, { svisla = false } = {}) {
     nav.className = `album-nav${svisla ? ' svisla' : ''} hidden`;
     nav.innerHTML = `
@@ -51,10 +62,15 @@ export function vytvoritListu(nav, poKliku, { svisla = false } = {}) {
         nav,
         svisla,
         upravitSipky,
-        // polozky: [{ klic, nazev, pocet }]; lišta má smysl až od dvou položek
+        // polozky: [{ klic, nazev, pocet }]; lišta má smysl až od dvou položek.
+        // Svislý pruh je úzký: ukazuje jen zkratku, celý název a počet jsou v nápovědě.
         naplnit(polozky) {
-            seznam.innerHTML = polozky.map(p => `
-                <button class="chip" data-skok="${esc(p.klic)}" title="${esc(p.nazev)}"><b>${esc(p.nazev)}</b>${p.pocet === undefined ? '' : `<span>${p.pocet}</span>`}</button>`).join('');
+            seznam.innerHTML = polozky.map(p => {
+                const napoveda = p.pocet === undefined ? p.nazev : `${p.nazev} (${p.pocet})`;
+                return svisla
+                    ? `<button class="chip" data-skok="${esc(p.klic)}" title="${esc(napoveda)}">${esc(zkratka(String(p.nazev)))}</button>`
+                    : `<button class="chip" data-skok="${esc(p.klic)}" title="${esc(p.nazev)}"><b>${esc(p.nazev)}</b>${p.pocet === undefined ? '' : `<span>${p.pocet}</span>`}</button>`;
+            }).join('');
             nav.classList.toggle('hidden', polozky.length < 2);
             upravitSipky();
         },

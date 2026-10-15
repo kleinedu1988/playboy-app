@@ -5,6 +5,12 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.10] – 2026-10-15
+
+### Změněno
+- Zvolená záložka (Modelky, Čísla, Centerfoldy) má místo krátké čárky růžovou linku přes celé slovo, která se
+  na koncích ztrácí a jemně září. Na profilu a stránce čísla je linka tlumená, bez záře.
+
 ## [0.18.9] – 2026-10-15
 
 ### Změněno

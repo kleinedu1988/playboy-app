@@ -197,8 +197,9 @@ textarea {
 
 /* Záložka přehledu: text s podtržením zvolené, jako ve Fotkách */
 .view-toggle button {
+    --odsazeni: 12px;
     position: relative;
-    padding: 0 10px;
+    padding: 0 var(--odsazeni);
     border: none;
     background: none;
     color: var(--text-muted);
@@ -216,16 +217,17 @@ textarea {
     font-weight: 600;
 }
 
+/* Zvolená záložka: růžová linka přes celé slovo, na koncích se ztrácí a jemně září */
 .view-toggle button.active::before {
     content: "";
     position: absolute;
-    left: 50%;
-    bottom: 6px;
-    width: 18px;
-    height: 3px;
-    margin-left: -9px;
+    left: var(--odsazeni);
+    right: var(--odsazeni);
+    bottom: 0;
+    height: 2px;
     border-radius: 2px;
-    background-color: var(--accent);
+    background: linear-gradient(90deg, transparent, var(--accent) 20%, var(--accent) 80%, transparent);
+    box-shadow: 0 0 10px 1px var(--accent);
 }
 
 /* Na podstránce (profil, vydání) zůstává vidět, odkud se přišlo, ale tlumeně */
@@ -234,7 +236,8 @@ textarea {
 }
 
 .podstranka .view-toggle button.active::before {
-    background-color: var(--text-muted);
+    background: linear-gradient(90deg, transparent, var(--text-muted) 20%, var(--text-muted) 80%, transparent);
+    box-shadow: none;
 }
 
 /* Kalendář, Nejlepší a Přehled jako ikonová tlačítka; zvolený přehled podbarvený akcentem */
@@ -396,10 +399,9 @@ textarea {
 /* Užší okno: postupně ubývá šířka záložek a jejich text; hledání se zužuje a v nejužším okně zmizí */
 @media (max-width: 900px) {
     .view-toggle button {
-        padding: 0 7px;
+        --odsazeni: 7px;
         font-size: 13px;
     }
-
 }
 
 @media (max-width: 760px) {

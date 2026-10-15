@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.31.2] – 2026-10-15
+
+### Změněno
+- Kalendář v novém stylu jako časová osa obálek: rok velkým tenkým číslem s růžovou linkou, měsíc jako
+  růžová páska na obálce (jako v Číslech), výtisk jako štítek. Barevné tečky nahradily tři linky na spodní
+  hraně obálky (cover, centerfold, pictorial; růžová = číslo ho má). Chybějící číslo má přerušovaný rámeček
+  s růžovým plus; speciály a sbalené prázdné roky jsou pilulky.
+
 ## [0.31.1] – 2026-10-15
 
 ### Změněno

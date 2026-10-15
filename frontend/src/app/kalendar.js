@@ -12,7 +12,7 @@ import { otevritCoverModal } from './cover';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { prevestNaVolby } from '../ui/volby';
 
-// Kalendář vydání: roky × měsíce. Prázdná políčka ukazují, co ve sbírce chybí.
+// Kalendář vydání: roky × měsíce jako časová osa obálek. Prázdná políčka ukazují, co ve sbírce chybí.
 export const ZKRATKY_MESICU = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
 
 export async function nacistKalendar(dotaz = '', zMezipameti = false) {
@@ -55,7 +55,8 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
                 // Chybějící číslo může být označené „mám výtisk“, „sháním“ nebo „nezajímá mě“
                 const udaje = stavCisla.get(klic);
                 const popisStavu = udaje?.stav ? ` – ${NAZVY_STAVU[udaje.stav].toLowerCase()}` : ' – chybí, klikni pro přidání';
-                return `<button class="cal-cell empty ${udaje?.stav || ''}" data-prazdne="${klic}" title="${nazevVydani(klic)}${popisStavu}${udaje?.poznamka ? `\n${esc(udaje.poznamka)}` : ''}"><span class="cal-month">${zkratka}${udaje?.stav === 'shanim' ? '<em>sháním</em>' : udaje?.stav === 'mam' ? '<em>výtisk</em>' : ''}</span></button>`;
+                return `<button class="cal-cell empty ${udaje?.stav || ''}" data-prazdne="${klic}" title="${nazevVydani(klic)}${popisStavu}${udaje?.poznamka ? `\n${esc(udaje.poznamka)}` : ''}">
+                    <span class="cal-plus">+</span><span class="cal-month">${zkratka}</span>${udaje?.stav === 'shanim' ? '<em>sháním</em>' : udaje?.stav === 'mam' ? '<em>výtisk</em>' : ''}</button>`;
             }
             obsazeno++;
             const popis = [v.cover && 'cover', v.centerfold && `centerfold: ${v.modelka}`, v.pictorial && 'pictorial'].filter(Boolean).join(', ');
@@ -63,8 +64,9 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
             return `
                 <button class="cal-cell ${vytisk ? 'mam' : ''}" data-vydani="${klic}" title="${esc(nazevVydani(klic))} – ${esc(popis)}${vytisk ? ' · mám výtisk' : ''}">
                     <img src="${esc(obrazek(v.nahled, 'w300'))}" loading="lazy" draggable="false" />
-                    <span class="cal-month">${zkratka}</span>
-                    <span class="cal-dots">
+                    <span class="cal-paska">${zkratka}</span>
+                    ${vytisk ? '<span class="cal-stav">výtisk</span>' : ''}
+                    <span class="cal-linky" aria-hidden="true">
                         <i class="${v.cover ? 'on' : ''}"></i><i class="${v.centerfold ? 'on' : ''}"></i><i class="${v.pictorial ? 'on' : ''}"></i>
                     </span>
                 </button>
@@ -125,7 +127,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
 
     listaKalendare.naplnit([...desetileti].map(([dekada, pocet]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet })));
     calList.innerHTML = prepinacEdic + `
-        <p class="cal-legend">Tečky v políčku: <i class="on"></i> cover <i class="on"></i> centerfold <i class="on"></i> pictorial. Prázdné políčko = vydání ve sbírce chybí.</p>
+        <p class="cal-legend">Linky na obálce zleva: <i></i> cover <i></i> centerfold <i></i> pictorial. Prázdné políčko = číslo ve sbírce chybí.</p>
         ${radky.join('') || '<div class="empty-state">Hledanému roku neodpovídá žádné vydání.</div>'}
     `;
     prevestNaVolby(calList.querySelector('.cal-editions'));

@@ -1566,77 +1566,74 @@ button.tag:hover {
     white-space: nowrap;
 }
 
-/* Kalendář vydání: roky × měsíce */
+/* Kalendář vydání: roky × měsíce jako časová osa obálek. Rok velkým tenkým číslem s růžovou linkou, měsíc
+   jako páska na obálce (jako v Číslech), obsah čísla tři linky na spodní hraně obálky */
 .cal-legend {
-    margin: 0 0 20px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 18px 0;
     font-size: 12px;
     color: var(--text-muted);
 }
 
-.cal-legend i,
-.cal-dots i {
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.25);
-}
-
-.cal-legend i:nth-of-type(1), .cal-dots i.on:nth-child(1) { background-color: var(--accent); }
-.cal-legend i:nth-of-type(2), .cal-dots i.on:nth-child(2) { background-color: #f5b041; }
-.cal-legend i:nth-of-type(3), .cal-dots i.on:nth-child(3) { background-color: #4fc3f7; }
-
 .cal-legend i {
-    margin-left: 6px;
-}
-
-.cal-year {
-    display: grid;
-    grid-template-columns: 64px minmax(0, 1fr);
-    gap: 12px;
-    align-items: start;
+    display: inline-block;
+    width: 18px;
+    height: 3px;
+    margin-left: 8px;
+    border-radius: 2px;
+    background-color: var(--accent);
 }
 
 .cal-year + .cal-year {
-    margin-top: 16px;
+    margin-top: 26px;
 }
 
-.cal-year-label strong {
-    display: block;
-    font-size: 18px;
+.cal-year-label {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.cal-year-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    align-self: center;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.5;
 }
 
 .cal-year-label span {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text-muted);
 }
 
 .cal-months {
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    gap: 8px;
+    gap: 12px;
 }
 
 .cal-cell {
     position: relative;
     aspect-ratio: 3 / 4;
     padding: 0;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border: none;
+    border-radius: 12px;
     background-color: var(--bg-card);
     overflow: hidden;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
     cursor: pointer;
-    transition: transform 0.15s, border-color 0.15s;
+    transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .cal-cell:hover {
     transform: translateY(-2px);
-    border-color: var(--accent);
-}
-
-.cal-cell.empty {
-    border-style: dashed;
-    background: none;
+    box-shadow: 0 0 0 2px var(--accent), 0 10px 24px rgba(0, 0, 0, 0.5);
 }
 
 .cal-cell img {
@@ -1646,41 +1643,107 @@ button.tag:hover {
     object-fit: cover;
 }
 
-.cal-month {
+/* Páska měsíce v levém horním rohu obálky */
+.cal-paska {
     position: absolute;
+    top: 8px;
     left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 12px 6px 4px;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-    font-size: 11px;
+    padding: 2px 8px 2px 6px;
+    border-radius: 0 999px 999px 0;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.cal-stav {
+    position: absolute;
+    top: 8px;
+    right: 6px;
+    padding: 1px 7px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: rgba(20, 20, 23, 0.8);
     color: var(--text-main);
-    text-align: left;
+    font-size: 9.5px;
+}
+
+/* Cover, centerfold, pictorial: tři linky na spodní hraně obálky; co číslo má, je růžové */
+.cal-linky {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+}
+
+.cal-linky i {
+    height: 3px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.22);
+}
+
+.cal-linky i.on {
+    background-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Chybějící číslo: přerušovaný rámeček s růžovým plus a měsícem */
+.cal-cell.empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    background: none;
+    box-shadow: none;
+}
+
+.cal-cell.empty:hover {
+    border-color: var(--accent);
+    box-shadow: none;
+}
+
+.cal-plus {
+    font-size: 20px;
+    font-weight: 200;
+    line-height: 1;
+    color: var(--accent-text);
 }
 
 .cal-cell.empty .cal-month {
-    top: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    background: none;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: var(--text-muted);
 }
 
-.cal-dots {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    display: flex;
-    gap: 3px;
-    padding: 3px 4px;
-    border-radius: 6px;
-    background-color: rgba(0, 0, 0, 0.6);
+.cal-cell.empty em {
+    margin-top: 2px;
+    padding: 1px 7px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    font-size: 9.5px;
+    font-style: normal;
+    color: var(--text-main);
 }
 
-.cal-dots i {
-    display: block;
+.cal-cell.empty.shanim {
+    border-color: var(--accent);
+}
+
+.cal-cell.empty.shanim em {
+    border-color: var(--accent);
+    color: var(--accent-text);
+}
+
+.cal-cell.empty.nezajima {
+    opacity: 0.25;
 }
 
 @media (max-width: 900px) {
@@ -1688,8 +1751,6 @@ button.tag:hover {
 }
 
 @media (max-width: 520px) {
-    .cal-year { grid-template-columns: 1fr; }
-    .cal-year-label { display: flex; align-items: baseline; gap: 8px; }
     .cal-months { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
@@ -2641,14 +2702,14 @@ body.razeni .photo-item {
 .cal-gap + .cal-year,
 .cal-year + .cal-gap,
 .cal-gap + .cal-gap {
-    margin-top: 16px;
+    margin-top: 26px;
 }
 
 .cal-gap-btn {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px dashed var(--border-color);
-    border-radius: 8px;
+    padding: 9px 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
     background: none;
     color: var(--text-muted);
     font-size: 12px;
@@ -2744,7 +2805,9 @@ body.razeni .photo-item {
 }
 
 .cal-year-link strong {
-    font-size: 18px;
+    font-size: 40px;
+    font-weight: 100;
+    line-height: 1;
 }
 
 .cal-year-link:hover strong {
@@ -2761,25 +2824,6 @@ body.razeni .photo-item {
 
 .issue-edit {
     margin-top: 12px;
-}
-
-/* Kalendář: chybějící číslo, které sháním, a číslo, které mě nezajímá */
-.cal-cell.empty.shanim {
-    border-color: var(--accent);
-}
-
-.cal-cell.empty.shanim .cal-month {
-    flex-direction: column;
-    color: var(--accent-text);
-}
-
-.cal-cell.empty.shanim em {
-    font-size: 10px;
-    font-style: normal;
-}
-
-.cal-cell.empty.nezajima {
-    opacity: 0.25;
 }
 
 /* Úvod prázdné sbírky */
@@ -2880,16 +2924,16 @@ body.razeni .photo-item {
 
 /* Speciály roku: štítky pod měsíci */
 .cal-specials {
-    grid-column: 2;
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+    margin-top: 12px;
 }
 
 .cal-special {
-    padding: 3px 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
+    padding: 4px 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
     background-color: var(--bg-card);
     color: var(--text-main, inherit);
     font-size: 12px;
@@ -2916,26 +2960,6 @@ body.razeni .photo-item {
 
 .cal-special.nezajima {
     opacity: 0.4;
-}
-
-/* Číslo, které mám jako fyzický výtisk: zelený rámeček; u prázdného políčka i popisek */
-.cal-cell.empty.mam {
-    border-color: var(--vytisk);
-}
-
-.cal-cell.empty.mam .cal-month {
-    flex-direction: column;
-    color: var(--vytisk);
-}
-
-.cal-cell.empty.mam em {
-    font-size: 10px;
-    font-style: normal;
-}
-
-.cal-cell.mam:not(.empty) {
-    outline: 2px solid var(--vytisk);
-    outline-offset: -2px;
 }
 
 .best-toolbar .chip span {

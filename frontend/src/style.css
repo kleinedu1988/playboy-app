@@ -2245,31 +2245,6 @@ body.razeni .photo-item {
 }
 
 /* Přehled sbírky */
-.stat-tiles {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 28px;
-}
-
-.stat-tile {
-    padding: 16px;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-}
-
-.stat-tile strong {
-    display: block;
-    font-size: 28px;
-    line-height: 1.1;
-}
-
-.stat-tile span {
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
 .stat-section + .stat-section {
     margin-top: 32px;
 }
@@ -3932,4 +3907,287 @@ main .album-nav:not(.svisla) .chip.active:hover {
 
 .album + .album {
     margin-top: 36px;
+}
+
+/* Přehled: levý panel jako u profilu (čísla sbírky, menu částí, vyplněnost), vpravo vždy jedna část */
+#stats:not(.hidden) {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 32px;
+    align-items: start;
+}
+
+.prehled-panel {
+    position: sticky;
+    top: 0;
+}
+
+.prehled-cisla {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 8px;
+    margin-top: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--panel-okraj);
+    text-align: center;
+}
+
+.prehled-cisla strong {
+    display: block;
+    font-size: 24px;
+    font-weight: 300;
+}
+
+.prehled-cisla span {
+    color: var(--accent-text);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.prehled-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 12px;
+}
+
+.prehled-menu button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 36px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.prehled-menu button:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.prehled-menu button.active {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--text-main);
+}
+
+.prehled-menu svg {
+    flex: none;
+    color: var(--accent-text);
+}
+
+.prehled-menu b {
+    margin-left: auto;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.prehled-menu b.chybi {
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.prehled-pruh {
+    margin-top: 14px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.prehled-menu + .prehled-pruh {
+    padding-top: 12px;
+    border-top: 1px solid var(--panel-okraj);
+}
+
+.prehled-pruh b {
+    float: right;
+    font-weight: 500;
+    color: var(--text-main);
+}
+
+.prehled-pruh div {
+    height: 6px;
+    margin-top: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.prehled-pruh i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent-hover), var(--accent-text));
+    box-shadow: 0 0 8px var(--accent);
+}
+
+/* Vpravo je vidět jen zvolená část */
+.prehled-obsah > .stat-section {
+    display: none;
+    margin-top: 0;
+}
+
+.prehled-obsah[data-sekce-ukazana="souhrn"] > [data-sekce="souhrn"],
+.prehled-obsah[data-sekce-ukazana="modelky"] > [data-sekce="modelky"],
+.prehled-obsah[data-sekce-ukazana="vydani"] > [data-sekce="vydani"],
+.prehled-obsah[data-sekce-ukazana="rocniky"] > [data-sekce="rocniky"],
+.prehled-obsah[data-sekce-ukazana="kontrola"] > [data-sekce="kontrola"] {
+    display: block;
+}
+
+/* Souhrn: karty toho, co zbývá doplnit */
+.prehled-karty {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 14px;
+}
+
+.prehled-karta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    padding: 16px 18px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.prehled-karta strong {
+    font-size: 30px;
+    font-weight: 300;
+    color: var(--text-main);
+}
+
+.prehled-karta.chybi strong {
+    color: var(--accent-text);
+}
+
+.prehled-karta:hover {
+    border-color: var(--accent);
+}
+
+/* Nadpisy částí tenkými kapitálkami s růžovou linkou */
+.stat-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.stat-section h3 span {
+    margin-left: 0;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.stat-section h3::after {
+    content: '';
+    flex: 1;
+    order: 5;
+    min-width: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.45;
+}
+
+.stat-section h3 .stat-toggle {
+    order: 6;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* Tabulky v plovoucím panelu; u chybějícího údaje zářící tečka */
+.stat-table {
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: 0 0 0 1px var(--panel-okraj), var(--panel-stin);
+}
+
+.stat-table th,
+.stat-table td {
+    border-bottom-color: var(--panel-okraj);
+}
+
+/* Jméno modelky na jeden řádek, i když levý panel tabulku zúží */
+.stat-table tbody th:first-child {
+    white-space: nowrap;
+}
+
+.prehled-obsah > .stat-section {
+    overflow-x: auto;
+}
+
+/* Vedle panelu je tabulka užší: menší odsazení a záhlaví sloupců smí na dva řádky */
+.prehled-obsah .stat-table th,
+.prehled-obsah .stat-table td {
+    padding-right: 10px;
+    padding-left: 10px;
+}
+
+.prehled-obsah .stat-table thead th {
+    white-space: normal;
+}
+
+.stat-table td.chybi {
+    font-weight: 500;
+}
+
+.stat-table td.chybi::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    vertical-align: middle;
+}
+
+.stat-table td[data-akce]:hover {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--accent-text);
+}
+
+.stat-year {
+    border-color: var(--panel-okraj);
+    border-radius: 14px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.stat-months i {
+    height: 6px;
+    border-radius: 999px;
+}
+
+@media (max-width: 760px) {
+    #stats:not(.hidden) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .prehled-panel {
+        position: static;
+    }
 }

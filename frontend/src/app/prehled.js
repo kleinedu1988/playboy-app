@@ -45,6 +45,16 @@ export const SKUPINY_UDAJU = [
 // Klíč „netýká se" podle záložky formuláře
 export const KLICE_SKUPIN = ['zakladni', 'vzhled', 'zarazeni'];
 
+// Ikony menu v levém panelu Přehledu
+const IKONA = obsah => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${obsah}</svg>`;
+const IKONY_CASTI = {
+    souhrn: IKONA('<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>'),
+    modelky: IKONA('<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'),
+    vydani: IKONA('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8"/>'),
+    rocniky: IKONA('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
+    kontrola: IKONA('<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>'),
+};
+
 export async function nacistPrehled() {
     const moje = ++stav.cisloNacteni;
     const [p, seznamModelek] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky()]);
@@ -53,7 +63,6 @@ export async function nacistPrehled() {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(stats);
 
-    const dlazdice = (cislo, popis) => `<div class="stat-tile"><strong>${cislo}</strong><span>${popis}</span></div>`;
     const ano = '<td class="ok" title="V pořádku">&#10003;</td>';
     // Buňka s chybějícím údajem je zároveň tlačítko, které ho nabídne doplnit
     const chybi = (akce, napoveda, klic = akce) => `<td class="chybi" data-akce="${akce}" data-klic="${klic}" title="${napoveda} (pravým tlačítkem: netýká se)">chybí</td>`;
@@ -115,17 +124,55 @@ export async function nacistPrehled() {
     p.vydaniBezCenterfoldu.forEach(v => vydani.set(v, { ...vydani.get(v), centerfold: true }));
     const radkyVydani = [...vydani].sort(([a], [b]) => b.localeCompare(a));
 
-    stats.innerHTML = `
-        <div class="stat-tiles">
-            ${dlazdice(p.modelek, 'modelek')}
-            ${dlazdice(p.alb, 'alb')}
-            ${dlazdice(p.fotek, 'fotek')}
-            ${dlazdice(p.hodnocenychFotek, 'fotek se srdíčky')}
-            ${dlazdice(p.coveru, 'coverů')}
-            ${dlazdice(p.vydani, 'vydání')}
-        </div>
+    // Levý panel: čísla sbírky, menu částí a vyplněnost; vpravo vždy jedna část (Souhrn, Modelky, Vydání…)
+    const modelekSChybou = radkyModelek.filter(m => vaha(m) > 0).length;
+    const aktivnich = seznam => seznam.filter(x => !x.netykaSe).length;
+    const casti = [
+        ['souhrn', 'Souhrn', ''],
+        ['modelky', 'Modelky', modelekSChybou],
+        ['vydani', 'Vydání', radkyVydani.length],
+        ...(p.rocniky.length ? [['rocniky', 'Ročníky', p.rocniky.length, true]] : []),
+        ...(p.podezrele.length ? [['kontrola', 'Ke kontrole', p.podezrele.length]] : []),
+    ];
+    if (!casti.some(([klic]) => klic === stav.prehledSekce)) stav.prehledSekce = 'souhrn';
+    const pruh = (popis, hotovo, celkem) => {
+        const procent = celkem ? Math.round(hotovo / celkem * 100) : 100;
+        return `<div class="prehled-pruh"><span>${popis}</span><b>${hotovo} z ${celkem}</b><div><i style="width:${procent}%"></i></div></div>`;
+    };
+    // Souhrn: co zbývá doplnit; klik na kartu otevře část, kde se to doplňuje
+    const karta = (pocet, popis, sekce) => `<button class="prehled-karta ${pocet ? 'chybi' : ''}" data-sekce-prehledu="${sekce}">
+        <strong>${pocet || '✓'}</strong><span>${popis}</span></button>`;
 
-        <section class="stat-section">
+    stats.innerHTML = `
+        <aside class="profile-side prehled-panel">
+            <h2>Sbírka</h2>
+            <div class="prehled-cisla">
+                ${[[p.modelek, 'modelek'], [p.alb, 'alb'], [p.fotek, 'fotek'], [p.hodnocenychFotek, 'se srdíčky'], [p.coveru, 'coverů'], [p.vydani, 'vydání']]
+                    .map(([cislo, popis]) => `<div><strong>${cislo}</strong><span>${popis}</span></div>`).join('')}
+            </div>
+            <nav class="prehled-menu">
+                ${casti.map(([klic, nazev, pocet, neutralni]) => `<button class="${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">
+                    ${IKONY_CASTI[klic]}${nazev}${pocet !== '' ? `<b class="${pocet && !neutralni ? 'chybi' : ''}">${pocet}</b>` : ''}</button>`).join('')}
+            </nav>
+            ${pruh('Modelky s úplnými údaji', p.modelek - modelekSChybou, p.modelek)}
+            ${pruh('Vydání s coverem i centerfoldem', p.vydani - radkyVydani.length, p.vydani)}
+        </aside>
+        <div class="prehled-obsah" data-sekce-ukazana="${stav.prehledSekce}">
+            <section class="stat-section" data-sekce="souhrn">
+                <h3>Co zbývá doplnit</h3>
+                <div class="prehled-karty">
+                    ${karta(aktivnich(p.bezTitulni), 'modelek bez titulní fotky', 'modelky')}
+                    ${karta(aktivnich(p.bezCenterfoldu), 'modelek bez centerfoldu', 'modelky')}
+                    ${karta(aktivnich(p.bezHodnoceni), 'modelek bez hodnocení', 'modelky')}
+                    ${karta(aktivnich(p.albaBezPopisu), 'alb bez textu', 'modelky')}
+                    ${karta(aktivnich(p.albaBezVydani), 'alb bez vydání', 'modelky')}
+                    ${karta(p.vydaniBezCoveru.length, 'vydání bez coveru', 'vydani')}
+                    ${karta(p.vydaniBezCenterfoldu.length, 'vydání bez centerfoldu', 'vydani')}
+                    ${p.podezrele.length ? karta(p.podezrele.length, 'údajů ke kontrole', 'kontrola') : ''}
+                </div>
+            </section>
+
+        <section class="stat-section" data-sekce="modelky">
             <h3>Modelky <span>${p.modelek - radkyModelek.filter(m => vaha(m) > 0).length} z ${p.modelek} má vše vyplněné</span>
                 <button class="link stat-toggle" data-skryte>${stav.prehledSkryte ? 'Skrýt údaje „netýká se“' : 'Zobrazit i údaje „netýká se“'}</button></h3>
             ${radkyModelek.length ? `
@@ -147,7 +194,7 @@ export async function nacistPrehled() {
             </table>${zbytek(radkyModelek.length)}` : ''}
         </section>
 
-        <section class="stat-section">
+        <section class="stat-section" data-sekce="vydani">
             <h3>Vydání <span>${p.vydani - radkyVydani.length} z ${p.vydani} má cover i centerfold</span></h3>
             ${radkyVydani.length ? `
             <table class="stat-table stat-table-narrow">
@@ -162,7 +209,7 @@ export async function nacistPrehled() {
         </section>
 
         ${p.rocniky.length ? `
-        <section class="stat-section">
+        <section class="stat-section" data-sekce="rocniky">
             <h3>Ročníky <span>které měsíce ve sbírce jsou</span></h3>
             <div class="stat-years">
                 ${p.rocniky.map(r => `
@@ -174,7 +221,7 @@ export async function nacistPrehled() {
         </section>` : ''}
 
         ${p.podezrele.length ? `
-        <section class="stat-section">
+        <section class="stat-section" data-sekce="kontrola">
             <h3>Ke kontrole <span>údaje, které vypadají jako chyba při zadávání</span></h3>
             <table class="stat-table stat-table-text">
                 <thead><tr><th>Modelka</th><th>Co zkontrolovat</th></tr></thead>
@@ -186,6 +233,7 @@ export async function nacistPrehled() {
                 </tbody>
             </table>${zbytek(p.podezrele.length)}
         </section>` : ''}
+        </div>
     `;
 }
 
@@ -211,9 +259,18 @@ export async function oznacitNetykaSe(bunka, netyka) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    // Přepínač skrytých údajů a další stránka tabulek
+    try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'souhrn'; } catch { /* souhrn */ }
+    // Části v levém panelu, přepínač skrytých údajů a další stránka tabulek
     stats.addEventListener('click', (e) => {
-        if (e.target.closest('[data-skryte]')) {
+        const cast = e.target.closest('[data-sekce-prehledu]');
+        if (cast) {
+            // Přepnutí části jen v zobrazené stránce, bez nového načtení
+            stav.prehledSekce = cast.dataset.sekcePrehledu;
+            try { localStorage.setItem('prehledSekce', stav.prehledSekce); } catch { /* jen se nezapamatuje */ }
+            stats.querySelector('.prehled-obsah').dataset.sekceUkazana = stav.prehledSekce;
+            stats.querySelectorAll('.prehled-menu [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b === cast || b.dataset.sekcePrehledu === stav.prehledSekce));
+            document.querySelector('main').scrollTop = 0;
+        } else if (e.target.closest('[data-skryte]')) {
             stav.prehledSkryte = !stav.prehledSkryte;
             nacistPrehled();
         } else if (e.target.closest('[data-vice]')) {

@@ -5,6 +5,19 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.13] – 2026-10-15
+
+### Změněno
+- Přehled má nové rozložení jako profil modelky: vlevo plovoucí panel **Sbírka** s čísly (modelky, alba, fotky,
+  se srdíčky, covery, vydání), menu částí **Souhrn, Modelky, Vydání, Ročníky, Ke kontrole** s počty (kde něco
+  chybí, růžově) a pruhy „Modelky s úplnými údaji“ a „Vydání s coverem i centerfoldem“. Vpravo je vždy jen
+  zvolená část; poslední zvolená se pamatuje.
+- Nová část **Souhrn** s kartami toho, co zbývá doplnit (bez titulní fotky, bez centerfoldu, bez hodnocení,
+  alba bez textu a vydání, vydání bez coveru a centerfoldu, ke kontrole); klik na kartu otevře příslušnou část.
+  Připravené místo pro grafy.
+- Nadpisy částí tenkými kapitálkami s růžovou linkou, tabulky v plovoucích panelech, u chybějícího údaje
+  zářící růžová tečka; jména modelek v tabulce na jeden řádek.
+
 ## [0.18.12] – 2026-10-15
 
 ### Změněno

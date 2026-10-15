@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.30.3] – 2026-10-15
+
+### Změněno
+- Stránka čísla: články jdou pod sebou jedna za druhým podle stran (jako alba v galerii modelky), za nimi
+  pictorialy. Tlačítka „předchozí / další“ a samostatný režim „Alba čísla“ jsou pryč, prostě se roluje.
+- Obsah vlevo zvýrazňuje článek, který právě čteš, a ukazatel přečteného ho sleduje při rolování; levý panel
+  se sám posune, aby zvýrazněná položka byla vidět. Klik na položku obsahu na článek doroluje.
+- Každý článek má u rubriky vlastní „✎ upravit“.
+
+### Opraveno
+- Druhý odstavec článku už neobtéká velké úvodní písmeno perexu.
+
 ## [0.30.2] – 2026-10-15
 
 ### Změněno

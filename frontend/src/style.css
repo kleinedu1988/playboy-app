@@ -4720,17 +4720,6 @@ textarea {
     scrollbar-width: thin;
 }
 
-/* Při čtení článku je cover menší, aby měl obsah místo */
-#issueView.cteni-clanku #issueSide > .posters {
-    max-height: 220px;
-    overflow: hidden;
-}
-
-#issueView.cteni-clanku #issueSide > .posters .poster img {
-    object-fit: cover;
-    object-position: top;
-}
-
 .pridat-do-cisla .volba {
     padding: 0 8px;
     font-size: 12px;
@@ -4844,22 +4833,6 @@ textarea {
     max-width: 760px;
 }
 
-.clanek-akce {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 18px;
-}
-
-.clanek-akce .volba {
-    border-radius: 999px;
-    border-color: var(--panel-okraj);
-    background: none;
-}
-
-.clanek-akce .volba span {
-    color: var(--accent-text);
-}
-
 .clanek-rubrika {
     color: var(--accent-text);
     font-size: 11px;
@@ -4899,6 +4872,8 @@ textarea {
 }
 
 .clanek-text .clanek-perex {
+    /* Iniciál zůstane v perexu, další odstavec ho neobtéká */
+    display: flow-root;
     color: var(--text-main);
     font-size: 17px;
     font-weight: 300;
@@ -4958,39 +4933,6 @@ textarea {
     object-fit: cover;
 }
 
-.clanek-sousede {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    margin-top: 26px;
-    padding-top: 16px;
-    border-top: 1px solid var(--panel-okraj);
-}
-
-.clanek-sousede button {
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text-muted);
-    font-size: 13px;
-    text-align: left;
-    cursor: pointer;
-}
-
-.clanek-sousede button.dalsi {
-    text-align: right;
-}
-
-.clanek-sousede b {
-    display: block;
-    color: var(--text-main);
-    font-weight: 500;
-}
-
-.clanek-sousede button:hover b {
-    color: var(--accent-text);
-}
-
 /* Okno článku (styl okna Doplnit modelku) */
 .modal-card.clanek-okno {
     width: min(760px, calc(100% - 48px));
@@ -5046,11 +4988,11 @@ textarea {
 }
 
 /* Ukazatel přečteného u čteného článku v obsahu: tenká růžová čára pod názvem */
-#issueView.cteni-clanku .obsah-polozka.active {
+#issueView .obsah-polozka[data-clanek].active {
     position: relative;
 }
 
-#issueView.cteni-clanku .obsah-polozka.active::after {
+#issueView .obsah-polozka[data-clanek].active::after {
     content: '';
     position: absolute;
     left: 50px;
@@ -5131,4 +5073,35 @@ textarea {
         border-radius: 2px;
         background: linear-gradient(90deg, var(--accent-hover), var(--accent-text));
     }
+}
+
+/* Články pod sebou: oddělené jako alba v galerii, úprava drobným odkazem u rubriky */
+.clanek + .clanek,
+.clanek + .issue-album {
+    margin-top: 56px;
+    padding-top: 40px;
+    border-top: 1px solid var(--panel-okraj);
+}
+
+.clanek-rubrika {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.clanek-upravit {
+    margin-left: auto;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+}
+
+.clanek-upravit:hover {
+    color: var(--accent-text);
 }

@@ -17,7 +17,7 @@ import { nacistKalendar } from './kalendar';
 import { otevritCoverModal } from './cover';
 import { otevritLightbox } from './prohlizec';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
-import { htmlClanku, otevritEditorClanku } from './clanky';
+import { htmlClanku, htmlProuzku, otevritEditorClanku } from './clanky';
 
 // Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
 export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
@@ -25,10 +25,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
     const moje = ++stav.cisloNacteni;
     const [fotky, info, clanky] = await Promise.all([GetVydani(vydani).then(f => f || []), GetVydaniInfo(vydani), GetClanky(vydani).then(c => c || [])]);
     if (moje !== stav.cisloNacteni) return;
-    // Při obnovení téhož čísla zůstane otevřený článek, jinak se začíná alby
-    if (vydani !== stav.aktualniVydani || !bezHistorie) stav.vydaniClanek = 0;
     stav.vydaniClanky = clanky;
-    if (!clanky.some(c => c.id === stav.vydaniClanek)) stav.vydaniClanek = 0;
     stav.aktualniVydani = vydani;
     stav.aktualniFotograf = null;
     ukazatPohled(issueView);
@@ -59,7 +56,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
             <span><span class="obsah-rubrika">${esc(rubrika)}</span><span class="obsah-nazev">${esc(nazev)}</span></span>
         </button>`;
     const obsah = [
-        ...stav.vydaniClanky.map(c => polozkaObsahu(c.strana, c.rubrika || 'Článek', c.nazev, `data-clanek="${c.id}"`, c.id === stav.vydaniClanek)),
+        ...stav.vydaniClanky.map(c => polozkaObsahu(c.strana, c.rubrika || 'Článek', c.nazev, `data-clanek="${c.id}"`, false)),
         ...albaObsahu.map((a, i) => polozkaObsahu('', a.typ, a.typ === 'Centerfold' ? a.jmenoModelky : a.album, `data-album-obsahu="${i}"`, false)),
     ].join('');
     const stavCisla = [
@@ -123,35 +120,22 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
     vykreslitObsahStranky();
 }
 
-// Pravá část stránky čísla: alba čísla, nebo otevřený článek (podle stav.vydaniClanek)
+// Pravá část stránky čísla: články pod sebou podle stran, za nimi pictorialy; obsah vlevo ukazuje, kde se čte
 function vykreslitObsahStranky() {
-    const clanek = stav.vydaniClanky.find(c => c.id === stav.vydaniClanek);
-    issueView.classList.toggle('cteni-clanku', Boolean(clanek));
-    document.querySelectorAll('#issueSide [data-clanek]').forEach(b => b.classList.toggle('active', parseInt(b.dataset.clanek) === stav.vydaniClanek));
-    document.getElementById('issueMain').innerHTML = clanek ? htmlClanku(clanek, stav.vydaniClanky) : stav.vydaniHtmlAlb;
-    issueView.style.setProperty('--precteno', '0%');
-    if (clanek) {
-        requestAnimationFrame(oznacitPrecteno);
-        // V proužku (úzké okno) je čtený článek vidět
-        const prouzek = issueView.querySelector('.clanek-prouzek');
-        const aktivni = prouzek?.querySelector('.active');
-        if (aktivni) prouzek.scrollLeft = aktivni.offsetLeft - prouzek.clientWidth / 2 + aktivni.offsetWidth / 2;
-    }
-    if (!clanek) {
-        issueView.querySelectorAll('#issueMain .poster').forEach(p => pripravitPlakat(p));
-        issueView.querySelectorAll('#issueSide .poster').forEach(p => pripravitPlakat(p));
-        pripravitPopisy(issueView);
-        zkratitAlba(issueView);
-    } else {
-        issueView.querySelectorAll('#issueSide .poster').forEach(p => pripravitPlakat(p));
-    }
+    const prouzek = stav.vydaniClanky.length ? htmlProuzku([
+        ...stav.vydaniClanky.map(c => ({ strana: c.strana, nazev: c.nazev, atribut: `data-clanek="${c.id}"` })),
+        ...[...document.querySelectorAll('#issueSide [data-album-obsahu]')].map(b => ({ strana: 0, nazev: b.querySelector('.obsah-nazev').textContent, atribut: `data-album-obsahu="${b.dataset.albumObsahu}"` })),
+    ]) : '';
+    document.getElementById('issueMain').innerHTML = prouzek + stav.vydaniClanky.map(c => htmlClanku(c)).join('') + stav.vydaniHtmlAlb;
+    issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
+    pripravitPopisy(issueView);
+    zkratitAlba(issueView);
+    requestAnimationFrame(oznacitPrecteno);
 }
 
-// Otevření článku (0 = zpět na alba čísla)
+// Posun na článek (pod sebou s ostatními)
 export function ukazatClanek(id) {
-    stav.vydaniClanek = id;
-    vykreslitObsahStranky();
-    document.querySelector('main').scrollTop = 0;
+    issueView.querySelector(`[data-cast="clanek-${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Obnovení stránky vydání, ročníku nebo fotografa po změně
@@ -294,15 +278,42 @@ export async function upravitVydani(vydani) {
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
-// Ukazatel přečteného: kolik z otevřeného článku už odrolovalo (0–100 %) v obsahu vlevo i v proužku
+// Rolování stránky čísla: v obsahu (a v proužku) se zvýrazní článek nebo album, které je právě nahoře,
+// a u článku se pod názvem plní čára podle toho, kolik z něj už je odrolováno
 function oznacitPrecteno() {
-    const clanek = issueView.querySelector('.clanek');
-    if (!clanek || issueView.classList.contains('hidden')) return;
+    if (issueView.classList.contains('hidden')) return;
     const oblast = document.querySelector('main');
-    const zbyva = clanek.offsetHeight - oblast.clientHeight;
-    const odrolovano = oblast.getBoundingClientRect().top - clanek.getBoundingClientRect().top;
-    const procent = zbyva > 0 ? Math.min(100, Math.max(0, odrolovano / zbyva * 100)) : 100;
+    const horni = oblast.getBoundingClientRect().top + 60;
+    const casti = [...issueView.querySelectorAll('#issueMain [data-cast]')];
+    if (!casti.length) return;
+    const naKonci = oblast.scrollTop >= oblast.scrollHeight - oblast.clientHeight - 1;
+    const aktualni = naKonci ? casti.at(-1) : casti.filter(c => c.getBoundingClientRect().top <= horni).pop() || casti[0];
+    const klic = aktualni.dataset.cast;
+    const jeClanek = klic.startsWith('clanek-');
+    const id = jeClanek ? klic.slice(7) : klic.slice(6);
+    issueView.querySelectorAll('[data-clanek], [data-album-obsahu]').forEach(b => b.classList.toggle('active',
+        jeClanek ? b.dataset.clanek === id : b.dataset.albumObsahu === id));
+    let procent = 0;
+    if (jeClanek) {
+        const r = aktualni.getBoundingClientRect();
+        const zbyva = r.height - oblast.clientHeight / 2;
+        procent = zbyva > 0 ? Math.min(100, Math.max(0, (horni - r.top) / zbyva * 100)) : 100;
+    }
     issueView.style.setProperty('--precteno', `${procent}%`);
+    // Zvýrazněná položka obsahu je v levém panelu vidět (panel se posune jen sám, článek ne)
+    const panel = document.getElementById('issueSide');
+    const vObsahu = panel.querySelector('.obsah-polozka.active');
+    if (vObsahu && getComputedStyle(panel).overflowY === 'auto') {
+        const p = panel.getBoundingClientRect(), o = vObsahu.getBoundingClientRect();
+        if (o.top < p.top + 8) panel.scrollTop -= p.top + 8 - o.top;
+        else if (o.bottom > p.bottom - 8) panel.scrollTop += o.bottom - p.bottom + 8;
+    }
+    // V proužku (úzké okno) je zvýrazněná položka vidět
+    const prouzek = issueView.querySelector('.clanek-prouzek');
+    const vProuzku = prouzek?.querySelector('.active');
+    if (vProuzku && (vProuzku.offsetLeft < prouzek.scrollLeft || vProuzku.offsetLeft + vProuzku.offsetWidth > prouzek.scrollLeft + prouzek.clientWidth)) {
+        prouzek.scrollLeft = vProuzku.offsetLeft - prouzek.clientWidth / 2 + vProuzku.offsetWidth / 2;
+    }
 }
 
 export function pripravit() {
@@ -341,28 +352,23 @@ export function pripravit() {
         }
         if (albumObsahu) {
             e.stopPropagation();
-            // Centerfold je v levém panelu (sjede se v něm), pictorialy vpravo mezi alby čísla
-            const cil = () => issueView.querySelector(`[data-cast="album-${albumObsahu.dataset.albumObsahu}"]`);
-            if (stav.vydaniClanek && !cil()?.closest('#issueSide')) ukazatClanek(0);
-            cil()?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            return;
-        }
-        if (e.target.closest('[data-alba-cisla]')) {
-            ukazatClanek(0);
+            // Centerfold je v levém panelu (sjede se v něm), pictorialy vpravo pod články
+            issueView.querySelector(`[data-cast="album-${albumObsahu.dataset.albumObsahu}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
         }
         if (e.target.closest('[data-novy-clanek]')) {
             otevritEditorClanku(null, stav.aktualniVydani);
             return;
         }
-        if (e.target.closest('[data-upravit-clanek]')) {
-            otevritEditorClanku(stav.vydaniClanky.find(c => c.id === stav.vydaniClanek), stav.aktualniVydani);
+        const upravit = e.target.closest('[data-upravit-clanek]');
+        if (upravit) {
+            otevritEditorClanku(stav.vydaniClanky.find(c => c.id === parseInt(upravit.dataset.upravitClanek)), stav.aktualniVydani);
             return;
         }
         const sken = e.target.closest('[data-sken]');
         if (sken) {
             // Skeny stran v prohlížeči fotek, od kliknutého
-            const c = stav.vydaniClanky.find(x => x.id === stav.vydaniClanek);
+            const c = stav.vydaniClanky.find(x => x.id === parseInt(sken.closest('[data-id-clanku]').dataset.idClanku));
             const polozky = c.skenyUrl.map((url, i) => ({ fotky: [{ id: 0, url, rotace: 0, driveId: c.skeny[i], hodnoceni: 0 }], album: c.nazev, typ: 'Sken', modelkaId: 0, jmenoModelky: '', rotace: 0, hodnoceni: 0 }));
             otevritLightbox(parseInt(sken.dataset.sken), false, polozky);
             return;

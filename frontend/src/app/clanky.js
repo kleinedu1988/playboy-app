@@ -25,40 +25,29 @@ export function htmlTextuClanku(text) {
     }).join('');
 }
 
-// Čtení článku v pravé části stránky čísla; sousední články podle obsahu
-export function htmlClanku(c, vsechny) {
-    const poradi = vsechny.findIndex(x => x.id === c.id);
-    const predchozi = vsechny[poradi - 1];
-    const dalsi = vsechny[poradi + 1];
+// Článek jako oddíl stránky čísla; články jdou pod sebou podle stran (jako alba v galerii modelky)
+export function htmlClanku(c) {
     const zahlavi = [c.rubrika || 'Článek', c.strana ? `strana ${c.strana}` : '', NAZVY_DRUHU[c.druh] || ''].filter(Boolean).join(' · ');
-    // Tenký proužek s obsahem a ukazatelem přečteného; vidět jen v úzkém okně, kde levý panel není u čtení
-    const prouzek = `
-        <nav class="clanek-prouzek">
-            ${vsechny.map(x => `<button type="button" class="${x.id === c.id ? 'active' : ''}" data-clanek="${x.id}">${x.strana ? `<b>${x.strana}</b>` : ''}${esc(x.nazev)}</button>`).join('')}
-            <span class="clanek-precteno"><i></i></span>
-        </nav>`;
     return `
-        <article class="clanek">
-            ${prouzek}
-            <div class="clanek-akce">
-                <button class="volba" data-alba-cisla><span aria-hidden="true">←</span>Alba čísla</button>
-                <button class="volba" data-upravit-clanek><span aria-hidden="true">✎</span>Upravit článek</button>
-            </div>
-            <div class="clanek-rubrika">${esc(zahlavi)}</div>
+        <article class="clanek" data-cast="clanek-${c.id}" data-id-clanku="${c.id}">
+            <div class="clanek-rubrika">${esc(zahlavi)}<button type="button" class="clanek-upravit" data-upravit-clanek="${c.id}" title="Upravit článek">✎ upravit</button></div>
             <h1>${esc(c.nazev)}</h1>
             ${c.autor || c.jmenoModelky ? `<div class="clanek-autor">${esc(c.autor)}${c.autor && c.jmenoModelky ? ' · ' : ''}${c.jmenoModelky
                 ? `<button class="link" data-modelka="${c.modelkaId}" title="Otevřít profil modelky">${esc(c.jmenoModelky)}</button>` : ''}</div>` : ''}
             <div class="clanek-linka"></div>
-            <div class="clanek-text">${htmlTextuClanku(c.text) || '<p class="empty-state">Článek zatím nemá text. Doplň ho tlačítkem Upravit článek.</p>'}</div>
+            <div class="clanek-text">${htmlTextuClanku(c.text) || '<p class="empty-state">Článek zatím nemá text. Doplň ho tlačítkem upravit.</p>'}</div>
             ${c.skenyUrl?.length ? `
                 <div class="clanek-skeny-nadpis">Skeny stran</div>
                 <div class="clanek-skeny">${c.skenyUrl.map((url, i) => `<button type="button" data-sken="${i}" title="Otevřít sken"><img src="${esc(obrazek(url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" draggable="false" /></button>`).join('')}</div>` : ''}
-            <nav class="clanek-sousede">
-                ${predchozi ? `<button type="button" data-clanek="${predchozi.id}"><span>← předchozí</span><b>${esc(predchozi.nazev)}</b></button>` : '<span></span>'}
-                ${dalsi ? `<button type="button" class="dalsi" data-clanek="${dalsi.id}"><span>další →</span><b>${esc(dalsi.nazev)}</b></button>` : '<span></span>'}
-            </nav>
         </article>`;
 }
+
+// Tenký proužek s obsahem a ukazatelem přečteného nad články; vidět jen v úzkém okně
+export const htmlProuzku = polozky => `
+    <nav class="clanek-prouzek">
+        ${polozky.map(p => `<button type="button" ${p.atribut}>${p.strana ? `<b>${p.strana}</b>` : ''}${esc(p.nazev)}</button>`).join('')}
+        <span class="clanek-precteno"><i></i></span>
+    </nav>`;
 
 // Okno článku: nový (clanek = null) nebo úprava; vydání je dané stránkou čísla
 export async function otevritEditorClanku(clanek, vydani) {
@@ -138,8 +127,7 @@ export function pripravit() {
             }
         }
         clanekModal.classList.add('hidden');
-        // Uložený článek se rovnou otevře
-        stav.vydaniClanek = id;
+        // Na uložený článek se stránka posune
         await obnovitStranku();
         ukazatClanek(id);
     });
@@ -158,7 +146,6 @@ export function pripravit() {
             return;
         }
         clanekModal.classList.add('hidden');
-        stav.vydaniClanek = 0;
         obnovitStranku();
     };
 }

@@ -3128,21 +3128,10 @@ body.razeni .photo-item {
     background-color: var(--panel-okraj);
 }
 
-/* U zvýrazněné volby by čáry kolem rušily */
+/* U zvýrazněného filtru by čáry kolem rušily */
 .volby-skupina .volba.zapnuto::before,
-.volby-skupina .volba.zapnuto + .volba::before,
-.volby-skupina .volba.otevrena::before,
-.volby-skupina .volba.otevrena + .volba::before {
+.volby-skupina .volba.zapnuto + .volba::before {
     opacity: 0;
-}
-
-/* Otevřená nabídka: panel zrůžoví jako hledání při psaní */
-.volby-skupina {
-    transition: border-color 0.15s;
-}
-
-.volby-skupina.otevreno {
-    border-color: var(--accent);
 }
 
 .volby-skupina .volba span {
@@ -3159,9 +3148,8 @@ body.razeni .photo-item {
     color: var(--accent-text);
 }
 
-/* Zapnutý filtr a právě vybíraná volba: tenký růžový rámeček a růžové podbarvení */
-.volby-skupina .volba.zapnuto,
-.volby-skupina .volba.otevrena {
+/* Zapnutý filtr: tenký růžový rámeček a růžové podbarvení */
+.volby-skupina .volba.zapnuto {
     background-color: var(--accent-soft);
     box-shadow: inset 0 0 0 1px var(--accent);
 }

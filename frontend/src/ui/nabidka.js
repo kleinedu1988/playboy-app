@@ -2,8 +2,6 @@
 // Ovládá se i klávesnicí: šipky, Home, End, Enter; Esc ji zavře a fokus se vrátí tam, kde byl.
 export let contextMenu = null;
 let fokusPredOtevrenim = null;
-// Co udělat, až se nabídka zavře (volby v liště zruší zvýraznění)
-let priZavreni = null;
 
 export function pripravitNabidku() {
     contextMenu = document.getElementById('contextMenu');
@@ -29,9 +27,6 @@ export function zavritKontextovouNabidku() {
     if (contextMenu.classList.contains('hidden')) return;
     const meloFokus = contextMenu.contains(document.activeElement);
     contextMenu.classList.add('hidden');
-    const zavreni = priZavreni;
-    priZavreni = null;
-    zavreni?.();
     if (meloFokus && fokusPredOtevrenim?.isConnected) fokusPredOtevrenim.focus({ preventScroll: true });
     fokusPredOtevrenim = null;
 }
@@ -45,10 +40,8 @@ function seraditPolozky(polozky) {
     return vse.filter((p, i) => p !== null || (i > 0 && i < vse.length - 1 && vse[i - 1] !== null));
 }
 
-export function otevritKontextovouNabidku(x, y, polozky, { poZavreni = null } = {}) {
+export function otevritKontextovouNabidku(x, y, polozky) {
     if (contextMenu.classList.contains('hidden')) fokusPredOtevrenim = document.activeElement;
-    else priZavreni?.();
-    priZavreni = poZavreni;
     contextMenu.innerHTML = '';
     seraditPolozky(polozky).forEach(p => {
         if (p === null) {

@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.19.1] – 2026-10-15
+
+### Změněno
+- Okno **Doplnit modelku**: bez fotky v hlavičce. Titulní fotka se místo odkazu vybírá kliknutím z fotek modelky
+  v galerii (vybraná má růžový rámeček); modelka bez fotek nabídne „Přidat fotky / album…“.
+- **Upravit modelku** má stejné rozložení a vzhled jako okno Doplnit modelku: růžový rámeček, části (Základní
+  údaje, Vzhled a míry, Zařazení a poznámky) pod sebou s růžovými nadpisy místo záložek, bez křížku – zavírá se
+  tlačítkem Zrušit. Odkaz z Přehledu posune formulář rovnou na příslušnou část.
+
 ## [0.19.0] – 2026-10-15
 
 Nový vzhled celého programu (řada 0.18.x) završený oknem pro doplňování modelek. Schéma databáze ani formát

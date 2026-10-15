@@ -82,10 +82,12 @@ export function otevritModelModal(modelka, fronta = null) {
 export const sekceFormulare = [...document.querySelectorAll('#addModelForm .form-section')];
 export const modelTabs = document.getElementById('modelTabs');
 
+// Části formuláře jsou pod sebou (jako v okně Doplnit modelku); „záložka“ jen posune na svou část
 export function ukazatZalozku(index) {
     sekceFormulare.forEach((sekce, i) => sekce.classList.toggle('active', i === index));
     modelTabs.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', i === index));
-    document.querySelector('#modelModal .form-body').scrollTop = 0;
+    const telo = document.querySelector('#modelModal .form-body');
+    telo.scrollTop = index ? telo.scrollTop + sekceFormulare[index].getBoundingClientRect().top - telo.getBoundingClientRect().top : 0;
 }
 
 // Tečka u záložky, ve které už je něco vyplněno

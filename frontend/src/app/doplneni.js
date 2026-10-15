@@ -2,13 +2,12 @@
 // Pole údajů se berou z formuláře modelky (stejné typy a nabídky), ukládá se jedním tlačítkem;
 // „Uložit a další“ pokračuje další modelkou v pořadí Přehledu.
 import { jednou, oznamit } from '../ui/oznameni';
-import { SetHodnoceni, SetNetykaSe, SetNetykaSeAlba, SetVydaniAlba, UpdateModelka } from './backend';
-import { esc, nazevAlba, platneDatum, prevestVahu, prevestVysku, rozlozitVydani } from '../lib/format';
+import { GetFotografieModelky, SetHodnoceni, SetNetykaSe, SetNetykaSeAlba, SetTitulniFotka, SetVydaniAlba, UpdateModelka } from './backend';
+import { esc, nazevAlba, obrazek, platneDatum, prevestVahu, prevestVysku, rozlozitVydani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { stats } from './prvky';
-import { odkazJeVPoradku } from './navigace';
-import { BEZ_FOTKY, adresaTitulni } from './obrazky';
+import { VELIKOST_NAHLEDU } from './obrazky';
 import { otevritDetailModelky, nacistFotkyModelky } from './profil';
 import { otevritAlbumModal } from './formular-alba';
 import { poleModelky } from './formular-modelky';
@@ -57,7 +56,12 @@ export async function otevritDoplneni(modelkaId) {
     const chybi = klic => radek.chybi.has(klic) && !radek.netyka.has(klic);
     const albaBez = seznam => seznam.filter(a => !a.netykaSe);
     const bloky = [];
-    if (chybi('titulni')) bloky.push(blok('Titulní fotka', 'titulni', '<div class="doplnit-mrizka" data-pole-pro="titulni"></div>'));
+    // Titulní fotka se vybírá z fotek modelky (kliknutím), ne odkazem
+    const fotky = chybi('titulni') ? (await GetFotografieModelky(modelkaId) || []).filter(f => f.url) : [];
+    if (chybi('titulni')) bloky.push(blok('Titulní fotka', 'titulni', fotky.length
+        ? `<p class="doplnit-napoveda">Vyber fotku z galerie modelky:</p><div class="doplnit-fotky">${fotky.slice(0, 60).map(f =>
+            `<button type="button" data-titulni="${f.id}" title="${esc(nazevAlba(f.album, f.typ))}"><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" draggable="false" /></button>`).join('')}</div>`
+        : '<div class="doplnit-akce"><span class="doplnit-napoveda">Modelka zatím nemá fotky.</span><button type="button" class="btn btn-secondary btn-small" data-pridat-fotky><span>+</span> Přidat fotky / album…</button></div>'));
     SKUPINY_UDAJU.forEach((s, i) => {
         const chybejici = radek.netyka.has(KLICE_SKUPIN[i]) ? [] : radek.udaje?.[i] || [];
         if (chybejici.length) bloky.push(blok(`${s.nazev} · ${chybejici.length === s.udaje.length ? 'vše' : `${chybejici.length} z ${s.udaje.length}`}`,
@@ -78,7 +82,6 @@ export async function otevritDoplneni(modelkaId) {
     const poradi = stav.prehledPoradi.indexOf(modelkaId);
     obsah.innerHTML = `
         <header class="doplnit-hlavicka">
-            <img src="${esc(modelka.coverUrl ? adresaTitulni(modelka) : BEZ_FOTKY)}" alt="" draggable="false" />
             <div>
                 <h3>${esc(modelka.jmeno)}</h3>
                 <div class="prehled-modelka-pruh"><div><i style="width:${radek.vyplneno}%"></i></div>${radek.vyplneno} %</div>
@@ -90,12 +93,12 @@ export async function otevritDoplneni(modelkaId) {
     document.getElementById('doplnitDalsiBtn').classList.toggle('hidden', poradi < 0 || poradi >= stav.prehledPoradi.length - 1);
 
     // Pole údajů z formuláře modelky
-    if (chybi('titulni')) obsah.querySelector('[data-pole-pro="titulni"]').append(kopiePole('inputDriveID', 'odkaz na titulní fotku z Google Disku'));
     SKUPINY_UDAJU.forEach((s, i) => {
         const cil = obsah.querySelector(`[data-pole-pro="${KLICE_SKUPIN[i]}"]`);
         if (cil) (radek.udaje?.[i] || []).forEach(([, popis, id]) => cil.append(kopiePole(id, popis)));
     });
     stav.doplnovaneHodnoceni = 0;
+    stav.doplnovanaTitulni = 0;
     doplnitModal.classList.remove('hidden');
     /** @type {HTMLElement} */ (obsah.querySelector('input, select, button.heart, .doplnit-akce button'))?.focus();
 }
@@ -119,7 +122,6 @@ async function ulozit() {
         oznamit('Datum narození napiš jako RRRR-MM-DD, RRRR-MM nebo jen rok RRRR.');
         return false;
     }
-    if (!await odkazJeVPoradku(modelka.coverId || '')) return false;
     /** @type {[HTMLInputElement, string][]} */
     const vydani = [.../** @type {NodeListOf<HTMLInputElement>} */ (obsah.querySelectorAll('[data-vydani-alba]'))]
         .map(p => /** @type {[HTMLInputElement, string]} */ ([p, p.value.trim()])).filter(([, v]) => v);
@@ -135,6 +137,7 @@ async function ulozit() {
         return false;
     }
     if (stav.doplnovaneHodnoceni) await SetHodnoceni(modelka.id, stav.doplnovaneHodnoceni);
+    if (stav.doplnovanaTitulni) await SetTitulniFotka(modelka.id, stav.doplnovanaTitulni);
     const alba = radek.bezVydani.filter(a => !a.netykaSe);
     for (const [prvek, v] of vydani) {
         const a = alba[parseInt(prvek.dataset.vydaniAlba)];
@@ -171,6 +174,18 @@ export function pripravit() {
         const cil = /** @type {HTMLElement} */ (e.target);
         const radek = stav.doplnovanyRadek;
         const modelka = stav.doplnovanaModelka;
+        const titulni = cil.closest('[data-titulni]');
+        if (titulni) {
+            const id = parseInt(titulni.dataset.titulni);
+            stav.doplnovanaTitulni = stav.doplnovanaTitulni === id ? 0 : id;
+            obsah.querySelectorAll('[data-titulni]').forEach(b => b.classList.toggle('vybrana', parseInt(b.dataset.titulni) === stav.doplnovanaTitulni));
+            return;
+        }
+        if (cil.closest('[data-pridat-fotky]')) {
+            doplnitModal.classList.add('hidden');
+            otevritAlbumModal(modelka);
+            return;
+        }
         const srdce = cil.closest('[data-hodnota-doplneni]');
         if (srdce) {
             const n = parseInt(srdce.dataset.hodnotaDoplneni);

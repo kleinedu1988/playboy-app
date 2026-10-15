@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.12] – 2026-10-15
+
+### Změněno
+- Lišta alb (v profilu) a jmen (v Nejlepších) je plovoucí pilulka; zvolená položka má tenký růžový rámeček
+  s podbarvením. Horní hrana lišty lícuje s levým panelem a při rolování pod ní neprosvítá obsah.
+- Nadpisy alb jsou tenkými kapitálkami s růžovou linkou, která se ztrácí (jako nadpisy v levém panelu).
+- Fotky v albech mají zaoblené rohy a jemný stín, mezi alby je víc místa.
+
 ## [0.18.11] – 2026-10-15
 
 ### Změněno

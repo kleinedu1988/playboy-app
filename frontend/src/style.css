@@ -3868,3 +3868,68 @@ body.razeni .photo-item {
     border-color: var(--panel-okraj);
     background-color: rgba(255, 255, 255, 0.03);
 }
+
+/* Lišta alb a jmen (profil, Nejlepší, stránky čísel) jako plovoucí pilulka; horní hrana lícuje s levým panelem.
+   Zvolená položka s tenkým růžovým rámečkem a podbarvením jako zapnutý filtr. */
+main .album-nav:not(.svisla) {
+    top: -24px;
+    margin: 0 0 18px;
+    padding: 3px 6px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    /* Neprůhledná barva panelu: rolovaný obsah pod pilulkou nesmí prosvítat */
+    background-color: rgb(32, 32, 36);
+    /* Další stíny jsou podklad v barvě pozadí: při rolování kolem pilulky neprosvítá obsah */
+    box-shadow: var(--panel-stin), 0 -10px 0 10px var(--bg-main), 0 6px 0 4px var(--bg-main);
+}
+
+main .album-nav:not(.svisla) .chip {
+    border-radius: 999px;
+}
+
+main .album-nav:not(.svisla) .chip.active,
+main .album-nav:not(.svisla) .chip.active:hover {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--text-main);
+}
+
+/* Nadpis alba tenkými kapitálkami, za ním růžová linka, která se ztrácí (jako nadpisy v levém panelu) */
+.album-header {
+    align-items: center;
+}
+
+.album-header h4 {
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.album-header::after {
+    content: '';
+    flex: 1;
+    order: 2;
+    min-width: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.45;
+}
+
+.album-header .album-more {
+    order: 3;
+    margin-left: 0;
+}
+
+/* Fotky alb se zaoblenými rohy a jemným stínem, mezi alby víc místa */
+.photos-grid {
+    gap: 14px;
+}
+
+.photo-item {
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.album + .album {
+    margin-top: 36px;
+}

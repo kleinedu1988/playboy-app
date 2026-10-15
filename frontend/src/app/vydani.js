@@ -1,6 +1,6 @@
 // Stránka vydání, ročníku a fotografa; údaje čísla
-import { GetAlbaFotografa, GetClanky, GetVydani, GetVydaniInfo, SetVydaniInfo, SetNazevSpecialu } from './backend';
-import { MESICE, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial } from '../lib/format';
+import { GetAlbaFotografa, GetClanky, GetStavyVydani, GetVydani, GetVydaniInfo, SetVydaniInfo, SetNazevSpecialu } from './backend';
+import { MESICE, VYCHOZI_EDICE, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -13,7 +13,8 @@ import { BEZ_FOTKY, VELIKOST_NAHLEDU, VELIKOST_PLAKATU, VELIKOST_PLAKATU_MALA } 
 import { ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlSrdickaFotky } from './galerie';
 import { atributyMrizky, htmlPlakatu, htmlPopisuAlba, pripravitPlakat, pripravitPopisy, rozbalitKliknute, zkratitAlba } from './profil';
-import { nacistKalendar } from './kalendar';
+import { nacistKalendar, oznacitCislo, pridatKVydani } from './kalendar';
+import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { otevritCoverModal } from './cover';
 import { otevritLightbox } from './prohlizec';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
@@ -32,7 +33,13 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
     ukazatPohled(issueView);
     document.querySelector('main').scrollTop = 0;
     // Ročník (bez měsíce) má vlastní rozvržení po měsících
-    if (!rozlozitVydani(vydani)?.mesic) return vykreslitRocnik(vydani, fotky);
+    if (!rozlozitVydani(vydani)?.mesic) {
+        // Ročník ukazuje u chybějících čísel i jejich stav (sháním, výtisk)
+        const stavy = await GetStavyVydani() || [];
+        if (moje !== stav.cisloNacteni) return;
+        stav.stavyVydaniData = stavy;
+        return vykreslitRocnik(vydani, fotky);
+    }
     listaStranky.naplnit([]);
 
     const alba = sestavitAlba(fotky);
@@ -178,46 +185,71 @@ export function htmlAlbaStranky(a, index, { nadpis = nazevAlba(a.album, a.typ), 
 export function vykreslitRocnik(vydani, fotky) {
     const casti = rozlozitVydani(vydani);
     const mesic = a => rozlozitVydani(a.typ === 'Centerfold' || a.typ === 'Cover' ? a.album : a.vydani)?.mesic || '';
-    const poradiTypu = { Cover: 0, Centerfold: 1 };
-    const alba = sestavitAlba(fotky).sort((x, y) => (mesic(x) || '99').localeCompare(mesic(y) || '99') || (poradiTypu[x.typ] ?? 2) - (poradiTypu[y.typ] ?? 2));
-    stav.vydaniPolozky = alba.flatMap(a => a.polozky);
-    // Index položky z mapy sestavené jednou, ne hledáním v poli u každé dlaždice
-    const indexy = new Map(stav.vydaniPolozky.map((p, i) => [p, i]));
-    const index = p => indexy.get(p);
-
+    const alba = sestavitAlba(fotky);
     const podleMesicu = new Map();
     alba.forEach(a => {
         if (!podleMesicu.has(mesic(a))) podleMesicu.set(mesic(a), []);
         podleMesicu.get(mesic(a)).push(a);
     });
-    const cisel = [...podleMesicu.keys()].filter(m => m && !m.startsWith('S')).length;
     const pocet = typ => alba.filter(a => typ === 'Pictorial' ? a.typ !== 'Cover' && a.typ !== 'Centerfold' : a.typ === typ).length;
+    const cisel = [...podleMesicu.keys()].filter(m => m && !m.startsWith('S')).length;
+    // Stav čísla (výtisk, sháním) z kalendáře, pokud už je načtený
+    const stavCisla = new Map((stav.stavyVydaniData || []).map(x => [x.vydani, x.stav]));
+
+    // Karta čísla: cover s páskou (bez coveru centerfold), v rohu náhled centerfoldu, pod ní playmate a obsah
+    const karta = (m, nazev) => {
+        const klic = slozitVydani(casti.rok, m, casti.edice);
+        const albaCisla = podleMesicu.get(m) || [];
+        const cover = albaCisla.find(a => a.typ === 'Cover');
+        const centerfold = albaCisla.find(a => a.typ === 'Centerfold');
+        const pictorialu = albaCisla.filter(a => a.typ !== 'Cover' && a.typ !== 'Centerfold').length;
+        const stavKlice = stavCisla.get(klic);
+        if (!albaCisla.length) {
+            return `<button class="rocnik-karta chybi ${stavKlice || ''}" data-prazdne="${esc(klic)}" title="${esc(nazevVydani(klic))} – chybí, klikni pro přidání">
+                <span class="rocnik-obalka"><span class="rocnik-plus">+</span></span>
+                <span class="rocnik-popis"><b>${esc(nazev)}</b>${stavKlice === 'shanim' ? 'sháním' : stavKlice === 'mam' ? 'mám výtisk' : 'chybí'}</span></button>`;
+        }
+        const hlavni = cover || centerfold || albaCisla[0];
+        const obsah = [cover && 'cover', centerfold && 'centerfold', pictorialu && sklonovat(pictorialu, 'pictorial', 'pictorialy', 'pictorialů')].filter(Boolean).join(' · ');
+        return `<button class="rocnik-karta" data-vydani="${esc(klic)}" title="Otevřít ${esc(nazevVydani(klic))}">
+            <span class="rocnik-obalka">
+                <img src="${esc(obrazek(hlavni.fotky[0].url, VELIKOST_PLAKATU_MALA))}" alt="" loading="lazy" draggable="false" />
+                <span class="rocnik-paska">${esc(paskaCisla(klic) || nazev)}</span>
+                ${stavKlice === 'mam' ? '<span class="rocnik-stav">výtisk</span>' : ''}
+                ${cover && centerfold ? `<span class="rocnik-cf"><img src="${esc(obrazek(centerfold.fotky[0].url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" draggable="false" /></span>` : ''}
+            </span>
+            <span class="rocnik-popis"><b>${esc(centerfold?.jmenoModelky || nazev)}</b>${esc(obsah)}</span></button>`;
+    };
+
+    // Speciály roku: pojmenované i ty, ke kterým jsou jen alba
+    const specialy = new Map(specialyRoku(casti.rok, casti.edice).map(x => [rozlozitVydani(x.vydani).mesic, x.nazev]));
+    [...podleMesicu.keys()].filter(m => m.startsWith('S') && !specialy.has(m))
+        .forEach(m => specialy.set(m, nazevVydani(slozitVydani(casti.rok, m, casti.edice)).replace(/ \d{4}( · .*)?$/, '')));
+    const naRok = podleMesicu.get('') || [];
+    stav.vydaniPolozky = naRok.flatMap(a => a.polozky);
+    const indexy = new Map(stav.vydaniPolozky.map((p, i) => [p, i]));
+    const index = p => indexy.get(p);
 
     document.getElementById('issueSide').innerHTML = `
-        <h2>Ročník ${esc(nazevVydani(vydani))}</h2>
-        <div class="issue-add"><button class="chip" data-pridat="pictorial">+ pictorial</button></div>
-        <dl class="profile-info">
-            <div><dt>Čísel ve sbírce</dt><dd>${cisel} z 12</dd></div>
-            <div><dt>Coverů</dt><dd>${pocet('Cover')}</dd></div>
-            <div><dt>Centerfoldů</dt><dd>${pocet('Centerfold')}</dd></div>
-            <div><dt>Pictorialů</dt><dd>${pocet('Pictorial')}</dd></div>
-            <div><dt>Fotek celkem</dt><dd>${fotky.length}</dd></div>
-        </dl>
+        <div class="rocnik-nadpis">Ročník${casti.edice !== VYCHOZI_EDICE ? ` · ${esc(casti.edice)}` : ''}</div>
+        <div class="rocnik-rok">${esc(casti.rok)}</div>
+        <div class="prehled-pruh"><span>Čísel ve sbírce</span><b>${cisel} z 12</b><div><i style="width:${Math.round(cisel / 12 * 100)}%"></i></div></div>
+        <div class="prehled-cisla rocnik-cisla">
+            ${[[pocet('Cover'), 'coverů'], [pocet('Centerfold'), 'centerfoldů'], [pocet('Pictorial'), 'pictorialů']]
+                .map(([n, popis]) => `<div><strong>${n}</strong><span>${popis}</span></div>`).join('')}
+        </div>
+        <div class="rocnik-akce"><button class="volba" data-pridat="pictorial"><span aria-hidden="true">+</span>Pictorial k ročníku</button></div>
     `;
-    const nazevMesice = m => !m ? 'Celý ročník' : m.startsWith('S') ? nazevVydani(slozitVydani(casti.rok, m, casti.edice)).replace(/ \d{4}( · .*)?$/, '') : MESICE[parseInt(m) - 1];
-    document.getElementById('issueMain').innerHTML = [...podleMesicu].map(([m, albaMesice]) => `
-        <section class="issue-month" data-cast="${m || 'rok'}">
-            <h3>${esc(nazevMesice(m))}
-                ${m ? `<button class="chip" data-vydani="${esc(slozitVydani(casti.rok, m, casti.edice))}" title="Otevřít číslo">Otevřít číslo</button>` : ''}</h3>
-            ${albaMesice.map(a => htmlAlbaStranky(a, index, { nadpis: a.typ === 'Cover' ? 'Cover' : a.typ === 'Centerfold' ? 'Centerfold' : nazevAlba(a.album, a.typ) })).join('')}
-        </section>
-    `).join('') || '<p class="empty-state">Z tohoto ročníku zatím ve sbírce nic není.</p>';
-    listaStranky.naplnit([...podleMesicu].map(([m, albaMesice]) => ({ klic: m || 'rok', nazev: nazevMesice(m), pocet: albaMesice.reduce((s, a) => s + a.fotky.length, 0) })));
+    document.getElementById('issueMain').innerHTML = `
+        <div class="rocnik-mrizka">${MESICE.map((nazev, i) => karta(String(i + 1).padStart(2, '0'), nazev)).join('')}</div>
+        ${specialy.size ? `<h3 class="rocnik-oddil">Speciály</h3><div class="rocnik-mrizka">${[...specialy].sort(([x], [y]) => x.localeCompare(y)).map(([m, nazev]) => karta(m, nazev)).join('')}</div>` : ''}
+        ${naRok.length ? `<h3 class="rocnik-oddil">Celý ročník</h3>${naRok.map(a => htmlAlbaStranky(a, index)).join('')}` : ''}
+    `;
+    listaStranky.naplnit([]);
 
     issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
     pripravitPopisy(issueView);
     zkratitAlba(issueView);
-    listaStranky.sledovat();
 }
 
 // Stránka fotografa: jeho alba napříč modelkami, chronologicky
@@ -240,14 +272,14 @@ export async function otevritFotografa(jmeno, { bezHistorie = false } = {}) {
     const index = p => indexy.get(p);
     const modelek = new Set(alba.flatMap(a => [a.modelkaId, ...a.dalsiModelky.map(m => m.id)])).size;
 
+    // Stejný panel jako ročník: drobný růžový nadpis, velké jméno, čísla
     document.getElementById('issueSide').innerHTML = `
-        <h2>${esc(jmeno)}</h2>
-        <p class="profile-aliases">fotograf</p>
-        <dl class="profile-info">
-            <div><dt>Alb</dt><dd>${alba.length}</dd></div>
-            <div><dt>Modelek</dt><dd>${modelek}</dd></div>
-            <div><dt>Fotek celkem</dt><dd>${fotky.length}</dd></div>
-        </dl>
+        <div class="rocnik-nadpis">Fotograf</div>
+        <h2 class="fotograf-jmeno">${esc(jmeno)}</h2>
+        <div class="prehled-cisla rocnik-cisla">
+            ${[[alba.length, 'alb'], [modelek, 'modelek'], [fotky.length, 'fotek']]
+                .map(([n, popis]) => `<div><strong>${n}</strong><span>${popis}</span></div>`).join('')}
+        </div>
     `;
     document.getElementById('issueMain').innerHTML = alba.map((a, i) => `<div data-cast="${i}">${htmlAlbaStranky(a, index, { sVydanim: true })}</div>`).join('')
         || '<p class="empty-state">Fotograf zatím nemá žádné album.</p>';
@@ -370,6 +402,15 @@ export function pripravit() {
         if (sken) {
             // Skeny stran v prohlížeči stran (dvojstrana jako v časopise), od kliknutého
             otevritCtecku(stav.vydaniClanky.find(x => x.id === parseInt(sken.closest('[data-id-clanku]').dataset.idClanku)), parseInt(sken.dataset.sken));
+            return;
+        }
+        const prazdne = e.target.closest('[data-prazdne]');
+        if (prazdne) {
+            e.stopPropagation();
+            const misto = prazdne.getBoundingClientRect();
+            // Po označení čísla se ročník překreslí
+            const oznacit = oznacitCislo(prazdne.dataset.prazdne).map(p => ({ ...p, akce: async () => { await p.akce(); obnovitStranku(); } }));
+            otevritKontextovouNabidku(misto.left, misto.bottom + 4, [...pridatKVydani(prazdne.dataset.prazdne), null, ...oznacit]);
             return;
         }
         const pridat = e.target.closest('[data-pridat]')?.dataset.pridat;

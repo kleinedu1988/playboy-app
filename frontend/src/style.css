@@ -5864,3 +5864,192 @@ textarea {
 #selectionCount {
     color: var(--text-main);
 }
+
+/* ===== Stránka ročníku: vlevo velký rok a čísla, vpravo 12 čísel jako karty ===== */
+.rocnik-nadpis {
+    margin-top: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--accent-text);
+}
+
+.rocnik-rok {
+    margin: 6px 0 4px;
+    font-size: 64px;
+    font-weight: 100;
+    line-height: 1;
+    text-align: center;
+}
+
+.prehled-cisla.rocnik-cisla {
+    grid-template-columns: repeat(3, 1fr);
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.rocnik-akce {
+    display: flex;
+    justify-content: center;
+    margin-top: 16px;
+}
+
+.rocnik-mrizka {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 22px 18px;
+}
+
+.rocnik-karta {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    text-align: center;
+    cursor: pointer;
+}
+
+.rocnik-obalka {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: var(--bg-card);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.rocnik-karta:hover .rocnik-obalka,
+.rocnik-karta:focus-visible .rocnik-obalka {
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 2px var(--accent), 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+.rocnik-karta:focus-visible {
+    outline: none;
+}
+
+.rocnik-obalka > img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rocnik-paska {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    padding: 2px 9px 2px 7px;
+    border-radius: 0 999px 999px 0;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.rocnik-stav {
+    position: absolute;
+    top: 10px;
+    right: 8px;
+    padding: 1px 7px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: rgba(20, 20, 23, 0.8);
+    font-size: 9.5px;
+}
+
+/* Náhled centerfoldu v rohu coveru */
+.rocnik-cf {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 34%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px rgba(20, 20, 23, 0.9), 0 6px 14px rgba(0, 0, 0, 0.6);
+}
+
+.rocnik-cf img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rocnik-popis {
+    display: block;
+    margin-top: 9px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+.rocnik-popis b {
+    display: block;
+    overflow: hidden;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--text-main);
+}
+
+.rocnik-karta.chybi .rocnik-obalka {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    background: none;
+    box-shadow: none;
+}
+
+.rocnik-karta.chybi.shanim .rocnik-obalka {
+    border-color: var(--accent);
+}
+
+.rocnik-karta.chybi.nezajima {
+    opacity: 0.35;
+}
+
+.rocnik-plus {
+    font-size: 26px;
+    font-weight: 200;
+    color: var(--accent-text);
+}
+
+.rocnik-oddil {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 34px 0 16px;
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.rocnik-oddil::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.45;
+}
+
+/* Stránka fotografa: jméno velkými tenkými písmeny jako rok ročníku */
+.fotograf-jmeno {
+    margin: 8px 0 0;
+    font-size: 26px;
+    font-weight: 200;
+    letter-spacing: 0.12em;
+    text-align: center;
+    text-transform: uppercase;
+}

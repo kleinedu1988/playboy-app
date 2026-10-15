@@ -5,6 +5,16 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.2] – 2026-10-15
+
+### Změněno
+- Stránka ročníku (klik na rok v Kalendáři) je přehled celého roku: 12 čísel jako karty – cover s páskou
+  měsíce, v rohu náhled centerfoldu, pod kartou jméno playmate a co číslo obsahuje (cover · centerfold ·
+  pictorialy), u výtisku štítek. Klik na kartu otevře číslo; chybějící měsíc má přerušovaný rámeček s plus
+  a nabídne přidání a označení (sháním, mám výtisk). Pod tím speciály roku a alba celého ročníku. Vlevo
+  panel s velkým tenkým rokem, proužkem „11 z 12“ a počty coverů, centerfoldů a pictorialů.
+- Stránka fotografa má stejný levý panel: jméno velkými tenkými písmeny a počty alb, modelek a fotek.
+
 ## [0.32.1] – 2026-10-15
 
 ### Změněno

@@ -5,6 +5,12 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.31.1] – 2026-10-15
+
+### Změněno
+- Rychlé výsledky hledání mají pozadí jako okno „Co je nového“ (zaoblené, s hlubokým stínem) a stránka pod
+  nimi ztmavne. Klik vedle výsledky zavře, nic pod nimi se přitom neotevře.
+
 ## [0.31.0] – 2026-10-15
 
 ### Přidáno

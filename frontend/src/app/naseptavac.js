@@ -9,6 +9,7 @@ import { otevritVydani } from './vydani';
 import { otevritClanek } from './clanky';
 
 const naseptavac = document.getElementById('naseptavac');
+const zavoj = document.getElementById('naseptavacZavoj');
 const NEJVIC_MODELEK = 5;
 const NEJVIC_CLANKU = 6;
 const NEJVIC_CISEL = 5;
@@ -52,6 +53,7 @@ const obsahujeVse = (text, slova) => {
 
 export function zavritNaseptavac() {
     naseptavac.classList.add('hidden');
+    zavoj.classList.add('hidden');
     naseptavac.innerHTML = '';
     polozky = [];
     vybrana = -1;
@@ -109,6 +111,7 @@ async function hledat() {
         ? `${html}<div class="naseptavac-pata">↑↓ vybrat · Enter otevřít · Esc zavřít</div>`
         : '<div class="naseptavac-prazdno">Žádná modelka, článek ani číslo neodpovídá.</div>';
     naseptavac.classList.remove('hidden');
+    zavoj.classList.remove('hidden');
 }
 
 function vybrat(index) {

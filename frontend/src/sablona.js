@@ -618,6 +618,9 @@ export const SABLONA_OKNA = `
     <div id="lbProgress" class="lb-progress"></div>
   </div>
 
+  <!-- Ztmavená stránka pod rychlými výsledky hledání; klik do ní výsledky zavře -->
+  <div id="naseptavacZavoj" class="naseptavac-zavoj hidden"></div>
+
   <!-- Prohlížeč stran článku: jedna strana nebo dvojstrana jako rozevřený časopis, dole pás náhledů -->
   <div id="ctecka" class="modal-overlay ctecka hidden" tabindex="-1" role="dialog" aria-label="Prohlížeč stran">
     <div class="ctecka-hlava">

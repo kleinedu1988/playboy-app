@@ -5161,14 +5161,23 @@ textarea {
     max-height: min(560px, calc(100vh - 80px));
     overflow-y: auto;
     padding: 6px 10px 10px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 18px;
-    background-color: rgb(30, 30, 34);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    /* Pozadí jako okno Co je nového */
+    background-color: rgba(32, 32, 36, 0.96);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
     transform: translateX(-50%);
     z-index: 1400;
     --wails-draggable: no-drag;
     user-select: none;
+}
+
+/* Stránka pod výsledky ztmavne jako pod oknem; řádek s hledáním (z-index 1400) zůstává nad ní */
+.naseptavac-zavoj {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 1300;
 }
 
 .naseptavac h5 {

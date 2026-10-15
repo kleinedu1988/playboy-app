@@ -1,5 +1,5 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
-import { esc, formatDatum, nazevAlba, nazevVydani, obrazek, rozlozitVydani, vekPriVydani, sklonovat } from '../lib/format';
+import { esc, formatDatum, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, vekPriVydani, sklonovat } from '../lib/format';
 import { GetFotografieModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -85,7 +85,10 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     // Tlačítka profilu (Upravit modelku, Přidat fotky) jsou v šabloně s obsluhou; před přepsáním hlavičky se vezmou
     // a vloží zpět pod jméno
     const akce = document.getElementById('profileActions');
+    // Páska v rohu panelu: první číslo, u playmate s označením role
+    const paska = prvniVydani ? `<span class="panel-paska">${/playmate/i.test(modelka.role) ? 'Playmate · ' : ''}${esc(paskaCisla(prvniVydani))}</span>` : '';
     document.getElementById('modelHeader').innerHTML = `
+        ${paska}
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
         <h2>${esc(modelka.jmeno)}</h2>
         ${htmlSrdicka(modelka)}

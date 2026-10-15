@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { EDICE, bezDiakritiky, esc, nazevAlba, nazevVydani, obrazek, rozlozitVydani, sjednotit, sklonovat } from '../lib/format';
+import { EDICE, bezDiakritiky, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, sklonovat } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
@@ -66,16 +66,6 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
 // Čísla časopisu: každé číslo, ke kterému je ve sbírce cover, centerfold nebo pictorial, jako výtisk s páskou
 // měsíce; bez coveru ztlumený náhled. Chybějící čísla označená „sháním“ nebo „mám výtisk“ jako prázdná dlaždice.
 const ZOBRAZIT_CISLA = { vse: 'vše', cover: 's coverem', bezCoveru: 'bez coveru', chybi: 'chybějící' };
-const ZKRATKY = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
-
-// Páska: „BŘE 95“, u speciálu „SPECIÁL 95“, u ročníku „ROČNÍK 95“
-function paskaCisla(v) {
-    const rok = v.rok.slice(2);
-    if (!v.mesic) return `Ročník ${rok}`;
-    if (v.mesic.startsWith('S')) return `Speciál ${rok}`;
-    return `${ZKRATKY[parseInt(v.mesic) - 1]} ${rok}`;
-}
-
 // Pořadí v roce: měsíce, speciály, celý ročník
 const poradiVRoce = v => !v.mesic ? 'Z' : v.mesic.startsWith('S') ? `T${v.mesic}` : v.mesic;
 
@@ -134,7 +124,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
     const dlazdice = k => {
         const s = stavCisla.get(k.vydani)?.stav;
         const stitek = s === 'mam' ? '<span class="cislo-stav">výtisk</span>' : s === 'shanim' ? '<span class="cislo-stav shanim">sháním</span>' : '';
-        const paska = `<span class="cislo-paska">${esc(paskaCisla(k.casti))}</span>`;
+        const paska = `<span class="cislo-paska">${esc(paskaCisla(k.vydani))}</span>`;
         const index = coverVydani.has(k.vydani) ? `data-cover="${coverVydani.get(k.vydani)}"` : '';
         const kdo = k.modelka || stavCisla.get(k.vydani)?.naObalce || '';
         return `

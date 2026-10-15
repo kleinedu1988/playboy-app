@@ -1,6 +1,6 @@
 // Stránka vydání, ročníku a fotografa; údaje čísla
 import { GetAlbaFotografa, GetVydani, GetVydaniInfo, SetVydaniInfo, SetNazevSpecialu } from './backend';
-import { MESICE, esc, nazevAlba, nazevVydani, obrazek, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial } from '../lib/format';
+import { MESICE, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -51,6 +51,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
             ${coveryVydani.flatMap(a => a.polozky).map(p => htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${index(p)}"`)).join('')
                 || `<div class="profile-cover"><img src="${BEZ_FOTKY}" alt="Bez coveru" draggable="false" /></div>`}
         </div>
+        ${jenRocnik ? '' : `<span class="panel-paska">${esc(paskaCisla(vydani))}</span>`}
         <h2>${jenRocnik ? 'Ročník ' : ''}${esc(nazevVydani(vydani))}</h2>
         <div class="issue-add">
             ${jenRocnik ? '' : '<button class="chip" data-pridat="cover">+ cover</button><button class="chip" data-pridat="centerfold">+ centerfold</button>'}
@@ -67,7 +68,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
             ${info.stav ? `<div><dt>Stav</dt><dd>${NAZVY_STAVU[info.stav]}</dd></div>` : ''}
         </dl>
         ${info.poznamka ? `<p class="profile-note">${esc(info.poznamka)}</p>` : ''}
-        <button class="btn btn-secondary btn-small issue-edit" data-upravit-vydani>Upravit číslo…</button>
+        <div class="profile-actions"><button class="volba issue-edit" data-upravit-vydani><span aria-hidden="true">✎</span>Upravit číslo…</button></div>
     `;
 
     document.getElementById('issueMain').innerHTML = [

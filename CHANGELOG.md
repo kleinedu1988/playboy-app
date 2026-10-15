@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.11] – 2026-10-15
+
+### Změněno
+- Levý panel profilu modelky, stránky čísla a fotografa je jeden plovoucí panel se stínem. Fotka (titulní,
+  centerfold nebo cover) vyplní horní část až k okrajům a dole končí zaoblenými rohy. V levém horním rohu je
+  růžová páska s prvním číslem („PLAYMATE · BŘE 95“, u čísla „LED 96“). Jméno je tenkými kapitálkami na střed,
+  srdíčka pod ním. Tlačítka (Upravit, Přidat fotky, Upravit číslo) jsou v jedné pilulce s dělicí čarou.
+  Údaje už nejsou v rámečku, nadpisy bloků jsou růžové s linkou, která se ztrácí.
+
 ## [0.18.10] – 2026-10-15
 
 ### Změněno

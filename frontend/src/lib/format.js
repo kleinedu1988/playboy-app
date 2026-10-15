@@ -49,6 +49,17 @@ export function nazevVydani(vydani) {
     return (v.mesic ? `${nazevCasti(vydani, v)} ${v.rok}` : v.rok) + (v.edice !== VYCHOZI_EDICE ? ` · ${v.edice}` : '');
 }
 
+// Páska čísla (dlaždice Čísel, levý panel profilu a čísla): „BŘE 95“, u speciálu „SPECIÁL 95“, u ročníku „ROČNÍK 95“
+const ZKRATKY_PASKY = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
+export function paskaCisla(vydani) {
+    const v = rozlozitVydani(vydani);
+    if (!v) return '';
+    const rok = v.rok.slice(2);
+    if (!v.mesic) return `Ročník ${rok}`;
+    if (v.mesic.startsWith('S')) return `Speciál ${rok}`;
+    return `${ZKRATKY_PASKY[parseInt(v.mesic) - 1]} ${rok}`;
+}
+
 // Adresa obrázku v požadované velikosti; šablonu adresy (s {velikost}) skládá backend
 export function obrazek(adresa, velikost) {
     return String(adresa || '').replace('{velikost}', velikost);

@@ -3696,3 +3696,175 @@ body.razeni .photo-item {
     color: var(--text-main);
     font-size: 12px;
 }
+
+/* Levý panel profilu, stránky čísla a fotografa: jeden plovoucí panel. Fotka (titulní, centerfold, cover) vyplní
+   horní část až k okrajům a dole končí zaoblenými rohy; v levém horním rohu páska čísla; jméno tenkými kapitálkami
+   na střed; tlačítka v jedné pilulce; údaje bez rámečků s růžovými nadpisy. */
+.profile-side {
+    position: relative;
+    padding: 16px;
+    overflow: hidden;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.profile-side .profile-cover,
+#issueSide > .posters,
+#centerfoldsSide .album:first-child {
+    margin: -16px -16px 0;
+}
+
+.profile-side .profile-cover,
+#issueSide > .posters > .poster,
+#issueSide > .posters .profile-cover,
+#centerfoldsSide .album:first-child .poster {
+    border: none;
+    border-radius: 0 0 16px 16px;
+}
+
+/* Titulní fotka je přímo v panelu: o odsazení širší, aby sahala k okrajům */
+#modelHeader .profile-cover {
+    width: calc(100% + 32px);
+}
+
+#issueSide > .posters .profile-cover {
+    margin: 0;
+}
+
+.profile-side .profile-actions .issue-edit {
+    margin: 0;
+}
+
+.panel-paska {
+    position: absolute;
+    top: 16px;
+    left: 0;
+    z-index: 2;
+    padding: 5px 12px 5px 10px;
+    border-radius: 0 999px 999px 0;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    pointer-events: none;
+}
+
+.profile-side h2 {
+    margin-top: 18px;
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+.detail-container.bez-titulni .profile-side h2 {
+    margin-top: 18px;
+}
+
+/* Fotograf ani ročník fotku nemají: jméno začíná nahoře */
+.profile-side > h2:first-child,
+.profile-side > .panel-paska + h2 {
+    margin-top: 4px;
+}
+
+.profile-side .hearts {
+    display: flex;
+    justify-content: center;
+}
+
+.profile-side .profile-aliases,
+.profile-side .issue-add,
+.profile-side .profile-tags,
+.profile-side .profile-links {
+    justify-content: center;
+    text-align: center;
+}
+
+/* Tlačítka v jedné pilulce s dělicí čarou, jako panel voleb v liště */
+.profile-side .profile-actions {
+    display: flex;
+    gap: 0;
+    margin-top: 14px;
+    padding: 3px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.profile-side .profile-actions .volba {
+    position: relative;
+    flex: 1 1 auto;
+    justify-content: center;
+    gap: 6px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+}
+
+.profile-side .profile-actions .volba:hover {
+    background-color: var(--panel-hover);
+}
+
+.profile-side .profile-actions .volba span {
+    color: var(--accent-text);
+}
+
+.profile-side .profile-actions .volba + .volba::before {
+    content: '';
+    position: absolute;
+    top: 7px;
+    bottom: 7px;
+    left: 0;
+    width: 1px;
+    background-color: var(--panel-okraj);
+}
+
+/* Údaje bez rámečku; nadpis bloku růžový s linkou, která se ztrácí */
+.profile-side .udaje-modelky,
+.profile-side .profile-info {
+    margin-top: 16px;
+    border: none;
+    border-radius: 0;
+    background: none;
+}
+
+.profile-side .udaje-blok {
+    padding: 10px 0;
+}
+
+.profile-side .udaje-blok + .udaje-blok {
+    border-top: none;
+}
+
+.profile-side .udaje-blok h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--accent-text);
+    letter-spacing: 0.14em;
+}
+
+.profile-side .udaje-blok h4::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.5;
+}
+
+.profile-side .profile-info > div {
+    padding-left: 0;
+    padding-right: 0;
+    border-color: var(--panel-okraj);
+}
+
+.profile-side .profile-note {
+    border-color: var(--panel-okraj);
+    background-color: rgba(255, 255, 255, 0.03);
+}

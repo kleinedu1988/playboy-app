@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.31.4] – 2026-10-15
+
+### Změněno
+- Centerfoldy v novém stylu jako výstava tisků: každý plakát v lehkém tmavém rámu (pasparta), přes rám
+  růžová páska vydání (jako v Číslech), pod rámem jméno velkými písmeny a vydání růžově – vidět pořád, ne
+  až po najetí. Při řazení podle vydání jsou desetiletí oddíly s velkým tenkým nadpisem a růžovou linkou
+  (jako roky v Kalendáři) a čtou se po řádcích.
+
 ## [0.31.3] – 2026-10-15
 
 ### Změněno

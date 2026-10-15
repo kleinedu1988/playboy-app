@@ -1754,44 +1754,6 @@ button.tag:hover {
     .cal-months { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-/* Stěna centerfoldů */
-.wall {
-    columns: 240px;
-    column-gap: 20px;
-}
-
-.wall .empty-state {
-    column-span: all;
-}
-
-.wall-item {
-    break-inside: avoid;
-    margin: 0 0 20px 0;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.wall-item:hover {
-    transform: translateY(-4px);
-}
-
-.wall-item figcaption {
-    padding: 10px 14px;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.wall-item figcaption strong {
-    display: block;
-    margin-bottom: 2px;
-    font-size: 14px;
-    color: var(--text-main);
-}
-
 /* Prohlížeč fotek / slideshow přes celé okno */
 .lightbox {
     position: absolute;
@@ -2776,34 +2738,6 @@ body.razeni .photo-item {
     margin-top: 18px;
 }
 
-/* Lišta nástrojů přes celou šířku stěny i ve sloupcovém rozvržení */
-.wall .wall-toolbar {
-    column-span: all;
-}
-
-/* Stěna podle vydání: mřížka čtená po řádcích jako časová osa */
-.wall.chronologicky {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 20px;
-    align-items: start;
-    columns: auto;
-}
-
-.wall.chronologicky .wall-toolbar,
-.wall.chronologicky .empty-state {
-    grid-column: 1 / -1;
-}
-
-/* Mřížka má vlastní mezery mezi řádky; řádek voleb pod sebou další okraj nepotřebuje */
-.wall.chronologicky .wall-toolbar {
-    margin-bottom: 0;
-}
-
-.wall.chronologicky .wall-item {
-    margin: 0;
-}
-
 .cal-year-link strong {
     font-size: 40px;
     font-weight: 100;
@@ -2970,8 +2904,7 @@ body.razeni .photo-item {
 /* Zaměření klávesnicí */
 .card:focus-visible,
 .photo-item:focus-visible,
-.poster:focus-visible,
-.wall-item:focus-visible {
+.poster:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
@@ -3519,13 +3452,11 @@ body.razeni .photo-item {
 
 /* Karta modelky a centerfold: fotka přes celou kartu, popisek je průhledný pruh přes spodek fotky
    a ukáže se až po najetí myší (nebo při výběru klávesnicí) */
-.card,
-.wall-item {
+.card {
     position: relative;
 }
 
-.card-info,
-.wall-item figcaption {
+.card-info {
     position: absolute;
     left: 0;
     right: 0;
@@ -3542,20 +3473,12 @@ body.razeni .photo-item {
 }
 
 .card:hover .card-info,
-.card:focus-visible .card-info,
-.wall-item:hover figcaption,
-.wall-item:focus-visible figcaption {
+.card:focus-visible .card-info {
     opacity: 1;
 }
 
 .card-info h3 {
     font-size: 15px;
-}
-
-.wall-item figcaption strong {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
 /* Na kartě je dole jméno, srdíčka proto v levém horním rohu */
@@ -5577,4 +5500,109 @@ textarea {
     color: rgba(255, 255, 255, 0.65);
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+/* ===== Stěna centerfoldů: tisk v lehkém rámu (pasparta), páska vydání přes rám, pod ním jméno a vydání ===== */
+.wall-mrizka {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 26px 20px;
+    align-items: start;
+}
+
+.wall-dekada + .wall-dekada {
+    margin-top: 34px;
+}
+
+.wall-dekada h3 {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 0 0 16px;
+    font-size: 36px;
+    font-weight: 100;
+    line-height: 1;
+}
+
+.wall-dekada h3 small {
+    font-size: 12.5px;
+    font-weight: normal;
+    color: var(--text-muted);
+}
+
+.wall-dekada h3::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    align-self: center;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.5;
+}
+
+.wall-item {
+    margin: 0;
+    cursor: pointer;
+}
+
+.wall-ram {
+    position: relative;
+    padding: 10px;
+    border-radius: 10px;
+    background: linear-gradient(145deg, #2a2a30, #1d1d21);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.wall-item:hover .wall-ram {
+    transform: translateY(-4px);
+}
+
+.wall-item:focus-visible {
+    outline: none;
+}
+
+.wall-item:focus-visible .wall-ram {
+    box-shadow: 0 0 0 2px var(--accent), 0 14px 30px rgba(0, 0, 0, 0.55);
+}
+
+.wall-ram .poster {
+    border-radius: 3px;
+}
+
+.wall-paska {
+    position: absolute;
+    top: 18px;
+    left: 0;
+    padding: 2px 9px 2px 7px;
+    border-radius: 0 999px 999px 0;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    pointer-events: none;
+}
+
+.wall-item figcaption {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.wall-item figcaption strong {
+    display: block;
+    overflow: hidden;
+    font-size: 12.5px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.wall-item figcaption span {
+    display: block;
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--accent-text);
 }

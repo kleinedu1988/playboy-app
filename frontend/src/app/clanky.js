@@ -1,12 +1,12 @@
 // Články čísla: čtení (text s perexem, citáty a zvýrazněnými otázkami, skeny stran) a okno pro úpravu
 import { jednou, oznamit } from '../ui/oznameni';
-import { AddClanek, DeleteClanek, UpdateClanek } from './backend';
+import { AddClanek, DeleteClanek, GetClankyModelky, UpdateClanek } from './backend';
 import { esc, nazevVydani, obrazek, sjednotit } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { VELIKOST_NAHLEDU } from './obrazky';
 import { potvrdit } from './formular-modelky';
-import { obnovitStranku, ukazatClanek } from './vydani';
+import { obnovitStranku, otevritVydani, ukazatClanek } from './vydani';
 
 // Rubriky, které nabízí okno článku; vlastní rubrika jde dopsat
 export const RUBRIKY = ['Úvodník', 'Playboy Interview', '20 otázek', 'Článek', 'Povídka', 'Móda', 'Humor', 'Advisor', 'Pictorial', 'Centerfold'];
@@ -49,6 +49,32 @@ export const htmlProuzku = polozky => `
         <span class="clanek-precteno"><i></i></span>
     </nav>`;
 
+// Články modelky jako poslední blok údajů v levém panelu profilu (údaje o modelce jsou důležitější);
+// klik otevře číslo na tomto článku
+export async function doplnitClankyModelky(modelka) {
+    const clanky = await GetClankyModelky(modelka.id) || [];
+    if (!clanky.length || stav.aktualniModelka?.id !== modelka.id) return;
+    const hlavicka = document.getElementById('modelHeader');
+    let udaje = hlavicka.querySelector('.udaje-modelky');
+    if (!udaje) {
+        udaje = document.createElement('div');
+        udaje.className = 'udaje-modelky';
+        hlavicka.querySelector('.profile-tags').after(udaje);
+    }
+    udaje.insertAdjacentHTML('beforeend', `<section class="udaje-blok udaje-clanky"><h4>Články</h4>
+        ${clanky.map(c => `<button type="button" class="profil-clanek" data-clanek-cisla="${esc(c.vydani)}" data-id="${c.id}" title="Otevřít článek v čísle">
+            <span class="profil-clanek-rubrika">${esc(c.rubrika || 'Článek')}</span>
+            <span class="profil-clanek-nazev">${esc(c.nazev)}</span>
+            <span class="profil-clanek-kde">${esc([nazevVydani(c.vydani), c.strana ? `strana ${c.strana}` : ''].filter(Boolean).join(' · '))}</span>
+        </button>`).join('')}</section>`);
+}
+
+// Otevření čísla rovnou na článku (z profilu modelky a z hledání)
+export async function otevritClanek(vydani, id) {
+    await otevritVydani(vydani);
+    if (stav.aktualniVydani === vydani) ukazatClanek(id, false);
+}
+
 // Okno článku: nový (clanek = null) nebo úprava; vydání je dané stránkou čísla
 export async function otevritEditorClanku(clanek, vydani) {
     stav.editovanyClanek = clanek || { id: 0, vydani };
@@ -79,6 +105,11 @@ export async function otevritEditorClanku(clanek, vydani) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    document.getElementById('modelHeader').addEventListener('click', (e) => {
+        const clanek = e.target.closest('[data-clanek-cisla]');
+        if (clanek) otevritClanek(clanek.dataset.clanekCisla, parseInt(clanek.dataset.id));
+    });
+
     document.getElementById('clanekForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
         const pole = id => /** @type {HTMLInputElement} */ (document.getElementById(id)).value.trim();

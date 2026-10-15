@@ -5105,3 +5105,380 @@ textarea {
 .clanek-upravit:hover {
     color: var(--accent-text);
 }
+
+/* ===== Články modelky: poslední blok údajů v levém panelu profilu ===== */
+.profil-clanek {
+    display: block;
+    width: calc(100% + 20px);
+    margin: 0 -10px;
+    padding: 7px 10px;
+    border: none;
+    border-radius: 12px;
+    background: none;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+}
+
+.profil-clanek:hover,
+.profil-clanek:focus-visible {
+    background-color: var(--panel-hover);
+}
+
+.profil-clanek-rubrika,
+.naseptavac-rubrika {
+    display: block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+}
+
+.profil-clanek-nazev {
+    display: block;
+    margin-top: 1px;
+    font-size: 14px;
+}
+
+.profil-clanek-kde {
+    display: block;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+/* ===== Rychlé výsledky pod hledáním ===== */
+/* Řádek s hledáním leží nad lištou voleb i nad obsahem stránky, aby výsledky nic nezakrylo (pod prohlížečem a okny) */
+.titulek-okna {
+    z-index: 1400;
+}
+
+.naseptavac {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    width: min(560px, calc(100vw - 32px));
+    max-height: min(560px, calc(100vh - 80px));
+    overflow-y: auto;
+    padding: 6px 10px 10px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: rgb(30, 30, 34);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+    transform: translateX(-50%);
+    z-index: 1400;
+    --wails-draggable: no-drag;
+    user-select: none;
+}
+
+.naseptavac h5 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 8px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.naseptavac h5::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.35;
+}
+
+.naseptavac-polozka {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 7px 8px;
+    border: none;
+    border-radius: 12px;
+    background: none;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+}
+
+.naseptavac-polozka.active {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.naseptavac-nahled {
+    flex: none;
+    width: 34px;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: #1c1c20;
+}
+
+.naseptavac-nahled.kulaty {
+    aspect-ratio: 1;
+    border-radius: 50%;
+}
+
+.naseptavac-nahled img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.naseptavac-text {
+    display: block;
+    min-width: 0;
+}
+
+.naseptavac-nazev {
+    display: block;
+    font-size: 14px;
+}
+
+.naseptavac-kde {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.naseptavac-text > .naseptavac-kde {
+    display: block;
+}
+
+.naseptavac-ukazka {
+    display: block;
+    margin-top: 2px;
+    overflow: hidden;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.naseptavac mark {
+    padding: 0 2px;
+    border-radius: 3px;
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 -1px 0 var(--accent);
+    color: var(--text-main);
+}
+
+.naseptavac-pata,
+.naseptavac-prazdno {
+    margin: 8px 8px 0;
+    font-size: 11.5px;
+    color: var(--text-muted);
+}
+
+.naseptavac-prazdno {
+    margin: 6px 8px 2px;
+    font-size: 13px;
+}
+
+/* ===== Prohlížeč stran článku ===== */
+.modal-overlay.ctecka {
+    outline: none;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    background-color: rgba(10, 10, 12, 0.97);
+}
+
+.ctecka-hlava {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 20px 14px 24px;
+}
+
+.ctecka-nazev {
+    font-size: 15px;
+}
+
+.ctecka-strany {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.ctecka-mezera {
+    flex: 1;
+}
+
+.ctecka-rezim {
+    display: flex;
+    gap: 2px;
+    padding: 4px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+}
+
+.ctecka-rezim button {
+    padding: 5px 12px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.ctecka-rezim button.active {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.ctecka-zavrit,
+.ctecka-sipka {
+    flex: none;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 50%;
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    cursor: pointer;
+}
+
+.ctecka-zavrit {
+    width: 34px;
+    height: 34px;
+    font-size: 18px;
+}
+
+.ctecka-sipka {
+    width: 46px;
+    height: 46px;
+    font-size: 24px;
+}
+
+.ctecka-zavrit:hover,
+.ctecka-sipka:hover:not(:disabled) {
+    border-color: var(--accent);
+}
+
+.ctecka-sipka:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+.ctecka-plocha {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    min-height: 0;
+    padding: 0 20px;
+}
+
+.ctecka-dvojstrana {
+    display: flex;
+    justify-content: center;
+    height: 100%;
+    max-width: calc(100% - 140px);
+    padding-bottom: 26px;
+}
+
+.ctecka-dvojstrana figure {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    margin: 0;
+}
+
+.ctecka-dvojstrana img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+    cursor: pointer;
+}
+
+.ctecka-dvojstrana.dve figure:first-child {
+    justify-content: flex-end;
+}
+
+.ctecka-dvojstrana.dve figure:first-child img {
+    border-radius: 6px 0 0 6px;
+}
+
+.ctecka-dvojstrana.dve figure:last-child img {
+    border-radius: 0 6px 6px 0;
+}
+
+.ctecka-dvojstrana.jedna img {
+    border-radius: 6px;
+}
+
+/* Hřbet: stín u vnitřních okrajů obou stran */
+.ctecka-dvojstrana.dve figure::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 26px;
+    width: 40px;
+    pointer-events: none;
+}
+
+.ctecka-dvojstrana.dve figure:first-child::after {
+    right: 0;
+    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.35));
+}
+
+.ctecka-dvojstrana.dve figure:last-child::after {
+    left: 0;
+    background: linear-gradient(270deg, transparent, rgba(0, 0, 0, 0.35));
+}
+
+.ctecka-dvojstrana figcaption {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -24px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.ctecka-pas {
+    display: flex;
+    justify-content: safe center;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 10px 20px 18px;
+    scrollbar-width: thin;
+}
+
+.ctecka-pas button {
+    display: flex;
+    flex: none;
+    gap: 1px;
+    padding: 3px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.ctecka-pas button:hover {
+    opacity: 0.85;
+}
+
+.ctecka-pas button.active {
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.ctecka-pas img {
+    display: block;
+    width: 34px;
+    height: 46px;
+    object-fit: cover;
+}

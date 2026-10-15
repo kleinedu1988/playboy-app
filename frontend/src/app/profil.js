@@ -12,6 +12,7 @@ import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni } from './obrazk
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { selectionBar } from './vyber';
+import { doplnitClankyModelky } from './clanky';
 
 // Otevření profilu modelky s fotogalerií
 export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}) {
@@ -102,7 +103,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
 
     document.querySelector('#modelHeader .profile-actions-misto').replaceWith(akce);
 
-    await nacistFotkyModelky(modelka.id);
+    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka)]);
 }
 
 // Ostatní modelky sdíleného alba (hlavní i další kromě té, jejíž profil je otevřený) jako odkazy na jejich profil

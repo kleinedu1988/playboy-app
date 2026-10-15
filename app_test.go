@@ -2344,6 +2344,29 @@ func TestClanky(t *testing.T) {
 		t.Fatal("smazání článku")
 	}
 
+	// Články modelky a hledání v textu (bez diakritiky, všechna slova, shoda v názvu první)
+	if m := a.GetClankyModelky(1); len(m) != 1 || m[0].ID != rozhovor {
+		t.Fatalf("články modelky: %+v", m)
+	}
+	povidka := a.AddClanek(Clanek{Vydani: "1995-07", Nazev: "Noc", Rubrika: "Povídka",
+		Text: strings.Repeat("Dlouhý úvod povídky. ", 20) + "Sázky v Monte Carlu se měří jinak než penězi. " + strings.Repeat("Konec. ", 30)})
+	a.AddClanek(Clanek{Vydani: "1994-07", Nazev: "Monte Carlo pro dva"})
+	n := a.HledatClanky("monte CARLU")
+	if len(n) != 1 || n[0].ID != povidka || !strings.HasPrefix(n[0].Ukazka, "…") || !strings.HasSuffix(n[0].Ukazka, "…") || !strings.Contains(n[0].Ukazka, "Monte Carlu") {
+		t.Fatalf("hledání v textu: %+v", n)
+	}
+	if n := a.HledatClanky("monte"); len(n) != 2 || n[0].Nazev != "Monte Carlo pro dva" {
+		t.Fatalf("shoda v názvu má být první: %+v", n)
+	}
+	if n := a.HledatClanky("sazky"); len(n) != 1 || !strings.Contains(n[0].Ukazka, "Sázky") {
+		t.Fatalf("hledání bez diakritiky: %+v", n)
+	}
+	if len(a.HledatClanky("  ")) != 0 || len(a.HledatClanky("grobel otázka")) != 1 || len(a.HledatClanky("grobel nic")) != 0 {
+		t.Fatal("hledání podle více slov")
+	}
+	a.DeleteClanek(povidka)
+	a.DeleteClanek(a.HledatClanky("monte")[0].ID)
+
 	// Export a import: články jsou u vydání; import doplní a opraví článek se stejným názvem
 	soubor, err := a.exportovat()
 	if err != nil || !strings.Contains(string(soubor), "clanky:") || !strings.Contains(string(soubor), "Playboy Interview") {

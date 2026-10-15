@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
+	"unicode/utf8"
 )
 
 // Články čísla časopisu: obsah s rubrikami a stranami, text (přepis nebo shrnutí) a volitelně skeny stran.
@@ -60,13 +62,22 @@ func rozdelitSkeny(text string) []string {
 
 // Články čísla podle strany (bez strany na konci), pak podle pořadí přidání
 func (a *App) GetClanky(vydani string) []Clanek {
+	return a.nacistClanky("GetClanky", "c.vydani = ?", "COALESCE(c.strana, 0) = 0, c.strana, c.id", vydani)
+}
+
+// Články, ve kterých se modelka objevuje (rozhovor, 20 otázek…), podle vydání a strany
+func (a *App) GetClankyModelky(modelkaID int) []Clanek {
+	return a.nacistClanky("GetClankyModelky", "c.modelka_id = ?", "c.vydani, COALESCE(c.strana, 0) = 0, c.strana, c.id", modelkaID)
+}
+
+func (a *App) nacistClanky(kde, podminka, razeni string, hodnota interface{}) []Clanek {
 	clanky := []Clanek{}
 	rows, err := a.db.Query(`SELECT c.id, c.vydani, COALESCE(c.strana, 0), COALESCE(c.rubrika, ''), c.nazev, COALESCE(c.autor, ''),
 			COALESCE(c.modelka_id, 0), COALESCE(m.jmeno, ''), COALESCE(c.druh, ''), COALESCE(c.text, ''), COALESCE(c.skeny, '')
 		FROM clanky c LEFT JOIN modelky m ON m.id = c.modelka_id
-		WHERE c.vydani = ? ORDER BY COALESCE(c.strana, 0) = 0, c.strana, c.id`, vydani)
+		WHERE `+podminka+` ORDER BY `+razeni, hodnota)
 	if err != nil {
-		a.chyba("GetClanky", err)
+		a.chyba(kde, err)
 		return clanky
 	}
 	defer rows.Close()
@@ -87,6 +98,135 @@ func (a *App) GetClanky(vydani string) []Clanek {
 		clanky = append(clanky, c)
 	}
 	return clanky
+}
+
+// Článek nalezený hledáním: kde je a úryvek textu kolem první shody
+type NalezClanku struct {
+	ID           int    `json:"id"`
+	Vydani       string `json:"vydani"`
+	Strana       int    `json:"strana"`
+	Rubrika      string `json:"rubrika"`
+	Nazev        string `json:"nazev"`
+	JmenoModelky string `json:"jmenoModelky"`
+	Ukazka       string `json:"ukazka"`
+}
+
+// Nejvíce nalezených článků v rozbalovacím hledání
+const nejviceNalezu = 20
+
+// Hledání v článcích: všechna slova dotazu musí být v názvu, rubrice, autorovi, jménu modelky nebo textu
+// (bez ohledu na velikost písmen a diakritiku). Shody v názvu jdou první, pak novější čísla.
+func (a *App) HledatClanky(dotaz string) []NalezClanku {
+	nalezy := []NalezClanku{}
+	slova := strings.Fields(zjednodusit(dotaz))
+	if len(slova) == 0 {
+		return nalezy
+	}
+	rows, err := a.db.Query(`SELECT c.id, c.vydani, COALESCE(c.strana, 0), COALESCE(c.rubrika, ''), c.nazev, COALESCE(c.autor, ''),
+			COALESCE(m.jmeno, ''), COALESCE(c.text, '')
+		FROM clanky c LEFT JOIN modelky m ON m.id = c.modelka_id`)
+	if err != nil {
+		a.chyba("HledatClanky", err)
+		return nalezy
+	}
+	defer rows.Close()
+	type kandidat struct {
+		NalezClanku
+		vNazvu bool
+	}
+	var vse []kandidat
+	for rows.Next() {
+		var n NalezClanku
+		var autor, text string
+		if rows.Scan(&n.ID, &n.Vydani, &n.Strana, &n.Rubrika, &n.Nazev, &autor, &n.JmenoModelky, &text) != nil {
+			continue
+		}
+		nazev := zjednodusit(n.Nazev)
+		prohledat := zjednodusit(strings.Join([]string{n.Nazev, n.Rubrika, autor, n.JmenoModelky, text}, " "))
+		vNazvu, vyhovuje := true, true
+		for _, slovo := range slova {
+			if !strings.Contains(prohledat, slovo) {
+				vyhovuje = false
+				break
+			}
+			vNazvu = vNazvu && strings.Contains(nazev, slovo)
+		}
+		if !vyhovuje {
+			continue
+		}
+		n.Ukazka = ukazkaTextu(text, slova)
+		vse = append(vse, kandidat{n, vNazvu})
+	}
+	sort.SliceStable(vse, func(i, j int) bool {
+		if vse[i].vNazvu != vse[j].vNazvu {
+			return vse[i].vNazvu
+		}
+		return vse[i].Vydani > vse[j].Vydani
+	})
+	for i, k := range vse {
+		if i == nejviceNalezu {
+			break
+		}
+		nalezy = append(nalezy, k.NalezClanku)
+	}
+	return nalezy
+}
+
+// Úryvek textu kolem první shody některého ze slov (zjednodušených); bez shody začátek textu
+func ukazkaTextu(text string, slova []string) string {
+	znaky := []rune(strings.Join(strings.Fields(text), " "))
+	if len(znaky) == 0 {
+		return ""
+	}
+	// Zjednodušený text po znacích, aby se pozice shody dala převést zpět na původní znak
+	var zjednoduseny strings.Builder
+	puvodni := []int{}
+	for i, z := range znaky {
+		cast := zjednodusit(string(z))
+		for range cast {
+			puvodni = append(puvodni, i)
+		}
+		zjednoduseny.WriteString(cast)
+	}
+	hledat := zjednoduseny.String()
+	shoda := -1
+	for _, slovo := range slova {
+		if bajt := strings.Index(hledat, slovo); bajt >= 0 {
+			if poz := puvodni[utf8.RuneCountInString(hledat[:bajt])]; shoda < 0 || poz < shoda {
+				shoda = poz
+			}
+		}
+	}
+	if shoda < 0 {
+		shoda = 0
+	}
+	const pred, za = 50, 110
+	od, do := 0, len(znaky)
+	if shoda > pred {
+		od = shoda - pred
+	}
+	if od+pred+za < do {
+		do = od + pred + za
+	}
+	// Úryvek začíná a končí celým slovem
+	if od > 0 {
+		for od < shoda && znaky[od-1] != ' ' {
+			od++
+		}
+	}
+	if do < len(znaky) {
+		for do > shoda+1 && znaky[do] != ' ' {
+			do--
+		}
+	}
+	ukazka := strings.TrimSpace(string(znaky[od:do]))
+	if od > 0 {
+		ukazka = "…" + ukazka
+	}
+	if do < len(znaky) {
+		ukazka += "…"
+	}
+	return ukazka
 }
 
 // Kontrola a úprava článku před zápisem

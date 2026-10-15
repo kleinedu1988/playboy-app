@@ -321,3 +321,11 @@ export function GetClanky(arg1) {
 export function UpdateClanek(arg1) {
   return window['go']['main']['App']['UpdateClanek'](arg1);
 }
+
+export function GetClankyModelky(arg1) {
+  return window['go']['main']['App']['GetClankyModelky'](arg1);
+}
+
+export function HledatClanky(arg1) {
+  return window['go']['main']['App']['HledatClanky'](arg1);
+}

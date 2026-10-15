@@ -18,6 +18,8 @@ export const SABLONA_OKNA = `
           <kbd class="hledani-zkratka" aria-hidden="true">Ctrl F</kbd>
           <button type="button" id="searchClearBtn" class="hledani-smazat" title="Smazat hledání" aria-label="Smazat hledání">&times;</button>
         </label>
+        <!-- Rychlé výsledky pod hledáním: modelky, články (i v textu) a čísla; plní je app/naseptavac.js -->
+        <div id="naseptavac" class="naseptavac hidden" role="listbox" aria-label="Výsledky hledání"></div>
       </div>
       <div class="window-controls">
         <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
@@ -616,6 +618,26 @@ export const SABLONA_OKNA = `
     <div id="lbProgress" class="lb-progress"></div>
   </div>
 
+  <!-- Prohlížeč stran článku: jedna strana nebo dvojstrana jako rozevřený časopis, dole pás náhledů -->
+  <div id="ctecka" class="modal-overlay ctecka hidden" tabindex="-1" role="dialog" aria-label="Prohlížeč stran">
+    <div class="ctecka-hlava">
+      <span id="cteckaNazev" class="ctecka-nazev"></span>
+      <span id="cteckaStrany" class="ctecka-strany"></span>
+      <span class="ctecka-mezera"></span>
+      <div class="ctecka-rezim" role="group" aria-label="Rozložení">
+        <button type="button" data-rezim-ctecky="1" title="Jedna strana (1)">Jedna strana</button>
+        <button type="button" data-rezim-ctecky="2" title="Dvojstrana (2)">Dvojstrana</button>
+      </div>
+      <button type="button" class="ctecka-zavrit" data-zavrit title="Zavřít (Esc)">&times;</button>
+    </div>
+    <div class="ctecka-plocha">
+      <button type="button" class="ctecka-sipka" data-krok-ctecky="-1" title="Předchozí (šipka vlevo)">&#8249;</button>
+      <div id="cteckaStrana" class="ctecka-dvojstrana"></div>
+      <button type="button" class="ctecka-sipka" data-krok-ctecky="1" title="Další (šipka vpravo)">&#8250;</button>
+    </div>
+    <nav id="cteckaPas" class="ctecka-pas"></nav>
+  </div>
+
   <!-- Krátké oznámení, když je hlavní oznámení obsazené nabídkou akce (Vrátit) -->
   <div id="toastInfo" class="toast toast-info hidden"><span id="toastInfoText"></span></div>
 
@@ -636,6 +658,7 @@ export const SABLONA_OKNA = `
       <div class="napoveda">
         <h4>Prohlížení</h4>
         <ul>
+          <li><strong>Rychlé výsledky</strong>: při psaní do hledání se pod ním ukážou modelky, články (i podle textu) a čísla. Šipky vybírají, Enter otevře, Esc výsledky zavře.</li>
           <li><strong>Přepínač v hlavičce</strong>: vlevo záložky Modelky, Čísla, Centerfoldy; vpravo ikony Kalendář, Nejlepší, Přehled. Volby přehledu (řazení, filtry) jsou uprostřed pod hledáním; počet položek ukáže nápověda zvolené záložky.</li>
           <li><strong>Volby přehledu</strong> v horní liště za záložkami: <strong>Řazení ▾</strong> (abecedně, nově přidané, podle roku prvního vydání) a <strong>Srdíčka ▾</strong> (jen modelky s aspoň tolika srdíčky; Vše filtr zruší). <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
@@ -668,7 +691,9 @@ export const SABLONA_OKNA = `
         <h4>Přehled a hodnocení</h4>
         <ul>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou.</li>
-          <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Klik na článek ho otevře ke čtení (perex, citáty, skeny stran, předchozí a další článek); „+ článek“ a „Upravit článek“ otevřou okno článku.</li>
+          <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
+          <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>
+          <li><strong>Články modelky</strong> (rozhovor, 20 otázek…) jsou v jejím profilu jako poslední blok vlevo; klik otevře číslo rovnou na článku.</li>
           <li>Přehled ukazuje, co chybí doplnit. V části Modelky klik na kartu modelky otevře okno „Doplnit modelku“ se vším, co jí chybí (s „Uložit a další“ pro další modelku); klik na konkrétní údaj otevře formulář, pravým tlačítkem „netýká se“.</li>
           <li>Vlastní výběry fotek jsou v Nejlepších vedle prahů srdíček.</li>
         </ul>

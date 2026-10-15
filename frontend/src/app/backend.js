@@ -12,6 +12,8 @@ const CTENI = new Set([
     'GetFotografieModelky',
     'GetFotografove',
     'GetClanky',
+    'GetClankyModelky',
+    'HledatClanky',
     'GetKalendar',
     'GetModelky',
     'GetNejlepsiFotky',
@@ -60,6 +62,8 @@ export const ExportovatDoSouboru = /** @type {typeof App.ExportovatDoSouboru} */
 export const GetAlbaFotografa = /** @type {typeof App.GetAlbaFotografa} */ (obalit('GetAlbaFotografa'));
 export const GetCenterfoldy = /** @type {typeof App.GetCenterfoldy} */ (obalit('GetCenterfoldy'));
 export const GetClanky = /** @type {typeof App.GetClanky} */ (obalit('GetClanky'));
+export const GetClankyModelky = /** @type {typeof App.GetClankyModelky} */ (obalit('GetClankyModelky'));
+export const HledatClanky = /** @type {typeof App.HledatClanky} */ (obalit('HledatClanky'));
 export const GetCovery = /** @type {typeof App.GetCovery} */ (obalit('GetCovery'));
 export const GetFotkyVyberu = /** @type {typeof App.GetFotkyVyberu} */ (obalit('GetFotkyVyberu'));
 export const GetFotografieModelky = /** @type {typeof App.GetFotografieModelky} */ (obalit('GetFotografieModelky'));

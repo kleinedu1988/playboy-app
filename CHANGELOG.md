@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.31.0] – 2026-10-15
+
+### Přidáno
+- Rychlé výsledky pod hledáním: při psaní se pod polem ukážou modelky, články a čísla. Články se hledají
+  i v textu (bez ohledu na diakritiku), u každého je úryvek s růžově zvýrazněnou shodou. Šipky vybírají,
+  Enter otevře, Esc výsledky zavře. Článek se otevře v čísle rovnou na svém místě.
+- Prohlížeč stran: skeny článku se otevřou na celé okno jako rozevřený časopis (dvojstrana se stínem
+  u hřbetu, článek od liché strany začíná vpravo) nebo po jedné straně. Dole pás náhledů, listování
+  šipkami nebo klikem na stranu, klávesy 1 a 2 přepínají rozložení (zapamatuje se).
+- Články modelky: v profilu je poslední blok vlevo „Články“ (rozhovor, 20 otázek…) s rubrikou, číslem
+  a stranou; klik otevře číslo na tomto článku.
+
 ## [0.30.3] – 2026-10-15
 
 ### Změněno

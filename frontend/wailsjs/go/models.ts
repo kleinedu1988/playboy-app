@@ -476,6 +476,30 @@ export namespace main {
 	        this.skenyOdkazy = source["skenyOdkazy"];
 	    }
 	}
+	export class NalezClanku {
+	    id: number;
+	    vydani: string;
+	    strana: number;
+	    rubrika: string;
+	    nazev: string;
+	    jmenoModelky: string;
+	    ukazka: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NalezClanku(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.vydani = source["vydani"];
+	        this.strana = source["strana"];
+	        this.rubrika = source["rubrika"];
+	        this.nazev = source["nazev"];
+	        this.jmenoModelky = source["jmenoModelky"];
+	        this.ukazka = source["ukazka"];
+	    }
+	}
 	export class VydaniInfo {
 	    vydani: string;
 	    poznamka: string;

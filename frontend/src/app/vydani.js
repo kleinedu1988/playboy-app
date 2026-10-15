@@ -18,6 +18,7 @@ import { otevritCoverModal } from './cover';
 import { otevritLightbox } from './prohlizec';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { htmlClanku, htmlProuzku, otevritEditorClanku } from './clanky';
+import { otevritCtecku } from './ctecka';
 
 // Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
 export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
@@ -134,8 +135,8 @@ function vykreslitObsahStranky() {
 }
 
 // Posun na článek (pod sebou s ostatními)
-export function ukazatClanek(id) {
-    issueView.querySelector(`[data-cast="clanek-${id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+export function ukazatClanek(id, plynule = true) {
+    issueView.querySelector(`[data-cast="clanek-${id}"]`)?.scrollIntoView({ behavior: plynule ? 'smooth' : 'auto', block: 'start' });
 }
 
 // Obnovení stránky vydání, ročníku nebo fotografa po změně
@@ -367,10 +368,8 @@ export function pripravit() {
         }
         const sken = e.target.closest('[data-sken]');
         if (sken) {
-            // Skeny stran v prohlížeči fotek, od kliknutého
-            const c = stav.vydaniClanky.find(x => x.id === parseInt(sken.closest('[data-id-clanku]').dataset.idClanku));
-            const polozky = c.skenyUrl.map((url, i) => ({ fotky: [{ id: 0, url, rotace: 0, driveId: c.skeny[i], hodnoceni: 0 }], album: c.nazev, typ: 'Sken', modelkaId: 0, jmenoModelky: '', rotace: 0, hodnoceni: 0 }));
-            otevritLightbox(parseInt(sken.dataset.sken), false, polozky);
+            // Skeny stran v prohlížeči stran (dvojstrana jako v časopise), od kliknutého
+            otevritCtecku(stav.vydaniClanky.find(x => x.id === parseInt(sken.closest('[data-id-clanku]').dataset.idClanku)), parseInt(sken.dataset.sken));
             return;
         }
         const pridat = e.target.closest('[data-pridat]')?.dataset.pridat;

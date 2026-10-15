@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.31.3] – 2026-10-15
+
+### Změněno
+- Nejlepší už nejsou rozdělené po modelkách: jedna mozaika nejlepších fotek celé sbírky, řady stejné výšky,
+  fotky v přirozeném poměru stran (neořezané na výšku), od nejvíce srdíček. Srdíčka jsou v rohu fotky, jméno
+  modelky (odkaz na profil) a odkud fotka je se ukáže po najetí myší. Lišta nahoře skáče na úrovně srdíček.
+  Vlastní výběry, prahy srdíček, slideshow a výběr více fotek fungují jako dřív.
+
 ## [0.31.2] – 2026-10-15
 
 ### Změněno

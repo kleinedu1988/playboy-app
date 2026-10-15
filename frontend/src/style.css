@@ -5515,3 +5515,66 @@ textarea {
     height: 46px;
     object-fit: cover;
 }
+
+/* ===== Nejlepší: jedna mozaika celé sbírky, řady stejné výšky, šířka podle poměru stran fotky ===== */
+.nejlepsi-mozaika {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+/* Poslední řada se neroztahuje přes celou šířku */
+.nejlepsi-mozaika::after {
+    content: '';
+    flex-grow: 999;
+}
+
+.nejlepsi-mozaika .photo-item {
+    flex: var(--pomer) 1 calc(var(--pomer) * 230px);
+    height: 230px;
+    border-radius: 12px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+/* Srdíčka vlevo nahoře (vpravo je ⋯), vždy vidět */
+.nejlepsi-mozaika .photo-item .hearts {
+    top: 8px;
+    bottom: auto;
+    opacity: 1;
+}
+
+.nejlepsi-popis {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 34px 12px 10px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.nejlepsi-mozaika .photo-item:hover .nejlepsi-popis,
+.nejlepsi-mozaika .photo-item:focus-visible .nejlepsi-popis {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.nejlepsi-popis .link {
+    display: block;
+    padding: 0;
+    color: #fff;
+    font-size: 13px;
+    text-align: left;
+}
+
+.nejlepsi-popis small {
+    display: block;
+    margin-top: 1px;
+    overflow: hidden;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

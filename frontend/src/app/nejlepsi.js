@@ -1,14 +1,15 @@
 // Nejlepší fotky a vlastní výběry
 import { GetFotkyVyberu, GetNejlepsiFotky, GetVybery, PrejmenovatVyber, PridatDoVyberu, SmazatVyber, VyberPodleNazvu } from './backend';
 import { oznamit } from '../ui/oznameni';
-import { bezDiakritiky, esc, sjednotit, sklonovat } from '../lib/format';
+import { bezDiakritiky, esc, nazevAlba, obrazek, sjednotit, sklonovat } from '../lib/format';
 import { stav } from './stav';
 import { vybratKliknutim } from './vyber';
 import { best, searchInput } from './prvky';
 import { listaNejlepsich } from './listy';
 import { historie, prepnoutRezim, ukazatPohled } from './navigace';
-import { nacistGalerii } from './galerie';
-import { htmlDlazdice } from './vydani';
+import { htmlSrdickaFotky, nacistGalerii } from './galerie';
+import { VELIKOST_NAHLEDU } from './obrazky';
+import { htmlAkciDlazdice } from './akce-fotky';
 import { otevritLightbox } from './prohlizec';
 import { potvrdit } from './formular-modelky';
 import { vybratHodnotu } from './ulozeni';
@@ -39,17 +40,16 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(best);
 
-    // Každá fotka zvlášť, po modelkách (covery bez modelky na konci)
+    // Jedna společná galerie celé sbírky: každá fotka zvlášť, od nejvíce srdíček (při shodě v pořadí z databáze)
     const hledat = sjednotit(dotaz);
     stav.nejlepsiPolozky = fotky.filter(f => !hledat || bezDiakritiky(f.jmenoModelky).includes(hledat)).map(f => ({
         fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni,
-    }));
-    const podleModelek = new Map();
-    stav.nejlepsiPolozky.forEach((p, i) => {
-        const klic = p.jmenoModelky || 'Covery';
-        if (!podleModelek.has(klic)) podleModelek.set(klic, { modelkaId: p.modelkaId, indexy: [] });
-        podleModelek.get(klic).indexy.push(i);
-    });
+    })).sort((x, y) => y.hodnoceni - x.hodnoceni);
+
+    // Lišta nahoře skáče na úrovně srdíček; první fotka každé úrovně nese značku části
+    const urovne = new Map();
+    stav.nejlepsiPolozky.forEach(p => urovne.set(p.hodnoceni, (urovne.get(p.hodnoceni) || 0) + 1));
+    const zacatekUrovne = new Set([...urovne.keys()].map(h => stav.nejlepsiPolozky.findIndex(p => p.hodnoceni === h)));
 
     const prah = [3, 4, 5].map(n => `<button class="chip ${!stav.nejlepsiVyber && n === stav.nejlepsiMin ? 'active' : ''}" data-nejlepsi-min="${n}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')
         + vybery.map(v => `<button class="chip ${v.id === stav.nejlepsiVyber ? 'active' : ''}" data-vyber-id="${v.id}" title="Vlastní výběr">${esc(v.nazev)}<span>${v.pocet}</span></button>`).join('')
@@ -57,21 +57,50 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     document.getElementById('bestList').innerHTML = `
         <div class="best-toolbar">${prah}<span>${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')}</span>
             ${stav.nejlepsiPolozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
-        ${[...podleModelek].map(([jmeno, { modelkaId, indexy }], i) => `
-            <section class="best-model" data-cast="${i}">
-                <div class="album-header">
-                    <h4>${modelkaId ? `<button class="link" data-modelka="${modelkaId}" title="Otevřít profil">${esc(jmeno)}</button>` : esc(jmeno)}</h4>
-                    <span>${sklonovat(indexy.length, 'fotka', 'fotky', 'fotek')}</span>
-                </div>
-                <div class="photos-grid">${indexy.map(index => htmlDlazdice(stav.nejlepsiPolozky[index], index)).join('')}</div>
-            </section>
-        `).join('') || `<p class="empty-state">${fotky.length || hledat ? 'Hledání neodpovídá žádná modelka.'
+        ${stav.nejlepsiPolozky.length ? `<div class="nejlepsi-mozaika">${stav.nejlepsiPolozky.map((p, i) => htmlDlazdiceMozaiky(p, i, zacatekUrovne.has(i))).join('')}</div>`
+            : `<p class="empty-state">${fotky.length || hledat ? 'Hledání neodpovídá žádná modelka.'
             : vyber ? 'Výběr je prázdný. Fotky se do něj přidávají odkudkoli: tlačítkem ⋯ na fotce, v prohlížeči nebo u vybraných fotek „Přidat do výběru…“.'
             : `Zatím žádná fotka nemá ${stav.nejlepsiMin} a více srdíček. Fotky se hodnotí srdíčky na dlaždici nebo v prohlížeči klávesami 1–5.`}</p>`}
     `;
     prevestNaVolby(document.querySelector('#bestList .best-toolbar'));
-    listaNejlepsich.naplnit([...podleModelek].map(([jmeno, { indexy }], i) => ({ klic: i, nazev: jmeno, pocet: indexy.length })));
+    pripravitMozaiku();
+    listaNejlepsich.naplnit([...urovne].map(([h, pocet]) => ({ klic: `srdicka-${h}`, nazev: h ? '♥'.repeat(h) : 'bez srdíček', pocet })));
     listaNejlepsich.sledovat();
+}
+
+// Poměr stran fotek (podle id) z minulého vykreslení: mozaika pak při překreslení neposkakuje
+const pomeryFotek = new Map();
+
+// Dlaždice mozaiky: řady stejné výšky, šířka podle poměru stran fotky; srdíčka v rohu, jméno a původ po najetí
+function htmlDlazdiceMozaiky(p, index, zacatek) {
+    const f = p.fotky[0];
+    const album = nazevAlba(p.album, p.typ);
+    const odkud = album.includes(p.typ) ? album : [p.typ, album].filter(Boolean).join(' · ');
+    return `
+        <div class="photo-item" data-index="${index}" data-foto-id="${f.id}" tabindex="0" ${zacatek ? `data-cast="srdicka-${p.hodnoceni}"` : ''}
+            style="--pomer: ${pomeryFotek.get(f.id) || 0.75}">
+            <img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" loading="lazy" draggable="false" />
+            ${htmlSrdickaFotky(p, index)}
+            <div class="nejlepsi-popis">
+                ${p.modelkaId ? `<button class="link" data-modelka="${p.modelkaId}" title="Otevřít profil">${esc(p.jmenoModelky)}</button>` : ''}
+                <small>${esc(odkud)}</small>
+            </div>
+            ${htmlAkciDlazdice()}
+        </div>`;
+}
+
+function pripravitMozaiku() {
+    document.querySelectorAll('#bestList .nejlepsi-mozaika .photo-item').forEach(dlazdice => {
+        const img = dlazdice.querySelector('img');
+        const nastavit = () => {
+            if (!img.naturalWidth) return;
+            const pomer = img.naturalWidth / img.naturalHeight;
+            pomeryFotek.set(parseInt(dlazdice.dataset.fotoId), pomer);
+            dlazdice.style.setProperty('--pomer', String(pomer));
+        };
+        if (img.complete) nastavit();
+        else img.addEventListener('load', nastavit, { once: true });
+    });
 }
 
 export async function upravitVyber(akce) {

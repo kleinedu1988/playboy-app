@@ -4287,3 +4287,240 @@ main .album-nav:not(.svisla) .chip.active:hover {
     color: #55555f;
     cursor: default;
 }
+
+/* Dialogová okna v jednotném stylu: plovoucí panel se zaoblenými rohy, nadpis tenkými kapitálkami,
+   tlačítka jako pilulky (hlavní akce plná růžová, ostatní s tenkým okrajem), pole se zaoblenými rohy */
+.modal-card {
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.close-btn {
+    border-radius: 50%;
+}
+
+.btn {
+    border: 1px solid transparent;
+    border-radius: 999px;
+}
+
+.btn-secondary {
+    border-color: var(--panel-okraj);
+    background-color: transparent;
+}
+
+.btn-secondary:hover {
+    border-color: var(--text-muted);
+    background-color: var(--panel-hover);
+}
+
+.btn-secondary span {
+    color: var(--accent-text);
+}
+
+input,
+select,
+textarea {
+    border-color: var(--panel-okraj);
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* Co je nového a nápověda: nadpisy verzí a kapitol tenkými kapitálkami s růžovou linkou */
+.napoveda h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.napoveda h4 span {
+    order: 2;
+    margin-left: 0;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.napoveda h4::after {
+    content: '';
+    flex: 1;
+    order: 3;
+    min-width: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.5;
+}
+
+.napoveda h5 {
+    color: var(--accent-text);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* Fotka na kartičce modelky v Přehledu se zaoblenými rohy i vpravo */
+.prehled-modelka > img {
+    border-radius: 18px;
+}
+
+/* Okno „Doplnit modelku“: plovoucí panel s růžovým rámečkem */
+.modal-card.doplnit-okno {
+    display: flex;
+    flex-direction: column;
+    width: min(660px, calc(100% - 48px));
+    max-height: 86vh;
+    padding: 0;
+    overflow: hidden;
+    border-color: var(--accent);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 4px rgba(216, 27, 96, 0.12);
+}
+
+#doplnitObsah {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.doplnit-hlavicka {
+    display: flex;
+    gap: 16px;
+    border-bottom: 1px solid var(--panel-okraj);
+}
+
+.doplnit-hlavicka img {
+    flex: none;
+    width: 96px;
+    min-height: 112px;
+    object-fit: cover;
+    border-radius: 0 0 18px 0;
+    background-color: var(--bg-card);
+}
+
+.doplnit-hlavicka > div {
+    flex: 1;
+    min-width: 0;
+    padding: 18px 20px 14px 0;
+}
+
+.doplnit-hlavicka h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.doplnit-hlavicka p {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.doplnit-telo {
+    padding: 4px 20px 12px;
+    overflow-y: auto;
+}
+
+.doplnit-blok {
+    padding: 12px 0;
+}
+
+.doplnit-blok h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 10px;
+    color: var(--accent-text);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.doplnit-blok h4::after {
+    content: '';
+    flex: 1;
+    order: 2;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.5;
+}
+
+.doplnit-netyka {
+    order: 3;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+}
+
+.doplnit-netyka:hover {
+    color: var(--accent-text);
+}
+
+.doplnit-mrizka {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+}
+
+.doplnit-mrizka > .doplnit-pole:only-child {
+    grid-column: 1 / -1;
+}
+
+.doplnit-pole label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+}
+
+.doplnit-pole input,
+.doplnit-pole select {
+    width: 100%;
+    box-sizing: border-box;
+    height: 34px;
+}
+
+.doplnit-akce {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.doplnit-srdicka .heart {
+    font-size: 22px;
+}
+
+.doplnit-pata {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--panel-okraj);
+}
+
+.doplnit-pata span {
+    margin-right: auto;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.doplnit-pata .btn {
+    padding: 0 16px;
+    height: 34px;
+}

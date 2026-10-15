@@ -668,7 +668,7 @@ export const SABLONA_OKNA = `
         <h4>Přehled a hodnocení</h4>
         <ul>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou.</li>
-          <li>Přehled ukazuje, co chybí doplnit; klik na „chybí“ otevře formulář, pravým tlačítkem „netýká se“.</li>
+          <li>Přehled ukazuje, co chybí doplnit. V části Modelky klik na kartu modelky otevře okno „Doplnit modelku“ se vším, co jí chybí (s „Uložit a další“ pro další modelku); klik na konkrétní údaj otevře formulář, pravým tlačítkem „netýká se“.</li>
           <li>Vlastní výběry fotek jsou v Nejlepších vedle prahů srdíček.</li>
         </ul>
         <h4>Import a zálohy</h4>
@@ -694,7 +694,21 @@ export const SABLONA_OKNA = `
       </div>
       <div id="newsModalBody" class="napoveda"></div>
       <div class="modal-actions">
-        <button type="button" class="btn btn-primary" data-zavrit>Zavřít</button>
+        <button type="button" class="btn btn-secondary" data-zavrit>Zavřít</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Doplnit modelku: vše, co jí podle Přehledu chybí; obsah skládá app/doplneni.js -->
+  <div id="doplnitModal" class="modal-overlay hidden">
+    <div class="modal-card doplnit-okno">
+      <div id="doplnitObsah"></div>
+      <div class="doplnit-pata">
+        <span id="doplnitPozice"></span>
+        <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
+        <button type="button" class="btn btn-secondary" id="doplnitProfilBtn">Otevřít profil</button>
+        <button type="button" class="btn btn-secondary" id="doplnitDalsiBtn">Uložit a další →</button>
+        <button type="button" class="btn btn-primary" id="doplnitUlozitBtn">Uložit</button>
       </div>
     </div>
   </div>

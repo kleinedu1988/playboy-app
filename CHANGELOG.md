@@ -5,6 +5,26 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.19.0] – 2026-10-15
+
+Nový vzhled celého programu (řada 0.18.x) završený oknem pro doplňování modelek. Schéma databáze ani formát
+exportu se nemění.
+
+### Přidáno
+- Okno **Doplnit modelku**: v Přehledu (část Modelky) klik na kartu modelky otevře plovoucí okno s růžovým
+  rámečkem. V hlavičce fotka, jméno a pruh vyplněnosti; pod ní jen to, co modelce chybí: odkaz na titulní fotku,
+  chybějící pole základních údajů, vzhledu a zařazení (stejná pole a nabídky jako ve formuláři modelky),
+  hodnocení srdíčky, vydání alb bez vydání, tlačítka pro přidání centerfoldu a pro text alb. U každého bloku
+  „netýká se“. Dole **Zrušit**, **Otevřít profil**, **Uložit a další →** (uloží a otevře další modelku v pořadí
+  Přehledu) a **Uložit**. Klik na konkrétní údaj na kartě otevírá formulář jako dřív.
+
+### Změněno
+- Dialogová okna v jednotném stylu: plovoucí panel se zaoblenými rohy, nadpis tenkými kapitálkami, tlačítka jako
+  pilulky (hlavní akce plná růžová, ostatní s tenkým okrajem), pole se zaoblenými rohy.
+- **Co je nového** a nápověda: nadpisy verzí a kapitol tenkými kapitálkami s růžovou linkou, podnadpisy
+  (Přidáno, Změněno) drobnými růžovými kapitálkami, „Zavřít“ jako pilulka.
+- Fotka na kartičce modelky v Přehledu má zaoblené rohy i vpravo.
+
 ## [0.18.14] – 2026-10-15
 
 ### Změněno

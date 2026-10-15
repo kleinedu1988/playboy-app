@@ -51,6 +51,10 @@ export const stav = {
     // Zobrazit i údaje označené „netýká se" (aby šlo označení zrušit) a kolik řádků tabulek ukázat
     prehledSkryte: false,
     prehledLimit: 60,
+    // Okno „Doplnit modelku“: modelka, její řádek Přehledu a zvolené hodnocení
+    doplnovanaModelka: null,
+    doplnovanyRadek: null,
+    doplnovaneHodnoceni: 0,
     prehledSekce: 'souhrn', // ukázaná část Přehledu: souhrn, modelky, vydani, rocniky, kontrola
     // Nejlepší: fotky s aspoň N srdíčky napříč sbírkou, po modelkách; prohlížeč jde přes všechny
     nejlepsiPolozky: [],

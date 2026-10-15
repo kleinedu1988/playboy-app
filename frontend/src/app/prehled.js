@@ -12,6 +12,7 @@ import { otevritCoverModal } from './cover';
 import { otevritModelModal, ukazatZalozku } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
+import { otevritDoplneni } from './doplneni';
 
 // Přehled sbírky: kolik čeho je a co ještě chybí doplnit.
 // Každá modelka a každé vydání má jeden řádek, sloupce říkají, co u nich chybí.
@@ -129,7 +130,7 @@ export async function nacistPrehled() {
         const modelka = stav.prehledModelky.get(m.id);
         const procent = vyplneno(m);
         return `
-            <div class="prehled-modelka" data-modelka="${m.id}" title="Otevřít profil">
+            <div class="prehled-modelka" data-modelka="${m.id}" title="Doplnit, co chybí">
                 <img src="${esc(modelka ? adresaTitulni(modelka) : BEZ_FOTKY)}" alt="" loading="lazy" draggable="false" />
                 <div class="prehled-modelka-telo">
                     <h4>${esc(m.jmeno)}</h4>
@@ -145,6 +146,7 @@ export async function nacistPrehled() {
     // Bez skrytých jen modelky, kterým něco opravdu chybí
     const radkyModelek = [...modelky.values()].filter(m => stav.prehledSkryte || vaha(m) > 0)
         .sort((a, b) => vaha(b) - vaha(a) || a.jmeno.localeCompare(b.jmeno, 'cs'));
+    radkyModelek.forEach(m => { m.vaha = vaha(m); m.vyplneno = vyplneno(m); });
     stav.prehledPoradi = radkyModelek.map(m => m.id);
     stav.prehledRadky = radkyModelek;
 
@@ -278,7 +280,12 @@ export function pripravit() {
     // Části v levém panelu, přepínač skrytých údajů a další stránka tabulek
     stats.addEventListener('click', (e) => {
         const cast = e.target.closest('[data-sekce-prehledu]');
-        if (cast) {
+        const karta = e.target.closest('.prehled-modelka');
+        if (karta && !e.target.closest('[data-akce]')) {
+            // Klik na kartu modelky (mimo konkrétní údaj) otevře okno se vším, co jí chybí
+            e.stopPropagation();
+            otevritDoplneni(parseInt(karta.dataset.modelka));
+        } else if (cast) {
             // Přepnutí části jen v zobrazené stránce, bez nového načtení
             stav.prehledSekce = cast.dataset.sekcePrehledu;
             try { localStorage.setItem('prehledSekce', stav.prehledSekce); } catch { /* jen se nezapamatuje */ }

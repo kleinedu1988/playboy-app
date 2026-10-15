@@ -181,6 +181,7 @@ textarea {
 
 /* Hlavní lišta: záložky vlevo, hledání uprostřed, akce vpravo */
 .hlavni-lista {
+    position: relative;
     display: flex;
     align-items: center;
     height: 44px;
@@ -228,12 +229,38 @@ textarea {
 }
 
 /* Na podstránce (profil, vydání) zůstává vidět, odkud se přišlo, ale tlumeně */
-.view-toggle.podstranka button.active {
+.podstranka .view-toggle button.active {
     font-weight: 500;
 }
 
-.view-toggle.podstranka button.active::before {
+.podstranka .view-toggle button.active::before {
     background-color: var(--text-muted);
+}
+
+/* Kalendář, Nejlepší a Přehled jako ikonová tlačítka; zvolený přehled podbarvený akcentem */
+.nav-rezim {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-rezim.active,
+.nav-rezim.active:hover {
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.podstranka .nav-rezim.active {
+    background-color: var(--bg-modal);
+    color: var(--text-main);
+}
+
+.nav-oddelovac {
+    align-self: center;
+    width: 1px;
+    height: 20px;
+    margin: 0 6px;
+    background-color: var(--border-color);
 }
 
 /* Hledání v řádku okna přesně uprostřed šířky okna, nezávisle na tom, co je vlevo a vpravo */
@@ -2962,12 +2989,15 @@ body.razeni .photo-item {
 }
 
 /* Volby přehledu v horní liště hned za záložkami: rozbalovací tlačítka „Řazení: A–Z ▾“ a počet */
+/* Uprostřed lišty přesně pod hledáním, nezávisle na záložkách vlevo a ikonách vpravo */
 .volby-prehledu {
+    position: absolute;
+    top: 50%;
+    left: 50%;
     display: flex;
     align-items: center;
-    flex: none;
     gap: 6px;
-    margin-left: 16px;
+    transform: translate(-50%, -50%);
 }
 
 /* Řádek štítků, ze kterého se volby složily, v obsahu není vidět */
@@ -3077,27 +3107,10 @@ body.razeni .photo-item {
     color: var(--accent-text);
 }
 
-.volby-pocet {
-    margin-left: 10px;
-    font-size: 12px;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-
-/* Užší okno: nejdřív zmizí počet, potom popisky (zůstane jen hodnota s ▾) */
-@media (max-width: 1180px) {
-    .volby-pocet {
-        display: none;
-    }
-}
-
+/* Užší okno: z voleb zmizí popisky, zůstane jen hodnota s ▾ */
 @media (max-width: 1000px) {
-    .volba span {
+    .volby-prehledu .volba span {
         display: none;
-    }
-
-    .volby-prehledu {
-        margin-left: 8px;
     }
 }
 

@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.6] – 2026-10-15
+
+### Změněno
+- Nové rozložení hlavní lišty: vlevo záložky **Modelky, Čísla, Centerfoldy**; uprostřed přesně pod hledáním
+  panel voleb přehledu (řazení, filtry); vpravo ikonová tlačítka **Kalendář, Nejlepší, Přehled** (zvolené
+  podbarvené akcentem, název v nápovědě), za čárou **+** a **⋯**.
+- Počet položek („22 modelek“, „78 fotek“) už v liště není, ukáže ho nápověda zvolené záložky nebo ikony.
+
 ## [0.18.5] – 2026-10-15
 
 ### Změněno

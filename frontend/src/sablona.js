@@ -25,17 +25,20 @@ export const SABLONA_OKNA = `
     </div>
     <!-- Hlavní lišta: přehledy jako záložky, volby přehledu a akce -->
     <div class="hlavni-lista">
+      <!-- Hlavní přehledy jako záložky vlevo -->
       <div id="viewToggle" class="view-toggle">
         <button data-rezim="modelky" title="Modelky" data-kratce="Mod" class="active">Modelky</button>
-        <button data-rezim="centerfoldy" title="Centerfoldy" data-kratce="Cf">Centerfoldy</button>
         <button data-rezim="covery" title="Čísla časopisu" data-kratce="Čís">Čísla</button>
-        <button data-rezim="kalendar" title="Kalendář" data-kratce="Kal">Kalendář</button>
-        <button data-rezim="nejlepsi" title="Nejlepší" data-kratce="Nej">Nejlepší</button>
-        <button data-rezim="prehled" title="Přehled" data-kratce="Př">Přehled</button>
+        <button data-rezim="centerfoldy" title="Centerfoldy" data-kratce="Cf">Centerfoldy</button>
       </div>
-      <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾…); plní je ui/volby.js -->
+      <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾…) uprostřed pod hledáním; plní je ui/volby.js -->
       <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
+      <!-- Další přehledy jako ikonová tlačítka, za čárou akce -->
       <div class="nav-akce">
+        <button data-rezim="kalendar" class="nav-fav nav-rezim" title="Kalendář" aria-label="Kalendář"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
+        <button data-rezim="nejlepsi" class="nav-fav nav-rezim" title="Nejlepší" aria-label="Nejlepší"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg></button>
+        <button data-rezim="prehled" class="nav-fav nav-rezim" title="Přehled" aria-label="Přehled"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></button>
+        <span class="nav-oddelovac" aria-hidden="true"></span>
         <button id="addBtn" class="nav-fav" title="Přidat…">+</button>
         <button id="menuBtn" class="nav-fav" title="Další akce">&#8943;</button>
       </div>
@@ -631,7 +634,7 @@ export const SABLONA_OKNA = `
       <div class="napoveda">
         <h4>Prohlížení</h4>
         <ul>
-          <li><strong>Přepínač v hlavičce</strong>: Modelky, Centerfoldy, Čísla, Kalendář, Nejlepší, Přehled.</li>
+          <li><strong>Přepínač v hlavičce</strong>: vlevo záložky Modelky, Čísla, Centerfoldy; vpravo ikony Kalendář, Nejlepší, Přehled. Volby přehledu (řazení, filtry) jsou uprostřed pod hledáním; počet položek ukáže nápověda zvolené záložky.</li>
           <li><strong>Volby přehledu</strong> v horní liště za záložkami: <strong>Řazení ▾</strong> (abecedně, nově přidané, podle roku prvního vydání) a <strong>Srdíčka ▾</strong> (jen modelky s aspoň tolika srdíčky; Vše filtr zruší). <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klik na vydání, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>

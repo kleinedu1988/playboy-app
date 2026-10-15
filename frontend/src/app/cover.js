@@ -5,7 +5,7 @@ import { AddCover, UpdateCover } from './backend';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { issueView, searchInput, wall } from './prvky';
-import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepnoutRezim, viewToggle } from './navigace';
+import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepinacRezimu, prepnoutRezim } from './navigace';
 import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
@@ -75,7 +75,7 @@ export function pripravit() {
         if (polozka) otevritLightbox(parseInt(polozka.dataset.index), false, stav.stenaPolozky);
     });
 
-    viewToggle.addEventListener('click', (e) => {
+    prepinacRezimu.addEventListener('click', (e) => {
         const tlacitko = e.target.closest('[data-rezim]');
         if (!tlacitko) return;
         // Přepnutí přehledu začíná novou historii

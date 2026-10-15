@@ -21,7 +21,7 @@ export function ukazatPohled(pohled) {
     document.getElementById('prevModelBtn').classList.toggle('hidden', pohled !== detailView);
     document.getElementById('nextModelBtn').classList.toggle('hidden', pohled !== detailView);
     // Záložky přehledů zůstávají vidět i na podstránce (jedním klikem jinam); zvolená je tam jen tlumená
-    viewToggle.classList.toggle('podstranka', podstranka);
+    prepinacRezimu.classList.toggle('podstranka', podstranka);
     // Přehled sbírky nemá co hledat; z profilu otevřeného z Přehledu se hledá dál
     searchInput.disabled = pohled === stats;
     // Volby v liště patří ukázanému přehledu; profil a stránka vydání žádné nemají
@@ -77,6 +77,8 @@ export async function zpet() {
     if (misto) requestAnimationFrame(() => { hlavni.scrollTop = misto.scroll; });
 }
 export const viewToggle = document.getElementById('viewToggle');
+// Všechna tlačítka přehledů: záložky vlevo i ikony vpravo v hlavní liště
+export const prepinacRezimu = document.querySelector('.hlavni-lista');
 
 // Shrnutí vložení odkazů: co se uložilo a co bylo odmítnuto
 export function oznamitVlozeni(v, co) {
@@ -131,7 +133,7 @@ export function prepnoutRezim(novy) {
         searchInput.value = hledaniPodleRezimu[novy] || '';
     }
     stav.rezim = novy;
-    viewToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.rezim === novy));
+    prepinacRezimu.querySelectorAll('[data-rezim]').forEach(b => b.classList.toggle('active', b.dataset.rezim === novy));
     // Při příštím spuštění se program otevře ve stejném přehledu
     try { localStorage.setItem('posledniRezim', novy); } catch { /* bez úložiště se jen nezapamatuje */ }
     document.querySelector('main').scrollTop = 0;

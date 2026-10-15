@@ -38,7 +38,7 @@ function ukazatVolby(lista) {
     const cil = misto();
     cil.innerHTML = '';
     cil.classList.toggle('hidden', !lista);
-    if (!lista) return;
+    if (!lista) return nastavitPocet();
 
     // Volby a tlačítka jsou v jednom plovoucím panelu s dělicími čarami; počet zůstává vedle panelu
     const panel = document.createElement('div');
@@ -94,12 +94,14 @@ function ukazatVolby(lista) {
 
     if (!panel.childElementCount) panel.remove();
 
-    // Počet (22 modelek, 78 fotek)
+    // Počet (22 modelek, 78 fotek) se v liště neukazuje, je v nápovědě zvoleného přehledu
     const pocet = [...lista.querySelectorAll(':scope > span:not([hidden])')].map(s => s.textContent.trim()).filter(Boolean).pop();
-    if (pocet) {
-        const span = document.createElement('span');
-        span.className = 'volby-pocet';
-        span.textContent = pocet;
-        cil.append(span);
-    }
+    nastavitPocet(pocet);
+}
+
+function nastavitPocet(pocet = '') {
+    document.querySelectorAll('.hlavni-lista [data-rezim]').forEach(b => {
+        b.dataset.titulek ??= b.title;
+        b.title = b.classList.contains('active') && pocet ? `${b.dataset.titulek} · ${pocet}` : b.dataset.titulek;
+    });
 }

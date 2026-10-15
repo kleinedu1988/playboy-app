@@ -4,7 +4,7 @@ import { oznamit } from './ui/oznameni';
 import { MaZamek, StavDatabaze } from './app/backend';
 import { stav } from './app/stav';
 import { nacistSpecialy } from './app/mezipamet';
-import { prepnoutRezim, viewToggle } from './app/navigace';
+import { prepinacRezimu, prepnoutRezim } from './app/navigace';
 import { nacistGalerii } from './app/galerie';
 import { kontrolaPoSpusteni, odemknoutPriStartu } from './app/sprava';
 import * as obrazky from './app/obrazky';
@@ -64,7 +64,7 @@ StavDatabaze().then((chyba) => {
     await nacistSpecialy();
     let posledni = null;
     try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
-    if (viewToggle.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
+    if (prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
     nacistGalerii();
     kontrolaPoSpusteni();
 })();

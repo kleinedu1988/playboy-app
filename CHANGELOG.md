@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.14] – 2026-10-15
+
+### Změněno
+- Přehled, část **Modelky**: místo tabulky kartičky ve dvou sloupcích. Fotka vyplní celou levou stranu karty
+  (jako karty v galerii), jméno je tenkými kapitálkami, pod ním pruh vyplněnosti s procenty a výčet toho, co
+  chybí („Základní údaje 3 z 4“, „Centerfold ✕“). Klik na údaj ho nabídne doplnit, pravým tlačítkem jde označit
+  „netýká se“, klik jinam na kartu otevře profil.
+- Svítící tečky u chybějících údajů jsou pryč, v tabulce Vydání je „chybí“ zase jen růžovým textem.
+
 ## [0.18.13] – 2026-10-15
 
 ### Změněno

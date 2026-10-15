@@ -4116,7 +4116,7 @@ main .album-nav:not(.svisla) .chip.active:hover {
     text-transform: none;
 }
 
-/* Tabulky v plovoucím panelu; u chybějícího údaje zářící tečka */
+/* Tabulky v plovoucím panelu */
 .stat-table {
     border-radius: 18px;
     background-color: var(--panel-bg);
@@ -4152,18 +4152,6 @@ main .album-nav:not(.svisla) .chip.active:hover {
     font-weight: 500;
 }
 
-.stat-table td.chybi::before {
-    content: '';
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    margin-right: 6px;
-    border-radius: 50%;
-    background-color: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
-    vertical-align: middle;
-}
-
 .stat-table td[data-akce]:hover {
     background-color: var(--accent-soft);
     box-shadow: inset 0 0 0 1px var(--accent);
@@ -4190,4 +4178,112 @@ main .album-nav:not(.svisla) .chip.active:hover {
     .prehled-panel {
         position: static;
     }
+}
+
+/* Přehled, část Modelky: kartičky s fotkou přes celou levou stranu (jako karty v galerii), jménem kapitálkami,
+   pruhem vyplněnosti a tím, co chybí; klik na údaj ho nabídne doplnit, klik jinam otevře profil */
+.prehled-modelky {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 14px;
+}
+
+.prehled-modelka {
+    display: flex;
+    gap: 16px;
+    min-height: 116px;
+    padding-right: 14px;
+    overflow: hidden;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+    cursor: pointer;
+}
+
+.prehled-modelka:hover {
+    border-color: var(--accent);
+}
+
+.prehled-modelka > img {
+    flex: none;
+    width: 92px;
+    align-self: stretch;
+    object-fit: cover;
+    background-color: var(--bg-card);
+}
+
+.prehled-modelka-telo {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 0;
+}
+
+.prehled-modelka h4 {
+    margin: 0;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.prehled-modelka-pruh {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.prehled-modelka-pruh div {
+    flex: 1;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.prehled-modelka-pruh i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent-hover), var(--accent-text));
+}
+
+.prehled-udaje {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+}
+
+.prehled-udaj {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.prehled-udaj b {
+    margin-left: 2px;
+    font-weight: 500;
+    color: var(--accent-text);
+}
+
+.prehled-udaj:hover {
+    color: var(--text-main);
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 3px;
+}
+
+.prehled-udaj.netyka,
+.prehled-udaj.netyka b {
+    color: #55555f;
+    cursor: default;
 }

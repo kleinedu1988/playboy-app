@@ -35,7 +35,7 @@ export function otevritNabidku(cil, x, y) {
     }
 
     // Buňka přehledu: označit údaj „netýká se", nebo označení zrušit
-    const bunkaPrehledu = cil.closest('#stats td[data-klic]');
+    const bunkaPrehledu = cil.closest('#stats [data-klic]');
     if (bunkaPrehledu) {
         const oznacena = Boolean(bunkaPrehledu.dataset.netyka);
         otevritKontextovouNabidku(x, y, oznacena

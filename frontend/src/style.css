@@ -1339,53 +1339,150 @@ button.tag:hover {
     border-radius: 12px;
 }
 
-/* Covery časopisů po ročnících */
-.cover-year + .cover-year {
+/* Čísla časopisu: výtisk se stínem a páskou měsíce, pod ním jméno playmate */
+.rocnik-cisel + .rocnik-cisel {
     margin-top: 32px;
 }
 
-.cover-year h3 {
-    margin: 0 0 14px 0;
-    font-size: 18px;
+.rocnik-cisel h3 {
+    margin: 0 0 16px;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 0.06em;
 }
 
-.covers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 220px));
-    gap: 20px;
-    align-items: start;
-}
-
-.cover-item {
-    margin: 0;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.cover-item:hover {
-    transform: translateY(-4px);
-}
-
-.cover-item figcaption {
-    padding: 10px 14px;
+.rocnik-cisel h3 small {
+    margin-left: 10px;
     font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
     color: var(--text-muted);
 }
 
-.cover-item figcaption strong {
-    display: block;
-    font-size: 14px;
-    color: var(--text-main);
+.cisla-mrizka {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 28px 22px;
 }
 
-.cover-item figcaption span {
-    display: block;
-    margin-top: 2px;
+.cislo {
+    margin: 0;
+    cursor: pointer;
+    outline: none;
+}
+
+.cislo-obalka {
+    position: relative;
+    aspect-ratio: 3 / 4;
     overflow: hidden;
+    border-radius: 4px;
+    background-color: var(--bg-card);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+    transition: transform 0.2s;
+}
+
+/* Lesk hřbetu vlevo a stín vpravo, aby dlaždice působila jako výtisk */
+.cislo-obalka::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.12), transparent 6%, transparent 94%, rgba(0, 0, 0, 0.25));
+    pointer-events: none;
+}
+
+.cislo:hover .cislo-obalka,
+.cislo:focus-visible .cislo-obalka {
+    transform: translateY(-4px) rotate(-1deg);
+}
+
+.cislo:focus-visible .cislo-obalka {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.cislo-obalka img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Bez coveru: ztlumený náhled centerfoldu nebo pictorialu */
+.cislo-obalka.bez-coveru img {
+    opacity: 0.35;
+    filter: grayscale(0.6);
+}
+
+.cislo-paska {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    z-index: 1;
+    padding: 4px 10px 4px 8px;
+    border-radius: 0 999px 999px 0;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.cislo-stav {
+    position: absolute;
+    top: 14px;
+    right: 8px;
+    z-index: 1;
+    padding: 2px 8px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    font-size: 11px;
+}
+
+.cislo-stav.shanim {
+    border-color: var(--accent);
+    color: var(--accent-text);
+}
+
+.cislo-znacka {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    z-index: 1;
+    transform: translateX(-50%);
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--text-muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.cislo.chybi .cislo-obalka {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px dashed var(--border-color);
+    background: none;
+    box-shadow: none;
+}
+
+.cislo.chybi .cislo-obalka::after {
+    display: none;
+}
+
+.cislo-chybi {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.cislo figcaption {
+    padding-top: 12px;
+    overflow: hidden;
+    font-size: 13px;
+    text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -2796,8 +2893,7 @@ body.razeni .photo-item {
 .card:focus-visible,
 .photo-item:focus-visible,
 .poster:focus-visible,
-.wall-item:focus-visible,
-.cover-item:focus-visible {
+.wall-item:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
@@ -3355,17 +3451,15 @@ body.razeni .photo-item {
     color: var(--text-main);
 }
 
-/* Karta modelky, centerfold a cover: fotka přes celou kartu, popisek je průhledný pruh přes spodek fotky
+/* Karta modelky a centerfold: fotka přes celou kartu, popisek je průhledný pruh přes spodek fotky
    a ukáže se až po najetí myší (nebo při výběru klávesnicí) */
 .card,
-.wall-item,
-.cover-item {
+.wall-item {
     position: relative;
 }
 
 .card-info,
-.wall-item figcaption,
-.cover-item figcaption {
+.wall-item figcaption {
     position: absolute;
     left: 0;
     right: 0;
@@ -3384,9 +3478,7 @@ body.razeni .photo-item {
 .card:hover .card-info,
 .card:focus-visible .card-info,
 .wall-item:hover figcaption,
-.wall-item:focus-visible figcaption,
-.cover-item:hover figcaption,
-.cover-item:focus-visible figcaption {
+.wall-item:focus-visible figcaption {
     opacity: 1;
 }
 
@@ -3394,8 +3486,7 @@ body.razeni .photo-item {
     font-size: 15px;
 }
 
-.wall-item figcaption strong,
-.cover-item figcaption strong {
+.wall-item figcaption strong {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

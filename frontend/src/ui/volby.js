@@ -10,6 +10,8 @@ const POPISKY = {
     nejlepsiMin: 'Srdíčka',
     vyberId: 'Výběr',
     edice: 'Edice',
+    ediceCisel: 'Edice',
+    zobrazitCisla: 'Zobrazit',
 };
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje „vše“ a nabídka má položku Vše

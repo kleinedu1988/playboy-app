@@ -10,6 +10,7 @@ import { nacistGalerii } from './galerie';
 import { nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba } from './profil';
 import { otevritVydani, upravitVydani } from './vydani';
 import { oznacitCislo, pridatKVydani } from './kalendar';
+import { nacistCovery } from './stena';
 import { oznacitNetykaSe } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
 import { otevritCoverModal, otevritProfilPodleId } from './cover';
@@ -187,15 +188,24 @@ export function otevritNabidku(cil, x, y) {
             { text: 'Přidat fotky / album', akce: () => otevritAlbumModal(stav.aktualniModelka) },
             { text: 'Zpět', akce: zpet },
         ];
-    } else if (cil.closest('.cover-item')) {
-        // Cover časopisu
-        const index = parseInt(cil.closest('.cover-item').dataset.index);
+    } else if (cil.closest('.cislo')) {
+        // Číslo časopisu; s coverem i akce coveru
+        const cislo = cil.closest('.cislo');
+        const klic = cislo.dataset.vydani;
+        const index = cislo.dataset.cover === undefined ? -1 : parseInt(cislo.dataset.cover);
         const cover = stav.coveryPolozky[index];
+        // Po označení čísla se stránka Čísla obnoví
+        const oznacit = oznacitCislo(klic).map(p => ({ ...p, akce: async () => { await p.akce(); nacistCovery(searchInput.value); } }));
         polozky = [
-            { text: 'Otevřít vydání', akce: () => otevritVydani(cover.album) },
-            { text: 'Zobrazit cover', akce: () => otevritLightbox(index, false, stav.coveryPolozky) },
-            { text: 'Upravit cover', akce: () => otevritCoverModal(cover) },
-            { text: 'Smazat cover', akce: () => smazatCover(cover), nebezpecne: true },
+            { text: `Otevřít vydání ${nazevVydani(klic)}`, akce: () => otevritVydani(klic) },
+            null,
+            ...(cover ? [
+                { text: 'Zobrazit cover', akce: () => otevritLightbox(index, false, stav.coveryPolozky) },
+                { text: 'Upravit cover', akce: () => otevritCoverModal(cover) },
+                { text: 'Smazat cover', akce: () => smazatCover(cover), nebezpecne: true },
+            ] : [{ text: `Přidat cover: ${nazevVydani(klic)}`, akce: () => otevritCoverModal(null, klic) }]),
+            null,
+            ...oznacit,
         ];
     } else if (!calendar.classList.contains('hidden')) {
         // Kalendář vydání
@@ -215,7 +225,7 @@ export function otevritNabidku(cil, x, y) {
             { text: 'Obnovit', akce: () => nacistGalerii(searchInput.value) }
         );
     } else if (!covers.classList.contains('hidden')) {
-        // Volný prostor v přehledu coverů
+        // Volný prostor na stránce Čísla
         polozky = [
             { text: 'Přidat cover', akce: () => otevritCoverModal() },
             { text: 'Obnovit', akce: () => nacistGalerii(searchInput.value) },

@@ -5,6 +5,20 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.5] – 2026-10-15
+
+### Změněno
+- Záložka **Covery** je nahrazená záložkou **Čísla**: galerie všech čísel časopisu, ke kterým je ve sbírce
+  cover, centerfold nebo pictorial, po ročnících s počtem „11 z 12“. Každé číslo vypadá jako výtisk se stínem
+  a růžovou páskou měsíce („BŘE 95“, u speciálu „SPECIÁL 95“), pod ním jméno playmate. Číslo bez coveru ukazuje
+  ztlumený náhled se štítkem „bez coveru“; štítky „výtisk“ a „sháním“ podle označení čísla. Chybějící číslo
+  označené „sháním“ nebo „mám výtisk“ je přerušovaná dlaždice „Ve sbírce chybí“.
+- V horní liště volby **Edice** (sdílená s kalendářem) a **Zobrazit** (vše, s coverem, bez coveru, chybějící).
+  Klik na číslo otevře jeho stránku; pravé tlačítko nabízí cover (zobrazit, upravit, smazat, nebo přidat)
+  a označení čísla (mám výtisk, sháním, nezajímá mě).
+
+Beze změny schématu databáze a formátu exportu.
+
 ## [0.18.4] – 2026-10-15
 
 ### Změněno

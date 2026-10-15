@@ -34,7 +34,7 @@ export function ukazatPohled(pohled) {
 
 // Historie pro Zpět: kam se vrátit a na jaké místo stránky
 export const historie = [];
-export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Covery', kalendar: 'Kalendář', nejlepsi: 'Nejlepší', prehled: 'Přehled' };
+export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Čísla', kalendar: 'Kalendář', nejlepsi: 'Nejlepší', prehled: 'Přehled' };
 
 export function popisZpet() {
     const misto = historie[historie.length - 1];
@@ -116,7 +116,7 @@ export const hledaniPodleRezimu = {};
 const HLEDANI_PODLE_REZIMU = {
     modelky: ['Hledat modelku…', document.getElementById('searchInput').title],
     centerfoldy: ['Jméno nebo vydání…', 'Centerfoldy podle jména modelky nebo vydání (např. březen 1995).'],
-    covery: ['Jméno nebo vydání…', 'Covery podle vydání (např. 1995) nebo jména playmate čísla.'],
+    covery: ['Jméno nebo vydání…', 'Čísla podle vydání (např. 1995) nebo jména playmate.'],
     kalendar: ['Rok, např. 1975…', 'Kalendář: ročníky, jejichž číslo obsahuje napsaný text (1975, 197…).'],
     nejlepsi: ['Jméno modelky…', 'Nejlepší fotky modelek, jejichž jméno obsahuje napsaný text.'],
     prehled: ['V Přehledu se nehledá', ''],

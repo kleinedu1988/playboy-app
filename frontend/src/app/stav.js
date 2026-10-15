@@ -19,6 +19,7 @@ export const stav = {
     cisloNacteni: 0,
     zamceno: false,
     coveryPolozky: [],
+    cislaZobrazit: 'vse', // stránka Čísla: 'vse', 'cover', 'bezCoveru' nebo 'chybi'
     vydaniPolozky: [],
     aktualniVydani: null,
     editovanyCover: null,
@@ -32,7 +33,7 @@ export const stav = {
     // Stěna centerfoldů napříč všemi modelkami
     stenaData: null,
     stenaChronologicky: false,
-    // Covery časopisů seřazené od nejnovějšího vydání, po ročnících
+    // Stránka Čísla: [kalendář, stavy čísel, covery]
     coveryData: null,
     // Fotograf, jehož alba ukazuje stránka (jinak null a stránka ukazuje vydání)
     aktualniFotograf: null,

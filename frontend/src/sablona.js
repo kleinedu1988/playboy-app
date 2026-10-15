@@ -14,7 +14,7 @@ export const SABLONA_OKNA = `
       <div class="nav-controls">
         <label class="hledani">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a covery: jméno nebo vydání." />
+          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a čísla: jméno nebo vydání." />
         </label>
       </div>
       <div class="window-controls">
@@ -28,7 +28,7 @@ export const SABLONA_OKNA = `
       <div id="viewToggle" class="view-toggle">
         <button data-rezim="modelky" title="Modelky" data-kratce="Mod" class="active">Modelky</button>
         <button data-rezim="centerfoldy" title="Centerfoldy" data-kratce="Cf">Centerfoldy</button>
-        <button data-rezim="covery" title="Covery" data-kratce="Cov">Covery</button>
+        <button data-rezim="covery" title="Čísla časopisu" data-kratce="Čís">Čísla</button>
         <button data-rezim="kalendar" title="Kalendář" data-kratce="Kal">Kalendář</button>
         <button data-rezim="nejlepsi" title="Nejlepší" data-kratce="Nej">Nejlepší</button>
         <button data-rezim="prehled" title="Přehled" data-kratce="Př">Přehled</button>
@@ -81,7 +81,7 @@ export const SABLONA_OKNA = `
     <!-- Přehled sbírky: počty a co chybí doplnit -->
     <div id="stats" class="stats hidden"></div>
 
-    <!-- Covery časopisů po ročnících -->
+    <!-- Čísla časopisu po ročnících (data-rezim „covery“) -->
     <div id="covers" class="covers se-sloupcem hidden">
       <nav id="coversNav"></nav>
       <div id="coversList"></div>
@@ -631,7 +631,7 @@ export const SABLONA_OKNA = `
       <div class="napoveda">
         <h4>Prohlížení</h4>
         <ul>
-          <li><strong>Přepínač v hlavičce</strong>: Modelky, Centerfoldy, Covery, Kalendář, Nejlepší, Přehled.</li>
+          <li><strong>Přepínač v hlavičce</strong>: Modelky, Centerfoldy, Čísla, Kalendář, Nejlepší, Přehled.</li>
           <li><strong>Volby přehledu</strong> v horní liště za záložkami: <strong>Řazení ▾</strong> (abecedně, nově přidané, podle roku prvního vydání) a <strong>Srdíčka ▾</strong> (jen modelky s aspoň tolika srdíčky; Vše filtr zruší). <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klik na vydání, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>

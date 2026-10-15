@@ -1,6 +1,6 @@
-// Stěna centerfoldů a covery časopisů
-import { GetCenterfoldy, GetCovery } from './backend';
-import { bezDiakritiky, esc, nazevAlba, rozlozitVydani, sjednotit } from '../lib/format';
+// Stěna centerfoldů a čísla časopisu
+import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
+import { EDICE, bezDiakritiky, esc, nazevAlba, nazevVydani, obrazek, rozlozitVydani, sjednotit, sklonovat } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
@@ -10,6 +10,7 @@ import { ukazatPohled } from './navigace';
 import { htmlPlakatu, pripravitPlakat } from './profil';
 import { otevritVydani } from './vydani';
 import { prevestNaVolby } from '../ui/volby';
+import { nastavitEdiciKalendare } from './kalendar';
 
 export async function nacistStenu(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
@@ -62,61 +63,108 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     wall.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
 }
 
+// Čísla časopisu: každé číslo, ke kterému je ve sbírce cover, centerfold nebo pictorial, jako výtisk s páskou
+// měsíce; bez coveru ztlumený náhled. Chybějící čísla označená „sháním“ nebo „mám výtisk“ jako prázdná dlaždice.
+const ZOBRAZIT_CISLA = { vse: 'vše', cover: 's coverem', bezCoveru: 'bez coveru', chybi: 'chybějící' };
+const ZKRATKY = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
+
+// Páska: „BŘE 95“, u speciálu „SPECIÁL 95“, u ročníku „ROČNÍK 95“
+function paskaCisla(v) {
+    const rok = v.rok.slice(2);
+    if (!v.mesic) return `Ročník ${rok}`;
+    if (v.mesic.startsWith('S')) return `Speciál ${rok}`;
+    return `${ZKRATKY[parseInt(v.mesic) - 1]} ${rok}`;
+}
+
+// Pořadí v roce: měsíce, speciály, celý ročník
+const poradiVRoce = v => !v.mesic ? 'Z' : v.mesic.startsWith('S') ? `T${v.mesic}` : v.mesic;
+
 export async function nacistCovery(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
-    const [fotky, centerfoldy] = zMezipameti && stav.coveryData ? stav.coveryData : await Promise.all([GetCovery(), GetCenterfoldy()]);
+    const [kalendar, stavy, coveryFotky] = zMezipameti && stav.coveryData ? stav.coveryData
+        : await Promise.all([GetKalendar().then(k => k || []), GetStavyVydani().then(s => s || []), GetCovery().then(c => c || [])]);
     if (moje !== stav.cisloNacteni) return;
-    stav.coveryData = [fotky, centerfoldy];
+    stav.coveryData = [kalendar, stavy, coveryFotky];
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(covers);
 
-    // Modelka z centerfoldu téhož vydání, pokud už je v databázi
-    const playmate = new Map((centerfoldy || []).map(f => [f.album, f.jmenoModelky]));
+    // Covery jako položky (pro prohlížeč a nabídku Upravit / Smazat cover) podle vydání
+    stav.coveryPolozky = sestavitAlba(coveryFotky).flatMap(a => a.polozky);
+    const coverVydani = new Map(stav.coveryPolozky.map((p, i) => [p.album, i]));
+    const stavCisla = new Map(stavy.map(s => [s.vydani, s]));
+
+    // Čísla zvolené edice; chybějící jen ta označená
+    const cisla = kalendar.map(k => ({ ...k, casti: rozlozitVydani(k.vydani) })).filter(k => k.casti?.edice === stav.kalendarEdice);
+    const zname = new Set(cisla.map(k => k.vydani));
+    stavy.forEach(s => {
+        const casti = rozlozitVydani(s.vydani);
+        if ((s.stav === 'shanim' || s.stav === 'mam') && casti?.edice === stav.kalendarEdice && !zname.has(s.vydani)) {
+            cisla.push({ vydani: s.vydani, casti, chybi: true });
+        }
+    });
 
     const hledat = sjednotit(dotaz);
-    const vyhovuje = f => !hledat || [f.album, nazevAlba(f.album, f.typ), playmate.get(f.album) || ''].some(t => bezDiakritiky(t).includes(hledat));
-    stav.coveryPolozky = sestavitAlba((fotky || []).filter(vyhovuje)).flatMap(a => a.polozky);
+    const vyhovuje = k => {
+        if (stav.cislaZobrazit === 'cover' && !k.cover) return false;
+        if (stav.cislaZobrazit === 'bezCoveru' && (k.cover || k.chybi)) return false;
+        if (stav.cislaZobrazit === 'chybi' && !k.chybi) return false;
+        return !hledat || [k.vydani, nazevVydani(k.vydani), k.modelka || '', stavCisla.get(k.vydani)?.naObalce || ''].some(t => bezDiakritiky(t).includes(hledat));
+    };
+    const vybrana = cisla.filter(vyhovuje);
 
-    if (stav.coveryPolozky.length === 0) {
+    const volby = `<div class="cisla-volby">
+        ${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice-cisel="${e}">${e}</button>`).join('')}
+        ${Object.entries(ZOBRAZIT_CISLA).map(([klic, nazev]) => `<button class="chip ${klic === stav.cislaZobrazit ? 'active' : ''}" data-zobrazit-cisla="${klic}">${nazev}</button>`).join('')}
+        <span>${stav.cislaZobrazit === 'chybi' ? sklonovat(vybrana.length, 'chybějící číslo', 'chybějící čísla', 'chybějících čísel') : sklonovat(vybrana.filter(k => !k.chybi).length, 'číslo', 'čísla', 'čísel')}</span></div>`;
+
+    if (vybrana.length === 0) {
         listaCoveru.naplnit([]);
-        coversList.innerHTML = `<div class="empty-state">${fotky?.length ? 'Hledání neodpovídá žádný cover.' : 'Zatím žádné covery. Přidej je tlačítkem + nahoře.'}</div>`;
+        coversList.innerHTML = volby + `<div class="empty-state">${cisla.length ? 'Hledání ani volbě neodpovídá žádné číslo.' : `V edici ${stav.kalendarEdice} zatím nic není. Čísla se naplní covery, centerfoldy a pictorialy s vydáním.`}</div>`;
+        prevestNaVolby(coversList.querySelector('.cisla-volby'));
         return;
     }
 
     const rocniky = new Map();
-    stav.coveryPolozky.forEach((p, i) => {
-        const rok = /^\d{4}/.exec(p.album)?.[0] || 'Ostatní';
-        if (!rocniky.has(rok)) rocniky.set(rok, []);
-        rocniky.get(rok).push(i);
-    });
+    vybrana.sort((a, b) => b.casti.rok.localeCompare(a.casti.rok) || poradiVRoce(a.casti).localeCompare(poradiVRoce(b.casti)))
+        .forEach(k => {
+            if (!rocniky.has(k.casti.rok)) rocniky.set(k.casti.rok, []);
+            rocniky.get(k.casti.rok).push(k);
+        });
 
-    listaCoveru.naplnit([...rocniky].map(([rok, indexy]) => ({ klic: rok, nazev: rok, pocet: indexy.length })));
-    coversList.innerHTML = [...rocniky].map(([rok, indexy]) => `
-        <section class="cover-year" data-cast="${esc(rok)}">
-            <h3>${esc(rok)}</h3>
-            <div class="covers-grid">
-                ${indexy.map(i => {
-                    const p = stav.coveryPolozky[i];
-                    return `
-                        <figure class="cover-item" tabindex="0" data-index="${i}">
-                            ${htmlPlakatu(p, VELIKOST_PLAKATU_MALA, '', true)}
-                            <figcaption>
-                                <strong>${esc(nazevAlba(p.album, p.typ))}</strong>
-                                ${playmate.has(p.album) ? `<span>Centerfold: ${esc(playmate.get(p.album))}</span>` : ''}
-                            </figcaption>
-                        </figure>
-                    `;
-                }).join('')}
-            </div>
-        </section>
-    `).join('');
-    covers.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
+    const dlazdice = k => {
+        const s = stavCisla.get(k.vydani)?.stav;
+        const stitek = s === 'mam' ? '<span class="cislo-stav">výtisk</span>' : s === 'shanim' ? '<span class="cislo-stav shanim">sháním</span>' : '';
+        const paska = `<span class="cislo-paska">${esc(paskaCisla(k.casti))}</span>`;
+        const index = coverVydani.has(k.vydani) ? `data-cover="${coverVydani.get(k.vydani)}"` : '';
+        const kdo = k.modelka || stavCisla.get(k.vydani)?.naObalce || '';
+        return `
+            <figure class="cislo ${k.chybi ? 'chybi' : ''}" tabindex="0" data-vydani="${esc(k.vydani)}" ${index} title="${esc(nazevVydani(k.vydani))}">
+                <div class="cislo-obalka ${k.cover || k.chybi ? '' : 'bez-coveru'}">
+                    ${paska}${stitek}
+                    ${k.chybi ? '<span class="cislo-chybi">Ve sbírce chybí</span>'
+                        : `<img src="${esc(obrazek(k.nahled, VELIKOST_PLAKATU_MALA))}" alt="" loading="lazy" draggable="false" />${k.cover ? '' : '<span class="cislo-znacka">bez coveru</span>'}`}
+                </div>
+                <figcaption>${kdo ? esc(kdo) : '&nbsp;'}</figcaption>
+            </figure>`;
+    };
+
+    listaCoveru.naplnit([...rocniky].map(([rok, l]) => ({ klic: rok, nazev: rok, pocet: l.filter(k => !k.chybi).length })));
+    coversList.innerHTML = volby + [...rocniky].map(([rok, l]) => {
+        const mesicnich = l.filter(k => !k.chybi && /^\d\d$/.test(k.casti.mesic)).length;
+        return `
+            <section class="rocnik-cisel" data-cast="${esc(rok)}">
+                <h3>${esc(rok)}${mesicnich ? `<small>${mesicnich} z 12</small>` : ''}</h3>
+                <div class="cisla-mrizka">${l.map(dlazdice).join('')}</div>
+            </section>`;
+    }).join('');
+    prevestNaVolby(coversList.querySelector('.cisla-volby'));
     listaCoveru.sledovat();
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     try { stav.stenaChronologicky = localStorage.getItem('stenaChronologicky') === '1'; } catch { /* podle jména */ }
+    try { stav.cislaZobrazit = ZOBRAZIT_CISLA[localStorage.getItem('cislaZobrazit')] ? localStorage.getItem('cislaZobrazit') : 'vse'; } catch { /* vše */ }
 
     wall.addEventListener('click', (e) => {
         const razeni = e.target.closest('[data-razeni-steny]');
@@ -128,7 +176,18 @@ export function pripravit() {
     }, true);
 
     covers.addEventListener('click', (e) => {
-        const polozka = e.target.closest('.cover-item');
-        if (polozka) otevritVydani(stav.coveryPolozky[parseInt(polozka.dataset.index)].album);
+        const edice = e.target.closest('[data-edice-cisel]');
+        const zobrazit = e.target.closest('[data-zobrazit-cisla]');
+        if (edice) {
+            nastavitEdiciKalendare(edice.dataset.ediceCisel);
+            nacistCovery(searchInput.value, true);
+        } else if (zobrazit) {
+            stav.cislaZobrazit = zobrazit.dataset.zobrazitCisla;
+            try { localStorage.setItem('cislaZobrazit', stav.cislaZobrazit); } catch { /* jen se nezapamatuje */ }
+            nacistCovery(searchInput.value, true);
+        } else {
+            const cislo = e.target.closest('.cislo');
+            if (cislo) otevritVydani(cislo.dataset.vydani);
+        }
     });
 }

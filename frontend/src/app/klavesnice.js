@@ -3,7 +3,7 @@
 import { otevritNabidku } from './nabidky';
 
 // Co jde zaměřit a otevřít: karta modelky, dlaždice fotky, plakát, centerfold na stěně, cover
-const AKTIVOVATELNE = '.card, .photo-item[data-index], .poster[data-index], .wall-item, .cover-item';
+const AKTIVOVATELNE = '.card, .photo-item[data-index], .poster[data-index], .wall-item, .cislo';
 const FOKUSOVATELNE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // Okno nebo prohlížeč, který je právě nahoře

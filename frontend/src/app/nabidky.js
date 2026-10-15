@@ -97,6 +97,7 @@ export function otevritNabidku(cil, x, y) {
         polozky = [];
         if (prvekPolozky) {
             const index = parseInt(prvekPolozky.dataset.index);
+            polozky.push({ nadpis: centerfold ? 'Centerfold' : 'Fotka' });
             polozky.push({ text: centerfold ? 'Otevřít centerfold' : 'Otevřít fotku', akce: () => otevritLightbox(index) });
 
             const fotka = prvekFotky && album.fotky.find(f => f.id === parseInt(prvekFotky.dataset.fotoId));
@@ -120,8 +121,8 @@ export function otevritNabidku(cil, x, y) {
                 // Plakát jako celek (tlačítko ⋯, klávesa nabídky): akce se všemi jeho stránkami
                 polozky.push(...akceFotky(stav.aktualniPolozky[index], null, { profil: false }));
             }
-            polozky.push(null);
         }
+        polozky.push({ nadpis: 'Album' });
         if (album.vydani) {
             polozky.push({ text: `Otevřít vydání ${nazevVydani(album.vydani)}`, akce: () => otevritVydani(album.vydani) });
         }
@@ -153,7 +154,7 @@ export function otevritNabidku(cil, x, y) {
         polozky.push(
             { text: 'Spustit slideshow alba', akce: () => otevritLightbox(stav.aktualniPolozky.indexOf(album.polozky[0]), true) },
             { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(vlastnik, album) },
-            null,
+            { nadpis: 'Modelky alba' },
             { text: 'Přidat další modelku k albu…', akce: () => pridatModelkuKAlbu(album) },
             ...album.dalsiModelky.map(m => ({ text: `Odebrat z alba: ${m.jmeno}`, akce: async () => {
                 await OdebratModelkuZAlba(album.modelkaId, album.album, album.typ, m.id);
@@ -163,7 +164,7 @@ export function otevritNabidku(cil, x, y) {
             ...(stav.aktualniAlba.some(a => a !== album && a.modelkaId === album.modelkaId)
                 ? [{ text: 'Sloučit s jiným albem…', akce: () => sloucitAlbum(album) }] : []),
             { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length), nebezpecne: true },
-            null,
+            { nadpis: 'Modelka' },
             { text: 'Upravit modelku', akce: () => otevritModelModal(stav.aktualniModelka) }
         );
     } else if (!issueView.classList.contains('hidden')) {

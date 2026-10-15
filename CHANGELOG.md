@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.1] – 2026-10-15
+
+### Změněno
+- Nabídky (pravé tlačítko, ⋯ vpravo nahoře, ⋯ u alba) v novém stylu: zaoblený průhledný panel, položky jako
+  pilulky s růžovým zvýrazněním při najetí a skupiny s tenkým růžovým nadpisem (Fotka, Album, Modelky alba,
+  Modelka; v ⋯ jméno modelky, Prohlížení, Údržba, Zálohy a data, Nastavení, Nápověda). Mazání zůstává červeně
+  na konci. Dlouhá nabídka se v nízkém okně roluje.
+- Lišta pro vybrané fotky (Ctrl+klik) je průhledná pilulka jako v prohlížeči fotek.
+
 ## [0.32.0] – 2026-10-15
 
 ### Přidáno

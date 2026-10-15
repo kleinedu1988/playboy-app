@@ -32,12 +32,22 @@ export function zavritKontextovouNabidku() {
 }
 
 // Položky s příznakem nebezpecne (mazání) jdou vždy na konec za oddělovač a jsou červené,
-// aby nestály uprostřed běžných akcí. Oddělovače na začátku, na konci a dva za sebou se vynechají.
+// aby nestály uprostřed běžných akcí. Oddělovač je null (linka) nebo { nadpis } (tenký nadpis skupiny);
+// oddělovače na konci a dva za sebou se vynechají (z dvojice zůstane ten s nadpisem), linka na začátku také.
+const jeOddelovac = p => p === null || Boolean(p?.nadpis);
+
 function seraditPolozky(polozky) {
     const bezne = polozky.filter(p => !p?.nebezpecne);
     const nebezpecne = polozky.filter(p => p?.nebezpecne);
     const vse = nebezpecne.length ? [...bezne, null, ...nebezpecne] : bezne;
-    return vse.filter((p, i) => p !== null || (i > 0 && i < vse.length - 1 && vse[i - 1] !== null));
+    const vysledek = [];
+    vse.forEach(p => {
+        if (!jeOddelovac(p)) vysledek.push(p);
+        else if (jeOddelovac(vysledek.at(-1))) { if (p) vysledek[vysledek.length - 1] = p; }
+        else if (vysledek.length || p) vysledek.push(p);
+    });
+    while (vysledek.length && jeOddelovac(vysledek.at(-1))) vysledek.pop();
+    return vysledek;
 }
 
 export function otevritKontextovouNabidku(x, y, polozky) {
@@ -46,6 +56,14 @@ export function otevritKontextovouNabidku(x, y, polozky) {
     seraditPolozky(polozky).forEach(p => {
         if (p === null) {
             contextMenu.appendChild(document.createElement('hr'));
+            return;
+        }
+        if (p.nadpis) {
+            const nadpis = document.createElement('div');
+            nadpis.className = 'context-nadpis';
+            nadpis.setAttribute('role', 'presentation');
+            nadpis.textContent = p.nadpis;
+            contextMenu.appendChild(nadpis);
             return;
         }
         const btn = document.createElement('button');

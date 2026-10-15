@@ -310,28 +310,28 @@ export function obnovitCoJeVidet() {
 // Správa sbírky: stejné položky nabízí pravé tlačítko na volném místě galerie i tlačítko ⋯ v hlavičce
 export function polozkySpravy() {
     return [
+        { nadpis: 'Prohlížení' },
         { text: 'Náhodná modelka', akce: nahodnaModelka },
         { text: `Interval slideshow (${stav.intervalSlideshow / 1000} s)…`, akce: zmenitInterval },
-        null,
+        { nadpis: 'Údržba' },
         { text: 'Obnovit zobrazení', akce: () => nacistGalerii(searchInput.value) },
         { text: 'Zkontrolovat soubory na Disku', akce: () => zkontrolovatSoubory() },
         { text: 'Vymazat mezipaměť obrázků', akce: vymazatMezipamet },
-        null,
+        { nadpis: 'Zálohy a data' },
         { text: 'Obnovit ze zálohy…', akce: otevritZalohy },
         { text: 'Otevřít složku se zálohami', akce: async () => BrowserOpenURL('file://' + await SlozkaZaloh()) },
         { text: 'Exportovat sbírku (YAML)…', akce: exportovatData },
         { text: 'Importovat (YAML nebo Markdown)…', akce: importovatData },
-        null,
+        { nadpis: 'Nastavení' },
         { text: 'Adresa obrázků…', akce: zmenitSablonuObrazku },
         { text: 'Přejmenovat fotografa…', akce: () => prejmenovatVeSbirce('fotograf') },
         { text: 'Přejmenovat tag…', akce: () => prejmenovatVeSbirce('tag') },
-        null,
         { text: stav.maZamek ? 'Změnit nebo zrušit heslo…' : 'Nastavit heslo…', akce: otevritHeslo },
         // Nové načtení okna znovu vyžádá heslo
         ...(stav.maZamek ? [{ text: 'Zamknout', akce: () => window.location.reload() }] : []),
         null,
         { text: 'Smazat celou databázi', akce: smazatDatabazi, nebezpecne: true },
-        null,
+        { nadpis: 'Nápověda' },
         { text: 'Nápověda (?)', akce: otevritNapovedu },
         { text: `Verze ${stav.verzeProgramu} – co je nového`, akce: () => otevritNovinky() },
     ];
@@ -438,7 +438,8 @@ export function pripravit() {
         const vProfilu = !detailView.classList.contains('hidden');
         nabidkaPodTlacitkem(e, [
             ...(vProfilu ? [
-                { text: `Upravit modelku: ${stav.aktualniModelka.jmeno}`, akce: () => otevritModelModal(stav.aktualniModelka) },
+                { nadpis: stav.aktualniModelka.jmeno },
+                { text: 'Upravit modelku', akce: () => otevritModelModal(stav.aktualniModelka) },
                 { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(stav.aktualniModelka) },
                 { text: 'Smazat modelku', akce: () => smazatModelku(stav.aktualniModelka), nebezpecne: true },
                 null,

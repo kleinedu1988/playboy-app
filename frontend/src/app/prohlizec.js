@@ -1,6 +1,6 @@
 // Prohlížeč fotek přes celé okno: lupa, otáčení, slideshow, lišta alb
 import { oznamit } from '../ui/oznameni';
-import { nazevAlba, obrazek } from '../lib/format';
+import { esc, nazevAlba, obrazek, paskaCisla } from '../lib/format';
 import { SetRotaceFotek } from './backend';
 import { zacatkyAlb } from '../lib/alba';
 import { vytvoritListu } from '../ui/lista';
@@ -211,9 +211,17 @@ export function lbZobrazit(index) {
         vetsi.src = obrazek(f.url, velikost);
     });
 
-    document.getElementById('lbCaption').textContent =
-        [polozka.jmenoModelky, nazevAlba(polozka.album, polozka.typ), polozka.typ].filter(Boolean).join(' · ');
-    document.getElementById('lbCounter').textContent = `${stav.lbIndex + 1} / ${pocet}`;
+    // Popisek: páska vydání, jméno velkými písmeny, album a typ (bez opakování typu, je-li už v názvu alba)
+    const album = nazevAlba(polozka.album, polozka.typ);
+    const kde = album.includes(polozka.typ) ? album : [album, polozka.typ].filter(Boolean).join(' · ');
+    const paska = paskaCisla(polozka.fotky[0].vydani || ((polozka.typ === 'Centerfold' || polozka.typ === 'Cover') ? polozka.album : ''));
+    const prvekPasky = document.getElementById('lbPaska');
+    prvekPasky.textContent = paska;
+    prvekPasky.classList.toggle('hidden', !paska);
+    document.getElementById('lbCaption').innerHTML = polozka.jmenoModelky
+        ? `<span class="lb-jmeno">${esc(polozka.jmenoModelky)}</span><span class="lb-kde">${esc(kde)}</span>`
+        : `<span class="lb-jmeno">${esc(kde)}</span>`;
+    document.getElementById('lbCounter').innerHTML = `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
     lbVykreslitSrdicka();
     lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
     lbAktualizovatTlacitka();
@@ -345,7 +353,7 @@ export function zavritLightbox() {
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     lightbox.addEventListener('mousemove', (e) => {
-        ukazatOvladani(Boolean(e.target.closest('.lightbox-top, .album-nav, .lb-nav')));
+        ukazatOvladani(Boolean(e.target.closest('.lightbox-top, .album-nav')));
     });
     // Ovládání klávesnicí (Tab do panelu) ho také ukáže
     lightbox.addEventListener('focusin', (e) => {

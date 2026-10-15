@@ -1789,17 +1789,9 @@ button.tag:hover {
     cursor: zoom-out;
 }
 
-.lightbox.zoomed .lb-nav {
-    display: none;
-}
-
 .lightbox-top {
     z-index: 2;
     background: linear-gradient(rgba(8, 8, 10, 0.85), transparent);
-}
-
-.lb-nav {
-    z-index: 2;
 }
 
 .lb-btn.active {
@@ -1846,8 +1838,7 @@ button.tag:hover {
     font-variant-numeric: tabular-nums;
 }
 
-.lb-btn,
-.lb-nav {
+.lb-btn {
     border: none;
     background: none;
     color: var(--text-muted);
@@ -1862,22 +1853,7 @@ button.tag:hover {
     line-height: 1;
 }
 
-.lb-nav {
-    position: absolute;
-    top: 50%;
-    width: 48px;
-    height: 72px;
-    margin-top: -36px;
-    border-radius: 12px;
-    font-size: 40px;
-    line-height: 1;
-}
-
-.lb-prev { left: 12px; }
-.lb-next { right: 12px; }
-
-.lb-btn:hover,
-.lb-nav:hover {
+.lb-btn:hover {
     background-color: var(--bg-modal);
     color: var(--text-main);
 }
@@ -1899,12 +1875,6 @@ button.tag:hover {
 @keyframes lb-progress {
     from { width: 0; }
     to { width: 100%; }
-}
-
-@media (max-width: 560px) {
-    .lb-nav {
-        background-color: rgba(0,0,0,0.4);
-    }
 }
 
 .photo-item img {
@@ -3163,62 +3133,122 @@ body.razeni .photo-item {
 
 /* Prohlížeč fotek: nástroje a lišta alb jako plovoucí panely nad fotkou (jako Fotky ve Windows) */
 .lightbox {
-    --lb-panel: var(--panel-bg);
-    --lb-panel-okraj: var(--panel-okraj);
+    /* Průhledné sklo: fotka pod panely prosvítá rozostřená */
+    --lb-panel: rgba(22, 22, 26, 0.55);
+    --lb-panel-okraj: rgba(255, 255, 255, 0.14);
 }
 
 .lightbox-top {
-    height: 64px;
-    padding: 0 8px 0 16px;
+    height: auto;
+    padding: 12px 14px 0;
     background: none;
     pointer-events: none;
 }
 
-.lightbox-top > * {
+/* Jedna průhledná pilulka přes celou šířku: vydání a jméno, nástroje, listování a zavření */
+.lb-lista {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 5px 6px;
+    border: 1px solid var(--lb-panel-okraj);
+    border-radius: 999px;
+    background-color: var(--lb-panel);
+    backdrop-filter: blur(16px) saturate(1.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     pointer-events: auto;
 }
 
-.lb-caption {
-    flex: 0 1 auto;
-    max-width: calc(50% - 260px);
-    color: var(--text-muted);
-    font-size: 12px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.lb-counter {
-    margin-right: auto;
-    font-size: 12px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
-}
-
-.lb-panel {
-    position: absolute;
-    top: 12px;
-    left: 50%;
+.lb-popis,
+.lb-vpravo {
     display: flex;
+    flex: 1;
     align-items: center;
-    gap: 2px;
-    padding: 4px 6px;
-    border: 1px solid var(--lb-panel-okraj);
-    border-radius: 10px;
-    background-color: var(--lb-panel);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
-    transform: translateX(-50%);
+    gap: 10px;
+    min-width: 0;
 }
 
-.lb-panel .lb-btn {
-    width: 36px;
-    height: 34px;
-    border-radius: 6px;
+.lb-vpravo {
+    justify-content: flex-end;
+    gap: 2px;
+}
+
+.lb-paska {
+    flex: none;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.lb-caption {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.lb-jmeno {
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-overflow: ellipsis;
     color: var(--text-main);
 }
 
-.lb-panel .lb-btn:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.08);
+.lb-kde {
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    color: var(--text-muted);
+}
+
+.lb-counter {
+    min-width: 54px;
+    font-size: 13px;
+    text-align: center;
+    color: var(--text-main);
+}
+
+.lb-counter small {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.lb-panel {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 2px;
+}
+
+.lb-lista .lb-btn {
+    width: 36px;
+    height: 34px;
+    border-radius: 50%;
+    color: var(--text-main);
+}
+
+.lb-lista .lb-btn:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.lb-lista .lb-sipka {
+    font-size: 24px;
 }
 
 .lb-oddelovac {
+    flex: none;
     width: 1px;
     height: 20px;
     margin: 0 4px;
@@ -3229,11 +3259,9 @@ body.razeni .photo-item {
     margin: 0 6px;
 }
 
-.lb-zavrit {
-    margin-left: auto;
-    width: 40px;
-    height: 36px;
-    font-size: 22px;
+.lb-lista .lb-zavrit {
+    font-size: 19px;
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 /* Lišta alb dole: plovoucí panel uprostřed, jen tak široký, jak je potřeba */
@@ -3245,8 +3273,9 @@ body.razeni .photo-item {
     max-width: calc(100% - 48px);
     padding: 6px 8px;
     border: 1px solid var(--lb-panel-okraj);
-    border-radius: 10px;
+    border-radius: 999px;
     background: var(--lb-panel);
+    backdrop-filter: blur(16px) saturate(1.3);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
     transform: translateX(-50%);
 }
@@ -3259,30 +3288,13 @@ body.razeni .photo-item {
     background-color: var(--accent-soft);
 }
 
-/* Šipky na předchozí a další fotku: kulaté plovoucí tlačítko jen po najetí myší */
-.lightbox .lb-nav {
-    width: 44px;
-    height: 44px;
-    margin-top: -22px;
-    border-radius: 50%;
-    font-size: 30px;
-    color: var(--text-main);
-    opacity: 0.55;
-}
-
-.lightbox .lb-nav:hover {
-    background-color: var(--lb-panel);
-    opacity: 1;
-}
-
 .lb-progress {
     bottom: auto;
     top: 0;
 }
 
 @media (max-width: 760px) {
-    .lb-caption,
-    .lb-counter {
+    .lb-caption {
         display: none;
     }
 }
@@ -3506,13 +3518,11 @@ body.razeni .photo-item {
 
 /* Prohlížeč: ovládání (panely, šipky, popisek, zavření) je vidět jen chvíli po pohybu myší */
 .lightbox .lightbox-top,
-.lightbox .lb-nav,
 .lightbox .album-nav {
     transition: opacity 0.25s;
 }
 
 .lightbox:not(.ovladani) .lightbox-top,
-.lightbox:not(.ovladani) .lb-nav,
 .lightbox:not(.ovladani) .album-nav {
     opacity: 0;
     pointer-events: none;

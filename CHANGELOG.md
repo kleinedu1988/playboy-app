@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.31.5] – 2026-10-15
+
+### Změněno
+- Prohlížeč fotek: všechno ovládání v jedné průhledné pilulce nahoře přes celou šířku. Vlevo růžová páska
+  vydání (BŘE 72), jméno velkými písmeny a odkud fotka je, uprostřed nástroje (srdíčka, rozložení,
+  otočení, lupa, zamíchání, slideshow, ⋯), vpravo šipky ‹ › s pořadím „3 / 22“ a zavření. Šipky po
+  stranách fotky zmizely. Panely prohlížeče jsou průhledné, fotka pod nimi rozostřeně prosvítá; lišta alb
+  dole je pilulka ve stejném stylu.
+
 ## [0.31.4] – 2026-10-15
 
 ### Změněno

@@ -1168,16 +1168,59 @@ button.tag:hover {
     overflow-wrap: anywhere;
 }
 
-/* Upravit modelku a Přidat fotky pod jménem v levém panelu profilu */
-.profile-actions {
+/* Plovoucí skupina tlačítek: zaoblený panel jako lišta prohlížeče, tlačítka oddělená tenkou čarou,
+   ikona v barvě akcentu. Společný styl, do kterého se postupně převádějí ovládací prvky aplikace. */
+.plovouci-skupina {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 12px;
+    padding: 3px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
 }
 
-.profile-actions .btn {
+.plovouci-tlacitko {
+    position: relative;
+    display: inline-flex;
     flex: 1 1 auto;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.plovouci-tlacitko:hover {
+    background-color: var(--panel-hover);
+}
+
+.plovouci-tlacitko > span {
+    color: var(--accent-text);
+    font-size: 14px;
+    line-height: 1;
+}
+
+.plovouci-tlacitko + .plovouci-tlacitko::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 7px;
+    bottom: 7px;
+    width: 1px;
+    background-color: var(--panel-okraj);
+}
+
+/* Upravit a Přidat fotky pod jménem v levém panelu profilu */
+.profile-actions {
+    margin-top: 12px;
 }
 
 .btn-small {

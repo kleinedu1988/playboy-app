@@ -5,6 +5,13 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.3] – 2026-10-15
+
+### Změněno
+- Tlačítka pod jménem modelky mají nový vzhled plovoucího panelu (jako lišta prohlížeče fotek): jeden zaoblený
+  panel, tlačítka **✎ Upravit** a **+ Přidat fotky** oddělená tenkou čarou, ikony v barvě akcentu. Styl je
+  připravený jako společný (`.plovouci-skupina`, `.plovouci-tlacitko`) a postupně do něj přejdou další prvky.
+
 ## [0.18.2] – 2026-10-14
 
 ### Změněno

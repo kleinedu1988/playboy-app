@@ -94,9 +94,9 @@ export const SABLONA_OKNA = `
         <div id="centerfoldsSide"></div>
         <div id="modelHeader"></div>
         <!-- Tlačítka se při vykreslení profilu přesunou pod jméno modelky -->
-        <div id="profileActions" class="profile-actions">
-          <button id="editModelBtn" class="btn btn-secondary btn-small">Upravit modelku</button>
-          <button id="addAlbumBtn" class="btn btn-secondary btn-small">+ Přidat fotky / album</button>
+        <div id="profileActions" class="profile-actions plovouci-skupina">
+          <button id="editModelBtn" class="plovouci-tlacitko" title="Upravit údaje modelky"><span aria-hidden="true">✎</span>Upravit</button>
+          <button id="addAlbumBtn" class="plovouci-tlacitko" title="Přidat fotky nebo album"><span aria-hidden="true">+</span>Přidat fotky</button>
         </div>
       </aside>
 

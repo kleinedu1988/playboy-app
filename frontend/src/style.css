@@ -5024,3 +5024,19 @@ textarea {
 .clanek-okno .doplnit-pata span {
     margin-right: auto;
 }
+
+/* Centerfold čísla v levém panelu pod údaji */
+.panel-centerfold .posters {
+    margin-top: 8px;
+}
+
+.panel-centerfold .poster {
+    width: 100%;
+    border-radius: 12px;
+}
+
+.panel-centerfold-modelka {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}

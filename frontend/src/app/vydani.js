@@ -88,19 +88,16 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
             : info.naObalce ? `<br>na obálce <b>${esc(info.naObalce)}</b>` : ''}${info.stav ? `<br><b>${NAZVY_STAVU[info.stav].toLowerCase()}</b>` : ''}</p>
         ${info.poznamka ? `<p class="profile-note">${esc(info.poznamka)}</p>` : ''}
         <div class="profile-actions"><button class="volba issue-edit" data-upravit-vydani><span aria-hidden="true">✎</span>Upravit číslo…</button></div>
+        ${centerfoldy.map((a, i) => `
+            <section class="panel-centerfold" data-cast="album-${i}">
+                <h4 class="panel-nadpis">Centerfold</h4>
+                <div class="panel-centerfold-modelka">${odkazNaModelku(a)}</div>
+                <div class="posters">${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${index(p)}"`)).join('')}</div>
+                ${htmlPopisuAlba(a)}
+            </section>`).join('')}
     `;
 
     const htmlAlb = [
-        ...centerfoldy.map((a, i) => `
-            <section class="issue-album" data-cast="album-${i}">
-                <div class="album-header">
-                    <h4>Centerfold</h4>
-                    ${odkazNaModelku(a)}
-                </div>
-                ${htmlPopisuAlba(a)}
-                <div class="posters">${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU, `data-index="${index(p)}"`)).join('')}</div>
-            </section>
-        `),
         ...ostatni.map((a, i) => `
             <section class="issue-album" data-cast="album-${centerfoldy.length + i}">
                 <div class="album-header">
@@ -120,7 +117,8 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
                 </div>
             </section>
         `),
-    ].join('') || '<p class="empty-state">K tomuto vydání zatím není přiřazený žádný centerfold ani pictorial. Centerfold se přiřadí měsícem a rokem, pictorial v úpravě alba.</p>';
+    ].join('') || `<p class="empty-state">${centerfoldy.length ? 'K tomuto vydání zatím není přiřazený žádný pictorial; přiřadí se v úpravě alba.'
+        : 'K tomuto vydání zatím není přiřazený žádný centerfold ani pictorial. Centerfold se přiřadí měsícem a rokem, pictorial v úpravě alba.'}</p>`;
     stav.vydaniHtmlAlb = htmlAlb;
     vykreslitObsahStranky();
 }
@@ -323,8 +321,10 @@ export function pripravit() {
         }
         if (albumObsahu) {
             e.stopPropagation();
-            if (stav.vydaniClanek) ukazatClanek(0);
-            issueView.querySelector(`[data-cast="album-${albumObsahu.dataset.albumObsahu}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Centerfold je v levém panelu (sjede se v něm), pictorialy vpravo mezi alby čísla
+            const cil = () => issueView.querySelector(`[data-cast="album-${albumObsahu.dataset.albumObsahu}"]`);
+            if (stav.vydaniClanek && !cil()?.closest('#issueSide')) ukazatClanek(0);
+            cil()?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             return;
         }
         if (e.target.closest('[data-alba-cisla]')) {

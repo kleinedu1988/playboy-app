@@ -5,6 +5,12 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.30.1] – 2026-10-15
+
+### Změněno
+- Centerfold čísla je v levém panelu pod údaji čísla (s modelkou a textem alba), vpravo zůstávají pictorialy.
+  Klik na centerfold v obsahu na něj v panelu sjede, klik na plakát ho otevře v prohlížeči.
+
 ## [0.30.0] – 2026-10-15
 
 Číslo časopisu jako magazín: obsah a články s textem. Schéma databáze: úprava č. 9 (tabulka článků). Formát

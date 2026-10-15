@@ -500,6 +500,70 @@ export namespace main {
 	        this.ukazka = source["ukazka"];
 	    }
 	}
+	export class PolozkaStatistiky {
+	    nazev: string;
+	    pocet: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PolozkaStatistiky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.nazev = source["nazev"];
+	        this.pocet = source["pocet"];
+	    }
+	}
+	export class DesetiletiStatistiky {
+	    desetileti: number;
+	    centerfoldy: number;
+	    cisla: number;
+	    edice: Record<string, number>;
+	
+	    static createFrom(source: any = {}) {
+	        return new DesetiletiStatistiky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.desetileti = source["desetileti"];
+	        this.centerfoldy = source["centerfoldy"];
+	        this.cisla = source["cisla"];
+	        this.edice = source["edice"];
+	    }
+	}
+	export class Statistiky {
+	    centerfoldu: number;
+	    desetileti: DesetiletiStatistiky[];
+	    vek: PolozkaStatistiky[];
+	    vekMedian: number;
+	    vekNejcastejsi: number;
+	    vekZnamy: number;
+	    fotografove: PolozkaStatistiky[];
+	    fotografuCelkem: number;
+	    narodnosti: PolozkaStatistiky[];
+	    narodnostiCelkem: number;
+	    modelekSNarodnosti: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Statistiky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.centerfoldu = source["centerfoldu"];
+	        this.desetileti = source["desetileti"];
+	        this.vek = source["vek"];
+	        this.vekMedian = source["vekMedian"];
+	        this.vekNejcastejsi = source["vekNejcastejsi"];
+	        this.vekZnamy = source["vekZnamy"];
+	        this.fotografove = source["fotografove"];
+	        this.fotografuCelkem = source["fotografuCelkem"];
+	        this.narodnosti = source["narodnosti"];
+	        this.narodnostiCelkem = source["narodnostiCelkem"];
+	        this.modelekSNarodnosti = source["modelekSNarodnosti"];
+	    }
+	}
 	export class VydaniInfo {
 	    vydani: string;
 	    poznamka: string;

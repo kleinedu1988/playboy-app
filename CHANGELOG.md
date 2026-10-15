@@ -5,6 +5,16 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.0] – 2026-10-15
+
+### Přidáno
+- Statistiky v Přehledu (nová položka v levém menu). Nahoře řádek velkých čísel s větou: počet centerfoldů
+  a nejsilnější desetiletí, medián věku v době centerfoldu, nejčastější fotograf, počet národností a podíl
+  té nejčastější. Pod ním karty s grafy: centerfoldy podle desetiletí, věk v době centerfoldu, nejčastější
+  fotografové a národnosti (po osmi) a čísla ve sbírce podle edic US a CZ a desetiletí. Najetí myší na sloupec
+  nebo řádek ukáže hodnotu. Věk se počítá jen u modelek se známým aspoň rokem a měsícem narození; fotografové
+  se sjednocují bez ohledu na velikost písmen a diakritiku. Statistiky se počítají při prvním otevření oddílu.
+
 ## [0.31.6] – 2026-10-15
 
 ### Změněno

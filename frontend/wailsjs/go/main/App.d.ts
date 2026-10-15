@@ -165,3 +165,5 @@ export function UpdateClanek(arg1:main.Clanek):Promise<boolean>;
 export function GetClankyModelky(arg1:number):Promise<Array<main.Clanek>>;
 
 export function HledatClanky(arg1:string):Promise<Array<main.NalezClanku>>;
+
+export function GetStatistiky():Promise<main.Statistiky>;

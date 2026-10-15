@@ -13,6 +13,7 @@ import { otevritModelModal, ukazatZalozku } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { otevritDoplneni } from './doplneni';
+import { nacistStatistiky } from './statistiky';
 
 // Přehled sbírky: kolik čeho je a co ještě chybí doplnit.
 // Každá modelka a každé vydání má jeden řádek, sloupce říkají, co u nich chybí.
@@ -55,6 +56,7 @@ const IKONY_CASTI = {
     vydani: IKONA('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8"/>'),
     rocniky: IKONA('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
     kontrola: IKONA('<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>'),
+    statistiky: IKONA('<path d="M5 20V11M12 20V5M19 20v-7"/>'),
 };
 
 export async function nacistPrehled() {
@@ -165,6 +167,7 @@ export async function nacistPrehled() {
         ['vydani', 'Vydání', radkyVydani.length],
         ...(p.rocniky.length ? [['rocniky', 'Ročníky', p.rocniky.length, true]] : []),
         ...(p.podezrele.length ? [['kontrola', 'Ke kontrole', p.podezrele.length]] : []),
+        ['statistiky', 'Statistiky', ''],
     ];
     if (!casti.some(([klic]) => klic === stav.prehledSekce)) stav.prehledSekce = 'souhrn';
     const pruh = (popis, hotovo, celkem) => {
@@ -257,8 +260,12 @@ export async function nacistPrehled() {
                 }).join('')}
             </div>${zbytek(p.podezrele.length)}
         </section>` : ''}
+
+        <!-- Statistiky se počítají až při prvním zobrazení oddílu -->
+        <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="stat-prazdne">Počítám statistiky…</p></section>
         </div>
     `;
+    if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
 }
 
 // „Netýká se" u buňky: modelka (centerfold neměla, údaj nejde zjistit) nebo všechna alba v buňce
@@ -306,6 +313,7 @@ export function pripravit() {
             try { localStorage.setItem('prehledSekce', stav.prehledSekce); } catch { /* jen se nezapamatuje */ }
             stats.querySelector('.prehled-obsah').dataset.sekceUkazana = stav.prehledSekce;
             stats.querySelectorAll('.prehled-menu [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b === cast || b.dataset.sekcePrehledu === stav.prehledSekce));
+            if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
             document.querySelector('main').scrollTop = 0;
         } else if (e.target.closest('[data-skryte]')) {
             stav.prehledSkryte = !stav.prehledSkryte;

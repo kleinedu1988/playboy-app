@@ -329,3 +329,7 @@ export function GetClankyModelky(arg1) {
 export function HledatClanky(arg1) {
   return window['go']['main']['App']['HledatClanky'](arg1);
 }
+
+export function GetStatistiky() {
+  return window['go']['main']['App']['GetStatistiky']();
+}

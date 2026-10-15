@@ -4004,7 +4004,8 @@ main .album-nav:not(.svisla) .chip.active:hover {
 .prehled-obsah[data-sekce-ukazana="modelky"] > [data-sekce="modelky"],
 .prehled-obsah[data-sekce-ukazana="vydani"] > [data-sekce="vydani"],
 .prehled-obsah[data-sekce-ukazana="rocniky"] > [data-sekce="rocniky"],
-.prehled-obsah[data-sekce-ukazana="kontrola"] > [data-sekce="kontrola"] {
+.prehled-obsah[data-sekce-ukazana="kontrola"] > [data-sekce="kontrola"],
+.prehled-obsah[data-sekce-ukazana="statistiky"] > [data-sekce="statistiky"] {
     display: block;
 }
 
@@ -5620,4 +5621,161 @@ textarea {
     margin-top: 3px;
     font-size: 11px;
     color: var(--accent-text);
+}
+
+/* ===== Statistiky v Přehledu: řádek velkých čísel s větou, pod ním karty s grafy ===== */
+.stat-statistiky {
+    position: relative;
+}
+
+.stat-cisla {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 22px;
+    margin: 0 0 22px;
+    padding: 4px 2px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.stat-karta-nadpis {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+}
+
+.stat-karta-nadpis::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.4;
+}
+
+.stat-velke {
+    font-size: 48px;
+    font-weight: 100;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.stat-cisla p {
+    margin: 8px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.stat-cisla strong {
+    font-weight: 400;
+    color: var(--text-main);
+}
+
+.stat-grafy {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.stat-karta {
+    min-width: 0;
+    padding: 18px 20px 16px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 20px;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.stat-karta.siroka {
+    grid-column: 1 / -1;
+}
+
+.graf {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.graf-mrizka {
+    stroke: rgba(255, 255, 255, 0.06);
+}
+
+.graf-osa {
+    stroke: rgba(255, 255, 255, 0.14);
+}
+
+.graf-popisek {
+    fill: var(--text-muted);
+    font-size: 11px;
+}
+
+.graf-hodnota {
+    fill: var(--text-main);
+    font-size: 11px;
+}
+
+.graf-nazev {
+    fill: #c8c8cc;
+    font-size: 12px;
+}
+
+/* Neviditelná plocha přes celý sloupec či řádek: bublina se ukáže i nad malým sloupcem */
+.graf-cil {
+    fill: transparent;
+}
+
+.graf g.aktivni .graf-cil {
+    fill: rgba(255, 255, 255, 0.04);
+}
+
+.graf-bublina {
+    position: absolute;
+    z-index: 5;
+    padding: 7px 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 10px;
+    background: rgba(28, 28, 32, 0.96);
+    box-shadow: var(--panel-stin);
+    font-size: 12px;
+    color: var(--text-main);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.stat-legenda {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.stat-legenda span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stat-legenda i {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+}
+
+.stat-pozn,
+.stat-prazdne {
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+@media (max-width: 1000px) {
+    .stat-cisla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stat-grafy { grid-template-columns: 1fr; }
 }

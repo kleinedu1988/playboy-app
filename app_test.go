@@ -2393,3 +2393,36 @@ func TestClanky(t *testing.T) {
 		t.Fatalf("článek po smazání modelky: %+v", c)
 	}
 }
+
+func TestStatistiky(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", NarozeniDatum: "1975-03-12", Narodnost: "USA", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Bára", NarozeniDatum: "1972-08", Narodnost: "Česko", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Cecílie", NarozeniDatum: "1970", Narodnost: " USA ", Tetovani: -1, Piercing: -1})
+	anna, bara, cecilie := a.GetModelky("Anna")[0].ID, a.GetModelky("Bára")[0].ID, a.GetModelky("Cecílie")[0].ID
+	a.AddBulkPhotos(anna, "1995-03", "Centerfold", odkazA)
+	a.AddBulkPhotos(bara, "1995-07-CZ", "Centerfold", odkazB)
+	a.AddBulkPhotos(cecilie, "1989-12", "Centerfold", "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view")
+	a.AddBulkPhotos(anna, "Pláž", "Pictorial", "https://drive.google.com/file/d/DDDDDDDDDDDDDDDDDDDDDDDDDDDDD/view")
+	a.SetPopisAlba(anna, "Pláž", "Pictorial", "", "Arny Freytag, Pompeo Posar")
+	a.SetPopisAlba(anna, "1995-03", "Centerfold", "", "arny freytag")
+
+	s := a.GetStatistiky()
+	if s.Centerfoldu != 3 || len(s.Desetileti) != 2 || s.Desetileti[0].Desetileti != 1980 || s.Desetileti[0].Centerfoldy != 1 ||
+		s.Desetileti[1].Centerfoldy != 2 || s.Desetileti[1].Cisla != 2 || s.Desetileti[1].Edice["US"] != 1 || s.Desetileti[1].Edice["CZ"] != 1 {
+		t.Fatalf("desetiletí: %+v", s)
+	}
+	// Věk: Anna 20 (březen 1995, narozena v březnu 1975), Bára 22; Cecílie jen s rokem narození se nepočítá
+	if s.VekZnamy != 2 || s.VekMedian != 21 || len(s.Vek) != 3 || s.Vek[0] != (PolozkaStatistiky{"20", 1}) || s.Vek[1].Pocet != 0 {
+		t.Fatalf("věk: %+v", s)
+	}
+	if s.FotografuCelkem != 2 || s.Fotografove[0] != (PolozkaStatistiky{"Arny Freytag", 2}) || s.Fotografove[1].Nazev != "Pompeo Posar" {
+		t.Fatalf("fotografové: %+v", s.Fotografove)
+	}
+	if s.NarodnostiCelkem != 2 || s.ModelekSNarodnosti != 3 || s.Narodnosti[0] != (PolozkaStatistiky{"USA", 2}) {
+		t.Fatalf("národnosti: %+v", s.Narodnosti)
+	}
+	if prazdna := novaTestovaciApp(t, nil).GetStatistiky(); prazdna.Centerfoldu != 0 || prazdna.Desetileti == nil || prazdna.Vek == nil {
+		t.Fatalf("prázdná sbírka: %+v", prazdna)
+	}
+}

@@ -701,6 +701,7 @@ export const SABLONA_OKNA = `
         </ul>
         <h4>Přehled a hodnocení</h4>
         <ul>
+          <li><strong>Statistiky</strong> v Přehledu (poslední položka vlevo): centerfoldy podle desetiletí, věk v době centerfoldu, nejčastější fotografové a národnosti, čísla edic US a CZ. Najetí myší na sloupec ukáže hodnotu.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; jméno modelky a odkud fotka je se ukáže po najetí myší.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>

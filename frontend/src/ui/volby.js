@@ -77,7 +77,13 @@ function ukazatVolby(lista) {
                 polozky.push(null, ...odkazy.map(o => ({ text: o.textContent.trim().replace(/^./, z => z.toUpperCase()), akce: () => o.click() })));
             }
             const r = tlacitko.getBoundingClientRect();
-            otevritKontextovouNabidku(r.left, r.bottom + 4, polozky);
+            // Dokud je nabídka otevřená, panel má růžový rámeček a vybíraná volba je zvýrazněná
+            panel.classList.add('otevreno');
+            tlacitko.classList.add('otevrena');
+            otevritKontextovouNabidku(r.left, r.bottom + 4, polozky, { poZavreni: () => {
+                panel.classList.remove('otevreno');
+                tlacitko.classList.remove('otevrena');
+            } });
         });
         panel.append(tlacitko);
     });

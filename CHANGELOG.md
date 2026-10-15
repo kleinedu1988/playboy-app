@@ -5,6 +5,12 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.8] – 2026-10-15
+
+### Změněno
+- Panel voleb pod hledáním reaguje jako hledání: dokud je otevřená nabídka některé volby, má celý panel tenký
+  růžový rámeček. Zapnutý filtr i právě vybíraná volba mají tenký růžový rámeček a růžové podbarvení.
+
 ## [0.18.7] – 2026-10-15
 
 ### Změněno

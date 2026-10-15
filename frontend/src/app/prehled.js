@@ -171,9 +171,15 @@ export async function nacistPrehled() {
         const procent = celkem ? Math.round(hotovo / celkem * 100) : 100;
         return `<div class="prehled-pruh"><span>${popis}</span><b>${hotovo} z ${celkem}</b><div><i style="width:${procent}%"></i></div></div>`;
     };
-    // Souhrn: co zbývá doplnit; klik na kartu otevře část, kde se to doplňuje
-    const karta = (pocet, popis, sekce) => `<button class="prehled-karta ${pocet ? 'chybi' : ''}" data-sekce-prehledu="${sekce}">
-        <strong>${pocet || '✓'}</strong><span>${popis}</span></button>`;
+    // Souhrn: pokrok sbírky po položkách (pruh, kolik z kolika) a kolik zbývá doplnit; klik otevře část, kde se doplňuje
+    const radekSouhrnu = (popis, chybi, celkem, sekce, akce = 'doplnit') => {
+        const hotovo = Math.max(0, celkem - chybi);
+        const procent = celkem ? Math.round(hotovo / celkem * 100) : 100;
+        return `<button class="prehled-souhrn-radek ${chybi ? '' : 'hotovo'}" data-sekce-prehledu="${sekce}">
+            <span>${popis}</span>
+            ${celkem ? `<div class="prehled-souhrn-pruh"><i style="width:${procent}%"></i></div><small>${hotovo} z ${celkem}</small>` : '<div></div><small></small>'}
+            <b>${chybi ? `${akce} ${chybi}` : 'hotovo'}</b></button>`;
+    };
 
     stats.innerHTML = `
         <aside class="profile-side prehled-panel">
@@ -192,15 +198,15 @@ export async function nacistPrehled() {
         <div class="prehled-obsah" data-sekce-ukazana="${stav.prehledSekce}">
             <section class="stat-section" data-sekce="souhrn">
                 <h3>Co zbývá doplnit</h3>
-                <div class="prehled-karty">
-                    ${karta(aktivnich(p.bezTitulni), 'modelek bez titulní fotky', 'modelky')}
-                    ${karta(aktivnich(p.bezCenterfoldu), 'modelek bez centerfoldu', 'modelky')}
-                    ${karta(aktivnich(p.bezHodnoceni), 'modelek bez hodnocení', 'modelky')}
-                    ${karta(aktivnich(p.albaBezPopisu), 'alb bez textu', 'modelky')}
-                    ${karta(aktivnich(p.albaBezVydani), 'alb bez vydání', 'modelky')}
-                    ${karta(p.vydaniBezCoveru.length, 'vydání bez coveru', 'vydani')}
-                    ${karta(p.vydaniBezCenterfoldu.length, 'vydání bez centerfoldu', 'vydani')}
-                    ${p.podezrele.length ? karta(p.podezrele.length, 'údajů ke kontrole', 'kontrola') : ''}
+                <div class="prehled-souhrn">
+                    ${radekSouhrnu('Modelky s titulní fotkou', aktivnich(p.bezTitulni), p.modelek, 'modelky')}
+                    ${radekSouhrnu('Modelky s centerfoldem', aktivnich(p.bezCenterfoldu), p.modelek, 'modelky')}
+                    ${radekSouhrnu('Modelky s hodnocením', aktivnich(p.bezHodnoceni), p.modelek, 'modelky')}
+                    ${radekSouhrnu('Alba s textem', aktivnich(p.albaBezPopisu), p.alb, 'modelky')}
+                    ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb, 'modelky')}
+                    ${radekSouhrnu('Vydání s coverem', p.vydaniBezCoveru.length, p.vydani, 'vydani')}
+                    ${radekSouhrnu('Vydání s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'vydani')}
+                    ${p.podezrele.length ? radekSouhrnu('Údaje ke kontrole', p.podezrele.length, 0, 'kontrola', 'zkontrolovat') : ''}
                 </div>
             </section>
 
@@ -240,15 +246,16 @@ export async function nacistPrehled() {
         ${p.podezrele.length ? `
         <section class="stat-section" data-sekce="kontrola">
             <h3>Ke kontrole <span>údaje, které vypadají jako chyba při zadávání</span></h3>
-            <table class="stat-table stat-table-text">
-                <thead><tr><th>Modelka</th><th>Co zkontrolovat</th></tr></thead>
-                <tbody>
-                    ${p.podezrele.slice(0, stav.prehledLimit).map(u => `
-                        <tr data-modelka="${u.modelkaId}" title="Otevřít profil">
-                            <th>${esc(u.jmeno)}</th><td class="stat-text">${esc(u.popis)}</td>
-                        </tr>`).join('')}
-                </tbody>
-            </table>${zbytek(p.podezrele.length)}
+            <div class="prehled-kontrola">
+                ${p.podezrele.slice(0, stav.prehledLimit).map(u => {
+                    const modelka = stav.prehledModelky.get(u.modelkaId);
+                    return `<div class="prehled-kontrola-radek" data-modelka="${u.modelkaId}" title="Otevřít profil">
+                        <img src="${esc(modelka ? adresaTitulni(modelka) : BEZ_FOTKY)}" alt="" loading="lazy" draggable="false" />
+                        <strong>${esc(u.jmeno)}</strong><span>${esc(u.popis)}</span>
+                        <button type="button" class="btn btn-secondary btn-small" data-opravit="${esc(u.popis)}">Opravit</button>
+                    </div>`;
+                }).join('')}
+            </div>${zbytek(p.podezrele.length)}
         </section>` : ''}
         </div>
     `;
@@ -281,7 +288,15 @@ export function pripravit() {
     stats.addEventListener('click', (e) => {
         const cast = e.target.closest('[data-sekce-prehledu]');
         const karta = e.target.closest('.prehled-modelka');
-        if (karta && !e.target.closest('[data-akce]')) {
+        const opravit = e.target.closest('[data-opravit]');
+        if (opravit) {
+            // Album s jednou fotkou se opravuje v profilu, ostatní (jméno, datum) ve formuláři modelky
+            e.stopPropagation();
+            const modelka = stav.prehledModelky.get(parseInt(opravit.closest('[data-modelka]').dataset.modelka));
+            if (!modelka) return;
+            if (opravit.dataset.opravit.startsWith('album')) otevritDetailModelky(modelka);
+            else otevritModelModal(modelka);
+        } else if (karta && !e.target.closest('[data-akce]')) {
             // Klik na kartu modelky (mimo konkrétní údaj) otevře okno se vším, co jí chybí
             e.stopPropagation();
             otevritDoplneni(parseInt(karta.dataset.modelka));

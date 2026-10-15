@@ -4046,43 +4046,6 @@ main .album-nav:not(.svisla) .chip.active:hover {
     display: block;
 }
 
-/* Souhrn: karty toho, co zbývá doplnit */
-.prehled-karty {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 14px;
-}
-
-.prehled-karta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    padding: 16px 18px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 18px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
-    color: var(--text-muted);
-    font-size: 12px;
-    text-align: left;
-    cursor: pointer;
-}
-
-.prehled-karta strong {
-    font-size: 30px;
-    font-weight: 300;
-    color: var(--text-main);
-}
-
-.prehled-karta.chybi strong {
-    color: var(--accent-text);
-}
-
-.prehled-karta:hover {
-    border-color: var(--accent);
-}
-
 /* Nadpisy částí tenkými kapitálkami s růžovou linkou */
 .stat-section h3 {
     display: flex;
@@ -4622,4 +4585,125 @@ textarea {
     color: var(--accent-text);
     font-weight: 500;
     letter-spacing: 0.14em;
+}
+
+/* Souhrn Přehledu: jeden panel, řádek = položka s pruhem pokroku, „19 z 22“ a pilulkou „doplnit 3“ */
+.prehled-souhrn {
+    overflow: hidden;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.prehled-souhrn-radek {
+    display: grid;
+    grid-template-columns: 220px 1fr 70px 110px;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 14px 18px;
+    border: none;
+    background: none;
+    color: var(--text-main);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.prehled-souhrn-radek + .prehled-souhrn-radek {
+    border-top: 1px solid var(--panel-okraj);
+}
+
+.prehled-souhrn-radek:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.prehled-souhrn-pruh {
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.prehled-souhrn-pruh i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent-hover), var(--accent-text));
+}
+
+.prehled-souhrn-radek small {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: right;
+}
+
+.prehled-souhrn-radek b {
+    justify-self: end;
+    padding: 3px 12px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background-color: var(--accent-soft);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.prehled-souhrn-radek.hotovo b {
+    border-color: var(--panel-okraj);
+    background: none;
+    color: var(--text-muted);
+}
+
+/* Ke kontrole: jeden seznam, kulatá fotka, jméno, popis problému a Opravit */
+.prehled-kontrola {
+    overflow: hidden;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.prehled-kontrola-radek {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    cursor: pointer;
+}
+
+.prehled-kontrola-radek + .prehled-kontrola-radek {
+    border-top: 1px solid var(--panel-okraj);
+}
+
+.prehled-kontrola-radek:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.prehled-kontrola-radek img {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    background-color: var(--bg-card);
+}
+
+.prehled-kontrola-radek strong {
+    flex: none;
+    width: 180px;
+    font-size: 14px;
+}
+
+.prehled-kontrola-radek span {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.prehled-kontrola-radek .btn {
+    flex: none;
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
 }

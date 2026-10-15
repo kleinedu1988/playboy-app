@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.19.2] – 2026-10-15
+
+### Změněno
+- Přehled, **Souhrn**: místo karet jeden panel s pokrokem sbírky po položkách (Modelky s titulní fotkou,
+  s centerfoldem, s hodnocením, Alba s textem a s vydáním, Vydání s coverem a s centerfoldem): pruh, „19 z 22“
+  a pilulka „doplnit 3“ (hotové „hotovo“). Klik na řádek otevře část, kde se doplňuje.
+- Přehled, **Ke kontrole**: místo tabulky seznam s kulatou fotkou, jménem, popisem problému a tlačítkem
+  **Opravit** (album s jednou fotkou otevře profil, ostatní formulář modelky); klik na řádek otevře profil.
+
 ## [0.19.1] – 2026-10-15
 
 ### Změněno

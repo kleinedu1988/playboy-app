@@ -305,3 +305,19 @@ export function ZkontrolovatSoubory() {
 export function ZrusitPoradiAlba(arg1, arg2, arg3) {
   return window['go']['main']['App']['ZrusitPoradiAlba'](arg1, arg2, arg3);
 }
+
+export function AddClanek(arg1) {
+  return window['go']['main']['App']['AddClanek'](arg1);
+}
+
+export function DeleteClanek(arg1) {
+  return window['go']['main']['App']['DeleteClanek'](arg1);
+}
+
+export function GetClanky(arg1) {
+  return window['go']['main']['App']['GetClanky'](arg1);
+}
+
+export function UpdateClanek(arg1) {
+  return window['go']['main']['App']['UpdateClanek'](arg1);
+}

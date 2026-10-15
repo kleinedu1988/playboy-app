@@ -668,6 +668,7 @@ export const SABLONA_OKNA = `
         <h4>Přehled a hodnocení</h4>
         <ul>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou.</li>
+          <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Klik na článek ho otevře ke čtení (perex, citáty, skeny stran, předchozí a další článek); „+ článek“ a „Upravit článek“ otevřou okno článku.</li>
           <li>Přehled ukazuje, co chybí doplnit. V části Modelky klik na kartu modelky otevře okno „Doplnit modelku“ se vším, co jí chybí (s „Uložit a další“ pro další modelku); klik na konkrétní údaj otevře formulář, pravým tlačítkem „netýká se“.</li>
           <li>Vlastní výběry fotek jsou v Nejlepších vedle prahů srdíček.</li>
         </ul>
@@ -696,6 +697,54 @@ export const SABLONA_OKNA = `
       <div class="modal-actions">
         <button type="button" class="btn btn-secondary" data-zavrit>Zavřít</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Článek čísla: rubrika, název, autor, strana, modelka, text a skeny; obsluha v app/clanky.js -->
+  <div id="clanekModal" class="modal-overlay hidden">
+    <div class="modal-card doplnit-okno clanek-okno">
+      <form id="clanekForm" novalidate>
+        <header class="doplnit-hlavicka"><div>
+          <h3 id="clanekModalTitle">Nový článek</h3>
+          <p id="clanekModalCislo"></p>
+        </div></header>
+        <div class="doplnit-telo">
+          <section class="doplnit-blok">
+            <h4>Článek</h4>
+            <div class="clanek-mrizka-3">
+              <div class="doplnit-pole"><label for="inputClanekRubrika">Rubrika</label><input id="inputClanekRubrika" list="seznamRubrik" autocomplete="off" /></div>
+              <div class="doplnit-pole"><label for="inputClanekAutor">Autor</label><input id="inputClanekAutor" list="seznamAutoru" autocomplete="off" /></div>
+              <div class="doplnit-pole"><label for="inputClanekStrana">Strana</label><input id="inputClanekStrana" inputmode="numeric" autocomplete="off" /></div>
+            </div>
+            <div class="clanek-mrizka-2">
+              <div class="doplnit-pole"><label for="inputClanekNazev">Název</label><input id="inputClanekNazev" autocomplete="off" /></div>
+              <div class="doplnit-pole"><label for="inputClanekModelka">Modelka (nepovinné, propojí s profilem)</label><input id="inputClanekModelka" list="seznamModelekClanku" autocomplete="off" /></div>
+            </div>
+          </section>
+          <section class="doplnit-blok">
+            <h4>Text</h4>
+            <div class="clanek-mrizka-2">
+              <div class="doplnit-pole"><label for="selectClanekDruh">Druh textu</label>
+                <select id="selectClanekDruh"><option value="">Neuvedeno</option><option value="prepis">Přepis</option><option value="shrnuti">Shrnutí</option></select></div>
+            </div>
+            <div class="doplnit-pole"><textarea id="inputClanekText" rows="10"></textarea></div>
+            <p class="doplnit-napoveda">Odstavce odděl prázdným řádkem; první odstavec je perex. Řádek začínající „&gt;“ je citát. Slovo velkými písmeny s dvojtečkou na začátku odstavce (PLAYBOY:) se zvýrazní.</p>
+          </section>
+          <section class="doplnit-blok">
+            <h4>Skeny stran (nepovinné)</h4>
+            <div class="doplnit-pole"><textarea id="inputClanekSkeny" rows="3" placeholder="Odkazy na skeny z Google Disku, každý na nový řádek"></textarea></div>
+          </section>
+        </div>
+        <div class="doplnit-pata">
+          <button type="button" class="btn btn-secondary" id="clanekSmazatBtn">Smazat článek</button>
+          <span></span>
+          <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
+          <button type="submit" class="btn btn-primary">Uložit</button>
+        </div>
+      </form>
+      <datalist id="seznamRubrik"></datalist>
+      <datalist id="seznamAutoru"></datalist>
+      <datalist id="seznamModelekClanku"></datalist>
     </div>
   </div>
 

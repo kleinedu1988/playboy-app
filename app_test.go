@@ -2172,7 +2172,7 @@ func TestUmrtiANeuplnaData(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	var verze int
 	a.db.QueryRow("PRAGMA user_version").Scan(&verze)
-	if verze != 8 || !a.maSloupec("modelky", "umrti_datum") || !a.maSloupec("vydani", "na_obalce") {
+	if verze < 8 || !a.maSloupec("modelky", "umrti_datum") || !a.maSloupec("vydani", "na_obalce") {
 		t.Fatalf("schéma %d bez nových sloupců", verze)
 	}
 
@@ -2206,13 +2206,13 @@ func TestUmrtiANeuplnaData(t *testing.T) {
 	}
 	a.SetVydaniInfo("1980-06", "", "", 0, "Jiná")
 
-	// Export verze 6 a import kruhem
+	// Export a import kruhem
 	data, err := a.exportovat()
 	if err != nil {
 		t.Fatal(err)
 	}
 	text := string(data)
-	if !strings.Contains(text, "verze: 6") || !strings.Contains(text, "umrti_datum: 2001-07") || !strings.Contains(text, "na_obalce: Jiná") {
+	if !strings.Contains(text, fmt.Sprintf("verze: %d", verzeExportu)) || !strings.Contains(text, "umrti_datum: 2001-07") || !strings.Contains(text, "na_obalce: Jiná") {
 		t.Fatalf("export:\n%s", text)
 	}
 	b := novaTestovaciApp(t, nil)
@@ -2308,5 +2308,65 @@ func TestImportOpravaKlicu(t *testing.T) {
 	}
 	if nejblizsiKlic("jmno") != "jmeno" || nejblizsiKlic("xy") != "" || nejblizsiKlic("tagy") != "tagy" {
 		t.Fatal("nejbližší klíč")
+	}
+}
+
+// Úprava č. 9: články čísla – uložení, úprava, smazání, pořadí podle strany a přenos exportem a importem
+func TestClanky(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+
+	if a.AddClanek(Clanek{Vydani: "1996-01", Nazev: ""}) != 0 || a.AddClanek(Clanek{Vydani: "nic", Nazev: "X"}) != 0 ||
+		a.AddClanek(Clanek{Vydani: "1996-01", Nazev: "X", Druh: "román"}) != 0 {
+		t.Fatal("neplatný článek se uložil")
+	}
+	rozhovor := a.AddClanek(Clanek{Vydani: "1996-01", Strana: 27, Rubrika: "Playboy Interview", Nazev: " Rozhovor ", Autor: "Grobel",
+		ModelkaID: 1, Druh: "prepis", Text: "Perex.\n\nPLAYBOY: Otázka?", SkenyOdkazy: odkazA + "\n" + odkazB})
+	uvodnik := a.AddClanek(Clanek{Vydani: "1996-01", Strana: 7, Rubrika: "Úvodník", Nazev: "Dopis"})
+	bezStrany := a.AddClanek(Clanek{Vydani: "1996-01", Nazev: "Kreslené vtipy"})
+	if rozhovor == 0 || uvodnik == 0 || bezStrany == 0 {
+		t.Fatal("článek se neuložil")
+	}
+	c := a.GetClanky("1996-01")
+	if len(c) != 3 || c[0].ID != uvodnik || c[1].ID != rozhovor || c[2].ID != bezStrany {
+		t.Fatalf("pořadí článků: %+v", c)
+	}
+	if r := c[1]; r.Nazev != "Rozhovor" || r.JmenoModelky != "Anna" || len(r.Skeny) != 2 || len(r.SkenyURL) != 2 || !strings.Contains(r.SkenyOdkazy, r.Skeny[0]) {
+		t.Fatalf("uložený článek: %+v", r)
+	}
+
+	r := c[1]
+	r.Strana, r.SkenyOdkazy = 30, ""
+	if !a.UpdateClanek(r) || a.GetClanky("1996-01")[1].Strana != 30 || len(a.GetClanky("1996-01")[1].Skeny) != 0 {
+		t.Fatalf("úprava článku: %+v", a.GetClanky("1996-01")[1])
+	}
+	if !a.DeleteClanek(bezStrany) || a.DeleteClanek(bezStrany) || len(a.GetClanky("1996-01")) != 2 {
+		t.Fatal("smazání článku")
+	}
+
+	// Export a import: články jsou u vydání; import doplní a opraví článek se stejným názvem
+	soubor, err := a.exportovat()
+	if err != nil || !strings.Contains(string(soubor), "clanky:") || !strings.Contains(string(soubor), "Playboy Interview") {
+		t.Fatalf("export článků: %v\n%s", err, soubor)
+	}
+	b := novaTestovaciApp(t, nil)
+	if v := b.importovat(soubor); v.Selhalo != "" || len(v.Chyby) != 0 {
+		t.Fatalf("import článků: %+v", v)
+	}
+	if c := b.GetClanky("1996-01"); len(c) != 2 || c[1].Nazev != "Rozhovor" || c[1].JmenoModelky != "Anna" || c[1].Druh != "prepis" {
+		t.Fatalf("články po importu: %+v", c)
+	}
+	oprava := "vydani:\n  - vydani: 1996-01\n    clanky:\n      - nazev: rozhovor\n        autor: \"-\"\n        strana: 31\n      - nazev: Nový článek\n"
+	if v := b.importovat([]byte(oprava)); v.Selhalo != "" || len(v.Chyby) != 0 {
+		t.Fatalf("import opravy: %+v", v)
+	}
+	if c := b.GetClanky("1996-01"); len(c) != 3 || c[1].Autor != "" || c[1].Strana != 31 || c[1].Text == "" || c[2].Nazev != "Nový článek" {
+		t.Fatalf("články po opravném importu: %+v", c)
+	}
+
+	// Smazání modelky článek nesmaže, jen zruší propojení
+	b.DeleteModelka(b.GetModelky("Anna")[0].ID)
+	if c := b.GetClanky("1996-01"); len(c) != 3 || c[1].ModelkaID != 0 {
+		t.Fatalf("článek po smazání modelky: %+v", c)
 	}
 }

@@ -27,6 +27,7 @@ import * as ulozeni from './app/ulozeni';
 import * as klavesnice from './app/klavesnice';
 import * as napoveda from './app/napoveda';
 import * as doplneni from './app/doplneni';
+import * as clanky from './app/clanky';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru
 obrazky.pripravit();
@@ -49,6 +50,7 @@ ulozeni.pripravit();
 klavesnice.pripravit();
 napoveda.pripravit();
 doplneni.pripravit();
+clanky.pripravit();
 
 // Chyby z backendu se ukazují v okně, ne jen v konzoli
 EventsOn('chyba', (zprava) => oznamit(zprava));

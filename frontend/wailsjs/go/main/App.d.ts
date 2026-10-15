@@ -153,3 +153,11 @@ export function ZkontrolovatDavku():Promise<main.KontrolaSouboru>;
 export function ZkontrolovatSoubory():Promise<main.KontrolaSouboru>;
 
 export function ZrusitPoradiAlba(arg1:number,arg2:string,arg3:string):Promise<boolean>;
+
+export function AddClanek(arg1:main.Clanek):Promise<number>;
+
+export function DeleteClanek(arg1:number):Promise<boolean>;
+
+export function GetClanky(arg1:string):Promise<Array<main.Clanek>>;
+
+export function UpdateClanek(arg1:main.Clanek):Promise<boolean>;

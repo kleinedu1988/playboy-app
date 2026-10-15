@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -253,6 +254,8 @@ type exportVydani struct {
 	// Kdo je na obálce, když to není modelka ze sbírky
 	NaObalce string `yaml:"na_obalce,omitempty"`
 	Poznamka string `yaml:"poznamka,omitempty"`
+	// Články čísla (od verze exportu 7)
+	Clanky []exportClanek `yaml:"clanky,omitempty"`
 }
 
 func (a *App) exportovatVydaniAVybery(odkazy odkazyNaModelky) ([]exportVydani, []exportVyberu) {
@@ -264,6 +267,16 @@ func (a *App) exportovatVydaniAVybery(odkazy odkazyNaModelky) ([]exportVydani, [
 		}
 		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Nazev: v.Nazev, Stav: v.Stav, ModelkaObalky: obalka, NaObalce: v.NaObalce, Poznamka: v.Poznamka})
 	}
+	// Články patří k vydání; vydání bez údajů, ke kterému jsou jen články, přibude v seznamu samo
+	clanky := a.exportovatClanky(odkazy)
+	for i := range vydani {
+		vydani[i].Clanky = clanky[vydani[i].Vydani]
+		delete(clanky, vydani[i].Vydani)
+	}
+	for v, c := range clanky {
+		vydani = append(vydani, exportVydani{Vydani: v, Clanky: c})
+	}
+	sort.Slice(vydani, func(i, j int) bool { return vydani[i].Vydani < vydani[j].Vydani })
 	var vybery []exportVyberu
 	for _, v := range a.GetVybery() {
 		e := exportVyberu{Nazev: v.Nazev, Fotky: []exportFotkyVyberu{}}
@@ -288,6 +301,13 @@ func (a *App) importovatVydaniAVybery(vydani []exportVydani, vybery []exportVybe
 		return idPodleOdkazu(odkaz)
 	}
 	for _, v := range vydani {
+		if len(v.Clanky) > 0 {
+			a.importovatClanky(v.Vydani, v.Clanky, idModelky, vysledek)
+		}
+		// Vydání jen s články (bez údajů čísla) údaje čísla nemění
+		if v.Nazev == "" && v.Stav == "" && v.ModelkaObalky == "" && v.NaObalce == "" && v.Poznamka == "" && len(v.Clanky) > 0 {
+			continue
+		}
 		stavajici := a.GetVydaniInfo(v.Vydani)
 		// Na obálce: modelka ze sbírky, jinak jméno textem; pomlčka obojí smaže
 		obalka, naObalce := stavajici.ModelkaObalky, stavajici.NaObalce

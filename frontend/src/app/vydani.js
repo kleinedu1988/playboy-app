@@ -1,5 +1,5 @@
 // Stránka vydání, ročníku a fotografa; údaje čísla
-import { GetAlbaFotografa, GetVydani, GetVydaniInfo, SetVydaniInfo, SetNazevSpecialu } from './backend';
+import { GetAlbaFotografa, GetClanky, GetVydani, GetVydaniInfo, SetVydaniInfo, SetNazevSpecialu } from './backend';
 import { MESICE, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
@@ -17,13 +17,18 @@ import { nacistKalendar } from './kalendar';
 import { otevritCoverModal } from './cover';
 import { otevritLightbox } from './prohlizec';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
+import { htmlClanku, otevritEditorClanku } from './clanky';
 
 // Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
 export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
     if (!bezHistorie) zapamatovatMisto({ vydani });
     const moje = ++stav.cisloNacteni;
-    const [fotky, info] = await Promise.all([GetVydani(vydani).then(f => f || []), GetVydaniInfo(vydani)]);
+    const [fotky, info, clanky] = await Promise.all([GetVydani(vydani).then(f => f || []), GetVydaniInfo(vydani), GetClanky(vydani).then(c => c || [])]);
     if (moje !== stav.cisloNacteni) return;
+    // Při obnovení téhož čísla zůstane otevřený článek, jinak se začíná alby
+    if (vydani !== stav.aktualniVydani || !bezHistorie) stav.vydaniClanek = 0;
+    stav.vydaniClanky = clanky;
+    if (!clanky.some(c => c.id === stav.vydaniClanek)) stav.vydaniClanek = 0;
     stav.aktualniVydani = vydani;
     stav.aktualniFotograf = null;
     ukazatPohled(issueView);
@@ -46,34 +51,48 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
     const odkazNaModelku = a => [{ id: a.modelkaId, jmeno: a.jmenoModelky }, ...a.dalsiModelky]
         .map(m => `<button class="chip" data-modelka="${m.id}" title="Otevřít profil modelky">${esc(m.jmeno)}</button>`).join(' ');
 
+    // Obsah čísla: články podle stran, za nimi centerfold a pictorialy (ty stranu nemají)
+    const albaObsahu = [...centerfoldy, ...ostatni];
+    const polozkaObsahu = (strana, rubrika, nazev, atribut, aktivni) => `
+        <button type="button" class="obsah-polozka ${aktivni ? 'active' : ''}" ${atribut}>
+            <span class="obsah-strana">${strana || ''}</span>
+            <span><span class="obsah-rubrika">${esc(rubrika)}</span><span class="obsah-nazev">${esc(nazev)}</span></span>
+        </button>`;
+    const obsah = [
+        ...stav.vydaniClanky.map(c => polozkaObsahu(c.strana, c.rubrika || 'Článek', c.nazev, `data-clanek="${c.id}"`, c.id === stav.vydaniClanek)),
+        ...albaObsahu.map((a, i) => polozkaObsahu('', a.typ, a.typ === 'Centerfold' ? a.jmenoModelky : a.album, `data-album-obsahu="${i}"`, false)),
+    ].join('');
+    const stavCisla = [
+        coveryVydani.length ? 'cover' : 'bez coveru',
+        centerfoldy.length ? `centerfold <b>${esc(centerfoldy.map(a => a.jmenoModelky).join(', '))}</b>` : 'bez centerfoldu',
+        sklonovat(ostatni.length, 'pictorial', 'pictorialy', 'pictorialů'),
+        sklonovat(fotky.length, 'fotka', 'fotky', 'fotek'),
+    ].join(' · ');
+
     document.getElementById('issueSide').innerHTML = `
         <div class="posters">
             ${coveryVydani.flatMap(a => a.polozky).map(p => htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${index(p)}"`)).join('')
                 || `<div class="profile-cover"><img src="${BEZ_FOTKY}" alt="Bez coveru" draggable="false" /></div>`}
         </div>
-        ${jenRocnik ? '' : `<span class="panel-paska">${esc(paskaCisla(vydani))}</span>`}
-        <h2>${jenRocnik ? 'Ročník ' : ''}${esc(nazevVydani(vydani))}</h2>
-        <div class="issue-add">
-            ${jenRocnik ? '' : '<button class="chip" data-pridat="cover">+ cover</button><button class="chip" data-pridat="centerfold">+ centerfold</button>'}
-            <button class="chip" data-pridat="pictorial">+ pictorial</button>
+        <span class="panel-paska">${esc(paskaCisla(vydani))}</span>
+        <h2>${esc(nazevVydani(vydani))}</h2>
+        <div class="profile-actions pridat-do-cisla">
+            <button class="volba" data-pridat="cover"><span aria-hidden="true">+</span>Cover</button>
+            <button class="volba" data-pridat="centerfold"><span aria-hidden="true">+</span>Centerfold</button>
+            <button class="volba" data-pridat="pictorial"><span aria-hidden="true">+</span>Pictorial</button>
         </div>
-        <dl class="profile-info">
-            ${jenRocnik ? '' : `
-            <div><dt>Cover</dt><dd>${coveryVydani.length ? 'Ano' : 'Zatím chybí'}</dd></div>
-            <div><dt>Centerfold</dt><dd>${centerfoldy.map(a => esc(a.jmenoModelky)).join(', ') || 'Zatím chybí'}</dd></div>`}
-            <div><dt>Pictorialy</dt><dd>${ostatni.length}</dd></div>
-            <div><dt>Fotek celkem</dt><dd>${fotky.length}</dd></div>
-            ${info.jmenoObalky ? `<div><dt>Na obálce</dt><dd><button class="chip" data-modelka="${info.modelkaObalky}">${esc(info.jmenoObalky)}</button></dd></div>`
-                : info.naObalce ? `<div><dt>Na obálce</dt><dd>${esc(info.naObalce)}</dd></div>` : ''}
-            ${info.stav ? `<div><dt>Stav</dt><dd>${NAZVY_STAVU[info.stav]}</dd></div>` : ''}
-        </dl>
+        <h4 class="panel-nadpis">Obsah<button type="button" data-novy-clanek title="Přidat článek do obsahu">+ článek</button></h4>
+        <nav class="obsah-cisla">${obsah || '<p class="obsah-prazdny">Zatím bez článků. Přidej je tlačítkem + článek.</p>'}</nav>
+        <h4 class="panel-nadpis">Číslo</h4>
+        <p class="cislo-udaje">${stavCisla}${info.jmenoObalky ? `<br>na obálce <button class="link" data-modelka="${info.modelkaObalky}">${esc(info.jmenoObalky)}</button>`
+            : info.naObalce ? `<br>na obálce <b>${esc(info.naObalce)}</b>` : ''}${info.stav ? `<br><b>${NAZVY_STAVU[info.stav].toLowerCase()}</b>` : ''}</p>
         ${info.poznamka ? `<p class="profile-note">${esc(info.poznamka)}</p>` : ''}
         <div class="profile-actions"><button class="volba issue-edit" data-upravit-vydani><span aria-hidden="true">✎</span>Upravit číslo…</button></div>
     `;
 
-    document.getElementById('issueMain').innerHTML = [
-        ...centerfoldy.map(a => `
-            <section class="issue-album">
+    const htmlAlb = [
+        ...centerfoldy.map((a, i) => `
+            <section class="issue-album" data-cast="album-${i}">
                 <div class="album-header">
                     <h4>Centerfold</h4>
                     ${odkazNaModelku(a)}
@@ -82,8 +101,8 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
                 <div class="posters">${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU, `data-index="${index(p)}"`)).join('')}</div>
             </section>
         `),
-        ...ostatni.map(a => `
-            <section class="issue-album">
+        ...ostatni.map((a, i) => `
+            <section class="issue-album" data-cast="album-${centerfoldy.length + i}">
                 <div class="album-header">
                     <h4>${esc(a.album)}</h4>
                     <span>${esc(a.typ)} · ${sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek')}</span>
@@ -102,16 +121,37 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
             </section>
         `),
     ].join('') || '<p class="empty-state">K tomuto vydání zatím není přiřazený žádný centerfold ani pictorial. Centerfold se přiřadí měsícem a rokem, pictorial v úpravě alba.</p>';
+    stav.vydaniHtmlAlb = htmlAlb;
+    vykreslitObsahStranky();
+}
 
-    issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
-    pripravitPopisy(issueView);
-    zkratitAlba(issueView);
+// Pravá část stránky čísla: alba čísla, nebo otevřený článek (podle stav.vydaniClanek)
+function vykreslitObsahStranky() {
+    const clanek = stav.vydaniClanky.find(c => c.id === stav.vydaniClanek);
+    issueView.classList.toggle('cteni-clanku', Boolean(clanek));
+    document.querySelectorAll('#issueSide [data-clanek]').forEach(b => b.classList.toggle('active', parseInt(b.dataset.clanek) === stav.vydaniClanek));
+    document.getElementById('issueMain').innerHTML = clanek ? htmlClanku(clanek, stav.vydaniClanky) : stav.vydaniHtmlAlb;
+    if (!clanek) {
+        issueView.querySelectorAll('#issueMain .poster').forEach(p => pripravitPlakat(p));
+        issueView.querySelectorAll('#issueSide .poster').forEach(p => pripravitPlakat(p));
+        pripravitPopisy(issueView);
+        zkratitAlba(issueView);
+    } else {
+        issueView.querySelectorAll('#issueSide .poster').forEach(p => pripravitPlakat(p));
+    }
+}
+
+// Otevření článku (0 = zpět na alba čísla)
+export function ukazatClanek(id) {
+    stav.vydaniClanek = id;
+    vykreslitObsahStranky();
+    document.querySelector('main').scrollTop = 0;
 }
 
 // Obnovení stránky vydání, ročníku nebo fotografa po změně
 export function obnovitStranku() {
-    if (stav.aktualniFotograf) otevritFotografa(stav.aktualniFotograf, { bezHistorie: true });
-    else otevritVydani(stav.aktualniVydani, { bezHistorie: true });
+    if (stav.aktualniFotograf) return otevritFotografa(stav.aktualniFotograf, { bezHistorie: true });
+    return otevritVydani(stav.aktualniVydani, { bezHistorie: true });
 }
 
 // Dlaždice fotky na stránce vydání, ročníku, fotografa a v Nejlepších
@@ -271,6 +311,40 @@ export function pripravit() {
     issueView.addEventListener('click', (e) => {
         if (e.target.closest('[data-upravit-vydani]')) {
             upravitVydani(stav.aktualniVydani);
+            return;
+        }
+        // Obsah čísla: článek, album čísla, nový článek; v článku úprava, skeny a sousední články
+        const clanek = e.target.closest('[data-clanek]');
+        const albumObsahu = e.target.closest('[data-album-obsahu]');
+        if (clanek) {
+            e.stopPropagation();
+            ukazatClanek(parseInt(clanek.dataset.clanek));
+            return;
+        }
+        if (albumObsahu) {
+            e.stopPropagation();
+            if (stav.vydaniClanek) ukazatClanek(0);
+            issueView.querySelector(`[data-cast="album-${albumObsahu.dataset.albumObsahu}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
+        if (e.target.closest('[data-alba-cisla]')) {
+            ukazatClanek(0);
+            return;
+        }
+        if (e.target.closest('[data-novy-clanek]')) {
+            otevritEditorClanku(null, stav.aktualniVydani);
+            return;
+        }
+        if (e.target.closest('[data-upravit-clanek]')) {
+            otevritEditorClanku(stav.vydaniClanky.find(c => c.id === stav.vydaniClanek), stav.aktualniVydani);
+            return;
+        }
+        const sken = e.target.closest('[data-sken]');
+        if (sken) {
+            // Skeny stran v prohlížeči fotek, od kliknutého
+            const c = stav.vydaniClanky.find(x => x.id === stav.vydaniClanek);
+            const polozky = c.skenyUrl.map((url, i) => ({ fotky: [{ id: 0, url, rotace: 0, driveId: c.skeny[i], hodnoceni: 0 }], album: c.nazev, typ: 'Sken', modelkaId: 0, jmenoModelky: '', rotace: 0, hodnoceni: 0 }));
+            otevritLightbox(parseInt(sken.dataset.sken), false, polozky);
             return;
         }
         const pridat = e.target.closest('[data-pridat]')?.dataset.pridat;

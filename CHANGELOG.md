@@ -5,6 +5,30 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.30.0] – 2026-10-15
+
+Číslo časopisu jako magazín: obsah a články s textem. Schéma databáze: úprava č. 9 (tabulka článků). Formát
+exportu: verze 7 (starší verze 1–6 se dál načtou).
+
+### Přidáno
+- **Obsah čísla** v levém panelu stránky čísla: články podle stran (číslo strany, rubrika drobnými růžovými
+  kapitálkami, název), za nimi centerfold a pictorialy čísla. Levý panel při rolování zůstává na místě
+  a obsah se v něm posouvá. Pod obsahem zkrácené údaje čísla (cover, centerfold, pictorialy, fotky, kdo je na
+  obálce, stav).
+- **Čtení článku** v pravé části: rubrika, strana a druh textu, velký nadpis, autor a modelka (odkaz na
+  profil), první odstavec jako perex s růžovým iniciálem, citáty („> “) s růžovou čarou, zvýrazněné otázky
+  („PLAYBOY:“), náhledy skenů stran (otevřou se v prohlížeči fotek) a odkazy na předchozí a další článek.
+  „Alba čísla“ vrátí centerfold a pictorialy; při čtení je cover v panelu menší.
+- Okno **Nový článek / Upravit článek** (styl okna Doplnit modelku): rubrika s nabídkou obvyklých (Úvodník,
+  Playboy Interview, 20 otázek, Článek, Povídka, Móda, Humor, Advisor, Pictorial, Centerfold) i vlastních,
+  autor, strana, název, modelka ze sbírky, druh textu (přepis, shrnutí), text a odkazy na skeny z Disku;
+  mazání článku s potvrzením.
+- Články v exportu a importu u vydání (klíč `clanky`); článek se v čísle pozná podle názvu, prázdný údaj
+  ponechá stávající, „-“ ho smaže. Popis v EXPORT.md a vzor-exportu.yaml.
+
+### Změněno
+- Přidávání do čísla jako pilulka **+ Cover | + Centerfold | + Pictorial** pod názvem čísla.
+
 ## [0.19.2] – 2026-10-15
 
 ### Změněno

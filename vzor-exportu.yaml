@@ -1,4 +1,4 @@
-# Vzor souboru pro import – formát verze 6 (popis všech klíčů je v EXPORT.md)
+# Vzor souboru pro import – formát verze 7 (popis všech klíčů je v EXPORT.md)
 #
 # Pravidla zápisu:
 # - odsazení mezerami (ne tabulátorem), vždy o dvě; každá položka seznamu začíná „- “
@@ -8,7 +8,7 @@
 # - hodnota - (pomlčka) údaj smaže, např. „narodnost: -“; překlep v klíči import opraví a vypíše
 # - řádky začínající # jsou komentáře, import je přeskočí
 
-verze: 6
+verze: 7
 
 modelky:
   # Modelka se všemi údaji
@@ -131,6 +131,19 @@ vydani:
   - vydani: "1955-01"
     stav: shanim                            # mam | shanim | nezajima
     na_obalce: "Bettie Page"                # na obálce je někdo, kdo ve sbírce není (volný text)
+  - vydani: "1996-01"
+    clanky:                                 # obsah čísla; článek se pozná podle názvu v čísle
+      - strana: 27
+        rubrika: "Playboy Interview"
+        nazev: "Rozhovor s hercem roku"
+        autor: "Lawrence Grobel"
+        druh: prepis                        # prepis | shrnuti
+        text: |
+          Na place působí jako muž, který má všechno pod kontrolou.
+
+          PLAYBOY: Začněme otázkou, kterou slyšíte nejčastěji.
+
+          > „Hrát někoho, komu nerozumíte, je jako tančit v cizích botách.“
 
 # Vlastní výběry fotek napříč sbírkou
 vybery:

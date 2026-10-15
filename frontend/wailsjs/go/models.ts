@@ -440,6 +440,42 @@ export namespace main {
 	    }
 	}
 	
+	export class Clanek {
+	    id: number;
+	    vydani: string;
+	    strana: number;
+	    rubrika: string;
+	    nazev: string;
+	    autor: string;
+	    modelkaId: number;
+	    jmenoModelky: string;
+	    druh: string;
+	    text: string;
+	    skeny: string[];
+	    skenyUrl: string[];
+	    skenyOdkazy: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Clanek(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.vydani = source["vydani"];
+	        this.strana = source["strana"];
+	        this.rubrika = source["rubrika"];
+	        this.nazev = source["nazev"];
+	        this.autor = source["autor"];
+	        this.modelkaId = source["modelkaId"];
+	        this.jmenoModelky = source["jmenoModelky"];
+	        this.druh = source["druh"];
+	        this.text = source["text"];
+	        this.skeny = source["skeny"];
+	        this.skenyUrl = source["skenyUrl"];
+	        this.skenyOdkazy = source["skenyOdkazy"];
+	    }
+	}
 	export class VydaniInfo {
 	    vydani: string;
 	    poznamka: string;

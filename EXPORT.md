@@ -1,7 +1,7 @@
-# Formát exportu (verze 6)
+# Formát exportu (verze 7)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 6** (program 0.18.0 a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 7** (program 0.30.0 a novější).
 
 Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-exportu.yaml); jde rovnou načíst importem.
 
@@ -37,7 +37,7 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 ## Celek
 
 ```yaml
-verze: 6
+verze: 7
 modelky: [...]   # modelky s jejich alby
 covery: [...]    # obálky časopisu, nepatří k modelce
 vydani: [...]    # stav a poznámky k jednotlivým číslům
@@ -106,6 +106,19 @@ vydani:
     poznamka: ...
   - vydani: 1980-05
     na_obalce: Jméno Příjmení   # na obálce je někdo, kdo ve sbírce není (volný text)
+  - vydani: 1996-01
+    clanky:               # články čísla (obsah); článek se pozná podle názvu v čísle
+      - strana: 27        # nepovinné
+        rubrika: Playboy Interview   # volný text; obvyklé: Úvodník, Playboy Interview, 20 otázek, Článek, Povídka, Móda, Humor, Advisor
+        nazev: Rozhovor s hercem roku
+        autor: Lawrence Grobel
+        modelka: Anna     # nepovinné; odkaz na modelku ze sbírky
+        druh: prepis      # prepis | shrnuti (nepovinné)
+        text: |           # odstavce oddělené prázdným řádkem; první je perex, „> “ citát
+          Perex článku…
+
+          PLAYBOY: Otázka?
+        skeny: [id, ...]  # nepovinné; id souborů na Disku (skeny stran)
 vybery:
   - nazev: Nejlepší
     fotky:
@@ -122,6 +135,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 7 | 0.30.0 | Články čísla: `clanky` u vydání (strana, rubrika, název, autor, modelka, druh, text, skeny) |
 | 6 | 0.18.0 | `umrti_datum` u modelky, data narození a úmrtí i neúplná (`RRRR`, `RRRR-MM`), `na_obalce` u čísla, `-` údaj smaže, oprava překlepů v klíčích |
 | 5 | 0.13.0 | Speciály (`RRRR-Snn`) a jejich `nazev` u vydání, stav čísla `mam` |
 | 4 | 0.10.0 | Kontrola verze, `cislo` a odkazy `Jméno [číslo]`, `netyka_se` u modelky i alba, `pridano` u fotky, `spojit` a `rucni_poradi` u coveru, alba bez fotek |

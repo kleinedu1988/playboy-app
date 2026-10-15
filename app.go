@@ -747,6 +747,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceAlbumJakoZaznam,
 	(*App).migraceSpecialy,
 	(*App).migraceUmrtiAObalka,
+	(*App).migraceClanky,
 }
 
 func (a *App) migrovat() error {
@@ -1487,6 +1488,7 @@ func (a *App) DeleteVse() bool {
 	dotazy := []string{
 		"DELETE FROM fotky",
 		"DELETE FROM alba",
+		"DELETE FROM clanky",
 		"DELETE FROM vydani",
 		"DELETE FROM vybery",
 		"DELETE FROM modelky",

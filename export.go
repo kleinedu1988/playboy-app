@@ -94,7 +94,7 @@ type exportCover struct {
 }
 
 // Verze formátu exportu, kterou program zapisuje a nejvýš umí načíst; popis je v EXPORT.md
-const verzeExportu = 6
+const verzeExportu = 7
 
 // Odkaz na modelku v exportu (další modelka alba, obálka, výběr): jméno, u jmen, která má víc modelek,
 // doplněné o číslo modelky v hranatých závorkách („Anna [12]“)
@@ -493,7 +493,7 @@ var vzorRadkuHodnoty = regexp.MustCompile(`^(\s*(?:- )?[A-Za-z_]+):[ \t]+(.+?)[ 
 // Klíče formátu exportu (podle značek yaml ve strukturách); řádek „Zdroj: Wikipedie“ uvnitř textu klíčem není
 var znameKlice = func() map[string]bool {
 	klice := map[string]bool{}
-	for _, v := range []interface{}{exportDat{}, exportModelka{}, exportAlbum{}, exportFotka{}, exportVyrez{}, exportCover{}, exportVydani{}, exportVyberu{}, exportFotkyVyberu{}} {
+	for _, v := range []interface{}{exportDat{}, exportModelka{}, exportAlbum{}, exportFotka{}, exportVyrez{}, exportCover{}, exportVydani{}, exportVyberu{}, exportFotkyVyberu{}, exportClanek{}} {
 		t := reflect.TypeOf(v)
 		for i := 0; i < t.NumField(); i++ {
 			if nazev := strings.Split(t.Field(i).Tag.Get("yaml"), ",")[0]; nazev != "" {

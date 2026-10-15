@@ -52,6 +52,11 @@ export const stav = {
     prehledSkryte: false,
     prehledLimit: 60,
     // Okno „Doplnit modelku“: modelka, její řádek Přehledu a zvolené hodnocení
+    // Stránka čísla: články, otevřený článek (0 = alba čísla) a vykreslená alba
+    vydaniClanky: [],
+    vydaniClanek: 0,
+    vydaniHtmlAlb: '',
+    editovanyClanek: null,
     doplnovanaModelka: null,
     doplnovanyRadek: null,
     doplnovaneHodnoceni: 0,

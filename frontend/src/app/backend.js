@@ -11,6 +11,7 @@ const CTENI = new Set([
     'GetFotkyVyberu',
     'GetFotografieModelky',
     'GetFotografove',
+    'GetClanky',
     'GetKalendar',
     'GetModelky',
     'GetNejlepsiFotky',
@@ -46,9 +47,11 @@ function obalit(jmeno) {
 }
 
 export const AddBulkPhotos = /** @type {typeof App.AddBulkPhotos} */ (obalit('AddBulkPhotos'));
+export const AddClanek = /** @type {typeof App.AddClanek} */ (obalit('AddClanek'));
 export const AddCover = /** @type {typeof App.AddCover} */ (obalit('AddCover'));
 export const AddModelka = /** @type {typeof App.AddModelka} */ (obalit('AddModelka'));
 export const DeleteAlbum = /** @type {typeof App.DeleteAlbum} */ (obalit('DeleteAlbum'));
+export const DeleteClanek = /** @type {typeof App.DeleteClanek} */ (obalit('DeleteClanek'));
 export const DeleteFotografie = /** @type {typeof App.DeleteFotografie} */ (obalit('DeleteFotografie'));
 export const DeleteFotografieHromadne = /** @type {typeof App.DeleteFotografieHromadne} */ (obalit('DeleteFotografieHromadne'));
 export const DeleteModelka = /** @type {typeof App.DeleteModelka} */ (obalit('DeleteModelka'));
@@ -56,6 +59,7 @@ export const DeleteVse = /** @type {typeof App.DeleteVse} */ (obalit('DeleteVse'
 export const ExportovatDoSouboru = /** @type {typeof App.ExportovatDoSouboru} */ (obalit('ExportovatDoSouboru'));
 export const GetAlbaFotografa = /** @type {typeof App.GetAlbaFotografa} */ (obalit('GetAlbaFotografa'));
 export const GetCenterfoldy = /** @type {typeof App.GetCenterfoldy} */ (obalit('GetCenterfoldy'));
+export const GetClanky = /** @type {typeof App.GetClanky} */ (obalit('GetClanky'));
 export const GetCovery = /** @type {typeof App.GetCovery} */ (obalit('GetCovery'));
 export const GetFotkyVyberu = /** @type {typeof App.GetFotkyVyberu} */ (obalit('GetFotkyVyberu'));
 export const GetFotografieModelky = /** @type {typeof App.GetFotografieModelky} */ (obalit('GetFotografieModelky'));
@@ -110,6 +114,7 @@ export const SlozkaZaloh = /** @type {typeof App.SlozkaZaloh} */ (obalit('Slozka
 export const SmazatVyber = /** @type {typeof App.SmazatVyber} */ (obalit('SmazatVyber'));
 export const StavDatabaze = /** @type {typeof App.StavDatabaze} */ (obalit('StavDatabaze'));
 export const UpdateAlbum = /** @type {typeof App.UpdateAlbum} */ (obalit('UpdateAlbum'));
+export const UpdateClanek = /** @type {typeof App.UpdateClanek} */ (obalit('UpdateClanek'));
 export const UpdateCover = /** @type {typeof App.UpdateCover} */ (obalit('UpdateCover'));
 export const UpdateModelka = /** @type {typeof App.UpdateModelka} */ (obalit('UpdateModelka'));
 export const VyberPodleNazvu = /** @type {typeof App.VyberPodleNazvu} */ (obalit('VyberPodleNazvu'));

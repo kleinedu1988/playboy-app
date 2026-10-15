@@ -586,8 +586,9 @@ export const SABLONA_OKNA = `
   <div id="lightbox" class="lightbox hidden">
     <div id="lbStage"></div>
     <div class="lightbox-top">
-      <!-- Jedna průhledná pilulka přes celou šířku: vlevo vydání a jméno, uprostřed nástroje, vpravo listování a zavření -->
+      <!-- Jedna průhledná pilulka přes celou šířku: na krajích šipky, vlevo vydání a jméno, uprostřed nástroje, vpravo pořadí a zavření -->
       <div class="lb-lista">
+        <button id="lbPrev" class="lb-btn lb-sipka" title="Předchozí (šipka vlevo)">&#8249;</button>
         <div class="lb-popis">
           <span id="lbPaska" class="lb-paska hidden"></span>
           <span id="lbCaption" class="lb-caption"></span>
@@ -614,12 +615,11 @@ export const SABLONA_OKNA = `
           <button id="lbMore" class="lb-btn tile-more" title="Akce s fotkou: do výběru, profil, Disk, odebrat">&#8943;</button>
         </div>
         <div class="lb-vpravo">
-          <button id="lbPrev" class="lb-btn lb-sipka" title="Předchozí (šipka vlevo)">&#8249;</button>
           <span id="lbCounter" class="lb-counter"></span>
-          <button id="lbNext" class="lb-btn lb-sipka" title="Další (šipka vpravo)">&#8250;</button>
           <span class="lb-oddelovac"></span>
           <button id="lbClose" class="lb-btn lb-zavrit" title="Zavřít (Esc)">&times;</button>
         </div>
+        <button id="lbNext" class="lb-btn lb-sipka" title="Další (šipka vpravo)">&#8250;</button>
       </div>
     </div>
     <nav id="lbNav"></nav>

@@ -3145,7 +3145,7 @@ body.razeni .photo-item {
     pointer-events: none;
 }
 
-/* Jedna průhledná pilulka přes celou šířku: vydání a jméno, nástroje, listování a zavření */
+/* Jedna průhledná pilulka přes celou šířku: šipky na krajích, vydání a jméno, nástroje, pořadí a zavření */
 .lb-lista {
     display: flex;
     align-items: center;
@@ -3244,7 +3244,12 @@ body.razeni .photo-item {
 }
 
 .lb-lista .lb-sipka {
+    flex: none;
     font-size: 24px;
+}
+
+.lb-vpravo .lb-counter {
+    margin-right: 4px;
 }
 
 .lb-oddelovac {

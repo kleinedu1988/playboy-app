@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.7] – 2026-10-15
+
+### Změněno
+- Pole hledání má vzhled panelu voleb pod ním: zaoblená pilulka s okrajem a stínem, růžová lupa.
+
+### Přidáno
+- **Ctrl+F** skočí do hledání a označí jeho text (mimo otevřené okno, prohlížeč fotek a zamčený program).
+  Vpravo v poli je nápověda „Ctrl F“; při psaní ji nahradí tlačítko **✕**, které hledání smaže.
+
 ## [0.18.6] – 2026-10-15
 
 ### Změněno

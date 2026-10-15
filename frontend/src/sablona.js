@@ -14,7 +14,9 @@ export const SABLONA_OKNA = `
       <div class="nav-controls">
         <label class="hledani">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a čísla: jméno nebo vydání." />
+          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a čísla: jméno nebo vydání. Do hledání skočíš klávesami Ctrl+F." />
+          <kbd class="hledani-zkratka" aria-hidden="true">Ctrl F</kbd>
+          <button type="button" id="searchClearBtn" class="hledani-smazat" title="Smazat hledání" aria-label="Smazat hledání">&times;</button>
         </label>
       </div>
       <div class="window-controls">

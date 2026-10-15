@@ -262,6 +262,23 @@ export function pripravit() {
         obnovitPoUlozeniAlba(modelka);
     });
 
+    // ✕ v hledání: smaže text a hledání se obnoví jako po ručním smazání
+    document.getElementById('searchClearBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.focus();
+    });
+
+    // Ctrl+F skočí do hledání odkudkoli kromě otevřeného okna, prohlížeče a zamčeného programu
+    document.addEventListener('keydown', (e) => {
+        if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== 'f') return;
+        if (stav.zamceno || searchInput.disabled || document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) return;
+        e.preventDefault();
+        searchInput.focus();
+        searchInput.select();
+    });
+
     searchInput.addEventListener('input', () => {
         clearTimeout(stav.casovacHledani);
         stav.casovacHledani = setTimeout(() => {

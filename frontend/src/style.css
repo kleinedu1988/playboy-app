@@ -282,25 +282,28 @@ textarea {
 
 .hledani svg {
     position: absolute;
-    left: 10px;
+    left: 14px;
     top: 50%;
     width: 14px;
     height: 14px;
     margin-top: -7px;
     fill: none;
-    stroke: var(--text-muted);
+    stroke: var(--accent-text);
     stroke-width: 2;
     stroke-linecap: round;
     pointer-events: none;
 }
 
+/* Hledání jako pilulka ve stylu panelu voleb pod ním: okraj, stín, růžová lupa; vpravo nápověda Ctrl F,
+   při psaní místo ní ✕ na smazání */
 .nav-controls input {
     width: 100%;
-    height: 28px;
-    padding: 0 12px 0 32px;
-    border-radius: 6px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-card);
+    height: 32px;
+    padding: 0 70px 0 36px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
     color: var(--text-main);
     font-size: 13px;
     outline: none;
@@ -312,6 +315,53 @@ textarea {
 
 .nav-controls input:disabled {
     opacity: 0.5;
+}
+
+.hledani-zkratka,
+.hledani-smazat {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+}
+
+.hledani-zkratka {
+    padding: 1px 7px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.hledani-smazat {
+    display: none;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+    font-size: 14px;
+    line-height: 20px;
+    cursor: pointer;
+}
+
+.hledani-smazat:hover {
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.hledani input:not(:placeholder-shown) ~ .hledani-zkratka,
+.hledani input:disabled ~ .hledani-zkratka {
+    display: none;
+}
+
+.hledani input:not(:placeholder-shown):not(:disabled) ~ .hledani-smazat {
+    display: block;
 }
 
 .nav-akce {

@@ -129,6 +129,14 @@ function vykreslitObsahStranky() {
     issueView.classList.toggle('cteni-clanku', Boolean(clanek));
     document.querySelectorAll('#issueSide [data-clanek]').forEach(b => b.classList.toggle('active', parseInt(b.dataset.clanek) === stav.vydaniClanek));
     document.getElementById('issueMain').innerHTML = clanek ? htmlClanku(clanek, stav.vydaniClanky) : stav.vydaniHtmlAlb;
+    issueView.style.setProperty('--precteno', '0%');
+    if (clanek) {
+        requestAnimationFrame(oznacitPrecteno);
+        // V proužku (úzké okno) je čtený článek vidět
+        const prouzek = issueView.querySelector('.clanek-prouzek');
+        const aktivni = prouzek?.querySelector('.active');
+        if (aktivni) prouzek.scrollLeft = aktivni.offsetLeft - prouzek.clientWidth / 2 + aktivni.offsetWidth / 2;
+    }
     if (!clanek) {
         issueView.querySelectorAll('#issueMain .poster').forEach(p => pripravitPlakat(p));
         issueView.querySelectorAll('#issueSide .poster').forEach(p => pripravitPlakat(p));
@@ -286,7 +294,19 @@ export async function upravitVydani(vydani) {
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
+// Ukazatel přečteného: kolik z otevřeného článku už odrolovalo (0–100 %) v obsahu vlevo i v proužku
+function oznacitPrecteno() {
+    const clanek = issueView.querySelector('.clanek');
+    if (!clanek || issueView.classList.contains('hidden')) return;
+    const oblast = document.querySelector('main');
+    const zbyva = clanek.offsetHeight - oblast.clientHeight;
+    const odrolovano = oblast.getBoundingClientRect().top - clanek.getBoundingClientRect().top;
+    const procent = zbyva > 0 ? Math.min(100, Math.max(0, odrolovano / zbyva * 100)) : 100;
+    issueView.style.setProperty('--precteno', `${procent}%`);
+}
+
 export function pripravit() {
+    document.querySelector('main').addEventListener('scroll', oznacitPrecteno, { passive: true });
     document.getElementById('issueForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
         // Modelka ze sbírky se propojí s profilem; jméno, které ve sbírce není, se uloží jako text

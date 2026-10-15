@@ -4709,11 +4709,15 @@ textarea {
 }
 
 /* Stránka čísla jako magazín: levý panel zůstává při rolování na místě a obsah čísla v něm jde posouvat */
+/* Levá a pravá část se rolují nezávisle: panel stojí na celou výšku okna a roluje si svůj obsah sám,
+   kolečko u jeho konce nepřejde na článek vpravo */
 #issueView:not(.hidden) #issueSide {
     position: sticky;
     top: 0;
     max-height: calc(100vh - 150px);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
 }
 
 /* Při čtení článku je cover menší, aby měl obsah místo */
@@ -5039,4 +5043,92 @@ textarea {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
+}
+
+/* Ukazatel přečteného u čteného článku v obsahu: tenká růžová čára pod názvem */
+#issueView.cteni-clanku .obsah-polozka.active {
+    position: relative;
+}
+
+#issueView.cteni-clanku .obsah-polozka.active::after {
+    content: '';
+    position: absolute;
+    left: 50px;
+    right: 12px;
+    bottom: 3px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent-hover), var(--accent-text)) no-repeat left / var(--precteno, 0%) 100%,
+        rgba(255, 255, 255, 0.08);
+}
+
+/* Proužek s obsahem nad článkem: jen v úzkém okně, kde je levý panel nad obsahem */
+.clanek-prouzek {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    #issueView:not(.hidden) #issueSide {
+        position: relative;
+        max-height: none;
+        overflow: hidden;
+    }
+
+    .clanek-prouzek {
+        position: sticky;
+        top: -24px;
+        z-index: 6;
+        display: flex;
+        gap: 4px;
+        margin: 0 0 18px;
+        padding: 3px 6px 6px;
+        overflow-x: auto;
+        border: 1px solid var(--panel-okraj);
+        border-radius: 999px;
+        background-color: rgb(32, 32, 36);
+        box-shadow: var(--panel-stin), 0 -10px 0 10px var(--bg-main);
+        scrollbar-width: none;
+    }
+
+    .clanek-prouzek button {
+        flex: none;
+        padding: 4px 12px;
+        border: none;
+        border-radius: 999px;
+        background: none;
+        color: var(--text-muted);
+        font-size: 12px;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .clanek-prouzek button b {
+        margin-right: 6px;
+        font-size: 11px;
+        font-weight: 300;
+    }
+
+    .clanek-prouzek button.active {
+        background-color: var(--accent-soft);
+        box-shadow: inset 0 0 0 1px var(--accent);
+        color: var(--text-main);
+    }
+
+    .clanek-precteno {
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        bottom: 1px;
+        height: 2px;
+        border-radius: 2px;
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+
+    .clanek-precteno i {
+        display: block;
+        width: var(--precteno, 0%);
+        height: 100%;
+        border-radius: 2px;
+        background: linear-gradient(90deg, var(--accent-hover), var(--accent-text));
+    }
 }

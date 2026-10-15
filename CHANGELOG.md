@@ -5,6 +5,16 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.30.2] – 2026-10-15
+
+### Změněno
+- Stránka čísla: levá a pravá část se rolují nezávisle. Levý panel stojí na celou výšku okna a roluje si svůj
+  obsah sám; kolečko u jeho konce už nepřejde na článek vpravo.
+- Ukazatel přečteného: u čteného článku v obsahu se pod názvem plní tenká růžová čára podle toho, kolik
+  článku už je odrolováno.
+- V úzkém okně (pod 760 px), kde je levý panel nad obsahem, je nad článkem tenký proužek s obsahem čísla
+  (čtený článek zvýrazněný) a ukazatelem přečteného; zůstává nahoře celou dobu čtení.
+
 ## [0.30.1] – 2026-10-15
 
 ### Změněno

@@ -31,8 +31,15 @@ export function htmlClanku(c, vsechny) {
     const predchozi = vsechny[poradi - 1];
     const dalsi = vsechny[poradi + 1];
     const zahlavi = [c.rubrika || 'Článek', c.strana ? `strana ${c.strana}` : '', NAZVY_DRUHU[c.druh] || ''].filter(Boolean).join(' · ');
+    // Tenký proužek s obsahem a ukazatelem přečteného; vidět jen v úzkém okně, kde levý panel není u čtení
+    const prouzek = `
+        <nav class="clanek-prouzek">
+            ${vsechny.map(x => `<button type="button" class="${x.id === c.id ? 'active' : ''}" data-clanek="${x.id}">${x.strana ? `<b>${x.strana}</b>` : ''}${esc(x.nazev)}</button>`).join('')}
+            <span class="clanek-precteno"><i></i></span>
+        </nav>`;
     return `
         <article class="clanek">
+            ${prouzek}
             <div class="clanek-akce">
                 <button class="volba" data-alba-cisla><span aria-hidden="true">←</span>Alba čísla</button>
                 <button class="volba" data-upravit-clanek><span aria-hidden="true">✎</span>Upravit článek</button>

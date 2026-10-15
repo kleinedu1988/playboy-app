@@ -258,6 +258,8 @@ export async function otevritFotografa(jmeno, { bezHistorie = false } = {}) {
     const moje = ++stav.cisloNacteni;
     const fotky = await GetAlbaFotografa(jmeno) || [];
     if (moje !== stav.cisloNacteni) return;
+    // Jiný fotograf začíná se všemi alby; obnovení téže stránky filtr nechá
+    if (stav.aktualniFotograf !== jmeno) stav.fotografFiltr = 'vse';
     stav.aktualniFotograf = jmeno;
     ukazatPohled(issueView);
     document.querySelector('main').scrollTop = 0;
@@ -266,10 +268,6 @@ export async function otevritFotografa(jmeno, { bezHistorie = false } = {}) {
         const v = a => (a.typ === 'Centerfold' || a.typ === 'Cover' ? a.album : a.vydani) || '9999';
         return v(x).localeCompare(v(y));
     });
-    stav.vydaniPolozky = alba.flatMap(a => a.polozky);
-    // Index položky z mapy sestavené jednou, ne hledáním v poli u každé dlaždice
-    const indexy = new Map(stav.vydaniPolozky.map((p, i) => [p, i]));
-    const index = p => indexy.get(p);
     const modelek = new Set(alba.flatMap(a => [a.modelkaId, ...a.dalsiModelky.map(m => m.id)])).size;
 
     // Stejný panel jako ročník: drobný růžový nadpis, velké jméno, čísla
@@ -281,14 +279,45 @@ export async function otevritFotografa(jmeno, { bezHistorie = false } = {}) {
                 .map(([n, popis]) => `<div><strong>${n}</strong><span>${popis}</span></div>`).join('')}
         </div>
     `;
-    document.getElementById('issueMain').innerHTML = alba.map((a, i) => `<div data-cast="${i}">${htmlAlbaStranky(a, index, { sVydanim: true })}</div>`).join('')
-        || '<p class="empty-state">Fotograf zatím nemá žádné album.</p>';
-    listaStranky.naplnit(alba.map((a, i) => ({ klic: i, nazev: `${a.jmenoModelky} – ${nazevAlba(a.album, a.typ)}`, pocet: a.fotky.length })));
+    albaFotografa = alba;
+    vykreslitAlbaFotografa();
+}
 
-    issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
-    pripravitPopisy(issueView);
-    zkratitAlba(issueView);
-    listaStranky.sledovat();
+// Alba fotografa jako mřížka karet (jako ročník): obálka alba s páskou vydání, počet fotek, pod ní modelka
+// a název alba. Filtr nahoře: vše, centerfoldy, ostatní alba. Klik na kartu otevře album v prohlížeči.
+let albaFotografa = [];
+const FILTRY_FOTOGRAFA = { vse: 'Vše', centerfoldy: 'Centerfoldy', alba: 'Pictorialy a alba' };
+
+function vykreslitAlbaFotografa() {
+    const jeCenterfold = a => a.typ === 'Centerfold';
+    const pocty = { vse: albaFotografa.length, centerfoldy: albaFotografa.filter(jeCenterfold).length };
+    pocty.alba = pocty.vse - pocty.centerfoldy;
+    if (!pocty[stav.fotografFiltr]) stav.fotografFiltr = 'vse';
+    const alba = albaFotografa.filter(a => stav.fotografFiltr === 'vse' || (stav.fotografFiltr === 'centerfoldy') === jeCenterfold(a));
+    stav.vydaniPolozky = alba.flatMap(a => a.polozky);
+
+    let index = 0;
+    const karty = alba.map(a => {
+        const prvni = index;
+        index += a.polozky.length;
+        const vydani = a.typ === 'Centerfold' || a.typ === 'Cover' ? a.album : a.vydani;
+        const paska = paskaCisla(vydani);
+        return `<button class="rocnik-karta" data-index="${prvni}" title="${esc(`${a.jmenoModelky} – ${nazevAlba(a.album, a.typ)}`)}">
+            <span class="rocnik-obalka">
+                <img src="${esc(obrazek(a.fotky[0].url, VELIKOST_PLAKATU_MALA))}" alt="" loading="lazy" draggable="false" />
+                ${paska ? `<span class="rocnik-paska">${esc(paska)}</span>` : ''}
+                ${jeCenterfold(a) ? '' : `<span class="fotograf-pocet">${esc(sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek'))}</span>`}
+            </span>
+            <span class="rocnik-popis"><b>${esc([a.jmenoModelky, ...a.dalsiModelky.map(m => m.jmeno)].filter(Boolean).join(' a '))}</b>${esc(jeCenterfold(a) ? 'Centerfold' : nazevAlba(a.album, a.typ))}</span>
+        </button>`;
+    }).join('');
+
+    document.getElementById('issueMain').innerHTML = albaFotografa.length ? `
+        ${pocty.centerfoldy && pocty.alba ? `<div class="fotograf-filtr">${Object.entries(FILTRY_FOTOGRAFA).map(([klic, nazev]) =>
+            `<button class="${klic === stav.fotografFiltr ? 'active' : ''}" data-filtr-fotografa="${klic}">${nazev} <span>${pocty[klic]}</span></button>`).join('')}</div>` : ''}
+        <div class="rocnik-mrizka">${karty}</div>`
+        : '<p class="empty-state">Fotograf zatím nemá žádné album.</p>';
+    listaStranky.naplnit([]);
 }
 
 // Údaje čísla: stav ve sbírce, modelka z obálky, poznámka
@@ -402,6 +431,13 @@ export function pripravit() {
         if (sken) {
             // Skeny stran v prohlížeči stran (dvojstrana jako v časopise), od kliknutého
             otevritCtecku(stav.vydaniClanky.find(x => x.id === parseInt(sken.closest('[data-id-clanku]').dataset.idClanku)), parseInt(sken.dataset.sken));
+            return;
+        }
+        const filtr = e.target.closest('[data-filtr-fotografa]');
+        if (filtr) {
+            e.stopPropagation();
+            stav.fotografFiltr = filtr.dataset.filtrFotografa;
+            vykreslitAlbaFotografa();
             return;
         }
         const prazdne = e.target.closest('[data-prazdne]');

@@ -6053,3 +6053,47 @@ textarea {
     text-align: center;
     text-transform: uppercase;
 }
+
+/* Stránka fotografa: filtr nad mřížkou alb a počet fotek na obálce alba */
+.fotograf-filtr {
+    display: flex;
+    gap: 4px;
+    width: max-content;
+    margin-bottom: 20px;
+    padding: 4px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+}
+
+.fotograf-filtr button {
+    padding: 5px 14px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.fotograf-filtr button span {
+    margin-left: 4px;
+    color: var(--text-muted);
+}
+
+.fotograf-filtr button.active {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--text-main);
+}
+
+.fotograf-pocet {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    padding: 2px 8px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: rgba(20, 20, 23, 0.8);
+    font-size: 10.5px;
+}

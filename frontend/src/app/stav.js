@@ -40,6 +40,8 @@ export const stav = {
     upravovaneVydani: null,
     kalendarData: null,
     stavyVydaniData: null,
+    // Filtr stránky fotografa: vse, centerfoldy, alba
+    fotografFiltr: 'vse',
     // Kalendář ukazuje jednu edici; volba se pamatuje
     kalendarEdice: VYCHOZI_EDICE,
     // Modelky a jejich nedoplněná alba pro akce v buňkách přehledu

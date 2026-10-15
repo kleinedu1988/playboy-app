@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.3] – 2026-10-15
+
+### Změněno
+- Stránka fotografa: alba a centerfoldy jako mřížka karet (jako ročník) – obálka alba s páskou vydání,
+  u alb počet fotek, pod kartou jméno modelky a název alba; chronologicky. Nahoře filtr Vše · Centerfoldy ·
+  Pictorialy a alba (jen když má fotograf obojí). Klik na kartu otevře album v prohlížeči fotek, pravé
+  tlačítko nabídne profil modelky, výběr a další akce. Velké plakáty a řada štítků nad každým albem zmizely.
+
 ## [0.32.2] – 2026-10-15
 
 ### Změněno

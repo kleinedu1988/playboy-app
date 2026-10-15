@@ -38,6 +38,11 @@ function ukazatVolby(lista) {
     cil.classList.toggle('hidden', !lista);
     if (!lista) return;
 
+    // Volby a tlačítka jsou v jednom plovoucím panelu s dělicími čarami; počet zůstává vedle panelu
+    const panel = document.createElement('div');
+    panel.className = 'volby-skupina';
+    cil.append(panel);
+
     const skupiny = new Map();
     lista.querySelectorAll('.chip').forEach(stitek => {
         const klic = Object.keys(stitek.dataset)[0];
@@ -72,18 +77,20 @@ function ukazatVolby(lista) {
             const r = tlacitko.getBoundingClientRect();
             otevritKontextovouNabidku(r.left, r.bottom + 4, polozky);
         });
-        cil.append(tlacitko);
+        panel.append(tlacitko);
     });
 
     // Další tlačítka řádku (Spustit slideshow) jako tlačítka lišty; klik na ně klikne na původní
     lista.querySelectorAll('button:not(.chip):not(.link)').forEach(puvodni => {
         const tlacitko = document.createElement('button');
         tlacitko.type = 'button';
-        tlacitko.className = 'volba';
+        tlacitko.className = 'volba akce';
         tlacitko.textContent = puvodni.textContent.trim();
         tlacitko.addEventListener('click', () => puvodni.click());
-        cil.append(tlacitko);
+        panel.append(tlacitko);
     });
+
+    if (!panel.childElementCount) panel.remove();
 
     // Počet (22 modelek, 78 fotek)
     const pocet = [...lista.querySelectorAll(':scope > span:not([hidden])')].map(s => s.textContent.trim()).filter(Boolean).pop();

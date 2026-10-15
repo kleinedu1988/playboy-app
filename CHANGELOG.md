@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.18.4] – 2026-10-15
+
+### Změněno
+- Volby přehledu v horní liště (Řazení, Srdíčka, Výběr, Edice, Spustit slideshow) jsou v jednom zaobleném
+  plovoucím panelu s dělicími čarami. Hodnota je tučně, šipka ▾ v barvě akcentu; zapnutý filtr srdíček je
+  podbarvený a jeho hodnota v akcentu; „Spustit slideshow“ je v akcentu jako akce. Počet zůstává vedle panelu.
+- Tlačítka **✎ Upravit** a **+ Přidat fotky** pod jménem modelky mají vzhled samostatných voleb (tmavá karta
+  s tenkým okrajem) místo plovoucího panelu z 0.18.3.
+
 ## [0.18.3] – 2026-10-15
 
 ### Změněno

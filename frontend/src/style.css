@@ -1168,59 +1168,17 @@ button.tag:hover {
     overflow-wrap: anywhere;
 }
 
-/* Plovoucí skupina tlačítek: zaoblený panel jako lišta prohlížeče, tlačítka oddělená tenkou čarou,
-   ikona v barvě akcentu. Společný styl, do kterého se postupně převádějí ovládací prvky aplikace. */
-.plovouci-skupina {
+/* Upravit a Přidat fotky pod jménem v levém panelu profilu: stejný vzhled jako volby v horní liště */
+.profile-actions {
     display: flex;
-    padding: 3px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
+    gap: 8px;
+    margin-top: 12px;
 }
 
-.plovouci-tlacitko {
-    position: relative;
-    display: inline-flex;
+.profile-actions .volba {
     flex: 1 1 auto;
-    align-items: center;
     justify-content: center;
     gap: 6px;
-    height: 30px;
-    padding: 0 12px;
-    border: none;
-    border-radius: 999px;
-    background: none;
-    color: var(--text-main);
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.plovouci-tlacitko:hover {
-    background-color: var(--panel-hover);
-}
-
-.plovouci-tlacitko > span {
-    color: var(--accent-text);
-    font-size: 14px;
-    line-height: 1;
-}
-
-.plovouci-tlacitko + .plovouci-tlacitko::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 7px;
-    bottom: 7px;
-    width: 1px;
-    background-color: var(--panel-okraj);
-}
-
-/* Upravit a Přidat fotky pod jménem v levém panelu profilu */
-.profile-actions {
-    margin-top: 12px;
 }
 
 .btn-small {
@@ -2913,9 +2871,7 @@ body.razeni .photo-item {
     align-items: center;
     flex: none;
     gap: 6px;
-    margin-left: 12px;
-    padding-left: 12px;
-    border-left: 1px solid var(--border-color);
+    margin-left: 16px;
 }
 
 /* Řádek štítků, ze kterého se volby složily, v obsahu není vidět */
@@ -2961,8 +2917,72 @@ body.razeni .photo-item {
     background-color: var(--accent-soft);
 }
 
+/* Volby v jednom plovoucím panelu (jako tlačítka v profilu): dělicí čáry, hodnota tučně, ▾ v akcentu,
+   zapnutý filtr podbarvený s hodnotou v akcentu, akce (Spustit slideshow) v akcentu */
+.volby-skupina {
+    display: flex;
+    align-items: center;
+    padding: 3px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.volby-skupina .volba {
+    position: relative;
+    height: 28px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+}
+
+.volby-skupina .volba:hover {
+    background-color: var(--panel-hover);
+}
+
+.volby-skupina .volba + .volba::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 7px;
+    bottom: 7px;
+    width: 1px;
+    background-color: var(--panel-okraj);
+}
+
+/* U podbarveného filtru by čáry kolem rušily */
+.volby-skupina .volba.zapnuto::before,
+.volby-skupina .volba.zapnuto + .volba::before {
+    opacity: 0;
+}
+
+.volby-skupina .volba span {
+    font-size: 12px;
+}
+
+.volby-skupina .volba b {
+    font-weight: 600;
+}
+
+.volby-skupina .volba i {
+    margin-left: 2px;
+    font-size: 9px;
+    color: var(--accent-text);
+}
+
+.volby-skupina .volba.zapnuto {
+    background-color: var(--accent-soft);
+}
+
+.volby-skupina .volba.zapnuto b,
+.volby-skupina .volba.akce {
+    color: var(--accent-text);
+}
+
 .volby-pocet {
-    margin-left: 4px;
+    margin-left: 10px;
     font-size: 12px;
     color: var(--text-muted);
     white-space: nowrap;
@@ -2982,7 +3002,6 @@ body.razeni .photo-item {
 
     .volby-prehledu {
         margin-left: 8px;
-        padding-left: 8px;
     }
 }
 

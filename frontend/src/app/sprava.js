@@ -7,6 +7,7 @@ import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { otevritNapovedu, otevritNovinky } from './napoveda';
+import { otevritZkratky } from './zkratky';
 import { detailView, issueView, searchInput } from './prvky';
 import { prepnoutRezim } from './navigace';
 import { nacistGalerii } from './galerie';
@@ -334,7 +335,8 @@ export function polozkySpravy() {
         null,
         { text: 'Smazat celou databázi', akce: smazatDatabazi, nebezpecne: true },
         { nadpis: 'Nápověda' },
-        { text: 'Nápověda (?)', akce: otevritNapovedu },
+        { text: 'Nápověda', akce: otevritNapovedu },
+        { text: 'Klávesové zkratky (?)', akce: otevritZkratky },
         { text: `Verze ${stav.verzeProgramu} – co je nového`, akce: () => otevritNovinky() },
     ];
 }

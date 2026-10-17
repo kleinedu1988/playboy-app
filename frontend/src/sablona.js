@@ -660,7 +660,7 @@ export const SABLONA_OKNA = `
     <button id="toastClose" class="close-btn" title="Zavřít">&times;</button>
   </div>
 
-  <!-- Nápověda (klávesa ?) -->
+  <!-- Nápověda (nabídka ⋯ a přehled zkratek pod klávesou ?) -->
   <div id="helpModal" class="modal-overlay hidden">
     <div class="modal-card modal-siroky">
       <div class="modal-header">
@@ -674,6 +674,7 @@ export const SABLONA_OKNA = `
           <li><strong>Přepínač v hlavičce</strong>: vlevo záložky Modelky, Čísla, Centerfoldy; vpravo ikony Kalendář, Nejlepší, Přehled. Volby přehledu (řazení, filtry) a počet položek jsou uprostřed pod hledáním.</li>
           <li><strong>Volby přehledu</strong> pod hledáním: <strong>⇅ řazení ▾</strong>, tlačítko <strong>Filtry</strong> (panel se srdíčky, edicí, rolí…; číslo v odznaku je počet zapnutých filtrů) a zapnuté filtry jako štítky, které <strong>×</strong> zruší; <strong>Zrušit filtry</strong> v panelu zruší všechny. V Nejlepších je vedle srdíček <strong>Výběr ▾</strong> a <strong>▶</strong> spustí slideshow. <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
+          <li>Klávesa <kbd>?</kbd> kdekoli (i v prohlížeči fotek a ve čtečce stran) ukáže přehled všech klávesových zkratek.</li>
           <li>Klik na vydání, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
         </ul>
         <h4>Prohlížeč fotek</h4>

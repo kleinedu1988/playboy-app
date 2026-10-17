@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.15] – 2026-10-17
+
+### Vylepšeno
+- **Přehled klávesových zkratek:** Klávesa `?` kdekoli otevře skleněný panel se všemi zkratkami po částech (Kdekoli, Výsledky hledání, Profil modelky, Výběr fotek, Prohlížeč fotek, Čtečka stran). Funguje i v prohlížeči fotek a ve čtečce stran; jejich část je pak první a zvýrazněná. Zavře se klávesou `?`, `Esc` nebo klikem vedle; tlačítko **Celá nápověda** otevře podrobnou nápovědu. V nabídce ⋯ přibyla položka **Klávesové zkratky (?)**, nápověda zůstává pod položkou Nápověda.
+
 ## [0.33.14] – 2026-10-17
 
 ### Vylepšeno

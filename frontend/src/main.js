@@ -31,6 +31,7 @@ import * as clanky from './app/clanky';
 import * as ctecka from './app/ctecka';
 import * as naseptavac from './app/naseptavac';
 import * as statistiky from './app/statistiky';
+import * as zkratky from './app/zkratky';
 import { stats } from './app/prvky';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru
@@ -58,6 +59,7 @@ clanky.pripravit();
 ctecka.pripravit();
 naseptavac.pripravit();
 statistiky.pripravit(stats);
+zkratky.pripravit();
 
 // Chyby z backendu se ukazují v okně, ne jen v konzoli
 EventsOn('chyba', (zprava) => oznamit(zprava));

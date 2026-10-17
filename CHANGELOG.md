@@ -5,6 +5,13 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.5] – 2026-10-17
+
+### Změněno
+- Stěna centerfoldů: karty mají jednotný rozměr v poměru 3:4 (jako galerie modelek).
+  Plakát je celý vycentrovaný uvnitř rámu bez ořezu – formát na výšku vyplní výšku rámu,
+  široký centerfold na šířku je vycentrovaný na tmavém podkladu pasparty.
+
 ## [0.32.4] – 2026-10-17
 
 ### Změněno

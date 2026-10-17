@@ -161,6 +161,19 @@ Cíl: sbírku o stovkách modelek rozebírat a hlídat kvalitu dat bez ručního
 | Seznam fotografů k procházení | Stránka fotografa jde dnes otevřít jen z alba | S |
 | Titulní fotka alba pro stránky fotografa a ročníku | Hezčí přehledy alb mimo profil | S–M |
 
+## Etapa 15 – Pořádný editor a práce s textem (1.3.0)
+
+Cíl: pohodlné psaní a úprava textů (články, rozhovory, průvodní texty alb, poznámky modelek i čísel) bez nutnosti ručně vypisovat formátovací značky do prostého textového pole. Komplexní a uživatelsky přívětivé řešení pro práci s textem.
+
+| Co | Proč | Prac. |
+|---|---|---|
+| Plnohodnotná komponenta editoru s nástrojovou lištou (tučné, kurzíva, nadpisy, odrážky, číslování, citace, kód, přeškrtnutí) | Dnes prosté `<textarea>` vyžadující psaní markdown značek zpaměti | M |
+| Živý náhled formátování (rozdělené okno nebo přepínač Úprava / Náhled) | Uživatel hned vidí, jak text ve výsledku vypadá, bez nutnosti ukládat | M |
+| Klávesové zkratky v editoru (Ctrl+B tučné, Ctrl+I kurzíva, Ctrl+K kód, Tab/Shift+Tab pro seznamy) | Rychlé a přirozené psaní textů | S–M |
+| Šablony a pomocníci pro články a rozhovory (tlačítka mluvčích `PLAYBOY:` / `Jméno:`, perex, vložení bloku citace, propojení se skeny) | Zjednodušení a zrychlení přepisu rozhovorů a rubrik časopisu | S–M |
+| Zvětšení editoru na celé okno (full-size režim) | Dlouhé články a povídky se v malém poli nepohodlně píší i čtou | S |
+| Sjednocení editoru napříč aplikací (okno článku, formulář alba, poznámka modelky, poznámka čísla) | Jednotné chování a opakovaně použitelná komponenta rozhraní | S–M |
+
 ## K rozhodnutí
 
 Rozhodnuto 14. 10. 2026: album jako záznam (1, hotovo v 0.10.0); řazení galerie jen tři – abecedně, naposledy

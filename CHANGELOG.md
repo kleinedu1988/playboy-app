@@ -5,6 +5,17 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.7] – 2026-10-17
+
+### Přidáno
+- Do roadmapy přidána Etapa 15 (Pořádný editor a práce s textem):
+  - plnohodnotný editor s nástrojovou lištou (tučné, kurzíva, nadpisy, odrážky, číslování, citace, kód)
+  - živý náhled formátování (split-view nebo přepínač Úprava / Náhled)
+  - klávesové zkratky (Ctrl+B, Ctrl+I, Ctrl+K, Tab pro odrážky)
+  - šablony pro rozhovory a články (tlačítka mluvčích `PLAYBOY:` / `Jméno:`, perex)
+  - zvětšení editoru na celé okno pro psaní a čtení dlouhých článků a povídek
+  - sjednocení komponenty editoru pro články, alba i poznámky
+
 ## [0.32.6] – 2026-10-17
 
 ### Přidáno

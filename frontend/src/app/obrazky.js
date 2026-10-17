@@ -28,31 +28,8 @@ export function adresaTitulni(modelka, velka = false) {
 }
 export const PLNE_ROZLISENI = 's0';
 
-// Adresy náhledů, které se už jednou načetly: znovu vykreslená dlaždice je ukáže hned, bez plynulého objevení
-const nactene = new Set();
-const oznacit = img => {
-    img.classList.add('nacteno');
-    nactene.add(img.src);
-};
-
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    // Náhled (img loading="lazy") je průhledný, dokud se nenačte, pak se plynule objeví (styl v style.css)
-    document.addEventListener('load', (e) => {
-        const img = /** @type {HTMLImageElement} */ (e.target);
-        if (img.tagName === 'IMG' && img.getAttribute('loading') === 'lazy') oznacit(img);
-    }, true);
-    // Nově vložený náhled, který už je v mezipaměti, se označí ještě před vykreslením (bez bliknutí)
-    new MutationObserver(zmeny => zmeny.forEach(z => z.addedNodes.forEach(uzel => {
-        if (uzel.nodeType !== 1) return;
-        const prvek = /** @type {Element} */ (uzel);
-        const obrazky = prvek.tagName === 'IMG' ? [prvek] : prvek.querySelectorAll('img[loading="lazy"]');
-        obrazky.forEach(img => {
-            const i = /** @type {HTMLImageElement} */ (img);
-            if (i.getAttribute('loading') === 'lazy' && (nactene.has(i.src) || (i.complete && i.naturalWidth))) oznacit(i);
-        });
-    }))).observe(document.body, { childList: true, subtree: true });
-
     // Fotka, která se nenačte (smazaná na Disku, bez připojení), se nahradí zástupným obrázkem
     document.addEventListener('error', (e) => {
         const img = /** @type {HTMLImageElement} */ (e.target);

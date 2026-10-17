@@ -6552,7 +6552,9 @@ textarea {
 }
 
 /* Otevření nabídek, panelu Filtry a výsledků hledání: krátké zjemnění a zvětšení z 98 %. Animace se spustí pokaždé,
-   když prvek přestane být skrytý (.hidden); výsledky hledání mají v klíčových snímcích i své vycentrování. */
+   když prvek přestane být skrytý (.hidden); výsledky hledání mají v klíčových snímcích i své vycentrování.
+   will-change drží panel trvale ve vlastní vrstvě: WebKitGTK by ho jinak po skončení animace vracel do stránky
+   a nabídka by na okamžik zmizela a znovu se objevila. */
 @keyframes otevrit-plovouci {
     from {
         opacity: 0;
@@ -6570,16 +6572,19 @@ textarea {
 .context-menu {
     transform-origin: top left;
     animation: otevrit-plovouci 0.14s ease-out;
+    will-change: transform, opacity;
 }
 
 .volby-panel {
     transform-origin: top center;
     animation: otevrit-plovouci 0.16s ease-out;
+    will-change: transform, opacity;
 }
 
 .naseptavac {
     transform-origin: top center;
     animation: otevrit-naseptavac 0.16s ease-out;
+    will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -6599,7 +6604,6 @@ textarea {
     align-items: center;
     padding: 64px 20px 40px;
     text-align: center;
-    animation: otevrit-plovouci 0.3s ease-out;
 }
 
 .prazdno-vejir {
@@ -6680,13 +6684,8 @@ textarea {
     box-shadow: 0 12px 30px rgba(216, 27, 96, 0.45);
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .prazdno {
-        animation: none;
-    }
-}
 
-/* ===== Načítání: obrysy karet s jemnou vlnou, fotky se plynule objeví ===== */
+/* ===== Načítání: obrysy karet s jemnou vlnou ===== */
 @keyframes kostra-vlna {
     from {
         background-position: 150% 0;
@@ -6699,7 +6698,6 @@ textarea {
 
 .kostra {
     grid-column: 1 / -1;
-    animation: otevrit-plovouci 0.3s ease-out;
 }
 
 .kostra i,
@@ -6750,24 +6748,12 @@ textarea {
     aspect-ratio: 3 / 4;
 }
 
-/* Náhledy se po načtení plynule objeví; už jednou načtená fotka (z mezipaměti) se ukáže hned bez přechodu */
-img[loading="lazy"] {
-    transition: opacity 0.35s ease-out;
-}
-
-img[loading="lazy"]:not(.nacteno) {
-    opacity: 0;
-}
-
 @media (prefers-reduced-motion: reduce) {
     .kostra i,
     .kostra b {
         animation: none;
     }
 
-    img[loading="lazy"] {
-        transition: none;
-    }
 }
 
 /* ===== Přehled klávesových zkratek (klávesa ?) ===== */
@@ -6794,6 +6780,7 @@ img[loading="lazy"]:not(.nacteno) {
     backdrop-filter: blur(18px) saturate(1.3);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
     animation: otevrit-plovouci 0.16s ease-out;
+    will-change: transform, opacity;
     user-select: none;
 }
 

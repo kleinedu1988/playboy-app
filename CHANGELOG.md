@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.18] – 2026-10-17
+
+### Opraveno
+- **Poblikávání okna při načítání karet a kontextové nabídky:** Ve WebKitGTK prvek s animací průhlednosti dostane na dobu animace vlastní vrstvu a po jejím skončení se vrací do stránky; na některých grafikách přitom obsah na okamžik zmizí. Fotky na kartách se proto znovu ukazují hned (bez plynulého objevení z verze 0.33.14), obrysy při načítání a prázdné stavy jsou bez úvodní animace a nabídky, panel Filtry, výsledky hledání a přehled zkratek zůstávají ve vlastní vrstvě trvale, takže se po animaci otevření už nepřepínají.
+
 ## [0.33.17] – 2026-10-17
 
 ### Opraveno (revize změn od verze 0.32.3)

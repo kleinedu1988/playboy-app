@@ -294,3 +294,15 @@ function nastavitPocet(pocet = '') {
         b.title = b.classList.contains('active') && pocet ? `${b.dataset.titulek} · ${pocet}` : b.dataset.titulek;
     });
 }
+
+// Tlačítko „Zrušit hledání a filtry“ v prázdném stavu: smaže text hledání a zruší zapnuté filtry po jednom
+export function zrusitHledaniAFiltry() {
+    const hledani = document.getElementById('searchInput');
+    if (hledani?.value) {
+        hledani.value = '';
+        hledani.dispatchEvent(new Event('input'));
+    }
+    if (!aktualniFiltry.zapnute.length) return;
+    rusitVse = true;
+    aktualniFiltry.zapnute[0].zrusit();
+}

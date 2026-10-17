@@ -5,6 +5,16 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.13] – 2026-10-17
+
+### Vylepšeno
+- **Prázdné stavy ve všech přehledech** mají stejný vzhled jako profil bez alb: vějíř skleněných karet s ikonou podle situace, tenký nadpis, krátké vysvětlení a tlačítko, kde dává smysl.
+  - **Nic nenalezeno** (Modelky, Centerfoldy, Čísla, Kalendář, Nejlepší): lupa a tlačítko **Zrušit hledání a filtry**, které smaže hledaný text a vypne všechny zapnuté filtry.
+  - **Modelky podle srdíček** (žádná s ♥ N+, vše ohodnoceno): srdce a stejné tlačítko pro zrušení filtrů.
+  - **Prázdná sbírka nebo edice** (Centerfoldy, Čísla, Kalendář): tlačítko **+ Přidat…** otevře nabídku přidání; u modelek tlačítko **+ Přidat modelku**.
+  - **Nejlepší:** prázdný výběr (hvězda) a žádné fotky s daným počtem srdíček (srdce).
+  - **Stránka čísla** bez alb a **fotograf** bez alb.
+
 ## [0.33.12] – 2026-10-17
 
 ### Vylepšeno

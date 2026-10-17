@@ -14,6 +14,7 @@ import { otevritLightbox } from './prohlizec';
 import { potvrdit } from './formular-modelky';
 import { vybratHodnotu } from './ulozeni';
 import { prevestNaVolby } from '../ui/volby';
+import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 
 // Přidání fotek do vlastního výběru (existujícího, nebo nového podle napsaného názvu)
 export async function pridatDoVyberu(ids) {
@@ -64,9 +65,9 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         <div class="best-toolbar">${prah}<span>${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')}</span>
             ${stav.nejlepsiPolozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
         ${stav.nejlepsiPolozky.length ? `<div class="nejlepsi-mozaika">${stav.nejlepsiPolozky.map((p, i) => htmlDlazdiceMozaiky(p, i, zacatekUrovne.has(i))).join('')}</div>`
-            : `<p class="empty-state">${fotky.length || tokeny.length ? 'Hledání neodpovídá žádná fotka.'
-            : vyber ? 'Výběr je prázdný. Fotky se do něj přidávají odkudkoli: tlačítkem ⋯ na fotce, v prohlížeči nebo u vybraných fotek „Přidat do výběru…“.'
-            : `Zatím žádná fotka nemá ${stav.nejlepsiMin} a více srdíček. Fotky se hodnotí srdíčky na dlaždici nebo v prohlížeči klávesami 1–5.`}</p>`}
+            : fotky.length || tokeny.length ? htmlNicNenalezeno('Hledání neodpovídá žádná fotka.')
+            : vyber ? htmlPrazdna('Výběr je prázdný', 'Fotky se do něj přidávají odkudkoli: tlačítkem ⋯ na fotce, v prohlížeči nebo u vybraných fotek „Přidat do výběru…“.', { ikona: 'hvezda' })
+            : htmlPrazdna(`Zatím žádné fotky s ♥ ${stav.nejlepsiMin}${stav.nejlepsiMin < 5 ? '+' : ''}`, 'Fotky se hodnotí srdíčky na dlaždici nebo v prohlížeči klávesami 1–5.', { ikona: 'srdce' })}
     `;
     prevestNaVolby(document.querySelector('#bestList .best-toolbar'));
     pripravitMozaiku();

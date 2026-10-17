@@ -6584,6 +6584,8 @@ textarea {
 
 /* ===== Prázdný stav: vějíř skleněných karet, tenký nadpis, věta a růžové tlačítko ===== */
 .prazdno {
+    /* V mřížce (galerie, stěna) zabere celý řádek */
+    grid-column: 1 / -1;
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -17,6 +17,8 @@ import { otevritCoverModal, otevritProfilPodleId } from './cover';
 import { otevritDeleteModal, otevritModelModal, otevritRychlePridani, potvrdit, smazatDatabazi, smazatModelku } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
 import { vybratHodnotu, vybratModelku } from './ulozeni';
+import { nastavitAkcePrazdna } from '../ui/prazdno';
+import { zrusitHledaniAFiltry } from '../ui/volby';
 
 // Kontrola, že Google Disk všechny uložené soubory stále vrací
 export const checkModal = document.getElementById('checkModal');
@@ -419,6 +421,15 @@ export function pripravit() {
     });
 
     GetVerze().then(verze => { stav.verzeProgramu = verze; });
+
+    // Tlačítka v prázdných stavech stránek: Přidat… otevře nabídku + nahoře, ostatní jdou rovnou do okna.
+    // Nabídka se otevře až po doběhnutí kliku, jinak by ji týž klik hned zavřel jako klik mimo ni.
+    nastavitAkcePrazdna({
+        pridat: () => setTimeout(() => document.getElementById('addBtn').click()),
+        'pridat-modelku': () => otevritRychlePridani(),
+        'pridat-album': () => otevritAlbumModal(stav.aktualniModelka),
+        zrusit: () => zrusitHledaniAFiltry(),
+    });
 
     document.getElementById('addBtn').onclick = (e) => {
         const vProfilu = !detailView.classList.contains('hidden');

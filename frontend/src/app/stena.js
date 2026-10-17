@@ -11,6 +11,7 @@ import { htmlPlakatu, pripravitPlakat } from './profil';
 import { otevritVydani } from './vydani';
 import { prevestNaVolby } from '../ui/volby';
 import { nastavitEdiciKalendare } from './kalendar';
+import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 
 const RAZENI_STENY = {
     jmeno: 'Podle jména',
@@ -62,7 +63,8 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
         <span>${sklonovat(stav.stenaPolozky.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</span></div>`;
     if (stav.stenaPolozky.length === 0) {
         listaSteny.naplnit([]);
-        wall.innerHTML = razeni + `<div class="empty-state">${fotky.length ? 'Hledání ani filtru neodpovídá žádný centerfold.' : 'Zatím žádné centerfoldy. Přidej je tlačítkem + nahoře.'}</div>`;
+        wall.innerHTML = razeni + (fotky.length ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádný centerfold.')
+            : htmlPrazdna('Zatím žádné centerfoldy', 'Centerfoldy modelek se tu seřadí jako stěna plakátů. Přidávají se tlačítkem + nahoře.', { tlacitko: { text: 'Přidat…', akce: 'pridat' } }));
         prevestNaVolby(wall.querySelector('.wall-toolbar'));
         return;
     }
@@ -157,7 +159,8 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
 
     if (vybrana.length === 0) {
         listaCoveru.naplnit([]);
-        coversList.innerHTML = volby + `<div class="empty-state">${cisla.length ? 'Hledání ani volbě neodpovídá žádné číslo.' : `V edici ${stav.kalendarEdice} zatím nic není. Čísla se naplní covery, centerfoldy a pictorialy s vydáním.`}</div>`;
+        coversList.innerHTML = volby + (cisla.length ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádné číslo.')
+            : htmlPrazdna(`Edice ${stav.kalendarEdice} je prázdná`, 'Čísla se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.', { ikona: 'kalendar', tlacitko: { text: 'Přidat…', akce: 'pridat' } }));
         prevestNaVolby(coversList.querySelector('.cisla-volby'));
         return;
     }

@@ -20,6 +20,7 @@ import { otevritLightbox } from './prohlizec';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { htmlClanku, htmlProuzku, otevritEditorClanku } from './clanky';
 import { otevritCtecku } from './ctecka';
+import { htmlPrazdna } from '../ui/prazdno';
 
 // Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
 export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
@@ -122,8 +123,8 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
                 </div>
             </section>
         `),
-    ].join('') || `<p class="empty-state">${centerfoldy.length ? 'K tomuto vydání zatím není přiřazený žádný pictorial; přiřadí se v úpravě alba.'
-        : 'K tomuto vydání zatím není přiřazený žádný centerfold ani pictorial. Centerfold se přiřadí měsícem a rokem, pictorial v úpravě alba.'}</p>`;
+    ].join('') || (centerfoldy.length ? htmlPrazdna('Zatím bez pictorialu', 'Pictorial se k číslu přiřadí v úpravě alba modelky.')
+        : htmlPrazdna('Zatím bez alb', 'Centerfold se k číslu přiřadí měsícem a rokem vydání, pictorial v úpravě alba modelky.'));
     stav.vydaniHtmlAlb = htmlAlb;
     vykreslitObsahStranky();
 }
@@ -316,7 +317,7 @@ function vykreslitAlbaFotografa() {
         ${pocty.centerfoldy && pocty.alba ? `<div class="fotograf-filtr">${Object.entries(FILTRY_FOTOGRAFA).map(([klic, nazev]) =>
             `<button class="${klic === stav.fotografFiltr ? 'active' : ''}" data-filtr-fotografa="${klic}">${nazev} <span>${pocty[klic]}</span></button>`).join('')}</div>` : ''}
         <div class="rocnik-mrizka">${karty}</div>`
-        : '<p class="empty-state">Fotograf zatím nemá žádné album.</p>';
+        : htmlPrazdna('Zatím žádná alba', 'Alba se fotografovi přiřadí podle jména v poli Fotograf v úpravě alba.');
     listaStranky.naplnit([]);
 }
 

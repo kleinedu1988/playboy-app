@@ -284,8 +284,8 @@ export async function nacistFotkyModelky(modelkaId) {
     const centerfoldy = stav.aktualniAlba.filter(a => a.typ === 'Centerfold');
     const ostatni = stav.aktualniAlba.filter(a => a.typ !== 'Centerfold');
     const prazdno = centerfoldy.length
-        ? htmlPrazdna('Žádná další alba', 'Pictorialy, fotky z dalších čísel a ostatní alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', 'Přidat fotky')
-        : htmlPrazdna('Zatím žádná alba', 'Centerfoldy, pictorialy a další alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', 'Přidat fotky');
+        ? htmlPrazdna('Žádná další alba', 'Pictorialy, fotky z dalších čísel a ostatní alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } })
+        : htmlPrazdna('Zatím žádná alba', 'Centerfoldy, pictorialy a další alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } });
     centerfoldsSide.innerHTML = centerfoldy.map(htmlCenterfoldu).join('');
     photosGrid.innerHTML = ostatni.map(htmlAlba).join('') || prazdno;
 
@@ -414,11 +414,6 @@ export function pripravit() {
     window.addEventListener('pointercancel', () => dokoncitTazeniFotky(true));
 
     window.addEventListener('blur', () => dokoncitTazeniFotky(true));
-
-    // Tlačítko v prázdném stavu profilu dělá totéž co Přidat fotky v hlavičce
-    document.getElementById('photosGrid').addEventListener('click', (e) => {
-        if (e.target.closest('[data-prazdno-akce]')) document.getElementById('addAlbumBtn')?.click();
-    });
 
     document.getElementById('photosGrid').addEventListener('click', (e) => {
         if (!stav.praveTazeno) return;

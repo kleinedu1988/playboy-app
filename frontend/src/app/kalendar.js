@@ -11,6 +11,7 @@ import { NAZVY_STAVU } from './vydani';
 import { otevritCoverModal } from './cover';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { prevestNaVolby } from '../ui/volby';
+import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 
 // Kalendář vydání: roky × měsíce jako časová osa obálek. Prázdná políčka ukazují, co ve sbírce chybí.
 export const ZKRATKY_MESICU = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
@@ -36,7 +37,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     const prepinacEdic = pocet => `<div class="cal-editions">${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
     if (vydani.size === 0) {
         listaKalendare.naplnit([]);
-        calList.innerHTML = prepinacEdic(0) + `<div class="empty-state">V edici ${stav.kalendarEdice} zatím nic není. Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání; prázdné políčko se objeví u prvního přidaného čísla.</div>`;
+        calList.innerHTML = prepinacEdic(0) + htmlPrazdna(`Edice ${stav.kalendarEdice} je prázdná`, 'Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.', { ikona: 'kalendar', tlacitko: { text: 'Přidat…', akce: 'pridat' } });
         prevestNaVolby(calList.querySelector('.cal-editions'));
         return;
     }
@@ -151,7 +152,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     listaKalendare.naplnit([...desetileti].map(([dekada, pocet]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet })));
     calList.innerHTML = prepinacEdic(celkemVydani) + `
         <p class="cal-legend">Linky na obálce zleva: <i></i> cover <i></i> centerfold <i></i> pictorial. Prázdné políčko = číslo ve sbírce chybí.</p>
-        ${radky.join('') || '<div class="empty-state">Hledanému roku neodpovídá žádné vydání.</div>'}
+        ${radky.join('') || htmlNicNenalezeno('Hledanému roku neodpovídá žádné vydání.')}
     `;
     prevestNaVolby(calList.querySelector('.cal-editions'));
     listaKalendare.sledovat();

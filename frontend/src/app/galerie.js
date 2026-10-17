@@ -19,6 +19,7 @@ import { nacistNejlepsi } from './nejlepsi';
 import { lightbox } from './prohlizec';
 import { vybraneDlazdice } from './vyber';
 import { prevestNaVolby } from '../ui/volby';
+import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 
 // Hodnocení 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší
 export function htmlSrdicek(hodnoceni, atribut) {
@@ -157,11 +158,12 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     }
     if (modelky.length === 0) {
         listaGalerie.naplnit([]);
-        gallery.innerHTML = htmlNastroju(0, roleCetnosti) + `<div class="empty-state">${
-            stav.minHodnoceni === -1 ? 'Všechny modelky už mají hodnocení.'
-            : stav.minHodnoceni > 0 ? `Žádná modelka nemá hodnocení ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? ' nebo vyšší' : ''}. Hodnotí se srdíčky na kartě nebo v profilu.`
-            : (dotaz.trim() || stav.ediceModelek !== 'vse' || stav.roleModelek !== 'vse') ? 'Hledání ani filtru neodpovídá žádná modelka.'
-            : 'Zatím žádné modelky. Přidej první tlačítkem + nahoře.'}</div>`;
+        const zrusit = { text: 'Zrušit hledání a filtry', akce: 'zrusit' };
+        gallery.innerHTML = htmlNastroju(0, roleCetnosti) + (
+            stav.minHodnoceni === -1 ? htmlPrazdna('Vše ohodnoceno', 'Všechny modelky už mají srdíčka.', { ikona: 'srdce', tlacitko: zrusit })
+            : stav.minHodnoceni > 0 ? htmlPrazdna(`Žádná modelka s ♥ ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? '+' : ''}`, 'Modelky se hodnotí srdíčky na kartě nebo v profilu.', { ikona: 'srdce', tlacitko: zrusit })
+            : (dotaz.trim() || stav.ediceModelek !== 'vse' || stav.roleModelek !== 'vse') ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádná modelka.')
+            : htmlPrazdna('Zatím žádné modelky', 'Sbírka začíná první modelkou. Přidej ji a pak k ní vlož fotky z Google Disku.', { tlacitko: { text: 'Přidat modelku', akce: 'pridat-modelku' } }));
         prevestNaVolby(gallery.querySelector('.gallery-toolbar'));
         return;
     }

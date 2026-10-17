@@ -5,6 +5,12 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.14] – 2026-10-17
+
+### Vylepšeno
+- **Načítání bez prázdné plochy:** Při prvním otevření Modelek, Centerfoldů, Čísel, Kalendáře a Nejlepších jsou místo prázdné plochy šedé obrysy karet s jemnou vlnou; v profilu jiné modelky se místo alb předchozí modelky do načtení ukážou obrysy alb.
+- **Fotky se plynule objeví:** Náhledy na kartách a dlaždicích se po načtení plynule zviditelní místo postupného vykreslování po řádcích; už jednou načtená fotka (například po změně filtru) se ukáže hned. Při zapnutém omezení pohybu v systému se vlna i přechod vynechají.
+
 ## [0.33.13] – 2026-10-17
 
 ### Vylepšeno

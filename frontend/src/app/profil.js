@@ -14,6 +14,7 @@ import { htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { selectionBar } from './vyber';
 import { doplnitClankyModelky } from './clanky';
 import { htmlPrazdna } from '../ui/prazdno';
+import { htmlKostryAlb } from '../ui/kostra';
 
 // Otevření profilu modelky s fotogalerií
 export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}) {
@@ -24,6 +25,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     // Mezitím otevřený jiný pohled má přednost
     if (moje !== stav.cisloNacteni) return;
     if (!bezHistorie) zapamatovatMisto({ modelka });
+    // Alba předchozí modelky se do načtení nahradí obrysy (stejná modelka po uložení zůstává, jak je)
+    if (stav.aktualniModelka?.id !== modelka.id) document.getElementById('photosGrid').innerHTML = htmlKostryAlb();
     stav.aktualniModelka = modelka;
     ukazatPohled(detailView);
     document.getElementById('centerfoldsSide').innerHTML = '';

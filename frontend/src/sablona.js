@@ -1,5 +1,6 @@
 // Kostra okna: hlavička, pohledy, modální okna, prohlížeč fotek. Obsah pohledů se vykresluje v main.js.
 import { MESICE, EDICE } from './lib/format';
+import { htmlKostryKaret } from './ui/kostra';
 
 export const SABLONA_OKNA = `
   <header class="navbar">
@@ -52,21 +53,21 @@ export const SABLONA_OKNA = `
   <main>
     <!-- Přehledy mají lištu pro skákání jako svislý sloupec vlevo; obsah je vedle ní -->
     <div class="se-sloupcem">
-      <!-- Lišta písmen: skok na první modelku daného písmene -->
+      <!-- Lišta písmen: skok na první modelku daného písmene. Přehledy mají do prvního načtení obrysy karet (ui/kostra.js) -->
       <nav id="galleryNav"></nav>
-      <div id="gallery" class="gallery-grid"></div>
+      <div id="gallery" class="gallery-grid">${htmlKostryKaret(15)}</div>
     </div>
 
     <!-- Stěna centerfoldů -->
     <div class="se-sloupcem">
       <nav id="wallNav"></nav>
-      <div id="wall" class="wall hidden"></div>
+      <div id="wall" class="wall hidden">${htmlKostryKaret(15)}</div>
     </div>
 
     <!-- Nejlépe hodnocené fotky napříč sbírkou -->
     <div id="best" class="best hidden">
       <nav id="bestNav"></nav>
-      <div id="bestList"></div>
+      <div id="bestList">${htmlKostryKaret(15, { sPopisem: false })}</div>
     </div>
 
     <!-- Stránka vydání časopisu: cover, centerfold a pictorialy -->
@@ -82,7 +83,7 @@ export const SABLONA_OKNA = `
     <!-- Kalendář vydání -->
     <div id="calendar" class="calendar se-sloupcem hidden">
       <nav id="calNav"></nav>
-      <div id="calList"></div>
+      <div id="calList">${htmlKostryKaret(12, { sPopisem: false })}</div>
     </div>
 
     <!-- Přehled sbírky: počty a co chybí doplnit -->
@@ -91,7 +92,7 @@ export const SABLONA_OKNA = `
     <!-- Čísla časopisu po ročnících (data-rezim „covery“) -->
     <div id="covers" class="covers se-sloupcem hidden">
       <nav id="coversNav"></nav>
-      <div id="coversList"></div>
+      <div id="coversList">${htmlKostryKaret(12)}</div>
     </div>
 
     <!-- Detailní profil modelky -->

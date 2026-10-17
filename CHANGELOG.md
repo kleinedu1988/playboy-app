@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.10] – 2026-10-17
+
+### Vylepšeno
+- Růžový rámeček mají i okna **Přidat cover / Upravit cover**, **Číslo časopisu** a **Nová modelka**, stejně jako ostatní okna, která něco mění (album, modelka, Doplnit modelku, článek).
+
 ## [0.33.9] – 2026-10-17
 
 ### Vylepšeno

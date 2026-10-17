@@ -4820,9 +4820,12 @@ textarea {
     object-fit: cover;
 }
 
-/* Formulář modelky ve stejném rozložení a vzhledu jako okno Doplnit modelku: růžový rámeček,
-   části pod sebou s růžovými nadpisy (místo záložek), bez křížku – zavírá se tlačítkem Zrušit */
-#modelModal .modal-card {
+/* Okna, která něco mění (modelka, nová modelka, cover, číslo časopisu), mají růžový rámeček jako Doplnit modelku.
+   Formulář modelky má navíc stejné rozložení: části pod sebou s růžovými nadpisy (místo záložek), bez křížku – zavírá se tlačítkem Zrušit */
+#modelModal .modal-card,
+#quickModal .modal-card,
+#coverModal .modal-card,
+#issueModal .modal-card {
     border-color: var(--accent);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 4px rgba(216, 27, 96, 0.12);
 }

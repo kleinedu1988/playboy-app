@@ -21,13 +21,19 @@ let vybrana = -1;
 // Kalendář (náhledy obálek čísel) se načte při prvním hledání a obnoví při každém novém zaměření pole
 let kalendar = null;
 
-// Zjištění aktivního slova před textovým kurzorem
+// Zjištění aktivního slova před textovým kurzorem (toleruje i mezeru za dvojtečkou u filtru, např. „vlasy: blond“)
 function ziskatAktivniSlovo() {
     const hodnota = searchInput.value;
     const pozice = searchInput.selectionStart ?? hodnota.length;
     const textPred = hodnota.slice(0, pozice);
-    const i = textPred.lastIndexOf(' ');
-    const zacatek = i >= 0 ? i + 1 : 0;
+    const shodaKlice = /(?:^|\s)((?:[-!])?[\p{L}]+:\s*\S*)$/u.exec(textPred);
+    let zacatek;
+    if (shodaKlice) {
+        zacatek = textPred.length - shodaKlice[1].length;
+    } else {
+        const i = textPred.lastIndexOf(' ');
+        zacatek = i >= 0 ? i + 1 : 0;
+    }
     const konecMezera = hodnota.indexOf(' ', pozice);
     const konec = konecMezera >= 0 ? konecMezera : hodnota.length;
     return {
@@ -197,8 +203,8 @@ async function hledat() {
     if (moje !== cisloHledani || document.activeElement !== searchInput) return;
 
     if (idxDvojtecka >= 0) {
-        klicHodnot = cisteSlovo.slice(0, idxDvojtecka).toLowerCase();
-        const filtrHodnoty = cisteSlovo.slice(idxDvojtecka + 1);
+        klicHodnot = bezDiakritiky(cisteSlovo.slice(0, idxDvojtecka)).toLowerCase();
+        const filtrHodnoty = cisteSlovo.slice(idxDvojtecka + 1).trim();
         moznostiHodnot = ziskatMoznostiHodnot(klicHodnot, filtrHodnoty, modelky);
     } else if (cisteSlovo.length >= 1) {
         moznostiPrikazu = ziskatMoznostiPrikazu(slovoPred);
@@ -227,7 +233,7 @@ async function hledat() {
     let nalezeneClanky = [];
 
     // Pokud uživatel nepíše cílený filtr s dvojtečkou a dotaz má alespoň 2 znaky, prohledáme i modelky, články a čísla
-    if (!idxDvojtecka && trimDotaz.length >= 2) {
+    if (idxDvojtecka < 0 && !tokeny.some(t => t.klic) && trimDotaz.length >= 2) {
         nalezeneModelky = modelky
             .filter(m => vyhovujeHledani([textModelky(m)], tokeny) || slova.some(s => odpovidaTextFuzzy(m.jmeno + ' ' + (m.dalsiJmena || ''), s)))
             .sort((a, b) => {

@@ -602,6 +602,26 @@ func TestPokrocileHledaniModelek(t *testing.T) {
 	if mam := jmena("jmeno:\""); len(mam) != 3 {
 		t.Fatalf("prázdná rozepsaná uvozovka nemá vymazat výsledky: %v", mam)
 	}
+
+	// 5. Tolerance mezery za dvojtečkou (vlasy: blond, -vlasy: cerna, vyska: > 175, vlasy: blond, zrzava, prázdné vlasy:)
+	if mam := jmena("vlasy: blond"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("mezera za dvojtečkou (vlasy: blond): %v", mam)
+	}
+	if mam := jmena("-vlasy: cerna"); !stejne(mam, "Klára Zrzka", "Zuzana Blond") {
+		t.Fatalf("mezera za dvojtečkou s negací (-vlasy: cerna): %v", mam)
+	}
+	if mam := jmena("jmeno: \"Zuzana Blond\""); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("mezera za dvojtečkou s uvozovkami: %v", mam)
+	}
+	if mam := jmena("vyska: > 175"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("mezera za dvojtečkou a operátorem (vyska: > 175): %v", mam)
+	}
+	if mam := jmena("vlasy: blond, zrzava"); !stejne(mam, "Klára Zrzka", "Zuzana Blond") {
+		t.Fatalf("mezera za dvojtečkou a čárkou (vlasy: blond, zrzava): %v", mam)
+	}
+	if mam := jmena("vlasy:"); len(mam) != 3 {
+		t.Fatalf("rozepsaný klíč s dvojtečkou (vlasy:) nemá vymazat výsledky: %v", mam)
+	}
 }
 
 func TestFuzzyHledaniAFTS5(t *testing.T) {

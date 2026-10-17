@@ -226,6 +226,24 @@ test('pokročilá syntaxe vyhledávání: negace, operátory, rozsahy, OR a neuz
     const tOperator = rozlozitDotaz('rok:>=1990');
     assert.equal(vyhovujeHledani(['1992-01'], tOperator), true);
     assert.equal(vyhovujeHledani(['1989-12'], tOperator), false);
+
+    // Tolerance mezery za dvojtečkou (vlasy: blond, fotograf: "arny freytag", rok: >= 1990, vlasy: blond, zrzava)
+    const tMezera = rozlozitDotaz('vlasy: blond -tag: playmate fotograf: "Arny Freytag"');
+    assert.equal(tMezera.length, 3);
+    assert.deepEqual(tMezera[0], { negace: false, klic: 'vlasy', hodnota: 'blond', varianty: ['blond'] });
+    assert.deepEqual(tMezera[1], { negace: true, klic: 'tag', hodnota: 'playmate', varianty: ['playmate'] });
+    assert.deepEqual(tMezera[2], { negace: false, klic: 'fotograf', hodnota: 'arny freytag', varianty: ['arny freytag'] });
+
+    const tMezeraOr = rozlozitDotaz('vlasy: blond, zrzava');
+    assert.equal(tMezeraOr.length, 1);
+    assert.deepEqual(tMezeraOr[0].varianty, ['blond', 'zrzava']);
+
+    const tMezeraOp = rozlozitDotaz('rok: >= 1990');
+    assert.equal(vyhovujeHledani(['1992-01'], tMezeraOp), true);
+    assert.equal(vyhovujeHledani(['1989-12'], tMezeraOp), false);
+
+    assert.deepEqual(rozlozitDotaz('vlasy:'), []);
+    assert.deepEqual(rozlozitDotaz('vlasy: '), []);
 });
 
 test('fuzzy matching Levenshtein a podpora našeptávání syntaxe', async () => {

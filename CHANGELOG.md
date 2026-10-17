@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.1] – 2026-10-17
+
+### Vylepšeno
+- **Tolerance mezery za dvojtečkou ve vyhledávání:**
+  - Parser vyhledávání na backendu i frontendu (`rozlozitDotaz`) nyní toleruje mezeru za dvojtečkou u cílených filtrů — jak u prostých hodnot (`vlasy: blond`, `-vlasy: cerna`), tak u hodnot v uvozovkách (`fotograf: "arny freytag"`), relačních operátorů (`vyska: > 175`, `rok: >= 1990`) i vícenásobných hodnot oddělených čárkou (`vlasy: blond, zrzava`).
+  - Samostatně rozepsaný klíč s dvojtečkou na konci dotazu (`vlasy:` nebo `vlasy: `) se při psaní ignoruje a nemaže výsledky galerie.
+  - Našeptávač hodnot filtrů plynule nabízí možnosti i v případě, že uživatel za dvojtečkou napíše mezeru (`vlasy: `), a po výběru celý filtr sjednotí do tvaru `vlasy:blond `.
+
 ## [0.33.0] – 2026-10-17
 
 ### Přidáno

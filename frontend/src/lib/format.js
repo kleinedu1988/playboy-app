@@ -306,26 +306,37 @@ export function rozlozitMiry(text) {
     return { hrudnik: naCm(m[1]), pas: naCm(m[3]), boky: naCm(m[4]), velikost: m[2] ? `${m[1]}${m[2].toUpperCase()}` : '' };
 }
 
-// Token hledání pro frontendové filtrování (podporuje negaci -, čárku jako OR, rozsah let a neuzavřené uvozovky)
+// Token hledání pro frontendové filtrování (podporuje negaci -, čárku jako OR, rozsah let, mezeru za dvojtečkou a neuzavřené uvozovky)
 export function rozlozitDotaz(dotaz) {
     let d = String(dotaz || '').trim();
     if (!d) return [];
     if ((d.match(/"/g) || []).length % 2 !== 0) d += '"';
-    const vzor = /(-|!)?([\p{L}]+):"([^"]*)"|(-|!)?"([^"]*)"|(\S+)/gu;
+    const vzor = /(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+|[^\s",:]+(?:\s*,\s*[^\s",:]+)*)?|(-|!)?"([^"]*)"|(\S+)/gu;
     const tokeny = [];
     let shoda;
     while ((shoda = vzor.exec(d)) !== null) {
-        let negace = Boolean(shoda[1] || shoda[4]);
-        let klic = shoda[2] || '';
-        let hodnota = shoda[3] || shoda[5] || '';
-        if (!klic && !hodnota && shoda[6]) {
-            let slovo = shoda[6];
+        let negace = false;
+        let klic = '';
+        let hodnota = '';
+        if (shoda[2]) {
+            negace = Boolean(shoda[1]);
+            klic = shoda[2];
+            hodnota = shoda[3] || '';
+        } else if (shoda[5]) {
+            negace = Boolean(shoda[4]);
+            klic = shoda[5];
+            hodnota = shoda[6] || '';
+        } else if (shoda[8] !== undefined) {
+            negace = Boolean(shoda[7]);
+            hodnota = shoda[8];
+        } else if (shoda[9]) {
+            let slovo = shoda[9];
             if (slovo.startsWith('-') || slovo.startsWith('!')) {
                 negace = true;
                 slovo = slovo.slice(1);
             }
             const i = slovo.indexOf(':');
-            if (i > 0 && i < slovo.length - 1) {
+            if (i > 0) {
                 klic = slovo.slice(0, i);
                 hodnota = slovo.slice(i + 1);
             } else {
@@ -346,8 +357,8 @@ export function vyhovujeHledani(texty, tokeny) {
     const zjednoduseneTexty = texty.filter(Boolean).map(t => bezDiakritiky(t));
     for (const t of tokeny) {
         // Kontrola rozsahu let např. 1970..1979 nebo 1970-1979 a operátorů >=1970, <1980
-        const rozsah = /^(\d{4})(?:\.\.|\-)(\d{4})$/.exec(t.hodnota);
-        const opMatch = /^(>=|<=|>|<|==|=)(\d{4})$/.exec(t.hodnota);
+        const rozsah = /^(\d{4})\s*(?:\.\.|\-)\s*(\d{4})$/.exec(t.hodnota);
+        const opMatch = /^(>=|<=|>|<|==|=)\s*(\d{4})$/.exec(t.hodnota);
         let shoda = false;
         if (rozsah) {
             const od = parseInt(rozsah[1]), doR = parseInt(rozsah[2]);

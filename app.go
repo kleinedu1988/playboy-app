@@ -1178,8 +1178,8 @@ func poleHledani(m Modelka) map[string]string {
 	}
 }
 
-// Slova hledání: volitelná negace (- nebo !), cílené pole:hodnota i pole:"více slov", uvozovky i obyčejná slova
-var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):"([^"]*)"|(-|!)?"([^"]*)"|(\S+)`)
+// Slova hledání: volitelná negace (- nebo !), cílené pole:hodnota (i s mezerou za dvojtečkou) i pole:"více slov", uvozovky i obyčejná slova
+var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+|[^\s",:]+(?:\s*,\s*[^\s",:]+)*)?|(-|!)?"([^"]*)"|(\S+)`)
 var vzorRozsahCisel = regexp.MustCompile(`^(\d+)\s*-\s*(\d+)$`)
 
 // Rozpoznání numerického filtru: op (">=", "<=", ">", "<", "=", ".."), numOd, numDo
@@ -1424,16 +1424,20 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 			negace = casti[1] != ""
 			klic = casti[2]
 			hodnota = casti[3]
-		} else if strings.HasPrefix(casti[0], "\"") || strings.HasPrefix(casti[0], "-\"") || strings.HasPrefix(casti[0], "!\"") {
+		} else if casti[5] != "" {
 			negace = casti[4] != ""
-			hodnota = casti[5]
+			klic = casti[5]
+			hodnota = casti[6]
+		} else if strings.HasPrefix(casti[0], "\"") || strings.HasPrefix(casti[0], "-\"") || strings.HasPrefix(casti[0], "!\"") {
+			negace = casti[7] != ""
+			hodnota = casti[8]
 		} else {
-			slovo := casti[6]
+			slovo := casti[9]
 			if strings.HasPrefix(slovo, "-") || strings.HasPrefix(slovo, "!") {
 				negace = true
 				slovo = slovo[1:]
 			}
-			if i := strings.Index(slovo, ":"); i > 0 && i < len(slovo)-1 {
+			if i := strings.Index(slovo, ":"); i > 0 {
 				klic = slovo[:i]
 				hodnota = slovo[i+1:]
 			} else {

@@ -96,6 +96,111 @@ func (a *App) migraceFTS5() error {
 	return err
 }
 
+// Úprava schématu č. 11: index textů s klíčem v rowid (článek = id, album = −id), aby se při změně článku
+// nebo alba mazal jediný řádek indexu a neprocházel celý (zdroj_id je UNINDEXED a hledání podle něj čte vše).
+// Druh se neindexuje (slovo „clanek“ nesmí najít všechny články); alba se indexují všechna, nová i stávající;
+// trigger alb běží jen při změně sloupců, které jsou v indexu.
+func (a *App) migraceFTSKlice() error {
+	_, err := a.db.Exec(`
+		DROP TRIGGER IF EXISTS clanky_ai;
+		DROP TRIGGER IF EXISTS clanky_ad;
+		DROP TRIGGER IF EXISTS clanky_au;
+		DROP TRIGGER IF EXISTS alba_popis_ai;
+		DROP TRIGGER IF EXISTS alba_popis_ad;
+		DROP TRIGGER IF EXISTS alba_popis_au;
+		DROP TABLE IF EXISTS texty_fts;
+
+		CREATE VIRTUAL TABLE texty_fts USING fts5(
+			druh UNINDEXED,
+			vydani,
+			nazev,
+			rubrika,
+			autor,
+			text,
+			zdroj_id UNINDEXED,
+			modelka_id UNINDEXED,
+			tokenize='unicode61 remove_diacritics 2'
+		);
+
+		CREATE TRIGGER clanky_ai AFTER INSERT ON clanky BEGIN
+			INSERT INTO texty_fts(rowid, druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+			VALUES(new.id, 'clanek', new.vydani, new.nazev, COALESCE(new.rubrika, ''), COALESCE(new.autor, ''), COALESCE(new.text, ''), new.id, COALESCE(new.modelka_id, 0));
+		END;
+
+		CREATE TRIGGER clanky_ad AFTER DELETE ON clanky BEGIN
+			DELETE FROM texty_fts WHERE rowid = old.id;
+		END;
+
+		CREATE TRIGGER clanky_au AFTER UPDATE ON clanky BEGIN
+			DELETE FROM texty_fts WHERE rowid = old.id;
+			INSERT INTO texty_fts(rowid, druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+			VALUES(new.id, 'clanek', new.vydani, new.nazev, COALESCE(new.rubrika, ''), COALESCE(new.autor, ''), COALESCE(new.text, ''), new.id, COALESCE(new.modelka_id, 0));
+		END;
+
+		CREATE TRIGGER alba_popis_ai AFTER INSERT ON alba BEGIN
+			INSERT INTO texty_fts(rowid, druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+			VALUES(-new.id, 'album', new.vydani, new.album, new.typ, COALESCE(new.fotograf, ''), COALESCE(new.popis, ''), new.id, COALESCE(new.modelka_id, 0));
+		END;
+
+		CREATE TRIGGER alba_popis_ad AFTER DELETE ON alba BEGIN
+			DELETE FROM texty_fts WHERE rowid = -old.id;
+		END;
+
+		CREATE TRIGGER alba_popis_au AFTER UPDATE OF vydani, album, typ, fotograf, popis, modelka_id ON alba BEGIN
+			DELETE FROM texty_fts WHERE rowid = -old.id;
+			INSERT INTO texty_fts(rowid, druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+			VALUES(-new.id, 'album', new.vydani, new.album, new.typ, COALESCE(new.fotograf, ''), COALESCE(new.popis, ''), new.id, COALESCE(new.modelka_id, 0));
+		END;
+
+		INSERT INTO texty_fts(rowid, druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+		SELECT id, 'clanek', vydani, nazev, COALESCE(rubrika, ''), COALESCE(autor, ''), COALESCE(text, ''), id, COALESCE(modelka_id, 0)
+		FROM clanky;
+
+		INSERT INTO texty_fts(rowid, druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+		SELECT -id, 'album', vydani, album, typ, COALESCE(fotograf, ''), COALESCE(popis, ''), id, COALESCE(modelka_id, 0)
+		FROM alba;
+	`)
+	return err
+}
+
+// Dotaz FTS5 ze slov hledání: slova se dělí na části z písmen a číslic (jean-luc = jean a luc), každá část
+// je předpona v uvozovkách (bez syntaxe FTS5 z uživatelského vstupu); slovo s minusem se vylučuje (NOT).
+// Bez hledaného slova (jen vylučovaná) vrátí prázdný řetězec.
+func dotazFTS(slova []string) string {
+	casti := func(slovo string) []string {
+		return strings.FieldsFunc(slovo, func(r rune) bool { return (r < 'a' || r > 'z') && (r < '0' || r > '9') })
+	}
+	var hledat, vyloucit []string
+	for _, s := range slova {
+		cil := &hledat
+		if strings.HasPrefix(s, "-") || strings.HasPrefix(s, "!") {
+			cil = &vyloucit
+		}
+		for _, c := range casti(s) {
+			*cil = append(*cil, `"`+c+`"*`)
+		}
+	}
+	if len(hledat) == 0 {
+		return ""
+	}
+	dotaz := strings.Join(hledat, " AND ")
+	for _, v := range vyloucit {
+		dotaz += " NOT " + v
+	}
+	return dotaz
+}
+
+// Slova hledání bez vylučovaných (pro úryvek a řazení podle názvu)
+func hledanaSlova(slova []string) []string {
+	vysledek := []string{}
+	for _, s := range slova {
+		if !strings.HasPrefix(s, "-") && !strings.HasPrefix(s, "!") {
+			vysledek = append(vysledek, s)
+		}
+	}
+	return vysledek
+}
+
 // Druh textu článku: přepis celého textu, nebo jen shrnutí; prázdný = neuvedeno
 var druhyClanku = map[string]bool{"": true, "prepis": true, "shrnuti": true}
 
@@ -194,29 +299,17 @@ type NalezTextu struct {
 // Nejvíce nalezených článků v rozbalovacím hledání
 const nejviceNalezu = 20
 
-// Hledání v článcích: využívá SQLite FTS5 s relevančním řazením BM25 a tolerancí diakritiky;
-// při absenci shody v FTS5 použije záložní prohledání (např. překlepy či shodu ve jménu modelky).
+// Hledání v článcích: SQLite FTS5 s relevancí BM25 a tolerancí diakritiky; slovo s minusem článek vylučuje.
+// K nálezům z textu se přidají články, které odpovídají jménem připojené modelky nebo s překlepem (záložní
+// prohledání), aby „monroe“ našlo i rozhovor připojený k Marilyn Monroe, i když její jméno v textu není.
 func (a *App) HledatClanky(dotaz string) []NalezClanku {
 	slova := strings.Fields(zjednodusit(dotaz))
-	if len(slova) == 0 {
+	hledana := hledanaSlova(slova)
+	if len(hledana) == 0 {
 		return []NalezClanku{}
 	}
-
-	var ftsTermy []string
-	for _, s := range slova {
-		ciste := strings.Map(func(r rune) rune {
-			if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-				return r
-			}
-			return -1
-		}, s)
-		if ciste != "" {
-			ftsTermy = append(ftsTermy, `"`+ciste+`"*`)
-		}
-	}
-
-	if len(ftsTermy) > 0 {
-		ftsDotaz := strings.Join(ftsTermy, " AND ")
+	nalezy := []NalezClanku{}
+	if ftsDotaz := dotazFTS(slova); ftsDotaz != "" {
 		rows, err := a.db.Query(`
 			SELECT c.id, c.vydani, COALESCE(c.strana, 0), COALESCE(c.rubrika, ''), c.nazev,
 				COALESCE(c.autor, ''), COALESCE(m.jmeno, ''), COALESCE(c.text, '')
@@ -224,29 +317,54 @@ func (a *App) HledatClanky(dotaz string) []NalezClanku {
 			JOIN clanky c ON c.id = f.zdroj_id
 			LEFT JOIN modelky m ON m.id = c.modelka_id
 			WHERE f.druh = 'clanek' AND texty_fts MATCH ?
-			ORDER BY (CASE WHEN LOWER(c.nazev) LIKE '%' || ? || '%' THEN 0 ELSE 1 END), bm25(texty_fts), c.vydani DESC
-			LIMIT ?`, ftsDotaz, slova[0], nejviceNalezu)
-		if err == nil {
-			defer rows.Close()
-			nalezy := []NalezClanku{}
+			ORDER BY bm25(texty_fts), c.vydani DESC
+			LIMIT ?`, ftsDotaz, nejviceNalezu)
+		if err != nil {
+			a.chyba("HledatClanky", err)
+		} else {
 			for rows.Next() {
 				var n NalezClanku
 				var autor, text string
 				if rows.Scan(&n.ID, &n.Vydani, &n.Strana, &n.Rubrika, &n.Nazev, &autor, &n.JmenoModelky, &text) == nil {
-					n.Ukazka = ukazkaTextu(text, slova)
+					n.Ukazka = ukazkaTextu(text, hledana)
 					nalezy = append(nalezy, n)
 				}
 			}
-			if len(nalezy) > 0 {
-				return nalezy
-			}
+			rows.Close()
 		}
 	}
-
-	return a.hledatClankyZalozni(slova)
+	// Doplnění článků, které odpovídají až se jménem připojené modelky, bez opakování; s překlepy se hledá,
+	// jen když se jinak nic nenašlo
+	videne := map[int]bool{}
+	for _, n := range nalezy {
+		videne[n.ID] = true
+	}
+	for _, n := range a.hledatClankyZalozni(slova, false) {
+		if !videne[n.ID] {
+			nalezy = append(nalezy, n)
+		}
+	}
+	if len(nalezy) == 0 {
+		nalezy = a.hledatClankyZalozni(slova, true)
+	}
+	// Shoda v názvu první (název bez diakritiky, jako hledaná slova), jinak pořadí relevance
+	vNazvu := func(n NalezClanku) bool {
+		nazev := zjednodusit(n.Nazev)
+		for _, s := range hledana {
+			if !strings.Contains(nazev, s) {
+				return false
+			}
+		}
+		return true
+	}
+	sort.SliceStable(nalezy, func(i, j int) bool { return vNazvu(nalezy[i]) && !vNazvu(nalezy[j]) })
+	if len(nalezy) > nejviceNalezu {
+		nalezy = nalezy[:nejviceNalezu]
+	}
+	return nalezy
 }
 
-func (a *App) hledatClankyZalozni(slova []string) []NalezClanku {
+func (a *App) hledatClankyZalozni(slova []string, sPreklepy bool) []NalezClanku {
 	nalezy := []NalezClanku{}
 	rows, err := a.db.Query(`SELECT c.id, c.vydani, COALESCE(c.strana, 0), COALESCE(c.rubrika, ''), c.nazev, COALESCE(c.autor, ''),
 			COALESCE(m.jmeno, ''), COALESCE(c.text, '')
@@ -271,7 +389,15 @@ func (a *App) hledatClankyZalozni(slova []string) []NalezClanku {
 		prohledat := zjednodusit(strings.Join([]string{n.Nazev, n.Rubrika, autor, n.JmenoModelky, text}, " "))
 		vNazvu, vyhovuje := true, true
 		for _, slovo := range slova {
-			if !strings.Contains(prohledat, slovo) && !odpovidaTextFuzzy(n.Nazev+" "+autor+" "+n.JmenoModelky, slovo) {
+			if vylucovane := strings.TrimLeft(slovo, "-!"); vylucovane != slovo {
+				// Vylučované slovo: článek nesmí obsahovat ani část (bez tolerance překlepů)
+				if vylucovane != "" && strings.Contains(prohledat, vylucovane) {
+					vyhovuje = false
+					break
+				}
+				continue
+			}
+			if !strings.Contains(prohledat, slovo) && (!sPreklepy || !odpovidaTextFuzzy(n.Nazev+" "+autor+" "+n.JmenoModelky, slovo)) {
 				vyhovuje = false
 				break
 			}
@@ -280,7 +406,7 @@ func (a *App) hledatClankyZalozni(slova []string) []NalezClanku {
 		if !vyhovuje {
 			continue
 		}
-		n.Ukazka = ukazkaTextu(text, slova)
+		n.Ukazka = ukazkaTextu(text, hledanaSlova(slova))
 		vse = append(vse, kandidat{n, vNazvu})
 	}
 	sort.SliceStable(vse, func(i, j int) bool {
@@ -305,22 +431,10 @@ func (a *App) HledatTexty(dotaz string) []NalezTextu {
 	if len(slova) == 0 {
 		return nalezy
 	}
-	var ftsTermy []string
-	for _, s := range slova {
-		ciste := strings.Map(func(r rune) rune {
-			if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
-				return r
-			}
-			return -1
-		}, s)
-		if ciste != "" {
-			ftsTermy = append(ftsTermy, `"`+ciste+`"*`)
-		}
-	}
-	if len(ftsTermy) == 0 {
+	ftsDotaz := dotazFTS(slova)
+	if ftsDotaz == "" {
 		return nalezy
 	}
-	ftsDotaz := strings.Join(ftsTermy, " AND ")
 	rows, err := a.db.Query(`
 		SELECT f.druh, f.zdroj_id, f.vydani, f.nazev, f.rubrika, f.autor, f.modelka_id, f.text,
 			bm25(texty_fts) AS rank
@@ -337,7 +451,7 @@ func (a *App) HledatTexty(dotaz string) []NalezTextu {
 		var n NalezTextu
 		var text string
 		if rows.Scan(&n.Druh, &n.ZdrojID, &n.Vydani, &n.Nazev, &n.Rubrika, &n.Autor, &n.ModelkaID, &text, &n.Relevance) == nil {
-			n.Ukazka = ukazkaTextu(text, slova)
+			n.Ukazka = ukazkaTextu(text, hledanaSlova(slova))
 			nalezy = append(nalezy, n)
 		}
 	}

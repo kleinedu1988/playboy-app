@@ -8,7 +8,9 @@ const FOKUSOVATELNE = 'button:not([disabled]), [href], input:not([disabled]):not
 
 // Okno nebo prohlížeč, který je právě nahoře
 function horniVrstva() {
-    return [...document.querySelectorAll('.modal-overlay:not(.hidden)')].pop()
+    // Přehled zkratek leží nad vším ostatním
+    return document.querySelector('#zkratky:not(.hidden) .zkratky')
+        || [...document.querySelectorAll('.modal-overlay:not(.hidden)')].pop()
         || document.querySelector('#lightbox:not(.hidden)');
 }
 

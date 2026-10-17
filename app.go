@@ -750,6 +750,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceUmrtiAObalka,
 	(*App).migraceClanky,
 	(*App).migraceFTS5,
+	(*App).migraceFTSKlice,
 }
 
 func (a *App) migrovat() error {
@@ -1219,13 +1220,13 @@ func parsovatNumerickyFiltr(hodnota string) (op string, numOd, numDo int, ok boo
 		od, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
 		do, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
 		if err1 == nil && err2 == nil {
-			return "..", od, do, true
+			return "..", min(od, do), max(od, do), true
 		}
 	}
 	if m := vzorRozsahCisel.FindStringSubmatch(h); len(m) == 3 {
 		od, _ := strconv.Atoi(m[1])
 		do, _ := strconv.Atoi(m[2])
-		return "..", od, do, true
+		return "..", min(od, do), max(od, do), true
 	}
 	if n, err := strconv.Atoi(h); err == nil {
 		return "=", n, 0, true
@@ -1289,6 +1290,19 @@ func vyhovujeNumericky(m Modelka, klic, op string, numOd, numDo int) bool {
 		return false
 	}
 	return false
+}
+
+// Slovo jen z číslic (rok, výška…): hledá se přesně, bez tolerance překlepů
+func jeCislo(text string) bool {
+	if text == "" {
+		return false
+	}
+	for _, r := range text {
+		if (r < '0' || r > '9') && r != '-' && r != '.' {
+			return false
+		}
+	}
+	return true
 }
 
 func vyhovujeVarianty(text string, varianty []string) bool {
@@ -1453,7 +1467,12 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 		var shoda bool
 		if klic != "" {
 			klicZjedn := zjednodusit(klic)
-			if op, numOd, numDo, ok := parsovatNumerickyFiltr(hodnota); ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "hodnoceni" || klicZjedn == "srdicka" || klicZjedn == "rok" || klicZjedn == "narozena") {
+			op, numOd, numDo, ok := parsovatNumerickyFiltr(hodnota)
+			// Rok kratší než čtyři číslice (rok:197) je začátek roku, ne přesný rok: hledá se jako text
+			if ok && op == "=" && (klicZjedn == "rok" || klicZjedn == "narozena") && len(strings.TrimSpace(hodnota)) < 4 {
+				ok = false
+			}
+			if ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "hodnoceni" || klicZjedn == "srdicka" || klicZjedn == "rok" || klicZjedn == "narozena") {
 				shoda = vyhovujeNumericky(m, klicZjedn, op, numOd, numDo)
 			} else {
 				if pole == nil {
@@ -1466,7 +1485,22 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 							varianty = append(varianty, vz)
 						}
 					}
-					shoda = vyhovujeVarianty(text, varianty)
+					if len(varianty) == 0 {
+						// Jen čárka (píše se další hodnota): slovo nic neomezuje
+						continue
+					}
+					if klicZjedn == "tetovani" || klicZjedn == "piercing" {
+						// Ano/ne se porovnává po celých slovech („no“ je i v „ano“)
+						shoda = false
+						for _, slovo := range strings.Fields(text) {
+							for _, v := range varianty {
+								shoda = shoda || slovo == v
+							}
+						}
+					} else {
+						shoda = vyhovujeVarianty(text, varianty)
+					}
+					// Překlepy se tolerují u jména a fotografa (i ve vyloučení: -jmeno:Pamella vyloučí Pamelu)
 					if !shoda && (klicZjedn == "jmeno" || klicZjedn == "fotograf") {
 						for _, v := range varianty {
 							if odpovidaTextFuzzy(text, v) {
@@ -1487,8 +1521,12 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 					varianty = append(varianty, vz)
 				}
 			}
+			if len(varianty) == 0 {
+				continue
+			}
 			shoda = vyhovujeVarianty(udaje, varianty)
-			if !shoda {
+			// Překlepy jen u hledaných slov s písmeny (ne u čísel a vylučovaných slov): 1975 nenajde 1976, -anna nevyloučí Anju
+			if !shoda && !negace && !jeCislo(hodnotaZjedn) {
 				for _, v := range varianty {
 					if odpovidaTextFuzzy(m.Jmeno+" "+m.DalsiJmena, v) || odpovidaTextFuzzy(m.fotografoveAlb, v) {
 						shoda = true

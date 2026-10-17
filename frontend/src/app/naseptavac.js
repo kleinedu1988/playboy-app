@@ -1,6 +1,6 @@
 // Rychlé výsledky pod hledáním odkudkoli: příkazy vyhledávání, hodnoty filtrů, modelky, články a čísla
 import { GetKalendar, HledatClanky } from './backend';
-import { PRIKAZY, bezDiakritiky, esc, nazevVydani, obrazek, odpovidaTextFuzzy, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { PRIKAZY, bezDiakritiky, esc, nazevVydani, obrazek, poleCisla, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { searchInput } from './prvky';
 import { VELIKOST_NAHLEDU, adresaTitulni } from './obrazky';
@@ -78,7 +78,7 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
         });
         for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
             if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
             }
         }
     } else if (klic === 'tag' || klic === 'tagy') {
@@ -90,7 +90,7 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
         });
         for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
             if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
             }
         }
     } else if (klic === 'edice') {
@@ -109,7 +109,7 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
         });
         for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
             if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
             }
         }
     } else if (klic === 'narodnost') {
@@ -120,7 +120,7 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
         });
         for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
             if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
             }
         }
     } else if (klic === 'oci') {
@@ -131,7 +131,7 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
         });
         for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
             if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
             }
         }
     } else if (klic === 'hodnoceni' || klic === 'srdicka') {
@@ -235,17 +235,15 @@ async function hledat() {
     // Pokud uživatel nepíše cílený filtr s dvojtečkou a dotaz má alespoň 2 znaky, prohledáme i modelky, články a čísla
     if (idxDvojtecka < 0 && !tokeny.some(t => t.klic) && trimDotaz.length >= 2) {
         nalezeneModelky = modelky
-            .filter(m => vyhovujeHledani([textModelky(m)], tokeny) || slova.some(s => odpovidaTextFuzzy(m.jmeno + ' ' + (m.dalsiJmena || ''), s)))
-            .sort((a, b) => {
-                const aJmeno = vyhovujeHledani([a.jmeno, a.dalsiJmena], tokeny) || slova.some(s => odpovidaTextFuzzy(a.jmeno, s));
-                const bJmeno = vyhovujeHledani([b.jmeno, b.dalsiJmena], tokeny) || slova.some(s => odpovidaTextFuzzy(b.jmeno, s));
-                if (aJmeno !== bJmeno) return aJmeno ? -1 : 1;
-                return a.jmeno.localeCompare(b.jmeno);
-            })
+            // Všechna slova musí platit (i vylučovaná); překlepy se tolerují jen ve jméně
+            .filter(m => vyhovujeHledani([textModelky(m)], tokeny, { jmeno: `${m.jmeno} ${m.dalsiJmena || ''}` }))
+            .map(m => ({ m, vJmene: vyhovujeHledani([m.jmeno, m.dalsiJmena], tokeny, { jmeno: `${m.jmeno} ${m.dalsiJmena || ''}` }) }))
+            .sort((a, b) => (a.vJmene !== b.vJmene ? (a.vJmene ? -1 : 1) : a.m.jmeno.localeCompare(b.m.jmeno)))
+            .map(x => x.m)
             .slice(0, NEJVIC_MODELEK);
 
         nalezenaCisla = cisla
-            .filter(k => vyhovujeHledani([nazevVydani(k.vydani), k.vydani, k.modelka || ''], tokeny))
+            .filter(k => vyhovujeHledani([nazevVydani(k.vydani), k.vydani, k.modelka || ''], tokeny, poleCisla(k.vydani, k.modelka || '')))
             .sort((a, b) => b.vydani.localeCompare(a.vydani)).slice(0, NEJVIC_CISEL);
 
         nalezeneClanky = clanky.slice(0, NEJVIC_CLANKU);
@@ -276,7 +274,7 @@ async function hledat() {
                 <span class="naseptavac-nazev"><code class="naseptavac-kod">${esc(p.prikaz)}</code></span>
                 <span class="naseptavac-kde">${esc(p.popis)}</span>
             </span>`)).join('')),
-        skupina(`Možnosti filtru ${klicHodnot}`, moznostiHodnot.length, moznostiHodnot.map(h => polozka(() => nahraditAktivniSlovo(`${negPrefix}${klicHodnot}:${h.hodnota}`, true), `
+        skupina(`Možnosti filtru ${klicHodnot}`, moznostiHodnot.length, moznostiHodnot.map(h => polozka(() => nahraditAktivniSlovo(`${negPrefix}${klicHodnot}:${/\s/.test(h.hodnota) ? `"${h.hodnota}"` : h.hodnota}`, true), `
             <span class="naseptavac-nahled-ikona">🏷</span>
             <span class="naseptavac-text">
                 <span class="naseptavac-nazev"><code class="naseptavac-kod">${esc(negPrefix + klicHodnot + ':' + h.hodnota)}</code></span>
@@ -340,12 +338,19 @@ export function pripravit() {
         kalendar = null;
         if (searchInput.value.trim().length >= 1) hledat();
     });
+    // Zavření (blur, Esc) zruší i čekající hledání, jinak by se výsledky po chvíli znovu otevřely
     searchInput.addEventListener('blur', () => {
+        clearTimeout(casovac);
         cisloHledani++;
         zavritNaseptavac();
     });
 
     searchInput.addEventListener('keydown', (e) => {
+        // Esc zruší i hledání, které ještě nedoběhlo (výsledky se ještě neukázaly)
+        if (e.key === 'Escape') {
+            clearTimeout(casovac);
+            cisloHledani++;
+        }
         if (naseptavac.classList.contains('hidden')) return;
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
             e.preventDefault();
@@ -363,7 +368,6 @@ export function pripravit() {
         } else if (e.key === 'Escape') {
             // Esc zavře jen výsledky; profil ani stránka čísla se nezavřou
             e.stopPropagation();
-            cisloHledani++;
             zavritNaseptavac();
         }
     });

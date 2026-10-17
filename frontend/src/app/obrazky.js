@@ -40,7 +40,7 @@ export function pripravit() {
     // Náhled (img loading="lazy") je průhledný, dokud se nenačte, pak se plynule objeví (styl v style.css)
     document.addEventListener('load', (e) => {
         const img = /** @type {HTMLImageElement} */ (e.target);
-        if (img.tagName === 'IMG' && img.loading === 'lazy') oznacit(img);
+        if (img.tagName === 'IMG' && img.getAttribute('loading') === 'lazy') oznacit(img);
     }, true);
     // Nově vložený náhled, který už je v mezipaměti, se označí ještě před vykreslením (bez bliknutí)
     new MutationObserver(zmeny => zmeny.forEach(z => z.addedNodes.forEach(uzel => {
@@ -49,7 +49,7 @@ export function pripravit() {
         const obrazky = prvek.tagName === 'IMG' ? [prvek] : prvek.querySelectorAll('img[loading="lazy"]');
         obrazky.forEach(img => {
             const i = /** @type {HTMLImageElement} */ (img);
-            if (i.loading === 'lazy' && (nactene.has(i.src) || (i.complete && i.naturalWidth))) oznacit(i);
+            if (i.getAttribute('loading') === 'lazy' && (nactene.has(i.src) || (i.complete && i.naturalWidth))) oznacit(i);
         });
     }))).observe(document.body, { childList: true, subtree: true });
 

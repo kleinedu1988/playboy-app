@@ -658,11 +658,11 @@ func TestFuzzyHledaniAFTS5(t *testing.T) {
 
 	// 2. FTS5: virtuální tabulka texty_fts pro články a texty alb
 	clanekID := a.AddClanek(Clanek{
-		Vydani: "1990-02",
-		Nazev:  "Interview s Pamelou",
+		Vydani:  "1990-02",
+		Nazev:   "Interview s Pamelou",
 		Rubrika: "Rozhovor",
-		Autor:  "Lawrence Grobel",
-		Text:   "Exkluzivní rozhovor v Los Angeles o natáčení filmu a divadle.",
+		Autor:   "Lawrence Grobel",
+		Text:    "Exkluzivní rozhovor v Los Angeles o natáčení filmu a divadle.",
 	})
 
 	// Hledání v článcích pomocí FTS5
@@ -2627,5 +2627,83 @@ func TestStatistiky(t *testing.T) {
 	}
 	if prazdna := novaTestovaciApp(t, nil).GetStatistiky(); prazdna.Centerfoldu != 0 || prazdna.Desetileti == nil || prazdna.Vek == nil {
 		t.Fatalf("prázdná sbírka: %+v", prazdna)
+	}
+}
+
+// Nálezy revize hledání: ano/ne po celých slovech, začátek roku, obrácený rozsah, rozepsaná čárka, čísla
+// a vylučovaná slova bez překlepů; FTS bez druhu v indexu, slova s pomlčkou, článek podle jména modelky,
+// vylučování v článcích a rychlé hromadné úpravy alb
+func TestReviseHledani(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anja Tetovaná", Tetovani: 1})
+	a.AddModelka(Modelka{Jmeno: "Marta Čistá", Tetovani: 0})
+	a.AddModelka(Modelka{Jmeno: "Anna Sedmdesátá", Tetovani: -1})
+	anna := a.GetModelky("Sedmdesátá")[0]
+	a.AddBulkPhotos(anna.ID, "1975-03", "Centerfold", odkazA)
+
+	jmena := func(dotaz string) []string {
+		vysledek := []string{}
+		for _, m := range a.GetModelky(dotaz) {
+			vysledek = append(vysledek, m.Jmeno)
+		}
+		return vysledek
+	}
+	for dotaz, cekam := range map[string]string{
+		"tetovani:no":   "Marta Čistá",
+		"tetovani:ano":  "Anja Tetovaná",
+		"rok:197":       "Anna Sedmdesátá",
+		"rok:1979-1970": "Anna Sedmdesátá",
+		"jmeno:marta,":  "Marta Čistá",
+		"1975":          "Anna Sedmdesátá",
+	} {
+		if mam := jmena(dotaz); len(mam) != 1 || mam[0] != cekam {
+			t.Errorf("hledání %q: %v, čekám %s", dotaz, mam, cekam)
+		}
+	}
+	if mam := jmena("1976"); len(mam) != 0 {
+		t.Errorf("rok se nemá hledat s překlepem: %v", mam)
+	}
+	if mam := jmena("-anna"); len(mam) != 2 {
+		t.Errorf("vylučované slovo bez překlepů (-anna nevyloučí Anju): %v", mam)
+	}
+
+	// Články: druh není v indexu, pomlčka dělí slovo, jméno modelky, vylučování
+	marilyn := a.GetModelky("Marta")[0]
+	srdce := a.AddClanek(Clanek{Vydani: "1990-01", Nazev: "Sweetheart", ModelkaID: marilyn.ID, Text: "Rozhovor o filmu."})
+	hollywood := a.AddClanek(Clanek{Vydani: "1990-02", Nazev: "Hollywood", Text: "Jean-Luc a Marta Čistá v Monte Carlu."})
+	if n := a.HledatClanky("clanek"); len(n) != 0 {
+		t.Errorf("slovo „clanek“ nemá najít všechny články: %+v", n)
+	}
+	if n := a.HledatTexty("jean-luc"); len(n) != 1 || n[0].ZdrojID != hollywood {
+		t.Errorf("slovo s pomlčkou: %+v", n)
+	}
+	if n := a.HledatClanky("cista"); len(n) != 2 {
+		t.Errorf("článek podle jména připojené modelky: %+v", n)
+	}
+	if n := a.HledatClanky("cista -monte"); len(n) != 1 || n[0].ID != srdce {
+		t.Errorf("vylučované slovo v článcích: %+v", n)
+	}
+
+	// Album bez textu je v indexu stejně jako po úpravě schématu
+	a.AddBulkPhotos(anna.ID, "Bez textu", "Pictorial", "https://drive.google.com/file/d/BBBBBBBBBBBBBBBBBBBBBBBBBBBBB/view")
+	if n := a.HledatTexty("textu"); len(n) != 1 || n[0].Druh != "album" {
+		t.Errorf("album bez popisu v indexu: %+v", n)
+	}
+
+	// Hromadná úprava mnoha alb nesmí procházet celý index pro každý řádek
+	tx, _ := a.db.Begin()
+	for i := 0; i < 3000; i++ {
+		tx.Exec(`INSERT INTO alba (modelka_id, album, typ, vydani) VALUES (?, ?, 'Pictorial', '')`, anna.ID, fmt.Sprintf("Album %d", i))
+	}
+	tx.Commit()
+	zacatek := time.Now()
+	if _, err := a.db.Exec(`UPDATE alba SET popis = 'nový popis'`); err != nil {
+		t.Fatal(err)
+	}
+	if trvani := time.Since(zacatek); trvani > 3*time.Second {
+		t.Errorf("hromadná úprava 3000 alb trvala %v", trvani)
+	}
+	if n := a.HledatTexty("novy popis"); len(n) == 0 {
+		t.Error("index po hromadné úpravě")
 	}
 }

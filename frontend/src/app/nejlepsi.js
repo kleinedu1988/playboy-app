@@ -1,7 +1,7 @@
 // Nejlepší fotky a vlastní výběry
 import { GetFotkyVyberu, GetNejlepsiFotky, GetVybery, PrejmenovatVyber, PridatDoVyberu, SmazatVyber, VyberPodleNazvu } from './backend';
 import { oznamit } from '../ui/oznameni';
-import { bezDiakritiky, esc, nazevAlba, obrazek, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { bezDiakritiky, esc, nazevAlba, obrazek, poleFotky, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { stav } from './stav';
 import { vybratKliknutim } from './vyber';
 import { best, searchInput } from './prvky';
@@ -48,7 +48,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         nazevAlba(f.album, f.typ),
         f.fotograf || '',
         f.popis || '',
-    ], tokeny);
+    ], tokeny, poleFotky(f));
     stav.nejlepsiPolozky = fotky.filter(vyhovuje).map(f => ({
         fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni,
     })).sort((x, y) => y.hodnoceni - x.hodnoceni);

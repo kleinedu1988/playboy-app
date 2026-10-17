@@ -51,13 +51,14 @@ const CASTI = [
 ];
 
 let panel = null;
+let fokusPredOtevrenim = null;
 
 function pripravitPanel() {
     panel = document.createElement('div');
     panel.id = 'zkratky';
     panel.className = 'zkratky-zavoj hidden';
     panel.innerHTML = `
-        <div class="zkratky" role="dialog" aria-modal="true" aria-labelledby="zkratkyNadpis">
+        <div class="zkratky" role="dialog" aria-modal="true" aria-labelledby="zkratkyNadpis" tabindex="-1">
             <h3 id="zkratkyNadpis">Klávesové zkratky</h3>
             <div class="zkratky-casti"></div>
             <div class="zkratky-pata">
@@ -86,10 +87,16 @@ export function otevritZkratky() {
             <dl>${c.radky.map(([klavesy, popis]) => `<dt>${klavesy}</dt><dd>${popis}</dd>`).join('')}</dl>
         </section>`).join('');
     panel.classList.remove('hidden');
+    // Fokus do panelu: Enter ani mezerník nesmí kliknout na tlačítko pod ním, Tab zůstává v panelu
+    fokusPredOtevrenim = document.activeElement;
+    panel.querySelector('.zkratky').focus({ preventScroll: true });
 }
 
 export function zavritZkratky() {
-    panel?.classList.add('hidden');
+    if (!panel || panel.classList.contains('hidden')) return;
+    panel.classList.add('hidden');
+    if (fokusPredOtevrenim?.isConnected) fokusPredOtevrenim.focus({ preventScroll: true });
+    fokusPredOtevrenim = null;
 }
 
 const otevreno = () => panel && !panel.classList.contains('hidden');
@@ -99,13 +106,16 @@ export function pripravit() {
     // ? otevře a zavře přehled (ne při psaní a nad okny kromě čtečky stran); Esc ho zavře a dál nejde
     document.addEventListener('keydown', (e) => {
         if (otevreno()) {
+            // Žádná klávesa nepatří stránce pod panelem (listování, srdíčka, Esc filtrů); obsluha zkratek je
+            // registrovaná první, takže zastaví i ostatní obsluhy na dokumentu. Tab a Enter na tlačítku
+            // „Celá nápověda“ zůstávají panelu.
+            if (e.key === 'Tab') return;
+            e.stopImmediatePropagation();
             if (e.key === 'Escape' || e.key === '?') {
                 e.preventDefault();
-                e.stopPropagation();
                 zavritZkratky();
-            } else if (e.key !== 'Tab') {
-                // Ostatní klávesy nepatří stránce pod panelem (listování, srdíčka…)
-                e.stopPropagation();
+            } else if (!(e.target.closest?.('.zkratky button') && (e.key === 'Enter' || e.key === ' '))) {
+                e.preventDefault();
             }
             return;
         }

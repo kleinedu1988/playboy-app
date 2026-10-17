@@ -159,10 +159,12 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     if (modelky.length === 0) {
         listaGalerie.naplnit([]);
         const zrusit = { text: 'Zrušit hledání a filtry', akce: 'zrusit' };
+        // Srdíčka jako jediná příčina mají vlastní hlášku; s hledáním nebo dalším filtrem je to „Nic nenalezeno“
+        const jinyFiltr = dotaz.trim() || stav.ediceModelek !== 'vse' || stav.roleModelek !== 'vse';
         gallery.innerHTML = htmlNastroju(0, roleCetnosti) + (
-            stav.minHodnoceni === -1 ? htmlPrazdna('Vše ohodnoceno', 'Všechny modelky už mají srdíčka.', { ikona: 'srdce', tlacitko: zrusit })
+            jinyFiltr ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádná modelka.')
+            : stav.minHodnoceni === -1 ? htmlPrazdna('Vše ohodnoceno', 'Všechny modelky už mají srdíčka.', { ikona: 'srdce', tlacitko: zrusit })
             : stav.minHodnoceni > 0 ? htmlPrazdna(`Žádná modelka s ♥ ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? '+' : ''}`, 'Modelky se hodnotí srdíčky na kartě nebo v profilu.', { ikona: 'srdce', tlacitko: zrusit })
-            : (dotaz.trim() || stav.ediceModelek !== 'vse' || stav.roleModelek !== 'vse') ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádná modelka.')
             : htmlPrazdna('Zatím žádné modelky', 'Sbírka začíná první modelkou. Přidej ji a pak k ní vlož fotky z Google Disku.', { tlacitko: { text: 'Přidat modelku', akce: 'pridat-modelku' } }));
         prevestNaVolby(gallery.querySelector('.gallery-toolbar'));
         return;

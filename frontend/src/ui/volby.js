@@ -34,8 +34,12 @@ const IKONA_PREHRAT = '<svg viewBox="0 0 24 24" width="13" height="13" fill="cur
 
 // Panel filtrů zůstává otevřený i po změně filtru (přehled se překreslí a panel se naplní znovu)
 let panelOtevren = false;
-// „Zrušit filtry“ ruší filtry po jednom: po každém překreslení přehledu se zruší další zapnutý
-let rusitVse = false;
+// „Zrušit filtry“ ruší filtry po jednom: po každém překreslení přehledu se zruší další zapnutý. Platí jen pro
+// přehled, ve kterém se začalo (rodič řádku voleb), a nejvýš 3 s; přepnutí jinam nebo nezdařené načtení ho ukončí.
+let rusitVse = null;
+const RUSENI_NEJDELE = 3000;
+const zacitRuseni = (lista) => { rusitVse = { kde: lista?.parentElement, do: Date.now() + RUSENI_NEJDELE }; };
+let aktualniLista = null;
 let tlacitkoFiltru = null;
 
 const misto = () => document.getElementById('volbyPrehledu');
@@ -52,6 +56,7 @@ export function prevestNaVolby(lista) {
 
 // Po přepnutí pohledu: volby nově ukázaného přehledu, nebo prázdné místo (profil, vydání, covery, přehled)
 export function obnovitVolby(pohled) {
+    rusitVse = null;
     ukazatVolby(pohled.querySelector('.volby-v-liste'));
 }
 
@@ -86,7 +91,7 @@ function ukazatVolby(lista) {
     cil.classList.toggle('hidden', !lista);
     tlacitkoFiltru = null;
     if (!lista) {
-        rusitVse = false;
+        rusitVse = null;
         zavritPanel();
         return nastavitPocet();
     }
@@ -110,9 +115,11 @@ function ukazatVolby(lista) {
     const odkazy = [...lista.querySelectorAll('button.link')];
     const sOdkazy = skupiny.find(s => s.druh === 'samostatne') || skupiny.filter(s => s.druh !== 'filtr').at(-1);
 
+    aktualniLista = lista;
     if (rusitVse) {
-        if (zapnute.length) setTimeout(() => zapnute[0].zrusit());
-        else rusitVse = false;
+        const pokracovat = rusitVse.kde === lista.parentElement && Date.now() < rusitVse.do && zapnute.length;
+        if (pokracovat) setTimeout(() => zapnute[0].zrusit());
+        else rusitVse = null;
     }
 
     const pridatTlacitko = (html, trida = '') => {
@@ -151,7 +158,8 @@ function ukazatVolby(lista) {
     };
     const krizek = '<em class="volba-zrusit" title="Zrušit filtr" aria-label="Zrušit filtr">&times;</em>';
 
-    skupiny.filter(s => s.druh !== 'filtr').forEach(s => {
+    // Povinná volba bez zvolené hodnoty (srdíčka v Nejlepších, když je zvolený výběr) se neukazuje
+    skupiny.filter(s => s.druh !== 'filtr' && (s.druh !== 'povinne' || s.zvoleny)).forEach(s => {
         let tlacitko;
         if (s.druh === 'razeni') {
             tlacitko = pridatTlacitko(`${IKONA_RAZENI}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
@@ -232,7 +240,7 @@ function pripravitPanel() {
             const v = aktualniFiltry.filtry[i]?.volby[j];
             if (v && !v.zvolena) v.akce();
         } else if (e.target.closest('[data-zrusit-filtry]') && aktualniFiltry.zapnute.length) {
-            rusitVse = true;
+            zacitRuseni(aktualniLista);
             aktualniFiltry.zapnute[0].zrusit();
         }
     });
@@ -240,6 +248,16 @@ function pripravitPanel() {
     document.addEventListener('mousedown', (e) => {
         if (panelOtevren && !panelFiltru.contains(e.target) && !tlacitkoFiltru?.contains(e.target)) zavritPanel();
     }, true);
+    // Tab zůstává v panelu (dokola), jako v okně
+    panelFiltru.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab') return;
+        const tlacitka = [...panelFiltru.querySelectorAll('button:not(:disabled)')];
+        const kde = tlacitka.indexOf(document.activeElement);
+        if (e.shiftKey ? kde <= 0 : kde === tlacitka.length - 1) {
+            e.preventDefault();
+            tlacitka[e.shiftKey ? tlacitka.length - 1 : 0]?.focus();
+        }
+    });
     document.addEventListener('keydown', (e) => {
         if (!panelOtevren || e.key !== 'Escape') return;
         e.preventDefault();
@@ -256,6 +274,8 @@ function otevritPanel() {
     panelOtevren = true;
     tlacitkoFiltru?.setAttribute('aria-expanded', 'true');
     vykreslitPanel();
+    // Fokus do panelu na zvolenou volbu prvního filtru, aby šel ovládat klávesnicí
+    panelFiltru.querySelector('button.active, button')?.focus({ preventScroll: true });
 }
 
 function zavritPanel() {
@@ -266,6 +286,8 @@ function zavritPanel() {
 
 function vykreslitPanel() {
     const { filtry, zapnute, pocet } = aktualniFiltry;
+    // Po překreslení zůstane fokus na stejné volbě (výběr Enterem jinak fokus ztratí)
+    const fokus = panelFiltru.contains(document.activeElement) ? document.activeElement.dataset.filtr || 'zrusit' : null;
     panelFiltru.innerHTML = filtry.map((s, i) => `
         <h6>${POPISKY[s.klic]}</h6>
         <div class="volby-panel-rada">${s.volby.map((v, j) => `
@@ -275,6 +297,7 @@ function vykreslitPanel() {
             <button type="button" class="link" data-zrusit-filtry ${zapnute.length ? '' : 'disabled'}>Zrušit filtry</button></div>`;
     panelFiltru.classList.remove('hidden');
     umistitPanel();
+    if (fokus) (panelFiltru.querySelector(`[data-filtr="${fokus}"]`) || panelFiltru.querySelector('button:not(:disabled)'))?.focus({ preventScroll: true });
 }
 
 // Panel uprostřed pod lištou voleb (stejně jako hledání nad ní), celý v okně
@@ -303,6 +326,6 @@ export function zrusitHledaniAFiltry() {
         hledani.dispatchEvent(new Event('input'));
     }
     if (!aktualniFiltry.zapnute.length) return;
-    rusitVse = true;
+    zacitRuseni(aktualniLista);
     aktualniFiltry.zapnute[0].zrusit();
 }

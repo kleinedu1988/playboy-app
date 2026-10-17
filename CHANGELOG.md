@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.17] – 2026-10-17
+
+### Opraveno (revize změn od verze 0.32.3)
+- **Stejné hledání ve všech přehledech:** Centerfoldy, Nejlepší, Čísla, Kalendář i rychlé výsledky teď rozumí cíleným slovům stejně jako hledání modelek: `rok:1970-1979`, `rok:>=1990`, `hodnoceni:>=4`, `fotograf:`, `jmeno:`, vylučování `-1975`. Dřív stěna centerfoldů cílené pole ignorovala (`-tag:x` vyřadilo vše s písmenem x) a Kalendář syntaxi neznal vůbec. Údaj, který přehled nemá (vlasy u centerfoldů), hledání neomezuje.
+- **Překlepy jen tam, kde dávají smysl:** Tolerance překlepů se už neuplatní u čísel (`1975` nenajde 1976) ani u vylučovaných slov (`-anna` nevyloučí Anju); u cíleného jména (`-jmeno:Pamella`) zůstává.
+- **Rychlé výsledky:** vylučovaná slova platí i tam (`anna -novakova`), Esc zavře výsledky i tehdy, když hledání ještě nedoběhlo, hodnota s mezerou se vloží v uvozovkách (`role:"playmate měsíce"`) a u nabídek hodnot už není dvakrát počet („1 1 modelka“).
+- **Hledání modelek:** `tetovani:no` a `piercing:no` už nenajdou všechny, `rok:197` najde celá sedmdesátá léta, obrácený rozsah `rok:1979-1970` funguje a rozepsaná čárka (`jmeno:anna,`) nevymaže výsledky.
+- **Hledání v textech:** Úprava schématu č. 11 přestaví fulltextový index: hromadná úprava tisíců alb trvala sekundy (každá změna procházela celý index), teď zlomek sekundy. Slovo „clanek“ už nenajde všechny články, slova s pomlčkou (`jean-luc`) se najdou, alba bez popisu se indexují stejně ve starých i nových databázích, článek se najde i podle jména připojené modelky a vylučované slovo (`monte -anderson`) článek vyřadí.
+- **Zrušit filtry** ruší filtry jen v přehledu, kde se začalo; rychlé přepnutí na jiný přehled už nesmaže jeho filtry. Panel Filtry jde ovládat klávesnicí (fokus na zvolené volbě, Tab zůstává v panelu). Hláška u filtru srdíček spolu s dalším filtrem je „Nic nenalezeno“ a v Nejlepších se při zvoleném výběru neukazuje nesmyslné „Srdíčka: vše“.
+- **Přehled zkratek** opravdu zastaví klávesy pod sebou (Enter neklikne na tlačítko za panelem, šipky nelistují čtečkou, Esc nezavře zároveň panel Filtry), Tab zůstává v panelu a po zavření se fokus vrátí.
+- Rejstřík u pravého okraje v nejužším okně nepřekrývá řádek voleb; skleněné panely mají rozmazání i ve starších verzích WebKitGTK; plynulé objevování fotek nezávisí na podpoře vlastnosti `loading`.
+
 ## [0.33.16] – 2026-10-17
 
 ### Opraveno

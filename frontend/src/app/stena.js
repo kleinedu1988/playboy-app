@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { EDICE, bezDiakritiky, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { EDICE, bezDiakritiky, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
@@ -37,7 +37,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
             nazevAlba(f.album, f.typ),
             f.fotograf || '',
             f.popis || '',
-        ], tokeny);
+        ], tokeny, poleFotky(f));
     };
     stav.stenaPolozky = sestavitAlba(fotky.filter(vyhovuje)).flatMap(a => a.polozky).filter(p => {
         if (stav.stenaMin === -1) return !p.hodnoceni;
@@ -148,7 +148,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
             stavCisla.get(k.vydani)?.naObalce || '',
             stavCisla.get(k.vydani)?.poznamka || '',
         ];
-        return vyhovujeHledani(texty, tokeny);
+        return vyhovujeHledani(texty, tokeny, poleCisla(k.vydani, k.modelka || ''));
     };
     const vybrana = cisla.filter(vyhovuje);
 

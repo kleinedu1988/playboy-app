@@ -362,38 +362,70 @@ export function rozlozitDotaz(dotaz) {
     return tokeny;
 }
 
-// Ověří, zda pole textových hodnot odpovídá tokenům hledání (AND mezi tokeny, OR přes čárku, negace -, rozsah let a operátory)
-export function vyhovujeHledani(texty, tokeny) {
+// Klíče cíleného hledání, které zná backend (hledání modelek). Pohled, který daný údaj nemá (vlasy na stěně
+// centerfoldů), slovo s takovým klíčem nic neomezuje; neznámý klíč se hledá jako text „klic:hodnota“.
+const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'fotograf',
+    'rok', 'vydani', 'narozena', 'edice', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
+    'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela']);
+const jeCislo = text => /^[\d.\-]+$/.test(text);
+
+// Číslo z textu vyhovuje rozsahu (1970..1979, 1970-1979) nebo porovnání (>=1970, >175); null = hodnota není číselná.
+// Bez cíleného pole se porovnávají jen čtyřmístné roky, v cíleném poli všechna čísla.
+function vyhovujeCislu(hodnota, texty, cilene) {
+    const rozsah = cilene ? /^(\d+)\s*(?:\.\.|-)\s*(\d+)$/.exec(hodnota) : /^(\d{4})\s*(?:\.\.|-)\s*(\d{4})$/.exec(hodnota);
+    const porovnani = cilene ? /^(>=|<=|>|<|==|=)\s*(\d+)$/.exec(hodnota) : /^(>=|<=|>|<|==|=)\s*(\d{4})$/.exec(hodnota);
+    if (!rozsah && !porovnani) return null;
+    const cisla = texty.flatMap(txt => (txt.match(cilene ? /\d+/g : /\b\d{4}\b/g) || []).map(Number));
+    if (rozsah) {
+        const [od, doR] = [Number(rozsah[1]), Number(rozsah[2])].sort((x, y) => x - y);
+        return cisla.some(c => c >= od && c <= doR);
+    }
+    const [, op, cil] = porovnani;
+    return cisla.some(c => op === '>=' ? c >= +cil : op === '<=' ? c <= +cil : op === '>' ? c > +cil : op === '<' ? c < +cil : c === +cil);
+}
+
+// Údaje fotky pro cílené hledání (stěna centerfoldů, Nejlepší): jméno, fotograf, vydání, rok, edice, srdíčka
+export function poleFotky(f) {
+    const vydani = f.vydani || (rozlozitVydani(f.album) ? f.album : '');
+    return {
+        jmeno: f.jmenoModelky || '', fotograf: f.fotograf || '', vydani, rok: vydani.slice(0, 4),
+        edice: rozlozitVydani(vydani)?.edice || '', hodnoceni: f.hodnoceni ? String(f.hodnoceni) : '', srdicka: f.hodnoceni ? String(f.hodnoceni) : '',
+    };
+}
+
+// Údaje čísla časopisu pro cílené hledání (Čísla, Kalendář, našeptávač)
+export const poleCisla = (vydani, modelka = '') => ({ jmeno: modelka, vydani, rok: vydani.slice(0, 4), edice: rozlozitVydani(vydani)?.edice || '' });
+
+// Ověří, zda texty položky odpovídají tokenům hledání: AND mezi tokeny, OR přes čárku, negace -, rozsahy a porovnání čísel.
+// pole = údaje pro cílené hledání ({ jmeno, fotograf, rok, … }); slovo s klíčem se hledá jen v daném údaji,
+// bez nich ve všech textech.
+// Překlepy se tolerují jen u hledaných slov s písmeny (ne u čísel a vylučovaných slov) a jen ve jméně a fotografovi,
+// pokud je pohled zná, jinak ve všech textech.
+export function vyhovujeHledani(texty, tokeny, pole = {}) {
     if (!tokeny.length) return true;
-    const zjednoduseneTexty = texty.filter(Boolean).map(t => bezDiakritiky(t));
+    const vse = texty.filter(Boolean).map(t => bezDiakritiky(t));
+    const udaje = Object.fromEntries(Object.entries(pole).map(([k, v]) => [k, bezDiakritiky(v || '')]));
+    const jmenaAFotografove = 'jmeno' in udaje || 'fotograf' in udaje ? [udaje.jmeno, udaje.fotograf].filter(Boolean) : vse;
     for (const t of tokeny) {
-        // Kontrola rozsahu let např. 1970..1979 nebo 1970-1979 a operátorů >=1970, <1980
-        const rozsah = /^(\d{4})\s*(?:\.\.|\-)\s*(\d{4})$/.exec(t.hodnota);
-        const opMatch = /^(>=|<=|>|<|==|=)\s*(\d{4})$/.exec(t.hodnota);
-        let shoda = false;
-        if (rozsah) {
-            const od = parseInt(rozsah[1]), doR = parseInt(rozsah[2]);
-            shoda = zjednoduseneTexty.some(txt => {
-                const roky = txt.match(/\b\d{4}\b/g) || [];
-                return roky.some(r => parseInt(r) >= od && parseInt(r) <= doR);
-            });
-        } else if (opMatch) {
-            const op = opMatch[1];
-            const cil = parseInt(opMatch[2]);
-            shoda = zjednoduseneTexty.some(txt => {
-                const roky = txt.match(/\b\d{4}\b/g) || [];
-                return roky.some(r => {
-                    const c = parseInt(r);
-                    if (op === '>=') return c >= cil;
-                    if (op === '<=') return c <= cil;
-                    if (op === '>') return c > cil;
-                    if (op === '<') return c < cil;
-                    if (op === '=' || op === '==') return c === cil;
-                    return false;
-                });
-            });
-        } else {
-            shoda = t.varianty.some(v => zjednoduseneTexty.some(txt => txt.includes(v) || odpovidaTextFuzzy(txt, v)));
+        let kde = vse;
+        let proPreklepy = jmenaAFotografove;
+        let hledane = t.varianty;
+        // Bez údajů pohledu (pole = {}) se cílené slovo hledá ve všech textech
+        if (t.klic && Object.keys(udaje).length) {
+            if (t.klic in udaje) {
+                kde = [udaje[t.klic]];
+                proPreklepy = t.klic === 'jmeno' || t.klic === 'fotograf' ? kde : [];
+            } else if (ZNAME_KLICE.has(t.klic)) {
+                continue;
+            } else {
+                hledane = [`${t.klic}:${t.hodnota}`];
+                proPreklepy = [];
+            }
+        }
+        let shoda = vyhovujeCislu(t.hodnota, kde, kde !== vse);
+        if (shoda === null) {
+            shoda = hledane.some(v => kde.some(txt => txt.includes(v))
+                || (!t.negace && !jeCislo(v) && proPreklepy.some(txt => odpovidaTextFuzzy(txt, v))));
         }
         if (t.negace) shoda = !shoda;
         if (!shoda) return false;

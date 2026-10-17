@@ -1,7 +1,7 @@
 // Články čísla: čtení (text s perexem, citáty a zvýrazněnými otázkami, skeny stran) a okno pro úpravu
 import { jednou, oznamit } from '../ui/oznameni';
 import { AddClanek, DeleteClanek, GetClankyModelky, UpdateClanek } from './backend';
-import { esc, nazevVydani, obrazek, sjednotit } from '../lib/format';
+import { esc, formatMarkdown, nazevVydani, obrazek, sjednotit } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { VELIKOST_NAHLEDU } from './obrazky';
@@ -14,15 +14,9 @@ const NAZVY_DRUHU = { prepis: 'přepis', shrnuti: 'shrnutí' };
 
 const clanekModal = document.getElementById('clanekModal');
 
-// Text článku: odstavce oddělené prázdným řádkem, první je perex; „> “ citát; „SLOVO:“ na začátku zvýrazní mluvčího
+// Text článku: odstavce oddělené prázdným řádkem, první je perex; podpora markdownu; „> “ citát; „SLOVO:“ na začátku zvýrazní mluvčího
 export function htmlTextuClanku(text) {
-    const odstavce = String(text || '').replace(/\r/g, '').split(/\n\s*\n/).map(o => o.trim()).filter(Boolean);
-    return odstavce.map((o, i) => {
-        if (o.startsWith('>')) return `<blockquote>${esc(o.replace(/^>\s*/gm, '')).replace(/\n/g, '<br>')}</blockquote>`;
-        let html = esc(o).replace(/\n/g, '<br>');
-        html = html.replace(/^([A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ .'-]{1,30}):/, '<strong>$1:</strong>');
-        return `<p${i === 0 ? ' class="clanek-perex"' : ''}>${html}</p>`;
-    }).join('');
+    return formatMarkdown(text, { perex: true, mluvci: true });
 }
 
 // Článek jako oddíl stránky čísla; články jdou pod sebou podle stran (jako alba v galerii modelky)

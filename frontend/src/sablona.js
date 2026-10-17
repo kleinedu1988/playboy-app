@@ -272,7 +272,7 @@ export const SABLONA_OKNA = `
               </div>
               <div class="form-group span-2">
                 <label for="inputPoznamka">Poznámka</label>
-                <textarea id="inputPoznamka" rows="3"></textarea>
+                <textarea id="inputPoznamka" rows="3" placeholder="Podporuje markdown: **tučné**, *kurzíva*, odrážky"></textarea>
               </div>
               <div class="form-group span-2">
                 <label for="inputOdkazy">Odkazy (Wikipedie a podobně, jeden na řádek)</label>
@@ -357,7 +357,7 @@ export const SABLONA_OKNA = `
         </div>
         <div class="form-group">
           <label for="inputAlbumPopis">Průvodní text alba (nepovinné)</label>
-          <textarea id="inputAlbumPopis" rows="3" placeholder="Text, který album v časopise uvádí"></textarea>
+          <textarea id="inputAlbumPopis" rows="3" placeholder="Text, který album v časopise uvádí (podporuje markdown: **tučné**, *kurzíva*, odrážky)"></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
@@ -521,7 +521,7 @@ export const SABLONA_OKNA = `
         </div>
         <div class="form-group">
           <label for="inputIssuePoznamka">Poznámka</label>
-          <textarea id="inputIssuePoznamka" rows="4"></textarea>
+          <textarea id="inputIssuePoznamka" rows="4" placeholder="Podporuje markdown: **tučné**, *kurzíva*, odrážky"></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
@@ -765,7 +765,7 @@ export const SABLONA_OKNA = `
                 <select id="selectClanekDruh"><option value="">Neuvedeno</option><option value="prepis">Přepis</option><option value="shrnuti">Shrnutí</option></select></div>
             </div>
             <div class="doplnit-pole"><textarea id="inputClanekText" rows="10"></textarea></div>
-            <p class="doplnit-napoveda">Odstavce odděl prázdným řádkem; první odstavec je perex. Řádek začínající „&gt;“ je citát. Slovo velkými písmeny s dvojtečkou na začátku odstavce (PLAYBOY:) se zvýrazní.</p>
+            <p class="doplnit-napoveda">Podpora markdownu: **tučné**, *kurzíva*, odrážky (* nebo -), citát (&gt;). První odstavec je perex, dvojtečka za jménem (PLAYBOY:) zvýrazní mluvčího.</p>
           </section>
           <section class="doplnit-blok">
             <h4>Skeny stran (nepovinné)</h4>

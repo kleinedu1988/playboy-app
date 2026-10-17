@@ -5,6 +5,17 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.6] – 2026-10-17
+
+### Přidáno
+- Podpora formátování textu pomocí Markdownu v popisech alb, textech článků a poznámkách modelky i čísla:
+  - tučné písmo (`**text**`, `__text__`) a kurzíva (`*text*`, `_text_`), včetně kombinace (`***text***`)
+  - odrážkové seznamy (`* položka`, `- položka`) a číslované seznamy (`1. položka`)
+  - blokové citace (`> text`)
+  - inline kód (`` `kód` ``) a přeškrtnutí (`~~text~~`)
+  - nadpisy (`#`, `##`, `###`)
+  - zachování perexu a zvýraznění mluvčího (`PLAYBOY:`) u článků
+
 ## [0.32.5] – 2026-10-17
 
 ### Změněno

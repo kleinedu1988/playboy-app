@@ -114,3 +114,51 @@ test('neúplná data modelky', () => {
     for (const d of ['1975-13', '75', '9. 3. 1975', '1975-3']) assert.equal(platneDatum(d), false, d);
     assert.equal(vekPriVydani('1950-08', '2001-07'), '50 let');
 });
+
+test('markdown v řádku: tučné, kurzíva, kód, přeškrtnutí', async () => {
+    const { markdownVRadku } = await import('../src/lib/format.js');
+    assert.equal(markdownVRadku(''), '');
+    assert.equal(markdownVRadku('Obyčejný text'), 'Obyčejný text');
+    assert.equal(markdownVRadku('**tučné**'), '<strong>tučné</strong>');
+    assert.equal(markdownVRadku('__tučné__'), '<strong>tučné</strong>');
+    assert.equal(markdownVRadku('*kurzíva*'), '<em>kurzíva</em>');
+    assert.equal(markdownVRadku('_kurzíva_'), '<em>kurzíva</em>');
+    assert.equal(markdownVRadku('promenna_s_podtrzitky'), 'promenna_s_podtrzitky');
+    assert.equal(markdownVRadku('***tučná kurzíva***'), '<strong><em>tučná kurzíva</em></strong>');
+    assert.equal(markdownVRadku('___tučná kurzíva___'), '<strong><em>tučná kurzíva</em></strong>');
+    assert.equal(markdownVRadku('`kód`'), '<code>kód</code>');
+    assert.equal(markdownVRadku('`**není tučné**`'), '<code>**není tučné**</code>');
+    assert.equal(markdownVRadku('~~přeškrtnuto~~'), '<del>přeškrtnuto</del>');
+    assert.equal(markdownVRadku('Text s **tučným** a *kurzívou* i `kódem`.'), 'Text s <strong>tučným</strong> a <em>kurzívou</em> i <code>kódem</code>.');
+    assert.equal(markdownVRadku('**tučné s *kurzívou* uvnitř**'), '<strong>tučné s <em>kurzívou</em> uvnitř</strong>');
+    assert.equal(markdownVRadku('<script>alert("xss")</script>'), '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+});
+
+test('formátování markdown bloků: odstavce, odrážky, citace, nadpisy, perex a mluvčí', async () => {
+    const { formatMarkdown } = await import('../src/lib/format.js');
+    assert.equal(formatMarkdown(''), '');
+    assert.equal(formatMarkdown('Jeden odstavec'), '<p>Jeden odstavec</p>');
+    assert.equal(formatMarkdown('Řádek 1\nŘádek 2'), '<p>Řádek 1<br>Řádek 2</p>');
+    assert.equal(formatMarkdown('Odstavec 1\n\nOdstavec 2'), '<p>Odstavec 1</p><p>Odstavec 2</p>');
+
+    // Odrážkový seznam s hvězdičkami i pomlčkami
+    const odrazky = formatMarkdown('* První bod s **tučným**\n* Druhý bod s *kurzívou*\n- Třetí bod');
+    assert.equal(odrazky, '<ul><li>První bod s <strong>tučným</strong></li><li>Druhý bod s <em>kurzívou</em></li><li>Třetí bod</li></ul>');
+
+    // Číslovaný seznam
+    const cisla = formatMarkdown('1. První krok\n2. Druhý krok');
+    assert.equal(cisla, '<ol><li>První krok</li><li>Druhý krok</li></ol>');
+
+    // Citace
+    const citace = formatMarkdown('> První řádek citátu\n> Druhý řádek citátu');
+    assert.equal(citace, '<blockquote>První řádek citátu<br>Druhý řádek citátu</blockquote>');
+
+    // Nadpisy
+    const nadpisy = formatMarkdown('# Hlavní\n## Podnadpis\n### Sekce');
+    assert.equal(nadpisy, '<h3>Hlavní</h3><h4>Podnadpis</h4><h5>Sekce</h5>');
+
+    // Článek s perexem a mluvčím
+    const clanek = formatMarkdown('Úvodní perex článku s **důrazem**.\n\nPLAYBOY: Jak jste začínala?\nMODELKA: Byla to náhoda.', { perex: true, mluvci: true });
+    assert.equal(clanek, '<p class="clanek-perex">Úvodní perex článku s <strong>důrazem</strong>.</p><p><strong>PLAYBOY:</strong> Jak jste začínala?<br><strong>MODELKA:</strong> Byla to náhoda.</p>');
+});
+

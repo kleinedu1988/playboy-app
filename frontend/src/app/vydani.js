@@ -1,6 +1,6 @@
 // Stránka vydání, ročníku a fotografa; údaje čísla
 import { GetAlbaFotografa, GetClanky, GetStavyVydani, GetVydani, GetVydaniInfo, SetVydaniInfo, SetNazevSpecialu } from './backend';
-import { MESICE, VYCHOZI_EDICE, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
+import { MESICE, VYCHOZI_EDICE, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -91,7 +91,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
         <h4 class="panel-nadpis">Číslo</h4>
         <p class="cislo-udaje">${stavCisla}${info.jmenoObalky ? `<br>na obálce <button class="link" data-modelka="${info.modelkaObalky}">${esc(info.jmenoObalky)}</button>`
             : info.naObalce ? `<br>na obálce <b>${esc(info.naObalce)}</b>` : ''}${info.stav ? `<br><b>${NAZVY_STAVU[info.stav].toLowerCase()}</b>` : ''}</p>
-        ${info.poznamka ? `<p class="profile-note">${esc(info.poznamka)}</p>` : ''}
+        ${info.poznamka ? `<div class="profile-note">${formatMarkdown(info.poznamka)}</div>` : ''}
         <div class="profile-actions"><button class="volba issue-edit" data-upravit-vydani><span aria-hidden="true">✎</span>Upravit číslo…</button></div>
         ${centerfoldy.map((a, i) => `
             <section class="panel-centerfold" data-cast="album-${i}">

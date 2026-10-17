@@ -1154,7 +1154,51 @@ input:focus, select:focus, textarea:focus {
     font-size: 13px;
     line-height: 1.5;
     color: var(--text-muted);
-    white-space: pre-wrap;
+}
+
+.profile-note p {
+    margin: 0 0 8px 0;
+}
+
+.profile-note p:last-child {
+    margin-bottom: 0;
+}
+
+.profile-note ul,
+.profile-note ol {
+    margin: 4px 0 8px 18px;
+    padding: 0;
+}
+
+.profile-note li {
+    margin-bottom: 2px;
+}
+
+.profile-note strong {
+    color: var(--text-main);
+}
+
+.profile-note em {
+    font-style: italic;
+}
+
+.profile-note code {
+    padding: 1px 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.profile-note del {
+    opacity: 0.6;
+}
+
+.profile-note blockquote {
+    margin: 6px 0;
+    padding: 2px 0 2px 10px;
+    border-left: 2px solid var(--accent);
+    color: var(--text-main);
+    font-style: italic;
 }
 
 .profile-info dd .chip {
@@ -1887,13 +1931,57 @@ button.tag:hover {
     display: -webkit-box;
     margin: 0;
     overflow: hidden;
-    white-space: pre-line;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
 }
 
 .album-desc-text.open {
     display: block;
+}
+
+.album-desc-text p {
+    margin: 0 0 6px 0;
+}
+
+.album-desc-text p:last-child {
+    margin-bottom: 0;
+}
+
+.album-desc-text ul,
+.album-desc-text ol {
+    margin: 4px 0 6px 18px;
+    padding: 0;
+}
+
+.album-desc-text li {
+    margin-bottom: 2px;
+}
+
+.album-desc-text strong {
+    color: var(--text-main);
+}
+
+.album-desc-text em {
+    font-style: italic;
+}
+
+.album-desc-text code {
+    padding: 1px 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.album-desc-text del {
+    opacity: 0.6;
+}
+
+.album-desc-text blockquote {
+    margin: 6px 0;
+    padding: 2px 0 2px 10px;
+    border-left: 2px solid var(--accent);
+    color: var(--text-main);
+    font-style: italic;
 }
 
 .album-desc-more {
@@ -4846,6 +4934,44 @@ textarea {
     font-size: 19px;
     font-style: italic;
     font-weight: 300;
+}
+
+.clanek-text ul,
+.clanek-text ol {
+    margin: 0 0 14px 22px;
+    padding: 0;
+    color: #cfcfd4;
+    font-size: 15px;
+    line-height: 1.75;
+}
+
+.clanek-text li {
+    margin-bottom: 4px;
+}
+
+.clanek-text code {
+    padding: 2px 6px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 13px;
+    color: var(--accent-light, #e0a96d);
+}
+
+.clanek-text del {
+    opacity: 0.6;
+}
+
+.clanek-text em {
+    font-style: italic;
+}
+
+.clanek-text h3,
+.clanek-text h4,
+.clanek-text h5 {
+    margin: 20px 0 10px;
+    color: var(--text-main);
+    font-weight: 600;
 }
 
 .clanek-skeny-nadpis {

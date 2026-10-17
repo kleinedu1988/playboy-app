@@ -1,5 +1,5 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
-import { esc, formatDatum, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, vekPriVydani, sklonovat } from '../lib/format';
+import { esc, formatDatum, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, vekPriVydani, sklonovat } from '../lib/format';
 import { GetFotografieModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -95,7 +95,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         <div class="profile-actions-misto"></div>
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
         ${bloky.length ? `<div class="udaje-modelky">${bloky.join('')}</div>` : ''}
-        ${modelka.poznamka ? `<p class="profile-note">${esc(modelka.poznamka)}</p>` : ''}
+        ${modelka.poznamka ? `<div class="profile-note">${formatMarkdown(modelka.poznamka)}</div>` : ''}
         ${htmlOdkazu(modelka.odkazy)}
     `;
 
@@ -115,7 +115,7 @@ export function htmlPopisuAlba(a) {
     if (!a.popis && !a.fotograf) return '';
     return `
         <div class="album-desc">
-            ${a.popis ? `<p class="album-desc-text">${esc(a.popis)}</p>
+            ${a.popis ? `<div class="album-desc-text">${formatMarkdown(a.popis)}</div>
             <button class="link album-desc-more hidden" data-rozbalit>více</button>` : ''}
             ${a.fotograf ? `<p class="album-credit">Foto: <button class="link" data-fotograf="${esc(a.fotograf)}" title="Všechna alba tohoto fotografa">${esc(a.fotograf)}</button></p>` : ''}
         </div>

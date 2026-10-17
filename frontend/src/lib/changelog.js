@@ -1,5 +1,5 @@
 // Novinky z CHANGELOG.md: rozdělení po verzích a jednoduchý převod na HTML (nadpisy, odrážky, `kód`)
-import { esc } from './format.js';
+import { esc, markdownVRadku } from './format.js';
 
 // „0.14.0-dev" → [0, 14, 0]; neplatné → null
 export function cislaVerze(verze) {
@@ -42,7 +42,7 @@ export function novinkyMezi(text, od, doVerze) {
     return verzeZChangelogu(text).filter(v => (!od || porovnatVerze(v.verze, od) > 0) && porovnatVerze(v.verze, doVerze) <= 0);
 }
 
-const vradku = t => esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+const vradku = markdownVRadku;
 
 // Tělo verze na HTML: odstavce, „### Nadpis", odrážky „- " včetně pokračovacích řádků
 export function telaNaHtml(verze) {

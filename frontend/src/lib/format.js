@@ -113,6 +113,129 @@ export function esc(text) {
     return String(text ?? '').replace(/[&<>"']/g, z => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[z]));
 }
 
+// Inline markdown: tučné (**text**, __text__), kurzíva (*text*, _text_), tučná kurzíva (***text***, ___text___), kód (`text`), přeškrtnutí (~~text~~)
+export function markdownVRadku(text) {
+    if (!text) return '';
+    let out = esc(text);
+
+    // Kód chráníme před vyhodnocením dalšího formátování
+    const kody = [];
+    out = out.replace(/`([^`]+)`/g, (_, kod) => {
+        kody.push(`<code>${kod}</code>`);
+        return `\x00KOD_${kody.length - 1}\x00`;
+    });
+
+    // Tučná kurzíva: ***text*** nebo ___text___
+    out = out.replace(/\*\*\*(?!\s)(.+?)(?<!\s)\*\*\*/g, '<strong><em>$1</em></strong>');
+    out = out.replace(/___(?!\s)(.+?)(?<!\s)___/g, '<strong><em>$1</em></strong>');
+
+    // Tučné: **text** nebo __text__
+    out = out.replace(/\*\*(?!\s)(.+?)(?<!\s)\*\*/g, '<strong>$1</strong>');
+    out = out.replace(/__(?!\s)(.+?)(?<!\s)__/g, '<strong>$1</strong>');
+
+    // Kurzíva: *text* (nesmí mít mezeru hned za * ani před koncovým *)
+    out = out.replace(/\*(?!\s)([^*]+?)(?<!\s)\*/g, '<em>$1</em>');
+    // Kurzíva: _text_ (jen celá slova nebo ohraničená mezerami/závorkami/interpunkcí, ne uvnitř slov jako snake_case)
+    out = out.replace(/(^|[\s(])_([^_]+)_(?=[\s).,!?:]|$)/g, '$1<em>$2</em>');
+
+    // Přeškrtnutí: ~~text~~
+    out = out.replace(/~~(?!\s)(.+?)(?<!\s)~~/g, '<del>$1</del>');
+
+    // Vrácení kódů
+    out = out.replace(/\x00KOD_(\d+)\x00/g, (_, i) => kody[Number(i)]);
+
+    return out;
+}
+
+// Celý text na HTML: odstavce, nadpisy (# až ###), citace (>), odrážkové (*, -) a číslované (1.) seznamy
+// perex: první odstavec dostane třídu clanek-perex (pro články)
+// mluvci: začátek řádku ve tvaru „SLOVO:“ (např. PLAYBOY:, HEFNER:) zvýrazní tučně
+export function formatMarkdown(text, { perex = false, mluvci = false } = {}) {
+    if (!text) return '';
+    const radky = String(text).replace(/\r/g, '').split('\n');
+    const casti = [];
+    let seznam = null;
+    let citat = null;
+    let odstavec = null;
+    let pouzitPerex = perex;
+
+    const ukoncit = () => {
+        if (seznam) {
+            casti.push(`<${seznam.typ}>${seznam.polozky.map(p => `<li>${p}</li>`).join('')}</${seznam.typ}>`);
+            seznam = null;
+        }
+        if (citat) {
+            casti.push(`<blockquote>${citat.join('<br>')}</blockquote>`);
+            citat = null;
+        }
+        if (odstavec) {
+            const trida = pouzitPerex ? ' class="clanek-perex"' : '';
+            pouzitPerex = false;
+            casti.push(`<p${trida}>${odstavec.join('<br>')}</p>`);
+            odstavec = null;
+        }
+    };
+
+    for (const radek of radky) {
+        const t = radek.trim();
+        if (!t) {
+            ukoncit();
+            continue;
+        }
+
+        // Nadpisy: #, ##, ###
+        const mNadpis = /^(#{1,3})\s+(.*)$/.exec(t);
+        if (mNadpis) {
+            ukoncit();
+            const u = mNadpis[1].length === 1 ? 3 : mNadpis[1].length === 2 ? 4 : 5;
+            casti.push(`<h${u}>${markdownVRadku(mNadpis[2])}</h${u}>`);
+            continue;
+        }
+
+        // Citace: řádek začínající >
+        if (t.startsWith('>')) {
+            if (odstavec || seznam) ukoncit();
+            (citat ||= []).push(markdownVRadku(t.replace(/^>\s*/, '')));
+            continue;
+        }
+
+        // Odrážkový seznam: začíná *, -, • nebo pomlčkou
+        const mOdrazka = /^[*•–\-]\s+(.*)$/.exec(t);
+        if (mOdrazka) {
+            if (citat || odstavec || (seznam && seznam.typ !== 'ul')) ukoncit();
+            if (!seznam) seznam = { typ: 'ul', polozky: [] };
+            seznam.polozky.push(markdownVRadku(mOdrazka[1]));
+            continue;
+        }
+
+        // Číslovaný seznam: začíná 1. apod.
+        const mCislo = /^\d+\.\s+(.*)$/.exec(t);
+        if (mCislo) {
+            if (citat || odstavec || (seznam && seznam.typ !== 'ol')) ukoncit();
+            if (!seznam) seznam = { typ: 'ol', polozky: [] };
+            seznam.polozky.push(markdownVRadku(mCislo[1]));
+            continue;
+        }
+
+        // Pokračovací řádek odrážky (odsazený mezerami nebo tabulátorem)
+        if (seznam && (radek.startsWith('  ') || radek.startsWith('\t'))) {
+            seznam.polozky[seznam.polozky.length - 1] += ' ' + markdownVRadku(t);
+            continue;
+        }
+
+        // Obyčejný text: ukončí předchozí seznam nebo citát
+        if (seznam || citat) ukoncit();
+
+        let radka = markdownVRadku(t);
+        if (mluvci) {
+            radka = radka.replace(/^([A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ][A-ZÁČĎÉĚÍŇÓŘŠŤÚŮÝŽ .'-]{1,30}):/, '<strong>$1:</strong>');
+        }
+        (odstavec ||= []).push(radka);
+    }
+    ukoncit();
+    return casti.join('');
+}
+
 // RRRR-MM-DD -> D. M. RRRR, RRRR-MM -> březen RRRR, samotný rok zůstává
 export function formatDatum(datum) {
     const casti = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datum || '');

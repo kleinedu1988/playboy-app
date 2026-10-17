@@ -97,14 +97,14 @@ export const SABLONA_OKNA = `
     <!-- Detailní profil modelky -->
     <div id="detailView" class="detail-container hidden">
       <aside class="profile-side">
-        <!-- Má-li modelka centerfold, nahrazuje titulní fotku -->
-        <div id="centerfoldsSide"></div>
         <div id="modelHeader"></div>
         <!-- Tlačítka se při vykreslení profilu přesunou pod jméno modelky -->
         <div id="profileActions" class="profile-actions">
           <button id="editModelBtn" class="volba" title="Upravit údaje modelky"><span aria-hidden="true">✎</span>Upravit</button>
           <button id="addAlbumBtn" class="volba" title="Přidat fotky nebo album"><span aria-hidden="true">+</span>Přidat fotky</button>
         </div>
+        <!-- Centerfoldy modelky jsou v levém panelu pod údaji -->
+        <div id="centerfoldsSide"></div>
       </aside>
 
       <section class="profile-main">

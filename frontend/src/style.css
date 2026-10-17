@@ -1400,16 +1400,8 @@ button.tag:hover {
 }
 
 /* Centerfoldy v levém sloupci profilu zabírají celou jeho šířku */
-#centerfoldsSide .album {
-    margin-bottom: 20px;
-}
-
-.detail-container.bez-titulni .profile-cover {
-    display: none;
-}
-
-.detail-container.bez-titulni .profile-side h2 {
-    margin-top: 0;
+#centerfoldsSide .album + .album {
+    margin-top: 16px;
 }
 
 #centerfoldsSide .posters > .poster {
@@ -3648,15 +3640,13 @@ body.razeni .photo-item {
 }
 
 .profile-side .profile-cover,
-#issueSide > .posters,
-#centerfoldsSide .album:first-child {
+#issueSide > .posters {
     margin: -16px -16px 0;
 }
 
 .profile-side .profile-cover,
 #issueSide > .posters > .poster,
-#issueSide > .posters .profile-cover,
-#centerfoldsSide .album:first-child .poster {
+#issueSide > .posters .profile-cover {
     border: none;
     border-radius: 0 0 16px 16px;
 }
@@ -3697,10 +3687,6 @@ body.razeni .photo-item {
     letter-spacing: 0.12em;
     text-align: center;
     text-transform: uppercase;
-}
-
-.detail-container.bez-titulni .profile-side h2 {
-    margin-top: 18px;
 }
 
 /* Fotograf ani ročník fotku nemají: jméno začíná nahoře */
@@ -4934,13 +4920,18 @@ textarea {
     margin-right: auto;
 }
 
-/* Centerfold čísla v levém panelu pod údaji */
+/* Centerfold v levém panelu pod údaji (u čísla i u modelky) */
+.panel-centerfold + .panel-centerfold {
+    margin-top: 16px;
+}
+
 .panel-centerfold .posters {
     margin-top: 8px;
 }
 
 .panel-centerfold .poster {
     width: 100%;
+    border: 1px solid var(--border-color);
     border-radius: 12px;
 }
 

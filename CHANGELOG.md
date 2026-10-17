@@ -5,6 +5,13 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.4] – 2026-10-17
+
+### Změněno
+- Profil modelky: titulní fotka (a její výřez) zůstává vždy nahoře a centerfold ji už nenahrazuje.
+  Centerfoldy se řadí dolů do levého panelu pod údaje modelky (s odkazem na vydání a textem alba),
+  stejně jako je tomu na stránce čísla časopisu.
+
 ## [0.32.3] – 2026-10-15
 
 ### Změněno

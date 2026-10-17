@@ -25,9 +25,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     if (!bezHistorie) zapamatovatMisto({ modelka });
     stav.aktualniModelka = modelka;
     ukazatPohled(detailView);
-    // Dokud nejsou načtené fotky, není jasné, zda se ukáže titulní fotka, nebo centerfold
     document.getElementById('centerfoldsSide').innerHTML = '';
-    detailView.classList.add('bez-titulni');
     document.querySelector('main').scrollTop = 0;
 
     const hledatelne = hodnota => hodnota
@@ -194,7 +192,6 @@ export async function nacistFotkyModelky(modelkaId) {
     selectionBar.classList.add('hidden');
 
     const centerfoldsSide = document.getElementById('centerfoldsSide');
-    const prazdno = '<p class="empty-state">Tato modelka zatím nemá žádná alba. Přidej je tlačítkem + Přidat fotky / album.</p>';
 
     stav.aktualniAlba = sestavitAlba(fotky || []);
     // Jméno hlavní modelky sdíleného alba (fotky profilu jména nenesou)
@@ -220,44 +217,56 @@ export async function nacistFotkyModelky(modelkaId) {
     const indexAlba = new Map(stav.aktualniAlba.map((a, i) => [a, i]));
     const indexPolozky = new Map(stav.aktualniPolozky.map((p, i) => [p, i]));
 
+    const htmlCenterfoldu = (a) => {
+        const index = indexAlba.get(a);
+        const stitky = [
+            a.album ? `<button class="chip" data-vydani="${esc(a.album)}" title="Otevřít vydání">${esc(nazevVydani(a.album))}</button>` : '',
+            htmlSpoluModelek(a),
+        ].filter(Boolean).join(' ');
+
+        return `
+            <section class="album panel-centerfold" data-album="${index}" data-cast="${index}">
+                <h4 class="panel-nadpis">Centerfold</h4>
+                ${stitky ? `<div class="panel-centerfold-modelka">${stitky}</div>` : ''}
+                <div class="posters">
+                    ${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${indexPolozky.get(p)}"`)).join('')}
+                </div>
+                ${htmlPopisuAlba(a)}
+            </section>
+        `;
+    };
+
     const htmlAlba = (a) => {
-        const centerfold = a.typ === 'Centerfold';
         const popis = sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek');
 
         return `
             <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}">
-                ${centerfold ? '' : `
-                    <div class="album-header">
-                        <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
-                        <span>${esc(a.typ)} · ${popis}</span>
-                        ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít vydání">${esc(nazevVydani(a.vydani))}</button>` : ''}
-                        ${htmlSpoluModelek(a)}
-                        <button class="album-more" data-nabidka-alba title="Akce alba (také pravým tlačítkem)">&#8943;</button>
-                    </div>
-                    ${htmlPopisuAlba(a)}
-                `}
-                <div class="${centerfold ? 'posters' : 'photos-grid'}" ${centerfold ? '' : atributyMrizky(a)}>
+                <div class="album-header">
+                    <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
+                    <span>${esc(a.typ)} · ${popis}</span>
+                    ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít vydání">${esc(nazevVydani(a.vydani))}</button>` : ''}
+                    ${htmlSpoluModelek(a)}
+                    <button class="album-more" data-nabidka-alba title="Akce alba (také pravým tlačítkem)">&#8943;</button>
+                </div>
+                ${htmlPopisuAlba(a)}
+                <div class="photos-grid" ${atributyMrizky(a)}>
                     ${a.polozky.map(p => {
                         const index = indexPolozky.get(p);
-                        // Centerfold se zobrazuje celý jako plakát, ostatní fotky jako oříznuté dlaždice
-                        return centerfold
-                            ? htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${index}"`)
-                            : `<div class="photo-item" data-index="${index}" data-foto-id="${p.fotky[0].id}" tabindex="0">
+                        return `<div class="photo-item" data-index="${index}" data-foto-id="${p.fotky[0].id}" tabindex="0">
                                    <img src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" loading="lazy" draggable="false" />
                                    ${htmlSrdickaFotky(p, index)}
                                    ${htmlAkciDlazdice()}
                                </div>`;
                     }).join('')}
                 </div>
-                ${centerfold ? htmlPopisuAlba(a) : ''}
             </section>
         `;
     };
 
     const centerfoldy = stav.aktualniAlba.filter(a => a.typ === 'Centerfold');
     const ostatni = stav.aktualniAlba.filter(a => a.typ !== 'Centerfold');
-    centerfoldsSide.innerHTML = centerfoldy.map(htmlAlba).join('');
-    detailView.classList.toggle('bez-titulni', centerfoldy.length > 0);
+    const prazdno = `<p class="empty-state">${centerfoldy.length ? 'Tato modelka zatím nemá žádná další alba. Přidej je tlačítkem + Přidat fotky.' : 'Tato modelka zatím nemá žádná alba. Přidej je tlačítkem + Přidat fotky.'}</p>`;
+    centerfoldsSide.innerHTML = centerfoldy.map(htmlCenterfoldu).join('');
     photosGrid.innerHTML = ostatni.map(htmlAlba).join('') || prazdno;
 
     // Lišta má smysl až od dvou alb; centerfoldy jsou v levém sloupci stále vidět

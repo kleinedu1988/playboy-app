@@ -6526,3 +6526,42 @@ textarea {
 .crop-panel {
     border-radius: 14px;
 }
+
+/* Otevření nabídek, panelu Filtry a výsledků hledání: krátké zjemnění a zvětšení z 98 %. Animace se spustí pokaždé,
+   když prvek přestane být skrytý (.hidden); výsledky hledání mají v klíčových snímcích i své vycentrování. */
+@keyframes otevrit-plovouci {
+    from {
+        opacity: 0;
+        transform: scale(0.98) translateY(-4px);
+    }
+}
+
+@keyframes otevrit-naseptavac {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.98) translateY(-4px);
+    }
+}
+
+.context-menu {
+    transform-origin: top left;
+    animation: otevrit-plovouci 0.14s ease-out;
+}
+
+.volby-panel {
+    transform-origin: top center;
+    animation: otevrit-plovouci 0.16s ease-out;
+}
+
+.naseptavac {
+    transform-origin: top center;
+    animation: otevrit-naseptavac 0.16s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .context-menu,
+    .volby-panel,
+    .naseptavac {
+        animation: none;
+    }
+}

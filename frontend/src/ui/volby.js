@@ -14,8 +14,8 @@ const POPISKY = {
     zobrazitCisla: 'Zobrazit',
 };
 
-// Filtr, který se dá vypnout: bez zvoleného štítku ukazuje „vše“ a nabídka má položku Vše
-const VYPINATELNE = new Set(['minHodnoceni']);
+// Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
+const VYPINATELNE = new Set(['minHodnoceni', 'vyberId']);
 
 const misto = () => document.getElementById('volbyPrehledu');
 
@@ -57,28 +57,52 @@ function ukazatVolby(lista) {
 
     [...skupiny].forEach(([klic, stitky], i) => {
         const zvoleny = stitky.find(s => s.classList.contains('active'));
+        const vychoziVse = stitky.find(s => Object.values(s.dataset)[0] === 'vse');
+        const jeVypinatelny = VYPINATELNE.has(klic);
+        const jeZapnuto = (jeVypinatelny && Boolean(zvoleny)) || Boolean(vychoziVse && zvoleny && zvoleny !== vychoziVse);
+        const zrusitFiltr = jeVypinatelny ? () => zvoleny?.click() : vychoziVse ? () => vychoziVse.click() : null;
+
         const tlacitko = document.createElement('button');
         tlacitko.type = 'button';
         tlacitko.className = 'volba';
-        tlacitko.classList.toggle('zapnuto', VYPINATELNE.has(klic) && Boolean(zvoleny));
+        tlacitko.classList.toggle('zapnuto', jeZapnuto);
         tlacitko.setAttribute('aria-haspopup', 'menu');
-        tlacitko.innerHTML = '<span></span> <b></b> <i aria-hidden="true">▾</i>';
+        if (jeZapnuto) {
+            tlacitko.title = 'Kliknutím na × nebo Shift+klikem zrušíš filtr';
+        }
+        tlacitko.innerHTML = `<span></span> <b></b>${jeZapnuto ? ' <em class="volba-zrusit" title="Zrušit filtr" aria-label="Zrušit filtr">&times;</em>' : ''} <i aria-hidden="true">▾</i>`;
         tlacitko.querySelector('span').textContent = `${POPISKY[klic]}:`;
-        tlacitko.querySelector('b').textContent = zvoleny ? textStitku(zvoleny) : VYPINATELNE.has(klic) ? 'vše' : '—';
+        tlacitko.querySelector('b').textContent = zvoleny ? textStitku(zvoleny) : klic === 'minHodnoceni' ? 'vše' : '—';
         tlacitko.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (jeZapnuto && zrusitFiltr && (e.shiftKey || e.target.closest('.volba-zrusit'))) {
+                zrusitFiltr();
+                return;
+            }
             const polozky = stitky.map(s => {
                 const pocet = s.querySelector('span')?.textContent.trim();
                 return { text: `${s === zvoleny ? '✓ ' : ''}${textStitku(s)}${pocet ? ` (${pocet})` : ''}`, akce: () => s.click() };
             });
             // Vypnutí filtru: klik na zvolený štítek ho zruší
-            if (VYPINATELNE.has(klic)) polozky.unshift({ text: `${zvoleny ? '' : '✓ '}Vše`, akce: () => zvoleny?.click() });
+            if (jeVypinatelny) {
+                const popisekVse = klic === 'vyberId' ? 'Vše podle srdíček' : 'Vše';
+                polozky.unshift({ text: `${zvoleny ? '' : '✓ '}${popisekVse}`, akce: () => zvoleny?.click() });
+            }
             if (i === skupiny.size - 1 && odkazy.length) {
                 polozky.push(null, ...odkazy.map(o => ({ text: o.textContent.trim().replace(/^./, z => z.toUpperCase()), akce: () => o.click() })));
             }
             const r = tlacitko.getBoundingClientRect();
             otevritKontextovouNabidku(r.left, r.bottom + 4, polozky);
         });
+        if (jeZapnuto && zrusitFiltr) {
+            tlacitko.addEventListener('auxclick', (e) => {
+                if (e.button === 1) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    zrusitFiltr();
+                }
+            });
+        }
         panel.append(tlacitko);
     });
 

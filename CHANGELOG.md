@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.3] – 2026-10-17
+
+### Vylepšeno
+- **Sjednocené zvýraznění aktivních filtrů (`.zapnuto`) a rychlé zrušení (`×`):**
+  - Třídu `.zapnuto` (růžový rámeček a podbarvení) nyní dostávají všechny aktivní filtry v liště pod vyhledáváním, které nejsou ve výchozím stavu „vše“ — kromě `minHodnoceni` nově také `zobrazitCisla` (při volbě `s coverem`, `bez coveru` nebo `chybějící`) a vlastní `vyberId` v přehledu Nejlepší.
+  - V nabídce `Výběr` v přehledu Nejlepší přibyla položka `Vše podle srdíček` pro přímý návrat z vlastního výběru.
+  - Každý aktivní filtr v liště má přímo uvnitř tlačítka křížek `×` (`.volba-zrusit`), kterým (stejně jako `Shift+klikem` nebo prostředním tlačítkem myši) lze filtr okamžitě zrušit bez nutnosti otevírat rozbalovací nabídku.
+
 ## [0.33.2] – 2026-10-17
 
 ### Vylepšeno

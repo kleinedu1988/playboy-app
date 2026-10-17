@@ -129,7 +129,8 @@ export function pripravit() {
     best.addEventListener('click', (e) => {
         const vyberChip = e.target.closest('[data-vyber-id]');
         if (vyberChip) {
-            stav.nejlepsiVyber = parseInt(vyberChip.dataset.vyberId);
+            const id = parseInt(vyberChip.dataset.vyberId);
+            stav.nejlepsiVyber = id === stav.nejlepsiVyber ? 0 : id;
             nacistNejlepsi(searchInput.value);
             return;
         }

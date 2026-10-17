@@ -3162,6 +3162,28 @@ body.razeni .photo-item {
     color: var(--accent-text);
 }
 
+.volby-skupina .volba-zrusit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin-left: 2px;
+    margin-right: -2px;
+    border-radius: 50%;
+    font-style: normal;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--accent-text);
+    opacity: 0.75;
+    transition: opacity 0.15s, background-color 0.15s;
+}
+
+.volby-skupina .volba-zrusit:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
 .volby-pocet {
     position: relative;
     display: inline-flex;

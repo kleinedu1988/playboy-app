@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.8] – 2026-10-17
+
+### Vylepšeno
+- Skleněný vzhled i u zbývajících plovoucích prvků: oznámení dole (s možností Vrátit), bublina u grafů ve Statistikách a panel úpravy výřezu na dlaždici mají stejné průsvitné rozmazané pozadí jako nabídky, panel Filtry a výsledky hledání.
+
+### Opraveno
+- Velmi krátký pruh v žebříčku Statistik (fotograf nebo národnost s malým počtem) se vykreslil s chybou; teď je z něj zaoblený konec.
+
 ## [0.33.7] – 2026-10-17
 
 ### Vylepšeno

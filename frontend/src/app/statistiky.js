@@ -34,12 +34,12 @@ function grafSloupcu(polozky, { sirka = 460, vyska = 190 } = {}) {
         }).join('')}</svg>`;
 }
 
-// Vodorovné pruhy žebříčku: název vlevo, hodnota za pruhem
+// Vodorovné pruhy žebříčku: název vlevo, hodnota za pruhem; nejkratší pruh je jen zaoblený konec (4 px)
 function grafPruhu(polozky, { sirka = 460, radek = 26, prostor = 128 } = {}) {
     const max = Math.max(1, ...polozky.map(p => p.pocet));
     return `<svg class="graf" viewBox="0 0 ${sirka} ${polozky.length * radek}" role="img">
         ${polozky.map((p, i) => {
-            const y = i * radek + 7, d = Math.max(2, (sirka - prostor - 44) * p.pocet / max);
+            const y = i * radek + 7, d = Math.max(4, (sirka - prostor - 44) * p.pocet / max);
             return `<g data-tip="${esc(`${p.nazev}: ${p.tip}`)}">
                 <rect class="graf-cil" x="0" y="${i * radek}" width="${sirka}" height="${radek}"/>
                 <text class="graf-nazev" x="${prostor - 10}" y="${y + 9}" text-anchor="end">${esc(p.nazev.length > 20 ? p.nazev.slice(0, 19) + '…' : p.nazev)}</text>

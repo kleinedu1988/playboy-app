@@ -70,6 +70,8 @@ export function GetVydaniInfo(arg1:string):Promise<main.VydaniInfo>;
 
 export function HledatClanky(arg1:string):Promise<Array<main.NalezClanku>>;
 
+export function HledatTexty(arg1:string):Promise<Array<main.NalezTextu>>;
+
 export function ImportovatSoubory(arg1:Array<string>):Promise<main.VysledekImportu>;
 
 export function MaZamek():Promise<boolean>;

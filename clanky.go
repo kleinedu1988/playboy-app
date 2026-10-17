@@ -29,6 +29,73 @@ func (a *App) migraceClanky() error {
 	return err
 }
 
+// Úprava schématu č. 10: virtuální tabulka SQLite FTS5 pro články a texty alb s BM25 relevancí
+func (a *App) migraceFTS5() error {
+	_, err := a.db.Exec(`
+		CREATE VIRTUAL TABLE IF NOT EXISTS texty_fts USING fts5(
+			druh,
+			vydani,
+			nazev,
+			rubrika,
+			autor,
+			text,
+			zdroj_id UNINDEXED,
+			modelka_id UNINDEXED,
+			tokenize='unicode61 remove_diacritics 2'
+		);
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.db.Exec(`
+		CREATE TRIGGER IF NOT EXISTS clanky_ai AFTER INSERT ON clanky BEGIN
+			INSERT INTO texty_fts(druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+			VALUES('clanek', new.vydani, new.nazev, COALESCE(new.rubrika, ''), COALESCE(new.autor, ''), COALESCE(new.text, ''), new.id, COALESCE(new.modelka_id, 0));
+		END;
+
+		CREATE TRIGGER IF NOT EXISTS clanky_ad AFTER DELETE ON clanky BEGIN
+			DELETE FROM texty_fts WHERE druh = 'clanek' AND zdroj_id = old.id;
+		END;
+
+		CREATE TRIGGER IF NOT EXISTS clanky_au AFTER UPDATE ON clanky BEGIN
+			DELETE FROM texty_fts WHERE druh = 'clanek' AND zdroj_id = old.id;
+			INSERT INTO texty_fts(druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+			VALUES('clanek', new.vydani, new.nazev, COALESCE(new.rubrika, ''), COALESCE(new.autor, ''), COALESCE(new.text, ''), new.id, COALESCE(new.modelka_id, 0));
+		END;
+
+		CREATE TRIGGER IF NOT EXISTS alba_popis_ai AFTER INSERT ON alba BEGIN
+			INSERT INTO texty_fts(druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+			VALUES('album', new.vydani, new.album, new.typ, COALESCE(new.fotograf, ''), COALESCE(new.popis, ''), new.id, COALESCE(new.modelka_id, 0));
+		END;
+
+		CREATE TRIGGER IF NOT EXISTS alba_popis_ad AFTER DELETE ON alba BEGIN
+			DELETE FROM texty_fts WHERE druh = 'album' AND zdroj_id = old.id;
+		END;
+
+		CREATE TRIGGER IF NOT EXISTS alba_popis_au AFTER UPDATE ON alba BEGIN
+			DELETE FROM texty_fts WHERE druh = 'album' AND zdroj_id = old.id;
+			INSERT INTO texty_fts(druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+			VALUES('album', new.vydani, new.album, new.typ, COALESCE(new.fotograf, ''), COALESCE(new.popis, ''), new.id, COALESCE(new.modelka_id, 0));
+		END;
+	`)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.db.Exec(`
+		INSERT INTO texty_fts(druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+		SELECT 'clanek', vydani, nazev, COALESCE(rubrika, ''), COALESCE(autor, ''), COALESCE(text, ''), id, COALESCE(modelka_id, 0)
+		FROM clanky;
+
+		INSERT INTO texty_fts(druh, vydani, nazev, rubrika, autor, text, zdroj_id, modelka_id)
+		SELECT 'album', vydani, album, typ, COALESCE(fotograf, ''), COALESCE(popis, ''), id, COALESCE(modelka_id, 0)
+		FROM alba
+		WHERE (popis IS NOT NULL AND popis <> '') OR (fotograf IS NOT NULL AND fotograf <> '');
+	`)
+	return err
+}
+
 // Druh textu článku: přepis celého textu, nebo jen shrnutí; prázdný = neuvedeno
 var druhyClanku = map[string]bool{"": true, "prepis": true, "shrnuti": true}
 
@@ -111,22 +178,81 @@ type NalezClanku struct {
 	Ukazka       string `json:"ukazka"`
 }
 
+// Výsledek full-textového hledání napříč články i popisy alb s BM25 relevancí
+type NalezTextu struct {
+	Druh      string  `json:"druh"`      // "clanek" nebo "album"
+	ZdrojID   int     `json:"zdrojId"`   // id článku nebo alba
+	Vydani    string  `json:"vydani"`    // vydání (např. 1975-05)
+	Nazev     string  `json:"nazev"`     // název článku nebo alba
+	Rubrika   string  `json:"rubrika"`   // rubrika článku nebo typ alba
+	Autor     string  `json:"autor"`     // autor článku nebo fotograf
+	ModelkaID int     `json:"modelkaId"` // id modelky
+	Ukazka    string  `json:"ukazka"`    // úryvek textu s kontextem
+	Relevance float64 `json:"relevance"` // BM25 skóre relevance
+}
+
 // Nejvíce nalezených článků v rozbalovacím hledání
 const nejviceNalezu = 20
 
-// Hledání v článcích: všechna slova dotazu musí být v názvu, rubrice, autorovi, jménu modelky nebo textu
-// (bez ohledu na velikost písmen a diakritiku). Shody v názvu jdou první, pak novější čísla.
+// Hledání v článcích: využívá SQLite FTS5 s relevančním řazením BM25 a tolerancí diakritiky;
+// při absenci shody v FTS5 použije záložní prohledání (např. překlepy či shodu ve jménu modelky).
 func (a *App) HledatClanky(dotaz string) []NalezClanku {
-	nalezy := []NalezClanku{}
 	slova := strings.Fields(zjednodusit(dotaz))
 	if len(slova) == 0 {
-		return nalezy
+		return []NalezClanku{}
 	}
+
+	var ftsTermy []string
+	for _, s := range slova {
+		ciste := strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+				return r
+			}
+			return -1
+		}, s)
+		if ciste != "" {
+			ftsTermy = append(ftsTermy, `"`+ciste+`"*`)
+		}
+	}
+
+	if len(ftsTermy) > 0 {
+		ftsDotaz := strings.Join(ftsTermy, " AND ")
+		rows, err := a.db.Query(`
+			SELECT c.id, c.vydani, COALESCE(c.strana, 0), COALESCE(c.rubrika, ''), c.nazev,
+				COALESCE(c.autor, ''), COALESCE(m.jmeno, ''), COALESCE(c.text, '')
+			FROM texty_fts f
+			JOIN clanky c ON c.id = f.zdroj_id
+			LEFT JOIN modelky m ON m.id = c.modelka_id
+			WHERE f.druh = 'clanek' AND texty_fts MATCH ?
+			ORDER BY (CASE WHEN LOWER(c.nazev) LIKE '%' || ? || '%' THEN 0 ELSE 1 END), bm25(texty_fts), c.vydani DESC
+			LIMIT ?`, ftsDotaz, slova[0], nejviceNalezu)
+		if err == nil {
+			defer rows.Close()
+			nalezy := []NalezClanku{}
+			for rows.Next() {
+				var n NalezClanku
+				var autor, text string
+				if rows.Scan(&n.ID, &n.Vydani, &n.Strana, &n.Rubrika, &n.Nazev, &autor, &n.JmenoModelky, &text) == nil {
+					n.Ukazka = ukazkaTextu(text, slova)
+					nalezy = append(nalezy, n)
+				}
+			}
+			if len(nalezy) > 0 {
+				return nalezy
+			}
+		}
+	}
+
+	return a.hledatClankyZalozni(slova)
+}
+
+func (a *App) hledatClankyZalozni(slova []string) []NalezClanku {
+	nalezy := []NalezClanku{}
 	rows, err := a.db.Query(`SELECT c.id, c.vydani, COALESCE(c.strana, 0), COALESCE(c.rubrika, ''), c.nazev, COALESCE(c.autor, ''),
 			COALESCE(m.jmeno, ''), COALESCE(c.text, '')
 		FROM clanky c LEFT JOIN modelky m ON m.id = c.modelka_id`)
 	if err != nil {
-		a.chyba("HledatClanky", err)
+		a.chyba("HledatClankyZalozni", err)
 		return nalezy
 	}
 	defer rows.Close()
@@ -145,7 +271,7 @@ func (a *App) HledatClanky(dotaz string) []NalezClanku {
 		prohledat := zjednodusit(strings.Join([]string{n.Nazev, n.Rubrika, autor, n.JmenoModelky, text}, " "))
 		vNazvu, vyhovuje := true, true
 		for _, slovo := range slova {
-			if !strings.Contains(prohledat, slovo) {
+			if !strings.Contains(prohledat, slovo) && !odpovidaTextFuzzy(n.Nazev+" "+autor+" "+n.JmenoModelky, slovo) {
 				vyhovuje = false
 				break
 			}
@@ -168,6 +294,52 @@ func (a *App) HledatClanky(dotaz string) []NalezClanku {
 			break
 		}
 		nalezy = append(nalezy, k.NalezClanku)
+	}
+	return nalezy
+}
+
+// Bleskové vyhledávání napříč články i popisy alb pomocí virtuální tabulky SQLite FTS5 s relevančním řazením BM25
+func (a *App) HledatTexty(dotaz string) []NalezTextu {
+	nalezy := []NalezTextu{}
+	slova := strings.Fields(zjednodusit(dotaz))
+	if len(slova) == 0 {
+		return nalezy
+	}
+	var ftsTermy []string
+	for _, s := range slova {
+		ciste := strings.Map(func(r rune) rune {
+			if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+				return r
+			}
+			return -1
+		}, s)
+		if ciste != "" {
+			ftsTermy = append(ftsTermy, `"`+ciste+`"*`)
+		}
+	}
+	if len(ftsTermy) == 0 {
+		return nalezy
+	}
+	ftsDotaz := strings.Join(ftsTermy, " AND ")
+	rows, err := a.db.Query(`
+		SELECT f.druh, f.zdroj_id, f.vydani, f.nazev, f.rubrika, f.autor, f.modelka_id, f.text,
+			bm25(texty_fts) AS rank
+		FROM texty_fts f
+		WHERE texty_fts MATCH ?
+		ORDER BY rank, f.vydani DESC
+		LIMIT ?`, ftsDotaz, nejviceNalezu)
+	if err != nil {
+		a.chyba("HledatTexty", err)
+		return nalezy
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var n NalezTextu
+		var text string
+		if rows.Scan(&n.Druh, &n.ZdrojID, &n.Vydani, &n.Nazev, &n.Rubrika, &n.Autor, &n.ModelkaID, &text, &n.Relevance) == nil {
+			n.Ukazka = ukazkaTextu(text, slova)
+			nalezy = append(nalezy, n)
+		}
 	}
 	return nalezy
 }

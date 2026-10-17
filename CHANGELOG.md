@@ -5,6 +5,21 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.0] – 2026-10-17
+
+### Přidáno
+- **Našeptávání příkazů a tagů v hledání (Autocomplete syntaxe):**
+  - Při napsání počátečních písmen (např. `v`, `t`, `r`) našeptávač automaticky nabídne relevantní příkazy (`vlasy:`, `vydani:`, `vyska:`, `vaha:`, `tag:`, `rok:`...).
+  - Při psaní konkrétního filtru s dvojtečkou (např. `vlasy:`, `tag:`, `edice:`, `role:`, `narodnost:`, `oci:`, `tetovani:`) našeptávač dynamicky nabídne existující hodnoty z databáze s počty modelek (např. `vlasy:blond`, `vlasy:hnědá`, `tag:playmate`).
+  - Vybrání položky kliknutím nebo klávesou Enter okamžitě doplní příkaz či hodnotu s mezerou do vyhledávacího pole.
+- **Fuzzy matching (tolerance drobných překlepů):**
+  - Implementace Levenshteinovy vzdálenosti (1–2 překlepy podle délky slova) pro jména modelek a fotografů.
+  - Hledání toleruje překlepy jako `Pamella` místo Pamela nebo `Freitag` / `Fraetag` místo Freytag, a to jak v cílených filtrech (`jmeno:`, `fotograf:`), tak v obecném textovém hledání a našeptávači.
+- **SQLite FTS5 fulltext pro články a texty alb:**
+  - Vytvořena virtuální tabulka `texty_fts` (úprava schématu č. 10) využívající SQLite FTS5 s automatickým odstraněním diakritiky (`unicode61 remove_diacritics 2`) a relevančním skórováním BM25.
+  - Automatická synchronizace článků i popisů alb přes databázové triggery při vložení, úpravě i smazání záznamů.
+  - Nová backendová metoda `HledatTexty` pro bleskové full-textové prohledávání článků i alb s BM25 relevancí.
+
 ## [0.32.10] – 2026-10-17
 
 ### Přidáno

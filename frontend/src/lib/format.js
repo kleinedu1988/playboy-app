@@ -371,10 +371,79 @@ export function vyhovujeHledani(texty, tokeny) {
                 });
             });
         } else {
-            shoda = t.varianty.some(v => zjednoduseneTexty.some(txt => txt.includes(v)));
+            shoda = t.varianty.some(v => zjednoduseneTexty.some(txt => txt.includes(v) || odpovidaTextFuzzy(txt, v)));
         }
         if (t.negace) shoda = !shoda;
         if (!shoda) return false;
     }
     return true;
 }
+
+// Levenshteinova vzdálenost mezi dvěma řetězci (počet vložení, smazání a záměn)
+export function vzdalenostLevenshtein(s1, s2) {
+    const a = [...String(s1 || '')];
+    const b = [...String(s2 || '')];
+    const lenA = a.length, lenB = b.length;
+    if (!lenA) return lenB;
+    if (!lenB) return lenA;
+    const predchozi = new Array(lenB + 1);
+    const aktualni = new Array(lenB + 1);
+    for (let j = 0; j <= lenB; j++) predchozi[j] = j;
+    for (let i = 1; i <= lenA; i++) {
+        aktualni[0] = i;
+        for (let j = 1; j <= lenB; j++) {
+            const cena = a[i - 1] === b[j - 1] ? 0 : 1;
+            aktualni[j] = Math.min(predchozi[j] + 1, aktualni[j - 1] + 1, predchozi[j - 1] + cena);
+        }
+        for (let j = 0; j <= lenB; j++) predchozi[j] = aktualni[j];
+    }
+    return aktualni[lenB];
+}
+
+// Maximální povolená editační vzdálenost podle délky hledaného slova (max 1–2 překlepy pro jména a fotografy)
+export function maxPovolenaVzdalenost(delka) {
+    if (delka <= 3) return 0;
+    if (delka <= 6) return 1;
+    return 2;
+}
+
+// Ověří, zda hledaný dotaz (i víceslovný) odpovídá textu (přesně nebo fuzzy Levenshteinem)
+export function odpovidaTextFuzzy(text, hledanyDotaz) {
+    const hledane = bezDiakritiky(hledanyDotaz).split(/\s+/).filter(Boolean);
+    if (!hledane.length) return true;
+    const slovaTextu = bezDiakritiky(text).split(/\s+/).filter(Boolean);
+    for (const h of hledane) {
+        const maxD = maxPovolenaVzdalenost(h.length);
+        const shoda = slovaTextu.some(s => s.includes(h) || (maxD > 0 && vzdalenostLevenshtein(s, h) <= maxD));
+        if (!shoda) return false;
+    }
+    return true;
+}
+
+// Podporované příkazy vyhledávání s popisem
+export const PRIKAZY = [
+    { klic: 'vlasy:', popis: 'Barva vlasů (blond, hnědá, černá, zrzavá…)' },
+    { klic: 'vydani:', popis: 'Vydání časopisu (např. 1975-05, 1995-03-CZ)' },
+    { klic: 'vyska:', popis: 'Výška modelky v cm (>175, 170..180)' },
+    { klic: 'vaha:', popis: 'Váha modelky v kg' },
+    { klic: 'tag:', popis: 'Tag ze sbírky (playmate, cyb…)' },
+    { klic: 'rok:', popis: 'Rok vydání (1970..1979, >=1980)' },
+    { klic: 'role:', popis: 'Role (Playmate, Cover, Modelka…)' },
+    { klic: 'fotograf:', popis: 'Jméno fotografa' },
+    { klic: 'hodnoceni:', popis: 'Hodnocení (1–5, >=4)' },
+    { klic: 'srdicka:', popis: 'Hodnocení srdíčky (5, >=4)' },
+    { klic: 'narodnost:', popis: 'Národnost modelky' },
+    { klic: 'edice:', popis: 'Edice časopisu (US, CZ)' },
+    { klic: 'narozena:', popis: 'Rok nebo datum narození' },
+    { klic: 'misto:', popis: 'Místo narození' },
+    { klic: 'oci:', popis: 'Barva očí' },
+    { klic: 'prsa:', popis: 'Velikost a typ poprsí' },
+    { klic: 'miry:', popis: 'Míry postavy (90-60-90)' },
+    { klic: 'tetovani:', popis: 'Tetování (ano / ne)' },
+    { klic: 'piercing:', popis: 'Piercing (ano / ne)' },
+    { klic: 'obalka:', popis: 'Obálka čísla' },
+    { klic: 'jmeno:', popis: 'Jméno nebo pseudonym' },
+    { klic: 'poznamka:', popis: 'Poznámka' },
+];
+
+

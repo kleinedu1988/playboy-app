@@ -228,4 +228,32 @@ test('pokročilá syntaxe vyhledávání: negace, operátory, rozsahy, OR a neuz
     assert.equal(vyhovujeHledani(['1989-12'], tOperator), false);
 });
 
+test('fuzzy matching Levenshtein a podpora našeptávání syntaxe', async () => {
+    const { odpovidaTextFuzzy, vzdalenostLevenshtein, vyhovujeHledani, rozlozitDotaz, PRIKAZY } = await import('../src/lib/format.js');
+
+    // Levenshteinova vzdálenost
+    assert.equal(vzdalenostLevenshtein('pamela', 'pamella'), 1);
+    assert.equal(vzdalenostLevenshtein('freytag', 'freitag'), 1);
+    assert.equal(vzdalenostLevenshtein('freytag', 'fraetag'), 2);
+    assert.equal(vzdalenostLevenshtein('bob', 'eva'), 3);
+
+    // odpovidaTextFuzzy
+    assert.equal(odpovidaTextFuzzy('Pamela Anderson', 'Pamella'), true);
+    assert.equal(odpovidaTextFuzzy('Arny Freytag', 'Freitag'), true);
+    assert.equal(odpovidaTextFuzzy('Arny Freytag', 'arni fraetag'), true);
+    assert.equal(odpovidaTextFuzzy('Anna Bílá', 'Bob'), false);
+
+    // vyhovujeHledani s fuzzy tolerancí
+    const tPamella = rozlozitDotaz('Pamella');
+    assert.equal(vyhovujeHledani(['Pamela Anderson', 'modelka'], tPamella), true);
+    assert.equal(vyhovujeHledani(['Carmen Electra', 'modelka'], tPamella), false);
+
+    // Příkazy našeptávače
+    assert.ok(PRIKAZY.some(p => p.klic === 'vlasy:'));
+    assert.ok(PRIKAZY.some(p => p.klic === 'vydani:'));
+    assert.ok(PRIKAZY.some(p => p.klic === 'vyska:'));
+    assert.ok(PRIKAZY.some(p => p.klic === 'tag:'));
+});
+
+
 

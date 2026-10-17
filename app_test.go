@@ -604,6 +604,71 @@ func TestPokrocileHledaniModelek(t *testing.T) {
 	}
 }
 
+func TestFuzzyHledaniAFTS5(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Pamela Anderson", Narodnost: "Kanada"})
+	pamela := a.GetModelky("Pamela")[0]
+	a.AddBulkPhotos(pamela.ID, "1990-02", "Centerfold", odkazA)
+	a.SetPopisAlba(pamela.ID, "1990-02", "Centerfold", "Nádherná série fotografií v přírodním parku v Kalifornii.", "Arny Freytag")
+
+	jmena := func(dotaz string) []string {
+		var vysledek []string
+		for _, m := range a.GetModelky(dotaz) {
+			vysledek = append(vysledek, m.Jmeno)
+		}
+		return vysledek
+	}
+
+	// 1. Fuzzy matching: tolerance drobných překlepů (1-2 znaky)
+	if mam := jmena("Pamella"); len(mam) != 1 || mam[0] != "Pamela Anderson" {
+		t.Fatalf("fuzzy hledání jména 'Pamella': %v", mam)
+	}
+	if mam := jmena("jmeno:Pamella"); len(mam) != 1 || mam[0] != "Pamela Anderson" {
+		t.Fatalf("fuzzy hledání jmeno:Pamella: %v", mam)
+	}
+	if mam := jmena("fotograf:Freitag"); len(mam) != 1 || mam[0] != "Pamela Anderson" {
+		t.Fatalf("fuzzy hledání fotografa 'Freitag': %v", mam)
+	}
+	if mam := jmena("Fraetag"); len(mam) != 1 || mam[0] != "Pamela Anderson" {
+		t.Fatalf("obecné fuzzy hledání fotografa 'Fraetag': %v", mam)
+	}
+	if mam := jmena("-jmeno:Pamella"); len(mam) != 0 {
+		t.Fatalf("negace fuzzy jména: %v", mam)
+	}
+
+	// 2. FTS5: virtuální tabulka texty_fts pro články a texty alb
+	clanekID := a.AddClanek(Clanek{
+		Vydani: "1990-02",
+		Nazev:  "Interview s Pamelou",
+		Rubrika: "Rozhovor",
+		Autor:  "Lawrence Grobel",
+		Text:   "Exkluzivní rozhovor v Los Angeles o natáčení filmu a divadle.",
+	})
+
+	// Hledání v článcích pomocí FTS5
+	nalezyClanku := a.HledatClanky("divadle")
+	if len(nalezyClanku) != 1 || nalezyClanku[0].ID != clanekID {
+		t.Fatalf("FTS5 HledatClanky 'divadle': %+v", nalezyClanku)
+	}
+
+	// Hledání napříč články i alby pomocí HledatTexty
+	textyClanek := a.HledatTexty("divadle")
+	if len(textyClanek) != 1 || textyClanek[0].Druh != "clanek" || textyClanek[0].ZdrojID != clanekID {
+		t.Fatalf("HledatTexty clanek 'divadle': %+v", textyClanek)
+	}
+
+	textyAlbum := a.HledatTexty("kalifornii")
+	if len(textyAlbum) != 1 || textyAlbum[0].Druh != "album" || !strings.Contains(textyAlbum[0].Ukazka, "Kalifornii") {
+		t.Fatalf("HledatTexty album 'kalifornii': %+v", textyAlbum)
+	}
+
+	// Odstranění článku vymaže záznam z FTS5 přes trigger
+	a.DeleteClanek(clanekID)
+	if poSmazani := a.HledatClanky("divadle"); len(poSmazani) != 0 {
+		t.Fatalf("FTS5 po smazání článku stále našel: %+v", poSmazani)
+	}
+}
+
 func TestDoplnkoveUdajeModelky(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	a.AddModelka(Modelka{Jmeno: "Kelley Thompson", DalsiJmena: "Kelly T., Miss November", Poznamka: "Playmate roku", Tetovani: 0, Piercing: -1, CoverID: odkazA})

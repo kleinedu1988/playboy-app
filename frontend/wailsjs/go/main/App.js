@@ -138,6 +138,10 @@ export function HledatClanky(arg1) {
   return window['go']['main']['App']['HledatClanky'](arg1);
 }
 
+export function HledatTexty(arg1) {
+  return window['go']['main']['App']['HledatTexty'](arg1);
+}
+
 export function ImportovatSoubory(arg1) {
   return window['go']['main']['App']['ImportovatSoubory'](arg1);
 }

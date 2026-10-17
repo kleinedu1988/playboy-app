@@ -1,6 +1,6 @@
-// Rychlé výsledky pod hledáním odkudkoli: modelky, články (i podle textu) a čísla; šipky vybírají, Enter otevře
+// Rychlé výsledky pod hledáním odkudkoli: příkazy vyhledávání, hodnoty filtrů, modelky, články a čísla
 import { GetKalendar, HledatClanky } from './backend';
-import { bezDiakritiky, esc, nazevVydani, obrazek, rozlozitDotaz, sjednotit, vyhovujeHledani } from '../lib/format';
+import { PRIKAZY, bezDiakritiky, esc, nazevVydani, obrazek, odpovidaTextFuzzy, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { searchInput } from './prvky';
 import { VELIKOST_NAHLEDU, adresaTitulni } from './obrazky';
@@ -21,12 +21,130 @@ let vybrana = -1;
 // Kalendář (náhledy obálek čísel) se načte při prvním hledání a obnoví při každém novém zaměření pole
 let kalendar = null;
 
+// Zjištění aktivního slova před textovým kurzorem
+function ziskatAktivniSlovo() {
+    const hodnota = searchInput.value;
+    const pozice = searchInput.selectionStart ?? hodnota.length;
+    const textPred = hodnota.slice(0, pozice);
+    const i = textPred.lastIndexOf(' ');
+    const zacatek = i >= 0 ? i + 1 : 0;
+    const konecMezera = hodnota.indexOf(' ', pozice);
+    const konec = konecMezera >= 0 ? konecMezera : hodnota.length;
+    return {
+        slovo: hodnota.slice(zacatek, konec),
+        slovoPred: hodnota.slice(zacatek, pozice),
+        zacatek,
+        konec,
+    };
+}
+
+// Nahrazení aktivního slova vybraným příkazem nebo hodnotou
+function nahraditAktivniSlovo(novyText, hotovo = false) {
+    const { zacatek, konec } = ziskatAktivniSlovo();
+    const hodnota = searchInput.value;
+    const vkladany = hotovo ? `${novyText} ` : novyText;
+    searchInput.value = hodnota.slice(0, zacatek) + vkladany + hodnota.slice(konec);
+    const novaPozice = zacatek + vkladany.length;
+    searchInput.focus();
+    searchInput.setSelectionRange(novaPozice, novaPozice);
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    hledat();
+}
+
+function ziskatMoznostiPrikazu(slovoPred) {
+    const neg = (slovoPred.startsWith('-') || slovoPred.startsWith('!')) ? slovoPred[0] : '';
+    const ciste = bezDiakritiky(neg ? slovoPred.slice(1) : slovoPred).toLowerCase();
+    if (!ciste) return [];
+    return PRIKAZY.filter(p => bezDiakritiky(p.klic).startsWith(ciste)).slice(0, 6).map(p => ({
+        prikaz: `${neg}${p.klic}`,
+        popis: p.popis,
+    }));
+}
+
+function ziskatMoznostiHodnot(klic, filtr, modelky) {
+    const f = bezDiakritiky(filtr).toLowerCase();
+    const vysledky = [];
+    if (klic === 'vlasy') {
+        const cetnosti = new Map();
+        modelky.forEach(m => {
+            const v = (m.vlasyBarva || '').trim();
+            if (v) cetnosti.set(v, (cetnosti.get(v) || 0) + 1);
+        });
+        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
+            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+            }
+        }
+    } else if (klic === 'tag' || klic === 'tagy') {
+        const cetnosti = new Map();
+        modelky.forEach(m => {
+            (m.tags || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => {
+                cetnosti.set(t, (cetnosti.get(t) || 0) + 1);
+            });
+        });
+        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
+            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+            }
+        }
+    } else if (klic === 'edice') {
+        ['US', 'CZ'].filter(e => !f || e.toLowerCase().includes(f)).forEach(e => {
+            vysledky.push({ hodnota: e, popis: `Edice ${e}` });
+        });
+    } else if (klic === 'tetovani' || klic === 'piercing') {
+        ['ano', 'ne'].filter(v => !f || v.includes(f)).forEach(v => {
+            vysledky.push({ hodnota: v, popis: v === 'ano' ? 'Má' : 'Nemá' });
+        });
+    } else if (klic === 'role') {
+        const cetnosti = new Map();
+        modelky.forEach(m => {
+            const r = (m.role || '').trim();
+            if (r) cetnosti.set(r, (cetnosti.get(r) || 0) + 1);
+        });
+        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
+            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+            }
+        }
+    } else if (klic === 'narodnost') {
+        const cetnosti = new Map();
+        modelky.forEach(m => {
+            const n = (m.narodnost || '').trim();
+            if (n) cetnosti.set(n, (cetnosti.get(n) || 0) + 1);
+        });
+        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
+            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+            }
+        }
+    } else if (klic === 'oci') {
+        const cetnosti = new Map();
+        modelky.forEach(m => {
+            const o = (m.ociBarva || '').trim();
+            if (o) cetnosti.set(o, (cetnosti.get(o) || 0) + 1);
+        });
+        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
+            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
+                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: `${pocet} ${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}` });
+            }
+        }
+    } else if (klic === 'hodnoceni' || klic === 'srdicka') {
+        ['>=4', '5', '>=3', '>=1'].filter(h => !f || h.includes(f)).forEach(h => {
+            vysledky.push({ hodnota: h, popis: `Hodnocení ${h}` });
+        });
+    } else if (klic === 'rok') {
+        ['1970..1979', '1980..1989', '1990..1999', '2000..2009', '>=2010'].filter(r => !f || r.includes(f)).forEach(r => {
+            vysledky.push({ hodnota: r, popis: `Dekáda ${r}` });
+        });
+    }
+    return vysledky.slice(0, 6);
+}
+
 // Zvýraznění slov dotazu v textu bez ohledu na diakritiku a velikost písmen
 export function zvyraznit(text, slova) {
     const znaky = [...String(text || '')];
     const zjednodusene = znaky.map(z => bezDiakritiky(z));
     const oznacit = new Array(znaky.length).fill(false);
-    // Hledá se v zjednodušeném textu; každý původní znak může dát víc znaků (ß → ss)
     const spojeny = zjednodusene.join('');
     const puvodni = zjednodusene.flatMap((z, i) => [...z].map(() => i));
     slova.forEach(slovo => {
@@ -46,11 +164,6 @@ export function zvyraznit(text, slova) {
     return otevreno ? html + '</mark>' : html;
 }
 
-const obsahujeVse = (text, slova) => {
-    const t = bezDiakritiky(text);
-    return slova.every(s => t.includes(s));
-};
-
 export function zavritNaseptavac() {
     naseptavac.classList.add('hidden');
     zavoj.classList.add('hidden');
@@ -60,18 +173,41 @@ export function zavritNaseptavac() {
 }
 
 async function hledat() {
-    const dotaz = searchInput.value.trim();
+    const dotaz = searchInput.value;
+    const trimDotaz = dotaz.trim();
     const moje = ++cisloHledani;
-    const tokeny = rozlozitDotaz(dotaz);
-    // Cílené hledání modelek (vlasy:blond, rok:1975...) patří jen galerii
-    if (dotaz.length < 2 || tokeny.some(t => t.klic) || searchInput.disabled) return zavritNaseptavac();
-    const slova = tokeny.filter(t => !t.negace).flatMap(t => t.varianty);
+
+    if (!trimDotaz || searchInput.disabled) return zavritNaseptavac();
+
+    const { slovoPred } = ziskatAktivniSlovo();
+    const negPrefix = (slovoPred.startsWith('-') || slovoPred.startsWith('!')) ? slovoPred[0] : '';
+    const cisteSlovo = negPrefix ? slovoPred.slice(1) : slovoPred;
+    const idxDvojtecka = cisteSlovo.indexOf(':');
+
+    let moznostiPrikazu = [];
+    let moznostiHodnot = [];
+    let klicHodnot = '';
 
     kalendar ||= GetKalendar().then(k => k || []);
-    const [modelky, clanky, cisla] = await Promise.all([vsechnyModelky(), HledatClanky(dotaz).then(c => c || []), kalendar]);
+    const [modelky, clanky, cisla] = await Promise.all([
+        vsechnyModelky(),
+        trimDotaz.length >= 2 ? HledatClanky(trimDotaz).then(c => c || []) : Promise.resolve([]),
+        kalendar,
+    ]);
     if (moje !== cisloHledani || document.activeElement !== searchInput) return;
-    const obalka = new Map(cisla.map(k => [k.vydani, k.nahled]));
 
+    if (idxDvojtecka >= 0) {
+        klicHodnot = cisteSlovo.slice(0, idxDvojtecka).toLowerCase();
+        const filtrHodnoty = cisteSlovo.slice(idxDvojtecka + 1);
+        moznostiHodnot = ziskatMoznostiHodnot(klicHodnot, filtrHodnoty, modelky);
+    } else if (cisteSlovo.length >= 1) {
+        moznostiPrikazu = ziskatMoznostiPrikazu(slovoPred);
+    }
+
+    const tokeny = rozlozitDotaz(trimDotaz);
+    const slova = tokeny.filter(t => !t.negace).flatMap(t => t.varianty);
+
+    const obalka = new Map(cisla.map(k => [k.vydani, k.nahled]));
     const textModelky = m => [
         m.jmeno,
         m.dalsiJmena,
@@ -86,19 +222,28 @@ async function hledat() {
         ...(m.obalky || []),
     ].filter(Boolean).join(' ');
 
-    const nalezeneModelky = modelky
-        .filter(m => vyhovujeHledani([textModelky(m)], tokeny))
-        .sort((a, b) => {
-            const aJmeno = vyhovujeHledani([a.jmeno, a.dalsiJmena], tokeny);
-            const bJmeno = vyhovujeHledani([b.jmeno, b.dalsiJmena], tokeny);
-            if (aJmeno !== bJmeno) return aJmeno ? -1 : 1;
-            return a.jmeno.localeCompare(b.jmeno);
-        })
-        .slice(0, NEJVIC_MODELEK);
-    const nalezenaCisla = cisla
-        .filter(k => vyhovujeHledani([nazevVydani(k.vydani), k.vydani, k.modelka || ''], tokeny))
-        .sort((a, b) => b.vydani.localeCompare(a.vydani)).slice(0, NEJVIC_CISEL);
-    const nalezeneClanky = clanky.slice(0, NEJVIC_CLANKU);
+    let nalezeneModelky = [];
+    let nalezenaCisla = [];
+    let nalezeneClanky = [];
+
+    // Pokud uživatel nepíše cílený filtr s dvojtečkou a dotaz má alespoň 2 znaky, prohledáme i modelky, články a čísla
+    if (!idxDvojtecka && trimDotaz.length >= 2) {
+        nalezeneModelky = modelky
+            .filter(m => vyhovujeHledani([textModelky(m)], tokeny) || slova.some(s => odpovidaTextFuzzy(m.jmeno + ' ' + (m.dalsiJmena || ''), s)))
+            .sort((a, b) => {
+                const aJmeno = vyhovujeHledani([a.jmeno, a.dalsiJmena], tokeny) || slova.some(s => odpovidaTextFuzzy(a.jmeno, s));
+                const bJmeno = vyhovujeHledani([b.jmeno, b.dalsiJmena], tokeny) || slova.some(s => odpovidaTextFuzzy(b.jmeno, s));
+                if (aJmeno !== bJmeno) return aJmeno ? -1 : 1;
+                return a.jmeno.localeCompare(b.jmeno);
+            })
+            .slice(0, NEJVIC_MODELEK);
+
+        nalezenaCisla = cisla
+            .filter(k => vyhovujeHledani([nazevVydani(k.vydani), k.vydani, k.modelka || ''], tokeny))
+            .sort((a, b) => b.vydani.localeCompare(a.vydani)).slice(0, NEJVIC_CISEL);
+
+        nalezeneClanky = clanky.slice(0, NEJVIC_CLANKU);
+    }
 
     const nahled = (url, tvar = '') => `<span class="naseptavac-nahled ${tvar}">${url ? `<img src="${esc(url)}" alt="" draggable="false" />` : ''}</span>`;
     const skupina = (nazev, pocet, html) => pocet ? `<h5>${nazev} · ${pocet}</h5>${html}` : '';
@@ -119,13 +264,25 @@ async function hledat() {
     };
 
     const html = [
+        skupina('Příkazy vyhledávání', moznostiPrikazu.length, moznostiPrikazu.map(p => polozka(() => nahraditAktivniSlovo(p.prikaz, false), `
+            <span class="naseptavac-nahled-ikona">⌨</span>
+            <span class="naseptavac-text">
+                <span class="naseptavac-nazev"><code class="naseptavac-kod">${esc(p.prikaz)}</code></span>
+                <span class="naseptavac-kde">${esc(p.popis)}</span>
+            </span>`)).join('')),
+        skupina(`Možnosti filtru ${klicHodnot}`, moznostiHodnot.length, moznostiHodnot.map(h => polozka(() => nahraditAktivniSlovo(`${negPrefix}${klicHodnot}:${h.hodnota}`, true), `
+            <span class="naseptavac-nahled-ikona">🏷</span>
+            <span class="naseptavac-text">
+                <span class="naseptavac-nazev"><code class="naseptavac-kod">${esc(negPrefix + klicHodnot + ':' + h.hodnota)}</code></span>
+                <span class="naseptavac-kde">${esc(h.popis)}</span>
+            </span>`)).join('')),
         skupina('Modelky', nalezeneModelky.length, nalezeneModelky.map(m => polozka(() => otevritDetailModelky(m), `
             ${nahled(adresaTitulni(m), 'kulaty')}
             <span class="naseptavac-text">
                 <span class="naseptavac-nazev">${zvyraznit(m.jmeno, slova)}</span>
                 <span class="naseptavac-kde">${detailModelky(m)}</span>
             </span>`)).join('')),
-        skupina('Články', clanky.length, nalezeneClanky.map(c => polozka(() => otevritClanek(c.vydani, c.id), `
+        skupina('Články', nalezeneClanky.length, nalezeneClanky.map(c => polozka(() => otevritClanek(c.vydani, c.id), `
             ${nahled(obalka.get(c.vydani) ? obrazek(obalka.get(c.vydani), VELIKOST_NAHLEDU) : '')}
             <span class="naseptavac-text">
                 <span class="naseptavac-rubrika">${esc(c.rubrika || 'Článek')}</span>
@@ -145,7 +302,7 @@ async function hledat() {
         zavritNaseptavac();
         return;
     }
-    naseptavac.innerHTML = `${html}<div class="naseptavac-pata">↑↓ vybrat · Enter otevřít · Esc zavřít</div>`;
+    naseptavac.innerHTML = `${html}<div class="naseptavac-pata">↑↓ vybrat · Enter vložit/otevřít · Esc zavřít</div>`;
     naseptavac.classList.remove('hidden');
     zavoj.classList.remove('hidden');
 }
@@ -164,7 +321,6 @@ function otevrit(index) {
     const akce = polozky[index];
     if (!akce) return;
     zavritNaseptavac();
-    searchInput.blur();
     akce();
 }
 
@@ -172,11 +328,11 @@ function otevrit(index) {
 export function pripravit() {
     searchInput.addEventListener('input', () => {
         clearTimeout(casovac);
-        casovac = setTimeout(hledat, 150);
+        casovac = setTimeout(hledat, 120);
     });
     searchInput.addEventListener('focus', () => {
         kalendar = null;
-        if (searchInput.value.trim().length >= 2) hledat();
+        if (searchInput.value.trim().length >= 1) hledat();
     });
     searchInput.addEventListener('blur', () => {
         cisloHledani++;

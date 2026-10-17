@@ -5375,6 +5375,37 @@ textarea {
     object-fit: cover;
 }
 
+.naseptavac-nahled-ikona {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    font-size: 15px;
+    color: var(--accent);
+}
+
+.naseptavac-polozka.active .naseptavac-nahled-ikona {
+    background-color: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.naseptavac-kod {
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.naseptavac-polozka.active .naseptavac-kod {
+    color: #fff;
+}
+
 .naseptavac-text {
     display: block;
     min-width: 0;

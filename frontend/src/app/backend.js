@@ -15,6 +15,7 @@ const CTENI = new Set([
     'GetStatistiky',
     'GetClankyModelky',
     'HledatClanky',
+    'HledatTexty',
     'GetKalendar',
     'GetModelky',
     'GetNejlepsiFotky',
@@ -66,6 +67,7 @@ export const GetStatistiky = /** @type {typeof App.GetStatistiky} */ (obalit('Ge
 export const GetClanky = /** @type {typeof App.GetClanky} */ (obalit('GetClanky'));
 export const GetClankyModelky = /** @type {typeof App.GetClankyModelky} */ (obalit('GetClankyModelky'));
 export const HledatClanky = /** @type {typeof App.HledatClanky} */ (obalit('HledatClanky'));
+export const HledatTexty = /** @type {typeof App.HledatTexty} */ (obalit('HledatTexty'));
 export const GetCovery = /** @type {typeof App.GetCovery} */ (obalit('GetCovery'));
 export const GetFotkyVyberu = /** @type {typeof App.GetFotkyVyberu} */ (obalit('GetFotkyVyberu'));
 export const GetFotografieModelky = /** @type {typeof App.GetFotografieModelky} */ (obalit('GetFotografieModelky'));

@@ -298,6 +298,34 @@ export namespace main {
 	        this.ukazka = source["ukazka"];
 	    }
 	}
+	export class NalezTextu {
+	    druh: string;
+	    zdrojId: number;
+	    vydani: string;
+	    nazev: string;
+	    rubrika: string;
+	    autor: string;
+	    modelkaId: number;
+	    ukazka: string;
+	    relevance: number;
+
+	    static createFrom(source: any = {}) {
+	        return new NalezTextu(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.druh = source["druh"];
+	        this.zdrojId = source["zdrojId"];
+	        this.vydani = source["vydani"];
+	        this.nazev = source["nazev"];
+	        this.rubrika = source["rubrika"];
+	        this.autor = source["autor"];
+	        this.modelkaId = source["modelkaId"];
+	        this.ukazka = source["ukazka"];
+	        this.relevance = source["relevance"];
+	    }
+	}
 	
 	export class VyberFotky {
 	    vyberId: number;

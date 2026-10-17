@@ -749,6 +749,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceSpecialy,
 	(*App).migraceUmrtiAObalka,
 	(*App).migraceClanky,
+	(*App).migraceFTS5,
 }
 
 func (a *App) migrovat() error {
@@ -1300,9 +1301,93 @@ func vyhovujeVarianty(text string, varianty []string) bool {
 	return false
 }
 
+// Levenshteinova vzdálenost mezi dvěma řetězci run (počet vložení, smazání a záměn znaků)
+func vzdalenostLevenshtein(s1, s2 string) int {
+	r1, r2 := []rune(s1), []rune(s2)
+	len1, len2 := len(r1), len(r2)
+	if len1 == 0 {
+		return len2
+	}
+	if len2 == 0 {
+		return len1
+	}
+	predchozi := make([]int, len2+1)
+	aktualni := make([]int, len2+1)
+	for j := 0; j <= len2; j++ {
+		predchozi[j] = j
+	}
+	for i := 1; i <= len1; i++ {
+		aktualni[0] = i
+		for j := 1; j <= len2; j++ {
+			cena := 1
+			if r1[i-1] == r2[j-1] {
+				cena = 0
+			}
+			smazat := predchozi[j] + 1
+			vlozit := aktualni[j-1] + 1
+			zamenit := predchozi[j-1] + cena
+			min := smazat
+			if vlozit < min {
+				min = vlozit
+			}
+			if zamenit < min {
+				min = zamenit
+			}
+			aktualni[j] = min
+		}
+		copy(predchozi, aktualni)
+	}
+	return aktualni[len2]
+}
+
+// Maximální povolená editační vzdálenost podle délky hledaného slova (max 1–2 překlepy pro jména a fotografy)
+func maxPovolenaVzdalenost(delka int) int {
+	if delka <= 3 {
+		return 0
+	}
+	if delka <= 6 {
+		return 1
+	}
+	return 2
+}
+
+// Ověří, zda hledané slovo odpovídá některému ze slov textu (přesně jako podřetězec nebo fuzzy Levenshteinem)
+func odpovidaSlovoFuzzy(slovaTextu []string, hledaneSlovo string) bool {
+	hledane := zjednodusit(hledaneSlovo)
+	if hledane == "" {
+		return true
+	}
+	maxD := maxPovolenaVzdalenost(len([]rune(hledane)))
+	for _, slovo := range slovaTextu {
+		s := zjednodusit(slovo)
+		if strings.Contains(s, hledane) {
+			return true
+		}
+		if maxD > 0 && vzdalenostLevenshtein(s, hledane) <= maxD {
+			return true
+		}
+	}
+	return false
+}
+
+// Ověří, zda hledaný dotaz (i víceslovný) odpovídá textu (přesně nebo s drobnými překlepy v jednotlivých slovech)
+func odpovidaTextFuzzy(text string, hledanyDotaz string) bool {
+	hledane := strings.Fields(zjednodusit(hledanyDotaz))
+	if len(hledane) == 0 {
+		return true
+	}
+	slovaTextu := strings.Fields(zjednodusit(text))
+	for _, h := range hledane {
+		if !odpovidaSlovoFuzzy(slovaTextu, h) {
+			return false
+		}
+	}
+	return true
+}
+
 // Každé hledané slovo se musí najít v některém údaji modelky, cílené slovo v daném údaji; na velikosti písmen
 // ani diakritice nezáleží. Podporuje negaci (-tag:), čárku jako OR (vlasy:blond,zrzava), numerické porovnání
-// (>175, 1970..1979) i neuzavřené uvozovky.
+// (>175, 1970..1979), neuzavřené uvozovky i fuzzy matching pro jména modelek a fotografů.
 func odpovidaHledani(m Modelka, vyhledavani string) bool {
 	// Pokud je v dotazu lichý počet uvozovek (uživatel píše uvozovku a ještě ji neuzavřel), pomyslně ji uzavřeme na konci
 	if strings.Count(vyhledavani, "\"")%2 != 0 {
@@ -1378,6 +1463,14 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 						}
 					}
 					shoda = vyhovujeVarianty(text, varianty)
+					if !shoda && (klicZjedn == "jmeno" || klicZjedn == "fotograf") {
+						for _, v := range varianty {
+							if odpovidaTextFuzzy(text, v) {
+								shoda = true
+								break
+							}
+						}
+					}
 				} else {
 					// Neznámé pole: hledá se celé slovo jako obyčejný text
 					shoda = strings.Contains(udaje, klicZjedn+":"+hodnotaZjedn)
@@ -1391,6 +1484,14 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 				}
 			}
 			shoda = vyhovujeVarianty(udaje, varianty)
+			if !shoda {
+				for _, v := range varianty {
+					if odpovidaTextFuzzy(m.Jmeno+" "+m.DalsiJmena, v) || odpovidaTextFuzzy(m.fotografoveAlb, v) {
+						shoda = true
+						break
+					}
+				}
+			}
 		}
 
 		if negace {

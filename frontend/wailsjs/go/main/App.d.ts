@@ -4,11 +4,15 @@ import {main} from '../models';
 
 export function AddBulkPhotos(arg1:number,arg2:string,arg3:string,arg4:string):Promise<main.VysledekVlozeni>;
 
+export function AddClanek(arg1:main.Clanek):Promise<number>;
+
 export function AddCover(arg1:string,arg2:string):Promise<main.VysledekVlozeni>;
 
 export function AddModelka(arg1:main.Modelka):Promise<boolean>;
 
 export function DeleteAlbum(arg1:number,arg2:string,arg3:string):Promise<boolean>;
+
+export function DeleteClanek(arg1:number):Promise<boolean>;
 
 export function DeleteFotografie(arg1:number):Promise<boolean>;
 
@@ -23,6 +27,10 @@ export function ExportovatDoSouboru():Promise<string>;
 export function GetAlbaFotografa(arg1:string):Promise<Array<main.Fotografie>>;
 
 export function GetCenterfoldy():Promise<Array<main.Fotografie>>;
+
+export function GetClanky(arg1:string):Promise<Array<main.Clanek>>;
+
+export function GetClankyModelky(arg1:number):Promise<Array<main.Clanek>>;
 
 export function GetCovery():Promise<Array<main.Fotografie>>;
 
@@ -46,6 +54,8 @@ export function GetSablonaObrazku():Promise<string>;
 
 export function GetSpecialy():Promise<Array<main.Special>>;
 
+export function GetStatistiky():Promise<main.Statistiky>;
+
 export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
 
 export function GetTagy():Promise<Array<string>>;
@@ -57,6 +67,8 @@ export function GetVybery():Promise<Array<main.Vyber>>;
 export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
 
 export function GetVydaniInfo(arg1:string):Promise<main.VydaniInfo>;
+
+export function HledatClanky(arg1:string):Promise<Array<main.NalezClanku>>;
 
 export function ImportovatSoubory(arg1:Array<string>):Promise<main.VysledekImportu>;
 
@@ -136,6 +148,8 @@ export function StavDatabaze():Promise<string>;
 
 export function UpdateAlbum(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
 
+export function UpdateClanek(arg1:main.Clanek):Promise<boolean>;
+
 export function UpdateCover(arg1:number,arg2:string,arg3:string):Promise<boolean>;
 
 export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
@@ -153,17 +167,3 @@ export function ZkontrolovatDavku():Promise<main.KontrolaSouboru>;
 export function ZkontrolovatSoubory():Promise<main.KontrolaSouboru>;
 
 export function ZrusitPoradiAlba(arg1:number,arg2:string,arg3:string):Promise<boolean>;
-
-export function AddClanek(arg1:main.Clanek):Promise<number>;
-
-export function DeleteClanek(arg1:number):Promise<boolean>;
-
-export function GetClanky(arg1:string):Promise<Array<main.Clanek>>;
-
-export function UpdateClanek(arg1:main.Clanek):Promise<boolean>;
-
-export function GetClankyModelky(arg1:number):Promise<Array<main.Clanek>>;
-
-export function HledatClanky(arg1:string):Promise<Array<main.NalezClanku>>;
-
-export function GetStatistiky():Promise<main.Statistiky>;

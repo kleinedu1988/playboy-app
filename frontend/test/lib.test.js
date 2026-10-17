@@ -187,3 +187,45 @@ test('víceslovné vyhledávání a shoda slov napříč údaji', async () => {
     assert.equal(vyhovuje(polozka3), false);
 });
 
+test('pokročilá syntaxe vyhledávání: negace, operátory, rozsahy, OR a neuzavřené uvozovky', async () => {
+    const { rozlozitDotaz, vyhovujeHledani } = await import('../src/lib/format.js');
+
+    // Tolerance neuzavřených uvozovek a parsování
+    const tNeuzavrene = rozlozitDotaz('fotograf:"arny');
+    assert.equal(tNeuzavrene.length, 1);
+    assert.equal(tNeuzavrene[0].klic, 'fotograf');
+    assert.equal(tNeuzavrene[0].hodnota, 'arny');
+    assert.equal(tNeuzavrene[0].negace, false);
+
+    // Negace a vícenásobné hodnoty (OR přes čárku)
+    const tKomplex = rozlozitDotaz('-tag:playmate vlasy:blond,zrzava -usa');
+    assert.equal(tKomplex.length, 3);
+    assert.deepEqual(tKomplex[0], { negace: true, klic: 'tag', hodnota: 'playmate', varianty: ['playmate'] });
+    assert.deepEqual(tKomplex[1], { negace: false, klic: 'vlasy', hodnota: 'blond,zrzava', varianty: ['blond', 'zrzava'] });
+    assert.deepEqual(tKomplex[2], { negace: true, klic: '', hodnota: 'usa', varianty: ['usa'] });
+
+    // vyhovujeHledani: shoda s negací a OR
+    const polozkaBlond = ['Pamela Anderson', 'blond', 'Kanada'];
+    const polozkaZrzava = ['Alyssa', 'zrzavá', 'Kanada'];
+    const polozkaBruneta = ['Carmen', 'hnědá', 'USA'];
+
+    const dotazOr = rozlozitDotaz('blond,zrzava -usa');
+    assert.equal(vyhovujeHledani(polozkaBlond, dotazOr), true);
+    assert.equal(vyhovujeHledani(polozkaZrzava, dotazOr), true);
+    assert.equal(vyhovujeHledani(polozkaBruneta, dotazOr), false);
+
+    // vyhovujeHledani: rozsahy a operátory let
+    const tRozsah = rozlozitDotaz('rok:1970..1979');
+    assert.equal(vyhovujeHledani(['1975-05', 'Květen 1975'], tRozsah), true);
+    assert.equal(vyhovujeHledani(['1985-05', 'Květen 1985'], tRozsah), false);
+
+    const tPomlcka = rozlozitDotaz('rok:1970-1979');
+    assert.equal(vyhovujeHledani(['1972-10'], tPomlcka), true);
+    assert.equal(vyhovujeHledani(['1969-12'], tPomlcka), false);
+
+    const tOperator = rozlozitDotaz('rok:>=1990');
+    assert.equal(vyhovujeHledani(['1992-01'], tOperator), true);
+    assert.equal(vyhovujeHledani(['1989-12'], tOperator), false);
+});
+
+

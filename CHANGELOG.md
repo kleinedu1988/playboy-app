@@ -5,6 +5,15 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.10] – 2026-10-17
+
+### Přidáno
+- Rozšíření syntaxe vyhledávání modelek, centerfoldů a vydání:
+  - **Negace (vylučovací operátor `-` a `!`):** možnost vyloučit záznamy pomocí `-tag:playmate`, `-vlasy:cerna` nebo obecného textového vyloučení např. `-usa`.
+  - **Numerická porovnání a rozsahy:** podpora relačních operátorů (`>`, `>=`, `<`, `<=`, `=`) a rozsahů (`..`, `-`) pro rok, výšku, váhu, datum narození a hodnocení/srdíčka (např. `rok:1970..1979`, `rok:1970-1979`, `rok:>=1980`, `vyska:>175`, `vyska:>=175`, `hodnoceni:>=4`, `srdicka:5`).
+  - **Vícenásobné hodnoty (logické OR přes čárku):** možnost zadat více alternativ oddělených čárkou (např. `vlasy:blond,zrzava` pro nalezení blond NEBO zrzavých modelek, `edice:CZ,US`).
+  - **Tolerance neuzavřených uvozovek:** rozepsaný dotaz s neuzavřenou uvozovkou (např. `fotograf:"arny`) automaticky doplní uzavření a nehledá doslovnou uvozovku v textu ani nemaže dosavadní výsledky při psaní.
+
 ## [0.32.9] – 2026-10-17
 
 ### Přidáno

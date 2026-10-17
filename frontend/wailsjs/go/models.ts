@@ -1,5 +1,59 @@
 export namespace main {
 	
+	export class Clanek {
+	    id: number;
+	    vydani: string;
+	    strana: number;
+	    rubrika: string;
+	    nazev: string;
+	    autor: string;
+	    modelkaId: number;
+	    jmenoModelky: string;
+	    druh: string;
+	    text: string;
+	    skeny: string[];
+	    skenyUrl: string[];
+	    skenyOdkazy: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Clanek(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.vydani = source["vydani"];
+	        this.strana = source["strana"];
+	        this.rubrika = source["rubrika"];
+	        this.nazev = source["nazev"];
+	        this.autor = source["autor"];
+	        this.modelkaId = source["modelkaId"];
+	        this.jmenoModelky = source["jmenoModelky"];
+	        this.druh = source["druh"];
+	        this.text = source["text"];
+	        this.skeny = source["skeny"];
+	        this.skenyUrl = source["skenyUrl"];
+	        this.skenyOdkazy = source["skenyOdkazy"];
+	    }
+	}
+	export class DesetiletiStatistiky {
+	    desetileti: number;
+	    centerfoldy: number;
+	    cisla: number;
+	    edice: Record<string, number>;
+	
+	    static createFrom(source: any = {}) {
+	        return new DesetiletiStatistiky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.desetileti = source["desetileti"];
+	        this.centerfoldy = source["centerfoldy"];
+	        this.cisla = source["cisla"];
+	        this.edice = source["edice"];
+	    }
+	}
 	export class OdkazModelky {
 	    id: number;
 	    jmeno: string;
@@ -220,6 +274,30 @@ export namespace main {
 	        this.obalky = source["obalky"];
 	    }
 	}
+	export class NalezClanku {
+	    id: number;
+	    vydani: string;
+	    strana: number;
+	    rubrika: string;
+	    nazev: string;
+	    jmenoModelky: string;
+	    ukazka: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NalezClanku(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.vydani = source["vydani"];
+	        this.strana = source["strana"];
+	        this.rubrika = source["rubrika"];
+	        this.nazev = source["nazev"];
+	        this.jmenoModelky = source["jmenoModelky"];
+	        this.ukazka = source["ukazka"];
+	    }
+	}
 	
 	export class VyberFotky {
 	    vyberId: number;
@@ -330,6 +408,20 @@ export namespace main {
 	        this.typ = source["typ"];
 	    }
 	}
+	export class PolozkaStatistiky {
+	    nazev: string;
+	    pocet: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PolozkaStatistiky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.nazev = source["nazev"];
+	        this.pocet = source["pocet"];
+	    }
+	}
 	export class RocnikPrehledu {
 	    rok: number;
 	    edice: string;
@@ -423,115 +515,6 @@ export namespace main {
 	        this.nazev = source["nazev"];
 	    }
 	}
-	export class Vyber {
-	    id: number;
-	    nazev: string;
-	    pocet: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new Vyber(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.nazev = source["nazev"];
-	        this.pocet = source["pocet"];
-	    }
-	}
-	
-	export class Clanek {
-	    id: number;
-	    vydani: string;
-	    strana: number;
-	    rubrika: string;
-	    nazev: string;
-	    autor: string;
-	    modelkaId: number;
-	    jmenoModelky: string;
-	    druh: string;
-	    text: string;
-	    skeny: string[];
-	    skenyUrl: string[];
-	    skenyOdkazy: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new Clanek(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.vydani = source["vydani"];
-	        this.strana = source["strana"];
-	        this.rubrika = source["rubrika"];
-	        this.nazev = source["nazev"];
-	        this.autor = source["autor"];
-	        this.modelkaId = source["modelkaId"];
-	        this.jmenoModelky = source["jmenoModelky"];
-	        this.druh = source["druh"];
-	        this.text = source["text"];
-	        this.skeny = source["skeny"];
-	        this.skenyUrl = source["skenyUrl"];
-	        this.skenyOdkazy = source["skenyOdkazy"];
-	    }
-	}
-	export class NalezClanku {
-	    id: number;
-	    vydani: string;
-	    strana: number;
-	    rubrika: string;
-	    nazev: string;
-	    jmenoModelky: string;
-	    ukazka: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new NalezClanku(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.vydani = source["vydani"];
-	        this.strana = source["strana"];
-	        this.rubrika = source["rubrika"];
-	        this.nazev = source["nazev"];
-	        this.jmenoModelky = source["jmenoModelky"];
-	        this.ukazka = source["ukazka"];
-	    }
-	}
-	export class PolozkaStatistiky {
-	    nazev: string;
-	    pocet: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new PolozkaStatistiky(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.nazev = source["nazev"];
-	        this.pocet = source["pocet"];
-	    }
-	}
-	export class DesetiletiStatistiky {
-	    desetileti: number;
-	    centerfoldy: number;
-	    cisla: number;
-	    edice: Record<string, number>;
-	
-	    static createFrom(source: any = {}) {
-	        return new DesetiletiStatistiky(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.desetileti = source["desetileti"];
-	        this.centerfoldy = source["centerfoldy"];
-	        this.cisla = source["cisla"];
-	        this.edice = source["edice"];
-	    }
-	}
 	export class Statistiky {
 	    centerfoldu: number;
 	    desetileti: DesetiletiStatistiky[];
@@ -552,18 +535,53 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.centerfoldu = source["centerfoldu"];
-	        this.desetileti = source["desetileti"];
-	        this.vek = source["vek"];
+	        this.desetileti = this.convertValues(source["desetileti"], DesetiletiStatistiky);
+	        this.vek = this.convertValues(source["vek"], PolozkaStatistiky);
 	        this.vekMedian = source["vekMedian"];
 	        this.vekNejcastejsi = source["vekNejcastejsi"];
 	        this.vekZnamy = source["vekZnamy"];
-	        this.fotografove = source["fotografove"];
+	        this.fotografove = this.convertValues(source["fotografove"], PolozkaStatistiky);
 	        this.fotografuCelkem = source["fotografuCelkem"];
-	        this.narodnosti = source["narodnosti"];
+	        this.narodnosti = this.convertValues(source["narodnosti"], PolozkaStatistiky);
 	        this.narodnostiCelkem = source["narodnostiCelkem"];
 	        this.modelekSNarodnosti = source["modelekSNarodnosti"];
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
+	export class Vyber {
+	    id: number;
+	    nazev: string;
+	    pocet: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Vyber(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.nazev = source["nazev"];
+	        this.pocet = source["pocet"];
+	    }
+	}
+	
 	export class VydaniInfo {
 	    vydani: string;
 	    poznamka: string;

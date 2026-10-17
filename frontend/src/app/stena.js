@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { EDICE, bezDiakritiky, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, sklonovat } from '../lib/format';
+import { EDICE, bezDiakritiky, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
@@ -20,14 +20,14 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(wall);
 
-    const slova = sjednotit(dotaz).split(/\s+/).filter(Boolean);
-    const vyhovuje = f => !slova.length || slova.every(s => [
+    const tokeny = rozlozitDotaz(dotaz);
+    const vyhovuje = f => vyhovujeHledani([
         f.jmenoModelky,
         f.album,
         nazevAlba(f.album, f.typ),
         f.fotograf || '',
         f.popis || '',
-    ].some(t => bezDiakritiky(t).includes(s)));
+    ], tokeny);
     stav.stenaPolozky = sestavitAlba(fotky.filter(vyhovuje)).flatMap(a => a.polozky);
     // Chronologicky: podle vydání (rok, měsíc, edice) jako časová osa, s lištou desetiletí
     const klicVydani = p => { const v = rozlozitVydani(p.album); return v ? `${v.rok}${v.mesic}${v.edice}` : '9999'; };
@@ -109,12 +109,11 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
         }
     });
 
-    const slova = sjednotit(dotaz).split(/\s+/).filter(Boolean);
+    const tokeny = rozlozitDotaz(dotaz);
     const vyhovuje = k => {
         if (stav.cislaZobrazit === 'cover' && !k.cover) return false;
         if (stav.cislaZobrazit === 'bezCoveru' && (k.cover || k.chybi)) return false;
         if (stav.cislaZobrazit === 'chybi' && !k.chybi) return false;
-        if (!slova.length) return true;
         const texty = [
             k.vydani,
             nazevVydani(k.vydani),
@@ -122,7 +121,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
             stavCisla.get(k.vydani)?.naObalce || '',
             stavCisla.get(k.vydani)?.poznamka || '',
         ];
-        return slova.every(s => texty.some(t => bezDiakritiky(t).includes(s)));
+        return vyhovujeHledani(texty, tokeny);
     };
     const vybrana = cisla.filter(vyhovuje);
 

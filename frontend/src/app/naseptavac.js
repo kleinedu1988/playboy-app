@@ -1,6 +1,6 @@
 // Rychlé výsledky pod hledáním odkudkoli: modelky, články (i podle textu) a čísla; šipky vybírají, Enter otevře
 import { GetKalendar, HledatClanky } from './backend';
-import { bezDiakritiky, esc, nazevVydani, obrazek, sjednotit } from '../lib/format';
+import { bezDiakritiky, esc, nazevVydani, obrazek, rozlozitDotaz, sjednotit, vyhovujeHledani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { searchInput } from './prvky';
 import { VELIKOST_NAHLEDU, adresaTitulni } from './obrazky';
@@ -62,9 +62,10 @@ export function zavritNaseptavac() {
 async function hledat() {
     const dotaz = searchInput.value.trim();
     const moje = ++cisloHledani;
-    // Cílené hledání modelek (vlasy:blond) patří jen galerii
-    if (dotaz.length < 2 || dotaz.includes(':') || searchInput.disabled) return zavritNaseptavac();
-    const slova = sjednotit(dotaz).split(/\s+/).filter(Boolean);
+    const tokeny = rozlozitDotaz(dotaz);
+    // Cílené hledání modelek (vlasy:blond, rok:1975...) patří jen galerii
+    if (dotaz.length < 2 || tokeny.some(t => t.klic) || searchInput.disabled) return zavritNaseptavac();
+    const slova = tokeny.filter(t => !t.negace).flatMap(t => t.varianty);
 
     kalendar ||= GetKalendar().then(k => k || []);
     const [modelky, clanky, cisla] = await Promise.all([vsechnyModelky(), HledatClanky(dotaz).then(c => c || []), kalendar]);
@@ -86,15 +87,16 @@ async function hledat() {
     ].filter(Boolean).join(' ');
 
     const nalezeneModelky = modelky
-        .filter(m => obsahujeVse(textModelky(m), slova))
+        .filter(m => vyhovujeHledani([textModelky(m)], tokeny))
         .sort((a, b) => {
-            const aJmeno = obsahujeVse(`${a.jmeno} ${a.dalsiJmena}`, slova);
-            const bJmeno = obsahujeVse(`${b.jmeno} ${b.dalsiJmena}`, slova);
+            const aJmeno = vyhovujeHledani([a.jmeno, a.dalsiJmena], tokeny);
+            const bJmeno = vyhovujeHledani([b.jmeno, b.dalsiJmena], tokeny);
             if (aJmeno !== bJmeno) return aJmeno ? -1 : 1;
             return a.jmeno.localeCompare(b.jmeno);
         })
         .slice(0, NEJVIC_MODELEK);
-    const nalezenaCisla = cisla.filter(k => obsahujeVse(`${nazevVydani(k.vydani)} ${k.vydani} ${k.modelka || ''}`, slova))
+    const nalezenaCisla = cisla
+        .filter(k => vyhovujeHledani([nazevVydani(k.vydani), k.vydani, k.modelka || ''], tokeny))
         .sort((a, b) => b.vydani.localeCompare(a.vydani)).slice(0, NEJVIC_CISEL);
     const nalezeneClanky = clanky.slice(0, NEJVIC_CLANKU);
 

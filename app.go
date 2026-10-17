@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -1176,12 +1177,138 @@ func poleHledani(m Modelka) map[string]string {
 	}
 }
 
-// Slova hledání; „pole:hodnota" i „pole:\"víc slov\"" zůstanou pohromadě
-var vzorSlovaHledani = regexp.MustCompile(`([\p{L}]+):"([^"]*)"|"([^"]*)"|(\S+)`)
+// Slova hledání: volitelná negace (- nebo !), cílené pole:hodnota i pole:"více slov", uvozovky i obyčejná slova
+var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):"([^"]*)"|(-|!)?"([^"]*)"|(\S+)`)
+var vzorRozsahCisel = regexp.MustCompile(`^(\d+)\s*-\s*(\d+)$`)
+
+// Rozpoznání numerického filtru: op (">=", "<=", ">", "<", "=", ".."), numOd, numDo
+func parsovatNumerickyFiltr(hodnota string) (op string, numOd, numDo int, ok bool) {
+	h := strings.TrimSpace(hodnota)
+	if strings.HasPrefix(h, ">=") {
+		if n, err := strconv.Atoi(strings.TrimSpace(h[2:])); err == nil {
+			return ">=", n, 0, true
+		}
+	}
+	if strings.HasPrefix(h, "<=") {
+		if n, err := strconv.Atoi(strings.TrimSpace(h[2:])); err == nil {
+			return "<=", n, 0, true
+		}
+	}
+	if strings.HasPrefix(h, "==") {
+		if n, err := strconv.Atoi(strings.TrimSpace(h[2:])); err == nil {
+			return "=", n, 0, true
+		}
+	}
+	if strings.HasPrefix(h, ">") {
+		if n, err := strconv.Atoi(strings.TrimSpace(h[1:])); err == nil {
+			return ">", n, 0, true
+		}
+	}
+	if strings.HasPrefix(h, "<") {
+		if n, err := strconv.Atoi(strings.TrimSpace(h[1:])); err == nil {
+			return "<", n, 0, true
+		}
+	}
+	if strings.HasPrefix(h, "=") {
+		if n, err := strconv.Atoi(strings.TrimSpace(h[1:])); err == nil {
+			return "=", n, 0, true
+		}
+	}
+	if parts := strings.Split(h, ".."); len(parts) == 2 {
+		od, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
+		do, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
+		if err1 == nil && err2 == nil {
+			return "..", od, do, true
+		}
+	}
+	if m := vzorRozsahCisel.FindStringSubmatch(h); len(m) == 3 {
+		od, _ := strconv.Atoi(m[1])
+		do, _ := strconv.Atoi(m[2])
+		return "..", od, do, true
+	}
+	if n, err := strconv.Atoi(h); err == nil {
+		return "=", n, 0, true
+	}
+	return "", 0, 0, false
+}
+
+func vyhovujeCislo(hodnota int, op string, numOd, numDo int) bool {
+	switch op {
+	case ">=":
+		return hodnota >= numOd
+	case "<=":
+		return hodnota <= numOd
+	case ">":
+		return hodnota > numOd
+	case "<":
+		return hodnota < numOd
+	case "=", "==":
+		return hodnota == numOd
+	case "..":
+		return hodnota >= numOd && hodnota <= numDo
+	default:
+		return false
+	}
+}
+
+func vyhovujeNumericky(m Modelka, klic, op string, numOd, numDo int) bool {
+	switch klic {
+	case "vyska":
+		if m.VyskaCm <= 0 {
+			return false
+		}
+		return vyhovujeCislo(m.VyskaCm, op, numOd, numDo)
+	case "vaha":
+		if m.VahaKg <= 0 {
+			return false
+		}
+		return vyhovujeCislo(m.VahaKg, op, numOd, numDo)
+	case "hodnoceni", "srdicka":
+		if m.Hodnoceni <= 0 && numOd > 0 {
+			return false
+		}
+		return vyhovujeCislo(m.Hodnoceni, op, numOd, numDo)
+	case "narozena":
+		if len(m.NarozeniDatum) >= 4 {
+			if rok, err := strconv.Atoi(m.NarozeniDatum[:4]); err == nil && rok > 0 {
+				return vyhovujeCislo(rok, op, numOd, numDo)
+			}
+		}
+		return false
+	case "rok":
+		for _, v := range m.Vydani {
+			if len(v) >= 4 {
+				if rok, err := strconv.Atoi(v[:4]); err == nil && rok > 0 {
+					if vyhovujeCislo(rok, op, numOd, numDo) {
+						return true
+					}
+				}
+			}
+		}
+		return false
+	}
+	return false
+}
+
+func vyhovujeVarianty(text string, varianty []string) bool {
+	zjedn := zjednodusit(text)
+	for _, v := range varianty {
+		if strings.Contains(zjedn, v) {
+			return true
+		}
+	}
+	return false
+}
 
 // Každé hledané slovo se musí najít v některém údaji modelky, cílené slovo v daném údaji; na velikosti písmen
-// ani diakritice nezáleží. Filtruje se tady a ne v SQL, protože LIKE v SQLite neumí malá a velká písmena s diakritikou.
+// ani diakritice nezáleží. Podporuje negaci (-tag:), čárku jako OR (vlasy:blond,zrzava), numerické porovnání
+// (>175, 1970..1979) i neuzavřené uvozovky.
 func odpovidaHledani(m Modelka, vyhledavani string) bool {
+	// Pokud je v dotazu lichý počet uvozovek (uživatel píše uvozovku a ještě ji neuzavřel), pomyslně ji uzavřeme na konci
+	if strings.Count(vyhledavani, "\"")%2 != 0 {
+		vyhledavani += "\""
+	}
+
 	vyskaTxt := ""
 	if m.VyskaCm > 0 {
 		vyskaTxt = fmt.Sprintf("%d %dcm", m.VyskaCm, m.VyskaCm)
@@ -1206,33 +1333,70 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 	}, "\n"))
 	var pole map[string]string
 	for _, casti := range vzorSlovaHledani.FindAllStringSubmatch(vyhledavani, -1) {
-		klic, hodnota := casti[1], casti[2]
-		if klic == "" {
-			slovo := casti[3] + casti[4]
+		var negace bool
+		var klic, hodnota string
+		if casti[2] != "" {
+			negace = casti[1] != ""
+			klic = casti[2]
+			hodnota = casti[3]
+		} else if strings.HasPrefix(casti[0], "\"") || strings.HasPrefix(casti[0], "-\"") || strings.HasPrefix(casti[0], "!\"") {
+			negace = casti[4] != ""
+			hodnota = casti[5]
+		} else {
+			slovo := casti[6]
+			if strings.HasPrefix(slovo, "-") || strings.HasPrefix(slovo, "!") {
+				negace = true
+				slovo = slovo[1:]
+			}
 			if i := strings.Index(slovo, ":"); i > 0 && i < len(slovo)-1 {
-				klic, hodnota = slovo[:i], slovo[i+1:]
+				klic = slovo[:i]
+				hodnota = slovo[i+1:]
 			} else {
 				hodnota = slovo
 			}
 		}
-		hodnota = zjednodusit(strings.TrimSpace(hodnota))
-		if hodnota == "" {
+		hodnota = strings.Trim(hodnota, "\"")
+		hodnotaZjedn := zjednodusit(strings.TrimSpace(hodnota))
+		if hodnotaZjedn == "" {
 			continue
 		}
+
+		var shoda bool
 		if klic != "" {
-			if pole == nil {
-				pole = poleHledani(m)
-			}
-			if text, zname := pole[zjednodusit(klic)]; zname {
-				if !strings.Contains(zjednodusit(text), hodnota) {
-					return false
+			klicZjedn := zjednodusit(klic)
+			if op, numOd, numDo, ok := parsovatNumerickyFiltr(hodnota); ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "hodnoceni" || klicZjedn == "srdicka" || klicZjedn == "rok" || klicZjedn == "narozena") {
+				shoda = vyhovujeNumericky(m, klicZjedn, op, numOd, numDo)
+			} else {
+				if pole == nil {
+					pole = poleHledani(m)
 				}
-				continue
+				if text, zname := pole[klicZjedn]; zname {
+					varianty := []string{}
+					for _, v := range strings.Split(hodnotaZjedn, ",") {
+						if vz := strings.TrimSpace(v); vz != "" {
+							varianty = append(varianty, vz)
+						}
+					}
+					shoda = vyhovujeVarianty(text, varianty)
+				} else {
+					// Neznámé pole: hledá se celé slovo jako obyčejný text
+					shoda = strings.Contains(udaje, klicZjedn+":"+hodnotaZjedn)
+				}
 			}
-			// Neznámé pole: hledá se celé slovo jako obyčejný text
-			hodnota = zjednodusit(klic) + ":" + hodnota
+		} else {
+			varianty := []string{}
+			for _, v := range strings.Split(hodnotaZjedn, ",") {
+				if vz := strings.TrimSpace(v); vz != "" {
+					varianty = append(varianty, vz)
+				}
+			}
+			shoda = vyhovujeVarianty(udaje, varianty)
 		}
-		if !strings.Contains(udaje, hodnota) {
+
+		if negace {
+			shoda = !shoda
+		}
+		if !shoda {
 			return false
 		}
 	}

@@ -1,7 +1,7 @@
 // Nejlepší fotky a vlastní výběry
 import { GetFotkyVyberu, GetNejlepsiFotky, GetVybery, PrejmenovatVyber, PridatDoVyberu, SmazatVyber, VyberPodleNazvu } from './backend';
 import { oznamit } from '../ui/oznameni';
-import { bezDiakritiky, esc, nazevAlba, obrazek, sjednotit, sklonovat } from '../lib/format';
+import { bezDiakritiky, esc, nazevAlba, obrazek, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { stav } from './stav';
 import { vybratKliknutim } from './vyber';
 import { best, searchInput } from './prvky';
@@ -40,14 +40,14 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(best);
 
-    const slova = sjednotit(dotaz).split(/\s+/).filter(Boolean);
-    const vyhovuje = f => !slova.length || slova.every(s => [
+    const tokeny = rozlozitDotaz(dotaz);
+    const vyhovuje = f => vyhovujeHledani([
         f.jmenoModelky,
         f.album,
         nazevAlba(f.album, f.typ),
         f.fotograf || '',
         f.popis || '',
-    ].some(t => bezDiakritiky(t).includes(s)));
+    ], tokeny);
     stav.nejlepsiPolozky = fotky.filter(vyhovuje).map(f => ({
         fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni,
     })).sort((x, y) => y.hodnoceni - x.hodnoceni);
@@ -64,7 +64,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         <div class="best-toolbar">${prah}<span>${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')}</span>
             ${stav.nejlepsiPolozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
         ${stav.nejlepsiPolozky.length ? `<div class="nejlepsi-mozaika">${stav.nejlepsiPolozky.map((p, i) => htmlDlazdiceMozaiky(p, i, zacatekUrovne.has(i))).join('')}</div>`
-            : `<p class="empty-state">${fotky.length || slova.length ? 'Hledání neodpovídá žádná modelka.'
+            : `<p class="empty-state">${fotky.length || tokeny.length ? 'Hledání neodpovídá žádná fotka.'
             : vyber ? 'Výběr je prázdný. Fotky se do něj přidávají odkudkoli: tlačítkem ⋯ na fotce, v prohlížeči nebo u vybraných fotek „Přidat do výběru…“.'
             : `Zatím žádná fotka nemá ${stav.nejlepsiMin} a více srdíček. Fotky se hodnotí srdíčky na dlaždici nebo v prohlížeči klávesami 1–5.`}</p>`}
     `;

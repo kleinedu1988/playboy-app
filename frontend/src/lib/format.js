@@ -305,3 +305,76 @@ export function rozlozitMiry(text) {
     const naCm = n => palce ? Math.round(parseInt(n) * 2.54) : parseInt(n);
     return { hrudnik: naCm(m[1]), pas: naCm(m[3]), boky: naCm(m[4]), velikost: m[2] ? `${m[1]}${m[2].toUpperCase()}` : '' };
 }
+
+// Token hledání pro frontendové filtrování (podporuje negaci -, čárku jako OR, rozsah let a neuzavřené uvozovky)
+export function rozlozitDotaz(dotaz) {
+    let d = String(dotaz || '').trim();
+    if (!d) return [];
+    if ((d.match(/"/g) || []).length % 2 !== 0) d += '"';
+    const vzor = /(-|!)?([\p{L}]+):"([^"]*)"|(-|!)?"([^"]*)"|(\S+)/gu;
+    const tokeny = [];
+    let shoda;
+    while ((shoda = vzor.exec(d)) !== null) {
+        let negace = Boolean(shoda[1] || shoda[4]);
+        let klic = shoda[2] || '';
+        let hodnota = shoda[3] || shoda[5] || '';
+        if (!klic && !hodnota && shoda[6]) {
+            let slovo = shoda[6];
+            if (slovo.startsWith('-') || slovo.startsWith('!')) {
+                negace = true;
+                slovo = slovo.slice(1);
+            }
+            const i = slovo.indexOf(':');
+            if (i > 0 && i < slovo.length - 1) {
+                klic = slovo.slice(0, i);
+                hodnota = slovo.slice(i + 1);
+            } else {
+                hodnota = slovo;
+            }
+        }
+        hodnota = hodnota.replace(/^"|"$/g, '').trim();
+        if (!hodnota) continue;
+        const varianty = hodnota.split(',').map(v => bezDiakritiky(v.trim())).filter(Boolean);
+        tokeny.push({ negace, klic: bezDiakritiky(klic), hodnota: bezDiakritiky(hodnota), varianty });
+    }
+    return tokeny;
+}
+
+// Ověří, zda pole textových hodnot odpovídá tokenům hledání (AND mezi tokeny, OR přes čárku, negace -, rozsah let a operátory)
+export function vyhovujeHledani(texty, tokeny) {
+    if (!tokeny.length) return true;
+    const zjednoduseneTexty = texty.filter(Boolean).map(t => bezDiakritiky(t));
+    for (const t of tokeny) {
+        // Kontrola rozsahu let např. 1970..1979 nebo 1970-1979 a operátorů >=1970, <1980
+        const rozsah = /^(\d{4})(?:\.\.|\-)(\d{4})$/.exec(t.hodnota);
+        const opMatch = /^(>=|<=|>|<|==|=)(\d{4})$/.exec(t.hodnota);
+        let shoda = false;
+        if (rozsah) {
+            const od = parseInt(rozsah[1]), doR = parseInt(rozsah[2]);
+            shoda = zjednoduseneTexty.some(txt => {
+                const roky = txt.match(/\b\d{4}\b/g) || [];
+                return roky.some(r => parseInt(r) >= od && parseInt(r) <= doR);
+            });
+        } else if (opMatch) {
+            const op = opMatch[1];
+            const cil = parseInt(opMatch[2]);
+            shoda = zjednoduseneTexty.some(txt => {
+                const roky = txt.match(/\b\d{4}\b/g) || [];
+                return roky.some(r => {
+                    const c = parseInt(r);
+                    if (op === '>=') return c >= cil;
+                    if (op === '<=') return c <= cil;
+                    if (op === '>') return c > cil;
+                    if (op === '<') return c < cil;
+                    if (op === '=' || op === '==') return c === cil;
+                    return false;
+                });
+            });
+        } else {
+            shoda = t.varianty.some(v => zjednoduseneTexty.some(txt => txt.includes(v)));
+        }
+        if (t.negace) shoda = !shoda;
+        if (!shoda) return false;
+    }
+    return true;
+}

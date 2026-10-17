@@ -6,6 +6,10 @@ export function AddBulkPhotos(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['AddBulkPhotos'](arg1, arg2, arg3, arg4);
 }
 
+export function AddClanek(arg1) {
+  return window['go']['main']['App']['AddClanek'](arg1);
+}
+
 export function AddCover(arg1, arg2) {
   return window['go']['main']['App']['AddCover'](arg1, arg2);
 }
@@ -16,6 +20,10 @@ export function AddModelka(arg1) {
 
 export function DeleteAlbum(arg1, arg2, arg3) {
   return window['go']['main']['App']['DeleteAlbum'](arg1, arg2, arg3);
+}
+
+export function DeleteClanek(arg1) {
+  return window['go']['main']['App']['DeleteClanek'](arg1);
 }
 
 export function DeleteFotografie(arg1) {
@@ -44,6 +52,14 @@ export function GetAlbaFotografa(arg1) {
 
 export function GetCenterfoldy() {
   return window['go']['main']['App']['GetCenterfoldy']();
+}
+
+export function GetClanky(arg1) {
+  return window['go']['main']['App']['GetClanky'](arg1);
+}
+
+export function GetClankyModelky(arg1) {
+  return window['go']['main']['App']['GetClankyModelky'](arg1);
 }
 
 export function GetCovery() {
@@ -90,6 +106,10 @@ export function GetSpecialy() {
   return window['go']['main']['App']['GetSpecialy']();
 }
 
+export function GetStatistiky() {
+  return window['go']['main']['App']['GetStatistiky']();
+}
+
 export function GetStavyVydani() {
   return window['go']['main']['App']['GetStavyVydani']();
 }
@@ -112,6 +132,10 @@ export function GetVydani(arg1) {
 
 export function GetVydaniInfo(arg1) {
   return window['go']['main']['App']['GetVydaniInfo'](arg1);
+}
+
+export function HledatClanky(arg1) {
+  return window['go']['main']['App']['HledatClanky'](arg1);
 }
 
 export function ImportovatSoubory(arg1) {
@@ -270,6 +294,10 @@ export function UpdateAlbum(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['UpdateAlbum'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function UpdateClanek(arg1) {
+  return window['go']['main']['App']['UpdateClanek'](arg1);
+}
+
 export function UpdateCover(arg1, arg2, arg3) {
   return window['go']['main']['App']['UpdateCover'](arg1, arg2, arg3);
 }
@@ -304,32 +332,4 @@ export function ZkontrolovatSoubory() {
 
 export function ZrusitPoradiAlba(arg1, arg2, arg3) {
   return window['go']['main']['App']['ZrusitPoradiAlba'](arg1, arg2, arg3);
-}
-
-export function AddClanek(arg1) {
-  return window['go']['main']['App']['AddClanek'](arg1);
-}
-
-export function DeleteClanek(arg1) {
-  return window['go']['main']['App']['DeleteClanek'](arg1);
-}
-
-export function GetClanky(arg1) {
-  return window['go']['main']['App']['GetClanky'](arg1);
-}
-
-export function UpdateClanek(arg1) {
-  return window['go']['main']['App']['UpdateClanek'](arg1);
-}
-
-export function GetClankyModelky(arg1) {
-  return window['go']['main']['App']['GetClankyModelky'](arg1);
-}
-
-export function HledatClanky(arg1) {
-  return window['go']['main']['App']['HledatClanky'](arg1);
-}
-
-export function GetStatistiky() {
-  return window['go']['main']['App']['GetStatistiky']();
 }

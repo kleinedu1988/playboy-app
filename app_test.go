@@ -490,6 +490,120 @@ func TestHledaniARazeniModelek(t *testing.T) {
 	}
 }
 
+func TestPokrocileHledaniModelek(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{
+		Jmeno: "Zuzana Blond", Narodnost: "Česká", VlasyBarva: "Blond",
+		VyskaCm: 178, Hodnoceni: 5, Tags: "modelka, playmate",
+	})
+	a.AddModelka(Modelka{
+		Jmeno: "Klára Zrzka", Narodnost: "USA", VlasyBarva: "Zrzavá",
+		VyskaCm: 168, Hodnoceni: 4, Tags: "modelka",
+	})
+	a.AddModelka(Modelka{
+		Jmeno: "Monika Tmavá", Narodnost: "USA", VlasyBarva: "Černá",
+		VyskaCm: 175, Hodnoceni: 2, Tags: "cyb",
+	})
+
+	// Přidáme alba / vydání pro testování roků a edic
+	modelky := a.GetModelky("")
+	var zuzana, klara, monika Modelka
+	for _, m := range modelky {
+		switch m.Jmeno {
+		case "Zuzana Blond":
+			zuzana = m
+		case "Klára Zrzka":
+			klara = m
+		case "Monika Tmavá":
+			monika = m
+		}
+	}
+	a.AddBulkPhotos(zuzana.ID, "1975-05", "Centerfold", odkazA)
+	a.AddBulkPhotos(klara.ID, "1982-10", "Centerfold", odkazB)
+	a.AddBulkPhotos(monika.ID, "1995-03-CZ", "Centerfold", odkazA)
+	a.SetHodnoceni(zuzana.ID, 5)
+	a.SetHodnoceni(klara.ID, 4)
+	a.SetHodnoceni(monika.ID, 2)
+
+	jmena := func(dotaz string) []string {
+		var vysledek []string
+		for _, m := range a.GetModelky(dotaz) {
+			vysledek = append(vysledek, m.Jmeno)
+		}
+		return vysledek
+	}
+	stejne := func(mam []string, chci ...string) bool {
+		if len(mam) != len(chci) {
+			return false
+		}
+		for i := range mam {
+			if mam[i] != chci[i] {
+				return false
+			}
+		}
+		return true
+	}
+
+	// 1. Negace: -tag:playmate, -vlasy:cerna, -usa, !vlasy:blond
+	if mam := jmena("-tag:playmate"); !stejne(mam, "Klára Zrzka", "Monika Tmavá") {
+		t.Fatalf("negace tagu: %v", mam)
+	}
+	if mam := jmena("-vlasy:cerna"); !stejne(mam, "Klára Zrzka", "Zuzana Blond") {
+		t.Fatalf("negace vlasů: %v", mam)
+	}
+	if mam := jmena("-usa"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("negace textu -usa: %v", mam)
+	}
+	if mam := jmena("!vlasy:blond"); !stejne(mam, "Klára Zrzka", "Monika Tmavá") {
+		t.Fatalf("negace !: %v", mam)
+	}
+
+	// 2. Numerická porovnání a rozsahy: vyska:>175, vyska:>=175, rok:1970..1979, hodnoceni:>=4, srdicka:5
+	if mam := jmena("vyska:>175"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("vyska > 175: %v", mam)
+	}
+	if mam := jmena("vyska:>=175"); !stejne(mam, "Monika Tmavá", "Zuzana Blond") {
+		t.Fatalf("vyska >= 175: %v", mam)
+	}
+	if mam := jmena("vyska:<170"); !stejne(mam, "Klára Zrzka") {
+		t.Fatalf("vyska < 170: %v", mam)
+	}
+	if mam := jmena("rok:1970..1979"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("rok .. rozsah: %v", mam)
+	}
+	if mam := jmena("rok:1970-1979"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("rok - rozsah: %v", mam)
+	}
+	if mam := jmena("rok:>=1980"); !stejne(mam, "Klára Zrzka", "Monika Tmavá") {
+		t.Fatalf("rok >= 1980: %v", mam)
+	}
+	if mam := jmena("hodnoceni:>=4"); !stejne(mam, "Klára Zrzka", "Zuzana Blond") {
+		t.Fatalf("hodnoceni >= 4: %v", mam)
+	}
+	if mam := jmena("srdicka:5"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("srdicka 5: %v", mam)
+	}
+
+	// 3. Vícenásobné hodnoty (OR přes čárku): vlasy:blond,zrzava, edice:CZ,US
+	if mam := jmena("vlasy:blond,zrzava"); !stejne(mam, "Klára Zrzka", "Zuzana Blond") {
+		t.Fatalf("vlasy OR: %v", mam)
+	}
+	if mam := jmena("edice:CZ,SK"); !stejne(mam, "Monika Tmavá") {
+		t.Fatalf("edice OR: %v", mam)
+	}
+
+	// 4. Tolerance neuzavřených uvozovek
+	if mam := jmena("jmeno:\"zuzana"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("neuzavřená uvozovka v klíči: %v", mam)
+	}
+	if mam := jmena("\"zuzana"); !stejne(mam, "Zuzana Blond") {
+		t.Fatalf("neuzavřená uvozovka v textu: %v", mam)
+	}
+	if mam := jmena("jmeno:\""); len(mam) != 3 {
+		t.Fatalf("prázdná rozepsaná uvozovka nemá vymazat výsledky: %v", mam)
+	}
+}
+
 func TestDoplnkoveUdajeModelky(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	a.AddModelka(Modelka{Jmeno: "Kelley Thompson", DalsiJmena: "Kelly T., Miss November", Poznamka: "Playmate roku", Tetovani: 0, Piercing: -1, CoverID: odkazA})

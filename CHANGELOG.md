@@ -5,6 +5,13 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.4] – 2026-10-17
+
+### Vylepšeno
+- **Rozšířené řazení a filtrování u Modelek a Centerfoldů:**
+  - **Modelky:** V nabídce `Řazení` přibyly samostatné volby `Podle srdíček` a `Podle fotek` (včetně odpovídající levé lišty částí) a filtr `Srdíčka` při řazení `A–Z` již nečekaně neruší abecední pořadí. V nabídce `Srdíčka` přibyl filtr `Bez ♥` (nehodnocené modelky) a v liště voleb přibyly rychlé filtry `Edice` (`vše` | `US` | `CZ`) a `Role` (dynamicky podle rolí ve sbírce s počty modelek).
+  - **Centerfoldy:** V nabídce `Řazení` přibyly volby `Od nejstarších`, `Od nejnovějších` (obě se seskupením po dekádách a časovou lištou) a `Podle srdíček`. V liště voleb přibyly filtry `Srdíčka` (`vše`, `♥ 1+` až `♥ 5`, `Bez ♥`) a `Edice` (`vše` | `US` | `CZ`).
+
 ## [0.33.3] – 2026-10-17
 
 ### Vylepšeno

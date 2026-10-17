@@ -7,12 +7,14 @@ export const stav = {
     editovanaModelka: null,
     potvrzenaAkce: null,
     zrusenaAkce: null,
-    minHodnoceni: 0, // galerie ukazuje jen modelky s aspoň tolika srdíčky; 0 = všechny
+    minHodnoceni: 0, // galerie ukazuje jen modelky s aspoň tolika srdíčky; 0 = všechny, -1 = bez srdíček
+    ediceModelek: 'vse', // filtr edice v galerii modelek: 'vse', 'US', 'CZ'
+    roleModelek: 'vse', // filtr role v galerii modelek: 'vse' nebo konkrétní role
     zrusitUpravuVyrezu: null,
     aktualniAlba: [],
     aktualniPolozky: [],
     stenaPolozky: [],
-    razeniGalerie: 'jmeno', // 'jmeno', 'pridano' (naposledy přidané) nebo 'rok' (rok prvního vydání)
+    razeniGalerie: 'jmeno', // 'jmeno', 'pridano', 'rok', 'hodnoceni' nebo 'fotky'
     rezim: 'modelky', // přehled na hlavní stránce: 'modelky', 'centerfoldy', 'covery', 'kalendar' nebo 'prehled'
     maZamek: false,
     // Pořadové číslo posledního načítání pohledu; odpověď, kterou mezitím předběhlo novější načítání, se zahodí
@@ -32,7 +34,9 @@ export const stav = {
     cekaNaOznaceni: false,
     // Stěna centerfoldů napříč všemi modelkami
     stenaData: null,
-    stenaChronologicky: false,
+    razeniSteny: 'jmeno', // 'jmeno', 'vydani' (od nejstarších), 'nejnovejsi' (od nejnovějších), 'hodnoceni' (podle srdíček)
+    stenaEdice: 'vse', // filtr edice na stěně centerfoldů: 'vse', 'US', 'CZ'
+    stenaMin: 0, // filtr srdíček na stěně centerfoldů: 0 = vše, 1..5 = aspoň N, -1 = bez srdíček
     // Stránka Čísla: [kalendář, stavy čísel, covery]
     coveryData: null,
     // Fotograf, jehož alba ukazuje stránka (jinak null a stránka ukazuje vydání)

@@ -12,6 +12,13 @@ import { otevritVydani } from './vydani';
 import { prevestNaVolby } from '../ui/volby';
 import { nastavitEdiciKalendare } from './kalendar';
 
+const RAZENI_STENY = {
+    jmeno: 'Podle jména',
+    vydani: 'Od nejstarších',
+    nejnovejsi: 'Od nejnovějších',
+    hodnoceni: 'Podle srdíček',
+};
+
 export async function nacistStenu(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
     const fotky = zMezipameti && stav.stenaData ? stav.stenaData : await GetCenterfoldy() || [];
@@ -21,25 +28,41 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     ukazatPohled(wall);
 
     const tokeny = rozlozitDotaz(dotaz);
-    const vyhovuje = f => vyhovujeHledani([
-        f.jmenoModelky,
-        f.album,
-        nazevAlba(f.album, f.typ),
-        f.fotograf || '',
-        f.popis || '',
-    ], tokeny);
-    stav.stenaPolozky = sestavitAlba(fotky.filter(vyhovuje)).flatMap(a => a.polozky);
-    // Chronologicky: podle vydání (rok, měsíc, edice) jako časová osa, s lištou desetiletí
-    const klicVydani = p => { const v = rozlozitVydani(p.album); return v ? `${v.rok}${v.mesic}${v.edice}` : '9999'; };
-    if (stav.stenaChronologicky) stav.stenaPolozky.sort((x, y) => klicVydani(x).localeCompare(klicVydani(y)));
+    const vyhovuje = f => {
+        if (stav.stenaEdice !== 'vse' && rozlozitVydani(f.album)?.edice !== stav.stenaEdice) return false;
+        return vyhovujeHledani([
+            f.jmenoModelky,
+            f.album,
+            nazevAlba(f.album, f.typ),
+            f.fotograf || '',
+            f.popis || '',
+        ], tokeny);
+    };
+    stav.stenaPolozky = sestavitAlba(fotky.filter(vyhovuje)).flatMap(a => a.polozky).filter(p => {
+        if (stav.stenaMin === -1) return !p.hodnoceni;
+        if (stav.stenaMin > 0) return (p.hodnoceni || 0) >= stav.stenaMin;
+        return true;
+    });
+    // Chronologicky (od nejstarších či nejnovějších) nebo podle srdíček
+    if (stav.razeniSteny === 'vydani') {
+        const klicVydani = p => { const v = rozlozitVydani(p.album); return v ? `${v.rok}${v.mesic}${v.edice}` : '9999'; };
+        stav.stenaPolozky.sort((x, y) => klicVydani(x).localeCompare(klicVydani(y)));
+    } else if (stav.razeniSteny === 'nejnovejsi') {
+        const klicVydani = p => { const v = rozlozitVydani(p.album); return v ? `${v.rok}${v.mesic}${v.edice}` : '0000'; };
+        stav.stenaPolozky.sort((x, y) => klicVydani(y).localeCompare(klicVydani(x)));
+    } else if (stav.razeniSteny === 'hodnoceni') {
+        stav.stenaPolozky.sort((x, y) => (y.hodnoceni || 0) - (x.hodnoceni || 0));
+    }
 
     const razeni = `<div class="wall-toolbar">
-        <button class="chip ${stav.stenaChronologicky ? '' : 'active'}" data-razeni-steny="jmeno">Podle jména</button>
-        <button class="chip ${stav.stenaChronologicky ? 'active' : ''}" data-razeni-steny="vydani">Podle vydání</button>
+        ${Object.entries(RAZENI_STENY).map(([klic, nazev]) => `<button class="chip ${stav.razeniSteny === klic ? 'active' : ''}" data-razeni-steny="${klic}">${nazev}</button>`).join('')}
+        ${[1, 2, 3, 4, 5].map(n => `<button class="chip ${stav.stenaMin === n ? 'active' : ''}" data-stena-min="${n}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')}
+        <button class="chip ${stav.stenaMin === -1 ? 'active' : ''}" data-stena-min="-1">Bez &#9829;</button>
+        ${['vse', ...EDICE].map(e => `<button class="chip ${stav.stenaEdice === e ? 'active' : ''}" data-edice-steny="${e}">${e === 'vse' ? 'vše' : e}</button>`).join('')}
         <span>${sklonovat(stav.stenaPolozky.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</span></div>`;
     if (stav.stenaPolozky.length === 0) {
         listaSteny.naplnit([]);
-        wall.innerHTML = razeni + `<div class="empty-state">${fotky.length ? 'Hledání neodpovídá žádný centerfold.' : 'Zatím žádné centerfoldy. Přidej je tlačítkem + nahoře.'}</div>`;
+        wall.innerHTML = razeni + `<div class="empty-state">${fotky.length ? 'Hledání ani filtru neodpovídá žádný centerfold.' : 'Zatím žádné centerfoldy. Přidej je tlačítkem + nahoře.'}</div>`;
         prevestNaVolby(wall.querySelector('.wall-toolbar'));
         return;
     }
@@ -58,8 +81,9 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
         </figure>`;
 
     // Podle vydání: desetiletí jako oddíly s velkým tenkým nadpisem (jako roky v Kalendáři), lišta na ně skáče
+    const maDekady = stav.razeniSteny === 'vydani' || stav.razeniSteny === 'nejnovejsi';
     const dekady = new Map();
-    if (stav.stenaChronologicky) {
+    if (maDekady) {
         stav.stenaPolozky.forEach((p, i) => {
             const rok = parseInt(rozlozitVydani(p.album)?.rok);
             const dekada = rok ? Math.floor(rok / 10) * 10 : 0;
@@ -67,7 +91,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
             dekady.get(dekada).push(i);
         });
     }
-    wall.innerHTML = razeni + (stav.stenaChronologicky
+    wall.innerHTML = razeni + (maDekady
         ? [...dekady].map(([dekada, indexy]) => `
             <section class="wall-dekada" data-cast="${dekada}">
                 <h3>${dekada ? `${dekada}–${dekada + 9}` : 'Bez vydání'}<small>${sklonovat(indexy.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</small></h3>
@@ -177,16 +201,31 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    try { stav.stenaChronologicky = localStorage.getItem('stenaChronologicky') === '1'; } catch { /* podle jména */ }
+    try {
+        const ulozene = localStorage.getItem('razeniSteny');
+        stav.razeniSteny = RAZENI_STENY[ulozene] ? ulozene : (localStorage.getItem('stenaChronologicky') === '1' ? 'vydani' : 'jmeno');
+    } catch { /* podle jména */ }
     try { stav.cislaZobrazit = ZOBRAZIT_CISLA[localStorage.getItem('cislaZobrazit')] ? localStorage.getItem('cislaZobrazit') : 'vse'; } catch { /* vše */ }
 
     wall.addEventListener('click', (e) => {
         const razeni = e.target.closest('[data-razeni-steny]');
-        if (!razeni) return;
-        e.stopPropagation();
-        stav.stenaChronologicky = razeni.dataset.razeniSteny === 'vydani';
-        try { localStorage.setItem('stenaChronologicky', stav.stenaChronologicky ? '1' : ''); } catch { /* jen se nezapamatuje */ }
-        nacistStenu(searchInput.value, true);
+        const minimum = e.target.closest('[data-stena-min]');
+        const edice = e.target.closest('[data-edice-steny]');
+        if (razeni) {
+            e.stopPropagation();
+            stav.razeniSteny = razeni.dataset.razeniSteny;
+            try { localStorage.setItem('razeniSteny', stav.razeniSteny); } catch { /* jen se nezapamatuje */ }
+            nacistStenu(searchInput.value, true);
+        } else if (minimum) {
+            e.stopPropagation();
+            const n = Number(minimum.dataset.stenaMin);
+            stav.stenaMin = n === stav.stenaMin ? 0 : n;
+            nacistStenu(searchInput.value, true);
+        } else if (edice) {
+            e.stopPropagation();
+            stav.stenaEdice = edice.dataset.ediceSteny;
+            nacistStenu(searchInput.value, true);
+        }
     }, true);
 
     covers.addEventListener('click', (e) => {

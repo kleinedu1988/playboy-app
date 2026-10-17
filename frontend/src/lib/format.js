@@ -67,11 +67,13 @@ export function obrazek(adresa, velikost) {
 }
 
 // Album centerfoldu a coveru je uložené jako vydání časopisu; zobrazuje se jako vydání
-// Řazení galerie: abecedně, naposledy přidané, podle roku prvního vydání; modelky bez údaje jdou na konec
+// Řazení galerie: abecedně, naposledy přidané, podle roku prvního vydání, podle srdíček, podle počtu fotek; modelky bez údaje jdou na konec
 export const RAZENI_GALERIE = {
     jmeno: { popisek: 'A–Z', nazev: 'abecedně' },
     pridano: { popisek: 'Nově přidané', nazev: 'naposledy přidané' },
     rok: { popisek: 'Podle roku', nazev: 'podle roku prvního vydání' },
+    hodnoceni: { popisek: 'Podle srdíček', nazev: 'podle hodnocení' },
+    fotky: { popisek: 'Podle fotek', nazev: 'podle počtu fotek' },
 };
 
 export function prvniRok(modelka) {
@@ -83,10 +85,12 @@ export function seraditModelky(modelky, razeni) {
     const vysledek = [...modelky];
     if (razeni === 'pridano') vysledek.sort((a, b) => (b.pridano || '').localeCompare(a.pridano || ''));
     else if (razeni === 'rok') vysledek.sort((a, b) => (prvniRok(a) || 9999) - (prvniRok(b) || 9999));
+    else if (razeni === 'hodnoceni') vysledek.sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0));
+    else if (razeni === 'fotky') vysledek.sort((a, b) => (b.pocetFotek || 0) - (a.pocetFotek || 0));
     return vysledek;
 }
 
-// Část galerie, do které karta patří (lišta nad galerií): písmeno, měsíc přidání, nebo desetiletí
+// Část galerie, do které karta patří (lišta nad galerií): písmeno, měsíc přidání, desetiletí, srdíčka nebo rozsah fotek
 export function castGalerie(modelka, razeni) {
     if (razeni === 'pridano') {
         const [rok, mesic] = (modelka.pridano || '').split('-');
@@ -95,6 +99,13 @@ export function castGalerie(modelka, razeni) {
     if (razeni === 'rok') {
         const rok = prvniRok(modelka);
         return rok ? `${Math.floor(rok / 10) * 10}s` : 'Bez vydání';
+    }
+    if (razeni === 'hodnoceni') {
+        return modelka.hodnoceni > 0 ? '♥'.repeat(modelka.hodnoceni) : 'Bez srdíček';
+    }
+    if (razeni === 'fotky') {
+        const n = modelka.pocetFotek || 0;
+        return n >= 50 ? '50+ fotek' : n >= 20 ? '20–49 fotek' : n >= 1 ? '1–19 fotek' : 'Bez fotek';
     }
     const jmeno = bezDiakritiky(modelka.jmeno);
     return /^\p{L}/u.test(jmeno) ? jmeno[0].toUpperCase() : '#';

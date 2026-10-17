@@ -7,15 +7,19 @@ const POPISKY = {
     razeniGalerie: 'Řazení',
     razeniSteny: 'Řazení',
     minHodnoceni: 'Srdíčka',
+    stenaMin: 'Srdíčka',
     nejlepsiMin: 'Srdíčka',
     vyberId: 'Výběr',
     edice: 'Edice',
     ediceCisel: 'Edice',
+    ediceModelek: 'Edice',
+    ediceSteny: 'Edice',
+    roleModelek: 'Role',
     zobrazitCisla: 'Zobrazit',
 };
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
-const VYPINATELNE = new Set(['minHodnoceni', 'vyberId']);
+const VYPINATELNE = new Set(['minHodnoceni', 'stenaMin', 'vyberId']);
 
 const misto = () => document.getElementById('volbyPrehledu');
 
@@ -72,7 +76,7 @@ function ukazatVolby(lista) {
         }
         tlacitko.innerHTML = `<span></span> <b></b>${jeZapnuto ? ' <em class="volba-zrusit" title="Zrušit filtr" aria-label="Zrušit filtr">&times;</em>' : ''} <i aria-hidden="true">▾</i>`;
         tlacitko.querySelector('span').textContent = `${POPISKY[klic]}:`;
-        tlacitko.querySelector('b').textContent = zvoleny ? textStitku(zvoleny) : klic === 'minHodnoceni' ? 'vše' : '—';
+        tlacitko.querySelector('b').textContent = zvoleny ? textStitku(zvoleny) : (klic === 'minHodnoceni' || klic === 'stenaMin') ? 'vše' : '—';
         tlacitko.addEventListener('click', (e) => {
             e.stopPropagation();
             if (jeZapnuto && zrusitFiltr && (e.shiftKey || e.target.closest('.volba-zrusit'))) {

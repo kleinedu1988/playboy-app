@@ -54,19 +54,26 @@ test('skloňování počtu', async () => {
 test('řazení galerie a části lišty', async () => {
     const { seraditModelky, castGalerie, prvniRok } = await import('../src/lib/format.js');
     const modelky = [
-        { id: 1, jmeno: 'Anna', pridano: '2026-01-05 10:00:00', vydani: ['1994-05-CZ', '1990-02'] },
-        { id: 2, jmeno: 'Bára', pridano: '2026-10-14 09:00:00', vydani: [] },
-        { id: 3, jmeno: 'Čeňka', pridano: '', vydani: ['1975-07'] },
+        { id: 1, jmeno: 'Anna', pridano: '2026-01-05 10:00:00', vydani: ['1994-05-CZ', '1990-02'], hodnoceni: 3, pocetFotek: 15 },
+        { id: 2, jmeno: 'Bára', pridano: '2026-10-14 09:00:00', vydani: [], hodnoceni: 5, pocetFotek: 55 },
+        { id: 3, jmeno: 'Čeňka', pridano: '', vydani: ['1975-07'], hodnoceni: 0, pocetFotek: 25 },
     ];
     assert.deepEqual(seraditModelky(modelky, 'jmeno').map(m => m.id), [1, 2, 3]);
     assert.deepEqual(seraditModelky(modelky, 'pridano').map(m => m.id), [2, 1, 3]);
     assert.deepEqual(seraditModelky(modelky, 'rok').map(m => m.id), [3, 1, 2]);
+    assert.deepEqual(seraditModelky(modelky, 'hodnoceni').map(m => m.id), [2, 1, 3]);
+    assert.deepEqual(seraditModelky(modelky, 'fotky').map(m => m.id), [2, 3, 1]);
     assert.equal(prvniRok(modelky[0]), 1990);
     assert.equal(castGalerie(modelky[0], 'rok'), '1990s');
     assert.equal(castGalerie(modelky[1], 'rok'), 'Bez vydání');
     assert.equal(castGalerie(modelky[1], 'pridano'), 'Říjen 2026');
     assert.equal(castGalerie(modelky[2], 'pridano'), 'Bez data');
     assert.equal(castGalerie(modelky[2], 'jmeno'), 'C');
+    assert.equal(castGalerie(modelky[0], 'hodnoceni'), '♥♥♥');
+    assert.equal(castGalerie(modelky[2], 'hodnoceni'), 'Bez srdíček');
+    assert.equal(castGalerie(modelky[0], 'fotky'), '1–19 fotek');
+    assert.equal(castGalerie(modelky[1], 'fotky'), '50+ fotek');
+    assert.equal(castGalerie(modelky[2], 'fotky'), '20–49 fotek');
 });
 
 test('speciály: klíč, název a speciály roku', async () => {

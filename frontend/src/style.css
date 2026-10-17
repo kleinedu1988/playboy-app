@@ -3199,9 +3199,162 @@ body.razeni .photo-item {
 
 /* Užší okno: z voleb zmizí popisky, zůstane jen hodnota s ▾ */
 @media (max-width: 1000px) {
-    .volby-prehledu .volba span {
+    .volby-prehledu .volba > span:not(.volby-odznak):not(.nazev) {
         display: none;
     }
+}
+
+/* Řazení s ikonou ⇅, tlačítko Filtry s odznakem počtu zapnutých filtrů, ikona slideshow */
+.volby-skupina .volba svg {
+    flex: none;
+    color: var(--accent-text);
+}
+
+.volby-skupina .volba.razeni,
+.volby-skupina .volba.filtry {
+    gap: 6px;
+}
+
+.volby-skupina .volba .nazev {
+    color: var(--text-main);
+    font-size: 12.5px;
+}
+
+.volby-skupina .volba.ikona {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+}
+
+.volby-odznak {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Zapnutý filtr jako malý štítek: hodnota v akcentu a ×, bez rámečku; mezi štítky není dělicí čára */
+.volby-skupina .volba.volba-stitek {
+    height: 24px;
+    margin: 0 2px;
+    padding: 0 6px 0 10px;
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.volby-skupina .volba.volba-stitek:hover {
+    background-color: rgba(216, 27, 96, 0.28);
+}
+
+.volby-skupina .volba.volba-stitek::before,
+.volby-skupina .volba.volba-stitek + .volba::before,
+.volby-skupina .volba.volba-stitek + .volby-pocet::before {
+    opacity: 0;
+}
+
+.volby-skupina .volba.volba-stitek .volba-zrusit {
+    margin: 0;
+}
+
+@media (max-width: 1100px) {
+    .volby-skupina .volba.volba-stitek {
+        display: none;
+    }
+}
+
+/* Panel filtrů: průsvitný jako nabídky, každý filtr řádek pilulek, zvolená s růžovým rámečkem */
+.volby-panel {
+    position: fixed;
+    z-index: 2000;
+    width: min(440px, calc(100vw - 16px));
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding: 16px 18px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background-color: rgba(26, 26, 30, 0.82);
+    backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+}
+
+.volby-panel h6 {
+    margin: 0 0 8px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.volby-panel-rada {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.volby-panel-rada button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    font-size: 12.5px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.volby-panel-rada button:hover {
+    background-color: var(--panel-hover);
+}
+
+.volby-panel-rada button span {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.volby-panel-rada button.active {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.volby-panel-pata {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid var(--panel-okraj);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.volby-panel-pata .link {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.volby-panel-pata .link:disabled {
+    color: var(--text-muted);
+    font-weight: 400;
+    opacity: 0.5;
+    cursor: default;
 }
 
 /* Vzhled rejstříku v celém programu: štítky bez rámečků, tlumený text, jemné podbarvení po najetí a u zvoleného.

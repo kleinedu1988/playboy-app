@@ -5,6 +5,12 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.5] – 2026-10-17
+
+### Vylepšeno
+- **Přehlednější lišta voleb pod hledáním:** Místo řady tlačítek „Srdíčka: vše ▾ · Edice: vše ▾ · Role: vše ▾“ je v liště jen řazení (ikona ⇅ a hodnota), tlačítko **Filtry** s odznakem počtu zapnutých filtrů a zapnuté filtry jako malé štítky s ×. Filtry otevřou průsvitný panel se všemi filtry jako řádky pilulek, počtem nalezených položek a volbou **Zrušit filtry**; panel zůstává otevřený, dokud se nezavře klikem mimo nebo Esc. Lišta má stejnou šířku bez ohledu na počet filtrů, na užším okně se štítky skryjí a zůstane odznak.
+- Povinné volby (edice u Čísel a Kalendáře, srdíčka v Nejlepších) zůstávají rozbalovacími tlačítky. **Výběr** v Nejlepších ukazuje bez zvoleného výběru jen „Výběr ▾“ místo „Výběr: —“ a slideshow spouští ikona ▶.
+
 ## [0.33.4] – 2026-10-17
 
 ### Vylepšeno

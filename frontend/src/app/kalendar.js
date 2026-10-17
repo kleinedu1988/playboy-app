@@ -33,10 +33,10 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         if (casti?.mesic && casti.edice === stav.kalendarEdice) vydani.set(k.vydani, k);
     });
 
-    const prepinacEdic = `<div class="cal-editions">${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}</div>`;
+    const prepinacEdic = pocet => `<div class="cal-editions">${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
     if (vydani.size === 0) {
         listaKalendare.naplnit([]);
-        calList.innerHTML = prepinacEdic + `<div class="empty-state">V edici ${stav.kalendarEdice} zatím nic není. Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání; prázdné políčko se objeví u prvního přidaného čísla.</div>`;
+        calList.innerHTML = prepinacEdic(0) + `<div class="empty-state">V edici ${stav.kalendarEdice} zatím nic není. Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání; prázdné políčko se objeví u prvního přidaného čísla.</div>`;
         prevestNaVolby(calList.querySelector('.cal-editions'));
         return;
     }
@@ -147,8 +147,9 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         `);
     }
 
+    const celkemVydani = rokyKalendare.reduce((soucet, r) => soucet + r.obsazeno + r.obsazenoSpecialu, 0);
     listaKalendare.naplnit([...desetileti].map(([dekada, pocet]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet })));
-    calList.innerHTML = prepinacEdic + `
+    calList.innerHTML = prepinacEdic(celkemVydani) + `
         <p class="cal-legend">Linky na obálce zleva: <i></i> cover <i></i> centerfold <i></i> pictorial. Prázdné políčko = číslo ve sbírce chybí.</p>
         ${radky.join('') || '<div class="empty-state">Hledanému roku neodpovídá žádné vydání.</div>'}
     `;

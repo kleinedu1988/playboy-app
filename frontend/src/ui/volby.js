@@ -92,10 +92,17 @@ function ukazatVolby(lista) {
         panel.append(tlacitko);
     });
 
+    // Počet (22 modelek, 78 fotek) se ukazuje na konci kapsle voleb i v nápovědě zvoleného přehledu
+    const pocet = [...lista.querySelectorAll(':scope > span:not([hidden])')].map(s => s.textContent.trim()).filter(Boolean).pop();
+    if (pocet) {
+        const pocitadlo = document.createElement('span');
+        pocitadlo.className = 'volby-pocet';
+        pocitadlo.textContent = pocet;
+        panel.append(pocitadlo);
+    }
+
     if (!panel.childElementCount) panel.remove();
 
-    // Počet (22 modelek, 78 fotek) se v liště neukazuje, je v nápovědě zvoleného přehledu
-    const pocet = [...lista.querySelectorAll(':scope > span:not([hidden])')].map(s => s.textContent.trim()).filter(Boolean).pop();
     nastavitPocet(pocet);
 }
 

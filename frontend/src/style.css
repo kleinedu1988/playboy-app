@@ -3119,7 +3119,8 @@ body.razeni .photo-item {
     background-color: var(--panel-hover);
 }
 
-.volby-skupina .volba + .volba::before {
+.volby-skupina .volba + .volba::before,
+.volby-skupina .volba + .volby-pocet::before {
     content: '';
     position: absolute;
     left: 0;
@@ -3131,7 +3132,8 @@ body.razeni .photo-item {
 
 /* U zvýrazněného filtru by čáry kolem rušily */
 .volby-skupina .volba.zapnuto::before,
-.volby-skupina .volba.zapnuto + .volba::before {
+.volby-skupina .volba.zapnuto + .volba::before,
+.volby-skupina .volba.zapnuto + .volby-pocet::before {
     opacity: 0;
 }
 
@@ -3158,6 +3160,19 @@ body.razeni .photo-item {
 .volby-skupina .volba.zapnuto b,
 .volby-skupina .volba.akce {
     color: var(--accent-text);
+}
+
+.volby-pocet {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    height: 28px;
+    padding: 0 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    user-select: none;
 }
 
 /* Užší okno: z voleb zmizí popisky, zůstane jen hodnota s ▾ */

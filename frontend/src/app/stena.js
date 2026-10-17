@@ -35,7 +35,8 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
 
     const razeni = `<div class="wall-toolbar">
         <button class="chip ${stav.stenaChronologicky ? '' : 'active'}" data-razeni-steny="jmeno">Podle jména</button>
-        <button class="chip ${stav.stenaChronologicky ? 'active' : ''}" data-razeni-steny="vydani">Podle vydání</button></div>`;
+        <button class="chip ${stav.stenaChronologicky ? 'active' : ''}" data-razeni-steny="vydani">Podle vydání</button>
+        <span>${sklonovat(stav.stenaPolozky.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</span></div>`;
     if (stav.stenaPolozky.length === 0) {
         listaSteny.naplnit([]);
         wall.innerHTML = razeni + `<div class="empty-state">${fotky.length ? 'Hledání neodpovídá žádný centerfold.' : 'Zatím žádné centerfoldy. Přidej je tlačítkem + nahoře.'}</div>`;

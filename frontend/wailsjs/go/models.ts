@@ -308,11 +308,11 @@ export namespace main {
 	    modelkaId: number;
 	    ukazka: string;
 	    relevance: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new NalezTextu(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.druh = source["druh"];

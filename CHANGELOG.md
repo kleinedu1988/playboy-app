@@ -5,6 +5,13 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.2] – 2026-10-17
+
+### Vylepšeno
+- **Zobrazení počtu nalezených položek přímo v liště pod vyhledáváním (`#volbyPrehledu`):**
+  - Na konci kapsle voleb pod vyhledáváním se nyní zobrazuje okamžité počítadlo položek (`.volby-pocet`, např. `48 modelek`, `38 čísel`, `24 centerfoldů`, `19 fotek`).
+  - Doplněno předávání počtu zobrazených záznamů i pro stěnu centerfoldů (`nacistStenu`) a kalendář vydání (`nacistKalendar`), takže zpětná vazba při psaní do vyhledávání a přepínání filtrů funguje jednotně napříč všemi přehledy.
+
 ## [0.33.1] – 2026-10-17
 
 ### Vylepšeno

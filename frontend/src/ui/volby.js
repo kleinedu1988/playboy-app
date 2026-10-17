@@ -277,10 +277,11 @@ function vykreslitPanel() {
     umistitPanel();
 }
 
-// Panel pod tlačítkem Filtry, vycentrovaný na něj, ale celý v okně
+// Panel uprostřed pod lištou voleb (stejně jako hledání nad ní), celý v okně
 function umistitPanel() {
-    if (!tlacitkoFiltru) return;
-    const r = tlacitkoFiltru.getBoundingClientRect();
+    const lista = misto().querySelector('.volby-skupina');
+    if (!lista) return;
+    const r = lista.getBoundingClientRect();
     const sirka = panelFiltru.offsetWidth;
     const levo = Math.min(Math.max(8, r.left + r.width / 2 - sirka / 2), window.innerWidth - sirka - 8);
     panelFiltru.style.left = `${levo}px`;

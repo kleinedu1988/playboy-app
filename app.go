@@ -1140,12 +1140,39 @@ func poleHledani(m Modelka) map[string]string {
 	if len(m.NarozeniDatum) >= 4 {
 		narozena = m.NarozeniDatum[:4]
 	}
+	vyska := ""
+	if m.VyskaCm > 0 {
+		vyska = fmt.Sprintf("%d", m.VyskaCm)
+	}
+	vaha := ""
+	if m.VahaKg > 0 {
+		vaha = fmt.Sprintf("%d", m.VahaKg)
+	}
+	hodnoceni := ""
+	if m.Hodnoceni > 0 {
+		hodnoceni = fmt.Sprintf("%d", m.Hodnoceni)
+	}
+	tetovani := ""
+	if m.Tetovani == 1 {
+		tetovani = "ano yes"
+	} else if m.Tetovani == 0 {
+		tetovani = "ne no"
+	}
+	piercing := ""
+	if m.Piercing == 1 {
+		piercing = "ano yes"
+	} else if m.Piercing == 0 {
+		piercing = "ne no"
+	}
+	obalky := strings.Join(m.Obalky, " ")
 	return map[string]string{
 		"jmeno": m.Jmeno + "\n" + m.DalsiJmena, "vlasy": m.VlasyBarva, "oci": m.OciBarva, "narodnost": m.Narodnost,
 		"etnicita": m.Etnicita, "misto": m.NarozeniMisto, "tag": m.Tags, "tagy": m.Tags, "role": m.Role,
 		"fotograf": m.fotografoveAlb, "rok": strings.Join(roky, " "), "vydani": strings.Join(m.Vydani, " "),
 		"narozena": narozena, "edice": strings.Join(edice, " "), "prsa": m.VelikostPrsou + " " + m.PrsaTyp,
-		"ochlupeni": m.Ochlupeni, "poznamka": m.Poznamka,
+		"ochlupeni": m.Ochlupeni, "poznamka": m.Poznamka, "vyska": vyska, "vaha": vaha,
+		"miry": m.Miry, "hodnoceni": hodnoceni, "srdicka": hodnoceni, "tetovani": tetovani,
+		"piercing": piercing, "obalka": obalky, "obalky": obalky, "umrti": m.UmrtiDatum, "zemrela": m.UmrtiDatum,
 	}
 }
 
@@ -1155,10 +1182,27 @@ var vzorSlovaHledani = regexp.MustCompile(`([\p{L}]+):"([^"]*)"|"([^"]*)"|(\S+)`
 // Každé hledané slovo se musí najít v některém údaji modelky, cílené slovo v daném údaji; na velikosti písmen
 // ani diakritice nezáleží. Filtruje se tady a ne v SQL, protože LIKE v SQLite neumí malá a velká písmena s diakritikou.
 func odpovidaHledani(m Modelka, vyhledavani string) bool {
+	vyskaTxt := ""
+	if m.VyskaCm > 0 {
+		vyskaTxt = fmt.Sprintf("%d %dcm", m.VyskaCm, m.VyskaCm)
+	}
+	vahaTxt := ""
+	if m.VahaKg > 0 {
+		vahaTxt = fmt.Sprintf("%d %dkg", m.VahaKg, m.VahaKg)
+	}
+	tetovaniTxt := ""
+	if m.Tetovani == 1 {
+		tetovaniTxt = "tetování tetovani"
+	}
+	piercingTxt := ""
+	if m.Piercing == 1 {
+		piercingTxt = "piercing"
+	}
 	udaje := zjednodusit(strings.Join([]string{
-		m.Jmeno, m.Narodnost, m.Etnicita, m.NarozeniMisto, m.NarozeniDatum, m.VlasyBarva, m.OciBarva,
+		m.Jmeno, m.Narodnost, m.Etnicita, m.NarozeniMisto, m.NarozeniDatum, m.UmrtiDatum, m.VlasyBarva, m.OciBarva,
 		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Miry, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags,
-		m.DalsiJmena, m.Poznamka, strings.Join(m.Vydani, " "), m.textyAlb,
+		m.DalsiJmena, m.Poznamka, strings.Join(m.Vydani, " "), strings.Join(m.Obalky, " "), m.textyAlb,
+		vyskaTxt, vahaTxt, tetovaniTxt, piercingTxt,
 	}, "\n"))
 	var pole map[string]string
 	for _, casti := range vzorSlovaHledani.FindAllStringSubmatch(vyhledavani, -1) {
@@ -1590,10 +1634,10 @@ func (a *App) GetFotografieModelky(modelkaID int) []Fotografie {
 
 // Všechny centerfoldy napříč modelkami pro stěnu plakátů
 func (a *App) GetCenterfoldy() []Fotografie {
-	return a.nacistFotografie(vyberFotografii+`, m.jmeno FROM fotografie f
-		JOIN modelky m ON m.id = f.modelka_id
+	return a.nacistFotografie(vyberFotografii+`, m.jmeno`+vyberPopisu+` FROM fotografie f
+		JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
 		WHERE f.typ = 'Centerfold'
-		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, false)
+		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true)
 }
 
 // Covery časopisů nepatří k modelce (modelka_id = 0); album je vydání ve tvaru RRRR-MM

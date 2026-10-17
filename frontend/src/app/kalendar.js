@@ -1,6 +1,6 @@
 // Kalendář vydání po rocích a měsících
 import { GetKalendar, GetStavyVydani, SetStavVydani } from './backend';
-import { EDICE, VYCHOZI_EDICE, esc, nazevVydani, obrazek, rozlozitVydani, slozitVydani, sklonovat, specialyRoku } from '../lib/format';
+import { EDICE, MESICE, VYCHOZI_EDICE, bezDiakritiky, esc, nazevVydani, obrazek, rozlozitVydani, sjednotit, slozitVydani, sklonovat, specialyRoku } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
 import { zalozitSpecial } from './specialy';
@@ -42,10 +42,32 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     }
 
     const roky = [...vydani.keys()].map(v => parseInt(v.slice(0, 4)));
-    const hledat = dotaz.trim();
+    const slova = sjednotit(dotaz).split(/\s+/).filter(Boolean);
+    const hledat = slova.length > 0;
     const rokyKalendare = [];
     for (let rok = Math.max(...roky); rok >= Math.min(...roky); rok--) {
-        if (hledat && !String(rok).includes(hledat)) continue;
+        if (hledat) {
+            const shodaRoku = slova.every(s => String(rok).includes(s));
+            const shodaVydani = slova.every(s => {
+                if (String(rok).includes(s)) return true;
+                const shodaMesice = ZKRATKY_MESICU.some((zkr, i) => {
+                    const klic = slozitVydani(String(rok), String(i + 1).padStart(2, '0'), stav.kalendarEdice);
+                    const v = vydani.get(klic);
+                    const udaje = stavCisla.get(klic);
+                    const texty = [zkr, MESICE[i], v?.modelka || '', udaje?.naObalce || '', udaje?.poznamka || '', udaje?.stav || ''];
+                    return texty.some(t => bezDiakritiky(t).includes(s));
+                });
+                if (shodaMesice) return true;
+                return [...vydani.keys()].some(klic => {
+                    if (!klic.startsWith(`${rok}-S`)) return false;
+                    const v = vydani.get(klic);
+                    const udaje = stavCisla.get(klic);
+                    const texty = [nazevVydani(klic), v?.modelka || '', udaje?.naObalce || '', udaje?.poznamka || ''];
+                    return texty.some(t => bezDiakritiky(t).includes(s));
+                });
+            });
+            if (!shodaRoku && !shodaVydani) continue;
+        }
 
         let obsazeno = 0;
         const policka = ZKRATKY_MESICU.map((zkratka, i) => {

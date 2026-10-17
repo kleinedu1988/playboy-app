@@ -14,7 +14,7 @@ export const SABLONA_OKNA = `
       <div class="nav-controls">
         <label class="hledani">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ. Centerfoldy a čísla: jméno nebo vydání. Do hledání skočíš klávesami Ctrl+F." />
+          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ, vyska:175, tetovani:ano, obalka:1995. Centerfoldy a čísla: jméno nebo vydání. Do hledání skočíš klávesami Ctrl+F." />
           <kbd class="hledani-zkratka" aria-hidden="true">Ctrl F</kbd>
           <button type="button" id="searchClearBtn" class="hledani-smazat" title="Smazat hledání" aria-label="Smazat hledání">&times;</button>
         </label>
@@ -691,7 +691,7 @@ export const SABLONA_OKNA = `
         <h4>Hledání</h4>
         <ul>
           <li>Více slov zužuje výběr: jméno, národnost, vlasy, míry, tagy…</li>
-          <li>Cíleně: <code>vlasy:blond</code>, <code>oci:</code>, <code>narodnost:</code>, <code>tag:</code>, <code>role:</code>, <code>fotograf:"arny freytag"</code>, <code>rok:1975</code>, <code>narozena:1990</code>, <code>edice:CZ</code>.</li>
+          <li>Cíleně: <code>vlasy:blond</code>, <code>oci:</code>, <code>narodnost:</code>, <code>tag:</code>, <code>role:</code>, <code>fotograf:"arny freytag"</code>, <code>rok:1975</code>, <code>narozena:1990</code>, <code>edice:CZ</code>, <code>vyska:175</code>, <code>tetovani:ano</code>, <code>hodnoceni:5</code>, <code>obalka:1995</code>.</li>
         </ul>
         <h4>Čísla časopisu</h4>
         <ul>

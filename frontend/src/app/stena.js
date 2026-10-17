@@ -20,8 +20,14 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(wall);
 
-    const hledat = sjednotit(dotaz);
-    const vyhovuje = f => !hledat || [f.jmenoModelky, f.album, nazevAlba(f.album, f.typ)].some(t => bezDiakritiky(t).includes(hledat));
+    const slova = sjednotit(dotaz).split(/\s+/).filter(Boolean);
+    const vyhovuje = f => !slova.length || slova.every(s => [
+        f.jmenoModelky,
+        f.album,
+        nazevAlba(f.album, f.typ),
+        f.fotograf || '',
+        f.popis || '',
+    ].some(t => bezDiakritiky(t).includes(s)));
     stav.stenaPolozky = sestavitAlba(fotky.filter(vyhovuje)).flatMap(a => a.polozky);
     // Chronologicky: podle vydání (rok, měsíc, edice) jako časová osa, s lištou desetiletí
     const klicVydani = p => { const v = rozlozitVydani(p.album); return v ? `${v.rok}${v.mesic}${v.edice}` : '9999'; };
@@ -103,12 +109,20 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
         }
     });
 
-    const hledat = sjednotit(dotaz);
+    const slova = sjednotit(dotaz).split(/\s+/).filter(Boolean);
     const vyhovuje = k => {
         if (stav.cislaZobrazit === 'cover' && !k.cover) return false;
         if (stav.cislaZobrazit === 'bezCoveru' && (k.cover || k.chybi)) return false;
         if (stav.cislaZobrazit === 'chybi' && !k.chybi) return false;
-        return !hledat || [k.vydani, nazevVydani(k.vydani), k.modelka || '', stavCisla.get(k.vydani)?.naObalce || ''].some(t => bezDiakritiky(t).includes(hledat));
+        if (!slova.length) return true;
+        const texty = [
+            k.vydani,
+            nazevVydani(k.vydani),
+            k.modelka || '',
+            stavCisla.get(k.vydani)?.naObalce || '',
+            stavCisla.get(k.vydani)?.poznamka || '',
+        ];
+        return slova.every(s => texty.some(t => bezDiakritiky(t).includes(s)));
     };
     const vybrana = cisla.filter(vyhovuje);
 

@@ -117,10 +117,10 @@ export const hledaniPodleRezimu = {};
 // Hledání prohledává v každém přehledu něco jiného; pole to říká textem a nápovědou
 const HLEDANI_PODLE_REZIMU = {
     modelky: ['Hledat modelku…', document.getElementById('searchInput').title],
-    centerfoldy: ['Jméno nebo vydání…', 'Centerfoldy podle jména modelky nebo vydání (např. březen 1995).'],
-    covery: ['Jméno nebo vydání…', 'Čísla podle vydání (např. 1995) nebo jména playmate.'],
-    kalendar: ['Rok, např. 1975…', 'Kalendář: ročníky, jejichž číslo obsahuje napsaný text (1975, 197…).'],
-    nejlepsi: ['Jméno modelky…', 'Nejlepší fotky modelek, jejichž jméno obsahuje napsaný text.'],
+    centerfoldy: ['Hledat v centerfoldech…', 'Centerfoldy: jméno modelky, vydání (např. březen 1995), fotograf. Více slov zužuje výběr.'],
+    covery: ['Hledat v číslech a coverech…', 'Čísla: vydání (např. 1995), název, modelka nebo obálka. Více slov zužuje výběr.'],
+    kalendar: ['Hledat v kalendáři…', 'Kalendář: ročníky podle čísla (1975), měsíce i jména modelek a speciálů.'],
+    nejlepsi: ['Hledat v nejlepších fotkách…', 'Nejlepší fotky: jméno modelky, vydání, fotograf. Více slov zužuje výběr.'],
     prehled: ['V Přehledu se nehledá', ''],
 };
 

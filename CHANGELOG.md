@@ -5,6 +5,24 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.9] – 2026-10-17
+
+### Přidáno
+- Rozšíření cíleného i obecného vyhledávání modelek v backendu:
+  - nová pole pro cílené hledání: `vyska:`, `vaha:`, `miry:`, `hodnoceni:` / `srdicka:`, `tetovani:ano|ne`, `piercing:ano|ne`, `obalka:`, `umrti:`.
+  - výška, váha, tetování, piercing, obálky a datum úmrtí se nyní prohledávají i v obecném textovém vyhledávání bez prefixu.
+  - centerfoldy na stěně plakátů načítají fotografa a popis alba pro vyhledávání.
+
+### Změněno
+- Sjednocení logiky vyhledávání napříč všemi pohledy:
+  - na stěně centerfoldů i stěně coverů a čísel se dotaz rozděluje na jednotlivá slova (logika AND) a prohledává modelky, vydání, fotografy i popisy.
+  - v kalendáři vydání lze nyní vyhledávat nejen podle roku, ale i podle jména modelky, měsíce či speciálu daného roku.
+  - v nejlepších fotkách funguje víceslovné vyhledávání i podle fotografa a vydání.
+- Vylepšení rychlého našeptávače:
+  - modelky se prohledávají nejen podle jména a pseudonymů, ale i podle role, národnosti, barvy vlasů, tagů a poznámky (se zachováním přednosti shody ve jméně).
+  - pokud rychlý našeptávač nenajde žádné položky pro přímý skok, nezobrazuje velký blokující overlay překrývající stránku, ale tiše se zavře, aby uživatel viděl výsledky v galerii.
+  - stisk Enter v poli hledání bez vybrané položky našeptávače pole opustí a zavře našeptávač pro okamžité procházení vyfiltrovaných karet.
+
 ## [0.32.8] – 2026-10-17
 
 ### Změněno

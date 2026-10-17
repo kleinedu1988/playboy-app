@@ -71,7 +71,29 @@ async function hledat() {
     if (moje !== cisloHledani || document.activeElement !== searchInput) return;
     const obalka = new Map(cisla.map(k => [k.vydani, k.nahled]));
 
-    const nalezeneModelky = modelky.filter(m => obsahujeVse(`${m.jmeno} ${m.dalsiJmena}`, slova)).slice(0, NEJVIC_MODELEK);
+    const textModelky = m => [
+        m.jmeno,
+        m.dalsiJmena,
+        m.role,
+        m.narodnost,
+        m.vlasyBarva,
+        m.tags,
+        m.poznamka,
+        m.vystoupeni,
+        m.pictorialVydani,
+        ...(m.vydani || []),
+        ...(m.obalky || []),
+    ].filter(Boolean).join(' ');
+
+    const nalezeneModelky = modelky
+        .filter(m => obsahujeVse(textModelky(m), slova))
+        .sort((a, b) => {
+            const aJmeno = obsahujeVse(`${a.jmeno} ${a.dalsiJmena}`, slova);
+            const bJmeno = obsahujeVse(`${b.jmeno} ${b.dalsiJmena}`, slova);
+            if (aJmeno !== bJmeno) return aJmeno ? -1 : 1;
+            return a.jmeno.localeCompare(b.jmeno);
+        })
+        .slice(0, NEJVIC_MODELEK);
     const nalezenaCisla = cisla.filter(k => obsahujeVse(`${nazevVydani(k.vydani)} ${k.vydani} ${k.modelka || ''}`, slova))
         .sort((a, b) => b.vydani.localeCompare(a.vydani)).slice(0, NEJVIC_CISEL);
     const nalezeneClanky = clanky.slice(0, NEJVIC_CLANKU);
@@ -84,12 +106,22 @@ async function hledat() {
         return `<button type="button" class="naseptavac-polozka" data-polozka="${polozky.length - 1}" role="option">${obsah}</button>`;
     };
 
+    const detailModelky = m => {
+        const casti = [
+            m.role,
+            m.vlasyBarva,
+            m.narodnost,
+            m.vydani[0] ? nazevVydani(m.vydani[0]) : '',
+        ].filter(Boolean);
+        return zvyraznit(casti.join(' · '), slova);
+    };
+
     const html = [
         skupina('Modelky', nalezeneModelky.length, nalezeneModelky.map(m => polozka(() => otevritDetailModelky(m), `
             ${nahled(adresaTitulni(m), 'kulaty')}
             <span class="naseptavac-text">
                 <span class="naseptavac-nazev">${zvyraznit(m.jmeno, slova)}</span>
-                <span class="naseptavac-kde">${esc([m.role, m.vydani[0] ? nazevVydani(m.vydani[0]) : ''].filter(Boolean).join(' · '))}</span>
+                <span class="naseptavac-kde">${detailModelky(m)}</span>
             </span>`)).join('')),
         skupina('Články', clanky.length, nalezeneClanky.map(c => polozka(() => otevritClanek(c.vydani, c.id), `
             ${nahled(obalka.get(c.vydani) ? obrazek(obalka.get(c.vydani), VELIKOST_NAHLEDU) : '')}
@@ -107,9 +139,11 @@ async function hledat() {
     ].join('');
 
     vybrana = -1;
-    naseptavac.innerHTML = html
-        ? `${html}<div class="naseptavac-pata">↑↓ vybrat · Enter otevřít · Esc zavřít</div>`
-        : '<div class="naseptavac-prazdno">Žádná modelka, článek ani číslo neodpovídá.</div>';
+    if (!html) {
+        zavritNaseptavac();
+        return;
+    }
+    naseptavac.innerHTML = `${html}<div class="naseptavac-pata">↑↓ vybrat · Enter otevřít · Esc zavřít</div>`;
     naseptavac.classList.remove('hidden');
     zavoj.classList.remove('hidden');
 }
@@ -154,9 +188,14 @@ export function pripravit() {
             if (!polozky.length) return;
             const dolu = e.key === 'ArrowDown';
             vybrat(vybrana < 0 ? (dolu ? 0 : polozky.length - 1) : (vybrana + (dolu ? 1 : -1) + polozky.length) % polozky.length);
-        } else if (e.key === 'Enter' && vybrana >= 0) {
+        } else if (e.key === 'Enter') {
             e.preventDefault();
-            otevrit(vybrana);
+            if (vybrana >= 0) {
+                otevrit(vybrana);
+            } else {
+                zavritNaseptavac();
+                searchInput.blur();
+            }
         } else if (e.key === 'Escape') {
             // Esc zavře jen výsledky; profil ani stránka čísla se nezavřou
             e.stopPropagation();

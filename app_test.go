@@ -1325,8 +1325,10 @@ func TestOpakovanaNedostupnost(t *testing.T) {
 
 func TestEtapa4Backend(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
-	a.AddModelka(Modelka{Jmeno: "Blondýna Nováková", VlasyBarva: "Blond", Narodnost: "Česká", NarozeniDatum: "1975-03-01", Poznamka: "zrzavá kamarádka"})
-	a.AddModelka(Modelka{Jmeno: "Zrzka", VlasyBarva: "Zrzavá", Poznamka: "blond paruka"})
+	a.AddModelka(Modelka{Jmeno: "Blondýna Nováková", VlasyBarva: "Blond", Narodnost: "Česká", NarozeniDatum: "1975-03-01", VyskaCm: 175, Tetovani: 1, Poznamka: "zrzavá kamarádka"})
+	a.AddModelka(Modelka{Jmeno: "Zrzka", VlasyBarva: "Zrzavá", VyskaCm: 168, Tetovani: 0, Poznamka: "blond paruka"})
+	a.SetHodnoceni(1, 5)
+	a.SetHodnoceni(2, 3)
 	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA)
 	a.SetPopisAlba(1, "Album", "Pictorial", "", "Arny Freytag")
 	a.SetVydaniAlba(1, "Album", "Pictorial", "1999-04-CZ")
@@ -1336,6 +1338,8 @@ func TestEtapa4Backend(t *testing.T) {
 	for dotaz, cekano := range map[string]int{
 		"blond": 2, "vlasy:blond": 1, "vlasy:zrzava": 1, `fotograf:"arny freytag"`: 1, "fotograf:freytag": 1,
 		"rok:1975": 1, "rok:1999": 1, "narozena:1975": 1, "edice:cz": 1, "edice:us": 1, "vlasy:blond rok:1975": 0,
+		"vyska:175": 1, "vyska:168": 1, "tetovani:ano": 1, "tetovani:ne": 1, "hodnoceni:5": 1, "srdicka:3": 1,
+		"175": 1, "tetování": 1,
 		"neznamepole:blond": 0,
 	} {
 		if n := len(a.GetModelky(dotaz)); n != cekano {

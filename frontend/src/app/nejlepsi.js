@@ -40,9 +40,15 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(best);
 
-    // Jedna společná galerie celé sbírky: každá fotka zvlášť, od nejvíce srdíček (při shodě v pořadí z databáze)
-    const hledat = sjednotit(dotaz);
-    stav.nejlepsiPolozky = fotky.filter(f => !hledat || bezDiakritiky(f.jmenoModelky).includes(hledat)).map(f => ({
+    const slova = sjednotit(dotaz).split(/\s+/).filter(Boolean);
+    const vyhovuje = f => !slova.length || slova.every(s => [
+        f.jmenoModelky,
+        f.album,
+        nazevAlba(f.album, f.typ),
+        f.fotograf || '',
+        f.popis || '',
+    ].some(t => bezDiakritiky(t).includes(s)));
+    stav.nejlepsiPolozky = fotky.filter(vyhovuje).map(f => ({
         fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni,
     })).sort((x, y) => y.hodnoceni - x.hodnoceni);
 
@@ -58,7 +64,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         <div class="best-toolbar">${prah}<span>${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')}</span>
             ${stav.nejlepsiPolozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
         ${stav.nejlepsiPolozky.length ? `<div class="nejlepsi-mozaika">${stav.nejlepsiPolozky.map((p, i) => htmlDlazdiceMozaiky(p, i, zacatekUrovne.has(i))).join('')}</div>`
-            : `<p class="empty-state">${fotky.length || hledat ? 'Hledání neodpovídá žádná modelka.'
+            : `<p class="empty-state">${fotky.length || slova.length ? 'Hledání neodpovídá žádná modelka.'
             : vyber ? 'Výběr je prázdný. Fotky se do něj přidávají odkudkoli: tlačítkem ⋯ na fotce, v prohlížeči nebo u vybraných fotek „Přidat do výběru…“.'
             : `Zatím žádná fotka nemá ${stav.nejlepsiMin} a více srdíček. Fotky se hodnotí srdíčky na dlaždici nebo v prohlížeči klávesami 1–5.`}</p>`}
     `;

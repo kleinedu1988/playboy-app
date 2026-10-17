@@ -174,3 +174,16 @@ test('formátování markdown bloků: odstavce, odrážky, citace, nadpisy, pere
     assert.equal(clanek, '<p class="clanek-perex">Úvodní perex článku s <strong>důrazem</strong>.</p><p><strong>PLAYBOY:</strong> Jak jste začínala?<br><strong>MODELKA:</strong> Byla to náhoda.</p>');
 });
 
+test('víceslovné vyhledávání a shoda slov napříč údaji', async () => {
+    const { bezDiakritiky, sjednotit } = await import('../src/lib/format.js');
+    const slova = sjednotit('Pamela 1990').split(/\s+/).filter(Boolean);
+    const polozka1 = ['Pamela Anderson', '1990-02', 'Únor 1990'];
+    const polozka2 = ['Pamela Anderson', '1995-04', 'Duben 1995'];
+    const polozka3 = ['Anna Nicole Smith', '1990-05', 'Květen 1990'];
+
+    const vyhovuje = polozka => slova.every(s => polozka.some(t => bezDiakritiky(t).includes(s)));
+    assert.equal(vyhovuje(polozka1), true);
+    assert.equal(vyhovuje(polozka2), false);
+    assert.equal(vyhovuje(polozka3), false);
+});
+

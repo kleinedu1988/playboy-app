@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.34.0] – 2026-10-17
+
+### Vylepšeno
+- **Patkové písmo nadpisů jako v časopise:** Jména modelek (na kartách, na stěně centerfoldů, v profilu), názvy čísel a fotografů, nadpisy alb, názvy článků, roky v Číslech, Kalendáři a na stěně a velké nadpisy oken jsou v kontrastním písmu Bodoni Moda; roky kurzívou. Drobné popisky, tlačítka a běžný text zůstávají v písmu aplikace. Písmo je vložené přímo do aplikace (licence SIL Open Font License), takže funguje bez internetu, a má plnou češtinu.
+
 ## [0.33.18] – 2026-10-17
 
 ### Opraveno

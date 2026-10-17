@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.16] – 2026-10-17
+
+### Opraveno
+- **Hlavička v úzkém okně:** Lišta voleb pod hledáním se pod šířkou zhruba 750 px překrývala s ikonami vpravo. Teď se postupně zhušťuje: pod 860 px zmizí počet položek (zůstává v popisku záložky), pod 760 px slovo Filtry (zůstane ikona s odznakem) a pod 620 px jde lišta voleb na vlastní řádek pod záložky, kde se počet zase ukáže. V nejužším okně (pod 400 px) se ikony vpravo přiblíží, aby se vešly vedle záložek.
+
 ## [0.33.15] – 2026-10-17
 
 ### Vylepšeno

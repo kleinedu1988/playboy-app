@@ -6902,3 +6902,58 @@ img[loading="lazy"]:not(.nacteno) {
         animation: none;
     }
 }
+
+/* Užší okno: lišta voleb se postupně zhušťuje, aby nenarazila na záložky ani na ikony vpravo.
+   Nejdřív zmizí počet (je i v popisku záložky), pak slovo Filtry (zůstane ikona s odznakem);
+   v nejužším okně jde lišta voleb na vlastní řádek pod záložky a počet se vrátí. */
+@media (max-width: 860px) {
+    .volby-skupina .volby-pocet {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .volby-skupina .volba.filtry b {
+        display: none;
+    }
+}
+
+@media (max-width: 620px) {
+    .hlavni-lista {
+        flex-wrap: wrap;
+        height: auto;
+        padding-bottom: 8px;
+    }
+
+    .view-toggle {
+        height: 44px;
+    }
+
+    .volby-prehledu {
+        position: static;
+        order: 3;
+        flex-basis: 100%;
+        justify-content: center;
+        transform: none;
+    }
+
+    .volby-skupina .volby-pocet {
+        display: inline-flex;
+    }
+}
+
+/* Nejužší okno: ikony vpravo se přiblíží a čára mezi nimi zmizí, aby se vešly vedle záložek na jeden řádek */
+@media (max-width: 400px) {
+    .nav-akce {
+        gap: 0;
+    }
+
+    .nav-akce .nav-fav {
+        min-width: 28px;
+        padding: 0 5px;
+    }
+
+    .nav-oddelovac {
+        display: none;
+    }
+}

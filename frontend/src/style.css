@@ -828,6 +828,21 @@ main {
     gap: 16px;
 }
 
+.form-row .form-group {
+    justify-content: flex-end;
+}
+
+.form-row .form-group label {
+    min-height: 28px;
+    display: flex;
+    align-items: flex-end;
+}
+
+.form-row .form-group input,
+.form-row .form-group select {
+    margin-top: auto;
+}
+
 label {
     font-size: 12px;
     color: var(--text-muted);
@@ -2003,10 +2018,12 @@ button.tag:hover {
     margin: 12px 0 0 0;
 }
 
-/* Formulář alba se musí vejít i do nízkého okna */
+/* Formulář alba (Přidat fotky do alba / Upravit album): měnící formulář s růžovým rámečkem */
 #albumModal .modal-card {
     max-height: calc(100% - 32px);
     overflow-y: auto;
+    border-color: var(--accent);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 4px rgba(216, 27, 96, 0.12);
 }
 
 #albumModal textarea {
@@ -2588,7 +2605,7 @@ body.razeni .photo-item {
 
 /* Řádek formuláře se třemi poli: měsíc, rok, edice */
 .form-row-3 {
-    grid-template-columns: 1fr 1fr 90px;
+    grid-template-columns: 1.4fr 1fr 80px;
 }
 
 /* Když se typ obsahu nevybírá, fotograf zabere celý řádek */
@@ -3765,7 +3782,45 @@ body.razeni .photo-item {
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    border: none;
+    text-align: left;
+    white-space: nowrap;
     pointer-events: none;
+}
+
+.panel-pasky {
+    position: absolute;
+    top: 16px;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    max-width: calc(100% - 32px);
+    max-height: 380px;
+    overflow-y: auto;
+}
+
+.panel-pasky::-webkit-scrollbar {
+    display: none;
+}
+
+.panel-pasky .panel-paska {
+    position: static;
+}
+
+button.panel-paska {
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+button.panel-paska:hover {
+    background-color: var(--accent-hover);
+    transform: translateX(3px);
+    box-shadow: 0 4px 12px rgba(216, 27, 96, 0.45);
 }
 
 .profile-side h2 {

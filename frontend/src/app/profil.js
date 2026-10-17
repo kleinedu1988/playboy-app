@@ -84,8 +84,25 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     // Tlačítka profilu (Upravit modelku, Přidat fotky) jsou v šabloně s obsluhou; před přepsáním hlavičky se vezmou
     // a vloží zpět pod jméno
     const akce = document.getElementById('profileActions');
-    // Páska v rohu panelu: první číslo, u playmate s označením role
-    const paska = prvniVydani ? `<span class="panel-paska">${/playmate/i.test(modelka.role) ? 'Playmate · ' : ''}${esc(paskaCisla(prvniVydani))}</span>` : '';
+    // Pásky v rohu fotky: štítek za každé číslo (rok i měsíc), ve kterém se modelka objevila
+    const vsechnaVydani = [
+        ...(modelka.vydani || []),
+        ...(modelka.obalky || []),
+        modelka.vystoupeni,
+        ...String(modelka.pictorialVydani || '').split('\n'),
+    ].map(v => (v || '').trim()).filter(Boolean);
+    const platnaVydani = [...new Set(vsechnaVydani)].filter(v => paskaCisla(v)).sort((a, b) => a.localeCompare(b));
+    const jePlaymate = /playmate/i.test(modelka.role);
+    const playmateVydani = (rozlozitVydani(modelka.vystoupeni)?.mesic && platnaVydani.includes(modelka.vystoupeni))
+        ? modelka.vystoupeni
+        : platnaVydani.find(v => rozlozitVydani(v)?.mesic);
+
+    const paskyHtml = platnaVydani.map(v => {
+        const role = (v === playmateVydani && jePlaymate) ? 'Playmate · ' : '';
+        const popisek = `${role}${paskaCisla(v)}`;
+        return `<button type="button" class="panel-paska" data-vydani="${esc(v)}" title="Otevřít vydání ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
+    }).join('');
+    const paska = paskyHtml ? `<div class="panel-pasky">${paskyHtml}</div>` : '';
     document.getElementById('modelHeader').innerHTML = `
         ${paska}
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>

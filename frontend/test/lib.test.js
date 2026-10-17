@@ -84,6 +84,18 @@ test('speciály: klíč, název a speciály roku', async () => {
     nastavitNazvySpecialu([]);
 });
 
+test('páska čísla s edicí i bez edice', async () => {
+    const { paskaCisla } = await import('../src/lib/format.js');
+    assert.equal(paskaCisla('1995-04'), 'Dub 95');
+    assert.equal(paskaCisla('1995-04-CZ'), 'Dub 95 · CZ');
+    assert.equal(paskaCisla('1995-S01'), 'Speciál 95');
+    assert.equal(paskaCisla('1995-S01-CZ'), 'Speciál 95 · CZ');
+    assert.equal(paskaCisla('1995'), 'Ročník 95');
+    assert.equal(paskaCisla('1995-DE'), 'Ročník 95 · DE');
+    assert.equal(paskaCisla(''), '');
+    assert.equal(paskaCisla('neplatne'), '');
+});
+
 test('novinky z changelogu', async () => {
     const { porovnatVerze, novinkyMezi, telaNaHtml } = await import('../src/lib/changelog.js');
     const text = `# Changelog\n\nÚvod.\n\n## [0.14.0] – nevydáno\n\nNápověda.\n\n### Přidáno\n- Okno \`?\`\n  s nápovědou.\n\n## [0.13.0] – 2026-10-14\n\n- Speciály.\n\n## [0.12.0] – 2026-10-14\n\n- Import.\n`;

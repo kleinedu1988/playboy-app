@@ -5,6 +5,13 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.32.8] – 2026-10-17
+
+### Změněno
+- Formulář alba (Přidat fotky / Upravit album) má růžový obvodový pruh se září, který jej vizuálně označuje jako měnící formulář (shodně s formulářem modelky).
+- Svislé zarovnání polí ve formuláři: pole „Měsíc nebo speciál“ a „Rok vydání“ jsou v jedné rovině díky jednotnému spodnímu zarovnání popisků i při zalomení textu na dva řádky.
+- Profil modelky: na titulní fotce se zobrazují štítky pro všechna čísla (rok i měsíc), ve kterých se modelka objevila (včetně edic a označení Playmate), s možností přímého prokliku do daného vydání.
+
 ## [0.32.7] – 2026-10-17
 
 ### Přidáno

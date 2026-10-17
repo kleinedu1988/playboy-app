@@ -5486,10 +5486,11 @@ textarea {
     max-height: min(560px, calc(100vh - 80px));
     overflow-y: auto;
     padding: 6px 10px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
-    /* Pozadí jako okno Co je nového */
-    background-color: rgba(32, 32, 36, 0.96);
+    /* Průsvitné sklo jako nabídky a panel Filtry */
+    background-color: rgba(26, 26, 30, 0.82);
+    backdrop-filter: blur(18px) saturate(1.3);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
     transform: translateX(-50%);
     z-index: 1400;
@@ -5550,7 +5551,7 @@ textarea {
     aspect-ratio: 3 / 4;
     overflow: hidden;
     border-radius: 6px;
-    background-color: #1c1c20;
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
 .naseptavac-nahled.kulaty {
@@ -5573,8 +5574,8 @@ textarea {
     width: 34px;
     height: 34px;
     border-radius: 8px;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border);
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     font-size: 15px;
     color: var(--accent);
 }

@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.12] – 2026-10-17
+
+### Vylepšeno
+- **Profil modelky bez alb** místo holé věty ukazuje vějíř tří skleněných karet (přední s růžovým nádechem a ikonou fotky), tenký nadpis „Zatím žádná alba“ (nebo „Žádná další alba“, když má modelka jen centerfoldy), krátké vysvětlení a růžové tlačítko **+ Přidat fotky**, které otevře okno přidání alba. Prázdný stav je připravený i pro další stránky (`ui/prazdno.js`).
+
 ## [0.33.11] – 2026-10-17
 
 ### Vylepšeno

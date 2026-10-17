@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.34.1] – 2026-10-17
+
+### Změněno
+- **Nadpisy zpět v písmu aplikace:** Patkové písmo Bodoni Moda z verze 0.34.0 je odstraněné; jména modelek, názvy čísel, alba a roky mají opět původní střídmý vzhled. Vložené soubory písma jsou z aplikace odebrané.
+
 ## [0.34.0] – 2026-10-17
 
 ### Vylepšeno

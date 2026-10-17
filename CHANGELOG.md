@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.33.11] – 2026-10-17
+
+### Vylepšeno
+- Posuvníky v celém programu jsou tenký průsvitný proužek bez dráhy a šipek; po najetí myší zesílí a zesvětlí, při tažení zrůžoví. Boční panel čísla a pás náhledů ve čtečce stran už neukazují systémový šedý posuvník.
+
 ## [0.33.10] – 2026-10-17
 
 ### Vylepšeno

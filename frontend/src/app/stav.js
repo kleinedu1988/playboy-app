@@ -66,7 +66,7 @@ export const stav = {
     doplnovanyRadek: null,
     doplnovaneHodnoceni: 0,
     doplnovanaTitulni: 0, // id fotky vybrané jako titulní
-    prehledSekce: 'souhrn', // ukázaná část Přehledu: souhrn, modelky, vydani, rocniky, kontrola
+    prehledSekce: 'uvod', // ukázaná část Přehledu: uvod, shanim, statistiky; údržba: souhrn, modelky, vydani, kontrola
     // Nejlepší: fotky s aspoň N srdíčky napříč sbírkou, po modelkách; prohlížeč jde přes všechny
     nejlepsiPolozky: [],
     nejlepsiData: null,

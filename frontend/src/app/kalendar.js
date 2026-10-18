@@ -172,9 +172,12 @@ export const pridatKVydani = klic => [
 // Po zápisu se kalendář obnoví, jen když je pořád vidět (uživatel mezitím mohl odejít jinam)
 const obnovitKalendar = () => { if (!calendar.classList.contains('hidden')) nacistKalendar(searchInput.value, true); };
 
+// Výtisky se sbírají jen u české edice; americká (archiv dat) nabízí jen „nezajímá mě“
 export const oznacitCislo = klic => [
-    { text: 'Mám výtisk', akce: async () => { await SetStavVydani(klic, 'mam'); obnovitKalendar(); } },
-    { text: 'Sháním toto číslo', akce: async () => { await SetStavVydani(klic, 'shanim'); obnovitKalendar(); } },
+    ...(rozlozitVydani(klic)?.edice === 'CZ' ? [
+        { text: 'Mám výtisk', akce: async () => { await SetStavVydani(klic, 'mam'); obnovitKalendar(); } },
+        { text: 'Sháním toto číslo', akce: async () => { await SetStavVydani(klic, 'shanim'); obnovitKalendar(); } },
+    ] : []),
     { text: 'Nezajímá mě', akce: async () => { await SetStavVydani(klic, 'nezajima'); obnovitKalendar(); } },
     { text: 'Zrušit označení', akce: async () => { await SetStavVydani(klic, ''); obnovitKalendar(); } },
 ];

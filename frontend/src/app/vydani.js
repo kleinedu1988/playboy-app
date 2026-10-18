@@ -329,7 +329,10 @@ export async function upravitVydani(vydani) {
     stav.upravovaneVydani = vydani;
     const [info, modelky] = await Promise.all([GetVydaniInfo(vydani), vsechnyModelky()]);
     document.getElementById('issueModalTitle').textContent = nazevVydani(vydani);
-    document.getElementById('selectIssueStav').value = info.stav;
+    // Výtisk a „sháním“ jen u české edice; u americké zůstanou vidět, jen když už jsou nastavené
+    const vyber = /** @type {HTMLSelectElement} */ (document.getElementById('selectIssueStav'));
+    [...vyber.options].forEach(o => { o.hidden = o.disabled = (o.value === 'mam' || o.value === 'shanim') && rozlozitVydani(vydani)?.edice !== 'CZ' && o.value !== info.stav; });
+    vyber.value = info.stav;
     document.getElementById('issueNazevGroup').classList.toggle('hidden', !jeSpecial(vydani));
     document.getElementById('inputIssueNazev').value = info.nazev || '';
     document.getElementById('inputIssueNazev').required = jeSpecial(vydani);

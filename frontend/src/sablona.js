@@ -703,12 +703,12 @@ export const SABLONA_OKNA = `
         </ul>
         <h4>Přehled a hodnocení</h4>
         <ul>
-          <li><strong>Statistiky</strong> v Přehledu (poslední položka vlevo): centerfoldy podle desetiletí, věk v době centerfoldu, nejčastější fotografové a národnosti, čísla edic US a CZ. Najetí myší na sloupec ukáže hodnotu.</li>
+          <li><strong>Statistiky</strong> v Přehledu (poslední část vlevo): centerfoldy podle desetiletí, věk v době centerfoldu, nejčastější fotografové a národnosti, čísla edic US a CZ. Najetí myší na sloupec ukáže hodnotu.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; jméno modelky a odkud fotka je se ukáže po najetí myší.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>
           <li><strong>Články modelky</strong> (rozhovor, 20 otázek…) jsou v jejím profilu jako poslední blok vlevo; klik otevře číslo rovnou na článku.</li>
-          <li>Přehled ukazuje, co chybí doplnit. V části Modelky klik na kartu modelky otevře okno „Doplnit modelku“ se vším, co jí chybí (s „Uložit a další“ pro další modelku); klik na konkrétní údaj otevře formulář, pravým tlačítkem „netýká se“.</li>
+          <li><strong>Přehled</strong> má vlevo čtyři části. <strong>Přehled</strong>: hlavní čísla, mapa české edice (vlastní výtisky: mám, sháním, chybí) a mapa americké edice (úplnost dat: kompletní číslo má cover, centerfold i pictorial); klik na políčko otevře číslo, prázdné nabídne přidání, pravým tlačítkem se nastaví stav. <strong>Údržba</strong>: co zbývá doplnit, modelky, čísla a údaje ke kontrole. V části Modelky klik na kartu modelky otevře okno „Doplnit modelku“ se vším, co jí chybí (s „Uložit a další“ pro další modelku); klik na konkrétní údaj otevře formulář, pravým tlačítkem „netýká se“. <strong>Sháním CZ</strong>: shánená čísla české edice po letech, „Kopírovat seznam“ je dá do schránky jako text.</li>
           <li>Vlastní výběry fotek jsou v Nejlepších vedle prahů srdíček.</li>
         </ul>
         <h4>Import a zálohy</h4>

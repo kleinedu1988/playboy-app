@@ -1,19 +1,26 @@
 // Přehled sbírky: co chybí doplnit a akce v buňkách tabulek
-import { GetPrehled, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
-import { MESICE, VYCHOZI_EDICE, esc, nazevAlba, nazevVydani, udajChybi } from '../lib/format';
+import { GetKalendar, GetPrehled, GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
+import { esc, nazevAlba, nazevVydani, udajChybi } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { searchInput, stats } from './prvky';
-import { prepnoutRezim, ukazatPohled } from './navigace';
-import { nacistGalerii } from './galerie';
+import { ukazatPohled } from './navigace';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
-import { nastavitEdiciKalendare } from './kalendar';
+import { oznacitCislo, pridatKVydani } from './kalendar';
 import { otevritCoverModal } from './cover';
 import { otevritModelModal, ukazatZalozku } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { otevritDoplneni } from './doplneni';
 import { nacistStatistiky } from './statistiky';
+import { htmlShanim, htmlUvodu, shanenaCisla, textShanim } from './prehled-uvod';
+import { otevritVydani } from './vydani';
+import { otevritKontextovouNabidku } from '../ui/nabidka';
+import { oznamit } from '../ui/oznameni';
+
+// Části údržby (co doplnit a opravit) jsou v menu jedna položka „Údržba“ s vlastními záložkami nahoře
+const UDRZBA = new Set(['souhrn', 'modelky', 'vydani', 'kontrola']);
+const polozkaMenu = sekce => UDRZBA.has(sekce) ? 'udrzba' : sekce;
 
 // Přehled sbírky: kolik čeho je a co ještě chybí doplnit.
 // Každá modelka a každé vydání má jeden řádek, sloupce říkají, co u nich chybí.
@@ -51,17 +58,16 @@ export const KLICE_SKUPIN = ['zakladni', 'vzhled', 'zarazeni'];
 // Ikony menu v levém panelu Přehledu
 const IKONA = obsah => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${obsah}</svg>`;
 const IKONY_CASTI = {
-    souhrn: IKONA('<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>'),
-    modelky: IKONA('<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>'),
-    vydani: IKONA('<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8"/>'),
-    rocniky: IKONA('<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
-    kontrola: IKONA('<path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/>'),
+    uvod: IKONA('<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>'),
+    udrzba: IKONA('<path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.4-.4-2.6z"/>'),
+    shanim: IKONA('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/>'),
     statistiky: IKONA('<path d="M5 20V11M12 20V5M19 20v-7"/>'),
 };
 
 export async function nacistPrehled() {
     const moje = ++stav.cisloNacteni;
-    const [p, seznamModelek] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky()]);
+    const [p, seznamModelek, kalendar, stavy] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky(),
+        GetKalendar().then(k => k || []), GetStavyVydani().then(s => s || [])]);
     if (moje !== stav.cisloNacteni) return;
     stav.prehledModelky = new Map(seznamModelek.map(m => [m.id, m]));
     stav.zrusitUpravuVyrezu = null;
@@ -161,19 +167,30 @@ export async function nacistPrehled() {
     // Levý panel: čísla sbírky, menu částí a vyplněnost; vpravo vždy jedna část (Souhrn, Modelky, Vydání…)
     const modelekSChybou = radkyModelek.filter(m => vaha(m) > 0).length;
     const aktivnich = seznam => seznam.filter(x => !x.netykaSe).length;
+    const kUdrzbe = [
+        ['Modelky bez titulní fotky', aktivnich(p.bezTitulni), 'modelky'],
+        ['Modelky bez centerfoldu', aktivnich(p.bezCenterfoldu), 'modelky'],
+        ['Modelky bez hodnocení', aktivnich(p.bezHodnoceni), 'modelky'],
+        ['Alba bez textu', aktivnich(p.albaBezPopisu), 'modelky'],
+        ['Alba bez vydání', aktivnich(p.albaBezVydani), 'modelky'],
+        ['Čísla bez coveru', p.vydaniBezCoveru.length, 'vydani'],
+        ['Čísla bez centerfoldu', p.vydaniBezCenterfoldu.length, 'vydani'],
+        ['Údaje ke kontrole', p.podezrele.length, 'kontrola'],
+    ].filter(([, pocet]) => pocet).map(([popis, pocet, sekce]) => ({ popis, pocet, sekce })).sort((a, b) => b.pocet - a.pocet);
+    const shanim = shanenaCisla(stavy).length;
     const casti = [
-        ['souhrn', 'Souhrn', ''],
-        ['modelky', 'Modelky', modelekSChybou],
-        ['vydani', 'Vydání', radkyVydani.length],
-        ...(p.rocniky.length ? [['rocniky', 'Ročníky', p.rocniky.length, true]] : []),
-        ...(p.podezrele.length ? [['kontrola', 'Ke kontrole', p.podezrele.length]] : []),
+        ['uvod', 'Přehled', ''],
+        ['udrzba', 'Údržba', modelekSChybou + radkyVydani.length + p.podezrele.length],
+        ['shanim', 'Sháním CZ', shanim, true],
         ['statistiky', 'Statistiky', ''],
     ];
-    if (!casti.some(([klic]) => klic === stav.prehledSekce)) stav.prehledSekce = 'souhrn';
-    const pruh = (popis, hotovo, celkem) => {
-        const procent = celkem ? Math.round(hotovo / celkem * 100) : 100;
-        return `<div class="prehled-pruh"><span>${popis}</span><b>${hotovo} z ${celkem}</b><div><i style="width:${procent}%"></i></div></div>`;
-    };
+    const zname = ['uvod', 'shanim', 'statistiky', 'souhrn', 'modelky', 'vydani', ...(p.podezrele.length ? ['kontrola'] : [])];
+    if (!zname.includes(stav.prehledSekce)) stav.prehledSekce = 'uvod';
+    // Záložky údržby nad každou její částí
+    const zalozkyUdrzby = `<nav class="udrzba-zalozky">${[
+        ['souhrn', 'Souhrn', ''], ['modelky', 'Modelky', modelekSChybou], ['vydani', 'Čísla', radkyVydani.length],
+        ...(p.podezrele.length ? [['kontrola', 'Ke kontrole', p.podezrele.length]] : []),
+    ].map(([klic, nazev, pocet]) => `<button type="button" class="${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">${nazev}${pocet ? ` <span>${pocet}</span>` : ''}</button>`).join('')}</nav>`;
     // Souhrn: pokrok sbírky po položkách (pruh, kolik z kolika) a kolik zbývá doplnit; klik otevře část, kde se doplňuje
     const radekSouhrnu = (popis, chybi, celkem, sekce, akce = 'doplnit') => {
         const hotovo = Math.max(0, celkem - chybi);
@@ -187,19 +204,16 @@ export async function nacistPrehled() {
     stats.innerHTML = `
         <aside class="profile-side prehled-panel">
             <h2>Sbírka</h2>
-            <div class="prehled-cisla">
-                ${[[p.modelek, 'modelek'], [p.alb, 'alb'], [p.fotek, 'fotek'], [p.hodnocenychFotek, 'se srdíčky'], [p.coveru, 'coverů'], [p.vydani, 'vydání']]
-                    .map(([cislo, popis]) => `<div><strong>${cislo}</strong><span>${popis}</span></div>`).join('')}
-            </div>
             <nav class="prehled-menu">
-                ${casti.map(([klic, nazev, pocet, neutralni]) => `<button class="${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">
+                ${casti.map(([klic, nazev, pocet, neutralni]) => `<button class="${klic === polozkaMenu(stav.prehledSekce) ? 'active' : ''}" data-sekce-prehledu="${klic}">
                     ${IKONY_CASTI[klic]}${nazev}${pocet !== '' ? `<b class="${pocet && !neutralni ? 'chybi' : ''}">${pocet}</b>` : ''}</button>`).join('')}
             </nav>
-            ${pruh('Modelky s úplnými údaji', p.modelek - modelekSChybou, p.modelek)}
-            ${pruh('Vydání s coverem i centerfoldem', p.vydani - radkyVydani.length, p.vydani)}
         </aside>
         <div class="prehled-obsah" data-sekce-ukazana="${stav.prehledSekce}">
+            <section class="stat-section" data-sekce="uvod">${htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, ukoly: kUdrzbe, kUdrzbe: modelekSChybou + radkyVydani.length + p.podezrele.length, modelekUplnych: p.modelek - modelekSChybou })}</section>
+            <section class="stat-section" data-sekce="shanim">${htmlShanim(stavy)}</section>
             <section class="stat-section" data-sekce="souhrn">
+                ${zalozkyUdrzby}
                 <h3>Co zbývá doplnit</h3>
                 <div class="prehled-souhrn">
                     ${radekSouhrnu('Modelky s titulní fotkou', aktivnich(p.bezTitulni), p.modelek, 'modelky')}
@@ -214,6 +228,7 @@ export async function nacistPrehled() {
             </section>
 
         <section class="stat-section" data-sekce="modelky">
+            ${zalozkyUdrzby}
             <h3>Modelky <span>${p.modelek - radkyModelek.filter(m => vaha(m) > 0).length} z ${p.modelek} má vše vyplněné</span>
                 <button class="link stat-toggle" data-skryte>${stav.prehledSkryte ? 'Skrýt údaje „netýká se“' : 'Zobrazit i údaje „netýká se“'}</button></h3>
             ${radkyModelek.length ? `
@@ -221,6 +236,7 @@ export async function nacistPrehled() {
         </section>
 
         <section class="stat-section" data-sekce="vydani">
+            ${zalozkyUdrzby}
             <h3>Vydání <span>${p.vydani - radkyVydani.length} z ${p.vydani} má cover i centerfold</span></h3>
             ${radkyVydani.length ? `
             <table class="stat-table stat-table-narrow">
@@ -234,20 +250,9 @@ export async function nacistPrehled() {
             </table>${zbytek(radkyVydani.length)}` : ''}
         </section>
 
-        ${p.rocniky.length ? `
-        <section class="stat-section" data-sekce="rocniky">
-            <h3>Ročníky <span>které měsíce ve sbírce jsou</span></h3>
-            <div class="stat-years">
-                ${p.rocniky.map(r => `
-                    <button class="stat-year" data-rocnik="${r.rok}" data-edice="${esc(r.edice)}" title="Zobrazit ročník ${r.rok} (${esc(r.edice)}) v kalendáři">
-                        <strong>${r.rok}${r.edice !== VYCHOZI_EDICE ? ` <em>${esc(r.edice)}</em>` : ''}</strong><span>${r.vydani} z 12</span>
-                        <span class="stat-months">${r.mesice.map((je, i) => `<i class="${je ? 'on' : ''}" title="${MESICE[i]}${je ? '' : ' – chybí'}"></i>`).join('')}</span>
-                    </button>`).join('')}
-            </div>
-        </section>` : ''}
-
         ${p.podezrele.length ? `
         <section class="stat-section" data-sekce="kontrola">
+            ${zalozkyUdrzby}
             <h3>Ke kontrole <span>údaje, které vypadají jako chyba při zadávání</span></h3>
             <div class="prehled-kontrola">
                 ${p.podezrele.slice(0, stav.prehledLimit).map(u => {
@@ -290,7 +295,7 @@ export async function oznacitNetykaSe(bunka, netyka) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'souhrn'; } catch { /* souhrn */ }
+    try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'uvod'; } catch { /* úvod */ }
     // Části v levém panelu, přepínač skrytých údajů a další stránka tabulek
     stats.addEventListener('click', (e) => {
         const cast = e.target.closest('[data-sekce-prehledu]');
@@ -308,11 +313,12 @@ export function pripravit() {
             e.stopPropagation();
             otevritDoplneni(parseInt(karta.dataset.modelka));
         } else if (cast) {
-            // Přepnutí části jen v zobrazené stránce, bez nového načtení
-            stav.prehledSekce = cast.dataset.sekcePrehledu;
+            // Přepnutí části jen v zobrazené stránce, bez nového načtení; Údržba otevře svůj souhrn
+            stav.prehledSekce = cast.dataset.sekcePrehledu === 'udrzba' ? 'souhrn' : cast.dataset.sekcePrehledu;
             try { localStorage.setItem('prehledSekce', stav.prehledSekce); } catch { /* jen se nezapamatuje */ }
             stats.querySelector('.prehled-obsah').dataset.sekceUkazana = stav.prehledSekce;
-            stats.querySelectorAll('.prehled-menu [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b === cast || b.dataset.sekcePrehledu === stav.prehledSekce));
+            stats.querySelectorAll('.prehled-menu [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === polozkaMenu(stav.prehledSekce)));
+            stats.querySelectorAll('.udrzba-zalozky [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === stav.prehledSekce));
             if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
             document.querySelector('main').scrollTop = 0;
         } else if (e.target.closest('[data-skryte]')) {
@@ -324,15 +330,44 @@ export function pripravit() {
         }
     });
 
-    // Klik na ročník ho ukáže v kalendáři
+    // Mapa sbírky: číslo s daty se otevře, prázdné nabídne přidání; pravé tlačítko nabídne i stav čísla.
+    // Naposledy přidaná modelka otevře profil, číslo v seznamu Sháním nabídne „mám výtisk“.
+    const nabidkaCisla = (klic, x, y, sOtevrenim) => otevritKontextovouNabidku(x, y, [
+        ...(sOtevrenim ? [{ text: `Otevřít ${nazevVydani(klic)}`, akce: () => otevritVydani(klic) }, null] : []),
+        ...pridatKVydani(klic), null,
+        ...oznacitCislo(klic).map(polozka => ({ ...polozka, akce: async () => { await polozka.akce(); nacistPrehled(); } })),
+    ]);
     stats.addEventListener('click', (e) => {
-        const dlazdice = e.target.closest('[data-rocnik]');
-        if (!dlazdice) return;
-        nastavitEdiciKalendare(dlazdice.dataset.edice);
-        prepnoutRezim('kalendar');
-        searchInput.value = dlazdice.dataset.rocnik;
-        nacistGalerii(dlazdice.dataset.rocnik);
+        const cislo = e.target.closest('[data-cislo]');
+        const modelka = e.target.closest('[data-otevrit-modelku]');
+        const shanene = e.target.closest('[data-shanim]');
+        if (cislo) {
+            if (cislo.hasAttribute('data-ma-data')) otevritVydani(cislo.dataset.cislo);
+            else nabidkaCisla(cislo.dataset.cislo, e.clientX, e.clientY, false);
+        } else if (modelka) {
+            const m = stav.prehledModelky.get(parseInt(modelka.dataset.otevritModelku));
+            if (m) otevritDetailModelky(m);
+        } else if (shanene) {
+            const klic = shanene.dataset.shanim;
+            const r = shanene.getBoundingClientRect();
+            otevritKontextovouNabidku(r.left, r.bottom + 4, [
+                { text: 'Mám výtisk', akce: async () => { await SetStavVydani(klic, 'mam'); nacistPrehled(); } },
+                { text: 'Už nesháním', akce: async () => { await SetStavVydani(klic, ''); nacistPrehled(); } },
+                null,
+                { text: `Otevřít ${nazevVydani(klic)}`, akce: () => otevritVydani(klic) },
+            ]);
+        } else if (e.target.closest('[data-kopirovat-shanim]')) {
+            GetStavyVydani().then(stavy => navigator.clipboard.writeText(textShanim(stavy || [])))
+                .then(() => oznamit('Seznam shánených čísel je ve schránce.'), () => oznamit('Seznam se nepodařilo zkopírovat.'));
+        }
     });
+    stats.addEventListener('contextmenu', (e) => {
+        const cislo = e.target.closest('[data-cislo]');
+        if (!cislo) return;
+        e.preventDefault();
+        e.stopPropagation();
+        nabidkaCisla(cislo.dataset.cislo, e.clientX, e.clientY, cislo.hasAttribute('data-ma-data'));
+    }, true);
 
     // Klik na buňku „chybí" otevře rovnou místo, kde se údaj doplňuje; klik jinam do řádku otevírá profil nebo vydání
     stats.addEventListener('click', async (e) => {

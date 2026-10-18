@@ -1,0 +1,160 @@
+// Úvod Přehledu: hlavní čísla, mapa české edice (vlastní výtisky), mapa americké edice (úplnost dat),
+// co zbývá doplnit a naposledy přidané modelky. Česká edice se sbírá fyzicky, americká jen jako data (PDF),
+// proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
+import { MESICE, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
+import { adresaTitulni } from './obrazky';
+
+// České vydání Playboye vychází od roku 1991; dřívější roky v mapě nejsou
+const PRVNI_ROK_CZ = 1991;
+// Naposledy přidaných modelek na úvodu
+const NAPOSLEDY = 6;
+
+const STAVY_CZ = { m: 'mám výtisk', s: 'sháním', n: 'nezajímá mě', c: 'chybí', b: 'ještě nevyšlo' };
+const STAVY_US = { k: 'kompletní', p: 'částečné', n: 'nezajímá mě', c: 'chybí', b: 'ještě nevyšlo' };
+
+// Měsíční čísla edice po letech: { rok: [12 × { klic, data }] } od prvního do posledního roku
+function cislaEdice(edice, odRoku, doRoku, podleKlice) {
+    const roky = [];
+    for (let rok = odRoku; rok <= doRoku; rok++) {
+        roky.push({ rok, mesice: MESICE.map((_, i) => {
+            const klic = slozitVydani(String(rok), String(i + 1).padStart(2, '0'), edice);
+            return { klic, data: podleKlice.get(klic) };
+        }) });
+    }
+    return roky;
+}
+
+// Obsah čísla slovy (do nápovědy políčka)
+const obsahCisla = k => [k?.cover && 'cover', k?.centerfold && 'centerfold', k?.pictorial && 'pictorial'].filter(Boolean).join(', ');
+
+// Mapa po desetiletích: sloupec = desetiletí, řádek = rok, políčko = měsíc
+function htmlMapy(roky, stavCisla) {
+    const dekady = new Map();
+    roky.forEach(r => {
+        const dekada = Math.floor(r.rok / 10) * 10;
+        if (!dekady.has(dekada)) dekady.set(dekada, []);
+        dekady.get(dekada).push(r);
+    });
+    return `<div class="uvod-mapa">${[...dekady].map(([dekada, rokyDekady]) => `
+        <div class="uvod-dekada"><h5>${dekada}–${dekada + 9}</h5>
+            ${rokyDekady.map(r => `<div class="uvod-rok"><span>${r.rok}</span>${r.mesice.map(m => {
+                const [stavPole, popis] = stavCisla(m);
+                return `<i class="${stavPole}" data-cislo="${esc(m.klic)}" ${m.data ? 'data-ma-data' : ''} title="${esc(`${nazevVydani(m.klic)} – ${popis}`)}"></i>`;
+            }).join('')}</div>`).join('')}
+        </div>`).join('')}</div>`;
+}
+
+const legenda = (pocty, nazvy) => `<div class="uvod-legenda">${Object.entries(pocty).filter(([, n]) => n).map(([s, n]) =>
+    `<span><i class="${s}"></i>${nazvy[s]} ${n}</span>`).join('')}</div>`;
+
+// p = GetPrehled, kalendar = GetKalendar, stavy = GetStavyVydani, ukoly = co doplnit (nejvíc první), kUdrzbe = počet v menu Údržba
+export function htmlUvodu({ p, kalendar, stavy, modelky, ukoly, kUdrzbe, modelekUplnych }) {
+    const dnes = new Date();
+    const letos = dnes.getFullYear();
+    const budouci = klic => {
+        const v = rozlozitVydani(klic);
+        return parseInt(v.rok) > letos || (parseInt(v.rok) === letos && parseInt(v.mesic) > dnes.getMonth() + 1);
+    };
+    const podleKlice = new Map(kalendar.map(k => [k.vydani, k]));
+    const stavPodleKlice = new Map(stavy.map(s => [s.vydani, s.stav]));
+    const rokyEdice = edice => kalendar.concat(stavy).map(k => rozlozitVydani(k.vydani)).filter(v => v?.mesic && v.edice === edice && !v.mesic.startsWith('S')).map(v => parseInt(v.rok));
+
+    // Česká edice: výtisky od roku 1991 (nebo od dřívějšího čísla ve sbírce) do letoška
+    const rokyCz = rokyEdice('CZ');
+    const cz = cislaEdice('CZ', Math.min(PRVNI_ROK_CZ, ...rokyCz), letos, podleKlice);
+    const poctyCz = { m: 0, s: 0, n: 0, c: 0, b: 0 };
+    const stavCz = m => {
+        const s = budouci(m.klic) ? 'b' : ({ mam: 'm', shanim: 's', nezajima: 'n' })[stavPodleKlice.get(m.klic)] || 'c';
+        poctyCz[s]++;
+        const obsah = obsahCisla(m.data);
+        return [s, STAVY_CZ[s] + (obsah ? ` · ${obsah}` : '')];
+    };
+    const mapaCz = htmlMapy(cz, stavCz);
+
+    // Americká edice: úplnost dat od prvního do posledního roku ve sbírce
+    const rokyUs = rokyEdice('US');
+    const poctyUs = { k: 0, p: 0, n: 0, c: 0, b: 0 };
+    const stavUs = m => {
+        const s = budouci(m.klic) ? 'b' : stavPodleKlice.get(m.klic) === 'nezajima' ? 'n'
+            : m.data?.cover && m.data?.centerfold && m.data?.pictorial ? 'k' : m.data ? 'p' : 'c';
+        poctyUs[s]++;
+        const obsah = obsahCisla(m.data);
+        return [s, STAVY_US[s] + (obsah && s === 'p' ? ` · ${obsah}` : '')];
+    };
+    const mapaUs = rokyUs.length ? htmlMapy(cislaEdice('US', Math.min(...rokyUs), Math.max(...rokyUs), podleKlice), stavUs) : '';
+    const vydanychCz = poctyCz.m + poctyCz.s + poctyCz.n + poctyCz.c;
+    const vydanychUs = poctyUs.k + poctyUs.p + poctyUs.n + poctyUs.c;
+
+    const procentModelek = p.modelek ? Math.round(modelekUplnych / p.modelek * 100) : 100;
+    const kpi = [
+        ['Modelky', p.modelek, `${procentModelek} % s úplnými údaji`],
+        ['Alba', p.alb, sklonovat(p.fotek, 'fotka', 'fotky', 'fotek')],
+        ['Čísla US', poctyUs.k + poctyUs.p, vydanychUs ? `${poctyUs.k} kompletních z ${vydanychUs}` : 'zatím žádné'],
+        ['Výtisky CZ', poctyCz.m, `z ${vydanychCz} vydaných · ${poctyCz.s} sháním`],
+    ];
+
+    const naposledy = [...modelky].filter(m => m.pridano).sort((a, b) => b.pridano.localeCompare(a.pridano)).slice(0, NAPOSLEDY);
+
+    return `
+        <div class="uvod-kpi">${kpi.map(([nazev, cislo, popis]) => `<div><span>${nazev}</span><b>${cislo.toLocaleString('cs-CZ')}</b><small>${esc(popis)}</small></div>`).join('')}</div>
+        <div class="uvod-karta">
+            <h4>Česká edice · moje výtisky<small>${cz[0].rok}–${letos} · klik otevře číslo, pravým tlačítkem stav</small></h4>
+            ${mapaCz}
+            ${legenda({ m: poctyCz.m, s: poctyCz.s, n: poctyCz.n, c: poctyCz.c }, STAVY_CZ)}
+        </div>
+        ${mapaUs ? `
+        <div class="uvod-karta">
+            <h4>Americká edice · archiv dat<small>${Math.min(...rokyUs)}–${Math.max(...rokyUs)} · kompletní = cover, centerfold i pictorial</small></h4>
+            ${mapaUs}
+            ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
+        </div>` : ''}
+        <div class="uvod-dole">
+            <div class="uvod-karta">
+                <h4>K doplnění</h4>
+                ${ukoly.length ? `<div class="uvod-ukoly">${ukoly.slice(0, 3).map(u => `
+                    <button type="button" data-sekce-prehledu="${u.sekce}">${esc(u.popis)}<b>${u.pocet}</b></button>`).join('')}</div>
+                    <button type="button" class="link uvod-dalsi" data-sekce-prehledu="souhrn">Otevřít údržbu (${kUdrzbe}) →</button>`
+                    : '<p class="uvod-hotovo">Všechno je doplněné.</p>'}
+            </div>
+            <div class="uvod-karta">
+                <h4>Naposledy přidané</h4>
+                ${naposledy.length ? `<div class="uvod-naposledy">${naposledy.map(m => `
+                    <button type="button" data-otevrit-modelku="${m.id}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(m.jmeno)}<small>${esc(formatDatum(m.pridano.slice(0, 10)))}</small></button>`).join('')}</div>`
+                    : '<p class="uvod-hotovo">Zatím žádné modelky.</p>'}
+            </div>
+        </div>`;
+}
+
+// Sháním (jen česká edice): čísla po letech, poznámka v nápovědě; seznam jde zkopírovat jako text
+export function shanenaCisla(stavy) {
+    return stavy.filter(s => s.stav === 'shanim' && rozlozitVydani(s.vydani)?.edice === 'CZ')
+        .sort((a, b) => a.vydani.localeCompare(b.vydani));
+}
+
+export function htmlShanim(stavy) {
+    const cisla = shanenaCisla(stavy);
+    const podleRoku = new Map();
+    cisla.forEach(s => {
+        const rok = rozlozitVydani(s.vydani).rok;
+        if (!podleRoku.has(rok)) podleRoku.set(rok, []);
+        podleRoku.get(rok).push(s);
+    });
+    return `
+        <h3>Sháním <span>česká edice · ${sklonovat(cisla.length, 'číslo', 'čísla', 'čísel')}</span>
+            ${cisla.length ? '<button type="button" class="link stat-toggle" data-kopirovat-shanim>Kopírovat seznam</button>' : ''}</h3>
+        ${cisla.length ? `<div class="uvod-karta uvod-shanim">${[...podleRoku].map(([rok, seznam]) => `
+            <div class="uvod-shanim-rok"><b>${rok}</b><div>${seznam.map(s => `
+                <button type="button" class="chip" data-shanim="${esc(s.vydani)}" title="${esc(nazevVydani(s.vydani) + (s.poznamka ? ` – ${s.poznamka}` : ''))}">${esc(nazevVydani(s.vydani).replace(/ \d{4}.*$/, ''))}${s.poznamka ? `<small>${esc(s.poznamka)}</small>` : ''}</button>`).join('')}</div></div>`).join('')}
+        </div>` : '<p class="stat-prazdne">Žádné číslo české edice nemá stav „sháním“. Označíš ho v mapě na úvodu Přehledu pravým tlačítkem, v kalendáři nebo v „Upravit číslo…“.</p>'}`;
+}
+
+// Text seznamu k vložení do zprávy nebo poznámek (např. pro antikvariát)
+export function textShanim(stavy) {
+    const podleRoku = new Map();
+    shanenaCisla(stavy).forEach(s => {
+        const v = rozlozitVydani(s.vydani);
+        if (!podleRoku.has(v.rok)) podleRoku.set(v.rok, []);
+        podleRoku.get(v.rok).push(MESICE[parseInt(v.mesic) - 1].toLowerCase());
+    });
+    return ['Playboy CZ – sháním:', ...[...podleRoku].map(([rok, mesice]) => `${rok}: ${mesice.join(', ')}`)].join('\n');
+}

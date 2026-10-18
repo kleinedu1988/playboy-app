@@ -5,6 +5,16 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.34.2] – 2026-10-17
+
+### Vylepšeno
+- **Nový Přehled:** Levý panel má čtyři části místo šesti: **Přehled**, **Údržba**, **Sháním CZ** a **Statistiky**.
+  - **Přehled (úvod):** hlavní čísla (modelky, alba, čísla US, výtisky CZ), mapa **české edice** jako sbírky výtisků od roku 1991 (mám výtisk, sháním, nezajímá mě, chybí) a mapa **americké edice** jako archivu dat (kompletní číslo má cover, centerfold i pictorial, částečné jen něco z toho). Políčko je jedno číslo: klik ho otevře, prázdné nabídne přidání, pravým tlačítkem se nastaví stav. Dole tři nejdůležitější úkoly k doplnění a naposledy přidané modelky.
+  - **Údržba:** dosavadní Souhrn, Modelky, Vydání a Ke kontrole pod jednou položkou se záložkami nahoře.
+  - **Sháním CZ:** shánená čísla české edice po letech s poznámkou; klik nabídne „Mám výtisk“ nebo „Už nesháním“, **Kopírovat seznam** dá seznam do schránky jako text.
+  - Část Ročníky je nahrazená mapami.
+- **Výtisky jen u české edice:** „Mám výtisk“ a „Sháním“ se nabízejí jen u čísel české edice (v kalendáři, na stránce čísla, v okně Upravit číslo); americká edice nabízí jen „Nezajímá mě“. Už nastavený stav u amerického čísla zůstává.
+
 ## [0.34.1] – 2026-10-17
 
 ### Změněno

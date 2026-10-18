@@ -1,8 +1,32 @@
-// Vývoj v čase ve Statistikách: tabulka údajů po desetiletích (medián nebo podíl, pod ním počet modelek) a pod ní
+// Vývoj v čase ve Statistikách: tabulka údajů po desetiletích (medián nebo podíl, pod ním počet modelek, vlevo úplnost
+// s odkazem na doplnění) a pod ní
 // graf vybraného řádku. Číselný údaj má čáru mediánu po pětiletích s pásmem prostřední poloviny modelek, podíl
 // sloupce po desetiletích rozdělené na sto procent. Sytost buňky ukazuje, kde je hodnota v řádku nejvyšší.
 import { GetVyvojVCase } from './backend';
 import { esc } from '../lib/format';
+import { vsechnyModelky } from './mezipamet';
+import { otevritModelModal, ukazatZalozku } from './formular-modelky';
+
+// Pole formuláře modelky, kde se údaj doplňuje: [záložka, klíč skupiny, id pole]
+const POLE_UDAJU = {
+    vek: [0, 'zakladni', 'inputNarozeniDatum'],
+    vyska: [1, 'vzhled', 'inputVyska'], vaha: [1, 'vzhled', 'inputVaha'], bmi: [1, 'vzhled', 'inputVyska'],
+    hrudnik: [1, 'vzhled', 'inputHrudnik'], pas: [1, 'vzhled', 'inputPas'], boky: [1, 'vzhled', 'inputBoky'], whr: [1, 'vzhled', 'inputPas'],
+    vlasy: [1, 'vzhled', 'inputVlasy'], ochlupeni: [1, 'vzhled', 'selectOchlupeni'], prsa: [1, 'vzhled', 'selectPrsaTyp'],
+    tetovani: [1, 'vzhled', 'selectTetovani'], piercing: [1, 'vzhled', 'selectPiercing'],
+};
+
+// Doplnění údaje: formulář první modelky, které chybí, s frontou „Uložit a další“ přes všechny ostatní
+async function doplnit(klic) {
+    const radek = radkyTabulky(data).find(r => r.klic === klic);
+    const [zalozka, skupina, pole] = POLE_UDAJU[klic] || [0, 'zakladni', 'inputJmeno'];
+    const ids = radek?.chybi || [];
+    const modelka = (await vsechnyModelky()).find(m => m.id === ids[0]);
+    if (!modelka) return;
+    otevritModelModal(modelka, { zalozka, klic: skupina, pole, ids });
+    ukazatZalozku(zalozka);
+    document.getElementById(pole)?.focus();
+}
 
 // Kategorie podílů: barvy v pevném pořadí (ověřené na tmavém pozadí i pro barvoslepé), „Ne“ a „Jiné“ jsou šedé
 const BARVY = ['#d81b60', '#3987e5', '#c98500', '#199e70'];
@@ -14,7 +38,8 @@ let edice = 'US';
 let vybrany = 'vek';
 let data = null;
 
-const cislo = n => (Math.round(n * 10) / 10).toLocaleString('cs-CZ');
+// Číslo na daný počet desetinných míst (poměr pas : boky dvě, ostatní jedno), zbytečné nuly se nepíšou
+const cislo = (n, desetinna = 1) => Number(n.toFixed(desetinna)).toLocaleString('cs-CZ', { maximumFractionDigits: desetinna });
 const dekada = d => `${String(d).slice(2)}. léta`;
 const procent = (pocet, n) => Math.round(pocet / n * 100);
 const barva = (kategorie, i) => kategorie === 'Ne' || kategorie === 'Jiné' ? SEDA : BARVY[i % BARVY.length];
@@ -22,17 +47,27 @@ const barva = (kategorie, i) => kategorie === 'Ne' || kategorie === 'Jiné' ? SE
 // Řádky tabulky: { klic, nazev, jednotka, bunky: [{ hodnota, text, n } | null] }
 function radkyTabulky(v) {
     const ciselne = v.ciselne.map(r => ({
-        klic: r.klic, nazev: r.nazev, jednotka: r.jednotka,
+        klic: r.klic, nazev: r.nazev, jednotka: r.odvozene ? `odvozeno · ${r.jednotka}` : r.jednotka, znamych: r.znamych, chybi: r.chybi,
         bunky: v.desetileti.map(d => {
             const b = r.desetileti.find(x => x.obdobi === d);
-            return b ? { hodnota: b.median, text: cislo(b.median), n: b.n } : null;
+            return b ? { hodnota: b.median, text: cislo(b.median, r.desetinna), n: b.n } : null;
         }),
     }));
     const podily = v.podily.map(p => ({
-        klic: p.klic, nazev: p.nazevRadku, jednotka: '% modelek',
+        klic: p.klic, nazev: p.nazevRadku, jednotka: '% modelek', znamych: p.znamych, chybi: p.chybi,
         bunky: p.desetileti.map(b => b.n ? { hodnota: procent(b.pocty[p.radek] || 0, b.n), text: `${procent(b.pocty[p.radek] || 0, b.n)} %`, n: b.n } : null),
     }));
     return [...ciselne, ...podily];
+}
+
+// Úplnost: podíl modelek s centerfoldem v edici, které údaj mají, a odkaz na doplnění chybějících
+function htmlUplnosti(r) {
+    const pct = data.modelek && Number.isFinite(r.znamych) ? Math.round(r.znamych / data.modelek * 100) : 0;
+    const chybi = r.chybi?.length || 0;
+    return `<td class="vyvoj-uplnost ${chybi ? '' : 'plna'}">
+        <div><i><b style="width: ${pct}%"></b></i><span>${pct} %</span></div>
+        ${chybi ? `<button type="button" class="link" data-vyvoj-doplnit="${r.klic}" title="Doplnit údaj modelkám, kterým chybí (Uložit a další)">doplnit ${chybi} →</button>` : '<span class="vyvoj-hotovo">úplné</span>'}
+    </td>`;
 }
 
 // Buňka: sytost podle hodnoty v řádku (jen období s dostatkem dat), malý počet modelek pod hodnotou
@@ -41,6 +76,7 @@ function htmlRadku(r) {
     const min = Math.min(...hodnoty), max = Math.max(...hodnoty);
     return `<tr class="${r.klic === vybrany ? 'active' : ''}" data-vyvoj-radek="${r.klic}" title="Ukázat graf">
         <td>${esc(r.nazev)}<small>${esc(r.jednotka)}</small></td>
+        ${htmlUplnosti(r)}
         ${r.bunky.map(b => {
             if (!b) return '<td class="prazdna">—</td>';
             const malo = b.n < MALO_DAT;
@@ -53,16 +89,22 @@ function htmlRadku(r) {
 // Čára mediánu po pětiletích s pásmem kvartilů; popisky hodnot jen na začátku a konci, ostatní v bublině
 function grafCary(r) {
     const body = r.petileti;
+    // Poměr (pas : boky) je bez jednotky
+    const jednotka = r.jednotka === 'poměr' ? '' : ` ${r.jednotka}`;
     if (body.length < 2) return '<p class="stat-prazdne">Na graf je málo dat.</p>';
     const W = 900, H = 260, L = 44, P = 70, T = 16, D = 44;
-    const lo = Math.floor(Math.min(...body.map(b => b.dolni)) - 1), hi = Math.ceil(Math.max(...body.map(b => b.horni)) + 1);
+    // Rozsah osy podle dat s okrajem; krok mřížky „hezké“ číslo (1, 2, 2,5, 5 × 10^k) asi na čtyři čáry
+    const min = Math.min(...body.map(b => b.dolni)), max = Math.max(...body.map(b => b.horni));
+    const okraj = (max - min) * 0.15 || 10 ** -r.desetinna;
+    const lo = min - okraj, hi = max + okraj;
+    const rad = 10 ** Math.floor(Math.log10((hi - lo) / 4));
+    const krok = [1, 2, 2.5, 5, 10].map(k => k * rad).find(k => (hi - lo) / k <= 5);
     const od = body[0].obdobi, doR = body.at(-1).obdobi;
     const x = obdobi => L + (doR === od ? 0 : (obdobi - od) / (doR - od)) * (W - L - P);
     const y = h => T + (hi - h) / (hi - lo || 1) * (H - T - D);
-    const krok = Math.max(1, Math.ceil((hi - lo) / 4));
     const mrizka = [];
-    for (let h = Math.ceil(lo / krok) * krok; h <= hi; h += krok) {
-        mrizka.push(`<line class="graf-mrizka" x1="${L}" x2="${W - P}" y1="${y(h)}" y2="${y(h)}"/><text class="graf-popisek" x="${L - 8}" y="${y(h) + 4}" text-anchor="end">${h}</text>`);
+    for (let h = Math.ceil(lo / krok) * krok; h <= hi + 1e-9; h += krok) {
+        mrizka.push(`<line class="graf-mrizka" x1="${L}" x2="${W - P}" y1="${y(h)}" y2="${y(h)}"/><text class="graf-popisek" x="${L - 8}" y="${y(h) + 4}" text-anchor="end">${cislo(h, r.desetinna)}</text>`);
     }
     const pasmo = body.map(b => `${x(b.obdobi)},${y(b.horni)}`).concat(body.slice().reverse().map(b => `${x(b.obdobi)},${y(b.dolni)}`)).join(' ');
     const sirkaCile = (W - L - P) / Math.max(1, body.length - 1);
@@ -71,12 +113,12 @@ function grafCary(r) {
         <line class="graf-osa" x1="${L}" x2="${W - P}" y1="${H - D}" y2="${H - D}"/>
         <polygon points="${pasmo}" fill="rgba(216, 27, 96, 0.16)"/>
         <polyline points="${body.map(b => `${x(b.obdobi)},${y(b.median)}`).join(' ')}" fill="none" stroke="#d81b60" stroke-width="2" stroke-linejoin="round"/>
-        ${body.map((b, i) => `<g data-tip="${esc(`${b.obdobi}–${b.obdobi + 4}: medián ${cislo(b.median)} ${r.jednotka}, polovina modelek ${cislo(b.dolni)}–${cislo(b.horni)} · n ${b.n}`)}">
+        ${body.map((b, i) => `<g data-tip="${esc(`${b.obdobi}–${b.obdobi + 4}: medián ${cislo(b.median, r.desetinna)}${jednotka}, polovina modelek ${cislo(b.dolni, r.desetinna)}–${cislo(b.horni, r.desetinna)} · n ${b.n}`)}">
             <rect class="graf-cil" x="${x(b.obdobi) - sirkaCile / 2}" y="0" width="${sirkaCile}" height="${H}"/>
             <circle cx="${x(b.obdobi)}" cy="${y(b.median)}" r="4" fill="#d81b60" stroke="#202024" stroke-width="2"/>
             <text class="graf-popisek" x="${x(b.obdobi)}" y="${H - D + 17}" text-anchor="middle">${b.obdobi % 10 === 0 ? b.obdobi : `'${String(b.obdobi).slice(2)}`}</text>
             <text class="graf-popisek vyvoj-n" x="${x(b.obdobi)}" y="${H - D + 32}" text-anchor="middle">n ${b.n}</text>
-            ${i === 0 || i === body.length - 1 ? `<text class="graf-hodnota" x="${x(b.obdobi) + (i ? 10 : 0)}" y="${y(b.median) + (i ? 4 : -10)}" text-anchor="${i ? 'start' : 'middle'}">${cislo(b.median)}${i ? ` ${r.jednotka}` : ''}</text>` : ''}
+            ${i === 0 || i === body.length - 1 ? `<text class="graf-hodnota" x="${x(b.obdobi) + (i ? 10 : 0)}" y="${y(b.median) + (i ? 4 : -10)}" text-anchor="${i ? 'start' : 'middle'}">${cislo(b.median, r.desetinna)}${i ? jednotka : ''}</text>` : ''}
         </g>`).join('')}
     </svg>
     <div class="vyvoj-legenda"><span><i class="cara"></i>medián</span><span><i class="pasmo"></i>prostřední polovina modelek</span><span>n = modelek se známým údajem</span></div>`;
@@ -115,7 +157,7 @@ function veta(radek) {
     const s = radek.bunky.map((b, i) => b && b.n >= MALO_DAT ? { ...b, d: data.desetileti[i] } : null).filter(Boolean);
     if (s.length < 2) return 'Na srovnání desetiletí je zatím málo dat.';
     const [a, b] = [s[0], s.at(-1)];
-    const jednotka = radek.jednotka === '% modelek' ? '' : ` ${radek.jednotka}`;
+    const jednotka = radek.jednotka === '% modelek' || radek.jednotka.includes('poměr') ? '' : ` ${radek.jednotka.replace('odvozeno · ', '')}`;
     const smer = b.hodnota > a.hodnota ? 'vzrostl' : b.hodnota < a.hodnota ? 'klesl' : 'zůstal';
     return radek.jednotka === '% modelek'
         ? `${esc(radek.nazev)}: <b>${a.text}</b> modelek v ${dekada(a.d).replace(' léta', ' letech')}, <b>${b.text}</b> v ${dekada(b.d).replace(' léta', ' letech')}.`
@@ -135,7 +177,7 @@ function vykreslit(koren) {
     koren.innerHTML = htmlHlavicky() + `
         <div class="stat-karta siroka vyvoj-tabulka">
             <table>
-                <thead><tr><th>Údaj</th>${data.desetileti.map(d => `<th>${dekada(d)}</th>`).join('')}</tr></thead>
+                <thead><tr><th>Údaj</th><th class="vyvoj-uplnost">Úplnost</th>${data.desetileti.map(d => `<th>${dekada(d)}</th>`).join('')}</tr></thead>
                 <tbody>${radky.map(htmlRadku).join('')}</tbody>
             </table>
         </div>
@@ -163,7 +205,10 @@ export function pripravit(stats) {
         if (!koren) return;
         const radek = e.target.closest('[data-vyvoj-radek]');
         const tlacitkoEdice = e.target.closest('[data-vyvoj-edice]');
-        if (radek) {
+        const doplnitUdaj = e.target.closest('[data-vyvoj-doplnit]');
+        if (doplnitUdaj) {
+            doplnit(doplnitUdaj.dataset.vyvojDoplnit);
+        } else if (radek) {
             vybrany = radek.dataset.vyvojRadek;
             vykreslit(koren);
         } else if (tlacitkoEdice && tlacitkoEdice.dataset.vyvojEdice !== edice) {

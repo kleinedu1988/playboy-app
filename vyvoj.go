@@ -6,7 +6,8 @@ import (
 	"strings"
 )
 
-// Vývoj modelek v čase pro Statistiky: věk v době centerfoldu, postava a podíly (vlasy, ochlupení, prsa, tetování)
+// Vývoj modelek v čase pro Statistiky: věk v době centerfoldu, postava (i BMI a poměr pasu a boků) a podíly
+// (vlasy, ochlupení, prsa, tetování)
 // po desetiletích (tabulka) a po pětiletích (graf). Čas je rok centerfoldu modelky v dané edici; modelka bez
 // centerfoldu v edici se nepočítá. Číselné údaje jsou medián s dolním a horním kvartilem (prostřední polovina
 // modelek), u každého období je počet modelek se známým údajem. Nic se neukládá, počítá se při otevření.
@@ -24,6 +25,10 @@ type RadaVyvoje struct {
 	Klic       string      `json:"klic"`
 	Nazev      string      `json:"nazev"`
 	Jednotka   string      `json:"jednotka"`
+	Odvozene   bool        `json:"odvozene"`  // spočítané z jiných údajů (BMI, pas : boky)
+	Desetinna  int         `json:"desetinna"` // desetinná místa při zobrazení
+	Znamych    int         `json:"znamych"`   // modelek se známou hodnotou (úplnost)
+	Chybi      []int       `json:"chybi"`     // id modelek s centerfoldem v edici, kterým údaj chybí
 	Desetileti []BodVyvoje `json:"desetileti"`
 	Petileti   []BodVyvoje `json:"petileti"`
 }
@@ -41,6 +46,8 @@ type KategorieVyvoje struct {
 	Kategorie  []string      `json:"kategorie"`  // pořadí v grafu
 	Radek      string        `json:"radek"`      // kategorie, jejíž podíl ukazuje řádek tabulky
 	NazevRadku string        `json:"nazevRadku"` // popis řádku tabulky (např. „Blond vlasy“)
+	Znamych    int           `json:"znamych"`
+	Chybi      []int         `json:"chybi"`
 	Desetileti []PodilVyvoje `json:"desetileti"`
 }
 
@@ -136,15 +143,31 @@ func (a *App) GetVyvojVCase(edice string) VyvojVCase {
 
 	type ciselny struct {
 		klic, nazev, jednotka string
+		odvozene              bool
+		desetinna             int
 		hodnota               func(m Modelka, vydani string) float64
 	}
 	ciselne := []ciselny{
-		{"vek", "Věk", "let", func(m Modelka, vydani string) float64 { return float64(vekKVydani(m.NarozeniDatum, vydani)) }},
-		{"vyska", "Výška", "cm", func(m Modelka, _ string) float64 { return float64(m.VyskaCm) }},
-		{"vaha", "Váha", "kg", func(m Modelka, _ string) float64 { return float64(m.VahaKg) }},
-		{"hrudnik", "Hrudník", "cm", func(m Modelka, _ string) float64 { return float64(m.ObvodHrudnikCm) }},
-		{"pas", "Pas", "cm", func(m Modelka, _ string) float64 { return float64(m.ObvodPasCm) }},
-		{"boky", "Boky", "cm", func(m Modelka, _ string) float64 { return float64(m.ObvodBokyCm) }},
+		{"vek", "Věk", "let", false, 1, func(m Modelka, vydani string) float64 { return float64(vekKVydani(m.NarozeniDatum, vydani)) }},
+		{"vyska", "Výška", "cm", false, 1, func(m Modelka, _ string) float64 { return float64(m.VyskaCm) }},
+		{"vaha", "Váha", "kg", false, 1, func(m Modelka, _ string) float64 { return float64(m.VahaKg) }},
+		{"hrudnik", "Hrudník", "cm", false, 1, func(m Modelka, _ string) float64 { return float64(m.ObvodHrudnikCm) }},
+		{"pas", "Pas", "cm", false, 1, func(m Modelka, _ string) float64 { return float64(m.ObvodPasCm) }},
+		{"boky", "Boky", "cm", false, 1, func(m Modelka, _ string) float64 { return float64(m.ObvodBokyCm) }},
+		// Odvozené: BMI z výšky a váhy, poměr pasu a boků; jen když jsou známé oba údaje
+		{"bmi", "BMI", "kg/m²", true, 1, func(m Modelka, _ string) float64 {
+			if m.VyskaCm <= 0 || m.VahaKg <= 0 {
+				return 0
+			}
+			metry := float64(m.VyskaCm) / 100
+			return float64(m.VahaKg) / (metry * metry)
+		}},
+		{"whr", "Pas : boky", "poměr", true, 2, func(m Modelka, _ string) float64 {
+			if m.ObvodPasCm <= 0 || m.ObvodBokyCm <= 0 {
+				return 0
+			}
+			return float64(m.ObvodPasCm) / float64(m.ObvodBokyCm)
+		}},
 	}
 	type podilovy struct {
 		klic, nazev, radek, nazevRadku string
@@ -167,6 +190,9 @@ func (a *App) GetVyvojVCase(edice string) VyvojVCase {
 	for i := range pocty {
 		pocty[i] = map[int]map[string]int{}
 	}
+	// Úplnost: kolik modelek údaj má a kterým chybí (pro „doplnit“)
+	chybiCiselne := make([][]int, len(ciselne))
+	chybiPodily := make([][]int, len(podilove))
 	desetileti := map[int]bool{}
 	for _, m := range a.GetModelky("") {
 		vydani, ma := centerfold[m.ID]
@@ -179,12 +205,15 @@ func (a *App) GetVyvojVCase(edice string) VyvojVCase {
 		for i, c := range ciselne {
 			if h := c.hodnota(m, vydani); h > 0 {
 				hodnoty[i][rok] = append(hodnoty[i][rok], h)
+			} else {
+				chybiCiselne[i] = append(chybiCiselne[i], m.ID)
 			}
 		}
 		for i, p := range podilove {
 			// Hodnota mimo známé kategorie (starý zápis) se nepočítá, aby podíly dávaly 100 %
 			h := p.hodnota(m)
 			if h == "" || !obsahuje(p.kategorie, h) {
+				chybiPodily[i] = append(chybiPodily[i], m.ID)
 				continue
 			}
 			dek := rok / 10 * 10
@@ -200,11 +229,14 @@ func (a *App) GetVyvojVCase(edice string) VyvojVCase {
 	sort.Ints(v.Desetileti)
 
 	for i, c := range ciselne {
-		v.Ciselne = append(v.Ciselne, RadaVyvoje{Klic: c.klic, Nazev: c.nazev, Jednotka: c.jednotka,
-			Desetileti: bodyVyvoje(hodnoty[i], 10), Petileti: bodyVyvoje(hodnoty[i], 5)})
+		chybi := append([]int{}, chybiCiselne[i]...)
+		v.Ciselne = append(v.Ciselne, RadaVyvoje{Klic: c.klic, Nazev: c.nazev, Jednotka: c.jednotka, Odvozene: c.odvozene, Desetinna: c.desetinna,
+			Znamych: v.Modelek - len(chybi), Chybi: chybi, Desetileti: bodyVyvoje(hodnoty[i], 10), Petileti: bodyVyvoje(hodnoty[i], 5)})
 	}
 	for i, p := range podilove {
-		k := KategorieVyvoje{Klic: p.klic, Nazev: p.nazev, Kategorie: p.kategorie, Radek: p.radek, NazevRadku: p.nazevRadku, Desetileti: []PodilVyvoje{}}
+		chybi := append([]int{}, chybiPodily[i]...)
+		k := KategorieVyvoje{Klic: p.klic, Nazev: p.nazev, Kategorie: p.kategorie, Radek: p.radek, NazevRadku: p.nazevRadku,
+			Znamych: v.Modelek - len(chybi), Chybi: chybi, Desetileti: []PodilVyvoje{}}
 		for _, d := range v.Desetileti {
 			bod := PodilVyvoje{Obdobi: d, Pocty: map[string]int{}}
 			for kat, n := range pocty[i][d] {

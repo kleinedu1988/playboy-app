@@ -5,6 +5,12 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.34.5] – 2026-10-17
+
+### Vylepšeno
+- **Vývoj v čase – BMI a poměr pas : boky:** Dva odvozené řádky (s popiskem „odvozeno“): BMI z výšky a váhy a poměr pasu a boků (na dvě desetinná místa); počítají se jen u modelek, které mají oba údaje.
+- **Vývoj v čase – úplnost dat:** Nový sloupec **Úplnost** u každého údaje: pruh a procento modelek s centerfoldem v edici, které údaj mají. Odkaz **doplnit N →** otevře formulář první modelky, které údaj chybí, rovnou v daném poli, a tlačítkem **Uložit a další** projde všechny ostatní.
+
 ## [0.34.4] – 2026-10-17
 
 ### Přidáno

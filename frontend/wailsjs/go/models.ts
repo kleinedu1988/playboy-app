@@ -635,6 +635,8 @@ export namespace main {
 	    kategorie: string[];
 	    radek: string;
 	    nazevRadku: string;
+	    znamych: number;
+	    chybi: number[];
 	    desetileti: PodilVyvoje[];
 	
 	    static createFrom(source: any = {}) {
@@ -648,6 +650,8 @@ export namespace main {
 	        this.kategorie = source["kategorie"];
 	        this.radek = source["radek"];
 	        this.nazevRadku = source["nazevRadku"];
+	        this.znamych = source["znamych"];
+	        this.chybi = source["chybi"];
 	        this.desetileti = this.convertValues(source["desetileti"], PodilVyvoje);
 	    }
 
@@ -673,6 +677,10 @@ export namespace main {
 	    klic: string;
 	    nazev: string;
 	    jednotka: string;
+	    odvozene: boolean;
+	    desetinna: number;
+	    znamych: number;
+	    chybi: number[];
 	    desetileti: BodVyvoje[];
 	    petileti: BodVyvoje[];
 	
@@ -685,6 +693,10 @@ export namespace main {
 	        this.klic = source["klic"];
 	        this.nazev = source["nazev"];
 	        this.jednotka = source["jednotka"];
+	        this.odvozene = source["odvozene"];
+	        this.desetinna = source["desetinna"];
+	        this.znamych = source["znamych"];
+	        this.chybi = source["chybi"];
 	        this.desetileti = this.convertValues(source["desetileti"], BodVyvoje);
 	        this.petileti = this.convertValues(source["petileti"], BodVyvoje);
 	    }

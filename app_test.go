@@ -2764,6 +2764,13 @@ func TestVyvojVCase(t *testing.T) {
 			}
 		}
 	}
+	// Úplnost: výšku mají všechny tři, váhu žádná (BMI tedy chybí všem); id chybějících pro „doplnit“
+	if r := rada("vyska"); r.Znamych != 3 || len(r.Chybi) != 0 {
+		t.Errorf("úplnost výšky: %+v", r)
+	}
+	if r := rada("bmi"); r.Znamych != 0 || len(r.Chybi) != 3 || !r.Odvozene || len(r.Desetileti) != 0 {
+		t.Errorf("BMI bez váhy: %+v", r)
+	}
 	if cz := a.GetVyvojVCase("CZ"); cz.Modelek != 1 || cz.Desetileti[0] != 1990 {
 		t.Errorf("česká edice: %+v", cz)
 	}

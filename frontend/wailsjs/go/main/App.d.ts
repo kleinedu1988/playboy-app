@@ -60,6 +60,8 @@ export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
 
 export function GetTagy():Promise<Array<string>>;
 
+export function GetVyvojVCase(arg1:string):Promise<main.VyvojVCase>;
+
 export function GetVerze():Promise<string>;
 
 export function GetVybery():Promise<Array<main.Vyber>>;

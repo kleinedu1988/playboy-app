@@ -2707,3 +2707,64 @@ func TestReviseHledani(t *testing.T) {
 		t.Error("index po hromadné úpravě")
 	}
 }
+
+// Vývoj v čase: zařazení podle roku centerfoldu v edici, medián a kvartily, podíly kategorií a skupiny vlasů
+func TestVyvojVCase(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	modelky := []Modelka{
+		{Jmeno: "Anna Sedmdesátá", NarozeniDatum: "1953-01", VyskaCm: 165, VlasyBarva: "Light Blonde", Ochlupeni: "Přírodní", Tetovani: 0},
+		{Jmeno: "Bára Sedmdesátá", NarozeniDatum: "1955-06", VyskaCm: 170, VlasyBarva: "hnědá", Ochlupeni: "Přírodní", Tetovani: -1},
+		{Jmeno: "Cecílie Osmdesátá", NarozeniDatum: "1962-03", VyskaCm: 175, VlasyBarva: "Zrzavá", Ochlupeni: "Oholené", Tetovani: 1},
+		{Jmeno: "Dana Česká", NarozeniDatum: "1975-05", VyskaCm: 180, Ochlupeni: "Oholené"},
+		{Jmeno: "Eva Bez Centerfoldu", VyskaCm: 190},
+	}
+	vydani := []string{"1975-03", "1977-08", "1985-05", "1996-02-CZ", ""}
+	for i, m := range modelky {
+		m.CoverID = odkazA
+		a.AddModelka(m)
+		if vydani[i] != "" {
+			id := a.GetModelky(m.Jmeno)[0].ID
+			a.AddBulkPhotos(id, vydani[i], "Centerfold", fmt.Sprintf("https://drive.google.com/file/d/%029d/view", i+1))
+		}
+	}
+	v := a.GetVyvojVCase("US")
+	if v.Modelek != 3 || len(v.Desetileti) != 2 || v.Desetileti[0] != 1970 || v.Desetileti[1] != 1980 {
+		t.Fatalf("zařazení do desetiletí: %+v", v)
+	}
+	rada := func(klic string) RadaVyvoje {
+		for _, r := range v.Ciselne {
+			if r.Klic == klic {
+				return r
+			}
+		}
+		t.Fatalf("chybí řada %s", klic)
+		return RadaVyvoje{}
+	}
+	if b := rada("vyska").Desetileti[0]; b.Median != 167.5 || b.N != 2 || b.Dolni != 166.25 || b.Horni != 168.75 {
+		t.Errorf("výška 70. let: %+v", b)
+	}
+	if b := rada("vek").Desetileti[0]; b.Median != 22 || b.N != 2 {
+		t.Errorf("věk 70. let (22 a 22): %+v", b)
+	}
+	if p := rada("vyska").Petileti; len(p) != 2 || p[0].Obdobi != 1975 || p[1].Obdobi != 1985 {
+		t.Errorf("pětiletí: %+v", p)
+	}
+	for _, p := range v.Podily {
+		switch p.Klic {
+		case "vlasy":
+			if d := p.Desetileti[0]; d.Pocty["Blond"] != 1 || d.Pocty["Hnědé"] != 1 || d.N != 2 {
+				t.Errorf("vlasy 70. let: %+v", d)
+			}
+			if d := p.Desetileti[1]; d.Pocty["Zrzavé"] != 1 {
+				t.Errorf("vlasy 80. let: %+v", d)
+			}
+		case "tetovani":
+			if d := p.Desetileti[0]; d.N != 1 || d.Pocty["Ne"] != 1 {
+				t.Errorf("tetování bez neuvedených: %+v", d)
+			}
+		}
+	}
+	if cz := a.GetVyvojVCase("CZ"); cz.Modelek != 1 || cz.Desetileti[0] != 1990 {
+		t.Errorf("česká edice: %+v", cz)
+	}
+}

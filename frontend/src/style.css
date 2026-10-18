@@ -7329,3 +7329,160 @@ textarea {
 [data-sekce="uvod"] {
     position: relative;
 }
+
+/* ===== Vývoj v čase (Statistiky): tabulka desetiletí a graf vybraného řádku ===== */
+.vyvoj {
+    margin-top: 34px;
+}
+
+.vyvoj > .stat-karta + .stat-karta {
+    margin-top: 16px;
+}
+
+.stat-section h3 .vyvoj-edice {
+    order: 3;
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 12px;
+    padding: 3px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+}
+
+.vyvoj-edice button {
+    padding: 3px 12px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0;
+    cursor: pointer;
+}
+
+.vyvoj-edice button.active {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--text-main);
+}
+
+.vyvoj-tabulka {
+    padding: 6px 12px 8px;
+    overflow-x: auto;
+}
+
+.vyvoj-tabulka table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+}
+
+.vyvoj-tabulka th {
+    padding: 10px 10px 8px;
+    border-bottom: 1px solid var(--panel-okraj);
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-align: right;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.vyvoj-tabulka td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    font-size: 13px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.vyvoj-tabulka th:first-child,
+.vyvoj-tabulka td:first-child {
+    text-align: left;
+    background: none !important;
+}
+
+.vyvoj-tabulka td small {
+    display: block;
+    color: #6e6e76;
+    font-size: 10px;
+}
+
+.vyvoj-tabulka td:first-child small {
+    color: var(--text-muted);
+}
+
+.vyvoj-tabulka td.malo {
+    color: var(--text-muted);
+}
+
+.vyvoj-tabulka td.prazdna {
+    color: #4a4a50;
+}
+
+.vyvoj-tabulka tbody tr {
+    cursor: pointer;
+}
+
+.vyvoj-tabulka tbody tr:hover td:first-child {
+    color: var(--accent-text);
+}
+
+.vyvoj-tabulka tbody tr.active td:first-child {
+    color: var(--accent-text);
+    box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.vyvoj-veta {
+    margin: 0 0 10px;
+    color: var(--text-main);
+    font-size: 14px;
+    font-weight: 300;
+}
+
+.vyvoj-veta b {
+    font-weight: 500;
+}
+
+.vyvoj-graf .vyvoj-n {
+    fill: #6e6e76;
+    font-size: 10px;
+}
+
+.vyvoj-graf .vyvoj-podil {
+    fill: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.vyvoj-legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.vyvoj-legenda i {
+    display: inline-block;
+    width: 12px;
+    height: 10px;
+    margin-right: 6px;
+    border-radius: 2px;
+    vertical-align: -1px;
+}
+
+.vyvoj-legenda i.cara {
+    height: 2px;
+    vertical-align: 3px;
+    background-color: var(--accent);
+}
+
+.vyvoj-legenda i.pasmo {
+    background-color: rgba(216, 27, 96, 0.28);
+}

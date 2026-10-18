@@ -122,6 +122,10 @@ export function GetVerze() {
   return window['go']['main']['App']['GetVerze']();
 }
 
+export function GetVyvojVCase(arg1) {
+  return window['go']['main']['App']['GetVyvojVCase'](arg1);
+}
+
 export function GetVybery() {
   return window['go']['main']['App']['GetVybery']();
 }

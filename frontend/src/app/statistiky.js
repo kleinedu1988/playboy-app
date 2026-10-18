@@ -2,6 +2,7 @@
 // srovnání edic). Grafy jsou SVG; najetí myší na sloupec nebo řádek ukáže bublinu s hodnotou.
 import { GetStatistiky } from './backend';
 import { EDICE, esc, sklonovat } from '../lib/format';
+import { nacistVyvoj } from './vyvoj';
 
 // Jedna řada má barvu akcentu; edice US a CZ růžová a modrá (dvojice ověřená na čitelnost i pro barvoslepé)
 const BARVY_EDIC = { US: '#d81b60', CZ: '#2f8fe0' };
@@ -116,6 +117,8 @@ function htmlStatistik(s) {
             ${edice.length > 1 ? karta('Čísla ve sbírce podle edic a desetiletí',
                 `<div class="stat-legenda">${edice.map(e => `<span><i style="background:${BARVY_EDIC[e] || BARVA}"></i>${e}</span>`).join('')}</div>` + grafEdic(radkyEdic, edice), true) : ''}
         </div>
+        <!-- Vývoj v čase se počítá zvlášť (app/vyvoj.js) -->
+        <div class="vyvoj" data-vyvoj><p class="stat-prazdne">Počítám vývoj v čase…</p></div>
         <div class="graf-bublina hidden"></div>`;
 }
 
@@ -126,6 +129,7 @@ export async function nacistStatistiky(koren) {
     const s = await GetStatistiky();
     if (!koren.isConnected) return;
     koren.innerHTML = htmlStatistik(s);
+    nacistVyvoj(koren.querySelector('[data-vyvoj]'));
 }
 
 // Bublina u sloupce nebo řádku grafu pod myší

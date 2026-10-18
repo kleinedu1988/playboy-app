@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.34.4] – 2026-10-17
+
+### Přidáno
+- **Vývoj v čase ve Statistikách:** Tabulka údajů po desetiletích podle roku centerfoldu modelky – medián věku v době centerfoldu, výšky, váhy, hrudníku, pasu a boků a podíl blond vlasů, oholeného ochlupení, silikonových prsou, tetování a piercingu. Pod každou hodnotou je počet modelek se známým údajem; období s méně než pěti modelkami je tlumené. Sytost buňky ukazuje, kde je hodnota v řádku nejvyšší. Klik na řádek ukáže pod tabulkou graf: u číselných údajů čáru mediánu po pětiletích s pásmem prostřední poloviny modelek, u podílů sloupce po desetiletích rozdělené na sto procent; po najetí myší bublina s hodnotou. Přepínač US/CZ vybere edici (výchozí US). Barva vlasů z volného textu se řadí do skupin Blond, Hnědé, Černé, Zrzavé a Jiné.
+
 ## [0.34.3] – 2026-10-17
 
 ### Vylepšeno

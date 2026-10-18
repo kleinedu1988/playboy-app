@@ -1,5 +1,5 @@
 // Přehled sbírky: co chybí doplnit a akce v buňkách tabulek
-import { GetKalendar, GetPrehled, GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
+import { GetKalendar, GetPrehled, GetStatistiky, GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
 import { esc, nazevAlba, nazevVydani, udajChybi } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -13,7 +13,7 @@ import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { otevritDoplneni } from './doplneni';
 import { nacistStatistiky } from './statistiky';
-import { htmlShanim, htmlUvodu, shanenaCisla, textShanim } from './prehled-uvod';
+import { htmlGrafuDekad, htmlShanim, htmlUvodu, shanenaCisla, textShanim } from './prehled-uvod';
 import { otevritVydani } from './vydani';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { oznamit } from '../ui/oznameni';
@@ -167,16 +167,6 @@ export async function nacistPrehled() {
     // Levý panel: čísla sbírky, menu částí a vyplněnost; vpravo vždy jedna část (Souhrn, Modelky, Vydání…)
     const modelekSChybou = radkyModelek.filter(m => vaha(m) > 0).length;
     const aktivnich = seznam => seznam.filter(x => !x.netykaSe).length;
-    const kUdrzbe = [
-        ['Modelky bez titulní fotky', aktivnich(p.bezTitulni), 'modelky'],
-        ['Modelky bez centerfoldu', aktivnich(p.bezCenterfoldu), 'modelky'],
-        ['Modelky bez hodnocení', aktivnich(p.bezHodnoceni), 'modelky'],
-        ['Alba bez textu', aktivnich(p.albaBezPopisu), 'modelky'],
-        ['Alba bez vydání', aktivnich(p.albaBezVydani), 'modelky'],
-        ['Čísla bez coveru', p.vydaniBezCoveru.length, 'vydani'],
-        ['Čísla bez centerfoldu', p.vydaniBezCenterfoldu.length, 'vydani'],
-        ['Údaje ke kontrole', p.podezrele.length, 'kontrola'],
-    ].filter(([, pocet]) => pocet).map(([popis, pocet, sekce]) => ({ popis, pocet, sekce })).sort((a, b) => b.pocet - a.pocet);
     const shanim = shanenaCisla(stavy).length;
     const casti = [
         ['uvod', 'Přehled', ''],
@@ -201,6 +191,17 @@ export async function nacistPrehled() {
             <b>${chybi ? `${akce} ${chybi}` : 'hotovo'}</b></button>`;
     };
 
+    // Pokrok sbírky po položkách; na úvodu i v Souhrnu údržby
+    const radkySouhrnu = `<div class="prehled-souhrn">
+                    ${radekSouhrnu('Modelky s titulní fotkou', aktivnich(p.bezTitulni), p.modelek, 'modelky')}
+                    ${radekSouhrnu('Modelky s centerfoldem', aktivnich(p.bezCenterfoldu), p.modelek, 'modelky')}
+                    ${radekSouhrnu('Modelky s hodnocením', aktivnich(p.bezHodnoceni), p.modelek, 'modelky')}
+                    ${radekSouhrnu('Alba s textem', aktivnich(p.albaBezPopisu), p.alb, 'modelky')}
+                    ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb, 'modelky')}
+                    ${radekSouhrnu('Vydání s coverem', p.vydaniBezCoveru.length, p.vydani, 'vydani')}
+                    ${radekSouhrnu('Vydání s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'vydani')}
+                    ${p.podezrele.length ? radekSouhrnu('Údaje ke kontrole', p.podezrele.length, 0, 'kontrola', 'zkontrolovat') : ''}
+    </div>`;
     stats.innerHTML = `
         <aside class="profile-side prehled-panel">
             <h2>Sbírka</h2>
@@ -210,21 +211,12 @@ export async function nacistPrehled() {
             </nav>
         </aside>
         <div class="prehled-obsah" data-sekce-ukazana="${stav.prehledSekce}">
-            <section class="stat-section" data-sekce="uvod">${htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, ukoly: kUdrzbe, kUdrzbe: modelekSChybou + radkyVydani.length + p.podezrele.length, modelekUplnych: p.modelek - modelekSChybou })}</section>
+            <section class="stat-section" data-sekce="uvod">${htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, souhrn: radkySouhrnu, kUdrzbe: modelekSChybou + radkyVydani.length + p.podezrele.length, modelekUplnych: p.modelek - modelekSChybou })}</section>
             <section class="stat-section" data-sekce="shanim">${htmlShanim(stavy)}</section>
             <section class="stat-section" data-sekce="souhrn">
                 ${zalozkyUdrzby}
                 <h3>Co zbývá doplnit</h3>
-                <div class="prehled-souhrn">
-                    ${radekSouhrnu('Modelky s titulní fotkou', aktivnich(p.bezTitulni), p.modelek, 'modelky')}
-                    ${radekSouhrnu('Modelky s centerfoldem', aktivnich(p.bezCenterfoldu), p.modelek, 'modelky')}
-                    ${radekSouhrnu('Modelky s hodnocením', aktivnich(p.bezHodnoceni), p.modelek, 'modelky')}
-                    ${radekSouhrnu('Alba s textem', aktivnich(p.albaBezPopisu), p.alb, 'modelky')}
-                    ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb, 'modelky')}
-                    ${radekSouhrnu('Vydání s coverem', p.vydaniBezCoveru.length, p.vydani, 'vydani')}
-                    ${radekSouhrnu('Vydání s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'vydani')}
-                    ${p.podezrele.length ? radekSouhrnu('Údaje ke kontrole', p.podezrele.length, 0, 'kontrola', 'zkontrolovat') : ''}
-                </div>
+                ${radkySouhrnu}
             </section>
 
         <section class="stat-section" data-sekce="modelky">
@@ -271,6 +263,9 @@ export async function nacistPrehled() {
         </div>
     `;
     if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
+    // Graf desetiletí na úvodu se dopočítá zvlášť (statistiky se počítají z celé sbírky)
+    const grafDekad = stats.querySelector('[data-graf-dekad]');
+    GetStatistiky().then(s => { if (grafDekad.isConnected) grafDekad.querySelector('.stat-prazdne').outerHTML = htmlGrafuDekad(s); });
 }
 
 // „Netýká se" u buňky: modelka (centerfold neměla, údaj nejde zjistit) nebo všechna alba v buňce

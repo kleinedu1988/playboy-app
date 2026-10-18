@@ -5,6 +5,11 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.34.3] – 2026-10-17
+
+### Vylepšeno
+- **Úvod Přehledu:** Pod mapami edic je celý seznam **Co zbývá doplnit** s pruhy a tlačítky „doplnit“ (místo karty se třemi úkoly), dva grafy – **Výtisky CZ po letech** a **Centerfoldy podle desetiletí** (s bublinou po najetí myší) – a naposledy přidané modelky v jednom řádku.
+
 ## [0.34.2] – 2026-10-17
 
 ### Vylepšeno

@@ -3,6 +3,7 @@
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
 import { MESICE, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
 import { adresaTitulni } from './obrazky';
+import { grafSloupcu } from './statistiky';
 
 // České vydání Playboye vychází od roku 1991; dřívější roky v mapě nejsou
 const PRVNI_ROK_CZ = 1991;
@@ -47,8 +48,8 @@ function htmlMapy(roky, stavCisla) {
 const legenda = (pocty, nazvy) => `<div class="uvod-legenda">${Object.entries(pocty).filter(([, n]) => n).map(([s, n]) =>
     `<span><i class="${s}"></i>${nazvy[s]} ${n}</span>`).join('')}</div>`;
 
-// p = GetPrehled, kalendar = GetKalendar, stavy = GetStavyVydani, ukoly = co doplnit (nejvíc první), kUdrzbe = počet v menu Údržba
-export function htmlUvodu({ p, kalendar, stavy, modelky, ukoly, kUdrzbe, modelekUplnych }) {
+// p = GetPrehled, kalendar = GetKalendar, stavy = GetStavyVydani, souhrn = řádky „Co zbývá doplnit“, kUdrzbe = počet v menu Údržba
+export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modelekUplnych }) {
     const dnes = new Date();
     const letos = dnes.getFullYear();
     const budouci = klic => {
@@ -108,21 +109,30 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, ukoly, kUdrzbe, modelek
             ${mapaUs}
             ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
         </div>` : ''}
+        <div class="uvod-karta uvod-doplnit">
+            <h4>Co zbývá doplnit<small><button type="button" class="link" data-sekce-prehledu="souhrn">Údržba (${kUdrzbe}) →</button></small></h4>
+            ${souhrn}
+        </div>
         <div class="uvod-dole">
             <div class="uvod-karta">
-                <h4>K doplnění</h4>
-                ${ukoly.length ? `<div class="uvod-ukoly">${ukoly.slice(0, 3).map(u => `
-                    <button type="button" data-sekce-prehledu="${u.sekce}">${esc(u.popis)}<b>${u.pocet}</b></button>`).join('')}</div>
-                    <button type="button" class="link uvod-dalsi" data-sekce-prehledu="souhrn">Otevřít údržbu (${kUdrzbe}) →</button>`
-                    : '<p class="uvod-hotovo">Všechno je doplněné.</p>'}
+                <h4>Výtisky CZ po letech</h4>
+                ${grafSloupcu(cz.filter(r => r.rok < letos || r.mesice.some(m => !budouci(m.klic))).map(r => {
+                    const mam = r.mesice.filter(m => stavPodleKlice.get(m.klic) === 'mam').length;
+                    return { hodnota: mam, popisek: r.rok % 5 === 0 ? String(r.rok) : '', tip: `${r.rok}: ${mam} z 12 výtisků` };
+                }), { vyska: 170 })}
             </div>
-            <div class="uvod-karta">
-                <h4>Naposledy přidané</h4>
-                ${naposledy.length ? `<div class="uvod-naposledy">${naposledy.map(m => `
-                    <button type="button" data-otevrit-modelku="${m.id}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(m.jmeno)}<small>${esc(formatDatum(m.pridano.slice(0, 10)))}</small></button>`).join('')}</div>`
-                    : '<p class="uvod-hotovo">Zatím žádné modelky.</p>'}
+            <div class="uvod-karta" data-graf-dekad>
+                <h4>Centerfoldy podle desetiletí</h4>
+                <p class="stat-prazdne">Počítám…</p>
             </div>
-        </div>`;
+        </div>
+        <div class="uvod-karta uvod-radek">
+            <h4>Naposledy přidané</h4>
+            ${naposledy.length ? `<div class="uvod-naposledy">${naposledy.map(m => `
+                <button type="button" data-otevrit-modelku="${m.id}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(m.jmeno)}<small>${esc(formatDatum(m.pridano.slice(0, 10)))}</small></button>`).join('')}</div>`
+                : '<p class="uvod-hotovo">Zatím žádné modelky.</p>'}
+        </div>
+        <div class="graf-bublina hidden"></div>`;
 }
 
 // Sháním (jen česká edice): čísla po letech, poznámka v nápovědě; seznam jde zkopírovat jako text
@@ -157,4 +167,10 @@ export function textShanim(stavy) {
         podleRoku.get(v.rok).push(MESICE[parseInt(v.mesic) - 1].toLowerCase());
     });
     return ['Playboy CZ – sháním:', ...[...podleRoku].map(([rok, mesice]) => `${rok}: ${mesice.join(', ')}`)].join('\n');
+}
+
+// Graf centerfoldů podle desetiletí (stejný jako ve Statistikách); počítá se až po zobrazení úvodu
+export function htmlGrafuDekad(s) {
+    if (!s.desetileti.length) return '<p class="stat-prazdne">Zatím žádné centerfoldy.</p>';
+    return grafSloupcu(s.desetileti.map(d => ({ hodnota: d.centerfoldy, popisek: `${String(d.desetileti).slice(2)}.`, tip: `${d.desetileti}–${d.desetileti + 9}: ${sklonovat(d.centerfoldy, 'centerfold', 'centerfoldy', 'centerfoldů')}` })), { vyska: 170 });
 }

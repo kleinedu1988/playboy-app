@@ -7285,3 +7285,47 @@ textarea {
         grid-template-columns: 1fr;
     }
 }
+
+/* Úvod: pruhy „Co zbývá doplnit“ v kartě bez vlastního rámečku, odkaz do údržby v nadpisu */
+.uvod-dole {
+    align-items: start;
+}
+
+/* Naposledy přidané v jednom řádku vedle sebe */
+.uvod-radek .uvod-naposledy {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+}
+
+.uvod-radek .uvod-naposledy button {
+    width: auto;
+    border-top: none;
+    padding: 4px 0;
+}
+
+.uvod-radek .uvod-naposledy small {
+    margin-left: 0;
+}
+
+.uvod-doplnit .prehled-souhrn {
+    border: none;
+    background: none;
+    box-shadow: none;
+}
+
+.uvod-karta h4 small .link {
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.uvod-karta .graf {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+[data-sekce="uvod"] {
+    position: relative;
+}

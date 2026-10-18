@@ -16,7 +16,7 @@ const sloupec = (x, y, sirka, vyska) => vyska <= 0 ? ''
     : `M${x},${y + vyska} V${y + Math.min(4, vyska)} q0,-${Math.min(4, vyska)} ${Math.min(4, sirka / 2)},-${Math.min(4, vyska)} h${sirka - 2 * Math.min(4, sirka / 2)} q${Math.min(4, sirka / 2)},0 ${Math.min(4, sirka / 2)},${Math.min(4, vyska)} V${y + vyska}Z`;
 
 // Svislé sloupce jedné řady; popisek hodnoty jen u maxima (ostatní v bublině)
-function grafSloupcu(polozky, { sirka = 460, vyska = 190 } = {}) {
+export function grafSloupcu(polozky, { sirka = 460, vyska = 190 } = {}) {
     const max = Math.max(1, ...polozky.map(p => p.hodnota));
     const dole = 22, nahore = 16, krok = sirka / polozky.length, sl = Math.min(30, krok * 0.58);
     const vyskaPlochy = vyska - dole - nahore;
@@ -131,7 +131,8 @@ export async function nacistStatistiky(koren) {
 // Bublina u sloupce nebo řádku grafu pod myší
 export function pripravit(stats) {
     stats.addEventListener('mousemove', (e) => {
-        const bublina = stats.querySelector('.graf-bublina');
+        // Každá část (úvod, statistiky) má vlastní bublinu
+        const bublina = e.target.closest?.('.stat-section')?.querySelector('.graf-bublina');
         if (!bublina) return;
         const cil = e.target.closest?.('[data-tip]');
         bublina.classList.toggle('hidden', !cil);
@@ -144,5 +145,5 @@ export function pripravit(stats) {
         bublina.style.left = `${x}px`;
         bublina.style.top = `${e.clientY - okraj.top + 16}px`;
     });
-    stats.addEventListener('mouseleave', () => stats.querySelector('.graf-bublina')?.classList.add('hidden'));
+    stats.addEventListener('mouseleave', () => stats.querySelectorAll('.graf-bublina').forEach(b => b.classList.add('hidden')));
 }

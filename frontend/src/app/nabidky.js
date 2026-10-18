@@ -1,15 +1,13 @@
 // Kontextové nabídky pravého tlačítka
 import { contextMenu, otevritKontextovouNabidku, zavritKontextovouNabidku } from '../ui/nabidka';
-import { OdebratModelkuZAlba, OdebratZVyberu, SetSpojeniAlba, SetTitulniFotka, ZrusitPoradiAlba } from './backend';
-import { nazevVydani } from '../lib/format';
-import { oznamit } from '../ui/oznameni';
+import { OdebratModelkuZAlba, OdebratZVyberu, SetSpojeniAlba, ZrusitPoradiAlba } from './backend';
+import { nazevAlba, nazevVydani } from '../lib/format';
 import { stav } from './stav';
 import { calendar, covers, detailView, issueView, searchInput, wall } from './prvky';
 import { zpet } from './navigace';
-import { nacistGalerii } from './galerie';
 import { nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba } from './profil';
 import { otevritVydani, upravitVydani } from './vydani';
-import { oznacitCislo, pridatKVydani } from './kalendar';
+import { nabidkaCisla, nabidkaRoku } from './kalendar';
 import { nacistCovery } from './stena';
 import { oznacitNetykaSe } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
@@ -19,7 +17,7 @@ import { selectionBar, zrusitVyber } from './vyber';
 import { upravitVyrez } from './vyrez';
 import { otevritModelModal, otevritRychlePridani, smazatModelku } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold, smazatAlbum } from './formular-alba';
-import { polozkySpravy, presunoutAlbum, pridatModelkuKAlbu, sloucitAlbum, smazatCover, zkontrolovatSoubory } from './sprava';
+import { polozkySpravy, presunoutAlbum, pridatModelkuKAlbu, sloucitAlbum, sloucitModelku, smazatCover } from './sprava';
 import { zavritOkno } from './ulozeni';
 import { akceFotky } from './akce-fotky';
 
@@ -72,10 +70,13 @@ export function otevritNabidku(cil, x, y) {
         const modelka = stav.nacteneModelky.find(item => item.id === id);
         if (!modelka) return;
         polozky = [
+            { text: 'Otevřít profil', akce: () => otevritProfilPodleId(modelka.id) },
             { text: 'Upravit modelku', akce: () => otevritModelModal(modelka) },
             { text: 'Upravit výřez titulní fotky', akce: () => upravitVyrez(modelka) },
-            { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },
             { text: 'Přidat fotky / album', akce: () => otevritAlbumModal(modelka) },
+            null,
+            { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
+            { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },
         ];
     } else if (cil.closest('.wall-item')) {
         // Centerfold na stěně plakátů
@@ -88,85 +89,30 @@ export function otevritNabidku(cil, x, y) {
             ...akceFotky(stav.stenaPolozky[index], null, { profil: false, odebrat: false }),
         ];
     } else if (cil.closest('.album')) {
-        // Album v profilu modelky, případně konkrétní fotka v něm
+        // Album v profilu modelky: na fotce jen akce fotky (album je pod jednou položkou), jinde v albu akce alba
         const album = stav.aktualniAlba[parseInt(cil.closest('.album').dataset.album)];
-        const centerfold = album.typ === 'Centerfold';
         const prvekPolozky = cil.closest('[data-index]');
-        const prvekFotky = cil.closest('[data-foto-id]');
-
-        polozky = [];
-        if (prvekPolozky) {
+        if (!prvekPolozky) {
+            polozky = polozkyAlba(album, cil.closest('.album'));
+        } else {
             const index = parseInt(prvekPolozky.dataset.index);
-            polozky.push({ nadpis: centerfold ? 'Centerfold' : 'Fotka' });
-            polozky.push({ text: centerfold ? 'Otevřít centerfold' : 'Otevřít fotku', akce: () => otevritLightbox(index) });
-
+            const prvekFotky = cil.closest('[data-foto-id]');
             const fotka = prvekFotky && album.fotky.find(f => f.id === parseInt(prvekFotky.dataset.fotoId));
-            if (fotka) {
-                polozky.push({
-                    text: 'Nastavit jako titulní fotku',
-                    akce: async () => {
-                        if (!await SetTitulniFotka(stav.aktualniModelka.id, fotka.id)) return;
-                        oznamit('Titulní fotka změněna. Výřez na kartě se vrátil na výchozí.');
-                        otevritProfilPodleId(stav.aktualniModelka.id);
-                    },
-                });
-                polozky.push(...akceFotky(stav.aktualniPolozky[index], fotka, { profil: false }));
-                // Stránky spojeného plakátu se nedají přetáhnout, řadí se po jedné
-                if (album.spojit) {
-                    const misto = album.fotky.indexOf(fotka);
-                    if (misto > 0) polozky.push({ text: 'Posunout stránku dřív', akce: () => posunoutStranku(album, fotka, -1) });
-                    if (misto < album.fotky.length - 1) polozky.push({ text: 'Posunout stránku později', akce: () => posunoutStranku(album, fotka, 1) });
-                }
-            } else {
-                // Plakát jako celek (tlačítko ⋯, klávesa nabídky): akce se všemi jeho stránkami
-                polozky.push(...akceFotky(stav.aktualniPolozky[index], null, { profil: false }));
+            polozky = [
+                { text: album.typ === 'Centerfold' ? 'Otevřít centerfold' : 'Otevřít fotku', akce: () => otevritLightbox(index) },
+                // Bez fotky (tlačítko ⋯, klávesa nabídky) jde o plakát jako celek: akce se všemi jeho stránkami
+                ...akceFotky(stav.aktualniPolozky[index], fotka || null, { profil: false }),
+            ];
+            // Stránky spojeného plakátu se nedají přetáhnout, řadí se po jedné
+            if (fotka && album.spojit) {
+                const misto = album.fotky.indexOf(fotka);
+                polozky.push(null);
+                if (misto > 0) polozky.push({ text: 'Posunout stránku dřív', akce: () => posunoutStranku(album, fotka, -1) });
+                if (misto < album.fotky.length - 1) polozky.push({ text: 'Posunout stránku později', akce: () => posunoutStranku(album, fotka, 1) });
             }
+            const prvekAlba = cil.closest('.album');
+            polozky.push(null, { text: `Album „${nazevAlba(album.album, album.typ)}“…`, akce: () => otevritKontextovouNabidku(x, y, polozkyAlba(album, prvekAlba)) });
         }
-        polozky.push({ nadpis: 'Album' });
-        if (album.vydani) {
-            polozky.push({ text: `Otevřít vydání ${nazevVydani(album.vydani)}`, akce: () => otevritVydani(album.vydani) });
-        }
-        if (centerfold && album.fotky.length > 1) {
-            polozky.push({
-                text: album.spojit ? 'Rozdělit plakát na samostatné fotky' : 'Spojit stránky do jednoho plakátu',
-                akce: async () => {
-                    await SetSpojeniAlba(album.modelkaId, album.album, album.typ, !album.spojit);
-                    nacistFotkyModelky(stav.aktualniModelka.id);
-                },
-            });
-        }
-        if (album.rucniPoradi && !centerfold) {
-            polozky.push({
-                text: 'Řadit album podle srdíček',
-                akce: async () => {
-                    await ZrusitPoradiAlba(album.modelkaId, album.album, album.typ);
-                    nacistFotkyModelky(stav.aktualniModelka.id);
-                },
-            });
-        }
-        const mrizka = cil.closest('.album').querySelector('.photos-grid.zkracena, .photos-grid.rozbalena');
-        if (mrizka) {
-            const zkracena = mrizka.classList.contains('zkracena');
-            polozky.push({ text: zkracena ? 'Rozbalit album' : 'Sbalit album', akce: () => prepnoutRozbaleniAlba(mrizka, zkracena) });
-        }
-        // Úpravy alba jdou vždy na jeho hlavní modelku, i když je otevřený profil další modelky
-        const vlastnik = { id: album.modelkaId, jmeno: '' };
-        polozky.push(
-            { text: 'Spustit slideshow alba', akce: () => otevritLightbox(stav.aktualniPolozky.indexOf(album.polozky[0]), true) },
-            { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(vlastnik, album) },
-            { nadpis: 'Modelky alba' },
-            { text: 'Přidat další modelku k albu…', akce: () => pridatModelkuKAlbu(album) },
-            ...album.dalsiModelky.map(m => ({ text: `Odebrat z alba: ${m.jmeno}`, akce: async () => {
-                await OdebratModelkuZAlba(album.modelkaId, album.album, album.typ, m.id);
-                nacistFotkyModelky(stav.aktualniModelka.id);
-            } })),
-            { text: 'Přesunout k jiné modelce…', akce: () => presunoutAlbum(album) },
-            ...(stav.aktualniAlba.some(a => a !== album && a.modelkaId === album.modelkaId)
-                ? [{ text: 'Sloučit s jiným albem…', akce: () => sloucitAlbum(album) }] : []),
-            { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length), nebezpecne: true },
-            { nadpis: 'Modelka' },
-            { text: 'Upravit modelku', akce: () => otevritModelModal(stav.aktualniModelka) }
-        );
     } else if (!issueView.classList.contains('hidden')) {
         // Stránka vydání: úpravy se dělají v profilu modelky a v přehledu coverů
         const prvekPolozky = cil.closest('[data-index]');
@@ -179,71 +125,90 @@ export function otevritNabidku(cil, x, y) {
             polozky.push({ text: 'Otevřít fotku', akce: () => otevritLightbox(index, false, stav.vydaniPolozky) });
             polozky.push(...akceFotky(polozka, fotka || null), null);
         }
-        polozky.push(
-            { text: 'Spustit slideshow vydání', akce: () => otevritLightbox(0, true, stav.vydaniPolozky) },
-            { text: 'Zpět', akce: zpet }
-        );
+        if (stav.vydaniPolozky.length) polozky.push({ text: 'Spustit slideshow čísla', akce: () => otevritLightbox(0, true, stav.vydaniPolozky) });
+        polozky.push({ text: 'Upravit číslo…', akce: () => upravitVydani(stav.aktualniVydani) });
     } else if (!detailView.classList.contains('hidden')) {
+        // Volné místo v profilu: Upravit a Přidat fotky jsou tlačítka pod jménem, tady je zbytek akcí s modelkou
+        const modelka = stav.aktualniModelka;
         polozky = [
-            { text: 'Upravit modelku', akce: () => otevritModelModal(stav.aktualniModelka) },
-            { text: 'Přidat fotky / album', akce: () => otevritAlbumModal(stav.aktualniModelka) },
-            { text: 'Zpět', akce: zpet },
+            ...(stav.aktualniPolozky.length ? [{ text: 'Spustit slideshow modelky', akce: () => otevritLightbox(0, true) }] : []),
+            { text: 'Upravit výřez titulní fotky', akce: () => upravitVyrez(modelka) },
+            null,
+            { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
+            { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },
         ];
     } else if (cil.closest('.cislo')) {
-        // Číslo časopisu; s coverem i akce coveru
+        // Číslo časopisu: společná nabídka čísla, s coverem i jeho akce; po označení se stránka Čísla obnoví
         const cislo = cil.closest('.cislo');
-        const klic = cislo.dataset.vydani;
         const index = cislo.dataset.cover === undefined ? -1 : parseInt(cislo.dataset.cover);
         const cover = stav.coveryPolozky[index];
-        // Po označení čísla se stránka Čísla obnoví
-        const oznacit = oznacitCislo(klic).map(p => ({ ...p, akce: async () => { await p.akce(); nacistCovery(searchInput.value); } }));
-        polozky = [
-            { text: `Otevřít vydání ${nazevVydani(klic)}`, akce: () => otevritVydani(klic) },
-            null,
-            ...(cover ? [
+        nabidkaCisla(cislo.dataset.vydani, x, y, {
+            poZmene: () => nacistCovery(searchInput.value),
+            navic: cover ? [
                 { text: 'Zobrazit cover', akce: () => otevritLightbox(index, false, stav.coveryPolozky) },
                 { text: 'Upravit cover', akce: () => otevritCoverModal(cover) },
                 { text: 'Smazat cover', akce: () => smazatCover(cover), nebezpecne: true },
-            ] : [{ text: `Přidat cover: ${nazevVydani(klic)}`, akce: () => otevritCoverModal(null, klic) }]),
-            null,
-            ...oznacit,
-        ];
+            ] : [],
+        });
+        return;
     } else if (!calendar.classList.contains('hidden')) {
-        // Kalendář vydání
-        const obsazene = cil.closest('[data-vydani]');
-        const prazdne = cil.closest('[data-prazdne]');
-        polozky = [];
-        if (obsazene) polozky.push({ text: `Otevřít vydání ${nazevVydani(obsazene.dataset.vydani)}`, akce: () => otevritVydani(obsazene.dataset.vydani) });
-        if (obsazene || prazdne) {
-            const klic = (obsazene || prazdne).dataset.vydani || prazdne.dataset.prazdne;
-            polozky.push(...pridatKVydani(klic), null,
-                ...oznacitCislo(klic),
-                { text: 'Upravit číslo…', akce: () => upravitVydani(klic) },
-                null);
-        }
-        polozky.push(
-            { text: 'Přidat cover', akce: () => otevritCoverModal() },
-            { text: 'Obnovit', akce: () => nacistGalerii(searchInput.value) }
-        );
+        // Kalendář: nadpis roku, číslo (i prázdné políčko), jinak jen přidání coveru
+        const rok = cil.closest('.cal-year-link');
+        const cislo = cil.closest('[data-vydani], [data-prazdne]');
+        if (rok) nabidkaRoku(rok.dataset.vydani, x, y);
+        else if (cislo) nabidkaCisla(cislo.dataset.vydani || cislo.dataset.prazdne, x, y);
+        else otevritKontextovouNabidku(x, y, [{ text: 'Přidat cover', akce: () => otevritCoverModal() }]);
+        return;
     } else if (!covers.classList.contains('hidden')) {
         // Volný prostor na stránce Čísla
-        polozky = [
-            { text: 'Přidat cover', akce: () => otevritCoverModal() },
-            { text: 'Obnovit', akce: () => nacistGalerii(searchInput.value) },
-            { text: 'Zkontrolovat soubory na Disku', akce: () => zkontrolovatSoubory() },
-        ];
+        polozky = [{ text: 'Přidat cover', akce: () => otevritCoverModal() }];
     } else if (!wall.classList.contains('hidden')) {
         // Volný prostor na stěně centerfoldů
-        polozky = [
-            { text: 'Přidat centerfold', akce: pridatCenterfold },
-            { text: 'Obnovit', akce: () => nacistGalerii(searchInput.value) },
-            { text: 'Zkontrolovat soubory na Disku', akce: () => zkontrolovatSoubory() },
-        ];
+        polozky = [{ text: 'Přidat centerfold', akce: pridatCenterfold }];
     } else {
         polozky = [{ text: 'Přidat modelku', akce: otevritRychlePridani }, ...polozkySpravy()];
     }
 
     otevritKontextovouNabidku(x, y, polozky);
+}
+
+// Akce alba v profilu modelky (⋯ v hlavičce alba, pravé tlačítko mimo fotky, položka „Album …“ v nabídce fotky).
+// Vydání alba je štítek v hlavičce a úprava modelky tlačítko v panelu, proto tu nejsou.
+function polozkyAlba(album, prvekAlba) {
+    const centerfold = album.typ === 'Centerfold';
+    // Úpravy alba jdou vždy na jeho hlavní modelku, i když je otevřený profil další modelky
+    const vlastnik = { id: album.modelkaId, jmeno: '' };
+    const mrizka = prvekAlba.querySelector('.photos-grid.zkracena, .photos-grid.rozbalena');
+    const zkracena = mrizka?.classList.contains('zkracena');
+    return [
+        { text: 'Spustit slideshow alba', akce: () => otevritLightbox(stav.aktualniPolozky.indexOf(album.polozky[0]), true) },
+        { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(vlastnik, album) },
+        ...(mrizka ? [{ text: zkracena ? 'Rozbalit album' : 'Sbalit album', akce: () => prepnoutRozbaleniAlba(mrizka, zkracena) }] : []),
+        ...(centerfold && album.fotky.length > 1 ? [{
+            text: album.spojit ? 'Rozdělit plakát na samostatné fotky' : 'Spojit stránky do jednoho plakátu',
+            akce: async () => {
+                await SetSpojeniAlba(album.modelkaId, album.album, album.typ, !album.spojit);
+                nacistFotkyModelky(stav.aktualniModelka.id);
+            },
+        }] : []),
+        ...(album.rucniPoradi && !centerfold ? [{
+            text: 'Řadit album podle srdíček',
+            akce: async () => {
+                await ZrusitPoradiAlba(album.modelkaId, album.album, album.typ);
+                nacistFotkyModelky(stav.aktualniModelka.id);
+            },
+        }] : []),
+        null,
+        { text: 'Přidat další modelku k albu…', akce: () => pridatModelkuKAlbu(album) },
+        ...album.dalsiModelky.map(m => ({ text: `Odebrat z alba: ${m.jmeno}`, akce: async () => {
+            await OdebratModelkuZAlba(album.modelkaId, album.album, album.typ, m.id);
+            nacistFotkyModelky(stav.aktualniModelka.id);
+        } })),
+        { text: 'Přesunout k jiné modelce…', akce: () => presunoutAlbum(album) },
+        ...(stav.aktualniAlba.some(a => a !== album && a.modelkaId === album.modelkaId)
+            ? [{ text: 'Sloučit s jiným albem…', akce: () => sloucitAlbum(album) }] : []),
+        { text: 'Smazat album', akce: () => smazatAlbum(album, album.fotky.length), nebezpecne: true },
+    ];
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů

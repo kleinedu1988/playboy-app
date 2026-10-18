@@ -5,7 +5,9 @@ import { stav } from './stav';
 import { detailView } from './prvky';
 import { otevritProfilPodleId } from './cover';
 import { pridatDoVyberu } from './nejlepsi';
-import { smazatFotku } from './sprava';
+import { obnovitCoJeVidet, smazatFotku } from './sprava';
+import { SetTitulniFotka } from './backend';
+import { oznamit } from '../ui/oznameni';
 import { lightbox, zavritLightbox } from './prohlizec';
 import { kopirovatText, odkazNaDisk } from './ulozeni';
 
@@ -25,7 +27,15 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
                 if (!lightbox.classList.contains('hidden')) zavritLightbox();
                 otevritProfilPodleId(polozka.modelkaId);
             } }] : []),
+        // Titulní fotka jde nastavit z jedné fotky (ne z celého plakátu najednou)
+        ...(polozka.modelkaId && stranky.length === 1 ? [{ text: 'Nastavit jako titulní fotku', akce: async () => {
+            if (!await SetTitulniFotka(polozka.modelkaId, prvni.id)) return;
+            oznamit('Titulní fotka změněna. Výřez na kartě se vrátil na výchozí.');
+            if (vProfilu) otevritProfilPodleId(polozka.modelkaId);
+            else obnovitCoJeVidet();
+        } }] : []),
         { text: 'Přidat do výběru…', akce: () => pridatDoVyberu(stranky.map(f => f.id)) },
+        null,
         { text: 'Otevřít na Google Disku', akce: () => BrowserOpenURL(odkazNaDisk(prvni)) },
         { text: 'Kopírovat odkaz', akce: () => kopirovatText(odkazNaDisk(prvni)) },
         ...(odebrat && stranky.length === 1

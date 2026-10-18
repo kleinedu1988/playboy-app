@@ -6,7 +6,7 @@ import { stav } from './stav';
 import { searchInput, stats } from './prvky';
 import { ukazatPohled } from './navigace';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
-import { oznacitCislo, pridatKVydani } from './kalendar';
+import { nabidkaCisla } from './kalendar';
 import { otevritCoverModal } from './cover';
 import { otevritModelModal, ukazatZalozku } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
@@ -371,18 +371,14 @@ export function pripravit() {
 
     // Mapa sbírky: číslo s daty se otevře, prázdné nabídne přidání; pravé tlačítko nabídne i stav čísla.
     // Naposledy přidaná modelka otevře profil, číslo v seznamu Sháním nabídne „mám výtisk“.
-    const nabidkaCisla = (klic, x, y, sOtevrenim) => otevritKontextovouNabidku(x, y, [
-        ...(sOtevrenim ? [{ text: `Otevřít ${nazevVydani(klic)}`, akce: () => otevritVydani(klic) }, null] : []),
-        ...pridatKVydani(klic), null,
-        ...oznacitCislo(klic).map(polozka => ({ ...polozka, akce: async () => { await polozka.akce(); nacistPrehled(); } })),
-    ]);
+    const nabidkaCislaPrehledu = (klic, x, y) => nabidkaCisla(klic, x, y, { poZmene: nacistPrehled });
     stats.addEventListener('click', (e) => {
         const cislo = e.target.closest('[data-cislo]');
         const modelka = e.target.closest('[data-otevrit-modelku]');
         const shanene = e.target.closest('[data-shanim]');
         if (cislo) {
             if (cislo.hasAttribute('data-ma-data')) otevritVydani(cislo.dataset.cislo);
-            else nabidkaCisla(cislo.dataset.cislo, e.clientX, e.clientY, false);
+            else nabidkaCislaPrehledu(cislo.dataset.cislo, e.clientX, e.clientY);
         } else if (modelka) {
             const m = stav.prehledModelky.get(parseInt(modelka.dataset.otevritModelku));
             if (m) otevritDetailModelky(m);
@@ -405,7 +401,7 @@ export function pripravit() {
         if (!cislo) return;
         e.preventDefault();
         e.stopPropagation();
-        nabidkaCisla(cislo.dataset.cislo, e.clientX, e.clientY, cislo.hasAttribute('data-ma-data'));
+        nabidkaCislaPrehledu(cislo.dataset.cislo, e.clientX, e.clientY);
     }, true);
 
     // Klik na buňku „chybí" otevře rovnou místo, kde se údaj doplňuje; klik jinam do řádku otevírá profil nebo vydání

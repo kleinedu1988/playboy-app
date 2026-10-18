@@ -7,7 +7,7 @@ import { zalozitSpecial } from './specialy';
 import { calList, calendar, searchInput } from './prvky';
 import { listaKalendare } from './listy';
 import { ukazatPohled } from './navigace';
-import { NAZVY_STAVU } from './vydani';
+import { NAZVY_STAVU, otevritVydani, upravitVydani } from './vydani';
 import { otevritCoverModal } from './cover';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { prevestNaVolby } from '../ui/volby';
@@ -160,27 +160,48 @@ export function nastavitEdiciKalendare(edice) {
 }
 
 // Co jde přidat k jednomu vydání; nabízí prázdné políčko kalendáře i pravé tlačítko na něm
-export const pridatKVydani = klic => [
-    ...(rozlozitVydani(klic) ? [{ text: `Nový speciál roku ${rozlozitVydani(klic).rok}…`, akce: async () => {
-        if (await zalozitSpecial(rozlozitVydani(klic).rok, rozlozitVydani(klic).edice)) nacistKalendar(searchInput.value);
-    } }] : []),
-    { text: `Přidat cover: ${nazevVydani(klic)}`, akce: () => otevritCoverModal(null, klic) },
-    { text: `Přidat centerfold: ${nazevVydani(klic)}`, akce: () => pridatCenterfold(klic) },
-    { text: `Přidat pictorial: ${nazevVydani(klic)}`, akce: () => pridatPictorial(klic) },
-];
-// Prázdné políčko nabízí i označení čísla
 // Po zápisu se kalendář obnoví, jen když je pořád vidět (uživatel mezitím mohl odejít jinam)
 const obnovitKalendar = () => { if (!calendar.classList.contains('hidden')) nacistKalendar(searchInput.value, true); };
 
-// Výtisky se sbírají jen u české edice; americká (archiv dat) nabízí jen „nezajímá mě“
-export const oznacitCislo = klic => [
-    ...(rozlozitVydani(klic)?.edice === 'CZ' ? [
-        { text: 'Mám výtisk', akce: async () => { await SetStavVydani(klic, 'mam'); obnovitKalendar(); } },
-        { text: 'Sháním toto číslo', akce: async () => { await SetStavVydani(klic, 'shanim'); obnovitKalendar(); } },
-    ] : []),
-    { text: 'Nezajímá mě', akce: async () => { await SetStavVydani(klic, 'nezajima'); obnovitKalendar(); } },
-    { text: 'Zrušit označení', akce: async () => { await SetStavVydani(klic, ''); obnovitKalendar(); } },
-];
+// Nabídka čísla, všude stejná (kalendář, Čísla, Přehled, ročník): otevřít a upravit, přidat jen to, co číslu chybí,
+// a stav čísla s ✓ u současného (druhý klik ho zruší). Výtisky se sbírají jen u české edice, americká má jen „nezajímá mě“.
+// navic: další položky za přidáváním (akce coveru na stránce Čísla); poZmene obnoví stránku po označení stavu.
+export async function nabidkaCisla(klic, x, y, { navic = [], poZmene = obnovitKalendar } = {}) {
+    const [kalendar, stavy] = await Promise.all([stav.kalendarData || GetKalendar().then(k => k || []), stav.stavyVydaniData || GetStavyVydani().then(s => s || [])]);
+    const data = kalendar.find(k => k.vydani === klic);
+    const casti = rozlozitVydani(klic);
+    const soucasny = stavy.find(s => s.vydani === klic)?.stav || '';
+    const oznacit = (hodnota, text) => ({ text: `${soucasny === hodnota ? '✓ ' : ''}${text}`, akce: async () => {
+        await SetStavVydani(klic, soucasny === hodnota ? '' : hodnota);
+        poZmene();
+    } });
+    otevritKontextovouNabidku(x, y, [
+        { nadpis: nazevVydani(klic) },
+        ...(data ? [{ text: 'Otevřít číslo', akce: () => otevritVydani(klic) }] : []),
+        { text: 'Upravit číslo…', akce: () => upravitVydani(klic) },
+        null,
+        // Ročník (bez měsíce) nemá cover ani centerfold, jen pictorial
+        ...(casti?.mesic && !data?.cover ? [{ text: 'Přidat cover', akce: () => otevritCoverModal(null, klic) }] : []),
+        ...(casti?.mesic && !data?.centerfold ? [{ text: 'Přidat centerfold', akce: () => pridatCenterfold(klic) }] : []),
+        ...(!data?.pictorial ? [{ text: 'Přidat pictorial', akce: () => pridatPictorial(klic) }] : []),
+        null,
+        ...navic,
+        null,
+        ...(casti?.edice === 'CZ' ? [oznacit('mam', 'Mám výtisk'), oznacit('shanim', 'Sháním')] : []),
+        oznacit('nezajima', 'Nezajímá mě'),
+    ]);
+}
+
+// Nabídka ročníku (nadpis roku v kalendáři): celý ročník a nový speciál
+export function nabidkaRoku(klic, x, y) {
+    const { rok, edice } = rozlozitVydani(klic);
+    otevritKontextovouNabidku(x, y, [
+        { nadpis: `Ročník ${rok}${edice !== VYCHOZI_EDICE ? ` · ${edice}` : ''}` },
+        { text: 'Otevřít ročník', akce: () => otevritVydani(klic) },
+        { text: 'Přidat pictorial k ročníku', akce: () => pridatPictorial(klic) },
+        { text: `Nový speciál roku ${rok}…`, akce: async () => { if (await zalozitSpecial(rok, edice)) obnovitKalendar(); } },
+    ]);
+}
 
 // Rozbalené řady prázdných roků (klíč „od-do")
 export const rozbaleneMezery = new Set();
@@ -206,6 +227,6 @@ export function pripravit() {
         if (!prazdne) return;
         e.stopPropagation();
         const misto = prazdne.getBoundingClientRect();
-        otevritKontextovouNabidku(misto.left, misto.bottom + 4, [...pridatKVydani(prazdne.dataset.prazdne), null, ...oznacitCislo(prazdne.dataset.prazdne)]);
+        nabidkaCisla(prazdne.dataset.prazdne, misto.left, misto.bottom + 4);
     });
 }

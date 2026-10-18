@@ -685,7 +685,7 @@ export const SABLONA_OKNA = `
         </ul>
         <h4>Akce a výběr</h4>
         <ul>
-          <li>Akce s fotkou, albem, modelkou nebo číslem: tlačítko <strong>⋯</strong>, pravé tlačítko myši nebo klávesa nabídky.</li>
+          <li>Akce s fotkou, albem, modelkou nebo číslem: tlačítko <strong>⋯</strong>, pravé tlačítko myši nebo klávesa nabídky. Na fotce jsou jen akce fotky, akce alba jsou pod ⋯ v hlavičce alba (nebo položkou „Album …“). Číslo má všude stejnou nabídku; současný stav čísla má ✓ a druhý klik ho zruší.</li>
           <li>Výběr více fotek (profil, vydání, ročník, fotograf, Nejlepší): <kbd>Ctrl</kbd>+klik, <kbd>Shift</kbd>+klik úsek, <kbd>Ctrl</kbd>+<kbd>A</kbd> vše, <kbd>Delete</kbd> odebrat (jde vrátit), <kbd>Esc</kbd> zrušit.</li>
           <li><kbd>Tab</kbd> prochází karty a fotky, <kbd>Enter</kbd> otevírá; v nabídce fungují šipky.</li>
           <li>Odebraná fotka jde vrátit tlačítkem Vrátit v oznámení; soubor na Disku zůstává vždy.</li>
@@ -699,7 +699,7 @@ export const SABLONA_OKNA = `
         <ul>
           <li>Kalendář ukazuje jednu edici (US nebo CZ). Tři linky na spodní hraně obálky: cover, centerfold, pictorial (růžová = číslo ho má); prázdné políčko = číslo chybí, klik ho přidá.</li>
           <li>Stav čísla: <strong>mám výtisk</strong> (zelený rámeček), <strong>sháním</strong>, <strong>nezajímá mě</strong> – v nabídce políčka nebo v „Upravit číslo…“.</li>
-          <li><strong>Speciály</strong> (Playmate Review, Lingerie…) jsou štítky pod měsíci roku; nový založíš v okně alba nebo coveru („Nový speciál…“) nebo z nabídky kalendáře.</li>
+          <li><strong>Speciály</strong> (Playmate Review, Lingerie…) jsou štítky pod měsíci roku; nový založíš v okně alba nebo coveru („Nový speciál…“) nebo pravým tlačítkem na nadpis roku v kalendáři.</li>
         </ul>
         <h4>Přehled a hodnocení</h4>
         <ul>

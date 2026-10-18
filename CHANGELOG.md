@@ -5,6 +5,18 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.34.7] – 2026-10-17
+
+### Změněno
+- Kontextové nabídky mají jedna pravidla: otevřít → upravit → přidat → uspořádat → smazat (vždy poslední). Z nabídek obsahu zmizely Zpět, Obnovit a Zkontrolovat soubory (zůstávají v hlavním ⋯) i položky, které jsou tlačítkem hned vedle.
+- Fotka v albu nabízí jen akce fotky. Akce alba jsou pod ⋯ v hlavičce alba, pravým tlačítkem mimo fotky nebo položkou „Album …“ v nabídce fotky. Z nabídky alba zmizely Otevřít vydání a Upravit modelku.
+- Číslo časopisu má všude stejnou nabídku (kalendář, Čísla, mapa v Přehledu, ročník, prázdné políčko). Nahoře je název čísla, přidat se nabízí jen to, co číslu chybí, a Upravit číslo… je všude. Současný stav čísla má ✓ a druhý klik ho zruší; „Zrušit označení“ zmizelo.
+- Nový speciál a pictorial k ročníku jsou v nabídce na nadpisu roku v kalendáři.
+- Karta modelky nabízí i Otevřít profil a Sloučit s jinou modelkou…
+- Volné místo v profilu nabízí slideshow modelky, výřez titulní fotky, sloučení a smazání. Volné místo na stránce čísla nabízí slideshow a Upravit číslo…
+- Nastavit jako titulní fotku jde z každé fotky modelky (i v prohlížeči, v Nejlepších a na stěně centerfoldů).
+- Oddíl „Údržba“ v hlavním ⋯ se jmenuje „Soubory a mezipaměť“, aby se nepletl s Údržbou v Přehledu.
+
 ## [0.34.6] – 2026-10-17
 
 ### Změněno

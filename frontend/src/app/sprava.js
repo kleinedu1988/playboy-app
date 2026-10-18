@@ -316,7 +316,7 @@ export function polozkySpravy() {
         { nadpis: 'Prohlížení' },
         { text: 'Náhodná modelka', akce: nahodnaModelka },
         { text: `Interval slideshow (${stav.intervalSlideshow / 1000} s)…`, akce: zmenitInterval },
-        { nadpis: 'Údržba' },
+        { nadpis: 'Soubory a mezipaměť' },
         { text: 'Obnovit zobrazení', akce: () => nacistGalerii(searchInput.value) },
         { text: 'Zkontrolovat soubory na Disku', akce: () => zkontrolovatSoubory() },
         { text: 'Vymazat mezipaměť obrázků', akce: vymazatMezipamet },

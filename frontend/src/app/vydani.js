@@ -13,8 +13,7 @@ import { BEZ_FOTKY, VELIKOST_NAHLEDU, VELIKOST_PLAKATU, VELIKOST_PLAKATU_MALA } 
 import { ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlSrdickaFotky } from './galerie';
 import { atributyMrizky, htmlPlakatu, htmlPopisuAlba, pripravitPlakat, pripravitPopisy, rozbalitKliknute, zkratitAlba } from './profil';
-import { nacistKalendar, oznacitCislo, pridatKVydani } from './kalendar';
-import { otevritKontextovouNabidku } from '../ui/nabidka';
+import { nabidkaCisla, nacistKalendar } from './kalendar';
 import { otevritCoverModal } from './cover';
 import { otevritLightbox } from './prohlizec';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
@@ -449,8 +448,7 @@ export function pripravit() {
             e.stopPropagation();
             const misto = prazdne.getBoundingClientRect();
             // Po označení čísla se ročník překreslí
-            const oznacit = oznacitCislo(prazdne.dataset.prazdne).map(p => ({ ...p, akce: async () => { await p.akce(); obnovitStranku(); } }));
-            otevritKontextovouNabidku(misto.left, misto.bottom + 4, [...pridatKVydani(prazdne.dataset.prazdne), null, ...oznacit]);
+            nabidkaCisla(prazdne.dataset.prazdne, misto.left, misto.bottom + 4, { poZmene: obnovitStranku });
             return;
         }
         const pridat = e.target.closest('[data-pridat]')?.dataset.pridat;

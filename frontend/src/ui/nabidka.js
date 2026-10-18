@@ -70,7 +70,9 @@ export function otevritKontextovouNabidku(x, y, polozky) {
         btn.className = p.nebezpecne ? 'context-item nebezpecne' : 'context-item';
         btn.setAttribute('role', 'menuitem');
         btn.textContent = p.text;
-        btn.onclick = () => {
+        // Klik nesmí dojít k zavírání nabídky na dokumentu: akce může otevřít další nabídku (Album … v nabídce fotky)
+        btn.onclick = (e) => {
+            e.stopPropagation();
             zavritKontextovouNabidku();
             p.akce();
         };

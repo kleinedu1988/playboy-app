@@ -1,6 +1,6 @@
 // Přehled sbírky: co chybí doplnit a akce v buňkách tabulek
 import { GetKalendar, GetPrehled, GetStatistiky, GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
-import { esc, nazevAlba, nazevVydani, udajChybi } from '../lib/format';
+import { VYCHOZI_EDICE, esc, nazevAlba, nazevVydani, rozlozitVydani, udajChybi } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { searchInput, stats } from './prvky';
@@ -17,10 +17,6 @@ import { htmlGrafuDekad, htmlShanim, htmlUvodu, shanenaCisla, textShanim } from 
 import { otevritVydani } from './vydani';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { oznamit } from '../ui/oznameni';
-
-// Části údržby (co doplnit a opravit) jsou v menu jedna položka „Údržba“ s vlastními záložkami nahoře
-const UDRZBA = new Set(['souhrn', 'modelky', 'vydani', 'kontrola']);
-const polozkaMenu = sekce => UDRZBA.has(sekce) ? 'udrzba' : sekce;
 
 // Přehled sbírky: kolik čeho je a co ještě chybí doplnit.
 // Každá modelka a každé vydání má jeden řádek, sloupce říkají, co u nich chybí.
@@ -64,6 +60,60 @@ const IKONY_CASTI = {
     statistiky: IKONA('<path d="M5 20V11M12 20V5M19 20v-7"/>'),
 };
 
+// Filtry fronty v Údržbě: [klíč, název]; filtr bez úkolů se neukazuje
+const FILTRY_UDRZBY = [
+    ['vse', 'Vše'], ['titulni', 'Titulní fotka'], ['centerfold', 'Centerfold'], ['hodnoceni', 'Hodnocení'], ['udaje', 'Údaje'],
+    ['text', 'Texty alb'], ['alba', 'Vydání alb'], ['cover', 'Cover čísla'], ['cfcisla', 'Centerfold čísla'], ['kontrola', 'Kontrola'],
+];
+// Co se doplňuje postupně („Uložit a další“), do textu tlačítka
+const NAZVY_FRONT = { titulni: 'titulní fotky', zakladni: 'základní údaje', vzhled: 'vzhled a míry', zarazeni: 'zařazení' };
+const NAZVY_UKOLU = { titulni: 'titulní fotka', centerfold: 'centerfold', hodnoceni: 'hodnocení' };
+const NAPOVEDY = { titulni: 'Doplnit titulní fotku', centerfold: 'Přidat centerfold', hodnoceni: 'Otevřít profil a ohodnotit' };
+const pocetAlb = n => `${n} ${n === 1 ? 'album' : n < 5 ? 'alba' : 'alb'}`;
+let prekreslitUdrzbu = () => {};
+
+// Úkoly modelky ve frontě údržby (štítky na řádku); „netýká se“ jen se zobrazenými skrytými
+function ukolyModelky(m) {
+    const ukoly = [];
+    const pridat = (filtr, klic, text, atributy, napoveda, akce = klic) => {
+        if (m.netyka.has(klic)) { if (stav.prehledSkryte) ukoly.push({ filtr, klic, text, netyka: true }); }
+        else ukoly.push({ filtr, klic, akce, text, atributy, napoveda });
+    };
+    if (m.chybi.has('titulni')) pridat('titulni', 'titulni', NAZVY_UKOLU.titulni, 'data-akce="titulni" data-klic="titulni"', NAPOVEDY.titulni);
+    if (m.chybi.has('centerfold')) pridat('centerfold', 'centerfold', NAZVY_UKOLU.centerfold, 'data-akce="centerfold" data-klic="centerfold"', NAPOVEDY.centerfold);
+    SKUPINY_UDAJU.forEach((s, i) => {
+        const chybejici = m.udaje?.[i] || [];
+        const klic = KLICE_SKUPIN[i];
+        if (!chybejici.length && !m.netyka.has(klic)) return;
+        if (!chybejici.length && m.netyka.has(klic)) { if (stav.prehledSkryte) ukoly.push({ filtr: 'udaje', klic, text: s.nazev.toLowerCase(), netyka: true }); return; }
+        const text = chybejici.length === s.udaje.length ? `${s.nazev.toLowerCase()} – vše`
+            : chybejici.length <= 3 ? chybejici.map(u => u[1]).join(', ') : `${s.nazev.toLowerCase()} (${chybejici.length} z ${s.udaje.length})`;
+        pridat('udaje', klic, text, `data-akce="udaje" data-klic="${klic}" data-zalozka="${s.zalozka}" data-pole="${chybejici[0][2]}"`,
+            `Chybí: ${chybejici.map(u => u[1]).join(', ')}`, 'udaje');
+    });
+    if (m.chybi.has('hodnoceni')) pridat('hodnoceni', 'hodnoceni', NAZVY_UKOLU.hodnoceni, 'data-akce="hodnoceni" data-klic="hodnoceni"', NAPOVEDY.hodnoceni);
+    // Alba: ukazuje se počet těch, která text nebo vydání opravdu potřebují
+    [['text', 'popis', m.bezPopisu, 'bez textu'], ['alba', 'vydani', m.bezVydani, 'bez vydání']].forEach(([filtr, akce, seznam, popis]) => {
+        const klic = akce === 'popis' ? 'text' : 'vydani';
+        const aktivni = seznam.filter(a => !a.netykaSe);
+        if (aktivni.length) ukoly.push({ filtr, klic, akce, text: `${pocetAlb(aktivni.length)} ${popis}`, atributy: `data-akce="${akce}" data-klic="${klic}"`,
+            napoveda: `Doplnit: ${aktivni.map(a => nazevAlba(a.album, a.typ)).join(', ')}` });
+        else if (seznam.length && stav.prehledSkryte) ukoly.push({ filtr, klic, text: `${pocetAlb(seznam.length)} ${popis}`, netyka: true });
+    });
+    return ukoly;
+}
+
+// Pod jménem v řádku: role a první číslo modelky
+function podtitulek(modelka) {
+    if (!modelka) return '';
+    const prvni = [...(modelka.vydani || [])].sort()[0];
+    return [modelka.role, prvni && nazevVydani(prvni)].filter(Boolean).join(' · ');
+}
+
+// Fronta pro „Uložit a další": modelky z údržby, kterým chybí právě tento údaj, zafixované při otevření
+const frontaPro = klic => stav.prehledRadky.filter(r => !r.netyka.has(klic)
+    && (klic === 'titulni' ? r.chybi.has('titulni') : (r.udaje?.[KLICE_SKUPIN.indexOf(klic)] || []).length > 0)).map(r => r.id);
+
 export async function nacistPrehled() {
     const moje = ++stav.cisloNacteni;
     const [p, seznamModelek, kalendar, stavy] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky(),
@@ -73,16 +123,7 @@ export async function nacistPrehled() {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(stats);
 
-    const ano = '<td class="ok" title="V pořádku">&#10003;</td>';
-    // Buňka s chybějícím údajem je zároveň tlačítko, které ho nabídne doplnit
-    const chybi = (akce, napoveda, klic = akce) => `<td class="chybi" data-akce="${akce}" data-klic="${klic}" title="${napoveda} (pravým tlačítkem: netýká se)">chybí</td>`;
     const netykaModelky = id => new Set((stav.prehledModelky.get(id)?.netykaSe || '').split(',').filter(Boolean));
-    const NAPOVEDY = {
-        titulni: 'Doplnit titulní fotku',
-        centerfold: 'Přidat centerfold',
-        hodnoceni: 'Otevřít profil a ohodnotit',
-    };
-    const zbytek = (pocet) => pocet > stav.prehledLimit ? `<p class="stat-note">Zobrazeno ${stav.prehledLimit} z ${pocet}. <button class="link" data-vice>Zobrazit dalších ${Math.min(60, pocet - stav.prehledLimit)}</button></p>` : '';
 
     // Modelky: co chybí přímo u nich a kolik jejich alb nemá text nebo vydání
     const modelky = new Map();
@@ -105,51 +146,11 @@ export async function nacistPrehled() {
     const vaha = m => [...m.chybi].filter(k => !m.netyka.has(k)).length
         + (m.bezPopisu.some(a => !a.netykaSe) ? 1 : 0) + (m.bezVydani.some(a => !a.netykaSe) ? 1 : 0)
         + (m.udaje || []).reduce((soucet, skupina, i) => soucet + (m.netyka.has(KLICE_SKUPIN[i]) ? 0 : skupina.length), 0);
-    // Údaj na kartě modelky: název a co chybí; klik ho nabídne doplnit, pravým tlačítkem „netýká se“
-    const udaj = (nazev, hodnota, atributy, napoveda) => `<button class="prehled-udaj" ${atributy} title="${esc(napoveda)} (pravým tlačítkem: netýká se)">${nazev} <b>${hodnota}</b></button>`;
-    const udajNetyka = (nazev, klic) => `<span class="prehled-udaj netyka" data-klic="${klic}" data-netyka="1" title="Netýká se – pravým tlačítkem jde znovu sledovat">${nazev} <b>—</b></span>`;
-    // Skupina údajů: počet chybějících, v nápovědě jejich výčet; klik otevře formulář na první z nich
-    const skupina = (m, i) => {
-        const s = SKUPINY_UDAJU[i];
-        if (m.netyka.has(KLICE_SKUPIN[i])) return stav.prehledSkryte ? udajNetyka(s.nazev, KLICE_SKUPIN[i]) : '';
-        const chybejici = m.udaje?.[i] || [];
-        if (!chybejici.length) return '';
-        return udaj(s.nazev, chybejici.length === s.udaje.length ? 'vše' : `${chybejici.length} z ${s.udaje.length}`,
-            `data-akce="udaje" data-klic="${KLICE_SKUPIN[i]}" data-zalozka="${s.zalozka}" data-pole="${chybejici[0][2]}"`,
-            `Chybí: ${chybejici.map(u => u[1]).join(', ')}`);
-    };
-    const alba = (m, seznam, akce) => {
-        const nazev = akce === 'popis' ? 'Alba bez textu' : 'Alba bez vydání';
-        const klic = akce === 'popis' ? 'text' : 'vydani';
-        const aktivni = seznam.filter(a => !a.netykaSe);
-        if (aktivni.length) return udaj(nazev, aktivni.length, `data-akce="${akce}" data-klic="${klic}"`, `Doplnit: ${aktivni.map(a => nazevAlba(a.album, a.typ)).join(', ')}`);
-        return seznam.length && stav.prehledSkryte ? udajNetyka(nazev, klic) : '';
-    };
-    const NAZVY = { titulni: 'Titulní fotka', centerfold: 'Centerfold', hodnoceni: 'Hodnocení' };
-    const jednoduchy = (m, klic) => m.netyka.has(klic) ? (stav.prehledSkryte ? udajNetyka(NAZVY[klic], klic) : '')
-        : m.chybi.has(klic) ? udaj(NAZVY[klic], '✕', `data-akce="${klic}" data-klic="${klic}"`, NAPOVEDY[klic]) : '';
     // Vyplněnost modelky: podíl sledovaných údajů, které nechybí (bez údajů „netýká se“)
     const vyplneno = m => {
         const celkem = ['titulni', 'centerfold', 'hodnoceni', 'text', 'vydani'].filter(k => !m.netyka.has(k)).length
             + SKUPINY_UDAJU.reduce((soucet, s, i) => soucet + (m.netyka.has(KLICE_SKUPIN[i]) ? 0 : s.udaje.length), 0);
         return celkem ? Math.max(0, Math.round((1 - vaha(m) / celkem) * 100)) : 100;
-    };
-    const kartaModelky = m => {
-        const modelka = stav.prehledModelky.get(m.id);
-        const procent = vyplneno(m);
-        return `
-            <div class="prehled-modelka" data-modelka="${m.id}" title="Doplnit, co chybí">
-                <img src="${esc(modelka ? adresaTitulni(modelka) : BEZ_FOTKY)}" alt="" loading="lazy" draggable="false" />
-                <div class="prehled-modelka-telo">
-                    <h4>${esc(m.jmeno)}</h4>
-                    <div class="prehled-modelka-pruh"><div><i style="width:${procent}%"></i></div>${procent} %</div>
-                    <div class="prehled-udaje">
-                        ${jednoduchy(m, 'titulni')}${SKUPINY_UDAJU.map((_, i) => skupina(m, i)).join('')}
-                        ${jednoduchy(m, 'centerfold')}${jednoduchy(m, 'hodnoceni')}
-                        ${alba(m, m.bezPopisu, 'popis')}${alba(m, m.bezVydani, 'vydani')}
-                    </div>
-                </div>
-            </div>`;
     };
     // Bez skrytých jen modelky, kterým něco opravdu chybí
     const radkyModelek = [...modelky.values()].filter(m => stav.prehledSkryte || vaha(m) > 0)
@@ -164,104 +165,114 @@ export async function nacistPrehled() {
     p.vydaniBezCenterfoldu.forEach(v => vydani.set(v, { ...vydani.get(v), centerfold: true }));
     const radkyVydani = [...vydani].sort(([a], [b]) => b.localeCompare(a));
 
-    // Levý panel: čísla sbírky, menu částí a vyplněnost; vpravo vždy jedna část (Souhrn, Modelky, Vydání…)
+    // Levý panel: menu částí; vpravo vždy jedna část (Přehled, Údržba, Sháním, Statistiky)
     const modelekSChybou = radkyModelek.filter(m => vaha(m) > 0).length;
     const aktivnich = seznam => seznam.filter(x => !x.netykaSe).length;
     const shanim = shanenaCisla(stavy).length;
+    const ukolu = modelekSChybou + radkyVydani.length + p.podezrele.length;
     const casti = [
         ['uvod', 'Přehled', ''],
-        ['udrzba', 'Údržba', modelekSChybou + radkyVydani.length + p.podezrele.length],
+        ['udrzba', 'Údržba', ukolu],
         ['shanim', 'Sháním CZ', shanim, true],
         ['statistiky', 'Statistiky', ''],
     ];
-    const zname = ['uvod', 'shanim', 'statistiky', 'souhrn', 'modelky', 'vydani', ...(p.podezrele.length ? ['kontrola'] : [])];
-    if (!zname.includes(stav.prehledSekce)) stav.prehledSekce = 'uvod';
-    // Záložky údržby nad každou její částí
-    const zalozkyUdrzby = `<nav class="udrzba-zalozky">${[
-        ['souhrn', 'Souhrn', ''], ['modelky', 'Modelky', modelekSChybou], ['vydani', 'Čísla', radkyVydani.length],
-        ...(p.podezrele.length ? [['kontrola', 'Ke kontrole', p.podezrele.length]] : []),
-    ].map(([klic, nazev, pocet]) => `<button type="button" class="${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">${nazev}${pocet ? ` <span>${pocet}</span>` : ''}</button>`).join('')}</nav>`;
-    // Souhrn: pokrok sbírky po položkách (pruh, kolik z kolika) a kolik zbývá doplnit; klik otevře část, kde se doplňuje
-    const radekSouhrnu = (popis, chybi, celkem, sekce, akce = 'doplnit') => {
+    if (!['uvod', 'udrzba', 'shanim', 'statistiky'].includes(stav.prehledSekce)) stav.prehledSekce = 'uvod';
+    // Pokrok sbírky po položkách (pruh, kolik z kolika) a kolik zbývá doplnit; klik otevře Údržbu s filtrem na tu položku
+    const radekSouhrnu = (popis, chybi, celkem, filtr, akce = 'doplnit') => {
         const hotovo = Math.max(0, celkem - chybi);
         const procent = celkem ? Math.round(hotovo / celkem * 100) : 100;
-        return `<button class="prehled-souhrn-radek ${chybi ? '' : 'hotovo'}" data-sekce-prehledu="${sekce}">
+        return `<button class="prehled-souhrn-radek ${chybi ? '' : 'hotovo'}" data-sekce-prehledu="udrzba" data-udrzba-filtr="${filtr}">
             <span>${popis}</span>
             ${celkem ? `<div class="prehled-souhrn-pruh"><i style="width:${procent}%"></i></div><small>${hotovo} z ${celkem}</small>` : '<div></div><small></small>'}
             <b>${chybi ? `${akce} ${chybi}` : 'hotovo'}</b></button>`;
     };
-
-    // Pokrok sbírky po položkách; na úvodu i v Souhrnu údržby
     const radkySouhrnu = `<div class="prehled-souhrn">
-                    ${radekSouhrnu('Modelky s titulní fotkou', aktivnich(p.bezTitulni), p.modelek, 'modelky')}
-                    ${radekSouhrnu('Modelky s centerfoldem', aktivnich(p.bezCenterfoldu), p.modelek, 'modelky')}
-                    ${radekSouhrnu('Modelky s hodnocením', aktivnich(p.bezHodnoceni), p.modelek, 'modelky')}
-                    ${radekSouhrnu('Alba s textem', aktivnich(p.albaBezPopisu), p.alb, 'modelky')}
-                    ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb, 'modelky')}
-                    ${radekSouhrnu('Vydání s coverem', p.vydaniBezCoveru.length, p.vydani, 'vydani')}
-                    ${radekSouhrnu('Vydání s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'vydani')}
+                    ${radekSouhrnu('Modelky s titulní fotkou', aktivnich(p.bezTitulni), p.modelek, 'titulni')}
+                    ${radekSouhrnu('Modelky s centerfoldem', aktivnich(p.bezCenterfoldu), p.modelek, 'centerfold')}
+                    ${radekSouhrnu('Modelky s hodnocením', aktivnich(p.bezHodnoceni), p.modelek, 'hodnoceni')}
+                    ${radekSouhrnu('Alba s textem', aktivnich(p.albaBezPopisu), p.alb, 'text')}
+                    ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb, 'alba')}
+                    ${radekSouhrnu('Vydání s coverem', p.vydaniBezCoveru.length, p.vydani, 'cover')}
+                    ${radekSouhrnu('Vydání s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'cfcisla')}
                     ${p.podezrele.length ? radekSouhrnu('Údaje ke kontrole', p.podezrele.length, 0, 'kontrola', 'zkontrolovat') : ''}
     </div>`;
+
+    // Údržba: jedna fronta úkolů (modelky, čísla, údaje ke kontrole) seřazená podle toho, kolik toho chybí
+    const modelekBezUdaju = radkyModelek.filter(m => (m.udaje || []).some((s, i) => s.length && !m.netyka.has(KLICE_SKUPIN[i]))).length;
+    const fronta = /** @type {any[]} */ ([
+        ...radkyModelek.map(m => ({ druh: 'modelka', m, vaha: m.vaha, ukoly: ukolyModelky(m) })),
+        ...radkyVydani.map(([v, co]) => ({ druh: 'vydani', v, vaha: (co.cover ? 1 : 0) + (co.centerfold ? 1 : 0), ukoly: [
+            ...(co.cover ? [{ filtr: 'cover', text: 'cover', atributy: 'data-akce="cover" data-klic="cover"', napoveda: 'Přidat cover' }] : []),
+            ...(co.centerfold ? [{ filtr: 'cfcisla', text: 'centerfold', atributy: 'data-akce="centerfold" data-klic="centerfold"', napoveda: 'Přidat centerfold' }] : []),
+        ] })),
+        ...p.podezrele.map(u => ({ druh: 'kontrola', u, vaha: 1, ukoly: [{ filtr: 'kontrola', text: u.popis, atributy: `data-opravit="${esc(u.popis)}"`, napoveda: 'Opravit', opravit: true }] })),
+    ]).sort((a, b) => b.vaha - a.vaha);
+    const pocetFiltru = filtr => fronta.filter(r => r.ukoly.some(u => u.filtr === filtr && !u.netyka)).length;
+    const htmlUdrzby = () => {
+        const filtr = stav.udrzbaFiltr;
+        const radky = fronta.filter(r => filtr === 'vse' || r.ukoly.some(u => u.filtr === filtr));
+        const prvniUkol = r => r.ukoly.find(u => !u.netyka && (filtr === 'vse' || u.filtr === filtr));
+        const cil = r => r.druh === 'vydani' ? `data-vydani="${esc(r.v)}"` : `data-modelka="${r.druh === 'modelka' ? r.m.id : r.u.modelkaId}"`;
+        // Doplňovat postupně jde jen tam, kde má formulář „Uložit a další“ (titulní fotka a údaje)
+        const prvni = radky.find(prvniUkol);
+        const ukol = prvni && prvniUkol(prvni);
+        const klicFronty = ukol?.akce === 'titulni' ? 'titulni' : ukol?.akce === 'udaje' ? ukol.klic : '';
+        const postupne = klicFronty ? `<button type="button" class="btn btn-primary btn-small ud-postupne" ${cil(prvni)} ${ukol.atributy}>Doplňovat ${NAZVY_FRONT[klicFronty]} postupně (${frontaPro(klicFronty).length}) →</button>` : '';
+        const ukazat = radky.slice(0, stav.prehledLimit);
+        return `
+            <h3>Údržba <span>co doplnit a opravit · ${ukolu} ${ukolu === 1 ? 'úkol' : ukolu > 1 && ukolu < 5 ? 'úkoly' : 'úkolů'}</span></h3>
+            <div class="ud-souhrn">${[
+                ['Titulní fotka', aktivnich(p.bezTitulni), p.modelek], ['Centerfold', aktivnich(p.bezCenterfoldu), p.modelek],
+                ['Hodnocení', aktivnich(p.bezHodnoceni), p.modelek], ['Údaje modelek', modelekBezUdaju, p.modelek],
+                ['Texty alb', aktivnich(p.albaBezPopisu), p.alb], ['Vydání alb', aktivnich(p.albaBezVydani), p.alb],
+                ['Cover čísel', p.vydaniBezCoveru.length, p.vydani], ['Centerfold čísel', p.vydaniBezCenterfoldu.length, p.vydani],
+            ].map(([nazev, chybi, celkem]) => {
+                const hotovo = Math.max(0, celkem - chybi);
+                return `<div>${nazev}<i><b style="width:${celkem ? Math.round(hotovo / celkem * 100) : 100}%"></b></i><span>${hotovo} z ${celkem}</span></div>`;
+            }).join('')}</div>
+            <div class="ud-filtry" role="group" aria-label="Co ukázat">${FILTRY_UDRZBY.map(([klic, nazev]) => {
+                const pocet = klic === 'vse' ? fronta.length : pocetFiltru(klic);
+                if (!pocet && klic !== filtr) return '';
+                return `<button type="button" class="${klic === filtr ? 'on' : ''}" aria-pressed="${klic === filtr}" data-udrzba-filtr="${klic}">${nazev}<b>${pocet}</b></button>`;
+            }).join('')}</div>
+            <div class="ud-lista">Seřazeno podle toho, kolik toho chybí · <button class="link" data-skryte>${stav.prehledSkryte ? 'skrýt „netýká se“' : 'zobrazit i „netýká se“'}</button>${postupne}</div>
+            ${ukazat.length ? `<div class="ud-fronta">${ukazat.map(r => {
+                const hlavni = prvniUkol(r);
+                const obrazek = r.druh === 'vydani' ? `<span class="ud-obalka">${IKONA('<path d="M6 3h9l3 3v15H6z"/><path d="M9 9h6M9 13h6M9 17h3"/>')}</span>`
+                    : `<img src="${esc(stav.prehledModelky.get(r.m?.id ?? r.u.modelkaId) ? adresaTitulni(stav.prehledModelky.get(r.m?.id ?? r.u.modelkaId)) : BEZ_FOTKY)}" alt="" loading="lazy" draggable="false" />`;
+                const nazev = r.druh === 'vydani' ? nazevVydani(r.v) : r.druh === 'modelka' ? r.m.jmeno : r.u.jmeno;
+                return `<div class="ud-radek" ${cil(r)}>
+                    ${obrazek}
+                    <div class="ud-jmeno"><strong>${esc(nazev)}</strong><small>${esc(r.druh === 'vydani' ? `číslo · ${rozlozitVydani(r.v)?.edice || VYCHOZI_EDICE}` : r.druh === 'kontrola' ? 'ke kontrole' : podtitulek(stav.prehledModelky.get(r.m.id)))}</small></div>
+                    <div class="ud-chybi">${r.ukoly.map(u => u.netyka
+                        ? `<span class="ud-chip netyka" data-klic="${u.klic}" data-netyka="1" title="Netýká se – pravým tlačítkem jde znovu sledovat">${esc(u.text)} —</span>`
+                        : u.opravit ? `<span class="ud-chip hlavni">${esc(u.text)}</span>`
+                        : `<button type="button" class="ud-chip ${u === hlavni ? 'hlavni' : ''}" ${u.atributy} title="${esc(u.napoveda)} (pravým tlačítkem: netýká se)">${esc(u.text)}</button>`).join('')}</div>
+                    <div class="ud-akce">
+                        ${hlavni ? `<button type="button" class="ud-doplnit" ${hlavni.atributy} title="${esc(hlavni.napoveda)}">${hlavni.opravit ? 'Opravit' : 'Doplnit'}</button>` : ''}
+                        <button type="button" class="ud-vice" data-ud-vice title="Netýká se, další akce" aria-label="Další akce">⋯</button>
+                    </div>
+                </div>`;
+            }).join('')}</div>${radky.length > stav.prehledLimit ? `<p class="stat-note">Zobrazeno ${stav.prehledLimit} z ${radky.length}. <button class="link" data-vice>Zobrazit dalších ${Math.min(60, radky.length - stav.prehledLimit)}</button></p>` : ''}`
+                : `<p class="stat-prazdne">${fronta.length ? 'V tomhle filtru nic nezbývá.' : 'Vše je doplněné.'}</p>`}`;
+    };
     stats.innerHTML = `
         <aside class="profile-side prehled-panel">
             <h2>Sbírka</h2>
             <nav class="prehled-menu">
-                ${casti.map(([klic, nazev, pocet, neutralni]) => `<button class="${klic === polozkaMenu(stav.prehledSekce) ? 'active' : ''}" data-sekce-prehledu="${klic}">
+                ${casti.map(([klic, nazev, pocet, neutralni]) => `<button class="${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">
                     ${IKONY_CASTI[klic]}${nazev}${pocet !== '' ? `<b class="${pocet && !neutralni ? 'chybi' : ''}">${pocet}</b>` : ''}</button>`).join('')}
             </nav>
         </aside>
         <div class="prehled-obsah" data-sekce-ukazana="${stav.prehledSekce}">
-            <section class="stat-section" data-sekce="uvod">${htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, souhrn: radkySouhrnu, kUdrzbe: modelekSChybou + radkyVydani.length + p.podezrele.length, modelekUplnych: p.modelek - modelekSChybou })}</section>
+            <section class="stat-section" data-sekce="uvod">${htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, souhrn: radkySouhrnu, kUdrzbe: ukolu, modelekUplnych: p.modelek - modelekSChybou })}</section>
             <section class="stat-section" data-sekce="shanim">${htmlShanim(stavy)}</section>
-            <section class="stat-section" data-sekce="souhrn">
-                ${zalozkyUdrzby}
-                <h3>Co zbývá doplnit</h3>
-                ${radkySouhrnu}
-            </section>
-
-        <section class="stat-section" data-sekce="modelky">
-            ${zalozkyUdrzby}
-            <h3>Modelky <span>${p.modelek - radkyModelek.filter(m => vaha(m) > 0).length} z ${p.modelek} má vše vyplněné</span>
-                <button class="link stat-toggle" data-skryte>${stav.prehledSkryte ? 'Skrýt údaje „netýká se“' : 'Zobrazit i údaje „netýká se“'}</button></h3>
-            ${radkyModelek.length ? `
-            <div class="prehled-modelky">${radkyModelek.slice(0, stav.prehledLimit).map(kartaModelky).join('')}</div>${zbytek(radkyModelek.length)}` : ''}
-        </section>
-
-        <section class="stat-section" data-sekce="vydani">
-            ${zalozkyUdrzby}
-            <h3>Vydání <span>${p.vydani - radkyVydani.length} z ${p.vydani} má cover i centerfold</span></h3>
-            ${radkyVydani.length ? `
-            <table class="stat-table stat-table-narrow">
-                <thead><tr><th>Vydání</th><th>Cover</th><th>Centerfold</th></tr></thead>
-                <tbody>
-                    ${radkyVydani.slice(0, stav.prehledLimit).map(([v, co]) => `
-                        <tr data-vydani="${esc(v)}" title="Otevřít vydání">
-                            <th>${esc(nazevVydani(v))}</th>${co.cover ? chybi('cover', 'Přidat cover') : ano}${co.centerfold ? chybi('centerfold', 'Přidat centerfold') : ano}
-                        </tr>`).join('')}
-                </tbody>
-            </table>${zbytek(radkyVydani.length)}` : ''}
-        </section>
-
-        ${p.podezrele.length ? `
-        <section class="stat-section" data-sekce="kontrola">
-            ${zalozkyUdrzby}
-            <h3>Ke kontrole <span>údaje, které vypadají jako chyba při zadávání</span></h3>
-            <div class="prehled-kontrola">
-                ${p.podezrele.slice(0, stav.prehledLimit).map(u => {
-                    const modelka = stav.prehledModelky.get(u.modelkaId);
-                    return `<div class="prehled-kontrola-radek" data-modelka="${u.modelkaId}" title="Otevřít profil">
-                        <img src="${esc(modelka ? adresaTitulni(modelka) : BEZ_FOTKY)}" alt="" loading="lazy" draggable="false" />
-                        <strong>${esc(u.jmeno)}</strong><span>${esc(u.popis)}</span>
-                        <button type="button" class="btn btn-secondary btn-small" data-opravit="${esc(u.popis)}">Opravit</button>
-                    </div>`;
-                }).join('')}
-            </div>${zbytek(p.podezrele.length)}
-        </section>` : ''}
-
-        <!-- Statistiky se počítají až při prvním zobrazení oddílu -->
-        <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="stat-prazdne">Počítám statistiky…</p></section>
+            <section class="stat-section" data-sekce="udrzba">${htmlUdrzby()}</section>
+            <!-- Statistiky se počítají až při prvním zobrazení oddílu -->
+            <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="stat-prazdne">Počítám statistiky…</p></section>
         </div>
     `;
+    prekreslitUdrzbu = () => { stats.querySelector('[data-sekce="udrzba"]').innerHTML = htmlUdrzby(); };
     if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
     // Graf desetiletí na úvodu se dopočítá zvlášť (statistiky se počítají z celé sbírky)
     const grafDekad = stats.querySelector('[data-graf-dekad]');
@@ -288,14 +299,43 @@ export async function oznacitNetykaSe(bunka, netyka) {
     if (!stats.classList.contains('hidden')) nacistPrehled();
 }
 
+// Nabídka ⋯ na řádku údržby: „netýká se“ pro každý úkol a další akce
+function nabidkaRadku(tlacitko) {
+    const radek = tlacitko.closest('.ud-radek');
+    const r = tlacitko.getBoundingClientRect();
+    const ukoly = [...radek.querySelectorAll('.ud-chybi button[data-klic]')];
+    let polozky;
+    if (radek.dataset.vydani) {
+        polozky = [
+            ...(ukoly.length ? [{ text: 'Netýká se – číslo mě nezajímá', akce: () => oznacitNetykaSe(ukoly[0], true) }, null] : []),
+            { text: `Otevřít ${nazevVydani(radek.dataset.vydani)}`, akce: () => otevritVydani(radek.dataset.vydani) },
+        ];
+    } else {
+        const modelka = stav.prehledModelky.get(parseInt(radek.dataset.modelka));
+        if (!modelka) return;
+        const netyka = [...radek.querySelectorAll('.ud-chybi [data-netyka]')];
+        polozky = [
+            ...ukoly.map(u => ({ text: `Netýká se: ${u.textContent}`, akce: () => oznacitNetykaSe(u, true) })),
+            ...netyka.map(u => ({ text: `Znovu sledovat: ${u.textContent.replace(/ —$/, '')}`, akce: () => oznacitNetykaSe(u, false) })),
+            ...(ukoly.length || netyka.length ? [null] : []),
+            ...(stav.prehledRadky.some(x => x.id === modelka.id) ? [{ text: 'Doplnit vše v jednom okně', akce: () => otevritDoplneni(modelka.id) }] : []),
+            { text: 'Otevřít profil', akce: () => otevritDetailModelky(modelka) },
+        ];
+    }
+    otevritKontextovouNabidku(r.right - 220, r.bottom + 4, polozky);
+}
+
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'uvod'; } catch { /* úvod */ }
-    // Části v levém panelu, přepínač skrytých údajů a další stránka tabulek
+    // Dřívější záložky údržby (Souhrn, Modelky, Čísla, Ke kontrole) jsou teď jedna Údržba
+    if (['souhrn', 'modelky', 'vydani', 'kontrola'].includes(stav.prehledSekce)) stav.prehledSekce = 'udrzba';
+    // Části v levém panelu, filtry a ⋯ ve frontě údržby, přepínač skrytých údajů a další stránka
     stats.addEventListener('click', (e) => {
         const cast = e.target.closest('[data-sekce-prehledu]');
-        const karta = e.target.closest('.prehled-modelka');
+        const filtr = e.target.closest('[data-udrzba-filtr]');
         const opravit = e.target.closest('[data-opravit]');
+        const vice = e.target.closest('[data-ud-vice]');
         if (opravit) {
             // Album s jednou fotkou se opravuje v profilu, ostatní (jméno, datum) ve formuláři modelky
             e.stopPropagation();
@@ -303,19 +343,23 @@ export function pripravit() {
             if (!modelka) return;
             if (opravit.dataset.opravit.startsWith('album')) otevritDetailModelky(modelka);
             else otevritModelModal(modelka);
-        } else if (karta && !e.target.closest('[data-akce]')) {
-            // Klik na kartu modelky (mimo konkrétní údaj) otevře okno se vším, co jí chybí
+        } else if (vice) {
             e.stopPropagation();
-            otevritDoplneni(parseInt(karta.dataset.modelka));
+            nabidkaRadku(vice);
         } else if (cast) {
-            // Přepnutí části jen v zobrazené stránce, bez nového načtení; Údržba otevře svůj souhrn
-            stav.prehledSekce = cast.dataset.sekcePrehledu === 'udrzba' ? 'souhrn' : cast.dataset.sekcePrehledu;
+            // Přepnutí části jen v zobrazené stránce, bez nového načtení; řádek souhrnu otevře Údržbu s filtrem
+            stav.prehledSekce = cast.dataset.sekcePrehledu;
             try { localStorage.setItem('prehledSekce', stav.prehledSekce); } catch { /* jen se nezapamatuje */ }
+            if (cast.dataset.udrzbaFiltr) { stav.udrzbaFiltr = cast.dataset.udrzbaFiltr; prekreslitUdrzbu(); }
             stats.querySelector('.prehled-obsah').dataset.sekceUkazana = stav.prehledSekce;
-            stats.querySelectorAll('.prehled-menu [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === polozkaMenu(stav.prehledSekce)));
-            stats.querySelectorAll('.udrzba-zalozky [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === stav.prehledSekce));
+            stats.querySelectorAll('.prehled-menu [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === stav.prehledSekce));
             if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
             document.querySelector('main').scrollTop = 0;
+        } else if (filtr) {
+            stav.udrzbaFiltr = filtr.dataset.udrzbaFiltr;
+            stav.prehledLimit = 60;
+            prekreslitUdrzbu();
+            stats.querySelector(`[data-udrzba-filtr="${stav.udrzbaFiltr}"]`)?.focus();
         } else if (e.target.closest('[data-skryte]')) {
             stav.prehledSkryte = !stav.prehledSkryte;
             nacistPrehled();
@@ -381,9 +425,6 @@ export function pripravit() {
 
         const modelka = stav.prehledModelky.get(parseInt(radek.dataset.modelka));
         if (!modelka) return;
-        // Fronta pro „Uložit a další": modelky z tabulky, kterým chybí právě tento údaj, zafixované při otevření
-        const frontaPro = klic => stav.prehledRadky.filter(r => !r.netyka.has(klic)
-            && (klic === 'titulni' ? r.chybi.has('titulni') : (r.udaje?.[KLICE_SKUPIN.indexOf(klic)] || []).length > 0)).map(r => r.id);
         if (akce === 'titulni') {
             otevritModelModal(modelka, { zalozka: 0, klic: 'titulni', ids: frontaPro('titulni') });
             document.getElementById('inputDriveID').focus();

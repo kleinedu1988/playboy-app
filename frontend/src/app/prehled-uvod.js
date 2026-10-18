@@ -110,7 +110,7 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
             ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
         </div>` : ''}
         <div class="uvod-karta uvod-doplnit">
-            <h4>Co zbývá doplnit<small><button type="button" class="link" data-sekce-prehledu="souhrn">Údržba (${kUdrzbe}) →</button></small></h4>
+            <h4>Co zbývá doplnit<small><button type="button" class="link" data-sekce-prehledu="udrzba" data-udrzba-filtr="vse">Údržba (${kUdrzbe}) →</button></small></h4>
             ${souhrn}
         </div>
         <div class="uvod-dole">

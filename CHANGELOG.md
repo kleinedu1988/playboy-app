@@ -5,6 +5,14 @@ verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do v
 která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
 `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
+## [0.34.6] – 2026-10-17
+
+### Změněno
+- Údržba je jedna fronta úkolů místo záložek Souhrn, Modelky, Čísla a Ke kontrole. Modelky, čísla i údaje ke kontrole jsou v jednom seznamu, seřazené podle toho, kolik toho chybí. Nahoře je stručný souhrn pokroku a filtry s počty (Titulní fotka, Centerfold, Hodnocení, Údaje, Texty alb, Vydání alb, Cover čísla, Centerfold čísla, Kontrola).
+- Na řádku jsou štítky toho, co chybí. Klik na štítek otevře právě ten údaj, „Doplnit“ otevře první z nich. „Doplňovat postupně“ prochází modelky s „Uložit a další“.
+- Pod ⋯ na řádku je „netýká se“ pro každý úkol, okno „Doplnit modelku“ se vším, co jí chybí, a profil.
+- Řádky „Co zbývá doplnit“ na úvodu otevřou Údržbu rovnou s filtrem na danou položku.
+
 ## [0.34.5] – 2026-10-17
 
 ### Vylepšeno

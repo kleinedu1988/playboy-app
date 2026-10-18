@@ -15,6 +15,12 @@
   - `CHANGELOG.md` (přidat záznam s datem ve formátu `YYYY-MM-DD`)
 - Změny vždy commituj do gitu s věcnou commit message.
 
+## Alfa (0.50.x)
+- Program je v alfě: přidávají se jen opravy a doladění rozhraní, žádné nové velké funkce.
+- **Neměnit schéma databáze (úprava č. 11) ani formát exportu (verze 7).** Hlídá to test `TestZmrazeniAlfy`;
+  jeho úprava je vědomé rozhodnutí uživatele, ne součást opravy.
+- Chyby a nápady z alfy se zapisují do `PLAN.md`, plán do `ROADMAP.md`.
+
 ## Kvalita kódu a testování
 - Po každé úpravě vždy ověř:
   - `go test ./...`

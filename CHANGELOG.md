@@ -2,10 +2,33 @@
 
 Všechny podstatné změny programu. Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
 verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do verze 1.0.0 zvyšuje MINOR každá změna,
-která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v repozitáři jsou označené značkami
-`vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
+která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Milníky (0.9.0, alfa 0.50.0, beta,
+1.0.0) jsou v repozitáři označené značkami `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
 
-## [0.34.7] – 2026-10-17
+Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
+
+## [0.50.0] – 2026-10-18 – alfa
+
+První alfa. Program je použitelný na skutečné sbírce; od této verze do 1.0.0 přibývají jen opravy
+a doladění rozhraní. Schéma databáze (úprava č. 11) a formát exportu (verze 7) jsou zmrazené: databáze
+ani exportované soubory se už do vydané verze nezmění. Chyby z alfy se opravují ve verzích 0.50.1, 0.50.2…
+
+### Co alfa obsahuje
+- **Modelky, alba a fotky:** profil s údaji a centerfoldy, sdílená alba, spojené plakáty, prohlížeč fotek se
+  slideshow, lupou a srdíčky, výběr více fotek, vlastní výběry, odebrání s možností vrátit.
+- **Čísla časopisu:** edice US a CZ, speciály, kalendář, stránka čísla s obsahem podle stran, články a skeny
+  stran, ročníky a fotografové; výtisky české edice (mám výtisk, sháním).
+- **Přehled:** mapy edic, Údržba jako fronta úkolů, Sháním CZ, Statistiky a vývoj modelek v čase.
+- **Hledání:** rychlé výsledky, cílené hledání, rozsahy, vylučování, překlepy a fulltext v textech.
+- **Data:** export a import YAML a Markdownu, denní zálohy a obnovení, zámek heslem, instalace do nabídky
+  aplikací.
+
+### Změněno
+- Test hlídá zmrazení schématu databáze a formátu exportu.
+- README, ROADMAP, PLAN a popis exportu odpovídají alfě: co program umí, číslování alfa 0.50.x, beta 0.90.x
+  a 1.0.0, plán po vydání.
+
+## [0.34.7] – 2026-10-18
 
 ### Změněno
 - Kontextové nabídky mají jedna pravidla: otevřít → upravit → přidat → uspořádat → smazat (vždy poslední). Z nabídek obsahu zmizely Zpět, Obnovit a Zkontrolovat soubory (zůstávají v hlavním ⋯) i položky, které jsou tlačítkem hned vedle.
@@ -17,7 +40,7 @@ která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v 
 - Nastavit jako titulní fotku jde z každé fotky modelky (i v prohlížeči, v Nejlepších a na stěně centerfoldů).
 - Oddíl „Údržba“ v hlavním ⋯ se jmenuje „Soubory a mezipaměť“, aby se nepletl s Údržbou v Přehledu.
 
-## [0.34.6] – 2026-10-17
+## [0.34.6] – 2026-10-18
 
 ### Změněno
 - Údržba je jedna fronta úkolů místo záložek Souhrn, Modelky, Čísla a Ke kontrole. Modelky, čísla i údaje ke kontrole jsou v jednom seznamu, seřazené podle toho, kolik toho chybí. Nahoře je stručný souhrn pokroku a filtry s počty (Titulní fotka, Centerfold, Hodnocení, Údaje, Texty alb, Vydání alb, Cover čísla, Centerfold čísla, Kontrola).
@@ -25,23 +48,23 @@ která mění schéma databáze nebo formát exportu, PATCH jen opravy. Verze v 
 - Pod ⋯ na řádku je „netýká se“ pro každý úkol, okno „Doplnit modelku“ se vším, co jí chybí, a profil.
 - Řádky „Co zbývá doplnit“ na úvodu otevřou Údržbu rovnou s filtrem na danou položku.
 
-## [0.34.5] – 2026-10-17
+## [0.34.5] – 2026-10-18
 
 ### Vylepšeno
 - **Vývoj v čase – BMI a poměr pas : boky:** Dva odvozené řádky (s popiskem „odvozeno“): BMI z výšky a váhy a poměr pasu a boků (na dvě desetinná místa); počítají se jen u modelek, které mají oba údaje.
 - **Vývoj v čase – úplnost dat:** Nový sloupec **Úplnost** u každého údaje: pruh a procento modelek s centerfoldem v edici, které údaj mají. Odkaz **doplnit N →** otevře formulář první modelky, které údaj chybí, rovnou v daném poli, a tlačítkem **Uložit a další** projde všechny ostatní.
 
-## [0.34.4] – 2026-10-17
+## [0.34.4] – 2026-10-18
 
 ### Přidáno
 - **Vývoj v čase ve Statistikách:** Tabulka údajů po desetiletích podle roku centerfoldu modelky – medián věku v době centerfoldu, výšky, váhy, hrudníku, pasu a boků a podíl blond vlasů, oholeného ochlupení, silikonových prsou, tetování a piercingu. Pod každou hodnotou je počet modelek se známým údajem; období s méně než pěti modelkami je tlumené. Sytost buňky ukazuje, kde je hodnota v řádku nejvyšší. Klik na řádek ukáže pod tabulkou graf: u číselných údajů čáru mediánu po pětiletích s pásmem prostřední poloviny modelek, u podílů sloupce po desetiletích rozdělené na sto procent; po najetí myší bublina s hodnotou. Přepínač US/CZ vybere edici (výchozí US). Barva vlasů z volného textu se řadí do skupin Blond, Hnědé, Černé, Zrzavé a Jiné.
 
-## [0.34.3] – 2026-10-17
+## [0.34.3] – 2026-10-18
 
 ### Vylepšeno
 - **Úvod Přehledu:** Pod mapami edic je celý seznam **Co zbývá doplnit** s pruhy a tlačítky „doplnit“ (místo karty se třemi úkoly), dva grafy – **Výtisky CZ po letech** a **Centerfoldy podle desetiletí** (s bublinou po najetí myší) – a naposledy přidané modelky v jednom řádku.
 
-## [0.34.2] – 2026-10-17
+## [0.34.2] – 2026-10-18
 
 ### Vylepšeno
 - **Nový Přehled:** Levý panel má čtyři části místo šesti: **Přehled**, **Údržba**, **Sháním CZ** a **Statistiky**.

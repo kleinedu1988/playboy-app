@@ -2775,3 +2775,14 @@ func TestVyvojVCase(t *testing.T) {
 		t.Errorf("česká edice: %+v", cz)
 	}
 }
+
+// Alfa (0.50.x) zmrazila schéma databáze a formát exportu: nová úprava schématu ani nová verze exportu
+// do 1.0.0 nevznikne. Změna tady znamená vědomé rozhodnutí a novou MINOR verzi mimo alfu.
+func TestZmrazeniAlfy(t *testing.T) {
+	if len(migrace) != 11 {
+		t.Errorf("úprav schématu je %d, alfa zmrazila schéma na úpravě č. 11", len(migrace))
+	}
+	if verzeExportu != 7 {
+		t.Errorf("verze exportu je %d, alfa zmrazila formát exportu na verzi 7", verzeExportu)
+	}
+}

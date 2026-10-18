@@ -3,6 +3,9 @@
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
 v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 7** (program 0.30.0 a novější).
 
+Od alfy (program 0.50.0) je formát verze 7 **zmrazený**: do verze 1.0.0 se nezmění a soubory exportované
+teď půjdou načíst i do vydané verze.
+
 Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-exportu.yaml); jde rovnou načíst importem.
 
 ## Pravidla importu

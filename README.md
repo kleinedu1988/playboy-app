@@ -3,7 +3,7 @@
 Desktopová aplikace (Wails v2: Go + Vanilla JS) pro osobní katalog modelek, alb, centerfoldů,
 coverů a čísel časopisu Playboy. Fotky se neukládají do aplikace, načítají se z Google Disku podle odkazu.
 
-**Stav: alfa (0.50.x).** Program je použitelný na skutečné sbírce. Schéma databáze (úprava č. 11) a formát
+**Stav: alfa (řada 0.5x).** Program je použitelný na skutečné sbírce. Schéma databáze (úprava č. 11) a formát
 exportu (verze 7) jsou zmrazené; v alfě přibývají jen opravy. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md),
 změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 
@@ -53,7 +53,7 @@ Instaluje se jen do domovské složky, bez sudo: program do `~/.local/bin/playbo
 Databáze se při prvním startu nové verze sama upraví (před úpravou se uloží záloha). Po aktualizaci se
 jednou ukáže okno „Co je nového“.
 
-**Přenos na jiný počítač:** program zavřít, zkopírovat celou složku `~/.local/share/playboy-app` (databáze,
+**Přenos na jiný počítač:** program zavřít (při zavření se deník změn zapíše do databáze a soubory `-wal` a `-shm` zmizí), zkopírovat celou složku `~/.local/share/playboy-app` (databáze,
 zálohy, stav okna) na stejné místo na novém počítači a tam program nainstalovat. Heslo, pokud je nastavené,
 platí dál. Mezipaměť obrázků se nepřenáší, vytvoří se znovu.
 
@@ -61,7 +61,7 @@ platí dál. Mezipaměť obrázků se nepřenáší, vytvoří se znovu.
 
 | Co | Kde |
 |---|---|
-| Databáze | `~/.local/share/playboy-app/playboy.db` |
+| Databáze (za běhu programu i deník změn `playboy.db-wal` a `playboy.db-shm`) | `~/.local/share/playboy-app/playboy.db` |
 | Zálohy: denní při spuštění (7 denních a 4 týdenní) a před mazáním a importem (20 od každého druhu) | `~/.local/share/playboy-app/zalohy/` |
 | Velikost a stav okna při posledním zavření | `~/.local/share/playboy-app/okno.json` |
 | Mezipaměť obrázků | `~/.cache/<název programu>/WebKitCache` |
@@ -101,7 +101,7 @@ pomlčkou (`-vlasy:blond`).
 ## Verze a vydání
 
 Program se verzuje podle sémantického verzování; verze se ukazuje v nabídce ⋯. Do 1.0.0 zvyšuje MINOR
-každá změna schématu databáze nebo formátu exportu, PATCH ostatní změny. Alfa má řadu 0.50.x.
+každá změna schématu databáze nebo formátu exportu, PATCH ostatní změny. Alfa má řadu 0.5x: MINOR pro větší zásah do programu (třeba změnu ukládání), PATCH pro opravy.
 
 Vydání verze:
 

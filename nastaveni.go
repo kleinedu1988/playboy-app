@@ -213,13 +213,13 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 	// Alba všech modelek; album je skupina fotek se stejným názvem a typem
 	maCenterfold := map[int]bool{}
 	rows, err := a.db.Query(`
-		SELECT f.modelka_id, m.jmeno, f.album, f.typ, COUNT(*), COALESCE(SUM(COALESCE(f.hodnoceni, 0) > 0), 0),
-			COALESCE(MAX(f.vydani), ''), COALESCE(MAX(al.popis), ''), COALESCE(MAX(al.netyka_se), '')
-		FROM fotografie f
-		JOIN modelky m ON m.id = f.modelka_id
-		LEFT JOIN alba al ON al.id = f.album_id
-		GROUP BY f.modelka_id, f.album, f.typ
-		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album`)
+		SELECT al.modelka_id, m.jmeno, al.album, al.typ, COUNT(*), COALESCE(SUM(COALESCE(f.hodnoceni, 0) > 0), 0),
+			COALESCE(al.vydani, ''), COALESCE(al.popis, ''), COALESCE(al.netyka_se, '')
+		FROM fotky f
+		JOIN alba al ON al.id = f.album_id
+		JOIN modelky m ON m.id = al.modelka_id
+		GROUP BY al.id
+		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, al.album`)
 	if err != nil {
 		a.chyba("GetPrehled", err)
 		return p

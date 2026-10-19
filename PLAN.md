@@ -5,7 +5,7 @@ Větší plán po etapách je v `ROADMAP.md`; tady zůstávají chyby z alfy, dr
 
 ## Chyby z alfy
 
-Chyby nalezené při používání na skutečné sbírce (co, kde, jak to vyvolat). Opravují se v 0.50.1, 0.50.2…
+Chyby nalezené při používání na skutečné sbírce (co, kde, jak to vyvolat). Opravují se v dalších verzích řady 0.5x.
 
 - Poblikávání okna ve WebKitGTK (karty při načtení, kontextová nabídka se na chvíli zavře a otevře):
   oprava z 0.33.18 čeká na ověření na Fedoře. Kdyby nestačila, vyzkoušet `WEBKIT_DISABLE_DMABUF_RENDERER=1`,

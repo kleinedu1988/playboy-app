@@ -456,16 +456,25 @@ func (a *App) ObnovitZalohu(soubor string) string {
 	heslo := a.nastaveni("heslo")
 	sablona := a.nastaveni("sablona_obrazku")
 
-	// Výměna souboru je přejmenováním, takže proběhne celá, nebo vůbec. Staré spojení dál čte původní soubor,
-	// dokud se nepřepne na nové; zavře se až potom, takže rozpracovaná volání doběhnou.
+	// Ve WAL patří k souboru i deník změn (playboy.db-wal), který obnovená databáze nesmí převzít. Staré spojení
+	// se proto před výměnou zavře: zavření přenese deník do souboru a smaže ho. Kdyby deník zůstal, obnovení
+	// se neprovede. Výměna souboru je pak přejmenováním, takže proběhne celá, nebo vůbec.
+	stare := a.db
+	stare.Exec("PRAGMA wal_checkpoint(TRUNCATE)")
+	stare.Close()
+	if info, err := os.Stat(cil + "-wal"); err == nil && info.Size() > 0 {
+		a.otevritDatabazi(cil)
+		return "Databázi se nepodařilo uzavřít pro obnovení, zůstala beze změny. Zkus to znovu."
+	}
+	os.Remove(cil + "-wal")
+	os.Remove(cil + "-shm")
 	if err := kopirovatSoubor(zaloha, cil); err != nil {
+		a.otevritDatabazi(cil)
 		return fmt.Sprintf("Zálohu se nepodařilo zkopírovat, databáze zůstala beze změny: %v", err)
 	}
-	stare := a.db
 	if err := a.otevritDatabazi(cil); err != nil {
 		return fmt.Sprintf("Databázi se po obnovení nepodařilo otevřít: %v", err)
 	}
-	stare.Close()
 	// Starší záloha může mít starší schéma
 	if err := a.migrovat(); err != nil {
 		// Do schématu, které se nepodařilo upravit, se nezapisuje
@@ -473,6 +482,7 @@ func (a *App) ObnovitZalohu(soubor string) string {
 		a.prepnoutJenProCteni()
 		return a.chybaStartu
 	}
+	a.zapnoutWAL()
 	if err := a.ulozitNastaveni("heslo", heslo); err != nil {
 		return fmt.Sprintf("Databáze je obnovená, ale nepodařilo se zachovat současné heslo: %v", err)
 	}
@@ -606,13 +616,16 @@ type VydaniKalendare struct {
 }
 
 func (a *App) GetKalendar() []VydaniKalendare {
-	// Jedním průchodem fotkami: co ke kterému vydání je a jeden náhled (cover, jinak centerfold, jinak pictorial).
-	// Poddotaz pro každé vydání byl kvadratický.
+	// Jedním průchodem alby (s první fotkou každého): co ke kterému vydání je a jeden náhled (cover, jinak
+	// centerfold, jinak pictorial). Album bez fotek se nepočítá. Po albech místo po fotkách je to desetkrát
+	// méně řádků; pořadí podle první fotky dá stejný náhled i modelku jako průchod všemi fotkami.
 	vysledek := []VydaniKalendare{}
 	rows, err := a.db.Query(`
-		SELECT ` + vydaniFotky + ` AS v, f.typ, f.drive_file_id, COALESCE(m.jmeno, '')
-		FROM fotografie f LEFT JOIN modelky m ON m.id = f.modelka_id
-		WHERE ` + vydaniFotky + ` <> '' ORDER BY v, f.id`)
+		SELECT al.vydani, al.typ, f.drive_file_id, COALESCE(m.jmeno, '')
+		FROM alba al
+		JOIN fotky f ON f.id = (SELECT MIN(id) FROM fotky WHERE album_id = al.id)
+		LEFT JOIN modelky m ON m.id = al.modelka_id
+		WHERE al.vydani <> '' ORDER BY al.vydani, f.id`)
 	if err != nil {
 		a.chyba("GetKalendar", err)
 		return vysledek
@@ -683,15 +696,32 @@ func (a *App) startup(ctx context.Context) {
 	sablonaObrazku.Store(a.nastaveni("sablona_obrazku"))
 
 	// Až po migracích a jen nad databází, která se otevřela v pořádku
+	if a.chybaStartu == "" && a.cestaDb != "" {
+		a.zapnoutWAL()
+	}
 	if a.chybaStartu == "" {
 		a.denniZaloha()
 	}
 }
 
+// Parametry spojení se souborem databáze (okno i import)
+const dsnDatabaze = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=synchronous(NORMAL)"
+
+// Režim WAL: změny se připisují do deníku vedle databáze (playboy.db-wal) a do souboru se přenesou najednou,
+// takže zápis nečeká na disk a čtení s zápisem se neblokují. Režim si pamatuje soubor; zapíná se až nad
+// databází, která prošla kontrolou a úpravami schématu (poškozená nebo novější se nemění).
+func (a *App) zapnoutWAL() {
+	var rezim string
+	if err := a.db.QueryRow("PRAGMA journal_mode = WAL").Scan(&rezim); err != nil || rezim != "wal" {
+		fmt.Printf("Režim WAL se nepodařilo zapnout (%s, %v), databáze běží v původním režimu\n", rezim, err)
+	}
+}
+
 // Otevření souboru databáze; volá se při startu a znovu po obnovení ze zálohy
 func (a *App) otevritDatabazi(cesta string) error {
-	// Souběžná volání z rozhraní na sebe chvíli počkají, místo aby hned selhala na zamčené databázi
-	db, err := sql.Open("sqlite", cesta+"?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)")
+	// Souběžná volání z rozhraní na sebe chvíli počkají, místo aby hned selhala na zamčené databázi.
+	// synchronous NORMAL: ve WAL se při potvrzení nečeká na disk, uložená data přežijí i pád programu.
+	db, err := sql.Open("sqlite", cesta+dsnDatabaze)
 	if err == nil {
 		err = db.Ping()
 	}
@@ -1011,11 +1041,13 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		radky.Close()
 	}
 
-	// Vydání každé modelky odvozená z jejích fotek
+	// Vydání každé modelky odvozená z jejích alb s fotkami (vlastních i sdílených)
 	vydaniModelek := map[int][]string{}
-	if radky, err := a.db.Query("SELECT DISTINCT f.modelka_id, " + vydaniFotky + " AS v FROM fotografie f WHERE f.modelka_id > 0 AND " + vydaniFotky + " <> ''" +
-		" UNION SELECT am.modelka_id, " + vydaniFotky + " FROM fotografie f JOIN alba al ON al.id = f.album_id" +
-		" JOIN alba_modelky am ON am.album_id = al.id WHERE " + vydaniFotky + " <> '' ORDER BY 2"); err == nil {
+	if radky, err := a.db.Query(`SELECT modelka_id, vydani FROM alba al WHERE modelka_id IS NOT NULL AND vydani <> ''
+			AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
+		UNION SELECT am.modelka_id, al.vydani FROM alba al JOIN alba_modelky am ON am.album_id = al.id
+			WHERE al.vydani <> '' AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
+		ORDER BY 2`); err == nil {
 		for radky.Next() {
 			var id int
 			var v string
@@ -1100,9 +1132,13 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		}
 	}
 
-	// Řazení podle jména bez ohledu na velikost písmen a diakritiku
+	// Řazení podle jména bez ohledu na velikost písmen a diakritiku; klíč se spočítá pro každou modelku jednou
+	klice := make(map[int]string, len(vysledky))
+	for _, m := range vysledky {
+		klice[m.ID] = zjednodusit(m.Jmeno)
+	}
 	sort.SliceStable(vysledky, func(i, j int) bool {
-		return zjednodusit(vysledky[i].Jmeno) < zjednodusit(vysledky[j].Jmeno)
+		return klice[vysledky[i].ID] < klice[vysledky[j].ID]
 	})
 	if err := rows.Err(); err != nil && prvniChyba == nil {
 		prvniChyba = err

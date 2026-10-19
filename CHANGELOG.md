@@ -7,6 +7,15 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.0] – 2026-10-19
+
+### Vylepšeno
+- **Rychlejší ukládání:** Databáze běží v režimu WAL – změny se připisují do deníku vedle databáze (`playboy.db-wal`) a na disk se srovnají najednou. Uložení srdíčka nebo údaje už nečeká na zápis na disk (v měření zhruba 40× rychleji) a čtení se zápisem se navzájem neblokují, ani když běží kontrola souborů na pozadí. Při prvním spuštění se databáze do režimu přepne sama; uložená data přežijí i pád programu.
+- **Rychlejší Přehled, kalendář a statistiky:** Kalendář, Přehled a seznam vydání modelek se počítají po albech místo po jednotlivých fotkách (desetkrát méně řádků) a seznam tagů pro našeptávání čte jen tagy. Na sbírce o 500 modelkách a 20 000 fotkách: kalendář 51 → 9 ms, Přehled 133 → 60 ms, statistiky 48 → 11 ms, tagy 44 → 0,1 ms, načtení modelek 48 → 26 ms. Výsledky jsou stejné jako dřív.
+
+### Opraveno
+- Obnovení ze zálohy nejdřív uzavře databázi a přenese deník změn, aby se do obnovené databáze nic ze staré nepřimíchalo.
+
 ## [0.50.1] – 2026-10-19
 
 ### Přidáno

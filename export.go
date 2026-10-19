@@ -653,7 +653,7 @@ func (a *App) importovatCelek(data exportDat) VysledekImportu {
 		a.importovatData(data, &vysledek)
 		return vysledek
 	}
-	db, err := sql.Open("sqlite", a.cestaDb+"?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)")
+	db, err := sql.Open("sqlite", a.cestaDb+dsnDatabaze)
 	if err == nil {
 		db.SetMaxOpenConns(1)
 		_, err = db.Exec("BEGIN IMMEDIATE")

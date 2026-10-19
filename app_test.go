@@ -2776,7 +2776,7 @@ func TestVyvojVCase(t *testing.T) {
 	}
 }
 
-// Alfa (0.50.x) zmrazila schéma databáze a formát exportu: nová úprava schématu ani nová verze exportu
+// Alfa (řada 0.5x) zmrazila schéma databáze a formát exportu: nová úprava schématu ani nová verze exportu
 // do 1.0.0 nevznikne. Změna tady znamená vědomé rozhodnutí a novou MINOR verzi mimo alfu.
 func TestZmrazeniAlfy(t *testing.T) {
 	if len(migrace) != 11 {
@@ -2784,5 +2784,49 @@ func TestZmrazeniAlfy(t *testing.T) {
 	}
 	if verzeExportu != 7 {
 		t.Errorf("verze exportu je %d, alfa zmrazila formát exportu na verzi 7", verzeExportu)
+	}
+}
+
+// Databáze běží v režimu WAL; obnovení ze zálohy nesmí převzít deník změn staré databáze
+func TestRezimWAL(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	rezim := func() string {
+		var r string
+		a.db.QueryRow("PRAGMA journal_mode").Scan(&r)
+		return r
+	}
+	if r := rezim(); r != "wal" {
+		t.Fatalf("režim databáze: %s", r)
+	}
+	a.AddModelka(Modelka{Jmeno: "V záloze"})
+	if err := a.zalohovat("test"); err != nil {
+		t.Fatal(err)
+	}
+	// Změny po záloze zůstanou v deníku (-wal), dokud se nepřenesou do souboru
+	for i := 0; i < 20; i++ {
+		a.AddModelka(Modelka{Jmeno: fmt.Sprintf("Po záloze %d", i)})
+	}
+	var zaloha Zaloha
+	for _, z := range a.SeznamZaloh() {
+		if z.Duvod == "test" {
+			zaloha = z
+		}
+	}
+	if chyba := a.ObnovitZalohu(zaloha.Soubor); chyba != "" {
+		t.Fatal(chyba)
+	}
+	if n := len(a.GetModelky("")); n != 1 {
+		t.Fatalf("po obnovení %d modelek místo 1", n)
+	}
+	if r := rezim(); r != "wal" {
+		t.Fatalf("režim po obnovení: %s", r)
+	}
+	// Po zavření a novém otevření zůstává obnovený stav (žádný starý deník se nepřimíchal)
+	a.db.Close()
+	if err := a.otevritDatabazi(a.cestaDb); err != nil {
+		t.Fatal(err)
+	}
+	if n := len(a.GetModelky("")); n != 1 {
+		t.Fatalf("po novém otevření %d modelek místo 1", n)
 	}
 }

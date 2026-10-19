@@ -641,8 +641,22 @@ func (a *App) PrejmenovatFotografa(stary, novy string) int {
 func (a *App) GetTagy() []string {
 	var tagy []string
 	videne := map[string]bool{}
-	for _, m := range a.GetModelky("") {
-		for _, tag := range strings.Split(m.Tags, ",") {
+	// Stačí sloupec tagů, ne všechny údaje modelek
+	radky, err := a.db.Query("SELECT tags FROM modelky WHERE COALESCE(tags, '') <> '' ORDER BY jmeno COLLATE BEZDIAKRITIKY")
+	if err != nil {
+		a.chyba("GetTagy", err)
+		return []string{}
+	}
+	var seznamy []string
+	for radky.Next() {
+		var t string
+		if radky.Scan(&t) == nil {
+			seznamy = append(seznamy, t)
+		}
+	}
+	radky.Close()
+	for _, seznam := range seznamy {
+		for _, tag := range strings.Split(seznam, ",") {
 			tag = strings.TrimSpace(tag)
 			if tag != "" && !videne[zjednodusit(tag)] {
 				videne[zjednodusit(tag)] = true

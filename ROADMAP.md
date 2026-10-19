@@ -1,6 +1,6 @@
 # Roadmapa
 
-Stav k 18. 10. 2026, verze **0.50.0 – alfa**. Hotové změny jsou v `CHANGELOG.md`, drobné nápady a rozhodnutí
+Stav k 19. 10. 2026, verze **0.51.0 – alfa**. Hotové změny jsou v `CHANGELOG.md`, drobné nápady a rozhodnutí
 v `PLAN.md`. Předchozí podoby roadmapy jsou v historii gitu (etapy 0–6 ve značce `v0.9.0`, etapy 7–10
 ve verzi 0.34.7).
 
@@ -26,7 +26,7 @@ přepínač řazení galerie, naposledy přidané modelky na úvodu Přehledu a 
 
 | Fáze | Verze | Co se smí měnit |
 |---|---|---|
-| Alfa | 0.50.x | jen opravy a doladění rozhraní; schéma (úprava č. 11) a export (verze 7) zmrazené |
+| Alfa | 0.5x | opravy, doladění rozhraní a zrychlení (MINOR pro větší zásah, PATCH pro opravy); schéma (úprava č. 11) a export (verze 7) zmrazené |
 | Beta | 0.90.x | jen opravy chyb; zmrazené i funkce a texty |
 | Vydání | 1.0.0 | jen číslo verze, datum v changelogu a značka |
 
@@ -34,14 +34,15 @@ Od 1.0.0 platí sémantické verzování naplno: změna schématu nebo exportu, 
 znamená 2.0.0. Zmrazení hlídá test `TestZmrazeniAlfy`; kdyby se v alfě ukázala nutná změna schématu nebo
 exportu, je to vědomé rozhodnutí s novou MINOR verzí a úpravou testu, ne tichá oprava.
 
-## Etapa 11 – Alfa (0.50.x) – probíhá
+## Etapa 11 – Alfa (0.5x) – probíhá
 
 Cíl: program používat na skutečné sbírce; vše, co se najde, je oprava.
 
 | Co | Proč | Prac. |
 |---|---|---|
 | ~~Zmrazení schématu a exportu testem, popis v README a `EXPORT.md`~~ – hotovo v 0.50.0 | Pojistka proti nechtěné změně | S |
-| Používání na skutečné sbírce (v kopii), zápis chyb do `PLAN.md` a jejich oprava v 0.50.1, 0.50.2… | Chyby, které testy nenajdou | M |
+| ~~Rychlejší databáze: režim WAL, čtení po albech místo po fotkách~~ – hotovo v 0.51.0 | Zápis čekal na disk, Přehled a kalendář procházely všechny fotky | M |
+| Používání na skutečné sbírce (v kopii), zápis chyb do `PLAN.md` a jejich oprava v dalších verzích 0.5x | Chyby, které testy nenajdou | M |
 | Poblikávání okna ve WebKitGTK: ověřit opravu z 0.33.18 na Fedoře, případně proměnné prostředí v `instalovat.sh` | Hlášené, oprava zatím nepotvrzená | S |
 | Zátěžová zkouška na syntetické sbírce (500 modelek, 20 000 fotek): galerie, profil, Přehled, Statistiky, export a import kruhem | Velká sbírka před betou | S–M |
 | Audit kódu agenty (data, rozhraní, výkon) a oprava nálezů | Stejně jako po 0.9.0 | M |

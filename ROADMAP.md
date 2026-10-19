@@ -59,7 +59,23 @@ Cíl: nic nového, jen jistota.
 
 ## Po 1.0.0
 
-### 1.1 – Každodenní práce
+### 1.1 – Google Disk v aplikaci
+
+Cíl: fotky vybírat přímo z Disku v programu místo kopírování odkazů. Google API slouží jen k přidávání;
+zobrazování zůstává na dnešní adrese obrázků (`lh3.googleusercontent.com/d/{id}`) bez přihlášení, takže
+vypršené přihlášení prohlížení sbírky neomezí. Do databáze se dál ukládá jen ID souboru: schéma ani
+formát exportu se nemění, token se uloží do tabulky nastavení. Dvojí jištění: kdyby Google adresu `lh3`
+vypnul, zobrazování se přepne na oficiální náhledy z API.
+
+| Co | Proč | Prac. |
+|---|---|---|
+| Přihlášení Googlem pro desktopovou aplikaci (prohlížeč, zpětná adresa na 127.0.0.1, PKCE), uložení a obnova tokenu, odhlášení; návod na založení vlastního projektu v Google Cloud v README | Bez přihlášení API nefunguje; aplikace v testovacím režimu, přihlášení vyprší po 7 dnech | M |
+| Okno „Vybrat z Disku“: složky, náhledy (načtené přes program s tokenem), výběr více fotek, hledání podle názvu | Dnes se odkazy kopírují ručně jeden po druhém | L |
+| Napojení do okna alba, coveru, titulní fotky a skenů článku; vkládání odkazů zůstává jako druhá cesta | Jeden výběr pro všechna místa, kde se přidávají fotky | S–M |
+| Volba „Nasdílet vybrané soubory: kdokoli s odkazem“ (zaškrtávací, ne potichu) | Nenasdílená fotka se dnes nenačte a nikdo neví proč | S |
+| Záložní zobrazování přes náhledy z API, když adresa `lh3` přestane fungovat (přepnutí v ⋯ → Adresa obrázků) | Adresa `lh3` není oficiálně zdokumentovaná | S–M |
+
+### 1.2 – Každodenní práce
 
 | Co | Proč | Prac. |
 |---|---|---|
@@ -69,7 +85,7 @@ Cíl: nic nového, jen jistota.
 | Předchozí a další rok na stránce ročníku | Listování ročníky bez návratu do kalendáře | S |
 | Evidence „mám PDF“ u americké edice (jen pokud se ukáže potřeba) | US se nesbírá fyzicky, archiv je v PDF | S [schéma] |
 
-### 1.2 – Velká sbírka
+### 1.3 – Velká sbírka
 
 | Co | Proč | Prac. |
 |---|---|---|
@@ -78,7 +94,7 @@ Cíl: nic nového, jen jistota.
 | Rekordy ve Statistikách (nejmladší, nejvyšší, nejvíc obálek…) | Encyklopedický pohled | S |
 | Titulní fotka alba pro stránky fotografa a ročníku | Hezčí přehledy alb mimo profil | S–M |
 
-### 1.3 – Editor textů
+### 1.4 – Editor textů
 
 Cíl: pohodlné psaní článků, rozhovorů, textů alb a poznámek bez ručního psaní formátovacích značek.
 
@@ -97,6 +113,7 @@ Cíl: pohodlné psaní článků, rozhovorů, textů alb a poznámek bez ruční
 - Dvě modelky stejného jména se liší datem narození; data narození a úmrtí RRRR, RRRR-MM nebo RRRR-MM-DD;
   hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý klíč (0.18.0–0.30.0).
 - Vzhled: střídmý, jeden růžový akcent, písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1).
+- Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.1).
 
 ## Nedělat
 
@@ -104,6 +121,7 @@ Cíl: pohodlné psaní článků, rozhovorů, textů alb a poznámek bez ruční
 - Místní kopie fotek, náhledy na disku, zálohy na jiný disk.
 - Šifrovanou databázi – zvolen zámek rozhraní.
 - Půlsrdíčka.
-- Přihlášení k Disku a import celé složky, stahování údajů z webu, rozpoznávání obličejů.
+- Zobrazování fotek přes Google API s přihlášením (API jen k výběru fotek, viz 1.1); automatický import celé
+  složky bez výběru, stahování údajů z webu, rozpoznávání obličejů.
 - Nové funkce v alfě a betě a změny schématu nebo exportu od alfy.
 - Vše z oddílu „Rozhodnuto nedělat“ v `PLAN.md`.

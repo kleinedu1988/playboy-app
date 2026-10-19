@@ -9,7 +9,7 @@ import { importovatData, otevritHeslo } from './sprava';
 import { otevritNapovedu } from './napoveda';
 import { detailView, gallery, searchInput } from './prvky';
 import { listaGalerie } from './listy';
-import { adresaTitulni } from './obrazky';
+import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { MODELEK_PRO_PISMENA, otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
@@ -173,7 +173,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     gallery.innerHTML = htmlNastroju(modelky.length, roleCetnosti) + modelky.map(m => `
         <div class="card" data-id="${m.id}" tabindex="0" aria-label="${esc(m.jmeno)}">
             <div class="card-image-wrap">
-                <img src="${esc(adresaTitulni(m))}" alt="${esc(m.jmeno)}" style="${stylVyrezu(m)}" draggable="false" loading="lazy" />
+                <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" decoding="async" />
                 ${htmlSrdicka(m)}
             </div>
             <div class="card-info">
@@ -182,6 +182,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
         </div>
     `).join('');
     prevestNaVolby(gallery.querySelector('.gallery-toolbar'));
+    nacitatPostupne(gallery);
 
     // Lišta částí: písmena, měsíce přidání, desetiletí, úrovně srdíček nebo pásma počtu fotek
     if (modelky.length >= MODELEK_PRO_PISMENA) {

@@ -17,7 +17,7 @@ export function upravitVyrez(modelka) {
     const ram = card.querySelector('.card-image-wrap');
     const img = ram.querySelector('img');
     // Při úpravě se přibližuje až čtyřikrát, karta proto dostane větší obrázek
-    if (modelka.coverUrl) img.src = obrazek(modelka.coverUrl, VELIKOST_TITULNI);
+    if (modelka.coverUrl) img.src = img.dataset.src = obrazek(modelka.coverUrl, VELIKOST_TITULNI);
     const vyrez = { coverZoom: modelka.coverZoom, coverX: modelka.coverX, coverY: modelka.coverY };
 
     card.classList.add('editing');

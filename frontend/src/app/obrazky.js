@@ -28,12 +28,33 @@ export function adresaTitulni(modelka, velka = false) {
 }
 export const PLNE_ROZLISENI = 's0';
 
+// Postupné načítání fotek ve velké mřížce: obrázek s data-src dostane adresu, až se přiblíží k zobrazené části
+// (asi dvě obrazovky dopředu). Když z ní odroluje dřív, než se načetl, jeho požadavek se zruší, aby při rychlém
+// rolování nečekaly fotky na obrazovce ve frontě za těmi, které už jsou pryč. Vestavěné loading="lazy"
+// ve WebKitGTK začíná načítat pozdě a odrolované fotky neruší. Každý kontejner má vlastního pozorovatele,
+// při novém vykreslení se starý odpojí (karty, které už nejsou v okně, se nehlídají dál).
+const pozorovatele = new WeakMap();
+export function nacitatPostupne(kontejner) {
+    pozorovatele.get(kontejner)?.disconnect();
+    const pozorovatel = new IntersectionObserver(zaznamy => zaznamy.forEach(z => {
+        const img = /** @type {HTMLImageElement} */ (z.target);
+        if (z.isIntersecting) {
+            if (img.dataset.src && img.getAttribute('src') !== img.dataset.src) img.src = img.dataset.src;
+        } else if (img.getAttribute('src') && !img.complete) {
+            img.removeAttribute('src');
+        }
+    }), { root: document.querySelector('main'), rootMargin: '1500px 0px' });
+    kontejner.querySelectorAll('img[data-src]').forEach(img => pozorovatel.observe(img));
+    pozorovatele.set(kontejner, pozorovatel);
+}
+
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     // Fotka, která se nenačte (smazaná na Disku, bez připojení), se nahradí zástupným obrázkem
     document.addEventListener('error', (e) => {
         const img = /** @type {HTMLImageElement} */ (e.target);
-        if (img.tagName !== 'IMG' || img.src === BEZ_FOTKY || img.closest('.lightbox')) return;
+        // Obrázek bez adresy (postupné načítání ho ještě nenačetlo nebo ho zrušilo) chybou není
+        if (img.tagName !== 'IMG' || !img.getAttribute('src') || img.src === BEZ_FOTKY || img.closest('.lightbox')) return;
         img.src = BEZ_FOTKY;
     }, true);
 }

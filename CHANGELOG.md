@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.1] – 2026-10-19
+
+### Opraveno
+- **Prázdné karty při rychlém rolování Modelek:** Fotky na kartách se teď načítají vlastním postupným načítáním: začínají asi dvě obrazovky před zobrazenou částí, a když karta odroluje dřív, než se fotka načetla, její stahování se zruší. Fotky na obrazovce tak nečekají ve frontě za desítkami fotek, které už jsou pryč. V měření se simulovaně pomalou sítí se karty po rychlém rolování zaplnily za 0,7 s místo 3,6 s a stáhlo se čtvrtinové množství fotek.
+
 ## [0.51.0] – 2026-10-19
 
 ### Vylepšeno

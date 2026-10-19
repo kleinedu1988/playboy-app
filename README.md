@@ -145,3 +145,9 @@ a `TestZmrazeniAlfy` hlídá, že v alfě nepřibude úprava schématu ani nová
 Od schématu 6 fotky (`fotky`) odkazují na album (`alba`), které nese vydání, spojení plakátu, text,
 fotografa a „netýká se“; cover je album bez modelky. Cizí klíče jsou zapnuté. Pohled `fotografie`
 skládá obojí do dřívější podoby pro čtení; zapisuje se přímo do tabulek.
+
+## Licence
+
+Zdrojový kód je pod licencí [MIT](LICENSE). Vznikl za pomoci AI asistentů pod vedením autora. Licence se
+týká jen kódu: ochranná známka Playboy patří svému vlastníkovi (projekt s ním není spojený) a fotky, skeny
+a další obsah sbírky nejsou součástí programu.

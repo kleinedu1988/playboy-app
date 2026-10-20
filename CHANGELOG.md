@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.19] – 2026-10-20
+
+### Změněno
+- **Nová ikona programu:** Místo výchozí ikony Wails má program vlastní ikonu ve svých barvách – obálku časopisu s růžovým záhlavím a srdíčkem na tmavém podkladu. Po `./instalovat.sh` se ukáže v nabídce aplikací (někdy až po odhlášení a přihlášení).
+
 ## [0.51.18] – 2026-10-20
 
 ### Vylepšeno

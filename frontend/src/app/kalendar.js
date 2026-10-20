@@ -76,7 +76,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
                 // Chybějící číslo může být označené „mám výtisk“, „sháním“ nebo „nezajímá mě“
                 const udaje = stavCisla.get(klic);
                 const popisStavu = udaje?.stav ? ` – ${NAZVY_STAVU[udaje.stav].toLowerCase()}` : ' – chybí, klikni pro přidání';
-                return `<button class="cal-cell empty ${udaje?.stav || ''}" data-prazdne="${klic}" title="${nazevVydani(klic)}${popisStavu}${udaje?.poznamka ? `\n${esc(udaje.poznamka)}` : ''}">
+                return `<button class="cal-cell empty ${udaje?.stav || ''}" data-prazdne="${klic}" title="${esc(nazevVydani(klic))}${popisStavu}${udaje?.poznamka ? `\n${esc(udaje.poznamka)}` : ''}">
                     <span class="cal-plus">+</span><span class="cal-month">${zkratka}</span>${udaje?.stav === 'shanim' ? '<em>sháním</em>' : udaje?.stav === 'mam' ? '<em>výtisk</em>' : ''}</button>`;
             }
             obsazeno++;

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"math"
 
 	"net/http"
 	"os"
@@ -1715,7 +1716,8 @@ func (a *App) UpdateModelka(m Modelka) bool {
 // Uložení výřezu titulní fotky na kartě (přiblížení a poloha v procentech)
 func (a *App) SetCoverVyrez(id int, zoom, x, y float64) bool {
 	omezit := func(hodnota, min, max float64) float64 {
-		if hodnota < min {
+		// NaN (třeba „.nan“ z ručně psaného importu) by porovnáním prošel; bere se jako výchozí nejmenší hodnota
+		if math.IsNaN(hodnota) || hodnota < min {
 			return min
 		}
 		if hodnota > max {

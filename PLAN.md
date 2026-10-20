@@ -14,6 +14,10 @@ databáze přešla do režimu WAL (0.51.0), karty, plakáty a mozaika se při ry
 
 ## Otevřené otázky
 
+- Content-Security-Policy v `frontend/index.html` (`script-src 'self'; object-src 'none'`) jako pojistka proti
+  chybě v ošetření textu. Přidat jen po ověření ve skutečném sestavení na Fedoře (prázdné okno by znamenalo, že
+  Wails vkládá vlastní skript, který zásady blokují).
+
 - Evidovat u americké edice „mám PDF“? Zatím ne (viz `ROADMAP.md`, verze 1.1).
 
 ## Rozhodnuto nedělat

@@ -7,6 +7,12 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.12] – 2026-10-20
+
+### Opraveno (revize zabezpečení)
+- Revize zabezpečení nenašla žádnou zranitelnost: zkouška s útočným textem ve všech údajích (jména, texty alb, články, odkazy, názvy výběrů…) v žádném okně nic nespustila, z odkazů modelky se otevírají jen adresy https, heslo je uložené jen jako otisk (PBKDF2 se solí) a dotazy do databáze dostávají hodnoty jako parametry.
+- Drobnosti z revize: nápověda prázdného políčka v kalendáři je ošetřená stejně jako ostatní a výřez titulní fotky s neplatnou hodnotou z ručně psaného importu („.nan“) se nastaví na výchozí.
+
 ## [0.51.11] – 2026-10-20
 
 ### Opraveno

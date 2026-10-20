@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -2872,5 +2873,17 @@ func TestObnoveniJenProCteniSDenikem(t *testing.T) {
 	}
 	if !a.AddModelka(Modelka{Jmeno: "Nová"}) {
 		t.Fatal("do obnovené databáze nejde zapisovat")
+	}
+}
+
+// Výřez titulní fotky: NaN a hodnoty mimo rozsah se omezí (ručně psaný import)
+func TestVyrezBezNaN(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna"})
+	id := a.GetModelky("")[0].ID
+	a.SetCoverVyrez(id, math.NaN(), math.NaN(), 250)
+	m := a.GetModelky("")[0]
+	if m.CoverZoom != 1 || m.CoverX != 0 || m.CoverY != 100 {
+		t.Fatalf("výřez %v %v %v", m.CoverZoom, m.CoverX, m.CoverY)
 	}
 }

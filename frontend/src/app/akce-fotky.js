@@ -20,6 +20,10 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
     const stranky = fotka ? [fotka] : polozka.fotky;
     const prvni = stranky[0];
     const vProfilu = !detailView.classList.contains('hidden') && stav.aktualniModelka?.id === polozka.modelkaId;
+    // Fotka sdíleného alba v profilu další modelky (i v prohlížeči otevřeném z profilu) je titulní pro ni,
+    // ne pro hlavní modelku alba
+    const zProfilu = !detailView.classList.contains('hidden') && stav.aktualniModelka && stav.aktualniPolozky.includes(polozka);
+    const proModelku = zProfilu ? stav.aktualniModelka.id : polozka.modelkaId;
     return [
         ...(profil && polozka.modelkaId && !vProfilu
             ? [{ text: `Otevřít profil${polozka.jmenoModelky ? ': ' + polozka.jmenoModelky : ' modelky'}`, akce: () => {
@@ -28,10 +32,10 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
                 otevritProfilPodleId(polozka.modelkaId);
             } }] : []),
         // Titulní fotka jde nastavit z jedné fotky (ne z celého plakátu najednou)
-        ...(polozka.modelkaId && stranky.length === 1 ? [{ text: 'Nastavit jako titulní fotku', akce: async () => {
-            if (!await SetTitulniFotka(polozka.modelkaId, prvni.id)) return;
+        ...(proModelku && stranky.length === 1 ? [{ text: 'Nastavit jako titulní fotku', akce: async () => {
+            if (!await SetTitulniFotka(proModelku, prvni.id)) return;
             oznamit('Titulní fotka změněna. Výřez na kartě se vrátil na výchozí.');
-            if (vProfilu) otevritProfilPodleId(polozka.modelkaId);
+            if (zProfilu) otevritProfilPodleId(proModelku);
             else obnovitCoJeVidet();
         } }] : []),
         { text: 'Přidat do výběru…', akce: () => pridatDoVyberu(stranky.map(f => f.id)) },

@@ -166,8 +166,16 @@ const obnovitKalendar = () => { if (!calendar.classList.contains('hidden')) naci
 // Nabídka čísla, všude stejná (kalendář, Čísla, Přehled, ročník): otevřít a upravit, přidat jen to, co číslu chybí,
 // a stav čísla s ✓ u současného (druhý klik ho zruší). Výtisky se sbírají jen u české edice, americká má jen „nezajímá mě“.
 // navic: další položky za přidáváním (akce coveru na stránce Čísla); poZmene obnoví stránku po označení stavu.
+// Nabídka se otevře až po načtení dat; mezitím mohl uživatel otevřít jinou nabídku čísla nebo přejít jinam
+let poradiNabidkyCisla = 0;
+const zobrazenyPohled = () => [...document.querySelector('main').children].find(e => !e.classList.contains('hidden'));
 export async function nabidkaCisla(klic, x, y, { navic = [], poZmene = obnovitKalendar } = {}) {
-    const [kalendar, stavy] = await Promise.all([stav.kalendarData || GetKalendar().then(k => k || []), stav.stavyVydaniData || GetStavyVydani().then(s => s || [])]);
+    const moje = ++poradiNabidkyCisla;
+    const pohled = zobrazenyPohled();
+    // Kalendář má data přehledu Čísla také (stav.coveryData), stačí je vzít
+    const [kalendar, stavy] = await Promise.all([stav.kalendarData || stav.coveryData?.[0] || GetKalendar().then(k => k || []),
+        stav.stavyVydaniData || stav.coveryData?.[1] || GetStavyVydani().then(s => s || [])]);
+    if (moje !== poradiNabidkyCisla || zobrazenyPohled() !== pohled) return;
     const data = kalendar.find(k => k.vydani === klic);
     const casti = rozlozitVydani(klic);
     const soucasny = stavy.find(s => s.vydani === klic)?.stav || '';
@@ -187,7 +195,9 @@ export async function nabidkaCisla(klic, x, y, { navic = [], poZmene = obnovitKa
         null,
         ...navic,
         null,
-        ...(casti?.edice === 'CZ' ? [oznacit('mam', 'Mám výtisk'), oznacit('shanim', 'Sháním')] : []),
+        // Americká edice výtisky nenabízí, už nastavený stav ale jde zrušit
+        ...(casti?.edice === 'CZ' || soucasny === 'mam' ? [oznacit('mam', 'Mám výtisk')] : []),
+        ...(casti?.edice === 'CZ' || soucasny === 'shanim' ? [oznacit('shanim', 'Sháním')] : []),
         oznacit('nezajima', 'Nezajímá mě'),
     ]);
 }

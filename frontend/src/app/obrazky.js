@@ -39,7 +39,8 @@ export function nacitatPostupne(kontejner) {
     const pozorovatel = new IntersectionObserver(zaznamy => zaznamy.forEach(z => {
         const img = /** @type {HTMLImageElement} */ (z.target);
         if (z.isIntersecting) {
-            if (img.dataset.src && img.getAttribute('src') !== img.dataset.src) img.src = img.dataset.src;
+            // Jen obrázek bez adresy; nenačtená fotka nahrazená zástupným obrázkem se znovu nestahuje
+            if (img.dataset.src && !img.getAttribute('src')) img.src = img.dataset.src;
         } else if (img.getAttribute('src') && !img.complete) {
             img.removeAttribute('src');
         }

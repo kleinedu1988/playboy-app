@@ -176,7 +176,7 @@ export function htmlAlbaStranky(a, index, { nadpis = nazevAlba(a.album, a.typ), 
             </div>
             ${htmlPopisuAlba(a)}
             ${plakat
-                ? `<div class="posters">${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${index(p)}"`, true)).join('')}</div>`
+                ? `<div class="posters">${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${index(p)}"`)).join('')}</div>`
                 : `<div class="photos-grid" ${atributyMrizky(a)}>${a.polozky.map(p => htmlDlazdice(p, index(p))).join('')}</div>`}
         </section>`;
 }

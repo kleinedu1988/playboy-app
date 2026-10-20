@@ -1,12 +1,12 @@
 // Kontextové nabídky pravého tlačítka
 import { contextMenu, otevritKontextovouNabidku, zavritKontextovouNabidku } from '../ui/nabidka';
 import { OdebratModelkuZAlba, OdebratZVyberu, SetSpojeniAlba, ZrusitPoradiAlba } from './backend';
-import { nazevAlba, nazevVydani } from '../lib/format';
+import { nazevAlba, nazevVydani, rozlozitVydani } from '../lib/format';
 import { stav } from './stav';
 import { calendar, covers, detailView, issueView, searchInput, wall } from './prvky';
 import { zpet } from './navigace';
 import { nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba } from './profil';
-import { otevritVydani, upravitVydani } from './vydani';
+import { obnovitStranku, otevritVydani, upravitVydani } from './vydani';
 import { nabidkaCisla, nabidkaRoku } from './kalendar';
 import { nacistCovery } from './stena';
 import { oznacitNetykaSe } from './prehled';
@@ -33,7 +33,8 @@ export function otevritNabidku(cil, x, y) {
     }
 
     // Buňka přehledu: označit údaj „netýká se", nebo označení zrušit
-    const bunkaPrehledu = cil.closest('#stats [data-klic]');
+    // Tlačítko „Doplňovat postupně“ nese údaje první modelky fronty, ale buňkou není (netýká se by šlo na ni)
+    const bunkaPrehledu = cil.closest('#stats [data-klic]:not(.ud-postupne)');
     if (bunkaPrehledu) {
         const oznacena = Boolean(bunkaPrehledu.dataset.netyka);
         otevritKontextovouNabidku(x, y, oznacena
@@ -113,8 +114,13 @@ export function otevritNabidku(cil, x, y) {
             const prvekAlba = cil.closest('.album');
             polozky.push(null, { text: `Album „${nazevAlba(album.album, album.typ)}“…`, akce: () => otevritKontextovouNabidku(x, y, polozkyAlba(album, prvekAlba)) });
         }
+    } else if (!issueView.classList.contains('hidden') && cil.closest('.rocnik-karta[data-vydani], [data-prazdne]')) {
+        // Měsíc na stránce ročníku (i chybějící): nabídka toho čísla, ne celého ročníku
+        const karta = cil.closest('.rocnik-karta[data-vydani], [data-prazdne]');
+        nabidkaCisla(karta.dataset.vydani || karta.dataset.prazdne, x, y, { poZmene: obnovitStranku });
+        return;
     } else if (!issueView.classList.contains('hidden')) {
-        // Stránka vydání: úpravy se dělají v profilu modelky a v přehledu coverů
+        // Stránka vydání, ročníku nebo fotografa: úpravy se dělají v profilu modelky a v přehledu coverů
         const prvekPolozky = cil.closest('[data-index]');
         polozky = [];
         if (prvekPolozky) {
@@ -125,14 +131,14 @@ export function otevritNabidku(cil, x, y) {
             polozky.push({ text: 'Otevřít fotku', akce: () => otevritLightbox(index, false, stav.vydaniPolozky) });
             polozky.push(...akceFotky(polozka, fotka || null), null);
         }
-        if (stav.vydaniPolozky.length) polozky.push({ text: 'Spustit slideshow čísla', akce: () => otevritLightbox(0, true, stav.vydaniPolozky) });
-        polozky.push({ text: 'Upravit číslo…', akce: () => upravitVydani(stav.aktualniVydani) });
+        if (stav.vydaniPolozky.length) polozky.push({ text: 'Spustit slideshow', akce: () => otevritLightbox(0, true, stav.vydaniPolozky) });
+        // Jen u čísla s měsícem; ročník a stránka fotografa číslo nejsou
+        if (rozlozitVydani(stav.aktualniVydani || '')?.mesic) polozky.push({ text: 'Upravit číslo…', akce: () => upravitVydani(stav.aktualniVydani) });
     } else if (!detailView.classList.contains('hidden')) {
         // Volné místo v profilu: Upravit a Přidat fotky jsou tlačítka pod jménem, tady je zbytek akcí s modelkou
         const modelka = stav.aktualniModelka;
         polozky = [
             ...(stav.aktualniPolozky.length ? [{ text: 'Spustit slideshow modelky', akce: () => otevritLightbox(0, true) }] : []),
-            { text: 'Upravit výřez titulní fotky', akce: () => upravitVyrez(modelka) },
             null,
             { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
             { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },

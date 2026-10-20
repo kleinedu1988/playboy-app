@@ -7,6 +7,22 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.5] – 2026-10-20
+
+### Opraveno (revize změn od verze 0.33.17 – rozhraní)
+- **Titulní fotka ze sdíleného alba:** „Nastavit jako titulní fotku“ v profilu další modelky sdíleného alba (i v prohlížeči otevřeném z profilu) nastavovala titulní fotku hlavní modelce alba. Teď ji dostane modelka, jejíž profil je otevřený.
+- **Ročník:** Pravé tlačítko na měsíci na stránce ročníku ukazovalo nabídku celého ročníku a „Upravit číslo…“ otevřelo úpravu roku. Teď je to nabídka toho čísla; „Upravit číslo…“ se na stránce ročníku a fotografa nenabízí.
+- **Nabídka čísla** se neotevře, když mezitím přejdeš jinam (dřív mohla po načtení dat vyskočit nad jiným přehledem); na stránce Čísla se už kvůli ní znovu nenačítá kalendář. U americké edice jde zrušit dříve nastavený stav „mám výtisk“ nebo „sháním“.
+- **Volné místo v profilu** už nenabízí „Upravit výřez titulní fotky“ – upravovala se neviditelná karta v galerii (výřez zůstává na kartě modelky).
+- **Údržba:**
+  - Pravé tlačítko na „Doplňovat postupně“ nabízelo „netýká se“ pro první modelku fronty.
+  - „Netýká se“ u čísla, které máš („mám výtisk“) nebo sháníš, by ten stav přepsalo na „nezajímá mě“; teď se stav nemění a program to oznámí.
+  - Počet u filtru „Vše“ nepočítá modelky, kterým zbývají jen úkoly „netýká se“.
+  - Po kliknutí na filtr zůstane na filtru fokus klávesnice.
+  - Odkazy z úvodu do Údržby začínají zase od prvních 60 řádků.
+- **Vývoj v čase:** Při rychlém přepnutí US/CZ se už nevykreslí starší odpověď pod nadpisem jiné edice.
+- Fotka, která se nenačetla, se při rolování znovu nestahuje.
+
 ## [0.51.4] – 2026-10-20
 
 ### Opraveno (revize změn od verze 0.33.17 – databáze)

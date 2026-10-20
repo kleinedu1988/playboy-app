@@ -192,9 +192,14 @@ const htmlHlavicky = () => `
     <h3>Vývoj v čase <span>podle roku centerfoldu · ${data?.modelek || 0} modelek · klik na řádek ukáže graf</span>
         <span class="vyvoj-edice">${['US', 'CZ'].map(e => `<button type="button" class="${e === edice ? 'active' : ''}" data-vyvoj-edice="${e}">${e}</button>`).join('')}</span></h3>`;
 
+// Rychlé přepnutí US/CZ: vykreslí se jen odpověď na poslední požadavek
+let poradiNacteni = 0;
 export async function nacistVyvoj(koren) {
     if (!koren) return;
-    data = await GetVyvojVCase(edice);
+    const moje = ++poradiNacteni;
+    const nova = await GetVyvojVCase(edice);
+    if (moje !== poradiNacteni) return;
+    data = nova;
     if (koren.isConnected) vykreslit(koren);
 }
 

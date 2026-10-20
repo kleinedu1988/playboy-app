@@ -231,7 +231,8 @@ export async function nacistPrehled() {
                 return `<div>${nazev}<i><b style="width:${celkem ? Math.round(hotovo / celkem * 100) : 100}%"></b></i><span>${hotovo} z ${celkem}</span></div>`;
             }).join('')}</div>
             <div class="ud-filtry" role="group" aria-label="Co ukázat">${FILTRY_UDRZBY.map(([klic, nazev]) => {
-                const pocet = klic === 'vse' ? fronta.length : pocetFiltru(klic);
+                // Řádky jen s úkoly „netýká se“ (při zobrazených skrytých) se do počtu nepočítají
+                const pocet = klic === 'vse' ? fronta.filter(r => r.ukoly.some(u => !u.netyka)).length : pocetFiltru(klic);
                 if (!pocet && klic !== filtr) return '';
                 return `<button type="button" class="${klic === filtr ? 'on' : ''}" aria-pressed="${klic === filtr}" data-udrzba-filtr="${klic}">${nazev}<b>${pocet}</b></button>`;
             }).join('')}</div>
@@ -284,6 +285,12 @@ export async function oznacitNetykaSe(bunka, netyka) {
     const radek = bunka.closest('[data-modelka], [data-vydani]');
     // U vydání je „netýká se" stav čísla „nezajímá mě"; zrušit ho jde na stránce vydání nebo v kalendáři
     if (radek.dataset.vydani) {
+        // Číslo, které mám nebo sháním, nesmí přijít o svůj stav kvůli chybějícímu coveru
+        const soucasny = (await GetStavyVydani() || []).find(s => s.vydani === radek.dataset.vydani)?.stav;
+        if (netyka && (soucasny === 'mam' || soucasny === 'shanim')) {
+            oznamit(`${nazevVydani(radek.dataset.vydani)} je označené „${soucasny === 'mam' ? 'mám výtisk' : 'sháním'}“; „netýká se“ by ten stav přepsalo, proto zůstává.`);
+            return;
+        }
         await SetStavVydani(radek.dataset.vydani, netyka ? 'nezajima' : '');
         if (!stats.classList.contains('hidden')) nacistPrehled();
         return;
@@ -350,7 +357,11 @@ export function pripravit() {
             // Přepnutí části jen v zobrazené stránce, bez nového načtení; řádek souhrnu otevře Údržbu s filtrem
             stav.prehledSekce = cast.dataset.sekcePrehledu;
             try { localStorage.setItem('prehledSekce', stav.prehledSekce); } catch { /* jen se nezapamatuje */ }
-            if (cast.dataset.udrzbaFiltr) { stav.udrzbaFiltr = cast.dataset.udrzbaFiltr; prekreslitUdrzbu(); }
+            if (cast.dataset.udrzbaFiltr) {
+                stav.udrzbaFiltr = cast.dataset.udrzbaFiltr;
+                stav.prehledLimit = 60;
+                prekreslitUdrzbu();
+            }
             stats.querySelector('.prehled-obsah').dataset.sekceUkazana = stav.prehledSekce;
             stats.querySelectorAll('.prehled-menu [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === stav.prehledSekce));
             if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
@@ -359,7 +370,7 @@ export function pripravit() {
             stav.udrzbaFiltr = filtr.dataset.udrzbaFiltr;
             stav.prehledLimit = 60;
             prekreslitUdrzbu();
-            stats.querySelector(`[data-udrzba-filtr="${stav.udrzbaFiltr}"]`)?.focus();
+            stats.querySelector(`.ud-filtry [data-udrzba-filtr="${stav.udrzbaFiltr}"]`)?.focus();
         } else if (e.target.closest('[data-skryte]')) {
             stav.prehledSkryte = !stav.prehledSkryte;
             nacistPrehled();

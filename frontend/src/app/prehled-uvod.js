@@ -103,8 +103,8 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
     const kpi = [
         ['Modelky', p.modelek, `${procentModelek} % s úplnými údaji`],
         ['Alba', p.alb, sklonovat(p.fotek, 'fotka', 'fotky', 'fotek')],
-        ['Čísla US', poctyUs.k + poctyUs.p, vydanychUs ? `${poctyUs.k} kompletních z ${vydanychUs}` : 'zatím žádné'],
-        ['Výtisky CZ', poctyCz.m, `z ${vydanychCz} vydaných · ${poctyCz.s} sháním`],
+        ['Čísla US', poctyUs.k + poctyUs.p, vydanychUs ? `kompletních: ${poctyUs.k} z ${vydanychUs}` : 'zatím žádné'],
+        ['Výtisky CZ', poctyCz.m, `z ${vydanychCz} vydaných · sháněných: ${poctyCz.s}`],
     ];
 
     const naposledy = [...modelky].filter(m => m.pridano).sort((a, b) => b.pridano.localeCompare(a.pridano)).slice(0, NAPOSLEDY);
@@ -163,7 +163,7 @@ export function htmlShanim(stavy) {
         podleRoku.get(rok).push(s);
     });
     return `
-        <h3>Sháním <span>česká edice · ${sklonovat(cisla.length, 'číslo', 'čísla', 'čísel')}</span>
+        <h3>Sháním CZ <span>česká edice · ${sklonovat(cisla.length, 'číslo', 'čísla', 'čísel')}</span>
             ${cisla.length ? '<button type="button" class="link stat-toggle" data-kopirovat-shanim>Kopírovat seznam</button>' : ''}</h3>
         ${cisla.length ? `<div class="uvod-karta uvod-shanim">${[...podleRoku].map(([rok, seznam]) => `
             <div class="uvod-shanim-rok"><b>${rok}</b><div>${seznam.map(s => `

@@ -9,7 +9,7 @@ změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 
 ## Co program umí
 
-- **Modelky:** karty s titulní fotkou a srdíčky, profil s údaji (osobní, vzhled a míry, zařazení), alby
+- **Modelky:** karty s titulní fotkou a srdíčky, profil s údaji (osobní, vzhled a míry, zařazení), alba
   a centerfoldy, články modelky. Řazení, filtry (srdíčka, edice, role…) a rejstřík písmen nebo roků.
 - **Alba a fotky:** pictorialy, centerfoldy (i spojené plakáty z více stránek), sdílená alba více modelek,
   text alba, fotograf. Prohlížeč fotek se slideshow, lupou a hodnocením 1–5 srdíček; výběr více fotek,
@@ -64,7 +64,7 @@ platí dál. Mezipaměť obrázků se nepřenáší, vytvoří se znovu.
 | Co | Kde |
 |---|---|
 | Databáze (za běhu programu i deník změn `playboy.db-wal` a `playboy.db-shm`) | `~/.local/share/playboy-app/playboy.db` |
-| Zálohy: denní při spuštění (7 denních a 4 týdenní) a před mazáním a importem (20 od každého druhu) | `~/.local/share/playboy-app/zalohy/` |
+| Zálohy: denní při spuštění (7 denních a 4 týdenní) a před každou hromadnou změnou (20 od každého druhu) | `~/.local/share/playboy-app/zalohy/` |
 | Velikost a stav okna při posledním zavření | `~/.local/share/playboy-app/okno.json` |
 | Mezipaměť obrázků | `~/.cache/<název programu>/WebKitCache` |
 

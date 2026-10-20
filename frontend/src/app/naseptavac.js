@@ -140,7 +140,7 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
         });
     } else if (klic === 'rok') {
         ['1970..1979', '1980..1989', '1990..1999', '2000..2009', '>=2010'].filter(r => !f || r.includes(f)).forEach(r => {
-            vysledky.push({ hodnota: r, popis: `Dekáda ${r}` });
+            vysledky.push({ hodnota: r, popis: `Desetiletí ${r}` });
         });
     }
     return vysledky.slice(0, 6);

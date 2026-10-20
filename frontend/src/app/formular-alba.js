@@ -67,7 +67,7 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     document.getElementById('albumSubmitBtn').textContent = album ? 'Uložit album' : 'Uložit fotky';
     document.getElementById('bulkLinksLabel').textContent = album
         ? 'Přidat další fotky – odkazy z Google Disku (nepovinné)'
-        : 'Vložte odkazy z Google Disku (libovolné množství)';
+        : 'Vlož odkazy z Google Disku (libovolné množství)';
     // Při úpravě alba není nutné přidávat další fotky
     document.getElementById('inputBulkLinks').required = !album;
 

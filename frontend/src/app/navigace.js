@@ -124,7 +124,7 @@ export async function odkazJeVPoradku(odkaz) {
     if (!odkaz.trim()) return true;
     if (jeOdkazNaSlozku(odkaz)) return false;
     if (await OveritOdkaz(odkaz) !== 0) return true;
-    oznamit('Tento odkaz nefunguje – soubor na Google Disku je smazaný, není sdílený „kdokoli s odkazem", nebo to není obrázek.');
+    oznamit('Tento odkaz nefunguje – soubor na Google Disku je smazaný, není sdílený „kdokoli s odkazem“, nebo to není obrázek.');
     return false;
 }
 

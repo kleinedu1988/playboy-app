@@ -3,7 +3,7 @@
 // graf vybraného řádku. Číselný údaj má čáru mediánu po pětiletích s pásmem prostřední poloviny modelek, podíl
 // sloupce po desetiletích rozdělené na sto procent. Sytost buňky ukazuje, kde je hodnota v řádku nejvyšší.
 import { GetVyvojVCase } from './backend';
-import { esc } from '../lib/format';
+import { esc, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { otevritModelModal, ukazatZalozku } from './formular-modelky';
 
@@ -189,7 +189,7 @@ function vykreslit(koren) {
 }
 
 const htmlHlavicky = () => `
-    <h3>Vývoj v čase <span>podle roku centerfoldu · ${data?.modelek || 0} modelek · klik na řádek ukáže graf</span>
+    <h3>Vývoj v čase <span>podle roku centerfoldu · ${sklonovat(data?.modelek || 0, 'modelka', 'modelky', 'modelek')} · klik na řádek ukáže graf</span>
         <span class="vyvoj-edice">${['US', 'CZ'].map(e => `<button type="button" class="${e === edice ? 'active' : ''}" data-vyvoj-edice="${e}">${e}</button>`).join('')}</span></h3>`;
 
 // Rychlé přepnutí US/CZ: vykreslí se jen odpověď na poslední požadavek

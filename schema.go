@@ -68,7 +68,7 @@ func (a *App) overitKlicAlba(modelkaID int, album, typ string) error {
 	case typ != "Cover" && (modelkaID == 0 || a.jmenoModelky(modelkaID) == ""):
 		return fmt.Errorf("modelka neexistuje")
 	case (typ == "Centerfold" || typ == "Cover") && !vzorVydani.MatchString(album):
-		return fmt.Errorf("název centerfoldu a coveru musí být vydání ve tvaru RRRR-MM")
+		return fmt.Errorf("název centerfoldu a coveru musí být vydání ve tvaru RRRR-MM nebo RRRR-Snn (s příponou edice, např. 2011-07-CZ)")
 	}
 	if e := edicePodleVydani(album); (typ == "Centerfold" || typ == "Cover") && e != "" && !dalsiEdice[e] {
 		return fmt.Errorf("neznámá edice „%s“", e)

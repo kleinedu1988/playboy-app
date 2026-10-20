@@ -171,7 +171,7 @@ export function htmlAlbaStranky(a, index, { nadpis = nazevAlba(a.album, a.typ), 
             <div class="album-header">
                 <h4>${esc(nadpis)}</h4>
                 <span>${esc(a.typ)}${plakat ? '' : ` · ${sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek')}`}</span>
-                ${sVydanim && vydani ? `<button class="chip" data-vydani="${esc(vydani)}" title="Otevřít vydání">${esc(nazevVydani(vydani))}</button>` : ''}
+                ${sVydanim && vydani ? `<button class="chip" data-vydani="${esc(vydani)}" title="Otevřít číslo">${esc(nazevVydani(vydani))}</button>` : ''}
                 ${modelky}
             </div>
             ${htmlPopisuAlba(a)}
@@ -209,7 +209,7 @@ export function vykreslitRocnik(vydani, fotky) {
                 <span class="rocnik-obalka"></span><span class="rocnik-popis"><b>${esc(nazev)}</b>nevyšlo</span></div>`;
         }
         if (!albaCisla.length) {
-            return `<button class="rocnik-karta chybi ${stavKlice || ''}" data-prazdne="${esc(klic)}" title="${esc(nazevVydani(klic))} – chybí, klikni pro přidání">
+            return `<button class="rocnik-karta chybi ${stavKlice || ''}" data-prazdne="${esc(klic)}" title="${esc(nazevVydani(klic))} – chybí, klik nabídne přidání">
                 <span class="rocnik-obalka"><span class="rocnik-plus">+</span></span>
                 <span class="rocnik-popis"><b>${esc(nazev)}</b>${stavKlice === 'shanim' ? 'sháním' : stavKlice === 'mam' ? 'mám výtisk' : 'chybí'}</span></button>`;
         }

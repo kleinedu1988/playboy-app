@@ -38,11 +38,11 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     // Vydání se odvozují z alb a centerfoldů; starší ručně psané údaje se ukážou, jen když odvozená chybí
     const prvniVydani = modelka.vydani.find(v => rozlozitVydani(v)?.mesic) || (rozlozitVydani(modelka.vystoupeni)?.mesic ? modelka.vystoupeni : '');
     const vydani = modelka.vydani.length
-        ? modelka.vydani.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít vydání">${esc(nazevVydani(v))}</button>`).join(' ')
+        ? modelka.vydani.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`).join(' ')
         : esc([modelka.vystoupeni, ...modelka.pictorialVydani.split('\n')].map(v => v.trim()).filter(Boolean).join(', '));
 
     // Údaje ve třech blocích: Playboy (nejdůležitější pro sbírku), Osobní, Vzhled; prázdné části se nezobrazí
-    const stitkyVydani = vydaniKody => vydaniKody.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít vydání">${esc(nazevVydani(v))}</button>`).join(' ');
+    const stitkyVydani = vydaniKody => vydaniKody.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`).join(' ');
     const playboy = [
         ['Vydání', vydani],
         ['Role', modelka.role ? `<span class="udaje-znamka">${esc(modelka.role)}</span>` : ''],
@@ -104,7 +104,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     const paskyHtml = platnaVydani.map(v => {
         const role = (v === playmateVydani && jePlaymate) ? 'Playmate · ' : '';
         const popisek = `${role}${paskaCisla(v)}`;
-        return `<button type="button" class="panel-paska" data-vydani="${esc(v)}" title="Otevřít vydání ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
+        return `<button type="button" class="panel-paska" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
     }).join('');
     const paska = paskyHtml ? `<div class="panel-pasky">${paskyHtml}</div>` : '';
     document.getElementById('modelHeader').innerHTML = `
@@ -242,7 +242,7 @@ export async function nacistFotkyModelky(modelkaId) {
     const htmlCenterfoldu = (a) => {
         const index = indexAlba.get(a);
         const stitky = [
-            a.album ? `<button class="chip" data-vydani="${esc(a.album)}" title="Otevřít vydání">${esc(nazevVydani(a.album))}</button>` : '',
+            a.album ? `<button class="chip" data-vydani="${esc(a.album)}" title="Otevřít číslo">${esc(nazevVydani(a.album))}</button>` : '',
             htmlSpoluModelek(a),
         ].filter(Boolean).join(' ');
 
@@ -266,7 +266,7 @@ export async function nacistFotkyModelky(modelkaId) {
                 <div class="album-header">
                     <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
                     <span>${esc(a.typ)} · ${popis}</span>
-                    ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít vydání">${esc(nazevVydani(a.vydani))}</button>` : ''}
+                    ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít číslo">${esc(nazevVydani(a.vydani))}</button>` : ''}
                     ${htmlSpoluModelek(a)}
                     <button class="album-more" data-nabidka-alba title="Akce alba (také pravým tlačítkem)">&#8943;</button>
                 </div>

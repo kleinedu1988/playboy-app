@@ -287,7 +287,7 @@ func (a *App) exportovat() ([]byte, error) {
 		return nil, err
 	}
 	hlavicka := "# Playboy Database – export " + time.Now().Format("2006-01-02 15:04") + "\n" +
-		"# Import údaje doplňuje a opravuje, nic nemaže; prázdný nebo chybějící údaj ponechá ten stávající.\n\n"
+		"# Import údaje doplňuje a opravuje; prázdný nebo chybějící údaj ponechá, smaže jen údaj s hodnotou „-“. Modelky, alba ani fotky nemaže.\n\n"
 	return append([]byte(hlavicka), yamlData...), nil
 }
 
@@ -870,7 +870,7 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 	for _, c := range data.Covery {
 		vydani := strings.TrimSpace(c.Vydani)
 		if !vzorVydani.MatchString(vydani) {
-			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("cover: vydání „%s“ není ve tvaru RRRR-MM", vydani))
+			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("cover: vydání „%s“ není ve tvaru RRRR-MM nebo RRRR-Snn (s příponou edice, např. 2011-07-CZ)", vydani))
 			continue
 		}
 		a.importovatFotky(0, exportAlbum{Nazev: vydani, Typ: "Cover", Fotky: c.Fotky, RucniPoradi: c.RucniPoradi}, vysledek, "cover "+vydani)

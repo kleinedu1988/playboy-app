@@ -32,7 +32,7 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
   Obojí import vypíše s číslem řádku.
 - Opakovaný import téhož souboru nic nezdvojí.
 - Před importem se uloží záloha. Při jakékoli chybě zápisu se import vrátí celý a databáze zůstane, jak byla.
-- Soubor s vyšší verzí formátu, než program zná, se odmítne celý (aktualizuj program). Starší verze 1–5
+- Soubor s vyšší verzí formátu, než program zná, se odmítne celý (aktualizuj program). Starší verze 1–6
   se načtou; údaje, které v nich ještě nebyly, zůstanou nezměněné.
 - Údaje se kontrolují stejně jako při zadávání v programu. Chybné album nebo fotka se přeskočí a import
   vypíše, co a proč.

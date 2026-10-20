@@ -15,7 +15,7 @@ export const SABLONA_OKNA = `
       <div class="nav-controls">
         <label class="hledani">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ, vyska:175, tetovani:ano, obalka:1995. Centerfoldy a čísla: jméno nebo vydání. Do hledání skočíš klávesami Ctrl+F." />
+          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ, vyska:175, tetovani:ano, obalka:1995., hodnoceni:5. Do hledání skočíš klávesami Ctrl+F." />
           <kbd class="hledani-zkratka" aria-hidden="true">Ctrl F</kbd>
           <button type="button" id="searchClearBtn" class="hledani-smazat" title="Smazat hledání" aria-label="Smazat hledání">&times;</button>
         </label>
@@ -273,7 +273,7 @@ export const SABLONA_OKNA = `
               </div>
               <div class="form-group span-2">
                 <label for="inputPoznamka">Poznámka</label>
-                <textarea id="inputPoznamka" rows="3" placeholder="Podporuje markdown: **tučné**, *kurzíva*, odrážky"></textarea>
+                <textarea id="inputPoznamka" rows="3" placeholder="Markdown: **tučné**, *kurzíva*, odrážky"></textarea>
               </div>
               <div class="form-group span-2">
                 <label for="inputOdkazy">Odkazy (Wikipedie a podobně, jeden na řádek)</label>
@@ -294,7 +294,7 @@ export const SABLONA_OKNA = `
         </div>
         <div class="modal-actions">
           <button type="button" id="cancelModelBtn" class="btn btn-secondary">Zrušit</button>
-          <button type="submit" id="modelNextBtn" class="btn btn-secondary hidden" title="Uloží a otevře další modelku z tabulky Přehledu na stejné záložce">Uložit a další</button>
+          <button type="submit" id="modelNextBtn" class="btn btn-secondary hidden" title="Uloží a otevře další modelku z fronty (Údržba nebo Vývoj v čase)">Uložit a další</button>
           <button type="submit" class="btn btn-primary">Uložit modelku</button>
         </div>
       </form>
@@ -353,12 +353,12 @@ export const SABLONA_OKNA = `
           </div>
         </div>
         <div class="form-group">
-          <label id="bulkLinksLabel">Vložte odkazy z Google Disku (libovolné množství)</label>
-          <textarea id="inputBulkLinks" rows="3" placeholder="Vložte zkopírované odkazy z Disku (můžete vložit více odkazů naráz)..." required></textarea>
+          <label id="bulkLinksLabel">Vlož odkazy z Google Disku (libovolné množství)</label>
+          <textarea id="inputBulkLinks" rows="3" placeholder="Vlož zkopírované odkazy z Disku (i více naráz)…" required></textarea>
         </div>
         <div class="form-group">
           <label for="inputAlbumPopis">Průvodní text alba (nepovinné)</label>
-          <textarea id="inputAlbumPopis" rows="3" placeholder="Text, který album v časopise uvádí (podporuje markdown: **tučné**, *kurzíva*, odrážky)"></textarea>
+          <textarea id="inputAlbumPopis" rows="3" placeholder="Text, který album v časopise uvádí (markdown: **tučné**, *kurzíva*, odrážky)"></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
@@ -522,7 +522,7 @@ export const SABLONA_OKNA = `
         </div>
         <div class="form-group">
           <label for="inputIssuePoznamka">Poznámka</label>
-          <textarea id="inputIssuePoznamka" rows="4" placeholder="Podporuje markdown: **tučné**, *kurzíva*, odrážky"></textarea>
+          <textarea id="inputIssuePoznamka" rows="4" placeholder="Markdown: **tučné**, *kurzíva*, odrážky"></textarea>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
@@ -613,7 +613,7 @@ export const SABLONA_OKNA = `
           <button id="lbPlay" class="lb-btn" title="Slideshow (mezerník)">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 5l12 7-12 7z"/></svg>
           </button>
-          <button id="lbMore" class="lb-btn tile-more" title="Akce s fotkou: do výběru, profil, Disk, odebrat">&#8943;</button>
+          <button id="lbMore" class="lb-btn tile-more" title="Akce s fotkou: profil, titulní fotka, do výběru, Google Disk, odkaz, odebrat">&#8943;</button>
         </div>
         <div class="lb-vpravo">
           <span id="lbCounter" class="lb-counter"></span>
@@ -675,13 +675,13 @@ export const SABLONA_OKNA = `
           <li><strong>Volby přehledu</strong> pod hledáním: <strong>⇅ řazení ▾</strong>, tlačítko <strong>Filtry</strong> (panel se srdíčky, edicí, rolí…; číslo v odznaku je počet zapnutých filtrů) a zapnuté filtry jako štítky, které <strong>×</strong> zruší; <strong>Zrušit filtry</strong> v panelu zruší všechny. V Nejlepších je vedle srdíček <strong>Výběr ▾</strong> a <strong>▶</strong> spustí slideshow. <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klávesa <kbd>?</kbd> kdekoli (i v prohlížeči fotek a ve čtečce stran) ukáže přehled všech klávesových zkratek.</li>
-          <li>Klik na vydání, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
+          <li>Klik na štítek čísla, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
         </ul>
         <h4>Prohlížeč fotek</h4>
         <ul>
           <li><kbd>←</kbd> <kbd>→</kbd> listování, <kbd>↑</kbd> <kbd>↓</kbd> skok mezi alby, <kbd>mezerník</kbd> slideshow, <kbd>S</kbd> zamíchat.</li>
           <li><kbd>F</kbd> rozložit plakát přes okno, <kbd>R</kbd> otočit, klik na fotku lupa, <kbd>1</kbd>–<kbd>5</kbd> srdíčka, <kbd>0</kbd> zrušit, <kbd>Esc</kbd> zavřít.</li>
-          <li>Tlačítko <strong>⋯</strong> nahoře: přidat do výběru, profil, Google Disk, odkaz, odebrat.</li>
+          <li>Tlačítko <strong>⋯</strong> nahoře: profil, titulní fotka, do výběru, Google Disk, odkaz, odebrat.</li>
         </ul>
         <h4>Akce a výběr</h4>
         <ul>
@@ -697,23 +697,23 @@ export const SABLONA_OKNA = `
         </ul>
         <h4>Čísla časopisu</h4>
         <ul>
-          <li>Kalendář ukazuje jednu edici (US nebo CZ). Tři linky na spodní hraně obálky: cover, centerfold, pictorial (růžová = číslo ho má); prázdné políčko = číslo chybí, klik ho přidá.</li>
-          <li>Stav čísla: <strong>mám výtisk</strong> (zelený rámeček), <strong>sháním</strong>, <strong>nezajímá mě</strong> – v nabídce políčka nebo v „Upravit číslo…“.</li>
+          <li>Kalendář ukazuje jednu edici (US nebo CZ). Tři linky na spodní hraně obálky: cover, centerfold, pictorial (růžová = číslo ho má); prázdné políčko = číslo chybí, klik nabídne přidání.</li>
+          <li>Stav čísla: <strong>mám výtisk</strong> (zelený rámeček), <strong>sháním</strong>, <strong>nezajímá mě</strong> – jen u české edice, v nabídce políčka nebo v „Upravit číslo…“.</li>
           <li><strong>Speciály</strong> (Playmate Review, Lingerie…) jsou štítky pod měsíci roku; nový založíš v okně alba nebo coveru („Nový speciál…“) nebo pravým tlačítkem na nadpis roku v kalendáři.</li>
         </ul>
         <h4>Přehled a hodnocení</h4>
         <ul>
           <li><strong>Statistiky</strong> v Přehledu (poslední část vlevo): centerfoldy podle desetiletí, věk v době centerfoldu, nejčastější fotografové a národnosti, čísla edic US a CZ. Najetí myší na sloupec ukáže hodnotu. Pod nimi <strong>Vývoj v čase</strong>: tabulka údajů po desetiletích podle roku centerfoldu (medián věku, výšky, váhy a měr, podíl blond vlasů, oholeného ochlupení, silikonových prsou, tetování a piercingu; pod hodnotou počet modelek se známým údajem), klik na řádek ukáže pod tabulkou graf. Přepínač US/CZ vybere edici.</li>
-          <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; jméno modelky a odkud fotka je se ukáže po najetí myší.</li>
+          <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; po najetí myší se ukáže jméno modelky a odkud fotka je.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>
           <li><strong>Články modelky</strong> (rozhovor, 20 otázek…) jsou v jejím profilu jako poslední blok vlevo; klik otevře číslo rovnou na článku.</li>
-          <li><strong>Přehled</strong> má vlevo čtyři části. <strong>Přehled</strong>: hlavní čísla, mapa české edice (vlastní výtisky: mám, sháním, chybí) a mapa americké edice (úplnost dat: kompletní číslo má cover, centerfold i pictorial); klik na políčko otevře číslo, prázdné nabídne přidání, pravým tlačítkem se nastaví stav. <strong>Údržba</strong>: jedna fronta úkolů (modelky, čísla i údaje ke kontrole) seřazená podle toho, kolik toho chybí; filtry nahoře ukážou jen jeden druh úkolu. „Doplnit“ otevře místo, kde se úkol doplňuje, štítek na řádku otevře právě ten údaj, „Doplňovat postupně“ jde s „Uložit a další“ modelku po modelce. Pod ⋯ je „netýká se“ a okno „Doplnit modelku“ se vším, co jí chybí. <strong>Sháním CZ</strong>: shánená čísla české edice po letech, „Kopírovat seznam“ je dá do schránky jako text.</li>
+          <li><strong>Přehled</strong> má vlevo čtyři části. <strong>Přehled</strong>: hlavní čísla, mapa české edice (vlastní výtisky: mám, sháním, chybí) a mapa americké edice (úplnost dat: kompletní číslo má cover, centerfold i pictorial); klik na políčko otevře číslo, prázdné nabídne přidání, pravým tlačítkem se nastaví stav. <strong>Údržba</strong>: jedna fronta úkolů (modelky, čísla i údaje ke kontrole) seřazená podle toho, kolik toho chybí; filtry nahoře ukážou jen jeden druh úkolu. „Doplnit“ otevře místo, kde se úkol doplňuje, štítek na řádku otevře právě ten údaj, „Doplňovat postupně“ jde s „Uložit a další“ modelku po modelce. Pod ⋯ na řádku je „Netýká se: …“ a „Doplnit vše v jednom okně“. <strong>Sháním CZ</strong>: sháněná čísla české edice po letech, „Kopírovat seznam“ je dá do schránky jako text.</li>
           <li>Vlastní výběry fotek jsou v Nejlepších vedle prahů srdíček.</li>
         </ul>
         <h4>Import a zálohy</h4>
         <ul>
-          <li>Nabídka ⋯ → Importovat: jeden nebo více souborů <code>.yaml</code>, <code>.yml</code> nebo <code>.md</code>; soubor může obsahovat i jen jednu modelku. Nic se nemaže, jen doplňuje.</li>
+          <li>Nabídka ⋯ → Importovat: jeden nebo více souborů <code>.yaml</code>, <code>.yml</code> nebo <code>.md</code>; soubor může obsahovat i jen jednu modelku. Údaje se doplňují a opravují; smaže se jen údaj s hodnotou „-“. Modelky, alba ani fotky import nemaže.</li>
           <li>Zálohy vznikají denně a před každou hromadnou změnou; obnovení v ⋯ → Obnovit ze zálohy.</li>
           <li>Fotky musí být na Google Disku sdílené „kdokoli s odkazem“.</li>
         </ul>
@@ -767,11 +767,11 @@ export const SABLONA_OKNA = `
                 <select id="selectClanekDruh"><option value="">Neuvedeno</option><option value="prepis">Přepis</option><option value="shrnuti">Shrnutí</option></select></div>
             </div>
             <div class="doplnit-pole"><textarea id="inputClanekText" rows="10"></textarea></div>
-            <p class="doplnit-napoveda">Podpora markdownu: **tučné**, *kurzíva*, odrážky (* nebo -), citát (&gt;). První odstavec je perex, dvojtečka za jménem (PLAYBOY:) zvýrazní mluvčího.</p>
+            <p class="doplnit-napoveda">Markdown: **tučné**, *kurzíva*, odrážky (* nebo -), citát (&gt;). První odstavec je perex, dvojtečka za jménem (PLAYBOY:) zvýrazní mluvčího.</p>
           </section>
           <section class="doplnit-blok">
             <h4>Skeny stran (nepovinné)</h4>
-            <div class="doplnit-pole"><textarea id="inputClanekSkeny" rows="3" placeholder="Odkazy na skeny z Google Disku, každý na nový řádek"></textarea></div>
+            <div class="doplnit-pole"><textarea id="inputClanekSkeny" rows="3" placeholder="Odkazy na skeny z Google Disku, jeden na řádek"></textarea></div>
           </section>
         </div>
         <div class="doplnit-pata">

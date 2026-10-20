@@ -72,9 +72,9 @@ export function otevritNabidku(cil, x, y) {
         if (!modelka) return;
         polozky = [
             { text: 'Otevřít profil', akce: () => otevritProfilPodleId(modelka.id) },
-            { text: 'Upravit modelku', akce: () => otevritModelModal(modelka) },
+            { text: 'Upravit modelku…', akce: () => otevritModelModal(modelka) },
             { text: 'Upravit výřez titulní fotky', akce: () => upravitVyrez(modelka) },
-            { text: 'Přidat fotky / album', akce: () => otevritAlbumModal(modelka) },
+            { text: 'Přidat fotky nebo album…', akce: () => otevritAlbumModal(modelka) },
             null,
             { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
             { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },
@@ -85,7 +85,7 @@ export function otevritNabidku(cil, x, y) {
         polozky = [
             { text: 'Otevřít centerfold', akce: () => otevritLightbox(index, false, stav.stenaPolozky) },
             { text: 'Otevřít profil modelky', akce: () => otevritProfilPodleId(stav.stenaPolozky[index].modelkaId) },
-            { text: `Otevřít vydání ${nazevVydani(stav.stenaPolozky[index].album)}`, akce: () => otevritVydani(stav.stenaPolozky[index].album) },
+            { text: `Otevřít číslo ${nazevVydani(stav.stenaPolozky[index].album)}`, akce: () => otevritVydani(stav.stenaPolozky[index].album) },
             null,
             ...akceFotky(stav.stenaPolozky[index], null, { profil: false, odebrat: false }),
         ];
@@ -151,7 +151,7 @@ export function otevritNabidku(cil, x, y) {
         nabidkaCisla(cislo.dataset.vydani, x, y, {
             poZmene: () => nacistCovery(searchInput.value),
             navic: cover ? [
-                { text: 'Zobrazit cover', akce: () => otevritLightbox(index, false, stav.coveryPolozky) },
+                { text: 'Otevřít cover', akce: () => otevritLightbox(index, false, stav.coveryPolozky) },
                 { text: 'Upravit cover', akce: () => otevritCoverModal(cover) },
                 { text: 'Smazat cover', akce: () => smazatCover(cover), nebezpecne: true },
             ] : [],
@@ -163,14 +163,14 @@ export function otevritNabidku(cil, x, y) {
         const cislo = cil.closest('[data-vydani], [data-prazdne]');
         if (rok) nabidkaRoku(rok.dataset.vydani, x, y);
         else if (cislo) nabidkaCisla(cislo.dataset.vydani || cislo.dataset.prazdne, x, y);
-        else otevritKontextovouNabidku(x, y, [{ text: 'Přidat cover', akce: () => otevritCoverModal() }]);
+        else otevritKontextovouNabidku(x, y, [{ text: 'Přidat cover…', akce: () => otevritCoverModal() }]);
         return;
     } else if (!covers.classList.contains('hidden')) {
         // Volný prostor na stránce Čísla
-        polozky = [{ text: 'Přidat cover', akce: () => otevritCoverModal() }];
+        polozky = [{ text: 'Přidat cover…', akce: () => otevritCoverModal() }];
     } else if (!wall.classList.contains('hidden')) {
         // Volný prostor na stěně centerfoldů
-        polozky = [{ text: 'Přidat centerfold', akce: pridatCenterfold }];
+        polozky = [{ text: 'Přidat centerfold…', akce: pridatCenterfold }];
     } else {
         polozky = [{ text: 'Přidat modelku', akce: otevritRychlePridani }, ...polozkySpravy()];
     }
@@ -188,7 +188,7 @@ function polozkyAlba(album, prvekAlba) {
     const zkracena = mrizka?.classList.contains('zkracena');
     return [
         { text: 'Spustit slideshow alba', akce: () => otevritLightbox(stav.aktualniPolozky.indexOf(album.polozky[0]), true) },
-        { text: 'Upravit album / přidat fotky', akce: () => otevritAlbumModal(vlastnik, album) },
+        { text: 'Upravit album nebo přidat fotky…', akce: () => otevritAlbumModal(vlastnik, album) },
         ...(mrizka ? [{ text: zkracena ? 'Rozbalit album' : 'Sbalit album', akce: () => prepnoutRozbaleniAlba(mrizka, zkracena) }] : []),
         ...(centerfold && album.fotky.length > 1 ? [{
             text: album.spojit ? 'Rozdělit plakát na samostatné fotky' : 'Spojit stránky do jednoho plakátu',

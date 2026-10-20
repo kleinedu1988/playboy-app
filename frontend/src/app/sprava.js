@@ -82,7 +82,7 @@ export async function importovatData() {
     const cesty = await VybratSouboryImportu() || [];
     if (!cesty.length) return;
     const nazvy = cesty.map(c => c.split('/').pop());
-    const co = nazvy.length === 1 ? `ze souboru „${nazvy[0]}“` : `z ${nazvy.length} souborů (${nazvy.slice(0, 3).join(', ')}${nazvy.length > 3 ? ', …' : ''})`;
+    const co = nazvy.length === 1 ? `ze souboru „${nazvy[0]}“` : `ze souborů (${nazvy.length}): ${nazvy.slice(0, 3).join(', ')}${nazvy.length > 3 ? ', …' : ''}`;
     if (!await potvrdit('Importovat do sbírky', `Načíst data ${co}? Stávající modelky a alba se doplní a opraví, nové se přidají. Smažou se jen údaje, které mají v souboru hodnotu „-“; modelky, alba ani fotky se nemažou. Před importem se uloží záloha.`, 'Importovat')) return;
 
     const v = await ImportovatSoubory(cesty);
@@ -337,7 +337,7 @@ export function polozkySpravy() {
         { nadpis: 'Nápověda' },
         { text: 'Nápověda', akce: otevritNapovedu },
         { text: 'Klávesové zkratky (?)', akce: otevritZkratky },
-        { text: `Verze ${stav.verzeProgramu} – co je nového`, akce: () => otevritNovinky() },
+        { text: `Co je nového · verze ${stav.verzeProgramu}`, akce: () => otevritNovinky() },
     ];
 }
 
@@ -368,7 +368,7 @@ export async function otevritZalohy() {
     const zalohy = await SeznamZaloh() || [];
     document.getElementById('backupModalText').textContent = zalohy.length
         ? 'Databáze se vrátí do stavu vybrané zálohy. Současný stav se předtím uloží jako další záloha, takže jde vrátit i obnovení. Heslo zůstane současné.'
-        : 'Zatím není žádná záloha. Vzniká jednou denně při spuštění a před každým mazáním a importem.';
+        : 'Zatím není žádná záloha. Vzniká jednou denně při spuštění a před každou hromadnou změnou.';
     document.getElementById('backupModalList').innerHTML = zalohy.map(z => `
         <li>
             <strong>${esc(casZalohy(z))}</strong>
@@ -437,12 +437,12 @@ export function pripravit() {
         const vProfilu = !detailView.classList.contains('hidden');
         const naVydani = !issueView.classList.contains('hidden');
         nabidkaPodTlacitkem(e, [
-            ...(vProfilu ? [{ text: `Přidat fotky / album: ${stav.aktualniModelka.jmeno}`, akce: () => otevritAlbumModal(stav.aktualniModelka) }, null] : []),
+            ...(vProfilu ? [{ text: `Přidat fotky nebo album… (${stav.aktualniModelka.jmeno})`, akce: () => otevritAlbumModal(stav.aktualniModelka) }, null] : []),
             { text: 'Přidat modelku', akce: otevritRychlePridani },
             // Centerfold a cover se po uložení vracejí do přehledu, proto se z profilu a ze stránky vydání nenabízejí
             ...(vProfilu || naVydani ? [] : [
-                { text: 'Přidat centerfold', akce: pridatCenterfold },
-                { text: 'Přidat cover', akce: () => otevritCoverModal() },
+                { text: 'Přidat centerfold…', akce: pridatCenterfold },
+                { text: 'Přidat cover…', akce: () => otevritCoverModal() },
             ]),
         ]);
     };
@@ -452,7 +452,7 @@ export function pripravit() {
         nabidkaPodTlacitkem(e, [
             ...(vProfilu ? [
                 { nadpis: stav.aktualniModelka.jmeno },
-                { text: 'Upravit modelku', akce: () => otevritModelModal(stav.aktualniModelka) },
+                { text: 'Upravit modelku…', akce: () => otevritModelModal(stav.aktualniModelka) },
                 { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(stav.aktualniModelka) },
                 { text: 'Smazat modelku', akce: () => smazatModelku(stav.aktualniModelka), nebezpecne: true },
                 null,

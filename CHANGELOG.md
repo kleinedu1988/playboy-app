@@ -7,6 +7,15 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.17] – 2026-10-20
+
+### Opraveno
+- **Texty:** Opravené překlepy a skloňování („sháněná čísla“, „alba“, počet modelek ve Vývoji v čase, hlášky importu a Přehledu) a uvozovky.
+- **Zastaralé popisy:** Nápověda a hlášky odpovídají současnému chování: co import maže (jen údaj s hodnotou „-“), tvar vydání s příponou edice, stav výtisku jen u české edice, zálohy před každou hromadnou změnou, nabídka ⋯ u fotky, tlačítko „Uložit a další“ a nápověda k hledání.
+
+### Změněno
+- **Jednotné názvy:** „Otevřít číslo“ místo „Otevřít vydání“, „Přidat fotky nebo album…“, „Desetiletí“ v našeptávači, „Sháním CZ“ v Přehledu. Položky nabídek, které otevírají okno, končí trojtečkou. Texty oslovují jednotně tykáním.
+
 ## [0.51.16] – 2026-10-20
 
 ### Vylepšeno

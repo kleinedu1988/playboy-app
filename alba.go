@@ -181,7 +181,7 @@ func (a *App) PresunoutAlbum(modelkaID int, album, typ string, cilID int) string
 	case cil == "" || cilID == modelkaID:
 		return "Vyber jinou modelku."
 	case pocetFotekAlba(a.db, cilID, album, typ) > 0:
-		return fmt.Sprintf("Modelka %s už má album stejného názvu a typu. Použij Sloučit s albem.", cil)
+		return fmt.Sprintf("Modelka %s už má album stejného názvu a typu. Použij „Sloučit s jiným albem…“ v nabídce alba.", cil)
 	}
 	tx, err := a.db.Begin()
 	if err == nil {

@@ -63,7 +63,7 @@ const IKONY_CASTI = {
 // Filtry fronty v Údržbě: [klíč, název]; filtr bez úkolů se neukazuje
 const FILTRY_UDRZBY = [
     ['vse', 'Vše'], ['titulni', 'Titulní fotka'], ['centerfold', 'Centerfold'], ['hodnoceni', 'Hodnocení'], ['udaje', 'Údaje'],
-    ['text', 'Texty alb'], ['alba', 'Vydání alb'], ['cover', 'Cover čísla'], ['cfcisla', 'Centerfold čísla'], ['kontrola', 'Kontrola'],
+    ['text', 'Texty alb'], ['alba', 'Vydání alb'], ['cover', 'Cover čísel'], ['cfcisla', 'Centerfold čísel'], ['kontrola', 'Kontrola'],
 ];
 // Co se doplňuje postupně („Uložit a další“), do textu tlačítka
 const NAZVY_FRONT = { titulni: 'titulní fotky', zakladni: 'základní údaje', vzhled: 'vzhled a míry', zarazeni: 'zařazení' };
@@ -192,8 +192,8 @@ export async function nacistPrehled() {
                     ${radekSouhrnu('Modelky s hodnocením', aktivnich(p.bezHodnoceni), p.modelek, 'hodnoceni')}
                     ${radekSouhrnu('Alba s textem', aktivnich(p.albaBezPopisu), p.alb, 'text')}
                     ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb, 'alba')}
-                    ${radekSouhrnu('Vydání s coverem', p.vydaniBezCoveru.length, p.vydani, 'cover')}
-                    ${radekSouhrnu('Vydání s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'cfcisla')}
+                    ${radekSouhrnu('Čísla s coverem', p.vydaniBezCoveru.length, p.vydani, 'cover')}
+                    ${radekSouhrnu('Čísla s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'cfcisla')}
                     ${p.podezrele.length ? radekSouhrnu('Údaje ke kontrole', p.podezrele.length, 0, 'kontrola', 'zkontrolovat') : ''}
     </div>`;
 
@@ -246,7 +246,7 @@ export async function nacistPrehled() {
                     ${obrazek}
                     <div class="ud-jmeno"><strong>${esc(nazev)}</strong><small>${esc(r.druh === 'vydani' ? `číslo · ${rozlozitVydani(r.v)?.edice || VYCHOZI_EDICE}` : r.druh === 'kontrola' ? 'ke kontrole' : podtitulek(stav.prehledModelky.get(r.m.id)))}</small></div>
                     <div class="ud-chybi">${r.ukoly.map(u => u.netyka
-                        ? `<span class="ud-chip netyka" data-klic="${u.klic}" data-netyka="1" title="Netýká se – pravým tlačítkem jde znovu sledovat">${esc(u.text)} —</span>`
+                        ? `<span class="ud-chip netyka" data-klic="${u.klic}" data-netyka="1" title="Netýká se – pravým tlačítkem jde znovu sledovat">${esc(u.text)} –</span>`
                         : u.opravit ? `<span class="ud-chip hlavni">${esc(u.text)}</span>`
                         : `<button type="button" class="ud-chip ${u === hlavni ? 'hlavni' : ''}" ${u.atributy} title="${esc(u.napoveda)} (pravým tlačítkem: netýká se)">${esc(u.text)}</button>`).join('')}</div>
                     <div class="ud-akce">
@@ -323,7 +323,7 @@ function nabidkaRadku(tlacitko) {
         const netyka = [...radek.querySelectorAll('.ud-chybi [data-netyka]')];
         polozky = [
             ...ukoly.map(u => ({ text: `Netýká se: ${u.textContent}`, akce: () => oznacitNetykaSe(u, true) })),
-            ...netyka.map(u => ({ text: `Znovu sledovat: ${u.textContent.replace(/ —$/, '')}`, akce: () => oznacitNetykaSe(u, false) })),
+            ...netyka.map(u => ({ text: `Znovu sledovat: ${u.textContent.replace(/ –$/, '')}`, akce: () => oznacitNetykaSe(u, false) })),
             ...(ukoly.length || netyka.length ? [null] : []),
             ...(stav.prehledRadky.some(x => x.id === modelka.id) ? [{ text: 'Doplnit vše v jednom okně', akce: () => otevritDoplneni(modelka.id) }] : []),
             { text: 'Otevřít profil', akce: () => otevritDetailModelky(modelka) },
@@ -404,7 +404,7 @@ export function pripravit() {
             ]);
         } else if (e.target.closest('[data-kopirovat-shanim]')) {
             GetStavyVydani().then(stavy => navigator.clipboard.writeText(textShanim(stavy || [])))
-                .then(() => oznamit('Seznam shánených čísel je ve schránce.'), () => oznamit('Seznam se nepodařilo zkopírovat.'));
+                .then(() => oznamit('Seznam sháněných čísel je ve schránce.'), () => oznamit('Seznam se nepodařilo zkopírovat.'));
         }
     });
     stats.addEventListener('contextmenu', (e) => {

@@ -75,7 +75,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
             if (!v) {
                 // Chybějící číslo může být označené „mám výtisk“, „sháním“ nebo „nezajímá mě“
                 const udaje = stavCisla.get(klic);
-                const popisStavu = udaje?.stav ? ` – ${NAZVY_STAVU[udaje.stav].toLowerCase()}` : ' – chybí, klikni pro přidání';
+                const popisStavu = udaje?.stav ? ` – ${NAZVY_STAVU[udaje.stav].toLowerCase()}` : ' – chybí, klik nabídne přidání';
                 return `<button class="cal-cell empty ${udaje?.stav || ''}" data-prazdne="${klic}" title="${esc(nazevVydani(klic))}${popisStavu}${udaje?.poznamka ? `\n${esc(udaje.poznamka)}` : ''}">
                     <span class="cal-plus">+</span><span class="cal-month">${zkratka}</span>${udaje?.stav === 'shanim' ? '<em>sháním</em>' : udaje?.stav === 'mam' ? '<em>výtisk</em>' : ''}</button>`;
             }
@@ -150,7 +150,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     listaKalendare.naplnit([...desetileti].map(([dekada, pocet]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet })));
     calList.innerHTML = prepinacEdic(celkemVydani) + `
         <p class="cal-legend">Linky na obálce zleva: <i></i> cover <i></i> centerfold <i></i> pictorial. Prázdné políčko = číslo ve sbírce chybí.</p>
-        ${radky.join('') || htmlNicNenalezeno('Hledanému roku neodpovídá žádné vydání.')}
+        ${radky.join('') || htmlNicNenalezeno('Hledání neodpovídá žádné číslo.')}
     `;
     prevestNaVolby(calList.querySelector('.cal-editions'));
     listaKalendare.sledovat();
@@ -192,9 +192,9 @@ export async function nabidkaCisla(klic, x, y, { navic = [], poZmene = obnovitKa
         { text: 'Upravit číslo…', akce: () => upravitVydani(klic) },
         null,
         // Ročník (bez měsíce) nemá cover ani centerfold, jen pictorial
-        ...(casti?.mesic && !data?.cover ? [{ text: 'Přidat cover', akce: () => otevritCoverModal(null, klic) }] : []),
-        ...(casti?.mesic && !data?.centerfold ? [{ text: 'Přidat centerfold', akce: () => pridatCenterfold(klic) }] : []),
-        ...(!data?.pictorial ? [{ text: 'Přidat pictorial', akce: () => pridatPictorial(klic) }] : []),
+        ...(casti?.mesic && !data?.cover ? [{ text: 'Přidat cover…', akce: () => otevritCoverModal(null, klic) }] : []),
+        ...(casti?.mesic && !data?.centerfold ? [{ text: 'Přidat centerfold…', akce: () => pridatCenterfold(klic) }] : []),
+        ...(!data?.pictorial ? [{ text: 'Přidat pictorial…', akce: () => pridatPictorial(klic) }] : []),
         null,
         ...navic,
         null,

@@ -43,7 +43,7 @@ Cíl: program používat na skutečné sbírce; vše, co se najde, je oprava.
 | ~~Zmrazení schématu a exportu testem, popis v README a `EXPORT.md`~~ – hotovo v 0.50.0 | Pojistka proti nechtěné změně | S |
 | ~~Rychlejší databáze: režim WAL, čtení po albech místo po fotkách~~ – hotovo v 0.51.0 | Zápis čekal na disk, Přehled a kalendář procházely všechny fotky | M |
 | Používání na skutečné sbírce (v kopii), zápis chyb do `PLAN.md` a jejich oprava v dalších verzích 0.5x | Chyby, které testy nenajdou | M |
-| Poblikávání okna ve WebKitGTK: ověřit opravu z 0.33.18 na Fedoře, případně proměnné prostředí v `instalovat.sh` | Hlášené, oprava zatím nepotvrzená | S |
+| ~~Poblikávání okna ve WebKitGTK: ověřit opravu z 0.33.18 na Fedoře~~ – ověřeno 20. 10. 2026 (spolu s WAL a postupným načítáním z 0.51.x) | Hlášené poblikávání | S |
 | Zátěžová zkouška na syntetické sbírce (500 modelek, 20 000 fotek): galerie, profil, Přehled, Statistiky, export a import kruhem | Velká sbírka před betou | S–M |
 | Audit kódu agenty (data, rozhraní, výkon) a oprava nálezů | Stejně jako po 0.9.0 | M |
 | Úzké okno a klávesnice: projít všechny pohledy a okna | Dojem z každodenního používání | S |

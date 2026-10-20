@@ -7,9 +7,10 @@ Větší plán po etapách je v `ROADMAP.md`; tady zůstávají chyby z alfy, dr
 
 Chyby nalezené při používání na skutečné sbírce (co, kde, jak to vyvolat). Opravují se v dalších verzích řady 0.5x.
 
-- Poblikávání okna ve WebKitGTK (karty při načtení, kontextová nabídka se na chvíli zavře a otevře):
-  oprava z 0.33.18 čeká na ověření na Fedoře. Kdyby nestačila, vyzkoušet `WEBKIT_DISABLE_DMABUF_RENDERER=1`,
-  `WEBKIT_DISABLE_COMPOSITING_MODE=1` nebo `GDK_BACKEND=x11` a funkční nastavit v `instalovat.sh`.
+Zatím žádné otevřené. Ověřeno na Fedoře 20. 10. 2026: poblikávání okna a kontextové nabídky je pryč (0.33.18),
+databáze přešla do režimu WAL (0.51.0), karty, plakáty a mozaika se při rychlém rolování zaplňují rychleji
+(0.51.1–0.51.3). Kdyby se poblikávání vrátilo, vyzkoušet `WEBKIT_DISABLE_DMABUF_RENDERER=1`,
+`WEBKIT_DISABLE_COMPOSITING_MODE=1` nebo `GDK_BACKEND=x11` a funkční nastavit v `instalovat.sh`.
 
 ## Otevřené otázky
 

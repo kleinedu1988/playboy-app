@@ -94,6 +94,7 @@ vypnul, zobrazování se přepne na oficiální náhledy z API.
 | Seznam fotografů k procházení | Stránka fotografa jde otevřít jen z alba | S |
 | Rekordy ve Statistikách (nejmladší, nejvyšší, nejvíc obálek…) | Encyklopedický pohled | S |
 | Titulní fotka alba pro stránky fotografa a ročníku | Hezčí přehledy alb mimo profil | S–M |
+| Náhledy na disku: malé náhledy (karty, dlaždice, plakáty na stěně, ~30–60 kB) si program uloží natrvalo do `~/.cache/playboy-app`, velké fotky v prohlížeči se dál stahují; omezení velikosti, úklid náhledů smazaných fotek, „Vymazat náhledy“ v ⋯ | Mřížky se při rolování načítají okamžitě a fungují i bez internetu; mezipaměť WebKitu platí jen tak dlouho, jak určí Google | M |
 
 ### 1.4 – Editor textů
 
@@ -115,11 +116,12 @@ Cíl: pohodlné psaní článků, rozhovorů, textů alb a poznámek bez ruční
   hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý klíč (0.18.0–0.30.0).
 - Vzhled: střídmý, jeden růžový akcent, písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1).
 - Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.1).
+- Malé náhledy smí program ukládat na disk jako mezipaměť (1.3); originály a velké fotky zůstávají jen na Disku.
 
 ## Nedělat
 
 - Obecné Zpět pro všechny úpravy (deník změn) – denní zálohy a Vrátit u fotek stačí.
-- Místní kopie fotek, náhledy na disku, zálohy na jiný disk.
+- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz 1.3), zálohy na jiný disk.
 - Šifrovanou databázi – zvolen zámek rozhraní.
 - Půlsrdíčka.
 - Zobrazování fotek přes Google API s přihlášením (API jen k výběru fotek, viz 1.1); automatický import celé

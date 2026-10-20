@@ -159,12 +159,13 @@ export function htmlOdkazu(text) {
 }
 
 // Plakát: jedna nebo více stránek spojených bez mezer, volitelně otočený
-// line = načíst až při přiblížení k oknu (dlouhé přehledy, kde je plakátů mnoho)
+// line = adresa jen v data-src, načte ji postupné načítání (nacitatPostupne) při přiblížení k oknu;
+// pro dlouhé přehledy, kde je plakátů mnoho
 export function htmlPlakatu(polozka, velikost, atributy = '', line = false) {
     return `
         <div class="poster" data-rot="${polozka.rotace}" ${atributy} ${atributy.includes('data-index') ? 'tabindex="0"' : ''}>
             <div class="poster-inner">
-                ${polozka.fotky.map(f => `<img src="${esc(obrazek(f.url, velikost))}" data-foto-id="${f.id}" draggable="false" ${line ? 'loading="lazy"' : ''} />`).join('')}
+                ${polozka.fotky.map(f => `<img ${line ? 'data-src' : 'src'}="${esc(obrazek(f.url, velikost))}" data-foto-id="${f.id}" draggable="false" ${line ? 'decoding="async"' : ''} />`).join('')}
             </div>
             ${htmlAkciDlazdice()}
         </div>

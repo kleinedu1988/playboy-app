@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.2] – 2026-10-20
+
+### Opraveno
+- **Prázdné plakáty a obálky při rychlém rolování Centerfoldů a Čísel:** Stěna centerfoldů a stránka Čísla používají stejné postupné načítání jako karty Modelek (0.51.1): fotky se začnou stahovat asi dvě obrazovky dopředu a ty, které odrolují dřív, než se načetly, se zruší. V měření se simulovaně pomalou sítí se stěna centerfoldů po rychlém rolování zaplnila za 0,7 s místo 2,5 s.
+
 ## [0.51.1] – 2026-10-19
 
 ### Opraveno

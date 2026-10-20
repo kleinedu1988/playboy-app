@@ -5,7 +5,7 @@ import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
 import { listaCoveru, listaSteny } from './listy';
-import { VELIKOST_PLAKATU_MALA } from './obrazky';
+import { VELIKOST_PLAKATU_MALA, nacitatPostupne } from './obrazky';
 import { ukazatPohled } from './navigace';
 import { htmlPlakatu, pripravitPlakat } from './profil';
 import { otevritVydani } from './vydani';
@@ -104,6 +104,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     listaSteny.naplnit([...dekady].filter(([dekada]) => dekada).map(([dekada, indexy]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet: indexy.length })));
     listaSteny.sledovat();
     wall.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
+    nacitatPostupne(wall);
 }
 
 // Čísla časopisu: každé číslo, ke kterému je ve sbírce cover, centerfold nebo pictorial, jako výtisk s páskou
@@ -183,7 +184,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
                 <div class="cislo-obalka ${k.cover || k.chybi ? '' : 'bez-coveru'}">
                     ${paska}${stitek}
                     ${k.chybi ? '<span class="cislo-chybi">Ve sbírce chybí</span>'
-                        : `<img src="${esc(obrazek(k.nahled, VELIKOST_PLAKATU_MALA))}" alt="" loading="lazy" draggable="false" />${k.cover ? '' : '<span class="cislo-znacka">bez coveru</span>'}`}
+                        : `<img data-src="${esc(obrazek(k.nahled, VELIKOST_PLAKATU_MALA))}" alt="" decoding="async" draggable="false" />${k.cover ? '' : '<span class="cislo-znacka">bez coveru</span>'}`}
                 </div>
                 <figcaption>${kdo ? esc(kdo) : '&nbsp;'}</figcaption>
             </figure>`;
@@ -199,6 +200,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
             </section>`;
     }).join('');
     prevestNaVolby(coversList.querySelector('.cisla-volby'));
+    nacitatPostupne(coversList);
     listaCoveru.sledovat();
 }
 

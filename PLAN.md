@@ -14,7 +14,6 @@ databáze přešla do režimu WAL (0.51.0), karty, plakáty a mozaika se při ry
 
 ## Otevřené otázky
 
-- Které číslo je první číslo české edice? Mapa výtisků CZ v Přehledu začíná lednem 1991.
 - Evidovat u americké edice „mám PDF“? Zatím ne (viz `ROADMAP.md`, verze 1.1).
 
 ## Rozhodnuto nedělat

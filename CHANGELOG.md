@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.6] – 2026-10-20
+
+### Opraveno
+- **Mapa české edice začíná prvním číslem 07/2011** místo roku 1991. Měsíce roku 2011 před prvním číslem jsou v mapě prázdné, nedají se otevřít ani označit a nepočítají se mezi chybějící čísla; „Výtisky CZ“ tak počítají jen čísla, která opravdu vyšla. Pokud by sbírka obsahovala české číslo z dřívější doby, mapa začne od něj.
+
 ## [0.51.5] – 2026-10-20
 
 ### Opraveno (revize změn od verze 0.33.17 – rozhraní)

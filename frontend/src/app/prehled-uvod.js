@@ -5,12 +5,13 @@ import { MESICE, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozi
 import { adresaTitulni } from './obrazky';
 import { grafSloupcu } from './statistiky';
 
-// České vydání Playboye vychází od roku 1991; dřívější roky v mapě nejsou
-const PRVNI_ROK_CZ = 1991;
+// Česká edice začíná číslem 07/2011; dřívější roky v mapě nejsou, měsíce 2011 před prvním číslem jsou prázdné
+const PRVNI_CISLO_CZ = '2011-07';
+const PRVNI_ROK_CZ = parseInt(PRVNI_CISLO_CZ);
 // Naposledy přidaných modelek na úvodu
 const NAPOSLEDY = 6;
 
-const STAVY_CZ = { m: 'mám výtisk', s: 'sháním', n: 'nezajímá mě', c: 'chybí', b: 'ještě nevyšlo' };
+const STAVY_CZ = { m: 'mám výtisk', s: 'sháním', n: 'nezajímá mě', c: 'chybí', b: 'ještě nevyšlo', x: 'před prvním českým číslem' };
 const STAVY_US = { k: 'kompletní', p: 'částečné', n: 'nezajímá mě', c: 'chybí', b: 'ještě nevyšlo' };
 
 // Měsíční čísla edice po letech: { rok: [12 × { klic, data }] } od prvního do posledního roku
@@ -40,7 +41,9 @@ function htmlMapy(roky, stavCisla) {
         <div class="uvod-dekada"><h5>${dekada}–${dekada + 9}</h5>
             ${rokyDekady.map(r => `<div class="uvod-rok"><span>${r.rok}</span>${r.mesice.map(m => {
                 const [stavPole, popis] = stavCisla(m);
-                return `<i class="${stavPole}" data-cislo="${esc(m.klic)}" ${m.data ? 'data-ma-data' : ''} title="${esc(`${nazevVydani(m.klic)} – ${popis}`)}"></i>`;
+                // Měsíc před prvním číslem edice (x) není číslo, nedá se otevřít ani označit
+                return stavPole === 'x' ? `<i class="x" title="${esc(`${nazevVydani(m.klic)} – ${popis}`)}"></i>`
+                    : `<i class="${stavPole}" data-cislo="${esc(m.klic)}" ${m.data ? 'data-ma-data' : ''} title="${esc(`${nazevVydani(m.klic)} – ${popis}`)}"></i>`;
             }).join('')}</div>`).join('')}
         </div>`).join('')}</div>`;
 }
@@ -60,12 +63,15 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
     const stavPodleKlice = new Map(stavy.map(s => [s.vydani, s.stav]));
     const rokyEdice = edice => kalendar.concat(stavy).map(k => rozlozitVydani(k.vydani)).filter(v => v?.mesic && v.edice === edice && !v.mesic.startsWith('S')).map(v => parseInt(v.rok));
 
-    // Česká edice: výtisky od roku 1991 (nebo od dřívějšího čísla ve sbírce) do letoška
+    // Česká edice: výtisky od prvního čísla 07/2011 (nebo od dřívějšího čísla ve sbírce) do letoška
     const rokyCz = rokyEdice('CZ');
     const cz = cislaEdice('CZ', Math.min(PRVNI_ROK_CZ, ...rokyCz), letos, podleKlice);
-    const poctyCz = { m: 0, s: 0, n: 0, c: 0, b: 0 };
+    const poctyCz = { m: 0, s: 0, n: 0, c: 0, b: 0, x: 0 };
     const stavCz = m => {
-        const s = budouci(m.klic) ? 'b' : ({ mam: 'm', shanim: 's', nezajima: 'n' })[stavPodleKlice.get(m.klic)] || 'c';
+        const stavCisla = ({ mam: 'm', shanim: 's', nezajima: 'n' })[stavPodleKlice.get(m.klic)];
+        // Měsíc před prvním číslem se nepočítá, pokud k němu ve sbírce přece jen něco není
+        const predPrvnim = m.klic.slice(0, 7) < PRVNI_CISLO_CZ && !m.data && !stavCisla;
+        const s = predPrvnim ? 'x' : budouci(m.klic) ? 'b' : stavCisla || 'c';
         poctyCz[s]++;
         const obsah = obsahCisla(m.data);
         return [s, STAVY_CZ[s] + (obsah ? ` · ${obsah}` : '')];

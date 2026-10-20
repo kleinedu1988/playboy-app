@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.13] – 2026-10-20
+
+### Vylepšeno
+- **Bez připojení k internetu:** Fotka, která se nenačetla, ukazuje zástupný obrázek „Nenačteno“ místo „Bez fotky“ (ten zůstává pro modelku, která titulní fotku nemá). Výpadek připojení program ohlásí a po jeho návratu se nenačtené fotky načtou samy, bez obnovování stránky.
+
 ## [0.51.12] – 2026-10-20
 
 ### Opraveno (revize zabezpečení)

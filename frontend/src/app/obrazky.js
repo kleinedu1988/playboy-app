@@ -1,5 +1,6 @@
 // Velikosti obrázků z Disku a zástupný obrázek pro chybějící fotku
 import { obrazek } from '../lib/format';
+import { oznamit } from '../ui/oznameni';
 
 // Google Disk bez přípony vrací nejvýše 1600 px; =s0 je originál, =w600 úsporný náhled
 export const VELIKOST_NAHLEDU = 'w400';       // dlaždice fotky v albu
@@ -9,8 +10,9 @@ export const VELIKOST_KARTY = 'w400';         // titulní fotka na kartě galeri
 // Titulní fotka v profilu a při úpravě výřezu; rezerva pro přiblížení
 export const VELIKOST_TITULNI = 'w800';
 
-// Zástupný obrázek pro modelku bez titulní fotky nebo pro fotku, která se nenačetla
-export const BEZ_FOTKY = 'data:image/svg+xml,' + encodeURIComponent(`
+// Zástupný obrázek: „Bez fotky“ u modelky bez titulní fotky, „Nenačteno“ u fotky, která se nenačetla
+// (bez připojení, smazaná nebo nesdílená na Disku)
+const zastupny = text => 'data:image/svg+xml,' + encodeURIComponent(`
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400">
         <rect width="300" height="400" fill="#18181c"/>
         <g fill="none" stroke="#3a3a42" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
@@ -18,8 +20,10 @@ export const BEZ_FOTKY = 'data:image/svg+xml,' + encodeURIComponent(`
             <circle cx="130" cy="182" r="10"/>
             <path d="M102 232l34-30 22 18 18-14 22 26"/>
         </g>
-        <text x="150" y="275" fill="#5a5a62" font-family="sans-serif" font-size="16" text-anchor="middle">Bez fotky</text>
+        <text x="150" y="275" fill="#5a5a62" font-family="sans-serif" font-size="16" text-anchor="middle">${text}</text>
     </svg>`);
+export const BEZ_FOTKY = zastupny('Bez fotky');
+const NENACTENO = zastupny('Nenačteno');
 
 // Karta si vystačí s menším obrázkem, dokud výřez fotku výrazně nepřibližuje
 export function adresaTitulni(modelka, velka = false) {
@@ -51,11 +55,26 @@ export function nacitatPostupne(kontejner) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    // Fotka, která se nenačte (smazaná na Disku, bez připojení), se nahradí zástupným obrázkem
+    // Fotka, která se nenačte (smazaná na Disku, bez připojení), se nahradí zástupným obrázkem „Nenačteno“;
+    // původní adresa zůstane u obrázku, aby se po návratu připojení dala načíst znovu
     document.addEventListener('error', (e) => {
         const img = /** @type {HTMLImageElement} */ (e.target);
         // Obrázek bez adresy (postupné načítání ho ještě nenačetlo nebo ho zrušilo) chybou není
-        if (img.tagName !== 'IMG' || !img.getAttribute('src') || img.src === BEZ_FOTKY || img.closest('.lightbox')) return;
-        img.src = BEZ_FOTKY;
+        if (img.tagName !== 'IMG' || !img.getAttribute('src') || img.src.startsWith('data:') || img.closest('.lightbox')) return;
+        img.dataset.nenacteno = img.getAttribute('src');
+        img.src = NENACTENO;
     }, true);
+
+    // Výpadek připojení se ohlásí jednou; po návratu se nenačtené fotky načtou znovu
+    const bezPripojeni = () => oznamit('Bez připojení k internetu. Fotky z Google Disku se nenačtou, dokud se připojení nevrátí; sbírku jde dál prohlížet a upravovat.');
+    window.addEventListener('offline', bezPripojeni);
+    window.addEventListener('online', () => {
+        const nenactene = [...document.querySelectorAll('img[data-nenacteno]')];
+        nenactene.forEach(img => {
+            img.src = img.dataset.nenacteno;
+            delete img.dataset.nenacteno;
+        });
+        oznamit(nenactene.length ? 'Připojení je zpět, fotky se načítají.' : 'Připojení je zpět.');
+    });
+    if (!navigator.onLine) bezPripojeni();
 }

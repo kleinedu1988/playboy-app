@@ -1,6 +1,6 @@
 // Kalendář vydání po rocích a měsících
 import { GetKalendar, GetStavyVydani, SetStavVydani } from './backend';
-import { EDICE, MESICE, VYCHOZI_EDICE, esc, nazevVydani, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
+import { EDICE, MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, nazevVydani, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
 import { zalozitSpecial } from './specialy';
@@ -69,6 +69,9 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         const policka = ZKRATKY_MESICU.map((zkratka, i) => {
             const klic = slozitVydani(String(rok), String(i + 1).padStart(2, '0'), stav.kalendarEdice);
             const v = vydani.get(klic);
+            if (!v && cisloNevyslo(klic)) {
+                return `<div class="cal-cell nevyslo" title="${esc(nazevVydani(klic))} – číslo nevyšlo"><span class="cal-month">${zkratka}</span><em>nevyšlo</em></div>`;
+            }
             if (!v) {
                 // Chybějící číslo může být označené „mám výtisk“, „sháním“ nebo „nezajímá mě“
                 const udaje = stavCisla.get(klic);
@@ -136,7 +139,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         const { rok, obsazeno, obsazenoSpecialu, policka, stitky } = rokyKalendare[i];
         radky.push(`
             <section class="cal-year" ${oznacitDekadu(rok, obsazeno + obsazenoSpecialu)}>
-                <div class="cal-year-label"><button class="link cal-year-link" data-vydani="${slozitVydani(String(rok), '', stav.kalendarEdice)}" title="Celý ročník"><strong>${rok}</strong></button><span>${obsazeno} z 12</span></div>
+                <div class="cal-year-label"><button class="link cal-year-link" data-vydani="${slozitVydani(String(rok), '', stav.kalendarEdice)}" title="Celý ročník"><strong>${rok}</strong></button><span>${obsazeno} z ${ciselRocniku(rok, stav.kalendarEdice)}</span></div>
                 <div class="cal-months">${policka}</div>
                 ${stitky ? `<div class="cal-specials" title="Speciály ${rok}">${stitky}</div>` : ''}
             </section>

@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { EDICE, bezDiakritiky, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { EDICE, bezDiakritiky, ciselRocniku, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
@@ -195,7 +195,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
         const mesicnich = l.filter(k => !k.chybi && /^\d\d$/.test(k.casti.mesic)).length;
         return `
             <section class="rocnik-cisel" data-cast="${esc(rok)}">
-                <h3>${esc(rok)}${mesicnich ? `<small>${mesicnich} z 12</small>` : ''}</h3>
+                <h3>${esc(rok)}${mesicnich ? `<small>${mesicnich} z ${ciselRocniku(rok, stav.kalendarEdice)}</small>` : ''}</h3>
                 <div class="cisla-mrizka">${l.map(dlazdice).join('')}</div>
             </section>`;
     }).join('');

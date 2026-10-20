@@ -1,6 +1,6 @@
 // Stránka vydání, ročníku a fotografa; údaje čísla
 import { GetAlbaFotografa, GetClanky, GetStavyVydani, GetVydani, GetVydaniInfo, SetVydaniInfo, SetNazevSpecialu } from './backend';
-import { MESICE, VYCHOZI_EDICE, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
+import { MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -204,6 +204,10 @@ export function vykreslitRocnik(vydani, fotky) {
         const centerfold = albaCisla.find(a => a.typ === 'Centerfold');
         const pictorialu = albaCisla.filter(a => a.typ !== 'Cover' && a.typ !== 'Centerfold').length;
         const stavKlice = stavCisla.get(klic);
+        if (!albaCisla.length && cisloNevyslo(klic)) {
+            return `<div class="rocnik-karta chybi nevyslo" title="${esc(nazevVydani(klic))} – číslo nevyšlo">
+                <span class="rocnik-obalka"></span><span class="rocnik-popis"><b>${esc(nazev)}</b>nevyšlo</span></div>`;
+        }
         if (!albaCisla.length) {
             return `<button class="rocnik-karta chybi ${stavKlice || ''}" data-prazdne="${esc(klic)}" title="${esc(nazevVydani(klic))} – chybí, klikni pro přidání">
                 <span class="rocnik-obalka"><span class="rocnik-plus">+</span></span>
@@ -233,7 +237,7 @@ export function vykreslitRocnik(vydani, fotky) {
     document.getElementById('issueSide').innerHTML = `
         <div class="rocnik-nadpis">Ročník${casti.edice !== VYCHOZI_EDICE ? ` · ${esc(casti.edice)}` : ''}</div>
         <div class="rocnik-rok">${esc(casti.rok)}</div>
-        <div class="prehled-pruh"><span>Čísel ve sbírce</span><b>${cisel} z 12</b><div><i style="width:${Math.round(cisel / 12 * 100)}%"></i></div></div>
+        <div class="prehled-pruh"><span>Čísel ve sbírce</span><b>${cisel} z ${ciselRocniku(casti.rok, casti.edice)}</b><div><i style="width:${Math.round(cisel / ciselRocniku(casti.rok, casti.edice) * 100)}%"></i></div></div>
         <div class="prehled-cisla rocnik-cisla">
             ${[[pocet('Cover'), 'coverů'], [pocet('Centerfold'), 'centerfoldů'], [pocet('Pictorial'), 'pictorialů']]
                 .map(([n, popis]) => `<div><strong>${n}</strong><span>${popis}</span></div>`).join('')}

@@ -1,7 +1,7 @@
 // Úvod Přehledu: hlavní čísla, mapa české edice (vlastní výtisky), mapa americké edice (úplnost dat),
 // co zbývá doplnit a naposledy přidané modelky. Česká edice se sbírá fyzicky, americká jen jako data (PDF),
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
-import { MESICE, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
+import { MESICE, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
 import { adresaTitulni } from './obrazky';
 import { grafSloupcu } from './statistiky';
 
@@ -12,7 +12,7 @@ const PRVNI_ROK_CZ = parseInt(PRVNI_CISLO_CZ);
 const NAPOSLEDY = 6;
 
 const STAVY_CZ = { m: 'mám výtisk', s: 'sháním', n: 'nezajímá mě', c: 'chybí', b: 'ještě nevyšlo', x: 'před prvním českým číslem' };
-const STAVY_US = { k: 'kompletní', p: 'částečné', n: 'nezajímá mě', c: 'chybí', b: 'ještě nevyšlo' };
+const STAVY_US = { k: 'kompletní', p: 'částečné', n: 'nezajímá mě', c: 'chybí', b: 'ještě nevyšlo', x: 'číslo nevyšlo' };
 
 // Měsíční čísla edice po letech: { rok: [12 × { klic, data }] } od prvního do posledního roku
 function cislaEdice(edice, odRoku, doRoku, podleKlice) {
@@ -80,9 +80,9 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
 
     // Americká edice: úplnost dat od prvního do posledního roku ve sbírce
     const rokyUs = rokyEdice('US');
-    const poctyUs = { k: 0, p: 0, n: 0, c: 0, b: 0 };
+    const poctyUs = { k: 0, p: 0, n: 0, c: 0, b: 0, x: 0 };
     const stavUs = m => {
-        const s = budouci(m.klic) ? 'b' : stavPodleKlice.get(m.klic) === 'nezajima' ? 'n'
+        const s = cisloNevyslo(m.klic) && !m.data ? 'x' : budouci(m.klic) ? 'b' : stavPodleKlice.get(m.klic) === 'nezajima' ? 'n'
             : m.data?.cover && m.data?.centerfold && m.data?.pictorial ? 'k' : m.data ? 'p' : 'c';
         poctyUs[s]++;
         const obsah = obsahCisla(m.data);

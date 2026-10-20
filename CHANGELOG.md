@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.7] – 2026-10-20
+
+### Opraveno
+- **Březen 1955 (US) nevyšel:** Americké číslo z března 1955 se už neukazuje jako chybějící. V kalendáři a na stránce ročníku je místo něj tlumené políčko „nevyšlo“, na které nejde kliknout, v mapě americké edice prázdné místo, které se nepočítá mezi chybějící čísla. Ročník 1955 má 11 čísel („x z 11“ v kalendáři, na stránce Čísla i ročníku).
+
 ## [0.51.6] – 2026-10-20
 
 ### Opraveno

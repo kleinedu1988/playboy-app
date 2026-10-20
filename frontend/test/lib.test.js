@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi } from '../src/lib/format.js';
+import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi, cisloNevyslo, ciselRocniku } from '../src/lib/format.js';
 import { sestavitAlba, zacatkyAlb, novePoradi } from '../src/lib/alba.js';
 
 test('názvy a formáty', () => {
@@ -282,3 +282,12 @@ test('fuzzy matching Levenshtein a podpora našeptávání syntaxe', async () =>
 
 
 
+
+test('číslo, které nevyšlo (US březen 1955)', () => {
+    assert.equal(cisloNevyslo('1955-03'), true);
+    assert.equal(cisloNevyslo('1955-03-CZ'), false);
+    assert.equal(cisloNevyslo('1955-04'), false);
+    assert.equal(ciselRocniku(1955, 'US'), 11);
+    assert.equal(ciselRocniku(1955, 'CZ'), 12);
+    assert.equal(ciselRocniku('1956', 'US'), 12);
+});

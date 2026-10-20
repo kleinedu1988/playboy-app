@@ -6,6 +6,15 @@ export const MESICE = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen
 export const EDICE = ['US', 'CZ'];
 export const VYCHOZI_EDICE = 'US';
 
+// Čísla, která nikdy nevyšla, i když jsou v řadě měsíců: americké číslo z března 1955.
+// V kalendáři, ročníku a mapě edice se neukazují jako chybějící a nedají se přidat ani označit.
+export const NEVYSLA_CISLA = new Set(['1955-03']);
+export const cisloNevyslo = klic => NEVYSLA_CISLA.has(klic);
+// Kolik měsíčních čísel ročník edice měl (12 bez těch, která nevyšla)
+export function ciselRocniku(rok, edice) {
+    return 12 - MESICE.filter((_, i) => cisloNevyslo(slozitVydani(String(rok), String(i + 1).padStart(2, '0'), edice))).length;
+}
+
 // „2009-11-CZ" → { rok: '2009', mesic: '11', edice: 'CZ' }; ročník bez měsíce má mesic ''; neplatné → null.
 // Speciál (zvláštní číslo mimo měsíční řadu) má místo měsíce pořadí v roce: „1995-S01" → mesic 'S01'.
 export function rozlozitVydani(text) {

@@ -1236,10 +1236,6 @@ input:focus, select:focus, textarea:focus {
     font-style: italic;
 }
 
-.profile-info dd .chip {
-    margin: 0 0 4px 4px;
-}
-
 .profile-tags {
     display: flex;
     flex-wrap: wrap;
@@ -1294,36 +1290,6 @@ button.tag:hover {
 
 .tag-suggest:empty {
     display: none;
-}
-
-.profile-info {
-    margin: 16px 0 0 0;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-}
-
-.profile-info > div {
-    display: flex;
-    justify-content: space-between;
-    gap: 16px;
-    padding: 9px 14px;
-    font-size: 13px;
-}
-
-.profile-info > div + div {
-    border-top: 1px solid var(--border-color);
-}
-
-.profile-info dt {
-    flex-shrink: 0;
-    color: var(--text-muted);
-}
-
-.profile-info dd {
-    margin: 0;
-    text-align: right;
-    overflow-wrap: anywhere;
 }
 
 /* Upravit a Přidat fotky pod jménem v levém panelu profilu: stejný vzhled jako volby v horní liště */
@@ -2399,141 +2365,10 @@ body.razeni .photo-item {
     color: var(--text-muted);
 }
 
-/* Tabulka toho, co chybí: řádek je modelka nebo vydání a celý je odkaz */
-.stat-table {
-    width: 100%;
-    border-collapse: collapse;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    /* Zakulacení rohů u tabulky se spojenými okraji drží jen přes obrys */
-    border-style: hidden;
-    box-shadow: 0 0 0 1px var(--border-color);
-    font-size: 13px;
-    overflow: hidden;
-}
-
-.stat-table-narrow {
-    max-width: 520px;
-}
-
-.stat-table th,
-.stat-table td {
-    padding: 9px 14px;
-    border-bottom: 1px solid var(--border-color);
-    text-align: center;
-    white-space: nowrap;
-}
-
-.stat-table th:first-child {
-    width: 100%;
-    text-align: left;
-    white-space: normal;
-}
-
-.stat-table thead th {
-    font-size: 11px;
-    font-weight: normal;
-    color: var(--text-muted);
-}
-
-.stat-table tbody th {
-    font-weight: 600;
-}
-
-.stat-table tbody tr {
-    cursor: pointer;
-}
-
-.stat-table tbody tr:last-child th,
-.stat-table tbody tr:last-child td {
-    border-bottom: none;
-}
-
-.stat-table tbody tr:hover {
-    background-color: var(--bg-modal);
-}
-
-.stat-table tbody tr:hover th {
-    color: var(--accent-text);
-}
-
-.stat-table td.ok {
-    color: #4a4a52;
-}
-
-.stat-table td.chybi {
-    color: var(--accent-text);
-    font-weight: 600;
-}
-
-/* Buňka, která nabízí doplnění, se při najetí chová jako tlačítko */
-.stat-table td[data-akce]:hover {
-    background-color: var(--accent);
-    color: #fff;
-}
-
-.stat-table td.stat-text {
-    text-align: left;
-    white-space: normal;
-    color: var(--text-muted);
-}
-
 .stat-note {
     margin: 8px 0 0 0;
     font-size: 12px;
     color: var(--text-muted);
-}
-
-/* Ročníky: dlaždice s pruhem, který ukazuje podíl měsíců ve sbírce */
-.stat-years {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 8px;
-}
-
-.stat-year {
-    position: relative;
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    padding: 10px 12px 12px;
-    overflow: hidden;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    color: var(--text-main);
-    font-size: 14px;
-    cursor: pointer;
-}
-
-.stat-year:hover {
-    border-color: var(--accent);
-}
-
-.stat-year span {
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-/* Dvanáct políček ročníku: vyplněné jsou měsíce, které ve sbírce jsou */
-.stat-year .stat-months {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 2px;
-    flex-basis: 100%;
-    margin-top: 8px;
-}
-
-.stat-months i {
-    height: 8px;
-    border-radius: 2px;
-    background-color: var(--border-color);
-}
-
-.stat-months i.on {
-    background-color: var(--accent);
 }
 
 /* Zámek: zakrývá vše pod hlavičkou okna; okno jde dál přesouvat a zavřít */
@@ -2582,18 +2417,6 @@ body.razeni .photo-item {
     font-size: 12px;
     line-height: 1.5;
     color: var(--text-muted);
-}
-
-/* Tabulka „Ke kontrole": úzký sloupec se jménem, zbytek šířky patří popisu */
-.stat-table-text th:first-child {
-    width: auto;
-    white-space: nowrap;
-}
-
-.stat-table-text th:last-child,
-.stat-table-text td.stat-text {
-    width: 100%;
-    text-align: left;
 }
 
 /* Prohlížeč čeká na originál fotky pro lupu */
@@ -2671,14 +2494,6 @@ body.razeni .photo-item {
     color: var(--accent-text);
 }
 
-/* Přidávání ze stránky vydání */
-.issue-add {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 10px 0 0 0;
-}
-
 /* Přepínač edice nad kalendářem */
 .cal-editions {
     display: flex;
@@ -2688,12 +2503,6 @@ body.razeni .photo-item {
 
 .cal-editions .chip.active {
     border-color: var(--accent);
-    color: var(--accent-text);
-}
-
-.stat-year strong em {
-    font-size: 11px;
-    font-style: normal;
     color: var(--accent-text);
 }
 
@@ -2763,11 +2572,6 @@ body.razeni .photo-item {
     white-space: nowrap;
 }
 
-/* Přehled: údaj označený „netýká se" */
-.stat-table td.netyka {
-    color: #4a4a52;
-}
-
 .stat-toggle {
     margin-left: 12px;
     font-size: 12px;
@@ -2834,23 +2638,6 @@ body.razeni .photo-item {
     height: 16px;
     margin: 0 4px;
     background-color: var(--border-color);
-}
-
-.best-model + .best-model,
-.issue-month + .issue-month {
-    margin-top: 32px;
-}
-
-.issue-month > h3 {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 12px 0;
-    font-size: 18px;
-}
-
-.issue-month .issue-album + .issue-album {
-    margin-top: 18px;
 }
 
 .cal-year-link strong {
@@ -3034,12 +2821,6 @@ body.razeni .photo-item {
 .card {
     content-visibility: auto;
     contain-intrinsic-block-size: auto 300px;
-}
-
-/* Nejlepší a výběry mohou mít tisíce fotek: oddíly mimo obrazovku se nevykreslují */
-.best-model {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 600px;
 }
 
 /* Tlačítko ⋯ na dlaždici fotky a na plakátu: akce bez pravého tlačítka */
@@ -4093,7 +3874,6 @@ button.panel-paska:hover {
 }
 
 .profile-side .profile-aliases,
-.profile-side .issue-add,
 .profile-side .profile-tags,
 .profile-side .profile-links {
     justify-content: center;
@@ -4141,8 +3921,7 @@ button.panel-paska:hover {
 }
 
 /* Údaje bez rámečku; nadpis bloku růžový s linkou, která se ztrácí */
-.profile-side .udaje-modelky,
-.profile-side .profile-info {
+.profile-side .udaje-modelky {
     margin-top: 16px;
     border: none;
     border-radius: 0;
@@ -4171,12 +3950,6 @@ button.panel-paska:hover {
     height: 1px;
     background: linear-gradient(90deg, var(--accent), transparent);
     opacity: 0.5;
-}
-
-.profile-side .profile-info > div {
-    padding-left: 0;
-    padding-right: 0;
-    border-color: var(--panel-okraj);
 }
 
 .profile-side .profile-note {
@@ -4418,58 +4191,8 @@ main .album-nav:not(.svisla) .chip.active:hover {
     text-transform: none;
 }
 
-/* Tabulky v plovoucím panelu */
-.stat-table {
-    border-radius: 18px;
-    background-color: var(--panel-bg);
-    box-shadow: 0 0 0 1px var(--panel-okraj), var(--panel-stin);
-}
-
-.stat-table th,
-.stat-table td {
-    border-bottom-color: var(--panel-okraj);
-}
-
-/* Jméno modelky na jeden řádek, i když levý panel tabulku zúží */
-.stat-table tbody th:first-child {
-    white-space: nowrap;
-}
-
 .prehled-obsah > .stat-section {
     overflow-x: auto;
-}
-
-/* Vedle panelu je tabulka užší: menší odsazení a záhlaví sloupců smí na dva řádky */
-.prehled-obsah .stat-table th,
-.prehled-obsah .stat-table td {
-    padding-right: 10px;
-    padding-left: 10px;
-}
-
-.prehled-obsah .stat-table thead th {
-    white-space: normal;
-}
-
-.stat-table td.chybi {
-    font-weight: 500;
-}
-
-.stat-table td[data-akce]:hover {
-    background-color: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent);
-    color: var(--accent-text);
-}
-
-.stat-year {
-    border-color: var(--panel-okraj);
-    border-radius: 14px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
-}
-
-.stat-months i {
-    height: 6px;
-    border-radius: 999px;
 }
 
 /* Úzké okno: levý panel Přehledu je řádek částí nad obsahem, ne sloupec s prázdným místem pod sebou */
@@ -4504,56 +4227,6 @@ main .album-nav:not(.svisla) .chip.active:hover {
     }
 }
 
-/* Přehled, část Modelky: kartičky s fotkou přes celou levou stranu (jako karty v galerii), jménem kapitálkami,
-   pruhem vyplněnosti a tím, co chybí; klik na údaj ho nabídne doplnit, klik jinam otevře profil */
-.prehled-modelky {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-    gap: 14px;
-}
-
-.prehled-modelka {
-    display: flex;
-    gap: 16px;
-    min-height: 116px;
-    padding-right: 14px;
-    overflow: hidden;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 18px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
-    cursor: pointer;
-}
-
-.prehled-modelka:hover {
-    border-color: var(--accent);
-}
-
-.prehled-modelka > img {
-    flex: none;
-    width: 92px;
-    align-self: stretch;
-    object-fit: cover;
-    background-color: var(--bg-card);
-}
-
-.prehled-modelka-telo {
-    flex: 1;
-    min-width: 0;
-    padding: 12px 0;
-}
-
-.prehled-modelka h4 {
-    margin: 0;
-    overflow: hidden;
-    font-size: 14px;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-overflow: ellipsis;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
 .prehled-modelka-pruh {
     display: flex;
     align-items: center;
@@ -4576,40 +4249,6 @@ main .album-nav:not(.svisla) .chip.active:hover {
     height: 100%;
     border-radius: 999px;
     background: linear-gradient(90deg, var(--accent-hover), var(--accent-text));
-}
-
-.prehled-udaje {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 12px;
-}
-
-.prehled-udaj {
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text-muted);
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.prehled-udaj b {
-    margin-left: 2px;
-    font-weight: 500;
-    color: var(--accent-text);
-}
-
-.prehled-udaj:hover {
-    color: var(--text-main);
-    text-decoration: underline;
-    text-decoration-color: var(--accent);
-    text-underline-offset: 3px;
-}
-
-.prehled-udaj.netyka,
-.prehled-udaj.netyka b {
-    color: #55555f;
-    cursor: default;
 }
 
 /* Dialogová okna v jednotném stylu: plovoucí panel se zaoblenými rohy, nadpis tenkými kapitálkami,
@@ -4692,11 +4331,6 @@ textarea {
     font-size: 11px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-}
-
-/* Fotka na kartičce modelky v Přehledu se zaoblenými rohy i vpravo */
-.prehled-modelka > img {
-    border-radius: 18px;
 }
 
 /* Okno „Doplnit modelku“: plovoucí panel s růžovým rámečkem */
@@ -5663,16 +5297,10 @@ textarea {
     color: var(--text-main);
 }
 
-.naseptavac-pata,
-.naseptavac-prazdno {
+.naseptavac-pata {
     margin: 8px 8px 0;
     font-size: 11.5px;
     color: var(--text-muted);
-}
-
-.naseptavac-prazdno {
-    margin: 6px 8px 2px;
-    font-size: 13px;
 }
 
 /* ===== Prohlížeč stran článku ===== */
@@ -6714,7 +6342,6 @@ textarea {
     box-shadow: 0 12px 30px rgba(216, 27, 96, 0.45);
 }
 
-
 /* ===== Načítání: obrysy karet s jemnou vlnou ===== */
 @keyframes kostra-vlna {
     from {
@@ -6989,7 +6616,6 @@ textarea {
     }
 }
 
-
 /* ===== Úvod Přehledu: hlavní čísla, mapy edic (CZ výtisky, US data), k doplnění, naposledy přidané ===== */
 .uvod-kpi {
     display: grid;
@@ -7177,7 +6803,6 @@ textarea {
     gap: 16px;
 }
 
-.uvod-ukoly button,
 .uvod-naposledy button {
     display: flex;
     align-items: center;
@@ -7193,24 +6818,12 @@ textarea {
     cursor: pointer;
 }
 
-.uvod-ukoly button:first-child,
 .uvod-naposledy button:first-child {
     border-top: none;
 }
 
-.uvod-ukoly button:hover,
 .uvod-naposledy button:hover {
     color: var(--accent-text);
-}
-
-.uvod-ukoly b {
-    margin-left: auto;
-    padding: 2px 9px;
-    border-radius: 999px;
-    background-color: var(--accent-soft);
-    color: var(--accent-text);
-    font-size: 11px;
-    font-weight: 600;
 }
 
 .uvod-naposledy img {
@@ -7224,13 +6837,6 @@ textarea {
     margin-left: auto;
     font-size: 11px;
     color: var(--text-muted);
-}
-
-.uvod-dalsi {
-    margin-top: 8px;
-    color: var(--accent-text);
-    font-size: 12px;
-    font-weight: 600;
 }
 
 .uvod-hotovo {

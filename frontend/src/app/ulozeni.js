@@ -46,13 +46,6 @@ export async function vybratModelku(nadpis, text, tlacitko, vynechat = []) {
     return modelka || null;
 }
 
-// Údaje odebrané fotky, aby ji šlo tlačítkem Vrátit vrátit
-export const obnovaFotky = (f, album) => ({
-    modelkaId: f.modelkaId, album: f.album, typ: f.typ, driveId: f.driveId, vydani: f.vydani || '', rotace: f.rotace || 0,
-    spojit: Boolean(f.spojit), hodnoceni: f.hodnoceni || 0, poradi: f.poradi || 0, pridano: f.pridano || '',
-    popis: album?.popis || '', fotograf: album?.fotograf || '',
-});
-
 // Odkaz na fotku na Google Disku
 export const odkazNaDisk = f => `https://drive.google.com/file/d/${f.driveId}/view`;
 

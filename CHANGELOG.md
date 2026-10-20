@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.15] – 2026-10-20
+
+### Změněno
+- Úklid před betou: odstraněno 61 nepoužívaných pravidel stylů (staré karty Údržby, dřívější tabulky statistik a Přehledu), nepoužívané funkce a soubor `build/README.md` ze šablony Wails. Vzhled se nemění (snímky všech pohledů před a po úklidu jsou stejné).
+
 ## [0.51.14] – 2026-10-20
 
 ### Změněno

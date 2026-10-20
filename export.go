@@ -311,13 +311,6 @@ func prvniNeprazdny(novy, puvodni string) string {
 	return puvodni
 }
 
-func prvniNenulove(nove, puvodni int) int {
-	if nove != 0 {
-		return nove
-	}
-	return puvodni
-}
-
 // Vložení fotek alba, které v databázi ještě nejsou, a převzetí jejich hodnocení, otočení a pořadí
 // Příkaz připravený jednou pro celý import; SQLite by jinak sestavoval stejný dotaz u každé fotky znovu.
 // Mimo import (nebo když příprava selže) se vrátí obal, který dotaz pošle obyčejně.
@@ -623,14 +616,6 @@ func slozitSoubory(soubory map[string][]byte, poradi []string) (exportDat, error
 		}
 	}
 	return celek, nil
-}
-
-func (a *App) importovat(yamlData []byte) VysledekImportu {
-	data, err := slozitSoubory(map[string][]byte{"import.yaml": yamlData}, []string{"import.yaml"})
-	if err != nil {
-		return VysledekImportu{Chyby: []string{}, Opravy: []string{}, Selhalo: err.Error()}
-	}
-	return a.importovatCelek(data)
 }
 
 func (a *App) importovatCelek(data exportDat) VysledekImportu {

@@ -2887,3 +2887,12 @@ func TestVyrezBezNaN(t *testing.T) {
 		t.Fatalf("výřez %v %v %v", m.CoverZoom, m.CoverX, m.CoverY)
 	}
 }
+
+// Import jednoho souboru YAML z textu (v programu se importují soubory vybrané v okně, ImportovatSoubory)
+func (a *App) importovat(yamlData []byte) VysledekImportu {
+	data, err := slozitSoubory(map[string][]byte{"import.yaml": yamlData}, []string{"import.yaml"})
+	if err != nil {
+		return VysledekImportu{Chyby: []string{}, Opravy: []string{}, Selhalo: err.Error()}
+	}
+	return a.importovatCelek(data)
+}

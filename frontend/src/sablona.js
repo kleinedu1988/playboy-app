@@ -687,7 +687,7 @@ export const SABLONA_OKNA = `
         <ul>
           <li>Akce s fotkou, albem, modelkou nebo číslem: tlačítko <strong>⋯</strong>, pravé tlačítko myši nebo klávesa nabídky. Na fotce jsou jen akce fotky, akce alba jsou pod ⋯ v hlavičce alba (nebo položkou „Album …“). Číslo má všude stejnou nabídku; současný stav čísla má ✓ a druhý klik ho zruší.</li>
           <li>Výběr více fotek (profil, vydání, ročník, fotograf, Nejlepší): <kbd>Ctrl</kbd>+klik, <kbd>Shift</kbd>+klik úsek, <kbd>Ctrl</kbd>+<kbd>A</kbd> vše, <kbd>Delete</kbd> odebrat (jde vrátit), <kbd>Esc</kbd> zrušit.</li>
-          <li><kbd>Tab</kbd> prochází karty a fotky, <kbd>Enter</kbd> otevírá; v nabídce fungují šipky.</li>
+          <li><kbd>Tab</kbd> prochází karty a fotky, <kbd>Enter</kbd> otevírá, <kbd>1</kbd>–<kbd>5</kbd> dá zaměřené kartě nebo fotce srdíčka (<kbd>0</kbd> je zruší); Zpět vrátí fokus na kartu, ze které se odešlo. V nabídce fungují šipky, v mapě edice v Přehledu šipky chodí po měsících a rocích.</li>
           <li>Odebraná fotka jde vrátit tlačítkem Vrátit v oznámení; soubor na Disku zůstává vždy.</li>
         </ul>
         <h4>Hledání</h4>

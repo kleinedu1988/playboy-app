@@ -7,6 +7,13 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.9] – 2026-10-20
+
+### Vylepšeno (zátěžová zkouška: 2 000 modelek, 64 000 fotek)
+- **Nejlepší s desítkami tisíc fotek:** Mozaika se vykresluje po úrovních srdíček a po dávkách 300 fotek; další dávka se přidá sama, když se konec úrovně blíží k oknu. Skok na úroveň v liště ukáže její začátek hned. Při rolování nahoru se konec předchozí úrovně sám nedoplňuje (obsah by poskočil), je tam tlačítko „Zobrazit další fotky (N)“. S 28 000 fotkami se Nejlepší dřív vykreslovaly 14,6 s a okno na 13,5 s zamrzlo; teď 0,4 s. Ctrl+A vybere vykreslené fotky.
+- **Karty Modelek a plakáty na stěně Centerfoldů** se mimo okno nevykreslují: 2 000 karet se ukáže za 0,3 s místo 1 s, stěna za 0,4 s místo 0,9 s a obojí plynuleji roluje. Vzhled a efekty při najetí myší zůstávají stejné.
+- Přehled s velkou sbírkou se otevře za 0,4 s (dřív 2,6 s, zdržovaly ho prvky Nejlepších, které zůstávaly ve stránce).
+
 ## [0.51.8] – 2026-10-20
 
 ### Změněno

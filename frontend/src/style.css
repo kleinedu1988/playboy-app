@@ -3023,6 +3023,14 @@ body.razeni .photo-item {
     opacity: 1;
 }
 
+/* Karty modelek mimo obrazovku se nevykreslují (stovky až tisíce karet): rychlejší první vykreslení i rolování.
+   Odhad výšky drží posuvník na místě, než se karta poprvé vykreslí; pak si prohlížeč pamatuje skutečnou.
+   Plakáty na stěně a obálky v Číslech to nemají: omezení by oříznulo jejich nadzvednutí a natočení při najetí myší. */
+.card {
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 300px;
+}
+
 /* Nejlepší a výběry mohou mít tisíce fotek: oddíly mimo obrazovku se nevykreslují */
 .best-model {
     content-visibility: auto;
@@ -5843,6 +5851,18 @@ textarea {
 }
 
 /* ===== Nejlepší: jedna mozaika celé sbírky, řady stejné výšky, šířka podle poměru stran fotky ===== */
+/* Úroveň srdíček v mozaice; mezi úrovněmi je mezera jako mezi řadami. Konec nevykreslené části úrovně je
+   tlačítko „Zobrazit další“; když se blíží k oknu odspodu, další dávka se přidá sama. */
+.nejlepsi-uroven + .nejlepsi-uroven {
+    margin-top: 10px;
+}
+
+.nejlepsi-dalsi {
+    display: block;
+    margin: 14px auto 4px;
+    font-size: 12.5px;
+}
+
 .nejlepsi-mozaika {
     display: flex;
     flex-wrap: wrap;
@@ -5942,9 +5962,15 @@ textarea {
     opacity: 0.5;
 }
 
+/* Plakát mimo obrazovku se nevykresluje (stěna má stovky až tisíce plakátů). Omezení by ořízlo stín rámu
+   a jeho nadzvednutí při najetí myší, proto má položka okraj 10 px (polovina mezery mřížky) uvnitř
+   a stejně velký záporný vnějšek, takže rozložení zůstává stejné. */
 .wall-item {
-    margin: 0;
+    margin: -10px -10px 0;
+    padding: 10px 10px 0;
     cursor: pointer;
+    content-visibility: auto;
+    contain-intrinsic-block-size: auto 360px;
 }
 
 .wall-ram {

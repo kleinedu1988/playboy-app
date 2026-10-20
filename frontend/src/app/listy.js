@@ -12,6 +12,8 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
     // Kde začíná viditelný obsah: pod vodorovnou lištou, u svislé hned nahoře
     const horniOkraj = () => svisla ? hlavniOblast.getBoundingClientRect().top : nav.getBoundingClientRect().bottom;
     const lista = vytvoritListu(nav, (klic) => {
+        // Pohled vykreslovaný po dávkách (Nejlepší) cílovou část nejdřív dovykreslí
+        lista.dovykreslit?.(klic);
         const cast = casti().find(c => c.dataset.cast === klic);
         if (!cast) return;
         const posun = cast.getBoundingClientRect().top - hlavniOblast.getBoundingClientRect().top - (svisla ? 0 : nav.offsetHeight) - 8;

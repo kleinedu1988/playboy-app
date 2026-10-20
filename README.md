@@ -66,7 +66,7 @@ git pull                         # stáhne nejnovější verzi
 ```
 
 Instaluje se jen do domovské složky, bez sudo: program do `~/.local/bin/playboy-app`, ikona do
-`~/.local/share/icons/hicolor/` (256x256 a scalable), položka „Playboy Database“ do `~/.local/share/applications/`.
+`~/.local/share/icons/hicolor/` (256x256 a 512x512), položka „Playboy Database“ do `~/.local/share/applications/`.
 Databáze se při prvním startu nové verze sama upraví (před úpravou se uloží záloha). Po aktualizaci se
 jednou ukáže okno „Co je nového“.
 
@@ -149,7 +149,7 @@ pro uživatele.
 - `statistiky.go`, `vyvoj.go` – statistiky a vývoj modelek v čase
 - `nastaveni.go` – zapamatování okna, zámek heslem, přehled sbírky
 - `export.go` – export a import sbírky v YAML; formát popisuje `EXPORT.md`, vzor je `vzor-exportu.yaml`
-- `build/appicon.svg` – zdroj ikony programu; `build/appicon.png` (1024 px) a `build/windows/icon.ico` jsou z něj vyrenderované
+- `build/appicon.png` – ikona programu (1024 px, průhledné rohy); `build/windows/icon.ico` je z ní zmenšená
 - `frontend/src/main.js` – start: načte moduly, zaregistruje obsluhu událostí v pevném pořadí, spustí program
 - `frontend/src/app/` – moduly rozhraní po pohledech a oknech (galerie, profil, prohlížeč, kalendář, přehled,
   formuláře…). Sdílený stav je jeden objekt v `stav.js`; backend se volá jen přes `backend.js`, který po každém

@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.21] – 2026-10-20
+
+### Změněno
+- **Nová ikona programu:** Pin-up dívka v kostkované košili a s šátkem ve vlasech v retro rámečku. Po `./instalovat.sh` se ukáže v nabídce aplikací i v okně (někdy až po odhlášení a přihlášení). Instalace teď ukládá ikonu ve velikostech 256 a 512 px a odstraní SVG ikonu, kterou instalovala předchozí verze.
+
 ## [0.51.20] – 2026-10-20
 
 ### Vylepšeno

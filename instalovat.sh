@@ -12,6 +12,8 @@ cd "$(dirname "$0")"
 NAZEV=playboy-app
 BIN="$HOME/.local/bin/$NAZEV"
 IKONA="$HOME/.local/share/icons/hicolor/256x256/apps/$NAZEV.png"
+IKONA_512="$HOME/.local/share/icons/hicolor/512x512/apps/$NAZEV.png"
+# Starší verze instalovaly SVG ikonu; ta by měla přednost před novou, proto se odstraňuje
 IKONA_SVG="$HOME/.local/share/icons/hicolor/scalable/apps/$NAZEV.svg"
 POLOZKA="$HOME/.local/share/applications/$NAZEV.desktop"
 
@@ -21,7 +23,7 @@ obnovit_nabidku() {
 }
 
 if [ "${1:-}" = "--odinstalovat" ]; then
-    rm -f "$BIN" "$IKONA" "$IKONA_SVG" "$POLOZKA"
+    rm -f "$BIN" "$IKONA" "$IKONA_512" "$IKONA_SVG" "$POLOZKA"
     obnovit_nabidku
     echo "Program je odinstalovaný. Data a zálohy zůstaly v ~/.local/share/$NAZEV."
     exit 0
@@ -56,19 +58,22 @@ if [ ! -x "build/bin/$NAZEV" ]; then
     exit 1
 fi
 
-mkdir -p "$(dirname "$BIN")" "$(dirname "$IKONA")" "$(dirname "$IKONA_SVG")" "$(dirname "$POLOZKA")"
+mkdir -p "$(dirname "$BIN")" "$(dirname "$IKONA")" "$(dirname "$IKONA_512")" "$(dirname "$POLOZKA")"
 # Přes dočasný soubor: běžící program se při aktualizaci nepřepíše uprostřed čtení
 install -m 0755 "build/bin/$NAZEV" "$BIN.novy"
 mv -f "$BIN.novy" "$BIN"
-if command -v magick >/dev/null; then
-    magick build/appicon.png -resize 256x256 "$IKONA"
-elif command -v convert >/dev/null; then
-    convert build/appicon.png -resize 256x256 "$IKONA"
-else
-    install -m 0644 build/appicon.png "$IKONA"
-fi
-# Ostrá ikona v každé velikosti; PNG zůstává pro prostředí, která SVG neumí
-install -m 0644 build/appicon.svg "$IKONA_SVG"
+# Ikona ve dvou velikostech (běžná a pro obrazovky s vysokým rozlišením)
+for velikost in 256 512; do
+    cil="$HOME/.local/share/icons/hicolor/${velikost}x${velikost}/apps/$NAZEV.png"
+    if command -v magick >/dev/null; then
+        magick build/appicon.png -resize "${velikost}x${velikost}" "$cil"
+    elif command -v convert >/dev/null; then
+        convert build/appicon.png -resize "${velikost}x${velikost}" "$cil"
+    else
+        install -m 0644 build/appicon.png "$cil"
+    fi
+done
+rm -f "$IKONA_SVG"
 cat > "$POLOZKA" <<EOF
 [Desktop Entry]
 Type=Application

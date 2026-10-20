@@ -37,7 +37,9 @@ cd frontend && npm test      # testy čistých funkcí rozhraní (frontend/src/l
 cd frontend && npm run typy  # kontrola typů (TypeScript nad JS s JSDoc, typy backendu z wailsjs)
 ```
 
-Značka `webkit2_41`, kterou vyžaduje Fedora, je nastavená ve `wails.json`.
+Značka `webkit2_41`, kterou vyžaduje Fedora, je nastavená ve `wails.json`. Doporučené Go je 1.26.10 nebo
+novější (opravy bezpečnosti standardní knihovny, `toolchain` v `go.mod`); na Fedoře `sudo dnf upgrade golang`.
+Wails zůstává na verzi 2.16.0, se kterou je program ověřený na Fedoře.
 
 ## Instalace a aktualizace
 

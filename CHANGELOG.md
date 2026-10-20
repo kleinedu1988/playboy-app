@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.14] – 2026-10-20
+
+### Změněno
+- **Aktualizované knihovny:** opravné verze knihoven Go pro síť, systém, text a šifrování (golang.org/x/net, sys, text, crypto) a několika dalších. Sestavení používá Go 1.26.10 s opravami bezpečnosti standardní knihovny (na Fedoře s balíčkovým Go stačí `sudo dnf upgrade golang`). Kontrola typů běží na TypeScriptu 5.9. Rozhraní za běhu žádnou knihovnu z npm nepoužívá a `npm audit` nenašel nic. Wails zůstává na ověřené verzi 2.16.0.
+
 ## [0.51.13] – 2026-10-20
 
 ### Vylepšeno

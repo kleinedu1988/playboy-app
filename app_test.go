@@ -2830,3 +2830,47 @@ func TestRezimWAL(t *testing.T) {
 		t.Fatalf("po novém otevření %d modelek místo 1", n)
 	}
 }
+
+// Obnovení v režimu jen pro čtení se zbylým deníkem změn (pád programu): deník se přenese a záloha se obnoví
+func TestObnoveniJenProCteniSDenikem(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "V záloze"})
+	if err := a.zalohovat("test"); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 5; i++ {
+		a.AddModelka(Modelka{Jmeno: fmt.Sprintf("Po záloze %d", i)})
+	}
+	// Stav po pádu: soubor databáze a neprázdný deník vedle něj
+	soubor, _ := os.ReadFile(a.cestaDb)
+	denik, err := os.ReadFile(a.cestaDb + "-wal")
+	if err != nil || len(denik) == 0 {
+		t.Fatalf("deník změn chybí: %v", err)
+	}
+	a.db.Close()
+	os.WriteFile(a.cestaDb, soubor, 0o600)
+	os.WriteFile(a.cestaDb+"-wal", denik, 0o600)
+	a.prepnoutJenProCteni()
+	if !a.jenProCteni {
+		t.Fatal("databáze se nepřepnula jen pro čtení")
+	}
+
+	var zaloha Zaloha
+	for _, z := range a.SeznamZaloh() {
+		if z.Duvod == "test" {
+			zaloha = z
+		}
+	}
+	if chyba := a.ObnovitZalohu(zaloha.Soubor); chyba != "" {
+		t.Fatal(chyba)
+	}
+	if a.jenProCteni || a.chybaStartu != "" {
+		t.Fatalf("po obnovení zůstal režim jen pro čtení: %q", a.chybaStartu)
+	}
+	if n := len(a.GetModelky("")); n != 1 {
+		t.Fatalf("po obnovení %d modelek místo 1", n)
+	}
+	if !a.AddModelka(Modelka{Jmeno: "Nová"}) {
+		t.Fatal("do obnovené databáze nejde zapisovat")
+	}
+}

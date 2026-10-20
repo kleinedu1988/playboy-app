@@ -7,6 +7,13 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.4] – 2026-10-20
+
+### Opraveno (revize změn od verze 0.33.17 – databáze)
+- **Obnovení ze zálohy v režimu jen pro čtení:** Když program běžel jen pro čtení (poškozená databáze) a po pádu zůstal vedle databáze deník změn, obnovení ze zálohy se pokaždé odmítlo a navíc databázi otevřelo znovu pro zápis. Teď se deník přenese zvláštním spojením a záloha se obnoví; když obnovení selže, databáze se vrátí do původního režimu včetně „jen pro čtení“.
+- **Obnovení během importu** se odmítne, místo aby smazalo deník, do kterého import právě zapisuje.
+- **Bez režimu WAL** (souborový systém, který ho neumí) se databáze otevře s plně bezpečným zápisem na disk.
+
 ## [0.51.3] – 2026-10-20
 
 ### Opraveno

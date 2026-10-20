@@ -37,6 +37,8 @@ type App struct {
 	naChybu func(zprava string)
 	// Chyba, kvůli které se nepodařilo otevřít databázi
 	chybaStartu string
+	// Databáze je otevřená jen pro čtení (poškozená nebo z novější verze)
+	jenProCteni bool
 }
 
 // Chyba se vypíše do konzole a zároveň se ukáže uživateli
@@ -420,7 +422,10 @@ func (a *App) prepnoutJenProCteni() {
 	if ro, err := sql.Open("sqlite", "file:"+a.cestaDb+"?mode=ro&_pragma=busy_timeout(5000)"); err == nil && ro.Ping() == nil {
 		a.db.Close()
 		a.db = ro
-		a.chybaStartu += " Program běží jen pro čtení, změny se neuloží."
+		a.jenProCteni = true
+		if veta := " Program běží jen pro čtení, změny se neuloží."; !strings.Contains(a.chybaStartu, veta) {
+			a.chybaStartu += veta
+		}
 	}
 }
 
@@ -457,23 +462,50 @@ func (a *App) ObnovitZalohu(soubor string) string {
 	sablona := a.nastaveni("sablona_obrazku")
 
 	// Ve WAL patří k souboru i deník změn (playboy.db-wal), který obnovená databáze nesmí převzít. Staré spojení
-	// se proto před výměnou zavře: zavření přenese deník do souboru a smaže ho. Kdyby deník zůstal, obnovení
-	// se neprovede. Výměna souboru je pak přejmenováním, takže proběhne celá, nebo vůbec.
-	stare := a.db
-	stare.Exec("PRAGMA wal_checkpoint(TRUNCATE)")
-	stare.Close()
+	// se proto před výměnou zavře a deník se přenese do souboru zvláštním spojením pro zápis (spojení jen pro
+	// čtení to neumí). Když to nejde (deník drží běžící import) nebo deník zůstane, obnovení se neprovede
+	// a databáze se otevře znovu tak, jak byla, včetně režimu jen pro čtení. Výměna souboru je pak
+	// přejmenováním, takže proběhne celá, nebo vůbec.
+	byloJenProCteni := a.jenProCteni
+	puvodniChyba := a.chybaStartu
+	vratitPuvodni := func(zprava string) string {
+		a.chybaStartu = puvodniChyba
+		if err := a.otevritDatabazi(cil); err != nil {
+			return zprava + fmt.Sprintf(" Databázi se nepodařilo znovu otevřít (%v), restartuj program.", err)
+		}
+		if byloJenProCteni {
+			a.prepnoutJenProCteni()
+		}
+		return zprava
+	}
+	a.db.Close()
+	if zapis, err := sql.Open("sqlite", cil+dsnDatabaze); err == nil {
+		var zaneprazdneno, stranek, preneseno int
+		err = zapis.QueryRow("PRAGMA wal_checkpoint(TRUNCATE)").Scan(&zaneprazdneno, &stranek, &preneseno)
+		zapis.Close()
+		// Chyba přenosu sama obnovení nebrání (poškozená databáze se právě obnovuje), rozhoduje zbytek deníku níže
+		if err == nil && zaneprazdneno != 0 {
+			return vratitPuvodni("Databázi teď nejde uzavřít (běží import?), zůstala beze změny. Zkus to za chvíli znovu.")
+		}
+	}
 	if info, err := os.Stat(cil + "-wal"); err == nil && info.Size() > 0 {
-		a.otevritDatabazi(cil)
-		return "Databázi se nepodařilo uzavřít pro obnovení, zůstala beze změny. Zkus to znovu."
+		return vratitPuvodni("Databázi se nepodařilo uzavřít pro obnovení, zůstala beze změny. Zkus to znovu.")
 	}
 	os.Remove(cil + "-wal")
 	os.Remove(cil + "-shm")
 	if err := kopirovatSoubor(zaloha, cil); err != nil {
-		a.otevritDatabazi(cil)
-		return fmt.Sprintf("Zálohu se nepodařilo zkopírovat, databáze zůstala beze změny: %v", err)
+		return vratitPuvodni(fmt.Sprintf("Zálohu se nepodařilo zkopírovat, databáze zůstala beze změny: %v", err))
 	}
+	// Obnovená databáze začíná bez chyby a bez režimu jen pro čtení; kontrola souboru a úpravy schématu níže
+	// je případně nastaví znovu
+	a.chybaStartu = ""
+	a.jenProCteni = false
 	if err := a.otevritDatabazi(cil); err != nil {
-		return fmt.Sprintf("Databázi se po obnovení nepodařilo otevřít: %v", err)
+		return fmt.Sprintf("Databázi se po obnovení nepodařilo otevřít: %v. Záloha stavu před obnovením je ve složce %s.", err, slozkaZaloh())
+	}
+	if a.chybaStartu != "" {
+		a.prepnoutJenProCteni()
+		return a.chybaStartu
 	}
 	// Starší záloha může mít starší schéma
 	if err := a.migrovat(); err != nil {
@@ -704,8 +736,10 @@ func (a *App) startup(ctx context.Context) {
 	}
 }
 
-// Parametry spojení se souborem databáze (okno i import)
-const dsnDatabaze = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=synchronous(NORMAL)"
+// Parametry spojení se souborem databáze (okno i import). synchronous NORMAL je bezpečné jen ve WAL;
+// když WAL zapnout nejde, databáze se otevře znovu s dsnBezWAL (výchozí FULL).
+const dsnBezWAL = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)"
+const dsnDatabaze = dsnBezWAL + "&_pragma=synchronous(NORMAL)"
 
 // Režim WAL: změny se připisují do deníku vedle databáze (playboy.db-wal) a do souboru se přenesou najednou,
 // takže zápis nečeká na disk a čtení s zápisem se neblokují. Režim si pamatuje soubor; zapíná se až nad
@@ -714,6 +748,10 @@ func (a *App) zapnoutWAL() {
 	var rezim string
 	if err := a.db.QueryRow("PRAGMA journal_mode = WAL").Scan(&rezim); err != nil || rezim != "wal" {
 		fmt.Printf("Režim WAL se nepodařilo zapnout (%s, %v), databáze běží v původním režimu\n", rezim, err)
+		if db, err := sql.Open("sqlite", a.cestaDb+dsnBezWAL); err == nil && db.Ping() == nil {
+			a.db.Close()
+			a.db = db
+		}
 	}
 }
 

@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.3] – 2026-10-20
+
+### Opraveno
+- **Postupné načítání i v Nejlepších a v profilu:** Mozaika Nejlepších a fotky v albech profilu modelky se načítají stejně jako karty Modelek, stěna centerfoldů a Čísla: fotky se začnou stahovat asi dvě obrazovky dopředu a ty, které odrolují dřív, než se načetly, se zruší. Mozaika Nejlepších si poměr stran fotky zjistí, až se fotka opravdu načte.
+
 ## [0.51.2] – 2026-10-20
 
 ### Opraveno

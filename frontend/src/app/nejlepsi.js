@@ -8,7 +8,7 @@ import { best, searchInput } from './prvky';
 import { listaNejlepsich } from './listy';
 import { historie, prepnoutRezim, ukazatPohled } from './navigace';
 import { htmlSrdickaFotky, nacistGalerii } from './galerie';
-import { VELIKOST_NAHLEDU } from './obrazky';
+import { VELIKOST_NAHLEDU, nacitatPostupne } from './obrazky';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { otevritLightbox } from './prohlizec';
 import { potvrdit } from './formular-modelky';
@@ -86,7 +86,7 @@ function htmlDlazdiceMozaiky(p, index, zacatek) {
     return `
         <div class="photo-item" data-index="${index}" data-foto-id="${f.id}" tabindex="0" ${zacatek ? `data-cast="srdicka-${p.hodnoceni}"` : ''}
             style="--pomer: ${pomeryFotek.get(f.id) || 0.75}">
-            <img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" loading="lazy" draggable="false" />
+            <img data-src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" decoding="async" draggable="false" />
             ${htmlSrdickaFotky(p, index)}
             <div class="nejlepsi-popis">
                 ${p.modelkaId ? `<button class="link" data-modelka="${p.modelkaId}" title="Otevřít profil">${esc(p.jmenoModelky)}</button>` : ''}
@@ -105,9 +105,11 @@ function pripravitMozaiku() {
             pomeryFotek.set(parseInt(dlazdice.dataset.fotoId), pomer);
             dlazdice.style.setProperty('--pomer', String(pomer));
         };
-        if (img.complete) nastavit();
+        // Obrázek bez adresy (postupné načítání ho ještě nenačetlo) je „complete“, ale bez rozměrů
+        if (img.complete && img.naturalWidth) nastavit();
         else img.addEventListener('load', nastavit, { once: true });
     });
+    nacitatPostupne(document.getElementById('bestList'));
 }
 
 export async function upravitVyber(akce) {

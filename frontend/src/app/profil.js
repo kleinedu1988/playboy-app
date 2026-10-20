@@ -8,7 +8,7 @@ import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { detailView, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
-import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni } from './obrazky';
+import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { selectionBar } from './vyber';
@@ -275,7 +275,7 @@ export async function nacistFotkyModelky(modelkaId) {
                     ${a.polozky.map(p => {
                         const index = indexPolozky.get(p);
                         return `<div class="photo-item" data-index="${index}" data-foto-id="${p.fotky[0].id}" tabindex="0">
-                                   <img src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" loading="lazy" draggable="false" />
+                                   <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" decoding="async" draggable="false" />
                                    ${htmlSrdickaFotky(p, index)}
                                    ${htmlAkciDlazdice()}
                                </div>`;
@@ -297,6 +297,7 @@ export async function nacistFotkyModelky(modelkaId) {
     listaAlb.naplnit(ostatni.map(a => ({ klic: indexAlba.get(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })));
 
     detailView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
+    nacitatPostupne(photosGrid);
     pripravitPopisy(detailView);
     zkratitAlba(detailView);
     listaAlb.sledovat();

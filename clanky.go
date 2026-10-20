@@ -234,12 +234,12 @@ func rozdelitSkeny(text string) []string {
 
 // Články čísla podle strany (bez strany na konci), pak podle pořadí přidání
 func (a *App) GetClanky(vydani string) []Clanek {
-	return a.nacistClanky("GetClanky", "c.vydani = ?", "COALESCE(c.strana, 0) = 0, c.strana, c.id", vydani)
+	return a.nacistClanky("načtení článků čísla", "c.vydani = ?", "COALESCE(c.strana, 0) = 0, c.strana, c.id", vydani)
 }
 
 // Články, ve kterých se modelka objevuje (rozhovor, 20 otázek…), podle vydání a strany
 func (a *App) GetClankyModelky(modelkaID int) []Clanek {
-	return a.nacistClanky("GetClankyModelky", "c.modelka_id = ?", "c.vydani, COALESCE(c.strana, 0) = 0, c.strana, c.id", modelkaID)
+	return a.nacistClanky("načtení článků modelky", "c.modelka_id = ?", "c.vydani, COALESCE(c.strana, 0) = 0, c.strana, c.id", modelkaID)
 }
 
 func (a *App) nacistClanky(kde, podminka, razeni string, hodnota interface{}) []Clanek {
@@ -320,7 +320,7 @@ func (a *App) HledatClanky(dotaz string) []NalezClanku {
 			ORDER BY bm25(texty_fts), c.vydani DESC
 			LIMIT ?`, ftsDotaz, nejviceNalezu)
 		if err != nil {
-			a.chyba("HledatClanky", err)
+			a.chyba("hledání v článcích", err)
 		} else {
 			for rows.Next() {
 				var n NalezClanku
@@ -370,7 +370,7 @@ func (a *App) hledatClankyZalozni(slova []string, sPreklepy bool) []NalezClanku 
 			COALESCE(m.jmeno, ''), COALESCE(c.text, '')
 		FROM clanky c LEFT JOIN modelky m ON m.id = c.modelka_id`)
 	if err != nil {
-		a.chyba("HledatClankyZalozni", err)
+		a.chyba("hledání v článcích", err)
 		return nalezy
 	}
 	defer rows.Close()
@@ -443,7 +443,7 @@ func (a *App) HledatTexty(dotaz string) []NalezTextu {
 		ORDER BY rank, f.vydani DESC
 		LIMIT ?`, ftsDotaz, nejviceNalezu)
 	if err != nil {
-		a.chyba("HledatTexty", err)
+		a.chyba("hledání v textech", err)
 		return nalezy
 	}
 	defer rows.Close()
@@ -548,14 +548,14 @@ func nullPokudNula(n int) interface{} {
 // Nový článek; vrací jeho id (0 = nepovedlo se)
 func (a *App) AddClanek(c Clanek) int {
 	if err := a.pripravitClanek(&c); err != nil {
-		a.chyba("AddClanek", err)
+		a.chyba("přidání článku", err)
 		return 0
 	}
 	vysledek, err := a.db.Exec(`INSERT INTO clanky (vydani, strana, rubrika, nazev, autor, modelka_id, druh, text, skeny)
 		VALUES (?, ?, NULLIF(?, ''), ?, NULLIF(?, ''), ?, NULLIF(?, ''), NULLIF(?, ''), NULLIF(?, ''))`,
 		c.Vydani, nullPokudNula(c.Strana), c.Rubrika, c.Nazev, c.Autor, nullPokudNula(c.ModelkaID), c.Druh, c.Text, strings.Join(c.Skeny, "\n"))
 	if err != nil {
-		a.chyba("AddClanek", err)
+		a.chyba("přidání článku", err)
 		return 0
 	}
 	id, _ := vysledek.LastInsertId()
@@ -564,14 +564,14 @@ func (a *App) AddClanek(c Clanek) int {
 
 func (a *App) UpdateClanek(c Clanek) bool {
 	if err := a.pripravitClanek(&c); err != nil {
-		a.chyba("UpdateClanek", err)
+		a.chyba("úprava článku", err)
 		return false
 	}
 	vysledek, err := a.db.Exec(`UPDATE clanky SET vydani = ?, strana = ?, rubrika = NULLIF(?, ''), nazev = ?, autor = NULLIF(?, ''),
 			modelka_id = ?, druh = NULLIF(?, ''), text = NULLIF(?, ''), skeny = NULLIF(?, '') WHERE id = ?`,
 		c.Vydani, nullPokudNula(c.Strana), c.Rubrika, c.Nazev, c.Autor, nullPokudNula(c.ModelkaID), c.Druh, c.Text, strings.Join(c.Skeny, "\n"), c.ID)
 	if err != nil {
-		a.chyba("UpdateClanek", err)
+		a.chyba("úprava článku", err)
 		return false
 	}
 	zmeneno, _ := vysledek.RowsAffected()
@@ -581,7 +581,7 @@ func (a *App) UpdateClanek(c Clanek) bool {
 func (a *App) DeleteClanek(id int) bool {
 	vysledek, err := a.db.Exec("DELETE FROM clanky WHERE id = ?", id)
 	if err != nil {
-		a.chyba("DeleteClanek", err)
+		a.chyba("smazání článku", err)
 		return false
 	}
 	smazano, _ := vysledek.RowsAffected()
@@ -605,7 +605,7 @@ func (a *App) exportovatClanky(odkazy odkazyNaModelky) map[string][]exportClanek
 	podleVydani := map[string][]exportClanek{}
 	rows, err := a.db.Query("SELECT DISTINCT vydani FROM clanky ORDER BY vydani")
 	if err != nil {
-		a.chyba("exportovatClanky", err)
+		a.chyba("export článků", err)
 		return podleVydani
 	}
 	var vydani []string

@@ -14,9 +14,9 @@ databáze přešla do režimu WAL (0.51.0), karty, plakáty a mozaika se při ry
 
 ## Otevřené otázky
 
-- Content-Security-Policy v `frontend/index.html` (`script-src 'self'; object-src 'none'`) jako pojistka proti
-  chybě v ošetření textu. Přidat jen po ověření ve skutečném sestavení na Fedoře (prázdné okno by znamenalo, že
-  Wails vkládá vlastní skript, který zásady blokují).
+- Content-Security-Policy v `frontend/index.html` je přidaná (0.51.20) a ověřená ve skutečném sestavení
+  s WebKitGTK 4.1 na Ubuntu. Ověřit na Fedoře: kdyby okno zůstalo prázdné, řádek s `Content-Security-Policy`
+  z `frontend/index.html` odebrat.
 
 - Evidovat u americké edice „mám PDF“? Zatím ne (viz `ROADMAP.md`, verze 1.1).
 

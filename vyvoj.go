@@ -124,7 +124,7 @@ func (a *App) GetVyvojVCase(edice string) VyvojVCase {
 	centerfold := map[int]string{}
 	rows, err := a.db.Query(`SELECT modelka_id, vydani FROM alba WHERE typ = 'Centerfold' AND modelka_id IS NOT NULL ORDER BY vydani`)
 	if err != nil {
-		a.chyba("GetVyvojVCase", err)
+		a.chyba("načtení vývoje v čase", err)
 		return v
 	}
 	for rows.Next() {

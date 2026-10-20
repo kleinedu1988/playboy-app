@@ -130,7 +130,7 @@ func (a *App) PridatModelkuKAlbu(modelkaID int, album, typ string, dalsiID int) 
 		_, err = a.db.Exec("INSERT OR IGNORE INTO alba_modelky (album_id, modelka_id) VALUES (?, ?)", id, dalsiID)
 	}
 	if err != nil {
-		a.chyba("PridatModelkuKAlbu", err)
+		a.chyba("přidání modelky k albu", err)
 	}
 	return err == nil
 }
@@ -139,7 +139,7 @@ func (a *App) OdebratModelkuZAlba(modelkaID int, album, typ string, dalsiID int)
 	_, err := a.db.Exec(`DELETE FROM alba_modelky WHERE modelka_id = ?
 		AND album_id = (SELECT id FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?)`, dalsiID, modelkaID, album, typ)
 	if err != nil {
-		a.chyba("OdebratModelkuZAlba", err)
+		a.chyba("odebrání modelky z alba", err)
 	}
 	return err == nil
 }
@@ -191,7 +191,7 @@ func (a *App) PresunoutAlbum(modelkaID int, album, typ string, cilID int) string
 		}
 	}
 	if err != nil {
-		a.chyba("PresunoutAlbum", err)
+		a.chyba("přesun alba", err)
 		return "Album se nepodařilo přesunout."
 	}
 	return ""
@@ -263,7 +263,7 @@ func (a *App) SloucitAlba(modelkaID int, zAlbum, zTyp, doAlbum, doTyp string) st
 		return "Cílové album neexistuje."
 	}
 	if err := a.zalohovat("pred-sloucenim"); err != nil {
-		a.chyba("zálohy", err)
+		a.chyba("vytvoření zálohy", err)
 		return "Nepodařilo se vytvořit zálohu, nic se nezměnilo."
 	}
 	tx, err := a.db.Begin()
@@ -274,7 +274,7 @@ func (a *App) SloucitAlba(modelkaID int, zAlbum, zTyp, doAlbum, doTyp string) st
 		}
 	}
 	if err != nil {
-		a.chyba("SloucitAlba", err)
+		a.chyba("sloučení alb", err)
 		return "Alba se nepodařilo sloučit."
 	}
 	return ""
@@ -290,12 +290,12 @@ func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) Vysled
 	var vysledek VysledekPresunu
 	album, typ = strings.TrimSpace(album), strings.TrimSpace(typ)
 	if err := a.overitKlicAlba(modelkaID, album, typ); err != nil {
-		a.chyba("PresunoutFotky", err)
+		a.chyba("přesun fotek", err)
 		return vysledek
 	}
 	tx, err := a.db.Begin()
 	if err != nil {
-		a.chyba("PresunoutFotky", err)
+		a.chyba("přesun fotek", err)
 		return vysledek
 	}
 	defer tx.Rollback()
@@ -303,7 +303,7 @@ func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) Vysled
 	// Cílové album (případně nové); fotky přebírají jeho spojení plakátu a otočení
 	cilID, err := zajistitAlbum(tx, modelkaID, album, typ)
 	if err != nil {
-		a.chyba("PresunoutFotky", err)
+		a.chyba("přesun fotek", err)
 		return vysledek
 	}
 	var spojit, rotace int
@@ -319,7 +319,7 @@ func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) Vysled
 		zmena, err := tx.Exec(`UPDATE fotky SET album_id = ?, rotace = CASE WHEN ? = 1 THEN ? ELSE rotace END, poradi = NULL WHERE id = ?`,
 			cilID, spojit, rotace, id)
 		if err != nil {
-			a.chyba("PresunoutFotky", err)
+			a.chyba("přesun fotek", err)
 			return VysledekPresunu{}
 		}
 		if n, _ := zmena.RowsAffected(); n > 0 {
@@ -327,11 +327,11 @@ func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) Vysled
 		}
 	}
 	if _, err := tx.Exec(smazatPrazdnaAlba); err != nil {
-		a.chyba("PresunoutFotky", err)
+		a.chyba("přesun fotek", err)
 		return VysledekPresunu{}
 	}
 	if err := tx.Commit(); err != nil {
-		a.chyba("PresunoutFotky", err)
+		a.chyba("přesun fotek", err)
 		return VysledekPresunu{}
 	}
 	return vysledek
@@ -354,13 +354,13 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 		return "Vyber jinou modelku."
 	}
 	if err := a.zalohovat("pred-sloucenim-modelek"); err != nil {
-		a.chyba("zálohy", err)
+		a.chyba("vytvoření zálohy", err)
 		return "Nepodařilo se vytvořit zálohu, nic se nezměnilo."
 	}
 
 	tx, err := a.db.Begin()
 	if err != nil {
-		a.chyba("SloucitModelky", err)
+		a.chyba("sloučení modelek", err)
 		return "Modelky se nepodařilo sloučit."
 	}
 	defer tx.Rollback()
@@ -385,7 +385,7 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 			err = presunoutAlbumTx(tx, zdrojID, k.album, k.typ, cilID)
 		}
 		if err != nil {
-			a.chyba("SloucitModelky", err)
+			a.chyba("sloučení modelek", err)
 			return "Modelky se nepodařilo sloučit."
 		}
 	}
@@ -393,20 +393,20 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 	if _, err := tx.Exec(`INSERT OR IGNORE INTO alba_modelky (album_id, modelka_id)
 		SELECT am.album_id, ? FROM alba_modelky am JOIN alba al ON al.id = am.album_id
 		WHERE am.modelka_id = ? AND al.modelka_id <> ?`, cilID, zdrojID, cilID); err != nil {
-		a.chyba("SloucitModelky", err)
+		a.chyba("sloučení modelek", err)
 		return "Modelky se nepodařilo sloučit."
 	}
 	// Obálky zdrojové modelky přejdou na cílovou (smazání by je jinak vynulovalo)
 	if _, err := tx.Exec("UPDATE vydani SET modelka_obalky = ? WHERE modelka_obalky = ?", cilID, zdrojID); err != nil {
-		a.chyba("SloucitModelky", err)
+		a.chyba("sloučení modelek", err)
 		return "Modelky se nepodařilo sloučit."
 	}
 	if _, err := tx.Exec("DELETE FROM modelky WHERE id = ?", zdrojID); err != nil {
-		a.chyba("SloucitModelky", err)
+		a.chyba("sloučení modelek", err)
 		return "Modelky se nepodařilo sloučit."
 	}
 	if err := tx.Commit(); err != nil {
-		a.chyba("SloucitModelky", err)
+		a.chyba("sloučení modelek", err)
 		return "Modelky se nepodařilo sloučit."
 	}
 
@@ -569,7 +569,7 @@ func (a *App) ObnovitFotky(fotky []ObnovaFotky) int {
 		}
 		albumID, err := zajistitAlbum(a.db, f.ModelkaID, f.Album, f.Typ)
 		if err != nil {
-			a.chyba("ObnovitFotky", err)
+			a.chyba("vrácení odebraných fotek", err)
 			continue
 		}
 		// Album, které zmizelo s poslední fotkou, dostane zpět vydání a spojení
@@ -577,7 +577,7 @@ func (a *App) ObnovitFotky(fotky []ObnovaFotky) int {
 		vysledek, err := a.db.Exec(`INSERT OR IGNORE INTO fotky (album_id, drive_file_id, rotace, hodnoceni, poradi, pridano) VALUES (?, ?, ?, ?, ?, ?)`,
 			albumID, ids[0], f.Rotace, f.Hodnoceni, poradi, prvniNeprazdny(f.Pridano, ted()))
 		if err != nil {
-			a.chyba("ObnovitFotky", err)
+			a.chyba("vrácení odebraných fotek", err)
 			continue
 		}
 		if n, _ := vysledek.RowsAffected(); n > 0 {
@@ -619,7 +619,7 @@ func (a *App) PrejmenovatFotografa(stary, novy string) int {
 	}
 	rows, err := a.db.Query("SELECT id, fotograf FROM alba WHERE COALESCE(fotograf, '') <> ''")
 	if err != nil {
-		a.chyba("PrejmenovatFotografa", err)
+		a.chyba("přejmenování fotografa", err)
 		return 0
 	}
 	var ids []int64
@@ -644,7 +644,7 @@ func (a *App) GetTagy() []string {
 	// Stačí sloupec tagů, ne všechny údaje modelek
 	radky, err := a.db.Query("SELECT tags FROM modelky WHERE COALESCE(tags, '') <> '' ORDER BY jmeno COLLATE BEZDIAKRITIKY")
 	if err != nil {
-		a.chyba("GetTagy", err)
+		a.chyba("načtení tagů", err)
 		return []string{}
 	}
 	var seznamy []string

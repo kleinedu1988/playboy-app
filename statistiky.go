@@ -123,7 +123,7 @@ func (a *App) GetStatistiky() Statistiky {
 	rows, err := a.db.Query(`SELECT a.vydani, COALESCE(m.narozeni_datum, '')
 		FROM alba a LEFT JOIN modelky m ON m.id = a.modelka_id WHERE a.typ = 'Centerfold'`)
 	if err != nil {
-		a.chyba("GetStatistiky", err)
+		a.chyba("načtení statistik", err)
 		return s
 	}
 	podleVeku := map[int]int{}

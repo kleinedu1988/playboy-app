@@ -172,7 +172,7 @@ export function otevritNabidku(cil, x, y) {
         // Volný prostor na stěně centerfoldů
         polozky = [{ text: 'Přidat centerfold…', akce: pridatCenterfold }];
     } else {
-        polozky = [{ text: 'Přidat modelku', akce: otevritRychlePridani }, ...polozkySpravy()];
+        polozky = [{ text: 'Přidat modelku…', akce: otevritRychlePridani }, ...polozkySpravy()];
     }
 
     otevritKontextovouNabidku(x, y, polozky);

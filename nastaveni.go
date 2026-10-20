@@ -132,13 +132,13 @@ func (a *App) NastavitHeslo(stare, nove string) bool {
 	if nove != "" {
 		sul := make([]byte, 16)
 		if _, err := rand.Read(sul); err != nil {
-			a.chyba("NastavitHeslo", err)
+			a.chyba("nastavení hesla", err)
 			return false
 		}
 		hodnota = otiskHesla(nove, sul)
 	}
 	if err := a.ulozitNastaveni("heslo", hodnota); err != nil {
-		a.chyba("NastavitHeslo", err)
+		a.chyba("nastavení hesla", err)
 		return false
 	}
 	return true
@@ -221,7 +221,7 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		GROUP BY al.id
 		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, al.album`)
 	if err != nil {
-		a.chyba("GetPrehled", err)
+		a.chyba("načtení přehledu sbírky", err)
 		return p
 	}
 	for rows.Next() {

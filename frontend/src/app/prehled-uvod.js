@@ -101,7 +101,7 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
 
     const procentModelek = p.modelek ? Math.round(modelekUplnych / p.modelek * 100) : 100;
     const kpi = [
-        ['Modelky', p.modelek, `${procentModelek} % s úplnými údaji`],
+        ['Modelky', p.modelek, p.modelek ? `${procentModelek} % s úplnými údaji` : 'zatím žádné'],
         ['Alba', p.alb, sklonovat(p.fotek, 'fotka', 'fotky', 'fotek')],
         ['Čísla US', poctyUs.k + poctyUs.p, vydanychUs ? `kompletních: ${poctyUs.k} z ${vydanychUs}` : 'zatím žádné'],
         ['Výtisky CZ', poctyCz.m, `z ${vydanychCz} vydaných · sháněných: ${poctyCz.s}`],

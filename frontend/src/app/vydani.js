@@ -192,7 +192,8 @@ export function vykreslitRocnik(vydani, fotky) {
         podleMesicu.get(mesic(a)).push(a);
     });
     const pocet = typ => alba.filter(a => typ === 'Pictorial' ? a.typ !== 'Cover' && a.typ !== 'Centerfold' : a.typ === typ).length;
-    const cisel = [...podleMesicu.keys()].filter(m => m && !m.startsWith('S')).length;
+    // Do „X z Y“ jen čísla z měsíční řady edice; omylem zapsaný měsíc mimo řadu se ukáže, ale nezapočítá
+    const cisel = [...podleMesicu.keys()].filter(m => /^\d\d$/.test(m) && !cisloNevyslo(slozitVydani(casti.rok, m, casti.edice))).length;
     // Stav čísla (výtisk, sháním) z kalendáře, pokud už je načtený
     const stavCisla = new Map((stav.stavyVydaniData || []).map(x => [x.vydani, x.stav]));
 

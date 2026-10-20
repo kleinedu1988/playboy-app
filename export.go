@@ -928,7 +928,7 @@ var filtrImportu = []runtime.FileFilter{
 func (a *App) VybratSouboryImportu() []string {
 	cesty, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{Title: "Importovat do sbírky", Filters: filtrImportu})
 	if err != nil {
-		a.chyba("import", err)
+		a.chyba("výběr souborů k importu", err)
 		return []string{}
 	}
 	if cesty == nil {

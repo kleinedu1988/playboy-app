@@ -14,6 +14,11 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+// Ikona okna (Alt+Tab, panel); v nabídce aplikací je ikona z instalovat.sh
+//
+//go:embed build/appicon.png
+var ikona []byte
+
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
@@ -42,6 +47,12 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},
 		Linux: &linux.Options{
 			WindowIsTranslucent: true,
+			Icon:                ikona,
+			// Stejný název jako StartupWMClass v položce nabídky: okno se spáruje s ní a s její ikonou
+			ProgramName: "playboy-app",
+			Messages: &linux.Messages{
+				WebKit2GTKMinRequired: "Program potřebuje WebKit2GTK %s nebo novější.",
+			},
 		},
 		OnStartup: func(ctx context.Context) {
 			app.naChybu = func(zprava string) { runtime.EventsEmit(ctx, "chyba", zprava) }

@@ -101,7 +101,7 @@ func (a *App) SetVydaniInfo(vydani, poznamka, stav string, modelkaObalky int, na
 			vydani, poznamka, stav, obalka, naObalce)
 	}
 	if err != nil {
-		a.chyba("SetVydaniInfo", err)
+		a.chyba("uložení údajů čísla", err)
 	}
 	return err == nil
 }
@@ -117,7 +117,7 @@ func (a *App) GetStavyVydani() []VydaniInfo {
 	stavy := []VydaniInfo{}
 	rows, err := a.db.Query("SELECT vydani, COALESCE(poznamka, ''), COALESCE(stav, ''), COALESCE(modelka_obalky, 0), COALESCE(nazev, ''), COALESCE(na_obalce, '') FROM vydani ORDER BY vydani")
 	if err != nil {
-		a.chyba("GetStavyVydani", err)
+		a.chyba("načtení stavů čísel", err)
 		return stavy
 	}
 	defer rows.Close()
@@ -143,7 +143,7 @@ func (a *App) GetVybery() []Vyber {
 	rows, err := a.db.Query(`SELECT v.id, v.nazev, (SELECT COUNT(*) FROM vybery_fotky vf WHERE vf.vyber_id = v.id)
 		FROM vybery v ORDER BY v.nazev COLLATE BEZDIAKRITIKY`)
 	if err != nil {
-		a.chyba("GetVybery", err)
+		a.chyba("načtení výběrů", err)
 		return vybery
 	}
 	defer rows.Close()
@@ -169,7 +169,7 @@ func (a *App) VyberPodleNazvu(nazev string) int {
 	}
 	vysledek, err := a.db.Exec("INSERT INTO vybery (nazev, pridano) VALUES (?, ?)", nazev, ted())
 	if err != nil {
-		a.chyba("VyberPodleNazvu", err)
+		a.chyba("založení výběru", err)
 		return 0
 	}
 	id, _ := vysledek.LastInsertId()
@@ -188,7 +188,7 @@ func (a *App) PrejmenovatVyber(id int, nazev string) bool {
 func (a *App) SmazatVyber(id int) bool {
 	_, err := a.db.Exec("DELETE FROM vybery WHERE id = ?", id)
 	if err != nil {
-		a.chyba("SmazatVyber", err)
+		a.chyba("smazání výběru", err)
 	}
 	return err == nil
 }
@@ -196,7 +196,7 @@ func (a *App) SmazatVyber(id int) bool {
 // Přidání fotek na konec výběru; fotka, která už ve výběru je, se přeskočí. Vrací počet přidaných.
 func (a *App) PridatDoVyberu(vyberID int, fotoIDs []int) int {
 	pridano := 0
-	if !a.vTransakci("PridatDoVyberu", func(tx dotazovac) error {
+	if !a.vTransakci("přidání fotek do výběru", func(tx dotazovac) error {
 		for _, id := range fotoIDs {
 			vysledek, err := tx.Exec(`INSERT OR IGNORE INTO vybery_fotky (vyber_id, fotografie_id, poradi)
 				SELECT ?, ?, COALESCE(MAX(poradi), 0) + 1 FROM vybery_fotky WHERE vyber_id = ?`, vyberID, id, vyberID)
@@ -215,7 +215,7 @@ func (a *App) PridatDoVyberu(vyberID int, fotoIDs []int) int {
 }
 
 func (a *App) OdebratZVyberu(vyberID int, fotoIDs []int) bool {
-	return a.vTransakci("OdebratZVyberu", func(tx dotazovac) error {
+	return a.vTransakci("odebrání fotek z výběru", func(tx dotazovac) error {
 		for _, id := range fotoIDs {
 			if _, err := tx.Exec("DELETE FROM vybery_fotky WHERE vyber_id = ? AND fotografie_id = ?", vyberID, id); err != nil {
 				return err
@@ -372,7 +372,7 @@ func (a *App) GetSpecialy() []Special {
 			UNION ALL SELECT DISTINCT vydani, '' FROM alba WHERE vydani GLOB '[0-9][0-9][0-9][0-9]-S[0-9][0-9]*'
 		) GROUP BY vydani ORDER BY vydani`)
 	if err != nil {
-		a.chyba("GetSpecialy", err)
+		a.chyba("načtení speciálů", err)
 		return specialy
 	}
 	defer rows.Close()
@@ -408,7 +408,7 @@ func (a *App) ZalozitSpecial(rok int, edice, nazev string) string {
 			continue
 		}
 		if _, err := a.db.Exec("INSERT INTO vydani (vydani, nazev) VALUES (?, ?)", klic, nazev); err != nil {
-			a.chyba("ZalozitSpecial", err)
+			a.chyba("založení speciálu", err)
 			return ""
 		}
 		return klic
@@ -424,7 +424,7 @@ func (a *App) SetNazevSpecialu(vydani, nazev string) bool {
 	}
 	_, err := a.db.Exec(`INSERT INTO vydani (vydani, nazev) VALUES (?, ?) ON CONFLICT(vydani) DO UPDATE SET nazev = excluded.nazev`, vydani, nazev)
 	if err != nil {
-		a.chyba("SetNazevSpecialu", err)
+		a.chyba("přejmenování speciálu", err)
 	}
 	return err == nil
 }

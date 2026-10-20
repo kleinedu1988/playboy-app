@@ -438,7 +438,7 @@ export function pripravit() {
         const naVydani = !issueView.classList.contains('hidden');
         nabidkaPodTlacitkem(e, [
             ...(vProfilu ? [{ text: `Přidat fotky nebo album… (${stav.aktualniModelka.jmeno})`, akce: () => otevritAlbumModal(stav.aktualniModelka) }, null] : []),
-            { text: 'Přidat modelku', akce: otevritRychlePridani },
+            { text: 'Přidat modelku…', akce: otevritRychlePridani },
             // Centerfold a cover se po uložení vracejí do přehledu, proto se z profilu a ze stránky vydání nenabízejí
             ...(vProfilu || naVydani ? [] : [
                 { text: 'Přidat centerfold…', akce: pridatCenterfold },

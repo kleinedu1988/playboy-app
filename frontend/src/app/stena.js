@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { EDICE, bezDiakritiky, ciselRocniku, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { EDICE, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
@@ -192,7 +192,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
 
     listaCoveru.naplnit([...rocniky].map(([rok, l]) => ({ klic: rok, nazev: rok, pocet: l.filter(k => !k.chybi).length })));
     coversList.innerHTML = volby + [...rocniky].map(([rok, l]) => {
-        const mesicnich = l.filter(k => !k.chybi && /^\d\d$/.test(k.casti.mesic)).length;
+        const mesicnich = l.filter(k => !k.chybi && /^\d\d$/.test(k.casti.mesic) && !cisloNevyslo(k.vydani)).length;
         return `
             <section class="rocnik-cisel" data-cast="${esc(rok)}">
                 <h3>${esc(rok)}${mesicnich ? `<small>${ciselRocniku(rok, stav.kalendarEdice) ? `${mesicnich} z ${ciselRocniku(rok, stav.kalendarEdice)}` : mesicnich}</small>` : ''}</h3>

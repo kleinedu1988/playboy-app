@@ -7,6 +7,19 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.20] – 2026-10-20
+
+### Vylepšeno
+- **Ikona i v okně:** Ikonu programu má i běžící okno (přepínání Alt+Tab, panel) a okno se spolehlivě spáruje s položkou v nabídce aplikací. V nabídce je ikona ostrá v každé velikosti a program jde najít i hledáním slov „katalog“, „sbírka“ nebo „časopis“.
+- **Srozumitelné chybové hlášky:** Když se něco nepovede, hláška místo interního názvu funkce říká, co se dělo, třeba „Chyba (přesun fotek): …“.
+- **Pojistka zabezpečení:** Okno programu spustí jen vlastní skripty programu (Content-Security-Policy).
+
+### Opraveno
+- Ročník a stránka Čísla počítají do „X z Y“ jen čísla, která v měsíční řadě edice mohla vyjít, stejně jako kalendář (dřív třeba „11 z 3“ u roku 2020).
+- Souhrn v Údržbě: čtyřmístná čísla („2000 z 2000“) se nezalamují a pruhy začínají pod sebou.
+- Přehled prázdné sbírky neukazuje „100 % s úplnými údaji“ u nula modelek.
+- Drobnosti: „Přidat modelku…“ s trojtečkou jako ostatní položky, které otevírají okno; v okně Adresa obrázků je mezera mezi vysvětlením a polem.
+
 ## [0.51.19] – 2026-10-20
 
 ### Změněno

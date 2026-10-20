@@ -66,7 +66,7 @@ git pull                         # stáhne nejnovější verzi
 ```
 
 Instaluje se jen do domovské složky, bez sudo: program do `~/.local/bin/playboy-app`, ikona do
-`~/.local/share/icons/hicolor/256x256/apps/`, položka „Playboy Database“ do `~/.local/share/applications/`.
+`~/.local/share/icons/hicolor/` (256x256 a scalable), položka „Playboy Database“ do `~/.local/share/applications/`.
 Databáze se při prvním startu nové verze sama upraví (před úpravou se uloží záloha). Po aktualizaci se
 jednou ukáže okno „Co je nového“.
 

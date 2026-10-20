@@ -2420,6 +2420,11 @@ body.razeni .photo-item {
     color: var(--text-muted);
 }
 
+/* Okno s volbou: vysvětlení nad polem je od popisku pole oddělené */
+#pickModalText:not(:empty) {
+    margin-bottom: 14px;
+}
+
 /* Prohlížeč čeká na originál fotky pro lupu */
 .lightbox.nacita .poster {
     cursor: progress;
@@ -6913,7 +6918,7 @@ textarea {
 
 .ud-souhrn div {
     display: grid;
-    grid-template-columns: 1fr 90px 64px;
+    grid-template-columns: 1fr 90px 80px;
     align-items: center;
     gap: 10px;
     padding: 3px 0;
@@ -6938,6 +6943,7 @@ textarea {
     font-variant-numeric: tabular-nums;
     color: var(--text-muted);
     text-align: right;
+    white-space: nowrap;
 }
 
 .ud-filtry {

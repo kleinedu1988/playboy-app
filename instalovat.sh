@@ -12,6 +12,7 @@ cd "$(dirname "$0")"
 NAZEV=playboy-app
 BIN="$HOME/.local/bin/$NAZEV"
 IKONA="$HOME/.local/share/icons/hicolor/256x256/apps/$NAZEV.png"
+IKONA_SVG="$HOME/.local/share/icons/hicolor/scalable/apps/$NAZEV.svg"
 POLOZKA="$HOME/.local/share/applications/$NAZEV.desktop"
 
 obnovit_nabidku() {
@@ -20,7 +21,7 @@ obnovit_nabidku() {
 }
 
 if [ "${1:-}" = "--odinstalovat" ]; then
-    rm -f "$BIN" "$IKONA" "$POLOZKA"
+    rm -f "$BIN" "$IKONA" "$IKONA_SVG" "$POLOZKA"
     obnovit_nabidku
     echo "Program je odinstalovaný. Data a zálohy zůstaly v ~/.local/share/$NAZEV."
     exit 0
@@ -55,7 +56,7 @@ if [ ! -x "build/bin/$NAZEV" ]; then
     exit 1
 fi
 
-mkdir -p "$(dirname "$BIN")" "$(dirname "$IKONA")" "$(dirname "$POLOZKA")"
+mkdir -p "$(dirname "$BIN")" "$(dirname "$IKONA")" "$(dirname "$IKONA_SVG")" "$(dirname "$POLOZKA")"
 # Přes dočasný soubor: běžící program se při aktualizaci nepřepíše uprostřed čtení
 install -m 0755 "build/bin/$NAZEV" "$BIN.novy"
 mv -f "$BIN.novy" "$BIN"
@@ -66,6 +67,8 @@ elif command -v convert >/dev/null; then
 else
     install -m 0644 build/appicon.png "$IKONA"
 fi
+# Ostrá ikona v každé velikosti; PNG zůstává pro prostředí, která SVG neumí
+install -m 0644 build/appicon.svg "$IKONA_SVG"
 cat > "$POLOZKA" <<EOF
 [Desktop Entry]
 Type=Application
@@ -75,6 +78,7 @@ Exec=$BIN
 Icon=$NAZEV
 Terminal=false
 Categories=Graphics;Viewer;
+Keywords=katalog;sbírka;časopis;modelky;centerfold;playboy;
 StartupWMClass=$NAZEV
 EOF
 obnovit_nabidku

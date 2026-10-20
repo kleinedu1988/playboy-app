@@ -7,6 +7,15 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.18] – 2026-10-20
+
+### Vylepšeno
+- **Instalace na čistou Fedoru:** README má postup od prázdného systému (balíčky, Wails, stažení programu). Když chybí Wails, Go, npm nebo knihovny WebKitGTK, `instalovat.sh` vypíše, co přesně doinstalovat, místo nejasné chyby.
+
+### Opraveno
+- Sestavení už nemění soubory v repozitáři (vygenerované vazby na backend), takže další `git pull` neskončí hláškou o místních změnách.
+- Po spuštění se kolem seznamu modelek a stěny centerfoldů neukazuje modrý rámeček fokusu.
+
 ## [0.51.17] – 2026-10-20
 
 ### Opraveno

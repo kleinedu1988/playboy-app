@@ -60,8 +60,6 @@ export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
 
 export function GetTagy():Promise<Array<string>>;
 
-export function GetVyvojVCase(arg1:string):Promise<main.VyvojVCase>;
-
 export function GetVerze():Promise<string>;
 
 export function GetVybery():Promise<Array<main.Vyber>>;
@@ -69,6 +67,8 @@ export function GetVybery():Promise<Array<main.Vyber>>;
 export function GetVydani(arg1:string):Promise<Array<main.Fotografie>>;
 
 export function GetVydaniInfo(arg1:string):Promise<main.VydaniInfo>;
+
+export function GetVyvojVCase(arg1:string):Promise<main.VyvojVCase>;
 
 export function HledatClanky(arg1:string):Promise<Array<main.NalezClanku>>;
 

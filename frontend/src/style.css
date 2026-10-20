@@ -577,7 +577,8 @@ textarea {
 }
 
 /* Pohled dostane fokus po přechodu z jiného (Enter na kartě, Zpět), aby další Tab šel do něj; rámeček nemá */
-main > [tabindex="-1"]:focus {
+main > [tabindex="-1"]:focus,
+main > .se-sloupcem > [tabindex="-1"]:focus {
     outline: none;
 }
 

@@ -1,5 +1,25 @@
 export namespace main {
 	
+	export class BodVyvoje {
+	    obdobi: number;
+	    median: number;
+	    dolni: number;
+	    horni: number;
+	    n: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new BodVyvoje(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.obdobi = source["obdobi"];
+	        this.median = source["median"];
+	        this.dolni = source["dolni"];
+	        this.horni = source["horni"];
+	        this.n = source["n"];
+	    }
+	}
 	export class Clanek {
 	    id: number;
 	    vydani: string;
@@ -110,6 +130,66 @@ export namespace main {
 	        this.dalsiModelky = this.convertValues(source["dalsiModelky"], OdkazModelky);
 	        this.driveId = source["driveId"];
 	        this.albumId = source["albumId"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class PodilVyvoje {
+	    obdobi: number;
+	    pocty: Record<string, number>;
+	    n: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PodilVyvoje(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.obdobi = source["obdobi"];
+	        this.pocty = source["pocty"];
+	        this.n = source["n"];
+	    }
+	}
+	export class KategorieVyvoje {
+	    klic: string;
+	    nazev: string;
+	    kategorie: string[];
+	    radek: string;
+	    nazevRadku: string;
+	    znamych: number;
+	    chybi: number[];
+	    desetileti: PodilVyvoje[];
+	
+	    static createFrom(source: any = {}) {
+	        return new KategorieVyvoje(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.kategorie = source["kategorie"];
+	        this.radek = source["radek"];
+	        this.nazevRadku = source["nazevRadku"];
+	        this.znamych = source["znamych"];
+	        this.chybi = source["chybi"];
+	        this.desetileti = this.convertValues(source["desetileti"], PodilVyvoje);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -416,6 +496,7 @@ export namespace main {
 	        this.popis = source["popis"];
 	    }
 	}
+	
 	export class PolozkaPrehledu {
 	    netykaSe: boolean;
 	    modelkaId: number;
@@ -528,6 +609,52 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class RadaVyvoje {
+	    klic: string;
+	    nazev: string;
+	    jednotka: string;
+	    odvozene: boolean;
+	    desetinna: number;
+	    znamych: number;
+	    chybi: number[];
+	    desetileti: BodVyvoje[];
+	    petileti: BodVyvoje[];
+	
+	    static createFrom(source: any = {}) {
+	        return new RadaVyvoje(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.jednotka = source["jednotka"];
+	        this.odvozene = source["odvozene"];
+	        this.desetinna = source["desetinna"];
+	        this.znamych = source["znamych"];
+	        this.chybi = source["chybi"];
+	        this.desetileti = this.convertValues(source["desetileti"], BodVyvoje);
+	        this.petileti = this.convertValues(source["petileti"], BodVyvoje);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	
 	export class Special {
 	    vydani: string;
@@ -575,170 +702,6 @@ export namespace main {
 	        this.modelekSNarodnosti = source["modelekSNarodnosti"];
 	    }
 	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class BodVyvoje {
-	    obdobi: number;
-	    median: number;
-	    dolni: number;
-	    horni: number;
-	    n: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new BodVyvoje(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.obdobi = source["obdobi"];
-	        this.median = source["median"];
-	        this.dolni = source["dolni"];
-	        this.horni = source["horni"];
-	        this.n = source["n"];
-	    }
-	}
-	export class PodilVyvoje {
-	    obdobi: number;
-	    pocty: Record<string, number>;
-	    n: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new PodilVyvoje(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.obdobi = source["obdobi"];
-	        this.pocty = source["pocty"];
-	        this.n = source["n"];
-	    }
-	}
-	export class KategorieVyvoje {
-	    klic: string;
-	    nazev: string;
-	    kategorie: string[];
-	    radek: string;
-	    nazevRadku: string;
-	    znamych: number;
-	    chybi: number[];
-	    desetileti: PodilVyvoje[];
-	
-	    static createFrom(source: any = {}) {
-	        return new KategorieVyvoje(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.klic = source["klic"];
-	        this.nazev = source["nazev"];
-	        this.kategorie = source["kategorie"];
-	        this.radek = source["radek"];
-	        this.nazevRadku = source["nazevRadku"];
-	        this.znamych = source["znamych"];
-	        this.chybi = source["chybi"];
-	        this.desetileti = this.convertValues(source["desetileti"], PodilVyvoje);
-	    }
-
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class RadaVyvoje {
-	    klic: string;
-	    nazev: string;
-	    jednotka: string;
-	    odvozene: boolean;
-	    desetinna: number;
-	    znamych: number;
-	    chybi: number[];
-	    desetileti: BodVyvoje[];
-	    petileti: BodVyvoje[];
-	
-	    static createFrom(source: any = {}) {
-	        return new RadaVyvoje(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.klic = source["klic"];
-	        this.nazev = source["nazev"];
-	        this.jednotka = source["jednotka"];
-	        this.odvozene = source["odvozene"];
-	        this.desetinna = source["desetinna"];
-	        this.znamych = source["znamych"];
-	        this.chybi = source["chybi"];
-	        this.desetileti = this.convertValues(source["desetileti"], BodVyvoje);
-	        this.petileti = this.convertValues(source["petileti"], BodVyvoje);
-	    }
-
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-	export class VyvojVCase {
-	    edice: string;
-	    desetileti: number[];
-	    modelek: number;
-	    ciselne: RadaVyvoje[];
-	    podily: KategorieVyvoje[];
-	
-	    static createFrom(source: any = {}) {
-	        return new VyvojVCase(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.edice = source["edice"];
-	        this.desetileti = source["desetileti"];
-	        this.modelek = source["modelek"];
-	        this.ciselne = this.convertValues(source["ciselne"], RadaVyvoje);
-	        this.podily = this.convertValues(source["podily"], KategorieVyvoje);
-	    }
-
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -875,6 +838,44 @@ export namespace main {
 	        this.duplicitni = source["duplicitni"];
 	        this.neovereno = source["neovereno"];
 	    }
+	}
+	export class VyvojVCase {
+	    edice: string;
+	    desetileti: number[];
+	    modelek: number;
+	    ciselne: RadaVyvoje[];
+	    podily: KategorieVyvoje[];
+	
+	    static createFrom(source: any = {}) {
+	        return new VyvojVCase(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.edice = source["edice"];
+	        this.desetileti = source["desetileti"];
+	        this.modelek = source["modelek"];
+	        this.ciselne = this.convertValues(source["ciselne"], RadaVyvoje);
+	        this.podily = this.convertValues(source["podily"], KategorieVyvoje);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class Zaloha {
 	    soubor: string;

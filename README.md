@@ -43,6 +43,21 @@ Wails zůstává na verzi 2.16.0, se kterou je program ověřený na Fedoře.
 
 ## Instalace a aktualizace
 
+**Poprvé na čisté Fedoře** (Fedora 44 nebo novější kvůli Go 1.26; verzi ukáže `go version`):
+
+```
+sudo dnf install git golang nodejs npm gcc pkgconf-pkg-config gtk3-devel webkit2gtk4.1-devel
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
+git clone https://github.com/kleinedu1988/playboy-app.git
+cd playboy-app
+./instalovat.sh
+```
+
+Wails se nainstaluje do `~/go/bin`; `instalovat.sh` ho tam najde i bez úpravy `PATH`. Když něco chybí,
+skript vypíše, co doinstalovat. Program se pak spouští z nabídky aplikací.
+
+**Aktualizace a další možnosti** (ve složce `playboy-app`):
+
 ```
 git pull                         # stáhne nejnovější verzi
 ./instalovat.sh                  # sestaví program a nainstaluje ho do nabídky aplikací (i aktualizace)

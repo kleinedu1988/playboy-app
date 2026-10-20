@@ -30,6 +30,24 @@ if [ "${1:-}" != "--bez-sestaveni" ]; then
     if ! command -v wails >/dev/null; then
         export PATH="$PATH:$HOME/go/bin"
     fi
+    # Na čistém systému chybí nástroje pro sestavení: vypíše, co doinstalovat (postup je i v README)
+    chybi=()
+    for prikaz in go npm pkg-config; do
+        command -v "$prikaz" >/dev/null || chybi+=("$prikaz")
+    done
+    if [ ${#chybi[@]} -eq 0 ] && ! pkg-config --exists webkit2gtk-4.1 gtk+-3.0; then
+        chybi+=("knihovny WebKitGTK a GTK pro sestavení")
+    fi
+    if [ ${#chybi[@]} -gt 0 ]; then
+        echo "Chybí: ${chybi[*]}. Doinstaluj je:" >&2
+        echo "  sudo dnf install git golang nodejs npm gcc pkgconf-pkg-config gtk3-devel webkit2gtk4.1-devel" >&2
+        exit 1
+    fi
+    if ! command -v wails >/dev/null; then
+        echo "Chybí Wails. Doinstaluj ho (stáhne se do ~/go/bin):" >&2
+        echo "  go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0" >&2
+        exit 1
+    fi
     wails build -tags webkit2_41
 fi
 if [ ! -x "build/bin/$NAZEV" ]; then

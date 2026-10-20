@@ -27,6 +27,14 @@ změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 - **Data:** export a import v YAML (i Markdown), denní zálohy a obnovení, zámek heslem.
 - Nápověda a přehled klávesových zkratek přímo v programu: klávesa `?` nebo ⋯ → Nápověda.
 
+## Známá omezení
+
+- Fotky zůstávají na Google Disku: musí být sdílené „kdokoli s odkazem“ a bez připojení k internetu se
+  nenačtou (údaje sbírky jsou dostupné i bez připojení).
+- Zámek heslem chrání jen rozhraní programu; soubor databáze šifrovaný není.
+- Program je ověřený na Fedoře (GNOME, WebKitGTK 4.1); jiné distribuce nejspíš fungují, ale vyzkoušené nejsou.
+- Jeden uživatel, jeden počítač: sbírka se nesynchronizuje, na jiný počítač se přenáší zkopírováním složky dat.
+
 ## Spuštění a vývoj
 
 ```

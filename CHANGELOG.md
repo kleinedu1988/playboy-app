@@ -7,6 +7,12 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.22] – 2026-10-20
+
+### Přidáno
+- **Známá omezení v README:** fotky jen z Disku a s připojením, heslo nešifruje databázi, ověřeno na Fedoře, jeden počítač.
+- **Testovací scénář bety** v `ROADMAP.md`: kontrolní seznam pro instalaci na čistém účtu, přenos dat, obnovení ze zálohy a práci bez připojení.
+
 ## [0.51.21] – 2026-10-20
 
 ### Změněno

@@ -73,6 +73,19 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 se vydá po etapě 11b.
 | Instalace na čistém uživatelském účtu Fedory podle README, přenos dat na jiný počítač, obnovení ze zálohy | Ověřit na skutečném systému, že postupy v README fungují | S |
 | Závěrečné opravy z používání (0.90.1…) | Dojem z vydané verze | S |
 
+**Testovací scénář bety** (odškrtává uživatel na Fedoře; co selže, jde do `PLAN.md` mezi chyby):
+
+- [ ] Před testem: ⋯ → Exportovat sbírku (YAML) a kopie složky `~/.local/share/playboy-app`
+- [ ] Čistý uživatelský účet: postup „Poprvé na čisté Fedoře“ z README projde bez dalších zásahů
+- [ ] Po instalaci ukáže `git status` čistý stav
+- [ ] Program je v nabídce aplikací s ikonou, ikona je i v Alt+Tab; okno není prázdné (Content-Security-Policy)
+- [ ] První spuštění ukáže úvod prázdné sbírky; import exportu z hlavního účtu projde
+- [ ] Přenos dat: zkopírovaná složka dat na novém účtu – sbírka i heslo fungují
+- [ ] Obnovení ze zálohy: ⋯ → Obnovit ze zálohy…, potom vrácení obnovení (záloha „Před obnovením“)
+- [ ] Bez připojení: hláška o výpadku, po připojení se fotky načtou samy
+- [ ] Na hlavní sbírce: verze 0.51.17–0.51.21 (texty, hlášky, ikona) bez chyby
+- [ ] `./instalovat.sh --odinstalovat` odebere program, data zůstanou
+
 ## Po 1.0.0
 
 ### 1.1 – Google Disk v aplikaci

@@ -145,8 +145,10 @@ pro uživatele.
 Změny schématu databáze jsou očíslované úpravy v `migrace` (`app.go`); databáze si číslo poslední
 provedené pamatuje v `PRAGMA user_version` a před čekajícími úpravami se uloží záloha. Každá úprava běží
 v transakci spolu se zápisem čísla, takže se buď provede celá, nebo vůbec. Nová úprava se přidává na konec
-seznamu, hotové se nemění; test `TestPrechodZeVsechSchemat` ověřuje přechod z každého staršího schématu
-a `TestZmrazeniAlfy` hlídá, že v alfě nepřibude úprava schématu ani nová verze exportu.
+seznamu, hotové se nemění; test `TestPrechodZeVsechSchemat` ověřuje přechod z každého staršího schématu,
+`TestPrechodZeStarychVerzi` převezme databáze a exporty, které vytvořily skutečné starší verze programu
+(`testdata/stare-verze`, 0.4 až 0.33), a porovná obsah, a `TestZmrazeniAlfy` hlídá, že v alfě nepřibude úprava
+schématu ani nová verze exportu.
 
 Od schématu 6 fotky (`fotky`) odkazují na album (`alba`), které nese vydání, spojení plakátu, text,
 fotografa a „netýká se“; cover je album bez modelky. Cizí klíče jsou zapnuté. Pohled `fotografie`

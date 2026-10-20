@@ -1,0 +1,133 @@
+# Playboy Database – export 2026-10-20 13:16
+# Import údaje doplňuje a opravuje, nic nemaže; prázdný nebo chybějící údaj ponechá ten stávající.
+
+verze: 6
+modelky:
+    - jmeno: Anna Bílá
+      pridano: "2026-10-20 13:16:07"
+      dalsi_jmena: Anička
+      hodnoceni: 5
+      narozeni_datum: "1975-03-12"
+      umrti_datum: 2020-01
+      narozeni_misto: Praha
+      narodnost: Česko
+      etnicita: Bělošská
+      vyska_cm: 172
+      vaha_kg: 54
+      vlasy: Blond
+      oci: Modré
+      hrudnik_cm: 90
+      pas_cm: 60
+      boky_cm: 90
+      velikost_prsou: C
+      prsa_typ: Přírodní
+      ochlupeni: Oholené
+      tetovani: ano
+      piercing: ne
+      role: Playmate měsíce
+      tagy: blond, česká
+      vystoupeni: Film
+      pictorial_vydani: 1995-04
+      poznamka: |-
+        Poznámka
+        na dva řádky
+      odkazy: https://example.com/anna
+      titulni_fotka: 1ZZprechod0000000000000002abcdef
+      vyrez:
+        zoom: 1.6
+        poloha_x: 40
+        poloha_y: 30
+      alba:
+        - nazev: Pláž
+          typ: Pictorial
+          pridano: "2026-10-20 13:16:07"
+          vydani: 1995-04
+          fotograf: Arny Freytag
+          popis: |-
+            První odstavec.
+
+            Druhý odstavec s **tučným**.
+          rucni_poradi: true
+          fotky:
+            - id: 1ZZprechod0000000000000003abcdef
+              hodnoceni: 3
+            - id: 1ZZprechod0000000000000001abcdef
+              hodnoceni: 5
+            - id: 1ZZprechod0000000000000002abcdef
+              hodnoceni: 5
+        - nazev: 1995-03
+          typ: Centerfold
+          pridano: "2026-10-20 13:16:07"
+          spojit: true
+          fotky:
+            - id: 1ZZprechod0000000000000004abcdef
+              rotace: 90
+            - id: 1ZZprechod0000000000000005abcdef
+    - jmeno: Bára Černá
+      pridano: "2026-10-20 13:16:07"
+      hodnoceni: 3
+      narodnost: USA
+      alba:
+        - nazev: Studio
+          typ: Pictorial
+          pridano: "2026-10-20 13:16:08"
+          vydani: "1996"
+          dalsi_modelky:
+            - Cecílie Zelená
+          netyka_se: text
+          fotky:
+            - id: 1ZZprechod0000000000000008abcdef
+            - id: 1ZZprechod0000000000000009abcdef
+        - nazev: Review
+          typ: Pictorial
+          pridano: "2026-10-20 13:16:09"
+          vydani: 1995-S01
+          fotky:
+            - id: 1ZZprechod0000000000000012abcdef
+    - jmeno: Cecílie Zelená
+      pridano: "2026-10-20 13:16:07"
+      piercing: ano
+      alba:
+        - nazev: 1996-01
+          typ: Centerfold
+          pridano: "2026-10-20 13:16:09"
+          fotky:
+            - id: 1ZZprechod0000000000000010abcdef
+    - jmeno: Dana Modrá
+      netyka_se: centerfold
+      pridano: "2026-10-20 13:16:07"
+      alba:
+        - nazev: Domácí
+          typ: Pictorial
+          pridano: "2026-10-20 13:16:09"
+          fotky:
+            - id: 1ZZprechod0000000000000011abcdef
+covery:
+    - vydani: 1995-04
+      fotky:
+        - id: 1ZZprechod0000000000000007abcdef
+          pridano: "2026-10-20 13:16:08"
+    - vydani: 1995-03
+      fotky:
+        - id: 1ZZprechod0000000000000006abcdef
+          pridano: "2026-10-20 13:16:08"
+vydani:
+    - vydani: 1995-03
+      stav: mam
+      modelka_obalky: Anna Bílá
+      poznamka: Výtisk z antikvariátu
+    - vydani: 1995-S01
+      nazev: Playmate Review
+    - vydani: 1996-02
+      stav: shanim
+vybery:
+    - nazev: Oblíbené
+      fotky:
+        - modelka: Anna Bílá
+          album: Pláž
+          typ: Pictorial
+          id: 1ZZprechod0000000000000001abcdef
+        - modelka: Anna Bílá
+          album: Pláž
+          typ: Pictorial
+          id: 1ZZprechod0000000000000003abcdef

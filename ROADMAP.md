@@ -55,7 +55,7 @@ a nálezy jdou do `PLAN.md`. Pořadí: nejdřív data, texty a úklid nakonec, a
 
 | # | Co | Proč | Prac. |
 |---|---|---|---|
-| 1 | Přechod databáze ze všech dřívějších schémat (0.4 až dnes) a import exportů verzí 1–7; export → import tam a zpět na velké sbírce (2 000 modelek) s porovnáním obsahu | Nikdo nesmí přijít o data aktualizací ani zálohou přes export | S–M |
+| 1 | ~~Přechod databáze ze všech dřívějších schémat (0.4 až dnes) a import exportů verzí 1–7; export → import tam a zpět na velké sbírce~~ – hotovo 20. 10. 2026: databáze a exporty deseti starých verzí (vytvořené těmi verzemi z gitu) jsou v `testdata/stare-verze` a test `TestPrechodZeStarychVerzi` je převezme beze ztráty; kruh export → import s 2 000 modelkami a 64 000 fotkami bez rozdílu | Nikdo nesmí přijít o data aktualizací ani zálohou přes export | S–M |
 | 2 | Zálohy v krajních situacích: obnovení velké databáze, poškozený soubor, heslo, plný disk při zálohování; místo, které zálohy a mezipaměť obrázků dlouhodobě zaberou | Záloha je poslední pojistka | S–M |
 | 3 | Revize zabezpečení: text z importu a formulářů vložený do stránky bez ošetření, uložení hesla | Import cizího souboru nesmí spustit kód | S |
 | 4 | Odolnost bez internetu a s chybějícími soubory na Disku, se špatnou adresou obrázků | Aplikace se nesmí zaseknout ani mást hláškami | S |

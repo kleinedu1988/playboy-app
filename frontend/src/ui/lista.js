@@ -67,8 +67,9 @@ export function vytvoritListu(nav, poKliku, { svisla = false } = {}) {
         naplnit(polozky) {
             seznam.innerHTML = polozky.map(p => {
                 const napoveda = p.pocet === undefined ? p.nazev : `${p.nazev} (${p.pocet})`;
+                // Svislý rejstřík je pomůcka pro myš (ukáže se při rolování); Tab jím neprochází
                 return svisla
-                    ? `<button class="chip" data-skok="${esc(p.klic)}" title="${esc(napoveda)}">${esc(zkratka(String(p.nazev)))}</button>`
+                    ? `<button class="chip" data-skok="${esc(p.klic)}" tabindex="-1" title="${esc(napoveda)}">${esc(zkratka(String(p.nazev)))}</button>`
                     : `<button class="chip" data-skok="${esc(p.klic)}" title="${esc(p.nazev)}"><b>${esc(p.nazev)}</b>${p.pocet === undefined ? '' : `<span>${p.pocet}</span>`}</button>`;
             }).join('');
             nav.classList.toggle('hidden', polozky.length < 2);

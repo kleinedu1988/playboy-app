@@ -74,7 +74,7 @@ function htmlUplnosti(r) {
 function htmlRadku(r) {
     const hodnoty = r.bunky.filter(b => b && b.n >= MALO_DAT).map(b => b.hodnota);
     const min = Math.min(...hodnoty), max = Math.max(...hodnoty);
-    return `<tr class="${r.klic === vybrany ? 'active' : ''}" data-vyvoj-radek="${r.klic}" title="Ukázat graf">
+    return `<tr class="${r.klic === vybrany ? 'active' : ''}" data-vyvoj-radek="${r.klic}" tabindex="0" aria-selected="${r.klic === vybrany}" title="Ukázat graf (Enter)">
         <td>${esc(r.nazev)}<small>${esc(r.jednotka)}</small></td>
         ${htmlUplnosti(r)}
         ${r.bunky.map(b => {
@@ -214,8 +214,11 @@ export function pripravit(stats) {
         if (doplnitUdaj) {
             doplnit(doplnitUdaj.dataset.vyvojDoplnit);
         } else if (radek) {
+            // Po překreslení zůstane fokus na vybraném řádku (ovládání klávesnicí)
+            const sFokusem = radek.contains(document.activeElement);
             vybrany = radek.dataset.vyvojRadek;
             vykreslit(koren);
+            if (sFokusem) koren.querySelector(`[data-vyvoj-radek="${vybrany}"]`)?.focus({ preventScroll: true });
         } else if (tlacitkoEdice && tlacitkoEdice.dataset.vyvojEdice !== edice) {
             edice = tlacitkoEdice.dataset.vyvojEdice;
             nacistVyvoj(koren);

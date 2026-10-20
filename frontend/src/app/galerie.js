@@ -21,21 +21,23 @@ import { vybraneDlazdice } from './vyber';
 import { prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 
-// Hodnocení 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší
-export function htmlSrdicek(hodnoceni, atribut) {
+// Hodnocení 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší.
+// Na kartě a dlaždici (tabem = false) srdíčka nejsou v pořadí Tabu: zaměřená karta se hodnotí klávesami 1–5
+// a 0 (klavesnice.js), jinak by každá karta přidala pět zastávek.
+export function htmlSrdicek(hodnoceni, atribut, tabem = true) {
     const srdicka = [1, 2, 3, 4, 5].map(n => `
-        <button class="heart ${n <= hodnoceni ? 'on' : ''}" data-hodnota="${n}"
+        <button class="heart ${n <= hodnoceni ? 'on' : ''}" data-hodnota="${n}" ${tabem ? '' : 'tabindex="-1"'}
             title="${n === hodnoceni ? 'Zrušit hodnocení' : `Ohodnotit ${n} z 5`}"></button>`).join('');
     return `<span class="hearts ${hodnoceni ? 'rated' : ''}" ${atribut}>${srdicka}</span>`;
 }
 
-export function htmlSrdicka(modelka) {
-    return htmlSrdicek(modelka.hodnoceni, `data-hodnoceni="${modelka.id}"`);
+export function htmlSrdicka(modelka, tabem = true) {
+    return htmlSrdicek(modelka.hodnoceni, `data-hodnoceni="${modelka.id}"`, tabem);
 }
 
 // Srdíčka fotky; index míří do seznamu položek právě zobrazeného pohledu
 export function htmlSrdickaFotky(polozka, index) {
-    return htmlSrdicek(polozka.hodnoceni, `data-hodnoceni-fotky="${index}"`);
+    return htmlSrdicek(polozka.hodnoceni, `data-hodnoceni-fotky="${index}"`, false);
 }
 
 export async function ohodnotitPolozku(polozka, zvoleno) {
@@ -174,7 +176,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
         <div class="card" data-id="${m.id}" tabindex="0" aria-label="${esc(m.jmeno)}">
             <div class="card-image-wrap">
                 <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" decoding="async" />
-                ${htmlSrdicka(m)}
+                ${htmlSrdicka(m, false)}
             </div>
             <div class="card-info">
                 <h3>${esc(m.jmeno)}</h3>
@@ -283,7 +285,7 @@ export function pripravit() {
 
         // Tatáž modelka může být načtená v galerii i otevřená v profilu
         [stav.aktualniModelka, ...stav.nacteneModelky].filter(m => m && m.id === id).forEach(m => { m.hodnoceni = nove; });
-        nahraditSrdicka(rada, htmlSrdicka(modelka), srdicko.dataset.hodnota);
+        nahraditSrdicka(rada, htmlSrdicka(modelka, !rada.closest('.card')), srdicko.dataset.hodnota);
         if (stav.minHodnoceni && !gallery.classList.contains('hidden')) nacistGalerii(searchInput.value);
     });
 

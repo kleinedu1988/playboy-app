@@ -32,6 +32,7 @@ const obsahCisla = k => [k?.cover && 'cover', k?.centerfold && 'centerfold', k?.
 
 // Mapa po desetiletích: sloupec = desetiletí, řádek = rok, políčko = měsíc
 function htmlMapy(roky, stavCisla) {
+    let prvni = true;
     const dekady = new Map();
     roky.forEach(r => {
         const dekada = Math.floor(r.rok / 10) * 10;
@@ -43,8 +44,11 @@ function htmlMapy(roky, stavCisla) {
             ${rokyDekady.map(r => `<div class="uvod-rok"><span>${r.rok}</span>${r.mesice.map(m => {
                 const [stavPole, popis] = stavCisla(m);
                 // Měsíc před prvním číslem edice (x) není číslo, nedá se otevřít ani označit
-                return stavPole === 'x' ? `<i class="x" title="${esc(`${nazevVydani(m.klic)} – ${popis}`)}"></i>`
-                    : `<i class="${stavPole}" data-cislo="${esc(m.klic)}" ${m.data ? 'data-ma-data' : ''} title="${esc(`${nazevVydani(m.klic)} – ${popis}`)}"></i>`;
+                // Do mapy vede Tab jen jednou (první číslo), dál se chodí šipkami
+                const tab = prvni ? 0 : -1;
+                if (stavPole !== 'x') prvni = false;
+                return stavPole === 'x' ? `<i class="x" tabindex="-1" title="${esc(`${nazevVydani(m.klic)} – ${popis}`)}"></i>`
+                    : `<i class="${stavPole}" data-cislo="${esc(m.klic)}" ${m.data ? 'data-ma-data' : ''} tabindex="${tab}" aria-label="${esc(`${nazevVydani(m.klic)} – ${popis}`)}" title="${esc(`${nazevVydani(m.klic)} – ${popis}`)}"></i>`;
             }).join('')}</div>`).join('')}
         </div>`).join('')}</div>`;
 }

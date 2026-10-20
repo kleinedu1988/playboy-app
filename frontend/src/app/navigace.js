@@ -30,6 +30,24 @@ export function ukazatPohled(pohled) {
     // Lišta písmen patří jen ke galerii modelek, lišta desetiletí jen ke stěně
     if (pohled !== gallery) document.getElementById('galleryNav')?.classList.add('hidden');
     if (pohled !== wall) document.getElementById('wallNav')?.classList.add('hidden');
+    // Fokus ve skrytém pohledu (Enter na kartě, Zpět) by zůstal nikde: dostane ho nový pohled, další Tab jde do něj.
+    // Hledání a lišta nahoře fokus nechávají.
+    const aktivni = document.activeElement;
+    if (!aktivni || aktivni === document.body || (hlavniOblast.contains(aktivni) && !pohled.contains(aktivni))) {
+        pohled.tabIndex = -1;
+        pohled.focus({ preventScroll: true });
+    }
+}
+
+const hlavniOblast = document.querySelector('main');
+
+// Prvek s fokusem jako selektor, aby se po návratu Zpět dal najít i v nově vykresleném pohledu
+const ATRIBUTY_FOKUSU = ['data-id', 'data-index', 'data-vydani', 'data-prazdne', 'data-cislo', 'data-modelka', 'data-album'];
+function selektorFokusu() {
+    const a = document.activeElement;
+    if (!a || !hlavniOblast.contains(a)) return '';
+    const atribut = ATRIBUTY_FOKUSU.find(at => a.hasAttribute(at));
+    return atribut ? `${a.classList[0] ? `.${CSS.escape(a.classList[0])}` : a.tagName.toLowerCase()}[${atribut}="${CSS.escape(a.getAttribute(atribut))}"]` : '';
 }
 
 // Historie pro Zpět: kam se vrátit a na jaké místo stránky
@@ -46,9 +64,10 @@ export function popisZpet() {
 
 export function soucasneMisto() {
     const scroll = document.querySelector('main').scrollTop;
-    if (!detailView.classList.contains('hidden')) return { typ: 'profil', modelka: stav.aktualniModelka, scroll };
-    if (!issueView.classList.contains('hidden')) return stav.aktualniFotograf ? { typ: 'fotograf', jmeno: stav.aktualniFotograf, scroll } : { typ: 'vydani', vydani: stav.aktualniVydani, scroll };
-    return { typ: 'prehled', rezim: stav.rezim, scroll };
+    const fokus = selektorFokusu();
+    if (!detailView.classList.contains('hidden')) return { typ: 'profil', modelka: stav.aktualniModelka, scroll, fokus };
+    if (!issueView.classList.contains('hidden')) return stav.aktualniFotograf ? { typ: 'fotograf', jmeno: stav.aktualniFotograf, scroll, fokus } : { typ: 'vydani', vydani: stav.aktualniVydani, scroll, fokus };
+    return { typ: 'prehled', rezim: stav.rezim, scroll, fokus };
 }
 
 // Před otevřením profilu nebo vydání se zapamatuje, odkud se přišlo (ne při návratu na totéž místo)
@@ -73,8 +92,11 @@ export async function zpet() {
         if (misto) prepnoutRezim(misto.rezim);
         await nacistGalerii(searchInput.value);
     }
-    // Stejné místo stránky, ze kterého se odešlo
-    if (misto) requestAnimationFrame(() => { hlavni.scrollTop = misto.scroll; });
+    // Stejné místo stránky, ze kterého se odešlo, a fokus na prvku, ze kterého se odešlo (karta, dlaždice…)
+    if (misto) requestAnimationFrame(() => {
+        hlavni.scrollTop = misto.scroll;
+        if (misto.fokus) document.querySelector(misto.fokus)?.focus({ preventScroll: true });
+    });
 }
 export const viewToggle = document.getElementById('viewToggle');
 // Všechna tlačítka přehledů: záložky vlevo i ikony vpravo v hlavní liště

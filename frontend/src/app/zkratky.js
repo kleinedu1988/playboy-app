@@ -13,6 +13,8 @@ const CASTI = [
         [k('?'), 'Klávesové zkratky'],
         [k('Esc'), 'Zavřít okno, zpět'],
         [`${k('Tab')}${nebo}${k('Enter')}`, 'Procházet a otevřít karty'],
+        [`${k('1')}–${k('5')}${nebo}${k('0')}`, 'Srdíčka zaměřené karty nebo fotky, zrušit'],
+        [k('←', '↑', '→', '↓'), 'Pohyb v mapě edice (Přehled)'],
         [`${k('Shift', 'F10')}`, 'Nabídka akcí (jako pravé tlačítko)'],
     ] },
     { klic: 'hledani', nazev: 'Výsledky hledání', radky: [

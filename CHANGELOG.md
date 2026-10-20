@@ -7,6 +7,15 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.10] – 2026-10-20
+
+### Vylepšeno (úzké okno a klávesnice)
+- **Přehled v úzkém okně** (do 900 px): levý panel Sbírka je řádek částí nad obsahem, ne sloupec s prázdným místem pod sebou.
+- **Mapy edic klávesnicí:** Do každé mapy vede jeden Tab, šipky se pohybují po měsících (←→) a rocích (↑↓) a přeskakují měsíce, které nevyšly; Home a End skočí na první a poslední číslo, Enter číslo otevře, klávesa nabídky (Shift+F10) nabídne jeho stav.
+- **Vývoj v čase klávesnicí:** Řádky tabulky jdou zaměřit Tabem, Enter ukáže graf a fokus zůstane na řádku.
+- **Fokus při přechodech:** Po otevření profilu nebo čísla klávesnicí jde další Tab rovnou do něj; Zpět vrátí fokus na kartu nebo dlaždici, ze které se odešlo.
+- **Srdíčka klávesami:** Zaměřené kartě modelky nebo dlaždici fotky dají klávesy 1–5 srdíčka, 0 je zruší. Srdíčka na kartách a dlaždicích už Tab neprochází (každá karta měla pět zastávek navíc), stejně jako svislý rejstřík písmen a roků u okraje.
+
 ## [0.51.9] – 2026-10-20
 
 ### Vylepšeno (zátěžová zkouška: 2 000 modelek, 64 000 fotek)

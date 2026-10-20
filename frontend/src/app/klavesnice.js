@@ -3,7 +3,8 @@
 import { otevritNabidku } from './nabidky';
 
 // Co jde zaměřit a otevřít: karta modelky, dlaždice fotky, plakát, centerfold na stěně, cover
-const AKTIVOVATELNE = '.card, .photo-item[data-index], .poster[data-index], .wall-item, .cislo';
+// a v Přehledu políčko mapy edice a řádek tabulky Vývoj v čase
+const AKTIVOVATELNE = '.card, .photo-item[data-index], .poster[data-index], .wall-item, .cislo, .uvod-rok i[data-cislo], [data-vyvoj-radek]';
 const FOKUSOVATELNE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // Okno nebo prohlížeč, který je právě nahoře
@@ -25,6 +26,16 @@ export function pripravit() {
             prvek.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey }));
             return;
         }
+        // Zaměřená karta nebo dlaždice fotky: 1–5 srdíčka, 0 je zruší (jako v prohlížeči)
+        const sSrdicky = prvek === e.target && /^[0-5]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey && prvek.querySelector(':scope > * .hearts, :scope > .hearts');
+        if (sSrdicky) {
+            e.preventDefault();
+            const soucasne = sSrdicky.querySelectorAll('.heart.on').length;
+            // Klik na současné hodnocení ho ruší; 0 tedy klikne na současné, stejné číslo nedělá nic
+            const hodnota = e.key === '0' ? soucasne : parseInt(e.key) === soucasne ? 0 : parseInt(e.key);
+            if (hodnota) sSrdicky.querySelector(`.heart[data-hodnota="${hodnota}"]`)?.click();
+            return;
+        }
         // Tab nevyjde z otevřeného okna ani z prohlížeče
         if (e.key !== 'Tab') return;
         const vrstva = horniVrstva();
@@ -40,7 +51,8 @@ export function pripravit() {
 
     // Klávesa nabídky a Shift+F10 vyvolají událost contextmenu bez souřadnic myši: nabídka se ukáže u prvku
     document.addEventListener('contextmenu', (e) => {
-        if (e.clientX || e.clientY || e.target.closest('input, textarea, select')) return;
+        // Políčko mapy edice má vlastní nabídku čísla (prehled.js)
+        if (e.clientX || e.clientY || e.target.closest('input, textarea, select, .uvod-rok i[data-cislo]')) return;
         const prvek = e.target.closest?.(AKTIVOVATELNE) || e.target;
         if (!(prvek instanceof Element)) return;
         e.preventDefault();

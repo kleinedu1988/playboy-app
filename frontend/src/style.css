@@ -576,6 +576,11 @@ textarea {
     color: var(--text-main);
 }
 
+/* Pohled dostane fokus po přechodu z jiného (Enter na kartě, Zpět), aby další Tab šel do něj; rámeček nemá */
+main > [tabindex="-1"]:focus {
+    outline: none;
+}
+
 /* Galerie karet */
 main {
     flex: 1;
@@ -4467,13 +4472,35 @@ main .album-nav:not(.svisla) .chip.active:hover {
     border-radius: 999px;
 }
 
-@media (max-width: 760px) {
+/* Úzké okno: levý panel Přehledu je řádek částí nad obsahem, ne sloupec s prázdným místem pod sebou */
+@media (max-width: 900px) {
     #stats:not(.hidden) {
         grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
     }
 
     .prehled-panel {
         position: static;
+        padding: 8px;
+    }
+
+    .prehled-panel > h2 {
+        display: none;
+    }
+
+    .prehled-menu {
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-top: 0;
+    }
+
+    .prehled-menu button {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+
+    .prehled-menu b {
+        margin-left: 2px;
     }
 }
 
@@ -7081,6 +7108,11 @@ textarea {
     cursor: pointer;
 }
 
+.uvod-rok i:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
 .uvod-rok i:hover {
     outline: 1px solid var(--text-muted);
     outline-offset: 1px;
@@ -7646,6 +7678,11 @@ span.ud-chip.hlavni {
 
 .vyvoj-tabulka tbody tr:hover td:first-child {
     color: var(--accent-text);
+}
+
+.vyvoj-tabulka tbody tr:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
 }
 
 .vyvoj-tabulka tbody tr.active td:first-child {

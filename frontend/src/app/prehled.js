@@ -412,8 +412,33 @@ export function pripravit() {
         if (!cislo) return;
         e.preventDefault();
         e.stopPropagation();
-        nabidkaCislaPrehledu(cislo.dataset.cislo, e.clientX, e.clientY);
+        // Klávesa nabídky nemá souřadnice myši: nabídka se ukáže u políčka
+        const r = cislo.getBoundingClientRect();
+        nabidkaCislaPrehledu(cislo.dataset.cislo, e.clientX || r.left + 8, e.clientY || r.bottom + 4);
     }, true);
+
+    // Mapa edice je pro Tab jedno místo; šipky se v ní pohybují po měsících (←→) a rocích (↑↓), Home a End
+    // skočí na první a poslední číslo, Enter číslo otevře, klávesa nabídky nabídne stav
+    stats.addEventListener('keydown', (e) => {
+        const policko = e.target.closest?.('.uvod-rok i');
+        const posun = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -12, ArrowDown: 12 }[e.key];
+        if (!policko || (posun === undefined && e.key !== 'Home' && e.key !== 'End')) return;
+        const vsechna = [...policko.closest('.uvod-mapa').querySelectorAll('.uvod-rok i')];
+        const cisla = vsechna.filter(i => i.hasAttribute('data-cislo'));
+        const kde = vsechna.indexOf(policko);
+        // Měsíce mimo řadu edice (bez čísla) se přeskakují; o rok nahoru nebo dolů na takový měsíc se nejde
+        let cil = e.key === 'Home' ? cisla[0] : e.key === 'End' ? cisla.at(-1) : null;
+        if (posun !== undefined) {
+            let i = kde + posun;
+            if (Math.abs(posun) === 1) while (vsechna[i] && !vsechna[i].hasAttribute('data-cislo')) i += posun;
+            cil = vsechna[i]?.hasAttribute('data-cislo') ? vsechna[i] : null;
+        }
+        if (!cil) { e.preventDefault(); return; }
+        e.preventDefault();
+        policko.tabIndex = -1;
+        cil.tabIndex = 0;
+        cil.focus();
+    });
 
     // Klik na buňku „chybí" otevře rovnou místo, kde se údaj doplňuje; klik jinam do řádku otevírá profil nebo vydání
     stats.addEventListener('click', async (e) => {

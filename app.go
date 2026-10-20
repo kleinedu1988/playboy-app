@@ -313,6 +313,8 @@ func (a *App) zalohovat(duvod string) error {
 		cil = fmt.Sprintf("%s-%d-%s.db", zaklad, i, duvod)
 	}
 	if _, err := a.db.Exec("VACUUM INTO '" + strings.ReplaceAll(cil, "'", "''") + "'"); err != nil {
+		// Nedokončený soubor (plný disk) by se v seznamu záloh tvářil jako záloha
+		os.Remove(cil)
 		return err
 	}
 	os.Chmod(cil, 0o600)

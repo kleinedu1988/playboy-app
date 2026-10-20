@@ -237,7 +237,7 @@ export function vykreslitRocnik(vydani, fotky) {
     document.getElementById('issueSide').innerHTML = `
         <div class="rocnik-nadpis">Ročník${casti.edice !== VYCHOZI_EDICE ? ` · ${esc(casti.edice)}` : ''}</div>
         <div class="rocnik-rok">${esc(casti.rok)}</div>
-        <div class="prehled-pruh"><span>Čísel ve sbírce</span><b>${cisel} z ${ciselRocniku(casti.rok, casti.edice)}</b><div><i style="width:${Math.round(cisel / ciselRocniku(casti.rok, casti.edice) * 100)}%"></i></div></div>
+        <div class="prehled-pruh"><span>Čísel ve sbírce</span><b>${ciselRocniku(casti.rok, casti.edice) ? `${cisel} z ${ciselRocniku(casti.rok, casti.edice)}` : cisel}</b><div><i style="width:${Math.min(100, Math.round(cisel / Math.max(1, ciselRocniku(casti.rok, casti.edice)) * 100))}%"></i></div></div>
         <div class="prehled-cisla rocnik-cisla">
             ${[[pocet('Cover'), 'coverů'], [pocet('Centerfold'), 'centerfoldů'], [pocet('Pictorial'), 'pictorialů']]
                 .map(([n, popis]) => `<div><strong>${n}</strong><span>${popis}</span></div>`).join('')}

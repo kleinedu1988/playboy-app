@@ -139,7 +139,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         const { rok, obsazeno, obsazenoSpecialu, policka, stitky } = rokyKalendare[i];
         radky.push(`
             <section class="cal-year" ${oznacitDekadu(rok, obsazeno + obsazenoSpecialu)}>
-                <div class="cal-year-label"><button class="link cal-year-link" data-vydani="${slozitVydani(String(rok), '', stav.kalendarEdice)}" title="Celý ročník"><strong>${rok}</strong></button><span>${obsazeno} z ${ciselRocniku(rok, stav.kalendarEdice)}</span></div>
+                <div class="cal-year-label"><button class="link cal-year-link" data-vydani="${slozitVydani(String(rok), '', stav.kalendarEdice)}" title="Celý ročník"><strong>${rok}</strong></button><span>${ciselRocniku(rok, stav.kalendarEdice) ? `${obsazeno} z ${ciselRocniku(rok, stav.kalendarEdice)}` : obsazeno}</span></div>
                 <div class="cal-months">${policka}</div>
                 ${stitky ? `<div class="cal-specials" title="Speciály ${rok}">${stitky}</div>` : ''}
             </section>

@@ -1,13 +1,14 @@
 // Úvod Přehledu: hlavní čísla, mapa české edice (vlastní výtisky), mapa americké edice (úplnost dat),
 // co zbývá doplnit a naposledy přidané modelky. Česká edice se sbírá fyzicky, americká jen jako data (PDF),
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
-import { MESICE, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
+import { MESICE, RADY_EDIC, ciselRocniku, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
 import { adresaTitulni } from './obrazky';
 import { grafSloupcu } from './statistiky';
 
-// Česká edice začíná číslem 07/2011; dřívější roky v mapě nejsou, měsíce 2011 před prvním číslem jsou prázdné
-const PRVNI_CISLO_CZ = '2011-07';
-const PRVNI_ROK_CZ = parseInt(PRVNI_CISLO_CZ);
+// Mapy začínají prvním číslem edice (RADY_EDIC); měsíce mimo měsíční řadu jsou v nich prázdné
+const PRVNI_ROK_CZ = parseInt(RADY_EDIC.CZ.od);
+const PRVNI_ROK_US = parseInt(RADY_EDIC.US.od);
+const POSLEDNI_ROK_US = parseInt(RADY_EDIC.US.do);
 // Naposledy přidaných modelek na úvodu
 const NAPOSLEDY = 6;
 
@@ -70,8 +71,8 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
     const stavCz = m => {
         const stavCisla = ({ mam: 'm', shanim: 's', nezajima: 'n' })[stavPodleKlice.get(m.klic)];
         // Měsíc před prvním číslem se nepočítá, pokud k němu ve sbírce přece jen něco není
-        const predPrvnim = m.klic.slice(0, 7) < PRVNI_CISLO_CZ && !m.data && !stavCisla;
-        const s = predPrvnim ? 'x' : budouci(m.klic) ? 'b' : stavCisla || 'c';
+        const mimoRadu = cisloNevyslo(m.klic) && !m.data && !stavCisla;
+        const s = mimoRadu ? 'x' : budouci(m.klic) ? 'b' : stavCisla || 'c';
         poctyCz[s]++;
         const obsah = obsahCisla(m.data);
         return [s, STAVY_CZ[s] + (obsah ? ` · ${obsah}` : '')];
@@ -82,13 +83,15 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
     const rokyUs = rokyEdice('US');
     const poctyUs = { k: 0, p: 0, n: 0, c: 0, b: 0, x: 0 };
     const stavUs = m => {
-        const s = cisloNevyslo(m.klic) && !m.data ? 'x' : budouci(m.klic) ? 'b' : stavPodleKlice.get(m.klic) === 'nezajima' ? 'n'
+        const s = cisloNevyslo(m.klic) && !m.data && !stavPodleKlice.get(m.klic) ? 'x' : budouci(m.klic) ? 'b' : stavPodleKlice.get(m.klic) === 'nezajima' ? 'n'
             : m.data?.cover && m.data?.centerfold && m.data?.pictorial ? 'k' : m.data ? 'p' : 'c';
         poctyUs[s]++;
         const obsah = obsahCisla(m.data);
         return [s, STAVY_US[s] + (obsah && s === 'p' ? ` · ${obsah}` : '')];
     };
-    const mapaUs = rokyUs.length ? htmlMapy(cislaEdice('US', Math.min(...rokyUs), Math.max(...rokyUs), podleKlice), stavUs) : '';
+    // Celá měsíční řada 1953–2020 (a případná dřívější nebo pozdější čísla ve sbírce), když sbírka nějaké US číslo má
+    const odUs = Math.min(PRVNI_ROK_US, ...rokyUs), doUs = Math.min(letos, Math.max(POSLEDNI_ROK_US, ...rokyUs));
+    const mapaUs = rokyUs.length ? htmlMapy(cislaEdice('US', odUs, doUs, podleKlice), stavUs) : '';
     const vydanychCz = poctyCz.m + poctyCz.s + poctyCz.n + poctyCz.c;
     const vydanychUs = poctyUs.k + poctyUs.p + poctyUs.n + poctyUs.c;
 
@@ -111,7 +114,7 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
         </div>
         ${mapaUs ? `
         <div class="uvod-karta">
-            <h4>Americká edice · archiv dat<small>${Math.min(...rokyUs)}–${Math.max(...rokyUs)} · kompletní = cover, centerfold i pictorial</small></h4>
+            <h4>Americká edice · archiv dat<small>${odUs}–${doUs} · kompletní = cover, centerfold i pictorial</small></h4>
             ${mapaUs}
             ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
         </div>` : ''}
@@ -124,7 +127,7 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
                 <h4>Výtisky CZ po letech</h4>
                 ${grafSloupcu(cz.filter(r => r.rok < letos || r.mesice.some(m => !budouci(m.klic))).map(r => {
                     const mam = r.mesice.filter(m => stavPodleKlice.get(m.klic) === 'mam').length;
-                    return { hodnota: mam, popisek: r.rok % 5 === 0 ? String(r.rok) : '', tip: `${r.rok}: ${mam} z 12 výtisků` };
+                    return { hodnota: mam, popisek: r.rok % 5 === 0 ? String(r.rok) : '', tip: `${r.rok}: ${mam} z ${ciselRocniku(r.rok, 'CZ')} výtisků` };
                 }), { vyska: 170 })}
             </div>
             <div class="uvod-karta" data-graf-dekad>

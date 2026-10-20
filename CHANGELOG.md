@@ -7,6 +7,12 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.8] – 2026-10-20
+
+### Změněno
+- **Měsíční řady edic:** Program zná, kdy která edice vycházela jako měsíčník. Americká od 12/1953 (první číslo s Marilyn Monroe) do 03/2020 (Spring 2020, poslední pravidelné číslo); čísla od roku 2025 (ročenka, čtvrtletník) se evidují jako speciály. Česká od 07/2011. Měsíce mimo řadu se v kalendáři a na stránce ročníku ukazují jako „nevyšlo“ a nepočítají se jako chybějící; počet „x z N“ u roku odpovídá skutečnému počtu čísel (1953: 1, 2020: 3).
+- **Mapa americké edice** v Přehledu ukazuje celou měsíční řadu 1953–2020, ne jen roky, ze kterých máš čísla, a „Čísla US“ počítají z čísel, která opravdu vyšla.
+
 ## [0.51.7] – 2026-10-20
 
 ### Opraveno

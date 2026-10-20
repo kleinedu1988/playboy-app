@@ -90,6 +90,12 @@ a pořadí v roce (`1995-S01`, české `1995-S01-CZ`); název je uložený u č�
 nebo coveru („Nový speciál…“) nebo pravým tlačítkem na nadpis roku v kalendáři; v kalendáři jsou jako štítky
 pod měsíci roku, na stránce ročníku mají vlastní oddíl. Přejmenovat je jde v okně „Upravit číslo…“.
 
+**Měsíční řady:** americká edice vycházela měsíčně od 12/1953 (první číslo s Marilyn Monroe) do 03/2020
+(Spring 2020); od roku 2025 vychází jako ročenka a čtvrtletník a ta čísla se evidují jako speciály. Česká edice
+začíná číslem 07/2011. Měsíce mimo řadu a jednotlivá čísla, která nevyšla (březen 1955), se v kalendáři, ročníku
+ani v mapách Přehledu nepočítají jako chybějící. Pravidla jsou v `RADY_EDIC` a `NEVYSLA_CISLA`
+(`frontend/src/lib/format.js`).
+
 ## Cílené hledání
 
 Více slov zužuje výběr. Cíleně `pole:hodnota`: `jmeno`, `vlasy`, `oci`, `narodnost`, `etnicita`, `misto`,

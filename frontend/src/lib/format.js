@@ -6,10 +6,20 @@ export const MESICE = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen
 export const EDICE = ['US', 'CZ'];
 export const VYCHOZI_EDICE = 'US';
 
-// Čísla, která nikdy nevyšla, i když jsou v řadě měsíců: americké číslo z března 1955.
-// V kalendáři, ročníku a mapě edice se neukazují jako chybějící a nedají se přidat ani označit.
+// Měsíční řady edic. Americká: od 12/1953 (první číslo, Marilyn Monroe) do 03/2020 (Spring 2020, poslední
+// pravidelné číslo); od 2025 vychází jen jako ročenka a čtvrtletník a ta čísla se evidují jako speciály.
+// Česká: od 07/2011. Mimo řadu jsou ještě jednotlivá čísla, která nevyšla (americké z března 1955).
+// Měsíc mimo řadu se v kalendáři, ročníku a mapě edice neukazuje jako chybějící a nedá se přidat ani označit.
+export const RADY_EDIC = { US: { od: '1953-12', do: '2020-03' }, CZ: { od: '2011-07', do: '' } };
 export const NEVYSLA_CISLA = new Set(['1955-03']);
-export const cisloNevyslo = klic => NEVYSLA_CISLA.has(klic);
+export function cisloNevyslo(klic) {
+    const v = rozlozitVydani(klic);
+    if (!v || !/^\d\d$/.test(v.mesic)) return false;
+    if (NEVYSLA_CISLA.has(klic)) return true;
+    const rada = RADY_EDIC[v.edice];
+    const mesic = `${v.rok}-${v.mesic}`;
+    return Boolean(rada && (mesic < rada.od || (rada.do && mesic > rada.do)));
+}
 // Kolik měsíčních čísel ročník edice měl (12 bez těch, která nevyšla)
 export function ciselRocniku(rok, edice) {
     return 12 - MESICE.filter((_, i) => cisloNevyslo(slozitVydani(String(rok), String(i + 1).padStart(2, '0'), edice))).length;

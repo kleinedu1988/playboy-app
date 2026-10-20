@@ -285,9 +285,26 @@ test('fuzzy matching Levenshtein a podpora našeptávání syntaxe', async () =>
 
 test('číslo, které nevyšlo (US březen 1955)', () => {
     assert.equal(cisloNevyslo('1955-03'), true);
-    assert.equal(cisloNevyslo('1955-03-CZ'), false);
+    assert.equal(cisloNevyslo('2015-03-CZ'), false);
     assert.equal(cisloNevyslo('1955-04'), false);
     assert.equal(ciselRocniku(1955, 'US'), 11);
-    assert.equal(ciselRocniku(1955, 'CZ'), 12);
+    assert.equal(ciselRocniku(2015, 'CZ'), 12);
     assert.equal(ciselRocniku('1956', 'US'), 12);
+});
+
+test('měsíční řady edic', () => {
+    assert.equal(cisloNevyslo('1953-11'), true);
+    assert.equal(cisloNevyslo('1953-12'), false);
+    assert.equal(cisloNevyslo('2020-03'), false);
+    assert.equal(cisloNevyslo('2020-04'), true);
+    assert.equal(cisloNevyslo('2025-02'), true);
+    assert.equal(cisloNevyslo('2025-S01'), false);
+    assert.equal(cisloNevyslo('2011-06-CZ'), true);
+    assert.equal(cisloNevyslo('2011-07-CZ'), false);
+    assert.equal(cisloNevyslo('2026-05-CZ'), false);
+    assert.equal(cisloNevyslo('1975'), false);
+    assert.equal(ciselRocniku(1953, 'US'), 1);
+    assert.equal(ciselRocniku(2020, 'US'), 3);
+    assert.equal(ciselRocniku(2022, 'US'), 0);
+    assert.equal(ciselRocniku(2011, 'CZ'), 6);
 });

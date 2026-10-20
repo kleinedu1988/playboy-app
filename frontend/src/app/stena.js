@@ -195,7 +195,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
         const mesicnich = l.filter(k => !k.chybi && /^\d\d$/.test(k.casti.mesic)).length;
         return `
             <section class="rocnik-cisel" data-cast="${esc(rok)}">
-                <h3>${esc(rok)}${mesicnich ? `<small>${mesicnich} z ${ciselRocniku(rok, stav.kalendarEdice)}</small>` : ''}</h3>
+                <h3>${esc(rok)}${mesicnich ? `<small>${ciselRocniku(rok, stav.kalendarEdice) ? `${mesicnich} z ${ciselRocniku(rok, stav.kalendarEdice)}` : mesicnich}</small>` : ''}</h3>
                 <div class="cisla-mrizka">${l.map(dlazdice).join('')}</div>
             </section>`;
     }).join('');

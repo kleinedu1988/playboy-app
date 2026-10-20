@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.51.16] – 2026-10-20
+
+### Vylepšeno
+- **„Co je nového“ po větší aktualizaci:** Když od naposledy viděné verze přibylo víc verzí, jsou celé vidět jen tři nejnovější a starší změny jsou ve sbaleném oddílu „Starší změny – N verzí“, který jde rozbalit.
+
 ## [0.51.15] – 2026-10-20
 
 ### Změněno

@@ -3,6 +3,7 @@
 import changelog from '../../../CHANGELOG.md?raw';
 import { GetVerze } from './backend';
 import { novinkyMezi, telaNaHtml } from '../lib/changelog';
+import { sklonovat } from '../lib/format';
 
 export const helpModal = document.getElementById('helpModal');
 export const newsModal = document.getElementById('newsModal');
@@ -12,13 +13,19 @@ export function otevritNapovedu() {
     helpModal.querySelector('.napoveda').scrollTop = 0;
 }
 
+// Kolik nejnovějších verzí je v „Co je nového“ vidět celých
+const NAHORE = 3;
+
 // Novinky od verze „od" (bez ní posledních pět verzí) po současnou
 export async function otevritNovinky(od = '') {
     const verze = await GetVerze();
     let novinky = novinkyMezi(changelog, od, verze);
     if (!od) novinky = novinky.slice(0, 5);
     document.getElementById('newsModalTitle').textContent = od ? `Co je nového od verze ${od}` : `Co je nového · verze ${verze}`;
-    document.getElementById('newsModalBody').innerHTML = telaNaHtml(novinky) || '<p>Žádné novinky.</p>';
+    // Po skoku přes mnoho verzí jsou celé jen tři nejnovější, starší jsou ve sbaleném oddílu
+    const starsi = novinky.length > NAHORE + 2 ? novinky.slice(NAHORE) : [];
+    document.getElementById('newsModalBody').innerHTML = (telaNaHtml(novinky.slice(0, novinky.length - starsi.length)) || '<p>Žádné novinky.</p>')
+        + (starsi.length ? `<details class="novinky-starsi"><summary>Starší změny – ${sklonovat(starsi.length, 'verze', 'verze', 'verzí')} (${starsi.at(-1).verze} až ${starsi[0].verze})</summary>${telaNaHtml(starsi)}</details>` : '');
     newsModal.classList.remove('hidden');
     newsModal.querySelector('.napoveda').scrollTop = 0;
 }

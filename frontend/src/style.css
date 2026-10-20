@@ -2752,6 +2752,23 @@ body.razeni .photo-item {
     font-size: 12px;
 }
 
+/* „Co je nového“ po skoku přes mnoho verzí: starší změny sbalené pod souhrnným řádkem */
+.novinky-starsi {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--panel-okraj);
+}
+
+.novinky-starsi summary {
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.novinky-starsi[open] summary {
+    margin-bottom: 12px;
+}
+
 .novinky-verze + .novinky-verze {
     margin-top: 18px;
     padding-top: 12px;

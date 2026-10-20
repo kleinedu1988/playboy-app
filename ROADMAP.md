@@ -48,15 +48,30 @@ Cíl: program používat na skutečné sbírce; vše, co se najde, je oprava.
 | Audit kódu agenty (data, rozhraní, výkon) a oprava nálezů | Stejně jako po 0.9.0 | M |
 | ~~Úzké okno a klávesnice: projít všechny pohledy a okna~~ – hotovo v 0.51.10 (Přehled v úzkém okně, mapy edic a Vývoj v čase klávesnicí, fokus po přechodu a Zpět, srdíčka klávesami) | Dojem z každodenního používání | S |
 
+## Etapa 11b – Příprava bety (0.5x) – probíhá
+
+Cíl: ověřit všechno, co chrání data, a uklidit před zmrazením. Mezitím se aplikace používá na skutečné sbírce
+a nálezy jdou do `PLAN.md`. Pořadí: nejdřív data, texty a úklid nakonec, aby je už nic nerozbilo.
+
+| # | Co | Proč | Prac. |
+|---|---|---|---|
+| 1 | Přechod databáze ze všech dřívějších schémat (0.4 až dnes) a import exportů verzí 1–7; export → import tam a zpět na velké sbírce (2 000 modelek) s porovnáním obsahu | Nikdo nesmí přijít o data aktualizací ani zálohou přes export | S–M |
+| 2 | Zálohy v krajních situacích: obnovení velké databáze, poškozený soubor, heslo, plný disk při zálohování; místo, které zálohy a mezipaměť obrázků dlouhodobě zaberou | Záloha je poslední pojistka | S–M |
+| 3 | Revize zabezpečení: text z importu a formulářů vložený do stránky bez ošetření, uložení hesla | Import cizího souboru nesmí spustit kód | S |
+| 4 | Odolnost bez internetu a s chybějícími soubory na Disku, se špatnou adresou obrázků | Aplikace se nesmí zaseknout ani mást hláškami | S |
+| 5 | Závislosti Go a JavaScriptu: známé zranitelnosti, aktualizace | Po betě už jen opravy | S |
+| 6 | Úklid: nepoužívaný kód a styly (staré karty Údržby…), `build/README.md` od Wails | Méně míst pro chyby | S |
+| 7 | Texty a nápověda ve všech oknech a hláškách; „Co je nového“ jako souhrn pro betu (podrobnosti zůstanou v `CHANGELOG.md`); rychlost startu s velkou sbírkou | Dojem z vydané verze | S–M |
+| 8 | Instalace podle README a `instalovat.sh` krok za krokem (co jde ověřit bez Fedory; na čistém účtu ověří uživatel) | Postupy v README musí fungovat | S |
+
 ## Etapa 12 – Beta (0.90.x)
 
-Cíl: nic nového, jen jistota.
+Cíl: nic nového, jen jistota. Beta 0.90.0 se vydá po etapě 11b.
 
 | Co | Proč | Prac. |
 |---|---|---|
-| Instalace na čistém uživatelském účtu podle README, přenos dat na jiný počítač, obnovení ze zálohy | Ověřit, že postupy v README fungují | S |
-| Přechod databáze ze všech dřívějších schémat a import exportů verzí 1–7 | Nikdo nesmí přijít o data aktualizací | S |
-| Kontrola textů, nápovědy a „Co je nového“, závěrečné opravy (0.90.1…) | Dojem z vydané verze | S |
+| Instalace na čistém uživatelském účtu Fedory podle README, přenos dat na jiný počítač, obnovení ze zálohy | Ověřit na skutečném systému, že postupy v README fungují | S |
+| Závěrečné opravy z používání (0.90.1…) | Dojem z vydané verze | S |
 
 ## Po 1.0.0
 

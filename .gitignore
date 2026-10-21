@@ -4,6 +4,8 @@ frontend/dist
 
 # Databáze a její kopie nepatří do repozitáře
 *.db
+# Zkušební databáze starších verzí pro test přechodu (TestPrechodZeStarychVerzi) do repozitáře patří
+!testdata/stare-verze/*/playboy.db
 *.db.presunuta
 
 # Program sestavený přímo přes go build (wails build ho dává do build/bin)

@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.90.4] – 2026-10-21
+
+### Opraveno
+- **Testy na čistém klonu:** zkušební databáze starších verzí (`testdata/stare-verze/*/playboy.db`) nebyly v repozitáři, protože je vynechávalo pravidlo `*.db` v `.gitignore`; test přechodu ze starších verzí proto na čistém klonu selhal. Databáze jsou teď v repozitáři. Program se nemění.
+
 ## [0.90.3] – 2026-10-21
 
 ### Dokumentace

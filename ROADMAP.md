@@ -105,10 +105,10 @@ neruší. Nejdřív možné vydání: 4. 11. 2026, pokud se do té doby nic nena
 
 ### Jak se vydává po 1.0.0
 
-- **Číslování:** každá verze z plánu níže je MINOR (1.1.0, 1.2.0…), oprava vydané verze PATCH (1.0.1, 1.1.1…).
-- **Rozpracovaná verze:** dílčí kroky vycházejí jako předběžné verze `1.1.0-alpha.1`, `1.1.0-alpha.2`…
-  (program je umí, test `TestVerzeSouhlasi`). Každá předběžná verze je funkční a projde všemi testy, jen
-  ještě nemá všechny kroky verze. Před vydáním `1.1.0-rc.1` = kandidát k vyzkoušení na skutečné sbírce.
+- **Číslování:** MAJOR.MINOR.PATCH. MINOR = téma z plánu níže (1.1, 1.2 … po 1.9 následuje 1.10, ne 2.0).
+  PATCH = pořadí kroku nebo opravy v tématu: první hotový krok vyjde jako 1.3.0, další jako 1.3.1, 1.3.2…
+  a opravy pokračují stejnou řadou (stejně jako v alfě 0.51.0, 0.51.1…). Každá vydaná verze je funkční
+  a projde všemi testy; když je hotový poslední krok tématu, vyzkouší ho uživatel na skutečné sbírce.
 - **Data:** rozšíření schématu nebo exportu (nový sloupec, nový nepovinný údaj v exportu) je MINOR s novou
   úpravou schématu a novou verzí exportu; starší program novější databázi otevře jen pro čtení a novější
   export odmítne se srozumitelnou hláškou (obojí už umí). Změna nebo odebrání údaje, kvůli kterému by
@@ -182,7 +182,7 @@ nasdílí a zobrazí; přepnutí na záložní adresu obrázků zobrazí sbírku
 
 ### 1.3 – Rychlé drobnosti
 
-**Cíl:** tři malé věci, které zrychlí běžnou práci; každá je samostatná předběžná verze.
+**Cíl:** tři malé věci, které zrychlí běžnou práci; každá vyjde jako samostatná verze (1.3.0, 1.3.1, 1.3.2).
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
@@ -281,8 +281,8 @@ i poznámky mají stejný editor a zkratky.
 - Vzhled: střídmý, jeden růžový akcent, písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1).
 - Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.1).
 - Malé náhledy smí program ukládat na disk jako mezipaměť (1.5); originály a velké fotky zůstávají jen na Disku.
-- 1.0.0 po 14 dnech používání bety bez nové chyby (21. 10. 2026); po 1.0.0 MINOR pro verzi z plánu, PATCH pro
-  opravy, rozpracované kroky jako předběžné verze `X.Y.0-alpha.N`; rozšíření dat MINOR, rozbití starších dat MAJOR.
+- 1.0.0 po 14 dnech používání bety bez nové chyby (21. 10. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
+  každý krok a opravu v tématu (1.3.0, 1.3.1…); rozšíření dat MINOR, rozbití starších dat MAJOR.
 - Google Disk v aplikaci (1.1–1.2): doporučený rozsah `drive.file` s výběrem Google v prohlížeči a vlastním projektem
   uživatele v Google Cloud – potvrdí se po prototypu (1.1, krok 1).
 - Editor textů (1.7–1.8): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.

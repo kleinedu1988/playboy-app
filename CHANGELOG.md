@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.90.3] – 2026-10-21
+
+### Dokumentace
+- **Číslování po 1.0.0:** téma z plánu zvyšuje druhé číslo (1.1, 1.2 … 1.10), každý hotový krok a oprava v tématu poslední číslo (1.3.0, 1.3.1, 1.3.2…), stejně jako v alfě. Program se nemění.
+
 ## [0.90.2] – 2026-10-21
 
 ### Dokumentace

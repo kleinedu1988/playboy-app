@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.90.1] – 2026-10-21
+
+### Dokumentace
+- **Plán po betě v `ROADMAP.md`:** pravidlo pro vydání 1.0.0 (14 dní používání bety bez nové chyby), způsob vydávání po 1.0.0 a podrobně rozpracované verze 1.1 (Google Disk v aplikaci), 1.2 (každodenní práce), 1.3 (velká sbírka, náhledy na disku) a 1.4 (editor textů). Program se nemění.
+
 ## [0.90.0] – 2026-10-21 – beta
 
 První beta. Od této verze do 1.0.0 se opravují jen chyby: funkce, texty, schéma databáze (úprava č. 11)

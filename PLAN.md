@@ -15,7 +15,7 @@ databáze přešla do režimu WAL (0.51.0), karty, plakáty a mozaika se při ry
 
 ## Otevřené otázky
 
-- Evidovat u americké edice „mám PDF“? Zatím ne (viz `ROADMAP.md`, verze 1.1).
+- Evidovat u americké edice „mám PDF“? Zatím ne (viz `ROADMAP.md`, rezerva po 1.0.0).
 
 ## Rozhodnuto nedělat
 

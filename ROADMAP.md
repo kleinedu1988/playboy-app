@@ -115,12 +115,27 @@ neruší. Nejdřív možné vydání: 4. 11. 2026, pokud se do té doby nic nena
   starší export nešel načíst, je MAJOR (2.0.0) a dělá se jen výjimečně.
 - **Údržba (průběžně, jako PATCH):** Wails 2.17.0 (s ověřením na Fedoře: okno, nabídky, poblikávání),
   aktualizace Go a knihoven, `govulncheck` u uživatele.
-- U každé verze níže: kroky v pořadí, ve kterém se dělají; **[schéma]** = mění databázi nebo export.
+- U každé verze: kroky v pořadí, ve kterém se dělají; **[schéma]** = mění databázi nebo export.
 
-### 1.1 – Google Disk v aplikaci
+Každá verze níže je malá a ucelená (zhruba 1–3 dny práce, 2–4 kroky) a dá se vyzkoušet sama o sobě.
+Pořadí verzí jde změnit, závislosti jsou uvedené.
 
-**Cíl:** fotky přidávat výběrem z Disku přímo v programu místo kopírování odkazů a nenasdílené soubory
-nasdílet jedním zaškrtnutím. Prohlížení sbírky se nemění: fotky se dál zobrazují přes sdílené odkazy bez
+| Verze | Obsah | Závisí na |
+|---|---|---|
+| 1.1 | Google Disk I – přihlášení a výběr fotek do alba | – |
+| 1.2 | Google Disk II – výběr všude, nasdílení, záložní adresa obrázků | 1.1 |
+| 1.3 | Rychlé drobnosti – duplicity, zamčení po nečinnosti, listování ročníky | – |
+| 1.4 | Přehledy – Naposledy přidané, fotografové, rekordy | – |
+| 1.5 | Náhledy na disku | – |
+| 1.6 | Kvalita dat – nové kontroly v Údržbě, titulní fotka alba **[schéma]** | – |
+| 1.7 | Editor I – lišta, náhled, zkratky | – |
+| 1.8 | Editor II – rozhovory, jeden editor všude | 1.7 |
+| rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – |
+
+### 1.1 – Google Disk I: přihlášení a výběr do alba
+
+**Cíl:** fotky do alba přidávat výběrem z Disku přímo v programu místo kopírování odkazů (výběr na dalších
+místech a nasdílení přijdou v 1.2). Prohlížení sbírky se nemění: fotky se dál zobrazují přes sdílené odkazy bez
 přihlášení, takže odhlášení nebo vypršené přihlášení nikdy nezablokuje prohlížení. **Bez změny schématu
 i exportu** – do databáze se dál ukládá jen ID souboru. Přihlašovací token se ukládá mimo databázi do
 `~/.config/playboy-app/google.json` (práva jen pro uživatele), takže se nedostane do záloh, exportu ani
@@ -138,57 +153,84 @@ při přenosu složky dat na jiný počítač (tam se přihlásí znovu).
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
-| 0 | Ověřovací prototyp (mimo hlavní větev) | Picker na stránce z `http://127.0.0.1:<pevný port>`, přihlášení OAuth s PKCE, vrácení ID vybraných souborů do Go. Ověřit: Picker v prohlížeči na Fedoře, povolený původ `127.0.0.1` s pevným portem, výběr více souborů a složky, nasdílení přes API na souboru z výběru | M |
-| 1 | Přihlášení Googlem | OAuth 2.0 pro desktopové aplikace: otevře se systémový prohlížeč, odpověď přijme dočasný server na `127.0.0.1`, PKCE, obnovovací token v `~/.config/playboy-app/google.json` (práva 0600), odhlášení token zruší i u Googlu, v ⋯ → Google Disk; stav přihlášení v nabídce | M |
-| 2 | Nastavení projektu | Okno ⋯ → Google Disk → „Nastavit…“: ID klienta a klíč API z vlastního projektu, odkaz na návod; README: oddíl „Google Disk v programu“ krok za krokem (projekt, Drive API a Picker API, obrazovka souhlasu, ID klienta typu Desktop, klíč API omezený na Picker) | S–M |
-| 3 | Okno „Vybrat z Disku“ | Tlačítko v okně alba (vedle pole pro odkazy) otevře Picker v prohlížeči; vybrané soubory se vrátí do pole jako odkazy, takže zbytek ukládání zůstává stejný. Více souborů najednou, jen obrázky, vybrat celou složku = všechny obrázky v ní | M |
-| 4 | Napojení na další místa | Cover, titulní fotka modelky, skeny článku, přidání fotek do existujícího alba; vkládání odkazů zůstává jako druhá cesta (funguje bez přihlášení) | S–M |
-| 5 | Nasdílení | Po výběru kontrola, které soubory nejsou sdílené „kdokoli s odkazem“; zaškrtávací volba „Nasdílet N souborů“ (nikdy potichu), nasdílení přes API (`permissions.create`, role čtenář, typ kdokoli) | S |
-| 6 | Kontrola souborů s přihlášením | Stávající „Zkontrolovat soubory na Disku“ u souborů vybraných přes Picker umí rozlišit „smazané“ od „nenasdílené“ a nabídne nasdílení | S |
-| 7 | Záložní adresa obrázků | V ⋯ → Adresa obrázků přednastavená druhá šablona `drive.google.com/thumbnail?id={id}&sz={velikost}` (bez přihlášení, pro sdílené soubory) pro případ, že `lh3` přestane fungovat; přepnutí jedním klikem a ověření na pár fotkách | S |
+| 1 | Ověřovací prototyp (mimo hlavní větev) | Picker na stránce z `http://127.0.0.1:<pevný port>`, přihlášení OAuth s PKCE, vrácení ID vybraných souborů do Go. Ověřit: Picker v prohlížeči na Fedoře, povolený původ `127.0.0.1` s pevným portem, výběr více souborů a složky, nasdílení přes API na souboru z výběru | M |
+| 2 | Přihlášení Googlem | OAuth 2.0 pro desktopové aplikace: otevře se systémový prohlížeč, odpověď přijme dočasný server na `127.0.0.1`, PKCE, obnovovací token v `~/.config/playboy-app/google.json` (práva 0600), odhlášení token zruší i u Googlu, v ⋯ → Google Disk; stav přihlášení v nabídce | M |
+| 3 | Nastavení projektu | Okno ⋯ → Google Disk → „Nastavit…“: ID klienta a klíč API z vlastního projektu, odkaz na návod; README: oddíl „Google Disk v programu“ krok za krokem (projekt, Drive API a Picker API, obrazovka souhlasu, ID klienta typu Desktop, klíč API omezený na Picker) | S–M |
+| 4 | Okno „Vybrat z Disku“ | Tlačítko v okně alba (vedle pole pro odkazy) otevře Picker v prohlížeči; vybrané soubory se vrátí do pole jako odkazy, takže zbytek ukládání zůstává stejný. Více souborů najednou, jen obrázky, vybrat celou složku = všechny obrázky v ní | M |
 
-**Rizika:** Google může změnit pravidla pro Picker nebo rozsahy (prototyp v kroku 0 to ověří dřív, než se
+**Rizika:** Google může změnit pravidla pro Picker nebo rozsahy (prototyp v kroku 1 to ověří dřív, než se
 cokoli napojí); `drive.file` nevidí soubory přidané dřív odkazem (pro ně zůstává dnešní kontrola bez
 přihlášení); únik tokenu = přístup jen k vybraným souborům, odhlášení token zneplatní.
 
 **Hotovo, když:** na čistém účtu jde podle README založit projekt a přihlásit se; album z 50 fotek ze složky
-jde přidat jedním výběrem; nenasdílené fotky se po zaškrtnutí nasdílí a zobrazí; odhlášený program dál
-normálně zobrazuje celou sbírku; token není v databázi, zálohách ani exportu.
+jde přidat jedním výběrem; odhlášený program dál normálně zobrazuje celou sbírku; token není v databázi,
+zálohách ani exportu.
 
-### 1.2 – Každodenní práce
+### 1.2 – Google Disk II: výběr všude, nasdílení, záložní adresa
 
-**Cíl:** drobnosti, které zrychlí běžné doplňování sbírky. Všechny kroky jsou nezávislé a dají se vydávat
-po jednom.
+**Cíl:** výběr z Disku na všech místech, kde se přidávají fotky, a konec „nenačtených“ fotek kvůli sdílení.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Napojení na další místa | Cover, titulní fotka modelky, skeny článku, přidání fotek do existujícího alba; vkládání odkazů zůstává jako druhá cesta (funguje bez přihlášení) | S–M |
+| 2 | Nasdílení | Po výběru kontrola, které soubory nejsou sdílené „kdokoli s odkazem“; zaškrtávací volba „Nasdílet N souborů“ (nikdy potichu), nasdílení přes API (`permissions.create`, role čtenář, typ kdokoli) | S |
+| 3 | Kontrola souborů s přihlášením | Stávající „Zkontrolovat soubory na Disku“ u souborů vybraných přes Picker umí rozlišit „smazané“ od „nenasdílené“ a nabídne nasdílení | S |
+| 4 | Záložní adresa obrázků | V ⋯ → Adresa obrázků přednastavená druhá šablona `drive.google.com/thumbnail?id={id}&sz={velikost}` (bez přihlášení, pro sdílené soubory) pro případ, že `lh3` přestane fungovat; přepnutí jedním klikem a ověření na pár fotkách | S |
+
+**Hotovo, když:** cover, titulní fotka i skeny jdou vybrat z Disku; nenasdílené fotky se po zaškrtnutí
+nasdílí a zobrazí; přepnutí na záložní adresu obrázků zobrazí sbírku stejně.
+
+### 1.3 – Rychlé drobnosti
+
+**Cíl:** tři malé věci, které zrychlí běžnou práci; každá je samostatná předběžná verze.
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | Upozornění na duplicitu | Při vkládání odkazů do alba program podle ID souboru najde fotky, které už ve sbírce jsou (u jiné modelky nebo v jiném albu), a ukáže je v okně s volbou „Přidat i tak / Vynechat“; stejné ID dvakrát v jednom vložení se sloučí. Hledání podle indexu na ID souboru | S |
-| 2 | Naposledy přidané | Nová část v Přehledu: dny (dnes, včera, tento týden, starší) a pod nimi modelky, alba a počty fotek přidané ten den, klik otevře profil nebo album; z údajů `pridano`, které už se ukládají | S |
-| 3 | Automatické zamčení | Při nastaveném heslu volba v okně hesla: zamknout po 5 / 15 / 30 minutách nečinnosti nebo nikdy (výchozí nikdy); nečinnost = žádná klávesa, klik ani rolování; zamčení schová obsah okna stejně jako při startu | S |
-| 4 | Listování ročníky | Na stránce ročníku šipky na předchozí a další rok téže edice (přeskočí roky bez čísel), klávesy `[` a `]` | S |
-| 5 | Rychlé hodnocení v kartách | Srdíčka na kartách modelek a dlaždicích fotek jdou nastavit kolečkem myši nad srdíčky (ověřit, že nekoliduje s rolováním) – jen pokud se v používání ukáže potřeba | S |
-| 6 | „Mám PDF“ u americké edice **[schéma]** | Jen pokud se ukáže potřeba: stav čísla US „mám PDF“ (a cesta nebo odkaz na soubor), filtr a barva v mapě americké edice; úprava schématu č. 12 a export verze 8 | S–M |
+| 2 | Automatické zamčení | Při nastaveném heslu volba v okně hesla: zamknout po 5 / 15 / 30 minutách nečinnosti nebo nikdy (výchozí nikdy); nečinnost = žádná klávesa, klik ani rolování; zamčení schová obsah okna stejně jako při startu | S |
+| 3 | Listování ročníky | Na stránce ročníku šipky na předchozí a další rok téže edice (přeskočí roky bez čísel), klávesy `[` a `]` | S |
 
-**Hotovo, když:** vložení odkazu na fotku, která už ve sbírce je, vždy upozorní; po dni práce ukáže
-„Naposledy přidané“ všechno, co přibylo; okno se samo zamkne po nastavené době.
+**Hotovo, když:** vložení odkazu na fotku, která už ve sbírce je, vždy upozorní; okno se samo zamkne po
+nastavené době; ročníky jdou listovat šipkami i klávesami.
 
-### 1.3 – Velká sbírka
+### 1.4 – Přehledy
 
-**Cíl:** rychlost a kvalita dat u sbírek s tisíci modelek. Pořadí: náhledy na disku nejdřív (největší přínos).
+**Cíl:** rychlá orientace ve sbírce – co přibylo, kdo fotil, co je výjimečné.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Naposledy přidané | Nová část v Přehledu: dny (dnes, včera, tento týden, starší) a pod nimi modelky, alba a počty fotek přidané ten den, klik otevře profil nebo album; z údajů `pridano`, které už se ukládají | S |
+| 2 | Seznam fotografů | Nová část v Přehledu: fotografové podle počtu alb, hledání, klik otevře stránku fotografa | S |
+| 3 | Rekordy ve Statistikách | Karta „Rekordy“: nejmladší a nejstarší v době centerfoldu, nejvyšší a nejnižší, nejvíc obálek, nejvíc alb; každý řádek otevře profil | S |
+
+**Hotovo, když:** po dni práce ukáže „Naposledy přidané“ všechno, co přibylo; každý fotograf a rekord
+otevře své album nebo profil.
+
+### 1.5 – Náhledy na disku
+
+**Cíl:** karty a dlaždice se zobrazí okamžitě i bez internetu.
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | Náhledy na disku | Program obsluhuje adresu náhledů sám (vlastní cesta v serveru aplikace, např. `/nahled/{id}/{velikost}`): náhled stáhne jednou, uloží do `~/.cache/playboy-app/nahledy/` a dál ho čte z disku. Jen malé velikosti (karty, dlaždice, plakáty, ~30–60 kB); velké fotky v prohlížeči se dál stahují. Limit velikosti (výchozí 1 GB, nejdéle nepoužité se mažou), úklid náhledů smazaných fotek při spuštění, ⋯ → „Vymazat náhledy“ se zobrazenou velikostí; nenačtený náhled se zkusí znovu po návratu připojení. Mřížky fungují i bez internetu | M |
-| 2 | Rozšířené kontroly v Údržbě | Nové druhy úkolů: centerfold bez data narození, cover bez modelky z obálky, stejný fotograf zapsaný různě (podobná jména bez diakritiky a velikosti písmen, např. „Arny Freytag“ / „arny freytag“) s nabídkou sloučení přes stávající přejmenování | M |
-| 3 | Seznam fotografů | Nová část v Přehledu: fotografové podle počtu alb, hledání, klik otevře stránku fotografa | S |
-| 4 | Rekordy ve Statistikách | Karta „Rekordy“: nejmladší a nejstarší v době centerfoldu, nejvyšší a nejnižší, nejvíc obálek, nejvíc alb; každý řádek otevře profil | S |
-| 5 | Titulní fotka alba | Album si pamatuje titulní fotku (první nejlépe hodnocená, jde změnit v nabídce fotky „Nastavit jako titulní fotku alba“); použije se na stránkách fotografa a ročníku **[schéma]** | S–M |
-| 6 | Měření na velké sbírce | Zátěžová zkouška (2 000 modelek, 64 000 fotek) zopakovat po každém kroku; cíl: žádný pohled nad 0,5 s, rolování bez prázdných karet | S |
+| 2 | Měření na velké sbírce | Zátěžová zkouška (2 000 modelek, 64 000 fotek) zopakovat po každém kroku; cíl: žádný pohled nad 0,5 s, rolování bez prázdných karet | S |
 
 **Hotovo, když:** po prvním projití sbírky se karty a dlaždice zobrazí okamžitě i bez internetu; mezipaměť
-nepřekročí limit; Údržba najde stejného fotografa zapsaného různě.
+nepřekročí limit; „Vymazat náhledy“ ukáže a uvolní místo.
 
-### 1.4 – Editor textů
+### 1.6 – Kvalita dat
+
+**Cíl:** Údržba najde víc chyb v datech, přehledy alb mimo profil mají obrázek.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Rozšířené kontroly v Údržbě | Nové druhy úkolů: centerfold bez data narození, cover bez modelky z obálky, stejný fotograf zapsaný různě (podobná jména bez diakritiky a velikosti písmen, např. „Arny Freytag“ / „arny freytag“) s nabídkou sloučení přes stávající přejmenování | M |
+| 2 | Titulní fotka alba | Album si pamatuje titulní fotku (první nejlépe hodnocená, jde změnit v nabídce fotky „Nastavit jako titulní fotku alba“); použije se na stránkách fotografa a ročníku **[schéma]** | S–M |
+
+**Hotovo, když:** Údržba najde stejného fotografa zapsaného různě a nabídne sloučení; stránky fotografa
+a ročníku ukazují titulní fotky alb; starší databáze i export se převedou (úprava schématu č. 12, export 8).
+
+### 1.7 – Editor I: lišta, náhled, zkratky
 
 **Cíl:** pohodlné psaní článků, rozhovorů, textů alb a poznámek bez psaní formátovacích značek zpaměti.
 Text se dál ukládá jako markdown (schéma ani export se nemění), takže starší texty fungují beze změny.
@@ -201,11 +243,29 @@ rozdíl mezi náhledem a uloženým textem, funguje se stávajícími zásadami 
 |---|---|---|---|
 | 1 | Lišta a náhled | Tlačítka tučné, kurzíva, nadpis, odrážky, číslování, citace, odkaz; obalí vybraný text nebo vloží značku na kurzor; přepínač Psaní / Náhled / Vedle sebe | M |
 | 2 | Zkratky a celé okno | Ctrl+B, Ctrl+I, Ctrl+K (odkaz), Tab v odrážkách; tlačítko zvětšení na celé okno pro dlouhé texty, Esc zmenší | S–M |
-| 3 | Rozhovory | Šablona rozhovoru (perex, mluvčí `PLAYBOY:` / jméno, citace); Enter za odpovědí nabídne dalšího mluvčího; počet slov | S–M |
-| 4 | Jeden editor všude | Články, texty alb, poznámky modelek a čísel; stejné chování a zkratky; nápověda a přehled zkratek doplněné | S–M |
 
-**Hotovo, když:** rozhovor o deseti otázkách jde přepsat bez jediné ručně psané značky; texty uložené před
-1.4 vypadají v náhledu stejně jako dřív.
+**Hotovo, když:** text alba jde naformátovat bez ručně psaných značek; texty uložené před 1.7 vypadají
+v náhledu stejně jako dřív.
+
+### 1.8 – Editor II: rozhovory a jeden editor všude
+
+**Cíl:** přepis rozhovorů bez psaní značek a stejný editor u všech textů.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Rozhovory | Šablona rozhovoru (perex, mluvčí `PLAYBOY:` / jméno, citace); Enter za odpovědí nabídne dalšího mluvčího; počet slov | S–M |
+| 2 | Jeden editor všude | Články, texty alb, poznámky modelek a čísel; stejné chování a zkratky; nápověda a přehled zkratek doplněné | S–M |
+
+**Hotovo, když:** rozhovor o deseti otázkách jde přepsat bez jediné ručně psané značky; články, alba
+i poznámky mají stejný editor a zkratky.
+
+### Rezerva – jen když se ukáže potřeba
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Rychlé hodnocení v kartách | Srdíčka na kartách modelek a dlaždicích fotek jdou nastavit kolečkem myši nad srdíčky (ověřit, že nekoliduje s rolováním) – jen pokud se v používání ukáže potřeba | S |
+| 2 | „Mám PDF“ u americké edice **[schéma]** | Jen pokud se ukáže potřeba: stav čísla US „mám PDF“ (a cesta nebo odkaz na soubor), filtr a barva v mapě americké edice; úprava schématu č. 12 a export verze 8 | S–M |
+
 
 ## Rozhodnuto
 
@@ -220,20 +280,20 @@ rozdíl mezi náhledem a uloženým textem, funguje se stávajícími zásadami 
   hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý klíč (0.18.0–0.30.0).
 - Vzhled: střídmý, jeden růžový akcent, písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1).
 - Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.1).
-- Malé náhledy smí program ukládat na disk jako mezipaměť (1.3); originály a velké fotky zůstávají jen na Disku.
+- Malé náhledy smí program ukládat na disk jako mezipaměť (1.5); originály a velké fotky zůstávají jen na Disku.
 - 1.0.0 po 14 dnech používání bety bez nové chyby (21. 10. 2026); po 1.0.0 MINOR pro verzi z plánu, PATCH pro
   opravy, rozpracované kroky jako předběžné verze `X.Y.0-alpha.N`; rozšíření dat MINOR, rozbití starších dat MAJOR.
-- Google Disk v aplikaci (1.1): doporučený rozsah `drive.file` s výběrem Google v prohlížeči a vlastním projektem
-  uživatele v Google Cloud – potvrdí se po prototypu (krok 0).
-- Editor textů (1.4): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
+- Google Disk v aplikaci (1.1–1.2): doporučený rozsah `drive.file` s výběrem Google v prohlížeči a vlastním projektem
+  uživatele v Google Cloud – potvrdí se po prototypu (1.1, krok 1).
+- Editor textů (1.7–1.8): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
 
 ## Nedělat
 
 - Obecné Zpět pro všechny úpravy (deník změn) – denní zálohy a Vrátit u fotek stačí.
-- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz 1.3), zálohy na jiný disk.
+- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz 1.5), zálohy na jiný disk.
 - Šifrovanou databázi – zvolen zámek rozhraní.
 - Půlsrdíčka.
-- Zobrazování fotek přes Google API s přihlášením (API jen k výběru fotek, viz 1.1); automatický import celé
+- Zobrazování fotek přes Google API s přihlášením (API jen k výběru fotek, viz 1.1–1.2); automatický import celé
   složky bez výběru, stahování údajů z webu, rozpoznávání obličejů.
 - Nové funkce v alfě a betě a změny schématu nebo exportu od alfy.
 - Vše z oddílu „Rozhodnuto nedělat“ v `PLAN.md`.

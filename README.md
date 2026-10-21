@@ -3,8 +3,8 @@
 Desktopová aplikace (Wails v2: Go + Vanilla JS) pro osobní katalog modelek, alb, centerfoldů,
 coverů a čísel časopisu Playboy. Fotky se neukládají do aplikace, načítají se z Google Disku podle odkazu.
 
-**Stav: alfa (řada 0.5x).** Program je použitelný na skutečné sbírce. Schéma databáze (úprava č. 11) a formát
-exportu (verze 7) jsou zmrazené; v alfě přibývají jen opravy. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md),
+**Stav: beta (řada 0.90.x).** Program je použitelný na skutečné sbírce. Funkce, texty, schéma databáze (úprava
+č. 11) a formát exportu (verze 7) jsou zmrazené; do vydání 1.0.0 přibývají jen opravy chyb. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md),
 změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 
 ## Co program umí

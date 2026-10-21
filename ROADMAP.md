@@ -1,6 +1,6 @@
 # Roadmapa
 
-Stav k 19. 10. 2026, verze **0.51.0 – alfa**. Hotové změny jsou v `CHANGELOG.md`, drobné nápady a rozhodnutí
+Stav k 21. 10. 2026, verze **0.90.0 – beta**. Hotové změny jsou v `CHANGELOG.md`, drobné nápady a rozhodnutí
 v `PLAN.md`. Předchozí podoby roadmapy jsou v historii gitu (etapy 0–6 ve značce `v0.9.0`, etapy 7–10
 ve verzi 0.34.7).
 
@@ -34,7 +34,7 @@ Od 1.0.0 platí sémantické verzování naplno: změna schématu nebo exportu, 
 znamená 2.0.0. Zmrazení hlídá test `TestZmrazeniAlfy`; kdyby se v alfě ukázala nutná změna schématu nebo
 exportu, je to vědomé rozhodnutí s novou MINOR verzí a úpravou testu, ne tichá oprava.
 
-## Etapa 11 – Alfa (0.5x) – probíhá
+## Etapa 11 – Alfa (0.5x) – hotovo
 
 Cíl: program používat na skutečné sbírce; vše, co se najde, je oprava.
 
@@ -48,7 +48,7 @@ Cíl: program používat na skutečné sbírce; vše, co se najde, je oprava.
 | Audit kódu agenty (data, rozhraní, výkon) a oprava nálezů | Stejně jako po 0.9.0 | M |
 | ~~Úzké okno a klávesnice: projít všechny pohledy a okna~~ – hotovo v 0.51.10 (Přehled v úzkém okně, mapy edic a Vývoj v čase klávesnicí, fokus po přechodu a Zpět, srdíčka klávesami) | Dojem z každodenního používání | S |
 
-## Etapa 11b – Příprava bety (0.5x) – probíhá
+## Etapa 11b – Příprava bety (0.5x) – hotovo
 
 Cíl: ověřit všechno, co chrání data, a uklidit před zmrazením. Mezitím se aplikace používá na skutečné sbírce
 a nálezy jdou do `PLAN.md`. Pořadí: nejdřív data, texty a úklid nakonec, aby je už nic nerozbilo.
@@ -64,27 +64,27 @@ a nálezy jdou do `PLAN.md`. Pořadí: nejdřív data, texty a úklid nakonec, a
 | ~~7~~ | ~~Texty a nápověda ve všech oknech a hláškách; „Co je nového“ jako souhrn pro betu (podrobnosti zůstanou v `CHANGELOG.md`); rychlost startu s velkou sbírkou~~ | Hotovo (0.51.16–0.51.17): opravené překlepy, zastaralé popisy a nejednotné názvy; „Co je nového“ sbalí starší verze; start s 2000 modelkami 0,13 s | S–M |
 | ~~8~~ | ~~Instalace podle README a `instalovat.sh` krok za krokem (co jde ověřit bez Fedory; na čistém účtu ověří uživatel)~~ | Hotovo (0.51.18): z čistého klonu s prázdnou domovskou složkou projde sestavení, instalace, první spuštění i odinstalace; README má postup pro čistou Fedoru, skript vypíše, co chybí. Na čisté Fedoře ověří uživatel | S |
 
-## Etapa 12 – Beta (0.90.x)
+## Etapa 12 – Beta (0.90.x) – probíhá
 
-Cíl: nic nového, jen jistota. Beta 0.90.0 se vydá po etapě 11b.
+Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 
 | Co | Proč | Prac. |
 |---|---|---|
-| Instalace na čistém uživatelském účtu Fedory podle README, přenos dat na jiný počítač, obnovení ze zálohy | Ověřit na skutečném systému, že postupy v README fungují | S |
+| ~~Instalace na čistém uživatelském účtu Fedory podle README, přenos dat na jiný počítač, obnovení ze zálohy~~ – hotovo 21. 10. 2026, ověřeno uživatelem podle scénáře níže | Ověřit na skutečném systému, že postupy v README fungují | S |
 | Závěrečné opravy z používání (0.90.1…) | Dojem z vydané verze | S |
 
 **Testovací scénář bety** (odškrtává uživatel na Fedoře; co selže, jde do `PLAN.md` mezi chyby):
 
-- [ ] Před testem: ⋯ → Exportovat sbírku (YAML) a kopie složky `~/.local/share/playboy-app`
-- [ ] Čistý uživatelský účet: postup „Poprvé na čisté Fedoře“ z README projde bez dalších zásahů
-- [ ] Po instalaci ukáže `git status` čistý stav
-- [ ] Program je v nabídce aplikací s ikonou, ikona je i v Alt+Tab; okno není prázdné (Content-Security-Policy)
-- [ ] První spuštění ukáže úvod prázdné sbírky; import exportu z hlavního účtu projde
-- [ ] Přenos dat: zkopírovaná složka dat na novém účtu – sbírka i heslo fungují
-- [ ] Obnovení ze zálohy: ⋯ → Obnovit ze zálohy…, potom vrácení obnovení (záloha „Před obnovením“)
-- [ ] Bez připojení: hláška o výpadku, po připojení se fotky načtou samy
-- [ ] Na hlavní sbírce: verze 0.51.17–0.51.21 (texty, hlášky, ikona) bez chyby
-- [ ] `./instalovat.sh --odinstalovat` odebere program, data zůstanou
+- [x] Před testem: ⋯ → Exportovat sbírku (YAML) a kopie složky `~/.local/share/playboy-app`
+- [x] Čistý uživatelský účet: postup „Poprvé na čisté Fedoře“ z README projde bez dalších zásahů
+- [x] Po instalaci ukáže `git status` čistý stav
+- [x] Program je v nabídce aplikací s ikonou, ikona je i v Alt+Tab; okno není prázdné (Content-Security-Policy)
+- [x] První spuštění ukáže úvod prázdné sbírky; import exportu z hlavního účtu projde
+- [x] Přenos dat: zkopírovaná složka dat na novém účtu – sbírka i heslo fungují
+- [x] Obnovení ze zálohy: ⋯ → Obnovit ze zálohy…, potom vrácení obnovení (záloha „Před obnovením“)
+- [x] Bez připojení: hláška o výpadku, po připojení se fotky načtou samy
+- [x] Na hlavní sbírce: verze 0.51.17–0.51.21 (texty, hlášky, ikona) bez chyby
+- [x] `./instalovat.sh --odinstalovat` odebere program, data zůstanou
 
 ## Po 1.0.0
 

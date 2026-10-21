@@ -7,6 +7,21 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.90.0] – 2026-10-21 – beta
+
+První beta. Od této verze do 1.0.0 se opravují jen chyby: funkce, texty, schéma databáze (úprava č. 11)
+a formát exportu (verze 7) jsou zmrazené. Opravy vycházejí jako 0.90.1, 0.90.2… Instalace na čistém účtu
+Fedory, přenos dat, obnovení ze zálohy a práce bez připojení jsou ověřené podle testovacího scénáře
+v `ROADMAP.md`.
+
+### Co přinesla alfa (0.50–0.51)
+- **Rychlost:** databáze v režimu WAL (ukládání zhruba 40× rychlejší), rychlejší Přehled, kalendář a statistiky, obrázky se při rychlém rolování načítají postupně; Nejlepší na sbírce s 2 000 modelkami 14,6 s → 0,4 s.
+- **Edice:** americká měsíční řada 12/1953–03/2020, česká od 07/2011, nevydané číslo 03/1955; měsíce mimo řadu se v kalendáři, ročníku ani mapách nepočítají jako chybějící.
+- **Ovládání:** jednotné kontextové nabídky, ovládání klávesnicí (mapy edic, Vývoj v čase, srdíčka 0–5), návrat na původní místo po Zpět, úprava pro úzké okno.
+- **Spolehlivost:** bezpečné obnovení ze zálohy, ověřený přechod z databází a exportů deseti starších verzí, odolnost bez připojení („Nenačteno“, hlášky o výpadku a návratu připojení).
+- **Zabezpečení a údržba:** revize zabezpečení, Content-Security-Policy, aktualizované závislosti, úklid kódu a stylů.
+- **Texty a instalace:** kontrola všech textů, srozumitelné chybové hlášky, postup instalace na čistou Fedoru, nová ikona programu, známá omezení v README.
+
 ## [0.51.22] – 2026-10-20
 
 ### Přidáno

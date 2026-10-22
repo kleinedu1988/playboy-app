@@ -135,6 +135,12 @@ Pořadí verzí jde změnit, závislosti jsou uvedené.
 | 1.7 | Editor I – lišta, náhled, zkratky | – |
 | 1.8 | Editor II – rozhovory, jeden editor všude | 1.7 |
 | 1.9 | Chytré hledání – česká věta jako filtr, našeptávač, učení z otevíraných výsledků, „jako X“, synonyma | – |
+| 1.10 | Tento den v historii, podobné modelky v profilu | 1.9 |
+| 1.11 | Stejné a podobné fotky (otisk obrázku) | 1.5 |
+| 1.12 | Wikidata I – návrh údajů u modelky | – (rozhodnutí) |
+| 1.13 | Wikidata II – hromadně v Údržbě | 1.12 |
+| 1.14 | Chytré výběry **[schéma]** | 1.9 |
+| 1.15 | Kvíz „Poznej playmate“ | 1.10 |
 | rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – |
 
 ### 1.1 – Google Disk I: přihlášení a výběr do alba
@@ -290,12 +296,88 @@ testovatelné, offline); podobnost modelek váženou vzdáleností nad údaji, s
 vidět a jde vrátit; našeptávač odpoví do 30 ms a `jako:` přidá nejvýš 10 ms na 5 000 modelkách; po třech
 otevřeních je modelka u stejného dotazu první; schéma zůstává na úpravě č. 11 a export na verzi 7.
 
-### Nápady k posouzení (bez pořadí)
+### 1.10 – Tento den a podobné modelky
 
-Doplňování údajů z Wikidat (návrh k potvrzení), podobné a duplicitní fotky na Disku (otisk obrázku),
-„Podobné modelky“ v profilu, Tento den v historii (výročí centerfoldů, narozeniny), chytré výběry z uloženého
-hledání, kvíz „Poznej playmate“. Hledání podle obsahu fotky („na pláži“) se nedělá: potřebovalo by velký
-obrazový model nebo posílání fotek do cloudu.
+**Cíl:** sbírka sama připomene výročí a nabídne podobné modelky. Bez změny schématu i exportu.
+Podrobně: [NAVRH-NAPADY.md](docs/NAVRH-NAPADY.md), nápady 3 a 4.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Tento den v historii | Karta na úvodu Přehledu: kulatá výročí centerfoldů, obálek a českých čísel v tomto měsíci (10, 20, 25, 30… let), ostatní centerfoldy měsíce jako roky, narozeniny dnes a do 7 dní (jen úplné datum, ne u zemřelých); výpočet v rozhraní z dat úvodu, prázdný stav s nejbližším výročím | S |
+| 2 | Podobné modelky | Pod profilem 6 karet s důvodem (období, vlasy, postava, fotograf); `PodobneModelky` ze společného `podobnost.go` (stejná funkce jako `jako:` z 1.9), chybějící údaje se nepočítají | M |
+
+**Hotovo, když:** úvod v den narozenin modelky ji ukáže s věkem; profil modelky s vyplněnými údaji ukáže
+podobné s důvodem a „Další podobné →“ otevře hledání `jako:`.
+
+### 1.11 – Stejné a podobné fotky
+
+**Cíl:** najít stejnou fotku nahranou na Disk víckrát (jiné ID) a podobné záběry. Otisk obrázku (dHash + pHash)
+z náhledů v mezipaměti z 1.5, otisky v `~/.cache/playboy-app/otisky.tsv`; bez změny schématu i exportu.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Otisky | `otisky.go`: dHash a pHash v čistém Go, počítání na pozadí (4 souběžně, pauza při výpadku a 429, pokračuje po restartu), stav v Údržbě; prahy doladit na skutečné sbírce | M |
+| 2 | Stejné fotky v Údržbě | Filtr „Stejné fotky“: skupiny (pásma otisku + sjednocení), náhledy vedle sebe, Odebrat s Vrátit, „V pořádku“ (v `nastaveni`) | M |
+| 3 | Najít podobné a upozornění | Nabídka fotky „Najít podobné fotky“; okno duplicit při vkládání (1.3) přidá „vypadá stejně jako…“ | S |
+
+**Hotovo, když:** stejná fotka nahraná podruhé se v Údržbě objeví jako skupina; přeuložená nebo zmenšená
+kopie se najde, fotky z jiných focení ne; smazání `otisky.tsv` jen spustí přepočet.
+
+### 1.12 – Wikidata I: návrh údajů u modelky
+
+**Cíl:** chybějící údaje modelky doplnit z Wikidat (CC0) jen na kliknutí a s potvrzením každého údaje.
+Bez změny schématu i exportu: původ = odkaz na položku Wikidat v Odkazech.
+
+**Rozhodnutí před začátkem:** bod Nedělat „stahování údajů z webu“ upřesnit na „automatické stahování
+a zápis údajů z webu“.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Prototyp a pokrytí | Kolik playmate má na Wikidatech ocenění s měsícem, datum narození, výšku; QID ocenění; ověřit `User-Agent`, odpovědi v `testdata/wikidata/` | S |
+| 2 | Spárování a převod | `wikidata.go`: kandidáti (`wbsearchentities`, odkaz na Wikipedii v Odkazech), skóre (měsíc centerfoldu, datum narození, jméno), převod přesnosti data, jednotek, státu na hodnoty sbírky; mezipaměť v `~/.cache/playboy-app/wikidata/` | M |
+| 3 | Okno návrhu | V profilu a v „Doplnit modelku“: údaje vedle sebe, zaškrtnutí po polích (prázdné ano, rozdíl ne s ⚠), Jiná osoba…, uložení s Vrátit; odmítnuté hodnoty se znovu nenabízí | M |
+
+**Hotovo, když:** u 20 zkušebních modelek návrh odpovídá Wikipedii, nic se neuloží bez potvrzení, bez
+připojení volba ohlásí výpadek a nic nezmění.
+
+### 1.13 – Wikidata II: hromadně v Údržbě
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Katalog playmate | Jeden dotaz SPARQL na všechny Playmate měsíce a roku s datem; párování podle měsíce centerfoldu | S–M |
+| 2 | Filtr „Z Wikidat“ | „Zjistit návrhy pro N modelek bez data narození“, postup s pozastavením (nejvýš 1 dotaz/s), fronta návrhů, „Projít…“ a „Přijmout vše bez ⚠“ | M |
+
+**Hotovo, když:** dávka 100 modelek bez data narození doběhne bez chyby 429 a přijetí návrhů jde vrátit.
+
+### 1.14 – Chytré výběry **[schéma]**
+
+**Cíl:** výběr, který se plní sám podle uloženého hledání. Úprava schématu č. 13 (`vybery.dotaz`),
+export 9 (`vybery[].dotaz`).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Fotky podle dotazu v Go | `GetFotkyDotazu`: podmínky modelky přes `odpovidaHledani`, podmínky fotky (srdíčka, typ, rok, vydání, fotograf) v SQL; rozklad dotazu sdílený s 1.9 | M |
+| 2 | Schéma a export | Sloupec `dotaz`, přechod, export a import, test zmrazení a přechodu ze starých verzí | S–M |
+| 3 | Rozhraní | „Uložit jako chytrý výběr…“ v Nejlepších, čip s ⚡, upravit dotaz, zmrazit (zkopírovat fotky do ručního výběru) | S |
+
+**Hotovo, když:** nová fotka splňující dotaz se ve výběru objeví bez zásahu; export → import chytrý výběr
+zachová; starší program novější export odmítne srozumitelnou hláškou.
+
+### 1.15 – Kvíz „Poznej playmate“
+
+**Cíl:** hra nad vlastní sbírkou. Bez změny schématu i exportu (statistiky v `nastaveni`).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Kdo je to? | Část Přehledu „Kvíz“: titulní fotka a 4 jména, lehká (náhodná) a těžká (podobné modelky z 1.10), okruh podle desetiletí a oblíbených, klávesy 1–4, Enter, Esc | M |
+| 2 | Kdy? a Playmate měsíce | Rok nebo měsíc k fotce či jménu (body za přesnost), „Kdo byla Playmate 06/1995?“; bez připojení jen režimy bez fotky | S–M |
+| 3 | Statistiky a opakování | `GetKviz`/`SetKviz` (JSON v `nastaveni`), úspěšnost, série, Leitnerovy krabičky – častěji modelky, které uživatel plete | S |
+
+**Hotovo, když:** deset otázek jde odehrát jen klávesnicí; po hře je seznam chyb s odkazy na profil;
+statistiky přežijí restart i obnovení ze zálohy.
+
+Rozbor možností k 1.10–1.15: [NAVRH-NAPADY.md](docs/NAVRH-NAPADY.md). Wikidata (1.12–1.13) čekají na rozhodnutí
+uživatele: odporují bodu „stahování údajů z webu“ v oddílu Nedělat.
 
 ### Rezerva – jen když se ukáže potřeba
 

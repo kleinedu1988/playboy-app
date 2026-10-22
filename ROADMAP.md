@@ -134,6 +134,7 @@ Pořadí verzí jde změnit, závislosti jsou uvedené.
 | 1.6 | Kvalita dat – nové kontroly v Údržbě, titulní fotka alba **[schéma]** | – |
 | 1.7 | Editor I – lišta, náhled, zkratky | – |
 | 1.8 | Editor II – rozhovory, jeden editor všude | 1.7 |
+| 1.9 | Chytré hledání – česká věta jako filtr, našeptávač, učení z otevíraných výsledků, „jako X“, synonyma | – |
 | rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – |
 
 ### 1.1 – Google Disk I: přihlášení a výběr do alba
@@ -262,6 +263,28 @@ v náhledu stejně jako dřív.
 
 **Hotovo, když:** rozhovor o deseti otázkách jde přepsat bez jediné ručně psané značky; články, alba
 i poznámky mají stejný editor a zkratky.
+
+### 1.9 – Chytré hledání (strojové učení nad sbírkou)
+
+**Cíl:** hledání rozumí běžné češtině a učí se ze sbírky a z používání – vše v programu, bez internetu
+a bez velkých modelů. Podrobný rozbor možností a cesta vývoje: [NAVRH-HLEDANI.md](docs/NAVRH-HLEDANI.md).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Česká věta jako filtr | „blondýnky z 90. let s tetováním“ → `vlasy:blond rok:1990..1999 tetovani:ano`; převod je vidět a jde upravit; slovník z hodnot ve sbírce | M–L |
+| 2 | Našeptávač | Při psaní skutečné hodnoty ze sbírky s počtem modelek a vlastní častá hledání | S–M |
+| 3 | Učení z otevíraných výsledků | Co po hledání otevíráš, jde příště výš; jen v počítači | M |
+| 4 | „Jako X“ | `jako:"jméno"` najde podobné modelky (postava, vlasy, období, kategorie) | M |
+| 5 | Synonyma ze sbírky | „plavé“ / „blond“ / „blonde“ se hledají společně | S–M |
+
+**Hotovo, když:** podle rozpracování v NAVRH-HLEDANI.md.
+
+### Nápady k posouzení (bez pořadí)
+
+Doplňování údajů z Wikidat (návrh k potvrzení), podobné a duplicitní fotky na Disku (otisk obrázku),
+„Podobné modelky“ v profilu, Tento den v historii (výročí centerfoldů, narozeniny), chytré výběry z uloženého
+hledání, kvíz „Poznej playmate“. Hledání podle obsahu fotky („na pláži“) se nedělá: potřebovalo by velký
+obrazový model nebo posílání fotek do cloudu.
 
 ### Rezerva – jen když se ukáže potřeba
 

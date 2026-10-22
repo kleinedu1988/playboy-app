@@ -17,14 +17,16 @@ const POPISKY = {
     ediceModelek: 'Edice',
     ediceSteny: 'Edice',
     zobrazeniCisel: 'Zobrazení',
+    sekcePrehledu: 'Část',
     roleModelek: 'Kategorie',
     vyskytModelek: 'Výskyt',
     zobrazitCisla: 'Zobrazit',
 };
 
 const RAZENI = new Set(['razeniGalerie', 'razeniSteny']);
-// Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
-const ZOBRAZENI = new Set(['zobrazeniCisel']);
+// Zobrazení Čísel (Obálky / Kalendář) a část Přehledu: rozbalovací volba s ikonou zvolené hodnoty, jako řazení.
+// Ikona je z IKONY_ZOBRAZENI, jinak SVG ve štítku (štítek ho má až za textem)
+const ZOBRAZENI = new Map([['zobrazeniCisel', 'Zobrazení čísel'], ['sekcePrehledu', 'Část přehledu']]);
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
 const VYPINATELNE = new Set(['minHodnoceni', 'stenaMin', 'vyberId']);
@@ -170,8 +172,9 @@ function ukazatVolby(lista) {
     skupiny.filter(s => s.druh !== 'filtr' && (s.druh !== 'povinne' || s.zvoleny)).forEach(s => {
         let tlacitko;
         if (s.druh === 'zobrazeni') {
-            tlacitko = pridatTlacitko(`${IKONY_ZOBRAZENI[hodnota(s)] || ''}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
-            tlacitko.title = 'Zobrazení čísel';
+            const ikona = IKONY_ZOBRAZENI[hodnota(s)] || s.zvoleny?.querySelector('svg')?.outerHTML || '';
+            tlacitko = pridatTlacitko(`${ikona}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
+            tlacitko.title = ZOBRAZENI.get(s.klic);
         } else if (s.druh === 'razeni') {
             tlacitko = pridatTlacitko(`${IKONA_RAZENI}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
             tlacitko.title = 'Řazení';

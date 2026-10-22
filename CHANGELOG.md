@@ -7,6 +7,14 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.0] – 2026-10-22
+
+### Změněno
+- Přehled: části Přehled, Údržba, Sháním CZ a Statistiky už nejsou velká lišta přes celou šířku, ale rozbalovací volba v horní liště – stejně jako zobrazení Čísel (Obálky / Kalendář). Tlačítko ukazuje ikonu a název zvolené části, nabídka i počet úkolů Údržby a čísel Sháním CZ. Obsah tak začíná hned nahoře.
+
+### Opraveno
+- Statistiky: osa grafů počtů má jen celá čísla (při malých počtech ukazovala 0,2, 0,4…).
+
 ## [0.98.0] – 2026-10-22
 
 ### Změněno

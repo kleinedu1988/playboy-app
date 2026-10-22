@@ -229,7 +229,8 @@ function htmlGrafuVCase(def, sloupce, sirka) {
         lo = min - okraj;
         hi = max + okraj;
     }
-    const krok = def.druh === 'podil' ? 25 : krokOsy(hi - lo);
+    // Počty jsou celá čísla: krok osy nejméně 1
+    const krok = def.druh === 'podil' ? 25 : def.druh === 'pocet' ? Math.max(1, krokOsy(hi - lo)) : krokOsy(hi - lo);
     if (def.druh === 'pocet') hi = Math.ceil(hi / krok) * krok;
     const y = h => T + (hi - h) / (hi - lo || 1) * (H - T - D);
     const x = i => L + i * k;

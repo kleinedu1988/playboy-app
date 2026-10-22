@@ -17,6 +17,7 @@ import { htmlGrafuDekad, htmlShanim, htmlUvodu, shanenaCisla, textShanim } from 
 import { otevritVydani } from './vydani';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { oznamit } from '../ui/oznameni';
+import { prevestNaVolby } from '../ui/volby';
 
 // Přehled sbírky: kolik čeho je a co ještě chybí doplnit.
 // Každá modelka a každé vydání má jeden řádek, sloupce říkají, co u nich chybí.
@@ -57,13 +58,14 @@ const atributyNalezu = u => `data-opravit="${esc(u.pole)}" data-klic="${esc(u.kl
 const ZALOZKY_POLI = { inputDalsiJmena: 0, inputUmrtiDatum: 0 };
 const zalozkaPole = pole => SKUPINY_UDAJU.find(s => s.udaje.some(u => u[2] === pole))?.zalozka ?? ZALOZKY_POLI[pole] ?? 0;
 
-// Ikony v liště částí Přehledu
+// Ikony částí Přehledu (u volby v horní liště)
 const IKONA = obsah => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${obsah}</svg>`;
+const IKONA_CASTI = obsah => IKONA(obsah).replace('width="16" height="16"', 'width="14" height="14"');
 const IKONY_CASTI = {
-    uvod: IKONA('<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>'),
-    udrzba: IKONA('<path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.4-.4-2.6z"/>'),
-    shanim: IKONA('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/>'),
-    statistiky: IKONA('<path d="M5 20V11M12 20V5M19 20v-7"/>'),
+    uvod: IKONA_CASTI('<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>'),
+    udrzba: IKONA_CASTI('<path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.4-.4-2.6z"/>'),
+    shanim: IKONA_CASTI('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/>'),
+    statistiky: IKONA_CASTI('<path d="M5 20V11M12 20V5M19 20v-7"/>'),
 };
 
 // Filtry fronty v Údržbě: [klíč, název]; filtr bez úkolů se neukazuje
@@ -171,7 +173,7 @@ export async function nacistPrehled() {
     p.vydaniBezCenterfoldu.forEach(v => vydani.set(v, { ...vydani.get(v), centerfold: true }));
     const radkyVydani = [...vydani].sort(([a], [b]) => b.localeCompare(a));
 
-    // Lišta částí nahoře; pod ní vždy jedna část (Přehled, Údržba, Sháním, Statistiky)
+    // Části: v liště nahoře volba, pod ní vždy jedna část (Přehled, Údržba, Sháním, Statistiky)
     const modelekSChybou = radkyModelek.filter(m => vaha(m) > 0).length;
     const shanim = shanenaCisla(stavy).length;
     // Údaje ke kontrole (kontrola.go) po modelkách; nález označený „V pořádku“ se nepočítá
@@ -182,7 +184,7 @@ export async function nacistPrehled() {
     const casti = [
         ['uvod', 'Přehled', ''],
         ['udrzba', 'Údržba', ukolu],
-        ['shanim', 'Sháním CZ', shanim, true],
+        ['shanim', 'Sháním CZ', shanim],
         ['statistiky', 'Statistiky', ''],
     ];
     if (!['uvod', 'udrzba', 'shanim', 'statistiky'].includes(stav.prehledSekce)) stav.prehledSekce = 'uvod';
@@ -269,12 +271,7 @@ export async function nacistPrehled() {
                 : `<p class="stat-prazdne">${fronta.length ? 'V tomhle filtru nic nezbývá.' : 'Vše je doplněné.'}</p>`}`;
     };
     stats.innerHTML = `
-        <aside class="profile-side prehled-panel">
-            <nav class="prehled-menu" aria-label="Části přehledu">
-                ${casti.map(([klic, nazev, pocet, neutralni]) => `<button class="${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">
-                    ${IKONY_CASTI[klic]}${nazev}${pocet !== '' ? `<b class="${pocet && !neutralni ? 'chybi' : ''}">${pocet}</b>` : ''}</button>`).join('')}
-            </nav>
-        </aside>
+        <div class="prehled-casti">${casti.map(([klic, nazev, pocet]) => `<button class="chip ${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">${nazev}${pocet ? `<span>${pocet}</span>` : ''}${IKONY_CASTI[klic]}</button>`).join('')}</div>
         <div class="prehled-obsah" data-sekce-ukazana="${stav.prehledSekce}">
             <section class="stat-section" data-sekce="uvod">${htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, souhrn: radkySouhrnu, kUdrzbe: ukolu, modelekUplnych: p.modelek - modelekSChybou })}</section>
             <section class="stat-section" data-sekce="shanim">${htmlShanim(stavy)}</section>
@@ -282,7 +279,9 @@ export async function nacistPrehled() {
             <!-- Statistiky se počítají až při prvním zobrazení oddílu -->
             <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="stat-prazdne">Počítám statistiky…</p></section>
         </div>
-    `;
+    `;    // Části (Přehled, Údržba, Sháním CZ, Statistiky) jako rozbalovací volba v horní liště, jako zobrazení Čísel
+    prevestNaVolby(stats.querySelector('.prehled-casti'));
+
     prekreslitUdrzbu = () => { stats.querySelector('[data-sekce="udrzba"]').innerHTML = htmlUdrzby(); };
     if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
     // Graf desetiletí na úvodu se dopočítá zvlášť (statistiky se počítají z celé sbírky)
@@ -385,7 +384,9 @@ export function pripravit() {
                 prekreslitUdrzbu();
             }
             stats.querySelector('.prehled-obsah').dataset.sekceUkazana = stav.prehledSekce;
-            stats.querySelectorAll('.prehled-menu [data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === stav.prehledSekce));
+            const casti = stats.querySelector('.prehled-casti');
+            casti.querySelectorAll('[data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === stav.prehledSekce));
+            prevestNaVolby(casti);
             if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
             document.querySelector('main').scrollTop = 0;
         } else if (filtr) {

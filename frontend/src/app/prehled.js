@@ -4,7 +4,7 @@ import { VYCHOZI_EDICE, esc, kategorieModelky, nazevAlba, nazevVydani, popisKate
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { searchInput, stats } from './prvky';
-import { ukazatPohled } from './navigace';
+import { historie, prepnoutRezim, ukazatPohled } from './navigace';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { nabidkaCisla } from './kalendar';
 import { otevritCoverModal } from './cover';
@@ -17,7 +17,6 @@ import { htmlGrafuDekad, htmlShanim, htmlUvodu, shanenaCisla, textShanim } from 
 import { otevritVydani } from './vydani';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { oznamit } from '../ui/oznameni';
-import { prevestNaVolby } from '../ui/volby';
 
 // Přehled sbírky: kolik čeho je a co ještě chybí doplnit.
 // Každá modelka a každé vydání má jeden řádek, sloupce říkají, co u nich chybí.
@@ -60,13 +59,9 @@ const zalozkaPole = pole => SKUPINY_UDAJU.find(s => s.udaje.some(u => u[2] === p
 
 // Ikony částí Přehledu (u volby v horní liště)
 const IKONA = obsah => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${obsah}</svg>`;
-const IKONA_CASTI = obsah => IKONA(obsah).replace('width="16" height="16"', 'width="14" height="14"');
-const IKONY_CASTI = {
-    uvod: IKONA_CASTI('<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>'),
-    udrzba: IKONA_CASTI('<path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.4-.4-2.6z"/>'),
-    shanim: IKONA_CASTI('<circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.4-4.4"/>'),
-    statistiky: IKONA_CASTI('<path d="M5 20V11M12 20V5M19 20v-7"/>'),
-};
+// Části Přehledu: vybírají se z nabídky tlačítka Přehled vpravo v liště; u Údržby a Sháním CZ počet z posledního načtení
+const CASTI = [['uvod', 'Přehled'], ['udrzba', 'Údržba'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']];
+const pocetVCasti = { udrzba: 0, shanim: 0 };
 
 // Filtry fronty v Údržbě: [klíč, název]; filtr bez úkolů se neukazuje
 const FILTRY_UDRZBY = [
@@ -173,7 +168,6 @@ export async function nacistPrehled() {
     p.vydaniBezCenterfoldu.forEach(v => vydani.set(v, { ...vydani.get(v), centerfold: true }));
     const radkyVydani = [...vydani].sort(([a], [b]) => b.localeCompare(a));
 
-    // Části: v liště nahoře volba, pod ní vždy jedna část (Přehled, Údržba, Sháním, Statistiky)
     const modelekSChybou = radkyModelek.filter(m => vaha(m) > 0).length;
     const shanim = shanenaCisla(stavy).length;
     // Údaje ke kontrole (kontrola.go) po modelkách; nález označený „V pořádku“ se nepočítá
@@ -181,12 +175,9 @@ export async function nacistPrehled() {
     p.podezrele.forEach(u => kontrola.set(u.modelkaId, [...(kontrola.get(u.modelkaId) || []), u]));
     const kKontrole = aktivnich(p.podezrele);
     const ukolu = modelekSChybou + radkyVydani.length + kKontrole;
-    const casti = [
-        ['uvod', 'Přehled', ''],
-        ['udrzba', 'Údržba', ukolu],
-        ['shanim', 'Sháním CZ', shanim],
-        ['statistiky', 'Statistiky', ''],
-    ];
+    // Počty k nabídce částí u tlačítka Přehled
+    pocetVCasti.udrzba = ukolu;
+    pocetVCasti.shanim = shanim;
     if (!['uvod', 'udrzba', 'shanim', 'statistiky'].includes(stav.prehledSekce)) stav.prehledSekce = 'uvod';
     // Pokrok sbírky po položkách (pruh, kolik z kolika) a kolik zbývá doplnit; klik otevře Údržbu s filtrem na tu položku
     const radekSouhrnu = (popis, chybi, celkem, filtr, akce = 'doplnit') => {
@@ -271,7 +262,6 @@ export async function nacistPrehled() {
                 : `<p class="stat-prazdne">${fronta.length ? 'V tomhle filtru nic nezbývá.' : 'Vše je doplněné.'}</p>`}`;
     };
     stats.innerHTML = `
-        <div class="prehled-casti">${casti.map(([klic, nazev, pocet]) => `<button class="chip ${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">${nazev}${pocet ? `<span>${pocet}</span>` : ''}${IKONY_CASTI[klic]}</button>`).join('')}</div>
         <div class="prehled-obsah" data-sekce-ukazana="${stav.prehledSekce}">
             <section class="stat-section" data-sekce="uvod">${htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, souhrn: radkySouhrnu, kUdrzbe: ukolu, modelekUplnych: p.modelek - modelekSChybou })}</section>
             <section class="stat-section" data-sekce="shanim">${htmlShanim(stavy)}</section>
@@ -279,9 +269,7 @@ export async function nacistPrehled() {
             <!-- Statistiky se počítají až při prvním zobrazení oddílu -->
             <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="stat-prazdne">Počítám statistiky…</p></section>
         </div>
-    `;    // Části (Přehled, Údržba, Sháním CZ, Statistiky) jako rozbalovací volba v horní liště, jako zobrazení Čísel
-    prevestNaVolby(stats.querySelector('.prehled-casti'));
-
+    `;
     prekreslitUdrzbu = () => { stats.querySelector('[data-sekce="udrzba"]').innerHTML = htmlUdrzby(); };
     if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
     // Graf desetiletí na úvodu se dopočítá zvlášť (statistiky se počítají z celé sbírky)
@@ -347,8 +335,41 @@ function nabidkaRadku(tlacitko) {
     otevritKontextovouNabidku(r.right - 220, r.bottom + 4, polozky);
 }
 
+// Zvolená část Přehledu se zapamatuje; když je Přehled otevřený, přepne se bez nového načtení
+function ukazatCast(klic) {
+    stav.prehledSekce = klic;
+    try { localStorage.setItem('prehledSekce', klic); } catch { /* jen se nezapamatuje */ }
+    const obsah = stats.querySelector('.prehled-obsah');
+    if (!obsah) return;
+    obsah.dataset.sekceUkazana = klic;
+    if (klic === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
+    document.querySelector('main').scrollTop = 0;
+}
+
+// Tlačítko Přehled vpravo v liště otevře nabídku částí; volba otevře Přehled na té části
+function nabidkaCasti(tlacitko) {
+    const otevreny = stav.rezim === 'prehled';
+    const r = tlacitko.getBoundingClientRect();
+    otevritKontextovouNabidku(r.right - 200, r.bottom + 6, CASTI.map(([klic, nazev]) => ({
+        text: `${otevreny && klic === stav.prehledSekce ? '✓ ' : ''}${nazev}${pocetVCasti[klic] ? ` (${pocetVCasti[klic]})` : ''}`,
+        akce: () => {
+            if (otevreny) return ukazatCast(klic);
+            stav.prehledSekce = klic;
+            try { localStorage.setItem('prehledSekce', klic); } catch { /* jen se nezapamatuje */ }
+            historie.length = 0;
+            prepnoutRezim('prehled');
+            nacistPrehled();
+        },
+    })));
+}
+
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    // Klik na tlačítko Přehled nepřepne rovnou, otevře nabídku částí (obsluha lišty se nespustí)
+    document.querySelector('.nav-rezim[data-rezim="prehled"]')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        nabidkaCasti(/** @type {HTMLElement} */ (e.currentTarget));
+    });
     try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'uvod'; } catch { /* úvod */ }
     // Dřívější záložky údržby (Souhrn, Modelky, Čísla, Ke kontrole) jsou teď jedna Údržba
     if (['souhrn', 'modelky', 'vydani', 'kontrola'].includes(stav.prehledSekce)) stav.prehledSekce = 'udrzba';
@@ -376,19 +397,12 @@ export function pripravit() {
             nabidkaRadku(vice);
         } else if (cast) {
             // Přepnutí části jen v zobrazené stránce, bez nového načtení; řádek souhrnu otevře Údržbu s filtrem
-            stav.prehledSekce = cast.dataset.sekcePrehledu;
-            try { localStorage.setItem('prehledSekce', stav.prehledSekce); } catch { /* jen se nezapamatuje */ }
             if (cast.dataset.udrzbaFiltr) {
                 stav.udrzbaFiltr = cast.dataset.udrzbaFiltr;
                 stav.prehledLimit = 60;
                 prekreslitUdrzbu();
             }
-            stats.querySelector('.prehled-obsah').dataset.sekceUkazana = stav.prehledSekce;
-            const casti = stats.querySelector('.prehled-casti');
-            casti.querySelectorAll('[data-sekce-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.sekcePrehledu === stav.prehledSekce));
-            prevestNaVolby(casti);
-            if (stav.prehledSekce === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
-            document.querySelector('main').scrollTop = 0;
+            ukazatCast(cast.dataset.sekcePrehledu);
         } else if (filtr) {
             stav.udrzbaFiltr = filtr.dataset.udrzbaFiltr;
             stav.prehledLimit = 60;

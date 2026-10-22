@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.1] – 2026-10-22
+
+### Změněno
+- Části Přehledu (Přehled, Údržba, Sháním CZ, Statistiky) jsou v kontextové nabídce tlačítka Přehled vpravo v liště (ikona grafu); tlačítko samo zůstává stejné. Volba otevře Přehled rovnou na té části, v otevřeném Přehledu jen přepne část (✓ u zvolené, u Údržby a Sháním CZ počet). Volba části v liště pod hledáním z 0.99.0 odpadla.
+
 ## [0.99.0] – 2026-10-22
 
 ### Změněno

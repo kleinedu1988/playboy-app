@@ -696,7 +696,7 @@ export const SABLONA_OKNA = `
         </ul>
         <h4>Čísla časopisu</h4>
         <ul>
-          <li>Kalendář ukazuje jednu edici (US nebo CZ). Tři linky na spodní hraně obálky: cover, centerfold, pictorial (růžová = číslo ho má); prázdné políčko = číslo chybí, klik nabídne přidání.</li>
+          <li>Kalendář ukazuje jednu edici (US nebo CZ). Tři linky na spodní hraně obálky: cover, centerfold, pictorial (růžová = číslo ho má); když myš chvíli zůstane na kartě, střídá se na ní cover, centerfold a nejlépe hodnocená fotka z pictorialu a bílá linka ukazuje, co je právě vidět; prázdné políčko = číslo chybí, klik nabídne přidání.</li>
           <li>Stav čísla: <strong>mám výtisk</strong> (zelený rámeček), <strong>sháním</strong>, <strong>nezajímá mě</strong> – jen u české edice, v nabídce políčka nebo v „Upravit číslo…“.</li>
           <li><strong>Speciály</strong> (Playmate Review, Lingerie…) jsou štítky pod měsíci roku; nový založíš v okně alba nebo coveru („Nový speciál…“) nebo pravým tlačítkem na nadpis roku v kalendáři.</li>
         </ul>

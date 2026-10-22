@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.94.1] – 2026-10-22
+
+### Vylepšeno
+- **Kalendář: listování obsahem čísla na kartě.** Když myš chvíli (půl vteřiny) zůstane na kartě čísla, střídá se na ní cover, centerfold a nejlépe hodnocená fotka z pictorialu (asi po 1,2 s, s prolnutím); bílá linka dole ukazuje, co je právě vidět. Odjetí myší vrátí původní obálku. Obsah čísla se načte až při prvním najetí a pak se pamatuje.
+
 ## [0.94.0] – 2026-10-22
 
 ### Změněno

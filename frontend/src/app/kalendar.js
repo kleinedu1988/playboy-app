@@ -1,5 +1,5 @@
 // Kalendář vydání po rocích a měsících
-import { GetKalendar, GetStavyVydani, SetStavVydani } from './backend';
+import { GetKalendar, GetStavyVydani, GetVydani, SetStavVydani } from './backend';
 import { EDICE, MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, nazevVydani, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
@@ -21,6 +21,9 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     const [kalendar, stavy] = zMezipameti && stav.kalendarData && stav.stavyVydaniData ? [stav.kalendarData, stav.stavyVydaniData]
         : await Promise.all([GetKalendar().then(k => k || []), GetStavyVydani().then(s => s || [])]);
     if (moje !== stav.cisloNacteni) return;
+    // Nové vykreslení ukončí listování na kartě; čerstvá data zahodí zapamatovaný obsah čísel
+    zastavitListovani();
+    if (!zMezipameti) obsahCisel.clear();
     stav.kalendarData = kalendar;
     stav.stavyVydaniData = stavy;
     const stavCisla = new Map(stavy.map(s => [s.vydani, s]));
@@ -219,8 +222,90 @@ export function nabidkaRoku(klic, x, y) {
 // Rozbalené řady prázdných roků (klíč „od-do")
 export const rozbaleneMezery = new Set();
 
+// Listování obsahem čísla na kartě: když myš chvíli zůstane na kartě, střídá se cover, centerfold a pictorial
+// (nejlépe hodnocená fotka); linka dole ukazuje, co je právě vidět. Obsah čísla se načte až při prvním najetí.
+const PRODLEVA_LISTOVANI = 500;
+const INTERVAL_LISTOVANI = 1200;
+const obsahCisel = new Map();
+let listovani = null;
+
+async function snimkyCisla(klic) {
+    if (!obsahCisel.has(klic)) {
+        obsahCisel.set(klic, GetVydani(klic).then(fotky => {
+            const sUrl = (fotky || []).filter(f => f.url);
+            const prvni = typ => sUrl.filter(f => f.typ === typ).sort((a, b) => (a.poradi || 0) - (b.poradi || 0))[0];
+            const pictorial = sUrl.filter(f => f.typ !== 'Cover' && f.typ !== 'Centerfold')
+                .sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || (a.poradi || 0) - (b.poradi || 0))[0];
+            // Pořadí jako linky na kartě: 0 cover, 1 centerfold, 2 pictorial
+            return [{ linka: 0, f: prvni('Cover') }, { linka: 1, f: prvni('Centerfold') }, { linka: 2, f: pictorial }]
+                .filter(s => s.f).map(s => ({ linka: s.linka, url: obrazek(s.f.url, 'w300') }));
+        }).catch(() => []));
+    }
+    return obsahCisel.get(klic);
+}
+
+function zastavitListovani() {
+    if (!listovani) return;
+    clearTimeout(listovani.casovac);
+    clearInterval(listovani.interval);
+    const { bunka, puvodni } = listovani;
+    bunka.querySelector('.cal-dalsi')?.remove();
+    const img = bunka.querySelector('img');
+    if (img && puvodni) img.src = puvodni;
+    bunka.querySelectorAll('.cal-linky i.ted').forEach(i => i.classList.remove('ted'));
+    listovani = null;
+}
+
+function spustitListovani(bunka) {
+    const img = /** @type {HTMLImageElement} */ (bunka.querySelector('img'));
+    if (!img) return;
+    const stavListovani = listovani = { bunka, puvodni: img.getAttribute('src'), casovac: 0, interval: 0 };
+    stavListovani.casovac = setTimeout(async () => {
+        const snimky = await snimkyCisla(bunka.dataset.vydani);
+        if (listovani !== stavListovani || snimky.length < 2) return;
+        // Začne obrázkem, který karta ukazuje (bývá to cover), a pokračuje dalším
+        let index = Math.max(0, snimky.findIndex(s => s.url === stavListovani.puvodni));
+        const linky = bunka.querySelectorAll('.cal-linky i');
+        const ukazat = (i) => {
+            linky.forEach((l, k) => l.classList.toggle('ted', k === snimky[i].linka));
+            // Prolnutí: nový obrázek nad starým, po načtení se zviditelní a pak nahradí spodní
+            const dalsi = document.createElement('img');
+            dalsi.className = 'cal-dalsi';
+            dalsi.draggable = false;
+            dalsi.onload = () => {
+                if (listovani !== stavListovani) return;
+                requestAnimationFrame(() => dalsi.classList.add('viditelny'));
+                setTimeout(() => {
+                    if (listovani !== stavListovani) return;
+                    img.src = snimky[i].url;
+                    dalsi.remove();
+                }, 400);
+            };
+            dalsi.src = snimky[i].url;
+            bunka.querySelector('.cal-dalsi')?.remove();
+            img.after(dalsi);
+        };
+        ukazat(index);
+        stavListovani.interval = setInterval(() => {
+            index = (index + 1) % snimky.length;
+            ukazat(index);
+        }, INTERVAL_LISTOVANI);
+    }, PRODLEVA_LISTOVANI);
+}
+
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    // Listování obsahem čísla při podržení myši na kartě
+    calendar.addEventListener('mouseover', (e) => {
+        const bunka = /** @type {HTMLElement} */ (e.target).closest('.cal-cell[data-vydani]');
+        if (bunka === listovani?.bunka) return;
+        zastavitListovani();
+        if (bunka) spustitListovani(bunka);
+    });
+    calendar.addEventListener('mouseleave', zastavitListovani);
+    // Kliknutí nebo nové vykreslení listování ukončí
+    calendar.addEventListener('mousedown', zastavitListovani, true);
+
     try { stav.kalendarEdice = EDICE.includes(localStorage.getItem('kalendarEdice')) ? localStorage.getItem('kalendarEdice') : VYCHOZI_EDICE; } catch { /* výchozí edice */ }
 
     calendar.addEventListener('click', (e) => {

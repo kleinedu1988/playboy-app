@@ -1775,6 +1775,29 @@ button.tag:hover {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 }
 
+/* Listování obsahem čísla (podržení myši na kartě): linka toho, co je právě vidět, a prolnutí obrázků */
+.cal-linky i.ted {
+    background-color: var(--text-main);
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
+}
+
+.cal-cell .cal-dalsi {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.cal-cell .cal-dalsi.viditelny {
+    opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cal-cell .cal-dalsi {
+        transition: none;
+    }
+}
+
 /* Chybějící číslo: přerušovaný rámeček s růžovým plus a měsícem */
 .cal-cell.empty {
     display: flex;

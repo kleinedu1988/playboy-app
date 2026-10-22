@@ -7,6 +7,16 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.97.0] – 2026-10-22
+
+### Přidáno
+- Údržba → Kontrola má vlastní soubor `kontrola.go` a víc pravidel: narození v budoucnosti, před rokem 1900 nebo po prvním vydání; úmrtí před narozením nebo před prvním vydáním; věk při prvním vydání mimo 18–45 let; výška, váha, BMI a obvody mimo běžné rozsahy, pas širší než boky nebo hrudník; Playmate roku dřív než první centerfold (nebo bez něj); dvě různá centerfoldová alba v jednom čísle; stejná fotka ve dvou albech modelky.
+- „V pořádku“ (pod ⋯ nebo pravým tlačítkem na štítku): pravdivý údaj, který jen vypadá jako chyba (modelce opravdu bylo 16 let), se už nehlásí. Ukládá se mezi „netýká se“ modelky nebo alba, takže ho nese i záloha a export; „zobrazit i netýká se“ nález ukáže s ✓ a „Znovu kontrolovat“ ho vrátí.
+- Štítek nálezu otevře formulář modelky přímo na záložce a poli s údajem (věk → datum narození, výška…); alba a fotky v profilu. Víc nálezů jedné modelky je na jednom řádku.
+
+### Změněno
+- Album s jednou fotkou se hlásí, jen když se jeho název podobá jinému albu modelky (překlep při přidávání); samostatné album s jednou fotkou je v pořádku.
+
 ## [0.96.0] – 2026-10-22
 
 ### Přidáno

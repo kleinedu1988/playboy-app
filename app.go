@@ -614,7 +614,7 @@ func obsahujeKlic(seznam, klic string) bool {
 }
 
 func (a *App) SetNetykaSe(modelkaID int, klic string, netyka bool) bool {
-	if !klicNetykaSeModelky[klic] {
+	if !klicNetykaSeModelky[klic] && !kliceKontrolyModelky[klic] {
 		return false
 	}
 	var seznam string
@@ -627,7 +627,7 @@ func (a *App) SetNetykaSe(modelkaID int, klic string, netyka bool) bool {
 }
 
 func (a *App) SetNetykaSeAlba(modelkaID int, album, typ, klic string, netyka bool) bool {
-	if !klicNetykaSeAlba[klic] {
+	if !klicNetykaSeAlba[klic] && !kliceKontrolyAlba[klic] {
 		return false
 	}
 	id, err := zajistitAlbum(a.db, modelkaID, album, typ)

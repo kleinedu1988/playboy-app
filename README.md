@@ -154,6 +154,7 @@ pro uživatele.
 - `alba.go` – sdílená alba, přesuny a slučování, vrácení odebraných fotek
 - `vydani.go` – údaje čísel časopisu, speciály a výběry
 - `udaje.go` – kontrola a úprava údajů modelek (data narození a úmrtí, „na obálce“)
+- `kontrola.go` – Kontrola v Údržbě: pravidla pro údaje, které vypadají jako překlep, a „V pořádku“
 - `clanky.go` – články, skeny stran a fulltextové hledání (SQLite FTS5)
 - `statistiky.go`, `vyvoj.go` – statistiky a vývoj modelek v čase
 - `nastaveni.go` – zapamatování okna, zámek heslem, přehled sbírky

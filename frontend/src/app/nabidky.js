@@ -37,11 +37,13 @@ export function otevritNabidku(cil, x, y) {
     const bunkaPrehledu = cil.closest('#stats [data-klic]:not(.ud-postupne)');
     if (bunkaPrehledu) {
         const oznacena = Boolean(bunkaPrehledu.dataset.netyka);
+        // Nález kontroly (oprava): „V pořádku“ – údaj je pravdivý a už se nehlásí
+        const nalez = bunkaPrehledu.hasAttribute('data-opravit');
         otevritKontextovouNabidku(x, y, oznacena
-            ? [{ text: 'Znovu sledovat (týká se)', akce: () => oznacitNetykaSe(bunkaPrehledu, false) }]
+            ? [{ text: nalez ? 'Znovu kontrolovat' : 'Znovu sledovat (týká se)', akce: () => oznacitNetykaSe(bunkaPrehledu, false) }]
             : [
-                { text: 'Doplnit', akce: () => bunkaPrehledu.click() },
-                { text: 'Netýká se – přestat sledovat', akce: () => oznacitNetykaSe(bunkaPrehledu, true) },
+                { text: nalez ? 'Opravit' : 'Doplnit', akce: () => bunkaPrehledu.click() },
+                { text: nalez ? 'V pořádku – údaj je správně, nehlásit' : 'Netýká se – přestat sledovat', akce: () => oznacitNetykaSe(bunkaPrehledu, true) },
             ]);
         return;
     }

@@ -486,6 +486,11 @@ export namespace main {
 	    modelkaId: number;
 	    jmeno: string;
 	    popis: string;
+	    klic: string;
+	    album: string;
+	    typ: string;
+	    pole: string;
+	    netykaSe: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new PodezrelyUdaj(source);
@@ -496,6 +501,11 @@ export namespace main {
 	        this.modelkaId = source["modelkaId"];
 	        this.jmeno = source["jmeno"];
 	        this.popis = source["popis"];
+	        this.klic = source["klic"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	        this.pole = source["pole"];
+	        this.netykaSe = source["netykaSe"];
 	    }
 	}
 	

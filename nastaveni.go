@@ -171,13 +171,6 @@ type RocnikPrehledu struct {
 	Mesice [12]bool `json:"mesice"` // které to jsou, od ledna
 }
 
-// Údaj, který vypadá jako chyba při zadávání a stojí za kontrolu
-type PodezrelyUdaj struct {
-	ModelkaID int    `json:"modelkaId"`
-	Jmeno     string `json:"jmeno"`
-	Popis     string `json:"popis"`
-}
-
 type Prehled struct {
 	Modelek          int `json:"modelek"`
 	Alb              int `json:"alb"`
@@ -233,11 +226,6 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		}
 		p.Alb++
 		p.Fotek += fotek
-		// Album s jedinou fotkou bývá překlep v názvu při přidávání do existujícího alba
-		if fotek == 1 && polozka.Typ != "Centerfold" {
-			p.Podezrele = append(p.Podezrele, PodezrelyUdaj{ModelkaID: polozka.ModelkaID, Jmeno: polozka.Jmeno,
-				Popis: fmt.Sprintf("album „%s“ má jen jednu fotku", polozka.Album)})
-		}
 		p.HodnocenychFotek += hodnocenych
 		if polozka.Typ == "Centerfold" {
 			maCenterfold[polozka.ModelkaID] = true
@@ -255,42 +243,8 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 	// Modelky se načtou jednou pro kontrolu i pro seznamy toho, co chybí
 	modelky := a.GetModelky("")
 
-	// Stejné jméno nebo pseudonym u dvou modelek bývá dvakrát založená tatáž
-	podleJmena := map[string]Modelka{}
-	for _, m := range modelky {
-		for _, jmeno := range append([]string{m.Jmeno}, strings.Split(m.DalsiJmena, ",")...) {
-			klic := zjednodusit(strings.TrimSpace(jmeno))
-			if klic == "" {
-				continue
-			}
-			if jina, obsazeno := podleJmena[klic]; obsazeno && jina.ID != m.ID {
-				p.Podezrele = append(p.Podezrele, PodezrelyUdaj{ModelkaID: m.ID, Jmeno: m.Jmeno,
-					Popis: fmt.Sprintf("jméno nebo pseudonym „%s“ má i modelka %s", strings.TrimSpace(jmeno), jina.Jmeno)})
-				continue
-			}
-			podleJmena[klic] = m
-		}
-
-		// Věk při prvním vydání mimo běžný rozsah ukazuje na překlep v datu narození nebo ve vydání
-		for _, v := range m.Vydani {
-			if !vzorVydani.MatchString(v) || jeSpecial(v) || len(m.NarozeniDatum) < 7 {
-				continue
-			}
-			var rokVydani, mesicVydani, rokNarozeni, mesicNarozeni int
-			fmt.Sscanf(v, "%d-%d", &rokVydani, &mesicVydani)
-			if n, _ := fmt.Sscanf(m.NarozeniDatum, "%d-%d", &rokNarozeni, &mesicNarozeni); n == 2 {
-				vek := rokVydani - rokNarozeni
-				if mesicVydani < mesicNarozeni {
-					vek--
-				}
-				if vek < 18 || vek > 60 {
-					p.Podezrele = append(p.Podezrele, PodezrelyUdaj{ModelkaID: m.ID, Jmeno: m.Jmeno,
-						Popis: fmt.Sprintf("věk při prvním vydání (%s) vychází na %d let", v, vek)})
-				}
-			}
-			break
-		}
-	}
+	// Údaje ke kontrole (kontrola.go)
+	p.Podezrele = a.kontrolovatSbirku(modelky, vcetneSkrytych)
 
 	// Centerfold sdíleného alba patří i dalším modelkám
 	if radky, err := a.db.Query("SELECT am.modelka_id FROM alba_modelky am JOIN alba al ON al.id = am.album_id WHERE al.typ = 'Centerfold'"); err == nil {

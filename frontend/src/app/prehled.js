@@ -51,6 +51,12 @@ export const SKUPINY_UDAJU = [
 // Klíč „netýká se" podle záložky formuláře
 export const KLICE_SKUPIN = ['zakladni', 'vzhled', 'zarazeni'];
 
+const aktivnich = seznam => seznam.filter(x => !x.netykaSe).length;
+// Nález kontroly: oprava v poli formuláře (pole), jinak v profilu; „V pořádku“ se ukládá u modelky, u nálezu alba u alba
+const atributyNalezu = u => `data-opravit="${esc(u.pole)}" data-klic="${esc(u.klic)}" data-album="${esc(u.album)}" data-typ="${esc(u.typ)}"`;
+const ZALOZKY_POLI = { inputDalsiJmena: 0, inputUmrtiDatum: 0 };
+const zalozkaPole = pole => SKUPINY_UDAJU.find(s => s.udaje.some(u => u[2] === pole))?.zalozka ?? ZALOZKY_POLI[pole] ?? 0;
+
 // Ikony v liště částí Přehledu
 const IKONA = obsah => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${obsah}</svg>`;
 const IKONY_CASTI = {
@@ -167,9 +173,12 @@ export async function nacistPrehled() {
 
     // Lišta částí nahoře; pod ní vždy jedna část (Přehled, Údržba, Sháním, Statistiky)
     const modelekSChybou = radkyModelek.filter(m => vaha(m) > 0).length;
-    const aktivnich = seznam => seznam.filter(x => !x.netykaSe).length;
     const shanim = shanenaCisla(stavy).length;
-    const ukolu = modelekSChybou + radkyVydani.length + p.podezrele.length;
+    // Údaje ke kontrole (kontrola.go) po modelkách; nález označený „V pořádku“ se nepočítá
+    const kontrola = new Map();
+    p.podezrele.forEach(u => kontrola.set(u.modelkaId, [...(kontrola.get(u.modelkaId) || []), u]));
+    const kKontrole = aktivnich(p.podezrele);
+    const ukolu = modelekSChybou + radkyVydani.length + kKontrole;
     const casti = [
         ['uvod', 'Přehled', ''],
         ['udrzba', 'Údržba', ukolu],
@@ -194,7 +203,7 @@ export async function nacistPrehled() {
                     ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb, 'alba')}
                     ${radekSouhrnu('Čísla s coverem', p.vydaniBezCoveru.length, p.vydani, 'cover')}
                     ${radekSouhrnu('Čísla s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'cfcisla')}
-                    ${p.podezrele.length ? radekSouhrnu('Údaje ke kontrole', p.podezrele.length, 0, 'kontrola', 'zkontrolovat') : ''}
+                    ${kKontrole ? radekSouhrnu('Údaje ke kontrole', kKontrole, 0, 'kontrola', 'zkontrolovat') : ''}
     </div>`;
 
     // Údržba: jedna fronta úkolů (modelky, čísla, údaje ke kontrole) seřazená podle toho, kolik toho chybí
@@ -205,7 +214,8 @@ export async function nacistPrehled() {
             ...(co.cover ? [{ filtr: 'cover', text: 'cover', atributy: 'data-akce="cover" data-klic="cover"', napoveda: 'Přidat cover' }] : []),
             ...(co.centerfold ? [{ filtr: 'cfcisla', text: 'centerfold', atributy: 'data-akce="centerfold" data-klic="centerfold"', napoveda: 'Přidat centerfold' }] : []),
         ] })),
-        ...p.podezrele.map(u => ({ druh: 'kontrola', u, vaha: 1, ukoly: [{ filtr: 'kontrola', text: u.popis, atributy: `data-opravit="${esc(u.popis)}"`, napoveda: 'Opravit', opravit: true }] })),
+        ...[...kontrola.values()].map(nalezy => ({ druh: 'kontrola', u: nalezy[0], vaha: aktivnich(nalezy), ukoly: nalezy.map(u => ({
+            filtr: 'kontrola', text: u.popis, atributy: atributyNalezu(u), napoveda: u.pole ? 'Opravit ve formuláři' : 'Opravit v profilu', opravit: true, netyka: u.netykaSe })) })),
     ]).sort((a, b) => b.vaha - a.vaha);
     const pocetFiltru = filtr => fronta.filter(r => r.ukoly.some(u => u.filtr === filtr && !u.netyka)).length;
     const htmlUdrzby = () => {
@@ -246,8 +256,9 @@ export async function nacistPrehled() {
                     ${obrazek}
                     <div class="ud-jmeno"><strong>${esc(nazev)}</strong><small>${esc(r.druh === 'vydani' ? `číslo · ${rozlozitVydani(r.v)?.edice || VYCHOZI_EDICE}` : r.druh === 'kontrola' ? 'ke kontrole' : podtitulek(stav.prehledModelky.get(r.m.id)))}</small></div>
                     <div class="ud-chybi">${r.ukoly.map(u => u.netyka
-                        ? `<span class="ud-chip netyka" data-klic="${u.klic}" data-netyka="1" title="Netýká se – pravým tlačítkem jde znovu sledovat">${esc(u.text)} –</span>`
-                        : u.opravit ? `<span class="ud-chip hlavni">${esc(u.text)}</span>`
+                        ? (u.opravit ? `<span class="ud-chip netyka" ${u.atributy} data-netyka="1" title="V pořádku – pravým tlačítkem jde znovu kontrolovat">${esc(u.text)} ✓</span>`
+                            : `<span class="ud-chip netyka" data-klic="${u.klic}" data-netyka="1" title="Netýká se – pravým tlačítkem jde znovu sledovat">${esc(u.text)} –</span>`)
+                        : u.opravit ? `<button type="button" class="ud-chip ${u === hlavni ? 'hlavni' : ''}" ${u.atributy} title="${esc(u.napoveda)} (pravým tlačítkem: v pořádku)">${esc(u.text)}</button>`
                         : `<button type="button" class="ud-chip ${u === hlavni ? 'hlavni' : ''}" ${u.atributy} title="${esc(u.napoveda)} (pravým tlačítkem: netýká se)">${esc(u.text)}</button>`).join('')}</div>
                     <div class="ud-akce">
                         ${hlavni ? `<button type="button" class="ud-doplnit" ${hlavni.atributy} title="${esc(hlavni.napoveda)}">${hlavni.opravit ? 'Opravit' : 'Doplnit'}</button>` : ''}
@@ -296,7 +307,10 @@ export async function oznacitNetykaSe(bunka, netyka) {
     }
     const modelkaId = parseInt(radek.dataset.modelka);
     const klic = bunka.dataset.klic;
-    if (klic === 'text' || klic === 'vydani') {
+    if (bunka.dataset.album) {
+        // Nález kontroly u alba: „V pořádku“ patří tomu albu
+        await SetNetykaSeAlba(modelkaId, bunka.dataset.album, bunka.dataset.typ, klic, netyka);
+    } else if (klic === 'text' || klic === 'vydani') {
         const alba = stav.prehledAlba.get(modelkaId)?.[klic === 'text' ? 'popis' : 'vydani'] || [];
         for (const a of alba) await SetNetykaSeAlba(a.modelkaId, a.album, a.typ, klic, netyka);
     } else {
@@ -304,6 +318,8 @@ export async function oznacitNetykaSe(bunka, netyka) {
     }
     if (!stats.classList.contains('hidden')) nacistPrehled();
 }
+
+const zkratit = text => text.length > 60 ? `${text.slice(0, 58)}…` : text;
 
 // Nabídka ⋯ na řádku údržby: „netýká se“ pro každý úkol a další akce
 function nabidkaRadku(tlacitko) {
@@ -321,8 +337,9 @@ function nabidkaRadku(tlacitko) {
         if (!modelka) return;
         const netyka = [...radek.querySelectorAll('.ud-chybi [data-netyka]')];
         polozky = [
-            ...ukoly.map(u => ({ text: `Netýká se: ${u.textContent}`, akce: () => oznacitNetykaSe(u, true) })),
-            ...netyka.map(u => ({ text: `Znovu sledovat: ${u.textContent.replace(/ –$/, '')}`, akce: () => oznacitNetykaSe(u, false) })),
+            // Nález kontroly (má data-opravit) je „V pořádku“, chybějící údaj „Netýká se“
+            ...ukoly.map(u => ({ text: `${u.hasAttribute('data-opravit') ? 'V pořádku' : 'Netýká se'}: ${zkratit(u.textContent)}`, akce: () => oznacitNetykaSe(u, true) })),
+            ...netyka.map(u => ({ text: `${u.hasAttribute('data-opravit') ? 'Znovu kontrolovat' : 'Znovu sledovat'}: ${zkratit(u.textContent.replace(/ [–✓]$/, ''))}`, akce: () => oznacitNetykaSe(u, false) })),
             ...(ukoly.length || netyka.length ? [null] : []),
             ...(stav.prehledRadky.some(x => x.id === modelka.id) ? [{ text: 'Doplnit vše v jednom okně', akce: () => otevritDoplneni(modelka.id) }] : []),
             { text: 'Otevřít profil', akce: () => otevritDetailModelky(modelka) },
@@ -343,12 +360,18 @@ export function pripravit() {
         const opravit = e.target.closest('[data-opravit]');
         const vice = e.target.closest('[data-ud-vice]');
         if (opravit) {
-            // Album s jednou fotkou se opravuje v profilu, ostatní (jméno, datum) ve formuláři modelky
+            // Údaj se opraví ve formuláři modelky (záložka a pole nálezu), alba a fotky v profilu
             e.stopPropagation();
             const modelka = stav.prehledModelky.get(parseInt(opravit.closest('[data-modelka]').dataset.modelka));
             if (!modelka) return;
-            if (opravit.dataset.opravit.startsWith('album')) otevritDetailModelky(modelka);
-            else otevritModelModal(modelka);
+            const pole = opravit.dataset.opravit;
+            if (!pole) {
+                otevritDetailModelky(modelka);
+                return;
+            }
+            otevritModelModal(modelka);
+            ukazatZalozku(zalozkaPole(pole));
+            zameritPole(pole);
         } else if (vice) {
             e.stopPropagation();
             nabidkaRadku(vice);

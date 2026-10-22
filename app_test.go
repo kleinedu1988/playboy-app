@@ -1109,21 +1109,13 @@ func TestPrehledSbirky(t *testing.T) {
 		t.Fatalf("ročníky: %+v", p.Rocniky)
 	}
 
-	// Ke kontrole: album s jednou fotkou; po doplnění dalších údajů i duplicitní jméno a nesmyslný věk
-	if len(p.Podezrele) != 1 || !strings.Contains(p.Podezrele[0].Popis, "Holé") {
+	// Údaje ke kontrole mají vlastní testy (kontrola_test.go); tady jen, že se dostanou do přehledu
+	if len(p.Podezrele) != 1 || p.Podezrele[0].Klic != "ok-dvojice" {
 		t.Fatalf("podezřelé údaje: %+v", p.Podezrele)
 	}
 	a.AddModelka(Modelka{Jmeno: "Jiná", DalsiJmena: "x, úplná", NarozeniDatum: "2000-06-15"})
 	jina := a.GetModelky("Jiná")[0].ID
 	a.AddBulkPhotos(jina, "2010-03", "Centerfold", odkazB)
-	var popisy []string
-	for _, u := range a.GetPrehled(false).Podezrele {
-		popisy = append(popisy, u.Jmeno+": "+u.Popis)
-	}
-	vse := strings.Join(popisy, " | ")
-	if len(popisy) != 3 || !strings.Contains(vse, "má i modelka Jiná") || !strings.Contains(vse, "vychází na 9 let") {
-		t.Fatalf("podezřelé údaje: %s", vse)
-	}
 
 	// Nově přidané záznamy mají datum přidání
 	if m := a.GetModelky("Jiná")[0]; len(m.Pridano) != 19 || len(a.GetFotografieModelky(jina)[0].Pridano) != 19 {

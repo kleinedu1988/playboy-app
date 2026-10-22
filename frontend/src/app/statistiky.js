@@ -1,7 +1,8 @@
 // Statistiky sbírky v Přehledu: jeden graf vybraný z rozvinutého seznamu, vedle něj modelky výběru.
-// Grafy v čase (podle roku centerfoldu nebo měsíce přidání) mají sloupce či body jednotlivých modelek a křivku
-// (klouzavý průměr nebo medián); klik na sloupec vybere rok, tažení období. Grafy rozložení (kategorie,
-// národnosti…) jsou pruhy; klik vybere hodnotu. Seznam vpravo ukazuje modelky výběru (bez výběru všechny v grafu).
+// Grafy v čase (podle roku centerfoldu nebo měsíce přidání) ukazují počty, údaje (medián a pásmo) nebo podíly
+// a přes ně křivku klouzavého průměru; klik na sloupec vybere rok, tažení období. Grafy rozložení (kategorie,
+// národnosti…) jsou pruhy; klik vybere hodnotu. Výběr platí pro všechny grafy (zužuje je), seznam vpravo
+// ukazuje jeho modelky (bez výběru všechny v grafu).
 // Počítá se ze seznamu modelek; nejčastější fotografové jsou z backendu (GetStatistiky) a jejich modelky se
 // dohledají hledáním. SVG grafSloupcu zůstává pro úvod Přehledu.
 import { GetModelky, GetStatistiky } from './backend';
@@ -40,16 +41,35 @@ export function grafSloupcu(polozky, { sirka = 460, vyska = 190 } = {}) {
         }).join('')}</svg>`;
 }
 
-// Nabídka grafů: v čase (sloupce nebo body s křivkou) a rozložení (pruhy)
+// Nabídka grafů. V čase: osa „rok“ (rok centerfoldu ve zvolené edici) nebo „mesic“ (měsíc přidání do sbírky);
+// druh pocet (sloupce počtů), udaj (medián a prostřední polovina modelek) nebo podil (procento modelek s vlastností
+// ze známých hodnot). Rozložení: pruhy hodnot.
+const anoNe = h => h === 1 ? true : h === 0 ? false : null;
+const zHodnot = (text, ano, ne) => {
+    const t = String(text || '').trim();
+    return ano.includes(t) ? true : ne.includes(t) ? false : null;
+};
 const GRAFY = [
-    { klic: 'cf', skupina: 'cas', nazev: 'Centerfoldy podle roku' },
-    { klic: 'vek', skupina: 'cas', nazev: 'Věk v době centerfoldu', jednotka: 'let', udaj: (m, c) => c.vekPresne },
-    { klic: 'vyska', skupina: 'cas', nazev: 'Výška', jednotka: 'cm', udaj: m => m.vyskaCm || null },
-    { klic: 'vaha', skupina: 'cas', nazev: 'Váha', jednotka: 'kg', udaj: m => m.vahaKg || null },
-    { klic: 'hrudnik', skupina: 'cas', nazev: 'Obvod hrudníku', jednotka: 'cm', udaj: m => m.obvodHrudnikCm || null },
-    { klic: 'pas', skupina: 'cas', nazev: 'Obvod pasu', jednotka: 'cm', udaj: m => m.obvodPasCm || null },
-    { klic: 'boky', skupina: 'cas', nazev: 'Obvod boků', jednotka: 'cm', udaj: m => m.obvodBokyCm || null },
-    { klic: 'prib', skupina: 'cas', nazev: 'Přibývání sbírky' },
+    { klic: 'cf', skupina: 'pocty', osa: 'rok', druh: 'pocet', nazev: 'Centerfoldy podle roku' },
+    { klic: 'prib', skupina: 'pocty', osa: 'mesic', druh: 'pocet', nazev: 'Přibývání sbírky' },
+    { klic: 'vek', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Věk v době centerfoldu', jednotka: 'let' },
+    { klic: 'vyska', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Výška', jednotka: 'cm', udaj: m => m.vyskaCm || null },
+    { klic: 'vaha', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Váha', jednotka: 'kg', udaj: m => m.vahaKg || null },
+    { klic: 'bmi', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'BMI', jednotka: 'kg/m²',
+        udaj: m => m.vyskaCm > 0 && m.vahaKg > 0 ? m.vahaKg / (m.vyskaCm / 100) ** 2 : null },
+    { klic: 'hrudnik', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod hrudníku', jednotka: 'cm', udaj: m => m.obvodHrudnikCm || null },
+    { klic: 'pas', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod pasu', jednotka: 'cm', udaj: m => m.obvodPasCm || null },
+    { klic: 'boky', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod boků', jednotka: 'cm', udaj: m => m.obvodBokyCm || null },
+    { klic: 'whr', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Poměr pas : boky', jednotka: '', desetinna: 2,
+        udaj: m => m.obvodPasCm > 0 && m.obvodBokyCm > 0 ? m.obvodPasCm / m.obvodBokyCm : null },
+    { klic: 'blond', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Blond vlasy', ano: 'blond', ne: 'jiné vlasy',
+        podil: m => String(m.vlasyBarva || '').trim() ? /blond|plav/.test(sjednotit(m.vlasyBarva)) : null },
+    { klic: 'silikon', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Silikonová prsa', ano: 'silikonová', ne: 'přírodní',
+        podil: m => zHodnot(m.prsaTyp, ['Silikonová'], ['Přírodní']) },
+    { klic: 'oholene', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Oholené ochlupení', ano: 'oholené', ne: 'přírodní nebo zastřižené',
+        podil: m => zHodnot(m.ochlupeni, ['Oholené'], ['Přírodní', 'Zastřižené']) },
+    { klic: 'tetovani', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Tetování', ano: 's tetováním', ne: 'bez tetování', podil: m => anoNe(m.tetovani) },
+    { klic: 'piercing', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Piercing', ano: 's piercingem', ne: 'bez piercingu', podil: m => anoNe(m.piercing) },
     { klic: 'kat', skupina: 'rozl', nazev: 'Kategorie' },
     { klic: 'nar', skupina: 'rozl', nazev: 'Národnosti' },
     { klic: 'vlasy', skupina: 'rozl', nazev: 'Barva vlasů' },
@@ -58,17 +78,25 @@ const GRAFY = [
     { klic: 'vyskyt', skupina: 'rozl', nazev: 'Výskyt (časopis / online)' },
     { klic: 'fot', skupina: 'rozl', nazev: 'Fotografové' },
 ];
-const SKUPINY = { cas: 'V čase', rozl: 'Rozložení' };
+const SKUPINY = { pocty: 'V čase · počty', udaje: 'V čase · údaje', podily: 'V čase · podíly', rozl: 'Rozložení' };
 
-// Stav: vybraný graf (pamatuje se), edice centerfoldů a výběr (u grafu v čase rozsah sloupců, jinak hodnota)
-let data = null;                 // { s, modelky, podleId, fotografove: Map(nazev → Set id modelek) }
+// Stav: vybraný graf (pamatuje se), edice centerfoldů a výběr. Výběr jsou podmínky (klíč → { popis, test, dotaz,
+// ... }) společné všem grafům: rok centerfoldu („rok“, sdílí ho všechny grafy s osou roků), měsíc přidání
+// („mesic“) a hodnota grafu rozložení (klíč grafu). Graf ukazuje jasně modelky vyhovující ostatním podmínkám,
+// tlumeně celou sbírku; vlastní podmínka grafu je v něm zvýrazněná.
+let data = null;                 // { s, modelky, fotografove: Map(nazev → Set id modelek) }
 let graf = 'cf';
 try { graf = GRAFY.some(g => g.klic === localStorage.getItem('grafStatistik')) ? localStorage.getItem('grafStatistik') : 'cf'; } catch { /* výchozí graf */ }
 let edice = 'vse';
-let vyber = null;                // { od, do } (indexy sloupců) nebo { hodnota }
+const filtry = new Map();
 let zobrazitVse = false;
-let tah = null;                  // tažení přes sloupce: { start, predtim }
+let tah = null;                  // tažení přes sloupce: { start, predtim, a, b }
+let posledniKonec = 'b';         // konec výběru, kterým naposledy hýbaly šipky se Shiftem
 const ZOBRAZIT_NAJEDNOU = 60;
+
+const definice = () => GRAFY.find(g => g.klic === graf);
+const klicFiltru = def => def.osa || def.klic;
+const vyhovuje = (m, krome = '') => [...filtry].every(([k, f]) => k === krome || f.test(m));
 
 // Centerfoldy modelky s rokem, edicí a věkem modelky v době vydání
 const vekVLetech = (narozeni, vydani) => {
@@ -89,33 +117,33 @@ const median = cisla => {
     const s = [...cisla].sort((a, b) => a - b), p = Math.floor(s.length / 2);
     return s.length % 2 ? s[p] : (s[p - 1] + s[p]) / 2;
 };
+const vEdici = c => edice === 'vse' || c.edice === edice;
 
-// Graf v čase: sloupce [{ popisek, nazev, polozky: [{ m, c?, hodnota? }] }] a druh (pocet, udaj)
+// Graf v čase: sloupce [{ popisek, nazev, rok | mesic, polozky: [{ m, c?, hodnota? }] }]
 function radaVCase(def) {
-    if (def.klic === 'prib') {
+    if (def.osa === 'mesic') {
         const dnes = new Date();
-        const sloupce = Array.from({ length: 24 }, (_, i) => {
+        return Array.from({ length: 24 }, (_, i) => {
             const d = new Date(dnes.getFullYear(), dnes.getMonth() - 23 + i, 1);
-            const klic = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            return { popisek: d.getMonth() ? ZKRATKY_PASKY[d.getMonth()] : String(d.getFullYear()), nazev: `${MESICE[d.getMonth()]} ${d.getFullYear()}`,
-                polozky: data.modelky.filter(m => (m.pridano || '').startsWith(klic)).map(m => ({ m })) };
+            const mesic = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            return { popisek: d.getMonth() ? ZKRATKY_PASKY[d.getMonth()] : String(d.getFullYear()), nazev: `${MESICE[d.getMonth()]} ${d.getFullYear()}`, mesic,
+                polozky: data.modelky.filter(m => (m.pridano || '').startsWith(mesic)).map(m => ({ m })) };
         });
-        return { druh: 'pocet', mesice: true, sloupce };
     }
     // Centerfoldy ve zvolené edici; údaj modelky (výška…) patří k roku jejího prvního centerfoldu
     const polozky = data.modelky.flatMap(m => {
-        const cf = centerfoldyModelky(m).filter(c => edice === 'vse' || c.edice === edice);
-        if (!def.udaj) return cf.map(c => ({ m, c }));
+        const cf = centerfoldyModelky(m).filter(vEdici);
+        if (def.druh === 'pocet') return cf.map(c => ({ m, c }));
         if (def.klic === 'vek') return cf.filter(c => c.vekPresne !== null).map(c => ({ m, c, hodnota: c.vekPresne }));
-        const hodnota = def.udaj(m);
-        return cf.length && hodnota ? [{ m, c: cf[0], hodnota }] : [];
+        const hodnota = def.druh === 'udaj' ? def.udaj(m) : def.podil(m);
+        return cf.length && hodnota !== null ? [{ m, c: cf[0], hodnota }] : [];
     });
-    if (!polozky.length) return { druh: def.udaj ? 'udaj' : 'pocet', sloupce: [] };
+    if (!polozky.length) return [];
     const roky = polozky.map(p => p.c.rok);
     const od = Math.min(...roky), doRoku = Math.max(...roky);
     const sloupce = Array.from({ length: doRoku - od + 1 }, (_, i) => ({ popisek: String(od + i), nazev: String(od + i), rok: od + i, polozky: [] }));
     polozky.forEach(p => sloupce[p.c.rok - od].polozky.push(p));
-    return { druh: def.udaj ? 'udaj' : 'pocet', sloupce };
+    return sloupce;
 }
 
 // Kvantil seřazených hodnot s lineární interpolací (q 0–1)
@@ -123,20 +151,29 @@ const kvantil = (serazene, q) => {
     const poz = q * (serazene.length - 1), dolni = Math.floor(poz);
     return serazene[dolni] + ((serazene[Math.ceil(poz)] ?? serazene[dolni]) - serazene[dolni]) * (poz - dolni);
 };
-// Údaj ve sloupci: medián a prostřední polovina modelek (null, když sloupec nemá hodnoty)
-const rozsahSloupce = s => {
-    if (!s.polozky.length) return null;
-    const h = s.polozky.map(p => p.hodnota).sort((a, b) => a - b);
+// Údaj ve skupině položek: medián a prostřední polovina modelek (null bez hodnot)
+const rozsahHodnot = polozky => {
+    if (!polozky.length) return null;
+    const h = polozky.map(p => p.hodnota).sort((a, b) => a - b);
     return { median: kvantil(h, 0.5), dolni: kvantil(h, 0.25), horni: kvantil(h, 0.75) };
 };
+// Hodnota sloupce podle druhu grafu: počet, medián (s pásmem) nebo procento (null, když nejsou data)
+function hodnotaSloupce(def, polozky) {
+    if (def.druh === 'pocet') return polozky.length;
+    if (def.druh === 'podil') return polozky.length ? polozky.filter(p => p.hodnota).length / polozky.length * 100 : null;
+    return rozsahHodnot(polozky)?.median ?? null;
+}
 
-// Křivka: klouzavý průměr počtů, u údaje průměr mediánů sloupců vážený počtem modelek, přes okno ±polomer
-function krivka(rada, polomer) {
-    return rada.sloupce.map((_, i) => {
-        const okno = rada.sloupce.slice(Math.max(0, i - polomer), i + polomer + 1);
-        if (rada.druh === 'pocet') return okno.reduce((s, x) => s + x.polozky.length, 0) / okno.length;
-        const n = okno.reduce((s, x) => s + x.polozky.length, 0);
-        return n >= 3 ? okno.reduce((s, x) => s + (x.polozky.length ? rozsahSloupce(x).median * x.polozky.length : 0), 0) / n : null;
+// Křivka přes okno ±polomer sloupců: průměr počtů, podíl ze všech modelek okna, u údaje průměr mediánů
+// sloupců vážený počtem modelek; u podílu a údaje jen z aspoň tří modelek
+function krivka(def, skupiny, polomer) {
+    return skupiny.map((_, i) => {
+        const okno = skupiny.slice(Math.max(0, i - polomer), i + polomer + 1);
+        const n = okno.reduce((s, x) => s + x.length, 0);
+        if (def.druh === 'pocet') return n / okno.length;
+        if (n < 3) return null;
+        if (def.druh === 'podil') return okno.reduce((s, x) => s + x.filter(p => p.hodnota).length, 0) / n * 100;
+        return okno.reduce((s, x) => s + (x.length ? rozsahHodnot(x).median * x.length : 0), 0) / n;
     });
 }
 
@@ -145,71 +182,94 @@ const krokOsy = rozpeti => {
     const rad = 10 ** Math.floor(Math.log10(rozpeti / 4 || 1));
     return [1, 2, 2.5, 5, 10].map(k => k * rad).find(k => rozpeti / k <= 5);
 };
+const textHodnoty = (def, h) => def.druh === 'podil' ? `${Math.round(h)} %` : `${cislo(h, def.desetinna ?? 1)}${def.jednotka ? ` ${def.jednotka}` : ''}`;
 
-// Graf v čase jako SVG v přesné šířce karty (písmo zůstává stejně velké); neviditelné cíle nesou bublinu a index
-function htmlGrafuVCase(def, rada, sirka) {
-    const { sloupce } = rada;
-    if (!sloupce.length) return `<p class="stat-prazdne">${def.udaj ? `Údaj ${def.nazev.toLowerCase()} zatím u modelek s centerfoldem chybí.` : 'Zatím žádná data.'}</p>`;
-    const W = Math.max(320, sirka), H = 360, L = 42, P = 10, T = 14, D = 26;
+// Rozsah vlastní podmínky grafu v čase jako indexy sloupců (při tažení dočasný)
+function rozsahVyberu(def, sloupce) {
+    if (tah) return { a: Math.min(tah.a, tah.b), b: Math.max(tah.a, tah.b) };
+    const f = filtry.get(klicFiltru(def));
+    if (!f || !sloupce.length) return null;
+    const index = hodnota => sloupce.findIndex(s => (def.osa === 'rok' ? s.rok : s.mesic) === hodnota);
+    const a = index(f.od), b = index(f.do);
+    if (a >= 0 && b >= 0) return { a, b };
+    // Rok mimo osu (jiná edice): výběr se oseká na sloupce, které graf má
+    if (def.osa === 'rok') {
+        const a2 = sloupce.findIndex(s => s.rok >= f.od), b2 = sloupce.findLastIndex(s => s.rok <= f.do);
+        return a2 >= 0 && b2 >= a2 ? { a: a2, b: b2 } : null;
+    }
+    return null;
+}
+
+// Graf v čase jako SVG v přesné šířce karty (písmo zůstává stejně velké); neviditelné cíle nesou bublinu a index.
+// Při výběru z jiných grafů: jasně modelky výběru, tlumeně celá sbírka a její křivka čárkovaně.
+function htmlGrafuVCase(def, sloupce, sirka) {
+    if (!sloupce.length) return `<p class="stat-prazdne">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s centerfoldem chybí.`}</p>`;
+    const zuzeno = [...filtry.keys()].some(k => k !== klicFiltru(def));
+    const vybrane = sloupce.map(s => zuzeno ? s.polozky.filter(p => vyhovuje(p.m, klicFiltru(def))) : s.polozky);
+    const W = Math.max(320, sirka), H = 360, L = 46, P = 10, T = 14, D = 26;
     const k = (W - L - P) / sloupce.length;
-    const polomer = rada.mesice ? 1 : 3;
-    const cara = sloupce.length >= 5 ? krivka(rada, polomer) : [];
-    let lo = 0, hi;
-    if (rada.druh === 'pocet') {
-        hi = Math.max(1, ...sloupce.map(s => s.polozky.length));
-    } else {
-        const rozsahy = sloupce.map(rozsahSloupce).filter(Boolean);
+    const polomer = def.osa === 'mesic' ? 1 : 3;
+    const cara = sloupce.length >= 5 ? krivka(def, vybrane, polomer) : [];
+    const caraCelku = zuzeno && sloupce.length >= 5 ? krivka(def, sloupce.map(s => s.polozky), polomer) : [];
+    let lo = 0, hi = 100;
+    if (def.druh === 'pocet') hi = Math.max(1, ...sloupce.map(s => s.polozky.length));
+    else if (def.druh === 'udaj') {
+        const rozsahy = [...sloupce.map(s => rozsahHodnot(s.polozky)), ...vybrane.map(rozsahHodnot)].filter(Boolean);
         const min = Math.min(...rozsahy.map(r => r.dolni)), max = Math.max(...rozsahy.map(r => r.horni)), okraj = (max - min) * 0.1 || 1;
         lo = min - okraj;
         hi = max + okraj;
     }
-    const krok = krokOsy(hi - lo);
-    if (rada.druh === 'pocet') hi = Math.ceil(hi / krok) * krok;
+    const krok = def.druh === 'podil' ? 25 : krokOsy(hi - lo);
+    if (def.druh === 'pocet') hi = Math.ceil(hi / krok) * krok;
     const y = h => T + (hi - h) / (hi - lo || 1) * (H - T - D);
     const x = i => L + i * k;
-    const vybrano = i => !vyber || (i >= Math.min(vyber.od, vyber.do) && i <= Math.max(vyber.od, vyber.do));
+    const rozsah = rozsahVyberu(def, sloupce);
+    const mimo = i => rozsah && (i < rozsah.a || i > rozsah.b);
     const casti = [];
-    for (let h = Math.ceil(lo / krok) * krok; h <= hi + 1e-9; h += krok) {
-        casti.push(`<line class="${h === 0 ? 'graf-osa' : 'graf-mrizka'}" x1="${L}" x2="${W - P}" y1="${y(h)}" y2="${y(h)}"/><text class="graf-popisek" x="${L - 8}" y="${y(h) + 4}" text-anchor="end">${cislo(h)}</text>`);
+    for (let h = Math.ceil(lo / krok - 1e-9) * krok; h <= hi + 1e-9; h += krok) {
+        casti.push(`<line class="${h === 0 ? 'graf-osa' : 'graf-mrizka'}" x1="${L}" x2="${W - P}" y1="${y(h)}" y2="${y(h)}"/><text class="graf-popisek" x="${L - 8}" y="${y(h) + 4}" text-anchor="end">${def.druh === 'podil' ? `${h} %` : cislo(h, krok < 0.1 ? 2 : krok < 1 ? 1 : 0)}</text>`);
     }
-    if (vyber) {
-        const a = Math.min(vyber.od, vyber.do), b = Math.max(vyber.od, vyber.do);
-        casti.push(`<rect class="sp-oblast" x="${x(a)}" y="${T}" width="${(b - a + 1) * k}" height="${H - T - D}" rx="4"/>`);
-    }
+    if (rozsah) casti.push(`<rect class="sp-oblast" x="${x(rozsah.a)}" y="${T}" width="${(rozsah.b - rozsah.a + 1) * k}" height="${H - T - D}" rx="4"/>`);
     // Popisky osy x tak, aby mezi nimi bylo aspoň 38 px; roky na kulatých číslech
     const kazdy = [1, 2, 5, 10, 20, 50].find(n => n * k >= 38) || 50;
+    const sl = Math.max(1, k - (k > 8 ? 2 : 1));
     sloupce.forEach((s, i) => {
-        const ukazat = rada.mesice ? i % kazdy === 0 || !ZKRATKY_PASKY.includes(s.popisek) : s.rok % kazdy === 0;
+        const ukazat = def.osa === 'mesic' ? i % kazdy === 0 || !ZKRATKY_PASKY.includes(s.popisek) : s.rok % kazdy === 0;
         if (ukazat) casti.push(`<text class="graf-popisek" x="${x(i) + k / 2}" y="${H - 8}" text-anchor="middle">${esc(s.popisek)}</text>`);
-        const tlum = vybrano(i) ? '' : 'tlum';
-        if (rada.druh === 'pocet') {
-            const v = s.polozky.length, sl = Math.max(1, k - (k > 8 ? 2 : 1));
-            casti.push(`<path class="sp-sloupec ${tlum}" d="${sloupec(x(i) + (k - sl) / 2, y(v), sl, y(0) - y(v))}" fill="${BARVA}"/>`);
-        } else if (s.polozky.length) {
+        const tlum = mimo(i) ? 'tlum' : '';
+        if (def.druh === 'udaj') {
             // Svislý pruh prostřední poloviny modelek a bod mediánu roku
-            const r = rozsahSloupce(s), sl = Math.max(2, Math.min(10, k - 2));
-            casti.push(`<rect class="sp-pasmo ${tlum}" x="${x(i) + (k - sl) / 2}" y="${y(r.horni)}" width="${sl}" height="${Math.max(2, y(r.dolni) - y(r.horni))}" rx="${Math.min(3, sl / 2)}"/>`);
+            const r = rozsahHodnot(vybrane[i]), sirkaPasma = Math.max(2, Math.min(10, k - 2));
+            if (!r) return;
+            casti.push(`<rect class="sp-pasmo ${tlum}" x="${x(i) + (k - sirkaPasma) / 2}" y="${y(r.horni)}" width="${sirkaPasma}" height="${Math.max(2, y(r.dolni) - y(r.horni))}" rx="${Math.min(3, sirkaPasma / 2)}"/>`);
             casti.push(`<circle class="sp-bod ${tlum}" cx="${x(i) + k / 2}" cy="${y(r.median)}" r="${Math.min(3.5, Math.max(2, k / 3))}" fill="${BARVA}"/>`);
+            return;
         }
+        const celek = hodnotaSloupce(def, s.polozky), vyber = hodnotaSloupce(def, vybrane[i]);
+        if (zuzeno && celek) casti.push(`<path class="sp-sloupec celek" d="${sloupec(x(i) + (k - sl) / 2, y(celek), sl, y(0) - y(celek))}"/>`);
+        if (vyber) casti.push(`<path class="sp-sloupec ${tlum}" d="${sloupec(x(i) + (k - sl) / 2, y(vyber), sl, y(0) - y(vyber))}" fill="${BARVA}"/>`);
     });
-    const body = cara.map((v, i) => v === null ? null : `${x(i) + k / 2},${y(v)}`);
     // Křivka se přeruší tam, kde nejsou data
-    const useky = body.reduce((u, b) => { if (b) u.at(-1).push(b); else if (u.at(-1).length) u.push([]); return u; }, [[]]).filter(u => u.length > 1);
-    useky.forEach(u => casti.push(`<polyline class="sp-krivka" points="${u.join(' ')}"/>`));
+    const lomena = (rada, trida) => rada.map((v, i) => v === null ? null : `${x(i) + k / 2},${y(v)}`)
+        .reduce((u, b) => { if (b) u.at(-1).push(b); else if (u.at(-1).length) u.push([]); return u; }, [[]])
+        .filter(u => u.length > 1).map(u => `<polyline class="${trida}" points="${u.join(' ')}"/>`).join('');
+    casti.push(lomena(caraCelku, 'sp-krivka celek'), lomena(cara, 'sp-krivka'));
     sloupce.forEach((s, i) => {
-        const n = s.polozky.length;
-        const tip = rada.druh === 'pocet'
-            ? `${s.nazev}: ${rada.mesice ? `${pocetModelek(n)} přidáno` : pocetCenterfoldu(n)}${cara[i] !== undefined ? ` · průměr ${cislo(cara[i])}` : ''}`
-            : `${s.nazev}: ${n ? `medián ${cislo(rozsahSloupce(s).median)} ${def.jednotka}, polovina modelek ${cislo(rozsahSloupce(s).dolni)}–${cislo(rozsahSloupce(s).horni)} · ${pocetModelek(n)}` : 'bez údaje'}`;
-        casti.push(`<rect class="graf-cil" data-i="${i}" data-tip="${esc(tip)}" x="${x(i)}" y="0" width="${k}" height="${H}"/>`);
+        const p = vybrane[i], n = p.length, h = hodnotaSloupce(def, p);
+        const kolik = def.druh === 'pocet' ? (def.osa === 'mesic' ? `${pocetModelek(n)} přidáno` : pocetCenterfoldu(n))
+            : h === null ? 'bez údaje'
+            : def.druh === 'podil' ? `${def.ano} ${Math.round(h)} % (${p.filter(x => x.hodnota).length} z ${n})`
+            : `medián ${textHodnoty(def, h)}, polovina modelek ${textHodnoty(def, rozsahHodnot(p).dolni)}–${textHodnoty(def, rozsahHodnot(p).horni)} · ${pocetModelek(n)}`;
+        const celkem = zuzeno && def.druh === 'pocet' ? ` z ${s.polozky.length}` : '';
+        casti.push(`<rect class="graf-cil" data-i="${i}" data-tip="${esc(`${s.nazev}: ${kolik}${celkem}`)}" x="${x(i)}" y="0" width="${k}" height="${H}"/>`);
     });
     return `<svg class="sp-svg" width="${W}" height="${H}" role="img" aria-label="${esc(def.nazev)}">${casti.join('')}</svg>`;
 }
 
-// Graf rozložení: položky { hodnota, nazev, test, dotaz } s počtem modelek
+// Graf rozložení: položky { hodnota, nazev, test, dotaz } s počtem modelek v celé sbírce a ve výběru
 function polozkyRozlozeni(klic) {
     const { modelky } = data;
-    const podleUdaje = (hodnota, dotaz, nejvic) => {
+    const podleUdaje = (hodnota, dotaz) => {
         const skupiny = new Map();
         modelky.forEach(m => {
             const h = String(hodnota(m) || '').trim();
@@ -219,7 +279,7 @@ function polozkyRozlozeni(klic) {
         });
         return [...skupiny.values()];
     };
-    let polozky = [];
+    let polozky = [], seradit = true;
     if (klic === 'kat') {
         const nazvy = new Set(modelky.flatMap(m => kategorieModelky(m).map(k => k.nazev)));
         polozky = [...nazvy].map(n => ({ hodnota: n, nazev: n, test: m => kategorieModelky(m).some(k => k.nazev === n), dotaz: `kategorie:"${n.toLowerCase()}"` }));
@@ -227,57 +287,63 @@ function polozkyRozlozeni(klic) {
     else if (klic === 'vlasy') polozky = podleUdaje(m => m.vlasyBarva, 'vlasy');
     else if (klic === 'oci') polozky = podleUdaje(m => m.ociBarva, 'oci');
     else if (klic === 'srd') {
-        return [5, 4, 3, 2, 1, 0].map(n => ({ hodnota: String(n), nazev: n ? '♥'.repeat(n) : 'Bez hodnocení', test: m => (m.hodnoceni || 0) === n, dotaz: n ? `hodnoceni:${n}` : null }))
-            .map(p => ({ ...p, pocet: modelky.filter(p.test).length }));
+        seradit = false;
+        polozky = [5, 4, 3, 2, 1, 0].map(n => ({ hodnota: String(n), nazev: n ? '♥'.repeat(n) : 'Bez hodnocení', test: m => (m.hodnoceni || 0) === n, dotaz: n ? `hodnoceni:${n}` : null }));
     } else if (klic === 'vyskyt') {
-        return Object.entries(VYSKYT).map(([k, nazev]) => ({ hodnota: k || 'neurceno', nazev, test: m => vyskytModelky(m) === k, dotaz: `vyskyt:${k || 'neurceno'}` }))
-            .map(p => ({ ...p, pocet: modelky.filter(p.test).length })).filter(p => p.pocet);
+        seradit = false;
+        polozky = Object.entries(VYSKYT).map(([k, nazev]) => ({ hodnota: k || 'neurceno', nazev, test: m => vyskytModelky(m) === k, dotaz: `vyskyt:${k || 'neurceno'}` }));
     } else if (klic === 'fot') {
         polozky = data.s.fotografove.filter(f => data.fotografove.has(f.nazev)).map(f => ({ hodnota: f.nazev, nazev: f.nazev,
             test: m => data.fotografove.get(f.nazev).has(m.id), dotaz: `fotograf:"${f.nazev}"` }));
     }
-    return polozky.map(p => ({ ...p, pocet: modelky.filter(p.test).length }))
-        .sort((a, b) => b.pocet - a.pocet || a.nazev.localeCompare(b.nazev, 'cs')).slice(0, 15);
+    const vybrane = modelky.filter(m => vyhovuje(m, klic));
+    const spocitane = polozky.map(p => ({ ...p, pocet: modelky.filter(p.test).length, vybrano: vybrane.filter(p.test).length })).filter(p => p.pocet);
+    return seradit ? spocitane.sort((a, b) => b.pocet - a.pocet || a.nazev.localeCompare(b.nazev, 'cs')).slice(0, 15) : spocitane;
 }
 
-function htmlPruhu(polozky) {
+function htmlPruhu(def, polozky) {
     if (!polozky.length) return `<p class="stat-prazdne">${graf === 'fot' && !data.fotografove.size ? 'Počítám fotografy…' : 'Zatím žádná data.'}</p>`;
+    const zuzeno = [...filtry.keys()].some(k => k !== def.klic);
+    const vlastni = filtry.get(def.klic)?.hodnota;
     const max = Math.max(1, ...polozky.map(p => p.pocet));
     return `<div class="sp-pruhy">${polozky.map(p => {
-        const zapnuty = vyber?.hodnota === p.hodnota;
-        return `<button type="button" class="sp-pruh ${zapnuty ? 'vybrany' : vyber ? 'tlum' : ''}" data-hodnota="${esc(p.hodnota)}" aria-pressed="${zapnuty}"
-            data-tip="${esc(`${p.nazev}: ${pocetModelek(p.pocet)}`)}">
-            <span class="sp-nazev">${esc(p.nazev)}</span><span class="sp-draha"><i style="width:${p.pocet / max * 100}%"></i></span><span class="sp-pocet">${p.pocet}</span>
+        const zapnuty = vlastni === p.hodnota;
+        return `<button type="button" class="sp-pruh ${zapnuty ? 'vybrany' : vlastni !== undefined ? 'tlum' : ''}" data-hodnota="${esc(p.hodnota)}" aria-pressed="${zapnuty}"
+            data-tip="${esc(`${p.nazev}: ${zuzeno ? `${p.vybrano} z ${pocetModelek(p.pocet)}` : pocetModelek(p.pocet)}`)}">
+            <span class="sp-nazev">${esc(p.nazev)}</span>
+            <span class="sp-draha">${zuzeno ? `<i class="celek" style="width:${p.pocet / max * 100}%"></i>` : ''}<i style="width:${(zuzeno ? p.vybrano : p.pocet) / max * 100}%"></i></span>
+            <span class="sp-pocet">${zuzeno ? `${p.vybrano} / ${p.pocet}` : p.pocet}</span>
         </button>`;
     }).join('')}</div>`;
 }
 
-// Modelky výběru: [{ m, detail, poradi }] bez opakování, nadpis a dotaz pro galerii
-function modelkyVyberu(def, rada, rozlozeni) {
-    if (def.skupina === 'rozl') {
-        const p = vyber && rozlozeni.find(x => x.hodnota === vyber.hodnota);
-        const seznam = (p ? data.modelky.filter(p.test) : data.modelky)
+// Modelky výběru: [{ m, detail }] bez opakování; u grafu v čase z vybraných sloupců (bez výběru ze všech)
+function modelkyVyberu(def, sloupce) {
+    if (!def.osa) {
+        const seznam = data.modelky.filter(m => vyhovuje(m))
             .sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || a.jmeno.localeCompare(b.jmeno, 'cs'))
             .map(m => ({ m, detail: kategorieModelky(m).filter(k => !k.odvozena).map(k => k.nazev)[0] || '' }));
-        return { nadpis: p ? p.nazev : 'Všechny modelky', seznam, dotaz: p?.dotaz || '' };
+        return seznam;
     }
-    const a = vyber ? Math.min(vyber.od, vyber.do) : 0, b = vyber ? Math.max(vyber.od, vyber.do) : rada.sloupce.length - 1;
+    const rozsah = rozsahVyberu(def, sloupce);
     const videne = new Set();
-    const seznam = rada.sloupce.slice(a, b + 1).flatMap(s => s.polozky).filter(p => !videne.has(p.m.id) && videne.add(p.m.id)).map(p => ({
-        m: p.m,
-        detail: def.klic === 'prib' ? `přidána ${p.m.pridano.slice(8, 10).replace(/^0/, '')}. ${parseInt(p.m.pridano.slice(5, 7))}. ${p.m.pridano.slice(0, 4)}`
-            : def.udaj ? `${cislo(p.hodnota)} ${def.jednotka} · ${nazevVydani(p.c.v)}` : nazevVydani(p.c.v),
-    }));
-    if (def.klic === 'prib') seznam.reverse();
-    const nadpis = !vyber || !rada.sloupce.length ? (def.klic === 'prib' ? 'Poslední dva roky' : 'Celé období')
-        : a === b ? rada.sloupce[a].nazev : `${rada.sloupce[a].nazev} – ${rada.sloupce[b].nazev}`;
-    return { nadpis, seznam, dotaz: '' };
+    const seznam = sloupce.slice(rozsah?.a ?? 0, (rozsah?.b ?? sloupce.length - 1) + 1).flatMap(s => s.polozky)
+        .filter(p => vyhovuje(p.m, klicFiltru(def)) && !videne.has(p.m.id) && videne.add(p.m.id)).map(p => ({
+            m: p.m,
+            detail: def.osa === 'mesic' ? `přidána ${parseInt(p.m.pridano.slice(8, 10))}. ${parseInt(p.m.pridano.slice(5, 7))}. ${p.m.pridano.slice(0, 4)}`
+                : def.druh === 'udaj' ? `${textHodnoty(def, p.hodnota)} · ${nazevVydani(p.c.v)}`
+                : def.druh === 'podil' ? `${p.hodnota ? def.ano : def.ne} · ${nazevVydani(p.c.v)}` : nazevVydani(p.c.v),
+        }));
+    return def.osa === 'mesic' ? seznam.reverse() : seznam;
 }
 
-function htmlSeznamu({ nadpis, seznam, dotaz }) {
+function htmlSeznamu(def, sloupce) {
+    const seznam = modelkyVyberu(def, sloupce);
     const ukazat = zobrazitVse ? seznam : seznam.slice(0, ZOBRAZIT_NAJEDNOU);
-    return `<div class="sp-seznam-hlava"><b>${esc(nadpis)}</b><span>${pocetModelek(seznam.length)}</span>
-            ${vyber ? '<button type="button" class="sp-zrusit" data-zrusit-vyber title="Zrušit výběr (Esc)" aria-label="Zrušit výběr">×</button>' : ''}</div>
+    const nadpis = filtry.size ? 'Modelky výběru' : def.osa === 'mesic' ? 'Přidané za dva roky' : def.osa ? 'Celé období' : 'Všechny modelky';
+    const dotazy = [...filtry.values()].map(f => f.dotaz);
+    const dotaz = filtry.size && dotazy.every(Boolean) ? dotazy.join(' ') : '';
+    return `<div class="sp-seznam-hlava"><b>${nadpis}</b><span>${pocetModelek(seznam.length)}</span></div>
         ${seznam.length ? `<div class="sp-modelky">${ukazat.map(({ m, detail }) => `
             <button type="button" class="sp-modelka" data-modelka-vyberu="${m.id}">
                 <img data-src="${esc(adresaTitulni(m))}" alt="" draggable="false" />
@@ -285,22 +351,26 @@ function htmlSeznamu({ nadpis, seznam, dotaz }) {
                 ${m.hodnoceni ? `<i>${'♥'.repeat(m.hodnoceni)}</i>` : ''}
             </button>`).join('')}
             ${ukazat.length < seznam.length ? `<button type="button" class="link sp-vse" data-vse-vyberu>Zobrazit všech ${seznam.length}</button>` : ''}</div>`
-        : '<p class="stat-prazdne">Ve výběru nejsou žádné modelky.</p>'}
+        : '<p class="stat-prazdne">Výběru neodpovídá žádná modelka.</p>'}
         ${dotaz ? `<button type="button" class="btn btn-primary btn-small sp-galerie" data-vyber-galerie="${esc(dotaz)}">Otevřít v galerii →</button>` : ''}`;
 }
 
-// Věta vpravo nad grafem
-function souhrn(def, rada, rozlozeni) {
-    if (def.skupina === 'rozl') return `<b>${data.modelky.length}</b> modelek · <b>${rozlozeni.length}</b> ${rozlozeni.length === 1 ? 'hodnota' : rozlozeni.length > 1 && rozlozeni.length < 5 ? 'hodnoty' : 'hodnot'}`;
-    const vsechny = rada.sloupce.flatMap(s => s.polozky);
+// Věta vpravo nad grafem: celek, u výběru i hodnota výběru
+function souhrn(def, sloupce, rozlozeni) {
+    const ve = (vyber, celkem) => filtry.size ? `<b>${vyber}</b> z ${celkem}` : `<b>${celkem}</b>`;
+    if (!def.osa) return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} modelek · ${rozlozeni.length} ${rozlozeni.length === 1 ? 'hodnota' : rozlozeni.length > 1 && rozlozeni.length < 5 ? 'hodnoty' : 'hodnot'}`;
+    const vsechny = sloupce.flatMap(s => s.polozky);
     if (!vsechny.length) return '';
-    if (def.klic === 'prib') return `<b>${vsechny.length}</b> přidáno za dva roky`;
-    const obdobi = `<b>${rada.sloupce[0].nazev}–${rada.sloupce.at(-1).nazev}</b>`;
-    if (!def.udaj) return `<b>${vsechny.length}</b> ${pocetCenterfoldu(vsechny.length).replace(/^\d+ /, '')} · ${obdobi}`;
-    return `medián <b>${cislo(median(vsechny.map(p => p.hodnota)))} ${def.jednotka}</b> · známý u ${pocetModelek(vsechny.length)} · ${obdobi}`;
+    const rozsah = rozsahVyberu(def, sloupce);
+    const vybrane = sloupce.slice(rozsah?.a ?? 0, (rozsah?.b ?? sloupce.length - 1) + 1).flatMap(s => s.polozky).filter(p => vyhovuje(p.m, klicFiltru(def)));
+    const obdobi = `${sloupce[0].nazev}–${sloupce.at(-1).nazev}`;
+    if (def.druh === 'pocet') return def.osa === 'mesic' ? `${ve(vybrane.length, vsechny.length)} přidaných za dva roky` : `${ve(vybrane.length, vsechny.length)} centerfoldů · ${obdobi}`;
+    const hodnota = polozky => polozky.length ? textHodnoty(def, def.druh === 'podil' ? hodnotaSloupce(def, polozky) : median(polozky.map(p => p.hodnota))) : '–';
+    const co = def.druh === 'podil' ? def.ano : 'medián';
+    return filtry.size ? `${co} ve výběru <b>${hodnota(vybrane)}</b> (celkem ${hodnota(vsechny)}) · ${pocetModelek(vybrane.length)}`
+        : `${co} <b>${hodnota(vsechny)}</b> · známé u ${pocetModelek(vsechny.length)} · ${obdobi}`;
 }
 
-const definice = () => GRAFY.find(g => g.klic === graf);
 const ediceCenterfoldu = () => EDICE.filter(e => data.modelky.some(m => centerfoldyModelky(m).some(c => c.edice === e)));
 
 // Kostra se vykreslí jednou (rozvinutý seznam drží fokus); části se pak překreslují zvlášť
@@ -313,6 +383,7 @@ function htmlKostry() {
             <span class="sp-edice" data-sp-edice></span>
             <span class="sp-souhrn" data-sp-souhrn></span>
         </div>
+        <div class="sp-filtry" data-sp-filtry></div>
         <div class="sp-telo">
             <div class="stat-karta sp-karta">
                 <div class="sp-legenda" data-sp-legenda></div>
@@ -324,47 +395,70 @@ function htmlKostry() {
         ${data.modelky.length ? '' : '<p class="stat-prazdne">Statistiky se ukážou, až budou ve sbírce modelky.</p>'}`;
 }
 
+function htmlLegendy(def) {
+    if (!def.osa) return '';
+    const celek = [...filtry.keys()].some(k => k !== klicFiltru(def)) ? '<span><i class="celek"></i>celá sbírka</span>' : '';
+    const prumer = `<span><i class="cara"></i>průměr ${def.osa === 'mesic' ? '3 měsíců' : '7 let'}</span>`;
+    if (def.druh === 'udaj') return `<span><i class="bod"></i>medián roku</span><span><i class="pasmo"></i>prostřední polovina modelek</span>${prumer}`;
+    return `<span><i></i>${def.druh === 'podil' ? `${def.ano} (% modelek se známým údajem)` : def.osa === 'mesic' ? 'přidané modelky' : 'centerfoldy'}</span>${celek}${prumer}`;
+}
+
 // Překreslení grafu (při tažení jen graf), případně i seznamu a lišty
-let rada = null, rozlozeni = [];
+let sloupce = [], rozlozeni = [];
 function vykreslit(koren, { jenGraf = false } = {}) {
     if (!data || !koren.querySelector('[data-sp-graf]')) return;
     const def = definice();
     const misto = koren.querySelector('[data-sp-graf]');
     koren.querySelector('.graf-bublina')?.classList.add('hidden');
     if (!jenGraf) {
-        rada = def.skupina === 'cas' ? radaVCase(def) : null;
-        rozlozeni = def.skupina === 'rozl' ? polozkyRozlozeni(def.klic) : [];
+        sloupce = def.osa ? radaVCase(def) : [];
+        rozlozeni = def.osa ? [] : polozkyRozlozeni(def.klic);
     }
     const fokus = /** @type {HTMLElement} */ (document.activeElement)?.closest?.('[data-hodnota]')?.dataset.hodnota;
-    misto.innerHTML = def.skupina === 'cas' ? htmlGrafuVCase(def, rada, misto.clientWidth) : htmlPruhu(rozlozeni);
-    misto.classList.toggle('cas', def.skupina === 'cas');
+    misto.innerHTML = def.osa ? htmlGrafuVCase(def, sloupce, misto.clientWidth) : htmlPruhu(def, rozlozeni);
+    misto.classList.toggle('cas', Boolean(def.osa));
     if (fokus !== undefined) /** @type {HTMLElement} */ (misto.querySelector(`[data-hodnota="${CSS.escape(fokus)}"]`))?.focus({ preventScroll: true });
     if (jenGraf) return;
     const ed = ediceCenterfoldu();
-    koren.querySelector('[data-sp-edice]').innerHTML = def.skupina === 'cas' && def.klic !== 'prib' && ed.length > 1
+    koren.querySelector('[data-sp-edice]').innerHTML = def.osa === 'rok' && ed.length > 1
         ? ['vse', ...ed].map(e => `<button type="button" class="${e === edice ? 'active' : ''}" aria-pressed="${e === edice}" data-sp-edice-volba="${e}">${e === 'vse' ? 'Vše' : e}</button>`).join('') : '';
-    koren.querySelector('[data-sp-souhrn]').innerHTML = souhrn(def, rada, rozlozeni);
-    koren.querySelector('[data-sp-legenda]').innerHTML = def.skupina === 'rozl' ? '' : rada.druh === 'pocet'
-        ? `<span><i></i>${rada.mesice ? 'přidané modelky' : 'centerfoldy'}</span><span><i class="cara"></i>průměr ${rada.mesice ? '3 měsíců' : '7 let'}</span>`
-        : '<span><i class="bod"></i>medián roku</span><span><i class="pasmo"></i>prostřední polovina modelek</span><span><i class="cara"></i>průměr 7 let</span>';
-    koren.querySelector('[data-sp-napoveda]').textContent = def.skupina === 'cas'
-        ? `Klik na sloupec vybere ${rada.mesice ? 'měsíc' : 'rok'}, tažením vyberete období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší.`
-        : 'Klik na řádek ukáže jeho modelky; další klik výběr zruší.';
+    koren.querySelector('[data-sp-souhrn]').innerHTML = souhrn(def, sloupce, rozlozeni);
+    koren.querySelector('[data-sp-filtry]').innerHTML = filtry.size ? `<span>Výběr:</span>${[...filtry].map(([k, f]) =>
+        `<button type="button" class="chip active" data-zrusit-podminku="${esc(k)}" title="Odebrat podmínku">${esc(f.popis)} ×</button>`).join('')}
+        <button type="button" class="link" data-zrusit-vyber>Zrušit výběr</button>` : '';
+    koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
+    koren.querySelector('[data-sp-napoveda]').textContent = def.osa
+        ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažením vyberete období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.`
+        : 'Klik na řádek vybere hodnotu, další klik ji zruší. Výběr platí pro všechny grafy: přepni graf a uvidíš jen vybrané modelky.';
     const seznam = koren.querySelector('[data-sp-seznam]');
     const fokusSeznamu = seznam.contains(document.activeElement);
-    seznam.innerHTML = htmlSeznamu(modelkyVyberu(def, rada, rozlozeni));
+    seznam.innerHTML = htmlSeznamu(def, sloupce);
     if (fokusSeznamu) /** @type {HTMLElement} */ (seznam.querySelector('button'))?.focus({ preventScroll: true });
     nacitatPostupne(seznam);
 }
 
-// Načtení a vykreslení do oddílu Přehledu; volá se při prvním zobrazení oddílu (výběr zůstává, dokud se nezmění data)
+// Podmínka roku centerfoldu nebo měsíce přidání ze sloupců a..b grafu v čase
+function nastavitRozsah(def, a, b) {
+    const [od, doS] = [sloupce[Math.min(a, b)], sloupce[Math.max(a, b)]];
+    const nazev = od === doS ? od.nazev : `${od.nazev} – ${doS.nazev}`;
+    if (def.osa === 'mesic') {
+        filtry.set('mesic', { od: od.mesic, do: doS.mesic, popis: `přidané ${nazev}`, dotaz: null,
+            test: m => (m.pridano || '').slice(0, 7) >= od.mesic && (m.pridano || '').slice(0, 7) <= doS.mesic });
+        return;
+    }
+    const ed = edice;
+    filtry.set('rok', { od: od.rok, do: doS.rok, popis: `centerfold ${nazev}${ed === 'vse' ? '' : ` · ${ed}`}`, dotaz: null,
+        test: m => centerfoldyModelky(m).some(c => (ed === 'vse' || c.edice === ed) && c.rok >= od.rok && c.rok <= doS.rok) });
+}
+
+// Načtení a vykreslení do oddílu Přehledu; volá se při prvním zobrazení oddílu (výběr se při nových datech zruší)
 export async function nacistStatistiky(koren) {
     if (!koren || koren.dataset.nacteno) return;
     koren.dataset.nacteno = '1';
     const [s, modelky] = await Promise.all([GetStatistiky(), vsechnyModelky()]);
     if (!koren.isConnected) return;
     data = { s, modelky, fotografove: new Map() };
-    vyber = null;
+    filtry.clear();
     koren.innerHTML = `${htmlKostry()}<div class="graf-bublina hidden"></div>`;
     vykreslit(koren);
     // Při změně šířky se graf v čase překreslí v nové šířce
@@ -373,7 +467,7 @@ export async function nacistStatistiky(koren) {
     new ResizeObserver(() => {
         if (!misto.isConnected || misto.clientWidth === sirka) return;
         sirka = misto.clientWidth;
-        if (definice().skupina === 'cas') vykreslit(koren, { jenGraf: true });
+        if (definice().osa) vykreslit(koren, { jenGraf: true });
     }).observe(misto);
     // Modelky nejčastějších fotografů (z hledání), pak se graf fotografů doplní
     const vysledky = await Promise.all(s.fotografove.map(f => GetModelky(`fotograf:"${f.nazev}"`)
@@ -394,8 +488,6 @@ function indexSloupce(misto, clientX) {
     return Math.max(0, Math.min(cile.length - 1, Math.floor((x - zacatek) / k)));
 }
 
-const stejny = (a, b) => a && b && a.od === b.od && a.do === b.do;
-
 // Bublina u sloupce nebo řádku pod myší; výběr myší (klik, tažení) a klávesnicí
 export function pripravit(stats) {
     stats.addEventListener('mousemove', (e) => {
@@ -415,7 +507,7 @@ export function pripravit(stats) {
     });
     stats.addEventListener('mouseleave', () => stats.querySelectorAll('.graf-bublina').forEach(b => b.classList.add('hidden')));
 
-    // Tažení přes sloupce grafu v čase
+    // Tažení přes sloupce grafu v čase; podmínka se nastaví po puštění
     stats.addEventListener('pointerdown', (e) => {
         const misto = /** @type {HTMLElement} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-sp-graf].cas'));
         if (!misto || e.button !== 0) return;
@@ -424,24 +516,26 @@ export function pripravit(stats) {
         e.preventDefault();
         misto.focus({ preventScroll: true });
         misto.setPointerCapture(e.pointerId);
-        tah = { start: i, predtim: vyber };
-        vyber = { od: i, do: i };
+        tah = { start: i, predtim: rozsahVyberu(definice(), sloupce), a: i, b: i };
         vykreslit(misto.closest('.stat-statistiky'), { jenGraf: true });
     });
     stats.addEventListener('pointermove', (e) => {
         if (!tah) return;
         const misto = /** @type {HTMLElement} */ (e.target).closest?.('[data-sp-graf]');
         const i = misto && indexSloupce(misto, e.clientX);
-        if (i === null || i === undefined || i === vyber.do) return;
-        vyber = { od: tah.start, do: i };
+        if (i === null || i === undefined || i === tah.b) return;
+        tah.b = i;
         vykreslit(misto.closest('.stat-statistiky'), { jenGraf: true });
     });
     stats.addEventListener('pointerup', (e) => {
         if (!tah) return;
         const koren = /** @type {HTMLElement} */ (e.target).closest?.('.stat-statistiky');
-        // Klik na jediný vybraný sloupec výběr zruší
-        if (vyber.od === vyber.do && stejny(vyber, tah.predtim)) vyber = null;
+        const { a, b, predtim } = tah;
         tah = null;
+        const def = definice();
+        // Klik na jediný vybraný sloupec výběr zruší
+        if (a === b && predtim && predtim.a === a && predtim.b === b) filtry.delete(klicFiltru(def));
+        else nastavitRozsah(def, a, b);
         zobrazitVse = false;
         if (koren) vykreslit(koren);
     });
@@ -451,7 +545,6 @@ export function pripravit(stats) {
         if (!select.matches('[data-sp-graf-vyber]')) return;
         graf = select.value;
         try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
-        vyber = null;
         zobrazitVse = false;
         vykreslit(select.closest('.stat-statistiky'));
     });
@@ -473,37 +566,61 @@ export function pripravit(stats) {
         }
         const volbaEdice = cil.closest('[data-sp-edice-volba]');
         const pruh = cil.closest('.sp-pruh[data-hodnota]');
-        if (cil.closest('[data-vse-vyberu]')) zobrazitVse = true;
-        else if (cil.closest('[data-zrusit-vyber]')) vyber = null;
+        const podminka = cil.closest('[data-zrusit-podminku]');
+        if (cil.closest('[data-vse-vyberu]')) {
+            zobrazitVse = true;
+            vykreslit(koren);
+            return;
+        }
+        if (cil.closest('[data-zrusit-vyber]')) filtry.clear();
+        else if (podminka) filtry.delete(podminka.dataset.zrusitPodminku);
         else if (volbaEdice) {
+            // Výběr roku platí pro edici, ve které vznikl; se změnou edice se zruší
             edice = volbaEdice.dataset.spEdiceVolba;
-            vyber = null;
-        } else if (pruh) vyber = vyber?.hodnota === pruh.dataset.hodnota ? null : { hodnota: pruh.dataset.hodnota };
-        else return;
-        if (!cil.closest('[data-vse-vyberu]')) zobrazitVse = false;
+            filtry.delete('rok');
+        } else if (pruh) {
+            const def = definice();
+            const p = rozlozeni.find(x => x.hodnota === pruh.dataset.hodnota);
+            if (!p) return;
+            if (filtry.get(def.klic)?.hodnota === p.hodnota) filtry.delete(def.klic);
+            else filtry.set(def.klic, { hodnota: p.hodnota, popis: `${def.nazev}: ${p.nazev}`, test: p.test, dotaz: p.dotaz });
+        } else return;
+        zobrazitVse = false;
         vykreslit(koren);
+        // Fokus zůstane na přepínači edice; po odebrání podmínky přejde na graf (Esc pak dál funguje)
         if (volbaEdice) /** @type {HTMLElement} */ (koren.querySelector(`[data-sp-edice-volba="${edice}"]`))?.focus();
+        else if (!pruh) /** @type {HTMLElement} */ (koren.querySelector('[data-sp-graf]'))?.focus({ preventScroll: true });
     });
 
-    // Klávesnice v grafu v čase: šipky posouvají výběr (Shift rozšiřuje), Home a End; Esc zruší výběr
+    // Klávesnice v grafu v čase: šipky posouvají výběr (Shift rozšiřuje), Home a End; Esc zruší celý výběr
     stats.addEventListener('keydown', (e) => {
         const koren = /** @type {HTMLElement} */ (e.target).closest?.('.stat-statistiky');
         if (!koren || !data) return;
         if (e.key === 'Escape') {
-            if (!vyber) return;
+            if (!filtry.size) return;
             e.preventDefault();
             e.stopPropagation();
-            vyber = null;
+            filtry.clear();
             vykreslit(koren);
             return;
         }
         const misto = /** @type {HTMLElement} */ (e.target).closest('[data-sp-graf].cas');
-        const n = rada?.sloupce.length || 0;
+        const n = sloupce.length;
         if (!misto || !n || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
         e.preventDefault();
-        const ted = vyber ? vyber.do : e.key === 'ArrowLeft' ? n : -1;
+        const def = definice();
+        const rozsah = rozsahVyberu(def, sloupce);
+        // Pohyblivý konec výběru: u rozšiřování ten, kterým se naposledy hýbalo
+        const kotva = rozsah ? (posledniKonec === 'a' ? rozsah.b : rozsah.a) : null;
+        const ted = rozsah ? (posledniKonec === 'a' ? rozsah.a : rozsah.b) : e.key === 'ArrowLeft' ? n : -1;
         const nove = e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : Math.max(0, Math.min(n - 1, ted + (e.key === 'ArrowLeft' ? -1 : 1)));
-        vyber = e.shiftKey && vyber ? { od: vyber.od, do: nove } : { od: nove, do: nove };
+        if (e.shiftKey && rozsah) {
+            posledniKonec = nove < kotva ? 'a' : 'b';
+            nastavitRozsah(def, kotva, nove);
+        } else {
+            posledniKonec = 'b';
+            nastavitRozsah(def, nove, nove);
+        }
         zobrazitVse = false;
         vykreslit(koren);
     });

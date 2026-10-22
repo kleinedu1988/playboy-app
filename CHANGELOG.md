@@ -7,6 +7,13 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.96.0] – 2026-10-22
+
+### Přidáno
+- Statistiky: výběr platí pro všechny grafy. Vybraný rok či období (centerfold, přidání) nebo hodnota (kategorie, národnost…) zúží ostatní grafy – jasně modelky výběru, tlumeně celá sbírka a čárkovaně její křivka. Podmínky jsou štítky pod lištou (křížek odebere jednu, „Zrušit výběr“ nebo Esc všechny); grafy s osou roků sdílejí výběr roku centerfoldu.
+- Nové grafy v čase: BMI a poměr pas : boky (medián a pásmo) a podíly – blond vlasy, silikonová prsa, oholené ochlupení, tetování a piercing (procento ze známých hodnot s křivkou).
+- Souhrn nad grafem srovná výběr s celkem (např. „medián ve výběru 22 let (celkem 21 let)“); pruhy rozložení ukazují „výběr / celkem“.
+
 ## [0.95.0] – 2026-10-22
 
 ### Změněno

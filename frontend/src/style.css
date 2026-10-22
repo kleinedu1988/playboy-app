@@ -5830,6 +5830,21 @@ textarea {
     font-weight: 600;
 }
 
+/* Podmínky výběru jako štítky; výběr platí pro všechny grafy */
+.sp-filtry {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: -4px 0 14px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.sp-filtry:empty {
+    display: none;
+}
+
 /* Graf a seznam vedle sebe; v užším okně seznam pod grafem */
 .sp-telo {
     display: grid;
@@ -5877,6 +5892,10 @@ textarea {
     background-color: rgba(216, 27, 96, 0.35);
 }
 
+.sp-legenda i.celek {
+    background-color: rgba(216, 27, 96, 0.22);
+}
+
 .sp-legenda i.cara {
     width: 14px;
     height: 2px;
@@ -5902,6 +5921,16 @@ textarea {
 .sp-svg {
     display: block;
     overflow: visible;
+}
+
+.sp-sloupec.celek {
+    fill: rgba(216, 27, 96, 0.22);
+}
+
+.sp-krivka.celek {
+    stroke: var(--text-muted);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 4;
 }
 
 .sp-sloupec.tlum,
@@ -5951,7 +5980,7 @@ textarea {
 
 .sp-pruh {
     display: grid;
-    grid-template-columns: minmax(90px, 200px) minmax(0, 1fr) 48px;
+    grid-template-columns: minmax(90px, 200px) minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
     padding: 6px 8px;
@@ -5985,7 +6014,14 @@ textarea {
 }
 
 .sp-draha {
+    position: relative;
     height: 10px;
+}
+
+.sp-draha i.celek {
+    position: absolute;
+    inset: 0 auto 0 0;
+    opacity: 0.25;
 }
 
 .sp-draha i {
@@ -5997,7 +6033,9 @@ textarea {
 }
 
 .sp-pocet {
+    min-width: 48px;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
     text-align: right;
     color: var(--text-muted);
 }
@@ -6025,21 +6063,6 @@ textarea {
 .sp-seznam-hlava span {
     color: var(--text-muted);
     font-size: 12px;
-}
-
-.sp-zrusit {
-    margin-left: auto;
-    padding: 0 6px;
-    border: none;
-    background: none;
-    color: var(--text-muted);
-    font-size: 18px;
-    line-height: 1;
-    cursor: pointer;
-}
-
-.sp-zrusit:hover {
-    color: var(--text-main);
 }
 
 .sp-modelky {

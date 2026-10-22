@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.94.3] – 2026-10-22
+
+### Opraveno
+- Kalendář: listování obsahem čísla na kartě už nepoblikává. Obrázky leží po celou dobu ve vlastní vrstvě nad obálkou, která nepřijímá myš; střídání je jen zvedne navrch a prolne, nic se pod kurzorem nevkládá ani neodebírá, takže karta neztrácí najetí (posun a růžový rámeček).
+
 ## [0.94.2] – 2026-10-22
 
 ### Opraveno

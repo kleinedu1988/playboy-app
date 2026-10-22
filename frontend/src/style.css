@@ -1781,10 +1781,19 @@ button.tag:hover {
     box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
 }
 
+/* Vrstva překryvů: vlastní skládání (z-index obrázků nepřeleze pásku a linky), myš jí prochází na kartu */
+.cal-vrstvy {
+    position: absolute;
+    inset: 0;
+    isolation: isolate;
+    pointer-events: none;
+}
+
 .cal-cell .cal-dalsi {
     position: absolute;
     inset: 0;
     opacity: 0;
+    will-change: opacity;
     transition: opacity 0.35s ease;
 }
 

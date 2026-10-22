@@ -7,6 +7,12 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.92.1] – 2026-10-22
+
+### Vylepšeno
+- **Přepracované Statistiky:** nahoře pět čísel (modelky, centerfoldy, věk, národnosti, přibylo za 30 dní) a nové grafy: kategorie, centerfoldy podle desetiletí rozdělené na edice US a CZ, barva vlasů a očí, hodnocení modelek a přibývání sbírky po měsících; zůstávají věk v době centerfoldu, národnosti, fotografové a vývoj v čase.
+- **Klik na sloupec ukáže modelky:** klik (nebo Enter) na sloupec či řádek grafu rozbalí pod řadou grafů titulní fotky modelek, které do něj patří, s údajem k věci (např. měsíc centerfoldu nebo věk). Klik na modelku otevře profil, „Zobrazit v galerii“ je ukáže jako hledání (u kategorií, národností, barvy vlasů a očí, hodnocení a fotografů), Esc výběr zavře. Stejně funguje číslo „Přibylo“.
+
 ## [0.92.0] – 2026-10-22
 
 ### Změněno

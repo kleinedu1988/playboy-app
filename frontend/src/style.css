@@ -5748,11 +5748,31 @@ textarea {
 
 .stat-cisla {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 22px;
-    margin: 0 0 22px;
-    padding: 4px 2px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 18px;
+}
+
+/* Čísla nahoře jako dlaždice; klikací (Přibylo) ukáže modelky */
+.stat-cislo {
+    min-width: 0;
+    padding: 12px 16px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 16px;
+    background: var(--panel-bg);
+}
+
+.stat-cislo .stat-karta-nadpis::after {
+    display: none;
+}
+
+.stat-cislo[data-vyber] {
+    cursor: pointer;
+}
+
+.stat-cislo[data-vyber]:hover,
+.stat-cislo.vybrany {
+    border-color: var(--accent);
 }
 
 .stat-karta-nadpis {
@@ -5776,14 +5796,14 @@ textarea {
 }
 
 .stat-velke {
-    font-size: 48px;
-    font-weight: 100;
+    font-size: 32px;
+    font-weight: 200;
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
 
 .stat-cisla p {
-    margin: 8px 0 0;
+    margin: 6px 0 0;
     font-size: 13px;
     line-height: 1.5;
     color: var(--text-muted);
@@ -5852,6 +5872,111 @@ textarea {
     fill: rgba(255, 255, 255, 0.04);
 }
 
+/* Sloupec nebo řádek, který vede na výběr modelek; vybraný má bílý obrys */
+.graf g[data-vyber] {
+    cursor: pointer;
+    outline: none;
+}
+
+.graf g[data-vyber]:focus-visible .graf-cil {
+    fill: rgba(255, 255, 255, 0.09);
+}
+
+.graf g.vybrany path {
+    stroke: var(--text-main);
+    stroke-width: 2;
+}
+
+.graf g.vybrany .graf-cil {
+    fill: rgba(255, 255, 255, 0.05);
+}
+
+/* Výběr modelek pod řadou grafů */
+.stat-vyber {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(216, 27, 96, 0.12), var(--panel-stin);
+}
+
+.stat-vyber-hlavicka {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.stat-vyber-hlavicka h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.stat-vyber-mrizka {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.stat-vyber-modelka {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+}
+
+.stat-vyber-modelka img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    margin-bottom: 4px;
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    object-fit: cover;
+}
+
+.stat-vyber-modelka span,
+.stat-vyber-modelka small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stat-vyber-modelka span {
+    font-size: 12.5px;
+}
+
+.stat-vyber-modelka small {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.stat-vyber-modelka:hover img,
+.stat-vyber-modelka:focus-visible img {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.stat-vyber-akce {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 12px;
+}
+
+.stat-vyber-akce:empty {
+    display: none;
+}
+
+.stat-vyber .link {
+    font-size: 13px;
+}
+
 .graf-bublina {
     position: absolute;
     z-index: 5;
@@ -5894,7 +6019,7 @@ textarea {
 }
 
 @media (max-width: 1000px) {
-    .stat-cisla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .stat-cisla { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .stat-grafy { grid-template-columns: 1fr; }
 }
 

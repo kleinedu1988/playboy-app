@@ -244,52 +244,63 @@ async function snimkyCisla(klic) {
     return obsahCisel.get(klic);
 }
 
+// Zastavení: odeberou se překryvy, původní obálka je celou dobu pod nimi
 function zastavitListovani() {
     if (!listovani) return;
     clearTimeout(listovani.casovac);
-    clearInterval(listovani.interval);
-    const { bunka, puvodni } = listovani;
-    bunka.querySelector('.cal-dalsi')?.remove();
-    const img = bunka.querySelector('img');
-    if (img && puvodni) img.src = puvodni;
-    bunka.querySelectorAll('.cal-linky i.ted').forEach(i => i.classList.remove('ted'));
+    const { bunka } = listovani;
     listovani = null;
+    bunka.querySelectorAll('.cal-dalsi').forEach(o => o.remove());
+    bunka.querySelectorAll('.cal-linky i.ted').forEach(i => i.classList.remove('ted'));
 }
 
+const cekat = ms => new Promise(hotovo => setTimeout(hotovo, ms));
+// Obrázek je načtený a dekódovaný (nebo se načíst nepodařilo – pak false)
+const nacistObrazek = img => (img.decode ? img.decode() : new Promise((ok, chyba) => { img.onload = ok; img.onerror = chyba; })).then(() => true, () => false);
+
+// Každý obrázek čísla se stáhne jednou do vlastního prvku; střídání ho jen přeloží přes kartu a prolne
+// (nic se nestahuje znovu, spodní obálka se nemění). Další krok začne, až je předchozí vidět.
 function spustitListovani(bunka) {
-    const img = /** @type {HTMLImageElement} */ (bunka.querySelector('img'));
-    if (!img) return;
-    const stavListovani = listovani = { bunka, puvodni: img.getAttribute('src'), casovac: 0, interval: 0 };
+    const puvodni = /** @type {HTMLImageElement} */ (bunka.querySelector('img'));
+    if (!puvodni) return;
+    const stavListovani = listovani = { bunka, casovac: 0 };
+    const bezi = () => listovani === stavListovani;
     stavListovani.casovac = setTimeout(async () => {
         const snimky = await snimkyCisla(bunka.dataset.vydani);
-        if (listovani !== stavListovani || snimky.length < 2) return;
-        // Začne obrázkem, který karta ukazuje (bývá to cover), a pokračuje dalším
-        let index = Math.max(0, snimky.findIndex(s => s.url === stavListovani.puvodni));
+        if (!bezi() || snimky.length < 2) return;
+        const obrazky = snimky.map(s => {
+            const el = document.createElement('img');
+            el.className = 'cal-dalsi';
+            el.draggable = false;
+            el.alt = '';
+            el.src = s.url;
+            return { ...s, el, nacteno: nacistObrazek(el) };
+        });
         const linky = bunka.querySelectorAll('.cal-linky i');
-        const ukazat = (i) => {
-            linky.forEach((l, k) => l.classList.toggle('ted', k === snimky[i].linka));
-            // Prolnutí: nový obrázek nad starým, po načtení se zviditelní a pak nahradí spodní
-            const dalsi = document.createElement('img');
-            dalsi.className = 'cal-dalsi';
-            dalsi.draggable = false;
-            dalsi.onload = () => {
-                if (listovani !== stavListovani) return;
-                requestAnimationFrame(() => dalsi.classList.add('viditelny'));
-                setTimeout(() => {
-                    if (listovani !== stavListovani) return;
-                    img.src = snimky[i].url;
-                    dalsi.remove();
-                }, 400);
-            };
-            dalsi.src = snimky[i].url;
-            bunka.querySelector('.cal-dalsi')?.remove();
-            img.after(dalsi);
-        };
-        ukazat(index);
-        stavListovani.interval = setInterval(() => {
-            index = (index + 1) % snimky.length;
-            ukazat(index);
-        }, INTERVAL_LISTOVANI);
+        let navrchu = null;
+        for (let index = 0; bezi(); index = (index + 1) % obrazky.length) {
+            const snimek = obrazky[index];
+            if (!await snimek.nacteno) {
+                // Obrázek, který se nenačetl, se přeskočí (po intervalu, aby se nezkoušelo dokola bez přestávky)
+                await cekat(INTERVAL_LISTOVANI);
+                continue;
+            }
+            if (!bezi()) return;
+            if (snimek.el !== navrchu) {
+                // Na vrch karty, z průhledného stavu se prolne; předchozí překryv pod ním se pak odebere
+                snimek.el.classList.remove('viditelny');
+                // Hned nad obálku a předchozí překryv, pod pásku měsíce, štítek výtisku a linky
+                ([...bunka.querySelectorAll('.cal-dalsi')].pop() || puvodni).after(snimek.el);
+                void snimek.el.offsetWidth;
+                snimek.el.classList.add('viditelny');
+                linky.forEach((l, k) => l.classList.toggle('ted', k === snimek.linka));
+                await cekat(380);
+                if (!bezi()) return;
+                navrchu?.remove();
+                navrchu = snimek.el;
+            }
+            await cekat(INTERVAL_LISTOVANI);
+        }
     }, PRODLEVA_LISTOVANI);
 }
 

@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.94.2] – 2026-10-22
+
+### Opraveno
+- **Kalendář, listování na kartě:** když se obrázky z Disku stahovaly déle než interval střídání (typicky napoprvé), karta přeskakovala na zastaralé snímky, linka neodpovídala obrázku a obálka problikávala. Teď se každý obrázek čísla stáhne jednou a jen se prolne přes obálku; další krok začne, až je předchozí opravdu vidět, a linka se přepne zároveň s obrázkem. Původní obálka zůstává pod překryvy, odjetí myší je jen odebere.
+
 ## [0.94.1] – 2026-10-22
 
 ### Vylepšeno

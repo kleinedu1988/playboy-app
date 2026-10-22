@@ -267,17 +267,28 @@ i poznámky mají stejný editor a zkratky.
 ### 1.9 – Chytré hledání (strojové učení nad sbírkou)
 
 **Cíl:** hledání rozumí běžné češtině a učí se ze sbírky a z používání – vše v programu, bez internetu
-a bez velkých modelů. Podrobný rozbor možností a cesta vývoje: [NAVRH-HLEDANI.md](docs/NAVRH-HLEDANI.md).
+a bez velkých modelů. Každá chytrá funkce se převádí na dnešní cílené hledání (`pole:hodnota`), které je vidět
+a jde upravit. **Bez změny schématu i exportu** – naučené údaje jsou v tabulce `nastaveni`. Každý krok vyjde
+jako samostatná verze (1.9.0–1.9.6). Rozbor možností: [NAVRH-HLEDANI.md](docs/NAVRH-HLEDANI.md).
+
+**Rozhodnutí:** pravidla a slovník z hodnot sbírky místo klasifikátoru nebo jazykového modelu (průhledné,
+testovatelné, offline); podobnost modelek váženou vzdáleností nad údaji, sdílenou s kontrolou v Údržbě.
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Česká věta jako filtr | „blondýnky z 90. let s tetováním“ → `vlasy:blond rok:1990..1999 tetovani:ano`; převod je vidět a jde upravit; slovník z hodnot ve sbírce | M–L |
-| 2 | Našeptávač | Při psaní skutečné hodnoty ze sbírky s počtem modelek a vlastní častá hledání | S–M |
-| 3 | Učení z otevíraných výsledků | Co po hledání otevíráš, jde příště výš; jen v počítači | M |
-| 4 | „Jako X“ | `jako:"jméno"` najde podobné modelky (postava, vlasy, období, kategorie) | M |
-| 5 | Synonyma ze sbírky | „plavé“ / „blond“ / „blonde“ se hledají společně | S–M |
+| 1 | Synonyma I | Výchozí slovník („blond“ = „blonde“ = „plavá“, národnosti cs/en) v hledání Go i JS, štítek „(+N)“; společné testovací případy hledání pro Go i JS; měření hledání na 5 000 modelkách | M |
+| 2 | Našeptávač II | Hodnoty všech polí ze sbírky s počty (i bez klíče, i „z výsledků“), roky z dat, historie vlastních hledání | M |
+| 3 | Česká věta I | „blondýnky z 90. let bez tetování“ → `vlasy:blond rok:1990..1999 tetovani:ne`; lehký stemming, čísla a rozsahy („vyšší než 175“, „narozené po 1980“), negace; řádek „Rozumím:“ se štítky, Tab převede, Ctrl+Enter hledá doslova | M–L |
+| 4 | Česká věta II | Národnosti a fotografové ze sbírky se skloňováním, volba významu u dvojznačných slov, „Vždy takto“; 50 testovacích vět | M |
+| 5 | „Jako X“ | `jako:"jméno"` najde podobné modelky (postava, vlasy, období, kategorie) s důvody, řazení Podobnost, „Podobné →“ v profilu; kód podobnosti sdílený s kontrolou duplicit | M |
+| 6 | Učení z otevíraných výsledků | Co po hledání otevíráš, jde příště výš (našeptávač, řazení Relevance); jen v počítači, jde zapomenout | M |
+| 7 | Synonyma II | Návrhy synonym ze sbírky a z oprav k potvrzení v ⋯ → Hledání → Synonyma | S–M |
 
-**Hotovo, když:** podle rozpracování v NAVRH-HLEDANI.md.
+**Nedělá se:** hledání podle obsahu fotky, jazykový model (API ani místní), přepisování dat podle synonym.
+
+**Hotovo, když:** z 50 testovacích vět je ≥ 45 převedeno správně a žádné jméno se nepřevede; každý převod je
+vidět a jde vrátit; našeptávač odpoví do 30 ms a `jako:` přidá nejvýš 10 ms na 5 000 modelkách; po třech
+otevřeních je modelka u stejného dotazu první; schéma zůstává na úpravě č. 11 a export na verzi 7.
 
 ### Nápady k posouzení (bez pořadí)
 

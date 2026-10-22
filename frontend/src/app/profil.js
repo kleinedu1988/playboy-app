@@ -1,5 +1,5 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
-import { esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, rozlozitVydani, vekPriVydani, sklonovat } from '../lib/format';
+import { VYSKYT, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -47,6 +47,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         ['Vydání', vydani],
         ['Kategorie', kategorieModelky(modelka).map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join(' ')],
         ['Na obálce', stitkyVydani(modelka.obalky || [])],
+        ['Výskyt', vyskytModelky(modelka) ? `<span class="udaje-znamka">${VYSKYT[vyskytModelky(modelka)]}</span>` : ''],
     ].filter(([, hodnota]) => hodnota);
 
     // Osobní údaje jako věty: „12. 3. 1975, Praha · v prvním vydání 20 let“

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi, cisloNevyslo, ciselRocniku, rozlozitKategorie, slozitKategorie, kategorieModelky, popisKategorie } from '../src/lib/format.js';
+import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi, cisloNevyslo, ciselRocniku, rozlozitKategorie, slozitKategorie, kategorieModelky, popisKategorie, vyskytModelky } from '../src/lib/format.js';
 import { sestavitAlba, zacatkyAlb, novePoradi } from '../src/lib/alba.js';
 
 test('názvy a formáty', () => {
@@ -328,4 +328,16 @@ test('kategorie modelek', () => {
     // Údržba: kategorie chybí, jen když není zapsaná ani odvozená
     assert.equal(udajChybi({ role: '', centerfoldy: [], obalky: [] }, 'role'), true);
     assert.equal(udajChybi({ role: '', centerfoldy: ['1995-03'], obalky: [] }, 'role'), false);
+});
+
+test('výskyt modelky: časopis, jen online, neurčeno', () => {
+    assert.equal(vyskytModelky({ vydani: ['1995-03'] }), 'casopis');
+    assert.equal(vyskytModelky({ obalky: ['1996-S01-CZ'] }), 'casopis');
+    // Ročník bez měsíce (Cybergirl of the Year 2012) není číslo časopisu
+    assert.equal(vyskytModelky({ vydani: ['2012'], role: 'Cybergirl of the Year 2012' }), 'online');
+    assert.equal(vyskytModelky({ role: 'Muse' }), 'online');
+    assert.equal(vyskytModelky({ role: 'Playboy Plus' }), 'online');
+    assert.equal(vyskytModelky({ role: 'Cyber Girl', centerfoldy: ['2005-03'] }), 'casopis');
+    assert.equal(vyskytModelky({ role: 'Celebrita' }), '');
+    assert.equal(vyskytModelky({}), '');
 });

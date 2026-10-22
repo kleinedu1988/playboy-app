@@ -1276,9 +1276,22 @@ func poleHledani(m Modelka) map[string]string {
 	if len(m.Obalky) > 0 {
 		kategorie += ", Modelka obálky"
 	}
+	// Výskyt: v časopise (číslo s měsícem nebo speciál), jen online (online kategorie), jinak neurčeno
+	// (frontend/src/lib/format.js, vyskytModelky)
+	vyskyt := "neurceno neurčeno"
+	cisla := append(append(append([]string{}, m.Vydani...), m.Obalky...), m.Centerfoldy...)
+	for _, v := range cisla {
+		if vzorVydani.MatchString(v) {
+			vyskyt = "casopis časopis"
+			break
+		}
+	}
+	if vyskyt != "casopis časopis" && vzorOnlineKategorie.MatchString(m.Role) {
+		vyskyt = "online"
+	}
 	return map[string]string{
 		"jmeno": m.Jmeno + "\n" + m.DalsiJmena, "vlasy": m.VlasyBarva, "oci": m.OciBarva, "narodnost": m.Narodnost,
-		"etnicita": m.Etnicita, "misto": m.NarozeniMisto, "tag": m.Tags, "tagy": m.Tags, "role": kategorie, "kategorie": kategorie,
+		"etnicita": m.Etnicita, "misto": m.NarozeniMisto, "tag": m.Tags, "tagy": m.Tags, "role": kategorie, "kategorie": kategorie, "vyskyt": vyskyt,
 		"fotograf": m.fotografoveAlb, "rok": strings.Join(roky, " "), "vydani": strings.Join(m.Vydani, " "),
 		"narozena": narozena, "edice": strings.Join(edice, " "), "prsa": m.VelikostPrsou + " " + m.PrsaTyp,
 		"ochlupeni": m.Ochlupeni, "poznamka": m.Poznamka, "vyska": vyska, "vaha": vaha,
@@ -1286,6 +1299,9 @@ func poleHledani(m Modelka) map[string]string {
 		"piercing": piercing, "obalka": obalky, "obalky": obalky, "umrti": m.UmrtiDatum, "zemrela": m.UmrtiDatum,
 	}
 }
+
+// Online kategorie (KATEGORIE s online: true ve frontend/src/lib/format.js), i anglicky
+var vzorOnlineKategorie = regexp.MustCompile(`(?i)cyber|coed|\bmuses?\b|creator|tvůrkyně|online|playboy ?plus|playboy\.?com`)
 
 // Slova hledání: volitelná negace (- nebo !), cílené pole:hodnota (i s mezerou za dvojtečkou) i pole:"více slov", uvozovky i obyčejná slova
 var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+|[^\s",:]+(?:\s*,\s*[^\s",:]+)*)?|(-|!)?"([^"]*)"|(\S+)`)

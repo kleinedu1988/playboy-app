@@ -1,7 +1,7 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
 import { GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
 import { contextMenu } from '../ui/nabidka';
-import { EDICE, bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, kategorieModelky, rozlozitVydani, seraditModelky, sklonovat } from '../lib/format';
+import { EDICE, VYSKYT, bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, kategorieModelky, rozlozitVydani, seraditModelky, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { otevritRychlePridani } from './formular-modelky';
@@ -68,8 +68,8 @@ const HTML_UVODU = `
         <p class="uvod-pozn">Data jsou v ~/.local/share/playboy-app; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
     </section>`;
 
-// Řádek voleb nad kartami (řazení, filtr srdíček včetně nehodnocených, edice a kategorie)
-function htmlNastroju(pocet, roleCetnosti = []) {
+// Řádek voleb nad kartami (řazení, filtr srdíček včetně nehodnocených, edice, kategorie a výskyt)
+function htmlNastroju(pocet, roleCetnosti = [], vyskytCetnosti = new Map()) {
     const razeni = Object.entries(RAZENI_GALERIE).map(([klic, r]) => `
         <button class="chip ${klic === stav.razeniGalerie ? 'active' : ''}" data-razeni-galerie="${klic}" title="Řadit ${r.nazev}">${r.popisek}</button>`).join('');
     const srdicka = [1, 2, 3, 4, 5].map(n => `
@@ -81,7 +81,11 @@ function htmlNastroju(pocet, roleCetnosti = []) {
         <button class="chip ${e === stav.ediceModelek ? 'active' : ''}" data-edice-modelek="${e}">${e === 'vse' ? 'vše' : e}</button>`).join('');
     const role = roleCetnosti.length ? `<button class="chip ${stav.roleModelek === 'vse' ? 'active' : ''}" data-role-modelek="vse">vše</button>`
         + roleCetnosti.map(([nazev, n]) => `<button class="chip ${nazev === stav.roleModelek ? 'active' : ''}" data-role-modelek="${esc(nazev)}">${esc(nazev)}<span>${n}</span></button>`).join('') : '';
-    return `<div class="gallery-toolbar">${razeni}<span class="oddelovac"></span>${srdicka}<span class="oddelovac"></span>${edice}${role ? `<span class="oddelovac"></span>${role}` : ''}
+    // Výskyt: v časopise, jen online, neurčeno (lib/format.js, vyskytModelky); hodnota bez modelek se nenabízí
+    const vyskyt = `<button class="chip ${stav.vyskytModelek === 'vse' ? 'active' : ''}" data-vyskyt-modelek="vse">vše</button>`
+        + Object.entries(VYSKYT).filter(([klic]) => vyskytCetnosti.get(klic) || klic === stav.vyskytModelek).map(([klic, nazev]) => `
+        <button class="chip ${klic === stav.vyskytModelek ? 'active' : ''}" data-vyskyt-modelek="${klic || 'neurceno'}">${nazev}<span>${vyskytCetnosti.get(klic) || 0}</span></button>`).join('');
+    return `<div class="gallery-toolbar">${razeni}<span class="oddelovac"></span>${srdicka}<span class="oddelovac"></span>${edice}${role ? `<span class="oddelovac"></span>${role}` : ''}<span class="oddelovac"></span>${vyskyt}
         <span>${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</span></div>`;
 }
 
@@ -103,6 +107,7 @@ export function hledatHodnotu(hodnota) {
     stav.minHodnoceni = 0;
     stav.ediceModelek = 'vse';
     stav.roleModelek = 'vse';
+    stav.vyskytModelek = 'vse';
     zapamatovatMisto({});
     prepnoutRezim('modelky');
     searchInput.value = hodnota;
@@ -132,6 +137,8 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
         cetnostiRoli.set(stav.roleModelek, 0);
     }
     const roleCetnosti = [...cetnostiRoli.entries()];
+    const vyskytCetnosti = new Map();
+    katalog.forEach(m => vyskytCetnosti.set(vyskytModelky(m), (vyskytCetnosti.get(vyskytModelky(m)) || 0) + 1));
 
     const vyhovujeModelka = m => {
         if (stav.minHodnoceni === -1 && m.hodnoceni > 0) return false;
@@ -141,6 +148,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
             if (!vydani.some(v => rozlozitVydani(v)?.edice === stav.ediceModelek)) return false;
         }
         if (stav.roleModelek !== 'vse' && !kategorieModelky(m).some(k => k.nazev === stav.roleModelek)) return false;
+        if (stav.vyskytModelek !== 'vse' && vyskytModelky(m) !== stav.vyskytModelek) return false;
         return true;
     };
 
@@ -160,8 +168,8 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
         listaGalerie.naplnit([]);
         const zrusit = { text: 'Zrušit hledání a filtry', akce: 'zrusit' };
         // Srdíčka jako jediná příčina mají vlastní hlášku; s hledáním nebo dalším filtrem je to „Nic nenalezeno“
-        const jinyFiltr = dotaz.trim() || stav.ediceModelek !== 'vse' || stav.roleModelek !== 'vse';
-        gallery.innerHTML = htmlNastroju(0, roleCetnosti) + (
+        const jinyFiltr = dotaz.trim() || stav.ediceModelek !== 'vse' || stav.roleModelek !== 'vse' || stav.vyskytModelek !== 'vse';
+        gallery.innerHTML = htmlNastroju(0, roleCetnosti, vyskytCetnosti) + (
             jinyFiltr ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádná modelka.')
             : stav.minHodnoceni === -1 ? htmlPrazdna('Vše ohodnoceno', 'Všechny modelky už mají srdíčka.', { ikona: 'srdce', tlacitko: zrusit })
             : stav.minHodnoceni > 0 ? htmlPrazdna(`Žádná modelka s ♥ ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? '+' : ''}`, 'Modelky se hodnotí srdíčky na kartě nebo v profilu.', { ikona: 'srdce', tlacitko: zrusit })
@@ -170,7 +178,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
         return;
     }
 
-    gallery.innerHTML = htmlNastroju(modelky.length, roleCetnosti) + modelky.map(m => `
+    gallery.innerHTML = htmlNastroju(modelky.length, roleCetnosti, vyskytCetnosti) + modelky.map(m => `
         <div class="card" data-id="${m.id}" tabindex="0" aria-label="${esc(m.jmeno)}">
             <div class="card-image-wrap">
                 <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" decoding="async" />
@@ -229,6 +237,7 @@ export function pripravit() {
         const minimum = e.target.closest('[data-min-hodnoceni]')?.dataset.minHodnoceni;
         const edice = e.target.closest('[data-edice-modelek]')?.dataset.ediceModelek;
         const role = e.target.closest('[data-role-modelek]')?.dataset.roleModelek;
+        const vyskyt = e.target.closest('[data-vyskyt-modelek]')?.dataset.vyskytModelek;
         if (razeni) {
             stav.razeniGalerie = razeni;
             try { localStorage.setItem('razeniGalerie', razeni); } catch { /* jen pro toto spuštění */ }
@@ -242,6 +251,9 @@ export function pripravit() {
             nacistGalerii(searchInput.value);
         } else if (role) {
             stav.roleModelek = role;
+            nacistGalerii(searchInput.value);
+        } else if (vyskyt) {
+            stav.vyskytModelek = vyskyt === 'neurceno' ? '' : vyskyt;
             nacistGalerii(searchInput.value);
         }
     });

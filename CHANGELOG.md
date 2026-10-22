@@ -7,6 +7,15 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.93.0] – 2026-10-22
+
+### Přidáno
+- **Výskyt modelky: v časopise, nebo jen online.** Program ho pozná sám: *v časopise* je modelka s centerfoldem, obálkou nebo albem u konkrétního čísla (měsíc nebo speciál; ročník bez měsíce jako „Cybergirl of the Year 2012“ se nepočítá), *jen online* modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator), ostatní jsou *neurčené*. Výskyt je v profilu, ve Filtrech galerie (s počty), ve Statistikách (skupina Sbírka, kombinuje se s ostatními podmínkami) a v hledání `vyskyt:casopis`, `vyskyt:online`, `vyskyt:neurceno`.
+- Nová kategorie **Online** pro modelky jen z internetu, které nemají jinou online kategorii (rozpozná i „Playboy Plus“, „Playboy.com“).
+
+### Opraveno
+- Statistiky, přibývání sbírky: červen a červenec měly stejnou zkratku „Čer“; teď Čvn a Čvc jako na páskách čísel.
+
 ## [0.92.2] – 2026-10-22
 
 ### Vylepšeno

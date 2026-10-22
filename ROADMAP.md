@@ -89,7 +89,7 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 ## Etapa 13 – Vydání 1.0.0
 
 **Výjimka z bety:** kategorie modelek (0.91.0), lišta Přehledu nahoře a přepracované Statistiky s výběrem
-modelek po kliknutí (0.92.x) přibyly 22. 10. 2026 na přání uživatele ještě před 1.0; schéma ani formát exportu
+modelek po kliknutí (0.92.x) a výskyt modelky v časopise nebo jen online (0.93.0) přibyly 22. 10. 2026 na přání uživatele ještě před 1.0; schéma ani formát exportu
 se nezměnily. Lhůta níže proto běží od jejich vydání: nejdřív 5. 11. 2026.
 
 **Pravidlo:** 1.0.0 vyjde po **14 dnech běžného používání bety bez nové chyby**. Lhůta běží od vydání bety

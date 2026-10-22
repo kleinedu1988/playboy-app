@@ -6,7 +6,7 @@
 // nejčastějších fotografů se dohledají hledáním. Grafy jsou HTML (písmo stejně velké v každé šířce karty);
 // SVG grafSloupcu zůstává pro úvod Přehledu.
 import { GetModelky, GetStatistiky } from './backend';
-import { EDICE, MESICE, esc, kategorieModelky, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat } from '../lib/format';
+import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, kategorieModelky, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { otevritDetailModelky } from './profil';
@@ -203,9 +203,11 @@ function htmlStatistik() {
     });
     const pribyvani = spocitat(mesice.map(k => {
         const nazev = `${MESICE[parseInt(k.slice(5)) - 1]} ${k.slice(0, 4)}`;
-        return { ...polozka('prib', k, nazev, `přidané ${nazev}`, m => (m.pridano || '').startsWith(k)), popisek: MESICE[parseInt(k.slice(5)) - 1].slice(0, 3) };
+        return { ...polozka('prib', k, nazev, `přidané ${nazev}`, m => (m.pridano || '').startsWith(k)), popisek: ZKRATKY_PASKY[parseInt(k.slice(5)) - 1] };
     }), modelky, vybrane);
     vsechnyPolozky.push(...pribyvani);
+    const vyskyt = graf(Object.entries(VYSKYT).map(([klic, nazev]) => polozka('vyskyt', klic || 'neurceno', nazev, nazev.toLowerCase(),
+        m => vyskytModelky(m) === klic, { dotaz: `vyskyt:${klic || 'neurceno'}` })).filter(p => modelky.some(p.test)));
     const polozkyFotografu = graf(s.fotografove.filter(f => fotografove.has(f.nazev)).map(f =>
         polozka('fot', f.nazev, f.nazev, `fotograf ${f.nazev}`, m => fotografove.get(f.nazev).has(m.id), { dotaz: `fotograf:"${f.nazev}"` })));
     data.polozky = new Map(vsechnyPolozky.map(p => [`${p.graf}\u0000${p.hodnota}`, p]));
@@ -266,6 +268,7 @@ function htmlStatistik() {
             modelky.length && karta('Hodnocení', sloupce(srdicka, vyber)),
         ))}
         ${sekce('Sbírka', karty(
+            vyskyt.length && karta('Výskyt', pruhy(vyskyt, vyber), 'V časopise: centerfold, obálka nebo album u konkrétního čísla. Jen online: bez čísla, s online kategorií (Cyber Girl, Coed, Muse, Creator, Online).'),
             pribyvani.some(p => p.celkem) && karta('Přibývání sbírky', sloupce(pribyvani, vyber), 'Modelky přidané po měsících za poslední rok.'),
             polozkyFotografu.length && karta('Nejčastější fotografové', pruhy(polozkyFotografu, vyber),
                 s.fotografuCelkem > polozkyFotografu.length ? `${polozkyFotografu.length} nejčastějších z ${sklonovat(s.fotografuCelkem, 'fotografa', 'fotografů', 'fotografů')}; počet modelek.` : 'Počet modelek.'),

@@ -97,6 +97,10 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
         ['US', 'CZ'].filter(e => !f || e.toLowerCase().includes(f)).forEach(e => {
             vysledky.push({ hodnota: e, popis: `Edice ${e}` });
         });
+    } else if (klic === 'vyskyt') {
+        [['casopis', 'V časopise'], ['online', 'Jen online (na internetu)'], ['neurceno', 'Neurčeno']].filter(([v]) => !f || v.includes(f)).forEach(([v, popis]) => {
+            vysledky.push({ hodnota: v, popis });
+        });
     } else if (klic === 'tetovani' || klic === 'piercing') {
         ['ano', 'ne'].filter(v => !f || v.includes(f)).forEach(v => {
             vysledky.push({ hodnota: v, popis: v === 'ano' ? 'Má' : 'Nemá' });

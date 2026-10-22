@@ -2932,6 +2932,8 @@ func TestKategorieModelek(t *testing.T) {
 		"kategorie:celebrita":         "Celebrita",
 		"role:celebrita":              "Celebrita",
 		"-kategorie:celebrita":        "Centerfold",
+		"vyskyt:casopis":              "Centerfold",
+		"vyskyt:neurceno":             "Celebrita",
 	} {
 		if mam := strings.Join(jmena(dotaz), " "); mam != chci {
 			t.Errorf("%s: %q, chci %q", dotaz, mam, chci)

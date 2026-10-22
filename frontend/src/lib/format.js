@@ -69,7 +69,7 @@ export function nazevVydani(vydani) {
 }
 
 // Páska čísla (dlaždice Čísel, levý panel profilu a čísla): „BŘE 95“, u speciálu „SPECIÁL 95“, u ročníku „ROČNÍK 95“, u jiné edice „… · CZ“
-const ZKRATKY_PASKY = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
+export const ZKRATKY_PASKY = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
 export function paskaCisla(vydani) {
     const v = rozlozitVydani(vydani);
     if (!v) return '';
@@ -308,17 +308,19 @@ export function udajChybi(modelka, vlastnost) {
 // Kategorie modelek (podle rozdělení na Playboy.com). Ukládají se do pole `role` jako text oddělený čárkami,
 // např. „Playmate roku 1998, Celebrita“; hodnota, kterou seznam nezná, zůstane jako vlastní kategorie.
 // Playmate měsíce a Modelka obálky program navíc odvodí sám z centerfoldů a obálek.
-// rok = kategorie má rok, urovne = Cyber Girl týdne / měsíce / roku; aliasy jsou bez diakritiky a malými písmeny
+// rok = kategorie má rok, urovne = Cyber Girl týdne / měsíce / roku; online = kategorie z Playboy.com, ne z časopisu;
+// aliasy jsou bez diakritiky a malými písmeny
 export const KATEGORIE = [
     { nazev: 'Playmate měsíce', odvozena: true, aliasy: ['playmate mesice', 'playmate of the month', 'pmom', 'playmate'] },
     { nazev: 'Playmate roku', rok: true, aliasy: ['playmate roku', 'playmate of the year', 'pmoy'] },
-    { nazev: 'Cyber Girl', urovne: ['týdne', 'měsíce', 'roku'], aliasy: ['cyber girl', 'cybergirl', 'cyber'] },
-    { nazev: 'Coed', urovne: ['týdne', 'měsíce'], aliasy: ['coed'] },
-    { nazev: 'Muse', aliasy: ['muse', 'muses'] },
+    { nazev: 'Cyber Girl', urovne: ['týdne', 'měsíce', 'roku'], online: true, aliasy: ['cyber girl', 'cybergirl', 'cyber'] },
+    { nazev: 'Coed', urovne: ['týdne', 'měsíce'], online: true, aliasy: ['coed'] },
+    { nazev: 'Muse', online: true, aliasy: ['muse', 'muses'] },
     { nazev: 'Celebrita', aliasy: ['celebrita', 'celebrity'] },
     { nazev: 'Modelka obálky', odvozena: true, aliasy: ['modelka obalky', 'cover girl', 'cover model', 'cover', 'obalka'] },
     { nazev: 'Jen ve speciálu', aliasy: ['jen ve specialu', 'special edition', 'specialni vydani', 'special', 'specialu'] },
-    { nazev: 'Creator', aliasy: ['creator', 'tvurkyne'] },
+    { nazev: 'Creator', online: true, aliasy: ['creator', 'tvurkyne'] },
+    { nazev: 'Online', online: true, aliasy: ['online', 'jen online', 'playboy plus', 'playboy com', 'playboy.com'] },
 ];
 const ALIASY_KATEGORII = KATEGORIE.flatMap(k => k.aliasy.map(alias => ({ alias, kategorie: k })))
     .sort((a, b) => b.alias.length - a.alias.length);
@@ -368,6 +370,16 @@ export function odvozeneKategorie(modelka) {
         (modelka.centerfoldy || []).length ? 'Playmate měsíce' : '',
         (modelka.obalky || []).length ? 'Modelka obálky' : '',
     ].filter(Boolean);
+}
+
+// Výskyt modelky: v časopise (centerfold, obálka nebo album u konkrétního čísla – měsíc nebo speciál; ročník bez
+// měsíce jako „Cybergirl of the Year 2012“ se nepočítá), jen online (bez čísla, s online kategorií) nebo neurčeno
+export const VYSKYT = { casopis: 'V časopise', online: 'Jen online', '': 'Neurčeno' };
+export function vyskytModelky(modelka) {
+    const cisla = [...(modelka.vydani || []), ...(modelka.obalky || []), ...(modelka.centerfoldy || [])];
+    if (cisla.some(v => rozlozitVydani(v)?.mesic)) return 'casopis';
+    const online = new Set(KATEGORIE.filter(k => k.online).map(k => k.nazev));
+    return rozlozitKategorie(modelka.role).some(k => online.has(k.nazev)) ? 'online' : '';
 }
 
 // Všechny kategorie modelky v pořadí seznamu (vlastní na konci); odvozená má příznak odvozena
@@ -460,7 +472,7 @@ export function rozlozitDotaz(dotaz) {
 
 // Klíče cíleného hledání, které zná backend (hledání modelek). Pohled, který daný údaj nemá (vlasy na stěně
 // centerfoldů), slovo s takovým klíčem nic neomezuje; neznámý klíč se hledá jako text „klic:hodnota“.
-const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'kategorie', 'fotograf',
+const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'kategorie', 'vyskyt', 'fotograf',
     'rok', 'vydani', 'narozena', 'edice', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
     'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela']);
 const jeCislo = text => /^[\d.\-]+$/.test(text);
@@ -579,6 +591,7 @@ export const PRIKAZY = [
     { klic: 'tag:', popis: 'Tag ze sbírky (playmate, cyb…)' },
     { klic: 'rok:', popis: 'Rok vydání (1970..1979, >=1980)' },
     { klic: 'kategorie:', popis: 'Kategorie (playmate, cyber girl, muse, celebrita…)' },
+    { klic: 'vyskyt:', popis: 'Výskyt: casopis, online (jen na internetu), neurceno' },
     { klic: 'fotograf:', popis: 'Jméno fotografa' },
     { klic: 'hodnoceni:', popis: 'Hodnocení (1–5, >=4)' },
     { klic: 'srdicka:', popis: 'Hodnocení srdíčky (5, >=4)' },

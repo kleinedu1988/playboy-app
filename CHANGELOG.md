@@ -7,6 +7,13 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.92.2] – 2026-10-22
+
+### Vylepšeno
+- **Statistiky jako skládaný výběr:** klik (nebo Enter) na sloupec či řádek grafu přidá podmínku výběru, další kliky ho zužují – třeba Celebrita, 70. léta a černé vlasy. V jednom grafu platí jedna hodnota; klik na jinou ji vymění, na tutéž ji zruší. Všechny grafy i čísla nahoře se přepočítají: tlumeně celá sbírka, jasně výběr (každý v měřítku svého největšího sloupce, aby byl tvar vidět i u malého výběru), u řádků „výběr / celkem“ a v číslech „z 2 000“ nebo „celkem 21“.
+- **Lišta výběru** ukazuje podmínky jako štítky (křížek podmínku odebere), počet modelek, „Zrušit výběr“ a „Zobrazit modelky“ s jejich titulními fotkami; klik na fotku otevře profil a „Otevřít v galerii“ převede výběr na hledání, když ho jde hledáním vyjádřit (kategorie, národnost, vlasy, oči, hodnocení, fotograf). Esc zavře fotky, další Esc zruší výběr.
+- **Grafy ve skupinách** Zařazení, Vzhled a původ a Sbírka, po třech v řadě (stránka je kratší); grafy bez údajů se nezobrazují a písmo v grafech je všude stejně velké. Fotografové se nově počítají v modelkách, aby šli kombinovat s ostatními podmínkami; místo čísla „Přibylo“ je nahoře průměrné hodnocení.
+
 ## [0.92.1] – 2026-10-22
 
 ### Vylepšeno

@@ -5816,8 +5816,241 @@ textarea {
 
 .stat-grafy {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+/* Statistiky: skupiny grafů, nápověda a lišta výběru (podmínky jako štítky, počet, akce) */
+.sg-sekce {
+    margin: 4px 0 8px;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.sg-napoveda {
+    margin: -4px 0 14px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+.sg-vyber {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 14px;
+    background: var(--panel-bg);
+    box-shadow: 0 0 0 4px rgba(216, 27, 96, 0.1);
+}
+
+.sg-vyber > b {
+    font-weight: 600;
+}
+
+.sg-vyber-text {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.sg-vyber .chip {
+    padding: 3px 10px;
+    font-size: 12.5px;
+}
+
+.sg-vyber-akce {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.stat-vyber[data-mrizka] {
+    margin: -6px 0 14px;
+}
+
+/* Grafy z HTML: každý sloupec a řádek je tlačítko; vrstva celé sbírky (tlumená při výběru) a vrstva výběru */
+.sg-sloupce {
+    display: flex;
+    gap: 4px;
+    height: 150px;
+    padding-top: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.sg-sloupec,
+.sg-pruh {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+}
+
+.sg-sloupec {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sg-sloupec:disabled,
+.sg-pruh:disabled {
+    cursor: default;
+}
+
+.sg-plocha {
+    position: relative;
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+}
+
+.sg-sloupec:not(:disabled):hover .sg-plocha,
+.sg-sloupec:focus-visible .sg-plocha {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.sg-sloupec:focus-visible,
+.sg-pruh:focus-visible {
+    outline: none;
+}
+
+.sg-plocha i {
+    position: absolute;
+    right: 12%;
+    bottom: 0;
+    left: 12%;
+    border-radius: 3px 3px 0 0;
+    background-color: var(--barva, var(--accent));
+}
+
+.sg-celkem.tlum {
+    opacity: 0.28;
+}
+
+.sg-sloupec.vybrany .sg-plocha {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.sg-plocha b {
+    position: absolute;
+    right: 0;
+    left: 0;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-main);
+    text-align: center;
+}
+
+.sg-plocha b.skryte {
+    visibility: hidden;
+}
+
+.sg-sloupec:hover .sg-plocha b,
+.sg-sloupec:focus-visible .sg-plocha b,
+.sg-sloupec.vybrany .sg-plocha b {
+    visibility: visible;
+}
+
+.sg-sloupec > small,
+.sg-skupina > small {
+    margin-top: 4px;
+    overflow: hidden;
+    font-size: 10.5px;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Sloupce po skupinách (desetiletí × edice): dvojice sloupců těsně u sebe, popisek pod skupinou */
+.sg-skupina {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sg-dvojice {
+    display: flex;
+    flex: 1;
+    gap: 2px;
+    padding: 0 6%;
+}
+
+.sg-skupiny .sg-plocha i {
+    right: 0;
+    left: 0;
+}
+
+.sg-skupiny .sg-skupina > small {
+    margin-bottom: -18px;
+}
+
+.sg-skupiny {
+    margin-bottom: 18px;
+}
+
+/* Vodorovné pruhy: název, dráha s pruhy, počet (u výběru „výběr / celkem“) */
+.sg-pruhy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sg-pruh {
+    display: grid;
+    grid-template-columns: minmax(70px, 34%) 1fr auto;
+    gap: 10px;
+    align-items: center;
+    min-height: 26px;
+    padding: 2px 8px;
+    border-radius: 7px;
+    text-align: left;
+}
+
+.sg-pruh:not(:disabled):hover,
+.sg-pruh:focus-visible {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sg-pruh.vybrany {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.sg-nazev {
+    overflow: hidden;
+    font-size: 12.5px;
+    color: var(--text-main);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sg-draha {
+    position: relative;
+    height: 9px;
+}
+
+.sg-draha i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    min-width: 3px;
+    border-radius: 0 4px 4px 0;
+    background-color: var(--accent);
+}
+
+.sg-pocet {
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
 }
 
 .stat-karta {
@@ -6018,8 +6251,15 @@ textarea {
     color: var(--text-muted);
 }
 
+@media (max-width: 1200px) {
+    .stat-grafy { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 1000px) {
     .stat-cisla { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
     .stat-grafy { grid-template-columns: 1fr; }
 }
 

@@ -1,7 +1,8 @@
 // Rychlé přidání modelky, formulář modelky a potvrzení mazání
 import { jednou, oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteModelka, DeleteVse, SlozkaZaloh } from './backend';
-import { esc, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
+import { esc, odvozeneKategorie, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
+import { pripojitVyberKategorii } from '../ui/kategorie';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { searchInput } from './prvky';
@@ -48,6 +49,15 @@ export const poleModelky = [
     ['coverId', 'inputDriveID', 'text'],
 ];
 
+// Kategorie modelky: štítky nad skrytým polem role
+const vyberKategorii = pripojitVyberKategorii(/** @type {HTMLInputElement} */ (document.getElementById('inputRole')), document.getElementById('kategorieVyber'));
+
+// Kurzor do pole formuláře; kategorie nemají textové pole, fokus dostane první štítek
+export function zameritPole(id) {
+    const prvek = id === 'inputRole' ? document.querySelector('#kategorieVyber .chip') : document.getElementById(id);
+    /** @type {HTMLElement} */ (prvek)?.focus();
+}
+
 export function otevritModelModal(modelka, fronta = null) {
     stav.frontaDoplnovani = fronta;
     document.getElementById('modelNextBtn').classList.toggle('hidden', !fronta);
@@ -71,6 +81,9 @@ export function otevritModelModal(modelka, fronta = null) {
             else prvek.value = modelka[vlastnost];
         });
     }
+    // Skryté pole formulář reset nevymaže
+    if (!modelka) /** @type {HTMLInputElement} */ (document.getElementById('inputRole')).value = '';
+    vyberKategorii.obnovit(modelka ? odvozeneKategorie(modelka) : []);
     modelModal.classList.remove('hidden');
     ukazatZalozku(0);
     oznacitVyplneneZalozky();
@@ -109,7 +122,6 @@ export async function naplnitNapovedu() {
         ['seznamNarodnost', m => m.narodnost, []],
         ['seznamEtnicita', m => m.etnicita, []],
         ['seznamMisto', m => m.narozeniMisto, []],
-        ['seznamRole', m => m.role, []],
     ];
     seznamy.forEach(([id, hodnota, obvykle]) => {
         const hodnoty = new Map();

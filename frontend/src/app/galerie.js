@@ -1,7 +1,7 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
 import { GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
 import { contextMenu } from '../ui/nabidka';
-import { EDICE, bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, rozlozitVydani, seraditModelky, sklonovat } from '../lib/format';
+import { EDICE, bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, kategorieModelky, rozlozitVydani, seraditModelky, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { otevritRychlePridani } from './formular-modelky';
@@ -68,7 +68,7 @@ const HTML_UVODU = `
         <p class="uvod-pozn">Data jsou v ~/.local/share/playboy-app; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
     </section>`;
 
-// Řádek voleb nad kartami (řazení, filtr srdíček včetně nehodnocených, edice a role)
+// Řádek voleb nad kartami (řazení, filtr srdíček včetně nehodnocených, edice a kategorie)
 function htmlNastroju(pocet, roleCetnosti = []) {
     const razeni = Object.entries(RAZENI_GALERIE).map(([klic, r]) => `
         <button class="chip ${klic === stav.razeniGalerie ? 'active' : ''}" data-razeni-galerie="${klic}" title="Řadit ${r.nazev}">${r.popisek}</button>`).join('');
@@ -125,15 +125,13 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     ]);
     if (moje !== stav.cisloNacteni) return;
 
+    // Kategorie (i odvozené z centerfoldu a obálky) v pořadí seznamu KATEGORIE, vlastní za nimi
     const cetnostiRoli = new Map();
-    katalog.forEach(m => {
-        const r = (m.role || '').trim();
-        if (r) cetnostiRoli.set(r, (cetnostiRoli.get(r) || 0) + 1);
-    });
+    katalog.forEach(m => kategorieModelky(m).forEach(k => cetnostiRoli.set(k.nazev, (cetnostiRoli.get(k.nazev) || 0) + 1)));
     if (stav.roleModelek !== 'vse' && !cetnostiRoli.has(stav.roleModelek)) {
         cetnostiRoli.set(stav.roleModelek, 0);
     }
-    const roleCetnosti = [...cetnostiRoli.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'cs'));
+    const roleCetnosti = [...cetnostiRoli.entries()];
 
     const vyhovujeModelka = m => {
         if (stav.minHodnoceni === -1 && m.hodnoceni > 0) return false;
@@ -142,7 +140,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
             const vydani = [...(m.vydani || []), ...(m.obalky || [])];
             if (!vydani.some(v => rozlozitVydani(v)?.edice === stav.ediceModelek)) return false;
         }
-        if (stav.roleModelek !== 'vse' && (m.role || '').trim() !== stav.roleModelek) return false;
+        if (stav.roleModelek !== 'vse' && !kategorieModelky(m).some(k => k.nazev === stav.roleModelek)) return false;
         return true;
     };
 

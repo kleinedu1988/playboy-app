@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi, cisloNevyslo, ciselRocniku } from '../src/lib/format.js';
+import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi, cisloNevyslo, ciselRocniku, rozlozitKategorie, slozitKategorie, kategorieModelky, popisKategorie } from '../src/lib/format.js';
 import { sestavitAlba, zacatkyAlb, novePoradi } from '../src/lib/alba.js';
 
 test('názvy a formáty', () => {
@@ -307,4 +307,25 @@ test('měsíční řady edic', () => {
     assert.equal(ciselRocniku(2020, 'US'), 3);
     assert.equal(ciselRocniku(2022, 'US'), 0);
     assert.equal(ciselRocniku(2011, 'CZ'), 6);
+});
+
+test('kategorie modelek', () => {
+    const text = t => slozitKategorie(rozlozitKategorie(t));
+    // Sjednocení názvů, anglické názvy, úroveň a rok
+    assert.equal(text('pmoy 1998, celebrity'), 'Playmate roku 1998, Celebrita');
+    assert.equal(text('Cybergirl of the Month 2005'), 'Cyber Girl měsíce 2005');
+    assert.equal(text('cyber girl týdne; Coed of the Week'), 'Cyber Girl týdne, Coed týdne');
+    assert.equal(text('Playmate'), 'Playmate měsíce');
+    assert.equal(text('Cover'), 'Modelka obálky');
+    // Neznámá hodnota zůstane, stejná kategorie dvakrát jen jednou
+    assert.equal(text('Modelka, Muse, muses'), 'Modelka, Muse');
+    assert.equal(text(''), '');
+    assert.deepEqual(rozlozitKategorie('Modelka')[0], { nazev: 'Modelka', detail: '', zbytek: '', vlastni: true });
+    // Odvozené kategorie z centerfoldu a obálky, pořadí podle seznamu, vlastní na konci
+    const m = { role: 'Vlastní, Celebrita', centerfoldy: ['1995-03'], obalky: ['1996-01'] };
+    assert.deepEqual(kategorieModelky(m).map(popisKategorie), ['Playmate měsíce', 'Celebrita', 'Modelka obálky', 'Vlastní']);
+    assert.equal(kategorieModelky(m)[0].odvozena, true);
+    // Údržba: kategorie chybí, jen když není zapsaná ani odvozená
+    assert.equal(udajChybi({ role: '', centerfoldy: [], obalky: [] }, 'role'), true);
+    assert.equal(udajChybi({ role: '', centerfoldy: ['1995-03'], obalky: [] }, 'role'), false);
 });

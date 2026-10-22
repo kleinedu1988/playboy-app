@@ -105,6 +105,8 @@ type Modelka struct {
 	Odkazy string `json:"odkazy"`
 	// Vydání, na jejichž obálce modelka je (jen pro čtení)
 	Obalky []string `json:"obalky"`
+	// Vydání jejích centerfoldů (jen pro čtení); centerfold = kategorie Playmate měsíce
+	Centerfoldy []string `json:"centerfoldy"`
 
 	// Popisy a fotografové alb modelky, jen pro hledání
 	textyAlb       string
@@ -1099,6 +1101,23 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		radky.Close()
 	}
 
+	// Centerfoldy modelek s fotkami (vlastní i sdílené); jen vydání, pro odvozenou kategorii Playmate měsíce
+	centerfoldyModelek := map[int][]string{}
+	if radky, err := a.db.Query(`SELECT modelka_id, COALESCE(NULLIF(vydani, ''), album) FROM alba al WHERE modelka_id IS NOT NULL
+			AND typ = 'Centerfold' AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
+		UNION SELECT am.modelka_id, COALESCE(NULLIF(al.vydani, ''), al.album) FROM alba al JOIN alba_modelky am ON am.album_id = al.id
+			WHERE al.typ = 'Centerfold' AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
+		ORDER BY 2`); err == nil {
+		for radky.Next() {
+			var id int
+			var v string
+			if radky.Scan(&id, &v) == nil {
+				centerfoldyModelek[id] = append(centerfoldyModelek[id], v)
+			}
+		}
+		radky.Close()
+	}
+
 	// Popisy alb se prohledávají spolu s údaji modelky
 	textyAlb := map[int]string{}
 	fotografoveAlb := map[int]string{}
@@ -1167,6 +1186,10 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		m.Vydani = vydaniModelek[m.ID]
 		if m.Vydani == nil {
 			m.Vydani = []string{}
+		}
+		m.Centerfoldy = centerfoldyModelek[m.ID]
+		if m.Centerfoldy == nil {
+			m.Centerfoldy = []string{}
 		}
 		if odpovidaHledani(m, vyhledavani) {
 			vysledky = append(vysledky, m)
@@ -1245,9 +1268,17 @@ func poleHledani(m Modelka) map[string]string {
 		piercing = "ne no"
 	}
 	obalky := strings.Join(m.Obalky, " ")
+	// Kategorie: zapsané v poli role a odvozené z centerfoldu a obálky (frontend/src/lib/format.js, KATEGORIE)
+	kategorie := m.Role
+	if len(m.Centerfoldy) > 0 {
+		kategorie += ", Playmate měsíce"
+	}
+	if len(m.Obalky) > 0 {
+		kategorie += ", Modelka obálky"
+	}
 	return map[string]string{
 		"jmeno": m.Jmeno + "\n" + m.DalsiJmena, "vlasy": m.VlasyBarva, "oci": m.OciBarva, "narodnost": m.Narodnost,
-		"etnicita": m.Etnicita, "misto": m.NarozeniMisto, "tag": m.Tags, "tagy": m.Tags, "role": m.Role,
+		"etnicita": m.Etnicita, "misto": m.NarozeniMisto, "tag": m.Tags, "tagy": m.Tags, "role": kategorie, "kategorie": kategorie,
 		"fotograf": m.fotografoveAlb, "rok": strings.Join(roky, " "), "vydani": strings.Join(m.Vydani, " "),
 		"narozena": narozena, "edice": strings.Join(edice, " "), "prsa": m.VelikostPrsou + " " + m.PrsaTyp,
 		"ochlupeni": m.Ochlupeni, "poznamka": m.Poznamka, "vyska": vyska, "vaha": vaha,

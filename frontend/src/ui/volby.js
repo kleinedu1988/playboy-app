@@ -16,7 +16,7 @@ const POPISKY = {
     ediceCisel: 'Edice',
     ediceModelek: 'Edice',
     ediceSteny: 'Edice',
-    roleModelek: 'Role',
+    roleModelek: 'Kategorie',
     zobrazitCisla: 'Zobrazit',
 };
 

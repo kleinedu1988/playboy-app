@@ -1293,6 +1293,51 @@ button.tag:hover {
     display: none;
 }
 
+/* Výběr kategorií modelky (ui/kategorie.js): štítky, u některých rok nebo úroveň, pole pro vlastní kategorii */
+.kategorie-vyber {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+}
+
+.kategorie-polozka {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.kategorie-vyber .chip {
+    padding: 4px 11px;
+    font-size: 12.5px;
+}
+
+/* Odvozená kategorie (z centerfoldu, obálky) je zapnutá, ale nejde vypnout */
+.kategorie-vyber .chip.odvozena[aria-disabled="true"] {
+    border-style: dashed;
+    cursor: default;
+}
+
+.kategorie-vyber .kategorie-detail {
+    width: auto;
+    min-width: 0;
+    height: 26px;
+    padding: 0 8px;
+    font-size: 12.5px;
+}
+
+.kategorie-vyber input.kategorie-detail {
+    width: 64px;
+}
+
+.kategorie-vyber .kategorie-jina {
+    flex: 1 1 120px;
+    min-width: 120px;
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12.5px;
+}
+
 /* Upravit a Přidat fotky pod jménem v levém panelu profilu: stejný vzhled jako volby v horní liště */
 .profile-actions {
     display: flex;

@@ -307,6 +307,7 @@ export namespace main {
 	    netykaSe: string;
 	    odkazy: string;
 	    obalky: string[];
+	    centerfoldy: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -352,6 +353,7 @@ export namespace main {
 	        this.netykaSe = source["netykaSe"];
 	        this.odkazy = source["odkazy"];
 	        this.obalky = source["obalky"];
+	        this.centerfoldy = source["centerfoldy"];
 	    }
 	}
 	export class NalezClanku {

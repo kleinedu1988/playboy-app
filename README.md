@@ -10,7 +10,8 @@ změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 ## Co program umí
 
 - **Modelky:** karty s titulní fotkou a srdíčky, profil s údaji (osobní, vzhled a míry, zařazení), alba
-  a centerfoldy, články modelky. Řazení, filtry (srdíčka, edice, role…) a rejstřík písmen nebo roků.
+  a centerfoldy, články modelky. Kategorie (Playmate měsíce a roku, Cyber Girl, Coed, Muse, Celebrita, Modelka
+  obálky, Jen ve speciálu, Creator). Řazení, filtry (srdíčka, edice, kategorie) a rejstřík písmen nebo roků.
 - **Alba a fotky:** pictorialy, centerfoldy (i spojené plakáty z více stránek), sdílená alba více modelek,
   text alba, fotograf. Prohlížeč fotek se slideshow, lupou a hodnocením 1–5 srdíček; výběr více fotek,
   odebrání s možností vrátit, vlastní výběry fotek.

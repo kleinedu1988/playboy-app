@@ -9,7 +9,7 @@ export const stav = {
     zrusenaAkce: null,
     minHodnoceni: 0, // galerie ukazuje jen modelky s aspoň tolika srdíčky; 0 = všechny, -1 = bez srdíček
     ediceModelek: 'vse', // filtr edice v galerii modelek: 'vse', 'US', 'CZ'
-    roleModelek: 'vse', // filtr role v galerii modelek: 'vse' nebo konkrétní role
+    roleModelek: 'vse', // filtr kategorie v galerii modelek: 'vse' nebo název kategorie (lib/format.js, KATEGORIE)
     zrusitUpravuVyrezu: null,
     aktualniAlba: [],
     aktualniPolozky: [],

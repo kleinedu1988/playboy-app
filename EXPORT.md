@@ -62,7 +62,8 @@ vybery: [...]    # vlastní výběry fotek napříč sbírkou
 | `tetovani`, `piercing` | `ano` / `ne` |
 | `prsa_typ` | `Přírodní` / `Silikonová` |
 | `ochlupeni` | `Oholené` / `Zastřižené` / `Přírodní` |
-| `role`, `vystoupeni`, `pictorial_vydani` | Zařazení |
+| `role` | Kategorie oddělené čárkou: `Playmate měsíce`, `Playmate roku 1998`, `Cyber Girl týdne` / `měsíce` / `roku`, `Coed týdne` / `měsíce`, `Muse`, `Celebrita`, `Modelka obálky`, `Jen ve speciálu`, `Creator`; jiný text zůstane jako vlastní kategorie. Import rozumí i anglickým názvům (Playmate of the Year, Cybergirl of the Month). Playmate měsíce a Modelku obálky program odvodí i sám z centerfoldu a obálky |
+| `vystoupeni`, `pictorial_vydani` | Zařazení |
 | `titulni_fotka`, `vyrez` (`zoom`, `poloha_x`, `poloha_y`) | Titulní fotka a její výřez |
 | `netyka_se` | Údaje, které se modelky netýkají (Přehled je nehlásí), oddělené čárkou: `titulni`, `zakladni`, `vzhled`, `zarazeni`, `centerfold`, `hodnoceni` |
 | `alba` | Alba, ve kterých je modelka hlavní |

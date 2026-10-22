@@ -1,6 +1,6 @@
 // Rychlé výsledky pod hledáním odkudkoli: příkazy vyhledávání, hodnoty filtrů, modelky, články a čísla
 import { GetKalendar, HledatClanky } from './backend';
-import { PRIKAZY, bezDiakritiky, esc, nazevVydani, obrazek, poleCisla, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { PRIKAZY, bezDiakritiky, esc, kategorieModelky, nazevVydani, obrazek, poleCisla, popisKategorie, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { searchInput } from './prvky';
 import { VELIKOST_NAHLEDU, adresaTitulni } from './obrazky';
@@ -101,13 +101,10 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
         ['ano', 'ne'].filter(v => !f || v.includes(f)).forEach(v => {
             vysledky.push({ hodnota: v, popis: v === 'ano' ? 'Má' : 'Nemá' });
         });
-    } else if (klic === 'role') {
+    } else if (klic === 'role' || klic === 'kategorie') {
         const cetnosti = new Map();
-        modelky.forEach(m => {
-            const r = (m.role || '').trim();
-            if (r) cetnosti.set(r, (cetnosti.get(r) || 0) + 1);
-        });
-        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
+        modelky.forEach(m => kategorieModelky(m).forEach(k => cetnosti.set(k.nazev, (cetnosti.get(k.nazev) || 0) + 1)));
+        for (const [hodnota, pocet] of cetnosti.entries()) {
             if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
                 vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
             }
@@ -217,7 +214,7 @@ async function hledat() {
     const textModelky = m => [
         m.jmeno,
         m.dalsiJmena,
-        m.role,
+        kategorieModelky(m).map(popisKategorie).join(' '),
         m.narodnost,
         m.vlasyBarva,
         m.tags,
@@ -259,7 +256,7 @@ async function hledat() {
 
     const detailModelky = m => {
         const casti = [
-            m.role,
+            kategorieModelky(m).filter(k => !k.odvozena).map(popisKategorie).join(', '),
             m.vlasyBarva,
             m.narodnost,
             m.vydani[0] ? nazevVydani(m.vydani[0]) : '',

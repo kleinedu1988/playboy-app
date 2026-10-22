@@ -300,7 +300,84 @@ export function vekPriVydani(narozeni, vydani) {
 export function udajChybi(modelka, vlastnost) {
     const hodnota = modelka[vlastnost];
     if (vlastnost === 'tetovani' || vlastnost === 'piercing') return hodnota !== 0 && hodnota !== 1;
+    // Kategorie se počítá i odvozená (centerfold, obálka)
+    if (vlastnost === 'role') return !kategorieModelky(modelka).length;
     return !hodnota;
+}
+
+// Kategorie modelek (podle rozdělení na Playboy.com). Ukládají se do pole `role` jako text oddělený čárkami,
+// např. „Playmate roku 1998, Celebrita“; hodnota, kterou seznam nezná, zůstane jako vlastní kategorie.
+// Playmate měsíce a Modelka obálky program navíc odvodí sám z centerfoldů a obálek.
+// rok = kategorie má rok, urovne = Cyber Girl týdne / měsíce / roku; aliasy jsou bez diakritiky a malými písmeny
+export const KATEGORIE = [
+    { nazev: 'Playmate měsíce', odvozena: true, aliasy: ['playmate mesice', 'playmate of the month', 'pmom', 'playmate'] },
+    { nazev: 'Playmate roku', rok: true, aliasy: ['playmate roku', 'playmate of the year', 'pmoy'] },
+    { nazev: 'Cyber Girl', urovne: ['týdne', 'měsíce', 'roku'], aliasy: ['cyber girl', 'cybergirl', 'cyber'] },
+    { nazev: 'Coed', urovne: ['týdne', 'měsíce'], aliasy: ['coed'] },
+    { nazev: 'Muse', aliasy: ['muse', 'muses'] },
+    { nazev: 'Celebrita', aliasy: ['celebrita', 'celebrity'] },
+    { nazev: 'Modelka obálky', odvozena: true, aliasy: ['modelka obalky', 'cover girl', 'cover model', 'cover', 'obalka'] },
+    { nazev: 'Jen ve speciálu', aliasy: ['jen ve specialu', 'special edition', 'specialni vydani', 'special', 'specialu'] },
+    { nazev: 'Creator', aliasy: ['creator', 'tvurkyne'] },
+];
+const ALIASY_KATEGORII = KATEGORIE.flatMap(k => k.aliasy.map(alias => ({ alias, kategorie: k })))
+    .sort((a, b) => b.alias.length - a.alias.length);
+const normalizovat = text => bezDiakritiky(text).toLowerCase().replace(/\s+/g, ' ').trim();
+
+/** @typedef {{ nazev: string, detail: string, zbytek: string, vlastni: boolean, odvozena?: boolean }} Kategorie */
+
+// „Playmate roku 1998, Cybergirl of the Month 2005" → [{ nazev, detail, zbytek, vlastni }]
+/** @returns {Kategorie[]} */
+export function rozlozitKategorie(text) {
+    /** @type {Kategorie[]} */
+    const vysledek = [];
+    for (const kus of String(text || '').split(/[,;\n]/).map(k => k.trim()).filter(Boolean)) {
+        const maly = normalizovat(kus);
+        const shoda = ALIASY_KATEGORII.find(({ alias }) => maly === alias || maly.startsWith(alias + ' '));
+        if (!shoda) {
+            vysledek.push({ nazev: kus, detail: '', zbytek: '', vlastni: true });
+            continue;
+        }
+        const k = shoda.kategorie;
+        // Zbytek za názvem (po slovech): úroveň (týdne, of the month…) nebo rok; co program nepozná, se zachová
+        const slova = kus.split(/\s+/).slice(shoda.alias.split(' ').length);
+        let detail = '';
+        if (k.urovne) {
+            const uroven = /^(of the )?(tydne|week|mesice|month|roku|year)\b/.exec(normalizovat(slova.join(' ')));
+            const nazevUrovne = uroven && { tydne: 'týdne', week: 'týdne', mesice: 'měsíce', month: 'měsíce', roku: 'roku', year: 'roku' }[uroven[2]];
+            if (nazevUrovne && k.urovne.includes(nazevUrovne)) {
+                detail = nazevUrovne;
+                slova.splice(0, uroven[0].split(' ').length);
+            }
+        } else if (k.rok) {
+            const index = slova.findIndex(s => /^(19|20)\d{2}$/.test(s));
+            if (index >= 0) detail = slova.splice(index, 1)[0];
+        }
+        const zbytek = slova.join(' ');
+        if (!vysledek.some(v => v.nazev === k.nazev)) vysledek.push({ nazev: k.nazev, detail, zbytek, vlastni: false });
+    }
+    return vysledek;
+}
+
+export const popisKategorie = k => [k.nazev, k.detail, k.zbytek].filter(Boolean).join(' ');
+export const slozitKategorie = seznam => seznam.map(popisKategorie).join(', ');
+
+// Kategorie odvozené z dat: centerfold = Playmate měsíce, obálka = Modelka obálky
+export function odvozeneKategorie(modelka) {
+    return [
+        (modelka.centerfoldy || []).length ? 'Playmate měsíce' : '',
+        (modelka.obalky || []).length ? 'Modelka obálky' : '',
+    ].filter(Boolean);
+}
+
+// Všechny kategorie modelky v pořadí seznamu (vlastní na konci); odvozená má příznak odvozena
+export function kategorieModelky(modelka) {
+    const zapsane = rozlozitKategorie(modelka.role);
+    odvozeneKategorie(modelka).forEach(nazev => {
+        if (!zapsane.some(k => k.nazev === nazev)) zapsane.push({ nazev, detail: '', zbytek: '', vlastni: false, odvozena: true });
+    });
+    const poradi = k => k.vlastni ? KATEGORIE.length : KATEGORIE.findIndex(z => z.nazev === k.nazev);
+    return zapsane.sort((a, b) => poradi(a) - poradi(b));
 }
 
 // Míry z amerických zdrojů. Samotné číslo se bere v centimetrech či kilogramech; null = nerozpoznáno.
@@ -383,7 +460,7 @@ export function rozlozitDotaz(dotaz) {
 
 // Klíče cíleného hledání, které zná backend (hledání modelek). Pohled, který daný údaj nemá (vlasy na stěně
 // centerfoldů), slovo s takovým klíčem nic neomezuje; neznámý klíč se hledá jako text „klic:hodnota“.
-const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'fotograf',
+const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'kategorie', 'fotograf',
     'rok', 'vydani', 'narozena', 'edice', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
     'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela']);
 const jeCislo = text => /^[\d.\-]+$/.test(text);
@@ -501,7 +578,7 @@ export const PRIKAZY = [
     { klic: 'vaha:', popis: 'Váha modelky v kg' },
     { klic: 'tag:', popis: 'Tag ze sbírky (playmate, cyb…)' },
     { klic: 'rok:', popis: 'Rok vydání (1970..1979, >=1980)' },
-    { klic: 'role:', popis: 'Role (Playmate, Cover, Modelka…)' },
+    { klic: 'kategorie:', popis: 'Kategorie (playmate, cyber girl, muse, celebrita…)' },
     { klic: 'fotograf:', popis: 'Jméno fotografa' },
     { klic: 'hodnoceni:', popis: 'Hodnocení (1–5, >=4)' },
     { klic: 'srdicka:', popis: 'Hodnocení srdíčky (5, >=4)' },

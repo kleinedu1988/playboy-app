@@ -1,5 +1,5 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
-import { esc, formatDatum, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, vekPriVydani, sklonovat } from '../lib/format';
+import { esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, rozlozitVydani, vekPriVydani, sklonovat } from '../lib/format';
 import { GetFotografieModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -45,7 +45,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     const stitkyVydani = vydaniKody => vydaniKody.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`).join(' ');
     const playboy = [
         ['Vydání', vydani],
-        ['Role', modelka.role ? `<span class="udaje-znamka">${esc(modelka.role)}</span>` : ''],
+        ['Kategorie', kategorieModelky(modelka).map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join(' ')],
         ['Na obálce', stitkyVydani(modelka.obalky || [])],
     ].filter(([, hodnota]) => hodnota);
 
@@ -96,7 +96,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         ...String(modelka.pictorialVydani || '').split('\n'),
     ].map(v => (v || '').trim()).filter(Boolean);
     const platnaVydani = [...new Set(vsechnaVydani)].filter(v => paskaCisla(v)).sort((a, b) => a.localeCompare(b));
-    const jePlaymate = /playmate/i.test(modelka.role);
+    const jePlaymate = kategorieModelky(modelka).some(k => k.nazev === 'Playmate měsíce');
     const playmateVydani = (rozlozitVydani(modelka.vystoupeni)?.mesic && platnaVydani.includes(modelka.vystoupeni))
         ? modelka.vystoupeni
         : platnaVydani.find(v => rozlozitVydani(v)?.mesic);

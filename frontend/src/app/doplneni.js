@@ -11,6 +11,7 @@ import { VELIKOST_NAHLEDU } from './obrazky';
 import { otevritDetailModelky, nacistFotkyModelky } from './profil';
 import { otevritAlbumModal } from './formular-alba';
 import { poleModelky } from './formular-modelky';
+import { pripojitVyberKategorii } from '../ui/kategorie';
 import { KLICE_SKUPIN, SKUPINY_UDAJU, nacistPrehled } from './prehled';
 
 export const doplnitModal = document.getElementById('doplnitModal');
@@ -36,6 +37,12 @@ function kopiePole(id, popis) {
     obal.className = 'doplnit-pole';
     obal.innerHTML = `<label for="${kopie.id}">${esc(popis.charAt(0).toUpperCase() + popis.slice(1))}</label>`;
     obal.append(kopie);
+    // Kategorie: místo skrytého pole štítky jako ve formuláři modelky
+    if (id === 'inputRole') {
+        const vyber = document.createElement('div');
+        obal.append(vyber);
+        pripojitVyberKategorii(/** @type {HTMLInputElement} */ (kopie), vyber);
+    }
     return obal;
 }
 
@@ -100,7 +107,7 @@ export async function otevritDoplneni(modelkaId) {
     stav.doplnovaneHodnoceni = 0;
     stav.doplnovanaTitulni = 0;
     doplnitModal.classList.remove('hidden');
-    /** @type {HTMLElement} */ (obsah.querySelector('input, select, button.heart, .doplnit-akce button'))?.focus();
+    /** @type {HTMLElement} */ (obsah.querySelector('input:not([type="hidden"]), select, .kategorie-vyber .chip, button.heart, .doplnit-akce button'))?.focus();
 }
 
 // Uložení všeho vyplněného; vrací, zda se povedlo

@@ -1,6 +1,6 @@
 // Přehled sbírky: co chybí doplnit a akce v buňkách tabulek
 import { GetKalendar, GetPrehled, GetStatistiky, GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
-import { VYCHOZI_EDICE, esc, nazevAlba, nazevVydani, rozlozitVydani, udajChybi } from '../lib/format';
+import { VYCHOZI_EDICE, esc, kategorieModelky, nazevAlba, nazevVydani, popisKategorie, rozlozitVydani, udajChybi } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { searchInput, stats } from './prvky';
@@ -8,7 +8,7 @@ import { ukazatPohled } from './navigace';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { nabidkaCisla } from './kalendar';
 import { otevritCoverModal } from './cover';
-import { otevritModelModal, ukazatZalozku } from './formular-modelky';
+import { otevritModelModal, ukazatZalozku, zameritPole } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { otevritDoplneni } from './doplneni';
@@ -44,7 +44,7 @@ export const SKUPINY_UDAJU = [
         ['prsaTyp', 'typ prsou', 'selectPrsaTyp'],
     ] },
     { nazev: 'Zařazení', zalozka: 2, udaje: [
-        ['role', 'role', 'inputRole'],
+        ['role', 'kategorie', 'inputRole'],
         ['tags', 'tagy', 'inputTags'],
     ] },
 ];
@@ -103,11 +103,11 @@ function ukolyModelky(m) {
     return ukoly;
 }
 
-// Pod jménem v řádku: role a první číslo modelky
+// Pod jménem v řádku: kategorie a první číslo modelky
 function podtitulek(modelka) {
     if (!modelka) return '';
     const prvni = [...(modelka.vydani || [])].sort()[0];
-    return [modelka.role, prvni && nazevVydani(prvni)].filter(Boolean).join(' · ');
+    return [kategorieModelky(modelka).map(popisKategorie).join(', '), prvni && nazevVydani(prvni)].filter(Boolean).join(' · ');
 }
 
 // Fronta pro „Uložit a další": modelky z údržby, kterým chybí právě tento údaj, zafixované při otevření
@@ -464,7 +464,7 @@ export function pripravit() {
             // Formulář se otevře na záložce skupiny, s kurzorem v prvním chybějícím poli
             otevritModelModal(modelka, { zalozka: parseInt(bunka.dataset.zalozka), klic: bunka.dataset.klic, ids: frontaPro(bunka.dataset.klic) });
             ukazatZalozku(parseInt(bunka.dataset.zalozka));
-            document.getElementById(bunka.dataset.pole).focus();
+            zameritPole(bunka.dataset.pole);
         } else if (akce === 'centerfold') {
             otevritAlbumModal(modelka, null, { typ: 'Centerfold' });
             document.getElementById('selectAlbumMesic').focus();

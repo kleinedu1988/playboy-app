@@ -15,7 +15,7 @@ export const SABLONA_OKNA = `
       <div class="nav-controls">
         <label class="hledani">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, role:, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ, vyska:175, tetovani:ano, obalka:1995., hodnoceni:5. Do hledání skočíš klávesami Ctrl+F." />
+          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, kategorie:muse, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ, vyska:175, tetovani:ano, obalka:1995, hodnoceni:5. Do hledání skočíš klávesami Ctrl+F." />
           <kbd class="hledani-zkratka" aria-hidden="true">Ctrl F</kbd>
           <button type="button" id="searchClearBtn" class="hledani-smazat" title="Smazat hledání" aria-label="Smazat hledání">&times;</button>
         </label>
@@ -263,8 +263,9 @@ export const SABLONA_OKNA = `
             <h4>Zařazení a poznámky</h4>
             <div class="form-grid cols-2">
               <div class="form-group span-2">
-                <label for="inputRole">Role</label>
-                <input type="text" id="inputRole" list="seznamRole" />
+                <label id="kategorieLabel">Kategorie</label>
+                <div id="kategorieVyber" role="group" aria-labelledby="kategorieLabel"></div>
+                <input type="hidden" id="inputRole" />
               </div>
               <div class="form-group span-2">
                 <label for="inputTags">Tagy (oddělené čárkou)</label>
@@ -289,7 +290,6 @@ export const SABLONA_OKNA = `
           <datalist id="seznamNarodnost"></datalist>
           <datalist id="seznamEtnicita"></datalist>
           <datalist id="seznamMisto"></datalist>
-          <datalist id="seznamRole"></datalist>
           </div>
         </div>
         <div class="modal-actions">
@@ -693,7 +693,7 @@ export const SABLONA_OKNA = `
         <h4>Hledání</h4>
         <ul>
           <li>Více slov zužuje výběr: jméno, národnost, vlasy, míry, tagy…</li>
-          <li>Cíleně: <code>vlasy:blond</code>, <code>oci:</code>, <code>narodnost:</code>, <code>tag:</code>, <code>role:</code>, <code>fotograf:"arny freytag"</code>, <code>rok:1975</code>, <code>narozena:1990</code>, <code>edice:CZ</code>, <code>vyska:175</code>, <code>tetovani:ano</code>, <code>hodnoceni:5</code>, <code>obalka:1995</code>.</li>
+          <li>Cíleně: <code>vlasy:blond</code>, <code>oci:</code>, <code>narodnost:</code>, <code>tag:</code>, <code>kategorie:muse</code>, <code>fotograf:"arny freytag"</code>, <code>rok:1975</code>, <code>narozena:1990</code>, <code>edice:CZ</code>, <code>vyska:175</code>, <code>tetovani:ano</code>, <code>hodnoceni:5</code>, <code>obalka:1995</code>.</li>
         </ul>
         <h4>Čísla časopisu</h4>
         <ul>
@@ -704,6 +704,7 @@ export const SABLONA_OKNA = `
         <h4>Přehled a hodnocení</h4>
         <ul>
           <li><strong>Statistiky</strong> v Přehledu (poslední část vlevo): centerfoldy podle desetiletí, věk v době centerfoldu, nejčastější fotografové a národnosti, čísla edic US a CZ. Najetí myší na sloupec ukáže hodnotu. Pod nimi <strong>Vývoj v čase</strong>: tabulka údajů po desetiletích podle roku centerfoldu (medián věku, výšky, váhy a měr, podíl blond vlasů, oholeného ochlupení, silikonových prsou, tetování a piercingu; pod hodnotou počet modelek se známým údajem), klik na řádek ukáže pod tabulkou graf. Přepínač US/CZ vybere edici.</li>
+          <li><strong>Kategorie</strong> modelky (Playmate roku, Cyber Girl, Coed, Muse, Celebrita, Jen ve speciálu, Creator) se volí štítky v „Upravit modelku…“; Playmate měsíce a Modelku obálky program pozná sám z centerfoldu a obálky. Podle kategorie filtruje galerie (Filtry) a hledání <code>kategorie:</code>.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; po najetí myší se ukáže jméno modelky a odkud fotka je.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>

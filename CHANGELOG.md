@@ -7,6 +7,19 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.91.0] – 2026-10-22
+
+### Přidáno
+- **Kategorie modelek** podle rozdělení na Playboy.com: Playmate měsíce, Playmate roku (s rokem), Cyber Girl a Coed (týdne, měsíce, roku), Muse, Celebrita, Modelka obálky, Jen ve speciálu a Creator. Modelka může mít kategorií víc; volí se štítky v „Upravit modelku…“ (i v okně Doplnit) a jinou hodnotu jde dopsat jako vlastní kategorii.
+- **Playmate měsíce a Modelku obálky program pozná sám** z centerfoldu a obálky ve sbírce, ručně se zadávat nemusí.
+- Kategorie jsou v profilu, ve filtru galerie (Filtry → Kategorie, s počty), v našeptávači a v hledání `kategorie:` (např. `kategorie:"playmate roku"`, `-kategorie:celebrita`); Údržba hlásí chybějící kategorii jen tam, kde není zapsaná ani odvozená.
+
+### Změněno
+- Pole „Role“ se jmenuje „Kategorie“. Dosavadní hodnoty zůstávají: známé názvy (i anglické, např. Cybergirl of the Month 2005) se sjednotí, ostatní zůstanou jako vlastní kategorie. Databáze ani formát exportu se nemění.
+
+### Opraveno
+- Nápověda k hledání: přebytečná tečka v příkladu „obalka:1995“.
+
 ## [0.90.4] – 2026-10-21
 
 ### Opraveno

@@ -2896,3 +2896,45 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 	}
 	return a.importovatCelek(data)
 }
+
+// Kategorie: zapsané v poli role a odvozené z centerfoldu; hledání kategorie: i role: najde obojí
+func TestKategorieModelek(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Celebrita", Role: "Celebrita, Playmate roku 1998", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Centerfold", Tetovani: -1, Piercing: -1})
+	var id int
+	for _, m := range a.GetModelky("") {
+		if m.Jmeno == "Centerfold" {
+			id = m.ID
+		}
+	}
+	if v := a.AddBulkPhotos(id, "1995-03", "Centerfold", odkazA); v.Vlozeno != 1 {
+		t.Fatalf("centerfold se nevložil: %+v", v)
+	}
+	for _, m := range a.GetModelky("") {
+		if m.Jmeno == "Centerfold" && (len(m.Centerfoldy) != 1 || m.Centerfoldy[0] != "1995-03") {
+			t.Fatalf("centerfoldy = %v, chci [1995-03]", m.Centerfoldy)
+		}
+		if m.Jmeno == "Celebrita" && len(m.Centerfoldy) != 0 {
+			t.Fatalf("modelka bez centerfoldu má centerfoldy %v", m.Centerfoldy)
+		}
+	}
+	jmena := func(dotaz string) []string {
+		var vysledek []string
+		for _, m := range a.GetModelky(dotaz) {
+			vysledek = append(vysledek, m.Jmeno)
+		}
+		return vysledek
+	}
+	for dotaz, chci := range map[string]string{
+		"kategorie:playmate":          "Celebrita Centerfold",
+		`kategorie:"playmate měsíce"`: "Centerfold",
+		"kategorie:celebrita":         "Celebrita",
+		"role:celebrita":              "Celebrita",
+		"-kategorie:celebrita":        "Centerfold",
+	} {
+		if mam := strings.Join(jmena(dotaz), " "); mam != chci {
+			t.Errorf("%s: %q, chci %q", dotaz, mam, chci)
+		}
+	}
+}

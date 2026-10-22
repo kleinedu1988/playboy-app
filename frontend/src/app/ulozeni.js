@@ -15,7 +15,7 @@ import { SKUPINY_UDAJU, nacistPrehled } from './prehled';
 import { otevritProfilPodleId } from './cover';
 import { albumModal, modelModal } from './okno';
 import { neniDuplicitni } from './vyrez';
-import { deleteModal, otevritModelModal, poleModelky, potvrdit, ukazatZalozku, zavritDeleteModal } from './formular-modelky';
+import { deleteModal, otevritModelModal, poleModelky, potvrdit, ukazatZalozku, zameritPole, zavritDeleteModal } from './formular-modelky';
 import { vybratNeboZalozitModelku } from './formular-alba';
 
 // Výběr nebo zadání jedné hodnoty s našeptáváním; vrací napsaný text, nebo null po zrušení
@@ -187,7 +187,7 @@ export function pripravit() {
                 const skupina = SKUPINY_UDAJU.find(sk => sk.zalozka === fronta.zalozka);
                 // Fronta ze Statistik doplňuje jeden konkrétní údaj (fronta.pole), z Přehledu první chybějící ve skupině
                 const prvni = fronta.pole ? ['', '', fronta.pole] : fronta.klic === 'titulni' ? ['', '', 'inputDriveID'] : skupina?.udaje.find(([vlastnost]) => udajChybi(dalsi, vlastnost));
-                document.getElementById(prvni ? prvni[2] : 'inputJmeno').focus();
+                zameritPole(prvni ? prvni[2] : 'inputJmeno');
                 if (!stats.classList.contains('hidden')) nacistPrehled();
                 return;
             }

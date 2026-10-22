@@ -88,11 +88,14 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 
 ## Etapa 13 – Vydání 1.0.0
 
+**Výjimka z bety:** kategorie modelek (0.91.0, 22. 10. 2026) přibyly na přání uživatele ještě před 1.0;
+schéma ani formát exportu se nezměnily. Lhůta níže proto běží od jejich vydání: nejdřív 5. 11. 2026.
+
 **Pravidlo:** 1.0.0 vyjde po **14 dnech běžného používání bety bez nové chyby**. Lhůta běží od vydání bety
 (21. 10. 2026); každá nová chyba zapsaná v `PLAN.md` (oddíl „Chyby z bety“) ji po opravě spustí znovu od
 vydání opravy. Změny jen v dokumentaci lhůtu neruší.
 Kosmetickou drobnost (vzhled, text), která nebrání práci, smí uživatel vědomě odložit do 1.0.1 – lhůtu pak
-neruší. Nejdřív možné vydání: 4. 11. 2026, pokud se do té doby nic nenajde.
+neruší. Nejdřív možné vydání: 5. 11. 2026 (po kategoriích v 0.91.0), pokud se do té doby nic nenajde.
 
 | Krok | Co |
 |---|---|

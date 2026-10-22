@@ -6,7 +6,7 @@ import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
 import { listaCoveru, listaSteny } from './listy';
 import { VELIKOST_PLAKATU_MALA, nacitatPostupne } from './obrazky';
-import { ukazatPohled } from './navigace';
+import { htmlZobrazeniCisel, ukazatPohled } from './navigace';
 import { htmlPlakatu, pripravitPlakat } from './profil';
 import { otevritVydani } from './vydani';
 import { prevestNaVolby } from '../ui/volby';
@@ -154,6 +154,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
     const vybrana = cisla.filter(vyhovuje);
 
     const volby = `<div class="cisla-volby">
+        ${htmlZobrazeniCisel('obalky')}
         ${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice-cisel="${e}">${e}</button>`).join('')}
         ${Object.entries(ZOBRAZIT_CISLA).map(([klic, nazev]) => `<button class="chip ${klic === stav.cislaZobrazit ? 'active' : ''}" data-zobrazit-cisla="${klic}">${nazev}</button>`).join('')}
         <span>${stav.cislaZobrazit === 'chybi' ? sklonovat(vybrana.length, 'chybějící číslo', 'chybějící čísla', 'chybějících čísel') : sklonovat(vybrana.filter(k => !k.chybi).length, 'číslo', 'čísla', 'čísel')}</span></div>`;

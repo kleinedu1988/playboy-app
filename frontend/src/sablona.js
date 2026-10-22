@@ -40,7 +40,6 @@ export const SABLONA_OKNA = `
       <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
       <!-- Další přehledy jako ikonová tlačítka, za čárou akce -->
       <div class="nav-akce">
-        <button data-rezim="kalendar" class="nav-fav nav-rezim" title="Kalendář" aria-label="Kalendář"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></button>
         <button data-rezim="nejlepsi" class="nav-fav nav-rezim" title="Nejlepší" aria-label="Nejlepší"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg></button>
         <button data-rezim="prehled" class="nav-fav nav-rezim" title="Přehled" aria-label="Přehled"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></button>
         <span class="nav-oddelovac" aria-hidden="true"></span>
@@ -671,8 +670,8 @@ export const SABLONA_OKNA = `
         <h4>Prohlížení</h4>
         <ul>
           <li><strong>Rychlé výsledky</strong>: při psaní do hledání se pod ním ukážou modelky, články (i podle textu) a čísla. Šipky vybírají, Enter otevře, Esc výsledky zavře.</li>
-          <li><strong>Přepínač v hlavičce</strong>: vlevo záložky Modelky, Čísla, Centerfoldy; vpravo ikony Kalendář, Nejlepší, Přehled. Volby přehledu (řazení, filtry) a počet položek jsou uprostřed pod hledáním.</li>
-          <li><strong>Volby přehledu</strong> pod hledáním: <strong>⇅ řazení ▾</strong>, tlačítko <strong>Filtry</strong> (panel se srdíčky, edicí, rolí…; číslo v odznaku je počet zapnutých filtrů) a zapnuté filtry jako štítky, které <strong>×</strong> zruší; <strong>Zrušit filtry</strong> v panelu zruší všechny. V Nejlepších je vedle srdíček <strong>Výběr ▾</strong> a <strong>▶</strong> spustí slideshow. <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
+          <li><strong>Přepínač v hlavičce</strong>: vlevo záložky Modelky, Čísla, Centerfoldy; vpravo ikony Nejlepší a Přehled. Čísla mají dvě zobrazení, volba <strong>Obálky ▾ / Kalendář ▾</strong> je první v liště voleb: Obálky ukazují čísla ve sbírce jako velké dlaždice, Kalendář všechny měsíce včetně chybějících; přepnutím zůstaneš na stejném roce a záložka Čísla otevře naposledy zvolené zobrazení. Volby přehledu (řazení, filtry) a počet položek jsou uprostřed pod hledáním.</li>
+          <li><strong>Volby přehledu</strong> pod hledáním: <strong>⇅ řazení ▾</strong>, tlačítko <strong>Filtry</strong> (panel se srdíčky, edicí, kategorií, výskytem…; číslo v odznaku je počet zapnutých filtrů) a zapnuté filtry jako štítky, které <strong>×</strong> zruší; <strong>Zrušit filtry</strong> v panelu zruší všechny. V Nejlepších je vedle srdíček <strong>Výběr ▾</strong> a <strong>▶</strong> spustí slideshow. <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klávesa <kbd>?</kbd> kdekoli (i v prohlížeči fotek a ve čtečce stran) ukáže přehled všech klávesových zkratek.</li>
           <li>Klik na štítek čísla, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>

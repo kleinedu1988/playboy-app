@@ -146,6 +146,15 @@ const HLEDANI_PODLE_REZIMU = {
     prehled: ['V Přehledu se nehledá', ''],
 };
 
+// Čísla mají dvě zobrazení: Obálky (přehled 'covery') a Kalendář (přehled 'kalendar'); volba v liště voleb,
+// záložka Čísla otevře naposledy zvolené
+export function zobrazeniCisel() {
+    try { return localStorage.getItem('zobrazeniCisel') === 'kalendar' ? 'kalendar' : 'obalky'; } catch { return 'obalky'; }
+}
+// Štítky volby Zobrazení na začátku řádku voleb (ui/volby.js z nich složí rozbalovací volbu)
+export const htmlZobrazeniCisel = aktivni => [['obalky', 'Obálky'], ['kalendar', 'Kalendář']]
+    .map(([klic, nazev]) => `<button class="chip ${klic === aktivni ? 'active' : ''}" data-zobrazeni-cisel="${klic}">${nazev}</button>`).join('');
+
 export function prepnoutRezim(novy) {
     const [text, napoveda] = HLEDANI_PODLE_REZIMU[novy] || HLEDANI_PODLE_REZIMU.modelky;
     searchInput.placeholder = text;
@@ -155,7 +164,11 @@ export function prepnoutRezim(novy) {
         searchInput.value = hledaniPodleRezimu[novy] || '';
     }
     stav.rezim = novy;
-    prepinacRezimu.querySelectorAll('[data-rezim]').forEach(b => b.classList.toggle('active', b.dataset.rezim === novy));
+    // Kalendář je zobrazení Čísel: svítí záložka Čísla
+    prepinacRezimu.querySelectorAll('[data-rezim]').forEach(b => b.classList.toggle('active', b.dataset.rezim === novy || (novy === 'kalendar' && b.dataset.rezim === 'covery')));
+    if (novy === 'covery' || novy === 'kalendar') {
+        try { localStorage.setItem('zobrazeniCisel', novy === 'kalendar' ? 'kalendar' : 'obalky'); } catch { /* jen pro toto spuštění */ }
+    }
     // Při příštím spuštění se program otevře ve stejném přehledu
     try { localStorage.setItem('posledniRezim', novy); } catch { /* bez úložiště se jen nezapamatuje */ }
     document.querySelector('main').scrollTop = 0;

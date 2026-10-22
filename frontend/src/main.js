@@ -80,7 +80,7 @@ StavDatabaze().then((chyba) => {
     await nacistSpecialy();
     let posledni = null;
     try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
-    if (prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
+    if (posledni === 'kalendar' || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
     nacistGalerii();
     kontrolaPoSpusteni();
 })();

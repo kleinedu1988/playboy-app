@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.94.0] – 2026-10-22
+
+### Změněno
+- **Čísla a Kalendář jsou jedna část:** Čísla mají dvě zobrazení, mezi kterými se přepíná volbou **Obálky ▾ / Kalendář ▾** na začátku lišty voleb (vedle Edice a Filtrů). Obálky ukazují čísla ve sbírce jako velké dlaždice, Kalendář všechny měsíce včetně chybějících. Přepnutím zůstaneš na stejném roce, záložka Čísla svítí v obou zobrazeních a otevře naposledy zvolené. Ikona kalendáře v horní liště odpadla.
+
 ## [0.93.0] – 2026-10-22
 
 ### Přidáno

@@ -6,7 +6,7 @@ import { stav } from './stav';
 import { zalozitSpecial } from './specialy';
 import { calList, calendar, searchInput } from './prvky';
 import { listaKalendare } from './listy';
-import { ukazatPohled } from './navigace';
+import { htmlZobrazeniCisel, ukazatPohled } from './navigace';
 import { NAZVY_STAVU, otevritVydani, upravitVydani } from './vydani';
 import { otevritCoverModal } from './cover';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
@@ -34,7 +34,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         if (casti?.mesic && casti.edice === stav.kalendarEdice) vydani.set(k.vydani, k);
     });
 
-    const prepinacEdic = pocet => `<div class="cal-editions">${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
+    const prepinacEdic = pocet => `<div class="cal-editions">${htmlZobrazeniCisel('kalendar')}${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
     if (vydani.size === 0) {
         listaKalendare.naplnit([]);
         calList.innerHTML = prepinacEdic(0) + htmlPrazdna(`Edice ${stav.kalendarEdice} je prázdná`, 'Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.', { ikona: 'kalendar', tlacitko: { text: 'Přidat…', akce: 'pridat' } });
@@ -138,7 +138,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         }
         const { rok, obsazeno, obsazenoSpecialu, policka, stitky } = rokyKalendare[i];
         radky.push(`
-            <section class="cal-year" ${oznacitDekadu(rok, obsazeno + obsazenoSpecialu)}>
+            <section class="cal-year" data-rok="${rok}" ${oznacitDekadu(rok, obsazeno + obsazenoSpecialu)}>
                 <div class="cal-year-label"><button class="link cal-year-link" data-vydani="${slozitVydani(String(rok), '', stav.kalendarEdice)}" title="Celý ročník"><strong>${rok}</strong></button><span>${ciselRocniku(rok, stav.kalendarEdice) ? `${obsazeno} z ${ciselRocniku(rok, stav.kalendarEdice)}` : obsazeno}</span></div>
                 <div class="cal-months">${policka}</div>
                 ${stitky ? `<div class="cal-specials" title="Speciály ${rok}">${stitky}</div>` : ''}

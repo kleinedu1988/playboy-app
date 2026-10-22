@@ -16,12 +16,15 @@ const POPISKY = {
     ediceCisel: 'Edice',
     ediceModelek: 'Edice',
     ediceSteny: 'Edice',
+    zobrazeniCisel: 'Zobrazení',
     roleModelek: 'Kategorie',
     vyskytModelek: 'Výskyt',
     zobrazitCisla: 'Zobrazit',
 };
 
 const RAZENI = new Set(['razeniGalerie', 'razeniSteny']);
+// Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
+const ZOBRAZENI = new Set(['zobrazeniCisel']);
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
 const VYPINATELNE = new Set(['minHodnoceni', 'stenaMin', 'vyberId']);
@@ -31,6 +34,10 @@ const SAMOSTATNE = new Set(['vyberId']);
 
 const IKONA_RAZENI = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg>';
 const IKONA_FILTRU = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>';
+const IKONY_ZOBRAZENI = {
+    'Obálky': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="3.5" width="7" height="10" rx="1.5"/><rect x="13" y="3.5" width="7" height="10" rx="1.5"/><rect x="4" y="15.5" width="7" height="5" rx="1.5"/><rect x="13" y="15.5" width="7" height="5" rx="1.5"/></svg>',
+    'Kalendář': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+};
 const IKONA_PREHRAT = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
 
 // Panel filtrů zůstává otevřený i po změně filtru (přehled se překreslí a panel se naplní znovu)
@@ -67,7 +74,7 @@ function popsatSkupinu(klic, stitky) {
     const vychoziVse = stitky.find(s => Object.values(s.dataset)[0] === 'vse');
     const vypinatelny = VYPINATELNE.has(klic);
     const zapnuto = (vypinatelny && Boolean(zvoleny)) || Boolean(vychoziVse && zvoleny && zvoleny !== vychoziVse);
-    const druh = RAZENI.has(klic) ? 'razeni' : SAMOSTATNE.has(klic) ? 'samostatne' : vypinatelny || vychoziVse ? 'filtr' : 'povinne';
+    const druh = ZOBRAZENI.has(klic) ? 'zobrazeni' : RAZENI.has(klic) ? 'razeni' : SAMOSTATNE.has(klic) ? 'samostatne' : vypinatelny || vychoziVse ? 'filtr' : 'povinne';
     return {
         klic, stitky, zvoleny, vypinatelny, zapnuto, druh,
         // Filtr s vypínáním nemá štítek „vše“: v nabídce i v panelu se doplní
@@ -162,7 +169,10 @@ function ukazatVolby(lista) {
     // Povinná volba bez zvolené hodnoty (srdíčka v Nejlepších, když je zvolený výběr) se neukazuje
     skupiny.filter(s => s.druh !== 'filtr' && (s.druh !== 'povinne' || s.zvoleny)).forEach(s => {
         let tlacitko;
-        if (s.druh === 'razeni') {
+        if (s.druh === 'zobrazeni') {
+            tlacitko = pridatTlacitko(`${IKONY_ZOBRAZENI[hodnota(s)] || ''}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
+            tlacitko.title = 'Zobrazení čísel';
+        } else if (s.druh === 'razeni') {
             tlacitko = pridatTlacitko(`${IKONA_RAZENI}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
             tlacitko.title = 'Řazení';
         } else if (s.druh === 'samostatne') {

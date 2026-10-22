@@ -5,7 +5,7 @@ import { AddCover, UpdateCover } from './backend';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { issueView, searchInput, wall } from './prvky';
-import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepinacRezimu, prepnoutRezim } from './navigace';
+import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepinacRezimu, prepnoutRezim, zobrazeniCisel } from './navigace';
 import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
@@ -78,9 +78,38 @@ export function pripravit() {
     prepinacRezimu.addEventListener('click', (e) => {
         const tlacitko = e.target.closest('[data-rezim]');
         if (!tlacitko) return;
-        // Přepnutí přehledu začíná novou historii
+        // Přepnutí přehledu začíná novou historii; Čísla v naposledy zvoleném zobrazení
         historie.length = 0;
-        prepnoutRezim(tlacitko.dataset.rezim);
+        prepnoutRezim(tlacitko.dataset.rezim === 'covery' && zobrazeniCisel() === 'kalendar' ? 'kalendar' : tlacitko.dataset.rezim);
         nacistGalerii(searchInput.value);
     });
+
+    // Volba Zobrazení v Číslech (Obálky / Kalendář): přepne přehled a zůstane na stejném roce
+    document.addEventListener('click', async (e) => {
+        const volba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-cisel]');
+        if (!volba) return;
+        const cil = volba.dataset.zobrazeniCisel === 'kalendar' ? 'kalendar' : 'covery';
+        if (cil === stav.rezim) return;
+        const rok = viditelnyRok();
+        historie.length = 0;
+        prepnoutRezim(cil);
+        await nacistGalerii(searchInput.value);
+        if (rok) skocitNaRok(rok);
+    });
+}
+
+// Rok na začátku viditelné části Čísel (Obálky: oddíl ročníku, Kalendář: řádek roku)
+function viditelnyRok() {
+    const hore = document.querySelector('main').getBoundingClientRect().top + 40;
+    const oddily = [...document.querySelectorAll('#covers .rocnik-cisel[data-cast], #calendar .cal-year[data-rok]')].filter(o => /** @type {HTMLElement} */ (o).offsetParent);
+    const oddil = /** @type {HTMLElement} */ (oddily.find(o => o.getBoundingClientRect().bottom > hore));
+    return oddil ? parseInt(oddil.dataset.rok || oddil.dataset.cast) : 0;
+}
+
+// Posun na rok (nebo nejbližší, který v zobrazení je)
+function skocitNaRok(rok) {
+    const oddily = [...document.querySelectorAll('#covers .rocnik-cisel[data-cast], #calendar .cal-year[data-rok]')]
+        .map(o => /** @type {HTMLElement} */ (o)).filter(o => o.offsetParent);
+    const nejblizsi = oddily.sort((a, b) => Math.abs(parseInt(a.dataset.rok || a.dataset.cast) - rok) - Math.abs(parseInt(b.dataset.rok || b.dataset.cast) - rok))[0];
+    nejblizsi?.scrollIntoView({ block: 'start' });
 }

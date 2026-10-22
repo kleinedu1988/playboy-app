@@ -1781,30 +1781,23 @@ button.tag:hover {
     box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
 }
 
-/* Vrstva překryvů: vlastní skládání (z-index obrázků nepřeleze pásku a linky), myš jí prochází na kartu */
+/* Vrstva překryvů nad obálkou (pod páskou a linkami); myš jí prochází na kartu */
 .cal-vrstvy {
     position: absolute;
     inset: 0;
-    isolation: isolate;
     pointer-events: none;
 }
 
+/* Výměna je okamžitá, bez prolínání: průhlednostní animace nad zaoblenou kartou s posunem při najetí
+   ve WebKitGTK s grafickou akcelerací poblikávala */
 .cal-cell .cal-dalsi {
     position: absolute;
     inset: 0;
-    opacity: 0;
-    will-change: opacity;
-    transition: opacity 0.35s ease;
+    visibility: hidden;
 }
 
 .cal-cell .cal-dalsi.viditelny {
-    opacity: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .cal-cell .cal-dalsi {
-        transition: none;
-    }
+    visibility: visible;
 }
 
 /* Chybějící číslo: přerušovaný rámeček s růžovým plus a měsícem */

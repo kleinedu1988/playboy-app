@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.94.4] – 2026-10-22
+
+### Opraveno
+- Kalendář: listování obsahem čísla na kartě už nebliká ani s grafickou akcelerací. Obrázky se střídají okamžitě, bez prolínání – průhlednostní animace nad zaoblenou kartou s posunem při najetí ve WebKitGTK blikala.
+
 ## [0.94.3] – 2026-10-22
 
 ### Opraveno

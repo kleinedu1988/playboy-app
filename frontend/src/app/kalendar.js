@@ -259,9 +259,8 @@ const cekat = ms => new Promise(hotovo => setTimeout(hotovo, ms));
 const nacistObrazek = img => (img.decode ? img.decode() : new Promise((ok, chyba) => { img.onload = ok; img.onerror = chyba; })).then(() => true, () => false);
 
 // Každý obrázek čísla se stáhne jednou do vlastního prvku ve vrstvě nad obálkou. Prvky v ní zůstávají po celou
-// dobu listování (žádné vkládání a odebírání pod kurzorem, které ve WebKitu bliká); střídání jen zvedne další
-// obrázek navrch a prolne ho. Vrstva nepřijímá myš, takže karta neztratí najetí. Další krok začne, až je
-// předchozí vidět.
+// dobu listování a střídání jen přepne, který je vidět – bez prolínání a bez vkládání pod kurzor, obojí
+// ve WebKitu blikalo. Vrstva nepřijímá myš, takže karta neztratí najetí.
 function spustitListovani(bunka) {
     const puvodni = /** @type {HTMLImageElement} */ (bunka.querySelector('img'));
     if (!puvodni) return;
@@ -285,7 +284,6 @@ function spustitListovani(bunka) {
         });
         const linky = bunka.querySelectorAll('.cal-linky i');
         let navrchu = null;
-        let poradi = 0;
         for (let index = 0; bezi(); index = (index + 1) % obrazky.length) {
             const snimek = obrazky[index];
             if (!await snimek.nacteno) {
@@ -295,16 +293,11 @@ function spustitListovani(bunka) {
             }
             if (!bezi()) return;
             if (snimek.el !== navrchu) {
-                // Navrch vrstvy a z průhledného stavu se prolne; předchozí obrázek se pod ním pak skryje
-                snimek.el.style.zIndex = String(++poradi);
-                snimek.el.classList.remove('viditelny');
-                void snimek.el.offsetWidth;
+                // Výměna v jednom snímku: nový obrázek se ukáže, předchozí skryje
                 snimek.el.classList.add('viditelny');
-                linky.forEach((l, k) => l.classList.toggle('ted', k === snimek.linka));
-                await cekat(380);
-                if (!bezi()) return;
                 navrchu?.classList.remove('viditelny');
                 navrchu = snimek.el;
+                linky.forEach((l, k) => l.classList.toggle('ted', k === snimek.linka));
             }
             await cekat(INTERVAL_LISTOVANI);
         }

@@ -51,7 +51,7 @@ export const SKUPINY_UDAJU = [
 // Klíč „netýká se" podle záložky formuláře
 export const KLICE_SKUPIN = ['zakladni', 'vzhled', 'zarazeni'];
 
-// Ikony menu v levém panelu Přehledu
+// Ikony v liště částí Přehledu
 const IKONA = obsah => `<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${obsah}</svg>`;
 const IKONY_CASTI = {
     uvod: IKONA('<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>'),
@@ -165,7 +165,7 @@ export async function nacistPrehled() {
     p.vydaniBezCenterfoldu.forEach(v => vydani.set(v, { ...vydani.get(v), centerfold: true }));
     const radkyVydani = [...vydani].sort(([a], [b]) => b.localeCompare(a));
 
-    // Levý panel: menu částí; vpravo vždy jedna část (Přehled, Údržba, Sháním, Statistiky)
+    // Lišta částí nahoře; pod ní vždy jedna část (Přehled, Údržba, Sháním, Statistiky)
     const modelekSChybou = radkyModelek.filter(m => vaha(m) > 0).length;
     const aktivnich = seznam => seznam.filter(x => !x.netykaSe).length;
     const shanim = shanenaCisla(stavy).length;
@@ -259,8 +259,7 @@ export async function nacistPrehled() {
     };
     stats.innerHTML = `
         <aside class="profile-side prehled-panel">
-            <h2>Sbírka</h2>
-            <nav class="prehled-menu">
+            <nav class="prehled-menu" aria-label="Části přehledu">
                 ${casti.map(([klic, nazev, pocet, neutralni]) => `<button class="${klic === stav.prehledSekce ? 'active' : ''}" data-sekce-prehledu="${klic}">
                     ${IKONY_CASTI[klic]}${nazev}${pocet !== '' ? `<b class="${pocet && !neutralni ? 'chybi' : ''}">${pocet}</b>` : ''}</button>`).join('')}
             </nav>

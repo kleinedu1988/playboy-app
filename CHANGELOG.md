@@ -7,6 +7,11 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.92.0] – 2026-10-22
+
+### Změněno
+- **Přehled bez levého panelu:** části Přehled, Údržba, Sháním CZ a Statistiky jsou v liště nahoře přes celou šířku (jako dřív jen v úzkém okně), takže obsah pod ní má celou šířku okna.
+
 ## [0.91.0] – 2026-10-22
 
 ### Přidáno

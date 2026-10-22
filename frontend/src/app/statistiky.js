@@ -1,5 +1,5 @@
 // Statistiky sbírky v Přehledu: jeden graf vybraný z rozvinutého seznamu, vedle něj modelky výběru.
-// Grafy v čase (podle roku centerfoldu nebo měsíce přidání) ukazují počty, údaje (medián a pásmo) nebo podíly
+// Grafy v čase (podle roku prvního výskytu v časopise nebo měsíce přidání) ukazují počty, údaje (medián a pásmo) nebo podíly
 // a přes ně křivku klouzavého průměru; klik na sloupec vybere rok, tažení období. Grafy rozložení (kategorie,
 // národnosti…) jsou pruhy; klik vybere hodnotu. Výběr platí pro všechny grafy (zužuje je), seznam vpravo
 // ukazuje jeho modelky (bez výběru všechny v grafu).
@@ -16,7 +16,6 @@ const BARVA = '#d81b60';
 
 const cislo = (n, desetinna = 1) => Number(n.toFixed(desetinna)).toLocaleString('cs-CZ', { maximumFractionDigits: desetinna });
 const pocetModelek = n => sklonovat(n, 'modelka', 'modelky', 'modelek');
-const pocetCenterfoldu = n => sklonovat(n, 'centerfold', 'centerfoldy', 'centerfoldů');
 
 // Zaoblený jen horní konec sloupce (4 px), dno sedí na ose
 const sloupec = (x, y, sirka, vyska) => vyska <= 0 ? ''
@@ -41,7 +40,8 @@ export function grafSloupcu(polozky, { sirka = 460, vyska = 190 } = {}) {
         }).join('')}</svg>`;
 }
 
-// Nabídka grafů. V čase: osa „rok“ (rok centerfoldu ve zvolené edici) nebo „mesic“ (měsíc přidání do sbírky);
+// Nabídka grafů. V čase: osa „rok“ (rok prvního výskytu modelky v časopise – centerfold, obálka nebo pictorial
+// u čísla – ve zvolené edici a druhu výskytu) nebo „mesic“ (měsíc přidání do sbírky);
 // druh pocet (sloupce počtů), udaj (medián a prostřední polovina modelek) nebo podil (procento modelek s vlastností
 // ze známých hodnot). Rozložení: pruhy hodnot.
 const anoNe = h => h === 1 ? true : h === 0 ? false : null;
@@ -50,9 +50,9 @@ const zHodnot = (text, ano, ne) => {
     return ano.includes(t) ? true : ne.includes(t) ? false : null;
 };
 const GRAFY = [
-    { klic: 'cf', skupina: 'pocty', osa: 'rok', druh: 'pocet', nazev: 'Centerfoldy podle roku' },
+    { klic: 'cf', skupina: 'pocty', osa: 'rok', druh: 'pocet', nazev: 'Modelky podle roku' },
     { klic: 'prib', skupina: 'pocty', osa: 'mesic', druh: 'pocet', nazev: 'Přibývání sbírky' },
-    { klic: 'vek', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Věk v době centerfoldu', jednotka: 'let' },
+    { klic: 'vek', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Věk při prvním výskytu', jednotka: 'let' },
     { klic: 'vyska', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Výška', jednotka: 'cm', udaj: m => m.vyskaCm || null },
     { klic: 'vaha', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Váha', jednotka: 'kg', udaj: m => m.vahaKg || null },
     { klic: 'bmi', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'BMI', jednotka: 'kg/m²',
@@ -80,14 +80,16 @@ const GRAFY = [
 ];
 const SKUPINY = { pocty: 'V čase · počty', udaje: 'V čase · údaje', podily: 'V čase · podíly', rozl: 'Rozložení' };
 
-// Stav: vybraný graf (pamatuje se), edice centerfoldů a výběr. Výběr jsou podmínky (klíč → { popis, test, dotaz,
-// ... }) společné všem grafům: rok centerfoldu („rok“, sdílí ho všechny grafy s osou roků), měsíc přidání
+// Stav: vybraný graf (pamatuje se), edice a druh výskytu a výběr. Výběr jsou podmínky (klíč → { popis, test, dotaz,
+// ... }) společné všem grafům: rok prvního výskytu („rok“, sdílí ho všechny grafy s osou roků), měsíc přidání
 // („mesic“) a hodnota grafu rozložení (klíč grafu). Graf ukazuje jasně modelky vyhovující ostatním podmínkám,
 // tlumeně celou sbírku; vlastní podmínka grafu je v něm zvýrazněná.
 let data = null;                 // { s, modelky, fotografove: Map(nazev → Set id modelek) }
 let graf = 'cf';
 try { graf = GRAFY.some(g => g.klic === localStorage.getItem('grafStatistik')) ? localStorage.getItem('grafStatistik') : 'cf'; } catch { /* výchozí graf */ }
 let edice = 'vse';
+let druhVyskytu = 'vse';
+const DRUHY_VYSKYTU = { vse: 'Vše', centerfold: 'Centerfold', obalka: 'Obálka', pictorial: 'Pictorial' };
 const filtry = new Map();
 let zobrazitVse = false;
 let tah = null;                  // tažení přes sloupce: { start, predtim, a, b }
@@ -98,26 +100,35 @@ const definice = () => GRAFY.find(g => g.klic === graf);
 const klicFiltru = def => def.osa || def.klic;
 const vyhovuje = (m, krome = '') => [...filtry].every(([k, f]) => k === krome || f.test(m));
 
-// Centerfoldy modelky s rokem, edicí a věkem modelky v době vydání
+// Věk modelky v čísle (z roku a měsíce narození a vydání); null, když chybí nebo nedává smysl
 const vekVLetech = (narozeni, vydani) => {
     const n = /^(\d{4})-(\d{2})/.exec(narozeni || ''), v = /^(\d{4})-(\d{2})/.exec(vydani || '');
     if (!n || !v) return null;
     const vek = parseInt(v[1]) - parseInt(n[1]) - (parseInt(v[2]) < parseInt(n[2]) ? 1 : 0);
     return vek > 12 && vek < 80 ? vek : null;
 };
-const centerfoldyCache = new WeakMap();
-function centerfoldyModelky(m) {
-    if (!centerfoldyCache.has(m)) centerfoldyCache.set(m, (m.centerfoldy || []).map(v => {
-        const casti = rozlozitVydani(v);
-        return casti && { v, edice: casti.edice, rok: parseInt(casti.rok), vekPresne: vekVLetech(m.narozeniDatum, v) };
-    }).filter(Boolean).sort((a, b) => a.v.localeCompare(b.v)));
-    return centerfoldyCache.get(m);
+// Výskyty modelky v časopise (čísla jejích centerfoldů, obálek a alb) s rokem, edicí, druhy a věkem modelky
+const vyskytyCache = new WeakMap();
+function vyskytyModelky(m) {
+    if (!vyskytyCache.has(m)) {
+        const cf = new Set(m.centerfoldy || []), obalky = new Set(m.obalky || []);
+        vyskytyCache.set(m, [...new Set([...(m.vydani || []), ...cf, ...obalky])].sort().map(v => {
+            const casti = rozlozitVydani(v);
+            if (!casti) return null;
+            const druhy = new Set([cf.has(v) && 'centerfold', obalky.has(v) && 'obalka', !cf.has(v) && !obalky.has(v) && 'pictorial'].filter(Boolean));
+            return { v, edice: casti.edice, rok: parseInt(casti.rok), druhy, vekPresne: vekVLetech(m.narozeniDatum, v) };
+        }).filter(Boolean));
+    }
+    return vyskytyCache.get(m);
 }
+// První výskyt ve zvolené edici a druhu (nebo v těch, které platily při vzniku podmínky)
+const prvniVyskyt = (m, ed = edice, druh = druhVyskytu) => vyskytyModelky(m)
+    .find(c => (ed === 'vse' || c.edice === ed) && (druh === 'vse' || c.druhy.has(druh)));
+const popisVyskytu = (druh = druhVyskytu) => druh === 'vse' ? 'první výskyt' : `první ${DRUHY_VYSKYTU[druh].toLowerCase()}`;
 const median = cisla => {
     const s = [...cisla].sort((a, b) => a - b), p = Math.floor(s.length / 2);
     return s.length % 2 ? s[p] : (s[p - 1] + s[p]) / 2;
 };
-const vEdici = c => edice === 'vse' || c.edice === edice;
 
 // Graf v čase: sloupce [{ popisek, nazev, rok | mesic, polozky: [{ m, c?, hodnota? }] }]
 function radaVCase(def) {
@@ -130,13 +141,12 @@ function radaVCase(def) {
                 polozky: data.modelky.filter(m => (m.pridano || '').startsWith(mesic)).map(m => ({ m })) };
         });
     }
-    // Centerfoldy ve zvolené edici; údaj modelky (výška…) patří k roku jejího prvního centerfoldu
+    // Každá modelka jednou, v roce prvního výskytu (zvolená edice a druh); věk je věk v tom čísle
     const polozky = data.modelky.flatMap(m => {
-        const cf = centerfoldyModelky(m).filter(vEdici);
-        if (def.druh === 'pocet') return cf.map(c => ({ m, c }));
-        if (def.klic === 'vek') return cf.filter(c => c.vekPresne !== null).map(c => ({ m, c, hodnota: c.vekPresne }));
-        const hodnota = def.druh === 'udaj' ? def.udaj(m) : def.podil(m);
-        return cf.length && hodnota !== null ? [{ m, c: cf[0], hodnota }] : [];
+        const c = prvniVyskyt(m);
+        if (!c) return [];
+        const hodnota = def.druh === 'pocet' ? true : def.klic === 'vek' ? c.vekPresne : def.druh === 'udaj' ? def.udaj(m) : def.podil(m);
+        return hodnota === null ? [] : [{ m, c, hodnota }];
     });
     if (!polozky.length) return [];
     const roky = polozky.map(p => p.c.rok);
@@ -203,7 +213,7 @@ function rozsahVyberu(def, sloupce) {
 // Graf v čase jako SVG v přesné šířce karty (písmo zůstává stejně velké); neviditelné cíle nesou bublinu a index.
 // Při výběru z jiných grafů: jasně modelky výběru, tlumeně celá sbírka a její křivka čárkovaně.
 function htmlGrafuVCase(def, sloupce, sirka) {
-    if (!sloupce.length) return `<p class="stat-prazdne">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s centerfoldem chybí.`}</p>`;
+    if (!sloupce.length) return `<p class="stat-prazdne">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s výskytem v časopise chybí.`}</p>`;
     const zuzeno = [...filtry.keys()].some(k => k !== klicFiltru(def));
     const vybrane = sloupce.map(s => zuzeno ? s.polozky.filter(p => vyhovuje(p.m, klicFiltru(def))) : s.polozky);
     const W = Math.max(320, sirka), H = 360, L = 46, P = 10, T = 14, D = 26;
@@ -256,7 +266,7 @@ function htmlGrafuVCase(def, sloupce, sirka) {
     casti.push(lomena(caraCelku, 'sp-krivka celek'), lomena(cara, 'sp-krivka'));
     sloupce.forEach((s, i) => {
         const p = vybrane[i], n = p.length, h = hodnotaSloupce(def, p);
-        const kolik = def.druh === 'pocet' ? (def.osa === 'mesic' ? `${pocetModelek(n)} přidáno` : pocetCenterfoldu(n))
+        const kolik = def.druh === 'pocet' ? (def.osa === 'mesic' ? `${pocetModelek(n)} přidáno` : pocetModelek(n))
             : h === null ? 'bez údaje'
             : def.druh === 'podil' ? `${def.ano} ${Math.round(h)} % (${p.filter(x => x.hodnota).length} z ${n})`
             : `medián ${textHodnoty(def, h)}, polovina modelek ${textHodnoty(def, rozsahHodnot(p).dolni)}–${textHodnoty(def, rozsahHodnot(p).horni)} · ${pocetModelek(n)}`;
@@ -364,14 +374,14 @@ function souhrn(def, sloupce, rozlozeni) {
     const rozsah = rozsahVyberu(def, sloupce);
     const vybrane = sloupce.slice(rozsah?.a ?? 0, (rozsah?.b ?? sloupce.length - 1) + 1).flatMap(s => s.polozky).filter(p => vyhovuje(p.m, klicFiltru(def)));
     const obdobi = `${sloupce[0].nazev}–${sloupce.at(-1).nazev}`;
-    if (def.druh === 'pocet') return def.osa === 'mesic' ? `${ve(vybrane.length, vsechny.length)} přidaných za dva roky` : `${ve(vybrane.length, vsechny.length)} centerfoldů · ${obdobi}`;
+    if (def.druh === 'pocet') return def.osa === 'mesic' ? `${ve(vybrane.length, vsechny.length)} přidaných za dva roky` : `${ve(vybrane.length, vsechny.length)} modelek · ${obdobi}`;
     const hodnota = polozky => polozky.length ? textHodnoty(def, def.druh === 'podil' ? hodnotaSloupce(def, polozky) : median(polozky.map(p => p.hodnota))) : '–';
     const co = def.druh === 'podil' ? def.ano : 'medián';
     return filtry.size ? `${co} ve výběru <b>${hodnota(vybrane)}</b> (celkem ${hodnota(vsechny)}) · ${pocetModelek(vybrane.length)}`
         : `${co} <b>${hodnota(vsechny)}</b> · známé u ${pocetModelek(vsechny.length)} · ${obdobi}`;
 }
 
-const ediceCenterfoldu = () => EDICE.filter(e => data.modelky.some(m => centerfoldyModelky(m).some(c => c.edice === e)));
+const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModelky(m).some(c => c.edice === e)));
 
 // Kostra se vykreslí jednou (rozvinutý seznam drží fokus); části se pak překreslují zvlášť
 function htmlKostry() {
@@ -380,6 +390,7 @@ function htmlKostry() {
             <label class="sp-vyber-grafu">
                 <select data-sp-graf-vyber aria-label="Graf">${Object.entries(SKUPINY).map(([s, nazev]) => `<optgroup label="${nazev}">${GRAFY.filter(g => g.skupina === s)
                     .map(g => `<option value="${g.klic}" ${g.klic === graf ? 'selected' : ''}>${esc(g.nazev)}</option>`).join('')}</optgroup>`).join('')}</select></label>
+            <span class="sp-edice" data-sp-druh></span>
             <span class="sp-edice" data-sp-edice></span>
             <span class="sp-souhrn" data-sp-souhrn></span>
         </div>
@@ -400,7 +411,7 @@ function htmlLegendy(def) {
     const celek = [...filtry.keys()].some(k => k !== klicFiltru(def)) ? '<span><i class="celek"></i>celá sbírka</span>' : '';
     const prumer = `<span><i class="cara"></i>průměr ${def.osa === 'mesic' ? '3 měsíců' : '7 let'}</span>`;
     if (def.druh === 'udaj') return `<span><i class="bod"></i>medián roku</span><span><i class="pasmo"></i>prostřední polovina modelek</span>${prumer}`;
-    return `<span><i></i>${def.druh === 'podil' ? `${def.ano} (% modelek se známým údajem)` : def.osa === 'mesic' ? 'přidané modelky' : 'centerfoldy'}</span>${celek}${prumer}`;
+    return `<span><i></i>${def.druh === 'podil' ? `${def.ano} (% modelek se známým údajem)` : def.osa === 'mesic' ? 'přidané modelky' : `modelky (${popisVyskytu()})`}</span>${celek}${prumer}`;
 }
 
 // Překreslení grafu (při tažení jen graf), případně i seznamu a lišty
@@ -419,16 +430,20 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     misto.classList.toggle('cas', Boolean(def.osa));
     if (fokus !== undefined) /** @type {HTMLElement} */ (misto.querySelector(`[data-hodnota="${CSS.escape(fokus)}"]`))?.focus({ preventScroll: true });
     if (jenGraf) return;
-    const ed = ediceCenterfoldu();
+    const ed = ediceVyskytu();
     koren.querySelector('[data-sp-edice]').innerHTML = def.osa === 'rok' && ed.length > 1
         ? ['vse', ...ed].map(e => `<button type="button" class="${e === edice ? 'active' : ''}" aria-pressed="${e === edice}" data-sp-edice-volba="${e}">${e === 'vse' ? 'Vše' : e}</button>`).join('') : '';
+    koren.querySelector('[data-sp-druh]').innerHTML = def.osa === 'rok'
+        ? Object.entries(DRUHY_VYSKYTU).map(([k, nazev]) => `<button type="button" class="${k === druhVyskytu ? 'active' : ''}" aria-pressed="${k === druhVyskytu}" data-sp-druh-volba="${k}">${nazev}</button>`).join('') : '';
     koren.querySelector('[data-sp-souhrn]').innerHTML = souhrn(def, sloupce, rozlozeni);
     koren.querySelector('[data-sp-filtry]').innerHTML = filtry.size ? `<span>Výběr:</span>${[...filtry].map(([k, f]) =>
         `<button type="button" class="chip active" data-zrusit-podminku="${esc(k)}" title="Odebrat podmínku">${esc(f.popis)} ×</button>`).join('')}
         <button type="button" class="link" data-zrusit-vyber>Zrušit výběr</button>` : '';
     koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
+    // Modelky bez čísla (jen online, bez vydání) nemají rok; kolik jich v grafech v čase není, říká nápověda
+    const bezCisla = def.osa === 'rok' ? data.modelky.filter(m => !vyskytyModelky(m).length).length : 0;
     koren.querySelector('[data-sp-napoveda]').textContent = def.osa
-        ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažením vyberete období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.`
+        ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažením vyberete období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.${bezCisla ? ` Rok je rok prvního výskytu v časopise; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase není.` : ''}`
         : 'Klik na řádek vybere hodnotu, další klik ji zruší. Výběr platí pro všechny grafy: přepni graf a uvidíš jen vybrané modelky.';
     const seznam = koren.querySelector('[data-sp-seznam]');
     const fokusSeznamu = seznam.contains(document.activeElement);
@@ -437,7 +452,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     nacitatPostupne(seznam);
 }
 
-// Podmínka roku centerfoldu nebo měsíce přidání ze sloupců a..b grafu v čase
+// Podmínka roku prvního výskytu nebo měsíce přidání ze sloupců a..b grafu v čase
 function nastavitRozsah(def, a, b) {
     const [od, doS] = [sloupce[Math.min(a, b)], sloupce[Math.max(a, b)]];
     const nazev = od === doS ? od.nazev : `${od.nazev} – ${doS.nazev}`;
@@ -446,9 +461,12 @@ function nastavitRozsah(def, a, b) {
             test: m => (m.pridano || '').slice(0, 7) >= od.mesic && (m.pridano || '').slice(0, 7) <= doS.mesic });
         return;
     }
-    const ed = edice;
-    filtry.set('rok', { od: od.rok, do: doS.rok, popis: `centerfold ${nazev}${ed === 'vse' ? '' : ` · ${ed}`}`, dotaz: null,
-        test: m => centerfoldyModelky(m).some(c => (ed === 'vse' || c.edice === ed) && c.rok >= od.rok && c.rok <= doS.rok) });
+    const ed = edice, druh = druhVyskytu;
+    filtry.set('rok', { od: od.rok, do: doS.rok, popis: `${popisVyskytu(druh)} ${nazev}${ed === 'vse' ? '' : ` · ${ed}`}`, dotaz: null,
+        test: m => {
+            const c = prvniVyskyt(m, ed, druh);
+            return Boolean(c) && c.rok >= od.rok && c.rok <= doS.rok;
+        } });
 }
 
 // Načtení a vykreslení do oddílu Přehledu; volá se při prvním zobrazení oddílu (výběr se při nových datech zruší)
@@ -565,6 +583,7 @@ export function pripravit(stats) {
             return;
         }
         const volbaEdice = cil.closest('[data-sp-edice-volba]');
+        const volbaDruhu = cil.closest('[data-sp-druh-volba]');
         const pruh = cil.closest('.sp-pruh[data-hodnota]');
         const podminka = cil.closest('[data-zrusit-podminku]');
         if (cil.closest('[data-vse-vyberu]')) {
@@ -574,9 +593,10 @@ export function pripravit(stats) {
         }
         if (cil.closest('[data-zrusit-vyber]')) filtry.clear();
         else if (podminka) filtry.delete(podminka.dataset.zrusitPodminku);
-        else if (volbaEdice) {
-            // Výběr roku platí pro edici, ve které vznikl; se změnou edice se zruší
-            edice = volbaEdice.dataset.spEdiceVolba;
+        else if (volbaEdice || volbaDruhu) {
+            // Výběr roku platí pro edici a druh výskytu, ve kterých vznikl; s jejich změnou se zruší
+            if (volbaEdice) edice = volbaEdice.dataset.spEdiceVolba;
+            else druhVyskytu = volbaDruhu.dataset.spDruhVolba;
             filtry.delete('rok');
         } else if (pruh) {
             const def = definice();
@@ -589,6 +609,7 @@ export function pripravit(stats) {
         vykreslit(koren);
         // Fokus zůstane na přepínači edice; po odebrání podmínky přejde na graf (Esc pak dál funguje)
         if (volbaEdice) /** @type {HTMLElement} */ (koren.querySelector(`[data-sp-edice-volba="${edice}"]`))?.focus();
+        else if (volbaDruhu) /** @type {HTMLElement} */ (koren.querySelector(`[data-sp-druh-volba="${druhVyskytu}"]`))?.focus();
         else if (!pruh) /** @type {HTMLElement} */ (koren.querySelector('[data-sp-graf]'))?.focus({ preventScroll: true });
     });
 

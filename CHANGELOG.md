@@ -7,6 +7,13 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.98.0] – 2026-10-22
+
+### Změněno
+- Statistiky už se neomezují na modelky s centerfoldem. Grafy v čase počítají každou modelku jednou, v roce jejího prvního výskytu v časopise – centerfold, obálka nebo pictorial u čísla. Přepínač Vše / Centerfold / Obálka / Pictorial vybere, který výskyt se počítá (Centerfold odpovídá dřívějším grafům). „Centerfoldy podle roku“ jsou teď „Modelky podle roku“, věk je „Věk při prvním výskytu“.
+- Výběr roku je „první výskyt 1992–2003“ (nebo „první centerfold…“) a platí pro edici a druh výskytu, ve kterých vznikl.
+- Nápověda pod grafem řekne, kolik modelek bez čísla (jen online nebo bez vydání) v grafech v čase není; grafy rozložení počítají se všemi modelkami.
+
 ## [0.97.0] – 2026-10-22
 
 ### Přidáno

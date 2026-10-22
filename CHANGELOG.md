@@ -7,6 +7,15 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.95.0] – 2026-10-22
+
+### Změněno
+- Přehled → Statistiky jsou přehlednější: místo deseti grafů a řádku čísel je vidět jeden velký graf, vybraný z rozvinutého seznamu, a vedle něj seznam modelek. Vybraný graf si program pamatuje.
+- Grafy v čase podle roku centerfoldu: počet centerfoldů (sloupce) a věk v době centerfoldu, výška, váha, hrudník, pas a boky (medián roku a pásmo prostřední poloviny modelek); přes ně bílá křivka klouzavého průměru. Přibývání sbírky po měsících za dva roky. Přepínač Vše / US / CZ.
+- Klik na sloupec vybere rok, tažení myší celé období; šipky ← → výběr posouvají, se Shiftem ho rozšíří, Esc ho zruší. Seznam vpravo ukáže modelky vybraného roku nebo období (bez výběru všechny), klik otevře profil.
+- Grafy rozložení (kategorie, národnosti, barva vlasů a očí, hodnocení, výskyt, fotografové) jsou pruhy; klik vybere hodnotu, „Otevřít v galerii“ ji převede na hledání.
+- Tabulka Vývoj v čase odpadla – její údaje jsou teď grafy v seznamu.
+
 ## [0.94.4] – 2026-10-22
 
 ### Opraveno

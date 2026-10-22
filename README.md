@@ -22,7 +22,7 @@ změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 - **Centerfoldy** jako stěna plakátů, **Nejlepší** fotky napříč sbírkou podle srdíček.
 - **Přehled:** hlavní čísla, mapa výtisků české edice a mapa úplnosti dat americké edice; **Údržba** (jedna
   fronta úkolů – co doplnit a opravit, s „Uložit a další“); **Sháním CZ** (seznam ke zkopírování);
-  **Statistiky** včetně vývoje modelek v čase (věk, míry, BMI, podíly po desetiletích).
+  **Statistiky**: graf z rozvinutého seznamu (centerfoldy, věk a míry podle roku s křivkou, rozložení kategorií, národností…) a vedle něj modelky vybraného roku, období nebo hodnoty.
 - **Hledání:** rychlé výsledky (modelky, články i podle textu, čísla), cílené hledání `pole:hodnota`,
   rozsahy, vylučování a tolerance překlepů; stejně ve všech přehledech.
 - **Data:** export a import v YAML (i Markdown), denní zálohy a obnovení, zámek heslem.

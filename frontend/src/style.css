@@ -4291,7 +4291,6 @@ main .album-nav:not(.svisla) .chip.active:hover {
     overflow-x: auto;
 }
 
-
 .prehled-modelka-pruh {
     display: flex;
     align-items: center;
@@ -5766,316 +5765,359 @@ textarea {
     color: var(--accent-text);
 }
 
-/* ===== Statistiky v Přehledu: řádek velkých čísel s větou, pod ním karty s grafy ===== */
+/* ===== Statistiky v Přehledu: lišta (výběr grafu, edice, souhrn), graf a vedle něj modelky výběru ===== */
 .stat-statistiky {
     position: relative;
 }
 
-.stat-cisla {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
-    margin: 0 0 18px;
-}
-
-/* Čísla nahoře jako dlaždice; klikací (Přibylo) ukáže modelky */
-.stat-cislo {
-    min-width: 0;
-    padding: 12px 16px 14px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 16px;
-    background: var(--panel-bg);
-}
-
-.stat-cislo .stat-karta-nadpis::after {
-    display: none;
-}
-
-.stat-cislo[data-vyber] {
-    cursor: pointer;
-}
-
-.stat-cislo[data-vyber]:hover,
-.stat-cislo.vybrany {
-    border-color: var(--accent);
-}
-
-.stat-karta-nadpis {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 8px;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--accent-text);
-}
-
-.stat-karta-nadpis::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, var(--accent), transparent);
-    opacity: 0.4;
-}
-
-.stat-velke {
-    font-size: 32px;
-    font-weight: 200;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-}
-
-.stat-cisla p {
-    margin: 6px 0 0;
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text-muted);
-}
-
-.stat-cisla strong {
-    font-weight: 400;
-    color: var(--text-main);
-}
-
-.stat-grafy {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-    margin-bottom: 18px;
-}
-
-/* Statistiky: skupiny grafů, nápověda a lišta výběru (podmínky jako štítky, počet, akce) */
-.sg-sekce {
-    margin: 4px 0 8px;
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-.sg-napoveda {
-    margin: -4px 0 14px;
-    font-size: 12.5px;
-    color: var(--text-muted);
-}
-
-.sg-vyber {
+.sp-lista {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     margin-bottom: 14px;
-    padding: 10px 14px;
-    border: 1px solid var(--accent);
-    border-radius: 14px;
-    background: var(--panel-bg);
-    box-shadow: 0 0 0 4px rgba(216, 27, 96, 0.1);
 }
 
-.sg-vyber > b {
+.sp-vyber-grafu select {
+    min-width: 250px;
+    padding: 8px 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 12px;
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    font-size: 14px;
     font-weight: 600;
+    cursor: pointer;
 }
 
-.sg-vyber-text {
+.sp-edice {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+}
+
+.sp-edice:empty {
+    display: none;
+}
+
+.sp-edice button {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    cursor: pointer;
+}
+
+.sp-edice button.active {
+    background-color: var(--accent-soft);
+    box-shadow: inset 0 0 0 1px var(--accent);
+    color: var(--text-main);
+}
+
+.sp-souhrn {
+    margin-left: auto;
     color: var(--text-muted);
     font-size: 13px;
 }
 
-.sg-vyber .chip {
-    padding: 3px 10px;
-    font-size: 12.5px;
+.sp-souhrn b {
+    color: var(--text-main);
+    font-weight: 600;
 }
 
-.sg-vyber-akce {
+/* Graf a seznam vedle sebe; v užším okně seznam pod grafem */
+.sp-telo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 14px;
+    align-items: start;
+}
+
+.sp-legenda {
     display: flex;
-    gap: 8px;
-    margin-left: auto;
-}
-
-.stat-vyber[data-mrizka] {
-    margin: -6px 0 14px;
-}
-
-/* Grafy z HTML: každý sloupec a řádek je tlačítko; vrstva celé sbírky (tlumená při výběru) a vrstva výběru */
-.sg-sloupce {
-    display: flex;
-    gap: 4px;
-    height: 150px;
-    padding-top: 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
-}
-
-.sg-sloupec,
-.sg-pruh {
-    padding: 0;
-    border: none;
-    background: none;
+    gap: 16px;
+    min-height: 16px;
+    margin-bottom: 10px;
+    font-size: 12px;
     color: var(--text-muted);
-    font: inherit;
-    cursor: pointer;
 }
 
-.sg-sloupec {
+.sp-legenda:empty {
+    display: none;
+}
+
+.sp-legenda span {
     display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-width: 0;
+    align-items: center;
+    gap: 6px;
 }
 
-.sg-sloupec:disabled,
-.sg-pruh:disabled {
-    cursor: default;
+.sp-legenda i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    background-color: var(--accent);
 }
 
-.sg-plocha {
-    position: relative;
-    flex: 1;
-    border-radius: 4px 4px 0 0;
+.sp-legenda i.bod {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
 }
 
-.sg-sloupec:not(:disabled):hover .sg-plocha,
-.sg-sloupec:focus-visible .sg-plocha {
-    background-color: rgba(255, 255, 255, 0.04);
+.sp-legenda i.pasmo {
+    width: 6px;
+    height: 12px;
+    background-color: rgba(216, 27, 96, 0.35);
 }
 
-.sg-sloupec:focus-visible,
-.sg-pruh:focus-visible {
+.sp-legenda i.cara {
+    width: 14px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--text-main);
+}
+
+.sp-graf {
+    border-radius: 8px;
     outline: none;
 }
 
-.sg-plocha i {
-    position: absolute;
-    right: 12%;
-    bottom: 0;
-    left: 12%;
-    border-radius: 3px 3px 0 0;
-    background-color: var(--barva, var(--accent));
+.sp-graf.cas {
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
 }
 
-.sg-celkem.tlum {
-    opacity: 0.28;
+.sp-graf:focus-visible {
+    box-shadow: 0 0 0 1px rgba(216, 27, 96, 0.5);
 }
 
-.sg-sloupec.vybrany .sg-plocha {
-    background-color: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent);
+.sp-svg {
+    display: block;
+    overflow: visible;
 }
 
-.sg-plocha b {
-    position: absolute;
-    right: 0;
-    left: 0;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--text-main);
-    text-align: center;
+.sp-sloupec.tlum,
+.sp-bod.tlum {
+    opacity: 0.3;
 }
 
-.sg-plocha b.skryte {
-    visibility: hidden;
+.sp-pasmo {
+    fill: rgba(216, 27, 96, 0.35);
 }
 
-.sg-sloupec:hover .sg-plocha b,
-.sg-sloupec:focus-visible .sg-plocha b,
-.sg-sloupec.vybrany .sg-plocha b {
-    visibility: visible;
+.sp-pasmo.tlum {
+    opacity: 0.4;
 }
 
-.sg-sloupec > small,
-.sg-skupina > small {
-    margin-top: 4px;
-    overflow: hidden;
-    font-size: 10.5px;
-    text-align: center;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+.sp-krivka {
+    fill: none;
+    stroke: var(--text-main);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    pointer-events: none;
 }
 
-/* Sloupce po skupinách (desetiletí × edice): dvojice sloupců těsně u sebe, popisek pod skupinou */
-.sg-skupina {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-width: 0;
+.sp-oblast {
+    fill: rgba(216, 27, 96, 0.1);
+    stroke: rgba(216, 27, 96, 0.55);
+    stroke-dasharray: 3 3;
 }
 
-.sg-dvojice {
-    display: flex;
-    flex: 1;
-    gap: 2px;
-    padding: 0 6%;
+.sp-graf .graf-cil:hover {
+    fill: rgba(255, 255, 255, 0.04);
 }
 
-.sg-skupiny .sg-plocha i {
-    right: 0;
-    left: 0;
+.sp-napoveda {
+    margin: 10px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
 }
 
-.sg-skupiny .sg-skupina > small {
-    margin-bottom: -18px;
-}
-
-.sg-skupiny {
-    margin-bottom: 18px;
-}
-
-/* Vodorovné pruhy: název, dráha s pruhy, počet (u výběru „výběr / celkem“) */
-.sg-pruhy {
+/* Pruhy rozložení: název, dráha, počet; vybraný pruh jasně, ostatní tlumeně */
+.sp-pruhy {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
 
-.sg-pruh {
+.sp-pruh {
     display: grid;
-    grid-template-columns: minmax(70px, 34%) 1fr auto;
-    gap: 10px;
+    grid-template-columns: minmax(90px, 200px) minmax(0, 1fr) 48px;
     align-items: center;
-    min-height: 26px;
-    padding: 2px 8px;
-    border-radius: 7px;
-    text-align: left;
-}
-
-.sg-pruh:not(:disabled):hover,
-.sg-pruh:focus-visible {
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.sg-pruh.vybrany {
-    background-color: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent);
-}
-
-.sg-nazev {
-    overflow: hidden;
-    font-size: 12.5px;
+    gap: 12px;
+    padding: 6px 8px;
+    border: none;
+    border-radius: 8px;
+    background: none;
     color: var(--text-main);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sp-pruh:hover,
+.sp-pruh:focus-visible {
+    background-color: var(--panel-hover);
+    outline: none;
+}
+
+.sp-pruh.vybrany {
+    background-color: var(--accent-soft);
+}
+
+.sp-pruh.tlum .sp-draha i {
+    opacity: 0.35;
+}
+
+.sp-nazev {
+    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.sg-draha {
-    position: relative;
-    height: 9px;
+.sp-draha {
+    height: 10px;
 }
 
-.sg-draha i {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    min-width: 3px;
+.sp-draha i {
+    display: block;
+    height: 100%;
+    min-width: 2px;
     border-radius: 0 4px 4px 0;
     background-color: var(--accent);
 }
 
-.sg-pocet {
-    font-size: 12px;
+.sp-pocet {
     font-variant-numeric: tabular-nums;
     text-align: right;
+    color: var(--text-muted);
+}
+
+/* Seznam modelek výběru */
+.sp-seznam {
+    display: flex;
+    flex-direction: column;
+    max-height: 520px;
+    padding: 14px 10px 12px 14px;
+}
+
+.sp-seznam-hlava {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 4px 10px 0;
+}
+
+.sp-seznam-hlava b {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.sp-seznam-hlava span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.sp-zrusit {
+    margin-left: auto;
+    padding: 0 6px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.sp-zrusit:hover {
+    color: var(--text-main);
+}
+
+.sp-modelky {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.sp-modelka {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    border: none;
+    border-radius: 9px;
+    background: none;
+    color: var(--text-main);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sp-modelka:hover,
+.sp-modelka:focus-visible {
+    background-color: var(--panel-hover);
+    outline: none;
+}
+
+.sp-modelka img {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 48px;
+    border-radius: 6px;
+    background-color: var(--bg-card);
+    object-fit: cover;
+}
+
+.sp-modelka span {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sp-modelka small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.sp-modelka i {
+    color: var(--accent-text);
+    font-size: 11px;
+    font-style: normal;
+    letter-spacing: -1px;
+}
+
+.sp-vse {
+    align-self: flex-start;
+    margin: 6px 5px;
+    font-size: 13px;
+}
+
+.sp-galerie {
+    align-self: flex-start;
+    margin-top: 10px;
+}
+
+@media (max-width: 1100px) {
+    .sp-telo { grid-template-columns: minmax(0, 1fr); }
+    .sp-seznam { max-height: none; }
+    .sp-modelky { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); overflow: visible; }
 }
 
 .stat-karta {
@@ -6085,10 +6127,6 @@ textarea {
     border-radius: 20px;
     background: var(--panel-bg);
     box-shadow: var(--panel-stin);
-}
-
-.stat-karta.siroka {
-    grid-column: 1 / -1;
 }
 
 .graf {
@@ -6130,111 +6168,6 @@ textarea {
     fill: rgba(255, 255, 255, 0.04);
 }
 
-/* Sloupec nebo řádek, který vede na výběr modelek; vybraný má bílý obrys */
-.graf g[data-vyber] {
-    cursor: pointer;
-    outline: none;
-}
-
-.graf g[data-vyber]:focus-visible .graf-cil {
-    fill: rgba(255, 255, 255, 0.09);
-}
-
-.graf g.vybrany path {
-    stroke: var(--text-main);
-    stroke-width: 2;
-}
-
-.graf g.vybrany .graf-cil {
-    fill: rgba(255, 255, 255, 0.05);
-}
-
-/* Výběr modelek pod řadou grafů */
-.stat-vyber {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(216, 27, 96, 0.12), var(--panel-stin);
-}
-
-.stat-vyber-hlavicka {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 12px;
-}
-
-.stat-vyber-hlavicka h4 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 600;
-}
-
-.stat-vyber-mrizka {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-    gap: 12px;
-    margin-top: 12px;
-}
-
-.stat-vyber-modelka {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text-main);
-    text-align: left;
-    cursor: pointer;
-}
-
-.stat-vyber-modelka img {
-    width: 100%;
-    aspect-ratio: 3 / 4;
-    margin-bottom: 4px;
-    border-radius: 8px;
-    background-color: var(--bg-card);
-    object-fit: cover;
-}
-
-.stat-vyber-modelka span,
-.stat-vyber-modelka small {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.stat-vyber-modelka span {
-    font-size: 12.5px;
-}
-
-.stat-vyber-modelka small {
-    font-size: 11px;
-    color: var(--text-muted);
-}
-
-.stat-vyber-modelka:hover img,
-.stat-vyber-modelka:focus-visible img {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-}
-
-.stat-vyber-akce {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 16px;
-    margin-top: 12px;
-}
-
-.stat-vyber-akce:empty {
-    display: none;
-}
-
-.stat-vyber .link {
-    font-size: 13px;
-}
-
 .graf-bublina {
     position: absolute;
     z-index: 5;
@@ -6249,43 +6182,11 @@ textarea {
     pointer-events: none;
 }
 
-.stat-legenda {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 8px;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.stat-legenda span {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.stat-legenda i {
-    width: 10px;
-    height: 10px;
-    border-radius: 3px;
-}
-
 .stat-pozn,
 .stat-prazdne {
     margin: 10px 0 0;
     font-size: 12px;
     color: var(--text-muted);
-}
-
-@media (max-width: 1200px) {
-    .stat-grafy { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-@media (max-width: 1000px) {
-    .stat-cisla { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-@media (max-width: 700px) {
-    .stat-grafy { grid-template-columns: 1fr; }
 }
 
 /* ===== Nabídky a lišta výběru v novém stylu: zaoblené průhledné panely, růžové zvýraznění, nadpisy skupin ===== */
@@ -6840,7 +6741,6 @@ textarea {
     .kostra b {
         animation: none;
     }
-
 }
 
 /* ===== Přehled klávesových zkratek (klávesa ?) ===== */
@@ -7616,215 +7516,3 @@ span.ud-chip.hlavni {
     position: relative;
 }
 
-/* ===== Vývoj v čase (Statistiky): tabulka desetiletí a graf vybraného řádku ===== */
-.vyvoj {
-    margin-top: 34px;
-}
-
-.vyvoj > .stat-karta + .stat-karta {
-    margin-top: 16px;
-}
-
-.stat-section h3 .vyvoj-edice {
-    order: 3;
-    display: inline-flex;
-    gap: 2px;
-    margin-left: 12px;
-    padding: 3px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-}
-
-.vyvoj-edice button {
-    padding: 3px 12px;
-    border: none;
-    border-radius: 999px;
-    background: none;
-    color: var(--text-muted);
-    font-size: 12px;
-    letter-spacing: 0;
-    cursor: pointer;
-}
-
-.vyvoj-edice button.active {
-    background-color: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent);
-    color: var(--text-main);
-}
-
-.vyvoj-tabulka {
-    padding: 6px 12px 8px;
-    overflow-x: auto;
-}
-
-.vyvoj-tabulka table {
-    width: 100%;
-    border-collapse: collapse;
-    font-variant-numeric: tabular-nums;
-}
-
-.vyvoj-tabulka th {
-    padding: 10px 10px 8px;
-    border-bottom: 1px solid var(--panel-okraj);
-    color: var(--text-muted);
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-align: right;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-.vyvoj-tabulka td {
-    padding: 8px 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    color: var(--text-main);
-    font-size: 13px;
-    text-align: right;
-    white-space: nowrap;
-}
-
-.vyvoj-tabulka th:first-child,
-.vyvoj-tabulka td:first-child {
-    text-align: left;
-    background: none !important;
-}
-
-.vyvoj-tabulka td small {
-    display: block;
-    color: #6e6e76;
-    font-size: 10px;
-}
-
-.vyvoj-tabulka td:first-child small {
-    color: var(--text-muted);
-}
-
-.vyvoj-tabulka td.malo {
-    color: var(--text-muted);
-}
-
-.vyvoj-tabulka td.prazdna {
-    color: #4a4a50;
-}
-
-.vyvoj-tabulka tbody tr {
-    cursor: pointer;
-}
-
-.vyvoj-tabulka tbody tr:hover td:first-child {
-    color: var(--accent-text);
-}
-
-.vyvoj-tabulka tbody tr:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-}
-
-.vyvoj-tabulka tbody tr.active td:first-child {
-    color: var(--accent-text);
-    box-shadow: inset 2px 0 0 var(--accent);
-}
-
-.vyvoj-veta {
-    margin: 0 0 10px;
-    color: var(--text-main);
-    font-size: 14px;
-    font-weight: 300;
-}
-
-.vyvoj-veta b {
-    font-weight: 500;
-}
-
-.vyvoj-graf .vyvoj-n {
-    fill: #6e6e76;
-    font-size: 10px;
-}
-
-.vyvoj-graf .vyvoj-podil {
-    fill: #fff;
-    font-size: 11px;
-    font-weight: 600;
-    pointer-events: none;
-}
-
-.vyvoj-legenda {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 16px;
-    margin-top: 8px;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.vyvoj-legenda i {
-    display: inline-block;
-    width: 12px;
-    height: 10px;
-    margin-right: 6px;
-    border-radius: 2px;
-    vertical-align: -1px;
-}
-
-.vyvoj-legenda i.cara {
-    height: 2px;
-    vertical-align: 3px;
-    background-color: var(--accent);
-}
-
-.vyvoj-legenda i.pasmo {
-    background-color: rgba(216, 27, 96, 0.28);
-}
-
-/* Vývoj v čase: sloupec Úplnost (pruh, procento, odkaz na doplnění chybějících) */
-.vyvoj-tabulka .vyvoj-uplnost {
-    width: 120px;
-    text-align: left;
-    background: none !important;
-}
-
-.vyvoj-uplnost div {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.vyvoj-uplnost i {
-    flex: 1;
-    height: 4px;
-    overflow: hidden;
-    border-radius: 2px;
-    background-color: rgba(255, 255, 255, 0.07);
-}
-
-.vyvoj-uplnost i b {
-    display: block;
-    height: 100%;
-    background-color: var(--accent);
-}
-
-.vyvoj-uplnost span {
-    width: 34px;
-    color: var(--text-main);
-    font-size: 12px;
-    text-align: right;
-}
-
-.vyvoj-uplnost .link {
-    display: block;
-    margin-top: 2px;
-    color: var(--accent-text);
-    font-size: 10.5px;
-    font-weight: 600;
-}
-
-.vyvoj-uplnost .vyvoj-hotovo {
-    display: block;
-    width: auto;
-    margin-top: 2px;
-    color: var(--text-muted);
-    font-size: 10.5px;
-    text-align: left;
-}

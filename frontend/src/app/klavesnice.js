@@ -3,8 +3,8 @@
 import { otevritNabidku } from './nabidky';
 
 // Co jde zaměřit a otevřít: karta modelky, dlaždice fotky, plakát, centerfold na stěně, cover
-// a v Přehledu políčko mapy edice a řádek tabulky Vývoj v čase
-const AKTIVOVATELNE = '.card, .photo-item[data-index], .poster[data-index], .wall-item, .cislo, .uvod-rok i[data-cislo], [data-vyvoj-radek]';
+// a v Přehledu políčko mapy edice
+const AKTIVOVATELNE = '.card, .photo-item[data-index], .poster[data-index], .wall-item, .cislo, .uvod-rok i[data-cislo]';
 const FOKUSOVATELNE = 'button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 // Okno nebo prohlížeč, který je právě nahoře

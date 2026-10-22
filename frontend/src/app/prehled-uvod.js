@@ -182,7 +182,7 @@ export function textShanim(stavy) {
     return ['Playboy CZ – sháním:', ...[...podleRoku].map(([rok, mesice]) => `${rok}: ${mesice.join(', ')}`)].join('\n');
 }
 
-// Graf centerfoldů podle desetiletí (stejný jako ve Statistikách); počítá se až po zobrazení úvodu
+// Graf centerfoldů podle desetiletí; počítá se až po zobrazení úvodu
 export function htmlGrafuDekad(s) {
     if (!s.desetileti.length) return '<p class="stat-prazdne">Zatím žádné centerfoldy.</p>';
     return grafSloupcu(s.desetileti.map(d => ({ hodnota: d.centerfoldy, popisek: `${String(d.desetileti).slice(2)}.`, tip: `${d.desetileti}–${d.desetileti + 9}: ${sklonovat(d.centerfoldy, 'centerfold', 'centerfoldy', 'centerfoldů')}` })), { vyska: 170 });

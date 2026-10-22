@@ -185,8 +185,8 @@ export function pripravit() {
                 otevritModelModal(dalsi, fronta);
                 ukazatZalozku(fronta.zalozka);
                 const skupina = SKUPINY_UDAJU.find(sk => sk.zalozka === fronta.zalozka);
-                // Fronta ze Statistik doplňuje jeden konkrétní údaj (fronta.pole), z Přehledu první chybějící ve skupině
-                const prvni = fronta.pole ? ['', '', fronta.pole] : fronta.klic === 'titulni' ? ['', '', 'inputDriveID'] : skupina?.udaje.find(([vlastnost]) => udajChybi(dalsi, vlastnost));
+                // Fronta z Přehledu zaměří první chybějící údaj ve skupině
+                const prvni = fronta.klic === 'titulni' ? ['', '', 'inputDriveID'] : skupina?.udaje.find(([vlastnost]) => udajChybi(dalsi, vlastnost));
                 zameritPole(prvni ? prvni[2] : 'inputJmeno');
                 if (!stats.classList.contains('hidden')) nacistPrehled();
                 return;

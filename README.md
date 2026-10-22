@@ -155,6 +155,7 @@ pro uživatele.
 - `vydani.go` – údaje čísel časopisu, speciály a výběry
 - `udaje.go` – kontrola a úprava údajů modelek (data narození a úmrtí, „na obálce“)
 - `kontrola.go` – Kontrola v Údržbě: pravidla pro údaje, které vypadají jako překlep, a „V pořádku“
+- `kontrola_uceni.go` – učení Kontroly ze sbírky: naučené rozsahy, neobvyklé kombinace údajů, podobná jména
 - `clanky.go` – články, skeny stran a fulltextové hledání (SQLite FTS5)
 - `statistiky.go`, `vyvoj.go` – statistiky a vývoj modelek v čase
 - `nastaveni.go` – zapamatování okna, zámek heslem, přehled sbírky

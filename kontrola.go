@@ -28,13 +28,15 @@ type PodezrelyUdaj struct {
 // Klíče nálezů: modelky a alba (ukládají se mezi „netýká se“)
 var (
 	kliceKontrolyModelky = map[string]bool{"ok-jmeno": true, "ok-vek": true, "ok-narozeni": true, "ok-umrti": true,
-		"ok-vyska": true, "ok-vaha": true, "ok-bmi": true, "ok-miry": true, "ok-pmoy": true, "ok-cislo": true, "ok-dvojice": true}
+		"ok-vyska": true, "ok-vaha": true, "ok-bmi": true, "ok-miry": true, "ok-pmoy": true, "ok-cislo": true, "ok-dvojice": true,
+		"ok-neobvykle": true, "ok-podobne-jmeno": true}
 	kliceKontrolyAlba = map[string]bool{"ok-album": true, "ok-vydani-alba": true}
 )
 
 var vzorPlaymateRoku = regexp.MustCompile(`(?i)playmate roku\s*(\d{4})`)
 
-// Rozsahy, mimo které údaj stojí za kontrolu (ne za zákaz: modelky bývají i mimo ně)
+// Rozsahy, mimo které údaj stojí za kontrolu (ne za zákaz: modelky bývají i mimo ně). Platí u malé sbírky;
+// když je údajů dost, nahradí je rozsahy naučené ze sbírky (kontrola_uceni.go).
 const (
 	vekOd, vekDo         = 18, 45
 	vyskaOd, vyskaDo     = 145, 195
@@ -67,12 +69,7 @@ func (a *App) kontrolovatSbirku(modelky []Modelka, vcetneSkrytych bool) []Podezr
 		podleID[m.ID] = m
 	}
 
-	kontrolovatJmena(modelky, pridat)
-	for _, m := range modelky {
-		kontrolovatData(m, pridat)
-		kontrolovatPostavu(m, pridat)
-		kontrolovatPlaymateRoku(m, pridat)
-	}
+	kontrolovatModelky(modelky, pridat)
 	a.kontrolovatCenterfoldyCisel(modelky, pridat)
 
 	// Alba: jedna fotka u alba s podobným názvem jako jiné album modelky (překlep), vydání mimo dobu časopisu
@@ -106,6 +103,20 @@ func (a *App) kontrolovatSbirku(modelky []Modelka, vcetneSkrytych bool) []Podezr
 	return nalezy
 }
 
+// Kontroly samotných údajů modelek (bez alb a fotek): pravidla s rozsahy naučenými ze sbírky,
+// neobvyklé kombinace údajů postavy a podobná jména
+func kontrolovatModelky(modelky []Modelka, pridat func(Modelka, string, string, string)) {
+	uceni := naucitSe(modelky)
+	kontrolovatJmena(modelky, pridat)
+	kontrolovatPodobnaJmena(modelky, pridat)
+	for _, m := range modelky {
+		kontrolovatData(m, uceni.rozsahy, pridat)
+		kontrolovatPostavu(m, uceni.rozsahy, pridat)
+		kontrolovatPlaymateRoku(m, pridat)
+	}
+	uceni.kontrolovatNeobvykle(modelky, pridat)
+}
+
 // Stejné jméno nebo pseudonym u dvou modelek bývá dvakrát založená tatáž
 func kontrolovatJmena(modelky []Modelka, pridat func(Modelka, string, string, string)) {
 	podleJmena := map[string]Modelka{}
@@ -135,8 +146,8 @@ func prvniVydani(m Modelka) string {
 	return prvni
 }
 
-// Narození, úmrtí a věk při prvním vydání
-func kontrolovatData(m Modelka, pridat func(Modelka, string, string, string)) {
+// Narození, úmrtí a věk při prvním vydání (rozsah věku z r)
+func kontrolovatData(m Modelka, r rozsahyKontroly, pridat func(Modelka, string, string, string)) {
 	dnes := time.Now().Format("2006-01-02")
 	narozeni, umrti := strings.TrimSpace(m.NarozeniDatum), strings.TrimSpace(m.UmrtiDatum)
 	prvni := prvniVydani(m)
@@ -150,7 +161,7 @@ func kontrolovatData(m Modelka, pridat func(Modelka, string, string, string)) {
 			pridat(m, "ok-narozeni", "inputNarozeniDatum", fmt.Sprintf("datum narození %s není před prvním vydáním (%s)", narozeni, prvni))
 		default:
 			// Věk mimo běžný rozsah ukazuje na překlep v datu narození nebo ve vydání (ale bývá i pravdivý)
-			if vek := vekKVydani(narozeni, prvni); prvni != "" && vek > 0 && (vek < vekOd || vek > vekDo) {
+			if vek := vekKVydani(narozeni, prvni); prvni != "" && vek > 0 && r[prVek].mimo(float64(vek)) {
 				pridat(m, "ok-vek", "inputNarozeniDatum", fmt.Sprintf("věk při prvním vydání (%s) vychází na %d let", prvni, vek))
 			}
 		}
@@ -167,27 +178,32 @@ func kontrolovatData(m Modelka, pridat func(Modelka, string, string, string)) {
 	}
 }
 
-// Výška, váha, BMI a obvody mimo běžné rozsahy; pas širší než boky nebo hrudník bývá prohozené pole
-func kontrolovatPostavu(m Modelka, pridat func(Modelka, string, string, string)) {
-	if m.VyskaCm > 0 && (m.VyskaCm < vyskaOd || m.VyskaCm > vyskaDo) {
-		pridat(m, "ok-vyska", "inputVyska", fmt.Sprintf("výška %d cm je mimo běžný rozsah %d–%d cm", m.VyskaCm, vyskaOd, vyskaDo))
+// Výška, váha, BMI a obvody mimo rozsahy r (pevné nebo naučené ze sbírky); pas širší než boky nebo hrudník
+// bývá prohozené pole
+func kontrolovatPostavu(m Modelka, r rozsahyKontroly, pridat func(Modelka, string, string, string)) {
+	if v := r[prVyska]; m.VyskaCm > 0 && v.mimo(float64(m.VyskaCm)) {
+		pridat(m, "ok-vyska", "inputVyska", fmt.Sprintf("výška %d cm je mimo %s %s cm", m.VyskaCm, v.popis(), v.text(priznaky[prVyska])))
 	}
-	if m.VahaKg > 0 && (m.VahaKg < vahaOd || m.VahaKg > vahaDo) {
-		pridat(m, "ok-vaha", "inputVaha", fmt.Sprintf("váha %d kg je mimo běžný rozsah %d–%d kg", m.VahaKg, vahaOd, vahaDo))
+	if v := r[prVaha]; m.VahaKg > 0 && v.mimo(float64(m.VahaKg)) {
+		pridat(m, "ok-vaha", "inputVaha", fmt.Sprintf("váha %d kg je mimo %s %s kg", m.VahaKg, v.popis(), v.text(priznaky[prVaha])))
 	}
 	if m.VyskaCm > 0 && m.VahaKg > 0 {
 		metry := float64(m.VyskaCm) / 100
-		if bmi := float64(m.VahaKg) / (metry * metry); bmi < bmiOd || bmi > bmiDo {
-			pridat(m, "ok-bmi", "inputVaha", fmt.Sprintf("BMI z výšky a váhy vychází %s – překlep ve výšce nebo váze?", strings.Replace(strconv.FormatFloat(bmi, 'f', 1, 64), ".", ",", 1)))
+		if bmi := float64(m.VahaKg) / (metry * metry); r[prBmi].mimo(bmi) {
+			pridat(m, "ok-bmi", "inputVaha", fmt.Sprintf("BMI z výšky a váhy vychází %s – překlep ve výšce nebo váze?", priznaky[prBmi].cislo(bmi)))
 		}
 	}
 	var chyby []string
 	for _, o := range []struct {
-		nazev     string
-		h, od, do int
-	}{{"hrudník", m.ObvodHrudnikCm, hrudnikOd, hrudnikDo}, {"pas", m.ObvodPasCm, pasOd, pasDo}, {"boky", m.ObvodBokyCm, bokyOd, bokyDo}} {
-		if o.h > 0 && (o.h < o.od || o.h > o.do) {
-			chyby = append(chyby, fmt.Sprintf("%s %d cm (běžně %d–%d)", o.nazev, o.h, o.od, o.do))
+		j int
+		h int
+	}{{prHrudnik, m.ObvodHrudnikCm}, {prPas, m.ObvodPasCm}, {prBoky, m.ObvodBokyCm}} {
+		if o.h > 0 && r[o.j].mimo(float64(o.h)) {
+			slovo := "běžně"
+			if r[o.j].naucene {
+				slovo = "ve sbírce obvykle"
+			}
+			chyby = append(chyby, fmt.Sprintf("%s %d cm (%s %s)", priznaky[o.j].nazev, o.h, slovo, r[o.j].text(priznaky[o.j])))
 		}
 	}
 	if m.ObvodPasCm > 0 && (m.ObvodBokyCm > 0 && m.ObvodPasCm >= m.ObvodBokyCm || m.ObvodHrudnikCm > 0 && m.ObvodPasCm >= m.ObvodHrudnikCm) {

@@ -7,6 +7,16 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.2] – 2026-10-22
+
+### Přidáno
+- Kontrola v Údržbě se učí ze sbírky (`kontrola_uceni.go`, bez nových knihoven):
+  - Rozsahy výšky, váhy, BMI, obvodů a věku při prvním vydání se odvodí z modelek ve sbírce (robustní medián ± 4,5 σ), když je údajů aspoň 30; u menší sbírky platí pevné hranice. Dolní hranice věku zůstává 18 let.
+  - „Neobvyklá kombinace údajů“: modelka, jejíž údaje jsou každý zvlášť v pořádku, ale dohromady ne (Mahalanobisova vzdálenost od středu sbírky); nález řekne, který údaj a jaká hodnota by byla obvyklá.
+  - „Podobné jméno“: skoro stejná jména dvou modelek (překlep, prohozené jméno a příjmení, pseudonym), podpořená stejným datem narození nebo prvním vydáním; jiný rok narození shodu vyloučí.
+  - Učení z „V pořádku“: tři a více potvrzených hodnot za hranicí, které na ni navazují, hranici posunou (potvrzené šestnáctileté playmate → věk 16 se už nehlásí); podobné potvrzené kombinace se přestanou hlásit.
+- Kontrola sbírky s 5 000 modelkami trvá zhruba 80 ms.
+
 ## [0.99.1] – 2026-10-22
 
 ### Změněno

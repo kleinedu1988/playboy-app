@@ -97,14 +97,14 @@ func TestKontrolaDat(t *testing.T) {
 		{Modelka{NarozeniDatum: "1960-05", Vydani: []string{"1985-S01", "1981-03"}}, ""},
 	} {
 		hlaseni = nil
-		kontrolovatData(pripad.m, pridat)
+		kontrolovatData(pripad.m, vychoziRozsahy(), pridat)
 		vysledek := strings.Join(hlaseni, " | ")
 		if pripad.cekano == "" && vysledek != "" || !strings.HasPrefix(vysledek, pripad.cekano) {
 			t.Errorf("%+v: %q, čekáno %q", pripad.m, vysledek, pripad.cekano)
 		}
 	}
 	hlaseni = nil
-	kontrolovatPostavu(Modelka{VyskaCm: 170, VahaKg: 95}, pridat)
+	kontrolovatPostavu(Modelka{VyskaCm: 170, VahaKg: 95}, vychoziRozsahy(), pridat)
 	if len(hlaseni) != 1 || !strings.HasPrefix(hlaseni[0], "ok-bmi BMI z výšky a váhy vychází 32,9") {
 		t.Errorf("BMI: %v", hlaseni)
 	}

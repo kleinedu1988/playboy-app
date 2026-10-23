@@ -149,7 +149,7 @@ do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají n�
 | 1.17 | Obsah čísla a tisk článku | 1.14 | nové |
 | 1.18 | Kontrola 2.1 – učení z rozhodnutí, jména podle období | 1.10 | 1.16 |
 | 1.19 | Přístupnost – přiblížení, popisky pro čtečku | – | nové |
-| 1.20 | Wikidata I – návrh údajů u modelky | – (rozhodnutí) | 1.12 |
+| 1.20 | Wikidata I – návrh údajů u modelky | – | 1.12 |
 | 1.21 | Wikidata II – hromadně v Údržbě, příprava dalšího roku | 1.20 | 1.13 |
 | **2.x** | **Chytrá sbírka** | | |
 | 2.0 | Chytré hledání I – synonyma, našeptávač, učení z otevíraných výsledků | – | 1.9 (kroky 1, 2, 6, 7) |
@@ -319,7 +319,7 @@ samostatná verze (1.9.0–1.9.3). Rozpracování: [PLAN-1X-DATA.md](docs/PLAN-1
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | Sjednocení zápisů | `GetRuzneZapisy`: fotograf (dělený čárkou), národnost, místo narození, vlasy, oči, etnicita, tagy – stejné bez diakritiky, Jaro–Winkler ≥ 0,92, iniciála, prohozené pořadí; filtr „Zápisy“ v Údržbě, „Sjednotit na …“ se zálohou, „Různí lidé“ v `nastaveni`; oprava `PrejmenovatFotografa` a `GetAlbaFotografa` pro víc fotografů v poli | M |
-| 2 | Titulní fotka alba a nové klíče **[schéma]** | Úprava č. 12: `alba.titulni` (ID souboru), `vydani.netyka_se`; klíče `fotograf` (album) a `obalka` (číslo); nabídka fotky „Nastavit jako titulní fotku alba“, použití na stránce fotografa a ročníku; export 8 (`titulni_fotka`, `netyka_se` u čísla), `EXPORT.md`, test verze dat a přechodu ze starých verzí | S–M |
+| 2 | Titulní fotka alba a nové klíče **[schéma]** | Úprava č. 12: `alba.titulni` (ID souboru), `vydani.netyka_se`, `modelky.upraveno` (datum poslední úpravy – „Naposledy upravené“ v galerii a řazení, bez historie změn); klíče `fotograf` (album) a `obalka` (číslo); nabídka fotky „Nastavit jako titulní fotku alba“, použití na stránce fotografa a ročníku; export 8 (`titulni_fotka`, `netyka_se` u čísla), `EXPORT.md`, test verze dat a přechodu ze starých verzí | S–M |
 | 3 | Nové úkoly v Údržbě | Playmate bez data narození (vlastní filtr, vyšší váha), číslo s coverem bez modelky z obálky, centerfold a pictorial bez fotografa; „Netýká se“ s novými klíči; řádky v souhrnu úvodu | M |
 | 4 | Kontrola při zadávání | `PodobneModelky` při psaní jména (práh 0,88, nejvýš 3 s fotkou), „Myslel jsi …?“ u fotografa a národnosti, `ZkontrolovatModelku` po uložení s oznámením a Opravit; „Sloučit…“ u nálezu podobného jména | M |
 
@@ -486,8 +486,7 @@ naučené“ vrátí výchozí stav; kontrola 5 000 modelek do 120 ms.
 
 ### 1.20 – Wikidata I: návrh údajů u modelky
 
-**Čeká na rozhodnutí uživatele:** odporuje bodu „stahování údajů z webu“ v oddílu Nedělat (návrh: upřesnit na
-„automatické stahování a zápis údajů z webu bez potvrzení“). Bez rozhodnutí se 1.20–1.21 vynechají.
+**Rozhodnuto 23. 10. 2026:** jde to – Wikidata se ptají jen na kliknutí a každý údaj uživatel potvrdí (viz Nedělat).
 
 **Cíl:** chybějící údaje modelky doplnit z Wikidat (CC0) jen na kliknutí a s potvrzením každého údaje.
 Bez změny schématu i exportu: původ = odkaz na položku Wikidat v Odkazech, odmítnuté hodnoty v `nastaveni`.
@@ -718,22 +717,29 @@ Rozbor možností k 2.2, 2.6–2.8 a k Wikidatům: [NAVRH-NAPADY.md](docs/NAVRH-
 - Dvě modelky stejného jména se liší datem narození; data narození a úmrtí RRRR, RRRR-MM nebo RRRR-MM-DD;
   hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý klíč (0.18.0–0.30.0).
 - Vzhled: střídmý, jeden růžový akcent, písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1).
-- Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.1).
-- Malé náhledy smí program ukládat na disk jako mezipaměť (1.3); originály a velké fotky zůstávají jen na Disku.
+- Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.3).
+- Malé náhledy smí program ukládat na disk jako mezipaměť (1.6); originály a velké fotky zůstávají jen na Disku.
 - 1.0.0 po 14 dnech používání bety bez nové chyby (21. 10. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
   každý krok a opravu v tématu (1.3.0, 1.3.1…); MAJOR = velký milník (2.x Chytrá sbírka), kompatibilitu dat hlídá
   verze schématu a exportu (revize plánu 23. 10. 2026).
-- Google Disk v aplikaci (1.1–1.2): doporučený rozsah `drive.file` s výběrem Google v prohlížeči a vlastním projektem
-  uživatele v Google Cloud – potvrdí se po prototypu (1.1, krok 1).
-- Editor textů (1.8–1.9): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
+- Google Disk v aplikaci (1.3–1.4): doporučený rozsah `drive.file` s výběrem Google v prohlížeči a vlastním projektem
+  uživatele v Google Cloud – potvrdí se po prototypu (1.3, krok 1).
+- Editor textů (1.14–1.15): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
+- Revize řady 1.x (23. 10. 2026, potvrzeno uživatelem): nejdřív Rychlé přidávání (1.1) a Přidat číslo (1.2), pak
+  Google Disk; Vrátit přidání v 1.2 jen pro právě přidané číslo (cílené, ne deník změn); upozornění na novou
+  verzi v 1.8 kontrolou repozitáře (`git fetch`), nic se samo neinstaluje; „Naposledy upravené“ u modelky jako
+  sloupec v úpravě č. 12 (1.9), plná historie změn ne; Disk: záložní adresa obrázků v 1.6 (Náhledy), výchozí
+  limit náhledů 2 GB, přihlášení přes `golang.org/x/oauth2`; Wikidata (1.20–1.21) jen na kliknutí a s potvrzením
+  každého údaje.
 
 ## Nedělat
 
-- Obecné Zpět pro všechny úpravy (deník změn) – denní zálohy a Vrátit u fotek stačí.
-- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz 1.3), zálohy na jiný disk.
+- Obecné Zpět pro všechny úpravy (deník změn) – denní zálohy, Vrátit u fotek a Vrátit přidání čísla (1.2) stačí.
+- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz 1.6), zálohy na jiný disk.
 - Šifrovanou databázi – zvolen zámek rozhraní.
 - Půlsrdíčka.
-- Zobrazování fotek přes Google API s přihlášením (API jen k výběru fotek, viz 1.1–1.2); automatický import celé
-  složky bez výběru, stahování údajů z webu, rozpoznávání obličejů.
+- Zobrazování fotek přes Google API s přihlášením (API jen k výběru fotek, viz 1.3–1.4); automatický import celé
+  složky bez výběru, automatické stahování a zápis údajů z webu bez potvrzení (Wikidata 1.20–1.21 jen na kliknutí
+  a s potvrzením každého údaje), rozpoznávání obličejů.
 - Nové funkce v alfě a betě a změny schématu nebo exportu od alfy.
 - Vše z oddílu „Rozhodnuto nedělat“ v `PLAN.md`.

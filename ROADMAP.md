@@ -168,6 +168,7 @@ do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají n�
 | 1.19 | Přístupnost – přiblížení, popisky pro čtečku | – | nové |
 | 1.20 | Wikidata I – návrh údajů u modelky | – | 1.12 |
 | 1.21 | Wikidata II – hromadně v Údržbě, příprava dalšího roku | 1.20 | 1.13 |
+| 1.22 | Kvalita kódu a testy – výpočty Statistik a Přehledu do `src/lib` s testy, chybějící testy backendu, jeden správce oken a rozepsaných změn, test rozhraní v Playwrightu | – | nové (revize) |
 | **2.x** | **Chytrá sbírka** | | |
 | 2.0 | Chytré hledání I – synonyma, našeptávač, učení z otevíraných výsledků | – | 1.9 (kroky 1, 2, 6, 7) |
 | 2.1 | Chytré hledání II – česká věta jako filtr a Síť slov (malá znaková neuronová síť) | 2.0 | 1.9 (kroky 3, 4) + síť |
@@ -179,6 +180,22 @@ do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají n�
 | 2.7 | Chytré výběry **[schéma]** | 2.0 | 1.14 |
 | 2.8 | Kvíz „Poznej playmate“ | 2.2 | 1.15 |
 | rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – | |
+
+### Doplňky z revize kódu (23. 10. 2026)
+
+Pět agentů prošlo kód (zprávy `docs/REVIZE-GO-DATA.md`, `REVIZE-GO-LOGIKA.md`, `REVIZE-FRONTEND-LOGIKA.md`,
+`REVIZE-ROZHRANI.md`, `REVIZE-TESTY-SESTAVENI.md`). Chyby jsou opravené v 0.99.6–0.99.8; zbytek patří sem:
+
+| Kam | Co |
+|---|---|
+| 1.0.x (údržba, PATCH) | ověření šablony adresy obrázků bez souběhu (`SetSablonaObrazku`); drobnosti hledání (prázdné pole v dotazu, význam `hodnoceni:<N`, regulární výraz jednou); úplnější CSP s ověřením na Fedoře; odpojení `ResizeObserver` a jedno `GetStatistiky`; historie bez zdvojení, srdíčka bez souběhu dvou kliků, `localStorage` v `try`; delší čekání u importu, `Sync` při kopírování, `SetNetykaSe` v transakci; úklid zdvojeného a mrtvého CSS (55 selektorů); ověřit na Fedoře, zda neblikají karty galerie a fotky alba (stejný vzor jako kalendář před 0.94.4); Wails 2.17.0, aktualizace závislostí, `govulncheck` |
+| 1.6 Náhledy na disku | dřívější opakované ověření nedostupných fotek v denní dávce |
+| 1.8 Zálohy a aktualizace | `npm ci` místo `npm install`; zámek při výměně databáze během obnovení; export z jedné čtecí transakce (dnes 5,7 s při 5 000 modelkách a 100 000 fotkách, cíl < 1 s); úklid mezipaměti při odinstalaci; ikony 256/512 připravené předem |
+| 1.9 Kvalita dat | řady edic US/CZ i v backendu a kontrola „číslo mimo řadu edice“; volitelný úklid prázdných alb vzniklých před 0.99.8 |
+| 1.10 Kontrola 2.0 | věk při prvním vydání i u data narození jen rokem |
+| 1.19 Přístupnost | role dialogu u oken, oznámení pro čtečku (`aria-live`), názvy ikonových tlačítek (+, ⋯), kontrast placeholderů, `prefers-reduced-motion` všude, hledání i v úzkém okně (pod 421 px), zásobník vrstev pro Esc, Tab a fokus |
+| 1.22 Kvalita kódu a testy | viz tabulka verzí |
+| 2.0 Chytré hledání I | levnější záložní hledání článků v našeptávači |
 
 ## Řada 1.x – Pohodlí a kvalita dat
 

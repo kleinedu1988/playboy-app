@@ -122,7 +122,8 @@ neruší. Nejdřív možné vydání: 5. 11. 2026 (po kategoriích v 0.91.0), po
 - U každé verze: kroky v pořadí, ve kterém se dělají; **[schéma]** = mění databázi nebo export.
 
 Každá verze níže je malá a ucelená (zhruba 1–3 dny práce, 2–4 kroky) a dá se vyzkoušet sama o sobě.
-Pořadí verzí jde změnit, závislosti jsou uvedené.
+Pořadí verzí jde změnit, závislosti jsou uvedené. Doporučené pořadí strojového učení: 1.16 Kontrola 2.0
+hned po 1.6 – sbírka přibývá po letech, takže kontrola podle období se vyplatí brzy.
 
 | Verze | Obsah | Závisí na |
 |---|---|---|
@@ -142,7 +143,7 @@ Pořadí verzí jde změnit, závislosti jsou uvedené.
 | 1.14 | Chytré výběry **[schéma]** | 1.9 |
 | 1.15 | Kvíz „Poznej playmate“ | 1.10 |
 | 1.16 | Kontrola 2.0 – postava podle období, jistota a řazení nálezů, učení z oprav i „V pořádku“ | – (rozšiřuje 1.6, jde hned po ní) |
-| 1.17 | Mohlo by se ti líbit – odhad srdíček z vlastních hodnocení, doporučené modelky a fotky, „Ohodnoť další“, volitelně malá neuronová síť | 1.10, 1.9.1 |
+| 1.17 | Mohlo by se ti líbit – návrh srdíček u nové modelky, soudržnost hodnocení, fotky, které by se mohly líbit | 1.10 |
 | 1.18 | Postřehy ve Statistikách – trendy, zlomy, výběr proti sbírce, neobvyklé roky | – |
 | rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – |
 
@@ -410,29 +411,37 @@ ani export se nemění.
 
 ### 1.17 – Mohlo by se ti líbit
 
-**Cíl:** program se z hodnocení srdíčky naučí vkus uživatele a nabídne nehodnocené modelky a fotky, každou
-s důvodem. Jen z vlastních hodnocení a údajů sbírky (ne z obsahu fotek), vše v počítači. **Bez změny schématu
-i exportu** – model se přepočítává z dat, „Nezajímá mě“ a volby jsou v `nastaveni`. Každý krok vyjde jako
-samostatná verze (1.17.0–1.17.3, volitelně 1.17.4). Rozbor možností: [NAVRH-DOPORUCENI.md](docs/NAVRH-DOPORUCENI.md).
+**Cíl:** program se z hodnocení naučí vkus uživatele a pomáhá s hodnocením: navrhne srdíčka u nově přidané
+modelky, upozorní na nesoudržné hodnocení a nabídne fotky, které by se mohly líbit – vždy s důvodem. Jen
+z vlastních hodnocení a údajů sbírky (ne z obsahu fotek), vše v počítači. **Bez změny schématu i exportu.**
+Rozbor možností: [NAVRH-DOPORUCENI.md](docs/NAVRH-DOPORUCENI.md).
 
-**Rozhodnutí:** hřebenová regrese odhadu srdíček v čistém Go (Cholesky z `kontrola_uceni.go`) smíchaná s kNN nad
-hodnocenými podle jejich počtu; příznaky z údajů modelky a alba (robustní z-skóre, one-hot, fotografové, štítky);
-podobnost a diverzita ze společného `podobnost.go`; nehodnocené nikdy nejsou záporný příklad.
+**Upraveno podle skutečného používání (říjen 2026):** uživatel hodnotí **všechny** modelky (i jedním srdíčkem),
+přidává je po letech (nyní kolem 400 modelek, rok 1977, desítky denně) a fotky hodnotí jen ty, které se mu
+vyloženě líbí. Proto: u modelek nejsou „nehodnocené k doporučení“ – odhad slouží jako návrh u nové modelky
+a ke kontrole soudržnosti; u fotek je hodnocení jen kladný signál (neohodnocená ≠ nelíbí se), takže se fotky
+řadí učením z kladných příkladů. Model se učí jen z let, která sbírka má; období je příznak a odhad u modelek
+z let, která ještě nejsou ve sbírce, se označí jako nejistý.
+
+**Rozhodnutí:** hřebenová regrese odhadu srdíček modelek v čistém Go (Cholesky z `kontrola_uceni.go`) smíchaná
+s kNN nad hodnocenými; u fotek skóre „podobné fotkám, které sis označil“ (učení z kladných a neoznačených
+příkladů, neoznačené s nízkou vahou); podobnost ze společného `podobnost.go`.
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Model modelek a řazení | `doporuceni.go`: příznaky, ridge + kNN, pod 10 hodnoceními nic, váhy úrovní srdíček, λ 5násobnou křížovou validací, přepočet po změně hodnocení; řazení „Odhad ♥“ v galerii; MAE a precision@10 na vlastních hodnoceních | M–L |
-| 2 | Mohlo by se ti líbit | Čip v Nejlepších: 10 modelek (7 nejlepších s penalizací podobnosti + 3 „Pro změnu“), důvody „blond · 70. léta · fotograf Pompeo Posar“ nebo „podobná X ♥5“, „Nezajímá mě“ (v `nastaveni`), odhad v profilu nehodnocené modelky | M |
-| 3 | Doporučené fotky | Příznaky fotky (typ alba, fotograf, hodnocení modelky, průměr alba bez fotky, poloha, období), mozaika 60 fotek (max. 3 z alba), prohlížeč s klávesami 1–5; když nepřekoná průměr alba, použije se ten | M |
-| 4 | Ohodnoť další a vyhodnocení | 12 fotek a modelek, u kterých si model je nejméně jistý (při začátku nejrozmanitější), ⋯ → Doporučení: „Jak dobře tě znám“, skryté, vypnout | M |
-| 5 | Malá neuronová síť (volitelně) | Jen při ≥ 1 000 hodnocených fotek podle metrik z kroku 4: perceptron s 1 skrytou vrstvou v čistém Go (pevné semínko, Adam, L2, early stopping), ověření na pozadí; použije se, jen když je v křížové validaci o ≥ 3 % lepší v ≥ 4 z 5 záhybů, jinak zůstane jednoduchý model; váhy (~7 kB) v `nastaveni` | M–L |
+| 1 | Návrh srdíček u nové modelky | `doporuceni.go`: příznaky, ridge + kNN, λ křížovou validací; po vyplnění údajů ve formuláři a v profilu nové modelky „Odhad ♥♥♥♥ – podobná X, Y“, potvrzení jedním klikem (nikdy se nezapíše samo); u let mimo sbírku „nejisté“; MAE na vlastních hodnoceních | M–L |
+| 2 | Soudržnost hodnocení | Modelky, jejichž srdíčka se nejvíc liší od odhadu z podobných („♥♥, podobné mají ♥♥♥♥“), jako volitelný filtr v Údržbě nebo seznam v ⋯ → Doporučení; posun měřítka v čase (průměr srdíček podle měsíce přidání); nic se nemění samo | M |
+| 3 | Fotky, které by se ti mohly líbit | Kladné příklady = ohodnocené fotky, neoznačené jako neznámé; příznaky (typ alba, fotograf, hodnocení modelky, poloha v albu, období); mozaika v Nejlepších (max. 3 z alba) s důvodem, „Nezajímá mě“ (v `nastaveni`), řazení „Mohlo by se líbit“ v albu | M |
+| 4 | Jak dobře tě znám | ⋯ → Doporučení: přesnost odhadu modelek (MAE proti průměru), úspěšnost u fotek (kolik z nabídnutých sis pak označil), skryté, vypnout | S–M |
 
-**Nedělá se:** obsah obrázku (konvoluční síť, hotové obrazové modely a jejich runtime), automatické hodnocení
-odhadem, učení z otevírání profilů, etnicita jako příznak.
+**Nedělá se teď:** malá neuronová síť – při stovkách modelek a jen kladně označených fotkách by se přeučila
+a jednoduchý model ji porazí; znovu zvážit při tisících hodnocených modelek (návrh v NAVRH-DOPORUCENI.md,
+oddíl 6, s pravidlem „použije se, jen když průkazně vyhraje“). Dál se nedělá: obsah obrázku, automatické
+hodnocení odhadem, učení z otevírání profilů, etnicita jako příznak.
 
-**Hotovo, když:** na syntetické sbírce je ≥ 8 z 10 doporučení podle zasazeného vkusu; na skutečné sbírce je odhad
-modelek o ≥ 10 % přesnější (MAE) než průměr uživatele a každé doporučení má důvod; stejná data dají stejný výsledek;
-přepočet 2 000 modelek < 50 ms a 64 000 fotek < 300 ms; schéma a export se nemění.
+**Hotovo, když:** na skutečné sbírce je odhad srdíček o ≥ 10 % přesnější (MAE) než průměr uživatele a každý
+návrh má důvod; z fotek nabídnutých jako „mohly by se líbit“ si uživatel označí výrazně víc než z náhodných
+fotek stejných alb; stejná data dají stejný výsledek; přepočet 2 000 modelek < 50 ms; schéma a export se nemění.
 
 ### 1.18 – Postřehy ve Statistikách
 

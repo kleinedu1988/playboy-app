@@ -543,3 +543,23 @@ odhadem, učení z otevírání profilů, etnicita jako příznak.
 modelek o ≥ 10 % přesnější (MAE) než průměr uživatele a každé doporučení má důvod; stejná data dají stejný výsledek;
 přepočet 2 000 modelek < 50 ms a 64 000 fotek < 300 ms; schéma a export se nemění.
 ```
+
+
+## Úprava podle skutečného používání (23. 10. 2026)
+
+Uživatel hodnotí **všechny** modelky (i jedním srdíčkem), přidává je po letech (kolem 400 modelek, rok 1977,
+desítky denně) a fotky hodnotí jen tehdy, když se mu vyloženě líbí. Z toho plyne:
+
+- **Modelky:** nehodnocené k doporučení skoro nejsou. Odhad srdíček se použije jako **návrh u nově přidané
+  modelky** (potvrdí se jedním klikem) a ke **kontrole soudržnosti** (modelky hodnocené jinak než podobné, posun
+  měřítka v čase). Jedna srdíčka jsou cenné záporné příklady – regrese z oddílu 2 zůstává.
+- **Fotky:** hodnocení je jen kladný signál; neohodnocená fotka neznamená „nelíbí se“. Místo regrese na srdíčka
+  jde o učení z kladných a neoznačených příkladů: skóre podobnosti k označeným fotkám, neoznačené s nízkou vahou
+  (nebo vážení podle odhadované pravděpodobnosti označení). Vyhodnocení: kolik z nabídnutých fotek si uživatel
+  později označí proti náhodným fotkám stejných alb.
+- **Období:** model se učí jen z let, která sbírka má. Období je příznak; odhad pro roky mimo rozsah sbírky se
+  označí jako nejistý. Kontrola podle období (1.16) se proto vyplatí brzy.
+- **Neuronová síť (oddíl 6):** teď ne. Při stovkách modelek a jen kladně označených fotkách se přeučí; znovu
+  zvážit při tisících hodnocených modelek, s pravidlem „použije se, jen když průkazně vyhraje“.
+
+Upravený oddíl 1.17 je v ROADMAP.md.

@@ -145,6 +145,7 @@ hned po 1.6 – sbírka přibývá po letech, takže kontrola podle období se v
 | 1.16 | Kontrola 2.0 – postava podle období, jistota a řazení nálezů, učení z oprav i „V pořádku“ | – (rozšiřuje 1.6, jde hned po ní) |
 | 1.17 | Mohlo by se ti líbit – návrh srdíček u nové modelky, soudržnost hodnocení, fotky, které by se mohly líbit | 1.10 |
 | 1.18 | Postřehy ve Statistikách – trendy, zlomy, výběr proti sbírce, neobvyklé roky | – |
+| 1.19 | Mapa sbírky – malá neuronová síť (autoenkodér): mapa modelek, podobnost, druhý názor Kontroly | 1.10 |
 | rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – |
 
 ### 1.1 – Google Disk I: přihlášení a výběr do alba
@@ -294,7 +295,10 @@ testovatelné, offline); podobnost modelek váženou vzdáleností nad údaji, s
 | 6 | Učení z otevíraných výsledků | Co po hledání otevíráš, jde příště výš (našeptávač, řazení Relevance); jen v počítači, jde zapomenout | M |
 | 7 | Synonyma II | Návrhy synonym ze sbírky a z oprav k potvrzení v ⋯ → Hledání → Synonyma | S–M |
 
-**Nedělá se:** hledání podle obsahu fotky, jazykový model (API ani místní), přepisování dat podle synonym.
+**Doplněno (říjen 2026):** malá znaková neuronová síť pro slova v hledání (pozná údaj i u neznámých tvarů:
+„blondýnky“ → vlasy:blond), učená na větách vygenerovaných z hodnot sbírky; rozbor v [NAVRH-SITE.md](docs/NAVRH-SITE.md).
+
+**Nedělá se:** hledání podle obsahu fotky, velký jazykový model (API ani místní), přepisování dat podle synonym.
 
 **Hotovo, když:** z 50 testovacích vět je ≥ 45 převedeno správně a žádné jméno se nepřevede; každý převod je
 vidět a jde vrátit; našeptávač odpoví do 30 ms a `jako:` přidá nejvýš 10 ms na 5 000 modelkách; po třech

@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.8] – 2026-10-23
+
+### Opraveno
+Další nálezy revize kódu (`docs/REVIZE-GO-DATA.md`, `docs/REVIZE-ROZHRANI.md`):
+- Opakovaný import exportu z jiné databáze (nebo ručně psaného souboru) zakládal stejnojmenné modelky znovu; když nejde jednoznačně poznat, která to je, modelka se přeskočí s hláškou.
+- Obnovení zálohy, která mezitím zmizela, obnovilo prázdnou sbírku; teď se nic nezmění. Zálohy se otevírají opravdu jen pro čtení.
+- Sloučení modelek přenese i články a označení „netýká se“ / „V pořádku“.
+- Export, při kterém se nepodaří načíst část dat, skončí chybou místo neúplného souboru.
+- Přejmenování fotografa a tagu, úprava coveru a uložení výsledku kontroly souborů proběhnou celé, nebo vůbec; chyba zápisu se ohlásí.
+- Vložení samých nefunkčních odkazů už nezaloží prázdné album.
+- Zamčený program neukazuje pole hledání; křížky prohlížeče, čtečky, oznámení a zavření programu a pole článku mají popisky pro čtečku; text pod grafem Statistik („tažení myší období“, „nejsou“); fokus z klávesnice je vidět i u vybraného řádku grafu.
+
 ## [0.99.7] – 2026-10-23
 
 ### Opraveno

@@ -12,6 +12,13 @@ Opravené (žádné otevřené):
 - 0.99.4 (23. 10. 2026): Esc nebo Zrušit zavřel rozepsaný článek, úpravu čísla, Doplnit modelku a rychlou
   Novou modelku bez dotazu „Zahodit změny?“; album s víc fotografy (odděleno čárkou) chybělo na stránce každého
   z nich a přejmenování fotografa přepsalo celé pole. Nalezeno při revizi kódu pro plán 1.x.
+- 0.99.6–0.99.8 (23. 10. 2026), revize kódu pěti agenty (zprávy `docs/REVIZE-*.md`): dotaz „Zahodit změny?“
+  pod oknem (chyba z 0.99.4); hledání `rok:`/`narozena:`/`vydani:` s měsícem jako rozsah; holá ID mezi odkazy se
+  ztrácela; falešné „úmrtí před vydáním“ u data jen rokem; Statistiky ztrácely výběr po Zpět; Zpět na smazanou
+  modelku; opakovaný import zakládal stejnojmenné modelky znovu; obnovení zmizelé zálohy obnovilo prázdnou sbírku;
+  sloučení modelek odpojilo články; neúplný export se uložil jako úplný; zápisy bez transakce (přejmenování, cover,
+  kontrola souborů); prázdné album po nedostupných odkazech; instalátor nainstaloval i při překlepu v přepínači;
+  hledání viditelné na zamčené obrazovce.
 
 Beta 0.90.0 prošla testovacím scénářem na čistém účtu Fedory (21. 10. 2026), včetně
 Content-Security-Policy (okno není prázdné). Z alfy: Ověřeno na Fedoře 20. 10. 2026: poblikávání okna a kontextové nabídky je pryč (0.33.18),

@@ -25,7 +25,7 @@ export const SABLONA_OKNA = `
       <div class="window-controls">
         <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
         <button id="winMaxBtn" class="win-btn" title="Maximalizovat">&#9633;</button>
-        <button id="winCloseBtn" class="win-btn win-close" title="Zavřít">&times;</button>
+        <button id="winCloseBtn" class="win-btn win-close" title="Zavřít" aria-label="Zavřít program">&times;</button>
       </div>
     </div>
     <!-- Hlavní lišta: přehledy jako záložky, volby přehledu a akce -->
@@ -352,7 +352,7 @@ export const SABLONA_OKNA = `
           </div>
         </div>
         <div class="form-group">
-          <label id="bulkLinksLabel">Vlož odkazy z Google Disku (libovolné množství)</label>
+          <label id="bulkLinksLabel" for="inputBulkLinks">Vlož odkazy z Google Disku (libovolné množství)</label>
           <textarea id="inputBulkLinks" rows="3" placeholder="Vlož zkopírované odkazy z Disku (i více naráz)…" required></textarea>
         </div>
         <div class="form-group">
@@ -439,7 +439,7 @@ export const SABLONA_OKNA = `
     <form id="lockForm">
       <div class="lock-icon">&#128274;</div>
       <h3>Sbírka je zamčená</h3>
-      <input type="password" id="inputLock" placeholder="Heslo" autocomplete="off" />
+      <input type="password" id="inputLock" placeholder="Heslo" aria-label="Heslo" autocomplete="off" />
       <button type="submit" class="btn btn-primary">Odemknout</button>
       <p id="lockMsg"></p>
     </form>
@@ -617,7 +617,7 @@ export const SABLONA_OKNA = `
         <div class="lb-vpravo">
           <span id="lbCounter" class="lb-counter"></span>
           <span class="lb-oddelovac"></span>
-          <button id="lbClose" class="lb-btn lb-zavrit" title="Zavřít (Esc)">&times;</button>
+          <button id="lbClose" class="lb-btn lb-zavrit" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
         </div>
         <button id="lbNext" class="lb-btn lb-sipka" title="Další (šipka vpravo)">&#8250;</button>
       </div>
@@ -639,7 +639,7 @@ export const SABLONA_OKNA = `
         <button type="button" data-rezim-ctecky="1" title="Jedna strana (1)">Jedna strana</button>
         <button type="button" data-rezim-ctecky="2" title="Dvojstrana (2)">Dvojstrana</button>
       </div>
-      <button type="button" class="ctecka-zavrit" data-zavrit title="Zavřít (Esc)">&times;</button>
+      <button type="button" class="ctecka-zavrit" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
     </div>
     <div class="ctecka-plocha">
       <button type="button" class="ctecka-sipka" data-krok-ctecky="-1" title="Předchozí (šipka vlevo)">&#8249;</button>
@@ -656,7 +656,7 @@ export const SABLONA_OKNA = `
   <div id="toast" class="toast hidden">
     <span id="toastText"></span>
     <button id="toastAction" class="btn btn-primary btn-small hidden"></button>
-    <button id="toastClose" class="close-btn" title="Zavřít">&times;</button>
+    <button id="toastClose" class="close-btn" title="Zavřít" aria-label="Zavřít oznámení">&times;</button>
   </div>
 
   <!-- Nápověda (nabídka ⋯ a přehled zkratek pod klávesou ?) -->
@@ -767,12 +767,12 @@ export const SABLONA_OKNA = `
               <div class="doplnit-pole"><label for="selectClanekDruh">Druh textu</label>
                 <select id="selectClanekDruh"><option value="">Neuvedeno</option><option value="prepis">Přepis</option><option value="shrnuti">Shrnutí</option></select></div>
             </div>
-            <div class="doplnit-pole"><textarea id="inputClanekText" rows="10"></textarea></div>
+            <div class="doplnit-pole"><textarea id="inputClanekText" rows="10" aria-label="Text článku"></textarea></div>
             <p class="doplnit-napoveda">Markdown: **tučné**, *kurzíva*, odrážky (* nebo -), citát (&gt;). První odstavec je perex, dvojtečka za jménem (PLAYBOY:) zvýrazní mluvčího.</p>
           </section>
           <section class="doplnit-blok">
             <h4>Skeny stran (nepovinné)</h4>
-            <div class="doplnit-pole"><textarea id="inputClanekSkeny" rows="3" placeholder="Odkazy na skeny z Google Disku, jeden na řádek"></textarea></div>
+            <div class="doplnit-pole"><textarea id="inputClanekSkeny" rows="3" aria-label="Skeny stran" placeholder="Odkazy na skeny z Google Disku, jeden na řádek"></textarea></div>
           </section>
         </div>
         <div class="doplnit-pata">

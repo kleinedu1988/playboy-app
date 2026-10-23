@@ -2479,6 +2479,7 @@ body.razeni .photo-item {
 
 /* Zamčený program nenabízí v hlavičce nic kromě tlačítek okna */
 #app.zamceno .logo > *,
+#app.zamceno .nav-controls,
 #app.zamceno .hlavni-lista > * {
     visibility: hidden;
 }
@@ -5935,6 +5936,13 @@ textarea {
 
 .sp-pruh.vybrany {
     background-color: var(--accent-soft);
+}
+
+/* Fokus z klávesnice je vidět i u vybraného řádku (pozadí výběru by ho jinak schovalo) */
+.sp-pruh:focus-visible,
+.sp-modelka:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
 }
 
 .sp-pruh.tlum .sp-draha i {

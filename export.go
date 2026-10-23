@@ -189,7 +189,24 @@ func seskupitDoAlb(fotky []Fotografie, odkazy odkazyNaModelky, netykaSe map[int6
 	return alba
 }
 
+// Export celé sbírky. Běží nad kopií aplikace, která chyby nehlásí do okna, ale sbírá: chyba čtení i v pomocných
+// funkcích, které ji jinak jen ohlásí (alba bez fotek, vydání, články, výběry), export zruší, aby se neuložil
+// neúplný soubor, který vypadá jako úspěšný export
 func (a *App) exportovat() ([]byte, error) {
+	var chyby []string
+	exp := *a
+	exp.naChybu = func(zprava string) { chyby = append(chyby, zprava) }
+	data, err := exp.sestavitExport()
+	if err != nil {
+		return nil, err
+	}
+	if len(chyby) > 0 {
+		return nil, fmt.Errorf("export není úplný: %s", chyby[0])
+	}
+	return data, nil
+}
+
+func (a *App) sestavitExport() ([]byte, error) {
 	data := exportDat{Verze: verzeExportu, Modelky: []exportModelka{}}
 	exportovanoFotek := 0
 
@@ -213,6 +230,8 @@ func (a *App) exportovat() ([]byte, error) {
 			}
 		}
 		rows.Close()
+	} else {
+		a.chyba("export", err)
 	}
 	dalsiModelky := a.dalsiModelkyAlb()
 	for _, m := range modelky {
@@ -685,11 +704,20 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 	}
 	sparovana := map[int]bool{}
 	podleCislaSouboru := map[int]int{}
-	najit := func(jmeno string, cislo int) (Modelka, bool) {
+	// Výsledek párování modelky ze souboru s modelkami ve sbírce
+	const (
+		nalezena = iota
+		zalozit
+		nejednoznacna
+	)
+	// Číslo modelky ze souboru platí jen v databázi, ze které export vznikl. Když ve sbírce zbývá víc
+	// nespárovaných modelek téhož jména a číslo žádnou neurčí, modelka se nezaloží znovu (opakovaný import
+	// do jiné databáze by jinak pokaždé přidal další kopie), ale přeskočí se s hláškou.
+	najit := func(jmeno string, cislo int) (Modelka, int) {
 		kandidati := podleJmena[zjednodusit(jmeno)]
 		for _, m := range kandidati {
 			if cislo != 0 && m.ID == cislo && !sparovana[m.ID] {
-				return m, true
+				return m, nalezena
 			}
 		}
 		var volne []Modelka
@@ -698,14 +726,19 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 				volne = append(volne, m)
 			}
 		}
+		switch {
+		case len(kandidati) == 0:
+			return Modelka{}, zalozit
 		// Jméno bez čísla, které má ve sbírce jediná modelka: je to ona, i když už ji doplnil jiný soubor téhož importu
-		if cislo == 0 && len(kandidati) == 1 {
-			return kandidati[0], true
+		case cislo == 0 && len(kandidati) == 1:
+			return kandidati[0], nalezena
+		case len(volne) == 1 && len(kandidati) == 1:
+			return volne[0], nalezena
+		// Všechny modelky toho jména už spároval tento import (soubor se dvěma Annami do prázdné databáze)
+		case len(volne) == 0:
+			return Modelka{}, zalozit
 		}
-		if len(volne) == 1 && len(kandidati) == 1 {
-			return volne[0], true
-		}
-		return Modelka{}, false
+		return Modelka{}, nejednoznacna
 	}
 	// Odkaz ze souboru („jméno“ nebo „jméno [číslo]“) na id modelky v databázi
 	idPodleOdkazu := func(odkaz string) int {
@@ -736,8 +769,16 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 			continue
 		}
 
-		m, existuje := najit(jmeno, e.Cislo)
-		if !existuje {
+		m, stav := najit(jmeno, e.Cislo)
+		if stav == nejednoznacna {
+			kdo := jmeno
+			if e.Cislo != 0 {
+				kdo = fmt.Sprintf("%s [%d]", jmeno, e.Cislo)
+			}
+			vysledek.Chyby = append(vysledek.Chyby, kdo+": ve sbírce je víc modelek tohoto jména a číslo nesedí, modelka přeskočena")
+			continue
+		}
+		if stav == zalozit {
 			if !a.AddModelka(Modelka{Jmeno: jmeno, Tetovani: -1, Piercing: -1, Pridano: strings.TrimSpace(e.Pridano)}) {
 				vysledek.Chyby = append(vysledek.Chyby, jmeno+": modelku se nepodařilo založit")
 				continue
@@ -988,6 +1029,8 @@ func (a *App) prazdnaAlba(modelkaID int, odkazy odkazyNaModelky) []exportAlbum {
 				}
 			}
 			rows.Close()
+		} else {
+			a.chyba("export", err)
 		}
 	}
 	return alba

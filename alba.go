@@ -87,6 +87,7 @@ func (a *App) dalsiModelkyAlb() map[string][]OdkazModelky {
 		FROM alba_modelky am JOIN alba al ON al.id = am.album_id JOIN modelky m ON m.id = am.modelka_id
 		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY`)
 	if err != nil {
+		a.chyba("načtení dalších modelek alb", err)
 		return vysledek
 	}
 	defer rows.Close()
@@ -401,6 +402,26 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 		a.chyba("sloučení modelek", err)
 		return "Modelky se nepodařilo sloučit."
 	}
+	// Články zdrojové modelky také (smazání by je odpojilo)
+	if _, err := tx.Exec("UPDATE clanky SET modelka_id = ? WHERE modelka_id = ?", cilID, zdrojID); err != nil {
+		a.chyba("sloučení modelek", err)
+		return "Modelky se nepodařilo sloučit."
+	}
+	// „Netýká se“ a „V pořádku“ zdrojové modelky se přidají k cílové
+	var cilovy string
+	if err := tx.QueryRow("SELECT COALESCE(netyka_se, '') FROM modelky WHERE id = ?", cilID).Scan(&cilovy); err != nil {
+		a.chyba("sloučení modelek", err)
+		return "Modelky se nepodařilo sloučit."
+	}
+	for _, klic := range strings.Split(zdroj.NetykaSe, ",") {
+		if klic = strings.TrimSpace(klic); klic != "" {
+			cilovy = prepnoutKlic(cilovy, klic, true)
+		}
+	}
+	if _, err := tx.Exec("UPDATE modelky SET netyka_se = NULLIF(?, '') WHERE id = ?", cilovy, cilID); err != nil {
+		a.chyba("sloučení modelek", err)
+		return "Modelky se nepodařilo sloučit."
+	}
 	if _, err := tx.Exec("DELETE FROM modelky WHERE id = ?", zdrojID); err != nil {
 		a.chyba("sloučení modelek", err)
 		return "Modelky se nepodařilo sloučit."
@@ -648,8 +669,16 @@ func (a *App) PrejmenovatFotografa(stary, novy string) int {
 		}
 	}
 	rows.Close()
-	for id, fotograf := range zmeny {
-		a.db.Exec("UPDATE alba SET fotograf = ? WHERE id = ?", fotograf, id)
+	// Všechna alba najednou, nebo žádné: počet upravených nesmí zahrnout neuložená
+	if !a.vTransakci("přejmenování fotografa", func(tx dotazovac) error {
+		for id, fotograf := range zmeny {
+			if _, err := tx.Exec("UPDATE alba SET fotograf = ? WHERE id = ?", fotograf, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	}) {
+		return 0
 	}
 	return len(zmeny)
 }
@@ -694,7 +723,7 @@ func (a *App) PrejmenovatTag(stary, novy string) int {
 	if strings.TrimSpace(stary) == "" || novy == "" {
 		return 0
 	}
-	upraveno := 0
+	zmeny := map[int]string{}
 	for _, m := range a.GetModelky("") {
 		tagy := strings.Split(m.Tags, ",")
 		zmena := false
@@ -705,11 +734,21 @@ func (a *App) PrejmenovatTag(stary, novy string) int {
 			}
 		}
 		if zmena {
-			a.db.Exec("UPDATE modelky SET tags = ? WHERE id = ?", sloucitSeznam(strings.Join(tagy, ","), ""), m.ID)
-			upraveno++
+			zmeny[m.ID] = sloucitSeznam(strings.Join(tagy, ","), "")
 		}
 	}
-	return upraveno
+	// Všechny modelky najednou, nebo žádná
+	if !a.vTransakci("přejmenování tagu", func(tx dotazovac) error {
+		for id, tagy := range zmeny {
+			if _, err := tx.Exec("UPDATE modelky SET tags = ? WHERE id = ?", tagy, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	}) {
+		return 0
+	}
+	return len(zmeny)
 }
 
 // Dnešní datum pro stav dostupnosti

@@ -444,7 +444,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     // Modelky bez čísla (jen online, bez vydání) nemají rok; kolik jich v grafech v čase není, říká nápověda
     const bezCisla = def.osa === 'rok' ? data.modelky.filter(m => !vyskytyModelky(m).length).length : 0;
     koren.querySelector('[data-sp-napoveda]').textContent = def.osa
-        ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažením vyberete období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.${bezCisla ? ` Rok je rok prvního výskytu v časopise; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase není.` : ''}`
+        ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažení myší období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.${bezCisla ? ` Rok je rok prvního výskytu v časopise; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase ${bezCisla >= 2 && bezCisla <= 4 ? 'nejsou' : 'není'}.` : ''}`
         : 'Klik na řádek vybere hodnotu, další klik ji zruší. Výběr platí pro všechny grafy: přepni graf a uvidíš jen vybrané modelky.';
     const seznam = koren.querySelector('[data-sp-seznam]');
     const fokusSeznamu = seznam.contains(document.activeElement);

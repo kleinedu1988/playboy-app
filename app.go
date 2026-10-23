@@ -8,6 +8,7 @@ import (
 	"math"
 
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -409,7 +410,7 @@ func (a *App) SeznamZaloh() []Zaloha {
 		if cas, err := time.Parse("2006-01-02-150405", nazev[len("playboy-"):len("playboy-")+17]); err == nil {
 			z.Cas = cas.Format("2006-01-02 15:04:05")
 		}
-		db, err := sql.Open("sqlite", soubor+"?mode=ro")
+		db, err := otevritZalohu(soubor)
 		if err == nil {
 			err = db.QueryRow("SELECT (SELECT COUNT(*) FROM modelky), (SELECT COUNT(*) FROM fotografie)").Scan(&z.Modelek, &z.Fotek)
 			db.Close()
@@ -418,6 +419,12 @@ func (a *App) SeznamZaloh() []Zaloha {
 		zalohy = append(zalohy, z)
 	}
 	return zalohy
+}
+
+// Spojení se zálohou jen pro čtení. Parametr mode bere SQLite jen z adresy file:, z obyčejné cesty by ho
+// ovladač zahodil, spojení by bylo pro zápis a chybějící soubor by založil jako prázdnou databázi.
+func otevritZalohu(soubor string) (*sql.DB, error) {
+	return sql.Open("sqlite", (&url.URL{Scheme: "file", Path: soubor, RawQuery: "mode=ro"}).String())
 }
 
 // Návrat databáze do stavu zálohy. Současný stav se předtím uloží jako další záloha a heslo zůstává současné.
@@ -441,8 +448,12 @@ func (a *App) ObnovitZalohu(soubor string) string {
 	}
 	zaloha := filepath.Join(slozkaZaloh(), soubor)
 	cil := filepath.Join(slozkaDat(), "playboy.db")
+	// Záloha mohla mezitím zmizet (úklid záloh po jiné záloze); prázdný soubor by obnovil prázdnou sbírku
+	if info, err := os.Stat(zaloha); err != nil || !info.Mode().IsRegular() || info.Size() == 0 {
+		return "Záloha už neexistuje, databáze zůstala beze změny."
+	}
 
-	overeni, err := sql.Open("sqlite", zaloha+"?mode=ro")
+	overeni, err := otevritZalohu(zaloha)
 	if err != nil {
 		return fmt.Sprintf("Zálohu se nepodařilo otevřít: %v", err)
 	}
@@ -2124,21 +2135,24 @@ func (a *App) UpdateCover(id int, vydani, rawLink string) bool {
 	if a.db.QueryRow("SELECT typ FROM fotografie WHERE id = ?", id).Scan(&typ); typ != "Cover" {
 		return false
 	}
-	// Cover přejde do alba svého vydání (případně nového), staré prázdné zmizí
-	albumID, err := zajistitAlbum(a.db, 0, vydani, "Cover")
-	if err == nil {
-		_, err = a.db.Exec("UPDATE fotky SET album_id = ? WHERE id = ?", albumID, id)
-	}
-	if ids := parseDriveIDs(rawLink); err == nil && len(ids) > 0 {
-		_, err = a.db.Exec("UPDATE fotky SET drive_file_id = ? WHERE id = ?", ids[0], id)
-	}
-	if err == nil {
-		_, err = a.db.Exec(smazatPrazdnaAlba)
-	}
-	if err != nil {
-		a.chyba("úprava coveru", err)
-	}
-	return err == nil
+	// Cover přejde do alba svého vydání (případně nového), staré prázdné zmizí. Celé v jedné transakci:
+	// když výměna souboru selže (stejný soubor už v cílovém čísle je), cover zůstane, kde byl.
+	return a.vTransakci("úprava coveru", func(tx dotazovac) error {
+		albumID, err := zajistitAlbum(tx, 0, vydani, "Cover")
+		if err != nil {
+			return err
+		}
+		if _, err := tx.Exec("UPDATE fotky SET album_id = ? WHERE id = ?", albumID, id); err != nil {
+			return err
+		}
+		if ids := parseDriveIDs(rawLink); len(ids) > 0 {
+			if _, err := tx.Exec("UPDATE fotky SET drive_file_id = ? WHERE id = ?", ids[0], id); err != nil {
+				return err
+			}
+		}
+		_, err = tx.Exec(smazatPrazdnaAlba)
+		return err
+	})
 }
 
 // Vše, co patří k jednomu vydání časopisu: covery, centerfoldy i pictorialy napříč modelkami
@@ -2550,29 +2564,44 @@ func (a *App) zkontrolovat(dotaz string, davka bool) KontrolaSouboru {
 		driveIDs[i] = p.driveID
 	}
 	den := dnes()
-	// Výsledky se zapíšou najednou v jedné transakci
+	stavy := overitSoubory(driveIDs)
+	for i, stav := range stavy {
+		p := polozky[i]
+		switch stav {
+		case souborNeoveren:
+			vysledek.Neovereno++
+		case souborNedostupny:
+			p.soubor.Opakovane = p.nedostupneOd != "" && p.nedostupneOd < den
+			vysledek.Nedostupne = append(vysledek.Nedostupne, p.soubor)
+		}
+	}
+	// Výsledky se zapíšou najednou v jedné transakci, až po síťové kontrole (spojení se po ni nedrží).
+	// Seznam nedostupných se rozhraní vrátí, i když se zápis nepovede; chyba se ale ohlásí.
 	tx, err := a.db.Begin()
 	if err != nil {
 		a.chyba("kontrola souborů", err)
 		return vysledek
 	}
-	defer tx.Commit()
-	for i, stav := range overitSoubory(driveIDs) {
+	defer tx.Rollback()
+	for i, stav := range stavy {
 		p := polozky[i]
-		switch stav {
-		case souborNeoveren:
-			vysledek.Neovereno++
-		case souborDostupny:
-			if p.soubor.FotoID != 0 {
-				tx.Exec("UPDATE fotky SET overeno = ?, nedostupne_od = NULL WHERE id = ?", den, p.soubor.FotoID)
-			}
-		case souborNedostupny:
-			p.soubor.Opakovane = p.nedostupneOd != "" && p.nedostupneOd < den
-			if p.soubor.FotoID != 0 {
-				tx.Exec("UPDATE fotky SET overeno = ?, nedostupne_od = COALESCE(nedostupne_od, ?) WHERE id = ?", den, den, p.soubor.FotoID)
-			}
-			vysledek.Nedostupne = append(vysledek.Nedostupne, p.soubor)
+		if p.soubor.FotoID == 0 {
+			continue
 		}
+		var err error
+		switch stav {
+		case souborDostupny:
+			_, err = tx.Exec("UPDATE fotky SET overeno = ?, nedostupne_od = NULL WHERE id = ?", den, p.soubor.FotoID)
+		case souborNedostupny:
+			_, err = tx.Exec("UPDATE fotky SET overeno = ?, nedostupne_od = COALESCE(nedostupne_od, ?) WHERE id = ?", den, den, p.soubor.FotoID)
+		}
+		if err != nil {
+			a.chyba("kontrola souborů", err)
+			return vysledek
+		}
+	}
+	if err := tx.Commit(); err != nil {
+		a.chyba("kontrola souborů", err)
 	}
 	return vysledek
 }
@@ -2632,6 +2661,13 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 		vysledek.Vlozeno++
 		if stav == souborNeoveren {
 			vysledek.Neovereno++
+		}
+	}
+	// Album založené jen pro tyto fotky nezůstane prázdné, když se nevložila žádná; album, které už předtím
+	// neslo text, fotografa nebo další modelky, zůstane
+	if albumID != 0 && vysledek.Vlozeno == 0 {
+		if _, err := a.db.Exec("DELETE FROM alba WHERE id = ? AND "+albumBezObsahu, albumID); err != nil {
+			a.chyba("vložení fotek do alba", err)
 		}
 	}
 	return vysledek

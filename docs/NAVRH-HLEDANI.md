@@ -1,5 +1,8 @@
 # Návrh: Chytré hledání (1.9)
 
+> **Číslování verzí:** návrh vznikl před revizí plánu 23. 10. 2026 a používá původní čísla verzí. Platné číslo
+> je v tabulce verzí v [ROADMAP.md](../ROADMAP.md) (sloupec „Dřív“).
+
 Rozpracování bodu **1.9 – Chytré hledání (strojové učení nad sbírkou)** z `ROADMAP.md`. Stav k 22. 10. 2026.
 Dokument je podklad k rozhodnutí; kód se podle něj začne psát až po 1.0.0.
 

@@ -1,5 +1,8 @@
 # Návrh: Kontrola 2.0 (1.16)
 
+> **Číslování verzí:** návrh vznikl před revizí plánu 23. 10. 2026 a používá původní čísla verzí. Platné číslo
+> je v tabulce verzí v [ROADMAP.md](../ROADMAP.md) (sloupec „Dřív“).
+
 Stav k 23. 10. 2026 (verze 0.99.2). Další krok kontroly údajů v Údržbě, která se od 0.99.2 učí ze sbírky
 (`kontrola_uceni.go`). Nic z toho není rozhodnuté; po potvrzení se verze přenesou do `ROADMAP.md` (sekce
 k vložení je na konci). Navazuje na 1.6 Kvalita dat; souvisí s 1.9 (podobnost modelek sdílená s kontrolou).

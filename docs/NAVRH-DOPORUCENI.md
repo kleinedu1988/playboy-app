@@ -1,5 +1,8 @@
 # Návrh: „Mohlo by se ti líbit“ (1.17)
 
+> **Číslování verzí:** návrh vznikl před revizí plánu 23. 10. 2026 a používá původní čísla verzí. Platné číslo
+> je v tabulce verzí v [ROADMAP.md](../ROADMAP.md) (sloupec „Dřív“).
+
 Stav k 23. 10. 2026 (po vydání 1.0.0). Rozpracování nového tématu: program se z hodnocení srdíčky naučí,
 co se uživateli líbí, a nabídne nehodnocené modelky a fotky. Nic z toho není rozhodnuté; po potvrzení se
 oddíl z konce dokumentu přenese do `ROADMAP.md`. Navazuje na „jako X“ (1.9, [NAVRH-HLEDANI.md](NAVRH-HLEDANI.md))

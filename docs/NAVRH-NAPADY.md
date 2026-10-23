@@ -1,5 +1,8 @@
 # Návrh: nápady k posouzení po 1.9
 
+> **Číslování verzí:** návrh vznikl před revizí plánu 23. 10. 2026 a používá původní čísla verzí. Platné číslo
+> je v tabulce verzí v [ROADMAP.md](../ROADMAP.md) (sloupec „Dřív“).
+
 Stav k 22. 10. 2026 (verze 0.99.1). Rozpracování oddílu „Nápady k posouzení“ z `ROADMAP.md` do možností,
 doporučení a cesty vývoje. Nic z toho není rozhodnuté; po potvrzení se vybrané verze přenesou do `ROADMAP.md`
 (hotové sekce k vložení jsou na konci). Chytré hledání (1.9) rozpracovává `docs/NAVRH-HLEDANI.md`.

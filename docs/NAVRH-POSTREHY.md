@@ -1,5 +1,8 @@
 # Návrh: Postřehy ve Statistikách (1.18)
 
+> **Číslování verzí:** návrh vznikl před revizí plánu 23. 10. 2026 a používá původní čísla verzí. Platné číslo
+> je v tabulce verzí v [ROADMAP.md](../ROADMAP.md) (sloupec „Dřív“).
+
 Stav k 23. 10. 2026. Podklad k rozhodnutí; kód se podle něj začne psát až po 1.0.0. Po potvrzení se oddíl
 z konce dokumentu přenese do `ROADMAP.md`.
 

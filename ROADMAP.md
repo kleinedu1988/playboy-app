@@ -109,44 +109,54 @@ neruší. Nejdřív možné vydání: 5. 11. 2026 (po kategoriích v 0.91.0), po
 
 ### Jak se vydává po 1.0.0
 
-- **Číslování:** MAJOR.MINOR.PATCH. MINOR = téma z plánu níže (1.1, 1.2 … po 1.9 následuje 1.10, ne 2.0).
-  PATCH = pořadí kroku nebo opravy v tématu: první hotový krok vyjde jako 1.3.0, další jako 1.3.1, 1.3.2…
-  a opravy pokračují stejnou řadou (stejně jako v alfě 0.51.0, 0.51.1…). Každá vydaná verze je funkční
-  a projde všemi testy; když je hotový poslední krok tématu, vyzkouší ho uživatel na skutečné sbírce.
-- **Data:** rozšíření schématu nebo exportu (nový sloupec, nový nepovinný údaj v exportu) je MINOR s novou
-  úpravou schématu a novou verzí exportu; starší program novější databázi otevře jen pro čtení a novější
-  export odmítne se srozumitelnou hláškou (obojí už umí). Změna nebo odebrání údaje, kvůli kterému by
-  starší export nešel načíst, je MAJOR (2.0.0) a dělá se jen výjimečně.
+- **Číslování:** MAJOR.MINOR.PATCH. **MAJOR = velký milník** (řada témat se společným cílem): 1.x Pohodlí
+  a kvalita dat, 2.x Chytrá sbírka. MINOR = téma z plánu (po 1.9 následuje 1.10). PATCH = pořadí kroku nebo
+  opravy v tématu: první hotový krok vyjde jako 1.3.0, další jako 1.3.1, 1.3.2… a opravy pokračují stejnou řadou.
+  Každá vydaná verze je funkční a projde všemi testy; když je hotový poslední krok tématu, vyzkouší ho uživatel
+  na skutečné sbírce. Řady se nemusí střídat přísně za sebou: téma 2.x může vyjít, i když 1.x ještě není celá
+  (pak se pokračuje dalším volným číslem v řadě).
+- **Data:** kompatibilitu nehlídá číslo verze programu, ale **verze schématu a exportu**. Rozšíření schématu nebo
+  exportu (nový sloupec, nový nepovinný údaj) = nová úprava schématu a nová verze exportu; starší program novější
+  databázi otevře jen pro čtení a novější export odmítne se srozumitelnou hláškou (obojí už umí). Změna nebo
+  odebrání údaje, kvůli kterému by starší export nešel načíst, se dělá jen výjimečně a s převodem.
 - **Údržba (průběžně, jako PATCH):** Wails 2.17.0 (s ověřením na Fedoře: okno, nabídky, poblikávání),
   aktualizace Go a knihoven, `govulncheck` u uživatele.
 - U každé verze: kroky v pořadí, ve kterém se dělají; **[schéma]** = mění databázi nebo export.
 
 Každá verze níže je malá a ucelená (zhruba 1–3 dny práce, 2–4 kroky) a dá se vyzkoušet sama o sobě.
-Pořadí verzí jde změnit, závislosti jsou uvedené. Doporučené pořadí strojového učení: 1.16 Kontrola 2.0
-hned po 1.6 – sbírka přibývá po letech, takže kontrola podle období se vyplatí brzy.
+Pořadí jde změnit, závislosti jsou uvedené. **Revize 23. 10. 2026:** témata přečíslovaná podle priority a rozdělená
+do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají návrhy v `docs/`).
 
-| Verze | Obsah | Závisí na |
-|---|---|---|
-| 1.1 | Google Disk I – přihlášení a výběr fotek do alba | – |
-| 1.2 | Google Disk II – výběr všude, nasdílení, záložní adresa obrázků | 1.1 |
-| 1.3 | Rychlé drobnosti – duplicity, zamčení po nečinnosti, listování ročníky | – |
-| 1.4 | Přehledy – Naposledy přidané, fotografové, rekordy | – |
-| 1.5 | Náhledy na disku | – |
-| 1.6 | Kvalita dat – nové kontroly v Údržbě, titulní fotka alba **[schéma]** | – |
-| 1.7 | Editor I – lišta, náhled, zkratky | – |
-| 1.8 | Editor II – rozhovory, jeden editor všude | 1.7 |
-| 1.9 | Chytré hledání – česká věta jako filtr, našeptávač, učení z otevíraných výsledků, „jako X“, synonyma | – |
-| 1.10 | Tento den v historii, podobné modelky v profilu | 1.9 |
-| 1.11 | Stejné a podobné fotky (otisk obrázku) | 1.5 |
-| 1.12 | Wikidata I – návrh údajů u modelky | – (rozhodnutí) |
-| 1.13 | Wikidata II – hromadně v Údržbě | 1.12 |
-| 1.14 | Chytré výběry **[schéma]** | 1.9 |
-| 1.15 | Kvíz „Poznej playmate“ | 1.10 |
-| 1.16 | Kontrola 2.0 – postava podle období, jistota a řazení nálezů, učení z oprav i „V pořádku“ | – (rozšiřuje 1.6, jde hned po ní) |
-| 1.17 | Mohlo by se ti líbit – návrh srdíček u nové modelky, soudržnost hodnocení, fotky, které by se mohly líbit | 1.10 |
-| 1.18 | Postřehy ve Statistikách – trendy, zlomy, výběr proti sbírce, neobvyklé roky | – |
-| 1.19 | Mapa sbírky – malá neuronová síť (autoenkodér): mapa modelek, podobnost, druhý názor Kontroly | 1.10 |
-| rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – |
+| Verze | Obsah | Závisí na | Dřív |
+|---|---|---|---|
+| **1.x** | **Pohodlí a kvalita dat** | | |
+| 1.1 | Google Disk I – přihlášení a výběr fotek do alba | – | 1.1 |
+| 1.2 | Google Disk II – výběr všude, nasdílení, záložní adresa obrázků | 1.1 | 1.2 |
+| 1.3 | Náhledy na disku | – | 1.5 |
+| 1.4 | Rychlé drobnosti – duplicity, zamčení po nečinnosti, listování ročníky | – | 1.3 |
+| 1.5 | Kvalita dat – nové kontroly v Údržbě, titulní fotka alba **[schéma]** | – | 1.6 |
+| 1.6 | Kontrola 2.0 – postava podle období, jistota a řazení nálezů, učení z oprav i „V pořádku“ | 1.5 | 1.16 |
+| 1.7 | Přehledy – Naposledy přidané, fotografové, rekordy | – | 1.4 |
+| 1.8 | Editor I – lišta, náhled, zkratky | – | 1.7 |
+| 1.9 | Editor II – rozhovory, jeden editor všude | 1.8 | 1.8 |
+| 1.10 | Wikidata I – návrh údajů u modelky | – (rozhodnutí) | 1.12 |
+| 1.11 | Wikidata II – hromadně v Údržbě | 1.10 | 1.13 |
+| **2.x** | **Chytrá sbírka** | | |
+| 2.0 | Chytré hledání I – synonyma, našeptávač, učení z otevíraných výsledků | – | 1.9 (kroky 1, 2, 6) |
+| 2.1 | Chytré hledání II – česká věta jako filtr, Síť slov, synonyma ze sbírky | 2.0 | 1.9 (kroky 3, 4, 7) + síť |
+| 2.2 | Podobné modelky, „jako X“, Tento den v historii | – | 1.9 (krok 5), 1.10 |
+| 2.3 | Mohlo by se ti líbit – návrh srdíček u nové modelky, soudržnost hodnocení, fotky, které by se mohly líbit | 2.2 | 1.17 |
+| 2.4 | Postřehy ve Statistikách – trendy, zlomy, výběr proti sbírce, neobvyklé roky | – | 1.18 |
+| 2.5 | Mapa sbírky – malá neuronová síť (autoenkodér): mapa modelek, podobnost, druhý názor Kontroly | 2.2 | 1.19 |
+| 2.6 | Stejné a podobné fotky (otisk obrázku) | 1.3 | 1.11 |
+| 2.7 | Chytré výběry **[schéma]** | 2.0 | 1.14 |
+| 2.8 | Kvíz „Poznej playmate“ | 2.2 | 1.15 |
+| rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – | |
+
+## Řada 1.x – Pohodlí a kvalita dat
+
+Pořadí podle denního používání: přidávání fotek z Disku, rychlost, kvalita dat (Kontrola 2.0 hned po Kvalitě
+dat, protože sbírka přibývá po letech), přehledy a editor; nakonec Wikidata, pokud se o nich rozhodne.
 
 ### 1.1 – Google Disk I: přihlášení a výběr do alba
 
@@ -196,33 +206,7 @@ zálohách ani exportu.
 **Hotovo, když:** cover, titulní fotka i skeny jdou vybrat z Disku; nenasdílené fotky se po zaškrtnutí
 nasdílí a zobrazí; přepnutí na záložní adresu obrázků zobrazí sbírku stejně.
 
-### 1.3 – Rychlé drobnosti
-
-**Cíl:** tři malé věci, které zrychlí běžnou práci; každá vyjde jako samostatná verze (1.3.0, 1.3.1, 1.3.2).
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Upozornění na duplicitu | Při vkládání odkazů do alba program podle ID souboru najde fotky, které už ve sbírce jsou (u jiné modelky nebo v jiném albu), a ukáže je v okně s volbou „Přidat i tak / Vynechat“; stejné ID dvakrát v jednom vložení se sloučí. Hledání podle indexu na ID souboru | S |
-| 2 | Automatické zamčení | Při nastaveném heslu volba v okně hesla: zamknout po 5 / 15 / 30 minutách nečinnosti nebo nikdy (výchozí nikdy); nečinnost = žádná klávesa, klik ani rolování; zamčení schová obsah okna stejně jako při startu | S |
-| 3 | Listování ročníky | Na stránce ročníku šipky na předchozí a další rok téže edice (přeskočí roky bez čísel), klávesy `[` a `]` | S |
-
-**Hotovo, když:** vložení odkazu na fotku, která už ve sbírce je, vždy upozorní; okno se samo zamkne po
-nastavené době; ročníky jdou listovat šipkami i klávesami.
-
-### 1.4 – Přehledy
-
-**Cíl:** rychlá orientace ve sbírce – co přibylo, kdo fotil, co je výjimečné.
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Naposledy přidané | Nová část v Přehledu: dny (dnes, včera, tento týden, starší) a pod nimi modelky, alba a počty fotek přidané ten den, klik otevře profil nebo album; z údajů `pridano`, které už se ukládají | S |
-| 2 | Seznam fotografů | Nová část v Přehledu: fotografové podle počtu alb, hledání, klik otevře stránku fotografa | S |
-| 3 | Rekordy ve Statistikách | Karta „Rekordy“: nejmladší a nejstarší v době centerfoldu, nejvyšší a nejnižší, nejvíc obálek, nejvíc alb; každý řádek otevře profil | S |
-
-**Hotovo, když:** po dni práce ukáže „Naposledy přidané“ všechno, co přibylo; každý fotograf a rekord
-otevře své album nebo profil.
-
-### 1.5 – Náhledy na disku
+### 1.3 – Náhledy na disku
 
 **Cíl:** karty a dlaždice se zobrazí okamžitě i bez internetu.
 
@@ -234,7 +218,20 @@ otevře své album nebo profil.
 **Hotovo, když:** po prvním projití sbírky se karty a dlaždice zobrazí okamžitě i bez internetu; mezipaměť
 nepřekročí limit; „Vymazat náhledy“ ukáže a uvolní místo.
 
-### 1.6 – Kvalita dat
+### 1.4 – Rychlé drobnosti
+
+**Cíl:** tři malé věci, které zrychlí běžnou práci; každá vyjde jako samostatná verze (1.4.0, 1.4.1, 1.4.2).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Upozornění na duplicitu | Při vkládání odkazů do alba program podle ID souboru najde fotky, které už ve sbírce jsou (u jiné modelky nebo v jiném albu), a ukáže je v okně s volbou „Přidat i tak / Vynechat“; stejné ID dvakrát v jednom vložení se sloučí. Hledání podle indexu na ID souboru | S |
+| 2 | Automatické zamčení | Při nastaveném heslu volba v okně hesla: zamknout po 5 / 15 / 30 minutách nečinnosti nebo nikdy (výchozí nikdy); nečinnost = žádná klávesa, klik ani rolování; zamčení schová obsah okna stejně jako při startu | S |
+| 3 | Listování ročníky | Na stránce ročníku šipky na předchozí a další rok téže edice (přeskočí roky bez čísel), klávesy `[` a `]` | S |
+
+**Hotovo, když:** vložení odkazu na fotku, která už ve sbírce je, vždy upozorní; okno se samo zamkne po
+nastavené době; ročníky jdou listovat šipkami i klávesami.
+
+### 1.5 – Kvalita dat
 
 **Cíl:** Údržba najde víc chyb v datech, přehledy alb mimo profil mají obrázek.
 
@@ -246,153 +243,12 @@ nepřekročí limit; „Vymazat náhledy“ ukáže a uvolní místo.
 **Hotovo, když:** Údržba najde stejného fotografa zapsaného různě a nabídne sloučení; stránky fotografa
 a ročníku ukazují titulní fotky alb; starší databáze i export se převedou (úprava schématu č. 12, export 8).
 
-### 1.7 – Editor I: lišta, náhled, zkratky
-
-**Cíl:** pohodlné psaní článků, rozhovorů, textů alb a poznámek bez psaní formátovacích značek zpaměti.
-Text se dál ukládá jako markdown (schéma ani export se nemění), takže starší texty fungují beze změny.
-
-**Rozhodnutí:** vlastní lehký editor nad textovým polem (lišta vkládá značky, vedle živý náhled stávajícím
-převodem markdownu) místo editoru „co vidíš, to dostaneš“ z cizí knihovny – žádná nová závislost, žádný
-rozdíl mezi náhledem a uloženým textem, funguje se stávajícími zásadami zabezpečení (CSP).
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Lišta a náhled | Tlačítka tučné, kurzíva, nadpis, odrážky, číslování, citace, odkaz; obalí vybraný text nebo vloží značku na kurzor; přepínač Psaní / Náhled / Vedle sebe | M |
-| 2 | Zkratky a celé okno | Ctrl+B, Ctrl+I, Ctrl+K (odkaz), Tab v odrážkách; tlačítko zvětšení na celé okno pro dlouhé texty, Esc zmenší | S–M |
-
-**Hotovo, když:** text alba jde naformátovat bez ručně psaných značek; texty uložené před 1.7 vypadají
-v náhledu stejně jako dřív.
-
-### 1.8 – Editor II: rozhovory a jeden editor všude
-
-**Cíl:** přepis rozhovorů bez psaní značek a stejný editor u všech textů.
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Rozhovory | Šablona rozhovoru (perex, mluvčí `PLAYBOY:` / jméno, citace); Enter za odpovědí nabídne dalšího mluvčího; počet slov | S–M |
-| 2 | Jeden editor všude | Články, texty alb, poznámky modelek a čísel; stejné chování a zkratky; nápověda a přehled zkratek doplněné | S–M |
-
-**Hotovo, když:** rozhovor o deseti otázkách jde přepsat bez jediné ručně psané značky; články, alba
-i poznámky mají stejný editor a zkratky.
-
-### 1.9 – Chytré hledání (strojové učení nad sbírkou)
-
-**Cíl:** hledání rozumí běžné češtině a učí se ze sbírky a z používání – vše v programu, bez internetu
-a bez velkých modelů. Každá chytrá funkce se převádí na dnešní cílené hledání (`pole:hodnota`), které je vidět
-a jde upravit. **Bez změny schématu i exportu** – naučené údaje jsou v tabulce `nastaveni`. Každý krok vyjde
-jako samostatná verze (1.9.0–1.9.6). Rozbor možností: [NAVRH-HLEDANI.md](docs/NAVRH-HLEDANI.md).
-
-**Rozhodnutí:** pravidla a slovník z hodnot sbírky místo klasifikátoru nebo jazykového modelu (průhledné,
-testovatelné, offline); podobnost modelek váženou vzdáleností nad údaji, sdílenou s kontrolou v Údržbě.
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Synonyma I | Výchozí slovník („blond“ = „blonde“ = „plavá“, národnosti cs/en) v hledání Go i JS, štítek „(+N)“; společné testovací případy hledání pro Go i JS; měření hledání na 5 000 modelkách | M |
-| 2 | Našeptávač II | Hodnoty všech polí ze sbírky s počty (i bez klíče, i „z výsledků“), roky z dat, historie vlastních hledání | M |
-| 3 | Česká věta I | „blondýnky z 90. let bez tetování“ → `vlasy:blond rok:1990..1999 tetovani:ne`; lehký stemming, čísla a rozsahy („vyšší než 175“, „narozené po 1980“), negace; řádek „Rozumím:“ se štítky, Tab převede, Ctrl+Enter hledá doslova | M–L |
-| 4 | Česká věta II | Národnosti a fotografové ze sbírky se skloňováním, volba významu u dvojznačných slov, „Vždy takto“; 50 testovacích vět | M |
-| 5 | „Jako X“ | `jako:"jméno"` najde podobné modelky (postava, vlasy, období, kategorie) s důvody, řazení Podobnost, „Podobné →“ v profilu; kód podobnosti sdílený s kontrolou duplicit | M |
-| 6 | Učení z otevíraných výsledků | Co po hledání otevíráš, jde příště výš (našeptávač, řazení Relevance); jen v počítači, jde zapomenout | M |
-| 7 | Synonyma II | Návrhy synonym ze sbírky a z oprav k potvrzení v ⋯ → Hledání → Synonyma | S–M |
-
-**Doplněno (říjen 2026):** malá znaková neuronová síť pro slova v hledání (pozná údaj i u neznámých tvarů:
-„blondýnky“ → vlasy:blond), učená na větách vygenerovaných z hodnot sbírky; rozbor v [NAVRH-SITE.md](docs/NAVRH-SITE.md).
-
-**Nedělá se:** hledání podle obsahu fotky, velký jazykový model (API ani místní), přepisování dat podle synonym.
-
-**Hotovo, když:** z 50 testovacích vět je ≥ 45 převedeno správně a žádné jméno se nepřevede; každý převod je
-vidět a jde vrátit; našeptávač odpoví do 30 ms a `jako:` přidá nejvýš 10 ms na 5 000 modelkách; po třech
-otevřeních je modelka u stejného dotazu první; schéma zůstává na úpravě č. 11 a export na verzi 7.
-
-### 1.10 – Tento den a podobné modelky
-
-**Cíl:** sbírka sama připomene výročí a nabídne podobné modelky. Bez změny schématu i exportu.
-Podrobně: [NAVRH-NAPADY.md](docs/NAVRH-NAPADY.md), nápady 3 a 4.
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Tento den v historii | Karta na úvodu Přehledu: kulatá výročí centerfoldů, obálek a českých čísel v tomto měsíci (10, 20, 25, 30… let), ostatní centerfoldy měsíce jako roky, narozeniny dnes a do 7 dní (jen úplné datum, ne u zemřelých); výpočet v rozhraní z dat úvodu, prázdný stav s nejbližším výročím | S |
-| 2 | Podobné modelky | Pod profilem 6 karet s důvodem (období, vlasy, postava, fotograf); `PodobneModelky` ze společného `podobnost.go` (stejná funkce jako `jako:` z 1.9), chybějící údaje se nepočítají | M |
-
-**Hotovo, když:** úvod v den narozenin modelky ji ukáže s věkem; profil modelky s vyplněnými údaji ukáže
-podobné s důvodem a „Další podobné →“ otevře hledání `jako:`.
-
-### 1.11 – Stejné a podobné fotky
-
-**Cíl:** najít stejnou fotku nahranou na Disk víckrát (jiné ID) a podobné záběry. Otisk obrázku (dHash + pHash)
-z náhledů v mezipaměti z 1.5, otisky v `~/.cache/playboy-app/otisky.tsv`; bez změny schématu i exportu.
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Otisky | `otisky.go`: dHash a pHash v čistém Go, počítání na pozadí (4 souběžně, pauza při výpadku a 429, pokračuje po restartu), stav v Údržbě; prahy doladit na skutečné sbírce | M |
-| 2 | Stejné fotky v Údržbě | Filtr „Stejné fotky“: skupiny (pásma otisku + sjednocení), náhledy vedle sebe, Odebrat s Vrátit, „V pořádku“ (v `nastaveni`) | M |
-| 3 | Najít podobné a upozornění | Nabídka fotky „Najít podobné fotky“; okno duplicit při vkládání (1.3) přidá „vypadá stejně jako…“ | S |
-
-**Hotovo, když:** stejná fotka nahraná podruhé se v Údržbě objeví jako skupina; přeuložená nebo zmenšená
-kopie se najde, fotky z jiných focení ne; smazání `otisky.tsv` jen spustí přepočet.
-
-### 1.12 – Wikidata I: návrh údajů u modelky
-
-**Cíl:** chybějící údaje modelky doplnit z Wikidat (CC0) jen na kliknutí a s potvrzením každého údaje.
-Bez změny schématu i exportu: původ = odkaz na položku Wikidat v Odkazech.
-
-**Rozhodnutí před začátkem:** bod Nedělat „stahování údajů z webu“ upřesnit na „automatické stahování
-a zápis údajů z webu“.
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Prototyp a pokrytí | Kolik playmate má na Wikidatech ocenění s měsícem, datum narození, výšku; QID ocenění; ověřit `User-Agent`, odpovědi v `testdata/wikidata/` | S |
-| 2 | Spárování a převod | `wikidata.go`: kandidáti (`wbsearchentities`, odkaz na Wikipedii v Odkazech), skóre (měsíc centerfoldu, datum narození, jméno), převod přesnosti data, jednotek, státu na hodnoty sbírky; mezipaměť v `~/.cache/playboy-app/wikidata/` | M |
-| 3 | Okno návrhu | V profilu a v „Doplnit modelku“: údaje vedle sebe, zaškrtnutí po polích (prázdné ano, rozdíl ne s ⚠), Jiná osoba…, uložení s Vrátit; odmítnuté hodnoty se znovu nenabízí | M |
-
-**Hotovo, když:** u 20 zkušebních modelek návrh odpovídá Wikipedii, nic se neuloží bez potvrzení, bez
-připojení volba ohlásí výpadek a nic nezmění.
-
-### 1.13 – Wikidata II: hromadně v Údržbě
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Katalog playmate | Jeden dotaz SPARQL na všechny Playmate měsíce a roku s datem; párování podle měsíce centerfoldu | S–M |
-| 2 | Filtr „Z Wikidat“ | „Zjistit návrhy pro N modelek bez data narození“, postup s pozastavením (nejvýš 1 dotaz/s), fronta návrhů, „Projít…“ a „Přijmout vše bez ⚠“ | M |
-
-**Hotovo, když:** dávka 100 modelek bez data narození doběhne bez chyby 429 a přijetí návrhů jde vrátit.
-
-### 1.14 – Chytré výběry **[schéma]**
-
-**Cíl:** výběr, který se plní sám podle uloženého hledání. Úprava schématu č. 13 (`vybery.dotaz`),
-export 9 (`vybery[].dotaz`).
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Fotky podle dotazu v Go | `GetFotkyDotazu`: podmínky modelky přes `odpovidaHledani`, podmínky fotky (srdíčka, typ, rok, vydání, fotograf) v SQL; rozklad dotazu sdílený s 1.9 | M |
-| 2 | Schéma a export | Sloupec `dotaz`, přechod, export a import, test zmrazení a přechodu ze starých verzí | S–M |
-| 3 | Rozhraní | „Uložit jako chytrý výběr…“ v Nejlepších, čip s ⚡, upravit dotaz, zmrazit (zkopírovat fotky do ručního výběru) | S |
-
-**Hotovo, když:** nová fotka splňující dotaz se ve výběru objeví bez zásahu; export → import chytrý výběr
-zachová; starší program novější export odmítne srozumitelnou hláškou.
-
-### 1.15 – Kvíz „Poznej playmate“
-
-**Cíl:** hra nad vlastní sbírkou. Bez změny schématu i exportu (statistiky v `nastaveni`).
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Kdo je to? | Část Přehledu „Kvíz“: titulní fotka a 4 jména, lehká (náhodná) a těžká (podobné modelky z 1.10), okruh podle desetiletí a oblíbených, klávesy 1–4, Enter, Esc | M |
-| 2 | Kdy? a Playmate měsíce | Rok nebo měsíc k fotce či jménu (body za přesnost), „Kdo byla Playmate 06/1995?“; bez připojení jen režimy bez fotky | S–M |
-| 3 | Statistiky a opakování | `GetKviz`/`SetKviz` (JSON v `nastaveni`), úspěšnost, série, Leitnerovy krabičky – častěji modelky, které uživatel plete | S |
-
-**Hotovo, když:** deset otázek jde odehrát jen klávesnicí; po hře je seznam chyb s odkazy na profil;
-statistiky přežijí restart i obnovení ze zálohy.
-
-Rozbor možností k 1.10–1.15: [NAVRH-NAPADY.md](docs/NAVRH-NAPADY.md). Wikidata (1.12–1.13) čekají na rozhodnutí
-uživatele: odporují bodu „stahování údajů z webu“ v oddílu Nedělat.
-
-### 1.16 – Kontrola 2.0
+### 1.6 – Kontrola 2.0
 
 **Cíl:** kontrola v Údržbě porovnává modelky se stejnou dobou, řadí nálezy podle jistoty chyby a učí se
 z oprav i z „V pořádku“. **Bez změny schématu i exportu** – naučené počty jsou v tabulce `nastaveni`.
-Každý krok vyjde jako samostatná verze (1.16.0–1.16.4). Rozbor možností: [NAVRH-KONTROLA2.md](docs/NAVRH-KONTROLA2.md).
-Rozšiřuje 1.6 a nezávisí na 1.7–1.15, takže jde vzít hned po 1.6.
+Každý krok vyjde jako samostatná verze (1.6.0–1.6.4). Rozbor možností: [NAVRH-KONTROLA2.md](docs/NAVRH-KONTROLA2.md).
+Rozšiřuje 1.5 a nezávisí na 1.8–2.8, takže jde vzít hned po 1.5.
 
 **Rozhodnutí:** klouzavé okno ±5 let podle prvního vydání přitažené k celé sbírce (ne desetiletí ani regrese);
 jistota = šance pravidla × vzácnost hodnoty (ne naučený klasifikátor); opravy se poznají ze snímku ukázaných
@@ -413,7 +269,130 @@ aspoň 15 skutečná chyba; oprava se započítá jako „opraveno“ a import n
 jsou prahy v mezích a „Zapomenout naučené“ vrátí výchozí stav; kontrola 5 000 modelek do 120 ms; schéma
 ani export se nemění.
 
-### 1.17 – Mohlo by se ti líbit
+### 1.7 – Přehledy
+
+**Cíl:** rychlá orientace ve sbírce – co přibylo, kdo fotil, co je výjimečné.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Naposledy přidané | Nová část v Přehledu: dny (dnes, včera, tento týden, starší) a pod nimi modelky, alba a počty fotek přidané ten den, klik otevře profil nebo album; z údajů `pridano`, které už se ukládají | S |
+| 2 | Seznam fotografů | Nová část v Přehledu: fotografové podle počtu alb, hledání, klik otevře stránku fotografa | S |
+| 3 | Rekordy ve Statistikách | Karta „Rekordy“: nejmladší a nejstarší v době centerfoldu, nejvyšší a nejnižší, nejvíc obálek, nejvíc alb; každý řádek otevře profil | S |
+
+**Hotovo, když:** po dni práce ukáže „Naposledy přidané“ všechno, co přibylo; každý fotograf a rekord
+otevře své album nebo profil.
+
+### 1.8 – Editor I: lišta, náhled, zkratky
+
+**Cíl:** pohodlné psaní článků, rozhovorů, textů alb a poznámek bez psaní formátovacích značek zpaměti.
+Text se dál ukládá jako markdown (schéma ani export se nemění), takže starší texty fungují beze změny.
+
+**Rozhodnutí:** vlastní lehký editor nad textovým polem (lišta vkládá značky, vedle živý náhled stávajícím
+převodem markdownu) místo editoru „co vidíš, to dostaneš“ z cizí knihovny – žádná nová závislost, žádný
+rozdíl mezi náhledem a uloženým textem, funguje se stávajícími zásadami zabezpečení (CSP).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Lišta a náhled | Tlačítka tučné, kurzíva, nadpis, odrážky, číslování, citace, odkaz; obalí vybraný text nebo vloží značku na kurzor; přepínač Psaní / Náhled / Vedle sebe | M |
+| 2 | Zkratky a celé okno | Ctrl+B, Ctrl+I, Ctrl+K (odkaz), Tab v odrážkách; tlačítko zvětšení na celé okno pro dlouhé texty, Esc zmenší | S–M |
+
+**Hotovo, když:** text alba jde naformátovat bez ručně psaných značek; texty uložené před 1.8 vypadají
+v náhledu stejně jako dřív.
+
+### 1.9 – Editor II: rozhovory a jeden editor všude
+
+**Cíl:** přepis rozhovorů bez psaní značek a stejný editor u všech textů.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Rozhovory | Šablona rozhovoru (perex, mluvčí `PLAYBOY:` / jméno, citace); Enter za odpovědí nabídne dalšího mluvčího; počet slov | S–M |
+| 2 | Jeden editor všude | Články, texty alb, poznámky modelek a čísel; stejné chování a zkratky; nápověda a přehled zkratek doplněné | S–M |
+
+**Hotovo, když:** rozhovor o deseti otázkách jde přepsat bez jediné ručně psané značky; články, alba
+i poznámky mají stejný editor a zkratky.
+
+### 1.10 – Wikidata I: návrh údajů u modelky
+
+**Čeká na rozhodnutí uživatele:** odporuje bodu „stahování údajů z webu“ v oddílu Nedělat (návrh: upřesnit na
+„automatické stahování a zápis bez potvrzení“).
+
+**Cíl:** chybějící údaje modelky doplnit z Wikidat (CC0) jen na kliknutí a s potvrzením každého údaje.
+Bez změny schématu i exportu: původ = odkaz na položku Wikidat v Odkazech.
+
+**Rozhodnutí před začátkem:** bod Nedělat „stahování údajů z webu“ upřesnit na „automatické stahování
+a zápis údajů z webu“.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Prototyp a pokrytí | Kolik playmate má na Wikidatech ocenění s měsícem, datum narození, výšku; QID ocenění; ověřit `User-Agent`, odpovědi v `testdata/wikidata/` | S |
+| 2 | Spárování a převod | `wikidata.go`: kandidáti (`wbsearchentities`, odkaz na Wikipedii v Odkazech), skóre (měsíc centerfoldu, datum narození, jméno), převod přesnosti data, jednotek, státu na hodnoty sbírky; mezipaměť v `~/.cache/playboy-app/wikidata/` | M |
+| 3 | Okno návrhu | V profilu a v „Doplnit modelku“: údaje vedle sebe, zaškrtnutí po polích (prázdné ano, rozdíl ne s ⚠), Jiná osoba…, uložení s Vrátit; odmítnuté hodnoty se znovu nenabízí | M |
+
+**Hotovo, když:** u 20 zkušebních modelek návrh odpovídá Wikipedii, nic se neuloží bez potvrzení, bez
+připojení volba ohlásí výpadek a nic nezmění.
+
+### 1.11 – Wikidata II: hromadně v Údržbě
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Katalog playmate | Jeden dotaz SPARQL na všechny Playmate měsíce a roku s datem; párování podle měsíce centerfoldu | S–M |
+| 2 | Filtr „Z Wikidat“ | „Zjistit návrhy pro N modelek bez data narození“, postup s pozastavením (nejvýš 1 dotaz/s), fronta návrhů, „Projít…“ a „Přijmout vše bez ⚠“ | M |
+
+**Hotovo, když:** dávka 100 modelek bez data narození doběhne bez chyby 429 a přijetí návrhů jde vrátit.
+
+## Řada 2.x – Chytrá sbírka
+
+Strojové učení a malé neuronové sítě jako jeden milník: hledání, podobnost, doporučení, postřehy, mapa sbírky.
+Vše v programu, bez internetu a bez velkých modelů; každá chytrá funkce jen navrhuje a ukáže proč. Bez změny
+schématu i exportu, pokud verze neříká jinak. Návrhy v `docs/` používají původní čísla verzí (převod je
+v tabulce výše).
+
+### 2.0 – Chytré hledání I: synonyma, našeptávač, učení z otevíraných
+
+**Cíl:** hledání najde i jinak zapsané hodnoty, při psaní nabízí hodnoty ze sbírky a učí se z toho, co uživatel
+otevírá; vše v programu, naučené údaje v tabulce `nastaveni`.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Synonyma I | Výchozí slovník („blond“ = „blonde“ = „plavá“, národnosti cs/en) v hledání Go i JS, štítek „(+N)“; společné testovací případy hledání pro Go i JS; měření hledání na 5 000 modelkách | M |
+| 2 | Našeptávač II | Hodnoty všech polí ze sbírky s počty (i bez klíče, i „z výsledků“), roky z dat, historie vlastních hledání | M |
+| 3 | Učení z otevíraných výsledků | Co po hledání otevíráš, jde příště výš (našeptávač, řazení Relevance); jen v počítači, jde zapomenout | M |
+
+**Hotovo, když:** společné testy hledání dávají v Go i JS stejný výsledek; našeptávač odpoví do 30 ms na 5 000
+modelkách; po třech otevřeních je modelka u stejného dotazu první, „Zapomenout“ vrátí původní pořadí.
+
+### 2.1 – Chytré hledání II: česká věta a Síť slov
+
+**Cíl:** hledání rozumí běžné české větě a převede ji na viditelný filtr (`pole:hodnota`), který jde upravit;
+tvary slov pozná malá neuronová síť.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Česká věta I | „blondýnky z 90. let bez tetování“ → `vlasy:blond rok:1990..1999 tetovani:ne`; lehký stemming, čísla a rozsahy („vyšší než 175“, „narozené po 1980“), negace; řádek „Rozumím:“ se štítky, Tab převede, Ctrl+Enter hledá doslova | M–L |
+| 2 | Česká věta II | Národnosti a fotografové ze sbírky se skloňováním, volba významu u dvojznačných slov, „Vždy takto“; 50 testovacích vět | M |
+| 3 | Síť slov | Malá znaková neuronová síť: každé slovo dotazu přiřadí k údaji a hodnotě i u neznámých tvarů („blondýnky“ → vlasy:blond, „Němky“ → národnost), učená na větách vygenerovaných z hodnot sbírky; pod mezí jistoty rozhodují pravidla | M |
+| 4 | Synonyma II | Návrhy synonym ze sbírky a z oprav k potvrzení v ⋯ → Hledání → Synonyma | S–M |
+
+**Nedělá se:** hledání podle obsahu fotky, velký jazykový model (API ani místní), přepisování dat podle synonym.
+
+**Hotovo, když:** z 50 testovacích vět je ≥ 45 převedeno správně a žádné jméno se nepřevede; každý převod je
+vidět a jde vrátit; Síť slov odpoví do 1 ms na slovo a u tvarů, které v učení nebyly, je přesnější než samotná pravidla.
+
+### 2.2 – Podobné modelky, „jako X“ a Tento den v historii
+
+**Cíl:** sbírka nabídne podobné modelky v profilu i v hledání a sama připomene výročí. Podobnost je společný
+`podobnost.go` (používá ho i kontrola duplicit, doporučení a Mapa sbírky).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | „Jako X“ | `jako:"jméno"` najde podobné modelky (postava, vlasy, období, kategorie) s důvody, řazení Podobnost, „Podobné →“ v profilu; kód podobnosti sdílený s kontrolou duplicit | M |
+| 2 | Tento den v historii | Karta na úvodu Přehledu: kulatá výročí centerfoldů, obálek a českých čísel v tomto měsíci (10, 20, 25, 30… let), ostatní centerfoldy měsíce jako roky, narozeniny dnes a do 7 dní (jen úplné datum, ne u zemřelých); výpočet v rozhraní z dat úvodu, prázdný stav s nejbližším výročím | S |
+| 3 | Podobné modelky | Pod profilem 6 karet s důvodem (období, vlasy, postava, fotograf); `PodobneModelky` ze společného `podobnost.go` (stejná funkce jako `jako:` v kroku 1), chybějící údaje se nepočítají | M |
+
+**Hotovo, když:** `jako:"jméno"` vrátí podobné modelky s důvody a přidá nejvýš 10 ms na 5 000 modelkách; profil
+ukáže podobné s důvodem a „Další podobné →“ otevře hledání `jako:`; úvod v den narozenin modelky ji ukáže s věkem.
+
+### 2.3 – Mohlo by se ti líbit
 
 **Cíl:** program se z hodnocení naučí vkus uživatele a pomáhá s hodnocením: navrhne srdíčka u nově přidané
 modelky, upozorní na nesoudržné hodnocení a nabídne fotky, které by se mohly líbit – vždy s důvodem. Jen
@@ -447,12 +426,12 @@ hodnocení odhadem, učení z otevírání profilů, etnicita jako příznak.
 návrh má důvod; z fotek nabídnutých jako „mohly by se líbit“ si uživatel označí výrazně víc než z náhodných
 fotek stejných alb; stejná data dají stejný výsledek; přepočet 2 000 modelek < 50 ms; schéma a export se nemění.
 
-### 1.18 – Postřehy ve Statistikách
+### 2.4 – Postřehy ve Statistikách
 
 **Cíl:** Statistiky samy najdou a česky popíšou, co je ve sbírce průkazné – trend, zlom, čím se liší výběr –
 a zamlčí náhodu. Nejvýš 5 postřehů nad grafem, klik ukáže odpovídající graf. Počítá se v rozhraní
 (`lib/statistika.js`, `lib/postrehy.js`) ze stejných dat a definic jako grafy. **Bez změny schématu i exportu.**
-Každý krok vyjde jako samostatná verze (1.18.0–1.18.4). Rozbor možností: [NAVRH-POSTREHY.md](docs/NAVRH-POSTREHY.md).
+Každý krok vyjde jako samostatná verze (2.4.0–2.4.4). Rozbor možností: [NAVRH-POSTREHY.md](docs/NAVRH-POSTREHY.md).
 
 **Rozhodnutí:** neparametrické testy (Kendall, Cochran–Armitage, Mann–Whitney, Fisher, Spearman) s opravou
 Benjamini–Hochberg a prahem podstatné velikosti; zlomy optimálním rozdělením s minimální délkou úseku 5 let;
@@ -471,6 +450,54 @@ výpočet v JS (testy výběru jsou funkce rozhraní), žádná p-hodnota v hlav
 **Hotovo, když:** na nulové simulované sbírce ukáže postřeh nejvýš 5 % náhodných výběrů; zasazený zlom a rozdíl
 se najdou jako první; statistické funkce souhlasí s R/SciPy; přepočet po změně výběru < 15 ms na 5 000 modelkách;
 každý postřeh jde ukázat v grafu; schéma zůstává na úpravě č. 11 a export na verzi 7.
+
+### 2.5 – Mapa sbírky
+
+**Cíl:** malá neuronová síť (autoenkodér) v čistém Go zhustí údaje modelek: mapa sbírky (každá modelka je tečka,
+podobné leží u sebe), podobnost a druhý názor Kontroly. Rozbor a kroky: [NAVRH-SITE.md](docs/NAVRH-SITE.md).
+
+### 2.6 – Stejné a podobné fotky
+
+**Cíl:** najít stejnou fotku nahranou na Disk víckrát (jiné ID) a podobné záběry. Otisk obrázku (dHash + pHash)
+z náhledů v mezipaměti z 1.3, otisky v `~/.cache/playboy-app/otisky.tsv`; bez změny schématu i exportu.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Otisky | `otisky.go`: dHash a pHash v čistém Go, počítání na pozadí (4 souběžně, pauza při výpadku a 429, pokračuje po restartu), stav v Údržbě; prahy doladit na skutečné sbírce | M |
+| 2 | Stejné fotky v Údržbě | Filtr „Stejné fotky“: skupiny (pásma otisku + sjednocení), náhledy vedle sebe, Odebrat s Vrátit, „V pořádku“ (v `nastaveni`) | M |
+| 3 | Najít podobné a upozornění | Nabídka fotky „Najít podobné fotky“; okno duplicit při vkládání (1.4) přidá „vypadá stejně jako…“ | S |
+
+**Hotovo, když:** stejná fotka nahraná podruhé se v Údržbě objeví jako skupina; přeuložená nebo zmenšená
+kopie se najde, fotky z jiných focení ne; smazání `otisky.tsv` jen spustí přepočet.
+
+### 2.7 – Chytré výběry **[schéma]**
+
+**Cíl:** výběr, který se plní sám podle uloženého hledání. Úprava schématu č. 13 (`vybery.dotaz`),
+export 9 (`vybery[].dotaz`).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Fotky podle dotazu v Go | `GetFotkyDotazu`: podmínky modelky přes `odpovidaHledani`, podmínky fotky (srdíčka, typ, rok, vydání, fotograf) v SQL; rozklad dotazu sdílený s chytrým hledáním (2.0–2.1) | M |
+| 2 | Schéma a export | Sloupec `dotaz`, přechod, export a import, test zmrazení a přechodu ze starých verzí | S–M |
+| 3 | Rozhraní | „Uložit jako chytrý výběr…“ v Nejlepších, čip s ⚡, upravit dotaz, zmrazit (zkopírovat fotky do ručního výběru) | S |
+
+**Hotovo, když:** nová fotka splňující dotaz se ve výběru objeví bez zásahu; export → import chytrý výběr
+zachová; starší program novější export odmítne srozumitelnou hláškou.
+
+### 2.8 – Kvíz „Poznej playmate“
+
+**Cíl:** hra nad vlastní sbírkou. Bez změny schématu i exportu (statistiky v `nastaveni`).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Kdo je to? | Část Přehledu „Kvíz“: titulní fotka a 4 jména, lehká (náhodná) a těžká (podobné modelky z 2.2), okruh podle desetiletí a oblíbených, klávesy 1–4, Enter, Esc | M |
+| 2 | Kdy? a Playmate měsíce | Rok nebo měsíc k fotce či jménu (body za přesnost), „Kdo byla Playmate 06/1995?“; bez připojení jen režimy bez fotky | S–M |
+| 3 | Statistiky a opakování | `GetKviz`/`SetKviz` (JSON v `nastaveni`), úspěšnost, série, Leitnerovy krabičky – častěji modelky, které uživatel plete | S |
+
+**Hotovo, když:** deset otázek jde odehrát jen klávesnicí; po hře je seznam chyb s odkazy na profil;
+statistiky přežijí restart i obnovení ze zálohy.
+
+Rozbor možností k 2.2, 2.6–2.8 a k Wikidatům: [NAVRH-NAPADY.md](docs/NAVRH-NAPADY.md).
 
 ### Rezerva – jen když se ukáže potřeba
 
@@ -493,17 +520,18 @@ každý postřeh jde ukázat v grafu; schéma zůstává na úpravě č. 11 a ex
   hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý klíč (0.18.0–0.30.0).
 - Vzhled: střídmý, jeden růžový akcent, písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1).
 - Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.1).
-- Malé náhledy smí program ukládat na disk jako mezipaměť (1.5); originály a velké fotky zůstávají jen na Disku.
+- Malé náhledy smí program ukládat na disk jako mezipaměť (1.3); originály a velké fotky zůstávají jen na Disku.
 - 1.0.0 po 14 dnech používání bety bez nové chyby (21. 10. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
-  každý krok a opravu v tématu (1.3.0, 1.3.1…); rozšíření dat MINOR, rozbití starších dat MAJOR.
+  každý krok a opravu v tématu (1.3.0, 1.3.1…); MAJOR = velký milník (2.x Chytrá sbírka), kompatibilitu dat hlídá
+  verze schématu a exportu (revize plánu 23. 10. 2026).
 - Google Disk v aplikaci (1.1–1.2): doporučený rozsah `drive.file` s výběrem Google v prohlížeči a vlastním projektem
   uživatele v Google Cloud – potvrdí se po prototypu (1.1, krok 1).
-- Editor textů (1.7–1.8): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
+- Editor textů (1.8–1.9): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
 
 ## Nedělat
 
 - Obecné Zpět pro všechny úpravy (deník změn) – denní zálohy a Vrátit u fotek stačí.
-- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz 1.5), zálohy na jiný disk.
+- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz 1.3), zálohy na jiný disk.
 - Šifrovanou databázi – zvolen zámek rozhraní.
 - Půlsrdíčka.
 - Zobrazování fotek přes Google API s přihlášením (API jen k výběru fotek, viz 1.1–1.2); automatický import celé

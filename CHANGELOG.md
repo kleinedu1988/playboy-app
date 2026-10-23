@@ -7,6 +7,14 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.3] – 2026-10-23
+
+### Opraveno
+- Nepodařené uložení srdíček modelky hlásilo chybu „uložení hodnocení fotky“; teď správně „uložení hodnocení modelky“.
+
+### Plán
+- ROADMAP: návrhy strojového učení po 1.0 – 1.16 Kontrola 2.0 (postava podle období, jistota nálezů, učení z oprav), 1.17 Mohlo by se ti líbit (odhad srdíček, doporučení, volitelně malá neuronová síť), 1.18 Postřehy ve Statistikách (trendy, zlomy, výběr proti sbírce); rozbor v `docs/NAVRH-KONTROLA2.md`, `docs/NAVRH-DOPORUCENI.md`, `docs/NAVRH-POSTREHY.md`.
+
 ## [0.99.2] – 2026-10-22
 
 ### Přidáno

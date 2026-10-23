@@ -141,6 +141,9 @@ Pořadí verzí jde změnit, závislosti jsou uvedené.
 | 1.13 | Wikidata II – hromadně v Údržbě | 1.12 |
 | 1.14 | Chytré výběry **[schéma]** | 1.9 |
 | 1.15 | Kvíz „Poznej playmate“ | 1.10 |
+| 1.16 | Kontrola 2.0 – postava podle období, jistota a řazení nálezů, učení z oprav i „V pořádku“ | – (rozšiřuje 1.6, jde hned po ní) |
+| 1.17 | Mohlo by se ti líbit – odhad srdíček z vlastních hodnocení, doporučené modelky a fotky, „Ohodnoť další“, volitelně malá neuronová síť | 1.10, 1.9.1 |
+| 1.18 | Postřehy ve Statistikách – trendy, zlomy, výběr proti sbírce, neobvyklé roky | – |
 | rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – |
 
 ### 1.1 – Google Disk I: přihlášení a výběr do alba
@@ -378,6 +381,83 @@ statistiky přežijí restart i obnovení ze zálohy.
 
 Rozbor možností k 1.10–1.15: [NAVRH-NAPADY.md](docs/NAVRH-NAPADY.md). Wikidata (1.12–1.13) čekají na rozhodnutí
 uživatele: odporují bodu „stahování údajů z webu“ v oddílu Nedělat.
+
+### 1.16 – Kontrola 2.0
+
+**Cíl:** kontrola v Údržbě porovnává modelky se stejnou dobou, řadí nálezy podle jistoty chyby a učí se
+z oprav i z „V pořádku“. **Bez změny schématu i exportu** – naučené počty jsou v tabulce `nastaveni`.
+Každý krok vyjde jako samostatná verze (1.16.0–1.16.4). Rozbor možností: [NAVRH-KONTROLA2.md](docs/NAVRH-KONTROLA2.md).
+Rozšiřuje 1.6 a nezávisí na 1.7–1.15, takže jde vzít hned po 1.6.
+
+**Rozhodnutí:** klouzavé okno ±5 let podle prvního vydání přitažené k celé sbírce (ne desetiletí ani regrese);
+jistota = šance pravidla × vzácnost hodnoty (ne naučený klasifikátor); opravy se poznají ze snímku ukázaných
+nálezů v `nastaveni` (ne deník změn); prahy se ladí po malých krocích v pevných mezích, tvrdá pravidla nikdy.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Postava podle období | Měření na kopii sbírky; medián a σ po rocích (okno ±5 až ±15 let, ≥ 40 hodnot), přitažení k celé sbírce w = n/(n+40), z-skóre kombinací vůči období s korelací z celé sbírky; text „kolem roku 1962 obvykle …“ | M–L |
+| 2 | Jistota a řazení | `Jistota` v nálezu z vzácnosti hodnoty (t-rozdělení, χ², podobnost jmen) a přesnosti pravidla; „skoro jistě překlep“ / „možná chyba“; Kontrola řazená podle jistoty; slabé nálezy za odkazem; „Proč je to podezřelé?“ v ⋯ | M |
+| 3 | Pamatování nálezů | Otisk údajů nálezu, snímek v `nastaveni`, porovnání v `GetPrehled`: zmizelý nález se změněným údajem = opraveno, „V pořádku“ = planý poplach, hromadné změny se nepočítají; okno ⋯ → Kontrola údajů… | M |
+| 4 | Učení z rozhodnutí | Přesnost pravidla (Beta), ladění k (4,0–6,0), α kombinací a prahu jmen (0,93–0,98) po krocích; řádek „Kontrola se naučila: …“, Zapomenout naučené | M |
+| 5 | Návrh opravy (volitelně) | Vzory překlepů (chybějící číslice, prohozené číslice, palce, libry, prohozené obvody) s kandidátem v rozsahu období, oprava jedním klikem s Vrátit; jména podle období | M |
+
+**Nedělá se:** nové klíče `ok-…`, deník změn, knihovny strojového učení, skrývání tvrdých pravidel.
+
+**Hotovo, když:** pas 70 cm v roce 1962 se hlásí a v roce 2008 ne; z prvních 20 nálezů skutečné sbírky je
+aspoň 15 skutečná chyba; oprava se započítá jako „opraveno“ a import ne; po 30 simulovaných rozhodnutích
+jsou prahy v mezích a „Zapomenout naučené“ vrátí výchozí stav; kontrola 5 000 modelek do 120 ms; schéma
+ani export se nemění.
+
+### 1.17 – Mohlo by se ti líbit
+
+**Cíl:** program se z hodnocení srdíčky naučí vkus uživatele a nabídne nehodnocené modelky a fotky, každou
+s důvodem. Jen z vlastních hodnocení a údajů sbírky (ne z obsahu fotek), vše v počítači. **Bez změny schématu
+i exportu** – model se přepočítává z dat, „Nezajímá mě“ a volby jsou v `nastaveni`. Každý krok vyjde jako
+samostatná verze (1.17.0–1.17.3, volitelně 1.17.4). Rozbor možností: [NAVRH-DOPORUCENI.md](docs/NAVRH-DOPORUCENI.md).
+
+**Rozhodnutí:** hřebenová regrese odhadu srdíček v čistém Go (Cholesky z `kontrola_uceni.go`) smíchaná s kNN nad
+hodnocenými podle jejich počtu; příznaky z údajů modelky a alba (robustní z-skóre, one-hot, fotografové, štítky);
+podobnost a diverzita ze společného `podobnost.go`; nehodnocené nikdy nejsou záporný příklad.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Model modelek a řazení | `doporuceni.go`: příznaky, ridge + kNN, pod 10 hodnoceními nic, váhy úrovní srdíček, λ 5násobnou křížovou validací, přepočet po změně hodnocení; řazení „Odhad ♥“ v galerii; MAE a precision@10 na vlastních hodnoceních | M–L |
+| 2 | Mohlo by se ti líbit | Čip v Nejlepších: 10 modelek (7 nejlepších s penalizací podobnosti + 3 „Pro změnu“), důvody „blond · 70. léta · fotograf Pompeo Posar“ nebo „podobná X ♥5“, „Nezajímá mě“ (v `nastaveni`), odhad v profilu nehodnocené modelky | M |
+| 3 | Doporučené fotky | Příznaky fotky (typ alba, fotograf, hodnocení modelky, průměr alba bez fotky, poloha, období), mozaika 60 fotek (max. 3 z alba), prohlížeč s klávesami 1–5; když nepřekoná průměr alba, použije se ten | M |
+| 4 | Ohodnoť další a vyhodnocení | 12 fotek a modelek, u kterých si model je nejméně jistý (při začátku nejrozmanitější), ⋯ → Doporučení: „Jak dobře tě znám“, skryté, vypnout | M |
+| 5 | Malá neuronová síť (volitelně) | Jen při ≥ 1 000 hodnocených fotek podle metrik z kroku 4: perceptron s 1 skrytou vrstvou v čistém Go (pevné semínko, Adam, L2, early stopping), ověření na pozadí; použije se, jen když je v křížové validaci o ≥ 3 % lepší v ≥ 4 z 5 záhybů, jinak zůstane jednoduchý model; váhy (~7 kB) v `nastaveni` | M–L |
+
+**Nedělá se:** obsah obrázku (konvoluční síť, hotové obrazové modely a jejich runtime), automatické hodnocení
+odhadem, učení z otevírání profilů, etnicita jako příznak.
+
+**Hotovo, když:** na syntetické sbírce je ≥ 8 z 10 doporučení podle zasazeného vkusu; na skutečné sbírce je odhad
+modelek o ≥ 10 % přesnější (MAE) než průměr uživatele a každé doporučení má důvod; stejná data dají stejný výsledek;
+přepočet 2 000 modelek < 50 ms a 64 000 fotek < 300 ms; schéma a export se nemění.
+
+### 1.18 – Postřehy ve Statistikách
+
+**Cíl:** Statistiky samy najdou a česky popíšou, co je ve sbírce průkazné – trend, zlom, čím se liší výběr –
+a zamlčí náhodu. Nejvýš 5 postřehů nad grafem, klik ukáže odpovídající graf. Počítá se v rozhraní
+(`lib/statistika.js`, `lib/postrehy.js`) ze stejných dat a definic jako grafy. **Bez změny schématu i exportu.**
+Každý krok vyjde jako samostatná verze (1.18.0–1.18.4). Rozbor možností: [NAVRH-POSTREHY.md](docs/NAVRH-POSTREHY.md).
+
+**Rozhodnutí:** neparametrické testy (Kendall, Cochran–Armitage, Mann–Whitney, Fisher, Spearman) s opravou
+Benjamini–Hochberg a prahem podstatné velikosti; zlomy optimálním rozdělením s minimální délkou úseku 5 let;
+výpočet v JS (testy výběru jsou funkce rozhraní), žádná p-hodnota v hlavní větě.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Trend u grafu | Statistické funkce s testy proti R/SciPy; věta pod grafem v čase („Výška průkazně roste: ze 168 na 173 cm“) s bublinou podrobností | M |
+| 2 | Zlomy | Optimální rozdělení řady let (min. 5 let a 30 modelek, nejvýš 3 zlomy), pokuta kalibrovaná simulací; čárkovaná svislice a úrovně období v grafu, věta „Od roku 1995 roste…“ | M–L |
+| 3 | Výběr proti sbírce | Mann–Whitney, Fisher, oprava BH, prahy podstatnosti (2 cm, 10 bodů), vyloučení příznaků určených výběrem, min. 10 modelek; panel „Výběr má o 4 cm užší pas (60 vs 64 cm)“ | M–L |
+| 4 | Panel napříč grafy | Skóre síla × jistota, nejvýš 5, bez opakování příbuzných příznaků, bez blikání; klik přepne graf (u neobvyklého roku vybere rok); 5 000 modelek < 30 ms | M |
+| 5 | Neobvyklé roky a souvislosti | Rok vybočující ze svého období, Spearman mezi údaji a s hodnocením („souvislost, ne příčina“), standardizace výběru podle desetiletí | M |
+
+**Nedělá se:** jazykový model, předpovědi do budoucna, postřehy o jednotlivých modelkách, neprůkazné náznaky.
+
+**Hotovo, když:** na nulové simulované sbírce ukáže postřeh nejvýš 5 % náhodných výběrů; zasazený zlom a rozdíl
+se najdou jako první; statistické funkce souhlasí s R/SciPy; přepočet po změně výběru < 15 ms na 5 000 modelkách;
+každý postřeh jde ukázat v grafu; schéma zůstává na úpravě č. 11 a export na verzi 7.
 
 ### Rezerva – jen když se ukáže potřeba
 

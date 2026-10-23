@@ -1791,7 +1791,7 @@ func (a *App) SetHodnoceni(id, hodnoceni int) bool {
 	}
 	_, err := a.db.Exec(`UPDATE modelky SET hodnoceni = ? WHERE id = ?`, hodnoceni, id)
 	if err != nil {
-		a.chyba("uložení hodnocení fotky", err)
+		a.chyba("uložení hodnocení modelky", err)
 	}
 	return err == nil
 }

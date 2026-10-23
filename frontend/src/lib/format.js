@@ -476,11 +476,12 @@ const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', '
     'rok', 'vydani', 'narozena', 'edice', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
     'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela']);
 const jeCislo = text => /^[\d.\-]+$/.test(text);
+const CISELNA_POLE = new Set(['rok', 'narozena', 'vyska', 'vaha', 'hodnoceni', 'srdicka']);
 
 // Číslo z textu vyhovuje rozsahu (1970..1979, 1970-1979) nebo porovnání (>=1970, >175); null = hodnota není číselná.
 // Bez cíleného pole se porovnávají jen čtyřmístné roky, v cíleném poli všechna čísla.
-function vyhovujeCislu(hodnota, texty, cilene) {
-    const rozsah = cilene ? /^(\d+)\s*(?:\.\.|-)\s*(\d+)$/.exec(hodnota) : /^(\d{4})\s*(?:\.\.|-)\s*(\d{4})$/.exec(hodnota);
+function vyhovujeCislu(hodnota, texty, cilene, roky = false) {
+    const rozsah = cilene && !roky ? /^(\d+)\s*(?:\.\.|-)\s*(\d+)$/.exec(hodnota) : /^(\d{4})\s*(?:\.\.|-)\s*(\d{4})$/.exec(hodnota);
     const porovnani = cilene ? /^(>=|<=|>|<|==|=)\s*(\d+)$/.exec(hodnota) : /^(>=|<=|>|<|==|=)\s*(\d{4})$/.exec(hodnota);
     if (!rozsah && !porovnani) return null;
     const cisla = texty.flatMap(txt => (txt.match(cilene ? /\d+/g : /\b\d{4}\b/g) || []).map(Number));
@@ -530,7 +531,11 @@ export function vyhovujeHledani(texty, tokeny, pole = {}) {
                 proPreklepy = [];
             }
         }
-        let shoda = vyhovujeCislu(t.hodnota, kde, kde !== vse);
+        // rok:1975-01 = číslo z daného měsíce (hledá se ve vydání)
+        if (t.klic === 'rok' && /^\d{4}-/.test(t.hodnota) && 'vydani' in udaje) kde = [udaje.vydani];
+        // Čísla se porovnávají jen v číselných polích; vydani:1975-01 je text, u roků rozsah jen se čtyřmístnými mezemi
+        const cilene = kde !== vse;
+        let shoda = cilene && !CISELNA_POLE.has(t.klic) ? null : vyhovujeCislu(t.hodnota, kde, cilene, t.klic === 'rok' || t.klic === 'narozena');
         if (shoda === null) {
             shoda = hledane.some(v => kde.some(txt => txt.includes(v))
                 || (!t.negace && !jeCislo(v) && proPreklepy.some(txt => odpovidaTextFuzzy(txt, v))));

@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.6] – 2026-10-23
+
+### Opraveno
+Nálezy revize kódu (zprávy v `docs/REVIZE-*.md`):
+- Dotaz „Zahodit změny?“ se u článku, úpravy čísla, Doplnit modelku a rychlé Nové modelky ukazoval pod oknem (chyba z 0.99.4) – teď je navrchu, Esc a Tab patří jemu; po zrušení mazání článku zůstanou rozepsané změny chráněné; po „Uložit a další album“ se Esc zbytečně neptá.
+- Doplnit modelku: zvolená srdíčka a titulní fotka jsou rozepsané změny – Esc i tlačítka, která okno opustí, se nejdřív zeptají.
+- Hledání `rok:1975-01` a `narozena:1975-03` vracelo všechny modelky do roku 1975 (bralo se jako rozsah 1–1975); teď najde číslo nebo měsíc narození. Ve frontendu totéž pro `vydani:1975-01` v Číslech, Kalendáři, na stěně a v Nejlepších.
+- Vložené odkazy smíšené s holými ID souborů: holá ID se tiše ztrácela, teď se vloží všechna.
+- Kontrola: datum úmrtí zapsané jen rokem („1980“) se hlásilo jako „před prvním vydáním 1980-08“; data se porovnávají na společnou přesnost.
+- Statistiky: návrat Zpět ze seznamu modelek už nezruší výběr; přerušené tažení v grafu výběr nerozbije.
+- Zpět na profil smazané nebo sloučené modelky se přeskočí a otevře se předchozí místo.
+
 ## [0.99.5] – 2026-10-23
 
 ### Změněno

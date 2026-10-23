@@ -147,7 +147,12 @@ export const deleteModal = document.getElementById('deleteModal');
 
 // Potvrzovací okno pro nevratné mazání; akce se provede až po potvrzení
 // slovo: když je zadané, tlačítko Smazat se odemkne až po jeho napsání
+// Okna mají stejné vrstvení, rozhoduje pořadí v DOM: dotaz se přesune na konec, aby byl nad oknem, ze kterého
+// se ptá (článek, Doplnit modelku), a Esc i Tab patřily jemu
+const navrchDeleteModal = () => deleteModal.parentElement.append(deleteModal);
+
 export function otevritDeleteModal(nadpis, text, akce, poDokonceni = () => nacistGalerii(searchInput.value), slovo = '') {
+    navrchDeleteModal();
     stav.potvrzenaAkce = async () => {
         if (await akce() === false) oznamit('Smazání se nepodařilo, nic se nezměnilo.');
         poDokonceni();
@@ -174,6 +179,7 @@ function nastavitPotvrzovaciSlovo(slovo) {
 // Obecná otázka ano/ne ve stejném okně; vrací, zda uživatel potvrdil
 // nebezpecne: hlavní tlačítko je červené a výchozí volba (fokus) je Zrušit
 export function potvrdit(nadpis, text, popisTlacitka, { nebezpecne = false } = {}) {
+    navrchDeleteModal();
     return new Promise((vyreseno) => {
         stav.potvrzenaAkce = () => { stav.zrusenaAkce = null; vyreseno(true); };
         stav.zrusenaAkce = () => vyreseno(false);

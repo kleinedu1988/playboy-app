@@ -109,3 +109,23 @@ func TestKontrolaDat(t *testing.T) {
 		t.Errorf("BMI: %v", hlaseni)
 	}
 }
+
+// Data zapsaná jen rokem se porovnávají na společnou přesnost
+func TestKontrolaDatJenRokem(t *testing.T) {
+	var hlaseni []string
+	pridat := func(m Modelka, klic, pole, popis string) { hlaseni = append(hlaseni, klic) }
+	for _, pripad := range []struct {
+		m       Modelka
+		nalezen bool
+	}{
+		{Modelka{NarozeniDatum: "1955-02-01", UmrtiDatum: "1980", Vydani: []string{"1980-08"}}, false},
+		{Modelka{NarozeniDatum: "1955-02-01", UmrtiDatum: "1979", Vydani: []string{"1980-08"}}, true},
+		{Modelka{NarozeniDatum: "1960", UmrtiDatum: "1960-05-01"}, false},
+	} {
+		hlaseni = nil
+		kontrolovatData(pripad.m, vychoziRozsahy(), pridat)
+		if (len(hlaseni) > 0) != pripad.nalezen {
+			t.Errorf("%+v: nálezy %v", pripad.m, hlaseni)
+		}
+	}
+}

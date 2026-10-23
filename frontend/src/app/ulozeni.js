@@ -249,6 +249,7 @@ export function pripravit() {
         if (e.submitter?.name === 'dalsi' && !stav.editovaneAlbum) {
             // Další album téže modelky: modelka, typ, fotograf a vydání zůstávají, vyprázdní se jen název, odkazy a text
             ['inputAlbumName', 'inputBulkLinks', 'inputAlbumPopis'].forEach(id => { document.getElementById(id).value = ''; });
+            delete albumModal.dataset.zmeneno;
             document.getElementById(typ === 'Centerfold' ? 'inputBulkLinks' : 'inputAlbumName').focus();
         } else {
             albumModal.classList.add('hidden');

@@ -341,3 +341,14 @@ test('výskyt modelky: časopis, jen online, neurčeno', () => {
     assert.equal(vyskytModelky({ role: 'Celebrita' }), '');
     assert.equal(vyskytModelky({}), '');
 });
+
+test('cílené hledání: rok a vydání s měsícem nejsou rozsah', async () => {
+    const { vyhovujeHledani, poleCisla, rozlozitDotaz: rozlozitHledani } = await import('../src/lib/format.js');
+    const ma = (dotaz, vydani) => vyhovujeHledani([vydani], rozlozitHledani(dotaz), poleCisla(vydani));
+    assert.equal(ma('vydani:1975-01', '1975-01'), true);
+    assert.equal(ma('vydani:1975-01', '1980-05'), false);
+    assert.equal(ma('rok:1975-01', '1975-01'), true);
+    assert.equal(ma('rok:1975-01', '1960-02'), false);
+    assert.equal(ma('rok:1970-1979', '1975-01'), true);
+    assert.equal(ma('rok:1970-1979', '1980-01'), false);
+});

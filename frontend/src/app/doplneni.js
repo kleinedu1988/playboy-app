@@ -10,7 +10,7 @@ import { stats } from './prvky';
 import { VELIKOST_NAHLEDU } from './obrazky';
 import { otevritDetailModelky, nacistFotkyModelky } from './profil';
 import { otevritAlbumModal } from './formular-alba';
-import { poleModelky } from './formular-modelky';
+import { poleModelky, potvrdit } from './formular-modelky';
 import { pripojitVyberKategorii } from '../ui/kategorie';
 import { KLICE_SKUPIN, SKUPINY_UDAJU, nacistPrehled } from './prehled';
 
@@ -185,9 +185,14 @@ export function pripravit() {
         if (titulni) {
             const id = parseInt(titulni.dataset.titulni);
             stav.doplnovanaTitulni = stav.doplnovanaTitulni === id ? 0 : id;
+            doplnitModal.dataset.zmeneno = '1';
             obsah.querySelectorAll('[data-titulni]').forEach(b => b.classList.toggle('vybrana', parseInt(b.dataset.titulni) === stav.doplnovanaTitulni));
             return;
         }
+        // Tlačítka, která okno opustí, se u rozepsaných změn nejdřív zeptají
+        const odejit = cil.closest('[data-pridat-fotky], [data-doplnit-centerfold], [data-text-alba]');
+        if (odejit && doplnitModal.dataset.zmeneno
+            && !await potvrdit('Zahodit změny?', 'Rozepsané údaje v okně se neuloží.', 'Zahodit', { nebezpecne: true })) return;
         if (cil.closest('[data-pridat-fotky]')) {
             doplnitModal.classList.add('hidden');
             otevritAlbumModal(modelka);
@@ -197,6 +202,7 @@ export function pripravit() {
         if (srdce) {
             const n = parseInt(srdce.dataset.hodnotaDoplneni);
             stav.doplnovaneHodnoceni = stav.doplnovaneHodnoceni === n ? 0 : n;
+            doplnitModal.dataset.zmeneno = '1';
             obsah.querySelectorAll('[data-hodnota-doplneni]').forEach(b => b.classList.toggle('on', parseInt(b.dataset.hodnotaDoplneni) <= stav.doplnovaneHodnoceni));
             return;
         }

@@ -1021,14 +1021,11 @@ func parseDriveIDs(rawInput string) []string {
 		}
 	}
 
-	// Pokud uživatel vložil pouze jedno čisté ID bez URL
-	// Holá ID bez odkazu, jedno nebo víc oddělených mezerami či řádky; odkaz na složku ani jiný text ID není
-	if len(ids) == 0 {
-		for _, slovo := range strings.Fields(rawInput) {
-			if vzorHolehoID.MatchString(slovo) && !seen[slovo] {
-				seen[slovo] = true
-				ids = append(ids, slovo)
-			}
+	// Holá ID (i mezi odkazy), oddělená mezerami či řádky; slovo s / nebo : (odkaz) vzoru ID nevyhoví
+	for _, slovo := range strings.Fields(rawInput) {
+		if vzorHolehoID.MatchString(slovo) && !seen[slovo] {
+			seen[slovo] = true
+			ids = append(ids, slovo)
 		}
 	}
 
@@ -1239,10 +1236,8 @@ func poleHledani(m Modelka) map[string]string {
 			edice = append(edice, "US")
 		}
 	}
-	narozena := ""
-	if len(m.NarozeniDatum) >= 4 {
-		narozena = m.NarozeniDatum[:4]
-	}
+	// Celé datum: narozena:1955-03 najde i měsíc (rok porovnává číselné hledání z NarozeniDatum)
+	narozena := m.NarozeniDatum
 	vyska := ""
 	if m.VyskaCm > 0 {
 		vyska = fmt.Sprintf("%d", m.VyskaCm)
@@ -1308,6 +1303,12 @@ var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?(
 var vzorRozsahCisel = regexp.MustCompile(`^(\d+)\s*-\s*(\d+)$`)
 
 // Rozpoznání numerického filtru: op (">=", "<=", ">", "<", "=", ".."), numOd, numDo
+// Rozsah roků v cíleném hledání (rok:1970-1979, narozena:1980..1989) a rok s měsícem (rok:1975-01)
+var (
+	vzorRozsahRoku      = regexp.MustCompile(`^\s*\d{4}\s*(-|\.\.)\s*\d{4}\s*$`)
+	vzorRokMesicHledani = regexp.MustCompile(`^\s*\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?\s*$`)
+)
+
 func parsovatNumerickyFiltr(hodnota string) (op string, numOd, numDo int, ok bool) {
 	h := strings.TrimSpace(hodnota)
 	if strings.HasPrefix(h, ">=") {
@@ -1596,7 +1597,20 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 			if ok && op == "=" && (klicZjedn == "rok" || klicZjedn == "narozena") && len(strings.TrimSpace(hodnota)) < 4 {
 				ok = false
 			}
-			if ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "hodnoceni" || klicZjedn == "srdicka" || klicZjedn == "rok" || klicZjedn == "narozena") {
+			// Rozsah roků jen se čtyřmístnými mezemi: „1975-01“ je měsíc vydání (narození), ne rozsah 1–1975
+			if ok && op == ".." && (klicZjedn == "rok" || klicZjedn == "narozena") && !vzorRozsahRoku.MatchString(hodnota) {
+				ok = false
+			}
+			if klicZjedn == "rok" && vzorRokMesicHledani.MatchString(hodnota) {
+				// rok:1975-01 = modelky čísla z daného měsíce (předpona vydání)
+				shoda = false
+				for _, v := range m.Vydani {
+					if strings.HasPrefix(v, strings.TrimSpace(hodnota)) {
+						shoda = true
+						break
+					}
+				}
+			} else if ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "hodnoceni" || klicZjedn == "srdicka" || klicZjedn == "rok" || klicZjedn == "narozena") {
 				shoda = vyhovujeNumericky(m, klicZjedn, op, numOd, numDo)
 			} else {
 				if pole == nil {

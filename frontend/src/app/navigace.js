@@ -9,6 +9,7 @@ import { otevritDetailModelky } from './profil';
 import { otevritFotografa, otevritVydani } from './vydani';
 import { zrusitVyber } from './vyber';
 import { obnovitVolby } from '../ui/volby';
+import { vsechnyModelky } from './mezipamet';
 
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají navíc v řádku okna tlačítko zpět
 export function ukazatPohled(pohled) {
@@ -80,7 +81,16 @@ export function zapamatovatMisto(cil) {
 }
 
 export async function zpet() {
-    const misto = historie.pop();
+    // Profil modelky, která mezitím zmizela (smazaná, sloučená), se přeskočí; jinak aktuální údaje modelky
+    let misto = historie.pop();
+    while (misto?.typ === 'profil') {
+        const aktualni = (await vsechnyModelky()).find(m => m.id === misto.modelka.id);
+        if (aktualni) {
+            misto = { ...misto, modelka: aktualni };
+            break;
+        }
+        misto = historie.pop();
+    }
     const hlavni = document.querySelector('main');
     if (misto?.typ === 'profil') {
         await otevritDetailModelky(misto.modelka, { bezHistorie: true });

@@ -160,12 +160,11 @@ export function pripravit() {
     document.getElementById('clanekSmazatBtn').onclick = async () => {
         const c = stav.editovanyClanek;
         if (!c?.id) return;
-        // Potvrzení je samostatné okno; článek se po zrušení otevře znovu
-        clanekModal.classList.add('hidden');
+        // Potvrzení se ukáže nad oknem článku; po zrušení zůstane článek i s rozepsanými změnami
         if (!await potvrdit('Smazat článek', `Opravdu smazat článek „${c.nazev}“? Text článku se smaže, skeny na Disku zůstanou.`, 'Smazat', { nebezpecne: true })) {
-            clanekModal.classList.remove('hidden');
             return;
         }
+        clanekModal.classList.add('hidden');
         if (!await DeleteClanek(c.id)) {
             oznamit('Článek se nepodařilo smazat.');
             return;

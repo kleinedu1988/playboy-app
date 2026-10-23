@@ -2974,3 +2974,29 @@ func TestFotografoveAlbaSCarkou(t *testing.T) {
 		t.Fatalf("po sloučení fotografů: %+v", f)
 	}
 }
+
+// Nálezy revize kódu 23. 10. 2026: rok:/narozena: s měsícem, holá ID mezi odkazy
+func TestRevizeHledaniAOdkazu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Leden", NarozeniDatum: "1955-03"})
+	a.AddModelka(Modelka{Jmeno: "Starší", NarozeniDatum: "1950-07"})
+	leden, starsi := a.GetModelky("Leden")[0].ID, a.GetModelky("Starší")[0].ID
+	a.AddBulkPhotos(leden, "1975-01", "Centerfold", odkazA)
+	a.AddBulkPhotos(starsi, "1970-05", "Centerfold", odkazB)
+	jmena := func(dotaz string) string {
+		var j []string
+		for _, m := range a.GetModelky(dotaz) {
+			j = append(j, m.Jmeno)
+		}
+		return strings.Join(j, ",")
+	}
+	for dotaz, cekano := range map[string]string{"rok:1975-01": "Leden", "rok:1970-1979": "Leden,Starší", "narozena:1955-03": "Leden", "rok:1970": "Starší"} {
+		if v := jmena(dotaz); v != cekano {
+			t.Errorf("%s: %q, čekáno %q", dotaz, v, cekano)
+		}
+	}
+	holeA, holeB := "CCCCCCCCCCCCCCCCCCCCCCCCCCCCC", "DDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
+	if ids := parseDriveIDs(odkazA + "\n" + holeA + " " + holeB + "\n" + holeA); strings.Join(ids, ",") != "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA,"+holeA+","+holeB {
+		t.Errorf("odkaz s holými ID: %v", ids)
+	}
+}

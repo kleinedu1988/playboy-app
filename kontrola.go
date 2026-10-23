@@ -170,12 +170,18 @@ func kontrolovatData(m Modelka, r rozsahyKontroly, pridat func(Modelka, string, 
 		switch {
 		case umrti > dnes:
 			pridat(m, "ok-umrti", "inputUmrtiDatum", fmt.Sprintf("datum úmrtí %s je v budoucnosti", umrti))
-		case narozeni != "" && umrti < narozeni:
+		case narozeni != "" && predData(umrti, narozeni):
 			pridat(m, "ok-umrti", "inputUmrtiDatum", fmt.Sprintf("datum úmrtí %s je před narozením (%s)", umrti, narozeni))
-		case prvni != "" && umrti[:min(7, len(umrti))] < prvni[:7]:
+		case prvni != "" && predData(umrti, prvni[:7]):
 			pridat(m, "ok-umrti", "inputUmrtiDatum", fmt.Sprintf("datum úmrtí %s je před prvním vydáním (%s)", umrti, prvni))
 		}
 	}
+}
+
+// Datum a je jistě před datem b: porovná se na společnou přesnost (úmrtí „1980“ není před vydáním „1980-08“)
+func predData(a, b string) bool {
+	n := min(len(a), len(b))
+	return a[:n] < b[:n]
 }
 
 // Výška, váha, BMI a obvody mimo rozsahy r (pevné nebo naučené ze sbírky); pas širší než boky nebo hrudník

@@ -476,8 +476,8 @@ export async function nacistStatistiky(koren) {
     koren.dataset.nacteno = '1';
     const [s, modelky] = await Promise.all([GetStatistiky(), vsechnyModelky()]);
     if (!koren.isConnected) return;
+    // Výběr zůstává (návrat Zpět ze seznamu modelek do Statistik); ruší ho uživatel nebo změna edice či výskytu
     data = { s, modelky, fotografove: new Map() };
-    filtry.clear();
     koren.innerHTML = `${htmlKostry()}<div class="graf-bublina hidden"></div>`;
     vykreslit(koren);
     // Při změně šířky se graf v čase překreslí v nové šířce
@@ -558,6 +558,14 @@ export function pripravit(stats) {
         zobrazitVse = false;
         if (koren) vykreslit(koren);
     });
+
+    // Přerušené tažení (ztráta zachycení ukazatele, systémové gesto) vrátí výběr, jaký byl před tažením
+    ['pointercancel', 'lostpointercapture'].forEach(udalost => stats.addEventListener(udalost, (e) => {
+        if (!tah) return;
+        tah = null;
+        const koren = /** @type {HTMLElement} */ (e.target).closest?.('.stat-statistiky');
+        if (koren) vykreslit(koren, { jenGraf: true });
+    }));
 
     stats.addEventListener('change', (e) => {
         const select = /** @type {HTMLSelectElement} */ (e.target);

@@ -68,7 +68,7 @@ export async function otevritDoplneni(modelkaId) {
     if (chybi('titulni')) bloky.push(blok('Titulní fotka', 'titulni', fotky.length
         ? `<p class="doplnit-napoveda">Vyber fotku z galerie modelky:</p><div class="doplnit-fotky">${fotky.slice(0, 60).map(f =>
             `<button type="button" data-titulni="${f.id}" title="${esc(nazevAlba(f.album, f.typ))}"><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" draggable="false" /></button>`).join('')}</div>`
-        : '<div class="doplnit-akce"><span class="doplnit-napoveda">Modelka zatím nemá fotky.</span><button type="button" class="btn btn-secondary btn-small" data-pridat-fotky><span>+</span> Přidat fotky nebo album……</button></div>'));
+        : '<div class="doplnit-akce"><span class="doplnit-napoveda">Modelka zatím nemá fotky.</span><button type="button" class="btn btn-secondary btn-small" data-pridat-fotky><span>+</span> Přidat fotky nebo album…</button></div>'));
     SKUPINY_UDAJU.forEach((s, i) => {
         const chybejici = radek.netyka.has(KLICE_SKUPIN[i]) ? [] : radek.udaje?.[i] || [];
         if (chybejici.length) bloky.push(blok(`${s.nazev} · ${chybejici.length === s.udaje.length ? 'vše' : `${chybejici.length} z ${s.udaje.length}`}`,

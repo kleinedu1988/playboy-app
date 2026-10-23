@@ -120,7 +120,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card modal-narrow">
       <div class="modal-header">
         <h3>Nová modelka</h3>
-        <button id="closeQuickModalBtn" class="close-btn">&times;</button>
+        <button id="closeQuickModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <form id="quickForm">
         <div class="form-group">
@@ -140,7 +140,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card modal-wide">
       <div class="modal-header">
         <h3 id="modelModalTitle">Přidat novou modelku</h3>
-        <button id="closeModalBtn" class="close-btn">&times;</button>
+        <button id="closeModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <form id="addModelForm" novalidate>
         <div class="form-layout">
@@ -305,7 +305,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="albumModalTitle">Přidat fotky do alba</h3>
-        <button id="closeAlbumModalBtn" class="close-btn">&times;</button>
+        <button id="closeAlbumModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <form id="addAlbumForm">
         <!-- Modelka se vybírá jen tam, kde není daná (stěna, vydání, kalendář); neznámé jméno založí novou -->
@@ -373,7 +373,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="coverModalTitle">Přidat cover</h3>
-        <button id="closeCoverModalBtn" class="close-btn">&times;</button>
+        <button id="closeCoverModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <form id="coverForm">
         <div class="form-row form-row-3">
@@ -410,7 +410,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card modal-narrow">
       <div class="modal-header">
         <h3 id="passModalTitle">Nastavit heslo</h3>
-        <button id="closePassModalBtn" class="close-btn">&times;</button>
+        <button id="closePassModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <form id="passForm">
         <div id="passOldGroup" class="form-group">
@@ -450,7 +450,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card modal-narrow">
       <div class="modal-header">
         <h3 id="pickModalTitle"></h3>
-        <button class="close-btn" data-zavrit>&times;</button>
+        <button class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <form id="pickForm">
         <p id="pickModalText" class="pass-hint"></p>
@@ -496,7 +496,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="issueModalTitle">Číslo časopisu</h3>
-        <button class="close-btn" data-zavrit>&times;</button>
+        <button class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <form id="issueForm">
         <div id="issueNazevGroup" class="form-group hidden">
@@ -536,7 +536,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card modal-backup">
       <div class="modal-header">
         <h3>Obnovit ze zálohy</h3>
-        <button class="close-btn" data-zavrit>&times;</button>
+        <button class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <p id="backupModalText" class="pass-hint"></p>
       <ul id="backupModalList" class="backup-list"></ul>
@@ -551,7 +551,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card">
       <div class="modal-header">
         <h3>Kontrola souborů na Google Disku</h3>
-        <button id="closeCheckModalBtn" class="close-btn">&times;</button>
+        <button id="closeCheckModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <p id="checkModalText"></p>
       <ul id="checkModalList" class="check-list"></ul>
@@ -567,7 +567,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card">
       <div class="modal-header">
         <h3 id="deleteModalTitle">Smazat modelku</h3>
-        <button id="closeDeleteModalBtn" class="close-btn">&times;</button>
+        <button id="closeDeleteModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <p id="deleteModalText"></p>
       <!-- U nevratných hromadných akcí se smazání potvrzuje napsáním slova -->
@@ -664,7 +664,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card modal-siroky">
       <div class="modal-header">
         <h3>Nápověda</h3>
-        <button class="close-btn" data-zavrit>&times;</button>
+        <button class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <div class="napoveda">
         <h4>Prohlížení</h4>
@@ -731,7 +731,7 @@ export const SABLONA_OKNA = `
     <div class="modal-card modal-siroky">
       <div class="modal-header">
         <h3 id="newsModalTitle">Co je nového</h3>
-        <button class="close-btn" data-zavrit>&times;</button>
+        <button class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <div id="newsModalBody" class="napoveda"></div>
       <div class="modal-actions">

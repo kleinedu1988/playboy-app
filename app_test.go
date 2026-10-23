@@ -2932,3 +2932,28 @@ func TestKategorieModelek(t *testing.T) {
 		}
 	}
 }
+
+// Album s víc fotografy (oddělenými čárkou) patří každému z nich; přejmenování změní jen toho jednoho
+func TestFotografoveAlbaSCarkou(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna"})
+	anna := a.GetModelky("Anna")[0].ID
+	a.AddBulkPhotos(anna, "Pláž", "Pictorial", odkazA)
+	a.SetPopisAlba(anna, "Pláž", "Pictorial", "", "Pompeo Posar, Arny Freytag")
+	for _, jmeno := range []string{"pompeo posar", "Arny Freytag"} {
+		if len(a.GetAlbaFotografa(jmeno)) != 1 {
+			t.Fatalf("album se dvěma fotografy chybí u %q", jmeno)
+		}
+	}
+	if a.PrejmenovatFotografa("arny freytag", "Arny Freytág") != 1 {
+		t.Fatal("přejmenování druhého fotografa alba")
+	}
+	if f := a.GetAlbaFotografa("Pompeo Posar"); len(f) != 1 || f[0].Fotograf != "Pompeo Posar, Arny Freytág" {
+		t.Fatalf("po přejmenování: %+v", f)
+	}
+	// Přejmenování na fotografa, který už v albu je, ho nezdvojí
+	a.PrejmenovatFotografa("Arny Freytág", "Pompeo Posar")
+	if f := a.GetAlbaFotografa("Pompeo Posar"); len(f) != 1 || f[0].Fotograf != "Pompeo Posar" {
+		t.Fatalf("po sloučení fotografů: %+v", f)
+	}
+}

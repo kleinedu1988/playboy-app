@@ -622,19 +622,36 @@ func (a *App) PrejmenovatFotografa(stary, novy string) int {
 		a.chyba("přejmenování fotografa", err)
 		return 0
 	}
-	var ids []int64
+	// U alba s víc fotografy (oddělenými čárkou) se přejmenuje jen ten jeden; když už nový mezi nimi je, nezdvojí se
+	hledany := zjednodusit(strings.TrimSpace(stary))
+	zmeny := map[int64]string{}
 	for rows.Next() {
 		var id int64
 		var fotograf string
-		if rows.Scan(&id, &fotograf) == nil && zjednodusit(strings.TrimSpace(fotograf)) == zjednodusit(strings.TrimSpace(stary)) {
-			ids = append(ids, id)
+		if rows.Scan(&id, &fotograf) != nil {
+			continue
+		}
+		var jmena []string
+		videne, nasel := map[string]bool{}, false
+		for _, jmeno := range strings.Split(fotograf, ",") {
+			jmeno = strings.TrimSpace(jmeno)
+			if zjednodusit(jmeno) == hledany {
+				jmeno, nasel = novy, true
+			}
+			if jmeno != "" && !videne[zjednodusit(jmeno)] {
+				videne[zjednodusit(jmeno)] = true
+				jmena = append(jmena, jmeno)
+			}
+		}
+		if nasel {
+			zmeny[id] = strings.Join(jmena, ", ")
 		}
 	}
 	rows.Close()
-	for _, id := range ids {
-		a.db.Exec("UPDATE alba SET fotograf = ? WHERE id = ?", novy, id)
+	for id, fotograf := range zmeny {
+		a.db.Exec("UPDATE alba SET fotograf = ? WHERE id = ?", fotograf, id)
 	}
-	return len(ids)
+	return len(zmeny)
 }
 
 // Všechny tagy sbírky pro našeptávání

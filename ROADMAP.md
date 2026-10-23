@@ -90,13 +90,13 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 
 **Výjimka z bety:** kategorie modelek (0.91.0), lišta Přehledu nahoře a přepracované Statistiky s výběrem
 modelek po kliknutí (0.92.x) výskyt modelky v časopise nebo jen online (0.93.0) spojení Čísel s Kalendářem (0.94.0) a Statistiky jako jeden graf se seznamem modelek (0.95.0, 0.96.0, 0.98.0) Kontrola s pravidly a „V pořádku“ (0.97.0) a části Přehledu v nabídce tlačítka Přehled (0.99.x) přibyly 22. 10. 2026 na přání uživatele ještě před 1.0; schéma ani formát exportu
-se nezměnily. Lhůta níže proto běží od jejich vydání: nejdřív 5. 11. 2026.
+se nezměnily. Lhůta níže proto běží od jejich vydání; po opravách chyb z bety v 0.99.4 (23. 10.) nejdřív 6. 11. 2026.
 
 **Pravidlo:** 1.0.0 vyjde po **14 dnech běžného používání bety bez nové chyby**. Lhůta běží od vydání bety
 (21. 10. 2026); každá nová chyba zapsaná v `PLAN.md` (oddíl „Chyby z bety“) ji po opravě spustí znovu od
 vydání opravy. Změny jen v dokumentaci lhůtu neruší.
 Kosmetickou drobnost (vzhled, text), která nebrání práci, smí uživatel vědomě odložit do 1.0.1 – lhůtu pak
-neruší. Nejdřív možné vydání: 5. 11. 2026 (po kategoriích v 0.91.0), pokud se do té doby nic nenajde.
+neruší. Nejdřív možné vydání: 6. 11. 2026 (po opravách v 0.99.4), pokud se do té doby nic nenajde.
 
 | Krok | Co |
 |---|---|

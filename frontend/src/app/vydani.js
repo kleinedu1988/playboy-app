@@ -122,8 +122,8 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
                 </div>
             </section>
         `),
-    ].join('') || (centerfoldy.length ? htmlPrazdna('Zatím bez pictorialu', 'Pictorial se k číslu přiřadí v úpravě alba modelky.')
-        : htmlPrazdna('Zatím bez alb', 'Centerfold se k číslu přiřadí měsícem a rokem vydání, pictorial v úpravě alba modelky.'));
+    ].join('') || (centerfoldy.length ? htmlPrazdna('Zatím bez pictorialu', 'Pictorial přidáš tlačítkem „+ Pictorial“ nahoře nebo vydáním v úpravě alba modelky.')
+        : htmlPrazdna('Zatím bez alb', 'Centerfold se k číslu přiřadí měsícem a rokem vydání, pictorial tlačítkem „+ Pictorial“ nahoře.'));
     stav.vydaniHtmlAlb = htmlAlb;
     vykreslitObsahStranky();
 }

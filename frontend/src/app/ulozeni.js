@@ -65,7 +65,8 @@ export async function kopirovatText(text) {
 }
 
 // Okna s formulářem: když v nich uživatel něco změnil, zavření se nejdřív zeptá, zda změny zahodit
-const oknaSFormularem = () => [modelModal, albumModal, document.getElementById('coverModal')];
+// Okna s formulářem: Esc, křížek nebo Zrušit se u rozepsaných změn zeptá (i článek a číslo, kde jde o dlouhý text)
+const oknaSFormularem = () => [modelModal, albumModal, document.getElementById('coverModal'), document.getElementById('clanekModal'), document.getElementById('issueModal'), document.getElementById('quickModal'), document.getElementById('doplnitModal')];
 
 async function zavritRozepsane(okno) {
     if (!await potvrdit('Zahodit změny?', 'Rozepsané údaje v okně se neuloží.', 'Zahodit', { nebezpecne: true })) return;

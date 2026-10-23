@@ -2183,9 +2183,13 @@ func (a *App) GetAlbaFotografa(fotograf string) []Fotografie {
 		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
 		WHERE COALESCE(a.fotograf, '') <> ''
 		ORDER BY `+vydaniFotky+`, m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true)
+	// Album s víc fotografy (oddělenými čárkou) patří každému z nich
 	for _, f := range vsechny {
-		if zjednodusit(strings.TrimSpace(f.Fotograf)) == hledany {
-			fotky = append(fotky, f)
+		for _, jmeno := range strings.Split(f.Fotograf, ",") {
+			if zjednodusit(strings.TrimSpace(jmeno)) == hledany {
+				fotky = append(fotky, f)
+				break
+			}
 		}
 	}
 	return a.doplnitDalsiModelky(fotky)

@@ -7,6 +7,16 @@ která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Mil
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.4] – 2026-10-23
+
+### Opraveno
+- Esc, křížek nebo Zrušit u rozepsaného článku, úpravy čísla, Doplnit modelku a rychlé Nové modelky se teď zeptá „Zahodit změny?“ – dřív se text tiše ztratil.
+- Album s víc fotografy (oddělenými čárkou, např. „Pompeo Posar, Arny Freytag“) se ukáže na stránce každého z nich; přejmenování fotografa změní jen toho jednoho a nezdvojí jméno, které už v albu je.
+- Drobnosti: dvojitá trojtečka u „Přidat fotky nebo album…“, aktuální rada v prázdném čísle („+ Pictorial“), křížky oken mají popisek pro čtečku a bublinu „Zavřít (Esc)“.
+
+### Plán
+- Dílčí kroky a rozšíření řady 1.x v `docs/PLAN-1X-DISK.md`, `PLAN-1X-DATA.md`, `PLAN-1X-TEXTY.md`, `PLAN-1X-ROZSIRENI.md`; 1.0.0 nejdřív 6. 11. 2026 (chyby z bety opravené 23. 10.).
+
 ## [0.99.3] – 2026-10-23
 
 ### Opraveno

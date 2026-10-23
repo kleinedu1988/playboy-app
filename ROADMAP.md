@@ -22,7 +22,26 @@ Mezi verzemi 0.14 a 0.34 navíc přibylo víc, než původní plán počítal:
 Z původních etap 13 a 14 je hotové: Ctrl+F do hledání, seznam „Sháním“ ke zkopírování, hledání v kalendáři,
 přepínač řazení galerie, naposledy přidané modelky na úvodu Přehledu a rozbory sbírky ve Statistikách.
 
-## Číslování do 1.0.0
+## Pravidlo verzování
+
+Platí pro všechny verze od bety dál (zapsáno 23. 10. 2026, hlídá test `TestVerzeSouhlasi`):
+
+- **Tvar `x.xx.xx`** = MAJOR.MINOR.PATCH, tři čísla oddělená tečkou, **bez nul na začátku** (1.1.0, 1.12.3, ne
+  1.01.03 – to standard verzování ani `npm` nepřijmou). MINOR a PATCH mají nejvýš dvě číslice (0–99), MAJOR jednu.
+- **MAJOR = milník** (řada témat se společným cílem): 0 = vývoj do vydání, 1 = Pohodlí a kvalita dat, 2 = Chytrá
+  sbírka. Nový MAJOR začíná `x.0.0`.
+- **MINOR = téma** z plánu (jedna verze z tabulky v ROADMAP, 2–4 kroky). Nové téma začíná `x.y.0`; čísla jdou
+  za sebou (po 1.9 je 1.10). Kdyby došla čísla (99), začne další milník.
+- **PATCH = jeden krok tématu nebo oprava** (1.3.0, 1.3.1, 1.3.2…); opravy pokračují stejnou řadou. Kdyby téma
+  potřebovalo víc než 99 vydání, je moc velké a rozdělí se.
+- **Každá změna = nová verze:** zápis v `CHANGELOG.md` (s datem), commit a push. Verze se mění na třech místech
+  (`verze.go`, `wails.json`, `frontend/package.json`) a v kontrolním součtu `package.json.md5`; test hlídá tvar,
+  shodu všech míst a datum v changelogu. Rozpracovaný stav může nést příponu `-dev`.
+- **Data:** kompatibilitu nehlídá číslo verze programu, ale verze schématu databáze a formátu exportu (viz „Jak se
+  vydává po 1.0.0“).
+- **Značky v gitu** (`vX.Y.Z`) se nedělají; historii nese changelog a commity.
+
+### Fáze do 1.0.0
 
 | Fáze | Verze | Co se smí měnit |
 |---|---|---|
@@ -109,10 +128,8 @@ neruší. Nejdřív možné vydání: 6. 11. 2026 (po opravách v 0.99.4), pokud
 
 ### Jak se vydává po 1.0.0
 
-- **Číslování:** MAJOR.MINOR.PATCH. **MAJOR = velký milník** (řada témat se společným cílem): 1.x Pohodlí
-  a kvalita dat, 2.x Chytrá sbírka. MINOR = téma z plánu (po 1.9 následuje 1.10). PATCH = pořadí kroku nebo
-  opravy v tématu: první hotový krok vyjde jako 1.3.0, další jako 1.3.1, 1.3.2… a opravy pokračují stejnou řadou.
-  Každá vydaná verze je funkční a projde všemi testy; když je hotový poslední krok tématu, vyzkouší ho uživatel
+- **Číslování:** podle oddílu „Pravidlo verzování“ (tvar `x.xx.xx`; MAJOR milník, MINOR téma, PATCH krok
+  nebo oprava; první hotový krok tématu vyjde jako 1.3.0, další jako 1.3.1, 1.3.2…). Každá vydaná verze je funkční a projde všemi testy; když je hotový poslední krok tématu, vyzkouší ho uživatel
   na skutečné sbírce. Řady se nemusí střídat přísně za sebou: téma 2.x může vyjít, i když 1.x ještě není celá
   (pak se pokračuje dalším volným číslem v řadě).
 - **Data:** kompatibilitu nehlídá číslo verze programu, ale **verze schématu a exportu**. Rozšíření schématu nebo

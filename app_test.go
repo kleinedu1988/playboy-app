@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -1585,10 +1586,11 @@ func TestEtapa4Backend(t *testing.T) {
 
 // Verze v programu, ve wails.json, ve frontend/package.json a v changelogu musí souhlasit
 func TestVerzeSouhlasi(t *testing.T) {
-	// MAJOR.MINOR.PATCH, před 1.0.0 i předběžné verze alfa, beta a kandidát (1.0.0-alpha.1); -dev = rozpracováno
+	// Pravidlo verzování (ROADMAP.md): x.xx.xx – MAJOR jedna číslice, MINOR a PATCH 0–99, bez nul na začátku;
+	// -dev = rozpracováno
 	cisla := strings.TrimSuffix(Verze, "-dev")
-	if !regexp.MustCompile(`^\d+\.\d+\.\d+(-(alpha|beta|rc)\.\d+)?$`).MatchString(cisla) {
-		t.Fatalf("verze %q není MAJOR.MINOR.PATCH ani předběžná verze (-alpha.N, -beta.N, -rc.N)", Verze)
+	if !regexp.MustCompile(`^\d\.(0|[1-9]\d?)\.(0|[1-9]\d?)$`).MatchString(cisla) {
+		t.Fatalf("verze %q nemá tvar x.xx.xx (MAJOR.MINOR.PATCH bez nul na začátku, MINOR a PATCH 0–99)", Verze)
 	}
 	precist := func(cesta string) string {
 		data, err := os.ReadFile(cesta)
@@ -1606,6 +1608,21 @@ func TestVerzeSouhlasi(t *testing.T) {
 	changelog := precist("CHANGELOG.md")
 	if !strings.Contains(changelog, "## ["+cisla+"]") {
 		t.Errorf("CHANGELOG.md nemá oddíl pro %s", cisla)
+	}
+	// Aktuální verze je v changelogu nahoře a je vyšší než předchozí
+	oddily := regexp.MustCompile(`(?m)^## \[(\d+)\.(\d+)\.(\d+)\]`).FindAllStringSubmatch(changelog, 2)
+	if len(oddily) == 2 {
+		cislo := func(o []string) [3]int {
+			var v [3]int
+			for i := range v {
+				v[i], _ = strconv.Atoi(o[i+1])
+			}
+			return v
+		}
+		nova, stara := cislo(oddily[0]), cislo(oddily[1])
+		if oddily[0][0] != "## ["+cisla+"]" || !(nova[0] > stara[0] || nova[0] == stara[0] && (nova[1] > stara[1] || nova[1] == stara[1] && nova[2] > stara[2])) {
+			t.Errorf("CHANGELOG.md: nahoře má být %s a vyšší než předchozí %s.%d.%d", cisla, oddily[1][1], stara[1], stara[2])
+		}
 	}
 	// Vydaná verze (bez -dev) musí mít v changelogu datum
 	if !strings.HasSuffix(Verze, "-dev") && !regexp.MustCompile(`## \[`+regexp.QuoteMeta(cisla)+`\] – \d{4}-\d{2}-\d{2}`).MatchString(changelog) {

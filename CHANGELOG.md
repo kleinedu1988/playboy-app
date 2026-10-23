@@ -1,11 +1,17 @@
 # Changelog
 
 Všechny podstatné změny programu. Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
-verze se řídí [sémantickým verzováním](https://semver.org/lang/cs/): do verze 1.0.0 zvyšuje MINOR každá změna,
-která mění schéma databáze nebo formát exportu, PATCH ostatní změny. Milníky (0.9.0, alfa 0.50.0, beta,
-1.0.0) jsou v repozitáři označené značkami `vX.Y.Z`. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md).
+verze mají tvar MAJOR.MINOR.PATCH (`x.xx.xx`, bez nul na začátku) podle oddílu „Pravidlo verzování“
+v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = krok nebo oprava. Starší milníky
+(0.9.0, alfa 0.50.0) mají v repozitáři značky `vX.Y.Z`, nové se nedělají.
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
+
+## [0.99.5] – 2026-10-23
+
+### Změněno
+- Pravidlo verzování zapsané v ROADMAP.md (oddíl „Pravidlo verzování“): tvar `x.xx.xx` – MAJOR.MINOR.PATCH bez nul na začátku, MINOR a PATCH 0–99; MAJOR = milník, MINOR = téma z plánu, PATCH = krok nebo oprava; každá změna = nová verze se zápisem v changelogu; značky v gitu se nedělají.
+- Test verze hlídá nový tvar a to, že aktuální verze je v changelogu nahoře a vyšší než předchozí.
 
 ## [0.99.4] – 2026-10-23
 

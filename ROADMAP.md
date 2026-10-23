@@ -109,20 +109,39 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 
 **Výjimka z bety:** kategorie modelek (0.91.0), lišta Přehledu nahoře a přepracované Statistiky s výběrem
 modelek po kliknutí (0.92.x) výskyt modelky v časopise nebo jen online (0.93.0) spojení Čísel s Kalendářem (0.94.0) a Statistiky jako jeden graf se seznamem modelek (0.95.0, 0.96.0, 0.98.0) Kontrola s pravidly a „V pořádku“ (0.97.0) a části Přehledu v nabídce tlačítka Přehled (0.99.x) přibyly 22. 10. 2026 na přání uživatele ještě před 1.0; schéma ani formát exportu
-se nezměnily. Lhůta níže proto běží od jejich vydání; po opravách chyb z bety v 0.99.4 (23. 10.) nejdřív 6. 11. 2026.
+se nezměnily. Lhůta níže proto běží od jejich vydání; po opravách chyb z bety v 0.99.4–0.99.8 (23. 10.) nejdřív 6. 11. 2026.
 
 **Pravidlo:** 1.0.0 vyjde po **14 dnech běžného používání bety bez nové chyby**. Lhůta běží od vydání bety
 (21. 10. 2026); každá nová chyba zapsaná v `PLAN.md` (oddíl „Chyby z bety“) ji po opravě spustí znovu od
 vydání opravy. Změny jen v dokumentaci lhůtu neruší.
 Kosmetickou drobnost (vzhled, text), která nebrání práci, smí uživatel vědomě odložit do 1.0.1 – lhůtu pak
-neruší. Nejdřív možné vydání: 6. 11. 2026 (po opravách v 0.99.4), pokud se do té doby nic nenajde.
+neruší. Nejdřív možné vydání: 6. 11. 2026 (po opravách v 0.99.8), pokud se do té doby nic nenajde.
+
+**Ověření před 1.0.0** (odškrtává uživatel na Fedoře; co selže, jde do `PLAN.md` mezi chyby). Scénář bety
+z 21. 10. pokryl verzi 0.90.0; od té doby přibyly výjimky z bety a opravy v citlivých místech (import, zálohy,
+sloučení), proto se část opakuje:
+
+- [x] `./zkontrolovat.sh` projde bez chyb (0.99.8, 23. 10.)
+- [ ] `./instalovat.sh` nainstaluje 0.99.8; `--napoveda` vypíše nápovědu, překlep (`--odinstaluj`) ohlásí chybu
+- [ ] Přenos dat znovu: ⋯ → Exportovat sbírku, import do čisté sbírky (jiný účet nebo kopie složky dat) a druhý
+      import téhož souboru – žádné zdvojené modelky
+- [ ] Zálohy: ⋯ → Obnovit ze zálohy…, pak vrácení přes zálohu „Před obnovením“
+- [ ] Sloučení dvou modelek (zkušebně, pak vrátit ze zálohy): články a „netýká se“ přejdou na cílovou
+- [ ] Kategorie a výskyt: štítky ve formuláři modelky, filtry Kategorie a Výskyt v galerii, hledání `kategorie:`, `vyskyt:online`
+- [ ] Čísla: přepínač Obálky / Kalendář, listování obsahem čísla po podržení myši na kartě bez blikání
+- [ ] Bez blikání i karty v galerii a fotky v albu při najetí myší
+- [ ] Přehled: nabídka tlačítka s grafem (Přehled, Údržba, Sháním CZ, Statistiky)
+- [ ] Údržba → Kontrola: nález otevře formulář na správném poli, „V pořádku“ ho schová, „Znovu kontrolovat“ vrátí
+- [ ] Statistiky: graf ze seznamu, výběr kliknutím i tažením, výběr platí i v ostatních grafech, Zpět z profilu výběr nezruší
+- [ ] Rozepsaný článek nebo úprava čísla: Esc ukáže „Zahodit změny?“ nad oknem
+- [ ] Hledání `rok:1977-03` najde jen březen 1977
+- [ ] Zamčený program neukazuje pole hledání
 
 | Krok | Co |
 |---|---|
 | 1 | Kontrola: oddíl „Chyby z bety“ v `PLAN.md` je prázdný, 14 dní od poslední opravy uplynulo |
 | 2 | Číslo 1.0.0 ve všech souborech verze, oddíl v `CHANGELOG.md` s datem a krátkým shrnutím (bez nových změn) |
 | 3 | README: stav „vydáno (1.x)“, ROADMAP: etapa 12 a 13 hotové, další je 1.1 |
-| 4 | Značka `v1.0.0` (pushne uživatel) |
 
 ## Po 1.0.0
 

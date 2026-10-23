@@ -37,4 +37,5 @@ databáze přešla do režimu WAL (0.51.0), karty, plakáty a mozaika se při ry
 - Patkové a dekorativní písmo, zlatá barva, ručně psané prvky – vzhled zůstává střídmý.
   Výjimkou je ikona programu (0.51.21, vybraná uživatelem): barevná retro ilustrace patří jen do nabídky
   aplikací a okna, rozhraní programu dál zůstává střídmé s jednou růžovou barvou.
-- Zůstává závislost na Google Disku: fotky musí být sdílené „kdokoli s odkazem“ a bez připojení se nenačtou.
+- Zůstává závislost na Google Disku: fotky musí být sdílené „kdokoli s odkazem“ a bez připojení se nenačtou
+  (po 1.6 Náhledy na disku se bez připojení ukážou aspoň uložené náhledy).

@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"fmt"
 	"math"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -1602,8 +1604,16 @@ func TestVerzeSouhlasi(t *testing.T) {
 	if !strings.Contains(precist("wails.json"), `"productVersion": "`+cisla+`"`) {
 		t.Errorf("wails.json nemá productVersion %s", cisla)
 	}
-	if !strings.Contains(precist("frontend/package.json"), `"version": "`+cisla+`"`) {
+	balicek := precist("frontend/package.json")
+	if !strings.Contains(balicek, `"version": "`+cisla+`"`) {
 		t.Errorf("frontend/package.json nemá version %s", cisla)
+	}
+	// Kontrolní součet package.json: když nesedí, wails build spustí npm install a ten může změnit lock v gitu
+	if soucet := fmt.Sprintf("%x", md5.Sum([]byte(balicek))); strings.TrimSpace(precist("frontend/package.json.md5")) != soucet {
+		t.Errorf("frontend/package.json.md5 neodpovídá package.json (má být %s)", soucet)
+	}
+	if zamek := precist("frontend/package-lock.json"); strings.Count(zamek, `"version": "`+cisla+`"`) < 2 {
+		t.Errorf("frontend/package-lock.json nemá version %s nahoře i u balíčku", cisla)
 	}
 	changelog := precist("CHANGELOG.md")
 	if !strings.Contains(changelog, "## ["+cisla+"]") {
@@ -2998,5 +3008,28 @@ func TestRevizeHledaniAOdkazu(t *testing.T) {
 	holeA, holeB := "CCCCCCCCCCCCCCCCCCCCCCCCCCCCC", "DDDDDDDDDDDDDDDDDDDDDDDDDDDDD"
 	if ids := parseDriveIDs(odkazA + "\n" + holeA + " " + holeB + "\n" + holeA); strings.Join(ids, ",") != "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA,"+holeA+","+holeB {
 		t.Errorf("odkaz s holými ID: %v", ids)
+	}
+}
+
+// Vazby rozhraní (frontend/wailsjs/go/main/App.js) odpovídají exportovaným metodám backendu
+func TestVazbyRozhrani(t *testing.T) {
+	data, err := os.ReadFile("frontend/wailsjs/go/main/App.js")
+	if err != nil {
+		t.Fatal(err)
+	}
+	vJS := map[string]bool{}
+	for _, m := range regexp.MustCompile(`(?m)^export function (\w+)\(`).FindAllStringSubmatch(string(data), -1) {
+		vJS[m[1]] = true
+	}
+	typ := reflect.TypeOf(&App{})
+	for i := 0; i < typ.NumMethod(); i++ {
+		jmeno := typ.Method(i).Name
+		if !vJS[jmeno] {
+			t.Errorf("metoda %s chybí ve vazbách App.js (wails generate module)", jmeno)
+		}
+		delete(vJS, jmeno)
+	}
+	for jmeno := range vJS {
+		t.Errorf("App.js má vazbu %s, kterou backend nemá", jmeno)
 	}
 }

@@ -47,7 +47,7 @@ Platí pro všechny verze od bety dál (zapsáno 23. 10. 2026, hlídá test `Tes
 |---|---|---|
 | Alfa | 0.5x | opravy, doladění rozhraní a zrychlení (MINOR pro větší zásah, PATCH pro opravy); schéma (úprava č. 11) a export (verze 7) zmrazené |
 | Beta | 0.90.x | jen opravy chyb; zmrazené i funkce a texty |
-| Vydání | 1.0.0 | jen číslo verze, datum v changelogu a značka |
+| Vydání | 1.0.0 | jen číslo verze a datum v changelogu |
 
 Od 1.0.0 platí sémantické verzování naplno: změna schématu nebo exportu, která by starší verzi rozbila,
 znamená 2.0.0. Zmrazení hlídá test `TestZmrazeniAlfy`; kdyby se v alfě ukázala nutná změna schématu nebo

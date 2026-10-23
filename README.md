@@ -41,6 +41,8 @@ změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 ```
 wails dev                    # vývoj s automatickým obnovením
 wails build                  # výsledný program v build/bin/playboy-app
+./zkontrolovat.sh            # všechny kontroly najednou (sestavení rozhraní, testy, typy, gofmt, vet)
+cd frontend && npm install && npm run build   # na čerstvém klonu před go test (program vkládá frontend/dist)
 go test ./...                # testy backendu (nepotřebují síť)
 cd frontend && npm test      # testy čistých funkcí rozhraní (frontend/src/lib) a obalu backendu
 cd frontend && npm run typy  # kontrola typů (TypeScript nad JS s JSDoc, typy backendu z wailsjs)
@@ -132,16 +134,18 @@ pomlčkou (`-vlasy:blond`).
 
 ## Verze a vydání
 
-Program se verzuje podle sémantického verzování; verze se ukazuje v nabídce ⋯. Do 1.0.0 zvyšuje MINOR
-každá změna schématu databáze nebo formátu exportu, PATCH ostatní změny. Alfa má řadu 0.5x: MINOR pro větší zásah do programu (třeba změnu ukládání), PATCH pro opravy.
+Verze má tvar `x.xx.xx` (MAJOR.MINOR.PATCH bez nul na začátku) podle oddílu „Pravidlo verzování“ v ROADMAP.md:
+MAJOR = milník, MINOR = téma z plánu, PATCH = krok nebo oprava; každá změna je nová verze. Verze se ukazuje
+v nabídce ⋯.
 
 Vydání verze:
 
 1. stejné číslo do `verze.go`, `wails.json` (`info.productVersion`), `frontend/package.json`
    a `frontend/package-lock.json` (`version`), znovu spočítat `frontend/package.json.md5`,
 2. v `CHANGELOG.md` nový oddíl `## [X.Y.Z] – RRRR-MM-DD`,
-3. `go test ./...` (test hlídá, že verze souhlasí a má oddíl v changelogu), testy a typy frontendu,
-4. commit; u milníků (alfa, beta, 1.0.0) i značka `git tag -a vX.Y.Z`.
+3. `./zkontrolovat.sh` (test hlídá tvar verze, shodu všech míst včetně `package.json.md5`, oddíl s datem
+   v changelogu a vazby rozhraní na backend),
+4. commit a push; značky v gitu se nedělají.
 
 Novinky z `CHANGELOG.md` se při sestavení vloží do programu (okno „Co je nového“), proto se changelog píše
 pro uživatele.

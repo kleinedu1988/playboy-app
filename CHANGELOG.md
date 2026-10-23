@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.7] – 2026-10-23
+
+### Opraveno
+- Instalátor: neznámý nebo překlepnutý přepínač (třeba `--odinstaluj`) už program nesestaví a nenainstaluje, ale ohlásí chybu; nový přepínač `--napoveda`. Před sestavením zkontroluje verzi Go a srozumitelně poradí `sudo dnf upgrade golang`. Cesta v položce nabídky je v uvozovkách (domovská složka s mezerou).
+
+### Přidáno
+- `./zkontrolovat.sh` spustí všechny kontroly najednou: sestavení rozhraní, testy a typy, gofmt, vet, testy Go, volitelně shellcheck a govulncheck.
+- Test verze hlídá i kontrolní součet `package.json.md5` a verzi v `package-lock.json`; nový test porovná vazby rozhraní (`App.js`) s metodami backendu.
+
+### Změněno
+- README a ROADMAP sjednocené s pravidlem verzování (bez značek v gitu); návod na testy na čerstvém klonu.
+
 ## [0.99.6] – 2026-10-23
 
 ### Opraveno

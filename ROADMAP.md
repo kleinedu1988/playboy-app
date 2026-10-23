@@ -142,8 +142,8 @@ do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají n�
 | 1.10 | Wikidata I – návrh údajů u modelky | – (rozhodnutí) | 1.12 |
 | 1.11 | Wikidata II – hromadně v Údržbě | 1.10 | 1.13 |
 | **2.x** | **Chytrá sbírka** | | |
-| 2.0 | Chytré hledání I – synonyma, našeptávač, učení z otevíraných výsledků | – | 1.9 (kroky 1, 2, 6) |
-| 2.1 | Chytré hledání II – česká věta jako filtr, Síť slov, synonyma ze sbírky | 2.0 | 1.9 (kroky 3, 4, 7) + síť |
+| 2.0 | Chytré hledání I – synonyma, našeptávač, učení z otevíraných výsledků | – | 1.9 (kroky 1, 2, 6, 7) |
+| 2.1 | Chytré hledání II – česká věta jako filtr a Síť slov (malá znaková neuronová síť) | 2.0 | 1.9 (kroky 3, 4) + síť |
 | 2.2 | Podobné modelky, „jako X“, Tento den v historii | – | 1.9 (krok 5), 1.10 |
 | 2.3 | Mohlo by se ti líbit – návrh srdíček u nové modelky, soudržnost hodnocení, fotky, které by se mohly líbit | 2.2 | 1.17 |
 | 2.4 | Postřehy ve Statistikách – trendy, zlomy, výběr proti sbírce, neobvyklé roky | – | 1.18 |
@@ -357,6 +357,7 @@ otevírá; vše v programu, naučené údaje v tabulce `nastaveni`.
 | 1 | Synonyma I | Výchozí slovník („blond“ = „blonde“ = „plavá“, národnosti cs/en) v hledání Go i JS, štítek „(+N)“; společné testovací případy hledání pro Go i JS; měření hledání na 5 000 modelkách | M |
 | 2 | Našeptávač II | Hodnoty všech polí ze sbírky s počty (i bez klíče, i „z výsledků“), roky z dat, historie vlastních hledání | M |
 | 3 | Učení z otevíraných výsledků | Co po hledání otevíráš, jde příště výš (našeptávač, řazení Relevance); jen v počítači, jde zapomenout | M |
+| 4 | Synonyma II | Návrhy synonym ze sbírky k potvrzení (z oprav české věty po 2.1) v ⋯ → Hledání → Synonyma | S–M |
 
 **Hotovo, když:** společné testy hledání dávají v Go i JS stejný výsledek; našeptávač odpoví do 30 ms na 5 000
 modelkách; po třech otevřeních je modelka u stejného dotazu první, „Zapomenout“ vrátí původní pořadí.
@@ -370,13 +371,14 @@ tvary slov pozná malá neuronová síť.
 |---|---|---|---|
 | 1 | Česká věta I | „blondýnky z 90. let bez tetování“ → `vlasy:blond rok:1990..1999 tetovani:ne`; lehký stemming, čísla a rozsahy („vyšší než 175“, „narozené po 1980“), negace; řádek „Rozumím:“ se štítky, Tab převede, Ctrl+Enter hledá doslova | M–L |
 | 2 | Česká věta II | Národnosti a fotografové ze sbírky se skloňováním, volba významu u dvojznačných slov, „Vždy takto“; 50 testovacích vět | M |
-| 3 | Síť slov | Malá znaková neuronová síť: každé slovo dotazu přiřadí k údaji a hodnotě i u neznámých tvarů („blondýnky“ → vlasy:blond, „Němky“ → národnost), učená na větách vygenerovaných z hodnot sbírky; pod mezí jistoty rozhodují pravidla | M |
-| 4 | Synonyma II | Návrhy synonym ze sbírky a z oprav k potvrzení v ⋯ → Hledání → Synonyma | S–M |
+| 3 | Síť slov I – jádro a měření | Malá znaková síť v čistém Go (hašované n-gramy 1–4 znaků, skrytá vrstva 32, softmax přes `pole:hodnota`), data generovaná z hodnot sbírky, vzorů skloňování a šablon vět, základní váhy v programu (~60 kB); ruční sada 150 dotazů, srovnání se stemmingem | M–L |
+| 4 | Síť slov II – v hledání a učení v programu | Odhad v JS (< 0,05 ms na slovo) jako druhá vrstva `veta.js` po pravidlech a přesné shodě; štítek „≈“ s jistotou a třemi významy, pod prahem jen „Myslíš…?“, jména se nepřevádí; zlatý test Go = JS; Přeučení na pozadí po změně hodnot sbírky (ne po nových jménech), opravy „Vždy takto“ jako příklady, pojistka proti zhoršení, váhy v `nastaveni`, ⋯ → Hledání → Síť slov | M–L |
 
 **Nedělá se:** hledání podle obsahu fotky, velký jazykový model (API ani místní), přepisování dat podle synonym.
 
 **Hotovo, když:** z 50 testovacích vět je ≥ 45 převedeno správně a žádné jméno se nepřevede; každý převod je
-vidět a jde vrátit; Síť slov odpoví do 1 ms na slovo a u tvarů, které v učení nebyly, je přesnější než samotná pravidla.
+vidět a jde vrátit; Síť slov: z ručních 150 dotazů ≥ 88 % neznámých tvarů správně, odhad pod 1 ms na slovo, zapne
+se jen když na neznámých tvarech porazí stemming o ≥ 10 bodů; stejná data dají stejné váhy. Rozbor: [NAVRH-SITE.md](docs/NAVRH-SITE.md).
 
 ### 2.2 – Podobné modelky, „jako X“ a Tento den v historii
 
@@ -453,8 +455,31 @@ každý postřeh jde ukázat v grafu; schéma zůstává na úpravě č. 11 a ex
 
 ### 2.5 – Mapa sbírky
 
-**Cíl:** malá neuronová síť (autoenkodér) v čistém Go zhustí údaje modelek: mapa sbírky (každá modelka je tečka,
-podobné leží u sebe), podobnost a druhý názor Kontroly. Rozbor a kroky: [NAVRH-SITE.md](docs/NAVRH-SITE.md).
+**Cíl:** celá sbírka jako mapa – blízko jsou modelky s podobnými údaji, vidět jsou období, „typy“ a neobvyklé
+modelky. Body s barvou podle údaje, bublina, klik otevře profil, laso zúží ostatní grafy Statistik. Z téže malé
+sítě podobnost pro „Podobné modelky“ i u neúplných údajů a druhý názor pro kontrolu neobvyklých kombinací.
+Vše v čistém Go, bez knihoven, učení na pozadí za sekundy s pevným semínkem. **Bez změny schématu i exportu** –
+váhy v `nastaveni`. Každý krok vyjde jako samostatná verze (2.5.0–2.5.3). Rozbor možností:
+[NAVRH-SITE.md](docs/NAVRH-SITE.md).
+
+**Rozhodnutí:** nejdřív PCA jako hotová mapa a měřítko; autoenkodér (2-D kód pro mapu, 8-D pro podobnost,
+maska chybějících údajů, učení s vynecháváním) ji nahradí, jen když lépe zachová sousedy; t-SNE ne (mapa by
+přeskakovala). Nové modelky umístí kodér hned, přeučení s teplým startem a zarovnáním (Procrustes) nejvýš
+denně. Podobnost dál vysvětluje Gower z `podobnost.go`; chyba rekonstrukce se slučuje do `ok-neobvykle`.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Mapa PCA | `mapa.go`: příznaky (z-skóre postavy z `kontrola_uceni.go`, one-hot vlasů, očí, národnosti, kategorie, období, fotografové, masky), PCA s pevnou orientací, `GetMapaSbirky`; graf „Mapa sbírky“ ve Statistikách s barvou podle údaje, bublinou, klikem na profil a „Jak číst mapu“ | M–L |
+| 2 | Autoenkodér | Společné jádro `sit.go` (Adam, L2, early stopping, pevné semínko), sítě s 2-D a 8-D kódem, ztráta jen z vyplněných údajů, učení na pozadí, váhy (~50 kB) v `nastaveni`; použije se, jen když zachová sousedy o ≥ 0,05 lépe než PCA | M–L |
+| 3 | Stabilita | Nové modelky kodérem hned, teplý start při +5 % modelek, zarovnání Procrustem, míra posunu pod mapou, „Přepočítat od začátku“ | M |
+| 4 | Výběr na mapě, podobnost a druhý názor | Laso jako výběr Statistik (zúží grafy a seznam), legenda jako výběr, „Na mapě →“ v profilu, canvas nad 2 000 bodů; „Sousedé na mapě“, 8-D kód jako doplněk Gowera u neúplných modelek; chyba rekonstrukce: souhlas zvýší jistotu `ok-neobvykle`, sama jen slabý nález, nikdy dva nálezy u jedné modelky | M–L |
+
+**Nedělá se:** t-SNE, srdíčka nebo etnicita jako vstup, nové klíče `ok-…`, knihovny strojového učení, obsah fotek.
+
+**Hotovo, když:** mapa 400 modelek se ukáže do 100 ms a zasazené skupiny umělé sbírky jsou oddělené; síť se
+používá jen při průkazně lepším zachování sousedů než PCA; po přidání 30 modelek se staré body posunou o < 3 %;
+žádná modelka nemá dva nálezy `ok-neobvykle`; stejná data dají stejnou mapu; 5 000 modelek: učení < 20 s na
+pozadí, kresba < 50 ms; schéma zůstává na úpravě č. 11 a export na verzi 7.
 
 ### 2.6 – Stejné a podobné fotky
 

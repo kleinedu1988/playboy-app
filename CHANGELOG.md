@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.9] – 2026-10-24
+
+### Přidáno
+- Nový typ alba **Pictorial online** pro pictorialy, které vyšly jen na webu (např. Cybergirl). Nemá vydání (měsíc, rok, edici), místo toho volitelné pole **Nafoceno** – datum, kdy bylo album nafoceno. Je to jen informace u alba, na profil modelky (narození, výskyt) se nepřenáší. V profilu se ukáže v nadpisu alba („Pictorial online · nafoceno červen 2004“).
+- Modelka s online albem a bez čísla časopisu má výskyt „online“. Hledání `nafoceno:2004` (i `nafoceno:2004-06`, čárka = nebo, `-nafoceno:` vylučuje); ve Statistikách druh výskytu „Online“.
+- Online alba nejsou v kalendáři, mezi čísly, na titulní fotce ani v Údržbě mezi „alby bez vydání“.
+
+### Změněno
+- **Výjimka v betě:** úprava databáze č. 12 (sloupec `datum` u alb) a export verze 8 (klíč `datum` u alba). Před úpravou vznikne záloha `*-pred-migraci.db`; starší exporty (verze 1–7) se dál načtou. Starší program novou databázi otevře jen pro čtení. Lhůta 14 dní do 1.0.0 běží znovu od této verze.
+
 ## [0.99.8] – 2026-10-23
 
 ### Opraveno

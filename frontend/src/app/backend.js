@@ -104,6 +104,7 @@ export const PresunoutFotky = /** @type {typeof App.PresunoutFotky} */ (obalit('
 export const PridatDoVyberu = /** @type {typeof App.PridatDoVyberu} */ (obalit('PridatDoVyberu'));
 export const PridatModelkuKAlbu = /** @type {typeof App.PridatModelkuKAlbu} */ (obalit('PridatModelkuKAlbu'));
 export const SetCoverVyrez = /** @type {typeof App.SetCoverVyrez} */ (obalit('SetCoverVyrez'));
+export const SetDatumAlba = /** @type {typeof App.SetDatumAlba} */ (obalit('SetDatumAlba'));
 export const SetHodnoceni = /** @type {typeof App.SetHodnoceni} */ (obalit('SetHodnoceni'));
 export const SetHodnoceniFotek = /** @type {typeof App.SetHodnoceniFotek} */ (obalit('SetHodnoceniFotek'));
 export const SetNetykaSe = /** @type {typeof App.SetNetykaSe} */ (obalit('SetNetykaSe'));

@@ -41,12 +41,12 @@ Uživatel má kolem 400 modelek, přidává desítky denně chronologicky (teď 
 ## 1.5 – Kvalita dat
 
 **Cíl:** chyby a nejednotné zápisy se najdou v Údržbě i přímo při zadávání; alba mají vlastní titulní fotku.
-Jediná změna schématu celé trojice verzí: **úprava č. 12, export verze 8** (krok 1.5.1).
+Jediná změna schématu celé trojice verzí: **úprava č. 13, export verze 9** (krok 1.5.1; č. 12 a export 8 použily online pictorialy v 0.99.9).
 
 | Verze | Krok | Prac. | [schéma] |
 |---|---|---|---|
 | 1.5.0 | Sjednocení zápisů: fotografové a hodnoty polí | M | ne |
-| 1.5.1 | Schéma 12 / export 8: titulní fotka alba, nové klíče „netýká se“ | S–M | **ano** |
+| 1.5.1 | Schéma 13 / export 9: titulní fotka alba, nové klíče „netýká se“ | S–M | **ano** |
 | 1.5.2 | Nové úkoly v Údržbě: playmate bez data narození, obálka bez modelky, album bez fotografa | M | ne (používá 1.5.1) |
 | 1.5.3 | Kontrola při zadávání: podobné jméno při psaní, nálezy hned po uložení, sloučení z Údržby | M | ne |
 
@@ -86,10 +86,10 @@ klikem se zálohou; našeptávač fotografů pak nabízí jen jeden zápis; albu
 **Ověří uživatel:** ve skutečné sbírce projde filtr „Zápisy“, sjednotí fotografy a zkontroluje stránku
 fotografa (počet alb odpovídá Statistikám → Fotografové).
 
-### 1.5.1 – Schéma 12, export 8 **[schéma]**
+### 1.5.1 – Schéma 13, export 9 **[schéma]**
 
 **Co se mění:**
-- `migraceTitulniAlba` (úprava č. 12, na konec `migrace`): `ALTER TABLE alba ADD COLUMN titulni TEXT`
+- `migraceTitulniAlba` (úprava č. 13, na konec `migrace`): `ALTER TABLE alba ADD COLUMN titulni TEXT`
   (ID souboru na Disku, ne `fotky.id` – to se při importu mění) a `ALTER TABLE vydani ADD COLUMN netyka_se TEXT`.
 - Výčty v `schema.go`: `klicNetykaSeAlba` + `fotograf`; nový `klicNetykaSeVydani` = `obalka`.
 - `SetTitulniFotkaAlba(albumID, fotoID int) bool` (0 = automaticky); `Fotografie` dostane `titulniAlba`
@@ -117,7 +117,7 @@ otevře jen pro čtení, uživatel o tom musí vědět před aktualizací (věta
 Konflikt čísel: rezerva „Mám PDF“ v ROADMAP počítá s úpravou 12 a exportem 8 – dostane další volné číslo.
 
 **Hotovo, když:** titulní fotka alba jde nastavit a zrušit, ukazuje se na stránce fotografa a ročníku; přechod
-z 11 na 12 projde na kopiích všech starých verzí; export 8 → import vrátí totéž; 1.4 otevře novou databázi jen
+z 12 na 13 projde na kopiích všech starých verzí; export 9 → import vrátí totéž; 1.4 otevře novou databázi jen
 pro čtení a export 8 odmítne srozumitelnou hláškou.
 
 **Ověří uživatel:** před aktualizací export YAML; po ní nastaví titulní fotku u pár alb jednoho fotografa,

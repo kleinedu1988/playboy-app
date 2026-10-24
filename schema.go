@@ -17,10 +17,13 @@ import (
 // Vydání alba podle typu: u centerfoldu a coveru je to název alba, u ostatních vlastní údaj
 const vydaniPodleTypu = `CASE WHEN %[1]styp IN ('Centerfold', 'Cover') THEN %[1]salbum ELSE COALESCE(%[1]svydani, '') END`
 
+// Pictorial jen na webu (Cyber Girl, Coed, Muse…): nepatří k číslu časopisu, místo vydání má datum nafocení
+const typOnline = "Pictorial online"
+
 // Uzavřené výčty. Rozšiřovat je jde bez změny schématu (přidáním hodnoty sem a do rozhraní), měnit ne.
 var (
-	// Typy alb; cover časopisu je album bez modelky
-	typyAlb = map[string]bool{"Pictorial": true, "Centerfold": true, "Cover": true}
+	// Typy alb; cover časopisu je album bez modelky, Pictorial online je pictorial jen na webu (bez vydání, s datem)
+	typyAlb = map[string]bool{"Pictorial": true, "Centerfold": true, "Cover": true, typOnline: true}
 	// Edice kromě výchozí US (ta se do vydání nepíše)
 	dalsiEdice = map[string]bool{"CZ": true}
 	// Klíče „netýká se" u modelky a u alba
@@ -171,4 +174,14 @@ func (a *App) migraceAlbumJakoZaznam() error {
 		}
 	}
 	return nil
+}
+
+// Úprava č. 12: datum nafocení nebo zveřejnění online alba (typ Pictorial online) ve tvaru RRRR, RRRR-MM
+// nebo RRRR-MM-DD. Je to jen údaj alba: do vydání, kalendáře ani titulní fotky modelky se nepřenáší.
+func (a *App) migraceDatumAlba() error {
+	if a.maSloupec("alba", "datum") {
+		return nil
+	}
+	_, err := a.db.Exec("ALTER TABLE alba ADD COLUMN datum TEXT")
+	return err
 }

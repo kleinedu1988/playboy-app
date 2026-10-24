@@ -2797,13 +2797,15 @@ func TestVyvojVCase(t *testing.T) {
 }
 
 // Alfa (řada 0.5x) zmrazila schéma databáze a formát exportu: nová úprava schématu ani nová verze exportu
-// do 1.0.0 nevznikne. Změna tady znamená vědomé rozhodnutí a novou MINOR verzi mimo alfu.
+// do 1.0.0 nevznikne. Změna tady znamená vědomé rozhodnutí a novou MINOR verzi mimo alfu. Jediná vědomá
+// výjimka v betě: online pictorialy (typ Pictorial online s datem nafocení) – úprava č. 12 a export verze 8;
+// od nich je stav zase zmrazený až do 1.0.0.
 func TestZmrazeniAlfy(t *testing.T) {
-	if len(migrace) != 11 {
-		t.Errorf("úprav schématu je %d, alfa zmrazila schéma na úpravě č. 11", len(migrace))
+	if len(migrace) != 12 {
+		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 12", len(migrace))
 	}
-	if verzeExportu != 7 {
-		t.Errorf("verze exportu je %d, alfa zmrazila formát exportu na verzi 7", verzeExportu)
+	if verzeExportu != 8 {
+		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 8", verzeExportu)
 	}
 }
 

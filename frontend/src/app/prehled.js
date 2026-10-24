@@ -193,7 +193,7 @@ export async function nacistPrehled() {
                     ${radekSouhrnu('Modelky s centerfoldem', aktivnich(p.bezCenterfoldu), p.modelek, 'centerfold')}
                     ${radekSouhrnu('Modelky s hodnocením', aktivnich(p.bezHodnoceni), p.modelek, 'hodnoceni')}
                     ${radekSouhrnu('Alba s textem', aktivnich(p.albaBezPopisu), p.alb, 'text')}
-                    ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb, 'alba')}
+                    ${radekSouhrnu('Alba s vydáním', aktivnich(p.albaBezVydani), p.alb - (p.albOnline || 0), 'alba')}
                     ${radekSouhrnu('Čísla s coverem', p.vydaniBezCoveru.length, p.vydani, 'cover')}
                     ${radekSouhrnu('Čísla s centerfoldem', p.vydaniBezCenterfoldu.length, p.vydani, 'cfcisla')}
                     ${kKontrole ? radekSouhrnu('Údaje ke kontrole', kKontrole, 0, 'kontrola', 'zkontrolovat') : ''}

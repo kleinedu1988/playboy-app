@@ -100,6 +100,7 @@ export namespace main {
 	    vydani: string;
 	    popis: string;
 	    fotograf: string;
+	    datumAlba: string;
 	    hodnoceni: number;
 	    poradi: number;
 	    pridano: string;
@@ -124,6 +125,7 @@ export namespace main {
 	        this.vydani = source["vydani"];
 	        this.popis = source["popis"];
 	        this.fotograf = source["fotograf"];
+	        this.datumAlba = source["datumAlba"];
 	        this.hodnoceni = source["hodnoceni"];
 	        this.poradi = source["poradi"];
 	        this.pridano = source["pridano"];
@@ -308,6 +310,7 @@ export namespace main {
 	    odkazy: string;
 	    obalky: string[];
 	    centerfoldy: string[];
+	    onlineAlba: string[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -354,6 +357,7 @@ export namespace main {
 	        this.odkazy = source["odkazy"];
 	        this.obalky = source["obalky"];
 	        this.centerfoldy = source["centerfoldy"];
+	        this.onlineAlba = source["onlineAlba"];
 	    }
 	}
 	export class NalezClanku {
@@ -432,6 +436,7 @@ export namespace main {
 	    typ: string;
 	    driveId: string;
 	    vydani: string;
+	    datum: string;
 	    rotace: number;
 	    spojit: boolean;
 	    hodnoceni: number;
@@ -454,6 +459,7 @@ export namespace main {
 	        this.typ = source["typ"];
 	        this.driveId = source["driveId"];
 	        this.vydani = source["vydani"];
+	        this.datum = source["datum"];
 	        this.rotace = source["rotace"];
 	        this.spojit = source["spojit"];
 	        this.hodnoceni = source["hodnoceni"];
@@ -564,6 +570,7 @@ export namespace main {
 	export class Prehled {
 	    modelek: number;
 	    alb: number;
+	    albOnline: number;
 	    fotek: number;
 	    hodnocenychFotek: number;
 	    coveru: number;
@@ -587,6 +594,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.modelek = source["modelek"];
 	        this.alb = source["alb"];
+	        this.albOnline = source["albOnline"];
 	        this.fotek = source["fotek"];
 	        this.hodnocenychFotek = source["hodnocenychFotek"];
 	        this.coveru = source["coveru"];

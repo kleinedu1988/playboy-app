@@ -1,6 +1,6 @@
 // Výběrová okna, ukládání formulářů a hledání
-import { esc, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
-import { AddBulkPhotos, AddModelka, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
+import { TYP_ONLINE, esc, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
+import { AddBulkPhotos, AddModelka, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -204,11 +204,20 @@ export function pripravit() {
     document.getElementById('addAlbumForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
         const typ = document.getElementById('selectTyp').value;
-        const rok = document.getElementById('inputAlbumRok').value;
-        const mesic = document.getElementById('selectAlbumMesic').value;
+        // Online album k číslu nepatří: vydání se nebere, místo něj datum nafocení
+        const online = typ === TYP_ONLINE;
+        const rok = online ? '' : document.getElementById('inputAlbumRok').value;
+        const mesic = online ? '' : document.getElementById('selectAlbumMesic').value;
         // Pictorialu stačí ročník, měsíc bez roku ale nedává smysl
         if (mesic && !rok) {
             oznamit('K měsíci vydání chybí rok.');
+            return;
+        }
+        // Datum nafocení smí být neúplné (jen rok nebo rok a měsíc), ale jen v tomto tvaru
+        const datum = online ? document.getElementById('inputAlbumDatum').value.trim() : '';
+        if (!platneDatum(datum)) {
+            document.getElementById('inputAlbumDatum').focus();
+            oznamit('Datum nafocení napiš jako RRRR-MM-DD, RRRR-MM nebo jen rok RRRR.');
             return;
         }
         const links = document.getElementById('inputBulkLinks').value;
@@ -236,8 +245,12 @@ export function pripravit() {
         }
         // Centerfold má vydání přímo v názvu alba, ostatním se přiřazuje zvlášť
         // Při přidávání fotek do existujícího alba prázdné pole jeho vydání nemaže; zrušit ho jde jen úpravou alba
-        if (typ !== 'Centerfold' && (stav.editovaneAlbum || vydani)) {
+        if (typ !== 'Centerfold' && !online && (stav.editovaneAlbum || vydani)) {
             await SetVydaniAlba(modelka.id, album, typ, vydani);
+        }
+        // Datum nafocení online alba; prázdné pole ho maže jen při úpravě alba
+        if (online && (stav.editovaneAlbum || datum)) {
+            await SetDatumAlba(modelka.id, album, typ, datum);
         }
         // Při přidávání fotek do existujícího alba prázdná pole jeho text nemažou
         const popis = document.getElementById('inputAlbumPopis').value;

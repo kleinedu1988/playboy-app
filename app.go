@@ -108,6 +108,8 @@ type Modelka struct {
 	Obalky []string `json:"obalky"`
 	// Vydání jejích centerfoldů (jen pro čtení); centerfold = kategorie Playmate měsíce
 	Centerfoldy []string `json:"centerfoldy"`
+	// Data nafocení jejích online alb (typ Pictorial online, jen pro čtení); album bez data má prázdný text
+	OnlineAlba []string `json:"onlineAlba"`
 
 	// Popisy a fotografové alb modelky, jen pro hledání
 	textyAlb       string
@@ -118,7 +120,7 @@ type Fotografie struct {
 	ID        int    `json:"id"`
 	ModelkaID int    `json:"modelkaId"`
 	Album     string `json:"album"`
-	Typ       string `json:"typ"` // "Centerfold", "Pictorial", "Cover"
+	Typ       string `json:"typ"` // "Centerfold", "Pictorial", "Pictorial online", "Cover"
 	URL       string `json:"url"`
 	Rotace    int    `json:"rotace"` // otočení při zobrazení: 0, 90, 180, 270
 	// Stránky centerfoldu v albu se zobrazují spojené do jednoho plakátu
@@ -129,6 +131,8 @@ type Fotografie struct {
 	// Průvodní text a fotograf alba; vyplněno jen v profilu modelky a na stránce vydání
 	Popis    string `json:"popis"`
 	Fotograf string `json:"fotograf"`
+	// Datum nafocení online alba (RRRR, RRRR-MM nebo RRRR-MM-DD); vyplněno tam, kde popis alba
+	DatumAlba string `json:"datumAlba"`
 	// 0 = nehodnoceno, 1–5 srdíček; lépe hodnocené fotky jsou v albu vpředu
 	Hodnoceni int `json:"hodnoceni"`
 	// Ručně určené pořadí v albu od 1; 0 = pořadí neurčeno (fotka je za seřazenými podle vložení)
@@ -835,6 +839,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceClanky,
 	(*App).migraceFTS5,
 	(*App).migraceFTSKlice,
+	(*App).migraceDatumAlba,
 }
 
 func (a *App) migrovat() error {
@@ -1126,6 +1131,23 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		radky.Close()
 	}
 
+	// Online alba modelek s fotkami (vlastní i sdílená): data nafocení pro výskyt „jen online“ a hledání nafoceno:
+	onlineAlbaModelek := map[int][]string{}
+	if radky, err := a.db.Query(`SELECT modelka_id, COALESCE(datum, '') FROM alba al WHERE modelka_id IS NOT NULL
+			AND typ = ?1 AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
+		UNION ALL SELECT am.modelka_id, COALESCE(al.datum, '') FROM alba al JOIN alba_modelky am ON am.album_id = al.id
+			WHERE al.typ = ?1 AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
+		ORDER BY 2`, typOnline); err == nil {
+		for radky.Next() {
+			var id int
+			var d string
+			if radky.Scan(&id, &d) == nil {
+				onlineAlbaModelek[id] = append(onlineAlbaModelek[id], d)
+			}
+		}
+		radky.Close()
+	}
+
 	// Popisy alb se prohledávají spolu s údaji modelky
 	textyAlb := map[int]string{}
 	fotografoveAlb := map[int]string{}
@@ -1198,6 +1220,10 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		m.Centerfoldy = centerfoldyModelek[m.ID]
 		if m.Centerfoldy == nil {
 			m.Centerfoldy = []string{}
+		}
+		m.OnlineAlba = onlineAlbaModelek[m.ID]
+		if m.OnlineAlba == nil {
+			m.OnlineAlba = []string{}
 		}
 		if odpovidaHledani(m, vyhledavani) {
 			vysledky = append(vysledky, m)
@@ -1282,8 +1308,8 @@ func poleHledani(m Modelka) map[string]string {
 	if len(m.Obalky) > 0 {
 		kategorie += ", Modelka obálky"
 	}
-	// Výskyt: v časopise (číslo s měsícem nebo speciál), jen online (online kategorie), jinak neurčeno
-	// (frontend/src/lib/format.js, vyskytModelky)
+	// Výskyt: v časopise (číslo s měsícem nebo speciál), jen online (online kategorie nebo online album),
+	// jinak neurčeno (frontend/src/lib/format.js, vyskytModelky)
 	vyskyt := "neurceno neurčeno"
 	cisla := append(append(append([]string{}, m.Vydani...), m.Obalky...), m.Centerfoldy...)
 	for _, v := range cisla {
@@ -1292,7 +1318,7 @@ func poleHledani(m Modelka) map[string]string {
 			break
 		}
 	}
-	if vyskyt != "casopis časopis" && vzorOnlineKategorie.MatchString(m.Role) {
+	if vyskyt != "casopis časopis" && (vzorOnlineKategorie.MatchString(m.Role) || len(m.OnlineAlba) > 0) {
 		vyskyt = "online"
 	}
 	return map[string]string{
@@ -1303,6 +1329,7 @@ func poleHledani(m Modelka) map[string]string {
 		"ochlupeni": m.Ochlupeni, "poznamka": m.Poznamka, "vyska": vyska, "vaha": vaha,
 		"miry": m.Miry, "hodnoceni": hodnoceni, "srdicka": hodnoceni, "tetovani": tetovani,
 		"piercing": piercing, "obalka": obalky, "obalky": obalky, "umrti": m.UmrtiDatum, "zemrela": m.UmrtiDatum,
+		"nafoceno": strings.Join(m.OnlineAlba, " "),
 	}
 }
 
@@ -1620,6 +1647,22 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 						shoda = true
 						break
 					}
+				}
+			} else if klicZjedn == "nafoceno" {
+				// nafoceno:2004, nafoceno:2004-06 = online album nafocené v daném roce či měsíci (předpona data)
+				shoda = false
+				varianty := 0
+				for _, v := range strings.Split(hodnotaZjedn, ",") {
+					if v = strings.TrimSpace(v); v == "" {
+						continue
+					}
+					varianty++
+					for _, d := range m.OnlineAlba {
+						shoda = shoda || (d != "" && strings.HasPrefix(d, v))
+					}
+				}
+				if varianty == 0 {
+					continue
 				}
 			} else if ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "hodnoceni" || klicZjedn == "srdicka" || klicZjedn == "rok" || klicZjedn == "narozena") {
 				shoda = vyhovujeNumericky(m, klicZjedn, op, numOd, numDo)
@@ -2019,7 +2062,7 @@ const razeniFotek = "f.poradi IS NULL, f.poradi, f.id"
 
 // Připojení údajů alba k fotce; sloupce se přidávají na konec výběru
 const (
-	vyberPopisu     = ", COALESCE(a.popis, ''), COALESCE(a.fotograf, '')"
+	vyberPopisu     = ", COALESCE(a.popis, ''), COALESCE(a.fotograf, ''), COALESCE(a.datum, '')"
 	pripojeniPopisu = " LEFT JOIN alba a ON a.id = f.album_id"
 )
 
@@ -2059,7 +2102,7 @@ func (a *App) nactiFotografie(query string, sJmenem, sPopisem bool, args ...inte
 			cile = append(cile, &f.JmenoModelky)
 		}
 		if sPopisem {
-			cile = append(cile, &f.Popis, &f.Fotograf)
+			cile = append(cile, &f.Popis, &f.Fotograf, &f.DatumAlba)
 		}
 		if err := rows.Scan(cile...); err != nil {
 			if prvniChyba == nil {
@@ -2233,14 +2276,29 @@ func (a *App) GetPrehledVydani() []Fotografie {
 
 // Přiřazení alba (typicky pictorialu) k vydání časopisu; prázdné vydání přiřazení ruší
 func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
-	if vydani != "" && !vzorVydaniAlba.MatchString(vydani) {
+	if vydani != "" && (!vzorVydaniAlba.MatchString(vydani) || typ == typOnline) {
 		return false
 	}
-	// Centerfold a cover mají vydání v názvu
-	_, err := a.db.Exec("UPDATE alba SET vydani = ? WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ NOT IN ('Centerfold', 'Cover')",
-		vydani, modelkaID, album, typ)
+	// Centerfold a cover mají vydání v názvu; online album k číslu nepatří (má datum nafocení)
+	_, err := a.db.Exec("UPDATE alba SET vydani = ? WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ NOT IN ('Centerfold', 'Cover', ?)",
+		vydani, modelkaID, album, typ, typOnline)
 	if err != nil {
 		a.chyba("přiřazení alba k číslu", err)
+	}
+	return err == nil
+}
+
+// Datum nafocení nebo zveřejnění online alba (RRRR, RRRR-MM nebo RRRR-MM-DD, stejný tvar jako datum narození);
+// prázdné datum údaj ruší. Je to jen údaj alba: vydání, kalendář ani titulní fotku modelky nemění.
+func (a *App) SetDatumAlba(modelkaID int, album, typ, datum string) bool {
+	datum = strings.TrimSpace(datum)
+	if !platneDatum(datum) || (typ != typOnline && datum != "") {
+		return false
+	}
+	_, err := a.db.Exec("UPDATE alba SET datum = NULLIF(?, '') WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ = ?",
+		datum, modelkaID, album, typ, typOnline)
+	if err != nil {
+		a.chyba("uložení data nafocení alba", err)
 	}
 	return err == nil
 }
@@ -2298,14 +2356,16 @@ func (a *App) UpdateAlbum(modelkaID int, staryAlbum, staryTyp, novyAlbum, novyTy
 	}
 	defer tx.Rollback()
 
-	// Fotky odkazují na album, přejmenuje se jen jeho záznam; vydání centerfoldu je jeho název
+	// Fotky odkazují na album, přejmenuje se jen jeho záznam; vydání centerfoldu je jeho název. Online album
+	// vydání nemá a datum nafocení má jen ono: změnou typu na online vydání zmizí, změnou z online datum.
 	dotazy := []string{
 		`UPDATE alba SET album = ?1, typ = ?2,
-			vydani = CASE WHEN ?2 IN ('Centerfold', 'Cover') THEN ?1 WHEN typ IN ('Centerfold', 'Cover') THEN '' ELSE vydani END
+			vydani = CASE WHEN ?2 IN ('Centerfold', 'Cover') THEN ?1 WHEN ?2 = ?6 OR typ IN ('Centerfold', 'Cover') THEN '' ELSE vydani END,
+			datum = CASE WHEN ?2 = ?6 THEN datum END
 		WHERE COALESCE(modelka_id, 0) = ?3 AND album = ?4 AND typ = ?5`,
 	}
 	for _, dotaz := range dotazy {
-		if _, err := tx.Exec(dotaz, novyAlbum, novyTyp, modelkaID, staryAlbum, staryTyp); err != nil {
+		if _, err := tx.Exec(dotaz, novyAlbum, novyTyp, modelkaID, staryAlbum, staryTyp, typOnline); err != nil {
 			a.chyba("úprava alba", err)
 			return false
 		}

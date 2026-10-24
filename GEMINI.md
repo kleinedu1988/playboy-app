@@ -18,7 +18,7 @@
 ## Beta (řada 0.90.x)
 - Program je v betě: opravují se jen chyby; funkce a texty se nemění (nové nápady patří do `ROADMAP.md` po 1.0.0).
   Výjimku (nová funkce před 1.0) rozhoduje jen uživatel; zvyšuje MINOR (0.91.0) a spouští lhůtu pro 1.0 znovu.
-- **Neměnit schéma databáze (úprava č. 11) ani formát exportu (verze 7).** Hlídá to test `TestZmrazeniAlfy`;
+- **Neměnit schéma databáze (úprava č. 12) ani formát exportu (verze 8).** Hlídá to test `TestZmrazeniAlfy`;
   jeho úprava je vědomé rozhodnutí uživatele, ne součást opravy.
 - Chyby z bety se zapisují do `PLAN.md`, plán do `ROADMAP.md`.
 

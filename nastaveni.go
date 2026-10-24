@@ -174,6 +174,7 @@ type RocnikPrehledu struct {
 type Prehled struct {
 	Modelek          int `json:"modelek"`
 	Alb              int `json:"alb"`
+	AlbOnline        int `json:"albOnline"`
 	Fotek            int `json:"fotek"`
 	HodnocenychFotek int `json:"hodnocenychFotek"`
 	Coveru           int `json:"coveru"`
@@ -234,7 +235,10 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		if popis == "" {
 			pridatChybejici(&p.AlbaBezPopisu, polozka, obsahujeKlic(netykaSe, "text"), vcetneSkrytych)
 		}
-		if vydani == "" {
+		// Online album k číslu nepatří, vydání mu nechybí
+		if polozka.Typ == typOnline {
+			p.AlbOnline++
+		} else if vydani == "" {
 			pridatChybejici(&p.AlbaBezVydani, polozka, obsahujeKlic(netykaSe, "vydani"), vcetneSkrytych)
 		}
 	}

@@ -28,10 +28,12 @@ type exportFotka struct {
 }
 
 type exportAlbum struct {
-	Nazev    string `yaml:"nazev"`
-	Typ      string `yaml:"typ"`
-	Pridano  string `yaml:"pridano,omitempty"` // kdy přibyla první fotka alba
-	Vydani   string `yaml:"vydani,omitempty"`
+	Nazev   string `yaml:"nazev"`
+	Typ     string `yaml:"typ"`
+	Pridano string `yaml:"pridano,omitempty"` // kdy přibyla první fotka alba
+	Vydani  string `yaml:"vydani,omitempty"`
+	// Jen u typu Pictorial online: kdy bylo album nafoceno nebo zveřejněno (RRRR, RRRR-MM nebo RRRR-MM-DD)
+	Datum    string `yaml:"datum,omitempty"`
 	Fotograf string `yaml:"fotograf,omitempty"`
 	Popis    string `yaml:"popis,omitempty"`
 	Spojit   bool   `yaml:"spojit,omitempty"`
@@ -94,7 +96,7 @@ type exportCover struct {
 }
 
 // Verze formátu exportu, kterou program zapisuje a nejvýš umí načíst; popis je v EXPORT.md
-const verzeExportu = 7
+const verzeExportu = 8
 
 // Odkaz na modelku v exportu (další modelka alba, obálka, výběr): jméno, u jmen, která má víc modelek,
 // doplněné o číslo modelky v hranatých závorkách („Anna [12]“)
@@ -158,7 +160,7 @@ func seskupitDoAlb(fotky []Fotografie, odkazy odkazyNaModelky, netykaSe map[int6
 		if !znam {
 			i = len(alba)
 			kde[klic] = i
-			album := exportAlbum{Nazev: f.Album, Typ: f.Typ, Fotograf: f.Fotograf, Popis: f.Popis, Pridano: f.Pridano}
+			album := exportAlbum{Nazev: f.Album, Typ: f.Typ, Fotograf: f.Fotograf, Popis: f.Popis, Pridano: f.Pridano, Datum: f.DatumAlba}
 			// Centerfold má vydání přímo v názvu alba
 			if f.Typ != "Centerfold" && f.Typ != "Cover" {
 				album.Vydani = f.Vydani
@@ -434,10 +436,26 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 		}
 	}
 	if vydani := strings.TrimSpace(album.Vydani); vydani != "" && album.Typ != "Centerfold" {
-		if vydani == smazatUdaj {
+		if album.Typ == typOnline {
+			// Smazání vydání, které online album nemá, nic nemění
+			if vydani != smazatUdaj {
+				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: online album nepatří k vydání „%s“ (kdy bylo nafoceno, patří do „datum“)", kde, vydani))
+			}
+		} else if vydani == smazatUdaj {
 			a.SetVydaniAlba(modelkaID, album.Nazev, album.Typ, "")
 		} else if !a.SetVydaniAlba(modelkaID, album.Nazev, album.Typ, vydani) {
 			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: vydání „%s“ není ve tvaru RRRR-MM ani RRRR", kde, vydani))
+		}
+	}
+	if datum := strings.TrimSpace(album.Datum); datum != "" {
+		if album.Typ != typOnline {
+			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: datum nafocení má jen album typu %s", kde, typOnline))
+		} else if datum == smazatUdaj {
+			a.SetDatumAlba(modelkaID, album.Nazev, album.Typ, "")
+		} else if !platneDatum(datum) {
+			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: datum „%s“ není ve tvaru RRRR-MM-DD, RRRR-MM ani RRRR", kde, datum))
+		} else {
+			a.SetDatumAlba(modelkaID, album.Nazev, album.Typ, datum)
 		}
 	}
 	if strings.TrimSpace(album.Popis) != "" || strings.TrimSpace(album.Fotograf) != "" {
@@ -998,7 +1016,7 @@ func (a *App) ImportovatSoubory(cesty []string) VysledekImportu {
 
 func (a *App) prazdnaAlba(modelkaID int, odkazy odkazyNaModelky) []exportAlbum {
 	var alba []exportAlbum
-	rows, err := a.db.Query(`SELECT id, album, typ, vydani, spojit, COALESCE(popis, ''), COALESCE(fotograf, ''), COALESCE(netyka_se, '')
+	rows, err := a.db.Query(`SELECT id, album, typ, vydani, spojit, COALESCE(popis, ''), COALESCE(fotograf, ''), COALESCE(netyka_se, ''), COALESCE(datum, '')
 		FROM alba WHERE modelka_id = ? AND NOT EXISTS (SELECT 1 FROM fotky f WHERE f.album_id = alba.id) ORDER BY album COLLATE BEZDIAKRITIKY, typ`, modelkaID)
 	if err != nil {
 		a.chyba("export", err)
@@ -1008,7 +1026,7 @@ func (a *App) prazdnaAlba(modelkaID int, odkazy odkazyNaModelky) []exportAlbum {
 	for rows.Next() {
 		var id int64
 		var al exportAlbum
-		if rows.Scan(&id, &al.Nazev, &al.Typ, &al.Vydani, &al.Spojit, &al.Popis, &al.Fotograf, &al.NetykaSe) == nil {
+		if rows.Scan(&id, &al.Nazev, &al.Typ, &al.Vydani, &al.Spojit, &al.Popis, &al.Fotograf, &al.NetykaSe, &al.Datum) == nil {
 			if al.Typ == "Centerfold" || al.Typ == "Cover" {
 				al.Vydani = ""
 			}

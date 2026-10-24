@@ -135,6 +135,14 @@ export function sklonovat(n, jedna, dve, pet) {
     return `${n} ${n === 1 ? jedna : n > 1 && n < 5 ? dve : pet}`;
 }
 
+// Pictorial jen na webu (Cyber Girl, Coed, Muse…): nepatří k číslu časopisu, místo vydání má datum nafocení
+export const TYP_ONLINE = 'Pictorial online';
+
+// Typ alba v hlavičce; online album s datem nafocení: „Pictorial online · nafoceno červen 2004“
+export function popisTypuAlba(typ, datum) {
+    return typ === TYP_ONLINE && datum ? `${typ} · nafoceno ${formatDatum(datum)}` : typ;
+}
+
 export function nazevAlba(album, typ) {
     return (typ === 'Centerfold' || typ === 'Cover') && rozlozitVydani(album)?.mesic ? nazevVydani(album) : album;
 }
@@ -373,11 +381,13 @@ export function odvozeneKategorie(modelka) {
 }
 
 // Výskyt modelky: v časopise (centerfold, obálka nebo album u konkrétního čísla – měsíc nebo speciál; ročník bez
-// měsíce jako „Cybergirl of the Year 2012“ se nepočítá), jen online (bez čísla, s online kategorií) nebo neurčeno
+// měsíce jako „Cybergirl of the Year 2012“ se nepočítá), jen online (bez čísla, s online kategorií nebo online
+// albem) nebo neurčeno; stejně jako vyskyt: v hledání (poleHledani v app.go)
 export const VYSKYT = { casopis: 'V časopise', online: 'Jen online', '': 'Neurčeno' };
 export function vyskytModelky(modelka) {
     const cisla = [...(modelka.vydani || []), ...(modelka.obalky || []), ...(modelka.centerfoldy || [])];
     if (cisla.some(v => rozlozitVydani(v)?.mesic)) return 'casopis';
+    if ((modelka.onlineAlba || []).length) return 'online';
     const online = new Set(KATEGORIE.filter(k => k.online).map(k => k.nazev));
     return rozlozitKategorie(modelka.role).some(k => online.has(k.nazev)) ? 'online' : '';
 }
@@ -474,7 +484,7 @@ export function rozlozitDotaz(dotaz) {
 // centerfoldů), slovo s takovým klíčem nic neomezuje; neznámý klíč se hledá jako text „klic:hodnota“.
 const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'kategorie', 'vyskyt', 'fotograf',
     'rok', 'vydani', 'narozena', 'edice', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
-    'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela']);
+    'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela', 'nafoceno']);
 const jeCislo = text => /^[\d.\-]+$/.test(text);
 const CISELNA_POLE = new Set(['rok', 'narozena', 'vyska', 'vaha', 'hodnoceni', 'srdicka']);
 
@@ -494,11 +504,13 @@ function vyhovujeCislu(hodnota, texty, cilene, roky = false) {
 }
 
 // Údaje fotky pro cílené hledání (stěna centerfoldů, Nejlepší): jméno, fotograf, vydání, rok, edice, srdíčka
+// a datum nafocení online alba
 export function poleFotky(f) {
     const vydani = f.vydani || (rozlozitVydani(f.album) ? f.album : '');
     return {
         jmeno: f.jmenoModelky || '', fotograf: f.fotograf || '', vydani, rok: vydani.slice(0, 4),
         edice: rozlozitVydani(vydani)?.edice || '', hodnoceni: f.hodnoceni ? String(f.hodnoceni) : '', srdicka: f.hodnoceni ? String(f.hodnoceni) : '',
+        nafoceno: f.datumAlba || '',
     };
 }
 
@@ -533,6 +545,13 @@ export function vyhovujeHledani(texty, tokeny, pole = {}) {
         }
         // rok:1975-01 = číslo z daného měsíce (hledá se ve vydání)
         if (t.klic === 'rok' && /^\d{4}-/.test(t.hodnota) && 'vydani' in udaje) kde = [udaje.vydani];
+        // nafoceno:2004, nafoceno:2004-06 = předpona data nafocení online alba (stejně jako v app.go)
+        if (t.klic === 'nafoceno' && 'nafoceno' in udaje) {
+            let shoda = hledane.some(v => udaje.nafoceno.split(' ').some(d => d && d.startsWith(v)));
+            if (t.negace) shoda = !shoda;
+            if (!shoda) return false;
+            continue;
+        }
         // Čísla se porovnávají jen v číselných polích; vydani:1975-01 je text, u roků rozsah jen se čtyřmístnými mezemi
         const cilene = kde !== vse;
         let shoda = cilene && !CISELNA_POLE.has(t.klic) ? null : vyhovujeCislu(t.hodnota, kde, cilene, t.klic === 'rok' || t.klic === 'narozena');
@@ -597,6 +616,7 @@ export const PRIKAZY = [
     { klic: 'rok:', popis: 'Rok vydání (1970..1979, >=1980)' },
     { klic: 'kategorie:', popis: 'Kategorie (playmate, cyber girl, muse, celebrita…)' },
     { klic: 'vyskyt:', popis: 'Výskyt: casopis, online (jen na internetu), neurceno' },
+    { klic: 'nafoceno:', popis: 'Kdy bylo online album nafoceno (2004, 2004-06)' },
     { klic: 'fotograf:', popis: 'Jméno fotografa' },
     { klic: 'hodnoceni:', popis: 'Hodnocení (1–5, >=4)' },
     { klic: 'srdicka:', popis: 'Hodnocení srdíčky (5, >=4)' },

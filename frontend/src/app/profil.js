@@ -1,5 +1,5 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
-import { VYSKYT, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
+import { TYP_ONLINE, VYSKYT, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -225,8 +225,9 @@ export async function nacistFotkyModelky(modelkaId) {
     stav.aktualniAlba.forEach(a => { a.jmenoModelky = jmenaModelek.get(a.modelkaId) || ''; });
     // Alba v profilu chronologicky podle vydání, bez vydání na konci v pořadí, jak přibyla;
     // ruční přeřazení fotek uvnitř alba tak pořadí alb nemění
+    // Online album se řadí podle data nafocení (vydání nemá)
     const klicPoradi = a => {
-        const v = rozlozitVydani(a.typ === 'Centerfold' ? a.album : a.vydani);
+        const v = a.typ === TYP_ONLINE ? rozlozitVydani(a.datumAlba.slice(0, 7)) : rozlozitVydani(a.typ === 'Centerfold' ? a.album : a.vydani);
         return v ? `0${v.rok}${v.mesic || '00'}${v.edice}` : '1';
     };
     const prvniFotka = a => Math.min(...a.fotky.map(f => f.id));
@@ -266,7 +267,7 @@ export async function nacistFotkyModelky(modelkaId) {
             <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}">
                 <div class="album-header">
                     <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
-                    <span>${esc(a.typ)} · ${popis}</span>
+                    <span>${esc(popisTypuAlba(a.typ, a.datumAlba))} · ${popis}</span>
                     ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít číslo">${esc(nazevVydani(a.vydani))}</button>` : ''}
                     ${htmlSpoluModelek(a)}
                     <button class="album-more" data-nabidka-alba title="Akce alba (také pravým tlačítkem)">&#8943;</button>

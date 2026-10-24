@@ -1,10 +1,12 @@
-# Formát exportu (verze 7)
+# Formát exportu (verze 8)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 7** (program 0.30.0 a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 8** (program 0.99.9
+a novější).
 
-Od alfy (program 0.50.0) je formát verze 7 **zmrazený**: do verze 1.0.0 se nezmění a soubory exportované
-teď půjdou načíst i do vydané verze.
+Od alfy (program 0.50.0) byl formát verze 7 **zmrazený**. Jedinou vědomou výjimkou v betě je verze 8, která
+přidala online pictorialy (typ alba `Pictorial online` s datem nafocení); od ní je formát znovu zmrazený do
+verze 1.0.0. Soubory verze 7 i 8 půjdou načíst i do vydané verze.
 
 Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-exportu.yaml); jde rovnou načíst importem.
 
@@ -25,14 +27,14 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 
 - Import údaje **doplňuje a opravuje**. Prázdný nebo chybějící údaj ponechá ten stávající; údaj s hodnotou
   `-` se smaže (`narodnost: -`, `vyska_cm: -`, `tetovani: -` = neuvedeno, `titulni_fotka: -`, u alba
-  `popis: -`, `fotograf: -`, `vydani: -`, u čísla `poznamka: -`, `stav: -`, `na_obalce: -`). Alba, fotky
+  `popis: -`, `fotograf: -`, `vydani: -`, `datum: -`, u čísla `poznamka: -`, `stav: -`, `na_obalce: -`). Alba, fotky
   ani modelky import nemaže.
 - Překlep v klíči (`narodnot:`) se opraví na nejbližší známý klíč (`narodnost:`), pokud se liší nejvýš
   o dva znaky (u krátkých klíčů o jeden) a nejbližší klíč je jen jeden. Neznámý klíč se přeskočí.
   Obojí import vypíše s číslem řádku.
 - Opakovaný import téhož souboru nic nezdvojí.
 - Před importem se uloží záloha. Při jakékoli chybě zápisu se import vrátí celý a databáze zůstane, jak byla.
-- Soubor s vyšší verzí formátu, než program zná, se odmítne celý (aktualizuj program). Starší verze 1–6
+- Soubor s vyšší verzí formátu, než program zná, se odmítne celý (aktualizuj program). Starší verze 1–7
   se načtou; údaje, které v nich ještě nebyly, zůstanou nezměněné.
 - Údaje se kontrolují stejně jako při zadávání v programu. Chybné album nebo fotka se přeskočí a import
   vypíše, co a proč.
@@ -40,7 +42,7 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 ## Celek
 
 ```yaml
-verze: 7
+verze: 8
 modelky: [...]   # modelky s jejich alby
 covery: [...]    # obálky časopisu, nepatří k modelce
 vydani: [...]    # stav a poznámky k jednotlivým číslům
@@ -80,9 +82,10 @@ určit jednoznačně, import to vypíše a odkaz přeskočí.
 | Klíč | Význam |
 |---|---|
 | `nazev` | Název; u centerfoldu je to vydání `RRRR-MM` (české vydání `RRRR-MM-CZ`) |
-| `typ` | `Pictorial` nebo `Centerfold` (covery mají vlastní oddíl) |
+| `typ` | `Pictorial`, `Pictorial online` (pictorial jen na webu – Cyber Girl, Coed, Muse…) nebo `Centerfold` (covery mají vlastní oddíl) |
 | `pridano` | Kdy přibyla první fotka alba |
-| `vydani` | Jen u pictorialu: `RRRR-MM`, `RRRR` (jen ročník), s edicí `-CZ` |
+| `vydani` | Jen u pictorialu: `RRRR-MM`, `RRRR` (jen ročník), s edicí `-CZ`; online album vydání nemá (import ho ohlásí a přeskočí) |
+| `datum` | Jen u `Pictorial online`: kdy bylo album nafoceno nebo zveřejněno, `RRRR-MM-DD`, `RRRR-MM` nebo `RRRR` (stejně jako datum narození). Je to jen údaj alba – nepřiřadí ho k vydání, do kalendáře ani k titulní fotce; jiný tvar nebo datum u jiného typu se ohlásí a přeskočí |
 | `fotograf`, `popis` | Fotograf a text alba (víceřádkový text jako blok `|-`) |
 | `spojit` | Stránky tvoří jeden spojený plakát |
 | `rucni_poradi` | Fotky jsou v souboru v ručně určeném pořadí; jinak se album řadí podle srdíček |
@@ -139,6 +142,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 8 | 0.99.9 | Online pictorialy: typ alba `Pictorial online` (bez vydání) a jeho `datum` nafocení |
 | 7 | 0.30.0 | Články čísla: `clanky` u vydání (strana, rubrika, název, autor, modelka, druh, text, skeny) |
 | 6 | 0.18.0 | `umrti_datum` u modelky, data narození a úmrtí i neúplná (`RRRR`, `RRRR-MM`), `na_obalce` u čísla, `-` údaj smaže, oprava překlepů v klíčích |
 | 5 | 0.13.0 | Speciály (`RRRR-Snn`) a jejich `nazev` u vydání, stav čísla `mam` |

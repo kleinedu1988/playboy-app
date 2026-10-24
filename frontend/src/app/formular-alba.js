@@ -1,7 +1,7 @@
 // Okno alba a centerfoldu
 import { oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteAlbum, GetFotografove } from './backend';
-import { esc, nazevAlba, rozlozitVydani, sjednotit } from '../lib/format';
+import { TYP_ONLINE, esc, nazevAlba, rozlozitVydani, sjednotit } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { nacistFotkyModelky } from './profil';
@@ -40,11 +40,14 @@ export async function vybratNeboZalozitModelku(jmeno) {
 // Výběr měsíce nabízí i speciály zvoleného roku
 let obnovitSpecialyAlba = (_vybrat) => {};
 
-// Centerfold se místo názvu určuje měsícem a rokem vydání
+// Centerfold se místo názvu určuje měsícem a rokem vydání; online album nemá vydání, ale datum nafocení
 export function prepnoutPoleAlba() {
-    const centerfold = document.getElementById('selectTyp').value === 'Centerfold';
+    const typ = document.getElementById('selectTyp').value;
+    const centerfold = typ === 'Centerfold';
+    const online = typ === TYP_ONLINE;
     document.getElementById('albumNazevGroup').classList.toggle('hidden', centerfold);
-    document.getElementById('albumVydaniGroup').classList.remove('hidden');
+    document.getElementById('albumVydaniGroup').classList.toggle('hidden', online);
+    document.getElementById('albumDatumGroup').classList.toggle('hidden', !online);
     // U pictorialu je vydání nepovinné
     // U pictorialu stačí i samotný rok
     document.getElementById('albumMesicLabel').textContent = centerfold ? 'Měsíc nebo speciál' : 'Měsíc nebo speciál (nepovinné)';
@@ -87,7 +90,7 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
         document.getElementById('inputAlbumName').value = album.album;
         document.getElementById('inputAlbumFotograf').value = album.fotograf || '';
         document.getElementById('inputAlbumPopis').value = album.popis || '';
-
+        document.getElementById('inputAlbumDatum').value = album.datumAlba || '';
     }
     if (moznosti.typ) vyberTypu.value = moznosti.typ;
     const vydani = rozlozitVydani(album ? (album.vydani || (album.typ === 'Centerfold' ? album.album : '')) : moznosti.vydani);

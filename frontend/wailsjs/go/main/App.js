@@ -218,6 +218,10 @@ export function SetCoverVyrez(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SetCoverVyrez'](arg1, arg2, arg3, arg4);
 }
 
+export function SetDatumAlba(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SetDatumAlba'](arg1, arg2, arg3, arg4);
+}
+
 export function SetHodnoceni(arg1, arg2) {
   return window['go']['main']['App']['SetHodnoceni'](arg1, arg2);
 }

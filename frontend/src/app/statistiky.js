@@ -6,7 +6,7 @@
 // Počítá se ze seznamu modelek; nejčastější fotografové jsou z backendu (GetStatistiky) a jejich modelky se
 // dohledají hledáním. SVG grafSloupcu zůstává pro úvod Přehledu.
 import { GetModelky, GetStatistiky } from './backend';
-import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
+import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { otevritDetailModelky } from './profil';
@@ -89,7 +89,8 @@ let graf = 'cf';
 try { graf = GRAFY.some(g => g.klic === localStorage.getItem('grafStatistik')) ? localStorage.getItem('grafStatistik') : 'cf'; } catch { /* výchozí graf */ }
 let edice = 'vse';
 let druhVyskytu = 'vse';
-const DRUHY_VYSKYTU = { vse: 'Vše', centerfold: 'Centerfold', obalka: 'Obálka', pictorial: 'Pictorial' };
+// Vše = první výskyt v časopise; Online = první online album s datem nafocení (do Vše se nepočítá)
+const DRUHY_VYSKYTU = { vse: 'Vše', centerfold: 'Centerfold', obalka: 'Obálka', pictorial: 'Pictorial', online: 'Online' };
 const filtry = new Map();
 let zobrazitVse = false;
 let tah = null;                  // tažení přes sloupce: { start, predtim, a, b }
@@ -107,23 +108,30 @@ const vekVLetech = (narozeni, vydani) => {
     const vek = parseInt(v[1]) - parseInt(n[1]) - (parseInt(v[2]) < parseInt(n[2]) ? 1 : 0);
     return vek > 12 && vek < 80 ? vek : null;
 };
-// Výskyty modelky v časopise (čísla jejích centerfoldů, obálek a alb) s rokem, edicí, druhy a věkem modelky
+// Výskyty modelky v časopise (čísla jejích centerfoldů, obálek a alb) s rokem, edicí, druhy a věkem modelky;
+// k nim online alba s datem nafocení (druh online, bez edice; album bez data na časové ose není)
 const vyskytyCache = new WeakMap();
 function vyskytyModelky(m) {
     if (!vyskytyCache.has(m)) {
         const cf = new Set(m.centerfoldy || []), obalky = new Set(m.obalky || []);
-        vyskytyCache.set(m, [...new Set([...(m.vydani || []), ...cf, ...obalky])].sort().map(v => {
+        const vCasopise = [...new Set([...(m.vydani || []), ...cf, ...obalky])].map(v => {
             const casti = rozlozitVydani(v);
             if (!casti) return null;
             const druhy = new Set([cf.has(v) && 'centerfold', obalky.has(v) && 'obalka', !cf.has(v) && !obalky.has(v) && 'pictorial'].filter(Boolean));
             return { v, edice: casti.edice, rok: parseInt(casti.rok), druhy, vekPresne: vekVLetech(m.narozeniDatum, v) };
-        }).filter(Boolean));
+        });
+        const online = (m.onlineAlba || []).filter(d => /^\d{4}/.test(d))
+            .map(d => ({ v: d, edice: '', rok: parseInt(d.slice(0, 4)), druhy: new Set(['online']), vekPresne: vekVLetech(m.narozeniDatum, d) }));
+        vyskytyCache.set(m, [...vCasopise.filter(Boolean), ...online].sort((a, b) => (a.v < b.v ? -1 : a.v > b.v ? 1 : 0)));
     }
     return vyskytyCache.get(m);
 }
-// První výskyt ve zvolené edici a druhu (nebo v těch, které platily při vzniku podmínky)
+// První výskyt ve zvolené edici a druhu (nebo v těch, které platily při vzniku podmínky); Vše jsou jen čísla
+// časopisu, online album edici nemá
 const prvniVyskyt = (m, ed = edice, druh = druhVyskytu) => vyskytyModelky(m)
-    .find(c => (ed === 'vse' || c.edice === ed) && (druh === 'vse' || c.druhy.has(druh)));
+    .find(c => (druh === 'vse' ? !c.druhy.has('online') : c.druhy.has(druh)) && (ed === 'vse' || c.druhy.has('online') || c.edice === ed));
+// Kde modelka v čísle (nebo online) byla, v seznamu modelek výběru
+const nazevVyskytu = c => c.druhy.has('online') ? `online · nafoceno ${formatDatum(c.v)}` : nazevVydani(c.v);
 const popisVyskytu = (druh = druhVyskytu) => druh === 'vse' ? 'první výskyt' : `první ${DRUHY_VYSKYTU[druh].toLowerCase()}`;
 const median = cisla => {
     const s = [...cisla].sort((a, b) => a - b), p = Math.floor(s.length / 2);
@@ -342,8 +350,8 @@ function modelkyVyberu(def, sloupce) {
         .filter(p => vyhovuje(p.m, klicFiltru(def)) && !videne.has(p.m.id) && videne.add(p.m.id)).map(p => ({
             m: p.m,
             detail: def.osa === 'mesic' ? `přidána ${parseInt(p.m.pridano.slice(8, 10))}. ${parseInt(p.m.pridano.slice(5, 7))}. ${p.m.pridano.slice(0, 4)}`
-                : def.druh === 'udaj' ? `${textHodnoty(def, p.hodnota)} · ${nazevVydani(p.c.v)}`
-                : def.druh === 'podil' ? `${p.hodnota ? def.ano : def.ne} · ${nazevVydani(p.c.v)}` : nazevVydani(p.c.v),
+                : def.druh === 'udaj' ? `${textHodnoty(def, p.hodnota)} · ${nazevVyskytu(p.c)}`
+                : def.druh === 'podil' ? `${p.hodnota ? def.ano : def.ne} · ${nazevVyskytu(p.c)}` : nazevVyskytu(p.c),
         }));
     return def.osa === 'mesic' ? seznam.reverse() : seznam;
 }
@@ -441,10 +449,15 @@ function vykreslit(koren, { jenGraf = false } = {}) {
         `<button type="button" class="chip active" data-zrusit-podminku="${esc(k)}" title="Odebrat podmínku">${esc(f.popis)} ×</button>`).join('')}
         <button type="button" class="link" data-zrusit-vyber>Zrušit výběr</button>` : '';
     koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
-    // Modelky bez čísla (jen online, bez vydání) nemají rok; kolik jich v grafech v čase není, říká nápověda
-    const bezCisla = def.osa === 'rok' ? data.modelky.filter(m => !vyskytyModelky(m).length).length : 0;
+    // Modelky bez čísla (jen online, bez vydání) nemají rok; kolik jich v grafech v čase není, říká nápověda.
+    // U druhu Online jsou to modelky bez online alba s datem nafocení.
+    const online = druhVyskytu === 'online';
+    const bezCisla = def.osa === 'rok' ? data.modelky.filter(m => !vyskytyModelky(m).some(c => c.druhy.has('online') === online)).length : 0;
+    const neni = bezCisla >= 2 && bezCisla <= 4 ? 'nejsou' : 'není';
     koren.querySelector('[data-sp-napoveda]').textContent = def.osa
-        ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažení myší období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.${bezCisla ? ` Rok je rok prvního výskytu v časopise; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase ${bezCisla >= 2 && bezCisla <= 4 ? 'nejsou' : 'není'}.` : ''}`
+        ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažení myší období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.${!bezCisla ? ''
+            : online ? ` Rok je rok nafocení prvního online alba; ${pocetModelek(bezCisla)} bez online alba s datem v grafech v čase ${neni}.`
+            : ` Rok je rok prvního výskytu v časopise; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase ${neni}.`}`
         : 'Klik na řádek vybere hodnotu, další klik ji zruší. Výběr platí pro všechny grafy: přepni graf a uvidíš jen vybrané modelky.';
     const seznam = koren.querySelector('[data-sp-seznam]');
     const fokusSeznamu = seznam.contains(document.activeElement);

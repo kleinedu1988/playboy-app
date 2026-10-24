@@ -352,3 +352,30 @@ test('cílené hledání: rok a vydání s měsícem nejsou rozsah', async () =>
     assert.equal(ma('rok:1970-1979', '1975-01'), true);
     assert.equal(ma('rok:1970-1979', '1980-01'), false);
 });
+
+test('online album: výskyt jen online, nadpis s datem nafocení a hledání nafoceno:', async () => {
+    const { rozlozitDotaz, vyhovujeHledani, poleFotky, popisTypuAlba, TYP_ONLINE, PRIKAZY } = await import('../src/lib/format.js');
+    // Online album stačí i bez online kategorie (stejně jako vyskyt:online v app.go), číslo časopisu má přednost
+    assert.equal(vyskytModelky({ onlineAlba: ['2004-06'] }), 'online');
+    assert.equal(vyskytModelky({ onlineAlba: [''] }), 'online');
+    assert.equal(vyskytModelky({ onlineAlba: ['2004-06'], vydani: ['2012'] }), 'online');
+    assert.equal(vyskytModelky({ onlineAlba: ['2004-06'], centerfoldy: ['2005-03'] }), 'casopis');
+    assert.equal(vyskytModelky({ onlineAlba: [] }), '');
+
+    assert.equal(popisTypuAlba(TYP_ONLINE, '2004-06'), 'Pictorial online · nafoceno červen 2004');
+    assert.equal(popisTypuAlba(TYP_ONLINE, '2004-06-15'), 'Pictorial online · nafoceno 15. 6. 2004');
+    assert.equal(popisTypuAlba(TYP_ONLINE, ''), 'Pictorial online');
+    assert.equal(popisTypuAlba('Pictorial', '2004'), 'Pictorial');
+
+    // nafoceno: je předpona data (rok nebo měsíc), čárka = nebo; pohled bez data alba slovo nic neomezuje
+    const fotka = poleFotky({ jmenoModelky: 'Anna', album: 'Web', typ: TYP_ONLINE, vydani: '', datumAlba: '2004-06-15' });
+    const najde = dotaz => vyhovujeHledani(['Anna'], rozlozitDotaz(dotaz), fotka);
+    assert.ok(najde('nafoceno:2004'));
+    assert.ok(najde('nafoceno:2004-06'));
+    assert.ok(najde('nafoceno:2003,2004'));
+    assert.ok(!najde('nafoceno:2005'));
+    assert.ok(!najde('nafoceno:06'));
+    assert.ok(!najde('-nafoceno:2004'));
+    assert.ok(vyhovujeHledani(['Anna'], rozlozitDotaz('nafoceno:2004'), { jmeno: 'Anna' }));
+    assert.ok(PRIKAZY.some(p => p.klic === 'nafoceno:'));
+});

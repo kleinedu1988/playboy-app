@@ -19,6 +19,8 @@ Opravené (žádné otevřené):
   sloučení modelek odpojilo články; neúplný export se uložil jako úplný; zápisy bez transakce (přejmenování, cover,
   kontrola souborů); prázdné album po nedostupných odkazech; instalátor nainstaloval i při překlepu v přepínači;
   hledání viditelné na zamčené obrazovce.
+- 0.99.9 (24. 10. 2026): online pictorialy jako výjimka v betě (úprava schématu č. 12, export 8). Není to oprava
+  chyby; lhůta do 1.0.0 běží od této verze. Přitom opravený i poměr „Alba s vydáním“ v Přehledu.
 
 Na Fedoře u uživatele prošel `./zkontrolovat.sh` bez chyb (0.99.8, 23. 10. 2026). Beta 0.90.0 prošla testovacím scénářem na čistém účtu Fedory (21. 10. 2026), včetně
 Content-Security-Policy (okno není prázdné). Z alfy: Ověřeno na Fedoře 20. 10. 2026: poblikávání okna a kontextové nabídky je pryč (0.33.18),

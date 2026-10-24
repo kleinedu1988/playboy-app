@@ -109,20 +109,22 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 
 **Výjimka z bety:** kategorie modelek (0.91.0), lišta Přehledu nahoře a přepracované Statistiky s výběrem
 modelek po kliknutí (0.92.x) výskyt modelky v časopise nebo jen online (0.93.0) spojení Čísel s Kalendářem (0.94.0) a Statistiky jako jeden graf se seznamem modelek (0.95.0, 0.96.0, 0.98.0) Kontrola s pravidly a „V pořádku“ (0.97.0) a části Přehledu v nabídce tlačítka Přehled (0.99.x) přibyly 22. 10. 2026 na přání uživatele ještě před 1.0; schéma ani formát exportu
-se nezměnily. Lhůta níže proto běží od jejich vydání; po opravách chyb z bety v 0.99.4–0.99.8 (23. 10.) nejdřív 6. 11. 2026.
+se nezměnily. Jedinou výjimkou se změnou schématu jsou **online pictorialy (0.99.9, 24. 10.)**: úprava databáze
+č. 12 a export verze 8 (krok 1–2 z 1.23). Lhůta níže proto běží od 0.99.9; nejdřív 7. 11. 2026.
 
 **Pravidlo:** 1.0.0 vyjde po **14 dnech běžného používání bety bez nové chyby**. Lhůta běží od vydání bety
 (21. 10. 2026); každá nová chyba zapsaná v `PLAN.md` (oddíl „Chyby z bety“) ji po opravě spustí znovu od
 vydání opravy. Změny jen v dokumentaci lhůtu neruší.
 Kosmetickou drobnost (vzhled, text), která nebrání práci, smí uživatel vědomě odložit do 1.0.1 – lhůtu pak
-neruší. Nejdřív možné vydání: 6. 11. 2026 (po opravách v 0.99.8), pokud se do té doby nic nenajde.
+neruší. Nejdřív možné vydání: 7. 11. 2026 (po online pictorialech v 0.99.9), pokud se do té doby nic nenajde.
 
 **Ověření před 1.0.0** (odškrtává uživatel na Fedoře; co selže, jde do `PLAN.md` mezi chyby). Scénář bety
 z 21. 10. pokryl verzi 0.90.0; od té doby přibyly výjimky z bety a opravy v citlivých místech (import, zálohy,
 sloučení), proto se část opakuje:
 
 - [x] `./zkontrolovat.sh` projde bez chyb (0.99.8, 23. 10.)
-- [ ] `./instalovat.sh` nainstaluje 0.99.8; `--napoveda` vypíše nápovědu, překlep (`--odinstaluj`) ohlásí chybu
+- [ ] `./zkontrolovat.sh` projde i na 0.99.9
+- [ ] `./instalovat.sh` nainstaluje 0.99.9; `--napoveda` vypíše nápovědu, překlep (`--odinstaluj`) ohlásí chybu
 - [ ] Přenos dat znovu: ⋯ → Exportovat sbírku, import do čisté sbírky (jiný účet nebo kopie složky dat) a druhý
       import téhož souboru – žádné zdvojené modelky
 - [ ] Zálohy: ⋯ → Obnovit ze zálohy…, pak vrácení přes zálohu „Před obnovením“
@@ -136,6 +138,10 @@ sloučení), proto se část opakuje:
 - [ ] Rozepsaný článek nebo úprava čísla: Esc ukáže „Zahodit změny?“ nad oknem
 - [ ] Hledání `rok:1977-03` najde jen březen 1977
 - [ ] Zamčený program neukazuje pole hledání
+- [ ] Online pictorialy: první spuštění 0.99.9 nad sbírkou vytvoří zálohu `*-pred-migraci.db`; v okně alba typ
+      „Pictorial online“ skryje vydání a ukáže „Nafoceno“ (chybné datum ohlásí); nadpis alba v profilu s datem;
+      album není v kalendáři ani na titulní fotce; výskyt „online“, hledání `nafoceno:2004`, Statistiky → Online;
+      export a import alba s datem
 
 | Krok | Co |
 |---|---|
@@ -367,33 +373,35 @@ jednou denně.
 ### 1.9 – Kvalita dat **[schéma]**
 
 **Cíl:** chyby a nejednotné zápisy se najdou v Údržbě i přímo při zadávání; alba mají vlastní titulní fotku.
-Úprava schématu č. 12 a export verze 8 (krok 2); ostatní kroky schéma nemění. Každý krok vyjde jako
+Úprava schématu č. 13 a export verze 9 (krok 2; č. 12 a export 8 použily online pictorialy v 0.99.9); ostatní kroky schéma nemění. Každý krok vyjde jako
 samostatná verze (1.9.0–1.9.3). Rozpracování: [PLAN-1X-DATA.md](docs/PLAN-1X-DATA.md).
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | Sjednocení zápisů | `GetRuzneZapisy`: fotograf (dělený čárkou), národnost, místo narození, vlasy, oči, etnicita, tagy – stejné bez diakritiky, Jaro–Winkler ≥ 0,92, iniciála, prohozené pořadí; filtr „Zápisy“ v Údržbě, „Sjednotit na …“ se zálohou, „Různí lidé“ v `nastaveni`; oprava `PrejmenovatFotografa` a `GetAlbaFotografa` pro víc fotografů v poli | M |
-| 2 | Titulní fotka alba a nové klíče **[schéma]** | Úprava č. 12: `alba.titulni` (ID souboru), `alba.datum` (kdy bylo album nafoceno nebo zveřejněno, pro online pictorialy – viz 1.23), typ alba „Pictorial online“, `vydani.netyka_se`, `modelky.upraveno` (datum poslední úpravy – „Naposledy upravené“ v galerii a řazení, bez historie změn); klíče `fotograf` (album) a `obalka` (číslo); nabídka fotky „Nastavit jako titulní fotku alba“, použití na stránce fotografa a ročníku; export 8 (`titulni_fotka`, `netyka_se` u čísla), `EXPORT.md`, test verze dat a přechodu ze starých verzí | S–M |
+| 2 | Titulní fotka alba a nové klíče **[schéma]** | Úprava č. 13: `alba.titulni` (ID souboru), `vydani.netyka_se`, `modelky.upraveno` (datum poslední úpravy – „Naposledy upravené“ v galerii a řazení, bez historie změn); klíče `fotograf` (album) a `obalka` (číslo); nabídka fotky „Nastavit jako titulní fotku alba“, použití na stránce fotografa a ročníku; export 9 (`titulni_fotka`, `netyka_se` u čísla), `EXPORT.md`, test verze dat a přechodu ze starých verzí | S–M |
 | 3 | Nové úkoly v Údržbě | Playmate bez data narození (vlastní filtr, vyšší váha), číslo s coverem bez modelky z obálky, centerfold a pictorial bez fotografa; „Netýká se“ s novými klíči; řádky v souhrnu úvodu | M |
 | 4 | Kontrola při zadávání | `PodobneModelky` při psaní jména (práh 0,88, nejvýš 3 s fotkou), „Myslel jsi …?“ u fotografa a národnosti, `ZkontrolovatModelku` po uložení s oznámením a Opravit; „Sloučit…“ u nálezu podobného jména | M |
 
 **Hotovo, když:** varianty fotografa jdou sjednotit jedním klikem a album se dvěma fotografy je na obou
 stránkách; titulní fotka alba se ukazuje na stránce fotografa a ročníku; nové úkoly jdou doplnit i označit
 „Netýká se“; překlep ve jméně existující modelky se ukáže při psaní a výška 17 cm hned po uložení; přechod
-na úpravu č. 12 projde ze všech starých verzí, export 8 → import vrátí totéž, 1.7 otevře novou databázi jen pro
-čtení a export 8 odmítne srozumitelnou hláškou.
+na úpravu č. 13 projde ze všech starých verzí, export 9 → import vrátí totéž, 1.7 otevře novou databázi jen pro
+čtení a export 9 odmítne srozumitelnou hláškou.
 
-### 1.23 – Online pictorialy (zařadit hned za 1.9)
+### 1.23 – Online pictorialy (kroky 1–2 hotové v 0.99.9, krok 3 hned za 1.9)
 
 **Cíl:** tři druhy výskytu modelky odpovídají albům: **Centerfold** (playmate – odvodí kategorii Playmate měsíce),
 **Pictorial** (u čísla časopisu) a nově **Pictorial online** (Cyber Girl, Coed, Muse… – pictorialy jen na webu).
 Online album má **datum nafocení nebo zveřejnění** (RRRR, RRRR-MM nebo RRRR-MM-DD): je to jen informace u alba,
-nepřenáší se do vydání, kalendáře ani na titulní fotku modelky. Schéma i export řeší úprava č. 12 v 1.9.
+nepřenáší se do vydání, kalendáře ani na titulní fotku modelky. **Hotovo v 0.99.9** (výjimka v betě): úprava
+schématu č. 12 (`alba.datum`), export verze 8, typ v okně alba, nadpis s datem, výskyt „online“, `nafoceno:`,
+Statistiky „Online“. Zbývá filtr typu alba a `typ:online` (k 1.9) a krok 3.
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Typ a datum v okně alba | Typ „Pictorial online“ vedle Pictorial, Centerfold, Cover; u něj pole „Nafoceno“ místo vydání (kontrola tvaru jako u data narození); v profilu nadpis alba s datem („Pictorial online · nafoceno 06/2004“) | S–M |
-| 2 | Výskyt a filtry | Modelka s online albem a bez čísla má výskyt „jen online“ i bez online kategorie; filtr typu alba a hledání `typ:online`, `nafoceno:2004`; Statistiky: druh výskytu „Pictorial online“ (rok = datum nafocení) | M |
+| 1 ✓ | Typ a datum v okně alba | Typ „Pictorial online“ vedle Pictorial, Centerfold, Cover; u něj pole „Nafoceno“ místo vydání (kontrola tvaru jako u data narození); v profilu nadpis alba s datem („Pictorial online · nafoceno 06/2004“) | S–M |
+| 2 (část ✓) | Výskyt a filtry | Modelka s online albem a bez čísla má výskyt „jen online“ i bez online kategorie; filtr typu alba a hledání `typ:online`, `nafoceno:2004`; Statistiky: druh výskytu „Pictorial online“ (rok = datum nafocení) | M |
 | 3 | Převod starších alb | Údržba nabídne alba Pictorial bez vydání u modelek s online kategorií k převedení na „Pictorial online“ (po jednom nebo hromadně, s potvrzením) | S |
 
 **Hotovo, když:** Cyber Girl s online albem z 06/2004 má výskyt „jen online“, album ukazuje datum nafocení,
@@ -772,7 +780,7 @@ Rozbor možností k 2.2, 2.6–2.8 a k Wikidatům: [NAVRH-NAPADY.md](docs/NAVRH-
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | Rychlé hodnocení v kartách | Srdíčka na kartách modelek a dlaždicích fotek jdou nastavit kolečkem myši nad srdíčky (ověřit, že nekoliduje s rolováním) – jen pokud se v používání ukáže potřeba | S |
-| 2 | „Mám PDF“ u americké edice **[schéma]** | Jen pokud se ukáže potřeba: stav čísla US „mám PDF“ (a cesta nebo odkaz na soubor), filtr a barva v mapě americké edice; úprava schématu č. 12 a export verze 8 | S–M |
+| 2 | „Mám PDF“ u americké edice **[schéma]** | Jen pokud se ukáže potřeba: stav čísla US „mám PDF“ (a cesta nebo odkaz na soubor), filtr a barva v mapě americké edice; nejbližší volná úprava schématu a verze exportu | S–M |
 
 
 ## Rozhodnuto

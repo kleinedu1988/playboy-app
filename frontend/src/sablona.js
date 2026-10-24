@@ -15,7 +15,7 @@ export const SABLONA_OKNA = `
       <div class="nav-controls">
         <label class="hledani">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
-          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, kategorie:muse, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, edice:CZ, vyska:175, tetovani:ano, obalka:1995, hodnoceni:5. Do hledání skočíš klávesami Ctrl+F." />
+          <input type="text" id="searchInput" placeholder="Hledat modelku…" title="Modelky: jméno, národnost, vlasy, míry, tagy… Více slov zužuje výběr. Cíleně: vlasy:blond, oci:, narodnost:, tag:, kategorie:muse, fotograf:&quot;arny freytag&quot;, rok:1975, narozena:1990, nafoceno:2004, edice:CZ, vyska:175, tetovani:ano, obalka:1995, hodnoceni:5. Do hledání skočíš klávesami Ctrl+F." />
           <kbd class="hledani-zkratka" aria-hidden="true">Ctrl F</kbd>
           <button type="button" id="searchClearBtn" class="hledani-smazat" title="Smazat hledání" aria-label="Smazat hledání">&times;</button>
         </label>
@@ -321,6 +321,7 @@ export const SABLONA_OKNA = `
             <select id="selectTyp">
               <option value="Pictorial">Pictorial (Fotostory)</option>
               <option value="Centerfold">Centerfold (Plakát)</option>
+              <option value="Pictorial online">Pictorial online (jen na webu)</option>
             </select>
           </div>
           <div class="form-group">
@@ -350,6 +351,12 @@ export const SABLONA_OKNA = `
             <label for="selectAlbumEdice">Edice</label>
             <select id="selectAlbumEdice">${EDICE.map(e => `<option>${e}</option>`).join('')}</select>
           </div>
+        </div>
+        <!-- Online album nepatří k číslu časopisu; datum nafocení je jen údaj alba (ne vydání ani titulní fotka) -->
+        <div id="albumDatumGroup" class="form-group hidden">
+          <label for="inputAlbumDatum">Nafoceno (nepovinné)</label>
+          <input type="text" id="inputAlbumDatum" placeholder="RRRR-MM-DD" autocomplete="off" />
+          <small class="field-hint">Kdy bylo album nafoceno nebo zveřejněno online: RRRR-MM-DD, RRRR-MM nebo jen rok. Jen informace u alba – nepřiřadí ho k vydání ani nezmění titulní fotku.</small>
         </div>
         <div class="form-group">
           <label id="bulkLinksLabel" for="inputBulkLinks">Vlož odkazy z Google Disku (libovolné množství)</label>
@@ -692,7 +699,7 @@ export const SABLONA_OKNA = `
         <h4>Hledání</h4>
         <ul>
           <li>Více slov zužuje výběr: jméno, národnost, vlasy, míry, tagy…</li>
-          <li>Cíleně: <code>vlasy:blond</code>, <code>oci:</code>, <code>narodnost:</code>, <code>tag:</code>, <code>kategorie:muse</code>, <code>fotograf:"arny freytag"</code>, <code>rok:1975</code>, <code>narozena:1990</code>, <code>edice:CZ</code>, <code>vyska:175</code>, <code>tetovani:ano</code>, <code>hodnoceni:5</code>, <code>obalka:1995</code>.</li>
+          <li>Cíleně: <code>vlasy:blond</code>, <code>oci:</code>, <code>narodnost:</code>, <code>tag:</code>, <code>kategorie:muse</code>, <code>fotograf:"arny freytag"</code>, <code>rok:1975</code>, <code>narozena:1990</code>, <code>edice:CZ</code>, <code>vyska:175</code>, <code>tetovani:ano</code>, <code>hodnoceni:5</code>, <code>obalka:1995</code>, <code>nafoceno:2004</code> nebo <code>nafoceno:2004-06</code> (kdy bylo online album nafoceno).</li>
         </ul>
         <h4>Čísla časopisu</h4>
         <ul>
@@ -702,9 +709,9 @@ export const SABLONA_OKNA = `
         </ul>
         <h4>Přehled a hodnocení</h4>
         <ul>
-          <li><strong>Statistiky</strong> v Přehledu (poslední část v nabídce tlačítka Přehled): jeden graf, který vybereš z rozvinutého seznamu, a vedle něj modelky výběru. <em>V čase</em> podle roku prvního výskytu modelky v časopise (centerfold, obálka nebo pictorial u čísla; přepínač Vše / Centerfold / Obálka / Pictorial vybere, který výskyt se počítá): počty (modelky podle roku; přibývání sbírky po měsících), údaje (věk při prvním výskytu, výška, váha, BMI, hrudník, pas, boky, poměr pas : boky – medián roku a pásmo prostřední poloviny modelek) a podíly (blond vlasy, silikonová prsa, oholené ochlupení, tetování, piercing – procento ze známých hodnot); bílá křivka je klouzavý průměr. Klik na sloupec vybere rok, tažení myší období; šipky ← → výběr posouvají, se Shiftem ho rozšíří. Přepínač Vše / US / CZ vybere edici. Modelky bez čísla (jen online) rok nemají a v grafech v čase nejsou; rozložení počítá se všemi. <em>Rozložení</em>: kategorie, národnosti, barva vlasů a očí, hodnocení, výskyt a nejčastější fotografové; klik na řádek vybere hodnotu. <strong>Výběr platí pro všechny grafy</strong>: vyber třeba 90. léta, přepni na Národnosti a uvidíš jasně jen modelky z 90. let, tlumeně celou sbírku; další výběr v jiném grafu ho zúží. Podmínky jsou štítky pod lištou (křížek podmínku odebere), Esc zruší celý výběr. Seznam vpravo ukazuje modelky výběru, klik otevře profil; „Otevřít v galerii“ převede výběr na hledání, když ho jde hledáním vyjádřit. Vybraný graf si program pamatuje.</li>
+          <li><strong>Statistiky</strong> v Přehledu (poslední část v nabídce tlačítka Přehled): jeden graf, který vybereš z rozvinutého seznamu, a vedle něj modelky výběru. <em>V čase</em> podle roku prvního výskytu modelky v časopise (centerfold, obálka nebo pictorial u čísla; přepínač Vše / Centerfold / Obálka / Pictorial / Online vybere, který výskyt se počítá; Online je rok nafocení prvního online alba, album bez data v grafech v čase není): počty (modelky podle roku; přibývání sbírky po měsících), údaje (věk při prvním výskytu, výška, váha, BMI, hrudník, pas, boky, poměr pas : boky – medián roku a pásmo prostřední poloviny modelek) a podíly (blond vlasy, silikonová prsa, oholené ochlupení, tetování, piercing – procento ze známých hodnot); bílá křivka je klouzavý průměr. Klik na sloupec vybere rok, tažení myší období; šipky ← → výběr posouvají, se Shiftem ho rozšíří. Přepínač Vše / US / CZ vybere edici. Modelky bez čísla (jen online) rok nemají a v grafech v čase nejsou; rozložení počítá se všemi. <em>Rozložení</em>: kategorie, národnosti, barva vlasů a očí, hodnocení, výskyt a nejčastější fotografové; klik na řádek vybere hodnotu. <strong>Výběr platí pro všechny grafy</strong>: vyber třeba 90. léta, přepni na Národnosti a uvidíš jasně jen modelky z 90. let, tlumeně celou sbírku; další výběr v jiném grafu ho zúží. Podmínky jsou štítky pod lištou (křížek podmínku odebere), Esc zruší celý výběr. Seznam vpravo ukazuje modelky výběru, klik otevře profil; „Otevřít v galerii“ převede výběr na hledání, když ho jde hledáním vyjádřit. Vybraný graf si program pamatuje.</li>
           <li><strong>Kategorie</strong> modelky (Playmate roku, Cyber Girl, Coed, Muse, Celebrita, Jen ve speciálu, Creator, Online) se volí štítky v „Upravit modelku…“; Playmate měsíce a Modelku obálky program pozná sám z centerfoldu a obálky. Podle kategorie filtruje galerie (Filtry) a hledání <code>kategorie:</code>.</li>
-          <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online); ostatní jsou <em>neurčené</em>. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
+          <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online) nebo s online albem; ostatní jsou <em>neurčené</em>. Album typu <em>Pictorial online</em> je pictorial jen na webu: v okně alba nemá vydání, ale pole <em>Nafoceno</em> (RRRR-MM-DD, RRRR-MM nebo rok). Datum je jen informace u alba – album nepřiřadí k vydání ani do kalendáře a nemění titulní fotku modelky. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; po najetí myší se ukáže jméno modelky a odkud fotka je.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>

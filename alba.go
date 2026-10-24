@@ -202,9 +202,9 @@ func (a *App) PresunoutAlbum(modelkaID int, album, typ string, cilID int) string
 // aby nevznikl dvakrát. Přesunuté fotky přebírají vydání a spojení plakátu cílového alba a řadí se za jeho fotky.
 func sloucitAlbaTx(tx *sql.Tx, zModelka int, zAlbum, zTyp string, doModelka int, doAlbum, doTyp string) error {
 	var zdrojID int64
-	var vydani, popis, fotograf, netykaSe string
-	err := tx.QueryRow("SELECT id, vydani, COALESCE(popis, ''), COALESCE(fotograf, ''), COALESCE(netyka_se, '') FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?",
-		zModelka, zAlbum, zTyp).Scan(&zdrojID, &vydani, &popis, &fotograf, &netykaSe)
+	var vydani, popis, fotograf, netykaSe, datum string
+	err := tx.QueryRow("SELECT id, vydani, COALESCE(popis, ''), COALESCE(fotograf, ''), COALESCE(netyka_se, ''), COALESCE(datum, '') FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?",
+		zModelka, zAlbum, zTyp).Scan(&zdrojID, &vydani, &popis, &fotograf, &netykaSe, &datum)
 	if err == sql.ErrNoRows {
 		return nil
 	} else if err != nil {
@@ -228,15 +228,17 @@ func sloucitAlbaTx(tx *sql.Tx, zModelka int, zAlbum, zTyp string, doModelka int,
 			JOIN fotky c ON c.album_id = ?2 AND c.drive_file_id = z.drive_file_id`,
 		`DELETE FROM fotky WHERE album_id = ?1 AND drive_file_id IN (SELECT drive_file_id FROM fotky WHERE album_id = ?2)`,
 		`UPDATE fotky SET album_id = ?2, rotace = CASE WHEN ?3 = 1 THEN ?4 ELSE rotace END, poradi = NULL WHERE album_id = ?1`,
-		// Vydání, text a fotograf cílového alba mají přednost, chybějící doplní zdrojové
-		`UPDATE alba SET vydani = CASE WHEN vydani = '' AND typ NOT IN ('Centerfold', 'Cover') THEN ?5 ELSE vydani END,
+		// Vydání, datum nafocení, text a fotograf cílového alba mají přednost, chybějící doplní zdrojové;
+		// online album vydání nemá a datum má jen ono
+		`UPDATE alba SET vydani = CASE WHEN vydani = '' AND typ NOT IN ('Centerfold', 'Cover', ?10) THEN ?5 ELSE vydani END,
+			datum = CASE WHEN typ = ?10 THEN COALESCE(NULLIF(datum, ''), NULLIF(?9, '')) ELSE datum END,
 			popis = COALESCE(NULLIF(popis, ''), NULLIF(?6, '')), fotograf = COALESCE(NULLIF(fotograf, ''), NULLIF(?7, ''))
 		WHERE id = ?2`,
 		`INSERT OR IGNORE INTO alba_modelky (album_id, modelka_id)
 			SELECT ?2, modelka_id FROM alba_modelky WHERE album_id = ?1 AND modelka_id <> ?8`,
 	}
 	for _, krok := range kroky {
-		if _, err := tx.Exec(krok, zdrojID, cilID, spojit, rotace, vydani, popis, fotograf, doModelka); err != nil {
+		if _, err := tx.Exec(krok, zdrojID, cilID, spojit, rotace, vydani, popis, fotograf, doModelka, datum, typOnline); err != nil {
 			return err
 		}
 	}
@@ -507,6 +509,7 @@ type ObnovaFotky struct {
 	Typ          string       `json:"typ"`
 	DriveID      string       `json:"driveId"`
 	Vydani       string       `json:"vydani"`
+	Datum        string       `json:"datum"` // datum nafocení online alba
 	Rotace       int          `json:"rotace"`
 	Spojit       bool         `json:"spojit"`
 	Hodnoceni    int          `json:"hodnoceni"`
@@ -530,9 +533,10 @@ func (a *App) OdebratFotky(ids []int) []ObnovaFotky {
 		var o ObnovaFotky
 		var spojit, poradi int
 		err := a.db.QueryRow(`SELECT f.modelka_id, f.album, f.typ, f.drive_file_id, COALESCE(f.vydani, ''), COALESCE(f.rotace, 0), COALESCE(f.spojit, 0),
-				COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0), COALESCE(f.pridano, ''), COALESCE(al.popis, ''), COALESCE(al.fotograf, ''), COALESCE(al.netyka_se, '')
+				COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0), COALESCE(f.pridano, ''), COALESCE(al.popis, ''), COALESCE(al.fotograf, ''), COALESCE(al.netyka_se, ''),
+				COALESCE(al.datum, '')
 			FROM fotografie f LEFT JOIN alba al ON al.id = f.album_id WHERE f.id = ?`, id).
-			Scan(&o.ModelkaID, &o.Album, &o.Typ, &o.DriveID, &o.Vydani, &o.Rotace, &spojit, &o.Hodnoceni, &poradi, &o.Pridano, &o.Popis, &o.Fotograf, &o.NetykaSe)
+			Scan(&o.ModelkaID, &o.Album, &o.Typ, &o.DriveID, &o.Vydani, &o.Rotace, &spojit, &o.Hodnoceni, &poradi, &o.Pridano, &o.Popis, &o.Fotograf, &o.NetykaSe, &o.Datum)
 		if err != nil {
 			continue
 		}
@@ -593,8 +597,10 @@ func (a *App) ObnovitFotky(fotky []ObnovaFotky) int {
 			a.chyba("vrácení odebraných fotek", err)
 			continue
 		}
-		// Album, které zmizelo s poslední fotkou, dostane zpět vydání a spojení
-		a.db.Exec(`UPDATE alba SET vydani = CASE WHEN vydani = '' THEN ? ELSE vydani END, spojit = MAX(spojit, ?) WHERE id = ?`, vydani, f.Spojit, albumID)
+		// Album, které zmizelo s poslední fotkou, dostane zpět vydání (online album datum nafocení) a spojení
+		a.db.Exec(`UPDATE alba SET vydani = CASE WHEN vydani = '' AND typ <> ?4 THEN ?1 ELSE vydani END,
+			datum = CASE WHEN typ = ?4 THEN COALESCE(NULLIF(datum, ''), NULLIF(?5, '')) ELSE datum END,
+			spojit = MAX(spojit, ?2) WHERE id = ?3`, vydani, f.Spojit, albumID, typOnline, f.Datum)
 		vysledek, err := a.db.Exec(`INSERT OR IGNORE INTO fotky (album_id, drive_file_id, rotace, hodnoceni, poradi, pridano) VALUES (?, ?, ?, ?, ?, ?)`,
 			albumID, ids[0], f.Rotace, f.Hodnoceni, poradi, prvniNeprazdny(f.Pridano, ted()))
 		if err != nil {

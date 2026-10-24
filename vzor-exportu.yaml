@@ -1,4 +1,4 @@
-# Vzor souboru pro import – formát verze 7 (popis všech klíčů je v EXPORT.md)
+# Vzor souboru pro import – formát verze 8 (popis všech klíčů je v EXPORT.md)
 #
 # Pravidla zápisu:
 # - odsazení mezerami (ne tabulátorem), vždy o dvě; každá položka seznamu začíná „- “
@@ -8,7 +8,7 @@
 # - hodnota - (pomlčka) údaj smaže, např. „narodnost: -“; překlep v klíči import opraví a vypíše
 # - řádky začínající # jsou komentáře, import je přeskočí
 
-verze: 7
+verze: 8
 
 modelky:
   # Modelka se všemi údaji
@@ -93,6 +93,13 @@ modelky:
           - id: "https://drive.google.com/file/d/1PlazFotka2xxxxxxxxxxxxxxxxxxxxxxx/view"   # celý odkaz jde také
           - id: "1PlazFotka3xxxxxxxxxxxxxxxxxxxxxxx"
             pridano: "2026-10-15 20:00:00"  # jen když fotka přibyla jindy než album
+
+      # Pictorial online (jen na webu – Cyber Girl, Coed, Muse…): nemá vydání, jen datum nafocení
+      - nazev: "Cyber Girl týdne"
+        typ: Pictorial online
+        datum: "2004-06"                    # kdy bylo nafoceno nebo zveřejněno: RRRR-MM-DD, RRRR-MM nebo RRRR
+        fotky:
+          - id: "1OnlineFotka1xxxxxxxxxxxxxxxxxxxxx"
 
       # Album, kterému zůstal jen text (fotky zatím nemá)
       - nazev: "Zákulisí"

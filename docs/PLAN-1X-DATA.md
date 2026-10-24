@@ -118,7 +118,7 @@ Konflikt čísel: rezerva „Mám PDF“ v ROADMAP počítá s úpravou 12 a exp
 
 **Hotovo, když:** titulní fotka alba jde nastavit a zrušit, ukazuje se na stránce fotografa a ročníku; přechod
 z 12 na 13 projde na kopiích všech starých verzí; export 9 → import vrátí totéž; 1.4 otevře novou databázi jen
-pro čtení a export 8 odmítne srozumitelnou hláškou.
+pro čtení a export 9 odmítne srozumitelnou hláškou.
 
 **Ověří uživatel:** před aktualizací export YAML; po ní nastaví titulní fotku u pár alb jednoho fotografa,
 export → import do prázdného účtu ukáže stejné karty.
@@ -259,7 +259,7 @@ kontrolovat) projde; databáze jen pro čtení se nezmění; oprava přes „Pou
 
 **Ověří uživatel:** po týdnu zadávání okno Kontrola údajů… ukazuje počty opravených a „V pořádku“ po pravidlech.
 
-**Nedělá se v 1.6:** nové klíče `ok-…` (export 8 už vyšel s 1.5.1, další by chtěly export 9), deník změn,
+**Nedělá se v 1.6:** nové klíče `ok-…` (export 9 už vyšel s 1.5.1, další by chtěly export 10), deník změn,
 knihovny strojového učení, skrývání tvrdých pravidel.
 
 ---
@@ -361,7 +361,7 @@ Návrhy pro práci s desítkami modelek denně. U každého: užitek, pracnost, 
 denní zálohy a Vrátit u fotek stačí“; NAVRH-KONTROLA2 deník také odmítá. Doporučení: **nedělat**. Co potřebu
 pokryje bez deníku: posledních 100 událostí Kontroly (1.6.3: „22. 11. opraveno – výška 17 → 170“), Vrátit
 u každé hromadné akce v oznámení, denní zálohy. Pokud by uživatel chtěl aspoň „Naposledy upravené“, stačí
-sloupec `modelky.upraveno` – pak ho přidat **do úpravy č. 12 v 1.5.1** (později by to byla další úprava
+sloupec `modelky.upraveno` – pak ho přidat **do úpravy č. 13 v 1.5.1** (později by to byla další úprava
 schématu); do exportu nejde, starší program ho ignoruje. Rozhodne uživatel před 1.5.1.
 
 ### 1.12 (návrh) – Úplnost a ročníky
@@ -422,7 +422,7 @@ naučené“ vrátí výchozí nálezy; kontrola 5 000 modelek do 120 ms.
 ## Soulad s Rozhodnuto a Nedělat
 
 - **Deník změn (Nedělat):** R6 se nedělá; Vrátit jen v oznámení po jedné akci (1.6.2, 1.13) jako u fotek.
-- **Schéma a export:** jediná změna v 1.5.1 (úprava č. 12, export 8) podle pravidla „nová úprava + nová verze
+- **Schéma a export:** jediná změna v 1.5.1 (úprava č. 13, export 9) podle pravidla „nová úprava + nová verze
   exportu, starší program jen pro čtení a novější export odmítne“. **Konflikt čísel:** rezerva „Mám PDF“
   v ROADMAP uvádí úpravu 12 a export 8 a 2.7 Chytré výběry 13 a 9 – čísla se přidělují podle pořadí vydání,
   text rezervy a 2.7 je potřeba upravit na „další volná úprava schématu a verze exportu“.

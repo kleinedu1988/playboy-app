@@ -188,6 +188,7 @@ do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají n�
 | 1.20 | Wikidata I – návrh údajů u modelky | – | 1.12 |
 | 1.21 | Wikidata II – hromadně v Údržbě, příprava dalšího roku | 1.20 | 1.13 |
 | 1.22 | Kvalita kódu a testy – výpočty Statistik a Přehledu do `src/lib` s testy, chybějící testy backendu, jeden správce oken a rozepsaných změn, test rozhraní v Playwrightu | – | nové (revize) |
+| 1.23 | Online pictorialy – typ alba „Pictorial online“ s datem nafocení (jen informace, nemění vydání ani titulní fotku), výskyt „online“ podle něj; zařadit hned za 1.9 | 1.9 (úprava schématu č. 12) | nové |
 | **2.x** | **Chytrá sbírka** | | |
 | 2.0 | Chytré hledání I – synonyma, našeptávač, učení z otevíraných výsledků | – | 1.9 (kroky 1, 2, 6, 7) |
 | 2.1 | Chytré hledání II – česká věta jako filtr a Síť slov (malá znaková neuronová síť) | 2.0 | 1.9 (kroky 3, 4) + síť |
@@ -372,7 +373,7 @@ samostatná verze (1.9.0–1.9.3). Rozpracování: [PLAN-1X-DATA.md](docs/PLAN-1
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | Sjednocení zápisů | `GetRuzneZapisy`: fotograf (dělený čárkou), národnost, místo narození, vlasy, oči, etnicita, tagy – stejné bez diakritiky, Jaro–Winkler ≥ 0,92, iniciála, prohozené pořadí; filtr „Zápisy“ v Údržbě, „Sjednotit na …“ se zálohou, „Různí lidé“ v `nastaveni`; oprava `PrejmenovatFotografa` a `GetAlbaFotografa` pro víc fotografů v poli | M |
-| 2 | Titulní fotka alba a nové klíče **[schéma]** | Úprava č. 12: `alba.titulni` (ID souboru), `vydani.netyka_se`, `modelky.upraveno` (datum poslední úpravy – „Naposledy upravené“ v galerii a řazení, bez historie změn); klíče `fotograf` (album) a `obalka` (číslo); nabídka fotky „Nastavit jako titulní fotku alba“, použití na stránce fotografa a ročníku; export 8 (`titulni_fotka`, `netyka_se` u čísla), `EXPORT.md`, test verze dat a přechodu ze starých verzí | S–M |
+| 2 | Titulní fotka alba a nové klíče **[schéma]** | Úprava č. 12: `alba.titulni` (ID souboru), `alba.datum` (kdy bylo album nafoceno nebo zveřejněno, pro online pictorialy – viz 1.23), typ alba „Pictorial online“, `vydani.netyka_se`, `modelky.upraveno` (datum poslední úpravy – „Naposledy upravené“ v galerii a řazení, bez historie změn); klíče `fotograf` (album) a `obalka` (číslo); nabídka fotky „Nastavit jako titulní fotku alba“, použití na stránce fotografa a ročníku; export 8 (`titulni_fotka`, `netyka_se` u čísla), `EXPORT.md`, test verze dat a přechodu ze starých verzí | S–M |
 | 3 | Nové úkoly v Údržbě | Playmate bez data narození (vlastní filtr, vyšší váha), číslo s coverem bez modelky z obálky, centerfold a pictorial bez fotografa; „Netýká se“ s novými klíči; řádky v souhrnu úvodu | M |
 | 4 | Kontrola při zadávání | `PodobneModelky` při psaní jména (práh 0,88, nejvýš 3 s fotkou), „Myslel jsi …?“ u fotografa a národnosti, `ZkontrolovatModelku` po uložení s oznámením a Opravit; „Sloučit…“ u nálezu podobného jména | M |
 
@@ -381,6 +382,22 @@ stránkách; titulní fotka alba se ukazuje na stránce fotografa a ročníku; n
 „Netýká se“; překlep ve jméně existující modelky se ukáže při psaní a výška 17 cm hned po uložení; přechod
 na úpravu č. 12 projde ze všech starých verzí, export 8 → import vrátí totéž, 1.7 otevře novou databázi jen pro
 čtení a export 8 odmítne srozumitelnou hláškou.
+
+### 1.23 – Online pictorialy (zařadit hned za 1.9)
+
+**Cíl:** tři druhy výskytu modelky odpovídají albům: **Centerfold** (playmate – odvodí kategorii Playmate měsíce),
+**Pictorial** (u čísla časopisu) a nově **Pictorial online** (Cyber Girl, Coed, Muse… – pictorialy jen na webu).
+Online album má **datum nafocení nebo zveřejnění** (RRRR, RRRR-MM nebo RRRR-MM-DD): je to jen informace u alba,
+nepřenáší se do vydání, kalendáře ani na titulní fotku modelky. Schéma i export řeší úprava č. 12 v 1.9.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Typ a datum v okně alba | Typ „Pictorial online“ vedle Pictorial, Centerfold, Cover; u něj pole „Nafoceno“ místo vydání (kontrola tvaru jako u data narození); v profilu nadpis alba s datem („Pictorial online · nafoceno 06/2004“) | S–M |
+| 2 | Výskyt a filtry | Modelka s online albem a bez čísla má výskyt „jen online“ i bez online kategorie; filtr typu alba a hledání `typ:online`, `nafoceno:2004`; Statistiky: druh výskytu „Pictorial online“ (rok = datum nafocení) | M |
+| 3 | Převod starších alb | Údržba nabídne alba Pictorial bez vydání u modelek s online kategorií k převedení na „Pictorial online“ (po jednom nebo hromadně, s potvrzením) | S |
+
+**Hotovo, když:** Cyber Girl s online albem z 06/2004 má výskyt „jen online“, album ukazuje datum nafocení,
+kalendář ani titulní fotka se nezměnily; export 8 datum i typ přenese a starší program novější export odmítne.
 
 ### 1.10 – Kontrola 2.0
 

@@ -372,12 +372,28 @@ export function rozlozitKategorie(text) {
 export const popisKategorie = k => [k.nazev, k.detail, k.zbytek].filter(Boolean).join(' ');
 export const slozitKategorie = seznam => seznam.map(popisKategorie).join(', ');
 
-// Kategorie odvozené z dat: centerfold = Playmate měsíce, obálka = Modelka obálky
+// Kategorie odvozené z dat: centerfold = Playmate měsíce, obálka = Modelka obálky, online album = Cyber Girl
+// (jen když modelka nemá zapsanou jinou online kategorii, třeba Coed nebo Muse)
 export function odvozeneKategorie(modelka) {
     return [
         (modelka.centerfoldy || []).length ? 'Playmate měsíce' : '',
+        (modelka.onlineAlba || []).length && !onlineKategorie(modelka) ? 'Cyber Girl' : '',
         (modelka.obalky || []).length ? 'Modelka obálky' : '',
     ].filter(Boolean);
+}
+
+// První zapsaná online kategorie modelky (Cyber Girl, Coed, Muse…), nebo undefined
+export function onlineKategorie(modelka) {
+    const online = new Set(KATEGORIE.filter(k => k.online).map(k => k.nazev));
+    return rozlozitKategorie(modelka.role).find(k => online.has(k.nazev));
+}
+
+// Páska online alba v rohu fotky: „Cyber Girl · Čvn 04“ (bez data jen kategorie)
+export function paskaOnline(modelka, datum) {
+    const nazev = onlineKategorie(modelka)?.nazev || 'Cyber Girl';
+    const [rok, mesic] = String(datum || '').split('-');
+    if (!/^\d{4}$/.test(rok || '')) return nazev;
+    return `${nazev} · ${mesic ? ZKRATKY_PASKY[parseInt(mesic) - 1] + ' ' : ''}${rok.slice(2)}`;
 }
 
 // Výskyt modelky: v časopise (centerfold, obálka nebo album u konkrétního čísla – měsíc nebo speciál; ročník bez
@@ -387,9 +403,7 @@ export const VYSKYT = { casopis: 'V časopise', online: 'Jen online', '': 'Neur�
 export function vyskytModelky(modelka) {
     const cisla = [...(modelka.vydani || []), ...(modelka.obalky || []), ...(modelka.centerfoldy || [])];
     if (cisla.some(v => rozlozitVydani(v)?.mesic)) return 'casopis';
-    if ((modelka.onlineAlba || []).length) return 'online';
-    const online = new Set(KATEGORIE.filter(k => k.online).map(k => k.nazev));
-    return rozlozitKategorie(modelka.role).some(k => online.has(k.nazev)) ? 'online' : '';
+    return (modelka.onlineAlba || []).length || onlineKategorie(modelka) ? 'online' : '';
 }
 
 // Všechny kategorie modelky v pořadí seznamu (vlastní na konci); odvozená má příznak odvozena

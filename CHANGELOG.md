@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.10] – 2026-10-24
+
+### Přidáno
+- Online album (Pictorial online) dává modelce odvozenou kategorii **Cyber Girl**, stejně jako centerfold dává Playmate měsíce. Když má modelka zapsanou jinou online kategorii (Coed, Muse, Creator…), použije se ta. Funguje ve filtru Kategorie, ve Statistikách i v hledání `kategorie:"cyber girl"`.
+- Proužek v rohu fotky v profilu: u online alba „Cyber Girl · Čvn 04“ (datum nafocení, bez data jen kategorie); klik přejde na album.
+
 ## [0.99.9] – 2026-10-24
 
 ### Přidáno

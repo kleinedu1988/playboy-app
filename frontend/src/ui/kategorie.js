@@ -18,7 +18,7 @@ export function pripojitVyberKategorii(vstup, kontejner, odvozene = []) {
             const polozka = polozky.find(p => p.nazev === k.nazev);
             const odvozena = odvozene.includes(k.nazev);
             const zapnuta = Boolean(polozka) || odvozena;
-            const title = odvozena ? (k.nazev === 'Playmate měsíce' ? 'Odvozeno z centerfoldu modelky' : 'Odvozeno z obálky ve sbírce') : '';
+            const title = odvozena ? { 'Playmate měsíce': 'Odvozeno z centerfoldu modelky', 'Cyber Girl': 'Odvozeno z online alba modelky' }[k.nazev] || 'Odvozeno z obálky ve sbírce' : '';
             let detail = '';
             if (polozka && k.rok) {
                 detail = `<input type="text" class="kategorie-detail" data-kategorie-rok="${esc(k.nazev)}" value="${esc(polozka.detail)}" placeholder="rok" inputmode="numeric" maxlength="4" aria-label="Rok – ${esc(k.nazev)}" />`;

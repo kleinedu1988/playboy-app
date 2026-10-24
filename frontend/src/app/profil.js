@@ -1,5 +1,5 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
-import { TYP_ONLINE, VYSKYT, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
+import { TYP_ONLINE, VYSKYT, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -106,7 +106,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         const role = (v === playmateVydani && jePlaymate) ? 'Playmate · ' : '';
         const popisek = `${role}${paskaCisla(v)}`;
         return `<button type="button" class="panel-paska" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
-    }).join('');
+    }).join('') + [...new Set(modelka.onlineAlba || [])].sort().map(d =>
+        `<button type="button" class="panel-paska" data-online-album="${esc(d)}" title="Přejít na online album${d ? ` (nafoceno ${esc(formatDatum(d))})` : ''}">${esc(paskaOnline(modelka, d))}</button>`).join('');
     const paska = paskyHtml ? `<div class="panel-pasky">${paskyHtml}</div>` : '';
     document.getElementById('modelHeader').innerHTML = `
         ${paska}
@@ -264,7 +265,7 @@ export async function nacistFotkyModelky(modelkaId) {
         const popis = sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek');
 
         return `
-            <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}">
+            <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}"${a.typ === TYP_ONLINE ? ` data-online="${esc(a.datumAlba || '')}"` : ''}>
                 <div class="album-header">
                     <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
                     <span>${esc(popisTypuAlba(a.typ, a.datumAlba))} · ${popis}</span>
@@ -387,6 +388,15 @@ export function pripravit() {
         if (!tlacitko) return;
         const rozbaleno = tlacitko.previousElementSibling.classList.toggle('open');
         tlacitko.textContent = rozbaleno ? 'méně' : 'více';
+    });
+
+    // Páska online alba přeskočí na album (stejné datum, jinak první online album)
+    document.getElementById('modelHeader').addEventListener('click', (e) => {
+        const paska = e.target.closest('[data-online-album]');
+        if (!paska) return;
+        const alba = [...document.querySelectorAll('#photosGrid section.album[data-online]')];
+        const album = alba.find(s => s.dataset.online === paska.dataset.onlineAlbum) || alba[0];
+        album?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     document.getElementById('photosGrid').addEventListener('pointerdown', (e) => {

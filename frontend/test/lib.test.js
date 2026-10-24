@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi, cisloNevyslo, ciselRocniku, rozlozitKategorie, slozitKategorie, kategorieModelky, popisKategorie, vyskytModelky } from '../src/lib/format.js';
+import { nazevAlba, esc, formatDatum, platneDatum, sjednotit, vekPriVydani, udajChybi, cisloNevyslo, ciselRocniku, rozlozitKategorie, slozitKategorie, kategorieModelky, popisKategorie, paskaOnline, vyskytModelky } from '../src/lib/format.js';
 import { sestavitAlba, zacatkyAlb, novePoradi } from '../src/lib/alba.js';
 
 test('názvy a formáty', () => {
@@ -325,6 +325,12 @@ test('kategorie modelek', () => {
     const m = { role: 'Vlastní, Celebrita', centerfoldy: ['1995-03'], obalky: ['1996-01'] };
     assert.deepEqual(kategorieModelky(m).map(popisKategorie), ['Playmate měsíce', 'Celebrita', 'Modelka obálky', 'Vlastní']);
     assert.equal(kategorieModelky(m)[0].odvozena, true);
+    // Online album = Cyber Girl, jen když není zapsaná jiná online kategorie
+    assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Cyber Girl']);
+    assert.deepEqual(kategorieModelky({ role: 'Coed', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Coed']);
+    assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }, '2004-06-12'), 'Cyber Girl · Čvn 04');
+    assert.equal(paskaOnline({ role: 'Muse' }, '2010'), 'Muse · 10');
+    assert.equal(paskaOnline({ role: '' }, ''), 'Cyber Girl');
     // Údržba: kategorie chybí, jen když není zapsaná ani odvozená
     assert.equal(udajChybi({ role: '', centerfoldy: [], obalky: [] }, 'role'), true);
     assert.equal(udajChybi({ role: '', centerfoldy: ['1995-03'], obalky: [] }, 'role'), false);

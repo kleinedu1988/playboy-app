@@ -138,9 +138,27 @@ export function sklonovat(n, jedna, dve, pet) {
 // Pictorial jen na webu (Cyber Girl, Coed, Muse…): nepatří k číslu časopisu, místo vydání má datum nafocení
 export const TYP_ONLINE = 'Pictorial online';
 
-// Typ alba v hlavičce; online album s datem nafocení: „Pictorial online · nafoceno červen 2004“
+// Cyber Girl of the Week: online album, u kterého se z celého data nafocení počítá týden
+export const TYP_CG_TYDNE = 'Cyber Girl týdne';
+export const jeOnline = typ => typ === TYP_ONLINE || typ === TYP_CG_TYDNE;
+
+// Týden v roce podle ISO 8601 (týden začíná pondělím, 1. týden obsahuje první čtvrtek) z data RRRR-MM-DD;
+// bez dne týden nejde určit
+export function tydenRoku(datum) {
+    const shoda = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(datum || ''));
+    if (!shoda) return null;
+    const d = new Date(Date.UTC(+shoda[1], +shoda[2] - 1, +shoda[3]));
+    d.setUTCDate(d.getUTCDate() + 3 - (d.getUTCDay() + 6) % 7);
+    const prvniCtvrtek = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+    return { tyden: 1 + Math.round(((d.getTime() - prvniCtvrtek.getTime()) / 864e5 - 3 + (prvniCtvrtek.getUTCDay() + 6) % 7) / 7), rok: d.getUTCFullYear() };
+}
+
+// Typ alba v hlavičce; online album s datem nafocení: „Pictorial online · nafoceno červen 2004“,
+// Cyber Girl týdne s celým datem: „Cyber Girl týdne · 24. týden 2004 (nafoceno 12. 6. 2004)“
 export function popisTypuAlba(typ, datum) {
-    return typ === TYP_ONLINE && datum ? `${typ} · nafoceno ${formatDatum(datum)}` : typ;
+    const tyden = typ === TYP_CG_TYDNE && tydenRoku(datum);
+    if (tyden) return `${typ} · ${tyden.tyden}. týden ${tyden.rok} (nafoceno ${formatDatum(datum)})`;
+    return jeOnline(typ) && datum ? `${typ} · nafoceno ${formatDatum(datum)}` : typ;
 }
 
 export function nazevAlba(album, typ) {
@@ -373,11 +391,11 @@ export const popisKategorie = k => [k.nazev, k.detail, k.zbytek].filter(Boolean)
 export const slozitKategorie = seznam => seznam.map(popisKategorie).join(', ');
 
 // Kategorie odvozené z dat: centerfold = Playmate měsíce, obálka = Modelka obálky, online album = Cyber Girl
-// (jen když modelka nemá zapsanou jinou online kategorii, třeba Coed nebo Muse)
+// (jen když modelka nemá zapsanou jinou online kategorii, třeba Coed nebo Muse); album Cyber Girl týdne vždy
 export function odvozeneKategorie(modelka) {
     return [
         (modelka.centerfoldy || []).length ? 'Playmate měsíce' : '',
-        (modelka.onlineAlba || []).length && !onlineKategorie(modelka) ? 'Cyber Girl' : '',
+        modelka.cyberGirlTydne || (modelka.onlineAlba || []).length && !onlineKategorie(modelka) ? 'Cyber Girl' : '',
         (modelka.obalky || []).length ? 'Modelka obálky' : '',
     ].filter(Boolean);
 }
@@ -407,7 +425,8 @@ export function vyskytModelky(modelka) {
 export function kategorieModelky(modelka) {
     const zapsane = rozlozitKategorie(modelka.role);
     odvozeneKategorie(modelka).forEach(nazev => {
-        if (!zapsane.some(k => k.nazev === nazev)) zapsane.push({ nazev, detail: '', zbytek: '', vlastni: false, odvozena: true });
+        const detail = nazev === 'Cyber Girl' && modelka.cyberGirlTydne ? 'týdne' : '';
+        if (!zapsane.some(k => k.nazev === nazev)) zapsane.push({ nazev, detail, zbytek: '', vlastni: false, odvozena: true });
     });
     const poradi = k => k.vlastni ? KATEGORIE.length : KATEGORIE.findIndex(z => z.nazev === k.nazev);
     return zapsane.sort((a, b) => poradi(a) - poradi(b));

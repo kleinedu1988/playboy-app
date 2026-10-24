@@ -1,5 +1,5 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
-import { TYP_ONLINE, VYSKYT, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
+import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -228,7 +228,7 @@ export async function nacistFotkyModelky(modelkaId) {
     // ruční přeřazení fotek uvnitř alba tak pořadí alb nemění
     // Online album se řadí podle data nafocení (vydání nemá)
     const klicPoradi = a => {
-        const v = a.typ === TYP_ONLINE ? rozlozitVydani(a.datumAlba.slice(0, 7)) : rozlozitVydani(a.typ === 'Centerfold' ? a.album : a.vydani);
+        const v = jeOnline(a.typ) ? rozlozitVydani(a.datumAlba.slice(0, 7)) : rozlozitVydani(a.typ === 'Centerfold' ? a.album : a.vydani);
         return v ? `0${v.rok}${v.mesic || '00'}${v.edice}` : '1';
     };
     const prvniFotka = a => Math.min(...a.fotky.map(f => f.id));
@@ -265,7 +265,7 @@ export async function nacistFotkyModelky(modelkaId) {
         const popis = sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek');
 
         return `
-            <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}"${a.typ === TYP_ONLINE ? ' data-online' : ''}>
+            <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}"${jeOnline(a.typ) ? ' data-online' : ''}>
                 <div class="album-header">
                     <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
                     <span>${esc(popisTypuAlba(a.typ, a.datumAlba))} · ${popis}</span>

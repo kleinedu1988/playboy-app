@@ -1,5 +1,5 @@
 // Výběrová okna, ukládání formulářů a hledání
-import { TYP_ONLINE, esc, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
+import { TYP_CG_TYDNE, TYP_ONLINE, esc, tydenRoku, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
 import { AddBulkPhotos, AddModelka, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -203,9 +203,11 @@ export function pripravit() {
     // Formulář: Hromadné fotky do alba
     document.getElementById('addAlbumForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
-        const typ = document.getElementById('selectTyp').value;
+        const vybranyTyp = document.getElementById('selectTyp').value;
         // Online album k číslu nepatří: vydání se nebere, místo něj datum nafocení
-        const online = typ === TYP_ONLINE;
+        const online = vybranyTyp === TYP_ONLINE;
+        const cgTydne = online && document.getElementById('inputCGTydne').checked;
+        const typ = cgTydne ? TYP_CG_TYDNE : vybranyTyp;
         const rok = online ? '' : document.getElementById('inputAlbumRok').value;
         const mesic = online ? '' : document.getElementById('selectAlbumMesic').value;
         // Pictorialu stačí ročník, měsíc bez roku ale nedává smysl
@@ -218,6 +220,11 @@ export function pripravit() {
         if (!platneDatum(datum)) {
             document.getElementById('inputAlbumDatum').focus();
             oznamit('Datum nafocení napiš jako RRRR-MM-DD, RRRR-MM nebo jen rok RRRR.');
+            return;
+        }
+        if (cgTydne && !tydenRoku(datum)) {
+            document.getElementById('inputAlbumDatum').focus();
+            oznamit('Cyber Girl of the Week potřebuje celé datum RRRR-MM-DD, aby šel spočítat týden.');
             return;
         }
         const links = document.getElementById('inputBulkLinks').value;

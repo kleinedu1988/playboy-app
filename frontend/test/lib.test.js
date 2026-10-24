@@ -328,6 +328,7 @@ test('kategorie modelek', () => {
     // Online album = Cyber Girl, jen když není zapsaná jiná online kategorie
     assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Cyber Girl']);
     assert.deepEqual(kategorieModelky({ role: 'Coed', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Coed']);
+    assert.deepEqual(kategorieModelky({ role: 'Online', onlineAlba: ['2004-06-12'], cyberGirlTydne: true }).map(popisKategorie), ['Cyber Girl týdne', 'Online']);
     // Páska bez data: Cyber Girl má přednost před Online, ostatní online kategorie zatím jako Online
     assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }), 'Cyber Girl');
     assert.equal(paskaOnline({ role: 'Online, Cyber Girl měsíce', onlineAlba: ['2004'] }), 'Cyber Girl');
@@ -373,6 +374,15 @@ test('online album: výskyt jen online, nadpis s datem nafocení a hledání naf
     assert.equal(popisTypuAlba(TYP_ONLINE, '2004-06'), 'Pictorial online · nafoceno červen 2004');
     assert.equal(popisTypuAlba(TYP_ONLINE, '2004-06-15'), 'Pictorial online · nafoceno 15. 6. 2004');
     assert.equal(popisTypuAlba(TYP_ONLINE, ''), 'Pictorial online');
+    // Cyber Girl týdne: týden podle ISO 8601 z celého data
+    const { tydenRoku, TYP_CG_TYDNE } = await import('../src/lib/format.js');
+    assert.deepEqual(tydenRoku('2004-06-12'), { tyden: 24, rok: 2004 });
+    assert.deepEqual(tydenRoku('2005-01-01'), { tyden: 53, rok: 2004 });
+    assert.deepEqual(tydenRoku('2007-12-31'), { tyden: 1, rok: 2008 });
+    assert.deepEqual(tydenRoku('2004-01-05'), { tyden: 2, rok: 2004 });
+    assert.equal(tydenRoku('2004-06'), null);
+    assert.equal(popisTypuAlba(TYP_CG_TYDNE, '2004-06-12'), 'Cyber Girl týdne · 24. týden 2004 (nafoceno 12. 6. 2004)');
+    assert.equal(popisTypuAlba(TYP_CG_TYDNE, '2004'), 'Cyber Girl týdne · nafoceno 2004');
     assert.equal(popisTypuAlba('Pictorial', '2004'), 'Pictorial');
 
     // nafoceno: je předpona data (rok nebo měsíc), čárka = nebo; pohled bez data alba slovo nic neomezuje

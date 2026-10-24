@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.12] – 2026-10-24
+
+### Přidáno
+- **Cyber Girl of the Week:** v okně alba u typu Pictorial online nová volba „Cyber Girl of the Week“. Program z celého data nafocení (RRRR-MM-DD) spočítá týden v roce podle ISO 8601 a ukáže ho hned v okně; nadpis alba v profilu „Cyber Girl týdne · 24. týden 2004 (nafoceno 12. 6. 2004)“. Modelka dostane odvozenou kategorii **Cyber Girl týdne** (i když má zapsané Online), proužek u profilovky zůstává „Cyber Girl“.
+- Album se ukládá jako typ `Cyber Girl týdne` – bez změny databáze; v exportu je to nová hodnota `typ` (starší 0.99.9–0.99.11 ji při importu nepřijme).
+
 ## [0.99.11] – 2026-10-24
 
 ### Změněno

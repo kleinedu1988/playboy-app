@@ -853,6 +853,20 @@ main {
     justify-content: flex-end;
 }
 
+/* Zaškrtávací volba pod polem (Cyber Girl of the Week v okně alba) */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: auto;
+    accent-color: var(--accent);
+}
+
 .form-row .form-group label {
     min-height: 28px;
     display: flex;

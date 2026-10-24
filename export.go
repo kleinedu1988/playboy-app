@@ -436,7 +436,7 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 		}
 	}
 	if vydani := strings.TrimSpace(album.Vydani); vydani != "" && album.Typ != "Centerfold" {
-		if album.Typ == typOnline {
+		if jeOnlineTyp(album.Typ) {
 			// Smazání vydání, které online album nemá, nic nemění
 			if vydani != smazatUdaj {
 				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: online album nepatří k vydání „%s“ (kdy bylo nafoceno, patří do „datum“)", kde, vydani))
@@ -448,8 +448,8 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 		}
 	}
 	if datum := strings.TrimSpace(album.Datum); datum != "" {
-		if album.Typ != typOnline {
-			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: datum nafocení má jen album typu %s", kde, typOnline))
+		if !jeOnlineTyp(album.Typ) {
+			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: datum nafocení má jen album typu %s nebo %s", kde, typOnline, typCGTydne))
 		} else if datum == smazatUdaj {
 			a.SetDatumAlba(modelkaID, album.Nazev, album.Typ, "")
 		} else if !platneDatum(datum) {

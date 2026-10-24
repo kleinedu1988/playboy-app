@@ -230,15 +230,15 @@ func sloucitAlbaTx(tx *sql.Tx, zModelka int, zAlbum, zTyp string, doModelka int,
 		`UPDATE fotky SET album_id = ?2, rotace = CASE WHEN ?3 = 1 THEN ?4 ELSE rotace END, poradi = NULL WHERE album_id = ?1`,
 		// Vydání, datum nafocení, text a fotograf cílového alba mají přednost, chybějící doplní zdrojové;
 		// online album vydání nemá a datum má jen ono
-		`UPDATE alba SET vydani = CASE WHEN vydani = '' AND typ NOT IN ('Centerfold', 'Cover', ?10) THEN ?5 ELSE vydani END,
-			datum = CASE WHEN typ = ?10 THEN COALESCE(NULLIF(datum, ''), NULLIF(?9, '')) ELSE datum END,
+		`UPDATE alba SET vydani = CASE WHEN vydani = '' AND typ NOT IN ('Centerfold', 'Cover', ?10, ?11) THEN ?5 ELSE vydani END,
+			datum = CASE WHEN typ IN (?10, ?11) THEN COALESCE(NULLIF(datum, ''), NULLIF(?9, '')) ELSE datum END,
 			popis = COALESCE(NULLIF(popis, ''), NULLIF(?6, '')), fotograf = COALESCE(NULLIF(fotograf, ''), NULLIF(?7, ''))
 		WHERE id = ?2`,
 		`INSERT OR IGNORE INTO alba_modelky (album_id, modelka_id)
 			SELECT ?2, modelka_id FROM alba_modelky WHERE album_id = ?1 AND modelka_id <> ?8`,
 	}
 	for _, krok := range kroky {
-		if _, err := tx.Exec(krok, zdrojID, cilID, spojit, rotace, vydani, popis, fotograf, doModelka, datum, typOnline); err != nil {
+		if _, err := tx.Exec(krok, zdrojID, cilID, spojit, rotace, vydani, popis, fotograf, doModelka, datum, typOnline, typCGTydne); err != nil {
 			return err
 		}
 	}
@@ -598,9 +598,9 @@ func (a *App) ObnovitFotky(fotky []ObnovaFotky) int {
 			continue
 		}
 		// Album, které zmizelo s poslední fotkou, dostane zpět vydání (online album datum nafocení) a spojení
-		a.db.Exec(`UPDATE alba SET vydani = CASE WHEN vydani = '' AND typ <> ?4 THEN ?1 ELSE vydani END,
-			datum = CASE WHEN typ = ?4 THEN COALESCE(NULLIF(datum, ''), NULLIF(?5, '')) ELSE datum END,
-			spojit = MAX(spojit, ?2) WHERE id = ?3`, vydani, f.Spojit, albumID, typOnline, f.Datum)
+		a.db.Exec(`UPDATE alba SET vydani = CASE WHEN vydani = '' AND typ NOT IN (?4, ?6) THEN ?1 ELSE vydani END,
+			datum = CASE WHEN typ IN (?4, ?6) THEN COALESCE(NULLIF(datum, ''), NULLIF(?5, '')) ELSE datum END,
+			spojit = MAX(spojit, ?2) WHERE id = ?3`, vydani, f.Spojit, albumID, typOnline, f.Datum, typCGTydne)
 		vysledek, err := a.db.Exec(`INSERT OR IGNORE INTO fotky (album_id, drive_file_id, rotace, hodnoceni, poradi, pridano) VALUES (?, ?, ?, ?, ?, ?)`,
 			albumID, ids[0], f.Rotace, f.Hodnoceni, poradi, prvniNeprazdny(f.Pridano, ted()))
 		if err != nil {

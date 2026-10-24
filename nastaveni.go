@@ -236,7 +236,7 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 			pridatChybejici(&p.AlbaBezPopisu, polozka, obsahujeKlic(netykaSe, "text"), vcetneSkrytych)
 		}
 		// Online album k číslu nepatří, vydání mu nechybí
-		if polozka.Typ == typOnline {
+		if jeOnlineTyp(polozka.Typ) {
 			p.AlbOnline++
 		} else if vydani == "" {
 			pridatChybejici(&p.AlbaBezVydani, polozka, obsahujeKlic(netykaSe, "vydani"), vcetneSkrytych)

@@ -106,8 +106,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         const role = (v === playmateVydani && jePlaymate) ? 'Playmate · ' : '';
         const popisek = `${role}${paskaCisla(v)}`;
         return `<button type="button" class="panel-paska" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
-    }).join('') + [...new Set(modelka.onlineAlba || [])].sort().map(d =>
-        `<button type="button" class="panel-paska" data-online-album="${esc(d)}" title="Přejít na online album${d ? ` (nafoceno ${esc(formatDatum(d))})` : ''}">${esc(paskaOnline(modelka, d))}</button>`).join('');
+    }).join('') + ((modelka.onlineAlba || []).length
+        ? `<button type="button" class="panel-paska" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
     const paska = paskyHtml ? `<div class="panel-pasky">${paskyHtml}</div>` : '';
     document.getElementById('modelHeader').innerHTML = `
         ${paska}
@@ -265,7 +265,7 @@ export async function nacistFotkyModelky(modelkaId) {
         const popis = sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek');
 
         return `
-            <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}"${a.typ === TYP_ONLINE ? ` data-online="${esc(a.datumAlba || '')}"` : ''}>
+            <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}"${a.typ === TYP_ONLINE ? ' data-online' : ''}>
                 <div class="album-header">
                     <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
                     <span>${esc(popisTypuAlba(a.typ, a.datumAlba))} · ${popis}</span>
@@ -390,13 +390,11 @@ export function pripravit() {
         tlacitko.textContent = rozbaleno ? 'méně' : 'více';
     });
 
-    // Páska online alba přeskočí na album (stejné datum, jinak první online album)
+    // Páska online alb přeskočí na první online album
     document.getElementById('modelHeader').addEventListener('click', (e) => {
         const paska = e.target.closest('[data-online-album]');
         if (!paska) return;
-        const alba = [...document.querySelectorAll('#photosGrid section.album[data-online]')];
-        const album = alba.find(s => s.dataset.online === paska.dataset.onlineAlbum) || alba[0];
-        album?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.querySelector('#photosGrid section.album[data-online]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     document.getElementById('photosGrid').addEventListener('pointerdown', (e) => {

@@ -388,12 +388,9 @@ export function onlineKategorie(modelka) {
     return rozlozitKategorie(modelka.role).find(k => online.has(k.nazev));
 }
 
-// Páska online alba v rohu fotky: „Cyber Girl · Čvn 04“ (bez data jen kategorie)
-export function paskaOnline(modelka, datum) {
-    const nazev = onlineKategorie(modelka)?.nazev || 'Cyber Girl';
-    const [rok, mesic] = String(datum || '').split('-');
-    if (!/^\d{4}$/.test(rok || '')) return nazev;
-    return `${nazev} · ${mesic ? ZKRATKY_PASKY[parseInt(mesic) - 1] + ' ' : ''}${rok.slice(2)}`;
+// Páska online alb v rohu fotky, bez data: Cyber Girl má přednost, jinak „Online“ (Coed, Muse… zatím také)
+export function paskaOnline(modelka) {
+    return kategorieModelky(modelka).some(k => k.nazev === 'Cyber Girl') ? 'Cyber Girl' : 'Online';
 }
 
 // Výskyt modelky: v časopise (centerfold, obálka nebo album u konkrétního čísla – měsíc nebo speciál; ročník bez

@@ -328,9 +328,11 @@ test('kategorie modelek', () => {
     // Online album = Cyber Girl, jen když není zapsaná jiná online kategorie
     assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Cyber Girl']);
     assert.deepEqual(kategorieModelky({ role: 'Coed', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Coed']);
-    assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }, '2004-06-12'), 'Cyber Girl · Čvn 04');
-    assert.equal(paskaOnline({ role: 'Muse' }, '2010'), 'Muse · 10');
-    assert.equal(paskaOnline({ role: '' }, ''), 'Cyber Girl');
+    // Páska bez data: Cyber Girl má přednost před Online, ostatní online kategorie zatím jako Online
+    assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }), 'Cyber Girl');
+    assert.equal(paskaOnline({ role: 'Online, Cyber Girl měsíce', onlineAlba: ['2004'] }), 'Cyber Girl');
+    assert.equal(paskaOnline({ role: 'Online', onlineAlba: ['2004'] }), 'Online');
+    assert.equal(paskaOnline({ role: 'Muse', onlineAlba: [''] }), 'Online');
     // Údržba: kategorie chybí, jen když není zapsaná ani odvozená
     assert.equal(udajChybi({ role: '', centerfoldy: [], obalky: [] }, 'role'), true);
     assert.equal(udajChybi({ role: '', centerfoldy: ['1995-03'], obalky: [] }, 'role'), false);

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.11] – 2026-10-24
+
+### Změněno
+- Proužek online alb v profilu je sjednocený a bez data: **Cyber Girl**, jinak **Online**. Cyber Girl má přednost před Online (i když má modelka zapsané obojí); Coed, Muse a další online kategorie se zatím ukazují jako Online. Proužek je jen jeden, i když má modelka víc online alb.
+
 ## [0.99.10] – 2026-10-24
 
 ### Přidáno

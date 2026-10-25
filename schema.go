@@ -20,16 +20,20 @@ const vydaniPodleTypu = `CASE WHEN %[1]styp IN ('Centerfold', 'Cover') THEN %[1]
 // Pictorial jen na webu (Cyber Girl, Coed, Muse…): nepatří k číslu časopisu, místo vydání má datum nafocení
 const typOnline = "Pictorial online"
 
-// Cyber Girl of the Week: online album, u kterého se z data nafocení počítá týden (v okně alba volba u Pictorial online)
-const typCGTydne = "Cyber Girl týdne"
+// Cyber Girl of the Week / of the Month: online alba, u kterých se z data nafocení počítá týden, nebo měsíc
+// (v okně alba volba u Pictorial online)
+const (
+	typCGTydne  = "Cyber Girl týdne"
+	typCGMesice = "Cyber Girl měsíce"
+)
 
-// Online album (Pictorial online nebo Cyber Girl týdne): bez vydání, s datem nafocení
-func jeOnlineTyp(typ string) bool { return typ == typOnline || typ == typCGTydne }
+// Online album (Pictorial online nebo Cyber Girl týdne či měsíce): bez vydání, s datem nafocení
+func jeOnlineTyp(typ string) bool { return typ == typOnline || typ == typCGTydne || typ == typCGMesice }
 
 // Uzavřené výčty. Rozšiřovat je jde bez změny schématu (přidáním hodnoty sem a do rozhraní), měnit ne.
 var (
 	// Typy alb; cover časopisu je album bez modelky, Pictorial online je pictorial jen na webu (bez vydání, s datem)
-	typyAlb = map[string]bool{"Pictorial": true, "Centerfold": true, "Cover": true, typOnline: true, typCGTydne: true}
+	typyAlb = map[string]bool{"Pictorial": true, "Centerfold": true, "Cover": true, typOnline: true, typCGTydne: true, typCGMesice: true}
 	// Edice kromě výchozí US (ta se do vydání nepíše)
 	dalsiEdice = map[string]bool{"CZ": true}
 	// Klíče „netýká se" u modelky a u alba

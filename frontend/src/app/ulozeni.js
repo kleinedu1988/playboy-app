@@ -1,5 +1,5 @@
 // Výběrová okna, ukládání formulářů a hledání
-import { TYP_CG_TYDNE, TYP_ONLINE, esc, tydenRoku, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
+import { TYP_ONLINE, esc, obdobiCyberGirl, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
 import { AddBulkPhotos, AddModelka, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -206,8 +206,8 @@ export function pripravit() {
         const vybranyTyp = document.getElementById('selectTyp').value;
         // Online album k číslu nepatří: vydání se nebere, místo něj datum nafocení
         const online = vybranyTyp === TYP_ONLINE;
-        const cgTydne = online && document.getElementById('inputCGTydne').checked;
-        const typ = cgTydne ? TYP_CG_TYDNE : vybranyTyp;
+        const cyberGirl = online ? document.getElementById('selectCG').value : '';
+        const typ = cyberGirl || vybranyTyp;
         const rok = online ? '' : document.getElementById('inputAlbumRok').value;
         const mesic = online ? '' : document.getElementById('selectAlbumMesic').value;
         // Pictorialu stačí ročník, měsíc bez roku ale nedává smysl
@@ -222,9 +222,11 @@ export function pripravit() {
             oznamit('Datum nafocení napiš jako RRRR-MM-DD, RRRR-MM nebo jen rok RRRR.');
             return;
         }
-        if (cgTydne && !tydenRoku(datum)) {
+        if (cyberGirl && !obdobiCyberGirl(cyberGirl, datum)) {
             document.getElementById('inputAlbumDatum').focus();
-            oznamit('Cyber Girl of the Week potřebuje celé datum RRRR-MM-DD, aby šel spočítat týden.');
+            oznamit(cyberGirl.endsWith('týdne')
+                ? 'Cyber Girl of the Week potřebuje celé datum RRRR-MM-DD, aby šel spočítat týden.'
+                : 'Cyber Girl of the Month potřebuje datum aspoň RRRR-MM, aby byl znát měsíc.');
             return;
         }
         const links = document.getElementById('inputBulkLinks').value;

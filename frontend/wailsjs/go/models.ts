@@ -311,7 +311,7 @@ export namespace main {
 	    obalky: string[];
 	    centerfoldy: string[];
 	    onlineAlba: string[];
-	    cyberGirlTydne: boolean;
+	    cyberGirl: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -359,7 +359,7 @@ export namespace main {
 	        this.obalky = source["obalky"];
 	        this.centerfoldy = source["centerfoldy"];
 	        this.onlineAlba = source["onlineAlba"];
-	        this.cyberGirlTydne = source["cyberGirlTydne"];
+	        this.cyberGirl = source["cyberGirl"];
 	    }
 	}
 	export class NalezClanku {

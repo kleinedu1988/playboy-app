@@ -110,8 +110,8 @@ type Modelka struct {
 	Centerfoldy []string `json:"centerfoldy"`
 	// Data nafocení jejích online alb (typ Pictorial online, jen pro čtení); album bez data má prázdný text
 	OnlineAlba []string `json:"onlineAlba"`
-	// Má album Cyber Girl týdne (odvozená kategorie Cyber Girl týdne, jen pro čtení)
-	CyberGirlTydne bool `json:"cyberGirlTydne"`
+	// Nejvyšší úroveň jejích alb Cyber Girl: „měsíce“, „týdne“ nebo "" (odvozená kategorie, jen pro čtení)
+	CyberGirl string `json:"cyberGirl"`
 
 	// Popisy a fotografové alb modelky, jen pro hledání
 	textyAlb       string
@@ -1135,18 +1135,22 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 
 	// Online alba modelek s fotkami (vlastní i sdílená): data nafocení pro výskyt „jen online“ a hledání nafoceno:
 	onlineAlbaModelek := map[int][]string{}
-	cyberGirlTydne := map[int]bool{}
+	cyberGirl := map[int]string{}
 	if radky, err := a.db.Query(`SELECT modelka_id, COALESCE(datum, ''), typ FROM alba al WHERE modelka_id IS NOT NULL
-			AND typ IN (?1, ?2) AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
+			AND typ IN (?1, ?2, ?3) AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
 		UNION ALL SELECT am.modelka_id, COALESCE(al.datum, ''), al.typ FROM alba al JOIN alba_modelky am ON am.album_id = al.id
-			WHERE al.typ IN (?1, ?2) AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
-		ORDER BY 2`, typOnline, typCGTydne); err == nil {
+			WHERE al.typ IN (?1, ?2, ?3) AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
+		ORDER BY 2`, typOnline, typCGTydne, typCGMesice); err == nil {
 		for radky.Next() {
 			var id int
 			var d, typ string
 			if radky.Scan(&id, &d, &typ) == nil {
 				onlineAlbaModelek[id] = append(onlineAlbaModelek[id], d)
-				cyberGirlTydne[id] = cyberGirlTydne[id] || typ == typCGTydne
+				if typ == typCGMesice {
+					cyberGirl[id] = "měsíce"
+				} else if typ == typCGTydne && cyberGirl[id] == "" {
+					cyberGirl[id] = "týdne"
+				}
 			}
 		}
 		radky.Close()
@@ -1229,7 +1233,7 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		if m.OnlineAlba == nil {
 			m.OnlineAlba = []string{}
 		}
-		m.CyberGirlTydne = cyberGirlTydne[m.ID]
+		m.CyberGirl = cyberGirl[m.ID]
 		if odpovidaHledani(m, vyhledavani) {
 			vysledky = append(vysledky, m)
 		}
@@ -1311,8 +1315,8 @@ func poleHledani(m Modelka) map[string]string {
 	if len(m.Centerfoldy) > 0 {
 		kategorie += ", Playmate měsíce"
 	}
-	if m.CyberGirlTydne {
-		kategorie += ", Cyber Girl týdne"
+	if m.CyberGirl != "" {
+		kategorie += ", Cyber Girl " + m.CyberGirl
 	} else if len(m.OnlineAlba) > 0 && !vzorOnlineKategorie.MatchString(m.Role) {
 		kategorie += ", Cyber Girl"
 	}
@@ -2291,8 +2295,8 @@ func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
 		return false
 	}
 	// Centerfold a cover mají vydání v názvu; online album k číslu nepatří (má datum nafocení)
-	_, err := a.db.Exec("UPDATE alba SET vydani = ? WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ NOT IN ('Centerfold', 'Cover', ?, ?)",
-		vydani, modelkaID, album, typ, typOnline, typCGTydne)
+	_, err := a.db.Exec("UPDATE alba SET vydani = ? WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ NOT IN ('Centerfold', 'Cover', ?, ?, ?)",
+		vydani, modelkaID, album, typ, typOnline, typCGTydne, typCGMesice)
 	if err != nil {
 		a.chyba("přiřazení alba k číslu", err)
 	}
@@ -2306,8 +2310,8 @@ func (a *App) SetDatumAlba(modelkaID int, album, typ, datum string) bool {
 	if !platneDatum(datum) || (!jeOnlineTyp(typ) && datum != "") {
 		return false
 	}
-	_, err := a.db.Exec("UPDATE alba SET datum = NULLIF(?, '') WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ IN (?, ?)",
-		datum, modelkaID, album, typ, typOnline, typCGTydne)
+	_, err := a.db.Exec("UPDATE alba SET datum = NULLIF(?, '') WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ IN (?, ?, ?)",
+		datum, modelkaID, album, typ, typOnline, typCGTydne, typCGMesice)
 	if err != nil {
 		a.chyba("uložení data nafocení alba", err)
 	}
@@ -2371,12 +2375,12 @@ func (a *App) UpdateAlbum(modelkaID int, staryAlbum, staryTyp, novyAlbum, novyTy
 	// vydání nemá a datum nafocení má jen ono: změnou typu na online vydání zmizí, změnou z online datum.
 	dotazy := []string{
 		`UPDATE alba SET album = ?1, typ = ?2,
-			vydani = CASE WHEN ?2 IN ('Centerfold', 'Cover') THEN ?1 WHEN ?2 IN (?6, ?7) OR typ IN ('Centerfold', 'Cover') THEN '' ELSE vydani END,
-			datum = CASE WHEN ?2 IN (?6, ?7) THEN datum END
+			vydani = CASE WHEN ?2 IN ('Centerfold', 'Cover') THEN ?1 WHEN ?2 IN (?6, ?7, ?8) OR typ IN ('Centerfold', 'Cover') THEN '' ELSE vydani END,
+			datum = CASE WHEN ?2 IN (?6, ?7, ?8) THEN datum END
 		WHERE COALESCE(modelka_id, 0) = ?3 AND album = ?4 AND typ = ?5`,
 	}
 	for _, dotaz := range dotazy {
-		if _, err := tx.Exec(dotaz, novyAlbum, novyTyp, modelkaID, staryAlbum, staryTyp, typOnline, typCGTydne); err != nil {
+		if _, err := tx.Exec(dotaz, novyAlbum, novyTyp, modelkaID, staryAlbum, staryTyp, typOnline, typCGTydne, typCGMesice); err != nil {
 			a.chyba("úprava alba", err)
 			return false
 		}

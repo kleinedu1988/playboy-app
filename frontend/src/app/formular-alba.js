@@ -1,7 +1,7 @@
 // Okno alba a centerfoldu
 import { oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteAlbum, GetFotografove } from './backend';
-import { TYP_CG_TYDNE, TYP_ONLINE, esc, nazevAlba, rozlozitVydani, sjednotit, tydenRoku } from '../lib/format';
+import { TYP_ONLINE, esc, jeOnline, nazevAlba, obdobiCyberGirl, rozlozitVydani, sjednotit } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { nacistFotkyModelky } from './profil';
@@ -58,12 +58,12 @@ export function prepnoutPoleAlba() {
     document.getElementById('inputAlbumRok').required = centerfold;
 }
 
-// Cyber Girl of the Week: týden se spočítá z celého data nafocení
+// Cyber Girl of the Week / Month: týden se spočítá z celého data nafocení, měsíc stačí z RRRR-MM
 export function ukazatTyden() {
-    const tyden = tydenRoku(document.getElementById('inputAlbumDatum').value.trim());
-    const zapnuto = document.getElementById('inputCGTydne').checked;
-    document.getElementById('albumTydenInfo').textContent = !zapnuto ? ''
-        : tyden ? `– ${tyden.tyden}. týden ${tyden.rok}` : '– týden se spočítá z celého data RRRR-MM-DD';
+    const typ = document.getElementById('selectCG').value;
+    const obdobi = obdobiCyberGirl(typ, document.getElementById('inputAlbumDatum').value.trim());
+    document.getElementById('albumTydenInfo').textContent = !typ ? ''
+        : obdobi || (typ === TYP_ONLINE ? '' : typ.endsWith('týdne') ? 'týden se spočítá z celého data RRRR-MM-DD' : 'měsíc se vezme z data RRRR-MM');
 }
 
 // moznosti: vyberModelky (modelka se vybírá v okně), typ a vydani (předvyplnění), nadpis
@@ -91,13 +91,14 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     vyberTypu.querySelectorAll('[data-puvodni]').forEach(o => o.remove());
 
     if (album) {
-        // Cyber Girl týdne je v okně Pictorial online se zaškrtnutou volbou
-        document.getElementById('inputCGTydne').checked = album.typ === TYP_CG_TYDNE;
-        if (album.typ !== TYP_CG_TYDNE && ![...vyberTypu.options].some(o => o.value === album.typ)) {
+        // Cyber Girl týdne a měsíce jsou v okně Pictorial online s volbou Cyber Girl
+        const cyberGirl = jeOnline(album.typ) && album.typ !== TYP_ONLINE;
+        document.getElementById('selectCG').value = cyberGirl ? album.typ : '';
+        if (!cyberGirl && ![...vyberTypu.options].some(o => o.value === album.typ)) {
             vyberTypu.add(new Option(album.typ, album.typ));
             vyberTypu.lastElementChild.dataset.puvodni = '1';
         }
-        vyberTypu.value = album.typ === TYP_CG_TYDNE ? TYP_ONLINE : album.typ;
+        vyberTypu.value = cyberGirl ? TYP_ONLINE : album.typ;
         document.getElementById('inputAlbumName').value = album.album;
         document.getElementById('inputAlbumFotograf').value = album.fotograf || '';
         document.getElementById('inputAlbumPopis').value = album.popis || '';
@@ -142,7 +143,7 @@ export function pripravit() {
     obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumMesic', 'inputAlbumRok', 'selectAlbumEdice');
 
     document.getElementById('selectTyp').addEventListener('change', prepnoutPoleAlba);
-    document.getElementById('inputCGTydne').addEventListener('change', ukazatTyden);
+    document.getElementById('selectCG').addEventListener('change', ukazatTyden);
     document.getElementById('inputAlbumDatum').addEventListener('input', ukazatTyden);
 
     // Nápověda, že napsané jméno zatím ve sbírce není a uložením vznikne nová modelka

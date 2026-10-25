@@ -82,10 +82,10 @@ určit jednoznačně, import to vypíše a odkaz přeskočí.
 | Klíč | Význam |
 |---|---|
 | `nazev` | Název; u centerfoldu je to vydání `RRRR-MM` (české vydání `RRRR-MM-CZ`) |
-| `typ` | `Pictorial`, `Pictorial online` (pictorial jen na webu – Cyber Girl, Coed, Muse…), `Cyber Girl týdne` (online album Cyber Girl of the Week, týden se počítá z `datum`; od 0.99.12) nebo `Centerfold` (covery mají vlastní oddíl) |
+| `typ` | `Pictorial`, `Pictorial online` (pictorial jen na webu – Cyber Girl, Coed, Muse…), `Cyber Girl týdne` / `Cyber Girl měsíce` (online album Cyber Girl of the Week / of the Month, týden nebo měsíc se počítá z `datum`; od 0.99.12 / 0.99.13) nebo `Centerfold` (covery mají vlastní oddíl) |
 | `pridano` | Kdy přibyla první fotka alba |
 | `vydani` | Jen u pictorialu: `RRRR-MM`, `RRRR` (jen ročník), s edicí `-CZ`; online album vydání nemá (import ho ohlásí a přeskočí) |
-| `datum` | Jen u `Pictorial online` a `Cyber Girl týdne`: kdy bylo album nafoceno nebo zveřejněno, `RRRR-MM-DD`, `RRRR-MM` nebo `RRRR` (stejně jako datum narození). Je to jen údaj alba – nepřiřadí ho k vydání, do kalendáře ani k titulní fotce; jiný tvar nebo datum u jiného typu se ohlásí a přeskočí |
+| `datum` | Jen u online alb (`Pictorial online`, `Cyber Girl týdne`, `Cyber Girl měsíce`): kdy bylo album nafoceno nebo zveřejněno, `RRRR-MM-DD`, `RRRR-MM` nebo `RRRR` (stejně jako datum narození). Je to jen údaj alba – nepřiřadí ho k vydání, do kalendáře ani k titulní fotce; jiný tvar nebo datum u jiného typu se ohlásí a přeskočí |
 | `fotograf`, `popis` | Fotograf a text alba (víceřádkový text jako blok `|-`) |
 | `spojit` | Stránky tvoří jeden spojený plakát |
 | `rucni_poradi` | Fotky jsou v souboru v ručně určeném pořadí; jinak se album řadí podle srdíček |

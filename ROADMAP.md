@@ -141,7 +141,7 @@ sloučení), proto se část opakuje:
 - [ ] Online pictorialy: první spuštění 0.99.9 nad sbírkou vytvoří zálohu `*-pred-migraci.db`; v okně alba typ
       „Pictorial online“ skryje vydání a ukáže „Nafoceno“ (chybné datum ohlásí); nadpis alba v profilu s datem;
       album není v kalendáři ani na titulní fotce; výskyt „online“, hledání `nafoceno:2004`, Statistiky → Online;
-      export a import alba s datem; proužek „Cyber Girl“ (nebo „Online“) v profilu a kategorie Cyber Girl (0.99.11); volba Cyber Girl of the Week v okně alba spočítá týden z data (0.99.12)
+      export a import alba s datem; proužek „Cyber Girl“ (nebo „Online“) v profilu a kategorie Cyber Girl (0.99.11); volba Cyber Girl of the Week v okně alba spočítá týden z data (0.99.12), of the Month měsíc (0.99.13)
 
 | Krok | Co |
 |---|---|

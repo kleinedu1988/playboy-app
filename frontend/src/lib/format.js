@@ -138,9 +138,21 @@ export function sklonovat(n, jedna, dve, pet) {
 // Pictorial jen na webu (Cyber Girl, Coed, Muse…): nepatří k číslu časopisu, místo vydání má datum nafocení
 export const TYP_ONLINE = 'Pictorial online';
 
-// Cyber Girl of the Week: online album, u kterého se z celého data nafocení počítá týden
+// Cyber Girl of the Week / of the Month: online alba, u kterých se z data nafocení počítá týden (celé datum),
+// nebo měsíc (stačí RRRR-MM)
 export const TYP_CG_TYDNE = 'Cyber Girl týdne';
-export const jeOnline = typ => typ === TYP_ONLINE || typ === TYP_CG_TYDNE;
+export const TYP_CG_MESICE = 'Cyber Girl měsíce';
+export const jeOnline = typ => typ === TYP_ONLINE || typ === TYP_CG_TYDNE || typ === TYP_CG_MESICE;
+
+// Období ocenění Cyber Girl z data nafocení: „24. týden 2004“, „červen 2004“; bez potřebné přesnosti ''
+export function obdobiCyberGirl(typ, datum) {
+    if (typ === TYP_CG_TYDNE) {
+        const t = tydenRoku(datum);
+        return t ? `${t.tyden}. týden ${t.rok}` : '';
+    }
+    const shoda = typ === TYP_CG_MESICE && /^(\d{4})-(\d{2})/.exec(String(datum || ''));
+    return shoda ? formatDatum(`${shoda[1]}-${shoda[2]}`) : '';
+}
 
 // Týden v roce podle ISO 8601 (týden začíná pondělím, 1. týden obsahuje první čtvrtek) z data RRRR-MM-DD;
 // bez dne týden nejde určit
@@ -154,10 +166,11 @@ export function tydenRoku(datum) {
 }
 
 // Typ alba v hlavičce; online album s datem nafocení: „Pictorial online · nafoceno červen 2004“,
-// Cyber Girl týdne s celým datem: „Cyber Girl týdne · 24. týden 2004 (nafoceno 12. 6. 2004)“
+// Cyber Girl týdne s celým datem: „Cyber Girl týdne · 24. týden 2004 (nafoceno 12. 6. 2004)“,
+// Cyber Girl měsíce: „Cyber Girl měsíce · červen 2004“ (s celým datem i „(nafoceno …)“)
 export function popisTypuAlba(typ, datum) {
-    const tyden = typ === TYP_CG_TYDNE && tydenRoku(datum);
-    if (tyden) return `${typ} · ${tyden.tyden}. týden ${tyden.rok} (nafoceno ${formatDatum(datum)})`;
+    const obdobi = obdobiCyberGirl(typ, datum);
+    if (obdobi) return `${typ} · ${obdobi}${/^\d{4}-\d{2}-\d{2}$/.test(datum) ? ` (nafoceno ${formatDatum(datum)})` : ''}`;
     return jeOnline(typ) && datum ? `${typ} · nafoceno ${formatDatum(datum)}` : typ;
 }
 
@@ -395,7 +408,7 @@ export const slozitKategorie = seznam => seznam.map(popisKategorie).join(', ');
 export function odvozeneKategorie(modelka) {
     return [
         (modelka.centerfoldy || []).length ? 'Playmate měsíce' : '',
-        modelka.cyberGirlTydne || (modelka.onlineAlba || []).length && !onlineKategorie(modelka) ? 'Cyber Girl' : '',
+        modelka.cyberGirl || (modelka.onlineAlba || []).length && !onlineKategorie(modelka) ? 'Cyber Girl' : '',
         (modelka.obalky || []).length ? 'Modelka obálky' : '',
     ].filter(Boolean);
 }
@@ -425,7 +438,7 @@ export function vyskytModelky(modelka) {
 export function kategorieModelky(modelka) {
     const zapsane = rozlozitKategorie(modelka.role);
     odvozeneKategorie(modelka).forEach(nazev => {
-        const detail = nazev === 'Cyber Girl' && modelka.cyberGirlTydne ? 'týdne' : '';
+        const detail = nazev === 'Cyber Girl' ? modelka.cyberGirl || '' : '';
         if (!zapsane.some(k => k.nazev === nazev)) zapsane.push({ nazev, detail, zbytek: '', vlastni: false, odvozena: true });
     });
     const poradi = k => k.vlastni ? KATEGORIE.length : KATEGORIE.findIndex(z => z.nazev === k.nazev);

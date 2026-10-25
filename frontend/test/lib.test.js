@@ -328,7 +328,8 @@ test('kategorie modelek', () => {
     // Online album = Cyber Girl, jen když není zapsaná jiná online kategorie
     assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Cyber Girl']);
     assert.deepEqual(kategorieModelky({ role: 'Coed', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Coed']);
-    assert.deepEqual(kategorieModelky({ role: 'Online', onlineAlba: ['2004-06-12'], cyberGirlTydne: true }).map(popisKategorie), ['Cyber Girl týdne', 'Online']);
+    assert.deepEqual(kategorieModelky({ role: 'Online', onlineAlba: ['2004-06-12'], cyberGirl: 'týdne' }).map(popisKategorie), ['Cyber Girl týdne', 'Online']);
+    assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-09'], cyberGirl: 'měsíce' }).map(popisKategorie), ['Cyber Girl měsíce']);
     // Páska bez data: Cyber Girl má přednost před Online, ostatní online kategorie zatím jako Online
     assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }), 'Cyber Girl');
     assert.equal(paskaOnline({ role: 'Online, Cyber Girl měsíce', onlineAlba: ['2004'] }), 'Cyber Girl');
@@ -383,6 +384,8 @@ test('online album: výskyt jen online, nadpis s datem nafocení a hledání naf
     assert.equal(tydenRoku('2004-06'), null);
     assert.equal(popisTypuAlba(TYP_CG_TYDNE, '2004-06-12'), 'Cyber Girl týdne · 24. týden 2004 (nafoceno 12. 6. 2004)');
     assert.equal(popisTypuAlba(TYP_CG_TYDNE, '2004'), 'Cyber Girl týdne · nafoceno 2004');
+    assert.equal(popisTypuAlba('Cyber Girl měsíce', '2004-09'), 'Cyber Girl měsíce · září 2004');
+    assert.equal(popisTypuAlba('Cyber Girl měsíce', '2004-09-03'), 'Cyber Girl měsíce · září 2004 (nafoceno 3. 9. 2004)');
     assert.equal(popisTypuAlba('Pictorial', '2004'), 'Pictorial');
 
     // nafoceno: je předpona data (rok nebo měsíc), čárka = nebo; pohled bez data alba slovo nic neomezuje

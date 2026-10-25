@@ -449,7 +449,7 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 	}
 	if datum := strings.TrimSpace(album.Datum); datum != "" {
 		if !jeOnlineTyp(album.Typ) {
-			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: datum nafocení má jen album typu %s nebo %s", kde, typOnline, typCGTydne))
+			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("%s: datum nafocení má jen online album (%s, %s, %s)", kde, typOnline, typCGTydne, typCGMesice))
 		} else if datum == smazatUdaj {
 			a.SetDatumAlba(modelkaID, album.Nazev, album.Typ, "")
 		} else if !platneDatum(datum) {

@@ -391,8 +391,8 @@ func TestCyberGirlTydne(t *testing.T) {
 		t.Fatal("Cyber Girl týdne nemá mít vydání")
 	}
 	m := modelkaPodleJmena(t, a, "Týdenní")
-	if !m.CyberGirlTydne || fmt.Sprintf("%q", m.OnlineAlba) != `["2004-06-12"]` {
-		t.Fatalf("modelka: %v %q", m.CyberGirlTydne, m.OnlineAlba)
+	if m.CyberGirl != "týdne" || fmt.Sprintf("%q", m.OnlineAlba) != `["2004-06-12"]` {
+		t.Fatalf("modelka: %q %q", m.CyberGirl, m.OnlineAlba)
 	}
 	for dotaz, chci := range map[string]string{
 		`kategorie:"cyber girl týdne"`: "Týdenní",
@@ -403,9 +403,21 @@ func TestCyberGirlTydne(t *testing.T) {
 			t.Errorf("%s: %q, chci %q", dotaz, jmena, chci)
 		}
 	}
-	// Zpět na Pictorial online: datum zůstane, kategorie týdne zmizí
+	// Druhé album Cyber Girl měsíce: vyšší úroveň má přednost
+	a.AddBulkPhotos(id, "Měsíc", typCGMesice, odkazOnline2)
+	if !a.SetDatumAlba(id, "Měsíc", typCGMesice, "2004-09") {
+		t.Fatal("datum alba Cyber Girl měsíce se neuložilo")
+	}
+	if m := modelkaPodleJmena(t, a, "Týdenní"); m.CyberGirl != "měsíce" {
+		t.Fatalf("úroveň: %q", m.CyberGirl)
+	}
+	if jmena := jmenaNalezu(a, `kategorie:"cyber girl měsíce"`); jmena != "Týdenní" {
+		t.Errorf("kategorie měsíce: %q", jmena)
+	}
+	// Zpět na Pictorial online: datum zůstane, kategorie zmizí
 	a.UpdateAlbum(id, "Web", typCGTydne, "Web", typOnline)
-	if m := modelkaPodleJmena(t, a, "Týdenní"); m.CyberGirlTydne || fmt.Sprintf("%q", m.OnlineAlba) != `["2004-06-12"]` {
-		t.Fatalf("po vrácení typu: %v %q", m.CyberGirlTydne, m.OnlineAlba)
+	a.UpdateAlbum(id, "Měsíc", typCGMesice, "Měsíc", typOnline)
+	if m := modelkaPodleJmena(t, a, "Týdenní"); m.CyberGirl != "" || fmt.Sprintf("%q", m.OnlineAlba) != `["2004-06-12" "2004-09"]` {
+		t.Fatalf("po vrácení typu: %q %q", m.CyberGirl, m.OnlineAlba)
 	}
 }

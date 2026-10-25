@@ -853,18 +853,16 @@ main {
     justify-content: flex-end;
 }
 
-/* Zaškrtávací volba pod polem (Cyber Girl of the Week v okně alba) */
-.checkbox-label {
+/* Volba Cyber Girl pod datem nafocení v okně alba */
+.cg-volba {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     margin-top: 4px;
-    cursor: pointer;
 }
 
-.checkbox-label input {
+.cg-volba select {
     width: auto;
-    accent-color: var(--accent);
 }
 
 .form-row .form-group label {

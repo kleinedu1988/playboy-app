@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.25] – 2026-10-25
+
+### Změněno
+- **Údržba ve třech režimech** místo dlouhého seznamu: nahoře jeden řádek (úplnost sbírky, počty úkolů, kontroly a návrhů) a přepínač **Po údajích / Po modelkách / Souhrn**; program si pamatuje poslední režim.
+  - **Po údajích** (výchozí): vlevo chybějící údaje s počty a návrhy, vpravo modelky, kterým vybraný údaj chybí, s polem k vyplnění přímo v řádku (našeptávání ze sbírky, výběry, srdíčka, odkaz na fotku, převody `5'7"`, `115 lbs`, `34B-24-34`). Návrh je předvyplněný i s důvodem. **Enter uloží a skočí na další řádek**, Esc vrátí hodnotu, Delete označí Netýká se (s Vrátit). „Přijmout N návrhů“ a „Netýká se všem…“ pro celý údaj.
+  - **Po modelkách**: karta jedné modelky se všemi úkoly (dřívější soustředěný režim, teď bez mezikroku), vpravo fronta s jedním výběrem filtru; Enter další pole, Ctrl+Enter uloží a otevře další modelku, srdíčka klávesami 1–5.
+  - **Souhrn**: oba panely (úplnost, Co se program naučil) a celý seznam s bočními filtry a Vyřízenými.
+- Řádky „Co zbývá doplnit“ na úvodu Přehledu otevřou Po údajích rovnou na daném údaji.
+
 ## [0.99.24] – 2026-10-25
 
 ### Změněno

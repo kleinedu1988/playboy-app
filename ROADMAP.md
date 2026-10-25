@@ -140,7 +140,7 @@ sloučení), proto se část opakuje:
 - [ ] Zamčený program neukazuje pole hledání
 - [ ] Nová okna (modelka, album, cover, číslo, článek) a editor textu: psaní s diakritikou, náhledy z Disku (0.99.18)
 - [ ] Údržba (0.99.22): hlavička s úplností, „Co doplnit dál“, filtry, hledání, klávesy, panel „Co se program naučil“, vznikne playboy-uceni.db vedle sbírky
-- [ ] Údržba (0.99.23): boční filtry, Další krok, soustředěný režim – uložení údajů, ✓/✕ návrhů, Netýká se, Esc s rozepsaným
+- [ ] Údržba (0.99.25): režimy Po údajích (Enter uloží a jde dolů, Delete netýká se), Po modelkách (Ctrl+Enter), Souhrn; pamatuje si režim
 - [ ] Údržba → Návrhy: návrhy dávají smysl na skutečné sbírce, Přijmout / Odmítnout / Vrátit, hromadné přijetí udělá zálohu (0.99.19)
 - [ ] Online pictorialy: první spuštění 0.99.9 nad sbírkou vytvoří zálohu `*-pred-migraci.db`; v okně alba typ
       „Pictorial online“ skryje vydání a ukáže „Nafoceno“ (chybné datum ohlásí); nadpis alba v profilu s datem;

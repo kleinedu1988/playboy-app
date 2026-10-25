@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.23] – 2026-10-25
+
+### Změněno
+- **Údržba pod oběma panely uklizená** (varianta A): vlevo boční panel s filtry po oblastech a počty (Fronta, Modelky, Alba, Čísla, Vyřízené; u Návrhů a Kontroly podseznam zdrojů), vpravo jeden pruh **Další krok** („Přijmout jisté“, „Začít postupně →“) místo karet, pruhu návrhů a lišty s tlačítkem, pod ním jedna lišta s hledáním, řazením a ⋯ Hromadně. Řádky ukazují jen souhrn (nejvýš tři štítky) a jedno hlavní tlačítko, podrobnosti a všechny akce po rozbalení. V úzkém okně se boční panel změní na výběr v liště.
+
+### Přidáno
+- **Soustředěný režim** (varianta C): „Začít postupně“, klávesa S nebo ⋯ „Vyřídit v soustředěném režimu“ otevře velkou kartu jedné modelky se všemi úkoly k vyřízení na místě – chybějící údaje rovnou napíšeš nebo vybereš (i srdíčka a odkaz na titulní fotku), nález kontroly opravíš nebo označíš V pořádku, návrh přijmeš ✓ nebo odmítneš ✕ (úprava hodnoty se zapíše jako oprava pro učení); co na místě nejde (text a vydání alba, cover, centerfold), otevře stávající okno. Vpravo fronta „Na řadě“ podle filtru a řazení. Ctrl+Enter uloží a otevře další, PageUp/PageDown nebo Alt+←/→ předchozí a další, Esc zpět na seznam (s rozepsanými změnami se zeptá „Zahodit změny?“). Ukládá jen změněná pole.
+
 ## [0.99.22] – 2026-10-25
 
 ### Přidáno

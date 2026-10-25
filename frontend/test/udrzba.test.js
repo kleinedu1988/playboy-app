@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FILTRY, OBLASTI_FILTRU, dalsiKrok, filtrovatUdrzbu, idNavrhu, opravaNavrhu, popisPolozky, sestavitUdrzbu, souhrnFronty, stitkySkupiny, textAkce, ukolyFokusu, zalozkaPole, zdrojePolozek } from '../src/lib/udrzba.js';
+import { FILTRY, OBLASTI_FILTRU, UDAJE, dalsiRadek, filtrovatUdrzbu, idNavrhu, opravaNavrhu, nazevKontroly, prvniUdaj, sestavitPoUdajich, sestavitUdrzbu, souhrnFronty, stitkySkupiny, textAkce, udajFiltru, ukolyFokusu, zalozkaPole, zdrojePolozek } from '../src/lib/udrzba.js';
 
 // Modelka se všemi hlídanými údaji; jednotlivé testy jí údaje uberou
 const uplna = (id, jmeno, dalsi = {}) => ({
@@ -58,7 +58,6 @@ test('hledání podle jména bez diakritiky, čísla a kroky', () => {
     const cislo = model.skupiny.find(s => s.druh === 'vydani');
     assert.deepEqual(cislo.polozky.map(x => x.filtr), ['cfcisla', 'cover']);
     assert.equal(model.pocty.cover, 1);
-    assert.equal(dalsiKrok(filtrovatUdrzbu(model)).ukolu, model.skupiny.reduce((n, sk) => n + sk.aktivnich, 0));
     // Pokrok: čísla 19 z 20 s coverem
     assert.deepEqual(model.pokrok.find(o => o.klic === 'cover'), { skupina: 'Čísla', klic: 'cover', nazev: 'Cover', hotovo: 19, celkem: 20, chybi: 1, filtr: 'cover', jednotka: '' });
 });
@@ -130,18 +129,12 @@ test('štítky řádku: nejvýš tři po druzích, jediná položka sama sebou',
     assert.deepEqual(stitkySkupiny(dva.map(x => ({ ...x, netyka: true }))), [{ druh: 'netyka', text: '2 vyřízeno' }]);
 });
 
-test('souhrn do fronty, další krok, text akce a popis položky', () => {
+test('souhrn do fronty a text akce', () => {
     const model = slozita();
     const s = model.skupiny[0];
     assert.equal(souhrnFronty(s.polozky), '⚠ výška, údaj · ✦ národnost · 3 chybí');
-    const krok = dalsiKrok(filtrovatUdrzbu(model));
-    assert.equal(krok.ukolu, s.aktivnich);
-    assert.equal(krok.jiste.length, 1);
-    assert.equal(krok.prvni.polozka, s.polozky[0]);
     const navrh = s.polozky.find(x => x.druh === 'navrh');
     assert.equal(textAkce(navrh, s), 'Přijmout');
-    assert.equal(popisPolozky(navrh), 'národnost: USA');
-    assert.equal(popisPolozky(s.polozky.find(x => x.id === 'titulni')), 'chybí titulní fotka');
     const cislo = { druh: 'vydani' };
     assert.equal(textAkce({ druh: 'ukol', id: 'cover' }, cislo), 'Přidat cover');
 });
@@ -162,4 +155,70 @@ test('úkoly soustředěného režimu: pole po jednom, návrh místo prázdného
     // Číslo: vše v okně
     const cisla = sestavitUdrzbu({ p: prehled({ vydaniBezCoveru: ['1990-01'] }), modelky: [] });
     assert.deepEqual(ukolyFokusu(cisla.skupiny[0].polozky, () => '').map(u => u.druh), ['okno']);
+});
+
+test('Po údajích: pevné pořadí údajů, každý hlídaný údaj modelky má své místo', () => {
+    assert.deepEqual(UDAJE.slice(0, 5).map(u => u.klic), ['kontrola', 'narozeniDatum', 'narodnost', 'narozeniMisto', 'vyskaVaha']);
+    assert.equal(UDAJE.find(u => u.klic === 'narodnost').nazev, 'Národnost');
+    assert.deepEqual(UDAJE.find(u => u.klic === 'miry').pole.map(p => p[2]), ['inputHrudnik', 'inputPas', 'inputBoky']);
+    // Každá vlastnost ze SKUPINY_UDAJU je právě v jednom údaji
+    const vlastnosti = UDAJE.flatMap(u => u.vlastnosti || []);
+    assert.equal(new Set(vlastnosti).size, vlastnosti.length);
+    assert.equal(vlastnosti.length, 18);
+});
+
+test('Po údajích: řádky po modelkách, návrh u svého pole, výška s váhou spolu, alba a čísla po jednom', () => {
+    const model = slozita();
+    const po = sestavitPoUdajich(model);
+    const udaj = k => po.udaje.get(k);
+    assert.deepEqual(udaj('narodnost').radky.map(r => r.skupina.jmeno), ['Hana']);
+    assert.equal(udaj('narodnost').navrhu, 1);
+    assert.equal(udaj('narodnost').radky[0].navrhy[0].navrh.hodnota, 'USA');
+    assert.equal(udaj('narozeniDatum').navrhu, 0);
+    assert.equal(udaj('kontrola').pocet, 2);
+    assert.equal(nazevKontroly(udaj('kontrola')), 'Výška, údaj');
+    assert.equal(udaj('titulni').pocet, 1);
+    assert.equal(udaj('hodnoceni').pocet, 1);
+    // Prázdné údaje v seznamu nejsou; Ke kontrole jde první
+    assert.deepEqual(po.oblasti.map(o => o.klic), ['kontrola', 'udaje', 'fotky']);
+    assert.ok(po.oblasti.every(o => o.udaje.every(u => u.pocet)));
+    assert.equal(prvniUdaj(po), 'kontrola');
+
+    const m = uplna(9, 'Ivana', { vyskaCm: 0, vahaKg: 0 });
+    const p = prehled({ modelek: 1, albaBezVydani: [{ ...polozka(m), album: 'Pláž', typ: 'Pictorial' }, { ...polozka(m), album: 'Les', typ: 'Pictorial' }, { ...polozka(m, true), album: 'Hory', typ: 'Pictorial' }],
+        vydaniBezCoveru: ['1990-01'] });
+    const navrhAlba = { modelkaId: 9, jmeno: 'Ivana', album: 'Les', typ: 'Pictorial', pole: 'vydaniAlba', popis: 'Vydání alba', hodnota: '1990-01', jistota: 0.92, klic: 'nv-vydaniAlba', inputId: 'inputAlbumRok', odmitnuto: false };
+    const fotograf = { ...navrhAlba, pole: 'fotografAlba', popis: 'Fotograf alba', hodnota: 'Pompeo Posar', inputId: 'inputAlbumFotograf', klic: 'nv-fotografAlba' };
+    const po2 = sestavitPoUdajich(sestavitUdrzbu({ p, modelky: [m], navrhy: [navrhAlba, fotograf] }));
+    assert.equal(po2.udaje.get('vyskaVaha').pocet, 1);
+    assert.deepEqual(po2.udaje.get('vyskaVaha').radky[0].chybejici.map(u => u[0]), ['vyskaCm', 'vahaKg']);
+    // Album „netýká se“ chybí, návrh vydání patří k řádku svého alba
+    const alba = po2.udaje.get('vydaniAlb').radky;
+    assert.deepEqual(alba.map(r => r.album.album), ['Pláž', 'Les']);
+    assert.equal(alba[1].navrhy.length, 1);
+    assert.equal(po2.udaje.get('navrhyAlb').pocet, 1);
+    assert.equal(po2.udaje.get('cover').radky[0].skupina.vydani, '1990-01');
+});
+
+test('Po údajích: odmítnutý návrh a „netýká se“ se nepočítají, filtr z úvodu vede na údaj', () => {
+    const m = uplna(10, 'Jana', { narodnost: '', etnicita: '' });
+    const n = { modelkaId: 10, jmeno: 'Jana', album: '', typ: '', pole: 'narodnost', popis: 'národnost', hodnota: 'USA', jistota: 0.9, klic: 'nv-narodnost', inputId: 'inputNarodnost', odmitnuto: true };
+    const po = sestavitPoUdajich(sestavitUdrzbu({ p: prehled({ modelek: 1 }), modelky: [m], navrhy: [n] }));
+    assert.equal(po.udaje.get('narodnost').pocet, 1);
+    assert.equal(po.udaje.get('narodnost').navrhu, 0);
+    const netyka = sestavitPoUdajich(sestavitUdrzbu({ p: prehled({ modelek: 1 }), modelky: [{ ...m, netykaSe: 'zakladni' }], skryte: true }));
+    assert.equal(netyka.udaje.get('narodnost').pocet, 0);
+    assert.equal(udajFiltru(po, 'udaje'), 'narodnost');
+    assert.equal(udajFiltru(po, 'cover'), '');
+    assert.equal(udajFiltru(sestavitPoUdajich(slozita()), 'navrhy'), 'narodnost');
+});
+
+test('další řádek: přeskočí hotové, na konci nic', () => {
+    const klice = ['a', 'b', 'c', 'd'];
+    assert.equal(dalsiRadek(klice, new Set(), 'a'), 'b');
+    assert.equal(dalsiRadek(klice, new Set(['b', 'c']), 'a'), 'd');
+    assert.equal(dalsiRadek(klice, new Set(['d']), 'c'), '');
+    assert.equal(dalsiRadek(klice, new Set(['b']), 'c', -1), 'a');
+    // Neznámý řádek (zmizel): od začátku
+    assert.equal(dalsiRadek(klice, new Set(), 'x'), 'a');
 });

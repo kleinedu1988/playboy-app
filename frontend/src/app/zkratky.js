@@ -1,5 +1,5 @@
 // Přehled klávesových zkratek (klávesa ?): skleněný panel uprostřed okna nad ztmavenou stránkou. V prohlížeči fotek
-// a ve čtečce stran (i v Údržbě a jejím soustředěném režimu) jde jejich část první a je zvýrazněná. Celá nápověda
+// a ve čtečce stran (i v režimech Údržby) jde jejich část první a je zvýrazněná. Celá nápověda
 // se otevře tlačítkem v patičce.
 import { otevritNapovedu } from './napoveda';
 import { lightbox } from './prohlizec';
@@ -28,21 +28,29 @@ const CASTI = [
         [k('←', '→'), 'Předchozí a další modelka'],
         [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět'],
     ] },
-    { klic: 'udrzba', nazev: 'Údržba v Přehledu', radky: [
+    { klic: 'udrzba-udaje', nazev: 'Údržba – Po údajích', radky: [
+        [k('Enter'), 'Uložit řádek a jít na další'],
+        [k('Tab'), 'Přeskočit na další pole'],
+        [k('Esc'), 'Vrátit hodnotu řádku'],
+        [`${k('Delete')}${nebo}${k('Ctrl', 'Delete')}`, 'Netýká se (v prázdném poli; V pořádku u kontroly, jde vrátit)'],
+        [`${k('1')}–${k('5')}`, 'Srdíčka v řádku hodnocení'],
+    ] },
+    { klic: 'udrzba-modelky', nazev: 'Údržba – Po modelkách', radky: [
+        [k('Enter'), 'Další pole na kartě'],
+        [k('Ctrl', 'Enter'), 'Uložit změny a otevřít další modelku'],
+        [`${k('PageDown')}${nebo}${k('Alt', '→')}`, 'Další ve frontě (přeskočit)'],
+        [`${k('PageUp')}${nebo}${k('Alt', '←')}`, 'Předchozí ve frontě'],
+        [k('Esc'), 'Vrátit hodnotu pole'],
+        [`${k('1')}–${k('5')}`, 'Srdíčka, když je zaměřené hodnocení'],
+    ] },
+    { klic: 'udrzba-souhrn', nazev: 'Údržba – Souhrn', radky: [
         [k('↑', '↓'), 'Předchozí a další řádek (i položky rozbalené skupiny)'],
         [k('→', '←'), 'Rozbalit a sbalit skupinu'],
         [k('Enter'), 'Hlavní akce: doplnit, opravit, přijmout návrh'],
         [k('Delete'), 'Netýká se, V pořádku, Odmítnout (jde vrátit)'],
         [k('E'), 'Upravit návrh ve formuláři'],
-        [k('S'), 'Vyřídit skupinu v soustředěném režimu'],
+        [k('S'), 'Vyřídit modelku v režimu Po modelkách'],
         [`${k('Ctrl', 'F')}${nebo}${k('/')}`, 'Hledat modelku nebo číslo'],
-    ] },
-    { klic: 'fokus', nazev: 'Soustředěný režim Údržby', radky: [
-        [k('Ctrl', 'Enter'), 'Uložit změny a otevřít další'],
-        [`${k('PageDown')}${nebo}${k('Alt', '→')}`, 'Další ve frontě (přeskočit)'],
-        [`${k('PageUp')}${nebo}${k('Alt', '←')}`, 'Předchozí ve frontě'],
-        [k('Tab'), 'Další pole a tlačítko na kartě'],
-        [k('Esc'), 'Zpět na seznam (rozepsané se nejdřív zeptá)'],
     ] },
     { klic: 'vyber', nazev: 'Výběr fotek', radky: [
         [`${k('Ctrl')} + klik`, 'Přidat do výběru'],
@@ -101,7 +109,7 @@ export function otevritZkratky() {
     const ctecka = document.getElementById('ctecka');
     const udrzba = stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && !document.getElementById('stats')?.classList.contains('hidden');
     const aktivni = !lightbox.classList.contains('hidden') ? 'prohlizec' : ctecka && !ctecka.classList.contains('hidden') ? 'ctecka'
-        : udrzba ? (stav.udrzbaFokus ? 'fokus' : 'udrzba') : '';
+        : udrzba ? `udrzba-${stav.udrzbaRezim}` : '';
     const casti = aktivni ? [CASTI.find(c => c.klic === aktivni), ...CASTI.filter(c => c.klic !== aktivni)] : CASTI;
     panel.querySelector('.zkratky-casti').innerHTML = casti.map(c => `
         <section class="${c.klic === aktivni ? 'aktivni' : ''}">

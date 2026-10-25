@@ -92,16 +92,18 @@ function zapsatMistne(n) {
 // Vlastnost modelky podle pole formuláře (vrácení přijatého návrhu)
 const vlastnostPole = inputId => poleModelky.find(p => p[1] === inputId)?.[0];
 
+// Vrací, zda se návrh uložil
 export async function prijmout(n) {
     // Původní hodnotu údaje modelky jde po přijetí vrátit; u alba se vrácení nenabízí
     const vlastnost = !n.album && vlastnostPole(n.inputId);
     const puvodni = vlastnost ? stav.prehledModelky.get(n.modelkaId)?.[vlastnost] : undefined;
     if (!(await ulozit([n])).length) {
         oznamit(`Návrh se nepodařilo uložit: ${textNavrhu(n)}.`);
-        return;
+        return false;
     }
     poZmene(idNavrhu(n));
     oznamit(`Doplněno: ${textNavrhu(n)} – ${n.jmeno}.`, vlastnost && puvodni !== undefined ? { text: 'Vrátit', akce: () => vratitPrijeti(n, vlastnost, puvodni) } : null);
+    return true;
 }
 
 async function vratitPrijeti(n, vlastnost, puvodni) {
@@ -118,7 +120,7 @@ async function vratitPrijeti(n, vlastnost, puvodni) {
     oznamit(`Vráceno: ${nazevNavrhu(n)} – ${n.jmeno} má zase původní hodnotu.`);
 }
 
-// Návrh, který soustředěný režim uložil s opravenou hodnotou: backend ho už nenabídne, ze seznamu zmizí hned
+// Návrh, který Údržba uložila s opravenou hodnotou: backend ho už nenabídne, ze seznamu zmizí hned
 export function odebratOpraveny(n) {
     navrhy = navrhy.filter(x => x !== n && idNavrhu(x) !== idNavrhu(n));
     poZmene('');
@@ -134,6 +136,13 @@ async function nastavitOdmitnuti(seznam, odmitnout = true) {
             }
         } catch { /* zůstane, jak byl */ }
     }
+    return zmenene;
+}
+
+// Odmítnutí bez oznámení (Netýká se v Po údajích má oznámení vlastní); vrací odmítnuté
+export async function odmitnoutPotichu(seznam) {
+    const zmenene = await nastavitOdmitnuti(seznam.filter(n => !n.odmitnuto));
+    if (zmenene.length) poZmene('');
     return zmenene;
 }
 
@@ -159,18 +168,19 @@ export async function vratitOdmitnuti(seznam) {
 // Přijetí víc návrhů najednou: zeptá se, vypíše, co se doplní, a upozorní na nejisté
 export async function prijmoutVice(seznam, nadpis = 'Přijmout návrhy?') {
     seznam = seznam.filter(n => !n.odmitnuto);
-    if (!seznam.length) return;
-    if (seznam.length === 1) return prijmout(seznam[0]);
+    if (!seznam.length) return [];
+    if (seznam.length === 1) return await prijmout(seznam[0]) ? seznam : [];
     const modelek = new Set(seznam.map(n => n.modelkaId)).size;
     const nejistych = seznam.filter(n => n.jistota < MEZ_JISTE).length;
     if (!await potvrdit(nadpis,
         `Uloží se ${sklonovat(seznam.length, 'údaj', 'údaje', 'údajů')} u ${sklonovat(modelek, 'modelky', 'modelek', 'modelek')}: ${souhrnPoli(seznam)}.`
         + (nejistych ? ` ${nejistych === 1 ? 'Jeden z nich není jistý' : nejistych < 5 ? `${nejistych} z nich nejsou jisté` : `${nejistych} z nich není jistých`} (pod 90 %).` : '')
-        + ' Před uložením se udělá záloha – celé přijetí jde vrátit přes ⋯ → Obnovit ze zálohy; jednotlivé údaje jdou opravit ve formuláři.', `Přijmout ${seznam.length}`)) return;
+        + ' Před uložením se udělá záloha – celé přijetí jde vrátit přes ⋯ → Obnovit ze zálohy; jednotlivé údaje jdou opravit ve formuláři.', `Přijmout ${seznam.length}`)) return [];
     const prijate = await ulozit(seznam);
     poZmene('');
     oznamit(prijate.length === seznam.length ? `${doplneno(prijate.length)}.`
         : `Doplněno ${prijate.length} z ${seznam.length}; zbytek se nepodařilo uložit a zůstal v návrzích.`);
+    return prijate;
 }
 
 export const prijmoutUModelky = modelkaId => {

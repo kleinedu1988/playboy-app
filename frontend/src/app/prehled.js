@@ -131,11 +131,11 @@ export function pripravit() {
     try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'uvod'; } catch { /* úvod */ }
     // Dřívější záložky údržby (Souhrn, Modelky, Čísla, Ke kontrole) jsou teď jedna Údržba
     if (['souhrn', 'modelky', 'vydani', 'kontrola'].includes(stav.prehledSekce)) stav.prehledSekce = 'udrzba';
-    // Řádek souhrnu na úvodu a odkaz „Údržba →“ otevřou Údržbu s filtrem (bez nového načtení)
+    // Řádek souhrnu na úvodu otevře Údržbu na daném údaji, odkaz „Údržba →“ v posledním režimu (bez nového načtení)
     stats.addEventListener('click', (e) => {
         const cast = e.target.closest('[data-sekce-prehledu]');
         if (!cast) return;
-        if (cast.dataset.udrzbaFiltr) udrzba.nastavitFiltr(cast.dataset.udrzbaFiltr);
+        if (cast.dataset.udrzbaFiltr) udrzba.otevritNaFiltru(cast.dataset.udrzbaFiltr);
         ukazatCast(cast.dataset.sekcePrehledu);
     });
 

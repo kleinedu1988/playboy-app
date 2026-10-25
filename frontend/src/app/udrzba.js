@@ -1,14 +1,14 @@
-// Údržba v Přehledu: jedna fronta toho, co sbírce chybí nebo co je potřeba zkontrolovat. Nahoře pokrok sbírky
-// po oblastech a panel učení, pod nimi vlevo lepivý seznam filtrů po oblastech s počty a vpravo „Další krok“
-// (nejcennější úkol, Přijmout jisté, Začít postupně), lišta s hledáním, řazením a hromadnými akcemi a fronta
-// skupin (modelka nebo číslo). Sbalený řádek ukáže jen souhrn (nejvýš tři štítky a hlavní akci), rozbalený
-// jednotlivé položky – chybějící údaj, nález kontroly, návrh doplnění – s jejich akcemi. „Začít postupně“
-// otevře soustředěný režim (udrzba-fokus.js): jedna skupina velká s úkoly k vyřízení na místě a vpravo fronta.
+// Údržba v Přehledu: co sbírce chybí nebo co je potřeba zkontrolovat, ve třech režimech pod jednořádkovou
+// hlavičkou (úplnost, počty, přepínač). „Po údajích“ (udrzba-udaje.js): jeden údaj, všechny modelky, kterým chybí,
+// píše se rovnou do řádků. „Po modelkách“ (udrzba-fokus.js): jedna modelka se všemi úkoly na kartě a vpravo
+// fronta. „Souhrn“ (tady): pokrok sbírky po oblastech, panel učení a celá fronta skupin (modelka nebo číslo)
+// s bočním seznamem filtrů, hledáním, řazením a hromadnými akcemi; sbalený řádek ukáže jen souhrn (nejvýš tři
+// štítky a hlavní akci), rozbalený jednotlivé položky – chybějící údaj, nález kontroly, návrh – s jejich akcemi.
 // Data a priority počítá lib/udrzba.js; tady je vykreslení na místě (mění se jen skupiny, které se změnily,
 // stránka se neposune a fokus zůstane), klávesnice, nabídky a akce.
 import { GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
 import { esc, nazevVydani, sklonovat } from '../lib/format';
-import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, dalsiKrok, filtrovatUdrzbu, podtitulek, popisPolozky, procent, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
+import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
 import { stav } from './stav';
 import { stats } from './prvky';
 import { nastavitHtml, srovnatSeznam } from '../ui/dom';
@@ -24,6 +24,7 @@ import { oznamit } from '../ui/oznameni';
 import * as navrhy from './navrhy';
 import * as uceni from './uceni';
 import * as fokus from './udrzba-fokus';
+import * as poUdajich from './udrzba-udaje';
 
 // Skupin na stránku; další se přidají při doscrollování na konec (nebo tlačítkem)
 const STRANKA = 60;
@@ -40,10 +41,22 @@ const ODLOZENI = {
     cislo: ['Nezajímá mě', 'Znovu sledovat', 'nezajímá mě'],
 };
 const druhOdlozeni = (x, s) => s.druh === 'vydani' ? 'cislo' : x.druh;
-const RAZENI_SLOVY = { priorita: 'podle priority', chybi: 'podle toho, kolik chybí', jmeno: 'podle jména' };
+// Režimy Údržby: [klíč, název, popis do nápovědy]
+const REZIMY = [
+    ['udaje', 'Po údajích', 'Jeden údaj, všechny modelky, kterým chybí: píšeš rovnou do řádků, Enter uloží a jde dolů'],
+    ['modelky', 'Po modelkách', 'Jedna modelka a všechny její úkoly na jedné kartě, vpravo fronta'],
+    ['souhrn', 'Souhrn', 'Pokrok sbírky, co se program naučil a celá fronta s filtry'],
+];
 const KOSTRA = `
     <div class="ud" data-ud-kostra>
-        <h3 data-ud="nadpis"></h3>
+        <header class="ud-zahlavi">
+            <div class="ud-zahlavi-text" data-ud="nadpis"></div>
+            <div class="ud-rezimy" role="group" aria-label="Režim Údržby">${REZIMY.map(([klic, nazev, popis]) =>
+        `<button type="button" class="ud-rezim" data-ud-rezim="${klic}" title="${popis}">${nazev}</button>`).join('')}</div>
+        </header>
+        <div class="ud-rezim-obsah hidden" data-ud="udaje"></div>
+        <div class="ud-fokus hidden" data-ud="fokus"></div>
+        <div class="ud-souhrn hidden" data-ud="souhrn">
         <div class="ud-hlava">
             <section class="ud-karta ud-pokrok" data-ud="pokrok" aria-label="Pokrok sbírky"></section>
             <section class="ud-karta ud-uceni hidden" data-ud="uceni" aria-label="Co se program naučil"></section>
@@ -51,7 +64,6 @@ const KOSTRA = `
         <div class="ud-telo" data-ud="seznam">
             <nav class="ud-bok" data-ud="bok" aria-label="Co ukázat"></nav>
             <div class="ud-hlavni">
-                <div data-ud="dal"></div>
                 <div class="ud-nastroje">
                     <label class="ud-hledat">${IKONA_HLEDANI}<input type="search" data-ud-hledat placeholder="Hledat modelku nebo číslo…" aria-label="Hledat v Údržbě (Ctrl+F nebo /)" autocomplete="off" spellcheck="false" /></label>
                     <div class="ud-uzke" data-ud="uzke"></div>
@@ -69,11 +81,12 @@ const KOSTRA = `
                 <div class="ud-konec" data-ud-konec aria-hidden="true"></div>
             </div>
         </div>
-        <div class="ud-fokus hidden" data-ud="fokus"></div>
+        </div>
     </div>`;
 
 let data = null; // { p, stavy } z posledního načtení Přehledu
 let model = null; // sestavitUdrzbu
+let udaje = null; // sestavitPoUdajich (Po údajích, výběr údaje v Po modelkách)
 let nacist = async () => {}; // celé načtení Přehledu (prehled.js)
 let uceniRozbaleno = false;
 // Rozbalení skupin: výchozí podle filtru (Kontrola a Návrhy rozbalené), přepnuté skupiny a „rozbalit/sbalit vše“
@@ -88,6 +101,7 @@ const sekce = () => /** @type {HTMLElement} */ (stats.querySelector('[data-sekce
 const cast = jmeno => /** @type {HTMLElement} */ (sekce()?.querySelector(`[data-ud="${jmeno}"]`));
 const oblast = () => document.querySelector('main');
 const udrzbaVidet = () => !stats.classList.contains('hidden') && stav.prehledSekce === 'udrzba';
+const vSouhrnu = () => stav.udrzbaRezim === 'souhrn';
 const modelkaSkupiny = s => s.druh === 'modelka' ? stav.prehledModelky.get(s.id) : null;
 // Podtitulek modelky (kategorie, první číslo) se počítá až pro vykreslenou skupinu; modelky se po načtení mění celé
 const podtitulky = new WeakMap();
@@ -107,6 +121,7 @@ export function nastavitData({ p, stavy }) {
 function prepocitat() {
     model = sestavitUdrzbu({ p: data.p, modelky: [...stav.prehledModelky.values()], navrhy: navrhy.seznamNavrhu(),
         skryte: stav.prehledSkryte, odmitnute: stav.prehledSkryte, razeni: stav.udrzbaRazeni });
+    udaje = sestavitPoUdajich(model);
     stav.prehledRadky = model.radkyModelek;
     stav.prehledPoradi = model.radkyModelek.map(r => r.id);
     stav.prehledAlba = model.alba;
@@ -119,11 +134,13 @@ const frontaPro = klic => stav.prehledRadky.filter(r => !r.netyka.has(klic)
 
 // ——— Vykreslení ———
 
+// Hlavička: prstenec úplnosti, název a počty (stejné ve všech režimech)
 function htmlNadpisu() {
-    const casti = [sklonovat(model.pocty.vse, 'úkol', 'úkoly', 'úkolů')];
-    if (model.kKontrole) casti.push(`${model.kKontrole} ke kontrole`);
-    if (model.navrhu) casti.push(sklonovat(model.navrhu, 'návrh', 'návrhy', 'návrhů'));
-    return `Údržba <span>co doplnit a opravit · ${casti.join(' · ')}</span>`;
+    const casti = [sklonovat(model.pocty.vse, 'úkol', 'úkoly', 'úkolů').replace(/^(\d+)/, '<b>$1</b>')];
+    if (model.kKontrole) casti.push(`<b>${model.kKontrole}</b> ke kontrole`);
+    if (model.navrhu) casti.push(sklonovat(model.navrhu, 'návrh', 'návrhy', 'návrhů').replace(/^(\d+)/, '<b>$1</b>'));
+    return `<span class="ud-prstenec" style="--p:${model.uplnost}" title="Sbírka doplněná na ${model.uplnost} % (průměr oblastí v Souhrnu)"><span>${model.uplnost} %</span></span>
+        <h3>Údržba</h3><span class="ud-pocty">${casti.join(' · ')}</span>`;
 }
 
 function htmlPokroku() {
@@ -150,27 +167,6 @@ export function obrazekSkupiny(s, trida = '') {
     if (s.druh === 'vydani') return `<span class="ud-obalka ${trida}">${IKONA_CISLA}</span>`;
     const m = modelkaSkupiny(s);
     return `<img class="${trida}" src="${esc(m ? adresaTitulni(m, trida === 'uf-foto') : BEZ_FOTKY)}" alt="" loading="lazy" draggable="false" />`;
-}
-
-// Další krok: nejcennější úkol výběru, kolik jich zbývá, přijetí jistých návrhů a vstup do soustředěného režimu
-function htmlDal(vybrane) {
-    const { prvni, ukolu, jiste } = dalsiKrok(vybrane);
-    if (!prvni) return '';
-    const { skupina: s, polozka: x } = prvni;
-    const dalsich = ukolu - 1;
-    const pod = [
-        !dalsich ? 'poslední úkol ve výběru' : `a ${dalsich === 1 ? 'další 1 úkol' : dalsich < 5 ? `další ${dalsich} úkoly` : `dalších ${dalsich} úkolů`} seřazen${dalsich === 1 ? 'ý' : dalsich < 5 ? 'é' : 'ých'} ${RAZENI_SLOVY[stav.udrzbaRazeni] || RAZENI_SLOVY.priorita}`,
-        jiste.length && `${jiste.length} ${jiste.length === 1 ? 'jistý návrh jde' : jiste.length < 5 ? 'jisté návrhy jdou' : 'jistých návrhů jde'} přijmout najednou`,
-    ].filter(Boolean).join(' · ');
-    return `<section class="ud-dal" aria-label="Další krok">
-        ${obrazekSkupiny(s)}
-        <div class="ud-dal-text">
-            <button type="button" class="ud-dal-krok" data-ud-krok="${esc(x.klic)}" title="${esc(`${textAkce(x, s)}: ${s.jmeno} – ${x.pole}${x.duvod ? `. ${x.duvod}` : ''}`)}">Další krok: ${esc(s.jmeno)} – ${esc(popisPolozky(x))}</button>
-            <small>${esc(pod)}</small>
-        </div>
-        ${jiste.length ? `<button type="button" class="ud-nastroj ud-dal-jiste" data-ud-jiste title="Přijme návrhy s jistotou aspoň 90 % v tomto výběru (před uložením se zeptá)">Přijmout jisté (${jiste.length})</button>` : ''}
-        <button type="button" class="btn btn-primary btn-small ud-zacit" data-ud-zacit title="Soustředěný režim: úkol po úkolu, vyřizují se na místě (S na řádku otevře u něj)">Začít postupně →</button>
-    </section>`;
 }
 
 // Zdroje návrhů nebo nálezů pod aktivním filtrem (Návrhy, Ke kontrole)
@@ -301,33 +297,61 @@ function zajistitKostru() {
     return s;
 }
 
-// Celá Údržba (po načtení Přehledu a po změně dat); v soustředěném režimu místo seznamu karta a fronta
+// Celá Údržba (po načtení Přehledu a po změně dat): hlavička a zvolený režim
 export function vykreslit() {
     if (!model || !zajistitKostru()) return;
     nastavitHtml(cast('nadpis'), htmlNadpisu());
-    nastavitHtml(cast('pokrok'), htmlPokroku());
-    const htmlU = uceni.htmlUceni({ rozbaleno: uceniRozbaleno, zdroj: stav.udrzbaFiltr === 'navrhy' ? stav.udrzbaZdroj : '' });
-    cast('uceni').classList.toggle('hidden', !htmlU);
-    cast('pokrok').parentElement.classList.toggle('bez-uceni', !htmlU);
-    nastavitHtml(cast('uceni'), htmlU);
-    if (fokus.otevreny()) fokus.vykreslit();
-    else vykreslitSeznam();
+    sekce().querySelectorAll('[data-ud-rezim]').forEach(b => {
+        const on = /** @type {HTMLElement} */ (b).dataset.udRezim === stav.udrzbaRezim;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', String(on));
+    });
+    ['udaje', 'fokus', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', souhrn: 'souhrn' }[stav.udrzbaRezim]));
+    if (stav.udrzbaRezim === 'udaje') {
+        poUdajich.zobrazit(cast('udaje'));
+        poUdajich.vykreslit();
+    } else if (stav.udrzbaRezim === 'modelky') {
+        if (!fokus.otevreny()) fokus.otevrit(cast('fokus'), '', { zamerit: false });
+        else fokus.vykreslit();
+    } else {
+        nastavitHtml(cast('pokrok'), htmlPokroku());
+        const htmlU = uceni.htmlUceni({ rozbaleno: uceniRozbaleno, zdroj: stav.udrzbaFiltr === 'navrhy' ? stav.udrzbaZdroj : '' });
+        cast('uceni').classList.toggle('hidden', !htmlU);
+        cast('pokrok').parentElement.classList.toggle('bez-uceni', !htmlU);
+        nastavitHtml(cast('uceni'), htmlU);
+        vykreslitSeznam();
+    }
 }
 
-// Boční seznam, další krok, lišta a fronta (filtr, hledání, řazení, rozbalení); fronta se mění po skupinách
+// Přepnutí režimu (zapamatuje se); z Po modelkách s rozepsanými změnami se nejdřív zeptá.
+// klicSkupiny: Po modelkách rovnou na této skupině (S nebo ⋯ v Souhrnu).
+async function nastavitRezim(rezim, klicSkupiny = '') {
+    if (!REZIMY.some(([k]) => k === rezim)) return;
+    if (rezim !== stav.udrzbaRezim && stav.udrzbaRezim === 'modelky' && !await fokus.zavrit()) return;
+    stav.udrzbaRezim = rezim;
+    try { localStorage.setItem('udrzbaRezim', rezim); } catch { /* jen se nezapamatuje */ }
+    if (!model) return;
+    if (rezim === 'modelky') {
+        cast('fokus').classList.remove('hidden');
+        fokus.otevrit(cast('fokus'), klicSkupiny);
+    }
+    vykreslit();
+}
+
+// Boční seznam, lišta a fronta (filtr, hledání, řazení, rozbalení); fronta se mění po skupinách
 function vykreslitSeznam() {
-    if (!model || !zajistitKostru() || fokus.otevreny()) return;
+    if (!model || !zajistitKostru() || !vSouhrnu()) return;
     // Zdroj, který ve filtru už nic nemá, se zruší
     if (stav.udrzbaZdroj && !zdrojePolozek(model, stav.udrzbaFiltr).some(z => z.zdroj === stav.udrzbaZdroj)) stav.udrzbaZdroj = '';
     const vybrane = vyber();
     const ukazat = vybrane.slice(0, stav.prehledLimit);
     const html = {
-        bok: htmlBoku(), uzke: htmlUzke(), dal: htmlDal(vybrane), lista: htmlListy(vybrane), pata: htmlPaty(vybrane, ukazat.length),
+        bok: htmlBoku(), uzke: htmlUzke(), lista: htmlListy(vybrane), pata: htmlPaty(vybrane, ukazat.length),
         fronta: ukazat.map(({ skupina, polozky }) => ({ klic: skupina.klic, html: htmlSkupiny(skupina, polozky) })),
     };
     // Nejdřív se přečte poloha (stránka je ještě beze změn, čtení nevynutí rozvržení navíc), pak se zapisuje
     zachovatPolohu(() => {
-        ['bok', 'uzke', 'dal', 'lista', 'pata'].forEach(jmeno => nastavitHtml(cast(jmeno), html[jmeno]));
+        ['bok', 'uzke', 'lista', 'pata'].forEach(jmeno => nastavitHtml(cast(jmeno), html[jmeno]));
         srovnatSeznam(cast('fronta'), html.fronta);
     });
 }
@@ -396,7 +420,7 @@ function prekreslitPoZmene(fokusKlic) {
         vykreslit();
         // Fokus, který zmizel s překresleným tlačítkem (akce z nabídky nebo oznámení), se vrátí na řádek
         const aktivni = document.activeElement;
-        if (fokusKlic && udrzbaVidet() && !fokus.otevreny() && (!aktivni || aktivni === document.body)) {
+        if (fokusKlic && udrzbaVidet() && vSouhrnu() && (!aktivni || aktivni === document.body)) {
             const klic = model.podleKlice.has(fokusKlic) ? fokusKlic : [...model.podleKlice.keys()].find(k => k.endsWith(`|n:${fokusKlic}`));
             if (klic) zachovatPolohu(() => {}, klic);
         }
@@ -442,7 +466,17 @@ function pozorovatKonec(prvek) {
     pozorovatel.observe(prvek);
 }
 
-// Filtr fronty (lišta, pokrok, řádek souhrnu na úvodu Přehledu)
+// Řádek „Co zbývá doplnit“ na úvodu Přehledu: údaj v Po údajích, když k filtru patří; Souhrn zůstane s filtrem
+export function otevritNaFiltru(filtr) {
+    if (filtr === 'vse' || !model) return;
+    const klic = udajFiltru(udaje, filtr);
+    if (klic && stav.udrzbaRezim !== 'souhrn') {
+        poUdajich.ukazatUdaj(klic);
+        nastavitRezim('udaje');
+    } else nastavitFiltr(filtr);
+}
+
+// Filtr fronty v Souhrnu (boční seznam, pokrok)
 export function nastavitFiltr(filtr, zdroj = '') {
     stav.udrzbaFiltr = filtr;
     stav.udrzbaZdroj = zdroj;
@@ -455,7 +489,7 @@ export function nastavitFiltr(filtr, zdroj = '') {
 
 const najitPolozku = klic => model?.podleKlice.get(klic);
 
-// Hlavní akce položky (Doplnit, Opravit, Přijmout, Přidat cover…); u alb jde zvolit album (soustředěný režim)
+// Hlavní akce položky (Doplnit, Opravit, Přijmout, Přidat cover…); u alb jde zvolit album (Po modelkách)
 async function hlavniAkce(x, s, zvoleneAlbum = null) {
     if (s.druh === 'vydani') {
         // Vydání je dané, u centerfoldu se vybírá jen modelka
@@ -543,29 +577,32 @@ async function zapsatOdlozeni(x, s, ano) {
     return true;
 }
 
-// Netýká se / V pořádku / Odmítnout / Nezajímá mě (ano = true), nebo vrácení (ano = false); jde vrátit z oznámení
-async function odlozit(x, s, ano = true) {
+// Netýká se / V pořádku / Odmítnout / Nezajímá mě (ano = true), nebo vrácení (ano = false); jde vrátit z oznámení.
+// tise: bez oznámení (Po údajích oznamuje samo); vrací, zda se povedlo (null = nic se nestalo, oznámí se proč).
+async function odlozit(x, s, ano = true, { tise = false } = {}) {
     if (x.druh === 'navrh') return ano ? navrhy.odmitnout(x.navrh) : navrhy.vratitOdmitnuti([x.navrh]);
     const [akce, vratit] = ODLOZENI[druhOdlozeni(x, s)];
     let ok = false;
     try {
         ok = await zapsatOdlozeni(x, s, ano);
     } catch { /* oznámí se níž */ }
-    if (ok === null) return;
+    if (ok === null) return null;
     if (!ok) {
-        oznamit(ano ? `${akce} se nepodařilo uložit.` : 'Nepodařilo se vrátit.');
+        if (!tise) oznamit(ano ? `${akce} se nepodařilo uložit.` : 'Nepodařilo se vrátit.');
         // Část se mohla uložit (víc alb najednou): fronta se srovná podle backendu
         naplanovatNacteni();
-        return;
+        return false;
     }
     if (s.druh === 'vydani' && !ano) {
         // Vrácené číslo se do fronty dostane jen novým načtením
         await nacist();
-        return;
+        return true;
     }
     poZmene(x.klic);
+    if (tise) return true;
     if (ano) oznamit(`${akce}: ${s.jmeno} – ${x.pole}.`, { text: 'Vrátit', akce: () => odlozit(x, s, false) });
     else oznamit(`${vratit}: ${s.jmeno} – ${x.pole}.`);
+    return true;
 }
 
 // Hromadné akce pro výběr (filtr, zdroj, hledání) – vždy pro všechny položky výběru, i nezobrazené
@@ -632,7 +669,7 @@ export function nabidkaUdrzby(cil, x, y) {
     const s = nalez?.skupina || model.skupiny.find(sk => sk.klic === prvekSkupiny.dataset.klic);
     if (!s) return true;
     const modelka = modelkaSkupiny(s);
-    const soustredeny = s.polozky.some(p => !p.netyka) ? [{ text: 'Vyřídit v soustředěném režimu (S)', akce: () => otevritFokus(s.klic) }] : [];
+    const soustredeny = s.polozky.some(p => !p.netyka) ? [{ text: 'Vyřídit po modelkách (S)', akce: () => nastavitRezim('modelky', s.klic) }] : [];
     const otevrit = s.druh === 'vydani' ? [...soustredeny, { text: `Otevřít ${nazevVydani(s.vydani)}`, akce: () => otevritVydani(s.vydani) }]
         : modelka ? [
             ...soustredeny,
@@ -674,26 +711,6 @@ function rozbalitVse() {
     vykreslitSeznam();
 }
 
-// Soustředěný režim místo seznamu (boční seznam, další krok a fronta se schovají); poloha seznamu se zapamatuje
-let polohaSeznamu = { posun: 0, radek: '' };
-function otevritFokus(klic) {
-    if (!model || !klic) return;
-    if (!fokus.otevreny()) polohaSeznamu = { posun: oblast().scrollTop, radek: aktivniRadek };
-    cast('seznam').classList.add('hidden');
-    fokus.otevrit(cast('fokus'), klic);
-}
-
-// Návrat ze soustředěného režimu: seznam na stejném místě, fokus na řádku, ze kterého se do režimu šlo
-function poZavreniFokusu() {
-    cast('seznam').classList.remove('hidden');
-    vykreslitSeznam();
-    oblast().scrollTop = polohaSeznamu.posun;
-    aktivniRadek = polohaSeznamu.radek;
-    obnovitTabIndex();
-    const radek = /** @type {HTMLElement} */ (cast('fronta').querySelector('[tabindex="0"]'));
-    radek?.focus({ preventScroll: true });
-}
-
 function prepnoutSkupinu(klic, rozbalit = null) {
     const filtr = stav.udrzbaFiltr;
     if (rozbalit !== null && jeRozbalena(klic) === rozbalit) return;
@@ -717,9 +734,17 @@ export function pripravit(nacistPrehled) {
     nacist = nacistPrehled;
     navrhy.nastavitObnoveni(poZmene);
     uceni.pripravit();
-    fokus.pripravit({ model: () => model, vyber, hlavniAkce, odlozit, nacist: () => nacist(), poZmene, obrazek: obrazekSkupiny,
-        podtitulek: podtitulekSkupiny, modelka: modelkaSkupiny, viditelna: udrzbaVidet, poZavreni: poZavreniFokusu });
+    const spolecne = { model: () => model, poUdajich: () => udaje, hlavniAkce, odlozit, obrazek: obrazekSkupiny, podtitulek: podtitulekSkupiny, modelka: modelkaSkupiny };
+    fokus.pripravit({ ...spolecne, nacist: () => nacist(), viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'modelky' });
+    poUdajich.pripravit({ ...spolecne, viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'udaje',
+        // Vyřízené v datech Přehledu (titulní fotka, srdíčka, alba) hned, bez čekání na nové načtení
+        vyrizeno: (seznam = '', jeTo = (_x) => false) => {
+            if (seznam && data) data.p[seznam] = (data.p[seznam] || []).filter(x => !jeTo(x));
+            poZmene();
+        } });
     try { stav.udrzbaRazeni = localStorage.getItem('udrzbaRazeni') || 'priorita'; } catch { /* výchozí */ }
+    try { stav.udrzbaRezim = localStorage.getItem('udrzbaRezim') || 'udaje'; } catch { /* Po údajích */ }
+    if (!REZIMY.some(([k]) => k === stav.udrzbaRezim)) stav.udrzbaRezim = 'udaje';
 
     stats.addEventListener('pointerdown', () => { mysDole = true; });
     document.addEventListener('pointerup', pustitMys);
@@ -742,6 +767,13 @@ export function pripravit(nacistPrehled) {
         const zdrojUceni = cil.closest('[data-uceni-zdroj]');
         // Nabídka se otevírá klikem: událost nesmí dojít k dokumentu, který nabídky klikem mimo ně zavírá (nabidky.js)
         if (cil.closest('[data-ud-vice], [data-ud-hromadne]')) e.stopPropagation();
+        const rezim = /** @type {HTMLElement} */ (cil.closest('[data-ud-rezim]'));
+        if (rezim) {
+            nastavitRezim(rezim.dataset.udRezim);
+            return;
+        }
+        // Režimy Po údajích a Po modelkách mají vlastní obsluhu
+        if (!cil.closest('[data-ud="souhrn"]')) return;
         if (cil.closest('[data-ud-vice]')) {
             const r = cil.closest('[data-ud-vice]').getBoundingClientRect();
             nabidkaUdrzby(cil, r.right - 240, r.bottom + 4);
@@ -760,14 +792,6 @@ export function pripravit(nacistPrehled) {
             vykreslit();
         } else if (cil.closest('[data-uceni-zapomenout]')) {
             uceni.zapomenout().then(ok => { if (ok) nacist(); });
-        } else if (cil.closest('[data-ud-krok]')) {
-            const k = najitPolozku(/** @type {HTMLElement} */ (cil.closest('[data-ud-krok]')).dataset.udKrok);
-            if (k) hlavniAkce(k.polozka, k.skupina);
-        } else if (cil.closest('[data-ud-zacit]')) {
-            otevritFokus(dalsiKrok(vyber()).prvni?.skupina.klic);
-        } else if (cil.closest('[data-ud-jiste]')) {
-            const jiste = navrhyVyberu(vyber()).filter(n => n.jistota >= MEZ_JISTE);
-            navrhy.prijmoutVice(jiste, 'Přijmout jisté návrhy (≥ 90 %)?');
         } else if (cil.closest('[data-ud-skryte]')) {
             stav.prehledSkryte = !stav.prehledSkryte;
             nacist();
@@ -829,7 +853,7 @@ export function pripravit(nacistPrehled) {
 
     // Ctrl+F a / skočí do hledání Údržby (hlavní hledání v Přehledu nic nehledá)
     document.addEventListener('keydown', (e) => {
-        if (!udrzbaVidet() || fokus.otevreny() || stav.zamceno || document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) return;
+        if (!udrzbaVidet() || !vSouhrnu() || stav.zamceno || document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) return;
         const pise = /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select');
         if (((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f') || (e.key === '/' && !pise && !e.ctrlKey && !e.altKey)) {
             e.preventDefault();
@@ -837,9 +861,9 @@ export function pripravit(nacistPrehled) {
         }
     });
 
-    // Klávesnice ve frontě: ↑↓ řádky, Home/End, PageUp/PageDown, → rozbalí, ← sbalí, Enter hlavní akce,
+    // Klávesnice ve frontě Souhrnu: ↑↓ řádky, Home/End, PageUp/PageDown, → rozbalí, ← sbalí, Enter hlavní akce,
     // mezerník rozbalí skupinu, Delete odloží položku (Netýká se, V pořádku, Odmítnout), E upraví návrh,
-    // S otevře skupinu v soustředěném režimu, Esc v hledání ho vymaže a ↓ z hledání skočí do fronty
+    // S otevře skupinu v režimu Po modelkách, Esc v hledání ho vymaže a ↓ z hledání skočí do fronty
     stats.addEventListener('keydown', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         if (cil.matches?.('[data-ud-hledat]')) {
@@ -908,7 +932,7 @@ export function pripravit(nacistPrehled) {
             navrhy.upravit(nalez.polozka.navrh);
         } else if ((e.key === 's' || e.key === 'S') && s?.polozky.some(p => !p.netyka)) {
             e.preventDefault();
-            otevritFokus(s.klic);
+            nastavitRezim('modelky', s.klic);
         }
     });
 }

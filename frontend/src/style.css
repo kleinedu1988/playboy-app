@@ -8269,8 +8269,432 @@ textarea {
     white-space: nowrap;
 }
 
-/* Údržba: hlavička s pokrokem sbírky a panelem učení, pod ní vlevo lepivý seznam filtrů, vpravo „Další krok“,
-   lišta nástrojů a fronta skupin (modelka nebo číslo) s rozbalitelnými položkami; soustředěný režim (.uf-*) */
+/* Údržba: jednořádková hlavička s přepínačem režimů; Po údajích (.uu-*), Po modelkách (.uf-*) a Souhrn –
+   pokrok sbírky a panel učení, pod nimi vlevo lepivý seznam filtrů, vpravo lišta nástrojů a fronta skupin */
+.ud-zahlavi {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    margin-bottom: 16px;
+}
+
+.ud-zahlavi-text {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 16px;
+    min-width: 0;
+}
+
+.ud-zahlavi h3 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.ud-zahlavi h3::after {
+    content: none;
+}
+
+/* Úplnost sbírky: malý prstenec z conic-gradient s procentem uprostřed */
+.ud-prstenec {
+    --p: 0;
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background:
+        radial-gradient(closest-side, var(--bg-main) 76%, transparent 78%),
+        conic-gradient(var(--accent) calc(var(--p) * 1%), rgba(255, 255, 255, 0.08) 0);
+}
+
+.ud-prstenec span {
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.ud-pocty {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.ud-pocty b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+/* Přepínač režimů: segmenty, zvolený v barvě akcentu */
+.ud-rezimy {
+    display: inline-flex;
+    flex: none;
+    max-width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 10px;
+}
+
+.ud-rezim {
+    padding: 7px 16px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.ud-rezim + .ud-rezim {
+    border-left: 1px solid var(--panel-okraj);
+}
+
+.ud-rezim:hover {
+    color: var(--text-main);
+}
+
+.ud-rezim:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.ud-rezim.on {
+    background-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Výběr (filtr fronty Po modelkách, údaj v úzkém okně) */
+.ud-vyber {
+    width: 100%;
+    height: 34px;
+    padding: 0 30px 0 12px;
+    background-position: right 10px center;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 10px;
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+/* Klávesy v patičce karet */
+.ud-klavesy {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.ud-klavesy kbd,
+.uu-enter kbd {
+    padding: 0 5px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 5px;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 11px;
+}
+
+.ud-klavesy kbd:not(:first-child) {
+    margin-left: 8px;
+}
+
+/* Pole s nápovědou uvnitř vpravo: jistota návrhu, důvod nálezu, klávesy srdíček */
+.ud-vstup {
+    position: relative;
+}
+
+.ud-napoveda {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    max-width: 60%;
+    overflow: hidden;
+    color: var(--accent-text);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.ud-vstup select ~ .ud-napoveda {
+    right: 32px;
+}
+
+.ud-napoveda.kontrola {
+    color: #f0c765;
+}
+
+.ud-napoveda.tlumena,
+.ud-napoveda.opraveno {
+    color: var(--text-muted);
+}
+
+.ud-napoveda.opraveno::before {
+    content: "oprava · ";
+}
+
+.ud-vstup:has(.ud-napoveda.navrh) input {
+    border-color: rgba(216, 27, 96, 0.5);
+}
+
+.ud-vstup:has(.ud-napoveda.kontrola) input {
+    border-color: rgba(224, 165, 38, 0.5);
+}
+
+/* Po údajích: vlevo seznam údajů, vpravo karta údaje s řádky modelek */
+.uu-mrizka {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    align-items: start;
+    gap: 18px;
+}
+
+.uu-navrhu {
+    color: var(--accent-text);
+    font-size: 11px;
+    font-style: normal;
+}
+
+.uu-prazdne {
+    margin: 8px 10px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.uu-karta {
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.uu-vyber {
+    display: none;
+}
+
+.uu-hlava {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--panel-okraj);
+}
+
+.uu-nadpis {
+    flex: 1 1 220px;
+    min-width: 0;
+}
+
+.uu-hlava h4 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.uu-hlava small {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.uu-odlozit-vse {
+    border-color: transparent;
+}
+
+.uu-radek {
+    display: grid;
+    grid-template-columns: 34px minmax(140px, 220px) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 9px 18px;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 56px;
+}
+
+.uu-radek + .uu-radek {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.uu-radek:focus-within {
+    background-color: rgba(255, 255, 255, 0.025);
+}
+
+.uu-radek > img,
+.uu-radek > .ud-obalka {
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    background-color: var(--bg-card);
+}
+
+.uu-radek > .ud-obalka {
+    width: 26px;
+    height: 34px;
+    border-radius: 5px;
+}
+
+.uu-jmeno {
+    min-width: 0;
+}
+
+.uu-jmeno strong,
+.uu-jmeno small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.uu-jmeno strong {
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+.uu-jmeno small {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.uu-obsah {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.uu-obsah > .uf-pole {
+    flex: 1 1 140px;
+    min-width: 0;
+}
+
+.uu-obsah .kategorie-vyber {
+    margin-top: 6px;
+}
+
+.uu-text {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: 13px;
+}
+
+.uu-text small {
+    color: var(--text-muted);
+}
+
+.uu-text .ud-napoveda {
+    position: static;
+    margin-left: 8px;
+    transform: none;
+}
+
+.uu-pole-navrhu {
+    margin-right: 6px;
+    color: var(--text-muted);
+}
+
+.uu-srdicka {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 9px;
+}
+
+.uu-srdicka:focus-visible,
+.uf-srdicka-obal:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.uu-srdicka .heart {
+    font-size: 20px;
+}
+
+.uu-akce {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 110px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* „Enter uložit“ u zaměřeného řádku vlevo od odložení; tlačítko vpravo se přitom nepohne (klik stisknutím
+   do řádku nesmí ztratit cíl, WebKitGTK by ho zahodil) */
+.uu-enter {
+    display: none;
+    white-space: nowrap;
+}
+
+.uu-radek:focus-within:not(.hotovo) .uu-enter {
+    display: inline;
+}
+
+.uu-stav:empty {
+    display: none;
+}
+
+.uu-stav {
+    color: var(--vytisk);
+    white-space: nowrap;
+}
+
+/* Uložený nebo odložený řádek zůstane na místě ztlumený; ukládaný jen trochu */
+.uu-radek.hotovo {
+    opacity: 0.45;
+}
+
+.uu-radek.hotovo .uu-odlozit,
+.uu-radek.hotovo .uu-enter {
+    display: none;
+}
+
+.uu-radek.uklada {
+    opacity: 0.7;
+}
+
+.uu-radek.chyba {
+    box-shadow: inset 3px 0 0 var(--danger-text);
+}
+
+.uu-hotovo {
+    margin: 0;
+    padding: 18px;
+    color: var(--vytisk);
+    font-size: 13.5px;
+}
+
+.uu-pata {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 14px;
+    padding: 12px 18px;
+    border-top: 1px solid var(--panel-okraj);
+    color: var(--text-muted);
+    font-size: 12px;
+}
 .ud-hlava {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr);
@@ -8787,78 +9211,6 @@ textarea {
     min-width: 0;
 }
 
-/* Další krok: nejcennější úkol výběru, Přijmout jisté a Začít postupně */
-.ud-dal {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 12px;
-    padding: 12px 16px;
-    border: 1px solid rgba(216, 27, 96, 0.35);
-    border-radius: 14px;
-    background: linear-gradient(90deg, rgba(216, 27, 96, 0.18), rgba(216, 27, 96, 0.04));
-}
-
-.ud-dal > img,
-.ud-dal > .ud-obalka {
-    flex: none;
-    width: 40px;
-    height: 40px;
-    margin: 0;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: top;
-    background-color: var(--bg-card);
-}
-
-.ud-dal > .ud-obalka {
-    width: 32px;
-    height: 42px;
-    border-radius: 6px;
-}
-
-.ud-dal-text {
-    flex: 1;
-    min-width: 0;
-}
-
-.ud-dal-krok {
-    display: block;
-    max-width: 100%;
-    padding: 0;
-    overflow: hidden;
-    border: none;
-    background: none;
-    color: var(--text-main);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 600;
-    text-align: left;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.ud-dal-krok:hover {
-    color: var(--accent-text);
-}
-
-.ud-dal-text small {
-    display: block;
-    margin-top: 2px;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.ud-dal-jiste {
-    border-color: transparent;
-}
-
-.ud-zacit {
-    flex: none;
-    white-space: nowrap;
-}
-
 /* Lišta nad frontou: hledání, (v úzkém okně výběr filtru), řazení, Hromadně */
 .ud-nastroje {
     position: sticky;
@@ -8897,16 +9249,6 @@ textarea {
 }
 
 /* Soustředěný režim: karta jedné skupiny s úkoly na místě, vpravo fronta „Na řadě“ */
-.uf-lista {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 14px;
-    margin-bottom: 12px;
-    color: var(--text-muted);
-    font-size: 12.5px;
-}
-
 .uf-mrizka {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 340px;
@@ -8971,30 +9313,26 @@ textarea {
 
 .uf-ukoly {
     display: grid;
-    gap: 10px;
+    border-top: 1px solid var(--panel-okraj);
 }
 
+/* Úkol na kartě: štítek, pole s nápovědou uvnitř, akce; řádky oddělené linkou */
 .uf-ukol {
     display: grid;
     grid-template-columns: 150px minmax(0, 1fr) auto;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 12px;
-    background-color: rgba(255, 255, 255, 0.02);
+    margin: 0 -10px;
+    padding: 8px 10px;
+    border-radius: 10px;
 }
 
-.uf-ukol.kontrola {
-    border-color: rgba(224, 165, 38, 0.45);
-}
-
-.uf-ukol.navrh {
-    border-color: rgba(216, 27, 96, 0.45);
+.uf-ukol + .uf-ukol {
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .uf-ukol:focus-within {
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: rgba(255, 255, 255, 0.03);
 }
 
 .uf-stitek {
@@ -9059,8 +9397,17 @@ textarea {
     color: var(--accent-text);
 }
 
+.uf-srdicka-obal {
+    display: flex;
+    align-items: center;
+    height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 9px;
+}
+
 .uf-srdicka .heart {
-    font-size: 22px;
+    font-size: 20px;
 }
 
 .uf-akce {
@@ -9068,6 +9415,12 @@ textarea {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 6px;
+}
+
+/* Odložení (Netýká se, V pořádku) jen textem, hlavní akce zůstává tlačítkem */
+.uf-akce .nv-tlacitko:not(.nv-prijmout):not(:hover),
+.uu-odlozit:not(:hover) {
+    background-color: transparent;
 }
 
 .uf-ano,
@@ -9104,6 +9457,10 @@ textarea {
     position: sticky;
     top: 8px;
     padding: 12px;
+}
+
+.uf-fronta > .ud-vyber {
+    margin-bottom: 10px;
 }
 
 .uf-fronta-hlava {
@@ -9220,15 +9577,41 @@ textarea {
     }
 }
 
-/* Úzké okno: boční seznam filtrů je výběr v liště, fronta soustředěného režimu pod kartou za tlačítkem */
+/* Úzké okno: boční seznamy jsou výběr nad obsahem, fronta Po modelkách nad kartou za tlačítkem */
 @media (max-width: 900px) {
     .ud-telo,
-    .uf-mrizka {
+    .uf-mrizka,
+    .uu-mrizka {
         grid-template-columns: minmax(0, 1fr);
     }
 
     .ud-bok {
         display: none;
+    }
+
+    .uu-vyber {
+        display: block;
+        width: calc(100% - 36px);
+        margin: 14px 18px 0;
+    }
+
+    .uu-radek {
+        grid-template-columns: 32px minmax(0, 1fr) auto;
+        row-gap: 6px;
+        padding: 10px 14px;
+    }
+
+    .uu-obsah {
+        grid-column: 2 / -1;
+        grid-row: 2;
+    }
+
+    .uu-akce {
+        min-width: 0;
+    }
+
+    .uf-fronta {
+        order: -1;
     }
 
     .ud-uzke {
@@ -9237,18 +9620,6 @@ textarea {
 
     .ud-nastroje {
         position: static;
-    }
-
-    .ud-dal {
-        flex-wrap: wrap;
-    }
-
-    .ud-dal-text {
-        flex-basis: calc(100% - 60px);
-    }
-
-    .ud-dal-krok {
-        white-space: normal;
     }
 
     .uf-fronta {

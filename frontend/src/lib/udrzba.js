@@ -1,6 +1,7 @@
 // Údržba sbírky bez stránky: z dat Přehledu (GetPrehled), modelek, nálezů kontroly a návrhů doplnění sestaví
 // jednu frontu skupin (modelka nebo číslo) s položkami (chybějící údaj, nález kontroly, návrh), spočítá jejich
-// prioritu, pokrok sbírky po oblastech a počty pro filtry. Jen čisté funkce – testuje je test/udrzba.test.js.
+// prioritu, pokrok sbírky po oblastech a počty pro filtry; pro režim Po údajích ji přeskládá po jednotlivých údajích.
+// Jen čisté funkce – testuje je test/udrzba.test.js.
 import { VYCHOZI_EDICE, kategorieModelky, nazevAlba, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
 
 // Údaje modelky, které Údržba hlídá, po skupinách shodných s částmi formuláře: [vlastnost, název, pole formuláře].
@@ -336,29 +337,10 @@ export function filtrovatUdrzbu(model, { filtr = 'vse', zdroj = '', hledat = '',
     return vysledek;
 }
 
-// Další krok nad frontou: první nevyřízená položka výběru (nejcennější podle řazení), kolik úkolů výběr má
-// a jeho jisté návrhy (jdou přijmout najednou)
-export function dalsiKrok(vybrane) {
-    let prvni = null;
-    let ukolu = 0;
-    const jiste = [];
-    for (const { skupina, polozky } of vybrane) {
-        for (const x of polozky) {
-            if (x.netyka) continue;
-            ukolu++;
-            if (!prvni) prvni = { skupina, polozka: x };
-            if (x.druh === 'navrh' && x.jistota >= MEZ_JISTE) jiste.push(x.navrh);
-        }
-    }
-    return { prvni, ukolu, jiste };
-}
-
 // Hlavní akce položky slovy (tlačítko v řádku, nabídka)
 export const textAkce = (x, s) => x.druh === 'navrh' ? 'Přijmout' : x.druh === 'kontrola' ? 'Opravit'
     : s.druh === 'vydani' ? (x.id === 'cover' ? 'Přidat cover' : 'Přidat centerfold') : 'Doplnit';
 
-// Položka jednou větou („chybí titulní fotka“, „národnost: USA“, „Výška 17 cm vypadá jako chyba“)
-export const popisPolozky = x => x.druh === 'kontrola' || /^chybí/.test(x.hodnota) ? x.hodnota : `${x.pole}: ${x.hodnota}`;
 const velke = t => t.charAt(0).toUpperCase() + t.slice(1);
 // Text štítku jedné položky v řádku fronty
 export const textStitku = x => x.druh === 'navrh' ? `✦ ${velke(x.pole)}: ${x.hodnota} · ${procent(x.jistota)} %`
@@ -388,7 +370,7 @@ export function souhrnFronty(polozky) {
 }
 
 /**
- * Úkoly soustředěného režimu pro nevyřízené položky jedné skupiny, v pořadí priority. Chybějící údaje se rozpadnou
+ * Úkoly karty Po modelkách pro nevyřízené položky jedné skupiny, v pořadí priority. Chybějící údaje se rozpadnou
  * na jednotlivá pole; pole, pro které je návrh, se doplňuje návrhem. Druh úkolu: 'pole' (prázdné pole formuláře),
  * 'titulni' (odkaz na Disk), 'hodnoceni' (srdíčka), 'kontrola' a 'navrh' (s polem, když údaj jde upravit na místě),
  * 'okno' (album, cover, centerfold – otevře se okno). Jeden údaj má nejvýš jedno pole (další nález téhož údaje je bez něj).
@@ -428,6 +410,130 @@ export function ukolyFokusu(polozky, vlastnostPole) {
         }
     });
     return ukoly;
+}
+
+// ——— Po údajích: jeden údaj, všechny modelky (alba, čísla), kterým chybí ———
+
+// Oblasti seznamu údajů vlevo
+export const OBLASTI_UDAJU = [['kontrola', 'Ke kontrole'], ['udaje', 'Údaje modelek'], ['fotky', 'Fotky a alba'], ['cisla', 'Čísla']];
+// Údaje v pevném pořadí podle toho, co sbírce přinesou nejvíc; pořadí se při práci nemění, aby seznam neskákal.
+// druh: 'pole' (pole formuláře modelky, vlastnosti ze SKUPINY_UDAJU), 'kontrola', 'hodnoceni', 'titulni' (odkaz z Disku),
+// 'vydaniAlba' (RRRR-MM), 'textAlba' (editor textu), 'okno' (centerfold, cover – otevře své okno), 'navrh' (jiné návrhy).
+// Výška s váhou a obvody jdou spolu (míry se píšou dohromady, 34B-24-34). bez = „N modelek bez …“, jednotka = koho řádek je.
+const MODELKY = ['modelka', 'modelky', 'modelek'];
+const ALBA = ['album', 'alba', 'alb'];
+const CISLA = ['číslo', 'čísla', 'čísel'];
+export const UDAJE = [
+    { klic: 'kontrola', oblast: 'kontrola', nazev: 'Ke kontrole', druh: 'kontrola', bez: 'ke kontrole', jednotka: ['nález', 'nálezy', 'nálezů'] },
+    { klic: 'narozeniDatum', oblast: 'udaje', druh: 'pole', vlastnosti: ['narozeniDatum'], bez: 'bez data narození' },
+    { klic: 'narodnost', oblast: 'udaje', druh: 'pole', vlastnosti: ['narodnost'], bez: 'bez národnosti' },
+    { klic: 'narozeniMisto', oblast: 'udaje', druh: 'pole', vlastnosti: ['narozeniMisto'], bez: 'bez místa narození' },
+    { klic: 'vyskaVaha', oblast: 'udaje', nazev: 'Výška a váha', druh: 'pole', vlastnosti: ['vyskaCm', 'vahaKg'], bez: 'bez výšky nebo váhy' },
+    { klic: 'role', oblast: 'udaje', druh: 'pole', vlastnosti: ['role'], bez: 'bez kategorie' },
+    { klic: 'etnicita', oblast: 'udaje', druh: 'pole', vlastnosti: ['etnicita'], bez: 'bez etnicity' },
+    { klic: 'vlasyBarva', oblast: 'udaje', druh: 'pole', vlastnosti: ['vlasyBarva'], bez: 'bez barvy vlasů' },
+    { klic: 'ociBarva', oblast: 'udaje', druh: 'pole', vlastnosti: ['ociBarva'], bez: 'bez barvy očí' },
+    { klic: 'miry', oblast: 'udaje', nazev: 'Míry', druh: 'pole', vlastnosti: ['obvodHrudnikCm', 'obvodPasCm', 'obvodBokyCm'], bez: 'bez měr' },
+    { klic: 'velikostPrsou', oblast: 'udaje', druh: 'pole', vlastnosti: ['velikostPrsou'], bez: 'bez velikosti prsou' },
+    { klic: 'prsaTyp', oblast: 'udaje', druh: 'pole', vlastnosti: ['prsaTyp'], bez: 'bez typu prsou' },
+    { klic: 'ochlupeni', oblast: 'udaje', druh: 'pole', vlastnosti: ['ochlupeni'], bez: 'bez údaje o ochlupení' },
+    { klic: 'tetovani', oblast: 'udaje', druh: 'pole', vlastnosti: ['tetovani'], bez: 'bez údaje o tetování' },
+    { klic: 'piercing', oblast: 'udaje', druh: 'pole', vlastnosti: ['piercing'], bez: 'bez údaje o piercingu' },
+    { klic: 'tags', oblast: 'udaje', druh: 'pole', vlastnosti: ['tags'], bez: 'bez tagů' },
+    { klic: 'hodnoceni', oblast: 'udaje', nazev: 'Hodnocení', druh: 'hodnoceni', bez: 'bez srdíček' },
+    { klic: 'titulni', oblast: 'fotky', nazev: 'Titulní fotka', druh: 'titulni', bez: 'bez titulní fotky' },
+    { klic: 'centerfold', oblast: 'fotky', nazev: 'Centerfold', druh: 'okno', bez: 'bez centerfoldu' },
+    { klic: 'vydaniAlb', oblast: 'fotky', nazev: 'Vydání alb', druh: 'vydaniAlba', bez: 'bez čísla, ve kterém vyšla', jednotka: ALBA },
+    { klic: 'textAlb', oblast: 'fotky', nazev: 'Texty alb', druh: 'textAlba', bez: 'bez průvodního textu', jednotka: ALBA },
+    { klic: 'navrhyAlb', oblast: 'fotky', nazev: 'Další návrhy', druh: 'navrh', bez: 'k potvrzení (fotograf, datum alba…)', jednotka: ['návrh', 'návrhy', 'návrhů'] },
+    { klic: 'cover', oblast: 'cisla', nazev: 'Cover', druh: 'okno', bez: 'bez obálky', jednotka: CISLA },
+    { klic: 'cfcisla', oblast: 'cisla', nazev: 'Centerfold', druh: 'okno', bez: 'bez centerfoldu', jednotka: CISLA },
+].map(u => {
+    // Pole formuláře údaje ([vlastnost, popis, pole formuláře]) a název podle SKUPINY_UDAJU
+    const pole = (u.vlastnosti || []).map(v => SKUPINY_UDAJU.flatMap(s => s.udaje).find(x => x[0] === v));
+    return { jednotka: MODELKY, ...u, pole, nazev: u.nazev || velke(pole[0][1]) };
+});
+const UDAJ_VLASTNOSTI = new Map(UDAJE.flatMap(u => (u.vlastnosti || []).map(v => [v, u.klic])));
+const UDAJ_POLE = new Map(UDAJE.flatMap(u => u.pole.map(p => [p[2], u.klic])));
+const jeVydaniAlba = n => n.pole === 'vydani' || n.pole === 'vydaniAlba';
+
+/**
+ * Údaje pro „Po údajích“ z modelu Údržby (stejné položky, takže počty sedí s ostatními režimy). Řádek je modelka
+ * (u alb album, u čísel číslo, u kontroly nález) s tím, co mu u údaje chybí, a návrhy pro jeho pole. Vyřízené
+ * položky („netýká se“, odmítnuté) se přeskakují. Řádky jdou v pořadí fronty (priorita), prázdné údaje se vynechají.
+ * Vrací { oblasti: [{ klic, nazev, udaje }], udaje: Map(klíč → údaj s radky, pocet, navrhu) }.
+ */
+export function sestavitPoUdajich(model) {
+    const radky = new Map(UDAJE.map(u => [u.klic, []]));
+    for (const s of model.skupiny) {
+        const uSkupiny = new Map(); // řádek údaje u této skupiny (alba podle názvu)
+        const radek = (udaj, klic, dalsi) => {
+            const k = `${udaj}|${s.klic}${klic ? `|${klic}` : ''}`;
+            if (!uSkupiny.has(k)) {
+                const r = { klic: k, udaj, skupina: s, chybejici: [], navrhy: [], ...dalsi };
+                uSkupiny.set(k, r);
+                radky.get(udaj).push(r);
+            }
+            return uSkupiny.get(k);
+        };
+        const aktivni = s.polozky.filter(x => !x.netyka);
+        for (const x of aktivni) {
+            if (x.akce === 'udaje') {
+                x.chybejici.forEach(u => {
+                    const udaj = UDAJ_VLASTNOSTI.get(u[0]);
+                    if (udaj) radek(udaj, '', { polozka: x }).chybejici.push(u);
+                });
+            } else if (x.druh === 'kontrola') radek('kontrola', x.id, { polozka: x, nalez: x.nalez });
+            else if (s.druh === 'vydani') radek(x.filtr === 'cover' ? 'cover' : 'cfcisla', '', { polozka: x });
+            else if (x.akce === 'titulni' || x.akce === 'centerfold' || x.akce === 'hodnoceni') radek(x.akce, '', { polozka: x });
+            else if (x.akce === 'popis' || x.akce === 'vydani') {
+                x.alba.filter(a => !a.netykaSe).forEach(a => radek(x.akce === 'popis' ? 'textAlb' : 'vydaniAlb', `${a.album}|${a.typ}`, { polozka: x, album: a }));
+            }
+        }
+        // Návrh patří k řádku svého pole (u kategorie, která se k zapsaným přidává, i když údaj nechybí),
+        // vydání alba k řádku alba, ostatní (fotograf, datum alba) do Dalších návrhů
+        aktivni.filter(x => x.druh === 'navrh').forEach(x => {
+            const n = x.navrh;
+            const udaj = !n.album && UDAJ_POLE.get(n.inputId);
+            if (udaj) radek(udaj, '', { polozka: x }).navrhy.push(x);
+            else if (n.album && jeVydaniAlba(n)) radek('vydaniAlb', `${n.album}|${n.typ}`, { polozka: x, album: { modelkaId: n.modelkaId, jmeno: n.jmeno, album: n.album, typ: n.typ } }).navrhy.push(x);
+            else radek('navrhyAlb', x.id, { polozka: x }).navrhy.push(x);
+        });
+    }
+    const udaje = new Map(UDAJE.map(u => {
+        const r = radky.get(u.klic);
+        return [u.klic, { ...u, radky: r, pocet: r.length, navrhu: r.reduce((soucet, x) => soucet + x.navrhy.length, 0) }];
+    }));
+    const oblasti = OBLASTI_UDAJU.map(([klic, nazev]) => ({ klic, nazev, udaje: [...udaje.values()].filter(u => u.oblast === klic && u.pocet) })).filter(o => o.udaje.length);
+    return { oblasti, udaje };
+}
+
+// Název Ke kontrole podle polí nálezů („⚠ Výška, věk, míry“); víc než tři pole jen počtem
+export function nazevKontroly(udaj) {
+    const pole = [...new Set(udaj.radky.map(r => r.polozka.pole))];
+    return pole.length && pole.length <= 3 ? velke(pole.join(', ')) : udaj.nazev;
+}
+
+// Další řádek po `od` ve směru `smer`, který ještě není hotový (uložený, odložený); '' když už žádný není
+export function dalsiRadek(klice, hotove, od, smer = 1) {
+    for (let i = klice.indexOf(od) + smer; i >= 0 && i < klice.length; i += smer) {
+        if (!hotove.has(klice[i])) return klice[i];
+    }
+    return '';
+}
+
+// První údaj seznamu, který má co doplnit (výchozí výběr, když zvolený údaj zmizel); '' když nic
+export const prvniUdaj = poUdajich => poUdajich.oblasti[0]?.udaje[0]?.klic || '';
+
+// Filtr Údržby na úvodu Přehledu („Co zbývá doplnit“) → údaj v Po údajích
+const UDAJ_FILTRU = { titulni: 'titulni', centerfold: 'centerfold', hodnoceni: 'hodnoceni', text: 'textAlb', alba: 'vydaniAlb', cover: 'cover', cfcisla: 'cfcisla', kontrola: 'kontrola' };
+export function udajFiltru(poUdajich, filtr) {
+    const zname = (klic) => poUdajich.udaje.get(klic)?.pocet ? klic : '';
+    if (UDAJ_FILTRU[filtr]) return zname(UDAJ_FILTRU[filtr]);
+    const vOblasti = [...poUdajich.udaje.values()].filter(u => u.pocet && (filtr === 'udaje' ? u.oblast === 'udaje' && u.druh === 'pole' : filtr === 'navrhy' ? u.navrhu : false));
+    // Návrhy: údaj s nejvíc návrhy
+    if (filtr === 'navrhy') vOblasti.sort((a, b) => b.navrhu - a.navrhu);
+    return vOblasti[0]?.klic || '';
 }
 
 // Zdroje položek ve filtru (návrhy, nálezy kontroly): [{ zdroj, popis, pocet }] od nejčastějšího

@@ -68,11 +68,13 @@ export const stav = {
     doplnovaneHodnoceni: 0,
     doplnovanaTitulni: 0, // id fotky vybrané jako titulní
     prehledSekce: 'uvod', // ukázaná část Přehledu: uvod, udrzba, shanim, statistiky
-    udrzbaFiltr: 'vse', // filtr fronty úkolů v Údržbě (vse, titulni, udaje, cover…)
+    udrzbaFiltr: 'vse', // filtr fronty v Souhrnu Údržby (vse, titulni, udaje, cover…)
     udrzbaZdroj: '', // zdroj návrhů nebo nálezů kontroly ve filtru ('' = všechny)
     udrzbaHledat: '', // hledání jména modelky nebo čísla v Údržbě
     udrzbaRazeni: 'priorita', // řazení fronty: 'priorita', 'chybi' nebo 'jmeno'
-    udrzbaFokus: false, // Údržba je v soustředěném režimu (jedna modelka nebo číslo, vpravo fronta)
+    udrzbaRezim: 'udaje', // režim Údržby: 'udaje' (Po údajích), 'modelky' (Po modelkách), 'souhrn'
+    udrzbaUdaj: '', // údaj na kartě Po údajích (narodnost, titulni, kontrola…)
+    udrzbaFiltrModelek: 'vse', // filtr fronty Po modelkách (filtr Souhrnu, nebo u:<údaj>)
     // Nejlepší: fotky s aspoň N srdíčky napříč sbírkou, po modelkách; prohlížeč jde přes všechny
     nejlepsiPolozky: [],
     nejlepsiData: null,

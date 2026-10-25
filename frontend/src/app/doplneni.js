@@ -21,8 +21,8 @@ const obsah = document.getElementById('doplnitObsah');
 const typPole = id => poleModelky.find(([, prvek]) => prvek === id)?.[2] || 'text';
 const vlastnostPole = id => poleModelky.find(([, prvek]) => prvek === id)?.[0];
 
-// Pole z formuláře modelky jako kopie (typ, nápověda, nabídka výběru) s vlastním id; sdílí ho soustředěný režim
-// Údržby (udrzba-fokus.js). hodnota = výchozí hodnota pole (oprava nálezu, návrh), jinak prázdné.
+// Pole z formuláře modelky jako kopie (typ, nápověda, nabídka výběru) s vlastním id; sdílí ho Údržba
+// (udrzba-udaje.js, udrzba-fokus.js). hodnota = výchozí hodnota pole (oprava nálezu, návrh), jinak prázdné.
 export function kopiePole(id, popis, { predpona = 'dopl', hodnota = '' } = {}) {
     const vzor = document.getElementById(id);
     const kopie = /** @type {HTMLInputElement | HTMLSelectElement} */ (vzor.cloneNode(true));

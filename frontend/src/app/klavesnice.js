@@ -1,6 +1,7 @@
 // Ovládání klávesnicí: dlaždice a karty jdou zaměřit Tabem a otevřít Enterem, okna a prohlížeč drží fokus
 // uvnitř a po zavření ho vrátí tam, odkud se otevřely
 import { otevritNabidku } from './nabidky';
+import { klavesaSrdicekModelky } from '../ui/srdicka';
 
 // Co jde zaměřit a otevřít: karta modelky, dlaždice fotky, plakát, centerfold na stěně, cover
 // a v Přehledu políčko mapy edice
@@ -28,6 +29,11 @@ export function pripravit() {
         }
         // Zaměřená karta nebo dlaždice fotky: 1–5 srdíčka, 0 je zruší (jako v prohlížeči)
         const sSrdicky = prvek === e.target && /^[0-5]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey && prvek.querySelector(':scope > * .hearts, :scope > .hearts');
+        // Modelka má srdíčka po půlkách: stejná číslice znovu přidá půlku (ui/srdicka.js); šipky zůstávají mřížce
+        if (sSrdicky && sSrdicky.classList.contains('hearts-pul')) {
+            klavesaSrdicekModelky(e, sSrdicky, { sipky: false });
+            return;
+        }
         if (sSrdicky) {
             e.preventDefault();
             const soucasne = sSrdicky.querySelectorAll('.heart.on').length;

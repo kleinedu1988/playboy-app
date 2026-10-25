@@ -13,6 +13,8 @@ import { kopiePole, prevestPole } from './doplneni';
 import { naplnitNapovedu, potvrdit } from './formular-modelky';
 import { chybaPoli, hodnotaModelky, hodnotaNavrhuPole, ulozitNavrh, ulozitPoleModelky, vlastnostPole } from './udrzba-zapis';
 import { nastavitHtml, srovnatSeznam } from '../ui/dom';
+import { htmlSrdicekModelky, obnovitSrdickaModelky } from '../ui/srdicka';
+import { hodnotaPoKlavese, textSrdicek } from '../lib/srdicka';
 import { oznamit } from '../ui/oznameni';
 import * as navrhy from './navrhy';
 import * as uceni from './uceni';
@@ -72,7 +74,7 @@ export function pripravit(funkce) {
             akce = () => { /** @type {HTMLElement} */ (document.activeElement)?.blur(); ulozitADalsi(); };
         } else if (e.key === 'Enter' && vKarte && !e.altKey && !e.shiftKey && cil.matches('input:not(.kategorie-jina), select')) akce = () => dalsiPole(cil);
         else if (e.key === 'Escape' && vKarte && cil.matches('[data-pole]')) akce = () => vratitPole(/** @type {HTMLInputElement} */ (cil));
-        else if (/^[0-5]$/.test(e.key) && cil.matches('[data-uf-hodnoceni]') && !e.ctrlKey && !e.altKey && !e.metaKey) akce = () => nastavitSrdicka(Number(e.key));
+        else if (/^([0-5]|ArrowLeft|ArrowRight)$/.test(e.key) && cil.matches('[data-uf-hodnoceni]') && !e.ctrlKey && !e.altKey && !e.metaKey) akce = () => srdickaKlavesou(e.key);
         else if ((e.key === 'PageDown' && !e.altKey) || (e.altKey && e.key === 'ArrowRight')) akce = () => prejit(1);
         else if ((e.key === 'PageUp' && !e.altKey) || (e.altKey && e.key === 'ArrowLeft')) akce = () => prejit(-1);
         if (!akce) return;
@@ -304,9 +306,10 @@ function prvekUkolu(u, s, modelka, zachovane) {
         /** @type {HTMLInputElement} */ (vstup('').querySelector('input')).placeholder = 'Vlož odkaz z Google Disku…';
         akce.push('<button type="button" class="nv-tlacitko" data-uf-akce="odlozit">Netýká se</button>');
     } else if (u.druh === 'hodnoceni') {
-        obsah = `<div class="ud-vstup uf-srdicka-obal" data-uf-hodnoceni tabindex="0" role="group" aria-label="Hodnocení (klávesy 1–5)">
-            <span class="hearts uf-srdicka">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="heart" data-uf-srdce="${n}" tabindex="-1" title="${n} z 5" aria-label="${n} z 5"></button>`).join('')}</span>
-            <small class="ud-napoveda tlumena">klávesy 1–5</small></div>`;
+        obsah = `<div class="ud-vstup uf-srdicka-obal" data-uf-hodnoceni tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="5" aria-valuenow="${hodnoceni.nove}"
+            aria-valuetext="${textSrdicek(hodnoceni.nove)}" aria-label="Hodnocení (klávesy 1–5, stejná znovu přidá půlku)">
+            ${htmlSrdicekModelky(hodnoceni.nove, '', { posuvnik: false, atributPulky: 'data-uf-srdce', tridy: 'uf-srdicka' })}
+            <small class="ud-napoveda tlumena">1–5, znovu ½</small></div>`;
         akce.push('<button type="button" class="nv-tlacitko" data-uf-akce="odlozit">Netýká se</button>');
     } else if (u.druh === 'kontrola') {
         if (u.inputId) pridatNapovedu(vstup(hodnotaModelky(modelka, u.inputId)), x.hodnota, 'kontrola', x.hodnota);
@@ -341,16 +344,22 @@ function prvekUkolu(u, s, modelka, zachovane) {
 }
 
 function obnovitSrdicka() {
-    cast('karta')?.querySelectorAll('[data-uf-srdce]').forEach(b => {
-        const n = Number(/** @type {HTMLElement} */ (b).dataset.ufSrdce);
-        b.classList.toggle('on', n <= hodnoceni.nove);
-        b.setAttribute('aria-pressed', String(n <= hodnoceni.nove));
-    });
+    const obal = cast('karta')?.querySelector('[data-uf-hodnoceni]');
+    if (!obal) return;
+    obnovitSrdickaModelky(obal.querySelector('.hearts'), hodnoceni.nove);
+    obal.setAttribute('aria-valuenow', String(hodnoceni.nove));
+    obal.setAttribute('aria-valuetext', textSrdicek(hodnoceni.nove));
 }
 
-// Srdíčka klávesou (1–5, 0 zruší) nebo klikem; stejné číslo podruhé je zruší
+// Srdíčka klikem na půlku (stejná hodnota podruhé je zruší)
 function nastavitSrdicka(n) {
     hodnoceni.nove = hodnoceni.nove === n ? 0 : n;
+    obnovitSrdicka();
+}
+
+// Srdíčka klávesou: 1–5 celá, stejná číslice znovu přidá půlku, 0 zruší, ←/→ po půlce (lib/srdicka.js)
+function srdickaKlavesou(klavesa) {
+    hodnoceni.nove = hodnotaPoKlavese(hodnoceni.nove, klavesa) ?? hodnoceni.nove;
     obnovitSrdicka();
 }
 

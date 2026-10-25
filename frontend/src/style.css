@@ -4997,7 +4997,8 @@ main .album-nav:not(.svisla) .chip.active:hover {
 .prehled-obsah[data-sekce-ukazana="udrzba"] > [data-sekce="udrzba"],
 .prehled-obsah[data-sekce-ukazana="uvod"] > [data-sekce="uvod"],
 .prehled-obsah[data-sekce-ukazana="shanim"] > [data-sekce="shanim"],
-.prehled-obsah[data-sekce-ukazana="statistiky"] > [data-sekce="statistiky"] {
+.prehled-obsah[data-sekce-ukazana="statistiky"] > [data-sekce="statistiky"],
+.prehled-obsah[data-sekce-ukazana="oblibenost"] > [data-sekce="oblibenost"] {
     display: block;
 }
 
@@ -10321,3 +10322,567 @@ span.ud-chip {
     position: relative;
 }
 
+
+/* Srdíčka modelky po půlkách (ui/srdicka.js): deset úzkých tlačítek, každé kreslí maskou SVG půlku srdíčka –
+   plnou u udělených, obrys u ostatních. Barvu (najetí, karta) dávají pravidla .heart výš, velikost písmo tlačítka. */
+:root {
+    --srdce-plne: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'/%3E%3C/svg%3E");
+    --srdce-obrys: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 20.2l-.9-.82C5.9 14.67 3 12 3 8.5 3 5.97 4.97 4 7.5 4c1.6 0 3.1.86 4.5 2.5C13.4 4.86 14.9 4 16.5 4 19.03 4 21 5.97 21 8.5c0 3.5-2.9 6.17-8.1 10.88z' fill='none' stroke='black' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.hearts-pul {
+    align-items: center;
+}
+
+.hearts-pul .heart.pulka {
+    flex: none;
+    width: 0.48em;
+    height: 0.96em;
+    padding: 0;
+    background-color: currentColor;
+    -webkit-mask: var(--srdce-obrys) no-repeat;
+    mask: var(--srdce-obrys) no-repeat;
+    -webkit-mask-size: 0.96em 0.96em;
+    mask-size: 0.96em 0.96em;
+}
+
+/* Levá půlka ukazuje levou polovinu srdíčka, pravá pravou; mezera mezi srdíčky jen z vnějších stran */
+.hearts-pul .pulka.l {
+    margin-left: 0.07em;
+    -webkit-mask-position: left center;
+    mask-position: left center;
+}
+
+.hearts-pul .pulka.p {
+    margin-right: 0.07em;
+    -webkit-mask-position: right center;
+    mask-position: right center;
+}
+
+.hearts-pul .pulka::before,
+.hearts-pul .pulka::after {
+    content: none !important;
+}
+
+.hearts-pul .pulka.on,
+.hearts-pul:hover .pulka {
+    -webkit-mask-image: var(--srdce-plne);
+    mask-image: var(--srdce-plne);
+}
+
+/* Při najetí jsou plné půlky až po tu pod kurzorem, další obrys – je vidět, co klik nastaví (i půlku) */
+.hearts-pul .pulka:hover ~ .pulka {
+    -webkit-mask-image: var(--srdce-obrys);
+    mask-image: var(--srdce-obrys);
+}
+
+.hearts-pul[role="slider"] {
+    border-radius: 6px;
+}
+
+.hearts-pul[role="slider"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.profile-side .hearts-pul .heart {
+    font-size: 20px;
+}
+
+.doplnit-srdicka .hearts-pul .heart {
+    font-size: 24px;
+}
+
+.uu-srdicka .hearts-pul .heart,
+.uf-srdicka .heart {
+    font-size: 22px;
+}
+
+/* Odhad hodnocení u nehodnocené modelky: tlumený čárkovaný štítek, nikdy nevypadá jako srdíčka */
+.odhad-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border: 1px dashed rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.4;
+    white-space: nowrap;
+    cursor: help;
+}
+
+/* Na kartě v levém horním rohu místo srdíček; po najetí myší ustoupí srdíčkům, kterými jde modelku ohodnotit */
+.card .odhad-chip {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    transition: opacity 0.15s;
+}
+
+.card:hover .odhad-chip,
+.card:focus-visible .odhad-chip,
+.card:focus-within .odhad-chip {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.profile-side .odhad-profil {
+    display: flex;
+    width: fit-content;
+    margin: 6px auto 0;
+}
+
+/* ——— Oblíbenost (app/oblibenost.js) ——— */
+.ob-info {
+    margin: 0 0 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.ob-karta {
+    margin-bottom: 16px;
+    padding: 16px 18px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.ob-karta h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 12px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+}
+
+.ob-karta h4 small {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-muted);
+}
+
+.ob-hlava {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    margin-bottom: 14px;
+}
+
+.ob-hlava h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: var(--text-main);
+}
+
+.ob-okruh {
+    display: flex;
+    gap: 6px;
+}
+
+.ob-dnes {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Dvě velké fotky vedle sebe, „nebo“ mezi nimi; výška podle okna, aby se dvojice vešla bez rolování */
+.ob-dvojice {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: start;
+    gap: 14px;
+    max-width: 760px;
+    margin: 0 auto;
+    transition: opacity 0.17s ease, transform 0.17s ease;
+}
+
+.ob-dvojice.odchazi {
+    opacity: 0;
+    transform: translateY(6px);
+}
+
+.ob-dvojice > .prazdno,
+.ob-dvojice > .ob-prazdne-akce,
+.ob-duvod {
+    grid-column: 1 / -1;
+}
+
+.ob-strana {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.ob-foto {
+    position: relative;
+    width: 100%;
+    max-height: min(56vh, 520px);
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    background-color: var(--bg-main);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+
+.ob-foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.ob-foto:hover,
+.ob-foto:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 18px rgba(216, 27, 96, 0.35);
+    outline: none;
+}
+
+/* Vybraná se krátce rozzáří, druhá ustoupí; remíza ztlumí obě stejně */
+.ob-dvojice[data-vybrano="a"] [data-strana="a"] .ob-foto,
+.ob-dvojice[data-vybrano="b"] [data-strana="b"] .ob-foto {
+    border-color: var(--accent-text);
+    transform: scale(1.02);
+    box-shadow: 0 0 24px rgba(255, 64, 129, 0.5);
+}
+
+.ob-dvojice[data-vybrano="a"] [data-strana="b"] .ob-foto,
+.ob-dvojice[data-vybrano="b"] [data-strana="a"] .ob-foto,
+.ob-dvojice[data-vybrano="remiza"] .ob-foto {
+    opacity: 0.55;
+}
+
+.ob-popis {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.ob-jmeno {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 15px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.ob-jmeno:hover {
+    color: var(--accent-text);
+}
+
+.ob-popis .hearts-pul .heart {
+    font-size: 18px;
+}
+
+.ob-nebo {
+    align-self: center;
+    margin-bottom: 40px;
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.ob-duvod {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.ob-ovladani {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 10px;
+    margin-top: 14px;
+}
+
+.ob-ovladani .oddelovac {
+    width: 1px;
+    height: 18px;
+    background-color: var(--panel-okraj);
+}
+
+.ob-ovladani .link {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.ob-ovladani .link:hover:not(:disabled) {
+    color: var(--text-main);
+}
+
+.ob-ovladani .link:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.ob-ovladani kbd {
+    padding: 0 5px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 5px;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 11px;
+}
+
+.ob-prazdne-akce {
+    margin: -24px 0 0;
+    text-align: center;
+}
+
+/* Nabídka srovnat srdíčka po volbě, která jim odporuje: jeden tichý řádek pod ovládáním */
+.ob-navrh:not(:empty) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 12px;
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background-color: var(--accent-soft);
+    font-size: 13px;
+}
+
+.ob-navrh .link {
+    color: var(--text-muted);
+}
+
+.ob-dva-sloupce {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    align-items: start;
+}
+
+.ob-dva-sloupce .prazdno {
+    padding: 24px 12px 16px;
+}
+
+/* Pořadí: místo, náhled, jméno se srdíčky, pruh síly s vousy nejistoty, počet porovnání */
+.ob-poradi {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ob-radek {
+    display: grid;
+    grid-template-columns: 30px 32px minmax(0, 1fr) minmax(60px, 34%) 34px;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 4px 6px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ob-radek:hover,
+.ob-radek:focus-visible {
+    background-color: var(--panel-hover);
+}
+
+.ob-misto {
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: right;
+}
+
+.ob-radek img {
+    width: 32px;
+    height: 40px;
+    border-radius: 6px;
+    object-fit: cover;
+    background-color: var(--bg-main);
+}
+
+.ob-jmeno-radku {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.ob-jmeno-radku small {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.ob-jmeno-radku small i {
+    color: var(--accent-text);
+    font-style: normal;
+}
+
+.ob-pruh {
+    position: relative;
+    height: 6px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.ob-pruh i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent-hover), var(--accent-text));
+}
+
+/* Nejistota: tenká světlá linka kolem konce pruhu */
+.ob-pruh b {
+    position: absolute;
+    top: 50%;
+    height: 2px;
+    margin-top: -1px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.45);
+}
+
+.ob-pocet {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-align: right;
+}
+
+.ob-vse {
+    margin: 8px 0 0 46px;
+    color: var(--accent-text);
+    font-size: 12px;
+}
+
+/* Mohlo by se ti líbit: mřížka malých karet s odhadem, důvodem a srdíčky k rychlému ohodnocení */
+.ob-tipy {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 14px 12px;
+}
+
+.ob-tip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    text-align: center;
+}
+
+.ob-tip-foto {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 12px;
+    background-color: var(--bg-main);
+    cursor: pointer;
+}
+
+.ob-tip-foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.ob-tip-foto:hover,
+.ob-tip-foto:focus-visible {
+    border-color: var(--accent);
+}
+
+.ob-tip-foto .odhad-chip {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+}
+
+.ob-tip .ob-jmeno {
+    font-size: 13px;
+}
+
+.ob-tip-duvod {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+/* Ohodnocená z tipů: odhad zmizí (galerie.js), karta se ztlumí, srdíčka zůstanou */
+.ob-tip.ohodnoceno .ob-tip-foto {
+    opacity: 0.6;
+}
+
+@media (max-width: 900px) {
+    .ob-dva-sloupce {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 560px) {
+    .ob-dvojice {
+        gap: 8px;
+    }
+
+    .ob-nebo {
+        display: none;
+    }
+
+    .ob-dvojice {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .ob-dnes {
+        margin-left: 0;
+    }
+
+    .ob-radek {
+        grid-template-columns: 24px 28px minmax(0, 1fr) 70px;
+    }
+
+    .ob-pocet {
+        display: none;
+    }
+}

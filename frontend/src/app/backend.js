@@ -147,3 +147,46 @@ export const ZalozitSpecial = /** @type {typeof App.ZalozitSpecial} */ (obalit('
 export const GetStavUceni = /** @type {typeof App.GetStavUceni} */ (obalit('GetStavUceni'));
 export const ZapomenoutUceni = /** @type {typeof App.ZapomenoutUceni} */ (obalit('ZapomenoutUceni'));
 export const ZaznamenatOpravu = /** @type {typeof App.ZaznamenatOpravu} */ (obalit('ZaznamenatOpravu'));
+
+// ——— DOČASNĚ: oblíbenost modelek (porovnávání dvojic a model vkusu) ———
+// Backend s těmito voláními vzniká souběžně a ve wailsjs/go/main/App zatím nejsou. Do té doby se volají přímo
+// přes window.go.main.App a rozhraní je ukáže, jen když backend volání má (maOblibenost). Po sloučení
+// s backendem a přegenerování wailsjs (wails generate module / wails build) integrátor:
+//   1. smaže celý tento blok (typedefy, goApp, docasne a pět exportů pod ním; maOblibenost viz bod 4),
+//   2. přidá do seznamu exportů výše standardní řádky (backend.test.js je vyžaduje přesně v tomto tvaru):
+//        export const GetDvojiceKPorovnani = /** @type {typeof App.GetDvojiceKPorovnani} */ (obalit('GetDvojiceKPorovnani'));
+//        export const GetMohloByTeLibit = /** @type {typeof App.GetMohloByTeLibit} */ (obalit('GetMohloByTeLibit'));
+//        export const GetOblibenost = /** @type {typeof App.GetOblibenost} */ (obalit('GetOblibenost'));
+//        export const PorovnatModelky = /** @type {typeof App.PorovnatModelky} */ (obalit('PorovnatModelky'));
+//        export const VratitPorovnani = /** @type {typeof App.VratitPorovnani} */ (obalit('VratitPorovnani'));
+//   3. GetDvojiceKPorovnani, GetMohloByTeLibit a GetOblibenost přidá do CTENI (jen čtou; Porovnat a Vrátit zapisují),
+//   4. nechá `export const maOblibenost = () => true;` (nebo jeho použití odstraní); typedefy níž nahradí typy
+//      z wailsjs/go/models.ts – main.Modelka už bude mít oblibenost a odhadHodnoceni (lib/srdicka.js je čte volně).
+
+/** @typedef {{ a: number, b: number, duvod: string }} DvojiceKPorovnani a, b = id modelek */
+/** @typedef {{ modelkaId: number, jmeno: string, hodnoceni: number, sila: number, nejistota: number, poradi: number, porovnani: number, odhad: number, duvod: string }} PolozkaOblibenosti */
+/** @typedef {{ porovnani: number, modelek: number, presnost: number, poradi: PolozkaOblibenosti[] }} Oblibenost */
+
+const goApp = () => /** @type {any} */ (window).go?.main?.App;
+
+// Backend umí oblíbenost (porovnávání, pořadí, odhad hodnocení); jinak se Oblíbenost a řazení podle ní neukazují
+export const maOblibenost = () => typeof goApp()?.GetOblibenost === 'function' && typeof goApp()?.PorovnatModelky === 'function';
+
+function docasne(jmeno, cteni) {
+    return async (...argumenty) => {
+        const funkce = goApp()?.[jmeno];
+        if (typeof funkce !== 'function') throw new Error(`Backend zatím neumí ${jmeno}`);
+        if (cteni) return funkce(...argumenty);
+        try {
+            return await funkce(...argumenty);
+        } finally {
+            ohlasitZmenuDat();
+        }
+    };
+}
+
+export const GetDvojiceKPorovnani = /** @type {(pocet: number, okruh: string) => Promise<DvojiceKPorovnani[]>} */ (docasne('GetDvojiceKPorovnani', true));
+export const GetMohloByTeLibit = /** @type {(pocet: number) => Promise<PolozkaOblibenosti[]>} */ (docasne('GetMohloByTeLibit', true));
+export const GetOblibenost = /** @type {() => Promise<Oblibenost>} */ (docasne('GetOblibenost', true));
+export const PorovnatModelky = /** @type {(a: number, b: number, vysledek: string) => Promise<boolean>} */ (docasne('PorovnatModelky', false));
+export const VratitPorovnani = /** @type {() => Promise<boolean>} */ (docasne('VratitPorovnani', false));

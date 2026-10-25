@@ -10,7 +10,7 @@ import { detailView, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
 import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
-import { htmlSrdicka, htmlSrdickaFotky } from './galerie';
+import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { selectionBar } from './vyber';
 import { doplnitClankyModelky } from './clanky';
 import { htmlPrazdna } from '../ui/prazdno';
@@ -114,6 +114,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
         <h2>${esc(modelka.jmeno)}</h2>
         ${htmlSrdicka(modelka)}
+        ${htmlOdhadu(modelka, 'odhad-profil')}
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
         <div class="profile-actions-misto"></div>
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>

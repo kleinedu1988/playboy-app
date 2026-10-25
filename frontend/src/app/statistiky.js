@@ -11,6 +11,7 @@ import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
+import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
 
 const BARVA = '#d81b60';
 
@@ -307,7 +308,9 @@ function polozkyRozlozeni(klic) {
     else if (klic === 'oci') polozky = podleUdaje(m => m.ociBarva, 'oci');
     else if (klic === 'srd') {
         seradit = false;
-        polozky = [5, 4, 3, 2, 1, 0].map(n => ({ hodnota: String(n), nazev: n ? '♥'.repeat(n) : 'Bez hodnocení', test: m => (m.hodnoceni || 0) === n, dotaz: n ? `hodnoceni:${n}` : null }));
+        // Po půlkách od 5 do ½; prázdné úrovně se vynechají (pocet 0). Hledání v galerii umí jen celá srdíčka.
+        polozky = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5, 0].map(n => ({ hodnota: String(n), nazev: n ? znakySrdicek(n) : 'Bez hodnocení',
+            test: m => naPulky(m.hodnoceni) === n, dotaz: n && n % 1 === 0 ? `hodnoceni:${n}` : null }));
     } else if (klic === 'vyskyt') {
         seradit = false;
         polozky = Object.entries(VYSKYT).map(([k, nazev]) => ({ hodnota: k || 'neurceno', nazev, test: m => vyskytModelky(m) === k, dotaz: `vyskyt:${k || 'neurceno'}` }));
@@ -367,7 +370,7 @@ function htmlSeznamu(def, sloupce) {
             <button type="button" class="sp-modelka" data-modelka-vyberu="${m.id}">
                 <img data-src="${esc(adresaTitulni(m))}" alt="" draggable="false" />
                 <span>${esc(m.jmeno)}<small>${esc(detail)}</small></span>
-                ${m.hodnoceni ? `<i>${'♥'.repeat(m.hodnoceni)}</i>` : ''}
+                ${m.hodnoceni ? `<i title="${textSrdicek(m.hodnoceni)}">${znakySrdicek(m.hodnoceni)}</i>` : ''}
             </button>`).join('')}
             ${ukazat.length < seznam.length ? `<button type="button" class="link sp-vse" data-vse-vyberu>Zobrazit všech ${seznam.length}</button>` : ''}</div>`
         : '<p class="stat-prazdne">Výběru neodpovídá žádná modelka.</p>'}

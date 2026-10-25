@@ -1,5 +1,5 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
-import { GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
+import { GetModelky, SetHodnoceni, SetHodnoceniFotek, maOblibenost } from './backend';
 import { contextMenu } from '../ui/nabidka';
 import { EDICE, VYSKYT, bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, kategorieModelky, rozlozitVydani, seraditModelky, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
@@ -20,10 +20,12 @@ import { lightbox } from './prohlizec';
 import { vybraneDlazdice } from './vyber';
 import { prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
+import { htmlSrdicekModelky, klavesaSrdicekModelky, obnovitSrdickaModelky } from '../ui/srdicka';
+import { hodnotaPoKliku, kratceSrdicka, ukazatOdhad, vyhovujeMinimu } from '../lib/srdicka';
 
-// Hodnocení 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší.
-// Na kartě a dlaždici (tabem = false) srdíčka nejsou v pořadí Tabu: zaměřená karta se hodnotí klávesami 1–5
-// a 0 (klavesnice.js), jinak by každá karta přidala pět zastávek.
+// Hodnocení fotky 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší.
+// Na dlaždici (tabem = false) srdíčka nejsou v pořadí Tabu: zaměřená dlaždice se hodnotí klávesami 1–5
+// a 0 (klavesnice.js), jinak by každá dlaždice přidala pět zastávek. Modelky mají srdíčka po půlkách (ui/srdicka.js).
 export function htmlSrdicek(hodnoceni, atribut, tabem = true) {
     const srdicka = [1, 2, 3, 4, 5].map(n => `
         <button class="heart ${n <= hodnoceni ? 'on' : ''}" data-hodnota="${n}" ${tabem ? '' : 'tabindex="-1"'}
@@ -31,8 +33,19 @@ export function htmlSrdicek(hodnoceni, atribut, tabem = true) {
     return `<span class="hearts ${hodnoceni ? 'rated' : ''}" ${atribut}>${srdicka}</span>`;
 }
 
+// Srdíčka modelky po půlkách; na kartě (tabem = false) bez zastávky Tabu, hodnotí zaměřená karta klávesami
 export function htmlSrdicka(modelka, tabem = true) {
-    return htmlSrdicek(modelka.hodnoceni, `data-hodnoceni="${modelka.id}"`, tabem);
+    return htmlSrdicekModelky(modelka.hodnoceni, `data-hodnoceni="${modelka.id}"`, { tabem, popis: `Hodnocení – ${esc(modelka.jmeno)}` });
+}
+
+// Důvody odhadů z posledního načtení Oblíbenosti (id modelky → věta), aby je štítek odhadu ukázal v nápovědě
+export const duvodyOdhadu = new Map();
+
+// Tlumený štítek „odhad 3½“ u nehodnocené modelky: odhad modelu vkusu, ne skutečné hodnocení
+export function htmlOdhadu(modelka, tridy = '') {
+    if (!ukazatOdhad(modelka)) return '';
+    const duvod = duvodyOdhadu.get(modelka.id);
+    return `<span class="odhad-chip ${tridy}" data-odhad="${modelka.id}" title="${esc(`Odhad podle tvého vkusu, zatím nehodnoceno${duvod ? ` – ${duvod}` : ''}`)}">odhad ${kratceSrdicka(modelka.odhadHodnoceni)}</span>`;
 }
 
 // Srdíčka fotky; index míří do seznamu položek právě zobrazeného pohledu
@@ -70,11 +83,12 @@ const HTML_UVODU = `
 
 // Řádek voleb nad kartami (řazení, filtr srdíček včetně nehodnocených, edice, kategorie a výskyt)
 function htmlNastroju(pocet, roleCetnosti = [], vyskytCetnosti = new Map()) {
-    const razeni = Object.entries(RAZENI_GALERIE).map(([klic, r]) => `
+    // Řazení podle oblíbenosti jen s backendem, který ji počítá
+    const razeni = Object.entries(RAZENI_GALERIE).filter(([klic]) => klic !== 'oblibenost' || maOblibenost() || stav.razeniGalerie === klic).map(([klic, r]) => `
         <button class="chip ${klic === stav.razeniGalerie ? 'active' : ''}" data-razeni-galerie="${klic}" title="Řadit ${r.nazev}">${r.popisek}</button>`).join('');
     const srdicka = [1, 2, 3, 4, 5].map(n => `
         <button class="chip ${n === stav.minHodnoceni ? 'active' : ''}" data-min-hodnoceni="${n}"
-            title="${n === stav.minHodnoceni ? 'Zobrazit všechny modelky' : `Jen modelky s hodnocením ${n}${n < 5 ? ' a více' : ''}`}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')
+            title="${n === stav.minHodnoceni ? 'Zobrazit všechny modelky' : `Jen modelky s hodnocením ${n}${n < 5 ? ` a více (i ${n},5)` : ''}`}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')
         + `<button class="chip ${stav.minHodnoceni === -1 ? 'active' : ''}" data-min-hodnoceni="-1"
             title="${stav.minHodnoceni === -1 ? 'Zobrazit všechny modelky' : 'Jen nehodnocené modelky (bez srdíček)'}">Bez &#9829;</button>`;
     const edice = ['vse', ...EDICE].map(e => `
@@ -141,8 +155,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     katalog.forEach(m => vyskytCetnosti.set(vyskytModelky(m), (vyskytCetnosti.get(vyskytModelky(m)) || 0) + 1));
 
     const vyhovujeModelka = m => {
-        if (stav.minHodnoceni === -1 && m.hodnoceni > 0) return false;
-        if (stav.minHodnoceni > 0 && m.hodnoceni < stav.minHodnoceni) return false;
+        if (!vyhovujeMinimu(m.hodnoceni, stav.minHodnoceni)) return false;
         if (stav.ediceModelek !== 'vse') {
             const vydani = [...(m.vydani || []), ...(m.obalky || [])];
             if (!vydani.some(v => rozlozitVydani(v)?.edice === stav.ediceModelek)) return false;
@@ -183,6 +196,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
             <div class="card-image-wrap">
                 <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" decoding="async" />
                 ${htmlSrdicka(m, false)}
+                ${htmlOdhadu(m)}
             </div>
             <div class="card-info">
                 <h3>${esc(m.jmeno)}</h3>
@@ -280,23 +294,31 @@ export function pripravit() {
         nahraditSrdicka(rada, htmlSrdickaFotky(polozka, parseInt(rada.dataset.hodnoceniFotky)), srdicko.dataset.hodnota);
     });
 
-    // Srdíčka na kartě i v profilu
+    // Srdíčka modelky (po půlkách) na kartě, v profilu a v Oblíbenosti
     document.querySelector('main').addEventListener('click', async (e) => {
-        const srdicko = e.target.closest('.hearts .heart');
+        const srdicko = e.target.closest('.hearts-pul[data-hodnoceni] .pulka');
         if (!srdicko) return;
         const rada = srdicko.closest('.hearts');
         const id = parseInt(rada.dataset.hodnoceni);
-        const modelka = [stav.aktualniModelka, ...stav.nacteneModelky].find(m => m && m.id === id);
-        if (!modelka) return;
+        const nactene = [stav.aktualniModelka, ...stav.nacteneModelky, stav.prehledModelky.get(id)].filter(m => m && m.id === id);
+        if (!nactene.length) return;
 
-        const zvoleno = parseInt(srdicko.dataset.hodnota);
-        const nove = zvoleno === modelka.hodnoceni ? 0 : zvoleno;
+        const nove = hodnotaPoKliku(nactene[0].hodnoceni, srdicko.dataset.hodnota);
         if (!await SetHodnoceni(id, nove)) return;
 
-        // Tatáž modelka může být načtená v galerii i otevřená v profilu
-        [stav.aktualniModelka, ...stav.nacteneModelky].filter(m => m && m.id === id).forEach(m => { m.hodnoceni = nove; });
-        nahraditSrdicka(rada, htmlSrdicka(modelka, !rada.closest('.card')), srdicko.dataset.hodnota);
+        // Tatáž modelka může být v galerii, v profilu i v Oblíbenosti: srdíčka se přepíšou na místě (fokus
+        // zůstane), odhad u ohodnocené zmizí
+        nactene.forEach(m => { m.hodnoceni = nove; });
+        document.querySelectorAll(`.hearts-pul[data-hodnoceni="${id}"]`).forEach(r => obnovitSrdickaModelky(r, nove));
+        document.querySelectorAll(`.odhad-chip[data-odhad="${id}"]`).forEach(c => c.classList.toggle('hidden', nove > 0));
+        document.dispatchEvent(new CustomEvent('hodnoceni-modelky', { detail: { id, hodnoceni: nove } }));
         if (stav.minHodnoceni && !gallery.classList.contains('hidden')) nacistGalerii(searchInput.value);
+    });
+
+    // Zaměřená srdíčka v profilu a v Oblíbenosti: číslice, šipky, Home a End (ui/srdicka.js); šipky tu nelistují modelkami
+    document.querySelector('main').addEventListener('keydown', (e) => {
+        const rada = e.target.closest?.('.hearts-pul[data-hodnoceni][role="slider"]');
+        if (rada && rada === e.target && klavesaSrdicekModelky(e, rada)) e.stopPropagation();
     });
 
     try {
@@ -310,7 +332,7 @@ export function pripravit() {
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
         // Alt + šipka je Zpět, s Ctrl a ve výběru fotek se šipkami nelistuje
-        const zamestnano = detailView.classList.contains('hidden')
+        const zamestnano = detailView.classList.contains('hidden') || e.defaultPrevented
             || e.altKey || e.ctrlKey || e.metaKey
             || !lightbox.classList.contains('hidden')
             || !contextMenu.classList.contains('hidden')

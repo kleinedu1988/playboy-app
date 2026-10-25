@@ -48,6 +48,8 @@ const DRUHY_ALBA = {
     nikde: [['Pictorial', 'Pictorial bez čísla']],
 };
 let kdeAlba = 'casopis';
+// Číslo časopisu: řádné měsíční, nebo speciál (vlastní výběr se speciály zvoleného roku a edice)
+let cisloAlba = 'mesic';
 
 const druhyAlba = kde => [...DRUHY_ALBA[kde], ...(kde === 'casopis'
     ? [...document.querySelectorAll('#selectTyp [data-puvodni]')].map(o => [o.value, o.value]) : [])];
@@ -73,14 +75,24 @@ export function prepnoutPoleAlba() {
     const online = jeOnline(typ);
     document.getElementById('albumNazevGroup').classList.toggle('hidden', centerfold);
     document.getElementById('albumVydaniGroup').classList.toggle('hidden', online || kdeAlba === 'nikde');
+    const special = cisloAlba === 'special';
+    document.getElementById('albumCisloGroup').classList.toggle('hidden', kdeAlba !== 'casopis');
+    document.querySelectorAll('#albumCisloGroup [data-cislo]').forEach(b => {
+        b.classList.toggle('active', b.dataset.cislo === cisloAlba);
+        b.setAttribute('aria-pressed', String(b.dataset.cislo === cisloAlba));
+    });
+    document.getElementById('selectAlbumMesic').classList.toggle('hidden', special);
+    document.getElementById('selectAlbumSpecial').classList.toggle('hidden', !special);
+    document.getElementById('albumMesicLabel').htmlFor = special ? 'selectAlbumSpecial' : 'selectAlbumMesic';
     document.getElementById('albumDatumGroup').classList.toggle('hidden', !online);
     ukazatTyden();
     // U pictorialu je vydání nepovinné
     // U pictorialu stačí i samotný rok
-    document.getElementById('albumMesicLabel').textContent = centerfold ? 'Měsíc nebo speciál' : 'Měsíc nebo speciál (nepovinné)';
+    document.getElementById('albumMesicLabel').textContent = (special ? 'Speciál' : 'Měsíc') + (centerfold ? '' : ' (nepovinné)');
     document.getElementById('albumRokLabel').textContent = centerfold ? 'Rok vydání' : 'Rok (nepovinné)';
     document.getElementById('inputAlbumName').required = !centerfold;
-    document.getElementById('selectAlbumMesic').required = centerfold;
+    document.getElementById('selectAlbumMesic').required = centerfold && !special;
+    document.getElementById('selectAlbumSpecial').required = centerfold && special;
     document.getElementById('inputAlbumRok').required = centerfold;
 }
 
@@ -132,7 +144,9 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     const vydani = rozlozitVydani(album ? (album.vydani || (album.typ === 'Centerfold' ? album.album : '')) : moznosti.vydani);
     document.getElementById('inputAlbumRok').value = vydani?.rok || '';
     document.getElementById('selectAlbumEdice').value = vydani?.edice || stav.kalendarEdice;
-    obnovitSpecialyAlba(vydani?.mesic || '');
+    cisloAlba = vydani?.mesic?.startsWith('S') ? 'special' : 'mesic';
+    obnovitSpecialyAlba(cisloAlba === 'special' ? vydani.mesic : '');
+    document.getElementById('selectAlbumMesic').value = cisloAlba === 'mesic' ? vydani?.mesic || '' : '';
     // Uložený pictorial bez čísla je „Nikde“, nové album začíná u časopisu
     nastavitTypAlba(typ, jeOnline(typ) ? 'online' : album && typ === 'Pictorial' && !vydani ? 'nikde' : 'casopis');
 
@@ -166,18 +180,22 @@ export function smazatAlbum(album, pocet) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumMesic', 'inputAlbumRok', 'selectAlbumEdice');
+    obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumSpecial', 'inputAlbumRok', 'selectAlbumEdice', true);
 
     // Kde vyšlo: druh zůstane, pokud ho nová volba má (Pictorial), jinak první z nabídky
     document.getElementById('albumTypGroup').addEventListener('click', (e) => {
         const kde = /** @type {HTMLElement} */ (e.target).closest('[data-kde]');
         const druh = /** @type {HTMLElement} */ (e.target).closest('[data-druh]');
+        const cislo = /** @type {HTMLElement} */ (e.target).closest('[data-cislo]');
         if (kde) {
             const typ = document.getElementById('selectTyp').value;
             const druhy = druhyAlba(kde.dataset.kde);
             nastavitTypAlba(druhy.some(([h]) => h === typ) ? typ : druhy[0][0], kde.dataset.kde);
         } else if (druh) {
             nastavitTypAlba(druh.dataset.druh);
+        } else if (cislo) {
+            cisloAlba = cislo.dataset.cislo;
+            prepnoutPoleAlba();
         }
     });
     document.getElementById('inputAlbumDatum').addEventListener('input', ukazatTyden);

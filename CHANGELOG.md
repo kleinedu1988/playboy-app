@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.15] – 2026-10-25
+
+### Změněno
+- Výběr měsíce v oknech alba a coveru má u českého názvu anglický v závorce („Červen (June)“).
+- **Speciály v okně alba zvlášť:** u Časopisu přibyla řada **Číslo** – Měsíční, nebo Speciál. Výběr měsíce má jen dvanáct měsíců, speciál má vlastní výběr se speciály zvoleného roku a edice a volbou „Nový speciál…“. Album u speciálu se otevře rovnou s volbou Speciál. (Okno coveru má speciály zatím ve výběru měsíce.)
+
 ## [0.99.14] – 2026-10-25
 
 ### Změněno

@@ -6,21 +6,24 @@ import { rozlozitVydani, specialyRoku } from '../lib/format';
 import { nacistSpecialy } from './mezipamet';
 import { vybratHodnotu } from './ulozeni';
 
-// Napojí výběr měsíce na pole roku a edice; vrací funkci, která skupinu speciálů obnoví a vybere hodnotu
-export function pripojitVyberSpecialu(idMesice, idRoku, idEdice) {
+// Napojí výběr měsíce na pole roku a edice; vrací funkci, která skupinu speciálů obnoví a vybere hodnotu.
+// samostatny: výběr je jen pro speciály (okno alba má měsíce a speciály zvlášť), speciály jsou bez skupiny
+export function pripojitVyberSpecialu(idMesice, idRoku, idEdice, samostatny = false) {
     const mesic = document.getElementById(idMesice);
     const rok = document.getElementById(idRoku);
     const edice = document.getElementById(idEdice);
 
     const obnovit = (vybrat = mesic.value) => {
-        mesic.querySelector('optgroup[data-specialy]')?.remove();
+        mesic.querySelectorAll('[data-specialy]').forEach(prvek => prvek.remove());
         if (/^\d{4}$/.test(rok.value)) {
+            const moznosti = [...specialyRoku(rok.value, edice.value).map(s => new Option(s.nazev, rozlozitVydani(s.vydani).mesic)),
+                new Option('Nový speciál…', 'novy')];
             const skupina = document.createElement('optgroup');
             skupina.label = 'Speciály';
-            skupina.dataset.specialy = '1';
-            for (const s of specialyRoku(rok.value, edice.value)) skupina.append(new Option(s.nazev, rozlozitVydani(s.vydani).mesic));
-            skupina.append(new Option('Nový speciál…', 'novy'));
-            mesic.append(skupina);
+            skupina.append(...moznosti);
+            const vlozit = samostatny ? moznosti : [skupina];
+            vlozit.forEach(prvek => { prvek.dataset.specialy = '1'; });
+            mesic.append(...vlozit);
         }
         mesic.value = [...mesic.options].some(o => o.value === vybrat) ? vybrat : '';
     };

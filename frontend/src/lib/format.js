@@ -1,6 +1,9 @@
 // Čisté funkce pro texty a data: nesahají na stránku ani na backend, proto jdou testovat samostatně
 
 export const MESICE = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
+// Anglické názvy k výběru měsíce („Červen (June)“), americké zdroje píšou čísla anglicky
+export const MESICE_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+export const moznostiMesicu = () => MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m} (${MESICE_EN[i]})</option>`).join('');
 
 // Edice časopisu; výchozí (US) se do vydání nepíše, ostatní mají příponu: 2009-11-CZ
 export const EDICE = ['US', 'CZ'];

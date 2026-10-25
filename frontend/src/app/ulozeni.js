@@ -209,7 +209,9 @@ export function pripravit() {
         const cyberGirl = online && typ !== 'Pictorial online' ? typ : '';
         const bezCisla = document.getElementById('albumVydaniGroup').classList.contains('hidden');
         const rok = bezCisla ? '' : document.getElementById('inputAlbumRok').value;
-        const mesic = bezCisla ? '' : document.getElementById('selectAlbumMesic').value;
+        // Měsíc, nebo speciál – podle toho, který výběr je vidět
+        const vyberCisla = document.getElementById('selectAlbumSpecial').classList.contains('hidden') ? 'selectAlbumMesic' : 'selectAlbumSpecial';
+        const mesic = bezCisla ? '' : document.getElementById(vyberCisla).value;
         // Pictorialu stačí ročník, měsíc bez roku ale nedává smysl
         if (mesic && !rok) {
             oznamit('K měsíci vydání chybí rok.');

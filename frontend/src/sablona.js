@@ -1,5 +1,5 @@
 // Kostra okna: hlavička, pohledy, modální okna, prohlížeč fotek. Obsah pohledů se vykresluje v main.js.
-import { MESICE, EDICE } from './lib/format';
+import { EDICE, moznostiMesicu } from './lib/format';
 import { htmlKostryKaret } from './ui/kostra';
 
 export const SABLONA_OKNA = `
@@ -325,6 +325,13 @@ export const SABLONA_OKNA = `
           </div>
           <span class="typ-alba-nadpis" id="albumDruhNadpis">Druh</span>
           <div id="albumDruhy" class="typ-alba-druhy" role="group" aria-labelledby="albumDruhNadpis"></div>
+          <div id="albumCisloGroup">
+            <span class="typ-alba-nadpis" id="albumCisloNadpis">Číslo</span>
+            <div class="typ-alba-druhy" role="group" aria-labelledby="albumCisloNadpis">
+              <button type="button" class="chip" data-cislo="mesic" title="Řádné měsíční číslo">Měsíční</button>
+              <button type="button" class="chip" data-cislo="special" title="Zvláštní číslo mimo měsíční řadu (Playmate Review, Lingerie…)">Speciál</button>
+            </div>
+          </div>
           <select id="selectTyp" class="hidden" tabindex="-1" aria-hidden="true">
             <option value="Pictorial">Pictorial</option>
             <option value="Centerfold">Centerfold</option>
@@ -348,7 +355,10 @@ export const SABLONA_OKNA = `
             <label id="albumMesicLabel" for="selectAlbumMesic">Měsíc vydání</label>
             <select id="selectAlbumMesic">
               <option value="">Vyber měsíc</option>
-              ${MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('')}
+              ${moznostiMesicu()}
+            </select>
+            <select id="selectAlbumSpecial" class="hidden">
+              <option value="">Vyber speciál</option>
             </select>
           </div>
           <div class="form-group">
@@ -397,7 +407,7 @@ export const SABLONA_OKNA = `
             <label for="selectCoverMesic">Měsíc nebo speciál</label>
             <select id="selectCoverMesic" required>
               <option value="">Vyber měsíc</option>
-              ${MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('')}
+              ${moznostiMesicu()}
             </select>
           </div>
           <div class="form-group">
@@ -720,7 +730,7 @@ export const SABLONA_OKNA = `
         <ul>
           <li><strong>Statistiky</strong> v Přehledu (poslední část v nabídce tlačítka Přehled): jeden graf, který vybereš z rozvinutého seznamu, a vedle něj modelky výběru. <em>V čase</em> podle roku prvního výskytu modelky v časopise (centerfold, obálka nebo pictorial u čísla; přepínač Vše / Centerfold / Obálka / Pictorial / Online vybere, který výskyt se počítá; Online je rok nafocení prvního online alba, album bez data v grafech v čase není): počty (modelky podle roku; přibývání sbírky po měsících), údaje (věk při prvním výskytu, výška, váha, BMI, hrudník, pas, boky, poměr pas : boky – medián roku a pásmo prostřední poloviny modelek) a podíly (blond vlasy, silikonová prsa, oholené ochlupení, tetování, piercing – procento ze známých hodnot); bílá křivka je klouzavý průměr. Klik na sloupec vybere rok, tažení myší období; šipky ← → výběr posouvají, se Shiftem ho rozšíří. Přepínač Vše / US / CZ vybere edici. Modelky bez čísla (jen online) rok nemají a v grafech v čase nejsou; rozložení počítá se všemi. <em>Rozložení</em>: kategorie, národnosti, barva vlasů a očí, hodnocení, výskyt a nejčastější fotografové; klik na řádek vybere hodnotu. <strong>Výběr platí pro všechny grafy</strong>: vyber třeba 90. léta, přepni na Národnosti a uvidíš jasně jen modelky z 90. let, tlumeně celou sbírku; další výběr v jiném grafu ho zúží. Podmínky jsou štítky pod lištou (křížek podmínku odebere), Esc zruší celý výběr. Seznam vpravo ukazuje modelky výběru, klik otevře profil; „Otevřít v galerii“ převede výběr na hledání, když ho jde hledáním vyjádřit. Vybraný graf si program pamatuje.</li>
           <li><strong>Kategorie</strong> modelky (Playmate roku, Cyber Girl, Coed, Muse, Celebrita, Jen ve speciálu, Creator, Online) se volí štítky v „Upravit modelku…“; Playmate měsíce, Cyber Girl a Modelku obálky program pozná sám z centerfoldu, online alba (Pictorial online; jen když není zapsaná jiná online kategorie, třeba Coed) a obálky. Proužek v rohu fotky profilu ukáže u centerfoldu „Playmate · měsíc“, u online alb „Cyber Girl“, nebo „Online“, když modelka Cyber Girl není (klik přejde na album). Podle kategorie filtruje galerie (Filtry) a hledání <code>kategorie:</code>.</li>
-          <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online) nebo s online albem; ostatní jsou <em>neurčené</em>. Album typu <em>Pictorial online</em> je pictorial jen na webu: v okně alba nemá vydání, ale pole <em>Nafoceno</em> (RRRR-MM-DD, RRRR-MM nebo rok). Typ alba se v okně volí ve dvou řadách: <em>Kde vyšlo</em> (Časopis, Online, Nikde) a <em>Druh</em> – u časopisu Pictorial nebo Centerfold, u online Pictorial, Cyber Girl of the Week nebo of the Month, „Nikde“ je pictorial bez čísla i data. <em>Cyber Girl of the Week</em> spočítá z celého data týden v roce (nadpis alba „Cyber Girl týdne · 24. týden 2004“), <em>of the Month</em> vezme z data měsíc („Cyber Girl měsíce · červen 2004“); modelka dostane kategorii Cyber Girl týdne, nebo měsíce. Datum je jen informace u alba – album nepřiřadí k vydání ani do kalendáře a nemění titulní fotku modelky. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
+          <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online) nebo s online albem; ostatní jsou <em>neurčené</em>. Album typu <em>Pictorial online</em> je pictorial jen na webu: v okně alba nemá vydání, ale pole <em>Nafoceno</em> (RRRR-MM-DD, RRRR-MM nebo rok). Typ alba se v okně volí ve dvou řadách: <em>Kde vyšlo</em> (Časopis, Online, Nikde) a <em>Druh</em> – u časopisu Pictorial nebo Centerfold a řada <em>Číslo</em> (Měsíční, nebo Speciál s vlastním výběrem speciálů roku a volbou „Nový speciál…“), u online Pictorial, Cyber Girl of the Week nebo of the Month, „Nikde“ je pictorial bez čísla i data. <em>Cyber Girl of the Week</em> spočítá z celého data týden v roce (nadpis alba „Cyber Girl týdne · 24. týden 2004“), <em>of the Month</em> vezme z data měsíc („Cyber Girl měsíce · červen 2004“); modelka dostane kategorii Cyber Girl týdne, nebo měsíce. Datum je jen informace u alba – album nepřiřadí k vydání ani do kalendáře a nemění titulní fotku modelky. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; po najetí myší se ukáže jméno modelky a odkud fotka je.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>

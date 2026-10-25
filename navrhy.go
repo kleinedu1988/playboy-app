@@ -10,24 +10,34 @@ import (
 	"time"
 )
 
-// Návrhy doplnění chybějících údajů pro Údržbu (popis v docs/NAVRHY-DOPLNENI.md). Návrh vzniká dvojím způsobem:
+// Návrhy doplnění chybějících údajů pro Údržbu (celkový popis učení v docs/UCENI.md). Návrh vzniká ze zdrojů:
 //
 //  1. Pravidla: údaj, který už ve sbírce je, jen jinde nebo v jiném tvaru (obvody z textu „míry“, vydání nebo
 //     datum alba z jeho názvu, národnost z místa narození podle tabulky zemí, Playmate roku z poznámky).
-//  2. Učení ze sbírky: četnosti hodnot mezi modelkami, které údaj vyplněný mají (národnost podle místa narození,
-//     etnicita podle národnosti, barva vlasů a očí podle etnicity a národnosti, fotograf podle jiných alb téhož
-//     čísla), a lineární regrese obvodů z ostatních údajů postavy.
+//  2. Učení ze sbírky: četnosti hodnot mezi modelkami, které údaj vyplněný mají (národnost podle místa narození
+//     a edice čísel, etnicita podle národnosti, barva vlasů a očí podle etnicity a národnosti, fotograf podle
+//     jiných alb téhož čísla), lineární regrese obvodů z ostatních údajů postavy a nejpodobnější modelky (kNN).
 //
-// Jistota je odhad pravděpodobnosti, že navržená hodnota je správně: u četností (k + p·w)/(n + w), tedy podíl
-// shod se zkušeností w pseudo-modelek s předpokladem p (Laplaceovo pravidlo pro p = 0,5, w = 2). Pravidla mají
-// předpoklad pevný a sbírka ho upřesní: kolikrát by stejné pravidlo u modelek s vyplněným údajem trefilo. Slabý
-// návrh (pod prahem) se nenabízí vůbec – raději méně návrhů, ale správných.
+// Každý zdroj má stabilní klíč (zdrojeNavrhu); návrh nese klíč nejsilnějšího zdroje a česky popis všech, které
+// hodnotu podporují. Jistota je odhad pravděpodobnosti, že navržená hodnota je správně:
 //
-// Odmítnutý návrh se uloží jako klíč „nv-<pole>“ mezi „netýká se“ modelky nebo alba a už se nevrací. Zároveň
-// snižuje jistotu podobných návrhů u ostatních modelek (stejný údaj ze stejného zdroje se stejnou hodnotou):
-// každé odmítnutí násobí jistotu w/(w + d), takže dvě až tři odmítnutí zdroj pro tu hodnotu prakticky vypnou.
+//   - zdroj sám: u četností (k + p·w)/(n + w), tedy podíl shod se zkušeností w pseudo-modelek s předpokladem p
+//     (Laplaceovo pravidlo pro p = 0,5, w = 2); pravidla mají předpoklad pevný a sbírka ho upřesní (kolikrát
+//     by stejné pravidlo u modelek s vyplněným údajem trefilo);
+//   - odmítnuté podobné návrhy (stejný údaj, zdroj a u četností i hodnota) jistotu násobí w/(w + d);
+//   - kalibrace podle zpětné vazby (uceni.go): zdroj, jehož návrhy uživatel přijímá méně často, než jistota
+//     slibuje, se posune níž (a zdroj, který stále selhává, se tím sám vypne);
+//   - více zdrojů téhož údaje se spojí naivním Bayesem v log-šancích (spojitZdroje): zdroje stejné hodnoty
+//     jistotu zvednou, zdroj jiné hodnoty ji sníží; dvě různé hodnoty, z nichž by prošly obě, jsou spor a údaj
+//     se nenavrhuje.
 //
-// Výpočet je deterministický a lineární v počtu modelek a alb (jeden průchod na učení, jeden na návrhy).
+// Slabý návrh (pod prahem) se nenabízí vůbec – raději méně návrhů, ale správných.
+//
+// Odmítnutí návrhu platí pro konkrétní hodnotu: uloží se do databáze učení (jiná hodnota téhož údaje se pak
+// navrhnout může) a pro zpětnou slučitelnost a export i jako klíč „nv-<pole>“ mezi „netýká se“ modelky nebo alba.
+// Klíč bez záznamu v databázi učení (starší verze, import, zapomenuté učení) znamená odmítnutí celého údaje.
+//
+// Výpočet je deterministický a skoro lineární v počtu modelek a alb.
 
 // Návrh hodnoty chybějícího údaje modelky nebo alba
 type NavrhDoplneni struct {
@@ -46,7 +56,46 @@ type NavrhDoplneni struct {
 	InputID string  `json:"inputId"` // pole formuláře modelky nebo okna alba pro „Upravit…“
 	// Návrh je odmítnutý; v seznamu jen při zobrazení odmítnutých
 	Odmitnuto bool `json:"odmitnuto"`
+	// Stabilní klíč nejsilnějšího zdroje (zdrojeNavrhu) a česky popis všech zdrojů, které hodnotu podporují
+	Zdroj      string `json:"zdroj"`
+	ZdrojPopis string `json:"zdrojPopis"`
 }
+
+// Návrh i s tím, co potřebuje učení: všechny podporující zdroje a jistota před kalibrací (s tou se porovná
+// výsledek, viz uceni.go). Tak se návrhy ukládají i do mezipaměti.
+type navrhSbirky struct {
+	NavrhDoplneni
+	Zdroje        []string `json:"zdroje"`
+	JistotaVzorce float64  `json:"jistotaVzorce"`
+}
+
+// Zdroj návrhů
+type zdrojNavrhu struct {
+	popis string // česky krátce, „místo narození“
+	// Zdroje téže rodiny vycházejí ze stejných údajů, takže se jako nezávislé nespojují (bere se silnější)
+	rodina string
+	// Typická jistota zdroje: předpoklad kalibrace, dokud o zdroji není zpětná vazba
+	predpoklad float64
+	// Odmítnutí podobného návrhu se počítá jen se stejnou hodnotou (u četností), jinak u celého zdroje
+	vzorSHodnotou bool
+}
+
+var zdrojeNavrhu = map[string]zdrojNavrhu{
+	"misto":      {popis: "místo narození", rodina: "misto", predpoklad: 0.85, vzorSHodnotou: true},
+	"edice":      {popis: "edice", rodina: "edice", predpoklad: 0.85, vzorSHodnotou: true},
+	"cetnost":    {popis: "četnost ve sbírce", rodina: "cetnost", predpoklad: 0.88, vzorSHodnotou: true},
+	"miry":       {popis: "míry", rodina: "miry", predpoklad: 0.95},
+	"regrese":    {popis: "odhad z postavy", rodina: "odhad", predpoklad: 0.5},
+	"podobne":    {popis: "podobné modelky", rodina: "odhad", predpoklad: 0.5},
+	"text":       {popis: "poznámka", rodina: "text", predpoklad: 0.9},
+	"nazev":      {popis: "název alba", rodina: "nazev", predpoklad: 0.85},
+	"centerfold": {popis: "centerfold", rodina: "centerfold", predpoklad: 0.75},
+	"cislo":      {popis: "fotograf čísla", rodina: "fotograf", predpoklad: 0.8},
+	"modelka":    {popis: "fotograf modelky", rodina: "fotograf", predpoklad: 0.7},
+}
+
+// Pořadí zdrojů v důvodu návrhu a v přehledu učení
+var poradiZdroju = []string{"misto", "edice", "cetnost", "miry", "regrese", "podobne", "text", "nazev", "centerfold", "cislo", "modelka"}
 
 // Údaj, pro který se návrhy dělají
 type udajNavrhu struct {
@@ -88,7 +137,15 @@ var kliceNavrhuModelky, kliceNavrhuAlba = func() (map[string]bool, map[string]bo
 
 func klicNavrhu(pole string) string { return "nv-" + pole }
 
-// Obvod (pole návrhu) → index údaje postavy v kontrola_uceni.go
+// Klíč hodnoty pro porovnání a odmítnutí: národnost podle země (USA = Americká), jinak zjednodušený text
+func klicHodnoty(pole, hodnota string) string {
+	if pole == "narodnost" {
+		return klicNarodnosti(hodnota)
+	}
+	return klicTextu(hodnota)
+}
+
+// Obvod (pole návrhu) → index údaje postavy (uceni_modely.go)
 var obvodyNavrhu = []struct {
 	pole string
 	j    int
@@ -110,59 +167,9 @@ const (
 	vahaOdmitnuti      = 6   // jistota × w/(w + počet odmítnutých podobných návrhů)
 	prahOdhadu         = 0.6 // odhad obvodu jen když se u sbírky trefí do ±2 cm aspoň u 60 % modelek
 	stropOdhadu        = 0.6 // odhad nikdy nepůsobí jistě
-	minModelekOdhadu   = 40
+	minJistotaOdhadu   = 0.3 // odhad, kterému kalibrace sebrala víc, se nezobrazuje (zdroj selhává)
+	tlumeniOdhadu      = 0.25
 )
-
-// Podíl úspěchů s předpokladem: (k + p·w)/(n + w); p = předpoklad bez dat, w = jeho váha v modelkách
-func podilSPredpokladem(k, n int, p, w float64) float64 {
-	return (float64(k) + p*w) / (float64(n) + w)
-}
-
-// Klíč textu pro porovnání: malá písmena bez diakritiky, bez teček, jedna mezera („U.S.A.“ = „usa“)
-func klicTextu(s string) string {
-	return strings.Join(strings.Fields(strings.ReplaceAll(zjednodusit(s), ".", "")), " ")
-}
-
-// Zápisy hodnot ve sbírce: ke každému klíči nejčastější zápis, aby návrh psal hodnotu tak, jak ji píše uživatel
-type pravopis map[string]map[string]int
-
-func (p pravopis) pridat(klic, zapis string) {
-	if p[klic] == nil {
-		p[klic] = map[string]int{}
-	}
-	p[klic][zapis]++
-}
-
-func (p pravopis) zapis(klic string) string {
-	nejlepsi, pocet := "", 0
-	for z, n := range p[klic] {
-		if n > pocet || n == pocet && z < nejlepsi {
-			nejlepsi, pocet = z, n
-		}
-	}
-	return nejlepsi
-}
-
-// Četnosti hodnot při podmínce
-type cetnosti map[string]map[string]int
-
-func (c cetnosti) pridat(podminka, hodnota string) {
-	if c[podminka] == nil {
-		c[podminka] = map[string]int{}
-	}
-	c[podminka][hodnota]++
-}
-
-// Nejčastější hodnota při podmínce, její počet a počet všech
-func (c cetnosti) nejcastejsi(podminka string) (hodnota string, k, n int) {
-	for h, p := range c[podminka] {
-		n += p
-		if p > k || p == k && h < hodnota {
-			hodnota, k = h, p
-		}
-	}
-	return hodnota, k, n
-}
 
 // Album pro návrhy
 type albumNavrhu struct {
@@ -172,37 +179,36 @@ type albumNavrhu struct {
 	fotek                         int
 }
 
-// Alba modelek jedním dotazem
-func (a *App) albaNavrhu() []albumNavrhu {
-	alba := []albumNavrhu{}
-	rows, err := a.db.Query(`SELECT al.modelka_id, al.album, al.typ, COALESCE(al.vydani, ''), COALESCE(al.datum, ''),
-			TRIM(COALESCE(al.fotograf, '')), COALESCE(al.netyka_se, ''), COUNT(f.id)
-		FROM alba al LEFT JOIN fotky f ON f.album_id = al.id
-		WHERE al.modelka_id IS NOT NULL GROUP BY al.id ORDER BY al.modelka_id, al.album, al.typ`)
-	if err != nil {
-		a.chyba("načtení alb pro návrhy", err)
-		return alba
+// Alba modelek pro návrhy (z albaSbirky) v pořadí modelka, název, typ
+func albaProNavrhy(alba []albumSbirky) []albumNavrhu {
+	vysledek := make([]albumNavrhu, 0, len(alba))
+	for _, al := range alba {
+		vysledek = append(vysledek, albumNavrhu{modelkaID: al.modelkaID, nazev: al.nazev, typ: al.typ, vydani: al.vydani,
+			datum: al.datum, fotograf: al.fotograf, neni: al.neni, fotek: al.fotek})
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var al albumNavrhu
-		if rows.Scan(&al.modelkaID, &al.nazev, &al.typ, &al.vydani, &al.datum, &al.fotograf, &al.neni, &al.fotek) == nil {
-			alba = append(alba, al)
+	sort.SliceStable(vysledek, func(i, j int) bool {
+		x, y := vysledek[i], vysledek[j]
+		if x.modelkaID != y.modelkaID {
+			return x.modelkaID < y.modelkaID
 		}
-	}
-	return alba
+		if x.nazev != y.nazev {
+			return x.nazev < y.nazev
+		}
+		return x.typ < y.typ
+	})
+	return vysledek
 }
 
 // Návrhy doplnění chybějících údajů seřazené od nejvyšší jistoty; odmítnuté jen s vcetneOdmitnutych (s příznakem)
 func (a *App) GetNavrhyDoplneni(vcetneOdmitnutych bool) []NavrhDoplneni {
-	return a.navrhyDoplneni(a.GetModelky(""), vcetneOdmitnutych)
+	return a.navrhyDoplneni(a.GetModelky(""), a.albaSbirky(), vcetneOdmitnutych)
 }
 
-func (a *App) navrhyDoplneni(modelky []Modelka, vcetneOdmitnutych bool) []NavrhDoplneni {
+func (a *App) navrhyDoplneni(modelky []Modelka, alba []albumSbirky, vcetneOdmitnutych bool) []NavrhDoplneni {
 	vysledek := []NavrhDoplneni{}
-	for _, n := range navrhnoutDoplneni(modelky, a.albaNavrhu(), time.Now().Year()) {
+	for _, n := range a.navrhySbirky(modelky, alba) {
 		if !n.Odmitnuto || vcetneOdmitnutych {
-			vysledek = append(vysledek, n)
+			vysledek = append(vysledek, n.NavrhDoplneni)
 		}
 	}
 	return vysledek
@@ -216,6 +222,9 @@ func (a *App) PrijmoutNavrh(n NavrhDoplneni) bool {
 		zapsano, err = zapsatNavrh(q, n)
 		return err
 	})
+	if ok && zapsano {
+		a.zaznamenatNavrh(udalostPrijato, n, n.Hodnota)
+	}
 	return ok && zapsano
 }
 
@@ -228,15 +237,16 @@ func (a *App) PrijmoutNavrhy(navrhy []NavrhDoplneni) int {
 		a.chyba("vytvoření zálohy", err)
 		return 0
 	}
-	pocet := 0
+	var prijate []NavrhDoplneni
 	ok := a.vTransakci("přijetí návrhů", func(q dotazovac) error {
+		prijate = prijate[:0]
 		for _, n := range navrhy {
 			zapsano, err := zapsatNavrh(q, n)
 			if err != nil {
 				return err
 			}
 			if zapsano {
-				pocet++
+				prijate = append(prijate, n)
 			}
 		}
 		return nil
@@ -244,19 +254,42 @@ func (a *App) PrijmoutNavrhy(navrhy []NavrhDoplneni) int {
 	if !ok {
 		return 0
 	}
-	return pocet
+	for _, n := range prijate {
+		a.zaznamenatNavrh(udalostPrijato, n, n.Hodnota)
+	}
+	return len(prijate)
 }
 
-// Odmítnutí návrhu (odmitnout = false odmítnutí ruší): klíč „nv-<pole>“ mezi „netýká se“ modelky nebo alba
+// Odmítnutí návrhu (odmitnout = false odmítnutí ruší). Platí pro navrženou hodnotu (n.Hodnota): ta se uloží do
+// databáze učení a jiná hodnota téhož údaje se navrhnout může. Ve sbírce se zároveň zapíše klíč „nv-<pole>“ mezi
+// „netýká se“ modelky nebo alba (export, starší verze); zruší se, až u údaje nezbude žádná odmítnutá hodnota.
+// Bez hodnoty se odmítá (nebo obnovuje) celý údaj.
 func (a *App) OdmitnoutNavrh(n NavrhDoplneni, odmitnout bool) bool {
 	u, ok := udajeNavrhu[n.Pole]
 	if !ok || n.Klic != klicNavrhu(n.Pole) || u.album != (n.Album != "") {
 		return false
 	}
-	if u.album {
-		return a.SetNetykaSeAlba(n.ModelkaID, n.Album, n.Typ, n.Klic, odmitnout)
+	ku := klicUdaje{n.ModelkaID, n.Album, n.Typ, n.Pole}
+	klic := klicHodnoty(n.Pole, n.Hodnota)
+	zbyva := a.uc.odmitnoutHodnotu(ku, klic, strings.TrimSpace(n.Hodnota), odmitnout)
+	// Klíč ve sbírce: při odmítnutí vždy, při zrušení jen když u údaje nic odmítnutého nezbylo
+	zapsat := odmitnout || zbyva == 0
+	ok = true
+	if zapsat {
+		if u.album {
+			ok = a.SetNetykaSeAlba(n.ModelkaID, n.Album, n.Typ, n.Klic, odmitnout)
+		} else {
+			ok = a.SetNetykaSe(n.ModelkaID, n.Klic, odmitnout)
+		}
 	}
-	return a.SetNetykaSe(n.ModelkaID, n.Klic, odmitnout)
+	if ok {
+		druh := udalostOdmitnuto
+		if !odmitnout {
+			druh = udalostZpet
+		}
+		a.zaznamenatNavrh(druh, n, "")
+	}
+	return ok
 }
 
 var vzorPlaymateRokuNavrhu = regexp.MustCompile(`^Playmate roku (19|20)\d{2}$`)
@@ -339,45 +372,134 @@ func zapsatNavrh(q dotazovac, n NavrhDoplneni) (bool, error) {
 	}
 }
 
-// Kandidát návrhu: vzor = co mají podobné návrhy společné (pro učení z odmítnutí)
-type kandidat struct {
-	NavrhDoplneni
-	vzor string
+// Údaj, ke kterému návrh patří (modelka, u alba i název a typ)
+type klicUdaje struct {
+	modelka    int
+	album, typ string
+	pole       string
 }
 
-// Všechny návrhy sbírky (i odmítnuté, s příznakem) nad prahem, seřazené od nejvyšší jistoty.
-// Modelky a alba jako z GetModelky a albaNavrhu; letos = nejpozdější rok, který může být v datu.
+// Co se návrhy naučily ze zpětné vazby (uceni.go); nil = jen ze sbírky
+type vstupUceni struct {
+	odmitnute map[klicUdaje]map[string]bool // odmítnuté hodnoty (klicHodnoty) podle údaje
+	kalibrace map[string]kalibraceZdroje    // podle klíče zdroje
+	zapisy    map[string]map[string]string  // pole → klíč hodnoty → zápis z oprav uživatele
+}
+
+// Kandidát návrhu jednoho zdroje
+type kandidat struct {
+	NavrhDoplneni
+	vzor        string // co mají podobné návrhy společné (pro učení z odmítnutí)
+	klicHodnoty string
+	dalsiZdroje []string // zdroje sloučené do kandidáta (shodné odhady obvodů)
+}
+
+// Všechny návrhy sbírky (i odmítnuté, s příznakem) nad prahem, seřazené od nejvyšší jistoty; bez učení ze zpětné
+// vazby. Modelky a alba jako z GetModelky a albaProNavrhy; letos = nejpozdější rok, který může být v datu.
 func navrhnoutDoplneni(modelky []Modelka, alba []albumNavrhu, letos int) []NavrhDoplneni {
+	navrhy := navrhnout(modelky, alba, letos, nil)
+	vysledek := make([]NavrhDoplneni, len(navrhy))
+	for i, n := range navrhy {
+		vysledek[i] = n.NavrhDoplneni
+	}
+	return vysledek
+}
+
+// Návrhy s učením ze zpětné vazby (uc může být nil)
+func navrhnout(modelky []Modelka, alba []albumNavrhu, letos int, uc *vstupUceni) []navrhSbirky {
 	var kandidati []kandidat
 	pridat := func(m Modelka, al *albumNavrhu, pole, hodnota, duvod, zdroj string, jistota float64) {
 		u := udajeNavrhu[pole]
 		k := kandidat{NavrhDoplneni: NavrhDoplneni{ModelkaID: m.ID, Jmeno: m.Jmeno, Pole: pole, Popis: u.popis, Hodnota: hodnota,
-			Jistota: jistota, Duvod: duvod, Klic: klicNavrhu(pole), InputID: u.input}}
+			Jistota: jistota, Duvod: duvod, Klic: klicNavrhu(pole), InputID: u.input, Zdroj: zdroj}}
+		k.klicHodnoty = klicHodnoty(pole, hodnota)
 		k.vzor = pole + "|" + zdroj
+		if zdrojeNavrhu[zdroj].vzorSHodnotou {
+			k.vzor += "|" + k.klicHodnoty
+		}
+		neni := m.NetykaSe
 		if al != nil {
-			k.Album, k.Typ = al.nazev, al.typ
-			k.Odmitnuto = obsahujeKlic(al.neni, k.Klic)
-		} else {
-			k.Odmitnuto = obsahujeKlic(m.NetykaSe, k.Klic)
+			k.Album, k.Typ, neni = al.nazev, al.typ, al.neni
+		}
+		// Odmítnutá hodnota (databáze učení); klíč „nv-“ bez záznamu v databázi odmítá celý údaj
+		if obsahujeKlic(neni, k.Klic) {
+			var hodnoty map[string]bool
+			if uc != nil {
+				hodnoty = uc.odmitnute[klicUdaje{k.ModelkaID, k.Album, k.Typ, pole}]
+			}
+			k.Odmitnuto = len(hodnoty) == 0 || hodnoty[k.klicHodnoty]
 		}
 		kandidati = append(kandidati, k)
 	}
+	predpoklady := predpokladyHodnot(modelky, alba)
+	var zapisy map[string]map[string]string
+	if uc != nil {
+		zapisy = uc.zapisy
+	}
 
-	navrhnoutNarodnosti(modelky, pridat)
-	navrhnoutVzhled(modelky, pridat)
+	navrhnoutNarodnosti(modelky, zapisy["narodnost"], pridat)
+	navrhnoutVzhled(modelky, zapisy, pridat)
 	navrhnoutMiry(modelky, pridat)
 	navrhnoutPlaymateRoku(modelky, alba, pridat)
-	navrhnoutAlba(modelky, alba, letos, pridat)
+	navrhnoutAlba(modelky, alba, letos, zapisy["fotografAlba"], pridat)
 
-	return vybratNavrhy(kandidati)
+	var kalibrace map[string]kalibraceZdroje
+	if uc != nil {
+		kalibrace = uc.kalibrace
+	}
+	return vybratNavrhy(kandidati, predpoklady, kalibrace)
 }
 
-// Funkce, kterou zdroje přidávají kandidáty (al = nil u údaje modelky)
+// Funkce, kterou zdroje přidávají kandidáty (al = nil u údaje modelky; zdroj = klíč ze zdrojeNavrhu)
 type pridatKandidata func(m Modelka, al *albumNavrhu, pole, hodnota, duvod, zdroj string, jistota float64)
 
-// Učení z odmítnutí, sloučení návrhů pro stejný údaj, práh a řazení
-func vybratNavrhy(kandidati []kandidat) []NavrhDoplneni {
-	// Odmítnuté podobné návrhy: stejný údaj, zdroj a hodnota (u alb a odhadů zdroj sám)
+// Předpoklad hodnoty bez jakéhokoli zdroje (π pro spojení zdrojů): podíl hodnoty mezi vyplněnými údaji sbírky
+// s Laplaceovým vyhlazením (k + 1)/(n + K + 1); jedna pseudo-hodnota navíc nechává místo pro hodnotu, kterou
+// sbírka ještě nezná. Klíč pole + "\x00" + klicHodnoty.
+type predpokladyNavrhu struct {
+	pocty   map[string]int
+	celkem  map[string]int
+	ruznych map[string]int
+}
+
+func predpokladyHodnot(modelky []Modelka, alba []albumNavrhu) predpokladyNavrhu {
+	p := predpokladyNavrhu{pocty: map[string]int{}, celkem: map[string]int{}, ruznych: map[string]int{}}
+	pridat := func(pole, hodnota string) {
+		if strings.TrimSpace(hodnota) == "" || hodnota == "0" {
+			return
+		}
+		k := pole + "\x00" + klicHodnoty(pole, hodnota)
+		if p.pocty[k] == 0 {
+			p.ruznych[pole]++
+		}
+		p.pocty[k]++
+		p.celkem[pole]++
+	}
+	for _, m := range modelky {
+		pridat("narodnost", m.Narodnost)
+		pridat("etnicita", m.Etnicita)
+		pridat("vlasyBarva", m.VlasyBarva)
+		pridat("ociBarva", m.OciBarva)
+		pridat("velikostPrsou", m.VelikostPrsou)
+		pridat("obvodHrudnikCm", strconv.Itoa(m.ObvodHrudnikCm))
+		pridat("obvodPasCm", strconv.Itoa(m.ObvodPasCm))
+		pridat("obvodBokyCm", strconv.Itoa(m.ObvodBokyCm))
+	}
+	for _, al := range alba {
+		pridat("vydaniAlba", al.vydani)
+		pridat("fotografAlba", al.fotograf)
+		pridat("datumAlba", al.datum)
+	}
+	return p
+}
+
+func (p predpokladyNavrhu) hodnoty(pole, klic string) float64 {
+	return (float64(p.pocty[pole+"\x00"+klic]) + 1) / (float64(p.celkem[pole]+p.ruznych[pole]) + 1)
+}
+
+// Výběr návrhů: učení z odmítnutí, kalibrace zdrojů, spojení zdrojů téhož údaje, spor, práh a řazení
+func vybratNavrhy(kandidati []kandidat, predpoklady predpokladyNavrhu, kalibrace map[string]kalibraceZdroje) []navrhSbirky {
+	// Odmítnuté podobné návrhy: stejný údaj, zdroj a u četností i hodnota
 	odmitnute := map[string]int{}
 	for _, k := range kandidati {
 		if k.Odmitnuto {
@@ -386,6 +508,10 @@ func vybratNavrhy(kandidati []kandidat) []NavrhDoplneni {
 	}
 	for i := range kandidati {
 		k := &kandidati[i]
+		// U zdroje bez hodnoty ve vzoru je to totéž, co kalibrace z databáze učení; s ní se nepočítá dvakrát
+		if _, kalibrovany := kalibrace[k.Zdroj]; kalibrovany && !zdrojeNavrhu[k.Zdroj].vzorSHodnotou {
+			continue
+		}
 		d := odmitnute[k.vzor]
 		if k.Odmitnuto {
 			d--
@@ -396,44 +522,28 @@ func vybratNavrhy(kandidati []kandidat) []NavrhDoplneni {
 		}
 	}
 
-	// Pro jeden údaj nejvýš jeden návrh: shodné hodnoty → ten jistější; různé hodnoty, z nichž by prošly
-	// dvě → údaj je sporný a nenavrhuje se
-	type klicUdaje struct {
-		modelka    int
-		album, typ string
-		pole       string
-	}
-	nejlepsi := map[klicUdaje]int{}
-	sporne := map[klicUdaje]bool{}
+	// Kandidáti podle údaje (v pořadí prvního výskytu, aby byl výsledek deterministický)
+	skupiny := map[klicUdaje][]int{}
 	var poradi []klicUdaje
 	for i, k := range kandidati {
 		ku := klicUdaje{k.ModelkaID, k.Album, k.Typ, k.Pole}
-		j, ok := nejlepsi[ku]
-		if !ok {
-			nejlepsi[ku] = i
+		if _, ok := skupiny[ku]; !ok {
 			poradi = append(poradi, ku)
-			continue
 		}
-		jiny := kandidati[j]
-		if klicTextu(jiny.Hodnota) != klicTextu(k.Hodnota) && min(jiny.Jistota, k.Jistota) >= prahNavrhu*0.9 {
-			sporne[ku] = true
-		}
-		if k.Jistota > jiny.Jistota {
-			nejlepsi[ku] = i
-		}
+		skupiny[ku] = append(skupiny[ku], i)
 	}
-	navrhy := []NavrhDoplneni{}
+	navrhy := []navrhSbirky{}
 	for _, ku := range poradi {
-		k := kandidati[nejlepsi[ku]]
-		if sporne[ku] || !jeOdhad(k.vzor) && k.Jistota < prahNavrhu {
-			continue
-		}
-		k.Jistota = math.Round(min(k.Jistota, stropJistoty)*1000) / 1000
-		navrhy = append(navrhy, k.NavrhDoplneni)
+		navrhy = append(navrhy, vybratZeSkupiny(kandidati, skupiny[ku], predpoklady, kalibrace)...)
 	}
+	for i := range navrhy {
+		navrhy[i].Jistota = math.Round(min(navrhy[i].Jistota, stropJistoty)*1000) / 1000
+		navrhy[i].JistotaVzorce = math.Round(min(navrhy[i].JistotaVzorce, stropJistoty)*1000) / 1000
+	}
+
 	klice := make([]string, len(navrhy))
 	for i, n := range navrhy {
-		klice[i] = zjednodusit(n.Jmeno) + "\x00" + n.Album + "\x00" + n.Typ + "\x00" + n.Pole
+		klice[i] = zjednodusit(n.Jmeno) + "\x00" + n.Album + "\x00" + n.Typ + "\x00" + n.Pole + "\x00" + n.Hodnota
 	}
 	index := make([]int, len(navrhy))
 	for i := range index {
@@ -449,19 +559,226 @@ func vybratNavrhy(kandidati []kandidat) []NavrhDoplneni {
 		}
 		return a.ModelkaID < b.ModelkaID
 	})
-	serazene := make([]NavrhDoplneni, len(navrhy))
+	serazene := make([]navrhSbirky, len(navrhy))
 	for i, j := range index {
 		serazene[i] = navrhy[j]
 	}
 	return serazene
 }
 
-// Odhad obvodu regresí: má vlastní práh (prahOdhadu se ověřuje už při odhadu) a nízkou jistotu
-const zdrojOdhadu = "odhad"
+// Hodnota navržená pro údaj a zdroje, které ji podporují (z každé rodiny nejsilnější kandidát)
+type hodnotaUdaje struct {
+	klic      string
+	kandidati []int // indexy do kandidátů, podle síly sestupně
+	odmitnuto bool
+}
 
-func jeOdhad(vzor string) bool { return strings.HasSuffix(vzor, "|"+zdrojOdhadu) }
+// Návrhy pro jeden údaj. Z každé rodiny zdrojů se bere nejsilnější kandidát; odhady obvodů (regrese a sousedé)
+// se slučují zvlášť. Pro každou hodnotu se pak spojí důkazy všech rodin (spojeníHodnoty): rodiny, které ji
+// podporují, jistotu zvednou, rodiny jiné hodnoty ji sníží. Odmítnutá hodnota se do soutěže nepočítá (víme, že je
+// u modelky špatně), jen se vrátí s příznakem. Prošly-li by dvě různé hodnoty, je údaj sporný a nenavrhuje se.
+func vybratZeSkupiny(kandidati []kandidat, indexy []int, predpoklady predpokladyNavrhu, kalibrace map[string]kalibraceZdroje) []navrhSbirky {
+	// Kalibrovaná jistota každého kandidáta
+	kalibrovana := map[int]float64{}
+	for _, i := range indexy {
+		kalibrovana[i] = kalibrace[kandidati[i].Zdroj].upravit(kandidati[i].Jistota, zdrojeNavrhu[kandidati[i].Zdroj].predpoklad)
+	}
+	silnejsi := func(i, j int) bool {
+		if kalibrovana[i] != kalibrovana[j] {
+			return kalibrovana[i] > kalibrovana[j]
+		}
+		return i < j
+	}
+	// Rodina → hodnota → nejsilnější kandidát
+	nejlepsi := map[string]map[string]int{}
+	var rodiny []string
+	for _, i := range indexy {
+		k := kandidati[i]
+		r := zdrojeNavrhu[k.Zdroj].rodina
+		if nejlepsi[r] == nil {
+			nejlepsi[r] = map[string]int{}
+			rodiny = append(rodiny, r)
+		}
+		if j, ok := nejlepsi[r][k.klicHodnoty]; !ok || silnejsi(i, j) {
+			nejlepsi[r][k.klicHodnoty] = i
+		}
+	}
+	// Odhady obvodů: regrese a sousedé do ±1 cm se shodnou (silnější hodnota, jistota spojená s tlumením),
+	// o 3 cm a víc se přou (odhad se nenavrhuje), jinak platí silnější
+	if odhady := nejlepsi["odhad"]; len(odhady) > 1 {
+		var seznam []int
+		for _, i := range odhady {
+			seznam = append(seznam, i)
+		}
+		sort.Slice(seznam, func(a, b int) bool { return silnejsi(seznam[a], seznam[b]) })
+		prvni := seznam[0]
+		x, _ := strconv.Atoi(kandidati[prvni].Hodnota)
+		zustava := map[string]int{kandidati[prvni].klicHodnoty: prvni}
+		for _, i := range seznam[1:] {
+			y, _ := strconv.Atoi(kandidati[i].Hodnota)
+			switch rozdil := abs(x - y); {
+			case rozdil >= 3:
+				zustava = nil
+			case rozdil <= 1 && zustava != nil:
+				p := []float64{kalibrovana[prvni], kalibrovana[i]}
+				pi := predpoklady.hodnoty(kandidati[prvni].Pole, kandidati[prvni].klicHodnoty)
+				kalibrovana[prvni] = min(stropOdhadu, spojitZdroje(p, pi, tlumeniOdhadu))
+				kandidati[prvni].Jistota = min(stropOdhadu, spojitZdroje([]float64{kandidati[prvni].Jistota, kandidati[i].Jistota}, pi, tlumeniOdhadu))
+				kandidati[prvni].Duvod += "; " + kandidati[i].Duvod
+				kandidati[prvni].ZdrojPopis = zdrojeNavrhu[kandidati[prvni].Zdroj].popis + " + " + zdrojeNavrhu[kandidati[i].Zdroj].popis
+				kandidati[prvni].dalsiZdroje = append(kandidati[prvni].dalsiZdroje, kandidati[i].Zdroj)
+			}
+		}
+		nejlepsi["odhad"] = zustava
+		if zustava == nil {
+			delete(nejlepsi, "odhad")
+		}
+	}
 
-// Modelka nesleduje údaje skupiny („netýká se“) nebo návrh odmítla celý
+	// Hodnoty a jejich podpora
+	hodnoty := map[string]*hodnotaUdaje{}
+	var klice []string
+	for _, r := range rodiny {
+		for klic, i := range nejlepsi[r] {
+			h := hodnoty[klic]
+			if h == nil {
+				h = &hodnotaUdaje{klic: klic}
+				hodnoty[klic] = h
+				klice = append(klice, klic)
+			}
+			h.kandidati = append(h.kandidati, i)
+			h.odmitnuto = h.odmitnuto || kandidati[i].Odmitnuto
+		}
+	}
+	sort.Strings(klice)
+	for _, h := range hodnoty {
+		sort.Slice(h.kandidati, func(a, b int) bool { return silnejsi(h.kandidati[a], h.kandidati[b]) })
+	}
+	if len(klice) == 0 {
+		return nil
+	}
+	pole := kandidati[indexy[0]].Pole
+	// Spojená jistota hodnoty: kalibrovaná a před kalibrací (vzorec, pro zpětnou vazbu)
+	spojit := func(h *hodnotaUdaje, jistota func(int) float64) float64 {
+		pi := predpoklady.hodnoty(pole, h.klic)
+		var pro []float64
+		for _, i := range h.kandidati {
+			pro = append(pro, jistota(i))
+		}
+		x := logit(spojitZdroje(pro, pi, tlumeniZavislosti))
+		// Proti: rodina, jejíž nejsilnější neodmítnutá hodnota je jiná, pravděpodobnost téhle hodnoty snižuje
+		// na q = (1 − p)·π/(1 − π_jiné) – zbytek své jistoty rozdělí mezi ostatní hodnoty podle předpokladů
+		for _, druha := range klice {
+			g := hodnoty[druha]
+			if druha == h.klic || g.odmitnuto {
+				continue
+			}
+			for _, i := range g.kandidati {
+				if podporuje(h, kandidati[i].Zdroj, kandidati) {
+					continue
+				}
+				q := (1 - jistota(i)) * pi / max(0.01, 1-predpoklady.hodnoty(pole, druha))
+				x += tlumeniZavislosti * (logit(q) - logit(pi))
+			}
+		}
+		return zLogitu(x)
+	}
+	type vysledek struct {
+		h               *hodnotaUdaje
+		jistota, vzorec float64
+	}
+	var vysledky []vysledek
+	for _, klic := range klice {
+		h := hodnoty[klic]
+		v := vysledek{h: h, jistota: spojit(h, func(i int) float64 { return kalibrovana[i] }),
+			vzorec: spojit(h, func(i int) float64 { return kandidati[i].Jistota })}
+		vysledky = append(vysledky, v)
+	}
+	odhad := func(v vysledek) bool { return zdrojeNavrhu[kandidati[v.h.kandidati[0]].Zdroj].rodina == "odhad" }
+	prosel := func(v vysledek) bool {
+		if odhad(v) {
+			return v.jistota >= minJistotaOdhadu
+		}
+		return v.jistota >= prahNavrhu
+	}
+	// Spor: dvě neodmítnuté hodnoty, z nichž by skoro prošly obě
+	sporne := 0
+	for _, v := range vysledky {
+		if !v.h.odmitnuto && !odhad(v) && v.jistota >= prahNavrhu*0.9 {
+			sporne++
+		}
+	}
+	var navrhy []navrhSbirky
+	var nejNeodmitnuta *vysledek
+	for i, v := range vysledky {
+		// Odmítnutá hodnota se vrací vždy (s příznakem), aby šlo odmítnutí zrušit, i když jistota mezitím klesla
+		if v.h.odmitnuto {
+			navrhy = append(navrhy, sestavitNavrh(kandidati, v.h, v.jistota, v.vzorec))
+			continue
+		}
+		if !prosel(v) || sporne > 1 {
+			continue
+		}
+		if nejNeodmitnuta == nil || v.jistota > nejNeodmitnuta.jistota {
+			nejNeodmitnuta = &vysledky[i]
+		}
+	}
+	if nejNeodmitnuta != nil {
+		navrhy = append(navrhy, sestavitNavrh(kandidati, nejNeodmitnuta.h, nejNeodmitnuta.jistota, nejNeodmitnuta.vzorec))
+	}
+	return navrhy
+}
+
+// Hodnotu podporuje kandidát zdroje (pro „proti“ se zdroj, který ji sám podporuje, nepočítá)
+func podporuje(h *hodnotaUdaje, zdroj string, kandidati []kandidat) bool {
+	for _, i := range h.kandidati {
+		if kandidati[i].Zdroj == zdroj {
+			return true
+		}
+	}
+	return false
+}
+
+// Návrh z hodnoty: zápis a důvod nejsilnějšího zdroje, důvody dalších zdrojů v pořadí zdrojů
+func sestavitNavrh(kandidati []kandidat, h *hodnotaUdaje, jistota, vzorec float64) navrhSbirky {
+	hlavni := kandidati[h.kandidati[0]]
+	n := navrhSbirky{NavrhDoplneni: hlavni.NavrhDoplneni, JistotaVzorce: vzorec}
+	n.Jistota = jistota
+	n.Odmitnuto = h.odmitnuto
+	podle := append([]int(nil), h.kandidati...)
+	sort.SliceStable(podle, func(a, b int) bool {
+		return poradiZdroje(kandidati[podle[a]].Zdroj) < poradiZdroje(kandidati[podle[b]].Zdroj)
+	})
+	var duvody, popisy []string
+	for _, i := range podle {
+		k := kandidati[i]
+		duvody = append(duvody, k.Duvod)
+		if k.ZdrojPopis != "" {
+			popisy = append(popisy, k.ZdrojPopis)
+		} else {
+			popisy = append(popisy, zdrojeNavrhu[k.Zdroj].popis)
+		}
+		n.Zdroje = append(n.Zdroje, k.Zdroj)
+		n.Zdroje = append(n.Zdroje, k.dalsiZdroje...)
+	}
+	n.Duvod = strings.Join(duvody, "; zároveň ")
+	n.ZdrojPopis = strings.Join(popisy, " + ")
+	if vzorec != 0 && math.Abs(jistota-vzorec) >= 0.005 {
+		n.Duvod += fmt.Sprintf("; podle dosavadních rozhodnutí upraveno z %d %% na %d %%", int(math.Round(min(vzorec, stropJistoty)*100)), int(math.Round(min(jistota, stropJistoty)*100)))
+	}
+	return n
+}
+
+func poradiZdroje(zdroj string) int {
+	for i, z := range poradiZdroju {
+		if z == zdroj {
+			return i
+		}
+	}
+	return len(poradiZdroju)
+}
+
+// Modelka nesleduje údaje skupiny („netýká se“)
 func neniKNavrhu(m Modelka, pole string) bool {
 	u := udajeNavrhu[pole]
 	return u.netyka != "" && obsahujeKlic(m.NetykaSe, u.netyka)
@@ -664,18 +981,26 @@ func (r *rejstrikMist) zeme(c castMista, poradi int) int {
 }
 
 // Národnost z místa narození (naučené ze sbírky a tabulka zemí) a z edice čísel (jen česká edice → nejčastější
-// národnost takových modelek). Z více částí místa se vezme ta s nejvyšší jistotou.
-func navrhnoutNarodnosti(modelky []Modelka, pridat pridatKandidata) {
-	zapisy := pravopis{}
+// národnost takových modelek). Z více částí místa se vezme ta s nejvyšší jistotou. Místo a edice jsou dva zdroje;
+// navrhnou-li tutéž hodnotu, spojí je vybratNavrhy, navrhnou-li různé, sníží si jistotu navzájem.
+// preferovane = zápisy z oprav uživatele (klíč národnosti → zápis).
+func navrhnoutNarodnosti(modelky []Modelka, preferovane map[string]string, pridat pridatKandidata) {
+	zapisy := novySlovnik()
+	zapisy.preferovane = preferovane
+	for _, m := range modelky {
+		if k := klicNarodnosti(m.Narodnost); k != "" {
+			zapisy.pridat(k, strings.TrimSpace(m.Narodnost))
+		}
+	}
+	zapisy.naucit()
 	mista := cetnosti{} // část místa → klíč národnosti
 	edice := cetnosti{} // edice čísel → klíč národnosti
 	rejstrik := &rejstrikMist{mezipamet: map[string]int{}}
 	for _, m := range modelky {
-		k := klicNarodnosti(m.Narodnost)
+		k := zapisy.klic(klicNarodnosti(m.Narodnost))
 		if k == "" {
 			continue
 		}
-		zapisy.pridat(k, strings.TrimSpace(m.Narodnost))
 		videne := map[string]bool{}
 		for _, c := range castiMista(m.NarozeniMisto) {
 			if !videne[c.klic] {
@@ -757,16 +1082,15 @@ func navrhnoutNarodnosti(modelky []Modelka, pridat pridatKandidata) {
 			}
 		}
 		if nejHodnota != "" {
-			pridat(m, nil, "narodnost", nejHodnota, nejDuvod, "misto|"+klicTextu(nejHodnota), nejJistota)
-			continue
+			pridat(m, nil, "narodnost", nejHodnota, nejDuvod, "misto", nejJistota)
 		}
-		// Bez místa: edice čísel (jen tam, kde má modelka čísla jen jedné edice)
+		// Edice čísel (jen tam, kde má modelka čísla jen jedné edice)
 		if e := edicePrehledu(m); e != "" {
 			klic, k, n := edice.nejcastejsi(e)
 			if jistota := podilSPredpokladem(k, n, 0.5, 2); n >= minModelekEdice && jistota >= prahEdice {
 				hodnota := zapisy.zapis(klic)
 				pridat(m, nil, "narodnost", hodnota, fmt.Sprintf("vyšla jen v edici %s; %d z %d takových modelek sbírky má národnost %s", e, k, n, hodnota),
-					"edice|"+klicTextu(hodnota), jistota)
+					"edice", jistota)
 			}
 		}
 	}
@@ -799,7 +1123,7 @@ func edicePrehledu(m Modelka) string {
 // Etnicita podle národnosti; barva vlasů a očí podle etnicity a národnosti (s ústupem na jen etnicitu, nebo
 // jen národnost, když dvojice nemá dost modelek). Bere se nejkonkrétnější podmínka, která má dost modelek,
 // ne ta, která vyjde nejlépe (to by byl výběr náhody). Navrhuje se jen silně jednoznačná hodnota.
-func navrhnoutVzhled(modelky []Modelka, pridat pridatKandidata) {
+func navrhnoutVzhled(modelky []Modelka, preferovane map[string]map[string]string, pridat pridatKandidata) {
 	type udaj struct {
 		pole, slovo string // „barvu vlasů“
 		hodnota     func(Modelka) string
@@ -809,17 +1133,28 @@ func navrhnoutVzhled(modelky []Modelka, pridat pridatKandidata) {
 		{"vlasyBarva", "barvu vlasů", func(m Modelka) string { return m.VlasyBarva }},
 		{"ociBarva", "barvu očí", func(m Modelka) string { return m.OciBarva }},
 	}
-	zapisy := map[string]pravopis{}
+	zapisy := map[string]*slovnikHodnot{}
 	tabulky := map[string]cetnosti{}
 	for _, u := range udaje {
-		zapisy[u.pole], tabulky[u.pole] = pravopis{}, cetnosti{}
+		zapisy[u.pole], tabulky[u.pole] = novySlovnik(), cetnosti{}
+		zapisy[u.pole].preferovane = preferovane[u.pole]
+	}
+	for _, m := range modelky {
+		for _, u := range udaje {
+			if h := strings.TrimSpace(u.hodnota(m)); h != "" {
+				zapisy[u.pole].pridat(klicTextu(h), h)
+			}
+		}
+	}
+	for _, u := range udaje {
+		zapisy[u.pole].naucit()
 	}
 	type podminka struct {
 		klic, popis string
 		minimum     int // nejmenší počet modelek s údajem při podmínce
 	}
 	podminky := func(m Modelka, pole string) []podminka {
-		e, n := klicTextu(m.Etnicita), klicNarodnosti(m.Narodnost)
+		e, n := zapisy["etnicita"].klic(klicTextu(m.Etnicita)), klicNarodnosti(m.Narodnost)
 		etnicita, narodnost := "etnicita "+strings.TrimSpace(m.Etnicita), "národnost "+strings.TrimSpace(m.Narodnost)
 		var p []podminka
 		if pole == "etnicita" {
@@ -845,8 +1180,7 @@ func navrhnoutVzhled(modelky []Modelka, pridat pridatKandidata) {
 			if h == "" {
 				continue
 			}
-			k := klicTextu(h)
-			zapisy[u.pole].pridat(k, h)
+			k := zapisy[u.pole].klic(klicTextu(h))
 			for _, p := range podminky(m, u.pole) {
 				tabulky[u.pole].pridat(p.klic, k)
 			}
@@ -865,7 +1199,7 @@ func navrhnoutVzhled(modelky []Modelka, pridat pridatKandidata) {
 				if jistota := podilSPredpokladem(k, n, 0.5, 2); jistota >= prahVzhledu {
 					hodnota := zapisy[u.pole].zapis(klic)
 					pridat(m, nil, u.pole, hodnota, fmt.Sprintf("%s: %d z %d modelek sbírky má %s %s", p.popis, k, n, u.slovo, hodnota),
-						"cetnost|"+klic, min(jistota, stropVzhledu))
+						"cetnost", min(jistota, stropVzhledu))
 				}
 				break
 			}
@@ -874,7 +1208,7 @@ func navrhnoutVzhled(modelky []Modelka, pridat pridatKandidata) {
 }
 
 // ---------------------------------------------------------------------------------------------------------
-// Míry: obvody a velikost prsou z textu „míry“, jinak odhad obvodu regresí
+// Míry: obvody a velikost prsou z textu „míry“, jinak odhad obvodu regresí a podle nejpodobnějších modelek
 
 // „90-60-90“, „36-24-36“, „34C-24-35“, „90 x 60 x 90 cm“
 var vzorMer = regexp.MustCompile(`^\s*(\d{2,3})\s*([A-Ga-g]{1,3})?\s*[-–/x×]\s*(\d{2,3})\s*[-–/x×]\s*(\d{2,3})\s*(cm|in|"|″|inch|inches|palce|palcu)?\s*$`)
@@ -985,12 +1319,11 @@ func navrhnoutMiry(modelky []Modelka, pridat pridatKandidata) {
 		}
 	}
 
-	udaje := make([]udajePostavy, len(modelky))
-	for i, m := range modelky {
-		x, ma := priznakyModelky(m)
-		udaje[i] = udajePostavy{x: x, ma: ma}
-	}
+	udaje := udajeSbirky(modelky)
 	odhady := map[[2]int]*regreseObvodu{}
+	// Sousedé pro každý obvod se učí až při prvním použití (u sbírky bez chybějících obvodů vůbec)
+	sousede := map[int]*sousedePostavy{}
+	naucenoSousedu := map[int]bool{}
 	for i, m := range modelky {
 		if neniKNavrhu(m, "obvodPasCm") {
 			continue
@@ -1046,7 +1379,7 @@ func navrhnoutMiry(modelky []Modelka, pridat pridatKandidata) {
 			}
 			continue
 		}
-		// Odhad regresí z ostatních údajů postavy
+		// Odhad regresí a podle nejpodobnějších modelek z ostatních údajů postavy
 		u := udaje[i]
 		for j, o := range obvodyNavrhu {
 			if stavajici[j] > 0 {
@@ -1061,6 +1394,10 @@ func navrhnoutMiry(modelky []Modelka, pridat pridatKandidata) {
 			if bitu(maska) < 2 {
 				continue
 			}
+			if !naucenoSousedu[o.j] {
+				sousede[o.j], naucenoSousedu[o.j] = naucitSousedy(udaje, o.j), true
+			}
+			navrhnoutPodleSousedu(m, u, o.pole, o.j, sousede[o.j], pridat)
 			klic := [2]int{o.j, maska}
 			reg, ok := odhady[klic]
 			if !ok {
@@ -1080,170 +1417,31 @@ func navrhnoutMiry(modelky []Modelka, pridat pridatKandidata) {
 			}
 			duvod := fmt.Sprintf("odhad z údajů %s podle %d modelek sbírky (přesně ±1 cm u %d %%, ±2 cm u %d %% z nich)",
 				strings.Join(zCeho, ", "), reg.n, int(math.Round(reg.trefa1*100)), int(math.Round(reg.trefa2*100)))
-			pridat(m, nil, o.pole, strconv.Itoa(odhad), duvod, zdrojOdhadu, min(stropOdhadu, reg.trefa1))
+			pridat(m, nil, o.pole, strconv.Itoa(odhad), duvod, "regrese", min(stropOdhadu, reg.trefa1))
 		}
 	}
 }
 
-func abs(x int) int {
-	if x < 0 {
-		return -x
+// Odhad obvodu podle nejpodobnějších modelek (uceni_modely.go): jen když se na sbírce trefuje (±2 cm aspoň
+// u prahOdhadu modelek) a sousedé se shodují aspoň zhruba jako obvykle. Jistota je ověřená trefa ±1 cm,
+// snížená v poměru typické a vlastní nejistoty, a nikdy nad stropOdhadu.
+func navrhnoutPodleSousedu(m Modelka, u udajePostavy, pole string, cil int, s *sousedePostavy, pridat pridatKandidata) {
+	if s == nil {
+		return
 	}
-	return x
-}
-
-func bitu(x int) int {
-	n := 0
-	for ; x > 0; x >>= 1 {
-		n += x & 1
+	hodnota, nejistota, o, ok := s.odhad(u)
+	if !ok || o.trefa2 < prahOdhadu || nejistota > 2*o.typickaNejistota {
+		return
 	}
-	return n
-}
-
-// Lineární regrese obvodu na jiné údaje postavy. Robustní: po prvním odhadu se vynechají modelky s reziduem
-// nad 3 robustní σ (překlepy) a odhad se zopakuje. Úspěšnost se měří poctivě vynecháním jedné modelky
-// (leave-one-out přes diagonálu projekční matice): podíl modelek, u nichž by zaokrouhlený odhad bez nich samých
-// trefil skutečnou hodnotu do ±1 a do ±2 cm.
-type regreseObvodu struct {
-	prediktory     []int
-	prumerX        []float64
-	prumerY        float64
-	beta           []float64
-	n              int
-	trefa1, trefa2 float64
-}
-
-func (r *regreseObvodu) odhad(x [pocetPriznaku]float64) int {
-	y := r.prumerY
-	for a, p := range r.prediktory {
-		y += r.beta[a] * (x[p] - r.prumerX[a])
+	odhad := int(math.Round(hodnota))
+	if p := priznaky[cil]; float64(odhad) < p.mezOd || float64(odhad) > p.mezDo {
+		return
 	}
-	return int(math.Round(y))
-}
-
-func naucitRegresi(udaje []udajePostavy, cil, maska int) *regreseObvodu {
-	var prediktory []int
-	for p := range pocetPriznaku {
-		if maska&(1<<p) != 0 {
-			prediktory = append(prediktory, p)
-		}
-	}
-	d := len(prediktory)
-	var radky []int
-	for i, u := range udaje {
-		ok := u.ma[cil]
-		for _, p := range prediktory {
-			ok = ok && u.ma[p]
-		}
-		if ok {
-			radky = append(radky, i)
-		}
-	}
-	if len(radky) < minModelekOdhadu {
-		return nil
-	}
-	odhadnout := func(vybrane []int) (*regreseObvodu, [][]float64) {
-		r := &regreseObvodu{prediktory: prediktory, prumerX: make([]float64, d), beta: make([]float64, d), n: len(vybrane)}
-		for _, i := range vybrane {
-			r.prumerY += udaje[i].x[cil]
-			for a, p := range prediktory {
-				r.prumerX[a] += udaje[i].x[p]
-			}
-		}
-		r.prumerY /= float64(len(vybrane))
-		for a := range prediktory {
-			r.prumerX[a] /= float64(len(vybrane))
-		}
-		s := make([][]float64, d)
-		b := make([]float64, d)
-		for a := range s {
-			s[a] = make([]float64, d)
-		}
-		for _, i := range vybrane {
-			for a, p := range prediktory {
-				xa := udaje[i].x[p] - r.prumerX[a]
-				b[a] += xa * (udaje[i].x[cil] - r.prumerY)
-				for c, q := range prediktory {
-					s[a][c] += xa * (udaje[i].x[q] - r.prumerX[c])
-				}
-			}
-		}
-		inv := invertovatCholesky(s)
-		if inv == nil {
-			return nil, nil
-		}
-		for a := range d {
-			for c := range d {
-				r.beta[a] += inv[a][c] * b[c]
-			}
-		}
-		return r, inv
-	}
-	r, _ := odhadnout(radky)
-	if r == nil {
-		return nil
-	}
-	rezidua := make([]float64, len(radky))
-	for k, i := range radky {
-		rezidua[k] = udaje[i].x[cil] - r.odhadPresny(udaje[i].x)
-	}
-	absolutni := make([]float64, len(rezidua))
-	for k, e := range rezidua {
-		absolutni[k] = math.Abs(e)
-	}
-	sort.Float64s(absolutni)
-	mez := max(1, 3*1.4826*kvantil(absolutni, 0.5))
-	var vnitrni []int
-	vnejsi := map[int]bool{}
-	for k, i := range radky {
-		if math.Abs(rezidua[k]) <= mez {
-			vnitrni = append(vnitrni, i)
-		} else {
-			vnejsi[i] = true
-		}
-	}
-	if len(vnitrni) < minModelekOdhadu {
-		return nil
-	}
-	r, inv := odhadnout(vnitrni)
-	if r == nil {
-		return nil
-	}
-	trefa1, trefa2 := 0, 0
-	for _, i := range radky {
-		y := udaje[i].x[cil]
-		odhad := r.odhadPresny(udaje[i].x)
-		if !vnejsi[i] {
-			// Odhad bez modelky samé: y − e/(1 − h), h = 1/n + x̃ᵀ(X̃ᵀX̃)⁻¹x̃
-			h := 1 / float64(len(vnitrni))
-			for a, p := range prediktory {
-				for c, q := range prediktory {
-					h += (udaje[i].x[p] - r.prumerX[a]) * inv[a][c] * (udaje[i].x[q] - r.prumerX[c])
-				}
-			}
-			if h < 1 {
-				odhad = y - (y-odhad)/(1-h)
-			}
-		}
-		chyba := math.Abs(y - math.Round(odhad))
-		if chyba <= 1 {
-			trefa1++
-		}
-		if chyba <= 2 {
-			trefa2++
-		}
-	}
-	r.trefa1, r.trefa2 = float64(trefa1)/float64(len(radky)), float64(trefa2)/float64(len(radky))
-	r.n = len(radky)
-	return r
-}
-
-func (r *regreseObvodu) odhadPresny(x [pocetPriznaku]float64) float64 {
-	y := r.prumerY
-	for a, p := range r.prediktory {
-		y += r.beta[a] * (x[p] - r.prumerX[a])
-	}
-	return y
+	jistota := min(stropOdhadu, o.trefa1*min(1, o.typickaNejistota/max(nejistota, 0.01)))
+	duvod := fmt.Sprintf("podle %d modelek sbírky s nejpodobnější postavou: %d cm, rozptyl ±%s cm (ověřeno na %d modelkách se stejnými údaji: ±1 cm u %d %%, ±2 cm u %d %%)",
+		pocetSousedu, odhad, strings.Replace(strconv.FormatFloat(nejistota, 'f', 1, 64), ".", ",", 1), o.n,
+		int(math.Round(o.trefa1*100)), int(math.Round(o.trefa2*100)))
+	pridat(m, nil, pole, strconv.Itoa(odhad), duvod, "podobne", jistota)
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -1390,35 +1588,23 @@ func datumZNazvu(nazev string, letos int) (datum string, presnost int, ok bool) 
 	return "", 0, false
 }
 
-// Úspěšnost pravidla na sbírce
-type uspesnost struct{ k, n int }
-
-func (u *uspesnost) zapocitat(shoda bool) {
-	u.n++
-	if shoda {
-		u.k++
-	}
-}
-
-func (u uspesnost) jistota(predpoklad, vaha float64) float64 {
-	return podilSPredpokladem(u.k, u.n, predpoklad, vaha)
-}
-
-// Text úspěšnosti do důvodu
-func (u uspesnost) text(co string) string {
-	if u.n == 0 {
-		return ""
-	}
-	return fmt.Sprintf("; ve sbírce sedí u %d z %d %s", u.k, u.n, co)
-}
-
 // Pictorial časopisu (ne online, centerfold ani cover), u kterého se vydání sleduje
 func jePictorialCisla(al albumNavrhu) bool { return al.typ == "Pictorial" }
 
 // Vydání pictorialu z názvu alba nebo z čísla jediného centerfoldu modelky (pictorial playmate vychází
 // v čísle s jejím centerfoldem), datum online alba z názvu a fotograf z jiných alb téhož čísla nebo modelky.
 // Každé pravidlo se nejdřív vyzkouší na albech, která údaj mají, a z toho se spočítá jeho jistota.
-func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, pridat pridatKandidata) {
+func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, preferovane map[string]string, pridat pridatKandidata) {
+	// Zápisy fotografů, jak je píše většina sbírky; varianty s překlepem se sjednotí
+	zapisyFotografu := novySlovnik()
+	zapisyFotografu.preferovane = preferovane
+	for _, al := range alba {
+		if al.fotograf != "" {
+			zapisyFotografu.pridat(klicTextu(al.fotograf), al.fotograf)
+		}
+	}
+	zapisyFotografu.naucit()
+	klicFotografa := func(f string) string { return zapisyFotografu.klic(klicTextu(f)) }
 	podleModelky := map[int][]int{}
 	for i, al := range alba {
 		podleModelky[al.modelkaID] = append(podleModelky[al.modelkaID], i)
@@ -1463,7 +1649,7 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, pridat prid
 			if j == krome || al.fotograf == "" || !podminka(al) {
 				continue
 			}
-			if fotograf != "" && klicTextu(fotograf) != klicTextu(al.fotograf) {
+			if fotograf != "" && klicFotografa(fotograf) != klicFotografa(al.fotograf) {
 				return "", 0
 			}
 			fotograf = al.fotograf
@@ -1502,19 +1688,12 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, pridat prid
 		if al.fotograf != "" {
 			if v := vydaniAlba(al); v != "" {
 				if f, n := jednotnyFotograf(podleModelky[al.modelkaID], i, func(j albumNavrhu) bool { return vydaniAlba(j) == v }); n > 0 {
-					fotografCisla.zapocitat(klicTextu(f) == klicTextu(al.fotograf))
+					fotografCisla.zapocitat(klicFotografa(f) == klicFotografa(al.fotograf))
 				}
 			}
 			if f, n := jednotnyFotograf(podleModelky[al.modelkaID], i, func(albumNavrhu) bool { return true }); n >= 2 {
-				fotografModelky.zapocitat(klicTextu(f) == klicTextu(al.fotograf))
+				fotografModelky.zapocitat(klicFotografa(f) == klicFotografa(al.fotograf))
 			}
-		}
-	}
-	// Zápis fotografa, jak ho píše většina sbírky
-	zapisyFotografu := pravopis{}
-	for _, al := range alba {
-		if al.fotograf != "" {
-			zapisyFotografu.pridat(klicTextu(al.fotograf), al.fotograf)
 		}
 	}
 
@@ -1537,7 +1716,8 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, pridat prid
 				if v, ok := vydaniZNazvu(*al); ok {
 					pridat(m, al, "vydaniAlba", v, fmt.Sprintf("název alba „%s“ obsahuje datum%s", al.nazev, zNazvu.text("pictorialů s datem v názvu")),
 						"nazev", zNazvu.jistota(0.85, 6))
-				} else if c != "" && bezVydani == 1 && !maPictorialCenterfoldu {
+				}
+				if c != "" && bezVydani == 1 && !maPictorialCenterfoldu {
 					// Rok v názvu, který k centerfoldu nesedí, pravidlo vylučuje
 					if r := vzorRoku.FindString(zjednodusit(al.nazev)); r == "" || r == c[:4] {
 						pridat(m, al, "vydaniAlba", c, fmt.Sprintf("pictorial playmate vychází v čísle jejího centerfoldu (%s)%s", c, sCenterfoldem.text("playmate s jedním centerfoldem")),
@@ -1558,14 +1738,14 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, pridat prid
 			if al.fotograf == "" && al.typ != "Cover" {
 				if v := vydaniAlba(*al); v != "" {
 					if f, n := jednotnyFotograf(indexy, j, func(x albumNavrhu) bool { return vydaniAlba(x) == v }); n > 0 {
-						f = zapisyFotografu.zapis(klicTextu(f))
+						f = zapisyFotografu.zapis(klicFotografa(f))
 						pridat(m, al, "fotografAlba", f, fmt.Sprintf("fotograf jejího alba ze stejného čísla %s%s", v, fotografCisla.text("alb modelek ze stejného čísla")),
 							"cislo", fotografCisla.jistota(0.8, 4))
 						continue
 					}
 				}
 				if f, n := jednotnyFotograf(indexy, j, func(albumNavrhu) bool { return true }); n >= 2 {
-					f = zapisyFotografu.zapis(klicTextu(f))
+					f = zapisyFotografu.zapis(klicFotografa(f))
 					pridat(m, al, "fotografAlba", f, fmt.Sprintf("všechna její ostatní alba s fotografem (%d) nafotil %s%s", n, f, fotografModelky.text("alb modelek s jednotným fotografem")),
 						"modelka", fotografModelky.jistota(0.5, 2))
 				}

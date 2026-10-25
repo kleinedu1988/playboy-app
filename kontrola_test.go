@@ -85,7 +85,7 @@ func TestKontrolaSbirky(t *testing.T) {
 
 func TestKontrolaDat(t *testing.T) {
 	var hlaseni []string
-	pridat := func(m Modelka, klic, pole, popis string) { hlaseni = append(hlaseni, klic+" "+popis) }
+	pridat := func(m Modelka, klic, zdroj, pole, popis string) { hlaseni = append(hlaseni, klic+" "+popis) }
 	for _, pripad := range []struct {
 		m      Modelka
 		cekano string
@@ -113,7 +113,7 @@ func TestKontrolaDat(t *testing.T) {
 // Data zapsaná jen rokem se porovnávají na společnou přesnost
 func TestKontrolaDatJenRokem(t *testing.T) {
 	var hlaseni []string
-	pridat := func(m Modelka, klic, pole, popis string) { hlaseni = append(hlaseni, klic) }
+	pridat := func(m Modelka, klic, zdroj, pole, popis string) { hlaseni = append(hlaseni, klic) }
 	for _, pripad := range []struct {
 		m       Modelka
 		nalezen bool

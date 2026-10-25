@@ -25,6 +25,7 @@ const CTENI = new Set([
     'GetPrehledVydani',
     'GetSablonaObrazku',
     'GetSpecialy',
+    'GetStavUceni',
     'GetStavyVydani',
     'GetTagy',
     'GetVerze',
@@ -145,3 +146,6 @@ export const ZrusitPoradiAlba = /** @type {typeof App.ZrusitPoradiAlba} */ (obal
 export const GetSpecialy = /** @type {typeof App.GetSpecialy} */ (obalit('GetSpecialy'));
 export const SetNazevSpecialu = /** @type {typeof App.SetNazevSpecialu} */ (obalit('SetNazevSpecialu'));
 export const ZalozitSpecial = /** @type {typeof App.ZalozitSpecial} */ (obalit('ZalozitSpecial'));
+export const GetStavUceni = /** @type {typeof App.GetStavUceni} */ (obalit('GetStavUceni'));
+export const ZapomenoutUceni = /** @type {typeof App.ZapomenoutUceni} */ (obalit('ZapomenoutUceni'));
+export const ZaznamenatOpravu = /** @type {typeof App.ZaznamenatOpravu} */ (obalit('ZaznamenatOpravu'));

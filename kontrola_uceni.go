@@ -22,68 +22,46 @@ import (
 //     Leží-li jich za hranicí rozsahu aspoň minPotvrzenych a navazují na ni, hranice se k nim posune
 //     (tři potvrzené šestnáctileté a sedmnáctileté playmate → věk 16–17 se už nehlásí). Neobvyklá kombinace
 //     se nehlásí, když se velmi podobá kombinaci, kterou uživatel už potvrdil.
+//  5. Prahy podle zpětné vazby (prahyKontroly, uceni.go): pravidlo, jehož nálezy uživatel opakovaně označuje
+//     „V pořádku“ místo opravy údaje, se zpřísní (širší rozsah, přísnější mez kombinace a podobnosti jmen).
+//     Zpřísnit jde, uvolnit ne: kontrola raději mlčí, než aby hlásila zbytečně.
+//
+// Sdílené nástroje (robustní odhad, Choleského inverze, Jaro–Winkler, profil postavy) jsou v uceni_modely.go.
 //
 // Výpočet je deterministický (žádná náhoda, řazení podle pořadí modelek) a lineární až skoro lineární
 // v počtu modelek, aby kontrola i u tisíců modelek trvala zlomek sekundy.
 
-// Údaje postavy, ze kterých se kontrola učí (pořadí = index v polích)
-const (
-	prVyska = iota
-	prVaha
-	prHrudnik
-	prPas
-	prBoky
-	prBmi
-	prVek
-	pocetPriznaku
-)
-
 // Parametry učení
 const (
-	minHodnotProUceni = 30     // z méně hodnot se rozsah neučí (platí pevný)
-	minModelekPostavy = 30     // z méně modelek s aspoň třemi údaji se kombinace nekontrolují
-	minUdajuPostavy   = 3      // kombinace se posuzuje jen u modelky s aspoň tolika údaji
-	kRozsahu          = 4.5    // naučený rozsah: medián ± 4,5 robustní směrodatné odchylky (u normálního rozdělení 1 z 150 000)
-	kvartilNaSigma    = 0.6745 // vzdálenost kvartilu od mediánu v σ normálního rozdělení
-	orezaniZ          = 3.5    // modelky s některým údajem dál než 3,5 σ se do kovariance nepočítají
-	zMezeKombinace    = 4.265  // jednostranný kvantil N(0,1) pro α = 1e-5: hlásí se jen zjevné odchylky
-	smrstovani        = 0.1    // podíl diagonály v kovarianci (stabilní inverze i u závislých údajů jako BMI)
-	minPotvrzenych    = 3      // tolik hodnot „V pořádku“ za hranicí ji posune
-	prahJmen          = 0.95   // nejmenší podobnost jmen (Jaro–Winkler s úpravami) pro nález
-	prahSlov          = 0.85   // každé slovo kratšího jména musí mít v druhém podobné slovo
+	minHodnotProUceni = 30    // z méně hodnot se rozsah neučí (platí pevný)
+	minModelekPostavy = 30    // z méně modelek s aspoň třemi údaji se kombinace nekontrolují
+	minUdajuPostavy   = 3     // kombinace se posuzuje jen u modelky s aspoň tolika údaji
+	kRozsahu          = 4.5   // naučený rozsah: medián ± 4,5 robustní směrodatné odchylky (u normálního rozdělení 1 z 150 000)
+	orezaniZ          = 3.5   // modelky s některým údajem dál než 3,5 σ se do kovariance nepočítají
+	zMezeKombinace    = 4.265 // jednostranný kvantil N(0,1) pro α = 1e-5: hlásí se jen zjevné odchylky
+	smrstovani        = 0.1   // podíl diagonály v kovarianci (stabilní inverze i u závislých údajů jako BMI)
+	minPotvrzenych    = 3     // tolik hodnot „V pořádku“ za hranicí ji posune
+	prahJmen          = 0.95  // nejmenší podobnost jmen (Jaro–Winkler s úpravami) pro nález
+	prahSlov          = 0.85  // každé slovo kratšího jména musí mít v druhém podobné slovo
 )
 
-// Popis údaje postavy pro učení a pro text nálezu
-type priznak struct {
-	nazev, pri, jednotka string // „výška“, „při výšce“, „cm“
-	pole                 string // pole formuláře, kde se údaj opraví
-	klic                 string // nález, jehož „V pořádku“ potvrzuje hodnotu jako běžnou
-	od, do               float64
-	mezOd, mezDo         float64 // rozumné meze: naučený rozsah za ně nikdy nesahá
-	minPul               float64 // naučený rozsah sahá od mediánu aspoň o tolik na každou stranu
-	minSigma             float64 // nejmenší směrodatná odchylka (celá čísla mívají MAD nulovou)
-	krok                 float64 // největší mezera mezi potvrzenými hodnotami, přes kterou se hranice posune
-	desetiny             bool    // zobrazuje se s jedním desetinným místem (BMI)
+// Prahy kontroly. Výchozí jsou konstanty výše; učení ze zpětné vazby (uceni.go) je může jen zpřísnit.
+type prahyKontroly struct {
+	kRozsahu   [pocetPriznaku]float64 // naučený rozsah: medián ± k·σ
+	zKombinace float64                // kvantil N(0,1) pro mez neobvyklé kombinace
+	prahJmen   float64                // nejmenší podobnost jmen
 }
 
-// Údaje postavy: pevné meze z kontrola.go, rozumné meze a minimální šířky naučeného rozsahu.
-// Dolní mez věku zůstává 18 let (mladší playmate stojí za kontrolu vždy); posunout ji může jen uživatel svým „V pořádku“.
-var priznaky = [pocetPriznaku]priznak{
-	prVyska: {nazev: "výška", pri: "při výšce", jednotka: "cm", pole: "inputVyska", klic: "ok-vyska",
-		od: vyskaOd, do: vyskaDo, mezOd: 135, mezDo: 205, minPul: 15, minSigma: 2, krok: 3},
-	prVaha: {nazev: "váha", pri: "při váze", jednotka: "kg", pole: "inputVaha", klic: "ok-vaha",
-		od: vahaOd, do: vahaDo, mezOd: 32, mezDo: 120, minPul: 12, minSigma: 2, krok: 3},
-	prHrudnik: {nazev: "hrudník", pri: "při hrudníku", jednotka: "cm", pole: "inputHrudnik", klic: "ok-miry",
-		od: hrudnikOd, do: hrudnikDo, mezOd: 60, mezDo: 150, minPul: 12, minSigma: 1.5, krok: 3},
-	prPas: {nazev: "pas", pri: "při pasu", jednotka: "cm", pole: "inputPas", klic: "ok-miry",
-		od: pasOd, do: pasDo, mezOd: 40, mezDo: 110, minPul: 8, minSigma: 1.5, krok: 3},
-	prBoky: {nazev: "boky", pri: "při bocích", jednotka: "cm", pole: "inputBoky", klic: "ok-miry",
-		od: bokyOd, do: bokyDo, mezOd: 60, mezDo: 150, minPul: 10, minSigma: 1.5, krok: 3},
-	prBmi: {nazev: "BMI", pri: "při BMI", pole: "inputVaha", klic: "ok-bmi",
-		od: bmiOd, do: bmiDo, mezOd: 13, mezDo: 35, minPul: 3, minSigma: 0.4, krok: 1, desetiny: true},
-	prVek: {nazev: "věk při prvním vydání", pri: "při věku", jednotka: "let", pole: "inputNarozeniDatum", klic: "ok-vek",
-		od: vekOd, do: vekDo, mezOd: vekOd, mezDo: 60, minPul: 8, minSigma: 1, krok: 1},
+func vychoziPrahy() prahyKontroly {
+	p := prahyKontroly{zKombinace: zMezeKombinace, prahJmen: prahJmen}
+	for j := range p.kRozsahu {
+		p.kRozsahu[j] = kRozsahu
+	}
+	return p
 }
+
+// Funkce, kterou pravidla hlásí nález: klíč „ok-…“, zdroj (stabilní klíč pravidla), pole formuláře a popis
+type pridatNalez func(m Modelka, klic, zdroj, pole, popis string)
 
 // Rozsah jednoho údaje, mimo který se hodnota hlásí (hranice patří do rozsahu)
 type rozsah struct {
@@ -107,22 +85,6 @@ func (r rozsah) popis() string {
 	return "běžný rozsah"
 }
 
-// Číslo údaje k zobrazení (BMI s desetinnou čárkou)
-func (p priznak) cislo(x float64) string {
-	if p.desetiny {
-		return strings.Replace(strconv.FormatFloat(x, 'f', 1, 64), ".", ",", 1)
-	}
-	return strconv.Itoa(int(math.Round(x)))
-}
-
-// „pas 80 cm“, „BMI 17,1“
-func (p priznak) hodnota(x float64) string {
-	if p.jednotka == "" {
-		return p.cislo(x)
-	}
-	return p.cislo(x) + " " + p.jednotka
-}
-
 // Pevné rozsahy (malá sbírka)
 func vychoziRozsahy() rozsahyKontroly {
 	var r rozsahyKontroly
@@ -132,71 +94,14 @@ func vychoziRozsahy() rozsahyKontroly {
 	return r
 }
 
-// Hodnoty údajů modelky; chybějící údaj má ma[j] = false
-func priznakyModelky(m Modelka) (x [pocetPriznaku]float64, ma [pocetPriznaku]bool) {
-	nastavit := func(j int, v float64) {
-		if v > 0 {
-			x[j], ma[j] = v, true
-		}
-	}
-	nastavit(prVyska, float64(m.VyskaCm))
-	nastavit(prVaha, float64(m.VahaKg))
-	nastavit(prHrudnik, float64(m.ObvodHrudnikCm))
-	nastavit(prPas, float64(m.ObvodPasCm))
-	nastavit(prBoky, float64(m.ObvodBokyCm))
-	if m.VyskaCm > 0 && m.VahaKg > 0 {
-		metry := float64(m.VyskaCm) / 100
-		nastavit(prBmi, float64(m.VahaKg)/(metry*metry))
-	}
-	if narozeni := strings.TrimSpace(m.NarozeniDatum); narozeni != "" {
-		if prvni := prvniVydani(m); prvni != "" {
-			nastavit(prVek, float64(vekKVydani(narozeni, prvni)))
-		}
-	}
-	return x, ma
-}
-
-// Kvantil q seřazených hodnot; celá čísla se berou jako rovnoměrně rozložená v intervalu ±0,5 (údaj 60 cm znamená
-// 59,5–60,5 cm), jinak by u úzce rozložených údajů (pas) vycházel rozptyl skokově 0, 1 nebo 2 cm.
-// Desetinná čísla (BMI) běžným kvantilem s interpolací (vyvoj.go).
-func kvantilUdaje(s []float64, q float64, celaCisla bool) float64 {
-	n := len(s)
-	if !celaCisla || n == 0 {
-		return kvantil(s, q)
-	}
-	cil := q * float64(n)
-	for i := 0; i < n; {
-		j := i
-		for j < n && s[j] == s[i] {
-			j++
-		}
-		if float64(j) >= cil {
-			return s[i] - 0.5 + (cil-float64(i))/float64(j-i)
-		}
-		i = j
-	}
-	return s[n-1]
-}
-
-// Robustní odhad středu a rozptylu: medián a zvlášť směrodatná odchylka pod a nad mediánem z kvartilů
-// ((Q2−Q1)/0,6745 a (Q3−Q2)/0,6745; u normálního rozdělení obě rovny σ, stejně jako MAD × 1,4826). Odděleně proto,
-// aby šikmý údaj (váha mívá delší horní chvost) neměl zbytečně úzkou horní mez. Odlehlé hodnoty (překlepy)
-// odhad skoro neovlivní.
-func robustniOdhad(hodnoty []float64, celaCisla bool) (med, sOd, sDo float64) {
-	s := append([]float64(nil), hodnoty...)
-	sort.Float64s(s)
-	med = kvantilUdaje(s, 0.5, celaCisla)
-	return med, (med - kvantilUdaje(s, 0.25, celaCisla)) / kvartilNaSigma, (kvantilUdaje(s, 0.75, celaCisla) - med) / kvartilNaSigma
-}
-
 // Naučený rozsah údaje: medián ± k·σ (robustní, viz robustniOdhad), aspoň minPul na každou stranu a nikdy za rozumné meze; z málo hodnot
 // pevný rozsah. Nakonec se rozšíří o hodnoty potvrzené uživatelem.
-func naucitRozsah(p priznak, hodnoty, potvrzene []float64) rozsah {
+func naucitRozsah(p priznak, hodnoty, potvrzene []float64, k float64) rozsah {
 	r := rozsah{od: p.od, do: p.do}
 	if len(hodnoty) >= minHodnotProUceni {
 		med, sOd, sDo := robustniOdhad(hodnoty, !p.desetiny)
-		od := min(med-kRozsahu*max(sOd, p.minSigma), med-p.minPul)
-		do := max(med+kRozsahu*max(sDo, p.minSigma), med+p.minPul)
+		od := min(med-k*max(sOd, p.minSigma), med-p.minPul)
+		do := max(med+k*max(sDo, p.minSigma), med+p.minPul)
 		od, do = max(od, p.mezOd), min(do, p.mezDo)
 		if p.desetiny {
 			od, do = math.Floor(od*10)/10, math.Ceil(do*10)/10
@@ -247,15 +152,10 @@ func rozsiritPodlePotvrzenych(r rozsah, potvrzene []float64, krok float64) rozsa
 
 // Co se kontrola naučila ze sbírky (udaje a vektory postavy jsou ve stejném pořadí jako modelky)
 type uceniSbirky struct {
+	prahy   prahyKontroly
 	rozsahy rozsahyKontroly
 	udaje   []udajePostavy
 	postava *modelPostavy // nil: málo údajů, kombinace se nekontrolují
-}
-
-// Hodnoty údajů postavy jedné modelky; ma[j] = false u chybějícího údaje
-type udajePostavy struct {
-	x  [pocetPriznaku]float64
-	ma [pocetPriznaku]bool
 }
 
 // Model postavy pro neobvyklé kombinace: robustní standardizace každého údaje a kovariance standardizovaných údajů
@@ -282,24 +182,23 @@ type presnost struct {
 }
 
 // Naučí rozsahy a model postavy ze všech modelek
-func naucitSe(modelky []Modelka) uceniSbirky {
+func naucitSe(modelky []Modelka, prahy prahyKontroly) uceniSbirky {
 	var hodnoty, potvrzene [pocetPriznaku][]float64
-	u := uceniSbirky{udaje: make([]udajePostavy, len(modelky))}
+	u := uceniSbirky{prahy: prahy, udaje: udajeSbirky(modelky)}
 	for i, m := range modelky {
-		x, ma := priznakyModelky(m)
-		u.udaje[i] = udajePostavy{x: x, ma: ma}
+		x := u.udaje[i]
 		for j := range pocetPriznaku {
-			if !ma[j] {
+			if !x.ma[j] {
 				continue
 			}
-			hodnoty[j] = append(hodnoty[j], x[j])
+			hodnoty[j] = append(hodnoty[j], x.x[j])
 			if obsahujeKlic(m.NetykaSe, priznaky[j].klic) {
-				potvrzene[j] = append(potvrzene[j], x[j])
+				potvrzene[j] = append(potvrzene[j], x.x[j])
 			}
 		}
 	}
 	for j, p := range priznaky {
-		u.rozsahy[j] = naucitRozsah(p, hodnoty[j], potvrzene[j])
+		u.rozsahy[j] = naucitRozsah(p, hodnoty[j], potvrzene[j], prahy.kRozsahu[j])
 	}
 	u.postava = naucitPostavu(modelky, u.udaje, hodnoty)
 	return u
@@ -460,55 +359,6 @@ func (mp *modelPostavy) presnost(maska uint8) *presnost {
 	return p
 }
 
-// Inverze symetrické pozitivně definitní matice Choleského rozkladem; nil, když matice není pozitivně definitní
-func invertovatCholesky(c [][]float64) [][]float64 {
-	d := len(c)
-	l := make([][]float64, d)
-	for i := range d {
-		l[i] = make([]float64, d)
-		for j := 0; j <= i; j++ {
-			s := c[i][j]
-			for k := range j {
-				s -= l[i][k] * l[j][k]
-			}
-			if i == j {
-				if s <= 1e-12 {
-					return nil
-				}
-				l[i][i] = math.Sqrt(s)
-			} else {
-				l[i][j] = s / l[j][j]
-			}
-		}
-	}
-	inv := make([][]float64, d)
-	for i := range d {
-		inv[i] = make([]float64, d)
-	}
-	y := make([]float64, d)
-	for sloupec := range d {
-		// L·y = e, pak Lᵀ·x = y
-		for i := range d {
-			s := 0.0
-			if i == sloupec {
-				s = 1
-			}
-			for k := range i {
-				s -= l[i][k] * y[k]
-			}
-			y[i] = s / l[i][i]
-		}
-		for i := d - 1; i >= 0; i-- {
-			s := y[i]
-			for k := i + 1; k < d; k++ {
-				s -= l[k][i] * inv[k][sloupec]
-			}
-			inv[i][sloupec] = s / l[i][i]
-		}
-	}
-	return inv
-}
-
 // Druhá mocnina Mahalanobisovy vzdálenosti vektoru z od středu pro údaje v masce; vrací i P·z
 func (p *presnost) vzdalenost(z [pocetPriznaku]float64) (float64, []float64) {
 	pz := make([]float64, len(p.index))
@@ -523,17 +373,18 @@ func (p *presnost) vzdalenost(z [pocetPriznaku]float64) (float64, []float64) {
 }
 
 // Mez Mahalanobisovy vzdálenosti (její druhé mocniny) pro daný počet údajů: kvantil rozdělení χ² pro α = 1e-5
-// (Wilsonova–Hilfertyho aproximace). U běžné sbírky jde o pár modelek, u kterých je kombinace opravdu výjimečná.
-func mezKombinace(stupnu int) float64 {
+// (Wilsonova–Hilfertyho aproximace; z = kvantil N(0,1), výchozí zMezeKombinace). U běžné sbírky jde o pár modelek,
+// u kterých je kombinace opravdu výjimečná.
+func mezKombinace(stupnu int, z float64) float64 {
 	k := float64(stupnu)
 	a := 2 / (9 * k)
-	return k * math.Pow(1-a+zMezeKombinace*math.Sqrt(a), 3)
+	return k * math.Pow(1-a+z*math.Sqrt(a), 3)
 }
 
 // Údaj modelky je už mimo rozsah jednotlivého pravidla (ten nález stačí, kombinace se pak nehlásí)
 func postavaMimoRozsahy(m Modelka, u udajePostavy, r rozsahyKontroly) bool {
 	hlaseno := false
-	kontrolovatPostavu(m, r, func(Modelka, string, string, string) { hlaseno = true })
+	kontrolovatPostavu(m, r, func(Modelka, string, string, string, string) { hlaseno = true })
 	return hlaseno || u.ma[prVek] && r[prVek].mimo(u.x[prVek])
 }
 
@@ -541,7 +392,7 @@ func postavaMimoRozsahy(m Modelka, u udajePostavy, r rozsahyKontroly) bool {
 // Popis jmenuje údaj, který k vzdálenosti přispívá nejvíc, údaj, který jeho očekávanou hodnotu nejvíc
 // ovlivňuje, a rozsah, jaký by u sbírky při ostatních údajích modelky byl obvyklý.
 // Modelky musí být tytéž a ve stejném pořadí jako při učení (naucitSe).
-func (u uceniSbirky) kontrolovatNeobvykle(modelky []Modelka, pridat func(Modelka, string, string, string)) {
+func (u uceniSbirky) kontrolovatNeobvykle(modelky []Modelka, pridat pridatNalez) {
 	mp := u.postava
 	if mp == nil {
 		return
@@ -553,7 +404,7 @@ func (u uceniSbirky) kontrolovatNeobvykle(modelky []Modelka, pridat func(Modelka
 		}
 		p := mp.presnost(v.maska)
 		d2, pz := p.vzdalenost(v.z)
-		if d2 <= mezKombinace(len(p.index)) || mp.podobnaPotvrzene(v) {
+		if d2 <= mezKombinace(len(p.index), u.prahy.zKombinace) || mp.podobnaPotvrzene(v) {
 			continue
 		}
 		// Příspěvek údaje ke vzdálenosti: z_j·(P·z)_j (součet příspěvků je d²)
@@ -587,7 +438,7 @@ func (u uceniSbirky) kontrolovatNeobvykle(modelky []Modelka, pridat func(Modelka
 			k := p.index[druhy]
 			popis += " " + priznaky[k].pri + " " + priznaky[k].hodnota(x[k])
 		}
-		pridat(m, "ok-neobvykle", ph.pole, popis+" (u sbírky obvykle "+obvykle+")")
+		pridat(m, "ok-neobvykle", "neobvykle", ph.pole, popis+" (u sbírky obvykle "+obvykle+")")
 	}
 }
 
@@ -622,58 +473,6 @@ type jmenoKPorovnani struct {
 	slova                    [][]rune
 	znaky, otoceny, serazeny []rune  // slova za sebou; příjmení na začátku; slova abecedně
 	idSlov                   []int32 // slova ve slovníku sbírky
-}
-
-// Jaro–Winklerova podobnost dvou textů (0–1): shodné znaky v okně, přehozené znaky a bonus za společný začátek
-func jaroWinkler(s1, s2 string) float64 { return jaroWinklerZnaku([]rune(s1), []rune(s2)) }
-
-// Jaro–Winkler nad znaky; pomocná pole jsou u krátkých textů na zásobníku (porovnávají se tisíce dvojic)
-func jaroWinklerZnaku(a, b []rune) float64 {
-	if len(a) == 0 || len(b) == 0 {
-		if len(a) == len(b) {
-			return 1
-		}
-		return 0
-	}
-	okno := max(0, max(len(a), len(b))/2-1)
-	var poleA, poleB [64]bool
-	shodaA, shodaB := poleA[:], poleB[:]
-	if len(a) > len(poleA) || len(b) > len(poleB) {
-		shodaA, shodaB = make([]bool, len(a)), make([]bool, len(b))
-	}
-	shod := 0
-	for i := range a {
-		for j := max(0, i-okno); j < min(len(b), i+okno+1); j++ {
-			if !shodaB[j] && a[i] == b[j] {
-				shodaA[i], shodaB[j] = true, true
-				shod++
-				break
-			}
-		}
-	}
-	if shod == 0 {
-		return 0
-	}
-	prehozenych, k := 0, 0
-	for i := range a {
-		if !shodaA[i] {
-			continue
-		}
-		for !shodaB[k] {
-			k++
-		}
-		if a[i] != b[k] {
-			prehozenych++
-		}
-		k++
-	}
-	m := float64(shod)
-	jaro := (m/float64(len(a)) + m/float64(len(b)) + (m-float64(prehozenych)/2)/m) / 3
-	zacatek := 0
-	for zacatek < min(4, len(a), len(b)) && a[zacatek] == b[zacatek] {
-		zacatek++
-	}
-	return jaro + float64(zacatek)*0.1*(1-jaro)
 }
 
 // Slova všech jmen sbírky, každé jednou
@@ -813,7 +612,7 @@ func rokNarozeni(m Modelka) string {
 // Další údaje: jiný rok narození vylučuje; stejné datum narození (aspoň měsíc) nebo stejné první vydání přidá
 // 0,04; jiný měsíc narození ubere 0,03; centerfoldy v různých číslech uberou 0,05 (playmate má centerfold jeden).
 // Jednoslovné jméno (pseudonym) se hlásí jen s podporou dalších údajů.
-func podobnostModelek(a, b jmenoKPorovnani, ma, mb Modelka) (skore float64, duvody []string, ok bool) {
+func podobnostModelek(a, b jmenoKPorovnani, ma, mb Modelka, prah float64) (skore float64, duvody []string, ok bool) {
 	if a.presne == b.presne || a.cislice != b.cislice || len(a.znaky) < 5 || len(b.znaky) < 5 {
 		return 0, nil, false
 	}
@@ -826,7 +625,7 @@ func podobnostModelek(a, b jmenoKPorovnani, ma, mb Modelka) (skore float64, duvo
 	if len(a.slova) > 1 || len(b.slova) > 1 {
 		skore = max(skore, jaroWinklerZnaku(a.znaky, b.otoceny), jaroWinklerZnaku(a.otoceny, b.znaky), jaroWinklerZnaku(a.serazeny, b.serazeny))
 	}
-	if skore < prahJmen-0.08 || !slovaOdpovidaji(a.slova, b.slova) {
+	if skore < prah-0.08 || !slovaOdpovidaji(a.slova, b.slova) {
 		return 0, nil, false
 	}
 	narA, narB := strings.TrimSpace(ma.NarozeniDatum), strings.TrimSpace(mb.NarozeniDatum)
@@ -856,7 +655,7 @@ func podobnostModelek(a, b jmenoKPorovnani, ma, mb Modelka) (skore float64, duvo
 	if (len(a.slova) < 2 || len(b.slova) < 2) && len(duvody) == 0 {
 		return 0, nil, false
 	}
-	return skore, duvody, skore >= prahJmen
+	return skore, duvody, skore >= prah
 }
 
 // Pravděpodobně dvakrát založená modelka podle podobného jména („ok-podobne-jmeno“). Aby se neporovnávala
@@ -864,7 +663,7 @@ func podobnostModelek(a, b jmenoKPorovnani, ma, mb Modelka) (skore float64, duvo
 // mít ve druhém jménu podobné slovo. Stačí proto projít jména, která mají slovo podobné jeho nejvzácnějšímu
 // slovu (u „Jennifer Novak“ jména s podobou „Novak“, ne všechny Jennifer). Předvýběr tak nic nevynechá.
 // Nález dostane později přidaná modelka (vyšší ID) se jménem té druhé.
-func kontrolovatPodobnaJmena(modelky []Modelka, pridat func(Modelka, string, string, string)) {
+func kontrolovatPodobnaJmena(modelky []Modelka, prah float64, pridat pridatNalez) {
 	slovnik := &slovnikSlov{id: map[string]int32{}}
 	var jmena []jmenoKPorovnani
 	for i, m := range modelky {
@@ -921,7 +720,7 @@ func kontrolovatPodobnaJmena(modelky []Modelka, pridat func(Modelka, string, str
 					continue
 				}
 				ma, mb := modelky[a.modelka], modelky[b.modelka]
-				skore, duvody, ok := podobnostModelek(*a, *b, ma, mb)
+				skore, duvody, ok := podobnostModelek(*a, *b, ma, mb, prah)
 				if !ok {
 					continue
 				}
@@ -958,7 +757,7 @@ func kontrolovatPodobnaJmena(modelky []Modelka, pridat func(Modelka, string, str
 		if len(d.duvody) > 0 {
 			duvod = ", " + strings.Join(d.duvody, ", ")
 		}
-		pridat(modelky[d.hlasena], "ok-podobne-jmeno", "inputDalsiJmena",
+		pridat(modelky[d.hlasena], "ok-podobne-jmeno", "podobne-jmeno", "inputDalsiJmena",
 			fmt.Sprintf("jméno „%s“ je skoro stejné jako %s (podobnost %d %%%s) – tatáž modelka založená dvakrát?",
 				d.jmeno, kdo, int(math.Round(min(1, d.skore)*100)), duvod))
 	}

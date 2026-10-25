@@ -41,6 +41,8 @@ type App struct {
 	chybaStartu string
 	// Databáze je otevřená jen pro čtení (poškozená nebo z novější verze)
 	jenProCteni bool
+	// Databáze učení vedle sbírky (uceni.go); nil u kopie pro import
+	uc *uceni
 }
 
 // Chyba se vypíše do konzole a zároveň se ukáže uživateli
@@ -208,7 +210,7 @@ func init() {
 }
 
 func NewApp() *App {
-	return &App{}
+	return &App{uc: &uceni{}}
 }
 
 func (a *App) maSloupec(tabulka, sloupec string) bool {
@@ -639,6 +641,8 @@ func (a *App) SetNetykaSe(modelkaID int, klic string, netyka bool) bool {
 	_, err := a.db.Exec("UPDATE modelky SET netyka_se = NULLIF(?, '') WHERE id = ?", prepnoutKlic(seznam, klic, netyka), modelkaID)
 	if err != nil {
 		a.chyba("označení „netýká se“", err)
+	} else if kliceKontrolyModelky[klic] && obsahujeKlic(seznam, klic) != netyka {
+		a.zaznamenatNalez(modelkaID, "", "", klic, netyka)
 	}
 	return err == nil
 }
@@ -652,6 +656,9 @@ func (a *App) SetNetykaSeAlba(modelkaID int, album, typ, klic string, netyka boo
 		var seznam string
 		a.db.QueryRow("SELECT COALESCE(netyka_se, '') FROM alba WHERE id = ?", id).Scan(&seznam)
 		_, err = a.db.Exec("UPDATE alba SET netyka_se = NULLIF(?, '') WHERE id = ?", prepnoutKlic(seznam, klic, netyka), id)
+		if err == nil && kliceKontrolyAlba[klic] && obsahujeKlic(seznam, klic) != netyka {
+			a.zaznamenatNalez(modelkaID, album, typ, klic, netyka)
+		}
 	}
 	if err != nil {
 		a.chyba("označení „netýká se“ u alba", err)
@@ -748,6 +755,10 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	sablonaObrazku.Store(a.nastaveni("sablona_obrazku"))
+	// Databáze učení se otevře až při prvním použití, vedle souboru sbírky (bez něj jen v paměti)
+	if a.uc != nil {
+		a.uc.cestaSbirky = a.cestaDb
+	}
 
 	// Až po migracích a jen nad databází, která se otevřela v pořádku
 	if a.chybaStartu == "" && a.cestaDb != "" {
@@ -1020,14 +1031,22 @@ func (a *App) shutdown() {
 	if a.db != nil {
 		a.db.Close()
 	}
+	if a.uc != nil {
+		a.uc.pockat()
+		if a.uc.db != nil {
+			a.uc.db.Close()
+		}
+	}
 }
 
 var vzorHolehoID = regexp.MustCompile(`^[a-zA-Z0-9_-]{25,}$`)
 
 // Vytažení všech Drive ID z jakéhokoliv textu/odkazů
+// Výraz se sestaví jednou (GetModelky ho volá u každé modelky)
+var vzorOdkazuDrive = regexp.MustCompile(`(?:file/d/|id=|/d/)([a-zA-Z0-9_-]{25,})`)
+
 func parseDriveIDs(rawInput string) []string {
-	re := regexp.MustCompile(`(?:file/d/|id=|/d/)([a-zA-Z0-9_-]{25,})`)
-	matches := re.FindAllStringSubmatch(rawInput, -1)
+	matches := vzorOdkazuDrive.FindAllStringSubmatch(rawInput, -1)
 
 	var ids []string
 	seen := make(map[string]bool)

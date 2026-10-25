@@ -114,6 +114,10 @@ export function GetStatistiky() {
   return window['go']['main']['App']['GetStatistiky']();
 }
 
+export function GetStavUceni() {
+  return window['go']['main']['App']['GetStavUceni']();
+}
+
 export function GetStavyVydani() {
   return window['go']['main']['App']['GetStavyVydani']();
 }
@@ -348,6 +352,14 @@ export function VymazatMezipamet() {
 
 export function ZalozitSpecial(arg1, arg2, arg3) {
   return window['go']['main']['App']['ZalozitSpecial'](arg1, arg2, arg3);
+}
+
+export function ZapomenoutUceni() {
+  return window['go']['main']['App']['ZapomenoutUceni']();
+}
+
+export function ZaznamenatOpravu(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['ZaznamenatOpravu'](arg1, arg2, arg3, arg4);
 }
 
 export function ZkontrolovatDavku() {

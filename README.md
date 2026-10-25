@@ -160,6 +160,9 @@ pro uživatele.
 - `udaje.go` – kontrola a úprava údajů modelek (data narození a úmrtí, „na obálce“)
 - `kontrola.go` – Kontrola v Údržbě: pravidla pro údaje, které vypadají jako překlep, a „V pořádku“
 - `kontrola_uceni.go` – učení Kontroly ze sbírky: naučené rozsahy, neobvyklé kombinace údajů, podobná jména
+- `navrhy.go` – návrhy doplnění chybějících údajů v Údržbě (zdroje, spojení zdrojů, odmítnutí hodnoty)
+- `uceni.go` – databáze učení vedle sbírky (`playboy-uceni.db`): deník rozhodnutí, kalibrace zdrojů, prahy
+  kontroly, mezipaměť; `uceni_modely.go` – sdílené statistické modely. Popis v [docs/UCENI.md](docs/UCENI.md)
 - `clanky.go` – články, skeny stran a fulltextové hledání (SQLite FTS5)
 - `statistiky.go`, `vyvoj.go` – statistiky a vývoj modelek v čase
 - `nastaveni.go` – zapamatování okna, zámek heslem, přehled sbírky

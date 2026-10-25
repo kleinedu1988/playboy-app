@@ -54,7 +54,7 @@ func umelaSbirka(n int) []Modelka {
 // Nálezy kontroly údajů modelek; označené „V pořádku“ se vynechají (jako v Údržbě bez skrytých)
 func kontrolaModelek(modelky []Modelka) []PodezrelyUdaj {
 	nalezy := []PodezrelyUdaj{}
-	kontrolovatModelky(modelky, func(m Modelka, klic, pole, popis string) {
+	kontrolovatModelky(modelky, vychoziPrahy(), func(m Modelka, klic, zdroj, pole, popis string) {
 		if !obsahujeKlic(m.NetykaSe, klic) {
 			nalezy = append(nalezy, PodezrelyUdaj{ModelkaID: m.ID, Jmeno: m.Jmeno, Popis: popis, Klic: klic, Pole: pole})
 		}
@@ -93,7 +93,7 @@ func TestJaroWinkler(t *testing.T) {
 // Čistá sbírka: naučené rozsahy jsou věrohodné a běžné modelky se nehlásí
 func TestUceniCisteSbirky(t *testing.T) {
 	modelky := umelaSbirka(200)
-	u := naucitSe(modelky)
+	u := naucitSe(modelky, vychoziPrahy())
 	for j, r := range u.rozsahy {
 		if !r.naucene && j != prVek {
 			t.Errorf("%s: rozsah se měl naučit: %+v", priznaky[j].nazev, r)
@@ -173,7 +173,7 @@ func TestNeobvyklaKombinace(t *testing.T) {
 // Malá sbírka: pevné rozsahy a bez kontroly kombinací
 func TestUceniMaleSbirky(t *testing.T) {
 	modelky := umelaSbirka(20)
-	u := naucitSe(modelky)
+	u := naucitSe(modelky, vychoziPrahy())
 	if u.rozsahy != vychoziRozsahy() {
 		t.Errorf("malá sbírka má mít pevné rozsahy: %+v", u.rozsahy)
 	}
@@ -297,7 +297,7 @@ func TestUceniRychlost(t *testing.T) {
 func BenchmarkKontrolaModelek(b *testing.B) {
 	modelky := umelaSbirka(5000)
 	for b.Loop() {
-		kontrolovatModelky(modelky, func(Modelka, string, string, string) {})
+		kontrolovatModelky(modelky, vychoziPrahy(), func(Modelka, string, string, string, string) {})
 	}
 }
 

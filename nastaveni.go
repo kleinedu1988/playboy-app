@@ -206,53 +206,48 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		Podezrele: []PodezrelyUdaj{},
 	}
 
-	// Alba všech modelek; album je skupina fotek se stejným názvem a typem
+	// Alba všech modelek jedním dotazem pro seznamy, kontrolu i návrhy; album je skupina fotek se stejným
+	// názvem a typem, album bez fotek se v seznamech nepočítá
 	maCenterfold := map[int]bool{}
-	rows, err := a.db.Query(`
-		SELECT al.modelka_id, m.jmeno, al.album, al.typ, COUNT(*), COALESCE(SUM(COALESCE(f.hodnoceni, 0) > 0), 0),
-			COALESCE(al.vydani, ''), COALESCE(al.popis, ''), COALESCE(al.netyka_se, '')
-		FROM fotky f
-		JOIN alba al ON al.id = f.album_id
-		JOIN modelky m ON m.id = al.modelka_id
-		GROUP BY al.id
-		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, al.album`)
-	if err != nil {
-		a.chyba("načtení přehledu sbírky", err)
-		return p
-	}
-	for rows.Next() {
-		var polozka PolozkaPrehledu
-		var fotek, hodnocenych int
-		var vydani, popis, netykaSe string
-		if err := rows.Scan(&polozka.ModelkaID, &polozka.Jmeno, &polozka.Album, &polozka.Typ, &fotek, &hodnocenych, &vydani, &popis, &netykaSe); err != nil {
+	alba := a.albaSbirky()
+	for _, al := range alba {
+		if al.fotek == 0 {
 			continue
 		}
+		polozka := PolozkaPrehledu{ModelkaID: al.modelkaID, Jmeno: al.jmeno, Album: al.nazev, Typ: al.typ}
 		p.Alb++
-		p.Fotek += fotek
-		p.HodnocenychFotek += hodnocenych
+		p.Fotek += al.fotek
+		p.HodnocenychFotek += al.hodnocenych
 		if polozka.Typ == "Centerfold" {
 			maCenterfold[polozka.ModelkaID] = true
 			continue
 		}
-		if popis == "" {
-			pridatChybejici(&p.AlbaBezPopisu, polozka, obsahujeKlic(netykaSe, "text"), vcetneSkrytych)
+		if al.popis == "" {
+			pridatChybejici(&p.AlbaBezPopisu, polozka, obsahujeKlic(al.neni, "text"), vcetneSkrytych)
 		}
 		// Online album k číslu nepatří, vydání mu nechybí
 		if jeOnlineTyp(polozka.Typ) {
 			p.AlbOnline++
-		} else if vydani == "" {
-			pridatChybejici(&p.AlbaBezVydani, polozka, obsahujeKlic(netykaSe, "vydani"), vcetneSkrytych)
+		} else if al.vydani == "" {
+			pridatChybejici(&p.AlbaBezVydani, polozka, obsahujeKlic(al.neni, "vydani"), vcetneSkrytych)
 		}
 	}
-	rows.Close()
 
 	// Modelky se načtou jednou pro kontrolu i pro seznamy toho, co chybí
 	modelky := a.GetModelky("")
 
-	// Údaje ke kontrole (kontrola.go)
-	p.Podezrele = a.kontrolovatSbirku(modelky, vcetneSkrytych)
-	// Návrhy doplnění (navrhy.go); v Přehledu jen jejich počet
-	p.Navrhu = len(a.navrhyDoplneni(modelky, false))
+	// Údaje ke kontrole (kontrola.go) a návrhy doplnění (navrhy.go), obojí z mezipaměti učení, když se sbírka
+	// nezměnila (uceni.go); z návrhů v Přehledu jen jejich počet
+	// Kontrola a návrhy jsou na sobě nezávislé; po změně dat se počítají souběžně
+	nalezy := make(chan []PodezrelyUdaj, 1)
+	go func() { nalezy <- a.nalezyKontroly(modelky, alba) }()
+	navrhy := a.navrhySbirky(modelky, alba)
+	p.Podezrele = vybratNalezy(<-nalezy, vcetneSkrytych)
+	for _, n := range navrhy {
+		if !n.Odmitnuto {
+			p.Navrhu++
+		}
+	}
 
 	// Centerfold sdíleného alba patří i dalším modelkám
 	if radky, err := a.db.Query("SELECT am.modelka_id FROM alba_modelky am JOIN alba al ON al.id = am.album_id WHERE al.typ = 'Centerfold'"); err == nil {

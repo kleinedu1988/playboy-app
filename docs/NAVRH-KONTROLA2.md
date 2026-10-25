@@ -3,6 +3,11 @@
 > **Číslování verzí:** návrh vznikl před revizí plánu 23. 10. 2026 a používá původní čísla verzí. Platné číslo
 > je v tabulce verzí v [ROADMAP.md](../ROADMAP.md) (sloupec „Dřív“).
 
+> **Stav provedení:** učení z oprav a z „V pořádku“, přesnost pravidel, zpřísnění prahů a „Zapomenout naučené“
+> jsou hotové jinak, než tento návrh předpokládal: naučené je ve vlastní databázi učení (`playboy-uceni.db`),
+> ne v tabulce `nastaveni`. Platný popis je v [UCENI.md](UCENI.md); tento dokument zůstává jako rozbor dalších
+> kroků (postava podle období, jistota nálezů).
+
 Stav k 23. 10. 2026 (verze 0.99.2). Další krok kontroly údajů v Údržbě, která se od 0.99.2 učí ze sbírky
 (`kontrola_uceni.go`). Nic z toho není rozhodnuté; po potvrzení se verze přenesou do `ROADMAP.md` (sekce
 k vložení je na konci). Navazuje na 1.6 Kvalita dat; souvisí s 1.9 (podobnost modelek sdílená s kontrolou).

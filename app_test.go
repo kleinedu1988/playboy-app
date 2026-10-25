@@ -42,7 +42,8 @@ func novaTestovaciApp(t *testing.T, stavy map[string]int) *App {
 
 	a := NewApp()
 	a.startup(context.Background())
-	t.Cleanup(func() { a.db.Close() })
+	// I databáze učení (a její zápisy na pozadí), aby se dočasná složka dala smazat
+	t.Cleanup(func() { a.shutdown() })
 	return a
 }
 

@@ -58,6 +58,8 @@ export function GetSpecialy():Promise<Array<main.Special>>;
 
 export function GetStatistiky():Promise<main.Statistiky>;
 
+export function GetStavUceni():Promise<main.StavUceni>;
+
 export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
 
 export function GetTagy():Promise<Array<string>>;
@@ -175,6 +177,10 @@ export function VybratSouboryImportu():Promise<Array<string>>;
 export function VymazatMezipamet():Promise<number>;
 
 export function ZalozitSpecial(arg1:number,arg2:string,arg3:string):Promise<string>;
+
+export function ZapomenoutUceni():Promise<boolean>;
+
+export function ZaznamenatOpravu(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
 
 export function ZkontrolovatDavku():Promise<main.KontrolaSouboru>;
 

@@ -9,8 +9,7 @@ import { nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba } from './pr
 import { obnovitStranku, otevritVydani, upravitVydani } from './vydani';
 import { nabidkaCisla, nabidkaRoku } from './kalendar';
 import { nacistCovery } from './stena';
-import { oznacitNetykaSe } from './prehled';
-import { nabidkaNavrhu } from './navrhy';
+import { nabidkaUdrzby } from './udrzba';
 import { nacistNejlepsi } from './nejlepsi';
 import { otevritCoverModal, otevritProfilPodleId } from './cover';
 import { lbPrepnoutLupu, lightbox, otevritLightbox, zavritLightbox } from './prohlizec';
@@ -33,28 +32,9 @@ export function otevritNabidku(cil, x, y) {
         return;
     }
 
-    // Návrh doplnění v Údržbě: přijmout, upravit, odmítnout (u modelky i všechny najednou)
-    const navrh = cil.closest('#stats .nv-radek, #stats .nv-skupina');
-    if (navrh) {
-        nabidkaNavrhu(cil, x, y);
-        return;
-    }
+    // Údržba: položka (úkol, nález kontroly, návrh), štítek nebo skupina – akce a odložení (Netýká se, V pořádku…)
+    if (nabidkaUdrzby(cil, x, y)) return;
 
-    // Buňka přehledu: označit údaj „netýká se", nebo označení zrušit
-    // Tlačítko „Doplňovat postupně“ nese údaje první modelky fronty, ale buňkou není (netýká se by šlo na ni)
-    const bunkaPrehledu = cil.closest('#stats [data-klic]:not(.ud-postupne)');
-    if (bunkaPrehledu) {
-        const oznacena = Boolean(bunkaPrehledu.dataset.netyka);
-        // Nález kontroly (oprava): „V pořádku“ – údaj je pravdivý a už se nehlásí
-        const nalez = bunkaPrehledu.hasAttribute('data-opravit');
-        otevritKontextovouNabidku(x, y, oznacena
-            ? [{ text: nalez ? 'Znovu kontrolovat' : 'Znovu sledovat (týká se)', akce: () => oznacitNetykaSe(bunkaPrehledu, false) }]
-            : [
-                { text: nalez ? 'Opravit' : 'Doplnit', akce: () => bunkaPrehledu.click() },
-                { text: nalez ? 'V pořádku – údaj je správně, nehlásit' : 'Netýká se – přestat sledovat', akce: () => oznacitNetykaSe(bunkaPrehledu, true) },
-            ]);
-        return;
-    }
     if (cil.closest('.modal-overlay, .lightbox')) {
         zavritKontextovouNabidku();
         return;

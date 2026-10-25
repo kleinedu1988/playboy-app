@@ -12,7 +12,8 @@ import { otevritDetailModelky, nacistFotkyModelky } from './profil';
 import { otevritAlbumModal } from './formular-alba';
 import { poleModelky, potvrdit } from './formular-modelky';
 import { pripojitVyberKategorii } from '../ui/kategorie';
-import { KLICE_SKUPIN, SKUPINY_UDAJU, nacistPrehled } from './prehled';
+import { nacistPrehled } from './prehled';
+import { KLICE_SKUPIN, SKUPINY_UDAJU } from '../lib/udrzba';
 
 export const doplnitModal = document.getElementById('doplnitModal');
 const obsah = document.getElementById('doplnitObsah');

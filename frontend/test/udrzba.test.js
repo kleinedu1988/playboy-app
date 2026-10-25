@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dalsiKroky, filtrovatUdrzbu, idNavrhu, sestavitUdrzbu, zalozkaPole, zdrojePolozek } from '../src/lib/udrzba.js';
+import { dalsiKroky, filtrovatUdrzbu, idNavrhu, opravaNavrhu, sestavitUdrzbu, zalozkaPole, zdrojePolozek } from '../src/lib/udrzba.js';
 
 // Modelka se všemi hlídanými údaji; jednotlivé testy jí údaje uberou
 const uplna = (id, jmeno, dalsi = {}) => ({
@@ -81,4 +81,16 @@ test('titulní fotka a alba: položky a odložení po albech', () => {
     // Album označené „netýká se“ se nepočítá
     assert.equal(text.pole, '1 album bez textu');
     assert.equal(model.radkyModelek[0].id, 7);
+});
+
+test('oprava návrhu: prázdné pole a nula nejsou oprava, jiný zápis ano, kategorie stačí obsažená', () => {
+    assert.equal(opravaNavrhu('34', 'inputHrudnik', 0), null);
+    assert.equal(opravaNavrhu('34', 'inputHrudnik', 34), null);
+    assert.equal(opravaNavrhu('34', 'inputHrudnik', 36), '36');
+    assert.equal(opravaNavrhu('USA', 'inputNarodnost', '  '), null);
+    assert.equal(opravaNavrhu('USA', 'inputNarodnost', ' USA '), null);
+    assert.equal(opravaNavrhu('Ceska', 'inputNarodnost', 'Česká'), 'Česká');
+    assert.equal(opravaNavrhu('USA', 'inputNarodnost', 'Kanada'), 'Kanada');
+    assert.equal(opravaNavrhu('Playmate roku 1990', 'inputRole', 'Celebrita, playmate roku 1990'), null);
+    assert.equal(opravaNavrhu('Playmate roku 1990', 'inputRole', 'Celebrita, Playmate roku 1991'), 'Celebrita, Playmate roku 1991');
 });

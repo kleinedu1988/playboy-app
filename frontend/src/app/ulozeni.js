@@ -260,20 +260,22 @@ export function pripravit() {
         }
         // Centerfold má vydání přímo v názvu alba, ostatním se přiřazuje zvlášť
         // Při přidávání fotek do existujícího alba prázdné pole jeho vydání nemaže; zrušit ho jde jen úpravou alba
+        // Co se opravdu uložilo: učení zaznamená opravu návrhu jen z uložené hodnoty
+        let ulozeneUdaje = true;
         if (typ !== 'Centerfold' && !online && (stav.editovaneAlbum || vydani)) {
-            await SetVydaniAlba(modelka.id, album, typ, vydani);
+            ulozeneUdaje = await SetVydaniAlba(modelka.id, album, typ, vydani) && ulozeneUdaje;
         }
         // Datum nafocení online alba; prázdné pole ho maže jen při úpravě alba
         if (online && (stav.editovaneAlbum || datum)) {
-            await SetDatumAlba(modelka.id, album, typ, datum);
+            ulozeneUdaje = await SetDatumAlba(modelka.id, album, typ, datum) && ulozeneUdaje;
         }
         // Při přidávání fotek do existujícího alba prázdná pole jeho text nemažou
         const popis = document.getElementById('inputAlbumPopis').value;
         const fotograf = document.getElementById('inputAlbumFotograf').value;
         if (stav.editovaneAlbum || popis.trim() || fotograf.trim()) {
-            await SetPopisAlba(modelka.id, album, typ, popis, fotograf);
+            ulozeneUdaje = await SetPopisAlba(modelka.id, album, typ, popis, fotograf) && ulozeneUdaje;
         }
-        if (stav.editovaneAlbum) poUlozeniAlba(modelka.id, stav.editovaneAlbum.album, stav.editovaneAlbum.typ, { vydani, fotograf, popis });
+        if (stav.editovaneAlbum && ulozeneUdaje) poUlozeniAlba(modelka.id, stav.editovaneAlbum.album, stav.editovaneAlbum.typ, { vydani, fotograf, popis });
 
         if (e.submitter?.name === 'dalsi' && !stav.editovaneAlbum) {
             // Další album téže modelky: modelka, typ, fotograf a vydání zůstávají, vyprázdní se jen název, odkazy a text

@@ -116,6 +116,14 @@ type uceni struct {
 	posledniNav map[string]navrhSbirky   // poslední návrhy podle klíče (pro zpětnou vazbu)
 	posledniNal map[string]PodezrelyUdaj // poslední nálezy podle klíče
 	ukladani    sync.WaitGroup           // zápisy mezipaměti na pozadí
+	// Po obnovení sbírky ze zálohy se zmizelé nálezy nepočítají jako opravené (data vrátila záloha, ne uživatel)
+	bezPorovnani bool
+	zavreno      bool // po zavření programu se už nic nezapisuje ani neotevírá
+
+	// Výpočet návrhů a nálezů jen jeden najednou: Přehled volá GetPrehled, GetNavrhyDoplneni a GetStavUceni
+	// souběžně a po změně dat by každé volání počítalo totéž znovu (a kontrola by opravu zapsala dvakrát).
+	// Pořadí zámků: vypocet… vždy před mu.
+	vypocetNavrhu, vypocetNalezu sync.Mutex
 }
 
 type pametVysledku[T any] struct {
@@ -140,7 +148,7 @@ func varovatUceni(format string, args ...any) {
 
 // Otevření při prvním použití; volá se se zámkem. Vrací nil jen bez databáze učení vůbec (App importu).
 func (u *uceni) zajistit() *sql.DB {
-	if u.otevreno {
+	if u.otevreno || u.zavreno {
 		return u.db
 	}
 	u.otevreno = true
@@ -346,7 +354,16 @@ func (a *App) zaznamenatNavrh(druh string, n NavrhDoplneni, vysledna string) {
 		zdroj, jistota, vzorec = strings.Join(p.Zdroje, "+"), p.Jistota, p.JistotaVzorce
 	}
 	u.mu.Unlock()
-	u.zapsat(druh, n.ModelkaID, n.Album, n.Typ, n.Pole, strings.TrimSpace(n.Hodnota), strings.TrimSpace(vysledna), zdroj, jistota, vzorec)
+	u.zapsat(druh, n.ModelkaID, n.Album, n.Typ, n.Pole, strings.TrimSpace(n.Hodnota), strings.TrimSpace(vysledna), zdroj, omezitJistotu(jistota), omezitJistotu(vzorec))
+}
+
+// Jistota z rozhraní do deníku jen v mezích 0–1: nekonečno nebo nesmysl by se přes kalibraci dostal až do
+// přesnosti zdroje a GetStavUceni by nešlo převést na JSON (NaN, Inf)
+func omezitJistotu(p float64) float64 {
+	if math.IsNaN(p) {
+		return 0
+	}
+	return min(1, max(0, p))
 }
 
 // Odmítnutí (nebo jeho zrušení) jedné hodnoty údaje; klic "" = celý údaj (uloží se jako „*“). Vrací, kolik
@@ -661,12 +678,23 @@ var rozsahyPravidel = map[string][]int{"vyska": {prVyska}, "vaha": {prVaha}, "bm
 	"miry": {prHrudnik, prPas, prBoky}}
 
 func (u *uceni) prahyKontroly() prahyKontroly {
-	p := vychoziPrahy()
+	p, _ := u.prahyAGenerace()
+	return p
+}
+
+// Prahy a generace deníku, ze které jsou (pod jedním zámkem)
+func (u *uceni) prahyAGenerace() (prahyKontroly, int64) {
 	if u == nil {
-		return p
+		return vychoziPrahy(), 0
 	}
 	u.mu.Lock()
 	defer u.mu.Unlock()
+	return u.spocitatPrahy(), u.generace
+}
+
+// Prahy kontroly z deníku (volá se se zámkem)
+func (u *uceni) spocitatPrahy() prahyKontroly {
+	p := vychoziPrahy()
 	if u.zajistit() == nil {
 		return p
 	}
@@ -731,10 +759,16 @@ func otiskSbirky(druh string, modelky []Modelka, alba []albumSbirky, generace in
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func otiskModelky(m Modelka) string {
+// Otisk údajů modelky, ze kterých kontrola hlásí nálezy (pro poznání, že uživatel nález opravil). Bez údajů, které
+// s kontrolou nesouvisejí a mění se často (srdíčka, titulní fotka, tagy, poznámka): jejich změna spolu s nálezem,
+// který zmizel z jiného důvodu (posunutý naučený rozsah), by se jinak zapsala jako oprava. Předpona je verze výpočtu.
+const predponaOtiskuKontroly = "k2:"
+
+func otiskUdajuKontroly(m Modelka) string {
+	m.Hodnoceni, m.CoverID, m.CoverURL, m.Tags, m.Poznamka, m.Pridano = 0, "", "", "", "", ""
 	h := fnv.New64a()
 	(&otiskovac{h: h}).modelka(&m)
-	return hex.EncodeToString(h.Sum(nil))
+	return predponaOtiskuKontroly + hex.EncodeToString(h.Sum(nil))
 }
 
 // Zápis údajů do otisku bez reflexe (fmt.Sprint všech modelek byl desetkrát pomalejší)
@@ -812,13 +846,43 @@ func (u *uceni) pockat() {
 	}
 }
 
+// Zavření při ukončení programu: počká na zápisy na pozadí a databázi zavře se zámkem; volání, která přijdou
+// potom (rozhraní ještě může něco poslat), už nic nezapíšou ani soubor neotevřou znovu
+func (u *uceni) zavrit() {
+	if u == nil {
+		return
+	}
+	u.pockat()
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	if u.db != nil {
+		u.db.Close()
+	}
+	u.db, u.zavreno = nil, true
+}
+
+// Sbírka se vrátila do stavu zálohy: nálezy, které tím zmizely, uživatel neopravil. Příští kontrola je proto
+// s předchozími nálezy neporovná (ani s uloženými v souboru) a začne od nového stavu.
+func (u *uceni) poObnoveniSbirky() {
+	if u == nil {
+		return
+	}
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	u.nalezy = pametVysledku[ulozeneNalezy]{}
+	u.bezPorovnani = true
+}
+
 // Všechny návrhy sbírky (i odmítnuté) s učením ze zpětné vazby; z mezipaměti, když se sbírka nezměnila
 func (a *App) navrhySbirky(modelky []Modelka, alba []albumSbirky) []navrhSbirky {
 	u := a.uc
-	vstup, generace := u.vstupNavrhu()
 	if u == nil {
 		return navrhnout(modelky, albaProNavrhy(alba), time.Now().Year(), nil)
 	}
+	// Souběžné volání počká na výpočet prvního a vezme si jeho výsledek z mezipaměti
+	u.vypocetNavrhu.Lock()
+	defer u.vypocetNavrhu.Unlock()
+	vstup, generace := u.vstupNavrhu()
 	otisk := otiskSbirky("navrhy", modelky, alba, generace)
 	u.mu.Lock()
 	if !u.navrhy.ma || u.navrhy.otisk != otisk {
@@ -859,14 +923,16 @@ func (a *App) nalezyKontroly(modelky []Modelka, alba []albumSbirky) []PodezrelyU
 	if u == nil {
 		return a.spocitatNalezy(modelky, alba, vychoziPrahy())
 	}
-	prahy := u.prahyKontroly()
-	u.mu.Lock()
-	generace := u.generace
-	u.mu.Unlock()
+	u.vypocetNalezu.Lock()
+	defer u.vypocetNalezu.Unlock()
+	// Prahy a generace z jednoho okamžiku: jinak by výsledek s prahy ze starší generace dostal otisk novější
+	prahy, generace := u.prahyAGenerace()
 	otisk := otiskSbirky("kontrola", modelky, alba, generace)
 	u.mu.Lock()
 	predchozi := u.nalezy
-	if !predchozi.ma {
+	bezPorovnani := u.bezPorovnani
+	u.bezPorovnani = false
+	if !predchozi.ma && !bezPorovnani {
 		// Po spuštění: poslední uložené nálezy (s jakýmkoli otiskem) jako výchozí stav pro poznání oprav
 		var ulozene ulozeneNalezy
 		var ulozenyOtisk string
@@ -893,7 +959,7 @@ func (a *App) nalezyKontroly(modelky []Modelka, alba []albumSbirky) []PodezrelyU
 	}
 	for _, n := range nalezy {
 		if n.Album == "" {
-			ulozit.Modelky[fmt.Sprint(n.ModelkaID)] = otiskModelky(podleID[n.ModelkaID])
+			ulozit.Modelky[fmt.Sprint(n.ModelkaID)] = otiskUdajuKontroly(podleID[n.ModelkaID])
 		}
 	}
 	// Opravené nálezy: byl, už není, modelka existuje a změnila se, a nebyl označen „V pořádku“
@@ -904,8 +970,10 @@ func (a *App) nalezyKontroly(modelky []Modelka, alba []albumSbirky) []PodezrelyU
 		}
 		for _, n := range predchozi.data.Nalezy {
 			m, existuje := podleID[n.ModelkaID]
+			// Otisk z dřívější verze (jiný výpočet) se s novým porovnat nedá: oprava se raději nezapíše
+			drivejsi := predchozi.data.Modelky[fmt.Sprint(n.ModelkaID)]
 			if n.Album != "" || n.NetykaSe || !existuje || nyni[klicNalezu(n.ModelkaID, n.Album, n.Typ, n.Klic)+"\x00"+n.Zdroj] ||
-				obsahujeKlic(m.NetykaSe, n.Klic) || predchozi.data.Modelky[fmt.Sprint(n.ModelkaID)] == otiskModelky(m) {
+				obsahujeKlic(m.NetykaSe, n.Klic) || !strings.HasPrefix(drivejsi, predponaOtiskuKontroly) || drivejsi == otiskUdajuKontroly(m) {
 				continue
 			}
 			u.zapsat(udalostNalezOpraveny, n.ModelkaID, "", "", n.Klic, n.Popis, "", n.Zdroj, 0, 0)

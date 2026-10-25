@@ -520,6 +520,8 @@ func (a *App) ObnovitZalohu(soubor string) string {
 	if err := kopirovatSoubor(zaloha, cil); err != nil {
 		return vratitPuvodni(fmt.Sprintf("Zálohu se nepodařilo zkopírovat, databáze zůstala beze změny: %v", err))
 	}
+	// Nálezy, které zmizí návratem k záloze, uživatel neopravil; učení je za opravy počítat nesmí
+	a.uc.poObnoveniSbirky()
 	// Obnovená databáze začíná bez chyby a bez režimu jen pro čtení; kontrola souboru a úpravy schématu níže
 	// je případně nastaví znovu
 	a.chybaStartu = ""
@@ -1031,12 +1033,7 @@ func (a *App) shutdown() {
 	if a.db != nil {
 		a.db.Close()
 	}
-	if a.uc != nil {
-		a.uc.pockat()
-		if a.uc.db != nil {
-			a.uc.db.Close()
-		}
-	}
+	a.uc.zavrit()
 }
 
 var vzorHolehoID = regexp.MustCompile(`^[a-zA-Z0-9_-]{25,}$`)

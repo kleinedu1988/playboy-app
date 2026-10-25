@@ -2,8 +2,8 @@
 // velikost souboru, „Zapomenout naučené“) a zápis opravy, když uživatel návrh v „Upravit…“ uloží s jinou hodnotou.
 // Učení je samostatný soubor vedle databáze; sbírky se nedotýká. Když ho backend nemá, panel se neukáže.
 import { GetStavUceni, ZapomenoutUceni, ZaznamenatOpravu } from './backend';
-import { esc, sjednotit, sklonovat } from '../lib/format';
-import { procent, tridaJistoty } from '../lib/udrzba';
+import { esc, sklonovat } from '../lib/format';
+import { opravaNavrhu, procent, tridaJistoty } from '../lib/udrzba';
 import { albumModal, modelModal } from './okno';
 import { poleModelky, potvrdit } from './formular-modelky';
 import { oznamit } from '../ui/oznameni';
@@ -37,7 +37,8 @@ export async function nacistUceni() {
 const velikostSouboru = b => b >= 1048576 ? `${(b / 1048576).toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} MB`
     : b >= 1024 ? `${Math.round(b / 1024).toLocaleString('cs-CZ')} kB` : `${b || 0} B`;
 function kdy(text) {
-    const d = text ? new Date(text) : null;
+    // „RRRR-MM-DD HH:MM:SS“ s mezerou starší JavaScriptCore (WebKitGTK) nepřečte, s „T“ ano (místní čas)
+    const d = text ? new Date(String(text).replace(' ', 'T')) : null;
     if (!d || Number.isNaN(d.getTime())) return '';
     return `${d.getDate()}. ${d.getMonth() + 1}. ${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
@@ -97,12 +98,8 @@ export function cekatNaOpravu(n) {
 }
 
 function zaznamenat(c, nova) {
-    const text = String(nova ?? '').trim();
-    // Prázdné pole oprava není (údaj zůstal nevyplněný); kategorie se k návrhu přidávají, takže stačí, že v nich je
-    if (!text) return;
-    const stejne = c.inputId === 'inputRole' ? sjednotit(text).split(/\s*,\s*/).includes(sjednotit(c.hodnota)) : sjednotit(text) === sjednotit(c.hodnota);
-    if (stejne) return;
-    ZaznamenatOpravu(c.modelkaId, c.pole, c.hodnota, text).catch(() => false);
+    const text = opravaNavrhu(c.hodnota, c.inputId, nova);
+    if (text !== null) ZaznamenatOpravu(c.modelkaId, c.pole, c.hodnota, text).catch(() => false);
 }
 
 // Volá ulozeni.js po uložení modelky

@@ -62,6 +62,17 @@ export const nazevNavrhu = n => n.popis || n.pole;
 // Vydání alba se ukazuje jako název čísla („Červenec 1976“), ostatní hodnoty tak, jak se uloží
 export const hodnotaNavrhu = n => (n.pole === 'vydani' || n.pole === 'vydaniAlba') && rozlozitVydani(n.hodnota) ? nazevVydani(n.hodnota) : String(n.hodnota ?? '');
 
+// Oprava návrhu po „Upravit…“: text uložené hodnoty pro ZaznamenatOpravu, nebo null, když není co zaznamenat.
+// Prázdné pole (u čísla 0) oprava není – údaj zůstal nevyplněný. Jiný zápis téže hodnoty („Ceska“ → „Česká“)
+// oprava je: učení si zapamatuje, jak uživatel hodnotu píše. Kategorie se k zapsaným přidávají, stačí, že v nich je.
+export function opravaNavrhu(navrzena, inputId, ulozena) {
+    const text = String(ulozena ?? '').trim();
+    const navrh = String(navrzena ?? '').trim();
+    if (!text || ulozena === 0) return null;
+    if (inputId === 'inputRole') return sjednotit(text).split(/\s*,\s*/).includes(sjednotit(navrh)) ? null : text;
+    return text === navrh ? null : text;
+}
+
 export const pocetAlb = n => `${n} ${n === 1 ? 'album' : n < 5 ? 'alba' : 'alb'}`;
 const vyctem = (seznam, max = 3) => seznam.length <= max ? seznam.join(', ') : `${seznam.slice(0, max).join(', ')} a ${seznam.length - max} další`;
 

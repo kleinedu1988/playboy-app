@@ -417,10 +417,24 @@ function obnovitTabIndex(radky = [...cast('fronta').querySelectorAll('[data-rade
     cil?.setAttribute('tabindex', '0');
 }
 
-// Po akci: přepočet z místních dat, překreslení na místě a po chvíli klidu nové načtení z backendu
+// Po akci: přepočet z místních dat, překreslení na místě a po chvíli klidu nové načtení z backendu.
+// Akce dobíhá asynchronně (backend); když mezitím uživatel drží tlačítko myši na další položce, překreslí se až po
+// puštění a kliknutí – WebKitGTK by klik zahodil, kdyby se řádek pod kurzorem vyměnil mezi stisknutím a puštěním.
+let odlozenePrekresleni = null;
 function poZmene(fokusKlic = null) {
     if (!model) return;
     prepocitat();
+    if (mysDole) {
+        odlozenePrekresleni = { fokusKlic };
+        naplanovatNacteni();
+        return;
+    }
+    prekreslitPoZmene(fokusKlic);
+    naplanovatNacteni();
+}
+
+function prekreslitPoZmene(fokusKlic) {
+    if (!model) return;
     if (sekce()?.querySelector('[data-ud-kostra]')) {
         vykreslit();
         // Fokus, který zmizel s překresleným tlačítkem (akce z nabídky nebo oznámení), se vrátí na řádek
@@ -430,7 +444,18 @@ function poZmene(fokusKlic = null) {
             if (klic) zachovatPolohu(() => {}, klic);
         }
     }
-    naplanovatNacteni();
+}
+
+// Puštění tlačítka myši (i mimo okno nebo zrušené stisknutí): odložené překreslení až po události click
+function pustitMys() {
+    mysDole = false;
+    if (!odlozenePrekresleni) return;
+    setTimeout(() => {
+        const odlozene = odlozenePrekresleni;
+        odlozenePrekresleni = null;
+        if (odlozene && !mysDole) prekreslitPoZmene(odlozene.fokusKlic);
+        else if (odlozene) odlozenePrekresleni = odlozene;
+    });
 }
 
 let casovacNacteni = null;
@@ -532,22 +557,24 @@ async function zapsatOdlozeni(x, s, ano) {
         }
         return true;
     }
+    // Místní data se změní jen podle toho, co backend opravdu uložil (jinak by položka zmizela a po načtení se vrátila)
     if (x.druh === 'kontrola') {
         const u = x.nalez;
         // Nález u alba: „V pořádku“ patří tomu albu, jinak modelce
-        if (u.album) await SetNetykaSeAlba(u.modelkaId, u.album, u.typ, u.klic, ano);
-        else await SetNetykaSe(u.modelkaId, u.klic, ano);
+        const ok = u.album ? await SetNetykaSeAlba(u.modelkaId, u.album, u.typ, u.klic, ano) : await SetNetykaSe(u.modelkaId, u.klic, ano);
+        if (!ok) return false;
         u.netykaSe = ano;
         return true;
     }
     if (x.netykaKlic === 'text' || x.netykaKlic === 'vydani') {
+        let vse = true;
         for (const a of x.alba) {
-            await SetNetykaSeAlba(a.modelkaId, a.album, a.typ, x.netykaKlic, ano);
-            a.netykaSe = ano;
+            if (await SetNetykaSeAlba(a.modelkaId, a.album, a.typ, x.netykaKlic, ano)) a.netykaSe = ano;
+            else vse = false;
         }
-        return true;
+        return vse;
     }
-    await SetNetykaSe(s.id, x.netykaKlic, ano);
+    if (!await SetNetykaSe(s.id, x.netykaKlic, ano)) return false;
     const m = stav.prehledModelky.get(s.id);
     if (m) {
         const klice = new Set((m.netykaSe || '').split(',').filter(Boolean));
@@ -569,6 +596,8 @@ async function odlozit(x, s, ano = true) {
     if (ok === null) return;
     if (!ok) {
         oznamit(ano ? `${akce} se nepodařilo uložit.` : 'Nepodařilo se vrátit.');
+        // Část se mohla uložit (víc alb najednou): fronta se srovná podle backendu
+        naplanovatNacteni();
         return;
     }
     if (s.druh === 'vydani' && !ano) {
@@ -702,7 +731,10 @@ export function pripravit(nacistPrehled) {
     try { stav.udrzbaRazeni = localStorage.getItem('udrzbaRazeni') || 'priorita'; } catch { /* výchozí */ }
 
     stats.addEventListener('pointerdown', () => { mysDole = true; });
-    document.addEventListener('pointerup', () => { mysDole = false; });
+    document.addEventListener('pointerup', pustitMys);
+    // Puštění mimo okno pointerup nepošle; bez toho by se načtení i překreslení odkládaly donekonečna
+    document.addEventListener('pointercancel', pustitMys);
+    window.addEventListener('blur', pustitMys);
 
     stats.addEventListener('click', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);

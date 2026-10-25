@@ -74,7 +74,19 @@ async function ulozit(seznam) {
         seznam.forEach(n => zpracovavane.delete(n));
     }
     navrhy = navrhy.filter(n => !prijate.includes(n));
+    prijate.forEach(zapsatMistne);
     return prijate;
+}
+
+// Přijatá hodnota do místních modelek Přehledu: Údržba se překreslí hned (bez čekání na nové načtení) a údaj
+// u modelky už nesmí hlásit jako chybějící. Kategorie se k zapsaným přidává jako v backendu (zapsatNavrh).
+function zapsatMistne(n) {
+    const vlastnost = !n.album && vlastnostPole(n.inputId);
+    const m = vlastnost && stav.prehledModelky.get(n.modelkaId);
+    if (!m) return;
+    if (typeof m[vlastnost] === 'number') m[vlastnost] = Number(n.hodnota) || 0;
+    else if (vlastnost === 'role' && String(m.role || '').trim()) m.role = `${String(m.role).trim().replace(/[,;]+$/, '')}, ${n.hodnota}`;
+    else m[vlastnost] = n.hodnota;
 }
 
 // Vlastnost modelky podle pole formuláře (vrácení přijatého návrhu)

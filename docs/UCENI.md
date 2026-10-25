@@ -190,6 +190,9 @@ Co se učí z rozhodnutí:
   chyb. Klesne-li pod 0,5, pravidlo se zpřísní úměrně t = (0,5 − přesnost)/0,5: rozsah o až 1,5 σ (jen pro
   údaje toho pravidla), mez neobvyklé kombinace o až 0,75 v kvantilu N(0,1), práh podobnosti jmen o až 0,03.
   Prahy se jen zpřísňují – kontrola raději mlčí, než aby hlásila zbytečně.
+  Změnu údajů modelky pozná otisk jen těch údajů, se kterými kontrola pracuje (srdíčka, titulní fotka, tagy ani
+  poznámka se nepočítají). Po obnovení sbírky ze zálohy se zmizelé nálezy za opravené nepovažují (data vrátila
+  záloha, ne uživatel); porovnává se až od dalšího výpočtu.
 
 ## Mezipaměť a výkon
 
@@ -200,7 +203,9 @@ otisk změní, takže jiná invalidace není potřeba. Přehled tak při opakova
 (alba jedním dotazem pro seznamy, kontrolu i návrhy), spočítá otisk a vezme hotový výsledek; po spuštění
 programu z mezipaměti v souboru.
 
-Po změně dat se kontrola a návrhy počítají souběžně a mezipaměť se do souboru zapisuje na pozadí.
+Po změně dat se kontrola a návrhy počítají souběžně a mezipaměť se do souboru zapisuje na pozadí. Každý z obou
+výpočtů ale běží jen jednou najednou: Přehled volá `GetPrehled`, `GetNavrhyDoplneni` a `GetStavUceni` současně
+a další volání počká na první a vezme si jeho výsledek, místo aby totéž počítalo potřetí.
 
 Umělá sbírka 3000 modelek (`TestVykonUceni`, `go test -run TestVykonUceni -v`): `GetPrehled` dřív asi 500 ms
 při každém otevření; nyní asi 150 ms při opakovaném otevření (z toho asi 90 ms načtení modelek), asi 420 ms po

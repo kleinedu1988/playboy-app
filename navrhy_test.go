@@ -345,7 +345,7 @@ func TestNavrhyAlb(t *testing.T) {
 		}
 		return NavrhDoplneni{}, false
 	}
-	if n, ok := najit("Playmate", "Playboy červen 1999", "vydaniAlba"); !ok || n.Hodnota != "1999-06" || n.InputID != "" || n.Typ != "Pictorial" || n.Klic != "nv-vydaniAlba" {
+	if n, ok := najit("Playmate", "Playboy červen 1999", "vydaniAlba"); !ok || n.Hodnota != "1999-06" || n.InputID != "inputAlbumRok" || n.Typ != "Pictorial" || n.Klic != "nv-vydaniAlba" {
 		t.Errorf("vydání z názvu: %+v", n)
 	}
 	// Pictorial v čísle centerfoldu už má (Zákulisí): druhý se k centerfoldu nepřiřadí

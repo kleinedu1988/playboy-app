@@ -43,7 +43,7 @@ type NavrhDoplneni struct {
 	Jistota float64 `json:"jistota"` // 0–1, odhad pravděpodobnosti, že je hodnota správně
 	Duvod   string  `json:"duvod"`   // česky proč
 	Klic    string  `json:"klic"`    // „nv-<pole>“, pod kterým se návrh odmítne
-	InputID string  `json:"inputId"` // pole formuláře modelky pro „Otevřít“; u alba ""
+	InputID string  `json:"inputId"` // pole formuláře modelky nebo okna alba pro „Upravit…“
 	// Návrh je odmítnutý; v seznamu jen při zobrazení odmítnutých
 	Odmitnuto bool `json:"odmitnuto"`
 }
@@ -68,9 +68,9 @@ var udajeNavrhu = map[string]udajNavrhu{
 	"obvodPasCm":     {popis: "Pas", input: "inputPas", sloupec: "obvod_pas_cm", cislo: true, netyka: "vzhled"},
 	"obvodBokyCm":    {popis: "Boky", input: "inputBoky", sloupec: "obvod_boky_cm", cislo: true, netyka: "vzhled"},
 	"role":           {popis: "Kategorie", input: "inputRole", sloupec: "role", netyka: "zarazeni"},
-	"vydaniAlba":     {popis: "Vydání alba", sloupec: "vydani", album: true},
-	"fotografAlba":   {popis: "Fotograf alba", sloupec: "fotograf", album: true},
-	"datumAlba":      {popis: "Datum nafocení", sloupec: "datum", album: true},
+	"vydaniAlba":     {popis: "Vydání alba", input: "inputAlbumRok", sloupec: "vydani", album: true},
+	"fotografAlba":   {popis: "Fotograf alba", input: "inputAlbumFotograf", sloupec: "fotograf", album: true},
+	"datumAlba":      {popis: "Datum nafocení", input: "inputAlbumDatum", sloupec: "datum", album: true},
 }
 
 // Klíče odmítnutých návrhů (ukládají se mezi „netýká se“ modelky a alba jako „ok-…“ u kontroly)
@@ -355,7 +355,7 @@ func navrhnoutDoplneni(modelky []Modelka, alba []albumNavrhu, letos int) []Navrh
 			Jistota: jistota, Duvod: duvod, Klic: klicNavrhu(pole), InputID: u.input}}
 		k.vzor = pole + "|" + zdroj
 		if al != nil {
-			k.Album, k.Typ, k.InputID = al.nazev, al.typ, ""
+			k.Album, k.Typ = al.nazev, al.typ
 			k.Odmitnuto = obsahujeKlic(al.neni, k.Klic)
 		} else {
 			k.Odmitnuto = obsahujeKlic(m.NetykaSe, k.Klic)

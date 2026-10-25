@@ -27,6 +27,11 @@ const CASTI = [
         [k('←', '→'), 'Předchozí a další modelka'],
         [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět'],
     ] },
+    { klic: 'navrhy', nazev: 'Návrhy v Údržbě', radky: [
+        [k('Enter'), 'Přijmout návrh (odmítnutý vrátit)'],
+        [k('Delete'), 'Odmítnout návrh (jde vrátit)'],
+        [k('↑', '↓'), 'Předchozí a další návrh'],
+    ] },
     { klic: 'vyber', nazev: 'Výběr fotek', radky: [
         [`${k('Ctrl')} + klik`, 'Přidat do výběru'],
         [`${k('Shift')} + klik`, 'Vybrat úsek'],

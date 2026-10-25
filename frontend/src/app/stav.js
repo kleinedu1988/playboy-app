@@ -58,6 +58,8 @@ export const stav = {
     // Zobrazit i údaje označené „netýká se" (aby šlo označení zrušit) a kolik řádků tabulek ukázat
     prehledSkryte: false,
     prehledLimit: 60,
+    // Návrhy doplnění v Údržbě: ukázat i odmítnuté (aby šlo odmítnutí vrátit)
+    navrhyOdmitnute: false,
     // Okno „Doplnit modelku“: modelka, její řádek Přehledu a zvolené hodnocení
     // Stránka čísla: články a vykreslená alba
     vydaniClanky: [],

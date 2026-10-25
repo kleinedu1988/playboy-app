@@ -10,6 +10,7 @@ import { obnovitStranku, otevritVydani, upravitVydani } from './vydani';
 import { nabidkaCisla, nabidkaRoku } from './kalendar';
 import { nacistCovery } from './stena';
 import { oznacitNetykaSe } from './prehled';
+import { nabidkaNavrhu } from './navrhy';
 import { nacistNejlepsi } from './nejlepsi';
 import { otevritCoverModal, otevritProfilPodleId } from './cover';
 import { lbPrepnoutLupu, lightbox, otevritLightbox, zavritLightbox } from './prohlizec';
@@ -29,6 +30,13 @@ export function otevritNabidku(cil, x, y) {
     if (cil.closest('#lbMore') || (!lightbox.classList.contains('hidden') && !cil.closest('.modal-overlay'))) {
         const polozka = stav.lbPolozky[stav.lbIndex];
         if (polozka) otevritKontextovouNabidku(x, y, akceFotky(polozka, null, { poOdebrani: zavritLightbox }));
+        return;
+    }
+
+    // Návrh doplnění v Údržbě: přijmout, upravit, odmítnout (u modelky i všechny najednou)
+    const navrh = cil.closest('#stats .nv-radek, #stats .nv-skupina');
+    if (navrh) {
+        nabidkaNavrhu(cil, x, y);
         return;
     }
 

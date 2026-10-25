@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.19] – 2026-10-25
+
+### Přidáno
+- **Návrhy doplnění v Údržbě** (strojové učení ze tvé sbírky, nic neodchází z počítače): program navrhne chybějící údaje s jistotou v procentech a důvodem, např. „místo narození Texas → USA (ve sbírce 12 z 12 modelek odtud)“. Zdroje:
+  - národnost z místa narození (tabulka zemí, států USA a měst + co je ve sbírce) a podle edice, ve které modelka vyšla;
+  - etnicita podle národnosti, barva vlasů a očí podle etnicity a národnosti – jen když je sbírka jednoznačná;
+  - obvody a velikost prsou z textu měr (cm i palce), odhad chybějícího obvodu z ostatních měr (vždy jen „odhad“);
+  - kategorie Playmate roku z poznámky či tagů (rok musí sedět k centerfoldu);
+  - vydání alba z data v názvu nebo z čísla jejího centerfoldu, datum online alba z názvu, fotograf alba podle alba stejného čísla nebo ostatních alb modelky.
+  Hodnoty se píšou tak, jak je ve sbírce zapisuješ. Jistota se ověřuje na údajích, které už ve sbírce máš; spory a slabé důkazy se nenabízejí. Odmítnutí program bere jako poučení – podobné návrhy pak nenabízí.
+- V Údržbě nová část **Návrhy** (počet i v hlavičce a na úvodu Přehledu): po modelkách a albech, u každého hodnota, jistota (jisté ≥ 90 %, pravděpodobné ≥ 70 %, odhad), důvod a ✓ Přijmout / Upravit… (otevře formulář nebo okno alba s předvyplněnou hodnotou) / ✕ Odmítnout. Hromadně „Přijmout vše jisté“ a „Přijmout vše u modelky“ (jedna transakce, před ní záloha „Před přijetím návrhů“), „zobrazit i odmítnuté“ s Vrátit, Vrátit v oznámení. Klávesy: Enter přijme, Delete odmítne, šipky mezi řádky.
+- Odmítnutí se ukládá mezi „netýká se“ (klíče `nv-*`), takže ho nese i export; bez změny databáze.
+
 ## [0.99.18] – 2026-10-25
 
 ### Změněno

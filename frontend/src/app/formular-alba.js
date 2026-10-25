@@ -227,6 +227,29 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     (prvni ? document.getElementById(prvni) : document.querySelector('#albumTypGroup [data-kde].active'))?.focus();
 }
 
+// Vydání vložené do otevřeného okna alba (návrh doplnění): album přejde do časopisu, vyplní se rok, měsíc
+// nebo speciál a edice; ohlásí se jako úprava, takže stačí uložit. Vrací pole, kam patří kurzor.
+export function predvyplnitVydaniAlba(vydani) {
+    const v = rozlozitVydani(vydani);
+    if (!v) return null;
+    const typ = document.getElementById('selectTyp').value;
+    cisloAlba = v.mesic.startsWith('S') ? 'special' : 'mesic';
+    if (kdeAlba !== 'casopis') nastavitTypAlba(druhyAlba('casopis').some(([h]) => h === typ) ? typ : 'Pictorial', 'casopis');
+    document.getElementById('inputAlbumRok').value = v.rok;
+    document.getElementById('selectAlbumEdice').value = v.edice;
+    obnovitSpecialyAlba(cisloAlba === 'special' ? v.mesic : '');
+    document.getElementById('selectAlbumMesic').value = cisloAlba === 'mesic' ? v.mesic : '';
+    prepnoutPoleAlba();
+    const pole = document.getElementById(cisloAlba === 'special' ? 'selectAlbumSpecial' : v.mesic ? 'selectAlbumMesic' : 'inputAlbumRok');
+    pole.dispatchEvent(new Event('input', { bubbles: true }));
+    pole.dispatchEvent(new Event('change', { bubbles: true }));
+    const skupina = document.getElementById('albumVydaniGroup');
+    skupina.classList.remove('predvyplneno');
+    void skupina.offsetWidth;
+    skupina.classList.add('predvyplneno');
+    return pole;
+}
+
 export function smazatAlbum(album, pocet) {
     otevritDeleteModal(
         'Smazat album',

@@ -41,11 +41,14 @@ const CTENI = new Set([
     'ExportovatDoSouboru',
 ]);
 
+// Volání, které vygenerované vazby (wails generate module) ještě neznají, jde přímo na window.go jako ostatní vazby
+
 function obalit(jmeno) {
-    if (CTENI.has(jmeno)) return (...argumenty) => App[jmeno](...argumenty);
+    const funkce = App[jmeno];
+    if (CTENI.has(jmeno)) return (...argumenty) => funkce(...argumenty);
     return async (...argumenty) => {
         try {
-            return await App[jmeno](...argumenty);
+            return await funkce(...argumenty);
         } finally {
             ohlasitZmenuDat();
         }

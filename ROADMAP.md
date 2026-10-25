@@ -110,13 +110,13 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 **Výjimka z bety:** kategorie modelek (0.91.0), lišta Přehledu nahoře a přepracované Statistiky s výběrem
 modelek po kliknutí (0.92.x) výskyt modelky v časopise nebo jen online (0.93.0) spojení Čísel s Kalendářem (0.94.0) a Statistiky jako jeden graf se seznamem modelek (0.95.0, 0.96.0, 0.98.0) Kontrola s pravidly a „V pořádku“ (0.97.0) a části Přehledu v nabídce tlačítka Přehled (0.99.x) přibyly 22. 10. 2026 na přání uživatele ještě před 1.0; schéma ani formát exportu
 se nezměnily. Jedinou výjimkou se změnou schématu jsou **online pictorialy (0.99.9, 24. 10.)**: úprava databáze
-č. 12 a export verze 8 (krok 1–2 z 1.23). Lhůta níže proto běží od 0.99.9; nejdřív 7. 11. 2026.
+č. 12 a export verze 8 (krok 1–2 z 1.23). Další výjimky (bez změny schématu): Cyber Girl, nová okna a editor textu (0.99.12–0.99.18) a návrhy doplnění v Údržbě (0.99.19, 25. 10.). Lhůta níže proto běží od 0.99.19; nejdřív 8. 11. 2026.
 
 **Pravidlo:** 1.0.0 vyjde po **14 dnech běžného používání bety bez nové chyby**. Lhůta běží od vydání bety
 (21. 10. 2026); každá nová chyba zapsaná v `PLAN.md` (oddíl „Chyby z bety“) ji po opravě spustí znovu od
 vydání opravy. Změny jen v dokumentaci lhůtu neruší.
 Kosmetickou drobnost (vzhled, text), která nebrání práci, smí uživatel vědomě odložit do 1.0.1 – lhůtu pak
-neruší. Nejdřív možné vydání: 7. 11. 2026 (po online pictorialech v 0.99.9), pokud se do té doby nic nenajde.
+neruší. Nejdřív možné vydání: 8. 11. 2026 (po návrzích doplnění v 0.99.19), pokud se do té doby nic nenajde.
 
 **Ověření před 1.0.0** (odškrtává uživatel na Fedoře; co selže, jde do `PLAN.md` mezi chyby). Scénář bety
 z 21. 10. pokryl verzi 0.90.0; od té doby přibyly výjimky z bety a opravy v citlivých místech (import, zálohy,
@@ -138,6 +138,8 @@ sloučení), proto se část opakuje:
 - [ ] Rozepsaný článek nebo úprava čísla: Esc ukáže „Zahodit změny?“ nad oknem
 - [ ] Hledání `rok:1977-03` najde jen březen 1977
 - [ ] Zamčený program neukazuje pole hledání
+- [ ] Nová okna (modelka, album, cover, číslo, článek) a editor textu: psaní s diakritikou, náhledy z Disku (0.99.18)
+- [ ] Údržba → Návrhy: návrhy dávají smysl na skutečné sbírce, Přijmout / Odmítnout / Vrátit, hromadné přijetí udělá zálohu (0.99.19)
 - [ ] Online pictorialy: první spuštění 0.99.9 nad sbírkou vytvoří zálohu `*-pred-migraci.db`; v okně alba typ
       „Pictorial online“ skryje vydání a ukáže „Nafoceno“ (chybné datum ohlásí); nadpis alba v profilu s datem;
       album není v kalendáři ani na titulní fotce; výskyt „online“, hledání `nafoceno:2004`, Statistiky → Online;

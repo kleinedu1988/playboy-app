@@ -1,10 +1,10 @@
 // Články čísla: čtení (text s perexem, citáty a zvýrazněnými otázkami, skeny stran) a okno pro úpravu
 import { jednou, oznamit } from '../ui/oznameni';
 import { AddClanek, DeleteClanek, GetClankyModelky, UpdateClanek } from './backend';
-import { esc, formatMarkdown, nazevVydani, obrazek, sjednotit } from '../lib/format';
+import { esc, formatMarkdown, nazevVydani, obrazek, pocetOdkazuDisku, sjednotit, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
-import { VELIKOST_NAHLEDU } from './obrazky';
+import { VELIKOST_NAHLEDU, adresyOdkazu } from './obrazky';
 import { potvrdit } from './formular-modelky';
 import { upravitText } from '../ui/editor-textu';
 import { obnovitStranku, otevritVydani, ukazatClanek } from './vydani';
@@ -14,6 +14,8 @@ export const RUBRIKY = ['Úvodník', 'Playboy Interview', '20 otázek', 'Článe
 const NAZVY_DRUHU = { prepis: 'přepis', shrnuti: 'shrnutí' };
 
 const clanekModal = document.getElementById('clanekModal');
+// Záhlaví článku: rubrika · strana · druh textu (stejné na stránce čísla i v náhledu okna)
+const zahlaviClanku = c => [c.rubrika || 'Článek', c.strana ? `strana ${c.strana}` : '', NAZVY_DRUHU[c.druh] || ''].filter(Boolean).join(' · ');
 
 // Text článku: odstavce oddělené prázdným řádkem, první je perex; podpora markdownu; „> “ citát; „SLOVO:“ na začátku zvýrazní mluvčího
 export function htmlTextuClanku(text) {
@@ -22,7 +24,7 @@ export function htmlTextuClanku(text) {
 
 // Článek jako oddíl stránky čísla; články jdou pod sebou podle stran (jako alba v galerii modelky)
 export function htmlClanku(c) {
-    const zahlavi = [c.rubrika || 'Článek', c.strana ? `strana ${c.strana}` : '', NAZVY_DRUHU[c.druh] || ''].filter(Boolean).join(' · ');
+    const zahlavi = zahlaviClanku(c);
     return `
         <article class="clanek" data-cast="clanek-${c.id}" data-id-clanku="${c.id}">
             <div class="clanek-rubrika">${esc(zahlavi)}<button type="button" class="clanek-upravit" data-upravit-clanek="${c.id}" title="Upravit článek">✎ upravit</button></div>
@@ -85,6 +87,8 @@ export async function otevritEditorClanku(clanek, vydani) {
     hodnota('inputClanekText', clanek?.text);
     hodnota('inputClanekSkeny', clanek?.skenyOdkazy);
     ukazatTextClanku();
+    ukazatZahlaviClanku();
+    ukazatSkenyClanku();
     document.getElementById('clanekSmazatBtn').classList.toggle('hidden', !clanek);
 
     // Našeptávání: rubriky (obvyklé i už použité), autoři čísla a jména modelek
@@ -94,6 +98,8 @@ export async function otevritEditorClanku(clanek, vydani) {
     document.getElementById('seznamAutoru').innerHTML = [...autori].map(a => `<option value="${esc(a)}"></option>`).join('');
     const modelky = await vsechnyModelky();
     document.getElementById('seznamModelekClanku').innerHTML = modelky.map(m => `<option value="${esc(m.jmeno)}"></option>`).join('');
+    jmenaModelek = new Set(modelky.map(m => sjednotit(m.jmeno)));
+    ukazatModelkuClanku();
 
     clanekModal.classList.remove('hidden');
     document.getElementById(clanek ? 'clanekTextBtn' : 'inputClanekRubrika').focus();
@@ -105,8 +111,46 @@ function ukazatTextClanku() {
     document.getElementById('clanekTextNahled').innerHTML = text.trim() ? htmlTextuClanku(text) : '<span class="text-nahled-prazdny">Napsat text článku…</span>';
 }
 
+// Jména modelek ve sbírce pro nápovědu pod polem Modelka
+let jmenaModelek = new Set();
+
+const hodnotaPole = id => /** @type {HTMLInputElement} */ (document.getElementById(id)).value.trim();
+
+function ukazatZahlaviClanku() {
+    const strana = hodnotaPole('inputClanekStrana');
+    document.getElementById('clanekNahledZahlavi').textContent = zahlaviClanku({
+        rubrika: hodnotaPole('inputClanekRubrika'),
+        strana: /^\d+$/.test(strana) ? strana : '',
+        druh: hodnotaPole('selectClanekDruh'),
+    });
+}
+
+// Jméno, které ve sbírce není, se neuloží; řekne se to hned u pole
+function ukazatModelkuClanku() {
+    const jmeno = hodnotaPole('inputClanekModelka');
+    document.getElementById('clanekModelkaInfo').textContent = !jmeno ? ''
+        : jmenaModelek.has(sjednotit(jmeno)) ? 'Článek bude v profilu modelky.' : 'Ve sbírce není – vyber jméno z nabídky, nebo pole nech prázdné.';
+}
+
+// Počet skenů a jejich náhledy z vložených odkazů
+let poradiSkenu = 0;
+async function ukazatSkenyClanku() {
+    const poradi = ++poradiSkenu;
+    const text = hodnotaPole('inputClanekSkeny');
+    const pocet = pocetOdkazuDisku(text);
+    document.getElementById('clanekSkenyInfo').textContent = pocet ? sklonovat(pocet, 'sken', 'skeny', 'skenů') : text ? 'V textu není odkaz na soubor z Disku.' : '';
+    const adresy = await adresyOdkazu(text, VELIKOST_NAHLEDU);
+    if (poradi !== poradiSkenu) return;
+    document.getElementById('clanekSkenyNahled').innerHTML = adresy.map((a, i) => `<img src="${esc(a)}" alt="Strana ${i + 1}" loading="lazy" draggable="false" />`).join('');
+}
+
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    ['inputClanekRubrika', 'inputClanekStrana', 'selectClanekDruh'].forEach(id => document.getElementById(id).addEventListener('input', ukazatZahlaviClanku));
+    document.getElementById('selectClanekDruh').addEventListener('change', ukazatZahlaviClanku);
+    document.getElementById('inputClanekModelka').addEventListener('input', ukazatModelkuClanku);
+    document.getElementById('inputClanekSkeny').addEventListener('input', ukazatSkenyClanku);
+
     document.getElementById('clanekTextBtn').addEventListener('click', async () => {
         const pole = /** @type {HTMLTextAreaElement} */ (document.getElementById('inputClanekText'));
         const text = await upravitText({

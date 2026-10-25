@@ -1,5 +1,5 @@
 // Okno coveru a otevření profilu ze stěny
-import { rozlozitVydani, slozitVydani } from '../lib/format';
+import { nazevVydani, obrazek, paskaCisla, rozlozitVydani, slozitVydani } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
 import { AddCover, UpdateCover } from './backend';
 import { vsechnyModelky } from './mezipamet';
@@ -12,6 +12,7 @@ import { obnovitStranku } from './vydani';
 import { otevritLightbox } from './prohlizec';
 import { pripojitVyberSpecialu } from './specialy';
 import { zavritOkno } from './ulozeni';
+import { VELIKOST_PLAKATU_MALA, adresyOdkazu } from './obrazky';
 
 // Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -32,9 +33,44 @@ function nastavitCisloCoveru(cislo) {
     const popisek = /** @type {HTMLLabelElement} */ (document.getElementById('coverMesicLabel'));
     popisek.textContent = special ? 'Speciál' : 'Měsíc';
     popisek.htmlFor = special ? 'selectCoverSpecial' : 'selectCoverMesic';
+    ukazatCisloCoveru();
 }
 const vyberCislaCoveru = () => /** @type {HTMLSelectElement} */ (document.getElementById(
     document.getElementById('selectCoverSpecial').classList.contains('hidden') ? 'selectCoverMesic' : 'selectCoverSpecial'));
+
+// Náhled vlevo: název čísla a páska jako na obálce v Číslech; u speciálu bez roku nápověda, kde se speciály vezmou
+function ukazatCisloCoveru() {
+    const rok = /** @type {HTMLInputElement} */ (document.getElementById('inputCoverRok')).value;
+    const special = !document.getElementById('selectCoverSpecial').classList.contains('hidden');
+    const vydani = /^\d{4}$/.test(rok) ? slozitVydani(rok, vyberCislaCoveru().value, document.getElementById('selectCoverEdice').value) : '';
+    const uplne = Boolean(rozlozitVydani(vydani)?.mesic);
+    document.getElementById('coverNahledNazev').textContent = uplne ? nazevVydani(vydani) : special ? 'Vyber rok a speciál' : 'Vyber měsíc a rok';
+    const paska = document.getElementById('coverNahledPaska');
+    paska.textContent = uplne ? paskaCisla(vydani) : '';
+    paska.classList.toggle('hidden', !uplne);
+    document.getElementById('coverSpecialInfo').textContent = special && !/^\d{4}$/.test(rok) ? 'Speciály roku se nabídnou po zadání roku.' : '';
+}
+
+// Obrázek náhledu; bez adresy zástupný text. Nenačtený obrázek nahradí „Nenačteno“ společná obsluha v obrazky.js
+function ukazatObalkuCoveru(adresa) {
+    const img = /** @type {HTMLImageElement} */ (document.getElementById('coverNahledObrazek'));
+    if (adresa) {
+        if (img.getAttribute('src') !== adresa) img.src = adresa;
+    } else {
+        img.removeAttribute('src');
+    }
+    img.classList.toggle('hidden', !adresa);
+    document.getElementById('coverNahledPrazdny').classList.toggle('hidden', Boolean(adresa));
+}
+
+// Náhled z vloženého odkazu; bez odkazu u úpravy zůstane původní obálka
+let puvodniObalka = '';
+let poradiNahledu = 0;
+async function nahledOdkazuCoveru() {
+    const poradi = ++poradiNahledu;
+    const [adresa] = await adresyOdkazu(/** @type {HTMLInputElement} */ (document.getElementById('inputCoverLink')).value, VELIKOST_PLAKATU_MALA);
+    if (poradi === poradiNahledu) ukazatObalkuCoveru(adresa || puvodniObalka);
+}
 
 // Formulář coveru slouží pro přidání (polozka = null) i úpravu vydání
 export const coverModal = document.getElementById('coverModal');
@@ -56,6 +92,9 @@ export function otevritCoverModal(polozka = null, predvyplnitVydani = '') {
     obnovitSpecialyCoveru(special ? vydani.mesic : '');
     document.getElementById('selectCoverMesic').value = special ? '' : vydani?.mesic || '';
     nastavitCisloCoveru(special ? 'special' : 'mesic');
+    puvodniObalka = polozka?.fotky?.[0]?.url ? obrazek(polozka.fotky[0].url, VELIKOST_PLAKATU_MALA) : '';
+    poradiNahledu++;
+    ukazatObalkuCoveru(puvodniObalka);
     coverModal.classList.remove('hidden');
     // S předvyplněným vydáním zbývá jen vložit odkaz
     (vydani && !polozka ? document.getElementById('inputCoverLink') : vyberCislaCoveru()).focus();
@@ -73,6 +112,10 @@ export function pripravit() {
         const cislo = /** @type {HTMLElement} */ (e.target).closest('[data-cislo-coveru]');
         if (cislo) nastavitCisloCoveru(cislo.dataset.cisloCoveru);
     });
+    ['input', 'change'].forEach(udalost => document.getElementById('coverForm').addEventListener(udalost, (e) => {
+        if (/** @type {HTMLElement} */ (e.target).id !== 'inputCoverLink') ukazatCisloCoveru();
+    }));
+    document.getElementById('inputCoverLink').addEventListener('input', nahledOdkazuCoveru);
 
     document.getElementById('closeCoverModalBtn').onclick = () => zavritOkno(coverModal);
 

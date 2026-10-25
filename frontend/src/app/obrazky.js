@@ -1,6 +1,7 @@
 // Velikosti obrázků z Disku a zástupný obrázek pro chybějící fotku
-import { obrazek } from '../lib/format';
+import { idOdkazuDisku, obrazek } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
+import { GetSablonaObrazku } from './backend';
 
 // Google Disk bez přípony vrací nejvýše 1600 px; =s0 je originál, =w600 úsporný náhled
 export const VELIKOST_NAHLEDU = 'w400';       // dlaždice fotky v albu
@@ -31,6 +32,15 @@ export function adresaTitulni(modelka, velka = false) {
     return obrazek(modelka.coverUrl, velka || modelka.coverZoom > 1.5 ? VELIKOST_TITULNI : VELIKOST_KARTY);
 }
 export const PLNE_ROZLISENI = 's0';
+
+// Adresy obrázků k souborům z vložených odkazů na Disk (náhled v oknech coveru a článku). Šablonu adresy
+// skládá backend a jde změnit v nastavení, proto se pokaždé načte znovu (je to jen přečtení hodnoty).
+export async function adresyOdkazu(text, velikost) {
+    const ids = idOdkazuDisku(text);
+    if (!ids.length) return [];
+    const sablona = await GetSablonaObrazku().catch(() => '');
+    return sablona ? ids.map(id => obrazek(sablona.replaceAll('{id}', id), velikost)) : [];
+}
 
 // Postupné načítání fotek ve velké mřížce: obrázek s data-src dostane adresu, až se přiblíží k zobrazené části
 // (asi dvě obrazovky dopředu). Když z ní odroluje dřív, než se načetl, jeho požadavek se zruší, aby při rychlém

@@ -16,6 +16,9 @@ export function pocetSlovAZnaku(text) {
     return { slov: (cisty.match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu) || []).length, znaku: cisty.replace(/\s/g, '').length };
 }
 
+// Okna coveru a článku (náhledy odkazů) volají stejnou funkci pod tímto jménem
+export const idOdkazuDisku = odkazyDisku;
+
 // Anglické názvy k výběru měsíce („Červen (June)“), americké zdroje píšou čísla anglicky
 export const MESICE_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const moznostiMesicu = () => MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m} (${MESICE_EN[i]})</option>`).join('');

@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.18] – 2026-10-25
+
+### Změněno
+Okna programu sjednocená do vzhledu okna alba (vlevo volby a náhled, vpravo pole), každé s křížkem, Ctrl+Enter a bez vodorovného posouvání v úzkém okně:
+- **Formulář modelky:** vlevo části formuláře (klik doroluje, tečka = vyplněno) a náhled „V profilu bude“ s pruhem „Vyplněno X z 18 údajů“; vpravo hustší pole (méně rolování). Živé nápovědy: věk z data narození, chybné datum, americké míry (`5'7"` → 170 cm, `115 lbs` → 52 kg, `34B-24-34`), BMI, upozornění na stejné jméno ve sbírce. Tagy se přidávají a odebírají klikem. Doplnit modelku je širší, převádí míry stejně a má křížek.
+- **Okno alba:** vejde se i na nízkou obrazovku (pole se posouvají, tlačítka zůstávají dole), tišší a kratší nápovědy, náhled s obrázkem první vložené fotky a počtem fotek, volby jdou ovládat šipkami.
+- **Okno coveru:** náhled obálky z vloženého odkazu s páskou čísla, Měsíční/Speciál jako volby vlevo.
+- **Okno čísla:** obálka se štítkem stavu, stav ve sbírce jako volby, u „Na obálce“ hned vidět, jestli se jméno propojí s profilem.
+- **Okno článku:** živé záhlaví (rubrika · strana · druh), pole přeskupená, upozornění na neznámou modelku hned při psaní, počet a náhledy skenů.
+
+### Přidáno
+- Společný editor textu i pro **poznámku modelky** a **poznámku čísla**. Editor ukazuje, který formát je u kurzoru (opakovaný klik ho vypne), odrážky jako tečky, u článku perex a mluvčí jako ve čtečce, tlačítko **Náhled** (přesně jako v profilu/čtečce), počet slov a znaků; Enter v číslovaném seznamu přečísluje položky.
+
 ## [0.99.17] – 2026-10-25
 
 ### Změněno

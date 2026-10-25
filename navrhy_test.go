@@ -671,3 +671,14 @@ func TestNavrhyRychlost(t *testing.T) {
 		t.Errorf("návrhy pro 3000 modelek trvaly %v (limit 1 s)", trvalo)
 	}
 }
+
+// Všechny návrhy sbírky (i odmítnuté, s příznakem) nad prahem, seřazené od nejvyšší jistoty; bez učení ze zpětné
+// vazby. Modelky a alba jako z GetModelky a albaProNavrhy; letos = nejpozdější rok, který může být v datu.
+func navrhnoutDoplneni(modelky []Modelka, alba []albumNavrhu, letos int) []NavrhDoplneni {
+	navrhy := navrhnout(modelky, alba, letos, nil)
+	vysledek := make([]NavrhDoplneni, len(navrhy))
+	for i, n := range navrhy {
+		vysledek[i] = n.NavrhDoplneni
+	}
+	return vysledek
+}

@@ -52,11 +52,6 @@ const (
 	prvniRokCasopisu     = 1953
 )
 
-// Nálezy ke kontrole; označené „V pořádku“ jen s vcetneSkrytych (s příznakem). Modelky jako z GetModelky.
-func (a *App) kontrolovatSbirku(modelky []Modelka, vcetneSkrytych bool) []PodezrelyUdaj {
-	return vybratNalezy(a.nalezyKontroly(modelky, a.albaSbirky()), vcetneSkrytych)
-}
-
 // Nálezy bez označených „V pořádku“, nebo všechny
 func vybratNalezy(vsechny []PodezrelyUdaj, vcetneSkrytych bool) []PodezrelyUdaj {
 	nalezy := []PodezrelyUdaj{}
@@ -70,15 +65,29 @@ func vybratNalezy(vsechny []PodezrelyUdaj, vcetneSkrytych bool) []PodezrelyUdaj 
 
 // Všechny nálezy sbírky i s označenými „V pořádku“ (s příznakem); výpočet bez mezipaměti (ta je v uceni.go)
 func (a *App) spocitatNalezy(modelky []Modelka, alba []albumSbirky, prahy prahyKontroly) []PodezrelyUdaj {
+	nalezModelky := func(m Modelka, klic, zdroj, pole, popis string) PodezrelyUdaj {
+		return PodezrelyUdaj{ModelkaID: m.ID, Jmeno: m.Jmeno, Popis: popis, Klic: klic, Pole: pole,
+			NetykaSe: obsahujeKlic(m.NetykaSe, klic), Zdroj: zdroj}
+	}
 	nalezy := []PodezrelyUdaj{}
 	pridat := func(m Modelka, klic, zdroj, pole, popis string) {
-		nalezy = append(nalezy, PodezrelyUdaj{ModelkaID: m.ID, Jmeno: m.Jmeno, Popis: popis, Klic: klic, Pole: pole,
-			NetykaSe: obsahujeKlic(m.NetykaSe, klic), Zdroj: zdroj})
+		nalezy = append(nalezy, nalezModelky(m, klic, zdroj, pole, popis))
 	}
 	podleID := map[int]Modelka{}
 	for _, m := range modelky {
 		podleID[m.ID] = m
 	}
+
+	// Dvojice fotek hledá dotaz nad všemi fotkami: běží souběžně s kontrolami údajů (jen čte databázi a podleID)
+	// a jeho nálezy se přidají na konec jako dřív
+	var dvojice []PodezrelyUdaj
+	hotovo := make(chan struct{})
+	go func() {
+		defer close(hotovo)
+		a.kontrolovatDvojiceFotek(podleID, func(m Modelka, klic, zdroj, pole, popis string) {
+			dvojice = append(dvojice, nalezModelky(m, klic, zdroj, pole, popis))
+		})
+	}()
 
 	kontrolovatModelky(modelky, prahy, pridat)
 	kontrolovatCenterfoldyCisel(modelky, alba, pridat)
@@ -115,22 +124,46 @@ func (a *App) spocitatNalezy(modelky []Modelka, alba []albumSbirky, prahy prahyK
 			pridatAlbu(al, "ok-vydani-alba", "vydani-alba", fmt.Sprintf("album „%s“ má vydání %s, mimo roky časopisu (%d–%d)", al.nazev, al.vydani, prvniRokCasopisu, letos))
 		}
 	}
-	a.kontrolovatDvojiceFotek(podleID, pridat)
-	return nalezy
+	<-hotovo
+	return append(nalezy, dvojice...)
 }
 
 // Kontroly samotných údajů modelek (bez alb a fotek): pravidla s rozsahy naučenými ze sbírky,
 // neobvyklé kombinace údajů postavy a podobná jména
 func kontrolovatModelky(modelky []Modelka, prahy prahyKontroly, pridat pridatNalez) {
+	// Podobná jména (porovnávají jména mezi sebou, nejdražší kontrola) běží souběžně s ostatními; jen čtou
+	// modelky. Nálezy se předají v pořadí jako dřív: jména, podobná jména, údaje modelek, neobvyklé kombinace.
+	type nalez struct {
+		m                        Modelka
+		klic, zdroj, pole, popis string
+	}
+	odlozit := func(seznam *[]nalez) pridatNalez {
+		return func(m Modelka, klic, zdroj, pole, popis string) {
+			*seznam = append(*seznam, nalez{m, klic, zdroj, pole, popis})
+		}
+	}
+	var podobna, udaje []nalez
+	hotovo := make(chan struct{})
+	go func() {
+		defer close(hotovo)
+		kontrolovatPodobnaJmena(modelky, prahy.prahJmen, odlozit(&podobna))
+	}()
+
 	uceni := naucitSe(modelky, prahy)
 	kontrolovatJmena(modelky, pridat)
-	kontrolovatPodobnaJmena(modelky, prahy.prahJmen, pridat)
+	pridatUdaj := odlozit(&udaje)
 	for _, m := range modelky {
-		kontrolovatData(m, uceni.rozsahy, pridat)
-		kontrolovatPostavu(m, uceni.rozsahy, pridat)
-		kontrolovatPlaymateRoku(m, pridat)
+		kontrolovatData(m, uceni.rozsahy, pridatUdaj)
+		kontrolovatPostavu(m, uceni.rozsahy, pridatUdaj)
+		kontrolovatPlaymateRoku(m, pridatUdaj)
 	}
-	uceni.kontrolovatNeobvykle(modelky, pridat)
+	uceni.kontrolovatNeobvykle(modelky, pridatUdaj)
+	<-hotovo
+	for _, seznam := range [][]nalez{podobna, udaje} {
+		for _, n := range seznam {
+			pridat(n.m, n.klic, n.zdroj, n.pole, n.popis)
+		}
+	}
 }
 
 // Stejné jméno nebo pseudonym u dvou modelek bývá dvakrát založená tatáž
@@ -262,7 +295,7 @@ func kontrolovatPlaymateRoku(m Modelka, pridat pridatNalez) {
 }
 
 // Dvě různá centerfoldová alba ve stejném měsíčním čísle bývají špatně zapsané vydání (společný centerfold
-// dvojčat je jedno sdílené album a nehlásí se). Alba jako z albaSbirky (všechna alba modelek).
+// dvojčat je jedno sdílené album a nehlásí se). Alba jako ze snímku sbírky (všechna alba modelek, snimek.go).
 func kontrolovatCenterfoldyCisel(modelky []Modelka, alba []albumSbirky, pridat pridatNalez) {
 	pocty := map[string]int{}
 	for _, al := range alba {

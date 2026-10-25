@@ -525,3 +525,8 @@ func TestNavrhPodleSousedu(t *testing.T) {
 		t.Errorf("z výšky a hrudníku pas odhadnout nejde, ověření má selhat: %+v", o)
 	}
 }
+
+func (u *uceni) prahyKontroly() prahyKontroly {
+	p, _ := u.prahyAGenerace()
+	return p
+}

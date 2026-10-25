@@ -129,3 +129,9 @@ func TestKontrolaDatJenRokem(t *testing.T) {
 		}
 	}
 }
+
+// Nálezy ke kontrole; označené „V pořádku“ jen s vcetneSkrytych (s příznakem). Modelky jako z GetModelky.
+func (a *App) kontrolovatSbirku(modelky []Modelka, vcetneSkrytych bool) []PodezrelyUdaj {
+	_, alba, _ := a.modelkyAAlba()
+	return vybratNalezy(a.nalezyKontroly(modelky, alba), vcetneSkrytych)
+}

@@ -2,10 +2,10 @@ package main
 
 import (
 	"database/sql"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"math"
 	"os"
 	"path/filepath"
@@ -695,11 +695,6 @@ func (u *uceni) vstupNavrhu() (*vstupUceni, int64) {
 var rozsahyPravidel = map[string][]int{"vyska": {prVyska}, "vaha": {prVaha}, "bmi": {prBmi}, "vek": {prVek},
 	"miry": {prHrudnik, prPas, prBoky}}
 
-func (u *uceni) prahyKontroly() prahyKontroly {
-	p, _ := u.prahyAGenerace()
-	return p
-}
-
 // Prahy a generace deníku, ze které jsou (pod jedním zámkem)
 func (u *uceni) prahyAGenerace() (prahyKontroly, int64) {
 	if u == nil {
@@ -763,8 +758,7 @@ func (u *uceni) spocitatPrahy() prahyKontroly {
 // Jakákoli změna dat nebo nové rozhodnutí tak mezipaměť zneplatní samo; jiná invalidace není potřeba.
 
 func otiskSbirky(druh string, modelky []Modelka, alba []albumSbirky, generace int64) string {
-	h := fnv.New64a()
-	o := otiskovac{h: h}
+	o := novyOtiskovac()
 	o.text(verzeModeluUceni, druh, time.Now().Format("2006-01-02"))
 	o.cisla(int(generace))
 	for i := range modelky {
@@ -774,7 +768,7 @@ func otiskSbirky(druh string, modelky []Modelka, alba []albumSbirky, generace in
 		o.text(al.jmeno, al.nazev, al.typ, al.vydani, al.datum, al.fotograf, al.popis, al.neni)
 		o.cisla(al.modelkaID, al.fotek, al.hodnocenych, int(al.soucetFotek))
 	}
-	return hex.EncodeToString(h.Sum(nil))
+	return o.hex()
 }
 
 // Otisk údajů modelky, ze kterých kontrola hlásí nálezy (pro poznání, že uživatel nález opravil). Bez údajů, které
@@ -784,31 +778,48 @@ const predponaOtiskuKontroly = "k2:"
 
 func otiskUdajuKontroly(m Modelka) string {
 	m.Hodnoceni, m.CoverID, m.CoverURL, m.Tags, m.Poznamka, m.Pridano = 0, "", "", "", "", ""
-	h := fnv.New64a()
-	(&otiskovac{h: h}).modelka(&m)
-	return predponaOtiskuKontroly + hex.EncodeToString(h.Sum(nil))
+	o := novyOtiskovac()
+	o.modelka(&m)
+	return predponaOtiskuKontroly + o.hex()
 }
 
-// Zápis údajů do otisku bez reflexe (fmt.Sprint všech modelek byl desetkrát pomalejší)
-type otiskovac struct {
-	h     interface{ Write([]byte) (int, error) }
-	cislo [8]byte
-}
+// Zápis údajů do otisku bez reflexe (fmt.Sprint všech modelek byl desetkrát pomalejší) a bez alokací: FNV-64a
+// počítaný přímo nad bajty textů, se stejnými hodnotami jako hash/fnv (otisky uložené v mezipaměti platí dál)
+type otiskovac struct{ h uint64 }
+
+const (
+	zakladFNV = 14695981039346656037
+	prvociFNV = 1099511628211
+)
+
+func novyOtiskovac() otiskovac { return otiskovac{h: zakladFNV} }
 
 func (o *otiskovac) text(texty ...string) {
+	h := o.h
 	for _, t := range texty {
-		o.h.Write([]byte(t))
-		o.h.Write([]byte{0})
+		for i := 0; i < len(t); i++ {
+			h = (h ^ uint64(t[i])) * prvociFNV
+		}
+		h *= prvociFNV // za každým textem bajt 0
 	}
+	o.h = h
 }
 
 func (o *otiskovac) cisla(cisla ...int) {
+	h := o.h
 	for _, c := range cisla {
-		for i := range o.cislo {
-			o.cislo[i] = byte(uint64(c) >> (8 * i))
+		for i := range 8 {
+			h = (h ^ uint64(byte(uint64(c)>>(8*i)))) * prvociFNV
 		}
-		o.h.Write(o.cislo[:])
 	}
+	o.h = h
+}
+
+// Otisk jako šestnáct šestnáctkových číslic (jako hex.EncodeToString(fnv.Sum(nil)))
+func (o *otiskovac) hex() string {
+	var b [8]byte
+	binary.BigEndian.PutUint64(b[:], o.h)
+	return hex.EncodeToString(b[:])
 }
 
 func (o *otiskovac) modelka(m *Modelka) {
@@ -1046,7 +1057,8 @@ func (a *App) GetStavUceni() StavUceni {
 	if u == nil {
 		return stav
 	}
-	navrhy := a.navrhySbirky(a.GetModelky(""), a.albaSbirky())
+	modelky, alba, _ := a.modelkyAAlba()
+	navrhy := a.navrhySbirky(modelky, alba)
 	pocty := map[string]int{}
 	for _, n := range navrhy {
 		if !n.Odmitnuto {
@@ -1149,63 +1161,4 @@ func uklidZalohUceni() {
 		os.Remove(soubory[0])
 		soubory = soubory[1:]
 	}
-}
-
-// ---------------------------------------------------------------------------------------------------------
-// Alba sbírky jedním dotazem
-
-// Album modelky se vším, co potřebuje Přehled, kontrola i návrhy
-type albumSbirky struct {
-	modelkaID               int
-	jmeno                   string // jméno modelky
-	nazev, typ              string
-	vydani, datum, fotograf string
-	popis, neni             string // neni = „netýká se“ alba
-	fotek, hodnocenych      int
-	soucetFotek             int64 // součet čísel fotek: změní se přidáním, přesunem i odebráním fotky
-}
-
-// Alba všech modelek (i bez fotek) seřazená podle jména modelky, názvu a typu
-func (a *App) albaSbirky() []albumSbirky {
-	alba := []albumSbirky{}
-	rows, err := a.db.Query(`
-		SELECT al.modelka_id, m.jmeno, al.album, al.typ, COALESCE(al.vydani, ''), COALESCE(al.datum, ''), TRIM(COALESCE(al.fotograf, '')),
-			COALESCE(al.popis, ''), COALESCE(al.netyka_se, ''), COUNT(f.id), COALESCE(SUM(COALESCE(f.hodnoceni, 0) > 0), 0), COALESCE(SUM(f.id), 0)
-		FROM alba al
-		JOIN modelky m ON m.id = al.modelka_id
-		LEFT JOIN fotky f ON f.album_id = al.id
-		GROUP BY al.id`)
-	if err != nil {
-		a.chyba("načtení alb", err)
-		return alba
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var al albumSbirky
-		if rows.Scan(&al.modelkaID, &al.jmeno, &al.nazev, &al.typ, &al.vydani, &al.datum, &al.fotograf, &al.popis, &al.neni,
-			&al.fotek, &al.hodnocenych, &al.soucetFotek) == nil {
-			alba = append(alba, al)
-		}
-	}
-	// Řazení v programu: COLLATE BEZDIAKRITIKY v SQL zjednodušuje jméno při každém porovnání (desítky ms)
-	klice := map[int]string{}
-	for _, al := range alba {
-		if _, ok := klice[al.modelkaID]; !ok {
-			klice[al.modelkaID] = zjednodusit(al.jmeno)
-		}
-	}
-	sort.SliceStable(alba, func(i, j int) bool {
-		x, y := alba[i], alba[j]
-		if kx, ky := klice[x.modelkaID], klice[y.modelkaID]; kx != ky {
-			return kx < ky
-		}
-		if x.modelkaID != y.modelkaID {
-			return x.modelkaID < y.modelkaID
-		}
-		if x.nazev != y.nazev {
-			return x.nazev < y.nazev
-		}
-		return x.typ < y.typ
-	})
-	return alba
 }

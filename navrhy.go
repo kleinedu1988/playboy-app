@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -179,7 +180,7 @@ type albumNavrhu struct {
 	fotek                         int
 }
 
-// Alba modelek pro návrhy (z albaSbirky) v pořadí modelka, název, typ
+// Alba modelek pro návrhy (ze snímku sbírky, snimek.go) v pořadí modelka, název, typ
 func albaProNavrhy(alba []albumSbirky) []albumNavrhu {
 	vysledek := make([]albumNavrhu, 0, len(alba))
 	for _, al := range alba {
@@ -201,7 +202,8 @@ func albaProNavrhy(alba []albumSbirky) []albumNavrhu {
 
 // Návrhy doplnění chybějících údajů seřazené od nejvyšší jistoty; odmítnuté jen s vcetneOdmitnutych (s příznakem)
 func (a *App) GetNavrhyDoplneni(vcetneOdmitnutych bool) []NavrhDoplneni {
-	return a.navrhyDoplneni(a.GetModelky(""), a.albaSbirky(), vcetneOdmitnutych)
+	modelky, alba, _ := a.modelkyAAlba()
+	return a.navrhyDoplneni(modelky, alba, vcetneOdmitnutych)
 }
 
 func (a *App) navrhyDoplneni(modelky []Modelka, alba []albumSbirky, vcetneOdmitnutych bool) []NavrhDoplneni {
@@ -394,21 +396,9 @@ type kandidat struct {
 	dalsiZdroje []string // zdroje sloučené do kandidáta (shodné odhady obvodů)
 }
 
-// Všechny návrhy sbírky (i odmítnuté, s příznakem) nad prahem, seřazené od nejvyšší jistoty; bez učení ze zpětné
-// vazby. Modelky a alba jako z GetModelky a albaProNavrhy; letos = nejpozdější rok, který může být v datu.
-func navrhnoutDoplneni(modelky []Modelka, alba []albumNavrhu, letos int) []NavrhDoplneni {
-	navrhy := navrhnout(modelky, alba, letos, nil)
-	vysledek := make([]NavrhDoplneni, len(navrhy))
-	for i, n := range navrhy {
-		vysledek[i] = n.NavrhDoplneni
-	}
-	return vysledek
-}
-
 // Návrhy s učením ze zpětné vazby (uc může být nil)
 func navrhnout(modelky []Modelka, alba []albumNavrhu, letos int, uc *vstupUceni) []navrhSbirky {
-	var kandidati []kandidat
-	pridat := func(m Modelka, al *albumNavrhu, pole, hodnota, duvod, zdroj string, jistota float64) {
+	novyKandidat := func(m Modelka, al *albumNavrhu, pole, hodnota, duvod, zdroj string, jistota float64) kandidat {
 		u := udajeNavrhu[pole]
 		k := kandidat{NavrhDoplneni: NavrhDoplneni{ModelkaID: m.ID, Jmeno: m.Jmeno, Pole: pole, Popis: u.popis, Hodnota: hodnota,
 			Jistota: jistota, Duvod: duvod, Klic: klicNavrhu(pole), InputID: u.input, Zdroj: zdroj}}
@@ -429,7 +419,7 @@ func navrhnout(modelky []Modelka, alba []albumNavrhu, letos int, uc *vstupUceni)
 			}
 			k.Odmitnuto = len(hodnoty) == 0 || hodnoty[k.klicHodnoty]
 		}
-		kandidati = append(kandidati, k)
+		return k
 	}
 	predpoklady := predpokladyHodnot(modelky, alba)
 	var zapisy map[string]map[string]string
@@ -437,11 +427,31 @@ func navrhnout(modelky []Modelka, alba []albumNavrhu, letos int, uc *vstupUceni)
 		zapisy = uc.zapisy
 	}
 
-	navrhnoutNarodnosti(modelky, zapisy["narodnost"], pridat)
-	navrhnoutVzhled(modelky, zapisy, pridat)
-	navrhnoutMiry(modelky, pridat)
-	navrhnoutPlaymateRoku(modelky, alba, pridat)
-	navrhnoutAlba(modelky, alba, letos, zapisy["fotografAlba"], pridat)
+	// Zdroje jsou na sobě nezávislé a jen čtou modelky, alba a naučené (uc): počítají se souběžně, každý do
+	// vlastního seznamu, a kandidáti se spojí v pevném pořadí zdrojů (výsledek je stejný jako po jednom)
+	zdroje := []func(pridat pridatKandidata){
+		func(pridat pridatKandidata) { navrhnoutNarodnosti(modelky, zapisy["narodnost"], pridat) },
+		func(pridat pridatKandidata) { navrhnoutVzhled(modelky, zapisy, pridat) },
+		func(pridat pridatKandidata) { navrhnoutMiry(modelky, pridat) },
+		func(pridat pridatKandidata) { navrhnoutPlaymateRoku(modelky, alba, pridat) },
+		func(pridat pridatKandidata) { navrhnoutAlba(modelky, alba, letos, zapisy["fotografAlba"], pridat) },
+	}
+	podleZdroje := make([][]kandidat, len(zdroje))
+	var cekani sync.WaitGroup
+	for i, spustit := range zdroje {
+		cekani.Add(1)
+		go func() {
+			defer cekani.Done()
+			spustit(func(m Modelka, al *albumNavrhu, pole, hodnota, duvod, zdroj string, jistota float64) {
+				podleZdroje[i] = append(podleZdroje[i], novyKandidat(m, al, pole, hodnota, duvod, zdroj, jistota))
+			})
+		}()
+	}
+	cekani.Wait()
+	var kandidati []kandidat
+	for _, k := range podleZdroje {
+		kandidati = append(kandidati, k...)
+	}
 
 	var kalibrace map[string]kalibraceZdroje
 	if uc != nil {

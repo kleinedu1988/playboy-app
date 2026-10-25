@@ -56,15 +56,28 @@ func (a *App) migraceSdilenaAlba() error {
 	return nil
 }
 
-// Řádek alba (vytvoří se, pokud ještě není); vrací jeho id
+// Řádek alba (vytvoří se, pokud ještě není); vrací jeho id. Cover časopisu je album bez modelky.
+const (
+	dotazZalozitAlbum = `INSERT OR IGNORE INTO alba (modelka_id, album, typ, vydani) VALUES (NULLIF(?, 0), ?, ?,
+		CASE WHEN ? IN ('Centerfold', 'Cover') THEN ? ELSE '' END)`
+	dotazIDAlba = "SELECT id FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?"
+)
+
 func zajistitAlbum(q dotazovac, modelkaID int, album, typ string) (int64, error) {
-	// Cover časopisu je album bez modelky
-	if _, err := q.Exec(`INSERT OR IGNORE INTO alba (modelka_id, album, typ, vydani) VALUES (NULLIF(?, 0), ?, ?,
-		CASE WHEN ? IN ('Centerfold', 'Cover') THEN ? ELSE '' END)`, modelkaID, album, typ, typ, album); err != nil {
+	return zajistitAlbumPres(obycejnyDotaz{q, dotazZalozitAlbum}, obycejnyDotaz{q, dotazIDAlba}, modelkaID, album, typ)
+}
+
+// Totéž nad spojením aplikace; v importu připravenými příkazy (album se zajišťuje u každého alba několikrát)
+func (a *App) zajistitAlbum(modelkaID int, album, typ string) (int64, error) {
+	return zajistitAlbumPres(a.pripraveny(dotazZalozitAlbum), a.pripraveny(dotazIDAlba), modelkaID, album, typ)
+}
+
+func zajistitAlbumPres(zalozit, najit pripravenyDotaz, modelkaID int, album, typ string) (int64, error) {
+	if _, err := zalozit.Exec(modelkaID, album, typ, typ, album); err != nil {
 		return 0, err
 	}
 	var id int64
-	err := q.QueryRow("SELECT id FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&id)
+	err := najit.QueryRow(modelkaID, album, typ).Scan(&id)
 	return id, err
 }
 
@@ -76,42 +89,63 @@ func pocetFotekAlba(q dotazovac, modelkaID int, album, typ string) int {
 
 func (a *App) jmenoModelky(id int) string {
 	var jmeno string
-	a.db.QueryRow("SELECT jmeno FROM modelky WHERE id = ?", id).Scan(&jmeno)
+	a.pripraveny("SELECT jmeno FROM modelky WHERE id = ?").QueryRow(id).Scan(&jmeno)
 	return jmeno
 }
 
-// Další modelky alb podle klíče „modelka\nalbum\ntyp"
-func (a *App) dalsiModelkyAlb() map[string][]OdkazModelky {
-	vysledek := map[string][]OdkazModelky{}
-	rows, err := a.db.Query(`SELECT al.modelka_id, al.album, al.typ, m.id, m.jmeno
+// Další modelky alb podle čísla alba (jen alba s hlavní modelkou; další modelky coveru se v seznamech fotek
+// neukazují), seřazené podle jména. alba = jen tato alba (profil modelky, vydání), nil = všechna (export).
+func (a *App) dalsiModelkyAlb(alba []int64) map[int64][]OdkazModelky {
+	vysledek := map[int64][]OdkazModelky{}
+	podminka, args := "", []interface{}{}
+	if alba != nil {
+		if len(alba) == 0 {
+			return vysledek
+		}
+		podminka = " AND am.album_id IN (?" + strings.Repeat(", ?", len(alba)-1) + ")"
+		for _, id := range alba {
+			args = append(args, id)
+		}
+	}
+	rows, err := a.db.Query(`SELECT am.album_id, m.id, m.jmeno
 		FROM alba_modelky am JOIN alba al ON al.id = am.album_id JOIN modelky m ON m.id = am.modelka_id
-		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY`)
+		WHERE al.modelka_id IS NOT NULL`+podminka+` ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, m.id`, args...)
 	if err != nil {
 		a.chyba("načtení dalších modelek alb", err)
 		return vysledek
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var modelkaID int
-		var album, typ string
+		var album int64
 		var odkaz OdkazModelky
-		if rows.Scan(&modelkaID, &album, &typ, &odkaz.ID, &odkaz.Jmeno) == nil {
-			klic := fmt.Sprintf("%d\n%s\n%s", modelkaID, album, typ)
-			vysledek[klic] = append(vysledek[klic], odkaz)
+		if rows.Scan(&album, &odkaz.ID, &odkaz.Jmeno) == nil {
+			vysledek[album] = append(vysledek[album], odkaz)
 		}
 	}
 	return vysledek
 }
 
-// Fotkám doplní další modelky jejich alba
+// Fotkám doplní další modelky jejich alba (načtou se jen pro alba těchto fotek)
 func (a *App) doplnitDalsiModelky(fotky []Fotografie) []Fotografie {
-	return doplnitDalsiModelkyZ(fotky, a.dalsiModelkyAlb())
+	videna := map[int64]bool{}
+	alba := []int64{}
+	for _, f := range fotky {
+		if !videna[f.AlbumID] {
+			videna[f.AlbumID] = true
+			alba = append(alba, f.AlbumID)
+		}
+	}
+	// Velký výběr alb (stovky) jednou pro všechna, aby dotaz nepřerostl mez počtu parametrů
+	if len(alba) > 500 {
+		alba = nil
+	}
+	return doplnitDalsiModelkyZ(fotky, a.dalsiModelkyAlb(alba))
 }
 
 // Totéž s předem načtenými vazbami (export je načte jednou pro všechny modelky)
-func doplnitDalsiModelkyZ(fotky []Fotografie, dalsi map[string][]OdkazModelky) []Fotografie {
+func doplnitDalsiModelkyZ(fotky []Fotografie, dalsi map[int64][]OdkazModelky) []Fotografie {
 	for i := range fotky {
-		fotky[i].DalsiModelky = dalsi[fmt.Sprintf("%d\n%s\n%s", fotky[i].ModelkaID, fotky[i].Album, fotky[i].Typ)]
+		fotky[i].DalsiModelky = dalsi[fotky[i].AlbumID]
 		if fotky[i].DalsiModelky == nil {
 			fotky[i].DalsiModelky = []OdkazModelky{}
 		}
@@ -126,7 +160,7 @@ func (a *App) PridatModelkuKAlbu(modelkaID int, album, typ string, dalsiID int) 
 	if dalsiID == modelkaID || a.jmenoModelky(dalsiID) == "" || existuje == 0 {
 		return false
 	}
-	id, err := zajistitAlbum(a.db, modelkaID, album, typ)
+	id, err := a.zajistitAlbum(modelkaID, album, typ)
 	if err == nil {
 		_, err = a.db.Exec("INSERT OR IGNORE INTO alba_modelky (album_id, modelka_id) VALUES (?, ?)", id, dalsiID)
 	}
@@ -344,7 +378,7 @@ func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) Vysled
 // jméno a pseudonymy zdrojové modelky se přidají mezi pseudonymy. Vrací text chyby, prázdný při úspěchu.
 func (a *App) SloucitModelky(cilID, zdrojID int) string {
 	var cil, zdroj *Modelka
-	for _, m := range a.GetModelky("") {
+	for _, m := range a.vsechnyModelky() {
 		m := m
 		switch m.ID {
 		case cilID:
@@ -592,7 +626,7 @@ func (a *App) ObnovitFotky(fotky []ObnovaFotky) int {
 		if f.Poradi > 0 {
 			poradi = f.Poradi
 		}
-		albumID, err := zajistitAlbum(a.db, f.ModelkaID, f.Album, f.Typ)
+		albumID, err := a.zajistitAlbum(f.ModelkaID, f.Album, f.Typ)
 		if err != nil {
 			a.chyba("vrácení odebraných fotek", err)
 			continue
@@ -730,7 +764,7 @@ func (a *App) PrejmenovatTag(stary, novy string) int {
 		return 0
 	}
 	zmeny := map[int]string{}
-	for _, m := range a.GetModelky("") {
+	for _, m := range a.vsechnyModelky() {
 		tagy := strings.Split(m.Tags, ",")
 		zmena := false
 		for i, tag := range tagy {

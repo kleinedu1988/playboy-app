@@ -1,9 +1,7 @@
 package main
 
 import (
-	"encoding/hex"
 	"fmt"
-	"hash/fnv"
 	"math"
 	"math/rand"
 	"regexp"
@@ -214,12 +212,12 @@ func (a *App) GetOblibenost() StavOblibenosti {
 		stav.Odhady = v.platny
 	}
 	for _, m := range modelky {
-		ob := model.oblibenostModelky(m)
+		ob := model.oblibenostModelky(&m)
 		if ob <= 0 {
 			continue
 		}
-		polozka := OblibenostModelky{ModelkaID: m.ID, Jmeno: m.Jmeno, Hodnoceni: m.Hodnoceni, Sila: zaokrouhlit3(model.silaModelky(m)),
-			Nejistota: zaokrouhlit3(math.Sqrt(model.rozptylModelky(m))), Porovnani: model.pocet[m.ID]}
+		polozka := OblibenostModelky{ModelkaID: m.ID, Jmeno: m.Jmeno, Hodnoceni: m.Hodnoceni, Sila: zaokrouhlit3(model.silaModelky(&m)),
+			Nejistota: zaokrouhlit3(math.Sqrt(model.rozptylModelky(&m))), Porovnani: model.pocet[m.ID]}
 		if odhad, duvod, ok := model.odhadModelky(m, true); ok {
 			polozka.Odhad = odhad
 			polozka.Duvod = duvod
@@ -294,7 +292,7 @@ func (a *App) doplnitOblibenost(modelky []Modelka) {
 	model := a.modelOblibenosti(modelky)
 	for i := range modelky {
 		m := &modelky[i]
-		m.Oblibenost = model.oblibenostModelky(*m)
+		m.Oblibenost = model.oblibenostModelky(m)
 		if m.Hodnoceni <= 0 && model.vkus != nil && model.vkus.platny {
 			if odhad, ok := model.odhad[m.ID]; ok {
 				m.OdhadHodnoceni = zaokrouhlitNaPul(odhad)
@@ -396,21 +394,21 @@ type modelOblibenosti struct {
 	prumer     float64 // průměr srdíček hodnocených modelek
 }
 
-func (m *modelOblibenosti) silaModelky(x Modelka) float64 {
+func (m *modelOblibenosti) silaModelky(x *Modelka) float64 {
 	if s, ok := m.sila[x.ID]; ok {
 		return s
 	}
 	return x.Hodnoceni
 }
 
-func (m *modelOblibenosti) rozptylModelky(x Modelka) float64 {
+func (m *modelOblibenosti) rozptylModelky(x *Modelka) float64 {
 	if r, ok := m.rozptyl[x.ID]; ok {
 		return r
 	}
 	return sigmaNehodnocene * sigmaNehodnocene
 }
 
-func (m *modelOblibenosti) oblibenostModelky(x Modelka) float64 { return m.oblibenost[x.ID] }
+func (m *modelOblibenosti) oblibenostModelky(x *Modelka) float64 { return m.oblibenost[x.ID] }
 
 // Model pro modelky sbírky: z paměti, když se data ani porovnání od minula nezměnily
 func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
@@ -433,8 +431,7 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 // Otisk všeho, z čeho se oblíbenost počítá: údaje modelek (i srdíčka fotek a fotografové), porovnání (počet a
 // poslední číslo – vrácení i nové porovnání ho změní) a dnešní datum (stáří porovnání)
 func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam) string {
-	h := fnv.New64a()
-	o := otiskovac{h: h}
+	o := novyOtiskovac()
 	o.text(verzeOblibenosti, time.Now().Format("2006-01-02"))
 	posledni := int64(0)
 	if len(porovnani) > 0 {
@@ -447,7 +444,7 @@ func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam) string {
 		o.cisla(m.fotekHodnocenych, m.srdciFotek)
 		o.text(m.fotografoveAlb)
 	}
-	return hex.EncodeToString(h.Sum(nil))
+	return o.hex()
 }
 
 func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni time.Time) *modelOblibenosti {
@@ -621,8 +618,35 @@ func spocitatBT(stred, sigma map[int]float64, porovnani []porovnaniZaznam, nyni 
 type kandidatDvojice struct {
 	a, b    int
 	skore   float64
-	duvod   string
 	pruzkum bool
+	// Proč právě tahle dvojice; text se skládá až u vybraných (duvodDvojice), kandidátů jsou tisíce
+	druh int
+	x, y *Modelka
+}
+
+// Druhy kandidátů dvojic (pro důvod)
+const (
+	dvojiceNehodnocena = iota // nehodnocená proti hodnocené kotvě
+	dvojiceStejna             // stejná úroveň srdíček
+	dvojiceSousedni           // sousední úrovně
+	dvojiceVzdalena           // srdíčka se liší o jedno
+)
+
+func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
+	nizsi, vyssi := textSrdicek(min(k.x.Hodnoceni, k.y.Hodnoceni)), textSrdicek(max(k.x.Hodnoceni, k.y.Hodnoceni))
+	switch k.druh {
+	case dvojiceNehodnocena:
+		duvod := fmt.Sprintf("Nehodnocená modelka proti modelce s %s", textSrdicek7(k.y.Hodnoceni))
+		if odhad, ok := model.odhad[k.x.ID]; ok {
+			duvod += fmt.Sprintf(" (odhad podle vkusu %s)", textSrdicek(zaokrouhlitNaPul(odhad)))
+		}
+		return duvod
+	case dvojiceStejna:
+		return fmt.Sprintf("Obě mají %s a pořadí mezi nimi zatím není jisté", textSrdicek(k.x.Hodnoceni))
+	case dvojiceSousedni:
+		return fmt.Sprintf("Sousední úrovně (%s a %s): patří ta s méně srdíčky výš?", nizsi, vyssi)
+	}
+	return fmt.Sprintf("Srdíčka se liší o jedno (%s a %s), porovnání ověří hranici", nizsi, vyssi)
 }
 
 func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porovnaniZaznam, nabidnute [][2]int, pocet int, okruh string, nahoda *rand.Rand) []DvojicePorovnani {
@@ -639,7 +663,7 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 		castost[p.a] += vaha
 		castost[p.b] += vaha
 	}
-	vahaModelky := func(m Modelka) float64 {
+	vahaModelky := func(m *Modelka) float64 {
 		w := 1 / (1 + 0.5*castost[m.ID])
 		if m.CoverID == "" && m.PocetFotek == 0 {
 			w *= vahaBezFotky
@@ -647,15 +671,16 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 		return w
 	}
 
-	var hodnocene, nehodnocene []Modelka
-	for _, m := range modelky {
-		if m.Hodnoceni > 0 {
+	// Ukazatele: řadí se tisíce modelek a kopírování celých záznamů bylo dražší než výběr sám
+	var hodnocene, nehodnocene []*Modelka
+	for i := range modelky {
+		if m := &modelky[i]; m.Hodnoceni > 0 {
 			hodnocene = append(hodnocene, m)
 		} else {
 			nehodnocene = append(nehodnocene, m)
 		}
 	}
-	silaM := func(m Modelka) float64 { return model.silaModelky(m) }
+	silaM := func(m *Modelka) float64 { return model.silaModelky(m) }
 	sort.SliceStable(hodnocene, func(i, j int) bool {
 		si, sj := silaM(hodnocene[i]), silaM(hodnocene[j])
 		if si != sj {
@@ -665,7 +690,7 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 	})
 
 	var kandidati []kandidatDvojice
-	informace := func(x, y Modelka, sx, sy float64) float64 {
+	informace := func(x, y *Modelka, sx, sy float64) float64 {
 		p := zLogitu(skalaBT * (sx - sy))
 		return p * (1 - p) * (model.rozptylModelky(x) + model.rozptylModelky(y))
 	}
@@ -686,11 +711,8 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 				if vyloucene[klicDvojice(x.ID, y.ID)] {
 					continue
 				}
-				duvod := fmt.Sprintf("Nehodnocená modelka proti modelce s %s", textSrdicek7(y.Hodnoceni))
-				if odhad, ok := model.odhad[x.ID]; ok {
-					duvod += fmt.Sprintf(" (odhad podle vkusu %s)", textSrdicek(zaokrouhlitNaPul(odhad)))
-				}
-				kandidati = append(kandidati, kandidatDvojice{a: x.ID, b: y.ID, skore: informace(x, y, sx, silaM(y)) * vahaModelky(x) * vahaModelky(y), duvod: duvod})
+				kandidati = append(kandidati, kandidatDvojice{a: x.ID, b: y.ID, skore: informace(x, y, sx, silaM(y)) * vahaModelky(x) * vahaModelky(y),
+					druh: dvojiceNehodnocena, x: x, y: y})
 			}
 		}
 	} else {
@@ -698,24 +720,20 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 			for j := i + 1; j < min(len(hodnocene), i+1+sousedeDvojic); j++ {
 				y := hodnocene[j]
 				rozdil := math.Abs(x.Hodnoceni - y.Hodnoceni)
-				vahaUrovne := 0.0
-				var duvod string
+				vahaUrovne, druh := 0.0, 0
 				switch {
 				case rozdil == 0:
-					vahaUrovne = 1
-					duvod = fmt.Sprintf("Obě mají %s a pořadí mezi nimi zatím není jisté", textSrdicek(x.Hodnoceni))
+					vahaUrovne, druh = 1, dvojiceStejna
 				case rozdil <= 0.5 && okruh != "stejne":
-					vahaUrovne = vahaSousedniUrovne
-					duvod = fmt.Sprintf("Sousední úrovně (%s a %s): patří ta s méně srdíčky výš?", textSrdicek(min(x.Hodnoceni, y.Hodnoceni)), textSrdicek(max(x.Hodnoceni, y.Hodnoceni)))
+					vahaUrovne, druh = vahaSousedniUrovne, dvojiceSousedni
 				case rozdil <= 1 && okruh != "stejne":
-					vahaUrovne = vahaVzdaleneUrovne
-					duvod = fmt.Sprintf("Srdíčka se liší o jedno (%s a %s), porovnání ověří hranici", textSrdicek(min(x.Hodnoceni, y.Hodnoceni)), textSrdicek(max(x.Hodnoceni, y.Hodnoceni)))
+					vahaUrovne, druh = vahaVzdaleneUrovne, dvojiceVzdalena
 				}
 				if vahaUrovne == 0 || vyloucene[klicDvojice(x.ID, y.ID)] {
 					continue
 				}
 				kandidati = append(kandidati, kandidatDvojice{a: x.ID, b: y.ID, skore: informace(x, y, silaM(x), silaM(y)) * vahaUrovne * vahaModelky(x) * vahaModelky(y),
-					duvod: duvod, pruzkum: rozdil <= 0.5})
+					pruzkum: rozdil <= 0.5, druh: druh, x: x, y: y})
 			}
 		}
 	}
@@ -760,7 +778,7 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 		if dalsi >= len(kandidati) {
 			break
 		}
-		pridat(kandidati[dalsi], kandidati[dalsi].duvod)
+		pridat(kandidati[dalsi], duvodDvojice(kandidati[dalsi], model))
 	}
 	return vysledek
 }

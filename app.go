@@ -19,6 +19,7 @@ import (
 	"sync/atomic"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/text/unicode/norm"
 
@@ -43,6 +44,8 @@ type App struct {
 	jenProCteni bool
 	// Databáze učení vedle sbírky (uceni.go); nil u kopie pro import
 	uc *uceni
+	// Poslední snímek sbírky (snimek.go); nil = snímek se nepamatuje (kopie pro import, testy bez NewApp)
+	pamet *pametSbirky
 }
 
 // Chyba se vypíše do konzole a zároveň se ukáže uživateli
@@ -223,12 +226,12 @@ func init() {
 }
 
 func NewApp() *App {
-	return &App{uc: &uceni{}}
+	return &App{uc: &uceni{}, pamet: &pametSbirky{}}
 }
 
 func (a *App) maSloupec(tabulka, sloupec string) bool {
 	var pocet int
-	a.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?`, tabulka, sloupec).Scan(&pocet)
+	a.pripraveny(`SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?`).QueryRow(tabulka, sloupec).Scan(&pocet)
 	return pocet > 0
 }
 
@@ -453,6 +456,7 @@ func otevritZalohu(soubor string) (*sql.DB, error) {
 // Databáze, které program nerozumí nebo je poškozená, se otevře znovu jen pro čtení
 func (a *App) prepnoutJenProCteni() {
 	if ro, err := sql.Open("sqlite", "file:"+a.cestaDb+"?mode=ro&_pragma=busy_timeout(5000)"); err == nil && ro.Ping() == nil {
+		a.zavritPametSbirky(false)
 		a.db.Close()
 		a.db = ro
 		a.jenProCteni = true
@@ -515,6 +519,8 @@ func (a *App) ObnovitZalohu(soubor string) string {
 		}
 		return zprava
 	}
+	// I hlídací spojení snímku sbírky, aby soubor po výměně nikdo nedržel
+	a.zavritPametSbirky(false)
 	a.db.Close()
 	if zapis, err := sql.Open("sqlite", cil+dsnDatabaze); err == nil {
 		var zaneprazdneno, stranek, preneseno int
@@ -666,7 +672,7 @@ func (a *App) SetNetykaSeAlba(modelkaID int, album, typ, klic string, netyka boo
 	if !klicNetykaSeAlba[klic] && !kliceKontrolyAlba[klic] && !kliceNavrhuAlba[klic] {
 		return false
 	}
-	id, err := zajistitAlbum(a.db, modelkaID, album, typ)
+	id, err := a.zajistitAlbum(modelkaID, album, typ)
 	if err == nil {
 		var seznam string
 		a.db.QueryRow("SELECT COALESCE(netyka_se, '') FROM alba WHERE id = ?", id).Scan(&seznam)
@@ -691,7 +697,32 @@ type VydaniKalendare struct {
 	Modelka    string `json:"modelka"` // jméno modelky z centerfoldu
 }
 
+// Kalendář se pamatuje se snímkem sbírky (snimek.go): Přehled ho čte dvakrát (GetPrehled i okno) a statistiky
+// znovu, a mezi změnami dat je pořád stejný
 func (a *App) GetKalendar() []VydaniKalendare {
+	s := a.snimekVPameti()
+	if s == nil || s.err != nil {
+		kalendar, err := a.nacistKalendar()
+		if err != nil {
+			a.chyba("načtení kalendáře", err)
+		}
+		return kalendar
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.kalendar == nil {
+		kalendar, err := a.nacistKalendar()
+		if err != nil {
+			a.chyba("načtení kalendáře", err)
+			return kalendar
+		}
+		s.kalendar = kalendar
+	}
+	return append([]VydaniKalendare{}, s.kalendar...)
+}
+
+// Vrací, co se přečíst podařilo, a chybu
+func (a *App) nacistKalendar() ([]VydaniKalendare, error) {
 	// Jedním průchodem alby (s první fotkou každého): co ke kterému vydání je a jeden náhled (cover, jinak
 	// centerfold, jinak pictorial). Album bez fotek se nepočítá. Po albech místo po fotkách je to desetkrát
 	// méně řádků; pořadí podle první fotky dá stejný náhled i modelku jako průchod všemi fotkami.
@@ -703,8 +734,7 @@ func (a *App) GetKalendar() []VydaniKalendare {
 		LEFT JOIN modelky m ON m.id = al.modelka_id
 		WHERE al.vydani <> '' ORDER BY al.vydani, f.id`)
 	if err != nil {
-		a.chyba("načtení kalendáře", err)
-		return vysledek
+		return vysledek, err
 	}
 	defer rows.Close()
 	priorita := map[string]int{"Cover": 0, "Centerfold": 1}
@@ -740,7 +770,7 @@ func (a *App) GetKalendar() []VydaniKalendare {
 			v.Nahled = adresaObrazku(driveID)
 		}
 	}
-	return vysledek
+	return vysledek, rows.Err()
 }
 
 func (a *App) startup(ctx context.Context) {
@@ -797,6 +827,7 @@ func (a *App) zapnoutWAL() {
 	if err := a.db.QueryRow("PRAGMA journal_mode = WAL").Scan(&rezim); err != nil || rezim != "wal" {
 		fmt.Printf("Režim WAL se nepodařilo zapnout (%s, %v), databáze běží v původním režimu\n", rezim, err)
 		if db, err := sql.Open("sqlite", a.cestaDb+dsnBezWAL); err == nil && db.Ping() == nil {
+			a.zavritPametSbirky(false)
 			a.db.Close()
 			a.db = db
 		}
@@ -1044,6 +1075,7 @@ func (a *App) migraceIndexy() error {
 
 // Zavření databáze při ukončení programu
 func (a *App) shutdown() {
+	a.zavritPametSbirky(true)
 	if a.db != nil {
 		a.db.Close()
 	}
@@ -1052,11 +1084,28 @@ func (a *App) shutdown() {
 
 var vzorHolehoID = regexp.MustCompile(`^[a-zA-Z0-9_-]{25,}$`)
 
+// Celý text je holé ID z Disku (totéž co vzorHolehoID, jen bez regulárního výrazu)
+func jeHoleID(text string) bool {
+	if len(text) < 25 {
+		return false
+	}
+	for i := 0; i < len(text); i++ {
+		if z := text[i]; !(z >= 'a' && z <= 'z' || z >= 'A' && z <= 'Z' || z >= '0' && z <= '9' || z == '_' || z == '-') {
+			return false
+		}
+	}
+	return true
+}
+
 // Vytažení všech Drive ID z jakéhokoliv textu/odkazů
 // Výraz se sestaví jednou (GetModelky ho volá u každé modelky)
 var vzorOdkazuDrive = regexp.MustCompile(`(?:file/d/|id=|/d/)([a-zA-Z0-9_-]{25,})`)
 
 func parseDriveIDs(rawInput string) []string {
+	// Holé ID (tak je uložená titulní fotka, čte se u každé modelky) se pozná bez regulárních výrazů
+	if jeHoleID(rawInput) {
+		return []string{rawInput}
+	}
 	matches := vzorOdkazuDrive.FindAllStringSubmatch(rawInput, -1)
 
 	var ids []string
@@ -1089,211 +1138,27 @@ func (a *App) GetModelky(vyhledavani string) []Modelka {
 }
 
 // Vrací, co se přečíst podařilo, a první chybu; export podle ní pozná, že seznam není úplný. sOblibenosti doplní
-// oblíbenost a odhad hodnocení (oblibenost.go) spočítané ze všech modelek, ne jen z nalezených.
+// oblíbenost a odhad hodnocení (oblibenost.go) spočítané ze všech modelek, ne jen z nalezených. Modelky jsou
+// ze snímku sbírky (snimek.go) seřazené podle jména bez ohledu na velikost písmen a diakritiku.
 func (a *App) nactiModelky(vyhledavani string, sOblibenosti bool) ([]Modelka, error) {
-	var prvniChyba error
-	// Starší řádky mohou mít ve sloupcích NULL
-	vyber := []string{"id", "jmeno"}
-	for _, s := range sloupceModelky {
-		vychozi := "''"
-		if s[1] == "INTEGER" {
-			vychozi = "0"
-		}
-		if s[0] == "tetovani" || s[0] == "piercing" {
-			vychozi = "-1"
-		}
-		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], vychozi))
-	}
-
-	for _, s := range sloupceVyrezu {
-		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], s[1]))
-	}
-
-	vyber = append(vyber, a.sloupecHodnoceni(), "COALESCE(pridano, '')", "COALESCE(netyka_se, '')")
-
-	// Počet fotek: vlastní a ze sdílených alb, dvěma souhrnnými dotazy (poddotaz pro každou modelku byl kvadratický);
-	// zároveň hodnocené fotky a součet jejich srdíček pro model vkusu
-	pocetFotek, hodnocenychFotek, srdciFotek := map[int]int{}, map[int]int{}, map[int]int{}
-	for _, dotaz := range []string{
-		"SELECT al.modelka_id, COUNT(*), COALESCE(SUM(f.hodnoceni > 0), 0), COALESCE(SUM(MAX(f.hodnoceni, 0)), 0) FROM fotky f JOIN alba al ON al.id = f.album_id WHERE al.modelka_id IS NOT NULL GROUP BY al.modelka_id",
-		`SELECT am.modelka_id, COUNT(*), COALESCE(SUM(f.hodnoceni > 0), 0), COALESCE(SUM(MAX(f.hodnoceni, 0)), 0) FROM alba_modelky am JOIN fotky f ON f.album_id = am.album_id GROUP BY am.modelka_id`,
-	} {
-		radky, err := a.db.Query(dotaz)
-		if err != nil {
-			return nil, err
-		}
-		for radky.Next() {
-			var id, pocet, hodnocenych, srdci int
-			if radky.Scan(&id, &pocet, &hodnocenych, &srdci) == nil {
-				pocetFotek[id] += pocet
-				hodnocenychFotek[id] += hodnocenych
-				srdciFotek[id] += srdci
-			}
-		}
-		radky.Close()
-	}
-
-	// Vydání každé modelky odvozená z jejích alb s fotkami (vlastních i sdílených)
-	vydaniModelek := map[int][]string{}
-	if radky, err := a.db.Query(`SELECT modelka_id, vydani FROM alba al WHERE modelka_id IS NOT NULL AND vydani <> ''
-			AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
-		UNION SELECT am.modelka_id, al.vydani FROM alba al JOIN alba_modelky am ON am.album_id = al.id
-			WHERE al.vydani <> '' AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
-		ORDER BY 2`); err == nil {
-		for radky.Next() {
-			var id int
-			var v string
-			if radky.Scan(&id, &v) == nil {
-				vydaniModelek[id] = append(vydaniModelek[id], v)
-			}
-		}
-		radky.Close()
-	}
-
-	// Centerfoldy modelek s fotkami (vlastní i sdílené); jen vydání, pro odvozenou kategorii Playmate měsíce
-	centerfoldyModelek := map[int][]string{}
-	if radky, err := a.db.Query(`SELECT modelka_id, COALESCE(NULLIF(vydani, ''), album) FROM alba al WHERE modelka_id IS NOT NULL
-			AND typ = 'Centerfold' AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
-		UNION SELECT am.modelka_id, COALESCE(NULLIF(al.vydani, ''), al.album) FROM alba al JOIN alba_modelky am ON am.album_id = al.id
-			WHERE al.typ = 'Centerfold' AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
-		ORDER BY 2`); err == nil {
-		for radky.Next() {
-			var id int
-			var v string
-			if radky.Scan(&id, &v) == nil {
-				centerfoldyModelek[id] = append(centerfoldyModelek[id], v)
-			}
-		}
-		radky.Close()
-	}
-
-	// Online alba modelek s fotkami (vlastní i sdílená): data nafocení pro výskyt „jen online“ a hledání nafoceno:
-	onlineAlbaModelek := map[int][]string{}
-	cyberGirl := map[int]string{}
-	if radky, err := a.db.Query(`SELECT modelka_id, COALESCE(datum, ''), typ FROM alba al WHERE modelka_id IS NOT NULL
-			AND typ IN (?1, ?2, ?3) AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
-		UNION ALL SELECT am.modelka_id, COALESCE(al.datum, ''), al.typ FROM alba al JOIN alba_modelky am ON am.album_id = al.id
-			WHERE al.typ IN (?1, ?2, ?3) AND EXISTS (SELECT 1 FROM fotky WHERE album_id = al.id)
-		ORDER BY 2`, typOnline, typCGTydne, typCGMesice); err == nil {
-		for radky.Next() {
-			var id int
-			var d, typ string
-			if radky.Scan(&id, &d, &typ) == nil {
-				onlineAlbaModelek[id] = append(onlineAlbaModelek[id], d)
-				if typ == typCGMesice {
-					cyberGirl[id] = "měsíce"
-				} else if typ == typCGTydne && cyberGirl[id] == "" {
-					cyberGirl[id] = "týdne"
-				}
-			}
-		}
-		radky.Close()
-	}
-
-	// Popisy alb se prohledávají spolu s údaji modelky
-	textyAlb := map[int]string{}
-	fotografoveAlb := map[int]string{}
-	// Modelky z obálek vydání
-	obalky := map[int][]string{}
-	if radky, err := a.db.Query("SELECT modelka_obalky, vydani FROM vydani WHERE modelka_obalky IS NOT NULL ORDER BY vydani"); err == nil {
-		for radky.Next() {
-			var id int
-			var v string
-			if radky.Scan(&id, &v) == nil {
-				obalky[id] = append(obalky[id], v)
-			}
-		}
-		radky.Close()
-	}
-	if radky, err := a.db.Query("SELECT modelka_id, COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba UNION ALL SELECT am.modelka_id, COALESCE(al.popis, ''), COALESCE(al.fotograf, '') FROM alba_modelky am JOIN alba al ON al.id = am.album_id"); err == nil {
-		for radky.Next() {
-			var id int
-			var popis, fotograf string
-			if radky.Scan(&id, &popis, &fotograf) == nil {
-				textyAlb[id] += popis + "\n" + fotograf + "\n"
-				fotografoveAlb[id] += fotograf + "\n"
-			}
-		}
-		radky.Close()
-	}
-
-	query := "SELECT " + strings.Join(vyber, ", ") + " FROM modelky"
-
-	rows, err := a.db.Query(query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var vysledky, vsechny []Modelka
-	for rows.Next() {
-		var m Modelka
-		var driveID string
-		var hodnoceniPul int
-		err := rows.Scan(&m.ID, &m.Jmeno,
-			&m.NarozeniDatum, &m.UmrtiDatum, &m.NarozeniMisto, &m.Narodnost, &m.Etnicita,
-			&m.VyskaCm, &m.VahaKg, &m.VlasyBarva, &m.OciBarva,
-			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
-			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
-			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &m.Odkazy, &driveID,
-			&m.CoverZoom, &m.CoverX, &m.CoverY, &hodnoceniPul, &m.Pridano, &m.NetykaSe)
-		if err != nil {
-			if prvniChyba == nil {
-				prvniChyba = err
-			}
-			continue
-		}
-		m.Hodnoceni = float64(min(max(hodnoceniPul, 0), 10)) / 2
-		m.fotekHodnocenych, m.srdciFotek = hodnocenychFotek[m.ID], srdciFotek[m.ID]
-
-		ids := parseDriveIDs(driveID)
-		if len(ids) > 0 {
-			m.CoverID = ids[0]
-			m.CoverURL = adresaObrazku(ids[0])
-		}
-		m.PocetFotek = pocetFotek[m.ID]
-		m.textyAlb = textyAlb[m.ID]
-		m.Obalky = obalky[m.ID]
-		if m.Obalky == nil {
-			m.Obalky = []string{}
-		}
-		m.fotografoveAlb = fotografoveAlb[m.ID]
-		m.Vydani = vydaniModelek[m.ID]
-		if m.Vydani == nil {
-			m.Vydani = []string{}
-		}
-		m.Centerfoldy = centerfoldyModelek[m.ID]
-		if m.Centerfoldy == nil {
-			m.Centerfoldy = []string{}
-		}
-		m.OnlineAlba = onlineAlbaModelek[m.ID]
-		if m.OnlineAlba == nil {
-			m.OnlineAlba = []string{}
-		}
-		m.CyberGirl = cyberGirl[m.ID]
-		vsechny = append(vsechny, m)
-	}
+	s := a.snimekSbirky()
+	// Kopie: snímek sdílejí souběžná volání, volající modelky mění (oblíbenost)
+	vsechny := append([]Modelka(nil), s.modelky...)
 	if sOblibenosti {
 		a.doplnitOblibenost(vsechny)
 	}
-	for _, m := range vsechny {
-		if odpovidaHledani(m, vyhledavani) {
-			vysledky = append(vysledky, m)
+	h := pripravitHledani(vyhledavani)
+	if len(h) == 0 {
+		return vsechny, s.err
+	}
+	texty := s.textyKHledani()
+	var vysledky []Modelka
+	for i := range vsechny {
+		if h.odpovida(&vsechny[i], &texty[i]) {
+			vysledky = append(vysledky, vsechny[i])
 		}
 	}
-
-	// Řazení podle jména bez ohledu na velikost písmen a diakritiku; klíč se spočítá pro každou modelku jednou
-	klice := make(map[int]string, len(vysledky))
-	for _, m := range vysledky {
-		klice[m.ID] = zjednodusit(m.Jmeno)
-	}
-	sort.SliceStable(vysledky, func(i, j int) bool {
-		return klice[vysledky[i].ID] < klice[vysledky[j].ID]
-	})
-	if err := rows.Err(); err != nil && prvniChyba == nil {
-		prvniChyba = err
-	}
-	return vysledky, prvniChyba
+	return vysledky, s.err
 }
 
 // Písmena, která se na základní tvar nerozkládají sama
@@ -1301,6 +1166,18 @@ var zvlastniPismena = strings.NewReplacer("ł", "l", "ø", "o", "đ", "d", "ß",
 
 // Text pro porovnávání a řazení: malá písmena bez diakritiky jakéhokoli jazyka (Zoë = zoe, Ödegaard = odegaard)
 func zjednodusit(text string) string {
+	// Text jen z ASCII (většina jmen a údajů) nemá co rozkládat: stačí malá písmena. Volá se i při každém
+	// porovnání v SQL (COLLATE BEZDIAKRITIKY), proto se vyplatí.
+	ascii := true
+	for i := 0; i < len(text); i++ {
+		if text[i] >= utf8.RuneSelf {
+			ascii = false
+			break
+		}
+	}
+	if ascii {
+		return strings.ToLower(text)
+	}
 	rozlozeny := norm.NFD.String(strings.ToLower(text))
 	bez := strings.Map(func(znak rune) rune {
 		if unicode.Is(unicode.Mn, znak) {
@@ -1309,564 +1186,6 @@ func zjednodusit(text string) string {
 		return znak
 	}, rozlozeny)
 	return zvlastniPismena.Replace(bez)
-}
-
-// Pole pro cílené hledání („vlasy:blond", „fotograf:\"arny freytag\"", „rok:1975"); hodnota se hledá jen v daném údaji
-func poleHledani(m Modelka) map[string]string {
-	roky, edice := []string{}, []string{}
-	for _, v := range m.Vydani {
-		if len(v) < 4 {
-			continue
-		}
-		roky = append(roky, v[:4])
-		if len(v) > 4 && v[len(v)-3] == '-' && v[len(v)-2] >= 'A' {
-			edice = append(edice, v[len(v)-2:])
-		} else {
-			edice = append(edice, "US")
-		}
-	}
-	// Celé datum: narozena:1955-03 najde i měsíc (rok porovnává číselné hledání z NarozeniDatum)
-	narozena := m.NarozeniDatum
-	vyska := ""
-	if m.VyskaCm > 0 {
-		vyska = fmt.Sprintf("%d", m.VyskaCm)
-	}
-	vaha := ""
-	if m.VahaKg > 0 {
-		vaha = fmt.Sprintf("%d", m.VahaKg)
-	}
-	hodnoceni := ""
-	if m.Hodnoceni > 0 {
-		hodnoceni = textHodnoceni(m.Hodnoceni)
-	}
-	tetovani := ""
-	if m.Tetovani == 1 {
-		tetovani = "ano yes"
-	} else if m.Tetovani == 0 {
-		tetovani = "ne no"
-	}
-	piercing := ""
-	if m.Piercing == 1 {
-		piercing = "ano yes"
-	} else if m.Piercing == 0 {
-		piercing = "ne no"
-	}
-	obalky := strings.Join(m.Obalky, " ")
-	// Kategorie: zapsané v poli role a odvozené z centerfoldu, alba Cyber Girl týdne či měsíce a obálky
-	// (frontend/src/lib/format.js, KATEGORIE a odvozeneKategorie); obyčejné online album kategorii nedává
-	kategorie := m.Role
-	if len(m.Centerfoldy) > 0 {
-		kategorie += ", Playmate měsíce"
-	}
-	if m.CyberGirl != "" {
-		kategorie += ", Cyber Girl " + m.CyberGirl
-	}
-	if len(m.Obalky) > 0 {
-		kategorie += ", Modelka obálky"
-	}
-	// Výskyt: v časopise (číslo s měsícem nebo speciál), jen online (online kategorie nebo online album),
-	// jinak neurčeno (frontend/src/lib/format.js, vyskytModelky)
-	vyskyt := "neurceno neurčeno"
-	cisla := append(append(append([]string{}, m.Vydani...), m.Obalky...), m.Centerfoldy...)
-	for _, v := range cisla {
-		if vzorVydani.MatchString(v) {
-			vyskyt = "casopis časopis"
-			break
-		}
-	}
-	if vyskyt != "casopis časopis" && (vzorOnlineKategorie.MatchString(m.Role) || len(m.OnlineAlba) > 0) {
-		vyskyt = "online"
-	}
-	return map[string]string{
-		"jmeno": m.Jmeno + "\n" + m.DalsiJmena, "vlasy": m.VlasyBarva, "oci": m.OciBarva, "narodnost": m.Narodnost,
-		"etnicita": m.Etnicita, "misto": m.NarozeniMisto, "tag": m.Tags, "tagy": m.Tags, "role": kategorie, "kategorie": kategorie, "vyskyt": vyskyt,
-		"fotograf": m.fotografoveAlb, "rok": strings.Join(roky, " "), "vydani": strings.Join(m.Vydani, " "),
-		"narozena": narozena, "edice": strings.Join(edice, " "), "prsa": m.VelikostPrsou + " " + m.PrsaTyp,
-		"ochlupeni": m.Ochlupeni, "poznamka": m.Poznamka, "vyska": vyska, "vaha": vaha,
-		"miry": m.Miry, "hodnoceni": hodnoceni, "srdicka": hodnoceni, "tetovani": tetovani,
-		"piercing": piercing, "obalka": obalky, "obalky": obalky, "umrti": m.UmrtiDatum, "zemrela": m.UmrtiDatum,
-		"nafoceno": strings.Join(m.OnlineAlba, " "),
-	}
-}
-
-// Online kategorie (KATEGORIE s online: true ve frontend/src/lib/format.js), i anglicky
-var vzorOnlineKategorie = regexp.MustCompile(`(?i)cyber|coed|\bmuses?\b|creator|tvůrkyně|online|playboy ?plus|playboy\.?com`)
-
-// Slova hledání: volitelná negace (- nebo !), cílené pole:hodnota (i s mezerou za dvojtečkou) i pole:"více slov", uvozovky i obyčejná slova
-var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+(?:[.,]\d+)?|[^\s",:]+(?:\s*,\s*[^\s",:]+)*)?|(-|!)?"([^"]*)"|(\S+)`)
-var vzorRozsahCisel = regexp.MustCompile(`^(\d+)\s*-\s*(\d+)$`)
-
-// Rozpoznání numerického filtru: op (">=", "<=", ">", "<", "=", ".."), numOd, numDo
-// Rozsah roků v cíleném hledání (rok:1970-1979, narozena:1980..1989) a rok s měsícem (rok:1975-01)
-var (
-	vzorRozsahRoku      = regexp.MustCompile(`^\s*\d{4}\s*(-|\.\.)\s*\d{4}\s*$`)
-	vzorRokMesicHledani = regexp.MustCompile(`^\s*\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?\s*$`)
-)
-
-func parsovatNumerickyFiltr(hodnota string) (op string, numOd, numDo int, ok bool) {
-	h := strings.TrimSpace(hodnota)
-	if strings.HasPrefix(h, ">=") {
-		if n, err := strconv.Atoi(strings.TrimSpace(h[2:])); err == nil {
-			return ">=", n, 0, true
-		}
-	}
-	if strings.HasPrefix(h, "<=") {
-		if n, err := strconv.Atoi(strings.TrimSpace(h[2:])); err == nil {
-			return "<=", n, 0, true
-		}
-	}
-	if strings.HasPrefix(h, "==") {
-		if n, err := strconv.Atoi(strings.TrimSpace(h[2:])); err == nil {
-			return "=", n, 0, true
-		}
-	}
-	if strings.HasPrefix(h, ">") {
-		if n, err := strconv.Atoi(strings.TrimSpace(h[1:])); err == nil {
-			return ">", n, 0, true
-		}
-	}
-	if strings.HasPrefix(h, "<") {
-		if n, err := strconv.Atoi(strings.TrimSpace(h[1:])); err == nil {
-			return "<", n, 0, true
-		}
-	}
-	if strings.HasPrefix(h, "=") {
-		if n, err := strconv.Atoi(strings.TrimSpace(h[1:])); err == nil {
-			return "=", n, 0, true
-		}
-	}
-	if parts := strings.Split(h, ".."); len(parts) == 2 {
-		od, err1 := strconv.Atoi(strings.TrimSpace(parts[0]))
-		do, err2 := strconv.Atoi(strings.TrimSpace(parts[1]))
-		if err1 == nil && err2 == nil {
-			return "..", min(od, do), max(od, do), true
-		}
-	}
-	if m := vzorRozsahCisel.FindStringSubmatch(h); len(m) == 3 {
-		od, _ := strconv.Atoi(m[1])
-		do, _ := strconv.Atoi(m[2])
-		return "..", min(od, do), max(od, do), true
-	}
-	if n, err := strconv.Atoi(h); err == nil {
-		return "=", n, 0, true
-	}
-	return "", 0, 0, false
-}
-
-// Jedna podmínka filtru srdíček; meze v polovinách srdíčka
-type filtrHodnoceni struct {
-	op     string
-	od, do int
-}
-
-var (
-	vzorPulSrdicka   = regexp.MustCompile(`^\d+(?:[.,]\d+)?$`)
-	vzorDesetinnaPul = regexp.MustCompile(`^\d[.,][05]$`)
-)
-
-// Filtr srdíček modelky po polovinách: číslo (3, 3.5, 3,5), porovnání (>=3,5), rozsah (3..4,5 nebo 3-4) nebo
-// výčet oddělený čárkou (3,4 = 3 nebo 4 srdíčka). „Číslice,5“ a „číslice,0“ je desetinná čárka: 3,5 = tři a půl
-// (dřívější výčet „4,5“ = 4 nebo 5 se tak čte jako 4½). Vrací podmínky (stačí jedna) v polovinách; ok = false,
-// když hodnota číslem není.
-func parsovatFiltrHodnoceni(hodnota string) (filtry []filtrHodnoceni, ok bool) {
-	h := strings.ReplaceAll(strings.TrimSpace(hodnota), " ", "")
-	pul := func(text string) (int, bool) {
-		if !vzorPulSrdicka.MatchString(text) {
-			return 0, false
-		}
-		x, err := strconv.ParseFloat(strings.Replace(text, ",", ".", 1), 64)
-		if err != nil {
-			return 0, false
-		}
-		// Hodnota mezi polovinami (3.3) se zaokrouhlí na nejbližší polovinu
-		return int(math.Round(x * 2)), true
-	}
-	for _, op := range []string{">=", "<=", "==", ">", "<", "="} {
-		if strings.HasPrefix(h, op) {
-			if n, ok := pul(h[len(op):]); ok {
-				if op == "==" {
-					op = "="
-				}
-				return []filtrHodnoceni{{op: op, od: n}}, true
-			}
-			return nil, false
-		}
-	}
-	for _, oddelovac := range []string{"..", "-"} {
-		if casti := strings.Split(h, oddelovac); len(casti) == 2 {
-			od, ok1 := pul(casti[0])
-			do, ok2 := pul(casti[1])
-			if ok1 && ok2 {
-				return []filtrHodnoceni{{op: "..", od: min(od, do), do: max(od, do)}}, true
-			}
-		}
-	}
-	if vzorDesetinnaPul.MatchString(h) {
-		n, _ := pul(h)
-		return []filtrHodnoceni{{op: "=", od: n}}, true
-	}
-	for _, cast := range strings.Split(h, ",") {
-		if cast == "" {
-			continue
-		}
-		n, ok := pul(cast)
-		if !ok {
-			return nil, false
-		}
-		filtry = append(filtry, filtrHodnoceni{op: "=", od: n})
-	}
-	return filtry, len(filtry) > 0
-}
-
-func vyhovujeCislo(hodnota int, op string, numOd, numDo int) bool {
-	switch op {
-	case ">=":
-		return hodnota >= numOd
-	case "<=":
-		return hodnota <= numOd
-	case ">":
-		return hodnota > numOd
-	case "<":
-		return hodnota < numOd
-	case "=", "==":
-		return hodnota == numOd
-	case "..":
-		return hodnota >= numOd && hodnota <= numDo
-	default:
-		return false
-	}
-}
-
-func vyhovujeNumericky(m Modelka, klic, op string, numOd, numDo int) bool {
-	switch klic {
-	case "vyska":
-		if m.VyskaCm <= 0 {
-			return false
-		}
-		return vyhovujeCislo(m.VyskaCm, op, numOd, numDo)
-	case "vaha":
-		if m.VahaKg <= 0 {
-			return false
-		}
-		return vyhovujeCislo(m.VahaKg, op, numOd, numDo)
-	case "hodnoceni", "srdicka":
-		// Meze jsou v polovinách srdíčka (parsovatFiltrHodnoceni)
-		if m.Hodnoceni <= 0 && numOd > 0 {
-			return false
-		}
-		return vyhovujeCislo(m.hodnoceniPul(), op, numOd, numDo)
-	case "narozena":
-		if len(m.NarozeniDatum) >= 4 {
-			if rok, err := strconv.Atoi(m.NarozeniDatum[:4]); err == nil && rok > 0 {
-				return vyhovujeCislo(rok, op, numOd, numDo)
-			}
-		}
-		return false
-	case "rok":
-		for _, v := range m.Vydani {
-			if len(v) >= 4 {
-				if rok, err := strconv.Atoi(v[:4]); err == nil && rok > 0 {
-					if vyhovujeCislo(rok, op, numOd, numDo) {
-						return true
-					}
-				}
-			}
-		}
-		return false
-	}
-	return false
-}
-
-// Slovo jen z číslic (rok, výška…): hledá se přesně, bez tolerance překlepů
-func jeCislo(text string) bool {
-	if text == "" {
-		return false
-	}
-	for _, r := range text {
-		if (r < '0' || r > '9') && r != '-' && r != '.' {
-			return false
-		}
-	}
-	return true
-}
-
-func vyhovujeVarianty(text string, varianty []string) bool {
-	zjedn := zjednodusit(text)
-	for _, v := range varianty {
-		if strings.Contains(zjedn, v) {
-			return true
-		}
-	}
-	return false
-}
-
-// Levenshteinova vzdálenost mezi dvěma řetězci run (počet vložení, smazání a záměn znaků)
-func vzdalenostLevenshtein(s1, s2 string) int {
-	r1, r2 := []rune(s1), []rune(s2)
-	len1, len2 := len(r1), len(r2)
-	if len1 == 0 {
-		return len2
-	}
-	if len2 == 0 {
-		return len1
-	}
-	predchozi := make([]int, len2+1)
-	aktualni := make([]int, len2+1)
-	for j := 0; j <= len2; j++ {
-		predchozi[j] = j
-	}
-	for i := 1; i <= len1; i++ {
-		aktualni[0] = i
-		for j := 1; j <= len2; j++ {
-			cena := 1
-			if r1[i-1] == r2[j-1] {
-				cena = 0
-			}
-			smazat := predchozi[j] + 1
-			vlozit := aktualni[j-1] + 1
-			zamenit := predchozi[j-1] + cena
-			min := smazat
-			if vlozit < min {
-				min = vlozit
-			}
-			if zamenit < min {
-				min = zamenit
-			}
-			aktualni[j] = min
-		}
-		copy(predchozi, aktualni)
-	}
-	return aktualni[len2]
-}
-
-// Maximální povolená editační vzdálenost podle délky hledaného slova (max 1–2 překlepy pro jména a fotografy)
-func maxPovolenaVzdalenost(delka int) int {
-	if delka <= 3 {
-		return 0
-	}
-	if delka <= 6 {
-		return 1
-	}
-	return 2
-}
-
-// Ověří, zda hledané slovo odpovídá některému ze slov textu (přesně jako podřetězec nebo fuzzy Levenshteinem)
-func odpovidaSlovoFuzzy(slovaTextu []string, hledaneSlovo string) bool {
-	hledane := zjednodusit(hledaneSlovo)
-	if hledane == "" {
-		return true
-	}
-	maxD := maxPovolenaVzdalenost(len([]rune(hledane)))
-	for _, slovo := range slovaTextu {
-		s := zjednodusit(slovo)
-		if strings.Contains(s, hledane) {
-			return true
-		}
-		if maxD > 0 && vzdalenostLevenshtein(s, hledane) <= maxD {
-			return true
-		}
-	}
-	return false
-}
-
-// Ověří, zda hledaný dotaz (i víceslovný) odpovídá textu (přesně nebo s drobnými překlepy v jednotlivých slovech)
-func odpovidaTextFuzzy(text string, hledanyDotaz string) bool {
-	hledane := strings.Fields(zjednodusit(hledanyDotaz))
-	if len(hledane) == 0 {
-		return true
-	}
-	slovaTextu := strings.Fields(zjednodusit(text))
-	for _, h := range hledane {
-		if !odpovidaSlovoFuzzy(slovaTextu, h) {
-			return false
-		}
-	}
-	return true
-}
-
-// Každé hledané slovo se musí najít v některém údaji modelky, cílené slovo v daném údaji; na velikosti písmen
-// ani diakritice nezáleží. Podporuje negaci (-tag:), čárku jako OR (vlasy:blond,zrzava), numerické porovnání
-// (>175, 1970..1979), neuzavřené uvozovky i fuzzy matching pro jména modelek a fotografů.
-func odpovidaHledani(m Modelka, vyhledavani string) bool {
-	// Pokud je v dotazu lichý počet uvozovek (uživatel píše uvozovku a ještě ji neuzavřel), pomyslně ji uzavřeme na konci
-	if strings.Count(vyhledavani, "\"")%2 != 0 {
-		vyhledavani += "\""
-	}
-
-	vyskaTxt := ""
-	if m.VyskaCm > 0 {
-		vyskaTxt = fmt.Sprintf("%d %dcm", m.VyskaCm, m.VyskaCm)
-	}
-	vahaTxt := ""
-	if m.VahaKg > 0 {
-		vahaTxt = fmt.Sprintf("%d %dkg", m.VahaKg, m.VahaKg)
-	}
-	tetovaniTxt := ""
-	if m.Tetovani == 1 {
-		tetovaniTxt = "tetování tetovani"
-	}
-	piercingTxt := ""
-	if m.Piercing == 1 {
-		piercingTxt = "piercing"
-	}
-	udaje := zjednodusit(strings.Join([]string{
-		m.Jmeno, m.Narodnost, m.Etnicita, m.NarozeniMisto, m.NarozeniDatum, m.UmrtiDatum, m.VlasyBarva, m.OciBarva,
-		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Miry, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags,
-		m.DalsiJmena, m.Poznamka, strings.Join(m.Vydani, " "), strings.Join(m.Obalky, " "), m.textyAlb,
-		vyskaTxt, vahaTxt, tetovaniTxt, piercingTxt,
-	}, "\n"))
-	var pole map[string]string
-	for _, casti := range vzorSlovaHledani.FindAllStringSubmatch(vyhledavani, -1) {
-		var negace bool
-		var klic, hodnota string
-		if casti[2] != "" {
-			negace = casti[1] != ""
-			klic = casti[2]
-			hodnota = casti[3]
-		} else if casti[5] != "" {
-			negace = casti[4] != ""
-			klic = casti[5]
-			hodnota = casti[6]
-		} else if strings.HasPrefix(casti[0], "\"") || strings.HasPrefix(casti[0], "-\"") || strings.HasPrefix(casti[0], "!\"") {
-			negace = casti[7] != ""
-			hodnota = casti[8]
-		} else {
-			slovo := casti[9]
-			if strings.HasPrefix(slovo, "-") || strings.HasPrefix(slovo, "!") {
-				negace = true
-				slovo = slovo[1:]
-			}
-			if i := strings.Index(slovo, ":"); i > 0 {
-				klic = slovo[:i]
-				hodnota = slovo[i+1:]
-			} else {
-				hodnota = slovo
-			}
-		}
-		hodnota = strings.Trim(hodnota, "\"")
-		hodnotaZjedn := zjednodusit(strings.TrimSpace(hodnota))
-		if hodnotaZjedn == "" {
-			continue
-		}
-
-		var shoda bool
-		if klic != "" {
-			klicZjedn := zjednodusit(klic)
-			op, numOd, numDo, ok := parsovatNumerickyFiltr(hodnota)
-			// Rok kratší než čtyři číslice (rok:197) je začátek roku, ne přesný rok: hledá se jako text
-			if ok && op == "=" && (klicZjedn == "rok" || klicZjedn == "narozena") && len(strings.TrimSpace(hodnota)) < 4 {
-				ok = false
-			}
-			// Rozsah roků jen se čtyřmístnými mezemi: „1975-01“ je měsíc vydání (narození), ne rozsah 1–1975
-			if ok && op == ".." && (klicZjedn == "rok" || klicZjedn == "narozena") && !vzorRozsahRoku.MatchString(hodnota) {
-				ok = false
-			}
-			if klicZjedn == "rok" && vzorRokMesicHledani.MatchString(hodnota) {
-				// rok:1975-01 = modelky čísla z daného měsíce (předpona vydání)
-				shoda = false
-				for _, v := range m.Vydani {
-					if strings.HasPrefix(v, strings.TrimSpace(hodnota)) {
-						shoda = true
-						break
-					}
-				}
-			} else if klicZjedn == "nafoceno" {
-				// nafoceno:2004, nafoceno:2004-06 = online album nafocené v daném roce či měsíci (předpona data)
-				shoda = false
-				varianty := 0
-				for _, v := range strings.Split(hodnotaZjedn, ",") {
-					if v = strings.TrimSpace(v); v == "" {
-						continue
-					}
-					varianty++
-					for _, d := range m.OnlineAlba {
-						shoda = shoda || (d != "" && strings.HasPrefix(d, v))
-					}
-				}
-				if varianty == 0 {
-					continue
-				}
-			} else if klicZjedn == "hodnoceni" || klicZjedn == "srdicka" {
-				// Srdíčka i po polovinách: hodnoceni:3.5, srdicka:3,5, hodnoceni:>=3,5, hodnoceni:3..4, hodnoceni:3,4 (3 nebo 4)
-				meze, zname := parsovatFiltrHodnoceni(hodnota)
-				if !zname {
-					shoda = strings.Contains(udaje, klicZjedn+":"+hodnotaZjedn)
-				}
-				for _, f := range meze {
-					shoda = shoda || vyhovujeNumericky(m, klicZjedn, f.op, f.od, f.do)
-				}
-			} else if ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "rok" || klicZjedn == "narozena") {
-				shoda = vyhovujeNumericky(m, klicZjedn, op, numOd, numDo)
-			} else {
-				if pole == nil {
-					pole = poleHledani(m)
-				}
-				if text, zname := pole[klicZjedn]; zname {
-					varianty := []string{}
-					for _, v := range strings.Split(hodnotaZjedn, ",") {
-						if vz := strings.TrimSpace(v); vz != "" {
-							varianty = append(varianty, vz)
-						}
-					}
-					if len(varianty) == 0 {
-						// Jen čárka (píše se další hodnota): slovo nic neomezuje
-						continue
-					}
-					if klicZjedn == "tetovani" || klicZjedn == "piercing" {
-						// Ano/ne se porovnává po celých slovech („no“ je i v „ano“)
-						shoda = false
-						for _, slovo := range strings.Fields(text) {
-							for _, v := range varianty {
-								shoda = shoda || slovo == v
-							}
-						}
-					} else {
-						shoda = vyhovujeVarianty(text, varianty)
-					}
-					// Překlepy se tolerují u jména a fotografa (i ve vyloučení: -jmeno:Pamella vyloučí Pamelu)
-					if !shoda && (klicZjedn == "jmeno" || klicZjedn == "fotograf") {
-						for _, v := range varianty {
-							if odpovidaTextFuzzy(text, v) {
-								shoda = true
-								break
-							}
-						}
-					}
-				} else {
-					// Neznámé pole: hledá se celé slovo jako obyčejný text
-					shoda = strings.Contains(udaje, klicZjedn+":"+hodnotaZjedn)
-				}
-			}
-		} else {
-			varianty := []string{}
-			for _, v := range strings.Split(hodnotaZjedn, ",") {
-				if vz := strings.TrimSpace(v); vz != "" {
-					varianty = append(varianty, vz)
-				}
-			}
-			if len(varianty) == 0 {
-				continue
-			}
-			shoda = vyhovujeVarianty(udaje, varianty)
-			// Překlepy jen u hledaných slov s písmeny (ne u čísel a vylučovaných slov): 1975 nenajde 1976, -anna nevyloučí Anju
-			if !shoda && !negace && !jeCislo(hodnotaZjedn) {
-				for _, v := range varianty {
-					if odpovidaTextFuzzy(m.Jmeno+" "+m.DalsiJmena, v) || odpovidaTextFuzzy(m.fotografoveAlb, v) {
-						shoda = true
-						break
-					}
-				}
-			}
-		}
-
-		if negace {
-			shoda = !shoda
-		}
-		if !shoda {
-			return false
-		}
-	}
-	return true
 }
 
 // Hodnoty modelky ve stejném pořadí jako sloupceModelky
@@ -1914,7 +1233,7 @@ func (a *App) AddModelka(m Modelka) bool {
 	}
 	args := append([]interface{}{m.Jmeno, pridano}, hodnotyModelky(m)...)
 
-	_, err := a.db.Exec(query, args...)
+	_, err := a.pripraveny(query).Exec(args...)
 	if err != nil {
 		a.chyba("přidání modelky", err)
 	}
@@ -1943,10 +1262,10 @@ func (a *App) UpdateModelka(m Modelka) bool {
 	args = append(args, m.ID)
 
 	var puvodniCover string
-	a.db.QueryRow(`SELECT COALESCE(drive_cover_id, '') FROM modelky WHERE id = ?`, m.ID).Scan(&puvodniCover)
+	a.pripraveny(`SELECT COALESCE(drive_cover_id, '') FROM modelky WHERE id = ?`).QueryRow(m.ID).Scan(&puvodniCover)
 
 	query := fmt.Sprintf(`UPDATE modelky SET %s WHERE id = ?`, strings.Join(nastaveni, ", "))
-	_, err := a.db.Exec(query, args...)
+	_, err := a.pripraveny(query).Exec(args...)
 	if err != nil {
 		a.chyba("úprava modelky", err)
 		return false
@@ -1990,7 +1309,7 @@ func (a *App) SetHodnoceni(modelkaID int, hodnoceni float64) bool {
 	}
 	var err error
 	if a.maSloupec("modelky", "hodnoceni_pul") {
-		_, err = a.db.Exec(`UPDATE modelky SET hodnoceni_pul = ?, hodnoceni = ? WHERE id = ?`, pul, pul/2, modelkaID)
+		_, err = a.pripraveny(`UPDATE modelky SET hodnoceni_pul = ?, hodnoceni = ? WHERE id = ?`).Exec(pul, pul/2, modelkaID)
 	} else {
 		// Databáze před úpravou č. 13 (jen při chybě úpravy, kdy se stejně zapisovat nedá)
 		_, err = a.db.Exec(`UPDATE modelky SET hodnoceni = ? WHERE id = ?`, pul/2, modelkaID)
@@ -2291,6 +1610,10 @@ const dotazFotekModelky = vyberFotografii + vyberPopisu + " FROM fotografie f" +
 	SELECT id FROM alba WHERE COALESCE(modelka_id, 0) = ?1 UNION SELECT album_id FROM alba_modelky WHERE modelka_id = ?1)
 	ORDER BY ` + razeniFotek
 
+// Fotky alb všech modelek (bez coverů) po modelkách, v každé v pořadí jako dotazFotekModelky (export)
+const dotazFotekVsechModelek = vyberFotografii + vyberPopisu + " FROM fotografie f" + pripojeniPopisu + `
+	WHERE f.modelka_id <> 0 ORDER BY f.modelka_id, ` + razeniFotek
+
 func (a *App) GetFotografieModelky(modelkaID int) []Fotografie {
 	return a.doplnitDalsiModelky(a.nacistFotografie(dotazFotekModelky, false, true, modelkaID))
 }
@@ -2443,7 +1766,7 @@ func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
 		return false
 	}
 	// Centerfold a cover mají vydání v názvu; online album k číslu nepatří (má datum nafocení)
-	_, err := a.db.Exec("UPDATE alba SET vydani = ? WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ NOT IN ('Centerfold', 'Cover', ?, ?, ?)",
+	_, err := a.pripraveny("UPDATE alba SET vydani = ? WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ NOT IN ('Centerfold', 'Cover', ?, ?, ?)").Exec(
 		vydani, modelkaID, album, typ, typOnline, typCGTydne, typCGMesice)
 	if err != nil {
 		a.chyba("přiřazení alba k číslu", err)
@@ -2458,7 +1781,7 @@ func (a *App) SetDatumAlba(modelkaID int, album, typ, datum string) bool {
 	if !platneDatum(datum) || (!jeOnlineTyp(typ) && datum != "") {
 		return false
 	}
-	_, err := a.db.Exec("UPDATE alba SET datum = NULLIF(?, '') WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ IN (?, ?, ?)",
+	_, err := a.pripraveny("UPDATE alba SET datum = NULLIF(?, '') WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ IN (?, ?, ?)").Exec(
 		datum, modelkaID, album, typ, typOnline, typCGTydne, typCGMesice)
 	if err != nil {
 		a.chyba("uložení data nafocení alba", err)
@@ -2482,7 +1805,7 @@ func (a *App) SetRotaceFotek(ids []int, rotace int) bool {
 // Zapnutí nebo vypnutí spojení stránek alba do jednoho plakátu
 func (a *App) SetSpojeniAlba(modelkaID int, album, typ string, spojit bool) bool {
 	// Spojený plakát se otáčí jako celek, proto se otočení stránek sjednotí
-	id, err := zajistitAlbum(a.db, modelkaID, album, typ)
+	id, err := a.zajistitAlbum(modelkaID, album, typ)
 	if err == nil {
 		_, err = a.db.Exec("UPDATE alba SET spojit = ? WHERE id = ?", spojit, id)
 	}
@@ -2546,12 +1869,12 @@ func (a *App) SetPopisAlba(modelkaID int, album, typ, popis, fotograf string) bo
 
 	// Popis patří k existujícímu albu; vymazání ho jen vyprázdní, album nese i fotky, vydání a vazby
 	var id int64
-	err := a.db.QueryRow("SELECT id FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?", modelkaID, album, typ).Scan(&id)
+	err := a.pripraveny(dotazIDAlba).QueryRow(modelkaID, album, typ).Scan(&id)
 	if err == sql.ErrNoRows {
 		return popis == "" && fotograf == ""
 	}
 	if err == nil {
-		_, err = a.db.Exec("UPDATE alba SET popis = NULLIF(?, ''), fotograf = NULLIF(?, '') WHERE id = ?", popis, fotograf, id)
+		_, err = a.pripraveny("UPDATE alba SET popis = NULLIF(?, ''), fotograf = NULLIF(?, '') WHERE id = ?").Exec(popis, fotograf, id)
 	}
 	if err == nil && popis == "" && fotograf == "" {
 		_, err = a.db.Exec(smazatPrazdnaAlba)
@@ -2836,6 +2159,36 @@ type VysledekVlozeni struct {
 	Neovereno  int `json:"neovereno"`  // uloženy bez ověření (výpadek připojení)
 }
 
+// Které ze souborů ids už v albu (modelka, název, typ) jsou; dotaz po pěti stech souborech místo dotazu na každý
+func (a *App) souboryVAlbu(modelkaID int, album, typ string, ids []string) (map[string]bool, error) {
+	vAlbu := map[string]bool{}
+	for zacatek := 0; zacatek < len(ids); zacatek += 500 {
+		cast := ids[zacatek:min(len(ids), zacatek+500)]
+		args := []interface{}{modelkaID, album, typ}
+		for _, id := range cast {
+			args = append(args, id)
+		}
+		radky, err := a.db.Query(`SELECT f.drive_file_id FROM fotky f JOIN alba al ON al.id = f.album_id
+			WHERE COALESCE(al.modelka_id, 0) = ? AND al.album = ? AND al.typ = ? AND f.drive_file_id IN (?`+strings.Repeat(", ?", len(cast)-1)+`)`, args...)
+		if err != nil {
+			return nil, err
+		}
+		for radky.Next() {
+			var id string
+			if err := radky.Scan(&id); err != nil {
+				radky.Close()
+				return nil, err
+			}
+			vAlbu[id] = true
+		}
+		radky.Close()
+		if err := radky.Err(); err != nil {
+			return nil, err
+		}
+	}
+	return vAlbu, nil
+}
+
 // Hromadné vložení fotek/odkazů do alba modelky
 func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) VysledekVlozeni {
 	var vysledek VysledekVlozeni
@@ -2845,12 +2198,15 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 	}
 
 	// Soubory, které v tomto albu už jsou, se nevkládají podruhé
+	odkazy := parseDriveIDs(rawLinks)
+	vAlbu, err := a.souboryVAlbu(modelkaID, album, typ, odkazy)
+	if err != nil {
+		a.chyba("vložení fotek do alba", err)
+		return vysledek
+	}
 	var ids []string
-	for _, id := range parseDriveIDs(rawLinks) {
-		var pocet int
-		a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND drive_file_id = ?",
-			modelkaID, album, typ, id).Scan(&pocet)
-		if pocet > 0 {
+	for _, id := range odkazy {
+		if vAlbu[id] {
 			vysledek.Duplicitni++
 			continue
 		}
@@ -2862,7 +2218,7 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 	var rotace int
 	if len(ids) > 0 {
 		var err error
-		if albumID, err = zajistitAlbum(a.db, modelkaID, album, typ); err != nil {
+		if albumID, err = a.zajistitAlbum(modelkaID, album, typ); err != nil {
 			a.chyba("vložení fotek do alba", err)
 			return vysledek
 		}
@@ -2870,21 +2226,38 @@ func (a *App) AddBulkPhotos(modelkaID int, album, typ, rawLinks string) Vysledek
 			albumID).Scan(&rotace)
 	}
 
-	for i, stav := range overitSoubory(ids) {
+	stavy := overitSoubory(ids)
+	for _, stav := range stavy {
 		if stav == souborNedostupny {
 			vysledek.Nedostupne++
-			continue
 		}
-		_, err := a.db.Exec("INSERT INTO fotky (album_id, drive_file_id, rotace, pridano, overeno) VALUES (?, ?, ?, ?, ?)",
-			albumID, ids[i], rotace, ted(), map[bool]interface{}{true: dnes(), false: nil}[stav == souborDostupny])
-		if err != nil {
-			a.chyba("vložení fotek do alba", err)
-			continue
+	}
+	// Zápis až po síťové kontrole, v jedné transakci (jeden zápis na disk místo jednoho za každou fotku). Fotka,
+	// kterou se vložit nepodaří, se ohlásí a ostatní se vloží dál, jako když šla každá zvlášť.
+	vlozeno, neovereno := 0, 0
+	if a.vTransakci("vložení fotek do alba", func(q dotazovac) error {
+		vlozeno, neovereno = 0, 0
+		for i, stav := range stavy {
+			if stav == souborNedostupny {
+				continue
+			}
+			var overeno interface{}
+			if stav == souborDostupny {
+				overeno = dnes()
+			}
+			if _, err := q.Exec("INSERT INTO fotky (album_id, drive_file_id, rotace, pridano, overeno) VALUES (?, ?, ?, ?, ?)",
+				albumID, ids[i], rotace, ted(), overeno); err != nil {
+				a.chyba("vložení fotek do alba", err)
+				continue
+			}
+			vlozeno++
+			if stav == souborNeoveren {
+				neovereno++
+			}
 		}
-		vysledek.Vlozeno++
-		if stav == souborNeoveren {
-			vysledek.Neovereno++
-		}
+		return nil
+	}) {
+		vysledek.Vlozeno, vysledek.Neovereno = vlozeno, neovereno
 	}
 	// Album založené jen pro tyto fotky nezůstane prázdné, když se nevložila žádná; album, které už předtím
 	// neslo text, fotografa nebo další modelky, zůstane

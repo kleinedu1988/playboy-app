@@ -194,7 +194,7 @@ func (a *App) GetVyvojVCase(edice string) VyvojVCase {
 	chybiCiselne := make([][]int, len(ciselne))
 	chybiPodily := make([][]int, len(podilove))
 	desetileti := map[int]bool{}
-	for _, m := range a.GetModelky("") {
+	for _, m := range a.vsechnyModelky() {
 		vydani, ma := centerfold[m.ID]
 		if !ma {
 			continue

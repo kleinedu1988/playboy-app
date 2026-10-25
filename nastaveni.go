@@ -206,10 +206,10 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		Podezrele: []PodezrelyUdaj{},
 	}
 
-	// Alba všech modelek jedním dotazem pro seznamy, kontrolu i návrhy; album je skupina fotek se stejným
+	// Modelky a alba z jednoho snímku sbírky pro seznamy, kontrolu i návrhy; album je skupina fotek se stejným
 	// názvem a typem, album bez fotek se v seznamech nepočítá
 	maCenterfold := map[int]bool{}
-	alba := a.albaSbirky()
+	modelky, alba, snimek := a.modelkyAAlba()
 	for _, al := range alba {
 		if al.fotek == 0 {
 			continue
@@ -233,9 +233,6 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		}
 	}
 
-	// Modelky se načtou jednou pro kontrolu i pro seznamy toho, co chybí
-	modelky := a.GetModelky("")
-
 	// Údaje ke kontrole (kontrola.go) a návrhy doplnění (navrhy.go), obojí z mezipaměti učení, když se sbírka
 	// nezměnila (uceni.go); z návrhů v Přehledu jen jejich počet
 	// Kontrola a návrhy jsou na sobě nezávislé; po změně dat se počítají souběžně
@@ -250,14 +247,8 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 	}
 
 	// Centerfold sdíleného alba patří i dalším modelkám
-	if radky, err := a.db.Query("SELECT am.modelka_id FROM alba_modelky am JOIN alba al ON al.id = am.album_id WHERE al.typ = 'Centerfold'"); err == nil {
-		for radky.Next() {
-			var id int
-			if radky.Scan(&id) == nil {
-				maCenterfold[id] = true
-			}
-		}
-		radky.Close()
+	for id := range snimek.sdileneCenterfoldy {
+		maCenterfold[id] = true
 	}
 
 	for _, m := range modelky {
@@ -288,7 +279,7 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 		vydani[v.Vydani] = &obsah{v.Cover, v.Centerfold}
 		poradi = append(poradi, v.Vydani)
 	}
-	a.db.QueryRow("SELECT COUNT(*) FROM fotografie WHERE typ = 'Cover'").Scan(&p.Coveru)
+	p.Coveru = snimek.fotekCoveru
 	p.Vydani = len(poradi)
 
 	// Ročník je rok v jedné edici

@@ -23,7 +23,25 @@ import (
 
 // Klíč textu pro porovnání: malá písmena bez diakritiky, bez teček, jedna mezera („U.S.A.“ = „usa“)
 func klicTextu(s string) string {
-	return strings.Join(strings.Fields(strings.ReplaceAll(zjednodusit(s), ".", "")), " ")
+	z := zjednodusit(s)
+	if uzJeKlicem(z) {
+		return z
+	}
+	return strings.Join(strings.Fields(strings.ReplaceAll(z, ".", "")), " ")
+}
+
+// Text, který úprava na klíč nezmění: jen ASCII bez teček, mezery jednoduché a ne na krajích (běžné hodnoty
+// údajů; klíč se počítá u každého návrhu a hodnoty)
+func uzJeKlicem(z string) bool {
+	for i := 0; i < len(z); i++ {
+		switch c := z[i]; {
+		case c >= 0x80 || c == '.' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r':
+			return false
+		case c == ' ' && (i == 0 || i == len(z)-1 || z[i-1] == ' '):
+			return false
+		}
+	}
+	return true
 }
 
 // Jaro–Winklerova podobnost dvou textů (0–1): shodné znaky v okně, přehozené znaky a bonus za společný začátek

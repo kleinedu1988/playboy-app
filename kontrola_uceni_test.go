@@ -315,3 +315,12 @@ func TestNoveKliceKontroly(t *testing.T) {
 		t.Errorf("netýká se: %q", m.NetykaSe)
 	}
 }
+
+// Pevné rozsahy (malá sbírka)
+func vychoziRozsahy() rozsahyKontroly {
+	var r rozsahyKontroly
+	for j, p := range priznaky {
+		r[j] = rozsah{od: p.od, do: p.do}
+	}
+	return r
+}

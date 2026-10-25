@@ -85,15 +85,6 @@ func (r rozsah) popis() string {
 	return "běžný rozsah"
 }
 
-// Pevné rozsahy (malá sbírka)
-func vychoziRozsahy() rozsahyKontroly {
-	var r rozsahyKontroly
-	for j, p := range priznaky {
-		r[j] = rozsah{od: p.od, do: p.do}
-	}
-	return r
-}
-
 // Naučený rozsah údaje: medián ± k·σ (robustní, viz robustniOdhad), aspoň minPul na každou stranu a nikdy za rozumné meze; z málo hodnot
 // pevný rozsah. Nakonec se rozšíří o hodnoty potvrzené uživatelem.
 func naucitRozsah(p priznak, hodnoty, potvrzene []float64, k float64) rozsah {

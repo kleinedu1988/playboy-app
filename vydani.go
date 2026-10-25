@@ -194,17 +194,23 @@ func (a *App) SmazatVyber(id int) bool {
 }
 
 // Přidání fotek na konec výběru; fotka, která už ve výběru je, se přeskočí. Vrací počet přidaných.
+// Konec výběru se zjistí jednou na začátku transakce (dřív u každé fotky, výběr tisíců fotek byl kvadratický).
 func (a *App) PridatDoVyberu(vyberID int, fotoIDs []int) int {
 	pridano := 0
 	if !a.vTransakci("přidání fotek do výběru", func(tx dotazovac) error {
+		pridano = 0
+		var posledni int
+		if err := tx.QueryRow("SELECT COALESCE(MAX(poradi), 0) FROM vybery_fotky WHERE vyber_id = ?", vyberID).Scan(&posledni); err != nil {
+			return err
+		}
 		for _, id := range fotoIDs {
-			vysledek, err := tx.Exec(`INSERT OR IGNORE INTO vybery_fotky (vyber_id, fotografie_id, poradi)
-				SELECT ?, ?, COALESCE(MAX(poradi), 0) + 1 FROM vybery_fotky WHERE vyber_id = ?`, vyberID, id, vyberID)
+			vysledek, err := tx.Exec("INSERT OR IGNORE INTO vybery_fotky (vyber_id, fotografie_id, poradi) VALUES (?, ?, ?)", vyberID, id, posledni+1)
 			if err != nil {
 				return err
 			}
 			if n, _ := vysledek.RowsAffected(); n > 0 {
 				pridano++
+				posledni++
 			}
 		}
 		return nil
@@ -258,12 +264,12 @@ type exportVydani struct {
 	Clanky []exportClanek `yaml:"clanky,omitempty"`
 }
 
-func (a *App) exportovatVydaniAVybery(odkazy odkazyNaModelky) ([]exportVydani, []exportVyberu) {
+func (a *App) exportovatVydaniAVybery(odkazy odkazyNaModelky, jmena map[int]string) ([]exportVydani, []exportVyberu) {
 	var vydani []exportVydani
 	for _, v := range a.GetStavyVydani() {
 		obalka := ""
 		if v.ModelkaObalky != 0 {
-			obalka = odkazy.odkaz(v.ModelkaObalky, a.jmenoModelky(v.ModelkaObalky))
+			obalka = odkazy.odkaz(v.ModelkaObalky, jmena[v.ModelkaObalky])
 		}
 		vydani = append(vydani, exportVydani{Vydani: v.Vydani, Nazev: v.Nazev, Stav: v.Stav, ModelkaObalky: obalka, NaObalce: v.NaObalce, Poznamka: v.Poznamka})
 	}
@@ -337,16 +343,19 @@ func (a *App) importovatVydaniAVybery(vydani []exportVydani, vybery []exportVybe
 		if id == 0 {
 			continue
 		}
+		// Fotky výběru se přidají najednou v pořadí ze souboru
+		var fotoIDs []int
 		for _, f := range v.Fotky {
 			var fotoID int
-			a.db.QueryRow("SELECT id FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND drive_file_id = ?",
+			a.pripraveny("SELECT id FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND drive_file_id = ?").QueryRow(
 				idModelky(f.Modelka), f.Album, f.Typ, f.ID).Scan(&fotoID)
 			if fotoID == 0 {
 				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("výběr „%s“: fotka %s v albu „%s“ ve sbírce není", v.Nazev, f.ID, f.Album))
 				continue
 			}
-			a.PridatDoVyberu(id, []int{fotoID})
+			fotoIDs = append(fotoIDs, fotoID)
 		}
+		a.PridatDoVyberu(id, fotoIDs)
 	}
 }
 

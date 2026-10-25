@@ -26,7 +26,7 @@ const (
 )
 
 // Aplikace nad prázdnou složkou dat; ověřování souborů na Disku je nahrazené, aby testy nepotřebovaly síť
-func novaTestovaciApp(t *testing.T, stavy map[string]int) *App {
+func novaTestovaciApp(t testing.TB, stavy map[string]int) *App {
 	t.Helper()
 	t.Setenv("XDG_DATA_HOME", t.TempDir())
 	t.Chdir(t.TempDir())

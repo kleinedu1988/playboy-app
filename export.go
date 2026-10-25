@@ -235,19 +235,25 @@ func (a *App) sestavitExport() ([]byte, error) {
 	} else {
 		a.chyba("export", err)
 	}
-	dalsiModelky := a.dalsiModelkyAlb()
+	// Fotky všech modelek jedním dotazem (dřív dotaz na každou modelku), po modelkách v pořadí alba. Sdílené
+	// album se zapisuje jen u hlavní modelky, u ostatních je jen jejich jméno v dalsi_modelky.
+	vsechnyFotky, err := a.nactiFotografie(dotazFotekVsechModelek, false, true)
+	if err != nil {
+		return nil, fmt.Errorf("fotky modelek se nepodařilo přečíst: %w", err)
+	}
+	doplnitDalsiModelkyZ(vsechnyFotky, a.dalsiModelkyAlb(nil))
+	fotkyModelek := map[int][]Fotografie{}
+	for zacatek := 0; zacatek < len(vsechnyFotky); {
+		id, konec := vsechnyFotky[zacatek].ModelkaID, zacatek
+		for konec < len(vsechnyFotky) && vsechnyFotky[konec].ModelkaID == id {
+			konec++
+		}
+		fotkyModelek[id] = vsechnyFotky[zacatek:konec:konec]
+		zacatek = konec
+	}
+	prazdnaAlba := a.prazdnaAlba(odkazy)
 	for _, m := range modelky {
-		vsechny, err := a.nactiFotografie(dotazFotekModelky, false, true, m.ID)
-		if err != nil {
-			return nil, fmt.Errorf("fotky modelky %s se nepodařilo přečíst: %w", m.Jmeno, err)
-		}
-		// Sdílené album se zapisuje jen u hlavní modelky, u ostatních je jen jejich jméno v dalsi_modelky
-		var fotky []Fotografie
-		for _, f := range doplnitDalsiModelkyZ(vsechny, dalsiModelky) {
-			if f.ModelkaID == m.ID {
-				fotky = append(fotky, f)
-			}
-		}
+		fotky := fotkyModelek[m.ID]
 		exportovanoFotek += len(fotky)
 		e := exportModelka{
 			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: hodnoceniUdaje{Pul: m.hodnoceniPul()},
@@ -261,7 +267,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 			Alba: seskupitDoAlb(fotky, odkazy, netykaSeAlb), Cislo: odkazy.cislo(m.ID, m.Jmeno), NetykaSe: m.NetykaSe,
 		}
 		// Alba bez fotek, která nesou text, fotografa, „netýká se“ nebo další modelky
-		e.Alba = append(e.Alba, a.prazdnaAlba(m.ID, odkazy)...)
+		e.Alba = append(e.Alba, prazdnaAlba[m.ID]...)
 		// Míry složené z obvodů se při importu složí znovu
 		if m.ObvodHrudnikCm > 0 && m.ObvodPasCm > 0 && m.ObvodBokyCm > 0 {
 			e.Miry = ""
@@ -289,7 +295,11 @@ func (a *App) sestavitExport() ([]byte, error) {
 		data.Covery = append(data.Covery, exportCover{Vydani: album.Nazev, Spojit: album.Spojit, RucniPoradi: album.RucniPoradi, Fotky: album.Fotky})
 	}
 
-	data.Vydani, data.Vybery = a.exportovatVydaniAVybery(odkazy)
+	jmena := make(map[int]string, len(modelky))
+	for _, m := range modelky {
+		jmena[m.ID] = m.Jmeno
+	}
+	data.Vydani, data.Vybery = a.exportovatVydaniAVybery(odkazy, jmena)
 
 	// Kontrola úplnosti proti databázi: fotky modelek a covery časopisů
 	var modelekVDb, fotekVDb int
@@ -371,7 +381,7 @@ func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *Vysled
 		return
 	}
 	// Album se zjistí (nebo založí) jednou; fotky se pak hledají a zapisují přímo v tabulce fotek
-	albumID, err := zajistitAlbum(a.db, modelkaID, album.Nazev, album.Typ)
+	albumID, err := a.zajistitAlbum(modelkaID, album.Nazev, album.Typ)
 	if err != nil {
 		a.chyba("import "+kde, err)
 		return
@@ -419,7 +429,7 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 		return
 	}
 	// Album bez fotek (jen s textem nebo dalšími modelkami) se založí samo
-	if _, err := zajistitAlbum(a.db, modelkaID, album.Nazev, album.Typ); err != nil {
+	if _, err := a.zajistitAlbum(modelkaID, album.Nazev, album.Typ); err != nil {
 		a.chyba("import "+kde, err)
 		return
 	}
@@ -460,7 +470,7 @@ func (a *App) importovatAlbum(modelkaID int, jmeno string, album exportAlbum, vy
 	}
 	if strings.TrimSpace(album.Popis) != "" || strings.TrimSpace(album.Fotograf) != "" {
 		var popis, fotograf string
-		a.db.QueryRow("SELECT COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?",
+		a.pripraveny("SELECT COALESCE(popis, ''), COALESCE(fotograf, '') FROM alba WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ?").QueryRow(
 			modelkaID, album.Nazev, album.Typ).Scan(&popis, &fotograf)
 		a.SetPopisAlba(modelkaID, album.Nazev, album.Typ, hodnotaZImportu(album.Popis, popis), hodnotaZImportu(album.Fotograf, fotograf))
 	}
@@ -717,7 +727,7 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 	// Modelky se párují podle jména bez ohledu na velikost písmen a diakritiku. Jména, která má víc modelek,
 	// rozhodne číslo modelky ze souboru; každá modelka v databázi se spáruje nejvýš jednou.
 	podleJmena := map[string][]Modelka{}
-	for _, m := range a.GetModelky("") {
+	for _, m := range a.vsechnyModelky() {
 		podleJmena[zjednodusit(m.Jmeno)] = append(podleJmena[zjednodusit(m.Jmeno)], m)
 	}
 	sparovana := map[int]bool{}
@@ -1014,42 +1024,60 @@ func (a *App) ImportovatSoubory(cesty []string) VysledekImportu {
 	return a.importovatCelek(data)
 }
 
-func (a *App) prazdnaAlba(modelkaID int, odkazy odkazyNaModelky) []exportAlbum {
-	var alba []exportAlbum
-	rows, err := a.db.Query(`SELECT id, album, typ, vydani, spojit, COALESCE(popis, ''), COALESCE(fotograf, ''), COALESCE(netyka_se, ''), COALESCE(datum, '')
-		FROM alba WHERE modelka_id = ? AND NOT EXISTS (SELECT 1 FROM fotky f WHERE f.album_id = alba.id) ORDER BY album COLLATE BEZDIAKRITIKY, typ`, modelkaID)
+// Alba bez fotek všech modelek (podle čísla modelky), seřazená podle názvu a typu; dva dotazy pro celou sbírku
+// místo dvou na každou modelku. Při shodě názvů bez ohledu na diakritiku rozhoduje pořadí založení.
+func (a *App) prazdnaAlba(odkazy odkazyNaModelky) map[int][]exportAlbum {
+	alba := map[int][]exportAlbum{}
+	rows, err := a.db.Query(`SELECT id, modelka_id, album, typ, vydani, spojit, COALESCE(popis, ''), COALESCE(fotograf, ''), COALESCE(netyka_se, ''), COALESCE(datum, '')
+		FROM alba WHERE modelka_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fotky f WHERE f.album_id = alba.id)
+		ORDER BY modelka_id, album COLLATE BEZDIAKRITIKY, typ, id`)
 	if err != nil {
 		a.chyba("export", err)
-		return nil
+		return alba
 	}
-	var ids []int64
+	type misto struct{ modelka, i int }
+	kde := map[int64]misto{}
 	for rows.Next() {
 		var id int64
+		var modelka int
 		var al exportAlbum
-		if rows.Scan(&id, &al.Nazev, &al.Typ, &al.Vydani, &al.Spojit, &al.Popis, &al.Fotograf, &al.NetykaSe, &al.Datum) == nil {
+		if rows.Scan(&id, &modelka, &al.Nazev, &al.Typ, &al.Vydani, &al.Spojit, &al.Popis, &al.Fotograf, &al.NetykaSe, &al.Datum) == nil {
 			if al.Typ == "Centerfold" || al.Typ == "Cover" {
 				al.Vydani = ""
 			}
 			al.Fotky = []exportFotka{}
-			alba = append(alba, al)
-			ids = append(ids, id)
+			kde[id] = misto{modelka, len(alba[modelka])}
+			alba[modelka] = append(alba[modelka], al)
 		}
 	}
 	rows.Close()
-	for i, id := range ids {
-		if rows, err := a.db.Query(`SELECT m.id, m.jmeno FROM alba_modelky am JOIN modelky m ON m.id = am.modelka_id
-			WHERE am.album_id = ? ORDER BY m.jmeno COLLATE BEZDIAKRITIKY`, id); err == nil {
-			for rows.Next() {
-				var mid int
-				var jmeno string
-				if rows.Scan(&mid, &jmeno) == nil {
-					alba[i].DalsiModelky = append(alba[i].DalsiModelky, odkazy.odkaz(mid, jmeno))
-				}
+	if err := rows.Err(); err != nil {
+		a.chyba("export", err)
+	}
+	if len(kde) == 0 {
+		return alba
+	}
+	rows, err = a.db.Query(`SELECT am.album_id, m.id, m.jmeno FROM alba_modelky am JOIN modelky m ON m.id = am.modelka_id
+		WHERE am.album_id IN (SELECT id FROM alba WHERE modelka_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM fotky f WHERE f.album_id = alba.id))
+		ORDER BY am.album_id, m.jmeno COLLATE BEZDIAKRITIKY, m.id`)
+	if err != nil {
+		a.chyba("export", err)
+		return alba
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var album int64
+		var mid int
+		var jmeno string
+		if rows.Scan(&album, &mid, &jmeno) == nil {
+			if k, ok := kde[album]; ok {
+				al := &alba[k.modelka][k.i]
+				al.DalsiModelky = append(al.DalsiModelky, odkazy.odkaz(mid, jmeno))
 			}
-			rows.Close()
-		} else {
-			a.chyba("export", err)
 		}
+	}
+	if err := rows.Err(); err != nil {
+		a.chyba("export", err)
 	}
 	return alba
 }

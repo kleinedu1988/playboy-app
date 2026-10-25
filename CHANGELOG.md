@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.27] – 2026-10-25
+
+### Změněno
+- **Rychlejší backend:** sbírka se načte jedním průchodem a pamatuje se, dokud se databáze nezmění (Přehled, Údržba, návrhy, učení, oblíbenost i statistiky ji sdílejí místo opakovaného načítání). Na sbírce 3000 modelek: seznam modelek 163 → 2 ms, hledání ~180 → 6 ms, Přehled 283 → 8 ms, návrhy 237 → 5 ms; po změně dat zhruba o polovinu rychlejší. Export 2× a import 2,5× rychlejší, vložení 200 odkazů 5× rychlejší; méně paměti.
+- **Rychlejší rozhraní:** skryté přehledy (galerie, čísla, nejlepší) po odchodu uvolní paměť, galerie má jednu obsluhu kliků místo tisíců, profil neměří stránku opakovaně, klávesy nehledají v celé stránce. Na sbírce 3000 modelek (zpomalený procesor): otevření okna modelky −86 %, rolování profilu −81 %, prohlížeč fotek −65 %, přepnutí na Nejlepší −73 %, Údržba −69 %. Editor textu (CodeMirror) a historie změn se načítají až při použití – hlavní skript je o polovinu menší, start rychlejší.
+- Úklid nepoužívaného a zdvojeného kódu v backendu i rozhraní.
+
 ## [0.99.26] – 2026-10-25
 
 ### Přidáno

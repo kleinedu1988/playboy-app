@@ -407,46 +407,58 @@ export const SABLONA_OKNA = `
 
   <!-- Modal: Přidat / upravit cover časopisu -->
   <div id="coverModal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="coverModalTitle">Přidat cover</h3>
-        <button id="closeCoverModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
-      </div>
-      <form id="coverForm">
-        <div class="form-group">
-          <span class="typ-alba-nadpis" id="coverCisloNadpis">Číslo</span>
-          <div class="typ-alba-druhy" role="group" aria-labelledby="coverCisloNadpis">
-            <button type="button" class="chip" data-cislo-coveru="mesic" title="Řádné měsíční číslo">Měsíční</button>
-            <button type="button" class="chip" data-cislo-coveru="special" title="Zvláštní číslo mimo měsíční řadu (Playmate Review, Lingerie…)">Speciál</button>
+    <!-- Rozložení okna alba: vlevo druh čísla a náhled obálky, vpravo pole; obsluha v app/cover.js -->
+    <div class="modal-card album-okno cislo-okno">
+      <form id="coverForm" class="album-mrizka">
+        <aside class="album-bok">
+          <h3 id="coverModalTitle">Přidat cover</h3>
+          <span class="album-krok" id="coverCisloNadpis">Číslo</span>
+          <div class="cislo-volby" role="group" aria-labelledby="coverCisloNadpis">
+            <button type="button" class="album-volba" data-cislo-coveru="mesic" title="Řádné měsíční číslo">Měsíční</button>
+            <button type="button" class="album-volba" data-cislo-coveru="special" title="Zvláštní číslo mimo měsíční řadu (Playmate Review, Lingerie…)">Speciál</button>
           </div>
-        </div>
-        <div class="form-row form-row-3">
+          <!-- Náhled: obálka z vloženého odkazu (u úpravy původní) s páskou čísla jako v Číslech -->
+          <div class="cislo-nahled" aria-live="polite">
+            <span class="cislo-nahled-obalka">
+              <img id="coverNahledObrazek" class="hidden" alt="Náhled coveru" draggable="false" />
+              <span id="coverNahledPrazdny" class="cislo-nahled-prazdny">Náhled se ukáže po vložení odkazu</span>
+              <span id="coverNahledPaska" class="rocnik-paska hidden"></span>
+            </span>
+            <b id="coverNahledNazev"></b>
+          </div>
+        </aside>
+        <div class="album-pole">
+          <button type="button" id="closeCoverModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
+          <div class="form-row form-row-3">
+            <div class="form-group">
+              <label id="coverMesicLabel" for="selectCoverMesic">Měsíc</label>
+              <select id="selectCoverMesic" required>
+                <option value="">Vyber měsíc</option>
+                ${moznostiMesicu()}
+              </select>
+              <select id="selectCoverSpecial" class="hidden">
+                <option value="">Vyber speciál</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="inputCoverRok">Rok vydání</label>
+              <input type="number" id="inputCoverRok" min="1953" max="2100" placeholder="RRRR" required />
+            </div>
+            <div class="form-group">
+              <label for="selectCoverEdice">Edice</label>
+              <select id="selectCoverEdice">${EDICE.map(e => `<option>${e}</option>`).join('')}</select>
+            </div>
+          </div>
+          <small id="coverSpecialInfo" class="field-hint cislo-info"></small>
           <div class="form-group">
-            <label id="coverMesicLabel" for="selectCoverMesic">Měsíc</label>
-            <select id="selectCoverMesic" required>
-              <option value="">Vyber měsíc</option>
-              ${moznostiMesicu()}
-            </select>
-            <select id="selectCoverSpecial" class="hidden">
-              <option value="">Vyber speciál</option>
-            </select>
+            <label id="coverLinkLabel" for="inputCoverLink">Odkaz na cover z Google Disku</label>
+            <input type="text" id="inputCoverLink" autocomplete="off" spellcheck="false" placeholder="https://drive.google.com/file/d/…" />
+            <small class="cislo-napoveda">Soubor musí být na Disku sdílený „kdokoli s odkazem“. Náhled obálky ukáže, jestli se obrázek načte.</small>
           </div>
-          <div class="form-group">
-            <label for="inputCoverRok">Rok vydání</label>
-            <input type="number" id="inputCoverRok" min="1953" max="2100" placeholder="RRRR" required />
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
+            <button type="submit" class="btn btn-primary">Uložit cover</button>
           </div>
-          <div class="form-group">
-            <label for="selectCoverEdice">Edice</label>
-            <select id="selectCoverEdice">${EDICE.map(e => `<option>${e}</option>`).join('')}</select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label id="coverLinkLabel" for="inputCoverLink">Odkaz na cover z Google Disku</label>
-          <input type="text" id="inputCoverLink" />
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
-          <button type="submit" class="btn btn-primary">Uložit cover</button>
         </div>
       </form>
     </div>
@@ -540,39 +552,59 @@ export const SABLONA_OKNA = `
 
   <!-- Modal: údaje vydání (poznámka, stav, modelka z obálky) -->
   <div id="issueModal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="issueModalTitle">Číslo časopisu</h3>
-        <button class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
-      </div>
-      <form id="issueForm">
-        <div id="issueNazevGroup" class="form-group hidden">
-          <label for="inputIssueNazev">Název speciálu</label>
-          <input type="text" id="inputIssueNazev" placeholder="např. Playmate Review" />
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label for="selectIssueStav">Stav ve sbírce</label>
-            <select id="selectIssueStav">
-              <option value="">Běžné</option>
-              <option value="mam">Mám výtisk</option>
-              <option value="shanim">Sháním</option>
-              <option value="nezajima">Nezajímá mě</option>
-            </select>
+    <!-- Rozložení okna alba: vlevo obálka čísla a stav ve sbírce, vpravo údaje; obsluha v app/vydani.js -->
+    <div class="modal-card album-okno cislo-okno">
+      <form id="issueForm" class="album-mrizka">
+        <aside class="album-bok">
+          <h3 id="issueModalTitle">Číslo časopisu</h3>
+          <p class="cislo-podnadpis">Údaje čísla</p>
+          <div class="cislo-nahled">
+            <span id="issueNahledObalka" class="cislo-nahled-obalka">
+              <img id="issueNahledObrazek" class="hidden" alt="Obálka čísla" draggable="false" />
+              <span id="issueNahledPrazdny" class="cislo-nahled-prazdny">Číslo zatím nemá cover</span>
+              <span id="issueNahledPaska" class="rocnik-paska"></span>
+              <span id="issueNahledStav" class="rocnik-stav hidden"></span>
+            </span>
+          </div>
+          <!-- Stav ve sbírce: volby vlevo, hodnotu drží skrytý výběr (u americké edice jsou výtisk a sháním skryté) -->
+          <span class="album-krok" id="issueStavNadpis">Stav ve sbírce</span>
+          <div id="issueStavVolby" class="cislo-volby" role="group" aria-labelledby="issueStavNadpis">
+            <button type="button" class="album-volba" data-stav-cisla="">Běžné</button>
+            <button type="button" class="album-volba" data-stav-cisla="mam" title="Výtisk je ve sbírce (zelený rámeček v kalendáři)">Mám výtisk</button>
+            <button type="button" class="album-volba" data-stav-cisla="shanim" title="Číslo se objeví v seznamu Sháním CZ">Sháním</button>
+            <button type="button" class="album-volba" data-stav-cisla="nezajima" title="Číslo se v kalendáři ztlumí">Nezajímá mě</button>
+          </div>
+          <small id="issueStavInfo" class="cislo-napoveda"></small>
+          <select id="selectIssueStav" class="hidden" tabindex="-1" aria-hidden="true">
+            <option value="">Běžné</option>
+            <option value="mam">Mám výtisk</option>
+            <option value="shanim">Sháním</option>
+            <option value="nezajima">Nezajímá mě</option>
+          </select>
+        </aside>
+        <div class="album-pole">
+          <button type="button" class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
+          <div id="issueNazevGroup" class="form-group hidden">
+            <label for="inputIssueNazev">Název speciálu</label>
+            <input type="text" id="inputIssueNazev" placeholder="např. Playmate Review" autocomplete="off" />
           </div>
           <div class="form-group">
             <label for="inputIssueObalka">Na obálce</label>
             <input type="text" id="inputIssueObalka" list="seznamModelekObalky" autocomplete="off" placeholder="Jméno modelky (i mimo sbírku)" />
             <datalist id="seznamModelekObalky"></datalist>
+            <small id="issueObalkaInfo" class="cislo-napoveda"></small>
           </div>
-        </div>
-        <div class="form-group">
-          <label for="inputIssuePoznamka">Poznámka</label>
-          <textarea id="inputIssuePoznamka" rows="4" placeholder="Markdown: **tučné**, *kurzíva*, odrážky"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
-          <button type="submit" class="btn btn-primary">Uložit</button>
+          <!-- Poznámka se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
+          <div class="form-group">
+            <span class="album-label">Poznámka</span>
+            <button type="button" id="issuePoznamkaBtn" class="text-nahled text-nahled-velky" title="Upravit poznámku"><span id="issuePoznamkaNahled"></span></button>
+            <textarea id="inputIssuePoznamka" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
+            <small class="cislo-napoveda">Kde je výtisk, stav, co v čísle chybí… Ukáže se v levém panelu stránky čísla.</small>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
+            <button type="submit" class="btn btn-primary">Uložit</button>
+          </div>
         </div>
       </form>
     </div>
@@ -744,7 +776,8 @@ export const SABLONA_OKNA = `
         <h4>Čísla časopisu</h4>
         <ul>
           <li>Kalendář ukazuje jednu edici (US nebo CZ). Tři linky na spodní hraně obálky: cover, centerfold, pictorial (růžová = číslo ho má); když myš chvíli zůstane na kartě, střídá se na ní cover, centerfold a nejlépe hodnocená fotka z pictorialu a bílá linka ukazuje, co je právě vidět; prázdné políčko = číslo chybí, klik nabídne přidání.</li>
-          <li>Stav čísla: <strong>mám výtisk</strong> (zelený rámeček), <strong>sháním</strong>, <strong>nezajímá mě</strong> – jen u české edice, v nabídce políčka nebo v „Upravit číslo…“.</li>
+          <li>Stav čísla: <strong>mám výtisk</strong> (zelený rámeček), <strong>sháním</strong>, <strong>nezajímá mě</strong> – jen u české edice, v nabídce políčka nebo v „Upravit číslo…“. Okno čísla má vlevo obálku čísla a volby stavu, vpravo kdo je na obálce (jméno ze sbírky se propojí s profilem, jiné se uloží jako text) a poznámku.</li>
+          <li>Okno <strong>Přidat cover</strong> ukazuje vlevo náhled obálky z vloženého odkazu s páskou čísla, takže hned poznáš, jestli se obrázek z Disku načte; u úpravy coveru je tam původní obálka, dokud nevložíš nový odkaz.</li>
           <li><strong>Speciály</strong> (Playmate Review, Lingerie…) jsou štítky pod měsíci roku; nový založíš v okně alba nebo coveru („Nový speciál…“) nebo pravým tlačítkem na nadpis roku v kalendáři.</li>
         </ul>
         <h4>Přehled a hodnocení</h4>
@@ -753,8 +786,8 @@ export const SABLONA_OKNA = `
           <li><strong>Kategorie</strong> modelky (Playmate roku, Cyber Girl, Coed, Muse, Celebrita, Jen ve speciálu, Creator, Online) se volí štítky v „Upravit modelku…“; Playmate měsíce, Cyber Girl a Modelku obálky program pozná sám z centerfoldu, online alba (Pictorial online; jen když není zapsaná jiná online kategorie, třeba Coed) a obálky. Proužek v rohu fotky profilu ukáže u centerfoldu „Playmate · měsíc“, u online alb „Cyber Girl“, nebo „Online“, když modelka Cyber Girl není (klik přejde na album). Podle kategorie filtruje galerie (Filtry) a hledání <code>kategorie:</code>.</li>
           <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online) nebo s online albem; ostatní jsou <em>neurčené</em>. Album typu <em>Pictorial online</em> je pictorial jen na webu: v okně alba nemá vydání, ale pole <em>Nafoceno</em> (RRRR-MM-DD, RRRR-MM nebo rok). Typ alba se v okně volí ve dvou řadách: <em>Kde vyšlo</em> (Časopis, Online, Nikde) a <em>Druh</em> – u časopisu Pictorial nebo Centerfold a řada <em>Číslo</em> (Měsíční, nebo Speciál s vlastním výběrem speciálů roku a volbou „Nový speciál…“), u online Pictorial, Cyber Girl of the Week nebo of the Month, „Nikde“ je pictorial bez čísla i data. <em>Cyber Girl of the Week</em> spočítá z celého data týden v roce (nadpis alba „Cyber Girl týdne · 24. týden 2004“), <em>of the Month</em> vezme z data měsíc („Cyber Girl měsíce · červen 2004“); modelka dostane kategorii Cyber Girl týdne, nebo měsíce. Datum je jen informace u alba – album nepřiřadí k vydání ani do kalendáře a nemění titulní fotku modelky. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; po najetí myší se ukáže jméno modelky a odkud fotka je.</li>
-          <li><strong>Psaní textu</strong> (průvodní text alba, text článku): klik na náhled textu otevře okno editoru. Text se ukazuje rovnou naformátovaný – tučně, kurzívou, nadpisy, citáty; značky markdownu (<code>**</code>, <code>*</code>, <code>#</code>, <code>&gt;</code>) se objeví, jen když je kurzor v daném místě. Tlačítka nahoře nebo Ctrl+B / Ctrl+I formátují výběr, Enter v odrážkách pokračuje další odrážkou, Ctrl+Enter text použije.</li>
-          <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
+          <li><strong>Psaní textu</strong> (průvodní text alba, text článku, poznámka čísla): klik na náhled textu otevře okno editoru. Text se ukazuje rovnou naformátovaný – tučně, kurzívou, nadpisy, citáty; značky markdownu (<code>**</code>, <code>*</code>, <code>#</code>, <code>&gt;</code>) se objeví, jen když je kurzor v daném místě. Tlačítka nahoře nebo Ctrl+B / Ctrl+I formátují výběr, Enter v odrážkách pokračuje další odrážkou, Ctrl+Enter text použije.</li>
+          <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku. V hlavičce okna je záhlaví článku tak, jak bude v čísle (rubrika · strana · druh textu), pod skeny jejich počet a náhledy.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>
           <li><strong>Články modelky</strong> (rozhovor, 20 otázek…) jsou v jejím profilu jako poslední blok vlevo; klik otevře číslo rovnou na článku.</li>
           <li><strong>Přehled</strong> má čtyři části; vybírají se z nabídky tlačítka Přehled (ikona grafu vpravo v liště), u Údržby s počtem úkolů. <strong>Přehled</strong>: hlavní čísla, mapa české edice (vlastní výtisky: mám, sháním, chybí) a mapa americké edice (úplnost dat: kompletní číslo má cover, centerfold i pictorial); klik na políčko otevře číslo, prázdné nabídne přidání, pravým tlačítkem se nastaví stav. <strong>Údržba</strong>: jedna fronta úkolů (modelky, čísla i údaje ke kontrole) seřazená podle toho, kolik toho chybí; filtry nahoře ukážou jen jeden druh úkolu. „Doplnit“ otevře místo, kde se úkol doplňuje, štítek na řádku otevře právě ten údaj, „Doplňovat postupně“ jde s „Uložit a další“ modelku po modelce. Pod ⋯ na řádku je „Netýká se: …“ a „Doplnit vše v jednom okně“. <strong>Kontrola</strong> hlásí údaje, které vypadají jako překlep: věk při prvním vydání pod 18 nebo nad 45 let, narození a úmrtí v nesmyslném pořadí, výšku, váhu, BMI a míry mimo běžný rozsah (pas širší než boky), Playmate roku dřív než centerfold, dvě centerfoldová alba v jednom čísle, stejné jméno u dvou modelek, album s jednou fotkou s podobným názvem jako jiné album a stejnou fotku ve dvou albech. Kontrola se učí ze sbírky: když je údajů dost, rozsahy výšky, váhy, BMI, měr a věku odvodí z tvých modelek místo pevných hranic, hlásí neobvyklé kombinace údajů (každý zvlášť v pořádku, dohromady ne – např. pas 70 cm při váze 44 kg) a skoro stejná jména dvou modelek (překlep, prohozené jméno a příjmení). Štítek otevře formulář přímo na poli s údajem. Když je údaj pravdivý (modelce opravdu bylo 16 let), zvol pod ⋯ nebo pravým tlačítkem „V pořádku“ – nález se už nehlásí a kontrola se z toho učí (tři potvrzené podobné hodnoty za hranicí ji posunou, podobné kombinace se přestanou hlásit); „zobrazit i netýká se“ ho ukáže s ✓ a jde vrátit („Znovu kontrolovat“). <strong>Sháním CZ</strong>: sháněná čísla české edice po letech, „Kopírovat seznam“ je dá do schránky jako text.</li>
@@ -795,36 +828,41 @@ export const SABLONA_OKNA = `
         <header class="doplnit-hlavicka"><div>
           <h3 id="clanekModalTitle">Nový článek</h3>
           <p id="clanekModalCislo"></p>
+          <!-- Živý náhled záhlaví článku tak, jak bude na stránce čísla (rubrika · strana · druh textu) -->
+          <p id="clanekNahledZahlavi" class="clanek-nahled-zahlavi" aria-live="polite"></p>
         </div></header>
         <div class="doplnit-telo">
           <section class="doplnit-blok">
             <h4>Článek</h4>
-            <div class="clanek-mrizka-3">
-              <div class="doplnit-pole"><label for="inputClanekRubrika">Rubrika</label><input id="inputClanekRubrika" list="seznamRubrik" autocomplete="off" /></div>
-              <div class="doplnit-pole"><label for="inputClanekAutor">Autor</label><input id="inputClanekAutor" list="seznamAutoru" autocomplete="off" /></div>
-              <div class="doplnit-pole"><label for="inputClanekStrana">Strana</label><input id="inputClanekStrana" inputmode="numeric" autocomplete="off" /></div>
+            <div class="clanek-mrizka-rubrika">
+              <div class="doplnit-pole"><label for="inputClanekRubrika">Rubrika</label><input id="inputClanekRubrika" list="seznamRubrik" autocomplete="off" placeholder="např. Playboy Interview" /></div>
+              <div class="doplnit-pole"><label for="inputClanekStrana">Strana</label><input id="inputClanekStrana" inputmode="numeric" autocomplete="off" placeholder="27" /></div>
             </div>
+            <div class="doplnit-pole clanek-nazev"><label for="inputClanekNazev">Název</label><input id="inputClanekNazev" autocomplete="off" required /></div>
             <div class="clanek-mrizka-2">
-              <div class="doplnit-pole"><label for="inputClanekNazev">Název</label><input id="inputClanekNazev" autocomplete="off" /></div>
-              <div class="doplnit-pole"><label for="inputClanekModelka">Modelka (nepovinné, propojí s profilem)</label><input id="inputClanekModelka" list="seznamModelekClanku" autocomplete="off" /></div>
+              <div class="doplnit-pole"><label for="inputClanekAutor">Autor</label><input id="inputClanekAutor" list="seznamAutoru" autocomplete="off" /></div>
+              <div class="doplnit-pole"><label for="inputClanekModelka">Modelka (nepovinné, propojí s profilem)</label><input id="inputClanekModelka" list="seznamModelekClanku" autocomplete="off" placeholder="Jméno ze sbírky" />
+                <small id="clanekModelkaInfo" class="cislo-napoveda"></small></div>
             </div>
           </section>
           <section class="doplnit-blok">
             <h4>Text</h4>
-            <div class="clanek-mrizka-2">
-              <div class="doplnit-pole"><label for="selectClanekDruh">Druh textu</label>
-                <select id="selectClanekDruh"><option value="">Neuvedeno</option><option value="prepis">Přepis</option><option value="shrnuti">Shrnutí</option></select></div>
-            </div>
             <!-- Text se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
             <div class="doplnit-pole">
               <button type="button" id="clanekTextBtn" class="text-nahled text-nahled-velky" title="Upravit text článku"><span id="clanekTextNahled"></span></button>
               <textarea id="inputClanekText" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
             </div>
-            <p class="doplnit-napoveda">Klik na text otevře editor. První odstavec je perex, dvojtečka za jménem (PLAYBOY:) zvýrazní mluvčího.</p>
+            <div class="clanek-druh">
+              <p class="doplnit-napoveda">Klik na text otevře editor. První odstavec je perex, dvojtečka za jménem (PLAYBOY:) zvýrazní mluvčího.</p>
+              <div class="doplnit-pole"><label for="selectClanekDruh">Druh textu</label>
+                <select id="selectClanekDruh"><option value="">Neuvedeno</option><option value="prepis">Přepis</option><option value="shrnuti">Shrnutí</option></select></div>
+            </div>
           </section>
           <section class="doplnit-blok">
             <h4>Skeny stran (nepovinné)</h4>
-            <div class="doplnit-pole"><textarea id="inputClanekSkeny" rows="3" aria-label="Skeny stran" placeholder="Odkazy na skeny z Google Disku, jeden na řádek"></textarea></div>
+            <div class="doplnit-pole"><textarea id="inputClanekSkeny" rows="3" aria-label="Skeny stran" aria-describedby="clanekSkenyInfo" placeholder="Odkazy na skeny z Google Disku, jeden na řádek" spellcheck="false"></textarea></div>
+            <small id="clanekSkenyInfo" class="cislo-napoveda"></small>
+            <div id="clanekSkenyNahled" class="clanek-skeny-nahled"></div>
           </section>
         </div>
         <div class="doplnit-pata">

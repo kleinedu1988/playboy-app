@@ -5240,19 +5240,97 @@ textarea {
     min-height: 0;
 }
 
-.clanek-mrizka-3,
+.clanek-mrizka-rubrika,
 .clanek-mrizka-2 {
     display: grid;
     gap: 10px 14px;
     margin-bottom: 10px;
 }
 
-.clanek-mrizka-3 {
-    grid-template-columns: 1fr 1fr 90px;
+.clanek-mrizka-rubrika {
+    grid-template-columns: minmax(0, 1fr) 90px;
 }
 
 .clanek-mrizka-2 {
-    grid-template-columns: 1.6fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.clanek-nazev {
+    margin-bottom: 10px;
+}
+
+.clanek-nazev input {
+    height: 40px;
+    font-size: 15px;
+}
+
+/* Náhled záhlaví článku v hlavičce okna (jako rubrika nad článkem na stránce čísla) */
+.doplnit-hlavicka .clanek-nahled-zahlavi {
+    margin-top: 6px;
+    color: var(--accent-text);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* Pod textem nápověda vlevo a druh textu vpravo */
+.clanek-druh {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.clanek-druh .doplnit-napoveda {
+    flex: 1;
+    margin: 0;
+}
+
+.clanek-druh .doplnit-pole {
+    flex: none;
+    width: 160px;
+}
+
+.clanek-okno select {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Náhledy skenů z vložených odkazů */
+.clanek-skeny-nahled {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+}
+
+.clanek-skeny-nahled:not(:empty) {
+    margin-top: 8px;
+    padding-bottom: 4px;
+}
+
+.clanek-skeny-nahled img {
+    flex: none;
+    width: 54px;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-card);
+}
+
+@media (max-width: 560px) {
+    .clanek-mrizka-2 {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .clanek-druh {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .clanek-druh .doplnit-pole {
+        width: auto;
+    }
 }
 
 .clanek-okno textarea {
@@ -5265,6 +5343,195 @@ textarea {
 
 .clanek-okno .doplnit-pata span {
     margin-right: auto;
+}
+
+/* Okna coveru a čísla časopisu: rozložení okna alba (vlevo volby a náhled obálky, vpravo pole) */
+.modal-card.cislo-okno {
+    width: min(720px, calc(100vw - 32px));
+    max-height: calc(100% - 32px);
+    overflow-y: auto;
+}
+
+.cislo-okno .album-mrizka {
+    grid-template-columns: 220px minmax(0, 1fr);
+}
+
+.cislo-podnadpis {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.cislo-volby [hidden] {
+    display: none;
+}
+
+.cislo-okno .album-volba:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+/* Náhled obálky s páskou čísla a štítkem stavu, jako dlaždice v Číslech */
+.cislo-nahled {
+    margin-top: 16px;
+}
+
+.cislo-nahled-obalka {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    background-color: var(--bg-card);
+}
+
+.cislo-nahled-obalka:has(img:not(.hidden)) {
+    border-style: solid;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+}
+
+.cislo-nahled-obalka.mam {
+    border: 2px solid var(--vytisk);
+}
+
+.cislo-nahled-obalka.nezajima img {
+    opacity: 0.45;
+}
+
+.cislo-nahled-obalka > img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cislo-nahled-prazdny {
+    padding: 0 18px;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+.cislo-nahled b {
+    display: block;
+    margin-top: 8px;
+    color: var(--text-main);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.cislo-nahled b:empty {
+    display: none;
+}
+
+/* Tlumená nápověda pod polem (field-hint je růžový a slouží k upozornění) */
+.cislo-napoveda {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.cislo-napoveda:empty {
+    display: none;
+}
+
+.album-bok .cislo-napoveda {
+    margin-top: 6px;
+}
+
+.doplnit-pole .cislo-napoveda {
+    margin-top: 4px;
+}
+
+.cislo-info {
+    display: block;
+    margin: -8px 0 12px;
+}
+
+.cislo-okno .form-row-3 {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 80px;
+}
+
+.cislo-okno .album-pole {
+    display: flex;
+    flex-direction: column;
+}
+
+.cislo-okno .modal-actions {
+    margin-top: auto;
+    padding-top: 8px;
+}
+
+/* Náhled textu poznámky a článku začíná nahoře (tlačítko obsah jinak svisle centruje) */
+.cislo-okno .text-nahled,
+.clanek-okno .text-nahled {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+/* Úzké okno: náhled se zmenší a jde vedle voleb, aby pole zůstala vidět bez rolování; křížek je v rohu okna */
+@media (max-width: 760px) {
+    .cislo-okno .album-mrizka {
+        position: relative;
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cislo-okno .album-pole {
+        position: static;
+        padding-top: 20px;
+    }
+
+    .cislo-okno .album-bok {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 96px;
+        column-gap: 16px;
+        align-content: start;
+        padding-right: 56px;
+    }
+
+    .cislo-okno .rocnik-stav {
+        display: none;
+    }
+
+    .cislo-okno .album-bok > :not(.cislo-nahled) {
+        grid-column: 1;
+    }
+
+    .cislo-okno .cislo-nahled {
+        grid-column: 2;
+        grid-row: 1 / span 8;
+        margin-top: 0;
+    }
+
+    .cislo-okno .cislo-nahled-prazdny {
+        padding: 0 6px;
+        font-size: 10px;
+    }
+
+    .cislo-okno .cislo-nahled b {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .cislo-okno .form-row-3 {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .cislo-okno .form-row-3 > .form-group:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .cislo-okno .modal-actions {
+        flex-wrap: wrap;
+    }
 }
 
 /* Centerfold v levém panelu pod údaji (u čísla i u modelky) */

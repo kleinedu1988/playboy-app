@@ -1,12 +1,14 @@
 // Čisté funkce pro texty a data: nesahají na stránku ani na backend, proto jdou testovat samostatně
 
 export const MESICE = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
-// Počet různých souborů Disku ve vloženém textu: odkazy (file/d/…, id=…) i holá ID; stejně jako parseDriveIDs v app.go
-export function pocetOdkazuDisku(text) {
+// Různé soubory Disku ve vloženém textu v pořadí výskytu: odkazy (file/d/…, id=…) i holá ID; stejně jako parseDriveIDs v app.go
+export function idOdkazuDisku(text) {
     const ids = new Set([...String(text || '').matchAll(/(?:file\/d\/|id=|\/d\/)([a-zA-Z0-9_-]{25,})/g)].map(m => m[1]));
     String(text || '').split(/\s+/).filter(slovo => /^[a-zA-Z0-9_-]{25,}$/.test(slovo)).forEach(id => ids.add(id));
-    return ids.size;
+    return [...ids];
 }
+
+export const pocetOdkazuDisku = text => idOdkazuDisku(text).length;
 
 // Anglické názvy k výběru měsíce („Červen (June)“), americké zdroje píšou čísla anglicky
 export const MESICE_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

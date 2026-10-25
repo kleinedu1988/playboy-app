@@ -347,6 +347,13 @@ test('počet souborů Disku ve vloženém textu', async () => {
     assert.equal(pocetOdkazuDisku('bez odkazu'), 0);
 });
 
+test('soubory Disku ve vloženém textu v pořadí výskytu', async () => {
+    const { idOdkazuDisku } = await import('../src/lib/format.js');
+    const id = 'A'.repeat(28), id2 = 'B'.repeat(28);
+    assert.deepEqual(idOdkazuDisku(`${id2}\nhttps://drive.google.com/file/d/${id}/view?usp=sharing ${id2}`), [id, id2]);
+    assert.deepEqual(idOdkazuDisku(''), []);
+});
+
 test('výskyt modelky: časopis, jen online, neurčeno', () => {
     assert.equal(vyskytModelky({ vydani: ['1995-03'] }), 'casopis');
     assert.equal(vyskytModelky({ obalky: ['1996-S01-CZ'] }), 'casopis');

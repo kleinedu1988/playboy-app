@@ -20,6 +20,7 @@ import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { htmlClanku, htmlProuzku, otevritEditorClanku } from './clanky';
 import { otevritCtecku } from './ctecka';
 import { htmlPrazdna } from '../ui/prazdno';
+import { upravitText } from '../ui/editor-textu';
 
 // Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
 export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
@@ -333,18 +334,69 @@ export async function upravitVydani(vydani) {
     stav.upravovaneVydani = vydani;
     const [info, modelky] = await Promise.all([GetVydaniInfo(vydani), vsechnyModelky()]);
     document.getElementById('issueModalTitle').textContent = nazevVydani(vydani);
+    document.getElementById('issueNahledPaska').textContent = paskaCisla(vydani);
     // Výtisk a „sháním“ jen u české edice; u americké zůstanou vidět, jen když už jsou nastavené
     const vyber = /** @type {HTMLSelectElement} */ (document.getElementById('selectIssueStav'));
     [...vyber.options].forEach(o => { o.hidden = o.disabled = (o.value === 'mam' || o.value === 'shanim') && rozlozitVydani(vydani)?.edice !== 'CZ' && o.value !== info.stav; });
     vyber.value = info.stav;
+    document.querySelectorAll('[data-stav-cisla]').forEach(b => {
+        /** @type {HTMLElement} */ (b).hidden = Boolean([...vyber.options].find(o => o.value === /** @type {HTMLElement} */ (b).dataset.stavCisla)?.hidden);
+    });
+    document.getElementById('issueStavInfo').textContent = [...vyber.options].some(o => o.hidden) ? 'Výtisk a sháním se evidují jen u české edice.' : '';
+    ukazatStavCisla();
     document.getElementById('issueNazevGroup').classList.toggle('hidden', !jeSpecial(vydani));
     document.getElementById('inputIssueNazev').value = info.nazev || '';
     document.getElementById('inputIssueNazev').required = jeSpecial(vydani);
     document.getElementById('inputIssueObalka').value = info.jmenoObalky || info.naObalce;
     document.getElementById('inputIssuePoznamka').value = info.poznamka;
+    ukazatPoznamkuCisla();
+    jmenaVeSbirce = new Set((modelky || []).map(m => sjednotit(m.jmeno)));
+    ukazatModelkuObalky();
     document.getElementById('seznamModelekObalky').innerHTML = (modelky || []).map(m => `<option value="${esc(m.jmeno)}"></option>`).join('');
+    ukazatObalkuCisla('');
     issueModal.classList.remove('hidden');
-    document.getElementById('inputIssuePoznamka').focus();
+    document.getElementById('issuePoznamkaBtn').focus();
+    // Obálka čísla do náhledu vlevo se dočte až po otevření okna
+    const cover = (await GetVydani(vydani) || []).find(f => f.typ === 'Cover');
+    if (stav.upravovaneVydani === vydani && cover) ukazatObalkuCisla(obrazek(cover.url, VELIKOST_PLAKATU_MALA));
+}
+
+// Jména modelek ve sbírce (pro nápovědu pod polem Na obálce)
+let jmenaVeSbirce = new Set();
+
+function ukazatObalkuCisla(adresa) {
+    const img = /** @type {HTMLImageElement} */ (document.getElementById('issueNahledObrazek'));
+    if (adresa) img.src = adresa;
+    else img.removeAttribute('src');
+    img.classList.toggle('hidden', !adresa);
+    document.getElementById('issueNahledPrazdny').classList.toggle('hidden', Boolean(adresa));
+}
+
+// Zvolený stav: volba vlevo a štítek na obálce (rámeček výtisku jako v kalendáři)
+function ukazatStavCisla() {
+    const hodnota = /** @type {HTMLSelectElement} */ (document.getElementById('selectIssueStav')).value;
+    document.querySelectorAll('[data-stav-cisla]').forEach(b => {
+        const zvolena = /** @type {HTMLElement} */ (b).dataset.stavCisla === hodnota;
+        b.classList.toggle('active', zvolena);
+        b.setAttribute('aria-pressed', String(zvolena));
+    });
+    const stitek = document.getElementById('issueNahledStav');
+    stitek.textContent = hodnota ? NAZVY_STAVU[hodnota].toLowerCase() : '';
+    stitek.classList.toggle('hidden', !hodnota);
+    const obalka = document.getElementById('issueNahledObalka');
+    Object.keys(NAZVY_STAVU).forEach(k => obalka.classList.toggle(k, k === hodnota));
+}
+
+function ukazatPoznamkuCisla() {
+    const text = /** @type {HTMLTextAreaElement} */ (document.getElementById('inputIssuePoznamka')).value;
+    document.getElementById('issuePoznamkaNahled').innerHTML = text.trim() ? formatMarkdown(text) : '<span class="text-nahled-prazdny">Přidat poznámku…</span>';
+}
+
+// Modelka ze sbírky se propojí s profilem, jiné jméno zůstane jen jako text
+function ukazatModelkuObalky() {
+    const jmeno = /** @type {HTMLInputElement} */ (document.getElementById('inputIssueObalka')).value.trim();
+    document.getElementById('issueObalkaInfo').textContent = !jmeno ? ''
+        : jmenaVeSbirce.has(sjednotit(jmeno)) ? 'Modelka ze sbírky – jméno na stránce čísla otevře její profil.' : 'Ve sbírce není – uloží se jen jméno.';
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
@@ -388,6 +440,30 @@ function oznacitPrecteno() {
 
 export function pripravit() {
     document.querySelector('main').addEventListener('scroll', oznacitPrecteno, { passive: true });
+    // Okno čísla: volba stavu nastaví skrytý výběr (událost change pozná rozepsané změny), poznámka v editoru textu
+    document.getElementById('issueStavVolby').addEventListener('click', (e) => {
+        const volba = /** @type {HTMLElement} */ (e.target).closest('[data-stav-cisla]');
+        if (!volba) return;
+        const vyber = /** @type {HTMLSelectElement} */ (document.getElementById('selectIssueStav'));
+        if (vyber.value === volba.dataset.stavCisla) return;
+        vyber.value = volba.dataset.stavCisla;
+        vyber.dispatchEvent(new Event('change', { bubbles: true }));
+        ukazatStavCisla();
+    });
+    document.getElementById('inputIssueObalka').addEventListener('input', ukazatModelkuObalky);
+    document.getElementById('issuePoznamkaBtn').addEventListener('click', async () => {
+        const pole = /** @type {HTMLTextAreaElement} */ (document.getElementById('inputIssuePoznamka'));
+        const text = await upravitText({
+            nadpis: `Poznámka · ${nazevVydani(stav.upravovaneVydani)}`,
+            text: pole.value,
+            zastupny: 'Kde je výtisk, v jakém je stavu, co v čísle chybí…',
+            napoveda: 'Formátování se ukazuje rovnou; značky se objeví, jen když je v místě kurzor. Ctrl+B tučné, Ctrl+I kurzíva, Ctrl+Enter použije text.',
+        });
+        if (text === null || text === pole.value) return;
+        pole.value = text;
+        pole.dispatchEvent(new Event('input', { bubbles: true }));
+        ukazatPoznamkuCisla();
+    });
     document.getElementById('issueForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
         // Modelka ze sbírky se propojí s profilem; jméno, které ve sbírce není, se uloží jako text

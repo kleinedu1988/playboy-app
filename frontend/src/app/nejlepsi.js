@@ -141,6 +141,12 @@ function sledovatKonce() {
     }), { root: hlavni, rootMargin: '0px 0px 2700px 0px' });
 }
 
+// Mozaika skrytého přehledu se zahazuje (navigace.js): konce úrovní se přestanou hlídat, další načtení začne znovu
+export function prestatSledovatKonce() {
+    pozorovatelKoncu?.disconnect();
+    pozorovatelKoncu = null;
+}
+
 // Lišta úrovní srdíček: úroveň bez vykreslených fotek dostane před skokem první dávku
 listaNejlepsich.dovykreslit = (klic) => {
     const h = parseInt(String(klic).replace('srdicka-', ''));

@@ -12,7 +12,7 @@ import { stav } from './stav';
 import { kopiePole, prevestPole } from './doplneni';
 import { naplnitNapovedu, potvrdit } from './formular-modelky';
 import { chybaPoli, hodnotaModelky, hodnotaNavrhuPole, ulozitNavrh, ulozitPoleModelky, vlastnostPole } from './udrzba-zapis';
-import { nastavitHtml, srovnatSeznam } from '../ui/dom';
+import { jeVidet, nastavitHtml, otevreneOkno, srovnatSeznam } from '../ui/dom';
 import { htmlSrdicekModelky, obnovitSrdickaModelky } from '../ui/srdicka';
 import { hodnotaPoKlavese, textSrdicek } from '../lib/srdicka';
 import { oznamit } from '../ui/oznameni';
@@ -65,7 +65,7 @@ export function pripravit(funkce) {
     // „zpět“; otevřené okno, nabídka a přehled zkratek mají přednost.
     document.addEventListener('keydown', (e) => {
         if (!otevreno || !api.viditelna() || stav.zamceno) return;
-        if (document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden), #zkratky:not(.hidden), #contextMenu:not(.hidden)')) return;
+        if (otevreneOkno() || jeVidet('lightbox') || jeVidet('zkratky') || jeVidet('contextMenu')) return;
         const cil = /** @type {HTMLElement} */ (e.target);
         const vKarte = cast('karta')?.contains(cil);
         let akce = null;

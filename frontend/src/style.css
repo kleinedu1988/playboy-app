@@ -853,18 +853,7 @@ main {
     justify-content: flex-end;
 }
 
-/* Typ alba: kde vyšlo (segmenty) a druh (štítky) */
-.typ-alba-nadpis {
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.typ-alba-druhy {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
+/* Období Cyber Girl (týden, měsíc) spočítané z data nafocení u typu alba */
 .typ-alba-obdobi {
     color: var(--accent-text);
     font-weight: 600;
@@ -7213,11 +7202,6 @@ textarea {
     font-size: 11px;
 }
 
-.graf-nazev {
-    fill: #c8c8cc;
-    font-size: 12px;
-}
-
 /* Neviditelná plocha přes celý sloupec či řádek: bublina se ukáže i nad malým sloupcem */
 .graf-cil {
     fill: transparent;
@@ -7241,7 +7225,6 @@ textarea {
     pointer-events: none;
 }
 
-.stat-pozn,
 .stat-prazdne {
     margin: 10px 0 0;
     font-size: 12px;

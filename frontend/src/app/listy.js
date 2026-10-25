@@ -6,9 +6,24 @@ import { best, calendar, covers, gallery, wall } from './prvky';
 export const hlavniOblast = document.querySelector('main');
 export const listyStranky = [];
 
+// Lišta je vidět, když ani ona, ani žádný její předek nemá třídu hidden. Zjišťuje se z tříd, ne z rozměrů:
+// getClientRects() by v obsluze rolování při každé události vynutil rozvržení celé stránky.
+function zobrazena(prvek) {
+    for (let p = prvek; p; p = p.parentElement) if (p.classList.contains('hidden')) return false;
+    return prvek.isConnected;
+}
+
 // svisla: lišta je sloupec vedle obsahu, ne řádek nad ním
 export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
-    const casti = () => [...pohled.querySelectorAll('[data-cast]')];
+    // Části se v pohledu hledají znovu jen po změně jeho obsahu; při každém posunu stránky by se kvůli pár
+    // značkám procházely tisíce karet. Nezpracované záznamy pozorovatele se berou hned, ne až po úloze.
+    let castiPamet = null;
+    const zmenyObsahu = new MutationObserver(() => { castiPamet = null; });
+    zmenyObsahu.observe(pohled, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-cast'] });
+    const casti = () => {
+        if (zmenyObsahu.takeRecords().length) castiPamet = null;
+        return (castiPamet ||= [...pohled.querySelectorAll('[data-cast]')]);
+    };
     // Kde začíná viditelný obsah: pod vodorovnou lištou, u svislé hned nahoře
     const horniOkraj = () => svisla ? hlavniOblast.getBoundingClientRect().top : nav.getBoundingClientRect().bottom;
     const lista = vytvoritListu(nav, (klic) => {
@@ -21,7 +36,7 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
     }, { svisla });
     lista.sledovat = () => {
         // Skrytá lišta ani lišta ve skrytém pohledu se nesleduje
-        if (!nav.getClientRects().length) return;
+        if (!zobrazena(nav)) return;
         const hranice = horniOkraj() + 40;
         const vsechny = casti();
         // Na konci stránky už poslední část výš nevyjede, i tak je to ta aktuální
@@ -34,7 +49,7 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
 }
 
 // Svislý rejstřík u pravého okraje se ukáže při rolování (a chvíli po něm) a když je myš u pravého okraje
-const svisleListy = () => listyStranky.filter(l => l.svisla && l.nav.getClientRects().length);
+const svisleListy = () => listyStranky.filter(l => l.svisla && zobrazena(l.nav));
 let skrytiPoRolovani = null;
 hlavniOblast.addEventListener('scroll', () => {
     svisleListy().forEach(l => l.nav.classList.add('rolovani'));

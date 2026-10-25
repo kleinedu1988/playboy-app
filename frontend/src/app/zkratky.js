@@ -4,6 +4,7 @@
 import { otevritNapovedu } from './napoveda';
 import { lightbox } from './prohlizec';
 import { stav } from './stav';
+import { otevreneOkno } from '../ui/dom';
 
 const k = (...klavesy) => klavesy.map(x => `<kbd>${x}</kbd>`).join('');
 const nebo = '<span class="zkratky-nebo">/</span>';
@@ -160,7 +161,7 @@ export function pripravit() {
             return;
         }
         if (e.key !== '?' || stav.zamceno || e.ctrlKey || e.altKey || e.metaKey || e.target.closest('input, textarea, select')
-            || document.querySelector('.modal-overlay:not(.hidden):not(#ctecka)')) return;
+            || otevreneOkno('ctecka')) return;
         e.preventDefault();
         e.stopPropagation();
         otevritZkratky();

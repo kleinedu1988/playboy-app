@@ -15,7 +15,7 @@ import { naplnitNapovedu, potvrdit } from './formular-modelky';
 import { chybaPoli, hodnotaModelky, hodnotaNavrhuPole, ulozitPoleModelky, vlastnostPole } from './udrzba-zapis';
 import { pridatNapovedu } from './udrzba-fokus';
 import { upravitText } from '../ui/editor-textu';
-import { nastavitHtml } from '../ui/dom';
+import { jeVidet, nastavitHtml, otevreneOkno } from '../ui/dom';
 import { htmlSrdicekModelky, obnovitSrdickaModelky } from '../ui/srdicka';
 import { hodnotaPoKlavese, textSrdicek } from '../lib/srdicka';
 import { oznamit } from '../ui/oznameni';
@@ -227,7 +227,7 @@ function postavitRadek(u, r, i) {
             placeholder="RRRR-MM nebo RRRR" autocomplete="off" value="${esc(x ? String(x.navrh.hodnota) : '')}" data-vychozi="${esc(x ? String(x.navrh.hodnota) : '')}" data-puvodni="" ${x ? 'data-navrh="0"' : ''} /></div>`;
         if (x) pridatNapovedu(/** @type {HTMLElement} */ (obsah.firstElementChild), `${textNavrhu(x)}${rozlozitVydani(x.navrh.hodnota) ? ` · ${nazevVydani(x.navrh.hodnota)}` : ''}`, 'navrh', titleNavrhu(x));
     } else if (u.druh === 'textAlba') {
-        obsah.innerHTML = '<button type="button" class="nv-tlacitko nv-prijmout" data-uu-akce="text">✎ Napsat text…</button>';
+        obsah.innerHTML = '<button type="button" class="nv-tlacitko nv-prijmout" data-uu-akce="text" data-editor-textu>✎ Napsat text…</button>';
     } else if (u.druh === 'navrh') {
         const x = r.navrhy[0];
         obsah.innerHTML = `<p class="uu-text"><span class="uu-pole-navrhu">${esc(x.pole)}${x.album ? ` · ${esc(x.album)}` : ''}</span> <b>${esc(x.hodnota)}</b>
@@ -579,7 +579,7 @@ function klavesa(e) {
     const cil = /** @type {HTMLElement} */ (e.target);
     const radek = /** @type {HTMLElement} */ (cil.closest?.('.uu-radek'));
     if (!radek || !kontejner?.contains(radek) || !api.viditelna() || stav.zamceno || e.altKey || e.metaKey) return;
-    if (document.querySelector('.modal-overlay:not(.hidden), #zkratky:not(.hidden), #contextMenu:not(.hidden)')) return;
+    if (otevreneOkno() || jeVidet('zkratky') || jeVidet('contextMenu')) return;
     const klic = radek.dataset.radek;
     let akce = null;
     const tlacitko = cil.tagName === 'BUTTON' && !cil.closest('.kategorie-vyber');

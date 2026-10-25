@@ -1,6 +1,7 @@
 // Prohlížeč stran článku: skeny jako rozevřený časopis (dvojstrana) nebo po jedné straně, dole pás náhledů
 import { esc, nazevVydani, obrazek } from '../lib/format';
 import { VELIKOST_NAHLEDU } from './obrazky';
+import { otevreneOkno } from '../ui/dom';
 
 // Sken se čte, potřebuje víc než plakát; Disk bez přípony dá nejvýše 1600 px, w2000 si řekne o víc
 const VELIKOST_STRANY = 'w2000';
@@ -111,7 +112,7 @@ export function pripravit() {
     // Šipky, PageUp/PageDown, Home/End, 1 a 2 přepínají rozložení; Esc zavře (jako každé okno)
     document.addEventListener('keydown', (e) => {
         if (ctecka.classList.contains('hidden') || e.ctrlKey || e.altKey || e.metaKey) return;
-        if (document.querySelector('.modal-overlay:not(.hidden):not(#ctecka)')) return;
+        if (otevreneOkno('ctecka')) return;
         const kroky = { ArrowLeft: -1, ArrowRight: 1, PageUp: -1, PageDown: 1, ' ': 1, Home: -Infinity, End: Infinity };
         if (e.key in kroky) {
             e.preventDefault();

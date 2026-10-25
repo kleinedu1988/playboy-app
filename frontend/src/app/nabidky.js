@@ -20,6 +20,7 @@ import { otevritAlbumModal, pridatCenterfold, smazatAlbum } from './formular-alb
 import { polozkySpravy, presunoutAlbum, pridatModelkuKAlbu, sloucitAlbum, sloucitModelku, smazatCover } from './sprava';
 import { zavritOkno } from './ulozeni';
 import { akceFotky } from './akce-fotky';
+import { otevreneOkno } from '../ui/dom';
 
 // Nabídka akcí pro prvek pod kurzorem; otevírá ji pravé tlačítko i tlačítko ⋯ na dlaždici a v prohlížeči
 export function otevritNabidku(cil, x, y) {
@@ -233,7 +234,7 @@ export function pripravit() {
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape') return;
         // Esc zavře nabídku, jinak se z profilu vrátí na výběr modelek
-        const okno = [...document.querySelectorAll('.modal-overlay:not(.hidden)')].pop();
+        const okno = otevreneOkno();
         if (!contextMenu.classList.contains('hidden')) {
             zavritKontextovouNabidku();
         } else if (okno) {
@@ -246,7 +247,7 @@ export function pripravit() {
             zrusitVyber();
         } else if (stav.zrusitUpravuVyrezu) {
             stav.zrusitUpravuVyrezu();
-        } else if ((!detailView.classList.contains('hidden') || !issueView.classList.contains('hidden')) && !document.querySelector('.modal-overlay:not(.hidden)')) {
+        } else if ((!detailView.classList.contains('hidden') || !issueView.classList.contains('hidden')) && !otevreneOkno()) {
             zpet();
         }
     });

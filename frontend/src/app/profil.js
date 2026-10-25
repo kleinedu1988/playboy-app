@@ -147,10 +147,12 @@ export function htmlPopisuAlba(a) {
 }
 
 // Tlačítko „více" má smysl jen u textu, který se do zkrácené podoby nevešel
+// Rozměry se nejdřív všechny přečtou a pak se teprve zapisuje; střídání čtení a zápisu by u každého alba
+// znovu rozvrhovalo celou stránku
 export function pripravitPopisy(pohled) {
-    pohled.querySelectorAll('.album-desc-text').forEach(text => {
-        text.nextElementSibling.classList.toggle('hidden', text.scrollHeight <= text.clientHeight + 1);
-    });
+    const texty = [...pohled.querySelectorAll('.album-desc-text')];
+    const vejdeSe = texty.map(text => text.scrollHeight <= text.clientHeight + 1);
+    texty.forEach((text, i) => text.nextElementSibling.classList.toggle('hidden', vejdeSe[i]));
 }
 
 // Odkazy modelky jako štítky s názvem webu; otevírají se v prohlížeči
@@ -348,12 +350,15 @@ export const RADKU_NAHLEDU = 2;
 export const rozbalenaAlba = new Set();
 export const atributyMrizky = a => `data-klic="${esc(klicAlba(a))}"`;
 
+// Počty sloupců všech mřížek se zjistí najednou před prvním zápisem (jinak by se po každém albu rozvrhovalo znovu)
 export function zkratitAlba(pohled) {
-    pohled.querySelectorAll('.photos-grid').forEach(mrizka => {
+    const mrizky = [...pohled.querySelectorAll('.photos-grid')]
         // Počet sloupců jde zjistit jen u mřížky, která je vidět
-        if (!mrizka.offsetParent) return;
+        .filter(mrizka => mrizka.offsetParent)
+        .map(mrizka => ({ mrizka, sloupcu: getComputedStyle(mrizka).gridTemplateColumns.split(' ').length }));
+    mrizky.forEach(({ mrizka, sloupcu }) => {
         const dlazdice = [...mrizka.children];
-        const limit = getComputedStyle(mrizka).gridTemplateColumns.split(' ').length * RADKU_NAHLEDU;
+        const limit = sloupcu * RADKU_NAHLEDU;
         const zkratit = dlazdice.length > limit && !rozbalenaAlba.has(mrizka.dataset.klic);
 
         dlazdice.forEach((d, i) => {

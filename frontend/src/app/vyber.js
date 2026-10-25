@@ -10,6 +10,7 @@ import { nacistNejlepsi, pridatDoVyberu } from './nejlepsi';
 import { lbOhodnotit, lbOtocit, lbPrepnoutRozlozeni, lbPrepnoutSlideshow, lbSkokAlba, lbZamichat, lbZobrazit, lightbox, otevritLightbox } from './prohlizec';
 import { nabidnoutVraceni } from './sprava';
 import { vybratHodnotu } from './ulozeni';
+import { otevreneOkno } from '../ui/dom';
 
 // Výběr více fotek v profilu, na stránce vydání, ročníku a fotografa a v Nejlepších: Ctrl (Cmd) + klik přidá
 // nebo odebere fotku, Shift + klik vybere úsek, Ctrl+A vybere vše, Delete vybrané odebere
@@ -138,7 +139,7 @@ export function pripravit() {
 
     // Ctrl+A vybere všechny fotky pohledu, Delete vybrané odebere (obojí ne při psaní ani nad oknem)
     document.addEventListener('keydown', (e) => {
-        if (e.target.closest('input, textarea, select') || document.querySelector('.modal-overlay:not(.hidden)') || !lightbox.classList.contains('hidden')) return;
+        if (e.target.closest('input, textarea, select') || otevreneOkno() || !lightbox.classList.contains('hidden')) return;
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
             if (vybratVse()) e.preventDefault();
         } else if (e.key === 'Delete' && vybraneDlazdice().length) {
@@ -157,7 +158,7 @@ export function pripravit() {
     document.addEventListener('keydown', (e) => {
         // Klávesy prohlížeče neplatí při psaní do pole ani nad otevřeným oknem
         if (lightbox.classList.contains('hidden') || e.ctrlKey || e.altKey || e.metaKey
-            || e.target.closest('input, textarea, select') || document.querySelector('.modal-overlay:not(.hidden)')) return;
+            || e.target.closest('input, textarea, select') || otevreneOkno()) return;
         const klavesa = e.key.toLowerCase();
         if (klavesa === 'arrowright') lbZobrazit(stav.lbIndex + 1);
         else if (klavesa === 'arrowleft') lbZobrazit(stav.lbIndex - 1);

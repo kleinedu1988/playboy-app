@@ -1,6 +1,6 @@
 // Nápověda (nabídka ⋯ a tlačítko v přehledu zkratek, který otevře klávesa ?) a „Co je nového“: po aktualizaci se jednou ukáže, co přibylo od verze,
-// kterou uživatel viděl naposledy. Novinky se berou z CHANGELOG.md vloženého při sestavení programu.
-import changelog from '../../../CHANGELOG.md?raw';
+// kterou uživatel viděl naposledy. Novinky se berou z CHANGELOG.md vloženého při sestavení programu; je to samostatný
+// kousek skriptu (přes 100 kB textu), který se načte až s oknem novinek, ne při každém startu.
 import { GetVerze } from './backend';
 import { novinkyMezi, telaNaHtml } from '../lib/changelog';
 import { sklonovat } from '../lib/format';
@@ -13,12 +13,14 @@ export function otevritNapovedu() {
     helpModal.querySelector('.napoveda').scrollTop = 0;
 }
 
+const nacistChangelog = () => import('../../../CHANGELOG.md?raw').then(m => m.default);
+
 // Kolik nejnovějších verzí je v „Co je nového“ vidět celých
 const NAHORE = 3;
 
 // Novinky od verze „od" (bez ní posledních pět verzí) po současnou
 export async function otevritNovinky(od = '') {
-    const verze = await GetVerze();
+    const [verze, changelog] = await Promise.all([GetVerze(), nacistChangelog()]);
     let novinky = novinkyMezi(changelog, od, verze);
     if (!od) novinky = novinky.slice(0, 5);
     document.getElementById('newsModalTitle').textContent = od ? `Co je nového od verze ${od}` : `Co je nového · verze ${verze}`;
@@ -36,7 +38,7 @@ export async function ukazatNovinkyPoAktualizaci() {
     let videna = null;
     try { videna = localStorage.getItem('videnaVerze'); } catch { return; }
     try { localStorage.setItem('videnaVerze', verze); } catch { /* příště znovu */ }
-    if (videna && videna !== verze && novinkyMezi(changelog, videna, verze).length) otevritNovinky(videna);
+    if (videna && videna !== verze && novinkyMezi(await nacistChangelog(), videna, verze).length) otevritNovinky(videna);
 }
 
 export function pripravit() {

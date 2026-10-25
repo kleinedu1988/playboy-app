@@ -11,7 +11,7 @@ import { esc, nazevVydani, sklonovat } from '../lib/format';
 import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
 import { stav } from './stav';
 import { stats } from './prvky';
-import { nastavitHtml, srovnatSeznam } from '../ui/dom';
+import { jeVidet, nastavitHtml, otevreneOkno, srovnatSeznam } from '../ui/dom';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { otevritCoverModal } from './cover';
@@ -444,7 +444,7 @@ let mysDole = false;
 function naplanovatNacteni() {
     clearTimeout(casovacNacteni);
     casovacNacteni = setTimeout(() => {
-        if (stats.classList.contains('hidden') || document.querySelector('.modal-overlay:not(.hidden)')) return;
+        if (stats.classList.contains('hidden') || otevreneOkno()) return;
         // Načtení nesmí vyměnit tlačítko mezi stisknutím a puštěním myši (WebKitGTK by klik zahodil)
         if (mysDole) return naplanovatNacteni();
         nacist();
@@ -853,7 +853,7 @@ export function pripravit(nacistPrehled) {
 
     // Ctrl+F a / skočí do hledání Údržby (hlavní hledání v Přehledu nic nehledá)
     document.addEventListener('keydown', (e) => {
-        if (!udrzbaVidet() || !vSouhrnu() || stav.zamceno || document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) return;
+        if (!udrzbaVidet() || !vSouhrnu() || stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
         const pise = /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select');
         if (((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f') || (e.key === '/' && !pise && !e.ctrlKey && !e.altKey)) {
             e.preventDefault();

@@ -12,7 +12,7 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { duvodyOdhadu, htmlSrdicka } from './galerie';
 import { obnovitSrdickaModelky } from '../ui/srdicka';
-import { nastavitHtml, nastavitText } from '../ui/dom';
+import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 
@@ -332,7 +332,7 @@ export function pripravit() {
     document.addEventListener('keydown', (e) => {
         if (!videt() || !fronta[0] && e.key !== 'Backspace' || e.ctrlKey || e.metaKey || e.altKey || stav.zamceno) return;
         if (e.target.closest?.('input, textarea, select, [role="slider"], [contenteditable]')) return;
-        if (document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden), #zkratky:not(.hidden), #contextMenu:not(.hidden)')) return;
+        if (otevreneOkno() || jeVidet('lightbox') || jeVidet('zkratky') || jeVidet('contextMenu')) return;
         // Odrolováno k pořadí: šipky a mezerník zase posouvají stránku
         const karta = cast('porovnani').getBoundingClientRect();
         if (karta.bottom < 120 || karta.top > innerHeight - 120) return;

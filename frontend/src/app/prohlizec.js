@@ -170,6 +170,10 @@ export function lbZobrazit(index) {
     }
     stav.lbIndex = (index + pocet) % pocet;
     const polozka = stav.lbPolozky[stav.lbIndex];
+    const dalsi = stav.lbPolozky[(stav.lbIndex + 1) % pocet];
+    // Velikost obrázků podle okna se zjistí před zápisem do stránky (potom by se kvůli ní rozvrhovalo znovu)
+    const velikost = lbVelikost(polozka);
+    const velikostDalsi = lbVelikost(dalsi);
 
     stav.lbLupa = null;
     stav.lbPlne = false;
@@ -200,7 +204,6 @@ export function lbZobrazit(index) {
         }
     });
 
-    const velikost = lbVelikost(polozka);
     polozka.fotky.forEach((f, i) => {
         const vetsi = new Image();
         vetsi.onload = () => {
@@ -227,8 +230,7 @@ export function lbZobrazit(index) {
     lbAktualizovatTlacitka();
 
     // Přednačtení další položky, aby listování neproblikávalo
-    const dalsi = stav.lbPolozky[(stav.lbIndex + 1) % pocet];
-    dalsi.fotky.forEach(f => { new Image().src = obrazek(f.url, lbVelikost(dalsi)); });
+    dalsi.fotky.forEach(f => { new Image().src = obrazek(f.url, velikostDalsi); });
 
     if (stav.lbCasovac) lbSpustitCasovac();
 }

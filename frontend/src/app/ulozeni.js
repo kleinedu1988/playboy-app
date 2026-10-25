@@ -19,6 +19,7 @@ import { albumModal, modelModal } from './okno';
 import { neniDuplicitni } from './vyrez';
 import { deleteModal, otevritModelModal, poleModelky, potvrdit, ukazatZalozku, zameritPole, zavritDeleteModal } from './formular-modelky';
 import { obnovitNahledAlba, vybratNeboZalozitModelku } from './formular-alba';
+import { jeVidet, otevreneOkno } from '../ui/dom';
 
 // Výběr nebo zadání jedné hodnoty s našeptáváním; vrací napsaný text, nebo null po zrušení
 export const pickModal = document.getElementById('pickModal');
@@ -301,7 +302,7 @@ export function pripravit() {
     // Ctrl+F skočí do hledání odkudkoli kromě otevřeného okna, prohlížeče a zamčeného programu
     document.addEventListener('keydown', (e) => {
         if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== 'f') return;
-        if (stav.zamceno || searchInput.disabled || document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) return;
+        if (stav.zamceno || searchInput.disabled || otevreneOkno() || jeVidet('lightbox')) return;
         e.preventDefault();
         searchInput.focus();
         searchInput.select();

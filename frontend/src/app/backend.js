@@ -41,8 +41,6 @@ const CTENI = new Set([
     'ExportovatDoSouboru',
 ]);
 
-// Volání, které vygenerované vazby (wails generate module) ještě neznají, jde přímo na window.go jako ostatní vazby
-
 function obalit(jmeno) {
     const funkce = App[jmeno];
     if (CTENI.has(jmeno)) return (...argumenty) => funkce(...argumenty);
@@ -145,3 +143,26 @@ export const ZrusitPoradiAlba = /** @type {typeof App.ZrusitPoradiAlba} */ (obal
 export const GetSpecialy = /** @type {typeof App.GetSpecialy} */ (obalit('GetSpecialy'));
 export const SetNazevSpecialu = /** @type {typeof App.SetNazevSpecialu} */ (obalit('SetNazevSpecialu'));
 export const ZalozitSpecial = /** @type {typeof App.ZalozitSpecial} */ (obalit('ZalozitSpecial'));
+
+// DOČASNÉ – učení (backend uceni.go) ve vygenerovaných vazbách zatím není. Volání jde přímo na window.go jako
+// ostatní vazby; když backend metodu nemá, vrátí null (GetStavUceni) nebo false a Údržba panel učení skryje.
+// Po sloučení s backendem a `wails generate module` se tyto tři řádky nahradí standardním tvarem
+// `export const X = /** @type {typeof App.X} */ (obalit('X'));` (hlídá backend.test.js), GetStavUceni přibude
+// do CTENI a typy StavUceni / ZdrojUceni v uceni.js se přepnou na main.StavUceni z wailsjs/go/models.
+function volitelne(jmeno, kdyzChybi) {
+    return async (...argumenty) => {
+        const funkce = /** @type {any} */ (window).go?.main?.App?.[jmeno];
+        if (typeof funkce !== 'function') return kdyzChybi;
+        try {
+            return await funkce(...argumenty);
+        } finally {
+            if (!jmeno.startsWith('Get')) ohlasitZmenuDat();
+        }
+    };
+}
+/** @type {() => Promise<import('./uceni').StavUceni | null>} */
+export const GetStavUceni = volitelne('GetStavUceni', null);
+/** @type {() => Promise<boolean>} */
+export const ZapomenoutUceni = volitelne('ZapomenoutUceni', false);
+/** @type {(modelkaId: number, pole: string, puvodniNavrh: string, novaHodnota: string) => Promise<boolean>} */
+export const ZaznamenatOpravu = volitelne('ZaznamenatOpravu', false);

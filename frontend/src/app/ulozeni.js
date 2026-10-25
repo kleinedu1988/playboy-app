@@ -11,7 +11,9 @@ import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { nacistStenu } from './stena';
 import { obnovitStranku } from './vydani';
 import { nacistKalendar } from './kalendar';
-import { SKUPINY_UDAJU, nacistPrehled } from './prehled';
+import { nacistPrehled } from './prehled';
+import { SKUPINY_UDAJU } from '../lib/udrzba';
+import { poUlozeniAlba, poUlozeniModelky } from './uceni';
 import { otevritProfilPodleId } from './cover';
 import { albumModal, modelModal } from './okno';
 import { neniDuplicitni } from './vyrez';
@@ -177,6 +179,8 @@ export function pripravit() {
             oznamit('Modelku se nepodařilo uložit do databáze.');
             return;
         }
+        // Návrh upravený v „Upravit…“ a uložený s jinou hodnotou si zapamatuje učení
+        if (stav.editovanaModelka) poUlozeniModelky(modelka);
         // Doplňování v řadě: další modelka z tabulky Přehledu, na stejné záložce a v prvním chybějícím poli
         if (e.submitter?.id === 'modelNextBtn' && stav.frontaDoplnovani) {
             const fronta = stav.frontaDoplnovani;
@@ -269,6 +273,7 @@ export function pripravit() {
         if (stav.editovaneAlbum || popis.trim() || fotograf.trim()) {
             await SetPopisAlba(modelka.id, album, typ, popis, fotograf);
         }
+        if (stav.editovaneAlbum) poUlozeniAlba(modelka.id, stav.editovaneAlbum.album, stav.editovaneAlbum.typ, { vydani, fotograf, popis });
 
         if (e.submitter?.name === 'dalsi' && !stav.editovaneAlbum) {
             // Další album téže modelky: modelka, typ, fotograf a vydání zůstávají, vyprázdní se jen název, odkazy a text

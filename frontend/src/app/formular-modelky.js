@@ -13,7 +13,7 @@ import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { modelModal } from './okno';
 import { neniDuplicitni } from './vyrez';
-import { SKUPINY_UDAJU } from './prehled';
+import { SKUPINY_UDAJU } from '../lib/udrzba';
 
 // Rychlé přidání: jen jméno, po uložení se rovnou otevře profil, kde se doplní fotky a údaje
 export const quickModal = document.getElementById('quickModal');

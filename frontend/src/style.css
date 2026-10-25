@@ -8269,76 +8269,433 @@ textarea {
     white-space: nowrap;
 }
 
-/* Údržba: souhrn pokroku ve dvou sloupcích, filtry a jedna fronta úkolů */
-.ud-souhrn {
+/* Údržba: hlavička s pokrokem sbírky a panelem učení, „Co doplnit dál“, lepivá lišta filtrů a nástrojů
+   a fronta skupin (modelka nebo číslo) s rozbalitelnými položkami */
+.ud-hlava {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px 28px;
-    margin-bottom: 20px;
-    padding: 14px 18px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(280px, 1fr);
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.ud-hlava.bez-uceni {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.ud-karta {
+    min-width: 0;
+    padding: 16px 18px;
     border: 1px solid var(--panel-okraj);
     border-radius: 18px;
     background-color: var(--panel-bg);
 }
 
-.ud-souhrn div {
+.ud-pokrok {
     display: grid;
-    grid-template-columns: 1fr 90px 80px;
+    grid-template-columns: 116px minmax(0, 1fr);
     align-items: center;
-    gap: 10px;
-    padding: 3px 0;
-    font-size: 12.5px;
+    gap: 20px;
 }
 
-.ud-souhrn i {
+/* Celková úplnost: prstenec z conic-gradient, číslo uprostřed */
+.ud-celek {
+    --p: 0;
+    display: grid;
+    place-content: center;
+    width: 116px;
+    height: 116px;
+    border-radius: 50%;
+    background:
+        radial-gradient(closest-side, var(--panel-bg) 79%, transparent 80%),
+        conic-gradient(var(--accent-text) calc(var(--p) * 1%), rgba(255, 255, 255, 0.07) 0);
+    text-align: center;
+}
+
+.ud-celek b {
+    font-size: 24px;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+}
+
+.ud-celek span {
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.25;
+}
+
+.ud-oblasti {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 4px 18px;
+}
+
+.ud-oblast h5 {
+    margin: 0 0 2px;
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.ud-oblast-radek {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 54px 34px;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 3px 6px;
+    margin: 0 -6px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 12.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ud-oblast-radek:hover,
+.ud-oblast-radek.on {
+    background-color: var(--panel-hover);
+}
+
+.ud-oblast-radek > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ud-oblast-radek i {
     height: 4px;
     overflow: hidden;
     border-radius: 2px;
     background-color: rgba(255, 255, 255, 0.07);
 }
 
-.ud-souhrn i b {
+.ud-oblast-radek i b {
     display: block;
     height: 100%;
     background-color: var(--accent);
 }
 
-.ud-souhrn span {
-    font-size: 11.5px;
-    font-variant-numeric: tabular-nums;
+.ud-oblast-radek.hotovo i b {
+    background-color: var(--vytisk);
+}
+
+.ud-oblast-radek small,
+.ud-oblast-radek em {
     color: var(--text-muted);
+    font-size: 11.5px;
+    font-style: normal;
+    font-variant-numeric: tabular-nums;
     text-align: right;
+}
+
+.ud-oblast-radek em {
+    grid-column: 2 / -1;
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.ud-oblast-radek.hotovo small {
+    color: var(--vytisk);
+}
+
+/* Panel „Co se program naučil“ */
+.ud-uceni h4 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 8px;
+    margin: 0 0 12px;
+    font-size: 13.5px;
+    font-weight: 500;
+}
+
+.ud-uceni h4 small {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 400;
+}
+
+.uc-cisla {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.uc-cisla div {
+    display: grid;
+    gap: 1px;
+}
+
+.uc-cisla b {
+    font-size: 18px;
+    font-weight: 300;
+    font-variant-numeric: tabular-nums;
+}
+
+.uc-cisla span {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.uc-zdroje {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.uc-zdroj {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "nazev jistota" "pocty jistota";
+    align-items: center;
+    column-gap: 10px;
+    width: 100%;
+    margin: 0 -6px;
+    padding: 4px 6px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.uc-zdroj:hover,
+.uc-zdroj.on {
+    background-color: var(--panel-hover);
+}
+
+.uc-zdroj.on {
+    box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.uc-nazev {
+    grid-area: nazev;
+    overflow: hidden;
+    font-size: 12.5px;
+    text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.uc-nazev em {
+    margin-left: 4px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.06);
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-style: normal;
+}
+
+.uc-zdroj.neaktivni .uc-nazev {
+    color: var(--text-muted);
+}
+
+.uc-zdroj .nv-jistota {
+    grid-area: jistota;
+}
+
+.uc-zdroj small {
+    grid-area: pocty;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.uc-vice {
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+.uc-prazdne {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.uc-pata {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px 12px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.uc-zapomenout {
+    color: var(--danger-text);
+    font-size: 12px;
+}
+
+/* Co doplnit dál: karty nejcennějších úkolů */
+.ud-dal {
+    margin-bottom: 16px;
+}
+
+.ud-dal h4 {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.ud-dal h4 small {
+    margin-left: 6px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-weight: 400;
+}
+
+.ud-kroky {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ud-krok {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 14px;
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ud-krok:hover,
+.ud-krok:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.ud-krok img,
+.ud-krok .ud-obalka {
+    width: 34px;
+    height: 34px;
+    margin: 0;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    background-color: var(--bg-card);
+}
+
+.ud-krok .ud-obalka {
+    width: 28px;
+    height: 36px;
+    border-radius: 5px;
+}
+
+.ud-krok strong,
+.ud-krok small {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ud-krok strong {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.ud-krok small {
+    margin-top: 1px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+/* Tečka priority: vysoká v barvě akcentu, střední žlutá, nízká šedá */
+.ud-tecka {
+    display: inline-block;
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #6e6e76;
+}
+
+.ud-tecka.vysoka {
+    background-color: var(--accent-text);
+    box-shadow: 0 0 6px var(--accent);
+}
+
+.ud-tecka.stredni {
+    background-color: #e0a526;
+}
+
+.ud-jmeno small .ud-tecka {
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    vertical-align: 1px;
+}
+
+/* Lepivá lišta: filtry jako segmentovaná řada s počty, pod nimi hledání, řazení a přepínače */
+.ud-ovladani {
+    position: sticky;
+    top: -32px;
+    z-index: 3;
+    display: grid;
+    gap: 8px;
+    margin: 0 -8px 4px;
+    padding: 12px 8px 10px;
+    background-color: var(--bg-main);
+    box-shadow: 0 8px 12px -10px rgba(0, 0, 0, 0.7);
 }
 
 .ud-filtry {
     display: flex;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 12px;
+    gap: 2px;
+    width: fit-content;
+    max-width: 100%;
+    padding: 3px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
 }
 
 .ud-filtry button {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 30px;
-    padding: 0 13px;
+    height: 28px;
+    padding: 0 12px;
     border: none;
     border-radius: 999px;
-    background-color: rgba(255, 255, 255, 0.05);
+    background: none;
     color: var(--text-muted);
     font-size: 12.5px;
+    white-space: nowrap;
     cursor: pointer;
 }
 
 .ud-filtry button:hover {
+    background-color: var(--panel-hover);
     color: var(--text-main);
 }
 
 .ud-filtry button b {
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 600;
+    font-variant-numeric: tabular-nums;
     color: var(--accent-text);
 }
 
@@ -8348,11 +8705,108 @@ textarea {
     color: var(--text-main);
 }
 
-.ud-lista {
+.ud-nastroje {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.ud-hledat {
+    display: flex;
+    flex: 1 1 220px;
+    align-items: center;
+    gap: 8px;
+    max-width: 360px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--text-muted);
+}
+
+.ud-hledat:focus-within {
+    border-color: var(--accent);
+}
+
+.ud-hledat input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: none;
+    color: var(--text-main);
+    font-size: 12.5px;
+}
+
+.ud-razeni {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.ud-razeni select {
+    height: 30px;
+    padding: 0 30px 0 12px;
+    background-position: right 10px center;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    font-size: 12px;
+}
+
+.ud-prepinace {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.ud-nastroj {
+    height: 30px;
+    padding: 0 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.ud-nastroj:hover {
+    color: var(--text-main);
+}
+
+.ud-nastroj.on {
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+    color: var(--text-main);
+}
+
+.ud-zdroje {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 6px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.ud-zdroje .chip b {
+    margin-left: 4px;
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.ud-lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
     min-height: 32px;
     margin: 4px 0 10px;
     font-size: 12.5px;
@@ -8361,13 +8815,13 @@ textarea {
 
 .ud-lista .link {
     font-size: 12.5px;
-    color: var(--text-muted);
 }
 
 .ud-postupne {
     margin-left: auto;
 }
 
+/* Fronta: skupina = hlavička (fotka, jméno, štítky nebo souhrn, hlavní akce) a rozbalené položky */
 .ud-fronta {
     overflow: hidden;
     border: 1px solid var(--panel-okraj);
@@ -8376,20 +8830,87 @@ textarea {
     box-shadow: var(--panel-stin);
 }
 
-.ud-radek {
-    display: grid;
-    grid-template-columns: 44px minmax(140px, 1fr) auto auto;
-    align-items: center;
-    gap: 14px;
-    padding: 10px 16px;
+.ud-fronta:empty {
+    display: none;
 }
 
-.ud-radek + .ud-radek {
+/* Skupiny mimo viditelnou část se nerozvrhují ani nekreslí (dlouhá fronta se překreslí rychle);
+   „auto“ si pamatuje poslední skutečnou výšku skupiny */
+.ud-skupina {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 66px;
+}
+
+.ud-skupina + .ud-skupina {
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.ud-radek:hover {
+.ud-radek {
+    display: grid;
+    grid-template-columns: 22px 44px minmax(140px, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px 10px 8px;
+    outline: none;
+    cursor: pointer;
+}
+
+.ud-radek:hover,
+.ud-polozka:hover {
     background-color: rgba(255, 255, 255, 0.025);
+}
+
+/* Zaměřený řádek: proužek akcentu vlevo (Enter hlavní akce, Delete odloží) */
+.ud-radek:focus-visible,
+.ud-polozka:focus-visible {
+    background-color: rgba(255, 255, 255, 0.045);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.ud-skupina.rozbalena > .ud-radek {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.ud-skupina.vyrizena .ud-jmeno strong {
+    color: var(--text-muted);
+}
+
+.ud-sipka {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.ud-sipka::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+    border-right: 1.8px solid currentColor;
+    border-bottom: 1.8px solid currentColor;
+    transform: rotate(-45deg);
+}
+
+.ud-sipka:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.ud-skupina.rozbalena .ud-sipka {
+    transform: rotate(90deg);
+}
+
+/* Rozbalená skupina má akce u každé položky; hlavní tlačítko v hlavičce by je jen opakovalo */
+.ud-skupina.rozbalena > .ud-radek .ud-doplnit {
+    display: none;
 }
 
 .ud-radek > img,
@@ -8416,6 +8937,22 @@ textarea {
     min-width: 0;
 }
 
+.ud-odkaz {
+    display: block;
+    max-width: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.ud-odkaz:hover strong {
+    color: var(--accent-text);
+}
+
 .ud-jmeno strong {
     display: block;
     overflow: hidden;
@@ -8428,8 +8965,11 @@ textarea {
 .ud-jmeno small {
     display: block;
     margin-top: 2px;
+    overflow: hidden;
     font-size: 11.5px;
     color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .ud-chybi {
@@ -8437,15 +8977,20 @@ textarea {
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 6px;
+    min-width: 0;
 }
 
 .ud-chip {
+    max-width: 280px;
+    overflow: hidden;
     padding: 2px 9px;
     border: none;
     border-radius: 999px;
     background-color: rgba(255, 255, 255, 0.05);
     color: var(--text-muted);
     font-size: 11.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     cursor: pointer;
 }
 
@@ -8458,18 +9003,52 @@ button.ud-chip:hover {
     color: var(--accent-text);
 }
 
+.ud-chip.kontrola {
+    box-shadow: inset 0 0 0 1px rgba(224, 165, 38, 0.45);
+}
+
+.ud-chip.navrh {
+    box-shadow: inset 0 0 0 1px rgba(216, 27, 96, 0.35);
+}
+
 .ud-chip.netyka {
     background: none;
     box-shadow: inset 0 0 0 1px var(--panel-okraj);
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 255, 255, 0.25);
+}
+
+.ud-chip.vice {
     cursor: default;
 }
 
-span.ud-chip.hlavni {
-    cursor: default;
+.ud-souhrn-skupiny {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.ud-souhrn-skupiny i {
+    width: 54px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.ud-souhrn-skupiny b {
+    display: block;
+    height: 100%;
+    background-color: var(--accent);
 }
 
 .ud-akce {
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
     gap: 4px;
 }
 
@@ -8482,7 +9061,12 @@ span.ud-chip.hlavni {
     color: var(--text-main);
     font-size: 12px;
     font-weight: 600;
+    white-space: nowrap;
     cursor: pointer;
+}
+
+.ud-doplnit:hover {
+    background-color: var(--accent);
 }
 
 .ud-vice {
@@ -8498,6 +9082,254 @@ span.ud-chip.hlavni {
 .ud-vice:hover {
     background-color: rgba(255, 255, 255, 0.06);
     color: var(--text-main);
+}
+
+/* Položka: štítek údaje, hodnota s důvodem, jistota/priorita/zdroj a akce – stejně pro úkol, nález i návrh */
+.ud-polozky {
+    padding: 2px 0 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ud-polozka {
+    display: grid;
+    grid-template-columns: 150px minmax(0, 1fr) 190px auto;
+    align-items: center;
+    column-gap: 14px;
+    padding: 8px 16px 8px 50px;
+    outline: none;
+}
+
+.ud-polozka + .ud-polozka {
+    border-top: 1px solid rgba(255, 255, 255, 0.035);
+}
+
+.ud-pole {
+    justify-self: start;
+    max-width: 100%;
+    overflow: hidden;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    font-size: 11.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ud-polozka.kontrola .ud-pole {
+    box-shadow: inset 0 0 0 1px rgba(224, 165, 38, 0.45);
+    color: #e9bf63;
+}
+
+.ud-polozka.navrh .ud-pole {
+    box-shadow: inset 0 0 0 1px rgba(216, 27, 96, 0.4);
+    color: var(--accent-text);
+}
+
+.ud-obsah {
+    min-width: 0;
+}
+
+.ud-hodnota {
+    display: block;
+    overflow: hidden;
+    color: var(--text-main);
+    font-size: 13px;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ud-polozka.navrh .ud-hodnota {
+    font-size: 14.5px;
+    font-weight: 600;
+}
+
+.ud-duvod {
+    display: block;
+    margin-top: 1px;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ud-meta {
+    min-width: 0;
+}
+
+.ud-priorita,
+.ud-zdroj {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ud-priorita::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background-color: #6e6e76;
+    vertical-align: 1px;
+}
+
+.ud-priorita.vysoka::before {
+    background-color: var(--accent-text);
+}
+
+.ud-priorita.stredni::before {
+    background-color: #e0a526;
+}
+
+.ud-zdroj {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.ud-polozka.netyka .ud-hodnota {
+    color: var(--text-muted);
+    font-weight: 400;
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 255, 255, 0.3);
+}
+
+.ud-polozka.netyka .nv-jistota,
+.ud-polozka.netyka .ud-pole {
+    opacity: 0.55;
+}
+
+/* Prázdná fronta: hotovo */
+.ud-hotovo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 22px 20px;
+    border: 1px dashed var(--panel-okraj);
+    border-radius: 18px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.ud-hotovo svg {
+    flex: none;
+    color: var(--vytisk);
+}
+
+.ud-hotovo p {
+    margin: 0;
+}
+
+.ud-dalsi {
+    text-align: center;
+}
+
+.ud-konec {
+    height: 1px;
+}
+
+@media (max-width: 1100px) {
+    .ud-hlava {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .ud-pokrok {
+        grid-template-columns: minmax(0, 1fr);
+        justify-items: start;
+    }
+
+    .ud-celek {
+        width: 84px;
+        height: 84px;
+    }
+
+    .ud-celek b {
+        font-size: 18px;
+    }
+
+    .ud-radek {
+        grid-template-columns: 22px 40px minmax(0, 1fr) auto;
+        row-gap: 6px;
+    }
+
+    .ud-radek > img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .ud-chybi {
+        grid-column: 3 / -1;
+        grid-row: 2;
+        justify-content: flex-start;
+    }
+
+    .ud-polozka {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "pole meta" "obsah obsah" "akce akce";
+        row-gap: 4px;
+        padding-left: 24px;
+    }
+
+    .ud-pole {
+        grid-area: pole;
+    }
+
+    .ud-obsah {
+        grid-area: obsah;
+    }
+
+    .ud-meta {
+        grid-area: meta;
+    }
+
+    .ud-polozka .ud-akce {
+        grid-area: akce;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .ud-prepinace {
+        margin-left: 0;
+    }
+
+    .ud-filtry {
+        border-radius: 16px;
+    }
+
+    /* V úzkém okně by lepivá lišta zabrala čtvrtinu výšky: roluje s obsahem */
+    .ud-ovladani {
+        position: static;
+        box-shadow: none;
+    }
+}
+
+@media (max-width: 560px) {
+    .uc-cisla {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ud-radek {
+        grid-template-columns: 22px 36px minmax(0, 1fr);
+    }
+
+    .ud-radek > .ud-akce {
+        grid-column: 3 / -1;
+        justify-content: flex-start;
+    }
+
+    .ud-hledat {
+        max-width: none;
+    }
 }
 
 /* Návrhy doplnění: pruh u Vše, skupiny po modelkách, řádek s hodnotou, jistotou a akcemi */
@@ -8542,143 +9374,7 @@ span.ud-chip.hlavni {
     font-size: 15px;
 }
 
-.nv-seznam {
-    display: grid;
-    gap: 12px;
-}
-
-.nv-skupina {
-    overflow: hidden;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 18px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
-}
-
-.nv-hlava {
-    display: grid;
-    grid-template-columns: 36px minmax(0, 1fr) auto auto;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px 10px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.nv-hlava > img {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: top;
-    background-color: var(--bg-card);
-}
-
-.nv-jmeno {
-    padding: 0;
-    border: none;
-    background: none;
-    color: var(--text-main);
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-}
-
-.nv-jmeno:hover strong,
-.nv-jmeno:focus-visible strong {
-    color: var(--accent-text);
-}
-
-.nv-jmeno:focus-visible {
-    outline: none;
-}
-
-.nv-vse {
-    height: 28px;
-    padding: 0 12px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text-main);
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.nv-vse:hover {
-    border-color: var(--accent);
-    background-color: var(--accent-soft);
-}
-
-.nv-album {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 10px 16px 2px 20px;
-    color: var(--text-muted);
-    font-size: 11.5px;
-    letter-spacing: 0.02em;
-}
-
-.nv-album small {
-    padding: 0 7px;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.05);
-    font-size: 10.5px;
-}
-
-.nv-radek {
-    display: grid;
-    grid-template-columns: 130px minmax(0, 1fr) 170px auto;
-    grid-template-areas: "pole hodnota jistota akce" "pole duvod duvod akce";
-    align-items: center;
-    column-gap: 14px;
-    row-gap: 1px;
-    padding: 9px 14px 9px 20px;
-    outline: none;
-}
-
-.nv-radek + .nv-radek {
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-}
-
-.nv-radek:hover {
-    background-color: rgba(255, 255, 255, 0.025);
-}
-
-/* Zaměřený řádek: proužek akcentu vlevo (Enter přijme, Delete odmítne) */
-.nv-radek:focus-visible {
-    background-color: rgba(255, 255, 255, 0.04);
-    box-shadow: inset 3px 0 0 var(--accent);
-}
-
-.nv-pole {
-    grid-area: pole;
-    align-self: start;
-    padding-top: 2px;
-    color: var(--text-muted);
-    font-size: 12.5px;
-}
-
-.nv-hodnota {
-    grid-area: hodnota;
-    overflow: hidden;
-    color: var(--text-main);
-    font-size: 15px;
-    font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.nv-duvod {
-    grid-area: duvod;
-    overflow: hidden;
-    color: var(--text-muted);
-    font-size: 11.5px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 .nv-jistota {
-    grid-area: jistota;
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -8722,14 +9418,6 @@ span.ud-chip.hlavni {
     --nv-barva: #8a8a92;
 }
 
-.nv-akce {
-    grid-area: akce;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 4px;
-}
-
 .nv-tlacitko {
     height: 28px;
     padding: 0 11px;
@@ -8757,24 +9445,8 @@ span.ud-chip.hlavni {
     background-color: var(--accent);
 }
 
-.nv-tlacitko.nv-odmitnout {
-    width: 28px;
-    padding: 0;
-}
-
 .nv-tlacitko.nv-odmitnout:hover {
     color: var(--danger-text);
-}
-
-.nv-radek.odmitnuty .nv-hodnota {
-    color: var(--text-muted);
-    font-weight: 400;
-    text-decoration: line-through;
-    text-decoration-color: rgba(255, 255, 255, 0.3);
-}
-
-.nv-radek.odmitnuty .nv-jistota {
-    opacity: 0.5;
 }
 
 .nv-stav {
@@ -8818,41 +9490,6 @@ span.ud-chip.hlavni {
 }
 
 @media (max-width: 900px) {
-    .ud-souhrn {
-        grid-template-columns: 1fr;
-    }
-
-    .ud-radek {
-        grid-template-columns: 44px 1fr auto;
-    }
-
-    .ud-chybi {
-        grid-column: 2 / -1;
-        grid-row: 2;
-        justify-content: flex-start;
-    }
-
-    .nv-radek {
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas: "pole jistota" "hodnota hodnota" "duvod duvod" "akce akce";
-        row-gap: 3px;
-    }
-
-    .nv-akce {
-        justify-content: flex-start;
-        margin-top: 4px;
-    }
-
-    .nv-hlava {
-        grid-template-columns: 36px minmax(0, 1fr) auto;
-    }
-
-    .nv-vse {
-        grid-column: 2 / -1;
-        grid-row: 2;
-        justify-self: start;
-    }
-
     .uvod-kpi {
         grid-template-columns: repeat(2, 1fr);
         row-gap: 14px;

@@ -55,11 +55,9 @@ export const stav = {
     // Pořadí modelek v tabulce pro „Uložit a další"
     prehledPoradi: [],
     prehledRadky: [],
-    // Zobrazit i údaje označené „netýká se" (aby šlo označení zrušit) a kolik řádků tabulek ukázat
+    // Zobrazit i vyřízené položky Údržby („netýká se“, „v pořádku“, odmítnuté návrhy), aby šly vrátit, a kolik skupin ukázat
     prehledSkryte: false,
     prehledLimit: 60,
-    // Návrhy doplnění v Údržbě: ukázat i odmítnuté (aby šlo odmítnutí vrátit)
-    navrhyOdmitnute: false,
     // Okno „Doplnit modelku“: modelka, její řádek Přehledu a zvolené hodnocení
     // Stránka čísla: články a vykreslená alba
     vydaniClanky: [],
@@ -71,6 +69,9 @@ export const stav = {
     doplnovanaTitulni: 0, // id fotky vybrané jako titulní
     prehledSekce: 'uvod', // ukázaná část Přehledu: uvod, udrzba, shanim, statistiky
     udrzbaFiltr: 'vse', // filtr fronty úkolů v Údržbě (vse, titulni, udaje, cover…)
+    udrzbaZdroj: '', // zdroj návrhů nebo nálezů kontroly ve filtru ('' = všechny)
+    udrzbaHledat: '', // hledání jména modelky nebo čísla v Údržbě
+    udrzbaRazeni: 'priorita', // řazení fronty: 'priorita', 'chybi' nebo 'jmeno'
     // Nejlepší: fotky s aspoň N srdíčky napříč sbírkou, po modelkách; prohlížeč jde přes všechny
     nejlepsiPolozky: [],
     nejlepsiData: null,

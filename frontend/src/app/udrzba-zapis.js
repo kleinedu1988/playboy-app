@@ -46,6 +46,8 @@ export async function ulozitPoleModelky(modelkaId, prvky, { navrh = () => null, 
     if (!mistni) return false;
     const modelka = { ...mistni };
     zapsatPole(prvky, modelka, { prazdne: true });
+    const velikost = prvky.find(p => p.dataset.velikost)?.dataset.velikost;
+    if (velikost && !modelka.velikostPrsou) modelka.velikostPrsou = velikost;
     const chyba = (pole, text) => {
         zamerit(pole);
         oznamit(text);

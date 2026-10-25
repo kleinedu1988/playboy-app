@@ -91,6 +91,8 @@ export function prevestPole(kontejner, prvek) {
     nastavit('inputBoky', miry.boky);
     // Míry bez velikosti v poli velikosti nesmí zůstat jako velikost prsou
     if (miry.velikost || prvek.dataset.pole === 'inputVelikost') nastavit('inputVelikost', miry.velikost);
+    // Kontejner bez pole velikosti (řádek Míry v Údržbě): velikost si pole zapamatuje a uloží se, když chybí
+    if (miry.velikost && !kontejner.querySelector('[data-pole="inputVelikost"]')) prvek.dataset.velikost = miry.velikost;
 }
 
 const blok = (nazev, klic, telo = '') => `

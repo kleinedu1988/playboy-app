@@ -66,6 +66,10 @@ export function GetCovery() {
   return window['go']['main']['App']['GetCovery']();
 }
 
+export function GetDvojiceKPorovnani(arg1, arg2) {
+  return window['go']['main']['App']['GetDvojiceKPorovnani'](arg1, arg2);
+}
+
 export function GetFotkyVyberu(arg1) {
   return window['go']['main']['App']['GetFotkyVyberu'](arg1);
 }
@@ -86,12 +90,20 @@ export function GetModelky(arg1) {
   return window['go']['main']['App']['GetModelky'](arg1);
 }
 
+export function GetMohloByTeLibit(arg1) {
+  return window['go']['main']['App']['GetMohloByTeLibit'](arg1);
+}
+
 export function GetNavrhyDoplneni(arg1) {
   return window['go']['main']['App']['GetNavrhyDoplneni'](arg1);
 }
 
 export function GetNejlepsiFotky(arg1) {
   return window['go']['main']['App']['GetNejlepsiFotky'](arg1);
+}
+
+export function GetOblibenost() {
+  return window['go']['main']['App']['GetOblibenost']();
 }
 
 export function GetPrehled(arg1) {
@@ -196,6 +208,10 @@ export function OdmitnoutNavrh(arg1, arg2) {
 
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
+}
+
+export function PorovnatModelky(arg1, arg2, arg3) {
+  return window['go']['main']['App']['PorovnatModelky'](arg1, arg2, arg3);
 }
 
 export function PrejmenovatFotografa(arg1, arg2) {
@@ -338,6 +354,10 @@ export function UpdateModelka(arg1) {
   return window['go']['main']['App']['UpdateModelka'](arg1);
 }
 
+export function VratitPorovnani() {
+  return window['go']['main']['App']['VratitPorovnani']();
+}
+
 export function VyberPodleNazvu(arg1) {
   return window['go']['main']['App']['VyberPodleNazvu'](arg1);
 }
@@ -352,6 +372,10 @@ export function VymazatMezipamet() {
 
 export function ZalozitSpecial(arg1, arg2, arg3) {
   return window['go']['main']['App']['ZalozitSpecial'](arg1, arg2, arg3);
+}
+
+export function ZapomenoutPorovnani() {
+  return window['go']['main']['App']['ZapomenoutPorovnani']();
 }
 
 export function ZapomenoutUceni() {

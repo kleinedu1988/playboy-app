@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -88,6 +89,41 @@ func (c *cisloUdaje) UnmarshalYAML(uzel *yaml.Node) error {
 		return fmt.Errorf("„%s“ není celé číslo (pro smazání údaje napiš -)", text)
 	}
 	*c = cisloUdaje{Hodnota: hodnota}
+	return nil
+}
+
+// Hodnocení modelky v souboru exportu (od verze 9 po polovinách srdíčka): 0–5 po 0,5, nebo „-“ pro smazání.
+// Zapisuje se celé číslo bez „.0“ (4), polovina s desetinnou tečkou (3.5); import přijme i desetinnou čárku
+// („3,5“). Jiná hodnota (3.3, 7, text) je chyba souboru s jasnou hláškou. 0 nic nemění (jako chybějící údaj).
+type hodnoceniUdaje struct {
+	Pul    int // v polovinách srdíčka (0–10)
+	Smazat bool
+}
+
+func (h hodnoceniUdaje) IsZero() bool { return h.Pul == 0 && !h.Smazat }
+
+func (h hodnoceniUdaje) MarshalYAML() (interface{}, error) {
+	if h.Pul%2 == 0 {
+		return h.Pul / 2, nil
+	}
+	return float64(h.Pul) / 2, nil
+}
+
+func (h *hodnoceniUdaje) UnmarshalYAML(uzel *yaml.Node) error {
+	text := strings.TrimSpace(uzel.Value)
+	if text == smazatUdaj {
+		*h = hodnoceniUdaje{Smazat: true}
+		return nil
+	}
+	chyba := fmt.Errorf("„%s“ není hodnocení modelky: zapiš 0–5 srdíček po polovinách, např. 4 nebo 3.5 (pro smazání údaje napiš -)", text)
+	if !vzorPulSrdicka.MatchString(text) {
+		return chyba
+	}
+	x, err := strconv.ParseFloat(strings.Replace(text, ",", ".", 1), 64)
+	if err != nil || x > 5 || math.Abs(x*2-math.Round(x*2)) > 1e-9 {
+		return chyba
+	}
+	*h = hodnoceniUdaje{Pul: int(math.Round(x * 2))}
 	return nil
 }
 

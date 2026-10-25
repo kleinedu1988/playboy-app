@@ -8,6 +8,7 @@ const CTENI = new Set([
     'GetAlbaFotografa',
     'GetCenterfoldy',
     'GetCovery',
+    'GetDvojiceKPorovnani',
     'GetFotkyVyberu',
     'GetFotografieModelky',
     'GetFotografove',
@@ -19,8 +20,10 @@ const CTENI = new Set([
     'HledatTexty',
     'GetKalendar',
     'GetModelky',
+    'GetMohloByTeLibit',
     'GetNavrhyDoplneni',
     'GetNejlepsiFotky',
+    'GetOblibenost',
     'GetPrehled',
     'GetPrehledVydani',
     'GetSablonaObrazku',
@@ -147,3 +150,9 @@ export const ZalozitSpecial = /** @type {typeof App.ZalozitSpecial} */ (obalit('
 export const GetStavUceni = /** @type {typeof App.GetStavUceni} */ (obalit('GetStavUceni'));
 export const ZapomenoutUceni = /** @type {typeof App.ZapomenoutUceni} */ (obalit('ZapomenoutUceni'));
 export const ZaznamenatOpravu = /** @type {typeof App.ZaznamenatOpravu} */ (obalit('ZaznamenatOpravu'));
+export const GetDvojiceKPorovnani = /** @type {typeof App.GetDvojiceKPorovnani} */ (obalit('GetDvojiceKPorovnani'));
+export const PorovnatModelky = /** @type {typeof App.PorovnatModelky} */ (obalit('PorovnatModelky'));
+export const VratitPorovnani = /** @type {typeof App.VratitPorovnani} */ (obalit('VratitPorovnani'));
+export const ZapomenoutPorovnani = /** @type {typeof App.ZapomenoutPorovnani} */ (obalit('ZapomenoutPorovnani'));
+export const GetOblibenost = /** @type {typeof App.GetOblibenost} */ (obalit('GetOblibenost'));
+export const GetMohloByTeLibit = /** @type {typeof App.GetMohloByTeLibit} */ (obalit('GetMohloByTeLibit'));

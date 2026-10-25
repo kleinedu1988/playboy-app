@@ -97,7 +97,15 @@ type Modelka struct {
 
 	DalsiJmena string `json:"dalsiJmena"` // pseudonymy oddělené čárkou
 	Poznamka   string `json:"poznamka"`
-	Hodnoceni  int    `json:"hodnoceni"` // 0 = nehodnoceno, 1–5 srdíček
+	// 0 = nehodnoceno, 0,5–5 srdíček po polovinách (úprava schématu č. 13)
+	Hodnoceni float64 `json:"hodnoceni"`
+	// Jemné pořadí oblíbenosti pro řazení (jen pro čtení, oblibenost.go): srdíčka upřesněná porovnáním dvojic
+	// v rámci stejné úrovně (nejvýš ±0,24, takže úrovně se nepřekrývají); nehodnocená porovnávaná modelka má
+	// odhad síly z porovnání, ostatní nehodnocené 0
+	Oblibenost float64 `json:"oblibenost"`
+	// Odhad hodnocení modelem vkusu (jen pro čtení): 0,5–5 po polovinách jen u nehodnocené modelky s dost jistým
+	// odhadem, jinak 0
+	OdhadHodnoceni float64 `json:"odhadHodnoceni"`
 
 	// Kdy byla modelka přidána (RRRR-MM-DD HH:MM:SS); prázdné u záznamů starších než tento údaj
 	Pridano string `json:"pridano"`
@@ -118,7 +126,12 @@ type Modelka struct {
 	// Popisy a fotografové alb modelky, jen pro hledání
 	textyAlb       string
 	fotografoveAlb string
+	// Hodnocené fotky modelky a součet jejich srdíček (model vkusu)
+	fotekHodnocenych, srdciFotek int
 }
+
+// Hodnocení modelky v polovinách srdíčka (3,5 → 7)
+func (m Modelka) hodnoceniPul() int { return int(math.Round(m.Hodnoceni * 2)) }
 
 type Fotografie struct {
 	ID        int    `json:"id"`
@@ -855,6 +868,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceFTS5,
 	(*App).migraceFTSKlice,
 	(*App).migraceDatumAlba,
+	(*App).migraceHodnoceniPul,
 }
 
 func (a *App) migrovat() error {
@@ -1067,15 +1081,16 @@ func parseDriveIDs(rawInput string) []string {
 }
 
 func (a *App) GetModelky(vyhledavani string) []Modelka {
-	modelky, err := a.nactiModelky(vyhledavani)
+	modelky, err := a.nactiModelky(vyhledavani, true)
 	if err != nil {
 		a.chyba("načtení modelek", err)
 	}
 	return modelky
 }
 
-// Vrací, co se přečíst podařilo, a první chybu; export podle ní pozná, že seznam není úplný
-func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
+// Vrací, co se přečíst podařilo, a první chybu; export podle ní pozná, že seznam není úplný. sOblibenosti doplní
+// oblíbenost a odhad hodnocení (oblibenost.go) spočítané ze všech modelek, ne jen z nalezených.
+func (a *App) nactiModelky(vyhledavani string, sOblibenosti bool) ([]Modelka, error) {
 	var prvniChyba error
 	// Starší řádky mohou mít ve sloupcích NULL
 	vyber := []string{"id", "jmeno"}
@@ -1094,22 +1109,25 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 		vyber = append(vyber, fmt.Sprintf("COALESCE(%s, %s)", s[0], s[1]))
 	}
 
-	vyber = append(vyber, "COALESCE(hodnoceni, 0)", "COALESCE(pridano, '')", "COALESCE(netyka_se, '')")
+	vyber = append(vyber, a.sloupecHodnoceni(), "COALESCE(pridano, '')", "COALESCE(netyka_se, '')")
 
-	// Počet fotek: vlastní a ze sdílených alb, dvěma souhrnnými dotazy (poddotaz pro každou modelku byl kvadratický)
-	pocetFotek := map[int]int{}
+	// Počet fotek: vlastní a ze sdílených alb, dvěma souhrnnými dotazy (poddotaz pro každou modelku byl kvadratický);
+	// zároveň hodnocené fotky a součet jejich srdíček pro model vkusu
+	pocetFotek, hodnocenychFotek, srdciFotek := map[int]int{}, map[int]int{}, map[int]int{}
 	for _, dotaz := range []string{
-		"SELECT al.modelka_id, COUNT(*) FROM fotky f JOIN alba al ON al.id = f.album_id WHERE al.modelka_id IS NOT NULL GROUP BY al.modelka_id",
-		`SELECT am.modelka_id, COUNT(*) FROM alba_modelky am JOIN fotky f ON f.album_id = am.album_id GROUP BY am.modelka_id`,
+		"SELECT al.modelka_id, COUNT(*), COALESCE(SUM(f.hodnoceni > 0), 0), COALESCE(SUM(MAX(f.hodnoceni, 0)), 0) FROM fotky f JOIN alba al ON al.id = f.album_id WHERE al.modelka_id IS NOT NULL GROUP BY al.modelka_id",
+		`SELECT am.modelka_id, COUNT(*), COALESCE(SUM(f.hodnoceni > 0), 0), COALESCE(SUM(MAX(f.hodnoceni, 0)), 0) FROM alba_modelky am JOIN fotky f ON f.album_id = am.album_id GROUP BY am.modelka_id`,
 	} {
 		radky, err := a.db.Query(dotaz)
 		if err != nil {
 			return nil, err
 		}
 		for radky.Next() {
-			var id, pocet int
-			if radky.Scan(&id, &pocet) == nil {
+			var id, pocet, hodnocenych, srdci int
+			if radky.Scan(&id, &pocet, &hodnocenych, &srdci) == nil {
 				pocetFotek[id] += pocet
+				hodnocenychFotek[id] += hodnocenych
+				srdciFotek[id] += srdci
 			}
 		}
 		radky.Close()
@@ -1207,23 +1225,26 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 	}
 	defer rows.Close()
 
-	var vysledky []Modelka
+	var vysledky, vsechny []Modelka
 	for rows.Next() {
 		var m Modelka
 		var driveID string
+		var hodnoceniPul int
 		err := rows.Scan(&m.ID, &m.Jmeno,
 			&m.NarozeniDatum, &m.UmrtiDatum, &m.NarozeniMisto, &m.Narodnost, &m.Etnicita,
 			&m.VyskaCm, &m.VahaKg, &m.VlasyBarva, &m.OciBarva,
 			&m.Miry, &m.ObvodHrudnikCm, &m.ObvodPasCm, &m.ObvodBokyCm,
 			&m.VelikostPrsou, &m.PrsaTyp, &m.Ochlupeni, &m.Tetovani, &m.Piercing,
 			&m.Vystoupeni, &m.PictorialVydani, &m.Role, &m.Tags, &m.DalsiJmena, &m.Poznamka, &m.Odkazy, &driveID,
-			&m.CoverZoom, &m.CoverX, &m.CoverY, &m.Hodnoceni, &m.Pridano, &m.NetykaSe)
+			&m.CoverZoom, &m.CoverX, &m.CoverY, &hodnoceniPul, &m.Pridano, &m.NetykaSe)
 		if err != nil {
 			if prvniChyba == nil {
 				prvniChyba = err
 			}
 			continue
 		}
+		m.Hodnoceni = float64(min(max(hodnoceniPul, 0), 10)) / 2
+		m.fotekHodnocenych, m.srdciFotek = hodnocenychFotek[m.ID], srdciFotek[m.ID]
 
 		ids := parseDriveIDs(driveID)
 		if len(ids) > 0 {
@@ -1250,6 +1271,12 @@ func (a *App) nactiModelky(vyhledavani string) ([]Modelka, error) {
 			m.OnlineAlba = []string{}
 		}
 		m.CyberGirl = cyberGirl[m.ID]
+		vsechny = append(vsechny, m)
+	}
+	if sOblibenosti {
+		a.doplnitOblibenost(vsechny)
+	}
+	for _, m := range vsechny {
 		if odpovidaHledani(m, vyhledavani) {
 			vysledky = append(vysledky, m)
 		}
@@ -1310,7 +1337,7 @@ func poleHledani(m Modelka) map[string]string {
 	}
 	hodnoceni := ""
 	if m.Hodnoceni > 0 {
-		hodnoceni = fmt.Sprintf("%d", m.Hodnoceni)
+		hodnoceni = textHodnoceni(m.Hodnoceni)
 	}
 	tetovani := ""
 	if m.Tetovani == 1 {
@@ -1366,7 +1393,7 @@ func poleHledani(m Modelka) map[string]string {
 var vzorOnlineKategorie = regexp.MustCompile(`(?i)cyber|coed|\bmuses?\b|creator|tvůrkyně|online|playboy ?plus|playboy\.?com`)
 
 // Slova hledání: volitelná negace (- nebo !), cílené pole:hodnota (i s mezerou za dvojtečkou) i pole:"více slov", uvozovky i obyčejná slova
-var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+|[^\s",:]+(?:\s*,\s*[^\s",:]+)*)?|(-|!)?"([^"]*)"|(\S+)`)
+var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+(?:[.,]\d+)?|[^\s",:]+(?:\s*,\s*[^\s",:]+)*)?|(-|!)?"([^"]*)"|(\S+)`)
 var vzorRozsahCisel = regexp.MustCompile(`^(\d+)\s*-\s*(\d+)$`)
 
 // Rozpoznání numerického filtru: op (">=", "<=", ">", "<", "=", ".."), numOd, numDo
@@ -1426,6 +1453,71 @@ func parsovatNumerickyFiltr(hodnota string) (op string, numOd, numDo int, ok boo
 	return "", 0, 0, false
 }
 
+// Jedna podmínka filtru srdíček; meze v polovinách srdíčka
+type filtrHodnoceni struct {
+	op     string
+	od, do int
+}
+
+var (
+	vzorPulSrdicka   = regexp.MustCompile(`^\d+(?:[.,]\d+)?$`)
+	vzorDesetinnaPul = regexp.MustCompile(`^\d[.,][05]$`)
+)
+
+// Filtr srdíček modelky po polovinách: číslo (3, 3.5, 3,5), porovnání (>=3,5), rozsah (3..4,5 nebo 3-4) nebo
+// výčet oddělený čárkou (3,4 = 3 nebo 4 srdíčka). „Číslice,5“ a „číslice,0“ je desetinná čárka: 3,5 = tři a půl
+// (dřívější výčet „4,5“ = 4 nebo 5 se tak čte jako 4½). Vrací podmínky (stačí jedna) v polovinách; ok = false,
+// když hodnota číslem není.
+func parsovatFiltrHodnoceni(hodnota string) (filtry []filtrHodnoceni, ok bool) {
+	h := strings.ReplaceAll(strings.TrimSpace(hodnota), " ", "")
+	pul := func(text string) (int, bool) {
+		if !vzorPulSrdicka.MatchString(text) {
+			return 0, false
+		}
+		x, err := strconv.ParseFloat(strings.Replace(text, ",", ".", 1), 64)
+		if err != nil {
+			return 0, false
+		}
+		// Hodnota mezi polovinami (3.3) se zaokrouhlí na nejbližší polovinu
+		return int(math.Round(x * 2)), true
+	}
+	for _, op := range []string{">=", "<=", "==", ">", "<", "="} {
+		if strings.HasPrefix(h, op) {
+			if n, ok := pul(h[len(op):]); ok {
+				if op == "==" {
+					op = "="
+				}
+				return []filtrHodnoceni{{op: op, od: n}}, true
+			}
+			return nil, false
+		}
+	}
+	for _, oddelovac := range []string{"..", "-"} {
+		if casti := strings.Split(h, oddelovac); len(casti) == 2 {
+			od, ok1 := pul(casti[0])
+			do, ok2 := pul(casti[1])
+			if ok1 && ok2 {
+				return []filtrHodnoceni{{op: "..", od: min(od, do), do: max(od, do)}}, true
+			}
+		}
+	}
+	if vzorDesetinnaPul.MatchString(h) {
+		n, _ := pul(h)
+		return []filtrHodnoceni{{op: "=", od: n}}, true
+	}
+	for _, cast := range strings.Split(h, ",") {
+		if cast == "" {
+			continue
+		}
+		n, ok := pul(cast)
+		if !ok {
+			return nil, false
+		}
+		filtry = append(filtry, filtrHodnoceni{op: "=", od: n})
+	}
+	return filtry, len(filtry) > 0
+}
+
 func vyhovujeCislo(hodnota int, op string, numOd, numDo int) bool {
 	switch op {
 	case ">=":
@@ -1458,10 +1550,11 @@ func vyhovujeNumericky(m Modelka, klic, op string, numOd, numDo int) bool {
 		}
 		return vyhovujeCislo(m.VahaKg, op, numOd, numDo)
 	case "hodnoceni", "srdicka":
+		// Meze jsou v polovinách srdíčka (parsovatFiltrHodnoceni)
 		if m.Hodnoceni <= 0 && numOd > 0 {
 			return false
 		}
-		return vyhovujeCislo(m.Hodnoceni, op, numOd, numDo)
+		return vyhovujeCislo(m.hodnoceniPul(), op, numOd, numDo)
 	case "narozena":
 		if len(m.NarozeniDatum) >= 4 {
 			if rok, err := strconv.Atoi(m.NarozeniDatum[:4]); err == nil && rok > 0 {
@@ -1693,7 +1786,16 @@ func odpovidaHledani(m Modelka, vyhledavani string) bool {
 				if varianty == 0 {
 					continue
 				}
-			} else if ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "hodnoceni" || klicZjedn == "srdicka" || klicZjedn == "rok" || klicZjedn == "narozena") {
+			} else if klicZjedn == "hodnoceni" || klicZjedn == "srdicka" {
+				// Srdíčka i po polovinách: hodnoceni:3.5, srdicka:3,5, hodnoceni:>=3,5, hodnoceni:3..4, hodnoceni:3,4 (3 nebo 4)
+				meze, zname := parsovatFiltrHodnoceni(hodnota)
+				if !zname {
+					shoda = strings.Contains(udaje, klicZjedn+":"+hodnotaZjedn)
+				}
+				for _, f := range meze {
+					shoda = shoda || vyhovujeNumericky(m, klicZjedn, f.op, f.od, f.do)
+				}
+			} else if ok && (klicZjedn == "vyska" || klicZjedn == "vaha" || klicZjedn == "rok" || klicZjedn == "narozena") {
 				shoda = vyhovujeNumericky(m, klicZjedn, op, numOd, numDo)
 			} else {
 				if pole == nil {
@@ -1878,19 +1980,51 @@ func (a *App) SetCoverVyrez(id int, zoom, x, y float64) bool {
 	return err == nil
 }
 
-// Hodnocení modelky 1–5 srdíček; 0 hodnocení ruší
-func (a *App) SetHodnoceni(id, hodnoceni int) bool {
-	if hodnoceni < 0 {
-		hodnoceni = 0
+// Hodnocení modelky 0,5–5 srdíček po polovinách; 0 hodnocení ruší. Hodnoty mimo 0–5 se oříznou, hodnota mimo
+// poloviny (3,3, NaN) se odmítne a nic nezmění.
+func (a *App) SetHodnoceni(modelkaID int, hodnoceni float64) bool {
+	pul, ok := hodnoceniNaPoloviny(hodnoceni)
+	if !ok {
+		a.chyba("uložení hodnocení modelky", fmt.Errorf("hodnocení %v není po polovinách srdíčka (0–5 po 0,5)", hodnoceni))
+		return false
 	}
-	if hodnoceni > 5 {
-		hodnoceni = 5
+	var err error
+	if a.maSloupec("modelky", "hodnoceni_pul") {
+		_, err = a.db.Exec(`UPDATE modelky SET hodnoceni_pul = ?, hodnoceni = ? WHERE id = ?`, pul, pul/2, modelkaID)
+	} else {
+		// Databáze před úpravou č. 13 (jen při chybě úpravy, kdy se stejně zapisovat nedá)
+		_, err = a.db.Exec(`UPDATE modelky SET hodnoceni = ? WHERE id = ?`, pul/2, modelkaID)
 	}
-	_, err := a.db.Exec(`UPDATE modelky SET hodnoceni = ? WHERE id = ?`, hodnoceni, id)
 	if err != nil {
 		a.chyba("uložení hodnocení modelky", err)
 	}
 	return err == nil
+}
+
+// Hodnocení v polovinách srdíčka (0–10); mimo 0–5 se ořízne, ok = false u hodnoty mimo poloviny nebo NaN
+func hodnoceniNaPoloviny(hodnoceni float64) (int, bool) {
+	if math.IsNaN(hodnoceni) {
+		return 0, false
+	}
+	hodnoceni = min(max(hodnoceni, 0), 5)
+	pul := math.Round(hodnoceni * 2)
+	if math.Abs(pul-hodnoceni*2) > 1e-9 {
+		return 0, false
+	}
+	return int(pul), true
+}
+
+// Výraz pro hodnocení modelky v polovinách; databáze před úpravou č. 13 (poškozená se neupravuje) má jen celá srdíčka
+func (a *App) sloupecHodnoceni() string {
+	if a.maSloupec("modelky", "hodnoceni_pul") {
+		return sloupecHodnoceniPul
+	}
+	return "MIN(MAX(COALESCE(hodnoceni, 0), 0), 5) * 2"
+}
+
+// Hodnocení modelky k zobrazení a do hledání: „3“, „3.5“
+func textHodnoceni(h float64) string {
+	return strconv.FormatFloat(h, 'f', -1, 64)
 }
 
 // Hodnocení fotek 1–5 srdíček (u spojeného plakátu všech jeho stránek najednou); 0 hodnocení ruší

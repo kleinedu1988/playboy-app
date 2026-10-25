@@ -6,9 +6,12 @@ uživatele** (co přijal, odmítl, opravil nebo označil „V pořádku“). Z t
 - **Návrhy doplnění** chybějících údajů (`navrhy.go`) s jistotou, zdrojem a českým důvodem;
 - **Kontrola** údajů, které vypadají jako překlep (`kontrola.go`, `kontrola_uceni.go`).
 
-Vše běží na počítači bez sítě a bez knihoven, deterministicky (stejná data = stejné výsledky ve stejném pořadí)
-a bez změny schématu sbírky (úprava č. 12) i formátu exportu (verze 8). Nic se nezapisuje do sbírky samo,
-jen po přijetí návrhu.
+Vše běží na počítači bez sítě a bez knihoven, deterministicky (stejná data = stejné výsledky ve stejném pořadí).
+Učení samo schéma sbírky nemění (hodnocení po polovinách srdíčka je úprava č. 13 sbírky, viz Oblíbenost níže).
+Nic se nezapisuje do sbírky samo, jen po přijetí návrhu.
+
+Třetí služba je **oblíbenost** (`oblibenost.go`, oddíly na konci): porovnání dvojic „Která se ti líbí víc?“,
+jemné pořadí modelek (Bradley–Terry) a model vkusu, který odhaduje hodnocení nehodnocených modelek.
 
 | Soubor | Co v něm je |
 |---|---|
@@ -16,6 +19,7 @@ jen po přijetí návrhu.
 | `navrhy.go` | zdroje návrhů, výběr a spojení zdrojů, přijetí a odmítnutí |
 | `kontrola.go`, `kontrola_uceni.go` | pravidla kontroly, naučené rozsahy, neobvyklé kombinace, podobná jména, prahy |
 | `uceni.go` | databáze učení: deník rozhodnutí, odmítnuté hodnoty, zápisy z oprav, kalibrace, prahy kontroly, mezipaměť, přehled a zapomenutí |
+| `oblibenost.go` | porovnání dvojic, Bradley–Terry s předpokladem ze srdíček, výběr dvojic (aktivní učení), model vkusu a jeho ověření |
 
 ## Soukromí a kde co je
 
@@ -35,10 +39,13 @@ jen po přijetí návrhu.
 | `zapisy` | zápisy, na které uživatel návrh opravil (jen jiný tvar téže hodnoty) |
 | `mezipamet` | poslední návrhy a nálezy s otiskem sbírky (JSON) |
 | `stav` | čas posledního otevření (zkouška zápisu) |
+| `porovnani` | (úprava č. 2) porovnání dvojic: čas, modelky `a` a `b`, `vysledek` (`a`, `b`, `remiza`), srdíčka obou v tu chvíli (`hodnoceni_a`, `hodnoceni_b`, po polovinách) |
 
 - **Zapomenout** (`ZapomenoutUceni`): databáze učení se nejdřív zazálohuje do složky záloh jako
   `uceni-RRRR-MM-DD-HHMMSS.mmm.db` (zůstává posledních 5; mezi zálohami sbírky se neukazují) a pak vyprázdní.
-  Stejné je smazat soubor `playboy-uceni.db`. Zapomene se jen naučené z rozhodnutí; sbírka se nemění. Klíče
+  Zapomene se jen naučené z rozhodnutí Údržby; sbírka se nemění. **Porovnání dvojic zůstanou** – jsou to
+  výslovné soudy uživatele jako srdíčka, ne naučené z návrhů; smaže je zvlášť `ZapomenoutPorovnani` (se stejnou
+  zálohou). Smazání souboru `playboy-uceni.db` zapomene obojí. Klíče
   `nv-…` ve sbírce zůstanou a bez záznamu v databázi učení znamenají odmítnutí celého údaje (jako ve starších
   verzích).
 - **Když databáze učení nejde použít**, program funguje dál a sbírky se to nikdy netýká (varování jde do
@@ -56,7 +63,7 @@ jen po přijetí návrhu.
 | `OdmitnoutNavrh(n, odmitnout) bool` | odmítne **navrženou hodnotu** (`n.hodnota`) – jiná hodnota téhož údaje se navrhnout může; ve sbírce zapíše i `nv-<pole>`; zrušení odmítnutí klíč smaže, až u údaje nezbude žádná odmítnutá hodnota. Bez hodnoty odmítá celý údaj |
 | `ZaznamenatOpravu(modelkaId, pole, puvodniNavrh, novaHodnota) bool` | rozhraní volá, když uživatel navrženou hodnotu před uložením upravil |
 | `GetStavUceni() StavUceni` | soubor, velikost, počty událostí (přijato, odmítnuto, opraveno), poslední událost a přehled zdrojů |
-| `ZapomenoutUceni() bool` | záloha a vyprázdnění databáze učení |
+| `ZapomenoutUceni() bool` | záloha a vyprázdnění databáze učení (bez porovnání dvojic) |
 | `SetNetykaSe`, `SetNetykaSeAlba` | „V pořádku“ / „Znovu kontrolovat“ u nálezu se navíc zapíše do deníku se zdrojem pravidla |
 | `Prehled.navrhu`, `Prehled.podezrele` | počet neodmítnutých návrhů a nálezy kontroly |
 
@@ -68,7 +75,7 @@ v jakém se uloží), `jistota` (0–1, po kalibraci), `duvod`, `klic` (`nv-<pol
 `PodezrelyUdaj` má navíc `zdroj`: stabilní klíč pravidla (viz níže); klíč `ok-…` se nemění.
 
 `StavUceni`: `soubor` (prázdný = jen v paměti), `velikost`, `udalosti`, `prijato`, `odmitnuto`, `opraveno`,
-`naposledy`, `zdroje` – pro každý zdroj `zdroj`, `popis`, `navrhu` (současné neodmítnuté návrhy, které zdroj
+`naposledy`, `porovnani` (počet porovnání dvojic), `zdroje` – pro každý zdroj `zdroj`, `popis`, `navrhu` (současné neodmítnuté návrhy, které zdroj
 podporuje), `prijato`, `odmitnuto`, `presnost` (kalibrovaná úspěšnost 0–1) a `aktivni` (i nejsilnější návrh
 zdroje ještě projde prahem).
 
@@ -220,3 +227,85 @@ změně dat (včetně odhadu podle sousedů, který dřív nebyl) a asi 300 ms p
 - Odmítnutí jedné hodnoty zná jen databáze učení: na jiném počítači (po importu) nebo po zapomenutí znamená
   klíč `nv-<pole>` odmítnutí celého údaje.
 - Kalibrace i prahy kontroly potřebují rozhodnutí; u nové sbírky platí vzorce beze změny.
+
+## Oblíbenost
+
+Hodnocení modelky je od úpravy schématu č. 13 po **polovinách srdíčka** (0,5–5; 0 = nehodnoceno). Sbírka má nový
+sloupec `modelky.hodnoceni_pul` (počet polovin 0–10), ze kterého program čte; do dosavadního `hodnoceni` dál
+zapisuje celá srdíčka zaokrouhlená dolů, takže starší program databázi otevře jen pro čtení a 3½ ukáže jako 3.
+Spouštěče drží oba sloupce v souladu. Fotky mají srdíčka dál celá. Export verze 9 zapisuje `hodnoceni: 3.5`
+(celá bez `.0`), import přijme verze 1–9, celá i poloviny (i `3,5`) a jiné hodnoty odmítne s hláškou.
+
+Srdíčka jsou hrubá: modelek se čtyřmi srdíčky bývají desítky. Jemné pořadí dávají **porovnání dvojic** („Která se
+ti líbí víc?“, výsledek A, B nebo remíza). Ukládají se jen do databáze učení (tabulka `porovnani`), nikdy do
+sbírky ani exportu.
+
+| Volání | Co dělá |
+|---|---|
+| `GetDvojiceKPorovnani(pocet, okruh) []DvojicePorovnani` | dvojice `{a, b, duvod}` vybrané aktivním učením; `okruh`: `""` hodnocené (stejná a sousední úroveň), `"stejne"` jen stejná úroveň, `"nehodnocene"` nehodnocená proti hodnocené kotvě |
+| `PorovnatModelky(a, b, vysledek) bool` | zapíše porovnání (`a`, `b`, `remiza`) se srdíčky obou v tu chvíli |
+| `VratitPorovnani() bool` | smaže poslední porovnání (zpět) |
+| `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání |
+| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření, 0–1), `odhady` (model prošel ověřením), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `duvod` |
+| `GetMohloByTeLibit(pocet) []OblibenostModelky` | nehodnocené modelky s nejvyšším jistým odhadem a důvodem (`odhad`, `duvod`; `sila` = nezaokrouhlený odhad, `nejistota` = chyba ověření) |
+| `Modelka.oblibenost` | srdíčka upřesněná porovnáním uvnitř úrovně (nejvýš ±0,24, úrovně se nepřekrývají); nehodnocená porovnávaná má sílu z porovnání, ostatní 0 |
+| `Modelka.odhadHodnoceni` | odhad modelu vkusu po polovinách jen u nehodnocené modelky s jistým odhadem, jinak 0 |
+
+## Bradley–Terry
+
+Každá modelka má skrytou sílu s na stupnici srdíček; P(víc se líbí i než j) = σ(k·(sᵢ − sⱼ)), k = 2 (o půl
+srdíčka silnější vyhraje v 73 %). **Předpoklad ze srdíček:** hodnocená s ~ N(srdíčka, 0,25²), nehodnocená
+porovnávaná N(průměr srdíček sbírky, 1,25²). Porovnání tak sílu posunou hlavně uvnitř úrovně, ale opakované
+„překvapení“ ji posune i přes hranici (v `duvod` pak „porovnání ji staví výš než její srdíčka“; oblíbenost
+zůstává v úrovni, srdíčka mění jen uživatel). Remíza je půl výhry pro každou, porovnání váží podle stáří
+0,5^(dny/365).
+
+Odhad je maximum aposteriorní hustoty, počítané **iteracemi MM** po souřadnicích: zakřivení logistické funkce je
+nejvýš k²/4, takže krok sᵢ += gᵢ/(Σ w·k²/4 + 1/σᵢ²) hodnotu nikdy nezhorší (Böhningova mez) a konverguje k jedinému
+maximu (cíl je konkávní). **Nejistota** je Laplaceova aproximace z diagonály Fisherovy informace:
+Var sᵢ ≈ 1/(1/σᵢ² + Σ w·k²·p(1 − p)). Modelka bez porovnání má sílu rovnou předpokladu. Na umělých datech
+(30 modelek jedné úrovně, 1500 porovnání) odhad vrátí pořadí se Spearmanovým ρ ≥ 0,9 (`TestBradleyTerryNajdePoradi`).
+
+## Výběr dvojic
+
+Aktivní učení: porovnání má smysl tam, kde je pořadí nejisté a kde na něm záleží – u stejné nebo sousední úrovně
+srdíček. Kandidátky jsou ke každé hodnocené modelce nejbližší sousedé podle síly (10). Skóre dvojice je očekávaná
+informace p(1 − p)·(Var sᵢ + Var sⱼ) krát váha úrovně (stejná 1, o půl srdíčka 0,7, o srdíčko 0,2, jinak nic; okruh
+`stejne` jen stejná) krát váha modelky (bez titulní fotky i fotek 0,3; častá v posledních porovnáních se tlumí
+1/(1 + 0,5·četnost), novější porovnání víc). Vynechají se dvojice z posledních 200 porovnání a posledních 60
+nabídnutých, modelka je v jednom výběru nejvýš jednou. Asi pětina dvojic je **průzkum** (náhodná dvojice stejné
+nebo sousední úrovně); semínko je z počtu porovnání a volání, výsledek je opakovatelný. Pořadí A/B je náhodné.
+Okruh `nehodnocene` páruje nehodnocenou modelku s hodnocenými kotvami blízko jejího odhadu (vkus, jinak průměr).
+
+## Model vkusu
+
+Hřebenová (ridge) regrese oblíbenosti hodnocených modelek na jejich údaje, čistě v Go:
+
+- hodnoty jako 0/1: etnicita, národnost (sjednocená tabulkou zemí), vlasy, oči, typ prsou, košíček (A–D, DD+),
+  ochlupení, tetování a piercing (ano/ne), desetiletí prvního výskytu, kategorie (i odvozené: Playmate měsíce,
+  Cyber Girl, Modelka obálky), fotografové alb; hodnota se počítá, když ji mají aspoň 3 hodnocené modelky (nejvýš
+  150 nejčastějších);
+- standardizovaně: výška, váha, hrudník, pas, boky, BMI a průměr srdíček jejích fotek (aspoň 2 hodnocené; silný
+  signál); chybějící údaj = průměr.
+
+λ ∈ {0,5; 2; 8; 32} se vybere **křížovým ověřením** na 5 částech (rozdělení podle čísla modelky). Gramova matice
+se sčítá z řídkých řádků po částech, takže ověření jen odečítá části a řeší malé soustavy Choleským rozkladem.
+Na ověření se měří průměrná odchylka od srdíček, táž chyba prostého průměru a **přesnost** = podíl modelek, u nichž
+zaokrouhlený odhad trefí srdíčka ± půl srdíčka (`StavOblibenosti.presnost`, od 15 hodnocených).
+
+**Přesnost má přednost před úplností:** odhady se ukazují jen při aspoň 30 hodnocených modelkách, chybě ověření
+nejvýš 90 % chyby průměru a přesnosti aspoň 0,5; u modelky jen s aspoň 4 skupinami údajů. `GetMohloByTeLibit`
+navíc bere jen odhady od mediánu srdíček sbírky (aspoň 2,5) a mlčí, když vysoké odhady na ověření sedí u méně
+než 60 % (při aspoň 5 takových). **Důvod** jsou tři nejsilnější příspěvky wⱼ·(xⱼ − x̄ⱼ) ve směru odhadu („Odhad
+4½ srdíčka: blond, 70. léta, Pompeo Posar“).
+
+Umělá sbírka (200 hodnocených, hodnocení podle vlasů, desetiletí a fotografa se šumem σ = 0,3,
+`TestModelVkusuOvereni`): chyba ověření 0,25 srdíčka proti 0,69 u průměru, přesnost 0,98, vysoké odhady sedí
+v 90 z 96. Náhodné hodnocení ani 20 hodnocených ověřením neprojdou a nic se neodhaduje.
+
+**Mezipaměť a výkon:** BT i model vkusu se počítají najednou v paměti s otiskem (FNV-64a z údajů všech modelek
+včetně srdíček fotek a fotografů, počtu a posledního čísla porovnání a dnešního data); GetModelky pak jen doplní
+čísla z map. Do souboru se výsledek neukládá (výpočet trvá desítky milisekund). Umělá sbírka 3000 modelek (1000
+hodnocených, 500 porovnání, `TestVykonOblibenosti`): načtení modelek bez oblíbenosti asi 100 ms, GetModelky
+z paměti asi 105 ms, první výpočet nebo po změně hodnocení asi 130–160 ms (BT + vkus asi 25 ms), výběr 10 dvojic
+asi 120 ms (z toho většinu zabere načtení modelek).

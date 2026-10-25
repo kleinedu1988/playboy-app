@@ -54,38 +54,38 @@ type exportVyrez struct {
 type exportModelka struct {
 	Jmeno string `yaml:"jmeno"`
 	// Číslo modelky v databázi, ze které export vznikl; odlišuje modelky stejného jména
-	Cislo           int           `yaml:"cislo,omitempty"`
-	NetykaSe        string        `yaml:"netyka_se,omitempty"`
-	Pridano         string        `yaml:"pridano,omitempty"`
-	DalsiJmena      string        `yaml:"dalsi_jmena,omitempty"`
-	Hodnoceni       cisloUdaje    `yaml:"hodnoceni,omitempty"`
-	NarozeniDatum   string        `yaml:"narozeni_datum,omitempty"`
-	UmrtiDatum      string        `yaml:"umrti_datum,omitempty"`
-	NarozeniMisto   string        `yaml:"narozeni_misto,omitempty"`
-	Narodnost       string        `yaml:"narodnost,omitempty"`
-	Etnicita        string        `yaml:"etnicita,omitempty"`
-	VyskaCm         cisloUdaje    `yaml:"vyska_cm,omitempty"`
-	VahaKg          cisloUdaje    `yaml:"vaha_kg,omitempty"`
-	VlasyBarva      string        `yaml:"vlasy,omitempty"`
-	OciBarva        string        `yaml:"oci,omitempty"`
-	ObvodHrudnikCm  cisloUdaje    `yaml:"hrudnik_cm,omitempty"`
-	ObvodPasCm      cisloUdaje    `yaml:"pas_cm,omitempty"`
-	ObvodBokyCm     cisloUdaje    `yaml:"boky_cm,omitempty"`
-	Miry            string        `yaml:"miry,omitempty"`
-	VelikostPrsou   string        `yaml:"velikost_prsou,omitempty"`
-	PrsaTyp         string        `yaml:"prsa_typ,omitempty"`
-	Ochlupeni       string        `yaml:"ochlupeni,omitempty"`
-	Tetovani        string        `yaml:"tetovani,omitempty"` // ano / ne
-	Piercing        string        `yaml:"piercing,omitempty"` // ano / ne
-	Role            string        `yaml:"role,omitempty"`
-	Tags            string        `yaml:"tagy,omitempty"`
-	Vystoupeni      string        `yaml:"vystoupeni,omitempty"`
-	PictorialVydani string        `yaml:"pictorial_vydani,omitempty"`
-	Poznamka        string        `yaml:"poznamka,omitempty"`
-	Odkazy          string        `yaml:"odkazy,omitempty"`
-	TitulniFotka    string        `yaml:"titulni_fotka,omitempty"`
-	Vyrez           *exportVyrez  `yaml:"vyrez,omitempty"`
-	Alba            []exportAlbum `yaml:"alba,omitempty"`
+	Cislo           int            `yaml:"cislo,omitempty"`
+	NetykaSe        string         `yaml:"netyka_se,omitempty"`
+	Pridano         string         `yaml:"pridano,omitempty"`
+	DalsiJmena      string         `yaml:"dalsi_jmena,omitempty"`
+	Hodnoceni       hodnoceniUdaje `yaml:"hodnoceni,omitempty"` // od verze 9 po polovinách (3.5)
+	NarozeniDatum   string         `yaml:"narozeni_datum,omitempty"`
+	UmrtiDatum      string         `yaml:"umrti_datum,omitempty"`
+	NarozeniMisto   string         `yaml:"narozeni_misto,omitempty"`
+	Narodnost       string         `yaml:"narodnost,omitempty"`
+	Etnicita        string         `yaml:"etnicita,omitempty"`
+	VyskaCm         cisloUdaje     `yaml:"vyska_cm,omitempty"`
+	VahaKg          cisloUdaje     `yaml:"vaha_kg,omitempty"`
+	VlasyBarva      string         `yaml:"vlasy,omitempty"`
+	OciBarva        string         `yaml:"oci,omitempty"`
+	ObvodHrudnikCm  cisloUdaje     `yaml:"hrudnik_cm,omitempty"`
+	ObvodPasCm      cisloUdaje     `yaml:"pas_cm,omitempty"`
+	ObvodBokyCm     cisloUdaje     `yaml:"boky_cm,omitempty"`
+	Miry            string         `yaml:"miry,omitempty"`
+	VelikostPrsou   string         `yaml:"velikost_prsou,omitempty"`
+	PrsaTyp         string         `yaml:"prsa_typ,omitempty"`
+	Ochlupeni       string         `yaml:"ochlupeni,omitempty"`
+	Tetovani        string         `yaml:"tetovani,omitempty"` // ano / ne
+	Piercing        string         `yaml:"piercing,omitempty"` // ano / ne
+	Role            string         `yaml:"role,omitempty"`
+	Tags            string         `yaml:"tagy,omitempty"`
+	Vystoupeni      string         `yaml:"vystoupeni,omitempty"`
+	PictorialVydani string         `yaml:"pictorial_vydani,omitempty"`
+	Poznamka        string         `yaml:"poznamka,omitempty"`
+	Odkazy          string         `yaml:"odkazy,omitempty"`
+	TitulniFotka    string         `yaml:"titulni_fotka,omitempty"`
+	Vyrez           *exportVyrez   `yaml:"vyrez,omitempty"`
+	Alba            []exportAlbum  `yaml:"alba,omitempty"`
 }
 
 type exportCover struct {
@@ -96,7 +96,7 @@ type exportCover struct {
 }
 
 // Verze formátu exportu, kterou program zapisuje a nejvýš umí načíst; popis je v EXPORT.md
-const verzeExportu = 8
+const verzeExportu = 9
 
 // Odkaz na modelku v exportu (další modelka alba, obálka, výběr): jméno, u jmen, která má víc modelek,
 // doplněné o číslo modelky v hranatých závorkách („Anna [12]“)
@@ -213,7 +213,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 	exportovanoFotek := 0
 
 	// Chyba čtení nesmí skončit neúplným souborem, který vypadá jako úspěšný export
-	modelky, err := a.nactiModelky("")
+	modelky, err := a.nactiModelky("", false)
 	if err != nil {
 		return nil, fmt.Errorf("modelky se nepodařilo přečíst: %w", err)
 	}
@@ -250,7 +250,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 		}
 		exportovanoFotek += len(fotky)
 		e := exportModelka{
-			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: cisloUdaje{Hodnota: m.Hodnoceni},
+			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: hodnoceniUdaje{Pul: m.hodnoceniPul()},
 			NarozeniDatum: m.NarozeniDatum, UmrtiDatum: m.UmrtiDatum, NarozeniMisto: m.NarozeniMisto, Narodnost: m.Narodnost, Etnicita: m.Etnicita,
 			VyskaCm: cisloUdaje{Hodnota: m.VyskaCm}, VahaKg: cisloUdaje{Hodnota: m.VahaKg}, VlasyBarva: m.VlasyBarva, OciBarva: m.OciBarva,
 			ObvodHrudnikCm: cisloUdaje{Hodnota: m.ObvodHrudnikCm}, ObvodPasCm: cisloUdaje{Hodnota: m.ObvodPasCm}, ObvodBokyCm: cisloUdaje{Hodnota: m.ObvodBokyCm}, Miry: m.Miry,
@@ -890,8 +890,8 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 		if e.Vyrez != nil && m.CoverID != "" {
 			a.SetCoverVyrez(m.ID, e.Vyrez.Zoom, e.Vyrez.X, e.Vyrez.Y)
 		}
-		if e.Hodnoceni.Smazat || e.Hodnoceni.Hodnota != 0 {
-			a.SetHodnoceni(m.ID, e.Hodnoceni.Hodnota)
+		if e.Hodnoceni.Smazat || e.Hodnoceni.Pul != 0 {
+			a.SetHodnoceni(m.ID, float64(e.Hodnoceni.Pul)/2)
 		}
 
 		for _, album := range e.Alba {

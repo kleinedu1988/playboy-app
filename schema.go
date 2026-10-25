@@ -195,3 +195,36 @@ func (a *App) migraceDatumAlba() error {
 	_, err := a.db.Exec("ALTER TABLE alba ADD COLUMN datum TEXT")
 	return err
 }
+
+// Úprava č. 13: hodnocení modelky po polovinách srdíčka (0–5 po 0,5). Nový sloupec hodnoceni_pul je počet
+// polovin (0–10) a program čte ten (řádek bez něj, NULL, se čte jako hodnoceni × 2). Dosavadní sloupec
+// hodnoceni zůstává a program do něj dál zapisuje celá srdíčka zaokrouhlená dolů (hodnoceni_pul / 2): starší
+// program, který databázi ve schématu 13 otevře jen pro čtení, tak ukáže 3½ srdíčka jako 3 a nic nepokazí.
+// Spouštěče drží oba sloupce v souladu i při zápisu jen do jednoho z nich (ruční SQL, starší kód). Hodnocení
+// fotek zůstává v celých srdíčkách.
+const sloupecHodnoceniPul = "COALESCE(hodnoceni_pul, MIN(MAX(COALESCE(hodnoceni, 0), 0), 5) * 2)"
+
+var krokyHodnoceniPul = []string{
+	`ALTER TABLE modelky ADD COLUMN hodnoceni_pul INTEGER`,
+	`UPDATE modelky SET hodnoceni_pul = MIN(MAX(COALESCE(hodnoceni, 0), 0), 5) * 2`,
+	// Zápis jen celých srdíček (starší způsob): poloviny se odvodí z nich
+	`CREATE TRIGGER modelky_hodnoceni_cela AFTER UPDATE OF hodnoceni ON modelky
+		WHEN NEW.hodnoceni_pul IS NULL OR NEW.hodnoceni_pul / 2 <> COALESCE(NEW.hodnoceni, 0)
+		BEGIN UPDATE modelky SET hodnoceni_pul = MIN(MAX(COALESCE(NEW.hodnoceni, 0), 0), 5) * 2 WHERE id = NEW.id; END`,
+	// Zápis jen polovin: celá srdíčka zaokrouhlená dolů pro starší čtenáře
+	`CREATE TRIGGER modelky_hodnoceni_poloviny AFTER UPDATE OF hodnoceni_pul ON modelky
+		WHEN NEW.hodnoceni_pul IS NOT NULL AND COALESCE(NEW.hodnoceni, 0) <> NEW.hodnoceni_pul / 2
+		BEGIN UPDATE modelky SET hodnoceni = NEW.hodnoceni_pul / 2 WHERE id = NEW.id; END`,
+}
+
+func (a *App) migraceHodnoceniPul() error {
+	if a.maSloupec("modelky", "hodnoceni_pul") {
+		return nil
+	}
+	for _, krok := range krokyHodnoceniPul {
+		if _, err := a.db.Exec(krok); err != nil {
+			return err
+		}
+	}
+	return nil
+}

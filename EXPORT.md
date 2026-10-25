@@ -1,12 +1,12 @@
-# Formát exportu (verze 8)
+# Formát exportu (verze 9)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 8** (program 0.99.9
-a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 9** (beta po programu 0.99.25).
 
-Od alfy (program 0.50.0) byl formát verze 7 **zmrazený**. Jedinou vědomou výjimkou v betě je verze 8, která
-přidala online pictorialy (typ alba `Pictorial online` s datem nafocení); od ní je formát znovu zmrazený do
-verze 1.0.0. Soubory verze 7 i 8 půjdou načíst i do vydané verze.
+Od alfy (program 0.50.0) byl formát verze 7 **zmrazený**. Vědomé výjimky v betě jsou dvě: verze 8 přidala
+online pictorialy (typ alba `Pictorial online` s datem nafocení) a verze 9 hodnocení modelky po polovinách
+srdíčka (`hodnoceni: 3.5`). Od verze 9 je formát znovu zmrazený do verze 1.0.0. Soubory verzí 7, 8 i 9 půjdou
+načíst i do vydané verze.
 
 Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-exportu.yaml); jde rovnou načíst importem.
 
@@ -34,15 +34,16 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
   Obojí import vypíše s číslem řádku.
 - Opakovaný import téhož souboru nic nezdvojí.
 - Před importem se uloží záloha. Při jakékoli chybě zápisu se import vrátí celý a databáze zůstane, jak byla.
-- Soubor s vyšší verzí formátu, než program zná, se odmítne celý (aktualizuj program). Starší verze 1–7
-  se načtou; údaje, které v nich ještě nebyly, zůstanou nezměněné.
+- Soubor s vyšší verzí formátu, než program zná, se odmítne celý (aktualizuj program). Starší verze 1–8
+  se načtou; údaje, které v nich ještě nebyly, zůstanou nezměněné. Starší program (formát 8) soubor verze 9
+  odmítne celý, i když poloviny srdíček neobsahuje.
 - Údaje se kontrolují stejně jako při zadávání v programu. Chybné album nebo fotka se přeskočí a import
   vypíše, co a proč.
 
 ## Celek
 
 ```yaml
-verze: 8
+verze: 9
 modelky: [...]   # modelky s jejich alby
 covery: [...]    # obálky časopisu, nepatří k modelce
 vydani: [...]    # stav a poznámky k jednotlivým číslům
@@ -57,7 +58,7 @@ vybery: [...]    # vlastní výběry fotek napříč sbírkou
 | `cislo` | Jen u jmen, která ve sbírce má víc modelek: číslo modelky v databázi, ze které export vznikl |
 | `pridano` | Kdy byla modelka přidána (`RRRR-MM-DD HH:MM:SS`) |
 | `dalsi_jmena`, `poznamka`, `odkazy`, `tagy` | Volný text (tagy oddělené čárkou) |
-| `hodnoceni` | 1–5 srdíček |
+| `hodnoceni` | 0,5–5 srdíček po polovinách. Celé číslo se zapisuje bez desetinné části (`4`), polovina s tečkou (`3.5`); import přijme i desetinnou čárku (`3,5`). Jiná hodnota (`3.3`, `7`, text) je chyba souboru a import se neprovede; `0` nic nemění, `-` hodnocení smaže. Verze 1–8 znaly jen celá srdíčka |
 | `narozeni_datum`, `umrti_datum` | Datum narození a úmrtí: `RRRR-MM-DD`, `RRRR-MM` nebo jen `RRRR`; úmrtí nesmí být před narozením, jiný tvar se ohlásí a stávající údaj zůstane |
 | `narozeni_misto`, `narodnost`, `etnicita` | Základní údaje |
 | `vyska_cm`, `vaha_kg`, `hrudnik_cm`, `pas_cm`, `boky_cm`, `miry`, `velikost_prsou`, `prsa_typ`, `vlasy`, `oci`, `ochlupeni` | Vzhled; `miry` se zapisují jen bez všech tří obvodů |
@@ -93,7 +94,7 @@ určit jednoznačně, import to vypíše a odkaz přeskočí.
 | `netyka_se` | `text`, `vydani` – co se alba netýká |
 | `fotky` | Fotky alba; může být prázdné (`[]`), když albu zbyl jen text nebo další modelky |
 
-Fotka: `id` (ID souboru na Google Disku nebo odkaz na něj), `hodnoceni` (1–5), `rotace` (90, 180, 270)
+Fotka: `id` (ID souboru na Google Disku nebo odkaz na něj), `hodnoceni` (1–5, jen celá srdíčka), `rotace` (90, 180, 270)
 a `pridano`, jen když se liší od data přidání alba.
 
 ## Cover, vydání, výběr
@@ -142,6 +143,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 9 | beta po 0.99.25 | `hodnoceni` modelky po polovinách srdíčka (`3.5`, při importu i `3,5`); hodnocení fotek zůstává celé |
 | 8 | 0.99.9 | Online pictorialy: typ alba `Pictorial online` (bez vydání) a jeho `datum` nafocení |
 | 7 | 0.30.0 | Články čísla: `clanky` u vydání (strana, rubrika, název, autor, modelka, druh, text, skeny) |
 | 6 | 0.18.0 | `umrti_datum` u modelky, data narození a úmrtí i neúplná (`RRRR`, `RRRR-MM`), `na_obalce` u čísla, `-` údaj smaže, oprava překlepů v klíčích |

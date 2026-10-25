@@ -1,4 +1,4 @@
-# Vzor souboru pro import – formát verze 8 (popis všech klíčů je v EXPORT.md)
+# Vzor souboru pro import – formát verze 9 (popis všech klíčů je v EXPORT.md)
 #
 # Pravidla zápisu:
 # - odsazení mezerami (ne tabulátorem), vždy o dvě; každá položka seznamu začíná „- “
@@ -8,13 +8,13 @@
 # - hodnota - (pomlčka) údaj smaže, např. „narodnost: -“; překlep v klíči import opraví a vypíše
 # - řádky začínající # jsou komentáře, import je přeskočí
 
-verze: 8
+verze: 9
 
 modelky:
   # Modelka se všemi údaji
   - jmeno: "Jackie Rainbow"
     pridano: "2026-10-14 09:00:00"         # kdy přibyla do sbírky; bez něj okamžik importu
-    hodnoceni: 4                            # 1–5 srdíček
+    hodnoceni: 4.5                          # 0,5–5 srdíček po polovinách (4, 3.5; i 3,5)
     dalsi_jmena: "Jacqueline Rainbow, Jackie Emery"
 
     # Základní údaje

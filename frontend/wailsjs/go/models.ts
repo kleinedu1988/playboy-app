@@ -74,6 +74,22 @@ export namespace main {
 	        this.edice = source["edice"];
 	    }
 	}
+	export class DvojicePorovnani {
+	    a: number;
+	    b: number;
+	    duvod: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new DvojicePorovnani(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.a = source["a"];
+	        this.b = source["b"];
+	        this.duvod = source["duvod"];
+	    }
+	}
 	export class OdkazModelky {
 	    id: number;
 	    jmeno: string;
@@ -305,6 +321,8 @@ export namespace main {
 	    dalsiJmena: string;
 	    poznamka: string;
 	    hodnoceni: number;
+	    oblibenost: number;
+	    odhadHodnoceni: number;
 	    pridano: string;
 	    netykaSe: string;
 	    odkazy: string;
@@ -353,6 +371,8 @@ export namespace main {
 	        this.dalsiJmena = source["dalsiJmena"];
 	        this.poznamka = source["poznamka"];
 	        this.hodnoceni = source["hodnoceni"];
+	        this.oblibenost = source["oblibenost"];
+	        this.odhadHodnoceni = source["odhadHodnoceni"];
 	        this.pridano = source["pridano"];
 	        this.netykaSe = source["netykaSe"];
 	        this.odkazy = source["odkazy"];
@@ -453,6 +473,34 @@ export namespace main {
 	    }
 	}
 	
+	export class OblibenostModelky {
+	    modelkaId: number;
+	    jmeno: string;
+	    hodnoceni: number;
+	    sila: number;
+	    nejistota: number;
+	    poradi: number;
+	    porovnani: number;
+	    odhad: number;
+	    duvod: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OblibenostModelky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.hodnoceni = source["hodnoceni"];
+	        this.sila = source["sila"];
+	        this.nejistota = source["nejistota"];
+	        this.poradi = source["poradi"];
+	        this.porovnani = source["porovnani"];
+	        this.odhad = source["odhad"];
+	        this.duvod = source["duvod"];
+	    }
+	}
 	export class VyberFotky {
 	    vyberId: number;
 	    poradi: number;
@@ -784,6 +832,44 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class StavOblibenosti {
+	    porovnani: number;
+	    modelek: number;
+	    presnost: number;
+	    odhady: boolean;
+	    poradi: OblibenostModelky[];
+	
+	    static createFrom(source: any = {}) {
+	        return new StavOblibenosti(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.porovnani = source["porovnani"];
+	        this.modelek = source["modelek"];
+	        this.presnost = source["presnost"];
+	        this.odhady = source["odhady"];
+	        this.poradi = this.convertValues(source["poradi"], OblibenostModelky);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class ZdrojUceni {
 	    zdroj: string;
 	    popis: string;
@@ -817,6 +903,7 @@ export namespace main {
 	    opraveno: number;
 	    zdroje: ZdrojUceni[];
 	    naposledy: string;
+	    porovnani: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new StavUceni(source);
@@ -832,6 +919,7 @@ export namespace main {
 	        this.opraveno = source["opraveno"];
 	        this.zdroje = this.convertValues(source["zdroje"], ZdrojUceni);
 	        this.naposledy = source["naposledy"];
+	        this.porovnani = source["porovnani"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -66,10 +66,25 @@ var migraceUceni = []string{
 		PRIMARY KEY (pole, klic, zapis)
 	);
 	CREATE TABLE mezipamet (druh TEXT PRIMARY KEY, otisk TEXT NOT NULL, data BLOB NOT NULL, cas TEXT NOT NULL);`,
+	// Úprava č. 2: porovnání dvojic modelek „Která se ti líbí víc?“ (oblibenost.go): čas, modelky A a B, výsledek
+	// (a, b, remiza) a jejich srdíčka v tu chvíli (po polovinách)
+	`CREATE TABLE porovnani (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		cas TEXT NOT NULL,
+		a INTEGER NOT NULL,
+		b INTEGER NOT NULL,
+		vysledek TEXT NOT NULL CHECK (vysledek IN ('a', 'b', 'remiza')),
+		hodnoceni_a REAL NOT NULL DEFAULT 0,
+		hodnoceni_b REAL NOT NULL DEFAULT 0
+	);`,
 }
 
-// Tabulky s naučeným (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti
+// Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti
+// a které ZapomenoutUceni vyprázdní
 var tabulkyUceni = []string{"udalosti", "odmitnute", "zapisy"}
+
+// Porovnání dvojic: do paměti se přenesou také, ale zapomínají se zvlášť (ZapomenoutPorovnani)
+var tabulkyPorovnani = []string{"porovnani"}
 
 // Druhy událostí deníku
 const (
@@ -124,6 +139,9 @@ type uceni struct {
 	// souběžně a po změně dat by každé volání počítalo totéž znovu (a kontrola by opravu zapsala dvakrát).
 	// Pořadí zámků: vypocet… vždy před mu.
 	vypocetNavrhu, vypocetNalezu sync.Mutex
+
+	// Porovnání dvojic a model oblíbenosti (oblibenost.go)
+	ob oblibenostUceni
 }
 
 type pametVysledku[T any] struct {
@@ -278,7 +296,7 @@ func otevritUceniVPameti(zdroj *sql.DB) *sql.DB {
 	if zdroj == nil {
 		return db
 	}
-	for _, tabulka := range tabulkyUceni {
+	for _, tabulka := range append(append([]string(nil), tabulkyUceni...), tabulkyPorovnani...) {
 		radky, err := zdroj.Query("SELECT * FROM " + tabulka)
 		if err != nil {
 			continue
@@ -794,7 +812,7 @@ func (o *otiskovac) cisla(cisla ...int) {
 }
 
 func (o *otiskovac) modelka(m *Modelka) {
-	o.cisla(m.ID, m.VyskaCm, m.VahaKg, m.ObvodHrudnikCm, m.ObvodPasCm, m.ObvodBokyCm, m.Tetovani, m.Piercing, m.Hodnoceni, m.PocetFotek)
+	o.cisla(m.ID, m.VyskaCm, m.VahaKg, m.ObvodHrudnikCm, m.ObvodPasCm, m.ObvodBokyCm, m.Tetovani, m.Piercing, m.hodnoceniPul(), m.PocetFotek)
 	o.text(m.Jmeno, m.NarozeniDatum, m.UmrtiDatum, m.NarozeniMisto, m.Narodnost, m.Etnicita, m.VlasyBarva, m.OciBarva, m.Miry,
 		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags, m.DalsiJmena, m.Poznamka,
 		m.NetykaSe, m.CyberGirl, m.CoverID, m.Pridano)
@@ -1007,6 +1025,8 @@ type StavUceni struct {
 	Opraveno  int          `json:"opraveno"`
 	Zdroje    []ZdrojUceni `json:"zdroje"`
 	Naposledy string       `json:"naposledy"` // čas poslední události (RRRR-MM-DD HH:MM:SS), prázdný bez událostí
+	// Porovnání dvojic modelek (oblibenost.go); ZapomenoutUceni je nemaže, to dělá ZapomenoutPorovnani
+	Porovnani int `json:"porovnani"`
 }
 
 // Zdroj návrhů v přehledu učení
@@ -1049,6 +1069,7 @@ func (a *App) GetStavUceni() StavUceni {
 	}
 	db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(druh = ?), 0), COALESCE(SUM(druh = ?), 0), COALESCE(SUM(druh = ?), 0), COALESCE(MAX(cas), '')
 		FROM udalosti`, udalostPrijato, udalostOdmitnuto, udalostOpraveno).Scan(&stav.Udalosti, &stav.Prijato, &stav.Odmitnuto, &stav.Opraveno, &stav.Naposledy)
+	stav.Porovnani = len(u.nacistPorovnani())
 	if u.statistiky == nil {
 		u.statistiky = u.spocitatKalibraci()
 	}
@@ -1082,18 +1103,8 @@ func (a *App) ZapomenoutUceni() bool {
 	if db == nil {
 		return false
 	}
-	if u.cesta != "" {
-		if err := os.MkdirAll(slozkaZaloh(), 0o700); err != nil {
-			a.chyba("záloha databáze učení", err)
-			return false
-		}
-		zaloha := filepath.Join(slozkaZaloh(), "uceni-"+time.Now().Format("2006-01-02-150405.000")+".db")
-		if _, err := db.Exec("VACUUM INTO ?", zaloha); err != nil {
-			a.chyba("záloha databáze učení", err)
-			return false
-		}
-		os.Chmod(zaloha, 0o600)
-		uklidZalohUceni()
+	if !a.zalohovatUceni(db) {
+		return false
 	}
 	for _, tabulka := range append(append([]string(nil), tabulkyUceni...), "mezipamet") {
 		if _, err := db.Exec("DELETE FROM " + tabulka); err != nil {
@@ -1107,6 +1118,26 @@ func (a *App) ZapomenoutUceni() bool {
 	u.nacistGeneraci()
 	u.vstup, u.prahy, u.statistiky = nil, nil, nil
 	u.navrhy, u.nalezy = pametVysledku[[]navrhSbirky]{}, pametVysledku[ulozeneNalezy]{}
+	return true
+}
+
+// Záloha databáze učení do složky záloh (uceni-….db) před zapomenutím; volá se se zámkem. Učení jen v paměti
+// se nezálohuje.
+func (a *App) zalohovatUceni(db *sql.DB) bool {
+	if a.uc.cesta == "" {
+		return true
+	}
+	if err := os.MkdirAll(slozkaZaloh(), 0o700); err != nil {
+		a.chyba("záloha databáze učení", err)
+		return false
+	}
+	zaloha := filepath.Join(slozkaZaloh(), "uceni-"+time.Now().Format("2006-01-02-150405.000")+".db")
+	if _, err := db.Exec("VACUUM INTO ?", zaloha); err != nil {
+		a.chyba("záloha databáze učení", err)
+		return false
+	}
+	os.Chmod(zaloha, 0o600)
+	uklidZalohUceni()
 	return true
 }
 

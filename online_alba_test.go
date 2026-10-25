@@ -65,8 +65,11 @@ func TestPrechodNaDatumAlba(t *testing.T) {
 	a.db.Exec("UPDATE alba SET vydani = '1995-03', popis = 'Text' WHERE album = 'Les'")
 	a.db.Close()
 
+	// Program s úpravou č. 12 (pozdější úpravy tento test nezajímají)
+	migrace = puvodni[:12]
 	b := NewApp()
 	b.startup(context.Background())
+	migrace = puvodni
 	if b.chybaStartu != "" {
 		t.Fatal(b.chybaStartu)
 	}
@@ -274,7 +277,7 @@ func TestExportOnlineAlb(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(export)
-	if !strings.Contains(text, "verze: 8") || !strings.Contains(text, "typ: Pictorial online") || strings.Count(text, "datum: ") != 2 || !strings.Contains(text, "2004-06") {
+	if !strings.Contains(text, fmt.Sprintf("verze: %d", verzeExportu)) || !strings.Contains(text, "typ: Pictorial online") || strings.Count(text, "datum: ") != 2 || !strings.Contains(text, "2004-06") {
 		t.Fatalf("export:\n%s", text)
 	}
 	b := novaTestovaciApp(t, nil)
@@ -300,8 +303,8 @@ func TestExportOnlineAlb(t *testing.T) {
 	}
 
 	// Novější formát se odmítne celý
-	if v := b.importovat([]byte("verze: 9\nmodelky:\n  - jmeno: Novější\n")); !strings.Contains(v.Selhalo, "z novější verze programu (formát 9, tato verze umí nejvýš 8)") {
-		t.Fatalf("formát 9: %+v", v)
+	if v := b.importovat([]byte("verze: 10\nmodelky:\n  - jmeno: Novější\n")); !strings.Contains(v.Selhalo, "z novější verze programu (formát 10, tato verze umí nejvýš 9)") {
+		t.Fatalf("formát 10: %+v", v)
 	}
 
 	// Export verze 7 (bez online alb) se načte jako dřív
@@ -359,7 +362,7 @@ modelky:
 }
 
 // Vzorový soubor (vzor-exportu.yaml) je ve formátu, který program zapisuje, a online album z něj projde
-func TestVzorExportuVerze8(t *testing.T) {
+func TestVzorExportu(t *testing.T) {
 	data, err := os.ReadFile("vzor-exportu.yaml")
 	if err != nil {
 		t.Fatal(err)

@@ -715,14 +715,14 @@ func TestDoplnkoveUdajeModelky(t *testing.T) {
 		t.Fatalf("tetování mimo rozsah = %d", anna.Tetovani)
 	}
 
-	// Hodnocení 0–5, hodnoty mimo rozsah se oříznou
+	// Hodnocení 0–5 po polovinách, hodnoty mimo rozsah se oříznou
 	if kelley.Hodnoceni != 0 {
-		t.Fatalf("nová modelka má hodnocení %d", kelley.Hodnoceni)
+		t.Fatalf("nová modelka má hodnocení %v", kelley.Hodnoceni)
 	}
-	for nastavit, chci := range map[int]int{3: 3, 9: 5, -2: 0} {
+	for nastavit, chci := range map[float64]float64{3: 3, 3.5: 3.5, 0.5: 0.5, 9: 5, -2: 0} {
 		a.SetHodnoceni(kelley.ID, nastavit)
 		if mam := a.GetModelky("kelley")[0].Hodnoceni; mam != chci {
-			t.Fatalf("SetHodnoceni(%d) uložilo %d, chci %d", nastavit, mam, chci)
+			t.Fatalf("SetHodnoceni(%v) uložilo %v, chci %v", nastavit, mam, chci)
 		}
 	}
 
@@ -778,7 +778,7 @@ func TestPrevodOblibenychNaHodnoceni(t *testing.T) {
 	a.startup(context.Background())
 	defer a.db.Close()
 
-	hodnoceni := map[string]int{}
+	hodnoceni := map[string]float64{}
 	for _, m := range a.GetModelky("") {
 		hodnoceni[m.Jmeno] = m.Hodnoceni
 	}
@@ -2798,15 +2798,16 @@ func TestVyvojVCase(t *testing.T) {
 }
 
 // Alfa (řada 0.5x) zmrazila schéma databáze a formát exportu: nová úprava schématu ani nová verze exportu
-// do 1.0.0 nevznikne. Změna tady znamená vědomé rozhodnutí a novou MINOR verzi mimo alfu. Jediná vědomá
-// výjimka v betě: online pictorialy (typ Pictorial online s datem nafocení) – úprava č. 12 a export verze 8;
-// od nich je stav zase zmrazený až do 1.0.0.
+// do 1.0.0 nevznikne. Změna tady znamená vědomé rozhodnutí a novou MINOR verzi mimo alfu. Vědomé výjimky
+// v betě: online pictorialy (typ Pictorial online s datem nafocení) – úprava č. 12 a export verze 8; a druhá,
+// hodnocení modelky po polovinách srdíčka – úprava č. 13 a export verze 9. Od ní je schéma i formát exportu
+// znovu zmrazené až do vydání 1.0.0.
 func TestZmrazeniAlfy(t *testing.T) {
-	if len(migrace) != 12 {
-		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 12", len(migrace))
+	if len(migrace) != 13 {
+		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 13", len(migrace))
 	}
-	if verzeExportu != 8 {
-		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 8", verzeExportu)
+	if verzeExportu != 9 {
+		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 9", verzeExportu)
 	}
 }
 

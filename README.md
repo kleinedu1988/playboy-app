@@ -4,7 +4,7 @@ Desktopová aplikace (Wails v2: Go + Vanilla JS) pro osobní katalog modelek, al
 coverů a čísel časopisu Playboy. Fotky se neukládají do aplikace, načítají se z Google Disku podle odkazu.
 
 **Stav: beta (řada 0.90.x).** Program je použitelný na skutečné sbírce. Funkce, texty, schéma databáze (úprava
-č. 12) a formát exportu (verze 8) jsou zmrazené; do vydání 1.0.0 přibývají jen opravy chyb. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md),
+č. 13, hodnocení modelek po polovinách srdíčka) a formát exportu (verze 9) jsou zmrazené; do vydání 1.0.0 přibývají jen opravy chyb. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md),
 změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 
 ## Co program umí
@@ -130,7 +130,8 @@ Více slov zužuje výběr. Cíleně `pole:hodnota`: `jmeno`, `vlasy`, `oci`, `n
 `tag`, `role`, `fotograf`, `rok` (rok vydání), `vydani`, `narozena`, `umrti`, `edice`, `prsa`, `ochlupeni`,
 `poznamka`, `vyska`, `vaha`, `miry`, `hodnoceni`, `tetovani`, `piercing`, `obalka`. Víceslovná hodnota do
 uvozovek (`fotograf:"arny freytag"`), rozsahy a porovnání (`rok:1970..1979`, `vyska:>175`), vyloučení
-pomlčkou (`-vlasy:blond`).
+pomlčkou (`-vlasy:blond`). Srdíčka modelek jsou po polovinách: `hodnoceni:3.5`, `srdicka:3,5`, `hodnoceni:>=3,5`,
+`hodnoceni:3..4`; výčet `hodnoceni:3,4` (3 nebo 4), „číslice,5“ je desetinná čárka.
 
 ## Verze a vydání
 

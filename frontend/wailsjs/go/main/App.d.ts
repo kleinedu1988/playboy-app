@@ -34,6 +34,8 @@ export function GetClankyModelky(arg1:number):Promise<Array<main.Clanek>>;
 
 export function GetCovery():Promise<Array<main.Fotografie>>;
 
+export function GetDvojiceKPorovnani(arg1:number,arg2:string):Promise<Array<main.DvojicePorovnani>>;
+
 export function GetFotkyVyberu(arg1:number):Promise<Array<main.Fotografie>>;
 
 export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>>;
@@ -44,9 +46,13 @@ export function GetKalendar():Promise<Array<main.VydaniKalendare>>;
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
+export function GetMohloByTeLibit(arg1:number):Promise<Array<main.OblibenostModelky>>;
+
 export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<main.NavrhDoplneni>>;
 
 export function GetNejlepsiFotky(arg1:number):Promise<Array<main.Fotografie>>;
+
+export function GetOblibenost():Promise<main.StavOblibenosti>;
 
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
@@ -99,6 +105,8 @@ export function Odemknout(arg1:string):Promise<boolean>;
 export function OdmitnoutNavrh(arg1:main.NavrhDoplneni,arg2:boolean):Promise<boolean>;
 
 export function OveritOdkaz(arg1:string):Promise<number>;
+
+export function PorovnatModelky(arg1:number,arg2:number,arg3:string):Promise<boolean>;
 
 export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
 
@@ -170,6 +178,8 @@ export function UpdateCover(arg1:number,arg2:string,arg3:string):Promise<boolean
 
 export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
 
+export function VratitPorovnani():Promise<boolean>;
+
 export function VyberPodleNazvu(arg1:string):Promise<number>;
 
 export function VybratSouboryImportu():Promise<Array<string>>;
@@ -177,6 +187,8 @@ export function VybratSouboryImportu():Promise<Array<string>>;
 export function VymazatMezipamet():Promise<number>;
 
 export function ZalozitSpecial(arg1:number,arg2:string,arg3:string):Promise<string>;
+
+export function ZapomenoutPorovnani():Promise<boolean>;
 
 export function ZapomenoutUceni():Promise<boolean>;
 

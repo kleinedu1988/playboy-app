@@ -13,8 +13,28 @@ import { otevritLightbox } from './prohlizec';
 import { pripojitVyberSpecialu } from './specialy';
 import { zavritOkno } from './ulozeni';
 
-// Výběr měsíce nabízí i speciály zvoleného roku
+// Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
+
+// Číslo coveru: řádné měsíční, nebo speciál; viditelný je jen jeden výběr a jen ten je povinný
+function nastavitCisloCoveru(cislo) {
+    const special = cislo === 'special';
+    document.querySelectorAll('[data-cislo-coveru]').forEach(b => {
+        b.classList.toggle('active', b.dataset.cisloCoveru === cislo);
+        b.setAttribute('aria-pressed', String(b.dataset.cisloCoveru === cislo));
+    });
+    const mesic = /** @type {HTMLSelectElement} */ (document.getElementById('selectCoverMesic'));
+    const vyberSpecialu = /** @type {HTMLSelectElement} */ (document.getElementById('selectCoverSpecial'));
+    mesic.classList.toggle('hidden', special);
+    vyberSpecialu.classList.toggle('hidden', !special);
+    mesic.required = !special;
+    vyberSpecialu.required = special;
+    const popisek = /** @type {HTMLLabelElement} */ (document.getElementById('coverMesicLabel'));
+    popisek.textContent = special ? 'Speciál' : 'Měsíc';
+    popisek.htmlFor = special ? 'selectCoverSpecial' : 'selectCoverMesic';
+}
+const vyberCislaCoveru = () => /** @type {HTMLSelectElement} */ (document.getElementById(
+    document.getElementById('selectCoverSpecial').classList.contains('hidden') ? 'selectCoverMesic' : 'selectCoverSpecial'));
 
 // Formulář coveru slouží pro přidání (polozka = null) i úpravu vydání
 export const coverModal = document.getElementById('coverModal');
@@ -32,10 +52,13 @@ export function otevritCoverModal(polozka = null, predvyplnitVydani = '') {
     if (vydani?.mesic) document.getElementById('inputCoverRok').value = vydani.rok;
     // Bez předvyplněného vydání se nabídne edice zobrazená v kalendáři
     document.getElementById('selectCoverEdice').value = vydani?.edice || stav.kalendarEdice;
-    obnovitSpecialyCoveru(vydani?.mesic || '');
+    const special = Boolean(vydani?.mesic?.startsWith('S'));
+    obnovitSpecialyCoveru(special ? vydani.mesic : '');
+    document.getElementById('selectCoverMesic').value = special ? '' : vydani?.mesic || '';
+    nastavitCisloCoveru(special ? 'special' : 'mesic');
     coverModal.classList.remove('hidden');
     // S předvyplněným vydáním zbývá jen vložit odkaz
-    document.getElementById(vydani && !polozka ? 'inputCoverLink' : 'selectCoverMesic').focus();
+    (vydani && !polozka ? document.getElementById('inputCoverLink') : vyberCislaCoveru()).focus();
 }
 
 export async function otevritProfilPodleId(modelkaId) {
@@ -45,13 +68,17 @@ export async function otevritProfilPodleId(modelkaId) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    obnovitSpecialyCoveru = pripojitVyberSpecialu('selectCoverMesic', 'inputCoverRok', 'selectCoverEdice');
+    obnovitSpecialyCoveru = pripojitVyberSpecialu('selectCoverSpecial', 'inputCoverRok', 'selectCoverEdice');
+    document.getElementById('coverForm').addEventListener('click', (e) => {
+        const cislo = /** @type {HTMLElement} */ (e.target).closest('[data-cislo-coveru]');
+        if (cislo) nastavitCisloCoveru(cislo.dataset.cisloCoveru);
+    });
 
     document.getElementById('closeCoverModalBtn').onclick = () => zavritOkno(coverModal);
 
     document.getElementById('coverForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
-        const vydani = slozitVydani(document.getElementById('inputCoverRok').value, document.getElementById('selectCoverMesic').value, document.getElementById('selectCoverEdice').value);
+        const vydani = slozitVydani(document.getElementById('inputCoverRok').value, vyberCislaCoveru().value, document.getElementById('selectCoverEdice').value);
         const odkaz = document.getElementById('inputCoverLink').value;
         if (jeOdkazNaSlozku(odkaz)) return;
 

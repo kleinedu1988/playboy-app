@@ -402,12 +402,22 @@ export const SABLONA_OKNA = `
         <button id="closeCoverModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
       </div>
       <form id="coverForm">
+        <div class="form-group">
+          <span class="typ-alba-nadpis" id="coverCisloNadpis">Číslo</span>
+          <div class="typ-alba-druhy" role="group" aria-labelledby="coverCisloNadpis">
+            <button type="button" class="chip" data-cislo-coveru="mesic" title="Řádné měsíční číslo">Měsíční</button>
+            <button type="button" class="chip" data-cislo-coveru="special" title="Zvláštní číslo mimo měsíční řadu (Playmate Review, Lingerie…)">Speciál</button>
+          </div>
+        </div>
         <div class="form-row form-row-3">
           <div class="form-group">
-            <label for="selectCoverMesic">Měsíc nebo speciál</label>
+            <label id="coverMesicLabel" for="selectCoverMesic">Měsíc</label>
             <select id="selectCoverMesic" required>
               <option value="">Vyber měsíc</option>
               ${moznostiMesicu()}
+            </select>
+            <select id="selectCoverSpecial" class="hidden">
+              <option value="">Vyber speciál</option>
             </select>
           </div>
           <div class="form-group">

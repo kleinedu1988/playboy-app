@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.16] – 2026-10-25
+
+### Změněno
+- **Speciály v okně coveru zvlášť:** stejně jako v okně alba má okno coveru řadu **Číslo** – Měsíční, nebo Speciál s vlastním výběrem speciálů zvoleného roku a edice („Nový speciál…“). Cover speciálu se otevře rovnou s volbou Speciál. Po změně roku nebo edice se vybraný speciál zruší (patří ke konkrétnímu roku).
+
 ## [0.99.15] – 2026-10-25
 
 ### Změněno

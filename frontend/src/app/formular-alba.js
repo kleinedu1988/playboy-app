@@ -180,7 +180,7 @@ export function smazatAlbum(album, pocet) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumSpecial', 'inputAlbumRok', 'selectAlbumEdice', true);
+    obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumSpecial', 'inputAlbumRok', 'selectAlbumEdice');
 
     // Kde vyšlo: druh zůstane, pokud ho nová volba má (Pictorial), jinak první z nabídky
     document.getElementById('albumTypGroup').addEventListener('click', (e) => {

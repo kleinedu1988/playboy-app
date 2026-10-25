@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.21] – 2026-10-25
+
+### Opraveno
+- Uložení alba (a podobně klik na tag ve formuláři modelky) šlo někdy až na druhý klik: po opuštění pole se znovu přepsal náhled i text tlačítka „Uložit … fotek“ a WebKitGTK první klik zahodil, protože se obsah tlačítka mezi stisknutím a puštěním myši vyměnil. Náhledy a texty se teď přepisují jen při skutečné změně.
+
 ## [0.99.20] – 2026-10-25
 
 ### Změněno

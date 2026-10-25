@@ -4,6 +4,7 @@ import { AddModelka, DeleteModelka, DeleteVse, SlozkaZaloh } from './backend';
 import { esc, formatDatum, formatMarkdown, odvozeneKategorie, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
 import { pripojitVyberKategorii } from '../ui/kategorie';
 import { upravitText } from '../ui/editor-textu';
+import { nastavitHtml, nastavitText } from '../ui/dom';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { searchInput } from './prvky';
@@ -167,7 +168,7 @@ const hodnota = id => /** @type {HTMLInputElement} */ (document.getElementById(i
 // Nápověda pod polem; chyba (neplatný tvar) je červená
 function napoveda(id, text, chyba = false) {
     const prvek = document.getElementById(id);
-    prvek.textContent = text;
+    nastavitText(prvek, text);
     prvek.classList.toggle('chyba', chyba);
 }
 
@@ -218,8 +219,8 @@ function obnovitNapovedy() {
 // Náhled v levém sloupci: jak bude modelka vypadat v profilu, a kolik sledovaných údajů je vyplněno
 function obnovitNahled() {
     const jmeno = hodnota('inputJmeno');
-    document.getElementById('modelNahledJmeno').textContent = jmeno || 'Bez jména';
-    document.getElementById('modelNahledDalsi').textContent = hodnota('inputDalsiJmena') ? `také ${hodnota('inputDalsiJmena')}` : '';
+    nastavitText(document.getElementById('modelNahledJmeno'), jmeno || 'Bez jména');
+    nastavitText(document.getElementById('modelNahledDalsi'), hodnota('inputDalsiJmena') ? `také ${hodnota('inputDalsiJmena')}` : '');
     const vyber = id => {
         const prvek = /** @type {HTMLSelectElement} */ (document.getElementById(id));
         return prvek.value && prvek.value !== '-1' ? prvek.selectedOptions[0]?.textContent.toLowerCase() : '';
@@ -237,9 +238,9 @@ function obnovitNahled() {
         [hodnota('inputVlasy') && `vlasy ${hodnota('inputVlasy').toLowerCase()}`, hodnota('inputOci') && `oči ${hodnota('inputOci').toLowerCase()}`],
         [vyber('selectTetovani') && `tetování ${vyber('selectTetovani')}`, vyber('selectPiercing') && `piercing ${vyber('selectPiercing')}`],
     ].map(r => r.filter(Boolean).join(' · ')).filter(Boolean);
-    document.getElementById('modelNahledUdaje').innerHTML = radky.length
+    nastavitHtml(document.getElementById('modelNahledUdaje'), radky.length
         ? radky.map(r => `<li>${esc(r)}</li>`).join('')
-        : '<li class="prazdny">Údaje se ukážou, jak je budeš psát.</li>';
+        : '<li class="prazdny">Údaje se ukážou, jak je budeš psát.</li>');
 
     // Sledované údaje jsou ty, které hlídá Údržba; kategorie se počítá i odvozená (centerfold, obálka)
     const udaje = SKUPINY_UDAJU.flatMap(s => s.udaje);
@@ -247,13 +248,13 @@ function obnovitNahled() {
         ? hodnota(id) || document.querySelector('#kategorieVyber .chip.active')
         : hodnota(id) && hodnota(id) !== '-1').length;
     document.getElementById('modelNahledPruh').style.width = `${Math.round(vyplneno / udaje.length * 100)}%`;
-    document.getElementById('modelNahledVyplneno').textContent = `Vyplněno ${vyplneno} z ${udaje.length} údajů`;
+    nastavitText(document.getElementById('modelNahledVyplneno'), `Vyplněno ${vyplneno} z ${udaje.length} údajů`);
 }
 
 // Náhled poznámky (klik otevře editor textu)
 function obnovitPoznamku() {
     const text = hodnota('inputPoznamka');
-    document.getElementById('modelPoznamkaNahled').innerHTML = text ? formatMarkdown(text) : '<span class="text-nahled-prazdny">Přidat poznámku…</span>';
+    nastavitHtml(document.getElementById('modelPoznamkaNahled'), text ? formatMarkdown(text) : '<span class="text-nahled-prazdny">Přidat poznámku…</span>');
 }
 
 // Vše, co se odvozuje z hodnot polí; volá se při otevření a po každé změně
@@ -293,9 +294,9 @@ export async function naplnitNapovedu() {
         [...modelky.map(hodnota), ...obvykle].forEach(h => {
             if (sjednotit(h) && !hodnoty.has(sjednotit(h))) hodnoty.set(sjednotit(h), h.trim());
         });
-        document.getElementById(id).innerHTML = [...hodnoty.values()]
+        nastavitHtml(document.getElementById(id), [...hodnoty.values()]
             .sort((a, b) => a.localeCompare(b, 'cs'))
-            .map(h => `<option value="${esc(h)}"></option>`).join('');
+            .map(h => `<option value="${esc(h)}"></option>`).join(''));
     });
 
     // Tagy se přidávají kliknutím, protože pole jich obsahuje víc najednou
@@ -303,9 +304,9 @@ export async function naplnitNapovedu() {
     modelky.flatMap(m => m.tags.split(',')).forEach(t => {
         if (sjednotit(t) && !tagy.has(sjednotit(t))) tagy.set(sjednotit(t), t.trim());
     });
-    document.getElementById('tagyNapoveda').innerHTML = [...tagy.values()]
+    nastavitHtml(document.getElementById('tagyNapoveda'), [...tagy.values()]
         .sort((a, b) => a.localeCompare(b, 'cs'))
-        .map(t => `<button type="button" class="tag" data-tag="${esc(t)}" aria-pressed="false">${esc(t)}</button>`).join('');
+        .map(t => `<button type="button" class="tag" data-tag="${esc(t)}" aria-pressed="false">${esc(t)}</button>`).join(''));
     oznacitTagy();
 }
 

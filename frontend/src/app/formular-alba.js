@@ -3,6 +3,7 @@ import { oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteAlbum, GetFotografove, GetSablonaObrazku } from './backend';
 import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, esc, formatMarkdown, jeOnline, nazevAlba, nazevVydani, obdobiCyberGirl, obrazek, odkazyDisku, popisTypuAlba, rozlozitVydani, sjednotit, sklonovat, slozitVydani } from '../lib/format';
 import { upravitText } from '../ui/editor-textu';
+import { nastavitHtml, nastavitText } from '../ui/dom';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { nacistFotkyModelky } from './profil';
@@ -119,19 +120,19 @@ export function obnovitNahledAlba() {
     const vyberCisla = document.getElementById('selectAlbumSpecial').classList.contains('hidden') ? 'selectAlbumMesic' : 'selectAlbumSpecial';
     const vydani = sCislem && /^\d{4}$/.test(hodnota('inputAlbumRok')) ? slozitVydani(hodnota('inputAlbumRok'), hodnota(vyberCisla), hodnota('selectAlbumEdice')) : '';
     const datum = jeOnline(typ) ? hodnota('inputAlbumDatum') : '';
-    document.getElementById('albumNahledNazev').textContent = typ === 'Centerfold' ? 'Centerfold' : hodnota('inputAlbumName') || 'Bez názvu';
-    document.getElementById('albumNahledPopis').textContent = [popisTypuAlba(typ, datum), vydani && nazevVydani(vydani)].filter(Boolean).join(' · ');
+    nastavitText(document.getElementById('albumNahledNazev'), typ === 'Centerfold' ? 'Centerfold' : hodnota('inputAlbumName') || 'Bez názvu');
+    nastavitText(document.getElementById('albumNahledPopis'), [popisTypuAlba(typ, datum), vydani && nazevVydani(vydani)].filter(Boolean).join(' · '));
 
     const odkazy = odkazyDisku(hodnota('inputBulkLinks'));
     const pocet = odkazy.length;
-    document.getElementById('albumPocetOdkazu').textContent = pocet ? `${sklonovat(pocet, 'fotka', 'fotky', 'fotek')} v odkazech` : '';
-    document.getElementById('albumNahledPocet').textContent = pocet ? (stav.editovaneAlbum ? `+ ${sklonovat(pocet, 'nová fotka', 'nové fotky', 'nových fotek')}` : sklonovat(pocet, 'fotka', 'fotky', 'fotek')) : '';
+    nastavitText(document.getElementById('albumPocetOdkazu'), pocet ? `${sklonovat(pocet, 'fotka', 'fotky', 'fotek')} v odkazech` : '');
+    nastavitText(document.getElementById('albumNahledPocet'), pocet ? (stav.editovaneAlbum ? `+ ${sklonovat(pocet, 'nová fotka', 'nové fotky', 'nových fotek')}` : sklonovat(pocet, 'fotka', 'fotky', 'fotek')) : '');
     ukazatObrazekNahledu(odkazy[0]);
-    document.getElementById('albumSubmitBtn').textContent = stav.editovaneAlbum ? 'Uložit album'
-        : pocet ? `Uložit ${sklonovat(pocet, 'fotku', 'fotky', 'fotek')}` : 'Uložit fotky';
+    nastavitText(document.getElementById('albumSubmitBtn'), stav.editovaneAlbum ? 'Uložit album'
+        : pocet ? `Uložit ${sklonovat(pocet, 'fotku', 'fotky', 'fotek')}` : 'Uložit fotky');
 
     const popis = hodnota('inputAlbumPopis');
-    document.getElementById('albumPopisNahled').innerHTML = popis ? formatMarkdown(popis) : '<span class="text-nahled-prazdny">Přidat průvodní text…</span>';
+    nastavitHtml(document.getElementById('albumPopisNahled'), popis ? formatMarkdown(popis) : '<span class="text-nahled-prazdny">Přidat průvodní text…</span>');
 }
 
 // Obrázek v náhledu: první vložená fotka, jinak první fotka upravovaného alba. Adresa náhledu z Disku se skládá

@@ -12,6 +12,7 @@ const CASTI = [
         [k('Ctrl', 'F'), 'Hledat'],
         [k('?'), 'Klávesové zkratky'],
         [k('Esc'), 'Zavřít okno, zpět'],
+        [k('Ctrl', 'Enter'), 'Uložit modelku (i v Doplnit modelku), použít text v editoru'],
         [`${k('Tab')}${nebo}${k('Enter')}`, 'Procházet a otevřít karty'],
         [`${k('1')}–${k('5')}${nebo}${k('0')}`, 'Srdíčka zaměřené karty nebo fotky, zrušit'],
         [k('←', '↑', '→', '↓'), 'Pohyb v mapě edice (Přehled)'],

@@ -3,7 +3,7 @@
 // „Uložit a další“ pokračuje další modelkou v pořadí Přehledu.
 import { jednou, oznamit } from '../ui/oznameni';
 import { GetFotografieModelky, SetHodnoceni, SetNetykaSe, SetNetykaSeAlba, SetTitulniFotka, SetVydaniAlba, UpdateModelka } from './backend';
-import { esc, nazevAlba, obrazek, platneDatum, prevestVahu, prevestVysku, rozlozitVydani } from '../lib/format';
+import { esc, nazevAlba, obrazek, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, rozlozitVydani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { stats } from './prvky';
@@ -27,6 +27,8 @@ function kopiePole(id, popis) {
     kopie.id = `dopl-${id}`;
     kopie.dataset.pole = id;
     kopie.removeAttribute('required');
+    // Živé nápovědy formuláře modelky v tomto okně nejsou
+    kopie.removeAttribute('aria-describedby');
     if (kopie.tagName === 'SELECT') {
         kopie.querySelectorAll('option[data-puvodni]').forEach(o => o.remove());
         /** @type {HTMLSelectElement} */ (kopie).selectedIndex = 0;
@@ -94,6 +96,7 @@ export async function otevritDoplneni(modelkaId) {
                 <div class="prehled-modelka-pruh"><div><i style="width:${radek.vyplneno}%"></i></div>${radek.vyplneno} %</div>
                 <p>Chybí ${radek.vaha} ${radek.vaha === 1 ? 'položka' : radek.vaha < 5 ? 'položky' : 'položek'} · doplň, co víš; ostatní můžeš označit „netýká se“</p>
             </div>
+            <button type="button" class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
         </header>
         <div class="doplnit-telo">${bloky.join('') || '<p class="empty-state">Modelce už nic nechybí.</p>'}</div>`;
     document.getElementById('doplnitPozice').textContent = poradi >= 0 ? `Modelka ${poradi + 1} z ${stav.prehledPoradi.length}` : '';
@@ -172,6 +175,39 @@ export function pripravit() {
     document.getElementById('doplnitDalsiBtn').onclick = jednou(async () => {
         if (await ulozit()) await dalsiModelka();
     });
+    // Ctrl+Enter uloží odkudkoli v okně
+    doplnitModal.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey)) return;
+        e.preventDefault();
+        // Opuštění pole nejdřív převede rozepsanou míru (událost change)
+        /** @type {HTMLElement} */ (document.activeElement)?.blur();
+        document.getElementById('doplnitUlozitBtn').click();
+    });
+
+    // Stejné převody jako ve formuláři modelky: americké míry po opuštění pole na cm a kg,
+    // „34B-24-34“ v hrudníku nebo velikosti prsou rozepíše do polí, která okno nabízí
+    obsah.addEventListener('change', (e) => {
+        const prvek = /** @type {HTMLInputElement} */ (e.target);
+        const prevod = { inputVyska: prevestVysku, inputVaha: prevestVahu }[prvek.dataset.pole];
+        if (prevod) {
+            const cislo = prevod(prvek.value);
+            if (cislo !== null) prvek.value = String(cislo);
+            return;
+        }
+        if (prvek.dataset.pole !== 'inputHrudnik' && prvek.dataset.pole !== 'inputVelikost') return;
+        const miry = rozlozitMiry(prvek.value);
+        if (!miry) return;
+        const nastavit = (pole, hodnota) => {
+            const kopie = /** @type {HTMLInputElement} */ (obsah.querySelector(`[data-pole="${pole}"]`));
+            if (kopie) kopie.value = String(hodnota);
+        };
+        nastavit('inputHrudnik', miry.hrudnik);
+        nastavit('inputPas', miry.pas);
+        nastavit('inputBoky', miry.boky);
+        // Míry bez velikosti v poli velikosti nesmí zůstat jako velikost prsou
+        if (miry.velikost || prvek.dataset.pole === 'inputVelikost') nastavit('inputVelikost', miry.velikost);
+    });
+
     document.getElementById('doplnitProfilBtn').onclick = () => {
         doplnitModal.classList.add('hidden');
         otevritDetailModelky(stav.doplnovanaModelka);

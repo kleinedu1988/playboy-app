@@ -5,6 +5,7 @@ import { backBtn } from './prvky';
 import { zpet } from './navigace';
 import { otevritAlbumModal } from './formular-alba';
 import { zavritOkno } from './ulozeni';
+import { jeVidet, otevreneOkno } from '../ui/dom';
 
 // Ovládání Modalů
 export const modelModal = document.getElementById('modelModal');
@@ -24,7 +25,7 @@ export function pripravit() {
     // Alt + šipka vlevo jako v prohlížeči
     document.addEventListener('keydown', (e) => {
         if (e.altKey && e.key === 'ArrowLeft' && !backBtn.classList.contains('hidden')
-            && !document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) {
+            && !otevreneOkno() && !jeVidet('lightbox')) {
             e.preventDefault();
             zpet();
         }

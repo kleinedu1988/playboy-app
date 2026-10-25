@@ -29,9 +29,7 @@ export const nastavitObnoveni = fn => { poZmene = fn; };
 const aktivni = () => navrhy.filter(n => !n.odmitnuto);
 export const seznamNavrhu = () => navrhy;
 export const navrhyNedostupne = () => nedostupne;
-export const pocetNavrhu = () => aktivni().length;
 export const maNavrhy = () => navrhy.length > 0;
-export const pocetJistych = () => aktivni().filter(n => n.jistota >= MEZ_JISTE).length;
 
 const textNavrhu = n => `${nazevNavrhu(n)} „${hodnotaNavrhu(n)}“`;
 const doplneno = n => n === 1 ? 'Doplněn 1 údaj' : n > 1 && n < 5 ? `Doplněny ${n} údaje` : `Doplněno ${n} údajů`;

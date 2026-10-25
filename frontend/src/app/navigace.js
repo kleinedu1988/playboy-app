@@ -3,18 +3,37 @@ import { esc, nazevVydani } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
 import { OveritOdkaz } from './backend';
 import { stav } from './stav';
-import { backBtn, best, calendar, covers, detailView, gallery, issueView, searchInput, stats, wall } from './prvky';
+import { backBtn, best, calendar, calList, covers, coversList, detailView, gallery, issueView, searchInput, stats, wall } from './prvky';
 import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { otevritFotografa, otevritVydani } from './vydani';
 import { zrusitVyber } from './vyber';
 import { obnovitVolby } from '../ui/volby';
 import { vsechnyModelky } from './mezipamet';
+import { prestatNacitat } from './obrazky';
+import { prestatSledovatKonce } from './nejlepsi';
+
+// Přehledy se seznamy (galerie, stěna, čísla, kalendář, nejlepší) se při každém zobrazení vykreslují celé znovu.
+// Skryté by jen držely tisíce karet a fotek, které zpomalují každou další akci (úklid paměti, hledání v dokumentu,
+// zásah myší), proto se jejich obsah po odchodu zahodí. Až v další úloze, po vykreslení nového pohledu,
+// a jen když se přehled mezitím znovu neukázal. Profil, stránka vydání a Přehled (zapisuje se na místo) zůstávají.
+const OBSAH_PREHLEDU = new Map([[gallery, gallery], [wall, wall], [covers, coversList], [calendar, calList], [best, document.getElementById('bestList')]]);
+function uvolnitPozdeji(opoustene) {
+    if (!opoustene.length) return;
+    setTimeout(() => opoustene.forEach((pohled) => {
+        if (!pohled.classList.contains('hidden')) return;
+        const obsah = OBSAH_PREHLEDU.get(pohled);
+        prestatNacitat(obsah);
+        if (pohled === best) prestatSledovatKonce();
+        obsah.replaceChildren();
+    }), 0);
+}
 
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají navíc v řádku okna tlačítko zpět
 export function ukazatPohled(pohled) {
     // Výběr fotek patří k pohledu, ve kterém vznikl; při odchodu se zruší, aby neovlivňoval Esc, šipky ani Delete
     if (document.querySelector('.photo-item.vybrana, .poster.vybrana')) zrusitVyber();
+    uvolnitPozdeji([...OBSAH_PREHLEDU.keys()].filter(p => p !== pohled && !p.classList.contains('hidden')));
     [gallery, wall, covers, calendar, stats, best, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
     const podstranka = pohled === detailView || pohled === issueView;
     // Zpět je vidět na podstránkách a v přehledu, kam se přešlo hledáním z profilu nebo vydání

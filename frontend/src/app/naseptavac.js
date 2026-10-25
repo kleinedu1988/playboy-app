@@ -67,32 +67,25 @@ function ziskatMoznostiPrikazu(slovoPred) {
     }));
 }
 
+// Hodnoty údaje napříč modelkami s počtem modelek; hodnotyModelky(m) = hodnoty jedné modelky.
+// Seřazené od nejčastější (seradit = false nechá pořadí, v jakém se hodnoty objevily)
+function hodnotySPocty(modelky, hodnotyModelky, f, seradit = true) {
+    const cetnosti = new Map();
+    modelky.forEach(m => hodnotyModelky(m).forEach(h => cetnosti.set(h, (cetnosti.get(h) || 0) + 1)));
+    const polozky = [...cetnosti.entries()];
+    if (seradit) polozky.sort((a, b) => b[1] - a[1]);
+    return polozky.filter(([hodnota]) => !f || bezDiakritiky(hodnota).toLowerCase().includes(f))
+        .map(([hodnota, pocet]) => ({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') }));
+}
+const jednaHodnota = text => [(text || '').trim()].filter(Boolean);
+
 function ziskatMoznostiHodnot(klic, filtr, modelky) {
     const f = bezDiakritiky(filtr).toLowerCase();
     const vysledky = [];
     if (klic === 'vlasy') {
-        const cetnosti = new Map();
-        modelky.forEach(m => {
-            const v = (m.vlasyBarva || '').trim();
-            if (v) cetnosti.set(v, (cetnosti.get(v) || 0) + 1);
-        });
-        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
-            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
-            }
-        }
+        vysledky.push(...hodnotySPocty(modelky, m => jednaHodnota(m.vlasyBarva), f));
     } else if (klic === 'tag' || klic === 'tagy') {
-        const cetnosti = new Map();
-        modelky.forEach(m => {
-            (m.tags || '').split(',').map(t => t.trim()).filter(Boolean).forEach(t => {
-                cetnosti.set(t, (cetnosti.get(t) || 0) + 1);
-            });
-        });
-        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
-            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
-            }
-        }
+        vysledky.push(...hodnotySPocty(modelky, m => (m.tags || '').split(',').map(t => t.trim()).filter(Boolean), f));
     } else if (klic === 'edice') {
         ['US', 'CZ'].filter(e => !f || e.toLowerCase().includes(f)).forEach(e => {
             vysledky.push({ hodnota: e, popis: `Edice ${e}` });
@@ -106,35 +99,11 @@ function ziskatMoznostiHodnot(klic, filtr, modelky) {
             vysledky.push({ hodnota: v, popis: v === 'ano' ? 'Má' : 'Nemá' });
         });
     } else if (klic === 'role' || klic === 'kategorie') {
-        const cetnosti = new Map();
-        modelky.forEach(m => kategorieModelky(m).forEach(k => cetnosti.set(k.nazev, (cetnosti.get(k.nazev) || 0) + 1)));
-        for (const [hodnota, pocet] of cetnosti.entries()) {
-            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
-            }
-        }
+        vysledky.push(...hodnotySPocty(modelky, m => kategorieModelky(m).map(k => k.nazev), f, false));
     } else if (klic === 'narodnost') {
-        const cetnosti = new Map();
-        modelky.forEach(m => {
-            const n = (m.narodnost || '').trim();
-            if (n) cetnosti.set(n, (cetnosti.get(n) || 0) + 1);
-        });
-        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
-            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
-            }
-        }
+        vysledky.push(...hodnotySPocty(modelky, m => jednaHodnota(m.narodnost), f));
     } else if (klic === 'oci') {
-        const cetnosti = new Map();
-        modelky.forEach(m => {
-            const o = (m.ociBarva || '').trim();
-            if (o) cetnosti.set(o, (cetnosti.get(o) || 0) + 1);
-        });
-        for (const [hodnota, pocet] of [...cetnosti.entries()].sort((a, b) => b[1] - a[1])) {
-            if (!f || bezDiakritiky(hodnota).toLowerCase().includes(f)) {
-                vysledky.push({ hodnota: hodnota.toLowerCase(), popis: sklonovat(pocet, 'modelka', 'modelky', 'modelek') });
-            }
-        }
+        vysledky.push(...hodnotySPocty(modelky, m => jednaHodnota(m.ociBarva), f));
     } else if (klic === 'hodnoceni' || klic === 'srdicka') {
         ['>=4', '5', '>=3', '>=1'].filter(h => !f || h.includes(f)).forEach(h => {
             vysledky.push({ hodnota: h, popis: `Hodnocení ${h}` });

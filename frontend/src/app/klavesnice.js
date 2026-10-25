@@ -2,6 +2,7 @@
 // uvnitř a po zavření ho vrátí tam, odkud se otevřely
 import { otevritNabidku } from './nabidky';
 import { klavesaSrdicekModelky } from '../ui/srdicka';
+import { jeVidet, otevreneOkno } from '../ui/dom';
 
 // Co jde zaměřit a otevřít: karta modelky, dlaždice fotky, plakát, centerfold na stěně, cover
 // a v Přehledu políčko mapy edice
@@ -11,9 +12,9 @@ const FOKUSOVATELNE = 'button:not([disabled]), [href], input:not([disabled]):not
 // Okno nebo prohlížeč, který je právě nahoře
 function horniVrstva() {
     // Přehled zkratek leží nad vším ostatním
-    return document.querySelector('#zkratky:not(.hidden) .zkratky')
-        || [...document.querySelectorAll('.modal-overlay:not(.hidden)')].pop()
-        || document.querySelector('#lightbox:not(.hidden)');
+    return (jeVidet('zkratky') && document.getElementById('zkratky').querySelector('.zkratky'))
+        || otevreneOkno()
+        || (jeVidet('lightbox') && document.getElementById('lightbox'));
 }
 
 const viditelne = koren => [...koren.querySelectorAll(FOKUSOVATELNE)].filter(p => p.offsetParent || p === document.activeElement);

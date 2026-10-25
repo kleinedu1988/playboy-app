@@ -290,7 +290,7 @@ export const SABLONA_OKNA = `
               <!-- Poznámka se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
               <div class="form-group siroke">
                 <span class="modelka-label" id="modelPoznamkaLabel">Poznámka</span>
-                <button type="button" id="modelPoznamkaBtn" class="text-nahled" title="Upravit poznámku" aria-labelledby="modelPoznamkaLabel modelPoznamkaNahled"><span id="modelPoznamkaNahled"></span></button>
+                <button type="button" id="modelPoznamkaBtn" class="text-nahled" data-editor-textu title="Upravit poznámku" aria-labelledby="modelPoznamkaLabel modelPoznamkaNahled"><span id="modelPoznamkaNahled"></span></button>
                 <textarea id="inputPoznamka" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
               </div>
               <div class="form-group siroke">
@@ -417,10 +417,10 @@ export const SABLONA_OKNA = `
             <textarea id="inputBulkLinks" rows="4" placeholder="Vlož zkopírované odkazy z Disku (i více naráz)…" required></textarea>
             <small id="albumPocetOdkazu" class="album-tip"></small>
           </div>
-          <!-- Průvodní text se píše ve společném okně s formátováním (app/ui/editor-textu.js); hodnota je ve skrytém poli -->
+          <!-- Průvodní text se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
           <div class="form-group">
             <span class="album-label">Průvodní text (nepovinné)</span>
-            <button type="button" id="albumPopisBtn" class="text-nahled" title="Upravit průvodní text"><span id="albumPopisNahled"></span></button>
+            <button type="button" id="albumPopisBtn" class="text-nahled" data-editor-textu title="Upravit průvodní text"><span id="albumPopisNahled"></span></button>
             <textarea id="inputAlbumPopis" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
           </div>
           <div class="modal-actions album-akce">
@@ -625,7 +625,7 @@ export const SABLONA_OKNA = `
           <!-- Poznámka se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
           <div class="form-group">
             <span class="album-label">Poznámka</span>
-            <button type="button" id="issuePoznamkaBtn" class="text-nahled text-nahled-velky" title="Upravit poznámku"><span id="issuePoznamkaNahled"></span></button>
+            <button type="button" id="issuePoznamkaBtn" class="text-nahled text-nahled-velky" data-editor-textu title="Upravit poznámku"><span id="issuePoznamkaNahled"></span></button>
             <textarea id="inputIssuePoznamka" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
             <small class="cislo-napoveda">Kde je výtisk, stav, co v čísle chybí… Ukáže se v levém panelu stránky čísla.</small>
           </div>
@@ -889,7 +889,7 @@ export const SABLONA_OKNA = `
             <h4>Text</h4>
             <!-- Text se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
             <div class="doplnit-pole">
-              <button type="button" id="clanekTextBtn" class="text-nahled text-nahled-velky" title="Upravit text článku"><span id="clanekTextNahled"></span></button>
+              <button type="button" id="clanekTextBtn" class="text-nahled text-nahled-velky" data-editor-textu title="Upravit text článku"><span id="clanekTextNahled"></span></button>
               <textarea id="inputClanekText" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
             </div>
             <div class="clanek-druh">

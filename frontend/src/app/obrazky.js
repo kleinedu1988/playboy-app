@@ -55,12 +55,20 @@ export function nacitatPostupne(kontejner) {
         if (z.isIntersecting) {
             // Jen obrázek bez adresy; nenačtená fotka nahrazená zástupným obrázkem se znovu nestahuje
             if (img.dataset.src && !img.getAttribute('src')) img.src = img.dataset.src;
-        } else if (img.getAttribute('src') && !img.complete) {
-            img.removeAttribute('src');
+        } else if (img.getAttribute('src')) {
+            if (!img.complete) img.removeAttribute('src');
+            // Načtenou fotku už hlídat netřeba; každý hlídaný obrázek prodlužuje výpočet při každém posunu stránky
+            else pozorovatel.unobserve(img);
         }
     }), { root: document.querySelector('main'), rootMargin: '1500px 0px' });
     kontejner.querySelectorAll('img[data-src]').forEach(img => pozorovatel.observe(img));
     pozorovatele.set(kontejner, pozorovatel);
+}
+
+// Kontejner, jehož obsah se zahazuje, se přestane hlídat (pozorovatel by jinak držel odpojené obrázky)
+export function prestatNacitat(kontejner) {
+    pozorovatele.get(kontejner)?.disconnect();
+    pozorovatele.delete(kontejner);
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů

@@ -72,6 +72,7 @@ export const stav = {
     udrzbaZdroj: '', // zdroj návrhů nebo nálezů kontroly ve filtru ('' = všechny)
     udrzbaHledat: '', // hledání jména modelky nebo čísla v Údržbě
     udrzbaRazeni: 'priorita', // řazení fronty: 'priorita', 'chybi' nebo 'jmeno'
+    udrzbaFokus: false, // Údržba je v soustředěném režimu (jedna modelka nebo číslo, vpravo fronta)
     // Nejlepší: fotky s aspoň N srdíčky napříč sbírkou, po modelkách; prohlížeč jde přes všechny
     nejlepsiPolozky: [],
     nejlepsiData: null,

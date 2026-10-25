@@ -1,7 +1,7 @@
 // Údržba sbírky bez stránky: z dat Přehledu (GetPrehled), modelek, nálezů kontroly a návrhů doplnění sestaví
 // jednu frontu skupin (modelka nebo číslo) s položkami (chybějící údaj, nález kontroly, návrh), spočítá jejich
 // prioritu, pokrok sbírky po oblastech a počty pro filtry. Jen čisté funkce – testuje je test/udrzba.test.js.
-import { VYCHOZI_EDICE, kategorieModelky, nazevAlba, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, udajChybi } from './format.js';
+import { VYCHOZI_EDICE, kategorieModelky, nazevAlba, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
 
 // Údaje modelky, které Údržba hlídá, po skupinách shodných s částmi formuláře: [vlastnost, název, pole formuláře].
 // Další jména a poznámka se nehlídají, většina modelek je mít nemusí.
@@ -40,12 +40,19 @@ export const zalozkaPole = pole => SKUPINY_UDAJU.find(s => s.udaje.some(u => u[2
 // Název údaje podle pole formuláře (štítek nálezu kontroly)
 export const nazevPoleFormulare = pole => SKUPINY_UDAJU.flatMap(s => s.udaje).find(u => u[2] === pole)?.[1] || NAZVY_POLI[pole] || '';
 
-// Filtry fronty: [klíč, název]. Počet u filtru je počet modelek a čísel, u Kontroly a Návrhů počet položek.
-export const FILTRY = [
-    ['vse', 'Vše'], ['titulni', 'Titulní fotka'], ['centerfold', 'Centerfold'], ['hodnoceni', 'Hodnocení'], ['udaje', 'Údaje'],
-    ['text', 'Texty alb'], ['alba', 'Vydání alb'], ['cover', 'Cover čísel'], ['cfcisla', 'Centerfold čísel'], ['kontrola', 'Kontrola'],
-    ['navrhy', 'Návrhy'],
+// Filtry fronty po oblastech (boční seznam v Údržbě): [klíč, název, popis do nápovědy]. Počet u filtru je počet
+// modelek a čísel, u Kontroly a Návrhů počet položek.
+export const OBLASTI_FILTRU = [
+    { nazev: 'Fronta', filtry: [
+        ['vse', 'Vše', 'Nahoře to, co sbírce přinese nejvíc: Playmate bez data narození, titulní fotky, údaje ke kontrole'],
+        ['navrhy', '✦ Návrhy', 'Odhadnuto z tvé sbírky; nejjistější a nejcennější první'],
+        ['kontrola', '⚠ Ke kontrole', 'Údaje, které vypadají jako překlep; když je údaj pravdivý, dej „V pořádku“ – kontrola se z toho učí'],
+    ] },
+    { nazev: 'Modelky', filtry: [['titulni', 'Titulní fotka', ''], ['centerfold', 'Centerfold', ''], ['hodnoceni', 'Hodnocení', ''], ['udaje', 'Údaje', 'Chybějící údaje modelek po částech formuláře']] },
+    { nazev: 'Alba', filtry: [['text', 'Texty', 'Alba bez průvodního textu'], ['alba', 'Vydání', 'Alba bez čísla, ve kterém vyšla']] },
+    { nazev: 'Čísla', filtry: [['cover', 'Cover', 'Čísla bez obálky'], ['cfcisla', 'Centerfold', 'Čísla bez centerfoldu']] },
 ];
+export const FILTRY = OBLASTI_FILTRU.flatMap(o => o.filtry.map(([klic, nazev]) => [klic, nazev]));
 // Filtry, u kterých se počítají jednotlivé položky (každá je samostatné rozhodnutí)
 const POCET_POLOZEK = new Set(['kontrola', 'navrhy']);
 
@@ -299,6 +306,8 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
         skupiny, pocty, pokrok, uplnost, podleKlice, radkyModelek,
         alba: new Map([...radky].map(([id, r]) => [id, { popis: r.bezPopisu, vydani: r.bezVydani }])),
         modelekSChybou: [...radky.values()].filter(r => r.vaha > 0).length,
+        // Vyřízené položky ve frontě (jen s „Vyřízené“, jinak je model nemá)
+        vyrizenych: skupiny.reduce((soucet, s) => soucet + s.polozky.length - s.aktivnich, 0),
         kKontrole,
         navrhu: navrhy.filter(n => !n.odmitnuto).length,
         odmitnutych: navrhy.filter(n => n.odmitnuto).length,
@@ -327,10 +336,98 @@ export function filtrovatUdrzbu(model, { filtr = 'vse', zdroj = '', hledat = '',
     return vysledek;
 }
 
-// Další kroky: nejcennější jednotlivé položky napříč frontou (bez odložených), nejvýš jedna za skupinu
-export function dalsiKroky(model, pocet = 4) {
-    return model.skupiny.filter(s => s.aktivnich).map(s => ({ skupina: s, polozka: s.polozky.find(x => !x.netyka) }))
-        .sort((a, b) => b.polozka.priorita - a.polozka.priorita).slice(0, pocet);
+// Další krok nad frontou: první nevyřízená položka výběru (nejcennější podle řazení), kolik úkolů výběr má
+// a jeho jisté návrhy (jdou přijmout najednou)
+export function dalsiKrok(vybrane) {
+    let prvni = null;
+    let ukolu = 0;
+    const jiste = [];
+    for (const { skupina, polozky } of vybrane) {
+        for (const x of polozky) {
+            if (x.netyka) continue;
+            ukolu++;
+            if (!prvni) prvni = { skupina, polozka: x };
+            if (x.druh === 'navrh' && x.jistota >= MEZ_JISTE) jiste.push(x.navrh);
+        }
+    }
+    return { prvni, ukolu, jiste };
+}
+
+// Hlavní akce položky slovy (tlačítko v řádku, nabídka)
+export const textAkce = (x, s) => x.druh === 'navrh' ? 'Přijmout' : x.druh === 'kontrola' ? 'Opravit'
+    : s.druh === 'vydani' ? (x.id === 'cover' ? 'Přidat cover' : 'Přidat centerfold') : 'Doplnit';
+
+// Položka jednou větou („chybí titulní fotka“, „národnost: USA“, „Výška 17 cm vypadá jako chyba“)
+export const popisPolozky = x => x.druh === 'kontrola' || /^chybí/.test(x.hodnota) ? x.hodnota : `${x.pole}: ${x.hodnota}`;
+const velke = t => t.charAt(0).toUpperCase() + t.slice(1);
+// Text štítku jedné položky v řádku fronty
+export const textStitku = x => x.druh === 'navrh' ? `✦ ${velke(x.pole)}: ${x.hodnota} · ${procent(x.jistota)} %`
+    : x.druh === 'kontrola' ? `⚠ ${x.hodnota}` : (x.souhrn || x.pole);
+
+// Štítky sbaleného řádku, nejvýš tři: po druzích (nálezy, návrhy, chybějící) s počtem; druh s jedinou položkou
+// (u nejvýš dvou druhů) a skupina s jedním druhem a nejvýš dvěma položkami ukáže položky samotné.
+// Vrací [{ druh, text, polozka? }] – polozka je klíč, když štítek patří jedné položce.
+/** @returns {{ druh: string, text: string, polozka?: string }[]} */
+export function stitkySkupiny(polozky) {
+    const aktivni = polozky.filter(x => !x.netyka);
+    if (!aktivni.length) return polozky.length ? [{ druh: 'netyka', text: `${polozky.length} vyřízeno` }] : [];
+    const druhy = /** @type {[string, any[]][]} */ (['kontrola', 'navrh', 'ukol'].map(d => [d, aktivni.filter(x => x.druh === d)])).filter(([, seznam]) => seznam.length);
+    const jednotlive = druhy.length === 1 && aktivni.length <= 2;
+    return druhy.flatMap(([druh, seznam]) => jednotlive || (seznam.length === 1 && druhy.length <= 2)
+        ? seznam.map(x => /** @type {{ druh: string, text: string, polozka?: string }} */ ({ druh, text: textStitku(x), polozka: x.klic }))
+        : [{ druh, text: druh === 'kontrola' ? `⚠ ${seznam.length} ke kontrole` : druh === 'navrh' ? `✦ ${sklonovat(seznam.length, 'návrh', 'návrhy', 'návrhů')}` : `${seznam.length} chybí` }]);
+}
+
+// Krátký souhrn skupiny do fronty „Na řadě“: „⚠ výška · ✦ národnost · 5 chybí“
+export function souhrnFronty(polozky) {
+    const aktivni = polozky.filter(x => !x.netyka);
+    const pole = druh => [...new Set(aktivni.filter(x => x.druh === druh).map(x => x.pole))].join(', ');
+    const ukoly = aktivni.filter(x => x.druh === 'ukol');
+    return [pole('kontrola') && `⚠ ${pole('kontrola')}`, pole('navrh') && `✦ ${pole('navrh')}`,
+        ukoly.length && (ukoly.length <= 2 ? ukoly.map(x => x.souhrn || x.pole).join(', ') : `${ukoly.length} chybí`)].filter(Boolean).join(' · ');
+}
+
+/**
+ * Úkoly soustředěného režimu pro nevyřízené položky jedné skupiny, v pořadí priority. Chybějící údaje se rozpadnou
+ * na jednotlivá pole; pole, pro které je návrh, se doplňuje návrhem. Druh úkolu: 'pole' (prázdné pole formuláře),
+ * 'titulni' (odkaz na Disk), 'hodnoceni' (srdíčka), 'kontrola' a 'navrh' (s polem, když údaj jde upravit na místě),
+ * 'okno' (album, cover, centerfold – otevře se okno). Jeden údaj má nejvýš jedno pole (další nález téhož údaje je bez něj).
+ * @param {any[]} polozky položky skupiny (z filtrovatUdrzbu)
+ * @param {(inputId: string) => string | undefined} vlastnostPole vlastnost modelky podle pole formuláře
+ */
+export function ukolyFokusu(polozky, vlastnostPole) {
+    const aktivni = polozky.filter(x => !x.netyka);
+    const sNavrhem = new Set(aktivni.filter(x => x.druh === 'navrh' && !x.navrh.album).map(x => x.navrh.inputId));
+    const sPolem = new Set();
+    const ukoly = [];
+    // Údaj, který jde upravit na místě: pole formuláře s vlastností modelky, zatím bez pole v jiném úkolu
+    const naMiste = (inputId, album) => {
+        const vlastnost = !album && inputId && !sPolem.has(inputId) ? vlastnostPole(inputId) || '' : '';
+        if (vlastnost) sPolem.add(inputId);
+        return vlastnost ? { inputId, vlastnost } : { inputId: '', vlastnost: '' };
+    };
+    aktivni.forEach(x => {
+        if (x.akce === 'udaje') {
+            let prvni = true;
+            x.chybejici.forEach(([vlastnost, popis, inputId]) => {
+                if (sNavrhem.has(inputId) || sPolem.has(inputId)) return;
+                sPolem.add(inputId);
+                ukoly.push({ klic: `${x.klic}|${inputId}`, druh: 'pole', polozka: x, inputId, vlastnost, popis, prvniVeSkupine: prvni });
+                prvni = false;
+            });
+        } else if (x.akce === 'titulni') {
+            ukoly.push({ klic: x.klic, druh: 'titulni', polozka: x, ...naMiste('inputDriveID', ''), popis: 'titulní fotka' });
+        } else if (x.akce === 'hodnoceni') {
+            ukoly.push({ klic: x.klic, druh: 'hodnoceni', polozka: x, inputId: '', vlastnost: 'hodnoceni', popis: 'hodnocení' });
+        } else if (x.druh === 'kontrola') {
+            ukoly.push({ klic: x.klic, druh: 'kontrola', polozka: x, ...naMiste(x.nalez.pole, x.nalez.album), popis: x.pole });
+        } else if (x.druh === 'navrh') {
+            ukoly.push({ klic: x.klic, druh: 'navrh', polozka: x, ...naMiste(x.navrh.inputId, x.navrh.album), popis: x.pole });
+        } else {
+            ukoly.push({ klic: x.klic, druh: 'okno', polozka: x, inputId: '', vlastnost: '', popis: x.pole });
+        }
+    });
+    return ukoly;
 }
 
 // Zdroje položek ve filtru (návrhy, nálezy kontroly): [{ zdroj, popis, pocet }] od nejčastějšího

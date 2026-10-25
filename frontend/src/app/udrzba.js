@@ -1,15 +1,17 @@
 // Údržba v Přehledu: jedna fronta toho, co sbírce chybí nebo co je potřeba zkontrolovat. Nahoře pokrok sbírky
-// po oblastech a panel učení, pod ním „Co doplnit dál“, lišta filtrů s počty, hledání a řazení a fronta skupin
-// (modelka nebo číslo). Skupina jde rozbalit na jednotlivé položky – chybějící údaj, nález kontroly, návrh
-// doplnění – všechny se stejným řádkem: štítek údaje, hodnota, důvod, jistota nebo priorita a akce.
+// po oblastech a panel učení, pod nimi vlevo lepivý seznam filtrů po oblastech s počty a vpravo „Další krok“
+// (nejcennější úkol, Přijmout jisté, Začít postupně), lišta s hledáním, řazením a hromadnými akcemi a fronta
+// skupin (modelka nebo číslo). Sbalený řádek ukáže jen souhrn (nejvýš tři štítky a hlavní akci), rozbalený
+// jednotlivé položky – chybějící údaj, nález kontroly, návrh doplnění – s jejich akcemi. „Začít postupně“
+// otevře soustředěný režim (udrzba-fokus.js): jedna skupina velká s úkoly k vyřízení na místě a vpravo fronta.
 // Data a priority počítá lib/udrzba.js; tady je vykreslení na místě (mění se jen skupiny, které se změnily,
 // stránka se neposune a fokus zůstane), klávesnice, nabídky a akce.
 import { GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
 import { esc, nazevVydani, sklonovat } from '../lib/format';
-import { FILTRY, MEZ_JISTE, NAZVY_PRIORIT, SKUPINY_UDAJU, podtitulek, dalsiKroky, filtrovatUdrzbu, procent, sestavitUdrzbu, slovoJistoty, tridaJistoty, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
+import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, dalsiKrok, filtrovatUdrzbu, podtitulek, popisPolozky, procent, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
 import { stav } from './stav';
 import { stats } from './prvky';
-import { nastavitHtml } from '../ui/dom';
+import { nastavitHtml, srovnatSeznam } from '../ui/dom';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { otevritCoverModal } from './cover';
@@ -21,6 +23,7 @@ import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { oznamit } from '../ui/oznameni';
 import * as navrhy from './navrhy';
 import * as uceni from './uceni';
+import * as fokus from './udrzba-fokus';
 
 // Skupin na stránku; další se přidají při doscrollování na konec (nebo tlačítkem)
 const STRANKA = 60;
@@ -37,16 +40,7 @@ const ODLOZENI = {
     cislo: ['Nezajímá mě', 'Znovu sledovat', 'nezajímá mě'],
 };
 const druhOdlozeni = (x, s) => s.druh === 'vydani' ? 'cislo' : x.druh;
-const textAkce = (x, s) => x.druh === 'navrh' ? '✓ Přijmout' : x.druh === 'kontrola' ? 'Opravit'
-    : s.druh === 'vydani' ? (x.id === 'cover' ? 'Přidat cover' : 'Přidat centerfold') : 'Doplnit';
-// Popisy filtrů do lišty nad frontou
-const POPIS_FILTRU = {
-    vse: 'Nahoře to, co sbírce přinese nejvíc: Playmate bez data narození, titulní fotky, údaje ke kontrole.',
-    kontrola: 'Údaje, které vypadají jako překlep. Když je údaj pravdivý, dej „V pořádku“ – kontrola se z toho učí.',
-    navrhy: 'Odhadnuto z tvé sbírky; nejjistější a nejcennější první.',
-    udaje: 'Chybějící údaje modelek po částech formuláře.',
-};
-const NAZVY_FRONT = { titulni: 'titulní fotky', zakladni: 'základní údaje', vzhled: 'vzhled a míry', zarazeni: 'zařazení' };
+const RAZENI_SLOVY = { priorita: 'podle priority', chybi: 'podle toho, kolik chybí', jmeno: 'podle jména' };
 const KOSTRA = `
     <div class="ud" data-ud-kostra>
         <h3 data-ud="nadpis"></h3>
@@ -54,25 +48,28 @@ const KOSTRA = `
             <section class="ud-karta ud-pokrok" data-ud="pokrok" aria-label="Pokrok sbírky"></section>
             <section class="ud-karta ud-uceni hidden" data-ud="uceni" aria-label="Co se program naučil"></section>
         </div>
-        <div data-ud="dal"></div>
-        <div class="ud-ovladani">
-            <div class="ud-filtry" data-ud="filtry" role="group" aria-label="Co ukázat"></div>
-            <div class="ud-nastroje">
-                <label class="ud-hledat">${IKONA_HLEDANI}<input type="search" data-ud-hledat placeholder="Hledat modelku nebo číslo…" aria-label="Hledat v Údržbě (Ctrl+F nebo /)" autocomplete="off" spellcheck="false" /></label>
-                <label class="ud-razeni">Řadit
-                    <select data-ud-razeni aria-label="Řazení fronty">
-                        <option value="priorita">podle priority</option>
-                        <option value="chybi">nejvíc chybí</option>
-                        <option value="jmeno">podle jména</option>
-                    </select></label>
-                <div class="ud-prepinace" data-ud="nastroje"></div>
+        <div class="ud-telo" data-ud="seznam">
+            <nav class="ud-bok" data-ud="bok" aria-label="Co ukázat"></nav>
+            <div class="ud-hlavni">
+                <div data-ud="dal"></div>
+                <div class="ud-nastroje">
+                    <label class="ud-hledat">${IKONA_HLEDANI}<input type="search" data-ud-hledat placeholder="Hledat modelku nebo číslo…" aria-label="Hledat v Údržbě (Ctrl+F nebo /)" autocomplete="off" spellcheck="false" /></label>
+                    <div class="ud-uzke" data-ud="uzke"></div>
+                    <label class="ud-razeni"><span>Řadit</span>
+                        <select data-ud-razeni aria-label="Řazení fronty">
+                            <option value="priorita">podle priority</option>
+                            <option value="chybi">nejvíc chybí</option>
+                            <option value="jmeno">podle jména</option>
+                        </select></label>
+                    <button type="button" class="ud-nastroj" data-ud-hromadne aria-haspopup="menu" title="Rozbalit nebo sbalit vše, hromadné akce pro celý výběr">⋯ Hromadně</button>
+                </div>
+                <div data-ud="lista"></div>
+                <div class="ud-fronta" data-ud="fronta" role="tree" aria-label="Fronta údržby"></div>
+                <div data-ud="pata"></div>
+                <div class="ud-konec" data-ud-konec aria-hidden="true"></div>
             </div>
-            <div data-ud="zdroje"></div>
         </div>
-        <div data-ud="lista"></div>
-        <div class="ud-fronta" data-ud="fronta" role="tree" aria-label="Fronta údržby"></div>
-        <div data-ud="pata"></div>
-        <div class="ud-konec" data-ud-konec aria-hidden="true"></div>
+        <div class="ud-fokus hidden" data-ud="fokus"></div>
     </div>`;
 
 let data = null; // { p, stavy } z posledního načtení Přehledu
@@ -149,85 +146,71 @@ function htmlPokroku() {
         </div>`;
 }
 
-function obrazekSkupiny(s, trida = '') {
+export function obrazekSkupiny(s, trida = '') {
     if (s.druh === 'vydani') return `<span class="ud-obalka ${trida}">${IKONA_CISLA}</span>`;
     const m = modelkaSkupiny(s);
-    return `<img class="${trida}" src="${esc(m ? adresaTitulni(m) : BEZ_FOTKY)}" alt="" loading="lazy" draggable="false" />`;
+    return `<img class="${trida}" src="${esc(m ? adresaTitulni(m, trida === 'uf-foto') : BEZ_FOTKY)}" alt="" loading="lazy" draggable="false" />`;
 }
 
-// Co doplnit dál: nejcennější jednotlivé úkoly napříč frontou, jedním klikem
-function htmlDal() {
-    if (stav.udrzbaFiltr !== 'vse' || stav.udrzbaHledat) return '';
-    const kroky = dalsiKroky(model, 4);
-    const navrhu = navrhy.pocetNavrhu();
-    if (!kroky.length && !navrhu) return '';
-    const jistych = navrhy.pocetJistych();
-    return `<section class="ud-dal" aria-label="Co doplnit dál">
-        ${kroky.length ? `<h4>Co doplnit dál <small>nejcennější úkoly podle priority</small></h4>
-        <div class="ud-kroky">${kroky.map(({ skupina: s, polozka: x }) => `
-            <button type="button" class="ud-krok" data-ud-krok="${esc(x.klic)}" title="${esc(`${textAkce(x, s)}: ${s.jmeno} – ${x.pole}${x.duvod ? `. ${x.duvod}` : ''}`)}">
-                ${obrazekSkupiny(s)}
-                <span><strong>${esc(s.jmeno)}</strong><small>${esc(x.pole)} · ${esc(x.hodnota)}</small></span>
-                <i class="ud-tecka ${x.uroven}" aria-label="${NAZVY_PRIORIT[x.uroven]}"></i>
-            </button>`).join('')}</div>` : ''}
-        ${navrhu ? `<button type="button" class="nv-upoutavka" data-udrzba-filtr="navrhy">
-            <span class="nv-hvezda" aria-hidden="true">✦</span>
-            <span><b>${sklonovat(navrhu, 'návrh', 'návrhy', 'návrhů')} doplnění</b> odhadnut${navrhu === 1 ? 'ý' : navrhu < 5 ? 'é' : 'o'} z tvé sbírky${jistych ? ` · ${jistych} ${jistych === 1 ? 'jistý' : jistych < 5 ? 'jisté' : 'jistých'}` : ''}</span>
-            <span class="nv-upoutavka-akce">Projít návrhy →</span></button>` : ''}
+// Další krok: nejcennější úkol výběru, kolik jich zbývá, přijetí jistých návrhů a vstup do soustředěného režimu
+function htmlDal(vybrane) {
+    const { prvni, ukolu, jiste } = dalsiKrok(vybrane);
+    if (!prvni) return '';
+    const { skupina: s, polozka: x } = prvni;
+    const dalsich = ukolu - 1;
+    const pod = [
+        !dalsich ? 'poslední úkol ve výběru' : `a ${dalsich === 1 ? 'další 1 úkol' : dalsich < 5 ? `další ${dalsich} úkoly` : `dalších ${dalsich} úkolů`} seřazen${dalsich === 1 ? 'ý' : dalsich < 5 ? 'é' : 'ých'} ${RAZENI_SLOVY[stav.udrzbaRazeni] || RAZENI_SLOVY.priorita}`,
+        jiste.length && `${jiste.length} ${jiste.length === 1 ? 'jistý návrh jde' : jiste.length < 5 ? 'jisté návrhy jdou' : 'jistých návrhů jde'} přijmout najednou`,
+    ].filter(Boolean).join(' · ');
+    return `<section class="ud-dal" aria-label="Další krok">
+        ${obrazekSkupiny(s)}
+        <div class="ud-dal-text">
+            <button type="button" class="ud-dal-krok" data-ud-krok="${esc(x.klic)}" title="${esc(`${textAkce(x, s)}: ${s.jmeno} – ${x.pole}${x.duvod ? `. ${x.duvod}` : ''}`)}">Další krok: ${esc(s.jmeno)} – ${esc(popisPolozky(x))}</button>
+            <small>${esc(pod)}</small>
+        </div>
+        ${jiste.length ? `<button type="button" class="ud-nastroj ud-dal-jiste" data-ud-jiste title="Přijme návrhy s jistotou aspoň 90 % v tomto výběru (před uložením se zeptá)">Přijmout jisté (${jiste.length})</button>` : ''}
+        <button type="button" class="btn btn-primary btn-small ud-zacit" data-ud-zacit title="Soustředěný režim: úkol po úkolu, vyřizují se na místě (S na řádku otevře u něj)">Začít postupně →</button>
     </section>`;
 }
 
-function htmlFiltru() {
+// Zdroje návrhů nebo nálezů pod aktivním filtrem (Návrhy, Ke kontrole)
+function zdrojeFiltru() {
     const filtr = stav.udrzbaFiltr;
-    return FILTRY.map(([klic, nazev]) => {
+    if (filtr !== 'navrhy' && filtr !== 'kontrola') return [];
+    return zdrojePolozek(model, filtr).map(z => ({ ...z, popis: filtr === 'kontrola' ? uceni.popisZdroje(z.zdroj) : z.popis }));
+}
+
+// Boční seznam filtrů po oblastech; pod aktivním filtrem jeho zdroje, dole přepínač Vyřízené
+function htmlBoku() {
+    const filtr = stav.udrzbaFiltr;
+    const zdroje = zdrojeFiltru();
+    const htmlZdroju = zdroje.length > 1 || stav.udrzbaZdroj ? `<div class="ud-bok-zdroje" role="group" aria-label="Zdroj">
+        ${[{ zdroj: '', popis: 'Všechny zdroje', pocet: model.pocty[filtr] }, ...zdroje].map(z => `<button type="button" class="ud-bok-radek ud-bok-zdroj ${z.zdroj === stav.udrzbaZdroj ? 'on' : ''}"
+            data-ud-zdroj="${esc(z.zdroj)}" aria-pressed="${z.zdroj === stav.udrzbaZdroj}"><span>${esc(z.popis)}</span><b>${z.pocet}</b></button>`).join('')}</div>` : '';
+    return OBLASTI_FILTRU.map(o => `<h5>${o.nazev}</h5>${o.filtry.map(([klic, nazev, popis]) => {
         const pocet = model.pocty[klic];
-        // Návrhy zůstanou vidět i se samými odmítnutými, aby šlo odmítnutí vrátit
-        if (!pocet && klic !== filtr && !(klic === 'navrhy' && navrhy.maNavrhy())) return '';
-        return `<button type="button" class="${klic === filtr ? 'on' : ''}" aria-pressed="${klic === filtr}" data-udrzba-filtr="${klic}">${nazev}<b>${pocet}</b></button>`;
-    }).join('');
+        return `<button type="button" class="ud-bok-radek ${klic === filtr ? 'on' : ''} ${pocet ? '' : 'prazdny'}" data-udrzba-filtr="${klic}" aria-pressed="${klic === filtr}"${popis ? ` title="${esc(popis)}"` : ''}>
+            <span>${nazev}</span><b>${pocet || (klic === 'vse' ? 0 : '✓')}</b></button>${klic === filtr ? htmlZdroju : ''}`;
+    }).join('')}`).join('')
+        + `<h5>Zobrazit</h5><button type="button" class="ud-bok-radek ud-prepinac ${stav.prehledSkryte ? 'on' : ''}" data-ud-skryte aria-pressed="${stav.prehledSkryte}"
+            title="Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit"><span>Vyřízené</span><b>${stav.prehledSkryte ? model.vyrizenych : ''}</b><i aria-hidden="true"></i></button>`;
 }
 
-function htmlNastroju() {
-    const vse = vychoziRozbaleni(stav.udrzbaFiltr) && !prepnute.get(stav.udrzbaFiltr)?.size;
-    return `
-        <button type="button" class="ud-nastroj" data-ud-rozbalit-vse title="Rozbalit nebo sbalit všechny skupiny">${vse ? 'Sbalit vše' : 'Rozbalit vše'}</button>
-        <button type="button" class="ud-nastroj ${stav.prehledSkryte ? 'on' : ''}" data-ud-skryte aria-pressed="${stav.prehledSkryte}"
-            title="Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit">Vyřízené</button>
-        ${hromadneAkce().length ? '<button type="button" class="ud-nastroj" data-ud-hromadne aria-haspopup="menu">Hromadně ▾</button>' : ''}`;
-}
-
-function htmlZdroju() {
+// V úzkém okně místo bočního seznamu výběr filtru (a zdroje) a přepínač Vyřízené v liště
+function htmlUzke() {
     const filtr = stav.udrzbaFiltr;
-    if (filtr !== 'navrhy' && filtr !== 'kontrola') return '';
-    const zdroje = zdrojePolozek(model, filtr);
-    if (!zdroje.length) return '';
-    const celkem = model.pocty[filtr];
-    return `<div class="ud-zdroje" role="group" aria-label="Zdroj">
-        <span>Zdroj</span>
-        <button type="button" class="chip ${stav.udrzbaZdroj ? '' : 'active'}" data-ud-zdroj="">Všechny <b>${celkem}</b></button>
-        ${zdroje.map(z => `<button type="button" class="chip ${z.zdroj === stav.udrzbaZdroj ? 'active' : ''}" data-ud-zdroj="${esc(z.zdroj)}">${esc(filtr === 'kontrola' ? uceni.popisZdroje(z.zdroj) : z.popis)} <b>${z.pocet}</b></button>`).join('')}
-    </div>`;
+    const zdroje = zdrojeFiltru();
+    return `<select data-ud-vyber-filtru aria-label="Co ukázat">${OBLASTI_FILTRU.map(o => `<optgroup label="${o.nazev}">${o.filtry.map(([klic, nazev]) =>
+        `<option value="${klic}" ${klic === filtr ? 'selected' : ''}>${nazev} (${model.pocty[klic]})</option>`).join('')}</optgroup>`).join('')}</select>
+        ${zdroje.length > 1 || stav.udrzbaZdroj ? `<select data-ud-vyber-zdroje aria-label="Zdroj"><option value="">Všechny zdroje</option>${zdroje.map(z =>
+        `<option value="${esc(z.zdroj)}" ${z.zdroj === stav.udrzbaZdroj ? 'selected' : ''}>${esc(z.popis)} (${z.pocet})</option>`).join('')}</select>` : ''}
+        <button type="button" class="ud-nastroj ${stav.prehledSkryte ? 'on' : ''}" data-ud-skryte aria-pressed="${stav.prehledSkryte}">Vyřízené</button>`;
 }
 
+// Pod lištou jen výsledek hledání
 function htmlListy(vybrane) {
-    const filtr = stav.udrzbaFiltr;
-    let popis = POPIS_FILTRU[filtr] || 'Seřazeno podle priority.';
-    if (stav.udrzbaRazeni === 'jmeno') popis = 'Seřazeno podle jména.';
-    else if (stav.udrzbaRazeni === 'chybi') popis = 'Seřazeno podle toho, kolik toho chybí.';
-    if (stav.udrzbaHledat) popis = `Hledání „${esc(stav.udrzbaHledat)}“: ${sklonovat(vybrane.length, 'výsledek', 'výsledky', 'výsledků')} · <button type="button" class="link" data-ud-zrusit-hledani>zrušit</button>`;
-    let akce = '';
-    if (filtr === 'navrhy') {
-        const jiste = navrhyVyberu(vybrane).filter(n => n.jistota >= MEZ_JISTE).length;
-        if (jiste) akce = `<button type="button" class="btn btn-primary btn-small ud-postupne" data-ud-jiste title="Přijme návrhy s jistotou aspoň 90 % v tomto výběru (před uložením se zeptá)">✓ Přijmout jisté (≥ 90 %) · ${jiste}</button>`;
-    } else {
-        // Doplňovat postupně jde jen tam, kde má formulář „Uložit a další“ (titulní fotka a údaje)
-        const prvni = vybrane.flatMap(v => v.polozky).find(x => !x.netyka && (x.akce === 'titulni' || x.akce === 'udaje'));
-        const klic = prvni?.akce === 'titulni' ? 'titulni' : prvni?.netykaKlic;
-        if (prvni && (filtr === 'titulni' || filtr === 'udaje' || filtr === 'vse')) {
-            akce = `<button type="button" class="btn btn-primary btn-small ud-postupne" data-ud-postupne="${esc(prvni.klic)}">Doplňovat ${NAZVY_FRONT[klic]} postupně (${frontaPro(klic).length}) →</button>`;
-        }
-    }
-    return `<div class="ud-lista"><span>${popis}</span>${akce}</div>`;
+    if (!stav.udrzbaHledat) return '';
+    return `<div class="ud-lista"><span>Hledání „${esc(stav.udrzbaHledat)}“: ${sklonovat(vybrane.length, 'výsledek', 'výsledky', 'výsledků')} · <button type="button" class="link" data-ud-zrusit-hledani>zrušit</button></span></div>`;
 }
 
 function htmlPolozky(x, s) {
@@ -251,19 +234,19 @@ function htmlPolozky(x, s) {
            <button type="button" class="nv-tlacitko nv-odmitnout" data-ud-akce="odlozit" tabindex="-1" title="${odlozit} (Delete)">${odlozit}</button>`;
     return `<div class="ud-polozka ${x.druh} ${x.netyka ? 'netyka' : ''}" data-radek="${esc(x.klic)}" data-polozka="${esc(x.klic)}" tabindex="-1" role="treeitem" aria-level="2"
         aria-label="${esc(`${x.pole}: ${x.hodnota}${x.netyka ? `, ${odlozeno}` : x.druh === 'navrh' ? `, ${procent(x.jistota)} %` : ''}`)}">
-        <span class="ud-pole">${esc(x.pole)}</span>
+        <span class="ud-pole">${x.druh === 'kontrola' ? '⚠ ' : x.druh === 'navrh' ? '✦ ' : ''}${esc(x.pole)}</span>
         <div class="ud-obsah"><strong class="ud-hodnota">${esc(x.hodnota)}</strong>${duvod ? `<small class="ud-duvod">${esc(duvod)}</small>` : ''}</div>
         <div class="ud-meta">${meta}</div>
         <div class="ud-akce">${akce}<button type="button" class="ud-vice" data-ud-vice tabindex="-1" title="Další akce" aria-label="Další akce">⋯</button></div>
     </div>`;
 }
 
-// Štítek položky ve sbalené skupině
-function htmlStitku(x, hlavni) {
-    const text = x.druh === 'navrh' ? `✦ ${x.pole}: ${x.hodnota}` : x.druh === 'kontrola' ? `⚠ ${x.hodnota}` : (x.souhrn || x.pole);
-    const kratky = text.length > 48 ? `${text.slice(0, 46)}…` : text;
-    return `<button type="button" class="ud-chip ${x.druh} ${x === hlavni ? 'hlavni' : ''} ${x.netyka ? 'netyka' : ''}" data-polozka="${esc(x.klic)}" tabindex="-1"
-        title="${esc(`${text}${x.netyka ? '' : ' – klik otevře, pravým tlačítkem další akce'}`)}">${esc(kratky)}</button>`;
+// Štítek souhrnu v řádku: štítek jedné položky ji otevře, štítek s počtem jen popisuje (klik rozbalí řádek)
+function htmlStitku(st) {
+    const kratky = st.text.length > 48 ? `${st.text.slice(0, 46)}…` : st.text;
+    return st.polozka
+        ? `<button type="button" class="ud-chip ${st.druh}" data-polozka="${esc(st.polozka)}" tabindex="-1" title="${esc(`${st.text} – klik otevře, pravým tlačítkem další akce`)}">${esc(kratky)}</button>`
+        : `<span class="ud-chip ${st.druh}" title="${esc(`${st.text} – rozbal řádek pro jednotlivé položky`)}">${esc(kratky)}</span>`;
 }
 
 // Skupina záměrně nemá data-modelka ani data-vydani: obecná obsluha odkazů v main (prohlizec.js) by každým
@@ -272,9 +255,6 @@ function htmlSkupiny(s, polozky) {
     const rozbalena = jeRozbalena(s.klic);
     const hlavni = polozky.find(x => !x.netyka);
     const aktivnich = polozky.filter(x => !x.netyka).length;
-    const stitky = polozky.slice(0, 6).map(x => htmlStitku(x, hlavni)).join('') + (polozky.length > 6 ? `<span class="ud-chip vice">+${polozky.length - 6}</span>` : '');
-    const souhrn = `<span class="ud-souhrn-skupiny">${aktivnich ? sklonovat(aktivnich, 'položka', 'položky', 'položek') : 'vyřízeno'}${s.druh === 'modelka' && s.vyplneno < 100
-        ? ` · <i><b style="width:${s.vyplneno}%"></b></i> vyplněno ${s.vyplneno} %` : ''}</span>`;
     return `<section class="ud-skupina ${rozbalena ? 'rozbalena' : ''} ${hlavni ? '' : 'vyrizena'}" data-klic="${esc(s.klic)}">
         <div class="ud-radek ud-hlavicka" data-radek="${esc(s.klic)}" tabindex="-1" role="treeitem" aria-level="1" aria-expanded="${rozbalena}"
             aria-label="${esc(`${s.jmeno}: ${aktivnich ? sklonovat(aktivnich, 'položka', 'položky', 'položek') : 'vyřízeno'}`)}">
@@ -282,7 +262,7 @@ function htmlSkupiny(s, polozky) {
             ${obrazekSkupiny(s)}
             <div class="ud-jmeno"><button type="button" class="ud-odkaz" data-ud-otevrit tabindex="-1" title="${s.druh === 'vydani' ? 'Otevřít číslo' : 'Otevřít profil'}"><strong>${esc(s.jmeno)}</strong></button>
                 <small>${s.uroven === 'vysoka' && hlavni ? '<i class="ud-tecka vysoka" aria-hidden="true"></i>' : ''}${esc(podtitulekSkupiny(s))}</small></div>
-            <div class="ud-chybi">${rozbalena ? souhrn : stitky}</div>
+            <div class="ud-chybi">${stitkySkupiny(polozky).map(htmlStitku).join('')}</div>
             <div class="ud-akce">${hlavni ? `<button type="button" class="ud-doplnit" data-polozka="${esc(hlavni.klic)}" data-ud-akce="hlavni" tabindex="-1" title="${esc(`${textAkce(hlavni, s)}: ${hlavni.pole}`)}">${textAkce(hlavni, s)}</button>` : ''}
                 <button type="button" class="ud-vice" data-ud-vice tabindex="-1" title="Další akce" aria-label="Další akce">⋯</button></div>
         </div>
@@ -321,7 +301,7 @@ function zajistitKostru() {
     return s;
 }
 
-// Celá Údržba (po načtení Přehledu a po změně dat)
+// Celá Údržba (po načtení Přehledu a po změně dat); v soustředěném režimu místo seznamu karta a fronta
 export function vykreslit() {
     if (!model || !zajistitKostru()) return;
     nastavitHtml(cast('nadpis'), htmlNadpisu());
@@ -330,49 +310,26 @@ export function vykreslit() {
     cast('uceni').classList.toggle('hidden', !htmlU);
     cast('pokrok').parentElement.classList.toggle('bez-uceni', !htmlU);
     nastavitHtml(cast('uceni'), htmlU);
-    vykreslitSeznam();
+    if (fokus.otevreny()) fokus.vykreslit();
+    else vykreslitSeznam();
 }
 
-// Lišty a fronta (filtr, hledání, řazení, rozbalení); fronta se mění po skupinách
+// Boční seznam, další krok, lišta a fronta (filtr, hledání, řazení, rozbalení); fronta se mění po skupinách
 function vykreslitSeznam() {
-    if (!model || !zajistitKostru()) return;
+    if (!model || !zajistitKostru() || fokus.otevreny()) return;
     // Zdroj, který ve filtru už nic nemá, se zruší
     if (stav.udrzbaZdroj && !zdrojePolozek(model, stav.udrzbaFiltr).some(z => z.zdroj === stav.udrzbaZdroj)) stav.udrzbaZdroj = '';
     const vybrane = vyber();
     const ukazat = vybrane.slice(0, stav.prehledLimit);
     const html = {
-        dal: htmlDal(), filtry: htmlFiltru(), nastroje: htmlNastroju(), zdroje: htmlZdroju(), lista: htmlListy(vybrane), pata: htmlPaty(vybrane, ukazat.length),
+        bok: htmlBoku(), uzke: htmlUzke(), dal: htmlDal(vybrane), lista: htmlListy(vybrane), pata: htmlPaty(vybrane, ukazat.length),
         fronta: ukazat.map(({ skupina, polozky }) => ({ klic: skupina.klic, html: htmlSkupiny(skupina, polozky) })),
     };
     // Nejdřív se přečte poloha (stránka je ještě beze změn, čtení nevynutí rozvržení navíc), pak se zapisuje
     zachovatPolohu(() => {
-        ['dal', 'filtry', 'nastroje', 'zdroje', 'lista', 'pata'].forEach(jmeno => nastavitHtml(cast(jmeno), html[jmeno]));
-        srovnat(cast('fronta'), html.fronta);
+        ['bok', 'uzke', 'dal', 'lista', 'pata'].forEach(jmeno => nastavitHtml(cast(jmeno), html[jmeno]));
+        srovnatSeznam(cast('fronta'), html.fronta);
     });
-}
-
-// Seznam skupin podle klíče: skupina se stejným HTML zůstane (i s fokusem), změněná se nahradí, chybějící přidá
-const htmlPrvku = new WeakMap();
-const sablona = document.createElement('template');
-function vytvorit(html) {
-    sablona.innerHTML = html;
-    const prvek = /** @type {HTMLElement} */ (sablona.content.firstElementChild);
-    htmlPrvku.set(prvek, html);
-    return prvek;
-}
-function srovnat(kontejner, polozky) {
-    const stare = new Map([...kontejner.children].map(e => [/** @type {HTMLElement} */ (e).dataset.klic, e]));
-    polozky.forEach(({ klic, html }, i) => {
-        let prvek = stare.get(klic);
-        stare.delete(klic);
-        if (prvek && htmlPrvku.get(prvek) !== html) {
-            const novy = vytvorit(html);
-            prvek.replaceWith(novy);
-            prvek = novy;
-        } else if (!prvek) prvek = vytvorit(html);
-        if (kontejner.children[i] !== prvek) kontejner.insertBefore(prvek, kontejner.children[i] || null);
-    });
-    stare.forEach(e => e.remove());
 }
 
 // Překreslení bez skoku: kotvou je zaměřený řádek, jinak první viditelný; fokus zůstane na řádku se stejným
@@ -439,7 +396,7 @@ function prekreslitPoZmene(fokusKlic) {
         vykreslit();
         // Fokus, který zmizel s překresleným tlačítkem (akce z nabídky nebo oznámení), se vrátí na řádek
         const aktivni = document.activeElement;
-        if (fokusKlic && udrzbaVidet() && (!aktivni || aktivni === document.body)) {
+        if (fokusKlic && udrzbaVidet() && !fokus.otevreny() && (!aktivni || aktivni === document.body)) {
             const klic = model.podleKlice.has(fokusKlic) ? fokusKlic : [...model.podleKlice.keys()].find(k => k.endsWith(`|n:${fokusKlic}`));
             if (klic) zachovatPolohu(() => {}, klic);
         }
@@ -498,7 +455,8 @@ export function nastavitFiltr(filtr, zdroj = '') {
 
 const najitPolozku = klic => model?.podleKlice.get(klic);
 
-async function hlavniAkce(x, s) {
+// Hlavní akce položky (Doplnit, Opravit, Přijmout, Přidat cover…); u alb jde zvolit album (soustředěný režim)
+async function hlavniAkce(x, s, zvoleneAlbum = null) {
     if (s.druh === 'vydani') {
         // Vydání je dané, u centerfoldu se vybírá jen modelka
         if (x.id === 'cover') otevritCoverModal(null, s.vydani);
@@ -531,7 +489,7 @@ async function hlavniAkce(x, s) {
         zameritPole(pole);
     } else {
         // První album, kterému text nebo vydání chybí, se otevře k úpravě v profilu modelky
-        const cil = x.alba.find(a => !a.netykaSe) || x.alba[0];
+        const cil = zvoleneAlbum || x.alba.find(a => !a.netykaSe) || x.alba[0];
         await otevritDetailModelky(modelka);
         await nacistFotkyModelky(modelka.id);
         const album = cil && stav.aktualniAlba.find(a => a.album === cil.album && a.typ === cil.typ);
@@ -674,8 +632,10 @@ export function nabidkaUdrzby(cil, x, y) {
     const s = nalez?.skupina || model.skupiny.find(sk => sk.klic === prvekSkupiny.dataset.klic);
     if (!s) return true;
     const modelka = modelkaSkupiny(s);
-    const otevrit = s.druh === 'vydani' ? [{ text: `Otevřít ${nazevVydani(s.vydani)}`, akce: () => otevritVydani(s.vydani) }]
+    const soustredeny = s.polozky.some(p => !p.netyka) ? [{ text: 'Vyřídit v soustředěném režimu (S)', akce: () => otevritFokus(s.klic) }] : [];
+    const otevrit = s.druh === 'vydani' ? [...soustredeny, { text: `Otevřít ${nazevVydani(s.vydani)}`, akce: () => otevritVydani(s.vydani) }]
         : modelka ? [
+            ...soustredeny,
             ...(stav.prehledRadky.some(r => r.id === modelka.id) ? [{ text: 'Doplnit vše v jednom okně', akce: () => otevritDoplneni(modelka.id) }] : []),
             { text: 'Upravit modelku…', akce: () => otevritModelModal(modelka) },
             { text: 'Otevřít profil', akce: () => otevritDetailModelky(modelka) },
@@ -705,6 +665,35 @@ export function nabidkaUdrzby(cil, x, y) {
     return true;
 }
 
+// Rozbalit nebo sbalit všechny skupiny filtru (nabídka Hromadně)
+function rozbalitVse() {
+    const f = stav.udrzbaFiltr;
+    const vse = vychoziRozbaleni(f) && !prepnute.get(f)?.size;
+    vseRozbaleno.set(f, !vse);
+    prepnute.delete(f);
+    vykreslitSeznam();
+}
+
+// Soustředěný režim místo seznamu (boční seznam, další krok a fronta se schovají); poloha seznamu se zapamatuje
+let polohaSeznamu = { posun: 0, radek: '' };
+function otevritFokus(klic) {
+    if (!model || !klic) return;
+    if (!fokus.otevreny()) polohaSeznamu = { posun: oblast().scrollTop, radek: aktivniRadek };
+    cast('seznam').classList.add('hidden');
+    fokus.otevrit(cast('fokus'), klic);
+}
+
+// Návrat ze soustředěného režimu: seznam na stejném místě, fokus na řádku, ze kterého se do režimu šlo
+function poZavreniFokusu() {
+    cast('seznam').classList.remove('hidden');
+    vykreslitSeznam();
+    oblast().scrollTop = polohaSeznamu.posun;
+    aktivniRadek = polohaSeznamu.radek;
+    obnovitTabIndex();
+    const radek = /** @type {HTMLElement} */ (cast('fronta').querySelector('[tabindex="0"]'));
+    radek?.focus({ preventScroll: true });
+}
+
 function prepnoutSkupinu(klic, rozbalit = null) {
     const filtr = stav.udrzbaFiltr;
     if (rozbalit !== null && jeRozbalena(klic) === rozbalit) return;
@@ -728,6 +717,8 @@ export function pripravit(nacistPrehled) {
     nacist = nacistPrehled;
     navrhy.nastavitObnoveni(poZmene);
     uceni.pripravit();
+    fokus.pripravit({ model: () => model, vyber, hlavniAkce, odlozit, nacist: () => nacist(), poZmene, obrazek: obrazekSkupiny,
+        podtitulek: podtitulekSkupiny, modelka: modelkaSkupiny, viditelna: udrzbaVidet, poZavreni: poZavreniFokusu });
     try { stav.udrzbaRazeni = localStorage.getItem('udrzbaRazeni') || 'priorita'; } catch { /* výchozí */ }
 
     stats.addEventListener('pointerdown', () => { mysDole = true; });
@@ -756,7 +747,7 @@ export function pripravit(nacistPrehled) {
             nabidkaUdrzby(cil, r.right - 240, r.bottom + 4);
         } else if (filtr) {
             nastavitFiltr(/** @type {HTMLElement} */ (filtr).dataset.udrzbaFiltr);
-            /** @type {HTMLElement} */ (cast('filtry').querySelector('.on'))?.focus({ preventScroll: true });
+            /** @type {HTMLElement} */ (cast('bok').querySelector('[data-udrzba-filtr].on'))?.focus({ preventScroll: true });
         } else if (zdroj) {
             stav.udrzbaZdroj = /** @type {HTMLElement} */ (zdroj).dataset.udZdroj;
             stav.prehledLimit = STRANKA;
@@ -772,24 +763,19 @@ export function pripravit(nacistPrehled) {
         } else if (cil.closest('[data-ud-krok]')) {
             const k = najitPolozku(/** @type {HTMLElement} */ (cil.closest('[data-ud-krok]')).dataset.udKrok);
             if (k) hlavniAkce(k.polozka, k.skupina);
-        } else if (cil.closest('[data-ud-postupne]')) {
-            const k = najitPolozku(/** @type {HTMLElement} */ (cil.closest('[data-ud-postupne]')).dataset.udPostupne);
-            if (k) hlavniAkce(k.polozka, k.skupina);
+        } else if (cil.closest('[data-ud-zacit]')) {
+            otevritFokus(dalsiKrok(vyber()).prvni?.skupina.klic);
         } else if (cil.closest('[data-ud-jiste]')) {
             const jiste = navrhyVyberu(vyber()).filter(n => n.jistota >= MEZ_JISTE);
             navrhy.prijmoutVice(jiste, 'Přijmout jisté návrhy (≥ 90 %)?');
         } else if (cil.closest('[data-ud-skryte]')) {
             stav.prehledSkryte = !stav.prehledSkryte;
             nacist();
-        } else if (cil.closest('[data-ud-rozbalit-vse]')) {
-            const f = stav.udrzbaFiltr;
-            const vse = vychoziRozbaleni(f) && !prepnute.get(f)?.size;
-            vseRozbaleno.set(f, !vse);
-            prepnute.delete(f);
-            vykreslitSeznam();
         } else if (cil.closest('[data-ud-hromadne]')) {
             const r = cil.closest('[data-ud-hromadne]').getBoundingClientRect();
-            otevritKontextovouNabidku(r.left, r.bottom + 4, hromadneAkce());
+            const vse = vychoziRozbaleni(stav.udrzbaFiltr) && !prepnute.get(stav.udrzbaFiltr)?.size;
+            const akce = hromadneAkce();
+            otevritKontextovouNabidku(Math.max(8, r.right - 300), r.bottom + 4, [{ text: vse ? 'Sbalit vše' : 'Rozbalit vše', akce: rozbalitVse }, ...(akce.length ? [null, ...akce] : [])]);
         } else if (cil.closest('[data-ud-dalsi]')) {
             stav.prehledLimit += STRANKA;
             vykreslitSeznam();
@@ -831,6 +817,9 @@ export function pripravit(nacistPrehled) {
     });
     stats.addEventListener('change', (e) => {
         const vyberRazeni = /** @type {HTMLSelectElement} */ (e.target);
+        // Úzké okno: výběr filtru a zdroje místo bočního seznamu
+        if (vyberRazeni.matches?.('[data-ud-vyber-filtru]')) return nastavitFiltr(vyberRazeni.value);
+        if (vyberRazeni.matches?.('[data-ud-vyber-zdroje]')) return nastavitFiltr(stav.udrzbaFiltr, vyberRazeni.value);
         if (!vyberRazeni.matches?.('[data-ud-razeni]')) return;
         stav.udrzbaRazeni = vyberRazeni.value;
         try { localStorage.setItem('udrzbaRazeni', vyberRazeni.value); } catch { /* jen se nezapamatuje */ }
@@ -840,7 +829,7 @@ export function pripravit(nacistPrehled) {
 
     // Ctrl+F a / skočí do hledání Údržby (hlavní hledání v Přehledu nic nehledá)
     document.addEventListener('keydown', (e) => {
-        if (!udrzbaVidet() || stav.zamceno || document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) return;
+        if (!udrzbaVidet() || fokus.otevreny() || stav.zamceno || document.querySelector('.modal-overlay:not(.hidden), #lightbox:not(.hidden)')) return;
         const pise = /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select');
         if (((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f') || (e.key === '/' && !pise && !e.ctrlKey && !e.altKey)) {
             e.preventDefault();
@@ -850,7 +839,7 @@ export function pripravit(nacistPrehled) {
 
     // Klávesnice ve frontě: ↑↓ řádky, Home/End, PageUp/PageDown, → rozbalí, ← sbalí, Enter hlavní akce,
     // mezerník rozbalí skupinu, Delete odloží položku (Netýká se, V pořádku, Odmítnout), E upraví návrh,
-    // Esc v hledání ho vymaže a ↓ z hledání skočí do fronty
+    // S otevře skupinu v soustředěném režimu, Esc v hledání ho vymaže a ↓ z hledání skočí do fronty
     stats.addEventListener('keydown', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         if (cil.matches?.('[data-ud-hledat]')) {
@@ -917,6 +906,9 @@ export function pripravit(nacistPrehled) {
         } else if ((e.key === 'e' || e.key === 'E') && nalez?.polozka.druh === 'navrh' && !nalez.polozka.netyka) {
             e.preventDefault();
             navrhy.upravit(nalez.polozka.navrh);
+        } else if ((e.key === 's' || e.key === 'S') && s?.polozky.some(p => !p.netyka)) {
+            e.preventDefault();
+            otevritFokus(s.klic);
         }
     });
 }

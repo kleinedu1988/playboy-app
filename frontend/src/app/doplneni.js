@@ -21,20 +21,25 @@ const obsah = document.getElementById('doplnitObsah');
 const typPole = id => poleModelky.find(([, prvek]) => prvek === id)?.[2] || 'text';
 const vlastnostPole = id => poleModelky.find(([, prvek]) => prvek === id)?.[0];
 
-// Pole z formuláře modelky jako kopie (typ, nápověda, nabídka výběru) s vlastním id
-function kopiePole(id, popis) {
+// Pole z formuláře modelky jako kopie (typ, nápověda, nabídka výběru) s vlastním id; sdílí ho soustředěný režim
+// Údržby (udrzba-fokus.js). hodnota = výchozí hodnota pole (oprava nálezu, návrh), jinak prázdné.
+export function kopiePole(id, popis, { predpona = 'dopl', hodnota = '' } = {}) {
     const vzor = document.getElementById(id);
     const kopie = /** @type {HTMLInputElement | HTMLSelectElement} */ (vzor.cloneNode(true));
-    kopie.id = `dopl-${id}`;
+    kopie.id = `${predpona}-${id}`;
     kopie.dataset.pole = id;
     kopie.removeAttribute('required');
     // Živé nápovědy formuláře modelky v tomto okně nejsou
     kopie.removeAttribute('aria-describedby');
     if (kopie.tagName === 'SELECT') {
         kopie.querySelectorAll('option[data-puvodni]').forEach(o => o.remove());
-        /** @type {HTMLSelectElement} */ (kopie).selectedIndex = 0;
+        const vyber = /** @type {HTMLSelectElement} */ (kopie);
+        // Hodnota, kterou výběr nenabízí, se do něj doplní (jako ve formuláři modelky)
+        if (hodnota !== '' && ![...vyber.options].some(o => o.value === hodnota)) vyber.add(new Option(hodnota, hodnota));
+        if (hodnota !== '') vyber.value = hodnota;
+        else vyber.selectedIndex = 0;
     } else {
-        /** @type {HTMLInputElement} */ (kopie).value = '';
+        /** @type {HTMLInputElement} */ (kopie).value = hodnota;
     }
     const obal = document.createElement('div');
     obal.className = 'doplnit-pole';
@@ -47,6 +52,45 @@ function kopiePole(id, popis) {
         pripojitVyberKategorii(/** @type {HTMLInputElement} */ (kopie), vyber);
     }
     return obal;
+}
+
+// Hodnoty kopií polí do kopie modelky se stejnými převody jako formulář modelky (americké míry, čísla).
+// Prázdné pole se přeskočí; s prazdne: true údaj smaže (oprava nálezu kontroly). Vrací, zda se něco zapsalo.
+export function zapsatPole(prvky, modelka, { prazdne = false } = {}) {
+    let zmena = false;
+    for (const prvek of prvky) {
+        const hodnota = prvek.value.trim();
+        if (!hodnota && !prazdne) continue;
+        const pole = prvek.dataset.pole;
+        if (pole === 'inputVyska') modelka.vyskaCm = prevestVysku(hodnota) ?? (parseInt(hodnota) || 0);
+        else if (pole === 'inputVaha') modelka.vahaKg = prevestVahu(hodnota) ?? (parseInt(hodnota) || 0);
+        else modelka[vlastnostPole(pole)] = typPole(pole) === 'cislo' ? parseInt(hodnota) || 0 : hodnota;
+        zmena = true;
+    }
+    return zmena;
+}
+
+// Po opuštění pole: americké míry na cm a kg, „34B-24-34“ v hrudníku nebo velikosti prsou rozepíše do polí,
+// která kontejner nabízí
+export function prevestPole(kontejner, prvek) {
+    const prevod = { inputVyska: prevestVysku, inputVaha: prevestVahu }[prvek.dataset.pole];
+    if (prevod) {
+        const cislo = prevod(prvek.value);
+        if (cislo !== null) prvek.value = String(cislo);
+        return;
+    }
+    if (prvek.dataset.pole !== 'inputHrudnik' && prvek.dataset.pole !== 'inputVelikost') return;
+    const miry = rozlozitMiry(prvek.value);
+    if (!miry) return;
+    const nastavit = (pole, hodnota) => {
+        const kopie = /** @type {HTMLInputElement} */ (kontejner.querySelector(`[data-pole="${pole}"]`));
+        if (kopie) kopie.value = String(hodnota);
+    };
+    nastavit('inputHrudnik', miry.hrudnik);
+    nastavit('inputPas', miry.pas);
+    nastavit('inputBoky', miry.boky);
+    // Míry bez velikosti v poli velikosti nesmí zůstat jako velikost prsou
+    if (miry.velikost || prvek.dataset.pole === 'inputVelikost') nastavit('inputVelikost', miry.velikost);
 }
 
 const blok = (nazev, klic, telo = '') => `
@@ -118,16 +162,7 @@ export async function otevritDoplneni(modelkaId) {
 async function ulozit() {
     const modelka = { ...stav.doplnovanaModelka };
     const radek = stav.doplnovanyRadek;
-    let zmenaModelky = false;
-    for (const prvek of /** @type {NodeListOf<HTMLInputElement>} */ (obsah.querySelectorAll('[data-pole]'))) {
-        const hodnota = prvek.value.trim();
-        if (!hodnota) continue;
-        const vlastnost = vlastnostPole(prvek.dataset.pole);
-        if (prvek.dataset.pole === 'inputVyska') modelka.vyskaCm = prevestVysku(hodnota) ?? (parseInt(hodnota) || 0);
-        else if (prvek.dataset.pole === 'inputVaha') modelka.vahaKg = prevestVahu(hodnota) ?? (parseInt(hodnota) || 0);
-        else modelka[vlastnost] = typPole(prvek.dataset.pole) === 'cislo' ? parseInt(hodnota) || 0 : hodnota;
-        zmenaModelky = true;
-    }
+    const zmenaModelky = zapsatPole(/** @type {NodeListOf<HTMLInputElement>} */ (obsah.querySelectorAll('[data-pole]')), modelka);
     if (!platneDatum(modelka.narozeniDatum)) {
         document.getElementById('dopl-inputNarozeniDatum')?.focus();
         oznamit('Datum narození napiš jako RRRR-MM-DD, RRRR-MM nebo jen rok RRRR.');
@@ -187,27 +222,7 @@ export function pripravit() {
 
     // Stejné převody jako ve formuláři modelky: americké míry po opuštění pole na cm a kg,
     // „34B-24-34“ v hrudníku nebo velikosti prsou rozepíše do polí, která okno nabízí
-    obsah.addEventListener('change', (e) => {
-        const prvek = /** @type {HTMLInputElement} */ (e.target);
-        const prevod = { inputVyska: prevestVysku, inputVaha: prevestVahu }[prvek.dataset.pole];
-        if (prevod) {
-            const cislo = prevod(prvek.value);
-            if (cislo !== null) prvek.value = String(cislo);
-            return;
-        }
-        if (prvek.dataset.pole !== 'inputHrudnik' && prvek.dataset.pole !== 'inputVelikost') return;
-        const miry = rozlozitMiry(prvek.value);
-        if (!miry) return;
-        const nastavit = (pole, hodnota) => {
-            const kopie = /** @type {HTMLInputElement} */ (obsah.querySelector(`[data-pole="${pole}"]`));
-            if (kopie) kopie.value = String(hodnota);
-        };
-        nastavit('inputHrudnik', miry.hrudnik);
-        nastavit('inputPas', miry.pas);
-        nastavit('inputBoky', miry.boky);
-        // Míry bez velikosti v poli velikosti nesmí zůstat jako velikost prsou
-        if (miry.velikost || prvek.dataset.pole === 'inputVelikost') nastavit('inputVelikost', miry.velikost);
-    });
+    obsah.addEventListener('change', (e) => prevestPole(obsah, /** @type {HTMLInputElement} */ (e.target)));
 
     document.getElementById('doplnitProfilBtn').onclick = () => {
         doplnitModal.classList.add('hidden');

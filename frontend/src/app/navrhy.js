@@ -118,6 +118,12 @@ async function vratitPrijeti(n, vlastnost, puvodni) {
     oznamit(`Vráceno: ${nazevNavrhu(n)} – ${n.jmeno} má zase původní hodnotu.`);
 }
 
+// Návrh, který soustředěný režim uložil s opravenou hodnotou: backend ho už nenabídne, ze seznamu zmizí hned
+export function odebratOpraveny(n) {
+    navrhy = navrhy.filter(x => x !== n && idNavrhu(x) !== idNavrhu(n));
+    poZmene('');
+}
+
 async function nastavitOdmitnuti(seznam, odmitnout = true) {
     const zmenene = [];
     for (const n of seznam) {

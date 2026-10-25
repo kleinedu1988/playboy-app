@@ -1,5 +1,6 @@
 // Přehled klávesových zkratek (klávesa ?): skleněný panel uprostřed okna nad ztmavenou stránkou. V prohlížeči fotek
-// a ve čtečce stran (i v Údržbě) jde jejich část první a je zvýrazněná. Celá nápověda se otevře tlačítkem v patičce.
+// a ve čtečce stran (i v Údržbě a jejím soustředěném režimu) jde jejich část první a je zvýrazněná. Celá nápověda
+// se otevře tlačítkem v patičce.
 import { otevritNapovedu } from './napoveda';
 import { lightbox } from './prohlizec';
 import { stav } from './stav';
@@ -33,7 +34,15 @@ const CASTI = [
         [k('Enter'), 'Hlavní akce: doplnit, opravit, přijmout návrh'],
         [k('Delete'), 'Netýká se, V pořádku, Odmítnout (jde vrátit)'],
         [k('E'), 'Upravit návrh ve formuláři'],
+        [k('S'), 'Vyřídit skupinu v soustředěném režimu'],
         [`${k('Ctrl', 'F')}${nebo}${k('/')}`, 'Hledat modelku nebo číslo'],
+    ] },
+    { klic: 'fokus', nazev: 'Soustředěný režim Údržby', radky: [
+        [k('Ctrl', 'Enter'), 'Uložit změny a otevřít další'],
+        [`${k('PageDown')}${nebo}${k('Alt', '→')}`, 'Další ve frontě (přeskočit)'],
+        [`${k('PageUp')}${nebo}${k('Alt', '←')}`, 'Předchozí ve frontě'],
+        [k('Tab'), 'Další pole a tlačítko na kartě'],
+        [k('Esc'), 'Zpět na seznam (rozepsané se nejdřív zeptá)'],
     ] },
     { klic: 'vyber', nazev: 'Výběr fotek', radky: [
         [`${k('Ctrl')} + klik`, 'Přidat do výběru'],
@@ -91,7 +100,8 @@ export function otevritZkratky() {
     // Část toho, co je právě otevřené, jde první a je zvýrazněná
     const ctecka = document.getElementById('ctecka');
     const udrzba = stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && !document.getElementById('stats')?.classList.contains('hidden');
-    const aktivni = !lightbox.classList.contains('hidden') ? 'prohlizec' : ctecka && !ctecka.classList.contains('hidden') ? 'ctecka' : udrzba ? 'udrzba' : '';
+    const aktivni = !lightbox.classList.contains('hidden') ? 'prohlizec' : ctecka && !ctecka.classList.contains('hidden') ? 'ctecka'
+        : udrzba ? (stav.udrzbaFokus ? 'fokus' : 'udrzba') : '';
     const casti = aktivni ? [CASTI.find(c => c.klic === aktivni), ...CASTI.filter(c => c.klic !== aktivni)] : CASTI;
     panel.querySelector('.zkratky-casti').innerHTML = casti.map(c => `
         <section class="${c.klic === aktivni ? 'aktivni' : ''}">

@@ -102,6 +102,11 @@ function zaznamenat(c, nova) {
     if (text !== null) ZaznamenatOpravu(c.modelkaId, c.pole, c.hodnota, text).catch(() => false);
 }
 
+// Návrh, který soustředěný režim Údržby uložil s jinou hodnotou (opravený na místě), stejně jako po „Upravit…“
+export function zaznamenatOpravuNavrhu(n, nova) {
+    zaznamenat({ hodnota: String(n.hodnota ?? ''), inputId: n.inputId || '', modelkaId: n.modelkaId, pole: n.pole }, nova);
+}
+
 // Volá ulozeni.js po uložení modelky
 export function poUlozeniModelky(modelka) {
     const c = cekajici;

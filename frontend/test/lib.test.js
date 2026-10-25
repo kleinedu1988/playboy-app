@@ -340,6 +340,13 @@ test('kategorie modelek', () => {
     assert.equal(udajChybi({ role: '', centerfoldy: ['1995-03'], obalky: [] }, 'role'), false);
 });
 
+test('počet souborů Disku ve vloženém textu', async () => {
+    const { pocetOdkazuDisku } = await import('../src/lib/format.js');
+    const id = 'A'.repeat(28), id2 = 'B'.repeat(28);
+    assert.equal(pocetOdkazuDisku(`https://drive.google.com/file/d/${id}/view\nhttps://drive.google.com/open?id=${id2} ${id}`), 2);
+    assert.equal(pocetOdkazuDisku('bez odkazu'), 0);
+});
+
 test('výskyt modelky: časopis, jen online, neurčeno', () => {
     assert.equal(vyskytModelky({ vydani: ['1995-03'] }), 'casopis');
     assert.equal(vyskytModelky({ obalky: ['1996-S01-CZ'] }), 'casopis');

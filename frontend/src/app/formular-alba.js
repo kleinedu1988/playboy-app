@@ -1,7 +1,8 @@
 // Okno alba a centerfoldu
 import { oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteAlbum, GetFotografove } from './backend';
-import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, esc, jeOnline, nazevAlba, obdobiCyberGirl, rozlozitVydani, sjednotit } from '../lib/format';
+import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, esc, formatMarkdown, jeOnline, nazevAlba, nazevVydani, obdobiCyberGirl, pocetOdkazuDisku, popisTypuAlba, rozlozitVydani, sjednotit, sklonovat, slozitVydani } from '../lib/format';
+import { upravitText } from '../ui/editor-textu';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { nacistFotkyModelky } from './profil';
@@ -63,7 +64,7 @@ function nastavitTypAlba(typ, kde = kdeAlba) {
         b.setAttribute('aria-pressed', String(b.dataset.kde === kde));
     });
     document.getElementById('albumDruhy').innerHTML = druhyAlba(kde)
-        .map(([hodnota, popis]) => `<button type="button" class="chip ${hodnota === typ ? 'active' : ''}" data-druh="${esc(hodnota)}" aria-pressed="${hodnota === typ}">${esc(popis)}</button>`).join('');
+        .map(([hodnota, popis]) => `<button type="button" class="album-volba ${hodnota === typ ? 'active' : ''}" data-druh="${esc(hodnota)}" aria-pressed="${hodnota === typ}">${esc(popis)}</button>`).join('');
     prepnoutPoleAlba();
 }
 
@@ -86,6 +87,7 @@ export function prepnoutPoleAlba() {
     document.getElementById('albumMesicLabel').htmlFor = special ? 'selectAlbumSpecial' : 'selectAlbumMesic';
     document.getElementById('albumDatumGroup').classList.toggle('hidden', !online);
     ukazatTyden();
+    obnovitNahledAlba();
     // U pictorialu je vydání nepovinné
     // U pictorialu stačí i samotný rok
     document.getElementById('albumMesicLabel').textContent = (special ? 'Speciál' : 'Měsíc') + (centerfold ? '' : ' (nepovinné)');
@@ -94,6 +96,26 @@ export function prepnoutPoleAlba() {
     document.getElementById('selectAlbumMesic').required = centerfold && !special;
     document.getElementById('selectAlbumSpecial').required = centerfold && special;
     document.getElementById('inputAlbumRok').required = centerfold;
+}
+
+// Náhled „V profilu bude“, počet rozpoznaných fotek v odkazech a náhled průvodního textu
+export function obnovitNahledAlba() {
+    const hodnota = id => /** @type {HTMLInputElement} */ (document.getElementById(id)).value.trim();
+    const typ = hodnota('selectTyp');
+    const sCislem = !document.getElementById('albumVydaniGroup').classList.contains('hidden');
+    const vyberCisla = document.getElementById('selectAlbumSpecial').classList.contains('hidden') ? 'selectAlbumMesic' : 'selectAlbumSpecial';
+    const vydani = sCislem && /^\d{4}$/.test(hodnota('inputAlbumRok')) ? slozitVydani(hodnota('inputAlbumRok'), hodnota(vyberCisla), hodnota('selectAlbumEdice')) : '';
+    const datum = jeOnline(typ) ? hodnota('inputAlbumDatum') : '';
+    document.getElementById('albumNahledNazev').textContent = typ === 'Centerfold' ? 'Centerfold' : hodnota('inputAlbumName') || 'Bez názvu';
+    document.getElementById('albumNahledPopis').textContent = [popisTypuAlba(typ, datum), vydani && nazevVydani(vydani)].filter(Boolean).join(' · ');
+
+    const pocet = pocetOdkazuDisku(hodnota('inputBulkLinks'));
+    document.getElementById('albumPocetOdkazu').textContent = pocet ? `Rozpoznáno: ${sklonovat(pocet, 'fotka', 'fotky', 'fotek')}` : '';
+    document.getElementById('albumSubmitBtn').textContent = stav.editovaneAlbum ? 'Uložit album'
+        : pocet ? `Uložit ${sklonovat(pocet, 'fotku', 'fotky', 'fotek')}` : 'Uložit fotky';
+
+    const popis = hodnota('inputAlbumPopis');
+    document.getElementById('albumPopisNahled').innerHTML = popis ? formatMarkdown(popis) : '<span class="text-nahled-prazdny">Přidat průvodní text…</span>';
 }
 
 // Cyber Girl of the Week / Month: týden se spočítá z celého data nafocení, měsíc stačí z RRRR-MM
@@ -199,6 +221,22 @@ export function pripravit() {
         }
     });
     document.getElementById('inputAlbumDatum').addEventListener('input', ukazatTyden);
+    document.getElementById('addAlbumForm').addEventListener('input', obnovitNahledAlba);
+    document.getElementById('addAlbumForm').addEventListener('change', obnovitNahledAlba);
+
+    // Průvodní text ve společném okně s formátováním; změna se ohlásí jako úprava formuláře
+    document.getElementById('albumPopisBtn').addEventListener('click', async () => {
+        const pole = /** @type {HTMLTextAreaElement} */ (document.getElementById('inputAlbumPopis'));
+        const text = await upravitText({
+            nadpis: 'Průvodní text alba',
+            text: pole.value,
+            zastupny: 'Text, který album v časopise uvádí…',
+            napoveda: 'Formátování se ukazuje rovnou; značky (**tučné**, *kurzíva*) se objeví, jen když je v místě kurzor. Ctrl+B tučné, Ctrl+I kurzíva, Ctrl+Enter použije text.',
+        });
+        if (text === null || text === pole.value) return;
+        pole.value = text;
+        pole.dispatchEvent(new Event('input', { bubbles: true }));
+    });
 
     // Nápověda, že napsané jméno zatím ve sbírce není a uložením vznikne nová modelka
     document.getElementById('inputAlbumModelka').addEventListener('input', (e) => {

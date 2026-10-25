@@ -6,6 +6,7 @@ import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { VELIKOST_NAHLEDU } from './obrazky';
 import { potvrdit } from './formular-modelky';
+import { upravitText } from '../ui/editor-textu';
 import { obnovitStranku, otevritVydani, ukazatClanek } from './vydani';
 
 // Rubriky, které nabízí okno článku; vlastní rubrika jde dopsat
@@ -83,6 +84,7 @@ export async function otevritEditorClanku(clanek, vydani) {
     hodnota('selectClanekDruh', clanek?.druh);
     hodnota('inputClanekText', clanek?.text);
     hodnota('inputClanekSkeny', clanek?.skenyOdkazy);
+    ukazatTextClanku();
     document.getElementById('clanekSmazatBtn').classList.toggle('hidden', !clanek);
 
     // Našeptávání: rubriky (obvyklé i už použité), autoři čísla a jména modelek
@@ -94,11 +96,32 @@ export async function otevritEditorClanku(clanek, vydani) {
     document.getElementById('seznamModelekClanku').innerHTML = modelky.map(m => `<option value="${esc(m.jmeno)}"></option>`).join('');
 
     clanekModal.classList.remove('hidden');
-    document.getElementById(clanek ? 'inputClanekText' : 'inputClanekRubrika').focus();
+    document.getElementById(clanek ? 'clanekTextBtn' : 'inputClanekRubrika').focus();
+}
+
+// Náhled textu v okně článku (stejné formátování jako při čtení)
+function ukazatTextClanku() {
+    const text = /** @type {HTMLTextAreaElement} */ (document.getElementById('inputClanekText')).value;
+    document.getElementById('clanekTextNahled').innerHTML = text.trim() ? htmlTextuClanku(text) : '<span class="text-nahled-prazdny">Napsat text článku…</span>';
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    document.getElementById('clanekTextBtn').addEventListener('click', async () => {
+        const pole = /** @type {HTMLTextAreaElement} */ (document.getElementById('inputClanekText'));
+        const text = await upravitText({
+            nadpis: document.getElementById('inputClanekNazev').value.trim() || 'Text článku',
+            text: pole.value,
+            zastupny: 'První odstavec je perex…',
+            mluvci: true,
+            napoveda: 'Formátování se ukazuje rovnou; značky se objeví, jen když je v místě kurzor. První odstavec je perex, „PLAYBOY:“ na začátku řádku zvýrazní mluvčího. Ctrl+B tučné, Ctrl+I kurzíva, Ctrl+Enter použije text.',
+        });
+        if (text === null || text === pole.value) return;
+        pole.value = text;
+        pole.dispatchEvent(new Event('input', { bubbles: true }));
+        ukazatTextClanku();
+    });
+
     document.getElementById('modelHeader').addEventListener('click', (e) => {
         const clanek = e.target.closest('[data-clanek-cisla]');
         if (clanek) otevritClanek(clanek.dataset.clanekCisla, parseInt(clanek.dataset.id));

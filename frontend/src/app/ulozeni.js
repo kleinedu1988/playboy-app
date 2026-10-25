@@ -16,7 +16,7 @@ import { otevritProfilPodleId } from './cover';
 import { albumModal, modelModal } from './okno';
 import { neniDuplicitni } from './vyrez';
 import { deleteModal, otevritModelModal, poleModelky, potvrdit, ukazatZalozku, zameritPole, zavritDeleteModal } from './formular-modelky';
-import { vybratNeboZalozitModelku } from './formular-alba';
+import { obnovitNahledAlba, vybratNeboZalozitModelku } from './formular-alba';
 
 // Výběr nebo zadání jedné hodnoty s našeptáváním; vrací napsaný text, nebo null po zrušení
 export const pickModal = document.getElementById('pickModal');
@@ -66,7 +66,7 @@ export async function kopirovatText(text) {
 
 // Okna s formulářem: když v nich uživatel něco změnil, zavření se nejdřív zeptá, zda změny zahodit
 // Okna s formulářem: Esc, křížek nebo Zrušit se u rozepsaných změn zeptá (i článek a číslo, kde jde o dlouhý text)
-const oknaSFormularem = () => [modelModal, albumModal, document.getElementById('coverModal'), document.getElementById('clanekModal'), document.getElementById('issueModal'), document.getElementById('quickModal'), document.getElementById('doplnitModal')];
+const oknaSFormularem = () => [document.getElementById('textModal'), modelModal, albumModal, document.getElementById('coverModal'), document.getElementById('clanekModal'), document.getElementById('issueModal'), document.getElementById('quickModal'), document.getElementById('doplnitModal')];
 
 async function zavritRozepsane(okno) {
     if (!await potvrdit('Zahodit změny?', 'Rozepsané údaje v okně se neuloží.', 'Zahodit', { nebezpecne: true })) return;
@@ -273,6 +273,7 @@ export function pripravit() {
         if (e.submitter?.name === 'dalsi' && !stav.editovaneAlbum) {
             // Další album téže modelky: modelka, typ, fotograf a vydání zůstávají, vyprázdní se jen název, odkazy a text
             ['inputAlbumName', 'inputBulkLinks', 'inputAlbumPopis'].forEach(id => { document.getElementById(id).value = ''; });
+            obnovitNahledAlba();
             delete albumModal.dataset.zmeneno;
             document.getElementById(typ === 'Centerfold' ? 'inputBulkLinks' : 'inputAlbumName').focus();
         } else {

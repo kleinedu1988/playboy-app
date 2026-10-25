@@ -32,6 +32,7 @@ import * as ctecka from './app/ctecka';
 import * as naseptavac from './app/naseptavac';
 import * as statistiky from './app/statistiky';
 import * as zkratky from './app/zkratky';
+import * as editorTextu from './ui/editor-textu';
 import { stats } from './app/prvky';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
@@ -58,6 +59,7 @@ klavesnice.pripravit();
 napoveda.pripravit();
 doplneni.pripravit();
 clanky.pripravit();
+editorTextu.pripravit();
 ctecka.pripravit();
 naseptavac.pripravit();
 statistiky.pripravit(stats);

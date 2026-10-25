@@ -859,37 +859,6 @@ main {
     color: var(--text-muted);
 }
 
-.typ-alba-kde {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    border: 1px solid var(--border-color);
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 6px;
-}
-
-.typ-alba-kde button {
-    padding: 9px 12px;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    font: inherit;
-    cursor: pointer;
-}
-
-.typ-alba-kde button + button {
-    border-left: 1px solid var(--border-color);
-}
-
-.typ-alba-kde button:hover {
-    color: var(--text-main);
-}
-
-.typ-alba-kde button.active {
-    background: var(--accent);
-    color: #fff;
-}
-
 .typ-alba-druhy {
     display: flex;
     flex-wrap: wrap;
@@ -897,8 +866,306 @@ main {
 }
 
 .typ-alba-obdobi {
-    color: var(--accent);
+    color: var(--accent-text);
     font-weight: 600;
+}
+
+/* Okno alba (varianta A): vlevo typ a náhled, vpravo pole */
+.modal-card.album-okno {
+    width: min(860px, calc(100vw - 32px));
+    padding: 0;
+}
+
+.album-mrizka {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+}
+
+.album-bok {
+    padding: 24px 20px;
+    border-right: 1px solid var(--border-color);
+}
+
+.album-bok h3 {
+    margin: 0 0 6px;
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.album-krok {
+    display: block;
+    margin: 16px 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.album-volba {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-bottom: 2px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.album-volba::before {
+    content: "";
+    flex: none;
+    width: 14px;
+    height: 14px;
+    border: 2px solid #55555c;
+    border-radius: 50%;
+}
+
+.album-volba:hover {
+    color: var(--text-main);
+    background: var(--panel-hover);
+}
+
+.album-volba.active {
+    color: var(--text-main);
+    background: var(--accent-soft);
+}
+
+.album-volba.active::before {
+    border-color: var(--accent);
+    background: radial-gradient(var(--accent) 40%, transparent 45%);
+}
+
+.album-nahled {
+    margin-top: 18px;
+    padding: 12px;
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.album-nahled b {
+    display: block;
+    margin: 4px 0 2px;
+    color: var(--text-main);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.album-pole {
+    position: relative;
+    padding: 24px;
+    padding-top: 52px;
+    min-width: 0;
+}
+
+.album-pole > .close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+}
+
+.album-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.text-nahled.text-nahled-velky {
+    max-height: 220px;
+    min-height: 120px;
+}
+
+/* Údaj vpravo uvnitř pole (týden nebo měsíc z data nafocení) */
+.pole-s-info {
+    position: relative;
+}
+
+.pole-s-info input {
+    width: 100%;
+    padding-right: 150px;
+}
+
+.pole-s-info small {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+/* Náhled textu v okně (klik otevře editor); dlouhý text se zkrátí */
+.text-nahled {
+    display: block;
+    width: 100%;
+    max-height: 96px;
+    overflow: hidden;
+    padding: 8px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-main);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: text;
+    -webkit-mask-image: linear-gradient(#000 70%, transparent);
+}
+
+.text-nahled:hover {
+    border-color: var(--text-muted);
+}
+
+.text-nahled p {
+    margin: 0 0 6px;
+}
+
+.text-nahled-prazdny {
+    color: var(--text-muted);
+}
+
+@media (max-width: 760px) {
+    .album-mrizka {
+        grid-template-columns: 1fr;
+    }
+
+    .album-bok {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+}
+
+/* Společné okno pro text v markdownu s formátováním přímo v editoru */
+.modal-card.text-okno {
+    width: min(760px, calc(100vw - 32px));
+}
+
+.text-nastroje {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.text-nastroje span {
+    width: 10px;
+}
+
+.text-nastroje button {
+    min-width: 34px;
+    height: 32px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    cursor: pointer;
+}
+
+.text-nastroje button:hover {
+    border-color: var(--text-muted);
+    background: var(--panel-hover);
+}
+
+.text-editor {
+    height: min(52vh, 460px);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+}
+
+.text-editor .cm-editor {
+    height: 100%;
+    color: var(--text-main);
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.text-editor .cm-editor.cm-focused {
+    outline: none;
+}
+
+.text-editor:focus-within {
+    border-color: var(--accent);
+}
+
+.text-editor .cm-scroller {
+    padding: 10px 6px;
+    font-family: inherit;
+}
+
+.text-editor .cm-content {
+    caret-color: var(--accent-text);
+}
+
+.text-editor .cm-cursor {
+    border-left-color: var(--accent-text);
+}
+
+.text-editor .cm-selectionBackground,
+.text-editor .cm-focused .cm-selectionBackground,
+.text-editor .cm-content ::selection {
+    background: rgba(216, 27, 96, 0.35) !important;
+}
+
+.text-editor .cm-placeholder {
+    color: var(--text-muted);
+}
+
+.md-tucne {
+    font-weight: 700;
+}
+
+.md-kurziva {
+    font-style: italic;
+}
+
+.md-preskrtnute {
+    text-decoration: line-through;
+}
+
+.md-kod {
+    font-family: monospace;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+}
+
+.md-h1,
+.md-h2,
+.md-h3 {
+    font-weight: 600;
+}
+
+.md-h1 {
+    font-size: 1.4em;
+}
+
+.md-h2 {
+    font-size: 1.25em;
+}
+
+.md-h3 {
+    font-size: 1.1em;
+}
+
+.md-citat {
+    border-left: 3px solid var(--accent);
+    padding-left: 12px !important;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.md-odrazka {
+    color: var(--accent-text);
 }
 
 .form-row .form-group label {

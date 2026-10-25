@@ -302,93 +302,104 @@ export const SABLONA_OKNA = `
 
   <!-- Modal 2: Hromadné nahrání fotek do alba -->
   <div id="albumModal" class="modal-overlay hidden">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 id="albumModalTitle">Přidat fotky do alba</h3>
-        <button id="closeAlbumModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
-      </div>
-      <form id="addAlbumForm">
-        <!-- Modelka se vybírá jen tam, kde není daná (stěna, vydání, kalendář); neznámé jméno založí novou -->
-        <div id="albumModelkaGroup" class="form-group hidden">
-          <label for="inputAlbumModelka">Modelka</label>
-          <input type="text" id="inputAlbumModelka" list="seznamModelekAlba" autocomplete="off" placeholder="Začni psát jméno…" />
-          <datalist id="seznamModelekAlba"></datalist>
-          <small id="albumModelkaNova" class="field-hint"></small>
-        </div>
-        <!-- Typ alba ve dvou krocích: kde vyšlo (časopis, online, nikde) a druh; skutečný typ drží skrytý výběr -->
-        <div id="albumTypGroup" class="form-group typ-alba">
-          <span class="typ-alba-nadpis" id="albumKdeNadpis">Kde vyšlo</span>
-          <div class="typ-alba-kde" role="group" aria-labelledby="albumKdeNadpis">
-            <button type="button" data-kde="casopis" title="Album patří k číslu časopisu">Časopis</button>
-            <button type="button" data-kde="online" title="Pictorial jen na webu (Cyber Girl, Coed…)">Online</button>
-            <button type="button" data-kde="nikde" title="Album bez čísla i bez data">Nikde</button>
+    <!-- Varianta A: vlevo typ alba a náhled, vpravo jen pole, která zvolený typ potřebuje -->
+    <div class="modal-card album-okno">
+      <form id="addAlbumForm" class="album-mrizka">
+        <aside class="album-bok">
+          <h3 id="albumModalTitle">Přidat fotky do alba</h3>
+          <!-- Typ alba ve krocích: kde vyšlo (časopis, online, nikde), druh a u časopisu číslo; skutečný typ drží skrytý výběr -->
+          <div id="albumTypGroup" class="typ-alba">
+            <span class="album-krok" id="albumKdeNadpis">Kde vyšlo</span>
+            <div role="group" aria-labelledby="albumKdeNadpis">
+              <button type="button" class="album-volba" data-kde="casopis" title="Album patří k číslu časopisu">Časopis</button>
+              <button type="button" class="album-volba" data-kde="online" title="Pictorial jen na webu (Cyber Girl, Coed…)">Online</button>
+              <button type="button" class="album-volba" data-kde="nikde" title="Album bez čísla i bez data">Nikde</button>
+            </div>
+            <span class="album-krok" id="albumDruhNadpis">Druh</span>
+            <div id="albumDruhy" role="group" aria-labelledby="albumDruhNadpis"></div>
+            <div id="albumCisloGroup">
+              <span class="album-krok" id="albumCisloNadpis">Číslo</span>
+              <div role="group" aria-labelledby="albumCisloNadpis">
+                <button type="button" class="album-volba" data-cislo="mesic" title="Řádné měsíční číslo">Měsíční</button>
+                <button type="button" class="album-volba" data-cislo="special" title="Zvláštní číslo mimo měsíční řadu (Playmate Review, Lingerie…)">Speciál</button>
+              </div>
+            </div>
+            <select id="selectTyp" class="hidden" tabindex="-1" aria-hidden="true">
+              <option value="Pictorial">Pictorial</option>
+              <option value="Centerfold">Centerfold</option>
+              <option value="Pictorial online">Pictorial online</option>
+              <option value="Cyber Girl týdne">Cyber Girl týdne</option>
+              <option value="Cyber Girl měsíce">Cyber Girl měsíce</option>
+            </select>
           </div>
-          <span class="typ-alba-nadpis" id="albumDruhNadpis">Druh</span>
-          <div id="albumDruhy" class="typ-alba-druhy" role="group" aria-labelledby="albumDruhNadpis"></div>
-          <div id="albumCisloGroup">
-            <span class="typ-alba-nadpis" id="albumCisloNadpis">Číslo</span>
-            <div class="typ-alba-druhy" role="group" aria-labelledby="albumCisloNadpis">
-              <button type="button" class="chip" data-cislo="mesic" title="Řádné měsíční číslo">Měsíční</button>
-              <button type="button" class="chip" data-cislo="special" title="Zvláštní číslo mimo měsíční řadu (Playmate Review, Lingerie…)">Speciál</button>
+          <div class="album-nahled" aria-live="polite">V profilu bude:<b id="albumNahledNazev"></b><span id="albumNahledPopis"></span></div>
+        </aside>
+        <div class="album-pole">
+          <button type="button" id="closeAlbumModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
+          <!-- Modelka se vybírá jen tam, kde není daná (stěna, vydání, kalendář); neznámé jméno založí novou -->
+          <div id="albumModelkaGroup" class="form-group hidden">
+            <label for="inputAlbumModelka">Modelka</label>
+            <input type="text" id="inputAlbumModelka" list="seznamModelekAlba" autocomplete="off" placeholder="Začni psát jméno…" />
+            <datalist id="seznamModelekAlba"></datalist>
+            <small id="albumModelkaNova" class="field-hint"></small>
+          </div>
+          <div class="form-row">
+            <div id="albumNazevGroup" class="form-group">
+              <label for="inputAlbumName">Název alba</label>
+              <input type="text" id="inputAlbumName" placeholder="např. Summer Heat" required />
+            </div>
+            <div class="form-group">
+              <label for="inputAlbumFotograf">Fotograf (nepovinné)</label>
+              <input type="text" id="inputAlbumFotograf" list="seznamFotografu" autocomplete="off" />
+              <datalist id="seznamFotografu"></datalist>
             </div>
           </div>
-          <select id="selectTyp" class="hidden" tabindex="-1" aria-hidden="true">
-            <option value="Pictorial">Pictorial</option>
-            <option value="Centerfold">Centerfold</option>
-            <option value="Pictorial online">Pictorial online</option>
-            <option value="Cyber Girl týdne">Cyber Girl týdne</option>
-            <option value="Cyber Girl měsíce">Cyber Girl měsíce</option>
-          </select>
-        </div>
-        <div id="albumNazevGroup" class="form-group">
-          <label for="inputAlbumName">Název alba</label>
-          <input type="text" id="inputAlbumName" placeholder="např. Pictorial 1995-04" required />
-        </div>
-        <div class="form-group">
-          <label for="inputAlbumFotograf">Fotograf (nepovinné)</label>
-          <input type="text" id="inputAlbumFotograf" list="seznamFotografu" autocomplete="off" />
-          <datalist id="seznamFotografu"></datalist>
-        </div>
-        <!-- Centerfold nemá název, určuje ho vydání časopisu; pictorial může k vydání patřit volitelně -->
-        <div id="albumVydaniGroup" class="form-row form-row-3 hidden">
-          <div class="form-group">
-            <label id="albumMesicLabel" for="selectAlbumMesic">Měsíc vydání</label>
-            <select id="selectAlbumMesic">
-              <option value="">Vyber měsíc</option>
-              ${moznostiMesicu()}
-            </select>
-            <select id="selectAlbumSpecial" class="hidden">
-              <option value="">Vyber speciál</option>
-            </select>
+          <!-- Centerfold nemá název, určuje ho vydání časopisu; pictorial může k vydání patřit volitelně -->
+          <div id="albumVydaniGroup" class="form-row form-row-3 hidden">
+            <div class="form-group">
+              <label id="albumMesicLabel" for="selectAlbumMesic">Měsíc vydání</label>
+              <select id="selectAlbumMesic">
+                <option value="">Vyber měsíc</option>
+                ${moznostiMesicu()}
+              </select>
+              <select id="selectAlbumSpecial" class="hidden">
+                <option value="">Vyber speciál</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label id="albumRokLabel" for="inputAlbumRok">Rok vydání</label>
+              <input type="number" id="inputAlbumRok" min="1953" max="2100" placeholder="RRRR" />
+            </div>
+            <div class="form-group">
+              <label for="selectAlbumEdice">Edice</label>
+              <select id="selectAlbumEdice">${EDICE.map(e => `<option>${e}</option>`).join('')}</select>
+            </div>
+          </div>
+          <!-- Online album nepatří k číslu časopisu; datum nafocení je jen údaj alba (ne vydání ani titulní fotka) -->
+          <div id="albumDatumGroup" class="form-group hidden">
+            <label for="inputAlbumDatum">Nafoceno (nepovinné)</label>
+            <div class="pole-s-info">
+              <input type="text" id="inputAlbumDatum" placeholder="RRRR-MM-DD" autocomplete="off" />
+              <small id="albumTydenInfo" class="typ-alba-obdobi"></small>
+            </div>
+            <small class="field-hint">Kdy bylo album nafoceno nebo zveřejněno online: RRRR-MM-DD, RRRR-MM nebo jen rok. Jen informace u alba – nepřiřadí ho k vydání ani nezmění titulní fotku.</small>
           </div>
           <div class="form-group">
-            <label id="albumRokLabel" for="inputAlbumRok">Rok vydání</label>
-            <input type="number" id="inputAlbumRok" min="1953" max="2100" placeholder="RRRR" />
+            <label id="bulkLinksLabel" for="inputBulkLinks">Vlož odkazy z Google Disku (libovolné množství)</label>
+            <textarea id="inputBulkLinks" rows="4" placeholder="Vlož zkopírované odkazy z Disku (i více naráz)…" required></textarea>
+            <small id="albumPocetOdkazu" class="field-hint"></small>
           </div>
+          <!-- Průvodní text se píše ve společném okně s formátováním (app/ui/editor-textu.js); hodnota je ve skrytém poli -->
           <div class="form-group">
-            <label for="selectAlbumEdice">Edice</label>
-            <select id="selectAlbumEdice">${EDICE.map(e => `<option>${e}</option>`).join('')}</select>
+            <span class="album-label">Průvodní text (nepovinné)</span>
+            <button type="button" id="albumPopisBtn" class="text-nahled" title="Upravit průvodní text"><span id="albumPopisNahled"></span></button>
+            <textarea id="inputAlbumPopis" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
           </div>
-        </div>
-        <!-- Online album nepatří k číslu časopisu; datum nafocení je jen údaj alba (ne vydání ani titulní fotka) -->
-        <div id="albumDatumGroup" class="form-group hidden">
-          <label for="inputAlbumDatum">Nafoceno (nepovinné)</label>
-          <input type="text" id="inputAlbumDatum" placeholder="RRRR-MM-DD" autocomplete="off" />
-          <small class="field-hint">Kdy bylo album nafoceno nebo zveřejněno online: RRRR-MM-DD, RRRR-MM nebo jen rok. Jen informace u alba – nepřiřadí ho k vydání ani nezmění titulní fotku.</small>
-          <small id="albumTydenInfo" class="typ-alba-obdobi"></small>
-        </div>
-        <div class="form-group">
-          <label id="bulkLinksLabel" for="inputBulkLinks">Vlož odkazy z Google Disku (libovolné množství)</label>
-          <textarea id="inputBulkLinks" rows="3" placeholder="Vlož zkopírované odkazy z Disku (i více naráz)…" required></textarea>
-        </div>
-        <div class="form-group">
-          <label for="inputAlbumPopis">Průvodní text alba (nepovinné)</label>
-          <textarea id="inputAlbumPopis" rows="3" placeholder="Text, který album v časopise uvádí (markdown: **tučné**, *kurzíva*, odrážky)"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
-          <button type="submit" id="albumNextBtn" name="dalsi" value="1" class="btn btn-secondary" title="Okno zůstane otevřené a podrží modelku, fotografa a vydání">Uložit a přidat další</button>
-          <button type="submit" id="albumSubmitBtn" class="btn btn-primary">Uložit fotky</button>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
+            <button type="submit" id="albumNextBtn" name="dalsi" value="1" class="btn btn-secondary" title="Okno zůstane otevřené a podrží modelku, fotografa a vydání">Uložit a přidat další</button>
+            <button type="submit" id="albumSubmitBtn" class="btn btn-primary">Uložit fotky</button>
+          </div>
         </div>
       </form>
     </div>
@@ -742,6 +753,7 @@ export const SABLONA_OKNA = `
           <li><strong>Kategorie</strong> modelky (Playmate roku, Cyber Girl, Coed, Muse, Celebrita, Jen ve speciálu, Creator, Online) se volí štítky v „Upravit modelku…“; Playmate měsíce, Cyber Girl a Modelku obálky program pozná sám z centerfoldu, online alba (Pictorial online; jen když není zapsaná jiná online kategorie, třeba Coed) a obálky. Proužek v rohu fotky profilu ukáže u centerfoldu „Playmate · měsíc“, u online alb „Cyber Girl“, nebo „Online“, když modelka Cyber Girl není (klik přejde na album). Podle kategorie filtruje galerie (Filtry) a hledání <code>kategorie:</code>.</li>
           <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online) nebo s online albem; ostatní jsou <em>neurčené</em>. Album typu <em>Pictorial online</em> je pictorial jen na webu: v okně alba nemá vydání, ale pole <em>Nafoceno</em> (RRRR-MM-DD, RRRR-MM nebo rok). Typ alba se v okně volí ve dvou řadách: <em>Kde vyšlo</em> (Časopis, Online, Nikde) a <em>Druh</em> – u časopisu Pictorial nebo Centerfold a řada <em>Číslo</em> (Měsíční, nebo Speciál s vlastním výběrem speciálů roku a volbou „Nový speciál…“), u online Pictorial, Cyber Girl of the Week nebo of the Month, „Nikde“ je pictorial bez čísla i data. <em>Cyber Girl of the Week</em> spočítá z celého data týden v roce (nadpis alba „Cyber Girl týdne · 24. týden 2004“), <em>of the Month</em> vezme z data měsíc („Cyber Girl měsíce · červen 2004“); modelka dostane kategorii Cyber Girl týdne, nebo měsíce. Datum je jen informace u alba – album nepřiřadí k vydání ani do kalendáře a nemění titulní fotku modelky. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; po najetí myší se ukáže jméno modelky a odkud fotka je.</li>
+          <li><strong>Psaní textu</strong> (průvodní text alba, text článku): klik na náhled textu otevře okno editoru. Text se ukazuje rovnou naformátovaný – tučně, kurzívou, nadpisy, citáty; značky markdownu (<code>**</code>, <code>*</code>, <code>#</code>, <code>&gt;</code>) se objeví, jen když je kurzor v daném místě. Tlačítka nahoře nebo Ctrl+B / Ctrl+I formátují výběr, Enter v odrážkách pokračuje další odrážkou, Ctrl+Enter text použije.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>
           <li><strong>Články modelky</strong> (rozhovor, 20 otázek…) jsou v jejím profilu jako poslední blok vlevo; klik otevře číslo rovnou na článku.</li>
@@ -803,8 +815,12 @@ export const SABLONA_OKNA = `
               <div class="doplnit-pole"><label for="selectClanekDruh">Druh textu</label>
                 <select id="selectClanekDruh"><option value="">Neuvedeno</option><option value="prepis">Přepis</option><option value="shrnuti">Shrnutí</option></select></div>
             </div>
-            <div class="doplnit-pole"><textarea id="inputClanekText" rows="10" aria-label="Text článku"></textarea></div>
-            <p class="doplnit-napoveda">Markdown: **tučné**, *kurzíva*, odrážky (* nebo -), citát (&gt;). První odstavec je perex, dvojtečka za jménem (PLAYBOY:) zvýrazní mluvčího.</p>
+            <!-- Text se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
+            <div class="doplnit-pole">
+              <button type="button" id="clanekTextBtn" class="text-nahled text-nahled-velky" title="Upravit text článku"><span id="clanekTextNahled"></span></button>
+              <textarea id="inputClanekText" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
+            </div>
+            <p class="doplnit-napoveda">Klik na text otevře editor. První odstavec je perex, dvojtečka za jménem (PLAYBOY:) zvýrazní mluvčího.</p>
           </section>
           <section class="doplnit-blok">
             <h4>Skeny stran (nepovinné)</h4>
@@ -821,6 +837,34 @@ export const SABLONA_OKNA = `
       <datalist id="seznamRubrik"></datalist>
       <datalist id="seznamAutoru"></datalist>
       <datalist id="seznamModelekClanku"></datalist>
+    </div>
+  </div>
+
+  <!-- Společné okno pro text v markdownu (průvodní text alba, text článku); editor ukazuje text naformátovaný -->
+  <div id="textModal" class="modal-overlay hidden">
+    <div class="modal-card text-okno">
+      <div class="modal-header">
+        <h3 id="textModalTitle">Text</h3>
+        <button type="button" class="close-btn" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
+      </div>
+      <div class="text-nastroje" role="toolbar" aria-label="Formátování">
+        <button type="button" data-nastroj="tucne" title="Tučné (Ctrl+B)"><b>B</b></button>
+        <button type="button" data-nastroj="kurziva" title="Kurzíva (Ctrl+I)"><i>I</i></button>
+        <button type="button" data-nastroj="preskrtnute" title="Přeškrtnuté"><s>S</s></button>
+        <span></span>
+        <button type="button" data-nastroj="nadpis" title="Nadpis">H</button>
+        <button type="button" data-nastroj="odrazky" title="Odrážky">•</button>
+        <button type="button" data-nastroj="cisla" title="Číslovaný seznam">1.</button>
+        <button type="button" data-nastroj="citat" title="Citát">„“</button>
+        <span></span>
+        <button type="button" data-nastroj="zpet" title="Zpět (Ctrl+Z)">↶</button>
+      </div>
+      <div id="textEditor" class="text-editor"></div>
+      <p id="textModalNapoveda" class="doplnit-napoveda"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" data-zavrit>Zrušit</button>
+        <button type="button" id="textUlozitBtn" class="btn btn-primary" title="Ctrl+Enter">Použít</button>
+      </div>
     </div>
   </div>
 

@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.17] – 2026-10-25
+
+### Změněno
+- **Okno alba ve dvou sloupcích** (varianta A): vlevo se volí Kde vyšlo, Druh a u časopisu Číslo (přepínače pod sebou) a pod nimi je náhled „V profilu bude: …“ s názvem a popisem alba, jak se ukáže v profilu. Vpravo jsou jen pole, která zvolený typ potřebuje; týden nebo měsíc Cyber Girl je vidět přímo v poli Nafoceno. Pod odkazy je počet rozpoznaných fotek a tlačítko ukazuje „Uložit 12 fotek“. V úzkém okně jsou sloupce pod sebou.
+
+### Přidáno
+- **Společné okno pro psaní textu** – průvodní text alba i text článku. Text je vidět rovnou naformátovaný (tučně, kurzíva, přeškrtnutí, nadpisy, citáty, odrážky, u článku mluvčí „PLAYBOY:“); značky markdownu se objeví, jen když je kurzor v daném místě. Lišta nástrojů, Ctrl+B / Ctrl+I, Enter v odrážkách pokračuje další odrážkou (na prázdné odrážce seznam ukončí), Ctrl+Enter text použije, Esc s rozepsaným textem se zeptá „Zahodit změny?“. V okně alba a článku je místo pole náhled textu; klik na něj otevře editor. Editor stojí na knihovně CodeMirror 6 (nová závislost rozhraní).
+
 ## [0.99.16] – 2026-10-25
 
 ### Změněno

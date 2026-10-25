@@ -414,6 +414,40 @@ export namespace main {
 	        this.relevance = source["relevance"];
 	    }
 	}
+	export class NavrhDoplneni {
+	    modelkaId: number;
+	    jmeno: string;
+	    album: string;
+	    typ: string;
+	    pole: string;
+	    popis: string;
+	    hodnota: string;
+	    jistota: number;
+	    duvod: string;
+	    klic: string;
+	    inputId: string;
+	    odmitnuto: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new NavrhDoplneni(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	        this.pole = source["pole"];
+	        this.popis = source["popis"];
+	        this.hodnota = source["hodnota"];
+	        this.jistota = source["jistota"];
+	        this.duvod = source["duvod"];
+	        this.klic = source["klic"];
+	        this.inputId = source["inputId"];
+	        this.odmitnuto = source["odmitnuto"];
+	    }
+	}
 	
 	export class VyberFotky {
 	    vyberId: number;
@@ -587,6 +621,7 @@ export namespace main {
 	    vydaniBezCenterfoldu: string[];
 	    rocniky: RocnikPrehledu[];
 	    podezrele: PodezrelyUdaj[];
+	    navrhu: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Prehled(source);
@@ -611,6 +646,7 @@ export namespace main {
 	        this.vydaniBezCenterfoldu = source["vydaniBezCenterfoldu"];
 	        this.rocniky = this.convertValues(source["rocniky"], RocnikPrehledu);
 	        this.podezrele = this.convertValues(source["podezrele"], PodezrelyUdaj);
+	        this.navrhu = source["navrhu"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

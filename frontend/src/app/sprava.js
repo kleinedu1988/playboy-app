@@ -360,6 +360,7 @@ export const NAZVY_ZALOH = {
     'pred-migraci': 'Před úpravou databáze',
     'pred-sloucenim': 'Před sloučením alb',
     'pred-sloucenim-modelek': 'Před sloučením modelek',
+    'pred-prijetim-navrhu': 'Před přijetím návrhů',
 };
 export const backupModal = document.getElementById('backupModal');
 export const casZalohy = z => `${formatDatum(z.cas.slice(0, 10))} ${z.cas.slice(11, 16)}`;

@@ -193,6 +193,8 @@ type Prehled struct {
 	Rocniky              []RocnikPrehledu `json:"rocniky"`
 
 	Podezrele []PodezrelyUdaj `json:"podezrele"`
+	// Počet návrhů doplnění chybějících údajů (navrhy.go), bez odmítnutých
+	Navrhu int `json:"navrhu"`
 }
 
 // vcetneSkrytych: i položky označené „netýká se" (s příznakem), aby šlo označení zrušit
@@ -249,6 +251,8 @@ func (a *App) GetPrehled(vcetneSkrytych bool) Prehled {
 
 	// Údaje ke kontrole (kontrola.go)
 	p.Podezrele = a.kontrolovatSbirku(modelky, vcetneSkrytych)
+	// Návrhy doplnění (navrhy.go); v Přehledu jen jejich počet
+	p.Navrhu = len(a.navrhyDoplneni(modelky, false))
 
 	// Centerfold sdíleného alba patří i dalším modelkám
 	if radky, err := a.db.Query("SELECT am.modelka_id FROM alba_modelky am JOIN alba al ON al.id = am.album_id WHERE al.typ = 'Centerfold'"); err == nil {

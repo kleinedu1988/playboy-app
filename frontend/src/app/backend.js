@@ -19,6 +19,7 @@ const CTENI = new Set([
     'HledatTexty',
     'GetKalendar',
     'GetModelky',
+    'GetNavrhyDoplneni',
     'GetNejlepsiFotky',
     'GetPrehled',
     'GetPrehledVydani',
@@ -76,6 +77,7 @@ export const GetFotografieModelky = /** @type {typeof App.GetFotografieModelky} 
 export const GetFotografove = /** @type {typeof App.GetFotografove} */ (obalit('GetFotografove'));
 export const GetKalendar = /** @type {typeof App.GetKalendar} */ (obalit('GetKalendar'));
 export const GetModelky = /** @type {typeof App.GetModelky} */ (obalit('GetModelky'));
+export const GetNavrhyDoplneni = /** @type {typeof App.GetNavrhyDoplneni} */ (obalit('GetNavrhyDoplneni'));
 export const GetNejlepsiFotky = /** @type {typeof App.GetNejlepsiFotky} */ (obalit('GetNejlepsiFotky'));
 export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehled'));
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));
@@ -94,6 +96,7 @@ export const ObnovitZalohu = /** @type {typeof App.ObnovitZalohu} */ (obalit('Ob
 export const OdebratFotky = /** @type {typeof App.OdebratFotky} */ (obalit('OdebratFotky'));
 export const OdebratModelkuZAlba = /** @type {typeof App.OdebratModelkuZAlba} */ (obalit('OdebratModelkuZAlba'));
 export const OdebratZVyberu = /** @type {typeof App.OdebratZVyberu} */ (obalit('OdebratZVyberu'));
+export const OdmitnoutNavrh = /** @type {typeof App.OdmitnoutNavrh} */ (obalit('OdmitnoutNavrh'));
 export const Odemknout = /** @type {typeof App.Odemknout} */ (obalit('Odemknout'));
 export const OveritOdkaz = /** @type {typeof App.OveritOdkaz} */ (obalit('OveritOdkaz'));
 export const PrejmenovatFotografa = /** @type {typeof App.PrejmenovatFotografa} */ (obalit('PrejmenovatFotografa'));
@@ -101,6 +104,8 @@ export const PrejmenovatTag = /** @type {typeof App.PrejmenovatTag} */ (obalit('
 export const PrejmenovatVyber = /** @type {typeof App.PrejmenovatVyber} */ (obalit('PrejmenovatVyber'));
 export const PresunoutAlbum = /** @type {typeof App.PresunoutAlbum} */ (obalit('PresunoutAlbum'));
 export const PresunoutFotky = /** @type {typeof App.PresunoutFotky} */ (obalit('PresunoutFotky'));
+export const PrijmoutNavrh = /** @type {typeof App.PrijmoutNavrh} */ (obalit('PrijmoutNavrh'));
+export const PrijmoutNavrhy = /** @type {typeof App.PrijmoutNavrhy} */ (obalit('PrijmoutNavrhy'));
 export const PridatDoVyberu = /** @type {typeof App.PridatDoVyberu} */ (obalit('PridatDoVyberu'));
 export const PridatModelkuKAlbu = /** @type {typeof App.PridatModelkuKAlbu} */ (obalit('PridatModelkuKAlbu'));
 export const SetCoverVyrez = /** @type {typeof App.SetCoverVyrez} */ (obalit('SetCoverVyrez'));

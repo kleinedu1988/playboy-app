@@ -86,6 +86,10 @@ export function GetModelky(arg1) {
   return window['go']['main']['App']['GetModelky'](arg1);
 }
 
+export function GetNavrhyDoplneni(arg1) {
+  return window['go']['main']['App']['GetNavrhyDoplneni'](arg1);
+}
+
 export function GetNejlepsiFotky(arg1) {
   return window['go']['main']['App']['GetNejlepsiFotky'](arg1);
 }
@@ -182,6 +186,10 @@ export function Odemknout(arg1) {
   return window['go']['main']['App']['Odemknout'](arg1);
 }
 
+export function OdmitnoutNavrh(arg1, arg2) {
+  return window['go']['main']['App']['OdmitnoutNavrh'](arg1, arg2);
+}
+
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
 }
@@ -212,6 +220,14 @@ export function PridatDoVyberu(arg1, arg2) {
 
 export function PridatModelkuKAlbu(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PridatModelkuKAlbu'](arg1, arg2, arg3, arg4);
+}
+
+export function PrijmoutNavrh(arg1) {
+  return window['go']['main']['App']['PrijmoutNavrh'](arg1);
+}
+
+export function PrijmoutNavrhy(arg1) {
+  return window['go']['main']['App']['PrijmoutNavrhy'](arg1);
 }
 
 export function SetCoverVyrez(arg1, arg2, arg3, arg4) {

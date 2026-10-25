@@ -44,6 +44,8 @@ export function GetKalendar():Promise<Array<main.VydaniKalendare>>;
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
+export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<main.NavrhDoplneni>>;
+
 export function GetNejlepsiFotky(arg1:number):Promise<Array<main.Fotografie>>;
 
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
@@ -92,6 +94,8 @@ export function OdebratZVyberu(arg1:number,arg2:Array<number>):Promise<boolean>;
 
 export function Odemknout(arg1:string):Promise<boolean>;
 
+export function OdmitnoutNavrh(arg1:main.NavrhDoplneni,arg2:boolean):Promise<boolean>;
+
 export function OveritOdkaz(arg1:string):Promise<number>;
 
 export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
@@ -107,6 +111,10 @@ export function PresunoutFotky(arg1:Array<number>,arg2:number,arg3:string,arg4:s
 export function PridatDoVyberu(arg1:number,arg2:Array<number>):Promise<number>;
 
 export function PridatModelkuKAlbu(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
+
+export function PrijmoutNavrh(arg1:main.NavrhDoplneni):Promise<boolean>;
+
+export function PrijmoutNavrhy(arg1:Array<main.NavrhDoplneni>):Promise<number>;
 
 export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):Promise<boolean>;
 

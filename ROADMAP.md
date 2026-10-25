@@ -110,7 +110,7 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 **Výjimka z bety:** kategorie modelek (0.91.0), lišta Přehledu nahoře a přepracované Statistiky s výběrem
 modelek po kliknutí (0.92.x) výskyt modelky v časopise nebo jen online (0.93.0) spojení Čísel s Kalendářem (0.94.0) a Statistiky jako jeden graf se seznamem modelek (0.95.0, 0.96.0, 0.98.0) Kontrola s pravidly a „V pořádku“ (0.97.0) a části Přehledu v nabídce tlačítka Přehled (0.99.x) přibyly 22. 10. 2026 na přání uživatele ještě před 1.0; schéma ani formát exportu
 se nezměnily. Jedinou výjimkou se změnou schématu jsou **online pictorialy (0.99.9, 24. 10.)**: úprava databáze
-č. 12 a export verze 8 (krok 1–2 z 1.23). Další výjimky (bez změny schématu): Cyber Girl, nová okna a editor textu (0.99.12–0.99.18) a návrhy doplnění v Údržbě (0.99.19, 25. 10.), přepracovaná Údržba a vlastní databáze učení (0.99.22), boční filtry a soustředěný režim Údržby (0.99.23, 25. 10.). Lhůta níže proto běží od 0.99.23; nejdřív 8. 11. 2026.
+č. 12 a export verze 8 (krok 1–2 z 1.23). Další výjimky (bez změny schématu): Cyber Girl, nová okna a editor textu (0.99.12–0.99.18) a návrhy doplnění v Údržbě (0.99.19, 25. 10.), přepracovaná Údržba a vlastní databáze učení (0.99.22), boční filtry a soustředěný režim Údržby (0.99.23, 25. 10.), režimy Údržby (0.99.25). Druhou výjimkou se změnou schématu je **hodnocení po půlsrdíčkách s porovnáváním dvojic a modelem vkusu (0.99.26, 25. 10.)**: úprava databáze č. 13 a export verze 9. Lhůta níže proto běží od 0.99.26; nejdřív 8. 11. 2026.
 
 **Pravidlo:** 1.0.0 vyjde po **14 dnech běžného používání bety bez nové chyby**. Lhůta běží od vydání bety
 (21. 10. 2026); každá nová chyba zapsaná v `PLAN.md` (oddíl „Chyby z bety“) ji po opravě spustí znovu od
@@ -140,6 +140,7 @@ sloučení), proto se část opakuje:
 - [ ] Zamčený program neukazuje pole hledání
 - [ ] Nová okna (modelka, album, cover, číslo, článek) a editor textu: psaní s diakritikou, náhledy z Disku (0.99.18)
 - [ ] Údržba (0.99.22): hlavička s úplností, „Co doplnit dál“, filtry, hledání, klávesy, panel „Co se program naučil“, vznikne playboy-uceni.db vedle sbírky
+- [ ] Hodnocení (0.99.26): první spuštění vytvoří zálohu `*-pred-migraci.db` a srdíčka zůstanou; půlsrdíčka klikem na levou půlku i klávesou (stejná číslice znovu); Přehled → Oblíbenost: porovnávání ←/→/↓/Backspace, Pořadí, Mohlo by se ti líbit; řazení galerie podle oblíbenosti; export a import s půlkami
 - [ ] Údržba (0.99.25): režimy Po údajích (Enter uloží a jde dolů, Delete netýká se), Po modelkách (Ctrl+Enter), Souhrn; pamatuje si režim
 - [ ] Údržba → Návrhy: návrhy dávají smysl na skutečné sbírce, Přijmout / Odmítnout / Vrátit, hromadné přijetí udělá zálohu (0.99.19)
 - [ ] Online pictorialy: první spuštění 0.99.9 nad sbírkou vytvoří zálohu `*-pred-migraci.db`; v okně alba typ
@@ -377,21 +378,21 @@ jednou denně.
 ### 1.9 – Kvalita dat **[schéma]**
 
 **Cíl:** chyby a nejednotné zápisy se najdou v Údržbě i přímo při zadávání; alba mají vlastní titulní fotku.
-Úprava schématu č. 13 a export verze 9 (krok 2; č. 12 a export 8 použily online pictorialy v 0.99.9); ostatní kroky schéma nemění. Každý krok vyjde jako
+Úprava schématu č. 14 a export verze 10 (krok 2; č. 12 a export 8 použily online pictorialy v 0.99.9, č. 13 a export 9 půlsrdíčka v 0.99.26); ostatní kroky schéma nemění. Každý krok vyjde jako
 samostatná verze (1.9.0–1.9.3). Rozpracování: [PLAN-1X-DATA.md](docs/PLAN-1X-DATA.md).
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | Sjednocení zápisů | `GetRuzneZapisy`: fotograf (dělený čárkou), národnost, místo narození, vlasy, oči, etnicita, tagy – stejné bez diakritiky, Jaro–Winkler ≥ 0,92, iniciála, prohozené pořadí; filtr „Zápisy“ v Údržbě, „Sjednotit na …“ se zálohou, „Různí lidé“ v `nastaveni`; oprava `PrejmenovatFotografa` a `GetAlbaFotografa` pro víc fotografů v poli | M |
-| 2 | Titulní fotka alba a nové klíče **[schéma]** | Úprava č. 13: `alba.titulni` (ID souboru), `vydani.netyka_se`, `modelky.upraveno` (datum poslední úpravy – „Naposledy upravené“ v galerii a řazení, bez historie změn); klíče `fotograf` (album) a `obalka` (číslo); nabídka fotky „Nastavit jako titulní fotku alba“, použití na stránce fotografa a ročníku; export 9 (`titulni_fotka`, `netyka_se` u čísla), `EXPORT.md`, test verze dat a přechodu ze starých verzí | S–M |
+| 2 | Titulní fotka alba a nové klíče **[schéma]** | Úprava č. 14: `alba.titulni` (ID souboru), `vydani.netyka_se`, `modelky.upraveno` (datum poslední úpravy – „Naposledy upravené“ v galerii a řazení, bez historie změn); klíče `fotograf` (album) a `obalka` (číslo); nabídka fotky „Nastavit jako titulní fotku alba“, použití na stránce fotografa a ročníku; export 10 (`titulni_fotka`, `netyka_se` u čísla), `EXPORT.md`, test verze dat a přechodu ze starých verzí | S–M |
 | 3 | Nové úkoly v Údržbě | Playmate bez data narození (vlastní filtr, vyšší váha), číslo s coverem bez modelky z obálky, centerfold a pictorial bez fotografa; „Netýká se“ s novými klíči; řádky v souhrnu úvodu | M |
 | 4 | Kontrola při zadávání | `PodobneModelky` při psaní jména (práh 0,88, nejvýš 3 s fotkou), „Myslel jsi …?“ u fotografa a národnosti, `ZkontrolovatModelku` po uložení s oznámením a Opravit; „Sloučit…“ u nálezu podobného jména | M |
 
 **Hotovo, když:** varianty fotografa jdou sjednotit jedním klikem a album se dvěma fotografy je na obou
 stránkách; titulní fotka alba se ukazuje na stránce fotografa a ročníku; nové úkoly jdou doplnit i označit
 „Netýká se“; překlep ve jméně existující modelky se ukáže při psaní a výška 17 cm hned po uložení; přechod
-na úpravu č. 13 projde ze všech starých verzí, export 9 → import vrátí totéž, 1.7 otevře novou databázi jen pro
-čtení a export 9 odmítne srozumitelnou hláškou.
+na úpravu č. 14 projde ze všech starých verzí, export 10 → import vrátí totéž, 1.7 otevře novou databázi jen pro
+čtení a export 10 odmítne srozumitelnou hláškou.
 
 ### 1.23 – Online pictorialy (kroky 1–2 hotové v 0.99.9, krok 3 hned za 1.9)
 
@@ -752,8 +753,8 @@ kopie se najde, fotky z jiných focení ne; smazání `otisky.tsv` jen spustí p
 
 ### 2.7 – Chytré výběry **[schéma]**
 
-**Cíl:** výběr, který se plní sám podle uloženého hledání. Úprava schématu č. 13 (`vybery.dotaz`),
-export 9 (`vybery[].dotaz`).
+**Cíl:** výběr, který se plní sám podle uloženého hledání. Úprava schématu č. 14 (`vybery.dotaz`),
+export 10 (`vybery[].dotaz`).
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|

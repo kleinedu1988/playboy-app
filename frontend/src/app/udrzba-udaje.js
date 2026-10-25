@@ -16,6 +16,8 @@ import { chybaPoli, hodnotaModelky, hodnotaNavrhuPole, ulozitPoleModelky, vlastn
 import { pridatNapovedu } from './udrzba-fokus';
 import { upravitText } from '../ui/editor-textu';
 import { nastavitHtml } from '../ui/dom';
+import { htmlSrdicekModelky, obnovitSrdickaModelky } from '../ui/srdicka';
+import { hodnotaPoKlavese, textSrdicek } from '../lib/srdicka';
 import { oznamit } from '../ui/oznameni';
 import * as navrhy from './navrhy';
 import * as uceni from './uceni';
@@ -214,9 +216,11 @@ function postavitRadek(u, r, i) {
                 <button type="button" class="nv-tlacitko nv-prijmout" data-uu-akce="hlavni">Opravit…</button>`;
         }
     } else if (u.druh === 'hodnoceni') {
-        obsah.innerHTML = `<div class="ud-vstup uu-srdicka" data-uu-hodnoceni data-hodnota="0" tabindex="0" role="group" aria-label="Hodnocení – ${esc(s.jmeno)} (klávesy 1–5)">
-            <span class="hearts">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="heart" data-uu-srdce="${n}" tabindex="-1" title="${n} z 5 (uloží hned)" aria-label="${n} z 5"></button>`).join('')}</span>
-            <small class="ud-napoveda tlumena">klávesy 1–5</small></div>`;
+        // Srdíčka po půlkách: klik na levou půlku dá x,5 a uloží hned, klávesy jen nastaví (uloží Enter)
+        obsah.innerHTML = `<div class="ud-vstup uu-srdicka" data-uu-hodnoceni data-hodnota="0" tabindex="0" role="slider" aria-valuemin="0" aria-valuemax="5"
+            aria-valuenow="0" aria-valuetext="${textSrdicek(0)}" aria-label="Hodnocení – ${esc(s.jmeno)} (klávesy 1–5, stejná znovu přidá půlku)">
+            ${htmlSrdicekModelky(0, '', { posuvnik: false, atributPulky: 'data-uu-srdce' })}
+            <small class="ud-napoveda tlumena">1–5, znovu ½</small></div>`;
     } else if (u.druh === 'vydaniAlba') {
         const x = r.navrhy[0];
         obsah.innerHTML = `<div class="uf-pole"><input type="text" data-uu-vydani aria-label="Vydání alba ${esc(nazevAlba(r.album.album, r.album.typ))} – ${esc(s.jmeno)}"
@@ -564,11 +568,9 @@ function vratitRadek(klic) {
 
 function nastavitSrdickaRadku(obal, n) {
     obal.dataset.hodnota = String(n);
-    obal.querySelectorAll('[data-uu-srdce]').forEach(b => {
-        const zapnute = Number(/** @type {HTMLElement} */ (b).dataset.uuSrdce) <= n;
-        b.classList.toggle('on', zapnute);
-        b.setAttribute('aria-pressed', String(zapnute));
-    });
+    obal.setAttribute('aria-valuenow', String(n));
+    obal.setAttribute('aria-valuetext', textSrdicek(n));
+    obnovitSrdickaModelky(obal.querySelector('.hearts'), n);
 }
 
 // ——— Události ———
@@ -584,7 +586,9 @@ function klavesa(e) {
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !tlacitko && !cil.classList.contains('kategorie-jina')) akce = () => ulozitRadek(klic);
     else if (e.key === 'Escape' && !e.ctrlKey) akce = () => vratitRadek(klic);
     else if (e.key === 'Delete' && (e.ctrlKey || tlacitko || !('value' in cil) || !String(/** @type {HTMLInputElement} */ (cil).value || '').trim())) akce = () => odlozitRadek(klic);
-    else if (/^[0-5]$/.test(e.key) && cil.matches('[data-uu-hodnoceni]') && !e.ctrlKey) akce = () => nastavitSrdickaRadku(cil, Number(e.key));
+    else if (/^([0-5]|ArrowLeft|ArrowRight)$/.test(e.key) && cil.matches('[data-uu-hodnoceni]') && !e.ctrlKey) {
+        akce = () => nastavitSrdickaRadku(cil, hodnotaPoKlavese(Number(cil.dataset.hodnota), e.key));
+    }
     if (!akce) return;
     e.preventDefault();
     e.stopPropagation();

@@ -1,7 +1,7 @@
 # Formát exportu (verze 9)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 9** (beta po programu 0.99.25).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 9** (program 0.99.26 a novější).
 
 Od alfy (program 0.50.0) byl formát verze 7 **zmrazený**. Vědomé výjimky v betě jsou dvě: verze 8 přidala
 online pictorialy (typ alba `Pictorial online` s datem nafocení) a verze 9 hodnocení modelky po polovinách
@@ -143,7 +143,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
-| 9 | beta po 0.99.25 | `hodnoceni` modelky po polovinách srdíčka (`3.5`, při importu i `3,5`); hodnocení fotek zůstává celé |
+| 9 | 0.99.26 | `hodnoceni` modelky po polovinách srdíčka (`3.5`, při importu i `3,5`); hodnocení fotek zůstává celé |
 | 8 | 0.99.9 | Online pictorialy: typ alba `Pictorial online` (bez vydání) a jeho `datum` nafocení |
 | 7 | 0.30.0 | Články čísla: `clanky` u vydání (strana, rubrika, název, autor, modelka, druh, text, skeny) |
 | 6 | 0.18.0 | `umrti_datum` u modelky, data narození a úmrtí i neúplná (`RRRR`, `RRRR-MM`), `na_obalce` u čísla, `-` údaj smaže, oprava překlepů v klíčích |

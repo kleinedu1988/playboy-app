@@ -16,6 +16,8 @@ const CASTI = [
         [k('Ctrl', 'Enter'), 'Uložit modelku (i v Doplnit modelku), použít text v editoru'],
         [`${k('Tab')}${nebo}${k('Enter')}`, 'Procházet a otevřít karty'],
         [`${k('1')}–${k('5')}${nebo}${k('0')}`, 'Srdíčka zaměřené karty nebo fotky, zrušit'],
+        [`${k('3')} ${k('3')}`, 'U modelky stejná číslice znovu přidá půlku (3½; u pětky 4½)'],
+        [k('←', '→'), 'Zaměřená srdíčka modelky po půlce (profil, Oblíbenost)'],
         [k('←', '↑', '→', '↓'), 'Pohyb v mapě edice (Přehled)'],
         [`${k('Shift', 'F10')}`, 'Nabídka akcí (jako pravé tlačítko)'],
     ] },
@@ -33,7 +35,7 @@ const CASTI = [
         [k('Tab'), 'Přeskočit na další pole'],
         [k('Esc'), 'Vrátit hodnotu řádku'],
         [`${k('Delete')}${nebo}${k('Ctrl', 'Delete')}`, 'Netýká se (v prázdném poli; V pořádku u kontroly, jde vrátit)'],
-        [`${k('1')}–${k('5')}`, 'Srdíčka v řádku hodnocení'],
+        [`${k('1')}–${k('5')}`, 'Srdíčka v řádku hodnocení (stejná znovu = půlka, ← → po půlce)'],
     ] },
     { klic: 'udrzba-modelky', nazev: 'Údržba – Po modelkách', radky: [
         [k('Enter'), 'Další pole na kartě'],
@@ -41,7 +43,14 @@ const CASTI = [
         [`${k('PageDown')}${nebo}${k('Alt', '→')}`, 'Další ve frontě (přeskočit)'],
         [`${k('PageUp')}${nebo}${k('Alt', '←')}`, 'Předchozí ve frontě'],
         [k('Esc'), 'Vrátit hodnotu pole'],
-        [`${k('1')}–${k('5')}`, 'Srdíčka, když je zaměřené hodnocení'],
+        [`${k('1')}–${k('5')}`, 'Srdíčka, když je zaměřené hodnocení (stejná znovu = půlka)'],
+    ] },
+    { klic: 'oblibenost', nazev: 'Oblíbenost – porovnávání', radky: [
+        [k('←'), 'Líbí se mi víc levá'],
+        [k('→'), 'Líbí se mi víc pravá'],
+        [`${k('↓')}${nebo}${k('Mezerník')}`, 'Obě stejně (remíza)'],
+        [k('S'), 'Přeskočit dvojici'],
+        [k('Backspace'), 'Vrátit poslední porovnání'],
     ] },
     { klic: 'udrzba-souhrn', nazev: 'Údržba – Souhrn', radky: [
         [k('↑', '↓'), 'Předchozí a další řádek (i položky rozbalené skupiny)'],
@@ -107,9 +116,10 @@ export function otevritZkratky() {
     if (!panel) pripravitPanel();
     // Část toho, co je právě otevřené, jde první a je zvýrazněná
     const ctecka = document.getElementById('ctecka');
-    const udrzba = stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && !document.getElementById('stats')?.classList.contains('hidden');
+    const prehledVidet = stav.rezim === 'prehled' && !document.getElementById('stats')?.classList.contains('hidden');
+    const udrzba = prehledVidet && stav.prehledSekce === 'udrzba';
     const aktivni = !lightbox.classList.contains('hidden') ? 'prohlizec' : ctecka && !ctecka.classList.contains('hidden') ? 'ctecka'
-        : udrzba ? `udrzba-${stav.udrzbaRezim}` : '';
+        : udrzba ? `udrzba-${stav.udrzbaRezim}` : prehledVidet && stav.prehledSekce === 'oblibenost' ? 'oblibenost' : '';
     const casti = aktivni ? [CASTI.find(c => c.klic === aktivni), ...CASTI.filter(c => c.klic !== aktivni)] : CASTI;
     panel.querySelector('.zkratky-casti').innerHTML = casti.map(c => `
         <section class="${c.klic === aktivni ? 'aktivni' : ''}">

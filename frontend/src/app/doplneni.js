@@ -14,6 +14,8 @@ import { poleModelky, potvrdit } from './formular-modelky';
 import { pripojitVyberKategorii } from '../ui/kategorie';
 import { nacistPrehled } from './prehled';
 import { KLICE_SKUPIN, SKUPINY_UDAJU } from '../lib/udrzba';
+import { htmlSrdicekModelky, obnovitSrdickaModelky } from '../ui/srdicka';
+import { hodnotaPoKliku } from '../lib/srdicka';
 
 export const doplnitModal = document.getElementById('doplnitModal');
 const obsah = document.getElementById('doplnitObsah');
@@ -126,7 +128,7 @@ export async function otevritDoplneni(modelkaId) {
     if (chybi('centerfold')) bloky.push(blok('Centerfold', 'centerfold',
         '<div class="doplnit-akce"><button type="button" class="btn btn-secondary btn-small" data-doplnit-centerfold><span>+</span> Přidat centerfold…</button></div>'));
     if (chybi('hodnoceni')) bloky.push(blok('Hodnocení', 'hodnoceni',
-        `<div class="doplnit-srdicka">${[1, 2, 3, 4, 5].map(n => `<button type="button" class="heart" data-hodnota-doplneni="${n}" title="${n} z 5"></button>`).join('')}</div>`));
+        `<div class="doplnit-srdicka">${htmlSrdicekModelky(stav.doplnovaneHodnoceni, '', { tabem: false, posuvnik: false, atributPulky: 'data-hodnota-doplneni' })}</div>`));
     const bezVydani = albaBez(radek.bezVydani);
     if (bezVydani.length) bloky.push(blok(`Alba bez vydání · ${bezVydani.length}`, 'vydani', `<div class="doplnit-mrizka">
         ${bezVydani.map((a, i) => `<div class="doplnit-pole"><label for="dopl-vydani-${i}">${esc(nazevAlba(a.album, a.typ))}</label>
@@ -254,10 +256,10 @@ export function pripravit() {
         }
         const srdce = cil.closest('[data-hodnota-doplneni]');
         if (srdce) {
-            const n = parseInt(srdce.dataset.hodnotaDoplneni);
-            stav.doplnovaneHodnoceni = stav.doplnovaneHodnoceni === n ? 0 : n;
+            // Po půlkách jako v profilu: levá půlka srdíčka dá x,5, klik na současnou hodnotu ji zruší
+            stav.doplnovaneHodnoceni = hodnotaPoKliku(stav.doplnovaneHodnoceni, srdce.dataset.hodnotaDoplneni);
             doplnitModal.dataset.zmeneno = '1';
-            obsah.querySelectorAll('[data-hodnota-doplneni]').forEach(b => b.classList.toggle('on', parseInt(b.dataset.hodnotaDoplneni) <= stav.doplnovaneHodnoceni));
+            obnovitSrdickaModelky(srdce.closest('.hearts'), stav.doplnovaneHodnoceni);
             return;
         }
         if (cil.closest('[data-doplnit-centerfold]')) {

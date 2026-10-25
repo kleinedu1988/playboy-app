@@ -1,4 +1,5 @@
 // Čisté funkce pro texty a data: nesahají na stránku ani na backend, proto jdou testovat samostatně
+import { porovnatOblibenost, znakySrdicek } from './srdicka.js';
 
 export const MESICE = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
 // Různé soubory Disku ve vloženém textu: odkazy (file/d/…, id=…) i holá ID; stejně jako parseDriveIDs v app.go
@@ -107,12 +108,14 @@ export function obrazek(adresa, velikost) {
 }
 
 // Album centerfoldu a coveru je uložené jako vydání časopisu; zobrazuje se jako vydání
-// Řazení galerie: abecedně, naposledy přidané, podle roku prvního vydání, podle srdíček, podle počtu fotek; modelky bez údaje jdou na konec
+// Řazení galerie: abecedně, naposledy přidané, podle roku prvního vydání, podle srdíček, podle oblíbenosti z porovnávání
+// (lib/srdicka.js), podle počtu fotek; modelky bez údaje jdou na konec
 export const RAZENI_GALERIE = {
     jmeno: { popisek: 'A–Z', nazev: 'abecedně' },
     pridano: { popisek: 'Nově přidané', nazev: 'naposledy přidané' },
     rok: { popisek: 'Podle roku', nazev: 'podle roku prvního vydání' },
     hodnoceni: { popisek: 'Podle srdíček', nazev: 'podle hodnocení' },
+    oblibenost: { popisek: 'Podle oblíbenosti', nazev: 'podle oblíbenosti (porovnávání, při shodě srdíčka)' },
     fotky: { popisek: 'Podle fotek', nazev: 'podle počtu fotek' },
 };
 
@@ -126,6 +129,7 @@ export function seraditModelky(modelky, razeni) {
     if (razeni === 'pridano') vysledek.sort((a, b) => (b.pridano || '').localeCompare(a.pridano || ''));
     else if (razeni === 'rok') vysledek.sort((a, b) => (prvniRok(a) || 9999) - (prvniRok(b) || 9999));
     else if (razeni === 'hodnoceni') vysledek.sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0));
+    else if (razeni === 'oblibenost') vysledek.sort(porovnatOblibenost);
     else if (razeni === 'fotky') vysledek.sort((a, b) => (b.pocetFotek || 0) - (a.pocetFotek || 0));
     return vysledek;
 }
@@ -140,8 +144,9 @@ export function castGalerie(modelka, razeni) {
         const rok = prvniRok(modelka);
         return rok ? `${Math.floor(rok / 10) * 10}s` : 'Bez vydání';
     }
-    if (razeni === 'hodnoceni') {
-        return modelka.hodnoceni > 0 ? '♥'.repeat(modelka.hodnoceni) : 'Bez srdíček';
+    // Oblíbenost je jemnější než srdíčka; lišta ji dělí po srdíčkách (i s půlkami)
+    if (razeni === 'hodnoceni' || razeni === 'oblibenost') {
+        return znakySrdicek(modelka.hodnoceni) || 'Bez srdíček';
     }
     if (razeni === 'fotky') {
         const n = modelka.pocetFotek || 0;
@@ -682,7 +687,7 @@ export const PRIKAZY = [
     { klic: 'vyskyt:', popis: 'Výskyt: casopis, online (jen na internetu), neurceno' },
     { klic: 'nafoceno:', popis: 'Kdy bylo online album nafoceno (2004, 2004-06)' },
     { klic: 'fotograf:', popis: 'Jméno fotografa' },
-    { klic: 'hodnoceni:', popis: 'Hodnocení (1–5, >=4)' },
+    { klic: 'hodnoceni:', popis: 'Hodnocení (1–5 i půlky 3,5; >=4)' },
     { klic: 'srdicka:', popis: 'Hodnocení srdíčky (5, >=4)' },
     { klic: 'narodnost:', popis: 'Národnost modelky' },
     { klic: 'edice:', popis: 'Edice časopisu (US, CZ)' },

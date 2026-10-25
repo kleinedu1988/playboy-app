@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.26] – 2026-10-25
+
+### Přidáno
+- **Hodnocení modelek po půlsrdíčkách** (0–5 po 0,5): klik na levou půlku srdíčka dá půlku, na pravou celé; klávesy 1–5 celá srdíčka, stejná číslice znovu přidá půlku, 0 zruší. Na kartách, v profilu, v Údržbě i v okně Doplnit modelku; hodnoty s čárkou („3,5“). Hledání `hodnoceni:3,5`, `>=3,5`. Srdíčka fotek zůstávají celá.
+- **Porovnávání dvojic** v nové části Přehledu **Oblíbenost**: dvě velké fotky, ←/→ vybereš, která se ti líbí víc, ↓ nebo mezerník remíza, S přeskočí, Backspace vrátí. Program vybírá dvojice, u kterých si je pořadím nejméně jistý (hlavně ve stejném srdíčku). Pořadí se počítá modelem Bradley–Terry ze srdíček a porovnání; když volba hodně odporuje srdíčkům, nabídne úpravu hodnocení.
+- **Model vkusu** (strojové učení z tvé sbírky): odhadne hodnocení nehodnocených modelek z jejich údajů a srdíček jejich fotek – jen když na tvé sbírce ověřitelně funguje (křížové ověření). Odhad je vidět jako tlumený štítek „odhad 3½“ s důvodem; část **Mohlo by se ti líbit** ukáže nehodnocené modelky s nejvyšším odhadem (rovnou je jde ohodnotit). Galerie má řazení **Podle oblíbenosti**.
+- Porovnání se ukládají do databáze učení; „Zapomenout naučené“ je nemaže (jsou to tvoje výslovné volby), smazání souboru učení ano.
+
+### Změněno
+- **Výjimka v betě se změnou schématu:** úprava databáze č. 13 (`modelky.hodnoceni_pul`, polovina srdíčka) a export verze 9 (`hodnoceni: 3.5`). Před úpravou vznikne záloha `*-pred-migraci.db`, stará hodnocení zůstanou stejná; starší program novou databázi otevře jen pro čtení (3½ ukáže jako 3). Import přijme exporty 1–9; hodnocení mimo 0–5 po půlkách odmítne. Ve výčtu hledání znamená `hodnoceni:4,5` nově 4½ (desetinná čárka), „4 nebo 5“ se píše `4..5`.
+
 ## [0.99.25] – 2026-10-25
 
 ### Změněno

@@ -41,12 +41,12 @@ Uživatel má kolem 400 modelek, přidává desítky denně chronologicky (teď 
 ## 1.5 – Kvalita dat
 
 **Cíl:** chyby a nejednotné zápisy se najdou v Údržbě i přímo při zadávání; alba mají vlastní titulní fotku.
-Jediná změna schématu celé trojice verzí: **úprava č. 13, export verze 9** (krok 1.5.1; č. 12 a export 8 použily online pictorialy v 0.99.9).
+Jediná změna schématu celé trojice verzí: **úprava č. 14, export verze 10** (krok 1.5.1; č. 12 a export 8 použily online pictorialy v 0.99.9, č. 13 a export 9 půlsrdíčka v 0.99.26).
 
 | Verze | Krok | Prac. | [schéma] |
 |---|---|---|---|
 | 1.5.0 | Sjednocení zápisů: fotografové a hodnoty polí | M | ne |
-| 1.5.1 | Schéma 13 / export 9: titulní fotka alba, nové klíče „netýká se“ | S–M | **ano** |
+| 1.5.1 | Schéma 14 / export 10: titulní fotka alba, nové klíče „netýká se“ | S–M | **ano** |
 | 1.5.2 | Nové úkoly v Údržbě: playmate bez data narození, obálka bez modelky, album bez fotografa | M | ne (používá 1.5.1) |
 | 1.5.3 | Kontrola při zadávání: podobné jméno při psaní, nálezy hned po uložení, sloučení z Údržby | M | ne |
 
@@ -86,10 +86,10 @@ klikem se zálohou; našeptávač fotografů pak nabízí jen jeden zápis; albu
 **Ověří uživatel:** ve skutečné sbírce projde filtr „Zápisy“, sjednotí fotografy a zkontroluje stránku
 fotografa (počet alb odpovídá Statistikám → Fotografové).
 
-### 1.5.1 – Schéma 13, export 9 **[schéma]**
+### 1.5.1 – Schéma 14, export 10 **[schéma]**
 
 **Co se mění:**
-- `migraceTitulniAlba` (úprava č. 13, na konec `migrace`): `ALTER TABLE alba ADD COLUMN titulni TEXT`
+- `migraceTitulniAlba` (úprava č. 14, na konec `migrace`): `ALTER TABLE alba ADD COLUMN titulni TEXT`
   (ID souboru na Disku, ne `fotky.id` – to se při importu mění) a `ALTER TABLE vydani ADD COLUMN netyka_se TEXT`.
 - Výčty v `schema.go`: `klicNetykaSeAlba` + `fotograf`; nový `klicNetykaSeVydani` = `obalka`.
 - `SetTitulniFotkaAlba(albumID, fotoID int) bool` (0 = automaticky); `Fotografie` dostane `titulniAlba`
@@ -110,15 +110,15 @@ Fotograf · Arny Freytag      [karta alba = vybraná titulní fotka, páska 1977
 
 **Testy:** `TestZmrazeniAlfy` → `TestVerzeDat` (12 a 8); `TestPrechodZeStarychVerzi` dostane databázi
 a export z 1.4.x do `testdata/stare-verze`; kruh export → import zachová titulní fotku i nové klíče; databáze se
-`user_version` 13 se neupraví a program běží jen pro čtení (test už je); export 9 se odmítne.
+`user_version` 14 se neupraví a program běží jen pro čtení (test už je); export 10 se odmítne.
 
 **Rizika:** jediné místo, kde se mění data – záloha před migrací už je; starší program (1.4) databázi 12
 otevře jen pro čtení, uživatel o tom musí vědět před aktualizací (věta v „Co je nového“).
 Konflikt čísel: rezerva „Mám PDF“ v ROADMAP počítá s úpravou 12 a exportem 8 – dostane další volné číslo.
 
 **Hotovo, když:** titulní fotka alba jde nastavit a zrušit, ukazuje se na stránce fotografa a ročníku; přechod
-z 12 na 13 projde na kopiích všech starých verzí; export 9 → import vrátí totéž; 1.4 otevře novou databázi jen
-pro čtení a export 9 odmítne srozumitelnou hláškou.
+z 13 na 14 projde na kopiích všech starých verzí; export 10 → import vrátí totéž; 1.4 otevře novou databázi jen
+pro čtení a export 10 odmítne srozumitelnou hláškou.
 
 **Ověří uživatel:** před aktualizací export YAML; po ní nastaví titulní fotku u pár alb jednoho fotografa,
 export → import do prázdného účtu ukáže stejné karty.
@@ -259,7 +259,7 @@ kontrolovat) projde; databáze jen pro čtení se nezmění; oprava přes „Pou
 
 **Ověří uživatel:** po týdnu zadávání okno Kontrola údajů… ukazuje počty opravených a „V pořádku“ po pravidlech.
 
-**Nedělá se v 1.6:** nové klíče `ok-…` (export 9 už vyšel s 1.5.1, další by chtěly export 10), deník změn,
+**Nedělá se v 1.6:** nové klíče `ok-…` (export 10 už vyšel s 1.5.1, další by chtěly export 11), deník změn,
 knihovny strojového učení, skrývání tvrdých pravidel.
 
 ---
@@ -361,7 +361,7 @@ Návrhy pro práci s desítkami modelek denně. U každého: užitek, pracnost, 
 denní zálohy a Vrátit u fotek stačí“; NAVRH-KONTROLA2 deník také odmítá. Doporučení: **nedělat**. Co potřebu
 pokryje bez deníku: posledních 100 událostí Kontroly (1.6.3: „22. 11. opraveno – výška 17 → 170“), Vrátit
 u každé hromadné akce v oznámení, denní zálohy. Pokud by uživatel chtěl aspoň „Naposledy upravené“, stačí
-sloupec `modelky.upraveno` – pak ho přidat **do úpravy č. 13 v 1.5.1** (později by to byla další úprava
+sloupec `modelky.upraveno` – pak ho přidat **do úpravy č. 14 v 1.5.1** (později by to byla další úprava
 schématu); do exportu nejde, starší program ho ignoruje. Rozhodne uživatel před 1.5.1.
 
 ### 1.12 (návrh) – Úplnost a ročníky
@@ -422,7 +422,7 @@ naučené“ vrátí výchozí nálezy; kontrola 5 000 modelek do 120 ms.
 ## Soulad s Rozhodnuto a Nedělat
 
 - **Deník změn (Nedělat):** R6 se nedělá; Vrátit jen v oznámení po jedné akci (1.6.2, 1.13) jako u fotek.
-- **Schéma a export:** jediná změna v 1.5.1 (úprava č. 13, export 9) podle pravidla „nová úprava + nová verze
+- **Schéma a export:** jediná změna v 1.5.1 (úprava č. 14, export 10) podle pravidla „nová úprava + nová verze
   exportu, starší program jen pro čtení a novější export odmítne“. **Konflikt čísel:** rezerva „Mám PDF“
   v ROADMAP uvádí úpravu 12 a export 8 a 2.7 Chytré výběry 13 a 9 – čísla se přidělují podle pořadí vydání,
   text rezervy a 2.7 je potřeba upravit na „další volná úprava schématu a verze exportu“.

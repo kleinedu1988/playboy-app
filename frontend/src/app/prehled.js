@@ -1,5 +1,6 @@
-// Přehled sbírky: úvod, Údržba, Sháním CZ a Statistiky; nabídka částí u tlačítka Přehled
+// Přehled sbírky: úvod, Údržba, Oblíbenost, Sháním CZ a Statistiky; nabídka částí u tlačítka Přehled
 import { GetKalendar, GetPrehled, GetStatistiky, GetStavyVydani, SetStavVydani } from './backend';
+import { nacistOblibenost } from './oblibenost';
 import { nazevVydani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -22,11 +23,13 @@ import * as udrzba from './udrzba';
 // Načtení se při opakování zapisuje na místo: části se přepíšou jen při změně, Údržba po skupinách,
 // takže se stránka neposune a fokus zůstane.
 
-// Části Přehledu: vybírají se z nabídky tlačítka Přehled vpravo v liště; u Údržby a Sháním CZ počet z posledního načtení
-const CASTI = [['uvod', 'Přehled'], ['udrzba', 'Údržba'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']];
+// Části Přehledu: vybírají se z nabídky tlačítka Přehled vpravo v liště; u Údržby a Sháním CZ počet z posledního načtení.
+// Oblíbenost (porovnávání a model vkusu) jen s backendem, který ji umí.
+const CASTI_VSE = [['uvod', 'Přehled'], ['udrzba', 'Údržba'], ['oblibenost', 'Oblíbenost'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']];
+const casti = () => CASTI_VSE;
 const pocetVCasti = { udrzba: 0, shanim: 0 };
 // Řádek částí Přehledu: lišta pod hledáním z něj udělá volbu s ikonou, jako Obálky / Kalendář u Čísel
-const htmlCasti = () => `<div class="prehled-casti volby-v-liste">${CASTI.map(([klic, nazev]) =>
+const htmlCasti = () => `<div class="prehled-casti volby-v-liste">${casti().map(([klic, nazev]) =>
     `<button class="chip ${klic === stav.prehledSekce ? 'active' : ''}" data-zobrazeni-prehledu="${klic}">${nazev}${pocetVCasti[klic] ? `<span>${pocetVCasti[klic]}</span>` : ''}</button>`).join('')}</div>`;
 
 const KOSTRA = `
@@ -35,6 +38,7 @@ const KOSTRA = `
             <section class="stat-section" data-sekce="uvod"></section>
             <section class="stat-section" data-sekce="shanim"></section>
             <section class="stat-section" data-sekce="udrzba"></section>
+            <section class="stat-section" data-sekce="oblibenost"></section>
             <!-- Statistiky se počítají až při prvním zobrazení oddílu -->
             <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="stat-prazdne">Počítám statistiky…</p></section>
         </div>`;
@@ -71,7 +75,7 @@ export async function nacistPrehled() {
     // Počty k nabídce částí u tlačítka Přehled
     pocetVCasti.udrzba = model.pocty.vse;
     pocetVCasti.shanim = shanenaCisla(stavy).length;
-    if (!CASTI.some(([klic]) => klic === stav.prehledSekce)) stav.prehledSekce = 'uvod';
+    if (!casti().some(([klic]) => klic === stav.prehledSekce)) stav.prehledSekce = 'uvod';
 
     let obsah = /** @type {HTMLElement} */ (stats.querySelector('.prehled-obsah'));
     if (!obsah) {
@@ -87,6 +91,7 @@ export async function nacistPrehled() {
     const sekceStatistik = obsah.querySelector('[data-sekce="statistiky"]');
     if (stav.prehledSekce === 'statistiky') nacistStatistiky(sekceStatistik);
     else sekceStatistik.innerHTML = '<p class="stat-prazdne">Počítám statistiky…</p>';
+    if (stav.prehledSekce === 'oblibenost') nacistOblibenost(obsah.querySelector('[data-sekce="oblibenost"]'));
     // Graf desetiletí na úvodu se dopočítá zvlášť (statistiky se počítají z celé sbírky); jen když se úvod přepsal
     const grafDekad = uvod.querySelector('[data-graf-dekad]');
     if (grafDekad?.querySelector('.stat-prazdne')) {
@@ -117,6 +122,7 @@ function ukazatCast(klic) {
     obsah.dataset.sekceUkazana = klic;
     obnovitCasti();
     if (klic === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
+    if (klic === 'oblibenost') nacistOblibenost(stats.querySelector('[data-sekce="oblibenost"]'));
     document.querySelector('main').scrollTop = 0;
 }
 

@@ -67,7 +67,8 @@ export const stav = {
     doplnovanyRadek: null,
     doplnovaneHodnoceni: 0,
     doplnovanaTitulni: 0, // id fotky vybrané jako titulní
-    prehledSekce: 'uvod', // ukázaná část Přehledu: uvod, udrzba, shanim, statistiky
+    prehledSekce: 'uvod', // ukázaná část Přehledu: uvod, udrzba, oblibenost, shanim, statistiky
+    oblibenostOkruh: '', // které dvojice Oblíbenost porovnává: '' (všechny), 'stejne' (stejné srdíčko), 'nehodnocene' (i bez srdíček)
     udrzbaFiltr: 'vse', // filtr fronty v Souhrnu Údržby (vse, titulni, udaje, cover…)
     udrzbaZdroj: '', // zdroj návrhů nebo nálezů kontroly ve filtru ('' = všechny)
     udrzbaHledat: '', // hledání jména modelky nebo čísla v Údržbě

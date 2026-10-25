@@ -7,6 +7,21 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.22] – 2026-10-25
+
+### Přidáno
+- **Vlastní databáze učení** `playboy-uceni.db` vedle sbírky (sbírka ani export se nemění; když soubor chybí nebo je poškozený, učení začne znovu): deník rozhodnutí (přijato, odmítnuto, opraveno, „V pořádku“, „Znovu kontrolovat“), odmítnutí konkrétní hodnoty místo celého údaje, kalibrace jistoty podle toho, jak často který zdroj trefí (zdroj, který stále odmítáš, sám zmizí), mezipaměť výpočtů. Kontrola zpřísní pravidla, která často označuješ „V pořádku“. Popis v `docs/UCENI.md`.
+- Návrhy spojují víc zdrojů (souhlasné zvýší jistotu, odporující se ruší), nový zdroj **podobné modelky** odhadne chybějící míry z nejpodobnějších modelek; u každého návrhu je vidět zdroj.
+- V Údržbě panel **Co se program naučil**: úspěšnost zdrojů, počty přijatých / odmítnutých / opravených, „Zapomenout naučené…“ (se zálohou). Úprava návrhu přes „Upravit…“ a uložení jiné hodnoty se zapíše jako oprava.
+
+### Změněno
+- **Stránka Údržba přepracovaná:** nahoře úplnost sbírky po oblastech (klik zapne filtr) a „Co doplnit dál“ (čtyři nejcennější úkoly; Playmate bez data narození první), lišta filtrů s počty, hledání jména nebo čísla (Ctrl+F nebo /), řazení, skupiny po modelkách jdou sbalit, jeden vzhled řádku pro úkoly, nálezy Kontroly i návrhy. Klávesy ↑↓ PgUp/PgDn Home/End, →/← rozbalí a sbalí, Enter hlavní akce, Delete odloží, E upraví návrh. Hromadné akce se vždy zeptají a jdou vrátit; jeden přepínač „Vyřízené“ ukáže netýká se, v pořádku i odmítnuté.
+- Rychlejší Přehled a Údržba: opakované otevření na velké sbírce asi 3× rychleji, akce v Údržbě už nenačítají celý Přehled znovu.
+
+### Opraveno
+- Klik do řádku Údržby otevíral profil; modelka s nálezem kontroly byla ve frontě dvakrát; „Hromadně“ a ⋯ hned zavíraly nabídku.
+- Z nezávislé revize (`docs/REVIZE-UDRZBA-UCENI.md`): obnovení ze zálohy se nebere jako oprava nálezů; „V pořádku“ a „Netýká se“ hlásí chybu, když se neuloží; klik během překreslení fronty se neztratí; oprava návrhu se zapisuje správně (i změna jen tvaru zápisu, ne vymazané pole); výpočet návrhů běží jen jednou najednou a další drobnosti.
+
 ## [0.99.21] – 2026-10-25
 
 ### Opraveno

@@ -110,7 +110,7 @@ Cíl: nic nového, jen jistota. Beta 0.90.0 vyšla 21. 10. 2026.
 **Výjimka z bety:** kategorie modelek (0.91.0), lišta Přehledu nahoře a přepracované Statistiky s výběrem
 modelek po kliknutí (0.92.x) výskyt modelky v časopise nebo jen online (0.93.0) spojení Čísel s Kalendářem (0.94.0) a Statistiky jako jeden graf se seznamem modelek (0.95.0, 0.96.0, 0.98.0) Kontrola s pravidly a „V pořádku“ (0.97.0) a části Přehledu v nabídce tlačítka Přehled (0.99.x) přibyly 22. 10. 2026 na přání uživatele ještě před 1.0; schéma ani formát exportu
 se nezměnily. Jedinou výjimkou se změnou schématu jsou **online pictorialy (0.99.9, 24. 10.)**: úprava databáze
-č. 12 a export verze 8 (krok 1–2 z 1.23). Další výjimky (bez změny schématu): Cyber Girl, nová okna a editor textu (0.99.12–0.99.18) a návrhy doplnění v Údržbě (0.99.19, 25. 10.). Lhůta níže proto běží od 0.99.19; nejdřív 8. 11. 2026.
+č. 12 a export verze 8 (krok 1–2 z 1.23). Další výjimky (bez změny schématu): Cyber Girl, nová okna a editor textu (0.99.12–0.99.18) a návrhy doplnění v Údržbě (0.99.19, 25. 10.), přepracovaná Údržba a vlastní databáze učení (0.99.22). Lhůta níže proto běží od 0.99.22; nejdřív 8. 11. 2026.
 
 **Pravidlo:** 1.0.0 vyjde po **14 dnech běžného používání bety bez nové chyby**. Lhůta běží od vydání bety
 (21. 10. 2026); každá nová chyba zapsaná v `PLAN.md` (oddíl „Chyby z bety“) ji po opravě spustí znovu od
@@ -139,6 +139,7 @@ sloučení), proto se část opakuje:
 - [ ] Hledání `rok:1977-03` najde jen březen 1977
 - [ ] Zamčený program neukazuje pole hledání
 - [ ] Nová okna (modelka, album, cover, číslo, článek) a editor textu: psaní s diakritikou, náhledy z Disku (0.99.18)
+- [ ] Údržba (0.99.22): hlavička s úplností, „Co doplnit dál“, filtry, hledání, klávesy, panel „Co se program naučil“, vznikne playboy-uceni.db vedle sbírky
 - [ ] Údržba → Návrhy: návrhy dávají smysl na skutečné sbírce, Přijmout / Odmítnout / Vrátit, hromadné přijetí udělá zálohu (0.99.19)
 - [ ] Online pictorialy: první spuštění 0.99.9 nad sbírkou vytvoří zálohu `*-pred-migraci.db`; v okně alba typ
       „Pictorial online“ skryje vydání a ukáže „Nafoceno“ (chybné datum ohlásí); nadpis alba v profilu s datem;

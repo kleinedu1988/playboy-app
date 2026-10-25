@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.20] – 2026-10-25
+
+### Změněno
+- Kategorii **Cyber Girl** dává modelce jen album **Cyber Girl of the Week** nebo **of the Month** (Cyber Girl týdne / měsíce). Obyčejné album Pictorial online už Cyber Girl nepřidává; proužek u profilovky pak ukazuje „Online“. Výskyt „jen online“ zůstává.
+
 ## [0.99.19] – 2026-10-25
 
 ### Přidáno

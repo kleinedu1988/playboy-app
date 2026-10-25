@@ -1309,16 +1309,14 @@ func poleHledani(m Modelka) map[string]string {
 		piercing = "ne no"
 	}
 	obalky := strings.Join(m.Obalky, " ")
-	// Kategorie: zapsané v poli role a odvozené z centerfoldu, online alba a obálky (frontend/src/lib/format.js,
-	// KATEGORIE a odvozeneKategorie); online album = Cyber Girl, jen bez jiné zapsané online kategorie
+	// Kategorie: zapsané v poli role a odvozené z centerfoldu, alba Cyber Girl týdne či měsíce a obálky
+	// (frontend/src/lib/format.js, KATEGORIE a odvozeneKategorie); obyčejné online album kategorii nedává
 	kategorie := m.Role
 	if len(m.Centerfoldy) > 0 {
 		kategorie += ", Playmate měsíce"
 	}
 	if m.CyberGirl != "" {
 		kategorie += ", Cyber Girl " + m.CyberGirl
-	} else if len(m.OnlineAlba) > 0 && !vzorOnlineKategorie.MatchString(m.Role) {
-		kategorie += ", Cyber Girl"
 	}
 	if len(m.Obalky) > 0 {
 		kategorie += ", Modelka obálky"

@@ -325,13 +325,14 @@ test('kategorie modelek', () => {
     const m = { role: 'Vlastní, Celebrita', centerfoldy: ['1995-03'], obalky: ['1996-01'] };
     assert.deepEqual(kategorieModelky(m).map(popisKategorie), ['Playmate měsíce', 'Celebrita', 'Modelka obálky', 'Vlastní']);
     assert.equal(kategorieModelky(m)[0].odvozena, true);
-    // Online album = Cyber Girl, jen když není zapsaná jiná online kategorie
-    assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Cyber Girl']);
+    // Obyčejné online album kategorii nedává, jen album Cyber Girl týdne nebo měsíce
+    assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-06'] }).map(popisKategorie), []);
     assert.deepEqual(kategorieModelky({ role: 'Coed', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Coed']);
     assert.deepEqual(kategorieModelky({ role: 'Online', onlineAlba: ['2004-06-12'], cyberGirl: 'týdne' }).map(popisKategorie), ['Cyber Girl týdne', 'Online']);
     assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-09'], cyberGirl: 'měsíce' }).map(popisKategorie), ['Cyber Girl měsíce']);
     // Páska bez data: Cyber Girl má přednost před Online, ostatní online kategorie zatím jako Online
-    assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }), 'Cyber Girl');
+    assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }), 'Online');
+    assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06-12'], cyberGirl: 'týdne' }), 'Cyber Girl');
     assert.equal(paskaOnline({ role: 'Online, Cyber Girl měsíce', onlineAlba: ['2004'] }), 'Cyber Girl');
     assert.equal(paskaOnline({ role: 'Online', onlineAlba: ['2004'] }), 'Online');
     assert.equal(paskaOnline({ role: 'Muse', onlineAlba: [''] }), 'Online');

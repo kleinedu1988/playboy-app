@@ -241,8 +241,8 @@ func TestVyskytANafoceno(t *testing.T) {
 		"nafoceno:2003":           "Casopis",
 		"-nafoceno:2004":          "Bez data,Casopis,Nic",
 		"vyskyt:online nafoceno:": "Bez data,Další,Online",
-		// Online album = odvozená kategorie Cyber Girl (jako centerfold = Playmate měsíce)
-		`kategorie:"cyber girl"`: "Bez data,Casopis,Další,Online",
+		// Obyčejné online album kategorii Cyber Girl nedává (jen album Cyber Girl týdne či měsíce, viz TestCyberGirlTydne)
+		`kategorie:"cyber girl"`: "",
 	}
 	for dotaz, chci := range pripady {
 		if jmena := jmenaNalezu(a, dotaz); jmena != chci {

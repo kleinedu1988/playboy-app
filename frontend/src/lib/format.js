@@ -424,12 +424,12 @@ export function rozlozitKategorie(text) {
 export const popisKategorie = k => [k.nazev, k.detail, k.zbytek].filter(Boolean).join(' ');
 export const slozitKategorie = seznam => seznam.map(popisKategorie).join(', ');
 
-// Kategorie odvozené z dat: centerfold = Playmate měsíce, obálka = Modelka obálky, online album = Cyber Girl
-// (jen když modelka nemá zapsanou jinou online kategorii, třeba Coed nebo Muse); album Cyber Girl týdne vždy
+// Kategorie odvozené z dat: centerfold = Playmate měsíce, obálka = Modelka obálky, album Cyber Girl týdne
+// nebo měsíce = Cyber Girl (obyčejný Pictorial online kategorii nedává)
 export function odvozeneKategorie(modelka) {
     return [
         (modelka.centerfoldy || []).length ? 'Playmate měsíce' : '',
-        modelka.cyberGirl || (modelka.onlineAlba || []).length && !onlineKategorie(modelka) ? 'Cyber Girl' : '',
+        modelka.cyberGirl ? 'Cyber Girl' : '',
         (modelka.obalky || []).length ? 'Modelka obálky' : '',
     ].filter(Boolean);
 }

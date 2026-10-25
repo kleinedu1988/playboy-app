@@ -76,6 +76,27 @@ export function zameritPole(id) {
     /** @type {HTMLElement} */ (prvek)?.focus();
 }
 
+// Hodnota vložená do pole otevřeného formuláře (návrh doplnění, „Upravit…“): ohlásí se jako úprava uživatele,
+// takže okno ví o změně a stačí uložit. Výběr, který hodnotu nenabízí, ji dostane jako volbu navíc;
+// kategorie se přidají ke štítkům.
+export function predvyplnitPole(id, hodnota) {
+    const prvek = document.getElementById(id);
+    if (!prvek) return;
+    if (prvek.tagName === 'SELECT' && ![...prvek.options].some(o => o.value === hodnota)) {
+        prvek.add(new Option(hodnota, hodnota));
+        prvek.lastElementChild.dataset.puvodni = '1';
+    }
+    prvek.value = id === 'inputRole' ? [prvek.value, hodnota].filter(Boolean).join(', ') : hodnota;
+    if (id === 'inputRole') vyberKategorii.obnovit(odvozeneKategorie(stav.editovanaModelka || {}));
+    prvek.dispatchEvent(new Event('input', { bubbles: true }));
+    prvek.dispatchEvent(new Event('change', { bubbles: true }));
+    // Krátké zvýraznění, kam se hodnota vložila
+    const pole = prvek.closest('.form-group') || prvek;
+    pole.classList.remove('predvyplneno');
+    void pole.offsetWidth;
+    pole.classList.add('predvyplneno');
+}
+
 export function otevritModelModal(modelka, fronta = null) {
     stav.frontaDoplnovani = fronta;
     document.getElementById('modelNextBtn').classList.toggle('hidden', !fronta);

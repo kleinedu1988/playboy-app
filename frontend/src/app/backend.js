@@ -19,6 +19,7 @@ const CTENI = new Set([
     'HledatTexty',
     'GetKalendar',
     'GetModelky',
+    'GetNavrhyDoplneni',
     'GetNejlepsiFotky',
     'GetPrehled',
     'GetPrehledVydani',
@@ -40,11 +41,15 @@ const CTENI = new Set([
     'ExportovatDoSouboru',
 ]);
 
+// Volání, které vygenerované vazby (wails generate module) ještě neznají, jde přímo na window.go jako ostatní vazby
+const volani = jmeno => App[jmeno] ?? ((...argumenty) => window['go']['main']['App'][jmeno](...argumenty));
+
 function obalit(jmeno) {
-    if (CTENI.has(jmeno)) return (...argumenty) => App[jmeno](...argumenty);
+    const funkce = volani(jmeno);
+    if (CTENI.has(jmeno)) return (...argumenty) => funkce(...argumenty);
     return async (...argumenty) => {
         try {
-            return await App[jmeno](...argumenty);
+            return await funkce(...argumenty);
         } finally {
             ohlasitZmenuDat();
         }
@@ -76,6 +81,12 @@ export const GetFotografieModelky = /** @type {typeof App.GetFotografieModelky} 
 export const GetFotografove = /** @type {typeof App.GetFotografove} */ (obalit('GetFotografove'));
 export const GetKalendar = /** @type {typeof App.GetKalendar} */ (obalit('GetKalendar'));
 export const GetModelky = /** @type {typeof App.GetModelky} */ (obalit('GetModelky'));
+// Návrhy doplnění (navrhy.js). Vazby a typy z models.ts zatím chybí, typ je proto popsaný tady; po vygenerování
+// vazeb se nahradí řádky ve stejném tvaru jako ostatní (typeof App.GetNavrhyDoplneni…).
+/** @typedef {{ modelkaId: number, jmeno: string, album: string, typ: string, pole: string, popis: string, hodnota: string, jistota: number, duvod: string, klic: string, inputId: string, odmitnuto: boolean }} NavrhDoplneni */
+export const GetNavrhyDoplneni = /** @type {(vcetneOdmitnutych: boolean) => Promise<NavrhDoplneni[]>} */ (obalit('GetNavrhyDoplneni'));
+export const PrijmoutNavrh = /** @type {(n: NavrhDoplneni) => Promise<boolean>} */ (obalit('PrijmoutNavrh'));
+export const OdmitnoutNavrh = /** @type {(n: NavrhDoplneni, odmitnout: boolean) => Promise<boolean>} */ (obalit('OdmitnoutNavrh'));
 export const GetNejlepsiFotky = /** @type {typeof App.GetNejlepsiFotky} */ (obalit('GetNejlepsiFotky'));
 export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehled'));
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));

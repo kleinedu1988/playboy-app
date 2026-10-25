@@ -8500,6 +8500,323 @@ span.ud-chip.hlavni {
     color: var(--text-main);
 }
 
+/* Návrhy doplnění: pruh u Vše, skupiny po modelkách, řádek s hodnotou, jistotou a akcemi */
+.nv-upoutavka {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    margin-bottom: 12px;
+    padding: 11px 16px;
+    border: 1px solid rgba(216, 27, 96, 0.35);
+    border-radius: 14px;
+    background: linear-gradient(90deg, var(--accent-soft), rgba(216, 27, 96, 0.04));
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.nv-upoutavka b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.nv-upoutavka:hover,
+.nv-upoutavka:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.nv-upoutavka-akce {
+    margin-left: auto;
+    color: var(--accent-text);
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.nv-hvezda {
+    color: var(--accent-text);
+    font-size: 15px;
+}
+
+.nv-seznam {
+    display: grid;
+    gap: 12px;
+}
+
+.nv-skupina {
+    overflow: hidden;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.nv-hlava {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px 10px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.nv-hlava > img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top;
+    background-color: var(--bg-card);
+}
+
+.nv-jmeno {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.nv-jmeno:hover strong,
+.nv-jmeno:focus-visible strong {
+    color: var(--accent-text);
+}
+
+.nv-jmeno:focus-visible {
+    outline: none;
+}
+
+.nv-vse {
+    height: 28px;
+    padding: 0 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.nv-vse:hover {
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+}
+
+.nv-album {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 16px 2px 20px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    letter-spacing: 0.02em;
+}
+
+.nv-album small {
+    padding: 0 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 10.5px;
+}
+
+.nv-radek {
+    display: grid;
+    grid-template-columns: 130px minmax(0, 1fr) 170px auto;
+    grid-template-areas: "pole hodnota jistota akce" "pole duvod duvod akce";
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 1px;
+    padding: 9px 14px 9px 20px;
+    outline: none;
+}
+
+.nv-radek + .nv-radek {
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.nv-radek:hover {
+    background-color: rgba(255, 255, 255, 0.025);
+}
+
+/* Zaměřený řádek: proužek akcentu vlevo (Enter přijme, Delete odmítne) */
+.nv-radek:focus-visible {
+    background-color: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.nv-pole {
+    grid-area: pole;
+    align-self: start;
+    padding-top: 2px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.nv-hodnota {
+    grid-area: hodnota;
+    overflow: hidden;
+    color: var(--text-main);
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nv-duvod {
+    grid-area: duvod;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nv-jistota {
+    grid-area: jistota;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+
+.nv-jistota i {
+    flex: none;
+    width: 46px;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.nv-jistota b {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background-color: var(--nv-barva);
+}
+
+.nv-jistota span {
+    min-width: 32px;
+    color: var(--text-main);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.nv-jistota.jiste {
+    --nv-barva: var(--vytisk);
+}
+
+.nv-jistota.pravdepodobne {
+    --nv-barva: #e0a526;
+}
+
+.nv-jistota.odhad {
+    --nv-barva: #8a8a92;
+}
+
+.nv-akce {
+    grid-area: akce;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.nv-tlacitko {
+    height: 28px;
+    padding: 0 11px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.nv-tlacitko:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.nv-tlacitko.nv-prijmout {
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.nv-tlacitko.nv-prijmout:hover {
+    background-color: var(--accent);
+}
+
+.nv-tlacitko.nv-odmitnout {
+    width: 28px;
+    padding: 0;
+}
+
+.nv-tlacitko.nv-odmitnout:hover {
+    color: var(--danger-text);
+}
+
+.nv-radek.odmitnuty .nv-hodnota {
+    color: var(--text-muted);
+    font-weight: 400;
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 255, 255, 0.3);
+}
+
+.nv-radek.odmitnuty .nv-jistota {
+    opacity: 0.5;
+}
+
+.nv-stav {
+    margin-right: 4px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    font-style: italic;
+}
+
+.nv-prazdne {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 20px;
+    border: 1px dashed var(--panel-okraj);
+    border-radius: 18px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.nv-prazdne p {
+    max-width: 640px;
+    margin: 0;
+}
+
+/* Pole, do kterého se vložil návrh („Upravit…“): krátce se rozsvítí */
+.predvyplneno {
+    border-radius: 10px;
+    animation: predvyplneno 1.6s ease-out;
+}
+
+@keyframes predvyplneno {
+    0%, 30% {
+        box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent);
+    }
+
+    100% {
+        box-shadow: 0 0 0 3px transparent, 0 0 0 1px transparent;
+    }
+}
+
 @media (max-width: 900px) {
     .ud-souhrn {
         grid-template-columns: 1fr;
@@ -8513,6 +8830,27 @@ span.ud-chip.hlavni {
         grid-column: 2 / -1;
         grid-row: 2;
         justify-content: flex-start;
+    }
+
+    .nv-radek {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "pole jistota" "hodnota hodnota" "duvod duvod" "akce akce";
+        row-gap: 3px;
+    }
+
+    .nv-akce {
+        justify-content: flex-start;
+        margin-top: 4px;
+    }
+
+    .nv-hlava {
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+    }
+
+    .nv-vse {
+        grid-column: 2 / -1;
+        grid-row: 2;
+        justify-self: start;
     }
 
     .uvod-kpi {

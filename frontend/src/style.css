@@ -1580,161 +1580,298 @@ input:focus, select:focus, textarea:focus {
     justify-content: space-between;
 }
 
-/* Velký formulář modelky: pevná hlavička a patička, obsah roluje */
-.modal-wide {
-    display: flex;
-    flex-direction: column;
-    width: 790px;
-    max-width: calc(100% - 48px);
-    /* Pevná výška, aby okno při přepínání záložek neskákalo */
-    height: 570px;
-    max-height: calc(100% - 48px);
+/* Formulář modelky (stejný jazyk jako okno alba): vlevo nadpis, části a náhled profilu, vpravo pole pod sebou.
+   Okno má pevnou výšku, roluje jen sloupec s poli; tlačítka zůstávají dole */
+.modal-card.modelka-okno {
+    position: relative;
+    width: min(940px, calc(100vw - 32px));
+    height: min(680px, calc(100% - 32px));
     padding: 0;
     overflow: hidden;
 }
 
-.modal-wide .modal-header {
-    margin: 0;
-    padding: 14px 20px;
-    border-bottom: 1px solid var(--border-color);
+.modelka-mrizka {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    height: 100%;
 }
 
-.modal-wide .modal-header h3 {
-    margin: 0;
-    font-size: 16px;
-}
-
-.modal-wide form {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-height: 0;
-}
-
-/* Záložky vlevo, pole aktivní záložky vpravo */
-.form-layout {
-    display: flex;
-    flex: 1;
-    min-height: 0;
-}
-
-.form-tabs {
+.modelka-bok {
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
-    gap: 2px;
-    width: 190px;
-    padding: 12px 8px;
-    background-color: var(--bg-card);
+    gap: 14px;
+    min-height: 0;
+    padding: 24px 16px 20px 20px;
+    overflow-y: auto;
     border-right: 1px solid var(--border-color);
 }
 
-.form-tabs button {
+.modelka-bok h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* Části formuláře: klik posune, zvýrazněná je ta, která je právě nahoře */
+.modelka-casti {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.modelka-casti button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
-    padding: 9px 12px;
+    gap: 10px;
+    padding: 8px 10px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     background: none;
     color: var(--text-muted);
+    font: inherit;
     font-size: 13px;
     text-align: left;
     cursor: pointer;
 }
 
-.form-tabs button:hover {
+.modelka-casti button:hover {
     color: var(--text-main);
+    background: var(--panel-hover);
 }
 
-.form-tabs button.active {
-    background-color: var(--bg-modal);
+.modelka-casti button.active {
     color: var(--text-main);
+    background: var(--accent-soft);
 }
 
-/* Tečka značí záložku, ve které je něco vyplněno */
-.form-tabs button i {
-    flex-shrink: 0;
-    width: 6px;
-    height: 6px;
+/* Tečka: v části je něco vyplněno (prázdný kroužek = nic) */
+.modelka-casti button i {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border: 1.5px solid #55555c;
     border-radius: 50%;
 }
 
-.form-tabs button.filled i {
+.modelka-casti button.filled i {
+    border-color: var(--accent);
     background-color: var(--accent);
 }
 
-.form-body {
-    flex: 1;
+.modelka-casti button:focus-visible,
+.modelka-okno .text-nahled:focus-visible,
+.tag-suggest .tag:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+/* Náhled „V profilu bude“ a pruh vyplněných údajů, které hlídá Údržba */
+.modelka-nahled {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 12px;
+    border: 1px dashed var(--border-color);
+    border-radius: 12px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.modelka-nahled b {
+    margin-top: 4px;
+    color: var(--text-main);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    overflow-wrap: anywhere;
+}
+
+.modelka-nahled span:empty {
+    display: none;
+}
+
+.modelka-nahled ul {
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text-main);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+}
+
+.modelka-nahled li.prazdny {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.modelka-pruh {
+    height: 4px;
+    margin-top: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.modelka-pruh i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent-hover), var(--accent-text));
+    transition: width 0.2s;
+}
+
+.modelka-nahled small {
+    margin-top: 4px;
+    font-size: 11px;
+}
+
+.modelka-pole {
+    position: relative;
+    display: flex;
+    flex-direction: column;
     min-width: 0;
-    padding: 20px 24px;
+    min-height: 0;
+}
+
+.modelka-pole > .close-btn {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    z-index: 1;
+    /* Pod křížkem roluje formulář; plné pozadí ho odliší */
+    background-color: var(--bg-modal);
+}
+
+.modelka-okno .form-body {
+    flex: 1;
+    min-height: 0;
+    padding: 6px 24px 16px;
     overflow-y: auto;
 }
 
-.modal-wide .modal-actions {
-    margin: 0;
-    padding: 12px 20px;
-    border-top: 1px solid var(--border-color);
+.modelka-okno .form-section {
+    padding: 14px 0 6px;
 }
 
-.form-section {
-    display: none;
-}
-
-.form-section.active {
-    display: block;
-}
-
-/* Název záložky je vidět v levém sloupci */
-.form-section h4 {
-    display: none;
-}
-
-.form-subtitle {
-    margin: 22px 0 12px 0;
-    padding-top: 18px;
-    border-top: 1px solid var(--border-color);
+/* Nadpis části růžovými kapitálkami s linkou (jako v okně Doplnit modelku); místo vpravo patří křížku */
+.modelka-okno .form-section h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    color: var(--accent-text);
     font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--text-muted);
 }
 
-.form-grid {
+.modelka-okno .form-section:first-child h4 {
+    margin-right: 40px;
+}
+
+.modelka-okno .form-section h4::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.5;
+}
+
+/* Řádky polí: šest sloupců, pole zabírá dva (siroke tři), ve „ctyri“ čtyři stejné sloupce */
+.modelka-radek {
     display: grid;
-    gap: 14px 16px;
-    align-items: end;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px 14px;
+    align-items: start;
 }
 
-.form-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
-.form-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
-.form-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
-.form-grid .span-2 { grid-column: span 2; }
+.modelka-radek > .form-group {
+    grid-column: span 2;
+}
 
-.form-section .form-group {
+.modelka-radek > .form-group.siroke {
+    grid-column: span 3;
+}
+
+.modelka-radek.ctyri {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.modelka-radek.ctyri > .form-group {
+    grid-column: span 1;
+}
+
+.modelka-okno .form-group {
+    gap: 5px;
     min-width: 0;
     margin-bottom: 0;
 }
 
-.form-section input,
-.form-section select,
-.form-section textarea {
+.modelka-okno .form-section > .form-group {
+    margin-bottom: 14px;
+}
+
+.modelka-okno label,
+.modelka-label {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.modelka-okno input,
+.modelka-okno select,
+.modelka-okno textarea {
     width: 100%;
-    background-color: var(--bg-card);
+    min-width: 0;
     font-size: 13px;
     color-scheme: dark;
 }
 
-.form-section textarea {
+.modelka-okno textarea {
     resize: vertical;
 }
 
-.form-section input:focus,
-.form-section select:focus,
-.form-section textarea:focus {
+.modelka-okno .text-nahled {
+    min-height: 74px;
+}
+
+/* Chyba v nápovědě pod polem (neplatné datum, nesrozumitelná míra) */
+.field-hint.chyba {
+    color: var(--danger-text);
+}
+
+.modelka-okno .modal-actions {
+    align-items: center;
+    margin: 0;
+    padding: 12px 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+.modelka-zkratka {
+    margin-right: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* Nápověda v nabídce tagů: zapnutý tag (modelka ho má) je růžový */
+.tag-suggest .tag.active {
     border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--text-main);
+}
+
+.tag-suggest {
+    max-height: 64px;
+    overflow-y: auto;
+}
+
+/* Rychlé přidání: nápověda pod polem */
+.quick-napoveda {
+    margin: -6px 0 0;
+    font-size: 12px;
+    color: var(--text-muted);
 }
 
 /* Nápověda v prázdném poli nesmí vypadat jako vyplněná hodnota */
@@ -1744,29 +1881,81 @@ input:focus, select:focus, textarea:focus {
     font-style: italic;
 }
 
-/* V úzkém okně jsou záložky nahoře v řadě */
-@media (max-width: 640px) {
-    .form-layout {
-        flex-direction: column;
+/* Užší okno: levý sloupec se zúží, pod 760 px jde nahoru (nadpis a části v řadě, náhled se schová) */
+@media (max-width: 900px) {
+    .modelka-mrizka {
+        grid-template-columns: 190px minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 760px) {
+    .modal-card.modelka-okno {
+        height: calc(100% - 32px);
     }
 
-    .form-tabs {
-        flex-direction: row;
-        width: auto;
-        padding: 8px;
+    .modelka-mrizka {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+    }
+
+    .modelka-bok {
+        gap: 10px;
+        padding: 16px 56px 12px 16px;
+        overflow: visible;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
-        overflow-x: auto;
     }
 
-    .form-tabs button {
-        white-space: nowrap;
+    .modelka-casti {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .modelka-casti button {
+        padding: 6px 10px;
+    }
+
+    .modelka-nahled {
+        display: none;
+    }
+
+    /* Křížek patří do rohu okna (k nadpisu), ne nad pole */
+    .modelka-pole {
+        position: static;
+    }
+
+    .modelka-okno .form-body {
+        padding: 4px 16px 12px;
+    }
+
+    .modelka-okno .form-section:first-child h4 {
+        margin-right: 0;
+    }
+
+    .modelka-okno .modal-actions {
+        flex-wrap: wrap;
+        padding: 10px 16px;
     }
 }
 
 @media (max-width: 640px) {
-    .form-grid.cols-3,
-    .form-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+    .modelka-radek,
+    .modelka-radek.ctyri {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .modelka-radek > .form-group,
+    .modelka-radek.ctyri > .form-group {
+        grid-column: span 1;
+    }
+
+    .modelka-radek > .form-group.siroke {
+        grid-column: 1 / -1;
+    }
+
+    .modelka-zkratka {
+        display: none;
+    }
 }
 
 /* Profil modelky: vlevo fotka a údaje, vpravo alba */
@@ -5155,56 +5344,70 @@ textarea {
     object-fit: cover;
 }
 
-/* Okna, která něco mění (modelka, nová modelka, cover, číslo časopisu), mají růžový rámeček jako Doplnit modelku.
-   Formulář modelky má navíc stejné rozložení: části pod sebou s růžovými nadpisy (místo záložek), bez křížku – zavírá se tlačítkem Zrušit */
+/* Doplnit modelku (třídy doplnit-* sdílí i okno článku, proto jen pro #doplnitModal): širší okno,
+   pole v tolika sloupcích, kolik se vejde, křížek v hlavičce */
+#doplnitModal .doplnit-okno {
+    width: min(780px, calc(100% - 32px));
+}
+
+#doplnitModal .doplnit-hlavicka {
+    position: relative;
+}
+
+#doplnitModal .doplnit-hlavicka > div {
+    padding-right: 56px;
+}
+
+#doplnitModal .doplnit-hlavicka .close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+}
+
+#doplnitModal .doplnit-mrizka {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+}
+
+/* Kategorie jsou štítky v řadě, potřebují celou šířku */
+#doplnitModal .doplnit-pole:has(.kategorie-vyber) {
+    grid-column: 1 / -1;
+}
+
+#doplnitModal .doplnit-pole input:focus-visible,
+#doplnitModal .doplnit-pole select:focus-visible,
+#doplnitModal .doplnit-netyka:focus-visible,
+#doplnitModal .doplnit-fotky button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+/* Výběr má nižší výšku než ostatní pole okna; bez svislého odsazení by se text uřízl */
+#doplnitModal .doplnit-pole select {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+#doplnitModal .doplnit-pata {
+    flex-wrap: wrap;
+}
+
+@media (max-width: 560px) {
+    #doplnitModal .doplnit-pata span {
+        flex-basis: 100%;
+    }
+
+    #doplnitModal .doplnit-telo {
+        padding: 4px 14px 12px;
+    }
+}
+
+/* Okna, která něco mění (modelka, nová modelka, cover, číslo časopisu), mají růžový rámeček jako Doplnit modelku */
 #modelModal .modal-card,
 #quickModal .modal-card,
 #coverModal .modal-card,
 #issueModal .modal-card {
     border-color: var(--accent);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 0 4px rgba(216, 27, 96, 0.12);
-}
-
-#modelModal .form-tabs,
-#closeModalBtn {
-    display: none;
-}
-
-#modelModal .form-body {
-    padding: 4px 24px 12px;
-}
-
-#modelModal .form-section {
-    display: block;
-    padding: 12px 0;
-}
-
-#modelModal .form-section h4 {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0 0 12px;
-    color: var(--accent-text);
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-}
-
-#modelModal .form-section h4::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, var(--accent), transparent);
-    opacity: 0.5;
-}
-
-#modelModal .form-subtitle {
-    margin: 14px 0 10px;
-    padding-top: 0;
-    border-top: none;
-    color: var(--accent-text);
-    font-weight: 500;
-    letter-spacing: 0.14em;
 }
 
 /* Souhrn Přehledu: jeden panel, řádek = položka s pruhem pokroku, „19 z 22“ a pilulkou „doplnit 3“ */

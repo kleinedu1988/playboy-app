@@ -125,8 +125,11 @@ export const SABLONA_OKNA = `
       <form id="quickForm">
         <div class="form-group">
           <label for="inputQuickJmeno">Jméno</label>
-          <input type="text" id="inputQuickJmeno" required autocomplete="off" />
+          <input type="text" id="inputQuickJmeno" required autocomplete="off" aria-describedby="quickJmenoInfo quickNapoveda" />
+          <!-- Živá kontrola, zda modelka se stejným jménem nebo pseudonymem už ve sbírce není -->
+          <small id="quickJmenoInfo" class="field-hint" aria-live="polite"></small>
         </div>
+        <p id="quickNapoveda" class="quick-napoveda">Enter přidá modelku a otevře její profil, kde se přidají fotky a údaje.</p>
         <div class="modal-actions modal-actions-split">
           <button type="button" id="quickMoreBtn" class="btn btn-secondary">Vyplnit další údaje…</button>
           <button type="submit" class="btn btn-primary">Přidat</button>
@@ -135,75 +138,114 @@ export const SABLONA_OKNA = `
     </div>
   </div>
 
-  <!-- Modal 1: Přidat / upravit modelku -->
+  <!-- Přidat / upravit modelku: vlevo nadpis, části formuláře a náhled profilu, vpravo pole pod sebou -->
   <div id="modelModal" class="modal-overlay hidden">
-    <div class="modal-card modal-wide">
-      <div class="modal-header">
-        <h3 id="modelModalTitle">Přidat novou modelku</h3>
-        <button id="closeModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
-      </div>
-      <form id="addModelForm" novalidate>
-        <div class="form-layout">
-          <nav id="modelTabs" class="form-tabs"></nav>
+    <div class="modal-card modelka-okno">
+      <form id="addModelForm" class="modelka-mrizka" novalidate>
+        <aside class="modelka-bok">
+          <h3 id="modelModalTitle">Přidat novou modelku</h3>
+          <!-- Části formuláře: klik posune na část, tečka značí, že je v ní něco vyplněno (app/formular-modelky.js) -->
+          <nav id="modelTabs" class="modelka-casti" aria-label="Části formuláře"></nav>
+          <div class="modelka-nahled" aria-live="polite">
+            <span>V profilu bude:</span>
+            <b id="modelNahledJmeno"></b>
+            <span id="modelNahledDalsi"></span>
+            <ul id="modelNahledUdaje"></ul>
+            <div class="modelka-pruh" aria-hidden="true"><i id="modelNahledPruh"></i></div>
+            <small id="modelNahledVyplneno"></small>
+          </div>
+        </aside>
+        <div class="modelka-pole">
+          <button type="button" id="closeModalBtn" class="close-btn" title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
           <div class="form-body">
-          <section class="form-section">
-            <h4>Základní údaje</h4>
-            <div class="form-grid cols-2">
-              <div class="form-group span-2">
+          <section class="form-section" aria-labelledby="modelCast0">
+            <h4 id="modelCast0">Základní údaje</h4>
+            <div class="modelka-radek">
+              <div class="form-group siroke">
                 <label for="inputJmeno">Celé jméno</label>
-                <input type="text" id="inputJmeno" />
+                <input type="text" id="inputJmeno" autocomplete="off" aria-describedby="modelJmenoInfo" />
+                <small id="modelJmenoInfo" class="field-hint" aria-live="polite"></small>
               </div>
-              <div class="form-group span-2">
-                <label for="inputDalsiJmena">Další jména a pseudonymy (oddělené čárkou)</label>
-                <input type="text" id="inputDalsiJmena" />
+              <div class="form-group siroke">
+                <label for="inputDalsiJmena">Další jména a pseudonymy</label>
+                <input type="text" id="inputDalsiJmena" autocomplete="off" placeholder="oddělené čárkou" />
               </div>
               <div class="form-group">
                 <label for="inputNarozeniDatum">Datum narození</label>
-                <input type="text" id="inputNarozeniDatum" placeholder="RRRR-MM-DD, RRRR-MM nebo RRRR" autocomplete="off" />
+                <input type="text" id="inputNarozeniDatum" placeholder="RRRR-MM-DD nebo rok" autocomplete="off" aria-describedby="modelNarozeniInfo" />
+                <small id="modelNarozeniInfo" class="field-hint" aria-live="polite"></small>
               </div>
               <div class="form-group">
                 <label for="inputUmrtiDatum">Datum úmrtí</label>
-                <input type="text" id="inputUmrtiDatum" placeholder="RRRR-MM-DD, RRRR-MM nebo RRRR" autocomplete="off" />
+                <input type="text" id="inputUmrtiDatum" placeholder="RRRR-MM-DD nebo rok" autocomplete="off" aria-describedby="modelUmrtiInfo" />
+                <small id="modelUmrtiInfo" class="field-hint" aria-live="polite"></small>
               </div>
               <div class="form-group">
                 <label for="inputNarozeniMisto">Místo narození</label>
-                <input type="text" id="inputNarozeniMisto" list="seznamMisto" />
+                <input type="text" id="inputNarozeniMisto" list="seznamMisto" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="inputNarodnost">Národnost</label>
-                <input type="text" id="inputNarodnost" list="seznamNarodnost" />
+                <input type="text" id="inputNarodnost" list="seznamNarodnost" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="inputEtnicita">Etnicita</label>
-                <input type="text" id="inputEtnicita" list="seznamEtnicita" />
+                <input type="text" id="inputEtnicita" list="seznamEtnicita" autocomplete="off" />
               </div>
-              <div class="form-group span-2">
-                <label for="inputDriveID">Titulní fotka – odkaz z Google Disku (nepovinné, jde později vybrat z alba)</label>
-                <input type="text" id="inputDriveID" />
+              <div class="form-group">
+                <label for="inputDriveID">Titulní fotka</label>
+                <input type="text" id="inputDriveID" autocomplete="off" placeholder="odkaz z Disku (nepovinné)" title="Odkaz na fotku z Google Disku; titulní fotku jde později vybrat i z alba" />
               </div>
             </div>
           </section>
 
-          <section class="form-section">
-            <h4>Vzhled a míry</h4>
-            <div class="form-grid cols-4">
+          <section class="form-section" aria-labelledby="modelCast1">
+            <h4 id="modelCast1">Vzhled a míry</h4>
+            <div class="modelka-radek ctyri">
               <div class="form-group">
                 <label for="inputVyska">Výška (cm)</label>
-                <input type="text" id="inputVyska" inputmode="decimal" placeholder="cm nebo 5'7&quot;" autocomplete="off" />
+                <input type="text" id="inputVyska" inputmode="decimal" placeholder="cm nebo 5'7&quot;" autocomplete="off" aria-describedby="modelVyskaInfo" />
+                <small id="modelVyskaInfo" class="field-hint" aria-live="polite"></small>
               </div>
               <div class="form-group">
                 <label for="inputVaha">Váha (kg)</label>
-                <input type="text" id="inputVaha" inputmode="decimal" placeholder="kg nebo 115 lbs" autocomplete="off" />
+                <input type="text" id="inputVaha" inputmode="decimal" placeholder="kg nebo 115 lbs" autocomplete="off" aria-describedby="modelVahaInfo" />
+                <small id="modelVahaInfo" class="field-hint" aria-live="polite"></small>
               </div>
               <div class="form-group">
                 <label for="inputVlasy">Barva vlasů</label>
-                <input type="text" id="inputVlasy" list="seznamVlasy" />
+                <input type="text" id="inputVlasy" list="seznamVlasy" autocomplete="off" />
               </div>
               <div class="form-group">
                 <label for="inputOci">Barva očí</label>
-                <input type="text" id="inputOci" list="seznamOci" />
+                <input type="text" id="inputOci" list="seznamOci" autocomplete="off" />
               </div>
-              <div class="form-group span-2">
+              <div class="form-group">
+                <label for="inputHrudnik">Hrudník (cm)</label>
+                <input type="text" id="inputHrudnik" inputmode="decimal" placeholder="cm nebo 34B-24-34" autocomplete="off" aria-describedby="modelMiryInfo" />
+                <small id="modelMiryInfo" class="field-hint" aria-live="polite"></small>
+              </div>
+              <div class="form-group">
+                <label for="inputPas">Pas (cm)</label>
+                <input type="text" id="inputPas" inputmode="decimal" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="inputBoky">Boky (cm)</label>
+                <input type="text" id="inputBoky" inputmode="decimal" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="inputVelikost">Velikost prsou</label>
+                <input type="text" id="inputVelikost" placeholder="např. 34B" autocomplete="off" />
+              </div>
+              <div class="form-group">
+                <label for="selectPrsaTyp">Typ prsou</label>
+                <select id="selectPrsaTyp">
+                  <option value="">Neuvedeno</option>
+                  <option>Přírodní</option>
+                  <option>Silikonová</option>
+                </select>
+              </div>
+              <div class="form-group">
                 <label for="selectOchlupeni">Ochlupení</label>
                 <select id="selectOchlupeni">
                   <option value="">Neuvedeno</option>
@@ -229,59 +271,34 @@ export const SABLONA_OKNA = `
                 </select>
               </div>
             </div>
-            <h5 class="form-subtitle">Míry</h5>
-            <div class="form-grid cols-3">
-              <div class="form-group">
-                <label for="inputHrudnik">Hrudník (cm)</label>
-                <input type="text" id="inputHrudnik" inputmode="decimal" placeholder="cm nebo 34B-24-34" autocomplete="off" />
+          </section>
+
+          <section class="form-section" aria-labelledby="modelCast2">
+            <h4 id="modelCast2">Zařazení a poznámky</h4>
+            <div class="form-group">
+              <label id="kategorieLabel">Kategorie</label>
+              <div id="kategorieVyber" role="group" aria-labelledby="kategorieLabel"></div>
+              <input type="hidden" id="inputRole" />
+            </div>
+            <div class="form-group">
+              <label for="inputTags">Tagy</label>
+              <input type="text" id="inputTags" autocomplete="off" placeholder="oddělené čárkou" />
+              <!-- Už použité tagy: klik tag přidá, druhý klik ho odebere -->
+              <div id="tagyNapoveda" class="tag-suggest" role="group" aria-label="Už použité tagy"></div>
+            </div>
+            <div class="modelka-radek">
+              <!-- Poznámka se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
+              <div class="form-group siroke">
+                <span class="modelka-label" id="modelPoznamkaLabel">Poznámka</span>
+                <button type="button" id="modelPoznamkaBtn" class="text-nahled" title="Upravit poznámku" aria-labelledby="modelPoznamkaLabel modelPoznamkaNahled"><span id="modelPoznamkaNahled"></span></button>
+                <textarea id="inputPoznamka" class="hidden" aria-hidden="true" tabindex="-1"></textarea>
               </div>
-              <div class="form-group">
-                <label for="inputPas">Pas (cm)</label>
-                <input type="text" id="inputPas" inputmode="decimal" autocomplete="off" />
-              </div>
-              <div class="form-group">
-                <label for="inputBoky">Boky (cm)</label>
-                <input type="text" id="inputBoky" inputmode="decimal" autocomplete="off" />
-              </div>
-              <div class="form-group">
-                <label for="inputVelikost">Velikost prsou (např. 34B)</label>
-                <input type="text" id="inputVelikost" />
-              </div>
-              <div class="form-group">
-                <label for="selectPrsaTyp">Typ prsou</label>
-                <select id="selectPrsaTyp">
-                  <option value="">Neuvedeno</option>
-                  <option>Přírodní</option>
-                  <option>Silikonová</option>
-                </select>
+              <div class="form-group siroke">
+                <label for="inputOdkazy">Odkazy (jeden na řádek)</label>
+                <textarea id="inputOdkazy" rows="3" placeholder="Wikipedie a podobně: https://…"></textarea>
               </div>
             </div>
           </section>
-
-          <section class="form-section">
-            <h4>Zařazení a poznámky</h4>
-            <div class="form-grid cols-2">
-              <div class="form-group span-2">
-                <label id="kategorieLabel">Kategorie</label>
-                <div id="kategorieVyber" role="group" aria-labelledby="kategorieLabel"></div>
-                <input type="hidden" id="inputRole" />
-              </div>
-              <div class="form-group span-2">
-                <label for="inputTags">Tagy (oddělené čárkou)</label>
-                <input type="text" id="inputTags" />
-                <div id="tagyNapoveda" class="tag-suggest"></div>
-              </div>
-              <div class="form-group span-2">
-                <label for="inputPoznamka">Poznámka</label>
-                <textarea id="inputPoznamka" rows="3" placeholder="Markdown: **tučné**, *kurzíva*, odrážky"></textarea>
-              </div>
-              <div class="form-group span-2">
-                <label for="inputOdkazy">Odkazy (Wikipedie a podobně, jeden na řádek)</label>
-                <textarea id="inputOdkazy" rows="2" placeholder="https://…"></textarea>
-              </div>
-            </div>
-          </section>
-
 
           <!-- Našeptávání hodnot, které už v databázi jsou, aby se stejný údaj psal vždy stejně -->
           <datalist id="seznamVlasy"></datalist>
@@ -290,11 +307,12 @@ export const SABLONA_OKNA = `
           <datalist id="seznamEtnicita"></datalist>
           <datalist id="seznamMisto"></datalist>
           </div>
-        </div>
-        <div class="modal-actions">
-          <button type="button" id="cancelModelBtn" class="btn btn-secondary">Zrušit</button>
-          <button type="submit" id="modelNextBtn" class="btn btn-secondary hidden" title="Uloží a otevře další modelku z fronty Údržby">Uložit a další</button>
-          <button type="submit" class="btn btn-primary">Uložit modelku</button>
+          <div class="modal-actions">
+            <span class="modelka-zkratka">Ctrl+Enter uloží</span>
+            <button type="button" id="cancelModelBtn" class="btn btn-secondary">Zrušit</button>
+            <button type="submit" id="modelNextBtn" class="btn btn-secondary hidden" title="Uloží a otevře další modelku z fronty Údržby">Uložit a další</button>
+            <button type="submit" id="modelUlozitBtn" class="btn btn-primary">Uložit modelku</button>
+          </div>
         </div>
       </form>
     </div>
@@ -793,10 +811,11 @@ export const SABLONA_OKNA = `
         <h4>Přehled a hodnocení</h4>
         <ul>
           <li><strong>Statistiky</strong> v Přehledu (poslední část v nabídce tlačítka Přehled): jeden graf, který vybereš z rozvinutého seznamu, a vedle něj modelky výběru. <em>V čase</em> podle roku prvního výskytu modelky v časopise (centerfold, obálka nebo pictorial u čísla; přepínač Vše / Centerfold / Obálka / Pictorial / Online vybere, který výskyt se počítá; Online je rok nafocení prvního online alba, album bez data v grafech v čase není): počty (modelky podle roku; přibývání sbírky po měsících), údaje (věk při prvním výskytu, výška, váha, BMI, hrudník, pas, boky, poměr pas : boky – medián roku a pásmo prostřední poloviny modelek) a podíly (blond vlasy, silikonová prsa, oholené ochlupení, tetování, piercing – procento ze známých hodnot); bílá křivka je klouzavý průměr. Klik na sloupec vybere rok, tažení myší období; šipky ← → výběr posouvají, se Shiftem ho rozšíří. Přepínač Vše / US / CZ vybere edici. Modelky bez čísla (jen online) rok nemají a v grafech v čase nejsou; rozložení počítá se všemi. <em>Rozložení</em>: kategorie, národnosti, barva vlasů a očí, hodnocení, výskyt a nejčastější fotografové; klik na řádek vybere hodnotu. <strong>Výběr platí pro všechny grafy</strong>: vyber třeba 90. léta, přepni na Národnosti a uvidíš jasně jen modelky z 90. let, tlumeně celou sbírku; další výběr v jiném grafu ho zúží. Podmínky jsou štítky pod lištou (křížek podmínku odebere), Esc zruší celý výběr. Seznam vpravo ukazuje modelky výběru, klik otevře profil; „Otevřít v galerii“ převede výběr na hledání, když ho jde hledáním vyjádřit. Vybraný graf si program pamatuje.</li>
+          <li><strong>Formulář modelky</strong> („Upravit modelku…“, „Vyplnit další údaje…“): vlevo části formuláře – klik na část k ní doroluje, plná tečka značí, že je v ní něco vyplněno – a náhled, jak bude modelka v profilu, s pruhem vyplněných údajů, které hlídá Údržba. Pod poli se hned při psaní ukazují nápovědy: datum narození a věk, neplatné datum nebo úmrtí před narozením (červeně), převod amerických měr na cm a kg (<code>5'7"</code>, <code>115 lbs</code>, <code>34B-24-34</code> rozepíše hrudník, pas, boky i velikost), BMI a upozornění, že modelka se stejným jménem nebo pseudonymem už ve sbírce je (to i v rychlém přidání). Klik na už použitý tag pod polem Tagy ho přidá, druhý klik ho odebere. Poznámka se píše v okně editoru textu. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> uloží (ve frontě Údržby uloží a otevře další modelku), stejně i v okně Doplnit modelku; <kbd>Esc</kbd> okno zavře, u rozepsaných změn se nejdřív zeptá.</li>
           <li><strong>Kategorie</strong> modelky (Playmate roku, Cyber Girl, Coed, Muse, Celebrita, Jen ve speciálu, Creator, Online) se volí štítky v „Upravit modelku…“; Playmate měsíce, Cyber Girl a Modelku obálky program pozná sám z centerfoldu, online alba (Pictorial online; jen když není zapsaná jiná online kategorie, třeba Coed) a obálky. Proužek v rohu fotky profilu ukáže u centerfoldu „Playmate · měsíc“, u online alb „Cyber Girl“, nebo „Online“, když modelka Cyber Girl není (klik přejde na album). Podle kategorie filtruje galerie (Filtry) a hledání <code>kategorie:</code>.</li>
           <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online) nebo s online albem; ostatní jsou <em>neurčené</em>. Album typu <em>Pictorial online</em> je pictorial jen na webu: v okně alba nemá vydání, ale pole <em>Nafoceno</em> (RRRR-MM-DD, RRRR-MM nebo rok). Typ alba se v okně volí ve dvou řadách: <em>Kde vyšlo</em> (Časopis, Online, Nikde) a <em>Druh</em> – u časopisu Pictorial nebo Centerfold a řada <em>Číslo</em> (Měsíční, nebo Speciál s vlastním výběrem speciálů roku a volbou „Nový speciál…“), u online Pictorial, Cyber Girl of the Week nebo of the Month, „Nikde“ je pictorial bez čísla i data. <em>Cyber Girl of the Week</em> spočítá z celého data týden v roce (nadpis alba „Cyber Girl týdne · 24. týden 2004“), <em>of the Month</em> vezme z data měsíc („Cyber Girl měsíce · červen 2004“); modelka dostane kategorii Cyber Girl týdne, nebo měsíce. Datum je jen informace u alba – album nepřiřadí k vydání ani do kalendáře a nemění titulní fotku modelky. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; po najetí myší se ukáže jméno modelky a odkud fotka je.</li>
-          <li><strong>Psaní textu</strong> (průvodní text alba, text článku, poznámka čísla): klik na náhled textu otevře okno editoru. Text se ukazuje rovnou naformátovaný – tučně, kurzívou, nadpisy, citáty; značky markdownu (<code>**</code>, <code>*</code>, <code>#</code>, <code>&gt;</code>) se objeví, jen když je kurzor v daném místě. Tlačítka nahoře nebo Ctrl+B / Ctrl+I formátují výběr a ukazují, který formát je v místě kurzoru (opakovaný klik ho vypne). Enter v odrážkách a číslovaném seznamu pokračuje další položkou (čísla pod ní se přečíslují), Enter na prázdné položce seznam ukončí. U článku se první odstavec (perex) a mluvčí („PLAYBOY:“) ukazují jako ve čtečce. Tlačítko <em>Náhled</em> ukáže text přesně tak, jak bude v profilu nebo ve čtečce; dole je počet slov a znaků. Ctrl+Enter text použije.</li>
+          <li><strong>Psaní textu</strong> (průvodní text alba, text článku, poznámka modelky a čísla): klik na náhled textu otevře okno editoru. Text se ukazuje rovnou naformátovaný – tučně, kurzívou, nadpisy, citáty; značky markdownu (<code>**</code>, <code>*</code>, <code>#</code>, <code>&gt;</code>) se objeví, jen když je kurzor v daném místě. Tlačítka nahoře nebo Ctrl+B / Ctrl+I formátují výběr a ukazují, který formát je v místě kurzoru (opakovaný klik ho vypne). Enter v odrážkách a číslovaném seznamu pokračuje další položkou (čísla pod ní se přečíslují), Enter na prázdné položce seznam ukončí. U článku se první odstavec (perex) a mluvčí („PLAYBOY:“) ukazují jako ve čtečce. Tlačítko <em>Náhled</em> ukáže text přesně tak, jak bude v profilu nebo ve čtečce; dole je počet slov a znaků. Ctrl+Enter text použije.</li>
           <li><strong>Okno alba</strong>: vlevo se volí, kde album vyšlo, jeho druh a číslo (Tab skočí na skupinu, šipky v ní mění volbu); náhled pod volbami ukazuje, jak bude album v profilu vypadat, i s obrázkem první vložené fotky a počtem fotek. Na malé obrazovce se pole posouvají a tlačítka Uložit zůstávají dole.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku. V hlavičce okna je záhlaví článku tak, jak bude v čísle (rubrika · strana · druh textu), pod skeny jejich počet a náhledy.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>

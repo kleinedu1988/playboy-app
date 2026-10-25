@@ -1,7 +1,7 @@
 // Okno alba a centerfoldu
 import { oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteAlbum, GetFotografove } from './backend';
-import { TYP_ONLINE, esc, jeOnline, nazevAlba, obdobiCyberGirl, rozlozitVydani, sjednotit } from '../lib/format';
+import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, esc, jeOnline, nazevAlba, obdobiCyberGirl, rozlozitVydani, sjednotit } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { nacistFotkyModelky } from './profil';
@@ -40,13 +40,39 @@ export async function vybratNeboZalozitModelku(jmeno) {
 // Výběr měsíce nabízí i speciály zvoleného roku
 let obnovitSpecialyAlba = (_vybrat) => {};
 
-// Centerfold se místo názvu určuje měsícem a rokem vydání; online album nemá vydání, ale datum nafocení
+// Typ alba ve dvou krocích: kde vyšlo a druh. Časopis a Nikde jsou obojí typ Pictorial, Nikde jen bez čísla.
+// Typ, který nabídka nezná (starší Cover…), se nabídne jako další druh u časopisu.
+const DRUHY_ALBA = {
+    casopis: [['Pictorial', 'Pictorial'], ['Centerfold', 'Centerfold']],
+    online: [[TYP_ONLINE, 'Pictorial'], [TYP_CG_TYDNE, 'Cyber Girl of the Week'], [TYP_CG_MESICE, 'Cyber Girl of the Month']],
+    nikde: [['Pictorial', 'Pictorial bez čísla']],
+};
+let kdeAlba = 'casopis';
+
+const druhyAlba = kde => [...DRUHY_ALBA[kde], ...(kde === 'casopis'
+    ? [...document.querySelectorAll('#selectTyp [data-puvodni]')].map(o => [o.value, o.value]) : [])];
+
+function nastavitTypAlba(typ, kde = kdeAlba) {
+    const vyberTypu = /** @type {HTMLSelectElement} */ (document.getElementById('selectTyp'));
+    kdeAlba = kde;
+    vyberTypu.value = typ;
+    document.querySelectorAll('#albumTypGroup [data-kde]').forEach(b => {
+        b.classList.toggle('active', b.dataset.kde === kde);
+        b.setAttribute('aria-pressed', String(b.dataset.kde === kde));
+    });
+    document.getElementById('albumDruhy').innerHTML = druhyAlba(kde)
+        .map(([hodnota, popis]) => `<button type="button" class="chip ${hodnota === typ ? 'active' : ''}" data-druh="${esc(hodnota)}" aria-pressed="${hodnota === typ}">${esc(popis)}</button>`).join('');
+    prepnoutPoleAlba();
+}
+
+// Centerfold se místo názvu určuje měsícem a rokem vydání; online album nemá vydání, ale datum nafocení;
+// album „Nikde“ nemá ani jedno
 export function prepnoutPoleAlba() {
     const typ = document.getElementById('selectTyp').value;
     const centerfold = typ === 'Centerfold';
-    const online = typ === TYP_ONLINE;
+    const online = jeOnline(typ);
     document.getElementById('albumNazevGroup').classList.toggle('hidden', centerfold);
-    document.getElementById('albumVydaniGroup').classList.toggle('hidden', online);
+    document.getElementById('albumVydaniGroup').classList.toggle('hidden', online || kdeAlba === 'nikde');
     document.getElementById('albumDatumGroup').classList.toggle('hidden', !online);
     ukazatTyden();
     // U pictorialu je vydání nepovinné
@@ -60,10 +86,10 @@ export function prepnoutPoleAlba() {
 
 // Cyber Girl of the Week / Month: týden se spočítá z celého data nafocení, měsíc stačí z RRRR-MM
 export function ukazatTyden() {
-    const typ = document.getElementById('selectCG').value;
+    const typ = document.getElementById('selectTyp').value;
     const obdobi = obdobiCyberGirl(typ, document.getElementById('inputAlbumDatum').value.trim());
-    document.getElementById('albumTydenInfo').textContent = !typ ? ''
-        : obdobi || (typ === TYP_ONLINE ? '' : typ.endsWith('týdne') ? 'týden se spočítá z celého data RRRR-MM-DD' : 'měsíc se vezme z data RRRR-MM');
+    document.getElementById('albumTydenInfo').textContent = typ === TYP_CG_TYDNE ? obdobi || 'Týden se spočítá z celého data RRRR-MM-DD.'
+        : typ === TYP_CG_MESICE ? obdobi || 'Měsíc se vezme z data RRRR-MM.' : '';
 }
 
 // moznosti: vyberModelky (modelka se vybírá v okně), typ a vydani (předvyplnění), nadpis
@@ -90,26 +116,25 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     const vyberTypu = document.getElementById('selectTyp');
     vyberTypu.querySelectorAll('[data-puvodni]').forEach(o => o.remove());
 
+    let typ = 'Pictorial';
     if (album) {
-        // Cyber Girl týdne a měsíce jsou v okně Pictorial online s volbou Cyber Girl
-        const cyberGirl = jeOnline(album.typ) && album.typ !== TYP_ONLINE;
-        document.getElementById('selectCG').value = cyberGirl ? album.typ : '';
-        if (!cyberGirl && ![...vyberTypu.options].some(o => o.value === album.typ)) {
+        if (![...vyberTypu.options].some(o => o.value === album.typ)) {
             vyberTypu.add(new Option(album.typ, album.typ));
             vyberTypu.lastElementChild.dataset.puvodni = '1';
         }
-        vyberTypu.value = cyberGirl ? TYP_ONLINE : album.typ;
+        typ = album.typ;
         document.getElementById('inputAlbumName').value = album.album;
         document.getElementById('inputAlbumFotograf').value = album.fotograf || '';
         document.getElementById('inputAlbumPopis').value = album.popis || '';
         document.getElementById('inputAlbumDatum').value = album.datumAlba || '';
     }
-    if (moznosti.typ) vyberTypu.value = moznosti.typ;
+    if (moznosti.typ) typ = moznosti.typ;
     const vydani = rozlozitVydani(album ? (album.vydani || (album.typ === 'Centerfold' ? album.album : '')) : moznosti.vydani);
     document.getElementById('inputAlbumRok').value = vydani?.rok || '';
     document.getElementById('selectAlbumEdice').value = vydani?.edice || stav.kalendarEdice;
     obnovitSpecialyAlba(vydani?.mesic || '');
-    prepnoutPoleAlba();
+    // Uložený pictorial bez čísla je „Nikde“, nové album začíná u časopisu
+    nastavitTypAlba(typ, jeOnline(typ) ? 'online' : album && typ === 'Pictorial' && !vydani ? 'nikde' : 'casopis');
 
     // Našeptávání fotografů z celé sbírky, aby se stejné jméno psalo vždy stejně
     GetFotografove().then(fotografove => {
@@ -122,7 +147,8 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
         document.getElementById('inputAlbumModelka').value = modelka?.jmeno || '';
     }
     albumModal.classList.remove('hidden');
-    document.getElementById(moznosti.vyberModelky ? 'inputAlbumModelka' : moznosti.typ ? (moznosti.typ === 'Centerfold' ? 'selectAlbumMesic' : 'inputAlbumName') : 'selectTyp').focus();
+    const prvni = moznosti.vyberModelky ? 'inputAlbumModelka' : moznosti.typ ? (moznosti.typ === 'Centerfold' ? 'selectAlbumMesic' : 'inputAlbumName') : '';
+    (prvni ? document.getElementById(prvni) : document.querySelector('#albumTypGroup [data-kde].active'))?.focus();
 }
 
 export function smazatAlbum(album, pocet) {
@@ -142,8 +168,18 @@ export function smazatAlbum(album, pocet) {
 export function pripravit() {
     obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumMesic', 'inputAlbumRok', 'selectAlbumEdice');
 
-    document.getElementById('selectTyp').addEventListener('change', prepnoutPoleAlba);
-    document.getElementById('selectCG').addEventListener('change', ukazatTyden);
+    // Kde vyšlo: druh zůstane, pokud ho nová volba má (Pictorial), jinak první z nabídky
+    document.getElementById('albumTypGroup').addEventListener('click', (e) => {
+        const kde = /** @type {HTMLElement} */ (e.target).closest('[data-kde]');
+        const druh = /** @type {HTMLElement} */ (e.target).closest('[data-druh]');
+        if (kde) {
+            const typ = document.getElementById('selectTyp').value;
+            const druhy = druhyAlba(kde.dataset.kde);
+            nastavitTypAlba(druhy.some(([h]) => h === typ) ? typ : druhy[0][0], kde.dataset.kde);
+        } else if (druh) {
+            nastavitTypAlba(druh.dataset.druh);
+        }
+    });
     document.getElementById('inputAlbumDatum').addEventListener('input', ukazatTyden);
 
     // Nápověda, že napsané jméno zatím ve sbírce není a uložením vznikne nová modelka

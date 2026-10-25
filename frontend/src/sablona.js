@@ -315,24 +315,32 @@ export const SABLONA_OKNA = `
           <datalist id="seznamModelekAlba"></datalist>
           <small id="albumModelkaNova" class="field-hint"></small>
         </div>
-        <div class="form-row">
-          <div id="albumTypGroup" class="form-group">
-            <label for="selectTyp">Typ obsahu</label>
-            <select id="selectTyp">
-              <option value="Pictorial">Pictorial (Fotostory)</option>
-              <option value="Centerfold">Centerfold (Plakát)</option>
-              <option value="Pictorial online">Pictorial online (jen na webu)</option>
-            </select>
+        <!-- Typ alba ve dvou krocích: kde vyšlo (časopis, online, nikde) a druh; skutečný typ drží skrytý výběr -->
+        <div id="albumTypGroup" class="form-group typ-alba">
+          <span class="typ-alba-nadpis" id="albumKdeNadpis">Kde vyšlo</span>
+          <div class="typ-alba-kde" role="group" aria-labelledby="albumKdeNadpis">
+            <button type="button" data-kde="casopis" title="Album patří k číslu časopisu">Časopis</button>
+            <button type="button" data-kde="online" title="Pictorial jen na webu (Cyber Girl, Coed…)">Online</button>
+            <button type="button" data-kde="nikde" title="Album bez čísla i bez data">Nikde</button>
           </div>
-          <div class="form-group">
-            <label for="inputAlbumFotograf">Fotograf (nepovinné)</label>
-            <input type="text" id="inputAlbumFotograf" list="seznamFotografu" autocomplete="off" />
-            <datalist id="seznamFotografu"></datalist>
-          </div>
+          <span class="typ-alba-nadpis" id="albumDruhNadpis">Druh</span>
+          <div id="albumDruhy" class="typ-alba-druhy" role="group" aria-labelledby="albumDruhNadpis"></div>
+          <select id="selectTyp" class="hidden" tabindex="-1" aria-hidden="true">
+            <option value="Pictorial">Pictorial</option>
+            <option value="Centerfold">Centerfold</option>
+            <option value="Pictorial online">Pictorial online</option>
+            <option value="Cyber Girl týdne">Cyber Girl týdne</option>
+            <option value="Cyber Girl měsíce">Cyber Girl měsíce</option>
+          </select>
         </div>
         <div id="albumNazevGroup" class="form-group">
           <label for="inputAlbumName">Název alba</label>
           <input type="text" id="inputAlbumName" placeholder="např. Pictorial 1995-04" required />
+        </div>
+        <div class="form-group">
+          <label for="inputAlbumFotograf">Fotograf (nepovinné)</label>
+          <input type="text" id="inputAlbumFotograf" list="seznamFotografu" autocomplete="off" />
+          <datalist id="seznamFotografu"></datalist>
         </div>
         <!-- Centerfold nemá název, určuje ho vydání časopisu; pictorial může k vydání patřit volitelně -->
         <div id="albumVydaniGroup" class="form-row form-row-3 hidden">
@@ -357,15 +365,7 @@ export const SABLONA_OKNA = `
           <label for="inputAlbumDatum">Nafoceno (nepovinné)</label>
           <input type="text" id="inputAlbumDatum" placeholder="RRRR-MM-DD" autocomplete="off" />
           <small class="field-hint">Kdy bylo album nafoceno nebo zveřejněno online: RRRR-MM-DD, RRRR-MM nebo jen rok. Jen informace u alba – nepřiřadí ho k vydání ani nezmění titulní fotku.</small>
-          <div class="cg-volba">
-            <label for="selectCG">Cyber Girl</label>
-            <select id="selectCG">
-              <option value="">–</option>
-              <option value="Cyber Girl týdne">of the Week (týden z data)</option>
-              <option value="Cyber Girl měsíce">of the Month (měsíc z data)</option>
-            </select>
-            <small id="albumTydenInfo" class="field-hint"></small>
-          </div>
+          <small id="albumTydenInfo" class="typ-alba-obdobi"></small>
         </div>
         <div class="form-group">
           <label id="bulkLinksLabel" for="inputBulkLinks">Vlož odkazy z Google Disku (libovolné množství)</label>
@@ -720,7 +720,7 @@ export const SABLONA_OKNA = `
         <ul>
           <li><strong>Statistiky</strong> v Přehledu (poslední část v nabídce tlačítka Přehled): jeden graf, který vybereš z rozvinutého seznamu, a vedle něj modelky výběru. <em>V čase</em> podle roku prvního výskytu modelky v časopise (centerfold, obálka nebo pictorial u čísla; přepínač Vše / Centerfold / Obálka / Pictorial / Online vybere, který výskyt se počítá; Online je rok nafocení prvního online alba, album bez data v grafech v čase není): počty (modelky podle roku; přibývání sbírky po měsících), údaje (věk při prvním výskytu, výška, váha, BMI, hrudník, pas, boky, poměr pas : boky – medián roku a pásmo prostřední poloviny modelek) a podíly (blond vlasy, silikonová prsa, oholené ochlupení, tetování, piercing – procento ze známých hodnot); bílá křivka je klouzavý průměr. Klik na sloupec vybere rok, tažení myší období; šipky ← → výběr posouvají, se Shiftem ho rozšíří. Přepínač Vše / US / CZ vybere edici. Modelky bez čísla (jen online) rok nemají a v grafech v čase nejsou; rozložení počítá se všemi. <em>Rozložení</em>: kategorie, národnosti, barva vlasů a očí, hodnocení, výskyt a nejčastější fotografové; klik na řádek vybere hodnotu. <strong>Výběr platí pro všechny grafy</strong>: vyber třeba 90. léta, přepni na Národnosti a uvidíš jasně jen modelky z 90. let, tlumeně celou sbírku; další výběr v jiném grafu ho zúží. Podmínky jsou štítky pod lištou (křížek podmínku odebere), Esc zruší celý výběr. Seznam vpravo ukazuje modelky výběru, klik otevře profil; „Otevřít v galerii“ převede výběr na hledání, když ho jde hledáním vyjádřit. Vybraný graf si program pamatuje.</li>
           <li><strong>Kategorie</strong> modelky (Playmate roku, Cyber Girl, Coed, Muse, Celebrita, Jen ve speciálu, Creator, Online) se volí štítky v „Upravit modelku…“; Playmate měsíce, Cyber Girl a Modelku obálky program pozná sám z centerfoldu, online alba (Pictorial online; jen když není zapsaná jiná online kategorie, třeba Coed) a obálky. Proužek v rohu fotky profilu ukáže u centerfoldu „Playmate · měsíc“, u online alb „Cyber Girl“, nebo „Online“, když modelka Cyber Girl není (klik přejde na album). Podle kategorie filtruje galerie (Filtry) a hledání <code>kategorie:</code>.</li>
-          <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online) nebo s online albem; ostatní jsou <em>neurčené</em>. Album typu <em>Pictorial online</em> je pictorial jen na webu: v okně alba nemá vydání, ale pole <em>Nafoceno</em> (RRRR-MM-DD, RRRR-MM nebo rok). Volba <em>Cyber Girl</em> pod datem: <em>of the Week</em> spočítá z celého data týden v roce (nadpis alba „Cyber Girl týdne · 24. týden 2004“), <em>of the Month</em> vezme z data měsíc („Cyber Girl měsíce · červen 2004“); modelka dostane kategorii Cyber Girl týdne, nebo měsíce. Datum je jen informace u alba – album nepřiřadí k vydání ani do kalendáře a nemění titulní fotku modelky. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
+          <li><strong>Výskyt</strong>: <em>v časopise</em> má modelka s centerfoldem, obálkou nebo albem u konkrétního čísla; <em>jen online</em> modelka bez čísla s online kategorií (Cyber Girl, Coed, Muse, Creator nebo Online) nebo s online albem; ostatní jsou <em>neurčené</em>. Album typu <em>Pictorial online</em> je pictorial jen na webu: v okně alba nemá vydání, ale pole <em>Nafoceno</em> (RRRR-MM-DD, RRRR-MM nebo rok). Typ alba se v okně volí ve dvou řadách: <em>Kde vyšlo</em> (Časopis, Online, Nikde) a <em>Druh</em> – u časopisu Pictorial nebo Centerfold, u online Pictorial, Cyber Girl of the Week nebo of the Month, „Nikde“ je pictorial bez čísla i data. <em>Cyber Girl of the Week</em> spočítá z celého data týden v roce (nadpis alba „Cyber Girl týdne · 24. týden 2004“), <em>of the Month</em> vezme z data měsíc („Cyber Girl měsíce · červen 2004“); modelka dostane kategorii Cyber Girl týdne, nebo měsíce. Datum je jen informace u alba – album nepřiřadí k vydání ani do kalendáře a nemění titulní fotku modelky. Je v profilu, ve Filtrech galerie, ve Statistikách a v hledání <code>vyskyt:online</code>, <code>vyskyt:casopis</code>.</li>
           <li>Srdíčka u modelky i u fotky; lépe hodnocené fotky jdou v albu první, Nejlepší je ukáže napříč sbírkou jako jednu mozaiku od nejvíce srdíček; po najetí myší se ukáže jméno modelky a odkud fotka je.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>

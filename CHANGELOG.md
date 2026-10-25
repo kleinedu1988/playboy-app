@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.14] – 2026-10-25
+
+### Změněno
+- **Výběr typu alba ve dvou krocích:** v okně alba je místo rozbalovacího seznamu nahoře řada **Kde vyšlo** (Časopis / Online / Nikde) a pod ní **Druh** – u časopisu Pictorial nebo Centerfold, u online Pictorial, Cyber Girl of the Week nebo of the Month, „Nikde“ je pictorial bez čísla i data. Okno ukazuje jen pole, která zvolený typ potřebuje (vydání, nebo datum nafocení s týdnem či měsícem). Uložený pictorial bez čísla se otevře jako „Nikde“; starší typy (Cover…) zůstanou jako další druh u časopisu. Pole Fotograf je pod názvem alba.
+
 ## [0.99.13] – 2026-10-25
 
 ### Přidáno

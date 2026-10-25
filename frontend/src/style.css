@@ -853,16 +853,52 @@ main {
     justify-content: flex-end;
 }
 
-/* Volba Cyber Girl pod datem nafocení v okně alba */
-.cg-volba {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 4px;
+/* Typ alba: kde vyšlo (segmenty) a druh (štítky) */
+.typ-alba-nadpis {
+    font-size: 13px;
+    color: var(--text-muted);
 }
 
-.cg-volba select {
-    width: auto;
+.typ-alba-kde {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.typ-alba-kde button {
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+}
+
+.typ-alba-kde button + button {
+    border-left: 1px solid var(--border-color);
+}
+
+.typ-alba-kde button:hover {
+    color: var(--text-main);
+}
+
+.typ-alba-kde button.active {
+    background: var(--accent);
+    color: #fff;
+}
+
+.typ-alba-druhy {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.typ-alba-obdobi {
+    color: var(--accent);
+    font-weight: 600;
 }
 
 .form-row .form-group label {

@@ -1,5 +1,5 @@
 // Výběrová okna, ukládání formulářů a hledání
-import { TYP_ONLINE, esc, obdobiCyberGirl, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
+import { esc, jeOnline, obdobiCyberGirl, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
 import { AddBulkPhotos, AddModelka, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -203,13 +203,13 @@ export function pripravit() {
     // Formulář: Hromadné fotky do alba
     document.getElementById('addAlbumForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
-        const vybranyTyp = document.getElementById('selectTyp').value;
-        // Online album k číslu nepatří: vydání se nebere, místo něj datum nafocení
-        const online = vybranyTyp === TYP_ONLINE;
-        const cyberGirl = online ? document.getElementById('selectCG').value : '';
-        const typ = cyberGirl || vybranyTyp;
-        const rok = online ? '' : document.getElementById('inputAlbumRok').value;
-        const mesic = online ? '' : document.getElementById('selectAlbumMesic').value;
+        const typ = document.getElementById('selectTyp').value;
+        // Online album k číslu nepatří: vydání se nebere, místo něj datum nafocení; album „Nikde“ nemá ani jedno
+        const online = jeOnline(typ);
+        const cyberGirl = online && typ !== 'Pictorial online' ? typ : '';
+        const bezCisla = document.getElementById('albumVydaniGroup').classList.contains('hidden');
+        const rok = bezCisla ? '' : document.getElementById('inputAlbumRok').value;
+        const mesic = bezCisla ? '' : document.getElementById('selectAlbumMesic').value;
         // Pictorialu stačí ročník, měsíc bez roku ale nedává smysl
         if (mesic && !rok) {
             oznamit('K měsíci vydání chybí rok.');

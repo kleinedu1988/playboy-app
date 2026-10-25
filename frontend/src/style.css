@@ -870,35 +870,51 @@ main {
     font-weight: 600;
 }
 
-/* Okno alba (varianta A): vlevo typ a náhled, vpravo pole */
+/* Okno alba (varianta A): vlevo typ a náhled, vpravo pole. Okno se vejde na výšku obrazovky:
+   pole vpravo se posouvají a tlačítka zůstávají dole vidět. */
 .modal-card.album-okno {
+    position: relative;
+    display: flex;
+    flex-direction: column;
     width: min(860px, calc(100vw - 32px));
+    max-height: calc(100% - 32px);
     padding: 0;
+    overflow: hidden;
 }
 
 .album-mrizka {
     display: grid;
-    grid-template-columns: 240px 1fr;
+    flex: 1 1 auto;
+    grid-template-columns: 240px minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+    min-height: 0;
 }
 
 .album-bok {
-    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    padding: 24px 18px 20px;
     border-right: 1px solid var(--border-color);
+    background: rgba(255, 255, 255, 0.015);
+    overflow-y: auto;
 }
 
 .album-bok h3 {
-    margin: 0 0 6px;
-    font-size: 18px;
+    margin: 0 0 4px 4px;
+    font-size: 15px;
     font-weight: 300;
-    letter-spacing: 0.1em;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
+    text-wrap: balance;
 }
 
 .album-krok {
     display: block;
-    margin: 16px 0 6px;
-    font-size: 11px;
-    letter-spacing: 0.12em;
+    margin: 18px 4px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--text-muted);
 }
@@ -909,12 +925,14 @@ main {
     gap: 10px;
     width: 100%;
     margin-bottom: 2px;
-    padding: 8px 10px;
-    border: none;
-    border-radius: 10px;
+    padding: 7px 10px;
+    border: 1px solid transparent;
+    border-radius: 9px;
     background: none;
     color: var(--text-muted);
     font: inherit;
+    font-size: 14px;
+    line-height: 1.3;
     text-align: left;
     cursor: pointer;
 }
@@ -926,11 +944,16 @@ main {
     height: 14px;
     border: 2px solid #55555c;
     border-radius: 50%;
+    transition: border-color 0.15s;
 }
 
 .album-volba:hover {
     color: var(--text-main);
     background: var(--panel-hover);
+}
+
+.album-volba:hover::before {
+    border-color: var(--text-muted);
 }
 
 .album-volba.active {
@@ -943,36 +966,136 @@ main {
     background: radial-gradient(var(--accent) 40%, transparent 45%);
 }
 
+/* Klávesnice: viditelný rámeček na zaměřené volbě (šipky mění volbu ve skupině) */
+.album-volba:focus-visible {
+    outline: none;
+    border-color: var(--accent-text);
+}
+
+/* Náhled hlavičky alba: obrázek první fotky, název a popis (okna bez obrázku mají jen text pod sebou) */
 .album-nahled {
-    margin-top: 18px;
+    margin-top: auto;
     padding: 12px;
-    border: 1px dashed var(--border-color);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
+    background: var(--bg-card);
     color: var(--text-muted);
     font-size: 12px;
+    line-height: 1.4;
+}
+
+.album-nahled:has(.album-nahled-obrazek) {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.album-bok .typ-alba {
+    margin-bottom: 20px;
+}
+
+.album-nahled-obrazek {
+    flex: none;
+    width: 48px;
+    height: 64px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05) center / cover no-repeat;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Bez fotky jen tlumený rámeček se symbolem obrázku */
+.album-nahled-obrazek:not(.ma-obrazek) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2355555c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Ccircle cx='9' cy='10' r='2'/%3E%3Cpath d='m21 16-5-5-9 9'/%3E%3C/svg%3E");
+    background-size: 20px;
+}
+
+.album-nahled-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.album-nahled-stitek {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
 .album-nahled b {
     display: block;
-    margin: 4px 0 2px;
     color: var(--text-main);
     font-size: 13px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     overflow-wrap: anywhere;
 }
 
-.album-pole {
-    position: relative;
-    padding: 24px;
-    padding-top: 52px;
-    min-width: 0;
+.album-nahled-pocet {
+    color: var(--accent-text);
 }
 
-.album-pole > .close-btn {
+.album-nahled-pocet:empty {
+    display: none;
+}
+
+.album-pole {
+    display: flex;
+    flex-direction: column;
+    padding: 52px 24px 24px;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* Křížek patří k oknu, ne k posouvaným polím */
+.album-okno .close-btn {
     position: absolute;
-    top: 14px;
+    top: 12px;
     right: 14px;
+    z-index: 1;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    line-height: 1;
+}
+
+.album-okno .close-btn:hover {
+    color: var(--text-main);
+    background: var(--panel-hover);
+}
+
+.album-okno .form-group {
+    margin-bottom: 14px;
+}
+
+/* Tlačítka zůstávají dole vidět i při posouvání polí */
+.album-pole:has(> .album-akce) {
+    padding-bottom: 0;
+}
+
+.album-akce {
+    position: sticky;
+    bottom: 0;
+    margin: auto -24px 0;
+    padding: 14px 24px 20px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-modal);
+}
+
+/* Tichá nápověda pod polem (místo růžové field-hint) */
+.album-tip {
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
+.album-tip:empty {
+    display: none;
+}
+
+#albumPocetOdkazu::before {
+    content: "✓ ";
+    color: var(--accent-text);
 }
 
 .album-label {
@@ -1007,9 +1130,10 @@ main {
 .text-nahled {
     display: block;
     width: 100%;
+    min-height: 40px;
     max-height: 96px;
     overflow: hidden;
-    padding: 8px 12px;
+    padding: 9px 12px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.03);
@@ -1021,8 +1145,18 @@ main {
     -webkit-mask-image: linear-gradient(#000 70%, transparent);
 }
 
+/* Prázdný nebo krátký text se nemaskuje (jinak by zástupný text zmizel v přechodu) */
+.text-nahled:has(.text-nahled-prazdny) {
+    -webkit-mask-image: none;
+}
+
 .text-nahled:hover {
     border-color: var(--text-muted);
+}
+
+.text-nahled:focus-visible {
+    outline: none;
+    border-color: var(--accent);
 }
 
 .text-nahled p {
@@ -1033,54 +1167,164 @@ main {
     color: var(--text-muted);
 }
 
+.text-nahled-prazdny::before {
+    content: "✎ ";
+}
+
+/* Nízké okno: menší odstupy, aby se vešlo víc polí */
+@media (max-height: 760px) {
+    .album-bok {
+        padding-top: 18px;
+    }
+
+    .album-krok {
+        margin-top: 12px;
+    }
+
+    .album-volba {
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+
+    .album-pole {
+        padding-top: 44px;
+    }
+}
+
+/* Úzké okno: volby v řádcích nad poli, posouvá se celé okno */
 @media (max-width: 760px) {
     .album-mrizka {
         grid-template-columns: 1fr;
+        grid-template-rows: none;
+        overflow-y: auto;
     }
 
     .album-bok {
+        padding: 20px 20px 16px;
         border-right: none;
         border-bottom: 1px solid var(--border-color);
+        overflow: visible;
+    }
+
+    .album-bok h3 {
+        margin-right: 40px;
+    }
+
+    .album-bok [role="radiogroup"],
+    .album-bok [role="group"] {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .album-volba {
+        width: auto;
+        margin: 0;
+    }
+
+    .album-krok {
+        margin-top: 12px;
+    }
+
+    .album-pole {
+        padding-top: 20px;
+        overflow: visible;
     }
 }
 
 /* Společné okno pro text v markdownu s formátováním přímo v editoru */
 .modal-card.text-okno {
+    display: flex;
+    flex-direction: column;
     width: min(760px, calc(100vw - 32px));
+    max-height: calc(100% - 32px);
+}
+
+.text-okno .modal-header {
+    margin-bottom: 14px;
 }
 
 .text-nastroje {
     display: flex;
-    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px;
     margin-bottom: 8px;
+    padding: 4px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
 }
 
-.text-nastroje span {
-    width: 10px;
+.text-oddelovac {
+    width: 1px;
+    height: 20px;
+    margin: 0 6px;
+    background: var(--border-color);
 }
 
 .text-nastroje button {
-    min-width: 34px;
-    height: 32px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
+    min-width: 32px;
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: 7px;
     background: none;
-    color: var(--text-main);
+    color: var(--text-muted);
     font: inherit;
+    font-size: 14px;
     cursor: pointer;
 }
 
-.text-nastroje button:hover {
-    border-color: var(--text-muted);
+.text-nastroje button:hover:not(:disabled) {
+    color: var(--text-main);
     background: var(--panel-hover);
 }
 
-.text-editor {
+.text-nastroje button:focus-visible {
+    outline: 2px solid var(--accent-text);
+    outline-offset: -2px;
+}
+
+/* Formát v místě kurzoru */
+.text-nastroje button.active {
+    color: var(--text-main);
+    background: var(--accent-soft);
+    border-color: rgba(216, 27, 96, 0.45);
+}
+
+.text-nastroje button:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.text-nastroje .text-nahled-prepinac {
+    margin-left: auto;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}
+
+.text-editor,
+.text-nahled-cely {
+    flex: 1 1 auto;
     height: min(52vh, 460px);
+    min-height: 160px;
     border: 1px solid var(--border-color);
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.03);
     overflow: hidden;
+}
+
+/* Náhled: hotový text, jak se ukáže v profilu nebo ve čtečce */
+.text-nahled-cely {
+    padding: 16px 20px;
+    overflow-y: auto;
+    outline: none;
+}
+
+.text-nahled-cely .album-desc {
+    margin: 0;
+    font-size: 14px;
 }
 
 .text-editor .cm-editor {
@@ -1099,7 +1343,7 @@ main {
 }
 
 .text-editor .cm-scroller {
-    padding: 10px 6px;
+    padding: 12px 10px;
     font-family: inherit;
 }
 
@@ -1121,6 +1365,33 @@ main {
     color: var(--text-muted);
 }
 
+.text-pata {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.text-napoveda {
+    flex: 1;
+    margin: 0;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-muted);
+}
+
+.text-pocet {
+    flex: none;
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.text-okno .modal-actions {
+    margin-top: 14px;
+}
+
 .md-tucne {
     font-weight: 700;
 }
@@ -1131,6 +1402,7 @@ main {
 
 .md-preskrtnute {
     text-decoration: line-through;
+    opacity: 0.7;
 }
 
 .md-kod {
@@ -1139,10 +1411,12 @@ main {
     border-radius: 4px;
 }
 
-.md-h1,
-.md-h2,
-.md-h3 {
+.text-editor .md-h1,
+.text-editor .md-h2,
+.text-editor .md-h3 {
+    padding-top: 4px;
     font-weight: 600;
+    line-height: 1.35;
 }
 
 .md-h1 {
@@ -1157,15 +1431,49 @@ main {
     font-size: 1.1em;
 }
 
-.md-citat {
-    border-left: 3px solid var(--accent);
-    padding-left: 12px !important;
-    color: var(--text-muted);
+/* Citát jako ve čtečce: růžová linka, kurzíva, lehčí písmo */
+.text-editor .md-citat {
+    border-left: 2px solid var(--accent);
+    padding-left: 14px !important;
+    color: var(--text-main);
     font-style: italic;
+    font-weight: 300;
 }
 
-.md-odrazka {
+/* Položka seznamu s předsazením: zalomený řádek začíná pod textem, ne pod odrážkou */
+.text-editor .md-polozka {
+    padding-left: 24px !important;
+    text-indent: -18px;
+}
+
+.md-odrazka,
+.md-tecka,
+.md-cislo {
     color: var(--accent-text);
+}
+
+.md-tecka {
+    display: inline-block;
+    width: 18px;
+    text-indent: 0;
+    font-weight: 700;
+}
+
+.md-cislo {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+/* Perex článku (první odstavec) jako ve čtečce: větší a lehčí písmo, první písmeno růžově */
+.text-editor .md-perex {
+    font-size: 17px;
+    font-weight: 300;
+}
+
+.text-editor .md-perex-zacatek::first-letter {
+    color: var(--accent-text);
+    font-size: 1.6em;
+    font-weight: 300;
 }
 
 .form-row .form-group label {

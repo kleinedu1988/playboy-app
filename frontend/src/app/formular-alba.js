@@ -1,7 +1,7 @@
 // Okno alba a centerfoldu
 import { oznamit } from '../ui/oznameni';
-import { AddModelka, DeleteAlbum, GetFotografove } from './backend';
-import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, esc, formatMarkdown, jeOnline, nazevAlba, nazevVydani, obdobiCyberGirl, pocetOdkazuDisku, popisTypuAlba, rozlozitVydani, sjednotit, sklonovat, slozitVydani } from '../lib/format';
+import { AddModelka, DeleteAlbum, GetFotografove, GetSablonaObrazku } from './backend';
+import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, esc, formatMarkdown, jeOnline, nazevAlba, nazevVydani, obdobiCyberGirl, obrazek, odkazyDisku, popisTypuAlba, rozlozitVydani, sjednotit, sklonovat, slozitVydani } from '../lib/format';
 import { upravitText } from '../ui/editor-textu';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -55,16 +55,32 @@ let cisloAlba = 'mesic';
 const druhyAlba = kde => [...DRUHY_ALBA[kde], ...(kde === 'casopis'
     ? [...document.querySelectorAll('#selectTyp [data-puvodni]')].map(o => [o.value, o.value]) : [])];
 
+// Volby ve skupině jsou přepínače (role radio): zvolená je zaměřitelná Tabem, ostatní jen šipkami
+function oznacitVolby(volby, jeZvolena) {
+    const seznam = [...volby];
+    const nektera = seznam.some(jeZvolena);
+    seznam.forEach((b, i) => {
+        const zvolena = jeZvolena(b);
+        b.classList.toggle('active', zvolena);
+        b.setAttribute('aria-checked', String(zvolena));
+        b.tabIndex = zvolena || (!nektera && i === 0) ? 0 : -1;
+    });
+}
+
 function nastavitTypAlba(typ, kde = kdeAlba) {
     const vyberTypu = /** @type {HTMLSelectElement} */ (document.getElementById('selectTyp'));
     kdeAlba = kde;
     vyberTypu.value = typ;
-    document.querySelectorAll('#albumTypGroup [data-kde]').forEach(b => {
-        b.classList.toggle('active', b.dataset.kde === kde);
-        b.setAttribute('aria-pressed', String(b.dataset.kde === kde));
-    });
-    document.getElementById('albumDruhy').innerHTML = druhyAlba(kde)
-        .map(([hodnota, popis]) => `<button type="button" class="album-volba ${hodnota === typ ? 'active' : ''}" data-druh="${esc(hodnota)}" aria-pressed="${hodnota === typ}">${esc(popis)}</button>`).join('');
+    oznacitVolby(document.querySelectorAll('#albumTypGroup [data-kde]'), b => b.dataset.kde === kde);
+    // Druhy se překreslí jen při změně nabídky, jinak by zaměřená volba ztratila fokus
+    const druhy = document.getElementById('albumDruhy');
+    const nabidka = druhyAlba(kde);
+    if (druhy.dataset.nabidka !== JSON.stringify(nabidka)) {
+        druhy.dataset.nabidka = JSON.stringify(nabidka);
+        druhy.innerHTML = nabidka
+            .map(([hodnota, popis]) => `<button type="button" role="radio" class="album-volba" data-druh="${esc(hodnota)}">${esc(popis)}</button>`).join('');
+    }
+    oznacitVolby(druhy.querySelectorAll('[data-druh]'), b => b.dataset.druh === typ);
     prepnoutPoleAlba();
 }
 
@@ -78,10 +94,7 @@ export function prepnoutPoleAlba() {
     document.getElementById('albumVydaniGroup').classList.toggle('hidden', online || kdeAlba === 'nikde');
     const special = cisloAlba === 'special';
     document.getElementById('albumCisloGroup').classList.toggle('hidden', kdeAlba !== 'casopis');
-    document.querySelectorAll('#albumCisloGroup [data-cislo]').forEach(b => {
-        b.classList.toggle('active', b.dataset.cislo === cisloAlba);
-        b.setAttribute('aria-pressed', String(b.dataset.cislo === cisloAlba));
-    });
+    oznacitVolby(document.querySelectorAll('#albumCisloGroup [data-cislo]'), b => b.dataset.cislo === cisloAlba);
     document.getElementById('selectAlbumMesic').classList.toggle('hidden', special);
     document.getElementById('selectAlbumSpecial').classList.toggle('hidden', !special);
     document.getElementById('albumMesicLabel').htmlFor = special ? 'selectAlbumSpecial' : 'selectAlbumMesic';
@@ -109,13 +122,42 @@ export function obnovitNahledAlba() {
     document.getElementById('albumNahledNazev').textContent = typ === 'Centerfold' ? 'Centerfold' : hodnota('inputAlbumName') || 'Bez názvu';
     document.getElementById('albumNahledPopis').textContent = [popisTypuAlba(typ, datum), vydani && nazevVydani(vydani)].filter(Boolean).join(' · ');
 
-    const pocet = pocetOdkazuDisku(hodnota('inputBulkLinks'));
-    document.getElementById('albumPocetOdkazu').textContent = pocet ? `Rozpoznáno: ${sklonovat(pocet, 'fotka', 'fotky', 'fotek')}` : '';
+    const odkazy = odkazyDisku(hodnota('inputBulkLinks'));
+    const pocet = odkazy.length;
+    document.getElementById('albumPocetOdkazu').textContent = pocet ? `${sklonovat(pocet, 'fotka', 'fotky', 'fotek')} v odkazech` : '';
+    document.getElementById('albumNahledPocet').textContent = pocet ? (stav.editovaneAlbum ? `+ ${sklonovat(pocet, 'nová fotka', 'nové fotky', 'nových fotek')}` : sklonovat(pocet, 'fotka', 'fotky', 'fotek')) : '';
+    ukazatObrazekNahledu(odkazy[0]);
     document.getElementById('albumSubmitBtn').textContent = stav.editovaneAlbum ? 'Uložit album'
         : pocet ? `Uložit ${sklonovat(pocet, 'fotku', 'fotky', 'fotek')}` : 'Uložit fotky';
 
     const popis = hodnota('inputAlbumPopis');
     document.getElementById('albumPopisNahled').innerHTML = popis ? formatMarkdown(popis) : '<span class="text-nahled-prazdny">Přidat průvodní text…</span>';
+}
+
+// Obrázek v náhledu: první vložená fotka, jinak první fotka upravovaného alba. Adresa náhledu z Disku se skládá
+// ze šablony (backend); bez sítě nebo se šablonou, která nefunguje, zůstane prázdný rámeček.
+let sablonaObrazku = null;
+function ukazatObrazekNahledu(driveId) {
+    const misto = document.getElementById('albumNahledObrazek');
+    const fotkaAlba = stav.editovaneAlbum?.fotky?.[0]?.url || stav.editovaneAlbum?.url || '';
+    const nastavit = (adresa) => {
+        if (misto.dataset.adresa === adresa) return;
+        misto.dataset.adresa = adresa;
+        misto.classList.remove('ma-obrazek');
+        misto.style.backgroundImage = '';
+        if (!adresa) return;
+        const img = new Image();
+        img.onload = () => {
+            if (misto.dataset.adresa !== adresa) return;
+            misto.style.backgroundImage = `url("${adresa.replace(/"/g, '%22')}")`;
+            misto.classList.add('ma-obrazek');
+        };
+        img.src = adresa;
+    };
+    if (!driveId) return nastavit(obrazek(fotkaAlba, 'w160'));
+    (sablonaObrazku ??= GetSablonaObrazku().catch(() => '')).then(sablona => {
+        nastavit(sablona && sablona.includes('{id}') ? obrazek(sablona.replace('{id}', driveId), 'w160') : obrazek(fotkaAlba, 'w160'));
+    });
 }
 
 // Cyber Girl of the Week / Month: týden se spočítá z celého data nafocení, měsíc stačí z RRRR-MM
@@ -137,9 +179,7 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     document.getElementById('albumNextBtn').classList.toggle('hidden', Boolean(album));
     document.getElementById('albumModalTitle').textContent = moznosti.nadpis || (album ? 'Upravit album' : 'Přidat fotky do alba');
     document.getElementById('albumSubmitBtn').textContent = album ? 'Uložit album' : 'Uložit fotky';
-    document.getElementById('bulkLinksLabel').textContent = album
-        ? 'Přidat další fotky – odkazy z Google Disku (nepovinné)'
-        : 'Vlož odkazy z Google Disku (libovolné množství)';
+    document.getElementById('bulkLinksLabel').textContent = album ? 'Přidat další fotky (nepovinné)' : 'Odkazy na fotky z Google Disku';
     // Při úpravě alba není nutné přidávat další fotky
     document.getElementById('inputBulkLinks').required = !album;
 
@@ -204,6 +244,21 @@ export function smazatAlbum(album, pocet) {
 export function pripravit() {
     obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumSpecial', 'inputAlbumRok', 'selectAlbumEdice');
 
+    // Šipky ve skupině voleb vyberou předchozí nebo další volbu (jako přepínače), Home a End první a poslední.
+    // Platí pro všechny skupiny .album-volba v dokumentu (okno alba, coveru i čísla)
+    document.addEventListener('keydown', (e) => {
+        const volba = /** @type {HTMLElement} */ (e.target).closest?.('[role="radiogroup"] .album-volba, [role="group"] .album-volba');
+        const posun = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+        if (!volba || (!posun && e.key !== 'Home' && e.key !== 'End') || e.altKey || e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        const skupina = volba.closest('[role="radiogroup"], [role="group"]');
+        const volby = [...skupina.querySelectorAll('.album-volba')];
+        const i = volby.indexOf(volba);
+        const cil = e.key === 'Home' ? volby[0] : e.key === 'End' ? volby[volby.length - 1] : volby[(i + posun + volby.length) % volby.length];
+        cil.click();
+        /** @type {HTMLElement} */ (skupina.querySelector('.album-volba.active') || cil).focus();
+    });
+
     // Kde vyšlo: druh zůstane, pokud ho nová volba má (Pictorial), jinak první z nabídky
     document.getElementById('albumTypGroup').addEventListener('click', (e) => {
         const kde = /** @type {HTMLElement} */ (e.target).closest('[data-kde]');
@@ -231,7 +286,7 @@ export function pripravit() {
             nadpis: 'Průvodní text alba',
             text: pole.value,
             zastupny: 'Text, který album v časopise uvádí…',
-            napoveda: 'Formátování se ukazuje rovnou; značky (**tučné**, *kurzíva*) se objeví, jen když je v místě kurzor. Ctrl+B tučné, Ctrl+I kurzíva, Ctrl+Enter použije text.',
+            napoveda: 'Značky formátování se ukážou, jen když je v místě kurzor. Ctrl+B tučně, Ctrl+I kurzíva, Ctrl+Enter použije text.',
         });
         if (text === null || text === pole.value) return;
         pole.value = text;

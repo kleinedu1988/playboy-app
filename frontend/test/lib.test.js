@@ -345,6 +345,17 @@ test('počet souborů Disku ve vloženém textu', async () => {
     const id = 'A'.repeat(28), id2 = 'B'.repeat(28);
     assert.equal(pocetOdkazuDisku(`https://drive.google.com/file/d/${id}/view\nhttps://drive.google.com/open?id=${id2} ${id}`), 2);
     assert.equal(pocetOdkazuDisku('bez odkazu'), 0);
+    // První vložený soubor je náhled v okně alba
+    const { odkazyDisku } = await import('../src/lib/format.js');
+    assert.deepEqual(odkazyDisku(`${id2}\nhttps://drive.google.com/file/d/${id}/view`), [id2, id]);
+    assert.deepEqual(odkazyDisku(`https://drive.google.com/file/d/${id}/view ${id2}`), [id, id2]);
+});
+
+test('počet slov a znaků v editoru textu', async () => {
+    const { pocetSlovAZnaku } = await import('../src/lib/format.js');
+    assert.deepEqual(pocetSlovAZnaku(''), { slov: 0, znaku: 0 });
+    assert.deepEqual(pocetSlovAZnaku('## Nadpis\n\n- **Žluťoučký** kůň\n1. úpěl'), { slov: 4, znaku: 22 });
+    assert.equal(pocetSlovAZnaku('Rock’n’roll a pre-war').slov, 3);
 });
 
 test('výskyt modelky: časopis, jen online, neurčeno', () => {

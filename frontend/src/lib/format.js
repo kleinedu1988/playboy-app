@@ -1,11 +1,19 @@
 // Čisté funkce pro texty a data: nesahají na stránku ani na backend, proto jdou testovat samostatně
 
 export const MESICE = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
-// Počet různých souborů Disku ve vloženém textu: odkazy (file/d/…, id=…) i holá ID; stejně jako parseDriveIDs v app.go
-export function pocetOdkazuDisku(text) {
-    const ids = new Set([...String(text || '').matchAll(/(?:file\/d\/|id=|\/d\/)([a-zA-Z0-9_-]{25,})/g)].map(m => m[1]));
-    String(text || '').split(/\s+/).filter(slovo => /^[a-zA-Z0-9_-]{25,}$/.test(slovo)).forEach(id => ids.add(id));
-    return ids.size;
+// Různé soubory Disku ve vloženém textu: odkazy (file/d/…, id=…) i holá ID; stejně jako parseDriveIDs v app.go
+// v pořadí, jak jsou v textu
+export function odkazyDisku(text) {
+    const shody = String(text || '').matchAll(/(?:file\/d\/|id=|\/d\/)([a-zA-Z0-9_-]{25,})|(?:^|\s)([a-zA-Z0-9_-]{25,})(?=\s|$)/g);
+    return [...new Set([...shody].map(m => m[1] || m[2]))];
+}
+
+export const pocetOdkazuDisku = text => odkazyDisku(text).length;
+
+// Počet slov a znaků textu v markdownu (patička editoru); značky formátování se nepočítají
+export function pocetSlovAZnaku(text) {
+    const cisty = String(text || '').replace(/^\s*(#{1,3}|>|[-*•–]|\d+\.)\s+/gm, '').replace(/\*\*|__|~~|[*`]/g, '');
+    return { slov: (cisty.match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu) || []).length, znaku: cisty.replace(/\s/g, '').length };
 }
 
 // Anglické názvy k výběru měsíce („Červen (June)“), americké zdroje píšou čísla anglicky

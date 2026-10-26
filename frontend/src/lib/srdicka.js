@@ -69,8 +69,9 @@ export function vyhovujeMinimu(hodnoceni, minimum) {
     return !minimum || h >= minimum;
 }
 
-// Pořadí podle oblíbenosti (jemné skóre z porovnávání), při shodě podle srdíček; stabilní, jinak zůstává pořadí vstupu
-export const porovnatOblibenost = (a, b) => (b.oblibenost || 0) - (a.oblibenost || 0) || (b.hodnoceni || 0) - (a.hodnoceni || 0);
+// Řazení galerie podle srdíček: napřed srdíčka, se stejnými srdíčky podle oblíbenosti (porovnávání a fotky), takže
+// i filtr ♥ 4+ ukáže pořadí; nehodnocené jsou na konci podle odhadu z fotek. Stabilní, jinak zůstává pořadí vstupu
+export const porovnatOblibenost = (a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || (b.oblibenost || 0) - (a.oblibenost || 0);
 
 // Odhad hodnocení se ukazuje jen u nehodnocené modelky; skutečné hodnocení má vždy přednost
 export const ukazatOdhad = modelka => !naPulky(modelka?.hodnoceni) && naPulky(modelka?.odhadHodnoceni) > 0;

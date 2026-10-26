@@ -343,7 +343,8 @@ export function pripravit() {
     });
 
     try {
-        const ulozene = localStorage.getItem('razeniGalerie');
+        // Dřívější řazení „Podle oblíbenosti“ je teď součástí řazení podle srdíček
+        const ulozene = localStorage.getItem('razeniGalerie') === 'oblibenost' ? 'hodnoceni' : localStorage.getItem('razeniGalerie');
         if (RAZENI_GALERIE[ulozene]) stav.razeniGalerie = ulozene;
     } catch { /* výchozí řazení podle jména */ }
     document.getElementById('prevModelBtn').onclick = () => krokModelky(-1);

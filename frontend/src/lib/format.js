@@ -114,8 +114,7 @@ export const RAZENI_GALERIE = {
     jmeno: { popisek: 'A–Z', nazev: 'abecedně' },
     pridano: { popisek: 'Nově přidané', nazev: 'naposledy přidané' },
     rok: { popisek: 'Podle roku', nazev: 'podle roku prvního vydání' },
-    hodnoceni: { popisek: 'Podle srdíček', nazev: 'podle hodnocení' },
-    oblibenost: { popisek: 'Podle oblíbenosti', nazev: 'podle oblíbenosti (porovnávání, při shodě srdíčka)' },
+    hodnoceni: { popisek: 'Podle srdíček', nazev: 'podle srdíček, se stejnými srdíčky podle oblíbenosti (porovnávání a fotky)' },
     fotky: { popisek: 'Podle fotek', nazev: 'podle počtu fotek' },
 };
 
@@ -128,8 +127,7 @@ export function seraditModelky(modelky, razeni) {
     const vysledek = [...modelky];
     if (razeni === 'pridano') vysledek.sort((a, b) => (b.pridano || '').localeCompare(a.pridano || ''));
     else if (razeni === 'rok') vysledek.sort((a, b) => (prvniRok(a) || 9999) - (prvniRok(b) || 9999));
-    else if (razeni === 'hodnoceni') vysledek.sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0));
-    else if (razeni === 'oblibenost') vysledek.sort(porovnatOblibenost);
+    else if (razeni === 'hodnoceni') vysledek.sort(porovnatOblibenost);
     else if (razeni === 'fotky') vysledek.sort((a, b) => (b.pocetFotek || 0) - (a.pocetFotek || 0));
     return vysledek;
 }
@@ -144,8 +142,7 @@ export function castGalerie(modelka, razeni) {
         const rok = prvniRok(modelka);
         return rok ? `${Math.floor(rok / 10) * 10}s` : 'Bez vydání';
     }
-    // Oblíbenost je jemnější než srdíčka; lišta ji dělí po srdíčkách (i s půlkami)
-    if (razeni === 'hodnoceni' || razeni === 'oblibenost') {
+    if (razeni === 'hodnoceni') {
         return znakySrdicek(modelka.hodnoceni) || 'Bez srdíček';
     }
     if (razeni === 'fotky') {

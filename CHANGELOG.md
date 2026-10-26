@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.32] – 2026-10-26
+
+### Změněno
+- **Řazení galerie „Podle srdíček“ řadí modelky se stejnými srdíčky podle oblíbenosti** (porovnávání a skóre fotek), takže i s filtrem ♥ 4+ vidíš skutečné pořadí místo náhodného. Nehodnocené modelky jsou na konci seřazené podle odhadu z fotek. Samostatné řazení „Podle oblíbenosti“ je díky tomu zbytečné a zmizelo (kdo ho měl zvolené, má teď „Podle srdíček“); dřív navíc míchalo nehodnocené modelky mezi hodnocené a trhalo lištu srdíček.
+
 ## [0.99.31] – 2026-10-26
 
 ### Změněno

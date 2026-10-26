@@ -56,9 +56,10 @@ test('filtr srdíček a řazení podle oblíbenosti', () => {
     assert.equal(vyhovujeMinimu(0.5, -1), false);
     assert.equal(vyhovujeMinimu(0, 0), true);
     const m = [{ id: 1, oblibenost: 1, hodnoceni: 3 }, { id: 2, oblibenost: 2, hodnoceni: 2 }, { id: 3, oblibenost: 1, hodnoceni: 4.5 }, { id: 4, hodnoceni: 5 }];
-    assert.deepEqual([...m].sort(porovnatOblibenost).map(x => x.id), [2, 3, 1, 4]);
-    assert.deepEqual(seraditModelky(m, 'oblibenost').map(x => x.id), [2, 3, 1, 4]);
-    assert.equal(castGalerie({ hodnoceni: 3.5 }, 'oblibenost'), '♥♥♥½');
+    assert.deepEqual([...m].sort(porovnatOblibenost).map(x => x.id), [4, 3, 1, 2], 'napřed srdíčka');
+    const stejna = [{ id: 1, oblibenost: 4.1, hodnoceni: 4 }, { id: 2, oblibenost: 4.3, hodnoceni: 4 }, { id: 3, oblibenost: 3.9, hodnoceni: 0 }, { id: 4, hodnoceni: 0 }, { id: 5, oblibenost: 4.6, hodnoceni: 4.5 }];
+    assert.deepEqual(seraditModelky(stejna, 'hodnoceni').map(x => x.id), [5, 2, 1, 3, 4], 'se stejnými srdíčky podle oblíbenosti, nehodnocené na konci podle odhadu');
+    assert.equal(castGalerie({ hodnoceni: 3.5 }, 'hodnoceni'), '♥♥♥½');
     assert.equal(castGalerie({ hodnoceni: 0 }, 'hodnoceni'), 'Bez srdíček');
 });
 

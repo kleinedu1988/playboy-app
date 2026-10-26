@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.30] – 2026-10-26
+
+### Změněno
+- Oblíbenost má vlastní tlačítko: **graf** vpravo v liště otevře rovnou porovnávání a pořadí modelek (bez volby pod hledáním). Hned vedle je nové tlačítko **Přehled sbírky** (deska se seznamem) pro Přehled, Údržbu, Sháním CZ a Statistiky – otevře naposledy zvolenou z nich a přepínají se volbou pod hledáním. V liště svítí tlačítko otevřené části.
+
 ## [0.99.29] – 2026-10-26
 
 ### Přidáno

@@ -23,13 +23,14 @@ import * as udrzba from './udrzba';
 // Načtení se při opakování zapisuje na místo: části se přepíšou jen při změně, Údržba po skupinách,
 // takže se stránka neposune a fokus zůstane.
 
-// Části Přehledu: vybírají se z nabídky tlačítka Přehled vpravo v liště; u Údržby a Sháním CZ počet z posledního načtení.
-// Oblíbenost (porovnávání a model vkusu) jen s backendem, který ji umí.
+// Části Přehledu. Oblíbenost má vlastní tlačítko (graf) a volbu pod hledáním nemá; ostatní části otevírá tlačítko
+// Přehled sbírky a přepínají se volbou pod hledáním. U Údržby a Sháním CZ počet z posledního načtení.
 const CASTI_VSE = [['uvod', 'Přehled'], ['udrzba', 'Údržba'], ['oblibenost', 'Oblíbenost'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']];
+const CASTI_SPRAVY = CASTI_VSE.filter(([klic]) => klic !== 'oblibenost');
 const casti = () => CASTI_VSE;
 const pocetVCasti = { udrzba: 0, shanim: 0 };
 // Řádek částí Přehledu: lišta pod hledáním z něj udělá volbu s ikonou, jako Obálky / Kalendář u Čísel
-const htmlCasti = () => `<div class="prehled-casti volby-v-liste">${casti().map(([klic, nazev]) =>
+const htmlCasti = () => stav.prehledSekce === 'oblibenost' ? '' : `<div class="prehled-casti volby-v-liste">${CASTI_SPRAVY.map(([klic, nazev]) =>
     `<button class="chip ${klic === stav.prehledSekce ? 'active' : ''}" data-zobrazeni-prehledu="${klic}">${nazev}${pocetVCasti[klic] ? `<span>${pocetVCasti[klic]}</span>` : ''}</button>`).join('')}</div>`;
 
 const KOSTRA = `
@@ -110,13 +111,37 @@ function obnovitCasti() {
     const misto = stats.querySelector('.prehled-casti-misto');
     if (!misto) return;
     nastavitHtml(misto, htmlCasti());
-    if (stav.rezim === 'prehled') obnovitVolby(stats);
+    if (stav.rezim === 'prehled') {
+        obnovitVolby(stats);
+        zvyraznitTlacitka();
+    }
+}
+
+// V liště svítí tlačítko otevřené části: Oblíbenost, nebo Přehled sbírky
+function zvyraznitTlacitka() {
+    const cast = stav.prehledSekce === 'oblibenost' ? 'oblibenost' : 'sprava';
+    document.querySelectorAll('.nav-rezim[data-cast-prehledu]').forEach(b => b.classList.toggle('active', b.dataset.castPrehledu === cast));
+}
+
+// Tlačítko v liště: Oblíbenost, nebo Přehled sbírky na naposledy zvolené části (úvod, Údržba, Sháním CZ, Statistiky)
+export function zvolitCastPrehledu(cast) {
+    let klic = 'oblibenost';
+    if (cast !== 'oblibenost') {
+        try { klic = localStorage.getItem('prehledSekceSpravy') || 'uvod'; } catch { klic = 'uvod'; }
+        if (!CASTI_SPRAVY.some(([k]) => k === klic)) klic = 'uvod';
+    }
+    if (stav.rezim === 'prehled' && stats.querySelector('.prehled-obsah')) return ukazatCast(klic);
+    stav.prehledSekce = klic;
+    try { localStorage.setItem('prehledSekce', klic); } catch { /* jen se nezapamatuje */ }
 }
 
 // Zvolená část Přehledu se zapamatuje; když je Přehled otevřený, přepne se bez nového načtení
 function ukazatCast(klic) {
     stav.prehledSekce = klic;
-    try { localStorage.setItem('prehledSekce', klic); } catch { /* jen se nezapamatuje */ }
+    try {
+        localStorage.setItem('prehledSekce', klic);
+        if (klic !== 'oblibenost') localStorage.setItem('prehledSekceSpravy', klic);
+    } catch { /* jen se nezapamatuje */ }
     const obsah = stats.querySelector('.prehled-obsah');
     if (!obsah) return;
     obsah.dataset.sekceUkazana = klic;

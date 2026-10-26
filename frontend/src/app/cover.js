@@ -6,6 +6,7 @@ import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { issueView, searchInput, wall } from './prvky';
 import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepinacRezimu, prepnoutRezim, zobrazeniCisel } from './navigace';
+import { zvolitCastPrehledu } from './prehled';
 import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
@@ -150,6 +151,8 @@ export function pripravit() {
         if (!tlacitko) return;
         // Přepnutí přehledu začíná novou historii; Čísla v naposledy zvoleném zobrazení
         historie.length = 0;
+        // Tlačítka Oblíbenost a Přehled sbírky otevírají Přehled, každé na své části
+        if (tlacitko.dataset.castPrehledu) zvolitCastPrehledu(tlacitko.dataset.castPrehledu);
         prepnoutRezim(tlacitko.dataset.rezim === 'covery' && zobrazeniCisel() === 'kalendar' ? 'kalendar' : tlacitko.dataset.rezim);
         nacistGalerii(searchInput.value);
     });

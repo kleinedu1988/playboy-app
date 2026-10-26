@@ -72,7 +72,7 @@ export const stav = {
     udrzbaFiltr: 'vse', // filtr fronty v Souhrnu Údržby (vse, titulni, udaje, cover…)
     udrzbaZdroj: '', // zdroj návrhů nebo nálezů kontroly ve filtru ('' = všechny)
     udrzbaHledat: '', // hledání jména modelky nebo čísla v Údržbě
-    udrzbaRazeni: 'priorita', // řazení fronty: 'priorita', 'chybi' nebo 'jmeno'
+    udrzbaRazeni: 'priorita', // řazení fronty: 'priorita', 'chybi', 'oblibenost' nebo 'jmeno'
     udrzbaRezim: 'udaje', // režim Údržby: 'udaje' (Po údajích), 'modelky' (Po modelkách), 'souhrn'
     udrzbaUdaj: '', // údaj na kartě Po údajích (narodnost, titulni, kontrola…)
     udrzbaFiltrModelek: 'vse', // filtr fronty Po modelkách (filtr Souhrnu, nebo u:<údaj>)

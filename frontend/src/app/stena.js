@@ -12,6 +12,8 @@ import { otevritVydani } from './vydani';
 import { prevestNaVolby } from '../ui/volby';
 import { nastavitEdiciKalendare } from './kalendar';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
+import { oblibenostModelek } from './mezipamet';
+import { porovnatFotkyPodleSrdicek } from '../lib/oblibenost';
 
 const RAZENI_STENY = {
     jmeno: 'Podle jména',
@@ -23,6 +25,7 @@ const RAZENI_STENY = {
 export async function nacistStenu(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
     const fotky = zMezipameti && stav.stenaData ? stav.stenaData : await GetCenterfoldy() || [];
+    const oblibenost = stav.razeniSteny === 'hodnoceni' ? await oblibenostModelek().catch(() => new Map()) : new Map();
     if (moje !== stav.cisloNacteni) return;
     stav.stenaData = fotky;
     stav.zrusitUpravuVyrezu = null;
@@ -52,7 +55,8 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
         const klicVydani = p => { const v = rozlozitVydani(p.album); return v ? `${v.rok}${v.mesic}${v.edice}` : '0000'; };
         stav.stenaPolozky.sort((x, y) => klicVydani(y).localeCompare(klicVydani(x)));
     } else if (stav.razeniSteny === 'hodnoceni') {
-        stav.stenaPolozky.sort((x, y) => (y.hodnoceni || 0) - (x.hodnoceni || 0));
+        // Se stejnými srdíčky podle oblíbenosti modelky
+        stav.stenaPolozky.sort(porovnatFotkyPodleSrdicek(oblibenost));
     }
 
     const razeni = `<div class="wall-toolbar">

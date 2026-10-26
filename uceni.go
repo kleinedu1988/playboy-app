@@ -77,14 +77,32 @@ var migraceUceni = []string{
 		hodnoceni_a REAL NOT NULL DEFAULT 0,
 		hodnoceni_b REAL NOT NULL DEFAULT 0
 	);`,
+	// Úprava č. 3: zájem o modelky (oblibenost_zajem.go) – otevření profilu a čas prohlížení jejích fotek – a denní
+	// snímky oblíbenosti (pořadí a trend)
+	`CREATE TABLE zajem (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		cas TEXT NOT NULL,
+		modelka_id INTEGER NOT NULL,
+		druh TEXT NOT NULL CHECK (druh IN ('profil', 'fotky')),
+		sekund INTEGER NOT NULL DEFAULT 0
+	);
+	CREATE INDEX zajem_modelka ON zajem(modelka_id);
+	CREATE TABLE historie_oblibenosti (
+		den TEXT NOT NULL,
+		modelka_id INTEGER NOT NULL,
+		oblibenost REAL NOT NULL,
+		poradi INTEGER NOT NULL,
+		PRIMARY KEY (den, modelka_id)
+	);`,
 }
 
 // Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti
 // a které ZapomenoutUceni vyprázdní
 var tabulkyUceni = []string{"udalosti", "odmitnute", "zapisy"}
 
-// Porovnání dvojic: do paměti se přenesou také, ale zapomínají se zvlášť (ZapomenoutPorovnani)
-var tabulkyPorovnani = []string{"porovnani"}
+// Oblíbenost (porovnání dvojic, zájem a historie): do paměti se přenesou také, ale zapomínají se zvlášť
+// (ZapomenoutPorovnani)
+var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti"}
 
 // Druhy událostí deníku
 const (

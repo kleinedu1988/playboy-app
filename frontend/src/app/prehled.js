@@ -1,5 +1,5 @@
 // Přehled sbírky: úvod, Údržba, Oblíbenost, Sháním CZ a Statistiky; nabídka částí u tlačítka Přehled
-import { GetKalendar, GetPrehled, GetStatistiky, GetStavyVydani, SetStavVydani } from './backend';
+import { GetKalendar, GetPrehled, GetPrehledOblibenosti, GetStatistiky, GetStavyVydani, SetStavVydani } from './backend';
 import { nacistOblibenost } from './oblibenost';
 import { nazevVydani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
@@ -65,8 +65,9 @@ function htmlSouhrnu(model) {
 
 export async function nacistPrehled() {
     const moje = ++stav.cisloNacteni;
-    const [p, seznamModelek, kalendar, stavy] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky(),
-        GetKalendar().then(k => k || []), GetStavyVydani().then(s => s || []), nacistNavrhy(), nacistUceni()]);
+    const [p, seznamModelek, kalendar, stavy, oblibenost] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky(),
+        GetKalendar().then(k => k || []), GetStavyVydani().then(s => s || []),
+        GetPrehledOblibenosti().catch(() => null), nacistNavrhy(), nacistUceni()]);
     if (moje !== stav.cisloNacteni) return;
     stav.prehledModelky = new Map(seznamModelek.map(m => [m.id, m]));
     stav.zrusitUpravuVyrezu = null;
@@ -86,8 +87,8 @@ export async function nacistPrehled() {
     obsah.dataset.sekceUkazana = stav.prehledSekce;
     obnovitCasti();
     const uvod = obsah.querySelector('[data-sekce="uvod"]');
-    nastavitHtml(uvod, htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, souhrn: htmlSouhrnu(model), kUdrzbe: model.pocty.vse, modelekUplnych: p.modelek - model.modelekSChybou }));
-    nastavitHtml(obsah.querySelector('[data-sekce="shanim"]'), htmlShanim(stavy));
+    nastavitHtml(uvod, htmlUvodu({ p, kalendar, stavy, modelky: seznamModelek, souhrn: htmlSouhrnu(model), kUdrzbe: model.pocty.vse, modelekUplnych: p.modelek - model.modelekSChybou, oblibenost }));
+    nastavitHtml(obsah.querySelector('[data-sekce="shanim"]'), htmlShanim(stavy, seznamModelek));
     udrzba.vykreslit();
     const sekceStatistik = obsah.querySelector('[data-sekce="statistiky"]');
     if (stav.prehledSekce === 'statistiky') nacistStatistiky(sekceStatistik);
@@ -164,6 +165,11 @@ export function pripravit() {
     if (['souhrn', 'modelky', 'vydani', 'kontrola'].includes(stav.prehledSekce)) stav.prehledSekce = 'udrzba';
     // Řádek souhrnu na úvodu otevře Údržbu na daném údaji, odkaz „Údržba →“ v posledním režimu (bez nového načtení)
     stats.addEventListener('click', (e) => {
+        // Odkaz do Oblíbenosti funguje jako tlačítko grafu v liště
+        if (e.target.closest('[data-otevrit-oblibenost]')) {
+            /** @type {HTMLElement|null} */ (document.querySelector('.nav-rezim[data-cast-prehledu="oblibenost"]'))?.click();
+            return;
+        }
         const cast = e.target.closest('[data-sekce-prehledu]');
         if (!cast) return;
         if (cast.dataset.udrzbaFiltr) udrzba.otevritNaFiltru(cast.dataset.udrzbaFiltr);

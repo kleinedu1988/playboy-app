@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.34] – 2026-10-26
+
+### Přidáno
+- **Oblíbenost se učí průběžně z toho, co v aplikaci děláš:** otevření profilu modelky a čas prohlížení jejích fotek v prohlížeči posouvají modelku v pořadí uvnitř jejích srdíček. Čerstvý zájem váží víc (poloviční váha po dvou měsících). Kolik zájem váží, se program učí z tvých porovnání modelek se stejnými srdíčky (výchozí malá váha, srdíčka nikdy nepřebije). Ukládá se jen do `playboy-uceni.db` (úprava č. 3 databáze učení), nic neopouští počítač.
+- **Vývoj v čase:** program si každý den pamatuje pořadí oblíbenosti. V profilu je pod srdíčky „12. v oblíbenosti · ▲ 3 za 30 dní“ (klik otevře Oblíbenost), na kartě modelky malá šipka při výrazném posunu, v Oblíbenosti u každé modelky posun a řádek „Stoupají / Klesají“. Trend se ukáže po týdnu.
+- **Úvod Přehledu má kartu Oblíbenost:** Top 10, Stoupají a Dlouho jsi neviděl (oblíbené, jejichž profil jsi měsíc neotevřel; ukáže se po měsíci sledování).
+- **Sháním CZ: „Nejdřív sháněj“** – sháněná čísla s tvými nejoblíbenějšími modelkami napřed.
+
+### Změněno
+- Nejlepší fotky a stěna centerfoldů Podle srdíček řadí fotky se stejnými srdíčky podle oblíbenosti modelky.
+- Údržba: priorita počítá s oblíbeností modelky (údaje oblíbených se doplňují dřív) a fronta má řazení „oblíbené napřed“.
+- „Zapomenout porovnání“ maže i zájem a historii oblíbenosti.
+
 ## [0.99.33] – 2026-10-26
 
 ### Změněno

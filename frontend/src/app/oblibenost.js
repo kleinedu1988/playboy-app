@@ -10,7 +10,7 @@
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, kratceSrdicka, navrhPoPorovnani, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
-import { NAHLEDU_V_POROVNANI, klavesaNahledu, nahledNaStrane, popisNahledu, posunoutNahled, textSkoreFotek, textVahyFotek } from '../lib/oblibenost';
+import { NAHLEDU_V_POROVNANI, klavesaNahledu, nahledNaStrane, popisNahledu, posunoutNahled, stoupajiKlesaji, textSkoreFotek, textVahyFotek, textVahyZajmu } from '../lib/oblibenost';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { stats } from './prvky';
@@ -86,6 +86,7 @@ const KOSTRA = `
         <div class="ob-karta">
             <h4>Pořadí <small data-ob-pocet-poradi></small></h4>
             <p class="ob-vaha" data-ob-vaha></p>
+            <p class="ob-trendy" data-ob-trendy></p>
             <div data-ob-poradi></div>
         </div>
         <div class="ob-karta">
@@ -304,7 +305,13 @@ function vykreslitPoradi() {
     const o = data.oblibenost;
     const poradi = (o?.poradi || []).filter(p => modelka(p.modelkaId));
     nastavitText(cast('pocet-poradi'), poradi.length ? sklonovat(poradi.length, 'modelka', 'modelky', 'modelek') : '');
-    nastavitText(cast('vaha'), o && poradi.length ? textVahyFotek(o) : '');
+    nastavitText(cast('vaha'), o && poradi.length ? `${textVahyFotek(o)} ${textVahyZajmu(o)}` : '');
+    // Stoupají / klesají proti snímku pořadí před trendDni dny (historii si program vede sám, jednou denně)
+    const { stoupaji, klesaji } = stoupajiKlesaji(poradi);
+    const jmena = (seznam, smer, znak) => seznam.map(p => `<button type="button" class="link" data-otevrit-modelku="${p.modelkaId}">${esc(modelka(p.modelkaId).jmeno)}</button> <span class="trend ${smer}">${znak}${Math.abs(p.zmenaPoradi)}</span>`).join(', ');
+    nastavitHtml(cast('trendy'), o?.trendDni && (stoupaji.length || klesaji.length)
+        ? [stoupaji.length ? `Stoupají: ${jmena(stoupaji, 'nahoru', '▲')}` : '', klesaji.length ? `Klesají: ${jmena(klesaji, 'dolu', '▼')}` : ''].filter(Boolean).join(' · ')
+            + ` <small>(${o.trendDni === 1 ? 'od včerejška' : `za ${o.trendDni} dní`})</small>` : '');
     // Pořadí dávají srdíčka a fotky už bez porovnání; prázdné je jen bez hodnocených modelek i fotek
     if (!poradi.length) {
         nastavitHtml(cast('poradi'), htmlPrazdna('Pořadí vznikne z porovnávání', 'Po pár volbách nahoře tu uvidíš, které modelky máš nejradši – jemněji, než ukážou srdíčka.', { ikona: 'hvezda' }));
@@ -320,7 +327,7 @@ function vykreslitPoradi() {
         return `<li class="${p.odhadZFotek ? 'ob-z-fotek' : ''}"><button type="button" class="ob-radek" data-otevrit-modelku="${m.id}" title="${esc(popis)}">
             <span class="ob-misto">${p.poradi || i + 1}.</span>
             <img data-src="${esc(adresaTitulni(m))}" alt="" draggable="false" />
-            <span class="ob-jmeno-radku">${esc(m.jmeno)}<small>${m.hodnoceni ? `<i>${znakySrdicek(m.hodnoceni)}</i>` : p.odhadZFotek ? '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>' : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}</small></span>
+            <span class="ob-jmeno-radku">${esc(m.jmeno)}<small>${m.hodnoceni ? `<i>${znakySrdicek(m.hodnoceni)}</i>` : p.odhadZFotek ? '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>' : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}${p.zmenaPoradi && o.trendDni ? ` · <span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}" title="${esc(`${p.zmenaPoradi > 0 ? 'Stoupla' : 'Klesla'} o ${sklonovat(Math.abs(p.zmenaPoradi), 'místo', 'místa', 'míst')} za ${o.trendDni} dní`)}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : ''}${p.zajem >= 0.05 ? ' · <span class="ob-zajem" title="Často otevíráš její profil nebo prohlížíš fotky – posouvá ji to v pořadí uvnitř srdíček">zájem</span>' : ''}</small></span>
             <span class="ob-pruh" aria-hidden="true"><i style="width:${sirka}%"></i>${nejistota ? `<b style="left:${Math.max(0, sirka - nejistota)}%; width:${Math.min(100, sirka + nejistota) - Math.max(0, sirka - nejistota)}%"></b>` : ''}</span>
             <small class="ob-pocet">${p.porovnani || 0}×</small>
         </button></li>`;

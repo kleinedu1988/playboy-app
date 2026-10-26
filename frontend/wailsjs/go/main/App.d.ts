@@ -60,6 +60,8 @@ export function GetOblibenost():Promise<main.StavOblibenosti>;
 
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
+export function GetPrehledOblibenosti():Promise<main.PrehledOblibenosti>;
+
 export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
 
 export function GetSablonaObrazku():Promise<string>;
@@ -197,6 +199,8 @@ export function ZapomenoutPorovnani():Promise<boolean>;
 export function ZapomenoutUceni():Promise<boolean>;
 
 export function ZaznamenatOpravu(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
+
+export function ZaznamenatZajem(arg1:number,arg2:string,arg3:number):Promise<boolean>;
 
 export function ZkontrolovatDavku():Promise<main.KontrolaSouboru>;
 

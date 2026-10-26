@@ -18,6 +18,7 @@ import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
 import { lightbox } from './prohlizec';
+import { trendModelky } from '../lib/oblibenost';
 import { vybraneDlazdice } from './vyber';
 import { prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
@@ -48,6 +49,12 @@ poZmeneDat(() => duvodyOdhadu.clear());
 const nadpisOdhadu = duvod => `Odhad podle tvého vkusu, zatím nehodnoceno${duvod ? ` – ${duvod}` : ''}`;
 
 // Tlumený štítek „odhad 3½“ u nehodnocené modelky: odhad modelu vkusu, ne skutečné hodnocení
+// Šipka trendu oblíbenosti na kartě: jen výrazný posun (aspoň 3 místa)
+export function htmlTrendu(modelka) {
+    const t = trendModelky(modelka, 3);
+    return t ? `<span class="trend trend-karta ${t.smer}" title="${esc(`Oblíbenost: ${t.text}`)}">${t.znak}</span>` : '';
+}
+
 export function htmlOdhadu(modelka, tridy = '') {
     if (!ukazatOdhad(modelka)) return '';
     return `<span class="odhad-chip ${tridy}" data-odhad="${modelka.id}" title="${esc(nadpisOdhadu(duvodyOdhadu.get(modelka.id)))}">odhad ${kratceSrdicka(modelka.odhadHodnoceni)}</span>`;
@@ -239,7 +246,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
                 ${htmlOdhadu(m)}
             </div>
             <div class="card-info">
-                <h3>${esc(m.jmeno)}</h3>
+                <h3>${esc(m.jmeno)}${htmlTrendu(m)}</h3>
             </div>
         </div>
     `).join('');

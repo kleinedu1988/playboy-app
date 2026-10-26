@@ -27,6 +27,7 @@ const CTENI = new Set([
     'GetNejlepsiFotky',
     'GetOblibenost',
     'GetPrehled',
+    'GetPrehledOblibenosti',
     'GetPrehledVydani',
     'GetSablonaObrazku',
     'GetSpecialy',
@@ -45,6 +46,9 @@ const CTENI = new Set([
     'StavDatabaze',
     'VybratSouboryImportu',
     'ExportovatDoSouboru',
+    // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
+    // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
+    'ZaznamenatZajem',
 ]);
 
 function obalit(jmeno) {
@@ -158,5 +162,7 @@ export const PorovnatModelky = /** @type {typeof App.PorovnatModelky} */ (obalit
 export const VratitPorovnani = /** @type {typeof App.VratitPorovnani} */ (obalit('VratitPorovnani'));
 export const ZapomenoutPorovnani = /** @type {typeof App.ZapomenoutPorovnani} */ (obalit('ZapomenoutPorovnani'));
 export const GetOblibenost = /** @type {typeof App.GetOblibenost} */ (obalit('GetOblibenost'));
+export const GetPrehledOblibenosti = /** @type {typeof App.GetPrehledOblibenosti} */ (obalit('GetPrehledOblibenosti'));
+export const ZaznamenatZajem = /** @type {typeof App.ZaznamenatZajem} */ (obalit('ZaznamenatZajem'));
 export const GetMohloByTeLibit = /** @type {typeof App.GetMohloByTeLibit} */ (obalit('GetMohloByTeLibit'));
 export const GetNahledyModelek = /** @type {typeof App.GetNahledyModelek} */ (obalit('GetNahledyModelek'));

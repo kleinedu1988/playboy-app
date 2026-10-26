@@ -101,7 +101,8 @@ export const jePlaymate = m => Boolean((m?.centerfoldy || []).length) || /playma
 // Jak moc na modelce ve sbírce záleží: Playmate a modelky obálky víc, srdíčka trochu
 export function vyznamModelky(m) {
     if (!m) return 1;
-    return 1 + (jePlaymate(m) ? 0.8 : 0) + ((m.obalky || []).length ? 0.3 : 0) + Math.max(0, m.hodnoceni || 0) * 0.08;
+    // Oblíbenost (srdíčka upřesněná fotkami, porovnáním a zájmem), bez ní srdíčka: údaje oblíbených se doplňují dřív
+    return 1 + (jePlaymate(m) ? 0.8 : 0) + ((m.obalky || []).length ? 0.3 : 0) + Math.max(0, m.oblibenost || m.hodnoceni || 0) * 0.08;
 }
 
 // Pod jménem v řádku: kategorie a první číslo modelky
@@ -122,7 +123,7 @@ const netykaSeModelky = m => new Set((m?.netykaSe || '').split(',').filter(Boole
  * @param {any[]} [vstup.navrhy] návrhy doplnění (i odmítnuté)
  * @param {boolean} [vstup.skryte] zobrazit i „netýká se“ a „V pořádku“
  * @param {boolean} [vstup.odmitnute] zobrazit i odmítnuté návrhy
- * @param {string} [vstup.razeni] 'priorita' | 'chybi' | 'jmeno'
+ * @param {string} [vstup.razeni] 'priorita' | 'chybi' | 'jmeno' | 'oblibenost'
  */
 export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitnute = false, razeni = 'priorita' }) {
     const podleId = new Map(modelky.map(m => [m.id, m]));
@@ -267,6 +268,9 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
         priorita: (a, b) => b.priorita - a.priorita || podleJmena(a, b),
         chybi: (a, b) => b.aktivnich - a.aktivnich || (radky.get(b.id)?.vaha || 0) - (radky.get(a.id)?.vaha || 0) || podleJmena(a, b),
         jmeno: podleJmena,
+        // Oblíbené modelky napřed (čísla za nimi), se stejnou oblíbeností podle priority
+        oblibenost: (a, b) => (b.druh === 'modelka' ? podleId.get(b.id)?.oblibenost || 0 : -1) - (a.druh === 'modelka' ? podleId.get(a.id)?.oblibenost || 0 : -1)
+            || b.priorita - a.priorita || podleJmena(a, b),
     };
     skupiny.sort(poradi[razeni] || poradi.priorita);
 

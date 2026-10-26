@@ -71,6 +71,7 @@ const KOSTRA = `
                         <select data-ud-razeni aria-label="Řazení fronty">
                             <option value="priorita">podle priority</option>
                             <option value="chybi">nejvíc chybí</option>
+                            <option value="oblibenost">oblíbené napřed</option>
                             <option value="jmeno">podle jména</option>
                         </select></label>
                     <button type="button" class="ud-nastroj" data-ud-hromadne aria-haspopup="menu" title="Rozbalit nebo sbalit vše, hromadné akce pro celý výběr">⋯ Hromadně</button>

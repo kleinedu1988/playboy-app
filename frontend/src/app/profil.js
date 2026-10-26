@@ -15,6 +15,8 @@ import { selectionBar } from './vyber';
 import { doplnitClankyModelky } from './clanky';
 import { htmlPrazdna } from '../ui/prazdno';
 import { htmlKostryAlb } from '../ui/kostra';
+import { textPoradiProfilu } from '../lib/oblibenost';
+import { zaznamenatProfil } from './zajem';
 
 // Otevření profilu modelky s fotogalerií
 export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}) {
@@ -25,6 +27,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     // Mezitím otevřený jiný pohled má přednost
     if (moje !== stav.cisloNacteni) return;
     if (!bezHistorie) zapamatovatMisto({ modelka });
+    // Listování mezi profily (bez historie) je taky zájem; backend stejnou modelku počítá nejvýš jednou za 10 minut
+    zaznamenatProfil(modelka.id);
     // Alba předchozí modelky se do načtení nahradí obrysy (stejná modelka po uložení zůstává, jak je)
     if (stav.aktualniModelka?.id !== modelka.id) document.getElementById('photosGrid').innerHTML = htmlKostryAlb();
     stav.aktualniModelka = modelka;
@@ -115,6 +119,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         <h2>${esc(modelka.jmeno)}</h2>
         ${htmlSrdicka(modelka)}
         ${htmlOdhadu(modelka, 'odhad-profil')}
+        ${htmlPoradi(modelka)}
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
         <div class="profile-actions-misto"></div>
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
@@ -126,6 +131,14 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     document.querySelector('#modelHeader .profile-actions-misto').replaceWith(akce);
 
     await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka)]);
+}
+
+// Pořadí v oblíbenosti a trend pod srdíčky; klik otevře Oblíbenost
+function htmlPoradi(modelka) {
+    const r = textPoradiProfilu(modelka);
+    if (!r) return '';
+    return `<button type="button" class="profile-poradi" data-otevrit-oblibenost title="Otevřít Oblíbenost – pořadí podle srdíček, fotek, porovnání a zájmu">
+        ${esc(r.poradi)}${r.trend ? ` · <span class="trend ${r.trend.smer}" title="${esc(r.trend.text)}">${r.trend.znak} ${esc(r.trend.kratce)}</span>` : ''}</button>`;
 }
 
 // Ostatní modelky sdíleného alba (hlavní i další kromě té, jejíž profil je otevřený) jako odkazy na jejich profil
@@ -400,8 +413,12 @@ export function pripravit() {
         tlacitko.textContent = rozbaleno ? 'méně' : 'více';
     });
 
-    // Páska online alb přeskočí na první online album
+    // Páska online alb přeskočí na první online album; pořadí v oblíbenosti otevře Oblíbenost (jako tlačítko grafu)
     document.getElementById('modelHeader').addEventListener('click', (e) => {
+        if (e.target.closest('[data-otevrit-oblibenost]')) {
+            /** @type {HTMLElement|null} */ (document.querySelector('.nav-rezim[data-cast-prehledu="oblibenost"]'))?.click();
+            return;
+        }
         const paska = e.target.closest('[data-online-album]');
         if (!paska) return;
         document.querySelector('#photosGrid section.album[data-online]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });

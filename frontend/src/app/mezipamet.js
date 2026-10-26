@@ -15,6 +15,11 @@ export async function vsechnyModelky() {
     return (await modelky).slice();
 }
 
+// Oblíbenost modelek podle id (řazení fotek se stejnými srdíčky v Nejlepších a na stěně)
+export async function oblibenostModelek() {
+    return new Map((await vsechnyModelky()).map(m => [m.id, m.oblibenost || 0]));
+}
+
 // Názvy speciálů pro nazevVydani; po změně dat se načtou znovu
 export async function nacistSpecialy() {
     nastavitNazvySpecialu(await GetSpecialy());

@@ -57,7 +57,7 @@ const legenda = (pocty, nazvy) => `<div class="uvod-legenda">${Object.entries(po
     `<span><i class="${s}"></i>${nazvy[s]} ${n}</span>`).join('')}</div>`;
 
 // p = GetPrehled, kalendar = GetKalendar, stavy = GetStavyVydani, souhrn = řádky „Co zbývá doplnit“, kUdrzbe = počet v menu Údržba
-export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modelekUplnych }) {
+export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modelekUplnych, oblibenost = null }) {
     const dnes = new Date();
     const letos = dnes.getFullYear();
     const budouci = klic => {
@@ -126,6 +126,7 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
             <h4>Co zbývá doplnit<small><button type="button" class="link" data-sekce-prehledu="udrzba" data-udrzba-filtr="vse">Údržba (${kUdrzbe}) →</button></small></h4>
             ${souhrn}
         </div>
+        ${oblibenost ? htmlOblibenostiUvodu(oblibenost, modelky) : ''}
         <div class="uvod-dole">
             <div class="uvod-karta">
                 <h4>Výtisky CZ po letech</h4>
@@ -148,14 +149,56 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
         <div class="graf-bublina hidden"></div>`;
 }
 
+// Oblíbenost na úvodu: nejoblíbenější, stoupající a oblíbené, které jsi dlouho neotevřel (GetPrehledOblibenosti)
+function htmlOblibenostiUvodu(ob, modelky) {
+    const podleId = new Map(modelky.map(m => [m.id, m]));
+    const seznam = (polozky, popis) => `<div class="uvod-naposledy">${polozky.map(x => {
+        const m = podleId.get(x.modelkaId) || { id: x.modelkaId, jmeno: x.jmeno };
+        return `<button type="button" data-otevrit-modelku="${x.modelkaId}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(x.jmeno)}<small>${popis(x)}</small></button>`;
+    }).join('')}</div>`;
+    const prazdne = text => `<p class="uvod-hotovo">${text}</p>`;
+    const top = ob.top.length ? seznam(ob.top, x => `${x.poradi}.`)
+        : prazdne('Ohodnoť modelky srdíčky – pořadí se ukáže tady.');
+    const kdy = ob.trendDni === 1 ? 'od včerejška' : `za ${ob.trendDni} dní`;
+    const stoupaji = ob.stoupaji.length ? seznam(ob.stoupaji, x => `<span class="trend nahoru">▲ ${x.zmenaPoradi}</span>`)
+        : prazdne(ob.trendDni ? `Nikdo výrazně nestoupl ${kdy}.` : 'Trend se ukáže za týden: program si každý den pamatuje pořadí.');
+    const dni = x => x.dni < 0 ? 'neotevřená' : `před ${x.dni} dny`;
+    const nevidene = ob.zajemDni < 30
+        ? prazdne(`Za ${sklonovat(30 - ob.zajemDni, 'den', 'dny', 'dní')} tu budou oblíbené, jejichž profil jsi dlouho neotevřel.`)
+        : ob.dlouhoNevidene.length ? seznam(ob.dlouhoNevidene, dni) : prazdne('Všechny oblíbené jsi v posledním měsíci viděl.');
+    return `
+        <div class="uvod-karta uvod-oblibenost">
+            <h4>Oblíbenost<small><button type="button" class="link" data-otevrit-oblibenost>Porovnávat a pořadí →</button></small></h4>
+            <div class="uvod-oblibenost-sloupce">
+                <div><h5>Top ${ob.top.length || 10}</h5>${top}</div>
+                <div><h5>Stoupají${ob.trendDni ? ` <small>${kdy}</small>` : ''}</h5>${stoupaji}</div>
+                <div><h5>Dlouho jsi neviděl</h5>${nevidene}</div>
+            </div>
+        </div>`;
+}
+
+// Sháněná čísla, ve kterých je modelka z pořadí oblíbenosti, od nejoblíbenější: [{ cislo, modelka }]
+export function prioritaShanim(cisla, modelky) {
+    const nejlepsi = new Map();
+    for (const m of modelky) {
+        if (!(m.poradi > 0)) continue;
+        for (const v of new Set([...(m.vydani || []), ...(m.obalky || [])])) {
+            if (!nejlepsi.has(v) || m.poradi < nejlepsi.get(v).poradi) nejlepsi.set(v, m);
+        }
+    }
+    return cisla.filter(s => nejlepsi.has(s.vydani)).map(s => ({ cislo: s, modelka: nejlepsi.get(s.vydani) }))
+        .sort((a, b) => a.modelka.poradi - b.modelka.poradi);
+}
+
 // Sháním (jen česká edice): čísla po letech, poznámka v nápovědě; seznam jde zkopírovat jako text
 export function shanenaCisla(stavy) {
     return stavy.filter(s => s.stav === 'shanim' && rozlozitVydani(s.vydani)?.edice === 'CZ')
         .sort((a, b) => a.vydani.localeCompare(b.vydani));
 }
 
-export function htmlShanim(stavy) {
+export function htmlShanim(stavy, modelky = []) {
     const cisla = shanenaCisla(stavy);
+    const priorita = prioritaShanim(cisla, modelky).slice(0, 6);
     const podleRoku = new Map();
     cisla.forEach(s => {
         const rok = rozlozitVydani(s.vydani).rok;
@@ -165,6 +208,8 @@ export function htmlShanim(stavy) {
     return `
         <h3>Sháním CZ <span>česká edice · ${sklonovat(cisla.length, 'číslo', 'čísla', 'čísel')}</span>
             ${cisla.length ? '<button type="button" class="link stat-toggle" data-kopirovat-shanim>Kopírovat seznam</button>' : ''}</h3>
+        ${priorita.length ? `<div class="uvod-karta uvod-shanim uvod-shanim-napred"><h4>Nejdřív sháněj<small>čísla s tvými nejoblíbenějšími modelkami</small></h4><div>${priorita.map(({ cislo, modelka }) => `
+            <button type="button" class="chip" data-shanim="${esc(cislo.vydani)}" title="${esc(`${nazevVydani(cislo.vydani)} – ${modelka.jmeno}, ${modelka.poradi}. v oblíbenosti`)}">${esc(nazevVydani(cislo.vydani))}<small>${esc(modelka.jmeno)} · ${modelka.poradi}.</small></button>`).join('')}</div></div>` : ''}
         ${cisla.length ? `<div class="uvod-karta uvod-shanim">${[...podleRoku].map(([rok, seznam]) => `
             <div class="uvod-shanim-rok"><b>${rok}</b><div>${seznam.map(s => `
                 <button type="button" class="chip" data-shanim="${esc(s.vydani)}" title="${esc(nazevVydani(s.vydani) + (s.poznamka ? ` – ${s.poznamka}` : ''))}">${esc(nazevVydani(s.vydani).replace(/ \d{4}.*$/, ''))}${s.poznamka ? `<small>${esc(s.poznamka)}</small>` : ''}</button>`).join('')}</div></div>`).join('')}

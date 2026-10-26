@@ -15,6 +15,8 @@ import { potvrdit } from './formular-modelky';
 import { vybratHodnotu } from './ulozeni';
 import { prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
+import { oblibenostModelek } from './mezipamet';
+import { porovnatFotkyPodleSrdicek } from '../lib/oblibenost';
 
 // Přidání fotek do vlastního výběru (existujícího, nebo nového podle napsaného názvu)
 export async function pridatDoVyberu(ids) {
@@ -33,6 +35,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
     const [fotky, vybery] = zMezipameti && stav.nejlepsiData ? [stav.nejlepsiData, stav.vyberyData]
         : await Promise.all([(stav.nejlepsiVyber ? GetFotkyVyberu(stav.nejlepsiVyber) : GetNejlepsiFotky(stav.nejlepsiMin)).then(f => f || []), GetVybery().then(v => v || [])]);
+    const oblibenost = await oblibenostModelek().catch(() => new Map());
     if (moje !== stav.cisloNacteni) return;
     stav.nejlepsiData = fotky;
     stav.vyberyData = vybery;
@@ -51,7 +54,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     ], tokeny, poleFotky(f));
     stav.nejlepsiPolozky = fotky.filter(vyhovuje).map(f => ({
         fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni,
-    })).sort((x, y) => y.hodnoceni - x.hodnoceni);
+    })).sort(porovnatFotkyPodleSrdicek(oblibenost));
 
     // Úrovně srdíček (od nejvyšší): každá je oddíl mozaiky se značkou části pro lištu nahoře
     const urovne = new Map();

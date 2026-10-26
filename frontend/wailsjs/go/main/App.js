@@ -118,6 +118,10 @@ export function GetPrehled(arg1) {
   return window['go']['main']['App']['GetPrehled'](arg1);
 }
 
+export function GetPrehledOblibenosti() {
+  return window['go']['main']['App']['GetPrehledOblibenosti']();
+}
+
 export function GetPrehledVydani() {
   return window['go']['main']['App']['GetPrehledVydani']();
 }
@@ -392,6 +396,10 @@ export function ZapomenoutUceni() {
 
 export function ZaznamenatOpravu(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['ZaznamenatOpravu'](arg1, arg2, arg3, arg4);
+}
+
+export function ZaznamenatZajem(arg1, arg2, arg3) {
+  return window['go']['main']['App']['ZaznamenatZajem'](arg1, arg2, arg3);
 }
 
 export function ZkontrolovatDavku() {

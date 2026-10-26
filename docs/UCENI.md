@@ -44,12 +44,14 @@ nehodnocených modelek.
 | `mezipamet` | poslední návrhy a nálezy s otiskem sbírky (JSON) |
 | `stav` | čas posledního otevření (zkouška zápisu) |
 | `porovnani` | (úprava č. 2) porovnání dvojic: čas, modelky `a` a `b`, `vysledek` (`a`, `b`, `remiza`), srdíčka obou v tu chvíli (`hodnoceni_a`, `hodnoceni_b`, po polovinách) |
+| `zajem` | (úprava č. 3) zájem o modelky: čas, modelka, `druh` (`profil` = otevření profilu, `fotky` = prohlížení jejích fotek) a `sekund` prohlížení; starší dvou let se maže |
+| `historie_oblibenosti` | (úprava č. 3) denní snímky oblíbenosti: `den`, modelka, `oblibenost`, `poradi`; po 60 dnech jen pondělní, po 400 dnech nic |
 
 - **Zapomenout** (`ZapomenoutUceni`): databáze učení se nejdřív zazálohuje do složky záloh jako
   `uceni-RRRR-MM-DD-HHMMSS.mmm.db` (zůstává posledních 5; mezi zálohami sbírky se neukazují) a pak vyprázdní.
   Zapomene se jen naučené z rozhodnutí Údržby; sbírka se nemění. **Porovnání dvojic zůstanou** – jsou to
   výslovné soudy uživatele jako srdíčka, ne naučené z návrhů; smaže je zvlášť `ZapomenoutPorovnani` (se stejnou
-  zálohou). Smazání souboru `playboy-uceni.db` zapomene obojí. Klíče
+  zálohou), a s nimi i zájem a historii oblíbenosti. Smazání souboru `playboy-uceni.db` zapomene obojí. Klíče
   `nv-…` ve sbírce zůstanou a bez záznamu v databázi učení znamenají odmítnutí celého údaje (jako ve starších
   verzích).
 - **Když databáze učení nejde použít**, program funguje dál a sbírky se to nikdy netýká (varování jde do
@@ -249,12 +251,15 @@ sbírky ani exportu.
 | `GetDvojiceKPorovnani(pocet, okruh) []DvojicePorovnani` | dvojice `{a, b, duvod}` vybrané aktivním učením; `okruh`: `""` hodnocené (stejná a sousední úroveň), `"stejne"` jen stejná úroveň, `"nehodnocene"` nehodnocená proti hodnocené kotvě |
 | `PorovnatModelky(a, b, vysledek) bool` | zapíše porovnání (`a`, `b`, `remiza`) se srdíčky obou v tu chvíli |
 | `VratitPorovnani() bool` | smaže poslední porovnání (zpět) |
-| `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání |
+| `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání, zájmu a historie oblíbenosti |
+| `ZaznamenatZajem(id, druh, sekund) bool` | zájem o modelku: `druh` `"profil"` (stejná modelka nejvýš jednou za 10 minut) nebo `"fotky"` (`sekund` prohlížení, 3–1800); změnu dat neohlašuje |
+| `GetPrehledOblibenosti() PrehledOblibenosti` | úvod Přehledu: `top` (10 nejoblíbenějších), `stoupaji` a `klesaji` (posun aspoň o 3 místa a 3 % délky pořadí, nejvýš 10), `dlouhoNevidene` (z horní třicítky ty, jejichž profil ani fotky jsi 30 dní neviděl; `dni` = −1 nikdy; až se zájem sleduje aspoň 30 dní), `trendDni`, `zajemDni`; položky `modelkaId`, `jmeno`, `hodnoceni`, `poradi`, `zmenaPoradi`, `dni` |
 | `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
 | `GetMohloByTeLibit(pocet) []OblibenostModelky` | nehodnocené modelky s nejvyšším odhadem a důvodem (`odhad`, `duvod`; `sila` = nezaokrouhlený odhad, `nejistota` = chyba ověření u modelek s podobně bohatými údaji) |
 | `GetDuvodOdhadu(id) string` | důvod ukázaného odhadu nehodnocené modelky („Odhad 4 srdíčka: blond, 70. léta, Pompeo Posar; podobně jako Anna (4½) a Bára (4)“), jinak `""`; štítek „odhad“ si ho načte při prvním najetí myší |
 | `GetNahledyModelek(ids, pocet) map[int][]NahledFotky` | náhledy fotek modelek pro porovnání (nejvýš `pocet`, 1–24; nejvýš 100 modelek): `id` fotky, `url` (šablona s `{velikost}`), `album`, `typ`, `hodnoceni` (srdíčka fotky), `rotace`; neznámá modelka nebo bez fotek má `[]` |
 | `Modelka.oblibenost` | srdíčka upřesněná skóre fotek a porovnáním (nejvýš ±0,49: o půl srdíčka se pořadí přehodit může, o celé ne); nehodnocená porovnávaná má sílu z porovnání, ostatní 0 |
+| `Modelka.poradi`, `zmenaPoradi`, `trendDni` | pořadí oblíbenosti od 1 (0 = mimo pořadí), o kolik míst výš než ve srovnávacím snímku (záporné = níž) a jeho stáří ve dnech (0 = trend zatím není) |
 | `Modelka.odhadHodnoceni` | odhad modelu vkusu po polovinách jen u nehodnocené modelky ze skupiny údajů, kde odhad na ověření jasně překonal průměr, jinak 0 |
 
 ## Bradley–Terry
@@ -342,6 +347,40 @@ log-ztráta na páté; při shodě silnější smrštění). Pod 10 porovnání 
 (`TestVahaFotekZPorovnani`, `TestVahaFotekVOblibenosti`): když porovnání sledují fotky, w dojde ke stropu 0,8 a log-ztráta
 předpovědi klesne o 23–87 %; náhodné skóre fotek nebo porovnání proti fotkám dají w ≈ 0,01; 25 porovnání dá 0,8, osm 0,3.
 Váha nemůže být záporná (fotky „naopak“ nedávají smysl, nejvýš se vypnou) a nepřekročí **0,8**: vlastní srdíčka modelky váží vždy aspoň pětinou, i když porovnání silně sledují fotky.
+
+## Zájem a trend
+
+Oblíbenost se nemá měnit jen tehdy, když porovnáváš. Program si proto všímá **zájmu** (`oblibenost_zajem.go`):
+otevření profilu modelky (stejná modelka nejvýš jednou za 10 minut, i listování mezi profily) a času prohlížení
+jejích fotek v prohlížeči (čas u jedné fotky nejvýš minuta, skryté okno se nepočítá; zapíše se při zavření
+prohlížeče). Záznamy jdou jen do databáze učení (tabulka `zajem`).
+
+- **Skóre zájmu** modelky Z = Σ 0,5^(dny/60) · h, kde h = 1 za otevření profilu a sekundy/120 za prohlížení fotek
+  (dvě minuty fotek = jedno otevření). Poločas 60 dní: oblíbenost sleduje, o koho se zajímáš teď.
+- **Míra zájmu** z = min(log(1 + Z) / ref, 2), ref = medián log(1 + Z) modelek se zájmem (aspoň log 2).
+  Logaritmus a strop drží desítky otevření jedné modelky na uzdě.
+- **Posun předpokladu** síly v Bradley–Terry o v·z (u modelek s předpokladem: hodnocené, s hodnocenými fotkami
+  a porovnávané). Váhu v se program učí jako váhu fotek: z porovnání modelek se stejnými srdíčky, kde se zájem
+  stran liší, mřížka 0–0,3 po 0,025 podle vážené log-ztráty (předpoklad stran se srdíčky a fotkami s naučenou
+  vahou fotek), výsledek stažený k výchozí 0,1 jako by ji potvrdilo 20 porovnání. Pod 10 takových porovnání platí
+  0,1 (`zajemNaucen: false`). Oblíbenost hodnocené modelky dál zůstává do ±0,49 od jejích srdíček: zájem přeskupí
+  pořadí uvnitř úrovně, srdíčka nepřebije. Hrozí smyčka „řadím podle oblíbenosti → otevírám ty nahoře → víc
+  zájmu“; proto je posun malý (výchozí nejvýš 0,2 srdíčka) a váhu určují porovnání, ne samotný zájem.
+- Nové záznamy výsledek v paměti nezneplatní každý zvlášť (přepočet modelu vkusu stojí desítky ms): projeví se po
+  každých 20 záznamech, po změně dat nebo druhý den. Důvod v pořadí ukáže „zájem: 8× profil, 14 min fotek za
+  2 měsíce (+0,15)“.
+
+**Historie a trend.** Po přepočtu modelu se zapíše snímek dnešní oblíbenosti a pořadí (`historie_oblibenosti`,
+dnešní nejvýš jednou za hodinu). Trend je posun proti snímku z doby před 30 dny, dokud není, proti nejstaršímu aspoň
+7 dní starému (`trendDni`); pořadí se pro srovnání počítá jen mezi modelkami, které jsou v obou snímcích, aby nově
+ohodnocené modelky nevypadaly jako pád všech pod nimi. Úklid jednou denně: po 60 dnech zůstane pondělní snímek, po
+400 dnech nic, záznamy zájmu starší dvou let se smažou.
+
+**Kde se oblíbenost projeví:** galerie Podle srdíček a filtr srdíček (se stejnými srdíčky podle oblíbenosti),
+pořadí a trend v profilu a šipka na kartě (posun aspoň o 3 místa), Nejlepší fotky a stěna centerfoldů Podle
+srdíček (fotky se stejnými srdíčky podle oblíbenosti modelky), Údržba (význam modelky v prioritě počítá
+s oblíbeností místo srdíček; řazení „oblíbené napřed“), Sháním CZ („Nejdřív sháněj“: čísla s nejoblíbenější
+modelkou) a úvod Přehledu (Top 10, Stoupají, Dlouho jsi neviděl).
 
 ## Náhledy alb
 

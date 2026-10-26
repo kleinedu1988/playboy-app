@@ -20,6 +20,8 @@ import (
 //     (Laplaceova aproximace, diagonála). Oblíbenost hodnocené modelky zůstává do ±0,49 od jejích srdíček.
 //   - Výběr dvojic (aktivní učení): dvojice s nejistým pořadím na stejné nebo sousední úrovni srdíček, bez
 //     nedávno ukázaných dvojic a bez častého opakování modelky, s trochou průzkumu.
+//   - Zájem a trend (oblibenost_zajem.go): otevírání profilu a prohlížení fotek posouvá předpoklad síly (váha
+//     naučená z porovnání), denní snímky oblíbenosti dávají pořadí v čase a trend (stoupá / klesá).
 //   - Model vkusu (oblibenost_vkus.go): průměr hřebenové regrese a posilovaných stromů na údajích modelky,
 //     ověřený křížovým ověřením. Odhady se ukazují jen u modelek s údaji, u kterých model na ověření jasně
 //     překoná prostý průměr (přesnost má přednost před úplností), a každý má český důvod („blond, 70. léta,
@@ -29,7 +31,7 @@ import (
 // otisk změní); GetModelky pak jen doplní hotová čísla.
 
 // Verze výpočtu oblíbenosti: změna modelů zneplatní výsledek v paměti
-const verzeOblibenosti = "oblibenost-2"
+const verzeOblibenosti = "oblibenost-3"
 
 // Parametry modelu Bradley–Terry
 const (
@@ -75,11 +77,19 @@ type StavOblibenosti struct {
 	Odhady bool `json:"odhady"`
 	// Váha skóre fotek v předpokladu síly (0–1), zda je naučená z porovnání (jinak výchozí 0,3), z kolika porovnání
 	// a o kolik zlepšila předpověď porovnání proti samotným srdíčkům na ověření (podíl log-ztráty, může být záporné)
-	VahaFotek     float64             `json:"vahaFotek"`
-	VahaNaucena   bool                `json:"vahaNaucena"`
-	PorovnaniVahy int                 `json:"porovnaniVahy"`
-	ZlepseniFotek float64             `json:"zlepseniFotek"`
-	Poradi        []OblibenostModelky `json:"poradi"`
+	VahaFotek     float64 `json:"vahaFotek"`
+	VahaNaucena   bool    `json:"vahaNaucena"`
+	PorovnaniVahy int     `json:"porovnaniVahy"`
+	ZlepseniFotek float64 `json:"zlepseniFotek"`
+	// Váha zájmu (otevírání profilu a prohlížení fotek) v předpokladu síly na jednotku míry zájmu, zda je naučená
+	// z porovnání (jinak výchozí 0,1) a z kolika; od kolika dní se zájem sleduje; stáří srovnávacího snímku trendu
+	// (0 = historie zatím chybí)
+	VahaZajmu      float64             `json:"vahaZajmu"`
+	ZajemNaucen    bool                `json:"zajemNaucen"`
+	PorovnaniZajmu int                 `json:"porovnaniZajmu"`
+	ZajemDni       int                 `json:"zajemDni"`
+	TrendDni       int                 `json:"trendDni"`
+	Poradi         []OblibenostModelky `json:"poradi"`
 }
 
 type OblibenostModelky struct {
@@ -96,7 +106,11 @@ type OblibenostModelky struct {
 	AlbFotek         int     `json:"albFotek"`
 	FotekHodnocenych int     `json:"fotekHodnocenych"`
 	OdhadZFotek      bool    `json:"odhadZFotek"` // nehodnocená a neporovnaná: místo v pořadí je jen odhad z fotek
-	Duvod            string  `json:"duvod"`       // „srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“
+	// Posun síly zájmem (srdíčka), posun oblíbenosti a pořadí proti srovnávacímu snímku (kladný = výš)
+	Zajem       float64 `json:"zajem"`
+	Trend       float64 `json:"trend"`
+	ZmenaPoradi int     `json:"zmenaPoradi"`
+	Duvod       string  `json:"duvod"` // „srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“
 }
 
 // Dvojice k porovnání vybrané aktivním učením. okruh: "" všechny hodnocené, "stejne" jen stejná úroveň srdíček,
@@ -177,8 +191,8 @@ func (a *App) VratitPorovnani() bool {
 	return true
 }
 
-// Zapomenutí porovnání: záloha databáze učení (jako u ZapomenoutUceni) a smazání všech porovnání. Naučené
-// z Údržby zůstává; ZapomenoutUceni naopak porovnání nemaže.
+// Zapomenutí oblíbenosti: záloha databáze učení (jako u ZapomenoutUceni) a smazání všech porovnání, zájmu
+// a historie oblíbenosti. Naučené z Údržby zůstává; ZapomenoutUceni naopak oblíbenost nemaže.
 func (a *App) ZapomenoutPorovnani() bool {
 	u := a.uc
 	if u == nil {
@@ -195,7 +209,10 @@ func (a *App) ZapomenoutPorovnani() bool {
 		a.chyba("zapomenutí porovnání", err)
 		return false
 	}
+	db.Exec("DELETE FROM zajem")
+	db.Exec("DELETE FROM historie_oblibenosti")
 	u.ob.porovnani, u.ob.nacteno, u.ob.nabidnute = nil, true, nil
+	u.ob.profily, u.ob.zaznamuZajmu, u.ob.historieCas, u.ob.model = nil, u.ob.zaznamuZajmu+zaznamuNaPrepocet, time.Time{}, nil
 	return true
 }
 
@@ -210,6 +227,11 @@ func (a *App) GetOblibenost() StavOblibenosti {
 	stav.Porovnani = model.porovnani
 	stav.VahaFotek, stav.VahaNaucena, stav.PorovnaniVahy = zaokrouhlit3(model.vaha.vaha), model.vaha.naucena, model.vaha.porovnani
 	stav.ZlepseniFotek = zaokrouhlit3(model.vaha.zlepseni())
+	stav.VahaZajmu, stav.ZajemNaucen, stav.PorovnaniZajmu = zaokrouhlit3(model.vahaZajmu.vaha), model.vahaZajmu.naucena, model.vahaZajmu.porovnani
+	stav.TrendDni = model.trendDni
+	if !model.zajemOd.IsZero() {
+		stav.ZajemDni = int(time.Since(model.zajemOd).Hours() / 24)
+	}
 	if v := model.vkus; v != nil {
 		stav.Presnost = zaokrouhlit3(v.presnost)
 		stav.Odhady = v.platny
@@ -220,7 +242,8 @@ func (a *App) GetOblibenost() StavOblibenosti {
 			continue
 		}
 		polozka := OblibenostModelky{ModelkaID: m.ID, Jmeno: m.Jmeno, Hodnoceni: m.Hodnoceni, Sila: zaokrouhlit3(model.silaModelky(&m)),
-			Nejistota: zaokrouhlit3(math.Sqrt(model.rozptylModelky(&m))), Porovnani: model.pocet[m.ID]}
+			Nejistota: zaokrouhlit3(math.Sqrt(model.rozptylModelky(&m))), Porovnani: model.pocet[m.ID], Poradi: model.poradi[m.ID],
+			Zajem: zaokrouhlit3(model.posunZajmu(m.ID)), Trend: model.trend[m.ID], ZmenaPoradi: model.zmenaPoradi[m.ID]}
 		if sf, ok := model.skore[m.ID]; ok {
 			polozka.SkoreFotek, polozka.AlbFotek, polozka.FotekHodnocenych = zaokrouhlit3(sf.skore), sf.alb, sf.fotek
 		}
@@ -235,17 +258,7 @@ func (a *App) GetOblibenost() StavOblibenosti {
 		}
 		stav.Poradi = append(stav.Poradi, polozka)
 	}
-	sort.SliceStable(stav.Poradi, func(i, j int) bool {
-		x, y := stav.Poradi[i], stav.Poradi[j]
-		ox, oy := model.oblibenost[x.ModelkaID], model.oblibenost[y.ModelkaID]
-		if ox != oy {
-			return ox > oy
-		}
-		return x.ModelkaID < y.ModelkaID
-	})
-	for i := range stav.Poradi {
-		stav.Poradi[i].Poradi = i + 1
-	}
+	sort.Slice(stav.Poradi, func(i, j int) bool { return stav.Poradi[i].Poradi < stav.Poradi[j].Poradi })
 	stav.Modelek = len(stav.Poradi)
 	return stav
 }
@@ -259,6 +272,10 @@ func (a *App) doplnitOblibenost(modelky []Modelka) {
 	for i := range modelky {
 		m := &modelky[i]
 		m.Oblibenost = model.oblibenostModelky(m)
+		m.Poradi, m.ZmenaPoradi = model.poradi[m.ID], model.zmenaPoradi[m.ID]
+		if _, ok := model.zmenaPoradi[m.ID]; ok {
+			m.TrendDni = model.trendDni
+		}
 		if m.Hodnoceni <= 0 && model.vkus != nil && model.vkus.platny {
 			if odhad, ok := model.odhad[m.ID]; ok {
 				m.OdhadHodnoceni = zaokrouhlitNaPul(odhad)
@@ -288,6 +305,11 @@ type oblibenostUceni struct {
 	// Naposledy nabídnuté dvojice (jen v paměti) a počet volání výběru (semínko průzkumu)
 	nabidnute [][2]int
 	nabidek   int
+	// Zájem (oblibenost_zajem.go): kdy byl naposledy zapsán profil každé modelky (pauza 10 minut), počet zápisů
+	// zájmu za běhu (po každých 20 se model přepočítá) a kdy se naposledy zapsal snímek historie
+	profily      map[int]time.Time
+	zaznamuZajmu int
+	historieCas  time.Time
 }
 
 // Porovnání z databáze učení (načtou se při prvním použití); volá se se zámkem
@@ -366,6 +388,25 @@ type modelOblibenosti struct {
 	predpoklad  map[int]float64 // střed předpokladu síly
 	zFotek      map[int]bool    // nehodnocená a neporovnaná modelka: oblíbenost jen odhadem z fotek
 	vkusZeSkore bool            // model vkusu má mezi příznaky skóre fotek (výchozí nastavení vkusu, ne průměr srdíček fotek)
+
+	// Zájem (oblibenost_zajem.go): míra zájmu z, záznamy, od kdy se sleduje a naučená váha
+	zajem     map[int]float64
+	zajemData map[int]zajemModelky
+	zajemOd   time.Time
+	vahaZajmu vysledekZajmu
+	// Pořadí od 1 a trend proti srovnávacímu snímku (posun oblíbenosti, pořadí a stáří snímku ve dnech)
+	poradi      map[int]int
+	trend       map[int]float64
+	zmenaPoradi map[int]int
+	trendDni    int
+}
+
+// Posun předpokladu síly zájmem (srdíčka); jen u modelek s předpokladem (hodnocené nebo s hodnocenými fotkami)
+func (m *modelOblibenosti) posunZajmu(id int) float64 {
+	if _, ok := m.predpoklad[id]; !ok {
+		return 0
+	}
+	return m.vahaZajmu.vaha * m.zajem[id]
 }
 
 func (m *modelOblibenosti) silaModelky(x *Modelka) float64 {
@@ -396,22 +437,34 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	defer u.ob.vypocet.Unlock()
 	u.mu.Lock()
 	porovnani := u.nacistPorovnani()
+	zaznamu := u.ob.zaznamuZajmu
 	u.mu.Unlock()
-	otisk := otiskOblibenosti(modelky, porovnani)
+	otisk := otiskOblibenosti(modelky, porovnani, zaznamu/zaznamuNaPrepocet)
 	if u.ob.model != nil && u.ob.model.otisk == otisk {
 		return u.ob.model
 	}
-	model := spocitatOblibenost(modelky, porovnani, time.Now())
+	nyni := time.Now()
+	u.mu.Lock()
+	zajem := u.nacistZajem(nyni)
+	snimek, den := u.nacistSrovnani(nyni)
+	u.mu.Unlock()
+	model := spocitatOblibenostSeZajmem(modelky, porovnani, zajem, nyni)
+	model.nastavitTrend(snimek, den, nyni)
 	model.otisk = otisk
 	u.ob.model = model
+	u.mu.Lock()
+	u.zapsatHistorii(model, nyni)
+	u.mu.Unlock()
 	return model
 }
 
 // Otisk všeho, z čeho se oblíbenost počítá: údaje modelek (i srdíčka fotek a fotografové), porovnání (počet a
-// poslední číslo – vrácení i nové porovnání ho změní) a dnešní datum (stáří porovnání)
-func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam) string {
+// poslední číslo – vrácení i nové porovnání ho změní), dávka zápisů zájmu a dnešní datum (stáří porovnání,
+// zájmu a srovnávací snímek trendu)
+func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam, davkaZajmu int) string {
 	o := novyOtiskovac()
 	o.text(verzeOblibenosti, time.Now().Format("2006-01-02"))
+	o.cisla(davkaZajmu)
 	posledni := int64(0)
 	if len(porovnani) > 0 {
 		posledni = porovnani[len(porovnani)-1].id
@@ -430,7 +483,12 @@ func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam) string {
 }
 
 func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni time.Time) *modelOblibenosti {
-	model := &modelOblibenosti{oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, zFotek: map[int]bool{}, porovnani: len(porovnani)}
+	return spocitatOblibenostSeZajmem(modelky, porovnani, stavZajmu{}, nyni)
+}
+
+func spocitatOblibenostSeZajmem(modelky []Modelka, porovnani []porovnaniZaznam, zajem stavZajmu, nyni time.Time) *modelOblibenosti {
+	model := &modelOblibenosti{oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, zFotek: map[int]bool{}, porovnani: len(porovnani),
+		zajem: miraZajmu(zajem.modelky), zajemData: zajem.modelky, zajemOd: zajem.od, vahaZajmu: vysledekZajmu{vaha: vychoziVahaZajmu}}
 	existuje := make(map[int]bool, len(modelky))
 	soucet, hodnocenych := 0.0, 0
 	for _, m := range modelky {
@@ -470,6 +528,30 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 	}
 	model.vaha = naucitVahuFotek(data, model.prumer)
 
+	// Váha zájmu z porovnání modelek se stejnými srdíčky (předpoklad stran se srdíčky a fotkami s naučenou vahou)
+	if len(model.zajem) > 0 {
+		dataZajmu := make([]porovnaniZajmu, 0, len(data))
+		for _, p := range porovnani {
+			if !existuje[p.a] || !existuje[p.b] || p.a == p.b || p.ha <= 0 || p.ha != p.hb {
+				continue
+			}
+			y, t := 0.5, 1.0
+			switch p.vysledek {
+			case "a":
+				y = 1
+			case "b":
+				y = 0
+			}
+			if !p.cas.IsZero() {
+				t = vahaStari(p.cas, nyni)
+			}
+			dataZajmu = append(dataZajmu, porovnaniZajmu{
+				pi: predpokladStrany(p.ha, prevedene[p.a], model.vaha.vaha, model.prumer), zi: model.zajem[p.a],
+				pj: predpokladStrany(p.hb, prevedene[p.b], model.vaha.vaha, model.prumer), zj: model.zajem[p.b], y: y, t: t})
+		}
+		model.vahaZajmu = naucitVahuZajmu(dataZajmu)
+	}
+
 	// Předpoklady: hodnocené modelky, modelky s hodnocenými fotkami a porovnávané nehodnocené; zvlášť jen ze srdíček
 	// (cíl modelu vkusu)
 	stred, sigma := map[int]float64{}, map[int]float64{}
@@ -477,7 +559,7 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 	for _, m := range modelky {
 		sf, maF := model.skore[m.ID]
 		if st, sg, ok := predpokladModelky(m.Hodnoceni, sf, maF, model.kalibrace, model.vaha.vaha); ok {
-			stred[m.ID], sigma[m.ID] = st, sg
+			stred[m.ID], sigma[m.ID] = st+model.vahaZajmu.vaha*model.zajem[m.ID], sg
 		}
 		if m.Hodnoceni > 0 {
 			stredSrdicka[m.ID], sigmaSrdicka[m.ID] = m.Hodnoceni, sigmaHodnocene
@@ -489,7 +571,7 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 				continue
 			}
 			if _, ok := stred[id]; !ok {
-				stred[id], sigma[id] = model.prumer, sigmaNehodnocene
+				stred[id], sigma[id] = model.prumer+model.vahaZajmu.vaha*model.zajem[id], sigmaNehodnocene
 			}
 			if _, ok := stredSrdicka[id]; !ok {
 				stredSrdicka[id], sigmaSrdicka[id] = model.prumer, sigmaNehodnocene
@@ -512,6 +594,7 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 			model.zFotek[m.ID] = true
 		}
 	}
+	model.poradi = spocitatPoradi(model.oblibenost)
 
 	model.naucitModelVkusu(modelky, porovnani, stredSrdicka, sigmaSrdicka, nyni)
 	return model
@@ -824,6 +907,9 @@ func (m *modelOblibenosti) duvodOblibenosti(x Modelka, odhad string) string {
 	n := m.pocet[x.ID]
 	if n > 0 {
 		casti = append(casti, fmt.Sprintf("%d porovnání (výhry %s)", n, strings.Replace(fmt.Sprint(m.vyhry[x.ID]), ".", ",", 1)))
+	}
+	if posun := m.posunZajmu(x.ID); posun >= 0.01 {
+		casti = append(casti, fmt.Sprintf("%s (+%s)", textZajmu(m.zajemData[x.ID]), cisloCesky(posun, 2)))
 	}
 	if s, ok := m.sila[x.ID]; ok && x.Hodnoceni > 0 && math.Abs(s-x.Hodnoceni) > 0.25 {
 		smer := "výš"

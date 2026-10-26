@@ -286,7 +286,7 @@ func TestPrechodDatabazeUceniNaPorovnani(t *testing.T) {
 	var verze, porovnani int
 	db.QueryRow("PRAGMA user_version").Scan(&verze)
 	db.QueryRow("SELECT COUNT(*) FROM porovnani").Scan(&porovnani)
-	if verze != 2 || porovnani != 1 {
+	if verze != len(migraceUceni) || porovnani != 1 {
 		t.Fatalf("databáze učení: schéma %d, porovnání %d", verze, porovnani)
 	}
 }

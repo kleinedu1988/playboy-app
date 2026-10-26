@@ -14,6 +14,7 @@ import { nacistCovery, nacistStenu } from './stena';
 import { obnovitStranku, otevritFotografa, otevritVydani } from './vydani';
 import { nacistNejlepsi } from './nejlepsi';
 import { otevritProfilPodleId } from './cover';
+import { sledovatFotku, ukoncitProhlizeni } from './zajem';
 
 // Prohlížeč fotek: šipky vlevo a vpravo listují, nahoru a dolů (PgUp, PgDn) skáčou mezi alby,
 // mezerník spouští slideshow, F rozkládá plakát, R otáčí, Esc zavírá
@@ -170,6 +171,7 @@ export function lbZobrazit(index) {
     }
     stav.lbIndex = (index + pocet) % pocet;
     const polozka = stav.lbPolozky[stav.lbIndex];
+    sledovatFotku(polozka.fotky?.[0]?.modelkaId || 0);
     const dalsi = stav.lbPolozky[(stav.lbIndex + 1) % pocet];
     // Velikost obrázků podle okna se zjistí před zápisem do stránky (potom by se kvůli ní rozvrhovalo znovu)
     const velikost = lbVelikost(polozka);
@@ -335,6 +337,7 @@ export function otevritLightbox(index, slideshow = false, polozky = stav.aktualn
 }
 
 export function zavritLightbox() {
+    ukoncitProhlizeni();
     lbPrepnoutSlideshow(false);
     lightbox.classList.add('hidden');
     lightbox.classList.remove('zoomed', 'filled');

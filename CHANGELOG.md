@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.33] – 2026-10-26
+
+### Změněno
+- **Filtr srdíček na kartách modelek (♥ 3+, ♥ 4+ …) řadí podle oblíbenosti:** zapnutí filtru samo přepne řazení na „Podle srdíček“ (nejvíc srdíček nahoře, se stejnými srdíčky podle oblíbenosti), vypnutí vrátí řazení, které bylo předtím. Když během filtru zvolíš jiné řazení, zůstane.
+
 ## [0.99.32] – 2026-10-26
 
 ### Změněno

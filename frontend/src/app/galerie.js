@@ -135,9 +135,23 @@ export async function krokModelky(smer) {
     otevritDetailModelky(seznam[(index + smer + seznam.length) % seznam.length], { bezHistorie: true });
 }
 
+// Filtr srdíček (♥ N+) řadí karty podle srdíček a oblíbenosti, i když je zvolené jiné řazení: zapnutí přepne
+// řazení na „Podle srdíček“ (bez uložení), vypnutí vrátí původní. Řazení zvolené během filtru zůstane.
+let razeniPredFiltrem = null;
+function nastavitMinimumSrdicek(minimum) {
+    if (minimum > 0 && razeniPredFiltrem === null && stav.razeniGalerie !== 'hodnoceni') {
+        razeniPredFiltrem = stav.razeniGalerie;
+        stav.razeniGalerie = 'hodnoceni';
+    } else if (minimum <= 0 && razeniPredFiltrem !== null) {
+        stav.razeniGalerie = razeniPredFiltrem;
+        razeniPredFiltrem = null;
+    }
+    stav.minHodnoceni = minimum;
+}
+
 // Klik na údaj v profilu vyhledá všechny modelky se stejnou hodnotou
 export function hledatHodnotu(hodnota) {
-    stav.minHodnoceni = 0;
+    nastavitMinimumSrdicek(0);
     stav.ediceModelek = 'vse';
     stav.roleModelek = 'vse';
     stav.vyskytModelek = 'vse';
@@ -267,11 +281,12 @@ export function pripravit() {
         const vyskyt = e.target.closest('[data-vyskyt-modelek]')?.dataset.vyskytModelek;
         if (razeni) {
             stav.razeniGalerie = razeni;
+            razeniPredFiltrem = null;
             try { localStorage.setItem('razeniGalerie', razeni); } catch { /* jen pro toto spuštění */ }
             nacistGalerii(searchInput.value);
         } else if (minimum) {
             // Klik na zvolený filtr ho zruší
-            stav.minHodnoceni = Number(minimum) === stav.minHodnoceni ? 0 : Number(minimum);
+            nastavitMinimumSrdicek(Number(minimum) === stav.minHodnoceni ? 0 : Number(minimum));
             nacistGalerii(searchInput.value);
         } else if (edice) {
             stav.ediceModelek = edice;

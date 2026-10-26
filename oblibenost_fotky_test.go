@@ -267,7 +267,8 @@ func TestSkoreANahledyVAplikaci(t *testing.T) {
 	sdilene := album(bara, "Spolu", "Pictorial", 3, 3)
 	a.db.Exec("INSERT INTO alba_modelky (album_id, modelka_id) VALUES (?, ?)", sdilene, anna)
 	stav := a.GetOblibenost()
-	if len(stav.Poradi) != 1 {
+	// Nehodnocená Bára s hodnocenými fotkami je v pořadí jen odhadem z fotek, pod hodnocenou Annou
+	if len(stav.Poradi) != 2 || stav.Poradi[1].ModelkaID != bara || !stav.Poradi[1].OdhadZFotek || stav.Poradi[0].OdhadZFotek {
 		t.Fatalf("pořadí: %+v", stav.Poradi)
 	}
 	p := stav.Poradi[0]

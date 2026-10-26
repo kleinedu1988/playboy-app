@@ -365,7 +365,7 @@ type modelOblibenosti struct {
 	vaha        vysledekVahy
 	predpoklad  map[int]float64 // střed předpokladu síly
 	zFotek      map[int]bool    // nehodnocená a neporovnaná modelka: oblíbenost jen odhadem z fotek
-	vkusZeSkore bool            // model vkusu bere skóre fotek místo průměru srdíček fotek (vyšlo lépe na ověření)
+	vkusZeSkore bool            // model vkusu má mezi příznaky skóre fotek (výchozí nastavení vkusu, ne průměr srdíček fotek)
 }
 
 func (m *modelOblibenosti) silaModelky(x *Modelka) float64 {

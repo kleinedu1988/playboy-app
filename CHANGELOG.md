@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.31] – 2026-10-26
+
+### Změněno
+- **Přesnější odhad oblíbenosti u nehodnocených modelek (model vkusu):** kombinuje regresi s rozhodovacími stromy, takže zachytí i nelineární vkus (např. „líbí se mi jen určitá kombinace údajů“). Štítek „odhad“ se ukáže jen tam, kde odhad na ověření prokazatelně překoná prostý průměr; na umělých sbírkách je chyba ukázaných odhadů zhruba o 10 % menší a pořadí „Mohlo by se ti líbit“ sedí lépe.
+- Najetí myší na štítek „odhad“ v galerii ukáže **důvod**: které údaje odhad nejvíc zvedly nebo snížily a které hodnocené modelky jsou nejpodobnější.
+
 ## [0.99.30] – 2026-10-26
 
 ### Změněno

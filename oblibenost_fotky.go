@@ -35,6 +35,7 @@ const (
 // Parametry předpokladu a naučené váhy fotek
 const (
 	vychoziVahaFotek    = 0.3  // váha skóre fotek v předpokladu, dokud porovnání neřeknou jinak
+	maxVahaFotek        = 0.8  // strop naučené váhy: vlastní srdíčka modelky váží vždy aspoň pětinou
 	minPorovnaniVahy    = 10   // z méně porovnání, na kterých váha něco mění, se neučí
 	minSigmaPredpokladu = 0.2  // směrodatná odchylka předpokladu hodnocené modelky nejméně (porovnání ji musí umět posunout)
 	vychoziRozptylKalib = 0.5  // nejistota převodu skóre fotek na srdíčka modelek, dokud ji sbírka neurčí
@@ -343,7 +344,7 @@ func naucitVahuFotek(data []porovnaniVahy, prumer float64) vysledekVahy {
 		return v
 	}
 	mrizka := make([]float64, 0, int(1/krokVahy)+1)
-	for i := 0; i <= int(math.Round(1/krokVahy)); i++ {
+	for i := 0; i <= int(math.Round(maxVahaFotek/krokVahy)); i++ {
 		mrizka = append(mrizka, float64(i)*krokVahy)
 	}
 	// Nejlepší váha na podmnožině (bez části vynech; -1 = všechna) a počet jejích porovnání

@@ -337,9 +337,9 @@ w = (n·ŵ + n₀·w₀)/(n + n₀),
 n = počet takových porovnání, n₀ ∈ {10, 40, 160} vybere **křížové ověření** na pěti částech (učí se na čtyřech,
 log-ztráta na páté; při shodě silnější smrštění). Pod 10 porovnání platí w₀ (`vahaNaucena: false`). `zlepseniFotek`
 = 1 − ztráta s naučenou vahou / ztráta jen ze srdíček (na týchž ověřovacích porovnáních). Chování na umělých datech
-(`TestVahaFotekZPorovnani`, `TestVahaFotekVOblibenosti`): když porovnání sledují fotky, w ≈ 0,98 a log-ztráta
+(`TestVahaFotekZPorovnani`, `TestVahaFotekVOblibenosti`): když porovnání sledují fotky, w dojde ke stropu 0,8 a log-ztráta
 předpovědi klesne o 23–87 %; náhodné skóre fotek nebo porovnání proti fotkám dají w ≈ 0,01; 25 porovnání dá 0,8, osm 0,3.
-Váha nemůže být záporná (fotky „naopak“ nedávají smysl, nejvýš se vypnou).
+Váha nemůže být záporná (fotky „naopak“ nedávají smysl, nejvýš se vypnou) a nepřekročí **0,8**: vlastní srdíčka modelky váží vždy aspoň pětinou, i když porovnání silně sledují fotky.
 
 ## Náhledy alb
 

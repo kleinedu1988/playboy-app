@@ -111,7 +111,8 @@ type OblibenostModelky struct {
 	SkoreFotek       float64 `json:"skoreFotek"`
 	AlbFotek         int     `json:"albFotek"`
 	FotekHodnocenych int     `json:"fotekHodnocenych"`
-	Duvod            string  `json:"duvod"` // „srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“
+	OdhadZFotek      bool    `json:"odhadZFotek"` // nehodnocená a neporovnaná: místo v pořadí je jen odhad z fotek
+	Duvod            string  `json:"duvod"`       // „srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“
 }
 
 // Dvojice k porovnání vybrané aktivním učením. okruh: "" všechny hodnocené, "stejne" jen stejná úroveň srdíček,
@@ -244,6 +245,10 @@ func (a *App) GetOblibenost() StavOblibenosti {
 			polozka.Duvod = duvod
 		}
 		polozka.Duvod = model.duvodOblibenosti(m, polozka.Duvod)
+		if model.zFotek[m.ID] {
+			polozka.OdhadZFotek = true
+			polozka.Duvod = "odhad z fotek, zatím bez srdíček a porovnání: " + polozka.Duvod
+		}
 		stav.Poradi = append(stav.Poradi, polozka)
 	}
 	sort.SliceStable(stav.Poradi, func(i, j int) bool {
@@ -419,6 +424,7 @@ type modelOblibenosti struct {
 	kalibrace   kalibraceFotek
 	vaha        vysledekVahy
 	predpoklad  map[int]float64 // střed předpokladu síly
+	zFotek      map[int]bool    // nehodnocená a neporovnaná modelka: oblíbenost jen odhadem z fotek
 	vkusZeSkore bool            // model vkusu bere skóre fotek místo průměru srdíček fotek (vyšlo lépe na ověření)
 }
 
@@ -437,6 +443,11 @@ func (m *modelOblibenosti) rozptylModelky(x *Modelka) float64 {
 }
 
 func (m *modelOblibenosti) oblibenostModelky(x *Modelka) float64 { return m.oblibenost[x.ID] }
+
+func maSkore(skore map[int]skoreFotek, id int) bool {
+	_, ok := skore[id]
+	return ok
+}
 
 // Model pro modelky sbírky: z paměti, když se data ani porovnání od minula nezměnily
 func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
@@ -479,7 +490,7 @@ func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam) string {
 }
 
 func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni time.Time) *modelOblibenosti {
-	model := &modelOblibenosti{oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, porovnani: len(porovnani)}
+	model := &modelOblibenosti{oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, zFotek: map[int]bool{}, porovnani: len(porovnani)}
 	existuje := make(map[int]bool, len(modelky))
 	soucet, hodnocenych := 0.0, 0
 	for _, m := range modelky {
@@ -555,6 +566,10 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 			model.oblibenost[m.ID] = m.Hodnoceni + min(max(s-m.Hodnoceni, -rozpetiUrovne), rozpetiUrovne)
 		case ok && bt.pocet[m.ID] > 0:
 			model.oblibenost[m.ID] = min(max(s, 0.25), 5)
+		case ok && maSkore(model.skore, m.ID):
+			// Nehodnocená modelka s hodnocenými fotkami: odhad ze skóre fotek (v Pořadí s označením „odhad z fotek“)
+			model.oblibenost[m.ID] = min(max(s, 0.25), 5)
+			model.zFotek[m.ID] = true
 		}
 	}
 

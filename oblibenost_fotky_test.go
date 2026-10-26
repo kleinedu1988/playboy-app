@@ -387,3 +387,31 @@ func TestVahaFotekVOblibenosti(t *testing.T) {
 		t.Fatalf("váha podle fotek %v, proti fotkám %v", podle.vaha.vaha, proti.vaha.vaha)
 	}
 }
+
+// Nehodnocená a neporovnaná modelka s hodnocenými fotkami je v Pořadí s příznakem odhadu z fotek
+func TestPoradiOdhadZFotek(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Hodnocená", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Jen fotky", Tetovani: -1, Piercing: -1})
+	hodnocena, fotky := idModelky(t, a, "Hodnocená"), idModelky(t, a, "Jen fotky")
+	a.SetHodnoceni(hodnocena, 3)
+	a.AddBulkPhotos(fotky, "Pláž", "Pictorial", odkazA+" "+odkazB)
+	for _, f := range a.GetFotografieModelky(fotky) {
+		a.SetHodnoceniFotek([]int{f.ID}, 5)
+	}
+	var nasla bool
+	for _, p := range a.GetOblibenost().Poradi {
+		if p.ModelkaID == fotky {
+			nasla = true
+			if !p.OdhadZFotek || p.Hodnoceni != 0 || !strings.Contains(p.Duvod, "odhad z fotek") {
+				t.Fatalf("položka: %+v", p)
+			}
+		}
+		if p.ModelkaID == hodnocena && p.OdhadZFotek {
+			t.Fatalf("hodnocená nemá být odhad z fotek: %+v", p)
+		}
+	}
+	if !nasla {
+		t.Fatal("nehodnocená modelka s fotkami v pořadí chybí")
+	}
+}

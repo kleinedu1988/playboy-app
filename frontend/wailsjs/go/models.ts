@@ -485,6 +485,7 @@ export namespace main {
 	    skoreFotek: number;
 	    albFotek: number;
 	    fotekHodnocenych: number;
+	    odhadZFotek: boolean;
 	    duvod: string;
 	
 	    static createFrom(source: any = {}) {
@@ -504,6 +505,7 @@ export namespace main {
 	        this.skoreFotek = source["skoreFotek"];
 	        this.albFotek = source["albFotek"];
 	        this.fotekHodnocenych = source["fotekHodnocenych"];
+	        this.odhadZFotek = source["odhadZFotek"];
 	        this.duvod = source["duvod"];
 	    }
 	}

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.29] – 2026-10-26
+
+### Přidáno
+- V Oblíbenosti → Pořadí jsou i **nehodnocené modelky s hodnocenými fotkami**: zařadí je odhad ze skóre jejich fotek, v seznamu jsou tlumeně se štítkem „odhad z fotek“ (důvod v bublině), dokud je neohodnotíš nebo neporovnáš. Stejný odhad používá i řazení galerie podle oblíbenosti. Pořadí se ukáže už ze srdíček a fotek, bez nutnosti porovnávat.
+
 ## [0.99.28] – 2026-10-26
 
 ### Změněno

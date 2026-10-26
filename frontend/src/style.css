@@ -10974,3 +10974,16 @@ span.ud-chip {
         display: none;
     }
 }
+
+/* Pořadí v Oblíbenosti: nehodnocená modelka zařazená jen odhadem z fotek */
+.ob-poradi li.ob-z-fotek .ob-radek {
+    opacity: 0.75;
+}
+
+.ob-odhad-fotek {
+    padding: 0 6px;
+    border: 1px dashed var(--text-muted);
+    border-radius: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+}

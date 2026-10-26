@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.28] – 2026-10-26
+
+### Změněno
+- **Porovnávání v Oblíbenosti s náhledem galerie:** pod velkou fotkou každé modelky je řada náhledů z jejích alb (nejlepší fotka z každého alba, pak podle srdíček). Najetí myší ukáže náhled velký na své straně, klávesy 1–8 ukážou n-tou nejlepší fotku na obou stranách najednou, ↑ listuje, 0 vrátí titulní fotky; klik otevře prohlížeč na té fotce a po zavření se vrátíš k porovnání.
+- **Spravedlivější pořadí – počítá i se srdíčky fotek v albech:** každé album je jeden hlas (víc fotek nepřeváží), hodnotu alba dávají jeho nejlepší fotky (slabší fotky navíc album nezhorší) a málo hodnocených fotek se stahuje k průměru sbírky (jedna fotka za 5 srdíček ≠ jistých 5). Kolik váží fotky proti srdíčkům modelky, se program učí z tvých porovnání modelek se stejnými srdíčky (výchozí 0,3, nejvýš 0,8). Srdíčka modelky jsou teď měkký předpoklad: fotky a porovnání můžou pořadí posunout o půl srdíčka, o celé nikdy.
+- V Pořadí je u modelky rozpad: srdíčka, skóre fotek (počet alb a hodnocených fotek) a porovnání, s důvodem, a věta, kolik fotky právě váží.
+
 ## [0.99.27] – 2026-10-25
 
 ### Změněno

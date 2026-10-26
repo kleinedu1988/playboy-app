@@ -20,10 +20,10 @@ import (
 //     (Laplaceova aproximace, diagonála). Oblíbenost hodnocené modelky zůstává do ±0,49 od jejích srdíček.
 //   - Výběr dvojic (aktivní učení): dvojice s nejistým pořadím na stejné nebo sousední úrovni srdíček, bez
 //     nedávno ukázaných dvojic a bez častého opakování modelky, s trochou průzkumu.
-//   - Model vkusu: hřebenová regrese hodnocení na údaje modelky (etnicita, národnost, vlasy, oči, postava,
-//     prsa, ochlupení, tetování, piercing, éra, kategorie, fotografové, srdíčka jejích fotek), ověřená křížovým
-//     ověřením. Odhady se ukazují, jen když model na ověření jasně překoná prostý průměr (přesnost má přednost
-//     před úplností), a každý má český důvod („blond, 70. léta, Pompeo Posar“).
+//   - Model vkusu (oblibenost_vkus.go): průměr hřebenové regrese a posilovaných stromů na údajích modelky,
+//     ověřený křížovým ověřením. Odhady se ukazují jen u modelek s údaji, u kterých model na ověření jasně
+//     překoná prostý průměr (přesnost má přednost před úplností), a každý má český důvod („blond, 70. léta,
+//     Pompeo Posar; podobně jako Anna (4½)“).
 //
 // Vše se počítá v paměti z modelek sbírky a porovnání a ukládá se podle otisku (změna dat nebo nové porovnání
 // otisk změní); GetModelky pak jen doplní hotová čísla.

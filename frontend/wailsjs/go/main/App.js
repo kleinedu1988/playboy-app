@@ -66,6 +66,10 @@ export function GetCovery() {
   return window['go']['main']['App']['GetCovery']();
 }
 
+export function GetDuvodOdhadu(arg1) {
+  return window['go']['main']['App']['GetDuvodOdhadu'](arg1);
+}
+
 export function GetDvojiceKPorovnani(arg1, arg2) {
   return window['go']['main']['App']['GetDvojiceKPorovnani'](arg1, arg2);
 }

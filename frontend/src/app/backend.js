@@ -21,6 +21,7 @@ const CTENI = new Set([
     'GetKalendar',
     'GetModelky',
     'GetMohloByTeLibit',
+    'GetNahledyModelek',
     'GetNavrhyDoplneni',
     'GetNejlepsiFotky',
     'GetOblibenost',
@@ -156,3 +157,4 @@ export const VratitPorovnani = /** @type {typeof App.VratitPorovnani} */ (obalit
 export const ZapomenoutPorovnani = /** @type {typeof App.ZapomenoutPorovnani} */ (obalit('ZapomenoutPorovnani'));
 export const GetOblibenost = /** @type {typeof App.GetOblibenost} */ (obalit('GetOblibenost'));
 export const GetMohloByTeLibit = /** @type {typeof App.GetMohloByTeLibit} */ (obalit('GetMohloByTeLibit'));
+export const GetNahledyModelek = /** @type {typeof App.GetNahledyModelek} */ (obalit('GetNahledyModelek'));

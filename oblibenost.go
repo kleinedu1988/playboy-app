@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"math/rand"
 	"regexp"
@@ -14,9 +15,10 @@ import (
 // Oblíbenost modelek (celkový popis v docs/UCENI.md, oddíly Oblíbenost, Bradley–Terry, Výběr dvojic a Model vkusu):
 //
 //   - Porovnání dvojic „Která se ti líbí víc?“ se ukládají do databáze učení (tabulka porovnani), nikdy do sbírky.
-//   - Bradley–Terry s předpokladem ze srdíček: každá modelka má skrytou sílu na stupnici srdíček. Srdíčka dávají
-//     předpoklad (průměr síly), porovnání ji upřesňují uvnitř úrovně i mezi úrovněmi. Odhad MAP iteracemi MM,
-//     nejistota z Fisherovy informace (Laplaceova aproximace, diagonála).
+//   - Bradley–Terry s předpokladem ze srdíček a skóre fotek: každá modelka má skrytou sílu na stupnici srdíček.
+//     Srdíčka modelky smíchaná se skóre jejích fotek (váha naučená z porovnání, oblibenost_fotky.go) dávají
+//     předpoklad (průměr síly), porovnání ji upřesňují. Odhad MAP iteracemi MM, nejistota z Fisherovy informace
+//     (Laplaceova aproximace, diagonála). Oblíbenost hodnocené modelky zůstává do ±0,49 od jejích srdíček.
 //   - Výběr dvojic (aktivní učení): dvojice s nejistým pořadím na stejné nebo sousední úrovni srdíček, bez
 //     nedávno ukázaných dvojic a bez častého opakování modelky, s trochou průzkumu.
 //   - Model vkusu: hřebenová regrese hodnocení na údaje modelky (etnicita, národnost, vlasy, oči, postava,
@@ -28,14 +30,18 @@ import (
 // otisk změní); GetModelky pak jen doplní hotová čísla.
 
 // Verze výpočtu oblíbenosti: změna modelů zneplatní výsledek v paměti
-const verzeOblibenosti = "oblibenost-1"
+const verzeOblibenosti = "oblibenost-2"
 
 // Parametry modelu Bradley–Terry
 const (
 	skalaBT          = 2.0  // P(A víc než B) = σ(skalaBT·(sA − sB)): o půl srdíčka silnější vyhraje v 73 %
 	sigmaHodnocene   = 0.25 // předpoklad síly hodnocené modelky: N(srdíčka, 0,25²) – porovnání ji posunou hlavně uvnitř úrovně
-	sigmaNehodnocene = 1.25 // nehodnocená porovnávaná modelka: N(průměr srdíček sbírky, 1,25²)
-	rozpetiUrovne    = 0.24 // oblíbenost hodnocené modelky = srdíčka ± nejvýš 0,24 (úrovně po 0,5 se nepřekrývají)
+	sigmaNehodnocene = 1.25 // nehodnocená porovnávaná modelka bez hodnocených fotek: N(průměr srdíček sbírky, 1,25²)
+	// Oblíbenost hodnocené modelky = srdíčka ± nejvýš 0,49: fotky a porovnání ji mohou posunout přes sousední
+	// úroveň (o půl srdíčka), ale modelku s o celé srdíčko víc nepředběhne (srdíčka jsou měkký předpoklad, ne přihrádky)
+	rozpetiUrovne = 0.49
+	// Cíl modelu vkusu: srdíčka upřesněná porovnáním uvnitř úrovně (bez skóre fotek, to je mezi údaji)
+	rozpetiCileVkusu = 0.24
 	maxIteraciBT     = 2000
 )
 
@@ -82,8 +88,14 @@ type StavOblibenosti struct {
 	Modelek   int     `json:"modelek"`   // modelek v pořadí
 	Presnost  float64 `json:"presnost"`  // přesnost modelu vkusu na křížovém ověření (± půl srdíčka), 0–1; 0 = málo dat
 	// Model vkusu prošel ověřením a jeho odhady se ukazují (odhadHodnoceni, GetMohloByTeLibit)
-	Odhady bool                `json:"odhady"`
-	Poradi []OblibenostModelky `json:"poradi"`
+	Odhady bool `json:"odhady"`
+	// Váha skóre fotek v předpokladu síly (0–1), zda je naučená z porovnání (jinak výchozí 0,3), z kolika porovnání
+	// a o kolik zlepšila předpověď porovnání proti samotným srdíčkům na ověření (podíl log-ztráty, může být záporné)
+	VahaFotek     float64             `json:"vahaFotek"`
+	VahaNaucena   bool                `json:"vahaNaucena"`
+	PorovnaniVahy int                 `json:"porovnaniVahy"`
+	ZlepseniFotek float64             `json:"zlepseniFotek"`
+	Poradi        []OblibenostModelky `json:"poradi"`
 }
 
 type OblibenostModelky struct {
@@ -95,7 +107,11 @@ type OblibenostModelky struct {
 	Poradi    int     `json:"poradi"`    // pořadí od 1 podle oblíbenosti
 	Porovnani int     `json:"porovnani"` // kolikrát byla porovnávaná
 	Odhad     float64 `json:"odhad"`     // odhad modelu vkusu po polovinách (0 = bez jistého odhadu)
-	Duvod     string  `json:"duvod"`
+	// Skóre fotek na stupnici srdíček fotek (0 = žádná hodnocená fotka), z kolika alb a hodnocených fotek
+	SkoreFotek       float64 `json:"skoreFotek"`
+	AlbFotek         int     `json:"albFotek"`
+	FotekHodnocenych int     `json:"fotekHodnocenych"`
+	Duvod            string  `json:"duvod"` // „srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“
 }
 
 // Dvojice k porovnání vybrané aktivním učením. okruh: "" všechny hodnocené, "stejne" jen stejná úroveň srdíček,
@@ -207,6 +223,8 @@ func (a *App) GetOblibenost() StavOblibenosti {
 	modelky, _ := a.nactiModelky("", false)
 	model := a.modelOblibenosti(modelky)
 	stav.Porovnani = model.porovnani
+	stav.VahaFotek, stav.VahaNaucena, stav.PorovnaniVahy = zaokrouhlit3(model.vaha.vaha), model.vaha.naucena, model.vaha.porovnani
+	stav.ZlepseniFotek = zaokrouhlit3(model.vaha.zlepseni())
 	if v := model.vkus; v != nil {
 		stav.Presnost = zaokrouhlit3(v.presnost)
 		stav.Odhady = v.platny
@@ -218,6 +236,9 @@ func (a *App) GetOblibenost() StavOblibenosti {
 		}
 		polozka := OblibenostModelky{ModelkaID: m.ID, Jmeno: m.Jmeno, Hodnoceni: m.Hodnoceni, Sila: zaokrouhlit3(model.silaModelky(&m)),
 			Nejistota: zaokrouhlit3(math.Sqrt(model.rozptylModelky(&m))), Porovnani: model.pocet[m.ID]}
+		if sf, ok := model.skore[m.ID]; ok {
+			polozka.SkoreFotek, polozka.AlbFotek, polozka.FotekHodnocenych = zaokrouhlit3(sf.skore), sf.alb, sf.fotek
+		}
 		if odhad, duvod, ok := model.odhadModelky(m, true); ok {
 			polozka.Odhad = odhad
 			polozka.Duvod = duvod
@@ -383,7 +404,7 @@ func klicDvojice(a, b int) [2]int {
 
 type modelOblibenosti struct {
 	otisk      string
-	sila       map[int]float64 // síla modelek s předpokladem (hodnocené a porovnávané)
+	sila       map[int]float64 // síla modelek s předpokladem (hodnocené, s hodnocenými fotkami a porovnávané)
 	rozptyl    map[int]float64
 	pocet      map[int]int     // porovnání modelky
 	vyhry      map[int]float64 // výhry (remíza = půl)
@@ -392,6 +413,13 @@ type modelOblibenosti struct {
 	vkus       *modelVkusu
 	porovnani  int
 	prumer     float64 // průměr srdíček hodnocených modelek
+
+	skore       map[int]skoreFotek // skóre fotek modelek s hodnocenými fotkami
+	fotky       parametryFotek
+	kalibrace   kalibraceFotek
+	vaha        vysledekVahy
+	predpoklad  map[int]float64 // střed předpokladu síly
+	vkusZeSkore bool            // model vkusu bere skóre fotek místo průměru srdíček fotek (vyšlo lépe na ověření)
 }
 
 func (m *modelOblibenosti) silaModelky(x *Modelka) float64 {
@@ -441,18 +469,21 @@ func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam) string {
 	for i := range modelky {
 		m := &modelky[i]
 		o.modelka(m)
-		o.cisla(m.fotekHodnocenych, m.srdciFotek)
+		o.cisla(m.fotekHodnocenych, m.srdciFotek, len(m.srdickaAlb))
+		for _, c := range m.srdickaAlb {
+			o.cisla(c[:]...)
+		}
 		o.text(m.fotografoveAlb)
 	}
 	return o.hex()
 }
 
 func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni time.Time) *modelOblibenosti {
-	model := &modelOblibenosti{oblibenost: map[int]float64{}, odhad: map[int]float64{}, porovnani: len(porovnani)}
-	existuje := make(map[int]Modelka, len(modelky))
+	model := &modelOblibenosti{oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, porovnani: len(porovnani)}
+	existuje := make(map[int]bool, len(modelky))
 	soucet, hodnocenych := 0.0, 0
 	for _, m := range modelky {
-		existuje[m.ID] = m
+		existuje[m.ID] = true
 		if m.Hodnoceni > 0 {
 			soucet += m.Hodnoceni
 			hodnocenych++
@@ -462,22 +493,59 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 	if hodnocenych > 0 {
 		model.prumer = soucet / float64(hodnocenych)
 	}
-	// Předpoklady: hodnocené modelky a porovnávané nehodnocené
+	// Skóre fotek, jeho převod na stupnici srdíček modelek a váha fotek naučená z porovnání
+	model.skore, model.fotky = spocitatSkoreFotek(modelky)
+	model.kalibrace = kalibrovatFotky(modelky, model.skore)
+	prevedene := make(map[int]float64, len(model.skore))
+	for id, sf := range model.skore {
+		prevedene[id], _ = model.kalibrace.naSrdicka(sf)
+	}
+	data := make([]porovnaniVahy, 0, len(porovnani))
+	for _, p := range porovnani {
+		if !existuje[p.a] || !existuje[p.b] || p.a == p.b {
+			continue
+		}
+		y, t := 0.5, 1.0
+		switch p.vysledek {
+		case "a":
+			y = 1
+		case "b":
+			y = 0
+		}
+		if !p.cas.IsZero() {
+			t = vahaStari(p.cas, nyni)
+		}
+		data = append(data, porovnaniVahy{hi: p.ha, hj: p.hb, fi: prevedene[p.a], fj: prevedene[p.b], y: y, t: t})
+	}
+	model.vaha = naucitVahuFotek(data, model.prumer)
+
+	// Předpoklady: hodnocené modelky, modelky s hodnocenými fotkami a porovnávané nehodnocené; zvlášť jen ze srdíček
+	// (cíl modelu vkusu)
 	stred, sigma := map[int]float64{}, map[int]float64{}
+	stredSrdicka, sigmaSrdicka := map[int]float64{}, map[int]float64{}
 	for _, m := range modelky {
+		sf, maF := model.skore[m.ID]
+		if st, sg, ok := predpokladModelky(m.Hodnoceni, sf, maF, model.kalibrace, model.vaha.vaha); ok {
+			stred[m.ID], sigma[m.ID] = st, sg
+		}
 		if m.Hodnoceni > 0 {
-			stred[m.ID], sigma[m.ID] = m.Hodnoceni, sigmaHodnocene
+			stredSrdicka[m.ID], sigmaSrdicka[m.ID] = m.Hodnoceni, sigmaHodnocene
 		}
 	}
 	for _, p := range porovnani {
 		for _, id := range []int{p.a, p.b} {
+			if !existuje[id] {
+				continue
+			}
 			if _, ok := stred[id]; !ok {
-				if _, ok := existuje[id]; ok {
-					stred[id], sigma[id] = model.prumer, sigmaNehodnocene
-				}
+				stred[id], sigma[id] = model.prumer, sigmaNehodnocene
+			}
+			if _, ok := stredSrdicka[id]; !ok {
+				stredSrdicka[id], sigmaSrdicka[id] = model.prumer, sigmaNehodnocene
 			}
 		}
 	}
+	maps.Copy(model.predpoklad, stred)
 	bt := spocitatBT(stred, sigma, porovnani, nyni)
 	model.sila, model.rozptyl, model.pocet, model.vyhry = bt.sila, bt.rozptyl, bt.pocet, bt.vyhry
 	for _, m := range modelky {
@@ -489,11 +557,33 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 			model.oblibenost[m.ID] = min(max(s, 0.25), 5)
 		}
 	}
-	model.vkus = naucitVkus(modelky, model.oblibenost)
-	if v := model.vkus; v != nil && v.platny {
-		for id, odhad := range v.odhady {
-			model.odhad[id] = odhad
+
+	// Model vkusu se učí na srdíčkách upřesněných porovnáním bez skóre fotek: fotky jsou mezi jeho údaji, v cíli by
+	// se počítaly podruhé. Údaj o fotkách je průměr srdíček fotek, nebo skóre fotek, podle toho, co vyjde lépe na ověření.
+	cil := map[int]float64{}
+	if len(porovnani) > 0 {
+		btSrdicka := spocitatBT(stredSrdicka, sigmaSrdicka, porovnani, nyni)
+		for _, m := range modelky {
+			if s, ok := btSrdicka.sila[m.ID]; ok && m.Hodnoceni > 0 {
+				cil[m.ID] = m.Hodnoceni + min(max(s-m.Hodnoceni, -rozpetiCileVkusu), rozpetiCileVkusu)
+			}
 		}
+	}
+	udaje := pripravitUdajeVkusu(modelky)
+	model.vkus = naucitVkus(modelky, cil, udaje)
+	if v := model.vkus; len(model.skore) > 0 && v.chybaCV > 0 {
+		udajeSkore := make(map[int]udajeVkusu, len(udaje))
+		for id, u := range udaje {
+			sf, ok := model.skore[id]
+			u.cis[cvFotky], u.ma[cvFotky] = sf.skore, ok
+			udajeSkore[id] = u
+		}
+		if s := naucitVkus(modelky, cil, udajeSkore); s.chybaCV > 0 && s.chybaCV < v.chybaCV-1e-9 {
+			model.vkus, model.vkusZeSkore = s, true
+		}
+	}
+	if v := model.vkus; v != nil && v.platny {
+		maps.Copy(model.odhad, v.odhady)
 	}
 	return model
 }
@@ -639,9 +729,16 @@ func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
 		duvod := fmt.Sprintf("Nehodnocená modelka proti modelce s %s", textSrdicek7(k.y.Hodnoceni))
 		if odhad, ok := model.odhad[k.x.ID]; ok {
 			duvod += fmt.Sprintf(" (odhad podle vkusu %s)", textSrdicek(zaokrouhlitNaPul(odhad)))
+		} else if sf, ok := model.skore[k.x.ID]; ok {
+			duvod += fmt.Sprintf(" (její fotky mají skóre %s)", cisloCesky(sf.skore, 1))
 		}
 		return duvod
 	case dvojiceStejna:
+		sx, okX := model.skore[k.x.ID]
+		sy, okY := model.skore[k.y.ID]
+		if okX && okY {
+			return fmt.Sprintf("Obě mají %s (fotky %s a %s) a pořadí mezi nimi zatím není jisté", textSrdicek(k.x.Hodnoceni), cisloCesky(sx.skore, 1), cisloCesky(sy.skore, 1))
+		}
 		return fmt.Sprintf("Obě mají %s a pořadí mezi nimi zatím není jisté", textSrdicek(k.x.Hodnoceni))
 	case dvojiceSousedni:
 		return fmt.Sprintf("Sousední úrovně (%s a %s): patří ta s méně srdíčky výš?", nizsi, vyssi)
@@ -697,7 +794,11 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 	if okruh == "nehodnocene" {
 		// Nehodnocená modelka proti hodnocené kotvě blízko jejímu odhadu (vkus, jinak průměr sbírky)
 		for _, x := range nehodnocene {
+			// Odhad vkusu, jinak předpoklad ze skóre fotek, jinak průměr sbírky
 			cil := model.prumer
+			if p, ok := model.predpoklad[x.ID]; ok {
+				cil = p
+			}
 			if odhad, ok := model.odhad[x.ID]; ok {
 				cil = odhad
 			}
@@ -971,7 +1072,8 @@ func textDesetileti(desetileti int) string {
 	return fmt.Sprintf("léta %d–%d", desetileti, desetileti+9)
 }
 
-func naucitVkus(modelky []Modelka, oblibenost map[int]float64) *modelVkusu {
+// Údaje všech modelek pro model vkusu (počítají se jednou pro obě varianty údaje o fotkách)
+func pripravitUdajeVkusu(modelky []Modelka) map[int]udajeVkusu {
 	pamet := map[string]string{}
 	klic := func(pole, text string) string {
 		k := pole + "\x00" + text
@@ -982,13 +1084,21 @@ func naucitVkus(modelky []Modelka, oblibenost map[int]float64) *modelVkusu {
 		pamet[k] = v
 		return v
 	}
-	v := &modelVkusu{udaje: make(map[int]udajeVkusu, len(modelky)), odhady: map[int]float64{}, index: map[string]int{}}
+	udaje := make(map[int]udajeVkusu, len(modelky))
+	for _, m := range modelky {
+		udaje[m.ID] = udajeModelkyVkus(m, klic)
+	}
+	return udaje
+}
+
+// oblibenost: cíl hodnocených modelek (chybí = srdíčka); udaje z pripravitUdajeVkusu
+func naucitVkus(modelky []Modelka, oblibenost map[int]float64, udaje map[int]udajeVkusu) *modelVkusu {
+	v := &modelVkusu{udaje: udaje, odhady: map[int]float64{}, index: map[string]int{}}
 	var hodnocene []int // indexy modelek
 	podpora := map[string]int{}
 	zapisy := map[string]map[string]int{}
 	for i, m := range modelky {
-		u := udajeModelkyVkus(m, klic)
-		v.udaje[m.ID] = u
+		u := udaje[m.ID]
 		if m.Hodnoceni <= 0 {
 			continue
 		}
@@ -1307,28 +1417,36 @@ func (m *modelOblibenosti) odhadModelky(x Modelka, sDuvodem bool) (float64, stri
 	return zaokrouhleny, duvod, true
 }
 
-// Důvod v pořadí oblíbenosti: srdíčka, porovnání a případně odhad vkusu
+// Důvod v pořadí oblíbenosti: složky (srdíčka, skóre fotek, porovnání), posun síly proti srdíčkům a případně
+// odhad vkusu: „srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“
 func (m *modelOblibenosti) duvodOblibenosti(x Modelka, odhad string) string {
-	var casti []string
-	if x.Hodnoceni > 0 {
-		casti = append(casti, textSrdicek(x.Hodnoceni))
-	} else {
-		casti = append(casti, "bez srdíček")
+	casti := []string{textSlozkySrdicek(x.Hodnoceni)}
+	sf, maFotky := m.skore[x.ID]
+	if maFotky {
+		casti = append(casti, textSkoreFotek(sf))
 	}
-	if n := m.pocet[x.ID]; n > 0 {
-		casti = append(casti, fmt.Sprintf("porovnání %d, výhry %s", n, strings.Replace(fmt.Sprint(m.vyhry[x.ID]), ".", ",", 1)))
-		if s := m.sila[x.ID]; x.Hodnoceni > 0 && math.Abs(s-x.Hodnoceni) > 0.35 {
-			smer := "výš"
-			if s < x.Hodnoceni {
-				smer = "níž"
-			}
-			casti = append(casti, fmt.Sprintf("porovnání ji staví %s než její srdíčka (síla %s)", smer, strings.Replace(fmt.Sprintf("%.1f", s), ".", ",", 1)))
+	n := m.pocet[x.ID]
+	if n > 0 {
+		casti = append(casti, fmt.Sprintf("%d porovnání (výhry %s)", n, strings.Replace(fmt.Sprint(m.vyhry[x.ID]), ".", ",", 1)))
+	}
+	if s, ok := m.sila[x.ID]; ok && x.Hodnoceni > 0 && math.Abs(s-x.Hodnoceni) > 0.25 {
+		smer := "výš"
+		if s < x.Hodnoceni {
+			smer = "níž"
 		}
+		pricina := "porovnání"
+		switch {
+		case maFotky && m.vaha.vaha > 0 && n > 0:
+			pricina = "fotky a porovnání"
+		case maFotky && m.vaha.vaha > 0:
+			pricina = "fotky"
+		}
+		casti = append(casti, fmt.Sprintf("%s ji staví %s než její srdíčka (síla %s)", pricina, smer, cisloCesky(s, 1)))
 	}
 	if odhad != "" {
 		casti = append(casti, strings.ToLower(odhad[:1])+odhad[1:])
 	}
-	return strings.Join(casti, "; ")
+	return strings.Join(casti, " · ")
 }
 
 // ---------------------------------------------------------------------------------------------------------

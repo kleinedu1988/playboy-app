@@ -10445,6 +10445,16 @@ span.ud-chip {
     color: var(--accent-text);
 }
 
+.ob-vaha {
+    margin: -6px 0 10px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.ob-vaha:empty {
+    display: none;
+}
+
 .ob-karta h4 small {
     font-size: 12px;
     font-weight: 400;
@@ -10514,7 +10524,7 @@ span.ud-chip {
 .ob-foto {
     position: relative;
     width: 100%;
-    max-height: min(56vh, 520px);
+    max-height: min(50vh, 480px);
     aspect-ratio: 3 / 4;
     overflow: hidden;
     padding: 0;
@@ -10536,6 +10546,92 @@ span.ud-chip {
 .ob-foto:focus-visible {
     border-color: var(--accent);
     box-shadow: 0 0 18px rgba(216, 27, 96, 0.35);
+    outline: none;
+}
+
+/* Otočená fotka náhledu (prohlížeč ji otáčí také): obrázek se otočí a zvětší, aby rámeček vyplnil */
+.ob-foto img[data-rot="90"],
+.ob-nahled img[data-rot="90"] {
+    transform: rotate(90deg) scale(1.34);
+}
+
+.ob-foto img[data-rot="180"],
+.ob-nahled img[data-rot="180"] {
+    transform: rotate(180deg);
+}
+
+.ob-foto img[data-rot="270"],
+.ob-nahled img[data-rot="270"] {
+    transform: rotate(270deg) scale(1.34);
+}
+
+/* Album a srdíčka náhledu, který je právě velký */
+.ob-foto-popis {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    left: 8px;
+    overflow: hidden;
+    padding: 3px 8px;
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.ob-foto-popis:empty {
+    display: none;
+}
+
+/* Řada náhledů z alb pod velkou fotkou: osm malých fotek na šířku fotky; místo drží i při načítání a u modelky
+   bez fotek (obě strany zůstanou zarovnané) */
+.ob-nahledy {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 4px;
+    width: 100%;
+    min-height: 44px;
+}
+
+.ob-nahledy.nacita,
+.ob-nahledy.prazdne {
+    border-radius: 6px;
+    background-color: var(--bg-main);
+    opacity: 0.5;
+}
+
+.ob-nahledy.prazdne {
+    visibility: hidden;
+}
+
+.ob-nahled {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 6px;
+    background-color: var(--bg-main);
+    opacity: 0.8;
+    cursor: zoom-in;
+    transition: border-color 0.12s, opacity 0.12s;
+}
+
+.ob-nahled img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ob-nahled:hover,
+.ob-nahled:focus-visible,
+.ob-nahled.aktivni {
+    border-color: var(--accent-text);
+    opacity: 1;
     outline: none;
 }
 
@@ -10737,6 +10833,11 @@ span.ud-chip {
     font-style: normal;
 }
 
+.ob-jmeno-radku .ob-fotky {
+    color: var(--text-main);
+    opacity: 0.75;
+}
+
 .ob-pruh {
     position: relative;
     height: 6px;
@@ -10855,6 +10956,10 @@ span.ud-chip {
 
     .ob-dvojice {
         grid-template-columns: 1fr 1fr;
+    }
+
+    .ob-nahledy {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 
     .ob-dnes {

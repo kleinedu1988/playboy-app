@@ -207,6 +207,19 @@ export function pripravitPlakat(plakat, poZmene = () => {}) {
     prepocitat();
 }
 
+// Alba v profilu chronologicky podle vydání, bez vydání na konci v pořadí, jak přibyla; ruční přeřazení fotek
+// uvnitř alba tak pořadí alb nemění. Online album se řadí podle data nafocení (vydání nemá). Centerfoldy první.
+// Stejné pořadí má prohlížeč otevřený z náhledu v Oblíbenosti.
+export function seraditAlbaProfilu(alba) {
+    const klicPoradi = a => {
+        const v = jeOnline(a.typ) ? rozlozitVydani(a.datumAlba.slice(0, 7)) : rozlozitVydani(a.typ === 'Centerfold' ? a.album : a.vydani);
+        return v ? `0${v.rok}${v.mesic || '00'}${v.edice}` : '1';
+    };
+    const prvniFotka = a => Math.min(...a.fotky.map(f => f.id));
+    return alba.sort((x, y) => Number(y.typ === 'Centerfold') - Number(x.typ === 'Centerfold')
+        || klicPoradi(x).localeCompare(klicPoradi(y)) || prvniFotka(x) - prvniFotka(y));
+}
+
 // Načtení fotografií v detailu
 export async function nacistFotkyModelky(modelkaId) {
     const fotky = await GetFotografieModelky(modelkaId);
@@ -227,16 +240,7 @@ export async function nacistFotkyModelky(modelkaId) {
     const neznama = stav.aktualniAlba.filter(a => !jmenaModelek.has(a.modelkaId));
     if (neznama.length) (await vsechnyModelky()).forEach(m => jmenaModelek.set(m.id, m.jmeno));
     stav.aktualniAlba.forEach(a => { a.jmenoModelky = jmenaModelek.get(a.modelkaId) || ''; });
-    // Alba v profilu chronologicky podle vydání, bez vydání na konci v pořadí, jak přibyla;
-    // ruční přeřazení fotek uvnitř alba tak pořadí alb nemění
-    // Online album se řadí podle data nafocení (vydání nemá)
-    const klicPoradi = a => {
-        const v = jeOnline(a.typ) ? rozlozitVydani(a.datumAlba.slice(0, 7)) : rozlozitVydani(a.typ === 'Centerfold' ? a.album : a.vydani);
-        return v ? `0${v.rok}${v.mesic || '00'}${v.edice}` : '1';
-    };
-    const prvniFotka = a => Math.min(...a.fotky.map(f => f.id));
-    stav.aktualniAlba.sort((x, y) => Number(y.typ === 'Centerfold') - Number(x.typ === 'Centerfold')
-        || klicPoradi(x).localeCompare(klicPoradi(y)) || prvniFotka(x) - prvniFotka(y));
+    seraditAlbaProfilu(stav.aktualniAlba);
     // Pořadí pro prohlížeč: nejdřív centerfoldy z levého sloupce, potom alba
     stav.aktualniPolozky = stav.aktualniAlba.flatMap(a => a.polozky);
 

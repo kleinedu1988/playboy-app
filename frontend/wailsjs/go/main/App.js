@@ -94,6 +94,10 @@ export function GetMohloByTeLibit(arg1) {
   return window['go']['main']['App']['GetMohloByTeLibit'](arg1);
 }
 
+export function GetNahledyModelek(arg1, arg2) {
+  return window['go']['main']['App']['GetNahledyModelek'](arg1, arg2);
+}
+
 export function GetNavrhyDoplneni(arg1) {
   return window['go']['main']['App']['GetNavrhyDoplneni'](arg1);
 }

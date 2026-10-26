@@ -482,6 +482,9 @@ export namespace main {
 	    poradi: number;
 	    porovnani: number;
 	    odhad: number;
+	    skoreFotek: number;
+	    albFotek: number;
+	    fotekHodnocenych: number;
 	    duvod: string;
 	
 	    static createFrom(source: any = {}) {
@@ -498,6 +501,9 @@ export namespace main {
 	        this.poradi = source["poradi"];
 	        this.porovnani = source["porovnani"];
 	        this.odhad = source["odhad"];
+	        this.skoreFotek = source["skoreFotek"];
+	        this.albFotek = source["albFotek"];
+	        this.fotekHodnocenych = source["fotekHodnocenych"];
 	        this.duvod = source["duvod"];
 	    }
 	}
@@ -837,6 +843,10 @@ export namespace main {
 	    modelek: number;
 	    presnost: number;
 	    odhady: boolean;
+	    vahaFotek: number;
+	    vahaNaucena: boolean;
+	    porovnaniVahy: number;
+	    zlepseniFotek: number;
 	    poradi: OblibenostModelky[];
 	
 	    static createFrom(source: any = {}) {
@@ -849,6 +859,10 @@ export namespace main {
 	        this.modelek = source["modelek"];
 	        this.presnost = source["presnost"];
 	        this.odhady = source["odhady"];
+	        this.vahaFotek = source["vahaFotek"];
+	        this.vahaNaucena = source["vahaNaucena"];
+	        this.porovnaniVahy = source["porovnaniVahy"];
+	        this.zlepseniFotek = source["zlepseniFotek"];
 	        this.poradi = this.convertValues(source["poradi"], OblibenostModelky);
 	    }
 	

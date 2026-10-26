@@ -26,6 +26,18 @@ type souhrnAlba struct {
 	popis, fotograf, neni     string // fotograf bez úprav; neni = „netýká se“ alba
 	fotek, hodnocenych, srdci int    // fotky, hodnocené fotky a součet jejich srdíček
 	soucetFotek               int64  // součet čísel fotek (otisk mezipaměti učení)
+	pocty                     srdickaAlba
+}
+
+// Počty hodnocených fotek alba podle srdíček: [0] = 1 srdíčko … [4] = 5 srdíček (skóre fotek v oblibenost_fotky.go)
+type srdickaAlba [5]int
+
+// Album, ve kterém modelka je (vlastní i jako další modelka), pro skóre fotek a náhledy alb v porovnání
+type albumModelky struct {
+	id         int64
+	nazev, typ string
+	fotek      int
+	pocty      srdickaAlba
 }
 
 // Album modelky se vším, co potřebuje Přehled, kontrola i návrhy (fotograf oříznutý o mezery na krajích)
@@ -52,6 +64,9 @@ type snimek struct {
 	sdileneCenterfoldy map[int]bool
 	fotekCoveru        int
 	err                error // první chyba čtení; snímek s chybou se nepamatuje
+	// Alba s fotkami každé modelky (vlastní, pak ta, kde je další modelkou) a pořadí modelky v seznamu podle čísla
+	albaModelek  map[int][]albumModelky
+	indexModelky map[int]int
 
 	hledani sync.Once
 	texty   []textyHledani // texty modelek k hledání ve stejném pořadí jako modelky (při prvním hledání)
@@ -59,6 +74,8 @@ type snimek struct {
 	// Kalendář vydání (GetKalendar) spočítaný při prvním volání nad tímto snímkem; nil = ještě není
 	mu       sync.Mutex
 	kalendar []VydaniKalendare
+	// Náhledy fotek modelek pro porovnání (GetNahledyModelek) spočítané nad tímto snímkem
+	nahledy map[int]nahledyModelky
 }
 
 // Texty modelek k hledání; spočítají se jednou pro snímek, další hledání (psaní do pole hledání) je už nepočítá
@@ -78,16 +95,19 @@ func (a *App) nacistSouhrnAlb() ([]souhrnAlba, []vazbaAlba, error) {
 	type pocty struct {
 		fotek, hodnocenych, srdci int
 		soucet                    int64
+		podleSrdicek              srdickaAlba
 	}
 	podleAlba := map[int64]pocty{}
-	radky, err := a.db.Query("SELECT album_id, COUNT(*), SUM(hodnoceni > 0), SUM(MAX(hodnoceni, 0)), SUM(id) FROM fotky GROUP BY album_id")
+	radky, err := a.db.Query(`SELECT album_id, COUNT(*), SUM(hodnoceni > 0), SUM(MAX(hodnoceni, 0)), SUM(id),
+		SUM(hodnoceni = 1), SUM(hodnoceni = 2), SUM(hodnoceni = 3), SUM(hodnoceni = 4), SUM(hodnoceni >= 5) FROM fotky GROUP BY album_id`)
 	if err != nil {
 		return nil, nil, err
 	}
 	for radky.Next() {
 		var id int64
 		var p pocty
-		if err := radky.Scan(&id, &p.fotek, &p.hodnocenych, &p.srdci, &p.soucet); err != nil {
+		if err := radky.Scan(&id, &p.fotek, &p.hodnocenych, &p.srdci, &p.soucet, &p.podleSrdicek[0], &p.podleSrdicek[1], &p.podleSrdicek[2],
+			&p.podleSrdicek[3], &p.podleSrdicek[4]); err != nil {
 			radky.Close()
 			return nil, nil, err
 		}
@@ -111,7 +131,7 @@ func (a *App) nacistSouhrnAlb() ([]souhrnAlba, []vazbaAlba, error) {
 			return nil, nil, err
 		}
 		p := podleAlba[al.id]
-		al.fotek, al.hodnocenych, al.srdci, al.soucetFotek = p.fotek, p.hodnocenych, p.srdci, p.soucet
+		al.fotek, al.hodnocenych, al.srdci, al.soucetFotek, al.pocty = p.fotek, p.hodnocenych, p.srdci, p.soucet, p.podleSrdicek
 		alba = append(alba, al)
 	}
 	radky.Close()
@@ -143,6 +163,7 @@ type odvozeneZAlb struct {
 	vydani, centerfoldy, online []string
 	cyberGirl                   string
 	texty, fotografove          strings.Builder
+	alba                        []albumModelky // alba s fotkami (skóre fotek, náhledy)
 }
 
 // Seřazený seznam bez opakování
@@ -167,7 +188,7 @@ func uzavritSeznam(s []string) []string {
 
 // Načtení snímku z databáze (bez paměti)
 func (a *App) nacistSnimek() *snimek {
-	s := &snimek{sdileneCenterfoldy: map[int]bool{}}
+	s := &snimek{sdileneCenterfoldy: map[int]bool{}, albaModelek: map[int][]albumModelky{}}
 	alba, vazby, err := a.nacistSouhrnAlb()
 	if err != nil {
 		s.err = err
@@ -187,6 +208,9 @@ func (a *App) nacistSnimek() *snimek {
 		o.hodnocenych += al.hodnocenych
 		o.srdci += al.srdci
 		if al.fotek > 0 {
+			if al.typ != "Cover" {
+				o.alba = append(o.alba, albumModelky{id: al.id, nazev: al.nazev, typ: al.typ, fotek: al.fotek, pocty: al.pocty})
+			}
 			if al.vydani != "" {
 				o.vydani = append(o.vydani, al.vydani)
 			}
@@ -244,6 +268,11 @@ func (a *App) nacistSnimek() *snimek {
 
 	modelky, jmena, err := a.nacistRadkyModelek(odvozene, obalky)
 	s.err = err
+	for id, o := range odvozene {
+		if len(o.alba) > 0 {
+			s.albaModelek[id] = o.alba[:len(o.alba):len(o.alba)]
+		}
+	}
 
 	// Řazení podle jména bez ohledu na velikost písmen a diakritiku; klíč se spočítá pro každou modelku jednou
 	klice := make(map[int]string, len(jmena))
@@ -256,8 +285,10 @@ func (a *App) nacistSnimek() *snimek {
 	}
 	sort.SliceStable(poradi, func(i, j int) bool { return klicRadku[poradi[i]] < klicRadku[poradi[j]] })
 	s.modelky = make([]Modelka, len(modelky))
+	s.indexModelky = make(map[int]int, len(modelky))
 	for i, p := range poradi {
 		s.modelky[i] = modelky[p]
+		s.indexModelky[modelky[p].ID] = i
 	}
 
 	// Alba modelek (bez coverů) seřazená podle jména modelky, názvu a typu
@@ -346,6 +377,12 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 			o.vydani, o.centerfoldy, o.online = serazeneBezOpakovani(x.vydani), serazeneBezOpakovani(x.centerfoldy), x.online
 			sort.Strings(o.online)
 			m.textyAlb, m.fotografoveAlb = x.texty.String(), x.fotografove.String()
+			for _, al := range x.alba {
+				if al.pocty != (srdickaAlba{}) {
+					m.srdickaAlb = append(m.srdickaAlb, al.pocty)
+				}
+			}
+			m.srdickaAlb = m.srdickaAlb[:len(m.srdickaAlb):len(m.srdickaAlb)]
 		}
 		m.PocetFotek, m.fotekHodnocenych, m.srdciFotek = o.fotek, o.hodnocenych, o.srdci
 		m.Vydani, m.Centerfoldy, m.OnlineAlba = uzavritSeznam(o.vydani), uzavritSeznam(o.centerfoldy), uzavritSeznam(o.online)

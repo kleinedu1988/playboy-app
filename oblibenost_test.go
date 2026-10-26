@@ -356,7 +356,7 @@ func TestBradleyTerryNajdePoradi(t *testing.T) {
 	}
 }
 
-// Oblíbenost drží srdíčka: porovnání posunou modelku jen uvnitř její úrovně, i když vyhrává nad vyšší úrovní
+// Oblíbenost drží srdíčka: o celé srdíčko se pořadí nepřehodí (nejvýš ±0,49), i když modelka vyhrává nad vyšší úrovní
 func TestOblibenostZustavaVUrovni(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	for j, h := range map[string]float64{"Trojka": 3, "Čtyřka": 4, "Druhá trojka": 3} {

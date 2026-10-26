@@ -52,6 +52,9 @@ const CASTI = [
         [`${k('↓')}${nebo}${k('Mezerník')}`, 'Obě stejně (remíza)'],
         [k('S'), 'Přeskočit dvojici'],
         [k('Backspace'), 'Vrátit poslední porovnání'],
+        [`${k('1')}–${k('8')}`, 'Velký n-tý náhled fotek z alb na obou stranách'],
+        [`${k('↑')}${nebo}${k('Shift', '↑')}`, 'Další a předchozí náhled na obou stranách'],
+        [k('0'), 'Zpět titulní fotky'],
     ] },
     { klic: 'udrzba-souhrn', nazev: 'Údržba – Souhrn', radky: [
         [k('↑', '↓'), 'Předchozí a další řádek (i položky rozbalené skupiny)'],

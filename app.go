@@ -102,9 +102,9 @@ type Modelka struct {
 	Poznamka   string `json:"poznamka"`
 	// 0 = nehodnoceno, 0,5–5 srdíček po polovinách (úprava schématu č. 13)
 	Hodnoceni float64 `json:"hodnoceni"`
-	// Jemné pořadí oblíbenosti pro řazení (jen pro čtení, oblibenost.go): srdíčka upřesněná porovnáním dvojic
-	// v rámci stejné úrovně (nejvýš ±0,24, takže úrovně se nepřekrývají); nehodnocená porovnávaná modelka má
-	// odhad síly z porovnání, ostatní nehodnocené 0
+	// Jemné pořadí oblíbenosti pro řazení (jen pro čtení, oblibenost.go): srdíčka upřesněná skóre fotek
+	// a porovnáním dvojic (nejvýš ±0,49, takže o celé srdíčko se pořadí nepřehodí, o půl ano); nehodnocená
+	// porovnávaná modelka má odhad síly z porovnání, ostatní nehodnocené 0
 	Oblibenost float64 `json:"oblibenost"`
 	// Odhad hodnocení modelem vkusu (jen pro čtení): 0,5–5 po polovinách jen u nehodnocené modelky s dost jistým
 	// odhadem, jinak 0
@@ -131,6 +131,8 @@ type Modelka struct {
 	fotografoveAlb string
 	// Hodnocené fotky modelky a součet jejich srdíček (model vkusu)
 	fotekHodnocenych, srdciFotek int
+	// Počty hodnocených fotek podle srdíček v každém jejím albu s hodnocenými fotkami (skóre fotek)
+	srdickaAlb []srdickaAlba
 }
 
 // Hodnocení modelky v polovinách srdíčka (3,5 → 7)

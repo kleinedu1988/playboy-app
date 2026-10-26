@@ -10,8 +10,10 @@ Vše běží na počítači bez sítě a bez knihoven, deterministicky (stejná 
 Učení samo schéma sbírky nemění (hodnocení po polovinách srdíčka je úprava č. 13 sbírky, viz Oblíbenost níže).
 Nic se nezapisuje do sbírky samo, jen po přijetí návrhu.
 
-Třetí služba je **oblíbenost** (`oblibenost.go`, oddíly na konci): porovnání dvojic „Která se ti líbí víc?“,
-jemné pořadí modelek (Bradley–Terry) a model vkusu, který odhaduje hodnocení nehodnocených modelek.
+Třetí služba je **oblíbenost** (`oblibenost.go`, `oblibenost_fotky.go`, oddíly na konci): porovnání dvojic „Která se
+ti líbí víc?“ s náhledy fotek z alb, skóre fotek modelky z hodnocení jejích alb, jemné pořadí modelek (Bradley–Terry
+s předpokladem ze srdíček a skóre fotek, váha fotek naučená z porovnání) a model vkusu, který odhaduje hodnocení
+nehodnocených modelek.
 
 | Soubor | Co v něm je |
 |---|---|
@@ -19,7 +21,8 @@ jemné pořadí modelek (Bradley–Terry) a model vkusu, který odhaduje hodnoce
 | `navrhy.go` | zdroje návrhů, výběr a spojení zdrojů, přijetí a odmítnutí |
 | `kontrola.go`, `kontrola_uceni.go` | pravidla kontroly, naučené rozsahy, neobvyklé kombinace, podobná jména, prahy |
 | `uceni.go` | databáze učení: deník rozhodnutí, odmítnuté hodnoty, zápisy z oprav, kalibrace, prahy kontroly, mezipaměť, přehled a zapomenutí |
-| `oblibenost.go` | porovnání dvojic, Bradley–Terry s předpokladem ze srdíček, výběr dvojic (aktivní učení), model vkusu a jeho ověření |
+| `oblibenost.go` | porovnání dvojic, Bradley–Terry s předpokladem ze srdíček a skóre fotek, výběr dvojic (aktivní učení), model vkusu a jeho ověření |
+| `oblibenost_fotky.go` | skóre fotek (album jako hlas, průměr nejlepších fotek, empirický Bayes), převod na stupnici srdíček, naučená váha fotek, náhledy alb pro porovnání |
 
 ## Soukromí a kde co je
 
@@ -246,19 +249,25 @@ sbírky ani exportu.
 | `PorovnatModelky(a, b, vysledek) bool` | zapíše porovnání (`a`, `b`, `remiza`) se srdíčky obou v tu chvíli |
 | `VratitPorovnani() bool` | smaže poslední porovnání (zpět) |
 | `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání |
-| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření, 0–1), `odhady` (model prošel ověřením), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `duvod` |
+| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
 | `GetMohloByTeLibit(pocet) []OblibenostModelky` | nehodnocené modelky s nejvyšším jistým odhadem a důvodem (`odhad`, `duvod`; `sila` = nezaokrouhlený odhad, `nejistota` = chyba ověření) |
-| `Modelka.oblibenost` | srdíčka upřesněná porovnáním uvnitř úrovně (nejvýš ±0,24, úrovně se nepřekrývají); nehodnocená porovnávaná má sílu z porovnání, ostatní 0 |
+| `GetNahledyModelek(ids, pocet) map[int][]NahledFotky` | náhledy fotek modelek pro porovnání (nejvýš `pocet`, 1–24; nejvýš 100 modelek): `id` fotky, `url` (šablona s `{velikost}`), `album`, `typ`, `hodnoceni` (srdíčka fotky), `rotace`; neznámá modelka nebo bez fotek má `[]` |
+| `Modelka.oblibenost` | srdíčka upřesněná skóre fotek a porovnáním (nejvýš ±0,49: o půl srdíčka se pořadí přehodit může, o celé ne); nehodnocená porovnávaná má sílu z porovnání, ostatní 0 |
 | `Modelka.odhadHodnoceni` | odhad modelu vkusu po polovinách jen u nehodnocené modelky s jistým odhadem, jinak 0 |
 
 ## Bradley–Terry
 
 Každá modelka má skrytou sílu s na stupnici srdíček; P(víc se líbí i než j) = σ(k·(sᵢ − sⱼ)), k = 2 (o půl
-srdíčka silnější vyhraje v 73 %). **Předpoklad ze srdíček:** hodnocená s ~ N(srdíčka, 0,25²), nehodnocená
-porovnávaná N(průměr srdíček sbírky, 1,25²). Porovnání tak sílu posunou hlavně uvnitř úrovně, ale opakované
-„překvapení“ ji posune i přes hranici (v `duvod` pak „porovnání ji staví výš než její srdíčka“; oblíbenost
-zůstává v úrovni, srdíčka mění jen uživatel). Remíza je půl výhry pro každou, porovnání váží podle stáří
-0,5^(dny/365).
+srdíčka silnější vyhraje v 73 %). **Předpoklad** (oddíl Předpoklad a naučená váha fotek): hodnocená modelka
+N(srdíčka, 0,25²), se skóre fotek N((1 − w)·srdíčka + w·F̂, σ²); nehodnocená se skóre fotek N(F̃, …), nehodnocená
+porovnávaná bez fotek N(průměr srdíček sbírky, 1,25²). Porovnání sílu posunou dál; v `duvod` pak „porovnání
+(fotky, fotky a porovnání) ji staví výš než její srdíčka“, když se síla od srdíček liší o víc než čtvrt srdíčka.
+Remíza je půl výhry pro každou, porovnání váží podle stáří 0,5^(dny/365).
+
+**Oblíbenost hodnocené modelky** = srdíčka + (s − srdíčka) oříznuté na ±0,49. Srdíčka jsou měkký předpoklad, ne
+přihrádky: výborné fotky nebo porovnání posunou čtyřku nad modelku se 4½ srdíčka se slabými fotkami, ale nad
+pětku ne (o celé srdíčko se pořadí nikdy nepřehodí; dřív ±0,24, tj. srdíčka jako tvrdé úrovně). Srdíčka mění
+jen uživatel.
 
 Odhad je maximum aposteriorní hustoty, počítané **iteracemi MM** po souřadnicích: zakřivení logistické funkce je
 nejvýš k²/4, takže krok sᵢ += gᵢ/(Σ w·k²/4 + 1/σᵢ²) hodnotu nikdy nezhorší (Böhningova mez) a konverguje k jedinému
@@ -266,16 +275,105 @@ maximu (cíl je konkávní). **Nejistota** je Laplaceova aproximace z diagonály
 Var sᵢ ≈ 1/(1/σᵢ² + Σ w·k²·p(1 − p)). Modelka bez porovnání má sílu rovnou předpokladu. Na umělých datech
 (30 modelek jedné úrovně, 1500 porovnání) odhad vrátí pořadí se Spearmanovým ρ ≥ 0,9 (`TestBradleyTerryNajdePoradi`).
 
+## Skóre fotek
+
+Fotky mají srdíčka 1–5 (0 = nehodnocená). Skóre fotek modelky F je odhad, jak se ti líbí její fotky, ze všech jejích
+alb s hodnocenými fotkami (vlastních i těch, kde je další modelkou; centerfold, pictorial i online album váží
+stejně – typ alba o kvalitě fotek nic neříká a dělit hlasy podle typu by malé skupiny zbytečně zašumělo).
+Nehodnocené fotky a alba bez hodnocených fotek se nepočítají. Počty fotek podle srdíček v každém albu přicházejí
+se snímkem sbírky (jeden dotaz se součty `SUM(hodnoceni = h)` po albech), skóre se počítá v paměti (3000 modelek
+asi 1 ms).
+
+Hierarchický normální model: fotka h ~ N(θₐ, σ_w²), album θₐ ~ N(φₘ, τₐ²), modelka φₘ ~ N(μ, τₘ²).
+
+1. **Album = průměr jeho nejlepších fotek**, mₐ = průměr k nejlepších, k = min(5, n − ⌊n/4⌋). Slabší čtvrtina alba
+   a fotky za pátou nejlepší výsledek nezhorší: album s pěti fotkami za 5 srdíček a třiceti za 3 je výborné album
+   (mₐ = 5), uživatel ho tak vnímá a průměrné fotky navíc jsou jen výplň. Proč ne medián nebo průměr všech: obojí
+   trestá album za to, že má víc fotek. Proč ne maximum: jedna dobrá fotka mezi slabými by album spasila; s k = 5
+   má „1× pět, 7× dvě“ skóre 2,6. Ořez čtvrtiny drží malá alba stejně férová (4 fotky → 3 nejlepší).
+2. **Album je jeden hlas.** Rozptyl mₐ kolem úrovně modelky je vₐ = σ_w²/kₐ + τₐ² (skóre stojí na kₐ fotkách), váha
+   alba 1/vₐ tedy od šesti hodnocených fotek dál neroste: album se čtyřiceti fotkami za 3 a album se šesti za 5
+   mají stejný hlas (modelka s alby 40× ♥3 + 6× ♥5 má stejné skóre jako 6× ♥3 + 40× ♥5; průměr fotek by dal 3,3
+   proti 4,7). Album s jednou dvěma fotkami je jen částečný hlas, protože je nejisté.
+3. **Smrštění k průměru sbírky** (empirický Bayes):
+
+   F = φ̂ = (μ/τₘ² + Σₐ mₐ/vₐ) / (1/τₘ² + Σₐ 1/vₐ),   Var F = 1/(1/τₘ² + Σₐ 1/vₐ)
+
+   Průměr sbírky μ váží jako 1/τₘ², tedy jako σ_w²/τₘ² fotek nebo zhruba (σ_w² + τₐ²)/τₘ² jednofotkových alb.
+   Parametry se odhadnou ze sbírky momentovou metodou: σ_w² = rozptyl srdíček fotek uvnitř alb (sdružený, od 10
+   stupňů volnosti, jinak 0,5), τₐ² = rozptyl skóre alb téže modelky minus průměrné σ_w²/k (jinak 0,1), μ = průměr
+   modelek, τₘ² = rozptyl průměrů modelek minus jejich průměrná nejistota (od 10 modelek, jinak 0,3); dolní meze
+   0,05, 0,02 a 0,05. Jedna fotka za 5 srdíček tak dá na umělé sbírce asi 4,2 (rozptyl 0,37), tři alba plná
+   pětek 4,8 (rozptyl 0,10); jedna fotka za 1 srdíčko skončí pod průměrem, ale nad 1,5.
+
+## Předpoklad a naučená váha fotek
+
+**Převod na stupnici srdíček modelek.** Fotky se hodnotí jinak než modelky (třeba štědřeji a v užším rozsahu).
+Pro hodnocenou modelku se skóre jen převede na stupnici srdíček posunem a natažením podle průměru a směrodatné
+odchylky skóre a srdíček hodnocených modelek s fotkami: F̂ = H̄ + (F − F̄)·sd_H/sd_F (natažení 0,25–4, z méně
+než 10 modelek jen posun průměrů). Kolik má F̂ vážit, převod neurčuje – to se učí z porovnání. Nehodnocená
+modelka srdíčka nemá, její předpoklad je předpověď srdíček regresí na skóre: F̃ = α + β·F (β 0–3; skóre je
+aposteriorní odhad, takže regrese na něj je kalibrovaná) s nejistotou r₀² + β²·Var F (r₀² = rozptyl reziduí
+bez části z nejistoty skóre).
+
+**Předpoklad síly** v Bradley–Terry:
+
+| Modelka | Střed | Směrodatná odchylka |
+|---|---|---|
+| srdíčka i skóre fotek | (1 − w)·H + w·F̂ | √((1 − w)²·0,25² + w²·Var F̂), aspoň 0,2 |
+| jen srdíčka | H | 0,25 |
+| jen skóre fotek | F̃ | √(r₀² + β²·Var F), nejvýš 1,25 |
+| nic, ale porovnávaná | průměr srdíček sbírky | 1,25 |
+
+**Naučená váha w.** Pro w z mřížky 0; 0,05; … 1 se spočítá log-věrohodnost porovnání Σ t·log σ(±k·(μᵢ(w) − μⱼ(w)))
+(t = váha podle stáří, remíza půl, srdíčka obou v okamžiku porovnání). Počítají se jen porovnání modelek se
+**stejnými srdíčky**, kde aspoň jedna má skóre fotek: tam je rozdíl předpokladů přesně w·(F̂ᵢ − F̂ⱼ) a věrohodnost
+měří, jak silně mají fotky modelky jedné úrovně rozlišit. U různých úrovní by váha zároveň zmenšovala rozdíl
+srdíček, takže kdyby uživatel občas dal přednost modelce s méně srdíčky, vyšší váha by vypadala lépe, i když fotky
+nic neříkají. Nejlepší ŵ se smrští k výchozí váze w₀ = 0,3:
+
+w = (n·ŵ + n₀·w₀)/(n + n₀),
+
+n = počet takových porovnání, n₀ ∈ {10, 40, 160} vybere **křížové ověření** na pěti částech (učí se na čtyřech,
+log-ztráta na páté; při shodě silnější smrštění). Pod 10 porovnání platí w₀ (`vahaNaucena: false`). `zlepseniFotek`
+= 1 − ztráta s naučenou vahou / ztráta jen ze srdíček (na týchž ověřovacích porovnáních). Chování na umělých datech
+(`TestVahaFotekZPorovnani`, `TestVahaFotekVOblibenosti`): když porovnání sledují fotky, w ≈ 0,98 a log-ztráta
+předpovědi klesne o 23–87 %; náhodné skóre fotek nebo porovnání proti fotkám dají w ≈ 0,01; 25 porovnání dá 0,8, osm 0,3.
+Váha nemůže být záporná (fotky „naopak“ nedávají smysl, nejvýš se vypnou).
+
+## Náhledy alb
+
+Porovnání podle jedné titulní fotky je nefér k modelkám s nevýraznou titulní fotkou. Pod velkou fotkou každé
+modelky je proto řada až osmi náhledů z jejích alb (`GetNahledyModelek`): alba se seřadí podle skóre (průměr
+nejlepších fotek, alba bez hodnocených fotek nakonec, při shodě v pořadí přidání), fotky v albu podle srdíček
+a pak podle pořadí v albu (ruční pořadí, jinak vložení). Napřed nejlepší fotka každého alba (při víc albech než
+náhledech nejlepších alb), zbylá místa dostanou ostatní fotky podle srdíček (při shodě ta výš ve svém albu);
+vybrané se nakonec seřadí podle srdíček, takže 1. náhled je nejlepší fotka. Titulní fotka se neopakuje. Fotky se
+čtou jedním dotazem `album_id IN (…)` pro alba všech žádaných modelek (alba modelek jsou ve snímku sbírky) a výsledek
+se pamatuje se snímkem (změna fotek nebo srdíček snímek zneplatní). Rozhraní si náhledy celé fronty dvojic načte
+jedním voláním dopředu a malé obrázky (w200) další dvojice přednačte.
+
+Ovládání (rozhraní): najetí myší na náhled ho ukáže velký jen na své straně (zůstane i při přechodu na velkou
+fotku, aby šla vybrat; opuštění strany vrátí titulní), <kbd>1</kbd>–<kbd>8</kbd> ukáže n-tý náhled na obou
+stranách najednou (n-tá nejlepší fotka proti n-té; podle `e.code`, funguje i v české klávesnici), <kbd>↑</kbd> /
+<kbd>Shift</kbd>+<kbd>↑</kbd> listuje, <kbd>0</kbd> vrátí titulní; klik na náhled otevře prohlížeč na té fotce mezi
+fotkami modelky (pořadí alb jako v profilu) a zavření prohlížeče vrátí k porovnání (náhledy té modelky se načtou
+znovu, srdíčka fotek se mohla změnit). ← → ↓, mezerník, S a Backspace zůstávají volbě.
+
 ## Výběr dvojic
 
 Aktivní učení: porovnání má smysl tam, kde je pořadí nejisté a kde na něm záleží – u stejné nebo sousední úrovně
 srdíček. Kandidátky jsou ke každé hodnocené modelce nejbližší sousedé podle síly (10). Skóre dvojice je očekávaná
 informace p(1 − p)·(Var sᵢ + Var sⱼ) krát váha úrovně (stejná 1, o půl srdíčka 0,7, o srdíčko 0,2, jinak nic; okruh
 `stejne` jen stejná) krát váha modelky (bez titulní fotky i fotek 0,3; častá v posledních porovnáních se tlumí
-1/(1 + 0,5·četnost), novější porovnání víc). Vynechají se dvojice z posledních 200 porovnání a posledních 60
+1/(1 + 0,5·četnost), novější porovnání víc). Var s vychází z předpokladu, takže skóre fotek do výběru vstupuje
+samo: modelka s nejistým skóre (málo alb a fotek) má širší předpoklad a dostane přednost před modelkou, o které
+fotky říkají hodně. Vynechají se dvojice z posledních 200 porovnání a posledních 60
 nabídnutých, modelka je v jednom výběru nejvýš jednou. Asi pětina dvojic je **průzkum** (náhodná dvojice stejné
 nebo sousední úrovně); semínko je z počtu porovnání a volání, výsledek je opakovatelný. Pořadí A/B je náhodné.
-Okruh `nehodnocene` páruje nehodnocenou modelku s hodnocenými kotvami blízko jejího odhadu (vkus, jinak průměr).
+Okruh `nehodnocene` páruje nehodnocenou modelku s hodnocenými kotvami blízko jejího odhadu (vkus, jinak předpověď ze
+skóre fotek, jinak průměr). Důvod dvojice stejné úrovně uvádí skóre fotek obou („Obě mají 4 srdíčka (fotky 4,6
+a 4,1) …“).
 
 ## Model vkusu
 
@@ -285,8 +383,14 @@ Hřebenová (ridge) regrese oblíbenosti hodnocených modelek na jejich údaje, 
   ochlupení, tetování a piercing (ano/ne), desetiletí prvního výskytu, kategorie (i odvozené: Playmate měsíce,
   Cyber Girl, Modelka obálky), fotografové alb; hodnota se počítá, když ji mají aspoň 3 hodnocené modelky (nejvýš
   150 nejčastějších);
-- standardizovaně: výška, váha, hrudník, pas, boky, BMI a průměr srdíček jejích fotek (aspoň 2 hodnocené; silný
-  signál); chybějící údaj = průměr.
+- standardizovaně: výška, váha, hrudník, pas, boky, BMI a údaj o fotkách (silný signál); chybějící údaj = průměr.
+  Údaj o fotkách je buď průměr srdíček jejích fotek (aspoň 2 hodnocené), nebo skóre fotek (oddíl Skóre fotek):
+  model se naučí s oběma a nechá si ten s menší chybou ověření. Skóre fotek se nepřidává jako další sloupec
+  vedle průměru (dvakrát tatáž informace, silně korelované sloupce).
+
+**Cíl** jsou srdíčka upřesněná porovnáním uvnitř úrovně (±0,24) z Bradley–Terry s předpokladem jen ze srdíček, ne
+oblíbenost se skóre fotek: fotky jsou mezi údaji modelu, v cíli by se započítaly podruhé a ověření by vycházelo
+lépe, než model je. Chyba ověření se měří proti samotným srdíčkům.
 
 λ ∈ {0,5; 2; 8; 32} se vybere **křížovým ověřením** na 5 částech (rozdělení podle čísla modelky). Gramova matice
 se sčítá z řídkých řádků po částech, takže ověření jen odečítá části a řeší malé soustavy Choleským rozkladem.
@@ -303,9 +407,11 @@ Umělá sbírka (200 hodnocených, hodnocení podle vlasů, desetiletí a fotogr
 `TestModelVkusuOvereni`): chyba ověření 0,25 srdíčka proti 0,69 u průměru, přesnost 0,98, vysoké odhady sedí
 v 90 z 96. Náhodné hodnocení ani 20 hodnocených ověřením neprojdou a nic se neodhaduje.
 
-**Mezipaměť a výkon:** BT i model vkusu se počítají najednou v paměti s otiskem (FNV-64a z údajů všech modelek
-včetně srdíček fotek a fotografů, počtu a posledního čísla porovnání a dnešního data); GetModelky pak jen doplní
-čísla z map. Do souboru se výsledek neukládá (výpočet trvá desítky milisekund). Umělá sbírka 3000 modelek (1000
+**Mezipaměť a výkon:** skóre fotek, váha fotek, BT i model vkusu se počítají najednou v paměti s otiskem (FNV-64a
+z údajů všech modelek včetně srdíček fotek po albech a fotografů, počtu a posledního čísla porovnání a dnešního
+data); GetModelky pak jen doplní čísla z map. Do souboru se výsledek neukládá (výpočet trvá desítky milisekund). Umělá sbírka 3000 modelek (1000
 hodnocených, 500 porovnání, `TestVykonOblibenosti`): načtení modelek bez oblíbenosti asi 100 ms, GetModelky
 z paměti asi 105 ms, první výpočet nebo po změně hodnocení asi 130–160 ms (BT + vkus asi 25 ms), výběr 10 dvojic
-asi 120 ms (z toho většinu zabere načtení modelek).
+asi 120 ms (z toho většinu zabere načtení modelek). Se skóre fotek a učením váhy (`TestVykonNahleduASkore`):
+`spocitatOblibenost` asi 20–30 ms (skóre fotek asi 1 ms, druhý BT pro cíl vkusu a druhá varianta vkusu asi
+polovina), `GetNahledyModelek` pro 6 modelek bez paměti pod 1 ms, z paměti snímku desítky µs.

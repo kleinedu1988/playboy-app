@@ -21,7 +21,8 @@ nehodnocených modelek.
 | `navrhy.go` | zdroje návrhů, výběr a spojení zdrojů, přijetí a odmítnutí |
 | `kontrola.go`, `kontrola_uceni.go` | pravidla kontroly, naučené rozsahy, neobvyklé kombinace, podobná jména, prahy |
 | `uceni.go` | databáze učení: deník rozhodnutí, odmítnuté hodnoty, zápisy z oprav, kalibrace, prahy kontroly, mezipaměť, přehled a zapomenutí |
-| `oblibenost.go` | porovnání dvojic, Bradley–Terry s předpokladem ze srdíček a skóre fotek, výběr dvojic (aktivní učení), model vkusu a jeho ověření |
+| `oblibenost.go` | porovnání dvojic, Bradley–Terry s předpokladem ze srdíček a skóre fotek, výběr dvojic (aktivní učení) |
+| `oblibenost_vkus.go`, `oblibenost_vkus_stromy.go` | model vkusu: údaje modelek, hřebenová regrese a posilované stromy, ověření, skupiny podle bohatosti údajů, důvody, „Mohlo by se ti líbit“ |
 | `oblibenost_fotky.go` | skóre fotek (album jako hlas, průměr nejlepších fotek, empirický Bayes), převod na stupnici srdíček, naučená váha fotek, náhledy alb pro porovnání |
 
 ## Soukromí a kde co je
@@ -249,11 +250,12 @@ sbírky ani exportu.
 | `PorovnatModelky(a, b, vysledek) bool` | zapíše porovnání (`a`, `b`, `remiza`) se srdíčky obou v tu chvíli |
 | `VratitPorovnani() bool` | smaže poslední porovnání (zpět) |
 | `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání |
-| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
-| `GetMohloByTeLibit(pocet) []OblibenostModelky` | nehodnocené modelky s nejvyšším jistým odhadem a důvodem (`odhad`, `duvod`; `sila` = nezaokrouhlený odhad, `nejistota` = chyba ověření) |
+| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
+| `GetMohloByTeLibit(pocet) []OblibenostModelky` | nehodnocené modelky s nejvyšším odhadem a důvodem (`odhad`, `duvod`; `sila` = nezaokrouhlený odhad, `nejistota` = chyba ověření u modelek s podobně bohatými údaji) |
+| `GetDuvodOdhadu(id) string` | důvod ukázaného odhadu nehodnocené modelky („Odhad 4 srdíčka: blond, 70. léta, Pompeo Posar; podobně jako Anna (4½) a Bára (4)“), jinak `""`; štítek „odhad“ si ho načte při prvním najetí myší |
 | `GetNahledyModelek(ids, pocet) map[int][]NahledFotky` | náhledy fotek modelek pro porovnání (nejvýš `pocet`, 1–24; nejvýš 100 modelek): `id` fotky, `url` (šablona s `{velikost}`), `album`, `typ`, `hodnoceni` (srdíčka fotky), `rotace`; neznámá modelka nebo bez fotek má `[]` |
 | `Modelka.oblibenost` | srdíčka upřesněná skóre fotek a porovnáním (nejvýš ±0,49: o půl srdíčka se pořadí přehodit může, o celé ne); nehodnocená porovnávaná má sílu z porovnání, ostatní 0 |
-| `Modelka.odhadHodnoceni` | odhad modelu vkusu po polovinách jen u nehodnocené modelky s jistým odhadem, jinak 0 |
+| `Modelka.odhadHodnoceni` | odhad modelu vkusu po polovinách jen u nehodnocené modelky ze skupiny údajů, kde odhad na ověření jasně překonal průměr, jinak 0 |
 
 ## Bradley–Terry
 
@@ -377,35 +379,83 @@ a 4,1) …“).
 
 ## Model vkusu
 
-Hřebenová (ridge) regrese oblíbenosti hodnocených modelek na jejich údaje, čistě v Go:
+Odhad srdíček nehodnocené modelky z jejích údajů (`oblibenost_vkus.go`), čistě v Go bez knihoven. Je to vážený
+průměr dvou modelů, oba se učí na hodnocených modelkách a ověřují **křížovým ověřením** na 5 částech (rozdělení
+podle čísla modelky, opakovatelné):
 
-- hodnoty jako 0/1: etnicita, národnost (sjednocená tabulkou zemí), vlasy, oči, typ prsou, košíček (A–D, DD+),
-  ochlupení, tetování a piercing (ano/ne), desetiletí prvního výskytu, kategorie (i odvozené: Playmate měsíce,
-  Cyber Girl, Modelka obálky), fotografové alb; hodnota se počítá, když ji mají aspoň 3 hodnocené modelky (nejvýš
-  150 nejčastějších);
-- standardizovaně: výška, váha, hrudník, pas, boky, BMI a údaj o fotkách (silný signál); chybějící údaj = průměr.
-  Údaj o fotkách je buď průměr srdíček jejích fotek (aspoň 2 hodnocené), nebo skóre fotek (oddíl Skóre fotek):
-  model se naučí s oběma a nechá si ten s menší chybou ověření. Skóre fotek se nepřidává jako další sloupec
-  vedle průměru (dvakrát tatáž informace, silně korelované sloupce).
+- **hřebenová (ridge) regrese** – hodnoty údajů jako 0/1: etnicita, národnost (sjednocená tabulkou zemí), vlasy, oči,
+  typ prsou, košíček (A–D, DD+), ochlupení, tetování a piercing (ano/ne), desetiletí prvního výskytu, kategorie
+  (i odvozené Playmate měsíce, Cyber Girl, Modelka obálky; rok na konci se zahodí, „Playmate roku 1998“ a „… 2003“
+  jsou táž kategorie), fotografové alb; hodnota se počítá, když ji mají aspoň 3 hodnocené modelky (nejvýš 150
+  nejčastějších). Číselné údaje (výška, váha, hrudník, pas, boky, BMI, poměr pas/boky, rok prvního výskytu, průměr
+  srdíček fotek, skóre fotek) robustně standardizované (medián a 1,4826·MAD, oříznuté na ±3, chybějící = 0) a navíc
+  po **pětinách** jako 0/1 („výška 165–169 cm“), takže regrese pozná i oblíbené rozmezí. λ ∈ {2; 8; 32; 128} vybere
+  ověření; Gramova matice se sčítá po částech a soustavy se řeší Choleským rozkladem (části souběžně).
+- **gradientně posilované mělké stromy** (`oblibenost_vkus_stromy.go`) – tytéž hodnoty údajů a číselné údaje v nejvýš
+  16 koších po kvantilech; chybějící údaj jde v každém dělení tou stranou, která sedí lépe. Hloubka 3, krok 0,15,
+  v listu aspoň 8 modelek, smrštění λ = 4, každý strom na náhodných 80 % modelek (pevné semínko). Počet stromů
+  (nejvýš 80) vybere ověření, les na části přestane růst po 20 stromech bez zlepšení. Stromy zachytí souvislosti,
+  které přímka nevidí: blond jen v jedné éře, oblíbený fotograf jen u některého typu.
 
-**Cíl** jsou srdíčka upřesněná porovnáním uvnitř úrovně (±0,24) z Bradley–Terry s předpokladem jen ze srdíček, ne
-oblíbenost se skóre fotek: fotky jsou mezi údaji modelu, v cíli by se započítaly podruhé a ověření by vycházelo
-lépe, než model je. Chyba ověření se měří proti samotným srdíčkům.
+**Váha stromů** v průměru z {0; ¼; ½; ¾; 1} se vybere podle chyby na ověření. **Cíl** jsou srdíčka upřesněná
+porovnáním uvnitř úrovně (±0,24) z Bradley–Terry s předpokladem jen ze srdíček, ne oblíbenost se skóre fotek: fotky
+jsou mezi údaji modelu (průměr srdíček fotek i skóre fotek, oddíl Skóre fotek), v cíli by se započítaly podruhé
+a ověření by vycházelo lépe, než model je. Chyba ověření se měří proti samotným srdíčkům (odhad oříznutý na 0,5–5).
 
-λ ∈ {0,5; 2; 8; 32} se vybere **křížovým ověřením** na 5 částech (rozdělení podle čísla modelky). Gramova matice
-se sčítá z řídkých řádků po částech, takže ověření jen odečítá části a řeší malé soustavy Choleským rozkladem.
-Na ověření se měří průměrná odchylka od srdíček, táž chyba prostého průměru a **přesnost** = podíl modelek, u nichž
-zaokrouhlený odhad trefí srdíčka ± půl srdíčka (`StavOblibenosti.presnost`, od 15 hodnocených).
+**Přesnost má přednost před úplností.** Modelky se rozdělí do šesti **skupin podle bohatosti údajů**: se srdíčky
+fotek, nebo bez nich × méně než 5, 5–6, aspoň 7 skupin údajů. Odhad se ukáže (`odhadHodnoceni`, štítek „odhad“)
+jen ve skupině, kde na ověření (aspoň 20 hodnocených, jinak spolu s chudšími skupinami téhož druhu, pak s celým
+druhem) má chybu nejvýš 90 % chyby prostého průměru a přesnost (zaokrouhlený odhad do ± půl srdíčka) aspoň 0,5;
+vždy jen od 30 hodnocených modelek a u modelky s aspoň 4 skupinami údajů. `presnost` v `GetOblibenost` a chyba jsou
+z ověření ukázaných skupin. Na umělé sbírce (níže) jsou odhady modelek bez srdíček fotek a s málo údaji horší než
+prostý průměr – dřív se ukazovaly všem.
 
-**Přesnost má přednost před úplností:** odhady se ukazují jen při aspoň 30 hodnocených modelkách, chybě ověření
-nejvýš 90 % chyby průměru a přesnosti aspoň 0,5; u modelky jen s aspoň 4 skupinami údajů. `GetMohloByTeLibit`
-navíc bere jen odhady od mediánu srdíček sbírky (aspoň 2,5) a mlčí, když vysoké odhady na ověření sedí u méně
-než 60 % (při aspoň 5 takových). **Důvod** jsou tři nejsilnější příspěvky wⱼ·(xⱼ − x̄ⱼ) ve směru odhadu („Odhad
-4½ srdíčka: blond, 70. léta, Pompeo Posar“).
+**„Mohlo by se ti líbit“** je pořadí, ne přesná hodnota: z nehodnocených se ≥ 4 skupinami údajů a odhadem aspoň na
+mediánu srdíček sbírky (aspoň 2,5) bere ty s nejvyšším odhadem, i ze skupin, kde se štítek neukazuje (vysoký odhad
+tam na ověření sedí stejně často, jen jeho hodnota je méně jistá). Mlčí bez platného modelu a když vysoké odhady
+na ověření sedí u méně než 60 % (při aspoň 5 takových); `nejistota` je chyba ověření ve skupině modelky.
 
-Umělá sbírka (200 hodnocených, hodnocení podle vlasů, desetiletí a fotografa se šumem σ = 0,3,
-`TestModelVkusuOvereni`): chyba ověření 0,25 srdíčka proti 0,69 u průměru, přesnost 0,98, vysoké odhady sedí
-v 90 z 96. Náhodné hodnocení ani 20 hodnocených ověřením neprojdou a nic se neodhaduje.
+**Důvod** („Odhad 4 srdíčka: blond, 70. léta, Pompeo Posar; podobně jako Anna (4½) a Bára (4)“): tři nejsilnější
+příspěvky údajů ve směru odchylky od průměru (u regrese wⱼ·(xⱼ − x̄ⱼ), u stromů po cestě stromem rozdíl hodnoty
+uzlu a potomka připadne údaji, podle kterého se dělilo – součet příspěvků a kořenů je přesně odhad; příspěvky
+obou modelů vážené jako v průměru, rok a desetiletí jsou jeden údaj „70. léta“, průměr srdíček fotek a skóre fotek
+jeden údaj o fotkách; jen údaje, které modelka má). Za středníkem dvě nejpodobnější hodnocené modelky se svými
+srdíčky: ty, se kterými padne do stejného listu ve většině stromů (aspoň polovině).
+
+**Vyhodnocení** (`TestVyhodnoceniVkusu`, `TestVyhodnoceniVariantVkusu`, `go test -run Vyhodnoceni -v`; při `-short` se
+přeskočí): umělé sbírky s realistickým rozložením údajů a hodně prázdnými poli (vlasy chybí u 15 %, výška u 30 %,
+míry u 50 %, typ prsou u 60 %, fotografové u 30 %…), simulovaný uživatel hodnotí nelineárně podle *skutečných*
+údajů (i těch, které ve sbírce chybí): blond jen před rokem 1990, černé vlasy až od roku 2000, rozmezí výšky
+165–173 cm, dva oblíbení a jeden neoblíbený fotograf, silikon, tetování, poměr pas/boky, vzácné národnosti, éra,
+k tomu vlastní nevysvětlitelná složka σ = 0,55 a šum; pod 2 srdíčky dává většinou jedno srdíčko, většinou celá
+srdíčka. Srdíčka fotek (u poloviny hodnocených a 12 % nehodnocených) souvisejí s vkusem. Každá modelka má „pravdu“
+(hodnocení, které by jí uživatel dal); model se učí z hodnocených a měří na nehodnocených, které nikdy neviděl.
+Strop: vkus ze skutečných údajů bez vlastní složky má s pravdou Spearmanovo ρ ≈ 0,61; s chybějícími údaji
+a 8 000 hodnocenými dosáhnou stromy asi 0,46.
+
+| Sbírka (semínek) | | dřív (jen regrese) | nyní |
+|---|---|---|---|
+| 400 modelek, 214 hodnocených (6) | MAE všech nehodnocených (průměr 0,709) | 0,691 | 0,680 |
+| | Spearman ρ / precision@10 (pravda ≥ 4) | 0,265 / 0,60 | 0,300 / 0,63 |
+| | model platný / pokrytí odhadů | 2 ze 6 / 0,33 | 6 ze 6 / 0,29 |
+| | ukázané odhady: MAE / přesnost ± ½ (ověření tvrdí) | 0,716 / 0,61 (0,674 / 0,63) | 0,620 / 0,72 (0,605 / 0,68) |
+| | tipy: běhů s tipy / precision@10 | 2 / 0,80 | 6 / 0,63 |
+| 400 modelek, 69 hodnocených (6) | MAE (průměr 0,748) / ρ / precision@10 | 0,744 / 0,205 / 0,53 | 0,743 / 0,222 / 0,70 |
+| | platný / pokrytí / ukázané MAE / přesnost | 4 ze 6 / 0,67 / 0,754 / 0,60 | 6 ze 6 / 0,28 / 0,671 / 0,62 |
+| | tipy: běhů / precision@10 | 4 / 0,50 | 6 / 0,70 |
+| 3000 modelek, 960 hodnocených (3) | MAE (průměr 0,704) / RMSE / ρ / precision@10 | 0,674 / 0,893 / 0,351 / 0,87 | 0,658 / 0,875 / 0,394 / 0,93 |
+| | platný / pokrytí / ukázané MAE / přesnost (ověření tvrdí) | 2 ze 3 / 0,66 / 0,676 / 0,62 (0,65) | 3 ze 3 / 0,47 / 0,618 / 0,66 (0,69) |
+| | tipy: běhů / precision@10 / sedí z tvrzených | 2 / 0,95 / 0,80 z 0,81 | 3 / 0,93 / 0,80 z 0,81 |
+| 400 modelek, náhodný vkus i fotky (6) | model platný | 0 ze 6 | 0 ze 6 |
+
+Pokrytí je podíl nehodnocených s ukázaným odhadem (průměr přes běhy, neplatný běh = 0). Porovnání variant na 12
+semínkách (400) a 3 (3000): samotné stromy jsou na malých sbírkách horší než regrese (ρ 0,275 proti 0,303) a na
+velké lepší (0,381 proti 0,373), průměr obou je nejlepší všude (0,310; 0,243; 0,394); pětiny číselných údajů zlepší
+regresi (ρ 0,287 → 0,303, na 3000 0,348 → 0,373), sloupec „údaj chybí“ ani izotonický převod odhadu na srdíčka
+nepomohly (převod zlepšil MAE, ale zhoršil pořadí a ověření pak přeceňovalo přesnost), porovnání dvojic jako
+další signál nic nezměnilo (ρ ±0,002), údaj o fotkách jako skóre, průměr srdíček nebo obojí vyjde nastejno
+(obojí je výchozí). Skupiny podle bohatosti sníží chybu ukázaných odhadů o 0,03–0,11 srdíčka za cenu menšího
+pokrytí. Ověření tvrdí přesnost ukázaných odhadů s odchylkou do 0,05 (dřív podobně).
 
 **Mezipaměť a výkon:** skóre fotek, váha fotek, BT i model vkusu se počítají najednou v paměti s otiskem (FNV-64a
 z údajů všech modelek včetně srdíček fotek po albech a fotografů, počtu a posledního čísla porovnání a dnešního
@@ -413,5 +463,9 @@ data); GetModelky pak jen doplní čísla z map. Do souboru se výsledek neuklá
 hodnocených, 500 porovnání, `TestVykonOblibenosti`): načtení modelek bez oblíbenosti asi 100 ms, GetModelky
 z paměti asi 105 ms, první výpočet nebo po změně hodnocení asi 130–160 ms (BT + vkus asi 25 ms), výběr 10 dvojic
 asi 120 ms (z toho většinu zabere načtení modelek). Se skóre fotek a učením váhy (`TestVykonNahleduASkore`):
-`spocitatOblibenost` asi 20–30 ms (skóre fotek asi 1 ms, druhý BT pro cíl vkusu a druhá varianta vkusu asi
-polovina), `GetNahledyModelek` pro 6 modelek bez paměti pod 1 ms, z paměti snímku desítky µs.
+`spocitatOblibenost` asi 50 ms (skóre fotek asi 1 ms; model vkusu se stromy asi 30 ms – části ověření regrese
+i stromů a les ze všech hodnocených běží souběžně; dřív dvě varianty regrese a celkem 20–30 ms), `GetOblibenost`
+z paměti asi 35 ms (dřív 10 ms; důvod odhadu ze stromů u 3000 modelek asi 17 ms), `GetNahledyModelek` pro 6
+modelek bez paměti pod 1 ms, z paměti snímku desítky µs. Na realistické umělé sbírce (`TestVyhodnoceniVkusu`,
+3000 modelek, 1000 hodnocených s 150 hodnotami údajů) trvá `spocitatOblibenost` dřív i nyní asi 45 ms, se 1800
+hodnocenými asi 62 ms; GetModelky z paměti se nemění (asi 2 ms).

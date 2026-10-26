@@ -34,6 +34,8 @@ export function GetClankyModelky(arg1:number):Promise<Array<main.Clanek>>;
 
 export function GetCovery():Promise<Array<main.Fotografie>>;
 
+export function GetDuvodOdhadu(arg1:number):Promise<string>;
+
 export function GetDvojiceKPorovnani(arg1:number,arg2:string):Promise<Array<main.DvojicePorovnani>>;
 
 export function GetFotkyVyberu(arg1:number):Promise<Array<main.Fotografie>>;

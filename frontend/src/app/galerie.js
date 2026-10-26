@@ -1,8 +1,9 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
-import { GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
+import { GetDuvodOdhadu, GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
 import { contextMenu } from '../ui/nabidka';
 import { EDICE, VYSKYT, bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, kategorieModelky, rozlozitVydani, seraditModelky, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
+import { poZmeneDat } from './udalosti';
 import { stav } from './stav';
 import { otevritRychlePridani } from './formular-modelky';
 import { importovatData, otevritHeslo } from './sprava';
@@ -39,15 +40,32 @@ export function htmlSrdicka(modelka, tabem = true) {
     return htmlSrdicekModelky(modelka.hodnoceni, `data-hodnoceni="${modelka.id}"`, { tabem, popis: `Hodnocení – ${esc(modelka.jmeno)}` });
 }
 
-// Důvody odhadů z posledního načtení Oblíbenosti (id modelky → věta), aby je štítek odhadu ukázal v nápovědě
+// Důvody odhadů (id modelky → věta) z posledního načtení Oblíbenosti nebo z prvního najetí na štítek, aby je
+// štítek odhadu ukázal v nápovědě; změna dat je zahodí (model vkusu se přeučí)
 export const duvodyOdhadu = new Map();
+poZmeneDat(() => duvodyOdhadu.clear());
+
+const nadpisOdhadu = duvod => `Odhad podle tvého vkusu, zatím nehodnoceno${duvod ? ` – ${duvod}` : ''}`;
 
 // Tlumený štítek „odhad 3½“ u nehodnocené modelky: odhad modelu vkusu, ne skutečné hodnocení
 export function htmlOdhadu(modelka, tridy = '') {
     if (!ukazatOdhad(modelka)) return '';
-    const duvod = duvodyOdhadu.get(modelka.id);
-    return `<span class="odhad-chip ${tridy}" data-odhad="${modelka.id}" title="${esc(`Odhad podle tvého vkusu, zatím nehodnoceno${duvod ? ` – ${duvod}` : ''}`)}">odhad ${kratceSrdicka(modelka.odhadHodnoceni)}</span>`;
+    return `<span class="odhad-chip ${tridy}" data-odhad="${modelka.id}" title="${esc(nadpisOdhadu(duvodyOdhadu.get(modelka.id)))}">odhad ${kratceSrdicka(modelka.odhadHodnoceni)}</span>`;
 }
+
+// Štítek odhadu bez známého důvodu si ho při najetí myší načte (nápověda se ukáže až po chvíli, do té doby je tu)
+document.addEventListener('mouseover', async e => {
+    const stitek = e.target instanceof Element ? e.target.closest('.odhad-chip[data-odhad]') : null;
+    if (!(stitek instanceof HTMLElement) || stitek.dataset.duvodNacten) return;
+    stitek.dataset.duvodNacten = '1';
+    const id = parseInt(stitek.dataset.odhad || '');
+    if (!duvodyOdhadu.has(id)) {
+        const duvod = await GetDuvodOdhadu(id).catch(() => '');
+        if (duvod) duvodyOdhadu.set(id, duvod);
+    }
+    const duvod = duvodyOdhadu.get(id);
+    if (duvod && !stitek.closest('.ob-tip')) stitek.title = nadpisOdhadu(duvod);
+});
 
 // Srdíčka fotky; index míří do seznamu položek právě zobrazeného pohledu
 export function htmlSrdickaFotky(polozka, index) {

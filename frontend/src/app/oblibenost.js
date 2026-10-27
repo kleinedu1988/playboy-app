@@ -16,7 +16,7 @@
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, GetSoubojeModelky, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, klicNavrhu, kratceSrdicka, pruhySily, skryteNavrhy, skrytNavrh, textModeluVkusu, textSrdicek, vetaNesouladu, zKolika, znakySrdicek } from '../lib/srdicka';
-import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, poctyCekajicich, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyFotek, textVahyZajmu, urovenModelky, vysledekRozhodnuti } from '../lib/oblibenost';
+import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, poctyCekajicich, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyFotek, textVahyZajmu, urovenModelky, vysledekOvereni, vysledekRozhodnuti } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
@@ -50,7 +50,7 @@ let porovnanoOdObnoveni = 0;
 const porovnaneOdObnoveni = new Set(); // modelky porovnané od posledního obnovení (oznámení o postupu do úrovně)
 // „Rozhodnout teď“: série soubojů jedné modelky na začátku fronty (dvojice = objekty ve frontě), úroveň, o kterou jde,
 // jestli ji modelka obhajovala, a po dokončení výsledek { ok, text }
-/** @type {{ id: number, uroven: number, obhajovala: boolean, dvojice: Set<object>, celkem: number, vysledek: { ok: boolean, text: string } | null, konci: boolean } | null} */
+/** @type {{ id: number, uroven: number, obhajovala: boolean, nesoulad: { hodnoceni: number, navrh: number } | null, dvojice: Set<object>, celkem: number, vysledek: { ok: boolean, text: string, navrh?: number } | null, konci: boolean } | null} */
 let serie = null;
 
 // Nejlepší fotky modelek pro galerii obou (id modelky → [{ id, url, album, typ, hodnoceni, rotace }]) a rozpracovaná
@@ -219,7 +219,8 @@ function htmlNavrhu(id, navrh, nesoulad, nehodnocena = null) {
         : `Nehodnocená ${jmeno} vychází po ${nehodnocena.porovnani} porovnáních (výhry ${String(nehodnocena.vyhry).replace('.', ',')}) na <b>${kratceSrdicka(navrh)} ♥</b>`;
     return { klic, html: `<span>${veta}</span>
         <button type="button" class="btn btn-primary btn-small" data-ob-navrh-ano="${klic}">Dát jí ${kratceSrdicka(navrh)} ♥</button>
-        <button type="button" class="link" data-ob-navrh-ne="${klic}">Nechat</button>` };
+        <button type="button" class="link" data-ob-navrh-ne="${klic}">Nechat</button>${nesoulad ? `
+        <button type="button" class="link" data-ob-rozhodnout="${id}" title="Čtyři porovnání s modelkami z úrovně, kam podle nesouladu patří – pak bude jasné, jestli srdíčka změnit">⚔ Ověřit porovnáním</button>` : ''}` };
 }
 
 // Po porovnání: návrh pro jednu z modelek dvojice, když ho backend má a nebyl odmítnut
@@ -495,7 +496,7 @@ async function vybrat(vysledek) {
     // Souboj na hranici úrovně se přepočte hned (úrovně a štítky v pásech ukážou výsledek), jinak po pěti porovnáních;
     // poslední souboj série „Rozhodnout teď“ přepočte a vyhodnotí dokončení série
     if (serie && !serie.vysledek && !zbyvaSerie()) dokoncitSerii();
-    else if (++porovnanoOdObnoveni >= 5 || d.druh === 'souboj') obnovitPrehled();
+    else if (++porovnanoOdObnoveni >= 5 || d.druh === 'souboj' || d.druh === 'overeni') obnovitPrehled();
 }
 
 // Další dvojice s krátkým přechodem: vybraná se rozzáří, obě zmizí, nové se objeví
@@ -556,7 +557,10 @@ async function rozhodnoutTed(id) {
     const jmeno = modelka(id)?.jmeno || 'Modelka';
     if (!dvojice.length) return oznamit(`${jmeno} zatím do souboje nejde – nejdřív ji pár běžných porovnání zařadí.`);
     const p = polozkaPoradi(id);
-    serie = { id, uroven: Number(p?.obhajoba?.uroven || p?.ceka?.uroven) || 0, obhajovala: !!p?.obhajoba, dvojice: new Set(dvojice), celkem: dvojice.length, vysledek: null, konci: false };
+    // Ověření srdíček (nesoulad): dvojice s druhem „overeni“
+    const ns = dvojice[0].druh === 'overeni' ? (data.oblibenost?.nesedi || []).find(n => n.modelkaId === id) : null;
+    serie = { id, uroven: Number(p?.obhajoba?.uroven || p?.ceka?.uroven) || 0, obhajovala: !!p?.obhajoba, nesoulad: ns ? { hodnoceni: ns.hodnoceni, navrh: ns.navrh } : null,
+        dvojice: new Set(dvojice), celkem: dvojice.length, vysledek: null, konci: false };
     fronta = [...dvojice, ...fronta];
     zobrazitNavrhPodPasy(null);
     ukazatCastOblibenosti('porovnani');
@@ -573,8 +577,23 @@ async function dokoncitSerii() {
     await obnovitPrehled();
     if (serie !== s) return;
     s.konci = false;
-    s.vysledek = vysledekRozhodnuti({ jmeno: modelka(s.id)?.jmeno, uroven: s.uroven, obhajovala: s.obhajovala, ted: polozkaPoradi(s.id) });
+    s.vysledek = s.nesoulad
+        ? vysledekOvereni({ jmeno: modelka(s.id)?.jmeno, hodnoceni: s.nesoulad.hodnoceni, ted: (data.oblibenost?.nesedi || []).find(n => n.modelkaId === s.id) })
+        : vysledekRozhodnuti({ jmeno: modelka(s.id)?.jmeno, uroven: s.uroven, obhajovala: s.obhajovala, ted: polozkaPoradi(s.id) });
     vykreslitSerii();
+}
+
+// Výsledek ověření potvrdil nesoulad: navržená srdíčka jedním klikem
+async function prijmoutNavrhSerie() {
+    const s = serie;
+    const navrh = s?.vysledek?.navrh;
+    if (!navrh) return;
+    if (!await SetHodnoceni(s.id, navrh)) return oznamit('Hodnocení se nepodařilo uložit.');
+    const m = modelka(s.id);
+    if (m) m.hodnoceni = navrh;
+    oznamit(`${m?.jmeno || 'Modelka'} má teď ${textSrdicek(navrh)}.`);
+    ukoncitSerii();
+    obnovitPrehled();
 }
 
 function ukoncitSerii() {
@@ -599,12 +618,13 @@ function vykreslitSerii() {
     if (serie.vysledek) {
         misto.dataset.vysledek = serie.vysledek.ok ? 'ano' : 'ne';
         return nastavitHtml(misto, `<span class="ob-serie-text">${serie.vysledek.ok ? '✓' : '·'} ${esc(serie.vysledek.text)}</span>
+            ${serie.vysledek.navrh ? `<button type="button" class="btn btn-primary btn-small" data-ob-serie-navrh>Dát jí ${esc(kratceSrdicka(serie.vysledek.navrh))} ♥</button>` : ''}
             <button type="button" class="link" data-ob-serie-poradi>Zpět na Pořadí</button>
             <button type="button" class="link" data-ob-serie-konec>Pokračovat v porovnávání</button>`);
     }
     delete misto.dataset.vysledek;
     const hotovo = serie.celkem - zbyvaSerie();
-    nastavitHtml(misto, `<span class="ob-serie-text">⚔ Rozhodnout teď: <b>${jmeno}</b> ${serie.obhajovala ? 'obhajuje' : 'o'} ${esc(cil)}
+    nastavitHtml(misto, `<span class="ob-serie-text">⚔ ${serie.nesoulad ? `Ověřit srdíčka: <b>${jmeno}</b> (${esc(kratceSrdicka(serie.nesoulad.hodnoceni))} ♥)` : `Rozhodnout teď: <b>${jmeno}</b> ${serie.obhajovala ? 'obhajuje' : 'o'} ${esc(cil)}`}
             · ${serie.konci ? 'vyhodnocuji…' : `souboj ${Math.min(hotovo + 1, serie.celkem)} ${zKolika(serie.celkem)}`}</span>
         <span class="ob-serie-postup" aria-hidden="true"><i style="width:${Math.round(100 * hotovo / serie.celkem)}%"></i></span>
         <button type="button" class="link" data-ob-serie-konec title="Vrátit se k běžnému mixu dvojic">Ukončit</button>`);
@@ -633,6 +653,7 @@ export function pripravit() {
         if (volba) vybrat(volba);
         else if (e.target.closest('[data-ob-rozhodnout]')) rozhodnoutTed(Number(e.target.closest('[data-ob-rozhodnout]').dataset.obRozhodnout));
         else if (e.target.closest('[data-ob-serie-konec]')) ukoncitSerii();
+        else if (e.target.closest('[data-ob-serie-navrh]')) prijmoutNavrhSerie();
         else if (e.target.closest('[data-ob-serie-poradi]')) { ukoncitSerii(); ukazatCastOblibenosti('poradi'); }
         else if (e.target.closest('[data-ob-preskocit]')) preskocit();
         else if (e.target.closest('[data-ob-vratit]')) vratit();

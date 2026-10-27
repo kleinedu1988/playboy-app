@@ -17,7 +17,7 @@ type DvojicePorovnani struct {
 	A     int    `json:"a"`
 	B     int    `json:"b"`
 	Duvod string `json:"duvod"` // proč právě tahle dvojice (česky)
-	Druh  string `json:"druh"`  // "souboj" u soubojů na hranicích top 10/20/50/100, jinak ""
+	Druh  string `json:"druh"`  // "souboj" u soubojů na hranicích top 10/20/50/100, "overeni" u ověření srdíček, jinak ""
 }
 
 // Parametry výběru dvojic
@@ -114,10 +114,12 @@ const (
 	dvojiceCekajici           // souboj: čekající na potvrzení úrovně proti poslední potvrzené
 	dvojiceHranice            // souboj: N. proti N+1. místu
 	dvojiceObhajoba           // souboj: vyzyvatelka proti držitelce, která místo obhajuje
+	dvojiceOvereni            // ověření srdíček: modelka s nesouladem proti úrovni, kam podle něj patří
 )
 
+// Souboje a ověření srdíček jdou ze zvláštního seznamu (oblibenost_urovne.go) s důvodem z duvodSouboje
 func jeSouboj(druh int) bool {
-	return druh == dvojiceCekajici || druh == dvojiceHranice || druh == dvojiceObhajoba
+	return druh == dvojiceCekajici || druh == dvojiceHranice || druh == dvojiceObhajoba || druh == dvojiceOvereni
 }
 
 func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
@@ -309,7 +311,9 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 			a, b = b, a
 		}
 		d := DvojicePorovnani{A: a, B: b, Duvod: duvod}
-		if jeSouboj(k.druh) {
+		if k.druh == dvojiceOvereni {
+			d.Druh = "overeni"
+		} else if jeSouboj(k.druh) {
 			d.Druh = "souboj"
 		}
 		vysledek = append(vysledek, d)

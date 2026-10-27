@@ -147,7 +147,8 @@ function vykreslit() {
         ${htmlOdhadu(p, m)}
         <div class="hod-ovladani">
             ${enter ? `<button type="button" class="btn btn-primary btn-small" data-hod-prijmout title="${p.druh === 'nesedi' ? 'Dát jí návrh' : 'Dát jí odhad'} (Enter)"><kbd>Enter</kbd> Dát ${esc(kratceSrdicka(enter))} ♥</button>` : ''}
-            ${p.druh === 'nesedi' ? `<button type="button" class="btn btn-secondary btn-small" data-hod-nechat title="Srdíčka nechat a návrh už nenabízet (N)"><kbd>N</kbd> Nechat ${esc(kratceSrdicka(p.hodnoceni))} ♥</button>` : ''}
+            ${p.druh === 'nesedi' ? `<button type="button" class="btn btn-secondary btn-small" data-hod-nechat title="Srdíčka nechat a návrh už nenabízet (N)"><kbd>N</kbd> Nechat ${esc(kratceSrdicka(p.hodnoceni))} ♥</button>
+                <button type="button" class="link" data-ob-rozhodnout="${p.modelkaId}" title="Čtyři porovnání s modelkami z úrovně, kam podle nesouladu patří (přepne do Porovnávání)">⚔ Ověřit porovnáním</button>` : ''}
             <span class="hod-klavesy"><kbd>1</kbd>–<kbd>5</kbd> srdíčka · půlky klikem na srdíčka</span>
             <span class="oddelovac"></span>
             <button type="button" class="link" data-hod-preskocit title="Přeskočit – příště bude až na konci (S)">Přeskočit <kbd>S</kbd></button>

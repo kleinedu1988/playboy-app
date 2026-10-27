@@ -476,6 +476,17 @@ směrem, položky se spojí (`zdroj: "oba"`, řadí se napřed), proti sobě pla
 prvních 8 a „Zobrazit všech“. V pásu porovnání je u jména skóre fotek („fotky 4,3“). V Pořadí je oddíl „Nesedí se srdíčky“ s „Dát jí 4 ♥“ a „Nechat“ (pamatuje se pro dané srdíčka a návrh),
 v Porovnávání odkaz s počtem.
 
+
+**Ověření porovnáním.** Ověřovací porovnání v běžném mixu jsou většinou se stejnou úrovní a o tom, jestli modelka
+patří výš nebo níž, moc neřeknou. Proto modelka s nesouladem dostává ve výběru dvojic cíleně soupeřky z úrovně, kam
+podle nesouladu patří (`souperkyOvereni`): úroveň návrhu a o půl srdíčka dál ve směru nesouladu (podhodnocená trojka
+proti 3½ a čtyřkám, nadhodnocená proti 2½ a dvojkám), z každé úrovně ta silou nejbližší úrovni (typická zástupkyně).
+Jdou ze seznamu soubojů (dvě na modelku, váha 2 × 0,45, druhá × 0,8), dvojice má `druh: "overeni"` a důvod „Ověření
+srdíček: Anna má 3 srdíčka, ale porovnání ji staví výš – patří spíš na 3½ srdíčka? Soupeřka Bára (4 srdíčka)“; po
+porovnání se pořadí hned přepočte. U nesouladu v Pořadí i v Hodnocení je „⚔ Ověřit porovnáním“: série čtyř takových
+porovnání hned za sebou (`GetSoubojeModelky`, jako Rozhodnout teď). Po ní pruh řekne, jestli porovnání nesoulad
+potvrdila („patří jí spíš 3½ ♥ místo 3 ♥“ s tlačítkem „Dát jí 3½ ♥“), nebo ne („3 ♥ jí sedí“).
+
 ## Úrovně Top 10/20/50/100
 
 Do špičky oblíbenosti se modelka nedostane jen proto, že má hodně srdíček nebo vysoký odhad (`oblibenost_urovne.go`).

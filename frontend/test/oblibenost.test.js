@@ -192,3 +192,10 @@ test('rychlé hodnocení: fronta, přeskočené a klávesy', async () => {
     assert.equal(srdickaKlavesy({ code: 'Digit6' }), 0);
     assert.equal(srdickaKlavesy({ code: 'KeyS' }), 0);
 });
+
+test('ověření srdíček: výsledek a nadpis', async () => {
+    const { vysledekOvereni, nadpisSouboje } = await import('../src/lib/oblibenost.js');
+    assert.deepEqual(vysledekOvereni({ jmeno: 'Anna', hodnoceni: 3, ted: { navrh: 3.5 } }), { ok: true, navrh: 3.5, text: 'Anna: porovnání to potvrdila – patří jí spíš 3½ ♥ místo 3 ♥.' });
+    assert.deepEqual(vysledekOvereni({ jmeno: 'Anna', hodnoceni: 4.5, ted: null }), { ok: false, navrh: 0, text: 'Anna: porovnání nesoulad nepotvrdila – 4½ ♥ jí sedí.' });
+    assert.equal(nadpisSouboje({ druh: 'overeni', duvod: 'Ověření srdíček: …' }), 'Ověření srdíček');
+});

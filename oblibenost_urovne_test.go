@@ -687,3 +687,59 @@ func TestSoubojeModelky(t *testing.T) {
 		t.Errorf("držitelka: %+v", d)
 	}
 }
+
+// Ověření srdíček: modelka s nesouladem dostane soupeřky z úrovně návrhu a o půl srdíčka dál (ve výběru i v sérii
+// Rozhodnout teď), dvojice mají druh "overeni"
+func TestOvereniSrdicek(t *testing.T) {
+	var modelky []Modelka
+	m := &modelOblibenosti{oblibenost: map[int]float64{}, pocet: map[int]int{}, rozptyl: map[int]float64{}, jenOdhad: map[int]bool{}}
+	srdicka := []float64{3, 3, 3, 3.5, 3.5, 3.5, 4, 4, 4, 2.5, 2}
+	for i, h := range srdicka {
+		id := i + 1
+		modelky = append(modelky, Modelka{ID: id, Jmeno: fmt.Sprintf("M%02d", id), Hodnoceni: h})
+		m.oblibenost[id], m.pocet[id], m.rozptyl[id] = h+0.01*float64(i%3), 5, 0.04
+	}
+	m.oblibenost[4], m.oblibenost[5] = 3.6, 3.5 // pátá nejblíž úrovni 3½
+	m.oblibenost[7], m.oblibenost[8] = 4.2, 4.0 // osmá nejblíž čtyřkám
+	m.nesoulad = map[int]NesouladSrdicek{1: {ModelkaID: 1, Hodnoceni: 3, Navrh: 3.5, Smer: "vice", Porovnani: 4, Vysledky: 3}}
+	podleId := map[int]*Modelka{}
+	for i := range modelky {
+		podleId[modelky[i].ID] = &modelky[i]
+	}
+	ids := func(v []*Modelka) string {
+		s := ""
+		for _, y := range v {
+			s += fmt.Sprintf("%d ", y.ID)
+		}
+		return s
+	}
+	if s := ids(m.souperkyOvereni(podleId[1], podleId, 4)); s != "5 8 6 9 " {
+		t.Errorf("soupeřky podhodnocené trojky: %s", s)
+	}
+	m.nesoulad[1] = NesouladSrdicek{ModelkaID: 1, Hodnoceni: 3, Navrh: 2.5, Smer: "mene"}
+	if s := ids(m.souperkyOvereni(podleId[1], podleId, 4)); s != "10 11 " {
+		t.Errorf("soupeřky nadhodnocené trojky: %s", s)
+	}
+	m.nesoulad[1] = NesouladSrdicek{ModelkaID: 1, Hodnoceni: 3, Navrh: 3.5, Smer: "vice", Porovnani: 4, Vysledky: 3}
+	m.poradi, m.mistoSily = map[int]int{}, map[int]int{}
+	for i := range modelky {
+		m.poradi[modelky[i].ID], m.mistoSily[modelky[i].ID] = len(modelky)-i, len(modelky)-i
+	}
+	d := m.soubojeModelky(modelky, 1)
+	if len(d) != 4 || d[0].Druh != "overeni" || d[0].B != 5 || !strings.Contains(d[0].Duvod, "Ověřit srdíčka: M01 má 3 srdíčka, porovnání ji staví výš") {
+		t.Errorf("série ověření: %+v", d)
+	}
+	k := m.kandidatiSouboju(modelky, nil, func(*Modelka) float64 { return 1 })
+	var overeni int
+	for _, x := range k {
+		if x.druh == dvojiceOvereni {
+			overeni++
+			if x.a != 1 || !strings.HasPrefix(duvodSouboje(x, m), "Ověření srdíček: M01 má 3 srdíčka, ale porovnání ji staví výš – patří spíš na 3½ srdíčka?") {
+				t.Errorf("ověření: %+v %q", x, duvodSouboje(x, m))
+			}
+		}
+	}
+	if overeni != 2 {
+		t.Errorf("kandidátů ověření %d", overeni)
+	}
+}

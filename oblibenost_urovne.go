@@ -82,7 +82,59 @@ const (
 	blizkoSouboje     = 0.15
 	// Souboj o obhajobu má před ostatními souboji přednost (váha čekající proti poslední potvrzené je nejvýš 1)
 	vahaObhajoby = 1.5
+	// Ověření srdíček (modelka s nesouladem proti úrovni, kam podle něj patří): po obhajobě a soubojích o top 10;
+	// váha úrovně se nepočítá (vahySouboju[k] násobí), proto vyšší základ
+	vahaOvereni = 2.0
 )
+
+// Soupeřky pro ověření srdíček modelky s nesouladem: z úrovně návrhu a o půl srdíčka dál ve směru nesouladu (podhodnocená
+// trojka proti 3½ a čtyřkám, nadhodnocená proti 2½ a dvojkám), z každé úrovně ta silou nejbližší úrovni (typická
+// zástupkyně), střídavě; nejvýš pocet
+func (m *modelOblibenosti) souperkyOvereni(x *Modelka, podleId map[int]*Modelka, pocet int) []*Modelka {
+	n, ok := m.nesoulad[x.ID]
+	if !ok {
+		return nil
+	}
+	krok := 0.5
+	if n.Smer == "mene" {
+		krok = -0.5
+	}
+	urovne := []float64{n.Hodnoceni + krok, n.Hodnoceni + 2*krok}
+	podleUrovne := make([][]*Modelka, len(urovne))
+	for _, y := range podleId {
+		if y.ID == x.ID || !m.doSouboje(y) {
+			continue
+		}
+		for i, u := range urovne {
+			if y.Hodnoceni == u {
+				podleUrovne[i] = append(podleUrovne[i], y)
+			}
+		}
+	}
+	for i, u := range urovne {
+		sort.Slice(podleUrovne[i], func(a, b int) bool {
+			da, db := math.Abs(m.oblibenost[podleUrovne[i][a].ID]-u), math.Abs(m.oblibenost[podleUrovne[i][b].ID]-u)
+			if da != db {
+				return da < db
+			}
+			return podleUrovne[i][a].ID < podleUrovne[i][b].ID
+		})
+	}
+	var v []*Modelka
+	for k := 0; len(v) < pocet; k++ {
+		pridano := false
+		for i := range urovne {
+			if k < len(podleUrovne[i]) && len(v) < pocet {
+				v = append(v, podleUrovne[i][k])
+				pridano = true
+			}
+		}
+		if !pridano {
+			break
+		}
+	}
+	return v
+}
 
 // Obhajoba platí pro úrovně do top N (proměnná kvůli simulaci v testu). V simulaci (16 semínek, 1500 porovnání)
 // obhajoba do top 50 snížila výpadky skutečné top 10 z potvrzené top 10 z 1,8 na 1,2 bez ztráty přesnosti
@@ -438,7 +490,8 @@ func (m *modelOblibenosti) urovneTop() []UrovenTop {
 // ---------------------------------------------------------------------------------------------------------
 // Souboje na hranicích (výběr dvojic)
 //
-// Dva druhy kandidátů, jen ve výchozím okruhu: (a) čekající modelka proti poslední potvrzené v úrovni, kam by podle
+// Druhy kandidátů, jen ve výchozím okruhu: (o) vyzyvatelka proti držitelce (obhajoba), (v) ověření srdíček – modelka
+// s nesouladem proti dvěma typickým zástupkyním úrovně, kam podle něj patří (váha 2 × 0,45, druhá × 0,8), (a) čekající modelka proti poslední potvrzené v úrovni, kam by podle
 // síly patřila (tu by vytlačila; nejvýš 3 soupeřky odspodu, když úroveň potvrzenou nemá nikoho, sousedky podle síly),
 // (b) N. proti N+1. místu potvrzeného pořadí, když se jejich oblíbenost liší nejvýš o 0,15. Do souboje nejde jen
 // odhad (nehodnocená neporovnaná – tu porovnává kotva na úrovni odhadu) ani nehodnocená, jejíž úroveň ještě není
@@ -525,6 +578,20 @@ func (m *modelOblibenosti) kandidatiSouboju(modelky []Modelka, vyloucene map[[2]
 			}
 		}
 	}
+	// (v) ověření srdíček: modelka s nesouladem proti úrovni, kam podle něj patří (souperkyOvereni)
+	for _, x := range podleSily {
+		if x == nil {
+			continue
+		}
+		if _, ok := m.nesoulad[x.ID]; !ok || !m.doSouboje(x) {
+			continue
+		}
+		vaha := vahaOvereni
+		for _, y := range m.souperkyOvereni(x, podleId, 2) {
+			pridat(x, y, vaha, dvojiceOvereni, len(prahyUrovni)-1)
+			vaha *= 0.8
+		}
+	}
 	// (b) N. proti N+1. místu, když jsou si silou blízko
 	for k, p := range prahyUrovni {
 		if p.uroven >= len(poradi) {
@@ -554,6 +621,15 @@ func duvodSouboje(k kandidatDvojice, model *modelOblibenosti) string {
 			return fmt.Sprintf("modelka č. %d", x.ID)
 		}
 		return x.Jmeno
+	}
+	if k.druh == dvojiceOvereni {
+		n := model.nesoulad[k.x.ID]
+		kam := "výš"
+		if n.Smer == "mene" {
+			kam = "níž"
+		}
+		return fmt.Sprintf("Ověření srdíček: %s má %s, ale porovnání ji staví %s – patří spíš na %s? Soupeřka %s (%s)",
+			jmeno(k.x), textSrdicek(n.Hodnoceni), kam, textSrdicek(n.Navrh), jmeno(k.y), textSrdicek(k.y.Hodnoceni))
 	}
 	if k.druh == dvojiceObhajoba {
 		return fmt.Sprintf("Obhajoba top %d: %s (%d.) brání místo, %s (%d.) ji silou předstihla – rozhodne jejich souboj", k.urovenTop,
@@ -604,10 +680,13 @@ func (m *modelOblibenosti) posledniVUrovni(uroven int) int {
 // Čekající dostane tolik soubojů, kolik jí chybí porovnání (při vysoké nejistotě o dva víc), nejméně 2 a nejvýš 6:
 // soupeřky jsou potvrzené v úrovni, kam míří, odspodu (poslední potvrzená napřed – tu by vytlačila); potřebuje-li
 // výhru nad top 20 a úroveň nikoho potvrzeného nemá, potvrzené v top 20; zbytek doplní sousedky podle síly.
+// Hodnocená s nesouladem se srdíčky (Nesedí se srdíčky) dostane 4 ověření proti úrovni, kam podle něj patří
+// (souperkyOvereni), dvojice s druhem "overeni".
 
 const (
 	minSoubojuRozhodnuti = 2
 	maxSoubojuRozhodnuti = 6
+	soubojuOvereni       = 4 // série ověření srdíček: 2 z úrovně návrhu a 2 o půl srdíčka dál
 )
 
 // Série soubojů pro modelku (prázdná, když nečeká ani neobhajuje, nebo ještě do souboje nesmí)
@@ -661,6 +740,17 @@ func (m *modelOblibenosti) soubojeModelky(modelky []Modelka, id int) []DvojicePo
 	}
 	c, ok := m.ceka[id]
 	if !ok {
+		// Nesoulad se srdíčky: série ověření proti úrovni, kam podle něj patří
+		if ns, jeNesoulad := m.nesoulad[id]; jeNesoulad {
+			kam := "výš"
+			if ns.Smer == "mene" {
+				kam = "níž"
+			}
+			for _, y := range m.souperkyOvereni(x, podleId, soubojuOvereni) {
+				v = append(v, DvojicePorovnani{A: x.ID, B: y.ID, Druh: "overeni",
+					Duvod: fmt.Sprintf("Ověřit srdíčka: %s má %s, porovnání ji staví %s – soupeřka %s (%s)", jmeno(x), textSrdicek(ns.Hodnoceni), kam, jmeno(y), textSrdicek(y.Hodnoceni))})
+			}
+		}
 		return v
 	}
 	n := c.PotrebaPorovnani - c.Porovnani

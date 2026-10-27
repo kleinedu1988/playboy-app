@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.58] – 2026-10-27
+
+### Přidáno
+- **Ověření srdíček porovnáním:** modelka, které nesedí srdíčka, dostává v Porovnávání cíleně soupeřky z úrovně, kam podle nesouladu patří. Podhodnocená trojka jde proti 3½ a čtyřkám, nadhodnocená proti 2½ a dvojkám. Nad pásy je štítek „⚔ Ověření srdíček“.
+  - U nesouladu v Pořadí i v Hodnocení je „⚔ Ověřit porovnáním“. Spustí čtyři taková porovnání hned za sebou s ukazatelem postupu.
+  - Na konci pruh řekne, jestli porovnání nesoulad potvrdila („patří jí spíš 3½ ♥ místo 3 ♥“ s tlačítkem „Dát jí 3½ ♥“), nebo ne („3 ♥ jí sedí“).
+
 ## [0.99.57] – 2026-10-27
 
 ### Změněno

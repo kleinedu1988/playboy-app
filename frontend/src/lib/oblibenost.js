@@ -194,6 +194,7 @@ export function textCekajicich(pocty, celkem = 0) {
 // Nadpis souboje nad pásy z dvojice (druh „souboj“) a úrovní obou modelek: „Souboj o Top 10“, u dvojice
 // o potvrzení čekající „O postup do Top 10“; jiná dvojice ''
 export function nadpisSouboje(dvojice, a = null, b = null) {
+    if (dvojice?.druh === 'overeni') return 'Ověření srdíček';
     if (dvojice?.druh !== 'souboj') return '';
     const duvod = String(dvojice.duvod || '');
     const zDuvodu = Number(duvod.match(/top\s*(\d+)/i)?.[1]) || 0;
@@ -235,4 +236,15 @@ export function vysledekRozhodnuti({ jmeno, uroven, obhajovala = false, ted = nu
     const chybi = chybiKUrovni(ted?.ceka);
     const proc = Number(ted?.ceka?.drzitelka) > 0 ? ' – místo dál obhajuje držitelka' : chybi.length ? ` – chybí ${chybi.join(', ')}` : '';
     return { ok: false, text: `${kdo} zatím nepostoupila do ${u}${proc}.` };
+}
+
+// Výsledek série ověření srdíček (nesoulad) po přepočtu: ted = položka nesouladu teď (nebo null, když zmizel).
+// { ok, text, navrh } – navrh = srdíčka, která porovnání potvrdila (rozhraní je nabídne jedním klikem)
+export function vysledekOvereni({ jmeno, hodnoceni, ted = null }) {
+    const kdo = jmeno || 'Modelka';
+    const h = String(hodnoceni).replace('.5', '½');
+    if (Number(ted?.navrh) > 0) {
+        return { ok: true, navrh: Number(ted.navrh), text: `${kdo}: porovnání to potvrdila – patří jí spíš ${String(ted.navrh).replace('.5', '½')} ♥ místo ${h} ♥.` };
+    }
+    return { ok: false, navrh: 0, text: `${kdo}: porovnání nesoulad nepotvrdila – ${h} ♥ jí sedí.` };
 }

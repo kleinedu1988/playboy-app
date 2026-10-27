@@ -11181,7 +11181,7 @@ span.ud-chip {
 
 .ob-nesedi-seznam li {
     display: grid;
-    grid-template-columns: 16px minmax(0, 1fr) auto auto;
+    grid-template-columns: 16px minmax(0, 1fr) auto auto auto;
     align-items: center;
     gap: 10px;
     padding: 7px 0;
@@ -11195,6 +11195,13 @@ span.ud-chip {
 
 .ob-nesedi-seznam .link {
     font-size: 13px;
+    white-space: nowrap;
+}
+
+/* Ověřit porovnáním: méně výrazné než Dát jí a Nechat */
+[data-ob-rozhodnout].link {
+    color: var(--accent-text);
+    white-space: nowrap;
 }
 
 .ob-nesedi-odkaz {

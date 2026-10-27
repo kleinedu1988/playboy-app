@@ -11280,3 +11280,199 @@ span.ud-chip {
         display: none;
     }
 }
+
+/* ——— Úrovně oblíbenosti Top 10 / 20 / 50 / 100 (oblibenost.js, porovnani-pasy.js, profil, karty, úvod) ——— */
+/* Porovnávání: štítek souboje o místo na hranici úrovně nad švem obou pásů; leží přes mezeru, nic neposouvá
+   a kliky propouští */
+.ob-dvojice-obal {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.ob-souboj {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 3;
+    padding: 3px 14px;
+    border: 1px solid rgba(255, 64, 129, 0.55);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+    color: var(--accent-text);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.17s ease;
+}
+
+.ob-dvojice.odchazi + .ob-souboj {
+    opacity: 0;
+}
+
+.ob-duvod.souboj {
+    color: var(--accent-text);
+}
+
+/* Úroveň modelky v pásu: potvrzená jako plná pilulka, čekající čárkovaně (jako odhad – ještě to není jisté) */
+.pas-uroven {
+    max-width: 100%;
+    overflow: hidden;
+    padding: 1px 8px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background-color: rgba(216, 27, 96, 0.35);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: help;
+}
+
+.pas-uroven.ceka {
+    border: 1px dashed rgba(255, 255, 255, 0.4);
+    background-color: rgba(0, 0, 0, 0.35);
+    color: rgba(255, 255, 255, 0.85);
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+/* Pořadí: oddělovač úrovně s počtem potvrzených a linkou do konce řádku */
+.ob-poradi .ob-uroven {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 12px 6px 4px;
+    color: var(--accent-text);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.ob-poradi .ob-uroven:first-child {
+    margin-top: 0;
+}
+
+.ob-poradi .ob-uroven::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    align-self: center;
+    background-color: var(--panel-okraj);
+}
+
+.ob-poradi .ob-uroven small {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+/* Čekající na potvrzení vyšší úrovně: jemně podbarvený řádek (tlačí se na hranici) a štítek s bublinou na vlastním
+   řádku pod srdíčky */
+.ob-poradi li.ob-ceka-radek .ob-radek {
+    background-color: rgba(255, 64, 129, 0.06);
+}
+
+.ob-poradi li.ob-ceka-radek .ob-radek:hover,
+.ob-poradi li.ob-ceka-radek .ob-radek:focus-visible {
+    background-color: rgba(255, 64, 129, 0.12);
+}
+
+/* V úzkém sloupci se štítek zalomí (radši o řádek víc než useknuté „podle síly“) */
+.ob-jmeno-radku .ob-ceka {
+    width: fit-content;
+    max-width: 100%;
+    color: var(--text-main);
+    line-height: 1.35;
+    white-space: normal;
+    cursor: help;
+}
+
+.ob-cekaji {
+    margin: -4px 0 10px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.ob-cekaji:empty,
+.ob-pravidla:empty {
+    display: none;
+}
+
+.ob-cekaji .link,
+.uvod-cekaji .link {
+    color: var(--accent-text);
+    font-size: 12px;
+}
+
+/* Pravidla úrovní pod pořadím: nenápadně, jen pro zvídavé */
+.ob-pravidla {
+    margin: 14px 6px 0;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+    opacity: 0.8;
+}
+
+/* Profil: úroveň v řádku pořadí; delší řádek (čekání a trend) se zalomí mezi částmi, ne uvnitř nich */
+.profile-poradi {
+    max-width: 100%;
+    border-radius: 14px;
+    white-space: normal;
+    text-align: center;
+}
+
+.profile-poradi > * {
+    white-space: nowrap;
+}
+
+.profile-uroven {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.profile-ceka {
+    color: var(--text-main);
+}
+
+/* Karta: malý odznak jen u potvrzené top 10 v pravém horním rohu (srdíčka a odhad jsou vlevo) */
+.top-karta {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 1;
+    padding: 1px 7px;
+    border: 1px solid rgba(255, 64, 129, 0.45);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--accent-text);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    line-height: 1.6;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.card.editing .top-karta {
+    display: none;
+}
+
+/* Úvod Přehledu: čekající na potvrzení pod Top 10 */
+.uvod-cekaji {
+    margin: 8px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}

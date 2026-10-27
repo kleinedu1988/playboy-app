@@ -3,6 +3,7 @@
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
 import { MESICE, RADY_EDIC, ciselRocniku, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
 import { adresaTitulni } from './obrazky';
+import { poctyCekajicich, textCekajicich } from '../lib/oblibenost';
 import { grafSloupcu } from './statistiky';
 
 // Mapy začínají prvním číslem edice (RADY_EDIC); měsíce mimo měsíční řadu jsou v nich prázdné
@@ -149,7 +150,9 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
         <div class="graf-bublina hidden"></div>`;
 }
 
-// Oblíbenost na úvodu: nejoblíbenější, stoupající a oblíbené, které jsi dlouho neotevřel (GetPrehledOblibenosti)
+// Oblíbenost na úvodu: nejoblíbenější, stoupající a oblíbené, které jsi dlouho neotevřel (GetPrehledOblibenosti).
+// Top 10 jsou jen potvrzené (backend v top dává jen je); modelky čekající na potvrzení úrovně (cekaNaTop z GetModelky)
+// mají pod ním řádek s odkazem rovnou do Porovnávání, kde jsou dvojice o potvrzení napřed
 function htmlOblibenostiUvodu(ob, modelky) {
     const podleId = new Map(modelky.map(m => [m.id, m]));
     const seznam = (polozky, popis) => `<div class="uvod-naposledy">${polozky.map(x => {
@@ -157,8 +160,10 @@ function htmlOblibenostiUvodu(ob, modelky) {
         return `<button type="button" data-otevrit-modelku="${x.modelkaId}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(x.jmeno)}<small>${popis(x)}</small></button>`;
     }).join('')}</div>`;
     const prazdne = text => `<p class="uvod-hotovo">${text}</p>`;
-    const top = ob.top.length ? seznam(ob.top, x => `${x.poradi}.`)
-        : prazdne('Ohodnoť modelky srdíčky – pořadí se ukáže tady.');
+    const cekaji = textCekajicich(poctyCekajicich(modelky));
+    const top = (ob.top.length ? seznam(ob.top, x => `${x.poradi}.`)
+        : prazdne('Ohodnoť modelky srdíčky – pořadí se ukáže tady.'))
+        + (cekaji ? `<p class="uvod-cekaji">⏳ ${esc(cekaji)} · <button type="button" class="link" data-otevrit-oblibenost="porovnani">Porovnávat →</button></p>` : '');
     const kdy = ob.trendDni === 1 ? 'od včerejška' : `za ${ob.trendDni} dní`;
     const stoupaji = ob.stoupaji.length ? seznam(ob.stoupaji, x => `<span class="trend nahoru">▲ ${x.zmenaPoradi}</span>`)
         : prazdne(ob.trendDni ? `Nikdo výrazně nestoupl ${kdy}.` : 'Trend se ukáže za týden: program si každý den pamatuje pořadí.');
@@ -170,7 +175,7 @@ function htmlOblibenostiUvodu(ob, modelky) {
         <div class="uvod-karta uvod-oblibenost">
             <h4>Oblíbenost<small><button type="button" class="link" data-otevrit-oblibenost>Porovnávat a pořadí →</button></small></h4>
             <div class="uvod-oblibenost-sloupce">
-                <div><h5>Top ${ob.top.length || 10}</h5>${top}</div>
+                <div><h5>Top 10${ob.top.length && ob.top.length < 10 ? ` <small>${sklonovat(ob.top.length, 'potvrzená', 'potvrzené', 'potvrzených')}</small>` : ''}</h5>${top}</div>
                 <div><h5>Stoupají${ob.trendDni ? ` <small>${kdy}</small>` : ''}</h5>${stoupaji}</div>
                 <div><h5>Dlouho jsi neviděl</h5>${nevidene}</div>
             </div>

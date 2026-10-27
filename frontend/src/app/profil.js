@@ -133,12 +133,16 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
     await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka)]);
 }
 
-// Pořadí v oblíbenosti a trend pod srdíčky; klik otevře Oblíbenost
+// Potvrzené pořadí v oblíbenosti, úroveň (Top 10 / 20 / 50 / 100) nebo čekání na vyšší a trend pod srdíčky; klik
+// otevře Pořadí v Oblíbenosti
 function htmlPoradi(modelka) {
     const r = textPoradiProfilu(modelka);
     if (!r) return '';
-    return `<button type="button" class="profile-poradi" data-otevrit-oblibenost title="Otevřít Oblíbenost – pořadí podle srdíček, fotek, porovnání a zájmu">
-        ${esc(r.poradi)}${r.trend ? ` · <span class="trend ${r.trend.smer}" title="${esc(r.trend.text)}">${r.trend.znak} ${esc(r.trend.kratce)}</span>` : ''}</button>`;
+    const title = r.ceka
+        ? `Podle síly patří výš, ${r.ceka} – potvrdí ji další porovnání (podrobnosti v Pořadí). Otevřít Oblíbenost`
+        : 'Otevřít Oblíbenost – pořadí podle srdíček, fotek, porovnání a zájmu';
+    return `<button type="button" class="profile-poradi" data-otevrit-oblibenost title="${esc(title)}">
+        <span>${esc(r.poradi)}</span>${r.uroven ? ` · <b class="profile-uroven">${esc(r.uroven)}</b>` : ''}${r.ceka ? ` · <span class="profile-ceka">⏳ ${esc(r.ceka)}</span>` : ''}${r.trend ? ` · <span class="trend ${r.trend.smer}" title="${esc(r.trend.text)}">${r.trend.znak} ${esc(r.trend.kratce)}</span>` : ''}</button>`;
 }
 
 // Ostatní modelky sdíleného alba (hlavní i další kromě té, jejíž profil je otevřený) jako odkazy na jejich profil

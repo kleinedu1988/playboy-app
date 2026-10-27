@@ -1,6 +1,6 @@
 // Přehled sbírky: úvod, Údržba, Oblíbenost, Sháním CZ a Statistiky; nabídka částí u tlačítka Přehled
 import { GetKalendar, GetPrehled, GetPrehledOblibenosti, GetStatistiky, GetStavyVydani, SetStavVydani } from './backend';
-import { htmlVolebOblibenosti, nacistOblibenost } from './oblibenost';
+import { htmlVolebOblibenosti, nacistOblibenost, nastavitCastOblibenosti } from './oblibenost';
 import { nazevVydani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -168,8 +168,10 @@ export function pripravit() {
     if (['souhrn', 'modelky', 'vydani', 'kontrola'].includes(stav.prehledSekce)) stav.prehledSekce = 'udrzba';
     // Řádek souhrnu na úvodu otevře Údržbu na daném údaji, odkaz „Údržba →“ v posledním režimu (bez nového načtení)
     stats.addEventListener('click', (e) => {
-        // Odkaz do Oblíbenosti funguje jako tlačítko grafu v liště
-        if (e.target.closest('[data-otevrit-oblibenost]')) {
+        // Odkaz do Oblíbenosti funguje jako tlačítko grafu v liště; s hodnotou otevře danou část (čekající → Porovnávání)
+        const doOblibenosti = e.target.closest('[data-otevrit-oblibenost]');
+        if (doOblibenosti) {
+            if (doOblibenosti.dataset.otevritOblibenost) nastavitCastOblibenosti(doOblibenosti.dataset.otevritOblibenost);
             /** @type {HTMLElement|null} */ (document.querySelector('.nav-rezim[data-cast-prehledu="oblibenost"]'))?.click();
             return;
         }

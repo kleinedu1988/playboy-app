@@ -4,15 +4,19 @@
 //     listují, Tab přepne, Enter nebo „♥ Tahle“ vybere, ↓ nebo mezerník remíza, Backspace vrátí poslední, S přeskočí,
 //     1–5 srdíčka fotce. Dvojice volí backend sám: stejné a sousední úrovně, asi třetina nehodnocených proti modelce
 //     se srdíčky jejich odhadu a častěji modelky, kterým nesedí srdíčka.
+//     Souboj o místo na hranici úrovně (dvojice s druhem „souboj“) má nad švem pásů štítek „Souboj o Top 10“.
 //   - Pořadí podle síly (Bradley–Terry v backendu, předpoklad ze srdíček, skóre fotek a zájmu) s trendem a vedle něj
 //     Mohlo by se ti líbit: nehodnocené s odhadem z modelu vkusu a věta o jeho přesnosti. Nad nimi „Nesedí se
 //     srdíčky“: modelky, které podle porovnání s jinými úrovněmi patří o půl srdíčka výš nebo níž.
+//     Pořadí je potvrzené: dělí ho úrovně Top 10 / 20 / 50 / 100 (oddělovače) a modelka, která podmínky vyšší úrovně
+//     ještě nesplňuje (porovnání, nejistota, výhra nad top 20 – prahy posílá backend), čeká těsně pod hranicí se
+//     štítkem „⏳ čeká na Top 10 (5/8 porovnání)“.
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, kratceSrdicka, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
-import { NAHLEDU_V_POROVNANI, stoupajiKlesaji, textSkoreFotek, textVahyFotek, textVahyZajmu } from '../lib/oblibenost';
+import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, poctyCekajicich, seskupitPodleUrovni, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyFotek, textVahyZajmu, urovenModelky } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
@@ -35,12 +39,13 @@ const TIPU = 12;
 const PRECHOD_MS = 170;
 
 let koren = null;
-let fronta = []; // dvojice na řadě [{ a, b, duvod }]; první je zobrazená
+let fronta = []; // dvojice na řadě [{ a, b, duvod, druh }]; první je zobrazená
 const historie = []; // porovnané dvojice pro Vrátit
 let zaneprazdneno = false;
 let poradiVse = false;
 let data = { oblibenost: null, tipy: [] };
 let porovnanoOdObnoveni = 0;
+const porovnaneOdObnoveni = new Set(); // modelky porovnané od posledního obnovení (oznámení o postupu do úrovně)
 
 // Nejlepší fotky modelek pro galerii obou (id modelky → [{ id, url, album, typ, hodnoceni, rotace }]) a rozpracovaná
 // načtení; fronta je má načtené dopředu, galerie se pak otevře hned
@@ -80,7 +85,10 @@ function ukazatCastOblibenosti(klic) {
 
 const KOSTRA = `
     <div class="ob-cast ob-porovnani" data-ob-porovnani>
-        <div class="ob-dvojice" data-ob-dvojice aria-live="polite"></div>
+        <div class="ob-dvojice-obal">
+            <div class="ob-dvojice" data-ob-dvojice aria-live="polite"></div>
+            <span class="ob-souboj hidden" data-ob-souboj aria-live="polite"></span>
+        </div>
         <div class="ob-ovladani" data-ob-ovladani>
             <span class="ob-napoveda">kolečko nebo <kbd>←</kbd> <kbd>→</kbd> listuje pásem pod myší · <kbd>Tab</kbd> přepne · <kbd>Enter</kbd> nebo ♥ Tahle vybere · <kbd>1</kbd>–<kbd>5</kbd> srdíčka fotce · klik otevře prohlížeč</span>
             <button type="button" class="btn btn-secondary btn-small" data-ob-volba="remiza" title="Obě stejně (↓ nebo mezerník)"><kbd>↓</kbd> Stejně</button>
@@ -101,7 +109,9 @@ const KOSTRA = `
                 <h4>Pořadí <small data-ob-pocet-poradi></small></h4>
                 <p class="ob-vaha" data-ob-vaha></p>
                 <p class="ob-trendy" data-ob-trendy></p>
+                <p class="ob-cekaji" data-ob-cekaji></p>
                 <div data-ob-poradi></div>
+                <p class="ob-pravidla" data-ob-pravidla></p>
             </div>
             <div class="ob-karta">
                 <h4>Mohlo by se ti líbit <small>odhad podle tvého vkusu</small></h4>
@@ -131,6 +141,9 @@ export async function nacistOblibenost(sekce) {
 // Pořadí, tipy a věta o modelu vkusu (po porovnáních se obnoví jen občas, je to přepočet celé sbírky)
 async function obnovitPrehled() {
     porovnanoOdObnoveni = 0;
+    const porovnane = [...porovnaneOdObnoveni];
+    porovnaneOdObnoveni.clear();
+    const predtim = new Map((data.oblibenost?.poradi || []).map(p => [p.modelkaId, urovenModelky(p).uroven]));
     try {
         const [oblibenost, tipy] = await Promise.all([GetOblibenost(), GetMohloByTeLibit(TIPU)]);
         data = { oblibenost, tipy: tipy || [] };
@@ -138,6 +151,7 @@ async function obnovitPrehled() {
         nastavitText(cast('info'), 'Oblíbenost se nepodařilo načíst.');
         return;
     }
+    oznamitPostup(porovnane, predtim);
     [...(data.oblibenost?.poradi || []), ...data.tipy].forEach(p => { if (p.duvod && p.odhad) duvodyOdhadu.set(p.modelkaId, p.duvod); });
     if (!koren?.isConnected) return;
     nastavitText(cast('info'), textModeluVkusu(data.oblibenost || {}));
@@ -146,6 +160,18 @@ async function obnovitPrehled() {
     vykreslitNesedi();
     // Pásy zobrazené dvojice ukážou skóre fotek (mění se jen to, co se změnilo)
     if (fronta[0]) vykreslitDvojici();
+}
+
+// Porovnaná modelka, která se po přepočtu potvrdila ve vyšší úrovni, dostane krátké oznámení (souboje a dvojice
+// o potvrzení mají viditelný výsledek); jen při obnovení po porovnání, ne při prvním načtení
+function oznamitPostup(porovnane, predtim) {
+    if (!porovnane.length || !predtim.size) return;
+    const ted = new Map((data.oblibenost?.poradi || []).map(p => [p.modelkaId, urovenModelky(p).uroven]));
+    const postup = porovnane
+        .map(id => ({ id, pred: predtim.get(id) || 0, po: ted.get(id) || 0 }))
+        .filter(x => x.po && (!x.pred || x.po < x.pred) && modelka(x.id))
+        .sort((x, y) => x.po - y.po)[0];
+    if (postup) oznamit(`${modelka(postup.id).jmeno} je teď potvrzená v ${nazevUrovne(postup.po)}.`);
 }
 
 // ——— Návrhy srdíček ———
@@ -303,6 +329,11 @@ function vykreslitDvojici() {
     const d = fronta[0];
     cast('ovladani').classList.toggle('hidden', !d);
     nastavitText(cast('duvod'), d?.duvod || '');
+    // Souboj o místo na hranici úrovně: štítek nad švem pásů (nic neposouvá) a zvýrazněný důvod
+    const souboj = d ? nadpisSouboje(d, polozkaPoradi(d.a) || modelka(d.a), polozkaPoradi(d.b) || modelka(d.b)) : '';
+    nastavitText(cast('souboj'), souboj ? `⚔ ${souboj}` : '');
+    cast('souboj').classList.toggle('hidden', !souboj);
+    cast('duvod').classList.toggle('souboj', !!souboj);
     if (!d) {
         const malo = (data.oblibenost?.hodnocenych || 0) < 2;
         delete misto.dataset.pasy;
@@ -313,15 +344,17 @@ function vykreslitDvojici() {
     }
     const [a, b] = [modelka(d.a), modelka(d.b)];
     misto.dataset.pasy = '';
-    // Skóre fotek z pořadí (Oblíbenost ho počítá v backendu), u modelky bez hodnocených fotek nic
-    const skore = id => (data.oblibenost?.poradi || []).find(p => p.modelkaId === id) || null;
+    // Skóre fotek a úroveň z pořadí (Oblíbenost je počítá v backendu), u modelky bez hodnocených fotek nic
     vykreslitPasy(misto, {
-        a: { modelka: a, fotky: nahledy.get(d.a) || null, celkem: a.pocetFotek || 0, skore: skore(d.a) },
-        b: { modelka: b, fotky: nahledy.get(d.b) || null, celkem: b.pocetFotek || 0, skore: skore(d.b) },
+        a: { modelka: a, fotky: nahledy.get(d.a) || null, celkem: a.pocetFotek || 0, skore: polozkaPoradi(d.a) },
+        b: { modelka: b, fotky: nahledy.get(d.b) || null, celkem: b.pocetFotek || 0, skore: polozkaPoradi(d.b) },
     });
     cast('vratit')?.toggleAttribute('disabled', !historie.length);
     if (!nahledy.has(d.a) || !nahledy.has(d.b)) nacistNahledy([d.a, d.b]).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
 }
+
+// Položka pořadí modelky (skóre fotek, úroveň, čekání), nebo null
+const polozkaPoradi = id => (data.oblibenost?.poradi || []).find(p => p.modelkaId === id) || null;
 
 // Běžný prohlížeč fotek (jako u alb) na fotce z pásu mezi všemi fotkami modelky (pořadí alb jako v profilu); po
 // zavření zůstane porovnání a fotky té modelky se načtou znovu (srdíčka fotek se mohla změnit)
@@ -355,6 +388,11 @@ function vykreslitPoradi() {
     nastavitHtml(cast('trendy'), o?.trendDni && (stoupaji.length || klesaji.length)
         ? [stoupaji.length ? `Stoupají: ${jmena(stoupaji, 'nahoru', '▲')}` : '', klesaji.length ? `Klesají: ${jmena(klesaji, 'dolu', '▼')}` : ''].filter(Boolean).join(' · ')
             + ` <small>(${o.trendDni === 1 ? 'od včerejška' : `za ${o.trendDni} dní`})</small>` : '');
+    // Čekající na potvrzení úrovně: kolik a kam, odkaz do Porovnávání (dvojice o potvrzení jsou tam napřed);
+    // pravidla úrovní nenápadně pod seznamem
+    const cekaji = textCekajicich(poctyCekajicich(poradi), o?.cekajicich);
+    nastavitHtml(cast('cekaji'), cekaji ? `⏳ ${esc(cekaji)} · <button type="button" class="link" data-ob-porovnavat title="Dvojice o potvrzení a souboje na hranicích úrovní nabízí Porovnávání">Porovnávat →</button>` : '');
+    nastavitText(cast('pravidla'), poradi.length ? textPravidelUrovni(o?.urovne) : '');
     // Pořadí dávají srdíčka a fotky už bez porovnání; prázdné je jen bez hodnocených modelek i fotek
     if (!poradi.length) {
         nastavitHtml(cast('poradi'), htmlPrazdna('Pořadí vznikne z porovnávání', 'Po pár volbách nahoře tu uvidíš, které modelky máš nejradši – jemněji, než ukážou srdíčka.', { ikona: 'hvezda' }));
@@ -362,21 +400,39 @@ function vykreslitPoradi() {
     }
     const ukazat = poradiVse ? poradi : poradi.slice(0, PORADI_NAJEDNOU);
     const pruhy = pruhySily(poradi);
-    nastavitHtml(cast('poradi'), `<ol class="ob-poradi">${ukazat.map((p, i) => {
+    // Řádek modelky; i = index v celém pořadí (pruhy síly)
+    const radek = (p, i) => {
         const m = modelka(p.modelkaId);
         const { sirka, nejistota } = pruhy[i];
         const fotky = textSkoreFotek(p.skoreFotek);
         const popis = `${m.jmeno}: ${p.duvod || sklonovat(p.porovnani || 0, 'porovnání', 'porovnání', 'porovnání')} · síla ${cislo(p.sila)} ± ${cislo(p.nejistota)}`;
-        return `<li class="${p.jenOdhad ? 'ob-z-fotek' : ''}"><button type="button" class="ob-radek" data-otevrit-modelku="${m.id}" title="${esc(popis)}">
+        const ceka = textCekani(p.ceka);
+        // Čekající: kam patří podle síly a co jí chybí (bublina); „podle síly 4.“ jen když se místo liší
+        const podleSily = ceka && p.mistoPodleSily > 0 && p.mistoPodleSily !== p.poradi ? ` · podle\u00a0síly\u00a0${p.mistoPodleSily}.` : '';
+        // Vlastní řádek pod srdíčky, aby se štítek v úzkém sloupci neusekl
+        const stitekCekani = ceka ? `<small class="ob-ceka" title="${esc(bublinaCekani(p.ceka, p.mistoPodleSily))}">⏳ ${esc(ceka)}${podleSily}</small>` : '';
+        return `<li class="${[p.jenOdhad ? 'ob-z-fotek' : '', ceka ? 'ob-ceka-radek' : ''].filter(Boolean).join(' ')}"><button type="button" class="ob-radek" data-otevrit-modelku="${m.id}" title="${esc(popis)}">
             <span class="ob-misto">${p.poradi || i + 1}.</span>
             <img data-src="${esc(adresaTitulni(m))}" alt="" draggable="false" />
             <span class="ob-jmeno-radku">${esc(m.jmeno)}<small>${m.hodnoceni ? `<i>${znakySrdicek(m.hodnoceni)}</i>` : p.jenOdhad ? (p.zdrojOdhadu === 'vkus'
                 ? '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle tvého vkusu (údaje modelky a srdíčka fotek)">odhad</span>'
-                : '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>') : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}${p.zmenaPoradi && o.trendDni ? ` · <span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}" title="${esc(`${p.zmenaPoradi > 0 ? 'Stoupla' : 'Klesla'} o ${sklonovat(Math.abs(p.zmenaPoradi), 'místo', 'místa', 'míst')} za ${o.trendDni} dní`)}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : ''}${p.zajem >= 0.05 ? ' · <span class="ob-zajem" title="Často otevíráš její profil nebo prohlížíš fotky – posouvá ji to v pořadí uvnitř srdíček">zájem</span>' : ''}</small></span>
+                : '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>') : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}${p.zmenaPoradi && o.trendDni ? ` · <span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}" title="${esc(`${p.zmenaPoradi > 0 ? 'Stoupla' : 'Klesla'} o ${sklonovat(Math.abs(p.zmenaPoradi), 'místo', 'místa', 'míst')} za ${o.trendDni} dní`)}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : ''}${p.zajem >= 0.05 ? ' · <span class="ob-zajem" title="Často otevíráš její profil nebo prohlížíš fotky – posouvá ji to v pořadí uvnitř srdíček">zájem</span>' : ''}</small>${stitekCekani}</span>
             <span class="ob-pruh" aria-hidden="true"><i style="width:${sirka}%"></i>${nejistota ? `<b style="left:${Math.max(0, sirka - nejistota)}%; width:${Math.min(100, sirka + nejistota) - Math.max(0, sirka - nejistota)}%"></b>` : ''}</span>
             <small class="ob-pocet">${p.porovnani || 0}×</small>
         </button></li>`;
-    }).join('')}</ol>
+    };
+    // Oddělovače úrovní (Top 10 · Top 20 · Top 50 · Top 100) s počtem potvrzených v celém pořadí; úroveň nad první
+    // skupinou, ve které zatím nikdo není potvrzený, má prázdný oddělovač (pořadí pak začíná pod její hranicí)
+    const vsechnySkupiny = seskupitPodleUrovni(poradi);
+    const potvrzenych = new Map();
+    vsechnySkupiny.forEach(sk => potvrzenych.set(sk.uroven, (potvrzenych.get(sk.uroven) || 0) + sk.polozky.length));
+    const prvni = vsechnySkupiny[0]?.uroven || 0;
+    const prazdne = (o.urovne || []).map(u => Number(u.uroven)).filter(u => u > 0 && (!prvni || u < prvni)).sort((x, y) => x - y);
+    const oddelovac = (uroven, pocet) => `<li class="ob-uroven"><span>${uroven ? nazevUrovne(uroven) : 'Mimo Top 100'}</span><small>${!pocet ? 'zatím žádná potvrzená'
+        : uroven ? sklonovat(pocet, 'potvrzená', 'potvrzené', 'potvrzených') : sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</small></li>`;
+    let i = 0;
+    nastavitHtml(cast('poradi'), `<ol class="ob-poradi">${prazdne.map(u => oddelovac(u, 0)).join('')}${seskupitPodleUrovni(ukazat).map(sk =>
+        oddelovac(sk.uroven, potvrzenych.get(sk.uroven) || 0) + sk.polozky.map(p => radek(p, i++)).join('')).join('')}</ol>
         ${ukazat.length < poradi.length ? `<button type="button" class="link ob-vse" data-ob-poradi-vse>Zobrazit všech ${poradi.length}</button>` : ''}`);
     nacitatPostupne(cast('poradi'));
 }
@@ -423,12 +479,14 @@ async function vybrat(vysledek) {
         return;
     }
     historie.push(d);
+    porovnaneOdObnoveni.add(d.a).add(d.b);
     porovnaniDnes++;
     ulozDnes(porovnaniDnes);
     vykreslitDnes();
     ukazatNavrhPoPorovnani(d);
     await dalsi();
-    if (++porovnanoOdObnoveni >= 5) obnovitPrehled();
+    // Souboj na hranici úrovně se přepočte hned (úrovně a štítky v pásech ukážou výsledek), jinak po pěti porovnáních
+    if (++porovnanoOdObnoveni >= 5 || d.druh === 'souboj') obnovitPrehled();
 }
 
 // Další dvojice s krátkým přechodem: vybraná se rozzáří, obě zmizí, nové se objeví
@@ -495,6 +553,7 @@ export function pripravit() {
         else if (e.target.closest('[data-ob-navrh-ne]')) odmitnoutNavrh(e.target.closest('[data-ob-navrh-ne]').dataset.obNavrhNe);
         else if (e.target.closest('[data-ob-poradi-vse]')) { poradiVse = true; vykreslitPoradi(); }
         else if (e.target.closest('[data-ob-nesedi-odkaz]')) ukazatCastOblibenosti('poradi');
+        else if (e.target.closest('[data-ob-porovnavat]')) ukazatCastOblibenosti('porovnani');
         else if (e.target.closest('[data-ob-nesedi-vse]')) { nesouladyVse = true; vykreslitNesedi(); }
     });
 

@@ -75,8 +75,9 @@ test('Oblíbenost: věta o modelu, dvojice, dnešní počet a pruhy síly', () =
     assert.equal(textModeluVkusu({ presnost: 0.72, hodnocenych: 380, porovnani: 140 }),
         'Model vkusu odhaduje tvé hodnocení s přesností 72 % podle 380 hodnocených modelek a 140 porovnání.');
     assert.match(textModeluVkusu({ presnost: 0, hodnocenych: 1, porovnani: 0 }), /teprve učí: zatím má 1 hodnocené modelky/);
-    assert.deepEqual(idDvojice({ a: 3, b: 7, duvod: 'x' }), { a: 3, b: 7, duvod: 'x' });
-    assert.deepEqual(idDvojice({ a: { id: 3 }, b: { id: 7 } }), { a: 3, b: 7, duvod: '' });
+    assert.deepEqual(idDvojice({ a: 3, b: 7, duvod: 'x' }), { a: 3, b: 7, duvod: 'x', druh: '' });
+    assert.deepEqual(idDvojice({ a: { id: 3 }, b: { id: 7 } }), { a: 3, b: 7, duvod: '', druh: '' });
+    assert.equal(idDvojice({ a: 3, b: 7, duvod: 'Souboj o top 10', druh: 'souboj' }).druh, 'souboj');
     assert.equal(dnesniPocet({ datum: '2026-10-25', pocet: 12 }, '2026-10-25'), 12);
     assert.equal(dnesniPocet({ datum: '2026-10-24', pocet: 12 }, '2026-10-25'), 0);
     assert.equal(dnesniPocet(null, '2026-10-25'), 0);

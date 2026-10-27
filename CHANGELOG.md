@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.35] – 2026-10-27
+
+### Změněno
+- **Porovnávání v Oblíbenosti podle titulních fotek, fotky obou modelek naráz po kliku:** pás malých náhledů pod fotkou zmizel. Klik na titulní fotku (nebo klávesa F) otevře přes celé okno dvě nezávislé galerie nad sebou – nahoře fotky levé modelky, dole pravé, každá až 24 nejlepších fotek (nejlepší z každého alba napřed). Každá se listuje zvlášť kolečkem nebo šipkami v polovině pod myší (Tab přepne), klik fotku zvětší, 1–5 jí dá srdíčka. Vybrat jde rovnou v galerii („♥ Tahle“ nebo Enter, ↓ = stejně), Esc vrátí k porovnání. Na titulní fotce je počet fotek modelky.
+
 ## [0.99.34] – 2026-10-26
 
 ### Přidáno

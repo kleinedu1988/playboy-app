@@ -10549,90 +10549,24 @@ span.ud-chip {
     outline: none;
 }
 
-/* Otočená fotka náhledu (prohlížeč ji otáčí také): obrázek se otočí a zvětší, aby rámeček vyplnil */
-.ob-foto img[data-rot="90"],
-.ob-nahled img[data-rot="90"] {
-    transform: rotate(90deg) scale(1.34);
-}
-
-.ob-foto img[data-rot="180"],
-.ob-nahled img[data-rot="180"] {
-    transform: rotate(180deg);
-}
-
-.ob-foto img[data-rot="270"],
-.ob-nahled img[data-rot="270"] {
-    transform: rotate(270deg) scale(1.34);
-}
-
-/* Album a srdíčka náhledu, který je právě velký */
-.ob-foto-popis {
+/* Počet fotek na titulní fotce: klik otevře galerii obou modelek */
+.ob-pocet-fotek {
     position: absolute;
-    right: 8px;
-    bottom: 8px;
-    left: 8px;
-    overflow: hidden;
-    padding: 3px 8px;
-    border-radius: 8px;
+    right: 10px;
+    bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 9px;
+    border-radius: 999px;
     background-color: rgba(0, 0, 0, 0.6);
-    color: #fff;
-    font-size: 11px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    color: #ddd;
+    font-size: 12px;
     pointer-events: none;
 }
 
-.ob-foto-popis:empty {
-    display: none;
-}
-
-/* Řada náhledů z alb pod velkou fotkou: osm malých fotek na šířku fotky; místo drží i při načítání a u modelky
-   bez fotek (obě strany zůstanou zarovnané) */
-.ob-nahledy {
-    display: grid;
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 4px;
-    width: 100%;
-    min-height: 44px;
-}
-
-.ob-nahledy.nacita,
-.ob-nahledy.prazdne {
-    border-radius: 6px;
-    background-color: var(--bg-main);
-    opacity: 0.5;
-}
-
-.ob-nahledy.prazdne {
-    visibility: hidden;
-}
-
-.ob-nahled {
-    position: relative;
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-    padding: 0;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 6px;
-    background-color: var(--bg-main);
-    opacity: 0.8;
+.ob-foto {
     cursor: zoom-in;
-    transition: border-color 0.12s, opacity 0.12s;
-}
-
-.ob-nahled img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.ob-nahled:hover,
-.ob-nahled:focus-visible,
-.ob-nahled.aktivni {
-    border-color: var(--accent-text);
-    opacity: 1;
-    outline: none;
 }
 
 /* Vybraná se krátce rozzáří, druhá ustoupí; remíza ztlumí obě stejně */
@@ -10958,10 +10892,6 @@ span.ud-chip {
         grid-template-columns: 1fr 1fr;
     }
 
-    .ob-nahledy {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-    }
-
     .ob-dnes {
         margin-left: 0;
     }
@@ -11093,4 +11023,260 @@ span.ud-chip {
 
 .ob-jmeno-radku .trend {
     font-size: 11px;
+}
+
+/* ——— Galerie obou modelek z porovnání (app/galerie-obou.js): dvě nezávislé galerie nad sebou ——— */
+.galerie-obou {
+    display: grid;
+    grid-template-rows: 1fr 1fr auto;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 12px 0 10px;
+    background-color: rgba(8, 8, 10, 0.98);
+    outline: none;
+}
+
+.galerie-obou.hidden {
+    display: none;
+}
+
+.go-pul {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0 12px;
+    padding: 8px 0 10px;
+    border: 1px solid transparent;
+    border-radius: 16px;
+    transition: border-color 0.15s, background-color 0.15s, opacity 0.15s;
+}
+
+.galerie-obou[data-aktivni="a"] .go-pul[data-go-strana="a"],
+.galerie-obou[data-aktivni="b"] .go-pul[data-go-strana="b"] {
+    border-color: rgba(216, 27, 96, 0.45);
+    background-color: rgba(216, 27, 96, 0.04);
+}
+
+.galerie-obou[data-aktivni="a"] .go-pul[data-go-strana="b"],
+.galerie-obou[data-aktivni="b"] .go-pul[data-go-strana="a"] {
+    opacity: 0.7;
+}
+
+.go-hlava {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px 8px;
+    white-space: nowrap;
+}
+
+.go-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.go-hlava b {
+    font-size: 16px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.go-srdicka {
+    color: var(--accent-text);
+    font-size: 13px;
+    letter-spacing: 2px;
+}
+
+.go-info,
+.go-pozice {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.go-pozice {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+.go-vybrat {
+    padding: 6px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.go-vybrat:hover,
+.go-vybrat:focus-visible {
+    background-color: var(--accent);
+    color: #fff;
+    outline: none;
+}
+
+.go-pas {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+    min-height: 0;
+    padding: 2px 16px 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a42 transparent;
+}
+
+.go-fotka {
+    position: relative;
+    flex: none;
+    height: 100%;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background-color: var(--bg-card);
+    cursor: zoom-in;
+    transition: border-color 0.12s;
+}
+
+.go-fotka img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.go-fotka img[data-rot="90"],
+.go-zoom img[data-rot="90"] {
+    transform: rotate(90deg);
+}
+
+.go-fotka img[data-rot="180"],
+.go-zoom img[data-rot="180"] {
+    transform: rotate(180deg);
+}
+
+.go-fotka img[data-rot="270"],
+.go-zoom img[data-rot="270"] {
+    transform: rotate(270deg);
+}
+
+.go-fotka.aktivni,
+.go-fotka:focus-visible {
+    border-color: var(--accent-text);
+    outline: none;
+}
+
+.go-srd,
+.go-album {
+    position: absolute;
+    bottom: 8px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #ddd;
+    font-size: 11.5px;
+    pointer-events: none;
+}
+
+.go-srd {
+    left: 8px;
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.go-album {
+    right: 8px;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.go-prazdne {
+    margin: auto;
+    color: var(--text-muted);
+}
+
+.go-ovladani {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding-top: 8px;
+}
+
+.go-napoveda {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.go-tlacitko {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.go-tlacitko:hover,
+.go-tlacitko:focus-visible {
+    border-color: var(--accent);
+    outline: none;
+}
+
+.galerie-obou kbd {
+    padding: 0 5px;
+    border: 1px solid #3a3a42;
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-family: inherit;
+    font-size: 11px;
+}
+
+.go-zoom {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(5, 5, 7, 0.97);
+    cursor: zoom-out;
+}
+
+.go-zoom.hidden {
+    display: none;
+}
+
+.go-zoom img {
+    max-width: calc(100% - 48px);
+    max-height: calc(100% - 80px);
+    border-radius: 10px;
+}
+
+.go-zoom-popis {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 14px;
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    white-space: nowrap;
 }

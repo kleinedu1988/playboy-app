@@ -10,8 +10,6 @@ export const VELIKOST_PLAKATU = 'w1200';      // plakát v širokém sloupci str
 export const VELIKOST_KARTY = 'w400';         // titulní fotka na kartě galerie
 // Titulní fotka v profilu a při úpravě výřezu; rezerva pro přiblížení
 export const VELIKOST_TITULNI = 'w800';
-// Malý náhled fotky v řadě pod fotkou v porovnání (Oblíbenost)
-export const VELIKOST_MINIATURY = 'w200';
 
 // Zástupný obrázek: „Bez fotky“ u modelky bez titulní fotky, „Nenačteno“ u fotky, která se nenačetla
 // (bez připojení, smazaná nebo nesdílená na Disku)

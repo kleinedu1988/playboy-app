@@ -1,23 +1,20 @@
-// Oblíbenost v Přehledu: porovnávání dvojic („Která se ti líbí víc?“) s náhledy fotek z alb, pořadí podle síly
-// (Bradley–Terry v backendu, předpoklad ze srdíček a skóre fotek), „Mohlo by se ti líbit“ s odhadem hodnocení
-// z modelu vkusu a věta o jeho přesnosti.
-// Klávesy porovnání: ← / → vybere, ↓ nebo mezerník remíza, Backspace vrátí poslední, S přeskočí; klik na fotku vybere.
-// Náhledy (lib/oblibenost.js, klavesaNahledu): 1–8 ukáže n-tý náhled velký na obou stranách, ↑ / Shift+↑ listuje,
-// 0 vrátí titulní fotky; najetí myší na náhled ho ukáže velký jen na své straně (do opuštění strany), klik otevře
-// prohlížeč na té fotce mezi fotkami modelky a po zavření se vrátí k porovnání.
+// Oblíbenost v Přehledu: porovnávání dvojic („Která se ti líbí víc?“) podle titulních fotek, pořadí podle síly
+// (Bradley–Terry v backendu, předpoklad ze srdíček, skóre fotek a zájmu), „Mohlo by se ti líbit“ s odhadem
+// hodnocení z modelu vkusu a věta o jeho přesnosti.
+// Klávesy porovnání: ← / → vybere, ↓ nebo mezerník remíza, Backspace vrátí poslední, S přeskočí, F otevře fotky.
+// Klik na titulní fotku otevře galerii obou modelek (galerie-obou.js): nahoře fotky levé, dole pravé, každá se
+// listuje zvlášť a vybírat jde i v ní.
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
-import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
-import { esc, obrazek, sklonovat } from '../lib/format';
+import { GetDvojiceKPorovnani, GetMohloByTeLibit, GetNahledyModelek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
+import { esc, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, kratceSrdicka, navrhPoPorovnani, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
-import { NAHLEDU_V_POROVNANI, klavesaNahledu, nahledNaStrane, popisNahledu, posunoutNahled, stoupajiKlesaji, textSkoreFotek, textVahyFotek, textVahyZajmu } from '../lib/oblibenost';
-import { sestavitAlba } from '../lib/alba';
+import { NAHLEDU_V_POROVNANI, stoupajiKlesaji, textSkoreFotek, textVahyFotek, textVahyZajmu } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
-import { VELIKOST_MINIATURY, VELIKOST_TITULNI, adresaTitulni, nacitatPostupne } from './obrazky';
+import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
-import { lightbox, otevritLightbox } from './prohlizec';
-import { seraditAlbaProfilu } from './profil';
+import { otevritGalerii } from './galerie-obou';
 import { duvodyOdhadu, htmlSrdicka } from './galerie';
 import { obnovitSrdickaModelky } from '../ui/srdicka';
 import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
@@ -41,14 +38,10 @@ let poradiVse = false;
 let data = { oblibenost: null, tipy: [] };
 let porovnanoOdObnoveni = 0;
 
-// Náhledy fotek modelek z backendu (id modelky → [{ id, url, album, typ, hodnoceni, rotace }]) a rozpracovaná načtení
+// Nejlepší fotky modelek pro galerii obou (id modelky → [{ id, url, album, typ, hodnoceni, rotace }]) a rozpracovaná
+// načtení; fronta je má načtené dopředu, galerie se pak otevře hned
 const nahledy = new Map();
 const nacitaniNahledu = new Map();
-// Co je na které straně velké: −1 titulní fotka, jinak index náhledu; mys = vybráno najetím (opuštění strany vrátí titulní)
-let vybrane = { a: -1, b: -1 };
-let zMysi = { a: false, b: false };
-let spolecnyNahled = -1; // poslední náhled vybraný klávesou (obě strany)
-let otevrenoZPorovnani = 0; // modelka, jejíž fotky jsou v prohlížeči otevřeném z náhledu
 
 const modelka = id => stav.prehledModelky.get(id);
 const dnes = () => new Date().toISOString().slice(0, 10);
@@ -102,7 +95,7 @@ const cast = klic => koren?.querySelector(`[data-ob-${klic}]`);
 export async function nacistOblibenost(sekce) {
     koren = sekce;
     if (!koren.querySelector('[data-ob-porovnani]')) koren.innerHTML = KOSTRA;
-    // Srdíčka fotek se mohla mezitím změnit; náhledy se načtou znovu (backend je má v paměti se snímkem sbírky)
+    // Srdíčka fotek se mohla mezitím změnit; fotky se načtou znovu (backend je má v paměti se snímkem sbírky)
     nahledy.clear();
     vykreslitOkruh();
     vykreslitDnes();
@@ -135,22 +128,16 @@ async function doplnitFrontu() {
     const videne = new Set(fronta.map(d => `${d.a}-${d.b}`));
     fronta.push(...nove.filter(d => d.a && d.b && d.a !== d.b && modelka(d.a) && modelka(d.b) && !videne.has(`${d.a}-${d.b}`)));
     prednacist();
-    // Náhledy celé fronty jedním voláním; první dvojice je čeká, další se načtou dopředu
-    nacistNahledy(fronta.flatMap(d => [d.a, d.b])).then(() => {
-        prednacist();
-        if (fronta[0]) doplnitNahledy(fronta[0]);
-    });
+    // Seznamy fotek celé fronty jedním voláním (pro galerii obou)
+    nacistNahledy(fronta.flatMap(d => [d.a, d.b]));
 }
 
-// Fotky další dvojice (titulní i náhledy) se načtou dopředu, přechod pak nebliká
+// Titulní fotky další dvojice se načtou dopředu, přechod pak nebliká
 function prednacist() {
-    fronta.slice(1, 3).forEach(d => [d.a, d.b].forEach(id => {
-        new Image().src = adresaTitulni(modelka(id), true);
-        (nahledy.get(id) || []).forEach(n => { new Image().src = obrazek(n.url, VELIKOST_MINIATURY); });
-    }));
+    fronta.slice(1, 3).forEach(d => [d.a, d.b].forEach(id => { new Image().src = adresaTitulni(modelka(id), true); }));
 }
 
-// Náhledy modelek, které ještě nejsou načtené; čeká i na rozpracovaná načtení týchž modelek
+// Fotky modelek, které ještě nejsou načtené; čeká i na rozpracovaná načtení týchž modelek
 async function nacistNahledy(ids) {
     const chybi = [...new Set(ids)].filter(id => id && !nahledy.has(id) && !nacitaniNahledu.has(id));
     if (chybi.length) {
@@ -174,23 +161,13 @@ function vykreslitDnes() {
     nastavitText(cast('dnes'), porovnaniDnes ? `dnes ${porovnaniDnes} porovnání` : 'dnes zatím žádné porovnání');
 }
 
-// Řada náhledů pod velkou fotkou; dokud se načítají, drží místo prázdná řada (třída nacita)
-function htmlNahledu(id) {
-    return (nahledy.get(id) || []).map((n, i) => `<button type="button" class="ob-nahled" data-ob-nahled="${i}"
-        title="${esc(popisNahledu(n, i))} – klik otevře prohlížeč" aria-label="${esc(popisNahledu(n, i))}, otevřít v prohlížeči">
-        <img src="${esc(obrazek(n.url, VELIKOST_MINIATURY))}" alt="" data-rot="${Number(n.rotace) || 0}" draggable="false" decoding="async" />
-    </button>`).join('');
-}
-
-const tridyNahledu = id => `ob-nahledy ${!nahledy.has(id) ? 'nacita' : nahledy.get(id).length ? '' : 'prazdne'}`;
-
+// Strana porovnání: titulní fotka (klik otevře galerii obou), počet fotek, jméno a srdíčka
 const htmlStrany = (strana, m) => `
     <div class="ob-strana" data-strana="${strana}">
-        <button type="button" class="ob-foto" data-ob-volba="${strana}" title="${strana === 'a' ? 'Tahle (←)' : 'Tahle (→)'}" aria-label="Vybrat ${esc(m.jmeno)}">
-            <img src="${esc(adresaTitulni(m, true))}" alt="" style="${stylVyrezu(m)}" data-ob-velka data-rot="0" draggable="false" />
-            <span class="ob-foto-popis" data-ob-popis-fotky></span>
+        <button type="button" class="ob-foto" data-ob-galerie="${strana}" title="Prohlížet fotky obou modelek (F)" aria-label="${esc(m.jmeno)} – prohlížet fotky obou modelek">
+            <img src="${esc(adresaTitulni(m, true))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
+            ${m.pocetFotek ? `<span class="ob-pocet-fotek"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>${sklonovat(m.pocetFotek, 'fotka', 'fotky', 'fotek')}</span>` : ''}
         </button>
-        <div class="${tridyNahledu(m.id)}" data-ob-nahledy="${strana}" role="group" aria-label="Fotky z alb (1–${NAHLEDU_V_POROVNANI})">${htmlNahledu(m.id)}</div>
         <div class="ob-popis">
             <button type="button" class="ob-jmeno" data-otevrit-modelku="${m.id}" title="Otevřít profil">${esc(m.jmeno)}</button>
             ${htmlSrdicka(m)}
@@ -211,94 +188,27 @@ function vykreslitDvojici() {
         return;
     }
     const [a, b] = [modelka(d.a), modelka(d.b)];
-    vybrane = { a: -1, b: -1 };
-    zMysi = { a: false, b: false };
-    spolecnyNahled = -1;
     nastavitHtml(misto, `${htmlStrany('a', a)}<span class="ob-nebo" aria-hidden="true">nebo</span>${htmlStrany('b', b)}
         ${d.duvod ? `<p class="ob-duvod">${esc(d.duvod)}</p>` : ''}`);
-    // Stejná dvojice znovu (Vrátit) nechá HTML beze změny; velké fotky se vrátí na titulní
-    ['a', 'b'].forEach(strana => zobrazitNahled(strana, -1, false, true));
     cast('vratit')?.toggleAttribute('disabled', !historie.length);
-    if (!nahledy.has(d.a) || !nahledy.has(d.b)) nacistNahledy([d.a, d.b]).then(() => doplnitNahledy(d));
+    if (!nahledy.has(d.a) || !nahledy.has(d.b)) nacistNahledy([d.a, d.b]);
 }
 
-// Náhledy, které dorazily po vykreslení dvojice: mění se jen obsah řady (prázdné místo, nic pod kurzorem nemizí)
-function doplnitNahledy(d) {
-    if (fronta[0] !== d) return;
-    [['a', d.a], ['b', d.b]].forEach(([strana, id]) => {
-        const rada = cast('dvojice')?.querySelector(`[data-ob-nahledy="${strana}"]`);
-        if (!rada || !nahledy.has(id)) return;
-        const predtim = rada.innerHTML;
-        nastavitHtml(rada, htmlNahledu(id));
-        rada.className = tridyNahledu(id);
-        if (rada.innerHTML !== predtim && vybrane[strana] >= 0) zobrazitNahled(strana, -1, false, true);
+// Galerie obou modelek zobrazené dvojice; strana ('a' nebo 'b') = kde se kliklo (ta polovina je aktivní). Volba v galerii se
+// zapíše jako volba v porovnání.
+/** @param {string} [strana] */
+async function otevritFotky(strana = 'a') {
+    const d = fronta[0];
+    if (!d || zaneprazdneno) return;
+    await nacistNahledy([d.a, d.b]);
+    if (fronta[0] !== d || !videt()) return;
+    const [a, b] = [modelka(d.a), modelka(d.b)];
+    otevritGalerii({
+        a: { modelka: a, fotky: nahledy.get(d.a) || [], celkem: a.pocetFotek || 0 },
+        b: { modelka: b, fotky: nahledy.get(d.b) || [], celkem: b.pocetFotek || 0 },
+        strana: strana === 'b' ? 'b' : 'a',
+        vybrat: volba => { if (fronta[0] === d) vybrat(volba); },
     });
-}
-
-// Velká fotka strany: index −1 titulní, jinak náhled (index za koncem řady ukáže titulní). Mění se jen atributy
-// obrázku a třídy náhledů, obsah pod kurzorem zůstává (WebKitGTK by jinak mohl ztratit klik).
-function zobrazitNahled(strana, index, mys = false, vynutit = false) {
-    const d = fronta[0];
-    if (!d) return;
-    const id = strana === 'a' ? d.a : d.b;
-    const m = modelka(id);
-    const seznam = nahledy.get(id) || [];
-    const i = nahledNaStrane(index, seznam.length);
-    zMysi[strana] = mys && i >= 0;
-    if (vybrane[strana] === i && !vynutit) return;
-    vybrane[strana] = i;
-    const blok = cast('dvojice')?.querySelector(`.ob-strana[data-strana="${strana}"]`);
-    const img = /** @type {HTMLImageElement} */ (blok?.querySelector('[data-ob-velka]'));
-    if (!img || !m) return;
-    blok.querySelectorAll('[data-ob-nahled]').forEach(b => b.classList.toggle('aktivni', Number(/** @type {HTMLElement} */ (b).dataset.obNahled) === i));
-    blok.classList.toggle('s-nahledem', i >= 0);
-    const n = seznam[i];
-    nastavitText(blok.querySelector('[data-ob-popis-fotky]'), n ? popisNahledu(n, i) : '');
-    if (!n) {
-        img.setAttribute('style', stylVyrezu(m));
-        img.dataset.rot = '0';
-        const titulni = adresaTitulni(m, true);
-        if (img.getAttribute('src') !== titulni) img.src = titulni;
-        return;
-    }
-    img.removeAttribute('style');
-    img.dataset.rot = String(Number(n.rotace) || 0);
-    // Hned malý náhled z mezipaměti, ostřejší po načtení (jen když je pořád vybraný)
-    img.src = obrazek(n.url, VELIKOST_MINIATURY);
-    const velka = new Image();
-    velka.onload = () => { if (fronta[0] === d && vybrane[strana] === i) img.src = velka.src; };
-    velka.src = obrazek(n.url, VELIKOST_TITULNI);
-}
-
-// Klávesa náhledů: stejná pozice na obou stranách (n-tá nejlepší fotka proti n-té nejlepší)
-function nahledObou(volba) {
-    const d = fronta[0];
-    if (!d) return;
-    const nejvic = Math.max((nahledy.get(d.a) || []).length, (nahledy.get(d.b) || []).length);
-    spolecnyNahled = volba.posun ? posunoutNahled(spolecnyNahled, nejvic, volba.posun) : Math.min(volba.index, nejvic - 1);
-    zobrazitNahled('a', spolecnyNahled);
-    zobrazitNahled('b', spolecnyNahled);
-}
-
-// Prohlížeč na fotce náhledu mezi všemi fotkami modelky (pořadí alb jako v profilu); po zavření zůstane porovnání
-async function otevritNahled(strana, index) {
-    const d = fronta[0];
-    if (!d) return;
-    const id = strana === 'a' ? d.a : d.b;
-    const nahled = (nahledy.get(id) || [])[index];
-    if (!nahled) return;
-    let fotky = [];
-    try {
-        fotky = await GetFotografieModelky(id) || [];
-    } catch { /* oznámí se níž */ }
-    if (fronta[0] !== d) return;
-    // Fotky profilu jména nenesou; u sdíleného alba je hlavní modelkou jiná
-    fotky.forEach(f => { f.jmenoModelky = modelka(f.modelkaId)?.jmeno || modelka(id)?.jmeno || ''; });
-    const polozky = seraditAlbaProfilu(sestavitAlba(fotky)).flatMap(a => a.polozky);
-    const kde = polozky.findIndex(p => p.fotky.some(f => f.id === nahled.id));
-    if (kde < 0) return oznamit('Fotku se nepodařilo otevřít.');
-    otevrenoZPorovnani = id;
-    otevritLightbox(kde, false, polozky);
 }
 
 function vykreslitPoradi() {
@@ -468,8 +378,8 @@ export function pripravit() {
         if (!koren?.contains(e.target)) return;
         const volba = e.target.closest('[data-ob-volba]')?.dataset.obVolba;
         const okruhVolba = e.target.closest('[data-ob-okruh-volba]');
-        const nahled = e.target.closest('[data-ob-nahled]');
-        if (nahled) otevritNahled(nahled.closest('.ob-strana').dataset.strana, Number(nahled.dataset.obNahled));
+        const galerie = e.target.closest('[data-ob-galerie]');
+        if (galerie) otevritFotky(galerie.dataset.obGalerie);
         else if (volba) vybrat(volba);
         else if (okruhVolba) zmenitOkruh(okruhVolba.dataset.obOkruhVolba);
         else if (e.target.closest('[data-ob-preskocit]')) preskocit();
@@ -478,33 +388,6 @@ export function pripravit() {
         else if (e.target.closest('[data-ob-navrh-ne]')) ukazatNavrh(null);
         else if (e.target.closest('[data-ob-poradi-vse]')) { poradiVse = true; vykreslitPoradi(); }
     });
-
-    // Náhled pod kurzorem se ukáže velký na své straně a zůstane, dokud kurzor stranu neopustí (i při přechodu
-    // na velkou fotku, aby šla vybrat); zaměřený náhled (Tab) se ukáže taky a zůstane
-    stats.addEventListener('mouseover', (e) => {
-        const nahled = /** @type {HTMLElement} */ (e.target).closest?.('[data-ob-nahled]');
-        if (!nahled || !koren?.contains(nahled) || zaneprazdneno) return;
-        zobrazitNahled(nahled.closest('.ob-strana').dataset.strana, Number(nahled.dataset.obNahled), true);
-    });
-    stats.addEventListener('mouseout', (e) => {
-        const blok = /** @type {HTMLElement} */ (e.target).closest?.('.ob-strana');
-        if (!blok || !koren?.contains(blok) || blok.contains(/** @type {Node} */ (e.relatedTarget))) return;
-        const strana = blok.dataset.strana;
-        if (zMysi[strana]) zobrazitNahled(strana, spolecnyNahled);
-    });
-    stats.addEventListener('focusin', (e) => {
-        const nahled = /** @type {HTMLElement} */ (e.target).closest?.('[data-ob-nahled]');
-        if (nahled && koren?.contains(nahled)) zobrazitNahled(nahled.closest('.ob-strana').dataset.strana, Number(nahled.dataset.obNahled));
-    });
-
-    // Po zavření prohlížeče otevřeného z náhledu se náhledy té modelky načtou znovu (srdíčka fotek se mohla změnit)
-    new MutationObserver(() => {
-        if (!otevrenoZPorovnani || !lightbox.classList.contains('hidden')) return;
-        const id = otevrenoZPorovnani;
-        otevrenoZPorovnani = 0;
-        nahledy.delete(id);
-        nacistNahledy([id]).then(() => fronta[0] && doplnitNahledy(fronta[0]));
-    }).observe(lightbox, { attributes: true, attributeFilter: ['class'] });
 
     // Klávesy porovnání, když je Oblíbenost vidět a nepíše se ani nehodnotí srdíčky (zaměřená srdíčka mají šipky)
     document.addEventListener('keydown', (e) => {
@@ -516,14 +399,8 @@ export function pripravit() {
         if (karta.bottom < 120 || karta.top > innerHeight - 120) return;
         // Na zaměřeném tlačítku v Oblíbenosti dělá mezerník to, co tlačítko (jinde, třeba na přepínači v hlavičce, je remíza)
         if (e.key === ' ' && e.target.closest?.('button') && koren.contains(e.target)) return;
-        const nahled = fronta[0] && klavesaNahledu(e);
-        if (nahled) {
-            e.preventDefault();
-            nahledObou(nahled);
-            return;
-        }
         const akce = { ArrowLeft: () => vybrat('a'), ArrowRight: () => vybrat('b'), ArrowDown: () => vybrat('remiza'), ' ': () => vybrat('remiza'),
-            Backspace: vratit, s: preskocit, S: preskocit }[e.key];
+            Backspace: vratit, s: preskocit, S: preskocit, f: () => otevritFotky('a'), F: () => otevritFotky('a') }[e.key];
         if (!akce) return;
         e.preventDefault();
         akce();

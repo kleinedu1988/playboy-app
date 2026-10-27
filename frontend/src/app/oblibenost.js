@@ -394,6 +394,8 @@ async function otevritFotku(strana, fotka) {
     otevritLightbox(kde, false, polozky);
 }
 
+const variantaRozhodnout = () => { try { return localStorage.getItem('rozhodnoutVarianta') || 'a'; } catch { return 'a'; } };
+
 function vykreslitPoradi() {
     const o = data.oblibenost;
     const poradi = (o?.poradi || []).filter(p => modelka(p.modelkaId));
@@ -408,7 +410,9 @@ function vykreslitPoradi() {
     // Čekající na potvrzení úrovně: kolik a kam, odkaz do Porovnávání (dvojice o potvrzení jsou tam napřed);
     // pravidla úrovní nenápadně pod seznamem
     const cekaji = textCekajicich(poctyCekajicich(poradi), o?.cekajicich);
-    nastavitHtml(cast('cekaji'), cekaji ? `⏳ ${esc(cekaji)} · <button type="button" class="link" data-ob-porovnavat title="Dvojice o potvrzení a souboje na hranicích úrovní nabízí Porovnávání">Porovnávat →</button>` : '');
+    const kRozhodnuti = variantaRozhodnout() === 'b' ? poradi.filter(p => p.ceka || p.obhajoba) : [];
+    nastavitHtml(cast('cekaji'), cekaji ? `⏳ ${esc(cekaji)} · <button type="button" class="link" data-ob-porovnavat title="Dvojice o potvrzení a souboje na hranicích úrovní nabízí Porovnávání">Porovnávat →</button>`
+        + (kRozhodnuti.length ? `<span class="ob-rozhodnout-seznam">⚔ Rozhodnout teď: ${kRozhodnuti.map(p => `<button type="button" class="chip" data-ob-rozhodnout="${p.modelkaId}" title="${esc(`Souboje, které ${modelka(p.modelkaId).jmeno} chybí, hned za sebou`)}">${esc(modelka(p.modelkaId).jmeno)} <small>${p.obhajoba ? `obhajuje ${nazevUrovne(p.obhajoba.uroven)}` : nazevUrovne(p.ceka.uroven)}</small></button>`).join('')}</span>` : '') : '');
     nastavitText(cast('pravidla'), poradi.length ? textPravidelUrovni(o?.urovne) : '');
     // Pořadí dávají srdíčka a fotky už bez porovnání; prázdné je jen bez hodnocených modelek i fotek
     if (!poradi.length) {
@@ -431,15 +435,17 @@ function vykreslitPoradi() {
         // Vlastní řádek pod srdíčky, aby se štítek v úzkém sloupci neusekl
         const stitekCekani = ceka ? `<small class="ob-ceka" title="${esc(bublinaCekani(p.ceka, p.mistoPodleSily, drzitelka))}">${p.ceka.drzitelka ? '⚔' : '⏳'} ${esc(ceka)}${podleSily}</small>`
             : obhajoba ? `<small class="ob-ceka ob-obhajuje" title="${esc(obhajoba.title)}">🛡 ${esc(obhajoba.text)}</small>` : '';
-        return `<li class="${[p.jenOdhad ? 'ob-z-fotek' : '', ceka ? 'ob-ceka-radek' : ''].filter(Boolean).join(' ')}"><button type="button" class="ob-radek" data-otevrit-modelku="${m.id}" title="${esc(popis)}">
+        const akce = (ceka || obhajoba) && variantaRozhodnout() === 'a'
+            ? `<button type="button" class="link ob-rozhodnout" data-ob-rozhodnout="${m.id}" title="${esc(`Spustí hned souboje, které ${m.jmeno} chybí${obhajoba ? ' k obhajobě' : ' do potvrzení'}, za sebou s ukazatelem postupu – na konci je jasné, jak to dopadlo`)}">⚔ Rozhodnout teď</button>` : '';
+        return `<li class="${[p.jenOdhad ? 'ob-z-fotek' : '', ceka || obhajoba ? 'ob-ceka-radek' : ''].filter(Boolean).join(' ')}"><button type="button" class="ob-radek" data-otevrit-modelku="${m.id}" title="${esc(popis)}">
             <span class="ob-misto">${p.poradi || i + 1}.</span>
             <img data-src="${esc(adresaTitulni(m))}" alt="" draggable="false" />
             <span class="ob-jmeno-radku">${esc(m.jmeno)}<small>${m.hodnoceni ? `<i>${znakySrdicek(m.hodnoceni)}</i>` : p.jenOdhad ? (p.zdrojOdhadu === 'vkus'
                 ? '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle tvého vkusu (údaje modelky a srdíčka fotek)">odhad</span>'
-                : '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>') : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}${p.zmenaPoradi && o.trendDni ? ` · <span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}" title="${esc(`${p.zmenaPoradi > 0 ? 'Stoupla' : 'Klesla'} o ${sklonovat(Math.abs(p.zmenaPoradi), 'místo', 'místa', 'míst')} za ${o.trendDni} dní`)}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : ''}${p.zajem >= 0.05 ? ' · <span class="ob-zajem" title="Často otevíráš její profil nebo prohlížíš fotky – posouvá ji to v pořadí uvnitř srdíček">zájem</span>' : ''}</small>${stitekCekani}</span>
+                : '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>') : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}${p.zmenaPoradi && o.trendDni ? ` · <span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}" title="${esc(`${p.zmenaPoradi > 0 ? 'Stoupla' : 'Klesla'} o ${sklonovat(Math.abs(p.zmenaPoradi), 'místo', 'místa', 'míst')} za ${o.trendDni} dní`)}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : ''}${p.zajem >= 0.05 ? ' · <span class="ob-zajem" title="Často otevíráš její profil nebo prohlížíš fotky – posouvá ji to v pořadí uvnitř srdíček">zájem</span>' : ''}</small></span>
             <span class="ob-pruh" aria-hidden="true"><i style="width:${sirka}%"></i>${nejistota ? `<b style="left:${Math.max(0, sirka - nejistota)}%; width:${Math.min(100, sirka + nejistota) - Math.max(0, sirka - nejistota)}%"></b>` : ''}</span>
             <small class="ob-pocet">${p.porovnani || 0}×</small>
-        </button>${ceka || obhajoba ? `<button type="button" class="ob-rozhodnout" data-ob-rozhodnout="${m.id}" title="${esc(`Spustí hned souboje, které ${m.jmeno} chybí${obhajoba ? ' k obhajobě' : ' do potvrzení'}, za sebou s ukazatelem postupu – na konci je jasné, jak to dopadlo`)}">⚔ Rozhodnout teď</button>` : ''}</li>`;
+        </button>${stitekCekani ? `<div class="ob-ceka-pod">${stitekCekani}${akce}</div>` : ''}</li>`;
     };
     // Oddělovače úseků (Top 10 · Top 20 · Top 50 · Top 100 · Mimo) s počtem potvrzených v úseku celého pořadí
     const potvrzenych = new Map(seskupitPodleUrovni(poradi).map(sk => [sk.uroven, sk]));

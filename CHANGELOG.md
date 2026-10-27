@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.49] – 2026-10-27
+
+### Přidáno
+- **Síň slávy:** třetí část Oblíbenosti vedle Porovnávání a Pořadí.
+  - **Top 10 jako karty modelek** jako v galerii. Vpravo nahoře je místo (jednička s korunkou), pod jménem jak dlouho v Top 10 je, kolikrát obhájila (🛡) a kolikátý je to pobyt. Podrobnosti ukáže bublina.
+  - **Rekordy jako zlaté štítky 🏆 na kartě:** nejdéle v Top 10, nejdelší vláda na 1. místě, nejvíc obhajob, nejrychlejší postup a největší návrat.
+  - **Legendy:** bývalé Top 10 jako vybledlé karty s nejlepším místem.
+  - **Kronika** je jeden řádek s nejnovější událostí, po rozkliknutí celá po měsících. Obsahuje vstupy, výpadky (i kdo modelku vytlačila), obhajoby a nové jedničky.
+  - **Profil** modelky, která v Top 10 je nebo byla, má řádek „🏆 V Top 10 87 dní · na 1. místě 12 dní · 2× obhájila · nejlépe 1.“, klik otevře Síň slávy.
+  - Kronika se ukládá trvale a začíná touto verzí; kdo už v Top 10 je, má „aspoň“ dní od jejího začátku. Vrácení porovnání vrátí i kroniku.
+
 ## [0.99.48] – 2026-10-27
 
 ### Přidáno

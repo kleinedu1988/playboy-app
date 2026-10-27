@@ -8,14 +8,16 @@ import (
 )
 
 // Výběr dvojic k porovnání „Která se ti líbí víc?“ (aktivní učení, popis níž a v docs/UCENI.md, oddíl Výběr dvojic):
-// hodnocené dvojice stejné a sousední úrovně a nehodnocené proti kotvě na úrovni jejich síly. Úroveň i nejistota jsou
-// ze společného modelu oblíbenosti (oblibenost.go), stejně jako pořadí a návrhy srdíček.
+// hodnocené dvojice stejné a sousední úrovně, nehodnocené proti kotvě na úrovni jejich síly a souboje na hranicích
+// top 10/20/50/100 (oblibenost_urovne.go). Úroveň i nejistota jsou ze společného modelu oblíbenosti (oblibenost.go),
+// stejně jako pořadí a návrhy srdíček.
 
 // Dvojice k porovnání „Která se ti líbí víc?“
 type DvojicePorovnani struct {
 	A     int    `json:"a"`
 	B     int    `json:"b"`
 	Duvod string `json:"duvod"` // proč právě tahle dvojice (česky)
+	Druh  string `json:"druh"`  // "souboj" u soubojů na hranicích top 10/20/50/100, jinak ""
 }
 
 // Parametry výběru dvojic
@@ -91,6 +93,8 @@ type kandidatDvojice struct {
 	// Nehodnocená: úroveň srdíček, na kterou vychází (odhad nebo síla z porovnání, po polovinách), a odkud
 	uroven float64
 	zdroj  int
+	// Souboj: o kterou úroveň top N (x čekající nebo N+1. místo, y soupeřka)
+	urovenTop int
 }
 
 // Odkud je úroveň nehodnocené modelky
@@ -107,9 +111,14 @@ const (
 	dvojiceStejna             // stejná úroveň srdíček
 	dvojiceSousedni           // sousední úrovně
 	dvojiceVzdalena           // srdíčka se liší o jedno
+	dvojiceCekajici           // souboj: čekající na potvrzení úrovně proti poslední potvrzené
+	dvojiceHranice            // souboj: N. proti N+1. místu
 )
 
 func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
+	if k.druh == dvojiceCekajici || k.druh == dvojiceHranice {
+		return duvodSouboje(k, model)
+	}
 	nizsi, vyssi := textSrdicek(min(k.x.Hodnoceni, k.y.Hodnoceni)), textSrdicek(max(k.x.Hodnoceni, k.y.Hodnoceni))
 	switch k.druh {
 	case dvojiceNehodnocena:
@@ -273,6 +282,11 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 			}
 		}
 	}
+	// Souboje na hranicích top 10/20/50/100 (jen výchozí okruh; seřazené už jsou)
+	var kandidatiSoub []kandidatDvojice
+	if okruh == "" {
+		kandidatiSoub = model.kandidatiSouboju(modelky, vyloucene, vahaModelky)
+	}
 	for _, kandidati := range [][]kandidatDvojice{kandidatiHod, kandidatiNeh} {
 		sort.SliceStable(kandidati, func(i, j int) bool {
 			if kandidati[i].skore != kandidati[j].skore {
@@ -289,13 +303,23 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 		if nahoda.Intn(2) == 1 {
 			a, b = b, a
 		}
-		vysledek = append(vysledek, DvojicePorovnani{A: a, B: b, Duvod: duvod})
+		d := DvojicePorovnani{A: a, B: b, Duvod: duvod}
+		if k.druh == dvojiceCekajici || k.druh == dvojiceHranice {
+			d.Druh = "souboj"
+		}
+		vysledek = append(vysledek, d)
 	}
 	// Další dvojice z jednoho seznamu: občas průzkum (náhodná použitelná ze stejné nebo sousední úrovně), jinak
 	// nejlepší použitelná; false, když v seznamu nic použitelného není
+	// Seznamy kandidátů (souboje bez průzkumu: o hranici rozhoduje pořadí, ne náhoda)
+	const (
+		seznamHodnocenych = iota
+		seznamNehodnocenych
+		seznamSouboju
+	)
 	dalsi := map[int]int{}
 	vzit := func(kandidati []kandidatDvojice, druh int) bool {
-		if nahoda.Float64() < podilPruzkumu {
+		if druh != seznamSouboju && nahoda.Float64() < podilPruzkumu {
 			var moznosti []kandidatDvojice
 			for _, k := range kandidati {
 				if k.pruzkum && pouzitelny(k) {
@@ -321,14 +345,31 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 		pridat(kandidati[dalsi[druh]], duvodDvojice(kandidati[dalsi[druh]], model))
 		return true
 	}
+	seznamy := [][]kandidatDvojice{kandidatiHod, kandidatiNeh, kandidatiSoub}
+	// Souboje berou z dvojic, které by jinak byly hodnocené, tolik, aby jich bylo podilSouboju ze všech
+	podilSoubojuHodnocenych := podilSouboju
+	if len(kandidatiNeh) > 0 {
+		podilSoubojuHodnocenych /= 1 - podilNehodnocenych
+	}
 	for len(vysledek) < pocet {
-		// Nehodnocené dostanou asi třetinu dvojic (když nějaké jsou); když jeden seznam dojde, bere se z druhého
-		nejdriv, potom := 0, 1
+		// Nehodnocené dostanou asi třetinu dvojic (když nějaké jsou), souboje asi 30 % (když nějaké jsou, jinak
+		// zůstanou hodnoceným); když jeden seznam dojde, bere se z dalších
+		nejdriv, potom := seznamHodnocenych, seznamNehodnocenych
 		if len(kandidatiHod) == 0 || (len(kandidatiNeh) > 0 && nahoda.Float64() < podilNehodnocenych) {
-			nejdriv, potom = 1, 0
+			nejdriv, potom = seznamNehodnocenych, seznamHodnocenych
 		}
-		seznamy := [][]kandidatDvojice{kandidatiHod, kandidatiNeh}
-		if !vzit(seznamy[nejdriv], nejdriv) && !vzit(seznamy[potom], potom) {
+		poradiSeznamu := []int{nejdriv, potom, seznamSouboju}
+		if nejdriv == seznamHodnocenych && len(kandidatiSoub) > 0 && nahoda.Float64() < podilSoubojuHodnocenych {
+			poradiSeznamu = []int{seznamSouboju, seznamHodnocenych, seznamNehodnocenych}
+		}
+		vzato := false
+		for _, s := range poradiSeznamu {
+			if vzit(seznamy[s], s) {
+				vzato = true
+				break
+			}
+		}
+		if !vzato {
 			break
 		}
 	}

@@ -382,12 +382,23 @@ func TestOblibenostZustavaVUrovni(t *testing.T) {
 	if ob["Druhá trojka"].Oblibenost >= ob["Trojka"].Oblibenost || ob["Nehodnocená"].Oblibenost != 0 {
 		t.Fatalf("oblíbenost: %v %v", ob["Druhá trojka"].Oblibenost, ob["Nehodnocená"].Oblibenost)
 	}
+	// Podle síly (oblíbenosti) je Čtyřka první; potvrzeně v top 10 je ale jen Trojka (30 porovnání a výhry nad
+	// potvrzenou top 20), Čtyřka nad nikým z top 20 nevyhrála, takže čeká na potvrzení top 10 a je druhá
 	stav := a.GetOblibenost()
-	if stav.Porovnani != 30 || stav.Modelek != 3 || stav.Poradi[0].ModelkaID != ctyrka || stav.Poradi[1].ModelkaID != trojka || stav.Poradi[0].Poradi != 1 {
+	if stav.Porovnani != 30 || stav.Modelek != 3 || stav.Poradi[0].ModelkaID != trojka || stav.Poradi[1].ModelkaID != ctyrka || stav.Poradi[0].Poradi != 1 {
 		t.Fatalf("pořadí: %+v", stav)
 	}
-	if p := stav.Poradi[1]; p.Porovnani != 30 || p.Sila <= 3.35 || !strings.Contains(p.Duvod, "výš než její srdíčka") {
+	if p := stav.Poradi[0]; p.Porovnani != 30 || p.Sila <= 3.35 || !strings.Contains(p.Duvod, "výš než její srdíčka") || p.MistoPodleSily != 2 || p.Uroven != 10 || p.Ceka != nil {
 		t.Fatalf("Trojka v pořadí: %+v", p)
+	}
+	if p := stav.Poradi[1]; p.MistoPodleSily != 1 || p.Uroven != 20 || p.Ceka == nil || p.Ceka.Uroven != 10 || !p.Ceka.PotrebaVyhry || p.Ceka.MaVyhru || p.Ceka.Porovnani != 15 {
+		t.Fatalf("Čtyřka v pořadí: %+v (čeká %+v)", p, p.Ceka)
+	}
+	if len(stav.Urovne) != 4 || stav.Urovne[0].Potvrzenych != 1 || stav.Urovne[1].Potvrzenych != 3 || stav.Cekajicich != 2 {
+		t.Fatalf("úrovně: %+v, čekajících %d", stav.Urovne, stav.Cekajicich)
+	}
+	if m := modelkaPodleJmena(t, a, "Čtyřka"); m.Poradi != 2 || m.UrovenTop != 20 || m.CekaNaTop != 10 {
+		t.Fatalf("Čtyřka v seznamu modelek: pořadí %d, úroveň %d, čeká na %d", m.Poradi, m.UrovenTop, m.CekaNaTop)
 	}
 	// Vrácení porovnání se projeví hned (otisk podle počtu a posledního čísla)
 	for range 30 {

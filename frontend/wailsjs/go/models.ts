@@ -20,6 +20,30 @@ export namespace main {
 	        this.n = source["n"];
 	    }
 	}
+	export class CekaniNaUroven {
+	    uroven: number;
+	    porovnani: number;
+	    potrebaPorovnani: number;
+	    nejistota: number;
+	    maxNejistota: number;
+	    potrebaVyhry: boolean;
+	    maVyhru: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new CekaniNaUroven(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.uroven = source["uroven"];
+	        this.porovnani = source["porovnani"];
+	        this.potrebaPorovnani = source["potrebaPorovnani"];
+	        this.nejistota = source["nejistota"];
+	        this.maxNejistota = source["maxNejistota"];
+	        this.potrebaVyhry = source["potrebaVyhry"];
+	        this.maVyhru = source["maVyhru"];
+	    }
+	}
 	export class Clanek {
 	    id: number;
 	    vydani: string;
@@ -78,6 +102,7 @@ export namespace main {
 	    a: number;
 	    b: number;
 	    duvod: string;
+	    druh: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new DvojicePorovnani(source);
@@ -88,6 +113,7 @@ export namespace main {
 	        this.a = source["a"];
 	        this.b = source["b"];
 	        this.duvod = source["duvod"];
+	        this.druh = source["druh"];
 	    }
 	}
 	export class OdkazModelky {
@@ -326,6 +352,8 @@ export namespace main {
 	    poradi: number;
 	    zmenaPoradi: number;
 	    trendDni: number;
+	    urovenTop: number;
+	    cekaNaTop: number;
 	    pridano: string;
 	    netykaSe: string;
 	    odkazy: string;
@@ -379,6 +407,8 @@ export namespace main {
 	        this.poradi = source["poradi"];
 	        this.zmenaPoradi = source["zmenaPoradi"];
 	        this.trendDni = source["trendDni"];
+	        this.urovenTop = source["urovenTop"];
+	        this.cekaNaTop = source["cekaNaTop"];
 	        this.pridano = source["pridano"];
 	        this.netykaSe = source["netykaSe"];
 	        this.odkazy = source["odkazy"];
@@ -572,6 +602,9 @@ export namespace main {
 	    trend: number;
 	    zmenaPoradi: number;
 	    duvod: string;
+	    mistoPodleSily: number;
+	    uroven: number;
+	    ceka?: CekaniNaUroven;
 	
 	    static createFrom(source: any = {}) {
 	        return new OblibenostModelky(source);
@@ -596,7 +629,28 @@ export namespace main {
 	        this.trend = source["trend"];
 	        this.zmenaPoradi = source["zmenaPoradi"];
 	        this.duvod = source["duvod"];
+	        this.mistoPodleSily = source["mistoPodleSily"];
+	        this.uroven = source["uroven"];
+	        this.ceka = this.convertValues(source["ceka"], CekaniNaUroven);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class VyberFotky {
 	    vyberId: number;
@@ -709,6 +763,7 @@ export namespace main {
 	    poradi: number;
 	    zmenaPoradi: number;
 	    dni: number;
+	    uroven: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new PolozkaOblibenosti(source);
@@ -722,6 +777,7 @@ export namespace main {
 	        this.poradi = source["poradi"];
 	        this.zmenaPoradi = source["zmenaPoradi"];
 	        this.dni = source["dni"];
+	        this.uroven = source["uroven"];
 	    }
 	}
 	export class PolozkaPrehledu {
@@ -991,6 +1047,26 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class UrovenTop {
+	    uroven: number;
+	    potrebaPorovnani: number;
+	    maxNejistota: number;
+	    potrebaVyhry: boolean;
+	    potvrzenych: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UrovenTop(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.uroven = source["uroven"];
+	        this.potrebaPorovnani = source["potrebaPorovnani"];
+	        this.maxNejistota = source["maxNejistota"];
+	        this.potrebaVyhry = source["potrebaVyhry"];
+	        this.potvrzenych = source["potvrzenych"];
+	    }
+	}
 	export class StavOblibenosti {
 	    porovnani: number;
 	    modelek: number;
@@ -1008,6 +1084,8 @@ export namespace main {
 	    trendDni: number;
 	    poradi: OblibenostModelky[];
 	    nesedi: NesouladSrdicek[];
+	    urovne: UrovenTop[];
+	    cekajicich: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new StavOblibenosti(source);
@@ -1031,6 +1109,8 @@ export namespace main {
 	        this.trendDni = source["trendDni"];
 	        this.poradi = this.convertValues(source["poradi"], OblibenostModelky);
 	        this.nesedi = this.convertValues(source["nesedi"], NesouladSrdicek);
+	        this.urovne = this.convertValues(source["urovne"], UrovenTop);
+	        this.cekajicich = source["cekajicich"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -1121,6 +1201,7 @@ export namespace main {
 		    return a;
 		}
 	}
+	
 	export class Vyber {
 	    id: number;
 	    nazev: string;

@@ -23,13 +23,15 @@ import (
 //   - Z téhož modelu: výběr dvojic (oblibenost_dvojice.go – stejné a sousední úrovně, nehodnocené proti kotvě na
 //     úrovni své síly, častěji modelky s nesouladem), návrhy srdíček (oblibenost_navrhy.go – úroveň nehodnocené po
 //     pár porovnáních, nesoulad hodnocené s porovnáními a se srdíčky fotek), pořadí a trend (oblibenost_zajem.go).
+//   - Potvrzené pořadí s úrovněmi Top 10/20/50/100 (oblibenost_urovne.go): modelka, která nesplňuje prahy úrovně
+//     (porovnání, nejistota, u top 10 výhra nad top 20), zůstane pod její hranicí; oblíbenost (číslo) se nemění.
 //
 // Model vkusu se učí jen na srdíčkách upřesněných porovnáním a na údajích modelek (se skóre fotek), na výsledku
 // Bradley–Terry nezávisí, takže se počítá napřed. Vše se počítá v paměti z modelek sbírky, porovnání a zájmu a ukládá
 // se podle otisku (změna dat, nové porovnání nebo dávka zájmu otisk změní); GetModelky pak jen doplní hotová čísla.
 
 // Verze výpočtu oblíbenosti: změna modelů zneplatní výsledek v paměti
-const verzeOblibenosti = "oblibenost-4"
+const verzeOblibenosti = "oblibenost-5"
 
 // Parametry modelu Bradley–Terry
 const (
@@ -72,6 +74,10 @@ type StavOblibenosti struct {
 	Poradi         []OblibenostModelky `json:"poradi"`
 	// Hodnocené modelky, kterým podle porovnání nesedí srdíčka, od největšího nesouladu
 	Nesedi []NesouladSrdicek `json:"nesedi"`
+	// Úrovně Top 10, 20, 50 a 100 (prahy a kolik modelek v nich potvrzeně je) a kolik modelek čeká na potvrzení
+	// úrovně, kam by podle síly patřila (oblibenost_urovne.go)
+	Urovne     []UrovenTop `json:"urovne"`
+	Cekajicich int         `json:"cekajicich"`
 }
 
 type OblibenostModelky struct {
@@ -80,7 +86,7 @@ type OblibenostModelky struct {
 	Hodnoceni float64 `json:"hodnoceni"` // srdíčka po polovinách (0 = nehodnocená)
 	Sila      float64 `json:"sila"`      // síla z porovnání na stupnici srdíček (bez porovnání = srdíčka)
 	Nejistota float64 `json:"nejistota"` // směrodatná odchylka síly
-	Poradi    int     `json:"poradi"`    // pořadí od 1 podle oblíbenosti
+	Poradi    int     `json:"poradi"`    // potvrzené pořadí od 1 (oblíbenost s prahy úrovní Top 10/20/50/100)
 	Porovnani int     `json:"porovnani"` // kolikrát byla porovnávaná
 	Odhad     float64 `json:"odhad"`     // odhad modelu vkusu po polovinách (0 = bez jistého odhadu)
 	// Skóre fotek na stupnici srdíček fotek (0 = žádná hodnocená fotka), z kolika alb a hodnocených fotek
@@ -95,6 +101,11 @@ type OblibenostModelky struct {
 	Trend       float64 `json:"trend"`
 	ZmenaPoradi int     `json:"zmenaPoradi"`
 	Duvod       string  `json:"duvod"` // „srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“
+	// Pořadí jen podle oblíbenosti (bez prahů), nejmenší úroveň Top N, ve které potvrzeně je (10, 20, 50, 100;
+	// 0 = mimo top 100), a čekání na vyšší úroveň, kam by podle síly patřila (jen když tam potvrzená není)
+	MistoPodleSily int             `json:"mistoPodleSily"`
+	Uroven         int             `json:"uroven"`
+	Ceka           *CekaniNaUroven `json:"ceka,omitempty"`
 }
 
 // Výsledek porovnání: vysledek "a" (víc se líbí A), "b" nebo "remiza". Zapíše se do databáze učení se srdíčky
@@ -197,7 +208,11 @@ func (a *App) GetOblibenost() StavOblibenosti {
 		}
 		polozka := OblibenostModelky{ModelkaID: m.ID, Jmeno: m.Jmeno, Hodnoceni: m.Hodnoceni, Sila: zaokrouhlit3(model.silaModelky(&m)),
 			Nejistota: zaokrouhlit3(math.Sqrt(model.rozptylModelky(&m))), Porovnani: model.pocet[m.ID], Poradi: model.poradi[m.ID],
-			Zajem: zaokrouhlit3(model.posunZajmu(m.ID)), Trend: model.trend[m.ID], ZmenaPoradi: model.zmenaPoradi[m.ID]}
+			Zajem: zaokrouhlit3(model.posunZajmu(m.ID)), Trend: model.trend[m.ID], ZmenaPoradi: model.zmenaPoradi[m.ID],
+			MistoPodleSily: model.mistoSily[m.ID], Uroven: model.uroven[m.ID]}
+		if c, ok := model.ceka[m.ID]; ok {
+			polozka.Ceka = &c
+		}
 		if sf, ok := model.skore[m.ID]; ok {
 			polozka.SkoreFotek, polozka.AlbFotek, polozka.FotekHodnocenych = zaokrouhlit3(sf.skore), sf.alb, sf.fotek
 		}
@@ -229,6 +244,7 @@ func (a *App) GetOblibenost() StavOblibenosti {
 		return stav.Nesedi[i].ModelkaID < stav.Nesedi[j].ModelkaID
 	})
 	stav.Modelek = len(stav.Poradi)
+	stav.Urovne, stav.Cekajicich = model.urovneTop(), len(model.ceka)
 	for _, m := range modelky {
 		if m.Hodnoceni > 0 {
 			stav.Hodnocenych++
@@ -246,7 +262,8 @@ func (a *App) doplnitOblibenost(modelky []Modelka) {
 	for i := range modelky {
 		m := &modelky[i]
 		m.Oblibenost = model.oblibenostModelky(m)
-		m.Poradi, m.ZmenaPoradi = model.poradi[m.ID], model.zmenaPoradi[m.ID]
+		m.Poradi, m.ZmenaPoradi, m.UrovenTop = model.poradi[m.ID], model.zmenaPoradi[m.ID], model.uroven[m.ID]
+		m.CekaNaTop = model.ceka[m.ID].Uroven
 		if _, ok := model.zmenaPoradi[m.ID]; ok {
 			m.TrendDni = model.trendDni
 		}
@@ -369,13 +386,21 @@ type modelOblibenosti struct {
 	zajemData map[int]zajemModelky
 	zajemOd   time.Time
 	vahaZajmu vysledekZajmu
-	// Pořadí od 1 a trend proti srovnávacímu snímku (posun oblíbenosti, pořadí a stáří snímku ve dnech)
+	// Potvrzené pořadí od 1 a trend proti srovnávacímu snímku (posun oblíbenosti, pořadí a stáří snímku ve dnech)
 	poradi      map[int]int
 	trend       map[int]float64
 	zmenaPoradi map[int]int
 	trendDni    int
 	// Hodnocené modelky, kterým podle porovnání s jinými úrovněmi nesedí srdíčka
 	nesoulad map[int]NesouladSrdicek
+	// Úrovně Top N (oblibenost_urovne.go): místo jen podle oblíbenosti, potvrzená úroveň (10/20/50/100, 0 = mimo),
+	// čekání na vyšší úroveň, potvrzená top 20 (elita) a kdo nad ní vyhrál, počet potvrzených v každé úrovni
+	mistoSily   map[int]int
+	uroven      map[int]int
+	ceka        map[int]CekaniNaUroven
+	elita       map[int]bool
+	maVyhru     map[int]bool
+	potvrzenych []int
 }
 
 // Posun předpokladu síly zájmem (srdíčka); jen u modelek s předpokladem (hodnocené nebo s hodnocenými fotkami)
@@ -423,10 +448,10 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	nyni := time.Now()
 	u.mu.Lock()
 	zajem := u.nacistZajem(nyni)
-	snimek, den := u.nacistSrovnani(nyni)
+	snimek, den, potvrzene := u.nacistSrovnani(nyni)
 	u.mu.Unlock()
 	model := spocitatOblibenostSeZajmem(modelky, porovnani, zajem, nyni)
-	model.nastavitTrend(snimek, den, nyni)
+	model.nastavitTrend(snimek, den, nyni, potvrzene)
 	model.otisk = otisk
 	u.ob.model = model
 	u.mu.Lock()
@@ -589,7 +614,7 @@ func spocitatOblibenostSeZajmem(modelky []Modelka, porovnani []porovnaniZaznam, 
 			model.jenOdhad[m.ID] = true
 		}
 	}
-	model.poradi = spocitatPoradi(model.oblibenost)
+	model.spocitatUrovne(porovnani)
 	model.nesoulad = spocitatNesoulad(modelky, porovnani, nyni)
 	model.doplnitNesouladFotek(modelky)
 	return model

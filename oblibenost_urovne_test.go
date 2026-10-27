@@ -1,0 +1,437 @@
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"os"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+)
+
+// Úrovně Top 10/20/50/100: potvrzené pořadí, čekání, souboje ve výběru dvojic a simulace přesnosti
+
+// Model jen s tím, co úrovně potřebují: modelka i+1 má oblíbenost sily[i] (sestupně = místo podle síly i+1),
+// nejistotu 0,2 a pocet[i] porovnání
+func modelUrovni(sily []float64, pocet []int, jenOdhad map[int]bool) *modelOblibenosti {
+	m := &modelOblibenosti{oblibenost: map[int]float64{}, rozptyl: map[int]float64{}, pocet: map[int]int{}, jenOdhad: map[int]bool{}}
+	for i, s := range sily {
+		m.oblibenost[i+1], m.rozptyl[i+1], m.pocet[i+1] = s, 0.04, pocet[i]
+	}
+	for id := range jenOdhad {
+		m.jenOdhad[id] = true
+	}
+	return m
+}
+
+// Potvrzené pořadí je permutace 1…n a úroveň odpovídá místu
+func overitPermutaci(t *testing.T, m *modelOblibenosti) {
+	t.Helper()
+	videno := map[int]bool{}
+	for id, p := range m.poradi {
+		if p < 1 || p > len(m.poradi) || videno[p] {
+			t.Fatalf("pořadí není permutace: %d má místo %d", id, p)
+		}
+		videno[p] = true
+		if u := m.uroven[id]; u != 0 && p > u {
+			t.Fatalf("modelka %d na %d. místě má úroveň %d", id, p, u)
+		}
+	}
+}
+
+func TestUrovneTopPotvrzenePoradi(t *testing.T) {
+	n := 60
+	sily, pocet := make([]float64, n), make([]int, n)
+	for i := range n {
+		sily[i], pocet[i] = 5-0.05*float64(i), 10
+	}
+	pocet[3] = 7 // 4. podle síly: na top 10 chybí porovnání, top 20 splňuje → 11. místo
+	pocet[5] = 5 // 6.: splňuje jen top 50 → 21. místo
+	pocet[1] = 0 // 2.: jen odhad → úplně nakonec
+	// Výhry nad potvrzenou top 20: všechny porazily dvacátou (8. ne), dvacátá první
+	var porovnani []porovnaniZaznam
+	for id := 1; id <= n; id++ {
+		if id != 20 && id != 8 {
+			porovnani = append(porovnani, porovnaniZaznam{a: id, b: 20, vysledek: "a"})
+		}
+	}
+	porovnani = append(porovnani, porovnaniZaznam{a: 1, b: 20, vysledek: "b"})
+	m := modelUrovni(sily, pocet, map[int]bool{2: true})
+	m.spocitatUrovne(porovnani)
+	overitPermutaci(t, m)
+	for _, c := range []struct{ id, poradi, misto, uroven, ceka int }{
+		{1, 1, 1, 10, 0}, {3, 2, 3, 10, 0}, {5, 3, 5, 10, 0}, {14, 10, 14, 10, 0},
+		{4, 11, 4, 20, 10},  // nemá na top 10: těsně pod hranicí
+		{8, 12, 8, 20, 10},  // bez výhry nad top 20
+		{6, 21, 6, 50, 10},  // nemá ani na top 20
+		{2, 60, 2, 0, 10},   // jen odhad
+		{15, 13, 15, 20, 0}, // potvrdila by se i do top 10, ale je jich tam deset silnějších
+	} {
+		if m.poradi[c.id] != c.poradi || m.mistoSily[c.id] != c.misto || m.uroven[c.id] != c.uroven || m.ceka[c.id].Uroven != c.ceka {
+			t.Errorf("modelka %d: místo %d (chci %d), podle síly %d, úroveň %d (chci %d), čeká %+v", c.id, m.poradi[c.id], c.poradi, m.mistoSily[c.id], m.uroven[c.id], c.uroven, m.ceka[c.id])
+		}
+	}
+	if c := m.ceka[4]; c.Porovnani != 7 || c.PotrebaPorovnani != 10 || !c.PotrebaVyhry || !c.MaVyhru || c.MaxNejistota != 0.3 {
+		t.Errorf("čekání čtvrté: %+v", c)
+	}
+	if c := m.ceka[8]; c.MaVyhru || c.Porovnani != 10 {
+		t.Errorf("čekání osmé: %+v", c)
+	}
+	if u := m.urovneTop(); len(u) != 4 || u[0].Potvrzenych != 10 || u[1].Potvrzenych != 20 || u[3].Uroven != 100 || u[3].Potvrzenych != n-1 {
+		t.Errorf("úrovně: %+v", u)
+	}
+	// Deterministické: stejný vstup, stejné pořadí
+	m2 := modelUrovni(sily, pocet, map[int]bool{2: true})
+	m2.spocitatUrovne(porovnani)
+	for id, p := range m.poradi {
+		if m2.poradi[id] != p {
+			t.Fatalf("pořadí se liší: %d %d/%d", id, p, m2.poradi[id])
+		}
+	}
+}
+
+// Bez porovnání nikdo potvrzený není: pořadí zůstane podle síly, každá v top 100 čeká, jen odhad až za top 100
+func TestUrovneTopBezPorovnani(t *testing.T) {
+	n := 120
+	sily, pocet := make([]float64, n), make([]int, n)
+	for i := range n {
+		sily[i] = 5 - 0.03*float64(i)
+	}
+	m := modelUrovni(sily, pocet, map[int]bool{1: true})
+	m.spocitatUrovne(nil)
+	overitPermutaci(t, m)
+	if m.poradi[1] != 101 || m.poradi[2] != 1 || m.poradi[50] != 49 || m.uroven[2] != 0 || len(m.ceka) != 100 || m.ceka[60].Uroven != 100 {
+		t.Fatalf("bez porovnání: jen odhad %d., druhá %d., úroveň %d, čekajících %d", m.poradi[1], m.poradi[2], m.uroven[2], len(m.ceka))
+	}
+}
+
+// Okno 2·N: porovnaná slabší modelka (podle síly 150.) se nepotvrdí do top 50 ani nevytáhne nad nepotvrzené, jen do
+// top 100 (od 51. místa)
+func TestUrovneTopOkno(t *testing.T) {
+	n := 300
+	sily, pocet := make([]float64, n), make([]int, n)
+	var porovnani []porovnaniZaznam
+	for i := range n {
+		sily[i] = 5 - 0.01*float64(i)
+		if i >= 149 && i < 160 {
+			pocet[i] = 12
+			porovnani = append(porovnani, porovnaniZaznam{a: i + 1, b: 1, vysledek: "a"})
+		}
+	}
+	m := modelUrovni(sily, pocet, nil)
+	m.spocitatUrovne(porovnani)
+	overitPermutaci(t, m)
+	if m.poradi[150] != 51 || m.uroven[150] != 100 || m.poradi[1] != 1 || m.uroven[1] != 0 || m.poradi[51] != 62 {
+		t.Fatalf("okno: 150. podle síly na %d. (úroveň %d), první na %d., 51. na %d.", m.poradi[150], m.uroven[150], m.poradi[1], m.poradi[51])
+	}
+}
+
+// Výběr dvojic: čekající na top 10 dostane souboj s poslední potvrzenou v top 10 (druh „souboj“, důvod s počtem
+// porovnání); nehodnocená neporovnaná do souboje nejde
+func TestVyberDvojicSouboje(t *testing.T) {
+	var modelky []Modelka
+	var porovnani []porovnaniZaznam
+	pridat := func(a, b int, v string) {
+		porovnani = append(porovnani, porovnaniZaznam{id: int64(len(porovnani) + 1), a: a, b: b, vysledek: v})
+	}
+	for i := range 30 {
+		h := 5.0
+		if i >= 12 {
+			h = 4
+		}
+		modelky = append(modelky, Modelka{ID: i + 1, Jmeno: fmt.Sprintf("M%02d", i+1), Hodnoceni: h, CoverID: "x"})
+	}
+	modelky = append(modelky, Modelka{ID: 99, Jmeno: "Nová", CoverID: "x"})
+	// Prvních 12 se pětkrát porovnalo mezi sebou (každá s pěti dalšími), 1. podle síly (M01) jen třikrát
+	for i := 2; i <= 12; i++ {
+		for d := 1; d <= 4; d++ {
+			j := (i-2+d)%11 + 2
+			pridat(i, j, "a")
+		}
+	}
+	for _, j := range []int{2, 3, 4} {
+		pridat(1, j, "a")
+	}
+	for i := 13; i <= 30; i++ {
+		pridat(i, 13+(i-12)%18, "remiza")
+	}
+	model := spocitatOblibenost(modelky, porovnani, time.Now())
+	c, ok := model.ceka[1]
+	if !ok || c.Uroven != 10 || c.Porovnani >= c.PotrebaPorovnani {
+		t.Fatalf("M01 má čekat na top 10: %+v (místo podle síly %d, pořadí %d)", c, model.mistoSily[1], model.poradi[1])
+	}
+	souboju, sM01 := 0, 0
+	for k := range 20 {
+		for _, d := range vybratDvojice(modelky, model, nil, nil, 8, "", rand.New(rand.NewSource(int64(k)))) {
+			if d.Druh != "souboj" {
+				if strings.HasPrefix(d.Duvod, "Souboj") || strings.Contains(d.Duvod, "čeká na potvrzení") {
+					t.Fatalf("důvod souboje bez druhu: %+v", d)
+				}
+				continue
+			}
+			souboju++
+			if d.A == 99 || d.B == 99 {
+				t.Fatalf("nehodnocená neporovnaná v souboji: %+v", d)
+			}
+			if d.A == 1 || d.B == 1 {
+				sM01++
+				if !strings.Contains(d.Duvod, "M01 čeká na potvrzení do top 10 (3 z 10 porovnání)") || !strings.Contains(d.Duvod, "soupeřkou je ") {
+					t.Fatalf("důvod souboje: %q", d.Duvod)
+				}
+			}
+		}
+	}
+	if souboju == 0 || sM01 == 0 || souboju > 20*8/2 {
+		t.Fatalf("soubojů %d (s M01 %d) ze %d dvojic", souboju, sM01, 20*8)
+	}
+	// Okruh „stejne“ souboje nenabízí
+	for _, d := range vybratDvojice(modelky, model, nil, nil, 8, "stejne", rand.New(rand.NewSource(1))) {
+		if d.Druh != "" {
+			t.Fatalf("souboj v okruhu stejne: %+v", d)
+		}
+	}
+}
+
+// Trend se snímkem s potvrzeným pořadím srovnává potvrzená místa (vstup do top 10 je vzestup), se starším
+// snímkem oblíbenost
+func TestTrendPotvrzenehoPoradi(t *testing.T) {
+	m := &modelOblibenosti{oblibenost: map[int]float64{1: 4.9, 2: 4.8, 3: 4.7}, poradi: map[int]int{1: 3, 2: 1, 3: 2}}
+	snimek := map[int]snimekOblibenosti{1: {4.9, 1}, 2: {4.8, 2}, 3: {4.7, 3}}
+	nyni := time.Now()
+	m.nastavitTrend(snimek, nyni.AddDate(0, 0, -30), nyni, true)
+	if m.zmenaPoradi[1] != -2 || m.zmenaPoradi[2] != 1 || m.zmenaPoradi[3] != 1 {
+		t.Fatalf("potvrzené pořadí: %v", m.zmenaPoradi)
+	}
+	m.nastavitTrend(snimek, nyni.AddDate(0, 0, -30), nyni, false)
+	if m.zmenaPoradi[1] != 0 || m.zmenaPoradi[2] != 0 {
+		t.Fatalf("starší snímek podle oblíbenosti: %v", m.zmenaPoradi)
+	}
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Simulace: jak přesná je špička pořadí s prahy a bez nich
+
+// Umělá sbírka: skutečná síla t ~ N(3; 1) (0,3–5,4), hodnocené mají srdíčka = t + šum N(0; 0,3) zaokrouhlené na
+// poloviny (0,5–5), část nehodnocená. Simulovaný uživatel odpovídá podle Bradley–Terry se skutečnými silami.
+type simulaceUrovni struct {
+	modelky  []Modelka
+	skutecna map[int]float64
+	top      map[int][]int // skutečné top k (k = 10, 20, 50)
+}
+
+func novaSimulaceUrovni(n, hodnocenych int, r *rand.Rand) simulaceUrovni {
+	s := simulaceUrovni{skutecna: map[int]float64{}, top: map[int][]int{}}
+	ids := make([]int, n)
+	for i := range n {
+		id := i + 1
+		ids[i] = id
+		t := min(max(3+r.NormFloat64(), 0.3), 5.4)
+		s.skutecna[id] = t
+		m := Modelka{ID: id, Jmeno: fmt.Sprintf("S%03d", id), CoverID: "x"}
+		if i < hodnocenych {
+			m.Hodnoceni = min(max(zaokrouhlitNaPul(t+0.3*r.NormFloat64()), 0.5), 5)
+		}
+		s.modelky = append(s.modelky, m)
+	}
+	sort.Slice(ids, func(i, j int) bool { return s.skutecna[ids[i]] > s.skutecna[ids[j]] })
+	for _, k := range []int{10, 20, 50} {
+		s.top[k] = append([]int(nil), ids[:k]...)
+	}
+	return s
+}
+
+// Výsledek simulace v jednom bodě (průměr přes semínka)
+type bodSimulace struct {
+	porovnani                       int
+	presnost10, presnost20, presn50 float64 // podíl skutečných top k v prvních k místech ukázaného pořadí
+	potvrzenych10, falesnych10      float64 // potvrzené v top 10 (Top v Přehledu) a z nich mimo skutečnou top 10
+	presnostPotvrzenych20           float64 // podíl skutečné top 20 mezi potvrzenými v top 20
+	potvrzenych20                   float64
+}
+
+type vysledekSimulace struct {
+	body []bodSimulace
+	// Skutečná top 10: po kolika porovnáních se modelka poprvé potvrdila v top 10 (medián) a kolik jich do konce ne
+	medianPotvrzeni float64
+	nepotvrzenych   float64
+	soubojuPodil    float64
+}
+
+func simulovatUrovne(semena []int64, body []int, varianta func()) vysledekSimulace {
+	puvodniPrahy, puvodniPodil := prahyUrovni, podilSouboju
+	defer func() { prahyUrovni, podilSouboju = puvodniPrahy, puvodniPodil }()
+	varianta()
+	v := vysledekSimulace{body: make([]bodSimulace, len(body))}
+	var potvrzeni []float64
+	dvojic, souboju := 0, 0
+	nyni := time.Now()
+	for _, semeno := range semena {
+		r := rand.New(rand.NewSource(semeno))
+		s := novaSimulaceUrovni(400, 340, r)
+		jeTop := map[int]map[int]bool{}
+		for k, ids := range s.top {
+			jeTop[k] = map[int]bool{}
+			for _, id := range ids {
+				jeTop[k][id] = true
+			}
+		}
+		var porovnani []porovnaniZaznam
+		var nabidnute [][2]int
+		potvrzena := map[int]int{}
+		bod := 0
+		for bod < len(body) {
+			model := spocitatOblibenost(s.modelky, porovnani, nyni)
+			for id, u := range model.uroven {
+				if _, ok := potvrzena[id]; !ok && u == 10 && jeTop[10][id] {
+					potvrzena[id] = len(porovnani)
+				}
+			}
+			if len(porovnani) >= body[bod] {
+				b := &v.body[bod]
+				b.porovnani = body[bod]
+				poradi := model.seznamPoradi()
+				pres := func(k int) float64 {
+					trefa := 0
+					for _, id := range poradi[:min(k, len(poradi))] {
+						if jeTop[k][id] {
+							trefa++
+						}
+					}
+					return float64(trefa) / float64(k)
+				}
+				b.presnost10 += pres(10)
+				b.presnost20 += pres(20)
+				b.presn50 += pres(50)
+				potv10, fal10, potv20, tref20 := 0, 0, 0, 0
+				for id, u := range model.uroven {
+					if u == 10 {
+						potv10++
+						if !jeTop[10][id] {
+							fal10++
+						}
+					}
+					if u > 0 && u <= 20 {
+						potv20++
+						if jeTop[20][id] {
+							tref20++
+						}
+					}
+				}
+				b.potvrzenych10 += float64(potv10)
+				b.falesnych10 += float64(fal10)
+				b.potvrzenych20 += float64(potv20)
+				b.presnostPotvrzenych20 += float64(tref20) / 20
+				bod++
+				if bod == len(body) {
+					break
+				}
+			}
+			for _, d := range vybratDvojice(s.modelky, model, porovnani, nabidnute, 10, "", r) {
+				dvojic++
+				if d.Druh == "souboj" {
+					souboju++
+				}
+				vysledek := "b"
+				if r.Float64() < zLogitu(skalaBT*(s.skutecna[d.A]-s.skutecna[d.B])) {
+					vysledek = "a"
+				}
+				ha, hb := s.modelky[d.A-1].Hodnoceni, s.modelky[d.B-1].Hodnoceni
+				porovnani = append(porovnani, porovnaniZaznam{id: int64(len(porovnani) + 1), a: d.A, b: d.B, vysledek: vysledek, ha: ha, hb: hb})
+				nabidnute = append(nabidnute, klicDvojice(d.A, d.B))
+			}
+			if len(nabidnute) > pametNabidek {
+				nabidnute = nabidnute[len(nabidnute)-pametNabidek:]
+			}
+		}
+		for _, id := range s.top[10] {
+			if p, ok := potvrzena[id]; ok {
+				potvrzeni = append(potvrzeni, float64(p))
+			} else {
+				v.nepotvrzenych++
+			}
+		}
+	}
+	k := float64(len(semena))
+	for i := range v.body {
+		b := &v.body[i]
+		b.presnost10, b.presnost20, b.presn50 = b.presnost10/k, b.presnost20/k, b.presn50/k
+		b.potvrzenych10, b.falesnych10, b.potvrzenych20, b.presnostPotvrzenych20 = b.potvrzenych10/k, b.falesnych10/k, b.potvrzenych20/k, b.presnostPotvrzenych20/k
+	}
+	v.nepotvrzenych /= k
+	if len(potvrzeni) > 0 {
+		sort.Float64s(potvrzeni)
+		v.medianPotvrzeni = potvrzeni[len(potvrzeni)/2]
+	}
+	if dvojic > 0 {
+		v.soubojuPodil = float64(souboju) / float64(dvojic)
+	}
+	return v
+}
+
+// Simulace (bez -short): 400 modelek (340 hodnocených), po 10 dvojicích z vybratDvojice, odpovědi podle skutečných
+// sil. Měří přesnost prvních 10/20/50 míst ukázaného pořadí, kolik je potvrzených v top 10 a kolik z nich „falešných“
+// (mimo skutečnou top 10), a jak rychle se skutečná top 10 potvrdí. Varianty: bez prahů (dřívější pořadí podle
+// oblíbenosti, bez soubojů) a výchozí; s PLAYBOY_SIMULACE=vse (16 semínek, asi 5 minut) i prahy bez soubojů,
+// přísnější a mírnější prahy, bez výhry nad top 20 a víc nebo méně soubojů (tím se prahy a váhy ladily).
+func TestSimulaceUrovni(t *testing.T) {
+	if testing.Short() {
+		t.Skip("simulace úrovní se v rychlém běhu nepouští")
+	}
+	vse := os.Getenv("PLAYBOY_SIMULACE") == "vse"
+	semena := []int64{1, 2, 3, 4, 5, 6}
+	if vse {
+		semena = []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+	}
+	body := []int{0, 100, 200, 400, 800, 1500}
+	varianty := []struct {
+		nazev string
+		f     func()
+	}{
+		{"bez prahů (dřív)", func() { prahyUrovni = nil }},
+		{"prahy bez soubojů", func() { podilSouboju = 0 }},
+		{"výchozí 10/6/4/2 + souboje 0,3", func() {}},
+		{"souboje 0,1", func() { podilSouboju = 0.1 }},
+		{"souboje 0,2", func() { podilSouboju = 0.2 }},
+		{"souboje 0,45", func() { podilSouboju = 0.45 }},
+		{"navržené 8/6/4/2", func() {
+			prahyUrovni = []prahUrovne{{10, 8, 0.3, true}, {20, 6, 0.4, false}, {50, 4, 0.5, false}, {100, 2, maxNejistotaNavrhu, false}}
+		}},
+		{"přísnější 12/8/5/3", func() {
+			prahyUrovni = []prahUrovne{{10, 12, 0.3, true}, {20, 8, 0.4, false}, {50, 5, 0.5, false}, {100, 3, maxNejistotaNavrhu, false}}
+		}},
+		{"mírnější 6/4/3/2", func() {
+			prahyUrovni = []prahUrovne{{10, 6, 0.3, true}, {20, 4, 0.4, false}, {50, 3, 0.5, false}, {100, 2, maxNejistotaNavrhu, false}}
+		}},
+		{"výchozí bez výhry nad top 20", func() {
+			prahyUrovni = []prahUrovne{{10, 10, 0.3, false}, {20, 6, 0.4, false}, {50, 4, 0.5, false}, {100, 2, maxNejistotaNavrhu, false}}
+		}},
+	}
+	if !vse {
+		varianty = varianty[:3]
+		varianty[1] = varianty[2]
+		varianty = varianty[:2]
+	}
+	vysledky := map[string]vysledekSimulace{}
+	for _, va := range varianty {
+		zacatek := time.Now()
+		v := simulovatUrovne(semena, body, va.f)
+		vysledky[va.nazev] = v
+		t.Logf("== %s (%v): souboje %.0f %% dvojic, skutečná top 10 potvrzená po mediánu %.0f porovnání, nepotvrzených do konce %.1f",
+			va.nazev, time.Since(zacatek).Round(time.Second), 100*v.soubojuPodil, v.medianPotvrzeni, v.nepotvrzenych)
+		t.Logf("   porovnání | P@10 | P@20 | P@50 | potvrzených top 10 | z nich falešných | potvrzených top 20 | z top 20 trefených")
+		for _, b := range v.body {
+			t.Logf("   %9d | %.2f | %.2f | %.2f | %18.1f | %16.1f | %18.1f | %.2f", b.porovnani, b.presnost10, b.presnost20, b.presn50,
+				b.potvrzenych10, b.falesnych10, b.potvrzenych20, b.presnostPotvrzenych20)
+		}
+	}
+	// Prahy nesmí ukázané pořadí zhoršit víc než o šum a potvrzená top 10 má být přesnější než prvních 10 bez prahů
+	bez, s := vysledky["bez prahů (dřív)"], vysledky["výchozí 10/6/4/2 + souboje 0,3"]
+	posledni := len(body) - 1
+	if s.body[posledni].presnost10 < bez.body[posledni].presnost10-0.1 {
+		t.Errorf("P@10 s prahy %.2f, bez %.2f", s.body[posledni].presnost10, bez.body[posledni].presnost10)
+	}
+	if b := s.body[posledni]; b.potvrzenych10 < 5 || b.falesnych10/b.potvrzenych10 > 1-bez.body[posledni].presnost10+0.05 {
+		t.Errorf("potvrzená top 10: %.1f, falešných %.1f (bez prahů přesnost %.2f)", b.potvrzenych10, b.falesnych10, bez.body[posledni].presnost10)
+	}
+}

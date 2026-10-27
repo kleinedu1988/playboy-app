@@ -385,9 +385,10 @@ modelkou) a úvod Přehledu (Top 10, Stoupají, Dlouho jsi neviděl).
 ## Pásy fotek v porovnání
 
 Porovnání podle jedné titulní fotky je nefér k modelkám s nevýraznou titulní fotkou a malé náhledy pod fotkou se
-špatně prohlížely. Porovnávání proto místo titulních fotek ukazuje **dvě nezávislé galerie nad sebou**
-(`frontend/src/app/porovnani-pasy.js`): nahoře pás fotek jedné modelky, dole druhé, přes výšku okna. Oblíbenost má
-pod hledáním tři části – Porovnávání, Pořadí a Mohlo by se ti líbit – a u Porovnávání i okruh dvojic.
+špatně prohlížely. Porovnávání proto ukazuje **dvě nezávislé galerie nad sebou** (`frontend/src/app/porovnani-pasy.js`)
+přes výšku okna: nahoře jedna modelka, dole druhá, vlevo její titulní fotka se jménem, srdíčky a „♥ Tahle“, hned
+vedle pás jejích fotek. Oblíbenost má pod hledáním dvě části – Porovnávání a Pořadí (s Mohlo by se ti líbit vedle) –
+a u Porovnávání i okruh dvojic.
 
 Každý pás je nejvýš 24 nejlepších fotek z `GetNahledyModelek`: alba se seřadí podle skóre (průměr nejlepších fotek,
 alba bez hodnocených fotek nakonec, při shodě v pořadí přidání), fotky v albu podle srdíček a pak podle pořadí v albu

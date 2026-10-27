@@ -1,5 +1,6 @@
-// Pásy fotek v porovnání (Oblíbenost): dvě nezávislé galerie nad sebou místo titulních fotek – nahoře modelka A,
-// dole B. Každá je vodorovný pás jejích nejlepších fotek (nejlepší fotka každého alba napřed, GetNahledyModelek).
+// Pásy fotek v porovnání (Oblíbenost): dvě nezávislé galerie nad sebou – nahoře modelka A, dole B. Vlevo titulní
+// fotka se jménem, srdíčky a „♥ Tahle“, hned vedle vodorovný pás jejích nejlepších fotek (nejlepší fotka každého
+// alba napřed, GetNahledyModelek).
 // Pás pod myší je aktivní (Tab ho přepne): kolečko a ← → listují jím, 1–5 dá srdíčka zvýrazněné fotce, 0 je zruší,
 // Enter vybere jeho modelku. Klik na fotku ji zvětší přes celé okno (← → listují dál, Esc nebo klik vrátí);
 // zvětšení je okno (modal-overlay v #app), takže klávesy obsluhuje samo.
@@ -7,9 +8,10 @@
 // zbytečně nemizí (WebKitGTK by mohl ztratit klik).
 import { SetHodnoceniFotek } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
-import { znakySrdicek } from '../lib/srdicka';
 import { popisNahledu } from '../lib/oblibenost';
-import { VELIKOST_PLAKATU, VELIKOST_PLAKATU_MALA } from './obrazky';
+import { VELIKOST_PLAKATU, VELIKOST_PLAKATU_MALA, adresaTitulni } from './obrazky';
+import { stylVyrezu } from './navigace';
+import { htmlSrdicka } from './galerie';
 import { nastavitHtml, nastavitText } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
 
@@ -25,15 +27,18 @@ let zoom = null; // strana zvětšené fotky, null = zavřeno
 const srdickaFotky = h => h > 0 ? `♥${h}` : 'bez ♥';
 const polovina = strana => koren?.querySelector(`[data-pas-strana="${strana}"]`);
 
-function htmlHlavy(strana) {
+// Titulní fotka vlevo od pásu: jméno (otevře profil), srdíčka modelky, počet fotek a pozice v pásu, „♥ Tahle“
+function htmlProfilu(strana) {
     const { modelka: m, fotky, celkem } = data[strana];
-    const info = !fotky ? '' : fotky.length < celkem ? `${fotky.length} nejlepších z ${sklonovat(celkem, 'fotky', 'fotek', 'fotek')}` : sklonovat(fotky.length, 'fotka', 'fotky', 'fotek');
+    const info = !fotky ? '' : fotky.length < celkem ? `${fotky.length} nejlepších z ${celkem}` : sklonovat(fotky.length, 'fotka', 'fotky', 'fotek');
     return `
-        <button type="button" class="pas-jmeno" data-otevrit-modelku="${m.id}" title="Otevřít profil">${esc(m.jmeno)}</button>
-        <span class="pas-srdicka">${m.hodnoceni ? znakySrdicek(m.hodnoceni) : 'bez srdíček'}</span>
-        <span class="pas-info">${info}</span>
-        <span class="pas-pozice" data-pas-pozice></span>
-        <button type="button" class="pas-vybrat" data-ob-volba="${strana}" title="Líbí se mi víc ${esc(m.jmeno)} (Enter v aktivním pásu)">♥ Tahle</button>`;
+        <img src="${esc(adresaTitulni(m, true))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
+        <button type="button" class="pas-vybrat" data-ob-volba="${strana}" title="Líbí se mi víc ${esc(m.jmeno)} (Enter v aktivním pásu)">♥ Tahle</button>
+        <div class="pas-popis">
+            <button type="button" class="pas-jmeno" data-otevrit-modelku="${m.id}" title="Otevřít profil">${esc(m.jmeno)}</button>
+            ${htmlSrdicka(m)}
+            <small><span>${info}</span><span data-pas-pozice></span></small>
+        </div>`;
 }
 
 function htmlFotek(strana) {
@@ -61,13 +66,13 @@ export function vykreslitPasy(misto, strany) {
         index.a = index.b = 0;
         nastavitHtml(misto, ['a', 'b'].map(strana => `
             <section class="pas" data-pas-strana="${strana}">
-                <header class="pas-hlava" data-pas-hlava></header>
+                <div class="pas-profil" data-pas-profil></div>
                 <div class="pas-fotky" data-pas-fotky></div>
             </section>`).join(''));
     }
     for (const strana of ['a', 'b']) {
         const pul = polovina(strana);
-        nastavitHtml(pul.querySelector('[data-pas-hlava]'), htmlHlavy(strana));
+        nastavitHtml(pul.querySelector('[data-pas-profil]'), htmlProfilu(strana));
         const pas = pul.querySelector('[data-pas-fotky]');
         nastavitHtml(pas, htmlFotek(strana));
         if (nova) pas.scrollLeft = 0;
@@ -89,7 +94,7 @@ function oznacit(strana, i, posunout = true) {
     if (!fotky?.length || !pul) return nastavitText(pul?.querySelector('[data-pas-pozice]'), '');
     index[strana] = Math.min(Math.max(i, 0), fotky.length - 1);
     pul.querySelectorAll('[data-pas-fotka]').forEach(b => b.classList.toggle('aktivni', Number(/** @type {HTMLElement} */ (b).dataset.pasFotka) === index[strana]));
-    nastavitText(pul.querySelector('[data-pas-pozice]'), `${index[strana] + 1} / ${fotky.length}`);
+    nastavitText(pul.querySelector('[data-pas-pozice]'), ` · ${index[strana] + 1}. fotka`);
     if (posunout) pul.querySelector(`[data-pas-fotka="${index[strana]}"]`)?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
 }
 

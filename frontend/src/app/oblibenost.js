@@ -1,10 +1,10 @@
-// Oblíbenost v Přehledu ve třech částech, které se přepínají volbou pod hledáním (jako části Přehledu):
-//   - Porovnávání „Která se ti líbí víc?“: dvě nezávislé galerie nad sebou, nahoře fotky jedné modelky, dole druhé
-//     (porovnani-pasy.js); pás pod myší je aktivní – kolečko a ← → listují, Tab přepne, Enter nebo „♥ Tahle“ vybere,
-//     ↓ nebo mezerník remíza, Backspace vrátí poslední, S přeskočí, 1–5 srdíčka fotce. Okruh dvojic je také pod
-//     hledáním.
-//   - Pořadí podle síly (Bradley–Terry v backendu, předpoklad ze srdíček, skóre fotek a zájmu) s trendem.
-//   - Mohlo by se ti líbit: nehodnocené s odhadem z modelu vkusu a věta o jeho přesnosti.
+// Oblíbenost v Přehledu ve dvou částech, které se přepínají volbou pod hledáním (jako části Přehledu):
+//   - Porovnávání „Která se ti líbí víc?“: dvě nezávislé galerie nad sebou, nahoře jedna modelka, dole druhá, vlevo
+//     titulní fotka se jménem a srdíčky, vedle pás fotek (porovnani-pasy.js); pás pod myší je aktivní – kolečko a ← →
+//     listují, Tab přepne, Enter nebo „♥ Tahle“ vybere, ↓ nebo mezerník remíza, Backspace vrátí poslední, S přeskočí,
+//     1–5 srdíčka fotce. Okruh dvojic je také pod hledáním.
+//   - Pořadí podle síly (Bradley–Terry v backendu, předpoklad ze srdíček, skóre fotek a zájmu) s trendem a vedle něj
+//     Mohlo by se ti líbit: nehodnocené s odhadem z modelu vkusu a věta o jeho přesnosti.
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
 import { GetDvojiceKPorovnani, GetMohloByTeLibit, GetNahledyModelek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
@@ -26,7 +26,7 @@ const OKRUHY = [['stejne', 'Stejné srdíčko', 'Dvojice se stejným počtem srd
     ['', 'Všechny', 'Dvojice napříč sbírkou, které model vkusu nejvíc pomohou'],
     ['nehodnocene', 'I nehodnocené', 'Přimíchá i modelky bez srdíček']];
 // Části Oblíbenosti (volba pod hledáním) a jejich ikony v liště (ui/volby.js)
-export const CASTI_OBLIBENOSTI = [['porovnani', 'Porovnávání'], ['poradi', 'Pořadí'], ['tipy', 'Mohlo by se ti líbit']];
+export const CASTI_OBLIBENOSTI = [['porovnani', 'Porovnávání'], ['poradi', 'Pořadí']];
 const DVOJIC_NAJEDNOU = 8;
 const PORADI_NAJEDNOU = 25;
 const TIPU = 12;
@@ -93,17 +93,20 @@ const KOSTRA = `
         <p class="ob-duvod" data-ob-duvod></p>
         <div class="ob-navrh" data-ob-navrh aria-live="polite"></div>
     </div>
-    <div class="ob-cast ob-karta" data-ob-cast-poradi>
-        <p class="ob-info" data-ob-info-poradi></p>
-        <h4>Pořadí <small data-ob-pocet-poradi></small></h4>
-        <p class="ob-vaha" data-ob-vaha></p>
-        <p class="ob-trendy" data-ob-trendy></p>
-        <div data-ob-poradi></div>
-    </div>
-    <div class="ob-cast ob-karta" data-ob-cast-tipy>
+    <div class="ob-cast" data-ob-cast-poradi>
         <p class="ob-info" data-ob-info></p>
-        <h4>Mohlo by se ti líbit <small>odhad podle tvého vkusu</small></h4>
-        <div data-ob-tipy></div>
+        <div class="ob-dva-sloupce">
+            <div class="ob-karta">
+                <h4>Pořadí <small data-ob-pocet-poradi></small></h4>
+                <p class="ob-vaha" data-ob-vaha></p>
+                <p class="ob-trendy" data-ob-trendy></p>
+                <div data-ob-poradi></div>
+            </div>
+            <div class="ob-karta">
+                <h4>Mohlo by se ti líbit <small>odhad podle tvého vkusu</small></h4>
+                <div data-ob-tipy></div>
+            </div>
+        </div>
     </div>`;
 
 const cast = klic => koren?.querySelector(`[data-ob-${klic}]`);
@@ -137,7 +140,6 @@ async function obnovitPrehled() {
     [...(data.oblibenost?.poradi || []), ...data.tipy].forEach(p => { if (p.duvod && p.odhad) duvodyOdhadu.set(p.modelkaId, p.duvod); });
     if (!koren?.isConnected) return;
     nastavitText(cast('info'), textModeluVkusu(data.oblibenost || {}));
-    nastavitText(cast('info-poradi'), textModeluVkusu(data.oblibenost || {}));
     vykreslitPoradi();
     vykreslitTipy();
 }
@@ -369,6 +371,8 @@ export function pripravit() {
     try { stav.oblibenostOkruh = localStorage.getItem('oblibenostOkruh') ?? ''; } catch { /* všechny */ }
     if (!OKRUHY.some(([klic]) => klic === stav.oblibenostOkruh)) stav.oblibenostOkruh = '';
     try { stav.oblibenostCast = localStorage.getItem('oblibenostCast') || 'porovnani'; } catch { /* porovnávání */ }
+    // Dřívější samostatná část tipů je teď v Pořadí
+    if (stav.oblibenostCast === 'tipy') stav.oblibenostCast = 'poradi';
     if (!CASTI_OBLIBENOSTI.some(([klic]) => klic === stav.oblibenostCast)) stav.oblibenostCast = 'porovnani';
 
     // Volby v liště pod hledáním: část Oblíbenosti a okruh dvojic (skryté štítky v obsahu Přehledu)

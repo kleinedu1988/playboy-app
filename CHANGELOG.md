@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.37] – 2026-10-27
+
+### Změněno
+- **Pás fotek v porovnání má vlevo titulní fotku** se jménem (otevře profil), srdíčky modelky (jdou rovnou měnit), počtem fotek a tlačítkem „♥ Tahle“; pás fotek pokračuje hned vedle.
+- **Pořadí a Mohlo by se ti líbit jsou zase jedna část** (vedle sebe); Oblíbenost má pod hledáním jen Porovnávání a Pořadí.
+
 ## [0.99.36] – 2026-10-27
 
 ### Změněno

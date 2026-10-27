@@ -8,7 +8,7 @@ import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { detailView, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
-import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne } from './obrazky';
+import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { selectionBar } from './vyber';
@@ -291,10 +291,10 @@ export async function nacistFotkyModelky(modelkaId) {
                     <button class="album-more" data-nabidka-alba title="Akce alba (také pravým tlačítkem)">&#8943;</button>
                 </div>
                 ${htmlPopisuAlba(a)}
-                <div class="photos-grid" ${atributyMrizky(a)}>
+                <div class="photos-grid mozaika" ${atributyMrizky(a)}>
                     ${a.polozky.map(p => {
                         const index = indexPolozky.get(p);
-                        return `<div class="photo-item" data-index="${index}" data-foto-id="${p.fotky[0].id}" tabindex="0">
+                        return `<div class="photo-item" data-index="${index}" data-foto-id="${p.fotky[0].id}" tabindex="0" style="--pomer: ${pomerFotky(p.fotky[0].id) || 0.75}">
                                    <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" decoding="async" draggable="false" />
                                    ${htmlSrdickaFotky(p, index)}
                                    ${htmlAkciDlazdice()}
@@ -319,6 +319,7 @@ export async function nacistFotkyModelky(modelkaId) {
     detailView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
     nacitatPostupne(photosGrid);
     pripravitPopisy(detailView);
+    sledovatMozaiku(photosGrid, detailView);
     zkratitAlba(detailView);
     listaAlb.sledovat();
 }
@@ -359,6 +360,36 @@ export async function posunoutStranku(album, fotka, smer) {
     if (await SetPoradiFotek(ids)) nacistFotkyModelky(stav.aktualniModelka.id);
 }
 
+// Mozaika alb v profilu: řady stejné výšky, šířka dlaždice podle poměru stran fotky (fotka na šířku je širší). Poměr
+// se zjistí po načtení obrázku a zapamatuje (pomerFotky); pak se znovu spočítá, které řady album v náhledu ukáže.
+function sledovatMozaiku(mrizka, pohled) {
+    if (mrizka.dataset.mozaika) return;
+    mrizka.dataset.mozaika = '1';
+    let prepocet = 0;
+    mrizka.addEventListener('load', (e) => {
+        const img = /** @type {HTMLImageElement} */ (e.target);
+        const dlazdice = img?.tagName === 'IMG' ? /** @type {HTMLElement | null} */ (img.parentElement?.closest('.mozaika > .photo-item')) : null;
+        if (!dlazdice || !img.naturalWidth || img.src.startsWith('data:')) return;
+        const pomer = img.naturalWidth / img.naturalHeight;
+        dlazdice.style.setProperty('--pomer', pomer.toFixed(3));
+        zapamatovatPomer(Number(dlazdice.dataset.fotoId), pomer);
+        clearTimeout(prepocet);
+        prepocet = setTimeout(() => zkratitAlba(pohled), 120);
+    }, true);
+}
+
+// Kolik dlaždic mozaiky se vejde do prvních řad: všechny ukázat, změřit řady a vrátit index první dlaždice za nimi
+function limitMozaiky(dlazdice) {
+    dlazdice.forEach(d => d.classList.remove('skryta', 'dalsi'));
+    const vrcholy = [];
+    for (const [i, d] of dlazdice.entries()) {
+        const vrchol = /** @type {HTMLElement} */ (d).offsetTop;
+        if (!vrcholy.includes(vrchol)) vrcholy.push(vrchol);
+        if (vrcholy.length > RADKU_NAHLEDU) return i;
+    }
+    return dlazdice.length;
+}
+
 // Dlouhé album ukazuje jen první řádky; poslední viditelná dlaždice nese počet skrytých fotek a album rozbalí
 export const RADKU_NAHLEDU = 2;
 export const rozbalenaAlba = new Set();
@@ -369,10 +400,11 @@ export function zkratitAlba(pohled) {
     const mrizky = [...pohled.querySelectorAll('.photos-grid')]
         // Počet sloupců jde zjistit jen u mřížky, která je vidět
         .filter(mrizka => mrizka.offsetParent)
-        .map(mrizka => ({ mrizka, sloupcu: getComputedStyle(mrizka).gridTemplateColumns.split(' ').length }));
+        .map(mrizka => ({ mrizka, sloupcu: mrizka.classList.contains('mozaika') ? 0 : getComputedStyle(mrizka).gridTemplateColumns.split(' ').length }));
     mrizky.forEach(({ mrizka, sloupcu }) => {
         const dlazdice = [...mrizka.children];
-        const limit = sloupcu * RADKU_NAHLEDU;
+        // Mozaika nemá sloupce: řady se změří
+        const limit = sloupcu ? sloupcu * RADKU_NAHLEDU : limitMozaiky(dlazdice);
         const zkratit = dlazdice.length > limit && !rozbalenaAlba.has(mrizka.dataset.klic);
 
         dlazdice.forEach((d, i) => {

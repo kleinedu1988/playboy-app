@@ -11988,3 +11988,32 @@ span.ud-chip {
     border-color: rgba(255, 64, 129, 0.45);
     color: var(--accent-text);
 }
+
+/* Alba v profilu jako mozaika: řady stejné výšky, šířka dlaždice podle poměru stran fotky (--pomer, do načtení 3 : 4) */
+.photos-grid.mozaika {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+}
+
+/* Poslední řada se neroztahuje přes celou šířku; sbalené album má poslední ukázanou řadu plnou */
+.photos-grid.mozaika::after {
+    content: '';
+    flex-grow: 999;
+}
+
+.photos-grid.mozaika.zkracena::after {
+    display: none;
+}
+
+.photos-grid.mozaika > .photo-item {
+    flex: var(--pomer, 0.75) 1 calc(var(--pomer, 0.75) * 250px);
+    height: 250px;
+    min-width: 0;
+}
+
+.photos-grid.mozaika > .photo-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}

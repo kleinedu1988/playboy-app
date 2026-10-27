@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.40] – 2026-10-27
+
+### Přidáno
+- **Návrh srdíček pro nehodnocenou modelku z porovnání:** po aspoň třech porovnáních, když už je jasné, kam patří, se pod pásy nabídne „Nehodnocená Anna vychází po 4 porovnáních (výhry 2,5) na 3½ ♥ – Dát jí 3½ ♥ / Nechat“. Samé výhry nebo prohry nad jednou úrovní návrh nedají (ví se jen „výš“, ne o kolik) – nejdřív přijde soupeřka o úroveň dál. „Nechat“ návrh pro tu modelku do zavření programu nenabízí.
+
 ## [0.99.39] – 2026-10-27
 
 ### Změněno

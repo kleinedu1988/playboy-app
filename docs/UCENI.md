@@ -256,6 +256,7 @@ sbírky ani exportu.
 | `GetPrehledOblibenosti() PrehledOblibenosti` | úvod Přehledu: `top` (10 nejoblíbenějších), `stoupaji` a `klesaji` (posun aspoň o 3 místa a 3 % délky pořadí, nejvýš 10), `dlouhoNevidene` (z horní třicítky ty, jejichž profil ani fotky jsi 30 dní neviděl; `dni` = −1 nikdy; až se zájem sleduje aspoň 30 dní), `trendDni`, `zajemDni`; položky `modelkaId`, `jmeno`, `hodnoceni`, `poradi`, `zmenaPoradi`, `dni` |
 | `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
 | `GetMohloByTeLibit(pocet) []OblibenostModelky` | nehodnocené modelky s nejvyšším odhadem a důvodem (`odhad`, `duvod`; `sila` = nezaokrouhlený odhad, `nejistota` = chyba ověření u modelek s podobně bohatými údaji) |
+| `GetNavrhSrdicek(id) NavrhSrdicek` | návrh srdíček nehodnocené z porovnání: `hodnoceni` (po polovinách, 0 = zatím nenavrhovat – méně než 3 porovnání, nejistota nad 0,6, už hodnocená), `porovnani`, `vyhry`, `nejistota` |
 | `GetDuvodOdhadu(id) string` | důvod ukázaného odhadu nehodnocené modelky („Odhad 4 srdíčka: blond, 70. léta, Pompeo Posar; podobně jako Anna (4½) a Bára (4)“), jinak `""`; štítek „odhad“ si ho načte při prvním najetí myší |
 | `GetNahledyModelek(ids, pocet) map[int][]NahledFotky` | náhledy fotek modelek pro porovnání (nejvýš `pocet`, 1–24; nejvýš 100 modelek): `id` fotky, `url` (šablona s `{velikost}`), `album`, `typ`, `hodnoceni` (srdíčka fotky), `rotace`; neznámá modelka nebo bez fotek má `[]` |
 | `Modelka.oblibenost` | srdíčka upřesněná skóre fotek a porovnáním (nejvýš ±0,49: o půl srdíčka se pořadí přehodit může, o celé ne); nehodnocená porovnávaná má sílu z porovnání, ostatní 0 |
@@ -422,7 +423,13 @@ skóre fotek, jinak průměr sbírky; jakmile je nehodnocená aspoň jednou poro
 posune další kotvu o úroveň výš, prohra níž – pár porovnání najde její úroveň jako půlení intervalu. Kotvy jsou
 typické modelky té úrovně (síla nejblíž srdíčkům, nejvýš 10); když na té úrovni nikdo není, nejbližší úroveň (při shodě
 vyšší). Důvod to říká: „Odhad podle vkusu: 3½ srdíčka – proti modelce s 3½ srdíčka: vyhraje-li, patří výš, prohraje-li,
-níž“. Důvod dvojice stejné úrovně uvádí skóre fotek obou („Obě mají 4 srdíčka (fotky 4,6
+níž“.
+
+Po volbě v dvojici s nehodnocenou se rozhraní zeptá na `GetNavrhSrdicek(id)`: po aspoň 3 porovnáních a s nejistotou
+síly nejvýš 0,6 srdíčka vrátí úroveň, na kterou modelka vychází (síla zaokrouhlená na polovinu srdíčka), a pod pásy se
+nabídne „Nehodnocená Anna vychází po 4 porovnáních (výhry 2,5) na 3½ ♥ – Dát jí 3½ ♥ / Nechat“. Samé výhry (nebo
+prohry) nad jednou úrovní návrh nedají – ví se jen „výš“, ne o kolik, a výběr dvojic nabídne kotvu o úroveň dál.
+„Nechat“ návrh pro tu modelku do zavření programu nenabízí. Důvod dvojice stejné úrovně uvádí skóre fotek obou („Obě mají 4 srdíčka (fotky 4,6
 a 4,1) …“).
 
 ## Model vkusu

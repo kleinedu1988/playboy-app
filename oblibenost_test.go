@@ -713,3 +713,35 @@ func TestNehodnocenaProtiUrovniOdhadu(t *testing.T) {
 		t.Fatalf("po výhrách nad 3½ mají být kotvy výš: %v (síla %.2f)", u, model.sila[100])
 	}
 }
+
+// Návrh srdíček nehodnocené: výhry nad 3½ a prohra s 4½ (jak je nabízí výběr dvojic) dají 3½–4½, dřív (dvě
+// porovnání) nic; samé výhry nad jednou úrovní nic (ví se jen „výš“, ne o kolik); hodnocená nic
+func TestNavrhSrdicekNehodnocene(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	for i, h := range []float64{3.5, 3.5, 3.5, 4, 4, 4.5} {
+		j := fmt.Sprintf("M%d", i)
+		a.AddModelka(Modelka{Jmeno: j, Tetovani: -1, Piercing: -1})
+		a.SetHodnoceni(idModelky(t, a, j), h)
+	}
+	a.AddModelka(Modelka{Jmeno: "Nová", Tetovani: -1, Piercing: -1})
+	nova := idModelky(t, a, "Nová")
+	kotvy := []int{idModelky(t, a, "M0"), idModelky(t, a, "M1"), idModelky(t, a, "M2")}
+	a.PorovnatModelky(nova, kotvy[0], "a")
+	a.PorovnatModelky(nova, kotvy[1], "a")
+	if n := a.GetNavrhSrdicek(nova); n.Hodnoceni != 0 || n.Porovnani != 2 {
+		t.Fatalf("po dvou porovnáních: %+v", n)
+	}
+	a.PorovnatModelky(kotvy[2], nova, "b")
+	if n := a.GetNavrhSrdicek(nova); n.Hodnoceni != 0 || n.Vyhry != 3 {
+		t.Fatalf("po třech výhrách nad 3½ je nejistota velká: %+v", n)
+	}
+	a.PorovnatModelky(nova, idModelky(t, a, "M5"), "b")
+	a.PorovnatModelky(nova, idModelky(t, a, "M3"), "remiza")
+	n := a.GetNavrhSrdicek(nova)
+	if n.Porovnani != 5 || n.Hodnoceni < 3.5 || n.Hodnoceni > 4.5 || n.Nejistota > maxNejistotaNavrhu {
+		t.Fatalf("po výhrách nad 3½, prohře s 4½ a remíze se 4: %+v", n)
+	}
+	if h := a.GetNavrhSrdicek(kotvy[0]); h.Hodnoceni != 0 {
+		t.Fatalf("hodnocená nemá dostat návrh: %+v", h)
+	}
+}

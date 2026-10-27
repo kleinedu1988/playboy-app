@@ -23,6 +23,7 @@ const CTENI = new Set([
     'GetModelky',
     'GetMohloByTeLibit',
     'GetNahledyModelek',
+    'GetNavrhSrdicek',
     'GetNavrhyDoplneni',
     'GetNejlepsiFotky',
     'GetOblibenost',
@@ -166,3 +167,4 @@ export const GetPrehledOblibenosti = /** @type {typeof App.GetPrehledOblibenosti
 export const ZaznamenatZajem = /** @type {typeof App.ZaznamenatZajem} */ (obalit('ZaznamenatZajem'));
 export const GetMohloByTeLibit = /** @type {typeof App.GetMohloByTeLibit} */ (obalit('GetMohloByTeLibit'));
 export const GetNahledyModelek = /** @type {typeof App.GetNahledyModelek} */ (obalit('GetNahledyModelek'));
+export const GetNavrhSrdicek = /** @type {typeof App.GetNavrhSrdicek} */ (obalit('GetNavrhSrdicek'));

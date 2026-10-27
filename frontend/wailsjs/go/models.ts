@@ -478,6 +478,24 @@ export namespace main {
 	        this.zdrojPopis = source["zdrojPopis"];
 	    }
 	}
+	export class NavrhSrdicek {
+	    hodnoceni: number;
+	    porovnani: number;
+	    vyhry: number;
+	    nejistota: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new NavrhSrdicek(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hodnoceni = source["hodnoceni"];
+	        this.porovnani = source["porovnani"];
+	        this.vyhry = source["vyhry"];
+	        this.nejistota = source["nejistota"];
+	    }
+	}
 	
 	export class OblibenostModelky {
 	    modelkaId: number;

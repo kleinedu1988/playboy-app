@@ -52,6 +52,8 @@ export function GetMohloByTeLibit(arg1:number):Promise<Array<main.OblibenostMode
 
 export function GetNahledyModelek(arg1:Array<number>,arg2:number):Promise<Record<number, Array<main.NahledFotky>>>;
 
+export function GetNavrhSrdicek(arg1:number):Promise<main.NavrhSrdicek>;
+
 export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<main.NavrhDoplneni>>;
 
 export function GetNejlepsiFotky(arg1:number):Promise<Array<main.Fotografie>>;

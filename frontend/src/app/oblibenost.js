@@ -7,7 +7,7 @@
 //     Mohlo by se ti líbit: nehodnocené s odhadem z modelu vkusu a věta o jeho přesnosti.
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
-import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
+import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, kratceSrdicka, navrhPoPorovnani, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
 import { NAHLEDU_V_POROVNANI, stoupajiKlesaji, textSkoreFotek, textVahyFotek, textVahyZajmu } from '../lib/oblibenost';
@@ -312,7 +312,11 @@ async function vybrat(vysledek) {
     porovnaniDnes++;
     ulozDnes(porovnaniDnes);
     vykreslitDnes();
-    ukazatNavrh(navrhPoPorovnani(modelka(d.a), modelka(d.b), vysledek), d);
+    const navrh = navrhPoPorovnani(modelka(d.a), modelka(d.b), vysledek);
+    ukazatNavrh(navrh, d);
+    // Nehodnocená v dvojici: po pár porovnáních nabídka dát jí srdíčka, na která vychází (když nic jiného nenabízím)
+    const nehodnocena = [d.a, d.b].find(id => !(modelka(id)?.hodnoceni > 0));
+    if (!navrh && nehodnocena && !odmitnuteNavrhy.has(nehodnocena)) nabidnoutSrdicka(nehodnocena);
     await dalsi();
     if (++porovnanoOdObnoveni >= 5) obnovitPrehled();
 }
@@ -368,6 +372,22 @@ function ukazatNavrh(navrh, d = null) {
         <button type="button" class="link" data-ob-navrh-ne>Nechat</button>`);
 }
 
+// Návrh srdíček nehodnocené z porovnání (GetNavrhSrdicek); „Nechat“ ho pro tu modelku do zavření programu nenabízí
+const odmitnuteNavrhy = new Set();
+async function nabidnoutSrdicka(id) {
+    let n = null;
+    try {
+        n = await GetNavrhSrdicek(id);
+    } catch { /* bez nabídky */ }
+    const m = modelka(id);
+    if (!n?.hodnoceni || !m || m.hodnoceni > 0 || posledniNavrh) return;
+    posledniNavrh = { id, hodnoceni: n.hodnoceni };
+    const vyhry = String(n.vyhry).replace('.', ',');
+    nastavitHtml(cast('navrh'), `<span>Nehodnocená <b>${esc(m.jmeno)}</b> vychází po ${n.porovnani} porovnáních (výhry ${vyhry}) na <b>${kratceSrdicka(n.hodnoceni)} ♥</b>.</span>
+        <button type="button" class="btn btn-primary btn-small" data-ob-navrh-ano>Dát jí ${kratceSrdicka(n.hodnoceni)} ♥</button>
+        <button type="button" class="link" data-ob-navrh-ne>Nechat</button>`);
+}
+
 async function prijmoutNavrh() {
     const n = posledniNavrh;
     if (!n) return;
@@ -415,7 +435,10 @@ export function pripravit() {
         else if (e.target.closest('[data-ob-preskocit]')) preskocit();
         else if (e.target.closest('[data-ob-vratit]')) vratit();
         else if (e.target.closest('[data-ob-navrh-ano]')) prijmoutNavrh();
-        else if (e.target.closest('[data-ob-navrh-ne]')) ukazatNavrh(null);
+        else if (e.target.closest('[data-ob-navrh-ne]')) {
+            if (posledniNavrh && !(modelka(posledniNavrh.id)?.hodnoceni > 0)) odmitnuteNavrhy.add(posledniNavrh.id);
+            ukazatNavrh(null);
+        }
         else if (e.target.closest('[data-ob-poradi-vse]')) { poradiVse = true; vykreslitPoradi(); }
     });
 

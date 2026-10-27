@@ -58,6 +58,13 @@ const (
 	vahaVzdaleneUrovne = 0.2 // rozdíl jednoho srdíčka
 )
 
+// Návrh srdíček nehodnocené modelce z porovnání (GetNavrhSrdicek): až po tolika porovnáních a jen s tak malou
+// nejistotou síly (směrodatná odchylka na stupnici srdíček)
+const (
+	minPorovnaniNavrhu = 3
+	maxNejistotaNavrhu = 0.6
+)
+
 // ---------------------------------------------------------------------------------------------------------
 // Rozhraní
 
@@ -141,6 +148,40 @@ func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 	}
 	u.mu.Unlock()
 	return dvojice
+}
+
+// Návrh srdíček nehodnocené modelce podle porovnání: úroveň, na kterou vychází její síla (po polovinách)
+type NavrhSrdicek struct {
+	Hodnoceni float64 `json:"hodnoceni"` // 0 = zatím nenavrhovat (málo porovnání, velká nejistota, už hodnocená)
+	Porovnani int     `json:"porovnani"`
+	Vyhry     float64 `json:"vyhry"` // remíza = půl
+	Nejistota float64 `json:"nejistota"`
+}
+
+// Návrh srdíček pro nehodnocenou modelku: po aspoň 3 porovnáních a s nejistotou síly nejvýš 0,6 srdíčka úroveň, na
+// kterou vychází (síla zaokrouhlená na polovinu srdíčka, 0,5–5)
+func (a *App) GetNavrhSrdicek(modelkaID int) NavrhSrdicek {
+	navrh := NavrhSrdicek{}
+	if a.uc == nil {
+		return navrh
+	}
+	modelky, _ := a.nactiModelky("", false)
+	var x *Modelka
+	for i := range modelky {
+		if modelky[i].ID == modelkaID {
+			x = &modelky[i]
+		}
+	}
+	if x == nil || x.Hodnoceni > 0 {
+		return navrh
+	}
+	model := a.modelOblibenosti(modelky)
+	navrh.Porovnani, navrh.Vyhry = model.pocet[x.ID], model.vyhry[x.ID]
+	navrh.Nejistota = zaokrouhlit3(math.Sqrt(model.rozptylModelky(x)))
+	if s, ok := model.sila[x.ID]; ok && navrh.Porovnani >= minPorovnaniNavrhu && navrh.Nejistota <= maxNejistotaNavrhu {
+		navrh.Hodnoceni = min(max(zaokrouhlitNaPul(s), 0.5), 5)
+	}
+	return navrh
 }
 
 // Výsledek porovnání: vysledek "a" (víc se líbí A), "b" nebo "remiza". Zapíše se do databáze učení se srdíčky

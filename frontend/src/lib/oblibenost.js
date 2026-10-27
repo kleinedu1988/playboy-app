@@ -148,15 +148,17 @@ export function textPravidelUrovni(urovne) {
     return `Úrovně potvrzuje počet porovnání a jistota místa – ${podminky.join(' · ')}. Modelka, která je ještě nesplňuje, čeká těsně pod hranicí.`;
 }
 
-// Pořadí rozdělené podle úrovní pro oddělovače: [{ uroven (0 = mimo top 100), polozky }] v pořadí seznamu.
-// Seznam je seřazený podle potvrzeného pořadí, takže úrovně jdou za sebou; bez úrovně z backendu podle místa.
+// Pořadí rozdělené na úseky podle místa pro oddělovače: [{ uroven (0 = mimo top 100), polozky, potvrzenych }].
+// Úsek dává místo (1.–10. = Top 10…), ne úroveň modelky: když úroveň nemá dost potvrzených, volné místo dostane
+// nejsilnější nepotvrzená (s čekáním). potvrzenych = kolik modelek v úseku na něj splňuje prahy.
 export function seskupitPodleUrovni(poradi) {
     const skupiny = [];
     (poradi || []).forEach((p, i) => {
-        const uroven = p.uroven !== undefined ? Number(p.uroven) || 0 : urovenMista(p.poradi || i + 1);
+        const uroven = urovenMista(p.poradi || i + 1);
+        const potvrzena = uroven ? Number(p.uroven) > 0 && Number(p.uroven) <= uroven : true;
         const posledni = skupiny.at(-1);
-        if (posledni?.uroven === uroven) posledni.polozky.push(p);
-        else skupiny.push({ uroven, polozky: [p] });
+        if (posledni?.uroven === uroven) { posledni.polozky.push(p); posledni.potvrzenych += potvrzena ? 1 : 0; }
+        else skupiny.push({ uroven, polozky: [p], potvrzenych: potvrzena ? 1 : 0 });
     });
     return skupiny;
 }

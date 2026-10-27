@@ -421,18 +421,17 @@ function vykreslitPoradi() {
             <small class="ob-pocet">${p.porovnani || 0}×</small>
         </button></li>`;
     };
-    // Oddělovače úrovní (Top 10 · Top 20 · Top 50 · Top 100) s počtem potvrzených v celém pořadí; úroveň nad první
-    // skupinou, ve které zatím nikdo není potvrzený, má prázdný oddělovač (pořadí pak začíná pod její hranicí)
-    const vsechnySkupiny = seskupitPodleUrovni(poradi);
-    const potvrzenych = new Map();
-    vsechnySkupiny.forEach(sk => potvrzenych.set(sk.uroven, (potvrzenych.get(sk.uroven) || 0) + sk.polozky.length));
-    const prvni = vsechnySkupiny[0]?.uroven || 0;
-    const prazdne = (o.urovne || []).map(u => Number(u.uroven)).filter(u => u > 0 && (!prvni || u < prvni)).sort((x, y) => x - y);
-    const oddelovac = (uroven, pocet) => `<li class="ob-uroven"><span>${uroven ? nazevUrovne(uroven) : 'Mimo Top 100'}</span><small>${!pocet ? 'zatím žádná potvrzená'
-        : uroven ? sklonovat(pocet, 'potvrzená', 'potvrzené', 'potvrzených') : sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</small></li>`;
+    // Oddělovače úseků (Top 10 · Top 20 · Top 50 · Top 100 · Mimo) s počtem potvrzených v úseku celého pořadí
+    const potvrzenych = new Map(seskupitPodleUrovni(poradi).map(sk => [sk.uroven, sk]));
+    const oddelovac = uroven => {
+        const sk = potvrzenych.get(uroven);
+        const pocet = uroven ? sk?.potvrzenych || 0 : sk?.polozky.length || 0;
+        return `<li class="ob-uroven"><span>${uroven ? nazevUrovne(uroven) : 'Mimo Top 100'}</span><small>${!pocet ? 'zatím žádná potvrzená'
+            : uroven ? `${sklonovat(pocet, 'potvrzená', 'potvrzené', 'potvrzených')}${pocet < sk.polozky.length ? ` z ${sk.polozky.length}` : ''}` : sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</small></li>`;
+    };
     let i = 0;
-    nastavitHtml(cast('poradi'), `<ol class="ob-poradi">${prazdne.map(u => oddelovac(u, 0)).join('')}${seskupitPodleUrovni(ukazat).map(sk =>
-        oddelovac(sk.uroven, potvrzenych.get(sk.uroven) || 0) + sk.polozky.map(p => radek(p, i++)).join('')).join('')}</ol>
+    nastavitHtml(cast('poradi'), `<ol class="ob-poradi">${seskupitPodleUrovni(ukazat).map(sk =>
+        oddelovac(sk.uroven) + sk.polozky.map(p => radek(p, i++)).join('')).join('')}</ol>
         ${ukazat.length < poradi.length ? `<button type="button" class="link ob-vse" data-ob-poradi-vse>Zobrazit všech ${poradi.length}</button>` : ''}`);
     nacitatPostupne(cast('poradi'));
 }

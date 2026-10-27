@@ -94,8 +94,11 @@ test('úrovně oblíbenosti: seskupení pořadí, čekající a nadpis souboje',
         { modelkaId: 3, poradi: 3, uroven: 20, ceka: { uroven: 10 } }, { modelkaId: 4, poradi: 4, uroven: 20 },
         { modelkaId: 5, poradi: 5, uroven: 0 },
     ];
-    assert.deepEqual(seskupitPodleUrovni(poradi).map(s => [s.uroven, s.polozky.map(p => p.modelkaId)]), [[10, [1, 2]], [20, [3, 4]], [0, [5]]]);
-    // Starší backend bez úrovní: podle potvrzeného místa
+    // Úseky podle místa; nepotvrzená na místě v top 10 (úroveň nesplňuje) se nepočítá mezi potvrzené
+    assert.deepEqual(seskupitPodleUrovni(poradi).map(s => [s.uroven, s.polozky.map(p => p.modelkaId), s.potvrzenych]), [[10, [1, 2, 3, 4, 5], 2]]);
+    const dlouhe = Array.from({ length: 12 }, (_, i) => ({ modelkaId: i + 1, poradi: i + 1, uroven: i < 3 ? 10 : i === 11 ? 20 : 0 }));
+    assert.deepEqual(seskupitPodleUrovni(dlouhe).map(s => [s.uroven, s.polozky.length, s.potvrzenych]), [[10, 10, 3], [20, 2, 1]]);
+    // Bez úrovní z backendu: podle potvrzeného místa
     const bezUrovni = Array.from({ length: 22 }, (_, i) => ({ modelkaId: i + 1, poradi: i + 1 }));
     assert.deepEqual(seskupitPodleUrovni(bezUrovni).map(s => [s.uroven, s.polozky.length]), [[10, 10], [20, 10], [50, 2]]);
     assert.deepEqual(seskupitPodleUrovni([]), []);

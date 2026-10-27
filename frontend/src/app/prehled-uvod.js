@@ -162,7 +162,9 @@ function htmlOblibenostiUvodu(ob, modelky) {
     const prazdne = text => `<p class="uvod-hotovo">${text}</p>`;
     const cekaji = textCekajicich(poctyCekajicich(modelky));
     const top = (ob.top.length ? seznam(ob.top, x => `${x.poradi}.`)
-        : prazdne('Ohodnoť modelky srdíčky – pořadí se ukáže tady.'))
+        : modelky.some(m => m.hodnoceni) || cekaji
+            ? prazdne('Zatím žádná potvrzená. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.' + (cekaji ? '' : ' <button type="button" class="link" data-otevrit-oblibenost="porovnani">Porovnávat →</button>'))
+            : prazdne('Ohodnoť modelky srdíčky – pořadí se ukáže tady.'))
         + (cekaji ? `<p class="uvod-cekaji">⏳ ${esc(cekaji)} · <button type="button" class="link" data-otevrit-oblibenost="porovnani">Porovnávat →</button></p>` : '');
     const kdy = ob.trendDni === 1 ? 'od včerejška' : `za ${ob.trendDni} dní`;
     const stoupaji = ob.stoupaji.length ? seznam(ob.stoupaji, x => `<span class="trend nahoru">▲ ${x.zmenaPoradi}</span>`)

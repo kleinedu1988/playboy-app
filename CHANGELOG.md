@@ -7,6 +7,27 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.47] – 2026-10-27
+
+### Přidáno
+- **Úrovně Top 10 / 20 / 50 / 100 s těžším vstupem:** do vyšší úrovně se modelka dostane, až má dost porovnání a jistotu.
+  - Prahy:
+    - Top 10: 10 porovnání, nejistota nejvýš 0,3 a výhra nad některou z potvrzené Top 20.
+    - Top 20: 6 porovnání.
+    - Top 50: 4 porovnání.
+    - Top 100: 2 porovnání; samotný odhad se sem nedostane nikdy.
+  - Kdo podle síly patří výš, ale prahy ještě nesplňuje, čeká těsně pod hranicí. Do Top N se navíc potvrdí jen modelka, která je podle síly nejvýš na místě 2·N.
+  - Číslo oblíbenosti se nemění, mění se jen potvrzené pořadí.
+- **Souboje na hranicích úrovní:** Porovnávání do mixu zařazuje dvojice čekající modelky proti posledním potvrzeným v úrovni a souboje sousedek o 10., 20., 50. a 100. místo. Nad pásy mají štítek „⚔ Souboj o Top 10“ nebo „O postup do Top 10“. Po souboji se pořadí hned přepočítá, postup do vyšší úrovně ohlásí upozornění.
+- **Úrovně v rozhraní:**
+  - Pořadí: oddělovače úseků s počtem potvrzených, u čekajících „⏳ čeká na Top 10 (6 z 10 porovnání…)“ s místem podle síly a pravidla úrovní pod seznamem.
+  - Profil ukazuje „· Top 10“ nebo čekání, karty modelek odznak TOP 10.
+  - Přehled ukazuje v Top 10 jen potvrzené a počet čekajících s odkazem do Porovnávání.
+
+### Změněno
+- **Trend a šipky** sledují potvrzené pořadí, takže postup do Top 10 se ukáže jako vzestup. Starší denní snímky se dál porovnávají podle oblíbenosti.
+- **Přesnost pořadí:** v simulaci se 400 modelkami odpovídá po 800 porovnáních prvních 10 míst skutečné Top 10 ze 74 % místo 66 %.
+
 ## [0.99.46] – 2026-10-27
 
 ### Změněno

@@ -109,11 +109,15 @@ type Modelka struct {
 	// Odhad hodnocení modelem vkusu (jen pro čtení): 0,5–5 po polovinách jen u nehodnocené modelky s dost jistým
 	// odhadem, jinak 0
 	OdhadHodnoceni float64 `json:"odhadHodnoceni"`
-	// Pořadí oblíbenosti od 1 (0 = mimo pořadí) a o kolik míst stoupla proti snímku před trendDni dny (záporné =
+	// Potvrzené pořadí oblíbenosti od 1 (0 = mimo pořadí; s prahy úrovní Top N) a o kolik míst stoupla proti snímku před trendDni dny (záporné =
 	// klesla; trendDni 0 = trend zatím není), jen pro čtení (oblibenost_zajem.go)
 	Poradi      int `json:"poradi"`
 	ZmenaPoradi int `json:"zmenaPoradi"`
 	TrendDni    int `json:"trendDni"`
+	// Úroveň Top N, ve které modelka potvrzeně je (10, 20, 50, 100; 0 = mimo top 100), a úroveň, na jejíž potvrzení
+	// čeká (podle síly by tam patřila, ale nesplňuje prahy; 0 = nic), jen pro čtení (oblibenost_urovne.go)
+	UrovenTop int `json:"urovenTop"`
+	CekaNaTop int `json:"cekaNaTop"`
 
 	// Kdy byla modelka přidána (RRRR-MM-DD HH:MM:SS); prázdné u záznamů starších než tento údaj
 	Pridano string `json:"pridano"`

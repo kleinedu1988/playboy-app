@@ -18,7 +18,9 @@ import (
 //     do ±0,49 od jejích srdíček: zájem přeskupí pořadí uvnitř úrovně, srdíčka nepřebije.
 //   - Historie: snímek oblíbenosti a pořadí jednou denně (dnešní se přepíše nejvýš jednou za hodinu). Po 60 dnech
 //     zůstane jeden snímek na týden (pondělí), po 400 dnech nic. Trend = posun proti snímku z doby před 30 dny,
-//     dokud není, proti nejstaršímu aspoň 7 dní starému.
+//     dokud není, proti nejstaršímu aspoň 7 dní starému. Pořadí ve snímku je potvrzené (s úrovněmi Top N); snímek
+//     ze starší verze (bez značky potvrzeného pořadí) se srovnává podle oblíbenosti, aby úrovně po přechodu
+//     nevypadaly jako pád nepotvrzených.
 //
 // Nové záznamy zájmu výsledek v paměti nezneplatní každý zvlášť (přepočet modelu vkusu stojí desítky ms): projeví
 // se po každých 20 záznamech, po změně dat nebo druhý den.
@@ -43,6 +45,8 @@ const (
 	dnyZaznamuZajmu      = 730 // starší záznamy zájmu váží pod 0,02 % a mažou se
 	dnyDlouhoNevidene    = 30
 	modelekPrehledu      = 10
+	// Značka ve snímku historie (řádek s modelka_id 0 a poradi 1): pořadí ve snímku je potvrzené s úrovněmi Top N
+	znackaPotvrzenehoPoradi = 0
 )
 
 // Zájem o jednu modelku z databáze učení
@@ -138,9 +142,10 @@ type PolozkaOblibenosti struct {
 	ModelkaID   int     `json:"modelkaId"`
 	Jmeno       string  `json:"jmeno"`
 	Hodnoceni   float64 `json:"hodnoceni"`
-	Poradi      int     `json:"poradi"`
+	Poradi      int     `json:"poradi"`      // potvrzené pořadí
 	ZmenaPoradi int     `json:"zmenaPoradi"` // o kolik míst výš než ve srovnávacím snímku (záporné = níž)
 	Dni         int     `json:"dni"`         // dlouho neviděné: dní od posledního zájmu, −1 = od začátku sledování nikdy
+	Uroven      int     `json:"uroven"`      // potvrzená úroveň Top N (10, 20, 50, 100; 0 = mimo top 100)
 }
 
 func (a *App) GetPrehledOblibenosti() PrehledOblibenosti {
@@ -161,11 +166,14 @@ func (a *App) GetPrehledOblibenosti() PrehledOblibenosti {
 	}
 	polozka := func(id int) PolozkaOblibenosti {
 		m := podleId[id]
-		return PolozkaOblibenosti{ModelkaID: id, Jmeno: m.Jmeno, Hodnoceni: m.Hodnoceni, Poradi: model.poradi[id], ZmenaPoradi: model.zmenaPoradi[id]}
+		return PolozkaOblibenosti{ModelkaID: id, Jmeno: m.Jmeno, Hodnoceni: m.Hodnoceni, Poradi: model.poradi[id], ZmenaPoradi: model.zmenaPoradi[id], Uroven: model.uroven[id]}
 	}
 	poradi := model.seznamPoradi()
+	// Top: jen potvrzené v top 10 (dokud jich není deset, je jich méně, i žádná)
 	for _, id := range poradi[:min(len(poradi), modelekPrehledu)] {
-		p.Top = append(p.Top, polozka(id))
+		if model.uroven[id] == modelekPrehledu {
+			p.Top = append(p.Top, polozka(id))
+		}
 	}
 	// Stoupající a klesající: posun aspoň o 3 místa a aspoň o 3 % délky pořadí (u velké sbírky není posun o tři
 	// místa z tisíce nic), největší posun napřed
@@ -363,11 +371,12 @@ func (m *modelOblibenosti) seznamPoradi() []int {
 	return ids
 }
 
-// Srovnávací snímek pro trend: poslední aspoň 30 dní starý, jinak nejstarší aspoň 7 dní starý; volá se se zámkem
-func (u *uceni) nacistSrovnani(nyni time.Time) (map[int]snimekOblibenosti, time.Time) {
+// Srovnávací snímek pro trend: poslední aspoň 30 dní starý, jinak nejstarší aspoň 7 dní starý; volá se se zámkem.
+// Pořadí ve snímku je potvrzené, má-li snímek značku (řádek modelka_id 0), jinak je ze starší verze podle oblíbenosti.
+func (u *uceni) nacistSrovnani(nyni time.Time) (map[int]snimekOblibenosti, time.Time, bool) {
 	db := u.zajistit()
 	if db == nil {
-		return nil, time.Time{}
+		return nil, time.Time{}, false
 	}
 	var den *string
 	db.QueryRow("SELECT MAX(den) FROM historie_oblibenosti WHERE den <= ?", nyni.AddDate(0, 0, -dnyTrendu).Format("2006-01-02")).Scan(&den)
@@ -375,51 +384,58 @@ func (u *uceni) nacistSrovnani(nyni time.Time) (map[int]snimekOblibenosti, time.
 		db.QueryRow("SELECT MIN(den) FROM historie_oblibenosti WHERE den <= ?", nyni.AddDate(0, 0, -minDnyTrendu).Format("2006-01-02")).Scan(&den)
 	}
 	if den == nil {
-		return nil, time.Time{}
+		return nil, time.Time{}, false
 	}
 	t, err := time.ParseInLocation("2006-01-02", *den, time.Local)
 	if err != nil {
-		return nil, time.Time{}
+		return nil, time.Time{}, false
 	}
 	radky, err := db.Query("SELECT modelka_id, oblibenost, poradi FROM historie_oblibenosti WHERE den = ?", *den)
 	if err != nil {
-		return nil, time.Time{}
+		return nil, time.Time{}, false
 	}
 	defer radky.Close()
-	snimek := map[int]snimekOblibenosti{}
+	snimek, potvrzene := map[int]snimekOblibenosti{}, false
 	for radky.Next() {
 		var id int
 		var s snimekOblibenosti
-		if radky.Scan(&id, &s.oblibenost, &s.poradi) == nil {
-			snimek[id] = s
+		if radky.Scan(&id, &s.oblibenost, &s.poradi) != nil {
+			continue
 		}
+		if id == znackaPotvrzenehoPoradi {
+			potvrzene = s.poradi == 1
+			continue
+		}
+		snimek[id] = s
 	}
-	return snimek, t
+	return snimek, t, potvrzene
 }
 
 // Trend proti srovnávacímu snímku: posun oblíbenosti a pořadí (kladný = výš). Modelka, která ve snímku nebyla,
-// trend nemá; posun pořadí se přepočítá na délku dnešního pořadí, aby nové modelky v pořadí nevypadaly jako pád
-// všech pod nimi.
-func (m *modelOblibenosti) nastavitTrend(snimek map[int]snimekOblibenosti, den, nyni time.Time) {
+// trend nemá; posun pořadí se přepočítá jen mezi modelkami v obou snímcích, aby nové modelky v pořadí nevypadaly
+// jako pád všech pod nimi. Se snímkem s potvrzeným pořadím se srovnává potvrzené pořadí (vstup do top 10 je
+// vzestup), se snímkem ze starší verze pořadí podle oblíbenosti.
+func (m *modelOblibenosti) nastavitTrend(snimek map[int]snimekOblibenosti, den, nyni time.Time, potvrzene bool) {
 	m.trend, m.zmenaPoradi = map[int]float64{}, map[int]int{}
 	if len(snimek) == 0 {
 		return
 	}
 	dnes0 := time.Date(nyni.Year(), nyni.Month(), nyni.Day(), 0, 0, 0, 0, time.Local)
 	m.trendDni = max(1, int(math.Round(dnes0.Sub(den).Hours()/24)))
-	// Dnešní pořadí jen mezi modelkami, které byly i ve snímku
-	spolecne := map[int]float64{}
+	// Dnešní pořadí jen mezi modelkami, které byly i ve snímku: potvrzené (klíčem je záporné místo), nebo podle
+	// oblíbenosti
+	spolecne, predtim := map[int]float64{}, map[int]float64{}
 	for id, o := range m.oblibenost {
-		if _, ok := snimek[id]; ok && o > 0 {
-			spolecne[id] = o
+		s, ok := snimek[id]
+		switch {
+		case !ok || o <= 0:
+		case potvrzene && s.poradi > 0 && m.poradi[id] > 0:
+			spolecne[id], predtim[id] = float64(1e9-m.poradi[id]), float64(1e9-s.poradi)
+		case !potvrzene:
+			spolecne[id], predtim[id] = o, s.oblibenost
 		}
 	}
-	dnes := spocitatPoradi(spolecne)
-	predtim := map[int]float64{}
-	for id := range spolecne {
-		predtim[id] = snimek[id].oblibenost
-	}
-	tehdy := spocitatPoradi(predtim)
+	dnes, tehdy := spocitatPoradi(spolecne), spocitatPoradi(predtim)
 	for id, p := range dnes {
 		m.zmenaPoradi[id] = tehdy[id] - p
 		m.trend[id] = zaokrouhlit3(m.oblibenost[id] - snimek[id].oblibenost)
@@ -443,6 +459,11 @@ func (u *uceni) zapsatHistorii(m *modelOblibenosti, nyni time.Time) {
 	}
 	prikaz, err := tx.Prepare("INSERT OR REPLACE INTO historie_oblibenosti (den, modelka_id, oblibenost, poradi) VALUES (?, ?, ?, ?)")
 	if err != nil {
+		tx.Rollback()
+		return
+	}
+	if _, err := prikaz.Exec(den, znackaPotvrzenehoPoradi, 0, 1); err != nil {
+		prikaz.Close()
 		tx.Rollback()
 		return
 	}

@@ -150,17 +150,27 @@ func TestTrendAHistorie(t *testing.T) {
 		}
 	}
 	a.uc.mu.Lock()
-	var dnes, celkem int
-	db.QueryRow("SELECT COUNT(*) FROM historie_oblibenosti WHERE den = ?", nyni.Format("2006-01-02")).Scan(&dnes)
-	db.QueryRow("SELECT COUNT(*) FROM historie_oblibenosti").Scan(&celkem)
+	var dnes, celkem, znacka int
+	db.QueryRow("SELECT COUNT(*) FROM historie_oblibenosti WHERE den = ? AND modelka_id > 0", nyni.Format("2006-01-02")).Scan(&dnes)
+	db.QueryRow("SELECT COUNT(*) FROM historie_oblibenosti WHERE modelka_id > 0").Scan(&celkem)
+	db.QueryRow("SELECT COUNT(*) FROM historie_oblibenosti WHERE den = ? AND modelka_id = 0 AND poradi = 1", nyni.Format("2006-01-02")).Scan(&znacka)
 	a.uc.mu.Unlock()
-	if dnes != 3 || celkem != 6 {
-		t.Fatalf("historie: dnes %d snímků, celkem %d (čekáno 3 a 6)", dnes, celkem)
+	if dnes != 3 || celkem != 6 || znacka != 1 {
+		t.Fatalf("historie: dnes %d snímků, celkem %d (čekáno 3 a 6), značka potvrzeného pořadí %d", dnes, celkem, znacka)
 	}
-	// Prahy přehledu: ze tří modelek stačí posun o 3 místa, žádná tolik nestoupla
+	// Prahy přehledu: ze tří modelek stačí posun o 3 místa, žádná tolik nestoupla. Top jen potvrzené: bez porovnání
+	// nikdo, Anna (první podle síly) až po porovnáních s výhrou nad potvrzenou top 20
 	p := a.GetPrehledOblibenosti()
-	if len(p.Top) != 3 || p.Top[0].Jmeno != "Anna" || len(p.Stoupaji) != 0 || p.TrendDni != 31 {
+	if len(p.Top) != 0 || len(p.Stoupaji) != 0 || p.TrendDni != 31 {
 		t.Fatalf("přehled: %+v", p)
+	}
+	for range 5 {
+		a.PorovnatModelky(ids["Anna"], ids["Bára"], "a")
+		a.PorovnatModelky(ids["Anna"], ids["Cecílie"], "a")
+		a.PorovnatModelky(ids["Bára"], ids["Cecílie"], "a")
+	}
+	if p := a.GetPrehledOblibenosti(); len(p.Top) != 2 || p.Top[0].Jmeno != "Anna" || p.Top[0].Uroven != 10 || p.Top[1].Jmeno != "Bára" {
+		t.Fatalf("přehled po porovnáních: %+v", p.Top)
 	}
 }
 

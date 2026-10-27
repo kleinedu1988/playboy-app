@@ -11770,3 +11770,72 @@ span.ud-chip {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
+
+/* Rozhodnout teď: tlačítko vpravo dole v řádku čekající nebo obhajující modelky (pod pruhem síly) */
+.ob-poradi li {
+    position: relative;
+}
+
+.ob-rozhodnout {
+    position: absolute;
+    right: 50px;
+    bottom: 6px;
+    z-index: 1;
+    padding: 1px 9px;
+    border: 1px solid rgba(255, 64, 129, 0.45);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--accent-text);
+    font: inherit;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.ob-rozhodnout:hover,
+.ob-rozhodnout:focus-visible {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    color: #fff;
+}
+
+/* Pruh série nad pásy: text, ukazatel postupu, Ukončit; po dokončení výsledek */
+.ob-serie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin: 0 0 10px;
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 64, 129, 0.45);
+    border-radius: 12px;
+    background-color: rgba(216, 27, 96, 0.1);
+}
+
+.ob-serie-text {
+    flex: 1 1 auto;
+}
+
+.ob-serie-postup {
+    flex: 0 1 220px;
+    height: 6px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.ob-serie-postup i {
+    display: block;
+    height: 100%;
+    background-color: var(--accent);
+    transition: width 0.3s;
+}
+
+.ob-serie[data-vysledek="ano"] {
+    border-color: var(--vytisk);
+    background-color: rgba(76, 175, 80, 0.12);
+}
+
+.ob-serie[data-vysledek="ne"] {
+    border-color: var(--panel-okraj);
+    background-color: var(--panel-bg);
+}

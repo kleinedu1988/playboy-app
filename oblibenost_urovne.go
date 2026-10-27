@@ -597,3 +597,96 @@ func (m *modelOblibenosti) posledniVUrovni(uroven int) int {
 	}
 	return posledni
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// „Rozhodnout teď“ (Pořadí › čekající nebo obhajující modelka): série soubojů jen pro jednu modelku, místo aby se
+// její potvrzení náhodně rozházelo v mixu. Vyzyvatelka a držitelka mají jediný souboj (rozhoduje vzájemný výsledek).
+// Čekající dostane tolik soubojů, kolik jí chybí porovnání (při vysoké nejistotě o dva víc), nejméně 2 a nejvýš 6:
+// soupeřky jsou potvrzené v úrovni, kam míří, odspodu (poslední potvrzená napřed – tu by vytlačila); potřebuje-li
+// výhru nad top 20 a úroveň nikoho potvrzeného nemá, potvrzené v top 20; zbytek doplní sousedky podle síly.
+
+const (
+	minSoubojuRozhodnuti = 2
+	maxSoubojuRozhodnuti = 6
+)
+
+// Série soubojů pro modelku (prázdná, když nečeká ani neobhajuje, nebo ještě do souboje nesmí)
+func (a *App) GetSoubojeModelky(id int) []DvojicePorovnani {
+	if a.uc == nil {
+		return []DvojicePorovnani{}
+	}
+	modelky, _ := a.nactiModelky("", false)
+	return a.modelOblibenosti(modelky).soubojeModelky(modelky, id)
+}
+
+func (m *modelOblibenosti) soubojeModelky(modelky []Modelka, id int) []DvojicePorovnani {
+	v := []DvojicePorovnani{}
+	podleId := make(map[int]*Modelka, len(modelky))
+	for i := range modelky {
+		podleId[modelky[i].ID] = &modelky[i]
+	}
+	x := podleId[id]
+	if x == nil || !m.doSouboje(x) {
+		return v
+	}
+	poradi, podleSily := make([]*Modelka, len(m.poradi)), make([]*Modelka, len(m.mistoSily))
+	for mid, p := range m.poradi {
+		poradi[p-1] = podleId[mid]
+	}
+	for mid, p := range m.mistoSily {
+		podleSily[p-1] = podleId[mid]
+	}
+	jmeno := func(y *Modelka) string {
+		if y.Jmeno == "" {
+			return fmt.Sprintf("modelka č. %d", y.ID)
+		}
+		return y.Jmeno
+	}
+	pouzite := map[int]bool{id: true}
+	pridat := func(y *Modelka, uroven int, kdo string) {
+		if y == nil || pouzite[y.ID] || !m.doSouboje(y) {
+			return
+		}
+		pouzite[y.ID] = true
+		v = append(v, DvojicePorovnani{A: x.ID, B: y.ID, Druh: "souboj",
+			Duvod: fmt.Sprintf("Rozhodnout teď: %s o top %d – soupeřka %s (%d.), %s", jmeno(x), uroven, jmeno(y), m.poradi[y.ID], kdo)})
+	}
+	if d, ok := m.vyzyva[id]; ok {
+		pridat(podleId[d], m.obhajoba[d].Uroven, "místo obhajuje")
+		return v
+	}
+	if o, ok := m.obhajoba[id]; ok {
+		pridat(podleId[o.Vyzyvatelka], o.Uroven, "vyzyvatelka, silou ji předstihla")
+		return v
+	}
+	c, ok := m.ceka[id]
+	if !ok {
+		return v
+	}
+	n := c.PotrebaPorovnani - c.Porovnani
+	if c.Nejistota > c.MaxNejistota+1e-9 {
+		n += 2
+	}
+	n = min(max(n, minSoubojuRozhodnuti), maxSoubojuRozhodnuti)
+	potvrzene := func(do int, kdo string) {
+		for p := min(do, len(poradi)); p >= 1 && len(v) < n; p-- {
+			if y := poradi[p-1]; y != nil {
+				if u := m.uroven[y.ID]; u > 0 && u <= do {
+					pridat(y, c.Uroven, kdo)
+				}
+			}
+		}
+	}
+	potvrzene(c.Uroven, fmt.Sprintf("potvrzená v top %d", c.Uroven))
+	if len(v) == 0 && c.PotrebaVyhry && !c.MaVyhru {
+		potvrzene(urovenElity, fmt.Sprintf("potvrzená v top %d", urovenElity))
+	}
+	for d := 1; len(v) < n && d < len(podleSily); d++ {
+		for _, p := range []int{m.mistoSily[id] - d, m.mistoSily[id] + d} {
+			if p >= 1 && p <= len(podleSily) && len(v) < n {
+				pridat(podleSily[p-1], c.Uroven, "sousedka podle síly")
+			}
+		}
+	}
+	return v
+}

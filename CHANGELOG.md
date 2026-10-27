@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.54] – 2026-10-27
+
+### Přidáno
+- **Rozhodnout teď:** u čekající nebo obhajující modelky v Pořadí je tlačítko „⚔ Rozhodnout teď“.
+  - Spustí hned za sebou jen ty souboje, které jí chybí: tolik, kolik jí chybí porovnání (2–6), proti posledním potvrzeným v úrovni. U obhajoby je to jediný souboj držitelky s vyzyvatelkou.
+  - Nad pásy je pruh s ukazatelem postupu („souboj 2 ze 4“). Přeskočit a Vrátit fungují, Ukončit vrátí běžný mix.
+  - Po posledním souboji se pořadí přepočte a pruh řekne, jak to dopadlo: postoupila, zatím nepostoupila (a co chybí), obhájila, nebo vypadla.
+
 ## [0.99.53] – 2026-10-27
 
 ### Změněno

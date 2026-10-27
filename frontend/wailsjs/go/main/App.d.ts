@@ -70,6 +70,8 @@ export function GetSablonaObrazku():Promise<string>;
 
 export function GetSinSlavy():Promise<main.SinSlavy>;
 
+export function GetSoubojeModelky(arg1:number):Promise<Array<main.DvojicePorovnani>>;
+
 export function GetSpecialy():Promise<Array<main.Special>>;
 
 export function GetStatistiky():Promise<main.Statistiky>;

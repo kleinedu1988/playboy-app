@@ -254,6 +254,7 @@ sbírky ani exportu.
 | `PorovnatModelky(a, b, vysledek) bool` | zapíše porovnání (`a`, `b`, `remiza`) se srdíčky obou v tu chvíli |
 | `VratitPorovnani() bool` | smaže poslední porovnání (zpět) |
 | `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání, zájmu, historie oblíbenosti, držitelek úrovní a kroniky síně slávy |
+| `GetSoubojeModelky(id) []DvojicePorovnani` | „Rozhodnout teď“: série soubojů jedné modelky (oddíl Úrovně, Rozhodnout teď); prázdná, když nečeká ani neobhajuje, nebo ještě do souboje nesmí |
 | `GetSinSlavy() SinSlavy` | síň slávy (oddíl Síň slávy): `od` (začátek kroniky), `vitrina` (současná potvrzená top 10 podle místa), `legendy` (bývalé top 10, nejdéle v top 10 napřed), `rekordy` (`druh` nejdele / vlada / obhajoby / rychlost / navrat, `modelkaId`, `hodnota`, `odZacatku`, `cas`, `trva`), `kronika` (nejvýš 300 událostí od nejnovější: `cas`, `druh`, `modelkaId`, `misto`, `souperka`); modelka ve vitríně i legendách: `modelkaId`, `misto`, `vTop`, `od`, `do`, `odZacatku`, `dniTed`, `dniCelkem`, `dniNejdele`, `dniNaPrvnim`, `pobytu`, `obhajob`, `nejlepsiMisto` |
 | `ZaznamenatZajem(id, druh, sekund) bool` | zájem o modelku: `druh` `"profil"` (stejná modelka nejvýš jednou za 10 minut) nebo `"fotky"` (`sekund` prohlížení, 3–1800); změnu dat neohlašuje |
 | `GetPrehledOblibenosti() PrehledOblibenosti` | úvod Přehledu: `top` (jen potvrzené v top 10 – dokud jich není deset, méně, i žádná), `stoupaji` a `klesaji` (posun aspoň o 3 místa a 3 % délky pořadí, nejvýš 10), `dlouhoNevidene` (z horní třicítky ty, jejichž profil ani fotky jsi 30 dní neviděl; `dni` = −1 nikdy; až se zájem sleduje aspoň 30 dní), `trendDni`, `zajemDni`; položky `modelkaId`, `jmeno`, `hodnoceni`, `poradi` (potvrzené), `zmenaPoradi`, `dni`, `uroven` (potvrzená úroveň Top N, 0 = mimo top 100) |
@@ -535,6 +536,15 @@ kandidátů bez průzkumu; berou asi 30 % všech dvojic (z těch, které by jina
 třetinu nechávají), dokud nějaké jsou – v praxi kolem 18 %. Dvojice má `druh: "souboj"` a důvod: „Souboj o top 10:
 Bára (10.), nebo Anna (11.)? Silou jsou si blízko“, „Anna čeká na potvrzení do top 10 (5 z 10 porovnání, chybí výhra
 nad top 20) – soupeřkou je Bára (10.), poslední potvrzená v top 10“ (jména v prvním pádě, cizí se skloňovat nedají).
+
+**Rozhodnout teď** (`GetSoubojeModelky`, tlačítko u čekající nebo obhajující modelky v Pořadí): místo čekání, až
+se souboje náhodně objeví v mixu, dostane modelka sérii hned za sebou. Vyzyvatelka a držitelka mají jediný vzájemný
+souboj. Čekající tolik soubojů, kolik jí chybí porovnání (při nejistotě nad prahem o dva víc), nejméně 2 a nejvýš 6:
+potvrzené v úrovni, kam míří, odspodu (poslední potvrzená napřed); potřebuje-li výhru nad top 20 a úroveň nikoho
+potvrzeného nemá, potvrzené v top 20; zbytek sousedky podle síly. Rozhraní dá sérii na začátek fronty Porovnávání
+s pruhem „⚔ Rozhodnout teď: Anna o Top 10 · souboj 2 ze 4“ a ukazatelem postupu (Přeskočit i Vrátit fungují, Ukončit
+vrátí běžný mix); po posledním souboji se pořadí přepočte a pruh řekne výsledek („postoupila do Top 10“, „zatím
+nepostoupila – chybí …“, „obhájila“, „prohrála a vypadla“).
 
 **Simulace** (`TestSimulaceUrovni`, bez `-short`; všechny varianty s `PLAYBOY_SIMULACE=vse`): 400 modelek, skutečná
 síla t ~ N(3; 1) (0,3–5,4), 340 hodnocených se srdíčky = t + N(0; 0,3) zaokrouhlené na poloviny, uživatel odpovídá

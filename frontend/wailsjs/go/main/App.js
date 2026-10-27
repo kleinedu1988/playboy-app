@@ -138,6 +138,10 @@ export function GetSinSlavy() {
   return window['go']['main']['App']['GetSinSlavy']();
 }
 
+export function GetSoubojeModelky(arg1) {
+  return window['go']['main']['App']['GetSoubojeModelky'](arg1);
+}
+
 export function GetSpecialy() {
   return window['go']['main']['App']['GetSpecialy']();
 }

@@ -638,3 +638,52 @@ func TestDrzitelkyVDatabazi(t *testing.T) {
 		t.Fatalf("po vrácení: %+v", st)
 	}
 }
+
+// „Rozhodnout teď“: čekající dostane souboje s posledními potvrzenými v úrovni (tolik, kolik jí chybí porovnání),
+// vyzyvatelka a držitelka jediný vzájemný souboj, ostatní nic
+func TestSoubojeModelky(t *testing.T) {
+	n := 30
+	sily, pocet := make([]float64, n), make([]int, n)
+	for i := range n {
+		sily[i], pocet[i] = 5-0.05*float64(i), 10
+	}
+	pocet[3] = 7 // 4. podle síly: chybí 3 porovnání do top 10
+	var porovnani []porovnaniZaznam
+	for id := 1; id <= n; id++ {
+		if id != 20 {
+			porovnani = append(porovnani, porovnaniZaznam{a: id, b: 20, vysledek: "a"})
+		}
+	}
+	m := modelUrovni(sily, pocet, nil)
+	m.spocitatUrovne(porovnani)
+	var modelky []Modelka
+	for id := 1; id <= n; id++ {
+		modelky = append(modelky, Modelka{ID: id, Jmeno: fmt.Sprintf("M%02d", id), Hodnoceni: 4})
+	}
+	souperky := func(d []DvojicePorovnani) []int {
+		var v []int
+		for _, x := range d {
+			v = append(v, x.B)
+		}
+		return v
+	}
+	d := m.soubojeModelky(modelky, 4)
+	// Top 10 bez čtyřky: 1, 2, 3, 5, …, 11 – poslední potvrzené odspodu jsou 11, 10, 9
+	if s := fmt.Sprint(souperky(d)); s != "[11 10 9]" || d[0].A != 4 || d[0].Druh != "souboj" {
+		t.Fatalf("souboje čtyřky: %s %+v", s, d)
+	}
+	if d[0].Duvod != "Rozhodnout teď: M04 o top 10 – soupeřka M11 (10.), potvrzená v top 10" {
+		t.Errorf("důvod: %q", d[0].Duvod)
+	}
+	if d := m.soubojeModelky(modelky, 1); len(d) != 0 {
+		t.Errorf("potvrzená jednička nemá co rozhodovat: %+v", d)
+	}
+	// Obhajoba: držitelka i vyzyvatelka mají jediný vzájemný souboj
+	m.obhajoba, m.vyzyva = map[int]ObhajobaUrovne{11: {Uroven: 10, Vyzyvatelka: 12}}, map[int]int{12: 11}
+	if d := m.soubojeModelky(modelky, 12); fmt.Sprint(souperky(d)) != "[11]" || !strings.Contains(d[0].Duvod, "místo obhajuje") {
+		t.Errorf("vyzyvatelka: %+v", d)
+	}
+	if d := m.soubojeModelky(modelky, 11); fmt.Sprint(souperky(d)) != "[12]" {
+		t.Errorf("držitelka: %+v", d)
+	}
+}

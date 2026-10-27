@@ -13,10 +13,10 @@
 //     štítkem „⏳ čeká na Top 10 (5/8 porovnání)“.
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
-import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
+import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, GetSoubojeModelky, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, kratceSrdicka, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
-import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, poctyCekajicich, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyFotek, textVahyZajmu, urovenModelky } from '../lib/oblibenost';
+import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, poctyCekajicich, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyFotek, textVahyZajmu, urovenModelky, vysledekRozhodnuti } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
@@ -47,6 +47,10 @@ let poradiVse = false;
 let data = { oblibenost: null, tipy: [] };
 let porovnanoOdObnoveni = 0;
 const porovnaneOdObnoveni = new Set(); // modelky porovnané od posledního obnovení (oznámení o postupu do úrovně)
+// „Rozhodnout teď“: série soubojů jedné modelky na začátku fronty (dvojice = objekty ve frontě), úroveň, o kterou jde,
+// jestli ji modelka obhajovala, a po dokončení výsledek { ok, text }
+/** @type {{ id: number, uroven: number, obhajovala: boolean, dvojice: Set<object>, celkem: number, vysledek: { ok: boolean, text: string } | null, konci: boolean } | null} */
+let serie = null;
 
 // Nejlepší fotky modelek pro galerii obou (id modelky → [{ id, url, album, typ, hodnoceni, rotace }]) a rozpracovaná
 // načtení; fronta je má načtené dopředu, galerie se pak otevře hned
@@ -87,6 +91,7 @@ function ukazatCastOblibenosti(klic) {
 
 const KOSTRA = `
     <div class="ob-cast ob-porovnani" data-ob-porovnani>
+        <div class="ob-serie hidden" data-ob-serie aria-live="polite"></div>
         <div class="ob-dvojice-obal">
             <div class="ob-dvojice" data-ob-dvojice aria-live="polite"></div>
             <span class="ob-souboj hidden" data-ob-souboj aria-live="polite"></span>
@@ -170,7 +175,8 @@ async function obnovitPrehled() {
 // o potvrzení mají viditelný výsledek); držitelka, která obhajovala, buď místo obhájila, nebo vypadla. Jen při
 // obnovení po porovnání, ne při prvním načtení.
 function oznamitPostup(porovnane, predtim) {
-    if (!porovnane.length || !predtim.size) return;
+    // Konec série „Rozhodnout teď“ řekne výsledek sám nad pásy
+    if (!porovnane.length || !predtim.size || serie?.konci) return;
     const ted = new Map((data.oblibenost?.poradi || []).map(p => [p.modelkaId, urovenModelky(p).uroven]));
     const zmeny = porovnane.filter(id => modelka(id)).map(id => ({ id, pred: predtim.get(id)?.uroven || 0, obhajoba: predtim.get(id)?.obhajoba || 0, vyzyvatelka: predtim.get(id)?.vyzyvatelka || 0, po: ted.get(id) || 0 }));
     const postup = zmeny.filter(x => x.po && (!x.pred || x.po < x.pred)).sort((x, y) => x.po - y.po)[0];
@@ -336,6 +342,7 @@ function vykreslitDnes() {
 function vykreslitDvojici() {
     const misto = cast('dvojice');
     if (!misto) return;
+    vykreslitSerii();
     const d = fronta[0];
     cast('ovladani').classList.toggle('hidden', !d);
     nastavitText(cast('duvod'), d?.duvod || '');
@@ -432,7 +439,7 @@ function vykreslitPoradi() {
                 : '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>') : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}${p.zmenaPoradi && o.trendDni ? ` · <span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}" title="${esc(`${p.zmenaPoradi > 0 ? 'Stoupla' : 'Klesla'} o ${sklonovat(Math.abs(p.zmenaPoradi), 'místo', 'místa', 'míst')} za ${o.trendDni} dní`)}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : ''}${p.zajem >= 0.05 ? ' · <span class="ob-zajem" title="Často otevíráš její profil nebo prohlížíš fotky – posouvá ji to v pořadí uvnitř srdíček">zájem</span>' : ''}</small>${stitekCekani}</span>
             <span class="ob-pruh" aria-hidden="true"><i style="width:${sirka}%"></i>${nejistota ? `<b style="left:${Math.max(0, sirka - nejistota)}%; width:${Math.min(100, sirka + nejistota) - Math.max(0, sirka - nejistota)}%"></b>` : ''}</span>
             <small class="ob-pocet">${p.porovnani || 0}×</small>
-        </button></li>`;
+        </button>${ceka || obhajoba ? `<button type="button" class="ob-rozhodnout" data-ob-rozhodnout="${m.id}" title="${esc(`Spustí hned souboje, které ${m.jmeno} chybí${obhajoba ? ' k obhajobě' : ' do potvrzení'}, za sebou s ukazatelem postupu – na konci je jasné, jak to dopadlo`)}">⚔ Rozhodnout teď</button>` : ''}</li>`;
     };
     // Oddělovače úseků (Top 10 · Top 20 · Top 50 · Top 100 · Mimo) s počtem potvrzených v úseku celého pořadí
     const potvrzenych = new Map(seskupitPodleUrovni(poradi).map(sk => [sk.uroven, sk]));
@@ -497,8 +504,10 @@ async function vybrat(vysledek) {
     vykreslitDnes();
     ukazatNavrhPoPorovnani(d);
     await dalsi();
-    // Souboj na hranici úrovně se přepočte hned (úrovně a štítky v pásech ukážou výsledek), jinak po pěti porovnáních
-    if (++porovnanoOdObnoveni >= 5 || d.druh === 'souboj') obnovitPrehled();
+    // Souboj na hranici úrovně se přepočte hned (úrovně a štítky v pásech ukážou výsledek), jinak po pěti porovnáních;
+    // poslední souboj série „Rozhodnout teď“ přepočte a vyhodnotí dokončení série
+    if (serie && !serie.vysledek && !zbyvaSerie()) dokoncitSerii();
+    else if (++porovnanoOdObnoveni >= 5 || d.druh === 'souboj') obnovitPrehled();
 }
 
 // Další dvojice s krátkým přechodem: vybraná se rozzáří, obě zmizí, nové se objeví
@@ -516,11 +525,12 @@ async function dalsi() {
     prednacist();
 }
 
-function preskocit() {
+async function preskocit() {
     if (!fronta[0] || zaneprazdneno) return;
     zaneprazdneno = true;
     zobrazitNavrhPodPasy(null);
-    dalsi();
+    await dalsi();
+    if (serie && !serie.vysledek && !zbyvaSerie()) dokoncitSerii();
 }
 
 async function vratit() {
@@ -532,13 +542,84 @@ async function vratit() {
     } catch { /* oznámí se níž */ }
     zaneprazdneno = false;
     if (!ok) return oznamit('Poslední porovnání se nepodařilo vrátit.');
-    fronta.unshift(historie.pop());
+    const vracena = historie.pop();
+    fronta.unshift(vracena);
+    // Vrácený souboj série ji znovu otevře
+    if (serie?.dvojice.has(vracena)) serie.vysledek = null;
     porovnaniDnes = Math.max(0, porovnaniDnes - 1);
     ulozDnes(porovnaniDnes);
     vykreslitDnes();
     zobrazitNavrhPodPasy(null);
     vykreslitDvojici();
     obnovitPrehled();
+}
+
+// ——— Rozhodnout teď ———
+// Tlačítko u čekající nebo obhajující modelky v Pořadí: souboje, které jí chybí (GetSoubojeModelky), jdou hned za
+// sebou na začátek fronty s ukazatelem postupu; po posledním se pořadí přepočte a nad pásy je, jak to dopadlo
+
+const zbyvaSerie = () => serie ? fronta.filter(d => serie.dvojice.has(d)).length : 0;
+
+async function rozhodnoutTed(id) {
+    let dvojice = [];
+    try {
+        dvojice = (await GetSoubojeModelky(id) || []).map(idDvojice).filter(d => modelka(d.a) && modelka(d.b));
+    } catch { /* oznámí se níž */ }
+    const jmeno = modelka(id)?.jmeno || 'Modelka';
+    if (!dvojice.length) return oznamit(`${jmeno} zatím do souboje nejde – nejdřív ji pár běžných porovnání zařadí.`);
+    const p = polozkaPoradi(id);
+    serie = { id, uroven: Number(p?.obhajoba?.uroven || p?.ceka?.uroven) || 0, obhajovala: !!p?.obhajoba, dvojice: new Set(dvojice), celkem: dvojice.length, vysledek: null, konci: false };
+    fronta = [...dvojice, ...fronta];
+    zobrazitNavrhPodPasy(null);
+    ukazatCastOblibenosti('porovnani');
+    vykreslitSerii();
+    vykreslitDvojici();
+    nacistNahledy(dvojice.flatMap(d => [d.a, d.b])).then(() => { if (fronta[0] && serie?.dvojice.has(fronta[0])) vykreslitDvojici(); });
+}
+
+async function dokoncitSerii() {
+    const s = serie;
+    if (!s) return;
+    s.konci = true;
+    vykreslitSerii();
+    await obnovitPrehled();
+    if (serie !== s) return;
+    s.konci = false;
+    s.vysledek = vysledekRozhodnuti({ jmeno: modelka(s.id)?.jmeno, uroven: s.uroven, obhajovala: s.obhajovala, ted: polozkaPoradi(s.id) });
+    vykreslitSerii();
+}
+
+function ukoncitSerii() {
+    if (!serie) return;
+    const s = serie;
+    serie = null;
+    const prvni = fronta[0];
+    fronta = fronta.filter(d => !s.dvojice.has(d));
+    vykreslitSerii();
+    if (fronta[0] !== prvni) vykreslitDvojici();
+    if (!fronta.length) doplnitFrontu();
+}
+
+// Pruh nad pásy: „⚔ Rozhodnout teď: Anna o Top 10 · souboj 2 ze 4“ s ukazatelem, po dokončení výsledek
+function vykreslitSerii() {
+    const misto = cast('serie');
+    if (!misto) return;
+    misto.classList.toggle('hidden', !serie);
+    if (!serie) return nastavitHtml(misto, '');
+    const jmeno = esc(modelka(serie.id)?.jmeno || 'Modelka');
+    const cil = serie.uroven ? nazevUrovne(serie.uroven) : 'místo';
+    if (serie.vysledek) {
+        misto.dataset.vysledek = serie.vysledek.ok ? 'ano' : 'ne';
+        return nastavitHtml(misto, `<span class="ob-serie-text">${serie.vysledek.ok ? '✓' : '·'} ${esc(serie.vysledek.text)}</span>
+            <button type="button" class="link" data-ob-serie-poradi>Zpět na Pořadí</button>
+            <button type="button" class="link" data-ob-serie-konec>Pokračovat v porovnávání</button>`);
+    }
+    delete misto.dataset.vysledek;
+    const hotovo = serie.celkem - zbyvaSerie();
+    nastavitHtml(misto, `<span class="ob-serie-text">⚔ Rozhodnout teď: <b>${jmeno}</b> ${serie.obhajovala ? 'obhajuje' : 'o'} ${esc(cil)}
+            · ${serie.konci ? 'vyhodnocuji…' : `souboj ${Math.min(hotovo + 1, serie.celkem)} ${zKolika(serie.celkem)}`}</span>
+        <span class="ob-serie-postup" aria-hidden="true"><i style="width:${Math.round(100 * hotovo / serie.celkem)}%"></i></span>
+        <button type="button" class="link" data-ob-serie-konec title="Vrátit se k běžnému mixu dvojic">Ukončit</button>`);
 }
 
 // ——— Události ———
@@ -560,6 +641,9 @@ export function pripravit() {
         if (!koren?.contains(e.target)) return;
         const volba = e.target.closest('[data-ob-volba]')?.dataset.obVolba;
         if (volba) vybrat(volba);
+        else if (e.target.closest('[data-ob-rozhodnout]')) rozhodnoutTed(Number(e.target.closest('[data-ob-rozhodnout]').dataset.obRozhodnout));
+        else if (e.target.closest('[data-ob-serie-konec]')) ukoncitSerii();
+        else if (e.target.closest('[data-ob-serie-poradi]')) { ukoncitSerii(); ukazatCastOblibenosti('poradi'); }
         else if (e.target.closest('[data-ob-preskocit]')) preskocit();
         else if (e.target.closest('[data-ob-vratit]')) vratit();
         else if (e.target.closest('[data-ob-navrh-ano]')) prijmoutNavrh(e.target.closest('[data-ob-navrh-ano]').dataset.obNavrhAno);

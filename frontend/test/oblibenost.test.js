@@ -164,3 +164,13 @@ test('síň slávy: texty kroniky, rekordů a dní', async () => {
     const skupiny = kronikaPoMesicich([{ cas: '2026-10-27 10:00:00' }, { cas: '2026-10-02 10:00:00' }, { cas: '2026-09-30 10:00:00' }]);
     assert.deepEqual(skupiny.map(s => [s.mesic, s.udalosti.length]), [['říjen 2026', 2], ['září 2026', 1]]);
 });
+
+test('rozhodnout teď: výsledek série', async () => {
+    const { vysledekRozhodnuti } = await import('../src/lib/oblibenost.js');
+    assert.deepEqual(vysledekRozhodnuti({ jmeno: 'Anna', uroven: 10, ted: { uroven: 10 } }), { ok: true, text: 'Anna postoupila do Top 10!' });
+    assert.deepEqual(vysledekRozhodnuti({ jmeno: 'Anna', uroven: 10, ted: { uroven: 20, ceka: { uroven: 10, porovnani: 8, potrebaPorovnani: 10, potrebaVyhry: true, maVyhru: true } } }),
+        { ok: false, text: 'Anna zatím nepostoupila do Top 10 – chybí ještě 2 porovnání (má 8 z 10).' });
+    assert.equal(vysledekRozhodnuti({ jmeno: 'Anna', uroven: 10, ted: { uroven: 20, ceka: { uroven: 10, drzitelka: 3 } } }).text, 'Anna zatím nepostoupila do Top 10 – místo dál obhajuje držitelka.');
+    assert.deepEqual(vysledekRozhodnuti({ jmeno: 'Bára', uroven: 10, obhajovala: true, ted: { uroven: 10 } }), { ok: true, text: 'Bára obhájila Top 10.' });
+    assert.deepEqual(vysledekRozhodnuti({ jmeno: 'Bára', uroven: 10, obhajovala: true, ted: { uroven: 20 } }), { ok: false, text: 'Bára prohrála a vypadla z Top 10.' });
+});

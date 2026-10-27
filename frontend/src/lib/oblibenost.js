@@ -222,3 +222,17 @@ export function stitekUrovne(x) {
     if (uroven && obhajoba) return { text: `${nazevUrovne(uroven)} · obhajuje`, ceka: false, title: `Potvrzená v ${nazevUrovne(uroven)}. Silou ji předstihla jiná modelka, místo obhajuje, dokud s ní neprohraje v souboji.` };
     return uroven ? { text: nazevUrovne(uroven), ceka: false, title: `Potvrzená v ${nazevUrovne(uroven)} oblíbenosti` } : null;
 }
+
+// Výsledek série „Rozhodnout teď“ po přepočtu: { ok, text }. obhajovala = modelka byla držitelkou, která místo
+// obhajovala; uroven = úroveň, o kterou šlo; ted = položka pořadí po přepočtu (uroven, ceka)
+export function vysledekRozhodnuti({ jmeno, uroven, obhajovala = false, ted = null }) {
+    const kdo = jmeno || 'Modelka';
+    const u = nazevUrovne(uroven);
+    const v = Number(ted?.uroven) || 0;
+    const uspech = v > 0 && v <= uroven;
+    if (obhajovala) return uspech ? { ok: true, text: `${kdo} obhájila ${u}.` } : { ok: false, text: `${kdo} prohrála a vypadla z ${u}.` };
+    if (uspech) return { ok: true, text: `${kdo} postoupila do ${u}!` };
+    const chybi = chybiKUrovni(ted?.ceka);
+    const proc = Number(ted?.ceka?.drzitelka) > 0 ? ' – místo dál obhajuje držitelka' : chybi.length ? ` – chybí ${chybi.join(', ')}` : '';
+    return { ok: false, text: `${kdo} zatím nepostoupila do ${u}${proc}.` };
+}

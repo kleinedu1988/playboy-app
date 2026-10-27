@@ -248,7 +248,7 @@ sbírky ani exportu.
 
 | Volání | Co dělá |
 |---|---|
-| `GetDvojiceKPorovnani(pocet, okruh) []DvojicePorovnani` | dvojice `{a, b, duvod}` vybrané aktivním učením; `okruh`: `""` hodnocené (stejná a sousední úroveň), `"stejne"` jen stejná úroveň, `"nehodnocene"` nehodnocená proti hodnocené kotvě |
+| `GetDvojiceKPorovnani(pocet, okruh) []DvojicePorovnani` | dvojice `{a, b, duvod}` vybrané aktivním učením; `okruh`: `""` (rozhraní jiný nepoužívá) míchá hodnocené dvojice (stejná, sousední a o srdíčko vzdálená úroveň) s asi třetinou nehodnocených proti kotvě, `"stejne"` jen stejná úroveň, `"nehodnocene"` jen nehodnocené proti kotvě |
 | `PorovnatModelky(a, b, vysledek) bool` | zapíše porovnání (`a`, `b`, `remiza`) se srdíčky obou v tu chvíli |
 | `VratitPorovnani() bool` | smaže poslední porovnání (zpět) |
 | `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání, zájmu a historie oblíbenosti |
@@ -417,7 +417,13 @@ samo: modelka s nejistým skóre (málo alb a fotek) má širší předpoklad a 
 fotky říkají hodně. Vynechají se dvojice z posledních 200 porovnání a posledních 60
 nabídnutých, modelka je v jednom výběru nejvýš jednou. Asi pětina dvojic je **průzkum** (náhodná dvojice stejné
 nebo sousední úrovně); semínko je z počtu porovnání a volání, výsledek je opakovatelný. Pořadí A/B je náhodné.
-Okruh `nehodnocene` páruje nehodnocenou modelku s kotvou, která má **přesně tolik srdíček, kolik vychází její
+Výchozí výběr (`okruh ""`) nic přepínat nenechává: hodnocené dvojice a nehodnocené proti kotvě jsou dva seznamy
+kandidátů a každá dvojice se bere z nehodnocených s pravděpodobností 0,33 (když jeden seznam dojde, z druhého).
+Nehodnocené mají váhu podle toho, co o nich víme: rozpracovaná (už porovnaná, ale ještě bez návrhu srdíček) 2,5,
+s odhadem vkusu 1, jen se skóre fotek 0,8, bez ničeho 0,35. Modelka s nesouladem se srdíčky (níž) má váhu 1,6, aby se
+nesoulad dalšími porovnáními potvrdil nebo vyvrátil.
+
+Nehodnocenou modelku páruje výběr s kotvou, která má **přesně tolik srdíček, kolik vychází její
 odhad** zaokrouhlený na polovinu srdíčka (stejné číslo, jaké ukazuje štítek „odhad“): odhad vkusu, jinak předpověď ze
 skóre fotek, jinak průměr sbírky; jakmile je nehodnocená aspoň jednou porovnaná, její síla z porovnání. Výhra tak
 posune další kotvu o úroveň výš, prohra níž – pár porovnání najde její úroveň jako půlení intervalu. Kotvy jsou
@@ -431,6 +437,18 @@ nabídne „Nehodnocená Anna vychází po 4 porovnáních (výhry 2,5) na 3½ �
 prohry) nad jednou úrovní návrh nedají – ví se jen „výš“, ne o kolik, a výběr dvojic nabídne kotvu o úroveň dál.
 „Nechat“ návrh pro tu modelku do zavření programu nenabízí. Důvod dvojice stejné úrovně uvádí skóre fotek obou („Obě mají 4 srdíčka (fotky 4,6
 a 4,1) …“).
+
+## Nesoulad se srdíčky
+
+`GetOblibenost().nesedi`: hodnocené modelky, kterým podle porovnání nesedí srdíčka. U každé se berou porovnání
+s hodnocenými, které mají (dnes) jiná srdíčka; očekávaná výhra podle samotných srdíček je σ(2·(hᵢ − hⱼ)) (o půl
+srdíčka silnější vyhraje v 73 %, o celé v 88 %). Rozdíl skutečných a očekávaných výher (vážený stářím porovnání) pod
+−1,5 znamená, že modelka s víc srdíčky prohrává se slabšími – návrh o půl srdíčka méně (`smer: "mene"`); nad +1,5, že
+s méně srdíčky vyhrává se silnějšími – o půl víc (`"vice"`). Jen s aspoň 3 takovými porovnáními. Položka: `modelkaId`,
+`jmeno`, `hodnoceni`, `navrh`, `smer`, `porovnani` (s modelkami s méně, resp. víc srdíčky), `vysledky` (z nich
+prohry, resp. výhry), `rozdil`. Tři prohry ze tří s modelkami o půl srdíčka slabšími dají rozdíl −2,2; dvě ze čtyř
+−0,9 (nic). V Pořadí je oddíl „Nesedí se srdíčky“ s „Dát jí 4 ♥“ a „Nechat“ (pamatuje se pro dané srdíčka a návrh),
+v Porovnávání odkaz s počtem.
 
 ## Model vkusu
 

@@ -497,6 +497,32 @@ export namespace main {
 	    }
 	}
 	
+	export class NesouladSrdicek {
+	    modelkaId: number;
+	    jmeno: string;
+	    hodnoceni: number;
+	    navrh: number;
+	    smer: string;
+	    porovnani: number;
+	    vysledky: number;
+	    rozdil: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new NesouladSrdicek(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.hodnoceni = source["hodnoceni"];
+	        this.navrh = source["navrh"];
+	        this.smer = source["smer"];
+	        this.porovnani = source["porovnani"];
+	        this.vysledky = source["vysledky"];
+	        this.rozdil = source["rozdil"];
+	    }
+	}
 	export class OblibenostModelky {
 	    modelkaId: number;
 	    jmeno: string;
@@ -947,6 +973,7 @@ export namespace main {
 	    zajemDni: number;
 	    trendDni: number;
 	    poradi: OblibenostModelky[];
+	    nesedi: NesouladSrdicek[];
 	
 	    static createFrom(source: any = {}) {
 	        return new StavOblibenosti(source);
@@ -968,6 +995,7 @@ export namespace main {
 	        this.zajemDni = source["zajemDni"];
 	        this.trendDni = source["trendDni"];
 	        this.poradi = this.convertValues(source["poradi"], OblibenostModelky);
+	        this.nesedi = this.convertValues(source["nesedi"], NesouladSrdicek);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

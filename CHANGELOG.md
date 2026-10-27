@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.41] – 2026-10-27
+
+### Změněno
+- **Porovnávání bez přepínání dvojic:** volba Stejné srdíčko / Všechny / I nehodnocené zmizela, program míchá dvojice sám – hlavně stejné a sousední úrovně, asi třetinu nehodnocených proti modelce s tolika srdíčky, kolik ukazuje jejich odhad (přednost mají rozpracované, aby se dotáhly k návrhu srdíček), a častěji modelky, kterým nesedí srdíčka.
+
+### Přidáno
+- **„Nesedí se srdíčky“ v Pořadí:** modelka s víc srdíčky, která v porovnáních soustavně prohrává se slabšími („Eva (4½ ♥) prohrála 3 ze 4 porovnání s modelkami s méně srdíčky – možná jí patří 4 ♥“), nebo naopak slabší vyhrávající se silnějšími, s tlačítky „Dát jí 4 ♥“ a „Nechat“. V Porovnávání je odkaz s počtem. Počítá se proti tomu, co by čekala samotná srdíčka, a až od tří takových porovnání.
+
 ## [0.99.40] – 2026-10-27
 
 ### Přidáno

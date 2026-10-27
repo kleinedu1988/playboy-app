@@ -22,7 +22,6 @@ const POPISKY = {
     zobrazitCisla: 'Zobrazit',
     zobrazeniPrehledu: 'Část Přehledu',
     zobrazeniOblibenosti: 'Část Oblíbenosti',
-    okruhOblibenosti: 'Dvojice',
 };
 
 const RAZENI = new Set(['razeniGalerie', 'razeniSteny']);

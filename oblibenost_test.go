@@ -435,7 +435,8 @@ func TestVyberDvojic(t *testing.T) {
 					t.Fatalf("nehodnocene: %v a %v", ha, hb)
 				}
 			default:
-				if ha == 0 || hb == 0 || math.Abs(ha-hb) > 1 {
+				// Výchozí výběr míchá hodnocené dvojice (nejvýš o srdíčko) a nehodnocenou proti hodnocené
+				if (ha == 0 && hb == 0) || (ha > 0 && hb > 0 && math.Abs(ha-hb) > 1) {
 					t.Fatalf("výchozí okruh: %v a %v", ha, hb)
 				}
 			}
@@ -743,5 +744,58 @@ func TestNavrhSrdicekNehodnocene(t *testing.T) {
 	}
 	if h := a.GetNavrhSrdicek(kotvy[0]); h.Hodnoceni != 0 {
 		t.Fatalf("hodnocená nemá dostat návrh: %+v", h)
+	}
+}
+
+// Výchozí výběr sám přimíchá nehodnocené (asi třetinu dvojic), aniž by se přepínal okruh
+func TestVyberDvojicMichaNehodnocene(t *testing.T) {
+	var modelky []Modelka
+	for i := range 40 {
+		h := 0.0
+		if i < 24 {
+			h = float64(2 + i%4)
+		}
+		modelky = append(modelky, Modelka{ID: i + 1, Hodnoceni: h, CoverID: "x"})
+	}
+	model := spocitatOblibenost(modelky, nil, time.Now())
+	nehodnocenych, celkem := 0, 0
+	for k := range 30 {
+		for _, d := range vybratDvojice(modelky, model, nil, nil, 6, "", rand.New(rand.NewSource(int64(k)))) {
+			celkem++
+			if modelky[d.A-1].Hodnoceni == 0 || modelky[d.B-1].Hodnoceni == 0 {
+				nehodnocenych++
+			}
+		}
+	}
+	if podil := float64(nehodnocenych) / float64(celkem); podil < 0.15 || podil > 0.55 {
+		t.Fatalf("podíl dvojic s nehodnocenou %.2f (%d z %d)", podil, nehodnocenych, celkem)
+	}
+}
+
+// Nesoulad se srdíčky: modelka se 4½, která prohrává se slabšími, má návrh 4; se 3, která vyhrává se silnějšími, 3½;
+// vyrovnané výsledky nic
+func TestNesouladSrdicek(t *testing.T) {
+	modelky := []Modelka{{ID: 1, Jmeno: "Silná", Hodnoceni: 4.5}, {ID: 2, Jmeno: "Slabá", Hodnoceni: 3}, {ID: 3, Hodnoceni: 4}, {ID: 4, Hodnoceni: 3.5}, {ID: 5, Hodnoceni: 4}}
+	nyni := time.Now()
+	var porovnani []porovnaniZaznam
+	pridat := func(a, b int, v string) {
+		porovnani = append(porovnani, porovnaniZaznam{id: int64(len(porovnani) + 1), cas: nyni, a: a, b: b, vysledek: v})
+	}
+	pridat(1, 3, "b")
+	pridat(4, 1, "a")
+	pridat(1, 5, "b")
+	pridat(2, 3, "a")
+	pridat(5, 2, "b")
+	pridat(2, 4, "a")
+	pridat(3, 4, "a") // 4 proti 3½: podle očekávání
+	n := spocitatNesoulad(modelky, porovnani, nyni)
+	if s, ok := n[1]; !ok || s.Smer != "mene" || s.Navrh != 4 || s.Porovnani != 3 || s.Vysledky != 3 {
+		t.Fatalf("silná: %+v", n[1])
+	}
+	if s, ok := n[2]; !ok || s.Smer != "vice" || s.Navrh != 3.5 || s.Vysledky != 3 {
+		t.Fatalf("slabá: %+v", n[2])
+	}
+	if _, ok := n[4]; ok {
+		t.Fatalf("modelka se 3½ s jednou výhrou a dvěma prohrami nemá mít nesoulad: %+v", n[4])
 	}
 }

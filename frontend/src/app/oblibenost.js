@@ -2,9 +2,11 @@
 //   - Porovnávání „Která se ti líbí víc?“: dvě nezávislé galerie nad sebou, nahoře jedna modelka, dole druhá, vlevo
 //     titulní fotka se jménem a srdíčky, vedle pás fotek (porovnani-pasy.js); pás pod myší je aktivní – kolečko a ← →
 //     listují, Tab přepne, Enter nebo „♥ Tahle“ vybere, ↓ nebo mezerník remíza, Backspace vrátí poslední, S přeskočí,
-//     1–5 srdíčka fotce. Okruh dvojic je také pod hledáním.
+//     1–5 srdíčka fotce. Dvojice volí backend sám: stejné a sousední úrovně, asi třetina nehodnocených proti modelce
+//     se srdíčky jejich odhadu a častěji modelky, kterým nesedí srdíčka.
 //   - Pořadí podle síly (Bradley–Terry v backendu, předpoklad ze srdíček, skóre fotek a zájmu) s trendem a vedle něj
-//     Mohlo by se ti líbit: nehodnocené s odhadem z modelu vkusu a věta o jeho přesnosti.
+//     Mohlo by se ti líbit: nehodnocené s odhadem z modelu vkusu a věta o jeho přesnosti. Nad nimi „Nesedí se
+//     srdíčky“: modelky, které podle porovnání s jinými úrovněmi patří o půl srdíčka výš nebo níž.
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
@@ -25,9 +27,6 @@ import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 
-const OKRUHY = [['stejne', 'Stejné srdíčko', 'Dvojice se stejným počtem srdíček – zpřesní pořadí uvnitř úrovně'],
-    ['', 'Všechny', 'Dvojice napříč sbírkou, které model vkusu nejvíc pomohou'],
-    ['nehodnocene', 'I nehodnocené', 'Přimíchá i modelky bez srdíček']];
 // Části Oblíbenosti (volba pod hledáním) a jejich ikony v liště (ui/volby.js)
 export const CASTI_OBLIBENOSTI = [['porovnani', 'Porovnávání'], ['poradi', 'Pořadí']];
 const DVOJIC_NAJEDNOU = 8;
@@ -59,13 +58,11 @@ function ulozDnes(pocet) {
 }
 let porovnaniDnes = nactiDnes();
 
-const okruh = () => stav.oblibenostOkruh;
 const videt = () => !!koren?.isConnected && stav.rezim === 'prehled' && stav.prehledSekce === 'oblibenost' && !stats.classList.contains('hidden');
 
-// Volby Oblíbenosti do lišty pod hledáním (prehled.js je vloží místo částí Přehledu): část a u porovnávání okruh dvojic
+// Volby Oblíbenosti do lišty pod hledáním (prehled.js je vloží místo částí Přehledu): Porovnávání, Pořadí
 export const htmlVolebOblibenosti = () => `<div class="prehled-casti volby-v-liste">${CASTI_OBLIBENOSTI.map(([klic, nazev]) =>
-    `<button class="chip ${klic === stav.oblibenostCast ? 'active' : ''}" data-zobrazeni-oblibenosti="${klic}">${nazev}</button>`).join('')}${stav.oblibenostCast === 'porovnani'
-    ? OKRUHY.map(([klic, nazev, popis]) => `<button class="chip ${klic === okruh() ? 'active' : ''}" data-okruh-oblibenosti="${klic}" title="${popis}">${nazev}</button>`).join('') : ''}</div>`;
+    `<button class="chip ${klic === stav.oblibenostCast ? 'active' : ''}" data-zobrazeni-oblibenosti="${klic}">${nazev}</button>`).join('')}</div>`;
 
 // Část Oblíbenosti, kterou otevře příští zobrazení (např. pořadí z profilu modelky)
 export function nastavitCastOblibenosti(klic) {
@@ -77,7 +74,7 @@ export function nastavitCastOblibenosti(klic) {
 function ukazatCastOblibenosti(klic) {
     nastavitCastOblibenosti(klic);
     if (koren) koren.dataset.obCast = stav.oblibenostCast;
-    // Lišta pod hledáním se obnoví v prehled.js (volby části a okruh)
+    // Lišta pod hledáním se obnoví v prehled.js
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     document.querySelector('main').scrollTop = 0;
 }
@@ -91,6 +88,7 @@ const KOSTRA = `
             <span class="oddelovac"></span>
             <button type="button" class="link" data-ob-preskocit title="Přeskočit dvojici (S)">Přeskočit <kbd>S</kbd></button>
             <button type="button" class="link" data-ob-vratit title="Vrátit poslední porovnání (Backspace)">Vrátit <kbd>⌫</kbd></button>
+            <button type="button" class="link ob-nesedi-odkaz hidden" data-ob-nesedi-odkaz title="Modelky, kterým podle porovnání nesedí srdíčka – otevře Pořadí"></button>
             <span class="ob-dnes" data-ob-dnes></span>
         </div>
         <p class="ob-duvod" data-ob-duvod></p>
@@ -98,6 +96,7 @@ const KOSTRA = `
     </div>
     <div class="ob-cast" data-ob-cast-poradi>
         <p class="ob-info" data-ob-info></p>
+        <div class="ob-karta ob-nesedi" data-ob-nesedi></div>
         <div class="ob-dva-sloupce">
             <div class="ob-karta">
                 <h4>Pořadí <small data-ob-pocet-poradi></small></h4>
@@ -145,12 +144,65 @@ async function obnovitPrehled() {
     nastavitText(cast('info'), textModeluVkusu(data.oblibenost || {}));
     vykreslitPoradi();
     vykreslitTipy();
+    vykreslitNesedi();
+}
+
+// ——— Nesedí se srdíčky ———
+// Modelky, které podle porovnání s jinými úrovněmi patří o půl srdíčka výš nebo níž (backend, spocitatNesoulad).
+// „Nechat“ se pamatuje pro dané srdíčka a návrh (po změně srdíček se modelka může ukázat znovu).
+
+const klicNesouladu = n => `${n.modelkaId}:${n.hodnoceni}:${n.navrh}`;
+function skryteNesoulady() {
+    try { return new Set(JSON.parse(localStorage.getItem('oblibenostNesediSkryte') || '[]')); } catch { return new Set(); }
+}
+const viditelneNesoulady = () => (data.oblibenost?.nesedi || []).filter(n => modelka(n.modelkaId) && !skryteNesoulady().has(klicNesouladu(n)));
+
+function vykreslitNesedi() {
+    const seznam = viditelneNesoulady();
+    const odkaz = cast('nesedi-odkaz');
+    odkaz?.classList.toggle('hidden', !seznam.length);
+    nastavitText(odkaz, seznam.length ? `Nesedí se srdíčky (${seznam.length}) →` : '');
+    nastavitHtml(cast('nesedi'), seznam.length ? `<h4>Nesedí se srdíčky <small>podle porovnání s jinými úrovněmi</small></h4>
+        <ul class="ob-nesedi-seznam">${seznam.map(n => {
+            const kolik = `${n.vysledky} z ${n.porovnani} porovnání`;
+            const veta = n.smer === 'mene'
+                ? `prohrála ${kolik} s modelkami s méně srdíčky`
+                : `vyhrála ${kolik} s modelkami s víc srdíčky`;
+            return `<li>
+                <span class="trend ${n.smer === 'mene' ? 'dolu' : 'nahoru'}">${n.smer === 'mene' ? '▼' : '▲'}</span>
+                <span><button type="button" class="link" data-otevrit-modelku="${n.modelkaId}">${esc(modelka(n.modelkaId).jmeno)}</button>
+                    (${kratceSrdicka(n.hodnoceni)} ♥) ${veta} – možná jí patří <b>${kratceSrdicka(n.navrh)} ♥</b></span>
+                <button type="button" class="btn btn-primary btn-small" data-ob-nesedi-ano="${klicNesouladu(n)}">Dát jí ${kratceSrdicka(n.navrh)} ♥</button>
+                <button type="button" class="link" data-ob-nesedi-ne="${klicNesouladu(n)}">Nechat</button>
+            </li>`;
+        }).join('')}</ul>` : '');
+}
+
+async function prijmoutNesoulad(klic) {
+    const n = (data.oblibenost?.nesedi || []).find(x => klicNesouladu(x) === klic);
+    if (!n) return;
+    if (!await SetHodnoceni(n.modelkaId, n.navrh)) return oznamit('Hodnocení se nepodařilo uložit.');
+    const m = modelka(n.modelkaId);
+    if (m) m.hodnoceni = n.navrh;
+    [stav.aktualniModelka, ...stav.nacteneModelky].forEach(x => { if (x?.id === n.modelkaId) x.hodnoceni = n.navrh; });
+    document.querySelectorAll(`.hearts-pul[data-hodnoceni="${n.modelkaId}"]`).forEach(r => obnovitSrdickaModelky(r, n.navrh));
+    data.oblibenost.nesedi = data.oblibenost.nesedi.filter(x => x !== n);
+    vykreslitNesedi();
+    oznamit(`${m?.jmeno || 'Modelka'} má teď ${textSrdicek(n.navrh)}.`);
+    obnovitPrehled();
+}
+
+function odmitnoutNesoulad(klic) {
+    const skryte = skryteNesoulady();
+    skryte.add(klic);
+    try { localStorage.setItem('oblibenostNesediSkryte', JSON.stringify([...skryte].slice(-300))); } catch { /* jen pro toto spuštění */ }
+    vykreslitNesedi();
 }
 
 async function doplnitFrontu() {
     let nove = [];
     try {
-        nove = (await GetDvojiceKPorovnani(DVOJIC_NAJEDNOU, okruh()) || []).map(idDvojice);
+        nove = (await GetDvojiceKPorovnani(DVOJIC_NAJEDNOU, '') || []).map(idDvojice);
     } catch { /* prázdná fronta ukáže prázdný stav */ }
     const videne = new Set(fronta.map(d => `${d.a}-${d.b}`));
     fronta.push(...nove.filter(d => d.a && d.b && d.a !== d.b && modelka(d.a) && modelka(d.b) && !videne.has(`${d.a}-${d.b}`)));
@@ -193,12 +245,11 @@ function vykreslitDvojici() {
     cast('ovladani').classList.toggle('hidden', !d);
     nastavitText(cast('duvod'), d?.duvod || '');
     if (!d) {
-        const malo = (data.oblibenost?.modelek || 0) < 2 && okruh() !== 'nehodnocene';
+        const malo = (data.oblibenost?.modelek || 0) < 2;
         delete misto.dataset.pasy;
         nastavitHtml(misto, malo
-            ? htmlPrazdna('Zatím není co porovnávat', 'Porovnávání potřebuje aspoň dvě modelky se srdíčky. Ohodnoť pár modelek nebo zapni „I nehodnocené“.', { ikona: 'srdce' })
-            : htmlPrazdna('Dvojice došly', okruh() === 'stejne' ? 'Na stejné úrovni srdíček teď není co porovnat. Zkus Všechny.' : 'Pro tenhle okruh teď nemám další dvojice.', { ikona: 'srdce' })
-                + (okruh() !== '' ? '<p class="ob-prazdne-akce"><button type="button" class="btn btn-secondary btn-small" data-okruh-oblibenosti="">Porovnávat všechny</button></p>' : ''));
+            ? htmlPrazdna('Zatím není co porovnávat', 'Porovnávání potřebuje aspoň dvě modelky se srdíčky. Ohodnoť pár modelek.', { ikona: 'srdce' })
+            : htmlPrazdna('Dvojice došly', 'Teď nemám další dvojice, které by pořadí něco řekly. Zkus to po pár nových hodnoceních.', { ikona: 'srdce' }));
         return;
     }
     const [a, b] = [modelka(d.a), modelka(d.b)];
@@ -400,32 +451,18 @@ async function prijmoutNavrh() {
     oznamit(`${m?.jmeno || 'Modelka'} má teď ${textSrdicek(n.hodnoceni)}.`);
 }
 
-function zmenitOkruh(klic) {
-    if (klic === okruh()) return;
-    stav.oblibenostOkruh = klic;
-    try { localStorage.setItem('oblibenostOkruh', klic); } catch { /* jen pro toto spuštění */ }
-    fronta = [];
-    document.dispatchEvent(new CustomEvent('volby-prehledu'));
-    doplnitFrontu().then(vykreslitDvojici);
-}
-
 // ——— Události ———
 
 export function pripravit() {
-    try { stav.oblibenostOkruh = localStorage.getItem('oblibenostOkruh') ?? ''; } catch { /* všechny */ }
-    if (!OKRUHY.some(([klic]) => klic === stav.oblibenostOkruh)) stav.oblibenostOkruh = '';
     try { stav.oblibenostCast = localStorage.getItem('oblibenostCast') || 'porovnani'; } catch { /* porovnávání */ }
     // Dřívější samostatná část tipů je teď v Pořadí
     if (stav.oblibenostCast === 'tipy') stav.oblibenostCast = 'poradi';
     if (!CASTI_OBLIBENOSTI.some(([klic]) => klic === stav.oblibenostCast)) stav.oblibenostCast = 'porovnani';
 
-    // Volby v liště pod hledáním: část Oblíbenosti a okruh dvojic (skryté štítky v obsahu Přehledu)
+    // Volba části v liště pod hledáním (skrytý štítek v obsahu Přehledu)
     document.addEventListener('click', (e) => {
-        const t = /** @type {HTMLElement} */ (e.target);
-        const castVolba = t.closest?.('[data-zobrazeni-oblibenosti]');
-        const okruhVolba = t.closest?.('[data-okruh-oblibenosti]');
+        const castVolba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-oblibenosti]');
         if (castVolba && castVolba.dataset.zobrazeniOblibenosti !== stav.oblibenostCast) ukazatCastOblibenosti(castVolba.dataset.zobrazeniOblibenosti);
-        else if (okruhVolba) zmenitOkruh(okruhVolba.dataset.okruhOblibenosti);
     });
 
     stats.addEventListener('click', (e) => {
@@ -440,6 +477,9 @@ export function pripravit() {
             ukazatNavrh(null);
         }
         else if (e.target.closest('[data-ob-poradi-vse]')) { poradiVse = true; vykreslitPoradi(); }
+        else if (e.target.closest('[data-ob-nesedi-ano]')) prijmoutNesoulad(e.target.closest('[data-ob-nesedi-ano]').dataset.obNesediAno);
+        else if (e.target.closest('[data-ob-nesedi-ne]')) odmitnoutNesoulad(e.target.closest('[data-ob-nesedi-ne]').dataset.obNesediNe);
+        else if (e.target.closest('[data-ob-nesedi-odkaz]')) ukazatCastOblibenosti('poradi');
     });
 
     // Klávesy porovnání, když je Oblíbenost vidět a nepíše se ani nehodnotí srdíčky (zaměřená srdíčka mají šipky)

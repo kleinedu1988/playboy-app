@@ -11141,3 +11141,41 @@ span.ud-chip {
 .ob-jmeno-radku .trend {
     font-size: 11px;
 }
+
+/* Pořadí: modelky, kterým podle porovnání nesedí srdíčka */
+.ob-nesedi {
+    margin-bottom: 16px;
+}
+
+.ob-nesedi:empty {
+    display: none;
+}
+
+.ob-nesedi-seznam {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ob-nesedi-seznam li {
+    display: grid;
+    grid-template-columns: 16px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+}
+
+.ob-nesedi-seznam li:first-child {
+    border-top: none;
+}
+
+.ob-nesedi-seznam .link {
+    font-size: 13px;
+}
+
+.ob-nesedi-odkaz {
+    color: var(--accent-text);
+    font-size: 12px;
+}

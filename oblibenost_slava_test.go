@@ -161,12 +161,6 @@ func TestKronikaVDatabazi(t *testing.T) {
 	if len(s.Kronika) != 3 || s.Kronika[0].Druh != udalostJednicka || s.Kronika[1].Souperka != idb {
 		t.Fatalf("po zápisu: %+v", s.Kronika)
 	}
-	if sl := a.GetSlavaModelky(ida); sl.ModelkaID != ida || sl.Pobytu != 1 || sl.NejlepsiMisto != 1 {
-		t.Errorf("sláva modelky: %+v", sl)
-	}
-	if sl := a.GetSlavaModelky(idb); sl.ModelkaID != 0 {
-		t.Errorf("modelka mimo kroniku: %+v", sl)
-	}
 	if !a.VratitPorovnani() {
 		t.Fatal("vrácení")
 	}

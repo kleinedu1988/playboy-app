@@ -1,6 +1,6 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
 import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
-import { GetFotografieModelky, GetSlavaModelky, SetPoradiFotek } from './backend';
+import { GetFotografieModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -15,8 +15,6 @@ import { selectionBar } from './vyber';
 import { doplnitClankyModelky } from './clanky';
 import { htmlPrazdna } from '../ui/prazdno';
 import { htmlKostryAlb } from '../ui/kostra';
-import { textPoradiProfilu } from '../lib/oblibenost';
-import { textSlavyProfilu } from '../lib/slava';
 import { zaznamenatProfil } from './zajem';
 
 // Otevření profilu modelky s fotogalerií
@@ -121,7 +119,6 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         ${htmlSrdicka(modelka)}
         ${htmlOdhadu(modelka, 'odhad-profil')}
         ${htmlPoradi(modelka)}
-        <button type="button" class="profile-poradi profile-slava hidden" data-otevrit-oblibenost="slava" title="Otevřít Síň slávy"></button>
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
         <div class="profile-actions-misto"></div>
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
@@ -132,32 +129,13 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
 
     document.querySelector('#modelHeader .profile-actions-misto').replaceWith(akce);
 
-    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitSlavu(modelka)]);
+    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka)]);
 }
 
-// Řádek síně slávy pod pořadím (jen modelka, která v potvrzené top 10 je nebo byla)
-async function doplnitSlavu(modelka) {
-    if (!(modelka.poradi > 0)) return;
-    const moje = stav.cisloNacteni;
-    let text = '';
-    try { text = textSlavyProfilu(await GetSlavaModelky(modelka.id)); } catch { return; }
-    const radek = document.querySelector('#modelHeader .profile-slava');
-    if (!text || !radek || moje !== stav.cisloNacteni) return;
-    // Části zvlášť: dlouhý řádek se zalomí mezi nimi, ne uvnitř
-    radek.innerHTML = `🏆 ${text.split(' · ').map(c => `<span>${esc(c)}</span>`).join(' · ')}`;
-    radek.classList.remove('hidden');
-}
-
-// Potvrzené pořadí v oblíbenosti, úroveň (Top 10 / 20 / 50 / 100) nebo čekání na vyšší a trend pod srdíčky; klik
-// otevře Pořadí v Oblíbenosti
+// Aktuální potvrzené pořadí v oblíbenosti pod srdíčky; klik otevře Pořadí v Oblíbenosti
 function htmlPoradi(modelka) {
-    const r = textPoradiProfilu(modelka);
-    if (!r) return '';
-    const title = r.ceka
-        ? `Podle síly patří výš, ${r.ceka} – potvrdí ji další porovnání (podrobnosti v Pořadí). Otevřít Oblíbenost`
-        : 'Otevřít Oblíbenost – pořadí podle srdíček, fotek, porovnání a zájmu';
-    return `<button type="button" class="profile-poradi" data-otevrit-oblibenost title="${esc(title)}">
-        <span>${esc(r.poradi)}</span>${r.uroven ? ` · <b class="profile-uroven">${esc(r.uroven)}</b>` : ''}${r.obhajuje ? ` · <span class="profile-ceka" title="Silou ji předstihla jiná modelka; místo jí zůstává, dokud s ní neprohraje v souboji">🛡 ${esc(r.obhajuje)}</span>` : ''}${r.ceka ? ` · <span class="profile-ceka">⏳ ${esc(r.ceka)}</span>` : ''}${r.trend ? ` · <span class="trend ${r.trend.smer}" title="${esc(r.trend.text)}">${r.trend.znak} ${esc(r.trend.kratce)}</span>` : ''}</button>`;
+    if (!(Number(modelka.poradi) > 0)) return '';
+    return `<button type="button" class="profile-poradi" data-otevrit-oblibenost title="Otevřít Pořadí v Oblíbenosti">${modelka.poradi}. v oblíbenosti</button>`;
 }
 
 // Ostatní modelky sdíleného alba (hlavní i další kromě té, jejíž profil je otevřený) jako odkazy na jejich profil

@@ -69,14 +69,3 @@ export function kronikaPoMesicich(kronika) {
     });
     return skupiny;
 }
-
-// Řádek síně slávy v profilu modelky (GetSlavaModelky): „V Top 10 87 dní · 2× obhájila · nejlépe 1.“; mimo kroniku ''
-export function textSlavyProfilu(s) {
-    if (!(Number(s?.modelkaId) > 0) || !s.pobytu) return '';
-    const casti = [s.vTop ? `V Top 10 ${textDni(s.dniTed, s.odZacatku)}` : `V Top 10 byla ${textDni(s.dniCelkem, s.odZacatku)}`];
-    if (s.vTop && s.pobytu > 1) casti.push(`celkem ${textDni(s.dniCelkem)}`);
-    if (s.dniNaPrvnim > 0) casti.push(`na 1. místě ${textDni(s.dniNaPrvnim)}`);
-    if (s.obhajob > 0) casti.push(`${s.obhajob}× obhájila`);
-    if (s.nejlepsiMisto > 0) casti.push(`nejlépe ${s.nejlepsiMisto}.`);
-    return casti.join(' · ');
-}

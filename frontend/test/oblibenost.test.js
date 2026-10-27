@@ -20,14 +20,12 @@ test('texty skóre fotek, popisku náhledu a váhy fotek', () => {
 });
 
 test('trend modelky, řádek pořadí v profilu a řazení fotek podle oblíbenosti', async () => {
-    const { trendModelky, textPoradiProfilu, porovnatFotkyPodleSrdicek, stoupajiKlesaji, textVahyZajmu } = await import('../src/lib/oblibenost.js');
+    const { trendModelky, porovnatFotkyPodleSrdicek, stoupajiKlesaji, textVahyZajmu } = await import('../src/lib/oblibenost.js');
     assert.equal(trendModelky({ zmenaPoradi: 3, trendDni: 0 }), null, 'bez historie není trend');
     assert.equal(trendModelky({ zmenaPoradi: 2, trendDni: 30 }, 3), null, 'na kartě jen výrazný');
     assert.deepEqual(trendModelky({ zmenaPoradi: 3, trendDni: 30 }), { smer: 'nahoru', znak: '▲', text: 'o 3 místa výš než před 30 dny', kratce: '3 za 30 dní' });
     assert.equal(trendModelky({ zmenaPoradi: -1, trendDni: 1 }).text, 'o 1 místo níž než včera');
     assert.equal(trendModelky({ zmenaPoradi: -7, trendDni: 8 }).text, 'o 7 míst níž než před 8 dny');
-    assert.equal(textPoradiProfilu({ poradi: 0 }), null);
-    assert.deepEqual(textPoradiProfilu({ poradi: 12, zmenaPoradi: 0, trendDni: 30 }), { poradi: '12. v oblíbenosti', uroven: '', ceka: '', obhajuje: '', trend: null });
 
     const ob = new Map([[1, 4.3], [2, 4.1], [3, 3.2]]);
     const fotky = [{ id: 'a', modelkaId: 2, hodnoceni: 5 }, { id: 'b', modelkaId: 3, hodnoceni: 4 }, { id: 'c', modelkaId: 1, hodnoceni: 5 }, { id: 'd', modelkaId: 9, hodnoceni: 4 }];
@@ -43,7 +41,7 @@ test('trend modelky, řádek pořadí v profilu a řazení fotek podle oblíbeno
 });
 
 test('úrovně oblíbenosti: úroveň modelky, čekání, bublina a podmínky z backendu', async () => {
-    const { UROVNE, urovenMista, urovenModelky, chybiKUrovni, textCekani, bublinaCekani, textPravidelUrovni, textPoradiProfilu } = await import('../src/lib/oblibenost.js');
+    const { UROVNE, urovenMista, urovenModelky, chybiKUrovni, textCekani, bublinaCekani, textPravidelUrovni } = await import('../src/lib/oblibenost.js');
     assert.deepEqual(UROVNE, [10, 20, 50, 100]);
     assert.deepEqual([1, 10, 11, 20, 21, 50, 51, 100, 101, 0].map(urovenMista), [10, 10, 20, 20, 50, 50, 100, 100, 0, 0]);
 
@@ -82,9 +80,6 @@ test('úrovně oblíbenosti: úroveň modelky, čekání, bublina a podmínky z 
     assert.equal(textPravidelUrovni([]), '');
     assert.equal(textPravidelUrovni(undefined), '');
 
-    assert.deepEqual(textPoradiProfilu({ poradi: 3, urovenTop: 10, zmenaPoradi: 0 }), { poradi: '3. v oblíbenosti', uroven: 'Top 10', ceka: '', obhajuje: '', trend: null });
-    assert.deepEqual(textPoradiProfilu({ poradi: 11, urovenTop: 20, cekaNaTop: 10 }), { poradi: '11. v oblíbenosti', uroven: '', ceka: 'čeká na Top 10', obhajuje: '', trend: null });
-    assert.equal(textPoradiProfilu({ poradi: 140, urovenTop: 0 }).uroven, '');
 });
 
 test('úrovně oblíbenosti: seskupení pořadí, čekající a nadpis souboje', async () => {
@@ -132,7 +127,7 @@ test('štítek úrovně z položky pořadí i z modelky', async () => {
 });
 
 test('obhajoba místa: štítky držitelky a vyzyvatelky', async () => {
-    const { textCekani, bublinaCekani, stitekObhajoby, stitekUrovne, textPoradiProfilu } = await import('../src/lib/oblibenost.js');
+    const { textCekani, bublinaCekani, stitekObhajoby, stitekUrovne } = await import('../src/lib/oblibenost.js');
     const ceka = { uroven: 10, porovnani: 12, potrebaPorovnani: 10, nejistota: 0.2, maxNejistota: 0.3, potrebaVyhry: true, maVyhru: true, drzitelka: 7 };
     assert.equal(textCekani(ceka, 'Bára'), 'čeká na souboj o Top 10 (místo brání Bára)');
     assert.equal(textCekani(ceka), 'čeká na souboj o Top 10');
@@ -143,11 +138,10 @@ test('obhajoba místa: štítky držitelky a vyzyvatelky', async () => {
     assert.match(s.title, /^Anna ji silou předstihla\. Místo v Top 10 jí ale zůstává, dokud s ní neprohraje/);
     assert.equal(stitekUrovne({ uroven: 10, obhajoba: { uroven: 10, vyzyvatelka: 3 } }).text, 'Top 10 · obhajuje');
     assert.equal(stitekUrovne({ urovenTop: 20, obhajujeTop: 20 }).text, 'Top 20 · obhajuje');
-    assert.equal(textPoradiProfilu({ poradi: 10, urovenTop: 10, obhajujeTop: 10 }).obhajuje, 'obhajuje');
 });
 
-test('síň slávy: texty kroniky, rekordů, dní a profilu', async () => {
-    const { textDni, datumKroniky, mesicKroniky, textUdalosti, textRekordu, kronikaPoMesicich, textSlavyProfilu } = await import('../src/lib/slava.js');
+test('síň slávy: texty kroniky, rekordů a dní', async () => {
+    const { textDni, datumKroniky, mesicKroniky, textUdalosti, textRekordu, kronikaPoMesicich } = await import('../src/lib/slava.js');
     assert.equal(textDni(0), 'od dneška');
     assert.equal(textDni(0, true), 'od začátku kroniky');
     assert.equal(textDni(1), '1 den');
@@ -169,8 +163,4 @@ test('síň slávy: texty kroniky, rekordů, dní a profilu', async () => {
     assert.equal(textRekordu({ druh: 'obhajoby', hodnota: 3 }).hodnota, '3×');
     const skupiny = kronikaPoMesicich([{ cas: '2026-10-27 10:00:00' }, { cas: '2026-10-02 10:00:00' }, { cas: '2026-09-30 10:00:00' }]);
     assert.deepEqual(skupiny.map(s => [s.mesic, s.udalosti.length]), [['říjen 2026', 2], ['září 2026', 1]]);
-    assert.equal(textSlavyProfilu({ modelkaId: 0 }), '');
-    assert.equal(textSlavyProfilu({ modelkaId: 3, pobytu: 2, vTop: true, dniTed: 30, dniCelkem: 90, dniNaPrvnim: 12, obhajob: 2, nejlepsiMisto: 1 }),
-        'V Top 10 30 dní · celkem 90 dní · na 1. místě 12 dní · 2× obhájila · nejlépe 1.');
-    assert.equal(textSlavyProfilu({ modelkaId: 3, pobytu: 1, vTop: false, dniCelkem: 40, odZacatku: true, nejlepsiMisto: 4 }), 'V Top 10 byla aspoň 40 dní · nejlépe 4.');
 });

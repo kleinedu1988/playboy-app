@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.51] – 2026-10-27
+
+### Změněno
+- **Profil modelky ukazuje pod srdíčky jen aktuální pořadí** („1. v oblíbenosti“, klik otevře Pořadí). Úroveň Top N, čekání, obhajoba, trend a řádek síně slávy z profilu zmizely; najdeš je v Oblíbenosti (Pořadí a Síň slávy).
+
 ## [0.99.50] – 2026-10-27
 
 ### Změněno

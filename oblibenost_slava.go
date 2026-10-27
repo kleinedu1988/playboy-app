@@ -9,7 +9,7 @@ import (
 // místo a kdo byl jedničkou. Události vznikají po přepočtu oblíbenosti z rozdílu proti uloženým držitelkám úrovní
 // (oblibenost_urovne.go) a zapisují se do trvalé tabulky kronika_slavy (denní snímky historie se po čase mažou,
 // kronika ne). Vrácení porovnání smaže i události po něm. Z kroniky se počítá vitrína (současná top 10 s délkou
-// pobytu), rekordy, legendy (bývalé top 10) a řádek v profilu.
+// pobytu), rekordy a legendy (bývalé top 10).
 
 const (
 	udalostZacatek       = "zacatek"  // kronika začala (modelka 0)
@@ -268,17 +268,6 @@ func (a *App) GetSinSlavy() SinSlavy {
 		existuje[m.ID] = true
 	}
 	return spocitatSinSlavy(kronika, model, porovnani, existuje, time.Now())
-}
-
-// Síň slávy jedné modelky (řádek v profilu); ModelkaID 0, když v top 10 nikdy nebyla
-func (a *App) GetSlavaModelky(id int) SlavaModelky {
-	s := a.GetSinSlavy()
-	for _, x := range append(s.Vitrina, s.Legendy...) {
-		if x.ModelkaID == id {
-			return x
-		}
-	}
-	return SlavaModelky{}
 }
 
 type pobytVTop struct {

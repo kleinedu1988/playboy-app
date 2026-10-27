@@ -43,20 +43,6 @@ export function trendModelky(modelka, min = 1) {
         : { smer: 'dolu', znak: '▼', text: `o ${mistaText(-zmena)} níž ${kdy}`, kratce };
 }
 
-// Řádek pod srdíčky v profilu: „3. v oblíbenosti · Top 10 · ▲ 3 za 30 dní“, u čekající „12. v oblíbenosti ·
-// čeká na Top 10“ (místo je potvrzené pořadí); bez pořadí prázdný. uroven je text úrovně, ceka text čekání, nebo ''
-export function textPoradiProfilu(modelka) {
-    if (!(Number(modelka?.poradi) > 0)) return null;
-    const { uroven, ceka } = urovenModelky(modelka);
-    return {
-        poradi: `${modelka.poradi}. v oblíbenosti`,
-        uroven: ceka ? '' : uroven ? nazevUrovne(uroven) : '',
-        ceka: ceka ? `čeká na ${nazevUrovne(ceka)}` : '',
-        obhajuje: !ceka && uroven && Number(modelka.obhajujeTop) > 0 ? 'obhajuje' : '',
-        trend: trendModelky(modelka),
-    };
-}
-
 // Řazení fotek podle srdíček, se stejnými srdíčky podle oblíbenosti modelky (oblibenost: Map id → oblíbenost)
 export const porovnatFotkyPodleSrdicek = oblibenost => (x, y) =>
     (y.hodnoceni || 0) - (x.hodnoceni || 0) || (oblibenost.get(y.modelkaId) || 0) - (oblibenost.get(x.modelkaId) || 0);

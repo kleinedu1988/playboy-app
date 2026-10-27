@@ -11427,27 +11427,6 @@ span.ud-chip {
     opacity: 0.8;
 }
 
-/* Profil: úroveň v řádku pořadí; delší řádek (čekání a trend) se zalomí mezi částmi, ne uvnitř nich */
-.profile-poradi {
-    max-width: 100%;
-    border-radius: 14px;
-    white-space: normal;
-    text-align: center;
-}
-
-.profile-poradi > * {
-    white-space: nowrap;
-}
-
-.profile-uroven {
-    color: var(--accent-text);
-    font-weight: 600;
-}
-
-.profile-ceka {
-    color: var(--text-main);
-}
-
 /* Karta: malý odznak jen u potvrzené top 10 v pravém horním rohu (srdíčka a odhad jsou vlevo) */
 .top-karta {
     position: absolute;

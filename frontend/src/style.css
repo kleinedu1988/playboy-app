@@ -11382,13 +11382,18 @@ span.ud-chip {
 
 /* Čekající na potvrzení vyšší úrovně: jemně podbarvený řádek (tlačí se na hranici) a štítek s bublinou na vlastním
    řádku pod srdíčky */
-.ob-poradi li.ob-ceka-radek .ob-radek {
+.ob-poradi li.ob-ceka-radek {
+    border-radius: 10px;
     background-color: rgba(255, 64, 129, 0.06);
+}
+
+.ob-poradi li.ob-ceka-radek:hover {
+    background-color: rgba(255, 64, 129, 0.12);
 }
 
 .ob-poradi li.ob-ceka-radek .ob-radek:hover,
 .ob-poradi li.ob-ceka-radek .ob-radek:focus-visible {
-    background-color: rgba(255, 64, 129, 0.12);
+    background-color: transparent;
 }
 
 /* V úzkém sloupci se štítek zalomí (radši o řádek víc než useknuté „podle síly“) */
@@ -11771,31 +11776,28 @@ span.ud-chip {
     }
 }
 
-/* Rozhodnout teď: tlačítko vpravo dole v řádku čekající nebo obhajující modelky (pod pruhem síly) */
-.ob-poradi li {
-    position: relative;
+/* Čekající a obhajující: štítek pod jménem (mimo tlačítko řádku) a vedle něj odkaz Rozhodnout teď */
+.ob-ceka-pod {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px 12px;
+    margin-top: -4px;
+    padding: 0 6px 6px 88px;
+    font-size: 11px;
+}
+
+.ob-ceka-pod .ob-ceka {
+    color: var(--text-main);
+    line-height: 1.35;
+    cursor: help;
 }
 
 .ob-rozhodnout {
-    position: absolute;
-    right: 50px;
-    bottom: 6px;
-    z-index: 1;
-    padding: 1px 9px;
-    border: 1px solid rgba(255, 64, 129, 0.45);
-    border-radius: 999px;
-    background-color: var(--panel-bg);
     color: var(--accent-text);
-    font: inherit;
     font-size: 11px;
-    cursor: pointer;
-}
-
-.ob-rozhodnout:hover,
-.ob-rozhodnout:focus-visible {
-    border-color: var(--accent);
-    background-color: var(--accent);
-    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 /* Pruh série nad pásy: text, ukazatel postupu, Ukončit; po dokončení výsledek */

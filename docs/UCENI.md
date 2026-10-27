@@ -537,7 +537,7 @@ třetinu nechávají), dokud nějaké jsou – v praxi kolem 18 %. Dvojice má `
 Bára (10.), nebo Anna (11.)? Silou jsou si blízko“, „Anna čeká na potvrzení do top 10 (5 z 10 porovnání, chybí výhra
 nad top 20) – soupeřkou je Bára (10.), poslední potvrzená v top 10“ (jména v prvním pádě, cizí se skloňovat nedají).
 
-**Rozhodnout teď** (`GetSoubojeModelky`, tlačítko u čekající nebo obhajující modelky v Pořadí): místo čekání, až
+**Rozhodnout teď** (`GetSoubojeModelky`, odkaz „⚔ Rozhodnout teď“ hned za štítkem čekání nebo obhajoby pod jménem modelky v Pořadí): místo čekání, až
 se souboje náhodně objeví v mixu, dostane modelka sérii hned za sebou. Vyzyvatelka a držitelka mají jediný vzájemný
 souboj. Čekající tolik soubojů, kolik jí chybí porovnání (při nejistotě nad prahem o dva víc), nejméně 2 a nejvýš 6:
 potvrzené v úrovni, kam míří, odspodu (poslední potvrzená napřed); potřebuje-li výhru nad top 20 a úroveň nikoho

@@ -572,8 +572,14 @@ func TestMohloByTeLibit(t *testing.T) {
 		t.Fatal(err)
 	}
 	stav := a.GetOblibenost()
-	if !stav.Odhady || stav.Presnost < 0.6 || stav.Modelek != 150 {
-		t.Fatalf("stav oblíbenosti: odhady %v, přesnost %v, modelek %d", stav.Odhady, stav.Presnost, stav.Modelek)
+	// V pořadí jsou i nehodnocené s odhadem vkusu (označené jen odhad), hodnocených je 150
+	if !stav.Odhady || stav.Presnost < 0.6 || stav.Hodnocenych != 150 || stav.Modelek <= 150 {
+		t.Fatalf("stav oblíbenosti: odhady %v, přesnost %v, modelek %d, hodnocených %d", stav.Odhady, stav.Presnost, stav.Modelek, stav.Hodnocenych)
+	}
+	for _, p := range stav.Poradi {
+		if p.Hodnoceni == 0 && p.Porovnani == 0 && (!p.JenOdhad || p.ZdrojOdhadu != "vkus" || p.Odhad == 0) {
+			t.Fatalf("nehodnocená v pořadí má být jen odhad podle vkusu: %+v", p)
+		}
 	}
 	odhadu := 0
 	for _, m := range a.GetModelky("") {
@@ -694,12 +700,13 @@ func TestNehodnocenaProtiUrovniOdhadu(t *testing.T) {
 		}
 		return urovne
 	}
+	// Úroveň je síla nehodnocené (předpoklad z odhadu vkusu); tady ji test nastaví rovnou
 	model := spocitatOblibenost(modelky, nil, time.Now())
-	model.odhad[100] = 3.6 // odhad 3½
+	model.sila[100], model.zdrojOdhadu[100] = 3.6, urovenVkus // odhad 3½
 	if u := kotvy(model, nil); len(u) != 1 || !u[3.5] {
 		t.Fatalf("odhad 3½: kotvy s %v srdíčky", u)
 	}
-	model.odhad[100] = 4.6 // 4½ nikdo nemá: nejbližší (při shodě vyšší) je 5
+	model.sila[100] = 4.6 // 4½ nikdo nemá: nejbližší (při shodě vyšší) je 5
 	if u := kotvy(model, nil); len(u) != 1 || !u[5] {
 		t.Fatalf("odhad 4½: kotvy s %v srdíčky", u)
 	}
@@ -709,7 +716,6 @@ func TestNehodnocenaProtiUrovniOdhadu(t *testing.T) {
 		porovnani = append(porovnani, porovnaniZaznam{id: int64(k + 1), a: 100, b: kotva, vysledek: "a", ha: 0, hb: 3.5})
 	}
 	model = spocitatOblibenost(modelky, porovnani, time.Now())
-	model.odhad[100] = 3.6
 	if u := kotvy(model, porovnani[len(porovnani):]); u[3.5] || u[2] || u[3] {
 		t.Fatalf("po výhrách nad 3½ mají být kotvy výš: %v (síla %.2f)", u, model.sila[100])
 	}
@@ -742,8 +748,16 @@ func TestNavrhSrdicekNehodnocene(t *testing.T) {
 	if n.Porovnani != 5 || n.Hodnoceni < 3.5 || n.Hodnoceni > 4.5 || n.Nejistota > maxNejistotaNavrhu {
 		t.Fatalf("po výhrách nad 3½, prohře s 4½ a remíze se 4: %+v", n)
 	}
-	if h := a.GetNavrhSrdicek(kotvy[0]); h.Hodnoceni != 0 {
-		t.Fatalf("hodnocená nemá dostat návrh: %+v", h)
+	// Hodnocená bez nesouladu nic, s nesouladem (prohry se slabšími) návrh o půl srdíčka méně
+	if h := a.GetNavrhSrdicek(kotvy[0]); h.Hodnoceni != 0 || h.Nesoulad != nil {
+		t.Fatalf("hodnocená bez nesouladu nemá dostat návrh: %+v", h)
+	}
+	silna := idModelky(t, a, "M5") // 4½
+	for _, slabsi := range kotvy {
+		a.PorovnatModelky(silna, slabsi, "b")
+	}
+	if h := a.GetNavrhSrdicek(silna); h.Hodnoceni != 4 || h.Nesoulad == nil || h.Nesoulad.Smer != "mene" {
+		t.Fatalf("4½ prohrávající se 3½: %+v", h)
 	}
 }
 

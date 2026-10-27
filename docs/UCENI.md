@@ -254,9 +254,9 @@ sbírky ani exportu.
 | `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání, zájmu a historie oblíbenosti |
 | `ZaznamenatZajem(id, druh, sekund) bool` | zájem o modelku: `druh` `"profil"` (stejná modelka nejvýš jednou za 10 minut) nebo `"fotky"` (`sekund` prohlížení, 3–1800); změnu dat neohlašuje |
 | `GetPrehledOblibenosti() PrehledOblibenosti` | úvod Přehledu: `top` (10 nejoblíbenějších), `stoupaji` a `klesaji` (posun aspoň o 3 místa a 3 % délky pořadí, nejvýš 10), `dlouhoNevidene` (z horní třicítky ty, jejichž profil ani fotky jsi 30 dní neviděl; `dni` = −1 nikdy; až se zájem sleduje aspoň 30 dní), `trendDni`, `zajemDni`; položky `modelkaId`, `jmeno`, `hodnoceni`, `poradi`, `zmenaPoradi`, `dni` |
-| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
+| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `hodnocenych` (hodnocené modelky), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `poradi` – hodnocené a porovnávané modelky od nejoblíbenější: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi`, `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `jenOdhad` a `zdrojOdhadu` (nehodnocená neporovnaná jen odhadem podle vkusu nebo fotek), `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
 | `GetMohloByTeLibit(pocet) []OblibenostModelky` | nehodnocené modelky s nejvyšším odhadem a důvodem (`odhad`, `duvod`; `sila` = nezaokrouhlený odhad, `nejistota` = chyba ověření u modelek s podobně bohatými údaji) |
-| `GetNavrhSrdicek(id) NavrhSrdicek` | návrh srdíček nehodnocené z porovnání: `hodnoceni` (po polovinách, 0 = zatím nenavrhovat – méně než 3 porovnání, nejistota nad 0,6, už hodnocená), `porovnani`, `vyhry`, `nejistota` |
+| `GetNavrhSrdicek(id) NavrhSrdicek` | návrh srdíček – jediné místo, které je navrhuje: nehodnocené `hodnoceni` (úroveň síly po polovinách; 0 = zatím ne – méně než 3 porovnání nebo nejistota nad 0,6) s `porovnani`, `vyhry`, `nejistota`; hodnocené návrh z nesouladu se srdíčky (`nesoulad`, viz Nesoulad se srdíčky) |
 | `GetDuvodOdhadu(id) string` | důvod ukázaného odhadu nehodnocené modelky („Odhad 4 srdíčka: blond, 70. léta, Pompeo Posar; podobně jako Anna (4½) a Bára (4)“), jinak `""`; štítek „odhad“ si ho načte při prvním najetí myší |
 | `GetNahledyModelek(ids, pocet) map[int][]NahledFotky` | náhledy fotek modelek pro porovnání (nejvýš `pocet`, 1–24; nejvýš 100 modelek): `id` fotky, `url` (šablona s `{velikost}`), `album`, `typ`, `hodnoceni` (srdíčka fotky), `rotace`; neznámá modelka nebo bez fotek má `[]` |
 | `Modelka.oblibenost` | srdíčka upřesněná skóre fotek a porovnáním (nejvýš ±0,49: o půl srdíčka se pořadí přehodit může, o celé ne); nehodnocená porovnávaná má sílu z porovnání, ostatní 0 |
@@ -267,8 +267,11 @@ sbírky ani exportu.
 
 Každá modelka má skrytou sílu s na stupnici srdíček; P(víc se líbí i než j) = σ(k·(sᵢ − sⱼ)), k = 2 (o půl
 srdíčka silnější vyhraje v 73 %). **Předpoklad** (oddíl Předpoklad a naučená váha fotek): hodnocená modelka
-N(srdíčka, 0,25²), se skóre fotek N((1 − w)·srdíčka + w·F̂, σ²); nehodnocená se skóre fotek N(F̃, …), nehodnocená
-porovnávaná bez fotek N(průměr srdíček sbírky, 1,25²). Porovnání sílu posunou dál; v `duvod` pak „porovnání
+N(srdíčka, 0,25²), se skóre fotek N((1 − w)·srdíčka + w·F̂, σ²); nehodnocená s odhadem vkusu N(odhad, chyba
+ověření²), jinak se skóre fotek N(F̃, …), nehodnocená porovnávaná bez obojího N(průměr srdíček sbírky, 1,25²).
+Model vkusu se proto počítá před Bradley–Terry (učí se jen na srdíčkách upřesněných porovnáním a na údajích, na
+výsledku Bradley–Terry nezávisí). Síla je tak jedno číslo, ze kterého berou pořadí, galerie, kotva v porovnání
+i návrh srdíček. Porovnání sílu posunou dál; v `duvod` pak „porovnání
 (fotky, fotky a porovnání) ji staví výš než její srdíčka“, když se síla od srdíček liší o víc než čtvrt srdíčka.
 Remíza je půl výhry pro každou, porovnání váží podle stáří 0,5^(dny/365).
 
@@ -330,8 +333,12 @@ bez části z nejistoty skóre).
 |---|---|---|
 | srdíčka i skóre fotek | (1 − w)·H + w·F̂ | √((1 − w)²·0,25² + w²·Var F̂), aspoň 0,2 |
 | jen srdíčka | H | 0,25 |
+| nehodnocená s odhadem vkusu | odhad vkusu | chyba ověření ve skupině podle bohatosti údajů (jinak celková), 0,35–1,25 |
 | jen skóre fotek | F̃ | √(r₀² + β²·Var F), nejvýš 1,25 |
 | nic, ale porovnávaná | průměr srdíček sbírky | 1,25 |
+
+Nehodnocená neporovnaná s předpokladem (vkus nebo fotky) má oblíbenost rovnou předpokladu a v Pořadí je označená
+jako odhad (`jenOdhad`, `zdrojOdhadu` „vkus“ / „fotky“).
 
 **Naučená váha w.** Pro w z mřížky 0; 0,05; … 1 se spočítá log-věrohodnost porovnání Σ t·log σ(±k·(μᵢ(w) − μⱼ(w)))
 (t = váha podle stáří, remíza půl, srdíčka obou v okamžiku porovnání). Počítají se jen porovnání modelek se

@@ -11,7 +11,7 @@
 // prehled.js (data-otevrit-modelku).
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
-import { dnesniPocet, idDvojice, kratceSrdicka, navrhPoPorovnani, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
+import { dnesniPocet, idDvojice, kratceSrdicka, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
 import { NAHLEDU_V_POROVNANI, stoupajiKlesaji, textSkoreFotek, textVahyFotek, textVahyZajmu } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
@@ -38,7 +38,6 @@ let koren = null;
 let fronta = []; // dvojice na řadě [{ a, b, duvod }]; první je zobrazená
 const historie = []; // porovnané dvojice pro Vrátit
 let zaneprazdneno = false;
-let posledniNavrh = null;
 let poradiVse = false;
 let data = { oblibenost: null, tipy: [] };
 let porovnanoOdObnoveni = 0;
@@ -149,15 +148,20 @@ async function obnovitPrehled() {
     if (fronta[0]) vykreslitDvojici();
 }
 
-// ——— Nesedí se srdíčky ———
-// Modelky, které podle porovnání s jinými úrovněmi patří o půl srdíčka výš nebo níž (backend, spocitatNesoulad).
-// „Nechat“ se pamatuje pro dané srdíčka a návrh (po změně srdíček se modelka může ukázat znovu).
+// ——— Návrhy srdíček ———
+// Srdíčka navrhuje jen backend (oblibenost.go, navrhSrdicek): nehodnocené úroveň, na kterou po pár porovnáních
+// vychází, hodnocené nesoulad se srdíčky (porovnání s jinými úrovněmi, srdíčka fotek). Návrh pod pásy po porovnání
+// (GetNavrhSrdicek) i v „Nesedí se srdíčky“ v Pořadí (GetOblibenost().nesedi) má stejnou větu, „Dát jí“ i „Nechat“.
+// „Nechat“ se pamatuje pro modelku, její srdíčka a návrh (po změně srdíček se může ukázat znovu).
 
-const klicNesouladu = n => `${n.modelkaId}:${n.hodnoceni}:${n.navrh}`;
-function skryteNesoulady() {
+const klicNavrhu = (id, hodnoceni, navrh) => `${id}:${hodnoceni}:${navrh}`;
+function skryteNavrhy() {
     try { return new Set(JSON.parse(localStorage.getItem('oblibenostNesediSkryte') || '[]')); } catch { return new Set(); }
 }
-const viditelneNesoulady = () => (data.oblibenost?.nesedi || []).filter(n => modelka(n.modelkaId) && !skryteNesoulady().has(klicNesouladu(n)));
+// Zobrazené návrhy podle klíče (pro „Dát jí“): { id, navrh }
+const navrhy = new Map();
+let navrhPodPasy = ''; // klíč návrhu zobrazeného pod pásy
+let cisloNavrhu = 0;
 
 const NESOULADU_NAJEDNOU = 8;
 let nesouladyVse = false;
@@ -166,7 +170,7 @@ const cislo1 = n => (Number(n) || 0).toLocaleString('cs-CZ', { minimumFractionDi
 // „3 ze 4“, „2 z 5“: ze před čísly, která se vyslovují se skupinou souhlásek (dvou, tří, čtyř, šesti, sedmi, dvanácti…)
 const zKolika = n => `${/^(?:[23467]|1[2-467])/.test(String(n)) ? 'ze' : 'z'} ${n}`;
 
-// Věta položky podle zdroje: porovnání, fotky, nebo obojí
+// Proč nesoulad: porovnání, fotky, nebo obojí
 function vetaNesouladu(n) {
     const porovnani = n.smer === 'mene'
         ? `prohrála ${n.vysledky} ${zKolika(n.porovnani)} porovnání s modelkami s méně srdíčky`
@@ -175,6 +179,47 @@ function vetaNesouladu(n) {
     return n.zdroj === 'fotky' ? fotky : n.zdroj === 'oba' ? `${porovnani} a ${fotky}` : porovnani;
 }
 
+// Věta a tlačítka návrhu; nesoulad = položka nesouladu (hodnocená), jinak nehodnocená { porovnani, vyhry }
+function htmlNavrhu(id, navrh, nesoulad, nehodnocena = null) {
+    const m = modelka(id);
+    const klic = klicNavrhu(id, m.hodnoceni || 0, navrh);
+    navrhy.set(klic, { id, navrh });
+    const jmeno = `<button type="button" class="link" data-otevrit-modelku="${id}">${esc(m.jmeno)}</button>`;
+    const veta = nesoulad
+        ? `${jmeno} (${kratceSrdicka(m.hodnoceni)} ♥) ${vetaNesouladu(nesoulad)} – možná jí patří <b>${kratceSrdicka(navrh)} ♥</b>`
+        : `Nehodnocená ${jmeno} vychází po ${nehodnocena.porovnani} porovnáních (výhry ${String(nehodnocena.vyhry).replace('.', ',')}) na <b>${kratceSrdicka(navrh)} ♥</b>`;
+    return { klic, html: `<span>${veta}</span>
+        <button type="button" class="btn btn-primary btn-small" data-ob-navrh-ano="${klic}">Dát jí ${kratceSrdicka(navrh)} ♥</button>
+        <button type="button" class="link" data-ob-navrh-ne="${klic}">Nechat</button>` };
+}
+
+// Po porovnání: návrh pro jednu z modelek dvojice, když ho backend má a nebyl odmítnut
+async function ukazatNavrhPoPorovnani(d) {
+    const moje = ++cisloNavrhu;
+    zobrazitNavrhPodPasy(null);
+    for (const id of [d.a, d.b]) {
+        let n = null;
+        try {
+            n = await GetNavrhSrdicek(id);
+        } catch { /* bez návrhu */ }
+        if (moje !== cisloNavrhu) return;
+        if (!n?.hodnoceni || !modelka(id)) continue;
+        const navrh = htmlNavrhu(id, n.hodnoceni, n.nesoulad || null, n);
+        if (skryteNavrhy().has(navrh.klic)) continue;
+        return zobrazitNavrhPodPasy(navrh);
+    }
+}
+
+function zobrazitNavrhPodPasy(navrh) {
+    navrhPodPasy = navrh?.klic || '';
+    nastavitHtml(cast('navrh'), navrh?.html || '');
+}
+
+const viditelneNesoulady = () => {
+    const skryte = skryteNavrhy();
+    return (data.oblibenost?.nesedi || []).filter(n => modelka(n.modelkaId) && !skryte.has(klicNavrhu(n.modelkaId, n.hodnoceni, n.navrh)));
+};
+
 function vykreslitNesedi() {
     const vsechny = viditelneNesoulady();
     const seznam = nesouladyVse ? vsechny : vsechny.slice(0, NESOULADU_NAJEDNOU);
@@ -182,37 +227,34 @@ function vykreslitNesedi() {
     odkaz?.classList.toggle('hidden', !seznam.length);
     nastavitText(odkaz, vsechny.length ? `Nesedí se srdíčky (${vsechny.length}) →` : '');
     nastavitHtml(cast('nesedi'), seznam.length ? `<h4>Nesedí se srdíčky <small>podle porovnání s jinými úrovněmi a srdíček fotek</small></h4>
-        <ul class="ob-nesedi-seznam">${seznam.map(n => {
-            const veta = vetaNesouladu(n);
-            return `<li>
+        <ul class="ob-nesedi-seznam">${seznam.map(n => `<li>
                 <span class="trend ${n.smer === 'mene' ? 'dolu' : 'nahoru'}">${n.smer === 'mene' ? '▼' : '▲'}</span>
-                <span><button type="button" class="link" data-otevrit-modelku="${n.modelkaId}">${esc(modelka(n.modelkaId).jmeno)}</button>
-                    (${kratceSrdicka(n.hodnoceni)} ♥) ${veta} – možná jí patří <b>${kratceSrdicka(n.navrh)} ♥</b></span>
-                <button type="button" class="btn btn-primary btn-small" data-ob-nesedi-ano="${klicNesouladu(n)}">Dát jí ${kratceSrdicka(n.navrh)} ♥</button>
-                <button type="button" class="link" data-ob-nesedi-ne="${klicNesouladu(n)}">Nechat</button>
-            </li>`;
-        }).join('')}</ul>
+                ${htmlNavrhu(n.modelkaId, n.navrh, n).html}
+            </li>`).join('')}</ul>
         ${seznam.length < vsechny.length ? `<button type="button" class="link ob-vse" data-ob-nesedi-vse>Zobrazit všech ${vsechny.length}</button>` : ''}` : '');
 }
 
-async function prijmoutNesoulad(klic) {
-    const n = (data.oblibenost?.nesedi || []).find(x => klicNesouladu(x) === klic);
+// „Dát jí“: srdíčka se uloží a ukážou všude, kde modelka je; návrh zmizí pod pásy i z Nesedí se srdíčky
+async function prijmoutNavrh(klic) {
+    const n = navrhy.get(klic);
     if (!n) return;
-    if (!await SetHodnoceni(n.modelkaId, n.navrh)) return oznamit('Hodnocení se nepodařilo uložit.');
-    const m = modelka(n.modelkaId);
+    if (!await SetHodnoceni(n.id, n.navrh)) return oznamit('Hodnocení se nepodařilo uložit.');
+    const m = modelka(n.id);
     if (m) m.hodnoceni = n.navrh;
-    [stav.aktualniModelka, ...stav.nacteneModelky].forEach(x => { if (x?.id === n.modelkaId) x.hodnoceni = n.navrh; });
-    document.querySelectorAll(`.hearts-pul[data-hodnoceni="${n.modelkaId}"]`).forEach(r => obnovitSrdickaModelky(r, n.navrh));
-    data.oblibenost.nesedi = data.oblibenost.nesedi.filter(x => x !== n);
+    [stav.aktualniModelka, ...stav.nacteneModelky].forEach(x => { if (x?.id === n.id) x.hodnoceni = n.navrh; });
+    document.querySelectorAll(`.hearts-pul[data-hodnoceni="${n.id}"]`).forEach(r => obnovitSrdickaModelky(r, n.navrh));
+    if (navrhPodPasy === klic) zobrazitNavrhPodPasy(null);
+    if (data.oblibenost) data.oblibenost.nesedi = (data.oblibenost.nesedi || []).filter(x => x.modelkaId !== n.id);
     vykreslitNesedi();
     oznamit(`${m?.jmeno || 'Modelka'} má teď ${textSrdicek(n.navrh)}.`);
     obnovitPrehled();
 }
 
-function odmitnoutNesoulad(klic) {
-    const skryte = skryteNesoulady();
+function odmitnoutNavrh(klic) {
+    const skryte = skryteNavrhy();
     skryte.add(klic);
     try { localStorage.setItem('oblibenostNesediSkryte', JSON.stringify([...skryte].slice(-300))); } catch { /* jen pro toto spuštění */ }
+    if (navrhPodPasy === klic) zobrazitNavrhPodPasy(null);
     vykreslitNesedi();
 }
 
@@ -262,7 +304,7 @@ function vykreslitDvojici() {
     cast('ovladani').classList.toggle('hidden', !d);
     nastavitText(cast('duvod'), d?.duvod || '');
     if (!d) {
-        const malo = (data.oblibenost?.modelek || 0) < 2;
+        const malo = (data.oblibenost?.hodnocenych || 0) < 2;
         delete misto.dataset.pasy;
         nastavitHtml(misto, malo
             ? htmlPrazdna('Zatím není co porovnávat', 'Porovnávání potřebuje aspoň dvě modelky se srdíčky. Ohodnoť pár modelek.', { ikona: 'srdce' })
@@ -325,10 +367,12 @@ function vykreslitPoradi() {
         const { sirka, nejistota } = pruhy[i];
         const fotky = textSkoreFotek(p.skoreFotek);
         const popis = `${m.jmeno}: ${p.duvod || sklonovat(p.porovnani || 0, 'porovnání', 'porovnání', 'porovnání')} · síla ${cislo(p.sila)} ± ${cislo(p.nejistota)}`;
-        return `<li class="${p.odhadZFotek ? 'ob-z-fotek' : ''}"><button type="button" class="ob-radek" data-otevrit-modelku="${m.id}" title="${esc(popis)}">
+        return `<li class="${p.jenOdhad ? 'ob-z-fotek' : ''}"><button type="button" class="ob-radek" data-otevrit-modelku="${m.id}" title="${esc(popis)}">
             <span class="ob-misto">${p.poradi || i + 1}.</span>
             <img data-src="${esc(adresaTitulni(m))}" alt="" draggable="false" />
-            <span class="ob-jmeno-radku">${esc(m.jmeno)}<small>${m.hodnoceni ? `<i>${znakySrdicek(m.hodnoceni)}</i>` : p.odhadZFotek ? '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>' : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}${p.zmenaPoradi && o.trendDni ? ` · <span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}" title="${esc(`${p.zmenaPoradi > 0 ? 'Stoupla' : 'Klesla'} o ${sklonovat(Math.abs(p.zmenaPoradi), 'místo', 'místa', 'míst')} za ${o.trendDni} dní`)}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : ''}${p.zajem >= 0.05 ? ' · <span class="ob-zajem" title="Často otevíráš její profil nebo prohlížíš fotky – posouvá ji to v pořadí uvnitř srdíček">zájem</span>' : ''}</small></span>
+            <span class="ob-jmeno-radku">${esc(m.jmeno)}<small>${m.hodnoceni ? `<i>${znakySrdicek(m.hodnoceni)}</i>` : p.jenOdhad ? (p.zdrojOdhadu === 'vkus'
+                ? '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle tvého vkusu (údaje modelky a srdíčka fotek)">odhad</span>'
+                : '<span class="ob-odhad-fotek" title="Zatím bez srdíček a porovnání – místo v pořadí je jen odhad podle srdíček jejích fotek">odhad z fotek</span>') : 'bez srdíček'}${fotky ? ` · <span class="ob-fotky" title="${esc(`Skóre fotek z ${sklonovat(p.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(p.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')}`)}">${fotky}</span>` : ''}${p.zmenaPoradi && o.trendDni ? ` · <span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}" title="${esc(`${p.zmenaPoradi > 0 ? 'Stoupla' : 'Klesla'} o ${sklonovat(Math.abs(p.zmenaPoradi), 'místo', 'místa', 'míst')} za ${o.trendDni} dní`)}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : ''}${p.zajem >= 0.05 ? ' · <span class="ob-zajem" title="Často otevíráš její profil nebo prohlížíš fotky – posouvá ji to v pořadí uvnitř srdíček">zájem</span>' : ''}</small></span>
             <span class="ob-pruh" aria-hidden="true"><i style="width:${sirka}%"></i>${nejistota ? `<b style="left:${Math.max(0, sirka - nejistota)}%; width:${Math.min(100, sirka + nejistota) - Math.max(0, sirka - nejistota)}%"></b>` : ''}</span>
             <small class="ob-pocet">${p.porovnani || 0}×</small>
         </button></li>`;
@@ -382,11 +426,7 @@ async function vybrat(vysledek) {
     porovnaniDnes++;
     ulozDnes(porovnaniDnes);
     vykreslitDnes();
-    const navrh = navrhPoPorovnani(modelka(d.a), modelka(d.b), vysledek);
-    ukazatNavrh(navrh, d);
-    // Nehodnocená v dvojici: po pár porovnáních nabídka dát jí srdíčka, na která vychází (když nic jiného nenabízím)
-    const nehodnocena = [d.a, d.b].find(id => !(modelka(id)?.hodnoceni > 0));
-    if (!navrh && nehodnocena && !odmitnuteNavrhy.has(nehodnocena)) nabidnoutSrdicka(nehodnocena);
+    ukazatNavrhPoPorovnani(d);
     await dalsi();
     if (++porovnanoOdObnoveni >= 5) obnovitPrehled();
 }
@@ -409,7 +449,7 @@ async function dalsi() {
 function preskocit() {
     if (!fronta[0] || zaneprazdneno) return;
     zaneprazdneno = true;
-    ukazatNavrh(null);
+    zobrazitNavrhPodPasy(null);
     dalsi();
 }
 
@@ -426,48 +466,9 @@ async function vratit() {
     porovnaniDnes = Math.max(0, porovnaniDnes - 1);
     ulozDnes(porovnaniDnes);
     vykreslitDnes();
-    ukazatNavrh(null);
+    zobrazitNavrhPodPasy(null);
     vykreslitDvojici();
     obnovitPrehled();
-}
-
-// Po volbě, která hodně odporuje srdíčkům, nenápadná nabídka srovnat je (vítězka dostane srdíčka poražené)
-function ukazatNavrh(navrh, d = null) {
-    posledniNavrh = navrh && d ? { id: navrh.modelka === 'a' ? d.a : d.b, hodnoceni: navrh.hodnoceni } : null;
-    const misto = cast('navrh');
-    if (!posledniNavrh) return nastavitHtml(misto, '');
-    const vitezka = modelka(posledniNavrh.id), porazena = modelka(navrh.modelka === 'a' ? d.b : d.a);
-    nastavitHtml(misto, `<span>Vybraná <b>${esc(vitezka.jmeno)}</b> má ${textSrdicek(vitezka.hodnoceni)}, ${esc(porazena.jmeno)} ${textSrdicek(porazena.hodnoceni)}.</span>
-        <button type="button" class="btn btn-primary btn-small" data-ob-navrh-ano>Dát jí ${kratceSrdicka(posledniNavrh.hodnoceni)} ♥</button>
-        <button type="button" class="link" data-ob-navrh-ne>Nechat</button>`);
-}
-
-// Návrh srdíček nehodnocené z porovnání (GetNavrhSrdicek); „Nechat“ ho pro tu modelku do zavření programu nenabízí
-const odmitnuteNavrhy = new Set();
-async function nabidnoutSrdicka(id) {
-    let n = null;
-    try {
-        n = await GetNavrhSrdicek(id);
-    } catch { /* bez nabídky */ }
-    const m = modelka(id);
-    if (!n?.hodnoceni || !m || m.hodnoceni > 0 || posledniNavrh) return;
-    posledniNavrh = { id, hodnoceni: n.hodnoceni };
-    const vyhry = String(n.vyhry).replace('.', ',');
-    nastavitHtml(cast('navrh'), `<span>Nehodnocená <b>${esc(m.jmeno)}</b> vychází po ${n.porovnani} porovnáních (výhry ${vyhry}) na <b>${kratceSrdicka(n.hodnoceni)} ♥</b>.</span>
-        <button type="button" class="btn btn-primary btn-small" data-ob-navrh-ano>Dát jí ${kratceSrdicka(n.hodnoceni)} ♥</button>
-        <button type="button" class="link" data-ob-navrh-ne>Nechat</button>`);
-}
-
-async function prijmoutNavrh() {
-    const n = posledniNavrh;
-    if (!n) return;
-    ukazatNavrh(null);
-    if (!await SetHodnoceni(n.id, n.hodnoceni)) return oznamit('Hodnocení se nepodařilo uložit.');
-    const m = modelka(n.id);
-    if (m) m.hodnoceni = n.hodnoceni;
-    [stav.aktualniModelka, ...stav.nacteneModelky].forEach(x => { if (x?.id === n.id) x.hodnoceni = n.hodnoceni; });
-    document.querySelectorAll(`.hearts-pul[data-hodnoceni="${n.id}"]`).forEach(r => obnovitSrdickaModelky(r, n.hodnoceni));
-    oznamit(`${m?.jmeno || 'Modelka'} má teď ${textSrdicek(n.hodnoceni)}.`);
 }
 
 // ——— Události ———
@@ -490,14 +491,9 @@ export function pripravit() {
         if (volba) vybrat(volba);
         else if (e.target.closest('[data-ob-preskocit]')) preskocit();
         else if (e.target.closest('[data-ob-vratit]')) vratit();
-        else if (e.target.closest('[data-ob-navrh-ano]')) prijmoutNavrh();
-        else if (e.target.closest('[data-ob-navrh-ne]')) {
-            if (posledniNavrh && !(modelka(posledniNavrh.id)?.hodnoceni > 0)) odmitnuteNavrhy.add(posledniNavrh.id);
-            ukazatNavrh(null);
-        }
+        else if (e.target.closest('[data-ob-navrh-ano]')) prijmoutNavrh(e.target.closest('[data-ob-navrh-ano]').dataset.obNavrhAno);
+        else if (e.target.closest('[data-ob-navrh-ne]')) odmitnoutNavrh(e.target.closest('[data-ob-navrh-ne]').dataset.obNavrhNe);
         else if (e.target.closest('[data-ob-poradi-vse]')) { poradiVse = true; vykreslitPoradi(); }
-        else if (e.target.closest('[data-ob-nesedi-ano]')) prijmoutNesoulad(e.target.closest('[data-ob-nesedi-ano]').dataset.obNesediAno);
-        else if (e.target.closest('[data-ob-nesedi-ne]')) odmitnoutNesoulad(e.target.closest('[data-ob-nesedi-ne]').dataset.obNesediNe);
         else if (e.target.closest('[data-ob-nesedi-odkaz]')) ukazatCastOblibenosti('poradi');
         else if (e.target.closest('[data-ob-nesedi-vse]')) { nesouladyVse = true; vykreslitNesedi(); }
     });

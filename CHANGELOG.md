@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.43] – 2026-10-27
+
+### Změněno
+- **Oblíbenost sjednocená do jednoho modelu:** nehodnocená modelka má teď předpoklad síly z odhadu podle vkusu (s jeho nejistotou), jinak ze srdíček fotek – stejné číslo ukazuje štítek „odhad“, řadí galerii, určuje soupeřku v porovnání i návrh srdíček. Dřív se pro soupeřku bral odhad vkusu, ale pořadí a návrh vycházely z průměru sbírky nebo fotek. V Pořadí jsou proto i nehodnocené s odhadem podle vkusu (označené „odhad“).
+- **Návrhy srdíček jen z jednoho místa:** po porovnání se už nenabízí skok o celé srdíčko po jediné volbě (pravidlo v rozhraní, které odporovalo „Nesedí se srdíčky“). Pod pásy se ukáže tentýž návrh jako v Pořadí – nehodnocené po pár porovnáních, hodnocené při nesouladu – se stejnou větou, „Dát jí“ i „Nechat“; „Nechat“ platí na obou místech.
+- Věta o modelu vkusu počítá skutečně hodnocené modelky (dřív i odhadnuté v pořadí).
+- Kód oblíbenosti rozdělený podle témat (výběr dvojic, návrhy srdíček) beze změny chování.
+
 ## [0.99.42] – 2026-10-27
 
 ### Přidáno

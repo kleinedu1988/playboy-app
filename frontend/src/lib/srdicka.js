@@ -76,23 +76,12 @@ export const porovnatOblibenost = (a, b) => (b.hodnoceni || 0) - (a.hodnoceni ||
 // Odhad hodnocení se ukazuje jen u nehodnocené modelky; skutečné hodnocení má vždy přednost
 export const ukazatOdhad = modelka => !naPulky(modelka?.hodnoceni) && naPulky(modelka?.odhadHodnoceni) > 0;
 
-// Má se po porovnání nabídnout úprava srdíček? Vítězka by měla mít aspoň tolik srdíček jako poražená;
-// když jich má o celé srdíčko a víc méně, nabídne se jí tolik srdíček, kolik má poražená.
-// Vrací { modelka: 'a' | 'b', hodnoceni } nebo null.
-export function navrhPoPorovnani(a, b, vysledek) {
-    if (vysledek !== 'a' && vysledek !== 'b') return null;
-    const [vitezka, porazena] = vysledek === 'a' ? [a, b] : [b, a];
-    const hv = naPulky(vitezka?.hodnoceni), hp = naPulky(porazena?.hodnoceni);
-    if (!hv || !hp || hp - hv < 1) return null;
-    return { modelka: vysledek, hodnoceni: naPulky(Math.min(NEJVIC_SRDICEK, hp)) };
-}
-
 // Procento s celým číslem (přesnost modelu vkusu 0–1 → „72 %“)
 export const procentaPresnosti = presnost => `${Math.round(Math.max(0, Math.min(1, Number(presnost) || 0)) * 100)} %`;
 
 // Věta o modelu vkusu pod nadpisem Oblíbenosti; bez přesnosti (málo dat) říká, co ještě chybí
-export function textModeluVkusu({ presnost = 0, modelek = 0, porovnani = 0 } = {}) {
-    const hodnocenych = `${modelek} ${modelek === 1 ? 'hodnocené modelky' : 'hodnocených modelek'}`;
+export function textModeluVkusu({ presnost = 0, hodnocenych: pocet = 0, porovnani = 0 } = {}) {
+    const hodnocenych = `${pocet} ${pocet === 1 ? 'hodnocené modelky' : 'hodnocených modelek'}`;
     if (!presnost) return `Model vkusu se teprve učí: zatím má ${hodnocenych} a ${porovnani} porovnání. Ohodnoť víc modelek srdíčky nebo je porovnávej.`;
     return `Model vkusu odhaduje tvé hodnocení s přesností ${procentaPresnosti(presnost)} podle ${hodnocenych} a ${porovnani} porovnání.`;
 }

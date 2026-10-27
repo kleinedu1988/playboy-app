@@ -268,7 +268,7 @@ func TestSkoreANahledyVAplikaci(t *testing.T) {
 	a.db.Exec("INSERT INTO alba_modelky (album_id, modelka_id) VALUES (?, ?)", sdilene, anna)
 	stav := a.GetOblibenost()
 	// Nehodnocená Bára s hodnocenými fotkami je v pořadí jen odhadem z fotek, pod hodnocenou Annou
-	if len(stav.Poradi) != 2 || stav.Poradi[1].ModelkaID != bara || !stav.Poradi[1].OdhadZFotek || stav.Poradi[0].OdhadZFotek {
+	if len(stav.Poradi) != 2 || stav.Poradi[1].ModelkaID != bara || !stav.Poradi[1].JenOdhad || stav.Poradi[0].JenOdhad {
 		t.Fatalf("pořadí: %+v", stav.Poradi)
 	}
 	p := stav.Poradi[0]
@@ -404,11 +404,11 @@ func TestPoradiOdhadZFotek(t *testing.T) {
 	for _, p := range a.GetOblibenost().Poradi {
 		if p.ModelkaID == fotky {
 			nasla = true
-			if !p.OdhadZFotek || p.Hodnoceni != 0 || !strings.Contains(p.Duvod, "odhad z fotek") {
+			if !p.JenOdhad || p.ZdrojOdhadu != "fotky" || p.Hodnoceni != 0 || !strings.Contains(p.Duvod, "odhad z fotek") {
 				t.Fatalf("položka: %+v", p)
 			}
 		}
-		if p.ModelkaID == hodnocena && p.OdhadZFotek {
+		if p.ModelkaID == hodnocena && p.JenOdhad {
 			t.Fatalf("hodnocená nemá být odhad z fotek: %+v", p)
 		}
 	}

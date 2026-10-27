@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dnesniPocet, formatSrdicek, hodnotaPoKlavese, hodnotaPoKliku, hodnotaZPozice, idDvojice, kratceSrdicka, naPulky, navrhPoPorovnani,
+import { dnesniPocet, formatSrdicek, hodnotaPoKlavese, hodnotaPoKliku, hodnotaZPozice, idDvojice, kratceSrdicka, naPulky,
     porovnatOblibenost, procentaPresnosti, pruhySily, textModeluVkusu, textSrdicek, ukazatOdhad, vyhovujeMinimu, znakySrdicek } from '../src/lib/srdicka.js';
 import { castGalerie, seraditModelky } from '../src/lib/format.js';
 
@@ -63,22 +63,18 @@ test('filtr srdíček a řazení podle oblíbenosti', () => {
     assert.equal(castGalerie({ hodnoceni: 0 }, 'hodnoceni'), 'Bez srdíček');
 });
 
-test('odhad jen u nehodnocené, návrh po porovnání jen při velkém rozporu', () => {
+// Návrhy srdíček po porovnání počítá backend (navrhSrdicek, oblibenost_test.go)
+test('odhad jen u nehodnocené', () => {
     assert.equal(ukazatOdhad({ hodnoceni: 0, odhadHodnoceni: 3.5 }), true);
     assert.equal(ukazatOdhad({ hodnoceni: 2, odhadHodnoceni: 3.5 }), false);
     assert.equal(ukazatOdhad({ hodnoceni: 0, odhadHodnoceni: 0 }), false);
-    assert.deepEqual(navrhPoPorovnani({ hodnoceni: 2.5 }, { hodnoceni: 4 }, 'a'), { modelka: 'a', hodnoceni: 4 });
-    assert.equal(navrhPoPorovnani({ hodnoceni: 3.5 }, { hodnoceni: 4 }, 'a'), null, 'půlka rozdílu nevadí');
-    assert.equal(navrhPoPorovnani({ hodnoceni: 2 }, { hodnoceni: 4 }, 'remiza'), null);
-    assert.equal(navrhPoPorovnani({ hodnoceni: 0 }, { hodnoceni: 4 }, 'a'), null, 'nehodnocené se nenabízí');
-    assert.deepEqual(navrhPoPorovnani({ hodnoceni: 5 }, { hodnoceni: 2 }, 'b'), { modelka: 'b', hodnoceni: 5 });
 });
 
 test('Oblíbenost: věta o modelu, dvojice, dnešní počet a pruhy síly', () => {
     assert.equal(procentaPresnosti(0.724), '72 %');
-    assert.equal(textModeluVkusu({ presnost: 0.72, modelek: 380, porovnani: 140 }),
+    assert.equal(textModeluVkusu({ presnost: 0.72, hodnocenych: 380, porovnani: 140 }),
         'Model vkusu odhaduje tvé hodnocení s přesností 72 % podle 380 hodnocených modelek a 140 porovnání.');
-    assert.match(textModeluVkusu({ presnost: 0, modelek: 1, porovnani: 0 }), /teprve učí: zatím má 1 hodnocené modelky/);
+    assert.match(textModeluVkusu({ presnost: 0, hodnocenych: 1, porovnani: 0 }), /teprve učí: zatím má 1 hodnocené modelky/);
     assert.deepEqual(idDvojice({ a: 3, b: 7, duvod: 'x' }), { a: 3, b: 7, duvod: 'x' });
     assert.deepEqual(idDvojice({ a: { id: 3 }, b: { id: 7 } }), { a: 3, b: 7, duvod: '' });
     assert.equal(dnesniPocet({ datum: '2026-10-25', pocet: 12 }, '2026-10-25'), 12);

@@ -478,25 +478,6 @@ export namespace main {
 	        this.zdrojPopis = source["zdrojPopis"];
 	    }
 	}
-	export class NavrhSrdicek {
-	    hodnoceni: number;
-	    porovnani: number;
-	    vyhry: number;
-	    nejistota: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new NavrhSrdicek(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.hodnoceni = source["hodnoceni"];
-	        this.porovnani = source["porovnani"];
-	        this.vyhry = source["vyhry"];
-	        this.nejistota = source["nejistota"];
-	    }
-	}
-	
 	export class NesouladSrdicek {
 	    modelkaId: number;
 	    jmeno: string;
@@ -533,6 +514,46 @@ export namespace main {
 	        this.rozdilFotek = source["rozdilFotek"];
 	    }
 	}
+	export class NavrhSrdicek {
+	    hodnoceni: number;
+	    porovnani: number;
+	    vyhry: number;
+	    nejistota: number;
+	    nesoulad?: NesouladSrdicek;
+	
+	    static createFrom(source: any = {}) {
+	        return new NavrhSrdicek(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.hodnoceni = source["hodnoceni"];
+	        this.porovnani = source["porovnani"];
+	        this.vyhry = source["vyhry"];
+	        this.nejistota = source["nejistota"];
+	        this.nesoulad = this.convertValues(source["nesoulad"], NesouladSrdicek);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	
+	
 	export class OblibenostModelky {
 	    modelkaId: number;
 	    jmeno: string;
@@ -545,7 +566,8 @@ export namespace main {
 	    skoreFotek: number;
 	    albFotek: number;
 	    fotekHodnocenych: number;
-	    odhadZFotek: boolean;
+	    jenOdhad: boolean;
+	    zdrojOdhadu: string;
 	    zajem: number;
 	    trend: number;
 	    zmenaPoradi: number;
@@ -568,7 +590,8 @@ export namespace main {
 	        this.skoreFotek = source["skoreFotek"];
 	        this.albFotek = source["albFotek"];
 	        this.fotekHodnocenych = source["fotekHodnocenych"];
-	        this.odhadZFotek = source["odhadZFotek"];
+	        this.jenOdhad = source["jenOdhad"];
+	        this.zdrojOdhadu = source["zdrojOdhadu"];
 	        this.zajem = source["zajem"];
 	        this.trend = source["trend"];
 	        this.zmenaPoradi = source["zmenaPoradi"];
@@ -971,6 +994,7 @@ export namespace main {
 	export class StavOblibenosti {
 	    porovnani: number;
 	    modelek: number;
+	    hodnocenych: number;
 	    presnost: number;
 	    odhady: boolean;
 	    vahaFotek: number;
@@ -993,6 +1017,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.porovnani = source["porovnani"];
 	        this.modelek = source["modelek"];
+	        this.hodnocenych = source["hodnocenych"];
 	        this.presnost = source["presnost"];
 	        this.odhady = source["odhady"];
 	        this.vahaFotek = source["vahaFotek"];

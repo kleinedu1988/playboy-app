@@ -101,11 +101,17 @@ function vykreslit() {
         return;
     }
     const rekordy = trofeje();
-    const top = data.vitrina.map(x => htmlKarty(x, rekordy.get(x.modelkaId), false)).join('');
+    // Stupně vítězů: první tři větší na podstavcích (2. vlevo, 1. uprostřed, 3. vpravo), od 4. místa běžná mřížka
+    const stupne = data.vitrina.filter(x => x.misto >= 1 && x.misto <= 3);
+    const poradiStupnu = [2, 1, 3].map(misto => stupne.find(x => x.misto === misto)).filter(Boolean);
+    const htmlStupnu = poradiStupnu.length ? `<div class="slava-stupne">${poradiStupnu.map(x =>
+        `<div class="slava-stupen misto-${x.misto}">${htmlKarty(x, rekordy.get(x.modelkaId), false)}<div class="slava-podstavec" aria-hidden="true">${x.misto}</div></div>`).join('')}</div>` : '';
+    const ostatni = data.vitrina.filter(x => !stupne.includes(x)).map(x => htmlKarty(x, rekordy.get(x.modelkaId), false)).join('');
+    const top = htmlStupnu + (ostatni ? `<div class="gallery-grid slava-karty">${ostatni}</div>` : '');
     const legendy = data.legendy.map(x => htmlKarty(x, rekordy.get(x.modelkaId), true)).join('');
     nastavitHtml(kontejner, `<div class="slava">
         <h4 class="slava-nadpis">Top 10 <small>${top ? 'jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy' : ''}</small></h4>
-        ${top ? `<div class="gallery-grid slava-karty">${top}</div>` : `<p class="slava-nic">Zatím žádná potvrzená v Top 10. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20. <button type="button" class="link" data-ob-porovnavat>Porovnávat →</button></p>`}
+        ${top || `<p class="slava-nic">Zatím žádná potvrzená v Top 10. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20. <button type="button" class="link" data-ob-porovnavat>Porovnávat →</button></p>`}
         <h4 class="slava-nadpis">Legendy <small>bývalé Top 10</small></h4>
         ${legendy ? `<div class="gallery-grid slava-karty">${legendy}</div>` : '<p class="slava-nic">Zatím nikdo z Top 10 nevypadl.</p>'}
         ${htmlKroniky()}

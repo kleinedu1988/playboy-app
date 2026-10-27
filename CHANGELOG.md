@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.50] – 2026-10-27
+
+### Změněno
+- **Síň slávy: stupně vítězů.** První tři modelky Top 10 mají větší portréty na stupních: 2. vlevo, 1. uprostřed a nejvýš, 3. vpravo. Každá stojí na podstavci s číslem místa, jednička v růžové, dvojka stříbrná, trojka bronzová. Od 4. místa zůstává běžná mřížka karet.
+
 ## [0.99.49] – 2026-10-27
 
 ### Přidáno

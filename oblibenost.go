@@ -724,7 +724,18 @@ type kandidatDvojice struct {
 	// Proč právě tahle dvojice; text se skládá až u vybraných (duvodDvojice), kandidátů jsou tisíce
 	druh int
 	x, y *Modelka
+	// Nehodnocená: úroveň srdíček, na kterou vychází (odhad nebo síla z porovnání, po polovinách), a odkud
+	uroven float64
+	zdroj  int
 }
+
+// Odkud je úroveň nehodnocené modelky
+const (
+	urovenPrumer    = iota // bez odhadu: průměr srdíček sbírky
+	urovenFotky            // skóre jejích fotek
+	urovenVkus             // odhad modelu vkusu
+	urovenPorovnani        // síla z dosavadních porovnání
+)
 
 // Druhy kandidátů dvojic (pro důvod)
 const (
@@ -738,13 +749,24 @@ func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
 	nizsi, vyssi := textSrdicek(min(k.x.Hodnoceni, k.y.Hodnoceni)), textSrdicek(max(k.x.Hodnoceni, k.y.Hodnoceni))
 	switch k.druh {
 	case dvojiceNehodnocena:
-		duvod := fmt.Sprintf("Nehodnocená modelka proti modelce s %s", textSrdicek7(k.y.Hodnoceni))
-		if odhad, ok := model.odhad[k.x.ID]; ok {
-			duvod += fmt.Sprintf(" (odhad podle vkusu %s)", textSrdicek(zaokrouhlitNaPul(odhad)))
-		} else if sf, ok := model.skore[k.x.ID]; ok {
-			duvod += fmt.Sprintf(" (její fotky mají skóre %s)", cisloCesky(sf.skore, 1))
+		var odkud string
+		switch k.zdroj {
+		case urovenPorovnani:
+			odkud = fmt.Sprintf("Po %d porovnáních vychází nehodnocená na %s", model.pocet[k.x.ID], textSrdicek(k.uroven))
+			if model.pocet[k.x.ID] == 1 {
+				odkud = fmt.Sprintf("Po prvním porovnání vychází nehodnocená na %s", textSrdicek(k.uroven))
+			}
+		case urovenVkus:
+			odkud = fmt.Sprintf("Odhad podle vkusu: %s", textSrdicek(k.uroven))
+		case urovenFotky:
+			odkud = fmt.Sprintf("Podle srdíček jejích fotek asi %s", textSrdicek(k.uroven))
+		default:
+			odkud = fmt.Sprintf("Zatím bez odhadu, průměr sbírky je %s", textSrdicek(k.uroven))
 		}
-		return duvod
+		if k.y.Hodnoceni != k.uroven {
+			return fmt.Sprintf("%s – modelku s %s nemáš, proto proti nejbližší s %s: vyhraje, nebo prohraje?", odkud, textSrdicek7(k.uroven), textSrdicek7(k.y.Hodnoceni))
+		}
+		return fmt.Sprintf("%s – proti modelce s %s: vyhraje-li, patří výš, prohraje-li, níž", odkud, textSrdicek7(k.y.Hodnoceni))
 	case dvojiceStejna:
 		sx, okX := model.skore[k.x.ID]
 		sy, okY := model.skore[k.y.ID]
@@ -804,28 +826,48 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 		return p * (1 - p) * (model.rozptylModelky(x) + model.rozptylModelky(y))
 	}
 	if okruh == "nehodnocene" {
-		// Nehodnocená modelka proti hodnocené kotvě blízko jejímu odhadu (vkus, jinak průměr sbírky)
+		// Nehodnocená modelka proti kotvě se stejným počtem srdíček, na jaký vychází: odhad zaokrouhlený na
+		// polovinu srdíčka (po porovnáních síla z nich, takže výhra posune další kotvu výš a prohra níž). Ukáže
+		// přímo, jestli patří nad svou úroveň, nebo pod ni. Kotvy jsou typické modelky té úrovně (síla nejblíž
+		// srdíčkům); bez modelky na té úrovni nejbližší úroveň.
+		podleUrovne := map[float64][]*Modelka{}
+		for _, y := range hodnocene {
+			podleUrovne[y.Hodnoceni] = append(podleUrovne[y.Hodnoceni], y)
+		}
+		for h, seznam := range podleUrovne {
+			sort.SliceStable(seznam, func(i, j int) bool {
+				return math.Abs(silaM(seznam[i])-h) < math.Abs(silaM(seznam[j])-h)
+			})
+		}
 		for _, x := range nehodnocene {
-			// Odhad vkusu, jinak předpoklad ze skóre fotek, jinak průměr sbírky
-			cil := model.prumer
-			if p, ok := model.predpoklad[x.ID]; ok {
-				cil = p
+			cil, zdroj := model.prumer, urovenPrumer
+			if p, ok := model.predpoklad[x.ID]; ok && maSkore(model.skore, x.ID) {
+				cil, zdroj = p, urovenFotky
 			}
 			if odhad, ok := model.odhad[x.ID]; ok {
-				cil = odhad
+				cil, zdroj = odhad, urovenVkus
 			}
-			sx := model.silaModelky(x)
-			if _, ok := model.sila[x.ID]; !ok {
-				sx = cil
+			if s, ok := model.sila[x.ID]; ok && model.pocet[x.ID] > 0 {
+				cil, zdroj = s, urovenPorovnani
 			}
-			i := sort.Search(len(hodnocene), func(i int) bool { return silaM(hodnocene[i]) >= cil })
-			for j := max(0, i-sousedeDvojic/2); j < min(len(hodnocene), i+sousedeDvojic/2); j++ {
-				y := hodnocene[j]
+			uroven := min(max(zaokrouhlitNaPul(cil), 0.5), 5)
+			kotvy := podleUrovne[uroven]
+			if len(kotvy) == 0 {
+				nejblizsi := -1.0
+				for h := range podleUrovne {
+					if nejblizsi < 0 || math.Abs(h-uroven) < math.Abs(nejblizsi-uroven) || (math.Abs(h-uroven) == math.Abs(nejblizsi-uroven) && h > nejblizsi) {
+						nejblizsi = h
+					}
+				}
+				kotvy = podleUrovne[nejblizsi]
+			}
+			sx := cil
+			for _, y := range kotvy[:min(len(kotvy), sousedeDvojic)] {
 				if vyloucene[klicDvojice(x.ID, y.ID)] {
 					continue
 				}
 				kandidati = append(kandidati, kandidatDvojice{a: x.ID, b: y.ID, skore: informace(x, y, sx, silaM(y)) * vahaModelky(x) * vahaModelky(y),
-					druh: dvojiceNehodnocena, x: x, y: y})
+					druh: dvojiceNehodnocena, x: x, y: y, uroven: uroven, zdroj: zdroj})
 			}
 		}
 	} else {

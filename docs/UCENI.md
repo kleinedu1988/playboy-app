@@ -416,8 +416,13 @@ samo: modelka s nejistým skóre (málo alb a fotek) má širší předpoklad a 
 fotky říkají hodně. Vynechají se dvojice z posledních 200 porovnání a posledních 60
 nabídnutých, modelka je v jednom výběru nejvýš jednou. Asi pětina dvojic je **průzkum** (náhodná dvojice stejné
 nebo sousední úrovně); semínko je z počtu porovnání a volání, výsledek je opakovatelný. Pořadí A/B je náhodné.
-Okruh `nehodnocene` páruje nehodnocenou modelku s hodnocenými kotvami blízko jejího odhadu (vkus, jinak předpověď ze
-skóre fotek, jinak průměr). Důvod dvojice stejné úrovně uvádí skóre fotek obou („Obě mají 4 srdíčka (fotky 4,6
+Okruh `nehodnocene` páruje nehodnocenou modelku s kotvou, která má **přesně tolik srdíček, kolik vychází její
+odhad** zaokrouhlený na polovinu srdíčka (stejné číslo, jaké ukazuje štítek „odhad“): odhad vkusu, jinak předpověď ze
+skóre fotek, jinak průměr sbírky; jakmile je nehodnocená aspoň jednou porovnaná, její síla z porovnání. Výhra tak
+posune další kotvu o úroveň výš, prohra níž – pár porovnání najde její úroveň jako půlení intervalu. Kotvy jsou
+typické modelky té úrovně (síla nejblíž srdíčkům, nejvýš 10); když na té úrovni nikdo není, nejbližší úroveň (při shodě
+vyšší). Důvod to říká: „Odhad podle vkusu: 3½ srdíčka – proti modelce s 3½ srdíčka: vyhraje-li, patří výš, prohraje-li,
+níž“. Důvod dvojice stejné úrovně uvádí skóre fotek obou („Obě mají 4 srdíčka (fotky 4,6
 a 4,1) …“).
 
 ## Model vkusu

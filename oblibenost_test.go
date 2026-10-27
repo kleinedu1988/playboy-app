@@ -662,3 +662,54 @@ func TestVykonOblibenosti(t *testing.T) {
 		t.Errorf("GetModelky z paměti %v (bez oblíbenosti %v), první výpočet %v", s, bez, prvni)
 	}
 }
+
+// Nehodnocená se porovnává s modelkou, která má tolik srdíček, kolik vychází její odhad (po polovinách); bez modelky
+// na té úrovni s nejbližší; po porovnáních podle síly z nich (výhry posunou kotvu výš)
+func TestNehodnocenaProtiUrovniOdhadu(t *testing.T) {
+	var modelky []Modelka
+	id := 0
+	for _, h := range []float64{2, 2, 3, 3, 3.5, 3.5, 3.5, 4, 4, 5} {
+		id++
+		modelky = append(modelky, Modelka{ID: id, Jmeno: fmt.Sprintf("M%d", id), Hodnoceni: h, CoverID: "x"})
+	}
+	modelky = append(modelky, Modelka{ID: 100, Jmeno: "Nová", CoverID: "x"})
+	srdicka := map[int]float64{}
+	for _, m := range modelky {
+		srdicka[m.ID] = m.Hodnoceni
+	}
+	kotvy := func(model *modelOblibenosti, porovnani []porovnaniZaznam) map[float64]bool {
+		urovne := map[float64]bool{}
+		for range 6 {
+			for _, d := range vybratDvojice(modelky, model, porovnani, nil, 3, "nehodnocene", rand.New(rand.NewSource(int64(len(urovne))))) {
+				jina := d.A
+				if jina == 100 {
+					jina = d.B
+				}
+				urovne[srdicka[jina]] = true
+				if !strings.Contains(d.Duvod, "srdíč") {
+					t.Fatalf("důvod bez úrovně: %q", d.Duvod)
+				}
+			}
+		}
+		return urovne
+	}
+	model := spocitatOblibenost(modelky, nil, time.Now())
+	model.odhad[100] = 3.6 // odhad 3½
+	if u := kotvy(model, nil); len(u) != 1 || !u[3.5] {
+		t.Fatalf("odhad 3½: kotvy s %v srdíčky", u)
+	}
+	model.odhad[100] = 4.6 // 4½ nikdo nemá: nejbližší (při shodě vyšší) je 5
+	if u := kotvy(model, nil); len(u) != 1 || !u[5] {
+		t.Fatalf("odhad 4½: kotvy s %v srdíčky", u)
+	}
+	// Výhry nad modelkami se 3½ posunou sílu a s ní kotvu výš
+	var porovnani []porovnaniZaznam
+	for k, kotva := range []int{5, 6, 7, 5, 6, 7} {
+		porovnani = append(porovnani, porovnaniZaznam{id: int64(k + 1), a: 100, b: kotva, vysledek: "a", ha: 0, hb: 3.5})
+	}
+	model = spocitatOblibenost(modelky, porovnani, time.Now())
+	model.odhad[100] = 3.6
+	if u := kotvy(model, porovnani[len(porovnani):]); u[3.5] || u[2] || u[3] {
+		t.Fatalf("po výhrách nad 3½ mají být kotvy výš: %v (síla %.2f)", u, model.sila[100])
+	}
+}

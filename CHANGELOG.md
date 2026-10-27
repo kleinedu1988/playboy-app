@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.39] – 2026-10-27
+
+### Změněno
+- **Nehodnocené modelky (Dvojice: I nehodnocené) se porovnávají s modelkou, která má přesně tolik srdíček, kolik ukazuje jejich odhad** (odhad vkusu, jinak podle srdíček fotek, jinak průměr sbírky). Výhra posune další soupeřku o úroveň výš, prohra níž, takže pár porovnání najde, kam modelka patří. Když nikdo s takovým počtem srdíček není, vybere se nejbližší úroveň. Pod pásy je důvod, např. „Odhad podle vkusu: 3½ srdíčka – proti modelce s 3½ srdíčka: vyhraje-li, patří výš, prohraje-li, níž“.
+
 ## [0.99.38] – 2026-10-27
 
 ### Opraveno

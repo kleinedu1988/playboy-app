@@ -10,14 +10,14 @@
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
-import { esc, obrazek, sklonovat } from '../lib/format';
+import { esc, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, kratceSrdicka, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
 import { NAHLEDU_V_POROVNANI, stoupajiKlesaji, textSkoreFotek, textVahyFotek, textVahyZajmu } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
-import { VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne } from './obrazky';
+import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
-import { klavesaPasu, pripravitPasy, vykreslitPasy } from './porovnani-pasy';
+import { adresaFotkyPasu, fotekNaObrazovce, klavesaPasu, pripravitPasy, vykreslitPasy } from './porovnani-pasy';
 import { lightbox, otevritLightbox } from './prohlizec';
 import { seraditAlbaProfilu } from './profil';
 import { sestavitAlba } from '../lib/alba';
@@ -274,8 +274,8 @@ async function doplnitFrontu() {
 
 // První fotky pásů další dvojice se načtou dopředu, přechod pak nebliká
 function prednacist() {
-    fronta.slice(1, 2).forEach(d => [d.a, d.b].forEach(id => (nahledy.get(id) || []).slice(0, 5)
-        .forEach(f => { new Image().src = obrazek(f.url, VELIKOST_PLAKATU_MALA); })));
+    fronta.slice(1, 2).forEach(d => [d.a, d.b].forEach(id => (nahledy.get(id) || []).slice(0, fotekNaObrazovce())
+        .forEach(f => { new Image().src = adresaFotkyPasu(f); })));
 }
 
 // Fotky modelek, které ještě nejsou načtené; čeká i na rozpracovaná načtení týchž modelek

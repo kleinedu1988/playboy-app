@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.45] – 2026-10-27
+
+### Změněno
+- **Rychlejší pásy fotek v porovnání:** fotky se stahují postupně, až se v pásu přiblíží (místo všech 48 najednou zhruba 10 na pás, další při rolování), a ve velikosti podle výšky pásu (na běžném monitoru w400 místo w600). Další dvojice přednačte jen fotky, které budou hned vidět. Změna srdíček fotky přepíše jen její štítek (dřív se pás sestavoval znovu), pohyb myši mění zvýraznění jen u dvou fotek a neaktivní pás ztlumí lehký překryv místo průhlednosti celého pásu; tlačítko „♥ Tahle“ už nemá náročné rozmazané pozadí.
+
 ## [0.99.44] – 2026-10-27
 
 ### Změněno

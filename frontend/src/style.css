@@ -10500,6 +10500,7 @@ span.ud-chip {
 }
 
 .pas {
+    position: relative;
     display: flex;
     flex: 1;
     gap: 12px;
@@ -10508,7 +10509,22 @@ span.ud-chip {
     border: 1px solid var(--border-color);
     border-radius: 16px;
     background-color: var(--bg-card);
-    transition: border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s;
+    /* Změna uvnitř pásu (zvýraznění fotky, štítek) nepřepočítává zbytek stránky */
+    contain: layout paint;
+}
+
+/* Neaktivní a poražený pás ztlumí průsvitný překryv: mění se jen jeho průhlednost, ne průhlednost pásu
+   s desítkami fotek (to by WebKitGTK skládal celý pás znovu) */
+.pas::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background-color: rgba(8, 8, 10, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
 }
 
 .ob-dvojice[data-aktivni="a"] .pas[data-pas-strana="a"],
@@ -10516,23 +10532,26 @@ span.ud-chip {
     border-color: rgba(216, 27, 96, 0.5);
 }
 
-.ob-dvojice[data-aktivni="a"] .pas[data-pas-strana="b"],
-.ob-dvojice[data-aktivni="b"] .pas[data-pas-strana="a"] {
-    opacity: 0.75;
+.ob-dvojice[data-aktivni="a"] .pas[data-pas-strana="b"]::after,
+.ob-dvojice[data-aktivni="b"] .pas[data-pas-strana="a"]::after {
+    opacity: 0.5;
 }
 
 /* Vybraná se krátce rozzáří, druhá ustoupí; remíza ztlumí obě stejně */
 .ob-dvojice[data-vybrano="a"] .pas[data-pas-strana="a"],
 .ob-dvojice[data-vybrano="b"] .pas[data-pas-strana="b"] {
     border-color: var(--accent-text);
-    box-shadow: 0 0 24px rgba(255, 64, 129, 0.35);
-    opacity: 1;
 }
 
-.ob-dvojice[data-vybrano="a"] .pas[data-pas-strana="b"],
-.ob-dvojice[data-vybrano="b"] .pas[data-pas-strana="a"],
-.ob-dvojice[data-vybrano="remiza"] .pas {
-    opacity: 0.45;
+.ob-dvojice[data-vybrano="a"] .pas[data-pas-strana="a"]::after,
+.ob-dvojice[data-vybrano="b"] .pas[data-pas-strana="b"]::after {
+    opacity: 0;
+}
+
+.ob-dvojice[data-vybrano="a"] .pas[data-pas-strana="b"]::after,
+.ob-dvojice[data-vybrano="b"] .pas[data-pas-strana="a"]::after,
+.ob-dvojice[data-vybrano="remiza"] .pas::after {
+    opacity: 1;
 }
 
 /* Titulní fotka vlevo od pásu: jméno, srdíčka a počet fotek dole na fotce, „♥ Tahle“ nahoře */
@@ -10558,9 +10577,8 @@ span.ud-chip {
     top: 8px;
     right: 8px;
     border-color: transparent;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgba(0, 0, 0, 0.7);
     color: #fff;
-    backdrop-filter: blur(6px);
 }
 
 .pas-profil .pas-vybrat:hover,

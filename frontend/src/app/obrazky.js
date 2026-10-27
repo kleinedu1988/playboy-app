@@ -46,9 +46,14 @@ export async function adresyOdkazu(text, velikost) {
 // (asi dvě obrazovky dopředu). Když z ní odroluje dřív, než se načetl, jeho požadavek se zruší, aby při rychlém
 // rolování nečekaly fotky na obrazovce ve frontě za těmi, které už jsou pryč. Vestavěné loading="lazy"
 // ve WebKitGTK začíná načítat pozdě a odrolované fotky neruší. Každý kontejner má vlastního pozorovatele,
-// při novém vykreslení se starý odpojí (karty, které už nejsou v okně, se nehlídají dál).
+// při novém vykreslení se starý odpojí (karty, které už nejsou v okně, se nehlídají dál). Vodorovný pás (porovnání
+// v Oblíbenosti) si předá vlastní kořen a okraj: hlídá se vůči pásu, ne vůči stránce.
 const pozorovatele = new WeakMap();
-export function nacitatPostupne(kontejner) {
+/**
+ * @param {Element} kontejner
+ * @param {{ root?: Element|null, rootMargin?: string }} [moznosti]
+ */
+export function nacitatPostupne(kontejner, { root = document.querySelector('main'), rootMargin = '1500px 0px' } = {}) {
     pozorovatele.get(kontejner)?.disconnect();
     const pozorovatel = new IntersectionObserver(zaznamy => zaznamy.forEach(z => {
         const img = /** @type {HTMLImageElement} */ (z.target);
@@ -60,7 +65,7 @@ export function nacitatPostupne(kontejner) {
             // Načtenou fotku už hlídat netřeba; každý hlídaný obrázek prodlužuje výpočet při každém posunu stránky
             else pozorovatel.unobserve(img);
         }
-    }), { root: document.querySelector('main'), rootMargin: '1500px 0px' });
+    }), { root, rootMargin });
     kontejner.querySelectorAll('img[data-src]').forEach(img => pozorovatel.observe(img));
     pozorovatele.set(kontejner, pozorovatel);
 }

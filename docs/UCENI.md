@@ -475,8 +475,9 @@ podle čísla modelky, opakovatelné):
   typ prsou, košíček (A–D, DD+), ochlupení, tetování a piercing (ano/ne), desetiletí prvního výskytu, kategorie
   (i odvozené Playmate měsíce, Cyber Girl, Modelka obálky; rok na konci se zahodí, „Playmate roku 1998“ a „… 2003“
   jsou táž kategorie), fotografové alb; hodnota se počítá, když ji mají aspoň 3 hodnocené modelky (nejvýš 150
-  nejčastějších). Číselné údaje (výška, váha, hrudník, pas, boky, BMI, poměr pas/boky, rok prvního výskytu, průměr
-  srdíček fotek, skóre fotek) robustně standardizované (medián a 1,4826·MAD, oříznuté na ±3, chybějící = 0) a navíc
+  nejčastějších). Číselné údaje (výška, váha, hrudník, pas, boky, BMI, poměr pas/boky, poměr hrudník/pas, věk při
+  prvním vydání, rok prvního výskytu, průměr srdíček fotek, skóre fotek; poměr hrudník/pas a věk až od 60 hodnocených
+  modelek s údajem) robustně standardizované (medián a 1,4826·MAD, oříznuté na ±3, chybějící = 0) a navíc
   po **pětinách** jako 0/1 („výška 165–169 cm“), takže regrese pozná i oblíbené rozmezí. λ ∈ {2; 8; 32; 128} vybere
   ověření; Gramova matice se sčítá po částech a soustavy se řeší Choleským rozkladem (části souběžně).
 - **gradientně posilované mělké stromy** (`oblibenost_vkus_stromy.go`) – tytéž hodnoty údajů a číselné údaje v nejvýš
@@ -535,6 +536,16 @@ a 8 000 hodnocenými dosáhnou stromy asi 0,46.
 | | platný / pokrytí / ukázané MAE / přesnost (ověření tvrdí) | 2 ze 3 / 0,66 / 0,676 / 0,62 (0,65) | 3 ze 3 / 0,47 / 0,618 / 0,66 (0,69) |
 | | tipy: běhů / precision@10 / sedí z tvrzených | 2 / 0,95 / 0,80 z 0,81 | 3 / 0,93 / 0,80 z 0,81 |
 | 400 modelek, náhodný vkus i fotky (6) | model platný | 0 ze 6 | 0 ze 6 |
+
+**Poměr hrudník/pas a věk při prvním vydání** (věk z data narození a prvního vydání, stejně jako v Údržbě, jen
+14–60 let). Ověřeno na zkušebních sbírkách: zkušební sbírka má i datum narození (u 60 % modelek) a scénář, kde vkus
+závisí i na věku (do 20 let +0,35, od 26 −0,35) a poměru hrudník/pas (od 1,5 +0,35;
+`TestVyhodnoceniVkusuVekProporce`). Výsledek: kde na nich vkus závisí, pomáhají (3000 modelek ρ 0,407 → 0,425,
+pokrytí 0,66 → 0,76, ukázané MAE 0,676 → 0,667; 400 modelek ρ 0,335 → 0,349), kde ne, nic nemění (3000: ρ 0,394 →
+0,393). S 69 hodnocenými ale zhoršily (ρ 0,222 → 0,198, precision@10 0,70 → 0,62 – model se učil šum), proto se
+berou až od 60 hodnocených modelek s údajem; pak je malá sbírka přesně jako dřív. U 400 modelek s 214 hodnocenými
+ukáže model o něco méně odhadů (pokrytí 0,29 → 0,19), zato přesnějších (ukázané MAE 0,620 → 0,485, přesnost
+0,72 → 0,76).
 
 Pokrytí je podíl nehodnocených s ukázaným odhadem (průměr přes běhy, neplatný běh = 0). Porovnání variant na 12
 semínkách (400) a 3 (3000): samotné stromy jsou na malých sbírkách horší než regrese (ρ 0,275 proti 0,303) a na

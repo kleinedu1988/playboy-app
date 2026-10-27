@@ -69,8 +69,13 @@ func vybrat(r *rand.Rand, v ...volba) string {
 }
 
 // n modelek, z nich podíl hodnocených; nahodnyVkus = hodnocení na údajích nezávisí (kontrola, že model mlčí)
+// Vkus závisí i na věku při prvním vydání a poměru hrudník/pas (scénář „i věk a proporce“); jinak sbírka i vkus
+// beze změny, datum narození se losuje z vlastního generátoru, aby se ostatní údaje nezměnily
+var harnessVekProporce = false
+
 func harnessVkusu(n int, podilHodnocenych float64, seed int64, nahodnyVkus bool) sbirkaHarness {
 	r := rand.New(rand.NewSource(seed))
+	r2 := rand.New(rand.NewSource(seed*7919 + 1))
 	s := sbirkaHarness{pravda: map[int]float64{}, vysvetl: map[int]float64{}}
 	chut := map[int]float64{}
 	// Uživatel: dva oblíbení fotografové a jeden neoblíbený (z aktivních v různých dobách)
@@ -125,8 +130,21 @@ func harnessVkusu(n int, podilHodnocenych float64, seed int64, nahodnyVkus bool)
 				}
 			}
 		}
+		vek := 18 + int(math.Abs(r2.NormFloat64())*4)
+		maNarozeni := r2.Float64() < 0.6
 		// Vkus uživatele: nelineární, s interakcemi a vlastní složkou
 		t := 2.7
+		if harnessVekProporce {
+			switch {
+			case vek <= 20:
+				t += 0.35
+			case vek >= 26:
+				t -= 0.35
+			}
+			if float64(hrudnik)/float64(pas) >= 1.5 {
+				t += 0.35
+			}
+		}
 		switch {
 		case vlasy == "blond" && rok < 1990:
 			t += 0.9
@@ -225,6 +243,9 @@ func harnessVkusu(n int, podilHodnocenych float64, seed int64, nahodnyVkus bool)
 		}
 		if r.Float64() < 0.55 {
 			m.OciBarva = oci
+		}
+		if maNarozeni {
+			m.NarozeniDatum = fmt.Sprintf("%d-%02d-%02d", rok-vek, 1+r2.Intn(12), 1+r2.Intn(28))
 		}
 		if r.Float64() < 0.7 {
 			m.Etnicita = etnicita
@@ -508,6 +529,24 @@ func TestVyhodnoceniVkusu(t *testing.T) {
 	}
 }
 
+// Vkus, který závisí i na věku při prvním vydání a poměru hrudník/pas (go test -run TestVyhodnoceniVkusuVekProporce -v)
+func TestVyhodnoceniVkusuVekProporce(t *testing.T) {
+	if testing.Short() {
+		t.Skip("vyhodnocení modelu vkusu se v rychlém běhu nespouští")
+	}
+	harnessVekProporce = true
+	defer func() { harnessVekProporce = false }()
+	for _, sc := range []scenarHarness{{"400/50 %, i věk a proporce", 400, 0.5, 12, false}, {"3000/30 %, i věk a proporce", 3000, 0.3, 3, false}} {
+		var behy []metrikyVkusu
+		for semeno := range sc.semen {
+			behy = append(behy, vyhodnotitVkus(harnessVkusu(sc.n, sc.podil, int64(1000+semeno), false)))
+		}
+		p, platnych, _ := prumerMetrik(behy)
+		t.Logf("%s: MAE %.3f (průměr %.3f) ρ %.3f P@10 %.2f | platný %d/%d pokrytí %.2f ukázané MAE %.3f přesnost %.2f | tipů %d P@10 %.2f",
+			sc.nazev, p.maeVse, p.maePrumer, p.rho, p.p10Vse, platnych, sc.semen, p.pokryti, p.maeUkazane, p.presnostUkazane, p.tipu, p.p10Tipy)
+	}
+}
+
 // Porovnání variant modelu (go test -run TestVyhodnoceniVariantVkusu -v)
 func TestVyhodnoceniVariantVkusu(t *testing.T) {
 	if testing.Short() {
@@ -672,4 +711,21 @@ func TestVkusJenSkupinySFotkami(t *testing.T) {
 		t.Fatalf("důvod: %q", duvod)
 	}
 	t.Log(duvod)
+}
+
+// Poměr hrudník/pas a věk při prvním vydání (z data narození); nevěrohodný věk se nepočítá
+func TestUdajeVkusuHrudPasAVek(t *testing.T) {
+	klic := func(pole, text string) string { return text }
+	m := Modelka{ID: 1, ObvodHrudnikCm: 90, ObvodPasCm: 60, ObvodBokyCm: 88, NarozeniDatum: "1975-03-12", Vydani: []string{"1997-06"}, Tetovani: -1, Piercing: -1}
+	u := udajeModelkyVkus(m, klic)
+	if !u.ma[cvHrudPas] || math.Abs(u.cis[cvHrudPas]-1.5) > 1e-9 || !u.ma[cvVek] || u.cis[cvVek] != 22 {
+		t.Fatalf("hrudník/pas %v (%v), věk %v (%v)", u.cis[cvHrudPas], u.ma[cvHrudPas], u.cis[cvVek], u.ma[cvVek])
+	}
+	if textCislaVkusu(cvVek, 22) != "věk 22 let" || textCislaVkusu(cvHrudPas, 1.5) != "poměr hrudník/pas 1,50" {
+		t.Fatalf("texty: %q, %q", textCislaVkusu(cvVek, 22), textCislaVkusu(cvHrudPas, 1.5))
+	}
+	m.NarozeniDatum = "1990-01-01" // „věk“ 7 let: překlep v datu, nepočítá se
+	if u := udajeModelkyVkus(m, klic); u.ma[cvVek] {
+		t.Fatalf("nevěrohodný věk %v", u.cis[cvVek])
+	}
 }

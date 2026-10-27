@@ -18,18 +18,21 @@ import (
 
 // Parametry modelu vkusu
 const (
-	minHodnocenychVkus  = 30  // z méně hodnocených modelek se vkus neodhaduje
-	minHodnocenychCV    = 15  // od tolika se aspoň spočítá přesnost (pro přehled)
-	minPodporaVkus      = 3   // hodnota údaje (blond, fotograf…) se počítá, když ji má aspoň tolik hodnocených modelek
-	maxKategoriiVkus    = 150 // nejvíc hodnot údajů v modelu (nejčastější)
-	pocetSkupinCV       = 5   // křížové ověření na pěti částech
-	podilZlepseni       = 0.9 // odhad musí mít na ověření chybu nejvýš 90 % chyby prostého průměru
-	minPresnostVkus     = 0.5 // a trefit hodnocení ± půl srdíčka aspoň u poloviny modelek
-	minPokrytiVkus      = 4   // odhad jen u modelky, která má aspoň tolik skupin údajů
-	minPresnostVysokych = 0.6 // „Mohlo by se ti líbit“: z vysokých odhadů na ověření musí sedět aspoň 60 %
-	kosuHrebene         = 5   // regrese: číselný údaj i po pětinách (rozmezí)
-	minOverenychVkus    = 20  // skupina podle bohatosti údajů se hodnotí jen na aspoň tolika hodnocených modelkách
-	pocetPodobnychVkus  = 2   // důvod odhadu: tolik nejpodobnějších hodnocených modelek
+	minHodnocenychVkus = 30 // z méně hodnocených modelek se vkus neodhaduje
+	minHodnocenychCV   = 15 // od tolika se aspoň spočítá přesnost (pro přehled)
+	minPodporaVkus     = 3  // hodnota údaje (blond, fotograf…) se počítá, když ji má aspoň tolik hodnocených modelek
+	// Poměr hrudník/pas a věk při prvním vydání až od tolika hodnocených modelek s údajem: s méně (zkušební sbírka se
+	// 69 hodnocenými) odhad zhoršily, model se v nich učil šum; od asi stovky pomáhají
+	minPodporaOdvozenych = 60
+	maxKategoriiVkus     = 150 // nejvíc hodnot údajů v modelu (nejčastější)
+	pocetSkupinCV        = 5   // křížové ověření na pěti částech
+	podilZlepseni        = 0.9 // odhad musí mít na ověření chybu nejvýš 90 % chyby prostého průměru
+	minPresnostVkus      = 0.5 // a trefit hodnocení ± půl srdíčka aspoň u poloviny modelek
+	minPokrytiVkus       = 4   // odhad jen u modelky, která má aspoň tolik skupin údajů
+	minPresnostVysokych  = 0.6 // „Mohlo by se ti líbit“: z vysokých odhadů na ověření musí sedět aspoň 60 %
+	kosuHrebene          = 5   // regrese: číselný údaj i po pětinách (rozmezí)
+	minOverenychVkus     = 20  // skupina podle bohatosti údajů se hodnotí jen na aspoň tolika hodnocených modelkách
+	pocetPodobnychVkus   = 2   // důvod odhadu: tolik nejpodobnějších hodnocených modelek
 )
 
 var lambdyVkusu = []float64{2, 8, 32, 128}
@@ -158,7 +161,8 @@ func doplnitSkoreVkusu(udaje map[int]udajeVkusu, skore map[int]skoreFotek) {
 //     robustně standardizovaných (medián a MAD, oříznuté na ±3) i po pětinách (rozmezí „výška 165–169 cm“);
 //     chybějící číselný údaj = 0 po standardizaci; λ vybere ověření;
 //   - gradientně posilované mělké stromy (oblibenost_vkus_stromy.go) na hodnotách údajů a číselných údajích
-//     (i rok prvního výskytu a poměr pas/boky), chybějící údaj jde svou cestou; počet stromů vybere ověření.
+//     (i rok prvního výskytu, poměry pas/boky a hrudník/pas a věk při prvním vydání), chybějící údaj jde svou
+//     cestou; počet stromů vybere ověření.
 //     Stromy zachytí souvislosti, které přímka nevidí (blond jen v jedné éře, oblíbené rozmezí výšky).
 //
 // Váhu stromů v průměru (0, ¼, ½, ¾, 1) vybere ověření. Hodnota údaje se počítá, když ji má aspoň minPodporaVkus
@@ -181,10 +185,12 @@ const (
 	cvPas
 	cvBoky
 	cvBmi
-	cvPomer // pas/boky
-	cvRok   // rok prvního výskytu
-	cvFotky // průměr srdíček jejích fotek (aspoň 2 hodnocené)
-	cvSkore // skóre fotek (oblibenost_fotky.go)
+	cvPomer   // pas/boky
+	cvHrudPas // hrudník/pas (postava „přesýpací hodiny“)
+	cvVek     // věk při prvním vydání (z data narození)
+	cvRok     // rok prvního výskytu
+	cvFotky   // průměr srdíček jejích fotek (aspoň 2 hodnocené)
+	cvSkore   // skóre fotek (oblibenost_fotky.go)
 	pocetCisVkusu
 )
 
@@ -193,7 +199,8 @@ var popisCisVkusu = [pocetCisVkusu]struct {
 	desetiny        int
 }{
 	{"výška", "cm", 0}, {"váha", "kg", 0}, {"hrudník", "cm", 0}, {"pas", "cm", 0}, {"boky", "cm", 0}, {"BMI", "", 1},
-	{"poměr pas/boky", "", 2}, {"rok", "", 0}, {"srdíčka jejích fotek", "", 1}, {"skóre fotek", "", 1},
+	{"poměr pas/boky", "", 2}, {"poměr hrudník/pas", "", 2}, {"věk", "let", 0}, {"rok", "", 0}, {"srdíčka jejích fotek", "", 1},
+	{"skóre fotek", "", 1},
 }
 
 // Které údaje o fotkách model bere
@@ -400,6 +407,13 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 	}
 	if postava.ma[prPas] && postava.ma[prBoky] {
 		u.cis[cvPomer], u.ma[cvPomer] = postava.x[prPas]/postava.x[prBoky], true
+	}
+	if postava.ma[prHrudnik] && postava.ma[prPas] {
+		u.cis[cvHrudPas], u.ma[cvHrudPas] = postava.x[prHrudnik]/postava.x[prPas], true
+	}
+	// Věk při prvním vydání (stejný výpočet jako v Údržbě): jen věrohodný (14–60 let)
+	if postava.ma[prVek] && postava.x[prVek] >= 14 && postava.x[prVek] <= 60 {
+		u.cis[cvVek], u.ma[cvVek] = postava.x[prVek], true
 	}
 	if postava.ma[prVyska] || postava.ma[prVaha] || postava.ma[prHrudnik] {
 		skupiny++
@@ -618,7 +632,8 @@ func naucitVkus(modelky []Modelka, oblibenost map[int]float64, udaje map[int]uda
 		v.sloupce = append(v.sloupce, sloupecVkusu{klic: k, popis: nejlepsi, druh: slHodnota})
 	}
 	v.hodnot = len(v.sloupce)
-	// Číselné údaje z hodnocených (aspoň 10 hodnot): robustní střed a rozptyl, koše stromů a pětiny
+	// Číselné údaje z hodnocených (aspoň 10 hodnot, odvozené poměr hrudník/pas a věk aspoň minPodporaOdvozenych):
+	// robustní střed a rozptyl, koše stromů a pětiny
 	for c := range pocetCisVkusu {
 		if (c == cvFotky && nast.fotky == fotkySkore) || (c == cvSkore && nast.fotky == fotkyPrumer) {
 			continue
@@ -629,7 +644,7 @@ func naucitVkus(modelky []Modelka, oblibenost map[int]float64, udaje map[int]uda
 				hodnoty = append(hodnoty, u.cis[c])
 			}
 		}
-		if len(hodnoty) < 10 {
+		if len(hodnoty) < 10 || ((c == cvHrudPas || c == cvVek) && len(hodnoty) < minPodporaOdvozenych) {
 			continue
 		}
 		serazene := append([]float64(nil), hodnoty...)

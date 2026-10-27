@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.44] – 2026-10-27
+
+### Změněno
+- **Model vkusu („Mohlo by se ti líbit“, štítek „odhad“) bere i poměr hrudník/pas a věk při prvním vydání** (z data narození). Na zkušebních sbírkách, kde na nich vkus závisí, odhad zpřesnily (3000 modelek: Spearman 0,407 → 0,425, odhad u 76 % místo 66 % nehodnocených); kde ne, nic nemění. S malým počtem hodnocených škodily, proto se použijí až od 60 hodnocených modelek s tím údajem. Důvod odhadu je může uvést („věk 21 let“, „poměr hrudník/pas 1,52“).
+
 ## [0.99.43] – 2026-10-27
 
 ### Změněno

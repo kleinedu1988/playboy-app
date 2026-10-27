@@ -21,7 +21,7 @@ import { stav } from './stav';
 import { stats } from './prvky';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
-import { adresaFotkyPasu, fotekNaObrazovce, klavesaPasu, pripravitPasy, vykreslitPasy } from './porovnani-pasy';
+import { adresaFotkyPasu, fotekNaObrazovce, klavesaPasu, pripravitPasy, sledovatPomerFotek, vykreslitPasy } from './porovnani-pasy';
 import { lightbox, otevritLightbox } from './prohlizec';
 import { seraditAlbaProfilu } from './profil';
 import { sestavitAlba } from '../lib/alba';
@@ -648,6 +648,7 @@ export function pripravit() {
     if (!CASTI_OBLIBENOSTI.some(([klic]) => klic === stav.oblibenostCast)) stav.oblibenostCast = 'porovnani';
 
     pripravitSinSlavy();
+    sledovatPomerFotek();
     pripravitHodnoceni(() => videt() && stav.oblibenostCast === 'hodnoceni' && !stav.zamceno && !otevreneOkno()
         && !jeVidet('lightbox') && !jeVidet('zkratky') && !jeVidet('contextMenu'));
     // Volba části v liště pod hledáním (skrytý štítek v obsahu Přehledu)

@@ -10666,11 +10666,13 @@ span.ud-chip {
     scrollbar-color: #3a3a42 transparent;
 }
 
+/* Celá fotka: výška pásu, šířka podle poměru stran (--pomer nastaví po načtení sledovatPomerFotek, do té doby 3 : 4) */
 .pas-fotka {
+    --pomer: 0.75;
     position: relative;
     flex: none;
     height: 100%;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: var(--pomer);
     overflow: hidden;
     padding: 0;
     border: 2px solid transparent;
@@ -10692,16 +10694,26 @@ span.ud-chip {
     object-fit: cover;
 }
 
-.pas-fotka img[data-rot="90"] {
-    transform: rotate(90deg);
-}
-
 .pas-fotka img[data-rot="180"] {
     transform: rotate(180deg);
 }
 
+/* Otočená o 90°: obrázek má rozměry místa prohozené a otočí se kolem středu */
+.pas-fotka img[data-rot="90"],
 .pas-fotka img[data-rot="270"] {
-    transform: rotate(270deg);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: calc(100% / var(--pomer));
+    height: calc(100% * var(--pomer));
+}
+
+.pas-fotka img[data-rot="90"] {
+    transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.pas-fotka img[data-rot="270"] {
+    transform: translate(-50%, -50%) rotate(270deg);
 }
 
 .pas-fotka.aktivni,

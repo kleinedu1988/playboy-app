@@ -10674,18 +10674,15 @@ span.ud-chip {
     object-fit: cover;
 }
 
-.pas-fotka img[data-rot="90"],
-.pas-zvetseni img[data-rot="90"] {
+.pas-fotka img[data-rot="90"] {
     transform: rotate(90deg);
 }
 
-.pas-fotka img[data-rot="180"],
-.pas-zvetseni img[data-rot="180"] {
+.pas-fotka img[data-rot="180"] {
     transform: rotate(180deg);
 }
 
-.pas-fotka img[data-rot="270"],
-.pas-zvetseni img[data-rot="270"] {
+.pas-fotka img[data-rot="270"] {
     transform: rotate(270deg);
 }
 
@@ -10724,35 +10721,6 @@ span.ud-chip {
 .pas-prazdne {
     margin: auto;
     color: var(--text-muted);
-}
-
-.pas-zvetseni {
-    background-color: rgba(5, 5, 7, 0.97);
-    cursor: zoom-out;
-    outline: none;
-}
-
-.pas-zvetseni.hidden {
-    display: none;
-}
-
-.pas-zvetseni img {
-    max-width: calc(100% - 48px);
-    max-height: calc(100% - 80px);
-    border-radius: 10px;
-}
-
-.pas-zvetseni-popis {
-    position: absolute;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 5px 14px;
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-    color: var(--text-muted);
-    font-size: 12.5px;
-    white-space: nowrap;
 }
 
 .ob-napoveda {

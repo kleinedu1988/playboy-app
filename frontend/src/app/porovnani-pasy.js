@@ -2,14 +2,13 @@
 // fotka se jménem, srdíčky a „♥ Tahle“, hned vedle vodorovný pás jejích nejlepších fotek (nejlepší fotka každého
 // alba napřed, GetNahledyModelek).
 // Pás pod myší je aktivní (Tab ho přepne): kolečko a ← → listují jím, 1–5 dá srdíčka zvýrazněné fotce, 0 je zruší,
-// Enter vybere jeho modelku. Klik na fotku ji zvětší přes celé okno (← → listují dál, Esc nebo klik vrátí);
-// zvětšení je okno (modal-overlay v #app), takže klávesy obsluhuje samo.
+// Enter vybere jeho modelku. Klik na fotku otevře běžný prohlížeč fotek (jako u alb) – otevírá ho oblibenost.js.
 // Obsah pásu se při změně jen doplní nebo přepíše přes nastavitHtml a zvýraznění mění jen třídy, nic pod kurzorem
 // zbytečně nemizí (WebKitGTK by mohl ztratit klik).
 import { SetHodnoceniFotek } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
 import { popisNahledu } from '../lib/oblibenost';
-import { VELIKOST_PLAKATU, VELIKOST_PLAKATU_MALA, adresaTitulni } from './obrazky';
+import { VELIKOST_PLAKATU_MALA, adresaTitulni } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { htmlSrdicka } from './galerie';
 import { nastavitHtml, nastavitText } from '../ui/dom';
@@ -21,8 +20,6 @@ let koren = null;
 let data = null; // { a: { modelka, fotky (null = načítá se), celkem }, b: … }
 let aktivni = 'a';
 const index = { a: 0, b: 0 };
-let zvetseni = null; // okno zvětšené fotky
-let zoom = null; // strana zvětšené fotky, null = zavřeno
 
 const srdickaFotky = h => h > 0 ? `♥${h}` : 'bez ♥';
 const polovina = strana => koren?.querySelector(`[data-pas-strana="${strana}"]`);
@@ -46,7 +43,7 @@ function htmlFotek(strana) {
     if (!fotky) return Array.from({ length: KOSTER }, () => '<span class="pas-fotka kostra"></span>').join('');
     if (!fotky.length) return '<p class="pas-prazdne">Modelka zatím nemá fotky v albech.</p>';
     return fotky.map((f, i) => `
-        <button type="button" class="pas-fotka" data-pas-fotka="${i}" aria-label="${esc(popisNahledu(f, i))} – zvětšit">
+        <button type="button" class="pas-fotka" data-pas-fotka="${i}" aria-label="${esc(popisNahledu(f, i))} – otevřít v prohlížeči">
             <img src="${esc(obrazek(f.url, VELIKOST_PLAKATU_MALA))}" alt="" data-rot="${Number(f.rotace) || 0}" draggable="false" decoding="async" />
             <span class="pas-srd" data-pas-srd>${srdickaFotky(f.hodnoceni)}</span>
             ${f.album ? `<span class="pas-album">${esc(f.album)}</span>` : ''}
@@ -102,7 +99,6 @@ function krok(strana, smer) {
     const n = data?.[strana].fotky?.length;
     if (!n) return;
     oznacit(strana, (index[strana] + smer + n) % n);
-    if (zoom) ukazatZoom();
 }
 
 async function ohodnotit(strana, hodnoceni) {
@@ -117,55 +113,6 @@ async function ohodnotit(strana, hodnoceni) {
     const i = data?.[strana].fotky?.indexOf(f) ?? -1;
     const stitek = i >= 0 ? polovina(strana)?.querySelector(`[data-pas-fotka="${i}"] [data-pas-srd]`) : null;
     if (stitek) nastavitText(stitek, srdickaFotky(hodnoceni));
-    if (zoom === strana) ukazatZoom();
-}
-
-// ——— Zvětšení fotky ———
-
-function vytvoritZvetseni() {
-    zvetseni = document.createElement('div');
-    zvetseni.className = 'modal-overlay pas-zvetseni hidden';
-    zvetseni.tabIndex = -1;
-    zvetseni.setAttribute('role', 'dialog');
-    zvetseni.setAttribute('aria-label', 'Zvětšená fotka');
-    zvetseni.innerHTML = '<img alt="" draggable="false" /><span class="pas-zvetseni-popis"></span>';
-    document.getElementById('app').appendChild(zvetseni);
-    zvetseni.addEventListener('click', zavritZoom);
-    zvetseni.addEventListener('keydown', (e) => {
-        if (e.ctrlKey || e.metaKey || e.altKey) return;
-        const akce = { Escape: zavritZoom, Enter: zavritZoom, ' ': zavritZoom, ArrowLeft: () => krok(zoom, -1), ArrowRight: () => krok(zoom, 1) }[e.key]
-            || (/^[0-5]$/.test(e.key) ? () => ohodnotit(zoom, Number(e.key)) : null);
-        if (!akce) return;
-        e.preventDefault();
-        e.stopPropagation();
-        akce();
-    });
-}
-
-function otevritZoom(strana) {
-    if (!zvetseni) vytvoritZvetseni();
-    zoom = strana;
-    zvetseni.classList.remove('hidden');
-    ukazatZoom();
-    zvetseni.focus({ preventScroll: true });
-}
-
-function ukazatZoom() {
-    const f = data?.[zoom]?.fotky?.[index[zoom]];
-    if (!f) return zavritZoom();
-    const img = /** @type {HTMLImageElement} */ (zvetseni.querySelector('img'));
-    // Hned obrázek z pásu (je v mezipaměti), ostřejší po načtení
-    img.src = obrazek(f.url, VELIKOST_PLAKATU_MALA);
-    img.dataset.rot = String(Number(f.rotace) || 0);
-    const velky = new Image();
-    velky.onload = () => { if (zoom && data?.[zoom].fotky?.[index[zoom]] === f) img.src = velky.src; };
-    velky.src = obrazek(f.url, VELIKOST_PLAKATU);
-    nastavitText(zvetseni.querySelector('.pas-zvetseni-popis'), `${data[zoom].modelka.jmeno} · ${popisNahledu(f, index[zoom])} · ← → listuje, Esc zpět`);
-}
-
-function zavritZoom() {
-    zoom = null;
-    zvetseni?.classList.add('hidden');
 }
 
 // ——— Ovládání ———
@@ -182,14 +129,19 @@ export function klavesaPasu(e, vybrat) {
         || (/^[0-5]$/.test(e.key) ? () => ohodnotit(aktivni, Number(e.key)) : null);
 }
 
-// Obsluha myši v místě pásů; volá se jednou
-export function pripravitPasy(misto) {
+/**
+ * Obsluha myši v místě pásů; volá se jednou. otevritFotku(strana, fotka) otevře prohlížeč na kliknuté fotce.
+ * @param {HTMLElement} misto
+ * @param {(strana: string, fotka: any) => void} otevritFotku
+ */
+export function pripravitPasy(misto, otevritFotku) {
     misto.addEventListener('click', (e) => {
         const fotka = /** @type {HTMLElement} */ (e.target).closest('[data-pas-fotka]');
         if (!fotka || !data) return;
         const strana = fotka.closest('[data-pas-strana]').dataset.pasStrana;
         oznacit(strana, Number(fotka.dataset.pasFotka), false);
-        otevritZoom(strana);
+        const f = data[strana].fotky?.[index[strana]];
+        if (f) otevritFotku(strana, f);
     });
     // Pás pod myší je aktivní, fotka pod myší zvýrazněná (srdíčka 1–5 jdou jí)
     misto.addEventListener('mouseover', (e) => {

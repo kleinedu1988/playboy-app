@@ -7,7 +7,7 @@
 //     Mohlo by se ti líbit: nehodnocené s odhadem z modelu vkusu a věta o jeho přesnosti.
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
-import { GetDvojiceKPorovnani, GetMohloByTeLibit, GetNahledyModelek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
+import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetOblibenost, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, kratceSrdicka, navrhPoPorovnani, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
 import { NAHLEDU_V_POROVNANI, stoupajiKlesaji, textSkoreFotek, textVahyFotek, textVahyZajmu } from '../lib/oblibenost';
@@ -16,6 +16,9 @@ import { stats } from './prvky';
 import { VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { klavesaPasu, pripravitPasy, vykreslitPasy } from './porovnani-pasy';
+import { lightbox, otevritLightbox } from './prohlizec';
+import { seraditAlbaProfilu } from './profil';
+import { sestavitAlba } from '../lib/alba';
 import { duvodyOdhadu, htmlSrdicka } from './galerie';
 import { obnovitSrdickaModelky } from '../ui/srdicka';
 import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
@@ -83,7 +86,7 @@ const KOSTRA = `
     <div class="ob-cast ob-porovnani" data-ob-porovnani>
         <div class="ob-dvojice" data-ob-dvojice aria-live="polite"></div>
         <div class="ob-ovladani" data-ob-ovladani>
-            <span class="ob-napoveda">kolečko nebo <kbd>←</kbd> <kbd>→</kbd> listuje pásem pod myší · <kbd>Tab</kbd> přepne · <kbd>Enter</kbd> nebo ♥ Tahle vybere · <kbd>1</kbd>–<kbd>5</kbd> srdíčka fotce · klik zvětší</span>
+            <span class="ob-napoveda">kolečko nebo <kbd>←</kbd> <kbd>→</kbd> listuje pásem pod myší · <kbd>Tab</kbd> přepne · <kbd>Enter</kbd> nebo ♥ Tahle vybere · <kbd>1</kbd>–<kbd>5</kbd> srdíčka fotce · klik otevře prohlížeč</span>
             <button type="button" class="btn btn-secondary btn-small" data-ob-volba="remiza" title="Obě stejně (↓ nebo mezerník)"><kbd>↓</kbd> Stejně</button>
             <span class="oddelovac"></span>
             <button type="button" class="link" data-ob-preskocit title="Přeskočit dvojici (S)">Přeskočit <kbd>S</kbd></button>
@@ -117,7 +120,7 @@ export async function nacistOblibenost(sekce) {
     koren = sekce;
     if (!koren.querySelector('[data-ob-porovnani]')) {
         koren.innerHTML = KOSTRA;
-        pripravitPasy(cast('dvojice'));
+        pripravitPasy(cast('dvojice'), otevritFotku);
     }
     koren.dataset.obCast = stav.oblibenostCast;
     // Srdíčka fotek se mohla mezitím změnit; fotky se načtou znovu (backend je má v paměti se snímkem sbírky)
@@ -206,6 +209,27 @@ function vykreslitDvojici() {
     });
     cast('vratit')?.toggleAttribute('disabled', !historie.length);
     if (!nahledy.has(d.a) || !nahledy.has(d.b)) nacistNahledy([d.a, d.b]).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
+}
+
+// Běžný prohlížeč fotek (jako u alb) na fotce z pásu mezi všemi fotkami modelky (pořadí alb jako v profilu); po
+// zavření zůstane porovnání a fotky té modelky se načtou znovu (srdíčka fotek se mohla změnit)
+let otevrenoZPorovnani = 0;
+async function otevritFotku(strana, fotka) {
+    const d = fronta[0];
+    if (!d) return;
+    const id = strana === 'a' ? d.a : d.b;
+    let fotky = [];
+    try {
+        fotky = await GetFotografieModelky(id) || [];
+    } catch { /* oznámí se níž */ }
+    if (fronta[0] !== d || !videt()) return;
+    // Fotky profilu jména nenesou; u sdíleného alba je hlavní modelkou jiná
+    fotky.forEach(f => { f.jmenoModelky = modelka(f.modelkaId)?.jmeno || modelka(id)?.jmeno || ''; });
+    const polozky = seraditAlbaProfilu(sestavitAlba(fotky)).flatMap(a => a.polozky);
+    const kde = polozky.findIndex(p => p.fotky.some(f => f.id === fotka.id));
+    if (kde < 0) return oznamit('Fotku se nepodařilo otevřít.');
+    otevrenoZPorovnani = id;
+    otevritLightbox(kde, false, polozky);
 }
 
 function vykreslitPoradi() {
@@ -408,6 +432,15 @@ export function pripravit() {
         e.preventDefault();
         akce();
     });
+
+    // Po zavření prohlížeče otevřeného z pásu se fotky té modelky načtou znovu (srdíčka fotek se mohla změnit)
+    new MutationObserver(() => {
+        if (!otevrenoZPorovnani || !lightbox.classList.contains('hidden')) return;
+        const id = otevrenoZPorovnani;
+        otevrenoZPorovnani = 0;
+        nahledy.delete(id);
+        nacistNahledy([id]).then(() => { if (fronta[0] && (fronta[0].a === id || fronta[0].b === id)) vykreslitDvojici(); });
+    }).observe(lightbox, { attributes: true, attributeFilter: ['class'] });
 
     // Srdíčka změněná kdekoli: tip se ztlumí jako ohodnocený, pořadí ukáže nová srdíčka při příštím obnovení
     document.addEventListener('hodnoceni-modelky', (e) => {

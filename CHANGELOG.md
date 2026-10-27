@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.38] – 2026-10-27
+
+### Opraveno
+- **Fotka z pásu v porovnání se otevírá v běžném prohlížeči fotek** (stejném jako u alb: lupa, otáčení, lišta alb, srdíčka, slideshow) na té fotce mezi všemi fotkami modelky; po zavření se vrátíš k porovnání a pás té modelky ukáže nová srdíčka fotek. Dosavadní jednoduché zvětšení zmizelo.
+
 ## [0.99.37] – 2026-10-27
 
 ### Změněno

@@ -52,7 +52,7 @@ const CASTI = [
         [k('Enter'), 'Líbí se mi víc modelka aktivního pásu'],
         [`${k('↓')}${nebo}${k('Mezerník')}`, 'Obě stejně (remíza)'],
         [`${k('1')}–${k('5')}${nebo}${k('0')}`, 'Srdíčka zvýrazněné fotce, 0 je zruší'],
-        ['klik na fotku', 'Zvětšit fotku přes celé okno (← → listují, Esc zpět)'],
+        ['klik na fotku', 'Prohlížeč fotek jako u alb (všechny fotky modelky), Esc zpět'],
         [k('S'), 'Přeskočit dvojici'],
         [k('Backspace'), 'Vrátit poslední porovnání'],
     ] },

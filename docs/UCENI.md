@@ -401,7 +401,7 @@ dvojice přednačte; dokud fotky nejsou, drží místo prázdné rámečky.
 
 Ovládání: pás pod myší je aktivní (<kbd>Tab</kbd> ho přepne, druhý se ztlumí), kolečko a <kbd>←</kbd> /
 <kbd>→</kbd> jím listují, <kbd>1</kbd>–<kbd>5</kbd> dá srdíčka zvýrazněné fotce (`SetHodnoceniFotek`), <kbd>0</kbd>
-je zruší, klik fotku zvětší přes celé okno (← → listují dál, Esc nebo klik vrátí), „♥ Tahle“ nebo <kbd>Enter</kbd>
+je zruší, klik otevře běžný prohlížeč fotek na té fotce mezi všemi fotkami modelky (pořadí alb jako v profilu, po zavření se pás té modelky načte znovu), „♥ Tahle“ nebo <kbd>Enter</kbd>
 vybere modelku aktivního pásu, <kbd>↓</kbd>, mezerník nebo „Stejně“ remízu, <kbd>S</kbd> přeskočí, <kbd>Backspace</kbd>
 vrátí poslední porovnání.
 

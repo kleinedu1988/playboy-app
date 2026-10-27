@@ -142,7 +142,7 @@ function htmlPoradi(modelka) {
         ? `Podle síly patří výš, ${r.ceka} – potvrdí ji další porovnání (podrobnosti v Pořadí). Otevřít Oblíbenost`
         : 'Otevřít Oblíbenost – pořadí podle srdíček, fotek, porovnání a zájmu';
     return `<button type="button" class="profile-poradi" data-otevrit-oblibenost title="${esc(title)}">
-        <span>${esc(r.poradi)}</span>${r.uroven ? ` · <b class="profile-uroven">${esc(r.uroven)}</b>` : ''}${r.ceka ? ` · <span class="profile-ceka">⏳ ${esc(r.ceka)}</span>` : ''}${r.trend ? ` · <span class="trend ${r.trend.smer}" title="${esc(r.trend.text)}">${r.trend.znak} ${esc(r.trend.kratce)}</span>` : ''}</button>`;
+        <span>${esc(r.poradi)}</span>${r.uroven ? ` · <b class="profile-uroven">${esc(r.uroven)}</b>` : ''}${r.obhajuje ? ` · <span class="profile-ceka" title="Silou ji předstihla jiná modelka; místo jí zůstává, dokud s ní neprohraje v souboji">🛡 ${esc(r.obhajuje)}</span>` : ''}${r.ceka ? ` · <span class="profile-ceka">⏳ ${esc(r.ceka)}</span>` : ''}${r.trend ? ` · <span class="trend ${r.trend.smer}" title="${esc(r.trend.text)}">${r.trend.znak} ${esc(r.trend.kratce)}</span>` : ''}</button>`;
 }
 
 // Ostatní modelky sdíleného alba (hlavní i další kromě té, jejíž profil je otevřený) jako odkazy na jejich profil

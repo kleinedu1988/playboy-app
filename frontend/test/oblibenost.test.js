@@ -27,7 +27,7 @@ test('trend modelky, řádek pořadí v profilu a řazení fotek podle oblíbeno
     assert.equal(trendModelky({ zmenaPoradi: -1, trendDni: 1 }).text, 'o 1 místo níž než včera');
     assert.equal(trendModelky({ zmenaPoradi: -7, trendDni: 8 }).text, 'o 7 míst níž než před 8 dny');
     assert.equal(textPoradiProfilu({ poradi: 0 }), null);
-    assert.deepEqual(textPoradiProfilu({ poradi: 12, zmenaPoradi: 0, trendDni: 30 }), { poradi: '12. v oblíbenosti', uroven: '', ceka: '', trend: null });
+    assert.deepEqual(textPoradiProfilu({ poradi: 12, zmenaPoradi: 0, trendDni: 30 }), { poradi: '12. v oblíbenosti', uroven: '', ceka: '', obhajuje: '', trend: null });
 
     const ob = new Map([[1, 4.3], [2, 4.1], [3, 3.2]]);
     const fotky = [{ id: 'a', modelkaId: 2, hodnoceni: 5 }, { id: 'b', modelkaId: 3, hodnoceni: 4 }, { id: 'c', modelkaId: 1, hodnoceni: 5 }, { id: 'd', modelkaId: 9, hodnoceni: 4 }];
@@ -78,12 +78,12 @@ test('úrovně oblíbenosti: úroveň modelky, čekání, bublina a podmínky z 
         { uroven: 100, potrebaPorovnani: 2, maxNejistota: 0, potrebaVyhry: false, potvrzenych: 40 },
         { uroven: 50, potrebaPorovnani: 4, maxNejistota: 0.5, potrebaVyhry: false, potvrzenych: 30 },
     ];
-    assert.equal(textPravidelUrovni(urovne), 'Úrovně potvrzuje počet porovnání a jistota místa – Top 100: 2 porovnání · Top 50: 4 porovnání, nejistota ≤ 0,5 · Top 10: 9 porovnání, nejistota ≤ 0,25, výhra nad modelkou z top 20. Modelka, která je ještě nesplňuje, čeká těsně pod hranicí.');
+    assert.equal(textPravidelUrovni(urovne), 'Úrovně potvrzuje počet porovnání a jistota místa – Top 100: 2 porovnání · Top 50: 4 porovnání, nejistota ≤ 0,5 · Top 10: 9 porovnání, nejistota ≤ 0,25, výhra nad modelkou z top 20. Modelka, která je ještě nesplňuje, čeká těsně pod hranicí. Potvrzená v Top 10, 20 nebo 50 o místo nepřijde jen proto, že ji silou předstihla jiná: obhajuje ho, dokud s ní neprohraje v souboji.');
     assert.equal(textPravidelUrovni([]), '');
     assert.equal(textPravidelUrovni(undefined), '');
 
-    assert.deepEqual(textPoradiProfilu({ poradi: 3, urovenTop: 10, zmenaPoradi: 0 }), { poradi: '3. v oblíbenosti', uroven: 'Top 10', ceka: '', trend: null });
-    assert.deepEqual(textPoradiProfilu({ poradi: 11, urovenTop: 20, cekaNaTop: 10 }), { poradi: '11. v oblíbenosti', uroven: '', ceka: 'čeká na Top 10', trend: null });
+    assert.deepEqual(textPoradiProfilu({ poradi: 3, urovenTop: 10, zmenaPoradi: 0 }), { poradi: '3. v oblíbenosti', uroven: 'Top 10', ceka: '', obhajuje: '', trend: null });
+    assert.deepEqual(textPoradiProfilu({ poradi: 11, urovenTop: 20, cekaNaTop: 10 }), { poradi: '11. v oblíbenosti', uroven: '', ceka: 'čeká na Top 10', obhajuje: '', trend: null });
     assert.equal(textPoradiProfilu({ poradi: 140, urovenTop: 0 }).uroven, '');
 });
 
@@ -113,6 +113,8 @@ test('úrovně oblíbenosti: seskupení pořadí, čekající a nadpis souboje',
     assert.equal(nadpisSouboje({ druh: '', duvod: 'Stejná úroveň srdíček' }), '');
     assert.equal(nadpisSouboje({ druh: 'souboj', duvod: 'Souboj o top 10: Anna (11.) proti Báře (10.)' }), 'Souboj o Top 10');
     assert.equal(nadpisSouboje({ druh: 'souboj', duvod: 'Anna čeká na potvrzení do top 10 (5/8 porovnání): proti Báře (10.)' }), 'O postup do Top 10');
+    assert.equal(nadpisSouboje({ druh: 'souboj', duvod: 'Obhajoba top 20: Bára (20.) brání místo, Anna (21.) ji silou předstihla – rozhodne jejich souboj' }), 'Obhajoba Top 20');
+
     assert.equal(nadpisSouboje({ druh: 'souboj', duvod: 'Na hranici' }, { cekaNaTop: 50 }, { urovenTop: 50 }), 'Souboj o Top 50');
     assert.equal(nadpisSouboje({ druh: 'souboj', duvod: '' }), 'Souboj o místo');
 });
@@ -127,4 +129,19 @@ test('štítek úrovně z položky pořadí i z modelky', async () => {
     const p = stitekUrovne({ uroven: 20, mistoPodleSily: 4, ceka: { uroven: 10, porovnani: 5, potrebaPorovnani: 8, nejistota: 0.2, maxNejistota: 0.3, potrebaVyhry: true, maVyhru: true } });
     assert.equal(p.text, 'čeká na Top 10 (5/8 porovnání)');
     assert.match(p.title, /4\. místo – do Top 10[\s\S]*ještě 3 porovnání/);
+});
+
+test('obhajoba místa: štítky držitelky a vyzyvatelky', async () => {
+    const { textCekani, bublinaCekani, stitekObhajoby, stitekUrovne, textPoradiProfilu } = await import('../src/lib/oblibenost.js');
+    const ceka = { uroven: 10, porovnani: 12, potrebaPorovnani: 10, nejistota: 0.2, maxNejistota: 0.3, potrebaVyhry: true, maVyhru: true, drzitelka: 7 };
+    assert.equal(textCekani(ceka, 'Bára'), 'čeká na souboj o Top 10 (místo brání Bára)');
+    assert.equal(textCekani(ceka), 'čeká na souboj o Top 10');
+    assert.match(bublinaCekani(ceka, 9, 'Bára'), /patří na 9\. místo – do Top 10 a podmínky splňuje\.\nMísto ale obhajuje Bára/);
+    assert.equal(stitekObhajoby(null), null);
+    const s = stitekObhajoby({ uroven: 10, vyzyvatelka: 3 }, 'Anna');
+    assert.equal(s.text, 'obhajuje Top 10');
+    assert.match(s.title, /^Anna ji silou předstihla\. Místo v Top 10 jí ale zůstává, dokud s ní neprohraje/);
+    assert.equal(stitekUrovne({ uroven: 10, obhajoba: { uroven: 10, vyzyvatelka: 3 } }).text, 'Top 10 · obhajuje');
+    assert.equal(stitekUrovne({ urovenTop: 20, obhajujeTop: 20 }).text, 'Top 20 · obhajuje');
+    assert.equal(textPoradiProfilu({ poradi: 10, urovenTop: 10, obhajujeTop: 10 }).obhajuje, 'obhajuje');
 });

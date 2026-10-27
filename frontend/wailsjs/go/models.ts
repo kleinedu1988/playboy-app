@@ -28,6 +28,7 @@ export namespace main {
 	    maxNejistota: number;
 	    potrebaVyhry: boolean;
 	    maVyhru: boolean;
+	    drzitelka?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new CekaniNaUroven(source);
@@ -42,6 +43,7 @@ export namespace main {
 	        this.maxNejistota = source["maxNejistota"];
 	        this.potrebaVyhry = source["potrebaVyhry"];
 	        this.maVyhru = source["maVyhru"];
+	        this.drzitelka = source["drzitelka"];
 	    }
 	}
 	export class Clanek {
@@ -354,6 +356,7 @@ export namespace main {
 	    trendDni: number;
 	    urovenTop: number;
 	    cekaNaTop: number;
+	    obhajujeTop: number;
 	    pridano: string;
 	    netykaSe: string;
 	    odkazy: string;
@@ -409,6 +412,7 @@ export namespace main {
 	        this.trendDni = source["trendDni"];
 	        this.urovenTop = source["urovenTop"];
 	        this.cekaNaTop = source["cekaNaTop"];
+	        this.obhajujeTop = source["obhajujeTop"];
 	        this.pridano = source["pridano"];
 	        this.netykaSe = source["netykaSe"];
 	        this.odkazy = source["odkazy"];
@@ -584,6 +588,20 @@ export namespace main {
 	}
 	
 	
+	export class ObhajobaUrovne {
+	    uroven: number;
+	    vyzyvatelka: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ObhajobaUrovne(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.uroven = source["uroven"];
+	        this.vyzyvatelka = source["vyzyvatelka"];
+	    }
+	}
 	export class OblibenostModelky {
 	    modelkaId: number;
 	    jmeno: string;
@@ -605,6 +623,7 @@ export namespace main {
 	    mistoPodleSily: number;
 	    uroven: number;
 	    ceka?: CekaniNaUroven;
+	    obhajoba?: ObhajobaUrovne;
 	
 	    static createFrom(source: any = {}) {
 	        return new OblibenostModelky(source);
@@ -632,6 +651,7 @@ export namespace main {
 	        this.mistoPodleSily = source["mistoPodleSily"];
 	        this.uroven = source["uroven"];
 	        this.ceka = this.convertValues(source["ceka"], CekaniNaUroven);
+	        this.obhajoba = this.convertValues(source["obhajoba"], ObhajobaUrovne);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

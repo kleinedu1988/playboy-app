@@ -256,11 +256,19 @@ type vysledekSimulace struct {
 	medianPotvrzeni float64
 	nepotvrzenych   float64
 	soubojuPodil    float64
+	// Výpadky z potvrzené top 10 (mezi dvěma výpočty) za celou simulaci a z nich modelek skutečné top 10
+	vypadku10, vypadkuSkutecnych10 float64
 }
+
+// Simulace předává držitelky z výpočtu do výpočtu jako aplikace (varianta „bez obhajoby“ ne)
+var obhajobaVSimulaci = true
 
 func simulovatUrovne(semena []int64, body []int, varianta func()) vysledekSimulace {
 	puvodniPrahy, puvodniPodil := prahyUrovni, podilSouboju
-	defer func() { prahyUrovni, podilSouboju = puvodniPrahy, puvodniPodil }()
+	puvodniObhajoba := obhajobaDoUrovne
+	defer func() {
+		prahyUrovni, podilSouboju, obhajobaVSimulaci, obhajobaDoUrovne = puvodniPrahy, puvodniPodil, true, puvodniObhajoba
+	}()
 	varianta()
 	v := vysledekSimulace{body: make([]bodSimulace, len(body))}
 	var potvrzeni []float64
@@ -279,9 +287,24 @@ func simulovatUrovne(semena []int64, body []int, varianta func()) vysledekSimula
 		var porovnani []porovnaniZaznam
 		var nabidnute [][2]int
 		potvrzena := map[int]int{}
+		var drzitelky map[int]int
 		bod := 0
 		for bod < len(body) {
-			model := spocitatOblibenost(s.modelky, porovnani, nyni)
+			model := spocitatOblibenostUplne(s.modelky, porovnani, stavZajmu{}, drzitelky, nyni)
+			for id, u := range drzitelky {
+				if u == 10 && model.uroven[id] != 10 {
+					v.vypadku10++
+					if jeTop[10][id] {
+						v.vypadkuSkutecnych10++
+					}
+				}
+			}
+			drzitelky = potvrzeneUrovne(model.uroven)
+			if !obhajobaVSimulaci {
+				// Bez obhajoby: držitelky jen pro počítání výpadků
+				model = spocitatOblibenost(s.modelky, porovnani, nyni)
+				drzitelky = potvrzeneUrovne(model.uroven)
+			}
 			for id, u := range model.uroven {
 				if _, ok := potvrzena[id]; !ok && u == 10 && jeTop[10][id] {
 					potvrzena[id] = len(porovnani)
@@ -359,6 +382,7 @@ func simulovatUrovne(semena []int64, body []int, varianta func()) vysledekSimula
 		b.potvrzenych10, b.falesnych10, b.potvrzenych20, b.presnostPotvrzenych20 = b.potvrzenych10/k, b.falesnych10/k, b.potvrzenych20/k, b.presnostPotvrzenych20/k
 	}
 	v.nepotvrzenych /= k
+	v.vypadku10, v.vypadkuSkutecnych10 = v.vypadku10/k, v.vypadkuSkutecnych10/k
 	if len(potvrzeni) > 0 {
 		sort.Float64s(potvrzeni)
 		v.medianPotvrzeni = potvrzeni[len(potvrzeni)/2]
@@ -372,8 +396,10 @@ func simulovatUrovne(semena []int64, body []int, varianta func()) vysledekSimula
 // Simulace (bez -short): 400 modelek (340 hodnocených), po 10 dvojicích z vybratDvojice, odpovědi podle skutečných
 // sil. Měří přesnost prvních 10/20/50 míst ukázaného pořadí, kolik je potvrzených v top 10 a kolik z nich „falešných“
 // (mimo skutečnou top 10), a jak rychle se skutečná top 10 potvrdí. Varianty: bez prahů (dřívější pořadí podle
-// oblíbenosti, bez soubojů) a výchozí; s PLAYBOY_SIMULACE=vse (16 semínek, asi 5 minut) i prahy bez soubojů,
-// přísnější a mírnější prahy, bez výhry nad top 20 a víc nebo méně soubojů (tím se prahy a váhy ladily).
+// oblíbenosti, bez soubojů), výchozí a bez obhajoby; s PLAYBOY_SIMULACE=vse (16 semínek, asi 8 minut) i prahy bez soubojů,
+// přísnější a mírnější prahy, bez výhry nad top 20, víc nebo méně soubojů a obhajoba na jiných úrovních (tím se prahy
+// a váhy ladily). Výchozí varianta předává držitelky z výpočtu do výpočtu (obhajoba), „bez obhajoby“ ne; obě počítají
+// výpadky z potvrzené top 10.
 func TestSimulaceUrovni(t *testing.T) {
 	if testing.Short() {
 		t.Skip("simulace úrovní se v rychlém běhu nepouští")
@@ -391,6 +417,10 @@ func TestSimulaceUrovni(t *testing.T) {
 		{"bez prahů (dřív)", func() { prahyUrovni = nil }},
 		{"prahy bez soubojů", func() { podilSouboju = 0 }},
 		{"výchozí 10/6/4/2 + souboje 0,3", func() {}},
+		{"bez obhajoby", func() { obhajobaVSimulaci = false }},
+		{"obhajoba jen top 10", func() { obhajobaDoUrovne = 10 }},
+		{"obhajoba do top 20", func() { obhajobaDoUrovne = 20 }},
+		{"obhajoba i top 100", func() { obhajobaDoUrovne = 100 }},
 		{"souboje 0,1", func() { podilSouboju = 0.1 }},
 		{"souboje 0,2", func() { podilSouboju = 0.2 }},
 		{"souboje 0,45", func() { podilSouboju = 0.45 }},
@@ -408,17 +438,18 @@ func TestSimulaceUrovni(t *testing.T) {
 		}},
 	}
 	if !vse {
-		varianty = varianty[:3]
-		varianty[1] = varianty[2]
-		varianty = varianty[:2]
+		varianty = []struct {
+			nazev string
+			f     func()
+		}{varianty[0], varianty[2], varianty[3]}
 	}
 	vysledky := map[string]vysledekSimulace{}
 	for _, va := range varianty {
 		zacatek := time.Now()
 		v := simulovatUrovne(semena, body, va.f)
 		vysledky[va.nazev] = v
-		t.Logf("== %s (%v): souboje %.0f %% dvojic, skutečná top 10 potvrzená po mediánu %.0f porovnání, nepotvrzených do konce %.1f",
-			va.nazev, time.Since(zacatek).Round(time.Second), 100*v.soubojuPodil, v.medianPotvrzeni, v.nepotvrzenych)
+		t.Logf("== %s (%v): souboje %.0f %% dvojic, skutečná top 10 potvrzená po mediánu %.0f porovnání, nepotvrzených do konce %.1f, výpadků z top 10 %.1f (skutečných top 10 %.1f)",
+			va.nazev, time.Since(zacatek).Round(time.Second), 100*v.soubojuPodil, v.medianPotvrzeni, v.nepotvrzenych, v.vypadku10, v.vypadkuSkutecnych10)
 		t.Logf("   porovnání | P@10 | P@20 | P@50 | potvrzených top 10 | z nich falešných | potvrzených top 20 | z top 20 trefených")
 		for _, b := range v.body {
 			t.Logf("   %9d | %.2f | %.2f | %.2f | %18.1f | %16.1f | %18.1f | %.2f", b.porovnani, b.presnost10, b.presnost20, b.presn50,
@@ -431,7 +462,146 @@ func TestSimulaceUrovni(t *testing.T) {
 	if s.body[posledni].presnost10 < bez.body[posledni].presnost10-0.1 {
 		t.Errorf("P@10 s prahy %.2f, bez %.2f", s.body[posledni].presnost10, bez.body[posledni].presnost10)
 	}
+	// Obhajoba nesmí skutečnou top 10 vyhazovat častěji než bez ní (šum 6 semínek)
+	if bezObh := vysledky["bez obhajoby"]; s.vypadkuSkutecnych10 > bezObh.vypadkuSkutecnych10+0.5 {
+		t.Errorf("výpadky skutečné top 10 s obhajobou %.1f, bez %.1f", s.vypadkuSkutecnych10, bezObh.vypadkuSkutecnych10)
+	}
 	if b := s.body[posledni]; b.potvrzenych10 < 5 || b.falesnych10/b.potvrzenych10 > 1-bez.body[posledni].presnost10+0.05 {
 		t.Errorf("potvrzená top 10: %.1f, falešných %.1f (bez prahů přesnost %.2f)", b.potvrzenych10, b.falesnych10, bez.body[posledni].presnost10)
+	}
+}
+
+// Obhajoba: držitelka top 10, kterou silou předstihla jiná, místo drží, dokud s ní vyzyvatelka v posledním
+// rozhodnutém vzájemném porovnání nevyhraje; bez souboje ho ztratí jen pod oknem 2·N nebo bez prahů
+func TestObhajobaUrovne(t *testing.T) {
+	n := 40
+	drzitelky := map[int]int{}
+	for id := 1; id <= n; id++ {
+		drzitelky[id] = urovenIndexu(indexMista(id))
+	}
+	vypocet := func(upravit func(sily []float64, pocet []int), navic ...porovnaniZaznam) *modelOblibenosti {
+		sily, pocet := make([]float64, n), make([]int, n)
+		for i := range n {
+			sily[i], pocet[i] = 5-0.05*float64(i), 10
+		}
+		upravit(sily, pocet)
+		var porovnani []porovnaniZaznam
+		for id := 1; id <= n; id++ {
+			if id != 20 {
+				porovnani = append(porovnani, porovnaniZaznam{a: id, b: 20, vysledek: "a"})
+			}
+		}
+		m := modelUrovni(sily, pocet, nil)
+		m.drzitelky = drzitelky
+		m.spocitatUrovne(append(porovnani, navic...))
+		overitPermutaci(t, m)
+		return m
+	}
+	// Jedenáctá silou předstihla desátou
+	predstihla := func(sily []float64, _ []int) { sily[10] = sily[9] + 0.01 }
+	obhajuje := func(m *modelOblibenosti, chci bool) {
+		t.Helper()
+		ma := m.poradi[10] == 10 && m.poradi[11] == 11 && m.uroven[10] == 10 && m.uroven[11] == 20 &&
+			m.obhajoba[10] == ObhajobaUrovne{Uroven: 10, Vyzyvatelka: 11} && m.vyzyva[11] == 10 && m.ceka[11].Drzitelka == 10 && m.ceka[11].Uroven == 10
+		bez := m.poradi[11] == 10 && m.poradi[10] == 11 && m.uroven[11] == 10 && m.obhajoba[10].Uroven == 0 && m.ceka[11].Uroven == 0
+		if (chci && !ma) || (!chci && !bez) {
+			t.Errorf("obhajoba %v: místa 10./11. %d/%d, úrovně %d/%d, obhajoba %+v, čeká %+v", chci, m.poradi[10], m.poradi[11],
+				m.uroven[10], m.uroven[11], m.obhajoba[10], m.ceka[11])
+		}
+	}
+	obhajuje(vypocet(predstihla), true)
+	vyhra := porovnaniZaznam{a: 11, b: 10, vysledek: "a"}
+	obhajuje(vypocet(predstihla, vyhra), false)
+	// Remíza po výhře nic nemění, odveta držitelky obhajobu vrátí
+	obhajuje(vypocet(predstihla, vyhra, porovnaniZaznam{a: 10, b: 11, vysledek: "remiza"}), false)
+	obhajuje(vypocet(predstihla, vyhra, porovnaniZaznam{a: 10, b: 11, vysledek: "a"}), true)
+	// Desátá silou až 25.: top 10 neobhájí (okno 2·N), top 20 ano – proti všem pěti silnějším, které by místo vzaly
+	m := vypocet(func(sily []float64, _ []int) { sily[9] = sily[24] - 0.001 })
+	if m.poradi[10] != 20 || m.uroven[10] != 20 || m.obhajoba[10] != (ObhajobaUrovne{Uroven: 20, Vyzyvatelka: 21}) || m.poradi[11] != 10 {
+		t.Errorf("pád pod okno: místo %d, úroveň %d, obhajoba %+v", m.poradi[10], m.uroven[10], m.obhajoba[10])
+	}
+	for id := 21; id <= 25; id++ {
+		if m.vyzyva[id] != 10 || m.ceka[id].Drzitelka != 10 || m.ceka[id].Uroven != 20 || m.poradi[id] != id {
+			t.Errorf("vyzyvatelka %d: místo %d, čeká %+v", id, m.poradi[id], m.ceka[id])
+		}
+	}
+	// Bez obhajoby: bez prahů top 10, nebo bez držitelek
+	obhajuje(vypocet(func(sily []float64, pocet []int) { sily[10] = sily[9] + 0.01; pocet[9] = 8 }), false)
+	puvodni := drzitelky
+	drzitelky = nil
+	obhajuje(vypocet(predstihla), false)
+	drzitelky = puvodni
+
+	// Souboj o obhajobu má ve výběru přednost a důvod ho pojmenuje
+	m = vypocet(predstihla)
+	var modelky []Modelka
+	for id := 1; id <= n; id++ {
+		modelky = append(modelky, Modelka{ID: id, Jmeno: fmt.Sprintf("M%02d", id), Hodnoceni: 4})
+	}
+	kandidati := m.kandidatiSouboju(modelky, nil, func(*Modelka) float64 { return 1 })
+	if len(kandidati) == 0 || kandidati[0].druh != dvojiceObhajoba || kandidati[0].a != 11 || kandidati[0].b != 10 {
+		t.Fatalf("první kandidát souboje: %+v", kandidati[:min(1, len(kandidati))])
+	}
+	if d := duvodSouboje(kandidati[0], m); d != "Obhajoba top 10: M10 (10.) brání místo, M11 (11.) ji silou předstihla – rozhodne jejich souboj" {
+		t.Errorf("důvod obhajoby: %q", d)
+	}
+	for _, k := range kandidati[1:] {
+		if k.druh == dvojiceCekajici && k.a == 11 {
+			t.Errorf("vyzyvatelka i mezi čekajícími: %+v", k)
+		}
+	}
+}
+
+// Držitelky v databázi učení: stav po porovnání, nezapisuje se beze změny, vrácení porovnání vrátí předchozí
+func TestDrzitelkyVDatabazi(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	for _, j := range []string{"A", "B"} {
+		a.AddModelka(Modelka{Jmeno: j, Tetovani: -1, Piercing: -1})
+		a.SetHodnoceni(idModelky(t, a, j), 4)
+	}
+	ida, idb := idModelky(t, a, "A"), idModelky(t, a, "B")
+	u := a.uc
+	// Se zámkem databáze učení (Fatal uvnitř by zámek nechal zamčený a úklid aplikace by se zasekl)
+	sZamkem := func(f func()) {
+		u.mu.Lock()
+		defer u.mu.Unlock()
+		f()
+	}
+	var chyba string
+	sZamkem(func() {
+		// Bez porovnání nikdo potvrzený (stav 0 už mohl zapsat výpočet při přidání modelek)
+		if d, _ := u.nacistDrzitelky(0); len(d) != 0 {
+			chyba = fmt.Sprintf("prázdná databáze: %v", d)
+			return
+		}
+		u.zapsatDrzitelky(0, map[int]int{ida: 10, idb: 0})
+		if d, stejne := u.nacistDrzitelky(0); len(d) != 1 || d[ida] != 10 || !stejne(map[int]int{ida: 10, idb: 0}) || stejne(map[int]int{ida: 20}) {
+			chyba = fmt.Sprintf("po zápisu: %v", d)
+		}
+	})
+	if chyba != "" {
+		t.Fatal(chyba)
+	}
+	if !a.PorovnatModelky(idb, ida, "a") {
+		t.Fatal("porovnání")
+	}
+	a.GetOblibenost()
+	var posledni int64
+	var stavu int
+	sZamkem(func() {
+		posledni = posledniPorovnani(u.nacistPorovnani())
+		u.zajistit().QueryRow("SELECT COUNT(DISTINCT porovnani_id) FROM drzitelky_urovni").Scan(&stavu)
+		u.zapsatDrzitelky(posledni, map[int]int{idb: 10})
+	})
+	if posledni == 0 || stavu != 2 {
+		t.Fatalf("po porovnání %d: stavů držitelek %d", posledni, stavu)
+	}
+	if !a.VratitPorovnani() {
+		t.Fatal("vrácení")
+	}
+	var d map[int]int
+	sZamkem(func() { d, _ = u.nacistDrzitelky(posledni + 5) })
+	if len(d) != 1 || d[ida] != 10 {
+		t.Fatalf("po vrácení: %v", d)
 	}
 }

@@ -113,10 +113,15 @@ const (
 	dvojiceVzdalena           // srdíčka se liší o jedno
 	dvojiceCekajici           // souboj: čekající na potvrzení úrovně proti poslední potvrzené
 	dvojiceHranice            // souboj: N. proti N+1. místu
+	dvojiceObhajoba           // souboj: vyzyvatelka proti držitelce, která místo obhajuje
 )
 
+func jeSouboj(druh int) bool {
+	return druh == dvojiceCekajici || druh == dvojiceHranice || druh == dvojiceObhajoba
+}
+
 func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
-	if k.druh == dvojiceCekajici || k.druh == dvojiceHranice {
+	if jeSouboj(k.druh) {
 		return duvodSouboje(k, model)
 	}
 	nizsi, vyssi := textSrdicek(min(k.x.Hodnoceni, k.y.Hodnoceni)), textSrdicek(max(k.x.Hodnoceni, k.y.Hodnoceni))
@@ -304,7 +309,7 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 			a, b = b, a
 		}
 		d := DvojicePorovnani{A: a, B: b, Duvod: duvod}
-		if k.druh == dvojiceCekajici || k.druh == dvojiceHranice {
+		if jeSouboj(k.druh) {
 			d.Druh = "souboj"
 		}
 		vysledek = append(vysledek, d)

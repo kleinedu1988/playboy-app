@@ -118,6 +118,8 @@ type Modelka struct {
 	// čeká (podle síly by tam patřila, ale nesplňuje prahy; 0 = nic), jen pro čtení (oblibenost_urovne.go)
 	UrovenTop int `json:"urovenTop"`
 	CekaNaTop int `json:"cekaNaTop"`
+	// Úroveň, kterou obhajuje proti silnější vyzyvatelce (0 = nic), jen pro čtení
+	ObhajujeTop int `json:"obhajujeTop"`
 
 	// Kdy byla modelka přidána (RRRR-MM-DD HH:MM:SS); prázdné u záznamů starších než tento údaj
 	Pridano string `json:"pridano"`

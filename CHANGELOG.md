@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.48] – 2026-10-27
+
+### Přidáno
+- **Obhajoba místa v Top 10, 20 a 50: sestup je stejně těžký jako postup.**
+  - Potvrzená modelka o místo nepřijde jen proto, že ji silou předstihla jiná. Drží ho, dokud s ní vyzyvatelka neprohraje ve vzájemném souboji; remíza se nepočítá.
+  - Bez souboje místo ztratí, jen když přestane splňovat prahy úrovně nebo silou klesne pod dvojnásobek hranice (u Top 10 pod 20. místo).
+  - Porovnávání nabízí souboj o obhajobu přednostně, se štítkem „Obhajoba Top 10“. Po souboji přijde upozornění „Bára obhájila Top 10“ nebo „… prohrála souboj a vypadla z Top 10“.
+  - Pořadí ukazuje „🛡 obhajuje Top 10“ a „⚔ čeká na souboj o Top 10 (místo brání …)“, profil „Top 10 · 🛡 obhajuje“.
+  - Vrácení porovnání vrátí i obhajobu.
+  - V simulaci vypadávají z potvrzené Top 10 modelky, které tam skutečně patří, o třetinu méně a přesnost pořadí se nezhorší.
+
 ## [0.99.47] – 2026-10-27
 
 ### Přidáno

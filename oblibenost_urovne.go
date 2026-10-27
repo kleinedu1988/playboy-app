@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"sort"
 	"strings"
@@ -13,6 +14,13 @@ import (
 // těsně pod hranicí té úrovně; číslo oblíbenosti se nemění, mění se jen pořadí (model.poradi, pořadí podle síly je
 // v model.mistoSily). Výběr dvojic (oblibenost_dvojice.go) přidává souboje na hranicích, aby se čekající rychle
 // potvrdila, nebo vypadla.
+//
+// Obhajoba (top 10, 20 a 50): sestup je stejně těžký jako postup. Modelka potvrzená v top N (držitelka z minulého výpočtu) o místo
+// nepřijde jen proto, že ji silou předstihla jiná: dokud s ní vyzyvatelka v posledním rozhodnutém vzájemném
+// porovnání nevyhraje (remíza se nepočítá), držitelka místo obhajuje a vyzyvatelka čeká těsně pod hranicí. Souboj
+// o obhajobu má ve výběru dvojic přednost. Bez souboje držitelka místo ztratí, jen když prahy úrovně přestane
+// splňovat nebo klesne silou pod místo 2·N. Držitelky se ukládají po každém porovnání (tabulka drzitelky_urovni),
+// takže vrácení porovnání vrátí i obhajobu.
 
 // Úroveň Top N v rozhraní (StavOblibenosti.Urovne): prahy pro texty a kolik modelek v ní potvrzeně je
 type UrovenTop struct {
@@ -32,6 +40,14 @@ type CekaniNaUroven struct {
 	MaxNejistota     float64 `json:"maxNejistota"`
 	PotrebaVyhry     bool    `json:"potrebaVyhry"`
 	MaVyhru          bool    `json:"maVyhru"`
+	// Prahy splňuje, ale místo obhajuje tahle držitelka: do úrovně se dostane, až ji porazí (0 = nikdo)
+	Drzitelka int `json:"drzitelka,omitempty"`
+}
+
+// Držitelka obhajuje úroveň proti silnější vyzyvatelce
+type ObhajobaUrovne struct {
+	Uroven      int `json:"uroven"`
+	Vyzyvatelka int `json:"vyzyvatelka"`
 }
 
 // Prahy úrovně: aspoň tolik porovnání, nejistota síly (směrodatná odchylka na stupnici srdíček) nejvýš tolik a u top
@@ -65,7 +81,15 @@ const (
 	// oblíbenosti rozdílné nejvýš o tolik
 	soupererekSouboje = 3
 	blizkoSouboje     = 0.15
+	// Souboj o obhajobu má před ostatními souboji přednost (váha čekající proti poslední potvrzené je nejvýš 1)
+	vahaObhajoby = 1.5
 )
+
+// Obhajoba platí pro úrovně do top N (proměnná kvůli simulaci v testu). V simulaci (16 semínek, 1500 porovnání)
+// obhajoba do top 50 snížila výpadky skutečné top 10 z potvrzené top 10 z 1,8 na 1,2 bez ztráty přesnosti
+// (P@10 0,77 proti 0,76, P@50 0,82 stejně); s top 100 souboje o obhajobu zabraly celý podíl soubojů a P@50 kleslo
+// na 0,76, jen s top 10 nepomohla.
+var obhajobaDoUrovne = 50
 
 // Podíl soubojů ze všech dvojic výběru (dokud nějaké jsou; proměnná kvůli simulaci v testu). V simulaci
 // 0,1 potvrdí skutečnou top 10 po mediánu 590 porovnání, 0,2 po 370, 0,3 po 280, 0,45 po 230 (souboje jsou pak
@@ -160,8 +184,8 @@ func (m *modelOblibenosti) spocitatUrovne(porovnani []porovnaniZaznam) {
 			m.maVyhru[p.b] = true
 		}
 	}
-	if len(m.maVyhru) > 0 {
-		poradi, uroven = m.seraditPodleUrovni(ids, zpusobilost(m.maVyhru))
+	if len(m.maVyhru) > 0 || len(m.drzitelky) > 0 {
+		poradi, uroven = m.obhajitUrovne(ids, zpusobilost(m.maVyhru), nejistota, porovnani)
 	}
 
 	m.poradi, m.uroven, m.ceka = make(map[int]int, len(ids)), make(map[int]int, len(ids)), map[int]CekaniNaUroven{}
@@ -173,14 +197,168 @@ func (m *modelOblibenosti) spocitatUrovne(porovnani []porovnaniZaznam) {
 				m.potvrzenych[k]++
 			}
 		}
-		// Čeká: podle síly patří do vyšší úrovně, než má potvrzeno (ta prahy nesplňuje; okno je splněné vždy)
-		ks := indexMista(i + 1)
-		if ks < len(prahyUrovni) && (uroven[i] == 0 || uroven[i] > prahyUrovni[ks].uroven) {
+		// Čeká: podle síly patří do vyšší úrovně, než má potvrzeno (ta prahy nesplňuje; okno je splněné vždy), nebo
+		// prahy splňuje, ale místo obhajuje držitelka
+		ks, drzitelka := indexMista(i+1), m.vyzyva[id]
+		if drzitelka > 0 {
+			ks = indexMista(m.obhajoba[drzitelka].Uroven)
+		}
+		if ks < len(prahyUrovni) && (drzitelka > 0 || uroven[i] == 0 || uroven[i] > prahyUrovni[ks].uroven) {
 			p := prahyUrovni[ks]
 			m.ceka[id] = CekaniNaUroven{Uroven: p.uroven, Porovnani: m.pocet[id], PotrebaPorovnani: p.porovnani,
-				Nejistota: zaokrouhlit3(nejistota[i]), MaxNejistota: p.nejistota, PotrebaVyhry: p.vyhra, MaVyhru: m.maVyhru[id]}
+				Nejistota: zaokrouhlit3(nejistota[i]), MaxNejistota: p.nejistota, PotrebaVyhry: p.vyhra, MaVyhru: m.maVyhru[id], Drzitelka: drzitelka}
 		}
 	}
+}
+
+// Obhajoba míst (popis nahoře) nad způsobilostí z (index úrovně ke každému indexu ids, jako pro seraditPodleUrovni):
+// úroveň po úrovni od top 10 porovná potvrzené s držitelkami. Držitelka, která z úrovně vypadla, ale prahy (bez
+// výhry, tu už jednou splnila) a okno 2·N dál splňuje, místo obhájí proti nejslabší nové modelce v úrovni, která ji
+// v posledním rozhodnutém vzájemném porovnání neporazila; ta je pro úroveň nezpůsobilá a čeká. Silnější vypadlé
+// párují napřed. Po každém kole se pořadí přepočítá a kolo se opakuje, dokud na uvolněné místo přichází další
+// (všechny musí držitelku porazit); posun v top 10 pak promítne i do top 20.
+func (m *modelOblibenosti) obhajitUrovne(ids []int, zpusobila []int, nejistota []float64, porovnani []porovnaniZaznam) (poradi, uroven []int) {
+	z := append([]int(nil), zpusobila...)
+	m.obhajoba, m.vyzyva = map[int]ObhajobaUrovne{}, map[int]int{}
+	poradi, uroven = m.seraditPodleUrovni(ids, z)
+	if len(m.drzitelky) == 0 {
+		return poradi, uroven
+	}
+	// Vítězka posledního rozhodnutého vzájemného porovnání (remíza nic nemění)
+	vitezka := map[[2]int]int{}
+	for _, p := range porovnani {
+		switch p.vysledek {
+		case "a":
+			vitezka[klicDvojice(p.a, p.b)] = p.a
+		case "b":
+			vitezka[klicDvojice(p.a, p.b)] = p.b
+		}
+	}
+	for k, p := range prahyUrovni {
+		if p.uroven > obhajobaDoUrovne {
+			break
+		}
+		// Dokud se úroveň neustálí: po zablokování vyzyvatelky může na uvolněné místo přijít další silnější
+		for {
+			var vypadle, nove []int
+			for i, id := range ids {
+				d := m.drzitelky[id]
+				drzela, je := d > 0 && d <= p.uroven, uroven[i] > 0 && uroven[i] <= p.uroven
+				switch {
+				case drzela && !je && !m.jenOdhad[id] && m.pocet[id] >= p.porovnani && nejistota[i] <= p.nejistota+1e-9 && i+1 <= oknoUrovne*p.uroven:
+					vypadle = append(vypadle, i)
+				case je && !drzela:
+					nove = append(nove, i)
+				}
+			}
+			pouzita, zmena := map[int]bool{}, false
+			for _, i := range vypadle {
+				for j := len(nove) - 1; j >= 0; j-- {
+					y := nove[j]
+					if pouzita[y] || vitezka[klicDvojice(ids[i], ids[y])] == ids[y] {
+						continue
+					}
+					pouzita[y], zmena = true, true
+					z[i], z[y] = min(z[i], k), max(z[y], k+1)
+					// Vyzyvatelkou je první, kdo by místo vzal; další zablokované čekají na souboj se stejnou
+					if _, ok := m.obhajoba[ids[i]]; !ok {
+						m.obhajoba[ids[i]] = ObhajobaUrovne{Uroven: p.uroven, Vyzyvatelka: ids[y]}
+					}
+					m.vyzyva[ids[y]] = ids[i]
+					break
+				}
+			}
+			if !zmena {
+				break
+			}
+			poradi, uroven = m.seraditPodleUrovni(ids, z)
+		}
+	}
+	return poradi, uroven
+}
+
+// Držitelky úrovní pro obhajobu: stav po posledním porovnání ≤ posledni (po vrácení porovnání ten před ním); stejne
+// řekne, jestli nový výpočet dal tytéž držitelky pod stejným porovnáním (pak se nic nezapisuje). Volá se se zámkem.
+func (u *uceni) nacistDrzitelky(posledni int64) (drzitelky map[int]int, stejne func(map[int]int) bool) {
+	stejne = func(map[int]int) bool { return false }
+	db := u.zajistit()
+	if db == nil {
+		return nil, func(map[int]int) bool { return true }
+	}
+	var stav int64 = -1
+	if db.QueryRow("SELECT COALESCE(MAX(porovnani_id), -1) FROM drzitelky_urovni WHERE porovnani_id <= ?", posledni).Scan(&stav) != nil || stav < 0 {
+		return nil, stejne
+	}
+	radky, err := db.Query("SELECT modelka_id, uroven FROM drzitelky_urovni WHERE porovnani_id = ? AND modelka_id > 0", stav)
+	if err != nil {
+		return nil, stejne
+	}
+	defer radky.Close()
+	drzitelky = map[int]int{}
+	for radky.Next() {
+		var id, uroven int
+		if radky.Scan(&id, &uroven) == nil {
+			drzitelky[id] = uroven
+		}
+	}
+	if stav == posledni {
+		puvodni := drzitelky
+		stejne = func(uroven map[int]int) bool { return maps.Equal(puvodni, potvrzeneUrovne(uroven)) }
+	}
+	return drzitelky, stejne
+}
+
+// Zápis držitelek po porovnání posledni; drží se jen posledních pametDrzitelek stavů (na vracení porovnání)
+func (u *uceni) zapsatDrzitelky(posledni int64, uroven map[int]int) {
+	db := u.zajistit()
+	if db == nil {
+		return
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return
+	}
+	defer tx.Rollback()
+	if _, err := tx.Exec("DELETE FROM drzitelky_urovni WHERE porovnani_id >= ?", posledni); err != nil {
+		return
+	}
+	prikaz, err := tx.Prepare("INSERT INTO drzitelky_urovni (porovnani_id, modelka_id, uroven) VALUES (?, ?, ?)")
+	if err != nil {
+		return
+	}
+	defer prikaz.Close()
+	if _, err := prikaz.Exec(posledni, 0, 0); err != nil {
+		return
+	}
+	for id, u := range potvrzeneUrovne(uroven) {
+		if _, err := prikaz.Exec(posledni, id, u); err != nil {
+			varovatUceni("držitelky úrovní se nezapsaly: %v", err)
+			return
+		}
+	}
+	tx.Exec("DELETE FROM drzitelky_urovni WHERE porovnani_id NOT IN (SELECT DISTINCT porovnani_id FROM drzitelky_urovni ORDER BY porovnani_id DESC LIMIT ?)", pametDrzitelek)
+	tx.Commit()
+}
+
+// Kolik posledních stavů držitelek se pamatuje (tolikrát jde vrátit porovnání se správnou obhajobou)
+const pametDrzitelek = 50
+
+// Jen potvrzené (úroveň > 0)
+func potvrzeneUrovne(uroven map[int]int) map[int]int {
+	v := make(map[int]int, len(uroven))
+	for id, u := range uroven {
+		if u > 0 {
+			v[id] = u
+		}
+	}
+	return v
+}
+
+func posledniPorovnani(porovnani []porovnaniZaznam) int64 {
+	if len(porovnani) == 0 {
+		return 0
+	}
+	return porovnani[len(porovnani)-1].id
 }
 
 // Plnění pořadí místo po místě (krok 3 výše): ids podle síly, zpusobila = index úrovně, pro kterou je modelka
@@ -295,9 +473,18 @@ func (m *modelOblibenosti) kandidatiSouboju(modelky []Modelka, vyloucene map[[2]
 			druh: druh, x: x, y: y, urovenTop: prahyUrovni[k].uroven})
 		return true
 	}
+	// (o) vyzyvatelka proti držitelce, která místo obhajuje: přednost před ostatními souboji
+	for _, x := range podleSily {
+		if x == nil {
+			continue
+		}
+		if d, ok := m.vyzyva[x.ID]; ok {
+			pridat(x, podleId[d], vahaObhajoby, dvojiceObhajoba, indexMista(m.obhajoba[d].Uroven))
+		}
+	}
 	// (a) čekající proti posledním potvrzeným v úrovni
 	for _, x := range podleSily[:min(len(podleSily), prahyUrovni[len(prahyUrovni)-1].uroven)] {
-		if x == nil {
+		if x == nil || m.vyzyva[x.ID] > 0 {
 			continue
 		}
 		c, ok := m.ceka[x.ID]
@@ -355,6 +542,10 @@ func duvodSouboje(k kandidatDvojice, model *modelOblibenosti) string {
 			return fmt.Sprintf("modelka č. %d", x.ID)
 		}
 		return x.Jmeno
+	}
+	if k.druh == dvojiceObhajoba {
+		return fmt.Sprintf("Obhajoba top %d: %s (%d.) brání místo, %s (%d.) ji silou předstihla – rozhodne jejich souboj", k.urovenTop,
+			jmeno(k.y), model.poradi[k.y.ID], jmeno(k.x), model.poradi[k.x.ID])
 	}
 	if k.druh == dvojiceHranice {
 		return fmt.Sprintf("Souboj o top %d: %s (%d.), nebo %s (%d.)? Silou jsou si blízko", k.urovenTop,

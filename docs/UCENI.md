@@ -45,6 +45,7 @@ nehodnocených modelek.
 | `stav` | čas posledního otevření (zkouška zápisu) |
 | `porovnani` | (úprava č. 2) porovnání dvojic: čas, modelky `a` a `b`, `vysledek` (`a`, `b`, `remiza`), srdíčka obou v tu chvíli (`hodnoceni_a`, `hodnoceni_b`, po polovinách) |
 | `zajem` | (úprava č. 3) zájem o modelky: čas, modelka, `druh` (`profil` = otevření profilu, `fotky` = prohlížení jejích fotek) a `sekund` prohlížení; starší dvou let se maže |
+| `drzitelky_urovni` | (úprava č. 4) držitelky úrovní Top N pro obhajobu místa: `porovnani_id` (poslední porovnání, po kterém stav platí), modelka, `uroven`; řádek s modelkou 0 značí stav (i prázdný); drží se posledních 50 stavů, vrácení porovnání smaže stavy po něm |
 | `historie_oblibenosti` | (úprava č. 3) denní snímky oblíbenosti: `den`, modelka, `oblibenost`, `poradi` (potvrzené; řádek s modelkou 0 a `poradi` 1 značí snímek s potvrzeným pořadím); po 60 dnech jen pondělní, po 400 dnech nic |
 
 - **Zapomenout** (`ZapomenoutUceni`): databáze učení se nejdřív zazálohuje do složky záloh jako
@@ -254,14 +255,14 @@ sbírky ani exportu.
 | `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání, zájmu a historie oblíbenosti |
 | `ZaznamenatZajem(id, druh, sekund) bool` | zájem o modelku: `druh` `"profil"` (stejná modelka nejvýš jednou za 10 minut) nebo `"fotky"` (`sekund` prohlížení, 3–1800); změnu dat neohlašuje |
 | `GetPrehledOblibenosti() PrehledOblibenosti` | úvod Přehledu: `top` (jen potvrzené v top 10 – dokud jich není deset, méně, i žádná), `stoupaji` a `klesaji` (posun aspoň o 3 místa a 3 % délky pořadí, nejvýš 10), `dlouhoNevidene` (z horní třicítky ty, jejichž profil ani fotky jsi 30 dní neviděl; `dni` = −1 nikdy; až se zájem sleduje aspoň 30 dní), `trendDni`, `zajemDni`; položky `modelkaId`, `jmeno`, `hodnoceni`, `poradi` (potvrzené), `zmenaPoradi`, `dni`, `uroven` (potvrzená úroveň Top N, 0 = mimo top 100) |
-| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `hodnocenych` (hodnocené modelky), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `urovne` (Top 10, 20, 50, 100: `uroven`, prahy `potrebaPorovnani`, `maxNejistota`, `potrebaVyhry` a `potvrzenych`), `cekajicich` (modelky čekající na potvrzení úrovně), `poradi` – hodnocené a porovnávané modelky v potvrzeném pořadí: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi` (potvrzené), `mistoPodleSily` (bez prahů), `uroven` (10/20/50/100, 0 = mimo top 100), `ceka` (jen když by podle síly patřila výš, než má potvrzeno: `uroven`, `porovnani`/`potrebaPorovnani`, `nejistota`/`maxNejistota`, `potrebaVyhry`, `maVyhru`), `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `jenOdhad` a `zdrojOdhadu` (nehodnocená neporovnaná jen odhadem podle vkusu nebo fotek), `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
+| `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `hodnocenych` (hodnocené modelky), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `urovne` (Top 10, 20, 50, 100: `uroven`, prahy `potrebaPorovnani`, `maxNejistota`, `potrebaVyhry` a `potvrzenych`), `cekajicich` (modelky čekající na potvrzení úrovně), `poradi` – hodnocené a porovnávané modelky v potvrzeném pořadí: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi` (potvrzené), `mistoPodleSily` (bez prahů), `uroven` (10/20/50/100, 0 = mimo top 100), `ceka` (jen když by podle síly patřila výš, než má potvrzeno: `uroven`, `porovnani`/`potrebaPorovnani`, `nejistota`/`maxNejistota`, `potrebaVyhry`, `maVyhru`, `drzitelka` – splňuje prahy, ale místo obhajuje tahle modelka), `obhajoba` (držitelka, kterou silou předstihla jiná: `uroven`, `vyzyvatelka`), `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `jenOdhad` a `zdrojOdhadu` (nehodnocená neporovnaná jen odhadem podle vkusu nebo fotek), `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
 | `GetMohloByTeLibit(pocet) []OblibenostModelky` | nehodnocené modelky s nejvyšším odhadem a důvodem (`odhad`, `duvod`; `sila` = nezaokrouhlený odhad, `nejistota` = chyba ověření u modelek s podobně bohatými údaji) |
 | `GetNavrhSrdicek(id) NavrhSrdicek` | návrh srdíček – jediné místo, které je navrhuje: nehodnocené `hodnoceni` (úroveň síly po polovinách; 0 = zatím ne – méně než 3 porovnání nebo nejistota nad 0,6) s `porovnani`, `vyhry`, `nejistota`; hodnocené návrh z nesouladu se srdíčky (`nesoulad`, viz Nesoulad se srdíčky) |
 | `GetDuvodOdhadu(id) string` | důvod ukázaného odhadu nehodnocené modelky („Odhad 4 srdíčka: blond, 70. léta, Pompeo Posar; podobně jako Anna (4½) a Bára (4)“), jinak `""`; štítek „odhad“ si ho načte při prvním najetí myší |
 | `GetNahledyModelek(ids, pocet) map[int][]NahledFotky` | náhledy fotek modelek pro porovnání (nejvýš `pocet`, 1–24; nejvýš 100 modelek): `id` fotky, `url` (šablona s `{velikost}`), `album`, `typ`, `hodnoceni` (srdíčka fotky), `rotace`; neznámá modelka nebo bez fotek má `[]` |
 | `Modelka.oblibenost` | srdíčka upřesněná skóre fotek a porovnáním (nejvýš ±0,49: o půl srdíčka se pořadí přehodit může, o celé ne); nehodnocená porovnávaná má sílu z porovnání, ostatní 0 |
 | `Modelka.poradi`, `zmenaPoradi`, `trendDni` | potvrzené pořadí oblíbenosti od 1 (0 = mimo pořadí; oddíl Úrovně Top 10/20/50/100), o kolik míst výš než ve srovnávacím snímku (záporné = níž) a jeho stáří ve dnech (0 = trend zatím není) |
-| `Modelka.urovenTop`, `cekaNaTop` | potvrzená úroveň Top N (10, 20, 50, 100; 0 = mimo top 100) a úroveň, na jejíž potvrzení čeká (0 = nic) |
+| `Modelka.urovenTop`, `cekaNaTop`, `obhajujeTop` | potvrzená úroveň Top N (10, 20, 50, 100; 0 = mimo top 100), úroveň, na jejíž potvrzení čeká (0 = nic), a úroveň, kterou obhajuje proti silnější vyzyvatelce (0 = nic) |
 | `Modelka.odhadHodnoceni` | odhad modelu vkusu po polovinách jen u nehodnocené modelky ze skupiny údajů, kde odhad na ověření jasně překonal průměr, jinak 0 |
 
 ## Bradley–Terry
@@ -508,7 +509,20 @@ trend, historie, Přehled i výběr dvojic) a úroveň. Pořadí jen podle oblí
 proti `maxNejistota`, `potrebaVyhry` a `maVyhru`). `GetOblibenost` k tomu vrací `urovne` (prahy a počet potvrzených
 v každé úrovni) a `cekajicich`. Přehled ukazuje v Top jen potvrzené v top 10 – dokud jich není deset, méně, i žádnou.
 
-**Souboje ve výběru dvojic** (jen výchozí okruh): (a) čekající proti poslední potvrzené v úrovni, kam by patřila
+**Obhajoba** (top 10, 20 a 50): sestup je stejně těžký jako postup. Výpočet dostane držitelky z minulého výpočtu
+(`drzitelky_urovni`, stav po posledním porovnání, které ještě platí) a po úrovních od top 10 porovná, kdo z úrovně
+vypadl a kdo do ní nově přišel. Držitelka, která vypadla, ale prahy úrovně (bez výhry, tu už jednou splnila) a okno
+2·N dál splňuje, místo obhájí proti nejslabší nové modelce v úrovni, která ji v posledním rozhodnutém vzájemném
+porovnání neporazila (remíza se nepočítá). Ta je pro úroveň nezpůsobilá: čeká těsně pod hranicí s `ceka.drzitelka`,
+držitelka nese `obhajoba` s vyzyvatelkou. Po každém kole se pořadí přepočítá a kolo se opakuje, dokud na uvolněné
+místo přichází další silnější – všechny musí držitelku porazit (vyzyvatelkou v `obhajoba` je první). Bez souboje
+držitelka místo ztratí, jen když prahy přestane splňovat nebo klesne silou pod místo 2·N. Nový stav držitelek se
+zapíše po výpočtu (beze změny ne); vrácení porovnání smaže stavy po něm, takže se vrátí i obhajoba. Bez porovnání
+ani držitelek se pořadí neliší od výpočtu bez obhajoby.
+
+**Souboje ve výběru dvojic** (jen výchozí okruh): (o) vyzyvatelka proti držitelce, která místo obhajuje (váha 1,5
+× váha úrovně, tedy před ostatními; důvod „Obhajoba top 10: Bára (10.) brání místo, Anna (11.) ji silou předstihla –
+rozhodne jejich souboj“; vyzyvatelka pak nejde do (a)), (a) čekající proti poslední potvrzené v úrovni, kam by patřila
 (tu by vytlačila; nejvýš tři soupeřky odspodu, když úroveň nemá nikoho potvrzeného, sousedky podle síly), (b) N.
 proti N+1. místu, když se jejich oblíbenost liší nejvýš o 0,15. Do souboje nejde jen odhad ani nehodnocená, jejíž
 úroveň ještě není známá (bez návrhu srdíček) – tu nejdřív porovnává kotva na úrovni odhadu, souboj o top 10 s modelkou,
@@ -552,6 +566,21 @@ Bez soubojů prahy škodí: špička se porovnává málo, takže se nikdo nepot
 Přísnější top 10 zpřesňuje, ale zpomaluje (10 porovnání je kompromis); víc soubojů pomáhá jen málo a bralo by dvojice
 učení celé sbírky. Výhra nad top 20 v simulaci nic nemění (souboje stejně párují se špičkou), chrání ale před
 modelkou, která nasbírá porovnání jen se slabšími (okruh „stejne“, kotvy nehodnocených).
+
+Obhajoba (simulace předává držitelky z výpočtu do výpočtu; výpadek = modelka, která byla potvrzená v top 10 a po
+dalším výpočtu není; 16 semínek, po 1500 porovnáních):
+
+| Obhajoba | P@10 | P@20 | P@50 | falešných v top 10 | výpadků z top 10 | z nich skutečné top 10 | soubojů z dvojic |
+|---|---|---|---|---|---|---|---|
+| bez | 0,76 | 0,78 | 0,82 | 2,4 | 5,1 | 1,8 | 18 % |
+| jen top 10 | 0,74 | 0,78 | 0,82 | 2,6 | 5,4 | 1,8 | 18 % |
+| do top 20 | 0,76 | 0,77 | 0,82 | 2,4 | 5,2 | 1,2 | 18 % |
+| **do top 50** | **0,77** | **0,77** | **0,82** | **2,3** | **5,1** | **1,2** | **18 %** |
+| i top 100 | 0,76 | 0,77 | 0,76 | 2,4 | 4,4 | 1,0 | 30 % |
+
+Do top 50 obhajoba o třetinu snižuje, jak často z top 10 vypadne modelka, která tam skutečně patří, a přesnost
+nezhorší. Obhajoba i top 100 vytváří tolik soubojů, že zaberou celý jejich podíl a ubírají porovnání učení sbírky
+(P@50 klesne o 6 bodů); obhajoba jen top 10 v simulaci nepomohla.
 
 ## Model vkusu
 

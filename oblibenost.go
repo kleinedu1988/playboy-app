@@ -31,7 +31,7 @@ import (
 // se podle otisku (změna dat, nové porovnání nebo dávka zájmu otisk změní); GetModelky pak jen doplní hotová čísla.
 
 // Verze výpočtu oblíbenosti: změna modelů zneplatní výsledek v paměti
-const verzeOblibenosti = "oblibenost-5"
+const verzeOblibenosti = "oblibenost-6"
 
 // Parametry modelu Bradley–Terry
 const (
@@ -106,6 +106,8 @@ type OblibenostModelky struct {
 	MistoPodleSily int             `json:"mistoPodleSily"`
 	Uroven         int             `json:"uroven"`
 	Ceka           *CekaniNaUroven `json:"ceka,omitempty"`
+	// Úroveň, kterou modelka obhajuje proti silnější vyzyvatelce (místo jí zůstává, dokud s ní neprohraje)
+	Obhajoba *ObhajobaUrovne `json:"obhajoba,omitempty"`
 }
 
 // Výsledek porovnání: vysledek "a" (víc se líbí A), "b" nebo "remiza". Zapíše se do databáze učení se srdíčky
@@ -153,6 +155,8 @@ func (a *App) VratitPorovnani() bool {
 		return false
 	}
 	u.ob.porovnani = append([]porovnaniZaznam(nil), porovnani[:len(porovnani)-1]...)
+	// Držitelky úrovní po vráceném porovnání neplatí (vrátí se ty před ním)
+	db.Exec("DELETE FROM drzitelky_urovni WHERE porovnani_id >= ?", posledni.id)
 	return true
 }
 
@@ -176,6 +180,7 @@ func (a *App) ZapomenoutPorovnani() bool {
 	}
 	db.Exec("DELETE FROM zajem")
 	db.Exec("DELETE FROM historie_oblibenosti")
+	db.Exec("DELETE FROM drzitelky_urovni")
 	u.ob.porovnani, u.ob.nacteno, u.ob.nabidnute = nil, true, nil
 	u.ob.profily, u.ob.zaznamuZajmu, u.ob.historieCas, u.ob.model = nil, u.ob.zaznamuZajmu+zaznamuNaPrepocet, time.Time{}, nil
 	return true
@@ -212,6 +217,9 @@ func (a *App) GetOblibenost() StavOblibenosti {
 			MistoPodleSily: model.mistoSily[m.ID], Uroven: model.uroven[m.ID]}
 		if c, ok := model.ceka[m.ID]; ok {
 			polozka.Ceka = &c
+		}
+		if o, ok := model.obhajoba[m.ID]; ok {
+			polozka.Obhajoba = &o
 		}
 		if sf, ok := model.skore[m.ID]; ok {
 			polozka.SkoreFotek, polozka.AlbFotek, polozka.FotekHodnocenych = zaokrouhlit3(sf.skore), sf.alb, sf.fotek
@@ -264,6 +272,7 @@ func (a *App) doplnitOblibenost(modelky []Modelka) {
 		m.Oblibenost = model.oblibenostModelky(m)
 		m.Poradi, m.ZmenaPoradi, m.UrovenTop = model.poradi[m.ID], model.zmenaPoradi[m.ID], model.uroven[m.ID]
 		m.CekaNaTop = model.ceka[m.ID].Uroven
+		m.ObhajujeTop = model.obhajoba[m.ID].Uroven
 		if _, ok := model.zmenaPoradi[m.ID]; ok {
 			m.TrendDni = model.trendDni
 		}
@@ -401,6 +410,11 @@ type modelOblibenosti struct {
 	elita       map[int]bool
 	maVyhru     map[int]bool
 	potvrzenych []int
+	// Obhajoba (oblibenost_urovne.go): držitelky úrovní z minulého výpočtu (vstup), kdo místo obhajuje a proti
+	// komu, a vyzyvatelka → držitelka, kterou musí porazit
+	drzitelky map[int]int
+	obhajoba  map[int]ObhajobaUrovne
+	vyzyva    map[int]int
 }
 
 // Posun předpokladu síly zájmem (srdíčka); jen u modelek s předpokladem (hodnocené nebo s hodnocenými fotkami)
@@ -449,13 +463,17 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	u.mu.Lock()
 	zajem := u.nacistZajem(nyni)
 	snimek, den, potvrzene := u.nacistSrovnani(nyni)
+	drzitelky, stejne := u.nacistDrzitelky(posledniPorovnani(porovnani))
 	u.mu.Unlock()
-	model := spocitatOblibenostSeZajmem(modelky, porovnani, zajem, nyni)
+	model := spocitatOblibenostUplne(modelky, porovnani, zajem, drzitelky, nyni)
 	model.nastavitTrend(snimek, den, nyni, potvrzene)
 	model.otisk = otisk
 	u.ob.model = model
 	u.mu.Lock()
 	u.zapsatHistorii(model, nyni)
+	if !stejne(model.uroven) {
+		u.zapsatDrzitelky(posledniPorovnani(porovnani), model.uroven)
+	}
 	u.mu.Unlock()
 	return model
 }
@@ -489,7 +507,12 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 }
 
 func spocitatOblibenostSeZajmem(modelky []Modelka, porovnani []porovnaniZaznam, zajem stavZajmu, nyni time.Time) *modelOblibenosti {
-	model := &modelOblibenosti{oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, jenOdhad: map[int]bool{}, zdrojOdhadu: map[int]int{}, porovnani: len(porovnani),
+	return spocitatOblibenostUplne(modelky, porovnani, zajem, nil, nyni)
+}
+
+// Celý výpočet; drzitelky = úrovně potvrzené minulým výpočtem (modelka → 10/20/50/100) pro obhajobu místa
+func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zajem stavZajmu, drzitelky map[int]int, nyni time.Time) *modelOblibenosti {
+	model := &modelOblibenosti{drzitelky: drzitelky, oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, jenOdhad: map[int]bool{}, zdrojOdhadu: map[int]int{}, porovnani: len(porovnani),
 		zajem: miraZajmu(zajem.modelky), zajemData: zajem.modelky, zajemOd: zajem.od, vahaZajmu: vysledekZajmu{vaha: vychoziVahaZajmu}}
 	existuje := make(map[int]bool, len(modelky))
 	soucet, hodnocenych := 0.0, 0

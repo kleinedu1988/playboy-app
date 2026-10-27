@@ -52,6 +52,7 @@ export function textPoradiProfilu(modelka) {
         poradi: `${modelka.poradi}. v oblíbenosti`,
         uroven: ceka ? '' : uroven ? nazevUrovne(uroven) : '',
         ceka: ceka ? `čeká na ${nazevUrovne(ceka)}` : '',
+        obhajuje: !ceka && uroven && Number(modelka.obhajujeTop) > 0 ? 'obhajuje' : '',
         trend: trendModelky(modelka),
     };
 }
@@ -113,9 +114,11 @@ export function chybiKUrovni(ceka) {
     return chybi;
 }
 
-// Štítek čekající modelky: „čeká na Top 10 (5/8 porovnání)“; v závorce první nesplněná podmínka
-export function textCekani(ceka) {
+// Štítek čekající modelky: „čeká na Top 10 (5/8 porovnání)“; v závorce první nesplněná podmínka. Splňuje-li prahy,
+// ale místo obhajuje držitelka: „čeká na souboj o Top 10 (místo brání Bára)“ (jmenoDrzitelky z modelek sbírky)
+export function textCekani(ceka, jmenoDrzitelky = '') {
     if (!(Number(ceka?.uroven) > 0)) return '';
+    if (Number(ceka.drzitelka) > 0) return `čeká na souboj o ${nazevUrovne(ceka.uroven)}${jmenoDrzitelky ? ` (místo brání ${jmenoDrzitelky})` : ''}`;
     const porovnani = Number(ceka.porovnani) || 0, potreba = Number(ceka.potrebaPorovnani) || 0;
     const zavorka = porovnani < potreba ? `${porovnani}/${potreba} porovnání`
         : Number(ceka.maxNejistota) > 0 && Number(ceka.nejistota) > Number(ceka.maxNejistota) ? `nejistota ${cislo2(ceka.nejistota)}`
@@ -124,14 +127,33 @@ export function textCekani(ceka) {
 }
 
 // Bublina čekající modelky: kam patří podle síly, co jí chybí a co s tím (víc řádků, do title)
-export function bublinaCekani(ceka, mistoPodleSily = 0) {
+export function bublinaCekani(ceka, mistoPodleSily = 0, jmenoDrzitelky = '') {
     if (!(Number(ceka?.uroven) > 0)) return '';
+    if (Number(ceka.drzitelka) > 0) {
+        const kdo = jmenoDrzitelky || 'držitelka';
+        return [
+            `Podle síly ${mistoPodleSily > 0 ? `patří na ${mistoPodleSily}. místo – do ${nazevUrovne(ceka.uroven)}` : `patří do ${nazevUrovne(ceka.uroven)}`} a podmínky splňuje.`,
+            `Místo ale obhajuje ${kdo}: sestup je stejně těžký jako postup, takže do ${nazevUrovne(ceka.uroven)} postoupí, až ${jmenoDrzitelky ? 'ji' : 'držitelku'} porazí ve vzájemném souboji.`,
+            'Porovnávání nabízí souboj o obhajobu napřed.',
+        ].join('\n');
+    }
     const chybi = chybiKUrovni(ceka);
     return [
         `Podle síly ${mistoPodleSily > 0 ? `patří na ${mistoPodleSily}. místo – do ${nazevUrovne(ceka.uroven)}` : `patří do ${nazevUrovne(ceka.uroven)}`}.`,
         chybi.length ? `Do potvrzení chybí:\n${chybi.map(c => `• ${c}`).join('\n')}` : 'Podmínky už splňuje, potvrdí se při příštím přepočtu.',
         'Do té doby zůstává těsně pod hranicí; dvojice o potvrzení nabízí Porovnávání.',
     ].join('\n');
+}
+
+// Štítek držitelky, která místo obhajuje: { text: „obhajuje Top 10“, title } (jmenoVyzyvatelky z modelek sbírky); jinak null
+export function stitekObhajoby(obhajoba, jmenoVyzyvatelky = '') {
+    if (!(Number(obhajoba?.uroven) > 0)) return null;
+    const u = nazevUrovne(obhajoba.uroven);
+    const kdo = jmenoVyzyvatelky || 'Jiná modelka';
+    return {
+        text: `obhajuje ${u}`,
+        title: `${kdo} ji silou předstihla. Místo v ${u} jí ale zůstává, dokud s ${jmenoVyzyvatelky ? 'ní' : 'vyzyvatelkou'} neprohraje ve vzájemném souboji – sestup je stejně těžký jako postup. Souboj nabízí Porovnávání napřed.`,
+    };
 }
 
 // Věta o podmínkách úrovní z GetOblibenost().urovne, od nejnižší: „Top 100: 2 porovnání · Top 50: 4 porovnání,
@@ -145,7 +167,7 @@ export function textPravidelUrovni(urovne) {
         if (u.potrebaVyhry) casti.push('výhra nad modelkou z top 20');
         return `${nazevUrovne(u.uroven)}: ${casti.join(', ')}`;
     });
-    return `Úrovně potvrzuje počet porovnání a jistota místa – ${podminky.join(' · ')}. Modelka, která je ještě nesplňuje, čeká těsně pod hranicí.`;
+    return `Úrovně potvrzuje počet porovnání a jistota místa – ${podminky.join(' · ')}. Modelka, která je ještě nesplňuje, čeká těsně pod hranicí. Potvrzená v Top 10, 20 nebo 50 o místo nepřijde jen proto, že ji silou předstihla jiná: obhajuje ho, dokud s ní neprohraje v souboji.`;
 }
 
 // Pořadí rozdělené na úseky podle místa pro oddělovače: [{ uroven (0 = mimo top 100), polozky, potvrzenych }].
@@ -192,6 +214,7 @@ export function nadpisSouboje(dvojice, a = null, b = null) {
     const zModelek = [a, b].map(m => urovenModelky(m).ceka).filter(Boolean);
     const uroven = zDuvodu || (zModelek.length ? Math.min(...zModelek) : 0);
     const naPotvrzeni = /čeká na potvrzení/i.test(duvod);
+    if (/^obhajoba/i.test(duvod)) return uroven ? `Obhajoba ${nazevUrovne(uroven)}` : 'Obhajoba místa';
     if (!uroven) return 'Souboj o místo';
     return naPotvrzeni ? `O postup do ${nazevUrovne(uroven)}` : `Souboj o ${nazevUrovne(uroven)}`;
 }
@@ -209,5 +232,7 @@ export function stitekUrovne(x) {
                 : `Podle síly patří do ${nazevUrovne(ceka)}, potvrdí ji další porovnání. Do té doby zůstává těsně pod hranicí.`,
         };
     }
+    const obhajoba = Number(x?.obhajoba?.uroven ?? x?.obhajujeTop ?? 0) || 0;
+    if (uroven && obhajoba) return { text: `${nazevUrovne(uroven)} · obhajuje`, ceka: false, title: `Potvrzená v ${nazevUrovne(uroven)}. Silou ji předstihla jiná modelka, místo obhajuje, dokud s ní neprohraje v souboji.` };
     return uroven ? { text: nazevUrovne(uroven), ceka: false, title: `Potvrzená v ${nazevUrovne(uroven)} oblíbenosti` } : null;
 }

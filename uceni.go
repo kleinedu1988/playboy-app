@@ -94,6 +94,14 @@ var migraceUceni = []string{
 		poradi INTEGER NOT NULL,
 		PRIMARY KEY (den, modelka_id)
 	);`,
+	// Úprava č. 4: držitelky úrovní Top N po každém porovnání (oblibenost_urovne.go, obhajoba místa); porovnani_id =
+	// poslední porovnání, po kterém platí (vrácení porovnání vrátí i držitelky), modelka_id 0 = značka stavu
+	`CREATE TABLE drzitelky_urovni (
+		porovnani_id INTEGER NOT NULL,
+		modelka_id INTEGER NOT NULL,
+		uroven INTEGER NOT NULL,
+		PRIMARY KEY (porovnani_id, modelka_id)
+	);`,
 }
 
 // Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti
@@ -102,7 +110,7 @@ var tabulkyUceni = []string{"udalosti", "odmitnute", "zapisy"}
 
 // Oblíbenost (porovnání dvojic, zájem a historie): do paměti se přenesou také, ale zapomínají se zvlášť
 // (ZapomenoutPorovnani)
-var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti"}
+var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti", "drzitelky_urovni"}
 
 // Druhy událostí deníku
 const (

@@ -503,9 +503,14 @@ export namespace main {
 	    hodnoceni: number;
 	    navrh: number;
 	    smer: string;
+	    zdroj: string;
 	    porovnani: number;
 	    vysledky: number;
 	    rozdil: number;
+	    skoreFotek: number;
+	    albFotek: number;
+	    fotekHodnocenych: number;
+	    rozdilFotek: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new NesouladSrdicek(source);
@@ -518,9 +523,14 @@ export namespace main {
 	        this.hodnoceni = source["hodnoceni"];
 	        this.navrh = source["navrh"];
 	        this.smer = source["smer"];
+	        this.zdroj = source["zdroj"];
 	        this.porovnani = source["porovnani"];
 	        this.vysledky = source["vysledky"];
 	        this.rozdil = source["rozdil"];
+	        this.skoreFotek = source["skoreFotek"];
+	        this.albFotek = source["albFotek"];
+	        this.fotekHodnocenych = source["fotekHodnocenych"];
+	        this.rozdilFotek = source["rozdilFotek"];
 	    }
 	}
 	export class OblibenostModelky {

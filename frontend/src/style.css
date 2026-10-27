@@ -11179,3 +11179,9 @@ span.ud-chip {
     color: var(--accent-text);
     font-size: 12px;
 }
+
+.pas-skore {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+}

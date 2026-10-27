@@ -7,7 +7,7 @@
 // zbytečně nemizí (WebKitGTK by mohl ztratit klik).
 import { SetHodnoceniFotek } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
-import { popisNahledu } from '../lib/oblibenost';
+import { popisNahledu, textSkoreFotek } from '../lib/oblibenost';
 import { VELIKOST_PLAKATU_MALA, adresaTitulni } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { htmlSrdicka } from './galerie';
@@ -26,14 +26,17 @@ const polovina = strana => koren?.querySelector(`[data-pas-strana="${strana}"]`)
 
 // Titulní fotka vlevo od pásu: jméno (otevře profil), srdíčka modelky, počet fotek a pozice v pásu, „♥ Tahle“
 function htmlProfilu(strana) {
-    const { modelka: m, fotky, celkem } = data[strana];
+    const { modelka: m, fotky, celkem, skore } = data[strana];
     const info = !fotky ? '' : fotky.length < celkem ? `${fotky.length} nejlepších z ${celkem}` : sklonovat(fotky.length, 'fotka', 'fotky', 'fotek');
+    const skoreFotek = skore?.skoreFotek > 0
+        ? `<span class="pas-skore" title="${esc(`Skóre fotek z ${sklonovat(skore.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(skore.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')} (každé album jeden hlas, rozhodují jeho nejlepší fotky)`)}">${esc(textSkoreFotek(skore.skoreFotek))}</span>` : '';
     return `
         <img src="${esc(adresaTitulni(m, true))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
         <button type="button" class="pas-vybrat" data-ob-volba="${strana}" title="Líbí se mi víc ${esc(m.jmeno)} (Enter v aktivním pásu)">♥ Tahle</button>
         <div class="pas-popis">
             <button type="button" class="pas-jmeno" data-otevrit-modelku="${m.id}" title="Otevřít profil">${esc(m.jmeno)}</button>
             ${htmlSrdicka(m)}
+            ${skoreFotek}
             <small><span>${info}</span><span data-pas-pozice></span></small>
         </div>`;
 }
@@ -53,7 +56,7 @@ function htmlFotek(strana) {
 /**
  * Pásy dvojice do místa; volá se při nové dvojici i po načtení fotek (stejná dvojice zachová polohu pásů).
  * @param {HTMLElement} misto
- * @param {{ a: { modelka: any, fotky: any[]|null, celkem: number }, b: { modelka: any, fotky: any[]|null, celkem: number } }} strany
+ * @param {{ a: { modelka: any, fotky: any[]|null, celkem: number, skore?: any }, b: { modelka: any, fotky: any[]|null, celkem: number, skore?: any } }} strany
  */
 export function vykreslitPasy(misto, strany) {
     const nova = !data || koren !== misto || data.a.modelka.id !== strany.a.modelka.id || data.b.modelka.id !== strany.b.modelka.id;

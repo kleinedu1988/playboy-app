@@ -145,6 +145,8 @@ async function obnovitPrehled() {
     vykreslitPoradi();
     vykreslitTipy();
     vykreslitNesedi();
+    // Pásy zobrazené dvojice ukážou skóre fotek (mění se jen to, co se změnilo)
+    if (fronta[0]) vykreslitDvojici();
 }
 
 // ——— Nesedí se srdíčky ———
@@ -157,17 +159,31 @@ function skryteNesoulady() {
 }
 const viditelneNesoulady = () => (data.oblibenost?.nesedi || []).filter(n => modelka(n.modelkaId) && !skryteNesoulady().has(klicNesouladu(n)));
 
+const NESOULADU_NAJEDNOU = 8;
+let nesouladyVse = false;
+const cislo1 = n => (Number(n) || 0).toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+// „3 ze 4“, „2 z 5“: ze před čísly, která se vyslovují se skupinou souhlásek (dvou, tří, čtyř, šesti, sedmi, dvanácti…)
+const zKolika = n => `${/^(?:[23467]|1[2-467])/.test(String(n)) ? 'ze' : 'z'} ${n}`;
+
+// Věta položky podle zdroje: porovnání, fotky, nebo obojí
+function vetaNesouladu(n) {
+    const porovnani = n.smer === 'mene'
+        ? `prohrála ${n.vysledky} ${zKolika(n.porovnani)} porovnání s modelkami s méně srdíčky`
+        : `vyhrála ${n.vysledky} ${zKolika(n.porovnani)} porovnání s modelkami s víc srdíčky`;
+    const fotky = `má fotky za ${cislo1(n.skoreFotek)} (${sklonovat(n.albFotek, 'album', 'alba', 'alb')}, ${sklonovat(n.fotekHodnocenych, 'hodnocená', 'hodnocené', 'hodnocených')})`;
+    return n.zdroj === 'fotky' ? fotky : n.zdroj === 'oba' ? `${porovnani} a ${fotky}` : porovnani;
+}
+
 function vykreslitNesedi() {
-    const seznam = viditelneNesoulady();
+    const vsechny = viditelneNesoulady();
+    const seznam = nesouladyVse ? vsechny : vsechny.slice(0, NESOULADU_NAJEDNOU);
     const odkaz = cast('nesedi-odkaz');
     odkaz?.classList.toggle('hidden', !seznam.length);
-    nastavitText(odkaz, seznam.length ? `Nesedí se srdíčky (${seznam.length}) →` : '');
-    nastavitHtml(cast('nesedi'), seznam.length ? `<h4>Nesedí se srdíčky <small>podle porovnání s jinými úrovněmi</small></h4>
+    nastavitText(odkaz, vsechny.length ? `Nesedí se srdíčky (${vsechny.length}) →` : '');
+    nastavitHtml(cast('nesedi'), seznam.length ? `<h4>Nesedí se srdíčky <small>podle porovnání s jinými úrovněmi a srdíček fotek</small></h4>
         <ul class="ob-nesedi-seznam">${seznam.map(n => {
-            const kolik = `${n.vysledky} z ${n.porovnani} porovnání`;
-            const veta = n.smer === 'mene'
-                ? `prohrála ${kolik} s modelkami s méně srdíčky`
-                : `vyhrála ${kolik} s modelkami s víc srdíčky`;
+            const veta = vetaNesouladu(n);
             return `<li>
                 <span class="trend ${n.smer === 'mene' ? 'dolu' : 'nahoru'}">${n.smer === 'mene' ? '▼' : '▲'}</span>
                 <span><button type="button" class="link" data-otevrit-modelku="${n.modelkaId}">${esc(modelka(n.modelkaId).jmeno)}</button>
@@ -175,7 +191,8 @@ function vykreslitNesedi() {
                 <button type="button" class="btn btn-primary btn-small" data-ob-nesedi-ano="${klicNesouladu(n)}">Dát jí ${kratceSrdicka(n.navrh)} ♥</button>
                 <button type="button" class="link" data-ob-nesedi-ne="${klicNesouladu(n)}">Nechat</button>
             </li>`;
-        }).join('')}</ul>` : '');
+        }).join('')}</ul>
+        ${seznam.length < vsechny.length ? `<button type="button" class="link ob-vse" data-ob-nesedi-vse>Zobrazit všech ${vsechny.length}</button>` : ''}` : '');
 }
 
 async function prijmoutNesoulad(klic) {
@@ -254,9 +271,11 @@ function vykreslitDvojici() {
     }
     const [a, b] = [modelka(d.a), modelka(d.b)];
     misto.dataset.pasy = '';
+    // Skóre fotek z pořadí (Oblíbenost ho počítá v backendu), u modelky bez hodnocených fotek nic
+    const skore = id => (data.oblibenost?.poradi || []).find(p => p.modelkaId === id) || null;
     vykreslitPasy(misto, {
-        a: { modelka: a, fotky: nahledy.get(d.a) || null, celkem: a.pocetFotek || 0 },
-        b: { modelka: b, fotky: nahledy.get(d.b) || null, celkem: b.pocetFotek || 0 },
+        a: { modelka: a, fotky: nahledy.get(d.a) || null, celkem: a.pocetFotek || 0, skore: skore(d.a) },
+        b: { modelka: b, fotky: nahledy.get(d.b) || null, celkem: b.pocetFotek || 0, skore: skore(d.b) },
     });
     cast('vratit')?.toggleAttribute('disabled', !historie.length);
     if (!nahledy.has(d.a) || !nahledy.has(d.b)) nacistNahledy([d.a, d.b]).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
@@ -480,6 +499,7 @@ export function pripravit() {
         else if (e.target.closest('[data-ob-nesedi-ano]')) prijmoutNesoulad(e.target.closest('[data-ob-nesedi-ano]').dataset.obNesediAno);
         else if (e.target.closest('[data-ob-nesedi-ne]')) odmitnoutNesoulad(e.target.closest('[data-ob-nesedi-ne]').dataset.obNesediNe);
         else if (e.target.closest('[data-ob-nesedi-odkaz]')) ukazatCastOblibenosti('poradi');
+        else if (e.target.closest('[data-ob-nesedi-vse]')) { nesouladyVse = true; vykreslitNesedi(); }
     });
 
     // Klávesy porovnání, když je Oblíbenost vidět a nepíše se ani nehodnotí srdíčky (zaměřená srdíčka mají šipky)

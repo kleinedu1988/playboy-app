@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.42] – 2026-10-27
+
+### Přidáno
+- **„Nesedí se srdíčky“ i podle srdíček fotek:** modelka, jejíž hodnocené fotky (aspoň 2 alba a 10 fotek) vycházejí aspoň o celé srdíčko jinde než její srdíčka, dostane návrh o půl srdíčka směrem k fotkám („Cecílie (2 ♥) má fotky za 4,6 (4 alba, 37 hodnocených) – možná jí patří 2½ ♥“). Když stejným směrem ukazují i porovnání, je to jedna položka a jde napřed; když proti sobě, platí porovnání. Ukáže se prvních 8, ostatní pod „Zobrazit všech“.
+- V pásu porovnání je u jména **skóre fotek** („fotky 4,3“, v bublině z kolika alb a fotek).
+
 ## [0.99.41] – 2026-10-27
 
 ### Změněno

@@ -447,7 +447,15 @@ srdíčka silnější vyhraje v 73 %, o celé v 88 %). Rozdíl skutečných a o�
 s méně srdíčky vyhrává se silnějšími – o půl víc (`"vice"`). Jen s aspoň 3 takovými porovnáními. Položka: `modelkaId`,
 `jmeno`, `hodnoceni`, `navrh`, `smer`, `porovnani` (s modelkami s méně, resp. víc srdíčky), `vysledky` (z nich
 prohry, resp. výhry), `rozdil`. Tři prohry ze tří s modelkami o půl srdíčka slabšími dají rozdíl −2,2; dvě ze čtyř
-−0,9 (nic). V Pořadí je oddíl „Nesedí se srdíčky“ s „Dát jí 4 ♥“ a „Nechat“ (pamatuje se pro dané srdíčka a návrh),
+−0,9 (nic).
+
+Druhý zdroj jsou **srdíčka fotek**: skóre fotek převedené na stupnici srdíček modelek (`kalibraceFotek.naSrdicka`,
+převod podle rozložení obou ve sbírce, takže přísnější hodnocení fotek nevadí) se od srdíček modelky liší aspoň o celé
+srdíčko, z aspoň 2 alb a 10 hodnocených fotek → návrh o půl srdíčka směrem k fotkám. Ukazují-li porovnání stejným
+směrem, položky se spojí (`zdroj: "oba"`, řadí se napřed), proti sobě platí porovnání (výslovné soudy); jinak
+`zdroj: "porovnani"` nebo `"fotky"`. Položka nese i `skoreFotek`, `albFotek`, `fotekHodnocenych` a `rozdilFotek`.
+Řadí se podle síly nesouladu (porovnání: |rozdíl|/1,5, fotky: |rozdíl fotek|, obojí: součet + 1); v Pořadí se ukáže
+prvních 8 a „Zobrazit všech“. V pásu porovnání je u jména skóre fotek („fotky 4,3“). V Pořadí je oddíl „Nesedí se srdíčky“ s „Dát jí 4 ♥“ a „Nechat“ (pamatuje se pro dané srdíčka a návrh),
 v Porovnávání odkaz s počtem.
 
 ## Model vkusu

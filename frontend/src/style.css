@@ -11478,195 +11478,139 @@ span.ud-chip {
     font-size: 12px;
 }
 
-/* ——— Síň slávy (Oblíbenost › Síň slávy, app/sin-slavy.js) ——— */
-.slava img {
-    object-fit: cover;
-    background-color: var(--bg-card);
-}
-
-.slava-bez-fotky {
-    display: block;
-    background-color: var(--bg-card);
-}
-
-.slava button {
-    font: inherit;
-    color: inherit;
-    text-align: left;
-    cursor: pointer;
-}
-
-.slava-prazdna-vitrina {
+/* ——— Síň slávy (Oblíbenost › Síň slávy, app/sin-slavy.js): karty modelek jako v galerii ——— */
+.slava-nadpis {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 12px;
-    color: var(--text-muted);
+    align-items: baseline;
+    gap: 10px;
+    margin: 4px 0 14px;
+    color: var(--accent-text);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
-.slava-prazdna-vitrina p {
-    margin: 0;
+.slava-nadpis small {
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.slava-karty {
+    margin-bottom: 28px;
 }
 
 .slava-nic {
-    margin: 0;
+    margin: 0 0 28px;
     color: var(--text-muted);
 }
 
-.slava-podnadpis {
-    margin-top: 18px;
-}
-
-/* Vitrína: karty s titulní fotkou, místem a délkou pobytu */
-.slava-vitrina {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 12px;
-}
-
-.slava-karta {
-    position: relative;
-    display: block;
-    overflow: hidden;
-    padding: 0;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 14px;
-    background-color: var(--bg-card);
-    aspect-ratio: 3 / 4;
-}
-
-.slava-karta img,
-.slava-karta .slava-bez-fotky {
-    width: 100%;
-    height: 100%;
-}
-
-.slava-karta::after {
-    content: "";
-    position: absolute;
-    inset: 45% 0 0;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
-    pointer-events: none;
-}
-
-.slava-karta.prvni {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 1px var(--accent), 0 8px 24px rgba(216, 27, 96, 0.25);
-}
-
+/* Místo vpravo nahoře (jako odznak Top 10 na kartě v galerii) */
 .slava-misto {
     position: absolute;
     top: 8px;
+    right: 8px;
+    z-index: 1;
+    padding: 2px 9px;
+    border: 1px solid rgba(255, 64, 129, 0.45);
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--accent-text);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.slava-misto.prvni {
+    border-color: var(--accent);
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.slava-misto.legenda {
+    border-color: var(--panel-okraj);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.slava-karta:has(.slava-misto.prvni) {
+    border-color: var(--accent);
+}
+
+/* Trofeje rekordů nad jménem */
+.slava-trofeje {
+    position: absolute;
+    right: 8px;
+    bottom: 84px;
     left: 8px;
     z-index: 1;
-    min-width: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    pointer-events: none;
+}
+
+.slava-trofej {
     padding: 2px 8px;
     border-radius: 999px;
-    background-color: rgba(0, 0, 0, 0.6);
-    font-weight: 700;
-    text-align: center;
+    background-color: rgba(0, 0, 0, 0.72);
+    color: #ffd54f;
+    font-size: 11px;
+    font-weight: 600;
+    pointer-events: auto;
 }
 
-.slava-karta.prvni .slava-misto {
-    background-color: var(--accent);
-}
-
-.slava-karta-popis {
-    position: absolute;
-    right: 10px;
-    bottom: 9px;
-    left: 10px;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    line-height: 1.25;
-}
-
-.slava-karta-popis small {
-    color: rgba(255, 255, 255, 0.75);
-}
-
-.slava-karta:hover,
-.slava-karta:focus-visible {
-    border-color: var(--accent-text);
-}
-
-/* Rekordy: dlaždice s fotkou */
-.slava-rekordy {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 10px;
-}
-
-.slava-rekord {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 12px;
-    background-color: rgba(255, 255, 255, 0.03);
-}
-
-.slava-rekord:hover,
-.slava-rekord:focus-visible {
-    background-color: var(--panel-hover);
-}
-
-.slava-rekord img,
-.slava-rekord .slava-bez-fotky {
-    flex: none;
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-}
-
-.slava-rekord-text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    line-height: 1.25;
-}
-
-.slava-rekord-text b {
-    font-size: 18px;
-}
-
-.slava-rekord-text small {
+.slava-popis {
+    margin: 3px 0 0;
+    overflow: hidden;
     color: var(--text-muted);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.slava-rekordy-pruh {
-    margin-bottom: 16px;
+/* Legendy: fotka vybledlá, po najetí barevná */
+.slava-karta.legenda img {
+    filter: grayscale(0.75);
+    transition: filter 0.2s;
 }
 
-.slava-trofeje .slava-rekord {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+.slava-karta.legenda:hover img,
+.slava-karta.legenda:focus-visible img {
+    filter: none;
 }
 
-.slava-trofeje .slava-rekord img,
-.slava-trofeje .slava-rekord .slava-bez-fotky {
-    width: 72px;
-    height: 72px;
-    box-shadow: 0 0 0 2px var(--accent);
+/* Kronika: sbalená karta pod kartami */
+.slava-kronika-obal summary {
+    list-style: none;
+    cursor: pointer;
 }
 
-.slava-trofeje .slava-rekord-text {
-    align-items: center;
+.slava-kronika-obal summary::-webkit-details-marker {
+    display: none;
 }
 
-/* Kronika: události po měsících */
-.slava-kronika {
+.slava-kronika-obal summary h4::before {
+    content: "▸ ";
+}
+
+.slava-kronika-obal[open] summary h4::before {
+    content: "▾ ";
+}
+
+.slava-kronika-obal summary h4 {
     margin: 0;
+}
+
+.slava-kronika {
+    margin: 12px 0 0;
     padding: 0;
     list-style: none;
 }
 
 .slava-mesic {
-    margin: 12px 0 6px;
+    margin: 14px 0 4px;
     color: var(--accent-text);
     font-size: 12px;
     font-weight: 700;
@@ -11674,16 +11618,21 @@ span.ud-chip {
     text-transform: uppercase;
 }
 
-.slava-mesic:first-child {
-    margin-top: 0;
-}
-
 .slava-udalost {
     display: flex;
-    align-items: center;
     gap: 10px;
     padding: 5px 0;
     border-bottom: 1px solid var(--panel-okraj);
+    line-height: 1.35;
+}
+
+.slava-udalost > span:last-child {
+    display: flex;
+    flex-direction: column;
+}
+
+.slava-udalost small {
+    color: var(--text-muted);
 }
 
 .slava-ikona {
@@ -11700,252 +11649,4 @@ span.ud-chip {
 
 .slava-udalost.vystup .slava-ikona {
     color: var(--danger-text);
-}
-
-.slava-mini {
-    flex: none;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    overflow: hidden;
-    border: none;
-    border-radius: 50%;
-    background: none;
-}
-
-.slava-mini img {
-    width: 100%;
-    height: 100%;
-}
-
-.slava-udalost-text {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-    line-height: 1.3;
-}
-
-.slava-udalost-text small {
-    color: var(--text-muted);
-}
-
-/* Legendy: seznam s fotkou a obdobím */
-.slava-legendy {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.slava-legendy button {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 6px;
-    border: none;
-    border-radius: 10px;
-    background: none;
-}
-
-.slava-legendy button:hover,
-.slava-legendy button:focus-visible {
-    background-color: var(--panel-hover);
-}
-
-.slava-legendy img,
-.slava-legendy .slava-bez-fotky {
-    flex: none;
-    width: 40px;
-    height: 52px;
-    border-radius: 8px;
-    filter: grayscale(0.6);
-}
-
-.slava-legendy span {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.3;
-}
-
-.slava-legendy small {
-    color: var(--text-muted);
-}
-
-/* Varianta B: žebříček s pruhem délky pobytu */
-.slava-zebricek {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.slava-radek {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 6px;
-    border: none;
-    border-radius: 10px;
-    background: none;
-}
-
-.slava-radek:hover,
-.slava-radek:focus-visible {
-    background-color: var(--panel-hover);
-}
-
-.slava-radek img,
-.slava-radek .slava-bez-fotky {
-    flex: none;
-    width: 40px;
-    height: 52px;
-    border-radius: 8px;
-}
-
-.slava-radek-text {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-    line-height: 1.25;
-}
-
-.slava-radek-text small {
-    color: var(--text-muted);
-}
-
-.slava-delka {
-    display: block;
-    height: 4px;
-    border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.08);
-}
-
-.slava-delka i {
-    display: block;
-    height: 100%;
-    border-radius: 4px;
-    background-color: var(--accent);
-}
-
-/* Varianta C: jednička velká vlevo, ostatní menší vedle */
-.slava-c-hlava {
-    display: grid;
-    grid-template-columns: minmax(220px, 320px) 1fr;
-    gap: 14px;
-    margin-bottom: 16px;
-}
-
-.slava-hrdina {
-    position: relative;
-    display: block;
-    overflow: hidden;
-    padding: 0;
-    border: 1px solid var(--accent);
-    border-radius: 18px;
-    background-color: var(--bg-card);
-    aspect-ratio: 3 / 4;
-    box-shadow: 0 10px 30px rgba(216, 27, 96, 0.25);
-}
-
-.slava-hrdina img {
-    width: 100%;
-    height: 100%;
-}
-
-.slava-hrdina::after {
-    content: "";
-    position: absolute;
-    inset: 40% 0 0;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
-}
-
-.slava-hrdina-popis {
-    position: absolute;
-    right: 16px;
-    bottom: 14px;
-    left: 16px;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-}
-
-.slava-hrdina-popis small {
-    color: var(--accent-text);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.slava-hrdina-popis b {
-    font-size: 26px;
-}
-
-.slava-hrdina-popis span {
-    color: rgba(255, 255, 255, 0.8);
-}
-
-.slava-mensi {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    align-content: start;
-    gap: 10px;
-}
-
-.slava-galerie {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 10px;
-}
-
-.slava-portret {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 0;
-    border: none;
-    background: none;
-}
-
-.slava-portret img,
-.slava-portret .slava-bez-fotky {
-    width: 100%;
-    border-radius: 10px;
-    aspect-ratio: 3 / 4;
-    filter: grayscale(0.7);
-}
-
-.slava-portret:hover img,
-.slava-portret:focus-visible img {
-    filter: none;
-}
-
-.slava-portret span {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.25;
-}
-
-.slava-portret small {
-    color: var(--text-muted);
-}
-
-@media (max-width: 720px) {
-    .slava-c-hlava {
-        grid-template-columns: 1fr;
-    }
-}
-
-.slava-pocatek {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin: 4px 0 2px;
-}
-
-.slava-pocatek .slava-mini {
-    width: 28px;
-    height: 28px;
 }

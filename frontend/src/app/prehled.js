@@ -186,7 +186,8 @@ export function pripravit() {
     const nabidkaCislaPrehledu = (klic, x, y) => nabidkaCisla(klic, x, y, { poZmene: nacistPrehled });
     stats.addEventListener('click', (e) => {
         const cislo = e.target.closest('[data-cislo]');
-        const modelka = e.target.closest('[data-otevrit-modelku]');
+        // Srdíčka na kartě (Síň slávy) hodnotí, profil neotevírají
+        const modelka = e.target.closest('.hearts') ? null : e.target.closest('[data-otevrit-modelku]');
         const shanene = e.target.closest('[data-shanim]');
         if (cislo) {
             if (cislo.hasAttribute('data-ma-data')) otevritVydani(cislo.dataset.cislo);

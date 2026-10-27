@@ -1,4 +1,4 @@
-// Čistá logika části Oblíbenost (app/oblibenost.js, galerie-obou.js): popisy fotek, texty složek pořadí (srdíčka,
+// Čistá logika části Oblíbenost (app/oblibenost.js, porovnani-pasy.js): popisy fotek, texty složek pořadí (srdíčka,
 // skóre fotek, porovnání, zájem), trend a řazení. Bez stránky, aby šla testovat.
 
 // Kolik nejlepších fotek každé modelky ukáže galerie obou v porovnání (nejvíc, kolik vrátí GetNahledyModelek)

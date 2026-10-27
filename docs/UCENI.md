@@ -382,26 +382,27 @@ srdíček (fotky se stejnými srdíčky podle oblíbenosti modelky), Údržba (v
 s oblíbeností místo srdíček; řazení „oblíbené napřed“), Sháním CZ („Nejdřív sháněj“: čísla s nejoblíbenější
 modelkou) a úvod Přehledu (Top 10, Stoupají, Dlouho jsi neviděl).
 
-## Fotky obou modelek
+## Pásy fotek v porovnání
 
-Porovnání podle jedné titulní fotky je nefér k modelkám s nevýraznou titulní fotkou, malé náhledy pod fotkou se ale
-špatně prohlížely. Porovnání proto ukazuje jen titulní fotky a klik na fotku (nebo <kbd>F</kbd>) otevře **fotky
-obou** (`frontend/src/app/galerie-obou.js`): okno přes celou plochu se dvěma nezávislými galeriemi nad sebou, nahoře
-levá modelka, dole pravá. Každá galerie je vodorovný pás nejvýš 24 nejlepších fotek z `GetNahledyModelek`: alba se
-seřadí podle skóre (průměr nejlepších fotek, alba bez hodnocených fotek nakonec, při shodě v pořadí přidání), fotky
-v albu podle srdíček a pak podle pořadí v albu (ruční pořadí, jinak vložení). Napřed nejlepší fotka každého alba (při
-víc albech než místech nejlepších alb), zbylá místa dostanou ostatní fotky podle srdíček (při shodě ta výš ve svém
-albu); vybrané se nakonec seřadí podle srdíček, takže 1. fotka je nejlepší. Titulní fotka se neopakuje. Fotky se
-čtou jedním dotazem `album_id IN (…)` pro alba všech žádaných modelek (alba modelek jsou ve snímku sbírky) a výsledek
-se pamatuje se snímkem (změna fotek nebo srdíček snímek zneplatní). Rozhraní si seznamy fotek celé fronty dvojic
-načte jedním voláním dopředu, galerie se pak otevře hned.
+Porovnání podle jedné titulní fotky je nefér k modelkám s nevýraznou titulní fotkou a malé náhledy pod fotkou se
+špatně prohlížely. Porovnávání proto místo titulních fotek ukazuje **dvě nezávislé galerie nad sebou**
+(`frontend/src/app/porovnani-pasy.js`): nahoře pás fotek jedné modelky, dole druhé, přes výšku okna. Oblíbenost má
+pod hledáním tři části – Porovnávání, Pořadí a Mohlo by se ti líbit – a u Porovnávání i okruh dvojic.
 
-Ovládání: polovina pod myší je aktivní (<kbd>Tab</kbd> ji přepne, druhá se ztlumí), kolečko a <kbd>←</kbd> /
-<kbd>→</kbd> listují jejím pásem, <kbd>1</kbd>–<kbd>5</kbd> dá srdíčka zvýrazněné fotce (`SetHodnoceniFotek`),
-<kbd>0</kbd> je zruší, klik fotku zvětší přes celé okno (← → listují dál, Esc nebo klik vrátí), „♥ Tahle“ nebo
-<kbd>Enter</kbd> vybere modelku aktivní galerie, <kbd>↓</kbd> nebo „Stejně“ remízu – volba se zapíše jako v porovnání
-a galerie se zavře. <kbd>Esc</kbd> vrátí k porovnání. Galerie je okno (`modal-overlay`), takže ostatní klávesové
-zkratky programu ji obcházejí.
+Každý pás je nejvýš 24 nejlepších fotek z `GetNahledyModelek`: alba se seřadí podle skóre (průměr nejlepších fotek,
+alba bez hodnocených fotek nakonec, při shodě v pořadí přidání), fotky v albu podle srdíček a pak podle pořadí v albu
+(ruční pořadí, jinak vložení). Napřed nejlepší fotka každého alba (při víc albech než místech nejlepších alb), zbylá
+místa dostanou ostatní fotky podle srdíček (při shodě ta výš ve svém albu); vybrané se nakonec seřadí podle srdíček,
+takže 1. fotka je nejlepší. Titulní fotka se neopakuje. Fotky se čtou jedním dotazem `album_id IN (…)` pro alba všech
+žádaných modelek (alba modelek jsou ve snímku sbírky) a výsledek se pamatuje se snímkem (změna fotek nebo srdíček
+snímek zneplatní). Rozhraní si seznamy fotek celé fronty dvojic načte jedním voláním dopředu a první fotky další
+dvojice přednačte; dokud fotky nejsou, drží místo prázdné rámečky.
+
+Ovládání: pás pod myší je aktivní (<kbd>Tab</kbd> ho přepne, druhý se ztlumí), kolečko a <kbd>←</kbd> /
+<kbd>→</kbd> jím listují, <kbd>1</kbd>–<kbd>5</kbd> dá srdíčka zvýrazněné fotce (`SetHodnoceniFotek`), <kbd>0</kbd>
+je zruší, klik fotku zvětší přes celé okno (← → listují dál, Esc nebo klik vrátí), „♥ Tahle“ nebo <kbd>Enter</kbd>
+vybere modelku aktivního pásu, <kbd>↓</kbd>, mezerník nebo „Stejně“ remízu, <kbd>S</kbd> přeskočí, <kbd>Backspace</kbd>
+vrátí poslední porovnání.
 
 ## Výběr dvojic
 

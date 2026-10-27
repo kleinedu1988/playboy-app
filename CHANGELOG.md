@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.36] – 2026-10-27
+
+### Změněno
+- **Porovnávání bez titulních fotek – rovnou dva pásy fotek nad sebou:** nahoře nejlepší fotky jedné modelky, dole druhé, přes výšku okna. Pás pod myší je aktivní (Tab přepne): kolečko nebo ← → jím listují, klik fotku zvětší, 1–5 jí dá srdíčka, „♥ Tahle“ nebo Enter vybere modelku, ↓ nebo mezerník = stejně. Samostatné okno „Fotky obou“ už není potřeba.
+- **Oblíbenost má části pod hledáním** jako Přehled: Porovnávání, Pořadí a Mohlo by se ti líbit (každá přes celou stránku); u Porovnávání je tam i volba Dvojice (Stejné srdíčko, Všechny, I nehodnocené). Pořadí v profilu modelky otevře rovnou část Pořadí.
+
 ## [0.99.35] – 2026-10-27
 
 ### Změněno

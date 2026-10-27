@@ -21,11 +21,13 @@ const POPISKY = {
     vyskytModelek: 'Výskyt',
     zobrazitCisla: 'Zobrazit',
     zobrazeniPrehledu: 'Část Přehledu',
+    zobrazeniOblibenosti: 'Část Oblíbenosti',
+    okruhOblibenosti: 'Dvojice',
 };
 
 const RAZENI = new Set(['razeniGalerie', 'razeniSteny']);
 // Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
-const ZOBRAZENI = new Set(['zobrazeniCisel', 'zobrazeniPrehledu']);
+const ZOBRAZENI = new Set(['zobrazeniCisel', 'zobrazeniPrehledu', 'zobrazeniOblibenosti']);
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
 const VYPINATELNE = new Set(['minHodnoceni', 'stenaMin', 'vyberId']);
@@ -44,9 +46,13 @@ const IKONY_ZOBRAZENI = {
     // Dvě srdíčka vedle sebe: porovnávání, která víc
     'Oblíbenost': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M8 18s-5.5-3.3-5.5-7.4A3 3 0 0 1 8 9a3 3 0 0 1 5.5 1.6c0 4.1-5.5 7.4-5.5 7.4z"/><path d="M15.2 6.6A3 3 0 0 1 21.5 8c0 3.2-3.3 5.9-4.8 6.9"/></svg>',
     'Sháním CZ': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>',
+    // Části Oblíbenosti: dva pásy fotek nad sebou, žebříček, jiskra tipu
+    'Porovnávání': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/></svg>',
+    'Pořadí': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h8M9 18h5"/><path d="M4 5v3M3.5 12h1.5l-1.5 2h1.5M3.5 17.5h1.5v2h-1.5"/></svg>',
+    'Mohlo by se ti líbit': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.2 5.6L20 9.5l-4.4 3.8L17 19l-5-3-5 3 1.4-5.7L4 9.5l5.8-.9z"/></svg>',
     'Statistiky': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>',
 };
-const TITULKY_ZOBRAZENI = { zobrazeniCisel: 'Zobrazení čísel', zobrazeniPrehledu: 'Část Přehledu' };
+const TITULKY_ZOBRAZENI = { zobrazeniCisel: 'Zobrazení čísel', zobrazeniPrehledu: 'Část Přehledu', zobrazeniOblibenosti: 'Část Oblíbenosti' };
 const IKONA_PREHRAT = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
 
 // Panel filtrů zůstává otevřený i po změně filtru (přehled se překreslí a panel se naplní znovu)

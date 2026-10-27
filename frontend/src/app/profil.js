@@ -416,6 +416,7 @@ export function pripravit() {
     // Páska online alb přeskočí na první online album; pořadí v oblíbenosti otevře Oblíbenost (jako tlačítko grafu)
     document.getElementById('modelHeader').addEventListener('click', (e) => {
         if (e.target.closest('[data-otevrit-oblibenost]')) {
+            stav.oblibenostCast = 'poradi';
             /** @type {HTMLElement|null} */ (document.querySelector('.nav-rezim[data-cast-prehledu="oblibenost"]'))?.click();
             return;
         }

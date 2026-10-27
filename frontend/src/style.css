@@ -10463,42 +10463,26 @@ span.ud-chip {
     color: var(--text-muted);
 }
 
-.ob-hlava {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 14px;
-    margin-bottom: 14px;
-}
-
-.ob-hlava h4 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 300;
-    letter-spacing: 0.04em;
-    text-transform: none;
-    color: var(--text-main);
-}
-
-.ob-okruh {
-    display: flex;
-    gap: 6px;
-}
-
 .ob-dnes {
     margin-left: auto;
     color: var(--text-muted);
     font-size: 12px;
 }
 
-/* Dvě velké fotky vedle sebe, „nebo“ mezi nimi; výška podle okna, aby se dvojice vešla bez rolování */
+/* Porovnávání: dva pásy fotek nad sebou přes výšku okna, pod nimi ovládání */
+.ob-porovnani {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    min-height: 480px;
+}
+
 .ob-dvojice {
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: start;
-    gap: 14px;
-    max-width: 760px;
-    margin: 0 auto;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 0;
     transition: opacity 0.17s ease, transform 0.17s ease;
 }
 
@@ -10507,89 +10491,240 @@ span.ud-chip {
     transform: translateY(6px);
 }
 
-.ob-dvojice > .prazdno,
-.ob-dvojice > .ob-prazdne-akce,
-.ob-duvod {
-    grid-column: 1 / -1;
+.ob-dvojice:not([data-pasy]) {
+    justify-content: center;
 }
 
-.ob-strana {
+.ob-dvojice > .ob-prazdne-akce {
+    text-align: center;
+}
+
+.pas {
     display: flex;
+    flex: 1;
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
+    min-height: 0;
+    padding: 8px 0 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    background-color: var(--bg-card);
+    transition: border-color 0.15s, opacity 0.15s, box-shadow 0.15s;
 }
 
-.ob-foto {
+.ob-dvojice[data-aktivni="a"] .pas[data-pas-strana="a"],
+.ob-dvojice[data-aktivni="b"] .pas[data-pas-strana="b"] {
+    border-color: rgba(216, 27, 96, 0.5);
+}
+
+.ob-dvojice[data-aktivni="a"] .pas[data-pas-strana="b"],
+.ob-dvojice[data-aktivni="b"] .pas[data-pas-strana="a"] {
+    opacity: 0.75;
+}
+
+/* Vybraná se krátce rozzáří, druhá ustoupí; remíza ztlumí obě stejně */
+.ob-dvojice[data-vybrano="a"] .pas[data-pas-strana="a"],
+.ob-dvojice[data-vybrano="b"] .pas[data-pas-strana="b"] {
+    border-color: var(--accent-text);
+    box-shadow: 0 0 24px rgba(255, 64, 129, 0.35);
+    opacity: 1;
+}
+
+.ob-dvojice[data-vybrano="a"] .pas[data-pas-strana="b"],
+.ob-dvojice[data-vybrano="b"] .pas[data-pas-strana="a"],
+.ob-dvojice[data-vybrano="remiza"] .pas {
+    opacity: 0.45;
+}
+
+.pas-hlava {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px 8px;
+    white-space: nowrap;
+}
+
+.pas-jmeno {
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 15px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.pas-jmeno:hover {
+    color: var(--accent-text);
+}
+
+.pas-srdicka {
+    color: var(--accent-text);
+    font-size: 13px;
+    letter-spacing: 2px;
+}
+
+.pas-info,
+.pas-pozice {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.pas-pozice {
+    margin-left: auto;
+    font-variant-numeric: tabular-nums;
+}
+
+.pas-vybrat {
+    padding: 5px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.pas-vybrat:hover,
+.pas-vybrat:focus-visible {
+    background-color: var(--accent);
+    color: #fff;
+    outline: none;
+}
+
+.pas-fotky {
+    display: flex;
+    flex: 1;
+    gap: 8px;
+    min-height: 0;
+    padding: 2px 16px 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a42 transparent;
+}
+
+.pas-fotka {
     position: relative;
-    width: 100%;
-    max-height: min(50vh, 480px);
+    flex: none;
+    height: 100%;
     aspect-ratio: 3 / 4;
     overflow: hidden;
     padding: 0;
     border: 2px solid transparent;
-    border-radius: 16px;
+    border-radius: 10px;
     background-color: var(--bg-main);
-    cursor: pointer;
-    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    cursor: zoom-in;
+    transition: border-color 0.12s;
 }
 
-.ob-foto img {
+.pas-fotka.kostra {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.pas-fotka img {
+    display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
 }
 
-.ob-foto:hover,
-.ob-foto:focus-visible {
-    border-color: var(--accent);
-    box-shadow: 0 0 18px rgba(216, 27, 96, 0.35);
+.pas-fotka img[data-rot="90"],
+.pas-zvetseni img[data-rot="90"] {
+    transform: rotate(90deg);
+}
+
+.pas-fotka img[data-rot="180"],
+.pas-zvetseni img[data-rot="180"] {
+    transform: rotate(180deg);
+}
+
+.pas-fotka img[data-rot="270"],
+.pas-zvetseni img[data-rot="270"] {
+    transform: rotate(270deg);
+}
+
+.pas-fotka.aktivni,
+.pas-fotka:focus-visible {
+    border-color: var(--accent-text);
     outline: none;
 }
 
-/* Počet fotek na titulní fotce: klik otevře galerii obou modelek */
-.ob-pocet-fotek {
+.pas-srd,
+.pas-album {
     position: absolute;
-    right: 10px;
-    bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 9px;
-    border-radius: 999px;
+    bottom: 8px;
+    padding: 2px 8px;
+    border-radius: 6px;
     background-color: rgba(0, 0, 0, 0.6);
     color: #ddd;
-    font-size: 12px;
+    font-size: 11.5px;
     pointer-events: none;
 }
 
-.ob-foto {
-    cursor: zoom-in;
+.pas-srd {
+    left: 8px;
+    color: var(--accent-text);
+    font-weight: 600;
 }
 
-/* Vybraná se krátce rozzáří, druhá ustoupí; remíza ztlumí obě stejně */
-.ob-dvojice[data-vybrano="a"] [data-strana="a"] .ob-foto,
-.ob-dvojice[data-vybrano="b"] [data-strana="b"] .ob-foto {
-    border-color: var(--accent-text);
-    transform: scale(1.02);
-    box-shadow: 0 0 24px rgba(255, 64, 129, 0.5);
+.pas-album {
+    right: 8px;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.ob-dvojice[data-vybrano="a"] [data-strana="b"] .ob-foto,
-.ob-dvojice[data-vybrano="b"] [data-strana="a"] .ob-foto,
-.ob-dvojice[data-vybrano="remiza"] .ob-foto {
-    opacity: 0.55;
+.pas-prazdne {
+    margin: auto;
+    color: var(--text-muted);
 }
 
-.ob-popis {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-    max-width: 100%;
+.pas-zvetseni {
+    background-color: rgba(5, 5, 7, 0.97);
+    cursor: zoom-out;
+    outline: none;
+}
+
+.pas-zvetseni.hidden {
+    display: none;
+}
+
+.pas-zvetseni img {
+    max-width: calc(100% - 48px);
+    max-height: calc(100% - 80px);
+    border-radius: 10px;
+}
+
+.pas-zvetseni-popis {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 14px;
+    border-radius: 999px;
+    background-color: var(--panel-bg);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    white-space: nowrap;
+}
+
+.ob-napoveda {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Části Oblíbenosti: vidět je jen zvolená */
+[data-ob-cast="porovnani"] > .ob-cast:not(.ob-porovnani),
+[data-ob-cast="poradi"] > .ob-cast:not([data-ob-cast-poradi]),
+[data-ob-cast="tipy"] > .ob-cast:not([data-ob-cast-tipy]) {
+    display: none;
 }
 
 .ob-jmeno {
@@ -10608,19 +10743,6 @@ span.ud-chip {
 
 .ob-jmeno:hover {
     color: var(--accent-text);
-}
-
-.ob-popis .hearts-pul .heart {
-    font-size: 18px;
-}
-
-.ob-nebo {
-    align-self: center;
-    margin-bottom: 40px;
-    color: var(--text-muted);
-    font-size: 11px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
 }
 
 .ob-duvod {
@@ -10880,18 +11002,6 @@ span.ud-chip {
 }
 
 @media (max-width: 560px) {
-    .ob-dvojice {
-        gap: 8px;
-    }
-
-    .ob-nebo {
-        display: none;
-    }
-
-    .ob-dvojice {
-        grid-template-columns: 1fr 1fr;
-    }
-
     .ob-dnes {
         margin-left: 0;
     }
@@ -11025,258 +11135,7 @@ span.ud-chip {
     font-size: 11px;
 }
 
-/* ——— Galerie obou modelek z porovnání (app/galerie-obou.js): dvě nezávislé galerie nad sebou ——— */
-.galerie-obou {
-    display: grid;
-    grid-template-rows: 1fr 1fr auto;
-    align-items: stretch;
-    justify-content: stretch;
-    padding: 12px 0 10px;
-    background-color: rgba(8, 8, 10, 0.98);
-    outline: none;
-}
-
-.galerie-obou.hidden {
-    display: none;
-}
-
-.go-pul {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    margin: 0 12px;
-    padding: 8px 0 10px;
-    border: 1px solid transparent;
-    border-radius: 16px;
-    transition: border-color 0.15s, background-color 0.15s, opacity 0.15s;
-}
-
-.galerie-obou[data-aktivni="a"] .go-pul[data-go-strana="a"],
-.galerie-obou[data-aktivni="b"] .go-pul[data-go-strana="b"] {
-    border-color: rgba(216, 27, 96, 0.45);
-    background-color: rgba(216, 27, 96, 0.04);
-}
-
-.galerie-obou[data-aktivni="a"] .go-pul[data-go-strana="b"],
-.galerie-obou[data-aktivni="b"] .go-pul[data-go-strana="a"] {
-    opacity: 0.7;
-}
-
-.go-hlava {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 0 16px 8px;
-    white-space: nowrap;
-}
-
-.go-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-.go-hlava b {
-    font-size: 16px;
-    font-weight: 300;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.go-srdicka {
-    color: var(--accent-text);
-    font-size: 13px;
-    letter-spacing: 2px;
-}
-
-.go-info,
-.go-pozice {
-    color: var(--text-muted);
-    font-size: 12.5px;
-}
-
-.go-pozice {
-    margin-left: auto;
-    font-variant-numeric: tabular-nums;
-}
-
-.go-vybrat {
-    padding: 6px 14px;
-    border: 1px solid var(--accent);
-    border-radius: 999px;
-    background-color: var(--accent-soft);
-    color: var(--accent-text);
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.go-vybrat:hover,
-.go-vybrat:focus-visible {
-    background-color: var(--accent);
-    color: #fff;
-    outline: none;
-}
-
-.go-pas {
-    display: flex;
-    flex: 1;
-    gap: 8px;
-    min-height: 0;
-    padding: 2px 16px 4px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: #3a3a42 transparent;
-}
-
-.go-fotka {
-    position: relative;
-    flex: none;
-    height: 100%;
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-    padding: 0;
-    border: 2px solid transparent;
-    border-radius: 10px;
-    background-color: var(--bg-card);
-    cursor: zoom-in;
-    transition: border-color 0.12s;
-}
-
-.go-fotka img {
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.go-fotka img[data-rot="90"],
-.go-zoom img[data-rot="90"] {
-    transform: rotate(90deg);
-}
-
-.go-fotka img[data-rot="180"],
-.go-zoom img[data-rot="180"] {
-    transform: rotate(180deg);
-}
-
-.go-fotka img[data-rot="270"],
-.go-zoom img[data-rot="270"] {
-    transform: rotate(270deg);
-}
-
-.go-fotka.aktivni,
-.go-fotka:focus-visible {
-    border-color: var(--accent-text);
-    outline: none;
-}
-
-.go-srd,
-.go-album {
-    position: absolute;
-    bottom: 8px;
-    padding: 2px 8px;
-    border-radius: 6px;
-    background-color: rgba(0, 0, 0, 0.6);
-    color: #ddd;
-    font-size: 11.5px;
-    pointer-events: none;
-}
-
-.go-srd {
-    left: 8px;
-    color: var(--accent-text);
-    font-weight: 600;
-}
-
-.go-album {
-    right: 8px;
-    max-width: 60%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.go-prazdne {
-    margin: auto;
-    color: var(--text-muted);
-}
-
-.go-ovladani {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding-top: 8px;
-}
-
-.go-napoveda {
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.go-tlacitko {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 14px;
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    background: none;
-    color: var(--text-main);
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.go-tlacitko:hover,
-.go-tlacitko:focus-visible {
-    border-color: var(--accent);
-    outline: none;
-}
-
-.galerie-obou kbd {
-    padding: 0 5px;
-    border: 1px solid #3a3a42;
-    border-radius: 4px;
-    color: var(--text-muted);
-    font-family: inherit;
-    font-size: 11px;
-}
-
-.go-zoom {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(5, 5, 7, 0.97);
-    cursor: zoom-out;
-}
-
-.go-zoom.hidden {
-    display: none;
-}
-
-.go-zoom img {
-    max-width: calc(100% - 48px);
-    max-height: calc(100% - 80px);
-    border-radius: 10px;
-}
-
-.go-zoom-popis {
-    position: absolute;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 5px 14px;
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-    color: var(--text-muted);
-    font-size: 12.5px;
-    white-space: nowrap;
+.ob-cast.ob-karta {
+    max-width: 1040px;
+    margin: 0 auto;
 }

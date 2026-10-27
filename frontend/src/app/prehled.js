@@ -1,6 +1,6 @@
 // Přehled sbírky: úvod, Údržba, Oblíbenost, Sháním CZ a Statistiky; nabídka částí u tlačítka Přehled
 import { GetKalendar, GetPrehled, GetPrehledOblibenosti, GetStatistiky, GetStavyVydani, SetStavVydani } from './backend';
-import { nacistOblibenost } from './oblibenost';
+import { htmlVolebOblibenosti, nacistOblibenost } from './oblibenost';
 import { nazevVydani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -23,14 +23,15 @@ import * as udrzba from './udrzba';
 // Načtení se při opakování zapisuje na místo: části se přepíšou jen při změně, Údržba po skupinách,
 // takže se stránka neposune a fokus zůstane.
 
-// Části Přehledu. Oblíbenost má vlastní tlačítko (graf) a volbu pod hledáním nemá; ostatní části otevírá tlačítko
-// Přehled sbírky a přepínají se volbou pod hledáním. U Údržby a Sháním CZ počet z posledního načtení.
+// Části Přehledu. Oblíbenost má vlastní tlačítko (graf) a pod hledáním své části (Porovnávání, Pořadí, Mohlo by se
+// ti líbit, oblibenost.js); ostatní části otevírá tlačítko Přehled sbírky a přepínají se volbou pod hledáním.
+// U Údržby a Sháním CZ počet z posledního načtení.
 const CASTI_VSE = [['uvod', 'Přehled'], ['udrzba', 'Údržba'], ['oblibenost', 'Oblíbenost'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']];
 const CASTI_SPRAVY = CASTI_VSE.filter(([klic]) => klic !== 'oblibenost');
 const casti = () => CASTI_VSE;
 const pocetVCasti = { udrzba: 0, shanim: 0 };
 // Řádek částí Přehledu: lišta pod hledáním z něj udělá volbu s ikonou, jako Obálky / Kalendář u Čísel
-const htmlCasti = () => stav.prehledSekce === 'oblibenost' ? '' : `<div class="prehled-casti volby-v-liste">${CASTI_SPRAVY.map(([klic, nazev]) =>
+const htmlCasti = () => stav.prehledSekce === 'oblibenost' ? htmlVolebOblibenosti() : `<div class="prehled-casti volby-v-liste">${CASTI_SPRAVY.map(([klic, nazev]) =>
     `<button class="chip ${klic === stav.prehledSekce ? 'active' : ''}" data-zobrazeni-prehledu="${klic}">${nazev}${pocetVCasti[klic] ? `<span>${pocetVCasti[klic]}</span>` : ''}</button>`).join('')}</div>`;
 
 const KOSTRA = `
@@ -155,6 +156,8 @@ function ukazatCast(klic) {
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     udrzba.pripravit(nacistPrehled);
+    // Oblíbenost změnila svou část nebo okruh: obnoví se volby v liště
+    document.addEventListener('volby-prehledu', obnovitCasti);
     // Části Přehledu (Přehled, Údržba, Sháním CZ, Statistiky) se přepínají volbou v liště pod hledáním
     document.addEventListener('click', (e) => {
         const volba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-prehledu]');

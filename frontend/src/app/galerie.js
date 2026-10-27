@@ -18,7 +18,7 @@ import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
 import { lightbox } from './prohlizec';
-import { trendModelky } from '../lib/oblibenost';
+import { trendModelky, urovenModelky } from '../lib/oblibenost';
 import { vybraneDlazdice } from './vyber';
 import { prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
@@ -53,6 +53,13 @@ const nadpisOdhadu = duvod => `Odhad podle tvého vkusu, zatím nehodnoceno${duv
 export function htmlTrendu(modelka) {
     const t = trendModelky(modelka, 3);
     return t ? `<span class="trend trend-karta ${t.smer}" title="${esc(`Oblíbenost: ${t.text}`)}">${t.znak}</span>` : '';
+}
+
+// Odznak Top 10 na kartě: jen potvrzená top 10 (nejvýš deset karet v celé galerii, takže nepřeplácá); nižší úrovně
+// a čekání ukazuje profil a Oblíbenost
+export function htmlTopu(modelka) {
+    if (urovenModelky(modelka).uroven !== 10) return '';
+    return `<span class="top-karta" title="${esc(`Top 10 v oblíbenosti${modelka.poradi > 0 ? ` · ${modelka.poradi}. místo` : ''}`)}">Top 10</span>`;
 }
 
 export function htmlOdhadu(modelka, tridy = '') {
@@ -244,6 +251,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
                 <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" decoding="async" />
                 ${htmlSrdicka(m, false)}
                 ${htmlOdhadu(m)}
+                ${htmlTopu(m)}
             </div>
             <div class="card-info">
                 <h3>${esc(m.jmeno)}${htmlTrendu(m)}</h3>

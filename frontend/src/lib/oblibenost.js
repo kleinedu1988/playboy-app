@@ -1,5 +1,6 @@
 // Čistá logika části Oblíbenost (app/oblibenost.js, porovnani-pasy.js): popisy fotek, texty složek pořadí (srdíčka,
-// skóre fotek, porovnání, zájem), trend a řazení. Bez stránky, aby šla testovat.
+// skóre fotek, porovnání, zájem), trend a řazení, úrovně Top 10 / 20 / 50 / 100 (štítky, čekání, seskupení, souboje).
+// Bez stránky, aby šla testovat.
 
 // Kolik nejlepších fotek každé modelky ukáže galerie obou v porovnání (nejvíc, kolik vrátí GetNahledyModelek)
 export const NAHLEDU_V_POROVNANI = 24;
@@ -42,10 +43,17 @@ export function trendModelky(modelka, min = 1) {
         : { smer: 'dolu', znak: '▼', text: `o ${mistaText(-zmena)} níž ${kdy}`, kratce };
 }
 
-// Řádek pod srdíčky v profilu: „12. v oblíbenosti · ▲ o 3 místa výš než před 30 dny“; bez pořadí prázdný
+// Řádek pod srdíčky v profilu: „3. v oblíbenosti · Top 10 · ▲ 3 za 30 dní“, u čekající „12. v oblíbenosti ·
+// čeká na Top 10“ (místo je potvrzené pořadí); bez pořadí prázdný. uroven je text úrovně, ceka text čekání, nebo ''
 export function textPoradiProfilu(modelka) {
     if (!(Number(modelka?.poradi) > 0)) return null;
-    return { poradi: `${modelka.poradi}. v oblíbenosti`, trend: trendModelky(modelka) };
+    const { uroven, ceka } = urovenModelky(modelka);
+    return {
+        poradi: `${modelka.poradi}. v oblíbenosti`,
+        uroven: ceka ? '' : uroven ? nazevUrovne(uroven) : '',
+        ceka: ceka ? `čeká na ${nazevUrovne(ceka)}` : '',
+        trend: trendModelky(modelka),
+    };
 }
 
 // Řazení fotek podle srdíček, se stejnými srdíčky podle oblíbenosti modelky (oblibenost: Map id → oblíbenost)
@@ -69,4 +77,135 @@ export function stoupajiKlesaji(poradi, kolik = 5) {
     const stoupaji = poradi.filter(p => (p.zmenaPoradi || 0) >= prah).sort((a, b) => b.zmenaPoradi - a.zmenaPoradi).slice(0, kolik);
     const klesaji = poradi.filter(p => (p.zmenaPoradi || 0) <= -prah).sort((a, b) => a.zmenaPoradi - b.zmenaPoradi).slice(0, kolik);
     return { stoupaji, klesaji };
+}
+
+// ——— Úrovně oblíbenosti (Top 10 / 20 / 50 / 100) ———
+// Backend (oblibenost.go) pouští modelku do vyšší úrovně, až splní podmínky úrovně (počet porovnání, nejistota,
+// u Top 10 výhra nad modelkou z top 20); do té doby zůstane těsně pod hranicí a „čeká“. Prahy posílá backend
+// (GetOblibenost().urovne), tady se jen popisují – nic z nich tu není natvrdo.
+export const UROVNE = [10, 20, 50, 100];
+
+// Úroveň podle potvrzeného místa (jen když backend úroveň neposlal): 1–10 → 10, 11–20 → 20 …, mimo top 100 → 0
+export const urovenMista = misto => Number(misto) > 0 ? UROVNE.find(u => misto <= u) || 0 : 0;
+
+export const nazevUrovne = uroven => `Top ${uroven}`;
+
+// Úroveň a čekání modelky z kteréhokoli zdroje: položka pořadí (uroven, ceka) i modelka z GetModelky (urovenTop,
+// cekaNaTop) → { uroven, ceka } (0 = žádná)
+export function urovenModelky(x) {
+    const uroven = Number(x?.urovenTop ?? x?.uroven ?? 0) || 0;
+    const ceka = Number(x?.cekaNaTop ?? x?.ceka?.uroven ?? 0) || 0;
+    return { uroven, ceka: ceka && (!uroven || ceka < uroven) ? ceka : 0 };
+}
+
+const cislo2 = n => (Number(n) || 0).toLocaleString('cs-CZ', { maximumFractionDigits: 2 });
+
+// Co čekající modelce chybí do potvrzení (ceka z položky pořadí) – seznam krátkých vět; splněné podmínky vynechá
+export function chybiKUrovni(ceka) {
+    if (!ceka) return [];
+    const chybi = [];
+    const porovnani = Number(ceka.porovnani) || 0, potreba = Number(ceka.potrebaPorovnani) || 0;
+    if (porovnani < potreba) chybi.push(`ještě ${potreba - porovnani} porovnání (má ${porovnani} z ${potreba})`);
+    if (Number(ceka.maxNejistota) > 0 && Number(ceka.nejistota) > Number(ceka.maxNejistota)) {
+        chybi.push(`jistější místo: nejistota ${cislo2(ceka.nejistota)}, potřeba nejvýš ${cislo2(ceka.maxNejistota)}`);
+    }
+    if (ceka.potrebaVyhry && !ceka.maVyhru) chybi.push('výhra nad modelkou z top 20');
+    return chybi;
+}
+
+// Štítek čekající modelky: „čeká na Top 10 (5/8 porovnání)“; v závorce první nesplněná podmínka
+export function textCekani(ceka) {
+    if (!(Number(ceka?.uroven) > 0)) return '';
+    const porovnani = Number(ceka.porovnani) || 0, potreba = Number(ceka.potrebaPorovnani) || 0;
+    const zavorka = porovnani < potreba ? `${porovnani}/${potreba} porovnání`
+        : Number(ceka.maxNejistota) > 0 && Number(ceka.nejistota) > Number(ceka.maxNejistota) ? `nejistota ${cislo2(ceka.nejistota)}`
+        : ceka.potrebaVyhry && !ceka.maVyhru ? 'chybí výhra nad top 20' : '';
+    return `čeká na ${nazevUrovne(ceka.uroven)}${zavorka ? ` (${zavorka})` : ''}`;
+}
+
+// Bublina čekající modelky: kam patří podle síly, co jí chybí a co s tím (víc řádků, do title)
+export function bublinaCekani(ceka, mistoPodleSily = 0) {
+    if (!(Number(ceka?.uroven) > 0)) return '';
+    const chybi = chybiKUrovni(ceka);
+    return [
+        `Podle síly ${mistoPodleSily > 0 ? `patří na ${mistoPodleSily}. místo – do ${nazevUrovne(ceka.uroven)}` : `patří do ${nazevUrovne(ceka.uroven)}`}.`,
+        chybi.length ? `Do potvrzení chybí:\n${chybi.map(c => `• ${c}`).join('\n')}` : 'Podmínky už splňuje, potvrdí se při příštím přepočtu.',
+        'Do té doby zůstává těsně pod hranicí; dvojice o potvrzení nabízí Porovnávání.',
+    ].join('\n');
+}
+
+// Věta o podmínkách úrovní z GetOblibenost().urovne, od nejnižší: „Top 100: 2 porovnání · Top 50: 4 porovnání,
+// nejistota ≤ 0,5 · … Top 10: 8 porovnání, nejistota ≤ 0,3, výhra nad modelkou z top 20.“
+export function textPravidelUrovni(urovne) {
+    const serazene = [...(urovne || [])].filter(u => Number(u?.uroven) > 0).sort((a, b) => b.uroven - a.uroven);
+    if (!serazene.length) return '';
+    const podminky = serazene.map(u => {
+        const casti = [`${Number(u.potrebaPorovnani) || 0} porovnání`];
+        if (Number(u.maxNejistota) > 0) casti.push(`nejistota ≤ ${cislo2(u.maxNejistota)}`);
+        if (u.potrebaVyhry) casti.push('výhra nad modelkou z top 20');
+        return `${nazevUrovne(u.uroven)}: ${casti.join(', ')}`;
+    });
+    return `Úrovně potvrzuje počet porovnání a jistota místa – ${podminky.join(' · ')}. Modelka, která je ještě nesplňuje, čeká těsně pod hranicí.`;
+}
+
+// Pořadí rozdělené podle úrovní pro oddělovače: [{ uroven (0 = mimo top 100), polozky }] v pořadí seznamu.
+// Seznam je seřazený podle potvrzeného pořadí, takže úrovně jdou za sebou; bez úrovně z backendu podle místa.
+export function seskupitPodleUrovni(poradi) {
+    const skupiny = [];
+    (poradi || []).forEach((p, i) => {
+        const uroven = p.uroven !== undefined ? Number(p.uroven) || 0 : urovenMista(p.poradi || i + 1);
+        const posledni = skupiny.at(-1);
+        if (posledni?.uroven === uroven) posledni.polozky.push(p);
+        else skupiny.push({ uroven, polozky: [p] });
+    });
+    return skupiny;
+}
+
+// Počty čekajících podle úrovně, na kterou čekají (z položek pořadí nebo modelek): [[10, 1], [50, 2]]
+export function poctyCekajicich(seznam) {
+    const pocty = new Map();
+    (seznam || []).forEach(x => {
+        const { ceka } = urovenModelky(x);
+        if (ceka) pocty.set(ceka, (pocty.get(ceka) || 0) + 1);
+    });
+    return [...pocty].sort((a, b) => a[0] - b[0]);
+}
+
+// „3 čekají na potvrzení (1 na Top 10, 2 na Top 50)“; celkem = počet z backendu (cekajicich), jinak součet
+export function textCekajicich(pocty, celkem = 0) {
+    const soucet = pocty.reduce((s, [, n]) => s + n, 0);
+    const n = Number(celkem) || soucet;
+    if (!n) return '';
+    const sloveso = n === 1 ? 'čeká' : n <= 4 ? 'čekají' : 'čeká';
+    const rozpis = pocty.length ? ` (${pocty.map(([u, k]) => `${k} na ${nazevUrovne(u)}`).join(', ')})` : '';
+    return `${n} ${sloveso} na potvrzení${rozpis}`;
+}
+
+// Nadpis souboje nad pásy z dvojice (druh „souboj“) a úrovní obou modelek: „Souboj o Top 10“, u dvojice
+// o potvrzení čekající „O postup do Top 10“; jiná dvojice ''
+export function nadpisSouboje(dvojice, a = null, b = null) {
+    if (dvojice?.druh !== 'souboj') return '';
+    const duvod = String(dvojice.duvod || '');
+    const zDuvodu = Number(duvod.match(/top\s*(\d+)/i)?.[1]) || 0;
+    const zModelek = [a, b].map(m => urovenModelky(m).ceka).filter(Boolean);
+    const uroven = zDuvodu || (zModelek.length ? Math.min(...zModelek) : 0);
+    const naPotvrzeni = /čeká na potvrzení/i.test(duvod);
+    if (!uroven) return 'Souboj o místo';
+    return naPotvrzeni ? `O postup do ${nazevUrovne(uroven)}` : `Souboj o ${nazevUrovne(uroven)}`;
+}
+
+// Štítek úrovně u modelky (pás porovnání, profil): položka pořadí (uroven, ceka s podrobnostmi, mistoPodleSily)
+// nebo modelka z GetModelky (urovenTop, cekaNaTop) → { text, ceka, title }; bez úrovně i čekání null
+export function stitekUrovne(x) {
+    const { uroven, ceka } = urovenModelky(x);
+    if (ceka) {
+        const podrobne = typeof x?.ceka === 'object' && x.ceka;
+        return {
+            text: podrobne ? textCekani(podrobne) : `čeká na ${nazevUrovne(ceka)}`,
+            ceka: true,
+            title: podrobne ? bublinaCekani(podrobne, Number(x.mistoPodleSily) || 0)
+                : `Podle síly patří do ${nazevUrovne(ceka)}, potvrdí ji další porovnání. Do té doby zůstává těsně pod hranicí.`,
+        };
+    }
+    return uroven ? { text: nazevUrovne(uroven), ceka: false, title: `Potvrzená v ${nazevUrovne(uroven)} oblíbenosti` } : null;
 }

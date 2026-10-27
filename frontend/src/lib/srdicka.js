@@ -86,8 +86,9 @@ export function textModeluVkusu({ presnost = 0, hodnocenych: pocet = 0, porovnan
     return `Model vkusu odhaduje tvé hodnocení s přesností ${procentaPresnosti(presnost)} podle ${hodnocenych} a ${porovnani} porovnání.`;
 }
 
-// Dvojice z backendu: a, b jsou id modelek (pro jistotu i celé modelky s id)
-export const idDvojice = d => ({ a: Number(d?.a?.id ?? d?.a) || 0, b: Number(d?.b?.id ?? d?.b) || 0, duvod: String(d?.duvod || '') });
+// Dvojice z backendu: a, b jsou id modelek (pro jistotu i celé modelky s id); druh „souboj“ = souboj o místo na
+// hranici úrovně (Top 10 / 20 / 50 / 100), jinak ''
+export const idDvojice = d => ({ a: Number(d?.a?.id ?? d?.a) || 0, b: Number(d?.b?.id ?? d?.b) || 0, duvod: String(d?.duvod || ''), druh: String(d?.druh || '') });
 
 // Počet dnešních porovnání: uložené { datum, pocet } platí jen pro dnešní datum (RRRR-MM-DD)
 export const dnesniPocet = (ulozene, dnes) => ulozene?.datum === dnes ? Number(ulozene.pocet) || 0 : 0;

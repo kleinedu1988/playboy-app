@@ -10,7 +10,7 @@
 // zvýraznění mění dvě fotky, ne všechny.
 import { SetHodnoceniFotek } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
-import { popisNahledu, textSkoreFotek } from '../lib/oblibenost';
+import { popisNahledu, stitekUrovne, textSkoreFotek } from '../lib/oblibenost';
 import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, VELIKOST_TITULNI, adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { htmlSrdicka } from './galerie';
@@ -44,18 +44,22 @@ export const fotekNaObrazovce = () => fotekNaSirku;
 const srdickaFotky = h => h > 0 ? `♥${h}` : 'bez ♥';
 const polovina = strana => koren?.querySelector(`[data-pas-strana="${strana}"]`);
 
-// Titulní fotka vlevo od pásu: jméno (otevře profil), srdíčka modelky, počet fotek a pozice v pásu, „♥ Tahle“
+// Titulní fotka vlevo od pásu: jméno (otevře profil), srdíčka modelky, úroveň oblíbenosti („Top 10“, „⏳ čeká na Top 10
+// (5/8 porovnání)“ – z položky pořadí, jinak z modelky), počet fotek a pozice v pásu, „♥ Tahle“
 function htmlProfilu(strana) {
     const { modelka: m, fotky, celkem, skore } = data[strana];
     const info = !fotky ? '' : fotky.length < celkem ? `${fotky.length} nejlepších z ${celkem}` : sklonovat(fotky.length, 'fotka', 'fotky', 'fotek');
     const skoreFotek = skore?.skoreFotek > 0
         ? `<span class="pas-skore" title="${esc(`Skóre fotek z ${sklonovat(skore.albFotek, 'alba', 'alb', 'alb')} a ${sklonovat(skore.fotekHodnocenych, 'hodnocené fotky', 'hodnocených fotek', 'hodnocených fotek')} (každé album jeden hlas, rozhodují jeho nejlepší fotky)`)}">${esc(textSkoreFotek(skore.skoreFotek))}</span>` : '';
+    const u = stitekUrovne(skore || m);
+    const uroven = u ? `<span class="pas-uroven ${u.ceka ? 'ceka' : ''}" title="${esc(u.title)}">${u.ceka ? '⏳ ' : ''}${esc(u.text)}</span>` : '';
     return `
         <img src="${esc(adresaTitulni(m, true))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
         <button type="button" class="pas-vybrat" data-ob-volba="${strana}" title="Líbí se mi víc ${esc(m.jmeno)} (Enter v aktivním pásu)">♥ Tahle</button>
         <div class="pas-popis">
             <button type="button" class="pas-jmeno" data-otevrit-modelku="${m.id}" title="Otevřít profil">${esc(m.jmeno)}</button>
             ${htmlSrdicka(m)}
+            ${uroven}
             ${skoreFotek}
             <small><span>${info}</span><span data-pas-pozice></span></small>
         </div>`;

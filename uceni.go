@@ -113,6 +113,13 @@ var migraceUceni = []string{
 		misto INTEGER NOT NULL DEFAULT 0,
 		souperka INTEGER NOT NULL DEFAULT 0
 	);`,
+	// Úprava č. 6: srdíčka daná přijetím odhadu vkusu v rychlém hodnocení (oblibenost_hodnoceni.go) – model vkusu
+	// se z nich neučí, dokud je nepotvrdí porovnání (jinak by se učil sám ze sebe)
+	`CREATE TABLE prevzate_odhady (
+		modelka_id INTEGER PRIMARY KEY,
+		hodnoceni REAL NOT NULL,
+		cas TEXT NOT NULL
+	);`,
 }
 
 // Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti
@@ -121,7 +128,7 @@ var tabulkyUceni = []string{"udalosti", "odmitnute", "zapisy"}
 
 // Oblíbenost (porovnání dvojic, zájem a historie): do paměti se přenesou také, ale zapomínají se zvlášť
 // (ZapomenoutPorovnani)
-var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti", "drzitelky_urovni", "kronika_slavy"}
+var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti", "drzitelky_urovni", "kronika_slavy", "prevzate_odhady"}
 
 // Druhy událostí deníku
 const (

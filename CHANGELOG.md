@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.57] – 2026-10-27
+
+### Změněno
+- **Rychlé hodnocení je chytřejší a sjednocené.**
+  - **Nově přidané napřed:** nehodnocená modelka přidaná v posledních 14 dnech jde na začátek fronty.
+  - **Pořadí podle užitku:** napřed modelky, u kterých tvoje srdíčka pořadí nejvíc změní, tedy vysoký, ale nejistý odhad. Odhad bere i sílu z porovnání a srdíčka fotek, nejen model vkusu.
+  - **Nesedí se srdíčky ve frontě:** po nehodnocených přijdou modelky, kterým podle porovnání nesedí srdíčka, se stejným návrhem jako v Pořadí. Enter dá návrh, N srdíčka nechá. V Pořadí je odkaz „Projít v Hodnocení →“.
+  - **Paměť přeskočených:** přeskočené modelky jdou na konec fronty i příště, ohodnocením z paměti zmizí.
+  - **Ochrana před ukotvením:** nejistý odhad se ukáže až po chvíli (nebo po „Ukázat odhad“), aby nejdřív rozhodly fotky. Srdíčka daná Enterem z odhadu si program pamatuje jako převzatá a model vkusu se z nich neučí, dokud je nepotvrdí porovnání.
+- **Model vkusu se učí i z porovnání:** nehodnocená modelka, která má za sebou aspoň tři porovnání a jistou sílu, mu slouží jako další příklad. Odhady se tak zlepšují i z porovnávání.
+
 ## [0.99.56] – 2026-10-27
 
 ### Přidáno

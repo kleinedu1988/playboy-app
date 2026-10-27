@@ -86,6 +86,10 @@ export function GetFotografove() {
   return window['go']['main']['App']['GetFotografove']();
 }
 
+export function GetFrontaHodnoceni() {
+  return window['go']['main']['App']['GetFrontaHodnoceni']();
+}
+
 export function GetKalendar() {
   return window['go']['main']['App']['GetKalendar']();
 }
@@ -288,6 +292,10 @@ export function SetHodnoceni(arg1, arg2) {
 
 export function SetHodnoceniFotek(arg1, arg2) {
   return window['go']['main']['App']['SetHodnoceniFotek'](arg1, arg2);
+}
+
+export function SetHodnoceniOdhadem(arg1, arg2) {
+  return window['go']['main']['App']['SetHodnoceniOdhadem'](arg1, arg2);
 }
 
 export function SetNazevSpecialu(arg1, arg2) {

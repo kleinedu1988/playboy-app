@@ -44,6 +44,8 @@ export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>
 
 export function GetFotografove():Promise<Array<string>>;
 
+export function GetFrontaHodnoceni():Promise<Array<main.PolozkaHodnoceni>>;
+
 export function GetKalendar():Promise<Array<main.VydaniKalendare>>;
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
@@ -145,6 +147,8 @@ export function SetDatumAlba(arg1:number,arg2:string,arg3:string,arg4:string):Pr
 export function SetHodnoceni(arg1:number,arg2:number):Promise<boolean>;
 
 export function SetHodnoceniFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
+
+export function SetHodnoceniOdhadem(arg1:number,arg2:number):Promise<boolean>;
 
 export function SetNazevSpecialu(arg1:string,arg2:string):Promise<boolean>;
 

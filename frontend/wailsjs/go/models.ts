@@ -776,6 +776,50 @@ export namespace main {
 	    }
 	}
 	
+	export class PolozkaHodnoceni {
+	    modelkaId: number;
+	    druh: string;
+	    odhad: number;
+	    nejistota: number;
+	    duvod: string;
+	    hodnoceni: number;
+	    navrh: number;
+	    nesoulad?: NesouladSrdicek;
+	
+	    static createFrom(source: any = {}) {
+	        return new PolozkaHodnoceni(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.druh = source["druh"];
+	        this.odhad = source["odhad"];
+	        this.nejistota = source["nejistota"];
+	        this.duvod = source["duvod"];
+	        this.hodnoceni = source["hodnoceni"];
+	        this.navrh = source["navrh"];
+	        this.nesoulad = this.convertValues(source["nesoulad"], NesouladSrdicek);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class PolozkaOblibenosti {
 	    modelkaId: number;
 	    jmeno: string;

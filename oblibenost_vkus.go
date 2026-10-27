@@ -118,17 +118,46 @@ func (model *modelOblibenosti) naucitModelVkusu(modelky []Modelka, porovnani []p
 	// Model vkusu se učí na srdíčkách upřesněných porovnáním bez skóre fotek: fotky jsou mezi jeho údaji, v cíli by
 	// se počítaly podruhé.
 	cil := map[int]float64{}
+	var btSrdicka *vysledekBT
 	if len(porovnani) > 0 {
-		btSrdicka := spocitatBT(stredSrdicka, sigmaSrdicka, porovnani, nyni)
+		bt := spocitatBT(stredSrdicka, sigmaSrdicka, porovnani, nyni)
+		btSrdicka = &bt
 		for _, m := range modelky {
 			if s, ok := btSrdicka.sila[m.ID]; ok && m.Hodnoceni > 0 {
 				cil[m.ID] = m.Hodnoceni + min(max(s-m.Hodnoceni, -rozpetiCileVkusu), rozpetiCileVkusu)
 			}
 		}
 	}
-	udaje := pripravitUdajeVkusu(modelky)
+	// Učební modelky: srdíčka jen převzatá z odhadu vkusu (rychlé hodnocení) se nepočítají, dokud je nepotvrdí aspoň
+	// tři porovnání – model by se učil sám ze sebe; nehodnocená s aspoň třemi porovnáními a jistou silou (jako pro
+	// návrh srdíček) učí síla z porovnání, jen do učení (ověření a „podobné modelky“ v důvodu zůstávají srdíčkům)
+	pocet := map[int]int{}
+	for _, p := range porovnani {
+		pocet[p.a]++
+		pocet[p.b]++
+	}
+	ucebni := append([]Modelka(nil), modelky...)
+	nast := nastaveniVkusuVychozi
+	for i := range ucebni {
+		m := &ucebni[i]
+		if h, ok := model.prevzate[m.ID]; ok && m.Hodnoceni > 0 && math.Abs(h-m.Hodnoceni) < 1e-9 && pocet[m.ID] < minPorovnaniNavrhu {
+			m.Hodnoceni = 0
+			continue
+		}
+		if m.Hodnoceni <= 0 && pocet[m.ID] >= minPorovnaniNavrhu && btSrdicka != nil {
+			if s, ok := btSrdicka.sila[m.ID]; ok && math.Sqrt(btSrdicka.rozptyl[m.ID]) <= maxNejistotaNavrhu {
+				sila := oriznoutSrdicka(s)
+				m.Hodnoceni, cil[m.ID] = zaokrouhlitNaPul(sila), sila
+				if nast.jenTrenink == nil {
+					nast.jenTrenink = map[int]bool{}
+				}
+				nast.jenTrenink[m.ID] = true
+			}
+		}
+	}
+	udaje := pripravitUdajeVkusu(ucebni)
 	doplnitSkoreVkusu(udaje, model.skore)
-	model.vkus = naucitVkus(modelky, cil, udaje, nastaveniVkusuVychozi)
+	model.vkus = naucitVkus(ucebni, cil, udaje, nast)
 	model.vkusZeSkore = len(model.skore) > 0 && nastaveniVkusuVychozi.fotky != fotkyPrumer
 	if v := model.vkus; v != nil && v.platny {
 		maps.Copy(model.odhad, v.odhady)
@@ -212,11 +241,12 @@ const (
 
 // Nastavení modelu (výchozí pro program; vyhodnocení v testech porovnává varianty)
 type nastaveniVkusu struct {
-	hreben, stromy bool    // které modely (aspoň jeden)
-	kose           bool    // regrese: číselné údaje i po pětinách
-	fotky          int     // fotkyPrumer, fotkySkore, fotkyObe
-	vahaStromu     float64 // pevná váha stromů v průměru; < 0 = vybere ověření
-	poSkupinach    bool    // odhad jen ve skupinách podle bohatosti údajů, kde na ověření jasně překoná průměr
+	hreben, stromy bool         // které modely (aspoň jeden)
+	kose           bool         // regrese: číselné údaje i po pětinách
+	fotky          int          // fotkyPrumer, fotkySkore, fotkyObe
+	vahaStromu     float64      // pevná váha stromů v průměru; < 0 = vybere ověření
+	jenTrenink     map[int]bool // modelky jen do učení (síla z porovnání místo srdíček): neověřují se, nejsou mezi podobnými
+	poSkupinach    bool         // odhad jen ve skupinách podle bohatosti údajů, kde na ověření jasně překoná průměr
 }
 
 var nastaveniVkusuVychozi = nastaveniVkusu{hreben: true, stromy: true, kose: true, fotky: fotkyObe, vahaStromu: -1, poSkupinach: true}
@@ -981,7 +1011,7 @@ func naucitVkus(modelky []Modelka, oblibenost map[int]float64, udaje map[int]uda
 	overit := func(kose ...int) souhrnOvereni {
 		var o souhrnOvereni
 		for r, i := range hodnocene {
-			if kose != nil && !slices.Contains(kose, kosBohatosti(udaje[modelky[i].ID])) {
+			if nast.jenTrenink[modelky[i].ID] || (kose != nil && !slices.Contains(kose, kosBohatosti(udaje[modelky[i].ID]))) {
 				continue
 			}
 			o.n++
@@ -1054,9 +1084,11 @@ func naucitVkus(modelky []Modelka, oblibenost map[int]float64, udaje map[int]uda
 	if nast.stromy {
 		// Les zůstane i s váhou 0: podle společných listů hledá podobné hodnocené modelky do důvodu
 		v.les = &lesVkusu{zaklad: lesVse.zaklad, stromy: lesVse.stromy[:min(v.pocetStromu, len(lesVse.stromy))]}
-		v.hodnocene = make([]hodnocenaVkusu, n)
+		v.hodnocene = make([]hodnocenaVkusu, 0, n)
 		for r, i := range hodnocene {
-			v.hodnocene[r] = hodnocenaVkusu{id: modelky[i].ID, jmeno: modelky[i].Jmeno, srdicka: srdicka[r], listy: v.les.listy(kosy[r])}
+			if !nast.jenTrenink[modelky[i].ID] {
+				v.hodnocene = append(v.hodnocene, hodnocenaVkusu{id: modelky[i].ID, jmeno: modelky[i].Jmeno, srdicka: srdicka[r], listy: v.les.listy(kosy[r])})
+			}
 		}
 	}
 	v.surove = make(map[int]float64, len(modelky))

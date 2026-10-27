@@ -417,6 +417,9 @@ type modelOblibenosti struct {
 	drzitelky map[int]int
 	obhajoba  map[int]ObhajobaUrovne
 	vyzyva    map[int]int
+	// Srdíčka daná přijetím odhadu vkusu (rychlé hodnocení, oblibenost_hodnoceni.go): model vkusu se z nich neučí,
+	// dokud je nepotvrdí porovnání
+	prevzate map[int]float64
 }
 
 // Posun předpokladu síly zájmem (srdíčka); jen u modelek s předpokladem (hodnocené nebo s hodnocenými fotkami)
@@ -467,8 +470,9 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	snimek, den, potvrzene := u.nacistSrovnani(nyni)
 	posledni := posledniPorovnani(porovnani)
 	st := u.nacistStavUrovni(posledni)
+	prevzate := u.nacistPrevzate()
 	u.mu.Unlock()
-	model := spocitatOblibenostUplne(modelky, porovnani, zajem, st.drzitelky, nyni)
+	model := spocitatOblibenostUplne(modelky, porovnani, zajem, vstupOblibenosti{drzitelky: st.drzitelky, prevzate: prevzate}, nyni)
 	model.nastavitTrend(snimek, den, nyni, potvrzene)
 	model.otisk = otisk
 	predchozi := u.ob.model
@@ -529,12 +533,19 @@ func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni tim
 }
 
 func spocitatOblibenostSeZajmem(modelky []Modelka, porovnani []porovnaniZaznam, zajem stavZajmu, nyni time.Time) *modelOblibenosti {
-	return spocitatOblibenostUplne(modelky, porovnani, zajem, nil, nyni)
+	return spocitatOblibenostUplne(modelky, porovnani, zajem, vstupOblibenosti{}, nyni)
 }
 
-// Celý výpočet; drzitelky = úrovně potvrzené minulým výpočtem (modelka → 10/20/50/100) pro obhajobu místa
-func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zajem stavZajmu, drzitelky map[int]int, nyni time.Time) *modelOblibenosti {
-	model := &modelOblibenosti{drzitelky: drzitelky, oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, jenOdhad: map[int]bool{}, zdrojOdhadu: map[int]int{}, porovnani: len(porovnani),
+// Vstup výpočtu z databáze učení mimo porovnání a zájem: drzitelky = úrovně potvrzené minulým výpočtem (modelka →
+// 10/20/50/100) pro obhajobu místa, prevzate = srdíčka daná přijetím odhadu vkusu (modelka → srdíčka v tu chvíli)
+type vstupOblibenosti struct {
+	drzitelky map[int]int
+	prevzate  map[int]float64
+}
+
+// Celý výpočet
+func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zajem stavZajmu, vstup vstupOblibenosti, nyni time.Time) *modelOblibenosti {
+	model := &modelOblibenosti{drzitelky: vstup.drzitelky, prevzate: vstup.prevzate, oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, jenOdhad: map[int]bool{}, zdrojOdhadu: map[int]int{}, porovnani: len(porovnani),
 		zajem: miraZajmu(zajem.modelky), zajemData: zajem.modelky, zajemOd: zajem.od, vahaZajmu: vysledekZajmu{vaha: vychoziVahaZajmu}}
 	existuje := make(map[int]bool, len(modelky))
 	soucet, hodnocenych := 0.0, 0

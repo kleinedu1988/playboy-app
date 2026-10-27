@@ -15,7 +15,7 @@
 // prehled.js (data-otevrit-modelku).
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, GetSoubojeModelky, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, sklonovat } from '../lib/format';
-import { dnesniPocet, idDvojice, kratceSrdicka, pruhySily, textModeluVkusu, textSrdicek, znakySrdicek } from '../lib/srdicka';
+import { dnesniPocet, idDvojice, klicNavrhu, kratceSrdicka, pruhySily, skryteNavrhy, skrytNavrh, textModeluVkusu, textSrdicek, vetaNesouladu, zKolika, znakySrdicek } from '../lib/srdicka';
 import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, poctyCekajicich, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyFotek, textVahyZajmu, urovenModelky, vysledekRozhodnuti } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
@@ -200,10 +200,6 @@ function oznamitPostup(porovnane, predtim) {
 // (GetNavrhSrdicek) i v „Nesedí se srdíčky“ v Pořadí (GetOblibenost().nesedi) má stejnou větu, „Dát jí“ i „Nechat“.
 // „Nechat“ se pamatuje pro modelku, její srdíčka a návrh (po změně srdíček se může ukázat znovu).
 
-const klicNavrhu = (id, hodnoceni, navrh) => `${id}:${hodnoceni}:${navrh}`;
-function skryteNavrhy() {
-    try { return new Set(JSON.parse(localStorage.getItem('oblibenostNesediSkryte') || '[]')); } catch { return new Set(); }
-}
 // Zobrazené návrhy podle klíče (pro „Dát jí“): { id, navrh }
 const navrhy = new Map();
 let navrhPodPasy = ''; // klíč návrhu zobrazeného pod pásy
@@ -211,19 +207,6 @@ let cisloNavrhu = 0;
 
 const NESOULADU_NAJEDNOU = 8;
 let nesouladyVse = false;
-const cislo1 = n => (Number(n) || 0).toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
-// „3 ze 4“, „2 z 5“: ze před čísly, která se vyslovují se skupinou souhlásek (dvou, tří, čtyř, šesti, sedmi, dvanácti…)
-const zKolika = n => `${/^(?:[23467]|1[2-467])/.test(String(n)) ? 'ze' : 'z'} ${n}`;
-
-// Proč nesoulad: porovnání, fotky, nebo obojí
-function vetaNesouladu(n) {
-    const porovnani = n.smer === 'mene'
-        ? `prohrála ${n.vysledky} ${zKolika(n.porovnani)} porovnání s modelkami s méně srdíčky`
-        : `vyhrála ${n.vysledky} ${zKolika(n.porovnani)} porovnání s modelkami s víc srdíčky`;
-    const fotky = `má fotky za ${cislo1(n.skoreFotek)} (${sklonovat(n.albFotek, 'album', 'alba', 'alb')}, ${sklonovat(n.fotekHodnocenych, 'hodnocená', 'hodnocené', 'hodnocených')})`;
-    return n.zdroj === 'fotky' ? fotky : n.zdroj === 'oba' ? `${porovnani} a ${fotky}` : porovnani;
-}
 
 // Věta a tlačítka návrhu; nesoulad = položka nesouladu (hodnocená), jinak nehodnocená { porovnani, vyhry }
 function htmlNavrhu(id, navrh, nesoulad, nehodnocena = null) {
@@ -272,7 +255,7 @@ function vykreslitNesedi() {
     const odkaz = cast('nesedi-odkaz');
     odkaz?.classList.toggle('hidden', !seznam.length);
     nastavitText(odkaz, vsechny.length ? `Nesedí se srdíčky (${vsechny.length}) →` : '');
-    nastavitHtml(cast('nesedi'), seznam.length ? `<h4>Nesedí se srdíčky <small>podle porovnání s jinými úrovněmi a srdíček fotek</small></h4>
+    nastavitHtml(cast('nesedi'), seznam.length ? `<h4>Nesedí se srdíčky <small>podle porovnání s jinými úrovněmi a srdíček fotek · <button type="button" class="link" data-ob-hodnotit title="Projít je jednu po druhé v Hodnocení (po nehodnocených)">Projít v Hodnocení →</button></small></h4>
         <ul class="ob-nesedi-seznam">${seznam.map(n => `<li>
                 <span class="trend ${n.smer === 'mene' ? 'dolu' : 'nahoru'}">${n.smer === 'mene' ? '▼' : '▲'}</span>
                 ${htmlNavrhu(n.modelkaId, n.navrh, n).html}
@@ -297,9 +280,7 @@ async function prijmoutNavrh(klic) {
 }
 
 function odmitnoutNavrh(klic) {
-    const skryte = skryteNavrhy();
-    skryte.add(klic);
-    try { localStorage.setItem('oblibenostNesediSkryte', JSON.stringify([...skryte].slice(-300))); } catch { /* jen pro toto spuštění */ }
+    skrytNavrh(klic);
     if (navrhPodPasy === klic) zobrazitNavrhPodPasy(null);
     vykreslitNesedi();
 }

@@ -9,6 +9,7 @@ const CTENI = new Set([
     'GetCenterfoldy',
     'GetCovery',
     'GetDuvodOdhadu',
+    'GetFrontaHodnoceni',
     'GetDvojiceKPorovnani',
     'GetFotkyVyberu',
     'GetFotografieModelky',
@@ -89,6 +90,7 @@ export const GetCovery = /** @type {typeof App.GetCovery} */ (obalit('GetCovery'
 export const GetFotkyVyberu = /** @type {typeof App.GetFotkyVyberu} */ (obalit('GetFotkyVyberu'));
 export const GetFotografieModelky = /** @type {typeof App.GetFotografieModelky} */ (obalit('GetFotografieModelky'));
 export const GetFotografove = /** @type {typeof App.GetFotografove} */ (obalit('GetFotografove'));
+export const GetFrontaHodnoceni = /** @type {typeof App.GetFrontaHodnoceni} */ (obalit('GetFrontaHodnoceni'));
 export const GetKalendar = /** @type {typeof App.GetKalendar} */ (obalit('GetKalendar'));
 export const GetModelky = /** @type {typeof App.GetModelky} */ (obalit('GetModelky'));
 export const GetNavrhyDoplneni = /** @type {typeof App.GetNavrhyDoplneni} */ (obalit('GetNavrhyDoplneni'));
@@ -128,6 +130,7 @@ export const SetCoverVyrez = /** @type {typeof App.SetCoverVyrez} */ (obalit('Se
 export const SetDatumAlba = /** @type {typeof App.SetDatumAlba} */ (obalit('SetDatumAlba'));
 export const SetHodnoceni = /** @type {typeof App.SetHodnoceni} */ (obalit('SetHodnoceni'));
 export const SetHodnoceniFotek = /** @type {typeof App.SetHodnoceniFotek} */ (obalit('SetHodnoceniFotek'));
+export const SetHodnoceniOdhadem = /** @type {typeof App.SetHodnoceniOdhadem} */ (obalit('SetHodnoceniOdhadem'));
 export const SetNetykaSe = /** @type {typeof App.SetNetykaSe} */ (obalit('SetNetykaSe'));
 export const SetNetykaSeAlba = /** @type {typeof App.SetNetykaSeAlba} */ (obalit('SetNetykaSeAlba'));
 export const SetPopisAlba = /** @type {typeof App.SetPopisAlba} */ (obalit('SetPopisAlba'));

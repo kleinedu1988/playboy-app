@@ -46,6 +46,7 @@ nehodnocených modelek.
 | `porovnani` | (úprava č. 2) porovnání dvojic: čas, modelky `a` a `b`, `vysledek` (`a`, `b`, `remiza`), srdíčka obou v tu chvíli (`hodnoceni_a`, `hodnoceni_b`, po polovinách) |
 | `zajem` | (úprava č. 3) zájem o modelky: čas, modelka, `druh` (`profil` = otevření profilu, `fotky` = prohlížení jejích fotek) a `sekund` prohlížení; starší dvou let se maže |
 | `kronika_slavy` | (úprava č. 5) kronika síně slávy: `cas`, `porovnani_id` (poslední porovnání v době zápisu), modelka, `druh` (`zacatek`, `pocatek`, `vstup`, `vystup`, `obhajoba`, `jednicka`, `konec`), `misto`, `souperka`; nemaže se (jen vrácením porovnání a zapomenutím porovnání) |
+| `prevzate_odhady` | (úprava č. 6) srdíčka daná přijetím odhadu vkusu v rychlém hodnocení: modelka, `hodnoceni` v tu chvíli, `cas` |
 | `drzitelky_urovni` | (úprava č. 4) držitelky úrovní Top N pro obhajobu místa: `porovnani_id` (poslední porovnání, po kterém stav platí), modelka, `uroven`; řádek s modelkou 0 značí stav (i prázdný); drží se posledních 50 stavů, vrácení porovnání smaže stavy po něm |
 | `historie_oblibenosti` | (úprava č. 3) denní snímky oblíbenosti: `den`, modelka, `oblibenost`, `poradi` (potvrzené; řádek s modelkou 0 a `poradi` 1 značí snímek s potvrzeným pořadím); po 60 dnech jen pondělní, po 400 dnech nic |
 
@@ -255,6 +256,8 @@ sbírky ani exportu.
 | `VratitPorovnani() bool` | smaže poslední porovnání (zpět) |
 | `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání, zájmu, historie oblíbenosti, držitelek úrovní a kroniky síně slávy |
 | `GetSoubojeModelky(id) []DvojicePorovnani` | „Rozhodnout teď“: série soubojů jedné modelky (oddíl Úrovně, Rozhodnout teď); prázdná, když nečeká ani neobhajuje, nebo ještě do souboje nesmí |
+| `GetFrontaHodnoceni() []PolozkaHodnoceni` | fronta rychlého hodnocení (oddíl Rychlé hodnocení): `modelkaId`, `druh` (nova / nehodnocena / nesedi), `odhad` (0 = žádný), `nejistota`, `duvod`, u nesouladu `hodnoceni`, `navrh` a `nesoulad` |
+| `SetHodnoceniOdhadem(id, hodnoceni) bool` | jako `SetHodnoceni`, navíc zapamatuje, že srdíčka jsou přijatý odhad vkusu (model vkusu se z nich neučí, dokud je nepotvrdí porovnání) |
 | `GetSinSlavy() SinSlavy` | síň slávy (oddíl Síň slávy): `od` (začátek kroniky), `vitrina` (současná potvrzená top 10 podle místa), `legendy` (bývalé top 10, nejdéle v top 10 napřed), `rekordy` (`druh` nejdele / vlada / obhajoby / rychlost / navrat, `modelkaId`, `hodnota`, `odZacatku`, `cas`, `trva`), `kronika` (nejvýš 300 událostí od nejnovější: `cas`, `druh`, `modelkaId`, `misto`, `souperka`); modelka ve vitríně i legendách: `modelkaId`, `misto`, `vTop`, `od`, `do`, `odZacatku`, `dniTed`, `dniCelkem`, `dniNejdele`, `dniNaPrvnim`, `pobytu`, `obhajob`, `nejlepsiMisto` |
 | `ZaznamenatZajem(id, druh, sekund) bool` | zájem o modelku: `druh` `"profil"` (stejná modelka nejvýš jednou za 10 minut) nebo `"fotky"` (`sekund` prohlížení, 3–1800); změnu dat neohlašuje |
 | `GetPrehledOblibenosti() PrehledOblibenosti` | úvod Přehledu: `top` (jen potvrzené v top 10 – dokud jich není deset, méně, i žádná), `stoupaji` a `klesaji` (posun aspoň o 3 místa a 3 % délky pořadí, nejvýš 10), `dlouhoNevidene` (z horní třicítky ty, jejichž profil ani fotky jsi 30 dní neviděl; `dni` = −1 nikdy; až se zájem sleduje aspoň 30 dní), `trendDni`, `zajemDni`; položky `modelkaId`, `jmeno`, `hodnoceni`, `poradi` (potvrzené), `zmenaPoradi`, `dni`, `uroven` (potvrzená úroveň Top N, 0 = mimo top 100) |
@@ -736,12 +739,37 @@ hodnocenými asi 62 ms; GetModelky z paměti se nemění (asi 2 ms).
 
 ## Rychlé hodnocení
 
-Pořadí je jen tak přesné, kolik modelek má srdíčka. Oblíbenost › Hodnocení (`app/rychle-hodnoceni.js`, fronta
-a klávesy v `lib/hodnoceni.js`) ukazuje nehodnocené jednu po druhé: vlevo velká titulní fotka se jménem a srdíčky,
-vpravo pás jejích nejlepších fotek (`GetNahledyModelek`, klik otevře běžný prohlížeč), pod ním odhad modelu vkusu
-s důvodem. Enter odhad přijme, 1–5 dá srdíčka (podle polohy klávesy, takže i v české klávesnici bez Shiftu), půlky
-klikem na srdíčka, S přeskočí (modelka jde na konec), Backspace vrátí poslední hodnocení.
+Pořadí je jen tak přesné, kolik modelek má srdíčka. Oblíbenost › Hodnocení (`app/rychle-hodnoceni.js`, úprava fronty
+a klávesy v `lib/hodnoceni.js`, fronta v `oblibenost_hodnoceni.go`) ukazuje modelky jednu po druhé: vlevo velká
+titulní fotka se jménem a srdíčky, vpravo pás jejích nejlepších fotek (`GetNahledyModelek`, klik otevře běžný
+prohlížeč), pod ním odhad s důvodem nebo návrh. Enter odhad nebo návrh přijme, 1–5 dá srdíčka (podle polohy klávesy,
+takže i v české klávesnici bez Shiftu), půlky klikem na srdíčka, N u nesouladu srdíčka nechá, S přeskočí, Backspace
+vrátí poslední hodnocení.
 
-Fronta: napřed tipy modelu vkusu v jeho pořadí (`GetMohloByTeLibit`, nejvyšší odhad s důvodem), pak ostatní
-nehodnocené podle `odhadHodnoceni`, počtu fotek a jména; modelky bez fotek i titulky nakonec. Po každých pěti
-hodnoceních se odhady zbytku fronty obnoví (model vkusu se z nových srdíček hned učí), pořadí fronty zůstává.
+**Fronta** (`GetFrontaHodnoceni`):
+
+1. Nově přidané nehodnocené (posledních 14 dní, nejnovější napřed) – máš je čerstvě v hlavě a bez srdíček by v pořadí
+   visely jako odhad.
+2. Ostatní nehodnocené podle užitku pro pořadí: odhad + ½·nejistota. Nejistá „možná pětka“ může rozhodnout o top 10
+   a model vkusu se na ní naučí nejvíc, jistá čtyřka méně. Odhad je síla z porovnání (už porovnávaná, nejistota
+   z Bradley–Terry), odhad vkusu (nejistota = chyba ověření ve skupině bohatosti údajů), odhad ze srdíček fotek
+   (nejistota 0,8), jinak průměr srdíček bez odhadu (nejistota 1,25). Bez fotek i titulky nakonec.
+3. Hodnocené, kterým nesedí srdíčka (oddíl Nesoulad se srdíčky) – stejný návrh jako „Nesedí se srdíčky“ v Pořadí
+   (odkaz „Projít v Hodnocení →“); „Nechat“ (N) se pamatuje společně s Pořadím.
+
+Přeskočené si rozhraní pamatuje i po zavření (posledních 500) a dává je na konec fronty; ohodnocená z paměti zmizí.
+Po každých pěti hodnoceních se odhady zbytku fronty obnoví (model vkusu se z nových srdíček hned učí), pořadí fronty
+zůstává.
+
+**Ochrana před ukotvením.** Číslo odhadu svádí dát přesně tolik, a model se pak učí sám ze sebe. Proto:
+
+- nejistý odhad (nejistota nad 0,6) se ukáže až po 2 sekundách nebo po kliku na „Ukázat odhad“ (první Enter ho jen
+  odkryje) – napřed rozhodnou fotky;
+- Enter zapíše srdíčka přes `SetHodnoceniOdhadem`: databáze učení si v `prevzate_odhady` (úprava č. 6) pamatuje, že
+  jsou jen přijatý odhad. Model vkusu se z takových srdíček neučí, dokud je nepotvrdí aspoň tři porovnání; změna
+  srdíček (jiná hodnota než převzatá) z nich dělá zase běžná srdíčka.
+
+**Porovnání jako učitel vkusu.** Nehodnocená modelka s aspoň třemi porovnáními a jistou silou (nejistota nejvýš 0,6,
+jako pro návrh srdíček) jde do učení modelu vkusu se silou z porovnání (Bradley–Terry s předpokladem jen ze srdíček)
+místo srdíček. Odhady se tak zlepšují i z porovnávání. Do ověření přesnosti ani mezi „podobné modelky“ v důvodu
+odhadu se nepočítá – ty zůstávají srdíčkům, která jsi dal.

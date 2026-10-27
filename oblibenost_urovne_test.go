@@ -294,7 +294,7 @@ func simulovatUrovne(semena []int64, body []int, varianta func()) vysledekSimula
 		kronika, jednicka, odStavu := map[int]bool{}, 0, 0
 		bod := 0
 		for bod < len(body) {
-			model := spocitatOblibenostUplne(s.modelky, porovnani, stavZajmu{}, drzitelky, nyni)
+			model := spocitatOblibenostUplne(s.modelky, porovnani, stavZajmu{}, vstupOblibenosti{drzitelky: drzitelky}, nyni)
 			if obhajobaVSimulaci {
 				var obhajoby map[int]ObhajobaUrovne
 				if predchozi != nil {

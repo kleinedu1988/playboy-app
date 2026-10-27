@@ -68,6 +68,10 @@ export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
 
 export function GetSablonaObrazku():Promise<string>;
 
+export function GetSinSlavy():Promise<main.SinSlavy>;
+
+export function GetSlavaModelky(arg1:number):Promise<main.SlavaModelky>;
+
 export function GetSpecialy():Promise<Array<main.Special>>;
 
 export function GetStatistiky():Promise<main.Statistiky>;

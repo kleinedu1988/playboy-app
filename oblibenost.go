@@ -157,6 +157,7 @@ func (a *App) VratitPorovnani() bool {
 	u.ob.porovnani = append([]porovnaniZaznam(nil), porovnani[:len(porovnani)-1]...)
 	// Držitelky úrovní po vráceném porovnání neplatí (vrátí se ty před ním)
 	db.Exec("DELETE FROM drzitelky_urovni WHERE porovnani_id >= ?", posledni.id)
+	db.Exec("DELETE FROM kronika_slavy WHERE porovnani_id >= ?", posledni.id)
 	return true
 }
 
@@ -181,6 +182,7 @@ func (a *App) ZapomenoutPorovnani() bool {
 	db.Exec("DELETE FROM zajem")
 	db.Exec("DELETE FROM historie_oblibenosti")
 	db.Exec("DELETE FROM drzitelky_urovni")
+	db.Exec("DELETE FROM kronika_slavy")
 	u.ob.porovnani, u.ob.nacteno, u.ob.nabidnute = nil, true, nil
 	u.ob.profily, u.ob.zaznamuZajmu, u.ob.historieCas, u.ob.model = nil, u.ob.zaznamuZajmu+zaznamuNaPrepocet, time.Time{}, nil
 	return true
@@ -463,16 +465,36 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	u.mu.Lock()
 	zajem := u.nacistZajem(nyni)
 	snimek, den, potvrzene := u.nacistSrovnani(nyni)
-	drzitelky, stejne := u.nacistDrzitelky(posledniPorovnani(porovnani))
+	posledni := posledniPorovnani(porovnani)
+	st := u.nacistStavUrovni(posledni)
 	u.mu.Unlock()
-	model := spocitatOblibenostUplne(modelky, porovnani, zajem, drzitelky, nyni)
+	model := spocitatOblibenostUplne(modelky, porovnani, zajem, st.drzitelky, nyni)
 	model.nastavitTrend(snimek, den, nyni, potvrzene)
 	model.otisk = otisk
+	predchozi := u.ob.model
 	u.ob.model = model
 	u.mu.Lock()
 	u.zapsatHistorii(model, nyni)
-	if !stejne(model.uroven) {
-		u.zapsatDrzitelky(posledniPorovnani(porovnani), model.uroven)
+	if st.db {
+		// Kronika síně slávy: vstupy, výpadky, obhajoby a nové jedničky od minulého stavu (oblibenost_slava.go)
+		var obhajobyPred map[int]ObhajobaUrovne
+		if predchozi != nil {
+			obhajobyPred = predchozi.obhajoba
+		}
+		var nove []porovnaniZaznam
+		if st.porovnani >= 0 {
+			for _, p := range porovnani {
+				if p.id > st.porovnani {
+					nove = append(nove, p)
+				}
+			}
+		}
+		if udalosti := udalostiSlavy(st.drzitelky, model, obhajobyPred, nove, !st.zacatek, st.jednicka); len(udalosti) > 0 {
+			u.zapsatUdalostiSlavy(posledni, udalosti, nyni)
+		}
+		if st.porovnani != posledni || !maps.Equal(st.drzitelky, potvrzeneUrovne(model.uroven)) {
+			u.zapsatDrzitelky(posledni, model.uroven)
+		}
 	}
 	u.mu.Unlock()
 	return model

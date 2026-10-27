@@ -1002,6 +1002,123 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class RekordSlavy {
+	    druh: string;
+	    modelkaId: number;
+	    hodnota: number;
+	    odZacatku: boolean;
+	    cas: string;
+	    trva: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new RekordSlavy(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.druh = source["druh"];
+	        this.modelkaId = source["modelkaId"];
+	        this.hodnota = source["hodnota"];
+	        this.odZacatku = source["odZacatku"];
+	        this.cas = source["cas"];
+	        this.trva = source["trva"];
+	    }
+	}
+	
+	export class UdalostSlavy {
+	    cas: string;
+	    druh: string;
+	    modelkaId: number;
+	    misto: number;
+	    souperka: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UdalostSlavy(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.cas = source["cas"];
+	        this.druh = source["druh"];
+	        this.modelkaId = source["modelkaId"];
+	        this.misto = source["misto"];
+	        this.souperka = source["souperka"];
+	    }
+	}
+	export class SlavaModelky {
+	    modelkaId: number;
+	    misto: number;
+	    vTop: boolean;
+	    od: string;
+	    do: string;
+	    odZacatku: boolean;
+	    dniTed: number;
+	    dniCelkem: number;
+	    dniNejdele: number;
+	    dniNaPrvnim: number;
+	    pobytu: number;
+	    obhajob: number;
+	    nejlepsiMisto: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new SlavaModelky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.misto = source["misto"];
+	        this.vTop = source["vTop"];
+	        this.od = source["od"];
+	        this.do = source["do"];
+	        this.odZacatku = source["odZacatku"];
+	        this.dniTed = source["dniTed"];
+	        this.dniCelkem = source["dniCelkem"];
+	        this.dniNejdele = source["dniNejdele"];
+	        this.dniNaPrvnim = source["dniNaPrvnim"];
+	        this.pobytu = source["pobytu"];
+	        this.obhajob = source["obhajob"];
+	        this.nejlepsiMisto = source["nejlepsiMisto"];
+	    }
+	}
+	export class SinSlavy {
+	    od: string;
+	    vitrina: SlavaModelky[];
+	    legendy: SlavaModelky[];
+	    rekordy: RekordSlavy[];
+	    kronika: UdalostSlavy[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SinSlavy(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.od = source["od"];
+	        this.vitrina = this.convertValues(source["vitrina"], SlavaModelky);
+	        this.legendy = this.convertValues(source["legendy"], SlavaModelky);
+	        this.rekordy = this.convertValues(source["rekordy"], RekordSlavy);
+	        this.kronika = this.convertValues(source["kronika"], UdalostSlavy);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	
 	export class Special {
 	    vydani: string;
@@ -1221,6 +1338,7 @@ export namespace main {
 		    return a;
 		}
 	}
+	
 	
 	export class Vyber {
 	    id: number;

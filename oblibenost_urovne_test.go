@@ -258,6 +258,8 @@ type vysledekSimulace struct {
 	soubojuPodil    float64
 	// Výpadky z potvrzené top 10 (mezi dvěma výpočty) za celou simulaci a z nich modelek skutečné top 10
 	vypadku10, vypadkuSkutecnych10 float64
+	// Kronika síně slávy: kolikrát top 10 složená z událostí nesouhlasila s modelem (musí být 0) a obhajob
+	nesouladKroniky, obhajobKroniky int
 }
 
 // Simulace předává držitelky z výpočtu do výpočtu jako aplikace (varianta „bez obhajoby“ ne)
@@ -288,9 +290,37 @@ func simulovatUrovne(semena []int64, body []int, varianta func()) vysledekSimula
 		var nabidnute [][2]int
 		potvrzena := map[int]int{}
 		var drzitelky map[int]int
+		var predchozi *modelOblibenosti
+		kronika, jednicka, odStavu := map[int]bool{}, 0, 0
 		bod := 0
 		for bod < len(body) {
 			model := spocitatOblibenostUplne(s.modelky, porovnani, stavZajmu{}, drzitelky, nyni)
+			if obhajobaVSimulaci {
+				var obhajoby map[int]ObhajobaUrovne
+				if predchozi != nil {
+					obhajoby = predchozi.obhajoba
+				}
+				for _, x := range udalostiSlavy(drzitelky, model, obhajoby, porovnani[odStavu:], predchozi == nil, jednicka) {
+					switch x.druh {
+					case udalostPocatek, udalostVstup:
+						kronika[x.modelka] = true
+					case udalostVystup:
+						delete(kronika, x.modelka)
+					case udalostObhajoba:
+						v.obhajobKroniky++
+					case udalostJednicka:
+						jednicka = x.modelka
+					case udalostKonecJednicky:
+						jednicka = 0
+					}
+				}
+				for id, u := range model.uroven {
+					if jeVTop10(u) != kronika[id] || (model.poradi[id] == 1 && jeVTop10(u) && jednicka != id) {
+						v.nesouladKroniky++
+					}
+				}
+				predchozi, odStavu = model, len(porovnani)
+			}
 			for id, u := range drzitelky {
 				if u == 10 && model.uroven[id] != 10 {
 					v.vypadku10++
@@ -448,8 +478,11 @@ func TestSimulaceUrovni(t *testing.T) {
 		zacatek := time.Now()
 		v := simulovatUrovne(semena, body, va.f)
 		vysledky[va.nazev] = v
-		t.Logf("== %s (%v): souboje %.0f %% dvojic, skutečná top 10 potvrzená po mediánu %.0f porovnání, nepotvrzených do konce %.1f, výpadků z top 10 %.1f (skutečných top 10 %.1f)",
-			va.nazev, time.Since(zacatek).Round(time.Second), 100*v.soubojuPodil, v.medianPotvrzeni, v.nepotvrzenych, v.vypadku10, v.vypadkuSkutecnych10)
+		t.Logf("== %s (%v): souboje %.0f %% dvojic, skutečná top 10 potvrzená po mediánu %.0f porovnání, nepotvrzených do konce %.1f, výpadků z top 10 %.1f (skutečných top 10 %.1f), obhajob v kronice %d",
+			va.nazev, time.Since(zacatek).Round(time.Second), 100*v.soubojuPodil, v.medianPotvrzeni, v.nepotvrzenych, v.vypadku10, v.vypadkuSkutecnych10, v.obhajobKroniky)
+		if v.nesouladKroniky > 0 {
+			t.Errorf("%s: kronika nesouhlasí s top 10 modelu %d×", va.nazev, v.nesouladKroniky)
+		}
 		t.Logf("   porovnání | P@10 | P@20 | P@50 | potvrzených top 10 | z nich falešných | potvrzených top 20 | z top 20 trefených")
 		for _, b := range v.body {
 			t.Logf("   %9d | %.2f | %.2f | %.2f | %18.1f | %16.1f | %18.1f | %.2f", b.porovnani, b.presnost10, b.presnost20, b.presn50,
@@ -552,7 +585,7 @@ func TestObhajobaUrovne(t *testing.T) {
 	}
 }
 
-// Držitelky v databázi učení: stav po porovnání, nezapisuje se beze změny, vrácení porovnání vrátí předchozí
+// Držitelky v databázi učení: stav po porovnání, vrácení porovnání vrátí předchozí
 func TestDrzitelkyVDatabazi(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	for _, j := range []string{"A", "B"} {
@@ -570,13 +603,13 @@ func TestDrzitelkyVDatabazi(t *testing.T) {
 	var chyba string
 	sZamkem(func() {
 		// Bez porovnání nikdo potvrzený (stav 0 už mohl zapsat výpočet při přidání modelek)
-		if d, _ := u.nacistDrzitelky(0); len(d) != 0 {
-			chyba = fmt.Sprintf("prázdná databáze: %v", d)
+		if st := u.nacistStavUrovni(0); !st.db || len(st.drzitelky) != 0 {
+			chyba = fmt.Sprintf("prázdná databáze: %+v", st)
 			return
 		}
 		u.zapsatDrzitelky(0, map[int]int{ida: 10, idb: 0})
-		if d, stejne := u.nacistDrzitelky(0); len(d) != 1 || d[ida] != 10 || !stejne(map[int]int{ida: 10, idb: 0}) || stejne(map[int]int{ida: 20}) {
-			chyba = fmt.Sprintf("po zápisu: %v", d)
+		if st := u.nacistStavUrovni(0); len(st.drzitelky) != 1 || st.drzitelky[ida] != 10 || st.porovnani != 0 {
+			chyba = fmt.Sprintf("po zápisu: %+v", st)
 		}
 	})
 	if chyba != "" {
@@ -599,9 +632,9 @@ func TestDrzitelkyVDatabazi(t *testing.T) {
 	if !a.VratitPorovnani() {
 		t.Fatal("vrácení")
 	}
-	var d map[int]int
-	sZamkem(func() { d, _ = u.nacistDrzitelky(posledni + 5) })
-	if len(d) != 1 || d[ida] != 10 {
-		t.Fatalf("po vrácení: %v", d)
+	var st stavUrovni
+	sZamkem(func() { st = u.nacistStavUrovni(posledni + 5) })
+	if len(st.drzitelky) != 1 || st.drzitelky[ida] != 10 || st.porovnani != 0 {
+		t.Fatalf("po vrácení: %+v", st)
 	}
 }

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"maps"
 	"math"
 	"sort"
 	"strings"
@@ -277,35 +276,48 @@ func (m *modelOblibenosti) obhajitUrovne(ids []int, zpusobila []int, nejistota [
 	return poradi, uroven
 }
 
-// Držitelky úrovní pro obhajobu: stav po posledním porovnání ≤ posledni (po vrácení porovnání ten před ním); stejne
-// řekne, jestli nový výpočet dal tytéž držitelky pod stejným porovnáním (pak se nic nezapisuje). Volá se se zámkem.
-func (u *uceni) nacistDrzitelky(posledni int64) (drzitelky map[int]int, stejne func(map[int]int) bool) {
-	stejne = func(map[int]int) bool { return false }
+// Uložený stav úrovní: držitelky po posledním porovnání ≤ posledni (po vrácení porovnání ten před ním) a pod kterým
+// porovnáním (−1 = žádný stav), jestli už začala kronika síně slávy a poslední zapsaná jednička; db false =
+// databáze učení není (nic se nezapisuje). Volá se se zámkem.
+type stavUrovni struct {
+	db        bool
+	drzitelky map[int]int
+	porovnani int64
+	zacatek   bool
+	jednicka  int
+}
+
+func (u *uceni) nacistStavUrovni(posledni int64) stavUrovni {
+	st := stavUrovni{porovnani: -1}
 	db := u.zajistit()
 	if db == nil {
-		return nil, func(map[int]int) bool { return true }
+		return st
 	}
-	var stav int64 = -1
-	if db.QueryRow("SELECT COALESCE(MAX(porovnani_id), -1) FROM drzitelky_urovni WHERE porovnani_id <= ?", posledni).Scan(&stav) != nil || stav < 0 {
-		return nil, stejne
+	st.db = true
+	var pocet int
+	db.QueryRow("SELECT COUNT(*) FROM kronika_slavy WHERE druh = ?", udalostZacatek).Scan(&pocet)
+	st.zacatek = pocet > 0
+	var druh string
+	if db.QueryRow("SELECT druh, modelka_id FROM kronika_slavy WHERE druh IN (?, ?) ORDER BY id DESC LIMIT 1", udalostJednicka, udalostKonecJednicky).Scan(&druh, &st.jednicka) == nil && druh == udalostKonecJednicky {
+		st.jednicka = 0
 	}
-	radky, err := db.Query("SELECT modelka_id, uroven FROM drzitelky_urovni WHERE porovnani_id = ? AND modelka_id > 0", stav)
+	if db.QueryRow("SELECT COALESCE(MAX(porovnani_id), -1) FROM drzitelky_urovni WHERE porovnani_id <= ?", posledni).Scan(&st.porovnani) != nil || st.porovnani < 0 {
+		st.porovnani = -1
+		return st
+	}
+	radky, err := db.Query("SELECT modelka_id, uroven FROM drzitelky_urovni WHERE porovnani_id = ? AND modelka_id > 0", st.porovnani)
 	if err != nil {
-		return nil, stejne
+		return st
 	}
 	defer radky.Close()
-	drzitelky = map[int]int{}
+	st.drzitelky = map[int]int{}
 	for radky.Next() {
 		var id, uroven int
 		if radky.Scan(&id, &uroven) == nil {
-			drzitelky[id] = uroven
+			st.drzitelky[id] = uroven
 		}
 	}
-	if stav == posledni {
-		puvodni := drzitelky
-		stejne = func(uroven map[int]int) bool { return maps.Equal(puvodni, potvrzeneUrovne(uroven)) }
-	}
-	return drzitelky, stejne
+	return st
 }
 
 // Zápis držitelek po porovnání posledni; drží se jen posledních pametDrzitelek stavů (na vracení porovnání)

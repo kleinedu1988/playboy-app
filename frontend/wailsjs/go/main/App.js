@@ -134,6 +134,14 @@ export function GetSablonaObrazku() {
   return window['go']['main']['App']['GetSablonaObrazku']();
 }
 
+export function GetSinSlavy() {
+  return window['go']['main']['App']['GetSinSlavy']();
+}
+
+export function GetSlavaModelky(arg1) {
+  return window['go']['main']['App']['GetSlavaModelky'](arg1);
+}
+
 export function GetSpecialy() {
   return window['go']['main']['App']['GetSpecialy']();
 }

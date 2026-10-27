@@ -102,6 +102,17 @@ var migraceUceni = []string{
 		uroven INTEGER NOT NULL,
 		PRIMARY KEY (porovnani_id, modelka_id)
 	);`,
+	// Úprava č. 5: kronika síně slávy (oblibenost_slava.go) – vstupy do top 10, výpadky, obhajoby a nové jedničky;
+	// porovnani_id = poslední porovnání v době zápisu (vrácení porovnání smaže i události po něm)
+	`CREATE TABLE kronika_slavy (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		cas TEXT NOT NULL,
+		porovnani_id INTEGER NOT NULL,
+		modelka_id INTEGER NOT NULL,
+		druh TEXT NOT NULL,
+		misto INTEGER NOT NULL DEFAULT 0,
+		souperka INTEGER NOT NULL DEFAULT 0
+	);`,
 }
 
 // Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti
@@ -110,7 +121,7 @@ var tabulkyUceni = []string{"udalosti", "odmitnute", "zapisy"}
 
 // Oblíbenost (porovnání dvojic, zájem a historie): do paměti se přenesou také, ale zapomínají se zvlášť
 // (ZapomenoutPorovnani)
-var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti", "drzitelky_urovni"}
+var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti", "drzitelky_urovni", "kronika_slavy"}
 
 // Druhy událostí deníku
 const (

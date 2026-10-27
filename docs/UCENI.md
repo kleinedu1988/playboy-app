@@ -45,6 +45,7 @@ nehodnocených modelek.
 | `stav` | čas posledního otevření (zkouška zápisu) |
 | `porovnani` | (úprava č. 2) porovnání dvojic: čas, modelky `a` a `b`, `vysledek` (`a`, `b`, `remiza`), srdíčka obou v tu chvíli (`hodnoceni_a`, `hodnoceni_b`, po polovinách) |
 | `zajem` | (úprava č. 3) zájem o modelky: čas, modelka, `druh` (`profil` = otevření profilu, `fotky` = prohlížení jejích fotek) a `sekund` prohlížení; starší dvou let se maže |
+| `kronika_slavy` | (úprava č. 5) kronika síně slávy: `cas`, `porovnani_id` (poslední porovnání v době zápisu), modelka, `druh` (`zacatek`, `pocatek`, `vstup`, `vystup`, `obhajoba`, `jednicka`, `konec`), `misto`, `souperka`; nemaže se (jen vrácením porovnání a zapomenutím porovnání) |
 | `drzitelky_urovni` | (úprava č. 4) držitelky úrovní Top N pro obhajobu místa: `porovnani_id` (poslední porovnání, po kterém stav platí), modelka, `uroven`; řádek s modelkou 0 značí stav (i prázdný); drží se posledních 50 stavů, vrácení porovnání smaže stavy po něm |
 | `historie_oblibenosti` | (úprava č. 3) denní snímky oblíbenosti: `den`, modelka, `oblibenost`, `poradi` (potvrzené; řádek s modelkou 0 a `poradi` 1 značí snímek s potvrzeným pořadím); po 60 dnech jen pondělní, po 400 dnech nic |
 
@@ -252,7 +253,9 @@ sbírky ani exportu.
 | `GetDvojiceKPorovnani(pocet, okruh) []DvojicePorovnani` | dvojice `{a, b, duvod, druh}` vybrané aktivním učením; `okruh`: `""` (rozhraní jiný nepoužívá) míchá hodnocené dvojice (stejná, sousední a o srdíčko vzdálená úroveň) s asi třetinou nehodnocených proti kotvě a souboji na hranicích top 10/20/50/100 (`druh: "souboj"`, jinak `""`), `"stejne"` jen stejná úroveň, `"nehodnocene"` jen nehodnocené proti kotvě |
 | `PorovnatModelky(a, b, vysledek) bool` | zapíše porovnání (`a`, `b`, `remiza`) se srdíčky obou v tu chvíli |
 | `VratitPorovnani() bool` | smaže poslední porovnání (zpět) |
-| `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání, zájmu a historie oblíbenosti |
+| `ZapomenoutPorovnani() bool` | záloha databáze učení a smazání všech porovnání, zájmu, historie oblíbenosti, držitelek úrovní a kroniky síně slávy |
+| `GetSinSlavy() SinSlavy` | síň slávy (oddíl Síň slávy): `od` (začátek kroniky), `vitrina` (současná potvrzená top 10 podle místa), `legendy` (bývalé top 10, nejdéle v top 10 napřed), `rekordy` (`druh` nejdele / vlada / obhajoby / rychlost / navrat, `modelkaId`, `hodnota`, `odZacatku`, `cas`, `trva`), `kronika` (nejvýš 300 událostí od nejnovější: `cas`, `druh`, `modelkaId`, `misto`, `souperka`); modelka ve vitríně i legendách: `modelkaId`, `misto`, `vTop`, `od`, `do`, `odZacatku`, `dniTed`, `dniCelkem`, `dniNejdele`, `dniNaPrvnim`, `pobytu`, `obhajob`, `nejlepsiMisto` |
+| `GetSlavaModelky(id) SlavaModelky` | totéž pro jednu modelku (řádek v profilu); `modelkaId` 0, když v top 10 nikdy nebyla |
 | `ZaznamenatZajem(id, druh, sekund) bool` | zájem o modelku: `druh` `"profil"` (stejná modelka nejvýš jednou za 10 minut) nebo `"fotky"` (`sekund` prohlížení, 3–1800); změnu dat neohlašuje |
 | `GetPrehledOblibenosti() PrehledOblibenosti` | úvod Přehledu: `top` (jen potvrzené v top 10 – dokud jich není deset, méně, i žádná), `stoupaji` a `klesaji` (posun aspoň o 3 místa a 3 % délky pořadí, nejvýš 10), `dlouhoNevidene` (z horní třicítky ty, jejichž profil ani fotky jsi 30 dní neviděl; `dni` = −1 nikdy; až se zájem sleduje aspoň 30 dní), `trendDni`, `zajemDni`; položky `modelkaId`, `jmeno`, `hodnoceni`, `poradi` (potvrzené), `zmenaPoradi`, `dni`, `uroven` (potvrzená úroveň Top N, 0 = mimo top 100) |
 | `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `vahaFotek` (váha skóre fotek v předpokladu 0–1), `vahaNaucena` (z porovnání, jinak výchozí 0,3), `porovnaniVahy` (porovnání, ze kterých se váha učí), `hodnocenych` (hodnocené modelky), `zlepseniFotek` (o kolik naučená váha zlepšila log-ztrátu předpovědi porovnání proti samotným srdíčkům na ověření; může být záporné), `urovne` (Top 10, 20, 50, 100: `uroven`, prahy `potrebaPorovnani`, `maxNejistota`, `potrebaVyhry` a `potvrzenych`), `cekajicich` (modelky čekající na potvrzení úrovně), `poradi` – hodnocené a porovnávané modelky v potvrzeném pořadí: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi` (potvrzené), `mistoPodleSily` (bez prahů), `uroven` (10/20/50/100, 0 = mimo top 100), `ceka` (jen když by podle síly patřila výš, než má potvrzeno: `uroven`, `porovnani`/`potrebaPorovnani`, `nejistota`/`maxNejistota`, `potrebaVyhry`, `maVyhru`, `drzitelka` – splňuje prahy, ale místo obhajuje tahle modelka), `obhajoba` (držitelka, kterou silou předstihla jiná: `uroven`, `vyzyvatelka`), `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `jenOdhad` a `zdrojOdhadu` (nehodnocená neporovnaná jen odhadem podle vkusu nebo fotek), `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „fotky a porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
@@ -581,6 +584,36 @@ dalším výpočtu není; 16 semínek, po 1500 porovnáních):
 Do top 50 obhajoba o třetinu snižuje, jak často z top 10 vypadne modelka, která tam skutečně patří, a přesnost
 nezhorší. Obhajoba i top 100 vytváří tolik soubojů, že zaberou celý jejich podíl a ubírají porovnání učení sbírky
 (P@50 klesne o 6 bodů); obhajoba jen top 10 v simulaci nepomohla.
+
+## Síň slávy
+
+Kronika potvrzené top 10 (`oblibenost_slava.go`): kdo kdy vstoupil, vypadl, obhájil místo a kdo byl jedničkou.
+Denní snímky historie se po čase mažou, proto má kronika vlastní trvalou tabulku `kronika_slavy`.
+
+**Zápis.** Po každém přepočtu oblíbenosti se nová top 10 porovná s držitelkami uloženými v `drzitelky_urovni` (oddíl
+Úrovně, obhajoba). Události:
+
+| Druh | Kdy | `misto` | `souperka` |
+|---|---|---|---|
+| `zacatek` | první výpočet s touto verzí (modelka 0) | – | – |
+| `pocatek` | v top 10 už byla, když kronika začala (dny jsou pak „aspoň“) | místo | – |
+| `vstup` | potvrdila se v top 10 | místo | poslední porazená z porovnání od minulého stavu (přednost má ta, která zároveň vypadla) |
+| `vystup` | z potvrzené top 10 vypadla | nové místo | poslední vítězka (přednost má ta, která vstoupila) |
+| `obhajoba` | obhajovala top 10 a vyzyvatelku od minulého stavu porazila (poslední rozhodnuté vzájemné porovnání) | místo | vyzyvatelka |
+| `jednicka` | nová jednička potvrzeného pořadí (i na začátku kroniky) | 1 | předchozí jednička |
+| `konec` | jednička přestala být potvrzená v top 10 a nikdo ji nevystřídal | – | – |
+
+Kdo obhajoval, se bere z minulého modelu v paměti (po spuštění programu první obhajoba chybí). Každá událost nese
+poslední porovnání; vrácení porovnání smaže události po něm (a příští výpočet zapíše, co dál platí), zapomenutí
+porovnání smaže celou kroniku. Simulace (`TestSimulaceUrovni`) skládá top 10 jen z událostí a hlídá, že po každém
+výpočtu souhlasí s modelem; obhajoba top 10 je v ní vzácná (většina soubojů o obhajobu je o top 20 a 50).
+
+**Výpočet** (`GetSinSlavy`, `GetSlavaModelky`): pobyty v top 10 (od `pocatek`/`vstup` do `vystup`, otevřený do teď)
+dávají dny celkem, nejdelší a současný pobyt (po celých 24 hodinách); vlády jedničky (od `jednicka` do další
+`jednicka` nebo `konec`) dny na prvním místě; nejlepší místo je nejmenší z událostí a současného. Rekordy: nejdéle
+v top 10 celkem, nejdelší vláda jedničky, nejvíc obhajob, nejrychlejší postup (nejméně vlastních porovnání do
+prvního vstupu – ne `pocatek`) a největší návrat (nejdelší pauza mimo top 10 před dalším vstupem); při shodě vyhrává
+dřívější (u dnů celkem a obhajob nižší číslo modelky). Vitrína je současná potvrzená top 10, legendy bývalé top 10. Smazané modelky se vynechají.
 
 ## Model vkusu
 

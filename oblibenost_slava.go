@@ -1,0 +1,461 @@
+package main
+
+import (
+	"sort"
+	"time"
+)
+
+// Síň slávy (popis v docs/UCENI.md, oddíl Síň slávy): kronika potvrzené top 10 – kdo kdy vstoupil, vypadl, obhájil
+// místo a kdo byl jedničkou. Události vznikají po přepočtu oblíbenosti z rozdílu proti uloženým držitelkám úrovní
+// (oblibenost_urovne.go) a zapisují se do trvalé tabulky kronika_slavy (denní snímky historie se po čase mažou,
+// kronika ne). Vrácení porovnání smaže i události po něm. Z kroniky se počítá vitrína (současná top 10 s délkou
+// pobytu), rekordy, legendy (bývalé top 10) a řádek v profilu.
+
+const (
+	udalostZacatek       = "zacatek"  // kronika začala (modelka 0)
+	udalostPocatek       = "pocatek"  // v top 10 už byla, když kronika začala
+	udalostVstup         = "vstup"    // potvrdila se v top 10
+	udalostVystup        = "vystup"   // z potvrzené top 10 vypadla
+	udalostObhajoba      = "obhajoba" // vyhrála souboj o obhajobu místa v top 10
+	udalostJednicka      = "jednicka" // nová jednička potvrzeného pořadí (i na začátku kroniky)
+	udalostKonecJednicky = "konec"    // jednička přestala být potvrzená a nikdo ji nevystřídal
+)
+
+// Kolik nejnovějších událostí kroniky se posílá do rozhraní
+const udalostiKroniky = 300
+
+type udalostUrovne struct {
+	modelka, misto, souperka int
+	druh                     string
+}
+
+func jeVTop10(uroven int) bool { return uroven > 0 && uroven <= 10 }
+
+// Události po přepočtu: stare = držitelky z uloženého stavu, m = nový model, obhajobyPred = kdo obhajoval v minulém
+// modelu (v paměti; po spuštění programu není), nove = porovnání od uloženého stavu, zacatek = kronika ještě nezačala
+// (zapíše se začátek a kdo už v top 10 je), jednicka = poslední zapsaná jednička (0 = žádná).
+//
+// Soupeřka u vstupu je poslední porazená z nových porovnání (přednost má ta, která zároveň z top 10 vypadla), u výpadku
+// poslední vítězka (přednost má ta, která vstoupila), u obhajoby vyzyvatelka.
+func udalostiSlavy(stare map[int]int, m *modelOblibenosti, obhajobyPred map[int]ObhajobaUrovne, nove []porovnaniZaznam, zacatek bool, jednicka int) []udalostUrovne {
+	podleMista := func(ids []int) {
+		sort.Slice(ids, func(i, j int) bool {
+			if m.poradi[ids[i]] != m.poradi[ids[j]] {
+				return m.poradi[ids[i]] < m.poradi[ids[j]]
+			}
+			return ids[i] < ids[j]
+		})
+	}
+	var top []int
+	jeTed := map[int]bool{}
+	for id, u := range m.uroven {
+		if jeVTop10(u) {
+			top = append(top, id)
+			jeTed[id] = true
+		}
+	}
+	podleMista(top)
+	prvni := 0
+	if len(top) > 0 && m.poradi[top[0]] == 1 {
+		prvni = top[0]
+	}
+	var v []udalostUrovne
+	if zacatek {
+		v = append(v, udalostUrovne{druh: udalostZacatek})
+		for _, id := range top {
+			v = append(v, udalostUrovne{modelka: id, druh: udalostPocatek, misto: m.poradi[id]})
+		}
+		if prvni > 0 {
+			v = append(v, udalostUrovne{modelka: prvni, druh: udalostJednicka, misto: 1})
+		}
+		return v
+	}
+	vstoupila := func(id int) bool { return jeTed[id] && !jeVTop10(stare[id]) }
+	vypadla := func(id int) bool { return jeVTop10(stare[id]) && !jeTed[id] }
+	souperka := func(id int, vyhra bool, prednost func(int) bool) int {
+		nalez := 0
+		for i := len(nove) - 1; i >= 0; i-- {
+			p := nove[i]
+			if (p.a != id && p.b != id) || p.vysledek == "remiza" {
+				continue
+			}
+			druha, vyhrala := p.b, p.vysledek == "a"
+			if p.b == id {
+				druha, vyhrala = p.a, p.vysledek == "b"
+			}
+			if vyhrala != vyhra {
+				continue
+			}
+			if prednost(druha) {
+				return druha
+			}
+			if nalez == 0 {
+				nalez = druha
+			}
+		}
+		return nalez
+	}
+	var vystupy, obhajeny []int
+	for id, u := range stare {
+		if jeVTop10(u) && !jeTed[id] {
+			vystupy = append(vystupy, id)
+		}
+	}
+	podleMista(vystupy)
+	for _, id := range vystupy {
+		v = append(v, udalostUrovne{modelka: id, druh: udalostVystup, misto: m.poradi[id], souperka: souperka(id, false, vstoupila)})
+	}
+	for _, id := range top {
+		if vstoupila(id) {
+			v = append(v, udalostUrovne{modelka: id, druh: udalostVstup, misto: m.poradi[id], souperka: souperka(id, true, vypadla)})
+		}
+	}
+	// Obhajoba: od minulého stavu porazila vyzyvatelku (poslední rozhodnuté vzájemné porovnání) a v top 10 zůstala
+	for id, o := range obhajobyPred {
+		if o.Uroven != 10 || !jeTed[id] {
+			continue
+		}
+		vitezka := 0
+		for _, p := range nove {
+			if klicDvojice(p.a, p.b) != klicDvojice(id, o.Vyzyvatelka) {
+				continue
+			}
+			switch p.vysledek {
+			case "a":
+				vitezka = p.a
+			case "b":
+				vitezka = p.b
+			}
+		}
+		if vitezka == id {
+			obhajeny = append(obhajeny, id)
+		}
+	}
+	podleMista(obhajeny)
+	for _, id := range obhajeny {
+		v = append(v, udalostUrovne{modelka: id, druh: udalostObhajoba, misto: m.poradi[id], souperka: obhajobyPred[id].Vyzyvatelka})
+	}
+	switch {
+	case prvni == jednicka:
+	case prvni > 0:
+		v = append(v, udalostUrovne{modelka: prvni, druh: udalostJednicka, misto: 1, souperka: jednicka})
+	default:
+		v = append(v, udalostUrovne{modelka: jednicka, druh: udalostKonecJednicky})
+	}
+	return v
+}
+
+// Zápis událostí po porovnání posledni; volá se se zámkem
+func (u *uceni) zapsatUdalostiSlavy(posledni int64, udalosti []udalostUrovne, nyni time.Time) {
+	db := u.zajistit()
+	if db == nil {
+		return
+	}
+	tx, err := db.Begin()
+	if err != nil {
+		return
+	}
+	defer tx.Rollback()
+	prikaz, err := tx.Prepare("INSERT INTO kronika_slavy (cas, porovnani_id, modelka_id, druh, misto, souperka) VALUES (?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		return
+	}
+	defer prikaz.Close()
+	cas := nyni.Format("2006-01-02 15:04:05")
+	for _, x := range udalosti {
+		if _, err := prikaz.Exec(cas, posledni, x.modelka, x.druh, x.misto, x.souperka); err != nil {
+			varovatUceni("kronika síně slávy se nezapsala: %v", err)
+			return
+		}
+	}
+	tx.Commit()
+}
+
+type zaznamKroniky struct {
+	cas                      time.Time
+	casText                  string
+	porovnani                int64
+	modelka, misto, souperka int
+	druh                     string
+}
+
+// Celá kronika od nejstarší; volá se se zámkem
+func (u *uceni) nacistKroniku() []zaznamKroniky {
+	db := u.zajistit()
+	if db == nil {
+		return nil
+	}
+	radky, err := db.Query("SELECT cas, porovnani_id, modelka_id, druh, misto, souperka FROM kronika_slavy ORDER BY id")
+	if err != nil {
+		return nil
+	}
+	defer radky.Close()
+	var v []zaznamKroniky
+	for radky.Next() {
+		var z zaznamKroniky
+		if radky.Scan(&z.casText, &z.porovnani, &z.modelka, &z.druh, &z.misto, &z.souperka) == nil {
+			z.cas, _ = time.ParseInLocation("2006-01-02 15:04:05", z.casText, time.Local)
+			v = append(v, z)
+		}
+	}
+	return v
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// Rozhraní
+
+// Událost kroniky pro rozhraní (druh: zacatek, pocatek, vstup, vystup, obhajoba, jednicka, konec)
+type UdalostSlavy struct {
+	Cas       string `json:"cas"` // RRRR-MM-DD HH:MM:SS
+	Druh      string `json:"druh"`
+	ModelkaID int    `json:"modelkaId"`
+	Misto     int    `json:"misto"`
+	Souperka  int    `json:"souperka"` // 0 = žádná (nebo smazaná)
+}
+
+// Modelka v síni slávy: současná top 10 (vitrína) nebo bývalá (legenda). Dny se počítají po celých 24 hodinách;
+// odZacatku = pobyt začal už před kronikou, dny jsou „aspoň“.
+type SlavaModelky struct {
+	ModelkaID     int    `json:"modelkaId"` // 0 = modelka v kronice není
+	Misto         int    `json:"misto"`     // současné potvrzené místo (0 = mimo pořadí)
+	VTop          bool   `json:"vTop"`      // teď v potvrzené top 10
+	Od            string `json:"od"`        // začátek současného pobytu (mimo top 10 prvního)
+	Do            string `json:"do"`        // konec posledního pobytu (jen mimo top 10)
+	OdZacatku     bool   `json:"odZacatku"`
+	DniTed        int    `json:"dniTed"` // současný pobyt
+	DniCelkem     int    `json:"dniCelkem"`
+	DniNejdele    int    `json:"dniNejdele"`
+	DniNaPrvnim   int    `json:"dniNaPrvnim"`
+	Pobytu        int    `json:"pobytu"`
+	Obhajob       int    `json:"obhajob"`
+	NejlepsiMisto int    `json:"nejlepsiMisto"`
+}
+
+// Rekord síně slávy: nejdele (dny v top 10 celkem), vlada (nejdelší vláda jedničky ve dnech), obhajoby (počet),
+// rychlost (vlastních porovnání do prvního vstupu do top 10), navrat (dny mimo top 10 před návratem)
+type RekordSlavy struct {
+	Druh      string `json:"druh"`
+	ModelkaID int    `json:"modelkaId"`
+	Hodnota   int    `json:"hodnota"`
+	OdZacatku bool   `json:"odZacatku"` // započítaný pobyt začal před kronikou (hodnota je „aspoň“)
+	Cas       string `json:"cas"`       // začátek vlády, první vstup, návrat (u ostatních prázdné)
+	Trva      bool   `json:"trva"`      // rekord dál roste (vláda trvá, rekordmanka je v top 10)
+}
+
+type SinSlavy struct {
+	Od      string         `json:"od"` // začátek kroniky ("" = ještě nezačala)
+	Vitrina []SlavaModelky `json:"vitrina"`
+	Legendy []SlavaModelky `json:"legendy"`
+	Rekordy []RekordSlavy  `json:"rekordy"`
+	Kronika []UdalostSlavy `json:"kronika"` // od nejnovější
+}
+
+// Síň slávy celé sbírky (přepočte oblíbenost, aby kronika byla aktuální)
+func (a *App) GetSinSlavy() SinSlavy {
+	prazdna := SinSlavy{Vitrina: []SlavaModelky{}, Legendy: []SlavaModelky{}, Rekordy: []RekordSlavy{}, Kronika: []UdalostSlavy{}}
+	if a.uc == nil {
+		return prazdna
+	}
+	modelky, _ := a.nactiModelky("", false)
+	model := a.modelOblibenosti(modelky)
+	u := a.uc
+	u.mu.Lock()
+	kronika := u.nacistKroniku()
+	porovnani := u.nacistPorovnani()
+	u.mu.Unlock()
+	existuje := make(map[int]bool, len(modelky))
+	for _, m := range modelky {
+		existuje[m.ID] = true
+	}
+	return spocitatSinSlavy(kronika, model, porovnani, existuje, time.Now())
+}
+
+// Síň slávy jedné modelky (řádek v profilu); ModelkaID 0, když v top 10 nikdy nebyla
+func (a *App) GetSlavaModelky(id int) SlavaModelky {
+	s := a.GetSinSlavy()
+	for _, x := range append(s.Vitrina, s.Legendy...) {
+		if x.ModelkaID == id {
+			return x
+		}
+	}
+	return SlavaModelky{}
+}
+
+type pobytVTop struct {
+	od, do    time.Time
+	otevreny  bool
+	odZacatku bool
+}
+
+func dniMezi(od, do time.Time) int {
+	if do.Before(od) {
+		return 0
+	}
+	return int(do.Sub(od).Hours() / 24)
+}
+
+func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnani []porovnaniZaznam, existuje map[int]bool, nyni time.Time) SinSlavy {
+	s := SinSlavy{Vitrina: []SlavaModelky{}, Legendy: []SlavaModelky{}, Rekordy: []RekordSlavy{}, Kronika: []UdalostSlavy{}}
+	pobyty := map[int][]pobytVTop{}
+	obhajob, nejlepsi := map[int]int{}, map[int]int{}
+	naPrvnim := map[int]int{}
+	var zacatek time.Time
+	// Vláda jedničky: kdo, od kdy, jestli od začátku kroniky
+	vladne, vladaOd, vladaOdZacatku := 0, time.Time{}, false
+	vlada := RekordSlavy{Druh: "vlada", Hodnota: -1}
+	ukoncitVladu := func(do time.Time) {
+		if vladne == 0 {
+			return
+		}
+		dni := dniMezi(vladaOd, do)
+		naPrvnim[vladne] += dni
+		if dni > vlada.Hodnota {
+			vlada = RekordSlavy{Druh: "vlada", ModelkaID: vladne, Hodnota: dni, OdZacatku: vladaOdZacatku, Cas: vladaOd.Format("2006-01-02 15:04:05"), Trva: do.Equal(nyni)}
+		}
+		vladne = 0
+	}
+	zlepsit := func(id, misto int) {
+		if misto > 0 && (nejlepsi[id] == 0 || misto < nejlepsi[id]) {
+			nejlepsi[id] = misto
+		}
+	}
+	navrat := RekordSlavy{Druh: "navrat", Hodnota: -1}
+	rychlost := RekordSlavy{Druh: "rychlost", Hodnota: -1}
+	prvniVstup := map[int]bool{}
+	for _, z := range kronika {
+		switch z.druh {
+		case udalostZacatek:
+			zacatek = z.cas
+			s.Od = z.casText
+		case udalostPocatek, udalostVstup:
+			p := pobyty[z.modelka]
+			if len(p) > 0 && p[len(p)-1].otevreny {
+				continue
+			}
+			if len(p) > 0 && z.druh == udalostVstup {
+				if dni := dniMezi(p[len(p)-1].do, z.cas); dni > navrat.Hodnota && existuje[z.modelka] {
+					navrat = RekordSlavy{Druh: "navrat", ModelkaID: z.modelka, Hodnota: dni, Cas: z.casText}
+				}
+			}
+			if z.druh == udalostVstup && len(p) == 0 && !prvniVstup[z.modelka] && existuje[z.modelka] {
+				// Vlastní porovnání do prvního vstupu
+				n := 0
+				for _, q := range porovnani {
+					if q.id <= z.porovnani && (q.a == z.modelka || q.b == z.modelka) {
+						n++
+					}
+				}
+				if rychlost.Hodnota < 0 || n < rychlost.Hodnota {
+					rychlost = RekordSlavy{Druh: "rychlost", ModelkaID: z.modelka, Hodnota: n, Cas: z.casText}
+				}
+			}
+			prvniVstup[z.modelka] = true
+			pobyty[z.modelka] = append(p, pobytVTop{od: z.cas, otevreny: true, odZacatku: z.druh == udalostPocatek})
+			zlepsit(z.modelka, z.misto)
+		case udalostVystup:
+			if p := pobyty[z.modelka]; len(p) > 0 && p[len(p)-1].otevreny {
+				p[len(p)-1].otevreny, p[len(p)-1].do = false, z.cas
+			}
+		case udalostObhajoba:
+			obhajob[z.modelka]++
+			zlepsit(z.modelka, z.misto)
+		case udalostJednicka:
+			ukoncitVladu(z.cas)
+			vladne, vladaOd, vladaOdZacatku = z.modelka, z.cas, z.cas.Equal(zacatek)
+			zlepsit(z.modelka, 1)
+		case udalostKonecJednicky:
+			ukoncitVladu(z.cas)
+		}
+	}
+	ukoncitVladu(nyni)
+
+	slava := func(id int) SlavaModelky {
+		x := SlavaModelky{ModelkaID: id, Misto: model.poradi[id], VTop: jeVTop10(model.uroven[id]), Obhajob: obhajob[id],
+			NejlepsiMisto: nejlepsi[id], DniNaPrvnim: naPrvnim[id]}
+		if x.VTop {
+			zlepsit(id, x.Misto)
+			x.NejlepsiMisto = nejlepsi[id]
+		}
+		p := pobyty[id]
+		x.Pobytu = len(p)
+		for i, q := range p {
+			do := q.do
+			if q.otevreny {
+				do = nyni
+			}
+			dni := dniMezi(q.od, do)
+			x.DniCelkem += dni
+			x.DniNejdele = max(x.DniNejdele, dni)
+			if i == len(p)-1 {
+				x.Od, x.OdZacatku = q.od.Format("2006-01-02 15:04:05"), q.odZacatku
+				if q.otevreny {
+					x.DniTed = dni
+				} else {
+					x.Do = q.do.Format("2006-01-02 15:04:05")
+				}
+			}
+		}
+		if !x.VTop && len(p) > 0 {
+			x.Od, x.OdZacatku = p[0].od.Format("2006-01-02 15:04:05"), p[0].odZacatku
+		}
+		return x
+	}
+	// Vitrína: současná potvrzená top 10 podle místa
+	var top []int
+	for id, u := range model.uroven {
+		if jeVTop10(u) && existuje[id] {
+			top = append(top, id)
+		}
+	}
+	sort.Slice(top, func(i, j int) bool { return model.poradi[top[i]] < model.poradi[top[j]] })
+	for _, id := range top {
+		s.Vitrina = append(s.Vitrina, slava(id))
+	}
+	// Legendy: bývalé top 10, nejdéle v top 10 napřed
+	ids := make([]int, 0, len(pobyty))
+	for id := range pobyty {
+		if existuje[id] && !jeVTop10(model.uroven[id]) {
+			ids = append(ids, id)
+		}
+	}
+	sort.Ints(ids)
+	for _, id := range ids {
+		s.Legendy = append(s.Legendy, slava(id))
+	}
+	sort.SliceStable(s.Legendy, func(i, j int) bool {
+		if s.Legendy[i].DniCelkem != s.Legendy[j].DniCelkem {
+			return s.Legendy[i].DniCelkem > s.Legendy[j].DniCelkem
+		}
+		return s.Legendy[i].NejlepsiMisto < s.Legendy[j].NejlepsiMisto
+	})
+	// Rekordy (jen ty, které už něco mají; při shodě dřívější číslo modelky)
+	vsechny := append(append([]SlavaModelky(nil), s.Vitrina...), s.Legendy...)
+	sort.Slice(vsechny, func(i, j int) bool { return vsechny[i].ModelkaID < vsechny[j].ModelkaID })
+	nejdele, obhajoby := RekordSlavy{Druh: "nejdele", Hodnota: -1}, RekordSlavy{Druh: "obhajoby", Hodnota: 0}
+	for _, x := range vsechny {
+		if x.Pobytu > 0 && x.DniCelkem > nejdele.Hodnota {
+			nejdele = RekordSlavy{Druh: "nejdele", ModelkaID: x.ModelkaID, Hodnota: x.DniCelkem, OdZacatku: pobyty[x.ModelkaID][0].odZacatku, Trva: x.VTop}
+		}
+		if x.Obhajob > obhajoby.Hodnota {
+			obhajoby = RekordSlavy{Druh: "obhajoby", ModelkaID: x.ModelkaID, Hodnota: x.Obhajob}
+		}
+	}
+	for _, r := range []RekordSlavy{nejdele, vlada, obhajoby, rychlost, navrat} {
+		if r.ModelkaID > 0 && existuje[r.ModelkaID] && r.Hodnota >= 0 {
+			s.Rekordy = append(s.Rekordy, r)
+		}
+	}
+	// Kronika od nejnovější (bez událostí smazaných modelek; smazaná soupeřka = 0)
+	for i := len(kronika) - 1; i >= 0 && len(s.Kronika) < udalostiKroniky; i-- {
+		z := kronika[i]
+		if z.druh != udalostZacatek && !existuje[z.modelka] {
+			continue
+		}
+		souperka := z.souperka
+		if !existuje[souperka] {
+			souperka = 0
+		}
+		s.Kronika = append(s.Kronika, UdalostSlavy{Cas: z.casText, Druh: z.druh, ModelkaID: z.modelka, Misto: z.misto, Souperka: souperka})
+	}
+	return s
+}

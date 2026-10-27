@@ -30,9 +30,10 @@ import { obnovitSrdickaModelky } from '../ui/srdicka';
 import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
+import { nacistSinSlavy, pripravitSinSlavy } from './sin-slavy';
 
 // Části Oblíbenosti (volba pod hledáním) a jejich ikony v liště (ui/volby.js)
-export const CASTI_OBLIBENOSTI = [['porovnani', 'Porovnávání'], ['poradi', 'Pořadí']];
+export const CASTI_OBLIBENOSTI = [['porovnani', 'Porovnávání'], ['poradi', 'Pořadí'], ['slava', 'Síň slávy']];
 const DVOJIC_NAJEDNOU = 8;
 const PORADI_NAJEDNOU = 25;
 const TIPU = 12;
@@ -78,6 +79,7 @@ export function nastavitCastOblibenosti(klic) {
 function ukazatCastOblibenosti(klic) {
     nastavitCastOblibenosti(klic);
     if (koren) koren.dataset.obCast = stav.oblibenostCast;
+    if (stav.oblibenostCast === 'slava' && cast('slava')) nacistSinSlavy(cast('slava'));
     // Lišta pod hledáním se obnoví v prehled.js
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     document.querySelector('main').scrollTop = 0;
@@ -118,7 +120,8 @@ const KOSTRA = `
                 <div data-ob-tipy></div>
             </div>
         </div>
-    </div>`;
+    </div>
+    <div class="ob-cast" data-ob-cast-slava><div data-ob-slava></div></div>`;
 
 const cast = klic => koren?.querySelector(`[data-ob-${klic}]`);
 
@@ -131,6 +134,7 @@ export async function nacistOblibenost(sekce) {
         pripravitPasy(cast('dvojice'), otevritFotku);
     }
     koren.dataset.obCast = stav.oblibenostCast;
+    if (stav.oblibenostCast === 'slava') nacistSinSlavy(cast('slava'));
     // Srdíčka fotek se mohla mezitím změnit; fotky se načtou znovu (backend je má v paměti se snímkem sbírky)
     nahledy.clear();
     vykreslitDnes();
@@ -545,6 +549,7 @@ export function pripravit() {
     if (stav.oblibenostCast === 'tipy') stav.oblibenostCast = 'poradi';
     if (!CASTI_OBLIBENOSTI.some(([klic]) => klic === stav.oblibenostCast)) stav.oblibenostCast = 'porovnani';
 
+    pripravitSinSlavy();
     // Volba části v liště pod hledáním (skrytý štítek v obsahu Přehledu)
     document.addEventListener('click', (e) => {
         const castVolba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-oblibenosti]');

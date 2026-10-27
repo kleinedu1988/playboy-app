@@ -10741,11 +10741,6 @@ span.ud-chip {
     color: var(--text-muted);
 }
 
-.ob-napoveda {
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
 /* Části Oblíbenosti: vidět je jen zvolená */
 [data-ob-cast="porovnani"] > .ob-cast:not(.ob-porovnani),
 [data-ob-cast="poradi"] > .ob-cast:not([data-ob-cast-poradi]),
@@ -10772,11 +10767,72 @@ span.ud-chip {
     color: var(--accent-text);
 }
 
+/* Hlavička nad pásy: proč tahle dvojice (se štítkem souboje), vpravo Nesedí se srdíčky a dnešní počet */
+.ob-hlavicka {
+    display: flex;
+    align-items: center;
+    gap: 8px 16px;
+    min-height: 28px;
+    margin-bottom: 10px;
+}
+
 .ob-duvod {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
     margin: 0;
+    color: var(--text-main);
+    font-size: 13px;
+}
+
+.ob-duvod > span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ob-hlavicka .ob-dnes {
+    flex: none;
+    margin-left: 0;
+}
+
+.ob-hlavicka .ob-nesedi-odkaz {
+    flex: none;
+    white-space: nowrap;
+}
+
+/* Klávesy: nápověda po najetí nebo zaměření, místo dlouhé věty pod pásy */
+.ob-klavesy {
+    position: relative;
     color: var(--text-muted);
     font-size: 12px;
-    text-align: center;
+    cursor: help;
+}
+
+.ob-klavesy-pomoc {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    z-index: 5;
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    width: max-content;
+    max-width: 420px;
+    padding: 10px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 12px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+    color: var(--text-main);
+    transform: translateX(-50%);
+}
+
+.ob-klavesy:hover .ob-klavesy-pomoc,
+.ob-klavesy:focus .ob-klavesy-pomoc {
+    display: flex;
 }
 
 .ob-ovladani {
@@ -10785,7 +10841,11 @@ span.ud-chip {
     align-items: center;
     justify-content: center;
     gap: 8px 10px;
-    margin-top: 14px;
+    margin-top: 12px;
+}
+
+.ob-ovladani .btn kbd {
+    margin-right: 4px;
 }
 
 .ob-ovladani .oddelovac,
@@ -11303,33 +11363,16 @@ span.ud-chip {
     min-height: 0;
 }
 
+/* Druh dvojice (souboj, ověření) jako štítek před důvodem v hlavičce */
 .ob-souboj {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    z-index: 3;
-    padding: 3px 14px;
+    flex: none;
+    padding: 2px 10px;
     border: 1px solid rgba(255, 64, 129, 0.55);
     border-radius: 999px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
     color: var(--accent-text);
-    font-size: 10.5px;
+    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
     white-space: nowrap;
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-    transition: opacity 0.17s ease;
-}
-
-.ob-dvojice.odchazi + .ob-souboj {
-    opacity: 0;
-}
-
-.ob-duvod.souboj {
-    color: var(--accent-text);
 }
 
 /* Úroveň modelky v pásu: potvrzená jako plná pilulka, čekající čárkovaně (jako odhad – ještě to není jisté) */

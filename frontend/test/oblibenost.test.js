@@ -145,3 +145,32 @@ test('obhajoba místa: štítky držitelky a vyzyvatelky', async () => {
     assert.equal(stitekUrovne({ urovenTop: 20, obhajujeTop: 20 }).text, 'Top 20 · obhajuje');
     assert.equal(textPoradiProfilu({ poradi: 10, urovenTop: 10, obhajujeTop: 10 }).obhajuje, 'obhajuje');
 });
+
+test('síň slávy: texty kroniky, rekordů, dní a profilu', async () => {
+    const { textDni, datumKroniky, mesicKroniky, textUdalosti, textRekordu, kronikaPoMesicich, textSlavyProfilu } = await import('../src/lib/slava.js');
+    assert.equal(textDni(0), 'od dneška');
+    assert.equal(textDni(0, true), 'od začátku kroniky');
+    assert.equal(textDni(1), '1 den');
+    assert.equal(textDni(3, true), 'aspoň 3 dny');
+    assert.equal(textDni(12), '12 dní');
+    assert.equal(datumKroniky('2026-07-28 20:15:00'), '28. 7. 2026');
+    assert.equal(mesicKroniky('2026-10-01 08:00:00'), 'říjen 2026');
+    assert.equal(datumKroniky(''), '');
+    const jmena = { 1: 'Anna', 2: 'Bára' };
+    const jmeno = id => jmena[id] || '';
+    assert.equal(textUdalosti({ druh: 'vstup', modelkaId: 1, misto: 7, souperka: 2 }, jmeno).text, 'Anna vstoupila do Top 10 na 7. místo · rozhodla výhra, soupeřka Bára');
+    assert.equal(textUdalosti({ druh: 'vystup', modelkaId: 2, misto: 11, souperka: 1 }, jmeno).text, 'Bára vypadla z Top 10 · vytlačila ji Anna');
+    assert.equal(textUdalosti({ druh: 'obhajoba', modelkaId: 2, misto: 9, souperka: 1 }, jmeno).text, 'Bára obhájila místo v Top 10 · vyzyvatelka Anna');
+    assert.equal(textUdalosti({ druh: 'jednicka', modelkaId: 1, misto: 1, souperka: 2 }, jmeno).text, 'Nová jednička: Anna · předtím Bára');
+    assert.equal(textUdalosti({ druh: 'jednicka', modelkaId: 1, misto: 1, souperka: 0 }, jmeno).text, 'Jednička: Anna');
+    assert.equal(textUdalosti({ druh: 'vstup', modelkaId: 9, misto: 3, souperka: 0 }, jmeno).text, 'Modelka vstoupila do Top 10 na 3. místo');
+    assert.deepEqual(textRekordu({ druh: 'nejdele', hodnota: 92, odZacatku: true, trva: true }), { nazev: 'Nejdéle v Top 10', hodnota: 'aspoň 92 dní', popis: 'celkem, a pořád v ní je' });
+    assert.equal(textRekordu({ druh: 'rychlost', hodnota: 11 }).hodnota, '11 porovnání');
+    assert.equal(textRekordu({ druh: 'obhajoby', hodnota: 3 }).hodnota, '3×');
+    const skupiny = kronikaPoMesicich([{ cas: '2026-10-27 10:00:00' }, { cas: '2026-10-02 10:00:00' }, { cas: '2026-09-30 10:00:00' }]);
+    assert.deepEqual(skupiny.map(s => [s.mesic, s.udalosti.length]), [['říjen 2026', 2], ['září 2026', 1]]);
+    assert.equal(textSlavyProfilu({ modelkaId: 0 }), '');
+    assert.equal(textSlavyProfilu({ modelkaId: 3, pobytu: 2, vTop: true, dniTed: 30, dniCelkem: 90, dniNaPrvnim: 12, obhajob: 2, nejlepsiMisto: 1 }),
+        'V Top 10 30 dní · celkem 90 dní · na 1. místě 12 dní · 2× obhájila · nejlépe 1.');
+    assert.equal(textSlavyProfilu({ modelkaId: 3, pobytu: 1, vTop: false, dniCelkem: 40, odZacatku: true, nejlepsiMisto: 4 }), 'V Top 10 byla aspoň 40 dní · nejlépe 4.');
+});

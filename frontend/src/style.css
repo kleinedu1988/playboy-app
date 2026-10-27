@@ -11583,24 +11583,58 @@ span.ud-chip {
 
 /* Kronika: sbalená karta pod kartami */
 .slava-kronika-obal summary {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
     list-style: none;
     cursor: pointer;
 }
 
-.slava-kronika-obal summary::-webkit-details-marker {
-    display: none;
+.slava-kronika-nadpis {
+    flex: none;
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
 }
 
-.slava-kronika-obal summary h4::before {
+.slava-kronika-nadpis::before {
     content: "▸ ";
 }
 
-.slava-kronika-obal[open] summary h4::before {
+.slava-kronika-obal[open] .slava-kronika-nadpis::before {
     content: "▾ ";
 }
 
-.slava-kronika-obal summary h4 {
-    margin: 0;
+.slava-kronika-posledni {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.slava-kronika-obal summary small {
+    flex: none;
+    color: var(--text-muted);
+}
+
+.slava-kronika-pocet {
+    margin-left: auto;
+}
+
+.slava-ikona.vstup,
+.slava-ikona.jednicka {
+    color: var(--accent-text);
+}
+
+.slava-ikona.vystup {
+    color: var(--danger-text);
+}
+
+.slava-kronika-obal summary::-webkit-details-marker {
+    display: none;
 }
 
 .slava-kronika {

@@ -69,10 +69,16 @@ function htmlKarty(x, rekordy, legenda) {
         </div>`;
 }
 
+// Kronika: zavřená je jeden řádek s nejnovější událostí, po rozkliknutí všechny po měsících
 function htmlKroniky() {
     const skupiny = kronikaPoMesicich(data.kronika);
+    const nejnovejsi = data.kronika[0];
+    const t = nejnovejsi && textUdalosti(nejnovejsi, jmeno);
+    const pocet = `${data.kronika.length} ${data.kronika.length === 1 ? 'událost' : data.kronika.length < 5 ? 'události' : 'událostí'} od ${datumKroniky(data.od)}`;
     return `<details class="ob-karta slava-kronika-obal">
-        <summary><h4>Kronika <small>${data.kronika.length} ${data.kronika.length === 1 ? 'událost' : data.kronika.length < 5 ? 'události' : 'událostí'} od ${esc(datumKroniky(data.od))}</small></h4></summary>
+        <summary title="${esc(`Kronika Top 10: ${pocet}. Klik ukáže všechny.`)}"><span class="slava-kronika-nadpis">Kronika</span>
+            ${t ? `<span class="slava-ikona ${esc(nejnovejsi.druh)}" aria-hidden="true">${t.ikona}</span><span class="slava-kronika-posledni">${esc(t.text)}</span><small>${esc(datumKroniky(nejnovejsi.cas))}</small>` : ''}
+            <small class="slava-kronika-pocet">${esc(pocet)}</small></summary>
         <ol class="slava-kronika">${skupiny.map(sk => `<li class="slava-mesic">${esc(sk.mesic)}</li>${sk.udalosti.map((u, i, vse) => {
             // Kdo byl v top 10 už na začátku kroniky, je v jednom řádku (jinak deset stejných vět za sebou)
             if (u.druh === 'pocatek') {

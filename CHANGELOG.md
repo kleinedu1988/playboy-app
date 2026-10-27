@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.56] – 2026-10-27
+
+### Přidáno
+- **Rychlé hodnocení:** nová část Oblíbenosti „Hodnocení“ vedle Porovnávání. Ukazuje nehodnocené modelky jednu po druhé, vlevo velkou titulní fotku a vpravo pás jejích nejlepších fotek. Pod tím je odhad srdíček podle tvého vkusu i s důvodem.
+  - **Klávesy:** Enter odhad přijme, 1–5 dá srdíčka (i na české klávesnici bez Shiftu), půlky jdou klikem na srdíčka. S přeskočí, Backspace vrátí poslední.
+  - **Pořadí fronty:** napřed modelky, které by se ti podle odhadu mohly líbit nejvíc, pak ostatní. Po každých pěti hodnoceních se odhady zpřesní.
+  - Odkaz „Ohodnotit rychle →“ je i u „Mohlo by se ti líbit“ v Pořadí.
+
 ## [0.99.55] – 2026-10-27
 
 ### Změněno

@@ -733,3 +733,15 @@ z paměti asi 35 ms (dřív 10 ms; důvod odhadu ze stromů u 3000 modelek asi 1
 modelek bez paměti pod 1 ms, z paměti snímku desítky µs. Na realistické umělé sbírce (`TestVyhodnoceniVkusu`,
 3000 modelek, 1000 hodnocených s 150 hodnotami údajů) trvá `spocitatOblibenost` dřív i nyní asi 45 ms, se 1800
 hodnocenými asi 62 ms; GetModelky z paměti se nemění (asi 2 ms).
+
+## Rychlé hodnocení
+
+Pořadí je jen tak přesné, kolik modelek má srdíčka. Oblíbenost › Hodnocení (`app/rychle-hodnoceni.js`, fronta
+a klávesy v `lib/hodnoceni.js`) ukazuje nehodnocené jednu po druhé: vlevo velká titulní fotka se jménem a srdíčky,
+vpravo pás jejích nejlepších fotek (`GetNahledyModelek`, klik otevře běžný prohlížeč), pod ním odhad modelu vkusu
+s důvodem. Enter odhad přijme, 1–5 dá srdíčka (podle polohy klávesy, takže i v české klávesnici bez Shiftu), půlky
+klikem na srdíčka, S přeskočí (modelka jde na konec), Backspace vrátí poslední hodnocení.
+
+Fronta: napřed tipy modelu vkusu v jeho pořadí (`GetMohloByTeLibit`, nejvyšší odhad s důvodem), pak ostatní
+nehodnocené podle `odhadHodnoceni`, počtu fotek a jména; modelky bez fotek i titulky nakonec. Po každých pěti
+hodnoceních se odhady zbytku fronty obnoví (model vkusu se z nových srdíček hned učí), pořadí fronty zůstává.

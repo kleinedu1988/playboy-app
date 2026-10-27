@@ -10749,7 +10749,8 @@ span.ud-chip {
 /* Části Oblíbenosti: vidět je jen zvolená */
 [data-ob-cast="porovnani"] > .ob-cast:not(.ob-porovnani),
 [data-ob-cast="poradi"] > .ob-cast:not([data-ob-cast-poradi]),
-[data-ob-cast="slava"] > .ob-cast:not([data-ob-cast-slava]) {
+[data-ob-cast="slava"] > .ob-cast:not([data-ob-cast-slava]),
+[data-ob-cast="hodnoceni"] > .ob-cast:not([data-ob-cast-hodnoceni]) {
     display: none;
 }
 
@@ -10787,13 +10788,15 @@ span.ud-chip {
     margin-top: 14px;
 }
 
-.ob-ovladani .oddelovac {
+.ob-ovladani .oddelovac,
+.hod-ovladani .oddelovac {
     width: 1px;
     height: 18px;
     background-color: var(--panel-okraj);
 }
 
-.ob-ovladani .link {
+.ob-ovladani .link,
+.hod-ovladani .link {
     color: var(--text-muted);
     font-size: 12px;
 }
@@ -11840,4 +11843,69 @@ span.ud-chip {
 .ob-serie[data-vysledek="ne"] {
     border-color: var(--panel-okraj);
     background-color: var(--panel-bg);
+}
+
+/* ——— Rychlé hodnocení (Oblíbenost › Hodnocení, app/rychle-hodnoceni.js): jeden pás jako v Porovnávání ——— */
+.hod {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+    min-height: 480px;
+}
+
+.hod-pruh {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin-bottom: 10px;
+    color: var(--text-muted);
+}
+
+.hod-pruh b {
+    color: var(--text-main);
+}
+
+.hod-pruh .ob-serie-postup {
+    flex: 1 1 200px;
+    max-width: 320px;
+}
+
+.hod-pas {
+    flex: 1;
+}
+
+.hod-odhad {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 12px;
+    margin: 12px 4px 0;
+}
+
+.hod-odhad b {
+    color: var(--accent-text);
+    font-size: 18px;
+}
+
+.hod-odhad small {
+    color: var(--text-muted);
+}
+
+.hod-ovladani {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 14px;
+    margin: 10px 4px 0;
+}
+
+.hod-klavesy {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.hod .hod-pas .pas-popis .hearts {
+    font-size: 22px;
 }

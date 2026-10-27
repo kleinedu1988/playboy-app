@@ -31,9 +31,10 @@ import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 import { nacistSinSlavy, pripravitSinSlavy } from './sin-slavy';
+import { nacistHodnoceni, pripravitHodnoceni } from './rychle-hodnoceni';
 
 // Části Oblíbenosti (volba pod hledáním) a jejich ikony v liště (ui/volby.js)
-export const CASTI_OBLIBENOSTI = [['porovnani', 'Porovnávání'], ['poradi', 'Pořadí'], ['slava', 'Síň slávy']];
+export const CASTI_OBLIBENOSTI = [['porovnani', 'Porovnávání'], ['hodnoceni', 'Hodnocení'], ['poradi', 'Pořadí'], ['slava', 'Síň slávy']];
 const DVOJIC_NAJEDNOU = 8;
 const PORADI_NAJEDNOU = 25;
 const TIPU = 12;
@@ -84,6 +85,7 @@ function ukazatCastOblibenosti(klic) {
     nastavitCastOblibenosti(klic);
     if (koren) koren.dataset.obCast = stav.oblibenostCast;
     if (stav.oblibenostCast === 'slava' && cast('slava')) nacistSinSlavy(cast('slava'));
+    if (stav.oblibenostCast === 'hodnoceni' && cast('hodnoceni')) nacistHodnoceni(cast('hodnoceni'));
     // Lišta pod hledáním se obnoví v prehled.js
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     document.querySelector('main').scrollTop = 0;
@@ -121,12 +123,13 @@ const KOSTRA = `
                 <p class="ob-pravidla" data-ob-pravidla></p>
             </div>
             <div class="ob-karta">
-                <h4>Mohlo by se ti líbit <small>odhad podle tvého vkusu</small></h4>
+                <h4>Mohlo by se ti líbit <small>odhad podle tvého vkusu · <button type="button" class="link" data-ob-hodnotit title="Nehodnocené jedna po druhé: Enter přijme odhad, 1–5 dá srdíčka">Ohodnotit rychle →</button></small></h4>
                 <div data-ob-tipy></div>
             </div>
         </div>
     </div>
-    <div class="ob-cast" data-ob-cast-slava><div data-ob-slava></div></div>`;
+    <div class="ob-cast" data-ob-cast-slava><div data-ob-slava></div></div>
+    <div class="ob-cast" data-ob-cast-hodnoceni><div class="hod" data-ob-hodnoceni></div></div>`;
 
 const cast = klic => koren?.querySelector(`[data-ob-${klic}]`);
 
@@ -140,6 +143,7 @@ export async function nacistOblibenost(sekce) {
     }
     koren.dataset.obCast = stav.oblibenostCast;
     if (stav.oblibenostCast === 'slava') nacistSinSlavy(cast('slava'));
+    if (stav.oblibenostCast === 'hodnoceni') nacistHodnoceni(cast('hodnoceni'));
     // Srdíčka fotek se mohla mezitím změnit; fotky se načtou znovu (backend je má v paměti se snímkem sbírky)
     nahledy.clear();
     vykreslitDnes();
@@ -355,7 +359,7 @@ function vykreslitDvojici() {
         const malo = (data.oblibenost?.hodnocenych || 0) < 2;
         delete misto.dataset.pasy;
         nastavitHtml(misto, malo
-            ? htmlPrazdna('Zatím není co porovnávat', 'Porovnávání potřebuje aspoň dvě modelky se srdíčky. Ohodnoť pár modelek.', { ikona: 'srdce' })
+            ? htmlPrazdna('Zatím není co porovnávat', 'Porovnávání potřebuje aspoň dvě modelky se srdíčky. Ohodnoť pár modelek v části Hodnocení.', { ikona: 'srdce' })
             : htmlPrazdna('Dvojice došly', 'Teď nemám další dvojice, které by pořadí něco řekly. Zkus to po pár nových hodnoceních.', { ikona: 'srdce' }));
         return;
     }
@@ -634,6 +638,8 @@ export function pripravit() {
     if (!CASTI_OBLIBENOSTI.some(([klic]) => klic === stav.oblibenostCast)) stav.oblibenostCast = 'porovnani';
 
     pripravitSinSlavy();
+    pripravitHodnoceni(() => videt() && stav.oblibenostCast === 'hodnoceni' && !stav.zamceno && !otevreneOkno()
+        && !jeVidet('lightbox') && !jeVidet('zkratky') && !jeVidet('contextMenu'));
     // Volba části v liště pod hledáním (skrytý štítek v obsahu Přehledu)
     document.addEventListener('click', (e) => {
         const castVolba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-oblibenosti]');
@@ -654,6 +660,7 @@ export function pripravit() {
         else if (e.target.closest('[data-ob-poradi-vse]')) { poradiVse = true; vykreslitPoradi(); }
         else if (e.target.closest('[data-ob-nesedi-odkaz]')) ukazatCastOblibenosti('poradi');
         else if (e.target.closest('[data-ob-porovnavat]')) ukazatCastOblibenosti('porovnani');
+        else if (e.target.closest('[data-ob-hodnotit]')) ukazatCastOblibenosti('hodnoceni');
         else if (e.target.closest('[data-ob-nesedi-vse]')) { nesouladyVse = true; vykreslitNesedi(); }
     });
 

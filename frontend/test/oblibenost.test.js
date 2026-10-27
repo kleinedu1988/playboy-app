@@ -174,3 +174,23 @@ test('rozhodnout teď: výsledek série', async () => {
     assert.deepEqual(vysledekRozhodnuti({ jmeno: 'Bára', uroven: 10, obhajovala: true, ted: { uroven: 10 } }), { ok: true, text: 'Bára obhájila Top 10.' });
     assert.deepEqual(vysledekRozhodnuti({ jmeno: 'Bára', uroven: 10, obhajovala: true, ted: { uroven: 20 } }), { ok: false, text: 'Bára prohrála a vypadla z Top 10.' });
 });
+
+test('rychlé hodnocení: fronta a klávesy', async () => {
+    const { frontaHodnoceni, srdickaKlavesy } = await import('../src/lib/hodnoceni.js');
+    const modelky = [
+        { id: 1, jmeno: 'Anna', hodnoceni: 4 },
+        { id: 2, jmeno: 'Bára', hodnoceni: 0, odhadHodnoceni: 3, pocetFotek: 10 },
+        { id: 3, jmeno: 'Cecílie', hodnoceni: 0, odhadHodnoceni: 0, pocetFotek: 30 },
+        { id: 4, jmeno: 'Dana', hodnoceni: 0, odhadHodnoceni: 4.5, pocetFotek: 5 },
+        { id: 5, jmeno: 'Eva', hodnoceni: 0, pocetFotek: 0, coverUrl: '' },
+        { id: 6, jmeno: 'Filoména', hodnoceni: 0, pocetFotek: 30 },
+    ];
+    const tipy = [{ modelkaId: 3, odhad: 4, duvod: 'podobná tvým pětkám' }, { modelkaId: 1, odhad: 5 }];
+    assert.deepEqual(frontaHodnoceni(modelky, tipy).map(x => [x.id, x.odhad]), [[3, 4], [4, 4.5], [2, 3], [6, 0], [5, 0]]);
+    assert.equal(frontaHodnoceni(modelky, tipy)[0].duvod, 'podobná tvým pětkám');
+    assert.deepEqual(frontaHodnoceni([], []), []);
+    assert.equal(srdickaKlavesy({ code: 'Digit4' }), 4);
+    assert.equal(srdickaKlavesy({ code: 'Numpad1' }), 1);
+    assert.equal(srdickaKlavesy({ code: 'Digit6' }), 0);
+    assert.equal(srdickaKlavesy({ code: 'KeyS' }), 0);
+});

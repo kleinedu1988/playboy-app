@@ -11203,3 +11203,80 @@ span.ud-chip {
     font-size: 12px;
     font-weight: 600;
 }
+
+/* Přepínač stránek v liště pod hledáním (Obálky / Kalendář, části Přehledu a Oblíbenosti): možnosti vedle sebe */
+.volba-prepinac {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.prepinac-volba {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.12s, color 0.12s;
+}
+
+.prepinac-volba:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.prepinac-volba.aktivni {
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+    font-weight: 600;
+    cursor: default;
+}
+
+.prepinac-volba svg {
+    flex: none;
+}
+
+.prepinac-volba small {
+    padding: 0 6px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 400;
+}
+
+.prepinac-volba.aktivni small {
+    background-color: rgba(255, 64, 129, 0.2);
+    color: var(--accent-text);
+}
+
+.volby-skupina .volba-prepinac + .volba::before,
+.volby-skupina .volba-prepinac + .volby-pocet::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 7px;
+    bottom: 7px;
+    width: 1px;
+    background-color: var(--panel-okraj);
+}
+
+.volby-skupina .volba-prepinac + .volba,
+.volby-skupina .volba-prepinac + .volby-pocet {
+    margin-left: 4px;
+}
+
+/* Úzké okno: u přepínače stránek jen ikony (název v bublině) */
+@media (max-width: 760px) {
+    .prepinac-volba svg + span {
+        display: none;
+    }
+}

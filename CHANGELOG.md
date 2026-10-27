@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.46] – 2026-10-27
+
+### Změněno
+- **Přepínání stránek pod hledáním jako přepínač, ne rozbalovací seznam:** všechny možnosti jsou vedle sebe a zvolená je zvýrazněná, klik přepne rovnou. Platí pro Oblíbenost (Porovnávání / Pořadí), Přehled sbírky (Přehled / Údržba / Sháním CZ / Statistiky, s počty) i Čísla (Obálky / Kalendář). V úzkém okně zůstanou jen ikony.
+
 ## [0.99.45] – 2026-10-27
 
 ### Změněno

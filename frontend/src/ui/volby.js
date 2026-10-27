@@ -179,12 +179,36 @@ function ukazatVolby(lista) {
     };
     const krizek = '<em class="volba-zrusit" title="Zrušit filtr" aria-label="Zrušit filtr">&times;</em>';
 
+    // Přepínač stránek (Obálky / Kalendář, části Přehledu a Oblíbenosti): všechny možnosti vedle sebe, zvolená
+    // zvýrazněná, klik přepne rovnou (bez nabídky)
+    const pridatPrepinac = (s) => {
+        const prepinac = document.createElement('div');
+        prepinac.className = 'volba-prepinac';
+        prepinac.setAttribute('role', 'radiogroup');
+        prepinac.setAttribute('aria-label', TITULKY_ZOBRAZENI[s.klic] || POPISKY[s.klic]);
+        s.volby.forEach(v => {
+            const tlacitko = document.createElement('button');
+            tlacitko.type = 'button';
+            tlacitko.className = `prepinac-volba ${v.zvolena ? 'aktivni' : ''}`.trim();
+            tlacitko.setAttribute('role', 'radio');
+            tlacitko.setAttribute('aria-checked', String(v.zvolena));
+            tlacitko.title = v.text;
+            tlacitko.innerHTML = `${IKONY_ZOBRAZENI[v.text] || ''}<span>${esc(v.text)}</span>${v.pocet ? `<small>${esc(v.pocet)}</small>` : ''}`;
+            tlacitko.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!v.zvolena) v.akce();
+            });
+            prepinac.append(tlacitko);
+        });
+        panel.append(prepinac);
+    };
+
     // Povinná volba bez zvolené hodnoty (srdíčka v Nejlepších, když je zvolený výběr) se neukazuje
     skupiny.filter(s => s.druh !== 'filtr' && (s.druh !== 'povinne' || s.zvoleny)).forEach(s => {
         let tlacitko;
         if (s.druh === 'zobrazeni') {
-            tlacitko = pridatTlacitko(`${IKONY_ZOBRAZENI[hodnota(s)] || ''}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
-            tlacitko.title = TITULKY_ZOBRAZENI[s.klic];
+            pridatPrepinac(s);
+            return;
         } else if (s.druh === 'razeni') {
             tlacitko = pridatTlacitko(`${IKONA_RAZENI}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
             tlacitko.title = 'Řazení';

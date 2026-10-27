@@ -11742,3 +11742,30 @@ span.ud-chip {
         flex: 1;
     }
 }
+
+/* Místa 4–10: jedna řada přes celou šířku, karty se dělí o místo rovným dílem; v úzkém okně po čtyřech */
+.slava-rada {
+    display: grid;
+    grid-template-columns: repeat(var(--karet, 7), minmax(0, 1fr));
+    gap: 16px;
+    align-items: start;
+}
+
+.slava-rada .card-info {
+    padding: 10px 12px;
+}
+
+.slava-rada .card-info h3 {
+    font-size: 12px;
+    letter-spacing: 0.06em;
+}
+
+.slava-rada .slava-trofeje {
+    bottom: 76px;
+}
+
+@media (max-width: 900px) {
+    .slava-rada {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}

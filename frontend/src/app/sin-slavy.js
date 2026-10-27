@@ -106,8 +106,10 @@ function vykreslit() {
     const poradiStupnu = [2, 1, 3].map(misto => stupne.find(x => x.misto === misto)).filter(Boolean);
     const htmlStupnu = poradiStupnu.length ? `<div class="slava-stupne">${poradiStupnu.map(x =>
         `<div class="slava-stupen misto-${x.misto}">${htmlKarty(x, rekordy.get(x.modelkaId), false)}<div class="slava-podstavec" aria-hidden="true">${x.misto}</div></div>`).join('')}</div>` : '';
-    const ostatni = data.vitrina.filter(x => !stupne.includes(x)).map(x => htmlKarty(x, rekordy.get(x.modelkaId), false)).join('');
-    const top = htmlStupnu + (ostatni ? `<div class="gallery-grid slava-karty">${ostatni}</div>` : '');
+    // Místa 4–10 v jedné řadě přes celou šířku (karty se poměrně zmenší, vpravo nezůstane prázdno)
+    const zbytek = data.vitrina.filter(x => !stupne.includes(x));
+    const ostatni = zbytek.map(x => htmlKarty(x, rekordy.get(x.modelkaId), false)).join('');
+    const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada" style="--karet: ${zbytek.length}">${ostatni}</div>` : '');
     const legendy = data.legendy.map(x => htmlKarty(x, rekordy.get(x.modelkaId), true)).join('');
     nastavitHtml(kontejner, `<div class="slava">
         <h4 class="slava-nadpis">Top 10 <small>${top ? 'jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy' : ''}</small></h4>

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.52] – 2026-10-27
+
+### Změněno
+- **Síň slávy: místa 4–10 v jedné řadě.** Sedm karet pod stupni vítězů se poměrně zmenší a vyplní celou šířku, vpravo nezůstane prázdné místo. V úzkém okně jdou po čtyřech.
+
 ## [0.99.51] – 2026-10-27
 
 ### Změněno

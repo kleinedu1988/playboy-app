@@ -615,7 +615,7 @@ prvního vstupu – ne `pocatek`) a největší návrat (nejdelší pauza mimo t
 dřívější (u dnů celkem a obhajob nižší číslo modelky). Vitrína je současná potvrzená top 10, legendy bývalé top 10. Smazané modelky se vynechají.
 
 **V rozhraní** (Oblíbenost › Síň slávy, `app/sin-slavy.js`, texty v `lib/slava.js`): karty modelek jako v galerii
-Modelky – současná Top 10 v pořadí (první tři větší na stupních vítězů: 2. vlevo, 1. uprostřed nejvýš, 3. vpravo, každá na podstavci s číslem; od 4. místa běžná mřížka s místem vpravo nahoře, jednička s korunkou, pod jménem délka pobytu, obhajoby 🛡
+Modelky – současná Top 10 v pořadí (první tři větší na stupních vítězů: 2. vlevo, 1. uprostřed nejvýš, 3. vpravo, každá na podstavci s číslem; místa 4–10 v jedné řadě přes celou šířku, karty se o ni dělí rovným dílem (v úzkém okně po čtyřech), místo vpravo nahoře, jednička s korunkou, pod jménem délka pobytu, obhajoby 🛡
 a kolikátý pobyt, zlaté štítky 🏆 rekordů, podrobnosti v bublině), pod ní Legendy (vybledlé karty s nejlepším
 místem) a kronika jako jeden řádek s nejnovější událostí, po rozkliknutí celá po měsících (kdo byl v top 10 už na
 začátku, je v jednom řádku).

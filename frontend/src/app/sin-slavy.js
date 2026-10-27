@@ -94,6 +94,10 @@ function htmlKroniky() {
     </details>`;
 }
 
+// Legendy vyplní řady rovnoměrně: nejvýš 7 v řadě, řad co nejméně a v každé skoro stejně karet (8 → 4 + 4,
+// 10 → 5 + 5), aby vpravo nezůstávalo prázdno
+const sloupcuLegend = n => Math.ceil(n / Math.ceil(n / 7));
+
 function vykreslit() {
     if (!kontejner || !data) return;
     if (!data.od) {
@@ -109,13 +113,13 @@ function vykreslit() {
     // Místa 4–10 v jedné řadě přes celou šířku (karty se poměrně zmenší, vpravo nezůstane prázdno)
     const zbytek = data.vitrina.filter(x => !stupne.includes(x));
     const ostatni = zbytek.map(x => htmlKarty(x, rekordy.get(x.modelkaId), false)).join('');
-    const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada" style="--karet: ${zbytek.length}">${ostatni}</div>` : '');
+    const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada ${zbytek.length >= 6 ? 'husta' : ''}" style="--karet: ${zbytek.length}">${ostatni}</div>` : '');
     const legendy = data.legendy.map(x => htmlKarty(x, rekordy.get(x.modelkaId), true)).join('');
     nastavitHtml(kontejner, `<div class="slava">
         <h4 class="slava-nadpis">Top 10 <small>${top ? 'jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy' : ''}</small></h4>
         ${top || `<p class="slava-nic">Zatím žádná potvrzená v Top 10. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20. <button type="button" class="link" data-ob-porovnavat>Porovnávat →</button></p>`}
         <h4 class="slava-nadpis">Legendy <small>bývalé Top 10</small></h4>
-        ${legendy ? `<div class="gallery-grid slava-karty">${legendy}</div>` : '<p class="slava-nic">Zatím nikdo z Top 10 nevypadl.</p>'}
+        ${legendy ? `<div class="slava-karty slava-rada ${sloupcuLegend(data.legendy.length) >= 6 ? 'husta' : ''}" style="--karet: ${sloupcuLegend(data.legendy.length)}">${legendy}</div>` : '<p class="slava-nic">Zatím nikdo z Top 10 nevypadl.</p>'}
         ${htmlKroniky()}
     </div>`);
     nacitatPostupne(kontejner);

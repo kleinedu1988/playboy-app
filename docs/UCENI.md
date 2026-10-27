@@ -617,7 +617,7 @@ dřívější (u dnů celkem a obhajob nižší číslo modelky). Vitrína je so
 **V rozhraní** (Oblíbenost › Síň slávy, `app/sin-slavy.js`, texty v `lib/slava.js`): karty modelek jako v galerii
 Modelky – současná Top 10 v pořadí (první tři větší na stupních vítězů: 2. vlevo, 1. uprostřed nejvýš, 3. vpravo, každá na podstavci s číslem; místa 4–10 v jedné řadě přes celou šířku, karty se o ni dělí rovným dílem (v úzkém okně po čtyřech), místo vpravo nahoře, jednička s korunkou, pod jménem délka pobytu, obhajoby 🛡
 a kolikátý pobyt, zlaté štítky 🏆 rekordů, podrobnosti v bublině), pod ní Legendy (vybledlé karty s nejlepším
-místem) a kronika jako jeden řádek s nejnovější událostí, po rozkliknutí celá po měsících (kdo byl v top 10 už na
+místem, řady vyplněné rovnoměrně: nejvýš 7 v řadě, 8 → 4 + 4) a kronika jako jeden řádek s nejnovější událostí, po rozkliknutí celá po měsících (kdo byl v top 10 už na
 začátku, je v jednom řádku).
 
 ## Model vkusu

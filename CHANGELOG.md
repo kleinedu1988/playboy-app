@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.53] – 2026-10-27
+
+### Změněno
+- **Síň slávy: legendy vyplní celou šířku.** Nejvýš 7 v řadě, řady se plní rovnoměrně (8 legend → 4 + 4, 10 → 5 + 5), takže vpravo nezůstávají prázdná místa. Malé písmo jmen mají jen husté řady od šesti karet.
+
 ## [0.99.52] – 2026-10-27
 
 ### Změněno

@@ -11743,7 +11743,7 @@ span.ud-chip {
     }
 }
 
-/* Místa 4–10: jedna řada přes celou šířku, karty se dělí o místo rovným dílem; v úzkém okně po čtyřech */
+/* Místa 4–10 a legendy: řady přes celou šířku, karty se dělí o místo rovným dílem; v úzkém okně po čtyřech */
 .slava-rada {
     display: grid;
     grid-template-columns: repeat(var(--karet, 7), minmax(0, 1fr));
@@ -11751,16 +11751,17 @@ span.ud-chip {
     align-items: start;
 }
 
-.slava-rada .card-info {
+/* Husté řady (od šesti karet): menší popisek, aby se jména vešla */
+.slava-rada.husta .card-info {
     padding: 10px 12px;
 }
 
-.slava-rada .card-info h3 {
+.slava-rada.husta .card-info h3 {
     font-size: 12px;
     letter-spacing: 0.06em;
 }
 
-.slava-rada .slava-trofeje {
+.slava-rada.husta .slava-trofeje {
     bottom: 76px;
 }
 

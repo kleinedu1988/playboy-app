@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.59] – 2026-10-27
+
+### Změněno
+- **Porovnávání je přehlednější.**
+  - **Hlavička nad pásy:** vlevo proč tahle dvojice, u souboje nebo ověření se štítkem („⚔ O postup do Top 10“, „⚔ Ověření srdíček“). Vpravo „Nesedí se srdíčky“ a dnešní počet porovnání.
+  - **Pod pásy jen tři tlačítka:** Vrátit, Obě stejně, Přeskočit. Přehled kláves ukáže „⌨ Klávesy“ po najetí myší.
+- **Fotky v pásech mají pevnou výšku a šířku podle fotky:** fotka na šířku je širší, nic se neořízne. Platí v Porovnávání i v rychlém hodnocení.
+- **Alba v profilu modelky jako mozaika:** řádky stejné výšky, šířka dlaždice podle poměru stran fotky. Dlouhé album zůstává sbalené na dva řádky. Poměry stran si program pamatuje, takže řádky při dalším otevření neposkakují.
+
 ## [0.99.58] – 2026-10-27
 
 ### Přidáno

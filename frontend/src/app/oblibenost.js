@@ -21,7 +21,7 @@ import { stav } from './stav';
 import { stats } from './prvky';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
-import { adresaFotkyPasu, fotekNaObrazovce, klavesaPasu, pripravitPasy, vykreslitPasy } from './porovnani-pasy';
+import { adresaFotkyPasu, fotekNaObrazovce, klavesaPasu, pripravitPasy, sledovatPomerFotek, vykreslitPasy } from './porovnani-pasy';
 import { lightbox, otevritLightbox } from './prohlizec';
 import { seraditAlbaProfilu } from './profil';
 import { sestavitAlba } from '../lib/alba';
@@ -93,21 +93,29 @@ function ukazatCastOblibenosti(klic) {
 
 const KOSTRA = `
     <div class="ob-cast ob-porovnani" data-ob-porovnani>
-        <div class="ob-serie hidden" data-ob-serie aria-live="polite"></div>
-        <div class="ob-dvojice-obal">
-            <div class="ob-dvojice" data-ob-dvojice aria-live="polite"></div>
-            <span class="ob-souboj hidden" data-ob-souboj aria-live="polite"></span>
-        </div>
-        <div class="ob-ovladani" data-ob-ovladani>
-            <span class="ob-napoveda">kolečko nebo <kbd>←</kbd> <kbd>→</kbd> listuje pásem pod myší · <kbd>Tab</kbd> přepne · <kbd>Enter</kbd> nebo ♥ Tahle vybere · <kbd>1</kbd>–<kbd>5</kbd> srdíčka fotce · klik otevře prohlížeč</span>
-            <button type="button" class="btn btn-secondary btn-small" data-ob-volba="remiza" title="Obě stejně (↓ nebo mezerník)"><kbd>↓</kbd> Stejně</button>
-            <span class="oddelovac"></span>
-            <button type="button" class="link" data-ob-preskocit title="Přeskočit dvojici (S)">Přeskočit <kbd>S</kbd></button>
-            <button type="button" class="link" data-ob-vratit title="Vrátit poslední porovnání (Backspace)">Vrátit <kbd>⌫</kbd></button>
+        <div class="ob-hlavicka">
+            <p class="ob-duvod" data-ob-duvod><span class="ob-souboj hidden" data-ob-souboj></span><span data-ob-duvod-text></span></p>
             <button type="button" class="link ob-nesedi-odkaz hidden" data-ob-nesedi-odkaz title="Modelky, kterým podle porovnání nesedí srdíčka – otevře Pořadí"></button>
             <span class="ob-dnes" data-ob-dnes></span>
         </div>
-        <p class="ob-duvod" data-ob-duvod></p>
+        <div class="ob-serie hidden" data-ob-serie aria-live="polite"></div>
+        <div class="ob-dvojice-obal">
+            <div class="ob-dvojice" data-ob-dvojice aria-live="polite"></div>
+        </div>
+        <div class="ob-ovladani" data-ob-ovladani>
+            <button type="button" class="btn btn-secondary btn-small" data-ob-vratit title="Vrátit poslední porovnání (Backspace)"><kbd>⌫</kbd> Vrátit</button>
+            <button type="button" class="btn btn-secondary btn-small" data-ob-volba="remiza" title="Obě stejně (↓ nebo mezerník)"><kbd>↓</kbd> Obě stejně</button>
+            <button type="button" class="btn btn-secondary btn-small" data-ob-preskocit title="Přeskočit dvojici (S)"><kbd>S</kbd> Přeskočit</button>
+            <span class="ob-klavesy" tabindex="0" aria-label="Klávesy">⌨ Klávesy
+                <span class="ob-klavesy-pomoc" role="tooltip">
+                    <span><kbd>Enter</kbd> nebo <b>♥ Tahle</b> – líbí se mi víc modelka v aktivním pásu</span>
+                    <span><kbd>Tab</kbd> přepne aktivní pás · pás pod myší je aktivní</span>
+                    <span>kolečko nebo <kbd>←</kbd> <kbd>→</kbd> listuje pásem</span>
+                    <span><kbd>1</kbd>–<kbd>5</kbd> srdíčka zvýrazněné fotce · klik otevře prohlížeč</span>
+                    <span><kbd>↓</kbd> nebo mezerník obě stejně · <kbd>S</kbd> přeskočit · <kbd>⌫</kbd> vrátit</span>
+                </span>
+            </span>
+        </div>
         <div class="ob-navrh" data-ob-navrh aria-live="polite"></div>
     </div>
     <div class="ob-cast" data-ob-cast-poradi>
@@ -331,10 +339,11 @@ function vykreslitDvojici() {
     vykreslitSerii();
     const d = fronta[0];
     cast('ovladani').classList.toggle('hidden', !d);
-    nastavitText(cast('duvod'), d?.duvod || '');
+    nastavitText(cast('duvod-text'), d?.duvod || '');
     // Souboj o místo na hranici úrovně: štítek nad švem pásů (nic neposouvá) a zvýrazněný důvod
     const souboj = d ? nadpisSouboje(d, polozkaPoradi(d.a) || modelka(d.a), polozkaPoradi(d.b) || modelka(d.b)) : '';
     nastavitText(cast('souboj'), souboj ? `⚔ ${souboj}` : '');
+    cast('duvod').classList.toggle('hidden', !d);
     cast('souboj').classList.toggle('hidden', !souboj);
     cast('duvod').classList.toggle('souboj', !!souboj);
     if (!d) {
@@ -639,6 +648,7 @@ export function pripravit() {
     if (!CASTI_OBLIBENOSTI.some(([klic]) => klic === stav.oblibenostCast)) stav.oblibenostCast = 'porovnani';
 
     pripravitSinSlavy();
+    sledovatPomerFotek();
     pripravitHodnoceni(() => videt() && stav.oblibenostCast === 'hodnoceni' && !stav.zamceno && !otevreneOkno()
         && !jeVidet('lightbox') && !jeVidet('zkratky') && !jeVidet('contextMenu'));
     // Volba části v liště pod hledáním (skrytý štítek v obsahu Přehledu)

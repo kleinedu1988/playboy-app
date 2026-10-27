@@ -423,6 +423,13 @@ je zruší, klik otevře běžný prohlížeč fotek na té fotce mezi všemi fo
 vybere modelku aktivního pásu, <kbd>↓</kbd>, mezerník nebo „Stejně“ remízu, <kbd>S</kbd> přeskočí, <kbd>Backspace</kbd>
 vrátí poslední porovnání.
 
+
+**Uspořádání stránky.** Nad pásy je hlavička: vlevo proč tahle dvojice (u souboje nebo ověření se štítkem „⚔ O postup
+do Top 10“, „⚔ Ověření srdíček“), vpravo „Nesedí se srdíčky“ a dnešní počet porovnání. Pod pásy jen „⌫ Vrátit“,
+„↓ Obě stejně“ a „S Přeskočit“; klávesy ukáže „⌨ Klávesy“ po najetí. Fotky v pásu jsou celé: pás má pevnou výšku
+a každá fotka šířku podle svého poměru stran (do načtení 3 : 4), načítají se podle výšky pásu (`h400` atd., u otočených
+o 90° podle šířky). Stejně se chová pás v rychlém hodnocení a alba v profilu modelky jsou mozaika se stejnou výškou
+řad; poměry stran fotek si rozhraní pamatuje (`pomerFotky`), takže řady při dalším otevření neposkakují.
 ## Výběr dvojic
 
 Aktivní učení: porovnání má smysl tam, kde je pořadí nejisté a kde na něm záleží – u stejné nebo sousední úrovně

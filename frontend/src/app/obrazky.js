@@ -11,6 +11,31 @@ export const VELIKOST_KARTY = 'w400';         // titulní fotka na kartě galeri
 // Titulní fotka v profilu a při úpravě výřezu; rezerva pro přiblížení
 export const VELIKOST_TITULNI = 'w800';
 
+// Poměry stran fotek (id → šířka / výška) z načtených obrázků: mozaiky (alba v profilu) je znají dopředu a řádky při
+// dalším otevření neposkakují; pamatují se i po zavření programu (nejvýš posledních 6000)
+const KLIC_POMERU = 'pomeryFotek';
+const NEJVIC_POMERU = 6000;
+let pomery = null;
+let ulozeniPomeru = 0;
+function nacistPomery() {
+    if (!pomery) {
+        try { pomery = new Map(JSON.parse(localStorage.getItem(KLIC_POMERU) || '[]')); } catch { pomery = new Map(); }
+    }
+    return pomery;
+}
+export const pomerFotky = id => nacistPomery().get(id) || 0;
+export function zapamatovatPomer(id, pomer) {
+    const mapa = nacistPomery();
+    const zaokrouhleny = Math.round(pomer * 1000) / 1000;
+    if (!id || !(zaokrouhleny > 0) || mapa.get(id) === zaokrouhleny) return;
+    mapa.delete(id);
+    mapa.set(id, zaokrouhleny);
+    clearTimeout(ulozeniPomeru);
+    ulozeniPomeru = setTimeout(() => {
+        try { localStorage.setItem(KLIC_POMERU, JSON.stringify([...mapa].slice(-NEJVIC_POMERU))); } catch { /* jen pro toto spuštění */ }
+    }, 2000);
+}
+
 // Zástupný obrázek: „Bez fotky“ u modelky bez titulní fotky, „Nenačteno“ u fotky, která se nenačetla
 // (bez připojení, smazaná nebo nesdílená na Disku)
 const zastupny = text => 'data:image/svg+xml,' + encodeURIComponent(`

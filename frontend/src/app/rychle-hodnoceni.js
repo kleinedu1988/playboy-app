@@ -9,13 +9,14 @@
 // Po každých pěti hodnoceních se odhady zbytku fronty obnoví – model vkusu se z nových srdíček učí.
 // Srdíčka obsluhuje galerie.js (data-hodnoceni) a ohlásí je událostí hodnoceni-modelky; profil otevírá prehled.js.
 import { GetFotografieModelky, GetFrontaHodnoceni, GetNahledyModelek, SetHodnoceni, SetHodnoceniOdhadem } from './backend';
-import { esc, obrazek, sklonovat } from '../lib/format';
+import { esc, sklonovat } from '../lib/format';
 import { pridatPreskocenou, srdickaKlavesy, upravitFrontu } from '../lib/hodnoceni';
 import { klicNavrhu, kratceSrdicka, skryteNavrhy, skrytNavrh, vetaNesouladu } from '../lib/srdicka';
 import { NAHLEDU_V_POROVNANI, popisNahledu } from '../lib/oblibenost';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
-import { VELIKOST_NAHLEDU, adresaTitulni, nacitatPostupne } from './obrazky';
+import { adresaTitulni, nacitatPostupne } from './obrazky';
+import { adresaFotkyVysky, vyskaFotekPasu } from './porovnani-pasy';
 import { stylVyrezu } from './navigace';
 import { htmlSrdicka } from './galerie';
 import { otevritLightbox } from './prohlizec';
@@ -123,6 +124,7 @@ function vykreslit() {
     }
     if (!odhadVidet(p)) casovacOdhadu = setTimeout(() => { if (fronta[0] === p) { odkryto = p; vykreslit(); } }, ODHAD_ZA_MS);
     const fotky = nahledy.get(p.modelkaId);
+    const vyska = vyskaFotekPasu(kontejner.querySelector('[data-hod-fotky]'));
     const stitek = p.druh === 'nova' ? '<span class="hod-stitek">nově přidaná</span>'
         : p.druh === 'nesedi' ? '<span class="hod-stitek nesedi">nesedí srdíčka</span>'
         : p.preskocena ? '<span class="hod-stitek">přeskočená</span>' : '';
@@ -141,7 +143,7 @@ function vykreslit() {
             <div class="pas-fotky" data-hod-fotky>${!fotky ? Array.from({ length: 5 }, () => '<span class="pas-fotka kostra"></span>').join('')
                 : !fotky.length ? '<p class="pas-prazdne">Modelka zatím nemá fotky v albech.</p>'
                 : fotky.map((f, i) => `<button type="button" class="pas-fotka" data-hod-fotka="${i}" aria-label="${esc(popisNahledu(f, i))} – otevřít v prohlížeči">
-                    <img ${i < 6 ? 'src' : 'data-src'}="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" data-rot="${Number(f.rotace) || 0}" draggable="false" decoding="async" />
+                    <img ${i < 6 ? 'src' : 'data-src'}="${esc(adresaFotkyVysky(f, vyska))}" alt="" data-rot="${Number(f.rotace) || 0}" draggable="false" decoding="async" />
                     ${f.album ? `<span class="pas-album">${esc(f.album)}</span>` : ''}</button>`).join('')}</div>
         </section>
         ${htmlOdhadu(p, m)}

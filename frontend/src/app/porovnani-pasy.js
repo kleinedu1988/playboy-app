@@ -5,13 +5,15 @@
 // Enter vybere jeho modelku. Klik na fotku otevře běžný prohlížeč fotek (jako u alb) – otevírá ho oblibenost.js.
 // Obsah pásu se při změně jen doplní nebo přepíše přes nastavitHtml a zvýraznění mění jen třídy, nic pod kurzorem
 // zbytečně nemizí (WebKitGTK by mohl ztratit klik).
-// Výkon: fotky se načítají postupně, až se v pásu přiblíží (asi šířka pásu dopředu), ve velikosti podle výšky pásu
-// (w400 na běžném monitoru); pás se znovu sestaví jen při jiných fotkách, změna srdíček přepíše jen štítek;
-// zvýraznění mění dvě fotky, ne všechny.
+// Fotky jsou celé: pás má pevnou výšku a každá fotka šířku podle svého poměru stran (fotka na šířku je širší, nic se
+// neořízne); dokud se nenačte, drží místo 3 : 4 (sledovatPomerFotek). Otočené o 90° mají poměr prohozený.
+// Výkon: fotky se načítají postupně, až se v pásu přiblíží (asi šířka pásu dopředu), ve výšce podle výšky pásu
+// (h400 na běžném monitoru – u otočených šířka, ta je po otočení výškou); pás se znovu sestaví jen při jiných fotkách,
+// změna srdíček přepíše jen štítek; zvýraznění mění dvě fotky, ne všechny.
 import { SetHodnoceniFotek } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
 import { popisNahledu, stitekUrovne, textSkoreFotek } from '../lib/oblibenost';
-import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, VELIKOST_TITULNI, adresaTitulni, nacitatPostupne } from './obrazky';
+import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { htmlSrdicka } from './galerie';
 import { nastavitHtml, nastavitText } from '../ui/dom';
@@ -25,20 +27,43 @@ let aktivni = 'a';
 const index = { a: 0, b: 0 };
 const zvyraznena = { a: null, b: null }; // zvýrazněná fotka (prvek) každého pásu
 const sestaveno = { a: '', b: '' }; // čím je pás sestavený (velikost a čísla fotek); jiné fotky = nové sestavení
-let velikost = VELIKOST_NAHLEDU;
+let velikost = 400; // výška fotek v pixelech obrazovky (po stupních 400 / 600 / 800 / 1200, ať se sdílí mezipaměť)
 let fotekNaSirku = 6; // kolik fotek se vejde do pásu (přednačtení další dvojice)
 
-// Velikost fotek podle výšky pásu: šířka fotky 3 : 4 v pixelech obrazovky
+// Výška fotek ve stupních podle výšky pásu v pixelech obrazovky
+const stupenVysky = px => [400, 600, 800].find(s => px <= s * 1.05) || 1200;
+
 function urcitVelikost(pas) {
     const vyska = pas.clientHeight;
     if (!vyska) return;
-    const sirka = vyska * 0.75 * (window.devicePixelRatio || 1);
-    velikost = sirka <= 420 ? VELIKOST_NAHLEDU : sirka <= 620 ? VELIKOST_PLAKATU_MALA : VELIKOST_TITULNI;
+    velikost = stupenVysky(vyska * (window.devicePixelRatio || 1));
     fotekNaSirku = Math.max(3, Math.ceil(pas.clientWidth / (vyska * 0.75 + 8)) + 1);
 }
 
+// Adresa fotky v dané výšce: celá fotka (h…), u otočené o 90° šířka (po otočení je výškou)
+export const adresaFotkyVysky = (f, vyska) => obrazek(f.url, `${(Number(f.rotace) || 0) % 180 ? 'w' : 'h'}${vyska}`);
+
 // Adresa fotky v pásu (i pro přednačtení první fotek další dvojice v oblibenost.js)
-export const adresaFotkyPasu = f => obrazek(f.url, velikost);
+export const adresaFotkyPasu = f => adresaFotkyVysky(f, velikost);
+
+// Výška fotek pro pás dané výšky (rychlé hodnocení má vlastní, vyšší pás)
+export const vyskaFotekPasu = pas => stupenVysky((pas?.clientHeight || 400) * (window.devicePixelRatio || 1));
+
+/**
+ * Po načtení fotky v pásu (porovnání i rychlé hodnocení) dostane její místo skutečný poměr stran: fotka je celá,
+ * jen na šířku širší. Volá se jednou (posluchač na celé stránce, načtení obrázku nebublá – zachytí se cestou dolů).
+ */
+export function sledovatPomerFotek() {
+    document.addEventListener('load', (e) => {
+        const img = /** @type {HTMLImageElement} */ (e.target);
+        if (img?.tagName !== 'IMG' || !img.naturalWidth) return;
+        const misto = img.parentElement;
+        if (!misto?.classList.contains('pas-fotka')) return;
+        const otocena = (Number(img.dataset.rot) || 0) % 180 !== 0;
+        const pomer = otocena ? img.naturalHeight / img.naturalWidth : img.naturalWidth / img.naturalHeight;
+        misto.style.setProperty('--pomer', pomer.toFixed(4));
+    }, true);
+}
 export const fotekNaObrazovce = () => fotekNaSirku;
 
 const srdickaFotky = h => h > 0 ? `♥${h}` : 'bez ♥';

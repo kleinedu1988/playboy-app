@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.70] – 2026-10-28
+
+### Opraveno
+- **Méně volného místa nahoře v Oblíbenosti i Přehledu.** Porovnávání, Galerie, Pořadí, Síň slávy a ostatní části Přehledu měly pod lištou o 20 px víc volna než zbytek programu. Mezeru dělalo prázdné místo pro volbu části, která je v liště. Obsah teď začíná stejně vysoko jako jinde.
+
 ## [0.99.69] – 2026-10-28
 
 ### Změněno

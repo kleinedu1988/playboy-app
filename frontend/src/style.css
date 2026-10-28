@@ -4925,6 +4925,12 @@ main .album-nav:not(.svisla) .chip.active:hover {
     align-items: start;
 }
 
+/* Místo pro volbu části je v obsahu vždy skryté (volba je v liště): nesmí v mřížce zabírat řádek s mezerou 20 px,
+   jinak má obsah nahoře zbytečné volno navíc */
+.prehled-casti-misto {
+    display: contents;
+}
+
 .prehled-cisla {
     display: grid;
     grid-template-columns: 1fr 1fr;

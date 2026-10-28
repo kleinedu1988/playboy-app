@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"sort"
+	"time"
 )
 
 // Výběr dvojic k porovnání „Která se ti líbí víc?“ (aktivní učení, popis níž a v docs/UCENI.md, oddíl Výběr dvojic):
@@ -25,7 +26,7 @@ const (
 	sousedeDvojic      = 10  // kandidátky ke každé modelce: tolik nejbližších podle síly
 	podilPruzkumu      = 0.2 // část dvojic vybraná náhodně (průzkum), ne podle nejistoty
 	pametNabidek       = 60  // kolik naposledy nabídnutých dvojic se nenabízí znovu
-	nedavnaPorovnani   = 200 // dvojice z tolika posledních porovnání se nenabízí
+	nedavnaPorovnani   = 200 // z tolika posledních porovnání se počítá, jak často modelka byla na řadě
 	maxDvojicNaVolani  = 50  // nejvíc dvojic na jedno volání
 	vahaBezFotky       = 0.3 // modelka bez titulní fotky i fotek se do dvojice hodí hůř (není co porovnat)
 	vahaSousedniUrovne = 0.7 // sousední úroveň (rozdíl půl srdíčka) proti stejné
@@ -56,7 +57,11 @@ func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 	semienko := int64(len(porovnani))*7919 + int64(u.ob.nabidek)
 	u.mu.Unlock()
 
-	dvojice = vybratDvojice(modelky, model, porovnani, nabidnute, pocet, okruh, rand.New(rand.NewSource(semienko)))
+	dvojice = vybratDvojiceS(modelky, model, porovnani, nabidnute, pocet, okruh, rand.New(rand.NewSource(semienko)), false)
+	if len(dvojice) == 0 && len(porovnani) > 0 {
+		// Všechno rozhodnuté se nedávno porovnávalo: radši dvojice starší než týden než nic
+		dvojice = vybratDvojiceS(modelky, model, porovnani, nabidnute, pocet, okruh, rand.New(rand.NewSource(semienko)), true)
+	}
 	u.mu.Lock()
 	for _, d := range dvojice {
 		u.ob.nabidnute = append(u.ob.nabidnute, klicDvojice(d.A, d.B))
@@ -199,15 +204,66 @@ func omezitSouboje(model *modelOblibenosti, porovnani []porovnaniZaznam, nabidnu
 	return o
 }
 
+// Paměť rozhodnutých dvojic: dvojice, ve které ses rozhodl (jedna vede), se měsíc nenabízí; remíza nebo vyrovnaný stav
+// (každá jednou vyhrála) se vrátí jako rozstřel nejdřív za týden. Počítá se od posledního porovnání té dvojice.
+const (
+	dnyRozhodnute = 30
+	dnyRozstrelu  = 7
+)
+
+// Dvojice, které se teď nenabízejí (paměť rozhodnutých výše); uvolnit = pro všechny jen týdenní pauza, když by jinak
+// nebylo co porovnávat. Porovnání bez času (testy, simulace) bere jako dnešní.
+func vylouceneDvojice(porovnani []porovnaniZaznam, nyni time.Time, uvolnit bool) map[[2]int]bool {
+	type stavDvojice struct {
+		skore    int // výhry modelky s menším číslem minus výhry té druhé
+		posledni time.Time
+	}
+	stavy := map[[2]int]stavDvojice{}
+	for _, p := range porovnani {
+		k := klicDvojice(p.a, p.b)
+		s := stavy[k]
+		vyhralaPrvni := (p.vysledek == "a" && p.a == k[0]) || (p.vysledek == "b" && p.b == k[0])
+		switch {
+		case p.vysledek == "remiza":
+		case vyhralaPrvni:
+			s.skore++
+		default:
+			s.skore--
+		}
+		cas := p.cas
+		if cas.IsZero() {
+			cas = nyni
+		}
+		if cas.After(s.posledni) {
+			s.posledni = cas
+		}
+		stavy[k] = s
+	}
+	v := make(map[[2]int]bool, len(stavy))
+	for k, s := range stavy {
+		dny := dnyRozstrelu
+		if s.skore != 0 && !uvolnit {
+			dny = dnyRozhodnute
+		}
+		if nyni.Sub(s.posledni) < time.Duration(dny)*24*time.Hour {
+			v[k] = true
+		}
+	}
+	return v
+}
+
 func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porovnaniZaznam, nabidnute [][2]int, pocet int, okruh string, nahoda *rand.Rand) []DvojicePorovnani {
+	return vybratDvojiceS(modelky, model, porovnani, nabidnute, pocet, okruh, nahoda, false)
+}
+
+func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []porovnaniZaznam, nabidnute [][2]int, pocet int, okruh string, nahoda *rand.Rand, uvolnit bool) []DvojicePorovnani {
 	vysledek := []DvojicePorovnani{}
-	vyloucene := map[[2]int]bool{}
+	vyloucene := vylouceneDvojice(porovnani, time.Now(), uvolnit)
 	for _, d := range nabidnute {
 		vyloucene[d] = true
 	}
 	castost := map[int]float64{}
 	for i, p := range porovnani[max(0, len(porovnani)-nedavnaPorovnani):] {
-		vyloucene[klicDvojice(p.a, p.b)] = true
 		// Novější porovnání tlumí víc (posledních asi 20)
 		vaha := math.Pow(0.9, float64(min(len(porovnani), nedavnaPorovnani)-1-i))
 		castost[p.a] += vaha

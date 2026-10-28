@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.61] – 2026-10-28
+
+### Změněno
+- **Porovnávání si pamatuje tvoje rozhodnutí.**
+  - Dvojice, ve které sis jednu vybral, se měsíc od posledního porovnání nenabídne znovu.
+  - Remíza nebo vyrovnaný stav (každá jednou vyhrála) se vrátí jako rozstřel nejdřív za týden.
+  - Dřív se dvojice mohla vrátit už po 200 dalších porovnáních. Kdyby v menší sbírce došly dvojice, nabídnou se ty starší než týden.
+
 ## [0.99.60] – 2026-10-28
 
 ### Opraveno

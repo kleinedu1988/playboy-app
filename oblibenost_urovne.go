@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Úrovně Top 10 / 20 / 50 / 100 (popis v docs/UCENI.md, oddíl Úrovně Top 10/20/50/100): do špičky oblíbenosti se
@@ -703,15 +704,11 @@ func (a *App) GetSoubojeModelky(id int) []DvojicePorovnani {
 	a.uc.mu.Lock()
 	porovnani := a.uc.nacistPorovnani()
 	a.uc.mu.Unlock()
-	nedavne := map[[2]int]bool{}
-	for _, p := range porovnani[max(0, len(porovnani)-nedavnaPorovnani):] {
-		nedavne[klicDvojice(p.a, p.b)] = true
-	}
-	return model.soubojeModelky(modelky, id, nedavne)
+	return model.soubojeModelky(modelky, id, vylouceneDvojice(porovnani, time.Now(), false))
 }
 
-// Série pro modelku; dvojice porovnané nedávno (nedavne) se neopakují – čekající je dostane, jen když jiné soupeřky
-// nejsou, obhajoba a ověření vůbec (výsledek už je)
+// Série pro modelku; dvojice z paměti rozhodnutých (nedavne: rozhodnutá do měsíce, rozstřel do týdne) se neopakují –
+// čekající je dostane, jen když jiné soupeřky nejsou, obhajoba a ověření vůbec (výsledek už je)
 func (m *modelOblibenosti) soubojeModelky(modelky []Modelka, id int, nedavne map[[2]int]bool) []DvojicePorovnani {
 	v := m.soubojeModelkyBez(modelky, id, nedavne)
 	if _, ceka := m.ceka[id]; len(v) == 0 && ceka && m.vyzyva[id] == 0 {

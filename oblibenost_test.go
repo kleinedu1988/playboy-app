@@ -856,3 +856,28 @@ func TestNesouladSFotkami(t *testing.T) {
 		t.Fatalf("porovnání i fotky: %+v", n)
 	}
 }
+
+// Paměť rozhodnutých dvojic: rozhodnutá se měsíc nenabízí, remíza nebo vyrovnaný stav se vrátí za týden jako rozstřel;
+// uvolněně (když není co porovnávat) jen týden pro všechny
+func TestVylouceneDvojice(t *testing.T) {
+	nyni := time.Date(2026, 10, 28, 12, 0, 0, 0, time.Local)
+	pred := func(dni int) time.Time { return nyni.AddDate(0, 0, -dni) }
+	porovnani := []porovnaniZaznam{
+		{a: 1, b: 2, vysledek: "a", cas: pred(10)},      // rozhodnutá před 10 dny: pořád vyloučená
+		{a: 3, b: 4, vysledek: "b", cas: pred(40)},      // rozhodnutá před 40 dny: zase se nabízí
+		{a: 5, b: 6, vysledek: "remiza", cas: pred(3)},  // remíza před 3 dny: vyloučená
+		{a: 7, b: 8, vysledek: "remiza", cas: pred(10)}, // remíza před 10 dny: rozstřel
+		{a: 9, b: 10, vysledek: "a", cas: pred(20)},     // 1 : 1 → vyrovnaná, posledně před 10 dny: rozstřel
+		{a: 10, b: 9, vysledek: "a", cas: pred(10)},
+		{a: 11, b: 12, vysledek: "a"}, // bez času = dnes
+	}
+	v := vylouceneDvojice(porovnani, nyni, false)
+	for k, chci := range map[[2]int]bool{{1, 2}: true, {3, 4}: false, {5, 6}: true, {7, 8}: false, {9, 10}: false, {11, 12}: true} {
+		if v[k] != chci {
+			t.Errorf("dvojice %v vyloučená %v, chci %v", k, v[k], chci)
+		}
+	}
+	if u := vylouceneDvojice(porovnani, nyni, true); u[[2]int{1, 2}] || !u[[2]int{5, 6}] || !u[[2]int{11, 12}] {
+		t.Errorf("uvolněně: %v", u)
+	}
+}

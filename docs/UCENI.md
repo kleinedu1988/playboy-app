@@ -464,8 +464,10 @@ prohry) nad jednou úrovní návrh nedají – ví se jen „výš“, ne o koli
 a 4,1) …“).
 
 
-**Proti opakování.** Stejná dvojice se nenabídne, dokud je mezi posledními 200 porovnáními nebo 60 nabídnutými (i po
-přeskočení). Souboje a ověření srdíček navíc hlídají, aby se tatáž modelka neobjevovala pořád dokola: modelka
+**Proti opakování.** Program si pamatuje, jak ses v každé dvojici rozhodl (`vylouceneDvojice`): rozhodnutá dvojice
+(jedna vede) se měsíc od posledního porovnání nenabízí, remíza nebo vyrovnaný stav (každá jednou vyhrála) se vrátí
+jako rozstřel nejdřív za týden. Kdyby tím nebylo co porovnávat, platí pro všechny jen týdenní pauza. Přeskočená
+dvojice se nenabízí, dokud je mezi 60 naposledy nabídnutými. Souboje a ověření srdíček navíc hlídají, aby se tatáž modelka neobjevovala pořád dokola: modelka
 z posledních 12 porovnání nebo z 8 naposledy nabídnutých (ještě neporovnaných) dvojic je chvíli nedostane, ani jako
 soupeřka (kromě souboje o obhajobu, ten rozhoduje). Modelka s nesouladem se ověřuje jen do 10 porovnání se stranou
 nesouladu (podhodnocená s víc srdíčky, nadhodnocená s méně) – pak už důkazy má a rozhodnutí je na uživateli. Série

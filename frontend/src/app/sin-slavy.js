@@ -5,7 +5,7 @@
 // (data-ob-porovnavat).
 import { GetSinSlavy } from './backend';
 import { esc } from '../lib/format';
-import { ODZNAKY, PORADI_ODZNAKU, datumKroniky, kronikaPoMesicich, popisOdznaku, textDni, textRekordu, textUdalosti } from '../lib/slava';
+import { ODZNAKY, PORADI_ODZNAKU, datumKroniky, htmlBublinyOdznaku, kronikaPoMesicich, popisOdznaku, textDni, textRekordu, textUdalosti } from '../lib/slava';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -42,12 +42,20 @@ function odznakyModelek() {
 }
 
 // Medailon odznaku: ikona v kroužku, barva kroužku podle stupně (jednorázový fialový)
+// Odznaky pro bublinu: klíč (modelka:odznak, nebo jen odznak u dlaždice) → odznak
+const odznakyBublin = new Map();
+const klicBubliny = o => {
+    const klic = `${o.modelkaId || 0}:${o.odznak}`;
+    odznakyBublin.set(klic, o);
+    return klic;
+};
+
 export function htmlMedailonu(o, velky = false) {
     const p = popisOdznaku(o, jmeno);
     if (!p) return '';
     // Nezískaný (jen postup k bronzu): přerušovaný kroužek
     const stupen = !o.ziskan ? 'cil' : ['jednorazovy', 'bronz', 'stribro', 'zlato'][o.stupen] || 'jednorazovy';
-    return `<span class="odznak ${stupen}${velky ? ' velky' : ''}" title="${esc(p.text)}" aria-label="${esc(p.text)}">${p.ikona}</span>`;
+    return `<span class="odznak ${stupen}${velky ? ' velky' : ''}" data-odznak-bublina="${esc(klicBubliny(o))}" title="" aria-label="${esc(p.text)}">${p.ikona}</span>`;
 }
 
 // Řada medailonů (karta, profil); nejvýš max, zbytek „+2“
@@ -102,10 +110,10 @@ function htmlOddiluOdznaku() {
     const vse = data.odznaky || [];
     const ziskane = vse.filter(o => o.ziskan);
     const naCeste = vse.filter(o => o.dalsi > 0).sort((a, b) => (popisOdznaku(b)?.postup ?? 0) - (popisOdznaku(a)?.postup ?? 0));
-    const kdo = o => `<button type="button" class="link odznak-jmeno" data-otevrit-modelku="${o.modelkaId}" title="${esc(popisOdznaku(o, jmeno)?.text || '')}">${esc(jmeno(o.modelkaId))}</button>`;
+    const kdo = o => `<button type="button" class="link odznak-jmeno" data-otevrit-modelku="${o.modelkaId}" data-odznak-bublina="${esc(klicBubliny(o))}" title="">${esc(jmeno(o.modelkaId))}</button>`;
     const pruh = o => {
         const p = popisOdznaku(o, jmeno);
-        return `<li class="odznak-cesta"><span class="odznak-cesta-ikona">${htmlMedailonu(o)}</span>${kdo(o)}<span class="odznak-pruh" title="${esc(p.text)}"><i style="width:${Math.round((p.postup || 0) * 100)}%"></i></span><small>${esc(p.zbyva)}</small></li>`;
+        return `<li class="odznak-cesta"><span class="odznak-cesta-ikona">${htmlMedailonu(o)}</span>${kdo(o)}<span class="odznak-pruh" data-odznak-bublina="${esc(klicBubliny(o))}"><i style="width:${Math.round((p.postup || 0) * 100)}%"></i></span><small>${esc(p.zbyva)}</small></li>`;
     };
     const nadpis = `<h4 class="slava-nadpis">Odznaky <small>${ziskane.length ? `${ziskane.length} získaných` : 'zatím žádný'} · bronz, stříbro, zlato a jednorázové</small></h4>`;
     const cesta = naCeste.length ? `<div class="odznaky-cesta"><h5>Na dosah</h5><ol>${naCeste.slice(0, 8).map(pruh).join('')}</ol></div>` : '';
@@ -113,7 +121,7 @@ function htmlOddiluOdznaku() {
     const dlazdice = klic => {
         const d = ODZNAKY[klic];
         const maji = ziskane.filter(o => o.odznak === klic).sort((a, b) => b.stupen - a.stupen);
-        return `<div class="odznak-dlazdice ${maji.length ? '' : 'prazdna'}"><span class="odznak velky ${d.prahy ? (maji[0] ? ['', 'bronz', 'stribro', 'zlato'][maji[0].stupen] : 'zadny') : maji.length ? 'jednorazovy' : 'zadny'}">${d.ikona}</span>
+        return `<div class="odznak-dlazdice ${maji.length ? '' : 'prazdna'}"><span data-odznak-bublina="${esc(klicBubliny({ modelkaId: 0, odznak: klic }))}" class="odznak velky ${d.prahy ? (maji[0] ? ['', 'bronz', 'stribro', 'zlato'][maji[0].stupen] : 'zadny') : maji.length ? 'jednorazovy' : 'zadny'}">${d.ikona}</span>
             <b>${esc(d.nazev)}</b><small>${esc(d.prahy ? `${d.popis}: ${d.prahy.join(' / ')}` : d.popis)}</small>
             <span class="odznak-drzitelky">${maji.length ? maji.map(o => `<span class="odznak-drzitelka ${['jednorazovy', 'bronz', 'stribro', 'zlato'][o.stupen]}">${kdo(o)}</span>`).join('') : '<small class="odznak-nikdo">zatím nikdo</small>'}</span></div>`;
     };
@@ -178,7 +186,40 @@ function vykreslit() {
     nacitatPostupne(kontejner);
 }
 
+// Bublina odznaku: jedna pro celou stránku, ukáže se nad odznakem pod myší (i v profilu) nebo při zaměření
+let bublina = null;
+function ukazatBublinu(prvek) {
+    const o = odznakyBublin.get(prvek.dataset.odznakBublina || '');
+    if (!o) return;
+    if (!bublina) {
+        bublina = document.createElement('div');
+        bublina.className = 'odznak-bublina';
+        bublina.setAttribute('role', 'tooltip');
+        document.body.append(bublina);
+    }
+    bublina.innerHTML = htmlBublinyOdznaku(o, jmeno);
+    bublina.classList.add('viditelna');
+    // Nad odznakem, když se nevejde, pod ním; vodorovně uvnitř okna
+    const r = prvek.getBoundingClientRect();
+    const b = bublina.getBoundingClientRect();
+    const nahore = r.top - b.height - 10 >= 8;
+    bublina.style.top = `${nahore ? r.top - b.height - 10 : r.bottom + 10}px`;
+    bublina.style.left = `${Math.max(8, Math.min(window.innerWidth - b.width - 8, r.left + r.width / 2 - b.width / 2))}px`;
+}
+const skrytBublinu = () => bublina?.classList.remove('viditelna');
+
 export function pripravitSinSlavy() {
+    document.addEventListener('mouseover', (e) => {
+        const prvek = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-odznak-bublina]'));
+        if (prvek) ukazatBublinu(prvek);
+        else skrytBublinu();
+    });
+    document.addEventListener('focusin', (e) => {
+        const prvek = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-odznak-bublina]'));
+        if (prvek) ukazatBublinu(prvek);
+        else skrytBublinu();
+    });
+    document.addEventListener('scroll', skrytBublinu, true);
     // Klávesnice: Enter na kartě otevře profil jako klik
     document.addEventListener('keydown', (e) => {
         const karta = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target)?.closest?.('.slava-karta'));

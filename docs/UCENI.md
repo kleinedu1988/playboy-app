@@ -683,7 +683,7 @@ týden od sebe. Testy: `TestOdznaky`.
 
 **V rozhraní:** na kartě v síni slávy řada medailonů na střed pod délkou pobytu (kroužek s ikonou, barva podle stupně:
 bronz, stříbro, zlato, jednorázové fialově; nejvýš 5, zbytek „+2“), v profilu pod pořadím (klik otevře Síň slávy),
-oddíl Odznaky s dlaždicí na každý odznak (kdo ho má, zlato napřed) a „Na dosah“ (8 nejbližších dalších stupňů
+vlastní bublina po najetí myší nebo zaměření (`htmlBublinyOdznaku` v `lib/slava.js`: stupeň, hodnota modelky, žebříček stupňů s prahy, postup, soupeřka, datum zisku; u dlaždice jen popis a prahy), oddíl Odznaky s dlaždicí na každý odznak (kdo ho má, zlato napřed) a „Na dosah“ (8 nejbližších dalších stupňů
 s ukazatelem a „ještě 8 dní do stříbra“). Texty v `lib/slava.js` (`ODZNAKY`, `popisOdznaku`).
 
 ## Model vkusu

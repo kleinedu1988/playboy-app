@@ -1,7 +1,7 @@
 // Texty síně slávy (Oblíbenost › Síň slávy): události kroniky, rekordy, počty dní a měsíce kroniky. Data posílá
 // backend (GetSinSlavy, oblibenost_slava.go); jména modelek se nesklonují (cizí jména), věty jsou proto stavěné
 // s jménem v prvním pádě.
-import { sklonovat } from './format.js';
+import { esc, sklonovat } from './format.js';
 
 const MESICE = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
 
@@ -119,4 +119,35 @@ export function popisOdznaku(o, jmeno = () => '') {
         zbyva,
     ].filter(Boolean).join(' · ');
     return { ikona: d.ikona, nazev: d.nazev, stupen, text, postup, zbyva };
+}
+
+const TRIDY_STUPNU = ['jednorazovy', 'bronz', 'stribro', 'zlato'];
+
+/**
+ * Bublina odznaku (najetí myší): ikona, název a stupeň, co odznak měří a kolik modelka má, žebříček stupňů s prahy
+ * (dosažené zaškrtnuté), postup k dalšímu stupni, soupeřka a kdy ho získala. Bez modelky (o.modelkaId 0) jen popis
+ * odznaku a stupňů.
+ * @param {any} o
+ * @param {(id: number) => string} [jmeno]
+ */
+export function htmlBublinyOdznaku(o, jmeno = () => '') {
+    const d = ODZNAKY[o?.odznak];
+    if (!d) return '';
+    const p = popisOdznaku(o, jmeno);
+    const kdo = o.modelkaId ? jmeno(o.modelkaId) : '';
+    const trida = !o.modelkaId ? (d.prahy ? 'zlato' : 'jednorazovy') : !o.ziskan ? 'cil' : TRIDY_STUPNU[o.stupen] || 'jednorazovy';
+    const stupen = p.stupen ? STUPNE.indexOf(p.stupen) : 0;
+    const radky = [];
+    if (d.prahy) {
+        if (o.modelkaId) radky.push(`<p class="ob-hodnota">${esc(kdo)}: <b>${esc(d.jednotka(Number(o.hodnota) || 0))}</b></p>`);
+        radky.push(`<ol class="ob-stupne">${d.prahy.map((prah, i) => `<li class="${TRIDY_STUPNU[i + 1]}${o.modelkaId && stupen > i ? ' dosazeno' : ''}"><span>${o.modelkaId && stupen > i ? '✓' : '○'} ${esc(STUPNE[i + 1])}</span><span>${esc(d.jednotka(prah))}</span></li>`).join('')}</ol>`);
+        if (o.modelkaId && p.postup !== null) radky.push(`<div class="ob-postup"><span class="odznak-pruh"><i style="width:${Math.round(p.postup * 100)}%"></i></span><small>${esc(p.zbyva)}</small></div>`);
+        else if (o.modelkaId && stupen === 3) radky.push('<p class="ob-maximum">Nejvyšší stupeň – zlato</p>');
+    } else if (kdo) {
+        const souperka = o.souperka && d.souperka ? jmeno(o.souperka) : '';
+        radky.push(`<p class="ob-hodnota">${esc(kdo)}${souperka ? ` · ${esc(d.souperka(souperka))}` : ''}</p>`);
+    }
+    const kdy = o.ziskan && o.cas ? datumKroniky(o.cas) : '';
+    return `<div class="ob-hlava"><span class="odznak velky ${trida}">${d.ikona}</span><span><b>${esc(d.nazev)}</b><small class="${trida}">${esc(p.stupen || (d.prahy ? (o.modelkaId ? 'zatím nezískaný' : 'bronz · stříbro · zlato') : 'jednorázový'))}</small></span></div>
+        <p class="ob-popis">${esc(d.popis)}</p>${radky.join('')}${kdy ? `<p class="ob-kdy">Získala ${esc(kdy)}</p>` : ''}`;
 }

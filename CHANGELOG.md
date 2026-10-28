@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.68] – 2026-10-28
+
+### Změněno
+- **Lepší bublina u odznaků.** Po najetí myší na odznak (na kartě v síni slávy, v profilu, v oddílu Odznaky i v „Na dosah“) se ukáže vlastní bublina.
+  - Obsahuje ikonu, název a stupeň a popis, co odznak měří a kolik má modelka.
+  - Ukazuje všechny stupně s prahy (dosažené zaškrtnuté), ukazatel postupu („ještě 8 dní do stříbra“), soupeřku a datum zisku.
+  - Funguje i na kartách v síni slávy, kde dřív přes odznaky vyskakovala jen bublina celé karty.
+
 ## [0.99.67] – 2026-10-28
 
 ### Změněno

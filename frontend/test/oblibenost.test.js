@@ -228,3 +228,23 @@ test('odznaky: popis, postup a kronika', async () => {
     assert.deepEqual(textRekordu({ druh: 'serie', hodnota: 12, trva: true }), { nazev: 'Nejdelší série', hodnota: '12 výher', popis: 'za sebou, a pořád vyhrává' });
     assert.equal(textRekordu({ druh: 'skok', hodnota: 3 }).hodnota, 'o 3 místa');
 });
+
+test('bublina odznaku', async () => {
+    const { htmlBublinyOdznaku } = await import('../src/lib/slava.js');
+    const jmeno = id => ({ 1: 'Anna', 2: 'Bára' })[id] || '';
+    const stalice = htmlBublinyOdznaku({ modelkaId: 1, odznak: 'stalice', stupen: 1, ziskan: true, hodnota: 92, dalsi: 100, cas: '2026-10-20 12:00:00' }, jmeno);
+    assert.match(stalice, /Stálice/);
+    assert.match(stalice, /Anna: <b>92 dní v Top 10<\/b>/);
+    assert.match(stalice, /class="bronz dosazeno"><span>✓ bronz/);
+    assert.match(stalice, /class="stribro"><span>○ stříbro<\/span><span>100 dní v Top 10/);
+    assert.match(stalice, /ještě 8 dní do stříbra/);
+    assert.match(stalice, /Získala 20\. 10\. 2026/);
+    const zlato = htmlBublinyOdznaku({ modelkaId: 1, odznak: 'zasluzena', stupen: 3, ziskan: true, hodnota: 120, dalsi: 0 }, jmeno);
+    assert.match(zlato, /Nejvyšší stupeň/);
+    assert.doesNotMatch(zlato, /Získala/);
+    assert.match(htmlBublinyOdznaku({ modelkaId: 1, odznak: 'david', ziskan: true, souperka: 2 }, jmeno), /Anna · porazila jedničku Bára/);
+    const definice = htmlBublinyOdznaku({ modelkaId: 0, odznak: 'serie' });
+    assert.match(definice, /bronz · stříbro · zlato/);
+    assert.doesNotMatch(definice, /dosazeno|ještě/);
+    assert.equal(htmlBublinyOdznaku({ odznak: 'neznamy' }), '');
+});

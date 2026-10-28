@@ -11883,6 +11883,98 @@ span.ud-chip {
     bottom: 104px;
 }
 
+/* Odznaky na kartě reagují na myš (bublina), i když zbytek popisku ne */
+.card-info .odznaky-rada {
+    pointer-events: auto;
+}
+
+/* Bublina odznaku (app/sin-slavy.js): nad odznakem pod myší, i v profilu */
+.odznak-bublina {
+    position: fixed;
+    z-index: 3000;
+    width: 260px;
+    padding: 12px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 12px;
+    background-color: var(--bg-modal);
+    box-shadow: var(--panel-stin);
+    color: var(--text-main);
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(4px);
+    transition: opacity 0.12s, transform 0.12s;
+}
+
+.odznak-bublina.viditelna {
+    opacity: 1;
+    transform: none;
+}
+
+.odznak-bublina p {
+    margin: 6px 0 0;
+}
+
+.ob-hlava {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ob-hlava b {
+    display: block;
+    font-size: 14px;
+}
+
+.ob-hlava small {
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.ob-hlava small.bronz { color: #c9834b; }
+.ob-hlava small.stribro { color: #c8ccd6; }
+.ob-hlava small.zlato { color: #f2c14e; }
+.ob-hlava small.jednorazovy { color: #b388ff; }
+
+.odznak-bublina .ob-popis,
+.odznak-bublina .ob-kdy {
+    color: var(--text-muted);
+}
+
+.ob-stupne {
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ob-stupne li {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    color: var(--text-muted);
+}
+
+.ob-stupne li.dosazeno.bronz { color: #c9834b; }
+.ob-stupne li.dosazeno.stribro { color: #c8ccd6; }
+.ob-stupne li.dosazeno.zlato { color: #f2c14e; }
+
+.ob-stupne li.dosazeno {
+    font-weight: 600;
+}
+
+.ob-postup {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.ob-postup small,
+.ob-maximum {
+    color: var(--text-muted);
+}
+
 .odznaky-rada {
     display: flex;
     flex-wrap: wrap;

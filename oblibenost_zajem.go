@@ -14,7 +14,9 @@ import (
 //     0,5^(dny/60), takže oblíbenost sleduje, o koho se zajímáš teď, ne před rokem.
 //   - Zájem posouvá předpoklad síly modelky v Bradley–Terry o v·z: z ∈ [0, 2] je zájem modelky proti mediánu
 //     sbírky (logaritmicky, aby desítky otevření nepřeválcovaly všechno), v se program učí z porovnání modelek se
-//     stejnými srdíčky (výchozí 0,1, nejvýš 0,3 srdíčka na jednotku z). Oblíbenost hodnocené modelky dál zůstává
+//     stejnými srdíčky (výchozí 0,1, nejvýš 0,3 srdíčka na jednotku z), a to jen ze zájmu z doby před každým
+//     porovnáním – zájem až po porovnání by výsledek „předpověděl“ zpětně. Prohlížení fotek otevřené
+//     z Porovnávání a Rychlého hodnocení se jako zájem nezapisuje (fotky ti tam ukázal program, ne zájem). Oblíbenost hodnocené modelky dál zůstává
 //     do ±0,49 od jejích srdíček: zájem přeskupí pořadí uvnitř úrovně, srdíčka nepřebije.
 //   - Historie: snímek oblíbenosti a pořadí jednou denně (dnešní se přepíše nejvýš jednou za hodinu). Po 60 dnech
 //     zůstane jeden snímek na týden (pondělí), po 400 dnech nic. Trend = posun proti snímku z doby před 30 dny,
@@ -61,6 +63,10 @@ type zajemModelky struct {
 type stavZajmu struct {
 	modelky map[int]zajemModelky
 	od      time.Time // nejstarší záznam: od kdy se zájem sleduje
+	// Záznamy každé modelky podle času s průběžným součtem h·2^(dny od „od“/60): skóre zájmu k libovolnému
+	// okamžiku (učení váhy bere jen zájem z doby před porovnáním)
+	casy   map[int][]time.Time
+	soucty map[int][]float64
 }
 
 // Snímek oblíbenosti modelky ze dne
@@ -232,6 +238,11 @@ func (u *uceni) nacistZajem(nyni time.Time) stavZajmu {
 		return st
 	}
 	defer radky.Close()
+	type zaznam struct {
+		t time.Time
+		h float64
+	}
+	zaznamy := map[int][]zaznam{}
 	for radky.Next() {
 		var cas, druh string
 		var id, sekund int
@@ -247,6 +258,7 @@ func (u *uceni) nacistZajem(nyni time.Time) stavZajmu {
 		if druh == "fotky" {
 			hodnota = float64(sekund) / sekundNaProfil
 		}
+		zaznamy[id] = append(zaznamy[id], zaznam{t, hodnota})
 		z := st.modelky[id]
 		z.skore += math.Pow(0.5, dny/polocasZajmu) * hodnota
 		if dny <= dnyNedavnehoZajmu {
@@ -264,11 +276,33 @@ func (u *uceni) nacistZajem(nyni time.Time) stavZajmu {
 			st.od = t
 		}
 	}
+	st.casy, st.soucty = make(map[int][]time.Time, len(zaznamy)), make(map[int][]float64, len(zaznamy))
+	for id, zz := range zaznamy {
+		sort.Slice(zz, func(i, j int) bool { return zz[i].t.Before(zz[j].t) })
+		casy, soucty := make([]time.Time, len(zz)), make([]float64, len(zz))
+		soucet := 0.0
+		for i, z := range zz {
+			soucet += z.h * math.Pow(2, z.t.Sub(st.od).Hours()/24/polocasZajmu)
+			casy[i], soucty[i] = z.t, soucet
+		}
+		st.casy[id], st.soucty[id] = casy, soucty
+	}
 	return st
 }
 
-// Míra zájmu z ∈ (0, 2]: log(1 + skóre) proti mediánu modelek se zájmem (aspoň jednomu otevření profilu)
-func miraZajmu(zajem map[int]zajemModelky) map[int]float64 {
+// Skóre zájmu modelky k okamžiku cas jen ze záznamů před ním (stejné váhy podle stáří jako skore)
+func (st stavZajmu) skoreK(id int, cas time.Time) float64 {
+	casy := st.casy[id]
+	k := sort.Search(len(casy), func(i int) bool { return !casy[i].Before(cas) })
+	if k == 0 {
+		return 0
+	}
+	return st.soucty[id][k-1] * math.Pow(0.5, cas.Sub(st.od).Hours()/24/polocasZajmu)
+}
+
+// Míra zájmu z ∈ (0, 2]: log(1 + skóre) proti mediánu modelek se zájmem (aspoň jednomu otevření profilu); ref je
+// ten medián (0 = žádný zájem)
+func miraZajmu(zajem map[int]zajemModelky) (mira map[int]float64, ref float64) {
 	hodnoty := make([]float64, 0, len(zajem))
 	for _, z := range zajem {
 		if z.skore > 1e-6 {
@@ -276,18 +310,20 @@ func miraZajmu(zajem map[int]zajemModelky) map[int]float64 {
 		}
 	}
 	if len(hodnoty) == 0 {
-		return nil
+		return nil, 0
 	}
 	sort.Float64s(hodnoty)
-	ref := max(hodnoty[len(hodnoty)/2], math.Log1p(1))
-	mira := make(map[int]float64, len(hodnoty))
+	ref = max(hodnoty[len(hodnoty)/2], math.Log1p(1))
+	mira = make(map[int]float64, len(hodnoty))
 	for id, z := range zajem {
 		if z.skore > 1e-6 {
-			mira[id] = min(math.Log1p(z.skore)/ref, maxZajmu)
+			mira[id] = mirkaZajmu(z.skore, ref)
 		}
 	}
-	return mira
+	return mira, ref
 }
+
+func mirkaZajmu(skore, ref float64) float64 { return min(math.Log1p(skore)/ref, maxZajmu) }
 
 // Váha zájmu z porovnání modelek se stejnými srdíčky: mřížka 0–0,3 po 0,025 podle vážené log-ztráty, výsledek
 // stažený k výchozí 0,1 (silaPredpokladuZajmu porovnání). Z méně než 10 porovnání se neučí.

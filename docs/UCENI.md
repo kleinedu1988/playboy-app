@@ -352,7 +352,8 @@ Nehodnocená neporovnaná s odhadem vkusu má oblíbenost rovnou odhadu a v Poř
 Oblíbenost se nemá měnit jen tehdy, když porovnáváš. Program si proto všímá **zájmu** (`oblibenost_zajem.go`):
 otevření profilu modelky (stejná modelka nejvýš jednou za 10 minut, i listování mezi profily) a času prohlížení
 jejích fotek v prohlížeči (čas u jedné fotky nejvýš minuta, skryté okno se nepočítá; zapíše se při zavření
-prohlížeče). Záznamy jdou jen do databáze učení (tabulka `zajem`).
+prohlížeče). Prohlížeč otevřený z Porovnávání nebo Rychlého hodnocení se nepočítá: fotky tam ukázal program, ne tvůj
+zájem, a modelky, které program páruje často, by jinak sbíraly zájem jen proto (`prohlizetBezZajmu` v `zajem.js`). Záznamy jdou jen do databáze učení (tabulka `zajem`).
 
 - **Skóre zájmu** modelky Z = Σ 0,5^(dny/60) · h, kde h = 1 za otevření profilu a sekundy/120 za prohlížení fotek
   (dvě minuty fotek = jedno otevření). Poločas 60 dní: oblíbenost sleduje, o koho se zajímáš teď.
@@ -360,7 +361,10 @@ prohlížeče). Záznamy jdou jen do databáze učení (tabulka `zajem`).
   Logaritmus a strop drží desítky otevření jedné modelky na uzdě.
 - **Posun předpokladu** síly v Bradley–Terry o v·z (u modelek s předpokladem: hodnocené, s odhadem vkusu
   a porovnávané). Váhu v se program učí z porovnání modelek se stejnými srdíčky, kde se zájem
-  stran liší, mřížka 0–0,3 po 0,025 podle vážené log-ztráty (předpoklad stran ze srdíček), výsledek stažený k výchozí 0,1 jako by ji potvrdilo 20 porovnání. Pod 10 takových porovnání platí
+  stran liší – u každého porovnání jen se zájmem z doby **před ním** (stejné váhy podle stáří k okamžiku porovnání,
+  míra proti dnešnímu mediánu; `stavZajmu.skoreK`). Dnešní zájem by výsledek „předpověděl“ zpětně: otevřeš fotky
+  modelky, vybereš ji, a zájem by vypadal užitečněji, než je (`TestVahaZajmuJenZajemPredPorovnanim`). Porovnání
+  bez zájmu před ním se do učení nepočítají, mřížka 0–0,3 po 0,025 podle vážené log-ztráty (předpoklad stran ze srdíček), výsledek stažený k výchozí 0,1 jako by ji potvrdilo 20 porovnání. Pod 10 takových porovnání platí
   0,1 (`zajemNaucen: false`). Oblíbenost hodnocené modelky dál zůstává do ±0,49 od jejích srdíček: zájem přeskupí
   pořadí uvnitř úrovně, srdíčka nepřebije. Hrozí smyčka „řadím podle oblíbenosti → otevírám ty nahoře → víc
   zájmu“; proto je posun malý (výchozí nejvýš 0,2 srdíčka) a váhu určují porovnání, ne samotný zájem.

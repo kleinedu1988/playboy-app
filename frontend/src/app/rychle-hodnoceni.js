@@ -8,6 +8,7 @@
 // Nejistý odhad se ukáže až po chvíli, aby nejdřív rozhodly fotky (ochrana před ukotvením na čísle).
 // Po každých pěti hodnoceních se odhady zbytku fronty obnoví – model vkusu se z nových srdíček učí.
 // Srdíčka obsluhuje galerie.js (data-hodnoceni) a ohlásí je událostí hodnoceni-modelky; profil otevírá prehled.js.
+import { prohlizetBezZajmu } from './zajem';
 import { GetFotografieModelky, GetFrontaHodnoceni, GetNahledyModelek, SetHodnoceni, SetHodnoceniOdhadem } from './backend';
 import { esc, sklonovat } from '../lib/format';
 import { pridatPreskocenou, srdickaKlavesy, upravitFrontu } from '../lib/hodnoceni';
@@ -271,6 +272,7 @@ async function otevritFotku(i) {
     const polozky = seraditAlbaProfilu(sestavitAlba(fotky)).flatMap(a => a.polozky);
     const kde = polozky.findIndex(x => x.fotky.some(q => q.id === f.id));
     if (kde < 0) return oznamit('Fotku se nepodařilo otevřít.');
+    prohlizetBezZajmu();
     otevritLightbox(kde, false, polozky);
 }
 

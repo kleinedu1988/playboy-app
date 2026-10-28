@@ -536,7 +536,9 @@ type vstupOblibenosti struct {
 // Celý výpočet
 func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zajem stavZajmu, vstup vstupOblibenosti, nyni time.Time) *modelOblibenosti {
 	model := &modelOblibenosti{drzitelky: vstup.drzitelky, prevzate: vstup.prevzate, oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, jenOdhad: map[int]bool{}, zdrojOdhadu: map[int]int{}, porovnani: len(porovnani),
-		zajem: miraZajmu(zajem.modelky), zajemData: zajem.modelky, zajemOd: zajem.od, vahaZajmu: vysledekZajmu{vaha: vychoziVahaZajmu}}
+		zajemData: zajem.modelky, zajemOd: zajem.od, vahaZajmu: vysledekZajmu{vaha: vychoziVahaZajmu}}
+	var refZajmu float64
+	model.zajem, refZajmu = miraZajmu(zajem.modelky)
 	existuje := make(map[int]bool, len(modelky))
 	soucet, hodnocenych := 0.0, 0
 	for _, m := range modelky {
@@ -553,8 +555,21 @@ func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zaj
 	// Skóre fotek: údaj pro model vkusu a pro rozhraní (síla modelky se z něj nepočítá, váha fotek je 0)
 	model.skore, model.fotky = spocitatSkoreFotek(modelky)
 
-	// Váha zájmu z porovnání modelek se stejnými srdíčky (předpoklad stran ze srdíček)
+	// Váha zájmu z porovnání modelek se stejnými srdíčky (předpoklad stran ze srdíček), u každého porovnání jen se
+	// zájmem z doby před ním (zájem po porovnání by výsledek „předpověděl“ zpětně)
 	if len(model.zajem) > 0 {
+		mira := func(id int, cas time.Time) float64 {
+			if zajem.casy == nil {
+				return model.zajem[id] // bez záznamů s časem (testy se stavem sestaveným ručně)
+			}
+			if cas.IsZero() {
+				cas = nyni
+			}
+			if sk := zajem.skoreK(id, cas); sk > 1e-6 {
+				return mirkaZajmu(sk, refZajmu)
+			}
+			return 0
+		}
 		dataZajmu := make([]porovnaniZajmu, 0, len(porovnani))
 		for _, p := range porovnani {
 			if !existuje[p.a] || !existuje[p.b] || p.a == p.b || p.ha <= 0 || p.ha != p.hb {
@@ -571,8 +586,8 @@ func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zaj
 				t = vahaStari(p.cas, nyni)
 			}
 			dataZajmu = append(dataZajmu, porovnaniZajmu{
-				pi: p.ha, zi: model.zajem[p.a],
-				pj: p.hb, zj: model.zajem[p.b], y: y, t: t})
+				pi: p.ha, zi: mira(p.a, p.cas),
+				pj: p.hb, zj: mira(p.b, p.cas), y: y, t: t})
 		}
 		model.vahaZajmu = naucitVahuZajmu(dataZajmu)
 	}

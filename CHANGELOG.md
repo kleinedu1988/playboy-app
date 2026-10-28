@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.64] – 2026-10-28
+
+### Opraveno
+- **Zájem o modelky se počítá poctivěji.**
+  - Prohlížení fotek otevřené z Porovnávání nebo Rychlého hodnocení se už nepočítá jako zájem. Ty fotky ti ukázal program, takže modelky, které často páruje, už nesbírají zájem jen proto.
+  - Kolik zájem v pořadí váží, se program učí z porovnání. Teď u každého porovnání bere jen zájem z doby před ním. Dřív bral i pozdější prohlížení, takže zájem vypadal užitečnější, než je, a mohl dostat vyšší váhu.
+  - Pořadí uvnitř srdíček se tím může mírně posunout.
+
 ## [0.99.63] – 2026-10-28
 
 ### Změněno

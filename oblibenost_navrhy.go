@@ -7,7 +7,7 @@ import (
 
 // Návrhy srdíček (popis v docs/UCENI.md, oddíly Výběr dvojic a Nesoulad se srdíčky) – jediné místo, které srdíčka
 // navrhuje: nehodnocené modelce úroveň, na kterou po pár porovnáních vychází její síla, hodnocené nesoulad se
-// srdíčky z porovnání s jinými úrovněmi a ze srdíček fotek. Rozhraní je ukazuje pod pásy po porovnání
+// srdíčky z porovnání s jinými úrovněmi. Rozhraní je ukazuje pod pásy po porovnání
 // (GetNavrhSrdicek) a v Pořadí v „Nesedí se srdíčky“ (GetOblibenost().nesedi).
 
 // Návrh srdíček nehodnocené modelce z porovnání (GetNavrhSrdicek): až po tolika porovnáních a jen s tak malou
@@ -41,8 +41,8 @@ type NesouladSrdicek struct {
 }
 
 // Návrh srdíček modelce – jediné místo, odkud rozhraní srdíčka navrhuje (po porovnání i v „Nesedí se srdíčky“):
-// nehodnocené úroveň, na kterou vychází její síla; hodnocené nesoulad se srdíčky (porovnání s jinými úrovněmi nebo
-// srdíčka fotek)
+// nehodnocené úroveň, na kterou vychází její síla; hodnocené nesoulad se srdíčky (porovnání s jinými
+// úrovněmi)
 type NavrhSrdicek struct {
 	Hodnoceni float64 `json:"hodnoceni"` // navržená srdíčka po polovinách; 0 = nic nenavrhovat
 	// Nehodnocená: z kolika porovnání, výhry (remíza = půl) a nejistota síly

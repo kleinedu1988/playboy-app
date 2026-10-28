@@ -13,6 +13,7 @@
 //     štítkem „⏳ čeká na Top 10 (5/8 porovnání)“.
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
+import { prohlizetBezZajmu } from './zajem';
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, GetSoubojeModelky, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, klicNavrhu, kratceSrdicka, pruhySily, skryteNavrhy, skrytNavrh, textModeluVkusu, textSrdicek, vetaNesouladu, zKolika, znakySrdicek } from '../lib/srdicka';
@@ -386,6 +387,7 @@ async function otevritFotku(strana, fotka) {
     const kde = polozky.findIndex(p => p.fotky.some(f => f.id === fotka.id));
     if (kde < 0) return oznamit('Fotku se nepodařilo otevřít.');
     otevrenoZPorovnani = id;
+    prohlizetBezZajmu();
     otevritLightbox(kde, false, polozky);
 }
 

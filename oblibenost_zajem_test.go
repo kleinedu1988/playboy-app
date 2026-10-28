@@ -111,6 +111,44 @@ func TestNaucitVahuZajmu(t *testing.T) {
 	}
 }
 
+// Učení váhy zájmu bere u porovnání jen zájem z doby před ním: zájem, který přišel až po porovnáních (třeba
+// prohlížení vítězky), váhu nezvedne; stejný zájem před porovnáními ano
+func TestVahaZajmuJenZajemPredPorovnanim(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	nyni := time.Now()
+	var modelky []Modelka
+	for i := 1; i <= 24; i++ {
+		modelky = append(modelky, Modelka{ID: i, Hodnoceni: 4})
+	}
+	// Modelky 1–12 vždy vyhrají nad 13–24; porovnání před 20 dny
+	var porovnani []porovnaniZaznam
+	for k := 0; k < 60; k++ {
+		porovnani = append(porovnani, porovnaniZaznam{id: int64(k + 1), cas: nyni.AddDate(0, 0, -20), a: 1 + k%12, b: 13 + (k*5)%12, vysledek: "a", ha: 4, hb: 4})
+	}
+	vaha := func(dniZpet int) vysledekZajmu {
+		db := a.uc.zajistit()
+		db.Exec("DELETE FROM zajem")
+		for i := 1; i <= 12; i++ {
+			db.Exec("INSERT INTO zajem (cas, modelka_id, druh, sekund) VALUES (?, ?, 'fotky', 600)", nyni.AddDate(0, 0, -dniZpet).Format("2006-01-02 15:04:05"), i)
+		}
+		for i := 13; i <= 24; i++ {
+			db.Exec("INSERT INTO zajem (cas, modelka_id, druh, sekund) VALUES (?, ?, 'profil', 0)", nyni.AddDate(0, 0, -dniZpet).Format("2006-01-02 15:04:05"), i)
+		}
+		a.uc.mu.Lock()
+		st := a.uc.nacistZajem(nyni)
+		a.uc.mu.Unlock()
+		return spocitatOblibenostSeZajmem(modelky, porovnani, st, nyni).vahaZajmu
+	}
+	po, pred := vaha(5), vaha(30)
+	t.Logf("zájem po porovnáních %+v, před nimi %+v", po, pred)
+	if po.porovnani != 0 || po.vaha != vychoziVahaZajmu {
+		t.Fatalf("zájem až po porovnáních váhu učí: %+v", po)
+	}
+	if !pred.naucena || pred.vaha <= vychoziVahaZajmu+0.05 {
+		t.Fatalf("zájem před porovnáními váhu nezvedl: %+v", pred)
+	}
+}
+
 // Trend: proti snímku před 30 dny modelka, která tehdy byla poslední, stoupla; dnešní snímek se zapíše a stará
 // historie se uklidí (po 60 dnech jen pondělí, po 400 dnech nic)
 func TestTrendAHistorie(t *testing.T) {

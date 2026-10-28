@@ -7,6 +7,8 @@ const MAX_NA_FOTKU = 60_000;
 
 let modelka = 0;
 let od = 0;
+// Prohlížeč otevřený z Porovnávání nebo Rychlého hodnocení: fotky ukázal program, ne zájem – nepočítá se
+let bezZajmu = false;
 const sekundy = new Map();
 
 const zapsat = (id, druh, s) => ZaznamenatZajem(id, druh, s).catch(() => { /* zájem je jen doplněk */ });
@@ -20,10 +22,15 @@ function pricist() {
     od = 0;
 }
 
+// Příští otevření prohlížeče (do jeho zavření) se do zájmu nepočítá; volá se těsně před otevřením
+export function prohlizetBezZajmu() {
+    bezZajmu = true;
+}
+
 // Prohlížeč ukázal fotku modelky (0 = obálka bez modelky)
 export function sledovatFotku(id) {
     pricist();
-    modelka = id > 0 ? id : 0;
+    modelka = id > 0 && !bezZajmu ? id : 0;
     od = modelka && !document.hidden ? performance.now() : 0;
 }
 
@@ -31,6 +38,7 @@ export function sledovatFotku(id) {
 export function ukoncitProhlizeni() {
     pricist();
     modelka = 0;
+    bezZajmu = false;
     for (const [id, s] of sekundy) zapsat(id, 'fotky', Math.round(s));
     sekundy.clear();
 }

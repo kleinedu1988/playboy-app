@@ -514,7 +514,7 @@ func (m *modelOblibenosti) doSouboje(x *Modelka) bool {
 	return m.pocet[x.ID] >= minPorovnaniNavrhu && math.Sqrt(m.rozptylModelky(x)) <= maxNejistotaNavrhu
 }
 
-func (m *modelOblibenosti) kandidatiSouboju(modelky []Modelka, vyloucene map[[2]int]bool, vahaModelky func(*Modelka) float64) []kandidatDvojice {
+func (m *modelOblibenosti) kandidatiSouboju(modelky []Modelka, vyloucene map[[2]int]bool, vahaModelky func(*Modelka) float64, omezeni omezeniSouboju) []kandidatDvojice {
 	if len(m.poradi) == 0 || len(prahyUrovni) == 0 {
 		return nil
 	}
@@ -532,6 +532,10 @@ func (m *modelOblibenosti) kandidatiSouboju(modelky []Modelka, vyloucene map[[2]
 	var kandidati []kandidatDvojice
 	pridat := func(x, y *Modelka, skore float64, druh, k int) bool {
 		if x == nil || y == nil || x == y || vyloucene[klicDvojice(x.ID, y.ID)] || !m.doSouboje(x) || !m.doSouboje(y) {
+			return false
+		}
+		// Obhajoba je jediný rozhodující souboj; ostatní čekají, až modelky chvíli nebyly na řadě
+		if druh != dvojiceObhajoba && (omezeni.pauza[x.ID] || omezeni.pauza[y.ID]) {
 			return false
 		}
 		kandidati = append(kandidati, kandidatDvojice{a: x.ID, b: y.ID, skore: skore * vahySouboju[k] * vahaModelky(x) * vahaModelky(y),
@@ -583,7 +587,7 @@ func (m *modelOblibenosti) kandidatiSouboju(modelky []Modelka, vyloucene map[[2]
 		if x == nil {
 			continue
 		}
-		if _, ok := m.nesoulad[x.ID]; !ok || !m.doSouboje(x) {
+		if _, ok := m.nesoulad[x.ID]; !ok || !m.doSouboje(x) || omezeni.overeno[x.ID] >= maxPorovnaniOvereni {
 			continue
 		}
 		vaha := vahaOvereni
@@ -695,10 +699,28 @@ func (a *App) GetSoubojeModelky(id int) []DvojicePorovnani {
 		return []DvojicePorovnani{}
 	}
 	modelky, _ := a.nactiModelky("", false)
-	return a.modelOblibenosti(modelky).soubojeModelky(modelky, id)
+	model := a.modelOblibenosti(modelky)
+	a.uc.mu.Lock()
+	porovnani := a.uc.nacistPorovnani()
+	a.uc.mu.Unlock()
+	nedavne := map[[2]int]bool{}
+	for _, p := range porovnani[max(0, len(porovnani)-nedavnaPorovnani):] {
+		nedavne[klicDvojice(p.a, p.b)] = true
+	}
+	return model.soubojeModelky(modelky, id, nedavne)
 }
 
-func (m *modelOblibenosti) soubojeModelky(modelky []Modelka, id int) []DvojicePorovnani {
+// Série pro modelku; dvojice porovnané nedávno (nedavne) se neopakují – čekající je dostane, jen když jiné soupeřky
+// nejsou, obhajoba a ověření vůbec (výsledek už je)
+func (m *modelOblibenosti) soubojeModelky(modelky []Modelka, id int, nedavne map[[2]int]bool) []DvojicePorovnani {
+	v := m.soubojeModelkyBez(modelky, id, nedavne)
+	if _, ceka := m.ceka[id]; len(v) == 0 && ceka && m.vyzyva[id] == 0 {
+		v = m.soubojeModelkyBez(modelky, id, nil)
+	}
+	return v
+}
+
+func (m *modelOblibenosti) soubojeModelkyBez(modelky []Modelka, id int, nedavne map[[2]int]bool) []DvojicePorovnani {
 	v := []DvojicePorovnani{}
 	podleId := make(map[int]*Modelka, len(modelky))
 	for i := range modelky {
@@ -723,7 +745,7 @@ func (m *modelOblibenosti) soubojeModelky(modelky []Modelka, id int) []DvojicePo
 	}
 	pouzite := map[int]bool{id: true}
 	pridat := func(y *Modelka, uroven int, kdo string) {
-		if y == nil || pouzite[y.ID] || !m.doSouboje(y) {
+		if y == nil || pouzite[y.ID] || !m.doSouboje(y) || nedavne[klicDvojice(x.ID, y.ID)] {
 			return
 		}
 		pouzite[y.ID] = true
@@ -746,7 +768,10 @@ func (m *modelOblibenosti) soubojeModelky(modelky []Modelka, id int) []DvojicePo
 			if ns.Smer == "mene" {
 				kam = "níž"
 			}
-			for _, y := range m.souperkyOvereni(x, podleId, soubojuOvereni) {
+			for _, y := range m.souperkyOvereni(x, podleId, soubojuOvereni+len(nedavne)) {
+				if len(v) >= soubojuOvereni || nedavne[klicDvojice(x.ID, y.ID)] {
+					continue
+				}
 				v = append(v, DvojicePorovnani{A: x.ID, B: y.ID, Druh: "overeni",
 					Duvod: fmt.Sprintf("Ověřit srdíčka: %s má %s, porovnání ji staví %s – soupeřka %s (%s)", jmeno(x), textSrdicek(ns.Hodnoceni), kam, jmeno(y), textSrdicek(y.Hodnoceni))})
 			}

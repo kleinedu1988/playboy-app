@@ -160,6 +160,45 @@ func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
 	return fmt.Sprintf("Srdíčka se liší o jedno (%s a %s), porovnání ověří hranici", nizsi, vyssi)
 }
 
+// Omezení soubojů a ověření, aby se tatáž modelka neobjevovala pořád dokola: modelka z posledních porovnání nebo
+// nabídnutých (ještě neporovnaných) dvojic chvíli souboj ani ověření nedostane (ani jako soupeřka), a modelka
+// s nesouladem se ověřuje jen do maxPorovnaniOvereni porovnání s modelkami na straně nesouladu – pak už důkazy má
+// a rozhodnutí je na uživateli (návrh srdíček zůstává).
+type omezeniSouboju struct {
+	pauza   map[int]bool
+	overeno map[int]int
+}
+
+const (
+	pauzaSouboju        = 12 // posledních porovnání, jejichž modelky souboj ani ověření hned znovu nedostanou
+	pauzaNabidek        = 8  // naposledy nabídnutých dvojic (ještě ve frontě rozhraní) totéž
+	maxPorovnaniOvereni = 10 // nesoulad vzniká od 3 porovnání se stranou nesouladu; ověření dál jen do 10
+)
+
+func omezitSouboje(model *modelOblibenosti, porovnani []porovnaniZaznam, nabidnute [][2]int) omezeniSouboju {
+	o := omezeniSouboju{pauza: map[int]bool{}, overeno: map[int]int{}}
+	for _, p := range porovnani[max(0, len(porovnani)-pauzaSouboju):] {
+		o.pauza[p.a], o.pauza[p.b] = true, true
+	}
+	for _, d := range nabidnute[max(0, len(nabidnute)-pauzaNabidek):] {
+		o.pauza[d[0]], o.pauza[d[1]] = true, true
+	}
+	if len(model.nesoulad) == 0 {
+		return o
+	}
+	// Porovnání se stranou nesouladu: podhodnocená s víc srdíčky, nadhodnocená s méně (srdíčka v době porovnání)
+	strana := func(id int, h, souperka float64) {
+		if n, ok := model.nesoulad[id]; ok && ((n.Smer == "vice" && souperka > h) || (n.Smer == "mene" && souperka < h && souperka > 0)) {
+			o.overeno[id]++
+		}
+	}
+	for _, p := range porovnani {
+		strana(p.a, p.ha, p.hb)
+		strana(p.b, p.hb, p.ha)
+	}
+	return o
+}
+
 func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porovnaniZaznam, nabidnute [][2]int, pocet int, okruh string, nahoda *rand.Rand) []DvojicePorovnani {
 	vysledek := []DvojicePorovnani{}
 	vyloucene := map[[2]int]bool{}
@@ -289,10 +328,10 @@ func vybratDvojice(modelky []Modelka, model *modelOblibenosti, porovnani []porov
 			}
 		}
 	}
-	// Souboje na hranicích top 10/20/50/100 (jen výchozí okruh; seřazené už jsou)
+	// Souboje na hranicích top 10/20/50/100 a ověření srdíček (jen výchozí okruh; seřazené už jsou)
 	var kandidatiSoub []kandidatDvojice
 	if okruh == "" {
-		kandidatiSoub = model.kandidatiSouboju(modelky, vyloucene, vahaModelky)
+		kandidatiSoub = model.kandidatiSouboju(modelky, vyloucene, vahaModelky, omezitSouboje(model, porovnani, nabidnute))
 	}
 	for _, kandidati := range [][]kandidatDvojice{kandidatiHod, kandidatiNeh} {
 		sort.SliceStable(kandidati, func(i, j int) bool {

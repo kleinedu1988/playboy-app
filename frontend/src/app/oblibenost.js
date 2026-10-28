@@ -564,13 +564,16 @@ async function rozhodnoutTed(id) {
         dvojice = (await GetSoubojeModelky(id) || []).map(idDvojice).filter(d => modelka(d.a) && modelka(d.b));
     } catch { /* oznámí se níž */ }
     const jmeno = modelka(id)?.jmeno || 'Modelka';
-    if (!dvojice.length) return oznamit(`${jmeno} zatím do souboje nejde – nejdřív ji pár běžných porovnání zařadí.`);
+    if (!dvojice.length) return oznamit(`${jmeno} teď nemá nové souboje – vhodné dvojice proběhly nedávno, nebo ji nejdřív musí zařadit pár běžných porovnání.`);
     const p = polozkaPoradi(id);
     // Ověření srdíček (nesoulad): dvojice s druhem „overeni“
     const ns = dvojice[0].druh === 'overeni' ? (data.oblibenost?.nesedi || []).find(n => n.modelkaId === id) : null;
     serie = { id, uroven: Number(p?.obhajoba?.uroven || p?.ceka?.uroven) || 0, obhajovala: !!p?.obhajoba, nesoulad: ns ? { hodnoceni: ns.hodnoceni, navrh: ns.navrh } : null,
         dvojice: new Set(dvojice), celkem: dvojice.length, vysledek: null, konci: false };
-    fronta = [...dvojice, ...fronta];
+    // Stejná dvojice už čekající ve frontě (v jakémkoli pořadí) se nezopakuje
+    const klic = d => [d.a, d.b].sort((x, y) => x - y).join('-');
+    const vSerii = new Set(dvojice.map(klic));
+    fronta = [...dvojice, ...fronta.filter(d => !vSerii.has(klic(d)))];
     zobrazitNavrhPodPasy(null);
     ukazatCastOblibenosti('porovnani');
     vykreslitSerii();

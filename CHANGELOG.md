@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.60] – 2026-10-28
+
+### Opraveno
+- **Porovnávání už nehází pořád tytéž modelky.**
+  - Modelka z posledních porovnání nebo z dvojic, které právě čekají ve frontě, chvíli nedostane souboj ani ověření srdíček, ani jako soupeřka. Výjimkou je souboj o obhajobu.
+  - Modelku, které nesedí srdíčka, program ověřuje jen do 10 porovnání se stranou nesouladu. Pak už důkazy má a návrh srdíček zůstává na tobě. Dřív ji nabízel v každé dávce.
+  - „Rozhodnout teď“ a „Ověřit porovnáním“ vynechají nedávno porovnané dvojice a nezopakují dvojici, která už čeká ve frontě.
+  - V simulaci klesl nejčastější výskyt jedné modelky z 84 na 27 dvojic na 1500 porovnání a přesnost pořadí se nezhoršila.
+
 ## [0.99.59] – 2026-10-27
 
 ### Změněno

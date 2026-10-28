@@ -463,6 +463,16 @@ prohry) nad jednou úrovní návrh nedají – ví se jen „výš“, ne o koli
 „Nechat“ návrh pro tu modelku do zavření programu nenabízí. Důvod dvojice stejné úrovně uvádí skóre fotek obou („Obě mají 4 srdíčka (fotky 4,6
 a 4,1) …“).
 
+
+**Proti opakování.** Stejná dvojice se nenabídne, dokud je mezi posledními 200 porovnáními nebo 60 nabídnutými (i po
+přeskočení). Souboje a ověření srdíček navíc hlídají, aby se tatáž modelka neobjevovala pořád dokola: modelka
+z posledních 12 porovnání nebo z 8 naposledy nabídnutých (ještě neporovnaných) dvojic je chvíli nedostane, ani jako
+soupeřka (kromě souboje o obhajobu, ten rozhoduje). Modelka s nesouladem se ověřuje jen do 10 porovnání se stranou
+nesouladu (podhodnocená s víc srdíčky, nadhodnocená s méně) – pak už důkazy má a rozhodnutí je na uživateli. Série
+„Rozhodnout teď“ a „Ověřit porovnáním“ nedávno porovnané dvojice vynechá (čekající je dostane, jen když jiné
+soupeřky nejsou) a rozhraní nezopakuje dvojici, která už čeká ve frontě. V simulaci (1500 porovnání) to snížilo
+nejčastější výskyt jedné modelky z 84 dvojic na 27 a podíl dvojic s modelkou z posledních deseti z 13 % na 6 %;
+přesnost pořadí se nezhoršila (P@10 0,78 proti dřívějším 0,77 na 16 semínkách).
 ## Nesoulad se srdíčky
 
 `GetOblibenost().nesedi`: hodnocené modelky, kterým podle porovnání nesedí srdíčka. U každé se berou porovnání

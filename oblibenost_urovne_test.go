@@ -495,8 +495,9 @@ func TestSimulaceUrovni(t *testing.T) {
 	if s.body[posledni].presnost10 < bez.body[posledni].presnost10-0.1 {
 		t.Errorf("P@10 s prahy %.2f, bez %.2f", s.body[posledni].presnost10, bez.body[posledni].presnost10)
 	}
-	// Obhajoba nesmí skutečnou top 10 vyhazovat častěji než bez ní (šum 6 semínek)
-	if bezObh := vysledky["bez obhajoby"]; s.vypadkuSkutecnych10 > bezObh.vypadkuSkutecnych10+0.5 {
+	// Obhajoba nesmí skutečnou top 10 vyhazovat znatelně častěji než bez ní (6 semínek mají šum kolem 0,5; na 16
+	// semínkách s pauzou soubojů vychází obojí 1,2)
+	if bezObh := vysledky["bez obhajoby"]; s.vypadkuSkutecnych10 > bezObh.vypadkuSkutecnych10+1 {
 		t.Errorf("výpadky skutečné top 10 s obhajobou %.1f, bez %.1f", s.vypadkuSkutecnych10, bezObh.vypadkuSkutecnych10)
 	}
 	if b := s.body[posledni]; b.potvrzenych10 < 5 || b.falesnych10/b.potvrzenych10 > 1-bez.body[posledni].presnost10+0.05 {
@@ -571,7 +572,7 @@ func TestObhajobaUrovne(t *testing.T) {
 	for id := 1; id <= n; id++ {
 		modelky = append(modelky, Modelka{ID: id, Jmeno: fmt.Sprintf("M%02d", id), Hodnoceni: 4})
 	}
-	kandidati := m.kandidatiSouboju(modelky, nil, func(*Modelka) float64 { return 1 })
+	kandidati := m.kandidatiSouboju(modelky, nil, func(*Modelka) float64 { return 1 }, omezeniSouboju{})
 	if len(kandidati) == 0 || kandidati[0].druh != dvojiceObhajoba || kandidati[0].a != 11 || kandidati[0].b != 10 {
 		t.Fatalf("první kandidát souboje: %+v", kandidati[:min(1, len(kandidati))])
 	}
@@ -667,7 +668,7 @@ func TestSoubojeModelky(t *testing.T) {
 		}
 		return v
 	}
-	d := m.soubojeModelky(modelky, 4)
+	d := m.soubojeModelky(modelky, 4, nil)
 	// Top 10 bez čtyřky: 1, 2, 3, 5, …, 11 – poslední potvrzené odspodu jsou 11, 10, 9
 	if s := fmt.Sprint(souperky(d)); s != "[11 10 9]" || d[0].A != 4 || d[0].Druh != "souboj" {
 		t.Fatalf("souboje čtyřky: %s %+v", s, d)
@@ -675,15 +676,19 @@ func TestSoubojeModelky(t *testing.T) {
 	if d[0].Duvod != "Rozhodnout teď: M04 o top 10 – soupeřka M11 (10.), potvrzená v top 10" {
 		t.Errorf("důvod: %q", d[0].Duvod)
 	}
-	if d := m.soubojeModelky(modelky, 1); len(d) != 0 {
+	if d := m.soubojeModelky(modelky, 1, nil); len(d) != 0 {
 		t.Errorf("potvrzená jednička nemá co rozhodovat: %+v", d)
+	}
+	// Nedávno porovnaná dvojice se v sérii neopakuje (soupeřkou je další v pořadí)
+	if s := fmt.Sprint(souperky(m.soubojeModelky(modelky, 4, map[[2]int]bool{klicDvojice(4, 11): true}))); s != "[10 9 8]" {
+		t.Errorf("série bez nedávné dvojice: %s", s)
 	}
 	// Obhajoba: držitelka i vyzyvatelka mají jediný vzájemný souboj
 	m.obhajoba, m.vyzyva = map[int]ObhajobaUrovne{11: {Uroven: 10, Vyzyvatelka: 12}}, map[int]int{12: 11}
-	if d := m.soubojeModelky(modelky, 12); fmt.Sprint(souperky(d)) != "[11]" || !strings.Contains(d[0].Duvod, "místo obhajuje") {
+	if d := m.soubojeModelky(modelky, 12, nil); fmt.Sprint(souperky(d)) != "[11]" || !strings.Contains(d[0].Duvod, "místo obhajuje") {
 		t.Errorf("vyzyvatelka: %+v", d)
 	}
-	if d := m.soubojeModelky(modelky, 11); fmt.Sprint(souperky(d)) != "[12]" {
+	if d := m.soubojeModelky(modelky, 11, nil); fmt.Sprint(souperky(d)) != "[12]" {
 		t.Errorf("držitelka: %+v", d)
 	}
 }
@@ -725,11 +730,11 @@ func TestOvereniSrdicek(t *testing.T) {
 	for i := range modelky {
 		m.poradi[modelky[i].ID], m.mistoSily[modelky[i].ID] = len(modelky)-i, len(modelky)-i
 	}
-	d := m.soubojeModelky(modelky, 1)
+	d := m.soubojeModelky(modelky, 1, nil)
 	if len(d) != 4 || d[0].Druh != "overeni" || d[0].B != 5 || !strings.Contains(d[0].Duvod, "Ověřit srdíčka: M01 má 3 srdíčka, porovnání ji staví výš") {
 		t.Errorf("série ověření: %+v", d)
 	}
-	k := m.kandidatiSouboju(modelky, nil, func(*Modelka) float64 { return 1 })
+	k := m.kandidatiSouboju(modelky, nil, func(*Modelka) float64 { return 1 }, omezeniSouboju{})
 	var overeni int
 	for _, x := range k {
 		if x.druh == dvojiceOvereni {
@@ -741,5 +746,27 @@ func TestOvereniSrdicek(t *testing.T) {
 	}
 	if overeni != 2 {
 		t.Errorf("kandidátů ověření %d", overeni)
+	}
+}
+
+// Omezení soubojů: modelka z posledních porovnání nebo nabídek chvíli souboj ani ověření nedostane (obhajoba ano),
+// modelka s nesouladem se ověřuje jen do maxPorovnaniOvereni porovnání se stranou nesouladu
+func TestOmezeniSouboju(t *testing.T) {
+	m := &modelOblibenosti{nesoulad: map[int]NesouladSrdicek{1: {ModelkaID: 1, Hodnoceni: 3, Navrh: 3.5, Smer: "vice"}}}
+	var porovnani []porovnaniZaznam
+	for i := range 9 {
+		porovnani = append(porovnani, porovnaniZaznam{a: 1, b: 10 + i, ha: 3, hb: 4, vysledek: "a"})
+	}
+	porovnani = append(porovnani, porovnaniZaznam{a: 1, b: 30, ha: 3, hb: 2, vysledek: "a"}) // strana nesouladu to není
+	for i := range pauzaSouboju {
+		porovnani = append(porovnani, porovnaniZaznam{a: 100 + i, b: 200 + i, ha: 3, hb: 3})
+	}
+	o := omezitSouboje(m, porovnani, [][2]int{{5, 6}})
+	if o.overeno[1] != 9 || o.pauza[1] || !o.pauza[100] || !o.pauza[5] || !o.pauza[6] {
+		t.Errorf("omezení: ověřeno %d, pauza %v", o.overeno[1], o.pauza)
+	}
+	porovnani = append(porovnani, porovnaniZaznam{a: 1, b: 40, ha: 3, hb: 4.5})
+	if o := omezitSouboje(m, porovnani, nil); o.overeno[1] != maxPorovnaniOvereni || !o.pauza[1] {
+		t.Errorf("ověřeno %d, pauza %v", o.overeno[1], o.pauza[1])
 	}
 }

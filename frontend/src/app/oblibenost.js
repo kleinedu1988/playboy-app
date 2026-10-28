@@ -32,7 +32,7 @@ import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 import { nacistSinSlavy, pripravitSinSlavy } from './sin-slavy';
-import { nacistGalerii, opustitGalerii, pripravitGalerii } from './galerie-hodnoceni';
+import { nacistGalerii, pripravitGalerii } from './galerie-hodnoceni';
 
 // Části Oblíbenosti (volba pod hledáním) a jejich ikony v liště (ui/volby.js)
 export const CASTI_OBLIBENOSTI = [['porovnani', 'Porovnávání'], ['galerie', 'Galerie'], ['poradi', 'Pořadí'], ['slava', 'Síň slávy']];
@@ -87,7 +87,6 @@ function ukazatCastOblibenosti(klic) {
     if (koren) koren.dataset.obCast = stav.oblibenostCast;
     if (stav.oblibenostCast === 'slava' && cast('slava')) nacistSinSlavy(cast('slava'));
     if (stav.oblibenostCast === 'galerie' && cast('galerie')) nacistGalerii(cast('galerie'));
-    else opustitGalerii();
     // Lišta pod hledáním se obnoví v prehled.js
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     document.querySelector('main').scrollTop = 0;
@@ -656,8 +655,7 @@ export function pripravit() {
 
     pripravitSinSlavy();
     sledovatPomerFotek();
-    pripravitGalerii(() => videt() && stav.oblibenostCast === 'galerie' && !stav.zamceno && !otevreneOkno()
-        && !jeVidet('lightbox') && !jeVidet('zkratky') && !jeVidet('contextMenu'));
+    pripravitGalerii();
     // Volba části v liště pod hledáním (skrytý štítek v obsahu Přehledu)
     document.addEventListener('click', (e) => {
         const castVolba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-oblibenosti]');

@@ -179,8 +179,8 @@ test('rozhodnout teď: výsledek série', async () => {
     assert.deepEqual(vysledekRozhodnuti({ jmeno: 'Bára', uroven: 10, obhajovala: true, ted: { uroven: 20 } }), { ok: false, text: 'Bára prohrála a vypadla z Top 10.' });
 });
 
-test('galerie nehodnocených fotek: fronta, přeskočené a klávesy', async () => {
-    const { frontaFotek, zamichat, pridatPreskocenou, srdickaKlavesy } = await import('../src/lib/hodnoceni.js');
+test('galerie nehodnocených fotek: pořadí', async () => {
+    const { frontaFotek, zamichat } = await import('../src/lib/hodnoceni.js');
     const fotky = [1, 2, 3, 4, 5, 6].map(id => ({ id, modelkaId: id <= 3 ? 10 : id <= 5 ? 20 : 30 }));
     // Zamíchání je opakovatelné a nemění vstup
     assert.deepEqual(zamichat(fotky, 7), zamichat(fotky, 7));
@@ -191,17 +191,8 @@ test('galerie nehodnocených fotek: fronta, přeskočené a klávesy', async () 
     const bloky = m.map(f => f.modelkaId).filter((id, i, v) => id !== v[i - 1]);
     assert.equal(bloky.length, 3);
     assert.deepEqual(m.filter(f => f.modelkaId === 10).map(f => f.id), [1, 2, 3]);
-    // Přeskočené na konci v pořadí přeskočení
-    const n = frontaFotek(fotky, { seed: 3, preskocene: [5, 2] });
-    assert.deepEqual(n.slice(-2).map(f => f.id), [5, 2]);
-    assert.equal(n.length, 6);
+    assert.equal(frontaFotek(fotky, { seed: 3 }).length, 6);
     assert.deepEqual(frontaFotek([]), []);
-    assert.deepEqual(pridatPreskocenou([1, 2, 3], 2), [1, 3, 2]);
-    assert.deepEqual(pridatPreskocenou(null, 7), [7]);
-    assert.equal(srdickaKlavesy({ code: 'Digit4' }), 4);
-    assert.equal(srdickaKlavesy({ code: 'Numpad1' }), 1);
-    assert.equal(srdickaKlavesy({ code: 'Digit6' }), 0);
-    assert.equal(srdickaKlavesy({ code: 'KeyS' }), 0);
 });
 
 test('ověření srdíček: výsledek a nadpis', async () => {

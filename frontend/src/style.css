@@ -12125,208 +12125,73 @@ span.ud-chip {
     background-color: var(--panel-bg);
 }
 
-/* ——— Galerie (Oblíbenost › Galerie, app/galerie-hodnoceni.js): nehodnocené fotky jedna po druhé ——— */
-.gh {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.gh-lista {
+/* ——— Galerie (Oblíbenost › Galerie, app/galerie-hodnoceni.js): panel, který otevře prohlížeč nehodnocených ——— */
+.gh-panel {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 8px 16px;
+    gap: 16px 24px;
+    margin-bottom: 16px;
 }
 
-.gh-pocet {
+.gh-uvod {
+    flex: 1 1 420px;
+}
+
+.gh-uvod h4 {
+    margin: 0 0 6px;
+}
+
+.gh-uvod p {
+    margin: 0;
     color: var(--text-muted);
     font-size: 13px;
 }
 
-.gh-pocet b {
-    color: var(--text-main);
-    font-weight: 600;
-}
-
-.gh-volby,
+.gh-ovladani,
 .gh-razeni {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
-}
-
-.gh-razeni {
-    margin-right: 6px;
-}
-
-/* Fotka přes skoro celou výšku okna, šipky po stranách */
-.gh-jeviste {
-    display: grid;
-    grid-template-columns: 48px minmax(0, 1fr) 48px;
-    align-items: center;
     gap: 8px;
 }
 
-.gh-fotka {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: calc(100vh - 330px);
-    min-height: 320px;
-    overflow: hidden;
-    border-radius: 12px;
-    background-color: #000;
+.gh-razeni {
+    margin-right: 8px;
 }
 
-.gh-fotka img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    user-select: none;
-}
-
-/* Otočená fotka: na výšku a na šířku se prohodí (vejde se celá) */
-.gh-fotka[data-rot="90"] img,
-.gh-fotka[data-rot="270"] img {
-    max-width: calc(100vh - 330px);
-    max-height: 100vw;
-}
-
-.gh-fotka[data-rot="90"] img { transform: rotate(90deg); }
-.gh-fotka[data-rot="180"] img { transform: rotate(180deg); }
-.gh-fotka[data-rot="270"] img { transform: rotate(270deg); }
-
-.gh-sipka {
-    height: 96px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 10px;
-    background-color: var(--panel-bg);
-    color: var(--text-main);
-    font-size: 28px;
-    cursor: pointer;
-}
-
-.gh-sipka:hover:not(:disabled) {
-    background-color: var(--panel-hover);
-}
-
-.gh-sipka:disabled {
-    opacity: 0.3;
-    cursor: default;
-}
-
-/* Pod fotkou: vlevo modelka a album, uprostřed srdíčka, vpravo přeskočit a vrátit */
-.gh-pod {
+/* Ukázka prvních fotek fronty: klik otevře prohlížeč na té fotce */
+.gh-ukazky {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    gap: 16px;
-    padding: 0 56px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
 }
 
-.gh-popis {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-}
-
-.gh-jmeno {
-    align-self: flex-start;
-    color: var(--text-main);
-    font-size: 16px;
-    font-weight: 600;
-}
-
-.gh-popis small {
-    overflow: hidden;
-    color: var(--text-muted);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.gh-srdicka {
-    display: flex;
-    gap: 4px;
-}
-
-.gh-srdce {
-    width: 44px;
-    height: 44px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 50%;
-    background-color: var(--panel-bg);
-    color: var(--text-muted);
-    font-family: system-ui, sans-serif;
-    font-size: 20px;
-    cursor: pointer;
-    transition: color 0.1s, background-color 0.1s;
-}
-
-/* Najetí na srdíčko rozsvítí i ta před ním */
-.gh-srdicka:has(.gh-srdce:hover) .gh-srdce,
-.gh-srdce:focus-visible {
-    color: var(--accent-text);
-}
-
-.gh-srdicka .gh-srdce:hover ~ .gh-srdce {
-    color: var(--text-muted);
-}
-
-.gh-srdce:hover {
-    background-color: var(--accent-soft);
-}
-
-.gh-akce {
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
-}
-
-.gh-nahledy {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    min-height: 64px;
-}
-
-.gh-nahled {
-    height: 64px;
+.gh-ukazka {
+    aspect-ratio: 3 / 4;
     padding: 0;
     overflow: hidden;
     border: 1px solid var(--panel-okraj);
-    border-radius: 6px;
+    border-radius: 8px;
     background-color: #000;
-    opacity: 0.6;
     cursor: pointer;
 }
 
-.gh-nahled:hover {
-    opacity: 1;
-}
-
-.gh-nahled img {
+.gh-ukazka img {
+    width: 100%;
     height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s;
 }
 
-.gh-napoveda {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 12px;
-    text-align: center;
+.gh-ukazka:hover img {
+    transform: scale(1.04);
 }
 
 @media (max-width: 900px) {
-    .gh-pod {
-        grid-template-columns: 1fr;
-        justify-items: center;
-        padding: 0;
-    }
-
-    .gh-jmeno {
-        align-self: center;
+    .gh-ukazky {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 

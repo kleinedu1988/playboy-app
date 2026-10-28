@@ -792,17 +792,17 @@ hodnocenými asi 62 ms; GetModelky z paměti se nemění (asi 2 ms).
 
 ## Galerie nehodnocených fotek
 
-Oblíbenost › Galerie (`app/galerie-hodnoceni.js`, fronta a klávesy v `lib/hodnoceni.js`) ukazuje všechny nehodnocené
-fotky modelek (`GetNehodnoceneFotky`: srdíčka 0, fotky bez modelky – obálky – ne) jednu po druhé přes skoro celou
-výšku okna. 1–5 (podle polohy klávesy, takže i v české klávesnici bez Shiftu) nebo klik na srdíčka fotku ohodnotí
-(`SetHodnoceniFotek`) a hned ukáže další; ohodnocená z fronty vypadne, takže se v Galerii znovu neobjeví. ←/→ listují,
-S přeskočí (fotka jde na konec, rozhraní si posledních 2000 přeskočených pamatuje i po zavření a dává je na konec),
-Backspace vrátí poslední hodnocení (srdíčka zpět na 0 a fotka zpět na své místo). Mezerník nebo „▶ Promítat“ spustí
-promítání: fotka se po 3 / 5 / 8 / 12 s sama posune (nic se nehodnotí, ohodnotit jde kdykoli); na konci fronty nebo
-po odchodu z Galerie promítání skončí. Pořadí „Náhodně“ zamíchá fotky všech modelek, „Po modelkách“ nechá fotky
-jedné modelky pohromadě (po albech) a zamíchá modelky; volba i interval se pamatují. Fronta se sestaví při prvním
-otevření a po vyčerpání (fotky ohodnocené jinde vypadnou při dalším sestavení). Pod fotkou je jméno modelky
-(odkaz na profil), album, typ a fotograf, pod tím náhledy dalších osmi fotek (klik skočí na fotku).
+Oblíbenost › Galerie (`app/galerie-hodnoceni.js`, pořadí v `lib/hodnoceni.js`) promítá všechny nehodnocené fotky
+modelek (`GetNehodnoceneFotky`: srdíčka 0, fotky bez modelky – obálky – ne) v **běžném prohlížeči fotek**. Panel ukáže,
+kolik fotek a modelek zbývá, pořadí („Náhodně“ zamíchá fotky všech modelek, „Po modelkách“ nechá fotky jedné modelky
+pohromadě po albech a zamíchá modelky; volba se pamatuje), tlačítka „Prohlížet a hodnotit“ a „▶ Promítat“
+(prohlížeč rovnou s promítáním) a prvních 12 fotek fronty (klik otevře prohlížeč na nich). Položky se skládají jako
+v profilu (`sestavitAlba`), takže spojený plakát je jedna položka.
+
+Prohlížeč se otevře s `jenNehodnocene` (`otevritLightbox(…, { jenNehodnocene, poZavreni })`): když fotka dostane
+srdíčka (1–5 nebo klik na srdíčka v liště), z prohlížeče vypadne a hned se ukáže další; po poslední prohlížeč skončí.
+Hodnocené se tak v Galerii neobjevují. Ostatní klávesy jsou jako vždy (šipky, mezerník promítání, S zamíchat, Esc).
+Po zavření se Galerie načte znovu. Prohlížení se do zájmu o modelky nepočítá (fotky vybral program, `prohlizetBezZajmu`).
 
 Do 0.99.66 tu bylo **rychlé hodnocení modelek** (modelky jedna po druhé s odhadem vkusu). Rozhraní nahradila Galerie;
 backend (`GetFrontaHodnoceni`, `SetHodnoceniOdhadem`, `oblibenost_hodnoceni.go`, převzaté odhady v `prevzate_odhady`)

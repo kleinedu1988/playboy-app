@@ -86,6 +86,8 @@ export const stav = {
     // Interval slideshow v milisekundách; jde změnit v nabídce ⋯
     intervalSlideshow: 4000,
     lbPolozky: [],
+    lbJenNehodnocene: false, // Galerie: ohodnocená položka z prohlížeče vypadne a ukáže se další
+    lbPoZavreni: null, // co udělat po zavření prohlížeče (Galerie obnoví počet)
     lbIndex: 0,
     lbCasovac: null,
     lbPlakat: null, // prvek .poster právě zobrazené položky

@@ -246,6 +246,20 @@ export async function lbOhodnotit(zvoleno) {
     const polozka = stav.lbPolozky[stav.lbIndex];
     if (!polozka || !await ohodnotitPolozku(polozka, zvoleno)) return;
     stav.lbZmeneno = true;
+    // Galerie nehodnocených: ohodnocená fotka vypadne a hned je tu další (na konci prohlížeč skončí)
+    if (stav.lbJenNehodnocene && polozka.hodnoceni > 0) {
+        const kde = stav.lbPolozky.indexOf(polozka);
+        if (kde < 0) return;
+        stav.lbPolozky.splice(kde, 1);
+        if (!stav.lbPolozky.length) {
+            zavritLightbox();
+            oznamit('Hotovo – všechny fotky jsou ohodnocené.');
+            return;
+        }
+        lbNaplnitListu();
+        lbZobrazit(kde >= stav.lbPolozky.length ? 0 : kde);
+        return;
+    }
     if (stav.lbPolozky[stav.lbIndex] === polozka) lbVykreslitSrdicka();
 }
 
@@ -323,8 +337,11 @@ function ukazatOvladani(zustat = false) {
     if (!zustat) skrytiOvladani = setTimeout(() => lightbox.classList.remove('ovladani'), CAS_OVLADANI);
 }
 
-export function otevritLightbox(index, slideshow = false, polozky = stav.aktualniPolozky) {
+// jenNehodnocene: Galerie nehodnocených fotek (ohodnocená vypadne); poZavreni se zavolá po zavření prohlížeče
+export function otevritLightbox(index, slideshow = false, polozky = stav.aktualniPolozky, { jenNehodnocene = false, poZavreni = null } = {}) {
     if (polozky.length === 0) return;
+    stav.lbJenNehodnocene = jenNehodnocene;
+    stav.lbPoZavreni = poZavreni;
     stav.lbPuvodniPoradi = null;
     document.getElementById('lbShuffle').classList.remove('active');
     stav.lbPolozky = polozky;
@@ -353,6 +370,11 @@ export function zavritLightbox() {
         else if (!issueView.classList.contains('hidden')) obnovitStranku();
         else if (!best.classList.contains('hidden')) nacistNejlepsi(searchInput.value);
     }
+    // Galerie nehodnocených: po zavření obnoví počet
+    const poZavreni = stav.lbPoZavreni;
+    stav.lbJenNehodnocene = false;
+    stav.lbPoZavreni = null;
+    poZavreni?.();
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů

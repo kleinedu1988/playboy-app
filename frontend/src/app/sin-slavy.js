@@ -5,7 +5,7 @@
 // (data-ob-porovnavat).
 import { GetSinSlavy } from './backend';
 import { esc } from '../lib/format';
-import { ODZNAKY, PORADI_ODZNAKU, datumKroniky, htmlBublinyOdznaku, kronikaPoMesicich, popisOdznaku, textDni, textRekordu, textUdalosti } from '../lib/slava';
+import { ODZNAKY, PORADI_ODZNAKU, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, textDni, textRekordu, textUdalosti } from '../lib/slava';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -50,6 +50,14 @@ const klicBubliny = o => {
     return klic;
 };
 
+// Rekord do téže bubliny (klíč rekord:druh)
+const rekordyBublin = new Map();
+function klicBublinyRekordu(r) {
+    const klic = `rekord:${r.druh}`;
+    rekordyBublin.set(klic, r);
+    return klic;
+}
+
 export function htmlMedailonu(o, velky = false) {
     const p = popisOdznaku(o, jmeno);
     if (!p) return '';
@@ -70,7 +78,7 @@ function trofeje() {
     const podleModelky = new Map();
     data.rekordy.forEach(r => {
         if (!podleModelky.has(r.modelkaId)) podleModelky.set(r.modelkaId, []);
-        podleModelky.get(r.modelkaId).push(textRekordu(r));
+        podleModelky.get(r.modelkaId).push({ ...textRekordu(r), klic: klicBublinyRekordu(r) });
     });
     return podleModelky;
 }
@@ -95,7 +103,7 @@ function htmlKarty(x, rekordy, legenda, odznaky) {
                 <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" decoding="async" />
                 ${htmlSrdicka(m, false)}
                 ${misto}
-                ${rekordy?.length ? `<span class="slava-trofeje">${rekordy.map(r => `<span class="slava-trofej" title="${esc(`${r.nazev}: ${r.hodnota} ${r.popis}`)}">🏆 ${esc(r.nazev)}</span>`).join('')}</span>` : ''}
+                ${rekordy?.length ? `<span class="slava-trofeje">${rekordy.map(r => `<span class="slava-trofej" data-odznak-bublina="${esc(r.klic)}" title="" aria-label="${esc(`${r.nazev}: ${r.hodnota} ${r.popis}`)}">🏆 ${esc(r.nazev)}</span>`).join('')}</span>` : ''}
             </div>
             <div class="card-info">
                 <h3>${esc(m.jmeno)}${legenda ? '' : htmlTrendu(m)}</h3>
@@ -189,15 +197,17 @@ function vykreslit() {
 // Bublina odznaku: jedna pro celou stránku, ukáže se nad odznakem pod myší (i v profilu) nebo při zaměření
 let bublina = null;
 function ukazatBublinu(prvek) {
-    const o = odznakyBublin.get(prvek.dataset.odznakBublina || '');
-    if (!o) return;
+    const klic = prvek.dataset.odznakBublina || '';
+    const o = odznakyBublin.get(klic);
+    const rekord = rekordyBublin.get(klic);
+    if (!o && !rekord) return;
     if (!bublina) {
         bublina = document.createElement('div');
         bublina.className = 'odznak-bublina';
         bublina.setAttribute('role', 'tooltip');
         document.body.append(bublina);
     }
-    bublina.innerHTML = htmlBublinyOdznaku(o, jmeno);
+    bublina.innerHTML = o ? htmlBublinyOdznaku(o, jmeno) : htmlBublinyRekordu(rekord, jmeno);
     bublina.classList.add('viditelna');
     // Nad odznakem, když se nevejde, pod ním; vodorovně uvnitř okna
     const r = prvek.getBoundingClientRect();

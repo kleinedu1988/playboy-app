@@ -11937,7 +11937,6 @@ span.ud-chip {
 .ob-hlava small {
     color: var(--text-muted);
     font-weight: 600;
-    text-transform: capitalize;
 }
 
 .ob-hlava small.bronz { color: #c9834b; }
@@ -11996,6 +11995,11 @@ span.ud-chip {
     flex-direction: column;
     gap: 4px;
     margin-top: 8px;
+}
+
+.ob-trva {
+    color: #f2c14e;
+    font-weight: 600;
 }
 
 .ob-postup small,

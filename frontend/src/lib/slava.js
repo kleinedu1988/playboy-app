@@ -122,6 +122,7 @@ export function popisOdznaku(o, jmeno = () => '') {
 }
 
 const TRIDY_STUPNU = ['jednorazovy', 'bronz', 'stribro', 'zlato'];
+const velkym = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 /**
  * Bublina odznaku (najetí myší): ikona, název a stupeň, co odznak měří a kolik modelka má, žebříček stupňů s prahy
@@ -148,6 +149,38 @@ export function htmlBublinyOdznaku(o, jmeno = () => '') {
         radky.push(`<p class="ob-hodnota">${esc(kdo)}${souperka ? ` · ${esc(d.souperka(souperka))}` : ''}</p>`);
     }
     const kdy = o.ziskan && o.cas ? datumKroniky(o.cas) : '';
-    return `<div class="ob-hlava"><span class="odznak velky ${trida}">${d.ikona}</span><span><b>${esc(d.nazev)}</b><small class="${trida}">${esc(p.stupen || (d.prahy ? (o.modelkaId ? 'zatím nezískaný' : 'bronz · stříbro · zlato') : 'jednorázový'))}</small></span></div>
+    return `<div class="ob-hlava"><span class="odznak velky ${trida}">${d.ikona}</span><span><b>${esc(d.nazev)}</b><small class="${trida}">${esc(velkym(p.stupen || (d.prahy ? (o.modelkaId ? 'zatím nezískaný' : 'bronz · stříbro · zlato') : 'jednorázový')))}</small></span></div>
         <p class="ob-popis">${esc(d.popis)}</p>${radky.join('')}${kdy ? `<p class="ob-kdy">Získala ${esc(kdy)}</p>` : ''}`;
+}
+
+// Co rekord měří a co znamená jeho čas (cas)
+const POPISY_REKORDU = {
+    nejdele: { popis: 'Nejvíc dní v Top 10 celkem – součet všech pobytů' },
+    vlada: { popis: 'Nejdelší nepřerušená vláda na 1. místě', cas: 'Vláda začala' },
+    obhajoby: { popis: 'Nejvíc obhájených míst v Top 10 proti silnějším vyzyvatelkám' },
+    rychlost: { popis: 'Nejméně vlastních porovnání do prvního vstupu do Top 10', cas: 'Vstoupila do Top 10' },
+    navrat: { popis: 'Nejdelší pauza mimo Top 10 před návratem', cas: 'Vrátila se' },
+    serie: { popis: 'Nejvíc výher v porovnání za sebou (remíza sérii nepřeruší)', cas: 'Série dosáhla rekordu' },
+    porovnani: { popis: 'Nejvíc porovnání ze všech modelek' },
+    skok: { popis: 'Největší posun v potvrzeném pořadí za nejvýš týden', cas: 'Skok' },
+};
+
+/**
+ * Bublina rekordu (🏆 na kartě v síni slávy), stejná jako u odznaků: název, kdo ho drží a hodnota, co rekord měří,
+ * odkdy a jestli dál roste.
+ * @param {any} r
+ * @param {(id: number) => string} [jmeno]
+ */
+export function htmlBublinyRekordu(r, jmeno = () => '') {
+    const t = textRekordu(r);
+    if (!t.nazev) return '';
+    const d = POPISY_REKORDU[r.druh] || { popis: '' };
+    const kdo = jmeno(r.modelkaId);
+    const kdy = d.cas && r.cas ? `${d.cas} ${datumKroniky(r.cas)}` : '';
+    return `<div class="ob-hlava"><span class="odznak velky zlato">🏆</span><span><b>${esc(t.nazev)}</b><small class="zlato">Rekord síně slávy</small></span></div>
+        <p class="ob-popis">${esc(d.popis)}</p>
+        <div class="ob-nadpis">Drží ho</div>
+        <p class="ob-hodnota">${esc(kdo || 'Modelka')}: <b>${esc(t.hodnota)}</b></p>
+        ${r.odZacatku ? '<p class="ob-kdy">Pobyt začal už před kronikou, skutečná hodnota může být vyšší.</p>' : ''}
+        ${r.trva ? '<p class="ob-trva">Rekord pořád roste</p>' : ''}${kdy ? `<p class="ob-kdy">${esc(kdy)}</p>` : ''}`;
 }

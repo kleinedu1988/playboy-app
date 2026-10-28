@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.71] – 2026-10-28
+
+### Změněno
+- **Rekordy (🏆) mají stejnou bublinu jako odznaky.** Po najetí myší na trofej na kartě v síni slávy se ukáže, co rekord měří, kdo ho drží a s jakou hodnotou a jestli pořád roste. U rekordů, kde to dává smysl, je i datum (začátek vlády, vstup do Top 10, návrat, série, skok). Když pobyt začal před kronikou, bublina upozorní, že skutečná hodnota může být vyšší.
+- Stupeň v bublině odznaku začíná velkým písmenem jen na začátku („Bronz · stříbro · zlato“).
+
 ## [0.99.70] – 2026-10-28
 
 ### Opraveno

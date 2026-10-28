@@ -244,7 +244,22 @@ test('bublina odznaku', async () => {
     assert.doesNotMatch(zlato, /Získala/);
     assert.match(htmlBublinyOdznaku({ modelkaId: 1, odznak: 'david', ziskan: true, souperka: 2 }, jmeno), /Anna · porazila jedničku Bára/);
     const definice = htmlBublinyOdznaku({ modelkaId: 0, odznak: 'serie' });
-    assert.match(definice, /bronz · stříbro · zlato/);
+    assert.match(definice, /Bronz · stříbro · zlato/);
     assert.doesNotMatch(definice, /dosazeno|ještě/);
     assert.equal(htmlBublinyOdznaku({ odznak: 'neznamy' }), '');
+});
+
+test('bublina rekordu', async () => {
+    const { htmlBublinyRekordu } = await import('../src/lib/slava.js');
+    const jmeno = id => ({ 1: 'Anna' })[id] || '';
+    const vlada = htmlBublinyRekordu({ druh: 'vlada', modelkaId: 1, hodnota: 47, odZacatku: true, cas: '2026-07-28 20:15:00', trva: true }, jmeno);
+    assert.match(vlada, /Nejdelší vláda/);
+    assert.match(vlada, /Anna: <b>aspoň 47 dní<\/b>/);
+    assert.match(vlada, /Nejdelší nepřerušená vláda na 1\. místě/);
+    assert.match(vlada, /Rekord pořád roste/);
+    assert.match(vlada, /Vláda začala 28\. 7\. 2026/);
+    assert.match(vlada, /před kronikou/);
+    const serie = htmlBublinyRekordu({ druh: 'porovnani', modelkaId: 1, hodnota: 112 }, jmeno);
+    assert.doesNotMatch(serie, /roste|začala|kronikou/);
+    assert.equal(htmlBublinyRekordu({ druh: 'neznamy' }), '');
 });

@@ -140,7 +140,7 @@ export function htmlBublinyOdznaku(o, jmeno = () => '') {
     const radky = [];
     if (d.prahy) {
         if (o.modelkaId) radky.push(`<p class="ob-hodnota">${esc(kdo)}: <b>${esc(d.jednotka(Number(o.hodnota) || 0))}</b></p>`);
-        radky.push(`<ol class="ob-stupne">${d.prahy.map((prah, i) => `<li class="${TRIDY_STUPNU[i + 1]}${o.modelkaId && stupen > i ? ' dosazeno' : ''}"><span>${o.modelkaId && stupen > i ? '✓' : '○'} ${esc(STUPNE[i + 1])}</span><span>${esc(d.jednotka(prah))}</span></li>`).join('')}</ol>`);
+        radky.push(`<div class="ob-nadpis">Stupně</div><ol class="ob-stupne">${d.prahy.map((prah, i) => `<li class="${TRIDY_STUPNU[i + 1]}${o.modelkaId && stupen > i ? ' dosazeno' : ''}"><span>${o.modelkaId && stupen > i ? '✓' : '○'} ${esc(STUPNE[i + 1])}</span><span>${esc(d.jednotka(prah))}</span></li>`).join('')}</ol>`);
         if (o.modelkaId && p.postup !== null) radky.push(`<div class="ob-postup"><span class="odznak-pruh"><i style="width:${Math.round(p.postup * 100)}%"></i></span><small>${esc(p.zbyva)}</small></div>`);
         else if (o.modelkaId && stupen === 3) radky.push('<p class="ob-maximum">Nejvyšší stupeň – zlato</p>');
     } else if (kdo) {

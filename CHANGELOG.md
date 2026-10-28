@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.69] – 2026-10-28
+
+### Změněno
+- **Bublina odznaků vypadá jako kontextové nabídky a hledání.** Má průsvitné sklo s rozmazáním, stejný okraj, zaoblení a stín. Nad stupni je růžový nadpis „Stupně“ s linkou jako nadpisy skupin v nabídkách.
+
 ## [0.99.68] – 2026-10-28
 
 ### Změněno

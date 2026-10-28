@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.67] – 2026-10-28
+
+### Změněno
+- **Oblíbenost › Hodnocení je teď Galerie nehodnocených fotek.**
+  - Panel ukáže, kolik nehodnocených fotek a modelek zbývá, a nabídne „Prohlížet a hodnotit“ a „▶ Promítat“. Pořadí je buď náhodně napříč modelkami, nebo po modelkách.
+  - Fotky se otevřou v běžném prohlížeči. Když fotka dostane srdíčka (1–5 nebo klik), zmizí a hned se ukáže další. Hodnocené se v Galerii neobjevují.
+  - Prohlížení v Galerii se nepočítá jako zájem o modelku.
+  - Dosavadní rychlé hodnocení modelek jedna po druhé zmizelo, s ním i odkazy „Projít v Hodnocení“ a „Ohodnotit rychle“ v Pořadí.
+
 ## [0.99.66] – 2026-10-28
 
 ### Přidáno

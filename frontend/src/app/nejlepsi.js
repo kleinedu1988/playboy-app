@@ -16,7 +16,7 @@ import { vybratHodnotu } from './ulozeni';
 import { prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { oblibenostModelek } from './mezipamet';
-import { porovnatFotkyPodleSrdicek } from '../lib/oblibenost';
+import { hodnotaFotky, porovnatFotkyPodleHodnoty, urovenHodnoty } from '../lib/oblibenost';
 
 // Přidání fotek do vlastního výběru (existujícího, nebo nového podle napsaného názvu)
 export async function pridatDoVyberu(ids) {
@@ -54,17 +54,21 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     ], tokeny, poleFotky(f));
     stav.nejlepsiPolozky = fotky.filter(vyhovuje).map(f => ({
         fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni,
-    })).sort(porovnatFotkyPodleSrdicek(oblibenost));
+    })).sort(porovnatFotkyPodleHodnoty(oblibenost));
 
-    // Úrovně srdíček (od nejvyšší): každá je oddíl mozaiky se značkou části pro lištu nahoře
+    // Úrovně hodnoty (srdíčka fotky × oblíbenost modelky ÷ 5, od nejvyšší): každá je oddíl mozaiky se značkou části
+    // pro lištu nahoře
     const urovne = new Map();
-    stav.nejlepsiPolozky.forEach(p => urovne.set(p.hodnoceni, (urovne.get(p.hodnoceni) || 0) + 1));
+    stav.nejlepsiPolozky.forEach(p => {
+        const h = urovenHodnoty(hodnotaFotky(p.hodnoceni, oblibenost.get(p.modelkaId)));
+        urovne.set(h, (urovne.get(h) || 0) + 1);
+    });
 
     const prah = [3, 4, 5].map(n => `<button class="chip ${!stav.nejlepsiVyber && n === stav.nejlepsiMin ? 'active' : ''}" data-nejlepsi-min="${n}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')
         + vybery.map(v => `<button class="chip ${v.id === stav.nejlepsiVyber ? 'active' : ''}" data-vyber-id="${v.id}" title="Vlastní výběr">${esc(v.nazev)}<span>${v.pocet}</span></button>`).join('')
         + (vyber ? '<button class="link" data-vyber-akce="prejmenovat">přejmenovat</button><button class="link" data-vyber-akce="smazat">smazat výběr</button>' : '');
     document.getElementById('bestList').innerHTML = `
-        <div class="best-toolbar">${prah}<span>${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')}</span>
+        <div class="best-toolbar">${prah}<span title="Pořadí podle hodnoty fotky: srdíčka fotky × srdíčka modelky ÷ 5 – pětisrdíčková fotka pětkové modelky je výš než pětisrdíčková fotka jedničkové">${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')} · podle hodnoty</span>
             ${stav.nejlepsiPolozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
         ${stav.nejlepsiPolozky.length ? [...urovne.keys()].map(h => `
             <section class="nejlepsi-uroven" data-uroven="${h}" data-cast="srdicka-${h}">
@@ -89,7 +93,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         const prvni = h === mapa.keys().next().value;
         vykreslitUroven(h, Math.max(predtim.get(h)?.vykresleno || 0, prvni ? DAVKA : 0));
     });
-    listaNejlepsich.naplnit([...urovne].map(([h, pocet]) => ({ klic: `srdicka-${h}`, nazev: h ? '♥'.repeat(h) : 'bez srdíček', pocet })));
+    listaNejlepsich.naplnit([...urovne].map(([h, pocet]) => ({ klic: `srdicka-${h}`, nazev: h ? `hodnota ${'♥'.repeat(h)}` : 'hodnota pod ♥', pocet })));
     listaNejlepsich.sledovat();
 }
 

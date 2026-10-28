@@ -43,9 +43,19 @@ export function trendModelky(modelka, min = 1) {
         : { smer: 'dolu', znak: '▼', text: `o ${mistaText(-zmena)} níž ${kdy}`, kratce };
 }
 
-// Řazení fotek podle srdíček, se stejnými srdíčky podle oblíbenosti modelky (oblibenost: Map id → oblíbenost)
-export const porovnatFotkyPodleSrdicek = oblibenost => (x, y) =>
-    (y.hodnoceni || 0) - (x.hodnoceni || 0) || (oblibenost.get(y.modelkaId) || 0) - (oblibenost.get(x.modelkaId) || 0);
+// Hodnota fotky napříč modelkami: srdíčka fotky říkají, jak dobrá je fotka té modelky (pětka = její nejlepší), proto
+// se násobí oblíbeností modelky (srdíčka upřesněná porovnáním): pětisrdíčková fotka pětkové modelky má hodnotu 5,
+// pětisrdíčková fotka jedničkové 1, trojková fotka pětkové 3. Modelka bez srdíček i odhadu bere střed 2,5.
+export const hodnotaFotky = (hodnoceniFotky, oblibenostModelky) =>
+    (Number(hodnoceniFotky) || 0) * (Number(oblibenostModelky) > 0 ? Number(oblibenostModelky) : 2.5) / 5;
+
+// Úroveň hodnoty po celých srdíčkách (oddíly Nejlepších): 0–5
+export const urovenHodnoty = hodnota => Math.min(5, Math.max(0, Math.round(hodnota)));
+
+// Řazení fotek různých modelek podle hodnoty, při shodě podle srdíček fotky (oblibenost: Map id modelky → oblíbenost)
+export const porovnatFotkyPodleHodnoty = oblibenost => (x, y) =>
+    hodnotaFotky(y.hodnoceni, oblibenost.get(y.modelkaId)) - hodnotaFotky(x.hodnoceni, oblibenost.get(x.modelkaId))
+    || (y.hodnoceni || 0) - (x.hodnoceni || 0);
 
 // Věta o zájmu v pořadí: od kdy si program všímá otevírání profilů a prohlížení fotek a kolik zájem váží
 export function textVahyZajmu({ vahaZajmu = 0, zajemNaucen = false, porovnaniZajmu = 0, zajemDni = 0 } = {}) {

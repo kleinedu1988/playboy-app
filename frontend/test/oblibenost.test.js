@@ -20,7 +20,7 @@ test('texty skóre fotek, popisku náhledu a váhy fotek', () => {
 });
 
 test('trend modelky, řádek pořadí v profilu a řazení fotek podle oblíbenosti', async () => {
-    const { trendModelky, porovnatFotkyPodleSrdicek, stoupajiKlesaji, textVahyZajmu } = await import('../src/lib/oblibenost.js');
+    const { trendModelky, porovnatFotkyPodleHodnoty, hodnotaFotky, urovenHodnoty, stoupajiKlesaji, textVahyZajmu } = await import('../src/lib/oblibenost.js');
     assert.equal(trendModelky({ zmenaPoradi: 3, trendDni: 0 }), null, 'bez historie není trend');
     assert.equal(trendModelky({ zmenaPoradi: 2, trendDni: 30 }, 3), null, 'na kartě jen výrazný');
     assert.deepEqual(trendModelky({ zmenaPoradi: 3, trendDni: 30 }), { smer: 'nahoru', znak: '▲', text: 'o 3 místa výš než před 30 dny', kratce: '3 za 30 dní' });
@@ -29,7 +29,16 @@ test('trend modelky, řádek pořadí v profilu a řazení fotek podle oblíbeno
 
     const ob = new Map([[1, 4.3], [2, 4.1], [3, 3.2]]);
     const fotky = [{ id: 'a', modelkaId: 2, hodnoceni: 5 }, { id: 'b', modelkaId: 3, hodnoceni: 4 }, { id: 'c', modelkaId: 1, hodnoceni: 5 }, { id: 'd', modelkaId: 9, hodnoceni: 4 }];
-    assert.deepEqual([...fotky].sort(porovnatFotkyPodleSrdicek(ob)).map(f => f.id), ['c', 'a', 'b', 'd']);
+    // Hodnota: c 5 × 4,3 / 5 = 4,3; a 4,1; b 4 × 3,2 / 5 = 2,56; d bez modelky 4 × 2,5 / 5 = 2
+    assert.deepEqual([...fotky].sort(porovnatFotkyPodleHodnoty(ob)).map(f => f.id), ['c', 'a', 'b', 'd']);
+    assert.equal(hodnotaFotky(5, 5), 5);
+    assert.equal(hodnotaFotky(5, 1), 1);
+    assert.equal(hodnotaFotky(3, 5), 3);
+    assert.equal(hodnotaFotky(4, 0), 2);
+    // Pětka slabé modelky je až za trojkou oblíbené
+    const slaba = [{ id: 'p', modelkaId: 7, hodnoceni: 5 }, { id: 't', modelkaId: 8, hodnoceni: 3 }];
+    assert.deepEqual(slaba.sort(porovnatFotkyPodleHodnoty(new Map([[7, 1], [8, 5]]))).map(f => f.id), ['t', 'p']);
+    assert.deepEqual([4.6, 4.4, 0.3, 7].map(urovenHodnoty), [5, 4, 0, 5]);
 
     const poradi = Array.from({ length: 10 }, (_, i) => ({ modelkaId: i + 1, zmenaPoradi: [5, -4, 2, 3, 0, -3, 0, 0, 7, -1][i] }));
     const { stoupaji, klesaji } = stoupajiKlesaji(poradi);

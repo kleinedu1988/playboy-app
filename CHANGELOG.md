@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.62] – 2026-10-28
+
+### Změněno
+- **Hodnota fotky se odvíjí od srdíček modelky.**
+  - Srdíčka fotky říkají, jak dobrá je fotka té modelky. Pro řazení fotek různých modelek se proto násobí oblíbeností modelky: hodnota = srdíčka fotky × srdíčka modelky ÷ 5.
+  - Pětisrdíčková fotka pětkové modelky má hodnotu 5, pětisrdíčková fotka jedničkové jen 1.
+  - Platí v Nejlepších fotkách, které mají oddíly po hodnotě („hodnota ♥♥♥♥♥“), i na stěně při řazení podle srdíček.
+  - Filtr ♥ 3+ / 4+ / 5 dál vybírá podle srdíček fotky.
+
 ## [0.99.61] – 2026-10-28
 
 ### Změněno

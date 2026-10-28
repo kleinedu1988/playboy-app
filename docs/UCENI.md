@@ -396,7 +396,9 @@ podle oblíbenosti – jinak by po přechodu na úrovně vypadaly nepotvrzené o
 
 **Kde se oblíbenost projeví:** galerie Podle srdíček a filtr srdíček (se stejnými srdíčky podle oblíbenosti),
 pořadí a trend v profilu a šipka na kartě (posun aspoň o 3 místa), Nejlepší fotky a stěna centerfoldů Podle
-srdíček (fotky se stejnými srdíčky podle oblíbenosti modelky), Údržba (význam modelky v prioritě počítá
+srdíček (podle hodnoty fotky = srdíčka fotky × oblíbenost modelky ÷ 5: srdíčka fotky říkají, jak dobrá je fotka té
+modelky, takže pětisrdíčková fotka jedničkové modelky má hodnotu 1 a pětkové 5; Nejlepší mají oddíly po celých
+hodnotách, `hodnotaFotky` v `lib/oblibenost.js`), Údržba (význam modelky v prioritě počítá
 s oblíbeností místo srdíček; řazení „oblíbené napřed“), Sháním CZ („Nejdřív sháněj“: čísla s nejoblíbenější
 modelkou) a úvod Přehledu (Top 10, Stoupají, Dlouho jsi neviděl).
 

@@ -13,7 +13,7 @@ import { prevestNaVolby } from '../ui/volby';
 import { nastavitEdiciKalendare } from './kalendar';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { oblibenostModelek } from './mezipamet';
-import { porovnatFotkyPodleSrdicek } from '../lib/oblibenost';
+import { porovnatFotkyPodleHodnoty } from '../lib/oblibenost';
 
 const RAZENI_STENY = {
     jmeno: 'Podle jména',
@@ -55,8 +55,8 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
         const klicVydani = p => { const v = rozlozitVydani(p.album); return v ? `${v.rok}${v.mesic}${v.edice}` : '0000'; };
         stav.stenaPolozky.sort((x, y) => klicVydani(y).localeCompare(klicVydani(x)));
     } else if (stav.razeniSteny === 'hodnoceni') {
-        // Se stejnými srdíčky podle oblíbenosti modelky
-        stav.stenaPolozky.sort(porovnatFotkyPodleSrdicek(oblibenost));
+        // Podle hodnoty fotky: srdíčka fotky × oblíbenost modelky (pětka slabší modelky je níž než pětka oblíbené)
+        stav.stenaPolozky.sort(porovnatFotkyPodleHodnoty(oblibenost));
     }
 
     const razeni = `<div class="wall-toolbar">

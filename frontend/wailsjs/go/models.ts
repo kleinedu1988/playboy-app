@@ -739,6 +739,32 @@ export namespace main {
 		}
 	}
 	
+	export class OdznakModelky {
+	    modelkaId: number;
+	    odznak: string;
+	    stupen: number;
+	    ziskan: boolean;
+	    hodnota: number;
+	    dalsi: number;
+	    souperka: number;
+	    cas: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OdznakModelky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.odznak = source["odznak"];
+	        this.stupen = source["stupen"];
+	        this.ziskan = source["ziskan"];
+	        this.hodnota = source["hodnota"];
+	        this.dalsi = source["dalsi"];
+	        this.souperka = source["souperka"];
+	        this.cas = source["cas"];
+	    }
+	}
 	export class PodezrelyUdaj {
 	    modelkaId: number;
 	    jmeno: string;
@@ -1067,6 +1093,8 @@ export namespace main {
 	    modelkaId: number;
 	    misto: number;
 	    souperka: number;
+	    odznak?: string;
+	    stupen?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new UdalostSlavy(source);
@@ -1079,6 +1107,8 @@ export namespace main {
 	        this.modelkaId = source["modelkaId"];
 	        this.misto = source["misto"];
 	        this.souperka = source["souperka"];
+	        this.odznak = source["odznak"];
+	        this.stupen = source["stupen"];
 	    }
 	}
 	export class SlavaModelky {
@@ -1122,6 +1152,7 @@ export namespace main {
 	    vitrina: SlavaModelky[];
 	    legendy: SlavaModelky[];
 	    rekordy: RekordSlavy[];
+	    odznaky: OdznakModelky[];
 	    kronika: UdalostSlavy[];
 	
 	    static createFrom(source: any = {}) {
@@ -1134,6 +1165,7 @@ export namespace main {
 	        this.vitrina = this.convertValues(source["vitrina"], SlavaModelky);
 	        this.legendy = this.convertValues(source["legendy"], SlavaModelky);
 	        this.rekordy = this.convertValues(source["rekordy"], RekordSlavy);
+	        this.odznaky = this.convertValues(source["odznaky"], OdznakModelky);
 	        this.kronika = this.convertValues(source["kronika"], UdalostSlavy);
 	    }
 	

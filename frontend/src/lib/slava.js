@@ -42,6 +42,13 @@ export function textUdalosti(u, jmeno) {
         case 'obhajoba': return { ikona: '🛡', text: `${kdo} obhájila místo v Top 10${souperka ? ` · vyzyvatelka ${souperka}` : ''}` };
         case 'jednicka': return { ikona: '♛', text: souperka ? `Nová jednička: ${kdo} · předtím ${souperka}` : `Jednička: ${kdo}` };
         case 'konec': return { ikona: '·', text: `${kdo} už není potvrzená jednička` };
+        case 'odznak': {
+            const o = ODZNAKY[u.odznak];
+            if (!o) return { ikona: '·', text: kdo };
+            const stupen = u.stupen ? ` · ${STUPNE[u.stupen]}` : '';
+            const proc = u.stupen ? ` (${o.jednotka(o.prahy[u.stupen - 1])})` : souperka ? ` (${o.souperka(souperka)})` : '';
+            return { ikona: o.ikona, text: `${kdo} získala odznak ${o.nazev}${stupen}${proc}` };
+        }
         default: return { ikona: '·', text: kdo };
     }
 }
@@ -55,6 +62,9 @@ export function textRekordu(r) {
         case 'obhajoby': return { nazev: 'Nejvíc obhajob', hodnota: `${n}×`, popis: 'obhájila místo v Top 10' };
         case 'rychlost': return { nazev: 'Nejrychlejší postup', hodnota: sklonovat(n, 'porovnání', 'porovnání', 'porovnání'), popis: 'do prvního vstupu do Top 10' };
         case 'navrat': return { nazev: 'Největší návrat', hodnota: textDni(n), popis: 'mimo Top 10, pak zpátky' };
+        case 'serie': return { nazev: 'Nejdelší série', hodnota: sklonovat(n, 'výhra', 'výhry', 'výher'), popis: r.trva ? 'za sebou, a pořád vyhrává' : 'v porovnání za sebou' };
+        case 'porovnani': return { nazev: 'Nejvíc porovnání', hodnota: `${n}×`, popis: 'v porovnávání' };
+        case 'skok': return { nazev: 'Největší skok', hodnota: `o ${sklonovat(n, 'místo', 'místa', 'míst')}`, popis: 'v pořadí do týdne' };
         default: return { nazev: '', hodnota: String(n), popis: '' };
     }
 }
@@ -68,4 +78,45 @@ export function kronikaPoMesicich(kronika) {
         else skupiny.push({ mesic, udalosti: [u] });
     });
     return skupiny;
+}
+
+// Odznaky (GetSinSlavy().odznaky, oblibenost_odznaky.go): stupňové mají prahy (bronz, stříbro, zlato), jednorázové ne.
+// jednotka(n) = „100 dní v Top 10“, kratce(n) = „100 dní“ (kolik zbývá), souperka(jméno) = „porazila Annu“ u jednorázových se soupeřkou
+const dni = n => sklonovat(n, 'den', 'dny', 'dní');
+/** @type {Record<string, { ikona: string, nazev: string, popis: string, prahy?: number[], jednotka?: (n: number) => string, kratce?: (n: number) => string, souperka?: (j: string) => string }>} */
+export const ODZNAKY = {
+    stalice: { ikona: '🏛', nazev: 'Stálice', prahy: [30, 100, 365], jednotka: n => `${dni(n)} v Top 10`, kratce: dni, popis: 'Dny v Top 10 celkem' },
+    kralovna: { ikona: '♛', nazev: 'Královna', prahy: [7, 30, 100], jednotka: n => `${dni(n)} na 1. místě`, kratce: dni, popis: 'Dny na 1. místě celkem' },
+    hradba: { ikona: '🛡', nazev: 'Hradba', prahy: [3, 5, 10], jednotka: n => `${n}× obhájila`, kratce: n => `${n}× obhájit`, popis: 'Obhájila místo v Top 10' },
+    serie: { ikona: '🔥', nazev: 'Série', prahy: [5, 10, 20], jednotka: n => `${sklonovat(n, 'výhra', 'výhry', 'výher')} za sebou`, kratce: n => sklonovat(n, 'výhra', 'výhry', 'výher'), popis: 'Výhry v porovnání za sebou' },
+    zasluzena: { ikona: '⚔', nazev: 'Zasloužená', prahy: [25, 50, 100], jednotka: n => sklonovat(n, 'porovnání', 'porovnání', 'porovnání'), kratce: n => sklonovat(n, 'porovnání', 'porovnání', 'porovnání'), popis: 'Porovnání celkem' },
+    raketa: { ikona: '🚀', nazev: 'Raketa', popis: 'Do Top 10 z místa za stovkou do 30 dní' },
+    comeback: { ikona: '🔄', nazev: 'Comeback', popis: 'Návrat do Top 10 po aspoň 30 dnech venku' },
+    david: { ikona: '🪨', nazev: 'David a Goliáš', popis: 'Z místa za Top 20 porazila jedničku', souperka: j => `porazila jedničku ${j}` },
+    latka: { ikona: '⬆', nazev: 'Přeskočená laťka', popis: 'Porazila modelku s o celé srdíčko víc', souperka: j => `porazila ${j}` },
+    neporazitelna: { ikona: '🧊', nazev: 'Neporazitelná', popis: '30 dní v Top 10 bez prohry (aspoň 3 porovnání)' },
+};
+export const PORADI_ODZNAKU = Object.keys(ODZNAKY);
+export const STUPNE = ['', 'bronz', 'stříbro', 'zlato'];
+
+// Odznak modelky → { ikona, nazev, stupen ('bronz'…, '' u jednorázového), text (bublina), postup (0–1 k dalšímu
+// stupni, null = není další), zbyva („18 dní do stříbra“) }
+/** @param {any} o @param {(id: number) => string} [jmeno] */
+export function popisOdznaku(o, jmeno = () => '') {
+    const d = ODZNAKY[o?.odznak];
+    if (!d) return null;
+    const stupen = STUPNE[o.stupen] || '';
+    const souperka = o.souperka && d.souperka ? jmeno(o.souperka) : '';
+    const dalsi = Number(o.dalsi) || 0;
+    const hodnota = Number(o.hodnota) || 0;
+    const odPrahu = o.stupen > 0 ? d.prahy[o.stupen - 1] : 0;
+    const postup = d.prahy && dalsi ? Math.max(0, Math.min(1, (hodnota - odPrahu) / (dalsi - odPrahu))) : null;
+    const zbyva = d.prahy && dalsi ? `ještě ${d.kratce(dalsi - hodnota)} do ${['bronzu', 'stříbra', 'zlata'][o.stupen]}` : '';
+    const text = [
+        `${d.nazev}${stupen ? ` – ${stupen}` : o.ziskan ? '' : ' (zatím ne)'}`,
+        d.prahy ? `${d.popis}: ${d.jednotka(hodnota)}` : d.popis,
+        souperka ? d.souperka(souperka) : '',
+        zbyva,
+    ].filter(Boolean).join(' · ');
+    return { ikona: d.ikona, nazev: d.nazev, stupen, text, postup, zbyva };
 }

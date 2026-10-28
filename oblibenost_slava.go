@@ -212,6 +212,9 @@ type UdalostSlavy struct {
 	ModelkaID int    `json:"modelkaId"`
 	Misto     int    `json:"misto"`
 	Souperka  int    `json:"souperka"` // 0 = žádná (nebo smazaná)
+	// Druh "odznak": který odznak a stupeň (1 bronz, 2 stříbro, 3 zlato, 0 = jednorázový)
+	Odznak string `json:"odznak,omitempty"`
+	Stupen int    `json:"stupen,omitempty"`
 }
 
 // Modelka v síni slávy: současná top 10 (vitrína) nebo bývalá (legenda). Dny se počítají po celých 24 hodinách;
@@ -244,16 +247,17 @@ type RekordSlavy struct {
 }
 
 type SinSlavy struct {
-	Od      string         `json:"od"` // začátek kroniky ("" = ještě nezačala)
-	Vitrina []SlavaModelky `json:"vitrina"`
-	Legendy []SlavaModelky `json:"legendy"`
-	Rekordy []RekordSlavy  `json:"rekordy"`
-	Kronika []UdalostSlavy `json:"kronika"` // od nejnovější
+	Od      string          `json:"od"` // začátek kroniky ("" = ještě nezačala)
+	Vitrina []SlavaModelky  `json:"vitrina"`
+	Legendy []SlavaModelky  `json:"legendy"`
+	Rekordy []RekordSlavy   `json:"rekordy"`
+	Odznaky []OdznakModelky `json:"odznaky"` // získané odznaky a postup k dalším (oblibenost_odznaky.go)
+	Kronika []UdalostSlavy  `json:"kronika"` // od nejnovější (i zisky odznaků)
 }
 
 // Síň slávy celé sbírky (přepočte oblíbenost, aby kronika byla aktuální)
 func (a *App) GetSinSlavy() SinSlavy {
-	prazdna := SinSlavy{Vitrina: []SlavaModelky{}, Legendy: []SlavaModelky{}, Rekordy: []RekordSlavy{}, Kronika: []UdalostSlavy{}}
+	prazdna := SinSlavy{Vitrina: []SlavaModelky{}, Legendy: []SlavaModelky{}, Rekordy: []RekordSlavy{}, Odznaky: []OdznakModelky{}, Kronika: []UdalostSlavy{}}
 	if a.uc == nil {
 		return prazdna
 	}
@@ -263,10 +267,7 @@ func (a *App) GetSinSlavy() SinSlavy {
 	u.mu.Lock()
 	kronika := u.nacistKroniku()
 	porovnani := u.nacistPorovnani()
-	var snimky []snimekPoradi
-	if len(kronika) > 0 && kronika[0].druh == udalostZacatek {
-		snimky = u.nacistSnimkyPoradi(kronika[0].cas)
-	}
+	snimky := u.nacistSnimkyPoradi()
 	u.mu.Unlock()
 	existuje := make(map[int]bool, len(modelky))
 	for _, m := range modelky {
@@ -298,13 +299,13 @@ type snimekPoradi struct {
 	poradi map[int]int
 }
 
-// Snímky potvrzeného pořadí před dnem pred, od nejstaršího; volá se se zámkem
-func (u *uceni) nacistSnimkyPoradi(pred time.Time) []snimekPoradi {
+// Všechny snímky potvrzeného pořadí, od nejstaršího; volá se se zámkem
+func (u *uceni) nacistSnimkyPoradi() []snimekPoradi {
 	db := u.zajistit()
-	if db == nil || pred.IsZero() {
+	if db == nil {
 		return nil
 	}
-	radky, err := db.Query("SELECT den, modelka_id, poradi FROM historie_oblibenosti WHERE den < ? ORDER BY den", pred.Format("2006-01-02"))
+	radky, err := db.Query("SELECT den, modelka_id, poradi FROM historie_oblibenosti ORDER BY den")
 	if err != nil {
 		return nil
 	}
@@ -343,7 +344,11 @@ func (u *uceni) nacistSnimkyPoradi(pred time.Time) []snimekPoradi {
 // (mezery mezi snímky – dny, kdy program neběžel – řadu nepřeruší)
 func pocatekZeSnimku(snimky []snimekPoradi, id int, zacatek time.Time, podminka func(int) bool) time.Time {
 	od := zacatek
+	den0 := time.Date(zacatek.Year(), zacatek.Month(), zacatek.Day(), 0, 0, 0, 0, time.Local)
 	for i := len(snimky) - 1; i >= 0; i-- {
+		if !snimky[i].den.Before(den0) {
+			continue
+		}
 		if !podminka(snimky[i].poradi[id]) {
 			break
 		}
@@ -352,11 +357,13 @@ func pocatekZeSnimku(snimky []snimekPoradi, id int, zacatek time.Time, podminka 
 	return od
 }
 
-// snimky = denní snímky potvrzeného pořadí před začátkem kroniky: kdo byl v top 10 (jedničkou) už na začátku, má
+// snimky = denní snímky potvrzeného pořadí (i před začátkem kroniky): kdo byl v top 10 (jedničkou) už na začátku, má
 // pobyt (vládu) od začátku souvislé řady snímků, kde byl v top 10 (první) – kronika mohla začít později než pobyt
 func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnani []porovnaniZaznam, existuje map[int]bool, snimky []snimekPoradi, nyni time.Time) SinSlavy {
-	s := SinSlavy{Vitrina: []SlavaModelky{}, Legendy: []SlavaModelky{}, Rekordy: []RekordSlavy{}, Kronika: []UdalostSlavy{}}
+	s := SinSlavy{Vitrina: []SlavaModelky{}, Legendy: []SlavaModelky{}, Rekordy: []RekordSlavy{}, Odznaky: []OdznakModelky{}, Kronika: []UdalostSlavy{}}
 	pobyty := map[int][]pobytVTop{}
+	var vlady []vladaJednicky
+	obhajobyCasy := map[int][]time.Time{}
 	obhajob, nejlepsi := map[int]int{}, map[int]int{}
 	naPrvnim := map[int]int{}
 	var zacatek time.Time
@@ -369,6 +376,7 @@ func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnan
 		}
 		dni := dniMezi(vladaOd, do)
 		naPrvnim[vladne] += dni
+		vlady = append(vlady, vladaJednicky{modelka: vladne, od: vladaOd, do: do})
 		if dni > vlada.Hodnota {
 			vlada = RekordSlavy{Druh: "vlada", ModelkaID: vladne, Hodnota: dni, OdZacatku: vladaOdZacatku, Cas: vladaOd.Format("2006-01-02 15:04:05"), Trva: do.Equal(nyni)}
 		}
@@ -422,6 +430,7 @@ func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnan
 			}
 		case udalostObhajoba:
 			obhajob[z.modelka]++
+			obhajobyCasy[z.modelka] = append(obhajobyCasy[z.modelka], z.cas)
 			zlepsit(z.modelka, z.misto)
 		case udalostJednicka:
 			ukoncitVladu(z.cas)
@@ -507,14 +516,31 @@ func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnan
 			obhajoby = RekordSlavy{Druh: "obhajoby", ModelkaID: x.ModelkaID, Hodnota: x.Obhajob}
 		}
 	}
-	for _, r := range []RekordSlavy{nejdele, vlada, obhajoby, rychlost, navrat} {
+	// Odznaky a rekordy z porovnání a snímků (oblibenost_odznaky.go); pobyty s koncem (otevřený do teď)
+	vstup := vstupOdznaku{pobyty: map[int][]pobytVTop{}, vlady: vlady, obhajobyCasy: obhajobyCasy, porovnani: porovnani,
+		snimky: snimky, vTop: map[int]bool{}, existuje: existuje, nyni: nyni}
+	for id, p := range pobyty {
+		for _, q := range p {
+			if q.otevreny {
+				q.do = nyni
+			}
+			vstup.pobyty[id] = append(vstup.pobyty[id], q)
+		}
+	}
+	for _, id := range top {
+		vstup.vTop[id] = true
+	}
+	odznaky, zisky, dalsiRekordy := spocitatOdznaky(vstup)
+	s.Odznaky = odznaky
+	for _, r := range append([]RekordSlavy{nejdele, vlada, obhajoby, rychlost, navrat}, dalsiRekordy...) {
 		if r.ModelkaID > 0 && existuje[r.ModelkaID] && r.Hodnota >= 0 {
 			s.Rekordy = append(s.Rekordy, r)
 		}
 	}
-	// Kronika od nejnovější (bez událostí smazaných modelek; smazaná soupeřka = 0)
-	for i := len(kronika) - 1; i >= 0 && len(s.Kronika) < udalostiKroniky; i-- {
-		z := kronika[i]
+	// Kronika od nejnovější (bez událostí smazaných modelek; smazaná soupeřka = 0), zisky odznaků zařazené podle času
+	var udalosti []UdalostSlavy
+	var casy []time.Time
+	for _, z := range kronika {
 		if z.druh != udalostZacatek && !existuje[z.modelka] {
 			continue
 		}
@@ -522,7 +548,25 @@ func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnan
 		if !existuje[souperka] {
 			souperka = 0
 		}
-		s.Kronika = append(s.Kronika, UdalostSlavy{Cas: z.casText, Druh: z.druh, ModelkaID: z.modelka, Misto: z.misto, Souperka: souperka})
+		udalosti = append(udalosti, UdalostSlavy{Cas: z.casText, Druh: z.druh, ModelkaID: z.modelka, Misto: z.misto, Souperka: souperka})
+		casy = append(casy, z.cas)
+	}
+	for _, z := range zisky {
+		souperka := z.souperka
+		if !existuje[souperka] {
+			souperka = 0
+		}
+		udalosti = append(udalosti, UdalostSlavy{Cas: z.cas.Format("2006-01-02 15:04:05"), Druh: "odznak", ModelkaID: z.modelka, Souperka: souperka, Odznak: z.odznak, Stupen: z.stupen})
+		casy = append(casy, z.cas)
+	}
+	poradi := make([]int, len(udalosti))
+	for i := range poradi {
+		poradi[i] = i
+	}
+	// Stabilně podle času: události kroniky ve stejné vteřině zůstanou v pořadí zápisu
+	sort.SliceStable(poradi, func(i, j int) bool { return casy[poradi[i]].Before(casy[poradi[j]]) })
+	for i := len(poradi) - 1; i >= 0 && len(s.Kronika) < udalostiKroniky; i-- {
+		s.Kronika = append(s.Kronika, udalosti[poradi[i]])
 	}
 	return s
 }

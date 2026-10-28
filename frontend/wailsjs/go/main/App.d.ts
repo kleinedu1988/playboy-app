@@ -62,6 +62,8 @@ export function GetNejlepsiFotky(arg1:number):Promise<Array<main.Fotografie>>;
 
 export function GetOblibenost():Promise<main.StavOblibenosti>;
 
+export function GetOdznakyModelky(arg1:number):Promise<Array<main.OdznakModelky>>;
+
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
 export function GetPrehledOblibenosti():Promise<main.PrehledOblibenosti>;

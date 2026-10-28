@@ -33,6 +33,7 @@ const CTENI = new Set([
     'GetPrehledVydani',
     'GetSablonaObrazku',
     'GetSinSlavy',
+    'GetOdznakyModelky',
     'GetSoubojeModelky',
     'GetSpecialy',
     'GetStavUceni',
@@ -99,6 +100,7 @@ export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehl
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));
 export const GetSablonaObrazku = /** @type {typeof App.GetSablonaObrazku} */ (obalit('GetSablonaObrazku'));
 export const GetSinSlavy = /** @type {typeof App.GetSinSlavy} */ (obalit('GetSinSlavy'));
+export const GetOdznakyModelky = /** @type {typeof App.GetOdznakyModelky} */ (obalit('GetOdznakyModelky'));
 export const GetSoubojeModelky = /** @type {typeof App.GetSoubojeModelky} */ (obalit('GetSoubojeModelky'));
 export const GetStavyVydani = /** @type {typeof App.GetStavyVydani} */ (obalit('GetStavyVydani'));
 export const GetTagy = /** @type {typeof App.GetTagy} */ (obalit('GetTagy'));

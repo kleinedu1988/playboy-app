@@ -1,6 +1,7 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
+import { htmlRadyOdznaku } from './sin-slavy';
 import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
-import { GetFotografieModelky, SetPoradiFotek } from './backend';
+import { GetFotografieModelky, GetOdznakyModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -119,6 +120,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
         ${htmlSrdicka(modelka)}
         ${htmlOdhadu(modelka, 'odhad-profil')}
         ${htmlPoradi(modelka)}
+        <div class="profile-odznaky" hidden></div>
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
         <div class="profile-actions-misto"></div>
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
@@ -129,7 +131,19 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}
 
     document.querySelector('#modelHeader .profile-actions-misto').replaceWith(akce);
 
-    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka)]);
+    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitOdznaky(modelka.id)]);
+}
+
+// Odznaky síně slávy pod pořadím (jen získané); klik otevře Síň slávy
+async function doplnitOdznaky(id) {
+    let odznaky = [];
+    try {
+        odznaky = await GetOdznakyModelky(id) || [];
+    } catch { /* odznaky jsou jen doplněk */ }
+    const misto = /** @type {HTMLElement | null} */ (document.querySelector('#modelHeader .profile-odznaky'));
+    if (!misto || stav.aktualniModelka?.id !== id || !odznaky.length) return;
+    misto.innerHTML = `<button type="button" class="profile-odznaky-tlacitko" data-otevrit-oblibenost="slava" title="Otevřít Síň slávy">${htmlRadyOdznaku(odznaky, 12)}</button>`;
+    misto.hidden = false;
 }
 
 // Aktuální potvrzené pořadí v oblíbenosti pod srdíčky; klik otevře Pořadí v Oblíbenosti

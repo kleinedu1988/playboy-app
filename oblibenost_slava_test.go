@@ -118,8 +118,20 @@ func TestSpocitatSinSlavy(t *testing.T) {
 			t.Errorf("rekord %s: %+v, chci %+v", druh, r, chci)
 		}
 	}
-	if len(s.Kronika) != len(kronika)-1 || s.Kronika[0].Druh != udalostVstup || s.Kronika[0].ModelkaID != 2 || s.Kronika[len(s.Kronika)-1].Druh != udalostZacatek {
+	var bezOdznaku []UdalostSlavy
+	for _, u := range s.Kronika {
+		if u.Druh != "odznak" {
+			bezOdznaku = append(bezOdznaku, u)
+		}
+	}
+	if len(bezOdznaku) != len(kronika)-1 || bezOdznaku[0].Druh != udalostVstup || bezOdznaku[0].ModelkaID != 2 || bezOdznaku[len(bezOdznaku)-1].Druh != udalostZacatek {
 		t.Errorf("kronika: %+v", s.Kronika)
+	}
+	// Zisk odznaku je v kronice po události, která ho přinesla (comeback dvojky hned po jejím vstupu)
+	for i, u := range s.Kronika {
+		if u.Odznak == "comeback" && (i+1 >= len(s.Kronika) || s.Kronika[i+1].Druh != udalostVstup) {
+			t.Errorf("comeback v kronice: %+v", s.Kronika)
+		}
 	}
 	// Trojka vypadla: legenda
 	s = spocitatSinSlavy(append(kronika, z(90, udalostVystup, 3, 12, 1, 15)), modelSlavy([]int{1, 2}, 3), porovnani, existuje, nil, nyni)

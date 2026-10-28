@@ -122,6 +122,10 @@ export function GetOblibenost() {
   return window['go']['main']['App']['GetOblibenost']();
 }
 
+export function GetOdznakyModelky(arg1) {
+  return window['go']['main']['App']['GetOdznakyModelky'](arg1);
+}
+
 export function GetPrehled(arg1) {
   return window['go']['main']['App']['GetPrehled'](arg1);
 }

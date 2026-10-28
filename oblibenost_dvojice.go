@@ -34,7 +34,6 @@ const (
 	// Nehodnocené proti kotvě: podíl dvojic ve výchozím výběru a váhy podle toho, co o nich víme (s odhadem vkusu 1)
 	podilNehodnocenych = 0.33
 	vahaRozpracovane   = 2.5 // už porovnaná, ale ještě bez návrhu srdíček: dotáhnout ji
-	vahaOdhaduFotek    = 0.8 // jen skóre fotek
 	vahaBezOdhadu      = 0.35
 	vahaNesouladu      = 1.6 // modelka, které nesedí srdíčka: další porovnání to ověří
 )
@@ -105,7 +104,6 @@ type kandidatDvojice struct {
 // Odkud je úroveň nehodnocené modelky
 const (
 	urovenPrumer    = iota // bez odhadu: průměr srdíček sbírky
-	urovenFotky            // skóre jejích fotek
 	urovenVkus             // odhad modelu vkusu
 	urovenPorovnani        // síla z dosavadních porovnání
 )
@@ -143,8 +141,6 @@ func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
 			}
 		case urovenVkus:
 			odkud = fmt.Sprintf("Odhad podle vkusu: %s", textSrdicek(k.uroven))
-		case urovenFotky:
-			odkud = fmt.Sprintf("Podle srdíček jejích fotek asi %s", textSrdicek(k.uroven))
 		default:
 			odkud = fmt.Sprintf("Zatím bez odhadu, průměr sbírky je %s", textSrdicek(k.uroven))
 		}
@@ -324,17 +320,14 @@ func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []poro
 			if len(podleUrovne) == 0 {
 				break
 			}
-			// Úroveň je síla modelky (předpoklad z odhadu vkusu, fotek nebo průměru, upřesněný porovnáními) – stejné číslo,
+			// Úroveň je síla modelky (předpoklad z odhadu vkusu nebo průměru, upřesněný porovnáními) – stejné číslo,
 			// ze kterého je její místo v pořadí a návrh srdíček
 			cil, zdroj, vahaX := model.prumer, urovenPrumer, vahaBezOdhadu
 			if s, ok := model.sila[x.ID]; ok {
 				cil, zdroj = s, model.zdrojOdhadu[x.ID]
 			}
-			switch zdroj {
-			case urovenVkus:
+			if zdroj == urovenVkus {
 				vahaX = 1
-			case urovenFotky:
-				vahaX = vahaOdhaduFotek
 			}
 			if model.pocet[x.ID] > 0 {
 				zdroj = urovenPorovnani

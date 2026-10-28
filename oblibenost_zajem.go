@@ -26,6 +26,7 @@ import (
 // se po každých 20 záznamech, po změně dat nebo druhý den.
 
 const (
+	minPorovnaniZajmu    = 10   // z méně porovnání, na kterých váha zájmu něco mění, se neučí
 	polocasZajmu         = 60.0 // dny: zájem starý dva měsíce váží polovinou
 	pauzaProfilu         = 10 * time.Minute
 	maxSekundZaznamu     = 1800  // jeden záznam prohlížení fotek nejvýš půl hodiny
@@ -299,7 +300,7 @@ func naucitVahuZajmu(data []porovnaniZajmu) vysledekZajmu {
 		}
 	}
 	v.porovnani = len(info)
-	if len(info) < minPorovnaniVahy {
+	if len(info) < minPorovnaniZajmu {
 		return v
 	}
 	nejlepsi, nejmensi := vychoziVahaZajmu, math.Inf(1)

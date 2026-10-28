@@ -111,97 +111,25 @@ func TestSkoreFotekSmrsteni(t *testing.T) {
 	}
 }
 
-// Srdíčka po půlce se mohou přeskupit podle fotek, celé srdíčko ne
-func TestSkoreFotekPreskupiPulSrdicka(t *testing.T) {
+// Srdíčka fotek sílu modelky neposouvají: bez porovnání je oblíbenost přesně její srdíčka, skóre fotek je jen údaj
+func TestFotkyNeposouvajiOblibenost(t *testing.T) {
 	modelky := pozadiFotek(40, rand.New(rand.NewSource(3)))
 	vyborne := []srdickaAlba{albumStejnych(8, 5), albumStejnych(8, 5), albumStejnych(8, 5)}
 	slabe := []srdickaAlba{albumStejnych(8, 2), albumStejnych(8, 2), albumStejnych(8, 2)}
 	modelky = append(modelky,
 		Modelka{ID: 1, Hodnoceni: 4, srdickaAlb: vyborne},
 		Modelka{ID: 2, Hodnoceni: 4.5, srdickaAlb: slabe},
-		Modelka{ID: 3, Hodnoceni: 3, srdickaAlb: vyborne},
-		Modelka{ID: 4, Hodnoceni: 4, srdickaAlb: slabe},
 		Modelka{ID: 5, Hodnoceni: 4})
 	model := spocitatOblibenost(modelky, nil, time.Now())
 	ob := model.oblibenost
-	t.Logf("váha %.2f, převod α %.2f β %.2f; oblíbenost %v %v %v %v %v", model.vaha.vaha, model.kalibrace.alfa, model.kalibrace.beta, ob[1], ob[2], ob[3], ob[4], ob[5])
-	if model.vaha.naucena || model.vaha.vaha != vychoziVahaFotek {
-		t.Fatalf("bez porovnání má platit výchozí váha: %+v", model.vaha)
+	if ob[1] != 4 || ob[2] != 4.5 || ob[5] != 4 {
+		t.Fatalf("oblíbenost se odchýlila od srdíček: %v %v %v", ob[1], ob[2], ob[5])
 	}
-	if ob[1] <= ob[2] {
-		t.Fatalf("čtyřka s výbornými fotkami (%v) nepředběhla 4½ se slabými (%v)", ob[1], ob[2])
-	}
-	if ob[3] >= ob[4] || ob[3] >= 3.5 || ob[4] <= 3.5 {
-		t.Fatalf("o celé srdíčko se pořadí přehodilo: trojka %v, čtyřka %v", ob[3], ob[4])
-	}
-	// Bez fotek zůstává na srdíčkách
-	if ob[5] != 4 {
-		t.Fatalf("bez fotek: %v", ob[5])
+	if _, ok := model.skore[1]; !ok {
+		t.Fatal("skóre fotek jako údaj chybí")
 	}
 	if d := model.duvodOblibenosti(Modelka{ID: 1, Hodnoceni: 4}, ""); !strings.HasPrefix(d, "srdíčka 4 · fotky ") || !strings.HasSuffix(d, " (3 alba, 24 hodnocených fotek)") {
 		t.Fatalf("důvod: %q", d)
-	}
-}
-
-// Umělá porovnání: skutečná síla t, srdíčka = t zaokrouhlené na půlky se šumem, skóre fotek přesné nebo náhodné
-func porovnaniProVahu(n int, presneFotky bool, seed int64) []porovnaniVahy {
-	r := rand.New(rand.NewSource(seed))
-	type modelka struct{ t, h, f float64 }
-	modelky := make([]modelka, 80)
-	for i := range modelky {
-		t := 2 + 3*r.Float64()
-		f := t + r.NormFloat64()*0.15
-		if !presneFotky {
-			f = 2 + 3*r.Float64()
-		}
-		modelky[i] = modelka{t, min(max(zaokrouhlitNaPul(t+r.NormFloat64()*0.4), 0.5), 5), f}
-	}
-	var data []porovnaniVahy
-	for len(data) < n {
-		i, j := r.Intn(len(modelky)), r.Intn(len(modelky))
-		a, b := modelky[i], modelky[j]
-		if i == j || a.h != b.h {
-			continue
-		}
-		y := 0.0
-		if r.Float64() < zLogitu(4*(a.t-b.t)) {
-			y = 1
-		}
-		data = append(data, porovnaniVahy{hi: a.h, hj: b.h, fi: a.f, fj: b.f, y: y, t: 1})
-	}
-	return data
-}
-
-func TestVahaFotekZPorovnani(t *testing.T) {
-	presne := naucitVahuFotek(porovnaniProVahu(400, true, 1), 3)
-	t.Logf("přesné fotky: %+v, zlepšení %.3f", presne, presne.zlepseni())
-	if !presne.naucena || presne.vaha < 0.5 || presne.zlepseni() <= 0 {
-		t.Fatalf("přesné skóre fotek: %+v", presne)
-	}
-	nahodne := naucitVahuFotek(porovnaniProVahu(400, false, 2), 3)
-	t.Logf("náhodné fotky: %+v, zlepšení %.3f", nahodne, nahodne.zlepseni())
-	if !nahodne.naucena || nahodne.vaha > 0.2 {
-		t.Fatalf("náhodné skóre fotek: %+v", nahodne)
-	}
-	// Málo porovnání: výchozí váha
-	malo := naucitVahuFotek(porovnaniProVahu(8, true, 3), 3)
-	if malo.naucena || malo.vaha != vychoziVahaFotek {
-		t.Fatalf("z osmi porovnání: %+v", malo)
-	}
-	// Málo porovnání (ale nad prahem) se smrští k výchozí víc než mnoho
-	nekolik := naucitVahuFotek(porovnaniProVahu(25, true, 4), 3)
-	t.Logf("25 porovnání: %+v", nekolik)
-	if !nekolik.naucena || math.Abs(nekolik.vaha-vychoziVahaFotek) > math.Abs(presne.vaha-vychoziVahaFotek)+1e-9 {
-		t.Fatalf("25 porovnání se smrštila méně než 400: %v proti %v", nekolik.vaha, presne.vaha)
-	}
-	// Porovnání bez skóre fotek váhu nemění
-	var bez []porovnaniVahy
-	for _, p := range porovnaniProVahu(100, true, 5) {
-		p.fi, p.fj = 0, 0
-		bez = append(bez, p)
-	}
-	if v := naucitVahuFotek(bez, 3); v.porovnani != 0 || v.naucena {
-		t.Fatalf("bez skóre fotek: %+v", v)
 	}
 }
 
@@ -267,12 +195,12 @@ func TestSkoreANahledyVAplikaci(t *testing.T) {
 	sdilene := album(bara, "Spolu", "Pictorial", 3, 3)
 	a.db.Exec("INSERT INTO alba_modelky (album_id, modelka_id) VALUES (?, ?)", sdilene, anna)
 	stav := a.GetOblibenost()
-	// Nehodnocená Bára s hodnocenými fotkami je v pořadí jen odhadem z fotek, pod hodnocenou Annou
-	if len(stav.Poradi) != 2 || stav.Poradi[1].ModelkaID != bara || !stav.Poradi[1].JenOdhad || stav.Poradi[0].JenOdhad {
+	// Nehodnocená Bára jen s hodnocenými fotkami v pořadí není, Anna má skóre fotek jako údaj
+	if len(stav.Poradi) != 1 || stav.Poradi[0].JenOdhad {
 		t.Fatalf("pořadí: %+v", stav.Poradi)
 	}
 	p := stav.Poradi[0]
-	if p.ModelkaID != anna || p.AlbFotek != 2 || p.FotekHodnocenych != 5 || p.SkoreFotek <= 3 || p.SkoreFotek >= 5 || !strings.Contains(p.Duvod, "fotky ") || stav.VahaFotek != vychoziVahaFotek {
+	if p.ModelkaID != anna || p.AlbFotek != 2 || p.FotekHodnocenych != 5 || p.SkoreFotek <= 3 || p.SkoreFotek >= 5 || !strings.Contains(p.Duvod, "fotky ") {
 		t.Fatalf("Anna v pořadí: %+v, stav %+v", p, stav)
 	}
 	nahledy := a.GetNahledyModelek([]int{anna, bara, 9999}, 8)
@@ -330,8 +258,8 @@ func TestVykonNahleduASkore(t *testing.T) {
 	stav := a.GetOblibenost()
 	oblibenost := time.Since(zacatek)
 	model := a.uc.ob.model
-	t.Logf("náhledy 6 modelek bez paměti %v, z paměti %v; GetOblibenost %v (skóre fotek u %d modelek, váha %.2f z %d porovnání, model vkusu ze skóre %v)",
-		studene, teple, oblibenost, len(model.skore), stav.VahaFotek, stav.PorovnaniVahy, model.vkusZeSkore)
+	t.Logf("náhledy 6 modelek bez paměti %v, z paměti %v; GetOblibenost %v (skóre fotek u %d modelek, %d v pořadí, model vkusu ze skóre %v)",
+		studene, teple, oblibenost, len(model.skore), len(stav.Poradi), model.vkusZeSkore)
 	zmerit := func(f func()) time.Duration {
 		nejlepsi := time.Duration(math.MaxInt64)
 		for range 3 {
@@ -353,44 +281,8 @@ func TestVykonNahleduASkore(t *testing.T) {
 
 // Celý výpočet: modelky jedné úrovně srdíček, porovnání podle kvality fotek → váha fotek se naučí výš než výchozí
 // a pořadí sleduje fotky; z porovnání proti fotkám váha klesne
-func TestVahaFotekVOblibenosti(t *testing.T) {
-	r := rand.New(rand.NewSource(9))
-	sestavit := func(protiFotkam bool) *modelOblibenosti {
-		var modelky []Modelka
-		uroven := map[int]float64{}
-		for i := range 40 {
-			u := 1 + r.Intn(5)
-			uroven[i+1] = float64(u)
-			modelky = append(modelky, Modelka{ID: i + 1, Hodnoceni: 4, srdickaAlb: []srdickaAlba{albumStejnych(6, u), albumStejnych(6, u)}})
-		}
-		var porovnani []porovnaniZaznam
-		for k := 0; len(porovnani) < 300; k++ {
-			i, j := 1+r.Intn(40), 1+r.Intn(40)
-			if i == j || uroven[i] == uroven[j] {
-				continue
-			}
-			lepsi := uroven[i] > uroven[j]
-			if protiFotkam {
-				lepsi = !lepsi
-			}
-			v := "b"
-			if lepsi {
-				v = "a"
-			}
-			porovnani = append(porovnani, porovnaniZaznam{id: int64(k + 1), a: i, b: j, vysledek: v, ha: 4, hb: 4})
-		}
-		return spocitatOblibenost(modelky, porovnani, time.Now())
-	}
-	podle := sestavit(false)
-	proti := sestavit(true)
-	t.Logf("podle fotek: %+v; proti fotkám: %+v", podle.vaha, proti.vaha)
-	if !podle.vaha.naucena || podle.vaha.vaha <= vychoziVahaFotek || proti.vaha.vaha >= vychoziVahaFotek {
-		t.Fatalf("váha podle fotek %v, proti fotkám %v", podle.vaha.vaha, proti.vaha.vaha)
-	}
-}
-
-// Nehodnocená a neporovnaná modelka s hodnocenými fotkami je v Pořadí s příznakem odhadu z fotek
-func TestPoradiOdhadZFotek(t *testing.T) {
+// Nehodnocená a neporovnaná modelka jen s hodnocenými fotkami do Pořadí nepatří (fotky o síle modelky neříkají nic)
+func TestPoradiBezOdhaduZFotek(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	a.AddModelka(Modelka{Jmeno: "Hodnocená", Tetovani: -1, Piercing: -1})
 	a.AddModelka(Modelka{Jmeno: "Jen fotky", Tetovani: -1, Piercing: -1})
@@ -400,19 +292,8 @@ func TestPoradiOdhadZFotek(t *testing.T) {
 	for _, f := range a.GetFotografieModelky(fotky) {
 		a.SetHodnoceniFotek([]int{f.ID}, 5)
 	}
-	var nasla bool
-	for _, p := range a.GetOblibenost().Poradi {
-		if p.ModelkaID == fotky {
-			nasla = true
-			if !p.JenOdhad || p.ZdrojOdhadu != "fotky" || p.Hodnoceni != 0 || !strings.Contains(p.Duvod, "odhad z fotek") {
-				t.Fatalf("položka: %+v", p)
-			}
-		}
-		if p.ModelkaID == hodnocena && p.JenOdhad {
-			t.Fatalf("hodnocená nemá být odhad z fotek: %+v", p)
-		}
-	}
-	if !nasla {
-		t.Fatal("nehodnocená modelka s fotkami v pořadí chybí")
+	poradi := a.GetOblibenost().Poradi
+	if len(poradi) != 1 || poradi[0].ModelkaID != hodnocena || poradi[0].JenOdhad || poradi[0].Sila != 3 {
+		t.Fatalf("pořadí: %+v", poradi)
 	}
 }

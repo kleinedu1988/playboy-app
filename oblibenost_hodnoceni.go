@@ -14,13 +14,12 @@ import (
 // nehodnocené podle užitku pro pořadí, nakonec hodnocené, kterým podle porovnání nebo fotek nesedí srdíčka (nesoulad,
 // stejný návrh jako „Nesedí se srdíčky“). Užitek nehodnocené = odhad + ½·nejistota: nejistá „možná pětka“ může
 // rozhodnout o top 10 a model vkusu se na ní naučí nejvíc, jistá čtyřka méně. Odhad je síla z porovnání (už
-// porovnávaná), odhad vkusu, odhad ze srdíček fotek, jinak průměr srdíček bez odhadu. Modelky bez fotek i titulky jdou
+// porovnávaná), odhad vkusu, jinak průměr srdíček bez odhadu. Modelky bez fotek i titulky jdou
 // mezi nehodnocenými nakonec.
 
 const (
 	dnyNoveModelky   = 14
 	vahaNejistotyHod = 0.5
-	nejistotaFotek   = 0.8
 )
 
 // Položka fronty rychlého hodnocení. Druh: "nova" (nedávno přidaná nehodnocená), "nehodnocena", "nesedi" (hodnocená,
@@ -92,15 +91,8 @@ func (m *modelOblibenosti) odhadProHodnoceni(x Modelka) (odhad, nejistota float6
 		odhad = min(max(m.oblibenost[x.ID], 0.5), 5)
 		return odhad, math.Sqrt(m.rozptylModelky(&x)), fmt.Sprintf("Po %d porovnáních vychází na %s", n, textSrdicek(zaokrouhlitNaPul(odhad)))
 	}
-	switch m.zdrojOdhadu[x.ID] {
-	case urovenVkus:
-		if o, ok := m.odhad[x.ID]; ok && m.vkus != nil {
-			return o, m.nejistotaOdhadu(x.ID), m.vkus.textOdhadu(x.ID, o, true, false)
-		}
-	case urovenFotky:
-		if p, ok := m.predpoklad[x.ID]; ok {
-			return min(max(p, 0.5), 5), nejistotaFotek, fmt.Sprintf("Podle srdíček jejích fotek asi %s", textSrdicek(zaokrouhlitNaPul(p)))
-		}
+	if o, ok := m.odhad[x.ID]; ok && m.vkus != nil && m.zdrojOdhadu[x.ID] == urovenVkus {
+		return o, m.nejistotaOdhadu(x.ID), m.vkus.textOdhadu(x.ID, o, true, false)
 	}
 	return 0, sigmaNehodnocene, ""
 }

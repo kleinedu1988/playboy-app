@@ -522,10 +522,6 @@ export namespace main {
 	    porovnani: number;
 	    vysledky: number;
 	    rozdil: number;
-	    skoreFotek: number;
-	    albFotek: number;
-	    fotekHodnocenych: number;
-	    rozdilFotek: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new NesouladSrdicek(source);
@@ -542,10 +538,6 @@ export namespace main {
 	        this.porovnani = source["porovnani"];
 	        this.vysledky = source["vysledky"];
 	        this.rozdil = source["rozdil"];
-	        this.skoreFotek = source["skoreFotek"];
-	        this.albFotek = source["albFotek"];
-	        this.fotekHodnocenych = source["fotekHodnocenych"];
-	        this.rozdilFotek = source["rozdilFotek"];
 	    }
 	}
 	export class NavrhSrdicek {
@@ -1254,10 +1246,6 @@ export namespace main {
 	    hodnocenych: number;
 	    presnost: number;
 	    odhady: boolean;
-	    vahaFotek: number;
-	    vahaNaucena: boolean;
-	    porovnaniVahy: number;
-	    zlepseniFotek: number;
 	    vahaZajmu: number;
 	    zajemNaucen: boolean;
 	    porovnaniZajmu: number;
@@ -1279,10 +1267,6 @@ export namespace main {
 	        this.hodnocenych = source["hodnocenych"];
 	        this.presnost = source["presnost"];
 	        this.odhady = source["odhady"];
-	        this.vahaFotek = source["vahaFotek"];
-	        this.vahaNaucena = source["vahaNaucena"];
-	        this.porovnaniVahy = source["porovnaniVahy"];
-	        this.zlepseniFotek = source["zlepseniFotek"];
 	        this.vahaZajmu = source["vahaZajmu"];
 	        this.zajemNaucen = source["zajemNaucen"];
 	        this.porovnaniZajmu = source["porovnaniZajmu"];

@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.63] – 2026-10-28
+
+### Změněno
+- **Srdíčka fotek už neposouvají sílu modelky.**
+  - Srdíčka fotky říkají, jak dobrá je fotka té modelky, ne jak moc se ti líbí modelka. Pětisrdíčková fotka jedničkové modelky ji proto už nevytáhne nad čtyřku.
+  - Pořadí v Oblíbenosti dávají srdíčka modelky, porovnání a zájem. Bez porovnání je oblíbenost přesně srdíčka.
+  - „Nesedí se srdíčky“ navrhuje změnu jen podle porovnání, ne podle fotek.
+  - Nehodnocené modelky jen s hodnocenými fotkami už nejsou v Pořadí jako „odhad z fotek“. Odhad dává jen model vkusu.
+  - Skóre fotek („fotky 4,3“) zůstává jako údaj u modelky a model vkusu z něj dál odhaduje hodnocení.
+  - Pod Pořadím zmizela věta o naučené váze fotek.
+
 ## [0.99.62] – 2026-10-28
 
 ### Změněno

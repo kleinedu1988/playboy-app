@@ -827,24 +827,18 @@ func TestNesouladSrdicek(t *testing.T) {
 
 // Nesoulad se skóre fotek: 4½ se slabými fotkami (3 alba po 8 fotkách za 2) má návrh 4 ze zdroje fotky; 3 s výbornými
 // 3½; s porovnáními stejným směrem zdroj „oba“; málo fotek (1 album) nic
-func TestNesouladSFotkami(t *testing.T) {
+func TestNesouladJenZPorovnani(t *testing.T) {
 	modelky := pozadiFotek(40, rand.New(rand.NewSource(3)))
 	slabe := []srdickaAlba{albumStejnych(8, 2), albumStejnych(8, 2), albumStejnych(8, 2)}
 	vyborne := []srdickaAlba{albumStejnych(8, 5), albumStejnych(8, 5), albumStejnych(8, 5)}
 	modelky = append(modelky,
 		Modelka{ID: 1, Jmeno: "Slabé fotky", Hodnoceni: 4.5, srdickaAlb: slabe},
 		Modelka{ID: 2, Jmeno: "Výborné fotky", Hodnoceni: 3, srdickaAlb: vyborne},
-		Modelka{ID: 3, Jmeno: "Jedno album", Hodnoceni: 4.5, srdickaAlb: []srdickaAlba{albumStejnych(12, 2)}},
 		Modelka{ID: 4, Hodnoceni: 4}, Modelka{ID: 5, Hodnoceni: 4}, Modelka{ID: 6, Hodnoceni: 4})
+	// Samotné fotky nesoulad nezakládají
 	model := spocitatOblibenost(modelky, nil, time.Now())
-	if n, ok := model.nesoulad[1]; !ok || n.Zdroj != "fotky" || n.Smer != "mene" || n.Navrh != 4 || n.AlbFotek != 3 || n.FotekHodnocenych != 24 {
-		t.Fatalf("slabé fotky: %+v", model.nesoulad[1])
-	}
-	if n, ok := model.nesoulad[2]; !ok || n.Zdroj != "fotky" || n.Smer != "vice" || n.Navrh != 3.5 {
-		t.Fatalf("výborné fotky: %+v", model.nesoulad[2])
-	}
-	if _, ok := model.nesoulad[3]; ok {
-		t.Fatalf("jedno album nestačí: %+v", model.nesoulad[3])
+	if len(model.nesoulad) != 0 {
+		t.Fatalf("nesoulad z fotek: %+v", model.nesoulad)
 	}
 	nyni := time.Now()
 	var porovnani []porovnaniZaznam
@@ -852,8 +846,11 @@ func TestNesouladSFotkami(t *testing.T) {
 		porovnani = append(porovnani, porovnaniZaznam{id: int64(k + 1), cas: nyni, a: 1, b: b, vysledek: "b"})
 	}
 	model = spocitatOblibenost(modelky, porovnani, nyni)
-	if n := model.nesoulad[1]; n.Zdroj != "oba" || n.Vysledky != 3 || n.SkoreFotek == 0 {
-		t.Fatalf("porovnání i fotky: %+v", n)
+	if n, ok := model.nesoulad[1]; !ok || n.Zdroj != "porovnani" || n.Vysledky != 3 || n.Smer != "mene" {
+		t.Fatalf("z porovnání: %+v", model.nesoulad[1])
+	}
+	if _, ok := model.nesoulad[2]; ok {
+		t.Fatalf("výborné fotky bez porovnání: %+v", model.nesoulad[2])
 	}
 }
 

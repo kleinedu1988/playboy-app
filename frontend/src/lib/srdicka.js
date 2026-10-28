@@ -118,16 +118,12 @@ export function skrytNavrh(klic) {
     try { localStorage.setItem('oblibenostNesediSkryte', JSON.stringify([...skryte].slice(-300))); } catch { /* jen pro toto spuštění */ }
 }
 
-const cislo1 = n => (Number(n) || 0).toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
 // „3 ze 4“, „2 z 5“: ze před čísly, která se vyslovují se skupinou souhlásek (dvou, tří, čtyř, šesti, sedmi, dvanácti…)
 export const zKolika = n => `${/^(?:[23467]|1[2-467])/.test(String(n)) ? 'ze' : 'z'} ${n}`;
 
-// Proč nesoulad: porovnání, fotky, nebo obojí
+// Proč nesoulad (jen z porovnání; srdíčka fotek jsou vůči modelce a o její síle neříkají nic)
 export function vetaNesouladu(n) {
-    const porovnani = n.smer === 'mene'
+    return n.smer === 'mene'
         ? `prohrála ${n.vysledky} ${zKolika(n.porovnani)} porovnání s modelkami s méně srdíčky`
         : `vyhrála ${n.vysledky} ${zKolika(n.porovnani)} porovnání s modelkami s víc srdíčky`;
-    const fotky = `má fotky za ${cislo1(n.skoreFotek)} (${sklonovat(n.albFotek, 'album', 'alba', 'alb')}, ${sklonovat(n.fotekHodnocenych, 'hodnocená', 'hodnocené', 'hodnocených')})`;
-    return n.zdroj === 'fotky' ? fotky : n.zdroj === 'oba' ? `${porovnani} a ${fotky}` : porovnani;
 }

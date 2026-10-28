@@ -16,18 +16,6 @@ export function popisNahledu(nahled, index) {
     return [nahled?.album, srdicka, `${index + 1}. fotka`].filter(Boolean).join(' · ');
 }
 
-// Věta o váze fotek v pořadí: naučená z porovnání, nebo výchozí
-export function textVahyFotek({ vahaFotek = 0, vahaNaucena = false, porovnaniVahy = 0, zlepseniFotek = 0 } = {}) {
-    const procenta = `${Math.round(Math.max(0, Math.min(1, Number(vahaFotek) || 0)) * 100)} %`;
-    if (!vahaNaucena) {
-        return `Skóre fotek váží v pořadí ${procenta} (výchozí). Naučí se z porovnání modelek se stejnými srdíčky${porovnaniVahy ? ` – zatím ${porovnaniVahy}, potřeba aspoň 10` : ''}.`;
-    }
-    const zlepseni = Math.round((Number(zlepseniFotek) || 0) * 100);
-    const predpoved = zlepseni > 0 ? `, předpověď porovnání je díky fotkám o ${zlepseni} % lepší`
-        : zlepseni < 0 ? ', fotky zatím porovnání nepředpovídají' : '';
-    return `Skóre fotek váží v pořadí ${procenta}, naučeno podle ${porovnaniVahy} porovnání modelek se stejnými srdíčky${predpoved}.`;
-}
-
 const mistaText = n => `${n} ${n === 1 ? 'místo' : n >= 2 && n <= 4 ? 'místa' : 'míst'}`;
 
 // Trend modelky: posun v pořadí oblíbenosti proti snímku před trendDni dny ({ smer, znak, text }), nebo null

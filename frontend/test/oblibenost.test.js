@@ -1,22 +1,17 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NAHLEDU_V_POROVNANI, popisNahledu, textSkoreFotek, textVahyFotek } from '../src/lib/oblibenost.js';
+import { NAHLEDU_V_POROVNANI, popisNahledu, textSkoreFotek } from '../src/lib/oblibenost.js';
 
 test('galerie obou ukáže nejvýš 24 nejlepších fotek (strop GetNahledyModelek)', () => {
     assert.equal(NAHLEDU_V_POROVNANI, 24);
 });
 
-test('texty skóre fotek, popisku náhledu a váhy fotek', () => {
+test('texty skóre fotek a popisku náhledu', () => {
     assert.equal(textSkoreFotek(4.26), 'fotky 4,3');
     assert.equal(textSkoreFotek(4), 'fotky 4,0');
     assert.equal(textSkoreFotek(0), '');
     assert.equal(popisNahledu({ album: 'Pictorial', hodnoceni: 4 }, 0), 'Pictorial · ♥♥♥♥ · 1. fotka');
     assert.equal(popisNahledu({ album: '', hodnoceni: 0 }, 2), 'bez srdíček · 3. fotka');
-    assert.equal(textVahyFotek({ vahaFotek: 0.3 }), 'Skóre fotek váží v pořadí 30 % (výchozí). Naučí se z porovnání modelek se stejnými srdíčky.');
-    assert.match(textVahyFotek({ vahaFotek: 0.3, porovnaniVahy: 4 }), /zatím 4, potřeba aspoň 10/);
-    assert.equal(textVahyFotek({ vahaFotek: 0.62, vahaNaucena: true, porovnaniVahy: 120, zlepseniFotek: 0.12 }),
-        'Skóre fotek váží v pořadí 62 %, naučeno podle 120 porovnání modelek se stejnými srdíčky, předpověď porovnání je díky fotkám o 12 % lepší.');
-    assert.match(textVahyFotek({ vahaFotek: 0.05, vahaNaucena: true, porovnaniVahy: 30, zlepseniFotek: -0.02 }), /fotky zatím porovnání nepředpovídají/);
 });
 
 test('trend modelky, řádek pořadí v profilu a řazení fotek podle oblíbenosti', async () => {
@@ -207,4 +202,10 @@ test('ověření srdíček: výsledek a nadpis', async () => {
     assert.deepEqual(vysledekOvereni({ jmeno: 'Anna', hodnoceni: 3, ted: { navrh: 3.5 } }), { ok: true, navrh: 3.5, text: 'Anna: porovnání to potvrdila – patří jí spíš 3½ ♥ místo 3 ♥.' });
     assert.deepEqual(vysledekOvereni({ jmeno: 'Anna', hodnoceni: 4.5, ted: null }), { ok: false, navrh: 0, text: 'Anna: porovnání nesoulad nepotvrdila – 4½ ♥ jí sedí.' });
     assert.equal(nadpisSouboje({ druh: 'overeni', duvod: 'Ověření srdíček: …' }), 'Ověření srdíček');
+});
+
+test('nesoulad se srdíčky se vysvětluje jen porovnáním', async () => {
+    const { vetaNesouladu } = await import('../src/lib/srdicka.js');
+    assert.equal(vetaNesouladu({ smer: 'mene', vysledky: 3, porovnani: 4, skoreFotek: 2 }), 'prohrála 3 ze 4 porovnání s modelkami s méně srdíčky');
+    assert.equal(vetaNesouladu({ smer: 'vice', vysledky: 5, porovnani: 5 }), 'vyhrála 5 z 5 porovnání s modelkami s víc srdíčky');
 });

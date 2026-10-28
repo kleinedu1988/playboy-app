@@ -57,12 +57,6 @@ type StavOblibenosti struct {
 	Presnost    float64 `json:"presnost"`    // přesnost modelu vkusu na křížovém ověření (± půl srdíčka), 0–1; 0 = málo dat
 	// Model vkusu prošel ověřením a jeho odhady se ukazují (odhadHodnoceni, GetMohloByTeLibit)
 	Odhady bool `json:"odhady"`
-	// Váha skóre fotek v předpokladu síly (0–1), zda je naučená z porovnání (jinak výchozí 0,3), z kolika porovnání
-	// a o kolik zlepšila předpověď porovnání proti samotným srdíčkům na ověření (podíl log-ztráty, může být záporné)
-	VahaFotek     float64 `json:"vahaFotek"`
-	VahaNaucena   bool    `json:"vahaNaucena"`
-	PorovnaniVahy int     `json:"porovnaniVahy"`
-	ZlepseniFotek float64 `json:"zlepseniFotek"`
 	// Váha zájmu (otevírání profilu a prohlížení fotek) v předpokladu síly na jednotku míry zájmu, zda je naučená
 	// z porovnání (jinak výchozí 0,1) a z kolika; od kolika dní se zájem sleduje; stáří srovnávacího snímku trendu
 	// (0 = historie zatím chybí)
@@ -93,7 +87,7 @@ type OblibenostModelky struct {
 	SkoreFotek       float64 `json:"skoreFotek"`
 	AlbFotek         int     `json:"albFotek"`
 	FotekHodnocenych int     `json:"fotekHodnocenych"`
-	// Nehodnocená a neporovnaná: místo v pořadí je jen odhad – podle vkusu („vkus“), nebo srdíček fotek („fotky“)
+	// Nehodnocená a neporovnaná: místo v pořadí je jen odhad podle vkusu („vkus“)
 	JenOdhad    bool   `json:"jenOdhad"`
 	ZdrojOdhadu string `json:"zdrojOdhadu"`
 	// Posun síly zájmem (srdíčka), posun oblíbenosti a pořadí proti srovnávacímu snímku (kladný = výš)
@@ -197,8 +191,6 @@ func (a *App) GetOblibenost() StavOblibenosti {
 	modelky, _ := a.nactiModelky("", false)
 	model := a.modelOblibenosti(modelky)
 	stav.Porovnani = model.porovnani
-	stav.VahaFotek, stav.VahaNaucena, stav.PorovnaniVahy = zaokrouhlit3(model.vaha.vaha), model.vaha.naucena, model.vaha.porovnani
-	stav.ZlepseniFotek = zaokrouhlit3(model.vaha.zlepseni())
 	stav.VahaZajmu, stav.ZajemNaucen, stav.PorovnaniZajmu = zaokrouhlit3(model.vahaZajmu.vaha), model.vahaZajmu.naucena, model.vahaZajmu.porovnani
 	stav.TrendDni = model.trendDni
 	if !model.zajemOd.IsZero() {
@@ -385,11 +377,9 @@ type modelOblibenosti struct {
 
 	skore       map[int]skoreFotek // skóre fotek modelek s hodnocenými fotkami
 	fotky       parametryFotek
-	kalibrace   kalibraceFotek
-	vaha        vysledekVahy
 	predpoklad  map[int]float64 // střed předpokladu síly
-	jenOdhad    map[int]bool    // nehodnocená a neporovnaná modelka: oblíbenost jen odhadem (vkus nebo fotky)
-	zdrojOdhadu map[int]int     // nehodnocená: odkud je předpoklad síly (urovenVkus, urovenFotky, urovenPrumer)
+	jenOdhad    map[int]bool    // nehodnocená a neporovnaná modelka: oblíbenost jen odhadem vkusu
+	zdrojOdhadu map[int]int     // nehodnocená: odkud je předpoklad síly (urovenVkus, urovenPrumer)
 	vkusZeSkore bool            // model vkusu má mezi příznaky skóre fotek (výchozí nastavení vkusu, ne průměr srdíček fotek)
 
 	// Zájem (oblibenost_zajem.go): míra zájmu z, záznamy, od kdy se sleduje a naučená váha
@@ -560,35 +550,12 @@ func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zaj
 	if hodnocenych > 0 {
 		model.prumer = soucet / float64(hodnocenych)
 	}
-	// Skóre fotek, jeho převod na stupnici srdíček modelek a váha fotek naučená z porovnání
+	// Skóre fotek: údaj pro model vkusu a pro rozhraní (síla modelky se z něj nepočítá, váha fotek je 0)
 	model.skore, model.fotky = spocitatSkoreFotek(modelky)
-	model.kalibrace = kalibrovatFotky(modelky, model.skore)
-	prevedene := make(map[int]float64, len(model.skore))
-	for id, sf := range model.skore {
-		prevedene[id], _ = model.kalibrace.naSrdicka(sf)
-	}
-	data := make([]porovnaniVahy, 0, len(porovnani))
-	for _, p := range porovnani {
-		if !existuje[p.a] || !existuje[p.b] || p.a == p.b {
-			continue
-		}
-		y, t := 0.5, 1.0
-		switch p.vysledek {
-		case "a":
-			y = 1
-		case "b":
-			y = 0
-		}
-		if !p.cas.IsZero() {
-			t = vahaStari(p.cas, nyni)
-		}
-		data = append(data, porovnaniVahy{hi: p.ha, hj: p.hb, fi: prevedene[p.a], fj: prevedene[p.b], y: y, t: t})
-	}
-	model.vaha = naucitVahuFotek(data, model.prumer)
 
-	// Váha zájmu z porovnání modelek se stejnými srdíčky (předpoklad stran se srdíčky a fotkami s naučenou vahou)
+	// Váha zájmu z porovnání modelek se stejnými srdíčky (předpoklad stran ze srdíček)
 	if len(model.zajem) > 0 {
-		dataZajmu := make([]porovnaniZajmu, 0, len(data))
+		dataZajmu := make([]porovnaniZajmu, 0, len(porovnani))
 		for _, p := range porovnani {
 			if !existuje[p.a] || !existuje[p.b] || p.a == p.b || p.ha <= 0 || p.ha != p.hb {
 				continue
@@ -604,8 +571,8 @@ func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zaj
 				t = vahaStari(p.cas, nyni)
 			}
 			dataZajmu = append(dataZajmu, porovnaniZajmu{
-				pi: predpokladStrany(p.ha, prevedene[p.a], model.vaha.vaha, model.prumer), zi: model.zajem[p.a],
-				pj: predpokladStrany(p.hb, prevedene[p.b], model.vaha.vaha, model.prumer), zj: model.zajem[p.b], y: y, t: t})
+				pi: p.ha, zi: model.zajem[p.a],
+				pj: p.hb, zj: model.zajem[p.b], y: y, t: t})
 		}
 		model.vahaZajmu = naucitVahuZajmu(dataZajmu)
 	}
@@ -627,20 +594,17 @@ func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zaj
 	}
 	model.naucitModelVkusu(modelky, porovnani, stredSrdicka, sigmaSrdicka, nyni)
 
-	// Předpoklady síly (jeden zdroj pro pořadí, galerii, výběr dvojic i návrhy): hodnocená ze srdíček a fotek;
-	// nehodnocená z odhadu vkusu (nejistota = chyba ověření skupiny), jinak ze skóre fotek, jinak (jen porovnávaná)
-	// z průměru sbírky. K tomu posun zájmem.
+	// Předpoklady síly (jeden zdroj pro pořadí, galerii, výběr dvojic i návrhy): hodnocená ze srdíček; nehodnocená
+	// z odhadu vkusu (nejistota = chyba ověření skupiny), jinak (jen porovnávaná) z průměru sbírky. K tomu posun zájmem.
+	// Srdíčka fotek sílu přímo neposouvají: říkají, jak dobrá je fotka té modelky (pětka = její nejlepší), ne jak
+	// dobrá je modelka; jsou jen jedním z údajů modelu vkusu.
 	stred, sigma := map[int]float64{}, map[int]float64{}
 	for _, m := range modelky {
-		sf, maF := model.skore[m.ID]
 		if odhad, ok := model.odhad[m.ID]; ok && m.Hodnoceni <= 0 {
 			stred[m.ID], sigma[m.ID] = odhad, model.nejistotaOdhadu(m.ID)
 			model.zdrojOdhadu[m.ID] = urovenVkus
-		} else if st, sg, ok := predpokladModelky(m.Hodnoceni, sf, maF, model.kalibrace, model.vaha.vaha); ok {
-			stred[m.ID], sigma[m.ID] = st, sg
-			if m.Hodnoceni <= 0 {
-				model.zdrojOdhadu[m.ID] = urovenFotky
-			}
+		} else if m.Hodnoceni > 0 {
+			stred[m.ID], sigma[m.ID] = m.Hodnoceni, sigmaHodnocene
 		}
 	}
 	for _, p := range porovnani {
@@ -672,7 +636,6 @@ func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zaj
 	}
 	model.spocitatUrovne(porovnani)
 	model.nesoulad = spocitatNesoulad(modelky, porovnani, nyni)
-	model.doplnitNesouladFotek(modelky)
 	return model
 }
 
@@ -815,14 +778,7 @@ func (m *modelOblibenosti) duvodOblibenosti(x Modelka, odhad string) string {
 		if s < x.Hodnoceni {
 			smer = "níž"
 		}
-		pricina := "porovnání"
-		switch {
-		case maFotky && m.vaha.vaha > 0 && n > 0:
-			pricina = "fotky a porovnání"
-		case maFotky && m.vaha.vaha > 0:
-			pricina = "fotky"
-		}
-		casti = append(casti, fmt.Sprintf("%s ji staví %s než její srdíčka (síla %s)", pricina, smer, cisloCesky(s, 1)))
+		casti = append(casti, fmt.Sprintf("porovnání ji staví %s než její srdíčka (síla %s)", smer, cisloCesky(s, 1)))
 	}
 	if odhad != "" {
 		casti = append(casti, strings.ToLower(odhad[:1])+odhad[1:])

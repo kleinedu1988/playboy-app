@@ -22,17 +22,11 @@ const (
 const (
 	minPorovnaniNesouladu = 3
 	prahNesouladu         = 1.5 // rozdíl výher proti očekávání (vážený stářím)
-	// Nesoulad se skóre fotek: fotky (převedené na stupnici srdíček modelek) se liší aspoň o celé srdíčko, z aspoň
-	// 2 alb a 10 hodnocených fotek
-	prahNesouladuFotek = 1.0
-	minAlbNesouladu    = 2
-	minFotekNesouladu  = 10
 )
 
-// Nesoulad se srdíčky: modelka s víc srdíčky prohrává se slabšími, nebo má slabší fotky (smer "mene", návrh o půl
-// srdíčka méně), nebo s méně srdíčky vyhrává se silnějšími, nebo má lepší fotky (smer "vice", o půl víc). Zdroj
-// "porovnani", "fotky", nebo "oba" (obojí ukazuje stejným směrem); když porovnání a fotky ukazují proti sobě, platí
-// porovnání (jsou to výslovné soudy).
+// Nesoulad se srdíčky: modelka s víc srdíčky prohrává se slabšími (smer "mene", návrh o půl srdíčka méně), nebo
+// s méně srdíčky vyhrává se silnějšími (smer "vice", o půl víc). Jen z porovnání (zdroj "porovnani"): srdíčka fotek
+// říkají, jak dobrá je fotka té modelky, ne jak dobrá je modelka, srdíčka modelky proto nenavrhují.
 type NesouladSrdicek struct {
 	ModelkaID int     `json:"modelkaId"`
 	Jmeno     string  `json:"jmeno"`
@@ -43,13 +37,7 @@ type NesouladSrdicek struct {
 	Porovnani int     `json:"porovnani"` // porovnání s modelkami s méně (smer mene) nebo víc (vice) srdíčky
 	Vysledky  int     `json:"vysledky"`  // z nich prohry (mene) nebo výhry (vice); remíza se nepočítá
 	Rozdil    float64 `json:"rozdil"`    // výhry proti očekávání ze srdíček (záporné = méně)
-	// Skóre fotek na stupnici srdíček fotek, z kolika alb a hodnocených fotek, a o kolik se fotky převedené na
-	// stupnici srdíček modelek liší od jejích srdíček (jen zdroj fotky a oba)
-	SkoreFotek       float64 `json:"skoreFotek"`
-	AlbFotek         int     `json:"albFotek"`
-	FotekHodnocenych int     `json:"fotekHodnocenych"`
-	RozdilFotek      float64 `json:"rozdilFotek"`
-	vaha             float64 // síla nesouladu pro řazení
+	vaha      float64 // síla nesouladu pro řazení
 }
 
 // Návrh srdíček modelce – jediné místo, odkud rozhraní srdíčka navrhuje (po porovnání i v „Nesedí se srdíčky“):
@@ -179,41 +167,4 @@ func spocitatNesoulad(modelky []Modelka, porovnani []porovnaniZaznam, nyni time.
 		vysledek[id] = n
 	}
 	return vysledek
-}
-
-// Nesoulad se skóre fotek: hodnocená modelka s dost hodnocenými fotkami, jejíž fotky převedené na stupnici srdíček
-// modelek (kalibrace sbírky) se liší od jejích srdíček aspoň o celé srdíčko. Se stejným směrem jako porovnání se
-// položky spojí (zdroj „oba“), s opačným platí porovnání.
-func (m *modelOblibenosti) doplnitNesouladFotek(modelky []Modelka) {
-	for _, x := range modelky {
-		sf, ok := m.skore[x.ID]
-		if x.Hodnoceni <= 0 || !ok || sf.alb < minAlbNesouladu || sf.fotek < minFotekNesouladu {
-			continue
-		}
-		f, _ := m.kalibrace.naSrdicka(sf)
-		rozdil := f - x.Hodnoceni
-		smer, navrh := "", 0.0
-		switch {
-		case rozdil <= -prahNesouladuFotek && x.Hodnoceni > 0.5:
-			smer, navrh = "mene", x.Hodnoceni-0.5
-		case rozdil >= prahNesouladuFotek && x.Hodnoceni < 5:
-			smer, navrh = "vice", x.Hodnoceni+0.5
-		default:
-			continue
-		}
-		fotky := func(n *NesouladSrdicek) {
-			n.SkoreFotek, n.AlbFotek, n.FotekHodnocenych, n.RozdilFotek = zaokrouhlit3(sf.skore), sf.alb, sf.fotek, zaokrouhlit3(rozdil)
-		}
-		if n, ok := m.nesoulad[x.ID]; ok {
-			if n.Smer == smer {
-				fotky(&n)
-				n.Zdroj, n.vaha = "oba", n.vaha+math.Abs(rozdil)/prahNesouladuFotek+1
-				m.nesoulad[x.ID] = n
-			}
-			continue
-		}
-		n := NesouladSrdicek{ModelkaID: x.ID, Jmeno: x.Jmeno, Hodnoceni: x.Hodnoceni, Navrh: navrh, Smer: smer, Zdroj: "fotky", vaha: math.Abs(rozdil) / prahNesouladuFotek}
-		fotky(&n)
-		m.nesoulad[x.ID] = n
-	}
 }

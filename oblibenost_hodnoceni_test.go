@@ -11,11 +11,11 @@ import (
 func TestFrontaHodnoceni(t *testing.T) {
 	nyni := time.Date(2026, 10, 27, 12, 0, 0, 0, time.Local)
 	m := &modelOblibenosti{prumer: 3, pocet: map[int]int{1: 6}, jenOdhad: map[int]bool{}, oblibenost: map[int]float64{1: 4},
-		rozptyl: map[int]float64{1: 0.04}, zdrojOdhadu: map[int]int{2: urovenFotky}, predpoklad: map[int]float64{2: 3.8},
+		rozptyl: map[int]float64{1: 0.04}, zdrojOdhadu: map[int]int{},
 		odhad: map[int]float64{}, nesoulad: map[int]NesouladSrdicek{9: {ModelkaID: 9, Hodnoceni: 4, Navrh: 3, vaha: 1}}}
 	modelky := []Modelka{
 		{ID: 1, PocetFotek: 10, Pridano: "2025-01-01 10:00:00"},               // porovnávaná: 4 ± 0,2 → užitek 4,1
-		{ID: 2, PocetFotek: 10, Pridano: "2025-01-01 10:00:00"},               // fotky: 3,8 ± 0,8 → 4,2
+		{ID: 2, PocetFotek: 10, Pridano: "2025-01-01 10:00:00"},               // bez odhadu (fotky ho nedávají): 3 + ½·1,25
 		{ID: 3, PocetFotek: 10},                                               // bez odhadu: 3 + ½·1,25
 		{ID: 4},                                                               // bez fotek i titulky
 		{ID: 5, PocetFotek: 3, Pridano: "2026-10-25 09:00:00"},                // nová
@@ -28,14 +28,14 @@ func TestFrontaHodnoceni(t *testing.T) {
 	for _, p := range f {
 		s += fmt.Sprintf("%d:%s ", p.ModelkaID, p.Druh)
 	}
-	if s != "5:nova 6:nova 2:nehodnocena 1:nehodnocena 3:nehodnocena 4:nehodnocena 9:nesedi " {
+	if s != "5:nova 6:nova 1:nehodnocena 2:nehodnocena 3:nehodnocena 4:nehodnocena 9:nesedi " {
 		t.Fatalf("fronta: %s", s)
 	}
-	if p := f[3]; p.Odhad != 4 || p.Nejistota != 0.2 || p.Duvod != "Po 6 porovnáních vychází na 4 srdíčka" {
+	if p := f[2]; p.Odhad != 4 || p.Nejistota != 0.2 || p.Duvod != "Po 6 porovnáních vychází na 4 srdíčka" {
 		t.Errorf("porovnávaná: %+v", p)
 	}
-	if p := f[2]; p.Odhad != 3.8 || p.Nejistota != nejistotaFotek || p.Duvod == "" {
-		t.Errorf("z fotek: %+v", p)
+	if p := f[3]; p.Odhad != 0 || p.Duvod != "" {
+		t.Errorf("jen s fotkami: %+v", p)
 	}
 	if p := f[4]; p.Odhad != 0 || p.Duvod != "" {
 		t.Errorf("bez odhadu: %+v", p)

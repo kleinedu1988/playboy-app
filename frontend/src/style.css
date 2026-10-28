@@ -11877,45 +11877,20 @@ span.ud-chip {
 }
 
 /* Řádek odznaků zvýší popisek karty: trofeje rekordů nad jménem o něj výš */
-.slava-karta:has(.odznaky-rada) .slava-trofeje,
-.slava-karta:has(.odznaky-pocty) .slava-trofeje {
+.slava-karta:has(.odznaky-rada) .slava-trofeje {
     bottom: 112px;
 }
 
-.slava-rada.husta .slava-karta:has(.odznaky-rada) .slava-trofeje,
-.slava-rada.husta .slava-karta:has(.odznaky-pocty) .slava-trofeje {
+.slava-rada.husta .slava-karta:has(.odznaky-rada) .slava-trofeje {
     bottom: 104px;
 }
 
 .odznaky-rada {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 4px;
     margin-top: 6px;
-}
-
-/* Varianta b: medailony na fotce vlevo dole */
-.odznaky-na-fotce {
-    position: absolute;
-    bottom: 84px;
-    left: 8px;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-}
-
-.slava-karta:has(.odznaky-na-fotce) .slava-trofeje {
-    left: 38px;
-}
-
-/* Varianta c: počet medailí pod jménem */
-.odznaky-pocty {
-    display: flex;
-    gap: 8px;
-    margin-top: 5px;
-    font-size: 12px;
-    font-weight: 600;
 }
 
 /* Oddíl Odznaky */
@@ -12033,92 +12008,13 @@ span.ud-chip {
     margin-bottom: 28px;
 }
 
-/* Varianta b: tabulka modelky × odznaky */
-.odznaky-tabulka-obal {
-    margin-bottom: 28px;
-    overflow-x: auto;
+/* Profil: odznaky pod pořadím, na střed */
+.profile-odznaky:not([hidden]) {
+    display: flex;
+    justify-content: center;
+    margin-top: 2px;
 }
 
-.odznaky-tabulka {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-}
-
-.odznaky-tabulka th,
-.odznaky-tabulka td {
-    padding: 6px 4px;
-    border-bottom: 1px solid var(--panel-okraj);
-    text-align: center;
-}
-
-.odznaky-tabulka thead th {
-    font-size: 16px;
-    font-weight: 400;
-}
-
-.odznaky-tabulka thead small {
-    display: block;
-    color: var(--text-muted);
-    font-size: 10px;
-}
-
-.odznaky-tabulka tbody th {
-    text-align: left;
-    white-space: nowrap;
-}
-
-.odznaky-tabulka .odznak-pruh {
-    width: 34px;
-    margin: 0 auto;
-}
-
-/* Varianta c: řádek na odznak se sloupci zlato / stříbro / bronz */
-.odznaky-c {
-    margin-bottom: 28px;
-}
-
-.odznaky-radky {
-    margin: 0 0 12px;
-    padding: 6px 14px;
-    list-style: none;
-}
-
-.odznak-radek {
-    display: grid;
-    grid-template-columns: 44px 200px repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--panel-okraj);
-    font-size: 12px;
-}
-
-.odznak-radek:last-child {
-    border-bottom: 0;
-}
-
-.odznak-radek-nazev small,
-.odznak-stupen-sloupec b small {
-    display: block;
-    color: var(--text-muted);
-    font-weight: 400;
-}
-
-.odznak-stupen-sloupec b {
-    display: block;
-    font-size: 11px;
-}
-
-.odznak-stupen-sloupec.s3 b { color: #f2c14e; }
-.odznak-stupen-sloupec.s2 b { color: #c8ccd6; }
-.odznak-stupen-sloupec.s1 b { color: #c9834b; }
-
-.odznak-stupen-sloupec.jedno {
-    grid-column: span 3;
-}
-
-/* Profil: odznaky pod pořadím */
 .profile-odznaky-tlacitko {
     padding: 0;
     border: 0;
@@ -12135,14 +12031,6 @@ span.ud-chip {
         grid-template-columns: 1fr;
     }
 
-    .odznak-radek {
-        grid-template-columns: 44px 1fr;
-    }
-
-    .odznak-stupen-sloupec,
-    .odznak-stupen-sloupec.jedno {
-        grid-column: 2;
-    }
 }
 
 /* Místa 4–10 a legendy: řady přes celou šířku, karty se dělí o místo rovným dílem; v úzkém okně po čtyřech */

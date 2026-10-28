@@ -209,3 +209,24 @@ test('nesoulad se srdíčky se vysvětluje jen porovnáním', async () => {
     assert.equal(vetaNesouladu({ smer: 'mene', vysledky: 3, porovnani: 4, skoreFotek: 2 }), 'prohrála 3 ze 4 porovnání s modelkami s méně srdíčky');
     assert.equal(vetaNesouladu({ smer: 'vice', vysledky: 5, porovnani: 5 }), 'vyhrála 5 z 5 porovnání s modelkami s víc srdíčky');
 });
+
+test('odznaky: popis, postup a kronika', async () => {
+    const { popisOdznaku, textUdalosti, textRekordu } = await import('../src/lib/slava.js');
+    const jmeno = id => ({ 1: 'Anna', 2: 'Bára' })[id] || '';
+    const stalice = popisOdznaku({ odznak: 'stalice', stupen: 1, ziskan: true, hodnota: 92, dalsi: 100 }, jmeno);
+    assert.equal(stalice.stupen, 'bronz');
+    assert.equal(stalice.zbyva, 'ještě 8 dní do stříbra');
+    assert.ok(Math.abs(stalice.postup - 62 / 70) < 1e-9);
+    assert.equal(stalice.text, 'Stálice – bronz · Dny v Top 10 celkem: 92 dní v Top 10 · ještě 8 dní do stříbra');
+    const serie = popisOdznaku({ odznak: 'serie', stupen: 0, ziskan: false, hodnota: 4, dalsi: 5 }, jmeno);
+    assert.equal(serie.zbyva, 'ještě 1 výhra do bronzu');
+    assert.match(serie.text, /zatím ne/);
+    assert.equal(popisOdznaku({ odznak: 'zasluzena', stupen: 3, ziskan: true, hodnota: 120, dalsi: 0 }).postup, null);
+    assert.equal(popisOdznaku({ odznak: 'david', stupen: 0, ziskan: true, souperka: 2 }, jmeno).text, 'David a Goliáš · Z místa za Top 20 porazila jedničku · porazila jedničku Bára');
+    assert.equal(popisOdznaku({ odznak: 'neznamy' }), null);
+    assert.equal(textUdalosti({ druh: 'odznak', modelkaId: 1, odznak: 'kralovna', stupen: 2 }, jmeno).text, 'Anna získala odznak Královna · stříbro (30 dní na 1. místě)');
+    assert.equal(textUdalosti({ druh: 'odznak', modelkaId: 1, odznak: 'raketa', stupen: 0 }, jmeno).text, 'Anna získala odznak Raketa');
+    assert.equal(textUdalosti({ druh: 'odznak', modelkaId: 1, odznak: 'latka', stupen: 0, souperka: 2 }, jmeno).text, 'Anna získala odznak Přeskočená laťka (porazila Bára)');
+    assert.deepEqual(textRekordu({ druh: 'serie', hodnota: 12, trva: true }), { nazev: 'Nejdelší série', hodnota: '12 výher', popis: 'za sebou, a pořád vyhrává' });
+    assert.equal(textRekordu({ druh: 'skok', hodnota: 3 }).hodnota, 'o 3 místa');
+});

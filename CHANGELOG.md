@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.66] – 2026-10-28
+
+### Přidáno
+- **Odznaky v síni slávy.** Osobní úspěchy modelek, které může mít víc modelek naráz.
+  - Se stupni bronz / stříbro / zlato: 🏛 Stálice (30 / 100 / 365 dní v Top 10), ♛ Královna (7 / 30 / 100 dní na 1. místě), 🛡 Hradba (3 / 5 / 10 obhajob), 🔥 Série (5 / 10 / 20 výher za sebou) a ⚔ Zasloužená (25 / 50 / 100 porovnání).
+  - Jednorázové: 🚀 Raketa (do Top 10 z místa za stovkou do 30 dní), 🔄 Comeback (návrat po aspoň 30 dnech), 🪨 David a Goliáš (z místa za Top 20 porazila jedničku), ⬆ Přeskočená laťka (porazila modelku s o celé srdíčko víc) a 🧊 Neporazitelná (30 dní v Top 10 bez prohry).
+  - Na kartě je řada medailonů pod jménem a barva kroužku ukazuje stupeň. V profilu jsou pod pořadím a klik otevře Síň slávy.
+  - Nový oddíl Odznaky ukazuje, kdo co má, a v „Na dosah“ kolik komu chybí k dalšímu stupni.
+  - Zisk odznaku se zapíše do kroniky. Odznaky se dopočítají i zpětně z dosavadních porovnání a kroniky.
+- **Nové rekordy:** nejdelší série výher, nejvíc porovnání a největší skok v pořadí za týden.
+
 ## [0.99.65] – 2026-10-28
 
 ### Opraveno

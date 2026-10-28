@@ -258,7 +258,8 @@ sbírky ani exportu.
 | `GetSoubojeModelky(id) []DvojicePorovnani` | „Rozhodnout teď“: série soubojů jedné modelky (oddíl Úrovně, Rozhodnout teď); prázdná, když nečeká ani neobhajuje, nebo ještě do souboje nesmí |
 | `GetFrontaHodnoceni() []PolozkaHodnoceni` | fronta rychlého hodnocení (oddíl Rychlé hodnocení): `modelkaId`, `druh` (nova / nehodnocena / nesedi), `odhad` (0 = žádný), `nejistota`, `duvod`, u nesouladu `hodnoceni`, `navrh` a `nesoulad` |
 | `SetHodnoceniOdhadem(id, hodnoceni) bool` | jako `SetHodnoceni`, navíc zapamatuje, že srdíčka jsou přijatý odhad vkusu (model vkusu se z nich neučí, dokud je nepotvrdí porovnání) |
-| `GetSinSlavy() SinSlavy` | síň slávy (oddíl Síň slávy): `od` (začátek kroniky), `vitrina` (současná potvrzená top 10 podle místa), `legendy` (bývalé top 10, nejdéle v top 10 napřed), `rekordy` (`druh` nejdele / vlada / obhajoby / rychlost / navrat, `modelkaId`, `hodnota`, `odZacatku`, `cas`, `trva`), `kronika` (nejvýš 300 událostí od nejnovější: `cas`, `druh`, `modelkaId`, `misto`, `souperka`); modelka ve vitríně i legendách: `modelkaId`, `misto`, `vTop`, `od`, `do`, `odZacatku`, `dniTed`, `dniCelkem`, `dniNejdele`, `dniNaPrvnim`, `pobytu`, `obhajob`, `nejlepsiMisto` |
+| `GetSinSlavy() SinSlavy` | síň slávy (oddíl Síň slávy): `od` (začátek kroniky), `vitrina` (současná potvrzená top 10 podle místa), `legendy` (bývalé top 10, nejdéle v top 10 napřed), `rekordy` (`druh` nejdele / vlada / obhajoby / rychlost / navrat / serie / porovnani / skok, `modelkaId`, `hodnota`, `odZacatku`, `cas`, `trva`), `odznaky` (oddíl Odznaky: `modelkaId`, `odznak`, `stupen` 0–3, `ziskan`, `hodnota`, `dalsi`, `souperka`, `cas`), `kronika` (nejvýš 300 událostí od nejnovější: `cas`, `druh` – i `odznak` se `odznak` a `stupen` –, `modelkaId`, `misto`, `souperka`); modelka ve vitríně i legendách: `modelkaId`, `misto`, `vTop`, `od`, `do`, `odZacatku`, `dniTed`, `dniCelkem`, `dniNejdele`, `dniNaPrvnim`, `pobytu`, `obhajob`, `nejlepsiMisto` |
+| `GetOdznakyModelky(id) []OdznakModelky` | získané odznaky jedné modelky (profil); počítá celou síň slávy |
 | `ZaznamenatZajem(id, druh, sekund) bool` | zájem o modelku: `druh` `"profil"` (stejná modelka nejvýš jednou za 10 minut) nebo `"fotky"` (`sekund` prohlížení, 3–1800); změnu dat neohlašuje |
 | `GetPrehledOblibenosti() PrehledOblibenosti` | úvod Přehledu: `top` (jen potvrzené v top 10 – dokud jich není deset, méně, i žádná), `stoupaji` a `klesaji` (posun aspoň o 3 místa a 3 % délky pořadí, nejvýš 10), `dlouhoNevidene` (z horní třicítky ty, jejichž profil ani fotky jsi 30 dní neviděl; `dni` = −1 nikdy; až se zájem sleduje aspoň 30 dní), `trendDni`, `zajemDni`; položky `modelkaId`, `jmeno`, `hodnoceni`, `poradi` (potvrzené), `zmenaPoradi`, `dni`, `uroven` (potvrzená úroveň Top N, 0 = mimo top 100) |
 | `GetOblibenost() StavOblibenosti` | `porovnani`, `modelek`, `presnost` (přesnost modelu vkusu na ověření u modelek ze skupin, kde se odhad ukazuje, 0–1), `odhady` (model prošel ověřením), `hodnocenych` (hodnocené modelky), `urovne` (Top 10, 20, 50, 100: `uroven`, prahy `potrebaPorovnani`, `maxNejistota`, `potrebaVyhry` a `potvrzenych`), `cekajicich` (modelky čekající na potvrzení úrovně), `poradi` – hodnocené a porovnávané modelky v potvrzeném pořadí: `modelkaId`, `jmeno`, `hodnoceni`, `sila`, `nejistota`, `poradi` (potvrzené), `mistoPodleSily` (bez prahů), `uroven` (10/20/50/100, 0 = mimo top 100), `ceka` (jen když by podle síly patřila výš, než má potvrzeno: `uroven`, `porovnani`/`potrebaPorovnani`, `nejistota`/`maxNejistota`, `potrebaVyhry`, `maVyhru`, `drzitelka` – splňuje prahy, ale místo obhajuje tahle modelka), `obhajoba` (držitelka, kterou silou předstihla jiná: `uroven`, `vyzyvatelka`), `porovnani`, `odhad`, `skoreFotek` (0 = žádná hodnocená fotka), `albFotek`, `fotekHodnocenych`, `jenOdhad` a `zdrojOdhadu` (nehodnocená neporovnaná jen odhadem podle vkusu, `"vkus"`), `duvod` („srdíčka 4 · fotky 4,3 (3 alba, 41 hodnocených fotek) · 12 porovnání (výhry 7)“, případně „porovnání ji staví výš než její srdíčka (síla 4,4)“ a odhad vkusu) |
@@ -651,6 +652,38 @@ Modelky – současná Top 10 v pořadí (první tři větší na stupních vít
 a kolikátý pobyt, zlaté štítky 🏆 rekordů, podrobnosti v bublině), pod ní Legendy (vybledlé karty s nejlepším
 místem, řady vyplněné rovnoměrně: nejvýš 7 v řadě, 8 → 4 + 4) a kronika jako jeden řádek s nejnovější událostí, po rozkliknutí celá po měsících (kdo byl v top 10 už na
 začátku, je v jednom řádku).
+
+## Odznaky
+
+Osobní úspěchy modelek v síni slávy (`oblibenost_odznaky.go`). Na rozdíl od rekordů (jedna držitelka) je může mít
+víc modelek naráz. Počítají se při každém čtení síně slávy z kroniky (pobyty v top 10, vlády jedničky, obhajoby),
+porovnání a denních snímků potvrzeného pořadí; nic se neukládá, takže vrácení porovnání odznak, který na něm stál,
+zase vezme, a po instalaci se dopočítají i zpětně.
+
+| Odznak | Stupně (bronz / stříbro / zlato) nebo podmínka |
+|---|---|
+| 🏛 Stálice | 30 / 100 / 365 dní v top 10 celkem (dny podle kalendáře, pobyty od začátku kroniky dopočítané ze snímků) |
+| ♛ Královna | 7 / 30 / 100 dní na 1. místě celkem |
+| 🛡 Hradba | 3 / 5 / 10 obhajob místa v top 10 |
+| 🔥 Série | 5 / 10 / 20 výher v porovnání za sebou (remíza sérii nepřeruší ani neprodlouží) |
+| ⚔ Zasloužená | 25 / 50 / 100 porovnání |
+| 🚀 Raketa | vstup do top 10, když v některém snímku za posledních 30 dní před ním byla za 100. místem nebo mimo pořadí |
+| 🔄 Comeback | vstup do top 10 po aspoň 30 dnech venku |
+| 🪨 David a Goliáš | výhra nad tehdejší jedničkou (podle vlád v kronice), když byla podle posledního snímku za 20. místem nebo mimo pořadí |
+| ⬆ Přeskočená laťka | výhra nad modelkou s o celé srdíčko víc (srdíčka obou v okamžiku porovnání) |
+| 🧊 Neporazitelná | 30 dní v jednom pobytu v top 10 bez prohry a s aspoň 3 rozhodnutými porovnáními za tu dobu |
+
+Pobyty od začátku kroniky (`pocatek`) se pro Raketu a Comeback nepočítají – jak se do top 10 dostala, kronika neví.
+Zisk každého stupně je v kronice událostí `odznak` s časem, kdy modelka práh překročila (dny: začátek pobytu + zbývající
+dny; počty: čas porovnání nebo obhajoby), zařazenou podle času mezi ostatní události. Nezískaný stupňový odznak se
+posílá jen u modelek v top 10, které mají aspoň polovinu prahu bronzu (postup v „Na dosah“). Nové rekordy: nejdelší
+série výher (`trva`, když série pořád běží), nejvíc porovnání a největší skok v potvrzeném pořadí mezi snímky nejvýš
+týden od sebe. Testy: `TestOdznaky`.
+
+**V rozhraní:** na kartě v síni slávy řada medailonů na střed pod délkou pobytu (kroužek s ikonou, barva podle stupně:
+bronz, stříbro, zlato, jednorázové fialově; nejvýš 5, zbytek „+2“), v profilu pod pořadím (klik otevře Síň slávy),
+oddíl Odznaky s dlaždicí na každý odznak (kdo ho má, zlato napřed) a „Na dosah“ (8 nejbližších dalších stupňů
+s ukazatelem a „ještě 8 dní do stříbra“). Texty v `lib/slava.js` (`ODZNAKY`, `popisOdznaku`).
 
 ## Model vkusu
 

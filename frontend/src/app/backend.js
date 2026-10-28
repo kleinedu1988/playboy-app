@@ -27,6 +27,7 @@ const CTENI = new Set([
     'GetNavrhSrdicek',
     'GetNavrhyDoplneni',
     'GetNejlepsiFotky',
+    'GetNehodnoceneFotky',
     'GetOblibenost',
     'GetPrehled',
     'GetPrehledOblibenosti',
@@ -96,6 +97,7 @@ export const GetKalendar = /** @type {typeof App.GetKalendar} */ (obalit('GetKal
 export const GetModelky = /** @type {typeof App.GetModelky} */ (obalit('GetModelky'));
 export const GetNavrhyDoplneni = /** @type {typeof App.GetNavrhyDoplneni} */ (obalit('GetNavrhyDoplneni'));
 export const GetNejlepsiFotky = /** @type {typeof App.GetNejlepsiFotky} */ (obalit('GetNejlepsiFotky'));
+export const GetNehodnoceneFotky = /** @type {typeof App.GetNehodnoceneFotky} */ (obalit('GetNehodnoceneFotky'));
 export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehled'));
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));
 export const GetSablonaObrazku = /** @type {typeof App.GetSablonaObrazku} */ (obalit('GetSablonaObrazku'));

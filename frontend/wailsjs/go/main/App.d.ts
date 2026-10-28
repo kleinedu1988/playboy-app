@@ -58,6 +58,8 @@ export function GetNavrhSrdicek(arg1:number):Promise<main.NavrhSrdicek>;
 
 export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<main.NavrhDoplneni>>;
 
+export function GetNehodnoceneFotky():Promise<Array<main.Fotografie>>;
+
 export function GetNejlepsiFotky(arg1:number):Promise<Array<main.Fotografie>>;
 
 export function GetOblibenost():Promise<main.StavOblibenosti>;

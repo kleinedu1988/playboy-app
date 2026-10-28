@@ -10757,7 +10757,7 @@ span.ud-chip {
 [data-ob-cast="porovnani"] > .ob-cast:not(.ob-porovnani),
 [data-ob-cast="poradi"] > .ob-cast:not([data-ob-cast-poradi]),
 [data-ob-cast="slava"] > .ob-cast:not([data-ob-cast-slava]),
-[data-ob-cast="hodnoceni"] > .ob-cast:not([data-ob-cast-hodnoceni]) {
+[data-ob-cast="galerie"] > .ob-cast:not([data-ob-cast-galerie]) {
     display: none;
 }
 
@@ -10860,15 +10860,13 @@ span.ud-chip {
     margin-right: 4px;
 }
 
-.ob-ovladani .oddelovac,
-.hod-ovladani .oddelovac {
+.ob-ovladani .oddelovac {
     width: 1px;
     height: 18px;
     background-color: var(--panel-okraj);
 }
 
-.ob-ovladani .link,
-.hod-ovladani .link {
+.ob-ovladani .link {
     color: var(--text-muted);
     font-size: 12px;
 }
@@ -12127,86 +12125,209 @@ span.ud-chip {
     background-color: var(--panel-bg);
 }
 
-/* ——— Rychlé hodnocení (Oblíbenost › Hodnocení, app/rychle-hodnoceni.js): jeden pás jako v Porovnávání ——— */
-.hod {
+/* ——— Galerie (Oblíbenost › Galerie, app/galerie-hodnoceni.js): nehodnocené fotky jedna po druhé ——— */
+.gh {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 150px);
-    min-height: 480px;
+    gap: 12px;
 }
 
-.hod-pruh {
+.gh-lista {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
+    justify-content: space-between;
     gap: 8px 16px;
-    margin-bottom: 10px;
-    color: var(--text-muted);
 }
 
-.hod-pruh b {
+.gh-pocet {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.gh-pocet b {
     color: var(--text-main);
+    font-weight: 600;
 }
 
-.hod-pruh .ob-serie-postup {
-    flex: 1 1 200px;
-    max-width: 320px;
-}
-
-.hod-pas {
-    flex: 1;
-}
-
-.hod-odhad {
+.gh-volby,
+.gh-razeni {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    gap: 4px 12px;
-    margin: 12px 4px 0;
+    align-items: center;
+    gap: 6px;
 }
 
-.hod-odhad b {
-    color: var(--accent-text);
-    font-size: 18px;
+.gh-razeni {
+    margin-right: 6px;
 }
 
-.hod-odhad small {
-    color: var(--text-muted);
+/* Fotka přes skoro celou výšku okna, šipky po stranách */
+.gh-jeviste {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    align-items: center;
+    gap: 8px;
 }
 
-.hod-ovladani {
+.gh-fotka {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
-    gap: 8px 14px;
-    margin: 10px 4px 0;
+    height: calc(100vh - 330px);
+    min-height: 320px;
+    overflow: hidden;
+    border-radius: 12px;
+    background-color: #000;
 }
 
-.hod-klavesy {
-    color: var(--text-muted);
-    font-size: 12px;
+.gh-fotka img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    user-select: none;
 }
 
-.hod .hod-pas .pas-popis .hearts {
-    font-size: 22px;
+/* Otočená fotka: na výšku a na šířku se prohodí (vejde se celá) */
+.gh-fotka[data-rot="90"] img,
+.gh-fotka[data-rot="270"] img {
+    max-width: calc(100vh - 330px);
+    max-height: 100vw;
 }
 
-/* Štítek položky rychlého hodnocení nad jménem: nově přidaná, nesedí srdíčka, přeskočená */
-.hod-stitek {
-    width: fit-content;
-    margin-bottom: 4px;
-    padding: 1px 8px;
+.gh-fotka[data-rot="90"] img { transform: rotate(90deg); }
+.gh-fotka[data-rot="180"] img { transform: rotate(180deg); }
+.gh-fotka[data-rot="270"] img { transform: rotate(270deg); }
+
+.gh-sipka {
+    height: 96px;
     border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
+    border-radius: 10px;
+    background-color: var(--panel-bg);
+    color: var(--text-main);
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.gh-sipka:hover:not(:disabled) {
+    background-color: var(--panel-hover);
+}
+
+.gh-sipka:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+/* Pod fotkou: vlevo modelka a album, uprostřed srdíčka, vpravo přeskočit a vrátit */
+.gh-pod {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 0 56px;
+}
+
+.gh-popis {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.gh-jmeno {
+    align-self: flex-start;
+    color: var(--text-main);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.gh-popis small {
+    overflow: hidden;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gh-srdicka {
+    display: flex;
+    gap: 4px;
+}
+
+.gh-srdce {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 50%;
     background-color: var(--panel-bg);
     color: var(--text-muted);
-    font-size: 11px;
+    font-family: system-ui, sans-serif;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.1s, background-color 0.1s;
 }
 
-.hod-stitek.nesedi {
-    border-color: rgba(255, 64, 129, 0.45);
+/* Najetí na srdíčko rozsvítí i ta před ním */
+.gh-srdicka:has(.gh-srdce:hover) .gh-srdce,
+.gh-srdce:focus-visible {
     color: var(--accent-text);
+}
+
+.gh-srdicka .gh-srdce:hover ~ .gh-srdce {
+    color: var(--text-muted);
+}
+
+.gh-srdce:hover {
+    background-color: var(--accent-soft);
+}
+
+.gh-akce {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+.gh-nahledy {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    min-height: 64px;
+}
+
+.gh-nahled {
+    height: 64px;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 6px;
+    background-color: #000;
+    opacity: 0.6;
+    cursor: pointer;
+}
+
+.gh-nahled:hover {
+    opacity: 1;
+}
+
+.gh-nahled img {
+    height: 100%;
+}
+
+.gh-napoveda {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+}
+
+@media (max-width: 900px) {
+    .gh-pod {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        padding: 0;
+    }
+
+    .gh-jmeno {
+        align-self: center;
+    }
 }
 
 /* Alba v profilu jako mozaika: řady stejné výšky, šířka dlaždice podle poměru stran fotky (--pomer, do načtení 3 : 4) */

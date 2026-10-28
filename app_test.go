@@ -1676,6 +1676,10 @@ func TestProhlizeniNapricSbirkou(t *testing.T) {
 	if nej := a.GetNejlepsiFotky(1); len(nej) != 3 || nej[0].JmenoModelky != "Adéla" {
 		t.Fatalf("nejlepší po modelkách: %+v", nej)
 	}
+	// Nehodnocené: jen fotky modelek bez srdíček (obálky ne)
+	if neh := a.GetNehodnoceneFotky(); len(neh) != 1 || neh[0].ID != fotky[2].ID || neh[0].JmenoModelky != "Bára" {
+		t.Fatalf("nehodnocené: %+v", neh)
+	}
 
 	// Fotograf: jeho alba napříč modelkami
 	a.SetPopisAlba(1, "Pictorial", "Pictorial", "", "Arny Freytag")

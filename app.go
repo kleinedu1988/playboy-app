@@ -1742,6 +1742,15 @@ func (a *App) GetNejlepsiFotky(minHodnoceni int) []Fotografie {
 		ORDER BY m.jmeno IS NULL, m.jmeno COLLATE BEZDIAKRITIKY, f.hodnoceni DESC, f.album, f.id`, true, true, minHodnoceni))
 }
 
+// Nehodnocené fotky všech modelek (Oblíbenost › Galerie: prohlížení s hodnocením); fotky bez modelky (obálky) ne.
+// Pořadí podle modelky a alba, zamíchá je rozhraní.
+func (a *App) GetNehodnoceneFotky() []Fotografie {
+	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
+		JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
+		WHERE COALESCE(f.hodnoceni, 0) = 0
+		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true))
+}
+
 // Alba jednoho fotografa napříč modelkami (na velikosti písmen a diakritice ve jméně nezáleží)
 func (a *App) GetAlbaFotografa(fotograf string) []Fotografie {
 	hledany := zjednodusit(strings.TrimSpace(fotograf))

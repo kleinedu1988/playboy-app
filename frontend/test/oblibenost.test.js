@@ -179,16 +179,23 @@ test('rozhodnout teď: výsledek série', async () => {
     assert.deepEqual(vysledekRozhodnuti({ jmeno: 'Bára', uroven: 10, obhajovala: true, ted: { uroven: 20 } }), { ok: false, text: 'Bára prohrála a vypadla z Top 10.' });
 });
 
-test('rychlé hodnocení: fronta, přeskočené a klávesy', async () => {
-    const { upravitFrontu, pridatPreskocenou, srdickaKlavesy } = await import('../src/lib/hodnoceni.js');
-    const fronta = [
-        { modelkaId: 5, druh: 'nova' }, { modelkaId: 2, druh: 'nehodnocena', odhad: 4 }, { modelkaId: 3, druh: 'nehodnocena' },
-        { modelkaId: 9, druh: 'nesedi', hodnoceni: 4, navrh: 3 }, { modelkaId: 8, druh: 'nesedi', hodnoceni: 2, navrh: 3 },
-    ];
-    const v = upravitFrontu(fronta, { preskocene: [3, 5], skryte: new Set(['8:2:3']) });
-    assert.deepEqual(v.map(p => [p.modelkaId, p.preskocena]), [[2, false], [9, false], [3, true], [5, true]]);
-    assert.equal(fronta[0].preskocena, undefined);
-    assert.deepEqual(upravitFrontu([]), []);
+test('galerie nehodnocených fotek: fronta, přeskočené a klávesy', async () => {
+    const { frontaFotek, zamichat, pridatPreskocenou, srdickaKlavesy } = await import('../src/lib/hodnoceni.js');
+    const fotky = [1, 2, 3, 4, 5, 6].map(id => ({ id, modelkaId: id <= 3 ? 10 : id <= 5 ? 20 : 30 }));
+    // Zamíchání je opakovatelné a nemění vstup
+    assert.deepEqual(zamichat(fotky, 7), zamichat(fotky, 7));
+    assert.deepEqual(zamichat(fotky, 7).map(f => f.id).sort(), [1, 2, 3, 4, 5, 6]);
+    assert.deepEqual(fotky.map(f => f.id), [1, 2, 3, 4, 5, 6]);
+    // Podle modelek: fotky jedné modelky pohromadě v původním pořadí
+    const m = frontaFotek(fotky, { razeni: 'modelky', seed: 3 });
+    const bloky = m.map(f => f.modelkaId).filter((id, i, v) => id !== v[i - 1]);
+    assert.equal(bloky.length, 3);
+    assert.deepEqual(m.filter(f => f.modelkaId === 10).map(f => f.id), [1, 2, 3]);
+    // Přeskočené na konci v pořadí přeskočení
+    const n = frontaFotek(fotky, { seed: 3, preskocene: [5, 2] });
+    assert.deepEqual(n.slice(-2).map(f => f.id), [5, 2]);
+    assert.equal(n.length, 6);
+    assert.deepEqual(frontaFotek([]), []);
     assert.deepEqual(pridatPreskocenou([1, 2, 3], 2), [1, 3, 2]);
     assert.deepEqual(pridatPreskocenou(null, 7), [7]);
     assert.equal(srdickaKlavesy({ code: 'Digit4' }), 4);

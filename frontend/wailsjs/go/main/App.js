@@ -114,6 +114,10 @@ export function GetNavrhyDoplneni(arg1) {
   return window['go']['main']['App']['GetNavrhyDoplneni'](arg1);
 }
 
+export function GetNehodnoceneFotky() {
+  return window['go']['main']['App']['GetNehodnoceneFotky']();
+}
+
 export function GetNejlepsiFotky(arg1) {
   return window['go']['main']['App']['GetNejlepsiFotky'](arg1);
 }

@@ -629,12 +629,18 @@ Denní snímky historie se po čase mažou, proto má kronika vlastní trvalou t
 | `konec` | jednička přestala být potvrzená v top 10 a nikdo ji nevystřídal | – | – |
 
 Kdo obhajoval, se bere z minulého modelu v paměti (po spuštění programu první obhajoba chybí). Každá událost nese
-poslední porovnání; vrácení porovnání smaže události po něm (a příští výpočet zapíše, co dál platí), zapomenutí
+poslední porovnání, jen začátek kroniky (`zacatek`, `pocatek` a první `jednicka`) číslo 0 – k žádnému porovnání
+nepatří a vrácení porovnání ho nesmí smazat (do 0.99.64 ho smazalo, když kronika začala po vráceném porovnání, a kronika
+pak začala znovu se všemi „od dneška“; `TestVraceniNesmazeZacatekKroniky`); vrácení porovnání smaže události po něm (a příští výpočet zapíše, co dál platí), zapomenutí
 porovnání smaže celou kroniku. Simulace (`TestSimulaceUrovni`) skládá top 10 jen z událostí a hlídá, že po každém
 výpočtu souhlasí s modelem; obhajoba top 10 je v ní vzácná (většina soubojů o obhajobu je o top 20 a 50).
 
 **Výpočet** (`GetSinSlavy`): pobyty v top 10 (od `pocatek`/`vstup` do `vystup`, otevřený do teď)
-dávají dny celkem, nejdelší a současný pobyt (po celých 24 hodinách); vlády jedničky (od `jednicka` do další
+dávají dny celkem, nejdelší a současný pobyt (podle kalendáře: včera večer → dnes ráno je 1 den; do 0.99.64 po celých
+24 hodinách, takže jednička od včerejška byla „od dneška“). Kdo byl v top 10 už na začátku kroniky (`pocatek`), má
+pobyt od začátku souvislé řady denních snímků potvrzeného pořadí před kronikou, ve kterých byl do 10. místa (mezery,
+kdy program neběžel, řadu nepřeruší); jednička ze začátku kroniky stejně vládu od řady snímků na 1. místě
+(`TestPocatekZeSnimku`). Dny jsou pak dál „aspoň“; vlády jedničky (od `jednicka` do další
 `jednicka` nebo `konec`) dny na prvním místě; nejlepší místo je nejmenší z událostí a současného. Rekordy: nejdéle
 v top 10 celkem, nejdelší vláda jedničky, nejvíc obhajob, nejrychlejší postup (nejméně vlastních porovnání do
 prvního vstupu – ne `pocatek`) a největší návrat (nejdelší pauza mimo top 10 před dalším vstupem); při shodě vyhrává

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"sort"
 	"time"
 )
@@ -262,12 +263,16 @@ func (a *App) GetSinSlavy() SinSlavy {
 	u.mu.Lock()
 	kronika := u.nacistKroniku()
 	porovnani := u.nacistPorovnani()
+	var snimky []snimekPoradi
+	if len(kronika) > 0 && kronika[0].druh == udalostZacatek {
+		snimky = u.nacistSnimkyPoradi(kronika[0].cas)
+	}
 	u.mu.Unlock()
 	existuje := make(map[int]bool, len(modelky))
 	for _, m := range modelky {
 		existuje[m.ID] = true
 	}
-	return spocitatSinSlavy(kronika, model, porovnani, existuje, time.Now())
+	return spocitatSinSlavy(kronika, model, porovnani, existuje, snimky, time.Now())
 }
 
 type pobytVTop struct {
@@ -276,14 +281,80 @@ type pobytVTop struct {
 	odZacatku bool
 }
 
+// Dny mezi dvěma okamžiky podle kalendáře (včera večer → dnes ráno = 1 den; dřív po celých 24 hodinách, takže
+// jednička od včerejška byla „od dneška“)
 func dniMezi(od, do time.Time) int {
 	if do.Before(od) {
 		return 0
 	}
-	return int(do.Sub(od).Hours() / 24)
+	d0 := time.Date(od.Year(), od.Month(), od.Day(), 12, 0, 0, 0, time.Local)
+	d1 := time.Date(do.Year(), do.Month(), do.Day(), 12, 0, 0, 0, time.Local)
+	return int(math.Round(d1.Sub(d0).Hours() / 24))
 }
 
-func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnani []porovnaniZaznam, existuje map[int]bool, nyni time.Time) SinSlavy {
+// Denní snímek potvrzeného pořadí z historie oblíbenosti (jen snímky se značkou potvrzeného pořadí)
+type snimekPoradi struct {
+	den    time.Time
+	poradi map[int]int
+}
+
+// Snímky potvrzeného pořadí před dnem pred, od nejstaršího; volá se se zámkem
+func (u *uceni) nacistSnimkyPoradi(pred time.Time) []snimekPoradi {
+	db := u.zajistit()
+	if db == nil || pred.IsZero() {
+		return nil
+	}
+	radky, err := db.Query("SELECT den, modelka_id, poradi FROM historie_oblibenosti WHERE den < ? ORDER BY den", pred.Format("2006-01-02"))
+	if err != nil {
+		return nil
+	}
+	defer radky.Close()
+	var v []snimekPoradi
+	potvrzeny := map[string]bool{}
+	for radky.Next() {
+		var den string
+		var id, poradi int
+		if radky.Scan(&den, &id, &poradi) != nil {
+			continue
+		}
+		if len(v) == 0 || v[len(v)-1].den.Format("2006-01-02") != den {
+			t, err := time.ParseInLocation("2006-01-02", den, time.Local)
+			if err != nil {
+				continue
+			}
+			v = append(v, snimekPoradi{den: t, poradi: map[int]int{}})
+		}
+		if id == znackaPotvrzenehoPoradi {
+			potvrzeny[den] = poradi == 1
+			continue
+		}
+		v[len(v)-1].poradi[id] = poradi
+	}
+	vysledek := v[:0]
+	for _, s := range v {
+		if potvrzeny[s.den.Format("2006-01-02")] {
+			vysledek = append(vysledek, s)
+		}
+	}
+	return vysledek
+}
+
+// Začátek souvislé řady snímků před kronikou, ve kterých modelka splňovala podminka(místo); zacatek, když žádný
+// (mezery mezi snímky – dny, kdy program neběžel – řadu nepřeruší)
+func pocatekZeSnimku(snimky []snimekPoradi, id int, zacatek time.Time, podminka func(int) bool) time.Time {
+	od := zacatek
+	for i := len(snimky) - 1; i >= 0; i-- {
+		if !podminka(snimky[i].poradi[id]) {
+			break
+		}
+		od = snimky[i].den
+	}
+	return od
+}
+
+// snimky = denní snímky potvrzeného pořadí před začátkem kroniky: kdo byl v top 10 (jedničkou) už na začátku, má
+// pobyt (vládu) od začátku souvislé řady snímků, kde byl v top 10 (první) – kronika mohla začít později než pobyt
+func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnani []porovnaniZaznam, existuje map[int]bool, snimky []snimekPoradi, nyni time.Time) SinSlavy {
 	s := SinSlavy{Vitrina: []SlavaModelky{}, Legendy: []SlavaModelky{}, Rekordy: []RekordSlavy{}, Kronika: []UdalostSlavy{}}
 	pobyty := map[int][]pobytVTop{}
 	obhajob, nejlepsi := map[int]int{}, map[int]int{}
@@ -339,7 +410,11 @@ func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnan
 				}
 			}
 			prvniVstup[z.modelka] = true
-			pobyty[z.modelka] = append(p, pobytVTop{od: z.cas, otevreny: true, odZacatku: z.druh == udalostPocatek})
+			od := z.cas
+			if z.druh == udalostPocatek {
+				od = pocatekZeSnimku(snimky, z.modelka, z.cas, func(m int) bool { return m > 0 && m <= 10 })
+			}
+			pobyty[z.modelka] = append(p, pobytVTop{od: od, otevreny: true, odZacatku: z.druh == udalostPocatek})
 			zlepsit(z.modelka, z.misto)
 		case udalostVystup:
 			if p := pobyty[z.modelka]; len(p) > 0 && p[len(p)-1].otevreny {
@@ -351,6 +426,9 @@ func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnan
 		case udalostJednicka:
 			ukoncitVladu(z.cas)
 			vladne, vladaOd, vladaOdZacatku = z.modelka, z.cas, z.cas.Equal(zacatek)
+			if vladaOdZacatku {
+				vladaOd = pocatekZeSnimku(snimky, z.modelka, z.cas, func(m int) bool { return m == 1 })
+			}
 			zlepsit(z.modelka, 1)
 		case udalostKonecJednicky:
 			ukoncitVladu(z.cas)

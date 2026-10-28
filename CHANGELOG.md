@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.65] – 2026-10-28
+
+### Opraveno
+- **Síň slávy: kronika už nezačíná znovu a dny sedí.**
+  - Vrácení porovnání (Backspace) mohlo smazat začátek kroniky, když kronika začala až po tom porovnání. Kronika pak začala znovu a všechny modelky v Top 10 byly „od dneška“. Začátek kroniky už vrácení nesmaže.
+  - Dny v Top 10 a na 1. místě se počítají podle kalendáře. Modelka, která se dostala na 1. místo včera večer, má dnes ráno 1 den, ne „od dneška“.
+  - Kdo byl v Top 10 už na začátku kroniky, má pobyt dopočítaný z denních snímků pořadí. Ukáže se tedy „aspoň 8 dní“ od dne, kdy se do Top 10 opravdu dostala, místo dne, kdy kronika začala. Stejně se dopočítá vláda jedničky.
+
 ## [0.99.64] – 2026-10-28
 
 ### Opraveno

@@ -484,7 +484,13 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 			}
 		}
 		if udalosti := udalostiSlavy(st.drzitelky, model, obhajobyPred, nove, !st.zacatek, st.jednicka); len(udalosti) > 0 {
-			u.zapsatUdalostiSlavy(posledni, udalosti, nyni)
+			// Začátek kroniky nepatří k žádnému porovnání: pod číslem 0 ho vrácení porovnání nesmaže (dřív se
+			// s vráceným porovnáním smazal a kronika začala znovu, všichni „od dneška“)
+			k := posledni
+			if !st.zacatek {
+				k = 0
+			}
+			u.zapsatUdalostiSlavy(k, udalosti, nyni)
 		}
 		if st.porovnani != posledni || !maps.Equal(st.drzitelky, potvrzeneUrovne(model.uroven)) {
 			u.zapsatDrzitelky(posledni, model.uroven)

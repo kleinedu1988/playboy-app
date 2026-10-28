@@ -85,7 +85,7 @@ func TestSpocitatSinSlavy(t *testing.T) {
 	porovnani := []porovnaniZaznam{{id: 1, a: 3, b: 4}, {id: 2, a: 3, b: 5}, {id: 3, a: 1, b: 2}, {id: 4, a: 3, b: 2}, {id: 5, a: 3, b: 6}}
 	model := modelSlavy([]int{3, 1, 2})
 	existuje := map[int]bool{1: true, 2: true, 3: true, 4: true}
-	s := spocitatSinSlavy(kronika, model, porovnani, existuje, nyni)
+	s := spocitatSinSlavy(kronika, model, porovnani, existuje, nil, nyni)
 	if s.Od != kronika[0].casText || len(s.Vitrina) != 3 || len(s.Legendy) != 0 {
 		t.Fatalf("síň: od %q, vitrína %d, legendy %d", s.Od, len(s.Vitrina), len(s.Legendy))
 	}
@@ -122,12 +122,12 @@ func TestSpocitatSinSlavy(t *testing.T) {
 		t.Errorf("kronika: %+v", s.Kronika)
 	}
 	// Trojka vypadla: legenda
-	s = spocitatSinSlavy(append(kronika, z(90, udalostVystup, 3, 12, 1, 15)), modelSlavy([]int{1, 2}, 3), porovnani, existuje, nyni)
+	s = spocitatSinSlavy(append(kronika, z(90, udalostVystup, 3, 12, 1, 15)), modelSlavy([]int{1, 2}, 3), porovnani, existuje, nil, nyni)
 	if len(s.Legendy) != 1 || s.Legendy[0].ModelkaID != 3 || s.Legendy[0].DniCelkem != 80 || s.Legendy[0].Do == "" || s.Legendy[0].VTop {
 		t.Errorf("legendy: %+v", s.Legendy)
 	}
 	// Prázdná kronika
-	if s := spocitatSinSlavy(nil, modelSlavy(nil), nil, existuje, nyni); s.Od != "" || len(s.Rekordy) != 0 || s.Kronika == nil {
+	if s := spocitatSinSlavy(nil, modelSlavy(nil), nil, existuje, nil, nyni); s.Od != "" || len(s.Rekordy) != 0 || s.Kronika == nil {
 		t.Errorf("prázdná: %+v", s)
 	}
 }
@@ -177,4 +177,93 @@ func TestKronikaVDatabazi(t *testing.T) {
 			t.Errorf("po zapomenutí: %+v", k)
 		}
 	}()
+}
+
+// Dny podle kalendáře: včera večer → dnes ráno je 1 den, ne „od dneška“
+func TestDniMeziPodleKalendare(t *testing.T) {
+	vcera := time.Date(2026, 10, 27, 22, 0, 0, 0, time.Local)
+	for _, p := range []struct {
+		do   time.Time
+		chci int
+	}{{time.Date(2026, 10, 28, 8, 0, 0, 0, time.Local), 1}, {time.Date(2026, 10, 27, 23, 0, 0, 0, time.Local), 0}, {time.Date(2026, 11, 3, 1, 0, 0, 0, time.Local), 7}} {
+		if d := dniMezi(vcera, p.do); d != p.chci {
+			t.Errorf("%v → %v: %d, chci %d", vcera, p.do, d, p.chci)
+		}
+	}
+}
+
+// Kronika začala později než pobyt: kdo byl v top 10 (první) už v souvislé řadě denních snímků před začátkem, má
+// pobyt (vládu) od začátku té řady
+func TestPocatekZeSnimku(t *testing.T) {
+	den0 := time.Date(2026, 10, 1, 0, 0, 0, 0, time.Local)
+	nyni := den0.AddDate(0, 0, 20).Add(15 * time.Hour)
+	zacatek := den0.AddDate(0, 0, 20).Add(9 * time.Hour)
+	snimek := func(den int, poradi map[int]int) snimekPoradi {
+		return snimekPoradi{den: den0.AddDate(0, 0, den), poradi: poradi}
+	}
+	snimky := []snimekPoradi{
+		snimek(10, map[int]int{1: 3, 2: 12}),
+		snimek(12, map[int]int{1: 1, 2: 8}),
+		snimek(15, map[int]int{1: 1, 2: 9}), // mezera 13–14 (program neběžel) řadu nepřeruší
+		snimek(19, map[int]int{1: 1, 2: 4}),
+	}
+	casText := zacatek.Format("2006-01-02 15:04:05")
+	kronika := []zaznamKroniky{
+		{cas: zacatek, casText: casText, druh: udalostZacatek},
+		{cas: zacatek, casText: casText, druh: udalostPocatek, modelka: 1, misto: 1},
+		{cas: zacatek, casText: casText, druh: udalostPocatek, modelka: 2, misto: 2},
+		{cas: zacatek, casText: casText, druh: udalostPocatek, modelka: 3, misto: 3},
+		{cas: zacatek, casText: casText, druh: udalostJednicka, modelka: 1, misto: 1},
+	}
+	s := spocitatSinSlavy(kronika, modelSlavy([]int{1, 2, 3}), nil, map[int]bool{1: true, 2: true, 3: true}, snimky, nyni)
+	v := map[int]SlavaModelky{}
+	for _, x := range s.Vitrina {
+		v[x.ModelkaID] = x
+	}
+	if x := v[1]; x.DniTed != 10 || !x.OdZacatku || x.DniNaPrvnim != 8 || x.Od[:10] != "2026-10-11" {
+		t.Errorf("jednička: %+v", x)
+	}
+	if x := v[2]; x.DniTed != 8 || x.Od[:10] != "2026-10-13" {
+		t.Errorf("dvojka: %+v", x)
+	}
+	if x := v[3]; x.DniTed != 0 || !x.OdZacatku {
+		t.Errorf("trojka bez snímků: %+v", x)
+	}
+}
+
+// Vrácení porovnání nesmaže začátek kroniky, ani když kronika začala po něm
+func TestVraceniNesmazeZacatekKroniky(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	for _, j := range []string{"A", "B"} {
+		a.AddModelka(Modelka{Jmeno: j, Tetovani: -1, Piercing: -1})
+		a.SetHodnoceni(idModelky(t, a, j), 4)
+	}
+	ida, idb := idModelky(t, a, "A"), idModelky(t, a, "B")
+	if !a.PorovnatModelky(ida, idb, "a") {
+		t.Fatal("porovnání")
+	}
+	// Kronika začne až teď (po porovnání), jako po instalaci verze se síní slávy
+	a.uc.mu.Lock()
+	a.uc.zajistit().Exec("DELETE FROM kronika_slavy")
+	a.uc.zajistit().Exec("DELETE FROM sqlite_sequence WHERE name = 'kronika_slavy'")
+	a.uc.ob.model = nil
+	a.uc.mu.Unlock()
+	od := a.GetSinSlavy().Od
+	if od == "" {
+		t.Fatal("kronika nezačala")
+	}
+	if !a.VratitPorovnani() {
+		t.Fatal("vrácení")
+	}
+	if s := a.GetSinSlavy(); s.Od != od || len(s.Kronika) != 1 || s.Kronika[0].Druh != udalostZacatek {
+		t.Errorf("po vrácení: od %q (bylo %q), %+v", s.Od, od, s.Kronika)
+	}
+	// Tentýž záznam (první v tabulce), ne nový začátek
+	var id, porovnani int64
+	a.uc.mu.Lock()
+	a.uc.zajistit().QueryRow("SELECT id, porovnani_id FROM kronika_slavy WHERE druh = ?", udalostZacatek).Scan(&id, &porovnani)
+	a.uc.mu.Unlock()
+	if id != 1 || porovnani != 0 {
+		t.Errorf("začátek kroniky: id %d, porovnání %d", id, porovnani)
+	}
 }

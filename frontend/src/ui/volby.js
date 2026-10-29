@@ -438,7 +438,7 @@ export function prizpusobitListu() {
 function upravitListu() {
     const titulek = document.querySelector('.titulek-okna');
     const vlevo = document.getElementById('viewToggle');
-    const vpravo = titulek?.querySelector('.nav-akce');
+    const vpravo = titulek?.querySelector('.window-controls');
     if (titulek && vlevo && vpravo) {
         titulek.classList.remove('bez-nazvu-vlevo');
         const l = vlevo.getBoundingClientRect();
@@ -447,15 +447,15 @@ function upravitListu() {
     }
     const lista = document.querySelector('.hlavni-lista');
     const pas = document.getElementById('pasStranky');
-    const hledani = lista?.querySelector('.nav-controls');
-    if (!lista || !pas || !hledani) return;
+    const akce = lista?.querySelector('.nav-akce');
+    if (!lista || !pas || !akce) return;
     lista.classList.remove('bez-nazvu-pasu');
     if (pas.classList.contains('hidden')) return;
     const rPas = pas.getBoundingClientRect();
-    const rHledani = hledani.getBoundingClientRect();
+    const rAkce = akce.getBoundingClientRect();
     const volby = misto();
     const rVolby = !volby.classList.contains('hidden') ? volby.getBoundingClientRect() : null;
-    if (rHledani.top > rPas.top + 8 || (rVolby && rVolby.top > rPas.top + 8) || prekryvaji(rPas, rHledani)) {
+    if (rAkce.top > rPas.top + 8 || (rVolby && rVolby.top > rPas.top + 8) || prekryvaji(rPas, rAkce)) {
         lista.classList.add('bez-nazvu-pasu');
     }
 }

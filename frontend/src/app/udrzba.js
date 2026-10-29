@@ -11,6 +11,7 @@ import { esc, nazevVydani, sklonovat } from '../lib/format';
 import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
 import { stav } from './stav';
 import { searchInput, stats } from './prvky';
+import { nastavitViditelnostHledani } from './navigace';
 import { jeVidet, nastavitHtml, otevreneOkno, srovnatSeznam } from '../ui/dom';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
@@ -852,8 +853,7 @@ export function pripravit(nacistPrehled) {
         const pise = /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select');
         if (e.key === '/' && !pise && !e.ctrlKey && !e.altKey) {
             e.preventDefault();
-            searchInput.focus();
-            searchInput.select();
+            nastavitViditelnostHledani(true, { zamerit: true });
         } else if (e.target === searchInput && (e.key === 'ArrowDown' || e.key === 'Enter')) {
             e.preventDefault();
             /** @type {HTMLElement} */ (cast('fronta').querySelector('[data-radek]'))?.focus();

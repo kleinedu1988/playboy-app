@@ -102,13 +102,11 @@ textarea {
     display: none !important;
 }
 
-/* Hlavička okna ve dvou řádcích (jako Fotky ve Windows): tenký řádek okna a hlavní lišta se záložkami */
+/* Hlavička okna: nahoře řádek se záložkami a tlačítky okna, pod ním kontextová lišta a volitelný řádek s kapslí hledání */
 .navbar {
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
-    background-color: #141417;
-    border-bottom: 1px solid var(--border-color);
     /* Hlavička slouží i k přesouvání okna */
     --wails-draggable: drag;
     user-select: none;
@@ -125,6 +123,7 @@ textarea {
     align-items: center;
     height: 42px;
     padding-left: 16px;
+    background-color: #141417;
     border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -234,7 +233,7 @@ textarea {
     color: white;
 }
 
-/* Kontextová lišta pod záložkami: vlevo drobečky, pilulky podčástí a volby přehledu, vpravo hledání */
+/* Kontextová lišta pod záložkami: vlevo drobečky, pilulky podčástí a volby přehledu, vpravo lupa, + a ⋯ */
 .hlavni-lista {
     position: relative;
     display: flex;
@@ -242,6 +241,23 @@ textarea {
     gap: 10px;
     min-height: 44px;
     padding: 6px 16px;
+    background-color: #141417;
+    border-bottom: 1px solid var(--border-color);
+    z-index: 1400;
+}
+
+/* Třetí řádek s kapslí hledat uprostřed: stejná výška jako kontextová lišta, průsvitné pozadí jako kontextové nabídky */
+.hledani-radek {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 6px 16px;
+    background-color: rgba(26, 26, 30, 0.82);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     z-index: 1400;
 }
 
@@ -264,7 +280,8 @@ textarea {
     font-size: 12.5px;
 }
 
-.zkracene-pas .pas-hlavicky .slava-pohled:not(.active) .pas-nazev {
+.zkracene-pas .pas-hlavicky .slava-pohled:not(.active) .pas-nazev,
+.bez-nazvu-pasu .pas-hlavicky .slava-pohled:not(.active) .pas-nazev {
     display: none;
 }
 
@@ -373,13 +390,15 @@ textarea {
     background-color: var(--border-color);
 }
 
-/* Hledání vpravo v kontextové liště */
+/* Kapsle hledání uprostřed třetího řádku (.hledani-radek) */
 .nav-controls {
     position: relative;
     display: flex;
-    flex: 0 1 320px;
+    justify-content: center;
+    flex: 0 1 440px;
+    width: 100%;
+    max-width: 440px;
     min-width: 180px;
-    margin-left: auto;
 }
 
 .hledani {
@@ -482,8 +501,11 @@ textarea {
     margin-left: auto;
 }
 
-/* Akce v liště (+, ⋯): ikonová tlačítka bez rámečku */
+/* Akce v liště (lupa, +, ⋯): ikonová tlačítka bez rámečku */
 .nav-fav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
     min-width: 32px;
     height: 32px;
@@ -498,10 +520,21 @@ textarea {
     cursor: pointer;
 }
 
-.nav-fav:hover,
-.nav-fav.active {
+.nav-fav:hover {
     background-color: var(--bg-modal);
     color: var(--text-main);
+}
+
+/* Zobrazený stav přepínače lupy: oblíbená růžová */
+.nav-fav.active,
+.nav-fav[aria-expanded="true"] {
+    color: var(--accent-text);
+}
+
+.nav-fav.active:hover,
+.nav-fav[aria-expanded="true"]:hover {
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
 }
 
 /* Užší okno: když se záložky vedle voleb nevejdou, nezvolené mají jen ikonu (název je v bublině), napřed stránky
@@ -549,14 +582,9 @@ textarea {
     }
 }
 
-/* V nejužším okně se hledání do řádku okna mezi šipky a tlačítka okna nevejde */
 @media (max-width: 420px) {
     .logo {
         max-width: none;
-    }
-
-    .nav-controls {
-        display: none;
     }
 }
 
@@ -3402,10 +3430,12 @@ body.razeni .photo-item {
 
 /* Zamčený program nenabízí v hlavičce nic kromě tlačítek okna */
 #app.zamceno .view-toggle,
+#app.zamceno #searchToggleBtn,
 #app.zamceno #addBtn,
 #app.zamceno #menuBtn,
 #app.zamceno .nav-oddelovac,
-#app.zamceno .hlavni-lista {
+#app.zamceno .hlavni-lista,
+#app.zamceno .hledani-radek {
     visibility: hidden;
 }
 
@@ -6356,8 +6386,9 @@ textarea {
 .naseptavac {
     position: absolute;
     top: calc(100% + 10px);
-    right: 0;
-    left: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
     width: min(560px, calc(100vw - 32px));
     max-height: min(560px, calc(100vh - 80px));
     overflow-y: auto;
@@ -7623,7 +7654,7 @@ textarea {
 @keyframes otevrit-naseptavac {
     from {
         opacity: 0;
-        transform: scale(0.98) translateY(-4px);
+        transform: translateX(-50%) scale(0.98) translateY(-4px);
     }
 }
 
@@ -7640,7 +7671,7 @@ textarea {
 }
 
 .naseptavac {
-    transform-origin: top right;
+    transform-origin: top center;
     animation: otevrit-naseptavac 0.16s ease-out;
     will-change: transform, opacity;
 }

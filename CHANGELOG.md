@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.80] – 2026-10-29
+
+### Změněno
+- **Přepínač lupy v kontextové liště a průsvitný řádek s kapslí hledat uprostřed:**
+  - Tlačítka přidání (`+`) a dalších akcí (`⋯`) jsou přesunuta do druhého řádku hlavičky (`.hlavni-lista`) na pravý okraj spolu s přepínačem lupy (`#searchToggleBtn`) ve stejném designu (`.nav-fav`).
+  - Ve skrytém stavu má tlačítko lupy stejnou barvu jako `+` a `⋯`, v zobrazeném stavu svítí růžově (`var(--accent-text)`).
+  - Kliknutí na lupu (nebo `Ctrl+F`) zobrazí a skryje třetí řádek (`#hledaniRadek`) se stejnou výškou jako řádek tlačítek, průsvitným skleněným pozadím jako kontextové nabídky a vyhledávací kapslí uprostřed.
+
 ## [0.99.79] – 2026-10-29
 
 ### Změněno

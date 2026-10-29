@@ -6,7 +6,7 @@ import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { calendar, detailView, issueView, searchInput, stats, wall } from './prvky';
-import { jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepnoutRezim, zapamatovatMisto } from './navigace';
+import { jeOdkazNaSlozku, nastavitViditelnostHledani, odkazJeVPoradku, oznamitVlozeni, prepnoutHledani, prepnoutRezim, zapamatovatMisto } from './navigace';
 import { nacistGalerii } from './galerie';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { nacistStenu } from './stena';
@@ -292,6 +292,11 @@ export function pripravit() {
         obnovitPoUlozeniAlba(modelka);
     });
 
+    // Tlačítko lupy: zobrazí nebo skryje řádek s kapslí hledat
+    document.getElementById('searchToggleBtn')?.addEventListener('click', () => {
+        prepnoutHledani();
+    });
+
     // ✕ v hledání: smaže text a hledání se obnoví jako po ručním smazání
     document.getElementById('searchClearBtn').addEventListener('click', (e) => {
         e.preventDefault();
@@ -300,13 +305,12 @@ export function pripravit() {
         searchInput.focus();
     });
 
-    // Ctrl+F skočí do hledání odkudkoli kromě otevřeného okna, prohlížeče a zamčeného programu
+    // Ctrl+F otevře řádek hledání a skočí do něj odkudkoli kromě otevřeného okna, prohlížeče a zamčeného programu
     document.addEventListener('keydown', (e) => {
         if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== 'f' || e.defaultPrevented) return;
         if (stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
         e.preventDefault();
-        searchInput.focus();
-        searchInput.select();
+        nastavitViditelnostHledani(true, { zamerit: true });
     });
 
     searchInput.addEventListener('input', () => {

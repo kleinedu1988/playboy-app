@@ -11,7 +11,7 @@ import { otevritNapovedu } from './napoveda';
 import { detailView, gallery, searchInput } from './prvky';
 import { listaGalerie } from './listy';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
-import { prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
+import { nastavitViditelnostHledani, prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { MODELEK_PRO_PISMENA, otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
 import { nacistKalendar } from './kalendar';
@@ -172,6 +172,7 @@ export function hledatHodnotu(hodnota) {
     stav.vyskytModelek = 'vse';
     zapamatovatMisto({});
     prepnoutRezim('modelky');
+    nastavitViditelnostHledani(true);
     searchInput.value = hodnota;
     nacistGalerii(hodnota);
 }

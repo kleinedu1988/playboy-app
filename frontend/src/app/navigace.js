@@ -232,6 +232,28 @@ export function zobrazeniCisel() {
 export const htmlZobrazeniCisel = aktivni => [['obalky', 'Obálky'], ['kalendar', 'Kalendář']]
     .map(([klic, nazev]) => `<button class="chip ${klic === aktivni ? 'active' : ''}" data-zobrazeni-cisel="${klic}">${nazev}</button>`).join('');
 
+// Přepínač řádku s kapslí hledat (tlačítko lupy v kontextové liště)
+export function nastavitViditelnostHledani(videt, { zamerit = false } = {}) {
+    const radek = document.getElementById('hledaniRadek');
+    const prepinac = document.getElementById('searchToggleBtn');
+    if (!radek || !prepinac) return;
+    radek.classList.toggle('hidden', !videt);
+    prepinac.classList.toggle('active', videt);
+    prepinac.setAttribute('aria-expanded', String(videt));
+    if (!videt) {
+        zrusitHledani();
+    } else if (zamerit) {
+        searchInput.focus();
+        searchInput.select();
+    }
+}
+
+export function prepnoutHledani() {
+    const radek = document.getElementById('hledaniRadek');
+    const videt = Boolean(radek?.classList.contains('hidden'));
+    nastavitViditelnostHledani(videt, { zamerit: videt });
+}
+
 export function prepnoutRezim(novy) {
     const [text, napoveda] = HLEDANI_PODLE_REZIMU[novy] || HLEDANI_PODLE_REZIMU.modelky;
     searchInput.placeholder = text;

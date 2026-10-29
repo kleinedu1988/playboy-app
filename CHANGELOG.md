@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.77] – 2026-10-29
+
+### Opraveno
+- **Tlačítka okna (minimalizovat, maximalizovat, zavřít)** v pravém horním rohu hlavičky jsou zase vidět: po omezení šířky drobečků vlevo (`.logo`) v 0.99.75 chybělo u `.window-controls` zarovnání doprava (`margin-left: auto`), takže se tlačítka posunula doprostřed pod pole hledání.
+- V nejužším okně (do 420 px, kde je hledání skryté) využijí drobečky celou šířku až k tlačítkům okna a zamčená obrazovka lícuje se spodní hranou řádku okna (40 px).
+
 ## [0.99.76] – 2026-10-29
 
 ### Změněno

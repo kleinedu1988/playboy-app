@@ -211,6 +211,7 @@ textarea {
     display: flex;
     flex: 0 0 auto;
     height: 100%;
+    margin-left: auto;
 }
 
 .win-btn {
@@ -521,6 +522,10 @@ textarea {
 
 /* V nejužším okně se hledání do řádku okna mezi šipky a tlačítka okna nevejde */
 @media (max-width: 420px) {
+    .logo {
+        max-width: none;
+    }
+
     .nav-controls {
         display: none;
     }
@@ -3318,7 +3323,7 @@ body.razeni .photo-item {
 /* Zámek: zakrývá vše pod hlavičkou okna; okno jde dál přesouvat a zavřít */
 .lock {
     position: absolute;
-    inset: 36px 0 0 0;
+    inset: 40px 0 0 0;
     z-index: 3000;
     display: flex;
     align-items: center;

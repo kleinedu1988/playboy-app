@@ -18,3 +18,11 @@ test('okna jsou přímo v kostře okna', () => {
     assert.ok(okna.length >= 10, `nalezeno oken: ${okna.length}`);
     assert.deepEqual(okna.filter(([, h]) => h !== 0), [], 'vnořená okna');
 });
+
+// .logo v řádku okna má omezenou max-width, aby nezasahovalo pod hledání uprostřed; tlačítka okna proto musí mít
+// margin-left: auto, jinak se posunou hned za .logo pod pole hledání
+test('tlačítka okna v hlavičce drží u pravého okraje', () => {
+    const css = readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
+    const blok = css.match(/\.window-controls\s*\{([^}]*)\}/);
+    assert.ok(blok && /margin-left:\s*auto\s*;/.test(blok[1]), '.window-controls musí mít margin-left: auto');
+});

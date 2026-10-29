@@ -3,6 +3,7 @@ import { GetKalendar, HledatClanky } from './backend';
 import { PRIKAZY, bezDiakritiky, esc, kategorieModelky, nazevVydani, obrazek, poleCisla, popisKategorie, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { searchInput } from './prvky';
+import { stav } from './stav';
 import { VELIKOST_NAHLEDU, adresaTitulni } from './obrazky';
 import { otevritDetailModelky } from './profil';
 import { otevritVydani } from './vydani';
@@ -295,7 +296,11 @@ function otevrit(index) {
     const akce = polozky[index];
     if (!akce) return;
     zavritNaseptavac();
+    const dotaz = searchInput.value;
     akce();
+    // Na stránkách Hodnocení, Síň slávy a Sbírka hledání jen najde, co otevřít; text by tam dál nic neznamenal
+    // (příkaz hledání, který text doplnil, ho nechá)
+    if (stav.rezim === 'prehled' && searchInput.value === dotaz) searchInput.value = '';
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
@@ -329,8 +334,9 @@ export function pripravit() {
             vybrat(vybrana < 0 ? (dolu ? 0 : polozky.length - 1) : (vybrana + (dolu ? 1 : -1) + polozky.length) % polozky.length);
         } else if (e.key === 'Enter') {
             e.preventDefault();
-            if (vybrana >= 0) {
-                otevrit(vybrana);
+            // Na stránkách Hodnocení, Síň slávy a Sbírka hledání nic nefiltruje: Enter otevře první výsledek
+            if (vybrana >= 0 || (stav.rezim === 'prehled' && polozky.length)) {
+                otevrit(Math.max(vybrana, 0));
             } else {
                 zavritNaseptavac();
                 searchInput.blur();

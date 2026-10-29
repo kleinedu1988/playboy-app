@@ -852,7 +852,8 @@ export function pripravit(nacistPrehled) {
         vykreslitSeznam();
     });
 
-    // Ctrl+F a / skočí do hledání Údržby (hlavní hledání v Přehledu nic nehledá)
+    // Ctrl+F a / skočí do hledání Údržby (hledá ve frontě); hlavní hledání nahoře dostane Ctrl+F jinde, proto
+    // se klávesa zachytí dřív
     document.addEventListener('keydown', (e) => {
         if (!udrzbaVidet() || !vSouhrnu() || stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
         const pise = /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select');
@@ -860,7 +861,7 @@ export function pripravit(nacistPrehled) {
             e.preventDefault();
             zaostritHledani();
         }
-    });
+    }, true);
 
     // Klávesnice ve frontě Souhrnu: ↑↓ řádky, Home/End, PageUp/PageDown, → rozbalí, ← sbalí, Enter hlavní akce,
     // mezerník rozbalí skupinu, Delete odloží položku (Netýká se, V pořádku, Odmítnout), E upraví návrh,

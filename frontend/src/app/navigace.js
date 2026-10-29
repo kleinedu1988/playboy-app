@@ -8,7 +8,7 @@ import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { otevritFotografa, otevritVydani } from './vydani';
 import { zrusitVyber } from './vyber';
-import { obnovitVolby } from '../ui/volby';
+import { obnovitVolby, prizpusobitListu } from '../ui/volby';
 import { vsechnyModelky } from './mezipamet';
 import { prestatNacitat } from './obrazky';
 import { prestatSledovatKonce } from './nejlepsi';
@@ -42,11 +42,10 @@ export function ukazatPohled(pohled) {
     document.getElementById('nextModelBtn').classList.toggle('hidden', pohled !== detailView);
     // Záložky přehledů zůstávají vidět i na podstránce (jedním klikem jinam); zvolená je tam jen tlumená
     prepinacRezimu.classList.toggle('podstranka', podstranka);
-    // Přehled sbírky nemá co hledat; z profilu otevřeného z Přehledu se hledá dál
-    searchInput.disabled = pohled === stats;
     // Volby v liště patří ukázanému přehledu; profil a stránka vydání žádné nemají
     obnovitVolby(pohled);
     backBtn.innerHTML = `&larr; ${esc(popisZpet())}`;
+    ukazatDrobecek(pohled);
     // Lišta písmen patří jen ke galerii modelek, lišta desetiletí jen ke stěně
     if (pohled !== gallery) document.getElementById('galleryNav')?.classList.add('hidden');
     if (pohled !== wall) document.getElementById('wallNav')?.classList.add('hidden');
@@ -61,6 +60,22 @@ export function ukazatPohled(pohled) {
 
 const hlavniOblast = document.querySelector('main');
 
+// Drobečky v řádku okna: „← odkud › kde jsem“, u profilu i kolikátá modelka v seznamu (‹ 3 z 22 ›)
+function ukazatDrobecek(pohled) {
+    const drobecek = document.getElementById('drobecek');
+    const poradi = document.getElementById('poradiModelky');
+    let nazev = '';
+    if (pohled === detailView) nazev = stav.aktualniModelka?.jmeno || '';
+    else if (pohled === issueView) nazev = stav.aktualniFotograf || (stav.aktualniVydani ? nazevVydani(stav.aktualniVydani) : '');
+    drobecek.textContent = nazev;
+    drobecek.title = nazev;
+    drobecek.classList.toggle('hidden', !nazev);
+    const seznam = stav.nacteneModelky || [];
+    const index = pohled === detailView ? seznam.findIndex(m => m.id === stav.aktualniModelka?.id) : -1;
+    poradi.textContent = index >= 0 && seznam.length > 1 ? `${index + 1} z ${seznam.length}` : '';
+    poradi.classList.toggle('hidden', !poradi.textContent);
+}
+
 // Prvek s fokusem jako selektor, aby se po návratu Zpět dal najít i v nově vykresleném pohledu
 const ATRIBUTY_FOKUSU = ['data-id', 'data-index', 'data-vydani', 'data-prazdne', 'data-cislo', 'data-modelka', 'data-album'];
 function selektorFokusu() {
@@ -72,14 +87,18 @@ function selektorFokusu() {
 
 // Historie pro Zpět: kam se vrátit a na jaké místo stránky
 export const historie = [];
-export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Čísla', kalendar: 'Kalendář', nejlepsi: 'Nejlepší', prehled: 'Přehled' };
+export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Čísla', kalendar: 'Kalendář', nejlepsi: 'Nejlepší', prehled: 'Sbírka' };
+// Přehled má tři stránky (tlačítka vpravo v liště); Zpět se jmenuje podle té, ze které se odešlo
+const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy' };
 
 export function popisZpet() {
     const misto = historie[historie.length - 1];
     if (misto?.typ === 'profil') return misto.modelka.jmeno;
     if (misto?.typ === 'vydani') return nazevVydani(misto.vydani);
     if (misto?.typ === 'fotograf') return misto.jmeno;
-    return NAZVY_REZIMU[misto?.rezim || stav.rezim];
+    const rezim = misto?.rezim || stav.rezim;
+    if (rezim === 'prehled' && stav.prehledSekce === 'oblibenost') return NAZVY_STRANEK[stav.oblibenostCast] || NAZVY_REZIMU.prehled;
+    return NAZVY_REZIMU[rezim];
 }
 
 export function soucasneMisto() {
@@ -172,7 +191,8 @@ const HLEDANI_PODLE_REZIMU = {
     covery: ['Hledat v číslech a coverech…', 'Čísla: vydání (např. 1995), název, modelka nebo obálka. Více slov zužuje výběr.'],
     kalendar: ['Hledat v kalendáři…', 'Kalendář: ročníky podle čísla (1975), měsíce i jména modelek a speciálů.'],
     nejlepsi: ['Hledat v nejlepších fotkách…', 'Nejlepší fotky: jméno modelky, vydání, fotograf. Více slov zužuje výběr.'],
-    prehled: ['V Přehledu se nehledá', ''],
+    // Na stránkách Hodnocení, Síň slávy a Sbírka hledání najde modelku a otevře její profil (výsledky pod polem)
+    prehled: ['Najít modelku…', 'Jméno modelky, číslo nebo článek; Enter otevře první výsledek. Do hledání skočíš klávesami Ctrl+F.'],
 };
 
 // Čísla mají dvě zobrazení: Obálky (přehled 'covery') a Kalendář (přehled 'kalendar'); volba v liště voleb,
@@ -193,8 +213,7 @@ export function prepnoutRezim(novy) {
         searchInput.value = hledaniPodleRezimu[novy] || '';
     }
     stav.rezim = novy;
-    // Kalendář je zobrazení Čísel: svítí záložka Čísla
-    prepinacRezimu.querySelectorAll('[data-rezim]').forEach(b => b.classList.toggle('active', b.dataset.rezim === novy || (novy === 'kalendar' && b.dataset.rezim === 'covery')));
+    zvyraznitRezim();
     if (novy === 'covery' || novy === 'kalendar') {
         try { localStorage.setItem('zobrazeniCisel', novy === 'kalendar' ? 'kalendar' : 'obalky'); } catch { /* jen pro toto spuštění */ }
     }
@@ -202,3 +221,21 @@ export function prepnoutRezim(novy) {
     try { localStorage.setItem('posledniRezim', novy); } catch { /* bez úložiště se jen nezapamatuje */ }
     document.querySelector('main').scrollTop = 0;
 }
+
+// Svítí záložka otevřeného přehledu (Kalendář je zobrazení Čísel); v Přehledu tlačítko otevřené stránky:
+// Hodnocení, Síň slávy, nebo Sbírka. Čtečky obrazovky ji poznají podle aria-current.
+export function zvyraznitRezim() {
+    const novy = stav.rezim;
+    const stranka = stav.prehledSekce === 'oblibenost' ? stav.oblibenostCast : 'sprava';
+    prepinacRezimu.querySelectorAll('[data-rezim]').forEach((b) => {
+        const zvoleny = novy === 'prehled'
+            ? b.dataset.rezim === 'prehled' && (b.dataset.castOblibenosti || b.dataset.castPrehledu) === stranka
+            : b.dataset.rezim === novy || (novy === 'kalendar' && b.dataset.rezim === 'covery');
+        b.classList.toggle('active', zvoleny);
+        if (zvoleny) b.setAttribute('aria-current', 'page');
+        else b.removeAttribute('aria-current');
+    });
+    prizpusobitListu();
+}
+
+window.addEventListener('resize', () => prizpusobitListu());

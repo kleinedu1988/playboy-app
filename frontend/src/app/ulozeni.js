@@ -299,10 +299,11 @@ export function pripravit() {
         searchInput.focus();
     });
 
-    // Ctrl+F skočí do hledání odkudkoli kromě otevřeného okna, prohlížeče a zamčeného programu
+    // Ctrl+F skočí do hledání odkudkoli kromě otevřeného okna, prohlížeče a zamčeného programu (Údržba má vlastní
+    // hledání a klávesu si vezme dřív)
     document.addEventListener('keydown', (e) => {
-        if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== 'f') return;
-        if (stav.zamceno || searchInput.disabled || otevreneOkno() || jeVidet('lightbox')) return;
+        if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== 'f' || e.defaultPrevented) return;
+        if (stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
         e.preventDefault();
         searchInput.focus();
         searchInput.select();

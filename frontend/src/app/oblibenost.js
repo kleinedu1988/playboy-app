@@ -1,4 +1,4 @@
-// Oblíbenost v Přehledu ve dvou částech, které se přepínají volbou pod hledáním (jako části Přehledu): Hodnocení
+// Oblíbenost v Přehledu ve dvou stránkách, každá má vlastní tlačítko vpravo v liště: Hodnocení
 // a Síň slávy (sin-slavy.js). Hodnocení má nahoře jednu hlavičku jako Síň slávy: pilulky pohledů Porovnat · Fotky ·
 // Pořadí s počty (čekající na potvrzení, nehodnocené fotky, nesoulady srdíček) a vpravo dnešní počet porovnání
 // s odkazy na to, co čeká v jiném pohledu („⏳ 3 čekají na Top 10 · Porovnávat →“). Pohledy:
@@ -40,8 +40,6 @@ import { nacistSinSlavy, pripravitSinSlavy } from './sin-slavy';
 import { nacistGalerii, pocetNehodnocenych, pripravitGalerii } from './galerie-hodnoceni';
 import { ikonaZobrazeni } from '../ui/volby';
 
-// Části Oblíbenosti (volba pod hledáním) a jejich ikony v liště (ui/volby.js); pohledy Hodnocení jsou pilulky v obsahu
-export const CASTI_OBLIBENOSTI = [['hodnoceni', 'Hodnocení'], ['slava', 'Síň slávy']];
 const DVOJIC_NAJEDNOU = 8;
 const PORADI_NAJEDNOU = 25;
 const ROZHODNUTI_NAJEDNOU = 6; // řádků v Čeká na rozhodnutí před „Zobrazit všech“
@@ -82,10 +80,6 @@ let porovnaniDnes = nactiDnes();
 
 const videt = () => !!koren?.isConnected && stav.rezim === 'prehled' && stav.prehledSekce === 'oblibenost' && !stats.classList.contains('hidden');
 
-// Volby Oblíbenosti do lišty pod hledáním (prehled.js je vloží místo částí Přehledu): Hodnocení, Síň slávy
-export const htmlVolebOblibenosti = () => `<div class="prehled-casti volby-v-liste">${CASTI_OBLIBENOSTI.map(([klic, nazev]) =>
-    `<button class="chip ${klic === stav.oblibenostCast ? 'active' : ''}" data-zobrazeni-oblibenosti="${klic}">${nazev}</button>`).join('')}</div>`;
-
 // Část Oblíbenosti nebo pohled Hodnocení, který otevře příští zobrazení (např. pořadí z profilu modelky): 'hodnoceni',
 // 'slava', pohled ('porovnat', 'fotky', 'poradi') i dřívější části ('porovnani', 'galerie' – prevestCastOblibenosti)
 export function nastavitCastOblibenosti(klic) {
@@ -107,7 +101,7 @@ function ukazatCastOblibenosti(klic) {
     if (stav.oblibenostCast === 'slava' && cast('slava')) nacistSinSlavy(cast('slava'));
     if (stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'fotky' && cast('galerie')) nacistGalerii(cast('galerie'));
     vykreslitHlavu();
-    // Lišta pod hledáním se obnoví v prehled.js
+    // V liště se rozsvítí tlačítko stránky (prehled.js)
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     document.querySelector('main').scrollTop = 0;
 }
@@ -813,11 +807,6 @@ export function pripravit() {
     sledovatPomerFotek();
     // Nový počet nehodnocených fotek ukáže pilulka Fotky a odkazy v hlavičce
     pripravitGalerii(vykreslitHlavu);
-    // Volba části v liště pod hledáním (skrytý štítek v obsahu Přehledu)
-    document.addEventListener('click', (e) => {
-        const castVolba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-oblibenosti]');
-        if (castVolba && castVolba.dataset.zobrazeniOblibenosti !== stav.oblibenostCast) ukazatCastOblibenosti(castVolba.dataset.zobrazeniOblibenosti);
-    });
 
     stats.addEventListener('click', (e) => {
         if (!koren?.contains(e.target)) return;

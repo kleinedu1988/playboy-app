@@ -7,6 +7,7 @@ import { stav } from './stav';
 import { issueView, searchInput, wall } from './prvky';
 import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepinacRezimu, prepnoutRezim, zobrazeniCisel } from './navigace';
 import { zvolitCastPrehledu } from './prehled';
+import { nastavitCastOblibenosti } from './oblibenost';
 import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
@@ -14,6 +15,7 @@ import { otevritLightbox } from './prohlizec';
 import { pripojitVyberSpecialu } from './specialy';
 import { zavritOkno } from './ulozeni';
 import { VELIKOST_PLAKATU_MALA, adresyOdkazu } from './obrazky';
+import { jeVidet, otevreneOkno } from '../ui/dom';
 
 // Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -151,10 +153,21 @@ export function pripravit() {
         if (!tlacitko) return;
         // Přepnutí přehledu začíná novou historii; Čísla v naposledy zvoleném zobrazení
         historie.length = 0;
-        // Tlačítka Oblíbenost a Přehled sbírky otevírají Přehled, každé na své části
+        // Tlačítka Hodnocení, Síň slávy a Sbírka otevírají Přehled, každé na své stránce
+        if (tlacitko.dataset.castOblibenosti && tlacitko.dataset.castOblibenosti !== stav.oblibenostCast) nastavitCastOblibenosti(tlacitko.dataset.castOblibenosti);
         if (tlacitko.dataset.castPrehledu) zvolitCastPrehledu(tlacitko.dataset.castPrehledu);
         prepnoutRezim(tlacitko.dataset.rezim === 'covery' && zobrazeniCisel() === 'kalendar' ? 'kalendar' : tlacitko.dataset.rezim);
         nacistGalerii(searchInput.value);
+    });
+
+    // Ctrl+1 až Ctrl+7: přehledy a stránky v liště zleva doprava (Modelky … Sbírka), jako klik na ně
+    document.addEventListener('keydown', (e) => {
+        if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || !/^[1-9]$/.test(e.key)) return;
+        if (stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
+        const tlacitko = /** @type {HTMLElement | undefined} */ (prepinacRezimu.querySelectorAll('[data-rezim]')[Number(e.key) - 1]);
+        if (!tlacitko) return;
+        e.preventDefault();
+        tlacitko.click();
     });
 
     // Volba Zobrazení v Číslech (Obálky / Kalendář): přepne přehled a zůstane na stejném roce

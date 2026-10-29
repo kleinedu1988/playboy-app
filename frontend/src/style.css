@@ -132,8 +132,14 @@ textarea {
     align-items: center;
     flex: 1;
     min-width: 0;
+    /* Jen místo vlevo od hledání (to je uprostřed okna, viz .nav-controls); jméno v drobečku se zkrátí */
+    max-width: calc(50% - min(220px, 50% - 130px) - 12px);
     gap: 8px;
     font-size: 13px;
+}
+
+.logo > button {
+    flex: none;
 }
 
 /* Cesta zpět z profilu a stránky vydání: v řádku okna vedle názvu */
@@ -164,6 +170,33 @@ textarea {
     padding: 0 8px;
     font-size: 15px;
     line-height: 1;
+}
+
+/* Drobeček: kde jsem (jméno modelky, číslo, fotograf) za tlačítkem Zpět, oddělený šipkou */
+.nav-drobecek {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.nav-drobecek::before {
+    content: "›";
+    margin-right: 8px;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+/* Kolikátá modelka v seznamu, mezi šipkami na předchozí a další */
+.nav-poradi {
+    flex: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 /* Tlačítka okna */
@@ -210,10 +243,14 @@ textarea {
     gap: 4px;
 }
 
-/* Záložka přehledu: text s podtržením zvolené, jako ve Fotkách */
-.view-toggle button {
-    --odsazeni: 12px;
+/* Záložka přehledu (vlevo) i stránky (vpravo): ikona a text, zvolená s podtržením, jako ve Fotkách */
+.view-toggle button,
+.nav-stranky button {
+    --odsazeni: 11px;
     position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
     padding: 0 var(--odsazeni);
     border: none;
     background: none;
@@ -223,17 +260,38 @@ textarea {
     cursor: pointer;
 }
 
-.view-toggle button:hover {
+.nav-ikona {
+    flex: none;
+    opacity: 0.85;
+}
+
+.view-toggle button:hover,
+.nav-stranky button:hover {
     color: var(--text-main);
 }
 
-.view-toggle button.active {
+.view-toggle button.active,
+.nav-stranky button.active {
     color: var(--text-main);
     font-weight: 600;
 }
 
-/* Zvolená záložka: růžová linka přes celé slovo, na koncích se ztrácí a jemně září */
-.view-toggle button.active::before {
+.view-toggle button.active .nav-ikona,
+.nav-stranky button.active .nav-ikona {
+    color: var(--accent-text);
+    opacity: 1;
+}
+
+.view-toggle button:focus-visible,
+.nav-stranky button:focus-visible {
+    outline: 2px solid var(--accent-text);
+    outline-offset: -4px;
+    border-radius: 8px;
+}
+
+/* Zvolená záložka: růžová linka přes celou záložku, na koncích se ztrácí a jemně září */
+.view-toggle button.active::before,
+.nav-stranky button.active::before {
     content: "";
     position: absolute;
     left: var(--odsazeni);
@@ -246,31 +304,27 @@ textarea {
 }
 
 /* Na podstránce (profil, vydání) zůstává vidět, odkud se přišlo, ale tlumeně */
-.podstranka .view-toggle button.active {
+.podstranka .view-toggle button.active,
+.podstranka .nav-stranky button.active {
     font-weight: 500;
 }
 
-.podstranka .view-toggle button.active::before {
+.podstranka .view-toggle button.active .nav-ikona,
+.podstranka .nav-stranky button.active .nav-ikona {
+    color: inherit;
+}
+
+.podstranka .view-toggle button.active::before,
+.podstranka .nav-stranky button.active::before {
     background: linear-gradient(90deg, transparent, var(--text-muted) 20%, var(--text-muted) 80%, transparent);
     box-shadow: none;
 }
 
-/* Kalendář, Nejlepší a Přehled jako ikonová tlačítka; zvolený přehled podbarvený akcentem */
-.nav-rezim {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.nav-rezim.active,
-.nav-rezim.active:hover {
-    background-color: var(--accent-soft);
-    color: var(--accent-text);
-}
-
-.podstranka .nav-rezim.active {
-    background-color: var(--bg-modal);
-    color: var(--text-main);
+/* Stránky vpravo (Hodnocení, Síň slávy, Sbírka) jsou záložky jako přehledy vlevo */
+.nav-stranky {
+    display: flex;
+    align-self: stretch;
+    gap: 4px;
 }
 
 .nav-oddelovac {
@@ -385,6 +439,8 @@ textarea {
 .nav-akce {
     display: flex;
     flex: none;
+    align-self: stretch;
+    align-items: center;
     gap: 4px;
     margin-left: auto;
 }
@@ -411,27 +467,36 @@ textarea {
     color: var(--text-main);
 }
 
-/* Užší okno: postupně ubývá šířka záložek a jejich text; hledání se zužuje a v nejužším okně zmizí */
+/* Užší okno: když se záložky vedle voleb nevejdou, nezvolené mají jen ikonu (název je v bublině), napřed stránky
+   vpravo, potom přehledy vlevo (třídy přidává ui/volby.js); zvolená má název vždy. Hledání se zužuje a v nejužším
+   okně zmizí. */
+.bez-nazvu-vpravo .nav-stranky button:not(.active) > span,
+.bez-nazvu-vlevo .view-toggle button:not(.active) > span {
+    display: none;
+}
+
 @media (max-width: 900px) {
-    .view-toggle button {
-        --odsazeni: 7px;
+    .view-toggle button,
+    .nav-stranky button {
+        --odsazeni: 8px;
         font-size: 13px;
     }
 }
 
+/* V užším okně drobečky šetří místo: napřed zmizí „3 z 22“, potom jméno (cesta zpět a šipky zůstávají) */
+@media (max-width: 1000px) {
+    .nav-poradi {
+        display: none;
+    }
+}
+
 @media (max-width: 760px) {
-    /* Záložky mají jen zkratky; celý název je v nápovědě */
-    .view-toggle button {
-        font-size: 0;
-    }
-
-    .view-toggle button::after {
-        content: attr(data-kratce);
-        font-size: 13px;
-    }
-
     .win-btn {
         width: 36px;
+    }
+
+    .nav-drobecek {
+        display: none;
     }
 }
 
@@ -4553,11 +4618,6 @@ body.razeni .photo-item {
 .lightbox:not(.ovladani) .album-nav {
     opacity: 0;
     pointer-events: none;
-}
-
-/* Tlačítko Zpět v řádku okna není vidět; zpět vede Esc a Alt+šipka vlevo. Šipky na další modelku zůstávají. */
-#backBtn {
-    display: none !important;
 }
 
 /* Údaje modelky v profilu: bloky Playboy, Osobní, Vzhled v jedné kartě */
@@ -11286,7 +11346,7 @@ span.ud-chip {
     font-weight: 600;
 }
 
-/* Přepínač stránek v liště pod hledáním (Obálky / Kalendář, části Přehledu a Oblíbenosti): možnosti vedle sebe */
+/* Přepínač zobrazení v liště pod hledáním (Obálky / Kalendář): možnosti vedle sebe */
 .volba-prepinac {
     display: flex;
     align-items: center;
@@ -11982,6 +12042,15 @@ span.ud-chip {
     justify-content: space-between;
     gap: 12px 20px;
     margin: 0 0 22px;
+}
+
+/* Pilulky částí Sbírky: odstup od obsahu dělá mřížka Přehledu */
+.sb-lista {
+    margin: 0;
+}
+
+.sb-lista .slava-pohled svg {
+    flex: none;
 }
 
 /* Pilulky pohledů: skleněný pás, zvolený pohled plnou růžovou (odliší se od voleb v horní liště) */

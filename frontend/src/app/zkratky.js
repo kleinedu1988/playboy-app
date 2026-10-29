@@ -12,6 +12,8 @@ const nebo = '<span class="zkratky-nebo">/</span>';
 const CASTI = [
     { klic: 'vse', nazev: 'Kdekoli', radky: [
         [k('Ctrl', 'F'), 'Hledat'],
+        [`${k('Ctrl', '1')}–${k('7')}`, 'Modelky, Čísla, Centerfoldy, Nejlepší, Hodnocení, Síň slávy, Sbírka'],
+        [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět (z profilu, čísla)'],
         [k('?'), 'Klávesové zkratky'],
         [k('Esc'), 'Zavřít okno, zpět'],
         [k('Ctrl', 'Enter'), 'Uložit modelku (i v Doplnit modelku), použít text v editoru'],

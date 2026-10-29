@@ -457,14 +457,14 @@ export function pripravit() {
         tlacitko.textContent = rozbaleno ? 'méně' : 'více';
     });
 
-    // Páska online alb přeskočí na první online album; pořadí v oblíbenosti otevře Oblíbenost (jako tlačítko grafu)
+    // Páska online alb přeskočí na první online album; pořadí v oblíbenosti otevře Hodnocení nebo Síň slávy (jako tlačítko v liště)
     document.getElementById('modelHeader').addEventListener('click', (e) => {
         const doOblibenosti = e.target.closest('[data-otevrit-oblibenost]');
         if (doOblibenosti) {
             nastavitCastOblibenosti(doOblibenosti.dataset.otevritOblibenost || 'poradi');
             // Řada odznaků otevře v síni slávy rovnou sbírku odznaků
             if (doOblibenosti.dataset.slavaPohled) nastavitPohledSlavy(doOblibenosti.dataset.slavaPohled);
-            /** @type {HTMLElement|null} */ (document.querySelector('.nav-rezim[data-cast-prehledu="oblibenost"]'))?.click();
+            /** @type {HTMLElement|null} */ (document.querySelector(`.nav-rezim[data-cast-oblibenosti="${stav.oblibenostCast}"]`))?.click();
             return;
         }
         const paska = e.target.closest('[data-online-album]');

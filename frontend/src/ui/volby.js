@@ -20,11 +20,14 @@ const POPISKY = {
     roleModelek: 'Kategorie',
     vyskytModelek: 'Výskyt',
     zobrazitCisla: 'Zobrazit',
+    ghRazeni: 'Pořadí fotek',
+    udRezim: 'Režim Údržby',
+    kronikaFiltr: 'Události',
 };
 
 const RAZENI = new Set(['razeniGalerie', 'razeniSteny']);
 // Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
-const ZOBRAZENI = new Set(['zobrazeniCisel']);
+const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim']);
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
 const VYPINATELNE = new Set(['minHodnoceni', 'stenaMin', 'vyberId']);
@@ -42,6 +45,11 @@ const IKONY_ZOBRAZENI = {
     'Údržba': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.5 1.5L7.5 5M3.5 12l1.5 1.5 2.5-2.5M3.5 18l1.5 1.5 2.5-2.5"/></svg>',
     // Dvě srdíčka vedle sebe: porovnávání, která víc
     'Oblíbenost': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M8 18s-5.5-3.3-5.5-7.4A3 3 0 0 1 8 9a3 3 0 0 1 5.5 1.6c0 4.1-5.5 7.4-5.5 7.4z"/><path d="M15.2 6.6A3 3 0 0 1 21.5 8c0 3.2-3.3 5.9-4.8 6.9"/></svg>',
+    // Zobrazení částí Přehledu v liště: pořadí fotek v Hodnocení a režimy Údržby
+    'Náhodně': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 7h3.2c2.4 0 3.6 1.2 5.3 5s2.9 5 5.3 5h3.2M3.5 17h3.2c1.2 0 2.1-.3 2.9-1M14.4 8c.8-.7 1.7-1 2.9-1h3.2M18 4.5 20.5 7 18 9.5M18 14.5l2.5 2.5-2.5 2.5"/></svg>',
+    'Po modelkách': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c.8-4 3.6-6.2 7-6.2s6.2 2.2 7 6.2"/></svg>',
+    'Po údajích': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9.5h17M3.5 14.5h17M9 4v16"/></svg>',
+    'Souhrn': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
     'Sháním CZ': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg>',
     // Část Oblíbenosti Hodnocení: srdíčko z půlky vyplněné (srdíčka, porovnání i pořadí v jednom)
     'Hodnocení': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2C13.9 6.2 15.5 5 17.5 5 21 5 22.6 8.6 21.2 11.4 19 15.65 12 20 12 20z"/><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2V20z" fill="currentColor" stroke="none"/></svg>',
@@ -55,7 +63,7 @@ const IKONY_ZOBRAZENI = {
 };
 // Ikona volby podle názvu (i pro pilulky v obsahu, ať vypadají jako volby v liště); neznámý název nic
 export const ikonaZobrazeni = nazev => IKONY_ZOBRAZENI[nazev] || '';
-const TITULKY_ZOBRAZENI = { zobrazeniCisel: 'Zobrazení čísel' };
+const TITULKY_ZOBRAZENI = { zobrazeniCisel: 'Zobrazení čísel', ghRazeni: 'Pořadí fotek', udRezim: 'Režim Údržby' };
 const IKONA_PREHRAT = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
 
 // Panel filtrů zůstává otevřený i po změně filtru (přehled se překreslí a panel se naplní znovu)
@@ -80,10 +88,12 @@ export function prevestNaVolby(lista) {
     ukazatVolby(lista);
 }
 
-// Po přepnutí pohledu: volby nově ukázaného přehledu, nebo prázdné místo (profil, vydání, covery, přehled)
+// Po přepnutí pohledu: volby nově ukázaného přehledu, nebo prázdné místo (profil, vydání). Přehled má řádků víc
+// (každá část svůj) a v data-volby-casti říká, který patří ukázané části (prehled.js).
 export function obnovitVolby(pohled) {
     rusitVse = null;
-    ukazatVolby(pohled.querySelector('.volby-v-liste'));
+    const cast = pohled.dataset.volbyCasti;
+    ukazatVolby(cast === undefined ? pohled.querySelector('.volby-v-liste') : pohled.querySelector(`.volby-v-liste[data-volby-casti="${CSS.escape(cast)}"]`));
 }
 
 // Skupina štítků jednoho druhu (řazení, srdíčka, edice…) a co s ní lišta dělá

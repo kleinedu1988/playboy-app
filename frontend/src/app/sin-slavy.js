@@ -34,6 +34,9 @@ let pohled = (() => {
     }
 })();
 
+// Ukázaný pohled (Kronika má filtr v liště pod hledáním, prehled.js podle toho vybere volby)
+export const pohledSlavy = () => pohled;
+
 // Pohled, který síň slávy ukáže (i z profilu: řada odznaků otevře Odznaky)
 export function nastavitPohledSlavy(klic) {
     if (!jePohled(klic)) return;
@@ -163,9 +166,9 @@ function htmlPrepinace(pocty) {
     const posledni = data.kronika[0];
     const t = posledni && textUdalosti(posledni, jmeno);
     const vpravo = pohled !== 'kronika' && t
-        ? `<button type="button" class="slava-novinka" data-slava-pohled="kronika" title="Naposledy v kronice – klik otevře celou kroniku"><span class="slava-ikona ${esc(posledni.druh)}" aria-hidden="true">${t.ikona}</span><span>${esc(t.text)}</span><small>${esc(datumKroniky(posledni.cas))}</small></button>`
-        : `<span class="slava-meta">Kronika vede od ${esc(datumKroniky(data.od))}</span>`;
-    return `<div class="slava-lista"><nav class="slava-pohledy" role="tablist" aria-label="Pohledy síně slávy">${pilulky}</nav>${vpravo}</div>`;
+        ? `<button type="button" class="slava-novinka pas-info" data-slava-pohled="kronika" title="Naposledy v kronice – klik otevře celou kroniku"><span class="slava-ikona ${esc(posledni.druh)}" aria-hidden="true">${t.ikona}</span><span>${esc(t.text)}</span><small>${esc(datumKroniky(posledni.cas))}</small></button>`
+        : `<span class="slava-meta pas-info">Kronika vede od ${esc(datumKroniky(data.od))}</span>`;
+    return `<div class="slava-lista plovouci-pas"><nav class="slava-pohledy" role="tablist" aria-label="Pohledy síně slávy">${pilulky}</nav>${vpravo}</div>`;
 }
 
 // Pohled Top 10: stupně vítězů (2. vlevo, 1. uprostřed, 3. vpravo) a místa 4–10 v řadě přes celou šířku
@@ -421,13 +424,14 @@ function htmlRekordu() {
 // Kdo byl v Top 10 už na začátku kroniky, je jedna událost (jinak deset stejných vět za sebou)
 const bezOpakovanychPocatku = seznam => seznam.filter((u, i) => !(u.druh === 'pocatek' && seznam[i - 1]?.druh === 'pocatek'));
 
-// Pohled Kronika: svislá časová osa po měsících, u každé události uzel s ikonou a fotka modelky; nahoře filtr
+// Pohled Kronika: svislá časová osa po měsících, u každé události uzel s ikonou a fotka modelky. Filtr druhu
+// událostí je v liště pod hledáním (skrytý řádek štítků převezme ui/volby.js přes prehled.js)
 function htmlKroniky() {
     const filtr = FILTRY_KRONIKY.find(([k]) => k === filtrKroniky) || FILTRY_KRONIKY[0];
-    const filtry = `<div class="kronika-filtry" role="group" aria-label="Filtr kroniky">${FILTRY_KRONIKY.map(([k, nazev, f]) => {
+    const filtry = `<div class="volby-v-liste" data-volby-casti="slava-kronika">${FILTRY_KRONIKY.map(([k, nazev, f]) => {
         const n = bezOpakovanychPocatku(data.kronika.filter(f)).length;
-        return n || k === 'vse' ? `<button type="button" class="chip ${k === filtr[0] ? 'active' : ''}" data-kronika-filtr="${k}">${nazev} <small>${n}</small></button>` : '';
-    }).join('')}</div>`;
+        return n || k === 'vse' ? `<button type="button" class="chip ${k === filtr[0] ? 'active' : ''}" data-kronika-filtr="${k}">${nazev}<span>${n}</span></button>` : '';
+    }).join('')}<span>${esc(sklonovat(bezOpakovanychPocatku(data.kronika.filter(filtr[2])).length, 'událost', 'události', 'událostí'))}</span></div>`;
     // Od nejnovější (stabilně: počátek kroniky zůstane pohromadě)
     const skupiny = kronikaPoMesicich(data.kronika.filter(filtr[2]).sort((a, b) => String(b.cas).localeCompare(String(a.cas))));
     const den = cas => {
@@ -482,6 +486,8 @@ function vykreslit() {
     </div>`);
     if (pohled === 'top') ukazatVitrinu(false);
     nacitatPostupne(kontejner);
+    // Volby v liště pod hledáním patří ukázanému pohledu (Kronika: filtr)
+    document.dispatchEvent(new CustomEvent('volby-prehledu'));
 }
 
 // Přepnutí pohledu: překreslí síň, stránku vrátí nahoru a zaměří zvolenou pilulku (když byla zaměřená)

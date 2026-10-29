@@ -51,9 +51,9 @@ const KOSTRA = `
     <div class="ud" data-ud-kostra>
         <header class="ud-zahlavi">
             <div class="ud-zahlavi-text" data-ud="nadpis"></div>
-            <div class="ud-rezimy" role="group" aria-label="Režim Údržby">${REZIMY.map(([klic, nazev, popis]) =>
-        `<button type="button" class="ud-rezim" data-ud-rezim="${klic}" title="${popis}">${nazev}</button>`).join('')}</div>
         </header>
+        <!-- Režim (Po údajích, Po modelkách, Souhrn) je zobrazení v liště pod hledáním, jako Obálky / Kalendář u Čísel -->
+        <div class="volby-v-liste" data-volby-casti="udrzba" data-ud="rezimy"></div>
         <div class="ud-rezim-obsah hidden" data-ud="udaje"></div>
         <div class="ud-fokus hidden" data-ud="fokus"></div>
         <div class="ud-souhrn hidden" data-ud="souhrn">
@@ -302,11 +302,8 @@ function zajistitKostru() {
 export function vykreslit() {
     if (!model || !zajistitKostru()) return;
     nastavitHtml(cast('nadpis'), htmlNadpisu());
-    sekce().querySelectorAll('[data-ud-rezim]').forEach(b => {
-        const on = /** @type {HTMLElement} */ (b).dataset.udRezim === stav.udrzbaRezim;
-        b.classList.toggle('on', on);
-        b.setAttribute('aria-pressed', String(on));
-    });
+    nastavitHtml(cast('rezimy'), REZIMY.map(([klic, nazev, popis]) =>
+        `<button type="button" class="chip ${klic === stav.udrzbaRezim ? 'active' : ''}" data-ud-rezim="${klic}" title="${popis}">${nazev}</button>`).join(''));
     ['udaje', 'fokus', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', souhrn: 'souhrn' }[stav.udrzbaRezim]));
     if (stav.udrzbaRezim === 'udaje') {
         poUdajich.zobrazit(cast('udaje'));
@@ -322,6 +319,8 @@ export function vykreslit() {
         nastavitHtml(cast('uceni'), htmlU);
         vykreslitSeznam();
     }
+    // Volba režimu v liště pod hledáním (prehled.js)
+    document.dispatchEvent(new CustomEvent('volby-prehledu'));
 }
 
 // Přepnutí režimu (zapamatuje se); z Po modelkách s rozepsanými změnami se nejdřív zeptá.

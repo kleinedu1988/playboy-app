@@ -70,7 +70,7 @@ function vykreslit(fotek) {
     if (!kontejner) return;
     if (!polozky.length) {
         nastavitHtml(kontejner, `<div class="ob-karta">${htmlPrazdna('Všechny fotky jsou ohodnocené', 'Nové nehodnocené fotky se tu objeví, až je přidáš.', { ikona: 'hvezda' })}</div>`);
-        return;
+        return ukazatVolby();
     }
     const modelky = modelkyFronty();
     const avatar = id => {
@@ -78,6 +78,11 @@ function vykreslit(fotek) {
         return m ? `<img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />` : '';
     };
     nastavitHtml(kontejner, `
+        <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky">
+            <button type="button" class="chip ${razeni() === 'nahodne' ? 'active' : ''}" data-gh-razeni="nahodne" title="Fotky všech modelek zamíchané">Náhodně</button>
+            <button type="button" class="chip ${razeni() === 'modelky' ? 'active' : ''}" data-gh-razeni="modelky" title="Fotky jedné modelky pohromadě, modelky v náhodném pořadí">Po modelkách</button>
+            <span>${esc(sklonovat(fotek, 'fotka', 'fotky', 'fotek'))}</span>
+        </div>
         <div class="ob-karta gh-panel gh-dlazdice">
             <div class="gh-nahledy" aria-label="Na řadě">${polozky.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-gh-ukazka="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
                 <span class="gh-nahledy-stitek">${razeni() === 'modelky' ? 'Po modelkách' : 'Zamíchané'}</span></div>
@@ -87,10 +92,6 @@ function vykreslit(fotek) {
                 <ul class="gh-cisla">
                     <li><b>${fotek}</b><span>${esc(sklonovat(fotek, 'nehodnocená fotka', 'nehodnocené fotky', 'nehodnocených fotek').replace(/^\d+ /, ''))}</span></li>
                     <li><b>${modelky.length}</b><span>${esc(sklonovat(modelky.length, 'modelka', 'modelky', 'modelek').replace(/^\d+ /, ''))}</span></li>
-                    <li class="gh-razeni" role="group" aria-label="Pořadí fotek">
-                        <button type="button" class="chip ${razeni() === 'nahodne' ? 'active' : ''}" data-gh-razeni="nahodne" title="Fotky všech modelek zamíchané">Náhodně</button>
-                        <button type="button" class="chip ${razeni() === 'modelky' ? 'active' : ''}" data-gh-razeni="modelky" title="Fotky jedné modelky pohromadě, modelky v náhodném pořadí">Po modelkách</button>
-                    </li>
                 </ul>
                 <div class="gh-ovladani">
                     <button type="button" class="btn btn-primary" data-gh-prohlizet>Prohlížet a hodnotit</button>
@@ -108,7 +109,11 @@ function vykreslit(fotek) {
             <div class="gh-ukazky">${polozky.slice(NAHLEDU, NAHLEDU + UKAZEK).map((p, j) => `<button type="button" class="gh-ukazka" data-gh-ukazka="${NAHLEDU + j}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 400))}" alt="" draggable="false" loading="lazy" /><span>${esc(p.jmenoModelky || '')}</span></button>`).join('')}</div>
         </div>` : ''}`);
     nacitatPostupne(kontejner);
+    ukazatVolby();
 }
+
+// Pořadí fotek (Náhodně / Po modelkách) je volba v liště pod hledáním: skrytý řádek nahoře převezme prehled.js
+const ukazatVolby = () => document.dispatchEvent(new CustomEvent('volby-prehledu'));
 
 function otevrit(index = 0, promitat = false, seznam = polozky) {
     if (!seznam.length) return;

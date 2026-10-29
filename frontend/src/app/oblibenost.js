@@ -111,9 +111,9 @@ const nastavitZobrazeni = () => { const hd = cast('cast-hodnoceni'); if (hd) hd.
 // Hodnocení: hlavička (pilulky pohledů, souhrn s odkazy) a tři pohledy, vidět je jen zvolený (data-hd-zobrazeno)
 const KOSTRA = `
     <div class="ob-cast hd" data-ob-cast-hodnoceni>
-    <div class="hd-lista">
+    <div class="hd-lista plovouci-pas">
         <nav class="slava-pohledy hd-pohledy" role="tablist" aria-label="Pohledy hodnocení" data-ob-pohledy></nav>
-        <div class="hd-souhrn">
+        <div class="hd-souhrn pas-info">
             <span class="hd-dnes" data-ob-dnes></span>
             <span class="hd-odkazy" data-ob-odkazy></span>
         </div>
@@ -439,7 +439,8 @@ function vykreslitHlavu() {
         const [n, popis] = pocty[klic];
         return `<button type="button" role="tab" class="slava-pohled ${klic === zvoleny ? 'active' : ''}" data-hd-pohled="${klic}" aria-selected="${klic === zvoleny}" tabindex="${klic === zvoleny ? 0 : -1}" title="${esc(popis)}">${ikonaZobrazeni(nazev)}${nazev}${n ? `<small>${n}</small>` : ''}</button>`;
     }).join(''));
-    nastavitHtml(cast('odkazy'), odkazyHodnoceni({ pohled: zvoleny, cekaji, celkem: nCekaji, nesouladu, fotek })
+    // V pásu vpravo jen nejdůležitější odkaz (pás má mít nejvýš dvě informace: dnešek a co čeká)
+    nastavitHtml(cast('odkazy'), odkazyHodnoceni({ pohled: zvoleny, cekaji, celkem: nCekaji, nesouladu, fotek }).slice(0, 1)
         .map(o => `<button type="button" class="hd-odkaz" data-hd-pohled="${o.pohled}" title="${esc(pocty[o.pohled][1])}"><span>${esc(o.text)}</span><b>${esc(o.akce)} →</b></button>`).join(''));
 }
 

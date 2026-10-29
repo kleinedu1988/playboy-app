@@ -1,7 +1,7 @@
 // Přehled: stránka Sbírka (úvod, Údržba, Sháním CZ, Statistiky) a stránky Oblíbenosti (Hodnocení, Síň slávy)
 import { GetKalendar, GetPrehled, GetPrehledOblibenosti, GetStatistiky, GetStavyVydani, SetStavVydani } from './backend';
 import { nacistOblibenost, nastavitCastOblibenosti } from './oblibenost';
-import { esc, nazevVydani } from '../lib/format';
+import { esc, nazevVydani, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { stats } from './prvky';
@@ -18,6 +18,8 @@ import { ikonaZobrazeni, obnovitVolby } from '../ui/volby';
 import { nacistNavrhy } from './navrhy';
 import { nacistUceni } from './uceni';
 import * as udrzba from './udrzba';
+import { pohledSlavy } from './sin-slavy';
+import { pripravitPasy } from '../ui/pas';
 
 // Přehled sbírky: úvod (hlavní čísla, mapy edic, co zbývá doplnit), Údržba (udrzba.js), Sháním CZ a Statistiky.
 // Načtení se při opakování zapisuje na místo: části se přepíšou jen při změně, Údržba po skupinách,
@@ -30,11 +32,26 @@ const CASTI_VSE = [['uvod', 'Přehled'], ['udrzba', 'Údržba'], ['oblibenost', 
 const CASTI_SPRAVY = CASTI_VSE.filter(([klic]) => klic !== 'oblibenost');
 const casti = () => CASTI_VSE;
 const pocetVCasti = { udrzba: 0, shanim: 0 };
-// Pilulky částí Sbírky nahoře v obsahu (Oblíbenost má své pilulky v obsahu sama)
-const htmlCasti = () => stav.prehledSekce === 'oblibenost' ? '' : `<div class="slava-lista sb-lista"><nav class="slava-pohledy" role="tablist" aria-label="Části sbírky">${CASTI_SPRAVY.map(([klic, nazev]) => {
-    const zvolena = klic === stav.prehledSekce;
-    return `<button type="button" role="tab" class="slava-pohled ${zvolena ? 'active' : ''}" data-zobrazeni-prehledu="${klic}" aria-selected="${zvolena}" tabindex="${zvolena ? 0 : -1}">${ikonaZobrazeni(nazev)}${esc(nazev)}${pocetVCasti[klic] ? `<small>${pocetVCasti[klic]}</small>` : ''}</button>`;
-}).join('')}</nav></div>`;
+let stavSbirky = null; // { uplnost, ukolu } z posledního načtení: informace vpravo v pásu
+// Plovoucí pás Sbírky nahoře v obsahu: pilulky částí a vpravo stav sbírky (odkaz do Údržby; v Údržbě ho ukazuje
+// její hlavička). Oblíbenost má svůj pás v obsahu sama.
+function htmlCasti() {
+    if (stav.prehledSekce === 'oblibenost') return '';
+    const pilulky = CASTI_SPRAVY.map(([klic, nazev]) => {
+        const zvolena = klic === stav.prehledSekce;
+        return `<button type="button" role="tab" class="slava-pohled ${zvolena ? 'active' : ''}" data-zobrazeni-prehledu="${klic}" aria-selected="${zvolena}" tabindex="${zvolena ? 0 : -1}">${ikonaZobrazeni(nazev)}${esc(nazev)}${pocetVCasti[klic] ? `<small>${pocetVCasti[klic]}</small>` : ''}</button>`;
+    }).join('');
+    const vpravo = stavSbirky && stav.prehledSekce !== 'udrzba'
+        ? `<button type="button" class="sb-info pas-info" data-sekce-prehledu="udrzba" title="Průměr všech oblastí Údržby – klik otevře Údržbu"><b>${stavSbirky.uplnost} %</b> sbírky doplněno${stavSbirky.ukolu ? ` · <b>${stavSbirky.ukolu}</b> ${esc(sklonovat(stavSbirky.ukolu, 'úkol', 'úkoly', 'úkolů').replace(/^\d+ /, ''))}` : ''}</button>`
+        : '';
+    return `<div class="slava-lista sb-lista plovouci-pas"><nav class="slava-pohledy" role="tablist" aria-label="Části sbírky">${pilulky}</nav>${vpravo}</div>`;
+}
+
+// Která volba v liště pod hledáním patří ukázané části: skrytý řádek štítků s data-volby-casti (ui/volby.js)
+function klicVoleb() {
+    if (stav.prehledSekce !== 'oblibenost') return stav.prehledSekce;
+    return stav.oblibenostCast === 'slava' ? `slava-${pohledSlavy()}` : `hodnoceni-${stav.hodnoceniPohled}`;
+}
 
 const KOSTRA = `
         <div class="prehled-casti-misto"></div>
@@ -80,6 +97,7 @@ export async function nacistPrehled() {
     // Počty k nabídce částí u tlačítka Přehled
     pocetVCasti.udrzba = model.pocty.vse;
     pocetVCasti.shanim = shanenaCisla(stavy).length;
+    stavSbirky = { uplnost: model.uplnost, ukolu: model.pocty.vse };
     if (!casti().some(([klic]) => klic === stav.prehledSekce)) stav.prehledSekce = 'uvod';
 
     let obsah = /** @type {HTMLElement} */ (stats.querySelector('.prehled-obsah'));
@@ -115,6 +133,7 @@ function obnovitCasti() {
     const misto = stats.querySelector('.prehled-casti-misto');
     if (!misto) return;
     nastavitHtml(misto, htmlCasti());
+    stats.dataset.volbyCasti = klicVoleb();
     if (stav.rezim === 'prehled') {
         obnovitVolby(stats);
         zvyraznitRezim();
@@ -153,6 +172,7 @@ function ukazatCast(klic) {
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     udrzba.pripravit(nacistPrehled);
+    pripravitPasy();
     // Oblíbenost změnila svou stránku (Hodnocení, Síň slávy): v liště se rozsvítí její tlačítko
     document.addEventListener('volby-prehledu', obnovitCasti);
     // Části Sbírky (Přehled, Údržba, Sháním CZ, Statistiky) se přepínají pilulkami nahoře v obsahu

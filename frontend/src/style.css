@@ -4978,11 +4978,9 @@ main .album-nav:not(.svisla) .chip.active:hover {
 }
 
 /* Přehled: části (Přehled, Údržba, Sháním CZ, Statistiky) jsou volba v horní liště, pod ní vždy jedna část */
+/* Blok, ne mřížka: plovoucí pás Sbírky (pilulky částí) by v mřížce držel jen ve svém řádku */
 #stats:not(.hidden) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 20px;
-    align-items: start;
+    display: block;
 }
 
 /* Místo pro volbu části je v obsahu vždy skryté (volba je v liště): nesmí v mřížce zabírat řádek s mezerou 20 px,
@@ -5092,6 +5090,13 @@ main .album-nav:not(.svisla) .chip.active:hover {
 
 .prehled-obsah > .stat-section {
     overflow-x: auto;
+}
+
+/* Hodnocení, Síň slávy a Údržba mají lepivé prvky (plovoucí pás, nástroje Údržby): rolovaná oblast by je držela
+   uvnitř oddílu, oříznutí ne */
+.prehled-obsah > .stat-section[data-sekce="oblibenost"],
+.prehled-obsah > .stat-section[data-sekce="udrzba"] {
+    overflow-x: clip;
 }
 
 .prehled-modelka-pruh {
@@ -8377,46 +8382,6 @@ textarea {
 
 .ud-pocty b {
     color: var(--text-main);
-    font-weight: 600;
-}
-
-/* Přepínač režimů: segmenty, zvolený v barvě akcentu */
-.ud-rezimy {
-    display: inline-flex;
-    flex: none;
-    max-width: 100%;
-    overflow: hidden;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 10px;
-}
-
-.ud-rezim {
-    padding: 7px 16px;
-    border: none;
-    background: none;
-    color: var(--text-muted);
-    font: inherit;
-    font-size: 13px;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.ud-rezim + .ud-rezim {
-    border-left: 1px solid var(--panel-okraj);
-}
-
-.ud-rezim:hover {
-    color: var(--text-main);
-}
-
-.ud-rezim:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: -2px;
-}
-
-.ud-rezim.on {
-    background-color: var(--accent);
-    color: #fff;
     font-weight: 600;
 }
 
@@ -12044,9 +12009,58 @@ span.ud-chip {
     margin: 0 0 22px;
 }
 
-/* Pilulky částí Sbírky: odstup od obsahu dělá mřížka Přehledu */
-.sb-lista {
-    margin: 0;
+/* Pilulky částí Sbírky; vpravo stav sbírky jako odkaz do Údržby */
+.sb-info {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.sb-info b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.sb-info:hover {
+    border-color: var(--text-muted);
+}
+
+/* Plovoucí pás stránky (Hodnocení, Síň slávy, Sbírka): pilulky částí vlevo, vpravo nejvýš dvě informace. Při
+   rolování drží nahoře jako lišta alb v profilu; přilepený (ui/pas.js) schová informace a má jen pilulky. */
+.plovouci-pas {
+    position: sticky;
+    /* Záporný posun ruší horní okraj rolované oblasti, pás tak doléhá až k hlavičce okna */
+    top: -32px;
+    z-index: 6;
+    margin-top: -10px;
+    padding: 10px 0;
+    background-color: var(--bg-main);
+    transition: box-shadow 0.2s;
+}
+
+.plovouci-pas.prilepeny {
+    box-shadow: 0 10px 18px -12px rgba(0, 0, 0, 0.8);
+}
+
+.plovouci-pas.prilepeny .pas-info {
+    display: none;
+}
+
+/* Lepivé prvky Údržby drží pod plovoucím pásem Sbírky */
+#stats .ud-nastroje {
+    top: calc(var(--vyska-pasu, 0px) - 32px);
+}
+
+#stats .ud-bok,
+#stats .uf-fronta {
+    top: calc(var(--vyska-pasu, 0px) + 8px);
 }
 
 .sb-lista .slava-pohled svg {
@@ -13101,22 +13115,6 @@ span.ud-chip {
 }
 
 /* Kronika: svislá osa, vlevo den, na ose uzel s ikonou, vpravo událost s fotkou */
-.kronika-filtry {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin: 0 0 14px;
-}
-
-.kronika-filtry .chip {
-    padding: 4px 12px;
-}
-
-.kronika-filtry .chip small {
-    margin-left: 2px;
-    color: var(--text-muted);
-}
-
 .kronika-osa {
     position: relative;
     max-width: 880px;
@@ -13401,16 +13399,11 @@ span.ud-chip {
     line-height: 1.5;
 }
 
-.gh-ovladani,
-.gh-razeni {
+.gh-ovladani {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 8px;
-}
-
-.gh-razeni {
-    margin-right: 8px;
 }
 
 /* Jen jedna modelka: kulatá fotka, jméno a počet jejích nehodnocených */
@@ -14041,11 +14034,6 @@ span.ud-chip {
 .gh-cisla span {
     color: var(--text-muted);
     font-size: 11.5px;
-}
-
-.gh-cisla > li.gh-razeni {
-    flex-direction: row;
-    margin-left: auto;
 }
 
 @media (max-width: 900px) {

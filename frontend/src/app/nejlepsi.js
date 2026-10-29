@@ -93,7 +93,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         const prvni = h === mapa.keys().next().value;
         vykreslitUroven(h, Math.max(predtim.get(h)?.vykresleno || 0, prvni ? DAVKA : 0));
     });
-    listaNejlepsich.naplnit([...urovne].map(([h, pocet]) => ({ klic: `srdicka-${h}`, nazev: h ? `hodnota ${'♥'.repeat(h)}` : 'hodnota pod ♥', pocet })));
+    listaNejlepsich.naplnit([...urovne].map(([h, pocet]) => ({ klic: `srdicka-${h}`, nazev: h ? '♥'.repeat(h) : '<♥', pocet })));
     listaNejlepsich.sledovat();
 }
 

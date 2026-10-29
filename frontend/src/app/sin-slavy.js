@@ -7,6 +7,7 @@
 // (data-ob-porovnavat).
 import { GetSinSlavy } from './backend';
 import { esc, sklonovat } from '../lib/format';
+import { htmlPasu } from '../ui/pas';
 import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, textDni, textRekordu, textUdalosti } from '../lib/slava';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
@@ -22,8 +23,8 @@ const modelka = id => stav.prehledModelky.get(id);
 const jmeno = id => modelka(id)?.jmeno || '';
 const TRIDY_STUPNU = ['jednorazovy', 'bronz', 'stribro', 'zlato'];
 
-// Pohledy síně slávy: klíč, název, ikona v pilulce
-const POHLEDY = [['top', 'Top 10', '♛'], ['legendy', 'Legendy', '★'], ['odznaky', 'Odznaky', '🏅'], ['rekordy', 'Rekordy', '🏆'], ['kronika', 'Kronika', '📜']];
+// Pohledy síně slávy: klíč, název (ikonu v pilulce dává ui/volby.js podle názvu)
+const POHLEDY = [['top', 'Top 10'], ['legendy', 'Legendy'], ['odznaky', 'Odznaky'], ['rekordy', 'Rekordy'], ['kronika', 'Kronika']];
 const jePohled = klic => POHLEDY.some(([k]) => k === klic);
 let pohled = (() => {
     try {
@@ -159,16 +160,33 @@ function htmlKarty(x, rekordy, legenda, odznaky) {
         </div>`;
 }
 
-// Pilulky pohledů a vpravo poslední událost kroniky (klik otevře Kroniku)
-function htmlPrepinace(pocty) {
-    const pilulky = POHLEDY.map(([klic, nazev, ikona]) => `<button type="button" role="tab" class="slava-pohled ${klic === pohled ? 'active' : ''}" data-slava-pohled="${klic}" aria-selected="${klic === pohled}" tabindex="${klic === pohled ? 0 : -1}">
-        <span class="slava-pohled-ikona" aria-hidden="true">${ikona}</span>${nazev}${pocty[klic] ? `<small>${pocty[klic]}</small>` : ''}</button>`).join('');
+// Plovoucí pás: pilulky pohledů (bez čísel – nic v nich nečeká na akci; kolik toho v pohledu je, říká počet pod
+// hledáním) a vpravo poslední událost kroniky (klik otevře Kroniku)
+function htmlPrepinace() {
     const posledni = data.kronika[0];
     const t = posledni && textUdalosti(posledni, jmeno);
     const vpravo = pohled !== 'kronika' && t
-        ? `<button type="button" class="slava-novinka pas-info" data-slava-pohled="kronika" title="Naposledy v kronice – klik otevře celou kroniku"><span class="slava-ikona ${esc(posledni.druh)}" aria-hidden="true">${t.ikona}</span><span>${esc(t.text)}</span><small>${esc(datumKroniky(posledni.cas))}</small></button>`
-        : `<span class="slava-meta pas-info">Kronika vede od ${esc(datumKroniky(data.od))}</span>`;
-    return `<div class="slava-lista plovouci-pas"><nav class="slava-pohledy" role="tablist" aria-label="Pohledy síně slávy">${pilulky}</nav>${vpravo}</div>`;
+        ? `<button type="button" class="pas-kapsle pas-info slava-novinka" data-slava-pohled="kronika" title="Naposledy v kronice – klik otevře celou kroniku"><span class="slava-ikona ${esc(posledni.druh)}" aria-hidden="true">${t.ikona}</span><span>${esc(t.text)}</span><small>${esc(datumKroniky(posledni.cas))}</small></button>`
+        : `<span class="pas-kapsle pas-info">Kronika vede od <b>${esc(datumKroniky(data.od))}</b></span>`;
+    return htmlPasu({ popis: 'Pohledy síně slávy', atribut: 'slava-pohled', vpravo,
+        pilulky: POHLEDY.map(([klic, nazev]) => ({ klic, nazev, zvolena: klic === pohled })) });
+}
+
+// Kolik toho ukázaný pohled má: počet na konci voleb pod hledáním (Kronika má i filtr, htmlKroniky)
+function htmlPoctuPohledu() {
+    const n = {
+        top: data.vitrina.length,
+        legendy: data.legendy.length,
+        odznaky: (data.odznaky || []).filter(o => o.ziskan).length,
+        rekordy: data.rekordy.length,
+    }[pohled];
+    const text = {
+        top: () => `${sklonovat(n, 'modelka', 'modelky', 'modelek')} v Top 10`,
+        legendy: () => sklonovat(n, 'legenda', 'legendy', 'legend'),
+        odznaky: () => sklonovat(n, 'získaný odznak', 'získané odznaky', 'získaných odznaků'),
+        rekordy: () => sklonovat(n, 'rekord', 'rekordy', 'rekordů'),
+    }[pohled];
+    return text ? `<div class="volby-v-liste" data-volby-casti="slava-${pohled}"><span>${esc(text())}</span></div>` : '';
 }
 
 // Pohled Top 10: stupně vítězů (2. vlevo, 1. uprostřed, 3. vpravo) a místa 4–10 v řadě přes celou šířku
@@ -182,7 +200,7 @@ function htmlTop(rekordy, odznaky) {
     const zbytek = data.vitrina.filter(x => !stupne.includes(x));
     const ostatni = zbytek.map(x => htmlKarty(x, rekordy.get(x.modelkaId), false, odznaky.get(x.modelkaId))).join('');
     const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada slava-skupina ${zbytek.length >= 6 ? 'husta' : ''}" style="--karet: ${zbytek.length}">${ostatni}</div>${misto}` : '');
-    if (!top) return `<p class="slava-nic">Zatím žádná potvrzená v Top 10. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20. <button type="button" class="link" data-ob-porovnavat>Porovnávat →</button></p>`;
+    if (!top) return `<p class="slava-nic">Zatím žádná potvrzená v Top 10. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20. <button type="button" class="link" data-ob-porovnavat>Porovnat →</button></p>`;
     return `<p class="slava-uvod">Jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy · odznaky pod jménem · klik na modelku otevře její vitrínu</p>${top}${htmlNaDosah()}`;
 }
 
@@ -468,20 +486,13 @@ function vykreslit() {
     }
     const rekordy = trofeje();
     const odznaky = odznakyModelek();
-    const pocty = {
-        top: 0,
-        legendy: data.legendy.length,
-        odznaky: (data.odznaky || []).filter(o => o.ziskan).length,
-        rekordy: data.rekordy.length,
-        kronika: bezOpakovanychPocatku(data.kronika).length,
-    };
     const obsah = pohled === 'legendy' ? htmlLegend(rekordy, odznaky)
         : pohled === 'odznaky' ? htmlOdznaku()
             : pohled === 'rekordy' ? htmlRekordu()
                 : pohled === 'kronika' ? htmlKroniky()
                     : htmlTop(rekordy, odznaky);
     nastavitHtml(kontejner, `<div class="slava" data-slava-zobrazeno="${pohled}">
-        ${htmlPrepinace(pocty)}
+        ${htmlPrepinace()}${htmlPoctuPohledu()}
         <section class="slava-obsah" role="tabpanel" aria-label="${esc(POHLEDY.find(([k]) => k === pohled)?.[1] || '')}">${obsah}</section>
     </div>`);
     if (pohled === 'top') ukazatVitrinu(false);
@@ -570,15 +581,6 @@ export function pripravitSinSlavy() {
     });
     document.addEventListener('keydown', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
-        // Šipky mezi pilulkami pohledů (jako záložky), Home/End na první a poslední
-        const pilulka = /** @type {HTMLElement | null} */ (cil?.closest?.('[role="tab"][data-slava-pohled]'));
-        if (pilulka && kontejner?.contains(pilulka) && ['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) {
-            const i = POHLEDY.findIndex(([k]) => k === pilulka.dataset.slavaPohled);
-            const n = e.key === 'Home' ? 0 : e.key === 'End' ? POHLEDY.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + POHLEDY.length) % POHLEDY.length;
-            e.preventDefault();
-            prepnoutPohled(POHLEDY[n][0], true);
-            return;
-        }
         // Enter na kartě (vitrína v Top 10, profil v Legendách) nebo trofeji jako klik
         const karta = /** @type {HTMLElement | null} */ (cil?.closest?.('.slava-karta'));
         if (e.key === 'Enter' && karta && kontejner?.contains(karta)) karta.click();

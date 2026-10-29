@@ -164,6 +164,13 @@ textarea {
     border-color: var(--text-muted);
 }
 
+/* Dlouhý název místa, kam vede Zpět (album, speciál), se zkrátí; celý je v bublině */
+#backBtn {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 22ch;
+}
+
 /* Šipky pro předchozí a další modelku */
 .nav-step {
     margin-left: 0;
@@ -4918,10 +4925,10 @@ main .album-nav:not(.svisla) {
     top: -24px;
     margin: 0 0 18px;
     padding: 3px 6px;
-    border: 1px solid var(--panel-okraj);
+    /* Stejná kapsle jako pilulky plovoucího pásu (.slava-pohledy), jen neprůhledná: rolovaný obsah nesmí prosvítat */
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 999px;
-    /* Neprůhledná barva panelu: rolovaný obsah pod pilulkou nesmí prosvítat */
-    background-color: rgb(32, 32, 36);
+    background-color: rgb(26, 26, 30);
     /* Další stíny jsou podklad v barvě pozadí: při rolování kolem pilulky neprosvítá obsah */
     box-shadow: var(--panel-stin), 0 -10px 0 10px var(--bg-main), 0 6px 0 4px var(--bg-main);
 }
@@ -8009,6 +8016,13 @@ textarea {
     }
 }
 
+/* Kapsle jen s počtem (Síň slávy) by bez počtu zůstala prázdná; pod 620 px se počet vrací */
+@media (max-width: 860px) and (min-width: 621px) {
+    .volby-skupina:not(:has(> :not(.volby-pocet))) {
+        display: none;
+    }
+}
+
 @media (max-width: 760px) {
     .volby-skupina .volba.filtry b {
         display: none;
@@ -8324,66 +8338,8 @@ textarea {
     white-space: nowrap;
 }
 
-/* Údržba: jednořádková hlavička s přepínačem režimů; Po údajích (.uu-*), Po modelkách (.uf-*) a Souhrn –
-   pokrok sbírky a panel učení, pod nimi vlevo lepivý seznam filtrů, vpravo lišta nástrojů a fronta skupin */
-.ud-zahlavi {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px 16px;
-    margin-bottom: 16px;
-}
-
-.ud-zahlavi-text {
-    display: flex;
-    flex: 1 1 auto;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 16px;
-    min-width: 0;
-}
-
-.ud-zahlavi h3 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 300;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.ud-zahlavi h3::after {
-    content: none;
-}
-
-/* Úplnost sbírky: malý prstenec z conic-gradient s procentem uprostřed */
-.ud-prstenec {
-    --p: 0;
-    display: grid;
-    flex: none;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background:
-        radial-gradient(closest-side, var(--bg-main) 76%, transparent 78%),
-        conic-gradient(var(--accent) calc(var(--p) * 1%), rgba(255, 255, 255, 0.08) 0);
-}
-
-.ud-prstenec span {
-    font-size: 11px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-.ud-pocty {
-    color: var(--text-muted);
-    font-size: 13px;
-}
-
-.ud-pocty b {
-    color: var(--text-main);
-    font-weight: 600;
-}
+/* Údržba: Po údajích (.uu-*), Po modelkách (.uf-*) a Souhrn – pokrok sbírky a panel učení, pod nimi vlevo lepivý
+   seznam filtrů, vpravo lišta nástrojů a fronta skupin. Režim je pod hledáním, stav v plovoucím pásu Sbírky. */
 
 /* Výběr (filtr fronty Po modelkách, údaj v úzkém okně) */
 .ud-vyber {
@@ -10787,65 +10743,13 @@ span.ud-chip {
     display: none;
 }
 
-/* Hlavička Hodnocení: pilulky pohledů jako v Síni slávy (.slava-pohledy), vpravo dnešní počet a odkazy na to,
-   co čeká v jiném pohledu */
-.hd-lista {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px 20px;
-    margin: 0 0 18px;
-}
-
-.hd-pohledy .slava-pohled svg {
-    flex: none;
-}
-
+/* Vpravo v pásu Hodnocení: dnešní porovnání a jeden odkaz na to, co čeká v jiném pohledu */
 .hd-souhrn {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px 10px;
-    min-width: 0;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.hd-dnes b {
-    color: var(--text-main);
-    font-weight: 600;
-}
-
-.hd-odkazy {
-    display: contents;
-}
-
-.hd-odkaz {
-    display: inline-flex;
-    align-items: baseline;
     gap: 8px;
-    padding: 6px 14px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background: none;
-    color: var(--text-main);
-    font-size: 12px;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: border-color 0.15s, background-color 0.15s;
-}
-
-.hd-odkaz:hover,
-.hd-odkaz:focus-visible {
-    border-color: rgba(255, 64, 129, 0.45);
-    background-color: var(--accent-soft);
-}
-
-.hd-odkaz b {
-    color: var(--accent-text);
-    font-weight: 600;
+    min-width: 0;
 }
 
 /* Užší okno: hlavička Hodnocení má dva řádky, pásy porovnání se o ně zkrátí */
@@ -12000,49 +11904,38 @@ span.ud-chip {
 }
 
 /* ——— Síň slávy po pohledech (app/sin-slavy.js): pilulky nahoře, pod nimi jeden pohled ——— */
-.slava-lista {
+/* Plovoucí pás stránky (Hodnocení, Síň slávy, Sbírka): pilulky částí vlevo, vpravo nejvýš dvě informace. Při
+   rolování drží nahoře jako lišta alb v profilu; přilepený (ui/pas.js) informace zprůhlední a nechá jen pilulky.
+   Výška se nemění (jeden řádek, informace se zkracuje), jinak by obsah při přilepení poskočil. */
+.plovouci-pas {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 12px 20px;
-    margin: 0 0 22px;
-}
-
-/* Pilulky částí Sbírky; vpravo stav sbírky jako odkaz do Údržby */
-.sb-info {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 6px 14px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background: none;
-    color: var(--text-muted);
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.sb-info b {
-    color: var(--text-main);
-    font-weight: 600;
-}
-
-.sb-info:hover {
-    border-color: var(--text-muted);
-}
-
-/* Plovoucí pás stránky (Hodnocení, Síň slávy, Sbírka): pilulky částí vlevo, vpravo nejvýš dvě informace. Při
-   rolování drží nahoře jako lišta alb v profilu; přilepený (ui/pas.js) schová informace a má jen pilulky. */
-.plovouci-pas {
+    gap: 20px;
+    margin-bottom: 20px;
     position: sticky;
     /* Záporný posun ruší horní okraj rolované oblasti, pás tak doléhá až k hlavičce okna */
     top: -32px;
     z-index: 6;
+    flex-wrap: nowrap;
     margin-top: -10px;
     padding: 10px 0;
     background-color: var(--bg-main);
     transition: box-shadow 0.2s;
+    container-type: inline-size;
+}
+
+.plovouci-pas > nav {
+    flex: none;
+}
+
+.plovouci-pas .pas-info {
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    transition: opacity 0.15s;
 }
 
 .plovouci-pas.prilepeny {
@@ -12050,7 +11943,13 @@ span.ud-chip {
 }
 
 .plovouci-pas.prilepeny .pas-info {
-    display: none;
+    visibility: hidden;
+    opacity: 0;
+}
+
+/* Fokus a skok na prvek nekončí pod plovoucím pásem (výšku nastavuje ui/pas.js) */
+main {
+    scroll-padding-top: calc(var(--vyska-pasu, 0px) + 8px);
 }
 
 /* Lepivé prvky Údržby drží pod plovoucím pásem Sbírky */
@@ -12063,8 +11962,62 @@ span.ud-chip {
     top: calc(var(--vyska-pasu, 0px) + 8px);
 }
 
-.sb-lista .slava-pohled svg {
+.plovouci-pas .slava-pohled svg {
     flex: none;
+}
+
+/* Informace vpravo v pásu: jedna podoba kapsle na všech stránkách (číslo bíle, akce růžově) */
+.pas-kapsle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.pas-kapsle b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.pas-kapsle .pas-akce {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+button.pas-kapsle {
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+button.pas-kapsle:hover,
+button.pas-kapsle:focus-visible {
+    border-color: rgba(255, 64, 129, 0.45);
+    background-color: var(--accent-soft);
+}
+
+/* V užším pásu mají nezvolené pilulky jen ikonu (název v bublině) a informace vpravo se schová */
+@container (max-width: 860px) {
+    .plovouci-pas .slava-pohled:not(.active) .pas-nazev {
+        display: none;
+    }
+
+    /* Hodnocení: místo zůstane odkazu na to, co čeká; dnešní počet je i v bublině pilulky Porovnat */
+    .plovouci-pas .hd-dnes {
+        display: none;
+    }
+}
+
+@container (max-width: 640px) {
+    .plovouci-pas .pas-info {
+        display: none;
+    }
 }
 
 /* Pilulky pohledů: skleněný pás, zvolený pohled plnou růžovou (odliší se od voleb v horní liště) */
@@ -12110,11 +12063,6 @@ span.ud-chip {
     outline-offset: 2px;
 }
 
-.slava-pohled-ikona {
-    font-size: 14px;
-    line-height: 1;
-}
-
 .slava-pohled small {
     min-width: 18px;
     padding: 1px 6px;
@@ -12129,37 +12077,16 @@ span.ud-chip {
 }
 
 /* Vpravo poslední událost kroniky jako odkaz na Kroniku */
-.slava-novinka {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    min-width: 0;
-    max-width: 48%;
-    padding: 6px 14px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background: none;
-    color: var(--text-main);
-    font-size: 12px;
-    cursor: pointer;
-}
-
-.slava-novinka:hover {
-    border-color: var(--text-muted);
-}
-
+/* Poslední událost kroniky v pásu: dlouhý text se zkrátí, datum zůstane */
 .slava-novinka > span:nth-child(2) {
     min-width: 0;
     overflow: hidden;
+    color: var(--text-main);
     text-overflow: ellipsis;
-    white-space: nowrap;
 }
 
-.slava-novinka small,
-.slava-meta {
+.slava-novinka small {
     flex: none;
-    color: var(--text-muted);
-    font-size: 12px;
 }
 
 .slava-uvod {
@@ -13291,10 +13218,6 @@ span.ud-chip {
 }
 
 @media (max-width: 900px) {
-    .slava-novinka {
-        max-width: 100%;
-    }
-
     .sbirka-souhrn {
         grid-template-columns: 1fr;
         gap: 16px;
@@ -13620,14 +13543,6 @@ span.ud-chip {
     min-width: 0;
 }
 
-.hz-poradi h4 .hz-rozbalit {
-    margin-left: auto;
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0;
-    text-transform: none;
-}
-
 .hz-poradi:not(.rozbaleno) [data-ob-poradi],
 .hz-poradi:not(.rozbaleno) .ob-vaha,
 .hz-poradi:not(.rozbaleno) .ob-pravidla,
@@ -13808,29 +13723,6 @@ span.ud-chip {
 }
 
 /* Hotovo dnes v hlavičce Hodnocení: počet a pruh k příští desítce */
-.hd-postup {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 12px;
-    border: 1px solid rgba(216, 27, 96, 0.4);
-    border-radius: 999px;
-    background-image: linear-gradient(90deg, rgba(216, 27, 96, 0.18), rgba(26, 26, 30, 0.6) 70%);
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-
-.hd-postup b {
-    color: var(--accent-text);
-    font-size: 15px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-}
-
-.hd-postup small {
-    font-size: 11px;
-}
-
 .ob-postup-pruh {
     position: relative;
     display: block;
@@ -13956,18 +13848,6 @@ span.ud-chip {
 
 .gh-nahled:hover img {
     transform: scale(1.04);
-}
-
-.gh-nahledy-stitek {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    background-color: rgba(0, 0, 0, 0.6);
-    color: var(--text-main);
-    font-size: 11px;
-    pointer-events: none;
 }
 
 .gh-text {

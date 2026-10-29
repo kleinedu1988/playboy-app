@@ -4,7 +4,7 @@ import { jednou, oznamit } from '../ui/oznameni';
 import { AddCover, UpdateCover } from './backend';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
-import { issueView, searchInput, wall } from './prvky';
+import { issueView, searchInput, stats, wall } from './prvky';
 import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepinacRezimu, prepnoutRezim, zobrazeniCisel } from './navigace';
 import { zvolitCastPrehledu } from './prehled';
 import { nastavitCastOblibenosti } from './oblibenost';
@@ -151,23 +151,35 @@ export function pripravit() {
     prepinacRezimu.addEventListener('click', (e) => {
         const tlacitko = e.target.closest('[data-rezim]');
         if (!tlacitko) return;
+        const main = document.querySelector('main');
+        // Zvolená záložka na přehledu jen vrátí stránku nahoru (bez nového načtení); z profilu nebo čísla vede zpět
+        // na přehled
+        if (tlacitko.classList.contains('active') && !prepinacRezimu.classList.contains('podstranka')) {
+            main.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
         // Přepnutí přehledu začíná novou historii; Čísla v naposledy zvoleném zobrazení
         historie.length = 0;
-        // Tlačítka Hodnocení, Síň slávy a Sbírka otevírají Přehled, každé na své stránce
+        // Tlačítka Hodnocení, Síň slávy a Sbírka otevírají Přehled, každé na své stránce. Když je Přehled vidět,
+        // přepne se stránka na místě (bez nového načtení dat).
+        const naPrehledu = stav.rezim === 'prehled' && !stats.classList.contains('hidden');
         if (tlacitko.dataset.castOblibenosti && tlacitko.dataset.castOblibenosti !== stav.oblibenostCast) nastavitCastOblibenosti(tlacitko.dataset.castOblibenosti);
-        if (tlacitko.dataset.castPrehledu) zvolitCastPrehledu(tlacitko.dataset.castPrehledu);
+        if (tlacitko.dataset.castPrehledu && zvolitCastPrehledu(tlacitko.dataset.castPrehledu, naPrehledu)) return;
         prepnoutRezim(tlacitko.dataset.rezim === 'covery' && zobrazeniCisel() === 'kalendar' ? 'kalendar' : tlacitko.dataset.rezim);
         nacistGalerii(searchInput.value);
     });
 
-    // Ctrl+1 až Ctrl+7: přehledy a stránky v liště zleva doprava (Modelky … Sbírka), jako klik na ně
+    // Ctrl+1 až Ctrl+7: přehledy a stránky v liště zleva doprava (Modelky … Sbírka), jako klik na ně. Číslo podle
+    // klávesy, ne znaku: na české klávesnici je na „1“ znak „+“ (číslice jsou se Shiftem). Držení se neopakuje.
     document.addEventListener('keydown', (e) => {
-        if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || !/^[1-9]$/.test(e.key)) return;
+        if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+        const cislo = /^(?:Digit|Numpad)([1-9])$/.exec(e.code)?.[1] || (/^[1-9]$/.test(e.key) ? e.key : '');
+        if (!cislo) return;
         if (stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
-        const tlacitko = /** @type {HTMLElement | undefined} */ (prepinacRezimu.querySelectorAll('[data-rezim]')[Number(e.key) - 1]);
+        const tlacitko = /** @type {HTMLElement | undefined} */ (prepinacRezimu.querySelectorAll('[data-rezim]')[Number(cislo) - 1]);
         if (!tlacitko) return;
         e.preventDefault();
-        tlacitko.click();
+        if (!e.repeat) tlacitko.click();
     });
 
     // Volba Zobrazení v Číslech (Obálky / Kalendář): přepne přehled a zůstane na stejném roce

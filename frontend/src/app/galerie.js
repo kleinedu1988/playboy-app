@@ -137,16 +137,16 @@ function htmlNastroju(pocet, roleCetnosti = [], vyskytCetnosti = new Map()) {
 }
 
 // Předchozí a další modelka v pořadí, v jakém jsou v galerii
+// Šipky ‹ › v profilu listují seznamem, ze kterého se profil otevřel (stav.seznamProfilu)
 export async function krokModelky(smer) {
-    if (!stav.aktualniModelka) return;
-    let seznam = stav.nacteneModelky;
-    if (!seznam.some(m => m.id === stav.aktualniModelka.id)) {
-        seznam = stav.nacteneModelky = await vsechnyModelky();
-    }
-    const index = seznam.findIndex(m => m.id === stav.aktualniModelka.id);
+    const seznam = stav.seznamProfilu;
+    if (!stav.aktualniModelka || !seznam) return;
+    const index = seznam.indexOf(stav.aktualniModelka.id);
     if (index < 0 || seznam.length < 2) return;
+    const id = seznam[(index + smer + seznam.length) % seznam.length];
+    const modelka = (await vsechnyModelky()).find(m => m.id === id);
     // Listování mezi modelkami historii neplní, Zpět vede tam, odkud se do profilů přišlo
-    otevritDetailModelky(seznam[(index + smer + seznam.length) % seznam.length], { bezHistorie: true });
+    if (modelka) otevritDetailModelky(modelka, { bezHistorie: true });
 }
 
 // Filtr srdíček (♥ N+) řadí karty podle srdíček a oblíbenosti, i když je zvolené jiné řazení: zapnutí přepne

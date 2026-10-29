@@ -20,8 +20,9 @@ const CASTI = [
         [`${k('Tab')}${nebo}${k('Enter')}`, 'Procházet a otevřít karty'],
         [`${k('1')}–${k('5')}${nebo}${k('0')}`, 'Srdíčka zaměřené karty nebo fotky, zrušit'],
         [`${k('3')} ${k('3')}`, 'U modelky stejná číslice znovu přidá půlku (3½; u pětky 4½)'],
-        [k('←', '→'), 'Zaměřená srdíčka modelky po půlce (profil, Oblíbenost)'],
-        [k('←', '↑', '→', '↓'), 'Pohyb v mapě edice (Přehled)'],
+        [k('←', '→'), 'Zaměřená srdíčka modelky po půlce (profil, Hodnocení)'],
+        [k('←', '→'), 'Části stránky, když je zaměřená pilulka pásu (Hodnocení, Síň slávy, Sbírka) nebo volba pod hledáním'],
+        [k('←', '↑', '→', '↓'), 'Pohyb v mapě edice (úvod Sbírky)'],
         [`${k('Shift', 'F10')}`, 'Nabídka akcí (jako pravé tlačítko)'],
     ] },
     { klic: 'hledani', nazev: 'Výsledky hledání', radky: [
@@ -48,7 +49,7 @@ const CASTI = [
         [k('Esc'), 'Vrátit hodnotu pole'],
         [`${k('1')}–${k('5')}`, 'Srdíčka, když je zaměřené hodnocení (stejná znovu = půlka)'],
     ] },
-    { klic: 'oblibenost', nazev: 'Oblíbenost – porovnávání', radky: [
+    { klic: 'porovnat', nazev: 'Hodnocení – Porovnat', radky: [
         [`${k('←', '→')}${nebo}kolečko`, 'Listovat pásem fotek pod myší'],
         [k('Tab'), 'Přepnout horní a dolní pás'],
         [k('Enter'), 'Líbí se mi víc modelka aktivního pásu'],
@@ -57,6 +58,10 @@ const CASTI = [
         ['klik na fotku', 'Prohlížeč fotek jako u alb (všechny fotky modelky), Esc zpět'],
         [k('S'), 'Přeskočit dvojici'],
         [k('Backspace'), 'Vrátit poslední porovnání'],
+    ] },
+    { klic: 'slava', nazev: 'Síň slávy', radky: [
+        [k('Enter'), 'Na kartě v Top 10 otevřít vitrínu modelky, v Legendách profil'],
+        [k('Esc'), 'Zavřít vitrínu'],
     ] },
     { klic: 'udrzba-souhrn', nazev: 'Údržba – Souhrn', radky: [
         [k('↑', '↓'), 'Předchozí a další řádek (i položky rozbalené skupiny)'],
@@ -125,7 +130,8 @@ export function otevritZkratky() {
     const prehledVidet = stav.rezim === 'prehled' && !document.getElementById('stats')?.classList.contains('hidden');
     const udrzba = prehledVidet && stav.prehledSekce === 'udrzba';
     const aktivni = !lightbox.classList.contains('hidden') ? 'prohlizec' : ctecka && !ctecka.classList.contains('hidden') ? 'ctecka'
-        : udrzba ? `udrzba-${stav.udrzbaRezim}` : prehledVidet && stav.prehledSekce === 'oblibenost' ? 'oblibenost' : '';
+        : udrzba ? `udrzba-${stav.udrzbaRezim}`
+            : prehledVidet && stav.prehledSekce === 'oblibenost' ? (stav.oblibenostCast === 'slava' ? 'slava' : stav.hodnoceniPohled === 'porovnat' ? 'porovnat' : '') : '';
     const casti = aktivni ? [CASTI.find(c => c.klic === aktivni), ...CASTI.filter(c => c.klic !== aktivni)] : CASTI;
     panel.querySelector('.zkratky-casti').innerHTML = casti.map(c => `
         <section class="${c.klic === aktivni ? 'aktivni' : ''}">

@@ -2,7 +2,7 @@
 import { GetKalendar, HledatClanky } from './backend';
 import { PRIKAZY, bezDiakritiky, esc, kategorieModelky, nazevVydani, obrazek, poleCisla, popisKategorie, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
-import { searchInput } from './prvky';
+import { searchInput, stats } from './prvky';
 import { stav } from './stav';
 import { VELIKOST_NAHLEDU, adresaTitulni } from './obrazky';
 import { otevritDetailModelky } from './profil';
@@ -19,6 +19,11 @@ let cisloHledani = 0;
 let casovac = 0;
 let polozky = [];
 let vybrana = -1;
+let otevritPrvni = false; // Enter dřív, než doběhlo hledání: po vykreslení se otevře první výsledek
+
+// Na stránkách Hodnocení, Síň slávy a Sbírka hledání nic nefiltruje, jen najde modelku (číslo, článek) a otevře ji:
+// bez příkazů a možností filtru, Enter otevře první výsledek
+const jenNajit = () => stav.rezim === 'prehled' && !stats.classList.contains('hidden');
 // Kalendář (náhledy obálek čísel) se načte při prvním hledání a obnoví při každém novém zaměření pole
 let kalendar = null;
 
@@ -173,7 +178,9 @@ async function hledat() {
     ]);
     if (moje !== cisloHledani || document.activeElement !== searchInput) return;
 
-    if (idxDvojtecka >= 0) {
+    if (jenNajit()) {
+        // Příkazy a filtry by tu nic neudělaly
+    } else if (idxDvojtecka >= 0) {
         klicHodnot = bezDiakritiky(cisteSlovo.slice(0, idxDvojtecka)).toLowerCase();
         const filtrHodnoty = cisteSlovo.slice(idxDvojtecka + 1).trim();
         moznostiHodnot = ziskatMoznostiHodnot(klicHodnot, filtrHodnoty, modelky);
@@ -204,7 +211,7 @@ async function hledat() {
     let nalezeneClanky = [];
 
     // Pokud uživatel nepíše cílený filtr s dvojtečkou a dotaz má alespoň 2 znaky, prohledáme i modelky, články a čísla
-    if (idxDvojtecka < 0 && !tokeny.some(t => t.klic) && trimDotaz.length >= 2) {
+    if ((jenNajit() || (idxDvojtecka < 0 && !tokeny.some(t => t.klic))) && trimDotaz.length >= 2) {
         nalezeneModelky = modelky
             // Všechna slova musí platit (i vylučovaná); překlepy se tolerují jen ve jméně
             .filter(m => vyhovujeHledani([textModelky(m)], tokeny, { jmeno: `${m.jmeno} ${m.dalsiJmena || ''}` }))
@@ -273,13 +280,24 @@ async function hledat() {
     ].join('');
 
     vybrana = -1;
+    const prvni = otevritPrvni;
+    otevritPrvni = false;
     if (!html) {
         zavritNaseptavac();
         return;
     }
-    naseptavac.innerHTML = `${html}<div class="naseptavac-pata">↑↓ vybrat · Enter vložit/otevřít · Esc zavřít</div>`;
+    naseptavac.innerHTML = `${html}<div class="naseptavac-pata">↑↓ vybrat · Enter ${jenNajit() ? 'otevřít první' : 'vložit/otevřít'} · Esc zavřít</div>`;
     naseptavac.classList.remove('hidden');
     zavoj.classList.remove('hidden');
+    if (prvni) otevrit(0);
+}
+
+// Přepnutí přehledu nebo stránky: staré výsledky ani rozběhnuté hledání už neplatí
+export function zrusitHledani() {
+    clearTimeout(casovac);
+    cisloHledani++;
+    otevritPrvni = false;
+    zavritNaseptavac();
 }
 
 function vybrat(index) {
@@ -296,11 +314,15 @@ function otevrit(index) {
     const akce = polozky[index];
     if (!akce) return;
     zavritNaseptavac();
-    const dotaz = searchInput.value;
+    // Na stránkách Hodnocení, Síň slávy a Sbírka hledání jen najde, co otevřít: text tam dál nic neznamená
+    // a fokus přejde na otevřený profil (šipky, srdíčka)
+    if (jenNajit()) {
+        // Čekající hledání z psaní (ulozeni.js) by z otevřeného profilu přešlo do Modelek
+        clearTimeout(stav.casovacHledani);
+        searchInput.value = '';
+        searchInput.blur();
+    }
     akce();
-    // Na stránkách Hodnocení, Síň slávy a Sbírka hledání jen najde, co otevřít; text by tam dál nic neznamenal
-    // (příkaz hledání, který text doplnil, ho nechá)
-    if (stav.rezim === 'prehled' && searchInput.value === dotaz) searchInput.value = '';
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
@@ -325,6 +347,17 @@ export function pripravit() {
         if (e.key === 'Escape') {
             clearTimeout(casovac);
             cisloHledani++;
+            otevritPrvni = false;
+            // Na stránkách Přehledu text nic nefiltruje: Esc při zavřených výsledcích pole vyprázdní
+            if (naseptavac.classList.contains('hidden') && jenNajit()) searchInput.value = '';
+        }
+        // Enter dřív, než se ukázaly výsledky: na stránkách Přehledu se otevře první, až hledání doběhne
+        if (e.key === 'Enter' && naseptavac.classList.contains('hidden') && jenNajit() && searchInput.value.trim().length >= 2) {
+            e.preventDefault();
+            otevritPrvni = true;
+            clearTimeout(casovac);
+            hledat();
+            return;
         }
         if (naseptavac.classList.contains('hidden')) return;
         if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -334,8 +367,7 @@ export function pripravit() {
             vybrat(vybrana < 0 ? (dolu ? 0 : polozky.length - 1) : (vybrana + (dolu ? 1 : -1) + polozky.length) % polozky.length);
         } else if (e.key === 'Enter') {
             e.preventDefault();
-            // Na stránkách Hodnocení, Síň slávy a Sbírka hledání nic nefiltruje: Enter otevře první výsledek
-            if (vybrana >= 0 || (stav.rezim === 'prehled' && polozky.length)) {
+            if (vybrana >= 0 || (jenNajit() && polozky.length)) {
                 otevrit(Math.max(vybrana, 0));
             } else {
                 zavritNaseptavac();

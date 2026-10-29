@@ -8,7 +8,6 @@ import { stav } from './stav';
 import { vybratKliknutim } from './vyber';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { calendar, issueView, searchInput } from './prvky';
-import { listaStranky } from './listy';
 import { BEZ_FOTKY, VELIKOST_NAHLEDU, VELIKOST_PLAKATU, VELIKOST_PLAKATU_MALA } from './obrazky';
 import { ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlSrdickaFotky } from './galerie';
@@ -41,7 +40,6 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
         stav.stavyVydaniData = stavy;
         return vykreslitRocnik(vydani, fotky);
     }
-    listaStranky.naplnit([]);
 
     const alba = sestavitAlba(fotky);
     const coveryVydani = alba.filter(a => a.typ === 'Cover');
@@ -251,7 +249,6 @@ export function vykreslitRocnik(vydani, fotky) {
         ${specialy.size ? `<h3 class="rocnik-oddil">Speciály</h3><div class="rocnik-mrizka">${[...specialy].sort(([x], [y]) => x.localeCompare(y)).map(([m, nazev]) => karta(m, nazev)).join('')}</div>` : ''}
         ${naRok.length ? `<h3 class="rocnik-oddil">Celý ročník</h3>${naRok.map(a => htmlAlbaStranky(a, index)).join('')}` : ''}
     `;
-    listaStranky.naplnit([]);
 
     issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
     pripravitPopisy(issueView);
@@ -323,7 +320,6 @@ function vykreslitAlbaFotografa() {
             `<button class="${klic === stav.fotografFiltr ? 'active' : ''}" data-filtr-fotografa="${klic}">${nazev} <span>${pocty[klic]}</span></button>`).join('')}</div>` : ''}
         <div class="rocnik-mrizka">${karty}</div>`
         : htmlPrazdna('Zatím žádná alba', 'Alba se fotografovi přiřadí podle jména v poli Fotograf v úpravě alba.');
-    listaStranky.naplnit([]);
 }
 
 // Údaje čísla: stav ve sbírce, modelka z obálky, poznámka

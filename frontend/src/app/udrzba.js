@@ -49,9 +49,6 @@ const REZIMY = [
 ];
 const KOSTRA = `
     <div class="ud" data-ud-kostra>
-        <header class="ud-zahlavi">
-            <div class="ud-zahlavi-text" data-ud="nadpis"></div>
-        </header>
         <!-- Režim (Po údajích, Po modelkách, Souhrn) je zobrazení v liště pod hledáním, jako Obálky / Kalendář u Čísel -->
         <div class="volby-v-liste" data-volby-casti="udrzba" data-ud="rezimy"></div>
         <div class="ud-rezim-obsah hidden" data-ud="udaje"></div>
@@ -135,13 +132,13 @@ const frontaPro = klic => stav.prehledRadky.filter(r => !r.netyka.has(klic)
 
 // ——— Vykreslení ———
 
-// Hlavička: prstenec úplnosti, název a počty (stejné ve všech režimech)
-function htmlNadpisu() {
+// Stav Údržby vpravo v plovoucím pásu Sbírky (prehled.js): úplnost a počty, stejné ve všech režimech
+export function htmlStavu() {
+    if (!model) return '';
     const casti = [sklonovat(model.pocty.vse, 'úkol', 'úkoly', 'úkolů').replace(/^(\d+)/, '<b>$1</b>')];
     if (model.kKontrole) casti.push(`<b>${model.kKontrole}</b> ke kontrole`);
     if (model.navrhu) casti.push(sklonovat(model.navrhu, 'návrh', 'návrhy', 'návrhů').replace(/^(\d+)/, '<b>$1</b>'));
-    return `<span class="ud-prstenec" style="--p:${model.uplnost}" title="Sbírka doplněná na ${model.uplnost} % (průměr oblastí v Souhrnu)"><span>${model.uplnost} %</span></span>
-        <h3>Údržba</h3><span class="ud-pocty">${casti.join(' · ')}</span>`;
+    return `<span class="pas-kapsle pas-info" title="Sbírka doplněná na ${model.uplnost} % (průměr oblastí v Souhrnu)"><b>${model.uplnost} %</b> doplněno · ${casti.join(' · ')}</span>`;
 }
 
 function htmlPokroku() {
@@ -301,7 +298,6 @@ function zajistitKostru() {
 // Celá Údržba (po načtení Přehledu a po změně dat): hlavička a zvolený režim
 export function vykreslit() {
     if (!model || !zajistitKostru()) return;
-    nastavitHtml(cast('nadpis'), htmlNadpisu());
     nastavitHtml(cast('rezimy'), REZIMY.map(([klic, nazev, popis]) =>
         `<button type="button" class="chip ${klic === stav.udrzbaRezim ? 'active' : ''}" data-ud-rezim="${klic}" title="${popis}">${nazev}</button>`).join(''));
     ['udaje', 'fokus', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', souhrn: 'souhrn' }[stav.udrzbaRezim]));

@@ -278,7 +278,7 @@ export function odkazyHodnoceni({ pohled = '', cekaji = [], celkem = 0, nesoulad
     const odkazy = [];
     if (nCekaji) {
         const kam = cekaji.length === 1 ? nazevUrovne(cekaji[0][0]) : 'potvrzení';
-        odkazy.push({ pohled: 'porovnat', text: `⏳ ${tvar(nCekaji, 'čeká', 'čekají', 'čeká')} na ${kam}`, akce: 'Porovnávat' });
+        odkazy.push({ pohled: 'porovnat', text: `⏳ ${tvar(nCekaji, 'čeká', 'čekají', 'čeká')} na ${kam}`, akce: 'Porovnat' });
     }
     if (nesouladu) odkazy.push({ pohled: 'poradi', text: `≠ ${tvar(nesouladu, 'modelce', 'modelkám', 'modelkám')} nesedí srdíčka`, akce: 'Pořadí' });
     if (fotek) odkazy.push({ pohled: 'fotky', text: `${tvar(fotek, 'fotka', 'fotky', 'fotek')} bez srdíček`, akce: 'Hodnotit' });

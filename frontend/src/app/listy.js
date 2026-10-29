@@ -66,5 +66,5 @@ export const listaCoveru = vytvoritListuStranky(document.getElementById('coversN
 export const listaKalendare = vytvoritListuStranky(document.getElementById('calNav'), calendar, { svisla: true });
 export const listaGalerie = vytvoritListuStranky(document.getElementById('galleryNav'), gallery, { svisla: true });
 export const listaSteny = vytvoritListuStranky(document.getElementById('wallNav'), wall, { svisla: true });
-export const listaStranky = vytvoritListuStranky(document.getElementById('issueNav'), document.getElementById('issueMain'));
-export const listaNejlepsich = vytvoritListuStranky(document.getElementById('bestNav'), best);
+// Nejlepší mají rejstřík hodnot u pravého okraje jako ostatní přehledy (písmena, roky)
+export const listaNejlepsich = vytvoritListuStranky(document.getElementById('bestNav'), best, { svisla: true });

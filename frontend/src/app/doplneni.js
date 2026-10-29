@@ -99,7 +99,7 @@ export function prevestPole(kontejner, prvek) {
 
 const blok = (nazev, klic, telo = '') => `
     <section class="doplnit-blok" data-blok="${klic}">
-        <h4>${nazev}<button type="button" class="doplnit-netyka" data-netyka-bloku="${klic}" title="Přestat sledovat v Přehledu">netýká se</button></h4>
+        <h4>${nazev}<button type="button" class="doplnit-netyka" data-netyka-bloku="${klic}" title="Přestat sledovat v Údržbě">netýká se</button></h4>
         ${telo}
     </section>`;
 

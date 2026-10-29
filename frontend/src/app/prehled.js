@@ -1,10 +1,11 @@
 // Přehled: stránka Sbírka (úvod, Údržba, Sháním CZ, Statistiky) a stránky Oblíbenosti (Hodnocení, Síň slávy)
 import { GetKalendar, GetPrehled, GetPrehledOblibenosti, GetStatistiky, GetStavyVydani, SetStavVydani } from './backend';
-import { nacistOblibenost, nastavitCastOblibenosti } from './oblibenost';
+import { nacistOblibenost, nastavitCastOblibenosti, ukazatStrankuOblibenosti } from './oblibenost';
+import { zrusitHledani } from './naseptavac';
 import { esc, nazevVydani, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
-import { stats } from './prvky';
+import { searchInput, stats } from './prvky';
 import { ukazatPohled, zvyraznitRezim } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { nabidkaCisla } from './kalendar';
@@ -14,12 +15,12 @@ import { otevritVydani } from './vydani';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { oznamit } from '../ui/oznameni';
 import { nastavitHtml } from '../ui/dom';
-import { ikonaZobrazeni, obnovitVolby } from '../ui/volby';
+import { obnovitVolby } from '../ui/volby';
 import { nacistNavrhy } from './navrhy';
 import { nacistUceni } from './uceni';
 import * as udrzba from './udrzba';
 import { pohledSlavy } from './sin-slavy';
-import { pripravitPasy } from '../ui/pas';
+import { htmlPasu, pripravitPasy } from '../ui/pas';
 
 // Přehled sbírky: úvod (hlavní čísla, mapy edic, co zbývá doplnit), Údržba (udrzba.js), Sháním CZ a Statistiky.
 // Načtení se při opakování zapisuje na místo: části se přepíšou jen při změně, Údržba po skupinách,
@@ -28,23 +29,23 @@ import { pripravitPasy } from '../ui/pas';
 // Části Přehledu. Oblíbenost jsou stránky Hodnocení a Síň slávy (vlastní tlačítka v liště, oblibenost.js);
 // ostatní části jsou stránka Sbírka (tlačítko v liště) a přepínají se pilulkami nahoře v obsahu, jako pohledy
 // Hodnocení a Síně slávy. U Údržby a Sháním CZ počet z posledního načtení.
-const CASTI_VSE = [['uvod', 'Přehled'], ['udrzba', 'Údržba'], ['oblibenost', 'Oblíbenost'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']];
+const CASTI_VSE = [['uvod', 'Úvod'], ['udrzba', 'Údržba'], ['oblibenost', 'Oblíbenost'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']];
 const CASTI_SPRAVY = CASTI_VSE.filter(([klic]) => klic !== 'oblibenost');
 const casti = () => CASTI_VSE;
 const pocetVCasti = { udrzba: 0, shanim: 0 };
 let stavSbirky = null; // { uplnost, ukolu } z posledního načtení: informace vpravo v pásu
-// Plovoucí pás Sbírky nahoře v obsahu: pilulky částí a vpravo stav sbírky (odkaz do Údržby; v Údržbě ho ukazuje
-// její hlavička). Oblíbenost má svůj pás v obsahu sama.
+// Plovoucí pás Sbírky nahoře v obsahu: pilulky částí (číslo u toho, co čeká: úkoly Údržby, sháněná čísla) a vpravo
+// stav ukázané části místo nadpisu. Oblíbenost má svůj pás v obsahu sama.
 function htmlCasti() {
     if (stav.prehledSekce === 'oblibenost') return '';
-    const pilulky = CASTI_SPRAVY.map(([klic, nazev]) => {
-        const zvolena = klic === stav.prehledSekce;
-        return `<button type="button" role="tab" class="slava-pohled ${zvolena ? 'active' : ''}" data-zobrazeni-prehledu="${klic}" aria-selected="${zvolena}" tabindex="${zvolena ? 0 : -1}">${ikonaZobrazeni(nazev)}${esc(nazev)}${pocetVCasti[klic] ? `<small>${pocetVCasti[klic]}</small>` : ''}</button>`;
-    }).join('');
-    const vpravo = stavSbirky && stav.prehledSekce !== 'udrzba'
-        ? `<button type="button" class="sb-info pas-info" data-sekce-prehledu="udrzba" title="Průměr všech oblastí Údržby – klik otevře Údržbu"><b>${stavSbirky.uplnost} %</b> sbírky doplněno${stavSbirky.ukolu ? ` · <b>${stavSbirky.ukolu}</b> ${esc(sklonovat(stavSbirky.ukolu, 'úkol', 'úkoly', 'úkolů').replace(/^\d+ /, ''))}` : ''}</button>`
-        : '';
-    return `<div class="slava-lista sb-lista plovouci-pas"><nav class="slava-pohledy" role="tablist" aria-label="Části sbírky">${pilulky}</nav>${vpravo}</div>`;
+    const ukolu = n => sklonovat(n, 'úkol', 'úkoly', 'úkolů').replace(/^(\d+)/, '<b>$1</b>');
+    const vpravo = {
+        uvod: () => stavSbirky && `<button type="button" class="pas-kapsle pas-info" data-sekce-prehledu="udrzba" title="Průměr všech oblastí Údržby – klik otevře Údržbu"><b>${stavSbirky.uplnost} %</b> sbírky doplněno${stavSbirky.ukolu ? ` · ${ukolu(stavSbirky.ukolu)}` : ''}</button>`,
+        udrzba: () => udrzba.htmlStavu(),
+        shanim: () => `<span class="pas-kapsle pas-info">${sklonovat(pocetVCasti.shanim, 'číslo', 'čísla', 'čísel').replace(/^(\d+)/, '<b>$1</b>')} české edice${pocetVCasti.shanim ? ' · <button type="button" class="link pas-akce" data-kopirovat-shanim>Kopírovat seznam</button>' : ''}</span>`,
+    }[stav.prehledSekce]?.() || '';
+    return htmlPasu({ popis: 'Části sbírky', atribut: 'zobrazeni-prehledu', vpravo,
+        pilulky: CASTI_SPRAVY.map(([klic, nazev]) => ({ klic, nazev, pocet: pocetVCasti[klic], zvolena: klic === stav.prehledSekce })) });
 }
 
 // Která volba v liště pod hledáním patří ukázané části: skrytý řádek štítků s data-volby-casti (ui/volby.js)
@@ -122,6 +123,14 @@ export async function nacistPrehled() {
     }
 }
 
+// Seznam modelek kolem odkazu na profil (pořadí, Top 10, karta úvodu): šipky ‹ › v profilu jím pak listují
+const SEZNAM_PROFILU = 'ol, ul, .ob-karta, .uvod-karta, .slava-obsah';
+function seznamOkolo(odkaz) {
+    const kontejner = odkaz.closest(SEZNAM_PROFILU);
+    if (!kontejner) return null;
+    return [...new Set([...kontejner.querySelectorAll('[data-otevrit-modelku]')].map(p => Number(/** @type {HTMLElement} */ (p).dataset.otevritModelku)))];
+}
+
 const htmlNaPrvky = (html) => {
     const t = document.createElement('template');
     t.innerHTML = html;
@@ -132,25 +141,38 @@ const htmlNaPrvky = (html) => {
 function obnovitCasti() {
     const misto = stats.querySelector('.prehled-casti-misto');
     if (!misto) return;
+    const fokusVPasu = misto.contains(document.activeElement);
     nastavitHtml(misto, htmlCasti());
+    // Klik nebo šipka na pilulce pás překreslí: fokus přejde na zvolenou pilulku
+    if (fokusVPasu && !misto.contains(document.activeElement)) /** @type {HTMLElement | null} */ (misto.querySelector('[role="tab"][aria-selected="true"]'))?.focus({ preventScroll: true });
     stats.dataset.volbyCasti = klicVoleb();
-    if (stav.rezim === 'prehled') {
+    // Část se může dovykreslit, až když je otevřený profil: lišta pak patří profilu
+    if (stav.rezim === 'prehled' && !stats.classList.contains('hidden')) {
         obnovitVolby(stats);
         zvyraznitRezim();
     }
 }
 
 // Tlačítko v liště: Hodnocení a Síň slávy (Oblíbenost), nebo Sbírka na naposledy zvolené části (úvod, Údržba,
-// Sháním CZ, Statistiky)
-export function zvolitCastPrehledu(cast) {
+// Sháním CZ, Statistiky). Nastaví, co ukáže následující načtení Přehledu (jedno, s čerstvými daty). naMiste: Přehled
+// je vidět; mezi Hodnocením a Síní slávy se přepne bez nového načtení a vrátí true (načítat už se nemá).
+export function zvolitCastPrehledu(cast, naMiste = false) {
     let klic = 'oblibenost';
     if (cast !== 'oblibenost') {
         try { klic = localStorage.getItem('prehledSekceSpravy') || 'uvod'; } catch { klic = 'uvod'; }
         if (!CASTI_SPRAVY.some(([k]) => k === klic)) klic = 'uvod';
     }
-    if (stav.rezim === 'prehled' && stats.querySelector('.prehled-obsah')) return ukazatCast(klic);
+    if (naMiste) {
+        zrusitHledani();
+        searchInput.value = '';
+        if (klic === 'oblibenost' && stav.prehledSekce === 'oblibenost' && ukazatStrankuOblibenosti(stav.oblibenostCast)) {
+            obnovitCasti();
+            return true;
+        }
+    }
     stav.prehledSekce = klic;
     try { localStorage.setItem('prehledSekce', klic); } catch { /* jen se nezapamatuje */ }
+    return false;
 }
 
 // Zvolená část Přehledu se zapamatuje; když je Přehled otevřený, přepne se bez nového načtení
@@ -179,18 +201,6 @@ export function pripravit() {
     document.addEventListener('click', (e) => {
         const volba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-prehledu]');
         if (volba && volba.dataset.zobrazeniPrehledu !== stav.prehledSekce) ukazatCast(volba.dataset.zobrazeniPrehledu);
-    });
-    // Šipky mezi pilulkami částí Sbírky (jako v Hodnocení a Síni slávy), Home/End na první a poslední
-    stats.addEventListener('keydown', (e) => {
-        const pilulka = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[role="tab"][data-zobrazeni-prehledu]'));
-        if (!pilulka || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
-        const i = CASTI_SPRAVY.findIndex(([k]) => k === pilulka.dataset.zobrazeniPrehledu);
-        const n = CASTI_SPRAVY.length;
-        const nova = CASTI_SPRAVY[e.key === 'Home' ? 0 : e.key === 'End' ? n - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + n) % n][0];
-        e.preventDefault();
-        e.stopPropagation();
-        ukazatCast(nova);
-        /** @type {HTMLElement | null} */ (stats.querySelector(`[role="tab"][data-zobrazeni-prehledu="${nova}"]`))?.focus();
     });
     try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'uvod'; } catch { /* úvod */ }
     // Dřívější záložky údržby (Souhrn, Modelky, Čísla, Ke kontrole) jsou teď jedna Údržba
@@ -223,7 +233,7 @@ export function pripravit() {
             else nabidkaCislaPrehledu(cislo.dataset.cislo, e.clientX, e.clientY);
         } else if (modelka) {
             const m = stav.prehledModelky.get(parseInt(modelka.dataset.otevritModelku));
-            if (m) otevritDetailModelky(m);
+            if (m) otevritDetailModelky(m, { seznam: seznamOkolo(modelka) });
         } else if (shanene) {
             const klic = shanene.dataset.shanim;
             const r = shanene.getBoundingClientRect();

@@ -85,12 +85,11 @@ function vykreslit(fotek) {
         </div>
         <div class="ob-karta gh-panel gh-dlazdice">
             <div class="gh-nahledy" aria-label="Na řadě">${polozky.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-gh-ukazka="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
-                <span class="gh-nahledy-stitek">${razeni() === 'modelky' ? 'Po modelkách' : 'Zamíchané'}</span></div>
+</div>
             <div class="gh-text">
                 <h3>Hodnotit fotky <small>Fotky bez srdíček v prohlížeči</small></h3>
                 <p class="gh-popis">Dávej srdíčka klávesami <kbd>1</kbd>–<kbd>5</kbd>: ohodnocená fotka zmizí a hned je tu další. Šipky listují, mezerník spustí promítání, <kbd>Esc</kbd> skončí.</p>
                 <ul class="gh-cisla">
-                    <li><b>${fotek}</b><span>${esc(sklonovat(fotek, 'nehodnocená fotka', 'nehodnocené fotky', 'nehodnocených fotek').replace(/^\d+ /, ''))}</span></li>
                     <li><b>${modelky.length}</b><span>${esc(sklonovat(modelky.length, 'modelka', 'modelky', 'modelek').replace(/^\d+ /, ''))}</span></li>
                 </ul>
                 <div class="gh-ovladani">

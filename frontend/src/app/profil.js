@@ -8,7 +8,7 @@ import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
-import { detailView, issueView } from './prvky';
+import { detailView, gallery, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
 import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
@@ -20,7 +20,13 @@ import { htmlKostryAlb } from '../ui/kostra';
 import { zaznamenatProfil } from './zajem';
 
 // Otevření profilu modelky s fotogalerií
-export async function otevritDetailModelky(modelka, { bezHistorie = false } = {}) {
+// seznam: id modelek, mezi kterými listují šipky ‹ › (pořadí, Top 10…); bez něj z galerie Modelky její karty,
+// odjinud (hledání, kronika, číslo) se nelistuje. Listování a Zpět (bezHistorie) seznam nemění.
+export async function otevritDetailModelky(modelka, { bezHistorie = false, seznam = null } = {}) {
+    if (!bezHistorie) {
+        stav.seznamProfilu = seznam?.length > 1 ? seznam
+            : stav.rezim === 'modelky' && !gallery.classList.contains('hidden') ? stav.nacteneModelky.map(m => m.id) : null;
+    }
     // Opožděná odpověď přehledu, ze kterého se sem přišlo, už profil nesmí přepsat
     const moje = ++stav.cisloNacteni;
     // Galerie a historie drží objekty z doby načtení; po úpravě by profil i formulář ukázaly staré údaje
@@ -150,7 +156,7 @@ async function doplnitOdznaky(id) {
 // Aktuální potvrzené pořadí v oblíbenosti pod srdíčky; klik otevře Pořadí v Oblíbenosti
 function htmlPoradi(modelka) {
     if (!(Number(modelka.poradi) > 0)) return '';
-    return `<button type="button" class="profile-poradi" data-otevrit-oblibenost title="Otevřít Pořadí v Oblíbenosti">${modelka.poradi}. v oblíbenosti</button>`;
+    return `<button type="button" class="profile-poradi" data-otevrit-oblibenost title="Otevřít Pořadí v Hodnocení">${modelka.poradi}. v oblíbenosti</button>`;
 }
 
 // Ostatní modelky sdíleného alba (hlavní i další kromě té, jejíž profil je otevřený) jako odkazy na jejich profil

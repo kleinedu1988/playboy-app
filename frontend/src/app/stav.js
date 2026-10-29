@@ -4,6 +4,7 @@ import { VYCHOZI_EDICE } from '../lib/format';
 export const stav = {
     aktualniModelka: null,
     nacteneModelky: [],
+    seznamProfilu: null, // id modelek seznamu, ze kterého se otevřel profil (šipky ‹ › a „3 z 22“); null = bez listování
     editovanaModelka: null,
     potvrzenaAkce: null,
     zrusenaAkce: null,

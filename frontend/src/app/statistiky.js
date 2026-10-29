@@ -397,8 +397,7 @@ const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModel
 
 // Kostra se vykreslí jednou (rozvinutý seznam drží fokus); části se pak překreslují zvlášť
 function htmlKostry() {
-    return `<h3>Statistiky sbírky</h3>
-        <div class="sp-lista">
+    return `<div class="sp-lista">
             <label class="sp-vyber-grafu">
                 <select data-sp-graf-vyber aria-label="Graf">${Object.entries(SKUPINY).map(([s, nazev]) => `<optgroup label="${nazev}">${GRAFY.filter(g => g.skupina === s)
                     .map(g => `<option value="${g.klic}" ${g.klic === graf ? 'selected' : ''}>${esc(g.nazev)}</option>`).join('')}</optgroup>`).join('')}</select></label>

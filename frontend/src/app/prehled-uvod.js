@@ -163,9 +163,9 @@ function htmlOblibenostiUvodu(ob, modelky) {
     const cekaji = textCekajicich(poctyCekajicich(modelky));
     const top = (ob.top.length ? seznam(ob.top, x => `${x.poradi}.`)
         : modelky.some(m => m.hodnoceni) || cekaji
-            ? prazdne('Zatím žádná potvrzená. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.' + (cekaji ? '' : ' <button type="button" class="link" data-otevrit-oblibenost="porovnani">Porovnávat →</button>'))
+            ? prazdne('Zatím žádná potvrzená. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.' + (cekaji ? '' : ' <button type="button" class="link" data-otevrit-oblibenost="porovnat">Porovnat →</button>'))
             : prazdne('Ohodnoť modelky srdíčky – pořadí se ukáže tady.'))
-        + (cekaji ? `<p class="uvod-cekaji">⏳ ${esc(cekaji)} · <button type="button" class="link" data-otevrit-oblibenost="porovnani">Porovnávat →</button></p>` : '');
+        + (cekaji ? `<p class="uvod-cekaji">⏳ ${esc(cekaji)} · <button type="button" class="link" data-otevrit-oblibenost="porovnat">Porovnat →</button></p>` : '');
     const kdy = ob.trendDni === 1 ? 'od včerejška' : `za ${ob.trendDni} dní`;
     const stoupaji = ob.stoupaji.length ? seznam(ob.stoupaji, x => `<span class="trend nahoru">▲ ${x.zmenaPoradi}</span>`)
         : prazdne(ob.trendDni ? `Nikdo výrazně nestoupl ${kdy}.` : 'Trend se ukáže za týden: program si každý den pamatuje pořadí.');
@@ -175,7 +175,7 @@ function htmlOblibenostiUvodu(ob, modelky) {
         : ob.dlouhoNevidene.length ? seznam(ob.dlouhoNevidene, dni) : prazdne('Všechny oblíbené jsi v posledním měsíci viděl.');
     return `
         <div class="uvod-karta uvod-oblibenost">
-            <h4>Oblíbenost<small><button type="button" class="link" data-otevrit-oblibenost>Porovnávat a pořadí →</button></small></h4>
+            <h4>Hodnocení<small><button type="button" class="link" data-otevrit-oblibenost="hodnoceni">Porovnat a Pořadí →</button></small></h4>
             <div class="uvod-oblibenost-sloupce">
                 <div><h5>Top 10${ob.top.length && ob.top.length < 10 ? ` <small>${sklonovat(ob.top.length, 'potvrzená', 'potvrzené', 'potvrzených')}</small>` : ''}</h5>${top}</div>
                 <div><h5>Stoupají${ob.trendDni ? ` <small>${kdy}</small>` : ''}</h5>${stoupaji}</div>
@@ -213,14 +213,12 @@ export function htmlShanim(stavy, modelky = []) {
         podleRoku.get(rok).push(s);
     });
     return `
-        <h3>Sháním CZ <span>česká edice · ${sklonovat(cisla.length, 'číslo', 'čísla', 'čísel')}</span>
-            ${cisla.length ? '<button type="button" class="link stat-toggle" data-kopirovat-shanim>Kopírovat seznam</button>' : ''}</h3>
         ${priorita.length ? `<div class="uvod-karta uvod-shanim uvod-shanim-napred"><h4>Nejdřív sháněj<small>čísla s tvými nejoblíbenějšími modelkami</small></h4><div>${priorita.map(({ cislo, modelka }) => `
             <button type="button" class="chip" data-shanim="${esc(cislo.vydani)}" title="${esc(`${nazevVydani(cislo.vydani)} – ${modelka.jmeno}, ${modelka.poradi}. v oblíbenosti`)}">${esc(nazevVydani(cislo.vydani))}<small>${esc(modelka.jmeno)} · ${modelka.poradi}.</small></button>`).join('')}</div></div>` : ''}
         ${cisla.length ? `<div class="uvod-karta uvod-shanim">${[...podleRoku].map(([rok, seznam]) => `
             <div class="uvod-shanim-rok"><b>${rok}</b><div>${seznam.map(s => `
                 <button type="button" class="chip" data-shanim="${esc(s.vydani)}" title="${esc(nazevVydani(s.vydani) + (s.poznamka ? ` – ${s.poznamka}` : ''))}">${esc(nazevVydani(s.vydani).replace(/ \d{4}.*$/, ''))}${s.poznamka ? `<small>${esc(s.poznamka)}</small>` : ''}</button>`).join('')}</div></div>`).join('')}
-        </div>` : '<p class="stat-prazdne">Žádné číslo české edice nemá stav „sháním“. Označíš ho v mapě na úvodu Přehledu pravým tlačítkem, v kalendáři nebo v „Upravit číslo…“.</p>'}`;
+        </div>` : '<p class="stat-prazdne">Žádné číslo české edice nemá stav „sháním“. Označíš ho v mapě na úvodu Sbírky pravým tlačítkem, v kalendáři nebo v „Upravit číslo…“.</p>'}`;
 }
 
 // Text seznamu k vložení do zprávy nebo poznámek (např. pro antikvariát)

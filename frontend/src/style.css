@@ -12106,6 +12106,429 @@ span.ud-chip {
     from { opacity: 0; transform: translateY(4px); }
 }
 
+
+/* Karta v Top 10 otevře vitrínu: vybraná svítí */
+.slava-skupina .slava-karta[data-slava-vybrat] {
+    cursor: pointer;
+}
+
+.slava-karta.vybrana,
+.slava-stupen .slava-karta.vybrana {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent), 0 12px 32px rgba(216, 27, 96, 0.25);
+}
+
+/* Události kroniky ve vitríně (její, cizí – kde byla soupeřkou – tlumeně) */
+.slava-kronika {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.slava-udalost {
+    display: flex;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--panel-okraj);
+    line-height: 1.35;
+}
+
+.slava-udalost > span:last-child {
+    display: flex;
+    flex-direction: column;
+}
+
+.slava-udalost small {
+    color: var(--text-muted);
+}
+
+.slava-udalost.u-vstup .slava-ikona,
+.slava-udalost.u-jednicka .slava-ikona {
+    color: var(--accent-text);
+}
+
+.slava-udalost.u-vystup .slava-ikona {
+    color: var(--danger-text);
+}
+
+/* Na dosah: jeden řádek pod Top 10 s nejbližšími dalšími stupni odznaků; proužek v barvě cílového stupně */
+.slava-dosah {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin-top: 22px;
+    padding: 10px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 14px;
+    background-color: var(--panel-bg);
+}
+
+.slava-dosah-nadpis {
+    margin-right: 4px;
+    color: var(--accent-text);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.slava-dosah-polozka {
+    display: flex;
+    flex: 1 1 170px;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 4px 8px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-main);
+    text-align: left;
+    cursor: pointer;
+}
+
+.slava-dosah-polozka:hover,
+.slava-dosah-polozka:focus-visible {
+    border-color: var(--panel-okraj);
+    background-color: var(--panel-hover);
+}
+
+.slava-dosah-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.slava-dosah-text b {
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.slava-dosah-text small {
+    color: var(--text-muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.odznak-pruh.bronz i { background-color: #c9834b; }
+.odznak-pruh.stribro i { background-color: #c8ccd6; }
+.odznak-pruh.zlato i { background-color: #f2c14e; }
+
+/* Vitrína modelky: skleněný panel pod řadou, šipka míří na vybranou kartu */
+.slava-vitrina-misto:empty {
+    display: none;
+}
+
+.slava-vitrina {
+    position: relative;
+    margin: -10px 0 28px;
+    padding: 18px 20px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background-color: rgba(26, 26, 30, 0.82);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+    animation: slava-vitrina-in 0.18s ease-out;
+}
+
+.slava-vitrina::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: calc(var(--sipka, 50%) - 8px);
+    width: 14px;
+    height: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: #1b1b1f;
+    transform: rotate(45deg);
+}
+
+@keyframes slava-vitrina-in {
+    from { opacity: 0; transform: translateY(-6px); }
+}
+
+.sv-hlava {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.sv-jmeno {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sv-jmeno h3 {
+    margin: 0;
+    font-size: 17px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.sv-jmeno small {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.sv-cisla {
+    display: flex;
+    flex: 1;
+    justify-content: center;
+    gap: 6px;
+    margin: 0;
+}
+
+.sv-cisla > div {
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    padding: 4px 12px;
+    border-left: 1px solid var(--panel-okraj);
+}
+
+.sv-cisla > div:first-child {
+    border-left: none;
+}
+
+.sv-cisla dd {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.sv-cisla dt {
+    color: var(--text-muted);
+    font-size: 10.5px;
+    white-space: nowrap;
+}
+
+.sv-akce {
+    display: flex;
+    flex: none;
+    gap: 8px;
+}
+
+.sv-tlacitko {
+    padding: 5px 14px;
+    border: 1px solid rgba(255, 64, 129, 0.45);
+    border-radius: 999px;
+    background: none;
+    color: var(--accent-text);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sv-tlacitko:hover {
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+}
+
+.sv-zavrit {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 50%;
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.sv-zavrit:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.sv-telo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 28px;
+    margin-top: 14px;
+}
+
+.sv-telo .ob-nadpis:first-child {
+    margin-top: 0;
+}
+
+/* Police odznaků: získané a rozdělané, každý s tečkami stupňů a postupem */
+.sv-police {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 8px;
+}
+
+.sv-odznak {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 14px;
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.sv-odznak.zlato { border-color: rgba(242, 193, 78, 0.35); background: linear-gradient(135deg, rgba(242, 193, 78, 0.12), rgba(255, 255, 255, 0.02) 60%); }
+.sv-odznak.stribro { border-color: rgba(200, 204, 214, 0.3); background: linear-gradient(135deg, rgba(200, 204, 214, 0.1), rgba(255, 255, 255, 0.02) 60%); }
+.sv-odznak.bronz { border-color: rgba(201, 131, 75, 0.32); background: linear-gradient(135deg, rgba(201, 131, 75, 0.1), rgba(255, 255, 255, 0.02) 60%); }
+.sv-odznak.jednorazovy { border-color: rgba(179, 136, 255, 0.3); background: linear-gradient(135deg, rgba(179, 136, 255, 0.1), rgba(255, 255, 255, 0.02) 60%); }
+.sv-odznak.cil { border-style: dashed; }
+
+.sv-odznak-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.sv-odznak-text b {
+    font-size: 13px;
+}
+
+.sv-odznak-text small {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.sv-odznak-text .sv-stupen {
+    font-weight: 600;
+}
+
+.sv-stupen.bronz { color: #c9834b; }
+.sv-stupen.stribro { color: #c8ccd6; }
+.sv-stupen.zlato { color: #f2c14e; }
+.sv-stupen.jednorazovy { color: #b388ff; }
+
+.sv-tecky {
+    display: flex;
+    gap: 4px;
+}
+
+.sv-tecky i {
+    width: 8px;
+    height: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+}
+
+.sv-tecky i.bronz { border-color: #c9834b; background-color: #c9834b; }
+.sv-tecky i.stribro { border-color: #c8ccd6; background-color: #c8ccd6; }
+.sv-tecky i.zlato { border-color: #f2c14e; background-color: #f2c14e; }
+
+.sv-chybi {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+}
+
+.sv-chybi small {
+    margin-right: 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.sv-chybi .odznak {
+    opacity: 0.55;
+    filter: grayscale(1);
+    transition: opacity 0.15s, filter 0.15s;
+}
+
+.sv-chybi .odznak:hover {
+    opacity: 1;
+    filter: none;
+}
+
+.sv-rekordy {
+    margin: 0 0 6px;
+    padding: 0;
+    list-style: none;
+}
+
+.sv-rekordy li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--panel-okraj);
+}
+
+.sv-rekordy li > span:last-child {
+    display: flex;
+    flex-direction: column;
+}
+
+.sv-rekordy b {
+    color: #ffd54f;
+    font-size: 13px;
+}
+
+.sv-rekordy small {
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.sv-pohar {
+    font-size: 17px;
+}
+
+.slava-kronika.sv-kronika {
+    margin: 0;
+    font-size: 12.5px;
+}
+
+.slava-udalost.cizi {
+    color: var(--text-muted);
+}
+
+.sv-starsi summary {
+    padding: 6px 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.sv-nic {
+    margin: 2px 0 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+@media (max-width: 900px) {
+    .sv-hlava {
+        flex-wrap: wrap;
+    }
+
+    .sv-cisla {
+        flex-wrap: wrap;
+        order: 3;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
+    .sv-telo {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* Kulatá fotka modelky (sbírka, police, kronika) */
 .slava-avatar {
     display: block;
@@ -12115,6 +12538,11 @@ span.ud-chip {
     overflow: hidden;
     border-radius: 50%;
     background-color: var(--bg-modal);
+}
+
+.slava-avatar.velky {
+    width: 48px;
+    height: 48px;
 }
 
 .slava-avatar img {

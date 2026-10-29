@@ -652,11 +652,28 @@ v top 10 celkem, nejdelší vláda jedničky, nejvíc obhajob, nejrychlejší po
 prvního vstupu – ne `pocatek`) a největší návrat (nejdelší pauza mimo top 10 před dalším vstupem); při shodě vyhrává
 dřívější (u dnů celkem a obhajob nižší číslo modelky). Vitrína je současná potvrzená top 10, legendy bývalé top 10. Smazané modelky se vynechají.
 
-**V rozhraní** (Oblíbenost › Síň slávy, `app/sin-slavy.js`, texty v `lib/slava.js`): karty modelek jako v galerii
-Modelky – současná Top 10 v pořadí (první tři větší na stupních vítězů: 2. vlevo, 1. uprostřed nejvýš, 3. vpravo, každá na podstavci s číslem; místa 4–10 v jedné řadě přes celou šířku, karty se o ni dělí rovným dílem (v úzkém okně po čtyřech), místo vpravo nahoře, jednička s korunkou, pod jménem délka pobytu, obhajoby 🛡
-a kolikátý pobyt, zlaté štítky 🏆 rekordů s bublinou jako u odznaků – co rekord měří, kdo ho drží a kolik, odkdy a jestli dál roste, `htmlBublinyRekordu` v `lib/slava.js`; podrobnosti karty v bublině), pod ní Legendy (vybledlé karty s nejlepším
-místem, řady vyplněné rovnoměrně: nejvýš 7 v řadě, 8 → 4 + 4) a kronika jako jeden řádek s nejnovější událostí, po rozkliknutí celá po měsících (kdo byl v top 10 už na
-začátku, je v jednom řádku).
+**V rozhraní** (Oblíbenost › Síň slávy, `app/sin-slavy.js`, texty v `lib/slava.js`): pět pohledů přepínaných
+pilulkami nahoře (Top 10 · Legendy · Odznaky · Rekordy · Kronika, s počty; zvolený se pamatuje v `slavaPohled`,
+šipky a Home/End mezi pilulkami; vpravo v liště poslední událost kroniky, klik otevře Kroniku). Nic se nehromadí
+pod sebou:
+
+- **Top 10** (výchozí): stupně vítězů (2. vlevo, 1. uprostřed nejvýš, 3. vpravo, na podstavcích) a místa 4–10
+  v řadě přes celou šířku; karty jako v galerii s místem, délkou pobytu, obhajobami 🛡, štítky 🏆 rekordů
+  a medailony odznaků. Klik (Enter) na kartu rozbalí pod její řadou **vitrínu modelky** (sklo se šipkou na kartu):
+  čísla (místo, dny v Top 10 a na 1. místě, obhajoby, nejlepší místo), odznaky jako dlaždice se stupněm, datem,
+  třemi tečkami stupňů a postupem, „Ještě nemá“ (vybledlé medailony), její rekordy a kronika (5 nejnovějších,
+  starší rozbalením). Zavře ji ✕, Esc nebo nový klik na kartu, „Profil →“ otevře profil. Pod Top 10 řádek
+  **Na dosah**: pět nejbližších dalších stupňů odznaků modelek z Top 10 (medailon, jméno, proužek v barvě cílového
+  stupně, „6 dní do stříbra“), klik otevře vitrínu.
+- **Legendy**: bývalé Top 10 jako portréty s obdobím v Top 10 a nejlepším místem; klik otevře profil.
+- **Odznaky**: sbírka jako medaile ve hře – souhrn (kolik druhů už někdo má, počty zlatých, stříbrných, bronzových
+  a jednorázových, kolik modelek má další stupeň na dosah) a mřížka stupňových a jednorázových odznaků: karta
+  svítí barvou nejvyššího získaného stupně, nezískaný je zašedlý se zámkem; schody prahů s počtem držitelek,
+  fotky držitelek (nejvýš 6, pak +N), v patičce kdo má nejblíž dalšímu stupni (u jednorázových kdo naposledy).
+- **Rekordy**: trofejová police (poháry se znakem druhu, hodnota, držitelka, „▲ roste“), prázdný podstavec pro
+  rekord bez držitelky, pod tím Rekordmanky.
+- **Kronika**: svislá časová osa po měsících s uzly podle druhu události a fotkami, filtr Vše / Vstupy a pády /
+  Jedničky / Obhajoby / Odznaky; kdo byl v top 10 už na začátku kroniky, je jeden blok.
 
 ## Odznaky
 
@@ -687,8 +704,7 @@ týden od sebe. Testy: `TestOdznaky`.
 
 **V rozhraní:** na kartě v síni slávy řada medailonů na střed pod délkou pobytu (kroužek s ikonou, barva podle stupně:
 bronz, stříbro, zlato, jednorázové fialově; nejvýš 5, zbytek „+2“), v profilu pod pořadím (klik otevře Síň slávy),
-vlastní bublina po najetí myší nebo zaměření (`htmlBublinyOdznaku` v `lib/slava.js`: stupeň, hodnota modelky, žebříček stupňů s prahy, postup, soupeřka, datum zisku; u dlaždice jen popis a prahy), oddíl Odznaky s dlaždicí na každý odznak (kdo ho má, zlato napřed) a „Na dosah“ (8 nejbližších dalších stupňů
-s ukazatelem a „ještě 8 dní do stříbra“). Texty v `lib/slava.js` (`ODZNAKY`, `popisOdznaku`).
+vlastní bublina po najetí myší nebo zaměření (`htmlBublinyOdznaku` v `lib/slava.js`: stupeň, hodnota modelky, žebříček stupňů s prahy, postup, soupeřka, datum zisku; u dlaždice jen popis a prahy), pohled Odznaky (sbírka, viz Síň slávy), vitrína modelky z Top 10 a řádek „Na dosah“ pod Top 10. Texty v `lib/slava.js` (`ODZNAKY`, `popisOdznaku`).
 
 ## Model vkusu
 

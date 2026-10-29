@@ -12008,7 +12008,7 @@ button.pas-kapsle:focus-visible {
         display: none;
     }
 
-    /* Hodnocení: místo zůstane odkazu na to, co čeká; dnešní počet je i v bublině pilulky Porovnat */
+    /* Hodnocení: místo zůstane odkazu na to, co čeká (dnešní počet se nevejde) */
     .plovouci-pas .hd-dnes {
         display: none;
     }

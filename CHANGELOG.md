@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.78] – 2026-10-29
+
+### Změněno
+- **Sjednocená dvouřádková hlavička a pět hlavních záložek (Varianta A + B):**
+  - **Horní řádek (`.titulek-okna`):** pět hlavních záložek pohromadě vlevo (**Modelky**, **Čísla**, **Centerfoldy**, **Oblíbenost**, **Sbírka**, zkratky `Ctrl+1` až `Ctrl+5`), vpravo tlačítka akcí (`+`, `⋯`) a tlačítka okna (`–`, `□`, `×`).
+  - **Druhý řádek (`.hlavni-lista`):** kontextová lišta otevřené sekce – vlevo návrat a drobečky na podstránkách (`.logo`), přepínač podčástí (`#pasStranky`) a volby přehledu, filtry a počty (`#volbyPrehledu`), vpravo vyhledávací pole (`.nav-controls`).
+  - **Oblíbenost na jednom místě:** dřívější záložky *Nejlepší*, *Hodnocení* a *Síň slávy* jsou sjednocené pod záložkou **Oblíbenost** s pilulkami **Porovnat**, **Fotky**, **Pořadí**, **Síň slávy** a **Nejlepší** v kontextové liště; pohledy Síně slávy (*Top 10*, *Legendy*, *Odznaky*, *Rekordy*, *Kronika*) se přepínají přímo ve volbách lišty bez třetího plovoucího pásu v obsahu stránky.
+  - **Sbírka bez plovoucího pásu v obsahu:** podčásti **Úvod**, **Údržba**, **Sháním CZ** a **Statistiky** i jejich stav a akce (*Kopírovat seznam*) jsou přímo v kontextové liště pod záložkami.
+
 ## [0.99.77] – 2026-10-29
 
 ### Opraveno

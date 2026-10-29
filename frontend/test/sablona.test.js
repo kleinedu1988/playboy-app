@@ -19,9 +19,26 @@ test('okna jsou přímo v kostře okna', () => {
     assert.deepEqual(okna.filter(([, h]) => h !== 0), [], 'vnořená okna');
 });
 
-// .logo v řádku okna má omezenou max-width, aby nezasahovalo pod hledání uprostřed; tlačítka okna proto musí mít
-// margin-left: auto, jinak se posunou hned za .logo pod pole hledání
-test('tlačítka okna v hlavičce drží u pravého okraje', () => {
+// Sjednocená dvouřádková hlavička: v horním řádku (.titulek-okna) je pět hlavních záložek (#viewToggle) a vpravo
+// akce (#addBtn, #menuBtn) s tlačítky okna (.window-controls); ve druhém řádku (.hlavni-lista) jsou drobečky (.logo),
+// pilulky podčástí (#pasStranky), volby přehledu (#volbyPrehledu) a hledání (.nav-controls)
+test('sjednocená dvouřádková hlavička a tlačítka okna u pravého okraje', () => {
+    const zdroj = readFileSync(new URL('../src/sablona.js', import.meta.url), 'utf8');
+    const titulek = zdroj.match(/<div class="titulek-okna">([\s\S]*)<div class="hlavni-lista">/);
+    assert.ok(titulek, '.titulek-okna před .hlavni-lista');
+    const zalozky = [...titulek[1].matchAll(/data-rezim="([^"]+)"/g)].map(m => m[1]);
+    assert.deepEqual(zalozky, ['modelky', 'covery', 'centerfoldy', 'prehled', 'prehled']);
+    assert.match(titulek[1], /id="addBtn"/);
+    assert.match(titulek[1], /id="menuBtn"/);
+    assert.match(titulek[1], /id="winCloseBtn"/);
+
+    const lista = zdroj.match(/<div class="hlavni-lista">([\s\S]*?)<\/header>/);
+    assert.ok(lista, '.hlavni-lista v hlavičce');
+    assert.match(lista[1], /class="logo hidden"/);
+    assert.match(lista[1], /id="pasStranky"/);
+    assert.match(lista[1], /id="volbyPrehledu"/);
+    assert.match(lista[1], /id="searchInput"/);
+
     const css = readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
     const blok = css.match(/\.window-controls\s*\{([^}]*)\}/);
     assert.ok(blok && /margin-left:\s*auto\s*;/.test(blok[1]), '.window-controls musí mít margin-left: auto');

@@ -470,7 +470,7 @@ export function pripravit() {
             nastavitCastOblibenosti(doOblibenosti.dataset.otevritOblibenost || 'poradi');
             // Řada odznaků otevře v síni slávy rovnou sbírku odznaků
             if (doOblibenosti.dataset.slavaPohled) nastavitPohledSlavy(doOblibenosti.dataset.slavaPohled);
-            /** @type {HTMLElement|null} */ (document.querySelector(`.nav-rezim[data-cast-oblibenosti="${stav.oblibenostCast}"]`))?.click();
+            /** @type {HTMLElement|null} */ (document.querySelector('.nav-rezim[data-cast-prehledu="oblibenost"]'))?.click();
             return;
         }
         const paska = e.target.closest('[data-online-album]');

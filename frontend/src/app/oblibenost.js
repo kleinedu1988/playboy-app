@@ -80,9 +80,16 @@ let porovnaniDnes = nactiDnes();
 
 const videt = () => !!koren?.isConnected && stav.rezim === 'prehled' && stav.prehledSekce === 'oblibenost' && !stats.classList.contains('hidden');
 
+let vOblibenostiNejlepsi = false;
+export const posledniCastOblibenosti = () => vOblibenostiNejlepsi ? 'nejlepsi' : (stav.oblibenostCast === 'slava' ? 'slava' : stav.hodnoceniPohled);
+export function nastavitNejlepsiVOblibenosti(zapnout = true) {
+    vOblibenostiNejlepsi = zapnout;
+}
+
 // Část Oblíbenosti nebo pohled Hodnocení, který otevře příští zobrazení (např. pořadí z profilu modelky): 'hodnoceni',
 // 'slava', pohled ('porovnat', 'fotky', 'poradi') i dřívější části ('porovnani', 'galerie' – prevestCastOblibenosti)
 export function nastavitCastOblibenosti(klic) {
+    vOblibenostiNejlepsi = false;
     const { cast: c, pohled } = prevestCastOblibenosti(klic, stav.hodnoceniPohled);
     stav.oblibenostCast = c;
     stav.hodnoceniPohled = pohled;
@@ -108,24 +115,16 @@ function ukazatCastOblibenosti(klic) {
     if (stav.oblibenostCast === 'slava' && cast('slava')) nacistSinSlavy(cast('slava'));
     if (stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'fotky' && cast('galerie')) nacistGalerii(cast('galerie'));
     vykreslitHlavu();
-    // V liště se rozsvítí tlačítko stránky (prehled.js)
-    document.dispatchEvent(new CustomEvent('volby-prehledu'));
     document.querySelector('main').scrollTop = 0;
 }
 
 const nastavitZobrazeni = () => { const hd = cast('cast-hodnoceni'); if (hd) hd.dataset.hdZobrazeno = stav.hodnoceniPohled; };
 
-// Hodnocení: hlavička (pilulky pohledů, souhrn s odkazy) a tři pohledy, vidět je jen zvolený (data-hd-zobrazeno)
+// Hodnocení: tři pohledy (Porovnat, Fotky, Pořadí) a Síň slávy; přepínání částí je v liště (#pasStranky)
 const KOSTRA = `
     <div class="ob-cast hd" data-ob-cast-hodnoceni>
-    <div class="plovouci-pas">
-        <nav class="slava-pohledy" role="tablist" aria-label="Pohledy hodnocení" data-ob-pohledy></nav>
-        <div class="hd-souhrn pas-info">
-            <span class="hd-dnes" data-ob-dnes></span>
-            <span class="hd-odkazy" data-ob-odkazy></span>
-        </div>
-    </div>
     <div class="hd-pohled ob-porovnani" data-hd="porovnat" data-ob-porovnani>
+        <div class="volby-v-liste" data-volby-casti="hodnoceni-porovnat" data-ob-volby-porovnat></div>
         <div class="ob-hlavicka">
             <p class="ob-duvod" data-ob-duvod><span class="ob-souboj hidden" data-ob-souboj></span><span data-ob-duvod-text></span></p>
             <p class="ob-v-poradi" data-ob-v-poradi aria-label="Dvojice v pořadí"></p>
@@ -402,11 +401,52 @@ async function nacistNahledy(ids) {
 
 // ——— Vykreslení ———
 
-// Hotovo dnes: počet porovnání a pruh k příští desítce
-function vykreslitDnes() {
+function poctyOblibenosti() {
+    const poradi = (data.oblibenost?.poradi || []).filter(p => modelka(p.modelkaId));
+    const cekaji = poctyCekajicich(poradi);
+    const nCekaji = Number(data.oblibenost?.cekajicich) || cekaji.reduce((s, [, n]) => s + n, 0);
+    const nesouladu = viditelneNesoulady().length;
+    const fotek = Math.max(0, pocetNehodnocenych());
+    return {
+        cekaji, nCekaji, nesouladu, fotek,
+        pocty: {
+            porovnat: [nCekaji, nCekaji ? `${textCekajicich(cekaji, nCekaji)} – dvojice, které to rozhodnou, jsou v porovnávání napřed` : 'Která se ti líbí víc? Dvě modelky nad sebou'],
+            fotky: [fotek, fotek ? `${sklonovat(fotek, 'nehodnocená fotka', 'nehodnocené fotky', 'nehodnocených fotek')} – dávej jim srdíčka v prohlížeči` : 'Nehodnocené fotky v prohlížeči'],
+            poradi: [nesouladu, nesouladu ? `${sklonovat(nesouladu, 'modelce', 'modelkám', 'modelkám')} podle porovnání nesedí srdíčka` : 'Pořadí podle síly s úrovněmi Top 10 / 20 / 50 / 100'],
+        },
+    };
+}
+
+// Pilulky částí Oblíbenosti pro lištu pod záložkami (#pasStranky): Porovnat, Fotky, Pořadí, Síň slávy a Nejlepší
+export function htmlPasuOblibenosti(aktivniRezim = stav.rezim) {
+    const { pocty } = poctyOblibenosti();
+    const zvoleny = aktivniRezim === 'nejlepsi' ? 'nejlepsi'
+        : stav.oblibenostCast === 'slava' ? 'slava' : stav.hodnoceniPohled;
+    const pilulky = [
+        ...POHLEDY_HODNOCENI.map(([klic, nazev]) => ({ klic, nazev, pocet: pocty[klic][0], titulek: pocty[klic][1], zvolena: klic === zvoleny })),
+        { klic: 'slava', nazev: 'Síň slávy', titulek: 'Nejlepší desítka, legendy, odznaky, rekordy a kronika', zvolena: zvoleny === 'slava' },
+        { klic: 'nejlepsi', nazev: 'Nejlepší', titulek: 'Nejlépe hodnocené modelky, čísla, centerfoldy a fotky', zvolena: zvoleny === 'nejlepsi' },
+    ];
+    return `<nav class="slava-pohledy" role="tablist" aria-label="Části oblíbenosti">${htmlPilulek(pilulky, 'cast-oblibenosti-pas')}</nav>`;
+}
+
+// Volby pohledu Porovnat v liště (#volbyPrehledu): dnešní počet porovnání a případný odkaz na čekající položku
+function vykreslitVolbyPorovnat() {
+    const misto = cast('volby-porovnat');
+    if (!misto) return;
     const p = postupDne(porovnaniDnes);
-    nastavitHtml(cast('dnes'), `<span class="pas-kapsle hd-postup" title="${esc(p.hotovo ? `Dnes ${sklonovat(p.hotovo, 'porovnání', 'porovnání', 'porovnání')} – do ${p.cil} zbývá ${p.zbyva}` : 'Dnes zatím žádné porovnání')}">Dnes <b>${p.hotovo}</b> z ${p.cil}
-        <span class="ob-postup-pruh" aria-hidden="true"><i style="width:${p.procent}%"></i></span></span>`);
+    const { cekaji, nCekaji, nesouladu, fotek, pocty } = poctyOblibenosti();
+    const odkaz = odkazyHodnoceni({ pohled: 'porovnat', cekaji, celkem: nCekaji, nesouladu, fotek })[0];
+    const htmlOdkazu = odkaz
+        ? `<button type="button" data-hd-pohled="${odkaz.pohled}" title="${esc(pocty[odkaz.pohled][1])}">${esc(odkaz.text)} · ${esc(odkaz.akce)} →</button>`
+        : '';
+    nastavitHtml(misto, `${htmlOdkazu}<span title="${esc(p.hotovo ? `Dnes ${sklonovat(p.hotovo, 'porovnání', 'porovnání', 'porovnání')} – do ${p.cil} zbývá ${p.zbyva}` : 'Dnes zatím žádné porovnání')}">Dnes ${p.hotovo} z ${p.cil}</span>`);
+}
+
+// Hotovo dnes: počet porovnání v liště voleb
+function vykreslitDnes() {
+    vykreslitVolbyPorovnat();
+    document.dispatchEvent(new CustomEvent('volby-prehledu'));
 }
 
 // Dvojice v pořadí: místa obou modelek a jejich sousedek (zvýrazněné), úroveň, posun po posledním přepočtu
@@ -427,25 +467,10 @@ function vykreslitVPoradi(d) {
     }).join(''));
 }
 
-// Hlavička Hodnocení: pilulky pohledů s počty a odkazy na to, co čeká jinde (lib/oblibenost.js, odkazyHodnoceni)
+// Obnoví počty v pilulkách Oblíbenosti (#pasStranky) a volby pohledu Porovnat (#volbyPrehledu)
 function vykreslitHlavu() {
-    const misto = cast('pohledy');
-    if (!misto) return;
-    const poradi = (data.oblibenost?.poradi || []).filter(p => modelka(p.modelkaId));
-    const cekaji = poctyCekajicich(poradi);
-    const nCekaji = Number(data.oblibenost?.cekajicich) || cekaji.reduce((s, [, n]) => s + n, 0);
-    const nesouladu = viditelneNesoulady().length;
-    const fotek = Math.max(0, pocetNehodnocenych());
-    const pocty = {
-        porovnat: [nCekaji, nCekaji ? `${textCekajicich(cekaji, nCekaji)} – dvojice, které to rozhodnou, jsou v porovnávání napřed` : 'Která se ti líbí víc? Dvě modelky nad sebou'],
-        fotky: [fotek, fotek ? `${sklonovat(fotek, 'nehodnocená fotka', 'nehodnocené fotky', 'nehodnocených fotek')} – dávej jim srdíčka v prohlížeči` : 'Nehodnocené fotky v prohlížeči'],
-        poradi: [nesouladu, nesouladu ? `${sklonovat(nesouladu, 'modelce', 'modelkám', 'modelkám')} podle porovnání nesedí srdíčka` : 'Pořadí podle síly s úrovněmi Top 10 / 20 / 50 / 100'],
-    };
-    const zvoleny = stav.hodnoceniPohled;
-    nastavitHtml(misto, htmlPilulek(POHLEDY_HODNOCENI.map(([klic, nazev]) => ({ klic, nazev, pocet: pocty[klic][0], titulek: pocty[klic][1], zvolena: klic === zvoleny })), 'hd-pohled'));
-    // V pásu vpravo jen nejdůležitější odkaz (pás má mít nejvýš dvě informace: dnešek a co čeká)
-    nastavitHtml(cast('odkazy'), odkazyHodnoceni({ pohled: zvoleny, cekaji, celkem: nCekaji, nesouladu, fotek }).slice(0, 1)
-        .map(o => `<button type="button" class="pas-kapsle" data-hd-pohled="${o.pohled}" title="${esc(pocty[o.pohled][1])}"><span>${esc(o.text)}</span><b class="pas-akce">${esc(o.akce)} →</b></button>`).join(''));
+    vykreslitVolbyPorovnat();
+    document.dispatchEvent(new CustomEvent('volby-prehledu'));
 }
 
 function vykreslitDvojici() {

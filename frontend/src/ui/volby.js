@@ -31,11 +31,12 @@ const POPISKY = {
     spVyber: 'Výběr',
     udRazeniVolba: 'Řazení',
     udSkryte: 'Vyřízené',
+    slavaPohled: 'Pohled',
 };
 
 const RAZENI = new Set(['razeniGalerie', 'razeniSteny', 'udRazeniVolba']);
 // Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
-const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim', 'poradiRozsah', 'filtrFotografa']);
+const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim', 'poradiRozsah', 'filtrFotografa', 'slavaPohled']);
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
 const VYPINATELNE = new Set(['minHodnoceni', 'stenaMin', 'vyberId', 'spVyber', 'udSkryte']);
@@ -74,11 +75,12 @@ const IKONY_ZOBRAZENI = {
     'Odznaky': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 3.5h7L13.5 9h-3z"/><circle cx="12" cy="14.5" r="5.5"/><path d="M12 12v5M10 14.5h4"/></svg>',
     'Rekordy': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.5 21V4"/><path d="M5.5 4.5h12l-2.5 4 2.5 4h-12"/></svg>',
     'Kronika': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h11a2 2 0 0 1 2 2v1.5h-4"/><path d="M16 7.5V18a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2v-1.5H12V18a2 2 0 0 0 2 2"/><path d="M7 4a2 2 0 0 0-2 2v10.5M8.5 9h4M8.5 12.5h4"/></svg>',
+    'Nejlepší': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8z"/></svg>',
     'Statistiky': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>',
 };
 // Ikona volby podle názvu (i pro pilulky v obsahu, ať vypadají jako volby v liště); neznámý název nic
 export const ikonaZobrazeni = nazev => IKONY_ZOBRAZENI[nazev] || '';
-const TITULKY_ZOBRAZENI = { zobrazeniCisel: 'Zobrazení čísel', ghRazeni: 'Pořadí fotek', udRezim: 'Režim Údržby', poradiRozsah: 'Rozsah pořadí', filtrFotografa: 'Alba fotografa' };
+const TITULKY_ZOBRAZENI = { zobrazeniCisel: 'Zobrazení čísel', ghRazeni: 'Pořadí fotek', udRezim: 'Režim Údržby', poradiRozsah: 'Rozsah pořadí', filtrFotografa: 'Alba fotografa', slavaPohled: 'Pohledy síně slávy' };
 const IKONA_PREHRAT = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
 
 // Panel filtrů zůstává otevřený i po změně filtru (přehled se překreslí a panel se naplní znovu)
@@ -408,15 +410,15 @@ function umistitPanel() {
 }
 
 function nastavitPocet(pocet = '') {
-    document.querySelectorAll('.hlavni-lista [data-rezim]').forEach(b => {
+    document.querySelectorAll('.navbar [data-rezim]').forEach(b => {
         b.dataset.titulek ??= b.title;
         b.title = b.classList.contains('active') && pocet ? `${b.dataset.titulek} · ${pocet}` : b.dataset.titulek;
     });
     prizpusobitListu();
 }
 
-// Záložky v liště mají ikonu a název; když se vedle voleb uprostřed nevejdou, nezvolené ukážou jen ikonu
-// (název je v bublině): napřed stránky vpravo, potom i přehledy vlevo. Zvolená má název vždy.
+// Záložky v horním řádku a pilulky pod-částí v kontextové liště mají ikonu a název; když je v řádku těsno,
+// nezvolené ukážou jen ikonu (název je v bublině) a zvolená má název vždy.
 const ODSTUP_V_LISTE = 16;
 const prekryvaji = (a, b) => a.width && b.width && a.right + ODSTUP_V_LISTE > b.left && b.right + ODSTUP_V_LISTE > a.left
     && a.bottom > b.top && b.bottom > a.top;
@@ -433,21 +435,28 @@ export function prizpusobitListu() {
 }
 
 function upravitListu() {
-    const lista = document.querySelector('.hlavni-lista');
+    const titulek = document.querySelector('.titulek-okna');
     const vlevo = document.getElementById('viewToggle');
-    const vpravo = lista?.querySelector('.nav-akce');
-    if (!vlevo || !vpravo) return;
-    const volby = misto();
-    const stredy = () => (volby.classList.contains('hidden') ? [] : [volby.getBoundingClientRect()]);
-    const tesno = () => {
+    const vpravo = titulek?.querySelector('.nav-akce');
+    if (titulek && vlevo && vpravo) {
+        titulek.classList.remove('bez-nazvu-vlevo');
         const l = vlevo.getBoundingClientRect();
         const p = vpravo.getBoundingClientRect();
-        // Úzké okno zalamuje lištu: stránky vpravo spadly pod přehledy
-        return p.top >= l.bottom - 2 || prekryvaji(l, p) || stredy().some(v => prekryvaji(l, v) || prekryvaji(v, p));
-    };
-    lista.classList.remove('bez-nazvu-vpravo', 'bez-nazvu-vlevo');
-    if (tesno()) lista.classList.add('bez-nazvu-vpravo');
-    if (tesno()) lista.classList.add('bez-nazvu-vlevo');
+        if (p.top >= l.bottom - 2 || prekryvaji(l, p)) titulek.classList.add('bez-nazvu-vlevo');
+    }
+    const lista = document.querySelector('.hlavni-lista');
+    const pas = document.getElementById('pasStranky');
+    const hledani = lista?.querySelector('.nav-controls');
+    if (!lista || !pas || !hledani) return;
+    lista.classList.remove('bez-nazvu-pasu');
+    if (pas.classList.contains('hidden')) return;
+    const rPas = pas.getBoundingClientRect();
+    const rHledani = hledani.getBoundingClientRect();
+    const volby = misto();
+    const rVolby = !volby.classList.contains('hidden') ? volby.getBoundingClientRect() : null;
+    if (rHledani.top > rPas.top + 8 || (rVolby && rVolby.top > rPas.top + 8) || prekryvaji(rPas, rHledani)) {
+        lista.classList.add('bez-nazvu-pasu');
+    }
 }
 
 // Tlačítko „Zrušit hledání a filtry“ v prázdném stavu: smaže text hledání a zruší zapnuté filtry po jednom

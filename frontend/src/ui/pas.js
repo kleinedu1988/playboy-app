@@ -39,7 +39,7 @@ export function pripravitPasy() {
     // Šipky mezi pilulkami pásu (jako záložky), Home/End na první a poslední: klik na sousední pilulku, pás se
     // překreslí a fokus dostane nově zvolená. Zachytí se dřív než klávesy stránky (šipky v Porovnání listují pásy).
     document.addEventListener('keydown', (e) => {
-        const pilulka = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('.plovouci-pas [role="tab"]'));
+        const pilulka = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('.plovouci-pas [role="tab"], #pasStranky [role="tab"]'));
         if (!pilulka || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key) || e.altKey || e.ctrlKey || e.metaKey) return;
         const vsechny = /** @type {HTMLElement[]} */ ([...pilulka.parentElement.querySelectorAll('[role="tab"]')]);
         const i = vsechny.indexOf(pilulka);
@@ -49,7 +49,7 @@ export function pripravitPasy() {
         e.stopImmediatePropagation();
         if (nova === pilulka) return;
         nova.click();
-        requestAnimationFrame(() => /** @type {HTMLElement[]} */ ([...document.querySelectorAll('.plovouci-pas [role="tab"][aria-selected="true"]')])
+        requestAnimationFrame(() => /** @type {HTMLElement[]} */ ([...document.querySelectorAll('.plovouci-pas [role="tab"][aria-selected="true"], #pasStranky [role="tab"][aria-selected="true"]')])
             .find(t => t.getClientRects().length)?.focus({ preventScroll: true }));
     });
     // Pás se při změně části nebo filtru vykreslí znovu (bez třídy): stav se obnoví hned

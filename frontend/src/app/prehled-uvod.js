@@ -214,6 +214,7 @@ export function htmlShanim(stavy, modelky = []) {
         podleRoku.get(rok).push(s);
     });
     return `
+        <div class="volby-v-liste" data-volby-casti="shanim">${cisla.length ? '<button type="button" data-kopirovat-shanim>Kopírovat seznam</button>' : ''}<span>${esc(sklonovat(cisla.length, 'číslo', 'čísla', 'čísel'))} české edice</span></div>
         ${priorita.length ? `<div class="uvod-karta uvod-shanim uvod-shanim-napred"><h4>Nejdřív sháněj<small>čísla s tvými nejoblíbenějšími modelkami</small></h4><div>${priorita.map(({ cislo, modelka }) => `
             <button type="button" class="chip" data-shanim="${esc(cislo.vydani)}" title="${esc(`${nazevVydani(cislo.vydani)} – ${modelka.jmeno}, ${modelka.poradi}. v oblíbenosti`)}">${esc(nazevVydani(cislo.vydani))}<small>${esc(modelka.jmeno)} · ${modelka.poradi}.</small></button>`).join('')}</div></div>` : ''}
         ${cisla.length ? `<div class="uvod-karta uvod-shanim">${[...podleRoku].map(([rok, seznam]) => `

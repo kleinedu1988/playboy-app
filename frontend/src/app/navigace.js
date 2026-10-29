@@ -15,6 +15,7 @@ import { prestatSledovatKonce } from './nejlepsi';
 import { zrusitHledani } from './naseptavac';
 import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti } from './oblibenost';
+import { obnovitPasHlavicky } from './prehled';
 
 // Přehledy se seznamy (galerie, stěna, čísla, kalendář, nejlepší) se při každém zobrazení vykreslují celé znovu.
 // Skryté by jen držely tisíce karet a fotek, které zpomalují každou další akci (úklid paměti, hledání v dokumentu,
@@ -48,7 +49,8 @@ export function ukazatPohled(pohled) {
     // Záložky přehledů zůstávají vidět i na podstránce (jedním klikem jinam); zvolená je tam jen tlumená
     prepinacRezimu.classList.toggle('podstranka', podstranka);
     zvyraznitRezim();
-    // Volby v liště patří ukázanému přehledu; profil a stránka vydání žádné nemají
+    // Pilulky podčástí (Oblíbenost, Sbírka) a volby v liště patří ukázanému přehledu; profil a stránka vydání žádné nemají
+    obnovitPasHlavicky(pohled);
     obnovitVolby(pohled);
     backBtn.innerHTML = `&larr; ${esc(popisZpet())}`;
     backBtn.title = `Zpět: ${popisZpet()} (Esc, Alt+šipka vlevo)`;
@@ -81,6 +83,7 @@ function ukazatDrobecek(pohled) {
     const index = pohled === detailView ? seznam.indexOf(stav.aktualniModelka?.id) : -1;
     poradi.textContent = index >= 0 && seznam.length > 1 ? `${index + 1} z ${seznam.length}` : '';
     poradi.classList.toggle('hidden', !poradi.textContent);
+    document.querySelector('.logo')?.classList.toggle('hidden', backBtn.classList.contains('hidden') && !nazev);
 }
 
 // Prvek s fokusem jako selektor, aby se po návratu Zpět dal najít i v nově vykresleném pohledu
@@ -168,8 +171,8 @@ export async function zpet() {
     });
 }
 export const viewToggle = document.getElementById('viewToggle');
-// Všechna tlačítka přehledů: záložky vlevo i ikony vpravo v hlavní liště
-export const prepinacRezimu = document.querySelector('.hlavni-lista');
+// Všechna tlačítka přehledů v horní liště
+export const prepinacRezimu = document.querySelector('.navbar');
 
 // Shrnutí vložení odkazů: co se uložilo a co bylo odmítnuto
 export function oznamitVlozeni(v, co) {
@@ -246,16 +249,17 @@ export function prepnoutRezim(novy) {
     document.querySelector('main').scrollTop = 0;
 }
 
-// Svítí záložka otevřeného přehledu (Kalendář je zobrazení Čísel); v Přehledu tlačítko otevřené stránky:
-// Hodnocení, Síň slávy, nebo Sbírka. Čtečky obrazovky ji poznají podle aria-current (na profilu a stránce čísla
-// jen „true“: odtud se přišlo, aktuální stránka je podstránka).
+// Svítí záložka otevřeného přehledu (Kalendář je zobrazení Čísel, Nejlepší je část Oblíbenosti); v Přehledu záložka
+// Oblíbenost nebo Sbírka. Čtečky obrazovky ji poznají podle aria-current (na profilu a stránce čísla jen „true“).
 export function zvyraznitRezim() {
     const novy = stav.rezim;
-    const stranka = stav.prehledSekce === 'oblibenost' ? stav.oblibenostCast : 'sprava';
+    const stranka = stav.prehledSekce === 'oblibenost' ? 'oblibenost' : 'sprava';
     prepinacRezimu.querySelectorAll('[data-rezim]').forEach((b) => {
         const zvoleny = novy === 'prehled'
-            ? b.dataset.rezim === 'prehled' && (b.dataset.castOblibenosti || b.dataset.castPrehledu) === stranka
-            : b.dataset.rezim === novy || (novy === 'kalendar' && b.dataset.rezim === 'covery');
+            ? b.dataset.rezim === 'prehled' && b.dataset.castPrehledu === stranka
+            : novy === 'nejlepsi'
+                ? b.dataset.castPrehledu === 'oblibenost'
+                : b.dataset.rezim === novy || (novy === 'kalendar' && b.dataset.rezim === 'covery');
         b.classList.toggle('active', zvoleny);
         if (zvoleny) b.setAttribute('aria-current', prepinacRezimu.classList.contains('podstranka') ? 'true' : 'page');
         else b.removeAttribute('aria-current');

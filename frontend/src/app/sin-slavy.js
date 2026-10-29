@@ -7,7 +7,6 @@
 // (data-ob-porovnavat).
 import { GetSinSlavy } from './backend';
 import { esc, sklonovat } from '../lib/format';
-import { htmlPasu } from '../ui/pas';
 import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, textDni, textRekordu, textUdalosti } from '../lib/slava';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
@@ -160,19 +159,12 @@ function htmlKarty(x, rekordy, legenda, odznaky) {
         </div>`;
 }
 
-// Plovoucí pás: pilulky pohledů (bez čísel – nic v nich nečeká na akci; kolik toho v pohledu je, říká počet pod
-// hledáním) a vpravo poslední událost kroniky (klik otevře Kroniku)
-function htmlPrepinace() {
-    const posledni = data.kronika[0];
-    const t = posledni && textUdalosti(posledni, jmeno);
-    const vpravo = pohled !== 'kronika' && t
-        ? `<button type="button" class="pas-kapsle pas-info slava-novinka" data-slava-pohled="kronika" title="Naposledy v kronice – klik otevře celou kroniku"><span class="slava-ikona ${esc(posledni.druh)}" aria-hidden="true">${t.ikona}</span><span>${esc(t.text)}</span><small>${esc(datumKroniky(posledni.cas))}</small></button>`
-        : `<span class="pas-kapsle pas-info">Kronika vede od <b>${esc(datumKroniky(data.od))}</b></span>`;
-    return htmlPasu({ popis: 'Pohledy síně slávy', atribut: 'slava-pohled', vpravo,
-        pilulky: POHLEDY.map(([klic, nazev]) => ({ klic, nazev, zvolena: klic === pohled })) });
+// Přepínač pohledů Síně slávy pro lištu voleb (#volbyPrehledu)
+function htmlVolbyPohledu() {
+    return POHLEDY.map(([klic, nazev]) => `<button type="button" class="chip ${klic === pohled ? 'active' : ''}" data-slava-pohled="${klic}">${nazev}</button>`).join('');
 }
 
-// Kolik toho ukázaný pohled má: počet na konci voleb pod hledáním (Kronika má i filtr, htmlKroniky)
+// Volby pohledu Síně slávy a počet položek v liště pod záložkami (Kronika má i filtr, htmlKroniky)
 function htmlPoctuPohledu() {
     const n = {
         top: data.vitrina.length,
@@ -186,7 +178,7 @@ function htmlPoctuPohledu() {
         odznaky: () => sklonovat(n, 'získaný odznak', 'získané odznaky', 'získaných odznaků'),
         rekordy: () => sklonovat(n, 'rekord', 'rekordy', 'rekordů'),
     }[pohled];
-    return text ? `<div class="volby-v-liste" data-volby-casti="slava-${pohled}"><span>${esc(text())}</span></div>` : '';
+    return text ? `<div class="volby-v-liste" data-volby-casti="slava-${pohled}">${htmlVolbyPohledu()}<span>${esc(text())}</span></div>` : '';
 }
 
 // Pohled Top 10: stupně vítězů (2. vlevo, 1. uprostřed, 3. vpravo) a místa 4–10 v řadě přes celou šířku
@@ -446,7 +438,7 @@ const bezOpakovanychPocatku = seznam => seznam.filter((u, i) => !(u.druh === 'po
 // událostí je v liště pod hledáním (skrytý řádek štítků převezme ui/volby.js přes prehled.js)
 function htmlKroniky() {
     const filtr = FILTRY_KRONIKY.find(([k]) => k === filtrKroniky) || FILTRY_KRONIKY[0];
-    const filtry = `<div class="volby-v-liste" data-volby-casti="slava-kronika">${FILTRY_KRONIKY.map(([k, nazev, f]) => {
+    const filtry = `<div class="volby-v-liste" data-volby-casti="slava-kronika">${htmlVolbyPohledu()}${FILTRY_KRONIKY.map(([k, nazev, f]) => {
         const n = bezOpakovanychPocatku(data.kronika.filter(f)).length;
         return n || k === 'vse' ? `<button type="button" class="chip ${k === filtr[0] ? 'active' : ''}" data-kronika-filtr="${k}">${nazev}<span>${n}</span></button>` : '';
     }).join('')}<span>${esc(sklonovat(bezOpakovanychPocatku(data.kronika.filter(filtr[2])).length, 'událost', 'události', 'událostí'))}</span></div>`;
@@ -492,7 +484,7 @@ function vykreslit() {
                 : pohled === 'kronika' ? htmlKroniky()
                     : htmlTop(rekordy, odznaky);
     nastavitHtml(kontejner, `<div class="slava" data-slava-zobrazeno="${pohled}">
-        ${htmlPrepinace()}${htmlPoctuPohledu()}
+        ${htmlPoctuPohledu()}
         <section class="slava-obsah" role="tabpanel" aria-label="${esc(POHLEDY.find(([k]) => k === pohled)?.[1] || '')}">${obsah}</section>
     </div>`);
     if (pohled === 'top') ukazatVitrinu(false);

@@ -4,17 +4,41 @@ import { htmlKostryKaret } from './ui/kostra';
 
 export const SABLONA_OKNA = `
   <header class="navbar">
-    <!-- Horní řádek: šipky na další modelku, hledání a tlačítka okna; slouží i k přesouvání okna -->
+    <!-- Horní řádek: 5 hlavních sekcí vlevo pohromadě, akce (+, ⋯) a tlačítka okna vpravo; slouží i k přesouvání okna -->
     <div class="titulek-okna">
+      <nav id="viewToggle" class="view-toggle" aria-label="Hlavní nabídka">
+        <button type="button" data-rezim="modelky" class="active" aria-current="page" title="Modelky (Ctrl+1)" aria-keyshortcuts="Control+1"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c.8-4 3.6-6.2 7-6.2s6.2 2.2 7 6.2"/></svg><span>Modelky</span></button>
+        <button type="button" data-rezim="covery" title="Čísla časopisu – obálky a kalendář (Ctrl+2)" aria-keyshortcuts="Control+2"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h10.5a1.5 1.5 0 0 1 1.5 1.5v15.5H7.5A1.5 1.5 0 0 1 6 19V3.5z"/><path d="M6 19a1.5 1.5 0 0 1 1.5-1.5H18M9.5 7.5h5"/></svg><span>Čísla</span></button>
+        <button type="button" data-rezim="centerfoldy" title="Centerfoldy (Ctrl+3)" aria-keyshortcuts="Control+3"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="1.5"/><path d="M7 8.8h10M7 15.2h10" stroke-dasharray="2 2"/></svg><span>Centerfoldy</span></button>
+        <button type="button" data-rezim="prehled" data-cast-prehledu="oblibenost" class="nav-rezim" title="Oblíbenost – porovnávání, fotky, pořadí, síň slávy, nejlepší (Ctrl+4)" aria-keyshortcuts="Control+4"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2C13.9 6.2 15.5 5 17.5 5 21 5 22.6 8.6 21.2 11.4 19 15.65 12 20 12 20z"/><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2V20z" fill="currentColor" stroke="none"/></svg><span>Oblíbenost</span></button>
+        <button type="button" data-rezim="prehled" data-cast-prehledu="sprava" class="nav-rezim" title="Sbírka – úvod, údržba, sháním CZ, statistiky (Ctrl+5)" aria-keyshortcuts="Control+5"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="5" rx="1.2"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Sbírka</span></button>
+      </nav>
+      <div class="nav-akce">
+        <button id="addBtn" class="nav-fav" title="Přidat…" aria-label="Přidat">+</button>
+        <button id="menuBtn" class="nav-fav" title="Další akce" aria-label="Další akce">&#8943;</button>
+        <span class="nav-oddelovac" aria-hidden="true"></span>
+        <div class="window-controls">
+          <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
+          <button id="winMaxBtn" class="win-btn" title="Maximalizovat">&#9633;</button>
+          <button id="winCloseBtn" class="win-btn win-close" title="Zavřít" aria-label="Zavřít program">&times;</button>
+        </div>
+      </div>
+    </div>
+    <!-- Kontextová lišta otevřené sekce: cesta zpět, pod-části, volby a filtry, vpravo hledání -->
+    <div class="hlavni-lista">
       <!-- Cesta zpět z profilu a stránky vydání (drobečky): odkud se přišlo › kde jsem, u profilu šipky na další modelku -->
-      <nav class="logo" aria-label="Kde jsem">
+      <nav class="logo hidden" aria-label="Kde jsem">
         <button id="backBtn" class="nav-back hidden" title="Zpět (Esc, Alt+šipka vlevo)">&larr; Modelky</button>
         <span id="drobecek" class="nav-drobecek hidden"></span>
         <button id="prevModelBtn" class="nav-back nav-step hidden" title="Předchozí modelka (šipka vlevo)" aria-label="Předchozí modelka">&#8249;</button>
         <span id="poradiModelky" class="nav-poradi hidden"></span>
         <button id="nextModelBtn" class="nav-back nav-step hidden" title="Další modelka (šipka vpravo)" aria-label="Další modelka">&#8250;</button>
       </nav>
-      <!-- Hledání přesně uprostřed šířky okna -->
+      <!-- Pod-části otevřené sekce (Oblíbenost, Sbírka); plní je app/prehled.js -->
+      <div id="pasStranky" class="pas-hlavicky hidden"></div>
+      <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾, filtry, počet…); plní je ui/volby.js -->
+      <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
+      <!-- Hledání vpravo -->
       <div class="nav-controls">
         <label class="hledani">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
@@ -24,34 +48,6 @@ export const SABLONA_OKNA = `
         </label>
         <!-- Rychlé výsledky pod hledáním: modelky, články (i v textu) a čísla; plní je app/naseptavac.js -->
         <div id="naseptavac" class="naseptavac hidden" role="listbox" aria-label="Výsledky hledání"></div>
-      </div>
-      <div class="window-controls">
-        <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
-        <button id="winMaxBtn" class="win-btn" title="Maximalizovat">&#9633;</button>
-        <button id="winCloseBtn" class="win-btn win-close" title="Zavřít" aria-label="Zavřít program">&times;</button>
-      </div>
-    </div>
-    <!-- Hlavní lišta: přehledy jako záložky, volby přehledu a akce -->
-    <div class="hlavni-lista">
-      <!-- Hlavní přehledy vlevo jako záložky s ikonou; v užším okně má text jen zvolená -->
-      <nav id="viewToggle" class="view-toggle" aria-label="Přehledy">
-        <button type="button" data-rezim="modelky" class="active" aria-current="page" title="Modelky (Ctrl+1)" aria-keyshortcuts="Control+1"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c.8-4 3.6-6.2 7-6.2s6.2 2.2 7 6.2"/></svg><span>Modelky</span></button>
-        <button type="button" data-rezim="covery" title="Čísla časopisu – obálky a kalendář (Ctrl+2)" aria-keyshortcuts="Control+2"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h10.5a1.5 1.5 0 0 1 1.5 1.5v15.5H7.5A1.5 1.5 0 0 1 6 19V3.5z"/><path d="M6 19a1.5 1.5 0 0 1 1.5-1.5H18M9.5 7.5h5"/></svg><span>Čísla</span></button>
-        <button type="button" data-rezim="centerfoldy" title="Centerfoldy (Ctrl+3)" aria-keyshortcuts="Control+3"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="1.5"/><path d="M7 8.8h10M7 15.2h10" stroke-dasharray="2 2"/></svg><span>Centerfoldy</span></button>
-        <button type="button" data-rezim="nejlepsi" title="Nejlepší fotky napříč sbírkou (Ctrl+4)" aria-keyshortcuts="Control+4"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.8z"/></svg><span>Nejlepší</span></button>
-      </nav>
-      <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾, filtry…) uprostřed pod hledáním; plní je ui/volby.js -->
-      <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
-      <!-- Stránky s funkcemi vpravo (stejné záložky jako vlevo), za čárou akce -->
-      <div class="nav-akce">
-        <nav class="nav-stranky" aria-label="Stránky">
-          <button type="button" data-rezim="prehled" data-cast-prehledu="oblibenost" data-cast-oblibenosti="hodnoceni" class="nav-rezim" title="Hodnocení – porovnávání, fotky, pořadí (Ctrl+5)" aria-keyshortcuts="Control+5"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2C13.9 6.2 15.5 5 17.5 5 21 5 22.6 8.6 21.2 11.4 19 15.65 12 20 12 20z"/><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2V20z" fill="currentColor" stroke="none"/></svg><span>Hodnocení</span></button>
-          <button type="button" data-rezim="prehled" data-cast-prehledu="oblibenost" data-cast-oblibenosti="slava" class="nav-rezim" title="Síň slávy – Top 10, legendy, odznaky, rekordy, kronika (Ctrl+6)" aria-keyshortcuts="Control+6"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4.5v1.5A3 3 0 0 0 7.3 10.5M17 6h2.5v1.5a3 3 0 0 1-2.8 3"/><path d="M12 14v3M8.5 20h7M9.5 17h5"/></svg><span>Síň slávy</span></button>
-          <button type="button" data-rezim="prehled" data-cast-prehledu="sprava" class="nav-rezim" title="Sbírka – přehled, údržba, sháním CZ, statistiky (Ctrl+7)" aria-keyshortcuts="Control+7"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="5" rx="1.2"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Sbírka</span></button>
-        </nav>
-        <span class="nav-oddelovac" aria-hidden="true"></span>
-        <button id="addBtn" class="nav-fav" title="Přidat…" aria-label="Přidat">+</button>
-        <button id="menuBtn" class="nav-fav" title="Další akce" aria-label="Další akce">&#8943;</button>
       </div>
     </div>
   </header>

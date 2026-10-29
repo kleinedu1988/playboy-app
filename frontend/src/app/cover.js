@@ -7,7 +7,7 @@ import { stav } from './stav';
 import { issueView, searchInput, stats, wall } from './prvky';
 import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepinacRezimu, prepnoutRezim, zobrazeniCisel } from './navigace';
 import { zvolitCastPrehledu } from './prehled';
-import { nastavitCastOblibenosti } from './oblibenost';
+import { nastavitCastOblibenosti, posledniCastOblibenosti } from './oblibenost';
 import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
@@ -160,8 +160,13 @@ export function pripravit() {
         }
         // Přepnutí přehledu začíná novou historii; Čísla v naposledy zvoleném zobrazení
         historie.length = 0;
-        // Tlačítka Hodnocení, Síň slávy a Sbírka otevírají Přehled, každé na své stránce. Když je Přehled vidět,
-        // přepne se stránka na místě (bez nového načtení dat).
+        // Záložky Oblíbenost a Sbírka otevírají Přehled (nebo Nejlepší, když byla v Oblíbenosti naposledy zvolená).
+        // Když je Přehled vidět, přepne se stránka na místě (bez nového načtení dat).
+        if (tlacitko.dataset.castPrehledu === 'oblibenost' && posledniCastOblibenosti() === 'nejlepsi') {
+            prepnoutRezim('nejlepsi');
+            nacistGalerii(searchInput.value);
+            return;
+        }
         const naPrehledu = stav.rezim === 'prehled' && !stats.classList.contains('hidden');
         if (tlacitko.dataset.castOblibenosti && tlacitko.dataset.castOblibenosti !== stav.oblibenostCast) nastavitCastOblibenosti(tlacitko.dataset.castOblibenosti);
         if (tlacitko.dataset.castPrehledu && zvolitCastPrehledu(tlacitko.dataset.castPrehledu, naPrehledu)) return;

@@ -123,17 +123,16 @@ textarea {
     position: relative;
     display: flex;
     align-items: center;
-    height: 40px;
-    padding-left: 12px;
+    height: 42px;
+    padding-left: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .logo {
     display: flex;
     align-items: center;
-    flex: 1;
+    flex: 0 1 auto;
     min-width: 0;
-    /* Jen místo vlevo od hledání (to je uprostřed okna, viz .nav-controls); jméno v drobečku se zkrátí */
-    max-width: calc(50% - min(220px, 50% - 130px) - 12px);
     gap: 8px;
     font-size: 13px;
 }
@@ -235,13 +234,44 @@ textarea {
     color: white;
 }
 
-/* Hlavní lišta: záložky vlevo, hledání uprostřed, akce vpravo */
+/* Kontextová lišta pod záložkami: vlevo drobečky, pilulky podčástí a volby přehledu, vpravo hledání */
 .hlavni-lista {
     position: relative;
     display: flex;
     align-items: center;
-    height: 44px;
-    padding: 0 12px 0 16px;
+    gap: 10px;
+    min-height: 44px;
+    padding: 6px 16px;
+    z-index: 1400;
+}
+
+.pas-hlavicky {
+    display: flex;
+    align-items: center;
+    flex: none;
+}
+
+.pas-hlavicky .slava-pohledy {
+    padding: 3px;
+    border-color: var(--panel-okraj);
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+}
+
+.pas-hlavicky .slava-pohled {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12.5px;
+}
+
+.zkracene-pas .pas-hlavicky .slava-pohled:not(.active) .pas-nazev {
+    display: none;
+}
+
+@media (max-width: 1120px) {
+    .pas-hlavicky .slava-pohled:not(.active) .pas-nazev {
+        display: none;
+    }
 }
 
 .view-toggle {
@@ -343,14 +373,13 @@ textarea {
     background-color: var(--border-color);
 }
 
-/* Hledání v řádku okna přesně uprostřed šířky okna, nezávisle na tom, co je vlevo a vpravo */
+/* Hledání vpravo v kontextové liště */
 .nav-controls {
-    position: absolute;
-    left: 50%;
-    top: 50%;
+    position: relative;
     display: flex;
-    width: min(440px, calc(100% - 2 * 130px));
-    transform: translate(-50%, -50%);
+    flex: 0 1 320px;
+    min-width: 180px;
+    margin-left: auto;
 }
 
 .hledani {
@@ -3356,9 +3385,11 @@ body.razeni .photo-item {
 }
 
 /* Zamčený program nenabízí v hlavičce nic kromě tlačítek okna */
-#app.zamceno .logo > *,
-#app.zamceno .nav-controls,
-#app.zamceno .hlavni-lista > * {
+#app.zamceno .view-toggle,
+#app.zamceno #addBtn,
+#app.zamceno #menuBtn,
+#app.zamceno .nav-oddelovac,
+#app.zamceno .hlavni-lista {
     visibility: hidden;
 }
 
@@ -3848,16 +3879,13 @@ body.razeni .photo-item {
     font-weight: 600;
 }
 
-/* Volby přehledu v horní liště hned za záložkami: rozbalovací tlačítka „Řazení: A–Z ▾“ a počet */
-/* Uprostřed lišty přesně pod hledáním, nezávisle na záložkách vlevo a ikonách vpravo */
+/* Volby přehledu v kontextové liště (vedle drobečků a pilulek podčástí): rozbalovací tlačítka „Řazení: A–Z ▾“ a počet */
 .volby-prehledu {
-    position: absolute;
-    top: 50%;
-    left: 50%;
+    position: static;
     display: flex;
     align-items: center;
+    flex: none;
     gap: 6px;
-    transform: translate(-50%, -50%);
 }
 
 /* Řádek štítků, ze kterého se volby složily, v obsahu není vidět */
@@ -6308,7 +6336,8 @@ textarea {
 .naseptavac {
     position: absolute;
     top: calc(100% + 10px);
-    left: 50%;
+    right: 0;
+    left: auto;
     width: min(560px, calc(100vw - 32px));
     max-height: min(560px, calc(100vh - 80px));
     overflow-y: auto;
@@ -6320,7 +6349,6 @@ textarea {
     -webkit-backdrop-filter: blur(18px) saturate(1.3);
     backdrop-filter: blur(18px) saturate(1.3);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
-    transform: translateX(-50%);
     z-index: 1400;
     --wails-draggable: no-drag;
     user-select: none;
@@ -7575,7 +7603,7 @@ textarea {
 @keyframes otevrit-naseptavac {
     from {
         opacity: 0;
-        transform: translateX(-50%) scale(0.98) translateY(-4px);
+        transform: scale(0.98) translateY(-4px);
     }
 }
 
@@ -7592,7 +7620,7 @@ textarea {
 }
 
 .naseptavac {
-    transform-origin: top center;
+    transform-origin: top right;
     animation: otevrit-naseptavac 0.16s ease-out;
     will-change: transform, opacity;
 }
@@ -7930,27 +7958,15 @@ textarea {
     }
 }
 
-@media (max-width: 620px) {
+@media (max-width: 720px) {
     .hlavni-lista {
         flex-wrap: wrap;
         height: auto;
         padding-bottom: 8px;
     }
 
-    .view-toggle {
-        height: 44px;
-    }
-
-    .volby-prehledu {
-        position: static;
-        order: 3;
-        flex-basis: 100%;
-        justify-content: center;
-        transform: none;
-    }
-
-    .volby-skupina .volby-pocet {
-        display: inline-flex;
+    .nav-controls {
+        flex: 1 1 200px;
     }
 }
 

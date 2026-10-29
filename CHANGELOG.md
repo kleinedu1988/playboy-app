@@ -7,6 +7,20 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.79] – 2026-10-29
+
+### Změněno
+- **Rychlejší načítání, filtrování a vykreslování stránky Modelky:**
+  - Při otevření galerie bez hledaného dotazu a při přepínání řazení nebo filtrů (srdíčka, edice, kategorie, výskyt) se modelky filtrují přímo z mezipaměti bez zbytečného volání backendu (`GetModelky`).
+  - Četnosti kategorií a výskytu i odvozené údaje modelek pro filtrování se pamatují v mezipaměti a nepřepočítávají se při každém překreslení; zrušení všech filtrů proběhne v jednom kroku.
+  - Značky částí (`data-cast`) pro rejstřík se vkládají rovnou do šablony karet bez druhého průchodu DOMem; nepřiblížené fotky (`coverZoom = 1`) nevytvářejí zbytečné kompozitní vrstvy (`transform: scale(1)`).
+  - Uložení výřezu titulní fotky (`SetCoverVyrez`) aktualizuje zapamatovaný snímek sbírky v paměti přímo na místě bez znovunačítání všech tabulek z databáze.
+- **Plynulejší posuvník, rejstřík a klávesové ovládání karet v galerii:**
+  - Karty mimo obrazovku (`content-visibility: auto`) drží přesný poměr stran `3 / 4`, takže při rolování ani skoku přes rejstřík neposkakuje posuvník; rámeček zaměřené karty (`:focus-visible`) se neořezává.
+  - Mezi kartami v mřížce lze přecházet šipkami `←`, `→`, `↑` a `↓` (včetně skoku o řádek nahoru a dolů ve stejném sloupci).
+  - Hodnocení srdíčky na kartě při zapnutém filtru srdíček nepřekresluje celou galerii, dokud modelka filtr splňuje (karta neodskočí pod kurzorem a funguje dvojstisk číslice `1`–`5` pro půlsrdíčko).
+  - V úzkém pravém rejstříku (`#galleryNav`) se popisky počtu fotek (`50+`, `20–49`, `1–19`) a srdíček (`4½ ♥`) zkracují bez přetékání a na kartě s dlouhým jménem zůstává šipka trendu vždy viditelná vedle zkráceného jména.
+
 ## [0.99.78] – 2026-10-29
 
 ### Změněno

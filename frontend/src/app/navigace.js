@@ -35,8 +35,9 @@ function uvolnitPozdeji(opoustene) {
 
 // Vždy je vidět jeden pohled; profil modelky a stránka vydání mají navíc v řádku okna tlačítko zpět
 export function ukazatPohled(pohled) {
-    // Výběr fotek patří k pohledu, ve kterém vznikl; při odchodu se zruší, aby neovlivňoval Esc, šipky ani Delete
+    // Výběr fotek a úprava výřezu na kartě patří k pohledu, ve kterém vznikly; při odchodu se zruší
     if (document.querySelector('.photo-item.vybrana, .poster.vybrana')) zrusitVyber();
+    if (pohled !== gallery && stav.zrusitUpravuVyrezu) stav.zrusitUpravuVyrezu();
     uvolnitPozdeji([...OBSAH_PREHLEDU.keys()].filter(p => p !== pohled && !p.classList.contains('hidden')));
     [gallery, wall, covers, calendar, stats, best, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
     const podstranka = pohled === detailView || pohled === issueView;
@@ -200,9 +201,12 @@ export async function odkazJeVPoradku(odkaz) {
     return false;
 }
 
-// Výřez titulní fotky: poloha v procentech a přiblížení kolem téhož bodu
-export function stylVyrezu({ coverZoom, coverX, coverY }) {
-    return `object-position: ${coverX}% ${coverY}%; transform-origin: ${coverX}% ${coverY}%; transform: scale(${coverZoom});`;
+// Výřez titulní fotky: poloha v procentech a přiblížení kolem téhož bodu (transform jen při přiblížení, aby
+// nepřiblížené karty nevytvářely stovky zbytečných kompozitních vrstev)
+export function stylVyrezu({ coverZoom = 1, coverX = 50, coverY = 50 }) {
+    const pos = coverX !== 50 || coverY !== 50 ? `object-position: ${coverX}% ${coverY}%;` : '';
+    const zoom = coverZoom !== 1 ? ` transform-origin: ${coverX}% ${coverY}%; transform: scale(${coverZoom});` : '';
+    return (pos + zoom).trim();
 }
 
 // Každý přehled si pamatuje své hledání; text z Modelek by v kalendáři filtroval roky
@@ -274,5 +278,5 @@ const sledovatListu = new ResizeObserver(() => {
     prizpusobitListu();
     document.documentElement.style.setProperty('--pod-hlavickou', `${Math.round(hlavicka.getBoundingClientRect().bottom)}px`);
 });
-[hlavicka, prepinacRezimu, document.getElementById('volbyPrehledu')].forEach(p => sledovatListu.observe(p));
+[hlavicka, document.getElementById('volbyPrehledu')].forEach(p => sledovatListu.observe(p));
 document.fonts?.ready.then(() => prizpusobitListu());

@@ -26,11 +26,14 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
     };
     // Kde začíná viditelný obsah: pod vodorovnou lištou, u svislé hned nahoře
     const horniOkraj = () => svisla ? hlavniOblast.getBoundingClientRect().top : nav.getBoundingClientRect().bottom;
+    let zvolenySkok = null;
     const lista = vytvoritListu(nav, (klic) => {
         // Pohled vykreslovaný po dávkách (Nejlepší) cílovou část nejdřív dovykreslí
         lista.dovykreslit?.(klic);
         const cast = casti().find(c => c.dataset.cast === klic);
         if (!cast) return;
+        zvolenySkok = klic;
+        lista.oznacit(klic);
         const posun = cast.getBoundingClientRect().top - hlavniOblast.getBoundingClientRect().top - (svisla ? 0 : nav.offsetHeight) - 8;
         hlavniOblast.scrollTo({ top: hlavniOblast.scrollTop + posun, behavior: 'smooth' });
     }, { svisla });
@@ -41,7 +44,22 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
         const vsechny = casti();
         // Na konci stránky už poslední část výš nevyjede, i tak je to ta aktuální
         const naKonci = hlavniOblast.scrollTop > 0 && hlavniOblast.scrollTop >= hlavniOblast.scrollHeight - hlavniOblast.clientHeight - 1;
-        const aktualni = naKonci ? vsechny.at(-1) : vsechny.filter(c => c.getBoundingClientRect().top <= hranice).pop() || vsechny[0];
+        let aktualni = vsechny[0];
+        if (naKonci) {
+            aktualni = vsechny.at(-1);
+        } else {
+            for (const c of vsechny) {
+                if (c.getBoundingClientRect().top <= hranice) aktualni = c;
+                else break;
+            }
+            // Když na stejném řádku mřížky začíná víc částí (stejné top), přednost má ta, na kterou se v rejstříku kliklo
+            if (zvolenySkok && aktualni) {
+                const topAktualni = aktualni.getBoundingClientRect().top;
+                const kliknuta = vsechny.find(c => c.dataset.cast === zvolenySkok && Math.abs(c.getBoundingClientRect().top - topAktualni) < 4);
+                if (kliknuta) aktualni = kliknuta;
+                else if (Math.abs(topAktualni - hranice) > 48) zvolenySkok = null;
+            }
+        }
         lista.oznacit(aktualni?.dataset.cast);
     };
     listyStranky.push(lista);
@@ -51,6 +69,7 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
 // Svislý rejstřík u pravého okraje se ukáže při rolování (a chvíli po něm) a když je myš u pravého okraje
 const svisleListy = () => listyStranky.filter(l => l.svisla && zobrazena(l.nav));
 let skrytiPoRolovani = null;
+let byloBlizko = false;
 hlavniOblast.addEventListener('scroll', () => {
     svisleListy().forEach(l => l.nav.classList.add('rolovani'));
     clearTimeout(skrytiPoRolovani);
@@ -58,6 +77,8 @@ hlavniOblast.addEventListener('scroll', () => {
 }, { passive: true });
 document.addEventListener('mousemove', (e) => {
     const blizko = e.clientX > window.innerWidth - 80 && e.clientY > hlavniOblast.getBoundingClientRect().top;
+    if (blizko === byloBlizko) return;
+    byloBlizko = blizko;
     listyStranky.forEach(l => { if (l.svisla) l.nav.classList.toggle('blizko', blizko); });
 }, { passive: true });
 

@@ -338,6 +338,7 @@ function pripravitPanel() {
             const v = aktualniFiltry.filtry[i]?.volby[j];
             if (v && !v.zvolena) v.akce();
         } else if (e.target.closest('[data-zrusit-filtry]') && aktualniFiltry.zapnute.length) {
+            if (aktualniLista && !aktualniLista.dispatchEvent(new CustomEvent('zrusit-filtry', { bubbles: true, cancelable: true }))) return;
             zacitRuseni(aktualniLista);
             aktualniFiltry.zapnute[0].zrusit();
         }
@@ -459,13 +460,13 @@ function upravitListu() {
     }
 }
 
-// Tlačítko „Zrušit hledání a filtry“ v prázdném stavu: smaže text hledání a zruší zapnuté filtry po jednom
+// Tlačítko „Zrušit hledání a filtry“ v prázdném stavu: smaže text hledání a zruší zapnuté filtry
 export function zrusitHledaniAFiltry() {
-    const hledani = document.getElementById('searchInput');
-    if (hledani?.value) {
-        hledani.value = '';
-        hledani.dispatchEvent(new Event('input'));
-    }
+    const hledani = /** @type {HTMLInputElement | null} */ (document.getElementById('searchInput'));
+    const meloHledani = Boolean(hledani?.value);
+    if (hledani && meloHledani) hledani.value = '';
+    if (aktualniLista && !aktualniLista.dispatchEvent(new CustomEvent('zrusit-filtry', { bubbles: true, cancelable: true }))) return;
+    if (hledani && meloHledani) hledani.dispatchEvent(new Event('input'));
     if (!aktualniFiltry.zapnute.length) return;
     zacitRuseni(aktualniLista);
     aktualniFiltry.zapnute[0].zrusit();

@@ -4,7 +4,7 @@ import { SetCoverVyrez } from './backend';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { gallery } from './prvky';
-import { VELIKOST_TITULNI } from './obrazky';
+import { VELIKOST_TITULNI, adresaTitulni } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { potvrdit } from './formular-modelky';
 
@@ -93,7 +93,9 @@ export function upravitVyrez(modelka) {
 
     let naAkci = null;
     const ukoncit = () => {
+        const meloFokus = card.contains(document.activeElement);
         panel.removeEventListener('click', naAkci, true);
+        panel.removeEventListener('wheel', naKolecko);
         ram.removeEventListener('pointerdown', naStisk);
         ram.removeEventListener('pointermove', naPohyb);
         ram.removeEventListener('pointerup', naUvolneni);
@@ -101,8 +103,10 @@ export function upravitVyrez(modelka) {
         ram.removeEventListener('wheel', naKolecko);
         card.classList.remove('editing');
         panel.remove();
+        img.src = img.dataset.src = adresaTitulni(modelka);
         img.style.cssText = stylVyrezu(modelka);
         stav.zrusitUpravuVyrezu = null;
+        if (meloFokus) /** @type {HTMLElement} */ (card).focus({ preventScroll: true });
     };
     stav.zrusitUpravuVyrezu = ukoncit;
 

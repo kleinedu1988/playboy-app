@@ -119,8 +119,12 @@ export const RAZENI_GALERIE = {
 };
 
 export function prvniRok(modelka) {
-    const roky = (modelka.vydani || []).map(v => parseInt(String(v).slice(0, 4))).filter(r => r > 0);
-    return roky.length ? Math.min(...roky) : 0;
+    let min = 0;
+    for (const v of modelka.vydani || []) {
+        const r = parseInt(String(v).slice(0, 4));
+        if (r > 0 && (!min || r < min)) min = r;
+    }
+    return min;
 }
 
 export function seraditModelky(modelky, razeni) {
@@ -351,8 +355,10 @@ export const platneDatum = datum => !String(datum || '').trim() || VZOR_DATUMU.t
 // Text pro porovnávání: malá písmena bez diakritiky
 // Písmena, která se na základní tvar nerozkládají sama (stejně jako v Go)
 const ZVLASTNI_PISMENA = { 'ł': 'l', 'ø': 'o', 'đ': 'd', 'ß': 'ss', 'æ': 'ae', 'œ': 'oe', 'þ': 'th', 'ı': 'i' };
-export const bezDiakritiky = text => String(text || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '')
-    .replace(/[łøđßæœþı]/g, z => ZVLASTNI_PISMENA[z]);
+export const bezDiakritiky = text => {
+    const s = String(text || '').toLowerCase();
+    return /[^\x00-\x7f]/.test(s) ? s.normalize('NFD').replace(/\p{M}/gu, '').replace(/[łøđßæœþı]/g, z => ZVLASTNI_PISMENA[z]) : s;
+};
 export const sjednotit = text => bezDiakritiky(text).trim();
 
 // Věk v letech k danému vydání (RRRR-MM), pokud je známé datum narození
@@ -675,7 +681,7 @@ export function odpovidaTextFuzzy(text, hledanyDotaz) {
     const slovaTextu = bezDiakritiky(text).split(/\s+/).filter(Boolean);
     for (const h of hledane) {
         const maxD = maxPovolenaVzdalenost(h.length);
-        const shoda = slovaTextu.some(s => s.includes(h) || (maxD > 0 && vzdalenostLevenshtein(s, h) <= maxD));
+        const shoda = slovaTextu.some(s => s.includes(h) || (maxD > 0 && Math.abs(s.length - h.length) <= maxD && vzdalenostLevenshtein(s, h) <= maxD));
         if (!shoda) return false;
     }
     return true;

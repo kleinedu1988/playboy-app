@@ -9,6 +9,12 @@ export function zkratka(nazev) {
     if (desetileti) return desetileti[1];
     const mesic = nazev.match(/^(\p{L}{3})\p{L}* \d{2}(\d{2})$/u);
     if (mesic) return `${mesic[1]} ${mesic[2]}`;
+    if (nazev.endsWith(' fotek') && !nazev.startsWith('Bez ')) return nazev.slice(0, -6);
+    if (/^♥*½?$/.test(nazev) && nazev) {
+        const pul = nazev.endsWith('½');
+        const celych = nazev.length - (pul ? 1 : 0);
+        return `${celych || ''}${pul ? '½' : ''} ♥`;
+    }
     // „Bez data“, „Bez vydání“: do pruhu se nevejde, celý název je v nápovědě
     if (nazev.startsWith('Bez ')) return '—';
     return nazev;
@@ -58,6 +64,8 @@ export function vytvoritListu(nav, poKliku, { svisla = false } = {}) {
     // Svislá lišta po změně velikosti okna znovu zjistí, zda se do ní všechno vejde
     if (svisla) new ResizeObserver(upravitSipky).observe(seznam);
 
+    let aktivniKlic = null;
+
     return {
         nav,
         svisla,
@@ -65,6 +73,7 @@ export function vytvoritListu(nav, poKliku, { svisla = false } = {}) {
         // polozky: [{ klic, nazev, pocet }]; lišta má smysl až od dvou položek.
         // Svislý pruh je úzký: ukazuje jen zkratku, celý název a počet jsou v nápovědě.
         naplnit(polozky) {
+            aktivniKlic = null;
             seznam.innerHTML = polozky.map(p => {
                 const napoveda = p.pocet === undefined ? p.nazev : `${p.nazev} (${p.pocet})`;
                 // Svislý rejstřík je pomůcka pro myš (ukáže se při rolování); Tab jím neprochází
@@ -76,8 +85,11 @@ export function vytvoritListu(nav, poKliku, { svisla = false } = {}) {
             upravitSipky();
         },
         oznacit(klic) {
+            const k = String(klic);
+            if (k === aktivniKlic) return;
+            aktivniKlic = k;
             seznam.querySelectorAll('[data-skok]').forEach(tlacitko => {
-                const aktivni = tlacitko.dataset.skok === String(klic);
+                const aktivni = tlacitko.dataset.skok === k;
                 if (aktivni && !tlacitko.classList.contains('active')) {
                     // Zvýrazněná položka má být v liště vidět
                     if (svisla) seznam.scrollTop = tlacitko.offsetTop - (seznam.clientHeight - tlacitko.offsetHeight) / 2;

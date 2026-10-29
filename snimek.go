@@ -530,3 +530,29 @@ func (a *App) snimekVPameti() *snimek {
 	}
 	return s
 }
+
+// Při úpravě výřezu titulní fotky se změní jen 3 čísla jedné modelky; aktualizují se přímo v zapamatovaném snímku,
+// aby se nemusely znovu načítat všechny fotky, alba, vydání a modelky z databáze ani zahazovat vyhledávací texty
+func (a *App) aktualizovatVyrezVeSnimku(id int, zoom, x, y float64) {
+	p := a.pamet
+	if p == nil || a.cestaDb == "" || a.vImportu {
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.snimek == nil || p.spojeni == nil || p.db != a.db {
+		return
+	}
+	idx, ok := p.snimek.indexModelky[id]
+	if !ok || idx < 0 || idx >= len(p.snimek.modelky) {
+		return
+	}
+	var verze int64
+	if err := p.spojeni.QueryRowContext(context.Background(), "PRAGMA data_version").Scan(&verze); err != nil {
+		return
+	}
+	p.snimek.modelky[idx].CoverZoom = zoom
+	p.snimek.modelky[idx].CoverX = x
+	p.snimek.modelky[idx].CoverY = y
+	p.verze = verze
+}

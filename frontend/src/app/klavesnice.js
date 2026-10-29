@@ -23,10 +23,46 @@ export function pripravit() {
     document.addEventListener('keydown', (e) => {
         // Zaměřená dlaždice: Enter a mezerník ji otevřou (s Ctrl nebo Shift přidají do výběru)
         const prvek = e.target.closest?.(AKTIVOVATELNE);
+        if (prvek?.classList.contains('editing')) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                /** @type {HTMLElement | null} */ (prvek.querySelector('[data-akce="ulozit"]'))?.click();
+            }
+            return;
+        }
         if (prvek && prvek === e.target && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
             prvek.dispatchEvent(new MouseEvent('click', { bubbles: true, ctrlKey: e.ctrlKey, metaKey: e.metaKey, shiftKey: e.shiftKey }));
             return;
+        }
+        // Pohyb šipkami mezi kartami v mřížce (Modelky, Čísla)
+        if (prvek && prvek === e.target && !e.ctrlKey && !e.metaKey && !e.altKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+            const mrizka = prvek.closest('.gallery-grid, .rocniky-mrizka');
+            if (mrizka) {
+                const karty = [...mrizka.querySelectorAll(':scope > .card')];
+                const index = karty.indexOf(prvek);
+                if (index >= 0) {
+                    let cil = null;
+                    if (e.key === 'ArrowRight') cil = karty[index + 1];
+                    else if (e.key === 'ArrowLeft') cil = karty[index - 1];
+                    else {
+                        const r = prvek.getBoundingClientRect();
+                        const smer = e.key === 'ArrowDown' ? 1 : -1;
+                        for (let i = index + smer; i >= 0 && i < karty.length; i += smer) {
+                            const kr = karty[i].getBoundingClientRect();
+                            if (Math.abs(kr.top - r.top) > 10 && Math.abs(kr.left - r.left) < r.width / 2) {
+                                cil = karty[i];
+                                break;
+                            }
+                        }
+                    }
+                    if (cil) {
+                        e.preventDefault();
+                        /** @type {HTMLElement} */ (cil).focus();
+                        return;
+                    }
+                }
+            }
         }
         // Zaměřená karta nebo dlaždice fotky: 1–5 srdíčka, 0 je zruší (jako v prohlížeči)
         const sSrdicky = prvek === e.target && /^[0-5]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey && prvek.querySelector(':scope > * .hearts, :scope > .hearts');

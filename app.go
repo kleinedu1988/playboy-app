@@ -1308,12 +1308,14 @@ func (a *App) SetCoverVyrez(id int, zoom, x, y float64) bool {
 		return hodnota
 	}
 
-	_, err := a.db.Exec(`UPDATE modelky SET cover_zoom = ?, cover_x = ?, cover_y = ? WHERE id = ?`,
-		omezit(zoom, 1, 4), omezit(x, 0, 100), omezit(y, 0, 100), id)
+	z, cx, cy := omezit(zoom, 1, 4), omezit(x, 0, 100), omezit(y, 0, 100)
+	_, err := a.db.Exec(`UPDATE modelky SET cover_zoom = ?, cover_x = ?, cover_y = ? WHERE id = ?`, z, cx, cy, id)
 	if err != nil {
 		a.chyba("uložení výřezu titulní fotky", err)
+		return false
 	}
-	return err == nil
+	a.aktualizovatVyrezVeSnimku(id, z, cx, cy)
+	return true
 }
 
 // Hodnocení modelky 0,5–5 srdíček po polovinách; 0 hodnocení ruší. Hodnoty mimo 0–5 se oříznou, hodnota mimo

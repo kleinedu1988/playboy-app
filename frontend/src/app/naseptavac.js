@@ -334,7 +334,6 @@ export function pripravit() {
         casovac = setTimeout(hledat, 120);
     });
     searchInput.addEventListener('focus', () => {
-        kalendar = null;
         if (searchInput.value.trim().length >= 1) hledat();
     });
     // Zavření (blur, Esc) zruší i čekající hledání, jinak by se výsledky po chvíli znovu otevřely

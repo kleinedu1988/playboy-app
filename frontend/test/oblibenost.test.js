@@ -263,3 +263,28 @@ test('bublina rekordu', async () => {
     assert.doesNotMatch(serie, /roste|začala|kronikou/);
     assert.equal(htmlBublinyRekordu({ druh: 'neznamy' }), '');
 });
+
+test('část Hodnocení: převod uložené části Oblíbenosti z dřívějších verzí', async () => {
+    const { prevestCastOblibenosti } = await import('../src/lib/oblibenost.js');
+    assert.deepEqual(prevestCastOblibenosti('porovnani'), { cast: 'hodnoceni', pohled: 'porovnat' });
+    assert.deepEqual(prevestCastOblibenosti('galerie'), { cast: 'hodnoceni', pohled: 'fotky' });
+    assert.deepEqual(prevestCastOblibenosti('poradi', 'fotky'), { cast: 'hodnoceni', pohled: 'poradi' }, 'stará část přebije uložený pohled');
+    assert.deepEqual(prevestCastOblibenosti('tipy'), { cast: 'hodnoceni', pohled: 'poradi' });
+    assert.deepEqual(prevestCastOblibenosti('hodnoceni'), { cast: 'hodnoceni', pohled: 'fotky' }, 'staré Hodnocení bez pohledu = Fotky');
+    assert.deepEqual(prevestCastOblibenosti('hodnoceni', 'poradi'), { cast: 'hodnoceni', pohled: 'poradi' });
+    assert.deepEqual(prevestCastOblibenosti('slava', 'fotky'), { cast: 'slava', pohled: 'fotky' });
+    assert.deepEqual(prevestCastOblibenosti('slava'), { cast: 'slava', pohled: 'porovnat' });
+    assert.deepEqual(prevestCastOblibenosti('fotky'), { cast: 'hodnoceni', pohled: 'fotky' });
+    assert.deepEqual(prevestCastOblibenosti(null, 'nesmysl'), { cast: 'hodnoceni', pohled: 'porovnat' });
+});
+
+test('část Hodnocení: odkazy hlavičky na jiné pohledy', async () => {
+    const { odkazyHodnoceni } = await import('../src/lib/oblibenost.js');
+    const vse = { cekaji: [[10, 3]], celkem: 3, nesouladu: 2, fotek: 56 };
+    assert.deepEqual(odkazyHodnoceni({ ...vse, pohled: 'fotky' }).map(o => [o.pohled, o.text]),
+        [['porovnat', '⏳ 3 čekají na Top 10'], ['poradi', '≠ 2 modelkám nesedí srdíčka']]);
+    assert.deepEqual(odkazyHodnoceni({ ...vse, pohled: 'porovnat' }).map(o => o.text), ['≠ 2 modelkám nesedí srdíčka', '56 fotek bez srdíček']);
+    assert.equal(odkazyHodnoceni({ cekaji: [[10, 1], [50, 4]], celkem: 5, pohled: 'poradi' })[0].text, '⏳ 5 čeká na potvrzení');
+    assert.equal(odkazyHodnoceni({ nesouladu: 1, fotek: 1, pohled: 'porovnat' }, 3).map(o => o.text).join(' | '), '≠ 1 modelce nesedí srdíčka | 1 fotka bez srdíček');
+    assert.deepEqual(odkazyHodnoceni({ pohled: 'porovnat' }), []);
+});

@@ -10469,17 +10469,11 @@ span.ud-chip {
     color: var(--text-muted);
 }
 
-.ob-dnes {
-    margin-left: auto;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-/* Porovnávání: dva pásy fotek nad sebou přes výšku okna, pod nimi ovládání */
+/* Porovnávání: dva pásy fotek nad sebou přes výšku okna (bez hlavičky Hodnocení), pod nimi ovládání */
 .ob-porovnani {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 150px);
+    height: calc(100vh - 206px);
     min-height: 480px;
 }
 
@@ -10759,12 +10753,81 @@ span.ud-chip {
     color: var(--text-muted);
 }
 
-/* Části Oblíbenosti: vidět je jen zvolená */
-[data-ob-cast="porovnani"] > .ob-cast:not(.ob-porovnani),
-[data-ob-cast="poradi"] > .ob-cast:not([data-ob-cast-poradi]),
+/* Části Oblíbenosti (Hodnocení, Síň slávy) a pohledy Hodnocení: vidět je jen zvolená a zvolený */
+[data-ob-cast="hodnoceni"] > .ob-cast:not([data-ob-cast-hodnoceni]),
 [data-ob-cast="slava"] > .ob-cast:not([data-ob-cast-slava]),
-[data-ob-cast="galerie"] > .ob-cast:not([data-ob-cast-galerie]) {
+.hd[data-hd-zobrazeno="porovnat"] > .hd-pohled:not([data-hd="porovnat"]),
+.hd[data-hd-zobrazeno="fotky"] > .hd-pohled:not([data-hd="fotky"]),
+.hd[data-hd-zobrazeno="poradi"] > .hd-pohled:not([data-hd="poradi"]) {
     display: none;
+}
+
+/* Hlavička Hodnocení: pilulky pohledů jako v Síni slávy (.slava-pohledy), vpravo dnešní počet a odkazy na to,
+   co čeká v jiném pohledu */
+.hd-lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 20px;
+    margin: 0 0 18px;
+}
+
+.hd-pohledy .slava-pohled svg {
+    flex: none;
+}
+
+.hd-souhrn {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px 10px;
+    min-width: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.hd-dnes b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.hd-odkazy {
+    display: contents;
+}
+
+.hd-odkaz {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 6px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.hd-odkaz:hover,
+.hd-odkaz:focus-visible {
+    border-color: rgba(255, 64, 129, 0.45);
+    background-color: var(--accent-soft);
+}
+
+.hd-odkaz b {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+/* Užší okno: hlavička Hodnocení má dva řádky, pásy porovnání se o ně zkrátí */
+@media (max-width: 1120px) {
+    .ob-porovnani {
+        height: calc(100vh - 250px);
+    }
 }
 
 .ob-jmeno {
@@ -10785,7 +10848,7 @@ span.ud-chip {
     color: var(--accent-text);
 }
 
-/* Hlavička nad pásy: proč tahle dvojice (se štítkem souboje), vpravo Nesedí se srdíčky a dnešní počet */
+/* Řádek nad pásy: proč tahle dvojice (se štítkem souboje); dnešní počet a nesoulady jsou v hlavičce Hodnocení */
 .ob-hlavicka {
     display: flex;
     align-items: center;
@@ -10808,16 +10871,6 @@ span.ud-chip {
 .ob-duvod > span:last-child {
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ob-hlavicka .ob-dnes {
-    flex: none;
-    margin-left: 0;
-}
-
-.ob-hlavicka .ob-nesedi-odkaz {
-    flex: none;
     white-space: nowrap;
 }
 
@@ -11107,10 +11160,6 @@ span.ud-chip {
 }
 
 @media (max-width: 560px) {
-    .ob-dnes {
-        margin-left: 0;
-    }
-
     .ob-radek {
         grid-template-columns: 24px 28px minmax(0, 1fr) 70px;
     }
@@ -11278,11 +11327,6 @@ span.ud-chip {
 [data-ob-rozhodnout].link {
     color: var(--accent-text);
     white-space: nowrap;
-}
-
-.ob-nesedi-odkaz {
-    color: var(--accent-text);
-    font-size: 12px;
 }
 
 .pas-skore {
@@ -11475,18 +11519,10 @@ span.ud-chip {
     cursor: help;
 }
 
-.ob-cekaji {
-    margin: -4px 0 10px;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.ob-cekaji:empty,
 .ob-pravidla:empty {
     display: none;
 }
 
-.ob-cekaji .link,
 .uvod-cekaji .link {
     color: var(--accent-text);
     font-size: 12px;
@@ -13326,28 +13362,23 @@ span.ud-chip {
     background-color: var(--panel-bg);
 }
 
-/* ——— Galerie (Oblíbenost › Galerie, app/galerie-hodnoceni.js): panel, který otevře prohlížeč nehodnocených ——— */
-.gh-panel {
+/* ——— Fotky (Oblíbenost › Hodnocení › Fotky, app/galerie-hodnoceni.js): karta, která otevře prohlížeč
+   nehodnocených, řádek modelek s nejvíc nehodnocenými a ukázka fronty ——— */
+.gh-radek {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 16px 24px;
-    margin-bottom: 16px;
+    gap: 14px 24px;
 }
 
-.gh-uvod {
-    flex: 1 1 420px;
-}
-
-.gh-uvod h4 {
-    margin: 0 0 6px;
-}
-
-.gh-uvod p {
+.gh-popis {
+    flex: 1 1 380px;
+    max-width: 640px;
     margin: 0;
     color: var(--text-muted);
     font-size: 13px;
+    line-height: 1.5;
 }
 
 .gh-ovladani,
@@ -13362,19 +13393,77 @@ span.ud-chip {
     margin-right: 8px;
 }
 
+/* Jen jedna modelka: kulatá fotka, jméno a počet jejích nehodnocených */
+.gh-modelky {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--panel-okraj);
+}
+
+.gh-modelky > small,
+.gh-dalsi {
+    margin-right: 4px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.gh-modelka {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 3px 12px 3px 3px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font-size: 12px;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.gh-modelka:hover,
+.gh-modelka:focus-visible {
+    border-color: rgba(255, 64, 129, 0.45);
+    background-color: var(--accent-soft);
+}
+
+.gh-modelka b {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.gh-avatar {
+    width: 24px;
+    height: 24px;
+    overflow: hidden;
+    border-radius: 50%;
+    background-color: var(--bg-card);
+}
+
+.gh-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 /* Ukázka prvních fotek fronty: klik otevře prohlížeč na té fotce */
 .gh-ukazky {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(8, minmax(0, 1fr));
     gap: 10px;
 }
 
 .gh-ukazka {
+    position: relative;
     aspect-ratio: 3 / 4;
     padding: 0;
     overflow: hidden;
     border: 1px solid var(--panel-okraj);
-    border-radius: 8px;
+    border-radius: 12px;
     background-color: #000;
     cursor: pointer;
 }
@@ -13386,13 +13475,35 @@ span.ud-chip {
     transition: transform 0.2s;
 }
 
+.gh-ukazka span {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 18px 10px 8px;
+    overflow: hidden;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+    color: #fff;
+    font-size: 11px;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
 .gh-ukazka:hover img {
     transform: scale(1.04);
 }
 
+.gh-ukazka:hover span,
+.gh-ukazka:focus-visible span {
+    opacity: 1;
+}
+
 @media (max-width: 900px) {
     .gh-ukazky {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 

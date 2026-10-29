@@ -1,5 +1,6 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
 import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
+import { nastavitCastOblibenosti } from './oblibenost';
 import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, GetOdznakyModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
@@ -460,7 +461,7 @@ export function pripravit() {
     document.getElementById('modelHeader').addEventListener('click', (e) => {
         const doOblibenosti = e.target.closest('[data-otevrit-oblibenost]');
         if (doOblibenosti) {
-            stav.oblibenostCast = doOblibenosti.dataset.otevritOblibenost || 'poradi';
+            nastavitCastOblibenosti(doOblibenosti.dataset.otevritOblibenost || 'poradi');
             // Řada odznaků otevře v síni slávy rovnou sbírku odznaků
             if (doOblibenosti.dataset.slavaPohled) nastavitPohledSlavy(doOblibenosti.dataset.slavaPohled);
             /** @type {HTMLElement|null} */ (document.querySelector('.nav-rezim[data-cast-prehledu="oblibenost"]'))?.click();

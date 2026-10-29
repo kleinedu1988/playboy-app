@@ -246,3 +246,41 @@ export function vysledekOvereni({ jmeno, hodnoceni, ted = null }) {
     }
     return { ok: false, navrh: 0, text: `${kdo}: porovnání nesoulad nepotvrdila – ${h} ♥ jí sedí.` };
 }
+
+// ——— Část Hodnocení (Porovnat · Fotky · Pořadí) ———
+
+// Pohledy části Hodnocení: klíč a název pilulky
+export const POHLEDY_HODNOCENI = [['porovnat', 'Porovnat'], ['fotky', 'Fotky'], ['poradi', 'Pořadí']];
+const jePohledHodnoceni = klic => POHLEDY_HODNOCENI.some(([k]) => k === klic);
+// Dřívější samostatné části Oblíbenosti → pohled Hodnocení ('hodnoceni' bez uloženého pohledu je ještě starší
+// Hodnocení modelek jedna po druhé, které nahradila Galerie nehodnocených fotek, tedy Fotky)
+const STARE_CASTI = { porovnani: 'porovnat', galerie: 'fotky', poradi: 'poradi', tipy: 'poradi' };
+
+// Uložená nebo požadovaná část Oblíbenosti (i z dřívějších verzí) a pohled Hodnocení → { cast, pohled }.
+// cast je 'hodnoceni', nebo 'slava'; pohled zůstává zapamatovaný i v Síni slávy.
+export function prevestCastOblibenosti(cast, pohled = '') {
+    const platny = jePohledHodnoceni(pohled) ? pohled : '';
+    if (cast === 'slava') return { cast: 'slava', pohled: platny || 'porovnat' };
+    if (STARE_CASTI[cast]) return { cast: 'hodnoceni', pohled: STARE_CASTI[cast] };
+    if (jePohledHodnoceni(cast)) return { cast: 'hodnoceni', pohled: cast };
+    if (cast === 'hodnoceni') return { cast: 'hodnoceni', pohled: platny || 'fotky' };
+    return { cast: 'hodnoceni', pohled: platny || 'porovnat' };
+}
+
+const tvar = (n, jeden, dva, pet) => `${n} ${n === 1 ? jeden : n >= 2 && n <= 4 ? dva : pet}`;
+
+// Odkazy v hlavičce Hodnocení na to, co čeká v jiném pohledu: čekající na potvrzení úrovně (vyřeší je Porovnat),
+// nesoulady srdíček (Pořadí) a nehodnocené fotky (Fotky). Zobrazený pohled odkaz nemá; nejvýš kolik odkazů.
+// cekaji = poctyCekajicich(), celkem = počet čekajících z backendu → [{ pohled, text, akce }]
+export function odkazyHodnoceni({ pohled = '', cekaji = [], celkem = 0, nesouladu = 0, fotek = 0 } = {}, kolik = 2) {
+    const soucet = cekaji.reduce((s, [, n]) => s + n, 0);
+    const nCekaji = Number(celkem) || soucet;
+    const odkazy = [];
+    if (nCekaji) {
+        const kam = cekaji.length === 1 ? nazevUrovne(cekaji[0][0]) : 'potvrzení';
+        odkazy.push({ pohled: 'porovnat', text: `⏳ ${tvar(nCekaji, 'čeká', 'čekají', 'čeká')} na ${kam}`, akce: 'Porovnávat' });
+    }
+    if (nesouladu) odkazy.push({ pohled: 'poradi', text: `≠ ${tvar(nesouladu, 'modelce', 'modelkám', 'modelkám')} nesedí srdíčka`, akce: 'Pořadí' });
+    if (fotek) odkazy.push({ pohled: 'fotky', text: `${tvar(fotek, 'fotka', 'fotky', 'fotek')} bez srdíček`, akce: 'Hodnotit' });
+    return odkazy.filter(o => o.pohled !== pohled).slice(0, kolik);
+}

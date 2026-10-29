@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.87] – 2026-10-29
+
+### Změněno
+- **Moderní segmentový přepínač hlavních sekcí ve stylu Linear / macOS:**
+  - Horní přepínač `#viewToggle` v záhlaví okna byl přepracován na kompaktní segmentový ovladač se zaobleným kontejnerem (`border-radius: 10px`, skleněný blur a jemný okraj).
+  - Aktivní segment vystupuje s jemným vyvýšením (`box-shadow`), zvýrazněným pozadím a růžovou ikonou sekce (`var(--accent)`).
+  - Byla odstraněna problematická polopilulka a rohová napojení (corner fillets) – navigace má nyní čistou, moderní a čitelnou dvouúrovňovou hierarchii (1. úroveň: segmentový přepínač Modelky / Čísla / Sbírka v záhlaví okna; 2. úroveň: kapslové pilulky podsekcí v liště `#pasStranky`).
+
 ## [0.99.86] – 2026-10-29
 
 ### Změněno

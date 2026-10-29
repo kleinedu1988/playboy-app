@@ -124,10 +124,10 @@ textarea {
     display: flex;
     align-items: center;
     height: 42px;
-    padding-left: 16px;
+    padding-left: 14px;
     background-color: #121215;
-    border-bottom: 1px solid var(--panel-okraj);
-    z-index: 1401;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    z-index: 1400;
 }
 
 .logo {
@@ -243,8 +243,8 @@ textarea {
     align-items: center;
     gap: 10px;
     min-height: 44px;
-    padding: 6px 16px;
-    background-color: #1c1c21;
+    padding: 6px 14px;
+    background-color: #16161a;
     border-bottom: 1px solid var(--border-color);
     z-index: 1400;
 }
@@ -301,14 +301,19 @@ textarea {
     }
 }
 
-/* Hlavní nabídka (Modelky, Čísla, Sbírka): horní záložka jako půl-pilulka spojená se spodní nabídkou */
+/* Hlavní nabídka (Modelky, Čísla, Sbírka): moderní segmentový přepínač ve stylu Linear/macOS */
 .view-toggle {
-    display: flex;
-    align-items: flex-end;
-    align-self: stretch;
-    gap: 4px;
-    padding-top: 4px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.04);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
     flex: none;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
 }
 
 .view-toggle button {
@@ -316,94 +321,64 @@ textarea {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    height: 34px;
-    padding: 0 16px;
+    height: 26px;
+    padding: 0 13px;
     border: none;
-    background: none;
+    border-radius: 7px;
+    background: transparent;
     color: var(--text-muted);
-    font-size: 13.5px;
+    font-size: 13px;
     font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
-    transition: color 0.15s ease, background-color 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .nav-ikona {
     flex: none;
-    opacity: 0.85;
+    opacity: 0.8;
     transition: color 0.15s ease, opacity 0.15s ease;
 }
 
 .view-toggle button:hover {
     color: var(--text-main);
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 12px 12px 0 0;
+    background-color: rgba(255, 255, 255, 0.06);
 }
 
 .view-toggle button:hover .nav-ikona {
     opacity: 1;
 }
 
-/* Jen vybrané tlačítko má tvar půl-pilulky (horní zaoblení pilulky) a propojuje se se spodní nabídkou */
+/* Zvolený segment: vyvýšený skleněný povrch s růžovou ikonou */
 .view-toggle button.active {
-    height: 38px;
-    margin-bottom: -1px;
-    padding: 0 18px;
-    border: 1px solid var(--panel-okraj);
-    border-bottom: 1px solid #1c1c21;
-    border-radius: 19px 19px 0 0;
-    background-color: #1c1c21;
-    color: var(--text-main);
+    background-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.09);
+    color: #ffffff;
     font-weight: 600;
-    z-index: 10;
-    box-shadow: 0 -2px 0 0 var(--accent), 0 -4px 14px rgba(216, 27, 96, 0.35);
 }
 
 .view-toggle button.active .nav-ikona {
-    color: var(--accent-text);
+    color: var(--accent);
     opacity: 1;
 }
 
 .view-toggle button:focus-visible {
     outline: 2px solid var(--accent-text);
-    outline-offset: -2px;
-    border-radius: 19px 19px 0 0;
-}
-
-/* Hladké přelévání do spodní lišty pomocí vnějších zaoblení (corner fillets) */
-.view-toggle button.active::before {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    left: -8px;
-    width: 8px;
-    height: 8px;
-    border-bottom-right-radius: 8px;
-    box-shadow: 4px 4px 0 0 #1c1c21;
-    pointer-events: none;
-}
-
-.view-toggle button.active::after {
-    content: "";
-    position: absolute;
-    bottom: -1px;
-    right: -8px;
-    width: 8px;
-    height: 8px;
-    border-bottom-left-radius: 8px;
-    box-shadow: -4px 4px 0 0 #1c1c21;
-    pointer-events: none;
+    outline-offset: 1px;
+    border-radius: 7px;
 }
 
 /* Na podstránce (profil, vydání) zůstává vidět, odkud se přišlo, ale tlumeně */
 .podstranka .view-toggle button.active {
-    font-weight: 500;
+    background-color: rgba(255, 255, 255, 0.06);
     box-shadow: none;
-    border-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    font-weight: 500;
 }
 
 .podstranka .view-toggle button.active .nav-ikona {
     color: inherit;
+    opacity: 0.8;
 }
 
 /* Stránky vpravo (Hodnocení, Síň slávy, Sbírka) jsou záložky jako přehledy vlevo */

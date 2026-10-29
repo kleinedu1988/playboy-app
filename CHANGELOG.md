@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.73] – 2026-10-29
+
+### Změněno
+- **Nová síň slávy.** Nahoře jsou pilulky Top 10 · Legendy · Odznaky · Rekordy · Kronika (s počty). Každý pohled má vlastní stránku, nic se nehromadí pod sebou. Zvolený pohled si program pamatuje a vpravo v liště je poslední událost kroniky.
+  - **Top 10:** stupně vítězů a místa 4–10. Klik na kartu rozbalí pod řadou **vitrínu modelky**: čísla, odznaky se stupni a postupem, co jí ještě chybí, její rekordy a kronika. Zavře ji ✕ nebo Esc, „Profil →“ otevře profil.
+  - Pod Top 10 je řádek **Na dosah**: pět nejbližších dalších stupňů odznaků. Klik na položku otevře vitrínu.
+  - **Odznaky** jako sbírka medailí: souhrn nahoře a karta pro každý odznak se stupni, fotkami držitelek a tím, kdo má nejblíž dalšímu stupni. Nezískané jsou zašedlé se zámkem. Dlouhý výpis odznaků dole zmizel.
+  - **Rekordy** stojí jako poháry na polici, pod nimi jsou Rekordmanky. **Kronika** je časová osa s filtrem (vstupy a pády, jedničky, obhajoby, odznaky).
+  - Řada odznaků v profilu otevře síň slávy rovnou na Odznacích.
+
 ## [0.99.72] – 2026-10-29
 
 ### Přidáno

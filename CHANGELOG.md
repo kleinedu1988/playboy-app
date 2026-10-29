@@ -7,6 +7,33 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.75] – 2026-10-29
+
+### Změněno
+- **Nová horní lišta.** Vlevo jsou přehledy **Modelky · Čísla · Centerfoldy · Nejlepší**, vpravo stránky **Hodnocení · Síň slávy · Sbírka** (dřív „Přehled sbírky“), všechny jako záložky s ikonou a názvem. Za čárou zůstávají + a ⋯.
+  - Klávesy **Ctrl+1 až Ctrl+7** otevřou záložky zleva doprava, fungují i na české klávesnici.
+  - V užším okně mají nezvolené záložky jen ikonu (název ukáže bublina), zvolená má název vždy. Zkratky „Mod / Čís / Cf“ zmizely.
+  - Klik na už zvolenou záložku jen vrátí stránku nahoru.
+- **Pod hledáním jsou jen volby zobrazení a filtry** otevřené části: řazení a filtry přehledů, Obálky / Kalendář, ve Fotkách Náhodně / Po modelkách, v Pořadí Top 10 / Celé pořadí, v Kronice filtr událostí a v Údržbě režim Po údajích / Po modelkách / Souhrn. Na konci je počet („24 událostí“, „8 rekordů“).
+- **Plovoucí pás stránek.** Hodnocení, Síň slávy a Sbírka mají nahoře v obsahu jeden společný pás: vlevo pilulky částí, vpravo stav stránky. Při rolování drží nahoře a zůstanou na něm jen pilulky.
+  - Číslo v pilulce je jen to, co čeká na tebe (k porovnání, nehodnocené fotky, úkoly Údržby, sháněná čísla).
+  - Síň slávy má v pilulkách ikony místo emoji.
+  - Ve Sbírce je první část **Úvod** (dřív Přehled). Místo nadpisů „ÚDRŽBA“, „SHÁNÍM CZ“ a „STATISTIKY SBÍRKY“ je stav vpravo v pásu („79 % doplněno · 29 úkolů“, „Kopírovat seznam“).
+  - Šipky ← → přepínají pilulky pásu i volby pod hledáním.
+- **Hledání funguje i na stránkách Hodnocení, Síň slávy a Sbírka** („Najít modelku…“). Najde modelku, číslo nebo článek a Enter otevře první výsledek, i když ho zmáčkneš hned po napsání.
+- **Cesta zpět v profilu a čísle:** vlevo nahoře je „← Hodnocení › Dana Nováková ‹ 3 z 10 ›“.
+  - Šipky ‹ › listují seznamem, ze kterého jsi profil otevřel: galerií, pořadím nebo Top 10.
+  - Z hledání nebo kroniky šipky nejsou.
+- Nejlepší mají rejstřík hodnot u pravého okraje jako ostatní přehledy. Hodnocení ukazuje „Dnes 0 z 10“. V odkazech je všude „Porovnat →“.
+
+### Opraveno
+- Lišta nástrojů a levý sloupec Údržby se při rolování drží nahoře (pod pásem), jak měly.
+- Přepnutí mezi Hodnocením a Síní slávy už nenačítá oblíbenost dvakrát.
+- Po Ctrl+číslo nezůstanou pod hledáním staré výsledky.
+- Odkaz „Porovnat a Pořadí →“ na úvodu Sbírky vždy otevře Hodnocení.
+- Fokus se po volbě v liště neztratí a zaměřený prvek se neschová pod pás.
+- Z čísla zmizela nepoužívaná lišta.
+
 ## [0.99.74] – 2026-10-29
 
 ### Změněno

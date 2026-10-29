@@ -132,7 +132,10 @@ sloučení), proto se část opakuje:
 - [ ] Kategorie a výskyt: štítky ve formuláři modelky, filtry Kategorie a Výskyt v galerii, hledání `kategorie:`, `vyskyt:online`
 - [ ] Čísla: přepínač Obálky / Kalendář, listování obsahem čísla po podržení myši na kartě bez blikání
 - [ ] Bez blikání i karty v galerii a fotky v albu při najetí myší
-- [ ] Lišta: graf otevře Oblíbenost, tlačítko Přehled sbírky vedle něj části Přehled, Údržba, Sháním CZ, Statistiky (volba pod hledáním, pamatuje si poslední) (0.99.30)
+- [ ] Lišta (0.99.75): vlevo Modelky · Čísla · Centerfoldy · Nejlepší, vpravo Hodnocení · Síň slávy · Sbírka; Ctrl+1–7
+      i na české klávesnici; v užším okně nezvolené jen ikona; plovoucí pás stránek drží při rolování nahoře a obsah
+      neposkočí (i ve WebKitGTK); hledání na stránkách najde modelku, Enter otevře první; ‹ › v profilu listují
+      seznamem, odkud se přišlo
 - [ ] Údržba → Kontrola: nález otevře formulář na správném poli, „V pořádku“ ho schová, „Znovu kontrolovat“ vrátí
 - [ ] Statistiky: graf ze seznamu, výběr kliknutím i tažením, výběr platí i v ostatních grafech, Zpět z profilu výběr nezruší
 - [ ] Rozepsaný článek nebo úprava čísla: Esc ukáže „Zahodit změny?“ nad oknem

@@ -10971,17 +10971,6 @@ span.ud-chip {
     color: var(--text-muted);
 }
 
-.ob-dva-sloupce {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: 16px;
-    align-items: start;
-}
-
-.ob-dva-sloupce .prazdno {
-    padding: 24px 12px 16px;
-}
-
 /* Pořadí: místo, náhled, jméno se srdíčky, pruh síly s vousy nejistoty, počet porovnání */
 .ob-poradi {
     display: flex;
@@ -11153,11 +11142,6 @@ span.ud-chip {
     opacity: 0.6;
 }
 
-@media (max-width: 900px) {
-    .ob-dva-sloupce {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
 
 @media (max-width: 560px) {
     .ob-radek {
@@ -11290,39 +11274,6 @@ span.ud-chip {
 }
 
 /* Pořadí: modelky, kterým podle porovnání nesedí srdíčka */
-.ob-nesedi {
-    margin-bottom: 16px;
-}
-
-.ob-nesedi:empty {
-    display: none;
-}
-
-.ob-nesedi-seznam {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.ob-nesedi-seznam li {
-    display: grid;
-    grid-template-columns: 16px minmax(0, 1fr) auto auto auto;
-    align-items: center;
-    gap: 10px;
-    padding: 7px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    font-size: 13px;
-}
-
-.ob-nesedi-seznam li:first-child {
-    border-top: none;
-}
-
-.ob-nesedi-seznam .link {
-    font-size: 13px;
-    white-space: nowrap;
-}
-
 /* Ověřit porovnáním: méně výrazné než Dát jí a Nechat */
 [data-ob-rozhodnout].link {
     color: var(--accent-text);
@@ -13504,6 +13455,541 @@ span.ud-chip {
 @media (max-width: 900px) {
     .gh-ukazky {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* ——— Pořadí v Hodnocení: Čeká na rozhodnutí, kompaktní Top 10, Stoupají a klesají ——— */
+.hz-rozhodnout:empty {
+    display: none;
+}
+
+.hz-rozhodnout {
+    border-color: rgba(216, 27, 96, 0.32);
+    background-image: linear-gradient(100deg, rgba(216, 27, 96, 0.09), transparent 55%);
+}
+
+.hz-r-skupina {
+    margin: 14px 0 2px;
+    color: var(--text-main);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.hz-r-skupina:first-of-type {
+    margin-top: 0;
+}
+
+.hz-r-skupina small {
+    margin-left: 6px;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.hz-r-seznam {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hz-r-seznam li {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+}
+
+.hz-r-seznam li:first-child {
+    border-top: none;
+}
+
+.hz-r-ikona {
+    text-align: center;
+}
+
+.hz-r-obsah {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+    min-width: 0;
+}
+
+.hz-r-obsah > span:first-child {
+    flex: 1 1 340px;
+    min-width: 0;
+}
+
+.hz-r-obsah .link {
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.hz-r-obsah .hz-r-rozhodnout {
+    border-color: rgba(216, 27, 96, 0.55);
+    color: var(--accent-text);
+    white-space: nowrap;
+}
+
+.hz-r-obsah .hz-r-rozhodnout:hover {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.hz-r-misto,
+.hz-r-text {
+    color: var(--text-muted);
+}
+
+/* Pořadí vlevo, trendy a tipy vpravo */
+.hz-sloupce {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 18px;
+}
+
+.hz-bok {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    min-width: 0;
+}
+
+.hz-poradi h4 .hz-rozbalit {
+    margin-left: auto;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.hz-poradi:not(.rozbaleno) [data-ob-poradi],
+.hz-poradi:not(.rozbaleno) .ob-vaha,
+.hz-poradi:not(.rozbaleno) .ob-pravidla,
+.hz-poradi.rozbaleno [data-ob-top] {
+    display: none;
+}
+
+.hz-poradi .ob-cekaji {
+    margin: 12px 0 0;
+}
+
+/* Kompaktní Top 10: dva sloupce po pěti (1–5 vlevo, 6–10 vpravo) */
+.hz-top {
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(5, auto);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hz-top-radek {
+    display: grid;
+    grid-template-columns: 26px 38px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 6px 10px 6px 4px;
+    border: 0;
+    border-radius: 12px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.hz-top-radek:hover,
+.hz-top-radek:focus-visible {
+    background-color: var(--panel-hover);
+    outline: none;
+}
+
+.hz-top-misto {
+    color: var(--accent-text);
+    font-size: 21px;
+    font-weight: 300;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.hz-top-radek img {
+    display: block;
+    width: 38px;
+    height: 50px;
+    border-radius: 8px;
+    background-color: #000;
+    object-fit: cover;
+    transform: none !important;
+}
+
+.hz-top-jmeno {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 14px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hz-top-jmeno small {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 11.5px;
+    text-overflow: ellipsis;
+}
+
+.hz-top-jmeno small i {
+    color: var(--accent-text);
+    font-style: normal;
+    letter-spacing: 0.04em;
+}
+
+.hz-top-radek.ceka .hz-top-misto,
+.hz-top-radek.ceka img {
+    opacity: 0.6;
+}
+
+.hz-top-radek .trend {
+    font-size: 11px;
+}
+
+/* Stoupají a klesají: řádky s náhledem */
+.hz-trend {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hz-trend + .hz-trend {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.hz-trend button {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 5px 8px 5px 4px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: 13.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.hz-trend button:hover,
+.hz-trend button:focus-visible {
+    background-color: var(--panel-hover);
+    outline: none;
+}
+
+.hz-trend img {
+    display: block;
+    width: 30px;
+    height: 40px;
+    border-radius: 6px;
+    background-color: #000;
+    object-fit: cover;
+    transform: none !important;
+}
+
+.hz-trend button > span:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hz-trend small {
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.hz-trend .trend {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.hz-tichy {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.hz-bok .ob-tipy {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+}
+
+@media (max-width: 900px) {
+    .hz-sloupce {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+/* Hotovo dnes v hlavičce Hodnocení: počet a pruh k příští desítce */
+.hd-postup {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border: 1px solid rgba(216, 27, 96, 0.4);
+    border-radius: 999px;
+    background-image: linear-gradient(90deg, rgba(216, 27, 96, 0.18), rgba(26, 26, 30, 0.6) 70%);
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.hd-postup b {
+    color: var(--accent-text);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.hd-postup small {
+    font-size: 11px;
+}
+
+.ob-postup-pruh {
+    position: relative;
+    display: block;
+    width: 80px;
+    height: 5px;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ob-postup-pruh > i {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    border-radius: inherit;
+    background-image: linear-gradient(90deg, var(--accent), #ff6fa3);
+    transition: width 0.3s ease;
+}
+
+/* Dvojice v pořadí: vpravo vedle důvodu dvojice, místa obou modelek a sousedek, úroveň, posun po přepočtu */
+.ob-v-poradi {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+    max-width: 50%;
+    margin: 0;
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.ob-v-poradi:empty {
+    display: none;
+}
+
+.ob-vp-uroven {
+    margin: 0 2px 0 6px;
+    color: var(--accent-text);
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.ob-vp-uroven:first-child {
+    margin-left: 0;
+}
+
+.ob-vp-misto {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+}
+
+.ob-vp-misto small {
+    font-size: 10.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.ob-vp-misto.dvojice {
+    border-color: rgba(216, 27, 96, 0.45);
+    background-color: var(--accent-soft);
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.ob-vp-misto i {
+    font-size: 10.5px;
+    font-style: normal;
+}
+
+.ob-vp-mezera {
+    padding: 0 2px;
+}
+
+/* Fotky: dlaždice – vlevo velké náhledy fronty, vpravo čísla, pořadí a tlačítka */
+.gh-dlazdice {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: 0 24px;
+    padding: 0;
+    overflow: hidden;
+}
+
+.gh-dlazdice > .gh-modelky {
+    grid-column: 1 / -1;
+    margin: 0 20px 16px;
+}
+
+.gh-nahledy {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-self: stretch;
+    height: 100%;
+    min-height: 220px;
+    max-height: 300px;
+}
+
+.gh-nahled {
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-right: 1px solid rgba(0, 0, 0, 0.5);
+    background-color: #000;
+    cursor: pointer;
+}
+
+.gh-nahled img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.25s ease;
+}
+
+.gh-nahled:hover img {
+    transform: scale(1.04);
+}
+
+.gh-nahledy-stitek {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: var(--text-main);
+    font-size: 11px;
+    pointer-events: none;
+}
+
+.gh-text {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px 20px 18px 0;
+}
+
+.gh-text .gh-popis {
+    flex: none;
+}
+
+.gh-text .gh-ovladani {
+    margin-top: auto;
+}
+
+.gh-text h3 {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin: 0;
+    font-size: 19px;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.gh-text h3 small {
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: normal;
+    text-transform: none;
+}
+
+.gh-cisla {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px 28px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.gh-cisla > li {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.gh-cisla b {
+    color: var(--accent-text);
+    font-size: 30px;
+    font-weight: 300;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+
+.gh-cisla > li:nth-child(2) b {
+    color: var(--text-main);
+}
+
+.gh-cisla span {
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.gh-cisla > li.gh-razeni {
+    flex-direction: row;
+    margin-left: auto;
+}
+
+@media (max-width: 900px) {
+    .gh-dlazdice {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .gh-text {
+        padding: 16px 20px;
+    }
+
+    .ob-v-poradi {
+        display: none;
     }
 }
 

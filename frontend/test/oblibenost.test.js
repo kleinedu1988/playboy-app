@@ -288,3 +288,23 @@ test('část Hodnocení: odkazy hlavičky na jiné pohledy', async () => {
     assert.equal(odkazyHodnoceni({ nesouladu: 1, fotek: 1, pohled: 'porovnat' }, 3).map(o => o.text).join(' | '), '≠ 1 modelce nesedí srdíčka | 1 fotka bez srdíček');
     assert.deepEqual(odkazyHodnoceni({ pohled: 'porovnat' }), []);
 });
+
+test('hodnocení: dvojice v pořadí, posun a postup dne', async () => {
+    const { okoliDvojice, posunMista, postupDne } = await import('../src/lib/oblibenost.js');
+    const poradi = Array.from({ length: 30 }, (_, i) => ({ modelkaId: i + 1, poradi: i + 1 }));
+    // Blízko u sebe: jeden úsek se sousedkami, oddělovač úrovně na začátku
+    const blizko = okoliDvojice(poradi, 4, 6);
+    assert.deepEqual(blizko.filter(x => x.typ === 'radek').map(x => [x.misto, x.strana]), [[3, ''], [4, 'a'], [5, ''], [6, 'b'], [7, '']]);
+    assert.deepEqual(blizko[0], { typ: 'uroven', uroven: 10 });
+    // Daleko od sebe: dva úseky s mezerou a novou úrovní
+    const daleko = okoliDvojice(poradi, 2, 25);
+    assert.ok(daleko.some(x => x.typ === 'mezera'));
+    assert.deepEqual(daleko.filter(x => x.typ === 'uroven').map(x => x.uroven), [10, 50]);
+    assert.deepEqual(okoliDvojice(poradi, 99, 98), []);
+    assert.deepEqual(posunMista(12, 10), { smer: 'nahoru', text: '▲2' });
+    assert.deepEqual(posunMista(3, 4), { smer: 'dolu', text: '▼1' });
+    assert.equal(posunMista(5, 5), null);
+    assert.equal(posunMista(0, 5), null);
+    assert.deepEqual(postupDne(12), { hotovo: 12, cil: 20, zbyva: 8, procent: 60 });
+    assert.deepEqual(postupDne(0), { hotovo: 0, cil: 10, zbyva: 10, procent: 0 });
+});

@@ -399,8 +399,15 @@ modelkou) a úvod Přehledu (Top 10, Stoupají, Dlouho jsi neviděl).
 Porovnání podle jedné titulní fotky je nefér k modelkám s nevýraznou titulní fotkou a malé náhledy pod fotkou se
 špatně prohlížely. Porovnávání proto ukazuje **dvě nezávislé galerie nad sebou** (`frontend/src/app/porovnani-pasy.js`)
 přes výšku okna: nahoře jedna modelka, dole druhá, vlevo její titulní fotka se jménem, srdíčky a „♥ Tahle“, hned
-vedle pás jejích fotek. Oblíbenost má pod hledáním dvě části – Porovnávání a Pořadí (s Mohlo by se ti líbit vedle) –
-a u Porovnávání i okruh dvojic.
+vedle pás jejích fotek. Oblíbenost má v liště dvě části – **Hodnocení** a Síň slávy. Hodnocení (`app/oblibenost.js`)
+má jako síň slávy pilulky pohledů Porovnat · Fotky · Pořadí s počty (čekající na potvrzení, nehodnocené fotky,
+nesoulady; zvolený pohled v `hodnoceniPohled`, stará hodnota `oblibenostCast` se převede, `prevestCastOblibenosti`)
+a vpravo „Dnes N“ s pruhem k příští desítce porovnání (`postupDne`) a odkazy na to, co čeká v jiném pohledu.
+V Porovnat je vedle důvodu dvojice pruh **Dvojice v pořadí** (`okoliDvojice`): místa obou modelek a jejich sousedek
+s úrovní, obě zvýrazněné, ⏳ u čekající a po přepočtu posun ▲▼ (`posunMista` proti místům před přepočtem). Pořadí
+začíná kartou **Čeká na rozhodnutí** (souboje o úroveň s „⚔ Rozhodnout teď“ a nesoulady se srdíčky s „Dát jí /
+Nechat / Ověřit porovnáním“), pod ní kompaktní Top 10 ve dvou sloupcích („Celé pořadí s úrovněmi“ rozbalí podrobný
+seznam), vedle Stoupají a klesají s fotkami a Mohlo by se ti líbit.
 
 Každý pás je nejvýš 24 nejlepších fotek z `GetNahledyModelek`: alba se seřadí podle skóre (průměr nejlepších fotek,
 alba bez hodnocených fotek nakonec, při shodě v pořadí přidání), fotky v albu podle srdíček a pak podle pořadí v albu
@@ -812,11 +819,12 @@ hodnocenými asi 62 ms; GetModelky z paměti se nemění (asi 2 ms).
 
 ## Galerie nehodnocených fotek
 
-Oblíbenost › Galerie (`app/galerie-hodnoceni.js`, pořadí v `lib/hodnoceni.js`) promítá všechny nehodnocené fotky
+Oblíbenost › Hodnocení › Fotky (`app/galerie-hodnoceni.js`, pořadí v `lib/hodnoceni.js`) promítá všechny nehodnocené fotky
 modelek (`GetNehodnoceneFotky`: srdíčka 0, fotky bez modelky – obálky – ne) v **běžném prohlížeči fotek**. Panel ukáže,
-kolik fotek a modelek zbývá, pořadí („Náhodně“ zamíchá fotky všech modelek, „Po modelkách“ nechá fotky jedné modelky
-pohromadě po albech a zamíchá modelky; volba se pamatuje), tlačítka „Prohlížet a hodnotit“ a „▶ Promítat“
-(prohlížeč rovnou s promítáním) a prvních 12 fotek fronty (klik otevře prohlížeč na nich). Položky se skládají jako
+kolik fotek a modelek zbývá (dlaždice: vlevo pět velkých náhledů fronty, vpravo velká čísla), pořadí („Náhodně“
+zamíchá fotky všech modelek, „Po modelkách“ nechá fotky jedné modelky pohromadě po albech a zamíchá modelky; volba se
+pamatuje), tlačítka „Prohlížet a hodnotit“ a „▶ Promítat“ (prohlížeč rovnou s promítáním), „Jen jedna modelka“
+(prohlížeč jen s fotkami vybrané) a pod dlaždicí dalších 16 fotek fronty (klik otevře prohlížeč na nich). Položky se skládají jako
 v profilu (`sestavitAlba`), takže spojený plakát je jedna položka.
 
 Prohlížeč se otevře s `jenNehodnocene` (`otevritLightbox(…, { jenNehodnocene, poZavreni })`): když fotka dostane

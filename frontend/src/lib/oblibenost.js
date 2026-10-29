@@ -284,3 +284,43 @@ export function odkazyHodnoceni({ pohled = '', cekaji = [], celkem = 0, nesoulad
     if (fotek) odkazy.push({ pohled: 'fotky', text: `${tvar(fotek, 'fotka', 'fotky', 'fotek')} bez srdíček`, akce: 'Hodnotit' });
     return odkazy.filter(o => o.pohled !== pohled).slice(0, kolik);
 }
+
+// Okolí dvojice v pořadí (pruh „Dvojice v pořadí“ nad pásy): obě modelky a jejich sousedky (okraj míst na každou
+// stranu); blízké modelky (nejvýš spojit míst od sebe) jeden souvislý úsek, jinak dva úseky s mezerou. Položky:
+// { typ: 'uroven', uroven } na začátku úrovně, { typ: 'mezera' }, { typ: 'radek', p, misto, strana: 'a' | 'b' | '' }
+export function okoliDvojice(poradi, a, b, { okraj = 1, spojit = 3 } = {}) {
+    const seznam = poradi || [];
+    const kde = [a, b].map(id => seznam.findIndex(p => p.modelkaId === id)).filter(i => i >= 0).sort((x, y) => x - y);
+    if (!kde.length) return [];
+    const indexy = new Set();
+    const pridat = (od, po) => { for (let i = Math.max(0, od); i <= Math.min(seznam.length - 1, po); i++) indexy.add(i); };
+    if (kde.length === 2 && kde[1] - kde[0] <= spojit) pridat(kde[0] - okraj, kde[1] + okraj);
+    else kde.forEach(i => pridat(i - okraj, i + okraj));
+    const vysledek = [];
+    let predchozi = -1, uroven = null;
+    [...indexy].sort((x, y) => x - y).forEach(i => {
+        const p = seznam[i];
+        const misto = Number(p.poradi) || i + 1;
+        if (predchozi >= 0 && i > predchozi + 1) vysledek.push({ typ: 'mezera' });
+        const u = urovenMista(misto);
+        if (u !== uroven) vysledek.push({ typ: 'uroven', uroven: u });
+        uroven = u;
+        vysledek.push({ typ: 'radek', p, misto, strana: p.modelkaId === a ? 'a' : p.modelkaId === b ? 'b' : '' });
+        predchozi = i;
+    });
+    return vysledek;
+}
+
+// Posun modelky v pořadí po přepočtu: { smer, text } (▲2 = o dvě místa výš), bez změny nebo bez míst null
+export function posunMista(pred, po) {
+    const z = Number(pred) || 0, na = Number(po) || 0;
+    if (!z || !na || z === na) return null;
+    return z > na ? { smer: 'nahoru', text: `▲${z - na}` } : { smer: 'dolu', text: `▼${na - z}` };
+}
+
+// Postup dne k příští desítce porovnání (pruh „Hotovo dnes“): { hotovo, cil, zbyva, procent }
+export function postupDne(pocet) {
+    const hotovo = Math.max(0, Math.floor(Number(pocet) || 0));
+    const cil = (Math.floor(hotovo / 10) + 1) * 10;
+    return { hotovo, cil, zbyva: cil - hotovo, procent: Math.round(100 * hotovo / cil) };
+}

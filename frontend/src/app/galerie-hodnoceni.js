@@ -18,6 +18,7 @@ import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 
 const KLIC_RAZENI = 'galerieRazeni';
+const NAHLEDU = 5; // velké náhledy v dlaždici
 const UKAZEK = 16;
 const MODELEK = 8;
 
@@ -77,17 +78,23 @@ function vykreslit(fotek) {
         return m ? `<img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />` : '';
     };
     nastavitHtml(kontejner, `
-        <div class="ob-karta gh-panel">
-            <h4>Fotky bez srdíček <small>${esc(sklonovat(fotek, 'fotka', 'fotky', 'fotek'))} · ${esc(sklonovat(modelky.length, 'modelka', 'modelky', 'modelek'))}</small></h4>
-            <div class="gh-radek">
-                <p class="gh-popis">Prohlížej je v běžném prohlížeči fotek a dávej srdíčka klávesami <kbd>1</kbd>–<kbd>5</kbd>: ohodnocená fotka zmizí a hned je tu další. Šipky listují, mezerník spustí promítání, <kbd>Esc</kbd> skončí.</p>
-                <div class="gh-ovladani">
-                    <span class="gh-razeni" role="group" aria-label="Pořadí fotek">
+        <div class="ob-karta gh-panel gh-dlazdice">
+            <div class="gh-nahledy" aria-label="Na řadě">${polozky.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-gh-ukazka="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
+                <span class="gh-nahledy-stitek">${razeni() === 'modelky' ? 'Po modelkách' : 'Zamíchané'}</span></div>
+            <div class="gh-text">
+                <h3>Hodnotit fotky <small>Fotky bez srdíček v prohlížeči</small></h3>
+                <p class="gh-popis">Dávej srdíčka klávesami <kbd>1</kbd>–<kbd>5</kbd>: ohodnocená fotka zmizí a hned je tu další. Šipky listují, mezerník spustí promítání, <kbd>Esc</kbd> skončí.</p>
+                <ul class="gh-cisla">
+                    <li><b>${fotek}</b><span>${esc(sklonovat(fotek, 'nehodnocená fotka', 'nehodnocené fotky', 'nehodnocených fotek').replace(/^\d+ /, ''))}</span></li>
+                    <li><b>${modelky.length}</b><span>${esc(sklonovat(modelky.length, 'modelka', 'modelky', 'modelek').replace(/^\d+ /, ''))}</span></li>
+                    <li class="gh-razeni" role="group" aria-label="Pořadí fotek">
                         <button type="button" class="chip ${razeni() === 'nahodne' ? 'active' : ''}" data-gh-razeni="nahodne" title="Fotky všech modelek zamíchané">Náhodně</button>
                         <button type="button" class="chip ${razeni() === 'modelky' ? 'active' : ''}" data-gh-razeni="modelky" title="Fotky jedné modelky pohromadě, modelky v náhodném pořadí">Po modelkách</button>
-                    </span>
-                    <button type="button" class="btn btn-secondary" data-gh-promitat title="Prohlížeč s promítáním – fotky se samy střídají, srdíčka jde dávat kdykoli">▶ Promítat</button>
+                    </li>
+                </ul>
+                <div class="gh-ovladani">
                     <button type="button" class="btn btn-primary" data-gh-prohlizet>Prohlížet a hodnotit</button>
+                    <button type="button" class="btn btn-secondary" data-gh-promitat title="Prohlížeč s promítáním – fotky se samy střídají, srdíčka jde dávat kdykoli">▶ Promítat</button>
                 </div>
             </div>
             <div class="gh-modelky" aria-label="Jen fotky jedné modelky">
@@ -96,10 +103,10 @@ function vykreslit(fotek) {
                 ${modelky.length > MODELEK ? `<span class="gh-dalsi">+ ${esc(sklonovat(modelky.length - MODELEK, 'další', 'další', 'dalších'))}</span>` : ''}
             </div>
         </div>
-        <div class="ob-karta">
-            <h4>Na řadě <small>prvních ${Math.min(UKAZEK, polozky.length)} z fronty · klik otevře prohlížeč na fotce</small></h4>
-            <div class="gh-ukazky">${polozky.slice(0, UKAZEK).map((p, i) => `<button type="button" class="gh-ukazka" data-gh-ukazka="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 400))}" alt="" draggable="false" loading="lazy" /><span>${esc(p.jmenoModelky || '')}</span></button>`).join('')}</div>
-        </div>`);
+        ${polozky.length > NAHLEDU ? `<div class="ob-karta">
+            <h4>Dál na řadě <small>dalších ${Math.min(UKAZEK, polozky.length - NAHLEDU)} z fronty · klik otevře prohlížeč na fotce</small></h4>
+            <div class="gh-ukazky">${polozky.slice(NAHLEDU, NAHLEDU + UKAZEK).map((p, j) => `<button type="button" class="gh-ukazka" data-gh-ukazka="${NAHLEDU + j}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 400))}" alt="" draggable="false" loading="lazy" /><span>${esc(p.jmenoModelky || '')}</span></button>`).join('')}</div>
+        </div>` : ''}`);
     nacitatPostupne(kontejner);
 }
 

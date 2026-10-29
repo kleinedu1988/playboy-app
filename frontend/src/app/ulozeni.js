@@ -316,15 +316,8 @@ export function pripravit() {
     searchInput.addEventListener('input', () => {
         clearTimeout(stav.casovacHledani);
         stav.casovacHledani = setTimeout(() => {
-            // Z profilu nebo stránky vydání se hledají modelky; odkud se hledalo, zůstane v historii
-            if (!detailView.classList.contains('hidden') || !issueView.classList.contains('hidden')) {
-                const text = searchInput.value;
-                zapamatovatMisto({});
-                prepnoutRezim('modelky');
-                searchInput.value = text;
-                nacistGalerii(text);
-                return;
-            }
+            // Na profilu modelky a stránce vydání psaní otevírá našeptávač v pruhu hledání bez opuštění stránky
+            if (!detailView.classList.contains('hidden') || !issueView.classList.contains('hidden')) return;
             if (stav.rezim !== 'prehled') nacistGalerii(searchInput.value, true);
             // V Souhrnu Údržby hlavní hledání filtruje frontu
             else if (hledaniVeFronte()) hledatVeFronte(searchInput.value);

@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.82] – 2026-10-29
+
+### Změněno
+- **Celošířková vícesloupcová mřížka našeptávače a chytřejší globální hledání:**
+  - Když našeptávač (`#naseptavac`) najde výsledky ve více skupinách (**Modelky**, **Čísla**, **Články**, **Fotografové**), rozloží je vedle sebe do sloupců přes celou šířku průsvitného pruhu (`#hledaniRadek`), s možností přecházet mezi sloupci šipkami `←` a `→`.
+  - V našeptávači přibyla skupina **Fotografové** (otevře stránku fotografa) a doplňování hodnot filtrů (`ziskatMoznostiHodnot`) nově podporuje i příkazy `fotograf:`, `prsa:`, `misto:`, `etnicita:`, `ochlupeni:`, `narozena:`, `nafoceno:`, `vyska:`, `vaha:`, půlsrdíčka u `hodnoceni:` a vícenásobné hodnoty oddělené čárkou (`vlasy:blond,zrz`).
+  - Vylepšeno řazení výsledků v našeptávači (přednost shody od začátku jména modelky či názvu čísla, prohledávání všech údajů modelky s mezipamětí `WeakMap` a automatickou invalidací `poZmeneDat`).
+  - Otevření modelky, čísla, článku nebo fotografa z našeptávače automaticky skryje pruh hledání (`#hledaniRadek`), aby nezakrýval nově otevřenou stránku, a psaní do hledání na profilu či stránce čísla už nevytrhává uživatele po 180 ms pryč do galerie.
+
 ## [0.99.81] – 2026-10-29
 
 ### Změněno

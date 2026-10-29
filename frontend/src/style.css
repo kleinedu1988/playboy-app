@@ -399,20 +399,20 @@ textarea {
     background-color: var(--border-color);
 }
 
-/* Kapsle hledání a nabídka výsledků uprostřed třetího řádku (.hledani-radek) */
+/* Kapsle hledání uprostřed a celošířková mřížka nabídky výsledků v třetím řádku (.hledani-radek) */
 .nav-controls {
     position: relative;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: min(560px, 100%);
+    width: min(1320px, 100%);
 }
 
 .hledani {
     position: relative;
     display: flex;
     width: 100%;
-    max-width: 440px;
+    max-width: 480px;
 }
 
 .hledani svg {
@@ -6389,17 +6389,52 @@ textarea {
     z-index: 1400;
 }
 
-/* Nabídka výsledků je přímo součástí průsvitného pruhu .hledani-radek pod kapslí hledání */
+/* Nabídka výsledků je přímo součástí průsvitného pruhu .hledani-radek pod kapslí hledání;
+   když je skupin víc (Modelky, Čísla, Články, Fotografové), rozloží se vedle sebe do sloupců přes šířku okna */
 .naseptavac {
     position: static;
     width: 100%;
     max-height: min(520px, calc(100vh - 140px));
     overflow-y: auto;
     margin-top: 6px;
-    padding: 4px 4px 6px;
+    padding: 6px 4px 6px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     --wails-draggable: no-drag;
     user-select: none;
+}
+
+.naseptavac.uzky {
+    max-width: 560px;
+}
+
+.naseptavac-mrizka {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px 18px;
+    align-items: start;
+}
+
+.naseptavac-skupina {
+    min-width: 0;
+}
+
+.naseptavac-mrizka:has(> :nth-child(2)) .naseptavac-prikazy {
+    grid-column: 1 / -1;
+}
+
+.naseptavac-mrizka:has(> :nth-child(2)) .naseptavac-prikazy .naseptavac-seznam {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 4px 12px;
+}
+
+.naseptavac-pocet {
+    padding: 1px 6px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.07);
+    font-size: 10px;
+    letter-spacing: 0;
+    color: var(--text-muted);
 }
 
 /* Průhledný závoj pod pruhem hledání nemění průhlednost skleněné lišty */

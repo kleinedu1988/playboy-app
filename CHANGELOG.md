@@ -7,6 +7,26 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.76] – 2026-10-29
+
+### Změněno
+- **Statistiky ovládáš pod hledáním**, jako ostatní přehledy:
+  - **Graf ▾** vybere graf;
+  - ve Filtrech jsou Výskyt a Edice;
+  - výběr z grafu je zapnutý filtr, který × zruší;
+  - na konci je souhrn („22 modelek · 1971–1995“).
+- **Údržba › Souhrn:** řazení fronty (⇅ podle priority ▾) a filtr **Vyřízené** jsou pod hledáním vedle režimů.
+  - Vlastní pole hledání v Údržbě zmizelo, ve frontě hledá **hlavní hledání nahoře** („Hledat ve frontě Údržby…“).
+  - ↓ nebo Enter z hledání skočí do fronty, Esc hledání zruší, do hledání vedou Ctrl+F i /.
+- **Stránka fotografa:** filtr Vše / Centerfoldy / Pictorialy a alba je pod hledáním s počty, na konci je počet alb.
+- **Zpět vede přesně tam, odkud jsi odešel**, i na konkrétní část. Jmenuje se podle ní („← Údržba“, „← Statistiky“, „← Sháním CZ“). U Hodnocení a Síně slávy nese název stránky.
+- **Jednotné prázdné stavy:**
+  - prázdná Top 10, Legendy, Sháním CZ, Statistiky bez modelek a dokončená fronta Po modelkách mají stejný vzhled s ikonou;
+  - drobná hlášení uvnitř karet mají jeden společný styl.
+
+### Opraveno
+- V úzkém okně se lišta přizpůsobí při každé změně šířky a po načtení písma. Rejstřík u pravého okraje začíná pod skutečnou spodní hranou hlavičky a nezasahuje do lišty, když se zalomí.
+
 ## [0.99.75] – 2026-10-29
 
 ### Změněno

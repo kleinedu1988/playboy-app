@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.85] – 2026-10-29
+
+### Změněno
+- **Sjednocení designu horního menu na kapsli („tabletku“):**
+  - Horní nabídka hlavních sekcí (`#viewToggle` – Modelky, Čísla, Sbírka) má nyní totožný kapslový vzhled („tabletku“) jako lišta podčástí pod ní (`#pasStranky` / `.slava-pohledy`): plně zaoblený kontejner (`border-radius: 999px`), poloprůhledné pozadí se skleněným rozostřením, jemný okraj a aktivní záložku se zvýrazněním ve firemní růžové barvě (`var(--accent)`). Obě úrovně nabídky tak mluví stejným vizuálním jazykem.
+
 ## [0.99.84] – 2026-10-29
 
 ### Změněno

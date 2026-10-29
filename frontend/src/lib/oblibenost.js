@@ -250,7 +250,7 @@ export function vysledekOvereni({ jmeno, hodnoceni, ted = null }) {
 // ——— Část Hodnocení (Porovnat · Fotky · Pořadí) ———
 
 // Pohledy části Hodnocení: klíč a název pilulky
-export const POHLEDY_HODNOCENI = [['porovnat', 'Porovnat'], ['fotky', 'Fotky'], ['poradi', 'Pořadí']];
+export const POHLEDY_HODNOCENI = [['porovnat', 'Porovnat'], ['fotky', 'Hodnotit fotky'], ['poradi', 'Pořadí']];
 const jePohledHodnoceni = klic => POHLEDY_HODNOCENI.some(([k]) => k === klic);
 // Dřívější samostatné části Oblíbenosti → pohled Hodnocení ('hodnoceni' bez uloženého pohledu je ještě starší
 // Hodnocení modelek jedna po druhé, které nahradila Galerie nehodnocených fotek, tedy Fotky)

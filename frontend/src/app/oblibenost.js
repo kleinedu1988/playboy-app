@@ -401,7 +401,7 @@ async function nacistNahledy(ids) {
 
 // ——— Vykreslení ———
 
-function poctyOblibenosti() {
+export function poctyOblibenosti() {
     const poradi = (data.oblibenost?.poradi || []).filter(p => modelka(p.modelkaId));
     const cekaji = poctyCekajicich(poradi);
     const nCekaji = Number(data.oblibenost?.cekajicich) || cekaji.reduce((s, [, n]) => s + n, 0);

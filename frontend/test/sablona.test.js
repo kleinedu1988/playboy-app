@@ -19,7 +19,7 @@ test('okna jsou přímo v kostře okna', () => {
     assert.deepEqual(okna.filter(([, h]) => h !== 0), [], 'vnořená okna');
 });
 
-// Hlavička: v horním řádku (.titulek-okna) je pět hlavních záložek (#viewToggle), vpravo oddělená kapsle voleb
+// Hlavička: v horním řádku (.titulek-okna) jsou tři hlavní sekce (#viewToggle) jako záložky prohlížeče, vpravo oddělená kapsle voleb
 // (#volbyPrehledu) a tlačítka okna (.window-controls); ve druhém řádku (.hlavni-lista) jsou drobečky (.logo), pilulky
 // podčástí (#pasStranky) a vpravo přepínač lupy (#searchToggleBtn) s akcemi (#addBtn, #menuBtn); ve třetím řádku
 // (#hledaniRadek) je uprostřed kapsle hledat (.nav-controls, #searchInput)
@@ -28,7 +28,7 @@ test('sjednocená hlavička s přepínačem lupy a řádkem hledání uprostřed
     const titulek = zdroj.match(/<div class="titulek-okna">([\s\S]*)<div class="hlavni-lista">/);
     assert.ok(titulek, '.titulek-okna před .hlavni-lista');
     const zalozky = [...titulek[1].matchAll(/data-rezim="([^"]+)"/g)].map(m => m[1]);
-    assert.deepEqual(zalozky, ['modelky', 'covery', 'centerfoldy', 'prehled', 'prehled']);
+    assert.deepEqual(zalozky, ['modelky', 'covery', 'prehled']);
     assert.match(titulek[1], /id="volbyPrehledu"/);
     assert.ok(titulek[1].indexOf('id="volbyPrehledu"') > titulek[1].indexOf('</nav>'), 'volby až za záložkami');
     assert.match(titulek[1], /id="winCloseBtn"/);

@@ -83,7 +83,7 @@ StavDatabaze().then((chyba) => {
     let posledni = null;
     try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
     if (posledni === 'nejlepsi') oblibenost.nastavitNejlepsiVOblibenosti(true);
-    if (posledni === 'kalendar' || posledni === 'nejlepsi' || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
+    if (['kalendar', 'nejlepsi', 'centerfoldy'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
     nacistGalerii();
     kontrolaPoSpusteni();
 })();

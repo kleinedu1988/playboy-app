@@ -303,25 +303,30 @@ textarea {
 .view-toggle {
     display: flex;
     flex: none;
+    align-items: flex-end;
     align-self: stretch;
     gap: 4px;
+    padding-top: 4px;
 }
 
-/* Záložka přehledu (vlevo) i stránky (vpravo): ikona a text, zvolená s podtržením, jako ve Fotkách */
-.view-toggle button,
-.nav-stranky button {
-    --odsazeni: 11px;
+/* Záložka hlavní sekce (Modelky, Čísla, Sbírka): styl záložky prohlížeče, která se dole přelévá do kontextové lišty */
+.view-toggle button {
     position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 7px;
-    padding: 0 var(--odsazeni);
-    border: none;
-    background: none;
+    gap: 8px;
+    height: 38px;
+    padding: 0 16px;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 9px 9px 0 0;
+    background: transparent;
     color: var(--text-muted);
-    font-size: 14px;
+    font-size: 13.5px;
+    font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .nav-ikona {
@@ -329,59 +334,43 @@ textarea {
     opacity: 0.85;
 }
 
-.view-toggle button:hover,
-.nav-stranky button:hover {
+.view-toggle button:hover {
     color: var(--text-main);
+    background-color: rgba(255, 255, 255, 0.04);
 }
 
-.view-toggle button.active,
-.nav-stranky button.active {
+.view-toggle button.active {
     color: var(--text-main);
     font-weight: 600;
+    background-color: #141417;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid #141417;
+    height: 39px;
+    margin-bottom: -1px;
+    z-index: 2;
+    box-shadow: 0 -2px 0 0 var(--accent);
 }
 
-.view-toggle button.active .nav-ikona,
-.nav-stranky button.active .nav-ikona {
+.view-toggle button.active .nav-ikona {
     color: var(--accent-text);
     opacity: 1;
 }
 
-.view-toggle button:focus-visible,
-.nav-stranky button:focus-visible {
+.view-toggle button:focus-visible {
     outline: 2px solid var(--accent-text);
-    outline-offset: -4px;
-    border-radius: 8px;
-}
-
-/* Zvolená záložka: růžová linka přes celou záložku, na koncích se ztrácí a jemně září */
-.view-toggle button.active::before,
-.nav-stranky button.active::before {
-    content: "";
-    position: absolute;
-    left: var(--odsazeni);
-    right: var(--odsazeni);
-    bottom: 0;
-    height: 2px;
-    border-radius: 2px;
-    background: linear-gradient(90deg, transparent, var(--accent) 20%, var(--accent) 80%, transparent);
-    box-shadow: 0 0 10px 1px var(--accent);
+    outline-offset: -3px;
+    border-radius: 9px 9px 0 0;
 }
 
 /* Na podstránce (profil, vydání) zůstává vidět, odkud se přišlo, ale tlumeně */
-.podstranka .view-toggle button.active,
-.podstranka .nav-stranky button.active {
+.podstranka .view-toggle button.active {
     font-weight: 500;
-}
-
-.podstranka .view-toggle button.active .nav-ikona,
-.podstranka .nav-stranky button.active .nav-ikona {
-    color: inherit;
-}
-
-.podstranka .view-toggle button.active::before,
-.podstranka .nav-stranky button.active::before {
-    background: linear-gradient(90deg, transparent, var(--text-muted) 20%, var(--text-muted) 80%, transparent);
     box-shadow: none;
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.podstranka .view-toggle button.active .nav-ikona {
+    color: inherit;
 }
 
 /* Stránky vpravo (Hodnocení, Síň slávy, Sbírka) jsou záložky jako přehledy vlevo */

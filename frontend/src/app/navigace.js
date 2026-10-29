@@ -99,7 +99,7 @@ function selektorFokusu() {
 // Historie pro Zpět: kam se vrátit a na jaké místo stránky
 export const historie = [];
 // Kalendář je zobrazení Čísel: Zpět se jmenuje podle záložky
-export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Čísla', kalendar: 'Čísla', nejlepsi: 'Nejlepší', prehled: 'Sbírka' };
+export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Čísla', covery: 'Čísla', kalendar: 'Čísla', nejlepsi: 'Modelky', prehled: 'Sbírka' };
 // Přehled má tři stránky (tlačítka vpravo v liště); Zpět se jmenuje podle té, ze které se odešlo
 // Přehled má stránky Hodnocení a Síň slávy (Oblíbenost) a Sbírku s částmi; Zpět se jmenuje podle té, ze které se
 // odešlo (úvod Sbírky je prostě „Sbírka“)
@@ -218,7 +218,7 @@ const HLEDANI_PODLE_REZIMU = {
     centerfoldy: ['Hledat v centerfoldech…', 'Centerfoldy: jméno modelky, vydání (např. březen 1995), fotograf. Více slov zužuje výběr.'],
     covery: ['Hledat v číslech…', 'Čísla: vydání (např. 1995), název, modelka nebo obálka. Více slov zužuje výběr.'],
     kalendar: ['Hledat v číslech…', 'Kalendář: ročníky podle čísla (1975), měsíce i jména modelek a speciálů.'],
-    nejlepsi: ['Hledat v nejlepších fotkách…', 'Nejlepší fotky: jméno modelky, vydání, fotograf. Více slov zužuje výběr.'],
+    nejlepsi: ['Hledat v galerii fotek…', 'Galerie nejlepších: jméno modelky, vydání, fotograf. Více slov zužuje výběr.'],
     // Na stránkách Hodnocení, Síň slávy a Sbírka hledání najde modelku a otevře její profil (výsledky pod polem)
     prehled: ['Najít modelku…', 'Jméno modelky, číslo nebo článek; Enter otevře první výsledek. Do hledání skočíš klávesami Ctrl+F.'],
 };
@@ -275,17 +275,20 @@ export function prepnoutRezim(novy) {
     document.querySelector('main').scrollTop = 0;
 }
 
-// Svítí záložka otevřeného přehledu (Kalendář je zobrazení Čísel, Nejlepší je část Oblíbenosti); v Přehledu záložka
-// Oblíbenost nebo Sbírka. Čtečky obrazovky ji poznají podle aria-current (na profilu a stránce čísla jen „true“).
+// Svítí záložka otevřené hlavní sekce (Modelky, Čísla, Sbírka); podstránky (Galerie, Síň slávy, Kalendář, Centerfoldy)
+// patří své hlavní sekci. Čtečky obrazovky ji poznají podle aria-current (na profilu a stránce čísla jen „true“).
 export function zvyraznitRezim() {
     const novy = stav.rezim;
-    const stranka = stav.prehledSekce === 'oblibenost' ? 'oblibenost' : 'sprava';
+    const jeSlava = novy === 'prehled' && stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'slava';
     prepinacRezimu.querySelectorAll('[data-rezim]').forEach((b) => {
-        const zvoleny = novy === 'prehled'
-            ? b.dataset.rezim === 'prehled' && b.dataset.castPrehledu === stranka
-            : novy === 'nejlepsi'
-                ? b.dataset.castPrehledu === 'oblibenost'
-                : b.dataset.rezim === novy || (novy === 'kalendar' && b.dataset.rezim === 'covery');
+        let zvoleny = false;
+        if (b.dataset.rezim === 'modelky') {
+            zvoleny = novy === 'modelky' || novy === 'nejlepsi' || jeSlava;
+        } else if (b.dataset.rezim === 'covery') {
+            zvoleny = novy === 'covery' || novy === 'kalendar' || novy === 'centerfoldy';
+        } else if (b.dataset.rezim === 'prehled') {
+            zvoleny = novy === 'prehled' && !jeSlava;
+        }
         b.classList.toggle('active', zvoleny);
         if (zvoleny) b.setAttribute('aria-current', prepinacRezimu.classList.contains('podstranka') ? 'true' : 'page');
         else b.removeAttribute('aria-current');

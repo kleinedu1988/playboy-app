@@ -160,18 +160,19 @@ export function pripravit() {
         }
         // Přepnutí přehledu začíná novou historii; Čísla v naposledy zvoleném zobrazení
         historie.length = 0;
-        // Záložky Oblíbenost a Sbírka otevírají Přehled (nebo Nejlepší, když byla v Oblíbenosti naposledy zvolená).
-        // Když je Přehled vidět, přepne se stránka na místě (bez nového načtení dat).
-        if (tlacitko.dataset.castPrehledu === 'oblibenost' && posledniCastOblibenosti() === 'nejlepsi') {
-            prepnoutRezim('nejlepsi');
+        const rezim = tlacitko.dataset.rezim;
+        if (rezim === 'modelky') {
+            prepnoutRezim('modelky');
             nacistGalerii(searchInput.value);
-            return;
+        } else if (rezim === 'covery') {
+            prepnoutRezim(zobrazeniCisel() === 'kalendar' ? 'kalendar' : 'covery');
+            nacistGalerii(searchInput.value);
+        } else if (rezim === 'prehled') {
+            const naPrehledu = stav.rezim === 'prehled' && !stats.classList.contains('hidden');
+            zvolitCastPrehledu('sprava', naPrehledu);
+            prepnoutRezim('prehled');
+            nacistGalerii(searchInput.value);
         }
-        const naPrehledu = stav.rezim === 'prehled' && !stats.classList.contains('hidden');
-        if (tlacitko.dataset.castOblibenosti && tlacitko.dataset.castOblibenosti !== stav.oblibenostCast) nastavitCastOblibenosti(tlacitko.dataset.castOblibenosti);
-        if (tlacitko.dataset.castPrehledu && zvolitCastPrehledu(tlacitko.dataset.castPrehledu, naPrehledu)) return;
-        prepnoutRezim(tlacitko.dataset.rezim === 'covery' && zobrazeniCisel() === 'kalendar' ? 'kalendar' : tlacitko.dataset.rezim);
-        nacistGalerii(searchInput.value);
     });
 
     // Ctrl+1 až Ctrl+7: přehledy a stránky v liště zleva doprava (Modelky … Sbírka), jako klik na ně. Číslo podle

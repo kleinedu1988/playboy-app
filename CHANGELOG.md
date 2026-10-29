@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.84] – 2026-10-29
+
+### Změněno
+- **Zjednodušení hlavního menu na 3 sekce se záložkovým vzhledem prohlížeče a reorganizace podčástí:**
+  - V horním řádku okna (`.titulek-okna`) zůstaly jen 3 hlavní sekce: **Modelky** (`Ctrl+1`), **Čísla** (`Ctrl+2`) a **Sbírka** (`Ctrl+3`).
+  - Horní záložky opustily kapslový vzhled – nezvolené mají čistý text s ikonou a zvolená má tvar záložky prohlížeče, která se na spodní hraně přelévá přímo do kontextové lišty (`.hlavni-lista`).
+  - Kontextová lišta pod nimi si zachovala kapslový design pilulek (`#pasStranky`):
+    - Pod **Modelky** se přesunuly: **Profily** (výchozí galerie modelek), **Galerie** (přejmenováno z *Nejlepší*) a **Síň slávy**.
+    - Pod **Čísla** se jako pilulky sjednotily: **Obálky**, **Kalendář** a **Centerfoldy**.
+    - Pod **Sbírku** se k existujícím částem (**Úvod**, **Údržba**, **Sháním CZ**, **Statistiky**) přesunuly hodnotící nástroje: **Porovnat**, **Hodnotit fotky** (přejmenováno z *Fotky*) a **Pořadí**.
+
 ## [0.99.83] – 2026-10-29
 
 ### Změněno

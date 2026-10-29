@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.86] – 2026-10-29
+
+### Změněno
+- **Aktivní záložka jako půl-pilulka plynule napojená na spodní lištu nabídek:**
+  - Nezvolené záložky v horní liště (`#viewToggle`) jsou čisté bez rámečků a pozadí.
+  - Pouze vybraná záložka má tvar půl-pilulky (horní zaoblení pilulky `border-radius: 19px 19px 0 0`) s horním akcentním podsvícením a její spodní hrana je otevřená a přímo spojená se spodní nabídkou (`.hlavni-lista`).
+  - Propojení záložky a spodní lišty je doplněno plynulými postranními zaobleními (corner fillets), takže horní záložka a spodní lišta tvoří jeden propojený celek.
+
 ## [0.99.85] – 2026-10-29
 
 ### Změněno

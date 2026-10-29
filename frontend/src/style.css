@@ -125,8 +125,9 @@ textarea {
     align-items: center;
     height: 42px;
     padding-left: 16px;
-    background-color: #141417;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    background-color: #121215;
+    border-bottom: 1px solid var(--panel-okraj);
+    z-index: 1401;
 }
 
 .logo {
@@ -243,7 +244,7 @@ textarea {
     gap: 10px;
     min-height: 44px;
     padding: 6px 16px;
-    background-color: #141417;
+    background-color: #1c1c21;
     border-bottom: 1px solid var(--border-color);
     z-index: 1400;
 }
@@ -300,19 +301,14 @@ textarea {
     }
 }
 
-/* Hlavní nabídka (Modelky, Čísla, Sbírka): stejný kapslový design tabletky jako lišta podčástí (.slava-pohledy) */
+/* Hlavní nabídka (Modelky, Čísla, Sbírka): horní záložka jako půl-pilulka spojená se spodní nabídkou */
 .view-toggle {
-    display: inline-flex;
-    align-items: center;
+    display: flex;
+    align-items: flex-end;
+    align-self: stretch;
     gap: 4px;
-    padding: 3px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
+    padding-top: 4px;
     flex: none;
-    -webkit-backdrop-filter: blur(18px) saturate(1.3);
-    backdrop-filter: blur(18px) saturate(1.3);
 }
 
 .view-toggle button {
@@ -320,17 +316,16 @@ textarea {
     display: inline-flex;
     align-items: center;
     gap: 7px;
-    height: 28px;
-    padding: 0 14px;
-    border: 0;
-    border-radius: 999px;
+    height: 34px;
+    padding: 0 16px;
+    border: none;
     background: none;
     color: var(--text-muted);
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 13.5px;
+    font-weight: 500;
     white-space: nowrap;
     cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    transition: color 0.15s ease, background-color 0.15s ease;
 }
 
 .nav-ikona {
@@ -340,36 +335,71 @@ textarea {
 }
 
 .view-toggle button:hover {
-    background-color: var(--panel-hover);
     color: var(--text-main);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px 12px 0 0;
 }
 
 .view-toggle button:hover .nav-ikona {
     opacity: 1;
 }
 
+/* Jen vybrané tlačítko má tvar půl-pilulky (horní zaoblení pilulky) a propojuje se se spodní nabídkou */
 .view-toggle button.active {
-    background-color: var(--accent);
-    box-shadow: 0 4px 14px rgba(216, 27, 96, 0.35);
-    color: #fff;
+    height: 38px;
+    margin-bottom: -1px;
+    padding: 0 18px;
+    border: 1px solid var(--panel-okraj);
+    border-bottom: 1px solid #1c1c21;
+    border-radius: 19px 19px 0 0;
+    background-color: #1c1c21;
+    color: var(--text-main);
+    font-weight: 600;
+    z-index: 10;
+    box-shadow: 0 -2px 0 0 var(--accent), 0 -4px 14px rgba(216, 27, 96, 0.35);
 }
 
 .view-toggle button.active .nav-ikona {
-    color: #fff;
+    color: var(--accent-text);
     opacity: 1;
 }
 
 .view-toggle button:focus-visible {
     outline: 2px solid var(--accent-text);
-    outline-offset: 2px;
-    border-radius: 999px;
+    outline-offset: -2px;
+    border-radius: 19px 19px 0 0;
+}
+
+/* Hladké přelévání do spodní lišty pomocí vnějších zaoblení (corner fillets) */
+.view-toggle button.active::before {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    left: -8px;
+    width: 8px;
+    height: 8px;
+    border-bottom-right-radius: 8px;
+    box-shadow: 4px 4px 0 0 #1c1c21;
+    pointer-events: none;
+}
+
+.view-toggle button.active::after {
+    content: "";
+    position: absolute;
+    bottom: -1px;
+    right: -8px;
+    width: 8px;
+    height: 8px;
+    border-bottom-left-radius: 8px;
+    box-shadow: -4px 4px 0 0 #1c1c21;
+    pointer-events: none;
 }
 
 /* Na podstránce (profil, vydání) zůstává vidět, odkud se přišlo, ale tlumeně */
 .podstranka .view-toggle button.active {
-    background-color: rgba(255, 255, 255, 0.14);
+    font-weight: 500;
     box-shadow: none;
-    color: var(--text-main);
+    border-color: rgba(255, 255, 255, 0.05);
 }
 
 .podstranka .view-toggle button.active .nav-ikona {

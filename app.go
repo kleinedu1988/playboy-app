@@ -136,6 +136,10 @@ type Modelka struct {
 	OnlineAlba []string `json:"onlineAlba"`
 	// Nejvyšší úroveň jejích alb Cyber Girl: „měsíce“, „týdne“ nebo "" (odvozená kategorie, jen pro čtení)
 	CyberGirl string `json:"cyberGirl"`
+	// Pictorial Playmate of the Month (kategorie Playmate měsíce i bez centerfoldu) a rok pictorialu Playmate of the
+	// Year (kategorie Playmate roku; „?“ = album bez roku); odvozené z alb, jen pro čtení
+	PlaymateMesice bool   `json:"playmateMesice"`
+	PlaymateRoku   string `json:"playmateRoku"`
 
 	// Popisy a fotografové alb modelky, jen pro hledání
 	textyAlb       string
@@ -153,7 +157,7 @@ type Fotografie struct {
 	ID        int    `json:"id"`
 	ModelkaID int    `json:"modelkaId"`
 	Album     string `json:"album"`
-	Typ       string `json:"typ"` // "Centerfold", "Pictorial", "Pictorial online", "Cover"
+	Typ       string `json:"typ"` // "Centerfold", "Pictorial", "Playmate měsíce", "Playmate roku", "Pictorial online", "Cover"…
 	URL       string `json:"url"`
 	Rotace    int    `json:"rotace"` // otočení při zobrazení: 0, 90, 180, 270
 	// Stránky centerfoldu v albu se zobrazují spojené do jednoho plakátu

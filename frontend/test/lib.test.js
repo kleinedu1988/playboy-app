@@ -330,6 +330,11 @@ test('kategorie modelek', () => {
     assert.deepEqual(kategorieModelky({ role: 'Coed', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Coed']);
     assert.deepEqual(kategorieModelky({ role: 'Online', onlineAlba: ['2004-06-12'], cyberGirl: 'týdne' }).map(popisKategorie), ['Cyber Girl týdne', 'Online']);
     assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-09'], cyberGirl: 'měsíce' }).map(popisKategorie), ['Cyber Girl měsíce']);
+    // Pictorial Playmate of the Month a of the Year (rok čísla, bez roku „?“); zapsaná Playmate roku má přednost
+    assert.deepEqual(kategorieModelky({ role: '', playmateMesice: true }).map(popisKategorie), ['Playmate měsíce']);
+    assert.deepEqual(kategorieModelky({ role: '', centerfoldy: ['1997-05'], playmateRoku: '1998' }).map(popisKategorie), ['Playmate měsíce', 'Playmate roku 1998']);
+    assert.deepEqual(kategorieModelky({ role: '', playmateRoku: '?' }).map(popisKategorie), ['Playmate roku']);
+    assert.deepEqual(kategorieModelky({ role: 'Playmate roku 1999', playmateRoku: '1998' }).map(popisKategorie), ['Playmate roku 1999']);
     // Páska bez data: Cyber Girl má přednost před Online, ostatní online kategorie zatím jako Online
     assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }), 'Online');
     assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06-12'], cyberGirl: 'týdne' }), 'Cyber Girl');

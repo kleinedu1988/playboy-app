@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -157,11 +158,16 @@ func (a *App) nacistSouhrnAlb() ([]souhrnAlba, []vazbaAlba, error) {
 	return alba, vazby, radky.Err()
 }
 
+// Rok (1950–2099) ve vydání nebo názvu alba
+var vzorRokuAlba = regexp.MustCompile(`\b(19[5-9]\d|20\d{2})\b`)
+
 // Co se o modelce odvodí z jejích alb (vlastních i těch, kde je další modelkou)
 type odvozeneZAlb struct {
 	fotek, hodnocenych, srdci   int
 	vydani, centerfoldy, online []string
 	cyberGirl                   string
+	playmateMesice              bool
+	playmateRoku                string
 	texty, fotografove          strings.Builder
 	alba                        []albumModelky // alba s fotkami (skóre fotek, náhledy)
 }
@@ -220,6 +226,22 @@ func (a *App) nacistSnimek() *snimek {
 					v = al.nazev
 				}
 				o.centerfoldy = append(o.centerfoldy, v)
+			}
+			switch al.typ {
+			case typPMMesice:
+				o.playmateMesice = true
+			case typPMRoku:
+				// Rok čísla s pictorialem, jinak rok z názvu alba („Playmate of the Year 1998“)
+				rok := vzorRokuAlba.FindString(al.vydani)
+				if rok == "" {
+					rok = vzorRokuAlba.FindString(al.nazev)
+				}
+				if rok == "" {
+					rok = "?"
+				}
+				if o.playmateRoku == "" || o.playmateRoku == "?" {
+					o.playmateRoku = rok
+				}
 			}
 			if jeOnlineTyp(al.typ) {
 				o.online = append(o.online, al.datum)
@@ -374,6 +396,7 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 		var o odvozeneZAlb
 		if x := odvozene[m.ID]; x != nil {
 			o.fotek, o.hodnocenych, o.srdci, o.cyberGirl = x.fotek, x.hodnocenych, x.srdci, x.cyberGirl
+			o.playmateMesice, o.playmateRoku = x.playmateMesice, x.playmateRoku
 			o.vydani, o.centerfoldy, o.online = serazeneBezOpakovani(x.vydani), serazeneBezOpakovani(x.centerfoldy), x.online
 			sort.Strings(o.online)
 			m.textyAlb, m.fotografoveAlb = x.texty.String(), x.fotografove.String()
@@ -388,6 +411,7 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 		m.Vydani, m.Centerfoldy, m.OnlineAlba = uzavritSeznam(o.vydani), uzavritSeznam(o.centerfoldy), uzavritSeznam(o.online)
 		m.Obalky = uzavritSeznam(obalky[m.ID])
 		m.CyberGirl = o.cyberGirl
+		m.PlaymateMesice, m.PlaymateRoku = o.playmateMesice, o.playmateRoku
 		modelky = append(modelky, m)
 	}
 	if err := rows.Err(); err != nil && prvniChyba == nil {

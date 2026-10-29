@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.72] – 2026-10-29
+
+### Přidáno
+- **Pictorialy Playmate of the Month a Playmate of the Year.** V okně alba je u Časopisu nově druh Pictorial, Playmate of the Month, Playmate of the Year a Centerfold (jako Cyber Girl of the Week / of the Month u online alb).
+  - Pictorial Playmate of the Month dá modelce kategorii Playmate měsíce, i když centerfold ve sbírce nemá.
+  - Pictorial Playmate of the Year dá kategorii **Playmate roku s rokem čísla**, ve kterém vyšel (bez čísla rok z názvu alba). Platí v kartách, filtrech, hledání `kategorie:` i v modelu vkusu.
+  - Zapsaná kategorie Playmate roku má přednost. Návrh „Playmate roku z poznámky“ se u modelky s takovým pictorialem už nenabízí.
+  - Údržba (Další návrhy) navrhne druh i u stávajících pictorialů. Podle názvu alba („Playmate of the Year 1998“, „PMOY“, „Playmate of the Month“) nebo když jde o jediný pictorial v čísle jejího centerfoldu (Playmate of the Month).
+
 ## [0.99.71] – 2026-10-28
 
 ### Změněno

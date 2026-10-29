@@ -91,8 +91,10 @@ zdroje ještě projde prahem).
 Údaje (`pole` → `inputId`): `narodnost` → `inputNarodnost`, `etnicita` → `inputEtnicita`, `vlasyBarva` →
 `inputVlasy`, `ociBarva` → `inputOci`, `velikostPrsou` → `inputVelikost`, `obvodHrudnikCm` / `obvodPasCm` /
 `obvodBokyCm` → `inputHrudnik` / `inputPas` / `inputBoky`, `role` → `inputRole`; u alba `vydaniAlba`,
-`fotografAlba`, `datumAlba`. Obvody se zapíšou jen v rozumných mezích a se všemi třemi obvody se složí i míry;
-kategorie (`role`) se k zapsaným **přidá**; vydání alba jen u pictorialu časopisu, datum jen u online alba.
+`fotografAlba`, `datumAlba`, `typAlba` → `selectTyp` (druh pictorialu). Obvody se zapíšou jen v rozumných mezích
+a se všemi třemi obvody se složí i míry; kategorie (`role`) se k zapsaným **přidá**; vydání alba jen u pictorialu
+časopisu, datum jen u online alba, druh jen u obyčejného pictorialu časopisu (`Pictorial` → `Playmate měsíce` nebo
+`Playmate roku`; album stejného jména s novým druhem modelka mít nesmí).
 
 ## Zdroje návrhů
 
@@ -106,7 +108,9 @@ kategorie (`role`) se k zapsaným **přidá**; vydání alba jen u pictorialu č
 | `podobne` | podobné modelky | obvody | k = 12 nejpodobnějších modelek (standardizované údaje postavy), vážený medián a rozptyl | trefa ±1 cm ověřená vynecháním jedné **pro stejnou kombinaci známých údajů**, snížená, když se sousedé shodují hůř než obvykle; strop 0,6 |
 | `text` | poznámka | kategorie | „Playmate of the Year 1998“, „PMOY 1998“ v poznámce, tagách, vystoupení nebo názvu alba; rok musí sedět k centerfoldu | 0,92, bez centerfoldu 0,75 |
 | `nazev` | název alba | vydání, datum alba | datum v názvu (červen 1995, June 1995, 06/1995, 2004-06-14…) | (k + p·w)/(n + w): předpoklad 0,85, váha 6, upřesněný sbírkou |
+| `nazev` | název alba | druh pictorialu | „Playmate of the Year“, „Playmate roku“, „PMOY“ → Playmate roku; „Playmate of the Month“, „Playmate měsíce“, „PMOM“ → Playmate měsíce | 0,92 / 0,9 |
 | `centerfold` | centerfold | vydání alba | jediný pictorial bez vydání → číslo jediného centerfoldu | předpoklad 0,75, váha 4 |
+| `centerfold` | centerfold | druh pictorialu | jediný pictorial v čísle jejího centerfoldu → Playmate měsíce | 0,8 |
 | `cislo` | fotograf čísla | fotograf alba | jiné album modelky ze stejného čísla | předpoklad 0,8, váha 4 |
 | `modelka` | fotograf modelky | fotograf alba | všechna ostatní alba modelky (aspoň 2) má jeden fotograf | předpoklad 0,5, váha 2 |
 

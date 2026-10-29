@@ -364,6 +364,8 @@ export namespace main {
 	    centerfoldy: string[];
 	    onlineAlba: string[];
 	    cyberGirl: string;
+	    playmateMesice: boolean;
+	    playmateRoku: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -420,6 +422,8 @@ export namespace main {
 	        this.centerfoldy = source["centerfoldy"];
 	        this.onlineAlba = source["onlineAlba"];
 	        this.cyberGirl = source["cyberGirl"];
+	        this.playmateMesice = source["playmateMesice"];
+	        this.playmateRoku = source["playmateRoku"];
 	    }
 	}
 	export class NalezClanku {

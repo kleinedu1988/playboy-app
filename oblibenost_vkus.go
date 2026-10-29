@@ -401,8 +401,11 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 		skupiny++
 	}
 	kategorie := strings.Split(m.Role, ",")
-	if len(m.Centerfoldy) > 0 {
+	if len(m.Centerfoldy) > 0 || m.PlaymateMesice {
 		kategorie = append(kategorie, "Playmate měsíce")
+	}
+	if m.PlaymateRoku != "" && !maPlaymateRoku(m.Role) {
+		kategorie = append(kategorie, "Playmate roku")
 	}
 	if m.CyberGirl != "" {
 		kategorie = append(kategorie, "Cyber Girl "+m.CyberGirl)

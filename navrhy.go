@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -121,6 +122,7 @@ var udajeNavrhu = map[string]udajNavrhu{
 	"vydaniAlba":     {popis: "Vydání alba", input: "inputAlbumRok", sloupec: "vydani", album: true},
 	"fotografAlba":   {popis: "Fotograf alba", input: "inputAlbumFotograf", sloupec: "fotograf", album: true},
 	"datumAlba":      {popis: "Datum nafocení", input: "inputAlbumDatum", sloupec: "datum", album: true},
+	"typAlba":        {popis: "Druh pictorialu", input: "selectTyp", sloupec: "typ", album: true},
 }
 
 // Klíče odmítnutých návrhů (ukládají se mezi „netýká se“ modelky a alba jako „ok-…“ u kontroly)
@@ -296,6 +298,12 @@ func (a *App) OdmitnoutNavrh(n NavrhDoplneni, odmitnout bool) bool {
 
 var vzorPlaymateRokuNavrhu = regexp.MustCompile(`^Playmate roku (19|20)\d{2}$`)
 
+// Název alba (zjednodušený) uvádí Playmate of the Year / of the Month
+var (
+	vzorPictorialuPMOY = regexp.MustCompile(`\b(playmate\s+(of\s+the\s+year|roku)|pmoy)\b`)
+	vzorPictorialuPMOM = regexp.MustCompile(`\b(playmate\s+(of\s+the\s+month|mesice)|pmom)\b`)
+)
+
 // Zápis jednoho návrhu; false, když údaj mezitím někdo vyplnil nebo návrh není platný
 func zapsatNavrh(q dotazovac, n NavrhDoplneni) (bool, error) {
 	u, ok := udajeNavrhu[n.Pole]
@@ -321,6 +329,14 @@ func zapsatNavrh(q dotazovac, n NavrhDoplneni) (bool, error) {
 				return false, nil
 			}
 			return zapsano(q.Exec("UPDATE alba SET vydani = ? WHERE "+klic+" AND COALESCE(vydani, '') = ''", hodnota, n.ModelkaID, n.Album, n.Typ))
+		case "typAlba":
+			// Obyčejný pictorial časopisu → Playmate of the Month / of the Year; album stejného jména a nového druhu
+			// už být nesmí (klíč alba je modelka, název a typ)
+			if n.Typ != "Pictorial" || (hodnota != typPMMesice && hodnota != typPMRoku) {
+				return false, nil
+			}
+			return zapsano(q.Exec("UPDATE alba SET typ = ? WHERE "+klic+` AND NOT EXISTS (SELECT 1 FROM alba b
+				WHERE COALESCE(b.modelka_id, 0) = ? AND b.album = ? AND b.typ = ?)`, hodnota, n.ModelkaID, n.Album, n.Typ, n.ModelkaID, n.Album, hodnota))
 		case "datumAlba":
 			if !platneDatum(hodnota) || !jeOnlineTyp(n.Typ) {
 				return false, nil
@@ -1473,7 +1489,8 @@ func navrhnoutPlaymateRoku(modelky []Modelka, alba []albumNavrhu, pridat pridatK
 		nazvyAlb[al.modelkaID] = append(nazvyAlb[al.modelkaID], al.nazev)
 	}
 	for _, m := range modelky {
-		if maPlaymateRoku(m.Role) || neniKNavrhu(m, "role") {
+		// Pictorial Playmate of the Year kategorii dává sám (odvozená)
+		if maPlaymateRoku(m.Role) || m.PlaymateRoku != "" || neniKNavrhu(m, "role") {
 			continue
 		}
 		roky := map[int]string{}
@@ -1599,7 +1616,7 @@ func datumZNazvu(nazev string, letos int) (datum string, presnost int, ok bool) 
 }
 
 // Pictorial časopisu (ne online, centerfold ani cover), u kterého se vydání sleduje
-func jePictorialCisla(al albumNavrhu) bool { return al.typ == "Pictorial" }
+func jePictorialCisla(al albumNavrhu) bool { return jePictorialCasopisu(al.typ) }
 
 // Vydání pictorialu z názvu alba nebo z čísla jediného centerfoldu modelky (pictorial playmate vychází
 // v čísle s jejím centerfoldem), datum online alba z názvu a fotograf z jiných alb téhož čísla nebo modelky.
@@ -1707,6 +1724,16 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, preferovane
 		}
 	}
 
+	// Kolik pictorialů časopisu má modelka v daném čísle
+	pictorialuVCisle := func(indexy []int, vydani string) int {
+		n := 0
+		for _, j := range indexy {
+			if jePictorialCisla(alba[j]) && alba[j].vydani == vydani {
+				n++
+			}
+		}
+		return n
+	}
 	for _, m := range modelky {
 		indexy := podleModelky[m.ID]
 		c := centerfold(m)
@@ -1733,6 +1760,19 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, preferovane
 						pridat(m, al, "vydaniAlba", c, fmt.Sprintf("pictorial playmate vychází v čísle jejího centerfoldu (%s)%s", c, sCenterfoldem.text("playmate s jedním centerfoldem")),
 							"centerfold", sCenterfoldem.jistota(0.75, 4))
 					}
+				}
+			}
+			// Druh pictorialu: Playmate of the Year / of the Month z názvu alba, jinak pictorial v čísle jejího
+			// centerfoldu je pictorial Playmate of the Month
+			if al.typ == "Pictorial" && !obsahujeKlic(al.neni, klicNavrhu("typAlba")) {
+				nazev := zjednodusit(al.nazev)
+				switch {
+				case vzorPictorialuPMOY.MatchString(nazev):
+					pridat(m, al, "typAlba", typPMRoku, fmt.Sprintf("název alba „%s“ uvádí Playmate of the Year", al.nazev), "nazev", 0.92)
+				case vzorPictorialuPMOM.MatchString(nazev):
+					pridat(m, al, "typAlba", typPMMesice, fmt.Sprintf("název alba „%s“ uvádí Playmate of the Month", al.nazev), "nazev", 0.9)
+				case al.vydani != "" && slices.Contains(m.Centerfoldy, al.vydani) && pictorialuVCisle(indexy, al.vydani) == 1:
+					pridat(m, al, "typAlba", typPMMesice, fmt.Sprintf("pictorial vyšel v čísle jejího centerfoldu (%s) – pictorial playmate měsíce", al.vydani), "centerfold", 0.8)
 				}
 			}
 			if jeOnlineTyp(al.typ) && al.datum == "" {

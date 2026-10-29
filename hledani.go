@@ -116,8 +116,11 @@ func hodnotaPole(m *Modelka, klic string) string {
 // (frontend/src/lib/format.js, KATEGORIE a odvozeneKategorie); obyčejné online album kategorii nedává
 func kategorieKHledani(m *Modelka) string {
 	kategorie := m.Role
-	if len(m.Centerfoldy) > 0 {
+	if len(m.Centerfoldy) > 0 || m.PlaymateMesice {
 		kategorie += ", Playmate měsíce"
+	}
+	if m.PlaymateRoku != "" {
+		kategorie += ", Playmate roku " + strings.TrimSuffix(m.PlaymateRoku, "?")
 	}
 	if m.CyberGirl != "" {
 		kategorie += ", Cyber Girl " + m.CyberGirl

@@ -682,3 +682,82 @@ func navrhnoutDoplneni(modelky []Modelka, alba []albumNavrhu, letos int) []Navrh
 	}
 	return vysledek
 }
+
+// Druh pictorialu: Playmate of the Year / of the Month z názvu alba, pictorial v čísle centerfoldu = Playmate of the
+// Month (jen jeden v tom čísle); zápis změní typ alba a odvodí kategorii
+func TestNavrhDruhuPictorialu(t *testing.T) {
+	modelky := sbirkaNavrhu(
+		Modelka{Jmeno: "Roku", Centerfoldy: []string{"1997-05"}},
+		Modelka{Jmeno: "Měsíce", Centerfoldy: []string{"1999-03"}},
+		Modelka{Jmeno: "Dva v čísle", Centerfoldy: []string{"2001-02"}},
+	)
+	alba := []albumNavrhu{
+		{modelkaID: 1, nazev: "1997-05", typ: "Centerfold"},
+		{modelkaID: 1, nazev: "Playmate of the Year 1998", typ: "Pictorial", vydani: "1998-06"},
+		{modelkaID: 2, nazev: "1999-03", typ: "Centerfold"},
+		{modelkaID: 2, nazev: "Slunce v Miami", typ: "Pictorial", vydani: "1999-03"},
+		{modelkaID: 2, nazev: "Playmate měsíce: zákulisí", typ: "Pictorial"},
+		{modelkaID: 3, nazev: "2001-02", typ: "Centerfold"},
+		{modelkaID: 3, nazev: "A", typ: "Pictorial", vydani: "2001-02"},
+		{modelkaID: 3, nazev: "B", typ: "Pictorial", vydani: "2001-02"},
+	}
+	navrhy := navrhyBezDb(modelky, alba)
+	najit := func(jmeno, album string) (NavrhDoplneni, bool) {
+		for _, n := range navrhy {
+			if n.Jmeno == jmeno && n.Album == album && n.Pole == "typAlba" {
+				return n, true
+			}
+		}
+		return NavrhDoplneni{}, false
+	}
+	if n, ok := najit("Roku", "Playmate of the Year 1998"); !ok || n.Hodnota != typPMRoku || n.Jistota < prahNavrhu || n.InputID != "selectTyp" {
+		t.Errorf("PMOY z názvu: %+v", n)
+	}
+	if n, ok := najit("Měsíce", "Slunce v Miami"); !ok || n.Hodnota != typPMMesice || n.Jistota < prahNavrhu {
+		t.Errorf("pictorial v čísle centerfoldu: %+v", n)
+	}
+	if n, ok := najit("Měsíce", "Playmate měsíce: zákulisí"); !ok || n.Hodnota != typPMMesice {
+		t.Errorf("PMOM z názvu: %+v", n)
+	}
+	for _, al := range []string{"A", "B"} {
+		if n, ok := najit("Dva v čísle", al); ok {
+			t.Errorf("dva pictorialy v čísle centerfoldu: %+v", n)
+		}
+	}
+}
+
+// Album Playmate of the Year a of the Month odvodí modelce kategorie (i v hledání); přijetí návrhu změní typ alba
+func TestKategoriePictorialuPlaymate(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Bára", Tetovani: -1, Piercing: -1})
+	anna, bara := idModelky(t, a, "Anna"), idModelky(t, a, "Bára")
+	a.AddBulkPhotos(anna, "Playmate of the Year", typPMRoku, odkazA)
+	a.SetVydaniAlba(anna, "Playmate of the Year", typPMRoku, "1998-06")
+	a.AddBulkPhotos(bara, "Pictorial", "Pictorial", odkazB)
+	modelky, _ := a.nactiModelky("", false)
+	for _, m := range modelky {
+		if m.ID == anna && (m.PlaymateRoku != "1998" || m.PlaymateMesice) {
+			t.Errorf("Anna: %q %v", m.PlaymateRoku, m.PlaymateMesice)
+		}
+		if m.ID == bara && (m.PlaymateRoku != "" || m.PlaymateMesice) {
+			t.Errorf("Bára před přijetím: %q %v", m.PlaymateRoku, m.PlaymateMesice)
+		}
+	}
+	if !a.PrijmoutNavrh(NavrhDoplneni{ModelkaID: bara, Album: "Pictorial", Typ: "Pictorial", Pole: "typAlba", Klic: "nv-typAlba", Hodnota: typPMMesice}) {
+		t.Fatal("přijetí druhu pictorialu")
+	}
+	// Neplatný druh se nezapíše
+	if a.PrijmoutNavrh(NavrhDoplneni{ModelkaID: bara, Album: "Pictorial", Typ: typPMMesice, Pole: "typAlba", Klic: "nv-typAlba", Hodnota: typPMRoku}) {
+		t.Error("změna z Playmate měsíce se zapsala")
+	}
+	modelky, _ = a.nactiModelky("", false)
+	for _, m := range modelky {
+		if m.ID == bara && !m.PlaymateMesice {
+			t.Errorf("Bára po přijetí: %+v", m.PlaymateMesice)
+		}
+	}
+	if v := a.GetModelky("kategorie:\"playmate roku\""); len(v) != 1 || v[0].ID != anna {
+		t.Errorf("hledání kategorie: %+v", v)
+	}
+}

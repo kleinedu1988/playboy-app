@@ -167,6 +167,11 @@ export const TYP_CG_TYDNE = 'Cyber Girl týdne';
 export const TYP_CG_MESICE = 'Cyber Girl měsíce';
 export const jeOnline = typ => typ === TYP_ONLINE || typ === TYP_CG_TYDNE || typ === TYP_CG_MESICE;
 
+// Pictorial playmate v časopise: Playmate of the Month a Playmate of the Year (kategorie Playmate měsíce, nebo
+// Playmate roku s rokem čísla; odvozuje backend, snimek.go)
+export const TYP_PM_MESICE = 'Playmate měsíce';
+export const TYP_PM_ROKU = 'Playmate roku';
+
 // Období ocenění Cyber Girl z data nafocení: „24. týden 2004“, „červen 2004“; bez potřebné přesnosti ''
 export function obdobiCyberGirl(typ, datum) {
     if (typ === TYP_CG_TYDNE) {
@@ -194,6 +199,7 @@ export function tydenRoku(datum) {
 export function popisTypuAlba(typ, datum) {
     const obdobi = obdobiCyberGirl(typ, datum);
     if (obdobi) return `${typ} · ${obdobi}${/^\d{4}-\d{2}-\d{2}$/.test(datum) ? ` (nafoceno ${formatDatum(datum)})` : ''}`;
+    if (typ === TYP_PM_MESICE || typ === TYP_PM_ROKU) return `Pictorial ${typ}`;
     return jeOnline(typ) && datum ? `${typ} · nafoceno ${formatDatum(datum)}` : typ;
 }
 
@@ -426,11 +432,13 @@ export function rozlozitKategorie(text) {
 export const popisKategorie = k => [k.nazev, k.detail, k.zbytek].filter(Boolean).join(' ');
 export const slozitKategorie = seznam => seznam.map(popisKategorie).join(', ');
 
-// Kategorie odvozené z dat: centerfold = Playmate měsíce, obálka = Modelka obálky, album Cyber Girl týdne
-// nebo měsíce = Cyber Girl (obyčejný Pictorial online kategorii nedává)
+// Kategorie odvozené z dat: centerfold nebo pictorial Playmate of the Month = Playmate měsíce, pictorial Playmate
+// of the Year = Playmate roku, obálka = Modelka obálky, album Cyber Girl týdne nebo měsíce = Cyber Girl (obyčejný
+// Pictorial online kategorii nedává)
 export function odvozeneKategorie(modelka) {
     return [
-        (modelka.centerfoldy || []).length ? 'Playmate měsíce' : '',
+        (modelka.centerfoldy || []).length || modelka.playmateMesice ? 'Playmate měsíce' : '',
+        modelka.playmateRoku ? 'Playmate roku' : '',
         modelka.cyberGirl ? 'Cyber Girl' : '',
         (modelka.obalky || []).length ? 'Modelka obálky' : '',
     ].filter(Boolean);
@@ -461,7 +469,8 @@ export function vyskytModelky(modelka) {
 export function kategorieModelky(modelka) {
     const zapsane = rozlozitKategorie(modelka.role);
     odvozeneKategorie(modelka).forEach(nazev => {
-        const detail = nazev === 'Cyber Girl' ? modelka.cyberGirl || '' : '';
+        const detail = nazev === 'Cyber Girl' ? modelka.cyberGirl || ''
+            : nazev === 'Playmate roku' && modelka.playmateRoku !== '?' ? modelka.playmateRoku || '' : '';
         if (!zapsane.some(k => k.nazev === nazev)) zapsane.push({ nazev, detail, zbytek: '', vlastni: false, odvozena: true });
     });
     const poradi = k => k.vlastni ? KATEGORIE.length : KATEGORIE.findIndex(z => z.nazev === k.nazev);

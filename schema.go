@@ -27,13 +27,25 @@ const (
 	typCGMesice = "Cyber Girl měsíce"
 )
 
+// Pictorial playmate v časopise: Playmate of the Month (pictorial k jejímu centerfoldu) a Playmate of the Year
+// (pictorial vyhlášené playmate roku); dávají modelce kategorii Playmate měsíce, nebo Playmate roku s rokem čísla
+const (
+	typPMMesice = "Playmate měsíce"
+	typPMRoku   = "Playmate roku"
+)
+
+// Pictorial časopisu (obyčejný nebo playmate): album k číslu časopisu, které není centerfold ani cover
+func jePictorialCasopisu(typ string) bool {
+	return typ == "Pictorial" || typ == typPMMesice || typ == typPMRoku
+}
+
 // Online album (Pictorial online nebo Cyber Girl týdne či měsíce): bez vydání, s datem nafocení
 func jeOnlineTyp(typ string) bool { return typ == typOnline || typ == typCGTydne || typ == typCGMesice }
 
 // Uzavřené výčty. Rozšiřovat je jde bez změny schématu (přidáním hodnoty sem a do rozhraní), měnit ne.
 var (
 	// Typy alb; cover časopisu je album bez modelky, Pictorial online je pictorial jen na webu (bez vydání, s datem)
-	typyAlb = map[string]bool{"Pictorial": true, "Centerfold": true, "Cover": true, typOnline: true, typCGTydne: true, typCGMesice: true}
+	typyAlb = map[string]bool{"Pictorial": true, "Centerfold": true, "Cover": true, typOnline: true, typCGTydne: true, typCGMesice: true, typPMMesice: true, typPMRoku: true}
 	// Edice kromě výchozí US (ta se do vydání nepíše)
 	dalsiEdice = map[string]bool{"CZ": true}
 	// Klíče „netýká se" u modelky a u alba

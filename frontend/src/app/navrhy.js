@@ -9,7 +9,7 @@ import { stav } from './stav';
 import { vsechnyModelky } from './mezipamet';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { otevritModelModal, poleModelky, potvrdit, predvyplnitPole, ukazatZalozku, zameritPole } from './formular-modelky';
-import { otevritAlbumModal, predvyplnitVydaniAlba } from './formular-alba';
+import { nastavitTypAlba, otevritAlbumModal, predvyplnitVydaniAlba } from './formular-alba';
 import { cekatNaOpravu } from './uceni';
 import { oznamit } from '../ui/oznameni';
 
@@ -231,7 +231,11 @@ export async function upravit(n) {
     const vydani = n.pole === 'vydani' || n.pole === 'vydaniAlba' || ['selectAlbumMesic', 'selectAlbumSpecial', 'inputAlbumRok'].includes(n.inputId);
     let pole = null;
     if (vydani) pole = predvyplnitVydaniAlba(n.hodnota);
-    else if (document.getElementById(n.inputId)) {
+    else if (n.pole === 'typAlba') {
+        // Druh pictorialu se volí tlačítky v okně alba (skrytý výběr typu by je nepřepnul)
+        nastavitTypAlba(n.hodnota, 'casopis');
+        pole = document.querySelector(`#albumDruhy [data-druh="${CSS.escape(n.hodnota)}"]`);
+    } else if (document.getElementById(n.inputId)) {
         predvyplnitPole(n.inputId, n.hodnota);
         pole = document.getElementById(n.inputId);
     }

@@ -1,7 +1,7 @@
 // Okno alba a centerfoldu
 import { oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteAlbum, GetFotografove, GetSablonaObrazku } from './backend';
-import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, esc, formatMarkdown, jeOnline, nazevAlba, nazevVydani, obdobiCyberGirl, obrazek, odkazyDisku, popisTypuAlba, rozlozitVydani, sjednotit, sklonovat, slozitVydani } from '../lib/format';
+import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, TYP_PM_MESICE, TYP_PM_ROKU, esc, formatMarkdown, jeOnline, nazevAlba, nazevVydani, obdobiCyberGirl, obrazek, odkazyDisku, popisTypuAlba, rozlozitVydani, sjednotit, sklonovat, slozitVydani } from '../lib/format';
 import { upravitText } from '../ui/editor-textu';
 import { nastavitHtml, nastavitText } from '../ui/dom';
 import { vsechnyModelky } from './mezipamet';
@@ -45,7 +45,7 @@ let obnovitSpecialyAlba = (_vybrat) => {};
 // Typ alba ve dvou krocích: kde vyšlo a druh. Časopis a Nikde jsou obojí typ Pictorial, Nikde jen bez čísla.
 // Typ, který nabídka nezná (starší Cover…), se nabídne jako další druh u časopisu.
 const DRUHY_ALBA = {
-    casopis: [['Pictorial', 'Pictorial'], ['Centerfold', 'Centerfold']],
+    casopis: [['Pictorial', 'Pictorial'], [TYP_PM_MESICE, 'Playmate of the Month'], [TYP_PM_ROKU, 'Playmate of the Year'], ['Centerfold', 'Centerfold']],
     online: [[TYP_ONLINE, 'Pictorial'], [TYP_CG_TYDNE, 'Cyber Girl of the Week'], [TYP_CG_MESICE, 'Cyber Girl of the Month']],
     nikde: [['Pictorial', 'Pictorial bez čísla']],
 };
@@ -68,7 +68,7 @@ function oznacitVolby(volby, jeZvolena) {
     });
 }
 
-function nastavitTypAlba(typ, kde = kdeAlba) {
+export function nastavitTypAlba(typ, kde = kdeAlba) {
     const vyberTypu = /** @type {HTMLSelectElement} */ (document.getElementById('selectTyp'));
     kdeAlba = kde;
     vyberTypu.value = typ;

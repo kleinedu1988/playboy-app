@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.74] – 2026-10-29
+
+### Změněno
+- **Porovnávání, Galerie a Pořadí jsou sloučené do jedné části „Hodnocení“** se stejným vzhledem jako síň slávy. V liště Oblíbenosti zůstávají jen Hodnocení a Síň slávy.
+  - Nahoře jsou pilulky **Porovnat · Fotky · Pořadí** s počty (čekající na potvrzení, nehodnocené fotky, nesoulady). Vpravo je „Dnes N“ s pruhem k příští desítce porovnání a odkazy na to, co čeká jinde („3 čekají na potvrzení → Porovnávat“).
+  - **Porovnat:** vedle důvodu dvojice je pruh **Dvojice v pořadí**. Ukazuje místa obou modelek a jejich sousedek s úrovní a po přepočtu posun ▲▼. Klávesy a souboje fungují jako dřív.
+  - **Fotky:** dlaždice s pěti velkými náhledy, velkými čísly (nehodnocené fotky, modelky) a tlačítky Prohlížet a hodnotit a ▶ Promítat. Nově jde prohlížet jen fotky jedné modelky. Pod dlaždicí je dalších 16 fotek fronty.
+  - **Pořadí:** nahoře karta **Čeká na rozhodnutí** se souboji o úroveň (⚔ Rozhodnout teď) a nesoulady se srdíčky (Dát jí, Nechat, Ověřit). Pod ní je kompaktní Top 10 a „Celé pořadí s úrovněmi“ k rozbalení, vedle Stoupají a klesají s fotkami a Mohlo by se ti líbit.
+
 ## [0.99.73] – 2026-10-29
 
 ### Změněno

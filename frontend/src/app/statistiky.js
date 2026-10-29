@@ -12,6 +12,8 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
+import { nastavitHtml } from '../ui/dom';
+import { htmlPrazdna } from '../ui/prazdno';
 
 const BARVA = '#d81b60';
 
@@ -222,7 +224,7 @@ function rozsahVyberu(def, sloupce) {
 // Graf v čase jako SVG v přesné šířce karty (písmo zůstává stejně velké); neviditelné cíle nesou bublinu a index.
 // Při výběru z jiných grafů: jasně modelky výběru, tlumeně celá sbírka a její křivka čárkovaně.
 function htmlGrafuVCase(def, sloupce, sirka) {
-    if (!sloupce.length) return `<p class="stat-prazdne">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s výskytem v časopise chybí.`}</p>`;
+    if (!sloupce.length) return `<p class="prazdno-male">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s výskytem v časopise chybí.`}</p>`;
     const zuzeno = [...filtry.keys()].some(k => k !== klicFiltru(def));
     const vybrane = sloupce.map(s => zuzeno ? s.polozky.filter(p => vyhovuje(p.m, klicFiltru(def))) : s.polozky);
     const W = Math.max(320, sirka), H = 360, L = 46, P = 10, T = 14, D = 26;
@@ -324,7 +326,7 @@ function polozkyRozlozeni(klic) {
 }
 
 function htmlPruhu(def, polozky) {
-    if (!polozky.length) return `<p class="stat-prazdne">${graf === 'fot' && !data.fotografove.size ? 'Počítám fotografy…' : 'Zatím žádná data.'}</p>`;
+    if (!polozky.length) return `<p class="prazdno-male">${graf === 'fot' && !data.fotografove.size ? 'Počítám fotografy…' : 'Zatím žádná data.'}</p>`;
     const zuzeno = [...filtry.keys()].some(k => k !== def.klic);
     const vlastni = filtry.get(def.klic)?.hodnota;
     const max = Math.max(1, ...polozky.map(p => p.pocet));
@@ -373,7 +375,7 @@ function htmlSeznamu(def, sloupce) {
                 ${m.hodnoceni ? `<i title="${textSrdicek(m.hodnoceni)}">${znakySrdicek(m.hodnoceni)}</i>` : ''}
             </button>`).join('')}
             ${ukazat.length < seznam.length ? `<button type="button" class="link sp-vse" data-vse-vyberu>Zobrazit všech ${seznam.length}</button>` : ''}</div>`
-        : '<p class="stat-prazdne">Výběru neodpovídá žádná modelka.</p>'}
+        : '<p class="prazdno-male">Výběru neodpovídá žádná modelka.</p>'}
         ${dotaz ? `<button type="button" class="btn btn-primary btn-small sp-galerie" data-vyber-galerie="${esc(dotaz)}">Otevřít v galerii →</button>` : ''}`;
 }
 
@@ -395,17 +397,10 @@ function souhrn(def, sloupce, rozlozeni) {
 
 const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModelky(m).some(c => c.edice === e)));
 
-// Kostra se vykreslí jednou (rozvinutý seznam drží fokus); části se pak překreslují zvlášť
+// Kostra se vykreslí jednou; části se pak překreslují zvlášť. Volby (graf, výskyt, edice, výběr a souhrn) jsou
+// v liště pod hledáním: skrytý řádek štítků převezme ui/volby.js (přes prehled.js)
 function htmlKostry() {
-    return `<div class="sp-lista">
-            <label class="sp-vyber-grafu">
-                <select data-sp-graf-vyber aria-label="Graf">${Object.entries(SKUPINY).map(([s, nazev]) => `<optgroup label="${nazev}">${GRAFY.filter(g => g.skupina === s)
-                    .map(g => `<option value="${g.klic}" ${g.klic === graf ? 'selected' : ''}>${esc(g.nazev)}</option>`).join('')}</optgroup>`).join('')}</select></label>
-            <span class="sp-edice" data-sp-druh></span>
-            <span class="sp-edice" data-sp-edice></span>
-            <span class="sp-souhrn" data-sp-souhrn></span>
-        </div>
-        <div class="sp-filtry" data-sp-filtry></div>
+    return `<div class="volby-v-liste" data-volby-casti="statistiky" data-sp-volby></div>
         <div class="sp-telo">
             <div class="stat-karta sp-karta">
                 <div class="sp-legenda" data-sp-legenda></div>
@@ -414,7 +409,7 @@ function htmlKostry() {
             </div>
             <div class="stat-karta sp-seznam" data-sp-seznam></div>
         </div>
-        ${data.modelky.length ? '' : '<p class="stat-prazdne">Statistiky se ukážou, až budou ve sbírce modelky.</p>'}`;
+        ${data.modelky.length ? '' : htmlPrazdna('Statistiky zatím nejsou', 'Statistiky se ukážou, až budou ve sbírce modelky.', { ikona: 'foto' })}`;
 }
 
 function htmlLegendy(def) {
@@ -441,15 +436,18 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     misto.classList.toggle('cas', Boolean(def.osa));
     if (fokus !== undefined) /** @type {HTMLElement} */ (misto.querySelector(`[data-hodnota="${CSS.escape(fokus)}"]`))?.focus({ preventScroll: true });
     if (jenGraf) return;
+    // Volby pod hledáním: Graf ▾ (skupiny za sebou), filtry Výskyt a Edice (u grafů v čase), výběr z grafu jako
+    // zapnutý filtr (× ho zruší) a na konci souhrn
     const ed = ediceVyskytu();
-    koren.querySelector('[data-sp-edice]').innerHTML = def.osa === 'rok' && ed.length > 1
-        ? ['vse', ...ed].map(e => `<button type="button" class="${e === edice ? 'active' : ''}" aria-pressed="${e === edice}" data-sp-edice-volba="${e}">${e === 'vse' ? 'Vše' : e}</button>`).join('') : '';
-    koren.querySelector('[data-sp-druh]').innerHTML = def.osa === 'rok'
-        ? Object.entries(DRUHY_VYSKYTU).map(([k, nazev]) => `<button type="button" class="${k === druhVyskytu ? 'active' : ''}" aria-pressed="${k === druhVyskytu}" data-sp-druh-volba="${k}">${nazev}</button>`).join('') : '';
-    koren.querySelector('[data-sp-souhrn]').innerHTML = souhrn(def, sloupce, rozlozeni);
-    koren.querySelector('[data-sp-filtry]').innerHTML = filtry.size ? `<span>Výběr:</span>${[...filtry].map(([k, f]) =>
-        `<button type="button" class="chip active" data-zrusit-podminku="${esc(k)}" title="Odebrat podmínku">${esc(f.popis)} ×</button>`).join('')}
-        <button type="button" class="link" data-zrusit-vyber>Zrušit výběr</button>` : '';
+    const stitek = (atribut, klic, nazev, zvoleny) => `<button type="button" class="chip ${zvoleny ? 'active' : ''}" data-${atribut}="${esc(klic)}">${esc(nazev)}</button>`;
+    nastavitHtml(koren.querySelector('[data-sp-volby]'), [
+        ...Object.keys(SKUPINY).flatMap(s => GRAFY.filter(g => g.skupina === s).map(g => stitek('sp-graf-volba', g.klic, g.nazev, g.klic === graf))),
+        ...(def.osa === 'rok' ? Object.entries(DRUHY_VYSKYTU).map(([k, nazev]) => stitek('sp-druh-volba', k, nazev === 'Vše' ? 'vše' : nazev, k === druhVyskytu)) : []),
+        ...(def.osa === 'rok' && ed.length > 1 ? ['vse', ...ed].map(e => stitek('sp-edice-volba', e, e === 'vse' ? 'vše' : e, e === edice)) : []),
+        filtry.size ? `<button type="button" class="chip active" data-sp-vyber="1" data-zrusit-vyber>${esc([...filtry.values()].map(f => f.popis).join(' · '))}</button>` : '',
+        `<span>${souhrn(def, sloupce, rozlozeni).replace(/<[^>]+>/g, '')}</span>`,
+    ].join(''));
+    document.dispatchEvent(new CustomEvent('volby-prehledu'));
     koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
     // Modelky bez čísla (jen online, bez vydání) nemají rok; kolik jich v grafech v čase není, říká nápověda.
     // U druhu Online jsou to modelky bez online alba s datem nafocení.
@@ -582,15 +580,6 @@ export function pripravit(stats) {
         if (koren) vykreslit(koren, { jenGraf: true });
     }));
 
-    stats.addEventListener('change', (e) => {
-        const select = /** @type {HTMLSelectElement} */ (e.target);
-        if (!select.matches('[data-sp-graf-vyber]')) return;
-        graf = select.value;
-        try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
-        zobrazitVse = false;
-        vykreslit(select.closest('.stat-statistiky'));
-    });
-
     stats.addEventListener('click', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         const koren = cil.closest('.stat-statistiky');
@@ -606,17 +595,24 @@ export function pripravit(stats) {
             hledatHodnotu(galerie.dataset.vyberGalerie);
             return;
         }
+        // Graf zvolený v liště pod hledáním (Graf ▾)
+        const volbaGrafu = /** @type {HTMLElement | null} */ (cil.closest('[data-sp-graf-volba]'));
+        if (volbaGrafu) {
+            graf = volbaGrafu.dataset.spGrafVolba;
+            try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
+            zobrazitVse = false;
+            vykreslit(koren);
+            return;
+        }
         const volbaEdice = cil.closest('[data-sp-edice-volba]');
         const volbaDruhu = cil.closest('[data-sp-druh-volba]');
         const pruh = cil.closest('.sp-pruh[data-hodnota]');
-        const podminka = cil.closest('[data-zrusit-podminku]');
         if (cil.closest('[data-vse-vyberu]')) {
             zobrazitVse = true;
             vykreslit(koren);
             return;
         }
         if (cil.closest('[data-zrusit-vyber]')) filtry.clear();
-        else if (podminka) filtry.delete(podminka.dataset.zrusitPodminku);
         else if (volbaEdice || volbaDruhu) {
             // Výběr roku platí pro edici a druh výskytu, ve kterých vznikl; s jejich změnou se zruší
             if (volbaEdice) edice = volbaEdice.dataset.spEdiceVolba;
@@ -631,10 +627,6 @@ export function pripravit(stats) {
         } else return;
         zobrazitVse = false;
         vykreslit(koren);
-        // Fokus zůstane na přepínači edice; po odebrání podmínky přejde na graf (Esc pak dál funguje)
-        if (volbaEdice) /** @type {HTMLElement} */ (koren.querySelector(`[data-sp-edice-volba="${edice}"]`))?.focus();
-        else if (volbaDruhu) /** @type {HTMLElement} */ (koren.querySelector(`[data-sp-druh-volba="${druhVyskytu}"]`))?.focus();
-        else if (!pruh) /** @type {HTMLElement} */ (koren.querySelector('[data-sp-graf]'))?.focus({ preventScroll: true });
     });
 
     // Klávesnice v grafu v čase: šipky posouvají výběr (Shift rozšiřuje), Home a End; Esc zruší celý výběr

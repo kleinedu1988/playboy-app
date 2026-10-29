@@ -10,7 +10,7 @@ import { GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './b
 import { esc, nazevVydani, sklonovat } from '../lib/format';
 import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
 import { stav } from './stav';
-import { stats } from './prvky';
+import { searchInput, stats } from './prvky';
 import { jeVidet, nastavitHtml, otevreneOkno, srovnatSeznam } from '../ui/dom';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
@@ -61,16 +61,9 @@ const KOSTRA = `
         <div class="ud-telo" data-ud="seznam">
             <nav class="ud-bok" data-ud="bok" aria-label="Co ukázat"></nav>
             <div class="ud-hlavni">
+                <!-- Hledání ve frontě je hlavní hledání nahoře, řazení a Vyřízené jsou pod ním (ui/volby.js) -->
                 <div class="ud-nastroje">
-                    <label class="ud-hledat">${IKONA_HLEDANI}<input type="search" data-ud-hledat placeholder="Hledat modelku nebo číslo…" aria-label="Hledat v Údržbě (Ctrl+F nebo /)" autocomplete="off" spellcheck="false" /></label>
                     <div class="ud-uzke" data-ud="uzke"></div>
-                    <label class="ud-razeni"><span>Řadit</span>
-                        <select data-ud-razeni aria-label="Řazení fronty">
-                            <option value="priorita">podle priority</option>
-                            <option value="chybi">nejvíc chybí</option>
-                            <option value="oblibenost">oblíbené napřed</option>
-                            <option value="jmeno">podle jména</option>
-                        </select></label>
                     <button type="button" class="ud-nastroj" data-ud-hromadne aria-haspopup="menu" title="Rozbalit nebo sbalit vše, hromadné akce pro celý výběr">⋯ Hromadně</button>
                 </div>
                 <div data-ud="lista"></div>
@@ -174,7 +167,7 @@ function zdrojeFiltru() {
     return zdrojePolozek(model, filtr).map(z => ({ ...z, popis: filtr === 'kontrola' ? uceni.popisZdroje(z.zdroj) : z.popis }));
 }
 
-// Boční seznam filtrů po oblastech; pod aktivním filtrem jeho zdroje, dole přepínač Vyřízené
+// Boční seznam filtrů po oblastech; pod aktivním filtrem jeho zdroje (Vyřízené jsou filtr pod hledáním)
 function htmlBoku() {
     const filtr = stav.udrzbaFiltr;
     const zdroje = zdrojeFiltru();
@@ -185,20 +178,17 @@ function htmlBoku() {
         const pocet = model.pocty[klic];
         return `<button type="button" class="ud-bok-radek ${klic === filtr ? 'on' : ''} ${pocet ? '' : 'prazdny'}" data-udrzba-filtr="${klic}" aria-pressed="${klic === filtr}"${popis ? ` title="${esc(popis)}"` : ''}>
             <span>${nazev}</span><b>${pocet || (klic === 'vse' ? 0 : '✓')}</b></button>${klic === filtr ? htmlZdroju : ''}`;
-    }).join('')}`).join('')
-        + `<h5>Zobrazit</h5><button type="button" class="ud-bok-radek ud-prepinac ${stav.prehledSkryte ? 'on' : ''}" data-ud-skryte aria-pressed="${stav.prehledSkryte}"
-            title="Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit"><span>Vyřízené</span><b>${stav.prehledSkryte ? model.vyrizenych : ''}</b><i aria-hidden="true"></i></button>`;
+    }).join('')}`).join('');
 }
 
-// V úzkém okně místo bočního seznamu výběr filtru (a zdroje) a přepínač Vyřízené v liště
+// V úzkém okně místo bočního seznamu výběr filtru (a zdroje)
 function htmlUzke() {
     const filtr = stav.udrzbaFiltr;
     const zdroje = zdrojeFiltru();
     return `<select data-ud-vyber-filtru aria-label="Co ukázat">${OBLASTI_FILTRU.map(o => `<optgroup label="${o.nazev}">${o.filtry.map(([klic, nazev]) =>
         `<option value="${klic}" ${klic === filtr ? 'selected' : ''}>${nazev} (${model.pocty[klic]})</option>`).join('')}</optgroup>`).join('')}</select>
         ${zdroje.length > 1 || stav.udrzbaZdroj ? `<select data-ud-vyber-zdroje aria-label="Zdroj"><option value="">Všechny zdroje</option>${zdroje.map(z =>
-        `<option value="${esc(z.zdroj)}" ${z.zdroj === stav.udrzbaZdroj ? 'selected' : ''}>${esc(z.popis)} (${z.pocet})</option>`).join('')}</select>` : ''}
-        <button type="button" class="ud-nastroj ${stav.prehledSkryte ? 'on' : ''}" data-ud-skryte aria-pressed="${stav.prehledSkryte}">Vyřízené</button>`;
+        `<option value="${esc(z.zdroj)}" ${z.zdroj === stav.udrzbaZdroj ? 'selected' : ''}>${esc(z.popis)} (${z.pocet})</option>`).join('')}</select>` : ''}`;
 }
 
 // Pod lištou jen výsledek hledání
@@ -288,8 +278,6 @@ function zajistitKostru() {
     if (!s) return null;
     if (!s.querySelector('[data-ud-kostra]')) {
         s.innerHTML = KOSTRA;
-        /** @type {HTMLInputElement} */ (s.querySelector('[data-ud-hledat]')).value = stav.udrzbaHledat;
-        /** @type {HTMLSelectElement} */ (s.querySelector('[data-ud-razeni]')).value = stav.udrzbaRazeni;
         pozorovatKonec(s.querySelector('[data-ud-konec]'));
     }
     return s;
@@ -298,8 +286,7 @@ function zajistitKostru() {
 // Celá Údržba (po načtení Přehledu a po změně dat): hlavička a zvolený režim
 export function vykreslit() {
     if (!model || !zajistitKostru()) return;
-    nastavitHtml(cast('rezimy'), REZIMY.map(([klic, nazev, popis]) =>
-        `<button type="button" class="chip ${klic === stav.udrzbaRezim ? 'active' : ''}" data-ud-rezim="${klic}" title="${popis}">${nazev}</button>`).join(''));
+    nastavitHtml(cast('rezimy'), htmlVoleb());
     ['udaje', 'fokus', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', souhrn: 'souhrn' }[stav.udrzbaRezim]));
     if (stav.udrzbaRezim === 'udaje') {
         poUdajich.zobrazit(cast('udaje'));
@@ -317,6 +304,31 @@ export function vykreslit() {
     }
     // Volba režimu v liště pod hledáním (prehled.js)
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
+}
+
+// Volby pod hledáním (skrytý řádek štítků, ui/volby.js): režim; v Souhrnu i řazení fronty a filtr Vyřízené
+const RAZENI_FRONTY = [['priorita', 'podle priority'], ['chybi', 'nejvíc chybí'], ['oblibenost', 'oblíbené napřed'], ['jmeno', 'podle jména']];
+function htmlVoleb() {
+    const stitek = (atribut, klic, nazev, zvoleny, titulek = '') => `<button type="button" class="chip ${zvoleny ? 'active' : ''}" ${atribut}="${klic}"${titulek ? ` title="${esc(titulek)}"` : ''}>${esc(nazev)}</button>`;
+    const rezimy = REZIMY.map(([klic, nazev, popis]) => stitek('data-ud-rezim', klic, nazev, klic === stav.udrzbaRezim, popis));
+    if (!vSouhrnu()) return rezimy.join('');
+    return [...rezimy,
+        ...RAZENI_FRONTY.map(([klic, nazev]) => stitek('data-ud-razeni-volba', klic, nazev, klic === stav.udrzbaRazeni)),
+        stitek('data-ud-skryte', '1', `Vyřízené${stav.prehledSkryte && model.vyrizenych ? ` (${model.vyrizenych})` : ''}`, stav.prehledSkryte,
+            'Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit')].join('');
+}
+
+// Hledání ve frontě Souhrnu je hlavní hledání nahoře (ulozeni.js, naseptavac.js); ostatní režimy hledají modelku
+export const hledaniVeFronte = () => udrzbaVidet() && vSouhrnu();
+let casovacFronty = null;
+export function hledatVeFronte(text) {
+    clearTimeout(casovacFronty);
+    casovacFronty = setTimeout(() => {
+        if (stav.udrzbaHledat === text.trim()) return;
+        stav.udrzbaHledat = text.trim();
+        stav.prehledLimit = STRANKA;
+        vykreslitSeznam();
+    }, 120);
 }
 
 // Přepnutí režimu (zapamatuje se); z Po modelkách s rozepsanými změnami se nejdřív zeptá.
@@ -719,12 +731,6 @@ function prepnoutSkupinu(klic, rozbalit = null) {
     /** @type {HTMLElement} */ (cast('fronta').querySelector(`[data-radek="${CSS.escape(klic)}"]`))?.focus({ preventScroll: true });
 }
 
-function zaostritHledani() {
-    const pole = /** @type {HTMLInputElement} */ (sekce()?.querySelector('[data-ud-hledat]'));
-    pole?.focus();
-    pole?.select();
-}
-
 // Obsluha událostí; volá ji prehled.js (nacistPrehled = celé načtení Přehledu)
 export function pripravit(nacistPrehled) {
     nacist = nacistPrehled;
@@ -768,6 +774,19 @@ export function pripravit(nacistPrehled) {
             nastavitRezim(rezim.dataset.udRezim);
             return;
         }
+        const razeni = /** @type {HTMLElement} */ (cil.closest('[data-ud-razeni-volba]'));
+        if (razeni) {
+            stav.udrzbaRazeni = razeni.dataset.udRazeniVolba;
+            try { localStorage.setItem('udrzbaRazeni', stav.udrzbaRazeni); } catch { /* jen se nezapamatuje */ }
+            prepocitat();
+            vykreslit();
+            return;
+        }
+        if (cil.closest('[data-ud-skryte]')) {
+            stav.prehledSkryte = !stav.prehledSkryte;
+            nacist();
+            return;
+        }
         // Režimy Po údajích a Po modelkách mají vlastní obsluhu
         if (!cil.closest('[data-ud="souhrn"]')) return;
         if (cil.closest('[data-ud-vice]')) {
@@ -788,9 +807,6 @@ export function pripravit(nacistPrehled) {
             vykreslit();
         } else if (cil.closest('[data-uceni-zapomenout]')) {
             uceni.zapomenout().then(ok => { if (ok) nacist(); });
-        } else if (cil.closest('[data-ud-skryte]')) {
-            stav.prehledSkryte = !stav.prehledSkryte;
-            nacist();
         } else if (cil.closest('[data-ud-hromadne]')) {
             const r = cil.closest('[data-ud-hromadne]').getBoundingClientRect();
             const vse = vychoziRozbaleni(stav.udrzbaFiltr) && !prepnute.get(stav.udrzbaFiltr)?.size;
@@ -800,11 +816,10 @@ export function pripravit(nacistPrehled) {
             stav.prehledLimit += STRANKA;
             vykreslitSeznam();
         } else if (cil.closest('[data-ud-zrusit-hledani]')) {
-            const pole = /** @type {HTMLInputElement} */ (sekce().querySelector('[data-ud-hledat]'));
-            pole.value = '';
+            searchInput.value = '';
             stav.udrzbaHledat = '';
             vykreslitSeznam();
-            pole.focus();
+            searchInput.focus();
         } else if (cil.closest('[data-ud-otevrit]')) {
             const s = model.skupiny.find(sk => sk.klic === cil.closest('.ud-skupina')?.dataset.klic);
             if (s?.druh === 'vydani') otevritVydani(s.vydani);
@@ -823,59 +838,33 @@ export function pripravit(nacistPrehled) {
         }
     });
 
-    // Hledání (s krátkou pauzou v psaní) a řazení
-    let casovacHledani = null;
-    stats.addEventListener('input', (e) => {
-        const pole = /** @type {HTMLInputElement} */ (e.target);
-        if (!pole.matches?.('[data-ud-hledat]')) return;
-        clearTimeout(casovacHledani);
-        casovacHledani = setTimeout(() => {
-            stav.udrzbaHledat = pole.value.trim();
-            stav.prehledLimit = STRANKA;
-            vykreslitSeznam();
-        }, 120);
-    });
     stats.addEventListener('change', (e) => {
         const vyberRazeni = /** @type {HTMLSelectElement} */ (e.target);
         // Úzké okno: výběr filtru a zdroje místo bočního seznamu
         if (vyberRazeni.matches?.('[data-ud-vyber-filtru]')) return nastavitFiltr(vyberRazeni.value);
         if (vyberRazeni.matches?.('[data-ud-vyber-zdroje]')) return nastavitFiltr(stav.udrzbaFiltr, vyberRazeni.value);
-        if (!vyberRazeni.matches?.('[data-ud-razeni]')) return;
-        stav.udrzbaRazeni = vyberRazeni.value;
-        try { localStorage.setItem('udrzbaRazeni', vyberRazeni.value); } catch { /* jen se nezapamatuje */ }
-        prepocitat();
-        vykreslitSeznam();
     });
 
-    // Ctrl+F a / skočí do hledání Údržby (hledá ve frontě); hlavní hledání nahoře dostane Ctrl+F jinde, proto
-    // se klávesa zachytí dřív
+    // / skočí do hledání nahoře (v Souhrnu hledá ve frontě; Ctrl+F tam vede všude). ↓ nebo Enter z hledání skočí do
+    // fronty
     document.addEventListener('keydown', (e) => {
-        if (!udrzbaVidet() || !vSouhrnu() || stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
+        if (!hledaniVeFronte() || stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
         const pise = /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select');
-        if (((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === 'f') || (e.key === '/' && !pise && !e.ctrlKey && !e.altKey)) {
+        if (e.key === '/' && !pise && !e.ctrlKey && !e.altKey) {
             e.preventDefault();
-            zaostritHledani();
+            searchInput.focus();
+            searchInput.select();
+        } else if (e.target === searchInput && (e.key === 'ArrowDown' || e.key === 'Enter')) {
+            e.preventDefault();
+            /** @type {HTMLElement} */ (cast('fronta').querySelector('[data-radek]'))?.focus();
         }
-    }, true);
+    });
 
     // Klávesnice ve frontě Souhrnu: ↑↓ řádky, Home/End, PageUp/PageDown, → rozbalí, ← sbalí, Enter hlavní akce,
     // mezerník rozbalí skupinu, Delete odloží položku (Netýká se, V pořádku, Odmítnout), E upraví návrh,
-    // S otevře skupinu v režimu Po modelkách, Esc v hledání ho vymaže a ↓ z hledání skočí do fronty
+    // S otevře skupinu v režimu Po modelkách
     stats.addEventListener('keydown', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
-        if (cil.matches?.('[data-ud-hledat]')) {
-            if (e.key === 'Escape' && /** @type {HTMLInputElement} */ (cil).value) {
-                e.preventDefault();
-                e.stopPropagation();
-                /** @type {HTMLInputElement} */ (cil).value = '';
-                stav.udrzbaHledat = '';
-                vykreslitSeznam();
-            } else if (e.key === 'ArrowDown' || e.key === 'Enter') {
-                e.preventDefault();
-                /** @type {HTMLElement} */ (cast('fronta').querySelector('[data-radek]'))?.focus();
-            }
-            return;
-        }
         const radek = cil.closest?.('[data-radek]');
         if (!radek || radek !== cil || !cast('fronta')?.contains(radek) || e.ctrlKey || e.altKey || e.metaKey) return;
         const radky = /** @type {HTMLElement[]} */ ([...cast('fronta').querySelectorAll('[data-radek]')]);

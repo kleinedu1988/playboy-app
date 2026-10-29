@@ -8,6 +8,7 @@ import { VELIKOST_NAHLEDU, adresaTitulni } from './obrazky';
 import { otevritDetailModelky } from './profil';
 import { otevritVydani } from './vydani';
 import { otevritClanek } from './clanky';
+import { hledaniVeFronte, hledatVeFronte } from './udrzba';
 
 const naseptavac = document.getElementById('naseptavac');
 const zavoj = document.getElementById('naseptavacZavoj');
@@ -23,7 +24,7 @@ let otevritPrvni = false; // Enter dřív, než doběhlo hledání: po vykreslen
 
 // Na stránkách Hodnocení, Síň slávy a Sbírka hledání nic nefiltruje, jen najde modelku (číslo, článek) a otevře ji:
 // bez příkazů a možností filtru, Enter otevře první výsledek
-const jenNajit = () => stav.rezim === 'prehled' && !stats.classList.contains('hidden');
+const jenNajit = () => stav.rezim === 'prehled' && !stats.classList.contains('hidden') && !hledaniVeFronte();
 // Kalendář (náhledy obálek čísel) se načte při prvním hledání a obnoví při každém novém zaměření pole
 let kalendar = null;
 
@@ -159,7 +160,8 @@ async function hledat() {
     const trimDotaz = dotaz.trim();
     const moje = ++cisloHledani;
 
-    if (!trimDotaz || searchInput.disabled) return zavritNaseptavac();
+    // V Souhrnu Údržby hledání filtruje frontu, výsledky pod polem by překážely
+    if (!trimDotaz || searchInput.disabled || hledaniVeFronte()) return zavritNaseptavac();
 
     const { slovoPred } = ziskatAktivniSlovo();
     const negPrefix = (slovoPred.startsWith('-') || slovoPred.startsWith('!')) ? slovoPred[0] : '';
@@ -348,8 +350,11 @@ export function pripravit() {
             clearTimeout(casovac);
             cisloHledani++;
             otevritPrvni = false;
-            // Na stránkách Přehledu text nic nefiltruje: Esc při zavřených výsledcích pole vyprázdní
-            if (naseptavac.classList.contains('hidden') && jenNajit()) searchInput.value = '';
+            // Na stránkách Přehledu text nic nefiltruje: Esc při zavřených výsledcích pole vyprázdní (v Údržbě i filtr fronty)
+            if (naseptavac.classList.contains('hidden') && (jenNajit() || hledaniVeFronte()) && searchInput.value) {
+                searchInput.value = '';
+                if (hledaniVeFronte()) hledatVeFronte('');
+            }
         }
         // Enter dřív, než se ukázaly výsledky: na stránkách Přehledu se otevře první, až hledání doběhne
         if (e.key === 'Enter' && naseptavac.classList.contains('hidden') && jenNajit() && searchInput.value.trim().length >= 2) {

@@ -13,6 +13,8 @@ import { vsechnyModelky } from './mezipamet';
 import { prestatNacitat } from './obrazky';
 import { prestatSledovatKonce } from './nejlepsi';
 import { zrusitHledani } from './naseptavac';
+import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
+import { nastavitCastOblibenosti } from './oblibenost';
 
 // Přehledy se seznamy (galerie, stěna, čísla, kalendář, nejlepší) se při každém zobrazení vykreslují celé znovu.
 // Skryté by jen držely tisíce karet a fotek, které zpomalují každou další akci (úklid paměti, hledání v dokumentu,
@@ -95,16 +97,19 @@ export const historie = [];
 // Kalendář je zobrazení Čísel: Zpět se jmenuje podle záložky
 export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Centerfoldy', covery: 'Čísla', kalendar: 'Čísla', nejlepsi: 'Nejlepší', prehled: 'Sbírka' };
 // Přehled má tři stránky (tlačítka vpravo v liště); Zpět se jmenuje podle té, ze které se odešlo
-const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy' };
+// Přehled má stránky Hodnocení a Síň slávy (Oblíbenost) a Sbírku s částmi; Zpět se jmenuje podle té, ze které se
+// odešlo (úvod Sbírky je prostě „Sbírka“)
+const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy', uvod: 'Sbírka', udrzba: 'Údržba', shanim: 'Sháním CZ', statistiky: 'Statistiky' };
+const strankaPrehledu = ({ sekce, cast }) => NAZVY_STRANEK[sekce === 'oblibenost' ? cast : sekce] || NAZVY_REZIMU.prehled;
 
 export function popisZpet() {
     const misto = historie[historie.length - 1];
     if (misto?.typ === 'profil') return misto.modelka.jmeno;
     if (misto?.typ === 'vydani') return nazevVydani(misto.vydani);
     if (misto?.typ === 'fotograf') return misto.jmeno;
-    const rezim = misto?.rezim || stav.rezim;
-    if (rezim === 'prehled' && stav.prehledSekce === 'oblibenost') return NAZVY_STRANEK[stav.oblibenostCast] || NAZVY_REZIMU.prehled;
-    return NAZVY_REZIMU[rezim];
+    if (misto?.rezim === 'prehled') return strankaPrehledu(misto.prehled);
+    if (!misto && stav.rezim === 'prehled') return strankaPrehledu({ sekce: stav.prehledSekce, cast: stav.oblibenostCast });
+    return NAZVY_REZIMU[misto?.rezim || stav.rezim];
 }
 
 export function soucasneMisto() {
@@ -112,7 +117,10 @@ export function soucasneMisto() {
     const fokus = selektorFokusu();
     if (!detailView.classList.contains('hidden')) return { typ: 'profil', modelka: stav.aktualniModelka, seznam: stav.seznamProfilu, scroll, fokus };
     if (!issueView.classList.contains('hidden')) return stav.aktualniFotograf ? { typ: 'fotograf', jmeno: stav.aktualniFotograf, scroll, fokus } : { typ: 'vydani', vydani: stav.aktualniVydani, scroll, fokus };
-    return { typ: 'prehled', rezim: stav.rezim, scroll, fokus };
+    // V Přehledu i stránka a část, aby Zpět vrátilo přesně tam (Údržba, Kronika…)
+    const prehled = stav.rezim === 'prehled'
+        ? { sekce: stav.prehledSekce, cast: stav.oblibenostCast, pohled: stav.hodnoceniPohled, slava: pohledSlavy() } : null;
+    return { typ: 'prehled', rezim: stav.rezim, prehled, scroll, fokus };
 }
 
 // Před otevřením profilu nebo vydání se zapamatuje, odkud se přišlo (ne při návratu na totéž místo)
@@ -144,6 +152,12 @@ export async function zpet() {
     } else if (misto?.typ === 'fotograf') {
         await otevritFotografa(misto.jmeno, { bezHistorie: true });
     } else {
+        if (misto?.prehled) {
+            stav.prehledSekce = misto.prehled.sekce;
+            nastavitCastOblibenosti(misto.prehled.pohled);
+            if (misto.prehled.cast === 'slava') nastavitCastOblibenosti('slava');
+            nastavitPohledSlavy(misto.prehled.slava);
+        }
         if (misto) prepnoutRezim(misto.rezim);
         await nacistGalerii(searchInput.value);
     }
@@ -249,4 +263,12 @@ export function zvyraznitRezim() {
     prizpusobitListu();
 }
 
-window.addEventListener('resize', () => prizpusobitListu());
+// Lišta se přizpůsobí při každé změně šířky lišty nebo voleb uprostřed (i po načtení písma). Spodní hrana hlavičky
+// (v úzkém okně má lišta víc řádků) posouvá rejstříky u pravého okraje (--pod-hlavickou).
+const hlavicka = document.querySelector('.navbar');
+const sledovatListu = new ResizeObserver(() => {
+    prizpusobitListu();
+    document.documentElement.style.setProperty('--pod-hlavickou', `${Math.round(hlavicka.getBoundingClientRect().bottom)}px`);
+});
+[hlavicka, prepinacRezimu, document.getElementById('volbyPrehledu')].forEach(p => sledovatListu.observe(p));
+document.fonts?.ready.then(() => prizpusobitListu());

@@ -19,6 +19,7 @@ import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { htmlClanku, htmlProuzku, otevritEditorClanku } from './clanky';
 import { otevritCtecku } from './ctecka';
 import { htmlPrazdna } from '../ui/prazdno';
+import { obnovitVolby } from '../ui/volby';
 import { upravitText } from '../ui/editor-textu';
 
 // Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
@@ -30,6 +31,8 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
     stav.vydaniClanky = clanky;
     stav.aktualniVydani = vydani;
     stav.aktualniFotograf = null;
+    // Stránka čísla volby pod hledáním nemá (řádek fotografa z minula už neplatí)
+    issueView.dataset.volbyCasti = 'vydani';
     ukazatPohled(issueView);
     document.querySelector('main').scrollTop = 0;
     // Ročník (bez měsíce) má vlastní rozvržení po měsících
@@ -264,6 +267,7 @@ export async function otevritFotografa(jmeno, { bezHistorie = false } = {}) {
     // Jiný fotograf začíná se všemi alby; obnovení téže stránky filtr nechá
     if (stav.aktualniFotograf !== jmeno) stav.fotografFiltr = 'vse';
     stav.aktualniFotograf = jmeno;
+    issueView.dataset.volbyCasti = 'fotograf';
     ukazatPohled(issueView);
     document.querySelector('main').scrollTop = 0;
 
@@ -287,7 +291,8 @@ export async function otevritFotografa(jmeno, { bezHistorie = false } = {}) {
 }
 
 // Alba fotografa jako mřížka karet (jako ročník): obálka alba s páskou vydání, počet fotek, pod ní modelka
-// a název alba. Filtr nahoře: vše, centerfoldy, ostatní alba. Klik na kartu otevře album v prohlížeči.
+// a název alba. Filtr Vše / Centerfoldy / Pictorialy a alba je pod hledáním (skrytý řádek štítků převezme
+// ui/volby.js), na konci počet alb. Klik na kartu otevře album v prohlížeči.
 let albaFotografa = [];
 const FILTRY_FOTOGRAFA = { vse: 'Vše', centerfoldy: 'Centerfoldy', alba: 'Pictorialy a alba' };
 
@@ -316,10 +321,12 @@ function vykreslitAlbaFotografa() {
     }).join('');
 
     document.getElementById('issueMain').innerHTML = albaFotografa.length ? `
-        ${pocty.centerfoldy && pocty.alba ? `<div class="fotograf-filtr">${Object.entries(FILTRY_FOTOGRAFA).map(([klic, nazev]) =>
-            `<button class="${klic === stav.fotografFiltr ? 'active' : ''}" data-filtr-fotografa="${klic}">${nazev} <span>${pocty[klic]}</span></button>`).join('')}</div>` : ''}
+        <div class="volby-v-liste" data-volby-casti="fotograf">${pocty.centerfoldy && pocty.alba ? Object.entries(FILTRY_FOTOGRAFA).map(([klic, nazev]) =>
+            `<button type="button" class="chip ${klic === stav.fotografFiltr ? 'active' : ''}" data-filtr-fotografa="${klic}">${nazev}<span>${pocty[klic]}</span></button>`).join('') : ''}
+            <span>${esc(sklonovat(alba.length, 'album', 'alba', 'alb'))}</span></div>
         <div class="rocnik-mrizka">${karty}</div>`
         : htmlPrazdna('Zatím žádná alba', 'Alba se fotografovi přiřadí podle jména v poli Fotograf v úpravě alba.');
+    obnovitVolby(issueView);
 }
 
 // Údaje čísla: stav ve sbírce, modelka z obálky, poznámka

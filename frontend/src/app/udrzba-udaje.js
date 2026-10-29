@@ -108,7 +108,7 @@ function htmlBoku(po) {
     return po.oblasti.map(o => `<h5>${o.nazev}</h5>${o.udaje.map(u => htmlUdaje(u)).join('')}`).join('')
         // Zobrazený údaj, který se právě dodělal, zůstane v seznamu se zaškrtnutím
         + (zobrazeny && !po.udaje.get(zobrazeny)?.pocet && po.udaje.get(zobrazeny) ? `<h5>Hotovo</h5>${htmlUdaje(po.udaje.get(zobrazeny))}` : '')
-        || '<p class="uu-prazdne">Nic nechybí.</p>';
+        || '<p class="prazdno-male">Nic nechybí.</p>';
 }
 
 function htmlUdaje(u) {

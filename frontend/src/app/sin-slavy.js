@@ -14,7 +14,7 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { htmlSrdicka, htmlTrendu } from './galerie';
 import { nastavitHtml } from '../ui/dom';
-import { htmlPrazdna } from '../ui/prazdno';
+import { htmlPrazdna, htmlPrazdnaMala } from '../ui/prazdno';
 
 let kontejner = null;
 let data = null;
@@ -200,7 +200,7 @@ function htmlTop(rekordy, odznaky) {
     const zbytek = data.vitrina.filter(x => !stupne.includes(x));
     const ostatni = zbytek.map(x => htmlKarty(x, rekordy.get(x.modelkaId), false, odznaky.get(x.modelkaId))).join('');
     const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada slava-skupina ${zbytek.length >= 6 ? 'husta' : ''}" style="--karet: ${zbytek.length}">${ostatni}</div>${misto}` : '');
-    if (!top) return `<p class="slava-nic">Zatím žádná potvrzená v Top 10. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20. <button type="button" class="link" data-ob-porovnavat>Porovnat →</button></p>`;
+    if (!top) return htmlPrazdna('Top 10 je zatím prázdná', 'Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' });
     return `<p class="slava-uvod">Jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy · odznaky pod jménem · klik na modelku otevře její vitrínu</p>${top}${htmlNaDosah()}`;
 }
 
@@ -343,7 +343,7 @@ function vybrat(id, prepnout = true) {
 
 // Pohled Legendy: bývalé Top 10 jako portréty na stěně, pod jménem kdy v ní byly
 function htmlLegend(rekordy, odznaky) {
-    if (!data.legendy.length) return '<p class="slava-nic">Zatím nikdo z Top 10 nevypadl.</p>';
+    if (!data.legendy.length) return htmlPrazdna('Zatím žádné legendy', 'Legendy jsou modelky, které z Top 10 vypadly – tady uvidíš, kdo v ní vydržel nejdéle.', { ikona: 'hvezda' });
     const dni = data.legendy.reduce((s, x) => s + (x.dniCelkem || 0), 0);
     return `<p class="slava-uvod">${esc(sklonovat(data.legendy.length, 'bývalá členka', 'bývalé členky', 'bývalých členek'))} Top 10 · dohromady ${esc(textDni(dni))} v ní · vpravo nahoře nejlepší místo</p>
         <div class="slava-legendy">${data.legendy.map(x => htmlKarty(x, rekordy.get(x.modelkaId), true, odznaky.get(x.modelkaId))).join('')}</div>`;
@@ -475,7 +475,7 @@ function htmlKroniky() {
         const foto = u.modelkaId && modelka(u.modelkaId) ? `<button type="button" class="kronika-foto" data-otevrit-modelku="${u.modelkaId}" aria-label="${esc(jmeno(u.modelkaId))}">${htmlAvataru(u.modelkaId)}</button>` : '';
         return `<li class="kronika-udalost druh-${esc(u.druh)}">${cas}<span class="kronika-uzel${stupen}" aria-hidden="true">${t.ikona}</span><div class="kronika-obsah">${foto}<p>${esc(t.text)}</p></div></li>`;
     }).join('')}`).join('');
-    return `${filtry}<ol class="kronika-osa">${osa || '<li class="slava-nic">Žádné události tohoto druhu.</li>'}</ol>`;
+    return `${filtry}<ol class="kronika-osa">${osa || htmlPrazdnaMala('Žádné události tohoto druhu.', 'li')}</ol>`;
 }
 
 function vykreslit() {

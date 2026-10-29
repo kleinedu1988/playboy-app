@@ -5,6 +5,7 @@ import { MESICE, RADY_EDIC, ciselRocniku, cisloNevyslo, esc, formatDatum, nazevV
 import { adresaTitulni } from './obrazky';
 import { poctyCekajicich, textCekajicich } from '../lib/oblibenost';
 import { grafSloupcu } from './statistiky';
+import { htmlPrazdna } from '../ui/prazdno';
 
 // Mapy začínají prvním číslem edice (RADY_EDIC); měsíce mimo měsíční řadu jsou v nich prázdné
 const PRVNI_ROK_CZ = parseInt(RADY_EDIC.CZ.od);
@@ -138,14 +139,14 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
             </div>
             <div class="uvod-karta" data-graf-dekad>
                 <h4>Centerfoldy podle desetiletí</h4>
-                <p class="stat-prazdne">Počítám…</p>
+                <p class="prazdno-male">Počítám…</p>
             </div>
         </div>
         <div class="uvod-karta uvod-radek">
             <h4>Naposledy přidané</h4>
             ${naposledy.length ? `<div class="uvod-naposledy">${naposledy.map(m => `
                 <button type="button" data-otevrit-modelku="${m.id}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(m.jmeno)}<small>${esc(formatDatum(m.pridano.slice(0, 10)))}</small></button>`).join('')}</div>`
-                : '<p class="uvod-hotovo">Zatím žádné modelky.</p>'}
+                : '<p class="prazdno-male">Zatím žádné modelky.</p>'}
         </div>
         <div class="graf-bublina hidden"></div>`;
 }
@@ -159,7 +160,7 @@ function htmlOblibenostiUvodu(ob, modelky) {
         const m = podleId.get(x.modelkaId) || { id: x.modelkaId, jmeno: x.jmeno };
         return `<button type="button" data-otevrit-modelku="${x.modelkaId}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(x.jmeno)}<small>${popis(x)}</small></button>`;
     }).join('')}</div>`;
-    const prazdne = text => `<p class="uvod-hotovo">${text}</p>`;
+    const prazdne = text => `<p class="prazdno-male">${text}</p>`;
     const cekaji = textCekajicich(poctyCekajicich(modelky));
     const top = (ob.top.length ? seznam(ob.top, x => `${x.poradi}.`)
         : modelky.some(m => m.hodnoceni) || cekaji
@@ -218,7 +219,7 @@ export function htmlShanim(stavy, modelky = []) {
         ${cisla.length ? `<div class="uvod-karta uvod-shanim">${[...podleRoku].map(([rok, seznam]) => `
             <div class="uvod-shanim-rok"><b>${rok}</b><div>${seznam.map(s => `
                 <button type="button" class="chip" data-shanim="${esc(s.vydani)}" title="${esc(nazevVydani(s.vydani) + (s.poznamka ? ` – ${s.poznamka}` : ''))}">${esc(nazevVydani(s.vydani).replace(/ \d{4}.*$/, ''))}${s.poznamka ? `<small>${esc(s.poznamka)}</small>` : ''}</button>`).join('')}</div></div>`).join('')}
-        </div>` : '<p class="stat-prazdne">Žádné číslo české edice nemá stav „sháním“. Označíš ho v mapě na úvodu Sbírky pravým tlačítkem, v kalendáři nebo v „Upravit číslo…“.</p>'}`;
+        </div>` : htmlPrazdna('Nic nesháníš', 'Žádné číslo české edice nemá stav „sháním“. Označíš ho v mapě na úvodu Sbírky pravým tlačítkem, v kalendáři nebo v „Upravit číslo…“.', { ikona: 'hledani' })}`;
 }
 
 // Text seznamu k vložení do zprávy nebo poznámek (např. pro antikvariát)
@@ -234,6 +235,6 @@ export function textShanim(stavy) {
 
 // Graf centerfoldů podle desetiletí; počítá se až po zobrazení úvodu
 export function htmlGrafuDekad(s) {
-    if (!s.desetileti.length) return '<p class="stat-prazdne">Zatím žádné centerfoldy.</p>';
+    if (!s.desetileti.length) return '<p class="prazdno-male">Zatím žádné centerfoldy.</p>';
     return grafSloupcu(s.desetileti.map(d => ({ hodnota: d.centerfoldy, popisek: `${String(d.desetileti).slice(2)}.`, tip: `${d.desetileti}–${d.desetileti + 9}: ${sklonovat(d.centerfoldy, 'centerfold', 'centerfoldy', 'centerfoldů')}` })), { vyska: 170 });
 }

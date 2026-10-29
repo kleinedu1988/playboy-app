@@ -12,16 +12,22 @@ const CESTY = {
 
 const ikona = nazev => `<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${CESTY[nazev] || CESTY.foto}</svg>`;
 
-// tlacitko = { text, akce } (akce je název z nastavitAkcePrazdna); ikona = klíč z CESTY
-export function htmlPrazdna(nadpis, text, { tlacitko = null, ikona: nazevIkony = 'foto' } = {}) {
+// Prázdný celý pohled nebo část stránky (Top 10, Sháním CZ, Statistiky…). tlacitko = { text, akce } (akce je název
+// z nastavitAkcePrazdna); odkaz = HTML odkazu pod větou, který obslouží stránka sama; ikona = klíč z CESTY
+export function htmlPrazdna(nadpis, text, { tlacitko = null, odkaz = '', ikona: nazevIkony = 'foto' } = {}) {
     return `
         <div class="prazdno">
             <div class="prazdno-vejir" aria-hidden="true"><i></i><i></i><i>${ikona(nazevIkony)}</i></div>
             <h4>${esc(nadpis)}</h4>
             <p>${esc(text)}</p>
+            ${odkaz}
             ${tlacitko ? `<button type="button" class="prazdno-tlacitko" data-prazdno-akce="${esc(tlacitko.akce)}">${tlacitko.akce.startsWith('pridat') ? '<span aria-hidden="true">+</span> ' : ''}${esc(tlacitko.text)}</button>` : ''}
         </div>`;
 }
+
+// Prázdná karta nebo seznam uvnitř stránky (Stoupají, filtr kroniky bez událostí, „Počítám…“): jedna tichá věta.
+// html smí obsahovat odkaz (volající ho escapuje sám)
+export const htmlPrazdnaMala = (html, znacka = 'p') => `<${znacka} class="prazdno-male">${html}</${znacka}>`;
 
 // Hledání nic nenašlo: lupa a tlačítko, které zruší hledání i filtry
 export const htmlNicNenalezeno = (text) => htmlPrazdna('Nic nenalezeno', text, { ikona: 'hledani', tlacitko: { text: 'Zrušit hledání a filtry', akce: 'zrusit' } });

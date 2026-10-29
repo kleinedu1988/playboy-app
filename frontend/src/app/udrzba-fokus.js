@@ -18,6 +18,7 @@ import { hodnotaPoKlavese, textSrdicek } from '../lib/srdicka';
 import { oznamit } from '../ui/oznameni';
 import * as navrhy from './navrhy';
 import * as uceni from './uceni';
+import { htmlPrazdna } from '../ui/prazdno';
 
 // Fronta vpravo ukáže kousek před kartou a tolik za ní (delší fronta je jen počet)
 const PRED = 2;
@@ -231,7 +232,7 @@ function prestavetKartu() {
     const s = skupina;
     const modelka = s ? api.modelka(s) : null;
     if (!s) {
-        karta.innerHTML = '<p class="uf-prazdne">Ve výběru už nic nezbývá.</p>';
+        karta.innerHTML = htmlPrazdna('Hotovo', 'Ve výběru už nic nezbývá – vyber jiný filtr, nebo přepni na Souhrn.', { ikona: 'hvezda' });
         return;
     }
     karta.innerHTML = `

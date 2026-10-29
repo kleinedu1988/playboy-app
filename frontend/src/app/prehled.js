@@ -62,7 +62,7 @@ const KOSTRA = `
             <section class="stat-section" data-sekce="udrzba"></section>
             <section class="stat-section" data-sekce="oblibenost"></section>
             <!-- Statistiky se počítají až při prvním zobrazení oddílu -->
-            <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="stat-prazdne">Počítám statistiky…</p></section>
+            <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="prazdno-male">Počítám statistiky…</p></section>
         </div>`;
 
 // Pokrok sbírky po položkách na úvodu (pruh, kolik z kolika); klik otevře Údržbu s filtrem na tu položku
@@ -114,12 +114,12 @@ export async function nacistPrehled() {
     udrzba.vykreslit();
     const sekceStatistik = obsah.querySelector('[data-sekce="statistiky"]');
     if (stav.prehledSekce === 'statistiky') nacistStatistiky(sekceStatistik);
-    else sekceStatistik.innerHTML = '<p class="stat-prazdne">Počítám statistiky…</p>';
+    else sekceStatistik.innerHTML = '<p class="prazdno-male">Počítám statistiky…</p>';
     if (stav.prehledSekce === 'oblibenost') nacistOblibenost(obsah.querySelector('[data-sekce="oblibenost"]'));
     // Graf desetiletí na úvodu se dopočítá zvlášť (statistiky se počítají z celé sbírky); jen když se úvod přepsal
     const grafDekad = uvod.querySelector('[data-graf-dekad]');
-    if (grafDekad?.querySelector('.stat-prazdne')) {
-        GetStatistiky().then(s => { if (grafDekad.isConnected) grafDekad.querySelector('.stat-prazdne')?.replaceWith(...htmlNaPrvky(htmlGrafuDekad(s))); });
+    if (grafDekad?.querySelector('.prazdno-male')) {
+        GetStatistiky().then(s => { if (grafDekad.isConnected) grafDekad.querySelector('.prazdno-male')?.replaceWith(...htmlNaPrvky(htmlGrafuDekad(s))); });
     }
 }
 
@@ -150,7 +150,20 @@ function obnovitCasti() {
     if (stav.rezim === 'prehled' && !stats.classList.contains('hidden')) {
         obnovitVolby(stats);
         zvyraznitRezim();
+        nastavitHledani();
     }
+}
+
+// V Souhrnu Údržby hlavní hledání filtruje frontu (ukáže její hledání), jinde na stránkách Přehledu najde modelku
+let hledaniFronty = false;
+function nastavitHledani() {
+    const fronta = udrzba.hledaniVeFronte();
+    searchInput.placeholder = fronta ? 'Hledat ve frontě Údržby…' : 'Najít modelku…';
+    searchInput.title = fronta ? 'Údržba: jméno modelky nebo číslo; ↓ skočí do fronty, Esc hledání zruší. Do hledání skočíš klávesami Ctrl+F nebo /.'
+        : 'Jméno modelky, číslo nebo článek; Enter otevře první výsledek. Do hledání skočíš klávesami Ctrl+F.';
+    if (fronta && document.activeElement !== searchInput) searchInput.value = stav.udrzbaHledat;
+    else if (!fronta && hledaniFronty) searchInput.value = '';
+    hledaniFronty = fronta;
 }
 
 // Tlačítko v liště: Hodnocení a Síň slávy (Oblíbenost), nebo Sbírka na naposledy zvolené části (úvod, Údržba,

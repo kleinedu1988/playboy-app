@@ -1,5 +1,6 @@
 // Výběrová okna, ukládání formulářů a hledání
 import { esc, jeOnline, obdobiCyberGirl, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
+import { hledaniVeFronte, hledatVeFronte } from './udrzba';
 import { AddBulkPhotos, AddModelka, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -299,8 +300,7 @@ export function pripravit() {
         searchInput.focus();
     });
 
-    // Ctrl+F skočí do hledání odkudkoli kromě otevřeného okna, prohlížeče a zamčeného programu (Údržba má vlastní
-    // hledání a klávesu si vezme dřív)
+    // Ctrl+F skočí do hledání odkudkoli kromě otevřeného okna, prohlížeče a zamčeného programu
     document.addEventListener('keydown', (e) => {
         if (!(e.ctrlKey || e.metaKey) || e.altKey || e.key.toLowerCase() !== 'f' || e.defaultPrevented) return;
         if (stav.zamceno || otevreneOkno() || jeVidet('lightbox')) return;
@@ -322,6 +322,8 @@ export function pripravit() {
                 return;
             }
             if (stav.rezim !== 'prehled') nacistGalerii(searchInput.value, true);
+            // V Souhrnu Údržby hlavní hledání filtruje frontu
+            else if (hledaniVeFronte()) hledatVeFronte(searchInput.value);
         }, 180);
     });
 }

@@ -24,14 +24,21 @@ const POPISKY = {
     udRezim: 'Režim Údržby',
     kronikaFiltr: 'Události',
     poradiRozsah: 'Pořadí',
+    filtrFotografa: 'Alba',
+    spGrafVolba: 'Graf',
+    spDruhVolba: 'Výskyt',
+    spEdiceVolba: 'Edice',
+    spVyber: 'Výběr',
+    udRazeniVolba: 'Řazení',
+    udSkryte: 'Vyřízené',
 };
 
-const RAZENI = new Set(['razeniGalerie', 'razeniSteny']);
+const RAZENI = new Set(['razeniGalerie', 'razeniSteny', 'udRazeniVolba']);
 // Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
-const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim', 'poradiRozsah']);
+const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim', 'poradiRozsah', 'filtrFotografa']);
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
-const VYPINATELNE = new Set(['minHodnoceni', 'stenaMin', 'vyberId']);
+const VYPINATELNE = new Set(['minHodnoceni', 'stenaMin', 'vyberId', 'spVyber', 'udSkryte']);
 
 // Výběr v Nejlepších mění, odkud fotky jsou, a má vlastní akce (přejmenovat, smazat): zůstává samostatným tlačítkem
 const SAMOSTATNE = new Set(['vyberId']);
@@ -71,7 +78,7 @@ const IKONY_ZOBRAZENI = {
 };
 // Ikona volby podle názvu (i pro pilulky v obsahu, ať vypadají jako volby v liště); neznámý název nic
 export const ikonaZobrazeni = nazev => IKONY_ZOBRAZENI[nazev] || '';
-const TITULKY_ZOBRAZENI = { zobrazeniCisel: 'Zobrazení čísel', ghRazeni: 'Pořadí fotek', udRezim: 'Režim Údržby', poradiRozsah: 'Rozsah pořadí' };
+const TITULKY_ZOBRAZENI = { zobrazeniCisel: 'Zobrazení čísel', ghRazeni: 'Pořadí fotek', udRezim: 'Režim Údržby', poradiRozsah: 'Rozsah pořadí', filtrFotografa: 'Alba fotografa' };
 const IKONA_PREHRAT = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>';
 
 // Panel filtrů zůstává otevřený i po změně filtru (přehled se překreslí a panel se naplní znovu)

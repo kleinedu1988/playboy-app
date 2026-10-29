@@ -70,7 +70,7 @@ const CASTI = [
         [k('Delete'), 'Netýká se, V pořádku, Odmítnout (jde vrátit)'],
         [k('E'), 'Upravit návrh ve formuláři'],
         [k('S'), 'Vyřídit modelku v režimu Po modelkách'],
-        [`${k('Ctrl', 'F')}${nebo}${k('/')}`, 'Hledat modelku nebo číslo'],
+        [`${k('Ctrl', 'F')}${nebo}${k('/')}`, 'Hledat ve frontě (hledání nahoře), ↓ skočí do fronty'],
     ] },
     { klic: 'vyber', nazev: 'Výběr fotek', radky: [
         [`${k('Ctrl')} + klik`, 'Přidat do výběru'],

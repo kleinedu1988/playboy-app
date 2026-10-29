@@ -3102,7 +3102,7 @@ button.tag:hover {
 /* Rejstřík je vidět jen při rolování a po najetí myší k pravému okraji (jako časová osa ve Fotkách) */
 .album-nav.svisla {
     position: fixed;
-    /* Pod hlavičkou; v nejužším okně je hlavička o řádek voleb vyšší (viz pravidla do 620 px) */
+    /* Pod hlavičkou (spodní hranu měří app/navigace.js; v úzkém okně má lišta víc řádků) */
     top: var(--pod-hlavickou, 92px);
     right: 6px;
     z-index: 20;
@@ -6861,84 +6861,9 @@ textarea {
     color: var(--accent-text);
 }
 
-/* ===== Statistiky v Přehledu: lišta (výběr grafu, edice, souhrn), graf a vedle něj modelky výběru ===== */
+/* ===== Statistiky (Sbírka): graf a vedle něj modelky výběru; graf, výskyt, edice a výběr jsou pod hledáním ===== */
 .stat-statistiky {
     position: relative;
-}
-
-.sp-lista {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 14px;
-}
-
-.sp-vyber-grafu select {
-    min-width: 250px;
-    padding: 8px 12px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 12px;
-    background-color: var(--panel-bg);
-    color: var(--text-main);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.sp-edice {
-    display: inline-flex;
-    gap: 2px;
-    padding: 3px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-}
-
-.sp-edice:empty {
-    display: none;
-}
-
-.sp-edice button {
-    padding: 4px 12px;
-    border: none;
-    border-radius: 999px;
-    background: none;
-    color: var(--text-muted);
-    font-size: 12.5px;
-    cursor: pointer;
-}
-
-.sp-edice button.active {
-    background-color: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent);
-    color: var(--text-main);
-}
-
-.sp-souhrn {
-    margin-left: auto;
-    color: var(--text-muted);
-    font-size: 13px;
-}
-
-.sp-souhrn b {
-    color: var(--text-main);
-    font-weight: 600;
-}
-
-/* Podmínky výběru jako štítky; výběr platí pro všechny grafy */
-.sp-filtry {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    margin: -4px 0 14px;
-    font-size: 13px;
-    color: var(--text-muted);
-}
-
-.sp-filtry:empty {
-    display: none;
 }
 
 /* Graf a seznam vedle sebe; v užším okně seznam pod grafem */
@@ -7303,10 +7228,12 @@ textarea {
     pointer-events: none;
 }
 
-.stat-prazdne {
+/* Prázdná karta nebo seznam uvnitř stránky (ui/prazdno.js htmlPrazdnaMala); prázdný celý pohled má .prazdno */
+.prazdno-male {
     margin: 10px 0 0;
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--text-muted);
+    list-style: none;
 }
 
 /* ===== Nabídky a lišta výběru v novém stylu: zaoblené průhledné panely, růžové zvýraznění, nadpisy skupin ===== */
@@ -7590,38 +7517,7 @@ textarea {
     text-transform: uppercase;
 }
 
-/* Stránka fotografa: filtr nad mřížkou alb a počet fotek na obálce alba */
-.fotograf-filtr {
-    display: flex;
-    gap: 4px;
-    width: max-content;
-    margin-bottom: 20px;
-    padding: 4px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-}
-
-.fotograf-filtr button {
-    padding: 5px 14px;
-    border: none;
-    border-radius: 999px;
-    background: none;
-    color: var(--text-muted);
-    font-size: 12.5px;
-    cursor: pointer;
-}
-
-.fotograf-filtr button span {
-    margin-left: 4px;
-    color: var(--text-muted);
-}
-
-.fotograf-filtr button.active {
-    background-color: var(--accent-soft);
-    box-shadow: inset 0 0 0 1px var(--accent);
-    color: var(--text-main);
-}
+/* Stránka fotografa: počet fotek na obálce alba (filtr alb je pod hledáním) */
 
 .fotograf-pocet {
     position: absolute;
@@ -8051,10 +7947,6 @@ textarea {
     .volby-skupina .volby-pocet {
         display: inline-flex;
     }
-
-    :root {
-        --pod-hlavickou: 136px;
-    }
 }
 
 /* Nejužší okno: ikony vpravo se přiblíží a čára mezi nimi zmizí, aby se vešly vedle záložek na jeden řádek */
@@ -8296,12 +8188,6 @@ textarea {
     color: var(--text-muted);
 }
 
-.uvod-hotovo {
-    margin: 0;
-    font-size: 12.5px;
-    color: var(--text-muted);
-}
-
 /* Sháním: řádek za rok, čísla jako štítky */
 .uvod-shanim-rok {
     display: grid;
@@ -8434,12 +8320,6 @@ textarea {
     color: var(--accent-text);
     font-size: 11px;
     font-style: normal;
-}
-
-.uu-prazdne {
-    margin: 8px 10px;
-    color: var(--text-muted);
-    font-size: 13px;
 }
 
 .uu-karta {
@@ -8960,53 +8840,6 @@ textarea {
     vertical-align: 1px;
 }
 
-.ud-hledat {
-    display: flex;
-    flex: 1 1 220px;
-    align-items: center;
-    gap: 8px;
-    max-width: 360px;
-    height: 32px;
-    padding: 0 12px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-    color: var(--text-muted);
-}
-
-.ud-hledat:focus-within {
-    border-color: var(--accent);
-}
-
-.ud-hledat input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    outline: none;
-    background: none;
-    color: var(--text-main);
-    font-size: 12.5px;
-}
-
-.ud-razeni {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.ud-razeni select {
-    height: 30px;
-    padding: 0 30px 0 12px;
-    background-position: right 10px center;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    background-color: var(--panel-bg);
-    color: var(--text-main);
-    font-size: 12px;
-}
-
 .ud-nastroj {
     height: 30px;
     padding: 0 12px;
@@ -9145,37 +8978,6 @@ textarea {
 .ud-bok-zdroj.on {
     background: none;
     box-shadow: inset 2px 0 0 var(--accent);
-}
-
-/* Vyřízené: přepínač s počtem */
-.ud-prepinac i {
-    flex: none;
-    position: relative;
-    width: 26px;
-    height: 14px;
-    border-radius: 999px;
-    background-color: rgba(255, 255, 255, 0.12);
-}
-
-.ud-prepinac i::after {
-    content: "";
-    position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: var(--text-muted);
-    transition: transform 0.15s ease;
-}
-
-.ud-prepinac.on i {
-    background-color: var(--accent);
-}
-
-.ud-prepinac.on i::after {
-    background-color: #fff;
-    transform: translateX(12px);
 }
 
 .ud-hlavni {
@@ -9403,16 +9205,6 @@ textarea {
 }
 
 .uf-hotovo,
-.uf-prazdne {
-    margin: 6px 0;
-    color: var(--vytisk);
-    font-size: 13.5px;
-}
-
-.uf-prazdne {
-    color: var(--text-muted);
-}
-
 .uf-pata {
     display: flex;
     flex-wrap: wrap;
@@ -10104,10 +9896,6 @@ span.ud-chip {
     .ud-radek > .ud-akce {
         grid-column: 3 / -1;
         justify-content: flex-start;
-    }
-
-    .ud-hledat {
-        max-width: none;
     }
 }
 
@@ -11468,11 +11256,6 @@ span.ud-chip {
 
 .slava-karty {
     margin-bottom: 28px;
-}
-
-.slava-nic {
-    margin: 0 0 28px;
-    color: var(--text-muted);
 }
 
 /* Místo vpravo nahoře (jako odznak Top 10 na kartě v galerii) */

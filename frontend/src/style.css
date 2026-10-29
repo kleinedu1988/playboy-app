@@ -104,9 +104,11 @@ textarea {
 
 /* Hlavička okna: nahoře řádek se záložkami a tlačítky okna, pod ním kontextová lišta a volitelný řádek s kapslí hledání */
 .navbar {
+    position: relative;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
+    z-index: 1400;
     /* Hlavička slouží i k přesouvání okna */
     --wails-draggable: drag;
     user-select: none;
@@ -246,10 +248,15 @@ textarea {
     z-index: 1400;
 }
 
-/* Třetí řádek s kapslí hledat uprostřed: stejná výška jako kontextová lišta, průsvitné pozadí jako kontextové nabídky */
+/* Třetí řádek s kapslí hledat a nabídkou výsledků uprostřed: pluje přes horní okraj obsahu se stejným
+   průsvitným skleněným pozadím jako výsledky hledání a kontextové nabídky */
 .hledani-radek {
-    position: relative;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 44px;
@@ -258,7 +265,9 @@ textarea {
     -webkit-backdrop-filter: blur(18px) saturate(1.3);
     backdrop-filter: blur(18px) saturate(1.3);
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
     z-index: 1400;
+    --wails-draggable: no-drag;
 }
 
 .pas-hlavicky {
@@ -390,15 +399,13 @@ textarea {
     background-color: var(--border-color);
 }
 
-/* Kapsle hledání uprostřed třetího řádku (.hledani-radek) */
+/* Kapsle hledání a nabídka výsledků uprostřed třetího řádku (.hledani-radek) */
 .nav-controls {
     position: relative;
     display: flex;
-    justify-content: center;
-    flex: 0 1 440px;
-    width: 100%;
-    max-width: 440px;
-    min-width: 180px;
+    flex-direction: column;
+    align-items: center;
+    width: min(560px, 100%);
 }
 
 .hledani {
@@ -422,16 +429,14 @@ textarea {
     pointer-events: none;
 }
 
-/* Hledání jako pilulka ve stylu panelu voleb pod ním: okraj, stín, růžová lupa; vpravo nápověda Ctrl F,
-   při psaní místo ní ✕ na smazání */
+/* Kapsle hledání uvnitř průsvitného pruhu: jemný skleněný obrys bez druhého tmavého pozadí */
 .nav-controls input {
     width: 100%;
     height: 32px;
     padding: 0 70px 0 36px;
-    border: 1px solid var(--panel-okraj);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 999px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
+    background-color: rgba(255, 255, 255, 0.05);
     color: var(--text-main);
     font-size: 13px;
     outline: none;
@@ -439,6 +444,7 @@ textarea {
 
 .nav-controls input:focus {
     border-color: var(--accent);
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 .nav-controls input:disabled {
@@ -6383,33 +6389,24 @@ textarea {
     z-index: 1400;
 }
 
+/* Nabídka výsledků je přímo součástí průsvitného pruhu .hledani-radek pod kapslí hledání */
 .naseptavac {
-    position: absolute;
-    top: calc(100% + 10px);
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%);
-    width: min(560px, calc(100vw - 32px));
-    max-height: min(560px, calc(100vh - 80px));
+    position: static;
+    width: 100%;
+    max-height: min(520px, calc(100vh - 140px));
     overflow-y: auto;
-    padding: 6px 10px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 20px;
-    /* Průsvitné sklo jako nabídky a panel Filtry */
-    background-color: rgba(26, 26, 30, 0.82);
-    -webkit-backdrop-filter: blur(18px) saturate(1.3);
-    backdrop-filter: blur(18px) saturate(1.3);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
-    z-index: 1400;
+    margin-top: 6px;
+    padding: 4px 4px 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     --wails-draggable: no-drag;
     user-select: none;
 }
 
-/* Stránka pod výsledky ztmavne jako pod oknem; řádek s hledáním (z-index 1400) zůstává nad ní */
+/* Průhledný závoj pod pruhem hledání nemění průhlednost skleněné lišty */
 .naseptavac-zavoj {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: transparent;
     z-index: 1300;
 }
 
@@ -7651,35 +7648,23 @@ textarea {
     }
 }
 
-@keyframes otevrit-naseptavac {
-    from {
-        opacity: 0;
-        transform: translateX(-50%) scale(0.98) translateY(-4px);
-    }
-}
-
 .context-menu {
     transform-origin: top left;
     animation: otevrit-plovouci 0.14s ease-out;
     will-change: transform, opacity;
 }
 
-.volby-panel {
+.volby-panel,
+.hledani-radek {
     transform-origin: top center;
     animation: otevrit-plovouci 0.16s ease-out;
-    will-change: transform, opacity;
-}
-
-.naseptavac {
-    transform-origin: top center;
-    animation: otevrit-naseptavac 0.16s ease-out;
     will-change: transform, opacity;
 }
 
 @media (prefers-reduced-motion: reduce) {
     .context-menu,
     .volby-panel,
-    .naseptavac {
+    .hledani-radek {
         animation: none;
     }
 }

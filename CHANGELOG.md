@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.81] – 2026-10-29
+
+### Změněno
+- **Sjednocená průhlednost pruhu hledání a výsledků hledání v jednom pruhu:**
+  - Pruh hledání (`#hledaniRadek`) pluje přímo přes horní okraj obsahu stránky (`position: absolute; top: 100%`), takže rozmazává obsah pod sebou se stejným průsvitným skleněným vzhledem jako nabídka výsledků hledání.
+  - Kapsle vyhledávacího pole nemá vlastní tmavé neprůhledné pozadí (`var(--panel-bg)`), ale jemný skleněný povrch (`rgba(255, 255, 255, 0.05)`) sladěný s položkami výsledků.
+  - Nabídka výsledků hledání (`#naseptavac`) se při psaní rozbaluje přímo uvnitř pruhu hledání jako jeho součást místo samostatného plovoucího boxu pod ním.
+
 ## [0.99.80] – 2026-10-29
 
 ### Změněno

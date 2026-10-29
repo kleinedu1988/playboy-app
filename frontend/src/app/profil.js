@@ -1,5 +1,5 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
-import { htmlRadyOdznaku } from './sin-slavy';
+import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, GetOdznakyModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
@@ -142,7 +142,7 @@ async function doplnitOdznaky(id) {
     } catch { /* odznaky jsou jen doplněk */ }
     const misto = /** @type {HTMLElement | null} */ (document.querySelector('#modelHeader .profile-odznaky'));
     if (!misto || stav.aktualniModelka?.id !== id || !odznaky.length) return;
-    misto.innerHTML = `<button type="button" class="profile-odznaky-tlacitko" data-otevrit-oblibenost="slava" title="Otevřít Síň slávy">${htmlRadyOdznaku(odznaky, 12)}</button>`;
+    misto.innerHTML = `<button type="button" class="profile-odznaky-tlacitko" data-otevrit-oblibenost="slava" data-slava-pohled="odznaky" title="Otevřít odznaky v Síni slávy">${htmlRadyOdznaku(odznaky, 12)}</button>`;
     misto.hidden = false;
 }
 
@@ -461,6 +461,8 @@ export function pripravit() {
         const doOblibenosti = e.target.closest('[data-otevrit-oblibenost]');
         if (doOblibenosti) {
             stav.oblibenostCast = doOblibenosti.dataset.otevritOblibenost || 'poradi';
+            // Řada odznaků otevře v síni slávy rovnou sbírku odznaků
+            if (doOblibenosti.dataset.slavaPohled) nastavitPohledSlavy(doOblibenosti.dataset.slavaPohled);
             /** @type {HTMLElement|null} */ (document.querySelector('.nav-rezim[data-cast-prehledu="oblibenost"]'))?.click();
             return;
         }

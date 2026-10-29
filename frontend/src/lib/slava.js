@@ -153,8 +153,12 @@ export function htmlBublinyOdznaku(o, jmeno = () => '') {
         <p class="ob-popis">${esc(d.popis)}</p>${radky.join('')}${kdy ? `<p class="ob-kdy">Získala ${esc(kdy)}</p>` : ''}`;
 }
 
+// Rekordy v pořadí na trofejové polici (síň slávy › Rekordy) a znak na poháru
+export const PORADI_REKORDU = ['nejdele', 'vlada', 'obhajoby', 'serie', 'rychlost', 'navrat', 'porovnani', 'skok'];
+export const ZNAKY_REKORDU = { nejdele: '⏳', vlada: '♛', obhajoby: '🛡', serie: '🔥', rychlost: '⚡', navrat: '🔄', porovnani: '⚔', skok: '📈' };
+
 // Co rekord měří a co znamená jeho čas (cas)
-const POPISY_REKORDU = {
+export const POPISY_REKORDU = {
     nejdele: { popis: 'Nejvíc dní v Top 10 celkem – součet všech pobytů' },
     vlada: { popis: 'Nejdelší nepřerušená vláda na 1. místě', cas: 'Vláda začala' },
     obhajoby: { popis: 'Nejvíc obhájených míst v Top 10 proti silnějším vyzyvatelkám' },

@@ -11634,47 +11634,12 @@ span.ud-chip {
     filter: none;
 }
 
-/* Kronika: sbalená karta pod kartami */
-.slava-kronika-obal summary {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    min-width: 0;
-    list-style: none;
-    cursor: pointer;
-}
-
-.slava-kronika-nadpis {
+/* Ikona události (poslední událost v liště síně slávy) */
+.slava-ikona {
     flex: none;
-    color: var(--accent-text);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-
-.slava-kronika-nadpis::before {
-    content: "▸ ";
-}
-
-.slava-kronika-obal[open] .slava-kronika-nadpis::before {
-    content: "▾ ";
-}
-
-.slava-kronika-posledni {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.slava-kronika-obal summary small {
-    flex: none;
+    width: 18px;
     color: var(--text-muted);
-}
-
-.slava-kronika-pocet {
-    margin-left: auto;
+    text-align: center;
 }
 
 .slava-ikona.vstup,
@@ -11683,58 +11648,6 @@ span.ud-chip {
 }
 
 .slava-ikona.vystup {
-    color: var(--danger-text);
-}
-
-.slava-kronika-obal summary::-webkit-details-marker {
-    display: none;
-}
-
-.slava-kronika {
-    margin: 12px 0 0;
-    padding: 0;
-    list-style: none;
-}
-
-.slava-mesic {
-    margin: 14px 0 4px;
-    color: var(--accent-text);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.slava-udalost {
-    display: flex;
-    gap: 10px;
-    padding: 5px 0;
-    border-bottom: 1px solid var(--panel-okraj);
-    line-height: 1.35;
-}
-
-.slava-udalost > span:last-child {
-    display: flex;
-    flex-direction: column;
-}
-
-.slava-udalost small {
-    color: var(--text-muted);
-}
-
-.slava-ikona {
-    flex: none;
-    width: 18px;
-    color: var(--text-muted);
-    text-align: center;
-}
-
-.slava-udalost.vstup .slava-ikona,
-.slava-udalost.jednicka .slava-ikona {
-    color: var(--accent-text);
-}
-
-.slava-udalost.vystup .slava-ikona {
     color: var(--danger-text);
 }
 
@@ -12015,101 +11928,7 @@ span.ud-chip {
     margin-top: 6px;
 }
 
-/* Oddíl Odznaky */
-.odznaky-dlazdice {
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 16px;
-}
-
-.odznak-dlazdice {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 14px 10px 12px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 12px;
-    background-color: var(--panel-bg);
-    text-align: center;
-}
-
-.odznak-dlazdice.prazdna {
-    opacity: 0.65;
-}
-
-.odznak-dlazdice > b {
-    margin-top: 4px;
-    font-size: 13px;
-}
-
-.odznak-dlazdice > small {
-    color: var(--text-muted);
-    font-size: 11px;
-}
-
-.odznak-drzitelky {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-    margin-top: 6px;
-}
-
-.odznak-drzitelka {
-    padding: 1px 8px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 999px;
-    font-size: 11px;
-}
-
-.odznak-drzitelka.zlato { border-color: #f2c14e; }
-.odznak-drzitelka.stribro { border-color: #c8ccd6; }
-.odznak-drzitelka.bronz { border-color: #c9834b; }
-.odznak-drzitelka.jednorazovy { border-color: #b388ff; }
-
-.odznak-drzitelka .link,
-.odznak-jmeno {
-    color: var(--text-main);
-    font-size: inherit;
-}
-
-.odznak-nikdo {
-    color: var(--text-muted);
-}
-
-.odznaky-cesta h5 {
-    margin: 0 0 8px;
-    color: var(--text-muted);
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.odznaky-cesta ol {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px 24px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.odznak-cesta {
-    display: grid;
-    grid-template-columns: auto minmax(70px, auto) 1fr auto;
-    gap: 10px;
-    align-items: center;
-    font-size: 12px;
-}
-
-.odznak-cesta small {
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-
+/* Postup k dalšímu stupni (bublina, sbírka odznaků) */
 .odznak-pruh {
     position: relative;
     display: block;
@@ -12126,10 +11945,6 @@ span.ud-chip {
     background-color: var(--accent);
 }
 
-.odznaky-cesta-obal {
-    margin-bottom: 28px;
-}
-
 /* Profil: odznaky pod pořadím, na střed */
 .profile-odznaky:not([hidden]) {
     display: flex;
@@ -12142,17 +11957,6 @@ span.ud-chip {
     border: 0;
     background: none;
     cursor: pointer;
-}
-
-@media (max-width: 900px) {
-    .odznaky-dlazdice {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .odznaky-cesta ol {
-        grid-template-columns: 1fr;
-    }
-
 }
 
 /* Místa 4–10 a legendy: řady přes celou šířku, karty se dělí o místo rovným dílem; v úzkém okně po čtyřech */
@@ -12180,6 +11984,851 @@ span.ud-chip {
 @media (max-width: 900px) {
     .slava-rada {
         grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/* ——— Síň slávy po pohledech (app/sin-slavy.js): pilulky nahoře, pod nimi jeden pohled ——— */
+.slava-lista {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 20px;
+    margin: 0 0 22px;
+}
+
+/* Pilulky pohledů: skleněný pás, zvolený pohled plnou růžovou (odliší se od voleb v horní liště) */
+.slava-pohledy {
+    display: inline-flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background-color: rgba(26, 26, 30, 0.82);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+}
+
+.slava-pohled {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.slava-pohled:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.slava-pohled.active {
+    background-color: var(--accent);
+    box-shadow: 0 4px 14px rgba(216, 27, 96, 0.35);
+    color: #fff;
+}
+
+.slava-pohled:focus-visible {
+    outline: 2px solid var(--accent-text);
+    outline-offset: 2px;
+}
+
+.slava-pohled-ikona {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.slava-pohled small {
+    min-width: 18px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.08);
+    font-size: 11px;
+    text-align: center;
+}
+
+.slava-pohled.active small {
+    background-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Vpravo poslední událost kroniky jako odkaz na Kroniku */
+.slava-novinka {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+    max-width: 48%;
+    padding: 6px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.slava-novinka:hover {
+    border-color: var(--text-muted);
+}
+
+.slava-novinka > span:nth-child(2) {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.slava-novinka small,
+.slava-meta {
+    flex: none;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.slava-uvod {
+    margin: 0 0 18px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.slava-obsah {
+    animation: slava-obsah 0.18s ease-out;
+}
+
+@keyframes slava-obsah {
+    from { opacity: 0; transform: translateY(4px); }
+}
+
+/* Kulatá fotka modelky (sbírka, police, kronika) */
+.slava-avatar {
+    display: block;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    overflow: hidden;
+    border-radius: 50%;
+    background-color: var(--bg-modal);
+}
+
+.slava-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Legendy: portréty na stěně, na střed */
+.slava-legendy {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 230px));
+    justify-content: center;
+    gap: 20px;
+}
+
+.slava-obdobi {
+    margin: 2px 0 0;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.slava-karta.legenda .slava-trofeje {
+    bottom: 102px;
+}
+
+.slava-karta.legenda:has(.odznaky-rada) .slava-trofeje {
+    bottom: 130px;
+}
+
+/* Sbírka odznaků: souhrn nahoře, pod ním medaile jako ve hře */
+.sbirka-souhrn {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 36px;
+    margin-bottom: 26px;
+    padding: 18px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background: radial-gradient(circle at 0% 0%, rgba(216, 27, 96, 0.18), transparent 55%), rgba(26, 26, 30, 0.82);
+}
+
+.sbirka-postup {
+    display: grid;
+    grid-template-columns: auto auto;
+    align-items: center;
+    column-gap: 12px;
+}
+
+.sbirka-postup > b {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.sbirka-postup > span:not(.odznak-pruh) {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.sbirka-postup .odznak-pruh {
+    grid-column: 1 / -1;
+    width: 190px;
+    margin-top: 10px;
+}
+
+.sbirka-pocty {
+    display: flex;
+    justify-content: center;
+    gap: 26px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sbirka-pocty li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.sbirka-pocty .odznak {
+    color: var(--text-main);
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.sbirka-dosah-pocet {
+    margin: 0;
+    font-size: 13px;
+    text-align: right;
+}
+
+.sbirka-dosah-pocet b {
+    color: var(--accent-text);
+    font-size: 18px;
+}
+
+.sbirka-dosah-pocet small {
+    display: block;
+    margin-top: 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.sbirka {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 30px;
+}
+
+/* Karta odznaku: barva podle nejvyššího stupně, který kdo má (--barva = r, g, b) */
+.sbirka-odznak {
+    --barva: 179, 136, 255;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 20px 14px 14px;
+    border: 1px solid rgba(var(--barva), 0.4);
+    border-radius: 16px;
+    background: radial-gradient(circle at 50% 0%, rgba(var(--barva), 0.2), transparent 62%), var(--bg-card);
+    text-align: center;
+}
+
+.sbirka-odznak.bronz { --barva: 201, 131, 75; }
+.sbirka-odznak.stribro { --barva: 200, 204, 214; }
+.sbirka-odznak.zlato { --barva: 242, 193, 78; }
+
+.sbirka-odznak.zamceno {
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    background: var(--bg-card);
+}
+
+.sbirka-odznak.zamceno .sbirka-nazev {
+    color: var(--text-muted);
+}
+
+.sbirka-medaile {
+    position: relative;
+    margin-bottom: 4px;
+}
+
+.odznak.obri {
+    width: 72px;
+    height: 72px;
+    border-width: 4px;
+    font-size: 32px;
+}
+
+.odznak.obri.zlato {
+    box-shadow: 0 0 24px rgba(242, 193, 78, 0.5);
+}
+
+.sbirka-zamek {
+    position: absolute;
+    right: -6px;
+    bottom: -2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 50%;
+    background-color: var(--bg-modal);
+    font-size: 13px;
+}
+
+.sbirka-nazev {
+    font-size: 14px;
+}
+
+.sbirka-popis {
+    min-height: 2.6em;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+/* Schody stupňů: práh a v kroužku počet držitelek */
+.sbirka-stupne {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sbirka-stupne li {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    height: 26px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 7px;
+    background-color: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: help;
+}
+
+.sbirka-stupne li.ma.bronz { border-color: #c9834b; background-color: rgba(201, 131, 75, 0.14); color: #e0a274; }
+.sbirka-stupne li.ma.stribro { border-color: #c8ccd6; background-color: rgba(200, 204, 214, 0.12); color: #e4e6ec; }
+.sbirka-stupne li.ma.zlato { border-color: #f2c14e; background-color: rgba(242, 193, 78, 0.16); color: #f7d27a; }
+
+.sbirka-stupne li b {
+    padding: 0 5px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.16);
+    color: var(--text-main);
+    font-size: 10px;
+    line-height: 16px;
+}
+
+.sbirka-druh {
+    height: 26px;
+    margin: 4px 0 0;
+    color: #b388ff;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    line-height: 26px;
+    text-transform: uppercase;
+}
+
+.sbirka-odznak.zamceno .sbirka-druh {
+    color: var(--text-muted);
+}
+
+/* Držitelky: překrývající se kulaté fotky s kroužkem barvy stupně */
+.sbirka-drzitelky {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 38px;
+    margin-top: 4px;
+    padding-left: 8px;
+}
+
+.sbirka-drzitelka {
+    position: relative;
+    width: 34px;
+    height: 34px;
+    margin-left: -8px;
+    padding: 0;
+    border: 2px solid #b388ff;
+    border-radius: 50%;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: transform 0.12s;
+}
+
+.sbirka-drzitelka.bronz { border-color: #c9834b; }
+.sbirka-drzitelka.stribro { border-color: #c8ccd6; }
+.sbirka-drzitelka.zlato { border-color: #f2c14e; }
+
+.sbirka-drzitelka:hover,
+.sbirka-drzitelka:focus-visible {
+    z-index: 1;
+    transform: translateY(-3px) scale(1.08);
+}
+
+.sbirka-drzitelka .slava-avatar {
+    width: 100%;
+    height: 100%;
+}
+
+.sbirka-navic {
+    margin-left: 6px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.sbirka-nikdo {
+    display: flex;
+    align-items: center;
+    min-height: 38px;
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Pata karty: kdo má nejblíž k dalšímu stupni, u jednorázového kdo ho má naposledy */
+.sbirka-dosah {
+    display: grid;
+    gap: 5px;
+    width: 100%;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--panel-okraj);
+    font-size: 11px;
+    text-align: left;
+}
+
+.sbirka-dosah-hlava {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+}
+
+.sbirka-dosah-hlava small {
+    flex: none;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sbirka-dosah-hlava b {
+    overflow: hidden;
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sbirka-dosah small {
+    color: var(--text-muted);
+}
+
+/* Rekordy: trofejová police, poháry stojí na skleněné desce */
+.trofeje {
+    display: grid;
+    gap: 44px;
+    margin-bottom: 36px;
+}
+
+.trofeje-police {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+    padding: 0 18px;
+}
+
+.trofeje-police::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: -14px;
+    left: 0;
+    height: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px 3px 10px 10px;
+    background: linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.03));
+    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.6), 0 2px 18px rgba(242, 193, 78, 0.08);
+}
+
+.trofej {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 22px 14px 18px;
+    border-radius: 16px 16px 0 0;
+    background: radial-gradient(ellipse at 50% 30%, rgba(242, 193, 78, 0.16), transparent 62%);
+    text-align: center;
+    outline: none;
+}
+
+.trofej:focus-visible {
+    box-shadow: inset 0 0 0 2px var(--accent-text);
+}
+
+.trofej-pohar {
+    position: relative;
+    font-size: 60px;
+    line-height: 1;
+    filter: drop-shadow(0 6px 14px rgba(242, 193, 78, 0.35));
+    transition: transform 0.15s;
+}
+
+.trofej:hover .trofej-pohar {
+    transform: translateY(-4px);
+}
+
+.trofej-znak {
+    position: absolute;
+    right: -12px;
+    bottom: -4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 2px solid #f2c14e;
+    border-radius: 50%;
+    background-color: var(--bg-card);
+    font-size: 14px;
+}
+
+.trofej-stitek {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 80%;
+    margin-top: 16px;
+    padding: 8px 12px;
+    border: 1px solid rgba(242, 193, 78, 0.35);
+    border-radius: 8px;
+    background: linear-gradient(rgba(242, 193, 78, 0.12), rgba(242, 193, 78, 0.03));
+}
+
+.trofej-stitek b {
+    color: #f2c14e;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.trofej-stitek strong {
+    font-size: 20px;
+}
+
+.trofej-stitek small {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.trofej-drzitelka,
+.rekordmanka {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    padding: 3px 12px 3px 3px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.trofej-drzitelka {
+    margin-top: 12px;
+}
+
+.trofej-drzitelka:hover,
+.rekordmanka:hover {
+    border-color: var(--text-muted);
+}
+
+.trofej-drzitelka span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.trofej-trva {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background-color: rgba(242, 193, 78, 0.16);
+    color: #f2c14e;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.trofej.prazdna .trofej-pohar {
+    opacity: 0.22;
+    filter: grayscale(1);
+}
+
+.trofej.prazdna .trofej-stitek {
+    border-style: dashed;
+    border-color: rgba(255, 255, 255, 0.12);
+    background: none;
+}
+
+.trofej.prazdna .trofej-stitek b {
+    color: var(--text-muted);
+}
+
+.rekordmanky {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.rekordmanka b {
+    font-size: 11px;
+}
+
+/* Kronika: svislá osa, vlevo den, na ose uzel s ikonou, vpravo událost s fotkou */
+.kronika-filtry {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 14px;
+}
+
+.kronika-filtry .chip {
+    padding: 4px 12px;
+}
+
+.kronika-filtry .chip small {
+    margin-left: 2px;
+    color: var(--text-muted);
+}
+
+.kronika-osa {
+    position: relative;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 0 12px;
+    list-style: none;
+}
+
+.kronika-osa::before {
+    content: '';
+    position: absolute;
+    top: 14px;
+    bottom: 0;
+    left: 89px;
+    width: 2px;
+    background: linear-gradient(var(--accent), rgba(216, 27, 96, 0.25) 40%, rgba(255, 255, 255, 0.06));
+}
+
+.kronika-mesic {
+    position: relative;
+    padding: 18px 0 8px 52px;
+}
+
+.kronika-mesic:first-child {
+    padding-top: 0;
+}
+
+.kronika-mesic span {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.kronika-udalost {
+    display: grid;
+    grid-template-columns: 70px 40px minmax(0, 1fr);
+    align-items: start;
+}
+
+.kronika-udalost time {
+    padding: 11px 12px 0 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.kronika-uzel {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    justify-self: center;
+    width: 28px;
+    height: 28px;
+    margin-top: 6px;
+    border: 2px solid rgba(255, 255, 255, 0.16);
+    border-radius: 50%;
+    background-color: var(--bg-card);
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.kronika-udalost.druh-vstup .kronika-uzel { border-color: var(--accent); color: var(--accent-text); }
+.kronika-udalost.druh-vystup .kronika-uzel { border-color: var(--danger); color: var(--danger-text); }
+.kronika-udalost.druh-obhajoba .kronika-uzel { border-color: #64b5f6; }
+.kronika-udalost.druh-jednicka .kronika-uzel,
+.kronika-udalost.druh-pocatek .kronika-uzel { border-color: #f2c14e; background-color: #3a2f16; color: #f2c14e; }
+.kronika-uzel.bronz { border-color: #c9834b; }
+.kronika-uzel.stribro { border-color: #c8ccd6; }
+.kronika-uzel.zlato { border-color: #f2c14e; box-shadow: 0 0 10px rgba(242, 193, 78, 0.45); }
+.kronika-uzel.jednorazovy { border-color: #b388ff; }
+
+.kronika-obsah {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    margin: 2px 0;
+    padding: 4px 14px 4px 4px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+}
+
+.kronika-obsah:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.kronika-obsah p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.kronika-udalost.druh-zacatek .kronika-obsah {
+    padding-left: 10px;
+    color: var(--text-muted);
+}
+
+.kronika-udalost.druh-vystup .kronika-obsah p {
+    color: #c9c9cf;
+}
+
+/* Jednička a odznak: zvýrazněná událost */
+.kronika-udalost.druh-jednicka .kronika-obsah {
+    border-color: rgba(242, 193, 78, 0.28);
+    background-color: rgba(242, 193, 78, 0.07);
+}
+
+.kronika-udalost.druh-odznak .kronika-obsah {
+    border-color: rgba(179, 136, 255, 0.22);
+    background-color: rgba(179, 136, 255, 0.06);
+}
+
+.kronika-foto {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    cursor: pointer;
+}
+
+.kronika-foto .slava-avatar {
+    width: 100%;
+    height: 100%;
+}
+
+.kronika-udalost.druh-pocatek .kronika-obsah {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 12px 10px;
+    border-color: var(--panel-okraj);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.kronika-pocatek {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.kronika-pocatek button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px 2px 2px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.kronika-pocatek .slava-avatar {
+    width: 22px;
+    height: 22px;
+}
+
+.kronika-pocatek small {
+    color: var(--accent-text);
+    font-weight: 700;
+}
+
+@media (max-width: 900px) {
+    .slava-novinka {
+        max-width: 100%;
+    }
+
+    .sbirka-souhrn {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .sbirka-pocty {
+        justify-content: flex-start;
+    }
+
+    .sbirka-dosah-pocet {
+        text-align: left;
+    }
+
+    .sbirka,
+    .trofeje-police {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 

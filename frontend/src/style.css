@@ -3441,6 +3441,7 @@ body.razeni .photo-item {
 #app.zamceno #menuBtn,
 #app.zamceno .nav-oddelovac,
 #app.zamceno .hlavni-lista,
+#app.zamceno .volby-prehledu,
 #app.zamceno .hledani-radek {
     visibility: hidden;
 }
@@ -3935,13 +3936,29 @@ body.razeni .photo-item {
     font-weight: 600;
 }
 
-/* Volby přehledu v kontextové liště (vedle drobečků a pilulek podčástí): rozbalovací tlačítka „Řazení: A–Z ▾“ a počet */
+/* Volby přehledu vpravo nahoře v řádku okna (oddělené od záložek čarou před tlačítky okna): rozbalovací tlačítka
+   „Řazení: A–Z ▾“, filtry a počet */
 .volby-prehledu {
     position: static;
     display: flex;
     align-items: center;
     flex: none;
     gap: 6px;
+    margin-left: auto;
+    padding-left: 16px;
+}
+
+/* Tlačítka okna hned za kapslí voleb; bez voleb zůstávají u pravého okraje sama */
+.volby-prehledu:not(.hidden) ~ .window-controls {
+    margin-left: 0;
+}
+
+.volby-prehledu.hidden + .oddelovac-voleb {
+    display: none;
+}
+
+.oddelovac-voleb {
+    margin: 0 4px 0 10px;
 }
 
 /* Řádek štítků, ze kterého se volby složily, v obsahu není vidět */

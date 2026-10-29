@@ -438,7 +438,9 @@ export function prizpusobitListu() {
 function upravitListu() {
     const titulek = document.querySelector('.titulek-okna');
     const vlevo = document.getElementById('viewToggle');
-    const vpravo = titulek?.querySelector('.window-controls');
+    // Soused záložek vpravo: kapsle voleb, když je vidět, jinak tlačítka okna
+    const volby = misto();
+    const vpravo = volby && !volby.classList.contains('hidden') ? volby : titulek?.querySelector('.window-controls');
     if (titulek && vlevo && vpravo) {
         titulek.classList.remove('bez-nazvu-vlevo');
         const l = vlevo.getBoundingClientRect();
@@ -453,9 +455,7 @@ function upravitListu() {
     if (pas.classList.contains('hidden')) return;
     const rPas = pas.getBoundingClientRect();
     const rAkce = akce.getBoundingClientRect();
-    const volby = misto();
-    const rVolby = !volby.classList.contains('hidden') ? volby.getBoundingClientRect() : null;
-    if (rAkce.top > rPas.top + 8 || (rVolby && rVolby.top > rPas.top + 8) || prekryvaji(rPas, rAkce)) {
+    if (rAkce.top > rPas.top + 8 || prekryvaji(rPas, rAkce)) {
         lista.classList.add('bez-nazvu-pasu');
     }
 }

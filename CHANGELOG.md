@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.83] – 2026-10-29
+
+### Změněno
+- **Kapsle voleb a filtrů vpravo nahoře:** volby přehledu (`#volbyPrehledu` – řazení, srdíčka, filtry, počet) se přesunuly z kontextové lišty do horního řádku okna na pravou stranu, oddělené od hlavních záložek (Modelky, Čísla, Centerfoldy, Oblíbenost, Sbírka) volným místem a svislou čarou před tlačítky okna. Kontextová lišta pod nimi drží jen drobečky, pilulky podčástí a akce (lupa, `+`, `⋯`).
+
 ## [0.99.82] – 2026-10-29
 
 ### Změněno

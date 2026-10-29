@@ -13,13 +13,16 @@ export const SABLONA_OKNA = `
         <button type="button" data-rezim="prehled" data-cast-prehledu="oblibenost" class="nav-rezim" title="Oblíbenost – porovnávání, fotky, pořadí, síň slávy, nejlepší (Ctrl+4)" aria-keyshortcuts="Control+4"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2C13.9 6.2 15.5 5 17.5 5 21 5 22.6 8.6 21.2 11.4 19 15.65 12 20 12 20z"/><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2V20z" fill="currentColor" stroke="none"/></svg><span>Oblíbenost</span></button>
         <button type="button" data-rezim="prehled" data-cast-prehledu="sprava" class="nav-rezim" title="Sbírka – úvod, údržba, sháním CZ, statistiky (Ctrl+5)" aria-keyshortcuts="Control+5"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="5" rx="1.2"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Sbírka</span></button>
       </nav>
+      <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾, filtry, počet…) vpravo nahoře, oddělené od záložek; plní je ui/volby.js -->
+      <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
+      <span class="nav-oddelovac oddelovac-voleb" aria-hidden="true"></span>
       <div class="window-controls">
         <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
         <button id="winMaxBtn" class="win-btn" title="Maximalizovat">&#9633;</button>
         <button id="winCloseBtn" class="win-btn win-close" title="Zavřít" aria-label="Zavřít program">&times;</button>
       </div>
     </div>
-    <!-- Kontextová lišta otevřené sekce: cesta zpět, pod-části, volby a filtry, vpravo přepínač lupy a akce (+, ⋯) -->
+    <!-- Kontextová lišta otevřené sekce: cesta zpět, pod-části, vpravo přepínač lupy a akce (+, ⋯) -->
     <div class="hlavni-lista">
       <!-- Cesta zpět z profilu a stránky vydání (drobečky): odkud se přišlo › kde jsem, u profilu šipky na další modelku -->
       <nav class="logo hidden" aria-label="Kde jsem">
@@ -31,8 +34,6 @@ export const SABLONA_OKNA = `
       </nav>
       <!-- Pod-části otevřené sekce (Oblíbenost, Sbírka); plní je app/prehled.js -->
       <div id="pasStranky" class="pas-hlavicky hidden"></div>
-      <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾, filtry, počet…); plní je ui/volby.js -->
-      <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
       <!-- Tlačítko lupy (přepínač kapsle hledat), přidání (+) a další akce (⋯) -->
       <div class="nav-akce">
         <button type="button" id="searchToggleBtn" class="nav-fav" aria-expanded="false" aria-controls="hledaniRadek" title="Hledat (Ctrl+F)" aria-label="Hledat" aria-keyshortcuts="Control+F"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>

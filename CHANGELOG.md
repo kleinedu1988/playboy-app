@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.88] – 2026-10-31
+
+### Opraveno
+- Sbírka › Statistiky po návratu z jiné části (Úvod, Údržba, Sháním CZ) nezůstanou viset na „Počítám statistiky…“ – spočítají se znovu.
+
 ## [0.99.87] – 2026-10-29
 
 ### Změněno

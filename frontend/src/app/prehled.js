@@ -156,7 +156,11 @@ export async function nacistPrehled() {
     obnovitCasti();
     const sekceStatistik = obsah.querySelector('[data-sekce="statistiky"]');
     if (stav.prehledSekce === 'statistiky') nacistStatistiky(sekceStatistik);
-    else sekceStatistik.innerHTML = '<p class="prazdno-male">Počítám statistiky…</p>';
+    else {
+        // Statistiky se při příštím ukázání spočítají znovu (bez smazané značky by nacistStatistiky skončilo hned)
+        sekceStatistik.innerHTML = '<p class="prazdno-male">Počítám statistiky…</p>';
+        delete sekceStatistik.dataset.nacteno;
+    }
     if (stav.prehledSekce === 'oblibenost') nacistOblibenost(obsah.querySelector('[data-sekce="oblibenost"]'));
     // Graf desetiletí na úvodu se dopočítá zvlášť (statistiky se počítají z celé sbírky); jen když se úvod přepsal
     const grafDekad = uvod.querySelector('[data-graf-dekad]');

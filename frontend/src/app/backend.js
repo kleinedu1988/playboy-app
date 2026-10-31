@@ -34,6 +34,7 @@ const CTENI = new Set([
     'GetPrehledVydani',
     'GetSablonaObrazku',
     'GetSinSlavy',
+    'GetSezona',
     'GetOdznakyModelky',
     'GetSoubojeModelky',
     'GetSpecialy',
@@ -102,6 +103,8 @@ export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehl
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));
 export const GetSablonaObrazku = /** @type {typeof App.GetSablonaObrazku} */ (obalit('GetSablonaObrazku'));
 export const GetSinSlavy = /** @type {typeof App.GetSinSlavy} */ (obalit('GetSinSlavy'));
+export const GetSezona = /** @type {typeof App.GetSezona} */ (obalit('GetSezona'));
+export const UzavritSezonu = /** @type {typeof App.UzavritSezonu} */ (obalit('UzavritSezonu'));
 export const GetOdznakyModelky = /** @type {typeof App.GetOdznakyModelky} */ (obalit('GetOdznakyModelky'));
 export const GetSoubojeModelky = /** @type {typeof App.GetSoubojeModelky} */ (obalit('GetSoubojeModelky'));
 export const GetStavyVydani = /** @type {typeof App.GetStavyVydani} */ (obalit('GetStavyVydani'));

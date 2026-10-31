@@ -18,6 +18,7 @@ var prahyOdznaku = map[string][3]int{
 	"hradba":    {3, 5, 10},     // obhajob místa v Top 10
 	"serie":     {5, 10, 20},    // výher v porovnání za sebou (remíza sérii nepřeruší ani neprodlouží)
 	"zasluzena": {25, 50, 100},  // porovnání
+	"favoritka": {1, 3, 6},      // titulů Favoritka sezóny (oblibenost_sezony.go)
 }
 
 const (
@@ -67,6 +68,7 @@ type vstupOdznaku struct {
 	snimky       []snimekPoradi
 	vTop         map[int]bool // dnes v potvrzené top 10
 	existuje     map[int]bool
+	favoritky    map[int][]time.Time // tituly Favoritka sezóny od nejstaršího
 	nyni         time.Time
 }
 
@@ -313,6 +315,18 @@ func spocitatOdznaky(v vstupOdznaku) (odznaky []OdznakModelky, zisky []ziskOdzna
 	rekordy = []RekordSlavy{rekordSerie, rekordPorovnani}
 	if skok.Hodnota > 0 {
 		rekordy = append(rekordy, skok)
+	}
+	// Favoritka sezóny: tituly z uzavřených sezón (kronika)
+	idsFavoritek := make([]int, 0, len(v.favoritky))
+	for id := range v.favoritky {
+		if v.existuje[id] {
+			idsFavoritek = append(idsFavoritek, id)
+		}
+	}
+	sort.Ints(idsFavoritek)
+	for _, id := range idsFavoritek {
+		casy := v.favoritky[id]
+		stupnovy(id, "favoritka", len(casy), func(prah int) time.Time { return casy[prah-1] })
 	}
 	sort.SliceStable(odznaky, func(i, j int) bool {
 		if odznaky[i].ModelkaID != odznaky[j].ModelkaID {

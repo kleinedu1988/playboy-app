@@ -74,6 +74,8 @@ export function GetPrehledVydani():Promise<Array<main.Fotografie>>;
 
 export function GetSablonaObrazku():Promise<string>;
 
+export function GetSezona():Promise<main.Sezona>;
+
 export function GetSinSlavy():Promise<main.SinSlavy>;
 
 export function GetSoubojeModelky(arg1:number):Promise<Array<main.DvojicePorovnani>>;
@@ -197,6 +199,8 @@ export function UpdateClanek(arg1:main.Clanek):Promise<boolean>;
 export function UpdateCover(arg1:number,arg2:string,arg3:string):Promise<boolean>;
 
 export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
+
+export function UzavritSezonu(arg1:string,arg2:number):Promise<boolean>;
 
 export function VratitPorovnani():Promise<boolean>;
 

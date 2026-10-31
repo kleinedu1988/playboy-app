@@ -5,9 +5,11 @@
 // Data z backendu (GetSinSlavy, oblibenost_slava.go); zvolený pohled si pamatuje localStorage (slavaPohled).
 // Profil otevírá prehled.js (data-otevrit-modelku), srdíčka galerie.js, přechod do Porovnávání oblibenost.js
 // (data-ob-porovnavat).
-import { GetSinSlavy } from './backend';
+import { GetSezona, GetSinSlavy } from './backend';
+import { soubojOTrun } from './oblibenost';
+import { vyhlasitSezonu } from './vyhlaseni-sezony';
 import { esc, sklonovat } from '../lib/format';
-import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, textDni, textRekordu, textUdalosti } from '../lib/slava';
+import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, nazevSezony, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva } from '../lib/slava';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -17,13 +19,14 @@ import { htmlPrazdna, htmlPrazdnaMala } from '../ui/prazdno';
 
 let kontejner = null;
 let data = null;
+let sezona = null; // probíhající sezóna (GetSezona, oblibenost_sezony.go)
 
 const modelka = id => stav.prehledModelky.get(id);
 const jmeno = id => modelka(id)?.jmeno || '';
 const TRIDY_STUPNU = ['jednorazovy', 'bronz', 'stribro', 'zlato'];
 
 // Pohledy síně slávy: klíč, název (ikonu v pilulce dává ui/volby.js podle názvu)
-const POHLEDY = [['top', 'Top 10'], ['legendy', 'Legendy'], ['odznaky', 'Odznaky'], ['rekordy', 'Rekordy'], ['kronika', 'Kronika']];
+const POHLEDY = [['top', 'Top 10'], ['legendy', 'Legendy'], ['odznaky', 'Odznaky'], ['rekordy', 'Rekordy'], ['kronika', 'Kronika'], ['sezona', 'Sezóna']];
 const jePohled = klic => POHLEDY.some(([k]) => k === klic);
 let pohled = (() => {
     try {
@@ -51,13 +54,14 @@ const FILTRY_KRONIKY = [
     ['jednicky', 'Jedničky', u => ['jednicka', 'konec'].includes(u.druh)],
     ['obhajoby', 'Obhajoby', u => u.druh === 'obhajoba'],
     ['odznaky', 'Odznaky', u => u.druh === 'odznak'],
+    ['sezony', 'Sezóny', u => ['favoritka', 'milacek'].includes(u.druh)],
 ];
 let filtrKroniky = 'vse';
 
 export async function nacistSinSlavy(prvek) {
     kontejner = prvek;
     try {
-        data = await GetSinSlavy();
+        [data, sezona] = await Promise.all([GetSinSlavy(), GetSezona()]);
     } catch {
         nastavitHtml(kontejner, '<p class="ob-info">Síň slávy se nepodařilo načíst.</p>');
         return;
@@ -171,12 +175,17 @@ function htmlPoctuPohledu() {
         legendy: data.legendy.length,
         odznaky: (data.odznaky || []).filter(o => o.ziskan).length,
         rekordy: data.rekordy.length,
+        sezona: 0,
     }[pohled];
     const text = {
         top: () => `${sklonovat(n, 'modelka', 'modelky', 'modelek')} v Top 10`,
         legendy: () => sklonovat(n, 'legenda', 'legendy', 'legend'),
         odznaky: () => sklonovat(n, 'získaný odznak', 'získané odznaky', 'získaných odznaků'),
         rekordy: () => sklonovat(n, 'rekord', 'rekordy', 'rekordů'),
+        sezona: () => {
+            const vede = sezona?.poradi.find(b => b.misto === 1);
+            return `${vede ? `vede ${jmeno(vede.modelkaId).split(' ')[0]}` : 'nikdo zatím nevede'} · ⏳ ${textZbyva(sezona?.den, sezona?.dni)}`;
+        },
     }[pohled];
     return text ? `<div class="volby-v-liste" data-volby-casti="slava-${pohled}">${htmlVolbyPohledu()}<span>${esc(text())}</span></div>` : '';
 }
@@ -194,6 +203,94 @@ function htmlTop(rekordy, odznaky) {
     const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada slava-skupina ${zbytek.length >= 6 ? 'husta' : ''}" style="--karet: ${zbytek.length}">${ostatni}</div>${misto}` : '');
     if (!top) return htmlPrazdna('Top 10 je zatím prázdná', 'Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' });
     return `<p class="slava-uvod">Jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy · odznaky pod jménem · klik na modelku otevře její vitrínu</p>${top}${htmlNaDosah()}`;
+}
+
+// Pohled Sezóna: řádek sezóny (název, odpočet měsíce, počty), trůn s první trojicí (stejné karty a stupně jako Top 10),
+// pořadí sezóny od 4. místa se složením bodů, pravidla a minulé sezóny. Body jen formy v sezóně, sílu nemění.
+function htmlSlozeni(b, nejvys) {
+    const sl = slozeniBodu(b, nejvys);
+    return `<span class="sz-slozeni" title="${esc(`za souboje ${b.zaSouboje} b. · za zájem ${b.zaZajem} b.`)}"><i class="sz-souboje" style="flex:${sl.souboje}"></i><i class="sz-zajem" style="flex:${sl.zajem}"></i><i class="sz-zbytek" style="flex:${Math.max(0, 1 - sl.souboje - sl.zajem)}"></i></span>`;
+}
+
+const textTrendu = t => (t > 0 ? `<span class="trend nahoru">▲ ${t}</span>` : t < 0 ? `<span class="trend dolu">▼ ${-t}</span>` : '');
+
+function htmlKartySezony(b, vudkyne, nejvys) {
+    const m = modelka(b.modelkaId);
+    if (!m) return '';
+    const prvni = b.misto === 1;
+    const vyzva = !prvni && vudkyne
+        ? `<button type="button" class="sz-vyzvat" data-sezona-vyzvat="${m.id}" data-sezona-vudkyne="${vudkyne.modelkaId}" title="Souboj s vedoucí modelkou v Porovnat">⚔ Vyzvat o trůn <small>−${vudkyne.body - b.body} b.</small></button>`
+        : `<p class="slava-popis sz-vede">${prvni ? 'Průběžná favoritka sezóny' : ''}</p>`;
+    return `
+        <div class="card slava-karta" data-otevrit-modelku="${m.id}" tabindex="0" aria-label="${esc(m.jmeno)}" title="${esc(`${m.jmeno}: ${b.misto}. místo v sezóně, ${b.body} b. (souboje ${b.zaSouboje}, zájem ${b.zaZajem}), ${b.vyhry} výher, ${b.remizy} remíz, ${b.prohry} proher`)}">
+            <div class="card-image-wrap">
+                <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" decoding="async" />
+                <span class="slava-misto ${prvni ? 'prvni' : ''}">${prvni ? '♛ ' : ''}${b.misto}.</span>
+            </div>
+            <div class="card-info">
+                <h3>${esc(m.jmeno)}</h3>
+                <p class="slava-popis">${b.body} b. · ${esc(sklonovat(b.vyhry, 'výhra', 'výhry', 'výher'))}${b.trend ? ` · ${b.trend > 0 ? '▲' : '▼'} ${Math.abs(b.trend)} za týden` : ''}</p>
+                ${htmlSlozeni(b, nejvys)}
+                ${vyzva}
+            </div>
+        </div>`;
+}
+
+function htmlSezony() {
+    const sz = sezona;
+    if (!sz) return htmlPrazdna('Sezónu se nepodařilo načíst', 'Zkus Síň slávy otevřít znovu.', { ikona: 'hvezda' });
+    // Skončená, ještě neuzavřená sezóna (okno vyhlášení se odložilo „Později“)
+    const kVyhlaseni = sz.kUzavreni ? `<div class="sz-karta sz-vyhlasit"><span>♛ Sezóna ${esc(nazevSezony(sz.kUzavreni.mesic))} skončila – čeká na vyhlášení Favoritky a volbu Miláčka.</span>
+        <button type="button" class="btn btn-primary btn-small" data-sezona-vyhlasit>Vyhlásit sezónu</button></div>` : '';
+    const soutezi = sz.poradi.filter(b => b.misto > 0 && modelka(b.modelkaId));
+    const nejvys = Math.max(1, ...sz.poradi.map(b => b.body));
+    const hlava = `
+        <div class="sz-hlava">
+            <div><h2>Sezóna ${esc(nazevSezony(sz.mesic))}</h2>
+                <p>Body za souboje v Porovnat a za zájem · o titul Favoritka soutěží modelky s aspoň 3 souboji</p></div>
+            <div class="sz-cas"><div><span>${esc(datumKroniky(sz.od))}</span><span>⏳ <b>${esc(textZbyva(sz.den, sz.dni))}</b></span><span>${esc(datumKroniky(sz.do))}</span></div>
+                <div class="sz-pruh"><i style="width:${Math.round(sz.den / Math.max(1, sz.dni) * 100)}%"></i></div></div>
+            <div class="sz-cisla"><span><b>${sz.souboju}</b>${esc(sklonovat(sz.souboju, 'souboj', 'souboje', 'soubojů').replace(/^\d+ /, ''))}</span><span><b>${soutezi.length}</b>soutěží</span></div>
+        </div>`;
+    const minule = sz.minule.length ? `
+        <div class="sz-karta"><h4>Minulé sezóny</h4><div class="sz-minule">${sz.minule.map((x) => {
+            const f = modelka(x.favoritka);
+            const mil = x.milacek ? modelka(x.milacek) : null;
+            return `<div class="card slava-karta ${f ? '' : 'sz-bez'}" ${f ? `data-otevrit-modelku="${f.id}"` : ''} tabindex="0" title="${esc(`Sezóna ${nazevSezony(x.mesic)}: ${f ? `Favoritka ${f.jmeno}, ${x.body} b.` : 'bez Favoritky'}${mil ? `, Miláček ${mil.jmeno}` : ''}, ${x.souboju} soubojů`)}">
+                <div class="card-image-wrap">${f ? `<img data-src="${esc(adresaTitulni(f))}" alt="" style="${stylVyrezu(f)}" draggable="false" decoding="async" />` : ''}<span class="slava-misto prvni">♛ ${esc(nazevSezony(x.mesic, true))}</span></div>
+                <div class="card-info"><h3>${esc(f?.jmeno || 'Bez titulu')}</h3><p class="slava-popis">${mil ? `♥ Miláček ${esc(mil.jmeno.split(' ')[0])}` : esc(sklonovat(x.souboju, 'souboj', 'souboje', 'soubojů'))}</p></div>
+            </div>`;
+        }).join('')}</div></div>` : '';
+    if (!soutezi.length) {
+        return `<div class="sz">${kVyhlaseni}${hlava}${htmlPrazdna('Sezóna teprve začíná', 'Body sbírají modelky za souboje v Porovnat a za zájem. Na trůn se dostane modelka, která má v sezóně aspoň 3 souboje.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' })}${minule}</div>`;
+    }
+    const vudkyne = soutezi[0];
+    const trun = [2, 1, 3].map(misto => soutezi.find(b => b.misto === misto)).filter(Boolean);
+    const zbytek = soutezi.filter(b => b.misto > 3).slice(0, 7);
+    const ostatnich = sz.poradi.length - soutezi.length;
+    const radky = zbytek.map(b => {
+        const m = modelka(b.modelkaId);
+        return `<button type="button" class="sz-radek" data-otevrit-modelku="${m.id}">
+            <span class="sz-m">${b.misto}.</span><img class="sz-av" data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
+            <span class="sz-jm">${esc(m.jmeno)}</span>${htmlSlozeni(b, nejvys)}<span class="sz-wl" title="výhry – prohry">${b.vyhry}–${b.prohry}</span>${textTrendu(b.trend) || '<span class="trend"></span>'}<b class="sz-b">${b.body}</b></button>`;
+    }).join('');
+    return `<div class="sz">${kVyhlaseni}${hlava}
+        <div class="slava-stupne slava-skupina">${trun.map(b => `<div class="slava-stupen misto-${b.misto}">${htmlKartySezony(b, vudkyne, nejvys)}<div class="slava-podstavec" aria-hidden="true">${b.misto}</div></div>`).join('')}</div>
+        <div class="sz-mrizka">
+            <div class="sz-karta"><h4>Pořadí sezóny</h4>
+                <p class="sz-leg"><span><i class="sz-souboje"></i>souboje</span><span><i class="sz-zajem"></i>zájem (nejvýš polovina bodů)</span></p>
+                ${radky || '<p class="prazdno-male">Zatím jen první trojice.</p>'}
+                ${ostatnich ? `<p class="prazdno-male">${esc(sklonovat(ostatnich, 'další modelka sbírá', 'další modelky sbírají', 'dalších modelek sbírá'))} body, na pořadí potřebuje aspoň 3 souboje.</p>` : ''}
+            </div>
+            <div class="sz-karta"><h4>Pravidla sezóny</h4>
+                <ul class="sz-pravidla">
+                    <li><b>+3</b> výhra v souboji, <b>+1</b> remíza</li>
+                    <li><b>+2</b> navíc za výhru nad silnější (výš v pořadí)</li>
+                    <li><b>+1</b> den s otevřeným profilem, <b>+1</b> za každé 2 minuty nad fotkami – nejvýš 4 denně a nejvýš polovina bodů</li>
+                    <li>Na konci měsíce vyhlásíš <b>Favoritku</b> a můžeš zvolit <b>♥ Miláčka</b> sezóny</li>
+                </ul>
+            </div>
+        </div>${minule}</div>`;
 }
 
 // Řádek „Na dosah“ pod Top 10: nejbližší další stupně odznaků (nejvýš pět), klik otevře vitrínu modelky
@@ -482,7 +579,8 @@ function vykreslit() {
         : pohled === 'odznaky' ? htmlOdznaku()
             : pohled === 'rekordy' ? htmlRekordu()
                 : pohled === 'kronika' ? htmlKroniky()
-                    : htmlTop(rekordy, odznaky);
+                    : pohled === 'sezona' ? htmlSezony()
+                        : htmlTop(rekordy, odznaky);
     nastavitHtml(kontejner, `<div class="slava" data-slava-zobrazeno="${pohled}">
         ${htmlPoctuPohledu()}
         <section class="slava-obsah" role="tabpanel" aria-label="${esc(POHLEDY.find(([k]) => k === pohled)?.[1] || '')}">${obsah}</section>
@@ -558,11 +656,23 @@ export function pripravitSinSlavy() {
             vybrat(0, false);
             return;
         }
+        if (cil.closest('[data-sezona-vyhlasit]')) {
+            vyhlasitSezonu(sezona?.kUzavreni);
+            return;
+        }
+        // Sezóna: souboj o trůn s vedoucí modelkou v Porovnat
+        const vyzva = /** @type {HTMLElement | null} */ (cil.closest('[data-sezona-vyzvat]'));
+        if (vyzva) {
+            soubojOTrun(Number(vyzva.dataset.sezonaVyzvat), Number(vyzva.dataset.sezonaVudkyne));
+            return;
+        }
         // Karta v Top 10 nebo položka Na dosah: vitrína (srdíčka na kartě hodnotí, vitrínu neotevírají)
         const vyber = /** @type {HTMLElement | null} */ (cil.closest('[data-slava-vybrat]'));
         if (vyber && !cil.closest('.hearts')) vybrat(Number(vyber.dataset.slavaVybrat), !vyber.classList.contains('slava-dosah-polozka'));
     });
     window.addEventListener('resize', umistitSipku);
+    // Po uzavření sezóny (okno vyhlášení) se síň načte znovu: minulé sezóny, kronika, odznak Favoritky
+    document.addEventListener('sezona-uzavrena', () => { if (kontejner?.isConnected) nacistSinSlavy(kontejner); });
     // Esc zavře otevřenou vitrínu (jen když je síň vidět a nic ji nepřekrývá)
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape' || !vybrana || !kontejner?.isConnected || !kontejner.offsetParent) return;

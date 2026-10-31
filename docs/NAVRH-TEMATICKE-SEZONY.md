@@ -1,6 +1,6 @@
 # Návrh rozšíření: Tematické sezóny a Sezónní síň slávy
 
-> **Stav dokumentu:** Návrh konceptu a architektury po verzi 1.0.  
+> **Stav dokumentu:** Krok 1 (kalendářní sezóna, Favoritka, Miláček, vyhlášení, kronika, odznak, pohled Síň slávy › Sezóna) je hotový ve verzi 0.99.89 (`oblibenost_sezony.go`); téma s bonusem a výzvy (krok 2) zbývají.  
 > **Kontext:** Rozšíření stávající Síně slávy (`oblibenost_slava.go`), odznaků (`oblibenost_odznaky.go`) a hodnocení oblíbenosti o gamifikační a kurátorskou vrstvu tematických sezón inspirovanou mechanikami sezón v akčních RPG (např. Diablo IV).
 
 ---

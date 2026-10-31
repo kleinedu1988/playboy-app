@@ -732,6 +732,19 @@ async function vratit() {
 }
 
 // ——— Rozhodnout teď ———
+// Souboj o trůn sezóny (Síň slávy › Sezóna, „Vyzvat o trůn“): dvojice vyzyvatelky s vedoucí jde do Porovnat jako
+// první; stejná dvojice čekající ve frontě se nezopakuje
+export function soubojOTrun(vyzyvatelka, vudkyne) {
+    if (!modelka(vyzyvatelka) || !modelka(vudkyne)) return;
+    const d = { a: vyzyvatelka, b: vudkyne, duvod: 'Souboj o trůn sezóny', druh: 'sezona' };
+    const ista = x => (x.a === d.a && x.b === d.b) || (x.a === d.b && x.b === d.a);
+    fronta = [d, ...fronta.filter(x => !ista(x))];
+    zobrazitNavrhPodPasy(null);
+    ukazatCastOblibenosti('porovnat');
+    vykreslitDvojici();
+    nacistNahledy([d.a, d.b]).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
+}
+
 // Tlačítko u čekající nebo obhajující modelky v Pořadí: souboje, které jí chybí (GetSoubojeModelky), jdou hned za
 // sebou na začátek fronty s ukazatelem postupu; po posledním se pořadí přepočte a nad pásy je, jak to dopadlo
 

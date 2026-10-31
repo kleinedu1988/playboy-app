@@ -518,7 +518,7 @@ func spocitatSinSlavy(kronika []zaznamKroniky, model *modelOblibenosti, porovnan
 	}
 	// Odznaky a rekordy z porovnání a snímků (oblibenost_odznaky.go); pobyty s koncem (otevřený do teď)
 	vstup := vstupOdznaku{pobyty: map[int][]pobytVTop{}, vlady: vlady, obhajobyCasy: obhajobyCasy, porovnani: porovnani,
-		snimky: snimky, vTop: map[int]bool{}, existuje: existuje, nyni: nyni}
+		snimky: snimky, vTop: map[int]bool{}, existuje: existuje, favoritky: titulyFavoritky(kronika), nyni: nyni}
 	for id, p := range pobyty {
 		for _, q := range p {
 			if q.otevreny {

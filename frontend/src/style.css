@@ -13847,3 +13847,416 @@ button.pas-kapsle:focus-visible {
     height: 100%;
     object-fit: cover;
 }
+
+/* ===== Síň slávy › Sezóna (app/sin-slavy.js htmlSezony): řádek sezóny, trůn (karty a stupně Top 10), pořadí se
+   složením bodů, pravidla a minulé sezóny; okno vyhlášení (app/vyhlaseni-sezony.js) ===== */
+.sz-hlava {
+    display: grid;
+    grid-template-columns: auto minmax(200px, 1fr) auto;
+    gap: 28px;
+    align-items: center;
+    margin: 0 0 26px;
+    padding: 0 0 18px;
+    border-bottom: 1px solid var(--panel-okraj);
+}
+
+.sz-hlava h2 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.sz-hlava p {
+    margin: 4px 0 0;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.sz-cas {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.sz-cas > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.sz-cas b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.sz-pruh {
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sz-pruh i {
+    display: block;
+    height: 100%;
+    background-color: var(--accent);
+}
+
+.sz-cisla {
+    display: flex;
+    gap: 22px;
+    text-align: right;
+}
+
+.sz-cisla span {
+    color: var(--text-muted);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sz-cisla b {
+    display: block;
+    color: var(--text-main);
+    font-size: 22px;
+    font-weight: 300;
+    letter-spacing: 0;
+}
+
+.sz .slava-stupne {
+    margin-bottom: 26px;
+}
+
+/* Složení bodů: souboje (růžová), zájem (šedá), zbytek do nejvyšších bodů sezóny */
+.sz-slozeni {
+    display: flex;
+    gap: 2px;
+    height: 5px;
+    margin: 8px 0 0;
+    overflow: hidden;
+    border-radius: 999px;
+}
+
+.sz-slozeni i {
+    display: block;
+    height: 100%;
+}
+
+.sz-souboje {
+    background-color: var(--accent);
+}
+
+.sz-zajem {
+    background-color: rgba(255, 255, 255, 0.35);
+}
+
+.sz-zbytek {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.sz-vyzvat {
+    /* Info karty leží přes fotku a kliky propouští na kartu; odkaz se klikat musí */
+    position: relative;
+    z-index: 2;
+    pointer-events: auto;
+    margin-top: 12px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent-text);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sz-vyzvat small {
+    margin-left: 4px;
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.sz-vede {
+    margin-top: 12px;
+    color: var(--accent-text);
+}
+
+.sz-mrizka {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 20px;
+    align-items: start;
+}
+
+.sz-karta {
+    margin-bottom: 20px;
+    padding: 18px 22px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+}
+
+.sz-karta h4 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 300;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.sz-karta h4::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+    opacity: 0.6;
+}
+
+.sz-leg {
+    display: flex;
+    gap: 14px;
+    margin: -4px 0 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+.sz-leg i {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    margin-right: 5px;
+    border-radius: 3px;
+    vertical-align: -1px;
+}
+
+.sz-radek {
+    display: grid;
+    grid-template-columns: 30px 34px minmax(0, 1fr) 150px 44px 40px 34px;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    padding: 8px 0;
+    border: 0;
+    border-top: 1px solid var(--panel-okraj);
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.sz-radek:hover .sz-jm {
+    color: var(--accent-text);
+}
+
+.sz-radek .sz-slozeni {
+    height: 6px;
+    margin: 0;
+}
+
+.sz-m,
+.sz-wl {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.sz-av {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.sz-b {
+    font-size: 17px;
+    font-weight: 300;
+    text-align: right;
+}
+
+.sz-pravidla {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.sz-pravidla li {
+    padding: 8px 0;
+    border-top: 1px solid var(--panel-okraj);
+}
+
+.sz-pravidla li:first-child {
+    border-top: 0;
+}
+
+.sz-pravidla b {
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.sz-minule {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.sz-minule .card-image-wrap {
+    height: 150px;
+    aspect-ratio: auto;
+}
+
+.sz-minule .card-info h3 {
+    font-size: 12px;
+}
+
+@media (max-width: 1000px) {
+    .sz-hlava,
+    .sz-mrizka {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .sz-cisla {
+        text-align: left;
+    }
+}
+
+.sz-vyhlasit {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-color: rgba(216, 27, 96, 0.5);
+    background-color: rgba(216, 27, 96, 0.1);
+    font-size: 13px;
+}
+
+/* Okno vyhlášení sezóny */
+.vs-zavoj {
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.vs-okno {
+    width: min(760px, calc(100vw - 48px));
+    padding: 26px 30px;
+}
+
+.vs-okno h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: 0.04em;
+}
+
+.vs-stitek {
+    margin: 0 0 8px;
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.vs-popis {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.vs-stupne {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr 1fr;
+    gap: 14px;
+    align-items: end;
+    margin: 20px 0 22px;
+}
+
+.vs-stupen img {
+    display: block;
+    width: 100%;
+    height: 150px;
+    border-radius: 14px 14px 0 0;
+    object-fit: cover;
+}
+
+.vs-stupen.prvni img {
+    height: 210px;
+}
+
+.vs-stupen > div {
+    padding: 8px 10px;
+    border: 1px solid var(--panel-okraj);
+    border-top: 0;
+    border-radius: 0 0 14px 14px;
+    background-color: var(--panel-bg);
+    font-size: 12px;
+    text-align: center;
+}
+
+.vs-stupen.prvni > div {
+    border-color: var(--accent);
+    background-color: rgba(216, 27, 96, 0.2);
+}
+
+.vs-stupen b {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.vs-milacek {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 12px 0 18px;
+}
+
+.vs-volba {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.vs-volba img {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.vs-volba small {
+    color: var(--text-muted);
+}
+
+.vs-volba.on {
+    border-color: var(--accent);
+    background-color: rgba(216, 27, 96, 0.14);
+}
+
+.vs-volba.on::after {
+    content: "♥";
+    color: var(--accent-text);
+}
+
+.vs-pata {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--panel-okraj);
+}

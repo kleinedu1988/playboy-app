@@ -120,6 +120,16 @@ var migraceUceni = []string{
 		hodnoceni REAL NOT NULL,
 		cas TEXT NOT NULL
 	);`,
+	// Úprava č. 7: uzavřené sezóny (oblibenost_sezony.go) – měsíc, Favoritka (0 = bez titulu), Miláček (volba
+	// uživatele, 0 = žádný), body Favoritky a počet soubojů v sezóně
+	`CREATE TABLE sezony (
+		mesic TEXT PRIMARY KEY,
+		favoritka INTEGER NOT NULL DEFAULT 0,
+		milacek INTEGER NOT NULL DEFAULT 0,
+		body INTEGER NOT NULL DEFAULT 0,
+		souboju INTEGER NOT NULL DEFAULT 0,
+		uzavreno TEXT NOT NULL
+	);`,
 }
 
 // Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti
@@ -128,7 +138,7 @@ var tabulkyUceni = []string{"udalosti", "odmitnute", "zapisy"}
 
 // Oblíbenost (porovnání dvojic, zájem a historie): do paměti se přenesou také, ale zapomínají se zvlášť
 // (ZapomenoutPorovnani)
-var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti", "drzitelky_urovni", "kronika_slavy", "prevzate_odhady"}
+var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti", "drzitelky_urovni", "kronika_slavy", "prevzate_odhady", "sezony"}
 
 // Druhy událostí deníku
 const (

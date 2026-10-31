@@ -177,6 +177,7 @@ func (a *App) ZapomenoutPorovnani() bool {
 	db.Exec("DELETE FROM historie_oblibenosti")
 	db.Exec("DELETE FROM drzitelky_urovni")
 	db.Exec("DELETE FROM kronika_slavy")
+	db.Exec("DELETE FROM sezony")
 	u.ob.porovnani, u.ob.nacteno, u.ob.nabidnute = nil, true, nil
 	u.ob.profily, u.ob.zaznamuZajmu, u.ob.historieCas, u.ob.model = nil, u.ob.zaznamuZajmu+zaznamuNaPrepocet, time.Time{}, nil
 	return true

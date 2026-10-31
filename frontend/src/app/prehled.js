@@ -375,7 +375,8 @@ export function pripravit() {
     stats.addEventListener('click', (e) => {
         const cislo = e.target.closest('[data-cislo]');
         // Srdíčka na kartě (Síň slávy) hodnotí, profil neotevírají
-        const modelka = e.target.closest('.hearts') ? null : e.target.closest('[data-otevrit-modelku]');
+        // …ani „Vyzvat o trůn“ na kartě sezóny (souboj, sin-slavy.js)
+        const modelka = e.target.closest('.hearts, [data-sezona-vyzvat]') ? null : e.target.closest('[data-otevrit-modelku]');
         const shanene = e.target.closest('[data-shanim]');
         if (cislo) {
             if (cislo.hasAttribute('data-ma-data')) otevritVydani(cislo.dataset.cislo);

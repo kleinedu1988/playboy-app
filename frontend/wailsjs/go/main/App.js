@@ -146,6 +146,10 @@ export function GetSablonaObrazku() {
   return window['go']['main']['App']['GetSablonaObrazku']();
 }
 
+export function GetSezona() {
+  return window['go']['main']['App']['GetSezona']();
+}
+
 export function GetSinSlavy() {
   return window['go']['main']['App']['GetSinSlavy']();
 }
@@ -392,6 +396,10 @@ export function UpdateCover(arg1, arg2, arg3) {
 
 export function UpdateModelka(arg1) {
   return window['go']['main']['App']['UpdateModelka'](arg1);
+}
+
+export function UzavritSezonu(arg1, arg2) {
+  return window['go']['main']['App']['UzavritSezonu'](arg1, arg2);
 }
 
 export function VratitPorovnani() {

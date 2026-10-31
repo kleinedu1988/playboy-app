@@ -42,6 +42,8 @@ export function textUdalosti(u, jmeno) {
         case 'obhajoba': return { ikona: '🛡', text: `${kdo} obhájila místo v Top 10${souperka ? ` · vyzyvatelka ${souperka}` : ''}` };
         case 'jednicka': return { ikona: '♛', text: souperka ? `Nová jednička: ${kdo} · předtím ${souperka}` : `Jednička: ${kdo}` };
         case 'konec': return { ikona: '·', text: `${kdo} už není potvrzená jednička` };
+        case 'favoritka': return { ikona: '♛', text: `${kdo} je Favoritka sezóny ${mesicKroniky(u.cas)}` };
+        case 'milacek': return { ikona: '♥', text: `${kdo} je Miláček sezóny ${mesicKroniky(u.cas)}` };
         case 'odznak': {
             const o = ODZNAKY[u.odznak];
             if (!o) return { ikona: '·', text: kdo };
@@ -95,7 +97,30 @@ export const ODZNAKY = {
     david: { ikona: '🪨', nazev: 'David a Goliáš', popis: 'Z místa za Top 20 porazila jedničku', souperka: j => `porazila jedničku ${j}` },
     latka: { ikona: '⬆', nazev: 'Přeskočená laťka', popis: 'Porazila modelku s o celé srdíčko víc', souperka: j => `porazila ${j}` },
     neporazitelna: { ikona: '🧊', nazev: 'Neporazitelná', popis: '30 dní v Top 10 bez prohry (aspoň 3 porovnání)' },
+    favoritka: { ikona: '👑', nazev: 'Favoritka', prahy: [1, 3, 6], jednotka: n => `${n}× Favoritka sezóny`, kratce: n => `${n}× vyhrát sezónu`, popis: 'Tituly Favoritka sezóny' },
 };
+
+// ——— Sezóny (Síň slávy › Sezóna, oblibenost_sezony.go) ———
+
+// „2026-11“ → „listopad 2026“; kratce → „XI/26“ (štítek na kartě minulé sezóny)
+const RIMSKE = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+export function nazevSezony(mesic, kratce = false) {
+    const m = /^(\d{4})-(\d{2})$/.exec(String(mesic || ''));
+    if (!m) return '';
+    return kratce ? `${RIMSKE[+m[2] - 1]}/${m[1].slice(2)}` : `${MESICE[+m[2] - 1]} ${m[1]}`;
+}
+
+// Kolik dní do konce sezóny: „poslední den“, „zbývá 1 den“, „zbývá 9 dní“ (den = kolikátý je dnes, dni = délka)
+export function textZbyva(den, dni) {
+    const zbyva = Math.max(0, (Number(dni) || 0) - (Number(den) || 0));
+    return zbyva ? `zbývá ${sklonovat(zbyva, 'den', 'dny', 'dní')}` : 'poslední den';
+}
+
+// Složení bodů modelky v sezóně na podíly pruhu (souboje, zájem) proti nejvyšším bodům v sezóně (0–1)
+export function slozeniBodu(b, nejvys) {
+    const n = Math.max(1, Number(nejvys) || 0);
+    return { souboje: Math.max(0, Number(b?.zaSouboje) || 0) / n, zajem: Math.max(0, Number(b?.zaZajem) || 0) / n };
+}
 export const PORADI_ODZNAKU = Object.keys(ODZNAKY);
 export const STUPNE = ['', 'bronz', 'stříbro', 'zlato'];
 

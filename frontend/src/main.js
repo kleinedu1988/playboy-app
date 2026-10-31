@@ -35,6 +35,7 @@ import * as oblibenost from './app/oblibenost';
 import * as zkratky from './app/zkratky';
 import * as editorTextu from './ui/editor-textu';
 import { stats } from './app/prvky';
+import { vyhlasitSezonu } from './app/vyhlaseni-sezony';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
 // když je otevřený, jeho obsluha kláves zastaví ostatní
@@ -86,4 +87,6 @@ StavDatabaze().then((chyba) => {
     if (['kalendar', 'nejlepsi', 'centerfoldy'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
     nacistGalerii();
     kontrolaPoSpusteni();
+    // Skončená sezóna oblíbenosti čeká na vyhlášení Favoritky (app/vyhlaseni-sezony.js); až po úvodních oknech
+    setTimeout(() => vyhlasitSezonu(), 1500);
 })();

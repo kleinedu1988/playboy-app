@@ -7,6 +7,23 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.89] – 2026-10-31
+
+### Přidáno
+- **Sezóny oblíbenosti (krok 1): Síň slávy › Sezóna.** Každý kalendářní měsíc je sezóna. Modelky v ní sbírají body formy, které nemění sílu ani pořadí oblíbenosti.
+  - **Body:**
+    - výhra v Porovnat +3, remíza +1, výhra nad silnější (výš v pořadí) +2 navíc;
+    - zájem: den s otevřeným profilem +1, každé 2 minuty nad fotkami +1, nejvýš 4 denně a nejvýš polovina bodů (rozhodují souboje);
+    - o titul soutěží modelky s aspoň 3 souboji.
+  - **Pohled Sezóna:**
+    - řádek sezóny s odpočtem měsíce;
+    - trůn první trojice ve stejných kartách jako Top 10 (u 2. a 3. „⚔ Vyzvat o trůn“ zařadí souboj s vedoucí do Porovnat);
+    - pořadí se složením bodů (souboje · zájem) a trendem za týden;
+    - pravidla a minulé sezóny.
+  - **Vyhlášení:** po skončení měsíce se při spuštění otevře okno s **Favoritkou sezóny** (nejvíc bodů) a stupni 1–3 a s nepovinnou volbou **♥ Miláčka sezóny**. „Později“ vyhlášení odloží a vyhlásit jde i z pohledu Sezóna.
+  - Favoritka a Miláček se zapíšou do kroniky (filtr Sezóny) a tituly Favoritky dávají odznak 👑 Favoritka (1×, 3×, 6×). Vrácení porovnání je nesmaže, „Zapomenout porovnání“ ano.
+  - V kapsli pohledů Síně slávy přibyla Sezóna se stavem „vede … · zbývá N dní“.
+
 ## [0.99.88] – 2026-10-31
 
 ### Opraveno

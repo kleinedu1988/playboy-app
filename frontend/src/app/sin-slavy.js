@@ -168,26 +168,30 @@ function htmlVolbyPohledu() {
     return POHLEDY.map(([klic, nazev]) => `<button type="button" class="chip ${klic === pohled ? 'active' : ''}" data-slava-pohled="${klic}">${nazev}</button>`).join('');
 }
 
-// Volby pohledu Síně slávy a počet položek v liště pod záložkami (Kronika má i filtr, htmlKroniky)
+// Stavová lišta Síně slávy: vlevo probíhající sezóna (den, kdo vede), vpravo skončená sezóna k vyhlášení, jinak
+// poslední zápis kroniky s odkazem (skrytá tlačítka se zrcadlí do lišty, klik jde na ně); počty jsou na stránce
+function htmlStavuSine() {
+    const vede = sezona?.poradi?.find(b => b.misto === 1 && modelka(b.modelkaId));
+    const textSezony = sezona?.dni
+        ? [`Sezóna ${nazevSezony(sezona.mesic).split(' ')[0]}`, `den ${sezona.den} z ${sezona.dni}`, vede ? `vede ${jmeno(vede.modelkaId).split(' ')[0]}` : 'nikdo zatím nevede'].join(' · ')
+        : '';
+    let vpravo = '';
+    if (sezona?.kUzavreni) {
+        vpravo = `<button type="button" data-sezona-vyhlasit>♛ Sezóna ${esc(nazevSezony(sezona.kUzavreni.mesic).split(' ')[0])} čeká na vyhlášení · Vyhlásit →</button>`;
+    } else if (pohled !== 'kronika') {
+        const posledni = (data.kronika || []).filter(u => u.druh !== 'zacatek' && u.druh !== 'pocatek')
+            .sort((x, y) => String(y.cas).localeCompare(String(x.cas)))[0];
+        if (posledni) {
+            const u = textUdalosti(posledni, jmeno);
+            vpravo = `<button type="button" data-slava-pohled="kronika" title="${esc(u.text)}">${esc(`${u.ikona} ${u.text.split(' · ')[0]}`)} · Kronika →</button>`;
+        }
+    }
+    return `${vpravo}${textSezony ? `<span>${esc(textSezony)}</span>` : ''}`;
+}
+
+// Volby pohledu Síně slávy v liště pod záložkami (Kronika má i filtr, htmlKroniky) a stav ve stavové liště
 function htmlPoctuPohledu() {
-    const n = {
-        top: data.vitrina.length,
-        legendy: data.legendy.length,
-        odznaky: (data.odznaky || []).filter(o => o.ziskan).length,
-        rekordy: data.rekordy.length,
-        sezona: 0,
-    }[pohled];
-    const text = {
-        top: () => `${sklonovat(n, 'modelka', 'modelky', 'modelek')} v Top 10`,
-        legendy: () => sklonovat(n, 'legenda', 'legendy', 'legend'),
-        odznaky: () => sklonovat(n, 'získaný odznak', 'získané odznaky', 'získaných odznaků'),
-        rekordy: () => sklonovat(n, 'rekord', 'rekordy', 'rekordů'),
-        sezona: () => {
-            const vede = sezona?.poradi.find(b => b.misto === 1);
-            return `${vede ? `vede ${jmeno(vede.modelkaId).split(' ')[0]}` : 'nikdo zatím nevede'} · ⏳ ${textZbyva(sezona?.den, sezona?.dni)}`;
-        },
-    }[pohled];
-    return text ? `<div class="volby-v-liste" data-stitek="Hodnocení" data-nadpis="Síň slávy" data-volby-casti="slava-${pohled}">${htmlVolbyPohledu()}<span>${esc(text())}</span></div>` : '';
+    return pohled === 'kronika' ? '' : `<div class="volby-v-liste" data-stitek="Hodnocení" data-nadpis="Síň slávy" data-volby-casti="slava-${pohled}">${htmlVolbyPohledu()}${htmlStavuSine()}</div>`;
 }
 
 // Pohled Top 10: stupně vítězů (2. vlevo, 1. uprostřed, 3. vpravo) a místa 4–10 v řadě přes celou šířku
@@ -538,7 +542,7 @@ function htmlKroniky() {
     const filtry = `<div class="volby-v-liste" data-stitek="Hodnocení" data-nadpis="Síň slávy" data-volby-casti="slava-kronika">${htmlVolbyPohledu()}${FILTRY_KRONIKY.map(([k, nazev, f]) => {
         const n = bezOpakovanychPocatku(data.kronika.filter(f)).length;
         return n || k === 'vse' ? `<button type="button" class="chip ${k === filtr[0] ? 'active' : ''}" data-kronika-filtr="${k}">${nazev}<span>${n}</span></button>` : '';
-    }).join('')}<span>${esc(sklonovat(bezOpakovanychPocatku(data.kronika.filter(filtr[2])).length, 'událost', 'události', 'událostí'))}</span></div>`;
+    }).join('')}${htmlStavuSine()}</div>`;
     // Od nejnovější (stabilně: počátek kroniky zůstane pohromadě)
     const skupiny = kronikaPoMesicich(data.kronika.filter(filtr[2]).sort((a, b) => String(b.cas).localeCompare(String(a.cas))));
     const den = cas => {

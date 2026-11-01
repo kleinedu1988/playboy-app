@@ -391,6 +391,19 @@ function ukazatVolby(lista) {
         tlacitko.addEventListener('click', () => puvodni.click());
     });
 
+    // Klávesová nápověda části (data-stav-napoveda, úseky oddělené „ · “) vpravo za odkazy; v úzkém okně jen první úsek
+    const napoveda = lista.dataset.stavNapoveda;
+    if (napoveda) {
+        const obal = document.createElement('span');
+        obal.className = 'stav-napoveda';
+        napoveda.split(' · ').forEach(usek => {
+            const kus = document.createElement('span');
+            kus.textContent = usek;
+            obal.append(kus);
+        });
+        stavVpravo.append(obal);
+    }
+
     // Počet a stav části (22 modelek, Dnes 0 z 10, 79 % doplněno) je první ve stavové liště a v nápovědě zvolené sekce
     const pocet = [...lista.querySelectorAll(':scope > span:not([hidden])')].map(s => s.textContent.trim()).filter(Boolean).pop();
     if (pocet) {

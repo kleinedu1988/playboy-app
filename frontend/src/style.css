@@ -10614,38 +10614,6 @@ span.ud-chip {
     white-space: nowrap;
 }
 
-/* Klávesy: nápověda po najetí nebo zaměření, místo dlouhé věty pod pásy */
-.ob-klavesy {
-    position: relative;
-    color: var(--text-muted);
-    font-size: 12px;
-    cursor: help;
-}
-
-.ob-klavesy-pomoc {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    z-index: 5;
-    display: none;
-    flex-direction: column;
-    gap: 6px;
-    width: max-content;
-    max-width: 420px;
-    padding: 10px 14px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 12px;
-    background-color: var(--panel-bg);
-    box-shadow: var(--panel-stin);
-    color: var(--text-main);
-    transform: translateX(-50%);
-}
-
-.ob-klavesy:hover .ob-klavesy-pomoc,
-.ob-klavesy:focus .ob-klavesy-pomoc {
-    display: flex;
-}
-
 .ob-ovladani {
     display: flex;
     flex-wrap: wrap;
@@ -15350,6 +15318,48 @@ body.rezim-vyberu #detailView .poster {
 .stavova-lista .stav-odkaz:hover {
     background-color: var(--panel-hover);
     color: #ffd18a;
+}
+
+/* Klávesová nápověda části vpravo (Porovnat, Fotky): úseky s tečkou mezi sebou, v úzkém okně jen první */
+/* Nápověda ustupuje stavu vlevo: úseky, které se nevejdou, se zalomí do skrytého řádku; odkazy a stav zůstanou celé */
+.stav-napoveda {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    gap: 0 6px;
+    min-width: 0;
+    height: 16px;
+    overflow: hidden;
+    line-height: 16px;
+    opacity: 0.7;
+}
+
+.stavova-lista:has(.stav-napoveda) .stav-vlevo {
+    flex: none;
+    max-width: 55%;
+}
+
+.stavova-lista:has(.stav-napoveda) .stav-vpravo {
+    flex: 0 1 auto;
+}
+
+.stav-vpravo > button {
+    flex: none;
+}
+
+.stav-napoveda > span {
+    flex: none;
+}
+
+.stav-napoveda > span + span::before {
+    content: "·";
+    margin-right: 6px;
+}
+
+@media (max-width: 900px) {
+    .stav-napoveda > span + span {
+        display: none;
+    }
 }
 
 .stav-vpravo:empty::before {

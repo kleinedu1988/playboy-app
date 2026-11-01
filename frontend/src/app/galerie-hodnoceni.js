@@ -90,22 +90,12 @@ function vykreslit(fotek) {
     nastavitHtml(kontejner, `
         <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky"
             data-stav-napoveda="1–5 srdíčka · ←/→ listovat · mezerník promítat · Esc konec">
-            <span>${esc(sklonovat(fotek, 'fotka', 'fotky', 'fotek'))}</span>
+            <span>${esc(`${sklonovat(fotek, 'fotka', 'fotky', 'fotek')} bez srdíček · ${sklonovat(modelky.length, 'modelka', 'modelky', 'modelek')}`)}</span>
         </div>
         <div class="ob-karta gh-panel gh-dlazdice">
-            <div class="gh-nahledy" aria-label="Na řadě">${polozky.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-gh-ukazka="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
+            <!-- Prohlížet a Promítat jsou v hlavičce Hodnocení, klávesy ve stavové liště; klik na fotku otevře prohlížeč -->
+            <div class="gh-nahledy" aria-label="Na řadě – klik otevře prohlížeč">${polozky.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-gh-ukazka="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
 </div>
-            <div class="gh-text">
-                <h3>Hodnotit fotky <small>Fotky bez srdíček v prohlížeči</small></h3>
-                <p class="gh-popis">Dávej srdíčka klávesami <kbd>1</kbd>–<kbd>5</kbd>: ohodnocená fotka zmizí a hned je tu další. Šipky listují, mezerník spustí promítání, <kbd>Esc</kbd> skončí.</p>
-                <ul class="gh-cisla">
-                    <li><b>${modelky.length}</b><span>${esc(sklonovat(modelky.length, 'modelka', 'modelky', 'modelek').replace(/^\d+ /, ''))}</span></li>
-                </ul>
-                <div class="gh-ovladani">
-                    <button type="button" class="btn btn-primary" data-gh-prohlizet>Prohlížet a hodnotit</button>
-                    <button type="button" class="btn btn-secondary" data-gh-promitat title="Prohlížeč s promítáním – fotky se samy střídají, srdíčka jde dávat kdykoli">▶ Promítat</button>
-                </div>
-            </div>
             <div class="gh-modelky" aria-label="Jen fotky jedné modelky">
                 <small>Jen jedna modelka</small>
                 ${modelky.slice(0, MODELEK).map(x => `<button type="button" class="gh-modelka" data-gh-modelka="${x.id}" title="${esc(`Prohlížet jen nehodnocené fotky – ${x.jmeno}`)}"><span class="gh-avatar">${avatar(x.id)}</span>${esc(x.jmeno)}<b>${x.n}</b></button>`).join('')}
@@ -140,7 +130,5 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
         const jedna = /** @type {HTMLElement | null} */ (t.closest('[data-gh-modelka]'));
         if (ukazka) otevrit(Number(ukazka.dataset.ghUkazka));
         else if (jedna) otevrit(0, false, polozky.filter(p => p.modelkaId === Number(jedna.dataset.ghModelka)));
-        else if (t.closest('[data-gh-prohlizet]')) otevrit();
-        else if (t.closest('[data-gh-promitat]')) otevrit(0, true);
     });
 }

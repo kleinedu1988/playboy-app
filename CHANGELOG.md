@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.11] – 2026-11-01
+
+### Přidáno
+- **Série dní v řadě** ve stavové liště Porovnat: „🔥 5 dní v řadě“ – kolik dní za sebou jsi aspoň jednou porovnával (počítá se z uložených porovnání). Když dnes ještě žádné porovnání není, série platí do včerejška a lišta oranžově připomene „dnes ji prodluž“; první dnešní porovnání ji prodlouží hned.
+
 ## [1.0.10] – 2026-11-01
 
 ### Změněno

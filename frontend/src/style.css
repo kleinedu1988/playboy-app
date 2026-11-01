@@ -2126,7 +2126,6 @@ input:focus, select:focus, textarea:focus {
 
 .profile-side h2 {
     margin: 16px 0 0 0;
-    font-size: 22px;
 }
 
 .profile-aliases {
@@ -2160,30 +2159,37 @@ input:focus, select:focus, textarea:focus {
     padding: 0;
 }
 
-.profile-note li {
+/* Formátovaný text poznámky modelky a průvodního textu alba (.album-desc-text) */
+.profile-note li,
+.album-desc-text li {
     margin-bottom: 2px;
 }
 
-.profile-note strong {
+.profile-note strong,
+.album-desc-text strong {
     color: var(--text-main);
 }
 
-.profile-note em {
+.profile-note em,
+.album-desc-text em {
     font-style: italic;
 }
 
-.profile-note code {
+.profile-note code,
+.album-desc-text code {
     padding: 1px 4px;
     background: rgba(255, 255, 255, 0.08);
     border-radius: 3px;
     font-size: 12px;
 }
 
-.profile-note del {
+.profile-note del,
+.album-desc-text del {
     opacity: 0.6;
 }
 
-.profile-note blockquote {
+.profile-note blockquote,
+.album-desc-text blockquote {
     margin: 6px 0;
     padding: 2px 0 2px 10px;
     border-left: 2px solid var(--accent);
@@ -2310,7 +2316,7 @@ button.tag:hover {
     font-size: 12px;
 }
 
-.album + .album,
+/* Mezera mezi alby v profilu je níž (.album + .album) */
 .issue-album + .issue-album {
     margin-top: 28px;
 }
@@ -2340,7 +2346,6 @@ button.tag:hover {
 
 .album-header {
     display: flex;
-    align-items: baseline;
     gap: 10px;
     margin-bottom: 12px;
 }
@@ -2368,13 +2373,11 @@ button.tag:hover {
 .photos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: 16px;
 }
 
 .photo-item {
     position: relative;
     height: 250px;
-    border-radius: 8px;
     overflow: hidden;
     background-color: var(--bg-card);
     cursor: zoom-in;
@@ -3006,37 +3009,6 @@ button.tag:hover {
     padding: 0;
 }
 
-.album-desc-text li {
-    margin-bottom: 2px;
-}
-
-.album-desc-text strong {
-    color: var(--text-main);
-}
-
-.album-desc-text em {
-    font-style: italic;
-}
-
-.album-desc-text code {
-    padding: 1px 4px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 3px;
-    font-size: 12px;
-}
-
-.album-desc-text del {
-    opacity: 0.6;
-}
-
-.album-desc-text blockquote {
-    margin: 6px 0;
-    padding: 2px 0 2px 10px;
-    border-left: 2px solid var(--accent);
-    color: var(--text-main);
-    font-style: italic;
-}
-
 .album-desc-more {
     color: var(--text-main);
     font-size: 12px;
@@ -3086,7 +3058,6 @@ button.tag:hover {
     margin: -8px 0 12px 0;
     padding: 10px 0;
     background-color: var(--bg-main);
-    border-bottom: 1px solid var(--border-color);
 }
 
 .album-nav-list {
@@ -3096,14 +3067,11 @@ button.tag:hover {
     gap: 8px;
     min-width: 0;
     overflow-x: auto;
+    scrollbar-width: none;
 }
 
 .album-nav-list::-webkit-scrollbar {
     display: none;
-}
-
-.album-nav-list {
-    scrollbar-width: none;
 }
 
 /* Alba pokračující mimo lištu se na té straně ztrácejí do pozadí */
@@ -3128,8 +3096,6 @@ button.tag:hover {
     padding: 0;
     border: 1px solid var(--border-color);
     border-radius: 50%;
-    background-color: var(--bg-card);
-    color: var(--text-main);
     font-size: 16px;
     line-height: 1;
     cursor: pointer;
@@ -3137,11 +3103,6 @@ button.tag:hover {
 
 .album-nav.pretekla .album-nav-arrow {
     display: block;
-}
-
-.album-nav-arrow:hover:not(:disabled) {
-    border-color: var(--accent);
-    color: var(--accent-text);
 }
 
 .album-nav-arrow:disabled {
@@ -3166,12 +3127,6 @@ button.tag:hover {
 
 .album-nav .chip span {
     margin-left: 6px;
-    color: var(--text-muted);
-}
-
-.album-nav .chip.active {
-    border-color: var(--accent);
-    color: var(--accent-text);
 }
 
 /* Přehledy (galerie, stěna, covery, kalendář, nejlepší): lišta je svislý sloupec vlevo vedle obsahu */
@@ -3231,6 +3186,9 @@ button.tag:hover {
 
 .album-nav.svisla .album-nav-arrow {
     align-self: center;
+    width: 22px;
+    height: 22px;
+    font-size: 13px;
 }
 
 /* Položky rejstříku: jen text bez rámečku, zvolená s podbarvením */
@@ -3248,12 +3206,6 @@ button.tag:hover {
     border-color: transparent;
     background-color: var(--bg-card);
     color: var(--text-main);
-}
-
-.album-nav.svisla .album-nav-arrow {
-    width: 22px;
-    height: 22px;
-    font-size: 13px;
 }
 
 /* Zkrácené album: fotky za náhledem jsou skryté, poslední viditelná ukazuje jejich počet */
@@ -3278,14 +3230,9 @@ button.tag:hover {
     color: var(--text-main);
 }
 
-/* Srdíčka na dlaždici fotky: přes spodní okraj; u nehodnocené jen při najetí myší */
+/* Srdíčka na dlaždici fotky: u nehodnocené jen při najetí myší (umístění a panel níž, u .card .hearts) */
 .photo-item .hearts {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 18px 8px 6px;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
     opacity: 0;
     transition: opacity 0.15s;
 }
@@ -3296,7 +3243,6 @@ button.tag:hover {
 }
 
 .photo-item .heart {
-    font-size: 13px;
     color: rgba(255, 255, 255, 0.7);
 }
 
@@ -3324,27 +3270,17 @@ button.tag:hover {
     font-size: 18px;
 }
 
-/* Lišta alb v prohlížeči fotek: dole přes fotku, položky uprostřed */
+/* Lišta alb v prohlížeči fotek: dole přes fotku, položky uprostřed (plovoucí panel níž) */
 .lightbox .album-nav {
     position: absolute;
     top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
     z-index: 2;
     margin: 0;
-    padding: 10px 16px 12px;
-    border: none;
-    background: linear-gradient(transparent, rgba(8, 8, 10, 0.85));
 }
 
 /* Vystředění, které při přetečení neuřízne začátek lišty */
 .lightbox .album-nav-list > :first-child { margin-left: auto; }
 .lightbox .album-nav-list > :last-child { margin-right: auto; }
-
-.lightbox .album-nav .chip {
-    background-color: rgba(8, 8, 10, 0.6);
-}
 
 /* Při lupě lišta nepřekáží */
 .lightbox.zoomed .album-nav {
@@ -3880,22 +3816,13 @@ body.razeni .photo-item {
     contain-intrinsic-block-size: auto 300px;
 }
 
-/* Tlačítko ⋯ na dlaždici fotky a na plakátu: akce bez pravého tlačítka */
+/* Tlačítko ⋯ na dlaždici fotky a na plakátu: akce bez pravého tlačítka (rozměry a panel níž, u srdíček dlaždice) */
 .photo-item .tile-more,
 .poster .tile-more {
     position: absolute;
-    top: 6px;
-    right: 6px;
     z-index: 2;
-    width: 28px;
-    height: 24px;
     padding: 0;
-    border: none;
-    border-radius: 6px;
-    background: rgba(0, 0, 0, 0.55);
-    color: #fff;
     font-size: 18px;
-    line-height: 20px;
     cursor: pointer;
     opacity: 0;
     transition: opacity 0.15s, background 0.15s;
@@ -3911,7 +3838,6 @@ body.razeni .photo-item {
 .photo-item .tile-more:hover,
 .poster .tile-more:hover,
 .tile-more:focus-visible {
-    background: var(--accent);
     opacity: 1;
 }
 
@@ -4315,15 +4241,6 @@ body.razeni .photo-item {
     border-color: transparent;
     background-color: var(--bg-card);
     color: var(--text-main);
-}
-
-/* V prohlížeči leží lišta přes fotku: štítky potřebují tmavý podklad, aby byly čitelné */
-.lightbox .album-nav .chip {
-    background-color: rgba(8, 8, 10, 0.6);
-}
-
-.lightbox .album-nav .chip.active {
-    background-color: var(--accent-soft);
 }
 
 /* Prohlížeč fotek: nástroje a lišta alb jako plovoucí panely nad fotkou (jako Fotky ve Windows) */

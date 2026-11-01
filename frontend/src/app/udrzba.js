@@ -26,6 +26,7 @@ import * as navrhy from './navrhy';
 import * as uceni from './uceni';
 import * as fokus from './udrzba-fokus';
 import * as poUdajich from './udrzba-udaje';
+import { prejmenovatVeSbirce } from './sprava';
 
 // Skupin na stránku; další se přidají při doscrollování na konec (nebo tlačítkem)
 const STRANKA = 60;
@@ -65,7 +66,7 @@ const KOSTRA = `
                 <!-- Hledání ve frontě je hlavní hledání nahoře, řazení a Vyřízené jsou pod ním (ui/volby.js) -->
                 <div class="ud-nastroje">
                     <div class="ud-uzke" data-ud="uzke"></div>
-                    <button type="button" class="ud-nastroj" data-ud-hromadne aria-haspopup="menu" title="Rozbalit nebo sbalit vše, hromadné akce pro celý výběr">⋯ Hromadně</button>
+                    <button type="button" class="ud-nastroj" data-ud-hromadne aria-haspopup="menu" title="Rozbalit nebo sbalit vše, hromadné akce pro celý výběr, přejmenovat fotografa nebo tag v celé sbírce">⋯ Hromadně</button>
                 </div>
                 <div data-ud="lista"></div>
                 <div class="ud-fronta" data-ud="fronta" role="tree" aria-label="Fronta údržby"></div>
@@ -812,7 +813,14 @@ export function pripravit(nacistPrehled) {
             const r = cil.closest('[data-ud-hromadne]').getBoundingClientRect();
             const vse = vychoziRozbaleni(stav.udrzbaFiltr) && !prepnute.get(stav.udrzbaFiltr)?.size;
             const akce = hromadneAkce();
-            otevritKontextovouNabidku(Math.max(8, r.right - 300), r.bottom + 4, [{ text: vse ? 'Sbalit vše' : 'Rozbalit vše', akce: rozbalitVse }, ...(akce.length ? [null, ...akce] : [])]);
+            otevritKontextovouNabidku(Math.max(8, r.right - 300), r.bottom + 4, [
+                { text: vse ? 'Sbalit vše' : 'Rozbalit vše', akce: rozbalitVse },
+                ...(akce.length ? [null, ...akce] : []),
+                // Úpravy napříč celou sbírkou (dřív v hlavní nabídce › Nastavení)
+                { nadpis: 'Napříč sbírkou' },
+                { text: 'Přejmenovat fotografa…', akce: () => prejmenovatVeSbirce('fotograf') },
+                { text: 'Přejmenovat tag…', akce: () => prejmenovatVeSbirce('tag') },
+            ]);
         } else if (cil.closest('[data-ud-dalsi]')) {
             stav.prehledLimit += STRANKA;
             vykreslitSeznam();

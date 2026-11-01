@@ -15,7 +15,7 @@ import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { nacistCovery } from './stena';
 import { obnovitStranku } from './vydani';
 import { otevritCoverModal, otevritProfilPodleId } from './cover';
-import { otevritDeleteModal, otevritModelModal, otevritRychlePridani, potvrdit, smazatDatabazi, smazatModelku } from './formular-modelky';
+import { otevritDeleteModal, otevritModelModal, otevritRychlePridani, potvrdit, smazatDatabazi } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
 import { vybratHodnotu, vybratModelku } from './ulozeni';
 import { nastavitAkcePrazdna } from '../ui/prazdno';
@@ -327,8 +327,6 @@ export function polozkySpravy() {
         { text: 'Importovat (YAML nebo Markdown)…', akce: importovatData },
         { nadpis: 'Nastavení' },
         { text: 'Adresa obrázků…', akce: zmenitSablonuObrazku },
-        { text: 'Přejmenovat fotografa…', akce: () => prejmenovatVeSbirce('fotograf') },
-        { text: 'Přejmenovat tag…', akce: () => prejmenovatVeSbirce('tag') },
         { text: stav.maZamek ? 'Změnit nebo zrušit heslo…' : 'Nastavit heslo…', akce: otevritHeslo },
         // Nové načtení okna znovu vyžádá heslo
         ...(stav.maZamek ? [{ text: 'Zamknout', akce: () => window.location.reload() }] : []),
@@ -448,19 +446,8 @@ export function pripravit() {
         ]);
     };
 
-    document.getElementById('menuBtn').onclick = (e) => {
-        const vProfilu = !detailView.classList.contains('hidden');
-        nabidkaPodTlacitkem(e, [
-            ...(vProfilu ? [
-                { nadpis: stav.aktualniModelka.jmeno },
-                { text: 'Upravit modelku…', akce: () => otevritModelModal(stav.aktualniModelka) },
-                { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(stav.aktualniModelka) },
-                { text: 'Smazat modelku', akce: () => smazatModelku(stav.aktualniModelka), nebezpecne: true },
-                null,
-            ] : []),
-            ...polozkySpravy(),
-        ]);
-    };
+    // Hlavní nabídka je všude stejná; akce s modelkou jsou v profilu v pruhu s modelkou (Upravit, ⋯)
+    document.getElementById('menuBtn').onclick = (e) => nabidkaPodTlacitkem(e, polozkySpravy());
 
     document.getElementById('editModelBtn').onclick = () => otevritModelModal(stav.aktualniModelka);
 

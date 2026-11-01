@@ -1,33 +1,255 @@
 {
   "popis": "Stejné dotazy a modelky pro hledání v Go (hledani.go) a model filtru ve frontendu (frontend/src/lib/filtr.js); obě strany musí najít stejné modelky",
   "modelky": [
-    { "id": 1, "jmeno": "Anna Nováková", "vlasyBarva": "strawberry blond", "ociBarva": "modré", "narodnost": "Česko", "hodnoceni": 3.5, "vydani": ["1995-03"], "obalky": ["1997-12-CZ"], "vyskaCm": 172, "tetovani": 1, "piercing": 0, "narozeniDatum": "1975-03-12", "tags": "playmate, blondýna" },
-    { "id": 2, "jmeno": "Bára Nováková", "vlasyBarva": "černá", "ociBarva": "hnědé", "narodnost": "USA", "hodnoceni": 4, "vydani": ["1971-02"], "obalky": [], "vyskaCm": 165, "tetovani": 0, "piercing": -1, "narozeniDatum": "1950-07-01", "tags": "" },
-    { "id": 3, "jmeno": "Cecílie Nováková", "vlasyBarva": "zrzavá", "ociBarva": "zelené", "narodnost": "Kanada", "hodnoceni": 0, "vydani": ["1988-11", "1990-05-CZ"], "obalky": ["1988-11"], "vyskaCm": 0, "tetovani": -1, "piercing": 1, "narozeniDatum": "1967", "tags": "rusovláska" },
-    { "id": 4, "jmeno": "Dana Nováková", "vlasyBarva": "blond", "ociBarva": "modré", "narodnost": "USA", "hodnoceni": 5, "vydani": ["2004-06"], "obalky": [], "vyskaCm": 180, "tetovani": 0, "piercing": 0, "narozeniDatum": "1982-01-30", "tags": "playmate" }
+    {
+      "id": 1,
+      "jmeno": "Anna Nováková",
+      "vlasyBarva": "strawberry blond",
+      "ociBarva": "modré",
+      "narodnost": "Česko",
+      "hodnoceni": 3.5,
+      "vydani": [
+        "1995-03"
+      ],
+      "obalky": [
+        "1997-12-CZ"
+      ],
+      "vyskaCm": 172,
+      "tetovani": 1,
+      "piercing": 0,
+      "narozeniDatum": "1975-03-12",
+      "tags": "playmate, blondýna"
+    },
+    {
+      "id": 2,
+      "jmeno": "Bára Nováková",
+      "vlasyBarva": "černá",
+      "ociBarva": "hnědé",
+      "narodnost": "USA",
+      "hodnoceni": 4,
+      "vydani": [
+        "1971-02"
+      ],
+      "obalky": [],
+      "vyskaCm": 165,
+      "tetovani": 0,
+      "piercing": -1,
+      "narozeniDatum": "1950-07-01",
+      "tags": ""
+    },
+    {
+      "id": 3,
+      "jmeno": "Cecílie Nováková",
+      "vlasyBarva": "zrzavá",
+      "ociBarva": "zelené",
+      "narodnost": "Kanada",
+      "hodnoceni": 0,
+      "vydani": [
+        "1988-11",
+        "1990-05-CZ"
+      ],
+      "obalky": [
+        "1988-11"
+      ],
+      "vyskaCm": 0,
+      "tetovani": -1,
+      "piercing": 1,
+      "narozeniDatum": "1967",
+      "tags": "rusovláska"
+    },
+    {
+      "id": 4,
+      "jmeno": "Dana Nováková",
+      "vlasyBarva": "blond",
+      "ociBarva": "modré",
+      "narodnost": "USA",
+      "hodnoceni": 5,
+      "vydani": [
+        "2004-06"
+      ],
+      "obalky": [],
+      "vyskaCm": 180,
+      "tetovani": 0,
+      "piercing": 0,
+      "narozeniDatum": "1982-01-30",
+      "tags": "playmate"
+    }
   ],
   "dotazy": [
-    { "dotaz": "vlasy:blond", "najde": [1, 4] },
-    { "dotaz": "-vlasy:blond", "najde": [2, 3] },
-    { "dotaz": "vlasy:\"strawberry blond\",zrzava", "najde": [1, 3] },
-    { "dotaz": "narodnost:usa vlasy:blond", "najde": [4] },
-    { "dotaz": "narodnost:usa,kanada", "najde": [2, 3, 4] },
-    { "dotaz": "edice:CZ", "najde": [1, 3] },
-    { "dotaz": "rok:1980..1999", "najde": [1, 3] },
-    { "dotaz": "rok:>=2000", "najde": [4] },
-    { "dotaz": "vyska:>=170", "najde": [1, 4] },
-    { "dotaz": "vyska:160-175", "najde": [1, 2] },
-    { "dotaz": "hodnoceni:>=3,5", "najde": [1, 2, 4] },
-    { "dotaz": "hodnoceni:4", "najde": [2] },
-    { "dotaz": "hodnoceni:3..4", "najde": [1, 2] },
-    { "dotaz": "-hodnoceni:5", "najde": [1, 2, 3] },
-    { "dotaz": "tetovani:ano", "najde": [1] },
-    { "dotaz": "tetovani:ne", "najde": [2, 4] },
-    { "dotaz": "oci:modre", "najde": [1, 4] },
-    { "dotaz": "tag:playmate", "najde": [1, 4] },
-    { "dotaz": "narozena:<1970", "najde": [2, 3] },
-    { "dotaz": "Bára", "najde": [2] },
-    { "dotaz": "nováková -anna", "najde": [2, 3, 4] },
-    { "dotaz": "vlasy:blond hodnoceni:>=4 vyska:>175", "najde": [4] }
+    {
+      "dotaz": "vlasy:blond",
+      "najde": [
+        1,
+        4
+      ]
+    },
+    {
+      "dotaz": "-vlasy:blond",
+      "najde": [
+        2,
+        3
+      ]
+    },
+    {
+      "dotaz": "vlasy:\"strawberry blond\",zrzava",
+      "najde": [
+        1,
+        3
+      ]
+    },
+    {
+      "dotaz": "narodnost:usa vlasy:blond",
+      "najde": [
+        4
+      ]
+    },
+    {
+      "dotaz": "narodnost:usa,kanada",
+      "najde": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "dotaz": "edice:CZ",
+      "najde": [
+        1,
+        3
+      ]
+    },
+    {
+      "dotaz": "rok:1980..1999",
+      "najde": [
+        1,
+        3
+      ]
+    },
+    {
+      "dotaz": "rok:>=2000",
+      "najde": [
+        4
+      ]
+    },
+    {
+      "dotaz": "vyska:>=170",
+      "najde": [
+        1,
+        4
+      ]
+    },
+    {
+      "dotaz": "vyska:160-175",
+      "najde": [
+        1,
+        2
+      ]
+    },
+    {
+      "dotaz": "hodnoceni:>=3,5",
+      "najde": [
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "dotaz": "hodnoceni:4",
+      "najde": [
+        2
+      ]
+    },
+    {
+      "dotaz": "hodnoceni:3..4",
+      "najde": [
+        1,
+        2
+      ]
+    },
+    {
+      "dotaz": "-hodnoceni:5",
+      "najde": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "dotaz": "tetovani:ano",
+      "najde": [
+        1
+      ]
+    },
+    {
+      "dotaz": "tetovani:ne",
+      "najde": [
+        2,
+        4
+      ]
+    },
+    {
+      "dotaz": "oci:modre",
+      "najde": [
+        1,
+        4
+      ]
+    },
+    {
+      "dotaz": "tag:playmate",
+      "najde": [
+        1,
+        4
+      ]
+    },
+    {
+      "dotaz": "narozena:<1970",
+      "najde": [
+        2,
+        3
+      ]
+    },
+    {
+      "dotaz": "Bára",
+      "najde": [
+        2
+      ]
+    },
+    {
+      "dotaz": "nováková -anna",
+      "najde": [
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "dotaz": "vlasy:blond hodnoceni:>=4 vyska:>175",
+      "najde": [
+        4
+      ]
+    },
+    {
+      "dotaz": "hodnoceni:0",
+      "najde": [
+        3
+      ]
+    },
+    {
+      "dotaz": "vyskyt:časopis",
+      "najde": [
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "dotaz": "-vyskyt:neurčeno tetovani:ano,ne",
+      "najde": [
+        1,
+        2,
+        4
+      ]
+    }
   ]
 }

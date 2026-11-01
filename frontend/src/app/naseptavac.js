@@ -12,6 +12,7 @@ import { otevritClanek } from './clanky';
 import { hledaniVeFronte, hledatVeFronte } from './udrzba';
 import { nacistGalerii } from './galerie';
 import { nastavitViditelnostHledani, obnovitViditelnostHledani, prepnoutRezim, zapamatovatMisto } from './navigace';
+import { nastavitNativniText, nativniText } from './tokeny';
 
 const naseptavac = document.getElementById('naseptavac');
 const zavoj = document.getElementById('naseptavacZavoj');
@@ -45,8 +46,9 @@ poZmeneDat(() => {
 });
 
 // Zjištění aktivního slova před textovým kurzorem (toleruje i mezeru za dvojtečkou u filtru, např. „vlasy: blond“)
+// V Modelkách je v poli jen volný text a rozepsaný příkaz, štítky jsou zvlášť (app/tokeny.js): pracuje se s textem pole
 function ziskatAktivniSlovo() {
-    const hodnota = searchInput.value;
+    const hodnota = nativniText();
     const pozice = searchInput.selectionStart ?? hodnota.length;
     const textPred = hodnota.slice(0, pozice);
     const shodaKlice = /(?:^|\s)((?:[-!])?[\p{L}]+:\s*\S*)$/u.exec(textPred);
@@ -70,9 +72,9 @@ function ziskatAktivniSlovo() {
 // Nahrazení aktivního slova vybraným příkazem nebo hodnotou
 function nahraditAktivniSlovo(novyText, hotovo = false) {
     const { zacatek, konec } = ziskatAktivniSlovo();
-    const hodnota = searchInput.value;
+    const hodnota = nativniText();
     const vkladany = hotovo ? `${novyText} ` : novyText;
-    searchInput.value = hodnota.slice(0, zacatek) + vkladany + hodnota.slice(konec);
+    nastavitNativniText(hodnota.slice(0, zacatek) + vkladany + hodnota.slice(konec));
     const novaPozice = zacatek + vkladany.length;
     searchInput.focus();
     searchInput.setSelectionRange(novaPozice, novaPozice);

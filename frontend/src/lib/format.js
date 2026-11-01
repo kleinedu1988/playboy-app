@@ -554,8 +554,10 @@ export function rozlozitDotaz(dotaz) {
         // Uvozovky jen ohraničují hodnoty (i jednotlivé v seznamu NEBO), do hodnoty nepatří
         hodnota = hodnota.replace(/"/g, '').trim();
         if (!hodnota) continue;
-        const varianty = hodnota.split(',').map(v => bezDiakritiky(v.trim())).filter(Boolean);
-        tokeny.push({ negace, klic: bezDiakritiky(klic), hodnota: bezDiakritiky(hodnota), varianty });
+        const surove = hodnota.split(',').map(v => v.trim()).filter(Boolean);
+        const varianty = surove.map(v => bezDiakritiky(v));
+        // surove = hodnoty tak, jak je uživatel napsal (štítky filtru je ukazují; porovnává se bez diakritiky)
+        tokeny.push({ negace, klic: bezDiakritiky(klic), hodnota: bezDiakritiky(hodnota), varianty, surove });
     }
     return tokeny;
 }

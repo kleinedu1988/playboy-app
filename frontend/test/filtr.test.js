@@ -20,7 +20,7 @@ test('model filtru: text ↔ filtr a počty u hodnot', async () => {
     const f = parsovat('vlasy:"strawberry blond",zrzavá -narodnost:usa rok:1980..1999 Anna', DIMENZE_MODELEK);
     assert.equal(f.podminky.length, 3);
     assert.equal(f.volne.length, 1);
-    assert.equal(serializovat(f), 'vlasy:"strawberry blond",zrzava -narodnost:usa rok:1980..1999 anna');
+    assert.equal(serializovat(f), 'vlasy:"strawberry blond",zrzavá -narodnost:usa rok:1980..1999 anna');
     assert.deepEqual(parsovat(serializovat(f), DIMENZE_MODELEK).podminky, f.podminky);
     // Počty vlasů s ostatními podmínkami (narodnost USA), bez podmínky na vlasy
     const usa = parsovat('narodnost:usa vlasy:cerna', DIMENZE_MODELEK);

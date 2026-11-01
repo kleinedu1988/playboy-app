@@ -4,6 +4,7 @@
 // a volba v liště nebo panelu na skrytý štítek jen klikne, takže obsluha přehledu se nemění.
 import { esc } from '../lib/format';
 import { otevritKontextovouNabidku, zavritKontextovouNabidku } from './nabidka';
+import { nativniText, pocetStitku, stitkyFiltru } from '../app/tokeny';
 
 const POPISKY = {
     razeniGalerie: 'Řazení',
@@ -329,16 +330,40 @@ function ukazatVolby(lista) {
 
     }
 
+    // Modelky: filtry jsou štítky v kapsli hledání; Filtry otevřou řádek hledání s rychlými filtry (app/tokeny.js)
+    if (lista.hasAttribute('data-filtry-stitky')) {
+        const n = pocetStitku();
+        const tlacitko = pridatTlacitko(`${IKONA_FILTRU}<b>Filtry</b>${n ? `<span class="volby-odznak">${n}</span>` : ''} <i aria-hidden="true">▾</i>`, 'filtry');
+        tlacitko.title = 'Filtry: vlasy, národnost, rok, srdíčka… (řádek pod hledáním)';
+        tlacitko.addEventListener('click', () => {
+            document.dispatchEvent(new CustomEvent('otevrit-filtry'));
+            /** @type {HTMLElement | null} */ (document.querySelector('.rychle-filtry .rychly-filtr'))?.focus();
+        });
+    }
+
     // Text v hledání, který přehled omezuje (navigace.js, obnovitViditelnostHledani), je ve stavové liště také štítkem:
     // klik skočí do pole, × text smaže. „Zrušit filtry“ ruší filtry i takové hledání.
     const hledani = /** @type {HTMLInputElement | null} */ (document.getElementById('searchInput'));
     const hledaniFiltruje = Boolean(hledani?.value.trim()) && Boolean(document.getElementById('hledaniRadek')?.classList.contains('filtruje'));
-    if (hledaniFiltruje) {
-        const stitek = pridatTlacitko(`<span class="stav-lupa" aria-hidden="true">⌕</span>${esc(hledani.value.trim())} ${krizek}`, 'volba-stitek stav-hledani', stavVlevo);
+    // Štítky filtru Modelek (app/tokeny.js) každý zvlášť: klik otevře jeho editor, × ho zruší
+    const stitkyModelek = stitkyFiltru();
+    stitkyModelek.forEach(st => {
+        const stitek = pridatTlacitko(`${esc(st.text)} ${krizek}`, 'volba-stitek', stavVlevo);
+        stitek.title = `${st.text} – klik upraví, × zruší`;
+        stitek.addEventListener('click', (e) => {
+            if (/** @type {HTMLElement} */ (e.target).closest('.volba-zrusit')) st.zrusit();
+            else st.upravit();
+        });
+    });
+    const volnyText = stitkyModelek.length ? nativniText().trim() : hledani?.value.trim();
+    if (hledaniFiltruje && volnyText) {
+        const stitek = pridatTlacitko(`<span class="stav-lupa" aria-hidden="true">⌕</span>${esc(volnyText)} ${krizek}`, 'volba-stitek stav-hledani', stavVlevo);
         stitek.title = 'Hledání omezuje přehled – klik skočí do pole, × hledání smaže';
         stitek.addEventListener('click', (e) => {
             if (/** @type {HTMLElement} */ (e.target).closest('.volba-zrusit')) {
-                hledani.value = '';
+                // Smaže jen volný text, štítky filtru zůstanou
+                if (stitkyModelek.length) hledani.value = hledani.value.slice(0, hledani.value.length - nativniText().length).trim();
+                else hledani.value = '';
                 hledani.dispatchEvent(new Event('input'));
             } else {
                 hledani.focus();
@@ -349,7 +374,7 @@ function ukazatVolby(lista) {
         const zrusit = document.createElement('button');
         zrusit.type = 'button';
         zrusit.className = 'link stav-zrusit';
-        zrusit.textContent = zapnute.length + (hledaniFiltruje ? 1 : 0) > 1 ? 'Zrušit filtry' : 'Zrušit filtr';
+        zrusit.textContent = zapnute.length + stitkyModelek.length + (volnyText ? 1 : 0) > 1 ? 'Zrušit filtry' : 'Zrušit filtr';
         zrusit.addEventListener('click', () => zrusitHledaniAFiltry());
         stavVlevo.append(zrusit);
     }

@@ -207,9 +207,9 @@ test('pokročilá syntaxe vyhledávání: negace, operátory, rozsahy, OR a neuz
     // Negace a vícenásobné hodnoty (OR přes čárku)
     const tKomplex = rozlozitDotaz('-tag:playmate vlasy:blond,zrzava -usa');
     assert.equal(tKomplex.length, 3);
-    assert.deepEqual(tKomplex[0], { negace: true, klic: 'tag', hodnota: 'playmate', varianty: ['playmate'] });
-    assert.deepEqual(tKomplex[1], { negace: false, klic: 'vlasy', hodnota: 'blond,zrzava', varianty: ['blond', 'zrzava'] });
-    assert.deepEqual(tKomplex[2], { negace: true, klic: '', hodnota: 'usa', varianty: ['usa'] });
+    assert.deepEqual(tKomplex[0], { negace: true, klic: 'tag', hodnota: 'playmate', varianty: ['playmate'], surove: ['playmate'] });
+    assert.deepEqual(tKomplex[1], { negace: false, klic: 'vlasy', hodnota: 'blond,zrzava', varianty: ['blond', 'zrzava'], surove: ['blond', 'zrzava'] });
+    assert.deepEqual(tKomplex[2], { negace: true, klic: '', hodnota: 'usa', varianty: ['usa'], surove: ['usa'] });
 
     // vyhovujeHledani: shoda s negací a OR
     const polozkaBlond = ['Pamela Anderson', 'blond', 'Kanada'];
@@ -237,9 +237,9 @@ test('pokročilá syntaxe vyhledávání: negace, operátory, rozsahy, OR a neuz
     // Tolerance mezery za dvojtečkou (vlasy: blond, fotograf: "arny freytag", rok: >= 1990, vlasy: blond, zrzava)
     const tMezera = rozlozitDotaz('vlasy: blond -tag: playmate fotograf: "Arny Freytag"');
     assert.equal(tMezera.length, 3);
-    assert.deepEqual(tMezera[0], { negace: false, klic: 'vlasy', hodnota: 'blond', varianty: ['blond'] });
-    assert.deepEqual(tMezera[1], { negace: true, klic: 'tag', hodnota: 'playmate', varianty: ['playmate'] });
-    assert.deepEqual(tMezera[2], { negace: false, klic: 'fotograf', hodnota: 'arny freytag', varianty: ['arny freytag'] });
+    assert.deepEqual(tMezera[0], { negace: false, klic: 'vlasy', hodnota: 'blond', varianty: ['blond'], surove: ['blond'] });
+    assert.deepEqual(tMezera[1], { negace: true, klic: 'tag', hodnota: 'playmate', varianty: ['playmate'], surove: ['playmate'] });
+    assert.deepEqual(tMezera[2], { negace: false, klic: 'fotograf', hodnota: 'arny freytag', varianty: ['arny freytag'], surove: ['Arny Freytag'] });
 
     const tMezeraOr = rozlozitDotaz('vlasy: blond, zrzava');
     assert.equal(tMezeraOr.length, 1);

@@ -34,7 +34,7 @@ import * as statistiky from './app/statistiky';
 import * as oblibenost from './app/oblibenost';
 import * as zkratky from './app/zkratky';
 import * as editorTextu from './ui/editor-textu';
-import { stats } from './app/prvky';
+import { searchInput, stats } from './app/prvky';
 import { vyhlasitSezonu } from './app/vyhlaseni-sezony';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
@@ -83,9 +83,11 @@ StavDatabaze().then((chyba) => {
     await nacistSpecialy();
     let posledni = null;
     try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
+    // Filtry a hledání Modelek z minula (štítky v kapsli hledání, app/tokeny.js); při jiném přehledu se schovají pro Modelky
+    try { searchInput.value = localStorage.getItem('hledaniModelek') || ''; } catch { /* bez úložiště začne bez filtru */ }
     if (posledni === 'nejlepsi') oblibenost.nastavitNejlepsiVOblibenosti(true);
     if (['kalendar', 'nejlepsi', 'centerfoldy'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
-    nacistGalerii();
+    nacistGalerii(searchInput.value);
     kontrolaPoSpusteni();
     // Skončená sezóna oblíbenosti čeká na vyhlášení Favoritky (app/vyhlaseni-sezony.js); až po úvodních oknech
     setTimeout(() => vyhlasitSezonu(), 1500);

@@ -13,7 +13,7 @@ export function parsovat(text, dimenze) {
     const volne = [];
     for (const t of rozlozitDotaz(text)) {
         const d = t.klic && najitDimenzi(dimenze, t.klic);
-        if (d) podminky.push({ klic: d.klic, negace: t.negace, hodnoty: t.varianty, vyraz: t.hodnota });
+        if (d) podminky.push({ klic: d.klic, negace: t.negace, hodnoty: t.surove, vyraz: t.surove.join(',') });
         else volne.push(t);
     }
     return { podminky, volne };

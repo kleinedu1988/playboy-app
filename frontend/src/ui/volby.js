@@ -36,6 +36,10 @@ const POPISKY = {
 
 const RAZENI = new Set(['razeniGalerie', 'razeniSteny', 'udRazeniVolba']);
 // Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
+// Pohledy zvolené části (Síň slávy › Top 10 … Sezóna, Údržba › Po údajích … Souhrn) nejsou volby, ale podmenu: kreslí
+// se do #podmenu v řádku pod navigační kapslí. Obálky / Kalendář jsou části Čísel přímo v kapsli, ve volbách nejsou.
+const PODMENU = new Set(['slavaPohled', 'udRezim']);
+const MIMO_VOLBY = new Set(['zobrazeniCisel']);
 const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim', 'poradiRozsah', 'filtrFotografa', 'slavaPohled']);
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše
@@ -142,6 +146,11 @@ const hodnota = s => s.zvoleny ? textStitku(s.zvoleny) : 'vše';
 
 function ukazatVolby(lista) {
     const cil = misto();
+    const podmenu = document.getElementById('podmenu');
+    if (podmenu) {
+        podmenu.innerHTML = '';
+        podmenu.classList.add('hidden');
+    }
     // Volby se skládají znovu: fokus zůstane na stejné volbě (podle textu, jinak na stejném místě)
     const aktivni = /** @type {HTMLElement | null} */ (cil.contains(document.activeElement) ? document.activeElement : null);
     const fokus = aktivni && { text: aktivni.textContent.trim(), poradi: [...cil.querySelectorAll('button')].indexOf(/** @type {HTMLButtonElement} */ (aktivni)) };
@@ -162,7 +171,7 @@ function ukazatVolby(lista) {
     const podleKlice = new Map();
     lista.querySelectorAll('.chip').forEach(stitek => {
         const klic = Object.keys(stitek.dataset)[0];
-        if (!POPISKY[klic]) return;
+        if (!POPISKY[klic] || MIMO_VOLBY.has(klic)) return;
         if (!podleKlice.has(klic)) podleKlice.set(klic, []);
         podleKlice.get(klic).push(stitek);
     });
@@ -218,7 +227,7 @@ function ukazatVolby(lista) {
 
     // Přepínač zobrazení (Obálky / Kalendář): všechny možnosti vedle sebe, zvolená
     // zvýrazněná, klik přepne rovnou (bez nabídky)
-    const pridatPrepinac = (s) => {
+    const pridatPrepinac = (s, kam = panel) => {
         const prepinac = document.createElement('div');
         prepinac.className = 'volba-prepinac';
         prepinac.setAttribute('role', 'radiogroup');
@@ -248,14 +257,18 @@ function ukazatVolby(lista) {
             e.stopPropagation();
             if (nova !== i) s.volby[nova].akce();
         });
-        panel.append(prepinac);
+        kam.append(prepinac);
     };
 
     // Povinná volba bez zvolené hodnoty (srdíčka v Nejlepších, když je zvolený výběr) se neukazuje
     skupiny.filter(s => s.druh !== 'filtr' && (s.druh !== 'povinne' || s.zvoleny)).forEach(s => {
         let tlacitko;
         if (s.druh === 'zobrazeni') {
-            pridatPrepinac(s);
+            if (podmenu && PODMENU.has(s.klic)) {
+                pridatPrepinac(s, podmenu);
+                podmenu.setAttribute('aria-label', TITULKY_ZOBRAZENI[s.klic] || POPISKY[s.klic]);
+                podmenu.classList.remove('hidden');
+            } else pridatPrepinac(s);
             return;
         } else if (s.druh === 'razeni') {
             tlacitko = pridatTlacitko(`${IKONA_RAZENI}<b>${esc(hodnota(s))}</b> <i aria-hidden="true">▾</i>`, 'razeni');
@@ -309,6 +322,8 @@ function ukazatVolby(lista) {
     }
 
     if (!panel.childElementCount) panel.remove();
+    // Bez voleb (jen podmenu) se prázdná kapsle neukazuje
+    cil.classList.toggle('hidden', !cil.querySelector('.volby-skupina'));
     nastavitPocet(pocet);
 
     aktualniFiltry = { filtry, zapnute, pocet };

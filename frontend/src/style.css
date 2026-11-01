@@ -14260,3 +14260,180 @@ button.pas-kapsle:focus-visible {
     padding-top: 16px;
     border-top: 1px solid var(--panel-okraj);
 }
+
+/* ===== Navigační kapsle (fúze variant A, B, C) =====
+   Řádek okna: jedna skleněná kapsle (sklo jako hledání) se čtyřmi sekcemi; nezvolené jen ikonou, zvolená s názvem
+   a hned za ní její části (#pasStranky přesouvá app/prehled.js). Klik na zvolenou sekci otevře nabídku všech sekcí
+   a částí (app/cover.js). Druhý řádek: podmenu zvolené části (#podmenu, ui/volby.js) ve stejném skle. */
+.view-toggle.nav-kapsle {
+    gap: 2px;
+    height: 36px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background-color: rgba(26, 26, 30, 0.82);
+    box-shadow: var(--panel-stin);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+}
+
+.nav-kapsle > button[data-rezim] {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+}
+
+.nav-kapsle > button[data-rezim]:not(.active) > span {
+    display: none;
+}
+
+.nav-kapsle > button[data-rezim].active {
+    padding: 0 13px 0 11px;
+}
+
+/* Rozbalená sekce a její části tvoří jeden podbarvený segment */
+.nav-kapsle.rozbalena > button[data-rezim].active {
+    padding-right: 6px;
+    border-radius: 999px 0 0 999px;
+    box-shadow: none;
+}
+
+.nav-kapsle .pas-hlavicky {
+    height: 28px;
+    margin-left: -2px;
+    padding: 0 2px 0 0;
+    border-radius: 0 999px 999px 0;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.nav-kapsle .pas-hlavicky::before {
+    content: "›";
+    padding: 0 6px 0 2px;
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.nav-kapsle .pas-hlavicky .slava-pohledy {
+    gap: 2px;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.nav-kapsle .pas-hlavicky .slava-pohled {
+    height: 24px;
+    padding: 0 10px;
+    font-size: 12.5px;
+}
+
+/* Zvolená část plnou růžovou: přesně „kde jsem“ */
+.nav-kapsle .pas-hlavicky .slava-pohled.active {
+    box-shadow: none;
+}
+
+/* Podmenu zvolené části pod kapslí, ve stejném skle */
+.podmenu {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    height: 34px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background-color: rgba(26, 26, 30, 0.82);
+    box-shadow: var(--panel-stin);
+}
+
+.podmenu .volba-prepinac {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.podmenu .prepinac-volba {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.podmenu .prepinac-volba:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.podmenu .prepinac-volba.aktivni {
+    background-color: rgba(216, 27, 96, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(216, 27, 96, 0.55);
+    color: var(--text-main);
+}
+
+.podmenu .prepinac-volba svg {
+    flex: none;
+}
+
+@media (max-width: 1120px) {
+    .podmenu .prepinac-volba:not(.aktivni) > span {
+        display: none;
+    }
+}
+
+/* Lupa, + a ⋯ v řádku okna za volbami */
+.titulek-okna .nav-akce {
+    flex: none;
+    align-self: center;
+    margin-left: 8px;
+}
+
+/* Druhý řádek jen s drobečky nebo podmenu; prázdný se neukazuje */
+.hlavni-lista:not(:has(> .logo:not(.hidden), > .podmenu:not(.hidden))) {
+    display: none;
+}
+
+/* Zvolená část v kapsli plnou růžovou (jako zvolená pilulka) */
+.nav-kapsle .pas-hlavicky .slava-pohled.active {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.nav-kapsle .pas-hlavicky .slava-pohled.active .nav-ikona,
+.nav-kapsle .pas-hlavicky .slava-pohled.active svg {
+    color: #fff;
+}
+
+/* Bez voleb jdou lupa a akce k pravému okraji (k tlačítkům okna) */
+.volby-prehledu.hidden + .nav-akce {
+    margin-left: auto;
+}
+
+/* Kapsle se nevejde vedle voleb: nezvolené části jen ikonou */
+.bez-nazvu-vlevo .nav-kapsle .pas-hlavicky .slava-pohled:not(.active) .pas-nazev {
+    display: none;
+}
+
+/* Tlačítka okna hned za lupou a akcemi; k pravému okraji je odsunou volby, nebo bez nich akce */
+.titulek-okna .window-controls {
+    margin-left: 0;
+}
+
+/* Úzké okno: zvolená sekce jen ikonou a v kapsli jen zvolená část; ostatní části jsou v nabídce po kliku na sekci */
+@media (max-width: 860px) {
+    .nav-kapsle > button[data-rezim].active > span {
+        display: none;
+    }
+
+    .nav-kapsle .pas-hlavicky .slava-pohled:not(.active) {
+        display: none;
+    }
+}

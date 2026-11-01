@@ -1,6 +1,6 @@
 // Přehled: stránka Sbírka (úvod, Údržba, Sháním CZ, Statistiky, Porovnat, Hodnotit fotky, Pořadí)
 import { GetKalendar, GetPrehled, GetPrehledOblibenosti, GetStatistiky, GetStavyVydani, SetStavVydani } from './backend';
-import { htmlPasuOblibenosti, nacistOblibenost, nastavitCastOblibenosti, nastavitNejlepsiVOblibenosti, poctyOblibenosti, ukazatStrankuOblibenosti } from './oblibenost';
+import { nacistOblibenost, nastavitCastOblibenosti, nastavitNejlepsiVOblibenosti, poctyOblibenosti, ukazatStrankuOblibenosti } from './oblibenost';
 import { nacistNejlepsi } from './nejlepsi';
 import { nacistGalerii } from './galerie';
 import { zrusitHledani } from './naseptavac';
@@ -35,15 +35,23 @@ const casti = () => CASTI_VSE;
 const pocetVCasti = { udrzba: 0, shanim: 0 };
 let stavSbirky = null; // { uplnost, ukolu } z posledního načtení
 
-// Pilulky podčástí pro Modelky v kontextové liště (#pasStranky): Profily, Galerie, Síň slávy
+// Části Modelek v navigační kapsli (#pasStranky): Profily, Galerie
 export function htmlPasuModelek(pohled) {
-    const jeSlava = pohled === stats && stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'slava';
     const pilulky = [
         { klic: 'profily', nazev: 'Profily', titulek: 'Všechny modelky v databázi, profily a alba', zvolena: pohled === gallery },
         { klic: 'galerie', nazev: 'Galerie', titulek: 'Nejlépe hodnocené modelky, čísla, centerfoldy a fotky', zvolena: pohled === best },
-        { klic: 'slava', nazev: 'Síň slávy', titulek: 'Nejlepší desítka, legendy, odznaky, rekordy a kronika', zvolena: jeSlava },
     ];
     return `<nav class="slava-pohledy" role="tablist" aria-label="Části modelek">${htmlPilulek(pilulky, 'cast-modelek-pas')}</nav>`;
+}
+
+// Části Hodnocení v navigační kapsli: Porovnat, Fotky, Pořadí (pohledy Oblíbenosti) a Síň slávy
+export function htmlPasuHodnoceni() {
+    const { pocty } = poctyOblibenosti();
+    const vHodnoceni = stav.oblibenostCast === 'hodnoceni';
+    const pohledy = [['porovnat', 'Porovnat'], ['fotky', 'Fotky'], ['poradi', 'Pořadí']].map(([klic, nazev]) =>
+        ({ klic, nazev, pocet: pocty[klic][0], titulek: pocty[klic][1], zvolena: vHodnoceni && stav.hodnoceniPohled === klic }));
+    const slava = [{ klic: 'slava', nazev: 'Síň slávy', titulek: 'Nejlepší desítka, legendy, odznaky, rekordy, kronika a sezóna', zvolena: !vHodnoceni }];
+    return `<nav class="slava-pohledy" role="tablist" aria-label="Části hodnocení">${htmlPilulek(pohledy, 'zobrazeni-prehledu')}${htmlPilulek(slava, 'cast-modelek-pas')}</nav>`;
 }
 
 // Pilulky podčástí pro Čísla v kontextové liště (#pasStranky): Obálky, Kalendář, Centerfoldy
@@ -56,37 +64,40 @@ export function htmlPasuCisel(pohled) {
     return `<nav class="slava-pohledy" role="tablist" aria-label="Části čísel">${htmlPilulek(pilulky, 'cast-cisel-pas')}</nav>`;
 }
 
-// Pilulky podčástí pro Sbírku v kontextové liště (#pasStranky): Úvod, Údržba, Sháním CZ, Statistiky, Porovnat, Hodnotit fotky, Pořadí
+// Části Sbírky v navigační kapsli (#pasStranky): Úvod, Údržba, Sháním CZ, Statistiky
 export function htmlPasuSbirky() {
-    const { pocty } = poctyOblibenosti();
-    const vOblibenosti = stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'hodnoceni';
     const pilulky = [
         { klic: 'uvod', nazev: 'Úvod', titulek: 'Přehled a stav sbírky', zvolena: stav.prehledSekce === 'uvod' },
         { klic: 'udrzba', nazev: 'Údržba', pocet: pocetVCasti.udrzba, titulek: 'Chybějící a neúplné údaje k doplnění', zvolena: stav.prehledSekce === 'udrzba' },
         { klic: 'shanim', nazev: 'Sháním CZ', pocet: pocetVCasti.shanim, titulek: 'Chybějící čísla CZ edice', zvolena: stav.prehledSekce === 'shanim' },
         { klic: 'statistiky', nazev: 'Statistiky', titulek: 'Statistiky a grafy sbírky', zvolena: stav.prehledSekce === 'statistiky' },
-        { klic: 'porovnat', nazev: 'Porovnat', pocet: pocty.porovnat[0], titulek: pocty.porovnat[1], zvolena: vOblibenosti && stav.hodnoceniPohled === 'porovnat' },
-        { klic: 'fotky', nazev: 'Hodnotit fotky', pocet: pocty.fotky[0], titulek: pocty.fotky[1], zvolena: vOblibenosti && stav.hodnoceniPohled === 'fotky' },
-        { klic: 'poradi', nazev: 'Pořadí', pocet: pocty.poradi[0], titulek: pocty.poradi[1], zvolena: vOblibenosti && stav.hodnoceniPohled === 'poradi' },
     ];
     return `<nav class="slava-pohledy" role="tablist" aria-label="Části sbírky">${htmlPilulek(pilulky, 'zobrazeni-prehledu')}</nav>`;
 }
 
-// Obnoví pilulky podčástí (#pasStranky) v kontextové liště pro otevřenou hlavní sekci (Modelky, Čísla, Sbírka)
+// Obnoví části otevřené sekce (#pasStranky) a přesune je v navigační kapsli hned za zvolenou sekci (Modelky, Čísla,
+// Hodnocení, Sbírka); na profilu a stránce čísla jsou skryté
 export function obnovitPasHlavicky(pohled) {
     const misto = document.getElementById('pasStranky');
     if (!misto) return;
     const fokusVPasu = misto.contains(document.activeElement);
     let html = '';
-    if (pohled === gallery || pohled === best || (pohled === stats && stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'slava')) {
+    if (pohled === gallery || pohled === best) {
         html = htmlPasuModelek(pohled);
     } else if (pohled === covers || pohled === calendar || pohled === wall) {
         html = htmlPasuCisel(pohled);
     } else if (pohled === stats) {
-        html = htmlPasuSbirky();
+        html = stav.prehledSekce === 'oblibenost' ? htmlPasuHodnoceni() : htmlPasuSbirky();
     }
     nastavitHtml(misto, html);
     misto.classList.toggle('hidden', !html);
+    const kapsle = document.getElementById('viewToggle');
+    const selektor = pohled === gallery || pohled === best ? '[data-rezim="modelky"]'
+        : pohled === covers || pohled === calendar || pohled === wall ? '[data-rezim="covery"]'
+            : `[data-sekce="${stav.prehledSekce === 'oblibenost' ? 'hodnoceni' : 'sbirka'}"]`;
+    const zvolena = kapsle?.querySelector(selektor);
+    if (zvolena && html && misto.previousElementSibling !== zvolena) zvolena.after(misto);
+    kapsle?.classList.toggle('rozbalena', Boolean(html));
     if (fokusVPasu && !misto.contains(document.activeElement)) /** @type {HTMLElement | null} */ (misto.querySelector('[role="tab"][aria-selected="true"]'))?.focus({ preventScroll: true });
 }
 

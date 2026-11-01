@@ -7,7 +7,7 @@ import { stav } from './stav';
 import { issueView, searchInput, stats, wall } from './prvky';
 import { historie, jeOdkazNaSlozku, odkazJeVPoradku, oznamitVlozeni, prepinacRezimu, prepnoutRezim, zobrazeniCisel } from './navigace';
 import { zvolitCastPrehledu } from './prehled';
-import { nastavitCastOblibenosti, posledniCastOblibenosti } from './oblibenost';
+import { nastavitCastOblibenosti, nastavitNejlepsiVOblibenosti, posledniCastOblibenosti } from './oblibenost';
 import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
@@ -16,6 +16,7 @@ import { pripojitVyberSpecialu } from './specialy';
 import { zavritOkno } from './ulozeni';
 import { VELIKOST_PLAKATU_MALA, adresyOdkazu } from './obrazky';
 import { jeVidet, otevreneOkno } from '../ui/dom';
+import { otevritKontextovouNabidku } from '../ui/nabidka';
 
 // Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -151,11 +152,12 @@ export function pripravit() {
     prepinacRezimu.addEventListener('click', (e) => {
         const tlacitko = e.target.closest('[data-rezim]');
         if (!tlacitko) return;
-        const main = document.querySelector('main');
-        // Zvolená záložka na přehledu jen vrátí stránku nahoru (bez nového načtení); z profilu nebo čísla vede zpět
-        // na přehled
+        // Zvolená sekce na přehledu otevře nabídku všech sekcí i s jejich částmi (skok rovnou na část); z profilu nebo
+        // čísla vede zpět na přehled
         if (tlacitko.classList.contains('active') && !prepinacRezimu.classList.contains('podstranka')) {
-            main.scrollTo({ top: 0, behavior: 'smooth' });
+            // Klik nesmí dojít k dokumentu, který nabídky klikem mimo ně zavírá (nabidky.js)
+            e.stopPropagation();
+            otevritNabidkuSekci(tlacitko);
             return;
         }
         // Přepnutí přehledu začíná novou historii; Čísla v naposledy zvoleném zobrazení
@@ -168,14 +170,16 @@ export function pripravit() {
             prepnoutRezim(zobrazeniCisel() === 'kalendar' ? 'kalendar' : 'covery');
             nacistGalerii(searchInput.value);
         } else if (rezim === 'prehled') {
+            // Hodnocení (Oblíbenost: Porovnat, Fotky, Pořadí, Síň slávy) nebo Sbírka, každá na naposledy zvolené části
             const naPrehledu = stav.rezim === 'prehled' && !stats.classList.contains('hidden');
-            zvolitCastPrehledu('sprava', naPrehledu);
+            nastavitNejlepsiVOblibenosti(false);
+            if (zvolitCastPrehledu(tlacitko.dataset.sekce === 'hodnoceni' ? 'oblibenost' : 'sprava', naPrehledu)) return;
             prepnoutRezim('prehled');
             nacistGalerii(searchInput.value);
         }
     });
 
-    // Ctrl+1 až Ctrl+7: přehledy a stránky v liště zleva doprava (Modelky … Sbírka), jako klik na ně. Číslo podle
+    // Ctrl+1 až Ctrl+4: přehledy a stránky v liště zleva doprava (Modelky … Sbírka), jako klik na ně. Číslo podle
     // klávesy, ne znaku: na české klávesnici je na „1“ znak „+“ (číslice jsou se Shiftem). Držení se neopakuje.
     document.addEventListener('keydown', (e) => {
         if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
@@ -185,6 +189,8 @@ export function pripravit() {
         const tlacitko = /** @type {HTMLElement | undefined} */ (prepinacRezimu.querySelectorAll('[data-rezim]')[Number(cislo) - 1]);
         if (!tlacitko) return;
         e.preventDefault();
+        // Zkratka zvolené sekce nabídku sekcí neotevírá
+        if (tlacitko.classList.contains('active') && !prepinacRezimu.classList.contains('podstranka')) return;
         if (!e.repeat) tlacitko.click();
     });
 
@@ -216,4 +222,37 @@ function skocitNaRok(rok) {
         .map(o => /** @type {HTMLElement} */ (o)).filter(o => o.offsetParent);
     const nejblizsi = oddily.sort((a, b) => Math.abs(parseInt(a.dataset.rok || a.dataset.cast) - rok) - Math.abs(parseInt(b.dataset.rok || b.dataset.cast) - rok))[0];
     nejblizsi?.scrollIntoView({ block: 'start' });
+}
+
+// Nabídka sekcí (klik na zvolenou sekci v navigační kapsli): všechny sekce a jejich části. Část se otevře stejně jako
+// klikem na její pilulku: dočasné tlačítko s jejím atributem obslouží obsluha pilulek (document)
+const CASTI_SEKCI = {
+    modelky: [['cast-modelek-pas', 'profily', 'Profily'], ['cast-modelek-pas', 'galerie', 'Galerie']],
+    covery: [['cast-cisel-pas', 'covery', 'Obálky'], ['cast-cisel-pas', 'kalendar', 'Kalendář'], ['cast-cisel-pas', 'centerfoldy', 'Centerfoldy']],
+    hodnoceni: [['zobrazeni-prehledu', 'porovnat', 'Porovnat'], ['zobrazeni-prehledu', 'fotky', 'Fotky'], ['zobrazeni-prehledu', 'poradi', 'Pořadí'], ['cast-modelek-pas', 'slava', 'Síň slávy']],
+    sbirka: [['zobrazeni-prehledu', 'uvod', 'Úvod'], ['zobrazeni-prehledu', 'udrzba', 'Údržba'], ['zobrazeni-prehledu', 'shanim', 'Sháním CZ'], ['zobrazeni-prehledu', 'statistiky', 'Statistiky']],
+};
+function otevritCast(atribut, klic) {
+    const b = document.createElement('button');
+    b.hidden = true;
+    b.setAttribute(`data-${atribut}`, klic);
+    document.body.append(b);
+    b.click();
+    b.remove();
+}
+function otevritNabidkuSekci(tlacitko) {
+    const zvolena = document.querySelector('#pasStranky [role="tab"][aria-selected="true"]');
+    const polozky = [];
+    prepinacRezimu.querySelectorAll('#viewToggle [data-rezim]').forEach((b) => {
+        const sekce = /** @type {HTMLElement} */ (b);
+        const klic = sekce.dataset.sekce || sekce.dataset.rezim;
+        const nazev = sekce.querySelector('span')?.textContent.trim() || '';
+        polozky.push({ nadpis: nazev });
+        (CASTI_SEKCI[klic] || []).forEach(([atribut, cast, nazevCasti]) => {
+            const je = sekce.classList.contains('active') && zvolena?.getAttribute(`data-${atribut}`) === cast;
+            polozky.push({ text: `${je ? '✓ ' : ''}${nazevCasti}`, akce: () => { if (!je) otevritCast(atribut, cast); } });
+        });
+    });
+    const r = tlacitko.getBoundingClientRect();
+    otevritKontextovouNabidku(r.left, r.bottom + 6, polozky);
 }

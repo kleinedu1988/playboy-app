@@ -4,15 +4,23 @@ import { htmlKostryKaret } from './ui/kostra';
 
 export const SABLONA_OKNA = `
   <header class="navbar">
-    <!-- Horní řádek: 3 hlavní sekce vlevo jako záložky prohlížeče, vpravo volby a tlačítka okna -->
+    <!-- Horní řádek: vlevo navigační kapsle se čtyřmi sekcemi – zvolená má název a rozbalí se na své části (#pasStranky
+         se přesune hned za ni, app/prehled.js); vpravo kapsle voleb (řazení, filtry, počet) a tlačítka okna -->
     <div class="titulek-okna">
-      <nav id="viewToggle" class="view-toggle" aria-label="Hlavní nabídka">
+      <nav id="viewToggle" class="view-toggle nav-kapsle" aria-label="Hlavní nabídka">
         <button type="button" data-rezim="modelky" class="active" aria-current="page" title="Modelky (Ctrl+1)" aria-keyshortcuts="Control+1"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.6"/><path d="M5 20.5c.8-4 3.6-6.2 7-6.2s6.2 2.2 7 6.2"/></svg><span>Modelky</span></button>
         <button type="button" data-rezim="covery" title="Čísla časopisu (Ctrl+2)" aria-keyshortcuts="Control+2"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h10.5a1.5 1.5 0 0 1 1.5 1.5v15.5H7.5A1.5 1.5 0 0 1 6 19V3.5z"/><path d="M6 19a1.5 1.5 0 0 1 1.5-1.5H18M9.5 7.5h5"/></svg><span>Čísla</span></button>
-        <button type="button" data-rezim="prehled" class="nav-rezim" title="Sbírka (Ctrl+3)" aria-keyshortcuts="Control+3"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="5" rx="1.2"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Sbírka</span></button>
+<button type="button" data-rezim="prehled" data-sekce="hodnoceni" class="nav-rezim" title="Hodnocení (Ctrl+3)" aria-keyshortcuts="Control+3"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2C13.9 6.2 15.5 5 17.5 5 21 5 22.6 8.6 21.2 11.4 19 15.65 12 20 12 20z"/><path d="M12 20s-7-4.35-9.2-8.6C1.4 8.6 3 5 6.5 5c2 0 3.6 1.2 5.5 3.2V20z" fill="currentColor" stroke="none"/></svg><span>Hodnocení</span></button>
+        <button type="button" data-rezim="prehled" data-sekce="sbirka" class="nav-rezim" title="Sbírka (Ctrl+4)" aria-keyshortcuts="Control+4"><svg class="nav-ikona" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="5" rx="1.2"/><path d="M5 9v9.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V9M10 13h4"/></svg><span>Sbírka</span></button>
       </nav>
       <!-- Volby otevřeného přehledu (Řazení ▾, Srdíčka ▾, filtry, počet…) vpravo nahoře, oddělené od záložek; plní je ui/volby.js -->
       <div id="volbyPrehledu" class="volby-prehledu hidden"></div>
+      <!-- Lupa (přepínač kapsle hledat), přidání (+) a další akce (⋯) v řádku okna; druhý řádek jen když je co ukázat -->
+      <div class="nav-akce">
+        <button type="button" id="searchToggleBtn" class="nav-fav" aria-expanded="false" aria-controls="hledaniRadek" title="Hledat (Ctrl+F)" aria-label="Hledat" aria-keyshortcuts="Control+F"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+        <button id="addBtn" class="nav-fav" title="Přidat…" aria-label="Přidat">+</button>
+        <button id="menuBtn" class="nav-fav" title="Další akce" aria-label="Další akce">&#8943;</button>
+      </div>
       <span class="nav-oddelovac oddelovac-voleb" aria-hidden="true"></span>
       <div class="window-controls">
         <button id="winMinBtn" class="win-btn" title="Minimalizovat">&#8211;</button>
@@ -20,7 +28,7 @@ export const SABLONA_OKNA = `
         <button id="winCloseBtn" class="win-btn win-close" title="Zavřít" aria-label="Zavřít program">&times;</button>
       </div>
     </div>
-    <!-- Kontextová lišta otevřené sekce: cesta zpět, pod-části, vpravo přepínač lupy a akce (+, ⋯) -->
+    <!-- Druhý řádek jen pro drobečky (profil, číslo) a podmenu zvolené části; jinak skrytý (style.css) -->
     <div class="hlavni-lista">
       <!-- Cesta zpět z profilu a stránky vydání (drobečky): odkud se přišlo › kde jsem, u profilu šipky na další modelku -->
       <nav class="logo hidden" aria-label="Kde jsem">
@@ -30,14 +38,10 @@ export const SABLONA_OKNA = `
         <span id="poradiModelky" class="nav-poradi hidden"></span>
         <button id="nextModelBtn" class="nav-back nav-step hidden" title="Další modelka (šipka vpravo)" aria-label="Další modelka">&#8250;</button>
       </nav>
-      <!-- Pod-části otevřené sekce (Oblíbenost, Sbírka); plní je app/prehled.js -->
+      <!-- Části otevřené sekce; plní je app/prehled.js a přesouvá do navigační kapsle za zvolenou sekci -->
       <div id="pasStranky" class="pas-hlavicky hidden"></div>
-      <!-- Tlačítko lupy (přepínač kapsle hledat), přidání (+) a další akce (⋯) -->
-      <div class="nav-akce">
-        <button type="button" id="searchToggleBtn" class="nav-fav" aria-expanded="false" aria-controls="hledaniRadek" title="Hledat (Ctrl+F)" aria-label="Hledat" aria-keyshortcuts="Control+F"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
-        <button id="addBtn" class="nav-fav" title="Přidat…" aria-label="Přidat">+</button>
-        <button id="menuBtn" class="nav-fav" title="Další akce" aria-label="Další akce">&#8943;</button>
-      </div>
+      <!-- Podmenu: pohledy zvolené části (Síň slávy › Top 10 … Sezóna, Údržba › Po údajích … Souhrn); plní ui/volby.js -->
+      <div id="podmenu" class="podmenu hidden" role="group"></div>
     </div>
     <!-- Řádek s kapslí hledání uprostřed: průsvitné pozadí jako kontextové nabídky, zobrazuje a skrývá jej tlačítko lupy -->
     <div id="hledaniRadek" class="hledani-radek hidden">
@@ -782,7 +786,7 @@ export const SABLONA_OKNA = `
         <h4>Prohlížení</h4>
         <ul>
           <li><strong>Rychlé výsledky</strong>: při psaní do hledání se pod ním ukážou modelky, články (i podle textu) a čísla. Šipky vybírají, Enter otevře, Esc výsledky zavře.</li>
-          <li><strong>Lišta v hlavičce</strong>: vlevo záložky přehledů <strong>Modelky · Čísla · Centerfoldy · Nejlepší</strong>, vpravo stránky <strong>Hodnocení · Síň slávy · Sbírka</strong> a za čárou <strong>+</strong> a <strong>⋯</strong>. Klávesy <kbd>Ctrl</kbd>+<kbd>1</kbd>–<kbd>7</kbd> je otevřou zleva doprava. V užším okně mají nezvolené záložky jen ikonu (název ukáže bublina). V profilu a na stránce čísla je vlevo nahoře cesta zpět „← Modelky › Jméno“ a u profilu „‹ 3 z 22 ›“ na předchozí a další modelku. Čísla mají dvě zobrazení, volba <strong>Obálky ▾ / Kalendář ▾</strong> je první v liště voleb: Obálky ukazují čísla ve sbírce jako velké dlaždice, Kalendář všechny měsíce včetně chybějících; přepnutím zůstaneš na stejném roce a záložka Čísla otevře naposledy zvolené zobrazení. Volby přehledu (řazení, filtry) a počet položek jsou uprostřed pod hledáním; stránky Hodnocení, Síň slávy a Sbírka mají své části jako pilulky v plovoucím pásu nahoře v obsahu (při rolování drží nahoře; číslo v pilulce je to, co čeká na tebe, šipky <kbd>←</kbd> <kbd>→</kbd> přepínají) a vpravo v pásu stav stránky. Na těchto stránkách hledání najde modelku, číslo nebo článek a <kbd>Enter</kbd> otevře první výsledek. Šipky ‹ › v profilu listují seznamem, ze kterého jsi profil otevřel (galerie, pořadí, Top 10).</li>
+          <li><strong>Navigační kapsle</strong> vlevo nahoře: čtyři sekce – <strong>Modelky</strong> (Profily · Galerie), <strong>Čísla</strong> (Obálky · Kalendář · Centerfoldy), <strong>Hodnocení</strong> (Porovnat · Fotky · Pořadí · Síň slávy) a <strong>Sbírka</strong> (Úvod · Údržba · Sháním CZ · Statistiky). Nezvolené sekce jsou jen ikony, zvolená má název a v kapsli se rozbalí na své části (zvolená část svítí růžově, číslo u části je to, co čeká na tebe). Klik na zvolenou sekci otevře nabídku všech sekcí i s částmi (skok rovnou třeba na Hodnocení › Síň slávy). Klávesy <kbd>Ctrl</kbd>+<kbd>1</kbd>–<kbd>4</kbd> otevřou sekce zleva doprava. Má-li část vlastní pohledy (Síň slávy: Top 10 … Sezóna, Údržba: Po údajích · Po modelkách · Souhrn), jsou v <strong>podmenu</strong> v řádku pod kapslí; tam jsou i drobečky v profilu a na stránce čísla („← Modelky › Jméno ‹ 3 z 22 ›“). Vpravo nahoře je kapsle voleb – jen řazení, filtry a počet – a za ní lupa (hledání), <strong>+</strong> a <strong>⋯</strong>. V užším okně mají nezvolené části jen ikonu a v nejužším zůstane v kapsli jen zvolená část (ostatní jsou v nabídce sekce).</li>
           <li><strong>Volby přehledu</strong> pod hledáním: <strong>⇅ řazení ▾</strong>, tlačítko <strong>Filtry</strong> (panel se srdíčky, edicí, kategorií, výskytem…; číslo v odznaku je počet zapnutých filtrů) a zapnuté filtry jako štítky, které <strong>×</strong> zruší; <strong>Zrušit filtry</strong> v panelu zruší všechny. V Nejlepších je vedle srdíček <strong>Výběr ▾</strong> a <strong>▶</strong> spustí slideshow. <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klávesa <kbd>?</kbd> kdekoli (i v prohlížeči fotek a ve čtečce stran) ukáže přehled všech klávesových zkratek.</li>

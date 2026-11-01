@@ -23,12 +23,16 @@ test('okna jsou přímo v kostře okna', () => {
 // (#volbyPrehledu) a tlačítka okna (.window-controls); ve druhém řádku (.hlavni-lista) jsou drobečky (.logo), pilulky
 // podčástí (#pasStranky) a vpravo přepínač lupy (#searchToggleBtn) s akcemi (#addBtn, #menuBtn); ve třetím řádku
 // (#hledaniRadek) je uprostřed kapsle hledat (.nav-controls, #searchInput)
-test('sjednocená hlavička s přepínačem lupy a řádkem hledání uprostřed', () => {
+test('hlavička: navigační kapsle se čtyřmi sekcemi, volby a akce v řádku okna, podmenu pod ní', () => {
     const zdroj = readFileSync(new URL('../src/sablona.js', import.meta.url), 'utf8');
     const titulek = zdroj.match(/<div class="titulek-okna">([\s\S]*)<div class="hlavni-lista">/);
     assert.ok(titulek, '.titulek-okna před .hlavni-lista');
     const zalozky = [...titulek[1].matchAll(/data-rezim="([^"]+)"/g)].map(m => m[1]);
-    assert.deepEqual(zalozky, ['modelky', 'covery', 'prehled']);
+    assert.deepEqual(zalozky, ['modelky', 'covery', 'prehled', 'prehled']);
+    assert.deepEqual([...titulek[1].matchAll(/data-sekce="([^"]+)"/g)].map(m => m[1]), ['hodnoceni', 'sbirka']);
+    assert.match(titulek[1], /id="searchToggleBtn"/);
+    assert.match(titulek[1], /id="addBtn"/);
+    assert.match(titulek[1], /id="menuBtn"/);
     assert.match(titulek[1], /id="volbyPrehledu"/);
     assert.ok(titulek[1].indexOf('id="volbyPrehledu"') > titulek[1].indexOf('</nav>'), 'volby až za záložkami');
     assert.match(titulek[1], /id="winCloseBtn"/);
@@ -37,10 +41,8 @@ test('sjednocená hlavička s přepínačem lupy a řádkem hledání uprostřed
     assert.ok(lista, '.hlavni-lista před #hledaniRadek');
     assert.match(lista[1], /class="logo hidden"/);
     assert.match(lista[1], /id="pasStranky"/);
+    assert.match(lista[1], /id="podmenu"/);
     assert.doesNotMatch(lista[1], /id="volbyPrehledu"/);
-    assert.match(lista[1], /id="searchToggleBtn"/);
-    assert.match(lista[1], /id="addBtn"/);
-    assert.match(lista[1], /id="menuBtn"/);
 
     const hledani = zdroj.match(/<div id="hledaniRadek" class="hledani-radek hidden">([\s\S]*?)<\/header>/);
     assert.ok(hledani, '#hledaniRadek v hlavičce');

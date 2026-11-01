@@ -279,15 +279,19 @@ export function prepnoutRezim(novy) {
 // patří své hlavní sekci. Čtečky obrazovky ji poznají podle aria-current (na profilu a stránce čísla jen „true“).
 export function zvyraznitRezim() {
     const novy = stav.rezim;
-    const jeSlava = novy === 'prehled' && stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'slava';
     prepinacRezimu.querySelectorAll('[data-rezim]').forEach((b) => {
         let zvoleny = false;
+        // Sekce: Modelky (profily, galerie), Čísla (obálky, kalendář, centerfoldy), Hodnocení (Oblíbenost i Síň slávy),
+        // Sbírka (ostatní části Přehledu)
+        const vOblibenosti = novy === 'prehled' && stav.prehledSekce === 'oblibenost';
         if (b.dataset.rezim === 'modelky') {
-            zvoleny = novy === 'modelky' || novy === 'nejlepsi' || jeSlava;
+            zvoleny = novy === 'modelky' || novy === 'nejlepsi';
         } else if (b.dataset.rezim === 'covery') {
             zvoleny = novy === 'covery' || novy === 'kalendar' || novy === 'centerfoldy';
+        } else if (b.dataset.sekce === 'hodnoceni') {
+            zvoleny = vOblibenosti;
         } else if (b.dataset.rezim === 'prehled') {
-            zvoleny = novy === 'prehled' && !jeSlava;
+            zvoleny = novy === 'prehled' && !vOblibenosti;
         }
         b.classList.toggle('active', zvoleny);
         if (zvoleny) b.setAttribute('aria-current', prepinacRezimu.classList.contains('podstranka') ? 'true' : 'page');

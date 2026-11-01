@@ -12,7 +12,7 @@ const nebo = '<span class="zkratky-nebo">/</span>';
 const CASTI = [
     { klic: 'vse', nazev: 'Kdekoli', radky: [
         [k('Ctrl', 'F'), 'Hledat'],
-        [`${k('Ctrl', '1')}–${k('5')}`, 'Modelky, Čísla, Centerfoldy, Oblíbenost, Sbírka'],
+        [`${k('Ctrl', '1')}–${k('4')}`, 'Sekce Modelky, Čísla, Hodnocení, Sbírka (klik na zvolenou sekci otevře nabídku všech částí)'],
         [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět (z profilu, čísla)'],
         [k('?'), 'Klávesové zkratky'],
         [k('Esc'), 'Zavřít okno, zpět'],

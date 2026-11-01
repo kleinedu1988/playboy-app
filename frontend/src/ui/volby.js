@@ -4,7 +4,7 @@
 // a volba v liště nebo panelu na skrytý štítek jen klikne, takže obsluha přehledu se nemění.
 import { esc } from '../lib/format';
 import { otevritKontextovouNabidku, zavritKontextovouNabidku } from './nabidka';
-import { nativniText, pocetStitku, stitkyFiltru } from '../app/tokeny';
+import { otevritPanelFiltru, pocetFiltru, stitkyFiltru, zrusitFiltrModelek } from '../app/filtr-modelek';
 
 const POPISKY = {
     razeniGalerie: 'Řazení',
@@ -330,14 +330,16 @@ function ukazatVolby(lista) {
 
     }
 
-    // Modelky: filtry jsou štítky v kapsli hledání; Filtry otevřou řádek hledání s rychlými filtry (app/tokeny.js)
+    // Modelky: Filtry otevřou panel filtru Modelek (app/filtr-modelek.js) – srdíčka, edice, kategorie, vlasy, roky…
     if (lista.hasAttribute('data-filtry-stitky')) {
-        const n = pocetStitku();
+        const n = pocetFiltru();
         const tlacitko = pridatTlacitko(`${IKONA_FILTRU}<b>Filtry</b>${n ? `<span class="volby-odznak">${n}</span>` : ''} <i aria-hidden="true">▾</i>`, 'filtry');
-        tlacitko.title = 'Filtry: vlasy, národnost, rok, srdíčka… (řádek pod hledáním)';
-        tlacitko.addEventListener('click', () => {
-            document.dispatchEvent(new CustomEvent('otevrit-filtry'));
-            /** @type {HTMLElement | null} */ (document.querySelector('.rychle-filtry .rychly-filtr'))?.focus();
+        tlacitko.title = 'Filtry: srdíčka, edice, kategorie, vlasy, národnost, roky, výška…';
+        tlacitko.setAttribute('aria-haspopup', 'dialog');
+        tlacitko.setAttribute('aria-expanded', 'false');
+        tlacitko.addEventListener('click', (e) => {
+            e.stopPropagation();
+            otevritPanelFiltru(tlacitko);
         });
     }
 
@@ -355,22 +357,20 @@ function ukazatVolby(lista) {
             else st.upravit();
         });
     });
-    const volnyText = stitkyModelek.length ? nativniText().trim() : hledani?.value.trim();
+    const volnyText = hledani?.value.trim();
     if (hledaniFiltruje && volnyText) {
         const stitek = pridatTlacitko(`<span class="stav-lupa" aria-hidden="true">⌕</span>${esc(volnyText)} ${krizek}`, 'volba-stitek stav-hledani', stavVlevo);
         stitek.title = 'Hledání omezuje přehled – klik skočí do pole, × hledání smaže';
         stitek.addEventListener('click', (e) => {
             if (/** @type {HTMLElement} */ (e.target).closest('.volba-zrusit')) {
-                // Smaže jen volný text, štítky filtru zůstanou
-                if (stitkyModelek.length) hledani.value = hledani.value.slice(0, hledani.value.length - nativniText().length).trim();
-                else hledani.value = '';
+                hledani.value = '';
                 hledani.dispatchEvent(new Event('input'));
             } else {
                 hledani.focus();
             }
         });
     }
-    if (zapnute.length || hledaniFiltruje) {
+    if (zapnute.length || stitkyModelek.length || hledaniFiltruje) {
         const zrusit = document.createElement('button');
         zrusit.type = 'button';
         zrusit.className = 'link stav-zrusit';
@@ -576,8 +576,10 @@ export function zrusitHledaniAFiltry() {
     const hledani = /** @type {HTMLInputElement | null} */ (document.getElementById('searchInput'));
     const meloHledani = Boolean(hledani?.value);
     if (hledani && meloHledani) hledani.value = '';
+    // Filtr Modelek z panelu Filtry se zruší i s hledáním jedním načtením
+    const filtrModelek = zrusitFiltrModelek();
     if (aktualniLista && !aktualniLista.dispatchEvent(new CustomEvent('zrusit-filtry', { bubbles: true, cancelable: true }))) return;
-    if (hledani && meloHledani) hledani.dispatchEvent(new Event('input'));
+    if (hledani && meloHledani && !filtrModelek) hledani.dispatchEvent(new Event('input'));
     if (!aktualniFiltry.zapnute.length) return;
     zacitRuseni(aktualniLista);
     aktualniFiltry.zapnute[0].zrusit();

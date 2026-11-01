@@ -15370,173 +15370,14 @@ body.rezim-vyberu #detailView .poster {
     display: none;
 }
 
-/* ===== Filtry jako štítky v kapsli hledání (app/tokeny.js) ===== */
-.hledani-stitky {
-    display: none;
-}
-
-.hledani.s-stitky {
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
-    min-height: 34px;
-    padding: 3px 70px 3px 34px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 18px;
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.hledani.s-stitky:focus-within {
-    border-color: var(--accent);
-    background-color: rgba(255, 255, 255, 0.08);
-}
-
-.hledani.s-stitky .hledani-stitky {
-    display: contents;
-}
-
-.hledani.s-stitky input,
-.hledani.s-stitky input:focus {
-    flex: 1 1 120px;
-    width: auto;
-    min-width: 120px;
-    height: 26px;
-    padding: 0 4px;
-    border: 0;
-    background: none;
-}
-
-.hledani-stitek {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    max-width: 100%;
-    height: 24px;
-    padding: 0 6px 0 10px;
-    border-radius: 999px;
-    background-color: rgba(216, 27, 96, 0.18);
-    box-shadow: inset 0 0 0 1px rgba(216, 27, 96, 0.55);
-    color: #fff;
-    font-size: 12px;
-    white-space: nowrap;
-    cursor: pointer;
-}
-
-.hledani-stitek:hover {
-    background-color: rgba(216, 27, 96, 0.3);
-}
-
-.hledani-stitek b {
-    font-weight: 600;
-    opacity: 0.75;
-}
-
-.hledani-stitek > span {
-    overflow: hidden;
-    font-weight: 600;
-    text-overflow: ellipsis;
-}
-
-.hledani-stitek i {
-    font-style: normal;
-    color: #ffb74d;
-}
-
-.hledani-stitek.neni {
-    background-color: rgba(255, 183, 77, 0.12);
-    box-shadow: inset 0 0 0 1px rgba(255, 183, 77, 0.5);
-}
-
-.hledani-stitek em {
-    display: inline-grid;
-    place-items: center;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    font-style: normal;
-    opacity: 0.7;
-}
-
-.hledani-stitek em:hover {
-    background-color: rgba(255, 255, 255, 0.15);
-    opacity: 1;
-}
-
-/* Řádek rychlých filtrů pod kapslí */
-.rychle-filtry {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px;
-    margin-top: 8px;
-}
-
-.rychly-filtr {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 28px;
-    padding: 0 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 999px;
-    background-color: rgba(255, 255, 255, 0.04);
-    color: var(--text-main);
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-.rychly-filtr:hover,
-.rychly-filtr:focus-visible {
-    background-color: var(--panel-hover);
-    outline: none;
-}
-
-.rychly-filtr span {
-    max-width: 18ch;
-    overflow: hidden;
-    color: #fff;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.rychly-filtr i {
-    font-size: 9px;
-    font-style: normal;
-    opacity: 0.6;
-}
-
-.rychly-filtr.zapnuto {
-    border-color: rgba(216, 27, 96, 0.6);
-    background-color: rgba(216, 27, 96, 0.16);
-}
-
-.rychly-filtr.dalsi {
-    color: var(--text-muted);
-}
-
-.rychle-zrusit {
-    padding: 0 6px;
-    border: 0;
-    background: none;
-    color: var(--accent-text);
-    font: inherit;
-    font-size: 12.5px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-/* Editor filtru: skleněný panel pod štítkem nebo tlačítkem */
-.filtr-editor {
+/* ===== Panel filtru Modelek pod tlačítkem Filtry (app/filtr-modelek.js): vlevo filtry, vpravo editor zvoleného ===== */
+.filtr-panel {
     position: fixed;
     z-index: 3000;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    width: 300px;
-    max-height: min(480px, calc(100vh - 140px));
-    padding: 14px;
+    width: min(640px, calc(100vw - 16px));
+    max-height: min(560px, calc(100vh - 120px));
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 18px;
     background-color: rgba(26, 26, 30, 0.94);
@@ -15547,13 +15388,135 @@ body.rezim-vyberu #detailView .poster {
     --wails-draggable: no-drag;
 }
 
-.filtr-editor h6 {
+.fp-telo {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    min-height: 0;
+    flex: 1 1 auto;
+}
+
+.fp-seznam {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 10px 8px;
+    overflow-y: auto;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.fp-filtr {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.fp-filtr:hover,
+.fp-filtr:focus-visible {
+    background-color: var(--panel-hover);
+    outline: none;
+}
+
+.fp-filtr.zvoleny {
+    background-color: rgba(255, 255, 255, 0.1);
+    font-weight: 600;
+}
+
+.fp-filtr small {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--accent-text);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fp-filtr.zapnuto > span::after {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-left: 6px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    vertical-align: middle;
+}
+
+.fp-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    padding: 14px 16px;
+    overflow-y: auto;
+}
+
+.fp-editor h6 {
     margin: 0;
     color: var(--accent-text);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
+}
+
+.fp-editor button {
+    border: 0;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    cursor: pointer;
+}
+
+.fp-editor .fe-zrusit {
+    align-self: flex-start;
+    padding: 0;
+    color: var(--accent-text);
+    font-size: 12.5px;
+    font-weight: 600;
+}
+
+.fp-pata {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.fp-pata .link {
+    border: 0;
+    background: none;
+    color: var(--accent-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+@media (max-width: 640px) {
+    .fp-telo {
+        grid-template-columns: 1fr;
+    }
+
+    .fp-seznam {
+        flex-direction: row;
+        flex-wrap: wrap;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
 }
 
 .fe-hlava {
@@ -15573,14 +15536,6 @@ body.rezim-vyberu #detailView .poster {
     padding: 2px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 999px;
-}
-
-.filtr-editor button {
-    border: 0;
-    background: none;
-    color: var(--text-main);
-    font: inherit;
-    cursor: pointer;
 }
 
 .fe-je button,
@@ -15684,42 +15639,3 @@ body.rezim-vyberu #detailView .poster {
     font-size: 12.5px;
 }
 
-.fe-pata {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    color: var(--text-muted);
-    font-size: 11.5px;
-}
-
-.fe-pata span {
-    overflow: hidden;
-    font-family: ui-monospace, monospace;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.fe-pata .link {
-    color: var(--accent-text);
-    font-size: 12px;
-    font-weight: 600;
-}
-
-.filtr-seznam button {
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 13px;
-    text-align: left;
-}
-
-.filtr-seznam button:hover {
-    background-color: var(--panel-hover);
-}
-
-/* Se štítky je kapsle hledání širší, aby se štítky vešly vedle sebe */
-.hledani.s-stitky {
-    max-width: min(820px, 100%);
-}

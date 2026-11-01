@@ -11,10 +11,11 @@ import { otevritNapovedu } from './napoveda';
 import { detailView, gallery, searchInput } from './prvky';
 import { listaGalerie } from './listy';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
-import { nastavitViditelnostHledani, obnovitViditelnostHledani, prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
+import { nastavitViditelnostHledani, prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
 import { otevritVydani } from './vydani';
+import { dotazFiltru } from './filtr-modelek';
 import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
@@ -116,8 +117,8 @@ const HTML_UVODU = `
         <p class="uvod-pozn">Data jsou v ~/.local/share/playboy-app; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
     </section>`;
 
-// Řádek voleb nad kartami: řazení a počet. Filtry jsou štítky v kapsli hledání (app/tokeny.js); data-filtry-stitky
-// řekne kapsli voleb, aby ukázala tlačítko Filtry, které otevře řádek hledání s rychlými filtry.
+// Řádek voleb nad kartami: řazení a počet. data-filtry-stitky řekne kapsli voleb, aby ukázala tlačítko Filtry
+// s panelem filtru Modelek (app/filtr-modelek.js).
 function htmlNastroju(pocet, celkem) {
     const razeni = Object.entries(RAZENI_GALERIE).map(([klic, r]) => `
         <button class="chip ${klic === stav.razeniGalerie ? 'active' : ''}" data-razeni-galerie="${klic}" title="Řadit ${r.nazev}">${r.popisek}</button>`).join('');
@@ -160,9 +161,13 @@ poZmeneDat(() => {
     posledniVsechnyModelky = null;
 });
 
+// Dotaz Modelek pro backend: příkazy filtru z panelu Filtry (app/filtr-modelek.js) a text hledání
+const dotazModelek = hledani => [dotazFiltru(), hledani].filter(s => s && s.trim()).join(' ');
+
 // Načtení Hlavní Galerie
 // zMezipameti = jen přefiltrovat data načtená minule (psaní do hledání, změna filtru či řazení), nenačítat je znovu z databáze
-export async function nacistGalerii(dotaz = '', zMezipameti = false) {
+export async function nacistGalerii(hledani = '', zMezipameti = false) {
+    const dotaz = stav.rezim === 'modelky' ? dotazModelek(hledani) : hledani;
     if (stav.rezim === 'centerfoldy') return nacistStenu(dotaz, zMezipameti);
     if (stav.rezim === 'covery') return nacistCovery(dotaz, zMezipameti);
     if (stav.rezim === 'kalendar') return nacistKalendar(dotaz, zMezipameti);
@@ -183,9 +188,6 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
         posledniVsechnyModelky = vsechny;
     }
     if (moje !== stav.cisloNacteni) return;
-
-    // Filtry jsou příkazy v dotazu (štítky v kapsli hledání), vyhodnotí je backend spolu s textem; dotaz se pamatuje
-    try { localStorage.setItem('hledaniModelek', dotaz); } catch { /* jen pro toto spuštění */ }
 
     // Zvolené řazení (stabilní: při shodě zůstává pořadí podle jména z backendu)
     const modelky = seraditModelky(vsechny, stav.razeniGalerie);
@@ -265,14 +267,12 @@ export function pripravit() {
         }
     });
 
-    // Změna štítků filtru v kapsli hledání (app/tokeny.js): nové hledání; Filtry v kapsli voleb otevřou řádek hledání
+    // Změna filtru v panelu Filtry (app/filtr-modelek.js): galerie se načte znovu
     document.addEventListener('filtr-modelek', () => {
         clearTimeout(stav.casovacHledani);
-        if (stav.rezim !== 'modelky') return;
-        obnovitViditelnostHledani();
-        nacistGalerii(searchInput.value);
+        if (stav.rezim === 'modelky') nacistGalerii(searchInput.value);
     });
-    document.addEventListener('otevrit-filtry', () => nastavitViditelnostHledani(true));
+
 
     // Klik na kartu otevře profil modelky (jedna obsluha pro všechny karty, ne posluchač na každé z tisíců karet)
     gallery.addEventListener('click', (e) => {
@@ -324,7 +324,7 @@ export function pripravit() {
         document.querySelectorAll(`.odhad-chip[data-odhad="${id}"]`).forEach(c => c.classList.toggle('hidden', nove > 0));
         document.dispatchEvent(new CustomEvent('hodnoceni-modelky', { detail: { id, hodnoceni: nove } }));
         // Filtr srdíček v dotazu: modelka mohla filtru přestat (nebo začít) vyhovovat
-        if (!gallery.classList.contains('hidden') && /(^|\s)[-!]?(hodnoceni|srdicka):/.test(searchInput.value)) {
+        if (!gallery.classList.contains('hidden') && /(^|\s)[-!]?(hodnoceni|srdicka):/.test(dotazModelek(searchInput.value))) {
             await nacistGalerii(searchInput.value);
         }
     });

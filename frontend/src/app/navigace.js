@@ -13,7 +13,7 @@ import { vsechnyModelky } from './mezipamet';
 import { prestatNacitat } from './obrazky';
 import { prestatSledovatKonce } from './nejlepsi';
 import { hledaniFiltruje, zrusitHledani } from './naseptavac';
-import { obnovitStitky } from './tokeny';
+import { zavritPanelFiltru } from './filtr-modelek';
 import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti } from './oblibenost';
 import { obnovitPasHlavicky } from './prehled';
@@ -305,15 +305,14 @@ export function prepnoutRezim(novy) {
     searchInput.title = napoveda;
     if (novy !== stav.rezim) {
         hledaniPodleRezimu[stav.rezim] = searchInput.value;
-        // Nový přehled je zvolený dřív, než se do pole vrátí jeho text: štítky filtru patří jen Modelkám (app/tokeny.js)
-        stav.rezim = novy;
         // Na stránkách Přehledu hledání nic nefiltruje, text se tam nepamatuje
         searchInput.value = novy === 'prehled' ? '' : hledaniPodleRezimu[novy] || '';
     }
     // Staré výsledky hledání pod polem (a rozběhnuté hledání) patří předchozímu přehledu
     zrusitHledani();
     stav.rezim = novy;
-    obnovitStitky();
+    // Panel filtru Modelek (app/filtr-modelek.js) patří jen Modelkám
+    if (novy !== 'modelky') zavritPanelFiltru();
     zvyraznitRezim();
     obnovitViditelnostHledani();
     if (novy === 'covery' || novy === 'kalendar') {

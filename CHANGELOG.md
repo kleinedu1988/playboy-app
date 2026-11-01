@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.96] – 2026-11-01
+
+### Změněno
+- **Pohledy částí v záhlaví stránky.** Síň slávy (Top 10 … Sezóna) a Údržba (Po údajích · Po modelkách · Souhrn) mají nahoře na stránce štítek sekce, velký nadpis, úvodní větu pohledu a vpravo kapsli pohledů; řádek podmenu pod navigační kapslí zmizel. V užším okně mají nezvolené pohledy jen ikonu.
+- **Mapa sekcí**: klik na zvolenou sekci v navigační kapsli otevře panel se všemi sekcemi, jejich částmi i pohledy (Síň slávy › Kronika, Údržba › Po modelkách…); klik přenese rovnou tam, Esc nebo klik mimo zavře.
+- **Hlavní nabídka ⋯** je všude stejná: akce s modelkou jsou v profilu v pruhu s modelkou. **Přejmenovat fotografa a tag** se přesunulo z Nastavení do Sbírka › Údržba › Souhrn › ⋯ Hromadně („Napříč sbírkou“).
+
 ## [0.99.95] – 2026-11-01
 
 ### Přidáno

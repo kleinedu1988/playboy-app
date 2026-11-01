@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.5] – 2026-11-01
+
+### Změněno
+- **Hodnocení má hlavičku jako Sbírka a profil modelky** (přepracování Hodnocení, krok 2).
+  - Hlavička: kruh **dnes** (porovnání z denního cíle), čísla (v pořadí, se srdíčky, fotek bez srdíček, kolik čeká) a vpravo okénka **Top 10** a **Sezóna** – klik otevře Síň slávy na tom pohledu.
+  - Akce **⚔ Rozhodnout čekající · Hodnotit fotky · ▶ Promítat · Ověřit srdíčka** (jen když je co dělat).
+  - Lišta **Porovnat · Fotky · Pořadí · Síň slávy** a vpravo pohledy části; pilulky částí zmizely z horní kapsle. Po odrolování se hlavička zmenší na jeden řádek.
+  - **Panel vpravo** (klávesa **I**, Esc zavře): **Tipy** (Mohlo by se ti líbit), **Trendy** (Stoupají a klesají) a **Jak počítám** (model vkusu, zájem, pravidla úrovní).
+  - **Pořadí** bez kompaktního Top 10 (je v Síni slávy) a bez karty Čeká na rozhodnutí: pohledy **Celé pořadí · Čekají · Nesedí**; upozornění na nesoulad ve stavové liště otevře Nesedí.
+
 ## [1.0.4] – 2026-11-01
 
 ### Změněno

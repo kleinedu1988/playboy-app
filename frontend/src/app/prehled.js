@@ -201,6 +201,7 @@ function obnovitCasti() {
     if (stav.rezim === 'prehled' && !stats.classList.contains('hidden')) {
         obnovitPasHlavicky(stats);
         obnovitVolby(stats);
+        udrzba.obnovitHlavuSbirky();
         zvyraznitRezim();
         nastavitHledani();
     } else if (stav.rezim === 'nejlepsi' && !best.classList.contains('hidden')) {

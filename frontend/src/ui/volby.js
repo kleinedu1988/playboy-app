@@ -39,8 +39,9 @@ const RAZENI = new Set(['razeniGalerie', 'razeniSteny', 'udRazeniVolba']);
 // Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
 // Pohledy zvolené části (Síň slávy › Top 10 … Sezóna, Údržba › Po údajích … Souhrn) nejsou volby: kreslí se do
 // záhlaví stránky (hlavaStranky). Obálky / Kalendář jsou části Čísel přímo v kapsli, ve volbách nejsou.
-const PODMENU = new Set(['slavaPohled', 'udRezim', 'poradiRozsah', 'ghRazeni']);
-const MIMO_VOLBY = new Set(['zobrazeniCisel']);
+const PODMENU = new Set(['slavaPohled', 'poradiRozsah', 'ghRazeni']);
+// Pohledy Údržby jsou v hlavičce Sbírky (app/udrzba.js, obnovitHlavuSbirky)
+const MIMO_VOLBY = new Set(['zobrazeniCisel', 'udRezim']);
 const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim', 'poradiRozsah', 'filtrFotografa', 'slavaPohled']);
 
 // Filtr, který se dá vypnout: bez zvoleného štítku ukazuje výchozí stav a nabídka má položku pro návrat na vše

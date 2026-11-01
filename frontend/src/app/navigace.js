@@ -14,6 +14,7 @@ import { prestatNacitat } from './obrazky';
 import { prestatSledovatKonce } from './nejlepsi';
 import { hledaniFiltruje, zrusitHledani } from './naseptavac';
 import { zavritPanelFiltru } from './filtr-modelek';
+import { obnovitHlavuSbirky } from './udrzba';
 import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti } from './oblibenost';
 import { obnovitPasHlavicky } from './prehled';
@@ -66,6 +67,7 @@ export function ukazatPohled(pohled) {
     if (pohled !== wall) document.getElementById('wallNav')?.classList.add('hidden');
     // Lišta alb profilu je ve druhém řádku hlavičky; jinde ji nikdo nenaplní, proto se skryje (a režim výběru skončí)
     document.getElementById('profilPruh')?.classList.toggle('hidden', pohled !== detailView);
+    obnovitHlavuSbirky();
     if (pohled !== detailView) document.querySelector('.navbar')?.classList.remove('profil-svinuty');
     if (pohled !== detailView) {
         document.getElementById('albumNav')?.classList.add('hidden');

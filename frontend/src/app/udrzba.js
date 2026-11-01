@@ -26,7 +26,8 @@ import * as navrhy from './navrhy';
 import * as uceni from './uceni';
 import * as fokus from './udrzba-fokus';
 import * as poUdajich from './udrzba-udaje';
-import { prejmenovatVeSbirce } from './sprava';
+import { exportovatData, importovatData, prejmenovatVeSbirce, zkontrolovatSoubory } from './sprava';
+import { otevritRychlePridani } from './formular-modelky';
 
 // Skupin na stránku; další se přidají při doscrollování na konec (nebo tlačítkem)
 const STRANKA = 60;
@@ -285,9 +286,109 @@ function zajistitKostru() {
     return s;
 }
 
+// ——— Hlavička Sbírky (jeden panel v hlavičce okna jako u profilu modelky) ———
+// Kruh doplnění, klíčová čísla, oblasti (Modelky / Alba / Čísla), řádek akcí a lišta: filtry fronty a pohledy Údržby.
+// Po odrolování se panel plynule zmenší na jeden řádek a lišta zůstane pod ním.
+let hlava = null;
+function htmlHlavySbirky() {
+    const p = data?.p || {};
+    const skupiny = new Map();
+    model.pokrok.forEach(o => skupiny.set(o.skupina, [...(skupiny.get(o.skupina) || []), o]));
+    const oblasti = [...skupiny].map(([nazev, seznam]) => {
+        const sObsahem = seznam.filter(o => o.celkem > 0);
+        const procento = sObsahem.length ? Math.round(sObsahem.reduce((x, o) => x + o.hotovo / o.celkem, 0) / sObsahem.length * 100) : 100;
+        const chybi = seznam.reduce((x, o) => x + o.chybi, 0);
+        return `<div class="sh-oblast" title="${esc(seznam.map(o => `${o.nazev}: ${o.hotovo} z ${o.celkem}`).join('\n'))}">
+            <span>${nazev}</span><b>${procento} %</b><i><em style="width:${procento}%"></em></i><small>${chybi ? `${chybi} chybí` : 'hotovo'}</small></div>`;
+    }).join('');
+    const cislo = (n, a, b, c) => `<span><b>${(n || 0).toLocaleString('cs-CZ')}</b> ${sklonovat(n || 0, a, b, c).replace(/^\S+ /, '')}</span>`;
+    const filtr = stav.udrzbaFiltr;
+    // V jedné řadě s oblastí v názvu, aby se Centerfold modelek a čísel nepletl
+    const NAZVY_V_LISTE = { text: 'Texty alb', alba: 'Vydání alb', cover: 'Cover čísel', cfcisla: 'Centerfold čísel' };
+    const pilulky = vSouhrnu() ? OBLASTI_FILTRU.flatMap(o => o.filtry).filter(([klic]) => klic === 'vse' || klic === filtr || model.pocty[klic])
+        .map(([klic, nazev, popis]) => `<button type="button" class="sh-filtr ${klic === filtr ? 'on' : ''}" data-sh-filtr="${klic}"${popis ? ` title="${esc(popis)}"` : ''}>${esc(NAZVY_V_LISTE[klic] || nazev)}<small>${model.pocty[klic] || 0}</small></button>`).join('') : '';
+    return `<div class="sh-obsah">
+            <div class="sh-kruh" style="--p:${model.uplnost}" title="Sbírka doplněná na ${model.uplnost} % (průměr oblastí)"><b>${model.uplnost} %</b><small>doplněno</small></div>
+            <div class="sh-identita"><h2>Sbírka</h2>
+                <div class="sh-cisla">${cislo(p.modelek, 'modelka', 'modelky', 'modelek')}${cislo(p.alb, 'album', 'alba', 'alb')}${cislo(p.fotek, 'fotka', 'fotky', 'fotek')}${cislo(p.vydani, 'číslo', 'čísla', 'čísel')}
+                    <span class="sh-ukoly"><b>${model.pocty.vse}</b> ${sklonovat(model.pocty.vse, 'úkol', 'úkoly', 'úkolů').replace(/^\S+ /, '')}</span></div></div>
+            <div class="sh-oblasti">${oblasti}</div>
+        </div>
+        <div class="sh-akce">
+            <button type="button" class="volba akcent" data-sh-akce="pridat" aria-haspopup="menu"><b>+ Přidat</b> <i aria-hidden="true">▾</i></button>
+            <button type="button" class="volba" data-sh-akce="import"><b>Importovat</b></button>
+            <button type="button" class="volba" data-sh-akce="export"><b>Exportovat</b></button>
+            <button type="button" class="volba" data-sh-akce="soubory"><b>Zkontrolovat soubory</b></button>
+            <span class="sh-oddelovac" aria-hidden="true"></span>
+            <button type="button" class="volba" data-sh-cast="shanim"><b>Sháním CZ</b></button>
+            <button type="button" class="volba" data-sh-cast="statistiky"><b>Statistiky</b></button>
+            <button type="button" class="volba" data-sh-cast="uvod"><b>Mapa čísel</b></button>
+        </div>
+        <div class="sh-lista">
+            <div class="sh-filtry" role="group" aria-label="Co ukázat ve frontě">${pilulky}</div>
+            <div class="sh-pohledy" role="group" aria-label="Pohled Údržby">${REZIMY.map(([klic, nazev, popis]) =>
+                `<button type="button" class="${klic === stav.udrzbaRezim ? 'on' : ''}" data-sh-rezim="${klic}" title="${esc(popis)}">${esc(klic === 'souhrn' ? 'Fronta' : nazev)}</button>`).join('')}</div>
+        </div>`;
+}
+
+// Hlavička je vidět jen v Údržbě; volá se po vykreslení Údržby a po každém přepnutí pohledu (navigace.js, prehled.js)
+export function obnovitHlavuSbirky() {
+    if (!hlava) return;
+    const videt = udrzbaVidet() && Boolean(model);
+    hlava.classList.toggle('hidden', !videt);
+    if (!videt) {
+        document.querySelector('.navbar')?.classList.remove('sbirka-svinuta');
+        return;
+    }
+    nastavitHtml(hlava, htmlHlavySbirky());
+}
+
+function pripravitHlavuSbirky() {
+    hlava = document.createElement('div');
+    hlava.id = 'sbirkaHlava';
+    hlava.className = 'sbirka-hlava hidden';
+    document.getElementById('albumNav')?.before(hlava);
+    hlava.addEventListener('click', (e) => {
+        const cil = /** @type {HTMLElement} */ (e.target);
+        const filtr = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-filtr]'));
+        const rezim = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-rezim]'));
+        const akce = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-akce]'));
+        const castSbirky = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-cast]'));
+        if (filtr) nastavitFiltr(filtr.dataset.shFiltr);
+        else if (rezim) nastavitRezim(rezim.dataset.shRezim);
+        else if (castSbirky) {
+            // Ostatní části Sbírky otevře stejné tlačítko jako pilulka v navigační kapsli (prehled.js)
+            const b = document.createElement('button');
+            b.hidden = true;
+            b.dataset.zobrazeniPrehledu = castSbirky.dataset.shCast;
+            document.body.append(b);
+            b.click();
+            b.remove();
+        } else if (akce?.dataset.shAkce === 'pridat') {
+            e.stopPropagation();
+            const r = akce.getBoundingClientRect();
+            otevritKontextovouNabidku(r.left, r.bottom + 6, [
+                { text: 'Přidat modelku…', akce: otevritRychlePridani },
+                { text: 'Přidat centerfold…', akce: () => pridatCenterfold() },
+                { text: 'Přidat cover…', akce: () => otevritCoverModal() },
+            ]);
+        } else if (akce?.dataset.shAkce === 'import') importovatData();
+        else if (akce?.dataset.shAkce === 'export') exportovatData();
+        else if (akce?.dataset.shAkce === 'soubory') zkontrolovatSoubory();
+    });
+    const navbar = document.querySelector('.navbar');
+    oblast().addEventListener('scroll', () => {
+        if (hlava.classList.contains('hidden')) return;
+        const odrolovano = oblast().scrollTop;
+        if (odrolovano > 60) navbar.classList.add('sbirka-svinuta');
+        else if (odrolovano < 20) navbar.classList.remove('sbirka-svinuta');
+    }, { passive: true });
+}
+
 // Celá Údržba (po načtení Přehledu a po změně dat): hlavička a zvolený režim
 export function vykreslit() {
     if (!model || !zajistitKostru()) return;
+    obnovitHlavuSbirky();
     nastavitHtml(cast('rezimy'), htmlVoleb());
     ['udaje', 'fokus', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', souhrn: 'souhrn' }[stav.udrzbaRezim]));
     if (stav.udrzbaRezim === 'udaje') {
@@ -753,6 +854,7 @@ export function pripravit(nacistPrehled) {
     try { stav.udrzbaRezim = localStorage.getItem('udrzbaRezim') || 'udaje'; } catch { /* Po údajích */ }
     if (!REZIMY.some(([k]) => k === stav.udrzbaRezim)) stav.udrzbaRezim = 'udaje';
 
+    pripravitHlavuSbirky();
     stats.addEventListener('pointerdown', () => { mysDole = true; });
     document.addEventListener('pointerup', pustitMys);
     // Puštění mimo okno pointerup nepošle; bez toho by se načtení i překreslení odkládaly donekonečna

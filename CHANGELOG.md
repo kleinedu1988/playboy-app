@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.6] – 2026-11-01
+
+### Změněno
+- **Síň slávy je vlastní sekce** (přepracování Hodnocení, krok 3). Kapsle: **Modelky · Čísla · Hodnocení · Síň slávy · Sbírka** – Síň slávy je **Ctrl+4**, **Sbírka se posunula na Ctrl+5**.
+  - Hlavička jako Hodnocení a Sbírka: fotka jedničky s ♛, čísla (v Top 10, legendy, odznaky, rekordy), okénka **Sezóna** (kdo vede, kolik zbývá) a **Na dosah** (nejbližší stupeň odznaku); akce **⚔ Vyzvat o trůn**, **♛ Vyhlásit sezónu** (když čeká) a **Porovnat →**. Po odrolování jeden řádek.
+  - Lišta pohledů **Top 10 · Sezóna · Legendy · Odznaky · Rekordy · Kronika**; filtr Kroniky je vpravo v liště.
+  - **Panel vpravo** (klávesa **I**, Esc zavře): **Na dosah**, **Minulé sezóny** a **Pravidla**.
+  - Pohled Sezóna bez vlastní druhé hlavičky a karty vyhlášení, Top 10 bez řádku Na dosah a popisné věty (vše je v hlavičce nebo v panelu).
+
 ## [1.0.5] – 2026-11-01
 
 ### Změněno

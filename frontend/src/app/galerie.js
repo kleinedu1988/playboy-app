@@ -91,10 +91,21 @@ export function htmlSrdickaFotky(polozka, index) {
 
 export async function ohodnotitPolozku(polozka, zvoleno) {
     const nove = zvoleno === polozka.hodnoceni ? 0 : zvoleno;
-    if (!await SetHodnoceniFotek(polozka.fotky.map(f => f.id), nove)) return false;
+    const pred = polozka.fotky.map(f => Number(f.hodnoceni) || 0);
+    let ok = false;
+    try { ok = await SetHodnoceniFotek(polozka.fotky.map(f => f.id), nove); } catch { /* false */ }
+    if (!ok) return false;
     polozka.hodnoceni = nove;
     polozka.fotky.forEach(f => { f.hodnoceni = nove; });
+    oznamitHodnoceniFotek(pred, polozka.fotky.length, nove);
     return true;
+}
+
+// Změna srdíček fotek kdekoli (prohlížeč, pásy Porovnat): počet nehodnocených v Hodnocení se upraví hned
+// (galerie-hodnoceni.js). pred = hodnocení fotek před změnou, nove = nové hodnocení všech
+export function oznamitHodnoceniFotek(pred, pocet, nove) {
+    const ubylo = pred.filter(h => !h).length - (nove ? 0 : pocet);
+    if (ubylo) document.dispatchEvent(new CustomEvent('hodnoceni-fotek', { detail: { ubylo } }));
 }
 
 const HTML_UVODU = `

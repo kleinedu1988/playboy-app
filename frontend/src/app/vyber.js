@@ -179,8 +179,9 @@ export function pripravit() {
         else if (klavesa === 'arrowleft') lbZobrazit(stav.lbIndex - 1);
         else if (klavesa === 'arrowdown' || klavesa === 'pagedown') lbSkokAlba(1);
         else if (klavesa === 'arrowup' || klavesa === 'pageup') lbSkokAlba(-1);
-        else if (/^[1-5]$/.test(klavesa)) lbOhodnotit(parseInt(klavesa));
-        else if (klavesa === '0') lbOhodnotit(stav.lbPolozky[stav.lbIndex].hodnoceni);
+        // Podržená číslice se neopakuje (jinak by ohodnotila celou frontu nehodnocených)
+        else if (/^[1-5]$/.test(klavesa)) { if (!e.repeat) lbOhodnotit(parseInt(klavesa)); }
+        else if (klavesa === '0') { if (!e.repeat && !stav.lbJenNehodnocene) lbOhodnotit(stav.lbPolozky[stav.lbIndex].hodnoceni); }
         else if (klavesa === ' ') lbPrepnoutSlideshow();
         else if (klavesa === 'f') lbPrepnoutRozlozeni();
         else if (klavesa === 'r') lbOtocit();

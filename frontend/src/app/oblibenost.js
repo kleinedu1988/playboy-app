@@ -37,7 +37,7 @@ import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 import { nacistSinSlavy, nastavitPohledSlavy, obnovitHlavuSlavy, pripravitSinSlavy } from './sin-slavy';
-import { hodnotitFotky, nacistGalerii, nastavitRazeniFotek, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
+import { hodnotitFotky, nacistGalerii, nacistPocetNehodnocenych, nastavitRazeniFotek, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
 import { nazevSezony, textZbyva } from '../lib/slava';
 
 const DVOJIC_NAJEDNOU = 8;
@@ -187,8 +187,9 @@ export async function nacistOblibenost(sekce) {
     obnovitPanelHodnoceni();
     vykreslitHlavu();
     if (stav.oblibenostCast === 'slava') nacistSinSlavy(cast('slava'));
-    // Fotky se načtou i ve skrytém pohledu: pilulka Fotky ukáže počet nehodnocených
-    else nacistGalerii(cast('galerie'));
+    // Seznam fotek jen ve Fotkách; jinde stačí počet nehodnocených (hlavička, pilulka) z jednoho dotazu
+    else if (stav.hodnoceniPohled === 'fotky') nacistGalerii(cast('galerie'));
+    else nacistPocetNehodnocenych();
     // Srdíčka fotek se mohla mezitím změnit; fotky se načtou znovu (backend je má v paměti se snímkem sbírky)
     nahledy.clear();
     vykreslitHlavu();

@@ -66,6 +66,8 @@ export function GetOblibenost():Promise<main.StavOblibenosti>;
 
 export function GetOdznakyModelky(arg1:number):Promise<Array<main.OdznakModelky>>;
 
+export function GetPocetNehodnocenychFotek():Promise<number>;
+
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
 export function GetPrehledOblibenosti():Promise<main.PrehledOblibenosti>;

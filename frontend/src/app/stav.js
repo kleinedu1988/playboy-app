@@ -88,7 +88,8 @@ export const stav = {
     intervalSlideshow: 4000,
     lbPolozky: [],
     lbJenNehodnocene: false, // Galerie: ohodnocená položka z prohlížeče vypadne a ukáže se další
-    lbPoZavreni: null, // co udělat po zavření prohlížeče (Galerie obnoví počet)
+    lbPoZavreni: null, // co udělat po zavření prohlížeče (Fotky načtou frontu znovu, až doběhnou zápisy)
+    lbZapisy: new Set(), // rozběhlé zápisy hodnocení fotek z prohlížeče (poZavreni počká na ně)
     lbIndex: 0,
     lbCasovac: null,
     lbPlakat: null, // prvek .poster právě zobrazené položky

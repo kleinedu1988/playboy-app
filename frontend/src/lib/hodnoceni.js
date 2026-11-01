@@ -19,18 +19,31 @@ export function zamichat(seznam, seed = 1) {
     return v;
 }
 
+// Stálá náhodná hodnota pro klíč a semínko (0–1): pořadí podle ní se nemění, když z fronty položky ubudou
+export function nahodaKlice(klic, seed = 1) {
+    let t = (Math.imul(Number(klic) || 0, 0x9e3779b1) ^ Math.imul(seed >>> 0, 0x85ebca6b)) >>> 0;
+    t = Math.imul(t ^ (t >>> 16), 0x7feb352d);
+    t = Math.imul(t ^ (t >>> 15), 0x846ca68b);
+    return ((t ^ (t >>> 16)) >>> 0) / 4294967296;
+}
+
+// Klíč položky prohlížeče (fotka, nebo spojený plakát): id první fotky
+const klicPolozky = p => p?.fotky?.[0]?.id ?? p?.id ?? 0;
+
 /**
  * Fronta položek prohlížeče (fotka, nebo spojený plakát): razeni 'nahodne' = vše zamíchané, 'modelky' = modelky
- * v náhodném pořadí a položky každé pohromadě (po albech, jak přišly).
+ * v náhodném pořadí a položky každé pohromadě (po albech, jak přišly). Pořadí je stálé pro dané semínko i po
+ * vyřazení ohodnocených položek (řadí se podle nahodaKlice, ne mícháním), takže se na frontu dá navázat.
  * @param {any[]} polozky
  * @param {{ razeni?: string, seed?: number }} [volby]
  */
 export function frontaFotek(polozky, { razeni = 'nahodne', seed = 1 } = {}) {
-    if (razeni !== 'modelky') return zamichat(polozky, seed);
+    const podle = (klic) => (x, y) => nahodaKlice(klic(x), seed) - nahodaKlice(klic(y), seed) || klic(x) - klic(y);
+    if (razeni !== 'modelky') return [...(polozky || [])].sort(podle(klicPolozky));
     const podleModelky = new Map();
     (polozky || []).forEach(p => {
         if (!podleModelky.has(p.modelkaId)) podleModelky.set(p.modelkaId, []);
         podleModelky.get(p.modelkaId).push(p);
     });
-    return zamichat([...podleModelky.keys()], seed).flatMap(id => podleModelky.get(id));
+    return [...podleModelky.keys()].sort(podle(id => id)).flatMap(id => podleModelky.get(id));
 }

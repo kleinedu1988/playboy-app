@@ -193,6 +193,11 @@ test('galerie nehodnocených fotek: pořadí', async () => {
     assert.deepEqual(m.filter(f => f.modelkaId === 10).map(f => f.id), [1, 2, 3]);
     assert.equal(frontaFotek(fotky, { seed: 3 }).length, 6);
     assert.deepEqual(frontaFotek([]), []);
+    // Stálé pořadí: po vyřazení položky zůstanou ostatní ve stejném vzájemném pořadí
+    const polozky = [1, 2, 3, 4, 5, 6, 7, 8].map(id => ({ modelkaId: id % 3, fotky: [{ id }] }));
+    const cela = frontaFotek(polozky, { seed: 11 }).map(p => p.fotky[0].id);
+    const bez = frontaFotek(polozky.filter(p => p.fotky[0].id !== cela[2]), { seed: 11 }).map(p => p.fotky[0].id);
+    assert.deepEqual(bez, cela.filter(id => id !== cela[2]));
 });
 
 test('ověření srdíček: výsledek a nadpis', async () => {

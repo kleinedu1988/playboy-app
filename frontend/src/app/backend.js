@@ -28,6 +28,7 @@ const CTENI = new Set([
     'GetNavrhyDoplneni',
     'GetNejlepsiFotky',
     'GetNehodnoceneFotky',
+    'GetPocetNehodnocenychFotek',
     'GetOblibenost',
     'GetPrehled',
     'GetPrehledOblibenosti',
@@ -99,6 +100,7 @@ export const GetModelky = /** @type {typeof App.GetModelky} */ (obalit('GetModel
 export const GetNavrhyDoplneni = /** @type {typeof App.GetNavrhyDoplneni} */ (obalit('GetNavrhyDoplneni'));
 export const GetNejlepsiFotky = /** @type {typeof App.GetNejlepsiFotky} */ (obalit('GetNejlepsiFotky'));
 export const GetNehodnoceneFotky = /** @type {typeof App.GetNehodnoceneFotky} */ (obalit('GetNehodnoceneFotky'));
+export const GetPocetNehodnocenychFotek = /** @type {typeof App.GetPocetNehodnocenychFotek} */ (obalit('GetPocetNehodnocenychFotek'));
 export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehled'));
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));
 export const GetSablonaObrazku = /** @type {typeof App.GetSablonaObrazku} */ (obalit('GetSablonaObrazku'));

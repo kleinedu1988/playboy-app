@@ -130,6 +130,10 @@ export function GetOdznakyModelky(arg1) {
   return window['go']['main']['App']['GetOdznakyModelky'](arg1);
 }
 
+export function GetPocetNehodnocenychFotek() {
+  return window['go']['main']['App']['GetPocetNehodnocenychFotek']();
+}
+
 export function GetPrehled(arg1) {
   return window['go']['main']['App']['GetPrehled'](arg1);
 }

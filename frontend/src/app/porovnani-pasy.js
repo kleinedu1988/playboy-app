@@ -15,7 +15,7 @@ import { esc, obrazek, sklonovat } from '../lib/format';
 import { popisNahledu, stitekUrovne, textSkoreFotek } from '../lib/oblibenost';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
-import { htmlSrdicka } from './galerie';
+import { htmlSrdicka, oznamitHodnoceniFotek } from './galerie';
 import { nastavitHtml, nastavitText } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
 
@@ -181,6 +181,7 @@ async function ohodnotit(strana, hodnoceni) {
         ok = await SetHodnoceniFotek([f.id], hodnoceni);
     } catch { /* oznámí se níž */ }
     if (!ok) return oznamit('Srdíčka fotky se nepodařilo uložit.');
+    oznamitHodnoceniFotek([Number(f.hodnoceni) || 0], 1, hodnoceni);
     f.hodnoceni = hodnoceni;
     const i = data?.[strana].fotky?.indexOf(f) ?? -1;
     if (i >= 0) nastavitText(polovina(strana)?.querySelector('[data-pas-fotky]')?.children[i]?.querySelector('[data-pas-srd]'), srdickaFotky(hodnoceni));

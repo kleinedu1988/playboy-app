@@ -13018,16 +13018,8 @@ button.pas-kapsle:focus-visible {
     background-color: var(--panel-bg);
 }
 
-/* ——— Fotky (Oblíbenost › Hodnocení › Fotky, app/galerie-hodnoceni.js): karta, která otevře prohlížeč
-   nehodnocených, řádek modelek s nejvíc nehodnocenými a ukázka fronty ——— */
-.gh-radek {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px 24px;
-}
-
+/* ——— Fotky (Hodnocení › Fotky, app/galerie-hodnoceni.js): náhledy fronty nehodnocených (klik otevře prohlížeč),
+   řádek modelek s nejvíc nehodnocenými a Dál na řadě ——— */
 /* Jen jedna modelka: kulatá fotka, jméno a počet jejích nehodnocených */
 .gh-modelky {
     display: flex;
@@ -13570,7 +13562,6 @@ button.pas-kapsle:focus-visible {
 }
 
 .gh-dlazdice > .gh-modelky {
-    grid-column: 1 / -1;
     margin: 0 20px 16px;
 }
 

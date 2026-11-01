@@ -234,7 +234,8 @@ export function lbZobrazit(index) {
         : `<span class="lb-jmeno">${esc(kde)}</span>`;
     lbCounter.innerHTML = `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
     lbVykreslitSrdicka();
-    lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
+    // Začátky alb jen tam, kde je lišta alb (fronta nehodnocených ji nemá a seznam je dlouhý)
+    if (!stav.lbJenNehodnocene) lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
     lbAktualizovatTlacitka();
 
     // Přednačtení další položky, aby listování neproblikávalo
@@ -250,23 +251,46 @@ export function lbVykreslitSrdicka() {
 // Hodnocení právě zobrazené fotky; pořadí v přehledu se podle něj upraví po zavření prohlížeče
 export async function lbOhodnotit(zvoleno) {
     const polozka = stav.lbPolozky[stav.lbIndex];
-    if (!polozka || !await ohodnotitPolozku(polozka, zvoleno)) return;
+    if (!polozka) return;
+    // Fotky nehodnocených: fotka vypadne hned (další stisk už hodnotí další fotku), zápis běží za ní; když se
+    // nepovede, vrátí se na své místo
+    if (stav.lbJenNehodnocene) return hodnotitNehodnocenou(polozka, zvoleno);
+    if (!await ohodnotitPolozku(polozka, zvoleno)) return;
     stav.lbZmeneno = true;
-    // Galerie nehodnocených: ohodnocená fotka vypadne a hned je tu další (na konci prohlížeč skončí)
-    if (stav.lbJenNehodnocene && polozka.hodnoceni > 0) {
-        const kde = stav.lbPolozky.indexOf(polozka);
-        if (kde < 0) return;
-        stav.lbPolozky.splice(kde, 1);
-        if (!stav.lbPolozky.length) {
-            zavritLightbox();
-            oznamit('Hotovo – všechny fotky jsou ohodnocené.');
-            return;
-        }
+    if (stav.lbPolozky[stav.lbIndex] === polozka) lbVykreslitSrdicka();
+}
+
+async function hodnotitNehodnocenou(polozka, zvoleno) {
+    if (!zvoleno || zvoleno === polozka.hodnoceni) return;
+    const seznam = stav.lbPolozky;
+    const kde = seznam.indexOf(polozka);
+    if (kde < 0) return;
+    seznam.splice(kde, 1);
+    // I z původního pořadí (po zamíchání S): ohodnocená se po návratu pořadí nevrátí
+    const puvodni = stav.lbPuvodniPoradi;
+    const kdePuvodne = puvodni ? puvodni.indexOf(polozka) : -1;
+    if (kdePuvodne >= 0) puvodni.splice(kdePuvodne, 1);
+    const zapis = ohodnotitPolozku(polozka, zvoleno);
+    stav.lbZapisy.add(zapis);
+    if (!seznam.length) {
+        zavritLightbox();
+        oznamit('Hotovo – všechny fotky jsou ohodnocené.');
+    } else {
         lbNaplnitListu();
-        lbZobrazit(kde >= stav.lbPolozky.length ? 0 : kde);
+        lbZobrazit(kde >= seznam.length ? 0 : kde);
+    }
+    const ok = await zapis.finally(() => stav.lbZapisy.delete(zapis));
+    if (ok) {
+        stav.lbZmeneno = true;
         return;
     }
-    if (stav.lbPolozky[stav.lbIndex] === polozka) lbVykreslitSrdicka();
+    oznamit('Srdíčka fotky se nepodařilo uložit.');
+    // Prohlížeč je pořád na stejném seznamu: fotka se vrátí na své místo a ukáže se
+    if (lightbox.classList.contains('hidden') || stav.lbPolozky !== seznam) return;
+    seznam.splice(Math.min(kde, seznam.length), 0, polozka);
+    if (kdePuvodne >= 0) puvodni.splice(Math.min(kdePuvodne, puvodni.length), 0, polozka);
+    lbNaplnitListu();
+    lbZobrazit(seznam.indexOf(polozka));
 }
 
 // Indexy prvních fotek jednotlivých alb v právě prohlíženém seznamu
@@ -287,8 +311,9 @@ export const lbLista = vytvoritListu(document.getElementById('lbNav'), klic => l
 
 export function lbNaplnitListu() {
     const zacatky = lbZacatkyAlb();
-    // Kde je každá položka vlastním albem (stěna centerfoldů, covery) nebo je pořadí zamíchané, lišta nemá smysl
-    const maSmysl = !stav.lbPuvodniPoradi && zacatky.length > 1 && zacatky.length < stav.lbPolozky.length;
+    // Kde je každá položka vlastním albem (stěna centerfoldů, covery), pořadí je zamíchané nebo jde o frontu
+    // nehodnocených (napříč sbírkou, alba po jedné fotce), lišta nemá smysl
+    const maSmysl = !stav.lbPuvodniPoradi && !stav.lbJenNehodnocene && zacatky.length > 1 && zacatky.length <= stav.lbPolozky.length / 2;
     lbLista.naplnit(maSmysl ? zacatky.map((zacatek, i) => ({
         klic: zacatek,
         nazev: nazevAlba(stav.lbPolozky[zacatek].album, stav.lbPolozky[zacatek].typ),
@@ -376,11 +401,12 @@ export function zavritLightbox() {
         else if (!issueView.classList.contains('hidden')) obnovitStranku();
         else if (!best.classList.contains('hidden')) nacistNejlepsi(searchInput.value);
     }
-    // Galerie nehodnocených: po zavření obnoví počet
+    // Fotky nehodnocených: po zavření se fronta načte znovu, až doběhnou zápisy hodnocení
     const poZavreni = stav.lbPoZavreni;
+    const zapisy = [...stav.lbZapisy];
     stav.lbJenNehodnocene = false;
     stav.lbPoZavreni = null;
-    poZavreni?.();
+    if (poZavreni) Promise.allSettled(zapisy).then(() => poZavreni());
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů

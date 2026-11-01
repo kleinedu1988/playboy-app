@@ -1757,6 +1757,15 @@ func (a *App) GetNehodnoceneFotky() []Fotografie {
 		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true))
 }
 
+// Počet nehodnocených fotek (pilulka a hlavička Hodnocení, stavová lišta Fotek) bez načítání celých fotek; stejný
+// výběr jako GetNehodnoceneFotky
+func (a *App) GetPocetNehodnocenychFotek() int {
+	var n int
+	a.db.QueryRow(`SELECT COUNT(*) FROM fotografie f JOIN modelky m ON m.id = f.modelka_id
+		WHERE COALESCE(f.hodnoceni, 0) = 0`).Scan(&n)
+	return n
+}
+
 // Alba jednoho fotografa napříč modelkami (na velikosti písmen a diakritice ve jméně nezáleží)
 func (a *App) GetAlbaFotografa(fotograf string) []Fotografie {
 	hledany := zjednodusit(strings.TrimSpace(fotograf))

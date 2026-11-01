@@ -19,10 +19,11 @@ export const htmlAkciDlazdice = () =>
 export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true, poOdebrani = () => {} } = {}) {
     const stranky = fotka ? [fotka] : polozka.fotky;
     const prvni = stranky[0];
-    const vProfilu = !detailView.classList.contains('hidden') && stav.aktualniModelka?.id === polozka.modelkaId;
+    const profilOtevreny = !detailView.classList.contains('hidden');
+    const vProfilu = profilOtevreny && stav.aktualniModelka?.id === polozka.modelkaId;
     // Fotka sdíleného alba v profilu další modelky (i v prohlížeči otevřeném z profilu) je titulní pro ni,
     // ne pro hlavní modelku alba
-    const zProfilu = !detailView.classList.contains('hidden') && stav.aktualniModelka && stav.aktualniPolozky.includes(polozka);
+    const zProfilu = profilOtevreny && stav.aktualniModelka && stav.aktualniPolozky.includes(polozka);
     const proModelku = zProfilu ? stav.aktualniModelka.id : polozka.modelkaId;
     return [
         ...(profil && polozka.modelkaId && !vProfilu

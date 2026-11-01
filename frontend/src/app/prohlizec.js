@@ -23,6 +23,13 @@ export const lbStage = document.getElementById('lbStage');
 export const lbProgress = document.getElementById('lbProgress');
 export const lbZoomBtn = document.getElementById('lbZoom');
 export const lbFillBtn = document.getElementById('lbFill');
+// Prvky, které se mění při každém listování; hledají se jednou
+const lbPaska = document.getElementById('lbPaska');
+const lbCaption = document.getElementById('lbCaption');
+const lbCounter = document.getElementById('lbCounter');
+const lbHearts = document.getElementById('lbHearts');
+const lbShuffle = document.getElementById('lbShuffle');
+const lbPlay = document.getElementById('lbPlay');
 
 export const lbOmezit = (hodnota, min, max) => Math.min(max, Math.max(min, hodnota));
 
@@ -220,13 +227,12 @@ export function lbZobrazit(index) {
     const album = nazevAlba(polozka.album, polozka.typ);
     const kde = album.includes(polozka.typ) ? album : [album, polozka.typ].filter(Boolean).join(' · ');
     const paska = paskaCisla(polozka.fotky[0].vydani || ((polozka.typ === 'Centerfold' || polozka.typ === 'Cover') ? polozka.album : ''));
-    const prvekPasky = document.getElementById('lbPaska');
-    prvekPasky.textContent = paska;
-    prvekPasky.classList.toggle('hidden', !paska);
-    document.getElementById('lbCaption').innerHTML = polozka.jmenoModelky
+    lbPaska.textContent = paska;
+    lbPaska.classList.toggle('hidden', !paska);
+    lbCaption.innerHTML = polozka.jmenoModelky
         ? `<span class="lb-jmeno">${esc(polozka.jmenoModelky)}</span><span class="lb-kde">${esc(kde)}</span>`
         : `<span class="lb-jmeno">${esc(kde)}</span>`;
-    document.getElementById('lbCounter').innerHTML = `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
+    lbCounter.innerHTML = `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
     lbVykreslitSrdicka();
     lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
     lbAktualizovatTlacitka();
@@ -238,7 +244,7 @@ export function lbZobrazit(index) {
 }
 
 export function lbVykreslitSrdicka() {
-    document.getElementById('lbHearts').innerHTML = htmlSrdicek(stav.lbPolozky[stav.lbIndex].hodnoceni, '');
+    lbHearts.innerHTML = htmlSrdicek(stav.lbPolozky[stav.lbIndex].hodnoceni, '');
 }
 
 // Hodnocení právě zobrazené fotky; pořadí v přehledu se podle něj upraví po zavření prohlížeče
@@ -305,7 +311,7 @@ export function lbPrepnoutSlideshow(zapnout = !stav.lbCasovac) {
     stav.lbCasovac = null;
     lbProgress.classList.remove('running');
     if (zapnout) lbSpustitCasovac();
-    document.getElementById('lbPlay').innerHTML = zapnout ? IKONA_PAUZA : IKONA_PREHRAT;
+    lbPlay.innerHTML = zapnout ? IKONA_PAUZA : IKONA_PREHRAT;
 }
 
 export function lbZamichat() {
@@ -322,7 +328,7 @@ export function lbZamichat() {
         }
         stav.lbPolozky = [aktualni, ...ostatni];
     }
-    document.getElementById('lbShuffle').classList.toggle('active', Boolean(stav.lbPuvodniPoradi));
+    lbShuffle.classList.toggle('active', Boolean(stav.lbPuvodniPoradi));
     lbNaplnitListu();
     lbZobrazit(stav.lbPolozky.indexOf(aktualni));
 }
@@ -343,7 +349,7 @@ export function otevritLightbox(index, slideshow = false, polozky = stav.aktualn
     stav.lbJenNehodnocene = jenNehodnocene;
     stav.lbPoZavreni = poZavreni;
     stav.lbPuvodniPoradi = null;
-    document.getElementById('lbShuffle').classList.remove('active');
+    lbShuffle.classList.remove('active');
     stav.lbPolozky = polozky;
     stav.lbZmeneno = false;
     lightbox.classList.remove('hidden');
@@ -390,18 +396,18 @@ export function pripravit() {
 
     try { stav.intervalSlideshow = parseInt(localStorage.getItem('intervalSlideshow')) || 4000; } catch { /* výchozí 4 s */ }
 
-    document.getElementById('lbHearts').addEventListener('click', (e) => {
+    lbHearts.addEventListener('click', (e) => {
         const srdicko = e.target.closest('.heart');
         if (srdicko) lbOhodnotit(parseInt(srdicko.dataset.hodnota));
     });
 
-    document.getElementById('lbShuffle').onclick = lbZamichat;
+    lbShuffle.onclick = lbZamichat;
 
     document.getElementById('lbPrev').onclick = () => lbZobrazit(stav.lbIndex - 1);
 
     document.getElementById('lbNext').onclick = () => lbZobrazit(stav.lbIndex + 1);
 
-    document.getElementById('lbPlay').onclick = () => lbPrepnoutSlideshow();
+    lbPlay.onclick =() => lbPrepnoutSlideshow();
 
     document.getElementById('lbRot').onclick = lbOtocit;
 

@@ -37,13 +37,18 @@ function vybraneFotky() {
     return vybraneDlazdice().flatMap(d => kontext.polozky[parseInt(d.dataset.index)]?.fotky || []);
 }
 
+const pocetVybranych = document.getElementById('selectionCount');
+const tlacitkoPresunout = selectionBar.querySelector('[data-vyber="presunout"]');
+const tlacitkoOdebrat = /** @type {HTMLElement} */ (selectionBar.querySelector('[data-vyber="odebrat"]'));
+
 export function aktualizovatVyber() {
     const pocet = vybraneDlazdice().length;
+    const kontext = kontextVyberu();
     selectionBar.classList.toggle('hidden', pocet === 0);
-    document.getElementById('selectionCount').textContent = `Vybráno: ${pocet}`;
-    selectionBar.querySelector('[data-vyber="presunout"]').classList.toggle('hidden', !kontextVyberu()?.presun);
+    pocetVybranych.textContent = `Vybráno: ${pocet}`;
+    tlacitkoPresunout.classList.toggle('hidden', !kontext?.presun);
     // Tlačítko má ikonu; co odebrání udělá, říká nápověda
-    selectionBar.querySelector('[data-vyber="odebrat"]').title = kontextVyberu()?.vyber ? 'Odebrat z výběru (Delete)' : 'Odebrat (Delete)';
+    tlacitkoOdebrat.title = kontext?.vyber ? 'Odebrat z výběru (Delete)' : 'Odebrat (Delete)';
 }
 
 export function zrusitVyber() {

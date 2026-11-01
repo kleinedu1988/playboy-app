@@ -313,11 +313,14 @@ const RAZENI_FRONTY = [['priorita', 'podle priority'], ['chybi', 'nejvíc chybí
 function htmlVoleb() {
     const stitek = (atribut, klic, nazev, zvoleny, titulek = '') => `<button type="button" class="chip ${zvoleny ? 'active' : ''}" ${atribut}="${klic}"${titulek ? ` title="${esc(titulek)}"` : ''}>${esc(nazev)}</button>`;
     const rezimy = REZIMY.map(([klic, nazev, popis]) => stitek('data-ud-rezim', klic, nazev, klic === stav.udrzbaRezim, popis));
-    if (!vSouhrnu()) return rezimy.join('');
+    // Stav Údržby do stavové lišty: úplnost a co čeká
+    const stavUdrzby = model ? `<span>${esc([`${model.uplnost} % doplněno`, sklonovat(model.pocty.vse, 'úkol', 'úkoly', 'úkolů'),
+        model.kKontrole ? `${model.kKontrole} ke kontrole` : '', model.navrhu ? sklonovat(model.navrhu, 'návrh', 'návrhy', 'návrhů') : ''].filter(Boolean).join(' · '))}</span>` : '';
+    if (!vSouhrnu()) return rezimy.join('') + stavUdrzby;
     return [...rezimy,
         ...RAZENI_FRONTY.map(([klic, nazev]) => stitek('data-ud-razeni-volba', klic, nazev, klic === stav.udrzbaRazeni)),
         stitek('data-ud-skryte', '1', `Vyřízené${stav.prehledSkryte && model.vyrizenych ? ` (${model.vyrizenych})` : ''}`, stav.prehledSkryte,
-            'Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit')].join('');
+            'Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit')].join('') + stavUdrzby;
 }
 
 // Hledání ve frontě Souhrnu je hlavní hledání nahoře (ulozeni.js, naseptavac.js); ostatní režimy hledají modelku

@@ -151,7 +151,7 @@ const KOSTRA = `
     </div>
     <div class="hd-pohled gh" data-hd="fotky" data-ob-galerie></div>
     <div class="hd-pohled" data-hd="poradi" data-ob-cast-poradi>
-        <div class="volby-v-liste" data-volby-casti="hodnoceni-poradi" data-ob-volby-poradi></div>
+        <div class="volby-v-liste" data-volby-casti="hodnoceni-poradi" data-ob-volby-poradi data-stitek="Hodnocení" data-nadpis="Pořadí"></div>
         <div class="ob-karta hz-rozhodnout" data-ob-rozhodnuti></div>
         <div class="hz-sloupce">
             <div class="ob-karta hz-poradi" data-ob-sekce-poradi>

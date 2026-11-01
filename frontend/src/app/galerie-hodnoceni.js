@@ -78,7 +78,7 @@ function vykreslit(fotek) {
         return m ? `<img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />` : '';
     };
     nastavitHtml(kontejner, `
-        <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky">
+        <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky" data-stitek="Hodnocení" data-nadpis="Fotky">
             <button type="button" class="chip ${razeni() === 'nahodne' ? 'active' : ''}" data-gh-razeni="nahodne" title="Fotky všech modelek zamíchané">Náhodně</button>
             <button type="button" class="chip ${razeni() === 'modelky' ? 'active' : ''}" data-gh-razeni="modelky" title="Fotky jedné modelky pohromadě, modelky v náhodném pořadí">Po modelkách</button>
             <span>${esc(sklonovat(fotek, 'fotka', 'fotky', 'fotek'))}</span>

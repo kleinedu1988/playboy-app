@@ -117,7 +117,7 @@ const HTML_UVODU = `
     </section>`;
 
 // Řádek voleb nad kartami (řazení, filtr srdíček včetně nehodnocených, edice, kategorie a výskyt)
-function htmlNastroju(pocet, roleCetnosti = [], vyskytCetnosti = new Map()) {
+function htmlNastroju(pocet, celkem, roleCetnosti = [], vyskytCetnosti = new Map()) {
     // Řazení podle oblíbenosti jen s backendem, který ji počítá
     const razeni = Object.entries(RAZENI_GALERIE).map(([klic, r]) => `
         <button class="chip ${klic === stav.razeniGalerie ? 'active' : ''}" data-razeni-galerie="${klic}" title="Řadit ${r.nazev}">${r.popisek}</button>`).join('');
@@ -135,7 +135,7 @@ function htmlNastroju(pocet, roleCetnosti = [], vyskytCetnosti = new Map()) {
         + Object.entries(VYSKYT).filter(([klic]) => vyskytCetnosti.get(klic) || klic === stav.vyskytModelek).map(([klic, nazev]) => `
         <button class="chip ${klic === stav.vyskytModelek ? 'active' : ''}" data-vyskyt-modelek="${klic || 'neurceno'}">${nazev}<span>${vyskytCetnosti.get(klic) || 0}</span></button>`).join('');
     return `<div class="gallery-toolbar">${razeni}<span class="oddelovac"></span>${srdicka}<span class="oddelovac"></span>${edice}${role ? `<span class="oddelovac"></span>${role}` : ''}<span class="oddelovac"></span>${vyskyt}
-        <span>${sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</span></div>`;
+        <span>${pocet < celkem ? `${pocet} z ${sklonovat(celkem, 'modelky', 'modelek', 'modelek')}` : sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</span></div>`;
 }
 
 // Předchozí a další modelka v pořadí, v jakém jsou v galerii
@@ -281,7 +281,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
         const zrusit = { text: 'Zrušit hledání a filtry', akce: 'zrusit' };
         // Srdíčka jako jediná příčina mají vlastní hlášku; s hledáním nebo dalším filtrem je to „Nic nenalezeno“
         const jinyFiltr = cistyDotaz || stav.ediceModelek !== 'vse' || stav.roleModelek !== 'vse' || stav.vyskytModelek !== 'vse';
-        gallery.innerHTML = htmlNastroju(0, roleCetnosti, vyskytCetnosti) + (
+        gallery.innerHTML = htmlNastroju(0, katalog.length, roleCetnosti, vyskytCetnosti) + (
             jinyFiltr ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádná modelka.')
             : stav.minHodnoceni === -1 ? htmlPrazdna('Vše ohodnoceno', 'Všechny modelky už mají srdíčka.', { ikona: 'srdce', tlacitko: zrusit })
             : stav.minHodnoceni > 0 ? htmlPrazdna(`Žádná modelka s ♥ ${stav.minHodnoceni}${stav.minHodnoceni < 5 ? '+' : ''}`, 'Modelky se hodnotí srdíčky na kartě nebo v profilu.', { ikona: 'srdce', tlacitko: zrusit })
@@ -294,7 +294,7 @@ export async function nacistGalerii(dotaz = '', zMezipameti = false) {
     // značku části (data-cast) dostane první karta každé části rovnou v šabloně
     const maRejstrik = modelky.length >= MODELEK_PRO_PISMENA;
     const casti = new Map();
-    gallery.innerHTML = htmlNastroju(modelky.length, roleCetnosti, vyskytCetnosti) + modelky.map(m => {
+    gallery.innerHTML = htmlNastroju(modelky.length, katalog.length, roleCetnosti, vyskytCetnosti) + modelky.map(m => {
         let atributCasti = '';
         if (maRejstrik) {
             const c = castGalerie(m, stav.razeniGalerie);

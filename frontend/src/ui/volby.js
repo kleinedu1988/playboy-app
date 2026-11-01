@@ -38,7 +38,7 @@ const RAZENI = new Set(['razeniGalerie', 'razeniSteny', 'udRazeniVolba']);
 // Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
 // Pohledy zvolené části (Síň slávy › Top 10 … Sezóna, Údržba › Po údajích … Souhrn) nejsou volby: kreslí se do
 // záhlaví stránky (hlavaStranky). Obálky / Kalendář jsou části Čísel přímo v kapsli, ve volbách nejsou.
-const PODMENU = new Set(['slavaPohled', 'udRezim']);
+const PODMENU = new Set(['slavaPohled', 'udRezim', 'poradiRozsah', 'ghRazeni']);
 const MIMO_VOLBY = new Set(['zobrazeniCisel']);
 const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim', 'poradiRozsah', 'filtrFotografa', 'slavaPohled']);
 
@@ -508,6 +508,16 @@ function upravitListu() {
     if (rAkce.top > rPas.top + 8 || prekryvaji(rPas, rAkce)) {
         lista.classList.add('bez-nazvu-pasu');
     }
+}
+
+// Stav stránky bez voleb (profil: 56 fotek · 14 alb) vlevo ve stavové liště; volby ji při přepnutí pohledu vyprázdní
+export function nastavitStav(text) {
+    stavVlevo.replaceChildren();
+    if (!text) return;
+    const pocitadlo = document.createElement('span');
+    pocitadlo.className = 'stav-pocet';
+    pocitadlo.textContent = text;
+    stavVlevo.append(pocitadlo);
 }
 
 // Zrušení všech zapnutých filtrů (Zrušit filtry ve stavové liště a v panelu Filtry): postupně jeden po druhém

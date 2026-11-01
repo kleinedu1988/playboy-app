@@ -20,6 +20,7 @@ import { htmlPrazdna } from '../ui/prazdno';
 import { htmlKostryAlb } from '../ui/kostra';
 import { zaznamenatProfil } from './zajem';
 import { upravitVyrez } from './vyrez';
+import { nastavitStav } from '../ui/volby';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -348,6 +349,7 @@ export async function nacistFotkyModelky(modelkaId) {
     listaAlb.naplnit(ostatni.map(a => ({ klic: indexAlba.get(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })));
     const fotek = stav.aktualniAlba.reduce((s, a) => s + a.fotky.length, 0);
     profilPocet.textContent = fotek ? `${sklonovat(fotek, 'fotka', 'fotky', 'fotek')} · ${sklonovat(stav.aktualniAlba.length, 'album', 'alba', 'alb')}` : '';
+    nastavitStav(profilPocet.textContent);
 
     detailView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
     nacitatPostupne(photosGrid);

@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.94] – 2026-11-01
+
+### Změněno
+- **Stránka modelky – úpravy pruhu s modelkou.**
+  - **Srdíčka** jsou hned vedle jména; pod jménem pořadí a odznaky.
+  - **★ Centerfold** je v pruhu vždy: s centerfoldem růžová hvězdička a klik ho otevře v prohlížeči, bez něj jen bílý obrys a tlačítko je vypnuté („Modelka zatím nemá centerfold“).
+  - **Vybrat** už není tlačítko v pruhu: výběr fotek se zapne v nabídce ⋯ („Vybrat fotky“, když běží „Ukončit výběr fotek“); Esc ho ukončí, Ctrl/Shift+klik funguje dál.
+
 ## [0.99.93] – 2026-11-01
 
 ### Změněno

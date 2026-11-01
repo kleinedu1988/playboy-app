@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.99] – 2026-11-01
+
+### Změněno
+- **Filtry v Modelkách jako štítky v kapsli hledání** (přepracování filtru, kroky 1 a 2).
+  - Příkaz `vlasy:blond`, `narodnost:usa,kanada`, `rok:1990..1999`, `hodnoceni:>=3,5`… se po mezeře nebo Enteru změní ve štítek; v poli zůstane jen hledaný text. Backspace v prázdném poli vrátí poslední štítek k úpravě.
+  - Pod kapslí řádek rychlých filtrů: Srdíčka, Edice, Kategorie, Výskyt, Vlasy, Národnost, Rok vydání, Výška a + Další (oči, tagy, rok narození, váha, tetování, piercing).
+  - Editor filtru (klik na štítek nebo tlačítko): **je / není**, zaškrtávání více hodnot s počtem modelek, které s ostatními filtry zbudou, hledání v hodnotách, u roků desetiletí a rozsah od–do, u výšky a váhy pásma, u srdíček ♥ 1+ … ♥ 5 a Bez ♥.
+  - Tlačítko **Filtry** v kapsli voleb s počtem filtrů otevře řádek hledání s filtry; stavová lišta ukazuje každý filtr zvlášť (klik upraví, × zruší), Zrušit filtry zruší vše.
+  - Filtr Modelek si program pamatuje i po přepnutí přehledu a po restartu. Starý panel Filtry v Modelkách nahradily štítky.
+- Společný model filtru (`lib/filtr.js`, `lib/dimenze.js`); stejné dotazy najdou totéž v Go i ve frontendu (testy nad `testdata/hledani-shoda.json`).
+
 ## [0.99.98] – 2026-11-01
 
 ### Opraveno

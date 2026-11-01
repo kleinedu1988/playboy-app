@@ -14355,46 +14355,12 @@ button.pas-kapsle:focus-visible {
     }
 }
 
-/* Druhý řádek (drobečky, podmenu) ve stejném průsvitném skle jako řádek hledání; otevřená kapsle hledání
-   se do něj přesune (app/navigace.js umistitHledani), pod panelem pak pluje jen nabídka výsledků */
+/* Druhý řádek (drobečky, podmenu) ve stejném průsvitném skle jako řádek hledání */
 .hlavni-lista {
     background-color: rgba(26, 26, 30, 0.82);
     -webkit-backdrop-filter: blur(18px) saturate(1.3);
     backdrop-filter: blur(18px) saturate(1.3);
     border-bottom-color: rgba(255, 255, 255, 0.12);
-}
-
-.lista-hledani {
-    display: flex;
-    flex: 1 1 auto;
-    justify-content: center;
-    min-width: 0;
-    --wails-draggable: no-drag;
-}
-
-.lista-hledani:empty {
-    display: none;
-}
-
-.lista-hledani.stred {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 440px;
-    transform: translate(-50%, -50%);
-}
-
-.lista-hledani .hledani {
-    max-width: 440px;
-}
-
-.navbar.hledani-v-liste .hledani-radek:not(:has(.naseptavac:not(.hidden))) {
-    display: none;
-}
-
-.navbar.hledani-v-liste .hledani-radek .naseptavac {
-    margin-top: 0;
-    border-top: 0;
 }
 
 /* ===== Stránka modelky (varianta C): galerie přes celou šířku, nahoře pruh s identitou, údaje ve výsuvném
@@ -15062,4 +15028,32 @@ body.rezim-vyberu #detailView .poster {
 /* Skryté části drobečků zůstávají skryté i přes display výše */
 .hlavni-lista .logo .hidden {
     display: none;
+}
+
+/* Řádek hledání je pod drobečky v toku hlavičky: může zůstat otevřený dlouho (text omezuje přehled), obsah proto
+   odsune, místo aby ho překrýval. Nabídka výsledků pluje pod ním ve stejném skle a obsah nepřekrývá jen dočasně. */
+.navbar .hledani-radek {
+    position: relative;
+    top: auto;
+    box-shadow: none;
+}
+
+.hledani-radek .naseptavac {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    background-color: rgba(26, 26, 30, 0.92);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.65);
+}
+
+/* Text v poli omezuje přehled: kapsle to dává najevo růžovým obrysem */
+.hledani-radek.filtruje .hledani input {
+    border-color: rgba(216, 27, 96, 0.6);
 }

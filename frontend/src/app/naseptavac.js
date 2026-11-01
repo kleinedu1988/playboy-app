@@ -11,7 +11,7 @@ import { otevritFotografa, otevritVydani } from './vydani';
 import { otevritClanek } from './clanky';
 import { hledaniVeFronte, hledatVeFronte } from './udrzba';
 import { nacistGalerii } from './galerie';
-import { nastavitViditelnostHledani, prepnoutRezim, zapamatovatMisto } from './navigace';
+import { nastavitViditelnostHledani, obnovitViditelnostHledani, prepnoutRezim, zapamatovatMisto } from './navigace';
 
 const naseptavac = document.getElementById('naseptavac');
 const zavoj = document.getElementById('naseptavacZavoj');
@@ -30,6 +30,8 @@ let otevritPrvni = false; // Enter dřív, než doběhlo hledání: po vykreslen
 // ale rovnou nachází modelku, číslo, článek nebo fotografa k otevření
 const vPodstrance = () => !detailView.classList.contains('hidden') || !issueView.classList.contains('hidden');
 const jenNajit = () => vPodstrance() || (stav.rezim === 'prehled' && !stats.classList.contains('hidden') && !hledaniVeFronte());
+// Text v poli právě omezuje přehled (galerie, čísla, fronta Údržby…); jinde jen hledá, co otevřít
+export const hledaniFiltruje = () => Boolean(searchInput.value.trim()) && !jenNajit();
 
 // Kalendář (náhledy obálek čísel), fotografové a prohledávané texty modelek se drží v mezipaměti do změny dat
 let kalendar = null;
@@ -462,6 +464,7 @@ function otevrit(index) {
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     searchInput.addEventListener('input', () => {
+        obnovitViditelnostHledani({ psani: true });
         clearTimeout(casovac);
         casovac = setTimeout(hledat, 120);
     });

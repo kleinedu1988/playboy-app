@@ -12,7 +12,7 @@ import { obnovitVolby, prizpusobitListu } from '../ui/volby';
 import { vsechnyModelky } from './mezipamet';
 import { prestatNacitat } from './obrazky';
 import { prestatSledovatKonce } from './nejlepsi';
-import { zrusitHledani } from './naseptavac';
+import { hledaniFiltruje, zrusitHledani } from './naseptavac';
 import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti } from './oblibenost';
 import { obnovitPasHlavicky } from './prehled';
@@ -57,6 +57,9 @@ export function ukazatPohled(pohled) {
     backBtn.innerHTML = `<span class="nav-zpet-sipka" aria-hidden="true">&larr;</span><span class="nav-cesta">${cestaZpet().map(esc).join('<span class="nav-oddel" aria-hidden="true">›</span>')}</span>`;
     backBtn.title = `Zpět: ${popisZpet()} (Esc, Alt+šipka vlevo)`;
     ukazatDrobecek(pohled);
+    // Na profil a číslo se řádek otevřený pro přehled nepřenáší; po návratu ho drží text, který přehled omezuje
+    if (podstranka) hledaniOtevrel = false;
+    obnovitViditelnostHledani();
     // Lišta písmen patří jen ke galerii modelek, lišta desetiletí jen ke stěně
     if (pohled !== gallery) document.getElementById('galleryNav')?.classList.add('hidden');
     if (pohled !== wall) document.getElementById('wallNav')?.classList.add('hidden');
@@ -257,15 +260,14 @@ export function zobrazeniCisel() {
 export const htmlZobrazeniCisel = aktivni => [['obalky', 'Obálky'], ['kalendar', 'Kalendář']]
     .map(([klic, nazev]) => `<button class="chip ${klic === aktivni ? 'active' : ''}" data-zobrazeni-cisel="${klic}">${nazev}</button>`).join('');
 
-// Přepínač řádku s kapslí hledat (tlačítko lupy v kontextové liště)
+// Řádek s kapslí hledat pod drobečky (tlačítko lupy, Ctrl+F). Otevřený ho drží buď uživatel, nebo text, který
+// právě omezuje přehled (vlasy:blond v Modelkách, hledání ve frontě Údržby): takový řádek se neschová, dokud
+// text nikdo nesmaže, a po návratu z profilu nebo čísla je zase vidět. Na podstránce (profil, číslo) text nic
+// nefiltruje, tam se řádek řídí jen lupou.
+let hledaniOtevrel = false;
 export function nastavitViditelnostHledani(videt, { zamerit = false } = {}) {
-    const radek = document.getElementById('hledaniRadek');
-    const prepinac = document.getElementById('searchToggleBtn');
-    if (!radek || !prepinac) return;
-    radek.classList.toggle('hidden', !videt);
-    umistitHledani();
-    prepinac.classList.toggle('active', videt);
-    prepinac.setAttribute('aria-expanded', String(videt));
+    hledaniOtevrel = videt;
+    obnovitViditelnostHledani();
     if (!videt) {
         zrusitHledani();
     } else if (zamerit) {
@@ -274,44 +276,25 @@ export function nastavitViditelnostHledani(videt, { zamerit = false } = {}) {
     }
 }
 
-// Otevřená kapsle hledání sdílí průsvitný druhý řádek s podmenu nebo drobečky: uprostřed panelu, když se tam
-// vejde, jinak hned vedle nich. Když místo není (úzké okno, dlouhé podmenu) nebo druhý řádek není vidět,
-// zůstane ve vlastním řádku pod ním. Nabídka výsledků je vždy v plovoucím řádku pod panelem.
-const SIRKA_KAPSLE = 440;
-function umistitHledani() {
+// psani: změna textu v poli; otevřený řádek pak zůstane i po smazání textu (×), dokud ho nezavře lupa nebo Esc
+export function obnovitViditelnostHledani({ psani = false } = {}) {
     const radek = document.getElementById('hledaniRadek');
-    const lista = document.querySelector('.hlavni-lista');
-    const misto = document.getElementById('hledaniVListe');
-    const kapsle = document.querySelector('.hledani');
-    const domov = radek?.querySelector('.nav-controls');
-    if (!radek || !lista || !misto || !kapsle || !domov) return;
-    let rezim = 'pod';
-    if (!radek.classList.contains('hidden') && getComputedStyle(lista).display !== 'none') {
-        const l = lista.getBoundingClientRect();
-        const vlevo = Math.max(l.left + 14, ...[...lista.children]
-            .filter(e => e !== misto && !e.classList.contains('hidden') && e.getClientRects().length)
-            .map(e => e.getBoundingClientRect().right));
-        const stred = l.left + l.width / 2;
-        if (vlevo + 16 <= stred - SIRKA_KAPSLE / 2) rezim = 'stred';
-        else if (l.right - 14 - vlevo - 16 >= 280) rezim = 'vedle';
-    }
-    const cil = rezim === 'pod' ? domov : misto;
-    misto.classList.toggle('stred', rezim === 'stred');
-    hlavicka.classList.toggle('hledani-v-liste', rezim !== 'pod');
-    if (kapsle.parentElement === cil) return;
-    // Přesun zruší zaměření pole; kurzor a výběr se vrátí
-    const zamereno = document.activeElement === searchInput;
-    const [od, po] = [searchInput.selectionStart, searchInput.selectionEnd];
-    cil.prepend(kapsle);
-    if (zamereno) {
-        searchInput.focus();
-        searchInput.setSelectionRange(od, po);
-    }
+    const prepinac = document.getElementById('searchToggleBtn');
+    if (!radek || !prepinac) return;
+    if (psani && !radek.classList.contains('hidden')) hledaniOtevrel = true;
+    const filtruje = hledaniFiltruje();
+    const videt = hledaniOtevrel || filtruje;
+    radek.classList.toggle('hidden', !videt);
+    radek.classList.toggle('filtruje', filtruje);
+    prepinac.classList.toggle('active', videt);
+    prepinac.setAttribute('aria-expanded', String(videt));
+    prepinac.title = filtruje ? 'Hledání omezuje přehled – smaž text (×), aby šlo řádek zavřít (Ctrl+F)' : 'Hledat (Ctrl+F)';
 }
 
+// Lupa: otevře řádek a skočí do pole; otevřený zavře, jen když jeho text nic neomezuje (jinak skočí do pole)
 export function prepnoutHledani() {
     const radek = document.getElementById('hledaniRadek');
-    const videt = Boolean(radek?.classList.contains('hidden'));
+    const videt = Boolean(radek?.classList.contains('hidden')) || hledaniFiltruje();
     nastavitViditelnostHledani(videt, { zamerit: videt });
 }
 
@@ -328,6 +311,7 @@ export function prepnoutRezim(novy) {
     zrusitHledani();
     stav.rezim = novy;
     zvyraznitRezim();
+    obnovitViditelnostHledani();
     if (novy === 'covery' || novy === 'kalendar') {
         try { localStorage.setItem('zobrazeniCisel', novy === 'kalendar' ? 'kalendar' : 'obalky'); } catch { /* jen pro toto spuštění */ }
     }
@@ -366,7 +350,6 @@ export function zvyraznitRezim() {
 const hlavicka = document.querySelector('.navbar');
 const sledovatListu = new ResizeObserver(() => {
     prizpusobitListu();
-    umistitHledani();
     document.documentElement.style.setProperty('--pod-hlavickou', `${Math.round(hlavicka.getBoundingClientRect().bottom)}px`);
 });
 [hlavicka, document.getElementById('volbyPrehledu'), document.querySelector('.hlavni-lista'), document.querySelector('.hlavni-lista > .logo'), document.getElementById('podmenu')]

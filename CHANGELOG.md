@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.3] – 2026-11-01
+
+### Změněno
+- **Sbírka: panel vpravo** (přepracování Sbírky, krok 3) jako Údaje u profilu modelky. Otevírá se tlačítky v hlavičce Sbírky (**Čísla a sháním · Statistiky · Učení**), záložkami v panelu nebo klávesou **I**; Esc, × nebo I ho zavře. Fronta Údržby zůstává vidět a panel se pamatuje.
+  - **Čísla a sháním:** sháněná čísla CZ (Kopírovat seznam ve stavové liště) a mapy výtisků CZ a archivu US; prázdné „Nic nesháníš“ je jen krátký řádek.
+  - **Statistiky:** graf a seznam pod sebou, graf a filtry v kapsli vpravo nahoře, dokud je panel otevřený.
+  - **Učení:** Co se program naučil (už ne nad frontou).
+  - Dříve uložená část Úvod, Sháním CZ nebo Statistiky se otevře jako panel nad Údržbou; mapa sekcí a odkazy odjinud otevřou správný panel.
+
 ## [1.0.2] – 2026-11-01
 
 ### Změněno

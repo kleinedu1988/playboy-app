@@ -80,6 +80,10 @@ export function otevritNabidku(cil, x, y) {
             null,
             ...akceFotky(stav.stenaPolozky[index], null, { profil: false, odebrat: false }),
         ];
+    } else if (cil.closest('#centerfoldBtn')) {
+        const centerfoldy = centerfoldyProfilu();
+        if (centerfoldy.length === 1) polozky = polozkyAlba(centerfoldy[0], null);
+        else polozky = centerfoldy.map(a => polozkaCenterfoldu(a, x, y));
     } else if (cil.closest('.album')) {
         // Album v profilu modelky: na fotce jen akce fotky (album je pod jednou položkou), jinde v albu akce alba
         const album = stav.aktualniAlba[parseInt(cil.closest('.album').dataset.album)];
@@ -170,7 +174,7 @@ function polozkyAlba(album, prvekAlba) {
     const centerfold = album.typ === 'Centerfold';
     // Úpravy alba jdou vždy na jeho hlavní modelku, i když je otevřený profil další modelky
     const vlastnik = { id: album.modelkaId, jmeno: '' };
-    const mrizka = prvekAlba.querySelector('.photos-grid.zkracena, .photos-grid.rozbalena');
+    const mrizka = prvekAlba?.querySelector('.photos-grid.zkracena, .photos-grid.rozbalena');
     const zkracena = mrizka?.classList.contains('zkracena');
     return [
         { text: 'Spustit slideshow alba', akce: () => otevritLightbox(stav.aktualniPolozky.indexOf(album.polozky[0]), true) },
@@ -203,19 +207,28 @@ function polozkyAlba(album, prvekAlba) {
     ];
 }
 
-// Obsluha událostí; volá ji main.js po načtení všech modulů
-// Akce s modelkou v kapsli voleb profilu: Promítat a ⋯ (promítat, sloučit, smazat)
+// Akce centerfoldu (tlačítko Centerfold v pruhu profilu nemá vlastní ⋯; pravé tlačítko na něm, položka v ⋯ modelky)
+const centerfoldyProfilu = () => stav.aktualniAlba.filter(a => a.typ === 'Centerfold');
+const polozkaCenterfoldu = (album, x, y) => ({
+    text: `Centerfold${album.album ? ` ${nazevVydani(album.album)}` : ''}…`,
+    akce: () => otevritKontextovouNabidku(x, y, polozkyAlba(album, null)),
+});
+
+// Akce s modelkou v pruhu profilu: ⋯ (promítat, centerfold, sloučit, smazat), totéž pravým tlačítkem na volném místě
 function nabidkaModelky(x, y) {
     const modelka = stav.aktualniModelka;
     if (!modelka) return;
+    const centerfoldy = centerfoldyProfilu();
     otevritKontextovouNabidku(x, y, [
         ...(stav.aktualniPolozky.length ? [{ text: 'Promítat všechny fotky', akce: () => otevritLightbox(0, true) }] : []),
+        ...centerfoldy.map(a => polozkaCenterfoldu(a, x, y)),
         null,
         { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
         { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },
     ]);
 }
 
+// Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     document.getElementById('promitatModelkuBtn').addEventListener('click', () => {
         if (stav.aktualniPolozky.length) otevritLightbox(0, true);

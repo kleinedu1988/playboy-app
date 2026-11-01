@@ -105,27 +105,30 @@ export const SABLONA_OKNA = `
 
     <!-- Detailní profil modelky -->
     <div id="detailView" class="detail-container hidden">
-      <!-- Akce s modelkou: ui/volby.js je při otevřeném profilu přesune do kapsle voleb vpravo nahoře -->
-      <div id="profileActions" class="akce-v-liste profil-akce">
-        <button type="button" id="infoBtn" class="volba" aria-pressed="false" aria-controls="profileSide" title="Údaje modelky (I)" aria-keyshortcuts="I"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><b>Údaje</b></button>
-        <button type="button" id="editModelBtn" class="volba" title="Upravit údaje modelky"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><b>Upravit</b></button>
-        <button type="button" id="addAlbumBtn" class="volba akcent" title="Přidat fotky nebo album"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><b>Přidat fotky</b></button>
-        <button type="button" id="promitatModelkuBtn" class="volba" title="Promítat všechny fotky modelky"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg><b>Promítat</b></button>
-        <button type="button" id="vybratBtn" class="volba" aria-pressed="false" title="Vybrat více fotek (také Ctrl+klik, Shift+klik; Esc ukončí)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg><b>Vybrat</b></button>
-        <button type="button" id="profilDalsiBtn" class="volba ikona" title="Další akce s modelkou: sloučit, smazat" aria-label="Další akce s modelkou">&#8943;</button>
-        <span id="profilPocet" class="volby-pocet"></span>
-      </div>
       <!-- Údaje modelky: výsuvný skleněný panel vpravo (tlačítko Údaje, klávesa I); otevření si program pamatuje -->
       <aside id="profileSide" class="profile-side">
         <div id="modelHeader"></div>
       </aside>
 
       <section class="profile-main">
-        <!-- Pruh s identitou modelky (miniatura, jméno, srdíčka, pořadí, odznaky, pásky čísel); plní app/profil.js -->
-        <div id="profilPruh" class="profil-pruh"></div>
+        <!-- Pruh s modelkou: nahoře miniatura, jméno, srdíčka, pořadí, odznaky a pásky čísel (plní app/profil.js), dole akce -->
+        <div id="profilPruh" class="profil-pruh">
+          <div id="profilPruhObsah" class="pruh-obsah"></div>
+          <!-- Akce s modelkou jako spodní řádek pruhu, uprostřed; Centerfold otevře plakát v prohlížeči -->
+          <div id="profileActions" class="profil-akce" role="toolbar" aria-label="Akce s modelkou">
+            <button type="button" id="centerfoldBtn" class="volba cf hidden" title="Otevřít centerfold v prohlížeči"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg><b>Centerfold</b></button>
+            <button type="button" id="infoBtn" class="volba" aria-pressed="false" aria-controls="profileSide" title="Údaje modelky (I)" aria-keyshortcuts="I"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><b>Údaje</b></button>
+            <button type="button" id="editModelBtn" class="volba" title="Upravit údaje modelky"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><b>Upravit</b></button>
+            <button type="button" id="addAlbumBtn" class="volba akcent" title="Přidat fotky nebo album"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><b>Přidat fotky</b></button>
+            <button type="button" id="promitatModelkuBtn" class="volba" title="Promítat všechny fotky modelky"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg><b>Promítat</b></button>
+            <button type="button" id="vybratBtn" class="volba" aria-pressed="false" title="Vybrat více fotek (také Ctrl+klik, Shift+klik; Esc ukončí)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg><b>Vybrat</b></button>
+            <button type="button" id="profilDalsiBtn" class="volba ikona" title="Další akce s modelkou: sloučit, smazat" aria-label="Další akce s modelkou">&#8943;</button>
+            <span id="profilPocet" class="volby-pocet"></span>
+          </div>
+        </div>
         <!-- Lišta alb: přesouvá se do druhého řádku hlavičky vedle drobečků (app/profil.js) -->
         <nav id="albumNav"></nav>
-        <!-- Alba; centerfoldy jsou první -->
+        <!-- Alba (centerfold je v pruhu jako tlačítko) -->
         <div id="photosGrid"></div>
       </section>
     </div>

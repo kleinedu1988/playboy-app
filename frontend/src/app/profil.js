@@ -11,7 +11,7 @@ import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { detailView, gallery, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
-import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
+import { VELIKOST_NAHLEDU, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { nastavitRezimVyberu, rezimVyberu, selectionBar, zrusitVyber } from './vyber';
@@ -21,9 +21,11 @@ import { htmlKostryAlb } from '../ui/kostra';
 import { zaznamenatProfil } from './zajem';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
-// ve výsuvném panelu vpravo (#profileSide), akce s modelkou v kapsli voleb (#profileActions, ui/volby.js).
+// ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
 const modelHeader = document.getElementById('modelHeader');
 const profilPruh = document.getElementById('profilPruh');
+const profilPruhObsah = document.getElementById('profilPruhObsah');
+const centerfoldBtn = document.getElementById('centerfoldBtn');
 const photosGrid = document.getElementById('photosGrid');
 const profilPocet = document.getElementById('profilPocet');
 
@@ -130,7 +132,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         ? `<button type="button" class="panel-paska" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
     const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" />`;
     // Pruh nahoře: kdo to je a jak si stojí (srdíčka, pořadí, odznaky) a ve kterých číslech byla; miniatura otevře údaje
-    profilPruh.innerHTML = `
+    profilPruhObsah.innerHTML = `
         <button type="button" class="pruh-foto" data-udaje title="Údaje modelky (I)">${titulni}</button>
         <div class="pruh-identita">
             <h2>${esc(modelka.jmeno)}</h2>
@@ -290,30 +292,6 @@ export async function nacistFotkyModelky(modelkaId) {
     const indexAlba = new Map(stav.aktualniAlba.map((a, i) => [a, i]));
     const indexPolozky = new Map(stav.aktualniPolozky.map((p, i) => [p, i]));
 
-    const htmlCenterfoldu = (a) => {
-        const index = indexAlba.get(a);
-        const stitky = [
-            a.album ? htmlStitkuVydani(a.album) : '',
-            htmlSpoluModelek(a),
-        ].filter(Boolean).join(' ');
-
-        const stran = sklonovat(a.fotky.length, 'strana', 'strany', 'stran');
-        return `
-            <section class="album album-centerfold" data-album="${index}" data-cast="${index}">
-                <div class="album-header">
-                    <h4>Centerfold</h4>
-                    <span>Plakát · ${stran}</span>
-                    ${stitky}
-                    <button class="album-more" data-nabidka-alba title="Akce centerfoldu (také pravým tlačítkem)">&#8943;</button>
-                </div>
-                <div class="posters">
-                    ${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${indexPolozky.get(p)}"`)).join('')}
-                </div>
-                ${htmlPopisuAlba(a)}
-            </section>
-        `;
-    };
-
     const htmlAlba = (a) => {
         const popis = sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek');
 
@@ -347,14 +325,18 @@ export async function nacistFotkyModelky(modelkaId) {
     const prazdno = () => centerfoldy.length
         ? htmlPrazdna('Žádná další alba', 'Pictorialy, fotky z dalších čísel a ostatní alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } })
         : htmlPrazdna('Zatím žádná alba', 'Centerfoldy, pictorialy a další alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } });
-    // Centerfoldy jsou první album galerie
-    photosGrid.innerHTML = centerfoldy.map(htmlCenterfoldu).join('') + (ostatni.map(htmlAlba).join('') || prazdno());
+    photosGrid.innerHTML = ostatni.map(htmlAlba).join('') || prazdno();
 
-    // Lišta má smysl až od dvou alb; centerfold v ní je první a má hvězdičku
-    listaAlb.naplnit([
-        ...centerfoldy.map(a => ({ klic: indexAlba.get(a), nazev: centerfoldy.length > 1 && a.album ? `★ ${nazevVydani(a.album)}` : '★ Centerfold' })),
-        ...ostatni.map(a => ({ klic: indexAlba.get(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })),
-    ]);
+    // Centerfold je tlačítko v pruhu: otevře plakát v prohlížeči (víc centerfoldů: ↑ ↓ mezi nimi)
+    const prvniCenterfold = centerfoldy[0]?.polozky[0];
+    centerfoldBtn.classList.toggle('hidden', !prvniCenterfold);
+    centerfoldBtn.dataset.index = prvniCenterfold ? String(indexPolozky.get(prvniCenterfold)) : '';
+    centerfoldBtn.querySelector('b').textContent = centerfoldy.length > 1 ? `Centerfoldy ${centerfoldy.length}` : 'Centerfold';
+    centerfoldBtn.title = centerfoldy.length > 1 ? 'Otevřít centerfoldy v prohlížeči (↑ ↓ mezi nimi)'
+        : `Otevřít centerfold${centerfoldy[0]?.album ? ` ${nazevVydani(centerfoldy[0].album)}` : ''} v prohlížeči`;
+
+    // Lišta má smysl až od dvou alb
+    listaAlb.naplnit(ostatni.map(a => ({ klic: indexAlba.get(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })));
     const fotek = stav.aktualniAlba.reduce((s, a) => s + a.fotky.length, 0);
     profilPocet.textContent = fotek ? `${sklonovat(fotek, 'fotka', 'fotky', 'fotek')} · ${sklonovat(stav.aktualniAlba.length, 'album', 'alba', 'alb')}` : '';
 

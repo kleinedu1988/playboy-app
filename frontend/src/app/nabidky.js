@@ -126,14 +126,9 @@ export function otevritNabidku(cil, x, y) {
         // Jen u čísla s měsícem; ročník a stránka fotografa číslo nejsou
         if (rozlozitVydani(stav.aktualniVydani || '')?.mesic) polozky.push({ text: 'Upravit číslo…', akce: () => upravitVydani(stav.aktualniVydani) });
     } else if (!detailView.classList.contains('hidden')) {
-        // Volné místo v profilu: Upravit a Přidat fotky jsou tlačítka pod jménem, tady je zbytek akcí s modelkou
-        const modelka = stav.aktualniModelka;
-        polozky = [
-            ...(stav.aktualniPolozky.length ? [{ text: 'Spustit slideshow modelky', akce: () => otevritLightbox(0, true) }] : []),
-            null,
-            { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
-            { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },
-        ];
+        // Volné místo v profilu: tytéž akce s modelkou jako ⋯ v kapsli voleb
+        nabidkaModelky(x, y);
+        return;
     } else if (cil.closest('.cislo')) {
         // Číslo časopisu: společná nabídka čísla, s coverem i jeho akce; po označení se stránka Čísla obnoví
         const cislo = cil.closest('.cislo');
@@ -209,7 +204,28 @@ function polozkyAlba(album, prvekAlba) {
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
+// Akce s modelkou v kapsli voleb profilu: Promítat a ⋯ (promítat, sloučit, smazat)
+function nabidkaModelky(x, y) {
+    const modelka = stav.aktualniModelka;
+    if (!modelka) return;
+    otevritKontextovouNabidku(x, y, [
+        ...(stav.aktualniPolozky.length ? [{ text: 'Promítat všechny fotky', akce: () => otevritLightbox(0, true) }] : []),
+        null,
+        { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
+        { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },
+    ]);
+}
+
 export function pripravit() {
+    document.getElementById('promitatModelkuBtn').addEventListener('click', () => {
+        if (stav.aktualniPolozky.length) otevritLightbox(0, true);
+    });
+    document.getElementById('profilDalsiBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const r = /** @type {HTMLElement} */ (e.currentTarget).getBoundingClientRect();
+        nabidkaModelky(r.left, r.bottom + 6);
+    });
+
     document.addEventListener('contextmenu', (e) => {
         // V textových polích a v modálních oknech vlastní nabídku nezobrazujeme
         if (e.target.closest('input, textarea, select')) return;

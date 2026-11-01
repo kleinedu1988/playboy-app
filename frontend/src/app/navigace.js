@@ -59,6 +59,11 @@ export function ukazatPohled(pohled) {
     // Lišta písmen patří jen ke galerii modelek, lišta desetiletí jen ke stěně
     if (pohled !== gallery) document.getElementById('galleryNav')?.classList.add('hidden');
     if (pohled !== wall) document.getElementById('wallNav')?.classList.add('hidden');
+    // Lišta alb profilu je ve druhém řádku hlavičky; jinde ji nikdo nenaplní, proto se skryje (a režim výběru skončí)
+    if (pohled !== detailView) {
+        document.getElementById('albumNav')?.classList.add('hidden');
+        document.body.classList.remove('rezim-vyberu');
+    }
     // Fokus ve skrytém pohledu (Enter na kartě, Zpět) by zůstal nikde: dostane ho nový pohled, další Tab jde do něj.
     // Hledání a lišta nahoře fokus nechávají.
     const aktivni = document.activeElement;

@@ -105,20 +105,27 @@ export const SABLONA_OKNA = `
 
     <!-- Detailní profil modelky -->
     <div id="detailView" class="detail-container hidden">
-      <aside class="profile-side">
+      <!-- Akce s modelkou: ui/volby.js je při otevřeném profilu přesune do kapsle voleb vpravo nahoře -->
+      <div id="profileActions" class="akce-v-liste profil-akce">
+        <button type="button" id="infoBtn" class="volba" aria-pressed="false" aria-controls="profileSide" title="Údaje modelky (I)" aria-keyshortcuts="I"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><b>Údaje</b></button>
+        <button type="button" id="editModelBtn" class="volba" title="Upravit údaje modelky"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg><b>Upravit</b></button>
+        <button type="button" id="addAlbumBtn" class="volba akcent" title="Přidat fotky nebo album"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><b>Přidat fotky</b></button>
+        <button type="button" id="promitatModelkuBtn" class="volba" title="Promítat všechny fotky modelky"><svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg><b>Promítat</b></button>
+        <button type="button" id="vybratBtn" class="volba" aria-pressed="false" title="Vybrat více fotek (také Ctrl+klik, Shift+klik; Esc ukončí)"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg><b>Vybrat</b></button>
+        <button type="button" id="profilDalsiBtn" class="volba ikona" title="Další akce s modelkou: sloučit, smazat" aria-label="Další akce s modelkou">&#8943;</button>
+        <span id="profilPocet" class="volby-pocet"></span>
+      </div>
+      <!-- Údaje modelky: výsuvný skleněný panel vpravo (tlačítko Údaje, klávesa I); otevření si program pamatuje -->
+      <aside id="profileSide" class="profile-side">
         <div id="modelHeader"></div>
-        <!-- Tlačítka se při vykreslení profilu přesunou pod jméno modelky -->
-        <div id="profileActions" class="profile-actions">
-          <button id="editModelBtn" class="volba" title="Upravit údaje modelky"><span aria-hidden="true">✎</span>Upravit</button>
-          <button id="addAlbumBtn" class="volba" title="Přidat fotky nebo album"><span aria-hidden="true">+</span>Přidat fotky</button>
-        </div>
-        <!-- Centerfoldy modelky jsou v levém panelu pod údaji -->
-        <div id="centerfoldsSide"></div>
       </aside>
 
       <section class="profile-main">
-        <!-- Lišta alb: zůstává při rolování nahoře a skáče na vybrané album -->
+        <!-- Pruh s identitou modelky (miniatura, jméno, srdíčka, pořadí, odznaky, pásky čísel); plní app/profil.js -->
+        <div id="profilPruh" class="profil-pruh"></div>
+        <!-- Lišta alb: přesouvá se do druhého řádku hlavičky vedle drobečků (app/profil.js) -->
         <nav id="albumNav"></nav>
+        <!-- Alba; centerfoldy jsou první -->
         <div id="photosGrid"></div>
       </section>
     </div>
@@ -790,7 +797,7 @@ export const SABLONA_OKNA = `
           <li><strong>Rychlé výsledky</strong>: při psaní do hledání se pod ním ukážou modelky, články (i podle textu) a čísla. Šipky vybírají, Enter otevře, Esc výsledky zavře.</li>
           <li><strong>Navigační kapsle</strong> vlevo nahoře: čtyři sekce – <strong>Modelky</strong> (Profily · Galerie), <strong>Čísla</strong> (Obálky · Kalendář · Centerfoldy), <strong>Hodnocení</strong> (Porovnat · Fotky · Pořadí · Síň slávy) a <strong>Sbírka</strong> (Úvod · Údržba · Sháním CZ · Statistiky). Nezvolené sekce jsou jen ikony, zvolená má název a v kapsli se rozbalí na své části (zvolená část svítí růžově, číslo u části je to, co čeká na tebe). Klik na zvolenou sekci otevře nabídku všech sekcí i s částmi (skok rovnou třeba na Hodnocení › Síň slávy). Klávesy <kbd>Ctrl</kbd>+<kbd>1</kbd>–<kbd>4</kbd> otevřou sekce zleva doprava. Má-li část vlastní pohledy (Síň slávy: Top 10 … Sezóna, Údržba: Po údajích · Po modelkách · Souhrn), jsou v <strong>podmenu</strong> v řádku pod kapslí; tam jsou i drobečky v profilu a na stránce čísla („← Modelky › Jméno ‹ 3 z 22 ›“). Tento řádek je průsvitný panel a lupa v něm otevře kapsli hledání vedle podmenu či drobečků (když se nevejde, otevře se v řádku pod ním; bez podmenu a drobečků má hledání vlastní plovoucí řádek). Vpravo nahoře je kapsle voleb – jen řazení, filtry a počet – a za ní lupa (hledání), <strong>+</strong> a <strong>⋯</strong>. V užším okně mají nezvolené části jen ikonu a v nejužším zůstane v kapsli jen zvolená část (ostatní jsou v nabídce sekce).</li>
           <li><strong>Volby přehledu</strong> pod hledáním: <strong>⇅ řazení ▾</strong>, tlačítko <strong>Filtry</strong> (panel se srdíčky, edicí, kategorií, výskytem…; číslo v odznaku je počet zapnutých filtrů) a zapnuté filtry jako štítky, které <strong>×</strong> zruší; <strong>Zrušit filtry</strong> v panelu zruší všechny. V Nejlepších je vedle srdíček <strong>Výběr ▾</strong> a <strong>▶</strong> spustí slideshow. <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
-          <li>V profilu <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
+          <li><strong>Profil modelky</strong>: nahoře pruh se jménem, srdíčky, pořadím, odznaky a páskami čísel, pod ním alba přes celou šířku (centerfold je první). Lišta alb je ve druhém řádku vedle drobečků. Akce jsou v kapsli vpravo nahoře: <strong>Údaje</strong> (nebo <kbd>I</kbd>, klik na miniaturu) vysune panel s údaji, články a odkazy a program si pamatuje, jestli ho necháš otevřený; dál Upravit, Přidat fotky, Promítat, <strong>Vybrat</strong> (klik pak fotky vybírá, <kbd>Esc</kbd> ukončí) a ⋯ (sloučit, smazat). <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
           <li>Klávesa <kbd>?</kbd> kdekoli (i v prohlížeči fotek a ve čtečce stran) ukáže přehled všech klávesových zkratek.</li>
           <li>Klik na štítek čísla, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
         </ul>
@@ -833,7 +840,7 @@ export const SABLONA_OKNA = `
           <li><strong>Okno alba</strong>: vlevo se volí, kde album vyšlo, jeho druh a číslo (Tab skočí na skupinu, šipky v ní mění volbu); náhled pod volbami ukazuje, jak bude album v profilu vypadat, i s obrázkem první vložené fotky a počtem fotek. Na malé obrazovce se pole posouvají a tlačítka Uložit zůstávají dole.</li>
           <li>Číslo časopisu má vlevo obsah: články podle stran, centerfold a pictorialy. Články jdou vpravo pod sebou; klik v obsahu na článek doroluje, „+ článek“ a „✎ upravit“ otevřou okno článku. V hlavičce okna je záhlaví článku tak, jak bude v čísle (rubrika · strana · druh textu), pod skeny jejich počet a náhledy.</li>
           <li><strong>Skeny stran</strong> článku se otevřou v prohlížeči stran: dvojstrana jako rozevřený časopis, nebo jedna strana (klávesy 1 a 2). Listuje se šipkami, klikem na stranu nebo v pásu náhledů; Esc zavře.</li>
-          <li><strong>Články modelky</strong> (rozhovor, 20 otázek…) jsou v jejím profilu jako poslední blok vlevo; klik otevře číslo rovnou na článku.</li>
+          <li><strong>Články modelky</strong> (rozhovor, 20 otázek…) jsou v jejím profilu jako poslední blok panelu Údaje; klik otevře číslo rovnou na článku.</li>
           <li><strong>Sbírka</strong> (tlačítko vpravo v liště) otevře naposledy zvolenou ze čtyř částí – Přehled, Údržba, Sháním CZ, Statistiky – a mezi nimi se přepíná pilulkami nahoře v obsahu (jako v Hodnocení a Síni slávy, i šipkami), u Údržby s počtem úkolů. <strong>Přehled</strong>: hlavní čísla, mapa české edice (vlastní výtisky: mám, sháním, chybí) a mapa americké edice (úplnost dat: kompletní číslo má cover, centerfold i pictorial); klik na políčko otevře číslo, prázdné nabídne přidání, pravým tlačítkem se nastaví stav. „Co zbývá doplnit“ otevře Údržbu rovnou na dané položce. <strong>Sháním CZ</strong>: sháněná čísla české edice po letech, „Kopírovat seznam“ je dá do schránky jako text.</li>
           <li><strong>Údržba</strong> ukazuje, co sbírce chybí nebo co je potřeba zkontrolovat. Vpravo v pásu je, na kolik procent je sbírka doplněná, a počty úkolů, údajů ke kontrole a návrhů; pod hledáním se přepínají tři režimy – <em>Po údajích</em>, <em>Po modelkách</em> a <em>Souhrn</em>. Program si pamatuje naposledy zvolený režim (poprvé Po údajích).</li>
           <li><strong>Po údajích</strong>: vlevo jsou údaje, které někde chybí – Ke kontrole (nálezy kontroly), údaje modelek (datum narození, národnost, místo narození, výška a váha, kategorie, etnicita, barvy, míry, velikost a typ prsou, ochlupení, tetování, piercing, tagy, hodnocení), fotky a alba (titulní fotka, centerfold, vydání alb, texty alb, další návrhy) a čísla (cover, centerfold) – s počtem a ✦ počtem návrhů; pořadí je pevné, od nejcennějších. Vpravo je karta zvoleného údaje s řádkem pro každou modelku (album, číslo), které chybí, a do řádku se píše rovnou: pole je stejného druhu jako ve formuláři modelky (našeptávání z hodnot ve sbírce, výběr u ochlupení nebo tetování, datum s kontrolou, převod <code>5'7"</code>, <code>115 lbs</code> a <code>34B-24-34</code>), u hodnocení srdíčka (klávesy 1–5, klik uloží hned), u titulní fotky odkaz z Disku, u vydání alba RRRR-MM. Návrh je v poli předvyplněný a vedle je jistota a důvod („návrh 97 % · místo narození Texas“). Pod jménem je nápověda, která pomůže (místo narození u národnosti, míry u velikosti prsou). <kbd>Enter</kbd> řádek uloží a skočí na další – nezměněný návrh se přijme, opravený se uloží a program si opravu zapamatuje, jinak se zapíše jen ten údaj; <kbd>Tab</kbd> řádek přeskočí, <kbd>Esc</kbd> vrátí jeho hodnotu, <kbd>Delete</kbd> v prázdném poli (nebo <kbd>Ctrl</kbd>+<kbd>Delete</kbd>) dá „Netýká se“ (u kontroly „V pořádku“), s Vrátit v oznámení. Uložený řádek zůstane na místě ztlumený („✓ uloženo“), aby nic neposkočilo. Text alba se píše v okně editoru, cover a centerfold otevřou svá okna. V hlavičce karty je „✓ Přijmout N návrhů“ (návrhy v řádcích, které jsi neměnil, s potvrzením) a „Netýká se všem…“. „Netýká se“ u údaje modelky platí pro celou část formuláře (základní údaje, vzhled a míry, zařazení) – tak se ukládá.</li>

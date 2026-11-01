@@ -117,6 +117,28 @@ export function obnovitVolby(pohled) {
     rusitVse = null;
     const cast = pohled.dataset.volbyCasti;
     ukazatVolby(cast === undefined ? pohled.querySelector('.volby-v-liste') : pohled.querySelector(`.volby-v-liste[data-volby-casti="${CSS.escape(cast)}"]`));
+    // Pohled bez voleb s vlastními akcemi (profil modelky: Údaje, Upravit, Přidat fotky…) je ukáže v kapsli voleb
+    const akce = /** @type {HTMLElement | null} */ (pohled.querySelector(':scope > .akce-v-liste'));
+    if (akce && misto().classList.contains('hidden')) ukazatAkce(akce);
+}
+
+// Akce se do kapsle přesouvají i s obsluhou; před dalším složením kapsle se vrátí na své místo v pohledu
+let akceVKapsli = null;
+function ukazatAkce(akce) {
+    const cil = misto();
+    const panel = document.createElement('div');
+    panel.className = 'volby-skupina';
+    akceVKapsli = { akce, domov: akce.parentElement, pred: akce.nextSibling };
+    panel.append(akce);
+    cil.append(panel);
+    cil.classList.remove('hidden');
+    prizpusobitListu();
+}
+function vratitAkce() {
+    if (!akceVKapsli) return;
+    const { akce, domov, pred } = akceVKapsli;
+    akceVKapsli = null;
+    domov.insertBefore(akce, pred);
 }
 
 // Skupina štítků jednoho druhu (řazení, srdíčka, edice…) a co s ní lišta dělá
@@ -154,6 +176,7 @@ function ukazatVolby(lista) {
     // Volby se skládají znovu: fokus zůstane na stejné volbě (podle textu, jinak na stejném místě)
     const aktivni = /** @type {HTMLElement | null} */ (cil.contains(document.activeElement) ? document.activeElement : null);
     const fokus = aktivni && { text: aktivni.textContent.trim(), poradi: [...cil.querySelectorAll('button')].indexOf(/** @type {HTMLButtonElement} */ (aktivni)) };
+    vratitAkce();
     cil.innerHTML = '';
     cil.classList.toggle('hidden', !lista);
     tlacitkoFiltru = null;

@@ -33,6 +33,8 @@ const CASTI = [
     { klic: 'profil', nazev: 'Profil modelky', radky: [
         [k('←', '→'), 'Předchozí a další modelka'],
         [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět'],
+        [k('I'), 'Panel Údaje (otevřít, zavřít)'],
+        [k('Esc'), 'V režimu Vybrat: ukončit výběr'],
     ] },
     { klic: 'udrzba-udaje', nazev: 'Údržba – Po údajích', radky: [
         [k('Enter'), 'Uložit řádek a jít na další'],

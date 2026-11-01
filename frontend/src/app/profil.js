@@ -14,18 +14,18 @@ import { hlavniOblast, listaAlb, listyStranky } from './listy';
 import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU_MALA, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
-import { selectionBar } from './vyber';
+import { nastavitRezimVyberu, rezimVyberu, selectionBar, zrusitVyber } from './vyber';
 import { doplnitClankyModelky } from './clanky';
 import { htmlPrazdna } from '../ui/prazdno';
 import { htmlKostryAlb } from '../ui/kostra';
 import { zaznamenatProfil } from './zajem';
 
-// Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Tlačítka profilu (Upravit modelku, Přidat
-// fotky) se při každém vykreslení přesouvají do hlavičky, odkaz na ně proto platí i po přepsání hlavičky.
+// Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
+// ve výsuvném panelu vpravo (#profileSide), akce s modelkou v kapsli voleb (#profileActions, ui/volby.js).
 const modelHeader = document.getElementById('modelHeader');
+const profilPruh = document.getElementById('profilPruh');
 const photosGrid = document.getElementById('photosGrid');
-const centerfoldsSide = document.getElementById('centerfoldsSide');
-const profileActions = document.getElementById('profileActions');
+const profilPocet = document.getElementById('profilPocet');
 
 // Štítek čísla časopisu; klik ho otevře (obsluha data-vydani v prohlizec.js)
 const htmlStitkuVydani = v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`;
@@ -51,7 +51,6 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     if (stav.aktualniModelka?.id !== modelka.id) photosGrid.innerHTML = htmlKostryAlb();
     stav.aktualniModelka = modelka;
     ukazatPohled(detailView);
-    centerfoldsSide.innerHTML = '';
     hlavniOblast.scrollTop = 0;
 
     const hledatelne = hodnota => hodnota
@@ -129,25 +128,29 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         return `<button type="button" class="panel-paska" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
     }).join('') + ((modelka.onlineAlba || []).length
         ? `<button type="button" class="panel-paska" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
-    const paska = paskyHtml ? `<div class="panel-pasky">${paskyHtml}</div>` : '';
+    const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" />`;
+    // Pruh nahoře: kdo to je a jak si stojí (srdíčka, pořadí, odznaky) a ve kterých číslech byla; miniatura otevře údaje
+    profilPruh.innerHTML = `
+        <button type="button" class="pruh-foto" data-udaje title="Údaje modelky (I)">${titulni}</button>
+        <div class="pruh-identita">
+            <h2>${esc(modelka.jmeno)}</h2>
+            <div class="pruh-radek">
+                ${htmlSrdicka(modelka)}
+                ${htmlOdhadu(modelka, 'odhad-profil')}
+                ${htmlPoradi(modelka)}
+                <div class="profile-odznaky" hidden></div>
+            </div>
+        </div>
+        ${paskyHtml ? `<div class="pruh-pasky">${paskyHtml}</div>` : ''}
+    `;
     modelHeader.innerHTML = `
-        ${paska}
-        <div class="profile-cover"><img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
-        <h2>${esc(modelka.jmeno)}</h2>
-        ${htmlSrdicka(modelka)}
-        ${htmlOdhadu(modelka, 'odhad-profil')}
-        ${htmlPoradi(modelka)}
-        <div class="profile-odznaky" hidden></div>
+        <div class="profile-cover">${titulni}</div>
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
-        <div class="profile-actions-misto"></div>
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
         ${bloky.length ? `<div class="udaje-modelky">${bloky.join('')}</div>` : ''}
         ${modelka.poznamka ? `<div class="profile-note">${formatMarkdown(modelka.poznamka)}</div>` : ''}
         ${htmlOdkazu(modelka.odkazy)}
     `;
-
-    // Tlačítka profilu jsou v šabloně s obsluhou; přepsání hlavičky je odpojí, vloží se zpět pod jméno
-    modelHeader.querySelector('.profile-actions-misto').replaceWith(profileActions);
 
     await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitOdznaky(modelka.id)]);
 }
@@ -158,7 +161,7 @@ async function doplnitOdznaky(id) {
     try {
         odznaky = await GetOdznakyModelky(id) || [];
     } catch { /* odznaky jsou jen doplněk */ }
-    const misto = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.profile-odznaky'));
+    const misto = /** @type {HTMLElement | null} */ (profilPruh.querySelector('.profile-odznaky'));
     if (!misto || stav.aktualniModelka?.id !== id || !odznaky.length) return;
     misto.innerHTML = `<button type="button" class="profile-odznaky-tlacitko" data-otevrit-oblibenost="slava" data-slava-pohled="odznaky" title="Otevřít odznaky v Síni slávy">${htmlRadyOdznaku(odznaky, 12)}</button>`;
     misto.hidden = false;
@@ -294,10 +297,15 @@ export async function nacistFotkyModelky(modelkaId) {
             htmlSpoluModelek(a),
         ].filter(Boolean).join(' ');
 
+        const stran = sklonovat(a.fotky.length, 'strana', 'strany', 'stran');
         return `
-            <section class="album panel-centerfold" data-album="${index}" data-cast="${index}">
-                <h4 class="panel-nadpis">Centerfold</h4>
-                ${stitky ? `<div class="panel-centerfold-modelka">${stitky}</div>` : ''}
+            <section class="album album-centerfold" data-album="${index}" data-cast="${index}">
+                <div class="album-header">
+                    <h4>Centerfold</h4>
+                    <span>Plakát · ${stran}</span>
+                    ${stitky}
+                    <button class="album-more" data-nabidka-alba title="Akce centerfoldu (také pravým tlačítkem)">&#8943;</button>
+                </div>
                 <div class="posters">
                     ${a.polozky.map(p => htmlPlakatu(p, VELIKOST_PLAKATU_MALA, `data-index="${indexPolozky.get(p)}"`)).join('')}
                 </div>
@@ -339,11 +347,16 @@ export async function nacistFotkyModelky(modelkaId) {
     const prazdno = () => centerfoldy.length
         ? htmlPrazdna('Žádná další alba', 'Pictorialy, fotky z dalších čísel a ostatní alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } })
         : htmlPrazdna('Zatím žádná alba', 'Centerfoldy, pictorialy a další alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } });
-    centerfoldsSide.innerHTML = centerfoldy.map(htmlCenterfoldu).join('');
-    photosGrid.innerHTML = ostatni.map(htmlAlba).join('') || prazdno();
+    // Centerfoldy jsou první album galerie
+    photosGrid.innerHTML = centerfoldy.map(htmlCenterfoldu).join('') + (ostatni.map(htmlAlba).join('') || prazdno());
 
-    // Lišta má smysl až od dvou alb; centerfoldy jsou v levém sloupci stále vidět
-    listaAlb.naplnit(ostatni.map(a => ({ klic: indexAlba.get(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })));
+    // Lišta má smysl až od dvou alb; centerfold v ní je první a má hvězdičku
+    listaAlb.naplnit([
+        ...centerfoldy.map(a => ({ klic: indexAlba.get(a), nazev: centerfoldy.length > 1 && a.album ? `★ ${nazevVydani(a.album)}` : '★ Centerfold' })),
+        ...ostatni.map(a => ({ klic: indexAlba.get(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })),
+    ]);
+    const fotek = stav.aktualniAlba.reduce((s, a) => s + a.fotky.length, 0);
+    profilPocet.textContent = fotek ? `${sklonovat(fotek, 'fotka', 'fotky', 'fotek')} · ${sklonovat(stav.aktualniAlba.length, 'album', 'alba', 'alb')}` : '';
 
     detailView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
     nacitatPostupne(photosGrid);
@@ -463,8 +476,49 @@ export function rozbalitKliknute(e) {
     return Boolean(dlazdice);
 }
 
+// Výsuvný panel s údaji modelky vpravo; otevřený zůstane i pro další profily (pamatuje si to i po restartu)
+const KLIC_UDAJU = 'profilUdaje';
+function nastavitUdaje(otevrit) {
+    detailView.classList.toggle('udaje-otevrene', otevrit);
+    const tlacitko = document.getElementById('infoBtn');
+    tlacitko?.classList.toggle('zapnuto', otevrit);
+    tlacitko?.setAttribute('aria-pressed', String(otevrit));
+    try { localStorage.setItem(KLIC_UDAJU, otevrit ? '1' : '0'); } catch { /* jen pohodlí */ }
+}
+export function prepnoutUdaje(otevrit = !detailView.classList.contains('udaje-otevrene')) {
+    nastavitUdaje(otevrit);
+    // Užší galerie má jiný počet fotek v řadách náhledu
+    requestAnimationFrame(() => zkratitAlba(detailView));
+}
+
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    let otevreneUdaje = false;
+    try { otevreneUdaje = localStorage.getItem(KLIC_UDAJU) === '1'; } catch { /* výchozí zavřené */ }
+    nastavitUdaje(otevreneUdaje);
+    document.getElementById('infoBtn').addEventListener('click', () => prepnoutUdaje());
+    document.getElementById('vybratBtn').addEventListener('click', () => {
+        if (rezimVyberu()) zrusitVyber();
+        else nastavitRezimVyberu(true);
+    });
+
+    // Lišta alb je ve druhém řádku hlavičky vedle drobečků, jako podmenu ostatních sekcí
+    document.getElementById('podmenu').before(listaAlb.nav);
+
+    // I přepne údaje; Esc nejdřív ukončí režim výběru
+    document.addEventListener('keydown', (e) => {
+        if (detailView.classList.contains('hidden') || e.ctrlKey || e.altKey || e.metaKey
+            || e.target.closest('input, textarea, select, [contenteditable]') || document.querySelector('.lightbox:not(.hidden), .modal-overlay:not(.hidden)')) return;
+        if (e.key.toLowerCase() === 'i' && !e.shiftKey) {
+            e.preventDefault();
+            prepnoutUdaje();
+        } else if (e.key === 'Escape' && rezimVyberu()) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            zrusitVyber();
+        }
+    }, true);
+
     hlavniOblast.addEventListener('click', (e) => {
         const tlacitko = e.target.closest('[data-rozbalit]');
         if (!tlacitko) return;
@@ -473,7 +527,11 @@ export function pripravit() {
     });
 
     // Páska online alb přeskočí na první online album; pořadí v oblíbenosti otevře Hodnocení nebo Síň slávy (jako tlačítko v liště)
-    modelHeader.addEventListener('click', (e) => {
+    profilPruh.addEventListener('click', (e) => {
+        if (e.target.closest('[data-udaje]')) {
+            prepnoutUdaje();
+            return;
+        }
         const doOblibenosti = e.target.closest('[data-otevrit-oblibenost]');
         if (doOblibenosti) {
             nastavitCastOblibenosti(doOblibenosti.dataset.otevritOblibenost || 'poradi');

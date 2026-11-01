@@ -55,6 +55,16 @@ export function zrusitVyber() {
     vybraneDlazdice().forEach(d => d.classList.remove('vybrana'));
     stav.posledniVybrana = null;
     aktualizovatVyber();
+    nastavitRezimVyberu(false);
+}
+
+// Režim výběru v profilu (tlačítko Vybrat): klik fotku vybere jako Ctrl+klik, dlaždice mají kroužky; Esc ho ukončí
+export const rezimVyberu = () => document.body.classList.contains('rezim-vyberu');
+export function nastavitRezimVyberu(zapnout) {
+    document.body.classList.toggle('rezim-vyberu', zapnout);
+    const tlacitko = document.getElementById('vybratBtn');
+    tlacitko?.classList.toggle('zapnuto', zapnout);
+    tlacitko?.setAttribute('aria-pressed', String(zapnout));
 }
 
 // Všechny viditelné dlaždice pohledu; vrací false, když v pohledu vybírat nejde
@@ -69,7 +79,10 @@ export function vybratVse() {
 export function vybratKliknutim(e) {
     const kontext = kontextVyberu();
     const dlazdice = kontext && e.target.closest(DLAZDICE);
-    if (!dlazdice || !kontext.koren.contains(dlazdice) || !(e.ctrlKey || e.metaKey || e.shiftKey)) return false;
+    const rezim = rezimVyberu() && !detailView.classList.contains('hidden');
+    if (!dlazdice || !kontext.koren.contains(dlazdice) || !(e.ctrlKey || e.metaKey || e.shiftKey || rezim)) return false;
+    // V režimu výběru otevírá ⋯ na dlaždici nabídku a srdíčka hodnotí jako jindy
+    if (rezim && !(e.ctrlKey || e.metaKey || e.shiftKey) && e.target.closest('.hearts, .tile-more, [data-nabidka], button')) return false;
     if (e.shiftKey && stav.posledniVybrana && stav.posledniVybrana.parentElement === dlazdice.parentElement) {
         const vsechny = [...dlazdice.parentElement.children].filter(d => d.offsetParent && d.matches(DLAZDICE));
         const [od, po] = [vsechny.indexOf(stav.posledniVybrana), vsechny.indexOf(dlazdice)].sort((x, y) => x - y);

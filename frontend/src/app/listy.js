@@ -25,7 +25,7 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
         return (castiPamet ||= [...pohled.querySelectorAll('[data-cast]')]);
     };
     // Kde začíná viditelný obsah: pod vodorovnou lištou, u svislé hned nahoře
-    const horniOkraj = () => svisla ? hlavniOblast.getBoundingClientRect().top : nav.getBoundingClientRect().bottom;
+    const horniOkraj = () => svisla || !hlavniOblast.contains(nav) ? hlavniOblast.getBoundingClientRect().top : nav.getBoundingClientRect().bottom;
     let zvolenySkok = null;
     const lista = vytvoritListu(nav, (klic) => {
         // Pohled vykreslovaný po dávkách (Nejlepší) cílovou část nejdřív dovykreslí
@@ -34,7 +34,9 @@ export function vytvoritListuStranky(nav, pohled, { svisla = false } = {}) {
         if (!cast) return;
         zvolenySkok = klic;
         lista.oznacit(klic);
-        const posun = cast.getBoundingClientRect().top - hlavniOblast.getBoundingClientRect().top - (svisla ? 0 : nav.offsetHeight) - 8;
+        // Lišta v hlavičce (profil) nad obsahem nepřekáží; přilepená lišta v obsahu zakrývá jeho horní okraj
+        const vObsahu = !svisla && hlavniOblast.contains(nav);
+        const posun = cast.getBoundingClientRect().top - hlavniOblast.getBoundingClientRect().top - (vObsahu ? nav.offsetHeight : 0) - 8;
         hlavniOblast.scrollTo({ top: hlavniOblast.scrollTop + posun, behavior: 'smooth' });
     }, { svisla });
     lista.sledovat = () => {

@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.91] – 2026-11-01
+
+### Změněno
+- **Stránka modelky – rychlejší a úspornější kód (vzhled a chování beze změny).**
+  - Zkracování alb na náhled přepočítá rozvržení stránky jednou, ne za každé album; rychlejší otevření profilu s mnoha alby a změna velikosti okna (nejvýš jednou za snímek).
+  - Tažení fotky při ručním řazení už při každém pohybu myši neprohledává celou stránku.
+  - Profil, prohlížeč fotek, lišta výběru a akce fotky hledají stálé prvky jednou; duplicitní šablony a výpočty sloučeny.
+  - Styly profilu a lišty alb bez deklarací, které pozdější pravidla přepisovala (o 50 řádků méně).
+
 ## [0.99.90] – 2026-11-01
 
 ### Změněno

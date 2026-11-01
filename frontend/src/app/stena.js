@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { EDICE, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, nazevAlba, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { EDICE, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
@@ -64,6 +64,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
         ${[1, 2, 3, 4, 5].map(n => `<button class="chip ${stav.stenaMin === n ? 'active' : ''}" data-stena-min="${n}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')}
         <button class="chip ${stav.stenaMin === -1 ? 'active' : ''}" data-stena-min="-1">Bez &#9829;</button>
         ${['vse', ...EDICE].map(e => `<button class="chip ${stav.stenaEdice === e ? 'active' : ''}" data-edice-steny="${e}">${e === 'vse' ? 'vše' : e}</button>`).join('')}
+        ${htmlVarovaniHledani(nepouziteKlice(tokeny, poleFotky({})))}
         <span>${sklonovat(stav.stenaPolozky.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</span></div>`;
     if (stav.stenaPolozky.length === 0) {
         listaSteny.naplnit([]);
@@ -161,6 +162,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
         ${htmlZobrazeniCisel('obalky')}
         ${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice-cisel="${e}">${e}</button>`).join('')}
         ${Object.entries(ZOBRAZIT_CISLA).map(([klic, nazev]) => `<button class="chip ${klic === stav.cislaZobrazit ? 'active' : ''}" data-zobrazit-cisla="${klic}">${nazev}</button>`).join('')}
+        ${htmlVarovaniHledani(nepouziteKlice(tokeny, poleCisla('')))}
         <span>${stav.cislaZobrazit === 'chybi' ? sklonovat(vybrana.length, 'chybějící číslo', 'chybějící čísla', 'chybějících čísel') : sklonovat(vybrana.filter(k => !k.chybi).length, 'číslo', 'čísla', 'čísel')}</span></div>`;
 
     if (vybrana.length === 0) {

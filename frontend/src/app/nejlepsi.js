@@ -1,7 +1,7 @@
 // Nejlepší fotky a vlastní výběry
 import { GetFotkyVyberu, GetNejlepsiFotky, GetVybery, PrejmenovatVyber, PridatDoVyberu, SmazatVyber, VyberPodleNazvu } from './backend';
 import { oznamit } from '../ui/oznameni';
-import { bezDiakritiky, esc, nazevAlba, obrazek, poleFotky, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { bezDiakritiky, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, obrazek, poleFotky, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { stav } from './stav';
 import { vybratKliknutim } from './vyber';
 import { best, searchInput } from './prvky';
@@ -68,7 +68,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         + vybery.map(v => `<button class="chip ${v.id === stav.nejlepsiVyber ? 'active' : ''}" data-vyber-id="${v.id}" title="Vlastní výběr">${esc(v.nazev)}<span>${v.pocet}</span></button>`).join('')
         + (vyber ? '<button class="link" data-vyber-akce="prejmenovat">přejmenovat</button><button class="link" data-vyber-akce="smazat">smazat výběr</button>' : '');
     document.getElementById('bestList').innerHTML = `
-        <div class="best-toolbar">${prah}<span title="Pořadí podle hodnoty fotky: srdíčka fotky × srdíčka modelky ÷ 5 – pětisrdíčková fotka pětkové modelky je výš než pětisrdíčková fotka jedničkové">${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')} · podle hodnoty</span>
+        <div class="best-toolbar">${prah}${htmlVarovaniHledani(nepouziteKlice(tokeny, poleFotky({})))}<span title="Pořadí podle hodnoty fotky: srdíčka fotky × srdíčka modelky ÷ 5 – pětisrdíčková fotka pětkové modelky je výš než pětisrdíčková fotka jedničkové">${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')} · podle hodnoty</span>
             ${stav.nejlepsiPolozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
         ${stav.nejlepsiPolozky.length ? [...urovne.keys()].map(h => `
             <section class="nejlepsi-uroven" data-uroven="${h}" data-cast="srdicka-${h}">

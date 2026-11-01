@@ -326,14 +326,32 @@ function ukazatVolby(lista) {
             stitek.title = `${POPISKY[s.klic]}: ${hodnota(s)} – klik otevře Filtry, × filtr zruší`;
             zrusitelne(stitek, s, () => otevritPanel());
         });
-        if (zapnute.length) {
-            const zrusit = document.createElement('button');
-            zrusit.type = 'button';
-            zrusit.className = 'link stav-zrusit';
-            zrusit.textContent = zapnute.length > 1 ? 'Zrušit filtry' : 'Zrušit filtr';
-            zrusit.addEventListener('click', zrusitFiltry);
-            stavVlevo.append(zrusit);
-        }
+
+    }
+
+    // Text v hledání, který přehled omezuje (navigace.js, obnovitViditelnostHledani), je ve stavové liště také štítkem:
+    // klik skočí do pole, × text smaže. „Zrušit filtry“ ruší filtry i takové hledání.
+    const hledani = /** @type {HTMLInputElement | null} */ (document.getElementById('searchInput'));
+    const hledaniFiltruje = Boolean(hledani?.value.trim()) && Boolean(document.getElementById('hledaniRadek')?.classList.contains('filtruje'));
+    if (hledaniFiltruje) {
+        const stitek = pridatTlacitko(`<span class="stav-lupa" aria-hidden="true">⌕</span>${esc(hledani.value.trim())} ${krizek}`, 'volba-stitek stav-hledani', stavVlevo);
+        stitek.title = 'Hledání omezuje přehled – klik skočí do pole, × hledání smaže';
+        stitek.addEventListener('click', (e) => {
+            if (/** @type {HTMLElement} */ (e.target).closest('.volba-zrusit')) {
+                hledani.value = '';
+                hledani.dispatchEvent(new Event('input'));
+            } else {
+                hledani.focus();
+            }
+        });
+    }
+    if (zapnute.length || hledaniFiltruje) {
+        const zrusit = document.createElement('button');
+        zrusit.type = 'button';
+        zrusit.className = 'link stav-zrusit';
+        zrusit.textContent = zapnute.length + (hledaniFiltruje ? 1 : 0) > 1 ? 'Zrušit filtry' : 'Zrušit filtr';
+        zrusit.addEventListener('click', () => zrusitHledaniAFiltry());
+        stavVlevo.append(zrusit);
     }
 
     // Další tlačítka řádku: slideshow jako ikona ▶ v kapsli, ostatní (upozornění s odkazem: „2 modelkám nesedí

@@ -1,6 +1,6 @@
 // Kalendář vydání po rocích a měsících
 import { GetKalendar, GetStavyVydani, GetVydani, SetStavVydani } from './backend';
-import { EDICE, MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, nazevVydani, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
+import { EDICE, MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
 import { zalozitSpecial } from './specialy';
@@ -37,7 +37,8 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         if (casti?.mesic && casti.edice === stav.kalendarEdice) vydani.set(k.vydani, k);
     });
 
-    const prepinacEdic = pocet => `<div class="cal-editions">${htmlZobrazeniCisel('kalendar')}${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
+    const tokeny = rozlozitDotaz(dotaz);
+    const prepinacEdic = pocet => `<div class="cal-editions">${htmlZobrazeniCisel('kalendar')}${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}${htmlVarovaniHledani(nepouziteKlice(tokeny, poleCisla('')))}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
     if (vydani.size === 0) {
         listaKalendare.naplnit([]);
         calList.innerHTML = prepinacEdic(0) + htmlPrazdna(`Edice ${stav.kalendarEdice} je prázdná`, 'Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.', { ikona: 'kalendar', tlacitko: { text: 'Přidat…', akce: 'pridat' } });
@@ -48,7 +49,6 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     const roky = [...vydani.keys()].map(v => parseInt(v.slice(0, 4)));
     // Hledání stejnou syntaxí jako ostatní přehledy (rok:1994-1995, -1995, jméno modelky…): rok zůstane,
     // když dotazu odpovídá sám rok nebo některé jeho číslo
-    const tokeny = rozlozitDotaz(dotaz);
     const hledat = tokeny.length > 0;
     const rokyKalendare = [];
     for (let rok = Math.max(...roky); rok >= Math.min(...roky); rok--) {

@@ -424,3 +424,25 @@ test('online album: výskyt jen online, nadpis s datem nafocení a hledání naf
     assert.ok(vyhovujeHledani(['Anna'], rozlozitDotaz('nafoceno:2004'), { jmeno: 'Anna' }));
     assert.ok(PRIKAZY.some(p => p.klic === 'nafoceno:'));
 });
+
+test('hledání: NEBO s hodnotami v uvozovkách a srdíčka po polovinách jako v backendu', async () => {
+    const { rozlozitDotaz, vyhovujeHledani, filtrHodnoceni } = await import('../src/lib/format.js');
+    const t = rozlozitDotaz('kategorie:playmate,"cyber girl" -fotograf:"arny freytag",pompeo');
+    assert.equal(t.length, 2);
+    assert.deepEqual(t[0].varianty, ['playmate', 'cyber girl']);
+    assert.ok(t[1].negace);
+    assert.deepEqual(t[1].varianty, ['arny freytag', 'pompeo']);
+    const fotka = (h) => ({ jmeno: 'Anna', hodnoceni: String(h) });
+    const najde = (dotaz, h) => vyhovujeHledani(['Anna'], rozlozitDotaz(dotaz), fotka(h));
+    assert.equal(rozlozitDotaz('hodnoceni:>=3,5').length, 1);
+    assert.ok(najde('hodnoceni:>=3,5', 4));
+    assert.ok(!najde('hodnoceni:>=3,5', 3));
+    assert.ok(najde('hodnoceni:4', 4));
+    assert.ok(!najde('hodnoceni:4', 5));
+    assert.ok(najde('hodnoceni:3,5', 3.5));
+    assert.ok(!najde('hodnoceni:3,5', 5));
+    assert.ok(najde('hodnoceni:3..4', 3));
+    assert.ok(!najde('-hodnoceni:5', 5));
+    assert.deepEqual(filtrHodnoceni('3,4'), [{ op: '=', od: 6 }, { op: '=', od: 8 }]);
+    assert.equal(filtrHodnoceni('abc'), null);
+});

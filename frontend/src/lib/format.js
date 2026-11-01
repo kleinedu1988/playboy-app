@@ -521,7 +521,9 @@ export function rozlozitDotaz(dotaz) {
     let d = String(dotaz || '').trim();
     if (!d) return [];
     if ((d.match(/"/g) || []).length % 2 !== 0) d += '"';
-    const vzor = /(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+|[^\s",:]+(?:\s*,\s*[^\s",:]+)*)?|(-|!)?"([^"]*)"|(\S+)/gu;
+    // Stejný vzor jako backend (hledani.go, vzorSlovaHledani): klíč s hodnotou (porovnání čísla i desetinného,
+    // seznam NEBO přes čárku, každá hodnota i v uvozovkách), fráze v uvozovkách, samostatné slovo
+    const vzor = /(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+(?:[.,]\d+)?|(?:"[^"]*"|[^\s",:]+)(?:\s*,\s*(?:"[^"]*"|[^\s",:]+))*)?|(-|!)?"([^"]*)"|(\S+)/gu;
     const tokeny = [];
     let shoda;
     while ((shoda = vzor.exec(d)) !== null) {
@@ -532,15 +534,11 @@ export function rozlozitDotaz(dotaz) {
             negace = Boolean(shoda[1]);
             klic = shoda[2];
             hodnota = shoda[3] || '';
-        } else if (shoda[5]) {
+        } else if (shoda[5] !== undefined) {
             negace = Boolean(shoda[4]);
-            klic = shoda[5];
-            hodnota = shoda[6] || '';
-        } else if (shoda[8] !== undefined) {
-            negace = Boolean(shoda[7]);
-            hodnota = shoda[8];
-        } else if (shoda[9]) {
-            let slovo = shoda[9];
+            hodnota = shoda[5];
+        } else if (shoda[6]) {
+            let slovo = shoda[6];
             if (slovo.startsWith('-') || slovo.startsWith('!')) {
                 negace = true;
                 slovo = slovo.slice(1);
@@ -553,7 +551,8 @@ export function rozlozitDotaz(dotaz) {
                 hodnota = slovo;
             }
         }
-        hodnota = hodnota.replace(/^"|"$/g, '').trim();
+        // Uvozovky jen ohraničují hodnoty (i jednotlivé v seznamu NEBO), do hodnoty nepatří
+        hodnota = hodnota.replace(/"/g, '').trim();
         if (!hodnota) continue;
         const varianty = hodnota.split(',').map(v => bezDiakritiky(v.trim())).filter(Boolean);
         tokeny.push({ negace, klic: bezDiakritiky(klic), hodnota: bezDiakritiky(hodnota), varianty });
@@ -584,6 +583,34 @@ function vyhovujeCislu(hodnota, texty, cilene, roky = false) {
     return cisla.some(c => op === '>=' ? c >= +cil : op === '<=' ? c <= +cil : op === '>' ? c > +cil : op === '<' ? c < +cil : c === +cil);
 }
 
+// Filtr srdíček stejně jako backend (hledani.go, parsovatFiltrHodnoceni), v polovinách srdíčka: hodnoceni:4 (přesně 4),
+// hodnoceni:3,5 (3½), hodnoceni:>=3,5, hodnoceni:3..4, hodnoceni:3,4 (3 nebo 4); null = hodnota není srdíčková
+export function filtrHodnoceni(hodnota) {
+    const h = String(hodnota || '').replace(/\s+/g, '');
+    const pul = (text) => /^\d+(?:[.,]\d+)?$/.test(text) ? Math.round(parseFloat(text.replace(',', '.')) * 2) : null;
+    for (const op of ['>=', '<=', '==', '>', '<', '=']) {
+        if (!h.startsWith(op)) continue;
+        const n = pul(h.slice(op.length));
+        return n === null ? null : [{ op: op === '==' ? '=' : op, od: n }];
+    }
+    for (const oddelovac of ['..', '-']) {
+        const casti = h.split(oddelovac);
+        if (casti.length !== 2) continue;
+        const [od, po] = casti.map(pul);
+        if (od !== null && po !== null) return [{ op: '..', od: Math.min(od, po), do: Math.max(od, po) }];
+    }
+    if (/^\d[.,][05]$/.test(h)) return [{ op: '=', od: pul(h) }];
+    const filtry = [];
+    for (const cast of h.split(',').filter(Boolean)) {
+        const n = pul(cast);
+        if (n === null) return null;
+        filtry.push({ op: '=', od: n });
+    }
+    return filtry.length ? filtry : null;
+}
+const vyhovujeSrdickum = (n, filtry) => filtry.some(({ op, od, do: po }) => op === '>=' ? n >= od : op === '<=' ? n <= od
+    : op === '>' ? n > od : op === '<' ? n < od : op === '..' ? n >= od && n <= po : n === od);
+
 // Údaje fotky pro cílené hledání (stěna centerfoldů, Nejlepší): jméno, fotograf, vydání, rok, edice, srdíčka
 // a datum nafocení online alba
 export function poleFotky(f) {
@@ -594,6 +621,17 @@ export function poleFotky(f) {
         nafoceno: f.datumAlba || '',
     };
 }
+
+// Cílené příkazy dotazu, které pohled nezná (vlasy: na Číslech): nic neomezují, pohled to ve stavové liště řekne.
+// pole = údaje pohledu pro cílené hledání (poleFotky, poleCisla); srdicka: je totéž co hodnoceni:
+export function nepouziteKlice(tokeny, pole) {
+    const zna = new Set(Object.keys(pole));
+    if (zna.has('hodnoceni')) zna.add('srdicka');
+    return [...new Set(tokeny.filter(t => t.klic && ZNAME_KLICE.has(t.klic) && !zna.has(t.klic)).map(t => `${t.klic}:`))];
+}
+// Varování do řádku voleb (ui/volby.js ho přesune vpravo do stavové lišty)
+export const htmlVarovaniHledani = (klice) => klice.length
+    ? `<button type="button" class="volby-varovani" title="Tento přehled údaj nezná, příkaz se tu přeskočí">⚠ ${esc(klice.join(' '))} tady nefiltruje</button>` : '';
 
 // Údaje čísla časopisu pro cílené hledání (Čísla, Kalendář, našeptávač)
 export const poleCisla = (vydani, modelka = '') => ({ jmeno: modelka, vydani, rok: vydani.slice(0, 4), edice: rozlozitVydani(vydani)?.edice || '' });
@@ -626,6 +664,16 @@ export function vyhovujeHledani(texty, tokeny, pole = {}) {
         }
         // rok:1975-01 = číslo z daného měsíce (hledá se ve vydání)
         if (t.klic === 'rok' && /^\d{4}-/.test(t.hodnota) && 'vydani' in udaje) kde = [udaje.vydani];
+        // Srdíčka po polovinách stejně jako v backendu (hodnoceni:>=3,5, hodnoceni:4 = přesně 4)
+        if ((t.klic === 'hodnoceni' || t.klic === 'srdicka') && kde !== vse) {
+            const filtry = filtrHodnoceni(t.hodnota);
+            if (filtry) {
+                let shoda = vyhovujeSrdickum(Math.round(Number(kde[0] || 0) * 2), filtry);
+                if (t.negace) shoda = !shoda;
+                if (!shoda) return false;
+                continue;
+            }
+        }
         // nafoceno:2004, nafoceno:2004-06 = předpona data nafocení online alba (stejně jako v app.go)
         if (t.klic === 'nafoceno' && 'nafoceno' in udaje) {
             let shoda = hledane.some(v => udaje.nafoceno.split(' ').some(d => d && d.startsWith(v)));

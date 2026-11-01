@@ -61,7 +61,12 @@ func hodnotaPole(m *Modelka, klic string) string {
 		return m.fotografoveAlb
 	case "rok", "edice":
 		roky, edice := []string{}, []string{}
-		for _, v := range m.Vydani {
+		// Edice podle všech čísel modelky včetně obálek, stejně jako filtr Edice v panelu (galerie.js); rok jen z vydání
+		cisla := m.Vydani
+		if klic == "edice" {
+			cisla = append(append([]string{}, m.Vydani...), m.Obalky...)
+		}
+		for _, v := range cisla {
 			if len(v) < 4 {
 				continue
 			}
@@ -187,7 +192,10 @@ func pripravitTexty(m *Modelka) textyHledani {
 var vzorOnlineKategorie = regexp.MustCompile(`(?i)cyber|coed|\bmuses?\b|creator|tvůrkyně|online|playboy ?plus|playboy\.?com`)
 
 // Slova hledání: volitelná negace (- nebo !), cílené pole:hodnota (i s mezerou za dvojtečkou) i pole:"více slov", uvozovky i obyčejná slova
-var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):\s*"([^"]*)"|(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+(?:[.,]\d+)?|[^\s",:]+(?:\s*,\s*[^\s",:]+)*)?|(-|!)?"([^"]*)"|(\S+)`)
+// Slovo dotazu: klíč s hodnotou (porovnání čísla, nebo seznam hodnot NEBO přes čárku, každá i v uvozovkách:
+// kategorie:playmate,"cyber girl"), fráze v uvozovkách, nebo samostatné slovo. Skupiny: 1 negace, 2 klíč, 3 hodnota |
+// 4 negace, 5 fráze | 6 slovo. Stejný vzor má frontend (lib/format.js, rozlozitDotaz).
+var vzorSlovaHledani = regexp.MustCompile(`(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+(?:[.,]\d+)?|(?:"[^"]*"|[^\s",:]+)(?:\s*,\s*(?:"[^"]*"|[^\s",:]+))*)?|(-|!)?"([^"]*)"|(\S+)`)
 var vzorRozsahCisel = regexp.MustCompile(`^(\d+)\s*-\s*(\d+)$`)
 
 // Rozsah roků v cíleném hledání (rok:1970-1979, narozena:1980..1989) a rok s měsícem (rok:1975-01)
@@ -519,15 +527,11 @@ func pripravitHledani(vyhledavani string) hledani {
 			negace = casti[1] != ""
 			klic = casti[2]
 			hodnota = casti[3]
-		} else if casti[5] != "" {
-			negace = casti[4] != ""
-			klic = casti[5]
-			hodnota = casti[6]
 		} else if strings.HasPrefix(casti[0], "\"") || strings.HasPrefix(casti[0], "-\"") || strings.HasPrefix(casti[0], "!\"") {
-			negace = casti[7] != ""
-			hodnota = casti[8]
+			negace = casti[4] != ""
+			hodnota = casti[5]
 		} else {
-			slovo := casti[9]
+			slovo := casti[6]
 			if strings.HasPrefix(slovo, "-") || strings.HasPrefix(slovo, "!") {
 				negace = true
 				slovo = slovo[1:]
@@ -539,7 +543,8 @@ func pripravitHledani(vyhledavani string) hledani {
 				hodnota = slovo
 			}
 		}
-		hodnota = strings.Trim(hodnota, "\"")
+		// Uvozovky jen ohraničují hodnoty (i jednotlivé v seznamu NEBO), do hodnoty nepatří
+		hodnota = strings.ReplaceAll(hodnota, "\"", "")
 		hodnotaZjedn := zjednodusit(strings.TrimSpace(hodnota))
 		if hodnotaZjedn == "" {
 			continue

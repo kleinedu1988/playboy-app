@@ -151,17 +151,8 @@ export async function krokModelky(smer) {
     if (modelka) otevritDetailModelky(modelka, { bezHistorie: true });
 }
 
-// Filtr srdíček (♥ N+) řadí karty podle srdíček a oblíbenosti, i když je zvolené jiné řazení: zapnutí přepne
-// řazení na „Podle srdíček“ (bez uložení), vypnutí vrátí původní. Řazení zvolené během filtru zůstane.
-let razeniPredFiltrem = null;
+// Filtr srdíček (♥ N+) jen zužuje výběr; řazení zůstává, jak si ho uživatel zvolil
 function nastavitMinimumSrdicek(minimum) {
-    if (minimum > 0 && razeniPredFiltrem === null && stav.razeniGalerie !== 'hodnoceni') {
-        razeniPredFiltrem = stav.razeniGalerie;
-        stav.razeniGalerie = 'hodnoceni';
-    } else if (minimum <= 0 && razeniPredFiltrem !== null) {
-        stav.razeniGalerie = razeniPredFiltrem;
-        razeniPredFiltrem = null;
-    }
     stav.minHodnoceni = minimum;
 }
 
@@ -345,7 +336,6 @@ export function pripravit() {
         const vyskyt = e.target.closest('[data-vyskyt-modelek]')?.dataset.vyskytModelek;
         if (razeni) {
             stav.razeniGalerie = razeni;
-            razeniPredFiltrem = null;
             try { localStorage.setItem('razeniGalerie', razeni); } catch { /* jen pro toto spuštění */ }
             nacistGalerii(searchInput.value, true);
         } else if (minimum) {

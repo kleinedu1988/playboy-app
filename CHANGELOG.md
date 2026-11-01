@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.97] – 2026-11-01
+
+### Přidáno
+- **Stavová lišta dole přes celé okno.**
+  - Vlevo počet a stav zvolené části: „8 z 22 modelek“ (s filtrem nebo hledáním), „Dnes 0 z 10“, „79 % sbírky doplněno · 29 úkolů“, v profilu „56 fotek · 14 alb“, v Údržbě úplnost, úkoly a co je ke kontrole.
+  - Za ním zapnuté filtry jako štítky: klik otevře Filtry, × filtr zruší, „Zrušit filtry“ zruší všechny.
+  - Vpravo upozornění s odkazem („≠ 2 modelkám nesedí srdíčka · Pořadí →“), jinak nápověda ke klávesám.
+
+### Změněno
+- **Kapsle voleb vpravo nahoře má jen ovládání** (řazení, Filtry s počtem zapnutých); počty, štítky filtrů a upozornění jsou ve stavové liště. Oznámení a lišta výběru fotek stojí nad stavovou lištou.
+- **Pořadí a Fotky mají záhlaví stránky** jako Síň slávy a Údržba; přepínače Top 10 · Celé pořadí a Náhodně · Po modelkách jsou v něm.
+
 ## [0.99.96] – 2026-11-01
 
 ### Změněno

@@ -80,7 +80,7 @@ export function otevritNabidku(cil, x, y) {
             null,
             ...akceFotky(stav.stenaPolozky[index], null, { profil: false, odebrat: false }),
         ];
-    } else if (cil.closest('#centerfoldBtn')) {
+    } else if (cil.closest('#centerfoldBtn') && centerfoldyProfilu().length) {
         const centerfoldy = centerfoldyProfilu();
         if (centerfoldy.length === 1) polozky = polozkyAlba(centerfoldy[0], null);
         else polozky = centerfoldy.map(a => polozkaCenterfoldu(a, x, y));

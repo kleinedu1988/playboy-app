@@ -327,12 +327,15 @@ export async function nacistFotkyModelky(modelkaId) {
         : htmlPrazdna('Zatím žádná alba', 'Centerfoldy, pictorialy a další alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } });
     photosGrid.innerHTML = ostatni.map(htmlAlba).join('') || prazdno();
 
-    // Centerfold je tlačítko v pruhu: otevře plakát v prohlížeči (víc centerfoldů: ↑ ↓ mezi nimi)
+    // Centerfold je tlačítko v pruhu: otevře plakát v prohlížeči (víc centerfoldů: ↑ ↓ mezi nimi); hvězdička je
+    // růžová, když modelka centerfold má, jinak jen bílý obrys a tlačítko je vypnuté
     const prvniCenterfold = centerfoldy[0]?.polozky[0];
-    centerfoldBtn.classList.toggle('hidden', !prvniCenterfold);
+    // Bez centerfoldu zůstává tlačítko vidět, jen vypnuté (hvězdička obrysem)
+    centerfoldBtn.disabled = !prvniCenterfold;
     centerfoldBtn.dataset.index = prvniCenterfold ? String(indexPolozky.get(prvniCenterfold)) : '';
     centerfoldBtn.querySelector('b').textContent = centerfoldy.length > 1 ? `Centerfoldy ${centerfoldy.length}` : 'Centerfold';
-    centerfoldBtn.title = centerfoldy.length > 1 ? 'Otevřít centerfoldy v prohlížeči (↑ ↓ mezi nimi)'
+    centerfoldBtn.title = !prvniCenterfold ? 'Modelka zatím nemá centerfold'
+        : centerfoldy.length > 1 ? 'Otevřít centerfoldy v prohlížeči (↑ ↓ mezi nimi)'
         : `Otevřít centerfold${centerfoldy[0]?.album ? ` ${nazevVydani(centerfoldy[0].album)}` : ''} v prohlížeči`;
 
     // Lišta má smysl až od dvou alb

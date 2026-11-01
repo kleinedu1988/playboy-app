@@ -14457,8 +14457,25 @@ button.pas-kapsle:focus-visible {
     color: var(--text-main);
 }
 
-.profil-akce .volba.cf {
+/* Hvězdička Centerfoldu: růžová, když modelka centerfold má; bez něj bílý obrys a tlačítko vypnuté */
+.profil-akce .volba.cf svg {
     color: var(--accent-text);
+}
+
+.profil-akce .volba.cf:disabled {
+    cursor: default;
+    opacity: 0.55;
+}
+
+.profil-akce .volba.cf:disabled:hover {
+    background: none;
+}
+
+.profil-akce .volba.cf:disabled svg {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 1.6;
+    stroke-linejoin: round;
 }
 
 .pruh-foto {

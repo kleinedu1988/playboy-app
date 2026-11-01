@@ -14528,7 +14528,17 @@ button.pas-kapsle:focus-visible {
     gap: 8px 12px;
 }
 
-.pruh-radek .hearts {
+/* Srdíčka hned vedle jména */
+.pruh-jmeno {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.pruh-jmeno .hearts {
+    flex: none;
+    margin: 0;
     font-size: 18px;
 }
 

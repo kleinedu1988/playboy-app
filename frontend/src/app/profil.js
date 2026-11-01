@@ -131,13 +131,15 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     }).join('') + ((modelka.onlineAlba || []).length
         ? `<button type="button" class="panel-paska" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
     const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" />`;
-    // Pruh nahoře: kdo to je a jak si stojí (srdíčka, pořadí, odznaky) a ve kterých číslech byla; miniatura otevře údaje
+    // Pruh nahoře: jméno se srdíčky, pod ním pořadí a odznaky, vpravo pásky čísel; miniatura otevře údaje
     profilPruhObsah.innerHTML = `
         <button type="button" class="pruh-foto" data-udaje title="Údaje modelky (I)">${titulni}</button>
         <div class="pruh-identita">
-            <h2>${esc(modelka.jmeno)}</h2>
-            <div class="pruh-radek">
+            <div class="pruh-jmeno">
+                <h2>${esc(modelka.jmeno)}</h2>
                 ${htmlSrdicka(modelka)}
+            </div>
+            <div class="pruh-radek">
                 ${htmlOdhadu(modelka, 'odhad-profil')}
                 ${htmlPoradi(modelka)}
                 <div class="profile-odznaky" hidden></div>

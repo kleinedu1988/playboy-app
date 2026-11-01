@@ -7,7 +7,9 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
-## [0.99.100] – 2026-11-01
+## [1.0.0] – 2026-11-01
+
+První vydání milníku 1 (Pohodlí a kvalita dat). Stejné vydání krátce vyšlo s neplatným číslem 0.99.100 (pravidlo verzování povoluje PATCH nejvýš 99).
 
 ### Změněno
 - **Filtr Modelek v panelu pod tlačítkem Filtry** v kapsli voleb vpravo nahoře (místo štítků v hledání z 0.99.99).

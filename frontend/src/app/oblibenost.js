@@ -622,8 +622,14 @@ function vykreslitVolbyPorovnat() {
     const sezona = sezonaVolby?.dni && vede ? `<span class="stav-sezona"> · ♛ ${esc(krestni(vede.modelkaId))} vede sezónu, ${esc(textZbyva(sezonaVolby.den, sezonaVolby.dni).replace(/^zbývá /, ''))}</span>` : '';
     // Deset dílků k další desítce (cíl dne roste po desítkách)
     const dilky = Array.from({ length: 10 }, (_, i) => `<i class="${i < p.hotovo - (p.cil - 10) ? 'on' : ''}"></i>`).join('');
+    // Série dní v řadě (backend počítá z historie; dnešní první porovnání ji prodlouží hned, bez přepočtu)
+    const o = data.oblibenost;
+    const dnesVSerii = Boolean(o?.serieDnes) || porovnaniDnes > 0;
+    const delkaSerie = (Number(o?.serieDni) || 0) + (porovnaniDnes > 0 && !o?.serieDnes ? 1 : 0);
+    const serie = delkaSerie >= 2 && dnesVSerii ? `<span class="stav-serie" title="Dní v řadě, kdy jsi porovnával"> · 🔥 ${esc(sklonovat(delkaSerie, 'den', 'dny', 'dní'))} v řadě</span>`
+        : delkaSerie >= 1 && !dnesVSerii ? `<span class="stav-serie ohrozena" title="Dnes ještě žádné porovnání – jedno sérii prodlouží"> · 🔥 ${esc(sklonovat(delkaSerie, 'den', 'dny', 'dní'))} v řadě – dnes ji prodluž</span>` : '';
     const titulek = p.hotovo ? `Dnes ${sklonovat(p.hotovo, 'porovnání', 'porovnání', 'porovnání')} – do ${p.cil} zbývá ${p.zbyva}` : 'Dnes zatím žádné porovnání';
-    nastavitHtml(misto, `${htmlVratit}${htmlNavrh}${htmlOdkazu}${klavesy}<span data-stav-html title="${esc(titulek)}"><span class="stav-dilky" aria-hidden="true">${dilky}</span>Dnes ${p.hotovo} z ${p.cil}${sezona}</span>`);
+    nastavitHtml(misto, `${htmlVratit}${htmlNavrh}${htmlOdkazu}${klavesy}<span data-stav-html title="${esc(titulek)}"><span class="stav-dilky" aria-hidden="true">${dilky}</span>Dnes ${p.hotovo} z ${p.cil}${serie}${sezona}</span>`);
 }
 
 // Po volbě: potvrzení v liště a po POTVRZENI_MS přepnutí na Vrátit

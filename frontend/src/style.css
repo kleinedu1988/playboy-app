@@ -15404,6 +15404,11 @@ body.rezim-vyberu #detailView .poster {
     background-color: var(--accent-hover, #e91e63);
 }
 
+/* Série dní v řadě; ohrožená (dnes ještě bez porovnání) oranžově */
+.stav-serie.ohrozena {
+    color: #ffb74d;
+}
+
 /* Užší okno: napřed zmizí odkazy (priorita 3) a sezóna, pak popisky kláves (zůstanou klávesy) */
 @media (max-width: 1100px) {
     .stav-vpravo [data-priorita="3"],

@@ -882,3 +882,26 @@ func TestVylouceneDvojice(t *testing.T) {
 		t.Errorf("uvolněně: %v", u)
 	}
 }
+
+func TestSerieDni(t *testing.T) {
+	ted := time.Date(2026, 11, 2, 21, 0, 0, 0, time.Local)
+	den := func(d int, h int) time.Time { return time.Date(2026, 11, 2+d, h, 0, 0, 0, time.Local) }
+	pripady := []struct {
+		nazev string
+		casy  []time.Time
+		n     int
+		dnes  bool
+	}{
+		{"nic", nil, 0, false},
+		{"jen dnes", []time.Time{den(0, 9)}, 1, true},
+		{"tři dny v řadě do dneška", []time.Time{den(-2, 23), den(-1, 1), den(0, 8), den(0, 9)}, 3, true},
+		{"do včerejška, dnes ještě ne", []time.Time{den(-2, 10), den(-1, 10)}, 2, false},
+		{"mezera přeruší", []time.Time{den(-3, 10), den(-1, 10), den(0, 10)}, 2, true},
+		{"předevčírem už propadla", []time.Time{den(-2, 10)}, 0, false},
+	}
+	for _, p := range pripady {
+		if n, dnes := serieDni(p.casy, ted); n != p.n || dnes != p.dnes {
+			t.Errorf("%s: %d %v, čekáno %d %v", p.nazev, n, dnes, p.n, p.dnes)
+		}
+	}
+}

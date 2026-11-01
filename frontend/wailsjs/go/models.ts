@@ -1427,6 +1427,8 @@ export namespace main {
 	    nesedi: NesouladSrdicek[];
 	    urovne: UrovenTop[];
 	    cekajicich: number;
+	    serieDni: number;
+	    serieDnes: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new StavOblibenosti(source);
@@ -1448,6 +1450,8 @@ export namespace main {
 	        this.nesedi = this.convertValues(source["nesedi"], NesouladSrdicek);
 	        this.urovne = this.convertValues(source["urovne"], UrovenTop);
 	        this.cekajicich = source["cekajicich"];
+	        this.serieDni = source["serieDni"];
+	        this.serieDnes = source["serieDnes"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

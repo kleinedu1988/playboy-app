@@ -72,6 +72,10 @@ type StavOblibenosti struct {
 	// úrovně, kam by podle síly patřila (oblibenost_urovne.go)
 	Urovne     []UrovenTop `json:"urovne"`
 	Cekajicich int         `json:"cekajicich"`
+	// Série dní v řadě s aspoň jedním porovnáním (stavová lišta Porovnat): kolik dní končících dneškem, nebo
+	// včerejškem, když se dnes ještě neporovnávalo (série pak ještě platí); SerieDnes = dnešek už se počítá
+	SerieDni  int  `json:"serieDni"`
+	SerieDnes bool `json:"serieDnes"`
 }
 
 type OblibenostModelky struct {
@@ -256,6 +260,14 @@ func (a *App) GetOblibenost() StavOblibenosti {
 	})
 	stav.Modelek = len(stav.Poradi)
 	stav.Urovne, stav.Cekajicich = model.urovneTop(), len(model.ceka)
+	a.uc.mu.Lock()
+	porovnani := a.uc.nacistPorovnani()
+	a.uc.mu.Unlock()
+	casy := make([]time.Time, len(porovnani))
+	for i, p := range porovnani {
+		casy[i] = p.cas
+	}
+	stav.SerieDni, stav.SerieDnes = serieDni(casy, time.Now())
 	for _, m := range modelky {
 		if m.Hodnoceni > 0 {
 			stav.Hodnocenych++
@@ -897,4 +909,26 @@ func textSrdicek7(h float64) string {
 		return "1 srdíčkem"
 	}
 	return fmt.Sprintf("%d srdíčky", cela)
+}
+
+// Série dní v řadě s aspoň jedním porovnáním (místní kalendářní dny): počítá se zpět od dneška; když dnes ještě
+// žádné porovnání není, od včerejška (série ještě nepropadla). Vrací délku a zda je v ní dnešek.
+func serieDni(casy []time.Time, ted time.Time) (int, bool) {
+	dny := map[string]bool{}
+	for _, c := range casy {
+		if !c.IsZero() {
+			dny[c.In(ted.Location()).Format("2006-01-02")] = true
+		}
+	}
+	den := ted
+	dnes := dny[den.Format("2006-01-02")]
+	if !dnes {
+		den = den.AddDate(0, 0, -1)
+	}
+	n := 0
+	for dny[den.Format("2006-01-02")] {
+		n++
+		den = den.AddDate(0, 0, -1)
+	}
+	return n, dnes
 }

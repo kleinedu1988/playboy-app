@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.98] – 2026-11-01
+
+### Opraveno
+- **Hledání a filtry (krok 0 přepracování filtru).**
+  - NEBO s víceslovnou hodnotou: `kategorie:playmate,"cyber girl"`, `vlasy:"strawberry blond",černá`.
+  - Srdíčka mají všude stejný význam jako v hledání modelek: `hodnoceni:>=3,5` už se v Nejlepších a Centerfoldech nerozpadne, `hodnoceni:3,5` = 3½, `hodnoceni:4` = přesně 4, `hodnoceni:3..4` rozsah.
+  - `edice:` počítá i obálky, stejně jako filtr Edice v panelu.
+  - Příkaz, který přehled nezná (`vlasy:` na Číslech), se už tiše nepřeskočí: stavová lišta ukáže „⚠ vlasy: tady nefiltruje“.
+  - Hledání, které omezuje přehled, je ve stavové liště štítkem (klik skočí do pole, × hledání smaže); „Zrušit filtry“ zruší naráz filtry i hledání.
+  - Filtr srdíček v Modelkách už nepřepíná řazení.
+
 ## [0.99.97] – 2026-11-01
 
 ### Přidáno

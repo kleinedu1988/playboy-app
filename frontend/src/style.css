@@ -14918,8 +14918,8 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* Oddělovač „›“ za cestou zpět a za ročníkem, když za nimi drobečky pokračují (místo, kde jsem, je růžová pilulka) */
-.hlavni-lista .logo .nav-back:has(~ .nav-drobek:not(.hidden), ~ .nav-drobecek:not(.hidden))::after,
-.hlavni-lista .logo .nav-drobek:has(~ .nav-drobecek:not(.hidden))::after {
+.hlavni-lista .logo .nav-back:has(~ .nav-drobek:not(.hidden), ~ .nav-drobecek:not(.hidden, .v-pruhu))::after,
+.hlavni-lista .logo .nav-drobek:has(~ .nav-drobecek:not(.hidden, .v-pruhu))::after {
     content: "›";
     margin: 0 -4px 0 8px;
     color: var(--text-muted);
@@ -15639,3 +15639,126 @@ body.rezim-vyberu #detailView .poster {
     font-size: 12.5px;
 }
 
+
+/* ===== Profil: pruh s modelkou je součástí panelu s drobečky (fotka, jméno, srdíčka, pořadí, odznaky, pásky, akce)
+   a pod ním lišta alb. Po odrolování (.profil-svinuty) se panel plynule zmenší na jeden řádek. ===== */
+.hlavni-lista:has(> #profilPruh:not(.hidden)) {
+    flex-wrap: wrap;
+    row-gap: 10px;
+    padding-top: 10px;
+    padding-bottom: 8px;
+}
+
+.hlavni-lista .logo .nav-drobecek.v-pruhu {
+    display: none;
+}
+
+.hlavni-lista #profilPruh {
+    flex: 1 1 100%;
+    margin: 0;
+    padding: 2px 4px 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    --wails-draggable: no-drag;
+}
+
+.hlavni-lista #profilPruh.hidden {
+    display: none;
+}
+
+.hlavni-lista #profilPruh + #albumNav {
+    flex: 1 1 100%;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hlavni-lista #profilPruh + #albumNav::before {
+    display: none;
+}
+
+.pruh-identita.s-nabidkou h2 {
+    cursor: pointer;
+}
+
+.pruh-identita.s-nabidkou h2::after {
+    content: " ▾";
+    font-size: 0.55em;
+    opacity: 0.6;
+}
+
+/* Plynulé zmenšení */
+#profilPruh .pruh-foto,
+#profilPruh .pruh-identita h2,
+#profilPruh .pruh-jmeno .hearts {
+    transition: width 0.2s ease, height 0.2s ease, font-size 0.2s ease;
+}
+
+.navbar.profil-svinuty .hlavni-lista:has(> #profilPruh:not(.hidden)) {
+    row-gap: 6px;
+    padding-top: 6px;
+}
+
+.navbar.profil-svinuty .hlavni-lista #profilPruh {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 0;
+}
+
+.navbar.profil-svinuty #profilPruh .pruh-obsah {
+    gap: 10px;
+    min-width: 0;
+}
+
+.navbar.profil-svinuty #profilPruh .pruh-foto {
+    width: 26px;
+    height: 32px;
+    border-radius: 8px;
+}
+
+.navbar.profil-svinuty #profilPruh .pruh-identita h2 {
+    font-size: 15px;
+}
+
+.navbar.profil-svinuty #profilPruh .pruh-jmeno .hearts {
+    font-size: 14px;
+}
+
+.navbar.profil-svinuty #profilPruh .pruh-radek,
+.navbar.profil-svinuty #profilPruh .pruh-pasky,
+.navbar.profil-svinuty #profilPruh .volby-pocet {
+    display: none;
+}
+
+.navbar.profil-svinuty #profilPruh .profil-akce {
+    flex-wrap: nowrap;
+    margin: 0 0 0 auto;
+    padding: 0;
+    border-top: 0;
+}
+
+.navbar.profil-svinuty #profilPruh .profil-akce .volba {
+    height: 28px;
+    padding: 0 9px;
+}
+
+.navbar.profil-svinuty #profilPruh .profil-akce .volba:not(.akcent, .cf) b {
+    display: none;
+}
+
+.navbar.profil-svinuty .hlavni-lista #profilPruh + #albumNav {
+    padding-top: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #profilPruh .pruh-foto,
+    #profilPruh .pruh-identita h2,
+    #profilPruh .pruh-jmeno .hearts {
+        transition: none;
+    }
+}

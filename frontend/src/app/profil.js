@@ -149,6 +149,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         </div>
         ${paskyHtml ? `<div class="pruh-pasky">${paskyHtml}</div>` : ''}
     `;
+    // Jméno otevře nabídku modelek seznamu, když se profil otevřel ze seznamu (galerie, pořadí…)
+    profilPruhObsah.querySelector('.pruh-identita')?.classList.toggle('s-nabidkou', (stav.seznamProfilu?.length || 0) > 1);
     modelHeader.innerHTML = `
         <div class="profile-cover-ram">
             <div class="profile-cover">${titulni}</div>
@@ -513,6 +515,26 @@ export function pripravit() {
 
     // Lišta alb je ve druhém řádku hlavičky vedle drobečků, jako podmenu ostatních sekcí
     document.getElementById('podmenu').before(listaAlb.nav);
+    // Pruh s modelkou je součástí panelu s drobečky (nad lištou alb): jeden panel profilu v hlavičce. Po odrolování
+    // se panel zmenší na jeden řádek (drobečky, miniatura, jméno, srdíčka, akce) a pod ním zůstane lišta alb.
+    listaAlb.nav.before(profilPruh);
+    const navbar = document.querySelector('.navbar');
+    hlavniOblast.addEventListener('scroll', () => {
+        if (detailView.classList.contains('hidden')) return;
+        const odrolovano = hlavniOblast.scrollTop;
+        // Mezera mezi prahy, aby panel na hranici neblikal
+        if (odrolovano > 60) navbar.classList.add('profil-svinuty');
+        else if (odrolovano < 20) navbar.classList.remove('profil-svinuty');
+    }, { passive: true });
+    // Jméno v pruhu u profilu otevřeného ze seznamu otevře nabídku modelek seznamu (jako dřív jméno v drobečcích)
+    profilPruhObsah.addEventListener('click', (e) => {
+        if (!/** @type {HTMLElement} */ (e.target).closest('.pruh-identita h2')) return;
+        const drobecek = /** @type {HTMLButtonElement} */ (document.getElementById('drobecek'));
+        if (drobecek.disabled) return;
+        // Klik by jinak doběhl k dokumentu a nabídku hned zavřel jako klik mimo ni
+        e.stopPropagation();
+        drobecek.click();
+    });
 
     // I přepne údaje; Esc nejdřív ukončí režim výběru
     document.addEventListener('keydown', (e) => {

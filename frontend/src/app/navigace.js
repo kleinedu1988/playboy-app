@@ -65,6 +65,8 @@ export function ukazatPohled(pohled) {
     if (pohled !== gallery) document.getElementById('galleryNav')?.classList.add('hidden');
     if (pohled !== wall) document.getElementById('wallNav')?.classList.add('hidden');
     // Lišta alb profilu je ve druhém řádku hlavičky; jinde ji nikdo nenaplní, proto se skryje (a režim výběru skončí)
+    document.getElementById('profilPruh')?.classList.toggle('hidden', pohled !== detailView);
+    if (pohled !== detailView) document.querySelector('.navbar')?.classList.remove('profil-svinuty');
     if (pohled !== detailView) {
         document.getElementById('albumNav')?.classList.add('hidden');
         document.body.classList.remove('rezim-vyberu');
@@ -94,6 +96,8 @@ function ukazatDrobecek(pohled) {
     drobecek.classList.toggle('hidden', !nazev);
     const sNabidkou = pohled === detailView && (stav.seznamProfilu?.length || 0) > 1;
     drobecek.classList.toggle('s-nabidkou', sNabidkou);
+    // V profilu je jméno v pruhu s modelkou (součást panelu); drobeček zůstane jen pro nabídku modelek seznamu
+    drobecek.classList.toggle('v-pruhu', pohled === detailView);
     drobecek.disabled = !sNabidkou;
     drobecek.title = sNabidkou ? `${nazev} – další modelky seznamu` : nazev;
     if (sNabidkou) drobecek.setAttribute('aria-haspopup', 'menu');

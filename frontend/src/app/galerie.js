@@ -349,7 +349,10 @@ export function pripravit() {
         const seznam = stav.seznamProfilu;
         if (detailView.classList.contains('hidden') || !seznam || seznam.length < 2) return;
         e.stopPropagation();
-        const r = /** @type {HTMLElement} */ (e.currentTarget).getBoundingClientRect();
+        // V profilu je drobeček skrytý a jméno je v pruhu s modelkou: nabídka se otevře pod ním
+        const kotva = /** @type {HTMLElement} */ (e.currentTarget).classList.contains('v-pruhu')
+            ? document.querySelector('#profilPruhObsah .pruh-identita h2') || /** @type {HTMLElement} */ (e.currentTarget) : /** @type {HTMLElement} */ (e.currentTarget);
+        const r = kotva.getBoundingClientRect();
         const podleId = new Map((await vsechnyModelky()).map(m => [m.id, m]));
         const index = Math.max(0, seznam.indexOf(stav.aktualniModelka?.id));
         const OKOLI = 8;

@@ -1,10 +1,8 @@
-// Úvod Přehledu: hlavní čísla, mapa české edice (vlastní výtisky), mapa americké edice (úplnost dat),
-// co zbývá doplnit a naposledy přidané modelky. Česká edice se sbírá fyzicky, americká jen jako data (PDF),
+// Mapa čísel Sbírky (dřív Úvod): mapa české edice (vlastní výtisky), mapa americké edice (úplnost dat) a naposledy
+// přidané modelky. Česká edice se sbírá fyzicky, americká jen jako data (PDF),
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
-import { MESICE, RADY_EDIC, ciselRocniku, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
+import { MESICE, RADY_EDIC, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
 import { adresaTitulni } from './obrazky';
-import { poctyCekajicich, textCekajicich } from '../lib/oblibenost';
-import { grafSloupcu } from './statistiky';
 import { htmlPrazdna } from '../ui/prazdno';
 
 // Mapy začínají prvním číslem edice (RADY_EDIC); měsíce mimo měsíční řadu jsou v nich prázdné
@@ -58,8 +56,9 @@ function htmlMapy(roky, stavCisla) {
 const legenda = (pocty, nazvy) => `<div class="uvod-legenda">${Object.entries(pocty).filter(([, n]) => n).map(([s, n]) =>
     `<span><i class="${s}"></i>${nazvy[s]} ${n}</span>`).join('')}</div>`;
 
-// p = GetPrehled, kalendar = GetKalendar, stavy = GetStavyVydani, souhrn = řádky „Co zbývá doplnit“, kUdrzbe = počet v menu Údržba
-export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modelekUplnych, oblibenost = null }) {
+// Mapa čísel Sbírky (dřív Úvod): mapy výtisků CZ a archivu US a naposledy přidané modelky; čísla sbírky a pokrok
+// jsou v hlavičce Sbírky (udrzba.js). kalendar = GetKalendar, stavy = GetStavyVydani
+export function htmlUvodu({ kalendar, stavy, modelky }) {
     const dnes = new Date();
     const letos = dnes.getFullYear();
     const budouci = klic => {
@@ -101,47 +100,21 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
     const vydanychCz = poctyCz.m + poctyCz.s + poctyCz.n + poctyCz.c;
     const vydanychUs = poctyUs.k + poctyUs.p + poctyUs.n + poctyUs.c;
 
-    const procentModelek = p.modelek ? Math.round(modelekUplnych / p.modelek * 100) : 100;
-    const kpi = [
-        ['Modelky', p.modelek, p.modelek ? `${procentModelek} % s úplnými údaji` : 'zatím žádné'],
-        ['Alba', p.alb, sklonovat(p.fotek, 'fotka', 'fotky', 'fotek')],
-        ['Čísla US', poctyUs.k + poctyUs.p, vydanychUs ? `kompletních: ${poctyUs.k} z ${vydanychUs}` : 'zatím žádné'],
-        ['Výtisky CZ', poctyCz.m, `z ${vydanychCz} vydaných · sháněných: ${poctyCz.s}`],
-    ];
 
     const naposledy = [...modelky].filter(m => m.pridano).sort((a, b) => b.pridano.localeCompare(a.pridano)).slice(0, NAPOSLEDY);
 
     return `
-        <div class="uvod-kpi">${kpi.map(([nazev, cislo, popis]) => `<div><span>${nazev}</span><b>${cislo.toLocaleString('cs-CZ')}</b><small>${esc(popis)}</small></div>`).join('')}</div>
         <div class="uvod-karta">
-            <h4>Česká edice · moje výtisky<small>${cz[0].rok}–${letos} · klik otevře číslo, pravým tlačítkem stav</small></h4>
+            <h4>Česká edice · moje výtisky<small>${esc(`${poctyCz.m} z ${vydanychCz} vydaných · sháním ${poctyCz.s}`)} · ${cz[0].rok}–${letos} · klik otevře číslo, pravým tlačítkem stav</small></h4>
             ${mapaCz}
             ${legenda({ m: poctyCz.m, s: poctyCz.s, n: poctyCz.n, c: poctyCz.c }, STAVY_CZ)}
         </div>
         ${mapaUs ? `
         <div class="uvod-karta">
-            <h4>Americká edice · archiv dat<small>${odUs}–${doUs} · kompletní = cover, centerfold i pictorial</small></h4>
+            <h4>Americká edice · archiv dat<small>${esc(`kompletních ${poctyUs.k} z ${vydanychUs}`)} · ${odUs}–${doUs} · kompletní = cover, centerfold i pictorial</small></h4>
             ${mapaUs}
             ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
         </div>` : ''}
-        <div class="uvod-karta uvod-doplnit">
-            <h4>Co zbývá doplnit<small><button type="button" class="link" data-sekce-prehledu="udrzba" data-udrzba-filtr="vse">Údržba (${kUdrzbe}) →</button></small></h4>
-            ${souhrn}
-        </div>
-        ${oblibenost ? htmlOblibenostiUvodu(oblibenost, modelky) : ''}
-        <div class="uvod-dole">
-            <div class="uvod-karta">
-                <h4>Výtisky CZ po letech</h4>
-                ${grafSloupcu(cz.filter(r => r.rok < letos || r.mesice.some(m => !budouci(m.klic))).map(r => {
-                    const mam = r.mesice.filter(m => stavPodleKlice.get(m.klic) === 'mam').length;
-                    return { hodnota: mam, popisek: r.rok % 5 === 0 ? String(r.rok) : '', tip: `${r.rok}: ${mam} z ${ciselRocniku(r.rok, 'CZ')} výtisků` };
-                }), { vyska: 170 })}
-            </div>
-            <div class="uvod-karta" data-graf-dekad>
-                <h4>Centerfoldy podle desetiletí</h4>
-                <p class="prazdno-male">Počítám…</p>
-            </div>
-        </div>
         <div class="uvod-karta uvod-radek">
             <h4>Naposledy přidané</h4>
             ${naposledy.length ? `<div class="uvod-naposledy">${naposledy.map(m => `
@@ -149,40 +122,6 @@ export function htmlUvodu({ p, kalendar, stavy, modelky, souhrn, kUdrzbe, modele
                 : '<p class="prazdno-male">Zatím žádné modelky.</p>'}
         </div>
         <div class="graf-bublina hidden"></div>`;
-}
-
-// Oblíbenost na úvodu: nejoblíbenější, stoupající a oblíbené, které jsi dlouho neotevřel (GetPrehledOblibenosti).
-// Top 10 jsou jen potvrzené (backend v top dává jen je); modelky čekající na potvrzení úrovně (cekaNaTop z GetModelky)
-// mají pod ním řádek s odkazem rovnou do Porovnávání, kde jsou dvojice o potvrzení napřed
-function htmlOblibenostiUvodu(ob, modelky) {
-    const podleId = new Map(modelky.map(m => [m.id, m]));
-    const seznam = (polozky, popis) => `<div class="uvod-naposledy">${polozky.map(x => {
-        const m = podleId.get(x.modelkaId) || { id: x.modelkaId, jmeno: x.jmeno };
-        return `<button type="button" data-otevrit-modelku="${x.modelkaId}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(x.jmeno)}<small>${popis(x)}</small></button>`;
-    }).join('')}</div>`;
-    const prazdne = text => `<p class="prazdno-male">${text}</p>`;
-    const cekaji = textCekajicich(poctyCekajicich(modelky));
-    const top = (ob.top.length ? seznam(ob.top, x => `${x.poradi}.`)
-        : modelky.some(m => m.hodnoceni) || cekaji
-            ? prazdne('Zatím žádná potvrzená. Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.' + (cekaji ? '' : ' <button type="button" class="link" data-otevrit-oblibenost="porovnat">Porovnat →</button>'))
-            : prazdne('Ohodnoť modelky srdíčky – pořadí se ukáže tady.'))
-        + (cekaji ? `<p class="uvod-cekaji">⏳ ${esc(cekaji)} · <button type="button" class="link" data-otevrit-oblibenost="porovnat">Porovnat →</button></p>` : '');
-    const kdy = ob.trendDni === 1 ? 'od včerejška' : `za ${ob.trendDni} dní`;
-    const stoupaji = ob.stoupaji.length ? seznam(ob.stoupaji, x => `<span class="trend nahoru">▲ ${x.zmenaPoradi}</span>`)
-        : prazdne(ob.trendDni ? `Nikdo výrazně nestoupl ${kdy}.` : 'Trend se ukáže za týden: program si každý den pamatuje pořadí.');
-    const dni = x => x.dni < 0 ? 'neotevřená' : `před ${x.dni} dny`;
-    const nevidene = ob.zajemDni < 30
-        ? prazdne(`Za ${sklonovat(30 - ob.zajemDni, 'den', 'dny', 'dní')} tu budou oblíbené, jejichž profil jsi dlouho neotevřel.`)
-        : ob.dlouhoNevidene.length ? seznam(ob.dlouhoNevidene, dni) : prazdne('Všechny oblíbené jsi v posledním měsíci viděl.');
-    return `
-        <div class="uvod-karta uvod-oblibenost">
-            <h4>Hodnocení<small><button type="button" class="link" data-otevrit-oblibenost="hodnoceni">Porovnat a Pořadí →</button></small></h4>
-            <div class="uvod-oblibenost-sloupce">
-                <div><h5>Top 10${ob.top.length && ob.top.length < 10 ? ` <small>${sklonovat(ob.top.length, 'potvrzená', 'potvrzené', 'potvrzených')}</small>` : ''}</h5>${top}</div>
-                <div><h5>Stoupají${ob.trendDni ? ` <small>${kdy}</small>` : ''}</h5>${stoupaji}</div>
-                <div><h5>Dlouho jsi neviděl</h5>${nevidene}</div>
-            </div>
-        </div>`;
 }
 
 // Sháněná čísla, ve kterých je modelka z pořadí oblíbenosti, od nejoblíbenější: [{ cislo, modelka }]
@@ -232,10 +171,4 @@ export function textShanim(stavy) {
         podleRoku.get(v.rok).push(MESICE[parseInt(v.mesic) - 1].toLowerCase());
     });
     return ['Playboy CZ – sháním:', ...[...podleRoku].map(([rok, mesice]) => `${rok}: ${mesice.join(', ')}`)].join('\n');
-}
-
-// Graf centerfoldů podle desetiletí; počítá se až po zobrazení úvodu
-export function htmlGrafuDekad(s) {
-    if (!s.desetileti.length) return '<p class="prazdno-male">Zatím žádné centerfoldy.</p>';
-    return grafSloupcu(s.desetileti.map(d => ({ hodnota: d.centerfoldy, popisek: `${String(d.desetileti).slice(2)}.`, tip: `${d.desetileti}–${d.desetileti + 9}: ${sklonovat(d.centerfoldy, 'centerfold', 'centerfoldy', 'centerfoldů')}` })), { vyska: 170 });
 }

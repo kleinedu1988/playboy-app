@@ -230,7 +230,7 @@ const CASTI_SEKCI = {
     modelky: [['cast-modelek-pas', 'profily', 'Profily'], ['cast-modelek-pas', 'galerie', 'Galerie']],
     covery: [['cast-cisel-pas', 'covery', 'Obálky'], ['cast-cisel-pas', 'kalendar', 'Kalendář'], ['cast-cisel-pas', 'centerfoldy', 'Centerfoldy']],
     hodnoceni: [['zobrazeni-prehledu', 'porovnat', 'Porovnat'], ['zobrazeni-prehledu', 'fotky', 'Fotky'], ['zobrazeni-prehledu', 'poradi', 'Pořadí'], ['cast-modelek-pas', 'slava', 'Síň slávy']],
-    sbirka: [['zobrazeni-prehledu', 'uvod', 'Úvod'], ['zobrazeni-prehledu', 'udrzba', 'Údržba'], ['zobrazeni-prehledu', 'shanim', 'Sháním CZ'], ['zobrazeni-prehledu', 'statistiky', 'Statistiky']],
+    sbirka: [['zobrazeni-prehledu', 'udrzba', 'Údržba'], ['zobrazeni-prehledu', 'uvod', 'Mapa čísel'], ['zobrazeni-prehledu', 'shanim', 'Sháním CZ'], ['zobrazeni-prehledu', 'statistiky', 'Statistiky']],
 };
 function otevritCast(atribut, klic) {
     const b = document.createElement('button');
@@ -276,7 +276,8 @@ function otevritNabidkuSekci(tlacitko) {
         const aktivniSekce = sekce.classList.contains('active');
         const nazev = sekce.querySelector('span')?.textContent.trim() || '';
         const casti = (CASTI_SEKCI[klic] || []).map(([atribut, cast, nazevCasti]) => {
-            const je = aktivniSekce && zvolena?.getAttribute(`data-${atribut}`) === cast;
+            // Sbírka nemá pilulky částí (jedna stránka s hlavičkou): zvolenou část říká stav Přehledu
+            const je = aktivniSekce && (zvolena ? zvolena.getAttribute(`data-${atribut}`) === cast : klic === 'sbirka' && stav.prehledSekce === cast);
             const p = POHLEDY_CASTI[cast];
             const pohledy = p ? `<div class="mapa-pohledy">${p.pohledy.map(([k, n]) =>
                 `<button type="button" class="${je && p.aktualni() === k ? 'zvolena' : ''}" data-mapa-cast="${atribut}:${cast}" data-mapa-pohled="${k}">${n}</button>`).join('')}</div>` : '';
@@ -300,7 +301,8 @@ function otevritNabidkuSekci(tlacitko) {
         const pohled = volba.dataset.mapaPohled;
         const p = POHLEDY_CASTI[cast];
         zavritMapu();
-        const naMiste = zvolena?.getAttribute(`data-${atribut}`) === cast && document.querySelector('#viewToggle .active');
+        const naMiste = (zvolena ? zvolena.getAttribute(`data-${atribut}`) === cast
+            : atribut === 'zobrazeni-prehledu' && stav.rezim === 'prehled' && stav.prehledSekce === cast) && document.querySelector('#viewToggle .active');
         if (pohled && p && naMiste) {
             // Už otevřená část: přepne pohled jejím přepínačem v záhlaví stránky
             /** @type {HTMLElement | null} */ (document.querySelector(`.volby-v-liste [data-${p.atribut}="${pohled}"]`))?.click();

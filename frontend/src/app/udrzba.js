@@ -305,7 +305,8 @@ function htmlHlavySbirky() {
     const filtr = stav.udrzbaFiltr;
     // V jedné řadě s oblastí v názvu, aby se Centerfold modelek a čísel nepletl
     const NAZVY_V_LISTE = { text: 'Texty alb', alba: 'Vydání alb', cover: 'Cover čísel', cfcisla: 'Centerfold čísel' };
-    const pilulky = vSouhrnu() ? OBLASTI_FILTRU.flatMap(o => o.filtry).filter(([klic]) => klic === 'vse' || klic === filtr || model.pocty[klic])
+    const vUdrzbe = stav.prehledSekce === 'udrzba';
+    const pilulky = vUdrzbe && vSouhrnu() ? OBLASTI_FILTRU.flatMap(o => o.filtry).filter(([klic]) => klic === 'vse' || klic === filtr || model.pocty[klic])
         .map(([klic, nazev, popis]) => `<button type="button" class="sh-filtr ${klic === filtr ? 'on' : ''}" data-sh-filtr="${klic}"${popis ? ` title="${esc(popis)}"` : ''}>${esc(NAZVY_V_LISTE[klic] || nazev)}<small>${model.pocty[klic] || 0}</small></button>`).join('') : '';
     return `<div class="sh-obsah">
             <div class="sh-kruh" style="--p:${model.uplnost}" title="Sbírka doplněná na ${model.uplnost} % (průměr oblastí)"><b>${model.uplnost} %</b><small>doplněno</small></div>
@@ -320,21 +321,30 @@ function htmlHlavySbirky() {
             <button type="button" class="volba" data-sh-akce="export"><b>Exportovat</b></button>
             <button type="button" class="volba" data-sh-akce="soubory"><b>Zkontrolovat soubory</b></button>
             <span class="sh-oddelovac" aria-hidden="true"></span>
-            <button type="button" class="volba" data-sh-cast="shanim"><b>Sháním CZ</b></button>
-            <button type="button" class="volba" data-sh-cast="statistiky"><b>Statistiky</b></button>
-            <button type="button" class="volba" data-sh-cast="uvod"><b>Mapa čísel</b></button>
+            ${[['uvod', 'Mapa čísel'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']].map(([klic, nazev]) =>
+                `<button type="button" class="volba ${stav.prehledSekce === klic ? 'zapnuto' : ''}" data-sh-cast="${klic}" aria-pressed="${stav.prehledSekce === klic}">${nazev}</button>`).join('')}
         </div>
         <div class="sh-lista">
-            <div class="sh-filtry" role="group" aria-label="Co ukázat ve frontě">${pilulky}</div>
+            <div class="sh-filtry" role="group" aria-label="Co ukázat ve frontě">${pilulky}${htmlZdrojuHlavy(vUdrzbe)}</div>
             <div class="sh-pohledy" role="group" aria-label="Pohled Údržby">${REZIMY.map(([klic, nazev, popis]) =>
-                `<button type="button" class="${klic === stav.udrzbaRezim ? 'on' : ''}" data-sh-rezim="${klic}" title="${esc(popis)}">${esc(klic === 'souhrn' ? 'Fronta' : nazev)}</button>`).join('')}</div>
+                `<button type="button" class="${vUdrzbe && klic === stav.udrzbaRezim ? 'on' : ''}" data-sh-rezim="${klic}" title="${esc(popis)}">${esc(klic === 'souhrn' ? 'Fronta' : nazev)}</button>`).join('')}</div>
         </div>`;
 }
 
-// Hlavička je vidět jen v Údržbě; volá se po vykreslení Údržby a po každém přepnutí pohledu (navigace.js, prehled.js)
+// Zdroje návrhů nebo nálezů (u filtru Návrhy a Ke kontrole) jako menší pilulky za filtry
+function htmlZdrojuHlavy(vUdrzbe) {
+    const zdroje = vUdrzbe && vSouhrnu() ? zdrojeFiltru() : [];
+    if (!(zdroje.length > 1 || stav.udrzbaZdroj)) return '';
+    return `<span class="sh-zdroje" role="group" aria-label="Zdroj">${[{ zdroj: '', popis: 'Všechny zdroje', pocet: model.pocty[stav.udrzbaFiltr] }, ...zdroje].map(z =>
+        `<button type="button" class="sh-zdroj ${z.zdroj === stav.udrzbaZdroj ? 'on' : ''}" data-sh-zdroj="${esc(z.zdroj)}" aria-pressed="${z.zdroj === stav.udrzbaZdroj}">${esc(z.popis)}<small>${z.pocet}</small></button>`).join('')}</span>`;
+}
+
+// Hlavička je vidět v celé Sbírce (Údržba, Mapa čísel, Sháním CZ, Statistiky); volá se po vykreslení Údržby
+// a po každém přepnutí pohledu nebo části (navigace.js, prehled.js)
+const sbirkaVidet = () => !stats.classList.contains('hidden') && stav.rezim === 'prehled' && stav.prehledSekce !== 'oblibenost';
 export function obnovitHlavuSbirky() {
     if (!hlava) return;
-    const videt = udrzbaVidet() && Boolean(model);
+    const videt = sbirkaVidet() && Boolean(model);
     hlava.classList.toggle('hidden', !videt);
     if (!videt) {
         document.querySelector('.navbar')?.classList.remove('sbirka-svinuta');
@@ -354,17 +364,23 @@ function pripravitHlavuSbirky() {
         const rezim = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-rezim]'));
         const akce = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-akce]'));
         const castSbirky = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-cast]'));
-        if (filtr) nastavitFiltr(filtr.dataset.shFiltr);
-        else if (rezim) nastavitRezim(rezim.dataset.shRezim);
-        else if (castSbirky) {
-            // Ostatní části Sbírky otevře stejné tlačítko jako pilulka v navigační kapsli (prehled.js)
+        // Část Sbírky přepne stejné tlačítko jako dřív pilulka v navigační kapsli (prehled.js); zvolená část se klikem
+        // zase zavře do Údržby
+        const otevritCastSbirky = (klic) => {
             const b = document.createElement('button');
             b.hidden = true;
-            b.dataset.zobrazeniPrehledu = castSbirky.dataset.shCast;
+            b.dataset.zobrazeniPrehledu = klic;
             document.body.append(b);
             b.click();
             b.remove();
-        } else if (akce?.dataset.shAkce === 'pridat') {
+        };
+        const zdroj = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-zdroj]'));
+        if (filtr) nastavitFiltr(filtr.dataset.shFiltr);
+        else if (zdroj) nastavitFiltr(stav.udrzbaFiltr, zdroj.dataset.shZdroj);
+        else if (rezim) {
+            nastavitRezim(rezim.dataset.shRezim);
+            if (stav.prehledSekce !== 'udrzba') otevritCastSbirky('udrzba');
+        } else if (castSbirky) otevritCastSbirky(stav.prehledSekce === castSbirky.dataset.shCast ? 'udrzba' : castSbirky.dataset.shCast); else if (akce?.dataset.shAkce === 'pridat') {
             e.stopPropagation();
             const r = akce.getBoundingClientRect();
             otevritKontextovouNabidku(r.left, r.bottom + 6, [
@@ -414,14 +430,12 @@ const RAZENI_FRONTY = [['priorita', 'podle priority'], ['chybi', 'nejvíc chybí
 function htmlVoleb() {
     const stitek = (atribut, klic, nazev, zvoleny, titulek = '') => `<button type="button" class="chip ${zvoleny ? 'active' : ''}" ${atribut}="${klic}"${titulek ? ` title="${esc(titulek)}"` : ''}>${esc(nazev)}</button>`;
     const rezimy = REZIMY.map(([klic, nazev, popis]) => stitek('data-ud-rezim', klic, nazev, klic === stav.udrzbaRezim, popis));
-    // Stav Údržby do stavové lišty: úplnost a co čeká
-    const stavUdrzby = model ? `<span>${esc([`${model.uplnost} % doplněno`, sklonovat(model.pocty.vse, 'úkol', 'úkoly', 'úkolů'),
-        model.kKontrole ? `${model.kKontrole} ke kontrole` : '', model.navrhu ? sklonovat(model.navrhu, 'návrh', 'návrhy', 'návrhů') : ''].filter(Boolean).join(' · '))}</span>` : '';
-    if (!vSouhrnu()) return rezimy.join('') + stavUdrzby;
+    // Úplnost a počty jsou v hlavičce Sbírky, stavová lišta je neopakuje
+    if (!vSouhrnu()) return rezimy.join('');
     return [...rezimy,
         ...RAZENI_FRONTY.map(([klic, nazev]) => stitek('data-ud-razeni-volba', klic, nazev, klic === stav.udrzbaRazeni)),
         stitek('data-ud-skryte', '1', `Vyřízené${stav.prehledSkryte && model.vyrizenych ? ` (${model.vyrizenych})` : ''}`, stav.prehledSkryte,
-            'Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit')].join('') + stavUdrzby;
+            'Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit')].join('');
 }
 
 // Hledání ve frontě Souhrnu je hlavní hledání nahoře (ulozeni.js, naseptavac.js); ostatní režimy hledají modelku

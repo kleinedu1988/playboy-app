@@ -16113,3 +16113,47 @@ body.rezim-vyberu #detailView .poster {
         transition: none;
     }
 }
+
+.sh-zdroje {
+    display: inline-flex;
+    flex: none;
+    gap: 2px;
+    margin-left: 6px;
+    padding-left: 8px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.sh-zdroj {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 24px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.sh-zdroj small {
+    opacity: 0.6;
+}
+
+.sh-zdroj:hover {
+    background-color: var(--panel-hover);
+}
+
+.sh-zdroj.on {
+    background-color: rgba(216, 27, 96, 0.2);
+    box-shadow: inset 0 0 0 1px rgba(216, 27, 96, 0.55);
+    color: #fff;
+}
+
+.sh-akce .volba.zapnuto,
+.sh-akce .volba.zapnuto:hover {
+    background-color: var(--accent);
+    color: #fff;
+}

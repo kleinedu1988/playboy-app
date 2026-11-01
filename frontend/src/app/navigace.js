@@ -131,14 +131,15 @@ export const historie = [];
 // Kalendář je zobrazení Čísel: Zpět se jmenuje podle záložky
 export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Čísla', covery: 'Čísla', kalendar: 'Čísla', nejlepsi: 'Modelky', prehled: 'Sbírka' };
 // Části Sbírky (a Hodnocení, Síně slávy) v cestě Zpět; úvod Sbírky je prostě „Sbírka“
-const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy', uvod: 'Sbírka', udrzba: 'Údržba', shanim: 'Sháním CZ', statistiky: 'Statistiky' };
+const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy', uvod: 'Mapa čísel', udrzba: 'Údržba', shanim: 'Sháním CZ', statistiky: 'Statistiky' };
 
 // Cesta, kam vede Zpět, stejnými názvy jako navigační kapsle: sekce › část, u podstránky modelka, číslo, fotograf
 const CASTI_REZIMU = { modelky: ['Modelky', 'Profily'], nejlepsi: ['Modelky', 'Galerie'], covery: ['Čísla', 'Obálky'], kalendar: ['Čísla', 'Kalendář'], centerfoldy: ['Čísla', 'Centerfoldy'] };
 const POHLEDY_HODNOCENI = { porovnat: 'Porovnat', fotky: 'Fotky', poradi: 'Pořadí' };
 function cestaPrehledu({ sekce, cast, pohled }) {
     if (sekce === 'oblibenost') return ['Hodnocení', cast === 'slava' ? 'Síň slávy' : POHLEDY_HODNOCENI[pohled] || 'Porovnat'];
-    return NAZVY_STRANEK[sekce] && sekce !== 'uvod' ? ['Sbírka', NAZVY_STRANEK[sekce]] : ['Sbírka'];
+    // Sbírka je jedna stránka; Údržba je její hlavní obsah, ostatní části se v cestě jmenují
+    return NAZVY_STRANEK[sekce] && sekce !== 'udrzba' ? ['Sbírka', NAZVY_STRANEK[sekce]] : ['Sbírka'];
 }
 export function cestaZpet() {
     const misto = historie[historie.length - 1];

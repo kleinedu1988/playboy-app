@@ -96,9 +96,11 @@ const CASTI = [
         [k('Backspace'), 'Ve frontě nehodnocených (Hodnocení › Fotky): vrátit poslední hodnocení'],
         [k('Esc'), 'Zavřít'],
     ] },
-    { klic: 'fotky', nazev: 'Hodnocení – Fotky', radky: [
-        [k('Enter'), 'Začít hodnotit nehodnocené fotky'],
+    { klic: 'fotky', nazev: 'Hodnocení – Hodnotit', radky: [
+        [k('Enter'), 'Fotky: začít hodnotit · Modelky: první karta bez srdíček'],
         [k('Mezerník'), 'Promítat nehodnocené fotky'],
+        [`${k('1')}–${k('5')}`, 'Modelky: srdíčka zaměřené karty (stejná znovu = půlka), pak se fokus posune na další'],
+        [k('Backspace'), 'Modelky: vrátit poslední hodnocení'],
     ] },
     { klic: 'ctecka', nazev: 'Čtečka stran', radky: [
         [`${k('←', '→')}${nebo}${k('Mezerník')}`, 'Listovat'],

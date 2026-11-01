@@ -108,7 +108,7 @@ const VLASTNOSTI = { inputVyska: 'vyskaCm', inputNarodnost: 'narodnost', inputNa
 
 test('filtry po oblastech: plochý seznam pro počty, Fronta první', () => {
     assert.deepEqual(OBLASTI_FILTRU.map(o => o.nazev), ['Fronta', 'Modelky', 'Alba', 'Čísla']);
-    assert.equal(FILTRY.length, 11);
+    assert.equal(FILTRY.length, 10);
     assert.deepEqual(FILTRY[0], ['vse', 'Vše']);
 });
 
@@ -116,11 +116,11 @@ test('štítky řádku: nejvýš tři po druzích, jediná položka sama sebou',
     const model = slozita();
     const s = model.skupiny[0];
     const stitky = stitkySkupiny(s.polozky);
-    assert.deepEqual(stitky.map(x => x.text), ['⚠ 2 ke kontrole', '✦ 1 návrh', '3 chybí']);
+    assert.deepEqual(stitky.map(x => x.text), ['⚠ 2 ke kontrole', '✦ 1 návrh', '2 chybí']);
     assert.ok(stitky.every(x => !x.polozka));
     // Jen návrh a chybějící: návrh je vidět celý (s jistotou), chybějící jako počet
     const bezKontroly = s.polozky.filter(x => x.druh !== 'kontrola');
-    assert.deepEqual(stitkySkupiny(bezKontroly).map(x => x.text), ['✦ Národnost: USA · 95 %', '3 chybí']);
+    assert.deepEqual(stitkySkupiny(bezKontroly).map(x => x.text), ['✦ Národnost: USA · 95 %', '2 chybí']);
     assert.equal(stitkySkupiny(bezKontroly)[0].polozka, bezKontroly.find(x => x.druh === 'navrh').klic);
     // Dva chybějící úkoly: oba samostatně
     const dva = s.polozky.filter(x => x.druh === 'ukol').slice(0, 2);
@@ -132,7 +132,7 @@ test('štítky řádku: nejvýš tři po druzích, jediná položka sama sebou',
 test('souhrn do fronty a text akce', () => {
     const model = slozita();
     const s = model.skupiny[0];
-    assert.equal(souhrnFronty(s.polozky), '⚠ výška, údaj · ✦ národnost · 3 chybí');
+    assert.equal(souhrnFronty(s.polozky), '⚠ výška, údaj · ✦ národnost · titulní fotka, datum narození, národnost');
     const navrh = s.polozky.find(x => x.druh === 'navrh');
     assert.equal(textAkce(navrh, s), 'Přijmout');
     const cislo = { druh: 'vydani' };
@@ -151,7 +151,8 @@ test('úkoly soustředěného režimu: pole po jednom, návrh místo prázdného
     // Nález výšky jde opravit na místě, nález jména ne (nemá pole)
     assert.deepEqual(podleDruhu('kontrola').map(u => u.inputId), ['inputVyska', '']);
     assert.equal(podleDruhu('titulni')[0].vlastnost, 'coverId');
-    assert.equal(podleDruhu('hodnoceni').length, 1);
+    // Srdíčka modelek nejsou v Údržbě (Hodnocení › Hodnotit › Modelky)
+    assert.equal(podleDruhu('hodnoceni').length, 0);
     // Číslo: vše v okně
     const cisla = sestavitUdrzbu({ p: prehled({ vydaniBezCoveru: ['1990-01'] }), modelky: [] });
     assert.deepEqual(ukolyFokusu(cisla.skupiny[0].polozky, () => '').map(u => u.druh), ['okno']);
@@ -178,7 +179,7 @@ test('Po údajích: řádky po modelkách, návrh u svého pole, výška s váho
     assert.equal(udaj('kontrola').pocet, 2);
     assert.equal(nazevKontroly(udaj('kontrola')), 'Výška, údaj');
     assert.equal(udaj('titulni').pocet, 1);
-    assert.equal(udaj('hodnoceni').pocet, 1);
+    assert.equal(udaj('hodnoceni'), undefined);
     // Prázdné údaje v seznamu nejsou; Ke kontrole jde první
     assert.deepEqual(po.oblasti.map(o => o.klic), ['kontrola', 'udaje', 'fotky']);
     assert.ok(po.oblasti.every(o => o.udaje.every(u => u.pocet)));

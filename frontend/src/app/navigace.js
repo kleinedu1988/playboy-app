@@ -136,7 +136,7 @@ const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy', uvod: 'M
 
 // Cesta, kam vede Zpět, stejnými názvy jako navigační kapsle: sekce › část, u podstránky modelka, číslo, fotograf
 const CASTI_REZIMU = { modelky: ['Modelky', 'Profily'], nejlepsi: ['Modelky', 'Galerie'], covery: ['Čísla', 'Obálky'], kalendar: ['Čísla', 'Kalendář'], centerfoldy: ['Čísla', 'Centerfoldy'] };
-const POHLEDY_HODNOCENI = { porovnat: 'Porovnat', fotky: 'Fotky', poradi: 'Pořadí' };
+const POHLEDY_HODNOCENI = { porovnat: 'Porovnat', fotky: 'Hodnotit', poradi: 'Pořadí' };
 function cestaPrehledu({ sekce, cast, pohled }) {
     if (sekce === 'oblibenost' && cast === 'slava') return ['Síň slávy'];
     if (sekce === 'oblibenost') return ['Hodnocení', POHLEDY_HODNOCENI[pohled] || 'Porovnat'];

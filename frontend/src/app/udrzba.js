@@ -423,12 +423,15 @@ const RAZENI_FRONTY = [['priorita', 'podle priority'], ['chybi', 'nejvíc chybí
 function htmlVoleb() {
     const stitek = (atribut, klic, nazev, zvoleny, titulek = '') => `<button type="button" class="chip ${zvoleny ? 'active' : ''}" ${atribut}="${klic}"${titulek ? ` title="${esc(titulek)}"` : ''}>${esc(nazev)}</button>`;
     const rezimy = REZIMY.map(([klic, nazev, popis]) => stitek('data-ud-rezim', klic, nazev, klic === stav.udrzbaRezim, popis));
+    // Srdíčka modelek nejsou úkol Údržby: odkaz do Hodnocení › Hodnotit › Modelky (vpravo ve stavové liště)
+    const bezSrdicek = (data?.p?.bezHodnoceni || []).length;
+    const odkaz = bezSrdicek ? `<button type="button" data-ud-hodnotit-modelky data-stav-priorita="3" title="Hodnocení › Hodnotit › Modelky">♥ ${esc(sklonovat(bezSrdicek, 'modelka', 'modelky', 'modelek'))} bez srdíček · Hodnotit →</button>` : '';
     // Úplnost a počty jsou v hlavičce Sbírky, stavová lišta je neopakuje
-    if (!vSouhrnu()) return rezimy.join('');
+    if (!vSouhrnu()) return rezimy.join('') + odkaz;
     return [...rezimy,
         ...RAZENI_FRONTY.map(([klic, nazev]) => stitek('data-ud-razeni-volba', klic, nazev, klic === stav.udrzbaRazeni)),
         stitek('data-ud-skryte', '1', `Vyřízené${stav.prehledSkryte && model.vyrizenych ? ` (${model.vyrizenych})` : ''}`, stav.prehledSkryte,
-            'Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit')].join('');
+            'Ukázat i položky označené „netýká se“, „v pořádku“ a odmítnuté návrhy, aby šly vrátit'), odkaz].join('');
 }
 
 // Hledání ve frontě Souhrnu je hlavní hledání nahoře (ulozeni.js, naseptavac.js); ostatní režimy hledají modelku
@@ -896,7 +899,18 @@ export function pripravit(nacistPrehled) {
             vykreslit();
             return;
         }
-        if (cil.closest('[data-ud-skryte]')) {
+        // Odkaz do Hodnocení › Hodnotit › Modelky: pohled se zapamatuje, část otevře obsluha pilulek (prehled.js)
+        if (cil.closest('[data-ud-hodnotit-modelky]')) {
+            try { localStorage.setItem('hodnotitPohled', 'modelky'); } catch { /* jen se nezapamatuje */ }
+            const b = document.createElement('button');
+            b.hidden = true;
+            b.dataset.zobrazeniPrehledu = 'fotky';
+            document.body.append(b);
+            b.click();
+            b.remove();
+            return;
+        }
+                if (cil.closest('[data-ud-skryte]')) {
             stav.prehledSkryte = !stav.prehledSkryte;
             nacist();
             return;

@@ -232,7 +232,7 @@ function skocitNaRok(rok) {
 const CASTI_SEKCI = {
     modelky: [['cast-modelek-pas', 'profily', 'Profily'], ['cast-modelek-pas', 'galerie', 'Galerie']],
     covery: [['cast-cisel-pas', 'covery', 'Obálky'], ['cast-cisel-pas', 'kalendar', 'Kalendář'], ['cast-cisel-pas', 'centerfoldy', 'Centerfoldy']],
-    hodnoceni: [['zobrazeni-prehledu', 'porovnat', 'Porovnat'], ['zobrazeni-prehledu', 'fotky', 'Fotky'], ['zobrazeni-prehledu', 'poradi', 'Pořadí']],
+    hodnoceni: [['zobrazeni-prehledu', 'porovnat', 'Porovnat'], ['zobrazeni-prehledu', 'fotky', 'Hodnotit'], ['zobrazeni-prehledu', 'poradi', 'Pořadí']],
     slava: [['cast-modelek-pas', 'slava', 'Síň slávy']],
     sbirka: [['zobrazeni-prehledu', 'udrzba', 'Údržba'], ['zobrazeni-prehledu', 'uvod', 'Mapa čísel'], ['zobrazeni-prehledu', 'shanim', 'Sháním CZ'], ['zobrazeni-prehledu', 'statistiky', 'Statistiky']],
 };

@@ -37,7 +37,7 @@ import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 import { nacistSinSlavy, nastavitPohledSlavy, obnovitHlavuSlavy, pripravitSinSlavy } from './sin-slavy';
-import { hodnotitFotky, nacistGalerii, nacistPocetNehodnocenych, nastavitRazeniFotek, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
+import { hodnotitFotky, nacistGalerii, nacistPocetNehodnocenych, nastavitPohledHodnotit, nastavitRazeniFotek, pocetModelekBezSrdicek, pohledHodnotit, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
 import { nazevSezony, textZbyva } from '../lib/slava';
 
 const DVOJIC_NAJEDNOU = 8;
@@ -458,7 +458,7 @@ function htmlHlavyHodnoceni() {
         fotek ? '<button type="button" class="volba" data-hd-akce="promitat" title="Prohlížeč s promítáním nehodnocených fotek"><b>▶ Promítat</b></button>' : '',
         nesouladu ? '<button type="button" class="volba" data-hd-akce="overit" title="Modelky, kterým podle porovnání nesedí srdíčka"><b>Ověřit srdíčka</b></button>' : '',
     ].join('');
-    const casti = [['porovnat', 'Porovnat'], ['fotky', 'Fotky'], ['poradi', 'Pořadí']];
+    const casti = [['porovnat', 'Porovnat'], ['fotky', 'Hodnotit'], ['poradi', 'Pořadí']];
     const tlacitkoPohledu = (klic, nazev, zvoleny, atribut) =>
         `<button type="button" class="${klic === zvoleny ? 'on' : ''}" ${atribut}="${klic}" aria-pressed="${klic === zvoleny}">${nazev}</button>`;
     const pohledy = stav.hodnoceniPohled === 'poradi'
@@ -470,12 +470,17 @@ function htmlHlavyHodnoceni() {
     const htmlCasti = `<div class="sh-filtry" role="tablist" aria-label="Části hodnocení">${casti.map(([klic, nazev]) =>
         `<button type="button" role="tab" class="sh-filtr ${klic === stav.hodnoceniPohled ? 'on' : ''}" aria-selected="${klic === stav.hodnoceniPohled}" data-zobrazeni-prehledu="${klic}">${nazev}</button>`).join('')}<button type="button" role="tab" class="sh-filtr" aria-selected="false" data-cast-modelek-pas="slava">Síň slávy</button></div>`;
     const htmlPanelu = PANELY_HODNOCENI.map(([klic, nazev]) => `<button type="button" class="volba ${stav.hodnoceniPanel === klic ? 'zapnuto' : ''}" data-hd-panel="${klic}" aria-pressed="${stav.hodnoceniPanel === klic}" title="Panel vpravo (I)">${nazev}</button>`).join('');
-    // Fotky: jen lišta s Hodnotit, Promítat a řazením (počty jsou ve stavové liště)
+    // Hodnotit: jen lišta; přepínač Fotky / Modelky (počty v něm), u fotek Hodnotit, Promítat a řazení
     if (stav.hodnoceniPohled === 'fotky') {
+        const co = pohledHodnotit();
+        const nModelek = pocetModelekBezSrdicek();
+        const prepinac = [['fotky', 'Fotky', fotek], ['modelky', 'Modelky', nModelek]].map(([klic, nazev, n]) =>
+            `<button type="button" class="${klic === co ? 'on' : ''}" data-hd-hodnotit="${klic}" aria-pressed="${klic === co}" title="${esc(klic === 'fotky' ? 'Fotky bez srdíček' : 'Modelky bez srdíček')}">${nazev}${Number(n) > 0 ? ` <small>${n}</small>` : ''}</button>`).join('');
+        const akceFotek = co === 'fotky' ? '<button type="button" class="volba akcent" data-hd-akce="fotky" title="Začít hodnotit (Enter)"><b>♥ Hodnotit ↵</b></button><button type="button" class="volba" data-hd-akce="promitat" title="Promítat nehodnocené (mezerník)"><b>▶ Promítat</b></button><span class="sh-oddelovac" aria-hidden="true"></span>' : '';
         return `<div class="sh-lista">${htmlCasti}
-            <div class="sh-akce hd-kompakt-akce"><button type="button" class="volba akcent" data-hd-akce="fotky" title="Začít hodnotit (Enter)"><b>♥ Hodnotit ↵</b></button><button type="button" class="volba" data-hd-akce="promitat" title="Promítat nehodnocené (mezerník)"><b>▶ Promítat</b></button>
-                <span class="sh-oddelovac" aria-hidden="true"></span>${htmlPanelu}</div>
-            <div class="sh-pohledy" role="group" aria-label="Pořadí fotek">${pohledy}</div>
+            <div class="sh-akce hd-kompakt-akce">${akceFotek}${htmlPanelu}</div>
+            <div class="sh-pohledy" role="group" aria-label="Co hodnotit">${prepinac}</div>
+            ${co === 'fotky' ? `<div class="sh-pohledy" role="group" aria-label="Pořadí fotek">${pohledy}</div>` : ''}
         </div>`;
     }
     // Porovnat: jen lišta (pásy mají celou výšku); dnešní postup a sezóna jsou ve stavové liště
@@ -549,7 +554,12 @@ function pripravitHlavuHodnoceni() {
         const slava = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-slava]'));
         const filtr = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-poradi]'));
         const razeni = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-razeni]'));
-        if (panel) nastavitPanelHodnoceni(panel.dataset.hdPanel);
+        const hodnotit = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-hodnotit]'));
+        if (hodnotit) {
+            nastavitPohledHodnotit(hodnotit.dataset.hdHodnotit);
+            obnovitHlavuHodnoceni();
+        }
+        else if (panel) nastavitPanelHodnoceni(panel.dataset.hdPanel);
         else if (filtr) nastavitPoradiFiltr(filtr.dataset.hdPoradi);
         else if (razeni) nastavitRazeniFotek(razeni.dataset.hdRazeni);
         else if (slava) {

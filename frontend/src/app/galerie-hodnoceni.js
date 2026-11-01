@@ -4,7 +4,11 @@
 // V prohlížeči 1–5 fotku ohodnotí a ta z něj hned vypadne (otevritLightbox s jenNehodnocene). Seznam dodává
 // GetNehodnoceneFotky (jen když je potřeba), počet pro hlavičku Hodnocení GetPocetNehodnocenychFotek; hodnocení
 // fotek kdekoli jinde ho hned upraví (událost hodnoceni-fotek).
-import { GetNehodnoceneFotky, GetPocetNehodnocenychFotek } from './backend';
+import { GetNehodnoceneFotky, GetPocetNehodnocenychFotek, SetHodnoceni } from './backend';
+import { htmlOdhadu, htmlSrdicka } from './galerie';
+import { kratceSrdicka } from '../lib/srdicka';
+import { obnovitSrdickaModelky } from '../ui/srdicka';
+import { oznamit } from '../ui/oznameni';
 import { esc, sklonovat } from '../lib/format';
 import { frontaFotek } from '../lib/hodnoceni';
 import { sestavitAlba } from '../lib/alba';
@@ -106,6 +110,7 @@ function modelkyFronty() {
 
 function vykreslit(fotek) {
     if (!kontejner) return;
+    if (pohledHodnotit() === 'modelky') return vykreslitModelky();
     if (!polozky.length) {
         nastavitHtml(kontejner, `<div class="ob-karta">${htmlPrazdna('Všechny fotky jsou ohodnocené', 'Nové nehodnocené fotky se tu objeví, až je přidáš.', { ikona: 'hvezda' })}</div>`);
         return ukazatVolby();
@@ -171,6 +176,126 @@ function vykreslitListuProhlizece() {
 // Pořadí fotek (Náhodně / Po modelkách) je volba v liště pod hledáním: skrytý řádek nahoře převezme prehled.js
 const ukazatVolby = () => document.dispatchEvent(new CustomEvent('volby-prehledu'));
 
+// ——— Hodnotit › Modelky: modelky bez srdíček (dřív úkol Údržby) ———
+// Karty napřed s nejvyšším odhadem vkusu; 1–5 na zaměřených srdíčkách (stejná číslice znovu = půlka), po chvíli
+// fokus přejde na další kartu. Ohodnocené zůstanou do odchodu z pohledu ztlumené. Stavová lišta: postup a Vrátit.
+const KLIC_POHLEDU = 'hodnotitPohled';
+const MODELEK_NAJEDNOU = 60;
+const DALSI_PO_MS = 1100;
+export const pohledHodnotit = () => { try { return localStorage.getItem(KLIC_POHLEDU) === 'modelky' ? 'modelky' : 'fotky'; } catch { return 'fotky'; } };
+export function nastavitPohledHodnotit(klic) {
+    try { localStorage.setItem(KLIC_POHLEDU, klic); } catch { /* jen pro toto spuštění */ }
+    relaceModelek = { historie: [], hotove: new Set() };
+    vykreslit(pocet);
+    if (klic === 'modelky') zameritDalsi(null);
+}
+
+let relaceModelek = { historie: [], hotove: new Set() };
+let casovacDalsi = 0;
+const bezSrdicek = () => [...stav.prehledModelky.values()].filter(m => !(m.hodnoceni > 0));
+export const pocetModelekBezSrdicek = () => bezSrdicek().length;
+
+function vykreslitModelky() {
+    const hotove = relaceModelek.hotove;
+    const seznam = [...stav.prehledModelky.values()].filter(m => !(m.hodnoceni > 0) || hotove.has(m.id))
+        .sort((a, b) => (Number(b.odhadHodnoceni) || 0) - (Number(a.odhadHodnoceni) || 0) || (b.pocetFotek || 0) - (a.pocetFotek || 0)
+            || String(a.jmeno).localeCompare(String(b.jmeno), 'cs'));
+    if (!seznam.length) {
+        nastavitHtml(kontejner, `<div class="volby-v-liste" data-volby-casti="hodnoceni-fotky"><span>Všechny modelky mají srdíčka</span></div>
+            <div class="ob-karta">${htmlPrazdna('Všechny modelky mají srdíčka', 'Nové modelky bez srdíček se tu objeví, až je přidáš.', { ikona: 'srdce' })}</div>`);
+        return ukazatVolby();
+    }
+    nastavitHtml(kontejner, `<div class="volby-v-liste" data-volby-casti="hodnoceni-fotky" data-hm-lista
+            data-stav-napoveda="1–5 srdíčka · stejná znovu půlka · Tab další · ⌫ vrátit"></div>
+        <div class="ob-karta hm-karta-obal">
+            <div class="ob-tipy hm-mrizka">${seznam.slice(0, MODELEK_NAJEDNOU).map(m => `<div class="ob-tip ${hotove.has(m.id) ? 'ohodnoceno' : ''}" data-hm-modelka="${m.id}">
+                <button type="button" class="ob-tip-foto" data-otevrit-modelku="${m.id}" title="Otevřít profil" aria-label="${esc(m.jmeno)} – otevřít profil">
+                    <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />${htmlOdhadu(m)}
+                </button>
+                <button type="button" class="ob-jmeno" data-otevrit-modelku="${m.id}">${esc(m.jmeno)}</button>
+                ${htmlSrdicka(m)}
+            </div>`).join('')}</div>
+            ${seznam.length > MODELEK_NAJEDNOU ? `<p class="hz-tichy hm-dalsi">a ${esc(sklonovat(seznam.length - MODELEK_NAJEDNOU, 'další', 'další', 'dalších'))} – ukážou se, až tyhle ohodnotíš</p>` : ''}
+        </div>`);
+    nacitatPostupne(kontejner);
+    vykreslitListuModelek();
+}
+
+// Stavová lišta: dílky k další desítce, „Ohodnoceno 3 · zbývá 12 modelek“, potvrzení a Vrátit
+function vykreslitListuModelek() {
+    const misto = kontejner?.querySelector('[data-hm-lista]');
+    if (!misto) return;
+    const hotovo = relaceModelek.historie.length;
+    const zbyva = pocetModelekBezSrdicek();
+    const cil = (Math.floor(hotovo / 10) + 1) * 10;
+    const dilky = Array.from({ length: 10 }, (_, i) => `<i class="${i < hotovo - (cil - 10) ? 'on' : ''}"></i>`).join('');
+    const posledni = relaceModelek.historie[hotovo - 1];
+    let vratit = '';
+    if (posledni) {
+        const m = stav.prehledModelky.get(posledni.id);
+        const text = `${kratceSrdicka(m?.hodnoceni || 0)} ♥ ${String(m?.jmeno || '').split(' ')[0]}`;
+        const cerstve = Date.now() - posledni.cas < POTVRZENI_MS;
+        vratit = `<button type="button" data-hm-vratit data-stav-priorita="1" data-stav-trida="${cerstve ? 'stav-potvrzeni' : 'stav-akce'}" title="Vrátit poslední hodnocení (Backspace)">${esc(cerstve ? `✓ ${text} · ↶` : `↶ Vrátit: ${text}`)}</button>`;
+    }
+    nastavitHtml(misto, `${vratit}<span data-stav-html><span class="stav-dilky" aria-hidden="true">${dilky}</span>Ohodnoceno ${hotovo} · zbývá ${esc(sklonovat(zbyva, 'modelka', 'modelky', 'modelek'))} bez srdíček</span>`);
+    ukazatVolby();
+}
+
+// Fokus na srdíčka další neohodnocené karty za danou (null = první)
+function zameritDalsi(za) {
+    const karty = [...(kontejner?.querySelectorAll('[data-hm-modelka]') || [])];
+    const od = za ? karty.findIndex(k => k.dataset.hmModelka === String(za)) + 1 : 0;
+    const dalsi = [...karty.slice(od), ...karty.slice(0, od)].find(k => !k.classList.contains('ohodnoceno'));
+    const srdicka = /** @type {HTMLElement | null} */ (dalsi?.querySelector('.hearts-pul[data-hodnoceni]'));
+    srdicka?.focus({ preventScroll: true });
+    srdicka?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+
+const modelkyVidet = () => Boolean(kontejner?.isConnected && kontejner.offsetParent) && pohledHodnotit() === 'modelky'
+    && stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'fotky';
+
+// Srdíčka modelky změněná kdekoli: v pohledu Modelky postup, potvrzení a přechod na další kartu
+function poHodnoceniModelky(id, hodnoceni) {
+    if (!modelkyVidet()) return;
+    const karta = kontejner.querySelector(`[data-hm-modelka="${id}"]`);
+    if (!karta) return;
+    const h = relaceModelek.historie;
+    if (hodnoceni > 0) {
+        relaceModelek.hotove.add(id);
+        karta.classList.add('ohodnoceno');
+        // Druhá číslice téže modelky (půlka) je pořád jedno hodnocení
+        if (h[h.length - 1]?.id === id) h[h.length - 1].cas = Date.now();
+        else h.push({ id, cas: Date.now() });
+        clearTimeout(casovacDalsi);
+        casovacDalsi = setTimeout(() => {
+            if (modelkyVidet() && document.activeElement?.closest?.(`[data-hm-modelka="${id}"]`)) zameritDalsi(id);
+            vykreslitListuModelek();
+        }, DALSI_PO_MS);
+    } else {
+        relaceModelek.hotove.delete(id);
+        relaceModelek.historie = h.filter(x => x.id !== id);
+        karta.classList.remove('ohodnoceno');
+    }
+    vykreslitListuModelek();
+}
+
+// Vrátit poslední hodnocení modelky (srdíčka na 0, karta zase k hodnocení)
+async function vratitModelku() {
+    const posledni = relaceModelek.historie[relaceModelek.historie.length - 1];
+    if (!posledni) return;
+    // Posun na další kartu po hodnocení už neplatí: fokus zůstane na vrácené
+    clearTimeout(casovacDalsi);
+    let ok = false;
+    try { ok = await SetHodnoceni(posledni.id, 0); } catch { /* oznámí se níž */ }
+    if (!ok) return oznamit('Hodnocení se nepodařilo vrátit.');
+    [stav.aktualniModelka, stav.prehledModelky.get(posledni.id), ...stav.nacteneModelky].forEach(m => { if (m?.id === posledni.id) m.hodnoceni = 0; });
+    document.querySelectorAll(`.hearts-pul[data-hodnoceni="${posledni.id}"]`).forEach(r => obnovitSrdickaModelky(/** @type {HTMLElement} */ (r), 0));
+    document.querySelectorAll(`.odhad-chip[data-odhad="${posledni.id}"]`).forEach(c => c.classList.remove('hidden'));
+    document.dispatchEvent(new CustomEvent('hodnoceni-modelky', { detail: { id: posledni.id, hodnoceni: 0 } }));
+    /** @type {HTMLElement | null} */ (kontejner?.querySelector(`[data-hm-modelka="${posledni.id}"] .hearts-pul[data-hodnoceni]`))?.focus({ preventScroll: true });
+}
+
+
 function otevrit(index = 0, promitat = false, seznam = polozky) {
     if (!seznam.length) return;
     prohlizetBezZajmu();
@@ -207,11 +332,29 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
         if (t.closest('[data-gh-start]')) otevrit(0);
         else if (t.closest('[data-gh-promitat]')) otevrit(0, true);
         else if (t.closest('[data-gh-vratit]')) lbVratitHodnoceni();
+        else if (t.closest('[data-hm-vratit]')) vratitModelku();
         else if (ukazka) otevrit(Number(ukazka.dataset.ghUkazka));
         else if (jedna) otevrit(0, false, polozky.filter(p => p.modelkaId === Number(jedna.dataset.ghModelka)));
     });
+    document.addEventListener('hodnoceni-modelky', (e) => {
+        const { id, hodnoceni } = /** @type {CustomEvent} */ (e).detail;
+        poHodnoceniModelky(id, hodnoceni);
+    });
+    // Hodnotit › Modelky: Backspace vrátí poslední hodnocení, Enter skočí na první kartu bez srdíček
+    document.addEventListener('keydown', (e) => {
+        if (!modelkyVidet() || e.ctrlKey || e.altKey || e.metaKey || stav.zamceno || jeVidet('lightbox') || otevreneOkno()) return;
+        if (/** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select, [contenteditable]')) return;
+        if (e.key === 'Backspace') {
+            e.preventDefault();
+            vratitModelku();
+        } else if (e.key === 'Enter' && !/** @type {HTMLElement} */ (e.target).closest?.('button, a, [role="slider"]')) {
+            e.preventDefault();
+            zameritDalsi(null);
+        }
+    });
     // Na stránce Fotky: Enter začne hodnotit, mezerník promítat (ne při psaní, nad oknem ani na tlačítku)
     document.addEventListener('keydown', (e) => {
+        if (pohledHodnotit() === 'modelky') return;
         if ((e.key !== 'Enter' && e.key !== ' ') || e.ctrlKey || e.altKey || e.metaKey || e.repeat) return;
         if (!kontejner?.isConnected || !kontejner.offsetParent || !polozky.length || stav.zamceno || jeVidet('lightbox') || otevreneOkno()) return;
         if (/** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select, button, a, [contenteditable]')) return;

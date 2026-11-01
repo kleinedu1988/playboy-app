@@ -49,7 +49,7 @@ export const OBLASTI_FILTRU = [
         ['navrhy', '✦ Návrhy', 'Odhadnuto z tvé sbírky; nejjistější a nejcennější první'],
         ['kontrola', '⚠ Ke kontrole', 'Údaje, které vypadají jako překlep; když je údaj pravdivý, dej „V pořádku“ – kontrola se z toho učí'],
     ] },
-    { nazev: 'Modelky', filtry: [['titulni', 'Titulní fotka', ''], ['centerfold', 'Centerfold', ''], ['hodnoceni', 'Hodnocení', ''], ['udaje', 'Údaje', 'Chybějící údaje modelek po částech formuláře']] },
+    { nazev: 'Modelky', filtry: [['titulni', 'Titulní fotka', ''], ['centerfold', 'Centerfold', ''], ['udaje', 'Údaje', 'Chybějící údaje modelek po částech formuláře']] },
     { nazev: 'Alba', filtry: [['text', 'Texty', 'Alba bez průvodního textu'], ['alba', 'Vydání', 'Alba bez čísla, ve kterém vyšla']] },
     { nazev: 'Čísla', filtry: [['cover', 'Cover', 'Čísla bez obálky'], ['cfcisla', 'Centerfold', 'Čísla bez centerfoldu']] },
 ];
@@ -136,7 +136,7 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
         if (!radky.has(id)) radky.set(id, { id, jmeno: podleId.get(id)?.jmeno || jmeno, chybi: new Set(), bezPopisu: [], bezVydani: [], netyka: netyka(id), udaje: null });
         return radky.get(id);
     };
-    /** @type {[string, any[]][]} */ ([['titulni', p.bezTitulni], ['centerfold', p.bezCenterfoldu], ['hodnoceni', p.bezHodnoceni]])
+    /** @type {[string, any[]][]} */ ([['titulni', p.bezTitulni], ['centerfold', p.bezCenterfoldu]])
         .forEach(([co, seznam]) => (seznam || []).forEach(m => radek(m.modelkaId, m.jmeno).chybi.add(co)));
     // Vyplněnost údajů napříč sbírkou (pokrok) a chybějící údaje po skupinách u každé modelky
     let udajuCelkem = 0, udajuVyplneno = 0;
@@ -160,7 +160,7 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
         + (r.udaje || []).reduce((soucet, sk, i) => soucet + (r.netyka.has(KLICE_SKUPIN[i]) ? 0 : sk.length), 0);
     // Vyplněnost modelky: podíl sledovaných údajů, které nechybí (bez údajů „netýká se“)
     const vyplneno = r => {
-        const celkem = ['titulni', 'centerfold', 'hodnoceni', 'text', 'vydani'].filter(k => !r.netyka.has(k)).length
+        const celkem = ['titulni', 'centerfold', 'text', 'vydani'].filter(k => !r.netyka.has(k)).length
             + SKUPINY_UDAJU.reduce((soucet, s, i) => soucet + (r.netyka.has(KLICE_SKUPIN[i]) ? 0 : s.udaje.length), 0);
         return celkem ? Math.max(0, Math.round((1 - r.vaha / celkem) * 100)) : 100;
     };
@@ -211,8 +211,7 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
                     duvod: bezNarozeni ? 'Playmate bez data narození – nejde spočítat věk při centerfoldu' : '',
                     netyka: nt.has(klic) }, vahaUdaju(chybejici, playmate));
             });
-            if (r.chybi.has('hodnoceni')) pridat({ id: 'hodnoceni', druh: 'ukol', filtr: 'hodnoceni', akce: 'hodnoceni', netykaKlic: 'hodnoceni', pole: 'hodnocení', hodnota: 'bez srdíček',
-                duvod: 'Srdíčka řadí galerii a vybírají Nejlepší', netyka: nt.has('hodnoceni') }, VAHY_UKOLU.hodnoceni);
+            // Srdíčka modelek nejsou úkol Údržby: hodnotí se v Hodnocení › Hodnotit › Modelky
             // Alba: počet těch, která text nebo vydání opravdu potřebují
             [['text', 'popis', r.bezPopisu, 'bez textu', 'Průvodní text alba se ukazuje v profilu a na stránce čísla'],
                 ['alba', 'vydani', r.bezVydani, 'bez vydání', 'Album bez čísla chybí v kalendáři i na stránce čísla']].forEach(([filtr, akce, seznam, popis, duvod]) => {
@@ -292,7 +291,6 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
     const pokrok = [
         oblast('Modelky', 'titulni', 'Titulní fotka', aktivnich(p.bezTitulni), p.modelek, 'titulni'),
         oblast('Modelky', 'centerfold', 'Centerfold', aktivnich(p.bezCenterfoldu), p.modelek, 'centerfold'),
-        oblast('Modelky', 'hodnoceni', 'Hodnocení', aktivnich(p.bezHodnoceni), p.modelek, 'hodnoceni'),
         oblast('Modelky', 'udaje', 'Údaje', udajuCelkem - udajuVyplneno, udajuCelkem, 'udaje', 'údajů'),
         oblast('Alba', 'text', 'Texty alb', aktivnich(p.albaBezPopisu), p.alb, 'text'),
         oblast('Alba', 'alba', 'Vydání alb', aktivnich(p.albaBezVydani), p.alb - (p.albOnline || 0), 'alba'),
@@ -444,7 +442,6 @@ export const UDAJE = [
     { klic: 'tetovani', oblast: 'udaje', druh: 'pole', vlastnosti: ['tetovani'], bez: 'bez údaje o tetování' },
     { klic: 'piercing', oblast: 'udaje', druh: 'pole', vlastnosti: ['piercing'], bez: 'bez údaje o piercingu' },
     { klic: 'tags', oblast: 'udaje', druh: 'pole', vlastnosti: ['tags'], bez: 'bez tagů' },
-    { klic: 'hodnoceni', oblast: 'udaje', nazev: 'Hodnocení', druh: 'hodnoceni', bez: 'bez srdíček' },
     { klic: 'titulni', oblast: 'fotky', nazev: 'Titulní fotka', druh: 'titulni', bez: 'bez titulní fotky' },
     { klic: 'centerfold', oblast: 'fotky', nazev: 'Centerfold', druh: 'okno', bez: 'bez centerfoldu' },
     { klic: 'vydaniAlb', oblast: 'fotky', nazev: 'Vydání alb', druh: 'vydaniAlba', bez: 'bez čísla, ve kterém vyšla', jednotka: ALBA },

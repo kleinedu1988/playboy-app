@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.13] – 2026-11-01
+
+### Změněno
+- **Hodnocení › Fotky** (přepracování Fotek, krok 2):
+  - Hlavička je jen lišta jako v Porovnat: **♥ Hodnotit ↵**, **▶ Promítat**, panel a Náhodně / Po modelkách.
+  - Na stránce velké **„♥ Začít hodnotit ↵“** přes pruh náhledů; **Enter** začne hodnotit, **mezerník** promítat. Karta Dál na řadě zmizela.
+  - Ve stavové liště stránky počet a klikatelné klávesy ↵ Hodnotit · Mezerník Promítat.
+
+### Přidáno
+- **Živá stavová lišta v prohlížeči nehodnocených fotek:** zůstává vidět pod prohlížečem – dílky a „Ohodnoceno 3 · zbývá 53“, po hodnocení na chvíli „✓ ♥♥♥♥ Dana“ a pak „↶ Vrátit“; počítadlo nahoře ukazuje „zbývá N“.
+- **Vrátit poslední hodnocení fotky** (Backspace nebo klik ve stavové liště): srdíčka se zruší a fotka se vrátí na své místo.
+
 ## [1.0.12] – 2026-11-01
 
 ### Opraveno

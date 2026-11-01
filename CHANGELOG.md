@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.2] – 2026-11-01
+
+### Změněno
+- **Sbírka je jedna stránka s hlavičkou jako profil modelky** (přepracování Sbírky, kroky 1 a 2).
+  - Hlavička: kruh s procentem doplnění, čísla sbírky (modelky, alba, fotky, čísla, úkoly) a vpravo oblasti Modelky / Alba / Čísla; akce + Přidat ▾, Importovat, Exportovat, Zkontrolovat soubory a Mapa čísel · Sháním CZ · Statistiky (zvolená svítí, další klik vrátí Údržbu); lišta s filtry fronty a jejich počty (u Návrhů a Ke kontrole i zdroje) a vpravo pohledy Po údajích · Po modelkách · Fronta. Po odrolování se hlavička zmenší na jeden řádek.
+  - Sbírka (Ctrl+4) se otevírá v Údržbě; části Úvod, Údržba, Sháním CZ a Statistiky už nejsou v navigační kapsli (v mapě sekcí ano).
+  - **Bez zdvojených údajů:** zmizel nadpis Údržby, kruh a pruhy pokroku v Souhrnu, boční seznam filtrů a texty o doplnění ve stavové liště. Úvod se jmenuje **Mapa čísel** a má jen mapy CZ a US (počty v nadpisech) a naposledy přidané; dlaždice s čísly, Co zbývá doplnit, karta Hodnocení a grafy výtisků a desetiletí jsou pryč (čísla jsou v hlavičce, hodnocení v sekci Hodnocení, desetiletí ve Statistikách).
+
 ## [1.0.1] – 2026-11-01
 
 ### Změněno

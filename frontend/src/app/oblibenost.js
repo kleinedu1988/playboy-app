@@ -470,6 +470,14 @@ function htmlHlavyHodnoceni() {
     const htmlCasti = `<div class="sh-filtry" role="tablist" aria-label="Části hodnocení">${casti.map(([klic, nazev]) =>
         `<button type="button" role="tab" class="sh-filtr ${klic === stav.hodnoceniPohled ? 'on' : ''}" aria-selected="${klic === stav.hodnoceniPohled}" data-zobrazeni-prehledu="${klic}">${nazev}</button>`).join('')}<button type="button" role="tab" class="sh-filtr" aria-selected="false" data-cast-modelek-pas="slava">Síň slávy</button></div>`;
     const htmlPanelu = PANELY_HODNOCENI.map(([klic, nazev]) => `<button type="button" class="volba ${stav.hodnoceniPanel === klic ? 'zapnuto' : ''}" data-hd-panel="${klic}" aria-pressed="${stav.hodnoceniPanel === klic}" title="Panel vpravo (I)">${nazev}</button>`).join('');
+    // Fotky: jen lišta s Hodnotit, Promítat a řazením (počty jsou ve stavové liště)
+    if (stav.hodnoceniPohled === 'fotky') {
+        return `<div class="sh-lista">${htmlCasti}
+            <div class="sh-akce hd-kompakt-akce"><button type="button" class="volba akcent" data-hd-akce="fotky" title="Začít hodnotit (Enter)"><b>♥ Hodnotit ↵</b></button><button type="button" class="volba" data-hd-akce="promitat" title="Promítat nehodnocené (mezerník)"><b>▶ Promítat</b></button>
+                <span class="sh-oddelovac" aria-hidden="true"></span>${htmlPanelu}</div>
+            <div class="sh-pohledy" role="group" aria-label="Pořadí fotek">${pohledy}</div>
+        </div>`;
+    }
     // Porovnat: jen lišta (pásy mají celou výšku); dnešní postup a sezóna jsou ve stavové liště
     if (stav.hodnoceniPohled === 'porovnat') {
         return `<div class="sh-lista">${htmlCasti}
@@ -501,7 +509,7 @@ export function obnovitHlavuHodnoceni() {
         document.querySelector('.navbar')?.classList.remove('hodnoceni-svinuta');
         return;
     }
-    hlava.classList.toggle('kompaktni', stav.hodnoceniPohled === 'porovnat');
+    hlava.classList.toggle('kompaktni', stav.hodnoceniPohled === 'porovnat' || stav.hodnoceniPohled === 'fotky');
     nastavitHtml(hlava, htmlHlavyHodnoceni());
 }
 

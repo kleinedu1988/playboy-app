@@ -93,7 +93,12 @@ const CASTI = [
         [k('R'), 'Otočit'],
         [`${k('1')}–${k('5')}`, 'Srdíčka'],
         [k('0'), 'Zrušit srdíčka'],
+        [k('Backspace'), 'Ve frontě nehodnocených (Hodnocení › Fotky): vrátit poslední hodnocení'],
         [k('Esc'), 'Zavřít'],
+    ] },
+    { klic: 'fotky', nazev: 'Hodnocení – Fotky', radky: [
+        [k('Enter'), 'Začít hodnotit nehodnocené fotky'],
+        [k('Mezerník'), 'Promítat nehodnocené fotky'],
     ] },
     { klic: 'ctecka', nazev: 'Čtečka stran', radky: [
         [`${k('←', '→')}${nebo}${k('Mezerník')}`, 'Listovat'],
@@ -136,7 +141,7 @@ export function otevritZkratky() {
     const udrzba = prehledVidet && stav.prehledSekce === 'udrzba';
     const aktivni = !lightbox.classList.contains('hidden') ? 'prohlizec' : ctecka && !ctecka.classList.contains('hidden') ? 'ctecka'
         : udrzba ? `udrzba-${stav.udrzbaRezim}`
-            : prehledVidet && stav.prehledSekce === 'oblibenost' ? (stav.oblibenostCast === 'slava' ? 'slava' : stav.hodnoceniPohled === 'porovnat' ? 'porovnat' : '') : '';
+            : prehledVidet && stav.prehledSekce === 'oblibenost' ? (stav.oblibenostCast === 'slava' ? 'slava' : ['porovnat', 'fotky'].includes(stav.hodnoceniPohled) ? stav.hodnoceniPohled : '') : '';
     const casti = aktivni ? [CASTI.find(c => c.klic === aktivni), ...CASTI.filter(c => c.klic !== aktivni)] : CASTI;
     panel.querySelector('.zkratky-casti').innerHTML = casti.map(c => `
         <section class="${c.klic === aktivni ? 'aktivni' : ''}">

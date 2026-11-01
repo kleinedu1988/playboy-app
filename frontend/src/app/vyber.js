@@ -7,7 +7,7 @@ import { best, detailView, issueView, searchInput } from './prvky';
 import { nacistFotkyModelky, rozbalitKliknute } from './profil';
 import { obnovitStranku } from './vydani';
 import { nacistNejlepsi, pridatDoVyberu } from './nejlepsi';
-import { lbOhodnotit, lbOtocit, lbPrepnoutRozlozeni, lbPrepnoutSlideshow, lbSkokAlba, lbZamichat, lbZobrazit, lightbox, otevritLightbox } from './prohlizec';
+import { lbOhodnotit, lbOtocit, lbPrepnoutRozlozeni, lbPrepnoutSlideshow, lbSkokAlba, lbVratitHodnoceni, lbZamichat, lbZobrazit, lightbox, otevritLightbox } from './prohlizec';
 import { nabidnoutVraceni } from './sprava';
 import { vybratHodnotu } from './ulozeni';
 import { otevreneOkno } from '../ui/dom';
@@ -182,6 +182,7 @@ export function pripravit() {
         // Podržená číslice se neopakuje (jinak by ohodnotila celou frontu nehodnocených)
         else if (/^[1-5]$/.test(klavesa)) { if (!e.repeat) lbOhodnotit(parseInt(klavesa)); }
         else if (klavesa === '0') { if (!e.repeat && !stav.lbJenNehodnocene) lbOhodnotit(stav.lbPolozky[stav.lbIndex].hodnoceni); }
+        else if (klavesa === 'backspace' && stav.lbJenNehodnocene) lbVratitHodnoceni();
         else if (klavesa === ' ') lbPrepnoutSlideshow();
         else if (klavesa === 'f') lbPrepnoutRozlozeni();
         else if (klavesa === 'r') lbOtocit();

@@ -94,6 +94,8 @@ function klicVoleb() {
     if (stav.prehledSekce !== 'oblibenost' && stav.sbirkaPanel === 'statistiky') return 'statistiky';
     if (stav.prehledSekce !== 'oblibenost' && stav.sbirkaPanel === 'cisla') return 'shanim';
     if (stav.prehledSekce !== 'oblibenost') return stav.prehledSekce;
+    // Prohlížeč fronty nehodnocených fotek má vlastní stavovou lištu (postup, Vrátit; galerie-hodnoceni.js)
+    if (stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'fotky' && stav.lbJenNehodnocene) return 'hodnoceni-fotky-lb';
     return stav.oblibenostCast === 'slava' ? `slava-${pohledSlavy()}` : `hodnoceni-${stav.hodnoceniPohled}`;
 }
 

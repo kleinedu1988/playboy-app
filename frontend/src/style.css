@@ -13020,6 +13020,48 @@ button.pas-kapsle:focus-visible {
 
 /* ——— Fotky (Hodnocení › Fotky, app/galerie-hodnoceni.js): náhledy fronty nehodnocených (klik otevře prohlížeč),
    řádek modelek s nejvíc nehodnocenými a Dál na řadě ——— */
+/* Začít hodnotit: výrazné tlačítko uprostřed pruhu náhledů (Enter dělá totéž) */
+.gh-start {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 22px;
+    border: 0;
+    border-radius: 999px;
+    background-color: var(--accent);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+    color: #fff;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+}
+
+.gh-start:hover,
+.gh-start:focus-visible {
+    background-color: #e91e63;
+    outline: none;
+}
+
+.gh-start kbd {
+    padding: 0 6px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    font: inherit;
+    font-size: 12px;
+}
+
+/* Prohlížeč při hodnocení fronty nechá dole místo stavové liště (postup, Vrátit, klávesy) */
+.lightbox.hodnoceni {
+    bottom: 30px;
+}
+
 /* Jen jedna modelka: kulatá fotka, jméno a počet jejích nehodnocených */
 .gh-modelky {
     display: flex;

@@ -232,7 +232,8 @@ export function lbZobrazit(index) {
     lbCaption.innerHTML = polozka.jmenoModelky
         ? `<span class="lb-jmeno">${esc(polozka.jmenoModelky)}</span><span class="lb-kde">${esc(kde)}</span>`
         : `<span class="lb-jmeno">${esc(kde)}</span>`;
-    lbCounter.innerHTML = `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
+    // Fronta nehodnocených ubývá: ukazuje, kolik zbývá; jinak pořadí fotky
+    lbCounter.innerHTML = stav.lbJenNehodnocene ? `<small>zbývá</small> ${pocet}` : `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
     lbVykreslitSrdicka();
     // Začátky alb jen tam, kde je lišta alb (fronta nehodnocených ji nemá a seznam je dlouhý)
     if (!stav.lbJenNehodnocene) lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
@@ -272,6 +273,9 @@ async function hodnotitNehodnocenou(polozka, zvoleno) {
     if (kdePuvodne >= 0) puvodni.splice(kdePuvodne, 1);
     const zapis = ohodnotitPolozku(polozka, zvoleno);
     stav.lbZapisy.add(zapis);
+    const zaznam = { polozka, kde, kdePuvodne, seznam, zvoleno };
+    stav.lbHistorie.push(zaznam);
+    oznamitZmenuHodnoceni();
     if (!seznam.length) {
         zavritLightbox();
         oznamit('Hotovo – všechny fotky jsou ohodnocené.');
@@ -285,12 +289,39 @@ async function hodnotitNehodnocenou(polozka, zvoleno) {
         return;
     }
     oznamit('Srdíčka fotky se nepodařilo uložit.');
+    stav.lbHistorie = stav.lbHistorie.filter(z => z !== zaznam);
+    oznamitZmenuHodnoceni();
     // Prohlížeč je pořád na stejném seznamu: fotka se vrátí na své místo a ukáže se
     if (lightbox.classList.contains('hidden') || stav.lbPolozky !== seznam) return;
     seznam.splice(Math.min(kde, seznam.length), 0, polozka);
     if (kdePuvodne >= 0) puvodni.splice(Math.min(kdePuvodne, puvodni.length), 0, polozka);
     lbNaplnitListu();
     lbZobrazit(seznam.indexOf(polozka));
+}
+
+// Vrátit poslední hodnocení ve frontě nehodnocených (⌫, „↶ Vrátit“ ve stavové liště): srdíčka se zruší a fotka
+// se vrátí na své místo
+export async function lbVratitHodnoceni() {
+    const z = stav.lbHistorie[stav.lbHistorie.length - 1];
+    if (!z || !stav.lbJenNehodnocene || stav.lbPolozky !== z.seznam) return;
+    stav.lbHistorie.pop();
+    // Dokud se hodnocení zapisuje, vrácení by se s ním mohlo předběhnout
+    await Promise.allSettled([...stav.lbZapisy]);
+    if (!await ohodnotitPolozku(z.polozka, z.polozka.hodnoceni)) {
+        stav.lbHistorie.push(z);
+        return oznamit('Hodnocení se nepodařilo vrátit.');
+    }
+    if (lightbox.classList.contains('hidden') || stav.lbPolozky !== z.seznam) return;
+    z.seznam.splice(Math.min(z.kde, z.seznam.length), 0, z.polozka);
+    if (z.kdePuvodne >= 0 && stav.lbPuvodniPoradi) stav.lbPuvodniPoradi.splice(Math.min(z.kdePuvodne, stav.lbPuvodniPoradi.length), 0, z.polozka);
+    lbNaplnitListu();
+    lbZobrazit(z.seznam.indexOf(z.polozka));
+    oznamitZmenuHodnoceni();
+}
+
+// Fronta nehodnocených se změnila (hodnocení, vrácení, otevření): stavovou lištu obnoví galerie-hodnoceni.js
+function oznamitZmenuHodnoceni() {
+    document.dispatchEvent(new CustomEvent('lb-hodnoceni'));
 }
 
 // Indexy prvních fotek jednotlivých alb v právě prohlíženém seznamu
@@ -373,6 +404,9 @@ export function otevritLightbox(index, slideshow = false, polozky = stav.aktualn
     if (polozky.length === 0) return;
     stav.lbJenNehodnocene = jenNehodnocene;
     stav.lbPoZavreni = poZavreni;
+    stav.lbHistorie = [];
+    // Hodnocení fronty: prohlížeč nechá dole místo stavové liště (postup, Vrátit, klávesy)
+    lightbox.classList.toggle('hodnoceni', jenNehodnocene);
     stav.lbPuvodniPoradi = null;
     lbShuffle.classList.remove('active');
     stav.lbPolozky = polozky;
@@ -382,13 +416,14 @@ export function otevritLightbox(index, slideshow = false, polozky = stav.aktualn
     lbNaplnitListu();
     lbPrepnoutSlideshow(slideshow);
     lbZobrazit(index);
+    if (jenNehodnocene) oznamitZmenuHodnoceni();
 }
 
 export function zavritLightbox() {
     ukoncitProhlizeni();
     lbPrepnoutSlideshow(false);
     lightbox.classList.add('hidden');
-    lightbox.classList.remove('zoomed', 'filled');
+    lightbox.classList.remove('zoomed', 'filled', 'hodnoceni');
     lbStage.innerHTML = '';
     stav.lbPlakat = null;
     stav.lbLupa = null;
@@ -404,8 +439,12 @@ export function zavritLightbox() {
     // Fotky nehodnocených: po zavření se fronta načte znovu, až doběhnou zápisy hodnocení
     const poZavreni = stav.lbPoZavreni;
     const zapisy = [...stav.lbZapisy];
+    const hodnotila = stav.lbJenNehodnocene;
     stav.lbJenNehodnocene = false;
     stav.lbPoZavreni = null;
+    stav.lbHistorie = [];
+    // Stavová lišta se vrátí stránce
+    if (hodnotila) oznamitZmenuHodnoceni();
     if (poZavreni) Promise.allSettled(zapisy).then(() => poZavreni());
 }
 

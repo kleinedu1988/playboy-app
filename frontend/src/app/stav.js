@@ -89,6 +89,7 @@ export const stav = {
     lbPolozky: [],
     lbJenNehodnocene: false, // Galerie: ohodnocená položka z prohlížeče vypadne a ukáže se další
     lbPoZavreni: null, // co udělat po zavření prohlížeče (Fotky načtou frontu znovu, až doběhnou zápisy)
+    lbHistorie: [], // ohodnocené ve frontě nehodnocených (pro Vrátit): { polozka, kde, kdePuvodne, seznam }
     lbZapisy: new Set(), // rozběhlé zápisy hodnocení fotek z prohlížeče (poZavreni počká na ně)
     lbIndex: 0,
     lbCasovac: null,

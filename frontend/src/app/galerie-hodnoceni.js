@@ -29,6 +29,16 @@ let pocet = -1; // nehodnocených fotek z posledního načtení (-1 = ještě ne
 let poZmenePoctu = (/** @type {number} */ _n) => {};
 
 const razeni = () => { try { return localStorage.getItem(KLIC_RAZENI) || 'nahodne'; } catch { return 'nahodne'; } };
+// Pořadí fotek pro lištu hlavičky Hodnocení (Náhodně / Po modelkách) a jeho změna
+export const razeniFotek = razeni;
+export function nastavitRazeniFotek(klic) {
+    if (klic === razeni()) return;
+    try { localStorage.setItem(KLIC_RAZENI, klic); } catch { /* jen pro toto spuštění */ }
+    if (kontejner) nacistGalerii(kontejner);
+}
+
+// Akce Hodnotit fotky / Promítat z hlavičky Hodnocení: prohlížeč na nehodnocených fotkách
+export const hodnotitFotky = (promitat = false) => otevrit(0, promitat);
 
 // Počet nehodnocených fotek z posledního načtení (-1, dokud se nenačetly)
 export const pocetNehodnocenych = () => pocet;
@@ -78,10 +88,8 @@ function vykreslit(fotek) {
         return m ? `<img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />` : '';
     };
     nastavitHtml(kontejner, `
-        <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky" data-stitek="Hodnocení" data-nadpis="Fotky"
+        <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky"
             data-stav-napoveda="1–5 srdíčka · ←/→ listovat · mezerník promítat · Esc konec">
-            <button type="button" class="chip ${razeni() === 'nahodne' ? 'active' : ''}" data-gh-razeni="nahodne" title="Fotky všech modelek zamíchané">Náhodně</button>
-            <button type="button" class="chip ${razeni() === 'modelky' ? 'active' : ''}" data-gh-razeni="modelky" title="Fotky jedné modelky pohromadě, modelky v náhodném pořadí">Po modelkách</button>
             <span>${esc(sklonovat(fotek, 'fotka', 'fotky', 'fotek'))}</span>
         </div>
         <div class="ob-karta gh-panel gh-dlazdice">
@@ -128,13 +136,9 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
     document.addEventListener('click', (e) => {
         const t = /** @type {HTMLElement} */ (e.target);
         if (!kontejner?.contains(t)) return;
-        const volba = /** @type {HTMLElement | null} */ (t.closest('[data-gh-razeni]'));
         const ukazka = /** @type {HTMLElement | null} */ (t.closest('[data-gh-ukazka]'));
         const jedna = /** @type {HTMLElement | null} */ (t.closest('[data-gh-modelka]'));
-        if (volba && volba.dataset.ghRazeni !== razeni()) {
-            try { localStorage.setItem(KLIC_RAZENI, volba.dataset.ghRazeni); } catch { /* jen pro toto spuštění */ }
-            nacistGalerii(kontejner);
-        } else if (ukazka) otevrit(Number(ukazka.dataset.ghUkazka));
+        if (ukazka) otevrit(Number(ukazka.dataset.ghUkazka));
         else if (jedna) otevrit(0, false, polozky.filter(p => p.modelkaId === Number(jedna.dataset.ghModelka)));
         else if (t.closest('[data-gh-prohlizet]')) otevrit();
         else if (t.closest('[data-gh-promitat]')) otevrit(0, true);

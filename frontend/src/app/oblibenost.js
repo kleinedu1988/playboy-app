@@ -36,17 +36,14 @@ import { obnovitSrdickaModelky } from '../ui/srdicka';
 import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
-import { nacistSinSlavy, pripravitSinSlavy } from './sin-slavy';
-import { nacistGalerii, pocetNehodnocenych, pripravitGalerii } from './galerie-hodnoceni';
+import { nacistSinSlavy, nastavitPohledSlavy, pripravitSinSlavy } from './sin-slavy';
+import { hodnotitFotky, nacistGalerii, nastavitRazeniFotek, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
 import { htmlPilulek } from '../ui/pas';
-import { textZbyva } from '../lib/slava';
+import { nazevSezony, textZbyva } from '../lib/slava';
 
 const DVOJIC_NAJEDNOU = 8;
 const PORADI_NAJEDNOU = 25;
-const ROZHODNUTI_NAJEDNOU = 6; // řádků v Čeká na rozhodnutí před „Zobrazit všech“
-const TOP_KOMPAKTNE = 10; // Pořadí ukáže napřed jen Top 10, celé po rozbalení
 const TRENDU = 3; // stoupají a klesají: kolik z každého
-let poradiRozbaleno = false;
 let mistaPred = new Map(); // místa v pořadí před posledním přepočtem (posun v pruhu Dvojice v pořadí)
 const TIPU = 12;
 const PRECHOD_MS = 170;
@@ -114,6 +111,7 @@ function ukazatCastOblibenosti(klic) {
     if (!koren) return;
     koren.dataset.obCast = stav.oblibenostCast;
     nastavitZobrazeni();
+    obnovitPanelHodnoceni();
     if (stav.oblibenostCast === 'slava' && cast('slava')) nacistSinSlavy(cast('slava'));
     if (stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'fotky' && cast('galerie')) nacistGalerii(cast('galerie'));
     vykreslitHlavu();
@@ -121,6 +119,12 @@ function ukazatCastOblibenosti(klic) {
 }
 
 const nastavitZobrazeni = () => { const hd = cast('cast-hodnoceni'); if (hd) hd.dataset.hdZobrazeno = stav.hodnoceniPohled; };
+
+// Panel Hodnocení vpravo (I): tipy, trendy a jak se počítá pořadí – jako Údaje u profilu a panel Sbírky
+const PANELY_HODNOCENI = [['tipy', 'Tipy'], ['trendy', 'Trendy'], ['jak', 'Jak počítám']];
+// Pohledy Pořadí v liště hlavičky: celé pořadí, čekající na rozhodnutí úrovně, nesoulady se srdíčky
+const POHLEDY_PORADI = [['vse', 'Celé pořadí'], ['cekaji', 'Čekají'], ['nesedi', 'Nesedí']];
+let poradiFiltr = 'vse';
 
 // Hodnocení: tři pohledy (Porovnat, Fotky, Pořadí) a Síň slávy; přepínání částí je v liště (#pasStranky)
 const KOSTRA = `
@@ -145,26 +149,33 @@ const KOSTRA = `
     </div>
     <div class="hd-pohled gh" data-hd="fotky" data-ob-galerie></div>
     <div class="hd-pohled" data-hd="poradi" data-ob-cast-poradi>
-        <div class="volby-v-liste" data-volby-casti="hodnoceni-poradi" data-ob-volby-poradi data-stitek="Hodnocení" data-nadpis="Pořadí"></div>
+        <div class="volby-v-liste" data-volby-casti="hodnoceni-poradi" data-ob-volby-poradi></div>
         <div class="ob-karta hz-rozhodnout" data-ob-rozhodnuti></div>
-        <div class="hz-sloupce">
-            <div class="ob-karta hz-poradi" data-ob-sekce-poradi>
-                <h4>Pořadí</h4>
-                <p class="ob-vaha" data-ob-vaha></p>
-                <div data-ob-top></div>
-                <div class="hz-cele" data-ob-poradi></div>
-                <p class="ob-pravidla" data-ob-pravidla></p>
-            </div>
-            <div class="hz-bok">
-                <div class="ob-karta hz-trendy" data-ob-trendy></div>
-                <div class="ob-karta">
-                    <h4>Mohlo by se ti líbit <small>odhad podle tvého vkusu</small></h4>
-                    <p class="ob-info" data-ob-info></p>
-                    <div data-ob-tipy></div>
-                </div>
-            </div>
+        <div class="ob-karta hz-poradi" data-ob-sekce-poradi>
+            <div data-ob-poradi></div>
         </div>
     </div>
+    <aside class="sbirka-panel hd-panel" aria-label="Panel Hodnocení">
+        <div class="sbp-hlava">
+            <nav class="sbp-zalozky" role="tablist" aria-label="Panel Hodnocení">${PANELY_HODNOCENI.map(([klic, nazev]) => `<button type="button" role="tab" data-hd-panel="${klic}">${nazev}</button>`).join('')}</nav>
+            <button type="button" class="sbp-zavrit" data-hd-panel-zavrit title="Zavřít panel (Esc)" aria-label="Zavřít panel">&times;</button>
+        </div>
+        <div class="sbp-telo">
+            <div class="hdp-cast" data-hdp="tipy">
+                <h4>Mohlo by se ti líbit <small>odhad podle tvého vkusu</small></h4>
+                <div data-ob-tipy></div>
+            </div>
+            <div class="hdp-cast hz-trendy" data-hdp="trendy" data-ob-trendy></div>
+            <div class="hdp-cast hdp-jak" data-hdp="jak">
+                <h4>Model vkusu</h4>
+                <p class="ob-info" data-ob-info></p>
+                <h4>Zájem</h4>
+                <p class="ob-vaha" data-ob-vaha></p>
+                <h4>Úrovně Top 10 / 20 / 50 / 100</h4>
+                <p class="ob-pravidla" data-ob-pravidla></p>
+            </div>
+        </div>
+    </aside>
     </div>
     <div class="ob-cast" data-ob-cast-slava><div data-ob-slava></div></div>`;
 
@@ -180,6 +191,7 @@ export async function nacistOblibenost(sekce) {
     }
     koren.dataset.obCast = stav.oblibenostCast;
     nastavitZobrazeni();
+    obnovitPanelHodnoceni();
     vykreslitHlavu();
     if (stav.oblibenostCast === 'slava') nacistSinSlavy(cast('slava'));
     // Fotky se načtou i ve skrytém pohledu: pilulka Fotky ukáže počet nehodnocených
@@ -251,7 +263,6 @@ let navrhPodPasy = ''; // klíč návrhu zobrazeného pod pásy
 let cisloNavrhu = 0;
 
 const NESOULADU_NAJEDNOU = 8;
-let nesouladyVse = false;
 
 // Věta a tlačítka návrhu; nesoulad = položka nesouladu (hodnocená), jinak nehodnocená { porovnani, vyhry }
 function htmlNavrhu(id, navrh, nesoulad, nehodnocena = null) {
@@ -298,20 +309,15 @@ const viditelneNesoulady = () => {
 // Modelky, o jejichž úrovni rozhodnou souboje: čekají na potvrzení, nebo obhajují místo (pořadí z backendu)
 const rozhodujici = () => (data.oblibenost?.poradi || []).filter(p => modelka(p.modelkaId) && (p.ceka || p.obhajoba));
 
-// Čeká na rozhodnutí (nahoře v Pořadí): souboje o úrovně (⚔ Rozhodnout teď) a srdíčka, která nesedí (Dát jí,
-// Nechat, Ověřit porovnáním) – co je potřeba udělat, na jednom místě
+// Pořadí › Čekají (souboje o úroveň s Rozhodnout teď) a Pořadí › Nesedí (Dát jí, Nechat, Ověřit); v Celém pořadí
+// je karta skrytá a pořadí ukazuje čekající štítkem u řádku
 function vykreslitRozhodnuti() {
-    const nesoulady = viditelneNesoulady();
-    const cekajici = rozhodujici();
-    const vse = cekajici.length + nesoulady.length;
     const karta = cast('rozhodnuti');
-    karta?.classList.toggle('hidden', !vse);
-    if (!vse) return nastavitHtml(karta, '');
-    // Napřed souboje (rozhodnou úroveň), pak nesoulady; zkráceně prvních pár
-    let zbyva = nesouladyVse ? Infinity : ROZHODNUTI_NAJEDNOU;
-    const ukazatCekajici = cekajici.slice(0, zbyva);
-    zbyva -= ukazatCekajici.length;
-    const ukazatNesoulady = nesoulady.slice(0, Math.max(0, zbyva));
+    cast('sekce-poradi')?.classList.toggle('hidden', poradiFiltr !== 'vse');
+    karta?.classList.toggle('hidden', poradiFiltr === 'vse');
+    if (!karta || poradiFiltr === 'vse') return;
+    const cekajici = poradiFiltr === 'cekaji' ? rozhodujici() : [];
+    const nesoulady = poradiFiltr === 'nesedi' ? viditelneNesoulady() : [];
     const radekCekajici = p => {
         const m = modelka(p.modelkaId);
         const drzitelka = p.ceka?.drzitelka ? modelka(p.ceka.drzitelka)?.jmeno || '' : '';
@@ -331,11 +337,13 @@ function vykreslitRozhodnuti() {
             <span class="hz-r-ikona trend ${n.smer === 'mene' ? 'dolu' : 'nahoru'}" aria-hidden="true">${n.smer === 'mene' ? '▼' : '▲'}</span>
             <div class="hz-r-obsah">${htmlNavrhu(n.modelkaId, n.navrh, n).html}</div>
         </li>`;
-    nastavitHtml(karta, `<h4>Čeká na rozhodnutí <small>${esc([cekajici.length ? sklonovat(cekajici.length, 'souboj o úroveň', 'souboje o úroveň', 'soubojů o úroveň') : '',
-        nesoulady.length ? `${nesoulady.length} nesedí se srdíčky` : ''].filter(Boolean).join(' · '))}</small></h4>
-        ${ukazatCekajici.length ? `<h5 class="hz-r-skupina">Souboje o úroveň</h5><ul class="hz-r-seznam">${ukazatCekajici.map(radekCekajici).join('')}</ul>` : ''}
-        ${ukazatNesoulady.length ? `<h5 class="hz-r-skupina">Nesedí se srdíčky <small>podle porovnání s modelkami s jinými srdíčky</small></h5><ul class="hz-r-seznam">${ukazatNesoulady.map(radekNesouladu).join('')}</ul>` : ''}
-        ${ukazatCekajici.length + ukazatNesoulady.length < vse ? `<button type="button" class="link ob-vse" data-ob-nesedi-vse>Zobrazit všech ${vse}</button>` : ''}`);
+    if (poradiFiltr === 'cekaji') {
+        nastavitHtml(karta, `<h4>Souboje o úroveň <small>${cekajici.length ? 'potvrdí místo v Top 10 / 20 / 50 / 100 – dvojice jsou i v Porovnat napřed' : ''}</small></h4>
+            ${cekajici.length ? `<ul class="hz-r-seznam">${cekajici.map(radekCekajici).join('')}</ul>` : '<p class="hz-tichy">Nic nečeká – všechna místa v úrovních jsou potvrzená.</p>'}`);
+    } else {
+        nastavitHtml(karta, `<h4>Nesedí se srdíčky <small>${nesoulady.length ? 'podle porovnání s modelkami s jinými srdíčky' : ''}</small></h4>
+            ${nesoulady.length ? `<ul class="hz-r-seznam">${nesoulady.map(radekNesouladu).join('')}</ul>` : '<p class="hz-tichy">Srdíčka sedí s porovnáním.</p>'}`);
+    }
 }
 
 // „Dát jí“: srdíčka se uloží a ukážou všude, kde modelka je; návrh zmizí pod pásy i z Nesedí se srdíčky
@@ -394,6 +402,137 @@ async function nacistNahledy(ids) {
     await Promise.all([...new Set(ids)].map(id => nacitaniNahledu.get(id)).filter(Boolean));
 }
 
+// ——— Hlavička Hodnocení (jeden panel v hlavičce okna jako Sbírka a profil modelky) ———
+// Kruh „dnes“, čísla, okénka Top 10 a Sezóna (proklik do Síně slávy), akce, přepínače panelu a lišta: části
+// Porovnat · Fotky · Pořadí · Síň slávy a vpravo pohledy zvolené části. Po odrolování jeden řádek a lišta.
+let hlava = null;
+const hlavaVidet = () => Boolean(koren?.isConnected) && !stats.classList.contains('hidden') && stav.rezim === 'prehled'
+    && stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'hodnoceni';
+
+function htmlHlavyHodnoceni() {
+    const p = postupDne(porovnaniDnes);
+    const { nCekaji, nesouladu, fotek } = poctyOblibenosti();
+    const poradi = (data.oblibenost?.poradi || []).filter(x => modelka(x.modelkaId));
+    const cislo = (n, text, trida = '') => `<span${trida ? ` class="${trida}"` : ''}><b>${(n || 0).toLocaleString('cs-CZ')}</b> ${esc(text)}</span>`;
+    const krestni = id => String(modelka(id)?.jmeno || '').split(' ')[0];
+    const avatar = id => {
+        const m = modelka(id);
+        return m ? `<img src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />` : '';
+    };
+    const top = poradi.slice(0, 10);
+    const okenkoTop = top.length ? `<button type="button" class="sh-oblast hd-okenko" data-hd-slava="top" title="Top 10 v Síni slávy">
+            <span>Top 10</span><span class="hd-avatary">${top.slice(0, 5).map(x => avatar(x.modelkaId)).join('')}</span><small>1. ${esc(krestni(top[0].modelkaId))}</small></button>` : '';
+    const sz = sezonaVolby;
+    const vede = sz?.poradi?.find(b => b.misto === 1 && modelka(b.modelkaId));
+    const okenkoSezony = sz?.dni ? `<button type="button" class="sh-oblast hd-okenko" data-hd-slava="sezona" title="Sezóna v Síni slávy">
+            <span>Sezóna ${esc(nazevSezony(sz.mesic).split(' ')[0])}</span><b>${vede ? `♛ ${esc(krestni(vede.modelkaId))}` : '—'}</b><i><em style="width:${Math.round(sz.den / sz.dni * 100)}%"></em></i><small>${esc(textZbyva(sz.den, sz.dni))}</small></button>` : '';
+    const cekajici = rozhodujici();
+    const akce = [
+        cekajici.length ? `<button type="button" class="volba akcent" data-hd-akce="rozhodnout" title="${esc(`Souboje, které rozhodnou úroveň – ${modelka(cekajici[0].modelkaId).jmeno} první`)}"><b>⚔ Rozhodnout čekající</b></button>` : '',
+        fotek ? '<button type="button" class="volba" data-hd-akce="fotky"><b>Hodnotit fotky</b></button>' : '',
+        fotek ? '<button type="button" class="volba" data-hd-akce="promitat" title="Prohlížeč s promítáním nehodnocených fotek"><b>▶ Promítat</b></button>' : '',
+        nesouladu ? '<button type="button" class="volba" data-hd-akce="overit" title="Modelky, kterým podle porovnání nesedí srdíčka"><b>Ověřit srdíčka</b></button>' : '',
+    ].join('');
+    const casti = [['porovnat', 'Porovnat'], ['fotky', 'Fotky'], ['poradi', 'Pořadí']];
+    const tlacitkoPohledu = (klic, nazev, zvoleny, atribut) =>
+        `<button type="button" class="${klic === zvoleny ? 'on' : ''}" ${atribut}="${klic}" aria-pressed="${klic === zvoleny}">${nazev}</button>`;
+    const pohledy = stav.hodnoceniPohled === 'poradi'
+        ? POHLEDY_PORADI.map(([klic, nazev]) => tlacitkoPohledu(klic, nazev, poradiFiltr, 'data-hd-poradi')).join('')
+        : stav.hodnoceniPohled === 'fotky'
+            ? [['nahodne', 'Náhodně'], ['modelky', 'Po modelkách']].map(([klic, nazev]) => tlacitkoPohledu(klic, nazev, razeniFotek(), 'data-hd-razeni')).join('')
+            : '';
+    const textCekaji = nCekaji === 1 ? 'čeká' : nCekaji < 5 ? 'čekají' : 'čeká';
+    return `<div class="sh-obsah">
+            <div class="sh-kruh" style="--p:${Math.min(100, Math.round(p.hotovo / p.cil * 100))}" title="${esc(`Dnes ${sklonovat(p.hotovo, 'porovnání', 'porovnání', 'porovnání')} z ${p.cil}`)}"><b>${p.hotovo}/${p.cil}</b><small>dnes</small></div>
+            <div class="sh-identita"><h2>Hodnocení</h2>
+                <div class="sh-cisla">${cislo(poradi.length, 'v pořadí')}${cislo(poradi.filter(x => modelka(x.modelkaId).hodnoceni > 0).length, 'se srdíčky')}${cislo(fotek, `${sklonovat(fotek, 'fotka', 'fotky', 'fotek').replace(/^\S+ /, '')} bez srdíček`)}${nCekaji ? cislo(nCekaji, textCekaji, 'sh-ukoly') : ''}</div></div>
+            <div class="sh-oblasti">${okenkoTop}${okenkoSezony}</div>
+        </div>
+        <div class="sh-akce">
+            ${akce}${akce ? '<span class="sh-oddelovac" aria-hidden="true"></span>' : ''}
+            ${PANELY_HODNOCENI.map(([klic, nazev]) => `<button type="button" class="volba ${stav.hodnoceniPanel === klic ? 'zapnuto' : ''}" data-hd-panel="${klic}" aria-pressed="${stav.hodnoceniPanel === klic}" title="Panel vpravo (I)">${nazev}</button>`).join('')}
+        </div>
+        <div class="sh-lista">
+            <div class="sh-filtry" role="tablist" aria-label="Části hodnocení">${casti.map(([klic, nazev]) =>
+                `<button type="button" role="tab" class="sh-filtr ${klic === stav.hodnoceniPohled ? 'on' : ''}" aria-selected="${klic === stav.hodnoceniPohled}" data-zobrazeni-prehledu="${klic}">${nazev}</button>`).join('')}<button type="button" role="tab" class="sh-filtr" aria-selected="false" data-cast-modelek-pas="slava">Síň slávy</button></div>
+            <div class="sh-pohledy" role="group" aria-label="Pohled části">${pohledy}</div>
+        </div>`;
+}
+
+export function obnovitHlavuHodnoceni() {
+    if (!hlava) return;
+    const videt = hlavaVidet();
+    hlava.classList.toggle('hidden', !videt);
+    if (!videt) {
+        document.querySelector('.navbar')?.classList.remove('hodnoceni-svinuta');
+        return;
+    }
+    nastavitHtml(hlava, htmlHlavyHodnoceni());
+}
+
+// Panel vpravo: '' zavře, stejný klíč znovu zavře; pamatuje se otevřený i naposledy otevřený (pro I)
+function nastavitPanelHodnoceni(klic) {
+    stav.hodnoceniPanel = klic === stav.hodnoceniPanel ? '' : klic;
+    try {
+        localStorage.setItem('hodnoceniPanel', stav.hodnoceniPanel);
+        if (stav.hodnoceniPanel) localStorage.setItem('hodnoceniPanelPosledni', stav.hodnoceniPanel);
+    } catch { /* jen pro toto spuštění */ }
+    obnovitPanelHodnoceni();
+    obnovitHlavuHodnoceni();
+}
+
+function obnovitPanelHodnoceni() {
+    const hd = cast('cast-hodnoceni');
+    if (!hd) return;
+    hd.dataset.hdPanel = stav.hodnoceniPanel;
+    hd.querySelectorAll('.hd-panel [data-hd-panel]').forEach(b => b.setAttribute('aria-selected', String(/** @type {HTMLElement} */ (b).dataset.hdPanel === stav.hodnoceniPanel)));
+}
+
+function nastavitPoradiFiltr(klic) {
+    poradiFiltr = klic;
+    vykreslitRozhodnuti();
+    obnovitHlavuHodnoceni();
+}
+
+function pripravitHlavuHodnoceni() {
+    hlava = document.createElement('div');
+    hlava.id = 'hodnoceniHlava';
+    hlava.className = 'sbirka-hlava hodnoceni-hlava hidden';
+    document.getElementById('albumNav')?.before(hlava);
+    hlava.addEventListener('click', (e) => {
+        const cil = /** @type {HTMLElement} */ (e.target);
+        const akce = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-akce]'))?.dataset.hdAkce;
+        const panel = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-panel]'));
+        const slava = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-slava]'));
+        const filtr = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-poradi]'));
+        const razeni = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-razeni]'));
+        if (panel) nastavitPanelHodnoceni(panel.dataset.hdPanel);
+        else if (filtr) nastavitPoradiFiltr(filtr.dataset.hdPoradi);
+        else if (razeni) nastavitRazeniFotek(razeni.dataset.hdRazeni);
+        else if (slava) {
+            // Okénko Top 10 / Sezóna: Síň slávy na tom pohledu
+            nastavitPohledSlavy(slava.dataset.hdSlava);
+            /** @type {HTMLElement | null} */ (hlava.querySelector('[data-cast-modelek-pas="slava"]'))?.click();
+        } else if (akce === 'rozhodnout') {
+            const prvni = rozhodujici()[0];
+            if (prvni) rozhodnoutTed(prvni.modelkaId);
+        } else if (akce === 'fotky' || akce === 'promitat') {
+            if (stav.hodnoceniPohled !== 'fotky') ukazatCastOblibenosti('fotky');
+            hodnotitFotky(akce === 'promitat');
+        } else if (akce === 'overit') {
+            if (stav.hodnoceniPohled !== 'poradi') ukazatCastOblibenosti('poradi');
+            nastavitPoradiFiltr('nesedi');
+        }
+    });
+    const navbar = document.querySelector('.navbar');
+    const main = document.querySelector('main');
+    main?.addEventListener('scroll', () => {
+        if (hlava.classList.contains('hidden')) return;
+        if (main.scrollTop > 60) navbar.classList.add('hodnoceni-svinuta');
+        else if (main.scrollTop < 20) navbar.classList.remove('hodnoceni-svinuta');
+    }, { passive: true });
+}
+
 // ——— Vykreslení ———
 
 export function poctyOblibenosti() {
@@ -449,8 +588,7 @@ function vykreslitVolbyPorovnat() {
 
 // Hotovo dnes: počet porovnání v liště voleb
 function vykreslitDnes() {
-    vykreslitVolbyPorovnat();
-    document.dispatchEvent(new CustomEvent('volby-prehledu'));
+    vykreslitHlavu();
 }
 
 // Dvojice v pořadí: místa obou modelek a jejich sousedek (zvýrazněné), úroveň, posun po posledním přepočtu
@@ -475,6 +613,7 @@ function vykreslitVPoradi(d) {
 function vykreslitHlavu() {
     vykreslitVolbyPorovnat();
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
+    obnovitHlavuHodnoceni();
 }
 
 function vykreslitDvojici() {
@@ -551,12 +690,8 @@ function vykreslitPoradi() {
     const o = data.oblibenost;
     const poradi = (o?.poradi || []).filter(p => modelka(p.modelkaId));
     nastavitText(cast('vaha'), o && poradi.length ? textVahyZajmu(o) : '');
-    // Napřed kompaktně Top 10, celé pořadí s úrovněmi po přepnutí v liště pod hledáním (Top 10 / Celé pořadí)
-    cast('sekce-poradi')?.classList.toggle('rozbaleno', poradiRozbaleno);
-    const lzeRozbalit = poradi.length > TOP_KOMPAKTNE || poradi.some(p => p.ceka || p.obhajoba);
-    nastavitHtml(cast('volby-poradi'), (lzeRozbalit ? [['top', 'Top 10', !poradiRozbaleno], ['vse', 'Celé pořadí', poradiRozbaleno]]
-        .map(([klic, nazev, on]) => `<button type="button" class="chip ${on ? 'active' : ''}" data-poradi-rozsah="${klic}">${nazev}</button>`).join('') : '')
-        + htmlStavuPoradi(poradi));
+    // Celé pořadí s úrovněmi (Top 10 je v Síni slávy); pohledy Celé · Čekají · Nesedí jsou v liště hlavičky
+    nastavitHtml(cast('volby-poradi'), htmlStavuPoradi(poradi));
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     vykreslitTrendy(poradi, o);
     // Čekající na potvrzení úrovně ukazuje hlavička Hodnocení (odkaz do Porovnávání, kde jsou dvojice o potvrzení
@@ -564,11 +699,9 @@ function vykreslitPoradi() {
     nastavitText(cast('pravidla'), poradi.length ? textPravidelUrovni(o?.urovne) : '');
     // Pořadí dávají srdíčka už bez porovnání; prázdné je jen bez hodnocených modelek
     if (!poradi.length) {
-        nastavitHtml(cast('top'), htmlPrazdna('Pořadí vznikne z porovnávání', 'Po pár porovnáních tu uvidíš, které modelky máš nejradši – jemněji, než ukážou srdíčka.', { ikona: 'hvezda' }));
-        nastavitHtml(cast('poradi'), '');
+        nastavitHtml(cast('poradi'), htmlPrazdna('Pořadí vznikne z porovnávání', 'Po pár porovnáních tu uvidíš, které modelky máš nejradši – jemněji, než ukážou srdíčka.', { ikona: 'hvezda' }));
         return;
     }
-    vykreslitTop(poradi, o);
     const ukazat = poradiVse ? poradi : poradi.slice(0, PORADI_NAJEDNOU);
     const pruhy = pruhySily(poradi);
     // Řádek modelky; i = index v celém pořadí (pruhy síly)
@@ -614,24 +747,6 @@ function vykreslitPoradi() {
 
 const cislo = n => (Number(n) || 0).toLocaleString('cs-CZ', { maximumFractionDigits: 2 });
 
-// Kompaktní Top 10: dva sloupce řádků (místo, náhled, jméno se srdíčky, trend); čekající na potvrzení úrovně
-// tlumeně s ⏳
-function vykreslitTop(poradi, o) {
-    const misto = cast('top');
-    nastavitHtml(misto, `<ol class="hz-top">${poradi.slice(0, TOP_KOMPAKTNE).map((p, i) => {
-        const m = modelka(p.modelkaId);
-        const trend = p.zmenaPoradi && o?.trendDni ? `<span class="trend ${p.zmenaPoradi > 0 ? 'nahoru' : 'dolu'}">${p.zmenaPoradi > 0 ? '▲' : '▼'}${Math.abs(p.zmenaPoradi)}</span>` : '';
-        const ceka = p.ceka ? textCekani(p.ceka) : '';
-        return `<li><button type="button" class="hz-top-radek ${ceka ? 'ceka' : ''}" data-otevrit-modelku="${m.id}" title="${esc(ceka ? `${m.jmeno}: ${ceka}` : m.jmeno)}">
-            <span class="hz-top-misto">${p.poradi || i + 1}</span>
-            <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
-            <span class="hz-top-jmeno">${esc(m.jmeno)}<small>${m.hodnoceni ? `<i>${znakySrdicek(m.hodnoceni)}</i>` : 'bez srdíček'}${ceka ? ' · ⏳ čeká' : ''}</small></span>
-            ${trend}
-        </button></li>`;
-    }).join('')}</ol>`);
-    nacitatPostupne(misto);
-}
-
 // Stoupají / klesají proti snímku pořadí před trendDni dny (historii si program vede sám, jednou denně), s fotkami
 function vykreslitTrendy(poradi, o) {
     const { stoupaji, klesaji } = stoupajiKlesaji(poradi, TRENDU);
@@ -648,7 +763,7 @@ function vykreslitTrendy(poradi, o) {
     nastavitHtml(cast('trendy'), `<h4>Stoupají a klesají${o?.trendDni ? ` <small>${kdy}</small>` : ''}</h4>
         ${ma ? `${stoupaji.length ? seznam(stoupaji, 'nahoru', '▲') : ''}${klesaji.length ? seznam(klesaji, 'dolu', '▼') : ''}`
             : `<p class="hz-tichy">${o?.trendDni ? `Nikdo se výrazně nepohnul ${kdy}.` : 'Trend se ukáže za pár dní: program si každý den pamatuje pořadí.'}</p>`}`);
-    nacitatPostupne(cast('trendy'));
+    nacitatPostupne(cast('trendy'), { root: null }); // panel je fixed: hlídá se vůči oknu
 }
 
 function vykreslitTipy() {
@@ -669,7 +784,7 @@ function vykreslitTipy() {
             ${htmlSrdicka(m)}
         </div>`;
     }).join('')}</div>`);
-    nacitatPostupne(cast('tipy'));
+    nacitatPostupne(cast('tipy'), { root: null });
 }
 
 // ——— Porovnání ———
@@ -863,6 +978,9 @@ export function pripravit() {
     } catch { /* výchozí */ }
     nastavitCastOblibenosti(ulozena);
 
+    try { stav.hodnoceniPanel = localStorage.getItem('hodnoceniPanel') || ''; } catch { /* zavřený */ }
+    if (!PANELY_HODNOCENI.some(([klic]) => klic === stav.hodnoceniPanel)) stav.hodnoceniPanel = '';
+    pripravitHlavuHodnoceni();
     pripravitSinSlavy();
     sledovatPomerFotek();
     // Nový počet nehodnocených fotek ukáže pilulka Fotky a odkazy v hlavičce
@@ -878,17 +996,39 @@ export function pripravit() {
         else if (e.target.closest('[data-ob-serie-poradi]')) { ukoncitSerii(); ukazatCastOblibenosti('poradi'); }
         else if (e.target.closest('[data-hd-pohled]')) {
             const pohled = e.target.closest('[data-hd-pohled]').dataset.hdPohled;
+            // Odkaz do Pořadí je upozornění na nesoulad srdíček: otevře Pořadí › Nesedí
+            if (pohled === 'poradi') poradiFiltr = 'nesedi';
             if (pohled !== stav.hodnoceniPohled) ukazatCastOblibenosti(pohled);
+            if (pohled === 'poradi') nastavitPoradiFiltr(poradiFiltr);
+        }
+        else if (e.target.closest('[data-hd-panel-zavrit]')) nastavitPanelHodnoceni('');
+        else if (e.target.closest('.hd-panel [data-hd-panel]')) {
+            const klic = e.target.closest('[data-hd-panel]').dataset.hdPanel;
+            if (klic !== stav.hodnoceniPanel) nastavitPanelHodnoceni(klic);
         }
         else if (e.target.closest('[data-ob-preskocit]')) preskocit();
         else if (e.target.closest('[data-ob-vratit]')) vratit();
         else if (e.target.closest('[data-ob-navrh-ano]')) prijmoutNavrh(e.target.closest('[data-ob-navrh-ano]').dataset.obNavrhAno);
         else if (e.target.closest('[data-ob-navrh-ne]')) odmitnoutNavrh(e.target.closest('[data-ob-navrh-ne]').dataset.obNavrhNe);
         else if (e.target.closest('[data-ob-poradi-vse]')) { poradiVse = true; vykreslitPoradi(); }
-        else if (e.target.closest('[data-poradi-rozsah]')) { poradiRozbaleno = e.target.closest('[data-poradi-rozsah]').dataset.poradiRozsah === 'vse'; vykreslitPoradi(); }
         else if (e.target.closest('[data-ob-porovnavat]')) ukazatCastOblibenosti('porovnat');
-        else if (e.target.closest('[data-ob-nesedi-vse]')) { nesouladyVse = true; vykreslitRozhodnuti(); }
     });
+
+    // Panel Hodnocení: I otevře naposledy otevřený (nebo zavře), Esc zavře
+    document.addEventListener('keydown', (e) => {
+        if (!hlavaVidet() || e.ctrlKey || e.altKey || e.metaKey || stav.zamceno || otevreneOkno() || jeVidet('lightbox')
+            || /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select, [contenteditable]')) return;
+        if (e.key.toLowerCase() === 'i' && !e.shiftKey) {
+            e.preventDefault();
+            let posledni = 'tipy';
+            try { posledni = localStorage.getItem('hodnoceniPanelPosledni') || 'tipy'; } catch { /* výchozí */ }
+            nastavitPanelHodnoceni(stav.hodnoceniPanel ? '' : posledni);
+        } else if (e.key === 'Escape' && stav.hodnoceniPanel && !document.querySelector('.context-menu:not(.hidden), .volby-panel:not(.hidden)')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            nastavitPanelHodnoceni('');
+        }
+    }, true);
 
     // Klávesy porovnání, když je Oblíbenost vidět a nepíše se ani nehodnotí srdíčky (zaměřená srdíčka mají šipky)
     document.addEventListener('keydown', (e) => {

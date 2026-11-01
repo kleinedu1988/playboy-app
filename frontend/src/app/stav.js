@@ -68,6 +68,7 @@ export const stav = {
     sbirkaPanel: '', // otevřený panel vpravo ve Sbírce: '', 'cisla' (Mapa čísel a Sháním CZ), 'statistiky', 'uceni'
     oblibenostCast: 'hodnoceni', // stránka Oblíbenosti (tlačítko v liště): 'hodnoceni' nebo 'slava'
     hodnoceniPohled: 'porovnat', // pohled části Hodnocení (pilulky v obsahu): 'porovnat', 'fotky' nebo 'poradi'
+    hodnoceniPanel: '', // otevřený panel vpravo v Hodnocení: '', 'tipy', 'trendy', 'jak'
     udrzbaFiltr: 'vse', // filtr fronty v Souhrnu Údržby (vse, titulni, udaje, cover…)
     udrzbaZdroj: '', // zdroj návrhů nebo nálezů kontroly ve filtru ('' = všechny)
     udrzbaHledat: '', // hledání jména modelky nebo čísla v Údržbě

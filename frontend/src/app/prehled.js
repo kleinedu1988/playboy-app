@@ -1,6 +1,6 @@
 // Přehled: stránka Sbírka (úvod, Údržba, Sháním CZ, Statistiky, Porovnat, Hodnotit fotky, Pořadí)
 import { GetKalendar, GetPrehled, GetStavyVydani, SetStavVydani } from './backend';
-import { nacistOblibenost, nastavitCastOblibenosti, nastavitNejlepsiVOblibenosti, poctyOblibenosti, ukazatStrankuOblibenosti } from './oblibenost';
+import { nacistOblibenost, nastavitCastOblibenosti, nastavitNejlepsiVOblibenosti, obnovitHlavuHodnoceni, poctyOblibenosti, ukazatStrankuOblibenosti } from './oblibenost';
 import { nacistNejlepsi } from './nejlepsi';
 import { nacistGalerii } from './galerie';
 import { zrusitHledani } from './naseptavac';
@@ -46,6 +46,8 @@ export function htmlPasuModelek(pohled) {
 export function htmlPasuHodnoceni() {
     const { pocty } = poctyOblibenosti();
     const vHodnoceni = stav.oblibenostCast === 'hodnoceni';
+    // Hodnocení má části v liště své hlavičky (oblibenost.js); Síň slávy zatím pilulky v kapsli
+    if (vHodnoceni) return '';
     const pohledy = [['porovnat', 'Porovnat'], ['fotky', 'Fotky'], ['poradi', 'Pořadí']].map(([klic, nazev]) =>
         ({ klic, nazev, pocet: pocty[klic][0], titulek: pocty[klic][1], zvolena: vHodnoceni && stav.hodnoceniPohled === klic }));
     const slava = [{ klic: 'slava', nazev: 'Síň slávy', titulek: 'Nejlepší desítka, legendy, odznaky, rekordy, kronika a sezóna', zvolena: !vHodnoceni }];
@@ -199,6 +201,7 @@ function obnovitCasti() {
         obnovitPasHlavicky(stats);
         obnovitVolby(stats);
         udrzba.obnovitHlavuSbirky();
+        obnovitHlavuHodnoceni();
         zvyraznitRezim();
         nastavitHledani();
     } else if (stav.rezim === 'nejlepsi' && !best.classList.contains('hidden')) {

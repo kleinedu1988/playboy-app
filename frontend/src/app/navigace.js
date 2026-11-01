@@ -16,7 +16,7 @@ import { hledaniFiltruje, zrusitHledani } from './naseptavac';
 import { zavritPanelFiltru } from './filtr-modelek';
 import { obnovitHlavuSbirky } from './udrzba';
 import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
-import { nastavitCastOblibenosti } from './oblibenost';
+import { nastavitCastOblibenosti, obnovitHlavuHodnoceni } from './oblibenost';
 import { obnovitPasHlavicky } from './prehled';
 
 // Přehledy se seznamy (galerie, stěna, čísla, kalendář, nejlepší) se při každém zobrazení vykreslují celé znovu.
@@ -68,6 +68,7 @@ export function ukazatPohled(pohled) {
     // Lišta alb profilu je ve druhém řádku hlavičky; jinde ji nikdo nenaplní, proto se skryje (a režim výběru skončí)
     document.getElementById('profilPruh')?.classList.toggle('hidden', pohled !== detailView);
     obnovitHlavuSbirky();
+    obnovitHlavuHodnoceni();
     if (pohled !== detailView) document.querySelector('.navbar')?.classList.remove('profil-svinuty');
     if (pohled !== detailView) {
         document.getElementById('albumNav')?.classList.add('hidden');

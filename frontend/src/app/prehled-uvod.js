@@ -3,7 +3,6 @@
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
 import { MESICE, RADY_EDIC, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
 import { adresaTitulni } from './obrazky';
-import { htmlPrazdna } from '../ui/prazdno';
 
 // Mapy začínají prvním číslem edice (RADY_EDIC); měsíce mimo měsíční řadu jsou v nich prázdné
 const PRVNI_ROK_CZ = parseInt(RADY_EDIC.CZ.od);
@@ -159,7 +158,7 @@ export function htmlShanim(stavy, modelky = []) {
         ${cisla.length ? `<div class="uvod-karta uvod-shanim">${[...podleRoku].map(([rok, seznam]) => `
             <div class="uvod-shanim-rok"><b>${rok}</b><div>${seznam.map(s => `
                 <button type="button" class="chip" data-shanim="${esc(s.vydani)}" title="${esc(nazevVydani(s.vydani) + (s.poznamka ? ` – ${s.poznamka}` : ''))}">${esc(nazevVydani(s.vydani).replace(/ \d{4}.*$/, ''))}${s.poznamka ? `<small>${esc(s.poznamka)}</small>` : ''}</button>`).join('')}</div></div>`).join('')}
-        </div>` : htmlPrazdna('Nic nesháníš', 'Žádné číslo české edice nemá stav „sháním“. Označíš ho v mapě na úvodu Sbírky pravým tlačítkem, v kalendáři nebo v „Upravit číslo…“.', { ikona: 'hledani' })}`;
+        </div>` : '<p class="uvod-shanim-nic"><b>Nic nesháníš.</b> Číslo označíš jako sháněné pravým tlačítkem v mapě níže, v kalendáři nebo v „Upravit číslo…“.</p>'}`;
 }
 
 // Text seznamu k vložení do zprávy nebo poznámek (např. pro antikvariát)

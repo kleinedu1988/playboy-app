@@ -22,7 +22,7 @@ const CASTI = [
         [`${k('3')} ${k('3')}`, 'U modelky stejná číslice znovu přidá půlku (3½; u pětky 4½)'],
         [k('←', '→'), 'Zaměřená srdíčka modelky po půlce (profil, Hodnocení)'],
         [k('←', '→'), 'Části stránky, když je zaměřená pilulka pásu (Hodnocení, Síň slávy, Sbírka) nebo volba pod hledáním'],
-        [k('←', '↑', '→', '↓'), 'Pohyb v mapě edice (Sbírka › Mapa čísel)'],
+        [k('←', '↑', '→', '↓'), 'Pohyb v mapě edice (Sbírka › panel Čísla a sháním)'],
         [`${k('Shift', 'F10')}`, 'Nabídka akcí (jako pravé tlačítko)'],
     ] },
     { klic: 'hledani', nazev: 'Výsledky hledání', radky: [
@@ -66,6 +66,7 @@ const CASTI = [
         [k('Esc'), 'Zavřít vitrínu'],
     ] },
     { klic: 'udrzba-souhrn', nazev: 'Údržba – Souhrn', radky: [
+        [k('I'), 'Panel vpravo: Čísla a sháním, Statistiky, Učení (Esc zavře)'],
         [k('↑', '↓'), 'Předchozí a další řádek (i položky rozbalené skupiny)'],
         [k('→', '←'), 'Rozbalit a sbalit skupinu'],
         [k('Enter'), 'Hlavní akce: doplnit, opravit, přijmout návrh'],

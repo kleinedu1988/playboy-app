@@ -64,7 +64,8 @@ export const stav = {
     doplnovanyRadek: null,
     doplnovaneHodnoceni: 0,
     doplnovanaTitulni: 0, // id fotky vybrané jako titulní
-    prehledSekce: 'uvod', // ukázaná část Přehledu: uvod, udrzba, oblibenost, shanim, statistiky
+    prehledSekce: 'udrzba', // ukázaná část Přehledu: udrzba (Sbírka) nebo oblibenost (Hodnocení)
+    sbirkaPanel: '', // otevřený panel vpravo ve Sbírce: '', 'cisla' (Mapa čísel a Sháním CZ), 'statistiky', 'uceni'
     oblibenostCast: 'hodnoceni', // stránka Oblíbenosti (tlačítko v liště): 'hodnoceni' nebo 'slava'
     hodnoceniPohled: 'porovnat', // pohled části Hodnocení (pilulky v obsahu): 'porovnat', 'fotky' nebo 'poradi'
     udrzbaFiltr: 'vse', // filtr fronty v Souhrnu Údržby (vse, titulni, udaje, cover…)

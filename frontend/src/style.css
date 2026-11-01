@@ -16157,3 +16157,155 @@ body.rezim-vyberu #detailView .poster {
     background-color: var(--accent);
     color: #fff;
 }
+
+/* ===== Panel Sbírky vpravo (prehled.js): Čísla a sháním (Sháním CZ + mapy), Statistiky, Učení – jako Údaje u profilu ===== */
+.sbirka-panel {
+    position: fixed;
+    top: calc(var(--pod-hlavickou, 92px) + 12px);
+    right: 16px;
+    bottom: 46px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    width: min(620px, 46vw);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    background-color: rgba(26, 26, 30, 0.9);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+    transform: translateX(calc(100% + 24px));
+    visibility: hidden;
+    transition: transform 0.22s ease, visibility 0s 0.22s;
+}
+
+.prehled-obsah:is([data-panel="cisla"], [data-panel="statistiky"], [data-panel="uceni"]) > .sbirka-panel {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease;
+}
+
+.prehled-obsah[data-sekce-ukazana="udrzba"]:is([data-panel="cisla"], [data-panel="statistiky"], [data-panel="uceni"]) > [data-sekce="udrzba"] {
+    margin-right: calc(min(620px, 46vw) + 16px);
+}
+
+.prehled-obsah[data-sekce-ukazana="oblibenost"] > .sbirka-panel {
+    display: none;
+}
+
+.sbp-hlava {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 10px 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sbp-zalozky {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+}
+
+.sbp-zalozky button,
+.sbp-zavrit {
+    height: 28px;
+    padding: 0 13px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sbp-zalozky button:hover,
+.sbp-zavrit:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.sbp-zalozky button[aria-selected="true"] {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.sbp-zavrit {
+    margin-left: auto;
+    width: 30px;
+    padding: 0;
+    font-size: 18px;
+}
+
+.sbp-telo {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 14px 16px 18px;
+    overflow-y: auto;
+}
+
+.sbp-telo > .stat-section,
+.sbp-telo > .sbp-uceni {
+    display: none;
+    margin: 0;
+}
+
+.prehled-obsah[data-panel="cisla"] .sbp-telo > [data-sekce="shanim"],
+.prehled-obsah[data-panel="cisla"] .sbp-telo > [data-sekce="uvod"],
+.prehled-obsah[data-panel="statistiky"] .sbp-telo > [data-sekce="statistiky"],
+.prehled-obsah[data-panel="uceni"] .sbp-telo > .sbp-uceni {
+    display: block;
+}
+
+.prehled-obsah[data-panel="cisla"] .sbp-telo > [data-sekce="shanim"] {
+    margin-bottom: 18px;
+}
+
+/* V užším panelu jsou karty Statistik a mapy čísel pod sebou; mapy se posouvají do stran */
+.sbp-telo .sp-telo {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.sbp-telo .uvod-karta {
+    overflow-x: auto;
+}
+
+/* Co se program naučil je v panelu; nad frontou se neopakuje */
+.ud-souhrn .ud-hlava {
+    display: none;
+}
+
+@media (max-width: 860px) {
+    .sbirka-panel {
+        left: 16px;
+        width: auto;
+    }
+
+    .prehled-obsah[data-sekce-ukazana="udrzba"]:is([data-panel="cisla"], [data-panel="statistiky"], [data-panel="uceni"]) > [data-sekce="udrzba"] {
+        margin-right: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sbirka-panel,
+    .prehled-obsah:is([data-panel="cisla"], [data-panel="statistiky"], [data-panel="uceni"]) > .sbirka-panel {
+        transition: none;
+    }
+}
+
+.uvod-shanim-nic {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.uvod-shanim-nic b {
+    color: var(--text-main);
+}

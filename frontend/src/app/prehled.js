@@ -16,7 +16,7 @@ import { htmlShanim, htmlUvodu, shanenaCisla, textShanim } from './prehled-uvod'
 import { otevritVydani } from './vydani';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { oznamit } from '../ui/oznameni';
-import { nastavitHtml } from '../ui/dom';
+import { nastavitHtml, otevreneOkno } from '../ui/dom';
 import { obnovitVolby } from '../ui/volby';
 import { nacistNavrhy } from './navrhy';
 import { nacistUceni } from './uceni';
@@ -95,19 +95,54 @@ export function obnovitPasHlavicky(pohled) {
 
 // Která volba v liště pod záložkami patří ukázané části: skrytý řádek štítků s data-volby-casti (ui/volby.js)
 function klicVoleb() {
+    // Otevřený panel Sbírky má volby v kapsli nahoře (graf Statistik, Kopírovat seznam u Sháním CZ)
+    if (stav.prehledSekce !== 'oblibenost' && stav.sbirkaPanel === 'statistiky') return 'statistiky';
+    if (stav.prehledSekce !== 'oblibenost' && stav.sbirkaPanel === 'cisla') return 'shanim';
     if (stav.prehledSekce !== 'oblibenost') return stav.prehledSekce;
     return stav.oblibenostCast === 'slava' ? `slava-${pohledSlavy()}` : `hodnoceni-${stav.hodnoceniPohled}`;
 }
 
+// Sbírka: Údržba je obsah stránky, Mapa čísel se Sháním CZ, Statistiky a Učení jsou ve výsuvném panelu vpravo
+// (jako Údaje u profilu modelky); panel ukazuje to, co říká data-panel na .prehled-obsah
+const PANELY_SBIRKY = [['cisla', 'Čísla a sháním'], ['statistiky', 'Statistiky'], ['uceni', 'Učení']];
+// Dřívější části Sbírky (pilulky, mapa sekcí, odkazy) → panel
+const PANEL_CASTI = { uvod: 'cisla', shanim: 'cisla', statistiky: 'statistiky' };
 const KOSTRA = `
         <div class="prehled-obsah">
-            <section class="stat-section" data-sekce="uvod"></section>
-            <section class="stat-section" data-sekce="shanim"></section>
             <section class="stat-section" data-sekce="udrzba"></section>
             <section class="stat-section" data-sekce="oblibenost"></section>
-            <!-- Statistiky se počítají až při prvním zobrazení oddílu -->
-            <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="prazdno-male">Počítám statistiky…</p></section>
+            <aside class="sbirka-panel" aria-label="Panel Sbírky">
+                <div class="sbp-hlava">
+                    <nav class="sbp-zalozky" role="tablist" aria-label="Panel Sbírky">${PANELY_SBIRKY.map(([klic, nazev]) => `<button type="button" role="tab" data-sbirka-panel="${klic}">${nazev}</button>`).join('')}</nav>
+                    <button type="button" class="sbp-zavrit" data-sbirka-panel-zavrit title="Zavřít panel (Esc)" aria-label="Zavřít panel">&times;</button>
+                </div>
+                <div class="sbp-telo">
+                    <section class="stat-section" data-sekce="shanim"></section>
+                    <section class="stat-section" data-sekce="uvod"></section>
+                    <!-- Statistiky se počítají až při prvním zobrazení panelu -->
+                    <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="prazdno-male">Počítám statistiky…</p></section>
+                    <div class="sbp-uceni" data-sbirka-uceni></div>
+                </div>
+            </aside>
         </div>`;
+
+// Otevře, přepne nebo zavře panel Sbírky (klic '' = zavřít; stejný klíč znovu = zavřít); pamatuje se
+export function nastavitPanelSbirky(klic) {
+    stav.sbirkaPanel = klic === stav.sbirkaPanel ? '' : klic;
+    try {
+        localStorage.setItem('sbirkaPanel', stav.sbirkaPanel);
+        if (stav.sbirkaPanel) localStorage.setItem('sbirkaPanelPosledni', stav.sbirkaPanel);
+    } catch { /* jen se nezapamatuje */ }
+    zobrazitPanelSbirky();
+    obnovitCasti();
+}
+function zobrazitPanelSbirky() {
+    const obsah = /** @type {HTMLElement | null} */ (stats.querySelector('.prehled-obsah'));
+    if (!obsah) return;
+    obsah.dataset.panel = stav.prehledSekce === 'oblibenost' ? '' : stav.sbirkaPanel;
+    obsah.querySelectorAll('[data-sbirka-panel]').forEach(b => b.setAttribute('aria-selected', String(/** @type {HTMLElement} */ (b).dataset.sbirkaPanel === stav.sbirkaPanel)));
+    if (stav.sbirkaPanel === 'statistiky') nacistStatistiky(obsah.querySelector('[data-sekce="statistiky"]'));
+}
 
 export async function nacistPrehled() {
     const moje = ++stav.cisloNacteni;
@@ -136,14 +171,14 @@ export async function nacistPrehled() {
     nastavitHtml(uvod, '<div class="volby-v-liste" data-volby-casti="uvod"></div>' + htmlUvodu({ kalendar, stavy, modelky: seznamModelek }));
     nastavitHtml(obsah.querySelector('[data-sekce="shanim"]'), htmlShanim(stavy, seznamModelek));
     udrzba.vykreslit();
-    obnovitCasti();
     const sekceStatistik = obsah.querySelector('[data-sekce="statistiky"]');
-    if (stav.prehledSekce === 'statistiky') nacistStatistiky(sekceStatistik);
-    else {
-        // Statistiky se při příštím ukázání spočítají znovu (bez smazané značky by nacistStatistiky skončilo hned)
+    if (stav.sbirkaPanel !== 'statistiky') {
+        // Statistiky se při příštím otevření panelu spočítají znovu (bez smazané značky by nacistStatistiky skončilo hned)
         sekceStatistik.innerHTML = '<p class="prazdno-male">Počítám statistiky…</p>';
         delete sekceStatistik.dataset.nacteno;
     }
+    zobrazitPanelSbirky();
+    obnovitCasti();
     if (stav.prehledSekce === 'oblibenost') nacistOblibenost(obsah.querySelector('[data-sekce="oblibenost"]'));
 }
 
@@ -227,11 +262,34 @@ export function pripravit() {
     pripravitPasy();
     // Oblíbenost změnila svou stránku (Hodnocení, Síň slávy): v liště se rozsvítí její tlačítko
     document.addEventListener('volby-prehledu', obnovitCasti);
+    // Panel Sbírky: tlačítka v hlavičce Sbírky (udrzba.js), záložky a × v panelu, klávesa I, Esc
+    document.addEventListener('panel-sbirky', e => nastavitPanelSbirky(/** @type {CustomEvent} */ (e).detail || ''));
+    stats.addEventListener('click', (e) => {
+        const zalozka = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest('[data-sbirka-panel]'));
+        if (zalozka) {
+            if (zalozka.dataset.sbirkaPanel !== stav.sbirkaPanel) nastavitPanelSbirky(zalozka.dataset.sbirkaPanel);
+        }
+        else if (/** @type {HTMLElement} */ (e.target).closest('[data-sbirka-panel-zavrit]')) nastavitPanelSbirky('');
+    });
+    document.addEventListener('keydown', (e) => {
+        const veSbirce = stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && !stats.classList.contains('hidden');
+        if (!veSbirce || e.ctrlKey || e.altKey || e.metaKey || otevreneOkno() || /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select, [contenteditable]')) return;
+        if (e.key.toLowerCase() === 'i' && !e.shiftKey) {
+            e.preventDefault();
+            let posledni = 'cisla';
+            try { posledni = localStorage.getItem('sbirkaPanelPosledni') || 'cisla'; } catch { /* výchozí */ }
+            nastavitPanelSbirky(stav.sbirkaPanel ? '' : posledni);
+        } else if (e.key === 'Escape' && stav.sbirkaPanel && !document.querySelector('.context-menu:not(.hidden), .volby-panel:not(.hidden)')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            nastavitPanelSbirky('');
+        }
+    }, true);
     // Části Sbírky (Úvod, Údržba, Sháním CZ, Statistiky, Porovnat, Hodnotit fotky, Pořadí), Modelek (Profily, Galerie, Síň slávy)
     // a Čísel (Obálky, Kalendář, Centerfoldy) se přepínají pilulkami v kontextové liště (#pasStranky)
     document.addEventListener('click', (e) => {
         // Klik na pilulku Sbírky
-        const volba = /** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-prehledu]');
+        const volba = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-prehledu]'));
         if (volba) {
             const klic = volba.dataset.zobrazeniPrehledu;
             if (['porovnat', 'fotky', 'poradi'].includes(klic)) {
@@ -250,6 +308,18 @@ export function pripravit() {
                     nacistPrehled();
                 } else {
                     ukazatStrankuOblibenosti(klic);
+                }
+            } else if (PANEL_CASTI[klic]) {
+                // Mapa čísel, Sháním CZ a Statistiky jsou panel Sbírky: otevře se nad Údržbou
+                const panel = PANEL_CASTI[klic];
+                if (stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && !stats.classList.contains('hidden')) {
+                    if (stav.sbirkaPanel !== panel) nastavitPanelSbirky(panel);
+                } else {
+                    stav.sbirkaPanel = panel;
+                    try { localStorage.setItem('sbirkaPanel', panel); } catch { /* jen se nezapamatuje */ }
+                    volba.dataset.zobrazeniPrehledu = 'udrzba';
+                    volba.click();
+                    volba.dataset.zobrazeniPrehledu = klic;
                 }
             } else if (klic) {
                 nastavitNejlepsiVOblibenosti(false);
@@ -326,6 +396,12 @@ export function pripravit() {
         }
     });
     try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'udrzba'; } catch { /* Údržba */ }
+    try { stav.sbirkaPanel = localStorage.getItem('sbirkaPanel') || ''; } catch { /* zavřený */ }
+    // Dřívější části Sbírky jsou panel vpravo nad Údržbou
+    if (PANEL_CASTI[stav.prehledSekce]) {
+        stav.sbirkaPanel = PANEL_CASTI[stav.prehledSekce];
+        stav.prehledSekce = 'udrzba';
+    }
     // Dřívější záložky údržby (Souhrn, Modelky, Čísla, Ke kontrole) jsou teď jedna Údržba
     if (['souhrn', 'modelky', 'vydani', 'kontrola'].includes(stav.prehledSekce)) stav.prehledSekce = 'udrzba';
     // Řádek souhrnu na úvodu otevře Údržbu na daném údaji, odkaz „Údržba →“ v posledním režimu (bez nového načtení)

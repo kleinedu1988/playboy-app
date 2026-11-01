@@ -305,7 +305,7 @@ function htmlHlavySbirky() {
     const filtr = stav.udrzbaFiltr;
     // V jedné řadě s oblastí v názvu, aby se Centerfold modelek a čísel nepletl
     const NAZVY_V_LISTE = { text: 'Texty alb', alba: 'Vydání alb', cover: 'Cover čísel', cfcisla: 'Centerfold čísel' };
-    const vUdrzbe = stav.prehledSekce === 'udrzba';
+    const vUdrzbe = true;
     const pilulky = vUdrzbe && vSouhrnu() ? OBLASTI_FILTRU.flatMap(o => o.filtry).filter(([klic]) => klic === 'vse' || klic === filtr || model.pocty[klic])
         .map(([klic, nazev, popis]) => `<button type="button" class="sh-filtr ${klic === filtr ? 'on' : ''}" data-sh-filtr="${klic}"${popis ? ` title="${esc(popis)}"` : ''}>${esc(NAZVY_V_LISTE[klic] || nazev)}<small>${model.pocty[klic] || 0}</small></button>`).join('') : '';
     return `<div class="sh-obsah">
@@ -321,8 +321,8 @@ function htmlHlavySbirky() {
             <button type="button" class="volba" data-sh-akce="export"><b>Exportovat</b></button>
             <button type="button" class="volba" data-sh-akce="soubory"><b>Zkontrolovat soubory</b></button>
             <span class="sh-oddelovac" aria-hidden="true"></span>
-            ${[['uvod', 'Mapa čísel'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']].map(([klic, nazev]) =>
-                `<button type="button" class="volba ${stav.prehledSekce === klic ? 'zapnuto' : ''}" data-sh-cast="${klic}" aria-pressed="${stav.prehledSekce === klic}">${nazev}</button>`).join('')}
+            ${[['cisla', 'Čísla a sháním'], ['statistiky', 'Statistiky'], ['uceni', 'Učení']].map(([klic, nazev]) =>
+                `<button type="button" class="volba ${stav.sbirkaPanel === klic ? 'zapnuto' : ''}" data-sh-panel="${klic}" aria-pressed="${stav.sbirkaPanel === klic}" title="Panel vpravo (I)">${nazev}</button>`).join('')}
         </div>
         <div class="sh-lista">
             <div class="sh-filtry" role="group" aria-label="Co ukázat ve frontě">${pilulky}${htmlZdrojuHlavy(vUdrzbe)}</div>
@@ -363,24 +363,14 @@ function pripravitHlavuSbirky() {
         const filtr = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-filtr]'));
         const rezim = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-rezim]'));
         const akce = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-akce]'));
-        const castSbirky = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-cast]'));
-        // Část Sbírky přepne stejné tlačítko jako dřív pilulka v navigační kapsli (prehled.js); zvolená část se klikem
-        // zase zavře do Údržby
-        const otevritCastSbirky = (klic) => {
-            const b = document.createElement('button');
-            b.hidden = true;
-            b.dataset.zobrazeniPrehledu = klic;
-            document.body.append(b);
-            b.click();
-            b.remove();
-        };
+        const panelSbirky = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-panel]'));
         const zdroj = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-zdroj]'));
         if (filtr) nastavitFiltr(filtr.dataset.shFiltr);
         else if (zdroj) nastavitFiltr(stav.udrzbaFiltr, zdroj.dataset.shZdroj);
-        else if (rezim) {
-            nastavitRezim(rezim.dataset.shRezim);
-            if (stav.prehledSekce !== 'udrzba') otevritCastSbirky('udrzba');
-        } else if (castSbirky) otevritCastSbirky(stav.prehledSekce === castSbirky.dataset.shCast ? 'udrzba' : castSbirky.dataset.shCast); else if (akce?.dataset.shAkce === 'pridat') {
+        else if (rezim) nastavitRezim(rezim.dataset.shRezim);
+        // Panel vpravo (Čísla a sháním, Statistiky, Učení) otevře prehled.js; stejné tlačítko ho zavře
+        else if (panelSbirky) document.dispatchEvent(new CustomEvent('panel-sbirky', { detail: panelSbirky.dataset.shPanel }));
+        else if (akce?.dataset.shAkce === 'pridat') {
             e.stopPropagation();
             const r = akce.getBoundingClientRect();
             otevritKontextovouNabidku(r.left, r.bottom + 6, [
@@ -416,6 +406,9 @@ export function vykreslit() {
     } else {
         nastavitHtml(cast('pokrok'), htmlPokroku());
         const htmlU = uceni.htmlUceni({ rozbaleno: uceniRozbaleno, zdroj: stav.udrzbaFiltr === 'navrhy' ? stav.udrzbaZdroj : '' });
+        // Co se program naučil je v panelu Sbírky (záložka Učení), ne nad frontou
+        const panelUceni = /** @type {HTMLElement | null} */ (stats.querySelector('[data-sbirka-uceni]'));
+        if (panelUceni) nastavitHtml(panelUceni, htmlU || '<p class="prazdno-male">Program se zatím nic nenaučil. Každé přijetí, odmítnutí a oprava návrhu zpřesní další návrhy.</p>');
         cast('uceni').classList.toggle('hidden', !htmlU);
         cast('pokrok').parentElement.classList.toggle('bez-uceni', !htmlU);
         nastavitHtml(cast('uceni'), htmlU);
@@ -877,7 +870,7 @@ export function pripravit(nacistPrehled) {
 
     stats.addEventListener('click', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
-        if (!cil.closest('[data-sekce="udrzba"]')) return;
+        if (!cil.closest('[data-sekce="udrzba"], [data-sbirka-uceni]')) return;
         const radek = /** @type {HTMLElement} */ (cil.closest('[data-radek]'));
         if (radek) {
             aktivniRadek = radek.dataset.radek;

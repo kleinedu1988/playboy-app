@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.10] – 2026-11-01
+
+### Změněno
+- **Hodnocení › Fotky bez zdvojených údajů:** z karty zmizel nadpis, návod na klávesy, číslo modelek a tlačítka Prohlížet a hodnotit / ▶ Promítat – tlačítka jsou v hlavičce Hodnocení, klávesy a počty („56 fotek bez srdíček · 8 modelek“) ve stavové liště. Náhledy fronty jsou přes celou šířku a vyšší, klik otevře prohlížeč; Jen jedna modelka a Dál na řadě zůstávají.
+
 ## [1.0.9] – 2026-11-01
 
 ### Změněno

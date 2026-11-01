@@ -77,13 +77,13 @@ function htmlProfilu(strana) {
     const uroven = u ? `<span class="pas-uroven ${u.ceka ? 'ceka' : ''}" title="${esc(u.title)}">${u.ceka ? '⏳ ' : ''}${esc(u.text)}</span>` : '';
     return `
         <img src="${esc(adresaTitulni(m, true))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
-        <button type="button" class="pas-vybrat" data-ob-volba="${strana}" title="Líbí se mi víc ${esc(m.jmeno)} (Enter v aktivním pásu)">♥ Tahle</button>
         <div class="pas-popis">
             <button type="button" class="pas-jmeno" data-otevrit-modelku="${m.id}" title="Otevřít profil">${esc(m.jmeno)}</button>
             ${htmlSrdicka(m)}
             ${uroven}
             ${skoreFotek}
             <small><span>${info}</span><span data-pas-pozice></span></small>
+            <button type="button" class="pas-vybrat" data-ob-volba="${strana}" title="Líbí se mi víc ${esc(m.jmeno)} (Enter v aktivním pásu)">♥ Tahle</button>
         </div>`;
 }
 
@@ -142,6 +142,9 @@ export function vykreslitPasy(misto, strany) {
 }
 
 // Aktivní pás (myš, Tab); posunout = dojet k jeho zvýrazněné fotce
+// Aktivní pás ('a' / 'b'): kam jde Enter a klávesa Tahle ve stavové liště
+export const aktivniPas = () => aktivni;
+
 function aktivovat(strana, posunout = false) {
     aktivni = strana;
     if (koren) koren.dataset.aktivni = strana;

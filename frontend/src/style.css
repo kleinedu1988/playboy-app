@@ -10261,12 +10261,13 @@ span.ud-chip {
     color: var(--text-muted);
 }
 
-/* Porovnávání: dva pásy fotek nad sebou přes výšku okna (bez hlavičky Hodnocení), pod nimi ovládání */
+/* Porovnávání: dva pásy fotek nad sebou přes celou výšku pod hlavičkou (--pod-hlavickou nastavuje navigace.js)
+   a nad stavovou lištou; ovládání, postup a návrhy jsou ve stavové liště */
 .ob-porovnani {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 206px);
-    min-height: 480px;
+    height: calc(100vh - var(--pod-hlavickou, 92px) - 72px);
+    min-height: 420px;
 }
 
 .ob-dvojice {
@@ -10322,7 +10323,24 @@ span.ud-chip {
 
 .ob-dvojice[data-aktivni="a"] .pas[data-pas-strana="b"]::after,
 .ob-dvojice[data-aktivni="b"] .pas[data-pas-strana="a"]::after {
-    opacity: 0.5;
+    opacity: 0.95;
+}
+
+/* Aktivní pás výrazně (obrys a záře), zvýrazněná fotka jen v něm – je jasné, kam jde Enter a 1–5 */
+.ob-dvojice[data-aktivni="a"] .pas[data-pas-strana="a"],
+.ob-dvojice[data-aktivni="b"] .pas[data-pas-strana="b"] {
+    box-shadow: 0 0 0 1px var(--accent), 0 0 26px rgba(216, 27, 96, 0.22);
+}
+
+.ob-dvojice[data-aktivni="a"] .pas[data-pas-strana="b"] .pas-fotka.aktivni,
+.ob-dvojice[data-aktivni="b"] .pas[data-pas-strana="a"] .pas-fotka.aktivni {
+    border-color: transparent;
+}
+
+/* Prohraná strana se po volbě odbarví */
+.ob-dvojice[data-vybrano="a"] .pas[data-pas-strana="b"] img,
+.ob-dvojice[data-vybrano="b"] .pas[data-pas-strana="a"] img {
+    filter: grayscale(1);
 }
 
 /* Vybraná se krátce rozzáří, druhá ustoupí; remíza ztlumí obě stejně */
@@ -10342,7 +10360,7 @@ span.ud-chip {
     opacity: 1;
 }
 
-/* Titulní fotka vlevo od pásu: jméno, srdíčka a počet fotek dole na fotce, „♥ Tahle“ nahoře */
+/* Titulní fotka vlevo od pásu: jméno, srdíčka a počet fotek dole na fotce, pod nimi velké „♥ Tahle“ */
 .pas-profil {
     position: relative;
     flex: none;
@@ -10361,12 +10379,13 @@ span.ud-chip {
 }
 
 .pas-profil .pas-vybrat {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    border-color: transparent;
-    background-color: rgba(0, 0, 0, 0.7);
+    align-self: stretch;
+    margin-top: 6px;
+    padding: 8px 12px;
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(0, 0, 0, 0.55);
     color: #fff;
+    font-size: 14px;
 }
 
 .pas-profil .pas-vybrat:hover,
@@ -10550,13 +10569,6 @@ span.ud-chip {
     display: none;
 }
 
-/* Užší okno: hlavička Hodnocení má dva řádky, pásy porovnání se o ně zkrátí */
-@media (max-width: 1120px) {
-    .ob-porovnani {
-        height: calc(100vh - 250px);
-    }
-}
-
 .ob-jmeno {
     max-width: 100%;
     overflow: hidden;
@@ -10573,92 +10585,6 @@ span.ud-chip {
 
 .ob-jmeno:hover {
     color: var(--accent-text);
-}
-
-/* Řádek nad pásy: proč tahle dvojice (se štítkem souboje); dnešní počet a nesoulady jsou v hlavičce Hodnocení */
-.ob-hlavicka {
-    display: flex;
-    align-items: center;
-    gap: 8px 16px;
-    min-height: 28px;
-    margin-bottom: 10px;
-}
-
-.ob-duvod {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-    margin: 0;
-    color: var(--text-main);
-    font-size: 13px;
-}
-
-.ob-duvod > span:last-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.ob-ovladani {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 8px 10px;
-    margin-top: 12px;
-}
-
-.ob-ovladani .btn kbd {
-    margin-right: 4px;
-}
-
-.ob-ovladani .oddelovac {
-    width: 1px;
-    height: 18px;
-    background-color: var(--panel-okraj);
-}
-
-.ob-ovladani .link {
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.ob-ovladani .link:hover:not(:disabled) {
-    color: var(--text-main);
-}
-
-.ob-ovladani .link:disabled {
-    opacity: 0.4;
-    cursor: default;
-}
-
-.ob-ovladani kbd {
-    padding: 0 5px;
-    border: 1px solid var(--panel-okraj);
-    border-radius: 5px;
-    color: var(--text-muted);
-    font: inherit;
-    font-size: 11px;
-}
-
-/* Nabídka srovnat srdíčka po volbě, která jim odporuje: jeden tichý řádek pod ovládáním */
-.ob-navrh:not(:empty) {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 8px 12px;
-    margin-top: 12px;
-    padding: 8px 12px;
-    border-radius: 12px;
-    background-color: var(--accent-soft);
-    font-size: 13px;
-}
-
-.ob-navrh .link {
-    color: var(--text-muted);
 }
 
 /* Pořadí: místo, náhled, jméno se srdíčky, pruh síly s vousy nejistoty, počet porovnání */
@@ -11050,16 +10976,68 @@ span.ud-chip {
     min-height: 0;
 }
 
-/* Druh dvojice (souboj, ověření) jako štítek před důvodem v hlavičce */
-.ob-souboj {
-    flex: none;
-    padding: 2px 10px;
-    border: 1px solid rgba(255, 64, 129, 0.55);
+/* Štítek na švu mezi pásy: souboj nebo důvod dvojice a místa obou modelek; celý důvod v bublině */
+.ob-sev {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: min(640px, 80%);
+    padding: 4px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 999px;
-    color: var(--accent-text);
-    font-size: 11px;
-    font-weight: 600;
+    background-color: rgba(20, 20, 24, 0.94);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
+    color: var(--text-muted);
+    font-size: 12px;
     white-space: nowrap;
+    transform: translate(-50%, -50%);
+    cursor: help;
+}
+
+.ob-sev.hidden {
+    display: none;
+}
+
+.ob-sev.souboj {
+    border-color: rgba(255, 64, 129, 0.6);
+}
+
+.ob-sev b {
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
+.ob-sev-duvod {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ob-sev-misto {
+    flex: none;
+    color: var(--text-main);
+    font-weight: 600;
+}
+
+.ob-sev-misto small {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.ob-sev-misto i {
+    margin-left: 3px;
+    font-size: 10.5px;
+    font-style: normal;
+}
+
+.ob-sev-oddel,
+.ob-sev-tecka {
+    flex: none;
+    opacity: 0.6;
 }
 
 /* Úroveň modelky v pásu: potvrzená jako plná pilulka, čekající čárkovaně (jako odhad – ještě to není jisté) */
@@ -13516,6 +13494,30 @@ button.pas-kapsle:focus-visible {
     }
 }
 
+/* Hlavička Hodnocení v Porovnat: jen lišta částí, vpravo Rozhodnout a přepínače panelu */
+.hodnoceni-hlava.kompaktni .sh-lista {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.sh-akce.hd-kompakt-akce {
+    flex-wrap: nowrap;
+    margin-left: auto;
+    padding-top: 0;
+    border-top: 0;
+}
+
+.sh-akce.hd-kompakt-akce .volba {
+    height: 28px;
+    padding: 0 10px;
+}
+
+@media (max-width: 860px) {
+    .sh-akce.hd-kompakt-akce .volba[data-hd-panel] {
+        display: none;
+    }
+}
+
 /* ===== Panel Hodnocení vpravo (I): Tipy, Trendy, Jak počítám – vzhled panelu Sbírky (.sbirka-panel, .sbp-*) ===== */
 .sbirka-panel.hd-panel {
     width: min(440px, 40vw);
@@ -13573,67 +13575,6 @@ button.pas-kapsle:focus-visible {
     [data-ob-cast-hodnoceni]:is([data-hd-panel="tipy"], [data-hd-panel="trendy"], [data-hd-panel="jak"]) > .hd-pohled {
         margin-right: 0;
     }
-}
-
-/* Dvojice v pořadí: vpravo vedle důvodu dvojice, místa obou modelek a sousedek, úroveň, posun po přepočtu */
-.ob-v-poradi {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: 4px;
-    max-width: 50%;
-    margin: 0;
-    overflow: hidden;
-    color: var(--text-muted);
-    font-size: 12px;
-    white-space: nowrap;
-}
-
-.ob-v-poradi:empty {
-    display: none;
-}
-
-.ob-vp-uroven {
-    margin: 0 2px 0 6px;
-    color: var(--accent-text);
-    font-size: 9.5px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-}
-
-.ob-vp-uroven:first-child {
-    margin-left: 0;
-}
-
-.ob-vp-misto {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 3px;
-    padding: 2px 8px;
-    border: 1px solid transparent;
-    border-radius: 999px;
-}
-
-.ob-vp-misto small {
-    font-size: 10.5px;
-    font-variant-numeric: tabular-nums;
-}
-
-.ob-vp-misto.dvojice {
-    border-color: rgba(216, 27, 96, 0.45);
-    background-color: var(--accent-soft);
-    color: var(--text-main);
-    font-weight: 600;
-}
-
-.ob-vp-misto i {
-    font-size: 10.5px;
-    font-style: normal;
-}
-
-.ob-vp-mezera {
-    padding: 0 2px;
 }
 
 /* Fotky: dlaždice – vlevo velké náhledy fronty, vpravo čísla, pořadí a tlačítka */
@@ -15496,6 +15437,84 @@ body.rezim-vyberu #detailView .poster {
 .stavova-lista .stav-odkaz:hover {
     background-color: var(--panel-hover);
     color: #ffd18a;
+}
+
+/* Stavová lišta: ukazatel dne (deset dílků k další desítce), klikatelné klávesy, potvrzení volby, návrh srdíček */
+.stav-dilky {
+    display: inline-flex;
+    gap: 2px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+.stav-dilky i {
+    width: 7px;
+    height: 7px;
+    border-radius: 2px;
+    background-color: rgba(255, 255, 255, 0.14);
+}
+
+.stav-dilky i.on {
+    background-color: var(--accent);
+}
+
+.stavova-lista .stav-klavesa {
+    background: none;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.stavova-lista .stav-klavesa kbd {
+    min-width: 18px;
+    padding: 0 4px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 4px;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 10.5px;
+    text-align: center;
+}
+
+.stavova-lista .stav-klavesa:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.stavova-lista .stav-akce {
+    background: none;
+    color: var(--text-main);
+}
+
+.stavova-lista .stav-akce:hover {
+    background-color: var(--panel-hover);
+}
+
+.stavova-lista .stav-potvrzeni {
+    background-color: rgba(76, 175, 80, 0.18);
+    color: #a5d6a7;
+}
+
+.stavova-lista .stav-navrh {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.stavova-lista .stav-navrh:hover {
+    background-color: var(--accent-hover, #e91e63);
+}
+
+/* Užší okno: napřed zmizí odkazy (priorita 3) a sezóna, pak popisky kláves (zůstanou klávesy) */
+@media (max-width: 1100px) {
+    .stav-vpravo [data-priorita="3"],
+    .stav-pocet .stav-sezona {
+        display: none;
+    }
+}
+
+@media (max-width: 900px) {
+    .stavova-lista .stav-klavesa span {
+        display: none;
+    }
 }
 
 /* Klávesová nápověda části vpravo (Porovnat, Fotky): úseky s tečkou mezi sebou, v úzkém okně jen první */

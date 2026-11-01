@@ -380,13 +380,20 @@ function ukazatVolby(lista) {
 
     // Další tlačítka řádku: slideshow jako ikona ▶ v kapsli, ostatní (upozornění s odkazem: „2 modelkám nesedí
     // srdíčka · Pořadí →“) vpravo ve stavové liště; klik na ně klikne na původní
+    // data-stav-klavesa: klikatelná klávesa („↵ Tahle“), data-stav-trida: vzhled (potvrzení, akce, návrh),
+    // data-stav-priorita: co v užším okně zmizí dřív (3 první, 1 nikdy; style.css)
     lista.querySelectorAll('button:not(.chip):not(.link)').forEach(puvodni => {
-        const popis = puvodni.textContent.trim();
+        const el = /** @type {HTMLElement} */ (puvodni);
+        const popis = el.textContent.trim();
         const slideshow = /slideshow/i.test(popis);
-        const tlacitko = pridatTlacitko(slideshow ? IKONA_PREHRAT : esc(popis), slideshow ? 'akce ikona' : 'stav-odkaz', slideshow ? panel : stavVpravo);
-        tlacitko.title = popis;
+        const klavesa = el.dataset.stavKlavesa;
+        const trida = slideshow ? 'akce ikona' : klavesa ? 'stav-klavesa' : el.dataset.stavTrida || 'stav-odkaz';
+        const html = slideshow ? IKONA_PREHRAT : klavesa ? `<kbd>${esc(klavesa)}</kbd><span>${esc(popis)}</span>` : esc(popis);
+        const tlacitko = pridatTlacitko(html, trida, slideshow ? panel : stavVpravo);
+        tlacitko.title = el.title || popis;
         tlacitko.setAttribute('aria-label', popis);
-        tlacitko.addEventListener('click', () => puvodni.click());
+        if (el.dataset.stavPriorita) tlacitko.dataset.priorita = el.dataset.stavPriorita;
+        tlacitko.addEventListener('click', () => el.click());
     });
 
     // Klávesová nápověda části (data-stav-napoveda, úseky oddělené „ · “) vpravo za odkazy; v úzkém okně jen první úsek
@@ -403,11 +410,16 @@ function ukazatVolby(lista) {
     }
 
     // Počet a stav části (22 modelek, Dnes 0 z 10, 79 % doplněno) je první ve stavové liště a v nápovědě zvolené sekce
-    const pocet = [...lista.querySelectorAll(':scope > span:not([hidden])')].map(s => s.textContent.trim()).filter(Boolean).pop();
-    if (pocet) {
+    const spany = [...lista.querySelectorAll(':scope > span:not([hidden])')].filter(s => s.textContent.trim());
+    const posledni = /** @type {HTMLElement | undefined} */ (spany.pop());
+    const pocet = posledni?.textContent.trim().replace(/\s+/g, ' ');
+    if (posledni) {
         const pocitadlo = document.createElement('span');
         pocitadlo.className = 'stav-pocet';
-        pocitadlo.textContent = pocet;
+        // data-stav-html: stav se značkami (ukazatel dne v Porovnat), jinak jen text
+        if (posledni.hasAttribute('data-stav-html')) pocitadlo.innerHTML = posledni.innerHTML;
+        else pocitadlo.textContent = pocet;
+        if (posledni.title) pocitadlo.title = posledni.title;
         stavVlevo.prepend(pocitadlo);
     }
 

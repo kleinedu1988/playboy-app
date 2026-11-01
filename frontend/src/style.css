@@ -15261,3 +15261,111 @@ body.rezim-vyberu #detailView .poster {
         gap: 12px 18px;
     }
 }
+
+/* ===== Stavová lišta dole přes celou šířku okna: vlevo počet a stav zvolené části, zapnuté filtry (× zruší, klik
+   otevře Filtry) a Zrušit filtry; vpravo upozornění s odkazem, jinak nápověda ke klávesám ===== */
+.stavova-lista {
+    position: relative;
+    z-index: 1300;
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 16px;
+    height: 30px;
+    padding: 0 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(20, 20, 24, 0.92);
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+    --wails-draggable: no-drag;
+}
+
+.stav-vlevo,
+.stav-vpravo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.stav-vpravo {
+    flex: none;
+    margin-left: auto;
+}
+
+.stav-pocet {
+    overflow: hidden;
+    color: var(--text-main);
+    font-weight: 600;
+    text-overflow: ellipsis;
+}
+
+.stavova-lista .volba {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 20px;
+    padding: 0 9px;
+    border: 0;
+    border-radius: 999px;
+    font: inherit;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.stavova-lista .volba-stitek {
+    background-color: rgba(216, 27, 96, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(216, 27, 96, 0.5);
+    color: #fff;
+}
+
+.stavova-lista .volba-stitek:hover {
+    background-color: rgba(216, 27, 96, 0.3);
+}
+
+.stavova-lista .volba-stitek .volba-zrusit {
+    font-style: normal;
+    opacity: 0.75;
+}
+
+.stavova-lista .stav-zrusit {
+    padding: 0 4px;
+    border: 0;
+    background: none;
+    color: var(--accent-text);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.stavova-lista .stav-odkaz {
+    background: none;
+    color: #ffb74d;
+}
+
+.stavova-lista .stav-odkaz:hover {
+    background-color: var(--panel-hover);
+    color: #ffd18a;
+}
+
+.stav-vpravo:empty::before {
+    content: "Ctrl+F hledat · Ctrl+1–4 sekce · ? klávesové zkratky";
+    opacity: 0.7;
+}
+
+/* Plovoucí lišta výběru a oznámení dole stojí nad stavovou lištou */
+.selection-bar {
+    bottom: 50px;
+}
+
+.toast {
+    bottom: 54px;
+}
+
+#app.zamceno .stavova-lista {
+    display: none;
+}

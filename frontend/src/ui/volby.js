@@ -100,6 +100,9 @@ let aktualniLista = null;
 let tlacitkoFiltru = null;
 
 const misto = () => document.getElementById('volbyPrehledu');
+// Stavová lišta dole (počet, zapnuté filtry, stav a upozornění zvolené části); kapsle voleb nahoře má jen ovládání
+const stavVlevo = /** @type {HTMLDivElement} */ (document.querySelector('#stavovaLista .stav-vlevo'));
+const stavVpravo = /** @type {HTMLDivElement} */ (document.querySelector('#stavovaLista .stav-vpravo'));
 
 // Text štítku bez počtu (výběr má počet v <span>)
 const textStitku = (stitek) => (stitek.childNodes[0]?.textContent || stitek.textContent).trim();
@@ -176,6 +179,8 @@ function ukazatVolby(lista) {
     const aktivni = /** @type {HTMLElement | null} */ (cil.contains(document.activeElement) ? document.activeElement : null);
     const fokus = aktivni && { text: aktivni.textContent.trim(), poradi: [...cil.querySelectorAll('button')].indexOf(/** @type {HTMLButtonElement} */ (aktivni)) };
     cil.innerHTML = '';
+    stavVlevo.replaceChildren();
+    stavVpravo.replaceChildren();
     cil.classList.toggle('hidden', !lista);
     tlacitkoFiltru = null;
     if (!lista) {
@@ -210,12 +215,12 @@ function ukazatVolby(lista) {
         else rusitVse = null;
     }
 
-    const pridatTlacitko = (html, trida = '') => {
+    const pridatTlacitko = (html, trida = '', kam = panel) => {
         const tlacitko = document.createElement('button');
         tlacitko.type = 'button';
         tlacitko.className = `volba ${trida}`.trim();
         tlacitko.innerHTML = html;
-        panel.append(tlacitko);
+        kam.append(tlacitko);
         return tlacitko;
     };
 
@@ -315,31 +320,40 @@ function ukazatVolby(lista) {
             if (panelOtevren) zavritPanel();
             else otevritPanel();
         });
-        // Zapnuté filtry jako štítky: klik otevře panel, × filtr zruší
+        // Zapnuté filtry jako štítky ve stavové liště: klik otevře panel, × filtr zruší
         zapnute.forEach(s => {
-            const stitek = pridatTlacitko(`${esc(hodnota(s))} ${krizek}`, 'volba-stitek');
-            stitek.title = `${POPISKY[s.klic]}: ${hodnota(s)}`;
+            const stitek = pridatTlacitko(`${esc(hodnota(s))} ${krizek}`, 'volba-stitek', stavVlevo);
+            stitek.title = `${POPISKY[s.klic]}: ${hodnota(s)} – klik otevře Filtry, × filtr zruší`;
             zrusitelne(stitek, s, () => otevritPanel());
         });
+        if (zapnute.length) {
+            const zrusit = document.createElement('button');
+            zrusit.type = 'button';
+            zrusit.className = 'link stav-zrusit';
+            zrusit.textContent = zapnute.length > 1 ? 'Zrušit filtry' : 'Zrušit filtr';
+            zrusit.addEventListener('click', zrusitFiltry);
+            stavVlevo.append(zrusit);
+        }
     }
 
-    // Další tlačítka řádku jako tlačítka lišty (slideshow jako ikona ▶); klik na ně klikne na původní
+    // Další tlačítka řádku: slideshow jako ikona ▶ v kapsli, ostatní (upozornění s odkazem: „2 modelkám nesedí
+    // srdíčka · Pořadí →“) vpravo ve stavové liště; klik na ně klikne na původní
     lista.querySelectorAll('button:not(.chip):not(.link)').forEach(puvodni => {
         const popis = puvodni.textContent.trim();
         const slideshow = /slideshow/i.test(popis);
-        const tlacitko = pridatTlacitko(slideshow ? IKONA_PREHRAT : esc(popis), slideshow ? 'akce ikona' : 'akce');
+        const tlacitko = pridatTlacitko(slideshow ? IKONA_PREHRAT : esc(popis), slideshow ? 'akce ikona' : 'stav-odkaz', slideshow ? panel : stavVpravo);
         tlacitko.title = popis;
         tlacitko.setAttribute('aria-label', popis);
         tlacitko.addEventListener('click', () => puvodni.click());
     });
 
-    // Počet (22 modelek, 78 fotek) se ukazuje na konci kapsle voleb i v nápovědě zvoleného přehledu
+    // Počet a stav části (22 modelek, Dnes 0 z 10, 79 % doplněno) je první ve stavové liště a v nápovědě zvolené sekce
     const pocet = [...lista.querySelectorAll(':scope > span:not([hidden])')].map(s => s.textContent.trim()).filter(Boolean).pop();
     if (pocet) {
         const pocitadlo = document.createElement('span');
-        pocitadlo.className = 'volby-pocet';
+        pocitadlo.className = 'stav-pocet';
         pocitadlo.textContent = pocet;
-        panel.append(pocitadlo);
+        stavVlevo.prepend(pocitadlo);
     }
 
     if (!panel.childElementCount) panel.remove();
@@ -375,10 +389,8 @@ function pripravitPanel() {
             const [i, j] = volba.dataset.filtr.split(':').map(Number);
             const v = aktualniFiltry.filtry[i]?.volby[j];
             if (v && !v.zvolena) v.akce();
-        } else if (e.target.closest('[data-zrusit-filtry]') && aktualniFiltry.zapnute.length) {
-            if (aktualniLista && !aktualniLista.dispatchEvent(new CustomEvent('zrusit-filtry', { bubbles: true, cancelable: true }))) return;
-            zacitRuseni(aktualniLista);
-            aktualniFiltry.zapnute[0].zrusit();
+        } else if (e.target.closest('[data-zrusit-filtry]')) {
+            zrusitFiltry();
         }
     });
     // Klik mimo panel a tlačítko Filtry panel zavře; Esc také (a dál nejde, nezavře profil ani číslo)
@@ -496,6 +508,14 @@ function upravitListu() {
     if (rAkce.top > rPas.top + 8 || prekryvaji(rPas, rAkce)) {
         lista.classList.add('bez-nazvu-pasu');
     }
+}
+
+// Zrušení všech zapnutých filtrů (Zrušit filtry ve stavové liště a v panelu Filtry): postupně jeden po druhém
+function zrusitFiltry() {
+    if (!aktualniFiltry?.zapnute.length) return;
+    if (aktualniLista && !aktualniLista.dispatchEvent(new CustomEvent('zrusit-filtry', { bubbles: true, cancelable: true }))) return;
+    zacitRuseni(aktualniLista);
+    aktualniFiltry.zapnute[0].zrusit();
 }
 
 // Tlačítko „Zrušit hledání a filtry“ v prázdném stavu: smaže text hledání a zruší zapnuté filtry

@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.7] – 2026-11-01
+
+### Změněno
+- **Pozor: Sbírka je teď na Ctrl+5.** Sekce jdou zleva doprava Modelky · Čísla · Hodnocení · **Síň slávy (Ctrl+4)** · Sbírka (přepracování Hodnocení, krok 4).
+- **Nápověda a klávesové zkratky** (?) popisují nové hlavičky Hodnocení a Síně slávy: klávesa **I** otevře a zavře panel vpravo (Hodnocení: Tipy · Trendy · Jak počítám, Síň slávy: Na dosah · Minulé sezóny · Pravidla), Esc ho zavře; pohledy Pořadí Celé pořadí · Čekají · Nesedí, filtr Kroniky v liště a stav ve stavové liště.
+
 ## [1.0.6] – 2026-11-01
 
 ### Změněno

@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.8] – 2026-11-01
+
+### Změněno
+- **Vyhlášení sezóny ve „3D“:** stupně vítězek vystupují do prostoru – boční fotky natočené k jedničce přesahují přes okraj okna, jednička vystoupí dopředu s korunou a září, pod nimi světlo jako podlaha a fotky při otevření přilétnou. Fotky jsou ve vlastních rámečcích, takže uložený výřez se zvětšením už nepřetéká přes text; avatary Miláčka jsou oříznuté do kroužku. V užším nebo nižším okně je přesah menší.
+
+### Opraveno
+- **Porovnat** (přepracování Porovnat, krok 1):
+  - Vrátit ze stránky „Dvojice došly“ už nespadne; Vrátit smaže jen dvojici, kterou ukazuje lišta (jinak nic a stará historie se zahodí).
+  - Smazané nebo skryté modelky zmizí z fronty i historie; přepočty pořadí se neprolínají (starší výsledek nepřepíše novější) a fronta se doplňuje jednou naráz.
+  - Po volbě odejde jen zobrazená dvojice (série „Rozhodnout teď“ nepřijde o souboj), vrácený souboj nechá sérii otevřenou a po Vrátit či Přeskočit se už neukáže zastaralý návrh srdíček.
+  - Enter na tlačítku v hlavičce nebo ve stavové liště nezapíše volbu.
+  - Hlavička a stavová lišta se po porovnání obnoví jednou místo třikrát; úklid nepoužívaného kódu.
+
 ## [1.0.7] – 2026-11-01
 
 ### Změněno

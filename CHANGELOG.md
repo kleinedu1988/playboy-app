@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.93] – 2026-11-01
+
+### Změněno
+- **Stránka modelky – akce v pruhu s modelkou, centerfold jako tlačítko.**
+  - Akce (Údaje · Upravit · Přidat fotky · Promítat · Vybrat · ⋯ a počet fotek a alb) jsou spodním řádkem pruhu s modelkou, uprostřed; kapsle vpravo nahoře je v profilu prázdná. V úzkém okně jen ikony.
+  - **★ Centerfold** je tlačítko v pruhu, které otevře centerfold v prohlížeči (víc centerfoldů: ↑ ↓ mezi nimi). Z galerie i lišty alb zmizel; jeho akce jsou na pravém tlačítku a v ⋯ („Centerfold Únor 1971…“).
+
 ## [0.99.92] – 2026-11-01
 
 ### Změněno

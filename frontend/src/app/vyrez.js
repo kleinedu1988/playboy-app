@@ -8,16 +8,19 @@ import { VELIKOST_TITULNI, adresaTitulni } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { potvrdit } from './formular-modelky';
 
-// Úprava výřezu titulní fotky přímo na kartě: tažením posun, kolečkem nebo posuvníkem přiblížení
-export function upravitVyrez(modelka) {
+// Úprava výřezu titulní fotky přímo na kartě: tažením posun, kolečkem nebo posuvníkem přiblížení.
+// karta: jiný obal fotky než karta v galerii (titulní fotka v panelu Údaje profilu, app/profil.js); poUlozeni se
+// zavolá po uložení výřezu (profil podle něj obnoví miniaturu v pruhu)
+export function upravitVyrez(modelka, { karta = null, poUlozeni = () => {} } = {}) {
     if (stav.zrusitUpravuVyrezu) stav.zrusitUpravuVyrezu();
 
-    const card = gallery.querySelector(`.card[data-id="${modelka.id}"]`);
+    const card = karta || gallery.querySelector(`.card[data-id="${modelka.id}"]`);
     if (!card) return;
-    const ram = card.querySelector('.card-image-wrap');
+    const ram = card.querySelector('.card-image-wrap, .profile-cover');
     const img = ram.querySelector('img');
-    // Při úpravě se přibližuje až čtyřikrát, karta proto dostane větší obrázek
-    if (modelka.coverUrl) img.src = img.dataset.src = obrazek(modelka.coverUrl, VELIKOST_TITULNI);
+    // Při úpravě se přibližuje až čtyřikrát, karta proto dostane větší obrázek (profil ho má už velký)
+    const puvodniAdresa = karta ? img.src : null;
+    if (modelka.coverUrl && !karta) img.src = img.dataset.src = obrazek(modelka.coverUrl, VELIKOST_TITULNI);
     const vyrez = { coverZoom: modelka.coverZoom, coverX: modelka.coverX, coverY: modelka.coverY };
 
     card.classList.add('editing');
@@ -103,7 +106,8 @@ export function upravitVyrez(modelka) {
         ram.removeEventListener('wheel', naKolecko);
         card.classList.remove('editing');
         panel.remove();
-        img.src = img.dataset.src = adresaTitulni(modelka);
+        if (puvodniAdresa) img.src = puvodniAdresa;
+        else img.src = img.dataset.src = adresaTitulni(modelka);
         img.style.cssText = stylVyrezu(modelka);
         stav.zrusitUpravuVyrezu = null;
         if (meloFokus) /** @type {HTMLElement} */ (card).focus({ preventScroll: true });
@@ -123,6 +127,7 @@ export function upravitVyrez(modelka) {
         } else if (akce === 'ulozit') {
             if (await SetCoverVyrez(modelka.id, vyrez.coverZoom, vyrez.coverX, vyrez.coverY)) {
                 Object.assign(modelka, vyrez);
+                poUlozeni();
             }
             ukoncit();
         }

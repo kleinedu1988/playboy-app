@@ -5,7 +5,7 @@ import { nazevAlba, nazevVydani, rozlozitVydani } from '../lib/format';
 import { stav } from './stav';
 import { calendar, covers, detailView, issueView, searchInput, wall } from './prvky';
 import { zpet } from './navigace';
-import { nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba } from './profil';
+import { nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba, upravitVyrezProfilu } from './profil';
 import { obnovitStranku, otevritVydani, upravitVydani } from './vydani';
 import { nabidkaCisla, nabidkaRoku } from './kalendar';
 import { nacistCovery } from './stena';
@@ -214,12 +214,13 @@ const polozkaCenterfoldu = (album, x, y) => ({
     akce: () => otevritKontextovouNabidku(x, y, polozkyAlba(album, null)),
 });
 
-// Akce s modelkou v pruhu profilu: ⋯ (promítat, centerfold, vybrat fotky, sloučit, smazat), totéž pravým tlačítkem na volném místě
+// Akce s modelkou v pruhu profilu: ⋯ (výřez titulní fotky, promítat, centerfold, vybrat fotky, sloučit, smazat), totéž pravým tlačítkem na volném místě
 function nabidkaModelky(x, y) {
     const modelka = stav.aktualniModelka;
     if (!modelka) return;
     const centerfoldy = centerfoldyProfilu();
     otevritKontextovouNabidku(x, y, [
+        { text: 'Upravit výřez titulní fotky', akce: upravitVyrezProfilu },
         ...(stav.aktualniPolozky.length ? [{ text: 'Promítat všechny fotky', akce: () => otevritLightbox(0, true) }] : []),
         ...centerfoldy.map(a => polozkaCenterfoldu(a, x, y)),
         ...(stav.aktualniPolozky.length ? [rezimVyberu()

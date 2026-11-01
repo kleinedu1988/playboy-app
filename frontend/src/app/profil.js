@@ -19,6 +19,7 @@ import { doplnitClankyModelky } from './clanky';
 import { htmlPrazdna } from '../ui/prazdno';
 import { htmlKostryAlb } from '../ui/kostra';
 import { zaznamenatProfil } from './zajem';
+import { upravitVyrez } from './vyrez';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -148,7 +149,10 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         ${paskyHtml ? `<div class="pruh-pasky">${paskyHtml}</div>` : ''}
     `;
     modelHeader.innerHTML = `
-        <div class="profile-cover">${titulni}</div>
+        <div class="profile-cover-ram">
+            <div class="profile-cover">${titulni}</div>
+            <button type="button" class="vyrez-btn" data-upravit-vyrez title="Upravit výřez titulní fotky (jak ji ukazuje karta v galerii)" aria-label="Upravit výřez titulní fotky"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
+        </div>
         ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
         <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
         ${bloky.length ? `<div class="udaje-modelky">${bloky.join('')}</div>` : ''}
@@ -478,8 +482,28 @@ export function prepnoutUdaje(otevrit = !detailView.classList.contains('udaje-ot
     requestAnimationFrame(() => zkratitAlba(detailView));
 }
 
+// Úprava výřezu titulní fotky v profilu: na velké fotce v panelu Údaje (panel se otevře); po uložení se obnoví
+// i miniatura v pruhu. Rám má při úpravě poměr stran karty v galerii, výřez tak odpovídá tomu, co karta ukáže.
+export function upravitVyrezProfilu() {
+    const modelka = stav.aktualniModelka;
+    const ram = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.profile-cover-ram'));
+    if (!modelka || !ram) return;
+    prepnoutUdaje(true);
+    ram.scrollIntoView({ block: 'nearest' });
+    upravitVyrez(modelka, {
+        karta: ram,
+        poUlozeni: () => {
+            const miniatura = /** @type {HTMLElement | null} */ (profilPruhObsah.querySelector('.pruh-foto img'));
+            if (miniatura) miniatura.style.cssText = stylVyrezu(modelka);
+        },
+    });
+}
+
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    modelHeader.addEventListener('click', (e) => {
+        if (e.target.closest('[data-upravit-vyrez]')) upravitVyrezProfilu();
+    });
     let otevreneUdaje = false;
     try { otevreneUdaje = localStorage.getItem(KLIC_UDAJU) === '1'; } catch { /* výchozí zavřené */ }
     nastavitUdaje(otevreneUdaje);

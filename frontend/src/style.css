@@ -14816,3 +14816,70 @@ body.rezim-vyberu #detailView .poster {
         width: auto;
     }
 }
+
+/* Titulní fotka v panelu Údaje: v rohu tlačítko úpravy výřezu (při najetí); při úpravě má rám poměr stran karty
+   v galerii, aby výřez odpovídal tomu, co karta ukáže */
+.profile-cover-ram {
+    position: relative;
+}
+
+.vyrez-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background-color: rgba(26, 26, 30, 0.72);
+    color: #fff;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.profile-cover-ram:hover .vyrez-btn,
+.vyrez-btn:focus-visible {
+    opacity: 1;
+}
+
+.vyrez-btn:hover {
+    background-color: var(--accent);
+}
+
+.profile-cover-ram.editing .vyrez-btn {
+    display: none;
+}
+
+#profileSide #modelHeader .profile-cover-ram.editing .profile-cover {
+    aspect-ratio: 3 / 4;
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+#profileSide #modelHeader .profile-cover-ram.editing .profile-cover:active {
+    cursor: grabbing;
+}
+
+.profile-cover-ram .crop-panel {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+}
+
+#modelHeader .profile-cover-ram {
+    margin: -16px -16px 0;
+}
+
+#modelHeader .profile-cover-ram .profile-cover {
+    width: 100%;
+    margin: 0;
+}

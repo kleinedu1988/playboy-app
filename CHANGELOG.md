@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.100] – 2026-11-01
+
+### Změněno
+- **Filtr Modelek v panelu pod tlačítkem Filtry** v kapsli voleb vpravo nahoře (místo štítků v hledání z 0.99.99).
+  - Vlevo seznam filtrů: Srdíčka, Edice, Kategorie, Výskyt, Vlasy, Oči, Národnost, Tagy, Rok vydání, Rok narození, Výška, Váha, Tetování, Piercing; zapnutý má tečku a hodnotu.
+  - Vpravo editor zvoleného: **je / není**, zaškrtávání hodnot s počtem modelek, které s ostatními filtry a hledáním zbudou, u roků, výšky a váhy předvolby a rozsah od–do, u srdíček ♥ 1+ … ♥ 5 a Bez ♥.
+  - Dole kolik modelek se zobrazí a Zrušit filtry. Zapnuté filtry jsou štítky ve stavové liště (klik otevře panel na filtru, × zruší); filtr se pamatuje i po restartu.
+- **Hledání je zase obyčejné pole**: bez štítků a bez řádku rychlých filtrů; příkazy jako `vlasy:blond` v něm fungují dál. Filtry uložené ve verzi 0.99.99 se převezmou do panelu.
+
 ## [0.99.99] – 2026-11-01
 
 ### Změněno

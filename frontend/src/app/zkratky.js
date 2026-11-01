@@ -60,10 +60,12 @@ const CASTI = [
         ['klik na fotku', 'Prohlížeč fotek jako u alb (všechny fotky modelky), Esc zpět'],
         [k('S'), 'Přeskočit dvojici'],
         [k('Backspace'), 'Vrátit poslední porovnání'],
+        [k('I'), 'Panel vpravo: Tipy, Trendy, Jak počítám (Esc zavře; i ve Fotkách a Pořadí)'],
     ] },
     { klic: 'slava', nazev: 'Síň slávy', radky: [
         [k('Enter'), 'Na kartě v Top 10 otevřít vitrínu modelky, v Legendách profil'],
-        [k('Esc'), 'Zavřít vitrínu'],
+        [k('Esc'), 'Zavřít vitrínu (nebo panel vpravo)'],
+        [k('I'), 'Panel vpravo: Na dosah, Minulé sezóny, Pravidla'],
     ] },
     { klic: 'udrzba-souhrn', nazev: 'Údržba – Souhrn', radky: [
         [k('I'), 'Panel vpravo: Čísla a sháním, Statistiky, Učení (Esc zavře)'],

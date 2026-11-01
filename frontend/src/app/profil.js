@@ -14,7 +14,7 @@ import { hlavniOblast, listaAlb, listyStranky } from './listy';
 import { VELIKOST_NAHLEDU, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
-import { nastavitRezimVyberu, rezimVyberu, selectionBar, zrusitVyber } from './vyber';
+import { rezimVyberu, selectionBar, zrusitVyber } from './vyber';
 import { doplnitClankyModelky } from './clanky';
 import { htmlPrazdna } from '../ui/prazdno';
 import { htmlKostryAlb } from '../ui/kostra';
@@ -479,10 +479,6 @@ export function pripravit() {
     try { otevreneUdaje = localStorage.getItem(KLIC_UDAJU) === '1'; } catch { /* výchozí zavřené */ }
     nastavitUdaje(otevreneUdaje);
     document.getElementById('infoBtn').addEventListener('click', () => prepnoutUdaje());
-    document.getElementById('vybratBtn').addEventListener('click', () => {
-        if (rezimVyberu()) zrusitVyber();
-        else nastavitRezimVyberu(true);
-    });
 
     // Lišta alb je ve druhém řádku hlavičky vedle drobečků, jako podmenu ostatních sekcí
     document.getElementById('podmenu').before(listaAlb.nav);

@@ -13,7 +13,7 @@ import { nabidkaUdrzby } from './udrzba';
 import { nacistNejlepsi } from './nejlepsi';
 import { otevritCoverModal, otevritProfilPodleId } from './cover';
 import { lbPrepnoutLupu, lightbox, otevritLightbox, zavritLightbox } from './prohlizec';
-import { selectionBar, zrusitVyber } from './vyber';
+import { nastavitRezimVyberu, rezimVyberu, selectionBar, zrusitVyber } from './vyber';
 import { upravitVyrez } from './vyrez';
 import { otevritModelModal, otevritRychlePridani, smazatModelku } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold, smazatAlbum } from './formular-alba';
@@ -214,7 +214,7 @@ const polozkaCenterfoldu = (album, x, y) => ({
     akce: () => otevritKontextovouNabidku(x, y, polozkyAlba(album, null)),
 });
 
-// Akce s modelkou v pruhu profilu: ⋯ (promítat, centerfold, sloučit, smazat), totéž pravým tlačítkem na volném místě
+// Akce s modelkou v pruhu profilu: ⋯ (promítat, centerfold, vybrat fotky, sloučit, smazat), totéž pravým tlačítkem na volném místě
 function nabidkaModelky(x, y) {
     const modelka = stav.aktualniModelka;
     if (!modelka) return;
@@ -222,6 +222,9 @@ function nabidkaModelky(x, y) {
     otevritKontextovouNabidku(x, y, [
         ...(stav.aktualniPolozky.length ? [{ text: 'Promítat všechny fotky', akce: () => otevritLightbox(0, true) }] : []),
         ...centerfoldy.map(a => polozkaCenterfoldu(a, x, y)),
+        ...(stav.aktualniPolozky.length ? [rezimVyberu()
+            ? { text: 'Ukončit výběr fotek', akce: () => zrusitVyber() }
+            : { text: 'Vybrat fotky (klik pak vybírá)', akce: () => nastavitRezimVyberu(true) }] : []),
         null,
         { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
         { text: 'Smazat modelku', akce: () => smazatModelku(modelka), nebezpecne: true },

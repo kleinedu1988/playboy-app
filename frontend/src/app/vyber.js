@@ -58,13 +58,10 @@ export function zrusitVyber() {
     nastavitRezimVyberu(false);
 }
 
-// Režim výběru v profilu (tlačítko Vybrat): klik fotku vybere jako Ctrl+klik, dlaždice mají kroužky; Esc ho ukončí
+// Režim výběru v profilu (⋯ › Vybrat fotky): klik fotku vybere jako Ctrl+klik, dlaždice mají kroužky; Esc ho ukončí
 export const rezimVyberu = () => document.body.classList.contains('rezim-vyberu');
 export function nastavitRezimVyberu(zapnout) {
     document.body.classList.toggle('rezim-vyberu', zapnout);
-    const tlacitko = document.getElementById('vybratBtn');
-    tlacitko?.classList.toggle('zapnuto', zapnout);
-    tlacitko?.setAttribute('aria-pressed', String(zapnout));
 }
 
 // Všechny viditelné dlaždice pohledu; vrací false, když v pohledu vybírat nejde

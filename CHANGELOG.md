@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.9] – 2026-11-01
+
+### Změněno
+- **Porovnat má pásy přes celou výšku okna** (přepracování Porovnat, krok 2).
+  - Z hlavičky Hodnocení zůstala v Porovnat jen lišta částí, vpravo **⚔ Rozhodnout** a Tipy · Trendy · Jak počítám.
+  - Důvod dvojice a místa obou modelek v pořadí jsou jeden **štítek na švu** mezi pásy („⚔ O postup do Top 10 · 10. Marta ↔ 11. Anna ⏳“); celý důvod v bublině.
+  - Velké **♥ Tahle** pod jménem, výraznější aktivní pás (zvýrazněná fotka jen v něm), prohraná strana se po volbě odbarví.
+  - **Stavová lišta**: vlevo ukazatel dne (dílky k další desítce) a kdo vede sezónu; vpravo po volbě „✓ Bára > Cecílie“ a pak „↶ Vrátit“, návrh srdíček (Ano · Ne – dřív pod pásy mimo obrazovku), odkaz na to, co čeká jinde, a klikatelné klávesy ↵ Tahle · ↓ Stejně · S Přeskočit. V užším okně napřed zmizí odkazy a sezóna, pak popisky kláves.
+
 ## [1.0.8] – 2026-11-01
 
 ### Změněno

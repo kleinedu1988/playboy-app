@@ -1,6 +1,11 @@
 package main
 
-import "testing"
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"testing"
+)
 
 // Rozbor dotazu: NEBO s hodnotami v uvozovkách, desetinná srdíčka, edice i podle obálek
 func TestHledaniDotazy(t *testing.T) {
@@ -27,6 +32,35 @@ func TestHledaniDotazy(t *testing.T) {
 		}
 		if g := odpovidaHledani(b, p.dotaz); g != p.b {
 			t.Errorf("%s: Bára %v, čekáno %v", p.dotaz, g, p.b)
+		}
+	}
+}
+
+// Shoda s frontendem: stejné dotazy nad stejnými modelkami (testdata/hledani-shoda.json, frontend/test/filtr.test.js)
+func TestHledaniShodaSFrontendem(t *testing.T) {
+	data, err := os.ReadFile("testdata/hledani-shoda.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var shoda struct {
+		Modelky []Modelka `json:"modelky"`
+		Dotazy  []struct {
+			Dotaz string `json:"dotaz"`
+			Najde []int  `json:"najde"`
+		} `json:"dotazy"`
+	}
+	if err := json.Unmarshal(data, &shoda); err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range shoda.Dotazy {
+		var nalezene []int
+		for _, m := range shoda.Modelky {
+			if odpovidaHledani(m, d.Dotaz) {
+				nalezene = append(nalezene, m.ID)
+			}
+		}
+		if fmt.Sprint(nalezene) != fmt.Sprint(d.Najde) {
+			t.Errorf("%s: našlo %v, čekáno %v", d.Dotaz, nalezene, d.Najde)
 		}
 	}
 }

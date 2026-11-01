@@ -608,7 +608,7 @@ export function filtrHodnoceni(hodnota) {
     }
     return filtry.length ? filtry : null;
 }
-const vyhovujeSrdickum = (n, filtry) => filtry.some(({ op, od, do: po }) => op === '>=' ? n >= od : op === '<=' ? n <= od
+export const vyhovujeSrdickum = (n, filtry) => filtry.some(({ op, od, do: po }) => op === '>=' ? n >= od : op === '<=' ? n <= od
     : op === '>' ? n > od : op === '<' ? n < od : op === '..' ? n >= od && n <= po : n === od);
 
 // Údaje fotky pro cílené hledání (stěna centerfoldů, Nejlepší): jméno, fotograf, vydání, rok, edice, srdíčka

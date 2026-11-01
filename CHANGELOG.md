@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.12] – 2026-11-01
+
+### Opraveno
+- **Hodnocení fotek v prohlížeči (Hodnocení › Fotky):**
+  - Podržená číslice ohodnotí jen jednu fotku (dřív mohla projet celou frontu); ohodnocená fotka vypadne hned a zápis běží za ní, takže rychlé „3“ a „4“ jdou každá na jinou fotku. Nepovedený zápis vrátí fotku na místo. Klávesa 0 ve frontě nehodnocených nic nezapíše.
+  - Zamíchání (S) už nevrací ohodnocené fotky; lišta alb se ve frontě nehodnocených neukazuje (u velké sbírky zpomalovala každé hodnocení).
+  - Po zavření prohlížeče se fronta načte až po dopsání hodnocení a souběžné načtení se neztratí – počet a náhledy sedí.
+  - Hodnocení fotek kdekoli (i v pásech Porovnat) hned upraví počet nehodnocených v hlavičce a stavové liště.
+- **Náhodné pořadí fotek** zůstává stejné po celé spuštění, i když ohodnocené ubývají – na frontu se dá navázat.
+
+### Změněno
+- Mimo Fotky se načítá jen počet nehodnocených fotek jedním dotazem; celý seznam až ve Fotkách (rychlejší otevření Hodnocení u velké sbírky).
+
 ## [1.0.11] – 2026-11-01
 
 ### Přidáno

@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.92] – 2026-11-01
+
+### Změněno
+- **Stránka modelky – nové rozložení (galerie přes celou šířku).**
+  - **Pruh nahoře** s miniaturou, jménem, srdíčky, pořadím, odznaky a páskami čísel.
+  - **Panel Údaje** (tlačítko Údaje, klávesa <kbd>I</kbd> nebo klik na miniaturu) se vysune zprava: velká fotka, údaje, tagy, poznámka, články a odkazy. Program si pamatuje, zda je otevřený.
+  - **Akce s modelkou v kapsli vpravo nahoře:** Údaje · Upravit · Přidat fotky · Promítat · Vybrat · ⋯ (promítat, sloučit, smazat) a počet fotek a alb; v užším okně jen ikony.
+  - **Lišta alb** je ve druhém řádku vedle drobečků, zvolené album plnou růžovou; drobečky jsou jedna kapsle.
+  - **Centerfold je první album galerie** s hlavičkou a ⋯, v liště alb jako „★ Centerfold“.
+  - **Režim Vybrat:** klik fotky vybírá (kroužky na dlaždicích), <kbd>Esc</kbd> nebo Zrušit ho ukončí; Ctrl/Shift+klik funguje dál.
+  - Tlačítko ⋯ u alb je vidět trvale, štítky v hlavičce alba jsou kapsle. Nápověda a přehled zkratek doplněny.
+
 ## [0.99.91] – 2026-11-01
 
 ### Změněno

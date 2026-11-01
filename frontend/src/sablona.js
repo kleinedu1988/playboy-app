@@ -42,6 +42,8 @@ export const SABLONA_OKNA = `
       <div id="pasStranky" class="pas-hlavicky hidden"></div>
       <!-- Podmenu: pohledy zvolené části (Síň slávy › Top 10 … Sezóna, Údržba › Po údajích … Souhrn); plní ui/volby.js -->
       <div id="podmenu" class="podmenu hidden" role="group"></div>
+      <!-- Sem se přesune kapsle hledání, když je druhý řádek vidět a vedle podmenu či drobečků se vejde (app/navigace.js) -->
+      <div id="hledaniVListe" class="lista-hledani"></div>
     </div>
     <!-- Řádek s kapslí hledání uprostřed: průsvitné pozadí jako kontextové nabídky, zobrazuje a skrývá jej tlačítko lupy -->
     <div id="hledaniRadek" class="hledani-radek hidden">

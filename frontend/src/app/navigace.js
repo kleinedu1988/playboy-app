@@ -238,6 +238,7 @@ export function nastavitViditelnostHledani(videt, { zamerit = false } = {}) {
     const prepinac = document.getElementById('searchToggleBtn');
     if (!radek || !prepinac) return;
     radek.classList.toggle('hidden', !videt);
+    umistitHledani();
     prepinac.classList.toggle('active', videt);
     prepinac.setAttribute('aria-expanded', String(videt));
     if (!videt) {
@@ -245,6 +246,41 @@ export function nastavitViditelnostHledani(videt, { zamerit = false } = {}) {
     } else if (zamerit) {
         searchInput.focus();
         searchInput.select();
+    }
+}
+
+// Otevřená kapsle hledání sdílí průsvitný druhý řádek s podmenu nebo drobečky: uprostřed panelu, když se tam
+// vejde, jinak hned vedle nich. Když místo není (úzké okno, dlouhé podmenu) nebo druhý řádek není vidět,
+// zůstane ve vlastním řádku pod ním. Nabídka výsledků je vždy v plovoucím řádku pod panelem.
+const SIRKA_KAPSLE = 440;
+function umistitHledani() {
+    const radek = document.getElementById('hledaniRadek');
+    const lista = document.querySelector('.hlavni-lista');
+    const misto = document.getElementById('hledaniVListe');
+    const kapsle = document.querySelector('.hledani');
+    const domov = radek?.querySelector('.nav-controls');
+    if (!radek || !lista || !misto || !kapsle || !domov) return;
+    let rezim = 'pod';
+    if (!radek.classList.contains('hidden') && getComputedStyle(lista).display !== 'none') {
+        const l = lista.getBoundingClientRect();
+        const vlevo = Math.max(l.left + 14, ...[...lista.children]
+            .filter(e => e !== misto && !e.classList.contains('hidden') && e.getClientRects().length)
+            .map(e => e.getBoundingClientRect().right));
+        const stred = l.left + l.width / 2;
+        if (vlevo + 16 <= stred - SIRKA_KAPSLE / 2) rezim = 'stred';
+        else if (l.right - 14 - vlevo - 16 >= 280) rezim = 'vedle';
+    }
+    const cil = rezim === 'pod' ? domov : misto;
+    misto.classList.toggle('stred', rezim === 'stred');
+    hlavicka.classList.toggle('hledani-v-liste', rezim !== 'pod');
+    if (kapsle.parentElement === cil) return;
+    // Přesun zruší zaměření pole; kurzor a výběr se vrátí
+    const zamereno = document.activeElement === searchInput;
+    const [od, po] = [searchInput.selectionStart, searchInput.selectionEnd];
+    cil.prepend(kapsle);
+    if (zamereno) {
+        searchInput.focus();
+        searchInput.setSelectionRange(od, po);
     }
 }
 
@@ -305,7 +341,9 @@ export function zvyraznitRezim() {
 const hlavicka = document.querySelector('.navbar');
 const sledovatListu = new ResizeObserver(() => {
     prizpusobitListu();
+    umistitHledani();
     document.documentElement.style.setProperty('--pod-hlavickou', `${Math.round(hlavicka.getBoundingClientRect().bottom)}px`);
 });
-[hlavicka, document.getElementById('volbyPrehledu')].forEach(p => sledovatListu.observe(p));
+[hlavicka, document.getElementById('volbyPrehledu'), document.querySelector('.hlavni-lista'), document.querySelector('.hlavni-lista > .logo'), document.getElementById('podmenu')]
+    .forEach(p => p && sledovatListu.observe(p));
 document.fonts?.ready.then(() => prizpusobitListu());

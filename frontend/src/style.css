@@ -427,7 +427,7 @@ textarea {
 }
 
 /* Kapsle hledání uvnitř průsvitného pruhu: jemný skleněný obrys bez druhého tmavého pozadí */
-.nav-controls input {
+.hledani input {
     width: 100%;
     height: 32px;
     padding: 0 70px 0 36px;
@@ -439,12 +439,12 @@ textarea {
     outline: none;
 }
 
-.nav-controls input:focus {
+.hledani input:focus {
     border-color: var(--accent);
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.nav-controls input:disabled {
+.hledani input:disabled {
     opacity: 0.5;
 }
 
@@ -14436,4 +14436,46 @@ button.pas-kapsle:focus-visible {
     .nav-kapsle .pas-hlavicky .slava-pohled:not(.active) {
         display: none;
     }
+}
+
+/* Druhý řádek (drobečky, podmenu) ve stejném průsvitném skle jako řádek hledání; otevřená kapsle hledání
+   se do něj přesune (app/navigace.js umistitHledani), pod panelem pak pluje jen nabídka výsledků */
+.hlavni-lista {
+    background-color: rgba(26, 26, 30, 0.82);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+.lista-hledani {
+    display: flex;
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
+    --wails-draggable: no-drag;
+}
+
+.lista-hledani:empty {
+    display: none;
+}
+
+.lista-hledani.stred {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 440px;
+    transform: translate(-50%, -50%);
+}
+
+.lista-hledani .hledani {
+    max-width: 440px;
+}
+
+.navbar.hledani-v-liste .hledani-radek:not(:has(.naseptavac:not(.hidden))) {
+    display: none;
+}
+
+.navbar.hledani-v-liste .hledani-radek .naseptavac {
+    margin-top: 0;
+    border-top: 0;
 }

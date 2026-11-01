@@ -20,6 +20,16 @@ import { htmlPrazdna } from '../ui/prazdno';
 import { htmlKostryAlb } from '../ui/kostra';
 import { zaznamenatProfil } from './zajem';
 
+// Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Tlačítka profilu (Upravit modelku, Přidat
+// fotky) se při každém vykreslení přesouvají do hlavičky, odkaz na ně proto platí i po přepsání hlavičky.
+const modelHeader = document.getElementById('modelHeader');
+const photosGrid = document.getElementById('photosGrid');
+const centerfoldsSide = document.getElementById('centerfoldsSide');
+const profileActions = document.getElementById('profileActions');
+
+// Štítek čísla časopisu; klik ho otevře (obsluha data-vydani v prohlizec.js)
+const htmlStitkuVydani = v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`;
+
 // Otevření profilu modelky s fotogalerií
 // seznam: id modelek, mezi kterými listují šipky ‹ › (pořadí, Top 10…); bez něj z galerie Modelky její karty,
 // odjinud (hledání, kronika, číslo) se nelistuje. Listování a Zpět (bezHistorie) seznam nemění.
@@ -38,11 +48,11 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     // Listování mezi profily (bez historie) je taky zájem; backend stejnou modelku počítá nejvýš jednou za 10 minut
     zaznamenatProfil(modelka.id);
     // Alba předchozí modelky se do načtení nahradí obrysy (stejná modelka po uložení zůstává, jak je)
-    if (stav.aktualniModelka?.id !== modelka.id) document.getElementById('photosGrid').innerHTML = htmlKostryAlb();
+    if (stav.aktualniModelka?.id !== modelka.id) photosGrid.innerHTML = htmlKostryAlb();
     stav.aktualniModelka = modelka;
     ukazatPohled(detailView);
-    document.getElementById('centerfoldsSide').innerHTML = '';
-    document.querySelector('main').scrollTop = 0;
+    centerfoldsSide.innerHTML = '';
+    hlavniOblast.scrollTop = 0;
 
     const hledatelne = hodnota => hodnota
         ? `<button class="link" data-hledat="${esc(hodnota)}" title="Vyhledat modelky se stejnou hodnotou">${esc(hodnota)}</button>`
@@ -50,16 +60,18 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     // Vydání se odvozují z alb a centerfoldů; starší ručně psané údaje se ukážou, jen když odvozená chybí
     const prvniVydani = modelka.vydani.find(v => rozlozitVydani(v)?.mesic) || (rozlozitVydani(modelka.vystoupeni)?.mesic ? modelka.vystoupeni : '');
     const vydani = modelka.vydani.length
-        ? modelka.vydani.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`).join(' ')
+        ? modelka.vydani.map(htmlStitkuVydani).join(' ')
         : esc([modelka.vystoupeni, ...modelka.pictorialVydani.split('\n')].map(v => v.trim()).filter(Boolean).join(', '));
 
-    // Údaje ve třech blocích: Playboy (nejdůležitější pro sbírku), Osobní, Vzhled; prázdné části se nezobrazí
-    const stitkyVydani = vydaniKody => vydaniKody.map(v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`).join(' ');
+    // Údaje ve třech blocích: Playboy (nejdůležitější pro sbírku), Osobní, Vzhled; prázdné části se nezobrazí.
+    // Kategorie a výskyt se odvozují z vydání a alb; spočítají se jednou pro údaje i pro pásky.
+    const kategorie = kategorieModelky(modelka);
+    const vyskyt = vyskytModelky(modelka);
     const playboy = [
         ['Vydání', vydani],
-        ['Kategorie', kategorieModelky(modelka).map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join(' ')],
-        ['Na obálce', stitkyVydani(modelka.obalky || [])],
-        ['Výskyt', vyskytModelky(modelka) ? `<span class="udaje-znamka">${VYSKYT[vyskytModelky(modelka)]}</span>` : ''],
+        ['Kategorie', kategorie.map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join(' ')],
+        ['Na obálce', (modelka.obalky || []).map(htmlStitkuVydani).join(' ')],
+        ['Výskyt', vyskyt ? `<span class="udaje-znamka">${VYSKYT[vyskyt]}</span>` : ''],
     ].filter(([, hodnota]) => hodnota);
 
     // Osobní údaje jako věty: „12. 3. 1975, Praha · v prvním vydání 20 let“
@@ -98,9 +110,6 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const tagy = modelka.tags.split(',').map(t => t.trim()).filter(Boolean);
     const dalsiJmena = modelka.dalsiJmena.split(',').map(j => j.trim()).filter(Boolean);
 
-    // Tlačítka profilu (Upravit modelku, Přidat fotky) jsou v šabloně s obsluhou; před přepsáním hlavičky se vezmou
-    // a vloží zpět pod jméno
-    const akce = document.getElementById('profileActions');
     // Pásky v rohu fotky: štítek za každé číslo (rok i měsíc), ve kterém se modelka objevila
     const vsechnaVydani = [
         ...(modelka.vydani || []),
@@ -109,7 +118,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         ...String(modelka.pictorialVydani || '').split('\n'),
     ].map(v => (v || '').trim()).filter(Boolean);
     const platnaVydani = [...new Set(vsechnaVydani)].filter(v => paskaCisla(v)).sort((a, b) => a.localeCompare(b));
-    const jePlaymate = kategorieModelky(modelka).some(k => k.nazev === 'Playmate měsíce');
+    const jePlaymate = kategorie.some(k => k.nazev === 'Playmate měsíce');
     const playmateVydani = (rozlozitVydani(modelka.vystoupeni)?.mesic && platnaVydani.includes(modelka.vystoupeni))
         ? modelka.vystoupeni
         : platnaVydani.find(v => rozlozitVydani(v)?.mesic);
@@ -121,7 +130,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     }).join('') + ((modelka.onlineAlba || []).length
         ? `<button type="button" class="panel-paska" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
     const paska = paskyHtml ? `<div class="panel-pasky">${paskyHtml}</div>` : '';
-    document.getElementById('modelHeader').innerHTML = `
+    modelHeader.innerHTML = `
         ${paska}
         <div class="profile-cover"><img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" /></div>
         <h2>${esc(modelka.jmeno)}</h2>
@@ -137,7 +146,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         ${htmlOdkazu(modelka.odkazy)}
     `;
 
-    document.querySelector('#modelHeader .profile-actions-misto').replaceWith(akce);
+    // Tlačítka profilu jsou v šabloně s obsluhou; přepsání hlavičky je odpojí, vloží se zpět pod jméno
+    modelHeader.querySelector('.profile-actions-misto').replaceWith(profileActions);
 
     await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitOdznaky(modelka.id)]);
 }
@@ -148,7 +158,7 @@ async function doplnitOdznaky(id) {
     try {
         odznaky = await GetOdznakyModelky(id) || [];
     } catch { /* odznaky jsou jen doplněk */ }
-    const misto = /** @type {HTMLElement | null} */ (document.querySelector('#modelHeader .profile-odznaky'));
+    const misto = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.profile-odznaky'));
     if (!misto || stav.aktualniModelka?.id !== id || !odznaky.length) return;
     misto.innerHTML = `<button type="button" class="profile-odznaky-tlacitko" data-otevrit-oblibenost="slava" data-slava-pohled="odznaky" title="Otevřít odznaky v Síni slávy">${htmlRadyOdznaku(odznaky, 12)}</button>`;
     misto.hidden = false;
@@ -161,7 +171,7 @@ function htmlPoradi(modelka) {
 }
 
 // Ostatní modelky sdíleného alba (hlavní i další kromě té, jejíž profil je otevřený) jako odkazy na jejich profil
-export function htmlSpoluModelek(a, krome = stav.aktualniModelka?.id) {
+function htmlSpoluModelek(a, krome = stav.aktualniModelka?.id) {
     const ostatni = [{ id: a.modelkaId, jmeno: a.jmenoModelky }, ...a.dalsiModelky].filter(m => m.id !== krome && m.jmeno);
     return ostatni.length ? `<span class="album-spolu">s ${ostatni.map(m => `<button class="chip" data-modelka="${m.id}" title="Otevřít profil">${esc(m.jmeno)}</button>`).join(' ')}</span>` : '';
 }
@@ -258,12 +268,9 @@ export async function nacistFotkyModelky(modelkaId) {
     // Při rychlém listování mezi modelkami může dorazit odpověď pro tu předchozí; její alba se nesmí ukázat
     // pod jménem jiné modelky, úpravy by pak šly na špatnou
     if (stav.aktualniModelka?.id !== modelkaId) return;
-    const photosGrid = document.getElementById('photosGrid');
     // Překreslení alb výběr ruší
     stav.posledniVybrana = null;
     selectionBar.classList.add('hidden');
-
-    const centerfoldsSide = document.getElementById('centerfoldsSide');
 
     stav.aktualniAlba = sestavitAlba(fotky || []);
     // Jméno hlavní modelky sdíleného alba (fotky profilu jména nenesou)
@@ -276,7 +283,6 @@ export async function nacistFotkyModelky(modelkaId) {
     // Pořadí pro prohlížeč: nejdřív centerfoldy z levého sloupce, potom alba
     stav.aktualniPolozky = stav.aktualniAlba.flatMap(a => a.polozky);
 
-
     // Indexy alb a položek se sestaví jednou; hledání v poli u každé dlaždice by rostlo s druhou mocninou
     const indexAlba = new Map(stav.aktualniAlba.map((a, i) => [a, i]));
     const indexPolozky = new Map(stav.aktualniPolozky.map((p, i) => [p, i]));
@@ -284,7 +290,7 @@ export async function nacistFotkyModelky(modelkaId) {
     const htmlCenterfoldu = (a) => {
         const index = indexAlba.get(a);
         const stitky = [
-            a.album ? `<button class="chip" data-vydani="${esc(a.album)}" title="Otevřít číslo">${esc(nazevVydani(a.album))}</button>` : '',
+            a.album ? htmlStitkuVydani(a.album) : '',
             htmlSpoluModelek(a),
         ].filter(Boolean).join(' ');
 
@@ -308,7 +314,7 @@ export async function nacistFotkyModelky(modelkaId) {
                 <div class="album-header">
                     <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
                     <span>${esc(popisTypuAlba(a.typ, a.datumAlba))} · ${popis}</span>
-                    ${a.vydani ? `<button class="chip" data-vydani="${esc(a.vydani)}" title="Otevřít číslo">${esc(nazevVydani(a.vydani))}</button>` : ''}
+                    ${a.vydani ? htmlStitkuVydani(a.vydani) : ''}
                     ${htmlSpoluModelek(a)}
                     <button class="album-more" data-nabidka-alba title="Akce alba (také pravým tlačítkem)">&#8943;</button>
                 </div>
@@ -329,11 +335,12 @@ export async function nacistFotkyModelky(modelkaId) {
 
     const centerfoldy = stav.aktualniAlba.filter(a => a.typ === 'Centerfold');
     const ostatni = stav.aktualniAlba.filter(a => a.typ !== 'Centerfold');
-    const prazdno = centerfoldy.length
+    // Prázdný stav se sestaví, jen když modelka nemá žádná další alba; text podle toho, zda má aspoň centerfold
+    const prazdno = () => centerfoldy.length
         ? htmlPrazdna('Žádná další alba', 'Pictorialy, fotky z dalších čísel a ostatní alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } })
         : htmlPrazdna('Zatím žádná alba', 'Centerfoldy, pictorialy a další alba modelky se objeví tady. Stačí vložit odkazy na fotky z Google Disku.', { tlacitko: { text: 'Přidat fotky', akce: 'pridat-album' } });
     centerfoldsSide.innerHTML = centerfoldy.map(htmlCenterfoldu).join('');
-    photosGrid.innerHTML = ostatni.map(htmlAlba).join('') || prazdno;
+    photosGrid.innerHTML = ostatni.map(htmlAlba).join('') || prazdno();
 
     // Lišta má smysl až od dvou alb; centerfoldy jsou v levém sloupci stále vidět
     listaAlb.naplnit(ostatni.map(a => ({ klic: indexAlba.get(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })));
@@ -346,11 +353,11 @@ export async function nacistFotkyModelky(modelkaId) {
     listaAlb.sledovat();
 }
 
-export function zrusitZnackyVlozeni() {
+function zrusitZnackyVlozeni() {
     document.querySelectorAll('.vlozit-pred, .vlozit-za').forEach(d => d.classList.remove('vlozit-pred', 'vlozit-za'));
 }
 
-export async function dokoncitTazeniFotky(zrusit = false) {
+async function dokoncitTazeniFotky(zrusit = false) {
     const t = stav.tazenaFotka;
     stav.tazenaFotka = null;
     if (!t || !t.tahne) return;
@@ -400,9 +407,9 @@ function sledovatMozaiku(mrizka, pohled) {
     }, true);
 }
 
-// Kolik dlaždic mozaiky se vejde do prvních řad: všechny ukázat, změřit řady a vrátit index první dlaždice za nimi
+// Kolik dlaždic mozaiky se vejde do prvních řad: změřit řady (dlaždice jsou už všechny ukázané) a vrátit index
+// první dlaždice za nimi
 function limitMozaiky(dlazdice) {
-    dlazdice.forEach(d => d.classList.remove('skryta', 'dalsi'));
     const vrcholy = [];
     for (const [i, d] of dlazdice.entries()) {
         const vrchol = /** @type {HTMLElement} */ (d).offsetTop;
@@ -413,20 +420,23 @@ function limitMozaiky(dlazdice) {
 }
 
 // Dlouhé album ukazuje jen první řádky; poslední viditelná dlaždice nese počet skrytých fotek a album rozbalí
-export const RADKU_NAHLEDU = 2;
-export const rozbalenaAlba = new Set();
+const RADKU_NAHLEDU = 2;
+const rozbalenaAlba = new Set();
 export const atributyMrizky = a => `data-klic="${esc(klicAlba(a))}"`;
 
-// Počty sloupců všech mřížek se zjistí najednou před prvním zápisem (jinak by se po každém albu rozvrhovalo znovu)
+// Počty sloupců všech mřížek se zjistí najednou před prvním zápisem (jinak by se po každém albu rozvrhovalo znovu).
+// Mozaiky všech alb se stejně tak nejdřív všechny rozbalí, pak změří a teprve potom zkrátí; střídání zápisu a měření
+// po albech by rozvrhovalo celou stránku znovu za každé album.
 export function zkratitAlba(pohled) {
     const mrizky = [...pohled.querySelectorAll('.photos-grid')]
         // Počet sloupců jde zjistit jen u mřížky, která je vidět
         .filter(mrizka => mrizka.offsetParent)
-        .map(mrizka => ({ mrizka, sloupcu: mrizka.classList.contains('mozaika') ? 0 : getComputedStyle(mrizka).gridTemplateColumns.split(' ').length }));
-    mrizky.forEach(({ mrizka, sloupcu }) => {
-        const dlazdice = [...mrizka.children];
-        // Mozaika nemá sloupce: řady se změří
-        const limit = sloupcu ? sloupcu * RADKU_NAHLEDU : limitMozaiky(dlazdice);
+        .map(mrizka => ({ mrizka, dlazdice: [...mrizka.children], sloupcu: mrizka.classList.contains('mozaika') ? 0 : getComputedStyle(mrizka).gridTemplateColumns.split(' ').length }));
+    // Mozaika nemá sloupce: řady se změří, až jsou vidět všechny dlaždice
+    mrizky.forEach(({ dlazdice, sloupcu }) => { if (!sloupcu) dlazdice.forEach(d => d.classList.remove('skryta', 'dalsi')); });
+    const limity = mrizky.map(({ dlazdice, sloupcu }) => sloupcu ? sloupcu * RADKU_NAHLEDU : limitMozaiky(dlazdice));
+    mrizky.forEach(({ mrizka, dlazdice }, j) => {
+        const limit = limity[j];
         const zkratit = dlazdice.length > limit && !rozbalenaAlba.has(mrizka.dataset.klic);
 
         dlazdice.forEach((d, i) => {
@@ -452,12 +462,10 @@ export function rozbalitKliknute(e) {
     if (dlazdice) prepnoutRozbaleniAlba(dlazdice.parentElement, true);
     return Boolean(dlazdice);
 }
-// Lišta písmen má smysl až u větší sbírky
-export const MODELEK_PRO_PISMENA = 20;
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    document.querySelector('main').addEventListener('click', (e) => {
+    hlavniOblast.addEventListener('click', (e) => {
         const tlacitko = e.target.closest('[data-rozbalit]');
         if (!tlacitko) return;
         const rozbaleno = tlacitko.previousElementSibling.classList.toggle('open');
@@ -465,7 +473,7 @@ export function pripravit() {
     });
 
     // Páska online alb přeskočí na první online album; pořadí v oblíbenosti otevře Hodnocení nebo Síň slávy (jako tlačítko v liště)
-    document.getElementById('modelHeader').addEventListener('click', (e) => {
+    modelHeader.addEventListener('click', (e) => {
         const doOblibenosti = e.target.closest('[data-otevrit-oblibenost]');
         if (doOblibenosti) {
             nastavitCastOblibenosti(doOblibenosti.dataset.otevritOblibenost || 'poradi');
@@ -479,7 +487,7 @@ export function pripravit() {
         document.querySelector('#photosGrid section.album[data-online]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
-    document.getElementById('photosGrid').addEventListener('pointerdown', (e) => {
+    photosGrid.addEventListener('pointerdown', (e) => {
         const dlazdice = e.target.closest('.photo-item');
         // S Ctrl nebo Shift se fotky vybírají, netahají
         if (e.button !== 0 || !dlazdice || dlazdice.classList.contains('dalsi') || e.target.closest('.hearts') || e.ctrlKey || e.metaKey || e.shiftKey) return;
@@ -496,7 +504,8 @@ export function pripravit() {
             t.dlazdice.classList.add('tazena');
             document.body.classList.add('razeni');
         }
-        zrusitZnackyVlozeni();
+        // Značku vložení nese jen dosavadní cíl; hledat ji při každém pohybu myši v celém dokumentu netřeba
+        t.cil?.classList.remove('vlozit-pred', 'vlozit-za');
         const pod = document.elementFromPoint(e.clientX, e.clientY)?.closest('.photo-item');
         // Přesouvá se jen uvnitř téhož alba
         t.cil = pod && pod !== t.dlazdice && pod.parentElement === t.dlazdice.parentElement ? pod : null;
@@ -512,7 +521,7 @@ export function pripravit() {
 
     window.addEventListener('blur', () => dokoncitTazeniFotky(true));
 
-    document.getElementById('photosGrid').addEventListener('click', (e) => {
+    photosGrid.addEventListener('click', (e) => {
         if (!stav.praveTazeno) return;
         e.stopPropagation();
         e.preventDefault();
@@ -527,10 +536,17 @@ export function pripravit() {
         });
     }, { passive: true });
 
-    // Počet sloupců mřížky, a tím i počet fotek v náhledu, závisí na šířce okna
+    // Počet sloupců mřížky, a tím i počet fotek v náhledu, závisí na šířce okna. Při tažení okraje okna chodí
+    // událostí víc za snímek; přepočítá se jednou před dalším vykreslením.
+    let cekaNaPrepocet = false;
     window.addEventListener('resize', () => {
-        zkratitAlba(detailView);
-        zkratitAlba(issueView);
-        listyStranky.forEach(l => { l.sledovat(); l.upravitSipky(); });
+        if (cekaNaPrepocet) return;
+        cekaNaPrepocet = true;
+        requestAnimationFrame(() => {
+            cekaNaPrepocet = false;
+            zkratitAlba(detailView);
+            zkratitAlba(issueView);
+            listyStranky.forEach(l => { l.sledovat(); l.upravitSipky(); });
+        });
     });
 }

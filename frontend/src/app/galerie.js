@@ -12,7 +12,7 @@ import { detailView, gallery, searchInput } from './prvky';
 import { listaGalerie } from './listy';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { nastavitViditelnostHledani, prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
-import { MODELEK_PRO_PISMENA, otevritDetailModelky } from './profil';
+import { otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
 import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
@@ -176,6 +176,9 @@ export function hledatHodnotu(hodnota) {
     searchInput.value = hodnota;
     nacistGalerii(hodnota);
 }
+
+// Lišta písmen má smysl až u větší sbírky
+const MODELEK_PRO_PISMENA = 20;
 
 // Modelky právě vykreslených karet podle id (klik na kartu otevře profil)
 let modelkyKaret = new Map();

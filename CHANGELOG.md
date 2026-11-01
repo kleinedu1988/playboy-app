@@ -7,6 +7,20 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.95] – 2026-11-01
+
+### Přidáno
+- **Úprava výřezu titulní fotky přímo v profilu**: tlačítko v rohu velké fotky v panelu Údaje nebo ⋯ › Upravit výřez titulní fotky. Rám má při úpravě tvar karty v galerii; po uložení se obnoví i miniatura v pruhu.
+
+### Změněno
+- **Drobečky sjednocené s navigační kapslí** (stejné sklo a oddělovač „›“).
+  - Zpět ukazuje celou cestu, odkud se přišlo („← Hodnocení › Pořadí“, „← Modelky › Profily“, jméno modelky, číslo) a vede přesně tam.
+  - Místo, kde jsem, svítí růžově; u profilu otevřeného ze seznamu (▾) otevře nabídku modelek seznamu.
+  - U čísla je před ním jeho ročník („Ročník 1975“, klik otevře celý ročník).
+  - Krokování „‹ 3 z 22 ›“ za tenkou čárou; v užším okně jen šipka zpět.
+- **Hledání**: kapsle má vždy vlastní řádek pod drobečky a obsah odsune, místo aby ho překrývala; výsledky plují pod ní.
+  - Text, který omezuje přehled (třeba `vlasy:blond` v Modelkách, hledání ve frontě Údržby), drží řádek otevřený: Esc ani lupa ho neschovají, kapsle má růžový obrys. Na profilu a čísle se řádek schová a po návratu je zpět; zavřít jde po smazání textu (×).
+
 ## [0.99.94] – 2026-11-01
 
 ### Změněno

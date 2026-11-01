@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.4] – 2026-11-01
+
+### Změněno
+- **Hodnocení a Síň slávy: stav ve stavové liště** (přepracování Hodnocení, krok 1).
+  - **Porovnat:** vlevo dnešní porovnání a sezóna (kdo vede, kolik dní zbývá), vpravo upozornění s odkazem, **↶ Vrátit** s poslední dvojicí a klávesy. Bublina „⌨ Klávesy“ pod pásy je pryč.
+  - **Fotky:** počet a klávesy prohlížeče (1–5 srdíčka, šipky, mezerník promítat, Esc).
+  - **Pořadí:** počet modelek, kolik čeká na potvrzení a kolik nesedí, vpravo odkaz do Porovnat.
+  - **Síň slávy:** den sezóny a kdo vede; vpravo sezóna čekající na vyhlášení (Vyhlásit →), jinak poslední zápis kroniky (Kronika →). Zdvojené počty („10 modelek v Top 10“) zmizely.
+  - V úzkém okně klávesová nápověda ubývá po celých úsecích, stav vlevo zůstává celý.
+
 ## [1.0.3] – 2026-11-01
 
 ### Změněno

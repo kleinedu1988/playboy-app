@@ -7,6 +7,21 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [0.99.90] – 2026-11-01
+
+### Změněno
+- **Navigační kapsle – fúze hlavního menu, částí a voleb.**
+  - **Čtyři sekce:** Modelky (Profily · Galerie), Čísla (Obálky · Kalendář · Centerfoldy), Hodnocení (Porovnat · Fotky · Pořadí · Síň slávy) a Sbírka (Úvod · Údržba · Sháním CZ · Statistiky).
+    - Zvolená sekce se v kapsli rozbalí na své části, nezvolené jsou jen ikony.
+    - Klik na zvolenou sekci otevře nabídku všech sekcí i s částmi.
+    - <kbd>Ctrl</kbd>+<kbd>1</kbd>–<kbd>4</kbd> otevřou sekce.
+  - **Pohledy části** (Síň slávy: Top 10 … Sezóna, Údržba: Po údajích · Po modelkách · Souhrn) jsou v podmenu v druhém řádku. Kapsle voleb vpravo nahoře má jen řazení, filtry a počet. Lupa, + a ⋯ jsou v řádku okna.
+  - **Sdílený průsvitný panel:** druhý řádek (podmenu, drobečky profilu a čísla) má sklo jako hledání.
+    - Lupa v něm otevře kapsli hledání vedle podmenu nebo drobečků, výsledky plují pod panelem.
+    - Když se kapsle nevejde, otevře se v řádku pod panelem.
+    - Bez podmenu a drobečků se řádek nezobrazuje a hledání má vlastní plovoucí řádek.
+  - V užším okně mají nezvolené části jen ikonu, v nejužším zůstane jen zvolená část.
+
 ## [0.99.89] – 2026-10-31
 
 ### Přidáno

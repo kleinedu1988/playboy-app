@@ -1,6 +1,6 @@
 // Přehled: stránka Sbírka (úvod, Údržba, Sháním CZ, Statistiky, Porovnat, Hodnotit fotky, Pořadí)
 import { GetKalendar, GetPrehled, GetStavyVydani, SetStavVydani } from './backend';
-import { nacistOblibenost, nastavitCastOblibenosti, nastavitNejlepsiVOblibenosti, obnovitHlavuHodnoceni, poctyOblibenosti, ukazatStrankuOblibenosti } from './oblibenost';
+import { nacistOblibenost, nastavitCastOblibenosti, nastavitNejlepsiVOblibenosti, obnovitHlavuHodnoceni, ukazatStrankuOblibenosti } from './oblibenost';
 import { nacistNejlepsi } from './nejlepsi';
 import { nacistGalerii } from './galerie';
 import { zrusitHledani } from './naseptavac';
@@ -42,16 +42,9 @@ export function htmlPasuModelek(pohled) {
     return `<nav class="slava-pohledy" role="tablist" aria-label="Části modelek">${htmlPilulek(pilulky, 'cast-modelek-pas')}</nav>`;
 }
 
-// Části Hodnocení v navigační kapsli: Porovnat, Fotky, Pořadí (pohledy Oblíbenosti) a Síň slávy
+// Hodnocení má části v liště své hlavičky (oblibenost.js), Síň slávy je vlastní sekce: v kapsli nic
 export function htmlPasuHodnoceni() {
-    const { pocty } = poctyOblibenosti();
-    const vHodnoceni = stav.oblibenostCast === 'hodnoceni';
-    // Hodnocení má části v liště své hlavičky (oblibenost.js); Síň slávy zatím pilulky v kapsli
-    if (vHodnoceni) return '';
-    const pohledy = [['porovnat', 'Porovnat'], ['fotky', 'Fotky'], ['poradi', 'Pořadí']].map(([klic, nazev]) =>
-        ({ klic, nazev, pocet: pocty[klic][0], titulek: pocty[klic][1], zvolena: vHodnoceni && stav.hodnoceniPohled === klic }));
-    const slava = [{ klic: 'slava', nazev: 'Síň slávy', titulek: 'Nejlepší desítka, legendy, odznaky, rekordy, kronika a sezóna', zvolena: !vHodnoceni }];
-    return `<nav class="slava-pohledy" role="tablist" aria-label="Části hodnocení">${htmlPilulek(pohledy, 'zobrazeni-prehledu')}${htmlPilulek(slava, 'cast-modelek-pas')}</nav>`;
+    return '';
 }
 
 // Pilulky podčástí pro Čísla v kontextové liště (#pasStranky): Obálky, Kalendář, Centerfoldy
@@ -88,7 +81,7 @@ export function obnovitPasHlavicky(pohled) {
     const kapsle = document.getElementById('viewToggle');
     const selektor = pohled === gallery || pohled === best ? '[data-rezim="modelky"]'
         : pohled === covers || pohled === calendar || pohled === wall ? '[data-rezim="covery"]'
-            : `[data-sekce="${stav.prehledSekce === 'oblibenost' ? 'hodnoceni' : 'sbirka'}"]`;
+            : `[data-sekce="${stav.prehledSekce !== 'oblibenost' ? 'sbirka' : stav.oblibenostCast === 'slava' ? 'slava' : 'hodnoceni'}"]`;
     const zvolena = kapsle?.querySelector(selektor);
     if (zvolena && html && misto.previousElementSibling !== zvolena) zvolena.after(misto);
     kapsle?.classList.toggle('rozbalena', Boolean(html));

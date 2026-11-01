@@ -138,7 +138,8 @@ const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy', uvod: 'M
 const CASTI_REZIMU = { modelky: ['Modelky', 'Profily'], nejlepsi: ['Modelky', 'Galerie'], covery: ['Čísla', 'Obálky'], kalendar: ['Čísla', 'Kalendář'], centerfoldy: ['Čísla', 'Centerfoldy'] };
 const POHLEDY_HODNOCENI = { porovnat: 'Porovnat', fotky: 'Fotky', poradi: 'Pořadí' };
 function cestaPrehledu({ sekce, cast, pohled }) {
-    if (sekce === 'oblibenost') return ['Hodnocení', cast === 'slava' ? 'Síň slávy' : POHLEDY_HODNOCENI[pohled] || 'Porovnat'];
+    if (sekce === 'oblibenost' && cast === 'slava') return ['Síň slávy'];
+    if (sekce === 'oblibenost') return ['Hodnocení', POHLEDY_HODNOCENI[pohled] || 'Porovnat'];
     // Sbírka je jedna stránka; Údržba je její hlavní obsah, ostatní části se v cestě jmenují
     return NAZVY_STRANEK[sekce] && sekce !== 'udrzba' ? ['Sbírka', NAZVY_STRANEK[sekce]] : ['Sbírka'];
 }
@@ -344,8 +345,10 @@ export function zvyraznitRezim() {
             zvoleny = novy === 'modelky' || novy === 'nejlepsi';
         } else if (b.dataset.rezim === 'covery') {
             zvoleny = novy === 'covery' || novy === 'kalendar' || novy === 'centerfoldy';
+        } else if (b.dataset.sekce === 'slava') {
+            zvoleny = vOblibenosti && stav.oblibenostCast === 'slava';
         } else if (b.dataset.sekce === 'hodnoceni') {
-            zvoleny = vOblibenosti;
+            zvoleny = vOblibenosti && stav.oblibenostCast !== 'slava';
         } else if (b.dataset.rezim === 'prehled') {
             zvoleny = novy === 'prehled' && !vOblibenosti;
         }

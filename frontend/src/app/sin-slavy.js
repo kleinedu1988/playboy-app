@@ -14,7 +14,7 @@ import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { htmlSrdicka, htmlTrendu } from './galerie';
-import { nastavitHtml } from '../ui/dom';
+import { jeVidet, nastavitHtml, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna, htmlPrazdnaMala } from '../ui/prazdno';
 
 let kontejner = null;
@@ -163,11 +163,6 @@ function htmlKarty(x, rekordy, legenda, odznaky) {
         </div>`;
 }
 
-// Přepínač pohledů Síně slávy pro lištu voleb (#volbyPrehledu)
-function htmlVolbyPohledu() {
-    return POHLEDY.map(([klic, nazev]) => `<button type="button" class="chip ${klic === pohled ? 'active' : ''}" data-slava-pohled="${klic}">${nazev}</button>`).join('');
-}
-
 // Stavová lišta Síně slávy: vlevo probíhající sezóna (den, kdo vede), vpravo skončená sezóna k vyhlášení, jinak
 // poslední zápis kroniky s odkazem (skrytá tlačítka se zrcadlí do lišty, klik jde na ně); počty jsou na stránce
 function htmlStavuSine() {
@@ -189,9 +184,9 @@ function htmlStavuSine() {
     return `${vpravo}${textSezony ? `<span>${esc(textSezony)}</span>` : ''}`;
 }
 
-// Volby pohledu Síně slávy v liště pod záložkami (Kronika má i filtr, htmlKroniky) a stav ve stavové liště
+// Skrytý řádek pro stavovou lištu (pohledy a filtr Kroniky jsou v liště hlavičky Síně)
 function htmlPoctuPohledu() {
-    return pohled === 'kronika' ? '' : `<div class="volby-v-liste" data-stitek="Hodnocení" data-nadpis="Síň slávy" data-volby-casti="slava-${pohled}">${htmlVolbyPohledu()}${htmlStavuSine()}</div>`;
+    return `<div class="volby-v-liste" data-volby-casti="slava-${pohled}">${htmlStavuSine()}</div>`;
 }
 
 // Pohled Top 10: stupně vítězů (2. vlevo, 1. uprostřed, 3. vpravo) a místa 4–10 v řadě přes celou šířku
@@ -206,7 +201,7 @@ function htmlTop(rekordy, odznaky) {
     const ostatni = zbytek.map(x => htmlKarty(x, rekordy.get(x.modelkaId), false, odznaky.get(x.modelkaId))).join('');
     const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada slava-skupina ${zbytek.length >= 6 ? 'husta' : ''}" style="--karet: ${zbytek.length}">${ostatni}</div>${misto}` : '');
     if (!top) return htmlPrazdna('Top 10 je zatím prázdná', 'Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' });
-    return `<p class="slava-uvod stranka-uvod">Jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy · odznaky pod jménem · klik na modelku otevře její vitrínu</p>${top}${htmlNaDosah()}`;
+    return top;
 }
 
 // Pohled Sezóna: řádek sezóny (název, odpočet měsíce, počty), trůn s první trojicí (stejné karty a stupně jako Top 10),
@@ -244,29 +239,10 @@ function htmlSezony() {
     const sz = sezona;
     if (!sz) return htmlPrazdna('Sezónu se nepodařilo načíst', 'Zkus Síň slávy otevřít znovu.', { ikona: 'hvezda' });
     // Skončená, ještě neuzavřená sezóna (okno vyhlášení se odložilo „Později“)
-    const kVyhlaseni = sz.kUzavreni ? `<div class="sz-karta sz-vyhlasit"><span>♛ Sezóna ${esc(nazevSezony(sz.kUzavreni.mesic))} skončila – čeká na vyhlášení Favoritky a volbu Miláčka.</span>
-        <button type="button" class="btn btn-primary btn-small" data-sezona-vyhlasit>Vyhlásit sezónu</button></div>` : '';
     const soutezi = sz.poradi.filter(b => b.misto > 0 && modelka(b.modelkaId));
     const nejvys = Math.max(1, ...sz.poradi.map(b => b.body));
-    const hlava = `
-        <div class="sz-hlava">
-            <div><h2>Sezóna ${esc(nazevSezony(sz.mesic))}</h2>
-                <p>Body za souboje v Porovnat a za zájem · o titul Favoritka soutěží modelky s aspoň 3 souboji</p></div>
-            <div class="sz-cas"><div><span>${esc(datumKroniky(sz.od))}</span><span>⏳ <b>${esc(textZbyva(sz.den, sz.dni))}</b></span><span>${esc(datumKroniky(sz.do))}</span></div>
-                <div class="sz-pruh"><i style="width:${Math.round(sz.den / Math.max(1, sz.dni) * 100)}%"></i></div></div>
-            <div class="sz-cisla"><span><b>${sz.souboju}</b>${esc(sklonovat(sz.souboju, 'souboj', 'souboje', 'soubojů').replace(/^\d+ /, ''))}</span><span><b>${soutezi.length}</b>soutěží</span></div>
-        </div>`;
-    const minule = sz.minule.length ? `
-        <div class="sz-karta"><h4>Minulé sezóny</h4><div class="sz-minule">${sz.minule.map((x) => {
-            const f = modelka(x.favoritka);
-            const mil = x.milacek ? modelka(x.milacek) : null;
-            return `<div class="card slava-karta ${f ? '' : 'sz-bez'}" ${f ? `data-otevrit-modelku="${f.id}"` : ''} tabindex="0" title="${esc(`Sezóna ${nazevSezony(x.mesic)}: ${f ? `Favoritka ${f.jmeno}, ${x.body} b.` : 'bez Favoritky'}${mil ? `, Miláček ${mil.jmeno}` : ''}, ${x.souboju} soubojů`)}">
-                <div class="card-image-wrap">${f ? `<img data-src="${esc(adresaTitulni(f))}" alt="" style="${stylVyrezu(f)}" draggable="false" decoding="async" />` : ''}<span class="slava-misto prvni">♛ ${esc(nazevSezony(x.mesic, true))}</span></div>
-                <div class="card-info"><h3>${esc(f?.jmeno || 'Bez titulu')}</h3><p class="slava-popis">${mil ? `♥ Miláček ${esc(mil.jmeno.split(' ')[0])}` : esc(sklonovat(x.souboju, 'souboj', 'souboje', 'soubojů'))}</p></div>
-            </div>`;
-        }).join('')}</div></div>` : '';
     if (!soutezi.length) {
-        return `<div class="sz">${kVyhlaseni}${hlava}${htmlPrazdna('Sezóna teprve začíná', 'Body sbírají modelky za souboje v Porovnat a za zájem. Na trůn se dostane modelka, která má v sezóně aspoň 3 souboje.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' })}${minule}</div>`;
+        return `<div class="sz">${htmlPrazdna('Sezóna teprve začíná', 'Body sbírají modelky za souboje v Porovnat a za zájem. Na trůn se dostane modelka, která má v sezóně aspoň 3 souboje.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' })}</div>`;
     }
     const vudkyne = soutezi[0];
     const trun = [2, 1, 3].map(misto => soutezi.find(b => b.misto === misto)).filter(Boolean);
@@ -278,7 +254,7 @@ function htmlSezony() {
             <span class="sz-m">${b.misto}.</span><img class="sz-av" data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
             <span class="sz-jm">${esc(m.jmeno)}</span>${htmlSlozeni(b, nejvys)}<span class="sz-wl" title="výhry – prohry">${b.vyhry}–${b.prohry}</span>${textTrendu(b.trend) || '<span class="trend"></span>'}<b class="sz-b">${b.body}</b></button>`;
     }).join('');
-    return `<div class="sz">${kVyhlaseni}${hlava}
+    return `<div class="sz">
         <div class="slava-stupne slava-skupina">${trun.map(b => `<div class="slava-stupen misto-${b.misto}">${htmlKartySezony(b, vudkyne, nejvys)}<div class="slava-podstavec" aria-hidden="true">${b.misto}</div></div>`).join('')}</div>
         <div class="sz-mrizka">
             <div class="sz-karta"><h4>Pořadí sezóny</h4>
@@ -286,31 +262,179 @@ function htmlSezony() {
                 ${radky || '<p class="prazdno-male">Zatím jen první trojice.</p>'}
                 ${ostatnich ? `<p class="prazdno-male">${esc(sklonovat(ostatnich, 'další modelka sbírá', 'další modelky sbírají', 'dalších modelek sbírá'))} body, na pořadí potřebuje aspoň 3 souboje.</p>` : ''}
             </div>
-            <div class="sz-karta"><h4>Pravidla sezóny</h4>
-                <ul class="sz-pravidla">
-                    <li><b>+3</b> výhra v souboji, <b>+1</b> remíza</li>
-                    <li><b>+2</b> navíc za výhru nad silnější (výš v pořadí)</li>
-                    <li><b>+1</b> den s otevřeným profilem, <b>+1</b> za každé 2 minuty nad fotkami – nejvýš 4 denně a nejvýš polovina bodů</li>
-                    <li>Na konci měsíce vyhlásíš <b>Favoritku</b> a můžeš zvolit <b>♥ Miláčka</b> sezóny</li>
-                </ul>
-            </div>
-        </div>${minule}</div>`;
+        </div></div>`;
 }
 
-// Řádek „Na dosah“ pod Top 10: nejbližší další stupně odznaků (nejvýš pět), klik otevře vitrínu modelky
-const NA_DOSAH = 5;
-function htmlNaDosah() {
-    const blizko = (data.odznaky || []).filter(o => o.dalsi > 0 && modelka(o.modelkaId) && data.vitrina.some(x => x.modelkaId === o.modelkaId))
+// ——— Hlavička Síně slávy (jeden panel v hlavičce okna jako Hodnocení a Sbírka) ———
+// Fotka jedničky s ♛, čísla, okénka Sezóna a Na dosah, akce (Vyzvat o trůn, Vyhlásit sezónu, Porovnat) a lišta:
+// pohledy Top 10 · Sezóna · Legendy · Odznaky · Rekordy · Kronika, vpravo filtr Kroniky. Po odrolování jeden řádek.
+let hlava = null;
+const POHLEDY_V_LISTE = ['top', 'sezona', 'legendy', 'odznaky', 'rekordy', 'kronika'];
+const hlavaVidet = () => Boolean(kontejner?.isConnected) && Boolean(data) && stav.rezim === 'prehled'
+    && stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'slava' && !document.getElementById('stats')?.classList.contains('hidden');
+
+// Panel vpravo (I): Na dosah (nejbližší stupně odznaků), Minulé sezóny, Pravidla sezóny
+const PANELY_SLAVY = [['dosah', 'Na dosah'], ['minule', 'Minulé sezóny'], ['pravidla', 'Pravidla']];
+
+function nejblizsiOdznaky(kolik) {
+    return (data.odznaky || []).filter(o => o.dalsi > 0 && modelka(o.modelkaId) && data.vitrina.some(x => x.modelkaId === o.modelkaId))
         .map(o => ({ o, p: popisOdznaku(o, jmeno) }))
-        .sort((a, b) => (b.p?.postup ?? 0) - (a.p?.postup ?? 0)).slice(0, NA_DOSAH);
-    if (!blizko.length) return '';
+        .sort((a, b) => (b.p?.postup ?? 0) - (a.p?.postup ?? 0)).slice(0, kolik);
+}
+
+function htmlHlavySlavy() {
+    const krestni = id => jmeno(id).split(' ')[0];
+    const prvni = data.vitrina.find(x => x.misto === 1);
+    const m1 = prvni && modelka(prvni.modelkaId);
+    const foto = m1
+        ? `<button type="button" class="sl-foto" data-otevrit-modelku="${m1.id}" title="${esc(`1. ${m1.jmeno} – otevřít profil`)}"><img src="${esc(adresaTitulni(m1))}" alt="" style="${stylVyrezu(m1)}" draggable="false" /><span aria-hidden="true">♛</span></button>`
+        : '<div class="sl-foto prazdna" aria-hidden="true"><span>♛</span></div>';
+    const cislo = (n, a, b, c) => `<span><b>${(n || 0).toLocaleString('cs-CZ')}</b> ${esc(sklonovat(n || 0, a, b, c).replace(/^\S+ /, ''))}</span>`;
+    const sz = sezona;
+    const soutezi = (sz?.poradi || []).filter(b => b.misto > 0 && modelka(b.modelkaId));
+    const vede = soutezi[0];
+    const okenkoSezony = sz?.dni ? `<button type="button" class="sh-oblast hd-okenko" data-sl-pohled="sezona" title="Pohled Sezóna">
+            <span>Sezóna ${esc(nazevSezony(sz.mesic).split(' ')[0])}</span><b>${vede ? `♛ ${esc(krestni(vede.modelkaId))}` : '—'}</b><i><em style="width:${Math.round(sz.den / sz.dni * 100)}%"></em></i><small>${esc(textZbyva(sz.den, sz.dni))}${vede ? ` · ${vede.body} b.` : ''}</small></button>` : '';
+    const dosah = nejblizsiOdznaky(1)[0];
+    const okenkoDosahu = dosah ? `<button type="button" class="sh-oblast hd-okenko" data-sl-panel="dosah" title="Nejbližší další stupeň odznaku – panel Na dosah">
+            <span>Na dosah</span><b>${esc(krestni(dosah.o.modelkaId))}</b><i><em style="width:${Math.round((dosah.p?.postup || 0) * 100)}%"></em></i><small>${esc(dosah.p?.zbyva || '')}</small></button>` : '';
+    const druha = soutezi[1];
+    const akce = [
+        sz?.kUzavreni ? `<button type="button" class="volba akcent" data-sezona-vyhlasit><b>♛ Vyhlásit sezónu ${esc(nazevSezony(sz.kUzavreni.mesic).split(' ')[0])}</b></button>` : '',
+        druha && vede ? `<button type="button" class="volba ${sz?.kUzavreni ? '' : 'akcent'}" data-sezona-vyzvat="${druha.modelkaId}" data-sezona-vudkyne="${vede.modelkaId}" title="${esc(`Souboj ${jmeno(druha.modelkaId)} s vedoucí ${jmeno(vede.modelkaId)} v Porovnat`)}"><b>⚔ Vyzvat o trůn</b> <small>${esc(krestni(druha.modelkaId))} −${vede.body - druha.body} b.</small></button>` : '',
+        '<button type="button" class="volba" data-zobrazeni-prehledu="porovnat" title="Hodnocení › Porovnat"><b>Porovnat →</b></button>',
+    ].join('');
+    const nazvy = new Map(POHLEDY.map(([k, n]) => /** @type {[string, string]} */ ([k, n])));
+    const filtryKroniky = pohled === 'kronika' ? FILTRY_KRONIKY.map(([k, nazev, f]) => {
+        const n = bezOpakovanychPocatku(data.kronika.filter(f)).length;
+        return n || k === 'vse' ? `<button type="button" class="${k === filtrKroniky ? 'on' : ''}" data-kronika-filtr="${k}" aria-pressed="${k === filtrKroniky}">${nazev} <small>${n}</small></button>` : '';
+    }).join('') : '';
+    return `<div class="sh-obsah">
+            ${foto}
+            <div class="sh-identita"><h2>Síň slávy</h2>
+                <div class="sh-cisla">${cislo(data.vitrina.length, 'v Top 10', 'v Top 10', 'v Top 10')}${cislo(data.legendy.length, 'legenda', 'legendy', 'legend')}${cislo((data.odznaky || []).filter(o => o.ziskan).length, 'odznak', 'odznaky', 'odznaků')}${cislo(data.rekordy.length, 'rekord', 'rekordy', 'rekordů')}</div></div>
+            <div class="sh-oblasti">${okenkoSezony}${okenkoDosahu}</div>
+        </div>
+        <div class="sh-akce">
+            ${akce}<span class="sh-oddelovac" aria-hidden="true"></span>
+            ${PANELY_SLAVY.map(([klic, nazev]) => `<button type="button" class="volba ${stav.slavaPanel === klic ? 'zapnuto' : ''}" data-sl-panel="${klic}" aria-pressed="${stav.slavaPanel === klic}" title="Panel vpravo (I)">${nazev}</button>`).join('')}
+        </div>
+        <div class="sh-lista">
+            <div class="sh-filtry" role="tablist" aria-label="Pohledy Síně slávy">${POHLEDY_V_LISTE.map(klic =>
+                `<button type="button" role="tab" class="sh-filtr ${klic === pohled ? 'on' : ''}" aria-selected="${klic === pohled}" data-sl-pohled="${klic}">${nazvy.get(klic)}</button>`).join('')}</div>
+            <div class="sh-pohledy" role="group" aria-label="Filtr kroniky">${filtryKroniky}</div>
+        </div>`;
+}
+
+export function obnovitHlavuSlavy() {
+    if (!hlava) return;
+    const videt = hlavaVidet();
+    hlava.classList.toggle('hidden', !videt);
+    if (!videt) {
+        document.querySelector('.navbar')?.classList.remove('slava-svinuta');
+        return;
+    }
+    nastavitHtml(hlava, htmlHlavySlavy());
+}
+
+// Obsah panelu (vykresluje se s pohledem; otevřený říká data-sl-panel na .slava)
+function htmlPaneluSlavy() {
     const cil = o => TRIDY_STUPNU[(o.stupen || 0) + 1] || 'zlato';
-    return `<div class="slava-dosah" aria-label="Na dosah – nejbližší další stupně odznaků">
-        <span class="slava-dosah-nadpis">Na dosah</span>
-        ${blizko.map(({ o, p }) => `<button type="button" class="slava-dosah-polozka" data-slava-vybrat="${o.modelkaId}" data-odznak-bublina="${esc(klicBubliny(o))}" title="">
+    const blizko = nejblizsiOdznaky(8);
+    const dosah = blizko.length ? `<ul class="slp-dosah">${blizko.map(({ o, p }) => `<li><button type="button" class="slava-dosah-polozka" data-slava-vybrat="${o.modelkaId}" data-odznak-bublina="${esc(klicBubliny(o))}" title="">
             ${htmlMedailonu(o)}<span class="slava-dosah-text"><b>${esc(jmeno(o.modelkaId))}</b><span class="odznak-pruh ${cil(o)}"><i style="width:${Math.round((p?.postup || 0) * 100)}%"></i></span><small>${esc(p?.zbyva || '')}</small></span>
-        </button>`).join('')}
-    </div>`;
+        </button></li>`).join('')}</ul>` : '<p class="hz-tichy">Žádná modelka z Top 10 teď nemá další stupeň odznaku na dosah.</p>';
+    const minule = (sezona?.minule || []).length ? `<ul class="slp-minule">${sezona.minule.map(x => {
+        const f = modelka(x.favoritka);
+        const mil = x.milacek ? modelka(x.milacek) : null;
+        return `<li><button type="button" ${f ? `data-otevrit-modelku="${f.id}"` : 'disabled'}>${f ? `<img data-src="${esc(adresaTitulni(f))}" alt="" style="${stylVyrezu(f)}" draggable="false" />` : '<span class="slp-bez"></span>'}
+            <span><b>${esc(nazevSezony(x.mesic))}</b><small>${f ? `♛ ${esc(f.jmeno)} · ${x.body} b.` : 'bez Favoritky'}${mil ? ` · ♥ ${esc(mil.jmeno.split(' ')[0])}` : ''} · ${esc(sklonovat(x.souboju, 'souboj', 'souboje', 'soubojů'))}</small></span></button></li>`;
+    }).join('')}</ul>` : '<p class="hz-tichy">Zatím žádná uzavřená sezóna – první se vyhlásí na konci měsíce.</p>';
+    const pravidla = `<ul class="sz-pravidla">
+            <li><b>+3</b> výhra v souboji, <b>+1</b> remíza</li>
+            <li><b>+2</b> navíc za výhru nad silnější (výš v pořadí)</li>
+            <li><b>+1</b> den s otevřeným profilem, <b>+1</b> za každé 2 minuty nad fotkami – nejvýš 4 denně a nejvýš polovina bodů</li>
+            <li>O titul soutěží modelky s aspoň 3 souboji v sezóně</li>
+            <li>Na konci měsíce vyhlásíš <b>Favoritku</b> a můžeš zvolit <b>♥ Miláčka</b> sezóny</li>
+        </ul>
+        <h4>Top 10 a legendy</h4>
+        <p class="hz-tichy">Do Top 10 se modelka dostane po 10 porovnáních s výhrou nad některou z Top 20. Bývalé členky Top 10 jsou Legendy; rekordy a odznaky se počítají z kroniky.</p>`;
+    return `<aside class="sbirka-panel sl-panel" aria-label="Panel Síně slávy">
+        <div class="sbp-hlava">
+            <nav class="sbp-zalozky" role="tablist" aria-label="Panel Síně slávy">${PANELY_SLAVY.map(([klic, nazev]) => `<button type="button" role="tab" data-sl-panel="${klic}" aria-selected="${stav.slavaPanel === klic}">${nazev}</button>`).join('')}</nav>
+            <button type="button" class="sbp-zavrit" data-sl-panel-zavrit title="Zavřít panel (Esc)" aria-label="Zavřít panel">&times;</button>
+        </div>
+        <div class="sbp-telo">
+            <div class="hdp-cast" data-slp="dosah"><h4>Na dosah <small>nejbližší další stupně odznaků v Top 10</small></h4>${dosah}</div>
+            <div class="hdp-cast" data-slp="minule"><h4>Minulé sezóny</h4>${minule}</div>
+            <div class="hdp-cast hdp-jak" data-slp="pravidla"><h4>Pravidla sezóny</h4>${pravidla}</div>
+        </div>
+    </aside>`;
+}
+
+function nastavitPanelSlavy(klic) {
+    stav.slavaPanel = klic === stav.slavaPanel ? '' : klic;
+    try {
+        localStorage.setItem('slavaPanel', stav.slavaPanel);
+        if (stav.slavaPanel) localStorage.setItem('slavaPanelPosledni', stav.slavaPanel);
+    } catch { /* jen pro toto spuštění */ }
+    const koren = kontejner?.querySelector('.slava');
+    if (koren) {
+        koren.dataset.slPanel = stav.slavaPanel;
+        koren.querySelectorAll('.sl-panel [data-sl-panel]').forEach(b => b.setAttribute('aria-selected', String(/** @type {HTMLElement} */ (b).dataset.slPanel === stav.slavaPanel)));
+    }
+    obnovitHlavuSlavy();
+}
+
+// Akce hlavičky a panelu (hlavička je mimo kontejner Síně)
+function klikSlavy(cil) {
+    const panel = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-panel]'));
+    const naPohled = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-pohled]'));
+    const filtr = /** @type {HTMLElement | null} */ (cil.closest('[data-kronika-filtr]'));
+    const vyzva = /** @type {HTMLElement | null} */ (cil.closest('[data-sezona-vyzvat]'));
+    if (cil.closest('[data-sl-panel-zavrit]')) nastavitPanelSlavy('');
+    else if (panel) {
+        if (!(panel.closest('.sl-panel') && panel.dataset.slPanel === stav.slavaPanel)) nastavitPanelSlavy(panel.dataset.slPanel);
+    } else if (naPohled) prepnoutPohled(naPohled.dataset.slPohled);
+    else if (filtr) {
+        filtrKroniky = filtr.dataset.kronikaFiltr || 'vse';
+        vykreslit();
+    } else if (cil.closest('[data-sezona-vyhlasit]')) vyhlasitSezonu(sezona?.kUzavreni);
+    else if (vyzva) soubojOTrun(Number(vyzva.dataset.sezonaVyzvat), Number(vyzva.dataset.sezonaVudkyne));
+    else return false;
+    return true;
+}
+
+function pripravitHlavuSlavy() {
+    try { stav.slavaPanel = localStorage.getItem('slavaPanel') || ''; } catch { /* zavřený */ }
+    if (!PANELY_SLAVY.some(([klic]) => klic === stav.slavaPanel)) stav.slavaPanel = '';
+    hlava = document.createElement('div');
+    hlava.id = 'slavaHlava';
+    hlava.className = 'sbirka-hlava slava-hlava hidden';
+    document.getElementById('albumNav')?.before(hlava);
+    hlava.addEventListener('click', e => klikSlavy(/** @type {HTMLElement} */ (e.target)));
+    const navbar = document.querySelector('.navbar');
+    const main = document.querySelector('main');
+    main?.addEventListener('scroll', () => {
+        if (hlava.classList.contains('hidden')) return;
+        if (main.scrollTop > 60) navbar.classList.add('slava-svinuta');
+        else if (main.scrollTop < 20) navbar.classList.remove('slava-svinuta');
+    }, { passive: true });
+    // I otevře naposledy otevřený panel (nebo ho zavře), Esc zavře
+    document.addEventListener('keydown', (e) => {
+        if (!hlavaVidet() || e.ctrlKey || e.altKey || e.metaKey || stav.zamceno || otevreneOkno() || jeVidet('lightbox')
+            || /** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select, [contenteditable]')) return;
+        if (e.key.toLowerCase() === 'i' && !e.shiftKey) {
+            e.preventDefault();
+            let posledni = 'dosah';
+            try { posledni = localStorage.getItem('slavaPanelPosledni') || 'dosah'; } catch { /* výchozí */ }
+            nastavitPanelSlavy(stav.slavaPanel ? '' : posledni);
+        } else if (e.key === 'Escape' && stav.slavaPanel && !document.querySelector('.context-menu:not(.hidden), .volby-panel:not(.hidden)')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            nastavitPanelSlavy('');
+        }
+    }, true);
 }
 
 // ——— Vitrína modelky (z Top 10): čísla, odznaky se stupni a postupem, co jí chybí, rekordy a její kronika ———
@@ -539,10 +663,6 @@ const bezOpakovanychPocatku = seznam => seznam.filter((u, i) => !(u.druh === 'po
 // událostí je v liště pod hledáním (skrytý řádek štítků převezme ui/volby.js přes prehled.js)
 function htmlKroniky() {
     const filtr = FILTRY_KRONIKY.find(([k]) => k === filtrKroniky) || FILTRY_KRONIKY[0];
-    const filtry = `<div class="volby-v-liste" data-stitek="Hodnocení" data-nadpis="Síň slávy" data-volby-casti="slava-kronika">${htmlVolbyPohledu()}${FILTRY_KRONIKY.map(([k, nazev, f]) => {
-        const n = bezOpakovanychPocatku(data.kronika.filter(f)).length;
-        return n || k === 'vse' ? `<button type="button" class="chip ${k === filtr[0] ? 'active' : ''}" data-kronika-filtr="${k}">${nazev}<span>${n}</span></button>` : '';
-    }).join('')}${htmlStavuSine()}</div>`;
     // Od nejnovější (stabilně: počátek kroniky zůstane pohromadě)
     const skupiny = kronikaPoMesicich(data.kronika.filter(filtr[2]).sort((a, b) => String(b.cas).localeCompare(String(a.cas))));
     const den = cas => {
@@ -568,7 +688,7 @@ function htmlKroniky() {
         const foto = u.modelkaId && modelka(u.modelkaId) ? `<button type="button" class="kronika-foto" data-otevrit-modelku="${u.modelkaId}" aria-label="${esc(jmeno(u.modelkaId))}">${htmlAvataru(u.modelkaId)}</button>` : '';
         return `<li class="kronika-udalost druh-${esc(u.druh)}">${cas}<span class="kronika-uzel${stupen}" aria-hidden="true">${t.ikona}</span><div class="kronika-obsah">${foto}<p>${esc(t.text)}</p></div></li>`;
     }).join('')}`).join('');
-    return `${filtry}<ol class="kronika-osa">${osa || htmlPrazdnaMala('Žádné události tohoto druhu.', 'li')}</ol>`;
+    return `<ol class="kronika-osa">${osa || htmlPrazdnaMala('Žádné události tohoto druhu.', 'li')}</ol>`;
 }
 
 function vykreslit() {
@@ -585,12 +705,17 @@ function vykreslit() {
                 : pohled === 'kronika' ? htmlKroniky()
                     : pohled === 'sezona' ? htmlSezony()
                         : htmlTop(rekordy, odznaky);
-    nastavitHtml(kontejner, `<div class="slava" data-slava-zobrazeno="${pohled}">
+    nastavitHtml(kontejner, `<div class="slava" data-slava-zobrazeno="${pohled}" data-sl-panel="${stav.slavaPanel}">
         ${htmlPoctuPohledu()}
         <section class="slava-obsah" role="tabpanel" aria-label="${esc(POHLEDY.find(([k]) => k === pohled)?.[1] || '')}">${obsah}</section>
+        ${htmlPaneluSlavy()}
     </div>`);
+    obnovitHlavuSlavy();
     if (pohled === 'top') ukazatVitrinu(false);
     nacitatPostupne(kontejner);
+    // Panel je fixed: fotky v něm se hlídají vůči oknu
+    const panel = kontejner.querySelector('.sl-panel');
+    if (panel) nacitatPostupne(panel, { root: null });
     // Volby v liště pod hledáním patří ukázanému pohledu (Kronika: filtr)
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
 }
@@ -630,6 +755,7 @@ function ukazatBublinu(prvek) {
 const skrytBublinu = () => bublina?.classList.remove('viditelna');
 
 export function pripravitSinSlavy() {
+    pripravitHlavuSlavy();
     document.addEventListener('mouseover', (e) => {
         const prvek = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-odznak-bublina]'));
         if (prvek) ukazatBublinu(prvek);
@@ -645,6 +771,7 @@ export function pripravitSinSlavy() {
     document.addEventListener('click', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         if (!kontejner?.contains(cil)) return;
+        if (cil.closest('.sl-panel') && klikSlavy(cil)) return;
         const naPohled = /** @type {HTMLElement | null} */ (cil.closest('[data-slava-pohled]'));
         if (naPohled) {
             prepnoutPohled(naPohled.dataset.slavaPohled, naPohled.getAttribute('role') === 'tab');

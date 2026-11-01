@@ -69,6 +69,7 @@ export const stav = {
     oblibenostCast: 'hodnoceni', // stránka Oblíbenosti (tlačítko v liště): 'hodnoceni' nebo 'slava'
     hodnoceniPohled: 'porovnat', // pohled části Hodnocení (pilulky v obsahu): 'porovnat', 'fotky' nebo 'poradi'
     hodnoceniPanel: '', // otevřený panel vpravo v Hodnocení: '', 'tipy', 'trendy', 'jak'
+    slavaPanel: '', // otevřený panel vpravo v Síni slávy: '', 'dosah', 'minule', 'pravidla'
     udrzbaFiltr: 'vse', // filtr fronty v Souhrnu Údržby (vse, titulni, udaje, cover…)
     udrzbaZdroj: '', // zdroj návrhů nebo nálezů kontroly ve filtru ('' = všechny)
     udrzbaHledat: '', // hledání jména modelky nebo čísla v Údržbě

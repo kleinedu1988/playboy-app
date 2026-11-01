@@ -172,14 +172,17 @@ export function pripravit() {
         } else if (rezim === 'prehled') {
             // Hodnocení (Oblíbenost: Porovnat, Fotky, Pořadí, Síň slávy) nebo Sbírka, každá na naposledy zvolené části
             const naPrehledu = stav.rezim === 'prehled' && !stats.classList.contains('hidden');
+            // Síň slávy je vlastní sekce (uvnitř část Oblíbenosti 'slava'): otevře ji obsluha její pilulky
+            if (tlacitko.dataset.sekce === 'slava') return otevritCast('cast-modelek-pas', 'slava');
             nastavitNejlepsiVOblibenosti(false);
+            if (tlacitko.dataset.sekce === 'hodnoceni' && stav.oblibenostCast === 'slava') nastavitCastOblibenosti(stav.hodnoceniPohled);
             if (zvolitCastPrehledu(tlacitko.dataset.sekce === 'hodnoceni' ? 'oblibenost' : 'sprava', naPrehledu)) return;
             prepnoutRezim('prehled');
             nacistGalerii(searchInput.value);
         }
     });
 
-    // Ctrl+1 až Ctrl+4: přehledy a stránky v liště zleva doprava (Modelky … Sbírka), jako klik na ně. Číslo podle
+    // Ctrl+1 až Ctrl+5: přehledy a stránky v liště zleva doprava (Modelky … Sbírka), jako klik na ně. Číslo podle
     // klávesy, ne znaku: na české klávesnici je na „1“ znak „+“ (číslice jsou se Shiftem). Držení se neopakuje.
     document.addEventListener('keydown', (e) => {
         if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
@@ -229,7 +232,8 @@ function skocitNaRok(rok) {
 const CASTI_SEKCI = {
     modelky: [['cast-modelek-pas', 'profily', 'Profily'], ['cast-modelek-pas', 'galerie', 'Galerie']],
     covery: [['cast-cisel-pas', 'covery', 'Obálky'], ['cast-cisel-pas', 'kalendar', 'Kalendář'], ['cast-cisel-pas', 'centerfoldy', 'Centerfoldy']],
-    hodnoceni: [['zobrazeni-prehledu', 'porovnat', 'Porovnat'], ['zobrazeni-prehledu', 'fotky', 'Fotky'], ['zobrazeni-prehledu', 'poradi', 'Pořadí'], ['cast-modelek-pas', 'slava', 'Síň slávy']],
+    hodnoceni: [['zobrazeni-prehledu', 'porovnat', 'Porovnat'], ['zobrazeni-prehledu', 'fotky', 'Fotky'], ['zobrazeni-prehledu', 'poradi', 'Pořadí']],
+    slava: [['cast-modelek-pas', 'slava', 'Síň slávy']],
     sbirka: [['zobrazeni-prehledu', 'udrzba', 'Údržba'], ['zobrazeni-prehledu', 'uvod', 'Mapa čísel'], ['zobrazeni-prehledu', 'shanim', 'Sháním CZ'], ['zobrazeni-prehledu', 'statistiky', 'Statistiky']],
 };
 function otevritCast(atribut, klic) {
@@ -242,15 +246,16 @@ function otevritCast(atribut, klic) {
 }
 // Pohledy částí, které je mají (třetí úroveň): v mapě sekcí pod svou částí; otevřou část rovnou na tom pohledu
 const POHLEDY_CASTI = {
-    slava: { atribut: 'slava-pohled', pohledy: [['top', 'Top 10'], ['legendy', 'Legendy'], ['odznaky', 'Odznaky'], ['rekordy', 'Rekordy'], ['kronika', 'Kronika'], ['sezona', 'Sezóna']], aktualni: () => pohledSlavy(), nastavit: k => nastavitPohledSlavy(k) },
+    slava: { atribut: 'sl-pohled', pohledy: [['top', 'Top 10'], ['legendy', 'Legendy'], ['odznaky', 'Odznaky'], ['rekordy', 'Rekordy'], ['kronika', 'Kronika'], ['sezona', 'Sezóna']], aktualni: () => pohledSlavy(), nastavit: k => nastavitPohledSlavy(k) },
     udrzba: { atribut: 'ud-rezim', pohledy: [['udaje', 'Po údajích'], ['modelky', 'Po modelkách'], ['souhrn', 'Souhrn']], aktualni: () => stav.udrzbaRezim, nastavit: (k) => { stav.udrzbaRezim = k; try { localStorage.setItem('udrzbaRezim', k); } catch { /* jen pro toto spuštění */ } } },
 };
 
 // Po otevření části přepne pohled jejím přepínačem, jakmile se přepínač objeví (nejvýš asi 2 s)
 function dokliknoutPohled(atribut, pohled, pokus = 0) {
-    const stitek = /** @type {HTMLElement | null} */ (document.querySelector(`#stats .volby-v-liste [data-${atribut}="${pohled}"]`));
+    // Přepínač je v liště voleb, nebo v liště hlavičky sekce (Síň slávy)
+    const stitek = /** @type {HTMLElement | null} */ (document.querySelector(`#stats .volby-v-liste [data-${atribut}="${pohled}"], .sbirka-hlava:not(.hidden) [data-${atribut}="${pohled}"]`));
     if (stitek) {
-        if (!stitek.classList.contains('active')) stitek.click();
+        if (!stitek.classList.contains('active') && !stitek.classList.contains('on')) stitek.click();
         return;
     }
     if (pokus < 20) setTimeout(() => dokliknoutPohled(atribut, pohled, pokus + 1), 100);
@@ -289,7 +294,7 @@ function otevritNabidkuSekci(tlacitko) {
     mapa.className = 'mapa-sekci';
     mapa.setAttribute('role', 'dialog');
     mapa.setAttribute('aria-label', 'Mapa sekcí');
-    mapa.innerHTML = `<div class="mapa-mrizka">${sloupce}</div><p class="mapa-tip">Klik na zvolenou sekci otevře tuto mapu · Ctrl+1–4 sekce · Esc zavře</p>`;
+    mapa.innerHTML = `<div class="mapa-mrizka">${sloupce}</div><p class="mapa-tip">Klik na zvolenou sekci otevře tuto mapu · Ctrl+1–5 sekce · Esc zavře</p>`;
     const r = tlacitko.getBoundingClientRect();
     mapa.style.left = `${Math.max(8, r.left)}px`;
     mapa.style.top = `${r.bottom + 8}px`;
@@ -305,7 +310,7 @@ function otevritNabidkuSekci(tlacitko) {
             : atribut === 'zobrazeni-prehledu' && stav.rezim === 'prehled' && stav.prehledSekce === cast) && document.querySelector('#viewToggle .active');
         if (pohled && p && naMiste) {
             // Už otevřená část: přepne pohled jejím přepínačem v záhlaví stránky
-            /** @type {HTMLElement | null} */ (document.querySelector(`.volby-v-liste [data-${p.atribut}="${pohled}"]`))?.click();
+            /** @type {HTMLElement | null} */ (document.querySelector(`.volby-v-liste [data-${p.atribut}="${pohled}"], .sbirka-hlava:not(.hidden) [data-${p.atribut}="${pohled}"]`))?.click();
             return;
         }
         if (pohled && p) p.nastavit(pohled);

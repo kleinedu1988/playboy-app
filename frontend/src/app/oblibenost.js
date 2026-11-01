@@ -36,7 +36,7 @@ import { obnovitSrdickaModelky } from '../ui/srdicka';
 import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
-import { nacistSinSlavy, nastavitPohledSlavy, pripravitSinSlavy } from './sin-slavy';
+import { nacistSinSlavy, nastavitPohledSlavy, obnovitHlavuSlavy, pripravitSinSlavy } from './sin-slavy';
 import { hodnotitFotky, nacistGalerii, nastavitRazeniFotek, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
 import { htmlPilulek } from '../ui/pas';
 import { nazevSezony, textZbyva } from '../lib/slava';
@@ -460,6 +460,7 @@ function htmlHlavyHodnoceni() {
 }
 
 export function obnovitHlavuHodnoceni() {
+    obnovitHlavuSlavy();
     if (!hlava) return;
     const videt = hlavaVidet();
     hlava.classList.toggle('hidden', !videt);

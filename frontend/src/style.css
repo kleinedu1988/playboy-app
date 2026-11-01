@@ -13415,6 +13415,161 @@ button.pas-kapsle:focus-visible {
     margin-left: -7px;
 }
 
+/* ===== Hlavička Síně slávy (sin-slavy.js): fotka jedničky s ♛ místo kruhu, jinak styly hlavičky Sbírky ===== */
+.sl-foto {
+    position: relative;
+    flex: none;
+    width: 76px;
+    height: 76px;
+    padding: 0;
+    border: 2px solid rgba(255, 196, 0, 0.75);
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: width 0.2s ease, height 0.2s ease;
+}
+
+.sl-foto img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+    transform: none !important;
+}
+
+.sl-foto span {
+    position: absolute;
+    top: -9px;
+    right: -4px;
+    color: #ffc400;
+    font-size: 20px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+.sl-foto.prazdna {
+    display: grid;
+    place-items: center;
+    cursor: default;
+}
+
+.sl-foto.prazdna span {
+    position: static;
+}
+
+.navbar.slava-svinuta .sl-foto {
+    width: 34px;
+    height: 34px;
+}
+
+.navbar.slava-svinuta .sl-foto span {
+    top: -7px;
+    right: -6px;
+    font-size: 13px;
+}
+
+.slava-hlava .sh-akce .volba small {
+    margin-left: 6px;
+    opacity: 0.75;
+}
+
+.slava-hlava .sh-pohledy:empty {
+    display: none;
+}
+
+.slava-hlava .sh-pohledy small {
+    opacity: 0.7;
+}
+
+/* Panel Síně slávy vpravo (I): Na dosah, Minulé sezóny, Pravidla */
+.slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > .sl-panel {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease;
+}
+
+.slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > .slava-obsah {
+    margin-right: calc(min(440px, 40vw) + 16px);
+}
+
+.sbirka-panel.sl-panel {
+    width: min(440px, 40vw);
+}
+
+[data-sl-panel="dosah"] .hdp-cast[data-slp="dosah"],
+[data-sl-panel="minule"] .hdp-cast[data-slp="minule"],
+[data-sl-panel="pravidla"] .hdp-cast[data-slp="pravidla"] {
+    display: block;
+}
+
+.sl-panel h4 {
+    margin: 0 0 10px;
+}
+
+.slp-dosah,
+.slp-minule {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.slp-dosah .slava-dosah-polozka {
+    width: 100%;
+}
+
+.slp-minule button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.slp-minule button:hover:not(:disabled) {
+    background-color: var(--panel-hover);
+}
+
+.slp-minule img,
+.slp-bez {
+    width: 34px;
+    height: 46px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.06);
+    object-fit: cover;
+    transform: none !important;
+}
+
+.slp-minule span {
+    display: flex;
+    flex-direction: column;
+}
+
+.slp-minule small {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+@media (max-width: 860px) {
+    .sbirka-panel.sl-panel {
+        left: 16px;
+        width: auto;
+    }
+
+    .slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > .slava-obsah {
+        margin-right: 0;
+    }
+}
+
 /* ===== Panel Hodnocení vpravo (I): Tipy, Trendy, Jak počítám – vzhled panelu Sbírky (.sbirka-panel, .sbp-*) ===== */
 .sbirka-panel.hd-panel {
     width: min(440px, 40vw);
@@ -15341,7 +15496,7 @@ body.rezim-vyberu #detailView .poster {
 }
 
 .stav-vpravo:empty::before {
-    content: "Ctrl+F hledat · Ctrl+1–4 sekce · ? klávesové zkratky";
+    content: "Ctrl+F hledat · Ctrl+1–5 sekce · ? klávesové zkratky";
     opacity: 0.7;
 }
 
@@ -16024,57 +16179,57 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* Svinutí po odrolování */
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-obsah {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-obsah {
     gap: 12px;
     padding: 0;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-kruh {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-kruh {
     width: 34px;
     height: 34px;
     background: radial-gradient(closest-side, rgb(26, 26, 30) 74%, transparent 75% 100%), conic-gradient(var(--accent) calc(var(--p) * 1%), rgba(255, 255, 255, 0.1) 0);
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-kruh b {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-kruh b {
     font-size: 9.5px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-kruh small,
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-oblasti,
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-cisla span:not(.sh-ukoly) {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-kruh small,
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-oblasti,
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-cisla span:not(.sh-ukoly) {
     display: none;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-identita {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-identita {
     flex-direction: row;
     align-items: center;
     gap: 12px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-identita h2 {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-identita h2 {
     font-size: 15px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sbirka-hlava {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sbirka-hlava {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     row-gap: 6px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-akce {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-akce {
     flex-wrap: nowrap;
     margin-left: auto;
     padding-top: 0;
     border-top: 0;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-akce .volba {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-akce .volba {
     height: 28px;
     padding: 0 9px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta) .sh-lista {
+:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-lista {
     flex: 1 1 100%;
     padding-top: 4px;
 }

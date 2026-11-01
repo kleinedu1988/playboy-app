@@ -14883,3 +14883,183 @@ body.rezim-vyberu #detailView .poster {
     width: 100%;
     margin: 0;
 }
+
+/* ===== Drobečky: stejná skleněná kapsle jako navigační kapsle. „← odkud (sekce › část) › [ročník ›] kde jsem ▾“
+   a za tenkou čárou krokování „‹ 3 z 22 ›“; oddělovač cesty je „›“ jako v kapsli, krokování má kulatá tlačítka ===== */
+.hlavni-lista .logo:not(.hidden) {
+    gap: 0;
+    height: 34px;
+    padding: 3px;
+    background-color: rgba(26, 26, 30, 0.82);
+    box-shadow: var(--panel-stin);
+}
+
+.hlavni-lista .logo .nav-back,
+.hlavni-lista .logo .nav-drobek,
+.hlavni-lista .logo .nav-drobecek {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    margin: 0;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    font: inherit;
+    font-size: 12.5px;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.hlavni-lista .logo .nav-back {
+    gap: 8px;
+    max-width: 40ch;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.hlavni-lista .logo #backBtn {
+    max-width: 40ch;
+}
+
+.nav-zpet-sipka {
+    flex: none;
+    color: var(--text-main);
+    font-size: 14px;
+}
+
+.nav-cesta {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nav-oddel {
+    margin: 0 6px;
+    opacity: 0.6;
+}
+
+.hlavni-lista .logo .nav-drobek {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.hlavni-lista .logo .nav-back:hover,
+.hlavni-lista .logo .nav-drobek:hover,
+.hlavni-lista .logo .nav-drobecek.s-nabidkou:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+/* Oddělovač „›“ za cestou zpět a za ročníkem, když za nimi drobečky pokračují (místo, kde jsem, je růžová pilulka) */
+.hlavni-lista .logo .nav-back:has(~ .nav-drobek:not(.hidden), ~ .nav-drobecek:not(.hidden))::after,
+.hlavni-lista .logo .nav-drobek:has(~ .nav-drobecek:not(.hidden))::after {
+    content: "›";
+    margin: 0 -4px 0 8px;
+    color: var(--text-muted);
+    font-weight: 400;
+    opacity: 0.6;
+}
+
+.hlavni-lista .logo .nav-drobecek::before {
+    content: none;
+}
+
+/* Kde jsem: plnou růžovou jako zvolená část v navigační kapsli */
+.hlavni-lista .logo .nav-drobecek {
+    max-width: 28ch;
+    overflow: hidden;
+    margin-left: 4px;
+    background-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    cursor: default;
+}
+
+.hlavni-lista .logo .nav-drobecek.s-nabidkou {
+    cursor: pointer;
+}
+
+.hlavni-lista .logo .nav-drobecek.s-nabidkou:hover {
+    background-color: var(--accent-hover);
+    color: #fff;
+}
+
+.hlavni-lista .logo .nav-drobecek.s-nabidkou::after {
+    content: "▾";
+    margin-left: 6px;
+    font-size: 10px;
+    opacity: 0.85;
+}
+
+.hlavni-lista .logo .nav-drobecek:disabled {
+    opacity: 1;
+}
+
+/* Krokování v seznamu za tenkou čárou */
+.nav-krokovac {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.nav-krokovac:has(> :not(.hidden)) {
+    margin-left: 6px;
+    padding-left: 6px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hlavni-lista .logo .nav-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font-size: 16px;
+}
+
+.hlavni-lista .logo .nav-step:hover {
+    background-color: var(--panel-hover);
+}
+
+.hlavni-lista .logo .nav-poradi {
+    padding: 0 4px;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Užší okno: cesta zpět jen šipkou (celá je v bublině), potom bez ročníku */
+@media (max-width: 1000px) {
+    .hlavni-lista .logo #backBtn {
+        max-width: none;
+        overflow: visible;
+    }
+
+    .hlavni-lista .logo .nav-back .nav-cesta,
+    .hlavni-lista .logo .nav-back::after {
+        display: none;
+    }
+}
+
+@media (max-width: 760px) {
+    .hlavni-lista .logo .nav-drobek {
+        display: none;
+    }
+
+    .hlavni-lista .logo .nav-drobecek {
+        display: inline-flex;
+        max-width: 16ch;
+    }
+}
+
+/* Skryté části drobečků zůstávají skryté i přes display výše */
+.hlavni-lista .logo .hidden {
+    display: none;
+}

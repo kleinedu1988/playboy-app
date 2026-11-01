@@ -1,6 +1,6 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
 import { GetDuvodOdhadu, GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
-import { contextMenu } from '../ui/nabidka';
+import { contextMenu, otevritKontextovouNabidku } from '../ui/nabidka';
 import { EDICE, VYSKYT, bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, kategorieModelky, rozlozitVydani, seraditModelky, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { poZmeneDat } from './udalosti';
@@ -14,6 +14,7 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { nastavitViditelnostHledani, prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
+import { otevritVydani } from './vydani';
 import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
@@ -442,6 +443,33 @@ export function pripravit() {
     document.getElementById('prevModelBtn').onclick = () => krokModelky(-1);
 
     document.getElementById('nextModelBtn').onclick = () => krokModelky(1);
+
+    // Jméno v drobečcích: nabídka modelek seznamu, ze kterého se profil otevřel (kolem právě otevřené)
+    document.getElementById('drobecek').addEventListener('click', async (e) => {
+        const seznam = stav.seznamProfilu;
+        if (detailView.classList.contains('hidden') || !seznam || seznam.length < 2) return;
+        e.stopPropagation();
+        const r = /** @type {HTMLElement} */ (e.currentTarget).getBoundingClientRect();
+        const podleId = new Map((await vsechnyModelky()).map(m => [m.id, m]));
+        const index = Math.max(0, seznam.indexOf(stav.aktualniModelka?.id));
+        const OKOLI = 8;
+        const od = Math.max(0, Math.min(index - OKOLI, seznam.length - 2 * OKOLI - 1));
+        const vyrez = seznam.slice(od, od + 2 * OKOLI + 1);
+        const vse = vyrez.length === seznam.length;
+        otevritKontextovouNabidku(r.left, r.bottom + 6, [
+            { nadpis: vse ? `${seznam.length} modelek v seznamu` : `${od + 1}.–${od + vyrez.length}. z ${seznam.length} v seznamu` },
+            ...vyrez.map((id, i) => ({
+                text: `${od + i + 1}. ${podleId.get(id)?.jmeno || '?'}${id === stav.aktualniModelka?.id ? '  ✓' : ''}`,
+                akce: () => { const m = podleId.get(id); if (m && id !== stav.aktualniModelka?.id) otevritDetailModelky(m, { bezHistorie: true }); },
+            })),
+        ]);
+    });
+
+    // Ročník v drobečcích čísla otevře stránku ročníku
+    document.getElementById('rocnikBtn').addEventListener('click', (e) => {
+        const klic = /** @type {HTMLElement} */ (e.currentTarget).dataset.vydani;
+        if (klic) otevritVydani(klic);
+    });
 
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;

@@ -1,5 +1,5 @@
 // Přepínání pohledů, historie pro Zpět a společné pomocné funkce
-import { esc, nazevVydani } from '../lib/format';
+import { esc, nazevVydani, rozlozitVydani, slozitVydani } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
 import { OveritOdkaz } from './backend';
 import { stav } from './stav';
@@ -53,7 +53,8 @@ export function ukazatPohled(pohled) {
     // Pilulky podčástí (Oblíbenost, Sbírka) a volby v liště patří ukázanému přehledu; profil a stránka vydání žádné nemají
     obnovitPasHlavicky(pohled);
     obnovitVolby(pohled);
-    backBtn.innerHTML = `&larr; ${esc(popisZpet())}`;
+    // Zpět ukazuje celou cestu jako navigační kapsle: sekce › část (Hodnocení › Pořadí), nebo modelka, číslo
+    backBtn.innerHTML = `<span class="nav-zpet-sipka" aria-hidden="true">&larr;</span><span class="nav-cesta">${cestaZpet().map(esc).join('<span class="nav-oddel" aria-hidden="true">›</span>')}</span>`;
     backBtn.title = `Zpět: ${popisZpet()} (Esc, Alt+šipka vlevo)`;
     ukazatDrobecek(pohled);
     // Lišta písmen patří jen ke galerii modelek, lišta desetiletí jen ke stěně
@@ -75,16 +76,30 @@ export function ukazatPohled(pohled) {
 
 const hlavniOblast = document.querySelector('main');
 
-// Drobečky v řádku okna: „← odkud › kde jsem“, u profilu i kolikátá modelka v seznamu (‹ 3 z 22 ›)
+// Drobečky ve druhém řádku: „← odkud (sekce › část) › [ročník ›] kde jsem ▾ │ ‹ 3 z 22 ›“. U profilu otevřeného
+// ze seznamu otevře jméno nabídku modelek seznamu (jako klik na zvolenou sekci v navigační kapsli), u čísla
+// s měsícem je před ním jeho ročník.
 function ukazatDrobecek(pohled) {
     const drobecek = document.getElementById('drobecek');
+    const rocnik = document.getElementById('rocnikBtn');
     const poradi = document.getElementById('poradiModelky');
     let nazev = '';
     if (pohled === detailView) nazev = stav.aktualniModelka?.jmeno || '';
     else if (pohled === issueView) nazev = stav.aktualniFotograf || (stav.aktualniVydani ? nazevVydani(stav.aktualniVydani) : '');
     drobecek.textContent = nazev;
-    drobecek.title = nazev;
     drobecek.classList.toggle('hidden', !nazev);
+    const sNabidkou = pohled === detailView && (stav.seznamProfilu?.length || 0) > 1;
+    drobecek.classList.toggle('s-nabidkou', sNabidkou);
+    drobecek.disabled = !sNabidkou;
+    drobecek.title = sNabidkou ? `${nazev} – další modelky seznamu` : nazev;
+    if (sNabidkou) drobecek.setAttribute('aria-haspopup', 'menu');
+    else drobecek.removeAttribute('aria-haspopup');
+    const casti = pohled === issueView && !stav.aktualniFotograf ? rozlozitVydani(stav.aktualniVydani) : null;
+    const klicRocniku = casti?.mesic ? slozitVydani(casti.rok, '', casti.edice) : '';
+    rocnik.classList.toggle('hidden', !klicRocniku);
+    rocnik.dataset.vydani = klicRocniku;
+    rocnik.textContent = klicRocniku ? `Ročník ${casti.rok}` : '';
+    rocnik.title = klicRocniku ? `Celý ročník ${casti.rok}` : '';
     const seznam = stav.seznamProfilu || [];
     const index = pohled === detailView ? seznam.indexOf(stav.aktualniModelka?.id) : -1;
     poradi.textContent = index >= 0 && seznam.length > 1 ? `${index + 1} z ${seznam.length}` : '';
@@ -105,21 +120,26 @@ function selektorFokusu() {
 export const historie = [];
 // Kalendář je zobrazení Čísel: Zpět se jmenuje podle záložky
 export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Čísla', covery: 'Čísla', kalendar: 'Čísla', nejlepsi: 'Modelky', prehled: 'Sbírka' };
-// Přehled má tři stránky (tlačítka vpravo v liště); Zpět se jmenuje podle té, ze které se odešlo
-// Přehled má stránky Hodnocení a Síň slávy (Oblíbenost) a Sbírku s částmi; Zpět se jmenuje podle té, ze které se
-// odešlo (úvod Sbírky je prostě „Sbírka“)
+// Části Sbírky (a Hodnocení, Síně slávy) v cestě Zpět; úvod Sbírky je prostě „Sbírka“
 const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy', uvod: 'Sbírka', udrzba: 'Údržba', shanim: 'Sháním CZ', statistiky: 'Statistiky' };
-const strankaPrehledu = ({ sekce, cast }) => NAZVY_STRANEK[sekce === 'oblibenost' ? cast : sekce] || NAZVY_REZIMU.prehled;
 
-export function popisZpet() {
-    const misto = historie[historie.length - 1];
-    if (misto?.typ === 'profil') return misto.modelka.jmeno;
-    if (misto?.typ === 'vydani') return nazevVydani(misto.vydani);
-    if (misto?.typ === 'fotograf') return misto.jmeno;
-    if (misto?.rezim === 'prehled') return strankaPrehledu(misto.prehled);
-    if (!misto && stav.rezim === 'prehled') return strankaPrehledu({ sekce: stav.prehledSekce, cast: stav.oblibenostCast });
-    return NAZVY_REZIMU[misto?.rezim || stav.rezim];
+// Cesta, kam vede Zpět, stejnými názvy jako navigační kapsle: sekce › část, u podstránky modelka, číslo, fotograf
+const CASTI_REZIMU = { modelky: ['Modelky', 'Profily'], nejlepsi: ['Modelky', 'Galerie'], covery: ['Čísla', 'Obálky'], kalendar: ['Čísla', 'Kalendář'], centerfoldy: ['Čísla', 'Centerfoldy'] };
+const POHLEDY_HODNOCENI = { porovnat: 'Porovnat', fotky: 'Fotky', poradi: 'Pořadí' };
+function cestaPrehledu({ sekce, cast, pohled }) {
+    if (sekce === 'oblibenost') return ['Hodnocení', cast === 'slava' ? 'Síň slávy' : POHLEDY_HODNOCENI[pohled] || 'Porovnat'];
+    return NAZVY_STRANEK[sekce] && sekce !== 'uvod' ? ['Sbírka', NAZVY_STRANEK[sekce]] : ['Sbírka'];
 }
+export function cestaZpet() {
+    const misto = historie[historie.length - 1];
+    if (misto?.typ === 'profil') return [misto.modelka.jmeno];
+    if (misto?.typ === 'vydani') return [nazevVydani(misto.vydani)];
+    if (misto?.typ === 'fotograf') return [misto.jmeno];
+    if (misto?.rezim === 'prehled') return cestaPrehledu(misto.prehled);
+    if (!misto && stav.rezim === 'prehled') return cestaPrehledu({ sekce: stav.prehledSekce, cast: stav.oblibenostCast, pohled: stav.hodnoceniPohled });
+    return CASTI_REZIMU[misto?.rezim || stav.rezim] || [NAZVY_REZIMU[misto?.rezim || stav.rezim] || 'Modelky'];
+}
+export const popisZpet = () => cestaZpet().join(' › ');
 
 export function soucasneMisto() {
     const scroll = document.querySelector('main').scrollTop;

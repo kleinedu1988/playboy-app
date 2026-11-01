@@ -52,7 +52,7 @@ const REZIMY = [
 const KOSTRA = `
     <div class="ud" data-ud-kostra>
         <!-- Režim (Po údajích, Po modelkách, Souhrn) je zobrazení v liště pod hledáním, jako Obálky / Kalendář u Čísel -->
-        <div class="volby-v-liste" data-volby-casti="udrzba" data-ud="rezimy"></div>
+        <div class="volby-v-liste" data-volby-casti="udrzba" data-ud="rezimy" data-stitek="Sbírka" data-nadpis="Údržba"></div>
         <div class="ud-rezim-obsah hidden" data-ud="udaje"></div>
         <div class="ud-fokus hidden" data-ud="fokus"></div>
         <div class="ud-souhrn hidden" data-ud="souhrn">

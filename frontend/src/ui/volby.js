@@ -36,8 +36,8 @@ const POPISKY = {
 
 const RAZENI = new Set(['razeniGalerie', 'razeniSteny', 'udRazeniVolba']);
 // Zobrazení Čísel (Obálky / Kalendář): rozbalovací volba s ikonou zvolené hodnoty, jako řazení
-// Pohledy zvolené části (Síň slávy › Top 10 … Sezóna, Údržba › Po údajích … Souhrn) nejsou volby, ale podmenu: kreslí
-// se do #podmenu v řádku pod navigační kapslí. Obálky / Kalendář jsou části Čísel přímo v kapsli, ve volbách nejsou.
+// Pohledy zvolené části (Síň slávy › Top 10 … Sezóna, Údržba › Po údajích … Souhrn) nejsou volby: kreslí se do
+// záhlaví stránky (hlavaStranky). Obálky / Kalendář jsou části Čísel přímo v kapsli, ve volbách nejsou.
 const PODMENU = new Set(['slavaPohled', 'udRezim']);
 const MIMO_VOLBY = new Set(['zobrazeniCisel']);
 const ZOBRAZENI = new Set(['zobrazeniCisel', 'ghRazeni', 'udRezim', 'poradiRozsah', 'filtrFotografa', 'slavaPohled']);
@@ -143,6 +143,27 @@ const volbaStitku = (stitek, zvoleny) => ({
 });
 
 const hodnota = s => s.zvoleny ? textStitku(s.zvoleny) : 'vše';
+
+// Záhlaví části s vlastními pohledy (Síň slávy, Údržba): nahoře na stránce štítek sekce, nadpis části, popis
+// a vpravo kapsle pohledů. Řádek voleb nese štítek a nadpis (data-stitek, data-nadpis); popis je úvodní věta
+// pohledu (.stranka-uvod), která se v obsahu pak neopakuje. Záhlaví se skládá znovu s každými volbami.
+function hlavaStranky(lista) {
+    const kontejner = lista.parentElement;
+    let hlava = /** @type {HTMLElement | null} */ (kontejner.querySelector(':scope > .stranka-hlava'));
+    if (!hlava) {
+        hlava = document.createElement('header');
+        hlava.className = 'stranka-hlava';
+        kontejner.prepend(hlava);
+    }
+    const uvod = kontejner.querySelector('.stranka-uvod');
+    hlava.innerHTML = `<div class="stranka-titul">
+            ${lista.dataset.stitek ? `<div class="stranka-stitek">${esc(lista.dataset.stitek)}</div>` : ''}
+            <h2 class="stranka-nadpis">${esc(lista.dataset.nadpis || '')}</h2>
+            ${uvod ? `<p class="stranka-popis">${uvod.innerHTML}</p>` : ''}
+        </div>
+        <div class="stranka-pohledy" role="group"></div>`;
+    return /** @type {HTMLDivElement} */ (hlava.querySelector('.stranka-pohledy'));
+}
 
 function ukazatVolby(lista) {
     const cil = misto();
@@ -264,10 +285,10 @@ function ukazatVolby(lista) {
     skupiny.filter(s => s.druh !== 'filtr' && (s.druh !== 'povinne' || s.zvoleny)).forEach(s => {
         let tlacitko;
         if (s.druh === 'zobrazeni') {
-            if (podmenu && PODMENU.has(s.klic)) {
-                pridatPrepinac(s, podmenu);
-                podmenu.setAttribute('aria-label', TITULKY_ZOBRAZENI[s.klic] || POPISKY[s.klic]);
-                podmenu.classList.remove('hidden');
+            if (PODMENU.has(s.klic)) {
+                const pohledy = hlavaStranky(lista);
+                pridatPrepinac(s, pohledy);
+                pohledy.setAttribute('aria-label', TITULKY_ZOBRAZENI[s.klic] || POPISKY[s.klic]);
             } else pridatPrepinac(s);
             return;
         } else if (s.druh === 'razeni') {

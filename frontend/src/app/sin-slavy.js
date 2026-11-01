@@ -187,7 +187,7 @@ function htmlPoctuPohledu() {
             return `${vede ? `vede ${jmeno(vede.modelkaId).split(' ')[0]}` : 'nikdo zatím nevede'} · ⏳ ${textZbyva(sezona?.den, sezona?.dni)}`;
         },
     }[pohled];
-    return text ? `<div class="volby-v-liste" data-volby-casti="slava-${pohled}">${htmlVolbyPohledu()}<span>${esc(text())}</span></div>` : '';
+    return text ? `<div class="volby-v-liste" data-stitek="Hodnocení" data-nadpis="Síň slávy" data-volby-casti="slava-${pohled}">${htmlVolbyPohledu()}<span>${esc(text())}</span></div>` : '';
 }
 
 // Pohled Top 10: stupně vítězů (2. vlevo, 1. uprostřed, 3. vpravo) a místa 4–10 v řadě přes celou šířku
@@ -202,7 +202,7 @@ function htmlTop(rekordy, odznaky) {
     const ostatni = zbytek.map(x => htmlKarty(x, rekordy.get(x.modelkaId), false, odznaky.get(x.modelkaId))).join('');
     const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada slava-skupina ${zbytek.length >= 6 ? 'husta' : ''}" style="--karet: ${zbytek.length}">${ostatni}</div>${misto}` : '');
     if (!top) return htmlPrazdna('Top 10 je zatím prázdná', 'Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' });
-    return `<p class="slava-uvod">Jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy · odznaky pod jménem · klik na modelku otevře její vitrínu</p>${top}${htmlNaDosah()}`;
+    return `<p class="slava-uvod stranka-uvod">Jak dlouho v ní kdo je · 🛡 obhajoby · 🏆 rekordy · odznaky pod jménem · klik na modelku otevře její vitrínu</p>${top}${htmlNaDosah()}`;
 }
 
 // Pohled Sezóna: řádek sezóny (název, odpočet měsíce, počty), trůn s první trojicí (stejné karty a stupně jako Top 10),
@@ -434,7 +434,7 @@ function vybrat(id, prepnout = true) {
 function htmlLegend(rekordy, odznaky) {
     if (!data.legendy.length) return htmlPrazdna('Zatím žádné legendy', 'Legendy jsou modelky, které z Top 10 vypadly – tady uvidíš, kdo v ní vydržel nejdéle.', { ikona: 'hvezda' });
     const dni = data.legendy.reduce((s, x) => s + (x.dniCelkem || 0), 0);
-    return `<p class="slava-uvod">${esc(sklonovat(data.legendy.length, 'bývalá členka', 'bývalé členky', 'bývalých členek'))} Top 10 · dohromady ${esc(textDni(dni))} v ní · vpravo nahoře nejlepší místo</p>
+    return `<p class="slava-uvod stranka-uvod">${esc(sklonovat(data.legendy.length, 'bývalá členka', 'bývalé členky', 'bývalých členek'))} Top 10 · dohromady ${esc(textDni(dni))} v ní · vpravo nahoře nejlepší místo</p>
         <div class="slava-legendy">${data.legendy.map(x => htmlKarty(x, rekordy.get(x.modelkaId), true, odznaky.get(x.modelkaId))).join('')}</div>`;
 }
 
@@ -523,7 +523,7 @@ function htmlRekordu() {
     data.rekordy.forEach(r => podleModelky.set(r.modelkaId, (podleModelky.get(r.modelkaId) || 0) + 1));
     const rekordmanky = [...podleModelky].sort((a, b) => b[1] - a[1]).map(([id, n]) =>
         `<button type="button" class="rekordmanka" data-otevrit-modelku="${id}">${htmlAvataru(id)}<span>${esc(jmeno(id))}</span><b>${'🏆'.repeat(n)}</b></button>`).join('');
-    return `<p class="slava-uvod">${esc(sklonovat(data.rekordy.length, 'rekord', 'rekordy', 'rekordů'))} z ${druhy.length} · ▲ rekord pořád roste · najetí myší na pohár ukáže, co měří</p>
+    return `<p class="slava-uvod stranka-uvod">${esc(sklonovat(data.rekordy.length, 'rekord', 'rekordy', 'rekordů'))} z ${druhy.length} · ▲ rekord pořád roste · najetí myší na pohár ukáže, co měří</p>
         <div class="trofeje">${police.join('')}</div>
         ${rekordmanky ? `<h4 class="slava-nadpis">Rekordmanky <small>kdo drží kolik rekordů</small></h4><div class="rekordmanky">${rekordmanky}</div>` : ''}`;
 }
@@ -535,7 +535,7 @@ const bezOpakovanychPocatku = seznam => seznam.filter((u, i) => !(u.druh === 'po
 // událostí je v liště pod hledáním (skrytý řádek štítků převezme ui/volby.js přes prehled.js)
 function htmlKroniky() {
     const filtr = FILTRY_KRONIKY.find(([k]) => k === filtrKroniky) || FILTRY_KRONIKY[0];
-    const filtry = `<div class="volby-v-liste" data-volby-casti="slava-kronika">${htmlVolbyPohledu()}${FILTRY_KRONIKY.map(([k, nazev, f]) => {
+    const filtry = `<div class="volby-v-liste" data-stitek="Hodnocení" data-nadpis="Síň slávy" data-volby-casti="slava-kronika">${htmlVolbyPohledu()}${FILTRY_KRONIKY.map(([k, nazev, f]) => {
         const n = bezOpakovanychPocatku(data.kronika.filter(f)).length;
         return n || k === 'vse' ? `<button type="button" class="chip ${k === filtr[0] ? 'active' : ''}" data-kronika-filtr="${k}">${nazev}<span>${n}</span></button>` : '';
     }).join('')}<span>${esc(sklonovat(bezOpakovanychPocatku(data.kronika.filter(filtr[2])).length, 'událost', 'události', 'událostí'))}</span></div>`;

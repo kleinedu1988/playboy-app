@@ -15057,3 +15057,207 @@ body.rezim-vyberu #detailView .poster {
 .hledani-radek.filtruje .hledani input {
     border-color: rgba(216, 27, 96, 0.6);
 }
+
+/* ===== Záhlaví části s pohledy (Síň slávy, Údržba): štítek sekce, tenký nadpis kapitálkami, popis a vpravo kapsle
+   pohledů ve skle; zvolený pohled plnou růžovou jako zvolená část v navigační kapsli ===== */
+.stranka-hlava {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 14px 24px;
+    margin: 0 0 22px;
+    padding: 0 0 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stranka-titul {
+    min-width: 0;
+}
+
+.stranka-stitek {
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.stranka-nadpis {
+    margin: 4px 0 0;
+    color: #fff;
+    font-size: 30px;
+    font-weight: 200;
+    letter-spacing: 0.14em;
+    line-height: 1.15;
+    text-transform: uppercase;
+}
+
+.stranka-popis {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+/* Úvodní věta pohledu je v záhlaví, v obsahu se neopakuje */
+:has(> .stranka-hlava) .stranka-uvod {
+    display: none;
+}
+
+.stranka-pohledy {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    padding: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background-color: rgba(26, 26, 30, 0.82);
+    box-shadow: var(--panel-stin);
+}
+
+.stranka-pohledy:empty {
+    display: none;
+}
+
+.stranka-pohledy .volba-prepinac {
+    display: inline-flex;
+    gap: 2px;
+}
+
+.stranka-pohledy .prepinac-volba {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.stranka-pohledy .prepinac-volba:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.stranka-pohledy .prepinac-volba.aktivni,
+.stranka-pohledy .prepinac-volba.aktivni:hover {
+    background-color: var(--accent);
+    box-shadow: none;
+    color: #fff;
+}
+
+.stranka-pohledy .prepinac-volba svg {
+    flex: none;
+}
+
+@media (max-width: 1000px) {
+    .stranka-pohledy .prepinac-volba:not(.aktivni) > span {
+        display: none;
+    }
+}
+
+/* ===== Mapa sekcí: klik na zvolenou sekci v navigační kapsli; sekce ve sloupcích, pod částí s pohledy její pohledy ===== */
+.mapa-sekci {
+    position: fixed;
+    z-index: 3000;
+    width: min(880px, calc(100vw - 16px));
+    padding: 18px 20px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    background-color: rgba(26, 26, 30, 0.9);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.7);
+    animation: otevrit-plovouci 0.14s ease-out;
+    --wails-draggable: no-drag;
+}
+
+.mapa-mrizka {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px 22px;
+}
+
+.mapa-sloupec {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.mapa-sloupec h4 {
+    margin: 0 0 8px;
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.mapa-sloupec h4.zvolena {
+    color: #fff;
+}
+
+.mapa-sekci button {
+    display: block;
+    width: 100%;
+    padding: 6px 10px;
+    border: 0;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.mapa-sekci button:hover,
+.mapa-sekci button:focus-visible {
+    background-color: var(--panel-hover);
+    outline: none;
+}
+
+.mapa-sekci button.zvolena,
+.mapa-sekci button.zvolena:hover {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.mapa-sekci .mapa-cast.v-ni {
+    color: #fff;
+    font-weight: 600;
+}
+
+.mapa-pohledy {
+    margin: 0 0 4px 12px;
+    padding-left: 8px;
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.mapa-pohledy button {
+    padding: 4px 10px;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.mapa-tip {
+    margin: 10px 0 0;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+@media (max-width: 760px) {
+    .mapa-mrizka {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 18px;
+    }
+}

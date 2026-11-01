@@ -13,10 +13,10 @@ import { otevritDetailModelky } from './profil';
 import { obnovitStranku } from './vydani';
 import { otevritLightbox } from './prohlizec';
 import { pripojitVyberSpecialu } from './specialy';
+import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
 import { zavritOkno } from './ulozeni';
 import { VELIKOST_PLAKATU_MALA, adresyOdkazu } from './obrazky';
 import { jeVidet, otevreneOkno } from '../ui/dom';
-import { otevritKontextovouNabidku } from '../ui/nabidka';
 
 // Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -240,19 +240,83 @@ function otevritCast(atribut, klic) {
     b.click();
     b.remove();
 }
+// Pohledy částí, které je mají (třetí úroveň): v mapě sekcí pod svou částí; otevřou část rovnou na tom pohledu
+const POHLEDY_CASTI = {
+    slava: { atribut: 'slava-pohled', pohledy: [['top', 'Top 10'], ['legendy', 'Legendy'], ['odznaky', 'Odznaky'], ['rekordy', 'Rekordy'], ['kronika', 'Kronika'], ['sezona', 'Sezóna']], aktualni: () => pohledSlavy(), nastavit: k => nastavitPohledSlavy(k) },
+    udrzba: { atribut: 'ud-rezim', pohledy: [['udaje', 'Po údajích'], ['modelky', 'Po modelkách'], ['souhrn', 'Souhrn']], aktualni: () => stav.udrzbaRezim, nastavit: (k) => { stav.udrzbaRezim = k; try { localStorage.setItem('udrzbaRezim', k); } catch { /* jen pro toto spuštění */ } } },
+};
+
+// Po otevření části přepne pohled jejím přepínačem, jakmile se přepínač objeví (nejvýš asi 2 s)
+function dokliknoutPohled(atribut, pohled, pokus = 0) {
+    const stitek = /** @type {HTMLElement | null} */ (document.querySelector(`#stats .volby-v-liste [data-${atribut}="${pohled}"]`));
+    if (stitek) {
+        if (!stitek.classList.contains('active')) stitek.click();
+        return;
+    }
+    if (pokus < 20) setTimeout(() => dokliknoutPohled(atribut, pohled, pokus + 1), 100);
+}
+
+// Mapa sekcí (klik na zvolenou sekci v navigační kapsli): všechny sekce, jejich části a pohledy částí najednou
+// ve skleněném panelu; zvolené místo plnou růžovou. Esc, klik mimo nebo volba ji zavře.
+let mapa = null;
+function zavritMapu() {
+    mapa?.remove();
+    mapa = null;
+    document.removeEventListener('pointerdown', klikMimoMapu, true);
+}
+function klikMimoMapu(e) {
+    if (mapa && !mapa.contains(e.target) && !e.target.closest?.('#viewToggle')) zavritMapu();
+}
 function otevritNabidkuSekci(tlacitko) {
+    if (mapa) return zavritMapu();
     const zvolena = document.querySelector('#pasStranky [role="tab"][aria-selected="true"]');
-    const polozky = [];
-    prepinacRezimu.querySelectorAll('#viewToggle [data-rezim]').forEach((b) => {
+    const sloupce = [...prepinacRezimu.querySelectorAll('#viewToggle [data-rezim]')].map((b) => {
         const sekce = /** @type {HTMLElement} */ (b);
         const klic = sekce.dataset.sekce || sekce.dataset.rezim;
+        const aktivniSekce = sekce.classList.contains('active');
         const nazev = sekce.querySelector('span')?.textContent.trim() || '';
-        polozky.push({ nadpis: nazev });
-        (CASTI_SEKCI[klic] || []).forEach(([atribut, cast, nazevCasti]) => {
-            const je = sekce.classList.contains('active') && zvolena?.getAttribute(`data-${atribut}`) === cast;
-            polozky.push({ text: `${je ? '✓ ' : ''}${nazevCasti}`, akce: () => { if (!je) otevritCast(atribut, cast); } });
-        });
-    });
+        const casti = (CASTI_SEKCI[klic] || []).map(([atribut, cast, nazevCasti]) => {
+            const je = aktivniSekce && zvolena?.getAttribute(`data-${atribut}`) === cast;
+            const p = POHLEDY_CASTI[cast];
+            const pohledy = p ? `<div class="mapa-pohledy">${p.pohledy.map(([k, n]) =>
+                `<button type="button" class="${je && p.aktualni() === k ? 'zvolena' : ''}" data-mapa-cast="${atribut}:${cast}" data-mapa-pohled="${k}">${n}</button>`).join('')}</div>` : '';
+            return `<button type="button" class="mapa-cast ${je ? (p ? 'v-ni' : 'zvolena') : ''}" data-mapa-cast="${atribut}:${cast}">${nazevCasti}</button>${pohledy}`;
+        }).join('');
+        return `<div class="mapa-sloupec"><h4 class="${aktivniSekce ? 'zvolena' : ''}">${nazev}</h4>${casti}</div>`;
+    }).join('');
+    mapa = document.createElement('div');
+    mapa.className = 'mapa-sekci';
+    mapa.setAttribute('role', 'dialog');
+    mapa.setAttribute('aria-label', 'Mapa sekcí');
+    mapa.innerHTML = `<div class="mapa-mrizka">${sloupce}</div><p class="mapa-tip">Klik na zvolenou sekci otevře tuto mapu · Ctrl+1–4 sekce · Esc zavře</p>`;
     const r = tlacitko.getBoundingClientRect();
-    otevritKontextovouNabidku(r.left, r.bottom + 6, polozky);
+    mapa.style.left = `${Math.max(8, r.left)}px`;
+    mapa.style.top = `${r.bottom + 8}px`;
+    document.getElementById('app').append(mapa);
+    mapa.addEventListener('click', (e) => {
+        const volba = /** @type {HTMLElement | null} */ (e.target.closest('[data-mapa-cast]'));
+        if (!volba) return;
+        const [atribut, cast] = volba.dataset.mapaCast.split(':');
+        const pohled = volba.dataset.mapaPohled;
+        const p = POHLEDY_CASTI[cast];
+        zavritMapu();
+        const naMiste = zvolena?.getAttribute(`data-${atribut}`) === cast && document.querySelector('#viewToggle .active');
+        if (pohled && p && naMiste) {
+            // Už otevřená část: přepne pohled jejím přepínačem v záhlaví stránky
+            /** @type {HTMLElement | null} */ (document.querySelector(`.volby-v-liste [data-${p.atribut}="${pohled}"]`))?.click();
+            return;
+        }
+        if (pohled && p) p.nastavit(pohled);
+        if (!naMiste) otevritCast(atribut, cast);
+        // Pohled, který potřebuje vlastní spuštění (Údržba › Po modelkách), se po načtení části přepne jejím přepínačem
+        if (pohled && p) dokliknoutPohled(p.atribut, pohled);
+    });
+    mapa.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        e.stopPropagation();
+        zavritMapu();
+        tlacitko.focus();
+    });
+    document.addEventListener('pointerdown', klikMimoMapu, true);
+    /** @type {HTMLElement | null} */ (mapa.querySelector('.zvolena, .v-ni, button'))?.focus();
 }

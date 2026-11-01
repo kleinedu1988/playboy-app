@@ -127,7 +127,7 @@ func TestUzavreniSezony(t *testing.T) {
 	if !odznak {
 		t.Errorf("odznak Favoritka: %+v", slava.Odznaky)
 	}
-	a.VratitPorovnani()
+	a.VratitPorovnani(0, 0)
 	if k := a.GetSinSlavy().Kronika; len(k) == 0 {
 		t.Error("vrácení porovnání smazalo kroniku sezóny")
 	}

@@ -202,7 +202,7 @@ export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
 
 export function UzavritSezonu(arg1:string,arg2:number):Promise<boolean>;
 
-export function VratitPorovnani():Promise<boolean>;
+export function VratitPorovnani(arg1:number,arg2:number):Promise<boolean>;
 
 export function VyberPodleNazvu(arg1:string):Promise<number>;
 

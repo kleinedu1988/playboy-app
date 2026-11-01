@@ -46,9 +46,6 @@ export const adresaFotkyVysky = (f, vyska) => obrazek(f.url, `${(Number(f.rotace
 // Adresa fotky v pásu (i pro přednačtení první fotek další dvojice v oblibenost.js)
 export const adresaFotkyPasu = f => adresaFotkyVysky(f, velikost);
 
-// Výška fotek pro pás dané výšky (rychlé hodnocení má vlastní, vyšší pás)
-export const vyskaFotekPasu = pas => stupenVysky((pas?.clientHeight || 400) * (window.devicePixelRatio || 1));
-
 /**
  * Po načtení fotky v pásu (porovnání i rychlé hodnocení) dostane její místo skutečný poměr stran: fotka je celá,
  * jen na šířku širší. Volá se jednou (posluchač na celé stránce, načtení obrázku nebublá – zachytí se cestou dolů).
@@ -109,7 +106,8 @@ function htmlFotek(strana) {
  * @param {{ a: { modelka: any, fotky: any[]|null, celkem: number, skore?: any }, b: { modelka: any, fotky: any[]|null, celkem: number, skore?: any } }} strany
  */
 export function vykreslitPasy(misto, strany) {
-    const nova = !data || koren !== misto || data.a.modelka.id !== strany.a.modelka.id || data.b.modelka.id !== strany.b.modelka.id;
+    // Prázdný stav (Dvojice došly) přepsal obsah: kostra se postaví znovu i pro stejnou dvojici
+    const nova = !data || koren !== misto || !polovina('a') || data.a.modelka.id !== strany.a.modelka.id || data.b.modelka.id !== strany.b.modelka.id;
     koren = misto;
     data = strany;
     if (nova) {

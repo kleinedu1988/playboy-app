@@ -630,7 +630,7 @@ func TestDrzitelkyVDatabazi(t *testing.T) {
 	if posledni == 0 || stavu != 2 {
 		t.Fatalf("po porovnání %d: stavů držitelek %d", posledni, stavu)
 	}
-	if !a.VratitPorovnani() {
+	if !a.VratitPorovnani(0, 0) {
 		t.Fatal("vrácení")
 	}
 	var st stavUrovni

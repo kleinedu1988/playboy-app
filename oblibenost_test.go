@@ -213,7 +213,7 @@ func TestPorovnaniVratitAZapomenout(t *testing.T) {
 			t.Errorf("neplatné porovnání %v prošlo", spatne)
 		}
 	}
-	if a.VratitPorovnani() {
+	if a.VratitPorovnani(0, 0) {
 		t.Fatal("vrácení bez porovnání prošlo")
 	}
 	if !a.PorovnatModelky(ida, idb, "a") || !a.PorovnatModelky(idb, idc, "remiza") || !a.PorovnatModelky(ida, idc, "b") {
@@ -228,7 +228,11 @@ func TestPorovnaniVratitAZapomenout(t *testing.T) {
 	if tabulek != 0 {
 		t.Fatal("porovnání je ve sbírce")
 	}
-	if !a.VratitPorovnani() || a.GetStavUceni().Porovnani != 2 {
+	// Vrácení jiné dvojice, než je poslední porovnání, nic nesmaže (lišta ukazuje zastaralou dvojici)
+	if a.VratitPorovnani(ida, idb) || a.GetStavUceni().Porovnani != 3 {
+		t.Fatal("vrácení jiné dvojice smazalo poslední porovnání")
+	}
+	if !a.VratitPorovnani(idc, ida) || a.GetStavUceni().Porovnani != 2 {
 		t.Fatal("vrácení posledního porovnání")
 	}
 	restartovatUceni(a)
@@ -402,7 +406,7 @@ func TestOblibenostZustavaVUrovni(t *testing.T) {
 	}
 	// Vrácení porovnání se projeví hned (otisk podle počtu a posledního čísla)
 	for range 30 {
-		a.VratitPorovnani()
+		a.VratitPorovnani(0, 0)
 	}
 	if o := modelkaPodleJmena(t, a, "Trojka").Oblibenost; o != 3 {
 		t.Fatalf("po vrácení všech porovnání: %v", o)

@@ -173,7 +173,7 @@ func TestKronikaVDatabazi(t *testing.T) {
 	if len(s.Kronika) != 3 || s.Kronika[0].Druh != udalostJednicka || s.Kronika[1].Souperka != idb {
 		t.Fatalf("po zápisu: %+v", s.Kronika)
 	}
-	if !a.VratitPorovnani() {
+	if !a.VratitPorovnani(0, 0) {
 		t.Fatal("vrácení")
 	}
 	if s := a.GetSinSlavy(); len(s.Kronika) != 1 {
@@ -264,7 +264,7 @@ func TestVraceniNesmazeZacatekKroniky(t *testing.T) {
 	if od == "" {
 		t.Fatal("kronika nezačala")
 	}
-	if !a.VratitPorovnani() {
+	if !a.VratitPorovnani(0, 0) {
 		t.Fatal("vrácení")
 	}
 	if s := a.GetSinSlavy(); s.Od != od || len(s.Kronika) != 1 || s.Kronika[0].Druh != udalostZacatek {

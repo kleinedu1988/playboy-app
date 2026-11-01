@@ -402,8 +402,8 @@ export function UzavritSezonu(arg1, arg2) {
   return window['go']['main']['App']['UzavritSezonu'](arg1, arg2);
 }
 
-export function VratitPorovnani() {
-  return window['go']['main']['App']['VratitPorovnani']();
+export function VratitPorovnani(arg1, arg2) {
+  return window['go']['main']['App']['VratitPorovnani'](arg1, arg2);
 }
 
 export function VyberPodleNazvu(arg1) {

@@ -22,7 +22,7 @@ import { prohlizetBezZajmu } from './zajem';
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, GetSezona, GetSoubojeModelky, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, klicNavrhu, kratceSrdicka, pruhySily, skryteNavrhy, skrytNavrh, textModeluVkusu, textSrdicek, vetaNesouladu, zKolika, znakySrdicek } from '../lib/srdicka';
-import { NAHLEDU_V_POROVNANI, POHLEDY_HODNOCENI, bublinaCekani, nadpisSouboje, nazevUrovne, odkazyHodnoceni, okoliDvojice, poctyCekajicich, posunMista, postupDne, prevestCastOblibenosti, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyZajmu, urovenModelky, vysledekOvereni, vysledekRozhodnuti } from '../lib/oblibenost';
+import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, odkazyHodnoceni, okoliDvojice, poctyCekajicich, posunMista, postupDne, prevestCastOblibenosti, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyZajmu, urovenModelky, vysledekOvereni, vysledekRozhodnuti } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
@@ -38,7 +38,6 @@ import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 import { nacistSinSlavy, nastavitPohledSlavy, obnovitHlavuSlavy, pripravitSinSlavy } from './sin-slavy';
 import { hodnotitFotky, nacistGalerii, nastavitRazeniFotek, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
-import { htmlPilulek } from '../ui/pas';
 import { nazevSezony, textZbyva } from '../lib/slava';
 
 const DVOJIC_NAJEDNOU = 8;
@@ -185,6 +184,10 @@ const cast = klic => koren?.querySelector(`[data-ob-${klic}]`);
 
 export async function nacistOblibenost(sekce) {
     koren = sekce;
+    // Modelky se mohly mezitím smazat nebo skrýt: jejich dvojice z fronty i historie zmizí
+    const plati = d => modelka(d.a) && modelka(d.b);
+    fronta = fronta.filter(plati);
+    historie.splice(0, historie.length, ...historie.filter(plati));
     if (!koren.querySelector('[data-ob-porovnani]')) {
         koren.innerHTML = KOSTRA;
         pripravitPasy(cast('dvojice'), otevritFotku);
@@ -198,13 +201,30 @@ export async function nacistOblibenost(sekce) {
     else nacistGalerii(cast('galerie'));
     // Srdíčka fotek se mohla mezitím změnit; fotky se načtou znovu (backend je má v paměti se snímkem sbírky)
     nahledy.clear();
-    vykreslitDnes();
+    vykreslitHlavu();
     await Promise.all([obnovitPrehled(), fronta.length ? null : doplnitFrontu()]);
     vykreslitDvojici();
 }
 
-// Pořadí, tipy a věta o modelu vkusu (po porovnáních se obnoví jen občas, je to přepočet celé sbírky)
-async function obnovitPrehled() {
+// Pořadí, tipy a věta o modelu vkusu (po porovnáních se obnoví jen občas, je to přepočet celé sbírky). Přepočty
+// se neprolínají: když jeden běží, další se poznamená a spustí jednou po něm (starší výsledek nepřepíše novější)
+let prehledBezi = null;
+let prehledZnovu = false;
+function obnovitPrehled() {
+    if (prehledBezi) {
+        prehledZnovu = true;
+        return prehledBezi;
+    }
+    prehledBezi = (async () => {
+        do {
+            prehledZnovu = false;
+            await obnovitPrehledJednou();
+        } while (prehledZnovu);
+    })().finally(() => { prehledBezi = null; });
+    return prehledBezi;
+}
+
+async function obnovitPrehledJednou() {
     porovnanoOdObnoveni = 0;
     const porovnane = [...porovnaneOdObnoveni];
     porovnaneOdObnoveni.clear();
@@ -262,7 +282,6 @@ const navrhy = new Map();
 let navrhPodPasy = ''; // klíč návrhu zobrazeného pod pásy
 let cisloNavrhu = 0;
 
-const NESOULADU_NAJEDNOU = 8;
 
 // Věta a tlačítka návrhu; nesoulad = položka nesouladu (hodnocená), jinak nehodnocená { porovnani, vyhry }
 function htmlNavrhu(id, navrh, nesoulad, nehodnocena = null) {
@@ -281,8 +300,8 @@ function htmlNavrhu(id, navrh, nesoulad, nehodnocena = null) {
 
 // Po porovnání: návrh pro jednu z modelek dvojice, když ho backend má a nebyl odmítnut
 async function ukazatNavrhPoPorovnani(d) {
-    const moje = ++cisloNavrhu;
     zobrazitNavrhPodPasy(null);
+    const moje = ++cisloNavrhu;
     for (const id of [d.a, d.b]) {
         let n = null;
         try {
@@ -297,6 +316,8 @@ async function ukazatNavrhPoPorovnani(d) {
 }
 
 function zobrazitNavrhPodPasy(navrh) {
+    // Skrytí (Vrátit, Přeskočit, nová série) zneplatní i návrh, na který se ještě čeká
+    if (!navrh) cisloNavrhu++;
     navrhPodPasy = navrh?.klic || '';
     nastavitHtml(cast('navrh'), navrh?.html || '');
 }
@@ -350,7 +371,9 @@ function vykreslitRozhodnuti() {
 async function prijmoutNavrh(klic) {
     const n = navrhy.get(klic);
     if (!n) return;
-    if (!await SetHodnoceni(n.id, n.navrh)) return oznamit('Hodnocení se nepodařilo uložit.');
+    let ok = false;
+    try { ok = await SetHodnoceni(n.id, n.navrh); } catch { /* oznámí se níž */ }
+    if (!ok) return oznamit('Hodnocení se nepodařilo uložit.');
     const m = modelka(n.id);
     if (m) m.hodnoceni = n.navrh;
     [stav.aktualniModelka, ...stav.nacteneModelky].forEach(x => { if (x?.id === n.id) x.hodnoceni = n.navrh; });
@@ -369,17 +392,27 @@ function odmitnoutNavrh(klic) {
     vykreslitHlavu();
 }
 
-async function doplnitFrontu() {
+// Klíč dvojice bez ohledu na pořadí (backend strany A/B prohazuje)
+const klicDvojice = d => [d.a, d.b].sort((x, y) => x - y).join('-');
+
+// Doplnění fronty; souběžná volání (rychlé volby) sdílejí jedno načtení
+let doplnovani = null;
+function doplnitFrontu() {
+    doplnovani ??= doplnitFrontuJednou().finally(() => { doplnovani = null; });
+    return doplnovani;
+}
+
+async function doplnitFrontuJednou() {
     let nove = [];
     try {
         nove = (await GetDvojiceKPorovnani(DVOJIC_NAJEDNOU, '') || []).map(idDvojice);
     } catch { /* prázdná fronta ukáže prázdný stav */ }
-    const videne = new Set(fronta.map(d => `${d.a}-${d.b}`));
-    fronta.push(...nove.filter(d => d.a && d.b && d.a !== d.b && modelka(d.a) && modelka(d.b) && !videne.has(`${d.a}-${d.b}`)));
-    // Seznamy fotek celé fronty jedním voláním; zobrazená dvojice pak pásy doplní
+    const videne = new Set(fronta.map(klicDvojice));
+    fronta.push(...nove.filter(d => d.a && d.b && d.a !== d.b && modelka(d.a) && modelka(d.b) && !videne.has(klicDvojice(d))));
+    // Seznamy fotek celé fronty jedním voláním; zobrazená dvojice pak pásy doplní (ne uprostřed přechodu)
     nacistNahledy(fronta.flatMap(d => [d.a, d.b])).then(() => {
         prednacist();
-        if (fronta[0]) vykreslitDvojici();
+        if (fronta[0] && !cast('dvojice')?.classList.contains('odchazi')) vykreslitDvojici();
     });
 }
 
@@ -552,19 +585,6 @@ export function poctyOblibenosti() {
     };
 }
 
-// Pilulky částí Oblíbenosti pro lištu pod záložkami (#pasStranky): Porovnat, Fotky, Pořadí, Síň slávy a Nejlepší
-export function htmlPasuOblibenosti(aktivniRezim = stav.rezim) {
-    const { pocty } = poctyOblibenosti();
-    const zvoleny = aktivniRezim === 'nejlepsi' ? 'nejlepsi'
-        : stav.oblibenostCast === 'slava' ? 'slava' : stav.hodnoceniPohled;
-    const pilulky = [
-        ...POHLEDY_HODNOCENI.map(([klic, nazev]) => ({ klic, nazev, pocet: pocty[klic][0], titulek: pocty[klic][1], zvolena: klic === zvoleny })),
-        { klic: 'slava', nazev: 'Síň slávy', titulek: 'Nejlepší desítka, legendy, odznaky, rekordy a kronika', zvolena: zvoleny === 'slava' },
-        { klic: 'nejlepsi', nazev: 'Nejlepší', titulek: 'Nejlépe hodnocené modelky, čísla, centerfoldy a fotky', zvolena: zvoleny === 'nejlepsi' },
-    ];
-    return `<nav class="slava-pohledy" role="tablist" aria-label="Části oblíbenosti">${htmlPilulek(pilulky, 'cast-oblibenosti-pas')}</nav>`;
-}
-
 // Volby pohledu Porovnat v liště (#volbyPrehledu): dnešní počet porovnání a případný odkaz na čekající položku
 function vykreslitVolbyPorovnat() {
     const misto = cast('volby-porovnat');
@@ -587,10 +607,6 @@ function vykreslitVolbyPorovnat() {
     nastavitHtml(misto, `${htmlOdkazu}${htmlVratit}<span title="${esc(p.hotovo ? `Dnes ${sklonovat(p.hotovo, 'porovnání', 'porovnání', 'porovnání')} – do ${p.cil} zbývá ${p.zbyva}` : 'Dnes zatím žádné porovnání')}">Dnes ${p.hotovo} z ${p.cil}${esc(textSezony)}</span>`);
 }
 
-// Hotovo dnes: počet porovnání v liště voleb
-function vykreslitDnes() {
-    vykreslitHlavu();
-}
 
 // Dvojice v pořadí: místa obou modelek a jejich sousedek (zvýrazněné), úroveň, posun po posledním přepočtu
 function vykreslitVPoradi(d) {
@@ -611,10 +627,16 @@ function vykreslitVPoradi(d) {
 }
 
 // Obnoví počty v pilulkách Oblíbenosti (#pasStranky) a volby pohledu Porovnat (#volbyPrehledu)
+// Hlavičku, kapsli a stavovou lištu obnoví prehled.js po události volby-prehledu; víc změn v jednom snímku jedna obnova
+let hlavaNaplanovana = false;
 function vykreslitHlavu() {
     vykreslitVolbyPorovnat();
-    document.dispatchEvent(new CustomEvent('volby-prehledu'));
-    obnovitHlavuHodnoceni();
+    if (hlavaNaplanovana) return;
+    hlavaNaplanovana = true;
+    requestAnimationFrame(() => {
+        hlavaNaplanovana = false;
+        document.dispatchEvent(new CustomEvent('volby-prehledu'));
+    });
 }
 
 function vykreslitDvojici() {
@@ -811,9 +833,9 @@ async function vybrat(vysledek) {
     porovnaneOdObnoveni.add(d.a).add(d.b);
     porovnaniDnes++;
     ulozDnes(porovnaniDnes);
-    vykreslitDnes();
+    vykreslitHlavu();
     ukazatNavrhPoPorovnani(d);
-    await dalsi();
+    await dalsi(d);
     // Souboj na hranici úrovně se přepočte hned (úrovně a štítky v pásech ukážou výsledek), jinak po pěti porovnáních;
     // poslední souboj série „Rozhodnout teď“ přepočte a vyhodnotí dokončení série
     if (serie && !serie.vysledek && !zbyvaSerie()) dokoncitSerii();
@@ -821,10 +843,11 @@ async function vybrat(vysledek) {
 }
 
 // Další dvojice s krátkým přechodem: vybraná se rozzáří, obě zmizí, nové se objeví
-async function dalsi() {
+async function dalsi(hotova) {
     const dvojice = cast('dvojice');
     dvojice.classList.add('odchazi');
-    fronta.shift();
+    // Jen zobrazená dvojice: fronta se mohla mezitím přepsat (Rozhodnout teď, Vyzvat o trůn)
+    fronta = fronta.filter(x => x !== hotova);
     const doplneni = fronta.length < 3 ? doplnitFrontu() : null;
     await new Promise(r => setTimeout(r, PRECHOD_MS));
     if (!fronta.length) await doplneni;
@@ -836,29 +859,36 @@ async function dalsi() {
 }
 
 async function preskocit() {
-    if (!fronta[0] || zaneprazdneno) return;
+    const d = fronta[0];
+    if (!d || zaneprazdneno) return;
     zaneprazdneno = true;
     zobrazitNavrhPodPasy(null);
-    await dalsi();
+    await dalsi(d);
     if (serie && !serie.vysledek && !zbyvaSerie()) dokoncitSerii();
 }
 
 async function vratit() {
-    if (zaneprazdneno || !historie.length) return;
+    const posledni = historie[historie.length - 1];
+    if (zaneprazdneno || !posledni) return;
     zaneprazdneno = true;
     let ok = false;
     try {
-        ok = await VratitPorovnani();
+        ok = await VratitPorovnani(posledni.a, posledni.b);
     } catch { /* oznámí se níž */ }
     zaneprazdneno = false;
-    if (!ok) return oznamit('Poslední porovnání se nepodařilo vrátit.');
+    if (!ok) {
+        // Poslední uložené porovnání je jiné (zapomenutá oblíbenost, jiné okno): stará historie neplatí
+        historie.length = 0;
+        vykreslitHlavu();
+        return oznamit('Poslední porovnání se nepodařilo vrátit.');
+    }
     const vracena = historie.pop();
     fronta.unshift(vracena);
     // Vrácený souboj série ji znovu otevře
     if (serie?.dvojice.has(vracena)) serie.vysledek = null;
     porovnaniDnes = Math.max(0, porovnaniDnes - 1);
     ulozDnes(porovnaniDnes);
-    vykreslitDnes();
+    vykreslitHlavu();
     zobrazitNavrhPodPasy(null);
     vykreslitDvojici();
     obnovitPrehled();
@@ -896,9 +926,8 @@ async function rozhodnoutTed(id) {
     serie = { id, uroven: Number(p?.obhajoba?.uroven || p?.ceka?.uroven) || 0, obhajovala: !!p?.obhajoba, nesoulad: ns ? { hodnoceni: ns.hodnoceni, navrh: ns.navrh } : null,
         dvojice: new Set(dvojice), celkem: dvojice.length, vysledek: null, konci: false };
     // Stejná dvojice už čekající ve frontě (v jakémkoli pořadí) se nezopakuje
-    const klic = d => [d.a, d.b].sort((x, y) => x - y).join('-');
-    const vSerii = new Set(dvojice.map(klic));
-    fronta = [...dvojice, ...fronta.filter(d => !vSerii.has(klic(d)))];
+    const vSerii = new Set(dvojice.map(klicDvojice));
+    fronta = [...dvojice, ...fronta.filter(d => !vSerii.has(klicDvojice(d)))];
     zobrazitNavrhPodPasy(null);
     ukazatCastOblibenosti('porovnat');
     vykreslitSerii();
@@ -914,6 +943,8 @@ async function dokoncitSerii() {
     await obnovitPrehled();
     if (serie !== s) return;
     s.konci = false;
+    // Během přepočtu se souboj vrátil (Vrátit): série ještě není hotová
+    if (zbyvaSerie()) return vykreslitSerii();
     s.vysledek = s.nesoulad
         ? vysledekOvereni({ jmeno: modelka(s.id)?.jmeno, hodnoceni: s.nesoulad.hodnoceni, ted: (data.oblibenost?.nesedi || []).find(n => n.modelkaId === s.id) })
         : vysledekRozhodnuti({ jmeno: modelka(s.id)?.jmeno, uroven: s.uroven, obhajovala: s.obhajovala, ted: polozkaPoradi(s.id) });
@@ -1037,7 +1068,8 @@ export function pripravit() {
         if (e.target.closest?.('input, textarea, select, [role="slider"], [contenteditable]')) return;
         if (otevreneOkno() || jeVidet('lightbox') || jeVidet('zkratky') || jeVidet('contextMenu')) return;
         // Na zaměřeném tlačítku v Oblíbenosti dělají mezerník a Enter to, co tlačítko (jinde, třeba v liště, je mezerník remíza)
-        if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('button') && koren.contains(e.target)) return;
+        if (e.key === 'Enter' && e.target.closest?.('button, a, [role="tab"]')) return;
+        if (e.key === ' ' && e.target.closest?.('button') && koren.contains(e.target)) return;
         const akce = (!zaneprazdneno && klavesaPasu(e, vybrat))
             || { ArrowDown: () => vybrat('remiza'), ' ': () => vybrat('remiza'), Backspace: vratit, s: preskocit, S: preskocit }[e.key];
         if (!akce) return;

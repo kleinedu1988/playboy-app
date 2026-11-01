@@ -23,14 +23,15 @@ function htmlOkna(u, modelky) {
     const f = m(prvni.modelkaId);
     const stupen = (b) => {
         const x = m(b.modelkaId);
-        return x ? `<div class="vs-stupen ${b.misto === 1 ? 'prvni' : ''}">
-            <img src="${esc(adresaTitulni(x))}" alt="" style="${stylVyrezu(x)}" draggable="false" />
+        // Fotka v rámečku, který ořízne uložený výřez (zvětšení) – jinak by přetekla přes okno
+        return x ? `<div class="vs-stupen misto-${b.misto} ${b.misto === 1 ? 'prvni' : ''}">
+            <span class="vs-foto"><img src="${esc(adresaTitulni(x))}" alt="" style="${stylVyrezu(x)}" draggable="false" />${b.misto === 1 ? '<i class="vs-koruna" aria-hidden="true">♛</i>' : ''}</span>
             <div><b>${b.misto === 1 ? '♛ ' : ''}${b.misto}. ${esc(x.jmeno.split(' ')[0])}</b>${b.body} b.</div></div>` : '';
     };
     const trun = [2, 1, 3].map(misto => u.poradi.find(b => b.misto === misto)).filter(Boolean).map(stupen).join('');
     const kandidatky = u.poradi.slice(1).filter(b => m(b.modelkaId)).map(b => {
         const x = m(b.modelkaId);
-        return `<button type="button" class="vs-volba" data-milacek="${x.id}" aria-pressed="false"><img src="${esc(adresaTitulni(x))}" alt="" style="${stylVyrezu(x)}" draggable="false" />${esc(x.jmeno.split(' ')[0])} <small>${b.misto}.</small></button>`;
+        return `<button type="button" class="vs-volba" data-milacek="${x.id}" aria-pressed="false"><span class="vs-avatar"><img src="${esc(adresaTitulni(x))}" alt="" style="${stylVyrezu(x)}" draggable="false" /></span>${esc(x.jmeno.split(' ')[0])} <small>${b.misto}.</small></button>`;
     }).join('');
     return `
         <div class="modal-card vs-okno" role="dialog" aria-modal="true" aria-labelledby="vsNadpis">

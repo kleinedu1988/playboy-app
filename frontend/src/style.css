@@ -10287,10 +10287,6 @@ span.ud-chip {
     justify-content: center;
 }
 
-.ob-dvojice > .ob-prazdne-akce {
-    text-align: center;
-}
-
 .pas {
     position: relative;
     display: flex;
@@ -10554,15 +10550,6 @@ span.ud-chip {
     display: none;
 }
 
-/* Vpravo v pásu Hodnocení: dnešní porovnání a jeden odkaz na to, co čeká v jiném pohledu */
-.hd-souhrn {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-    min-width: 0;
-}
-
 /* Užší okno: hlavička Hodnocení má dva řádky, pásy porovnání se o ně zkrátí */
 @media (max-width: 1120px) {
     .ob-porovnani {
@@ -10654,11 +10641,6 @@ span.ud-chip {
     color: var(--text-muted);
     font: inherit;
     font-size: 11px;
-}
-
-.ob-prazdne-akce {
-    margin: -24px 0 0;
-    text-align: center;
 }
 
 /* Nabídka srovnat srdíčka po volbě, která jim odporuje: jeden tichý řádek pod ovládáním */
@@ -10961,20 +10943,6 @@ span.ud-chip {
     margin-left: 6px;
     color: var(--text-muted);
     font-size: 11px;
-}
-
-.ob-trendy {
-    margin: -4px 0 10px;
-    color: var(--text-muted);
-    font-size: 12px;
-}
-
-.ob-trendy:empty {
-    display: none;
-}
-
-.ob-trendy .link {
-    font-size: 12px;
 }
 
 .ob-jmeno-radku .trend {
@@ -11779,11 +11747,6 @@ button.pas-kapsle:focus-visible {
 /* V užším pásu mají nezvolené pilulky jen ikonu (název v bublině) a informace vpravo se schová */
 @container (max-width: 860px) {
     .plovouci-pas .slava-pohled:not(.active) .pas-nazev {
-        display: none;
-    }
-
-    /* Hodnocení: místo zůstane odkazu na to, co čeká (dnešní počet se nevejde) */
-    .plovouci-pas .hd-dnes {
         display: none;
     }
 }
@@ -13227,23 +13190,6 @@ button.pas-kapsle:focus-visible {
     background-image: linear-gradient(100deg, rgba(216, 27, 96, 0.09), transparent 55%);
 }
 
-.hz-r-skupina {
-    margin: 14px 0 2px;
-    color: var(--text-main);
-    font-size: 12.5px;
-    font-weight: 600;
-}
-
-.hz-r-skupina:first-of-type {
-    margin-top: 0;
-}
-
-.hz-r-skupina small {
-    margin-left: 6px;
-    color: var(--text-muted);
-    font-weight: 400;
-}
-
 .hz-r-seznam {
     margin: 0;
     padding: 0;
@@ -13627,27 +13573,6 @@ button.pas-kapsle:focus-visible {
     [data-ob-cast-hodnoceni]:is([data-hd-panel="tipy"], [data-hd-panel="trendy"], [data-hd-panel="jak"]) > .hd-pohled {
         margin-right: 0;
     }
-}
-
-/* Hotovo dnes v hlavičce Hodnocení: počet a pruh k příští desítce */
-.ob-postup-pruh {
-    position: relative;
-    display: block;
-    width: 80px;
-    height: 5px;
-    overflow: hidden;
-    border-radius: 999px;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.ob-postup-pruh > i {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    border-radius: inherit;
-    background-image: linear-gradient(90deg, var(--accent), #ff6fa3);
-    transition: width 0.3s ease;
 }
 
 /* Dvojice v pořadí: vpravo vedle důvodu dvojice, místa obou modelek a sousedek, úroveň, posun po přepočtu */
@@ -14162,7 +14087,9 @@ button.pas-kapsle:focus-visible {
 
 .vs-okno {
     width: min(760px, calc(100vw - 48px));
+    max-height: calc(100vh - 48px);
     padding: 26px 30px;
+    overflow-y: auto;
 }
 
 .vs-okno h2 {
@@ -14189,29 +14116,74 @@ button.pas-kapsle:focus-visible {
 
 .vs-stupne {
     display: grid;
-    grid-template-columns: 1fr 1.25fr 1fr;
-    gap: 14px;
+    grid-template-columns: 1fr 1.3fr 1fr;
     align-items: end;
-    margin: 20px 0 22px;
+    margin: 30px 0 24px;
+    padding: 0 6px;
 }
 
-.vs-stupen img {
+/* Stupně: jednička uprostřed vystoupí nad sousedky (větší, se stínem, mírně přes jejich okraj); každá fotka je
+   ve vlastním rámečku, který výřez ořízne – nic nepřeteče přes okno */
+.vs-stupen {
+    position: relative;
+    min-width: 0;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+
+.vs-stupen.misto-2 {
+    margin-right: -14px;
+    transform: rotate(-2deg);
+    transform-origin: bottom right;
+}
+
+.vs-stupen.misto-3 {
+    margin-left: -14px;
+    transform: rotate(2deg);
+    transform-origin: bottom left;
+}
+
+.vs-stupen.prvni {
+    z-index: 1;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.6), 0 0 0 2px var(--accent);
+}
+
+.vs-foto {
+    position: relative;
+    display: block;
+    height: 170px;
+    overflow: hidden;
+    border-radius: 16px 16px 0 0;
+    background-color: #000;
+}
+
+.vs-stupen.prvni .vs-foto {
+    height: 250px;
+}
+
+.vs-foto img {
     display: block;
     width: 100%;
-    height: 150px;
-    border-radius: 14px 14px 0 0;
+    height: 100%;
     object-fit: cover;
 }
 
-.vs-stupen.prvni img {
-    height: 210px;
+.vs-koruna {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    color: #ffc400;
+    font-size: 26px;
+    font-style: normal;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    transform: translateX(-50%);
 }
 
 .vs-stupen > div {
     padding: 8px 10px;
     border: 1px solid var(--panel-okraj);
     border-top: 0;
-    border-radius: 0 0 14px 14px;
+    border-radius: 0 0 16px 16px;
     background-color: var(--panel-bg);
     font-size: 12px;
     text-align: center;
@@ -14219,13 +14191,16 @@ button.pas-kapsle:focus-visible {
 
 .vs-stupen.prvni > div {
     border-color: var(--accent);
-    background-color: rgba(216, 27, 96, 0.2);
+    background-color: rgb(70, 24, 44);
 }
 
 .vs-stupen b {
     display: block;
+    overflow: hidden;
     font-size: 14px;
     font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .vs-milacek {
@@ -14249,10 +14224,19 @@ button.pas-kapsle:focus-visible {
     cursor: pointer;
 }
 
-.vs-volba img {
+.vs-avatar {
+    flex: none;
     width: 28px;
     height: 28px;
+    overflow: hidden;
     border-radius: 50%;
+    background-color: #000;
+}
+
+.vs-avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
 }
 

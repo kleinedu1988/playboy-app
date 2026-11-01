@@ -131,7 +131,9 @@ func (a *App) PorovnatModelky(modelkaA, modelkaB int, vysledek string) bool {
 }
 
 // Vrácení posledního porovnání (smaže ho z databáze učení); false, když žádné není
-func (a *App) VratitPorovnani() bool {
+// modelkaA a modelkaB jsou dvojice, kterou vrácení ukazuje (lišta „↶ Vrátit: A > B“): když poslední porovnání
+// je jiná dvojice (mezitím se porovnání zapomněla nebo změnila jinde), nic se nemaže. 0 a 0 = bez kontroly.
+func (a *App) VratitPorovnani(modelkaA, modelkaB int) bool {
 	u := a.uc
 	if u == nil {
 		return false
@@ -144,6 +146,12 @@ func (a *App) VratitPorovnani() bool {
 		return false
 	}
 	posledni := porovnani[len(porovnani)-1]
+	if modelkaA != 0 || modelkaB != 0 {
+		stejna := (posledni.a == modelkaA && posledni.b == modelkaB) || (posledni.a == modelkaB && posledni.b == modelkaA)
+		if !stejna {
+			return false
+		}
+	}
 	if _, err := db.Exec("DELETE FROM porovnani WHERE id = ?", posledni.id); err != nil {
 		varovatUceni("porovnání se nepodařilo vrátit: %v", err)
 		return false

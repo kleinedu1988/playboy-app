@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.1.4] – 2026-11-02
+
+### Přidáno
+- **Volba sezóny na jejím začátku** (tematické sezóny, krok 4): okno se třemi navrženými tématy s ukázkami fotek tématu, Klasickou, 🎲 losem a „Jiným tématem“; témata, která nejdou hrát, ukáže zašedlá s důvodem. Návrhy se neopakují z posledních tří sezón.
+  - **Odhad délky**: potřeba soubojů podle počtu soutěžících dělená tvým tempem za posledních 30 dní, zaokrouhlená na nabízenou délku (7–30 dní); málo fotek tématu na modelku délku zkrátí. Doporučená délka je předvybraná se štítkem a výpočtem pod ní.
+  - Otevře se po vyhlášení minulé sezóny nebo při spuštění; „Později“ ji odloží, zvolit jde i tlačítkem **✦ Zvolit téma sezóny** v Síni slávy nebo ze stavové lišty.
+- **Tematický režim Porovnat**: v tematické sezóně vpravo v liště „✦ téma · Klasické“ (klávesa **T**). V tématu jen soutěžící, pásy jen s fotkami tématu, štítek tématu na švu a souboje se počítají do sezóny; výzva o trůn je vždy v tématu.
+
 ## [1.1.3] – 2026-11-02
 
 ### Změněno

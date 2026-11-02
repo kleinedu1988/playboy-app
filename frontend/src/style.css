@@ -10608,6 +10608,12 @@ span.ud-chip {
     contain-intrinsic-size: auto 42px;
 }
 
+/* Vybraná modelka (šipky, najetí myší): rámeček; podrobnosti ukazuje stavová lišta */
+.ob-poradi > li.vybrana {
+    box-shadow: inset 0 0 0 1px rgba(255, 64, 129, 0.6);
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
 /* Řádek na jednu linku: místo, náhled, jméno se srdíčky, trend, pruh síly, „jen 5×“; štítky vpravo mimo tlačítko */
 .ob-poradi > li > .ob-radek {
     min-width: 0;

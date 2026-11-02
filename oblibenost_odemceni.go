@@ -71,20 +71,25 @@ func (a *App) proslePruvodcem() map[int]bool {
 	return v
 }
 
-func pokrytiTematu(t *Tema, modelky []Modelka, fotky map[int]*fotkaTematu, prosle map[int]bool) PokrytiTematu {
+func pokrytiTematu(t *Tema, modelky []Modelka, fotky []*fotkaTematu, prosle map[int]bool) PokrytiTematu {
+	h := novyHodnotitel(t, modelky)
 	fotek, neznamych := map[int]int{}, map[int]int{}
-	for id, f := range fotky {
+	for _, f := range fotky {
+		id := f.id
+		if !h.modelka(f.modelka) || !h.album(f) {
+			continue
+		}
 		switch {
-		case t.fotkaSplnuje(f):
+		case h.tagy(f):
 			fotek[f.modelka]++
-		case !prosle[id] && t.albumSplnuje(f):
+		case !prosle[id]:
 			neznamych[f.modelka]++
 		}
 	}
 	p := PokrytiTematu{InfoTematu: InfoTematu{Tema: *t}, Kandidatky: []KandidatkaTematu{}, MinFotek: minFotekTematu, MinModelek: minModelekTematu}
 	for i := range modelky {
 		m := &modelky[i]
-		if !t.modelkaSplnuje(m) {
+		if !h.modelky[m.ID] {
 			continue
 		}
 		n := fotek[m.ID]
@@ -118,16 +123,13 @@ func pokrytiTematu(t *Tema, modelky []Modelka, fotky map[int]*fotkaTematu, prosl
 
 // Témata katalogu s podmínkou na tagy, která ještě neplatí, ale průvodce je může odemknout; od nejbližšího
 func (a *App) GetTemataKOdemceni() []PokrytiTematu {
-	modelky, _ := a.nactiModelky("", false)
-	fotky := a.fotkyProTemata()
-	prosle := a.proslePruvodcem()
 	vysledek := []PokrytiTematu{}
 	for i := range katalogTemat {
 		t := katalogTemat[i]
 		if !t.maPodminkuNaTag() {
 			continue
 		}
-		p := pokrytiTematu(&t, modelky, fotky, prosle)
+		p := a.pokrytiTematuSbirky(&t)
 		if !p.Plati && len(p.Kandidatky) >= p.ChybiModelek {
 			vysledek = append(vysledek, p)
 		}
@@ -142,9 +144,8 @@ func (a *App) GetFotkyKOdemceni(tema string) []Fotografie {
 	if t == nil {
 		return []Fotografie{}
 	}
-	modelky, _ := a.nactiModelky("", false)
 	vsechny := a.fotkyProTemata()
-	p := pokrytiTematu(t, modelky, vsechny, a.proslePruvodcem())
+	p := a.pokrytiTematuSbirky(t)
 	poradi := map[int]int{}
 	for i, k := range p.Kandidatky {
 		poradi[k.ModelkaID] = i + 1
@@ -166,4 +167,11 @@ func (a *App) GetFotkyKOdemceni(tema string) []Fotografie {
 	}
 	sort.SliceStable(vysledek, func(i, j int) bool { return poradi[vysledek[i].ModelkaID] < poradi[vysledek[j].ModelkaID] })
 	return vysledek
+}
+
+// Pokrytí tématu nad celou sbírkou (z paměti ke snímku – zápis průvodce dá nový snímek); kandidátky se nesmí měnit
+func (a *App) pokrytiTematuSbirky(t *Tema) PokrytiTematu {
+	return pametTematu(a, t.Klic, func(p *temataPamet) map[string]PokrytiTematu { return p.pokryti }, func() PokrytiTematu {
+		return pokrytiTematu(t, a.modelkyProTemata(), a.seznamFotekProTemata(), a.proslePruvodcem())
+	})
 }

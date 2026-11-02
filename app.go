@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -239,9 +240,40 @@ func ted() string {
 
 // Řazení v SQL stejně jako v programu: bez ohledu na velikost písmen a diakritiku (COLLATE BEZDIAKRITIKY zná jen ASCII)
 func init() {
-	sqlite.MustRegisterCollationUtf8("BEZDIAKRITIKY", func(a, b string) int {
-		return strings.Compare(zjednodusit(a), zjednodusit(b))
-	})
+	sqlite.MustRegisterCollationUtf8("BEZDIAKRITIKY", porovnatBezDiakritiky)
+}
+
+// Porovnání pro COLLATE BEZDIAKRITIKY: dva texty jen z ASCII (většina) bajt po bajtu malými písmeny bez alokace
+// (řazení velkých výsledků volá porovnání statisíckrát); jinak přes zjednodusit
+func porovnatBezDiakritiky(a, b string) int {
+	for i := 0; ; i++ {
+		if i == len(a) || i == len(b) {
+			for j := i; j < len(a); j++ {
+				if a[j] >= utf8.RuneSelf {
+					return strings.Compare(zjednodusit(a), zjednodusit(b))
+				}
+			}
+			for j := i; j < len(b); j++ {
+				if b[j] >= utf8.RuneSelf {
+					return strings.Compare(zjednodusit(a), zjednodusit(b))
+				}
+			}
+			return len(a) - len(b)
+		}
+		x, y := a[i], b[i]
+		if x >= utf8.RuneSelf || y >= utf8.RuneSelf {
+			return strings.Compare(zjednodusit(a), zjednodusit(b))
+		}
+		if 'A' <= x && x <= 'Z' {
+			x += 'a' - 'A'
+		}
+		if 'A' <= y && y <= 'Z' {
+			y += 'a' - 'A'
+		}
+		if x != y {
+			return int(x) - int(y)
+		}
+	}
 }
 
 func NewApp() *App {
@@ -835,7 +867,8 @@ func (a *App) startup(ctx context.Context) {
 
 // Parametry spojení se souborem databáze (okno i import). synchronous NORMAL je bezpečné jen ve WAL;
 // když WAL zapnout nejde, databáze se otevře znovu s dsnBezWAL (výchozí FULL).
-const dsnBezWAL = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)"
+// cache_size 32 MB na spojení (výchozí 2 MB je u větší sbírky málo) a dočasné tabulky řazení v paměti
+const dsnBezWAL = "?_pragma=busy_timeout(5000)&_pragma=foreign_keys(1)&_pragma=cache_size(-32000)&_pragma=temp_store(MEMORY)"
 const dsnDatabaze = dsnBezWAL + "&_pragma=synchronous(NORMAL)"
 
 // Režim WAL: změny se připisují do deníku vedle databáze (playboy.db-wal) a do souboru se přenesou najednou,
@@ -1777,19 +1810,36 @@ func (a *App) GetAlbaFotografa(fotograf string) []Fotografie {
 	if hledany == "" {
 		return fotky
 	}
-	vsechny := a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
-		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
-		WHERE COALESCE(a.fotograf, '') <> ''
-		ORDER BY `+vydaniFotky+`, m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true)
-	// Album s víc fotografy (oddělenými čárkou) patří každému z nich
-	for _, f := range vsechny {
-		for _, jmeno := range strings.Split(f.Fotograf, ",") {
+	// Napřed alba fotografa (album s víc fotografy oddělenými čárkou patří každému z nich), pak jen jejich fotky –
+	// dřív se načetly všechny fotky všech alb s fotografem a filtrovaly až tady
+	var alba []int
+	radky, err := a.db.Query(`SELECT id, fotograf FROM alba WHERE COALESCE(fotograf, '') <> ''`)
+	if err != nil {
+		a.chyba("alba fotografa", err)
+		return fotky
+	}
+	for radky.Next() {
+		var id int
+		var jmena string
+		if radky.Scan(&id, &jmena) != nil {
+			continue
+		}
+		for _, jmeno := range strings.Split(jmena, ",") {
 			if zjednodusit(strings.TrimSpace(jmeno)) == hledany {
-				fotky = append(fotky, f)
+				alba = append(alba, id)
 				break
 			}
 		}
 	}
+	radky.Close()
+	if len(alba) == 0 {
+		return fotky
+	}
+	idAlb, _ := json.Marshal(alba)
+	fotky = a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
+		LEFT JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
+		WHERE f.album_id IN (SELECT value FROM json_each(?))
+		ORDER BY `+vydaniFotky+`, m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true, string(idAlb))
 	return a.doplnitDalsiModelky(fotky)
 }
 

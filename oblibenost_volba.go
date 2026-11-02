@@ -144,11 +144,9 @@ func (a *App) GetNavrhSezony() NavrhSezony {
 		}
 	}
 	var kandidati []NavrhTematu
-	modelky, _ := a.nactiModelky("", false)
-	fotky := a.fotkyProTemata()
 	for i := range katalogTemat {
 		t := katalogTemat[i]
-		soutezici, fotek := souteziciTematu(&t, modelky, fotky)
+		soutezici, fotek := a.souteziciTematuSbirky(&t)
 		n := navrhTematu(InfoTematu{Tema: t, Soutezicich: len(soutezici), Fotek: fotek, Plati: len(soutezici) >= minModelekTematu}, vysledek.Tempo)
 		n.Ukazky = nejlepsiUkazky(soutezici, func(x, y int) bool { return x > y })
 		vysledek.Vsechna = append(vysledek.Vsechna, n)

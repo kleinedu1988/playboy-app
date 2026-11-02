@@ -184,3 +184,14 @@ func TestSlovnikTemat(t *testing.T) {
 		t.Errorf("éra mimo slovník: %+v", tm)
 	}
 }
+
+// Bitová maska tagů pro témata: katalog se musí vejít do 64 bitů
+func TestBitTagu(t *testing.T) {
+	n := 0
+	for _, sk := range katalogTagu {
+		n += len(sk.Tagy)
+	}
+	if n > 64 || len(bitTagu) != n {
+		t.Fatalf("tagů %d, bitů %d – maska je uint64", n, len(bitTagu))
+	}
+}

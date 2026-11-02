@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -551,8 +552,14 @@ func (a *App) aktualizovatVyrezVeSnimku(id int, zoom, x, y float64) {
 	if err := p.spojeni.QueryRowContext(context.Background(), "PRAGMA data_version").Scan(&verze); err != nil {
 		return
 	}
-	p.snimek.modelky[idx].CoverZoom = zoom
-	p.snimek.modelky[idx].CoverX = x
-	p.snimek.modelky[idx].CoverY = y
+	// Nový snímek s kopií modelek (souběžná čtení drží starý snímek a nesmí vidět zápis uprostřed kopírování)
+	// (dopočítávané části – texty hledání, kalendář, náhledy – se nad novým snímkem spočítají znovu)
+	stary := p.snimek
+	novy := &snimek{modelky: slices.Clone(stary.modelky), alba: stary.alba, sdileneCenterfoldy: stary.sdileneCenterfoldy,
+		fotekCoveru: stary.fotekCoveru, err: stary.err, albaModelek: stary.albaModelek, indexModelky: stary.indexModelky}
+	novy.modelky[idx].CoverZoom = zoom
+	novy.modelky[idx].CoverX = x
+	novy.modelky[idx].CoverY = y
+	p.snimek = novy
 	p.verze = verze
 }

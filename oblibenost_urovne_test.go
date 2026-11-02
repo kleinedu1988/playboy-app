@@ -718,11 +718,11 @@ func TestOvereniSrdicek(t *testing.T) {
 		}
 		return s
 	}
-	if s := ids(m.souperkyOvereni(podleId[1], podleId, 4)); s != "5 8 6 9 " {
+	if s := ids(m.souperkyOvereni(podleId[1], m.kosySouboje(podleId), 4)); s != "5 8 6 9 " {
 		t.Errorf("soupeřky podhodnocené trojky: %s", s)
 	}
 	m.nesoulad[1] = NesouladSrdicek{ModelkaID: 1, Hodnoceni: 3, Navrh: 2.5, Smer: "mene"}
-	if s := ids(m.souperkyOvereni(podleId[1], podleId, 4)); s != "10 11 " {
+	if s := ids(m.souperkyOvereni(podleId[1], m.kosySouboje(podleId), 4)); s != "10 11 " {
 		t.Errorf("soupeřky nadhodnocené trojky: %s", s)
 	}
 	m.nesoulad[1] = NesouladSrdicek{ModelkaID: 1, Hodnoceni: 3, Navrh: 3.5, Smer: "vice", Porovnani: 4, Vysledky: 3}

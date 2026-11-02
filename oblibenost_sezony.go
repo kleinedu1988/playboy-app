@@ -470,8 +470,7 @@ func (a *App) GetSezona() Sezona {
 	}
 	if filtr == nil && o.tema != "" {
 		if t := temaZKlice(o.tema); t != nil && t.Klic != "" {
-			modelky, _ := a.nactiModelky("", false)
-			soutezici, _ := souteziciTematu(t, modelky, a.fotkyProTemata())
+			soutezici, _ := a.souteziciTematuSbirky(t)
 			s.Propadle = &PropadleTema{Klic: t.Klic, Nazev: t.Nazev, Ikona: t.Ikona, Soutezicich: len(soutezici), MinModelek: minModelekTematu}
 		}
 	}

@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.17] – 2026-11-02
+
+### Změněno
+- **Rychlejší backend** (měřeno na sbírce 3 000 modelek a 150 000 fotek):
+  - výběr dvojic v Porovnat 247 → 55 ms (soupeřky pro ověření srdíček se třídí jednou, ne pro každou modelku);
+  - volba sezóny a Odemknout téma: výsledky témat se pamatují, dokud se ve sbírce nic nezmění (napodruhé 1,3 s → 12 ms a 0,2 ms), a napoprvé se počítají rychleji – údaje modelky jednou za modelku, podmínky na album jednou za album, tagy jako bitová maska;
+  - počet fotek bez tagů 71 → 7 ms, alba fotografa 1,4 s → 0,24 s;
+  - řazení podle jména bez diakritiky bez zbytečných kopií textu;
+  - SQLite má větší vyrovnávací paměť (32 MB) a dočasné řazení v paměti.
+
+### Opraveno
+- Změna výřezu titulní fotky už nemění snímek sbírky, který zrovna čte jiné volání (souběh).
+
 ## [1.2.16] – 2026-11-02
 
 ### Změněno

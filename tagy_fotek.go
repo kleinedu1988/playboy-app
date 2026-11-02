@@ -171,7 +171,9 @@ func (a *App) GetPoctyTagu() map[string]int {
 		radky.Close()
 	}
 	var bez int
-	a.db.QueryRow(`SELECT COUNT(*) FROM fotky f WHERE NOT EXISTS (SELECT 1 FROM fotky_tagy t WHERE t.fotka_id = f.id)`).Scan(&bez)
+	// Rozdíl počtů (cizí klíč s ON DELETE CASCADE drží tagy jen u existujících fotek) – NOT EXISTS přes všechny fotky
+	// byl řádově pomalejší
+	a.db.QueryRow(`SELECT (SELECT COUNT(*) FROM fotky) - (SELECT COUNT(DISTINCT fotka_id) FROM fotky_tagy)`).Scan(&bez)
 	pocty[""] = bez
 	return pocty
 }

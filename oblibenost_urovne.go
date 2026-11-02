@@ -90,8 +90,9 @@ const (
 
 // Soupeřky pro ověření srdíček modelky s nesouladem: z úrovně návrhu a o půl srdíčka dál ve směru nesouladu (podhodnocená
 // trojka proti 3½ a čtyřkám, nadhodnocená proti 2½ a dvojkám), z každé úrovně ta silou nejbližší úrovni (typická
-// zástupkyně), střídavě; nejvýš pocet
-func (m *modelOblibenosti) souperkyOvereni(x *Modelka, podleId map[int]*Modelka, pocet int) []*Modelka {
+// zástupkyně), střídavě; nejvýš pocet. kosy = modelky schopné souboje podle srdíček, seřazené (kosySouboje) –
+// sestaví se jednou na výběr, ne pro každou modelku s nesouladem (dřív O(nesoulad × modelky))
+func (m *modelOblibenosti) souperkyOvereni(x *Modelka, kosy map[float64][]*Modelka, pocet int) []*Modelka {
 	n, ok := m.nesoulad[x.ID]
 	if !ok {
 		return nil
@@ -102,24 +103,12 @@ func (m *modelOblibenosti) souperkyOvereni(x *Modelka, podleId map[int]*Modelka,
 	}
 	urovne := []float64{n.Hodnoceni + krok, n.Hodnoceni + 2*krok}
 	podleUrovne := make([][]*Modelka, len(urovne))
-	for _, y := range podleId {
-		if y.ID == x.ID || !m.doSouboje(y) {
-			continue
-		}
-		for i, u := range urovne {
-			if y.Hodnoceni == u {
+	for i, u := range urovne {
+		for _, y := range kosy[u] {
+			if y.ID != x.ID {
 				podleUrovne[i] = append(podleUrovne[i], y)
 			}
 		}
-	}
-	for i, u := range urovne {
-		sort.Slice(podleUrovne[i], func(a, b int) bool {
-			da, db := math.Abs(m.oblibenost[podleUrovne[i][a].ID]-u), math.Abs(m.oblibenost[podleUrovne[i][b].ID]-u)
-			if da != db {
-				return da < db
-			}
-			return podleUrovne[i][a].ID < podleUrovne[i][b].ID
-		})
 	}
 	var v []*Modelka
 	for k := 0; len(v) < pocet; k++ {
@@ -584,6 +573,7 @@ func (m *modelOblibenosti) kandidatiSouboju(modelky []Modelka, vyloucene map[[2]
 		}
 	}
 	// (v) ověření srdíček: modelka s nesouladem proti úrovni, kam podle něj patří (souperkyOvereni)
+	var kosy map[float64][]*Modelka
 	for _, x := range podleSily {
 		if x == nil {
 			continue
@@ -592,7 +582,10 @@ func (m *modelOblibenosti) kandidatiSouboju(modelky []Modelka, vyloucene map[[2]
 			continue
 		}
 		vaha := vahaOvereni
-		for _, y := range m.souperkyOvereni(x, podleId, 2) {
+		if kosy == nil {
+			kosy = m.kosySouboje(podleId)
+		}
+		for _, y := range m.souperkyOvereni(x, kosy, 2) {
 			pridat(x, y, vaha, dvojiceOvereni, len(prahyUrovni)-1)
 			vaha *= 0.8
 		}
@@ -765,7 +758,7 @@ func (m *modelOblibenosti) soubojeModelkyBez(modelky []Modelka, id int, nedavne 
 			if ns.Smer == "mene" {
 				kam = "níž"
 			}
-			for _, y := range m.souperkyOvereni(x, podleId, soubojuOvereni+len(nedavne)) {
+			for _, y := range m.souperkyOvereni(x, m.kosySouboje(podleId), soubojuOvereni+len(nedavne)) {
 				if len(v) >= soubojuOvereni || nedavne[klicDvojice(x.ID, y.ID)] {
 					continue
 				}
@@ -801,4 +794,24 @@ func (m *modelOblibenosti) soubojeModelkyBez(modelky []Modelka, id int, nedavne 
 		}
 	}
 	return v
+}
+
+// Modelky schopné souboje podle srdíček; v každé úrovni seřazené podle vzdálenosti síly od úrovně (pak podle id)
+func (m *modelOblibenosti) kosySouboje(podleId map[int]*Modelka) map[float64][]*Modelka {
+	kosy := map[float64][]*Modelka{}
+	for _, y := range podleId {
+		if m.doSouboje(y) {
+			kosy[y.Hodnoceni] = append(kosy[y.Hodnoceni], y)
+		}
+	}
+	for u, l := range kosy {
+		sort.Slice(l, func(a, b int) bool {
+			da, db := math.Abs(m.oblibenost[l[a].ID]-u), math.Abs(m.oblibenost[l[b].ID]-u)
+			if da != db {
+				return da < db
+			}
+			return l[a].ID < l[b].ID
+		})
+	}
+	return kosy
 }

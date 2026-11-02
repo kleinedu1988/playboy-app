@@ -64,7 +64,7 @@ func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 		if t == nil || t.Klic == "" {
 			return dvojice
 		}
-		soutezici, _ := souteziciTematu(t, modelky, a.fotkyProTemata())
+		soutezici, _ := a.souteziciTematuSbirky(t)
 		modelky = slices.DeleteFunc(slices.Clone(modelky), func(m Modelka) bool { return soutezici[m.ID] == 0 })
 		porovnani = slices.DeleteFunc(slices.Clone(porovnani), func(p porovnaniZaznam) bool { return p.tema != t.Klic })
 		okruh = ""

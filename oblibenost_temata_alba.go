@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"sync"
 )
 
 // Údaje alba pro témata; rok a měsíc 0 = neznámé, edice "" = album bez vydání
@@ -82,13 +83,8 @@ func (al *albumTematu) splnuje(klic, hodnota string) bool {
 	}
 	switch klic {
 	case "obdobi":
-		m := vzorObdobi.FindStringSubmatch(hodnota)
-		if m == nil || al.rok == 0 {
-			return false
-		}
-		od, _ := strconv.Atoi(m[1])
-		do, _ := strconv.Atoi(m[2])
-		return al.rok >= od && al.rok <= do
+		od, do, ok := rozsahObdobi(hodnota)
+		return ok && al.rok != 0 && al.rok >= od && al.rok <= do
 	case "mesic":
 		n, err := strconv.Atoi(hodnota)
 		return err == nil && al.mesic > 0 && n == al.mesic
@@ -171,4 +167,22 @@ func frazeFotky(klic, hodnota string) string {
 		}
 	}
 	return hodnota
+}
+
+// Rozsah „RRRR-RRRR“ (pamatuje se – volá se pro každé album každého tématu s érou)
+var rozsahyObdobi sync.Map
+
+func rozsahObdobi(hodnota string) (int, int, bool) {
+	if v, ok := rozsahyObdobi.Load(hodnota); ok {
+		r := v.([3]int)
+		return r[0], r[1], r[2] == 1
+	}
+	r := [3]int{}
+	if m := vzorObdobi.FindStringSubmatch(hodnota); m != nil {
+		r[0], _ = strconv.Atoi(m[1])
+		r[1], _ = strconv.Atoi(m[2])
+		r[2] = 1
+	}
+	rozsahyObdobi.Store(hodnota, r)
+	return r[0], r[1], r[2] == 1
 }

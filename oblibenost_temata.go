@@ -419,15 +419,74 @@ func (t *Tema) modelkaSplnuje(m *Modelka) bool {
 
 // Fotky modelek s tagy a údaji alba (id fotky → modelka, tagy, album)
 type fotkaTematu struct {
+	id      int
 	modelka int
 	tagy    map[string]bool
+	maska   uint64 // tagy jako bity (bitTagu) – rychlá podmínka nad statisíci fotek
 	album   *albumTematu
 }
+
+// Bit tagu v masce fotky (katalog má méně než 64 tagů; test to hlídá)
+var bitTagu = func() map[string]uint64 {
+	m := map[string]uint64{}
+	n := 0
+	for _, sk := range katalogTagu {
+		for _, t := range sk.Tagy {
+			m[t.Klic] = 1 << n
+			n++
+		}
+	}
+	return m
+}()
 
 type temataPamet struct {
 	mu     sync.Mutex
 	snimek *snimek
 	fotky  map[int]*fotkaTematu
+	seznam []*fotkaTematu // tytéž fotky jako seznam (procházení je řádově rychlejší než přes mapu)
+	// Výsledky témat ke snímku (soutěžící a pokrytí; obojí jen ze sbírky, každý zápis dá nový snímek)
+	vysledkySnimek *snimek
+	soutez         map[string]vysledekSouteze
+	pokryti        map[string]PokrytiTematu
+}
+
+type vysledekSouteze struct {
+	soutezici map[int]int
+	fotek     int
+}
+
+// Výsledek tématu z paměti ke snímku, jinak spočítat (spocitat se volá bez zámku – sama čte snímek a fotky)
+func pametTematu[T any](a *App, klic string, vyber func(p *temataPamet) map[string]T, spocitat func() T) T {
+	s := a.snimekVPameti()
+	if s == nil {
+		return spocitat()
+	}
+	p := a.pametTemat()
+	p.mu.Lock()
+	if p.vysledkySnimek != s {
+		p.vysledkySnimek, p.soutez, p.pokryti = s, map[string]vysledekSouteze{}, map[string]PokrytiTematu{}
+	}
+	if v, ok := vyber(p)[klic]; ok {
+		p.mu.Unlock()
+		return v
+	}
+	p.mu.Unlock()
+	v := spocitat()
+	p.mu.Lock()
+	if p.vysledkySnimek == s {
+		vyber(p)[klic] = v
+	}
+	p.mu.Unlock()
+	return v
+}
+
+// Soutěžící tématu nad celou sbírkou (z paměti ke snímku); výsledek se nesmí měnit
+func (a *App) souteziciTematuSbirky(t *Tema) (map[int]int, int) {
+	v := pametTematu(a, t.Klic, func(p *temataPamet) map[string]vysledekSouteze { return p.soutez }, func() vysledekSouteze {
+		s, n := souteziciTematu(t, a.modelkyProTemata(), a.seznamFotekProTemata())
+		return vysledekSouteze{s, n}
+	})
+	return v.soutezici, v.fotek
 }
 
 // Paměť se zakládá líně (App se kopíruje, např. pro import – kopie sdílí ukazatel)
@@ -452,11 +511,43 @@ func (a *App) fotkyProTemata(modelky ...int) map[int]*fotkaTematu {
 			defer p.mu.Unlock()
 			if p.snimek != s {
 				p.fotky, p.snimek = a.nacistFotkyProTemata(), s
+				p.seznam = seznamFotek(p.fotky)
 			}
 			return p.fotky
 		}
 	}
 	return a.nacistFotkyProTemata(modelky...)
+}
+
+// Modelky pro témata jen ke čtení: ze snímku bez kopie (nactiModelky kopíruje celý seznam – u 70 témat znatelné)
+func (a *App) modelkyProTemata() []Modelka {
+	if s := a.snimekSbirky(); s != nil && s.err == nil {
+		return s.modelky
+	}
+	m, _ := a.nactiModelky("", false)
+	return m
+}
+
+// Všechny fotky pro témata jako seznam (z paměti ke snímku)
+func (a *App) seznamFotekProTemata() []*fotkaTematu {
+	if s := a.snimekVPameti(); s != nil {
+		a.fotkyProTemata()
+		p := a.pametTemat()
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		if p.snimek == s {
+			return p.seznam
+		}
+	}
+	return seznamFotek(a.nacistFotkyProTemata())
+}
+
+func seznamFotek(fotky map[int]*fotkaTematu) []*fotkaTematu {
+	v := make([]*fotkaTematu, 0, len(fotky))
+	for _, f := range fotky {
+		v = append(v, f)
+	}
+	return v
 }
 
 func (a *App) nacistFotkyProTemata(modelky ...int) map[int]*fotkaTematu {
@@ -482,7 +573,7 @@ func (a *App) nacistFotkyProTemata(modelky ...int) map[int]*fotkaTematu {
 			if al == nil {
 				al = &albumTematu{}
 			}
-			fotky[id] = &fotkaTematu{modelka: m, tagy: map[string]bool{}, album: al}
+			fotky[id] = &fotkaTematu{id: id, modelka: m, tagy: map[string]bool{}, album: al}
 		}
 	}
 	radky.Close()
@@ -490,25 +581,88 @@ func (a *App) nacistFotkyProTemata(modelky ...int) map[int]*fotkaTematu {
 		if f := fotky[id]; f != nil {
 			for _, tag := range t {
 				f.tagy[tag] = true
+				f.maska |= bitTagu[tag]
 			}
 		}
 	}
 	return fotky
 }
 
+// Vyhodnocení tématu nad všemi fotkami: údaje modelky se zjistí jednou za modelku a podmínky na album jednou za
+// album (dřív u každé ze statisíců fotek); fotky modelek, které údaje nesplňují, se přeskočí
+type hodnotitelTematu struct {
+	t       *Tema
+	modelky map[int]bool
+	splnuje []bool // podle id modelky (rychlejší než mapa ve smyčce přes všechny fotky)
+	alba    map[*albumTematu]bool
+	maAlbum bool
+	masky   []uint64 // každá podmínka na tag: fotka musí mít aspoň jeden z bitů
+}
+
+func novyHodnotitel(t *Tema, modelky []Modelka) *hodnotitelTematu {
+	h := &hodnotitelTematu{t: t, modelky: make(map[int]bool, len(modelky)), alba: map[*albumTematu]bool{}}
+	maxID := 0
+	for i := range modelky {
+		maxID = max(maxID, modelky[i].ID)
+	}
+	h.splnuje = make([]bool, maxID+1)
+	for i := range modelky {
+		if t.modelkaSplnuje(&modelky[i]) {
+			h.modelky[modelky[i].ID] = true
+			h.splnuje[modelky[i].ID] = true
+		}
+	}
+	for _, p := range t.Podminky {
+		h.maAlbum = h.maAlbum || p.Druh == "fotka"
+		if p.Druh == "tag" {
+			var m uint64
+			for _, x := range p.Hodnoty {
+				m |= bitTagu[x]
+			}
+			h.masky = append(h.masky, m)
+		}
+	}
+	return h
+}
+
+// Modelka fotky splňuje údaje tématu
+func (h *hodnotitelTematu) modelka(id int) bool { return id >= 0 && id < len(h.splnuje) && h.splnuje[id] }
+
+func (h *hodnotitelTematu) album(f *fotkaTematu) bool {
+	if !h.maAlbum {
+		return true
+	}
+	v, ok := h.alba[f.album]
+	if !ok {
+		v = h.t.albumSplnuje(f)
+		h.alba[f.album] = v
+	}
+	return v
+}
+
+func (h *hodnotitelTematu) tagy(f *fotkaTematu) bool {
+	for _, m := range h.masky {
+		if f.maska&m == 0 {
+			return false
+		}
+	}
+	return true
+}
+
 // Soutěžící tématu: modelka → počet fotek tématu (jen ty s aspoň minFotekTematu a splněnými údaji)
-func souteziciTematu(t *Tema, modelky []Modelka, fotky map[int]*fotkaTematu) (map[int]int, int) {
-	pocet := map[int]int{}
+func souteziciTematu(t *Tema, modelky []Modelka, fotky []*fotkaTematu) (map[int]int, int) {
+	h := novyHodnotitel(t, modelky)
+	pocet := make([]int, len(h.splnuje))
 	fotekCelkem := 0
 	for _, f := range fotky {
-		if t.fotkaSplnuje(f) {
+		if h.modelka(f.modelka) && h.tagy(f) && h.album(f) {
 			pocet[f.modelka]++
 		}
 	}
 	soutezici := map[int]int{}
 	for i := range modelky {
 		m := &modelky[i]
-		if n := pocet[m.ID]; n >= minFotekTematu && t.modelkaSplnuje(m) {
+		if n := pocet[m.ID]; n >= minFotekTematu && h.modelka(m.ID) {
 			soutezici[m.ID] = n
 			fotekCelkem += n
 		}
@@ -518,12 +672,10 @@ func souteziciTematu(t *Tema, modelky []Modelka, fotky map[int]*fotkaTematu) (ma
 
 // Katalog témat s pokrytím (nabídka tématu sezóny)
 func (a *App) GetTemataSezon() []InfoTematu {
-	modelky, _ := a.nactiModelky("", false)
-	fotky := a.fotkyProTemata()
 	vysledek := make([]InfoTematu, 0, len(katalogTemat))
 	for i := range katalogTemat {
 		t := katalogTemat[i]
-		s, n := souteziciTematu(&t, modelky, fotky)
+		s, n := a.souteziciTematuSbirky(&t)
 		vysledek = append(vysledek, InfoTematu{Tema: t, Soutezicich: len(s), Fotek: n, Plati: len(s) >= minModelekTematu})
 	}
 	return vysledek
@@ -559,8 +711,7 @@ func (a *App) filtrSezony(tema string) *filtrSezony {
 	if t == nil || t.Klic == "" {
 		return nil
 	}
-	modelky, _ := a.nactiModelky("", false)
-	s, _ := souteziciTematu(t, modelky, a.fotkyProTemata())
+	s, _ := a.souteziciTematuSbirky(t)
 	if len(s) < minModelekTematu {
 		return nil
 	}
@@ -584,8 +735,7 @@ func (a *App) filtrSezonyOkna(tema string, porovnani []porovnaniZaznam, od, do t
 		}
 		return a.filtrSezony(t.Klic)
 	}
-	modelky, _ := a.nactiModelky("", false)
-	s, _ := souteziciTematu(t, modelky, a.fotkyProTemata())
+	s, _ := a.souteziciTematuSbirky(t)
 	return &filtrSezony{tema: *t, soutezici: s}
 }
 

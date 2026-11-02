@@ -34,6 +34,7 @@ const CASTI = [
         [k('←', '→'), 'Předchozí a další modelka'],
         [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět'],
         [k('I'), 'Panel Údaje (otevřít, zavřít)'],
+        [k('T'), 'Tagy vybraných fotek'],
         [k('Esc'), 'V režimu Vybrat: ukončit výběr'],
     ] },
     { klic: 'udrzba-udaje', nazev: 'Údržba – Po údajích', radky: [

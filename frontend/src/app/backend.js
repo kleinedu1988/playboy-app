@@ -29,6 +29,10 @@ const CTENI = new Set([
     'GetNejlepsiFotky',
     'GetNehodnoceneFotky',
     'GetPocetNehodnocenychFotek',
+    'GetKatalogTagu',
+    'GetTagyFotek',
+    'SetTagyFotek',
+    'GetPoctyTagu',
     'GetOblibenost',
     'GetPrehled',
     'GetPrehledOblibenosti',
@@ -101,6 +105,10 @@ export const GetNavrhyDoplneni = /** @type {typeof App.GetNavrhyDoplneni} */ (ob
 export const GetNejlepsiFotky = /** @type {typeof App.GetNejlepsiFotky} */ (obalit('GetNejlepsiFotky'));
 export const GetNehodnoceneFotky = /** @type {typeof App.GetNehodnoceneFotky} */ (obalit('GetNehodnoceneFotky'));
 export const GetPocetNehodnocenychFotek = /** @type {typeof App.GetPocetNehodnocenychFotek} */ (obalit('GetPocetNehodnocenychFotek'));
+export const GetKatalogTagu = /** @type {typeof App.GetKatalogTagu} */ (obalit('GetKatalogTagu'));
+export const GetTagyFotek = /** @type {typeof App.GetTagyFotek} */ (obalit('GetTagyFotek'));
+export const SetTagyFotek = /** @type {typeof App.SetTagyFotek} */ (obalit('SetTagyFotek'));
+export const GetPoctyTagu = /** @type {typeof App.GetPoctyTagu} */ (obalit('GetPoctyTagu'));
 export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehled'));
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));
 export const GetSablonaObrazku = /** @type {typeof App.GetSablonaObrazku} */ (obalit('GetSablonaObrazku'));

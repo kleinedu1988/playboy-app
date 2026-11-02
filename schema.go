@@ -240,3 +240,20 @@ func (a *App) migraceHodnoceniPul() error {
 	}
 	return nil
 }
+
+// Tagy fotek z pevného seznamu (tagy_fotek.go); smazaná fotka odnese i své tagy
+func (a *App) migraceTagyFotek() error {
+	for _, krok := range []string{
+		`CREATE TABLE IF NOT EXISTS fotky_tagy (
+			fotka_id INTEGER NOT NULL REFERENCES fotky(id) ON DELETE CASCADE,
+			tag TEXT NOT NULL,
+			PRIMARY KEY (fotka_id, tag)
+		) WITHOUT ROWID`,
+		`CREATE INDEX IF NOT EXISTS fotky_tagy_tag ON fotky_tagy(tag, fotka_id)`,
+	} {
+		if _, err := a.db.Exec(krok); err != nil {
+			return err
+		}
+	}
+	return nil
+}

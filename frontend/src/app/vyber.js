@@ -11,6 +11,7 @@ import { lbOhodnotit, lbOtocit, lbPrepnoutRozlozeni, lbPrepnoutSlideshow, lbSkok
 import { nabidnoutVraceni } from './sprava';
 import { vybratHodnotu } from './ulozeni';
 import { otevreneOkno } from '../ui/dom';
+import { otevritPanelTagu, zavritPanelTagu } from './tagy-fotek';
 
 // Výběr více fotek v profilu, na stránce vydání, ročníku a fotografa a v Nejlepších: Ctrl (Cmd) + klik přidá
 // nebo odebere fotku, Shift + klik vybere úsek, Ctrl+A vybere vše, Delete vybrané odebere
@@ -52,6 +53,7 @@ export function aktualizovatVyber() {
 }
 
 export function zrusitVyber() {
+    zavritPanelTagu();
     vybraneDlazdice().forEach(d => d.classList.remove('vybrana'));
     stav.posledniVybrana = null;
     aktualizovatVyber();
@@ -127,6 +129,11 @@ export function pripravit() {
             vybratVse();
             return;
         }
+        // Tagy: panel nad lištou, výběr zůstane (tagy se ukládají hned po kliku)
+        if (akce === 'tagy') {
+            if (ids.length) otevritPanelTagu(ids, /** @type {HTMLElement} */ (e.target.closest('[data-vyber]')));
+            return;
+        }
         if (!kontext || !ids.length) return;
 
         if (hodnoceni) {
@@ -160,6 +167,10 @@ export function pripravit() {
         } else if (e.key === 'Delete' && vybraneDlazdice().length) {
             e.preventDefault();
             odebratVybrane();
+        } else if ((e.key === 't' || e.key === 'T') && !e.ctrlKey && !e.altKey && !e.metaKey && vybraneDlazdice().length) {
+            // T otevře (nebo zavře) panel tagů vybraných fotek
+            e.preventDefault();
+            /** @type {HTMLElement | null} */ (selectionBar.querySelector('[data-vyber="tagy"]'))?.click();
         }
     });
 

@@ -2807,14 +2807,14 @@ func TestVyvojVCase(t *testing.T) {
 // Alfa (řada 0.5x) zmrazila schéma databáze a formát exportu: nová úprava schématu ani nová verze exportu
 // do 1.0.0 nevznikne. Změna tady znamená vědomé rozhodnutí a novou MINOR verzi mimo alfu. Vědomé výjimky
 // v betě: online pictorialy (typ Pictorial online s datem nafocení) – úprava č. 12 a export verze 8; a druhá,
-// hodnocení modelky po polovinách srdíčka – úprava č. 13 a export verze 9. Od ní je schéma i formát exportu
-// znovu zmrazené až do vydání 1.0.0.
+// hodnocení modelky po polovinách srdíčka – úprava č. 13 a export verze 9. Po 1.0.0 nová úprava schématu nebo
+// verze exportu znamená novou MINOR verzi: 1.1.0 přidala tagy fotek (úprava č. 14, export verze 10).
 func TestZmrazeniAlfy(t *testing.T) {
-	if len(migrace) != 13 {
-		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 13", len(migrace))
+	if len(migrace) != 14 {
+		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 14 (tagy fotek, 1.1.0)", len(migrace))
 	}
-	if verzeExportu != 9 {
-		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 9", verzeExportu)
+	if verzeExportu != 10 {
+		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 10 (tagy fotek, 1.1.0)", verzeExportu)
 	}
 }
 
@@ -3042,5 +3042,53 @@ func TestVazbyRozhrani(t *testing.T) {
 	}
 	for jmeno := range vJS {
 		t.Errorf("App.js má vazbu %s, kterou backend nemá", jmeno)
+	}
+}
+
+// Tagy fotek: jen z pevného seznamu, výlučná skupina drží jednu hodnotu, počty, export a import (verze 10)
+func TestTagyFotek(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+	id := idModelky(t, a, "Anna")
+	a.AddBulkPhotos(id, "Album", "Pictorial", odkazA+" "+odkazB)
+	fotky := a.GetFotografieModelky(id)
+	if len(fotky) != 2 {
+		t.Fatalf("fotek: %d", len(fotky))
+	}
+	f1, f2 := fotky[0].ID, fotky[1].ID
+	if !a.SetTagyFotek([]int{f1, f2}, []string{"postava", "prsa", "neexistuje", "studio"}, nil) {
+		t.Fatal("tagy se neuložily")
+	}
+	// Výlučná skupina (záběr): portrét nahradí postavu; vícenásobná (partie) přidává
+	a.SetTagyFotek([]int{f1}, []string{"portret", "nohy"}, []string{"studio"})
+	tagy := a.GetTagyFotek([]int{f1, f2})
+	if strings.Join(tagy[f1], ",") != "nohy,portret,prsa" || strings.Join(tagy[f2], ",") != "postava,prsa,studio" {
+		t.Fatalf("tagy: %v", tagy)
+	}
+	if p := a.GetPoctyTagu(); p["prsa"] != 2 || p["portret"] != 1 || p["studio"] != 1 || p[""] != 0 {
+		t.Errorf("počty: %v", p)
+	}
+	if got := platneTagy([]string{"akt", "oblecena", "prsa", "x"}); strings.Join(got, ",") != "oblecena,prsa" {
+		t.Errorf("platné tagy: %v", got)
+	}
+
+	// Export zapíše tagy, import do nové sbírky je obnoví
+	data, err := a.exportovat()
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(data)
+	if !strings.Contains(text, "tagy: [nohy, portret, prsa]") {
+		t.Fatalf("export bez tagů:\n%s", text)
+	}
+	b := novaTestovaciApp(t, nil)
+	if v := b.importovat(data); v.Selhalo != "" || len(v.Chyby) != 0 {
+		t.Fatalf("import: %+v", v)
+	}
+	idB := idModelky(t, b, "Anna")
+	fb := b.GetFotografieModelky(idB)
+	vsech := b.GetTagyFotek([]int{fb[0].ID, fb[1].ID})
+	if len(vsech) != 2 {
+		t.Fatalf("tagy po importu: %v", vsech)
 	}
 }

@@ -41,7 +41,7 @@ func TestPrechodNaPolovinySrdicek(t *testing.T) {
 		t.Fatal(b.chybaStartu)
 	}
 	b.db.QueryRow("PRAGMA user_version").Scan(&schema)
-	if schema != 13 || !b.maSloupec("modelky", "hodnoceni_pul") {
+	if schema != len(migrace) || !b.maSloupec("modelky", "hodnoceni_pul") {
 		t.Fatalf("po úpravě: schéma %d", schema)
 	}
 	if zalohy, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "*-pred-migraci.db")); len(zalohy) != 1 {
@@ -83,7 +83,7 @@ func TestPrechodNaPolovinySrdicek(t *testing.T) {
 	}
 	b.db.Close()
 
-	// Starší program zná jen 12 úprav: databázi ve schématu 13 neupraví, běží jen pro čtení
+	// Starší program zná jen 12 úprav: databázi v novějším schématu neupraví, běží jen pro čtení
 	migrace = puvodni[:12]
 	c := NewApp()
 	c.startup(context.Background())
@@ -99,7 +99,7 @@ func TestPrechodNaPolovinySrdicek(t *testing.T) {
 	var cela int
 	c.db.QueryRow("SELECT hodnoceni FROM modelky WHERE id = ?", trojka).Scan(&cela)
 	c.db.QueryRow("PRAGMA user_version").Scan(&schema)
-	if schema != 13 || cela != 3 || len(c.GetModelky("")) != 3 {
+	if schema != len(migrace) || cela != 3 || len(c.GetModelky("")) != 3 {
 		t.Fatalf("starší program: schéma %d, hodnocení %d", schema, cela)
 	}
 }
@@ -166,7 +166,7 @@ func TestExportPolovinySrdicek(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(export)
-	if !strings.Contains(text, "verze: 9") || !strings.Contains(text, "hodnoceni: 3.5\n") || !strings.Contains(text, "hodnoceni: 4\n") || strings.Contains(text, "4.0") {
+	if !strings.Contains(text, fmt.Sprintf("verze: %d", verzeExportu)) || !strings.Contains(text, "hodnoceni: 3.5\n") || !strings.Contains(text, "hodnoceni: 4\n") || strings.Contains(text, "4.0") {
 		t.Fatalf("export:\n%s", text)
 	}
 	b := novaTestovaciApp(t, nil)

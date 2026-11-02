@@ -8,7 +8,7 @@
 # - hodnota - (pomlčka) údaj smaže, např. „narodnost: -“; překlep v klíči import opraví a vypíše
 # - řádky začínající # jsou komentáře, import je přeskočí
 
-verze: 9
+verze: 10
 
 modelky:
   # Modelka se všemi údaji
@@ -90,6 +90,7 @@ modelky:
         fotky:
           - id: "1PlazFotka1xxxxxxxxxxxxxxxxxxxxxxx"
             hodnoceni: 5
+            tagy: [postava, nahore_bez, plaz]   # pevný seznam tagů, viz EXPORT.md
           - id: "https://drive.google.com/file/d/1PlazFotka2xxxxxxxxxxxxxxxxxxxxxxx/view"   # celý odkaz jde také
           - id: "1PlazFotka3xxxxxxxxxxxxxxxxxxxxxxx"
             pridano: "2026-10-15 20:00:00"  # jen když fotka přibyla jindy než album

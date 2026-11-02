@@ -48,6 +48,8 @@ export function GetFrontaHodnoceni():Promise<Array<main.PolozkaHodnoceni>>;
 
 export function GetKalendar():Promise<Array<main.VydaniKalendare>>;
 
+export function GetKatalogTagu():Promise<Array<main.SkupinaTagu>>;
+
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
 export function GetMohloByTeLibit(arg1:number):Promise<Array<main.OblibenostModelky>>;
@@ -67,6 +69,8 @@ export function GetOblibenost():Promise<main.StavOblibenosti>;
 export function GetOdznakyModelky(arg1:number):Promise<Array<main.OdznakModelky>>;
 
 export function GetPocetNehodnocenychFotek():Promise<number>;
+
+export function GetPoctyTagu():Promise<Record<string, number>>;
 
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
@@ -91,6 +95,8 @@ export function GetStavUceni():Promise<main.StavUceni>;
 export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
 
 export function GetTagy():Promise<Array<string>>;
+
+export function GetTagyFotek(arg1:Array<number>):Promise<Record<number, Array<string>>>;
 
 export function GetVerze():Promise<string>;
 
@@ -175,6 +181,8 @@ export function SetSablonaObrazku(arg1:string):Promise<string>;
 export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean):Promise<boolean>;
 
 export function SetStavVydani(arg1:string,arg2:string):Promise<boolean>;
+
+export function SetTagyFotek(arg1:Array<number>,arg2:Array<string>,arg3:Array<string>):Promise<boolean>;
 
 export function SetTitulniFotka(arg1:number,arg2:number):Promise<boolean>;
 

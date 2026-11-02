@@ -43,7 +43,7 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 ## Celek
 
 ```yaml
-verze: 9
+verze: 10
 modelky: [...]   # modelky s jejich alby
 covery: [...]    # obálky časopisu, nepatří k modelce
 vydani: [...]    # stav a poznámky k jednotlivým číslům
@@ -96,6 +96,8 @@ určit jednoznačně, import to vypíše a odkaz přeskočí.
 
 Fotka: `id` (ID souboru na Google Disku nebo odkaz na něj), `hodnoceni` (1–5, jen celá srdíčka), `rotace` (90, 180, 270)
 a `pridano`, jen když se liší od data přidání alba.
+
+`tagy` (od verze 10): tagy fotky z pevného seznamu, např. `tagy: [postava, akt, prsa, studio]`. Záběr, Odhalení a Prostředí mají nejvýš jednu hodnotu. Seznam: záběr `portret`, `poprsi`, `postava`, `detail`; odhalení `oblecena`, `pradlo`, `nahore_bez`, `akt`, `explicitni`; partie `prsa`, `zadecek`, `vagina`, `nohy`, `chodidla`; prostředí `studio`, `interier`, `loznice`, `koupelna`, `priroda`, `plaz`, `mesto`; oblečení a doplňky `podpatky`, `puncochy`, `podvazky`, `bikiny`, `saty`, `kosile`, `kostym`, `latex`; póza `stoji`, `sedi`, `lezi`, `zezadu`, `mokra`, `vic_modelek`. Neprázdný seznam při importu nahradí tagy fotky, neznámý tag se přeskočí, prázdný nebo chybějící nic nemění.
 
 ## Cover, vydání, výběr
 

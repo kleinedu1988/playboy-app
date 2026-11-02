@@ -94,6 +94,10 @@ export function GetKalendar() {
   return window['go']['main']['App']['GetKalendar']();
 }
 
+export function GetKatalogTagu() {
+  return window['go']['main']['App']['GetKatalogTagu']();
+}
+
 export function GetModelky(arg1) {
   return window['go']['main']['App']['GetModelky'](arg1);
 }
@@ -132,6 +136,10 @@ export function GetOdznakyModelky(arg1) {
 
 export function GetPocetNehodnocenychFotek() {
   return window['go']['main']['App']['GetPocetNehodnocenychFotek']();
+}
+
+export function GetPoctyTagu() {
+  return window['go']['main']['App']['GetPoctyTagu']();
 }
 
 export function GetPrehled(arg1) {
@@ -180,6 +188,10 @@ export function GetStavyVydani() {
 
 export function GetTagy() {
   return window['go']['main']['App']['GetTagy']();
+}
+
+export function GetTagyFotek(arg1) {
+  return window['go']['main']['App']['GetTagyFotek'](arg1);
 }
 
 export function GetVerze() {
@@ -348,6 +360,10 @@ export function SetSpojeniAlba(arg1, arg2, arg3, arg4) {
 
 export function SetStavVydani(arg1, arg2) {
   return window['go']['main']['App']['SetStavVydani'](arg1, arg2);
+}
+
+export function SetTagyFotek(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetTagyFotek'](arg1, arg2, arg3);
 }
 
 export function SetTitulniFotka(arg1, arg2) {

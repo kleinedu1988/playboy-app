@@ -593,6 +593,9 @@ export const SABLONA_OKNA = `
     <button class="panel-btn" data-vyber="presunout" title="Přesunout do alba…">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M10 13h6M13 10l3 3-3 3"/></svg>
     </button>
+    <button class="panel-btn" data-vyber="tagy" title="Tagy vybraných fotek (T)">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.4"/></svg>
+    </button>
     <button class="panel-btn" data-vyber="dovyberu" title="Přidat do výběru…">
       <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/><path d="M12 7v6M9 10h6"/></svg>
     </button>
@@ -823,7 +826,7 @@ export const SABLONA_OKNA = `
         <h4>Akce a výběr</h4>
         <ul>
           <li>Akce s fotkou, albem, modelkou nebo číslem: tlačítko <strong>⋯</strong>, pravé tlačítko myši nebo klávesa nabídky. Na fotce jsou jen akce fotky, akce alba jsou pod ⋯ v hlavičce alba (nebo položkou „Album …“). Číslo má všude stejnou nabídku; současný stav čísla má ✓ a druhý klik ho zruší.</li>
-          <li>Výběr více fotek (profil, vydání, ročník, fotograf, Nejlepší): <kbd>Ctrl</kbd>+klik, <kbd>Shift</kbd>+klik úsek, <kbd>Ctrl</kbd>+<kbd>A</kbd> vše, <kbd>Delete</kbd> odebrat (jde vrátit), <kbd>Esc</kbd> zrušit.</li>
+          <li>Výběr více fotek (profil, vydání, ročník, fotograf, Nejlepší): <kbd>Ctrl</kbd>+klik, <kbd>Shift</kbd>+klik úsek, <kbd>Ctrl</kbd>+<kbd>A</kbd> vše, <kbd>Delete</kbd> odebrat (jde vrátit), <kbd>T</kbd> tagy, <kbd>Esc</kbd> zrušit. <strong>Tagy fotek</strong> (tlačítko se štítkem v liště výběru nebo <kbd>T</kbd>) jsou pevný seznam po skupinách – Záběr, Odhalení, Partie v záběru, Prostředí, Oblečení a doplňky, Póza; Záběr, Odhalení a Prostředí mají jen jednu hodnotu. Pilulka svítí, když tag mají všechny vybrané fotky, čárkovaně, když jen některé; klik ho přidá všem, u plné ho odebere. Tagy budou základem tematických sezón; typ prsou, ochlupení a podobně se berou z údajů modelky.</li>
           <li><kbd>Tab</kbd> prochází karty a fotky, <kbd>Enter</kbd> otevírá, <kbd>1</kbd>–<kbd>5</kbd> dá zaměřené kartě nebo fotce srdíčka (<kbd>0</kbd> je zruší; u karty modelky stejná číslice znovu přidá půlku); Zpět vrátí fokus na kartu, ze které se odešlo. V nabídce fungují šipky, v mapě edice na úvodu Sbírky šipky chodí po měsících a rocích.</li>
           <li>Odebraná fotka jde vrátit tlačítkem Vrátit v oznámení; soubor na Disku zůstává vždy.</li>
         </ul>

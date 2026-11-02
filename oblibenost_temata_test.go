@@ -141,3 +141,34 @@ func TestTemaSezonyVAplikaci(t *testing.T) {
 		t.Errorf("Klasická místo tématu: tema %+v, soubojů %d, název %q", s.Tema, s.Souboju, s.Nazev)
 	}
 }
+
+// Slovník: každé téma katalogu má vlastní název, ikonu, skupinu a popis; popisy patří k platným klíčům
+func TestSlovnikTemat(t *testing.T) {
+	nazvy := map[string]string{}
+	for _, tm := range katalogTemat {
+		if _, ok := slovnikTemat[tm.Klic]; !ok {
+			t.Errorf("téma %q nemá název ve slovníku", tm.Klic)
+		}
+		if _, ok := popisyTemat[tm.Klic]; !ok || tm.Ikona == "" || tm.Skupina == "" || tm.Popis == "" {
+			t.Errorf("téma %q nemá ikonu, skupinu nebo popis: %+v", tm.Klic, tm)
+		}
+		if k, ok := nazvy[tm.Nazev]; ok {
+			t.Errorf("název %q mají %q i %q", tm.Nazev, k, tm.Klic)
+		}
+		nazvy[tm.Nazev] = tm.Klic
+	}
+	for klic := range popisyTemat {
+		if temaZKlice(klic) == nil {
+			t.Errorf("popis k neplatnému klíči %q", klic)
+		}
+	}
+	for klic := range slovnikTemat {
+		if tm := temaZKlice(klic); tm == nil || tm.Klic != klic {
+			t.Errorf("klíč slovníku %q není kanonický: %+v", klic, tm)
+		}
+	}
+	// Mimo slovník: ikona a skupina podle podmínky, složený popis
+	if tm := temaZKlice("fotka:obdobi=1950-1959"); tm.Skupina != skupinaEra || tm.Ikona != "📼" || tm.Popis == "" {
+		t.Errorf("éra mimo slovník: %+v", tm)
+	}
+}

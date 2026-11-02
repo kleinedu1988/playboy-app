@@ -16784,6 +16784,24 @@ body.rezim-vyberu #detailView .poster {
     font-size: 12px;
 }
 
+/* Popis afinity tématu (jedna věta), kurzívou nad počty */
+.vo-afinita {
+    display: -webkit-box;
+    overflow: hidden;
+    color: var(--text-main);
+    font-size: 12px;
+    font-style: italic;
+    line-height: 1.35;
+    opacity: 0.85;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.vo-ikona {
+    margin-right: 5px;
+    font-style: normal;
+}
+
 .vo-text em {
     color: var(--accent-text);
     font-size: 12px;

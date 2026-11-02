@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.3] – 2026-11-02
+
+### Přidáno
+- **Ikona a popis afinity u každého tématu sezóny**: karta ve volbě sezóny ukáže ikonu, název a jednu větu („📼 Zlatá devadesátá – Supermodelková éra na vrcholu formy.“), v nabídce „Jiné téma“ je ikona u názvu a popis v bublině; v Porovnat má ikonu tématu štítek na švu i přepínač režimu.
+- **Témata pro tagy fotek**: **Černobílá múza**, **Film noir**, **Noir**, **Andělské světlo**, **Sépiová nostalgie**, **Zlatá hodinka**, **Po setmění**, **Tváří v tvář**, **Úsměvy sezóny**, **Umění detailu**, **Bunny klasika**, **Denim Americana**, **Kůže a lesk**, **Role a kostýmy**, **Dámy v šatech**, **V jeho košili**, **Ve dvou**, **Nekonečné nohy**, **Budoár**, **U bazénu**, **Návrat k přírodě**, **Pěna a pára**, **Studiové světlo**, **Benzín a chrom** a **Noc ve městě**.
+- Téma mimo slovník dostane ikonu a popis složený z podmínek.
+
 ## [1.2.2] – 2026-11-02
 
 ### Přidáno

@@ -32,6 +32,9 @@ type Tema struct {
 	Klic     string           `json:"klic"`
 	Nazev    string           `json:"nazev"`
 	Podminky []PodminkaTematu `json:"podminky"`
+	Ikona    string           `json:"ikona"`
+	Skupina  string           `json:"skupina"` // éra, kalendář, původ, půvab, styl, místo, kombinace (oblibenost_temata_popis.go)
+	Popis    string           `json:"popis"`   // jedna věta „afinity“ na kartu tématu
 }
 
 // Téma v katalogu s pokrytím (kolik modelek by soutěžilo a kolik fotek tématu je)
@@ -101,7 +104,33 @@ var slovnikTemat = map[string]string{
 	"modelka:kategorie=pmr":                                                          "Královny ročníku",
 	"modelka:kategorie=cg":                                                           "Digitální múzy",
 	"modelka:kategorie=obalka":                                                       "Tváře obálek",
-	"modelka:vlasy=blond+tag:plaz":                                                   "Slunce a blond",
+	// Styl a místa z tagů (od 1.2.3)
+	"tag:cernobila":                "Černobílá múza",
+	"tag:cernobila+tag:low_key":    "Film noir",
+	"tag:low_key":                  "Noir",
+	"tag:high_key":                 "Andělské světlo",
+	"tag:tonovana":                 "Sépiová nostalgie",
+	"tag:zlata_hodina":             "Zlatá hodinka",
+	"tag:noc":                      "Po setmění",
+	"tag:do_kamery":                "Tváří v tvář",
+	"tag:usmev":                    "Úsměvy sezóny",
+	"tag:detail":                   "Umění detailu",
+	"tag:bunny":                    "Bunny klasika",
+	"tag:dziny":                    "Denim Americana",
+	"tag:latex":                    "Kůže a lesk",
+	"tag:kostym":                   "Role a kostýmy",
+	"tag:saty":                     "Dámy v šatech",
+	"tag:kosile":                   "V jeho košili",
+	"tag:vic_modelek":              "Ve dvou",
+	"tag:nohy+tag:podpatky":        "Nekonečné nohy",
+	"tag:loznice+tag:pradlo":       "Budoár",
+	"tag:bazen":                    "U bazénu",
+	"tag:priroda":                  "Návrat k přírodě",
+	"tag:koupelna":                 "Pěna a pára",
+	"tag:studio":                   "Studiové světlo",
+	"tag:auto":                     "Benzín a chrom",
+	"tag:mesto":                    "Noc ve městě",
+	"modelka:vlasy=blond+tag:plaz": "Slunce a blond",
 }
 
 // Fráze jednotlivých podmínek na modelku (podmínka na tag má frázi z názvu tagu)
@@ -184,6 +213,31 @@ var katalogTemat = func() []Tema {
 		t(mod("kategorie", "cg")),
 		t(mod("kategorie", "obalka")),
 		t(mod("vlasy", "blond"), tag("plaz")),
+		t(tag("cernobila")),
+		t(tag("cernobila"), tag("low_key")),
+		t(tag("low_key")),
+		t(tag("high_key")),
+		t(tag("tonovana")),
+		t(tag("zlata_hodina")),
+		t(tag("noc")),
+		t(tag("do_kamery")),
+		t(tag("usmev")),
+		t(tag("detail")),
+		t(tag("bunny")),
+		t(tag("dziny")),
+		t(tag("latex")),
+		t(tag("kostym")),
+		t(tag("saty")),
+		t(tag("kosile")),
+		t(tag("vic_modelek")),
+		t(tag("nohy"), tag("podpatky")),
+		t(tag("loznice"), tag("pradlo")),
+		t(tag("bazen")),
+		t(tag("priroda")),
+		t(tag("koupelna")),
+		t(tag("studio")),
+		t(tag("auto")),
+		t(tag("mesto")),
 	}
 }()
 
@@ -294,7 +348,9 @@ func nazevTaguFotky(klic string) string {
 }
 
 func noveTema(podminky []PodminkaTematu) Tema {
-	return Tema{Klic: klicTematu(podminky), Nazev: nazevTematu(podminky), Podminky: podminky}
+	klic := klicTematu(podminky)
+	z := popisTematu(klic, podminky)
+	return Tema{Klic: klic, Nazev: nazevTematu(podminky), Podminky: podminky, Ikona: z.Ikona, Skupina: z.Skupina, Popis: z.Popis}
 }
 
 // Téma z klíče (i mimo katalog); neplatný klíč → nil

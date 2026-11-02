@@ -34,7 +34,7 @@ function htmlKarty(t, druh, nahledy) {
     const fotky = (t.ukazky || []).map(id => nahledy?.[id]?.[0]).filter(Boolean).slice(0, 4);
     const kolaz = fotky.length
         ? fotky.map(f => `<img src="${esc(adresaFotkyVysky(f, 240))}" alt="" data-rot="${Number(f.rotace) || 0}" draggable="false" decoding="async" />`).join('')
-        : `<span class="vo-symbol" aria-hidden="true">${druh === 'los' ? '🎲' : druh === 'klasicka' ? '♛' : '✦'}</span>`;
+        : `<span class="vo-symbol" aria-hidden="true">${druh === 'los' ? '🎲' : esc(t.ikona || '✦')}</span>`;
     const popis = druh === 'los'
         ? 'Náhodné téma z ostatních, které jdou hrát'
         : druh === 'klasicka'
@@ -42,7 +42,8 @@ function htmlKarty(t, druh, nahledy) {
             : `${sklonovat(t.soutezicich, 'soutěžící', 'soutěžící', 'soutěžících')} · ${sklonovat(t.fotek, 'fotka', 'fotky', 'fotek')}`;
     return `<button type="button" class="vo-karta ${druh}" data-vo-tema="${esc(druh === 'los' ? '#los' : t.klic)}" aria-pressed="false">
         <span class="vo-kolaz n${fotky.length}">${kolaz}</span>
-        <span class="vo-text"><b>${esc(druh === 'los' ? '🎲 Los' : t.nazev)}</b><small>${esc(popis)}</small>
+        <span class="vo-text"><b>${druh === 'los' ? '🎲 Los' : `${t.ikona ? `<i class="vo-ikona" aria-hidden="true">${esc(t.ikona)}</i>` : ''}${esc(t.nazev)}`}</b>
+        ${t.popis && druh !== 'los' ? `<span class="vo-afinita">${esc(t.popis)}</span>` : ''}<small>${esc(popis)}</small>
         ${druh === 'los' ? '' : `<em>doporučeno ${t.dni} dní</em>`}</span>
     </button>`;
 }
@@ -62,7 +63,7 @@ function htmlOkna(n, nahledyTematu) {
             <label class="vo-jine">Jiné téma
                 <select data-vo-jine>
                     <option value="">—</option>
-                    ${jine.map(t => `<option value="${esc(t.klic)}" ${t.plati ? '' : 'disabled'}>${esc(t.nazev)} · ${esc(t.plati ? `${t.soutezicich} soutěžících` : t.duvod)}</option>`).join('')}
+                    ${jine.map(t => `<option value="${esc(t.klic)}" ${t.plati ? '' : 'disabled'} title="${esc(t.popis || '')}">${esc(`${t.ikona || ''} ${t.nazev}`.trim())} · ${esc(t.plati ? `${t.soutezicich} soutěžících` : t.duvod)}</option>`).join('')}
                 </select>
             </label>
             <div class="vo-delka">
@@ -145,6 +146,8 @@ export async function zvolitSezonu({ auto = false } = {}) {
                 if (text) text.textContent = `🎲 ${t.nazev}`;
                 karta?.querySelector('small')?.replaceChildren(`${sklonovat(t.soutezicich, 'soutěžící', 'soutěžící', 'soutěžících')} · ${sklonovat(t.fotek, 'fotka', 'fotky', 'fotek')}`);
                 karta?.querySelector('.vo-text')?.insertAdjacentHTML('beforeend', `<em>doporučeno ${t.dni} dní</em>`);
+                karta?.querySelector('.vo-afinita')?.remove();
+                if (t.popis) karta?.querySelector('small')?.insertAdjacentHTML('beforebegin', `<span class="vo-afinita">${esc(t.popis)}</span>`);
                 karta?.querySelector('.vo-text em + em')?.previousElementSibling?.remove();
                 vybrat(t);
             }

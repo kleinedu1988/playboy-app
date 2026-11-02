@@ -248,6 +248,9 @@ export namespace main {
 	    klic: string;
 	    nazev: string;
 	    podminky: PodminkaTematu[];
+	    ikona: string;
+	    skupina: string;
+	    popis: string;
 	    soutezicich: number;
 	    fotek: number;
 	    plati: boolean;
@@ -261,6 +264,9 @@ export namespace main {
 	        this.klic = source["klic"];
 	        this.nazev = source["nazev"];
 	        this.podminky = this.convertValues(source["podminky"], PodminkaTematu);
+	        this.ikona = source["ikona"];
+	        this.skupina = source["skupina"];
+	        this.popis = source["popis"];
 	        this.soutezicich = source["soutezicich"];
 	        this.fotek = source["fotek"];
 	        this.plati = source["plati"];
@@ -640,6 +646,9 @@ export namespace main {
 	    klic: string;
 	    nazev: string;
 	    podminky: PodminkaTematu[];
+	    ikona: string;
+	    skupina: string;
+	    popis: string;
 	    soutezicich: number;
 	    fotek: number;
 	    plati: boolean;
@@ -657,6 +666,9 @@ export namespace main {
 	        this.klic = source["klic"];
 	        this.nazev = source["nazev"];
 	        this.podminky = this.convertValues(source["podminky"], PodminkaTematu);
+	        this.ikona = source["ikona"];
+	        this.skupina = source["skupina"];
+	        this.popis = source["popis"];
 	        this.soutezicich = source["soutezicich"];
 	        this.fotek = source["fotek"];
 	        this.plati = source["plati"];
@@ -1307,6 +1319,9 @@ export namespace main {
 	    klic: string;
 	    nazev: string;
 	    podminky: PodminkaTematu[];
+	    ikona: string;
+	    skupina: string;
+	    popis: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Tema(source);
@@ -1317,6 +1332,9 @@ export namespace main {
 	        this.klic = source["klic"];
 	        this.nazev = source["nazev"];
 	        this.podminky = this.convertValues(source["podminky"], PodminkaTematu);
+	        this.ikona = source["ikona"];
+	        this.skupina = source["skupina"];
+	        this.popis = source["popis"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

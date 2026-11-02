@@ -53,6 +53,7 @@ let porovnatVTematu = (() => { try { return localStorage.getItem('porovnatVTemat
 let temaFronty = ''; // téma, se kterým se naposledy doplnila fronta
 const temaPorovnani = () => (porovnatVTematu && sezonaVolby?.tema?.klic) || '';
 const nazevTematuPorovnani = klic => (klic && sezonaVolby?.tema?.klic === klic ? sezonaVolby.tema.nazev : '');
+const ikonaTematuPorovnani = klic => (klic && sezonaVolby?.tema?.klic === klic ? sezonaVolby.tema.ikona || '✦' : '✦');
 let zaneprazdneno = false;
 let poradiLimit = 25; // kolik řádků pořadí je ukázaných (Zobrazit dalších 100)
 let data = { oblibenost: null, tipy: [] };
@@ -498,7 +499,7 @@ function htmlHlavyHodnoceni() {
     // vpravo režim: téma sezóny, nebo Klasické
     const tema = sezonaVolby?.tema;
     const rezim = tema ? `<div class="sh-pohledy" role="group" aria-label="Režim porovnání">
-            <button type="button" class="${porovnatVTematu ? 'on' : ''}" data-hd-tema="1" aria-pressed="${porovnatVTematu}" title="${esc(`Sezóna ${tema.nazev}: jen soutěžící a fotky tématu, souboje se počítají do sezóny (T přepne)`)}">✦ ${esc(tema.nazev)}</button>
+            <button type="button" class="${porovnatVTematu ? 'on' : ''}" data-hd-tema="1" aria-pressed="${porovnatVTematu}" title="${esc(`Sezóna ${tema.nazev}${tema.popis ? ` – ${tema.popis}` : ''} Jen soutěžící a fotky tématu, souboje se počítají do sezóny (T přepne).`)}">${esc(tema.ikona || '✦')} ${esc(tema.nazev)}</button>
             <button type="button" class="${porovnatVTematu ? '' : 'on'}" data-hd-tema="0" aria-pressed="${!porovnatVTematu}" title="Všechny modelky a fotky; do tematické sezóny se nepočítá">Klasické</button></div>` : '';
     return `<div class="sh-lista">${htmlCasti}
             <div class="sh-akce hd-kompakt-akce">${htmlRozhodnout}${htmlPanelu}</div>
@@ -700,7 +701,7 @@ function vykreslitSev(d) {
     misto.classList.toggle('souboj', Boolean(souboj));
     const tema = nazevTematuPorovnani(d.tema);
     misto.classList.toggle('tema', Boolean(tema));
-    nastavitHtml(misto, `${tema ? `<span class="ob-sev-tema" title="Souboj v tématu sezóny – počítá se do sezóny">✦ ${esc(tema)}</span>` : ''}${souboj ? `<b>⚔ ${esc(souboj)}</b>` : d.duvod ? `<span class="ob-sev-duvod">${esc(d.duvod)}</span>` : ''}${mista ? `${souboj || d.duvod ? '<span class="ob-sev-tecka" aria-hidden="true">·</span>' : ''}${mista}` : ''}`);
+    nastavitHtml(misto, `${tema ? `<span class="ob-sev-tema" title="Souboj v tématu sezóny – počítá se do sezóny">${esc(ikonaTematuPorovnani(d.tema))} ${esc(tema)}</span>` : ''}${souboj ? `<b>⚔ ${esc(souboj)}</b>` : d.duvod ? `<span class="ob-sev-duvod">${esc(d.duvod)}</span>` : ''}${mista ? `${souboj || d.duvod ? '<span class="ob-sev-tecka" aria-hidden="true">·</span>' : ''}${mista}` : ''}`);
 }
 
 // Obnoví počty v pilulkách Oblíbenosti (#pasStranky) a volby pohledu Porovnat (#volbyPrehledu)

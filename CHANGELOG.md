@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.1.2] – 2026-11-02
+
+### Přidáno
+- **Témata sezón v programu** (tematické sezóny, krok 3; v rozhraní zatím nejsou): téma je sada podmínek na tagy fotek a údaje modelky. Název dává slovník – „Přírodní krása“, „Na podpatcích“, „Pod širým nebem“, „Ohnivé zrzky“…; kombinace mimo slovník se pojmenuje z frází podmínek („Podpatky · přírodní prsa“).
+  - Soutěží modelky s aspoň 6 fotkami tématu; téma platí od 8 soutěžících, jinak sezóna běží jako Klasická.
+  - Body se počítají jen ze soubojů v tématu, zájem jen u soutěžících; pásy v Porovnat ukážou jen fotky tématu.
+- Databáze učení dostala úpravu pro témata sezón (stará data zůstávají jako Klasické sezóny).
+
 ## [1.1.1] – 2026-11-02
 
 ### Přidáno

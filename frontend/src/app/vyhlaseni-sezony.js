@@ -1,6 +1,7 @@
 // Vyhlášení skončené sezóny (oblibenost_sezony.go): při spuštění programu, nebo tlačítkem v Síni slávy › Sezóna,
 // když sezóna skončila a ještě není uzavřená. Okno ukáže Favoritku sezóny se stupni 1–3 a nabídne volbu Miláčka
 // sezóny (nepovinnou). „Uzavřít sezónu“ ji zapíše (kronika, odznak), „Později“ okno zavře a zeptá se příště.
+// Když není co vyhlásit, nabídne volbu tématu probíhající sezóny (volba-sezony.js).
 import { GetSezona, UzavritSezonu } from './backend';
 import { esc, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
@@ -8,6 +9,7 @@ import { adresaTitulni } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { oznamit } from '../ui/oznameni';
 import { otevreneOkno } from '../ui/dom';
+import { zvolitSezonu } from './volba-sezony';
 
 let okno = null;
 
@@ -55,7 +57,9 @@ export async function vyhlasitSezonu(u = null) {
     if (!k) {
         try { k = (await GetSezona())?.kUzavreni; } catch { return; }
     }
-    if (!k?.poradi?.length || okno || otevreneOkno()) return;
+    // Nic k vyhlášení: při spuštění a po uzavření poslední nabídne volbu tématu probíhající sezóny
+    if (!k?.poradi?.length) return u ? undefined : zvolitSezonu({ auto: true });
+    if (okno || otevreneOkno()) return;
     const modelky = new Map((await vsechnyModelky()).map(x => [x.id, x]));
     okno = document.createElement('div');
     okno.className = 'modal-overlay vs-zavoj';

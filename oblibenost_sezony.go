@@ -95,6 +95,7 @@ type Sezona struct {
 	Tema        *Tema  `json:"tema"`
 	Soutezicich int    `json:"soutezicich"`
 	Zvolene     string `json:"zvolene"`
+	Zvoleno     bool   `json:"zvoleno"` // téma a délka potvrzené (jinak se nabídne volba)
 	MozneDelky  []int  `json:"mozneDelky"`
 }
 
@@ -416,7 +417,7 @@ func (a *App) GetSezona() Sezona {
 	od, do := o.od, o.do
 	s.Den = int(zacatekDne(nyni).Sub(od).Hours()/24+0.5) + 1
 	s.Dni = o.dni()
-	s.Zvolene = o.tema
+	s.Zvolene, s.Zvoleno = o.tema, o.zvoleno
 	porovnani, poradi, existuje := a.podkladySezon()
 	a.uc.mu.Lock()
 	minule := a.uc.nacistSezony()

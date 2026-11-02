@@ -18,8 +18,9 @@ var delkySezon = []int{7, 10, 14, 21, 28, 30}
 const vychoziDelkaSezony = 14
 
 type obdobiSezony struct {
-	od, do time.Time
-	tema   string
+	od, do  time.Time
+	tema    string
+	zvoleno bool // uživatel téma a délku potvrdil
 }
 
 const formatDne = "2006-01-02"
@@ -37,7 +38,7 @@ func (u *uceni) nacistObdobi() []obdobiSezony {
 	if db == nil {
 		return nil
 	}
-	radky, err := db.Query("SELECT od, do, tema FROM obdobi_sezon ORDER BY od")
+	radky, err := db.Query("SELECT od, do, tema, zvoleno != '' FROM obdobi_sezon ORDER BY od")
 	if err != nil {
 		return nil
 	}
@@ -45,13 +46,14 @@ func (u *uceni) nacistObdobi() []obdobiSezony {
 	var vysledek []obdobiSezony
 	for radky.Next() {
 		var od, do, tema string
-		if radky.Scan(&od, &do, &tema) != nil {
+		var zvoleno bool
+		if radky.Scan(&od, &do, &tema, &zvoleno) != nil {
 			continue
 		}
 		o, err1 := time.ParseInLocation(formatDne, od, time.Local)
 		d, err2 := time.ParseInLocation(formatDne, do, time.Local)
 		if err1 == nil && err2 == nil && d.After(o) {
-			vysledek = append(vysledek, obdobiSezony{od: o, do: d, tema: tema})
+			vysledek = append(vysledek, obdobiSezony{od: o, do: d, tema: tema, zvoleno: zvoleno})
 		}
 	}
 	return vysledek

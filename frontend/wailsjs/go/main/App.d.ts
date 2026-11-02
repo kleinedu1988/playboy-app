@@ -58,6 +58,8 @@ export function GetNahledyModelek(arg1:Array<number>,arg2:number):Promise<Record
 
 export function GetNahledyTematu(arg1:Array<number>,arg2:number,arg3:string):Promise<Record<number, Array<main.NahledFotky>>>;
 
+export function GetNavrhSezony():Promise<main.NavrhSezony>;
+
 export function GetNavrhSrdicek(arg1:number):Promise<main.NavrhSrdicek>;
 
 export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<main.NavrhDoplneni>>;

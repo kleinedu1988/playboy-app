@@ -114,6 +114,10 @@ export function GetNahledyTematu(arg1, arg2, arg3) {
   return window['go']['main']['App']['GetNahledyTematu'](arg1, arg2, arg3);
 }
 
+export function GetNavrhSezony() {
+  return window['go']['main']['App']['GetNavrhSezony']();
+}
+
 export function GetNavrhSrdicek(arg1) {
   return window['go']['main']['App']['GetNavrhSrdicek'](arg1);
 }

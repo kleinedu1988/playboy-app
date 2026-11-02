@@ -8,6 +8,7 @@
 import { GetSezona, GetSinSlavy } from './backend';
 import { soubojOTrun } from './oblibenost';
 import { vyhlasitSezonu } from './vyhlaseni-sezony';
+import { zvolitSezonu } from './volba-sezony';
 import { esc, sklonovat } from '../lib/format';
 import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva } from '../lib/slava';
 import { stav } from './stav';
@@ -173,6 +174,8 @@ function htmlStavuSine() {
     let vpravo = '';
     if (sezona?.kUzavreni) {
         vpravo = `<button type="button" data-sezona-vyhlasit>♛ Sezóna ${esc(sezona.kUzavreni.kratky)} čeká na vyhlášení · Vyhlásit →</button>`;
+    } else if (sezona?.dni && !sezona.zvoleno) {
+        vpravo = '<button type="button" data-sezona-zvolit>✦ Sezóna ještě nemá téma · Zvolit →</button>';
     } else if (pohled !== 'kronika') {
         const posledni = (data.kronika || []).filter(u => u.druh !== 'zacatek' && u.druh !== 'pocatek')
             .sort((x, y) => String(y.cas).localeCompare(String(x.cas)))[0];
@@ -301,6 +304,7 @@ function htmlHlavySlavy() {
     const druha = soutezi[1];
     const akce = [
         sz?.kUzavreni ? `<button type="button" class="volba akcent" data-sezona-vyhlasit><b>♛ Vyhlásit sezónu ${esc(sz.kUzavreni.kratky)}</b></button>` : '',
+        sz?.dni && !sz.zvoleno && !sz.kUzavreni ? '<button type="button" class="volba akcent" data-sezona-zvolit title="Téma a délka probíhající sezóny"><b>✦ Zvolit téma sezóny</b></button>' : '',
         druha && vede ? `<button type="button" class="volba ${sz?.kUzavreni ? '' : 'akcent'}" data-sezona-vyzvat="${druha.modelkaId}" data-sezona-vudkyne="${vede.modelkaId}" title="${esc(`Souboj ${jmeno(druha.modelkaId)} s vedoucí ${jmeno(vede.modelkaId)} v Porovnat`)}"><b>⚔ Vyzvat o trůn</b> <small>${esc(krestni(druha.modelkaId))} −${vede.body - druha.body} b.</small></button>` : '',
         '<button type="button" class="volba" data-zobrazeni-prehledu="porovnat" title="Hodnocení › Porovnat"><b>Porovnat →</b></button>',
     ].join('');
@@ -400,6 +404,7 @@ function klikSlavy(cil) {
         filtrKroniky = filtr.dataset.kronikaFiltr || 'vse';
         vykreslit();
     } else if (cil.closest('[data-sezona-vyhlasit]')) vyhlasitSezonu(sezona?.kUzavreni);
+    else if (cil.closest('[data-sezona-zvolit]')) zvolitSezonu();
     else if (vyzva) soubojOTrun(Number(vyzva.dataset.sezonaVyzvat), Number(vyzva.dataset.sezonaVudkyne));
     else return false;
     return true;
@@ -791,6 +796,10 @@ export function pripravitSinSlavy() {
             vyhlasitSezonu(sezona?.kUzavreni);
             return;
         }
+        if (cil.closest('[data-sezona-zvolit]')) {
+            zvolitSezonu();
+            return;
+        }
         // Sezóna: souboj o trůn s vedoucí modelkou v Porovnat
         const vyzva = /** @type {HTMLElement | null} */ (cil.closest('[data-sezona-vyzvat]'));
         if (vyzva) {
@@ -803,7 +812,7 @@ export function pripravitSinSlavy() {
     });
     window.addEventListener('resize', umistitSipku);
     // Po uzavření sezóny (okno vyhlášení) se síň načte znovu: minulé sezóny, kronika, odznak Favoritky
-    document.addEventListener('sezona-uzavrena', () => { if (kontejner?.isConnected) nacistSinSlavy(kontejner); });
+    ['sezona-uzavrena', 'sezona-zvolena'].forEach(u => document.addEventListener(u, () => { if (kontejner?.isConnected) nacistSinSlavy(kontejner); }));
     // Esc zavře otevřenou vitrínu (jen když je síň vidět a nic ji nepřekrývá)
     document.addEventListener('keydown', (e) => {
         if (e.key !== 'Escape' || !vybrana || !kontejner?.isConnected || !kontejner.offsetParent) return;

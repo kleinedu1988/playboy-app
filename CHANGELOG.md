@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.16] – 2026-11-02
+
+### Změněno
+- **Hodnocení má ve všech pohledech jen jednu lištu** (bez velké hlavičky s kruhem „dnes“ a okénky Top 10 a Sezóna – jsou ve stavové liště a v Síni slávy).
+- **Pořadí** (přepracování Pořadí, krok 2):
+  - Vpravo v liště **skoky na úroveň Top 10 · 20 · 50 · 100 · Mimo**; svítí úroveň, ve které je seznam odrolovaný. Oddělovače úrovní zůstávají při rolování přilepené nahoře.
+  - **Řádek na jednu linku** (na obrazovku se vejde asi o polovinu víc modelek): místo, jméno se srdíčky, skóre fotek, zarovnaný trend a pruh síly, „jen 5×“ jen při málo porovnáních.
+  - Vpravo v řádku štítek **„⏳ čeká na Top 10 (5/8)“ s ⚔ Rozhodnout**, u nesouladu **„≠ 4½ → 4 ♥“ s Dát a Nechat**. Pohledy Čekají a Nesedí zmizely – vše je v řádcích; odkaz na nesoulad ve stavové liště skočí na řádek.
+  - V užším okně má přednost jméno.
+
 ## [1.0.15] – 2026-11-02
 
 ### Opraveno

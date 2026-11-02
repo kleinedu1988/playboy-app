@@ -10,7 +10,7 @@ import { soubojOTrun } from './oblibenost';
 import { vyhlasitSezonu } from './vyhlaseni-sezony';
 import { zvolitSezonu } from './volba-sezony';
 import { esc, sklonovat } from '../lib/format';
-import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva } from '../lib/slava';
+import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva, nazevSezonyVeVete } from '../lib/slava';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -169,11 +169,11 @@ function htmlKarty(x, rekordy, legenda, odznaky) {
 function htmlStavuSine() {
     const vede = sezona?.poradi?.find(b => b.misto === 1 && modelka(b.modelkaId));
     const textSezony = sezona?.dni
-        ? [`Sezóna ${sezona.kratky}`, `den ${sezona.den} z ${sezona.dni}`, vede ? `vede ${jmeno(vede.modelkaId).split(' ')[0]}` : 'nikdo zatím nevede'].join(' · ')
+        ? [`Sezóna ${nazevSezonyVeVete(sezona, true)}`, `den ${sezona.den} z ${sezona.dni}`, vede ? `vede ${jmeno(vede.modelkaId).split(' ')[0]}` : 'nikdo zatím nevede'].join(' · ')
         : '';
     let vpravo = '';
     if (sezona?.kUzavreni) {
-        vpravo = `<button type="button" data-sezona-vyhlasit>♛ Sezóna ${esc(sezona.kUzavreni.kratky)} čeká na vyhlášení · Vyhlásit →</button>`;
+        vpravo = `<button type="button" data-sezona-vyhlasit>♛ Sezóna ${esc(nazevSezonyVeVete(sezona.kUzavreni, true))} čeká na vyhlášení · Vyhlásit →</button>`;
     } else if (sezona?.dni && !sezona.zvoleno) {
         vpravo = '<button type="button" data-sezona-zvolit>✦ Sezóna ještě nemá téma · Zvolit →</button>';
     } else if (pohled !== 'kronika') {
@@ -224,7 +224,7 @@ function htmlKartySezony(b, vudkyne, nejvys) {
         ? `<button type="button" class="sz-vyzvat" data-sezona-vyzvat="${m.id}" data-sezona-vudkyne="${vudkyne.modelkaId}" title="Souboj s vedoucí modelkou v Porovnat">⚔ Vyzvat o trůn <small>−${vudkyne.body - b.body} b.</small></button>`
         : `<p class="slava-popis sz-vede">${prvni ? 'Průběžná favoritka sezóny' : ''}</p>`;
     return `
-        <div class="card slava-karta" data-otevrit-modelku="${m.id}" tabindex="0" aria-label="${esc(m.jmeno)}" title="${esc(`${m.jmeno}: ${b.misto}. místo v sezóně, ${b.body} b. (souboje ${b.zaSouboje}, zájem ${b.zaZajem}), ${b.vyhry} výher, ${b.remizy} remíz, ${b.prohry} proher`)}">
+        <div class="card slava-karta" data-otevrit-modelku="${m.id}" tabindex="0" aria-label="${esc(m.jmeno)}" title="${esc(`${m.jmeno}: ${b.misto}. místo v sezóně, ${b.body} b. (souboje ${b.zaSouboje}, zájem ${b.zaZajem}), ${sklonovat(b.vyhry, 'výhra', 'výhry', 'výher')}, ${sklonovat(b.remizy, 'remíza', 'remízy', 'remíz')}, ${sklonovat(b.prohry, 'prohra', 'prohry', 'proher')}`)}">
             <div class="card-image-wrap">
                 <img data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" decoding="async" />
                 <span class="slava-misto ${prvni ? 'prvni' : ''}">${prvni ? '♛ ' : ''}${b.misto}.</span>
@@ -263,7 +263,7 @@ function htmlSezony() {
             <div class="sz-karta"><h4>Pořadí sezóny</h4>
                 <p class="sz-leg"><span><i class="sz-souboje"></i>souboje</span><span><i class="sz-zajem"></i>zájem (nejvýš polovina bodů)</span></p>
                 ${radky || '<p class="prazdno-male">Zatím jen první trojice.</p>'}
-                ${ostatnich ? `<p class="prazdno-male">${esc(sklonovat(ostatnich, 'další modelka sbírá', 'další modelky sbírají', 'dalších modelek sbírá'))} body, na pořadí potřebuje aspoň 3 souboje.</p>` : ''}
+                ${ostatnich ? `<p class="prazdno-male">${esc(sklonovat(ostatnich, 'další modelka má', 'další modelky mají', 'dalších modelek má'))} body, ale ještě ne 3 souboje, které pořadí potřebuje.</p>` : ''}
             </div>
         </div></div>`;
 }
@@ -297,13 +297,13 @@ function htmlHlavySlavy() {
     const soutezi = (sz?.poradi || []).filter(b => b.misto > 0 && modelka(b.modelkaId));
     const vede = soutezi[0];
     const okenkoSezony = sz?.dni ? `<button type="button" class="sh-oblast hd-okenko" data-sl-pohled="sezona" title="Pohled Sezóna">
-            <span>Sezóna ${esc(sz.kratky)}</span><b>${vede ? `♛ ${esc(krestni(vede.modelkaId))}` : '—'}</b><i><em style="width:${Math.round(sz.den / sz.dni * 100)}%"></em></i><small>${esc(textZbyva(sz.den, sz.dni))}${vede ? ` · ${vede.body} b.` : ''}</small></button>` : '';
+            <span>Sezóna ${esc(nazevSezonyVeVete(sz, true))}</span><b>${vede ? `♛ ${esc(krestni(vede.modelkaId))}` : '—'}</b><i><em style="width:${Math.round(sz.den / sz.dni * 100)}%"></em></i><small>${esc(textZbyva(sz.den, sz.dni))}${vede ? ` · ${vede.body} b.` : ''}</small></button>` : '';
     const dosah = nejblizsiOdznaky(1)[0];
     const okenkoDosahu = dosah ? `<button type="button" class="sh-oblast hd-okenko" data-sl-panel="dosah" title="Nejbližší další stupeň odznaku – panel Na dosah">
             <span>Na dosah</span><b>${esc(krestni(dosah.o.modelkaId))}</b><i><em style="width:${Math.round((dosah.p?.postup || 0) * 100)}%"></em></i><small>${esc(dosah.p?.zbyva || '')}</small></button>` : '';
     const druha = soutezi[1];
     const akce = [
-        sz?.kUzavreni ? `<button type="button" class="volba akcent" data-sezona-vyhlasit><b>♛ Vyhlásit sezónu ${esc(sz.kUzavreni.kratky)}</b></button>` : '',
+        sz?.kUzavreni ? `<button type="button" class="volba akcent" data-sezona-vyhlasit><b>♛ Vyhlásit sezónu ${esc(nazevSezonyVeVete(sz.kUzavreni, true))}</b></button>` : '',
         sz?.dni && !sz.zvoleno && !sz.kUzavreni ? '<button type="button" class="volba akcent" data-sezona-zvolit title="Téma a délka probíhající sezóny"><b>✦ Zvolit téma sezóny</b></button>' : '',
         druha && vede ? `<button type="button" class="volba ${sz?.kUzavreni ? '' : 'akcent'}" data-sezona-vyzvat="${druha.modelkaId}" data-sezona-vudkyne="${vede.modelkaId}" title="${esc(`Souboj ${jmeno(druha.modelkaId)} s vedoucí ${jmeno(vede.modelkaId)} v Porovnat`)}"><b>⚔ Vyzvat o trůn</b> <small>${esc(krestni(druha.modelkaId))} −${vede.body - druha.body} b.</small></button>` : '',
         '<button type="button" class="volba" data-zobrazeni-prehledu="porovnat" title="Hodnocení › Porovnat"><b>Porovnat →</b></button>',

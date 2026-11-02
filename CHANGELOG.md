@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.14] – 2026-11-02
+
+### Změněno
+- **Názvy sezón ve větě**: tematická sezóna je v uvozovkách („Sezóna „Na podpatcích“ skončila“, v kronice „Favoritka sezóny „Na podpatcích“ (2.–15. listopadu 2026)“), takže nevznikají zdvojení. Témata s „sezónou“ v názvu se přejmenovala: Blondýnky, Mokrá kůže, Hladké linie, Brunetky, Úsměvy; dále Zlatá hodina a Společné focení (klíče témat se nemění).
+- Hodnotit: pohled Jen srdíčka se jmenuje **Rychle ♥** (aby se nepletl s režimem J „jen srdíčka“ v průvodci).
+- Porovnat: režim Klasické se jmenuje **Bez tématu** (Klasická zůstává název sezóny bez tématu).
+- Volba sezóny: témata, která nejdou hrát, mají u důvodu „· odemkneš v Průvodci“.
+- Nápověda a přehled zkratek odpovídají ovládání: výběr v Porovnat (Enter / ♥ Tahle, ← → listují pásem), tři pohledy Hodnotit, štítek s ikonou tématu na švu.
+
+### Opraveno
+- Skloňování: „1 soutěžící“, „1 výhra, 2 remízy…“, věta o modelkách bez 3 soubojů; vyhlášení bez Favoritky už neříká „Favoritkou sezóny je modelka“.
+
 ## [1.2.13] – 2026-11-02
 
 ### Opraveno

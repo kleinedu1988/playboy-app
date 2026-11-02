@@ -294,7 +294,7 @@ func doplnitSezonyKroniky(kronika []UdalostSlavy, sezony []MinulaSezona, obdobi 
 		n := noveNazevSezony(m.Klic, od, do, m.Tema)
 		text := n.Obdobi
 		if n.Nazev != n.Obdobi {
-			text = n.Nazev + " (" + n.Obdobi + ")"
+			text = "„" + n.Nazev + "“ (" + n.Obdobi + ")"
 		}
 		podleCasu[do.Add(-time.Second).Format("2006-01-02 15:04:05")] = text
 	}

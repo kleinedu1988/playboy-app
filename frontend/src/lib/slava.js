@@ -206,3 +206,11 @@ export function htmlBublinyRekordu(r, jmeno = () => '') {
         ${r.odZacatku ? '<p class="ob-kdy">Pobyt začal už před kronikou, skutečná hodnota může být vyšší.</p>' : ''}
         ${r.trva ? '<p class="ob-trva">Rekord pořád roste</p>' : ''}${kdy ? `<p class="ob-kdy">${esc(kdy)}</p>` : ''}`;
 }
+
+// Název sezóny do věty: tematická v uvozovkách („Sezóna „Na podpatcích““), podle období bez nich („Sezóna listopad“);
+// kratce = krátký tvar do hlaviček (období bez roku)
+export function nazevSezonyVeVete(x, kratce = false) {
+    if (!x) return '';
+    const n = kratce ? x.kratky : x.nazev;
+    return x.nazev && x.nazev !== x.obdobi ? `„${n}“` : n;
+}

@@ -66,7 +66,7 @@ function htmlOkna(n, nahledyTematu, skoro = []) {
             <label class="vo-jine">Jiné téma
                 <select data-vo-jine>
                     <option value="">—</option>
-                    ${jine.map(t => `<option value="${esc(t.klic)}" ${t.plati ? '' : 'disabled'} title="${esc(t.popis || '')}">${esc(`${t.ikona || ''} ${t.nazev}`.trim())} · ${esc(t.plati ? `${t.soutezicich} soutěžících` : t.duvod)}</option>`).join('')}
+                    ${jine.map(t => `<option value="${esc(t.klic)}" ${t.plati ? '' : 'disabled'} title="${esc(t.popis || '')}">${esc(`${t.ikona || ''} ${t.nazev}`.trim())} · ${esc(t.plati ? sklonovat(t.soutezicich, 'soutěžící', 'soutěžící', 'soutěžících') : `${t.duvod} · odemkneš v Průvodci`)}</option>`).join('')}
                 </select>
             </label>
             ${skoro.length ? `<div class="vo-skoro"><small>✦ Skoro hratelná – průvodce je odemkne</small>

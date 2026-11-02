@@ -60,7 +60,7 @@ const CASTI = [
         [`${k('1')}–${k('5')}${nebo}${k('0')}`, 'Srdíčka zvýrazněné fotce, 0 je zruší'],
         ['klik na fotku', 'Prohlížeč fotek jako u alb (všechny fotky modelky), Esc zpět'],
         [k('S'), 'Přeskočit dvojici'],
-        [k('T'), 'V tematické sezóně přepnout režim: téma sezóny ↔ Klasické'],
+        [k('T'), 'V tematické sezóně přepnout režim: téma sezóny ↔ Bez tématu'],
         [k('Backspace'), 'Vrátit poslední porovnání'],
         [k('I'), 'Panel vpravo: Tipy, Trendy, Jak počítám (Esc zavře; i ve Fotkách a Pořadí)'],
     ] },
@@ -95,7 +95,7 @@ const CASTI = [
         [k('R'), 'Otočit'],
         [`${k('1')}–${k('5')}`, 'Srdíčka'],
         [k('0'), 'Zrušit srdíčka'],
-        [k('Backspace'), 'Ve frontě nehodnocených (Hodnocení › Fotky): vrátit poslední hodnocení'],
+        [k('Backspace'), 'Ve frontě Rychle ♥ (Hodnocení › Hodnotit): vrátit poslední hodnocení'],
         [k('Esc'), 'Zavřít'],
     ] },
     { klic: 'poradi', nazev: 'Hodnocení – Pořadí', radky: [
@@ -105,7 +105,7 @@ const CASTI = [
         [k('R'), 'Rozhodnout: souboje o úroveň vybrané čekající nebo obhajující'],
     ] },
     { klic: 'fotky', nazev: 'Hodnocení – Hodnotit', radky: [
-        [k('Enter'), 'Fotky: začít hodnotit · Modelky: první karta bez srdíček'],
+        [k('Enter'), 'Průvodce / Rychle ♥: začít · Modelky: první karta bez srdíček'],
         [k('Mezerník'), 'Promítat nehodnocené fotky'],
         [`${k('1')}–${k('5')}`, 'Modelky: srdíčka zaměřené karty (stejná znovu = půlka), pak se fokus posune na další'],
         [k('Backspace'), 'Modelky: vrátit poslední hodnocení'],

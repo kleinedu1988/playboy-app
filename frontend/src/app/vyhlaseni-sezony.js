@@ -10,6 +10,7 @@ import { stylVyrezu } from './navigace';
 import { oznamit } from '../ui/oznameni';
 import { otevreneOkno } from '../ui/dom';
 import { zvolitSezonu } from './volba-sezony';
+import { nazevSezonyVeVete } from '../lib/slava';
 
 let okno = null;
 
@@ -36,8 +37,8 @@ function htmlOkna(u, modelky) {
     }).join('');
     return `
         <div class="modal-card vs-okno" role="dialog" aria-modal="true" aria-labelledby="vsNadpis">
-            <p class="vs-stitek">Sezóna ${esc(u.nazev)} skončila${u.nazev !== u.obdobi ? ` <small>${esc(u.obdobi)}</small>` : ''}</p>
-            <h2 id="vsNadpis">♛ Favoritkou sezóny je ${esc(f?.jmeno || 'modelka')}</h2>
+            <p class="vs-stitek">Sezóna ${esc(nazevSezonyVeVete(u))} skončila${u.nazev !== u.obdobi ? ` <small>${esc(u.obdobi)}</small>` : ''}</p>
+            <h2 id="vsNadpis">${f ? `♛ Favoritkou sezóny je ${esc(f.jmeno)}` : '♛ Favoritka sezóny je vybraná'}</h2>
             <p class="vs-popis">${prvni.body} b. · ${esc(sklonovat(prvni.vyhry, 'výhra', 'výhry', 'výher'))} z ${esc(sklonovat(prvni.souboju, 'souboje', 'soubojů', 'soubojů'))} · v sezóně ${esc(sklonovat(u.souboju, 'souboj', 'souboje', 'soubojů'))}</p>
             <div class="vs-stupne">${trun}</div>
             ${kandidatky ? `<p class="vs-stitek">♥ Miláček sezóny – tvoje volba (nepovinné)</p>
@@ -91,7 +92,7 @@ export async function vyhlasitSezonu(u = null) {
             try { ok = await UzavritSezonu(k.klic, milacek); } catch { ok = false; }
             zavrit();
             if (!ok) return oznamit('Sezónu se nepodařilo uzavřít.');
-            oznamit(`Sezóna ${k.nazev} je uzavřená a zapsaná do kroniky.`);
+            oznamit(`Sezóna ${nazevSezonyVeVete(k)} je uzavřená a zapsaná do kroniky.`);
             document.dispatchEvent(new CustomEvent('sezona-uzavrena'));
             // Další skončená neuzavřená sezóna (po delší pauze)
             vyhlasitSezonu();

@@ -489,8 +489,8 @@ function htmlHlavyHodnoceni() {
     if (stav.hodnoceniPohled === 'fotky') {
         const co = pohledHodnotit();
         const nModelek = pocetModelekBezSrdicek();
-        const titulky = { fotky: 'Fotky bez srdíček', modelky: 'Modelky bez srdíček', pruvodce: 'Průvodce: tagy krok po kroku a srdíčka (pro tematické sezóny)' };
-        const prepinac = [['pruvodce', 'Průvodce', pocetFotekKPruvodci()], ['fotky', 'Jen srdíčka', fotek], ['modelky', 'Modelky', nModelek]].map(([klic, nazev, n]) =>
+        const titulky = { fotky: 'Rychle ♥: jen srdíčka fotkám, bez tagů', modelky: 'Modelky bez srdíček', pruvodce: 'Průvodce: tagy krok po kroku a srdíčka (pro tematické sezóny)' };
+        const prepinac = [['pruvodce', 'Průvodce', pocetFotekKPruvodci()], ['fotky', 'Rychle ♥', fotek], ['modelky', 'Modelky', nModelek]].map(([klic, nazev, n]) =>
             `<button type="button" class="${klic === co ? 'on' : ''}" data-hd-hodnotit="${klic}" aria-pressed="${klic === co}" title="${esc(titulky[klic])}">${nazev}${Number(n) > 0 ? ` <small>${n}</small>` : ''}</button>`).join('');
         const akceFotek = co === 'fotky' ? '<button type="button" class="volba akcent" data-hd-akce="fotky" title="Začít hodnotit (Enter)"><b>♥ Hodnotit ↵</b></button><button type="button" class="volba" data-hd-akce="promitat" title="Promítat nehodnocené (mezerník)"><b>▶ Promítat</b></button><span class="sh-oddelovac" aria-hidden="true"></span>' : '';
         const razeni = [['nahodne', 'Náhodně'], ['modelky', 'Po modelkách']].map(([klic, nazev]) => tlacitkoPohledu(klic, nazev, razeniFotek(), 'data-hd-razeni')).join('');
@@ -513,8 +513,8 @@ function htmlHlavyHodnoceni() {
     // vpravo režim: téma sezóny, nebo Klasické
     const tema = sezonaVolby?.tema;
     const rezim = tema ? `<div class="sh-pohledy" role="group" aria-label="Režim porovnání">
-            <button type="button" class="${porovnatVTematu ? 'on' : ''}" data-hd-tema="1" aria-pressed="${porovnatVTematu}" title="${esc(`Sezóna ${tema.nazev}${tema.popis ? ` – ${tema.popis}` : ''} Jen soutěžící a fotky tématu, souboje se počítají do sezóny (T přepne).`)}">${esc(tema.ikona || '✦')} ${esc(tema.nazev)}</button>
-            <button type="button" class="${porovnatVTematu ? '' : 'on'}" data-hd-tema="0" aria-pressed="${!porovnatVTematu}" title="Všechny modelky a fotky; do tematické sezóny se nepočítá">Klasické</button></div>` : '';
+            <button type="button" class="${porovnatVTematu ? 'on' : ''}" data-hd-tema="1" aria-pressed="${porovnatVTematu}" title="${esc(`Sezóna „${tema.nazev}“${tema.popis ? ` – ${tema.popis}` : '.'} Jen soutěžící a fotky tématu, souboje se počítají do sezóny (T přepne).`)}">${esc(tema.ikona || '✦')} ${esc(tema.nazev)}</button>
+            <button type="button" class="${porovnatVTematu ? '' : 'on'}" data-hd-tema="0" aria-pressed="${!porovnatVTematu}" title="${esc(`Všechny modelky a fotky – do sezóny „${tema.nazev}“ se nepočítá (T přepne).`)}">Bez tématu</button></div>` : '';
     return `<div class="sh-lista">${htmlCasti}
             <div class="sh-akce hd-kompakt-akce">${htmlRozhodnout}${htmlPanelu}</div>
             ${rezim}

@@ -222,7 +222,7 @@ function vykreslitPruvodce() {
             <span>${esc(`${sklonovat(pocetKPruvodci, 'fotka', 'fotky', 'fotek')} k průvodci · ${sklonovat(alba.length, 'album', 'alba', 'alb')}`)}</span>
         </div>
         <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky-pruvodce" data-pr-lista
-            data-stav-napoveda="1–9 volba · 0 žádná · ↵ dál · ⌫ zpět · ⇧↵ jako minulá · S přeskočit · H skrýt"></div>
+            data-stav-napoveda="1–9 volba · 0 žádná · ↵ dál · ⌫ zpět · ⇧↵ jako minulá · S přeskočit · J jen srdíčka · H skrýt"></div>
         <div class="ob-karta gh-dlazdice">
             <div class="gh-nahledy" aria-label="Na řadě – klik začne od fotky">${polozkyPruvodce.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-pr-od="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
                 <button type="button" class="gh-start" data-pr-start title="Průvodce na první fotce fronty: tagy krok po kroku, nakonec srdíčka (Enter)">✦ Začít průvodce <kbd>↵</kbd></button>
@@ -274,15 +274,15 @@ const ukazatVolby = () => document.dispatchEvent(new CustomEvent('volby-prehledu
 // ——— Hodnotit › Modelky: modelky bez srdíček (dřív úkol Údržby) ———
 // Karty napřed s nejvyšším odhadem vkusu; 1–5 na zaměřených srdíčkách (stejná číslice znovu = půlka), po chvíli
 // fokus přejde na další kartu. Ohodnocené zůstanou do odchodu z pohledu ztlumené. Stavová lišta: postup a Vrátit.
-const KLIC_POHLEDU = 'hodnotitPohled';
+// Od 1.2.7 je výchozí Průvodce (nový klíč; dřívější volba Fotky / Tagy se nepřebírá)
+const KLIC_POHLEDU = 'hodnotitPohled2';
 const MODELEK_NAJEDNOU = 60;
 const DALSI_PO_MS = 1100;
 export const pohledHodnotit = () => {
     try {
         const p = localStorage.getItem(KLIC_POHLEDU);
-        if (p === 'tagy') return 'pruvodce'; // do 1.2.5 pohled Tagy
-        return p === 'modelky' || p === 'pruvodce' ? p : 'fotky';
-    } catch { return 'fotky'; }
+        return p === 'modelky' || p === 'fotky' ? p : 'pruvodce';
+    } catch { return 'pruvodce'; }
 };
 export function nastavitPohledHodnotit(klic) {
     try { localStorage.setItem(KLIC_POHLEDU, klic); } catch { /* jen pro toto spuštění */ }

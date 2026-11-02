@@ -901,7 +901,7 @@ export function pripravit(nacistPrehled) {
         }
         // Odkaz do Hodnocení › Hodnotit › Modelky: pohled se zapamatuje, část otevře obsluha pilulek (prehled.js)
         if (cil.closest('[data-ud-hodnotit-modelky]')) {
-            try { localStorage.setItem('hodnotitPohled', 'modelky'); } catch { /* jen se nezapamatuje */ }
+            try { localStorage.setItem('hodnotitPohled2', 'modelky'); } catch { /* jen se nezapamatuje */ }
             const b = document.createElement('button');
             b.hidden = true;
             b.dataset.zobrazeniPrehledu = 'fotky';

@@ -114,6 +114,7 @@ const CASTI = [
         [`${k('Backspace')}${nebo}${k('←')}`, 'Průvodce: o krok zpět; na prvním kroku vrátit minulou fotku'],
         [`${k('Shift', 'Enter')}`, 'Průvodce: tagy jako minulá fotka a rovnou srdíčka'],
         [`${k('S')} · ${k('H')}`, 'Průvodce: přeskočit fotku (potvrzené kroky se uloží) · skrýt pásek'],
+        [k('J'), 'Průvodce: jen srdíčka (1–5 uloží jen srdíčka, tagy počkají) a zpět'],
     ] },
     { klic: 'ctecka', nazev: 'Čtečka stran', radky: [
         [`${k('←', '→')}${nebo}${k('Mezerník')}`, 'Listovat'],

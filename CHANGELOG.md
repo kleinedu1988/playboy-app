@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.7] – 2026-11-02
+
+### Přidáno
+- **Jen srdíčka v průvodci** (klávesa **J** nebo tlačítko v pásku): 1–5 uloží jen srdíčka a ukáže další fotku, tagy počkají – fotka se příště nabídne v průvodci znovu. J přepne zpět na celý průvodce; volba se pamatuje.
+- Pásek průvodce bez pohybu myši a kláves po chvíli zeslábne, aby nerušil fotku; nad ním a při stisku se hned vrátí.
+
+### Změněno
+- **Průvodce je výchozí pohled Hodnotit** (dřívější volba Fotky / Tagy se nepřebírá; Jen srdíčka a Modelky zůstávají v přepínači).
+
 ## [1.2.6] – 2026-11-02
 
 ### Přidáno

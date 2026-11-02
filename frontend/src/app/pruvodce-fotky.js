@@ -1,7 +1,8 @@
 // Průvodce hodnocením fotky v prohlížeči (Hodnocení › Hodnotit › Průvodce): skleněný pásek pod středem fotky
 // s krokem průvodce (lib/pruvodce.js, kroky z backendu). Číslice 1–9 (i numerická klávesnice) vybírá, 0 = žádná,
 // Enter / → dál, Backspace / ← zpět (na prvním kroku vrátí minulou fotku), Shift+Enter jako minulá fotka a rovnou
-// srdíčka, S přeskočí (potvrzené kroky se zapíšou, fotka jde na konec fronty a nabídne se znovu), H skryje pásek.
+// srdíčka, S přeskočí (potvrzené kroky se zapíšou, fotka jde na konec fronty a nabídne se znovu), H skryje pásek,
+// J přepne na „jen srdíčka“ (1–5 uloží jen srdíčka, tagy počkají na průvodce). Bez pohybu pásek po chvíli zeslábne.
 // Srdíčka 1–5 fotku uloží jako prošlou a ukáže další; zápis běží za ní (nepovedený ji vrátí).
 import { GetKrokyPruvodce, GetTagyFotek, UlozitPruvodceFotky, VratitPruvodceFotky } from './backend';
 import { cislice, cisloKlavesy, jakoMinula, novyStav, potvrdit, tlumene, viditelneKroky, vybraneKroku, zadna, zodpovezeneSkupiny, zpet } from '../lib/pruvodce';
@@ -23,6 +24,10 @@ export let historiePruvodce = []; // { polozky: [{ polozka, kde }], tagy, hodnoc
 export let hotovoPruvodce = 0;
 let pasek = null;
 let skryty = (() => { try { return localStorage.getItem(KLIC_SKRYTI) === '1'; } catch { return false; } })();
+const KLIC_JEN_SRDICKA = 'pruvodceJenSrdicka';
+let jenSrdicka = (() => { try { return localStorage.getItem(KLIC_JEN_SRDICKA) === '1'; } catch { return false; } })();
+const KLID_MS = 2500;
+let casovacKlidu = 0;
 
 const klicAlba = p => `${p.modelkaId}|${p.album}|${p.typ}`;
 const aktualni = () => stav.lbPolozky[stav.lbIndex];
@@ -84,27 +89,31 @@ function ukazatDalsi(kde) {
     lbZobrazit(Math.min(Math.max(kde, 0), seznam.length - 1));
 }
 
-// Fotka prošla průvodcem (srdíčka): vypadne z fronty, zápis běží za ní
+// Fotka prošla průvodcem (srdíčka): vypadne z fronty, zápis běží za ní. Jen srdíčka: zapíšou se jen srdíčka,
+// fotka v této relaci vypadne, ale průvodcem neprošla (nabídne se příště)
 async function ulozitHotovou(p, s) {
     const kde = stav.lbPolozky.indexOf(p);
     const polozky = vyraditZFronty([p]);
-    const tagy = [...s.vybrane].filter(t => !s.navrh.has(t));
+    const jen = jenSrdicka;
+    const tagy = jen ? [] : [...s.vybrane].filter(t => !s.navrh.has(t));
     const zaznam = { polozky, tagy, hodnoceni: s.hodnoceni, predchozi: null, cas: Date.now() };
     historiePruvodce.push(zaznam);
     hotovoPruvodce++;
-    posledni = tagy;
-    podleAlba.set(klicAlba(p), tagy);
+    if (!jen) {
+        posledni = tagy;
+        podleAlba.set(klicAlba(p), tagy);
+    }
     ukazatDalsi(kde);
     zmena();
     const ids = p.fotky.map(f => f.id);
     const predFotek = p.fotky.map(f => Number(f.hodnoceni) || 0);
     let vysledek = null;
     try {
-        vysledek = await UlozitPruvodceFotky({ ids, skupiny: zodpovezeneSkupiny(kroky, s), tagy, hodnoceni: s.hodnoceni, hotovo: true });
+        vysledek = await UlozitPruvodceFotky({ ids, skupiny: jen ? [] : zodpovezeneSkupiny(kroky, s), tagy, hodnoceni: s.hodnoceni, hotovo: !jen });
     } catch { /* oznámí se níž */ }
     if (vysledek?.ok) {
         zaznam.predchozi = vysledek;
-        ids.forEach(id => tagyFotek.set(id, tagy));
+        if (!jen) ids.forEach(id => tagyFotek.set(id, tagy));
         p.hodnoceni = s.hodnoceni;
         p.fotky.forEach((f) => { f.hodnoceni = s.hodnoceni; });
         oznamitHodnoceniFotek(predFotek, p.fotky.length, s.hodnoceni);
@@ -188,11 +197,32 @@ function upozornit() {
 // Klávesy průvodce; true = klávesa patřila průvodci
 export function klavesaPruvodce(e) {
     if (!stav.lbPruvodce || !kroky.length) return false;
+    probudit();
     const p = aktualni();
     const s = p && stavy.get(p);
     if (e.code === 'KeyH' || e.code === 'NumpadMultiply') {
         prepnoutSkryti();
         return true;
+    }
+    if (e.code === 'KeyJ') {
+        prepnoutJenSrdicka();
+        return true;
+    }
+    // Jen srdíčka: 1–5 uloží, Backspace vrátí, ostatní nic
+    if (jenSrdicka && s) {
+        const c = cisloKlavesy(e);
+        if (c !== null) {
+            if (!e.repeat && c >= 1 && c <= 5) {
+                s.hodnoceni = c;
+                ulozitHotovou(p, s);
+            } else if (!e.repeat) upozornit();
+            return true;
+        }
+        if (e.code === 'Backspace' || e.code === 'ArrowLeft') {
+            vratitPruvodce();
+            return true;
+        }
+        if (e.code !== 'KeyS' && e.code !== 'NumpadDivide') return ['Enter', 'NumpadEnter', 'ArrowRight', 'Space', 'ArrowUp', 'ArrowDown'].includes(e.code);
     }
     if (e.code === 'KeyS' || e.code === 'NumpadDivide') {
         if (!e.repeat) preskocit();
@@ -224,6 +254,19 @@ export function klavesaPruvodce(e) {
     return e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown';
 }
 
+function prepnoutJenSrdicka() {
+    jenSrdicka = !jenSrdicka;
+    try { localStorage.setItem(KLIC_JEN_SRDICKA, jenSrdicka ? '1' : '0'); } catch { /* jen pro toto spuštění */ }
+    vykreslitPasek();
+}
+
+// Pásek bez pohybu myši a kláves po chvíli zeslábne (nad ním ne)
+function probudit() {
+    pasek?.classList.remove('klid');
+    clearTimeout(casovacKlidu);
+    casovacKlidu = setTimeout(() => pasek?.classList.add('klid'), KLID_MS);
+}
+
 function prepnoutSkryti() {
     skryty = !skryty;
     try { localStorage.setItem(KLIC_SKRYTI, skryty ? '1' : '0'); } catch { /* jen pro toto spuštění */ }
@@ -238,6 +281,7 @@ function pripravitPasek() {
     pasek.id = 'lbPruvodce';
     pasek.className = 'lb-pruvodce hidden';
     lightbox.append(pasek);
+    lightbox.addEventListener('mousemove', () => { if (stav.lbPruvodce) probudit(); });
     // Klik na pásek nesmí zavřít prohlížeč ani zapnout lupu
     pasek.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -245,7 +289,17 @@ function pripravitPasek() {
         const p = aktualni();
         const s = p && stavy.get(p);
         if (cil.closest('[data-pr-skryt]')) return prepnoutSkryti();
+        if (cil.closest('[data-pr-jen]')) return prepnoutJenSrdicka();
         if (!s) return;
+        if (jenSrdicka) {
+            const srdce = /** @type {HTMLElement | null} */ (cil.closest('[data-pr-cislo]'));
+            if (srdce) {
+                s.hodnoceni = Number(srdce.dataset.prCislo);
+                return ulozitHotovou(p, s);
+            }
+            if (cil.closest('[data-pr-preskocit]')) return preskocit();
+            return;
+        }
         const volba = /** @type {HTMLElement | null} */ (cil.closest('[data-pr-cislo]'));
         if (volba) {
             const v = Number(volba.dataset.prCislo) === 0 ? zadna(kroky, s) : cislice(kroky, s, Number(volba.dataset.prCislo));
@@ -275,13 +329,25 @@ export function vykreslitPasek() {
         return;
     }
     pasek.classList.remove('skryty');
+    probudit();
+    const srdce = n => `<button type="button" class="pr-srdce" data-pr-cislo="${n}" title="${n} (uloží a ukáže další)"><kbd>${n}</kbd>${'♥'.repeat(n)}</button>`;
+    const prepinacJen = `<button type="button" data-pr-jen title="${jenSrdicka ? 'Zpět na celý průvodce (J)' : 'Jen srdíčka – tagy počkají na průvodce (J)'}"><kbd>J</kbd> ${jenSrdicka ? 'celý průvodce' : 'jen srdíčka'}</button>`;
+    if (jenSrdicka) {
+        pasek.innerHTML = `
+        <div class="pr-hlava"><span class="pr-krok">♥</span><b>Jen srdíčka</b>
+            <span class="pr-napoveda">1–5 uloží srdíčka a ukáže další · tagy doplníš v průvodci</span>
+            <button type="button" class="pr-skryt" data-pr-skryt title="Skrýt průvodce (H)"><kbd>H</kbd></button></div>
+        <div class="pr-moznosti">${[1, 2, 3, 4, 5].map(srdce).join('')}</div>
+        <div class="pr-pata"><button type="button" data-pr-preskocit title="Přeskočit fotku (S)"><kbd>S</kbd> přeskočit</button>${prepinacJen}</div>`;
+        return;
+    }
     const krok = kroky[s.krok];
     const viditelne = viditelneKroky(kroky, s.vybrane);
     const poradi = viditelne.indexOf(s.krok) + 1;
     const tecky = viditelne.map(i => `<i class="${i === s.krok ? 'ted' : s.potvrzene.has(kroky[i].klic) ? 'on' : ''}" title="${esc(kroky[i].nazev)}"></i>`).join('');
     let moznosti = '';
     if (krok.typ === 'srdicka') {
-        moznosti = [1, 2, 3, 4, 5].map(n => `<button type="button" class="pr-srdce" data-pr-cislo="${n}" title="${n} (uloží a ukáže další)"><kbd>${n}</kbd>${'♥'.repeat(n)}</button>`).join('');
+        moznosti = [1, 2, 3, 4, 5].map(srdce).join('');
     } else {
         const tlum = tlumene(krok, s.vybrane);
         moznosti = (krok.povinny ? '' : `<button type="button" class="pr-volba nula ${vybraneKroku(krok, s).length ? '' : 'on'}" data-pr-cislo="0"><kbd>0</kbd>${esc(krok.nula || 'žádná')}</button>`)
@@ -309,5 +375,6 @@ export function vykreslitPasek() {
         <div class="pr-pata">
             <button type="button" data-pr-preskocit title="Přeskočit fotku – potvrzené kroky se uloží (S)"><kbd>S</kbd> přeskočit</button>
             ${posledni ? '<button type="button" data-pr-minula title="Tagy jako minulá fotka, pak srdíčka (Shift+Enter)"><kbd>⇧↵</kbd> jako minulá</button>' : ''}
+            ${prepinacJen}
         </div>`;
 }

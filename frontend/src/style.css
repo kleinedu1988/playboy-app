@@ -13211,6 +13211,11 @@ button.pas-kapsle:focus-visible {
     background-color: rgba(18, 18, 22, 0.82);
 }
 
+/* Bez pohybu myši a kláves pásek zeslábne, aby nerušil fotku */
+.lb-pruvodce.klid:not(:hover) {
+    opacity: 0.35;
+}
+
 .lb-pruvodce.hidden {
     display: none;
 }

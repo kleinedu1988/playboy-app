@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.17] – 2026-11-02
+
+### Přidáno
+- **Výběr modelky v Pořadí** (přepracování Pořadí, krok 3): šipky ↑↓ nebo najetí myší vyberou modelku a stavová lišta ukáže, co v řádku není – „11. Anna · bez srdíček · síla 3,92 ± 0,42 · 5 porovnání · čeká na Top 10 (5/8)“.
+  - Písmena skočí na jméno, **Enter** otevře profil, **R** spustí souboje vybrané čekající nebo obhajující modelky.
+  - Vpravo ve stavové liště **„⏳ Další čekající ↓“** a **„≠ Další nesedí ↓“** projdou takové modelky jednu po druhé; klávesy jsou klikatelné.
+
 ## [1.0.16] – 2026-11-02
 
 ### Změněno

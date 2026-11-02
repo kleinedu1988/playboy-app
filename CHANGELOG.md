@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.1.1] – 2026-11-02
+
+### Přidáno
+- **Rychlé tagování – Hodnocení › Hodnotit › Tagy** (tematické sezóny, krok 2): fronta fotek bez tagů po albech; Enter nebo „Začít tagovat“ otevře prohlížeč s panelem skupin pod fotkou.
+  - **Z** záběr, **O** odhalení, **M** místo – každý stisk další hodnota (se Shiftem zpět); **P** prsa, **V** vagina, **H** podpatky přepínají, ostatní tagy klikem.
+  - Prostředí, odhalení a záběr se předvyplní podle minulé fotky téhož alba.
+  - **Enter** uloží a ukáže další, **1–5** uloží i se srdíčky, **.** tagy jako minulá fotka, **⇧Enter** stejné tagy celému zbytku alba, **⌫** vrátí.
+  - Ve stavové liště postup „Otagováno 3 · zbývá 120“, potvrzení a Vrátit.
+
 ## [1.1.0] – 2026-11-02
 
 ### Přidáno

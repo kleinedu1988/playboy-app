@@ -10103,7 +10103,6 @@ span.ud-chip {
     position: relative;
 }
 
-
 /* Srdíčka modelky po půlkách (ui/srdicka.js): deset úzkých tlačítek, každé kreslí maskou SVG půlku srdíčka –
    plnou u udělených, obrys u ostatních. Barvu (najetí, karta) dávají pravidla .heart výš, velikost písmo tlačítka. */
 :root {
@@ -10598,14 +10597,97 @@ span.ud-chip {
 }
 
 /* Dlouhé pořadí: řádky mimo obrazovku se nevykreslují (u stovek modelek plynulé rolování) */
-.ob-poradi > li {
+.ob-poradi > li:not(.ob-uroven) {
+    display: grid;
+    /* Štítky mají vlastní sloupec i u řádků bez nich: pruhy síly jsou pod sebou zarovnané */
+    grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+    align-items: center;
+    gap: 8px;
+    border-radius: 10px;
     content-visibility: auto;
-    contain-intrinsic-size: auto 52px;
+    contain-intrinsic-size: auto 42px;
+}
+
+/* Řádek na jednu linku: místo, náhled, jméno se srdíčky, trend, pruh síly, „jen 5×“; štítky vpravo mimo tlačítko */
+.ob-poradi > li > .ob-radek {
+    min-width: 0;
+}
+
+@media (max-width: 1000px) {
+    .ob-poradi > li:not(.ob-uroven) {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 200px);
+    }
+
+    /* Užší okno: přednost má jméno; skóre fotek a zájem jsou v bublině řádku, pruh je kratší */
+    .ob-jmeno-radku .ob-fotky,
+    .ob-jmeno-radku .ob-zajem {
+        display: none;
+    }
+
+    .ob-poradi .ob-radek {
+        grid-template-columns: 24px 28px minmax(0, 1fr) 30px minmax(50px, 90px) 40px;
+    }
+}
+
+@media (max-width: 860px) {
+    .ob-poradi > li:not(.ob-uroven) {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 150px);
+    }
+
+    .ob-r-stitky .ob-nechat {
+        display: none;
+    }
+}
+
+.ob-r-stitky {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+    padding-right: 8px;
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+
+.ob-chip {
+    min-width: 0;
+    overflow: hidden;
+    padding: 2px 9px;
+    border-radius: 999px;
+    text-overflow: ellipsis;
+    cursor: help;
+}
+
+.ob-chip-ceka {
+    border: 1px dashed rgba(255, 255, 255, 0.35);
+    color: var(--text-main);
+}
+
+.ob-chip-nesedi {
+    flex: none;
+    border: 1px solid rgba(255, 183, 77, 0.55);
+    color: #ffcc80;
+}
+
+.ob-r-stitky .link {
+    flex: none;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+.ob-r-stitky .ob-dat {
+    color: var(--accent-text);
+}
+
+.ob-r-stitky .ob-nechat {
+    color: var(--text-muted);
 }
 
 .ob-radek {
     display: grid;
-    grid-template-columns: 30px 32px minmax(0, 1fr) minmax(60px, 34%) 34px;
+    grid-template-columns: 28px 28px minmax(0, 1fr) 36px minmax(80px, 200px) 44px;
     align-items: center;
     gap: 10px;
     width: 100%;
@@ -10631,8 +10713,8 @@ span.ud-chip {
 }
 
 .ob-radek img {
-    width: 32px;
-    height: 40px;
+    width: 28px;
+    height: 36px;
     border-radius: 6px;
     object-fit: cover;
     background-color: var(--bg-main);
@@ -10640,22 +10722,41 @@ span.ud-chip {
 
 .ob-jmeno-radku {
     display: flex;
-    flex-direction: column;
+    align-items: baseline;
+    gap: 8px;
     min-width: 0;
     overflow: hidden;
     font-size: 13px;
     white-space: nowrap;
+}
+
+.ob-jmeno-radku b {
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 500;
     text-overflow: ellipsis;
 }
 
-.ob-jmeno-radku small {
+.ob-jmeno-radku > i {
+    flex: none;
+    color: var(--accent-text);
+    font-size: 11px;
+    font-style: normal;
+}
+
+.ob-jmeno-radku > span {
+    flex: none;
     color: var(--text-muted);
     font-size: 11px;
 }
 
-.ob-jmeno-radku small i {
-    color: var(--accent-text);
-    font-style: normal;
+.ob-trend-sloupec {
+    font-size: 11px;
+    text-align: right;
+}
+
+.ob-pocet.malo {
+    color: #ffb74d;
 }
 
 .ob-jmeno-radku .ob-fotky {
@@ -10763,7 +10864,6 @@ span.ud-chip {
 .ob-tip.ohodnoceno .ob-tip-foto {
     opacity: 0.6;
 }
-
 
 @media (max-width: 560px) {
     .ob-radek {
@@ -10874,10 +10974,6 @@ span.ud-chip {
 .uvod-shanim-napred .chip small {
     margin-left: 6px;
     color: var(--text-muted);
-    font-size: 11px;
-}
-
-.ob-jmeno-radku .trend {
     font-size: 11px;
 }
 
@@ -11073,10 +11169,16 @@ span.ud-chip {
 
 /* Pořadí: oddělovač úrovně s počtem potvrzených a linkou do konce řádku */
 .ob-poradi .ob-uroven {
+    position: sticky;
+    /* Přilepí se k horní hraně okna obsahu (main má odsazení 32 px) */
+    top: -32px;
+    z-index: 2;
     display: flex;
     align-items: baseline;
     gap: 8px;
-    margin: 12px 6px 4px;
+    margin: 8px 0 2px;
+    padding: 8px 6px 6px;
+    background: linear-gradient(var(--panel-bg), var(--panel-bg)), var(--bg-main);
     color: var(--accent-text);
     font-size: 10.5px;
     font-weight: 600;
@@ -11113,11 +11215,6 @@ span.ud-chip {
 
 .ob-poradi li.ob-ceka-radek:hover {
     background-color: rgba(255, 64, 129, 0.12);
-}
-
-.ob-poradi li.ob-ceka-radek .ob-radek:hover,
-.ob-poradi li.ob-ceka-radek .ob-radek:focus-visible {
-    background-color: transparent;
 }
 
 /* V úzkém sloupci se štítek zalomí (radši o řádek víc než useknuté „podle síly“) */
@@ -11814,7 +11911,6 @@ button.pas-kapsle:focus-visible {
 @keyframes slava-obsah {
     from { opacity: 0; transform: translateY(4px); }
 }
-
 
 /* Karta v Top 10 otevře vitrínu: vybraná svítí */
 .slava-skupina .slava-karta[data-slava-vybrat] {
@@ -12949,23 +13045,6 @@ button.pas-kapsle:focus-visible {
     }
 }
 
-/* Čekající a obhajující: štítek pod jménem (mimo tlačítko řádku) a vedle něj odkaz Rozhodnout teď */
-.ob-ceka-pod {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 2px 12px;
-    margin-top: -4px;
-    padding: 0 6px 6px 88px;
-    font-size: 11px;
-}
-
-.ob-ceka-pod .ob-ceka {
-    color: var(--text-main);
-    line-height: 1.35;
-    cursor: help;
-}
-
 .ob-rozhodnout {
     color: var(--accent-text);
     font-size: 11px;
@@ -13173,75 +13252,6 @@ button.pas-kapsle:focus-visible {
     }
 }
 
-/* ——— Pořadí v Hodnocení: Čekají a Nesedí (karta místo celého pořadí), Stoupají a klesají v panelu ——— */
-.hz-rozhodnout:empty {
-    display: none;
-}
-
-.hz-rozhodnout {
-    border-color: rgba(216, 27, 96, 0.32);
-    background-image: linear-gradient(100deg, rgba(216, 27, 96, 0.09), transparent 55%);
-}
-
-.hz-r-seznam {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.hz-r-seznam li {
-    display: grid;
-    grid-template-columns: 22px minmax(0, 1fr);
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    font-size: 13px;
-}
-
-.hz-r-seznam li:first-child {
-    border-top: none;
-}
-
-.hz-r-ikona {
-    text-align: center;
-}
-
-.hz-r-obsah {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px 12px;
-    min-width: 0;
-}
-
-.hz-r-obsah > span:first-child {
-    flex: 1 1 340px;
-    min-width: 0;
-}
-
-.hz-r-obsah .link {
-    font-size: 13px;
-    white-space: nowrap;
-}
-
-.hz-r-obsah .hz-r-rozhodnout {
-    border-color: rgba(216, 27, 96, 0.55);
-    color: var(--accent-text);
-    white-space: nowrap;
-}
-
-.hz-r-obsah .hz-r-rozhodnout:hover {
-    background-color: var(--accent);
-    color: #fff;
-}
-
-.hz-r-misto,
-.hz-r-text {
-    color: var(--text-muted);
-}
-
-
 /* Stoupají a klesají: řádky s náhledem */
 .hz-trend {
     display: flex;
@@ -13333,25 +13343,6 @@ button.pas-kapsle:focus-visible {
 .hd-okenko:focus-visible {
     background-color: rgba(255, 255, 255, 0.08);
     outline: none;
-}
-
-.hd-avatary {
-    display: flex;
-    grid-column: 1 / -1;
-}
-
-.hd-avatary img {
-    width: 24px;
-    height: 24px;
-    border: 2px solid rgb(26, 26, 30);
-    border-radius: 50%;
-    background-color: #000;
-    object-fit: cover;
-    transform: none !important;
-}
-
-.hd-avatary img + img {
-    margin-left: -7px;
 }
 
 /* ===== Hlavička Síně slávy (sin-slavy.js): fotka jedničky s ♛ místo kruhu, jinak styly hlavičky Sbírky ===== */
@@ -13632,7 +13623,6 @@ button.pas-kapsle:focus-visible {
 .gh-nahled:hover img {
     transform: scale(1.04);
 }
-
 
 /* Alba v profilu jako mozaika: řady stejné výšky, šířka dlaždice podle poměru stran fotky (--pomer, do načtení 3 : 4) */
 .photos-grid.mozaika {
@@ -15782,7 +15772,6 @@ body.rezim-vyberu #detailView .poster {
     font-size: 12.5px;
 }
 
-
 /* ===== Profil: pruh s modelkou je součástí panelu s drobečky (fotka, jméno, srdíčka, pořadí, odznaky, pásky, akce)
    a pod ním lišta alb. Po odrolování (.profil-svinuty) se panel plynule zmenší na jeden řádek. ===== */
 .hlavni-lista:has(> #profilPruh:not(.hidden)) {
@@ -16179,57 +16168,57 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* Svinutí po odrolování */
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-obsah {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-obsah {
     gap: 12px;
     padding: 0;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-kruh {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-kruh {
     width: 34px;
     height: 34px;
     background: radial-gradient(closest-side, rgb(26, 26, 30) 74%, transparent 75% 100%), conic-gradient(var(--accent) calc(var(--p) * 1%), rgba(255, 255, 255, 0.1) 0);
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-kruh b {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-kruh b {
     font-size: 9.5px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-kruh small,
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-oblasti,
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-cisla span:not(.sh-ukoly) {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-kruh small,
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-oblasti,
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-cisla span:not(.sh-ukoly) {
     display: none;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-identita {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-identita {
     flex-direction: row;
     align-items: center;
     gap: 12px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-identita h2 {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-identita h2 {
     font-size: 15px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sbirka-hlava {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sbirka-hlava {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     row-gap: 6px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-akce {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-akce {
     flex-wrap: nowrap;
     margin-left: auto;
     padding-top: 0;
     border-top: 0;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-akce .volba {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-akce .volba {
     height: 28px;
     padding: 0 9px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.hodnoceni-svinuta, .navbar.slava-svinuta) .sh-lista {
+:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-lista {
     flex: 1 1 100%;
     padding-top: 4px;
 }

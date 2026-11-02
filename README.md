@@ -135,7 +135,7 @@ pomlčkou (`-vlasy:blond`). Srdíčka modelek jsou po polovinách: `hodnoceni:3.
 
 ## Verze a vydání
 
-Verze má tvar `x.xx.xx` (MAJOR.MINOR.PATCH bez nul na začátku) podle oddílu „Pravidlo verzování“ v ROADMAP.md:
+Verze má tvar `x.xx.xxx` (MAJOR.MINOR.PATCH bez nul na začátku, PATCH až 999) podle oddílu „Pravidlo verzování“ v ROADMAP.md:
 MAJOR = milník, MINOR = téma z plánu, PATCH = krok nebo oprava; každá změna je nová verze. Verze se ukazuje
 v nabídce ⋯.
 

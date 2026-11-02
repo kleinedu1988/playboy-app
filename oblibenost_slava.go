@@ -215,6 +215,8 @@ type UdalostSlavy struct {
 	// Druh "odznak": který odznak a stupeň (1 bronz, 2 stříbro, 3 zlato, 0 = jednorázový)
 	Odznak string `json:"odznak,omitempty"`
 	Stupen int    `json:"stupen,omitempty"`
+	// Druh "favoritka" a "milacek": název sezóny („Na podpatcích (2.–15. listopadu 2026)“, Klasická jen období)
+	Sezona string `json:"sezona,omitempty"`
 }
 
 // Modelka v síni slávy: současná top 10 (vitrína) nebo bývalá (legenda). Dny se počítají po celých 24 hodinách;
@@ -264,16 +266,43 @@ func (a *App) GetSinSlavy() SinSlavy {
 	modelky, _ := a.nactiModelky("", false)
 	model := a.modelOblibenosti(modelky)
 	u := a.uc
+	obdobi, _ := a.obdobiSezon(time.Now())
 	u.mu.Lock()
 	kronika := u.nacistKroniku()
 	porovnani := u.nacistPorovnani()
 	snimky := u.nacistSnimkyPoradi()
+	sezony := u.nacistSezony()
 	u.mu.Unlock()
 	existuje := make(map[int]bool, len(modelky))
 	for _, m := range modelky {
 		existuje[m.ID] = true
 	}
-	return spocitatSinSlavy(kronika, model, porovnani, existuje, snimky, time.Now())
+	s := spocitatSinSlavy(kronika, model, porovnani, existuje, snimky, time.Now())
+	doplnitSezonyKroniky(s.Kronika, sezony, obdobi)
+	return s
+}
+
+// Tituly sezón v kronice dostanou název sezóny: zápis má čas posledního dne sezóny (konec − 1 s), podle něj se
+// najde uzavřená sezóna (víc sezón v jednom měsíci se tak neplete)
+func doplnitSezonyKroniky(kronika []UdalostSlavy, sezony []MinulaSezona, obdobi []obdobiSezony) {
+	podleCasu := map[string]string{}
+	for _, m := range sezony {
+		od, do, ok := oknoSezony(m.Klic, obdobi)
+		if !ok {
+			continue
+		}
+		n := noveNazevSezony(m.Klic, od, do, m.Tema)
+		text := n.Obdobi
+		if n.Nazev != n.Obdobi {
+			text = n.Nazev + " (" + n.Obdobi + ")"
+		}
+		podleCasu[do.Add(-time.Second).Format("2006-01-02 15:04:05")] = text
+	}
+	for i := range kronika {
+		if d := kronika[i].Druh; d == udalostFavoritka || d == udalostMilacek {
+			kronika[i].Sezona = podleCasu[kronika[i].Cas]
+		}
+	}
 }
 
 type pobytVTop struct {

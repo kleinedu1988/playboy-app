@@ -1,11 +1,19 @@
 # Changelog
 
 Všechny podstatné změny programu. Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
-verze mají tvar MAJOR.MINOR.PATCH (`x.xx.xx`, bez nul na začátku) podle oddílu „Pravidlo verzování“
+verze mají tvar MAJOR.MINOR.PATCH (`x.xx.xxx`, bez nul na začátku; do 1.1.4 `x.xx.xx`) podle oddílu „Pravidlo verzování“
 v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = krok nebo oprava. Starší milníky
 (0.9.0, alfa 0.50.0) mají v repozitáři značky `vX.Y.Z`, nové se nedělají.
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
+
+## [1.1.5] – 2026-11-02
+
+### Opraveno
+- **Kronika Síně slávy pojmenuje sezónu správně**: zápis Favoritky a Miláčka nese název sezóny – „Marta je Favoritka sezóny Na podpatcích (2.–15. listopadu 2026)“, u Klasické jen období. Dřív se psal jen měsíc, takže víc sezón v jednom měsíci splývalo.
+
+### Změněno
+- Pravidlo verzování: tvar `x.xx.xxx` – PATCH může mít až tři číslice (0–999), aby šlo vydávat po menších krocích (ROADMAP, oddíl „Pravidlo verzování“).
 
 ## [1.1.4] – 2026-11-02
 

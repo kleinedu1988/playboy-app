@@ -17,6 +17,7 @@ test('složení bodů proti nejvyšším bodům', () => {
 test('kronika a odznak sezóny', () => {
     const jmeno = () => 'Marta';
     assert.equal(textUdalosti({ druh: 'favoritka', modelkaId: 1, cas: '2026-10-31 23:59:59' }, jmeno).text, 'Marta je Favoritka sezóny říjen 2026');
+    assert.equal(textUdalosti({ druh: 'favoritka', modelkaId: 1, cas: '2026-11-15 23:59:59', sezona: 'Na podpatcích (2.–15. listopadu 2026)' }, jmeno).text, 'Marta je Favoritka sezóny Na podpatcích (2.–15. listopadu 2026)');
     assert.equal(textUdalosti({ druh: 'milacek', modelkaId: 1, cas: '2026-10-31 23:59:59' }, jmeno).ikona, '♥');
     const o = popisOdznaku({ odznak: 'favoritka', stupen: 1, ziskan: true, hodnota: 2, dalsi: 3 });
     assert.equal(o.stupen, 'bronz');

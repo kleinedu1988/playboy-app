@@ -1589,11 +1589,11 @@ func TestEtapa4Backend(t *testing.T) {
 
 // Verze v programu, ve wails.json, ve frontend/package.json a v changelogu musí souhlasit
 func TestVerzeSouhlasi(t *testing.T) {
-	// Pravidlo verzování (ROADMAP.md): x.xx.xx – MAJOR jedna číslice, MINOR a PATCH 0–99, bez nul na začátku;
+	// Pravidlo verzování (ROADMAP.md): x.xx.xxx – MAJOR jedna číslice, MINOR 0–99, PATCH 0–999, bez nul na začátku;
 	// -dev = rozpracováno
 	cisla := strings.TrimSuffix(Verze, "-dev")
-	if !regexp.MustCompile(`^\d\.(0|[1-9]\d?)\.(0|[1-9]\d?)$`).MatchString(cisla) {
-		t.Fatalf("verze %q nemá tvar x.xx.xx (MAJOR.MINOR.PATCH bez nul na začátku, MINOR a PATCH 0–99)", Verze)
+	if !regexp.MustCompile(`^\d\.(0|[1-9]\d?)\.(0|[1-9]\d{0,2})$`).MatchString(cisla) {
+		t.Fatalf("verze %q nemá tvar x.xx.xxx (MAJOR.MINOR.PATCH bez nul na začátku, MINOR 0–99, PATCH 0–999)", Verze)
 	}
 	precist := func(cesta string) string {
 		data, err := os.ReadFile(cesta)

@@ -42,8 +42,8 @@ export function textUdalosti(u, jmeno) {
         case 'obhajoba': return { ikona: '🛡', text: `${kdo} obhájila místo v Top 10${souperka ? ` · vyzyvatelka ${souperka}` : ''}` };
         case 'jednicka': return { ikona: '♛', text: souperka ? `Nová jednička: ${kdo} · předtím ${souperka}` : `Jednička: ${kdo}` };
         case 'konec': return { ikona: '·', text: `${kdo} už není potvrzená jednička` };
-        case 'favoritka': return { ikona: '♛', text: `${kdo} je Favoritka sezóny ${mesicKroniky(u.cas)}` };
-        case 'milacek': return { ikona: '♥', text: `${kdo} je Miláček sezóny ${mesicKroniky(u.cas)}` };
+        case 'favoritka': return { ikona: '♛', text: `${kdo} je Favoritka sezóny ${u.sezona || mesicKroniky(u.cas)}` };
+        case 'milacek': return { ikona: '♥', text: `${kdo} je Miláček sezóny ${u.sezona || mesicKroniky(u.cas)}` };
         case 'odznak': {
             const o = ODZNAKY[u.odznak];
             if (!o) return { ikona: '·', text: kdo };

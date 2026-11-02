@@ -26,14 +26,15 @@ přepínač řazení galerie, naposledy přidané modelky na úvodu Přehledu a 
 
 Platí pro všechny verze od bety dál (zapsáno 23. 10. 2026, hlídá test `TestVerzeSouhlasi`):
 
-- **Tvar `x.xx.xx`** = MAJOR.MINOR.PATCH, tři čísla oddělená tečkou, **bez nul na začátku** (1.1.0, 1.12.3, ne
-  1.01.03 – to standard verzování ani `npm` nepřijmou). MINOR a PATCH mají nejvýš dvě číslice (0–99), MAJOR jednu.
+- **Tvar `x.xx.xxx`** = MAJOR.MINOR.PATCH, tři čísla oddělená tečkou, **bez nul na začátku** (1.1.0, 1.12.103, ne
+  1.01.003 – to standard verzování ani `npm` nepřijmou). MAJOR má jednu číslici, MINOR nejvýš dvě (0–99) a PATCH
+  nejvýš tři (0–999), aby šlo vydávat po malých krocích (změna 2. 11. 2026, dřív `x.xx.xx`).
 - **MAJOR = milník** (řada témat se společným cílem): 0 = vývoj do vydání, 1 = Pohodlí a kvalita dat, 2 = Chytrá
   sbírka. Nový MAJOR začíná `x.0.0`.
 - **MINOR = téma** z plánu (jedna verze z tabulky v ROADMAP, 2–4 kroky). Nové téma začíná `x.y.0`; čísla jdou
   za sebou (po 1.9 je 1.10). Kdyby došla čísla (99), začne další milník.
-- **PATCH = jeden krok tématu nebo oprava** (1.3.0, 1.3.1, 1.3.2…); opravy pokračují stejnou řadou. Kdyby téma
-  potřebovalo víc než 99 vydání, je moc velké a rozdělí se.
+- **PATCH = jeden malý krok tématu nebo oprava** (1.3.0, 1.3.1, 1.3.2…); opravy pokračují stejnou řadou. Vydává se
+  po menších verzích – raději víc malých vydání než jedno velké.
 - **Každá změna = nová verze:** zápis v `CHANGELOG.md` (s datem), commit a push. Verze se mění na třech místech
   (`verze.go`, `wails.json`, `frontend/package.json`) a v kontrolním součtu `package.json.md5`; test hlídá tvar,
   shodu všech míst a datum v changelogu. Rozpracovaný stav může nést příponu `-dev`.
@@ -161,7 +162,7 @@ sloučení), proto se část opakuje:
 
 ### Jak se vydává po 1.0.0
 
-- **Číslování:** podle oddílu „Pravidlo verzování“ (tvar `x.xx.xx`; MAJOR milník, MINOR téma, PATCH krok
+- **Číslování:** podle oddílu „Pravidlo verzování“ (tvar `x.xx.xxx`; MAJOR milník, MINOR téma, PATCH krok
   nebo oprava; první hotový krok tématu vyjde jako 1.3.0, další jako 1.3.1, 1.3.2…). Každá vydaná verze je funkční a projde všemi testy; když je hotový poslední krok tématu, vyzkouší ho uživatel
   na skutečné sbírce. Řady se nemusí střídat přísně za sebou: téma 2.x může vyjít, i když 1.x ještě není celá
   (pak se pokračuje dalším volným číslem v řadě).

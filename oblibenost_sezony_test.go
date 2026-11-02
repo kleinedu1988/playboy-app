@@ -112,8 +112,12 @@ func TestUzavreniSezony(t *testing.T) {
 	// Kronika a odznak Favoritky; vrácení porovnání je nesmaže
 	slava := a.GetSinSlavy()
 	druhy := map[string]int{}
+	mesic := zacatekMesice(time.Now()).AddDate(0, -1, 0)
 	for _, u := range slava.Kronika {
 		druhy[u.Druh] = u.ModelkaID
+		if (u.Druh == udalostFavoritka || u.Druh == udalostMilacek) && u.Sezona != textObdobi(mesic, mesic.AddDate(0, 1, 0), true) {
+			t.Errorf("název sezóny v kronice: %q", u.Sezona)
+		}
 	}
 	if druhy[udalostFavoritka] != ida || druhy[udalostMilacek] != idc {
 		t.Errorf("kronika: %+v", slava.Kronika)

@@ -1457,6 +1457,7 @@ export namespace main {
 	    souperka: number;
 	    odznak?: string;
 	    stupen?: number;
+	    sezona?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new UdalostSlavy(source);
@@ -1471,6 +1472,7 @@ export namespace main {
 	        this.souperka = source["souperka"];
 	        this.odznak = source["odznak"];
 	        this.stupen = source["stupen"];
+	        this.sezona = source["sezona"];
 	    }
 	}
 	export class SlavaModelky {

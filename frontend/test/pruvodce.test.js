@@ -80,3 +80,24 @@ test('číslice podle fyzické klávesy', () => {
     assert.equal(cisloKlavesy({ code: 'Numpad0', key: '0' }), 0);
     assert.equal(cisloKlavesy({ code: 'KeyA', key: 'a' }), null);
 });
+
+test('fotka se srdíčky: krok srdíček se přeskočí, po posledním kroku tagů je hotová', () => {
+    const s = novyStav(KROKY, [], [], 3);
+    assert.ok(s.maSrdicka);
+    assert.equal(s.hodnoceni, 3);
+    assert.deepEqual(viditelneKroky(KROKY, s.vybrane, true), [0, 1, 2, 3]);
+    cislice(KROKY, s, 3);
+    zadna(KROKY, s);
+    potvrdit(KROKY, s); // tělo
+    assert.equal(KROKY[s.krok].klic, 'styl');
+    assert.equal(potvrdit(KROKY, s), 'hotovo');
+    assert.ok(s.hotovo);
+    assert.equal(s.hodnoceni, 3);
+    // Jako minulá je rovnou hotová; bez srdíček skončí na kroku srdíček
+    const t = novyStav(KROKY, [], [], 5);
+    jakoMinula(KROKY, t, ['postava']);
+    assert.ok(t.hotovo);
+    const u = novyStav(KROKY);
+    jakoMinula(KROKY, u, ['postava']);
+    assert.ok(!u.hotovo && KROKY[u.krok].typ === 'srdicka');
+});

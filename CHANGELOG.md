@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.8] – 2026-11-02
+
+### Změněno
+- **Průvodce přeskočí srdíčka u fotky, která je už má** (ohodnocená dřív nebo v Jen srdíčka): po posledním kroku tagů se fotka uloží jako prošlá a srdíčka zůstanou; v pásku je vedle názvu kroku ukáže ♥ a tečky postupu krok srdíček nemají. V režimu Jen srdíčka se fotky se srdíčky přeskakují.
+
 ## [1.2.7] – 2026-11-02
 
 ### Přidáno

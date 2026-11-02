@@ -6,7 +6,7 @@
 /** @typedef {{ tagy: string[], ne: boolean }} Podminka */
 /** @typedef {{ klic: string, nazev: string, skupina: string, vylucna: boolean }} Moznost */
 /** @typedef {{ klic: string, nazev: string, typ: string, povinny: boolean, nula: string, moznosti: Moznost[], preskocit: Podminka | null, tlumit: { moznosti: string[], kdyz: Podminka }[], predvyplnit: string[], skupiny: string[] }} Krok */
-/** @typedef {{ krok: number, vybrane: Set<string>, navrh: Set<string>, potvrzene: Set<string>, hodnoceni: number, hotovo: boolean }} StavPruvodce */
+/** @typedef {{ krok: number, vybrane: Set<string>, navrh: Set<string>, potvrzene: Set<string>, hodnoceni: number, hotovo: boolean, maSrdicka: boolean }} StavPruvodce */
 
 /** @param {Podminka | null | undefined} p @param {Set<string>} vybrane */
 export function plati(p, vybrane) {
@@ -39,15 +39,17 @@ export function predchoziKrok(kroky, i, vybrane) {
     return j;
 }
 
-/** Viditelné kroky (pro tečky postupu) @param {Krok[]} kroky */
-export const viditelneKroky = (kroky, vybrane) => kroky.map((k, i) => i).filter(i => !preskocen(kroky[i], vybrane));
+/** Viditelné kroky (pro tečky postupu); fotka se srdíčky krok srdíček nemá @param {Krok[]} kroky */
+export const viditelneKroky = (kroky, vybrane, maSrdicka = false) => kroky.map((k, i) => i)
+    .filter(i => !preskocen(kroky[i], vybrane) && !(maSrdicka && kroky[i].typ === 'srdicka'));
 
 /**
- * Nový stav fotky: stávající tagy, u kroků bez tagu předvyplnění z minulé fotky alba (jen tagy, které krok dovolí)
- * @param {Krok[]} kroky @param {string[]} tagyFotky @param {string[]} podleAlba
+ * Nový stav fotky: stávající tagy, u kroků bez tagu předvyplnění z minulé fotky alba (jen tagy, které krok dovolí).
+ * Fotka, která už má srdíčka (hodnoceni > 0), krok srdíček přeskočí – po posledním kroku tagů je hotová.
+ * @param {Krok[]} kroky @param {string[]} tagyFotky @param {string[]} podleAlba @param {number} hodnoceni
  * @returns {StavPruvodce}
  */
-export function novyStav(kroky, tagyFotky = [], podleAlba = []) {
+export function novyStav(kroky, tagyFotky = [], podleAlba = [], hodnoceni = 0) {
     const vybrane = new Set(tagyFotky);
     const navrh = new Set();
     kroky.forEach((k) => {
@@ -58,7 +60,7 @@ export function novyStav(kroky, tagyFotky = [], podleAlba = []) {
             navrh.add(t);
         });
     });
-    const s = { krok: 0, vybrane, navrh, potvrzene: new Set(), hodnoceni: 0, hotovo: false };
+    const s = { krok: 0, vybrane, navrh, potvrzene: new Set(), hodnoceni: hodnoceni > 0 ? hodnoceni : 0, hotovo: false, maSrdicka: hodnoceni > 0 };
     if (preskocen(kroky[0], vybrane)) s.krok = dalsiKrok(kroky, 0, vybrane);
     return s;
 }
@@ -71,6 +73,8 @@ function potvrditKrok(kroky, s) {
     s.potvrzene.add(krok.klic);
     krok.moznosti.forEach(m => s.navrh.delete(m.klic));
     s.krok = dalsiKrok(kroky, s.krok, s.vybrane);
+    // Srdíčka už fotka má: po posledním kroku tagů je hotová
+    if (s.maSrdicka && kroky[s.krok]?.typ === 'srdicka') s.hotovo = true;
 }
 
 /**
@@ -95,7 +99,7 @@ export function cislice(kroky, s, cislo) {
     if (krok.typ === 'jeden') {
         s.vybrane.add(m.klic);
         potvrditKrok(kroky, s);
-        return 'dal';
+        return s.hotovo ? 'hotovo' : 'dal';
     }
     s.navrh.delete(m.klic);
     if (mel) s.vybrane.delete(m.klic);
@@ -105,16 +109,16 @@ export function cislice(kroky, s, cislo) {
     return 'zmena';
 }
 
-/** 0 = žádná (jen volitelný krok): krok bez tagů a dál; vrací 'dal' nebo '' @param {Krok[]} kroky @param {StavPruvodce} s */
+/** 0 = žádná (jen volitelný krok): krok bez tagů a dál; vrací 'dal', 'hotovo' (fotka se srdíčky) nebo '' */
 export function zadna(kroky, s) {
     const krok = kroky[s.krok];
     if (!krok || krok.povinny || krok.typ === 'srdicka') return '';
     krok.moznosti.forEach((m) => { s.vybrane.delete(m.klic); s.navrh.delete(m.klic); });
     potvrditKrok(kroky, s);
-    return 'dal';
+    return s.hotovo ? 'hotovo' : 'dal';
 }
 
-/** Enter: potvrdí výběr (i předvyplněný); povinný krok bez výběru → 'chybi'; vrací 'dal', 'chybi' nebo '' */
+/** Enter: potvrdí výběr (i předvyplněný); povinný krok bez výběru → 'chybi'; vrací 'dal', 'hotovo', 'chybi' nebo '' */
 export function potvrdit(kroky, s) {
     const krok = kroky[s.krok];
     if (!krok || krok.typ === 'srdicka') return '';
@@ -123,19 +127,21 @@ export function potvrdit(kroky, s) {
         return zadna(kroky, s);
     }
     potvrditKrok(kroky, s);
-    return 'dal';
+    return s.hotovo ? 'hotovo' : 'dal';
 }
 
 /** Zpět o krok; vrací false na prvním kroku */
 export function zpet(kroky, s) {
-    const j = predchoziKrok(kroky, s.krok, s.vybrane);
+    let j = predchoziKrok(kroky, s.krok, s.vybrane);
+    if (s.maSrdicka && kroky[j]?.typ === 'srdicka') j = predchoziKrok(kroky, j, s.vybrane);
     if (j < 0) return false;
     s.krok = j;
     s.hotovo = false;
     return true;
 }
 
-/** Shift+Enter: tagy jako minulá fotka (krokům, které na ně odpovídají) a rovnou na srdíčka */
+/** Shift+Enter: tagy jako minulá fotka (krokům, které na ně odpovídají) a rovnou na srdíčka (fotka se srdíčky je
+ * tím hotová) */
 export function jakoMinula(kroky, s, tagyMinule) {
     const posledni = kroky.length - 1;
     kroky.slice(0, posledni).forEach((k) => {
@@ -144,6 +150,7 @@ export function jakoMinula(kroky, s, tagyMinule) {
         if (!preskocen(k, s.vybrane)) s.potvrzene.add(k.klic);
     });
     s.krok = posledni;
+    if (s.maSrdicka) s.hotovo = true;
 }
 
 /** Skupiny katalogu potvrzených kroků (backend v nich nahradí tagy fotky) */

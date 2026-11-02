@@ -13271,6 +13271,12 @@ button.pas-kapsle:focus-visible {
     letter-spacing: 0.1em;
 }
 
+.pr-ma {
+    color: var(--accent-text);
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+
 .pr-tecky {
     display: inline-flex;
     gap: 4px;

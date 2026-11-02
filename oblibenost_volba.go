@@ -28,6 +28,7 @@ type NavrhTematu struct {
 	Souboju int    `json:"souboju"` // kolik soubojů by sezóna potřebovala
 	Duvod   string `json:"duvod"`   // proč téma nejde (málo soutěžících) nebo proč je délka zkrácená
 	Ukazky  []int  `json:"ukazky"`  // až 4 soutěžící pro ukázkové fotky (nejvíc fotek tématu, v Klasické nejvýš v pořadí)
+	Stitek  string `json:"stitek"`  // „vzácné“ (málo soutěžících), „poprvé“ (ještě neběželo)
 }
 
 const ukazekTematu = 4
@@ -124,11 +125,22 @@ func (a *App) GetNavrhSezony() NavrhSezony {
 	vysledek.Klasicka = navrhTematu(InfoTematu{Tema: *temaZKlice(""), Soutezicich: vPoradi, Plati: true}, vysledek.Tempo)
 	vysledek.Klasicka.Ukazky = nejlepsiUkazky(poradi, func(x, y int) bool { return x < y })
 
-	// Témata posledních sezón před probíhající se nenavrhují
+	// Témata posledních sezón před probíhající se nenavrhují; skupina minulé sezóny má menší váhu
 	nedavna := map[string]bool{}
-	for i := len(obdobi) - 1; i >= 0 && len(nedavna) < poslednichBezOpak; i-- {
-		if obdobi[i].od.Before(o.od) && obdobi[i].tema != "" {
+	behla := map[string]bool{}
+	skupinaMinule := ""
+	for i := len(obdobi) - 1; i >= 0; i-- {
+		if !obdobi[i].od.Before(o.od) || obdobi[i].tema == "" {
+			continue
+		}
+		behla[obdobi[i].tema] = true
+		if len(nedavna) < poslednichBezOpak {
 			nedavna[obdobi[i].tema] = true
+		}
+		if skupinaMinule == "" {
+			if tm := temaZKlice(obdobi[i].tema); tm != nil {
+				skupinaMinule = tm.Skupina
+			}
 		}
 	}
 	var kandidati []NavrhTematu
@@ -140,7 +152,11 @@ func (a *App) GetNavrhSezony() NavrhSezony {
 		n := navrhTematu(InfoTematu{Tema: t, Soutezicich: len(soutezici), Fotek: fotek, Plati: len(soutezici) >= minModelekTematu}, vysledek.Tempo)
 		n.Ukazky = nejlepsiUkazky(soutezici, func(x, y int) bool { return x > y })
 		vysledek.Vsechna = append(vysledek.Vsechna, n)
-		if n.Plati && !nedavna[n.Klic] {
+		// Téma, ve kterém by soutěžila skoro celá sbírka (přes 70 % pořadí), je prakticky Klasická
+		if n.Plati && !nedavna[n.Klic] && (vPoradi < 20 || n.Soutezicich*10 <= vPoradi*7) {
+			if !behla[n.Klic] {
+				n.Stitek = "poprvé"
+			}
 			kandidati = append(kandidati, n)
 		}
 	}
@@ -148,8 +164,7 @@ func (a *App) GetNavrhSezony() NavrhSezony {
 	h := fnv.New64a()
 	h.Write([]byte(vysledek.Klic))
 	r := rand.New(rand.NewSource(int64(h.Sum64())))
-	r.Shuffle(len(kandidati), func(i, j int) { kandidati[i], kandidati[j] = kandidati[j], kandidati[i] })
-	vysledek.Navrhy = append(vysledek.Navrhy, kandidati[:min(navrhuTemat, len(kandidati))]...)
+	vysledek.Navrhy = append(vysledek.Navrhy, vybratNavrhyTemat(kandidati, skupinaMinule, r)...)
 	slices.SortStableFunc(vysledek.Vsechna, func(x, y NavrhTematu) int {
 		if x.Plati != y.Plati {
 			if x.Plati {
@@ -180,4 +195,81 @@ func nejlepsiUkazky(hodnoty map[int]int, lepsi func(x, y int) bool) []int {
 		return 1
 	})
 	return ids[:min(ukazekTematu, len(ids))]
+}
+
+// Tři návrhy po slotech: éra nebo kalendář · styl nebo místo · původ, půvab nebo kombinace (zhruba ve třetině
+// sezón místo něj „vzácné“ téma z dolní třetiny podle soutěžících). Uvnitř slotu losem s váhou √soutěžících ×
+// novost (téma, které ještě neběželo, ×1,5; skupina minulé sezóny ×0,6). Prázdný slot doplní zbylá témata.
+var slotyNavrhu = [][]string{{skupinaEra, skupinaKalendar}, {skupinaStyl, skupinaMisto}, {skupinaPuvod, skupinaPuvab, skupinaKombinace}}
+
+func vybratNavrhyTemat(kandidati []NavrhTematu, skupinaMinule string, r *rand.Rand) []NavrhTematu {
+	vaha := func(n NavrhTematu) float64 {
+		v := math.Sqrt(float64(max(n.Soutezicich, 1)))
+		if n.Stitek == "poprvé" {
+			v *= 1.5
+		}
+		if skupinaMinule != "" && n.Skupina == skupinaMinule {
+			v *= 0.6
+		}
+		return v
+	}
+	vybrane := map[string]bool{}
+	losovat := func(seznam []NavrhTematu) (NavrhTematu, bool) {
+		celkem := 0.0
+		for _, n := range seznam {
+			celkem += vaha(n)
+		}
+		if celkem == 0 {
+			return NavrhTematu{}, false
+		}
+		x := r.Float64() * celkem
+		for _, n := range seznam {
+			if x -= vaha(n); x <= 0 {
+				return n, true
+			}
+		}
+		return seznam[len(seznam)-1], true
+	}
+	volne := func(ok func(NavrhTematu) bool) []NavrhTematu {
+		var v []NavrhTematu
+		for _, n := range kandidati {
+			if !vybrane[n.Klic] && ok(n) {
+				v = append(v, n)
+			}
+		}
+		return v
+	}
+	// Vzácné: dolní třetina platných témat podle počtu soutěžících
+	pocty := make([]int, 0, len(kandidati))
+	for _, n := range kandidati {
+		pocty = append(pocty, n.Soutezicich)
+	}
+	slices.Sort(pocty)
+	hraniceVzacnych := 0
+	if len(pocty) >= 6 {
+		hraniceVzacnych = pocty[len(pocty)/3]
+	}
+	navrhy := []NavrhTematu{}
+	for i, skupiny := range slotyNavrhu {
+		seznam := volne(func(n NavrhTematu) bool { return slices.Contains(skupiny, n.Skupina) })
+		vzacne := i == len(slotyNavrhu)-1 && hraniceVzacnych > 0 && r.Intn(3) == 0
+		if vzacne {
+			if v := volne(func(n NavrhTematu) bool { return n.Soutezicich < hraniceVzacnych }); len(v) > 0 {
+				seznam = v
+			} else {
+				vzacne = false
+			}
+		}
+		if len(seznam) == 0 {
+			seznam = volne(func(NavrhTematu) bool { return true })
+		}
+		if n, ok := losovat(seznam); ok {
+			if vzacne {
+				n.Stitek = "vzácné"
+			}
+			vybrane[n.Klic] = true
+			navrhy = append(navrhy, n)
+		}
+	}
+	return navrhy
 }

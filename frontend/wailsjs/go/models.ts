@@ -656,6 +656,7 @@ export namespace main {
 	    souboju: number;
 	    duvod: string;
 	    ukazky: number[];
+	    stitek: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new NavrhTematu(source);
@@ -676,6 +677,7 @@ export namespace main {
 	        this.souboju = source["souboju"];
 	        this.duvod = source["duvod"];
 	        this.ukazky = source["ukazky"];
+	        this.stitek = source["stitek"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

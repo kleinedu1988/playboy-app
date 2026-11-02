@@ -41,7 +41,7 @@ function htmlKarty(t, druh, nahledy) {
             ? `${sklonovat(t.soutezicich, 'modelka', 'modelky', 'modelek')} v pořadí`
             : `${sklonovat(t.soutezicich, 'soutěžící', 'soutěžící', 'soutěžících')} · ${sklonovat(t.fotek, 'fotka', 'fotky', 'fotek')}`;
     return `<button type="button" class="vo-karta ${druh}" data-vo-tema="${esc(druh === 'los' ? '#los' : t.klic)}" aria-pressed="false">
-        <span class="vo-kolaz n${fotky.length}">${kolaz}</span>
+        <span class="vo-kolaz n${fotky.length}">${kolaz}${t.stitek && druh !== 'los' ? `<i class="vo-stitek ${t.stitek === 'vzácné' ? 'vzacne' : ''}" title="${esc(t.stitek === 'vzácné' ? 'Téma s málo soutěžícími – objev méně známé modelky' : 'Toto téma ještě neběželo')}">${esc(t.stitek)}</i>` : ''}</span>
         <span class="vo-text"><b>${druh === 'los' ? '🎲 Los' : `${t.ikona ? `<i class="vo-ikona" aria-hidden="true">${esc(t.ikona)}</i>` : ''}${esc(t.nazev)}`}</b>
         ${t.popis && druh !== 'los' ? `<span class="vo-afinita">${esc(t.popis)}</span>` : ''}<small>${esc(popis)}</small>
         ${druh === 'los' ? '' : `<em>doporučeno ${t.dni} dní</em>`}</span>

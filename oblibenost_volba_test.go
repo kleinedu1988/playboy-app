@@ -1,6 +1,8 @@
 package main
 
 import (
+	"math/rand"
+	"slices"
 	"testing"
 	"time"
 )
@@ -86,5 +88,40 @@ func TestNavrhSezony(t *testing.T) {
 	}
 	if a.GetSezona().Zvoleno || !a.SetObdobiSezony(n.Klic, n.Navrhy[0].Klic, 0) || !a.GetSezona().Zvoleno {
 		t.Error("příznak zvolené sezóny")
+	}
+}
+
+// Návrhy po slotech: éra, styl/místo, ostatní; prázdný slot doplní zbytek; vzácné jen z dolní třetiny
+func TestVyberNavrhuPoSlotech(t *testing.T) {
+	n := func(klic, skupina string, s int) NavrhTematu {
+		return NavrhTematu{InfoTematu: InfoTematu{Tema: Tema{Klic: klic, Skupina: skupina}, Soutezicich: s, Plati: true}}
+	}
+	kandidati := []NavrhTematu{n("e1", skupinaEra, 40), n("e2", skupinaEra, 30), n("k1", skupinaKalendar, 20),
+		n("s1", skupinaStyl, 25), n("m1", skupinaMisto, 12), n("p1", skupinaPuvod, 9), n("v1", skupinaPuvab, 50), n("x1", skupinaKombinace, 8)}
+	vzacnych := 0
+	for seed := int64(0); seed < 60; seed++ {
+		v := vybratNavrhyTemat(kandidati, "", rand.New(rand.NewSource(seed)))
+		if len(v) != 3 {
+			t.Fatalf("seed %d: %d návrhů", seed, len(v))
+		}
+		if !slices.Contains(slotyNavrhu[0], v[0].Skupina) || !slices.Contains(slotyNavrhu[1], v[1].Skupina) {
+			t.Errorf("seed %d: sloty %q %q", seed, v[0].Skupina, v[1].Skupina)
+		}
+		if v[2].Stitek == "vzácné" {
+			vzacnych++
+			if v[2].Soutezicich >= 12 {
+				t.Errorf("vzácné s %d soutěžícími", v[2].Soutezicich)
+			}
+		} else if !slices.Contains(slotyNavrhu[2], v[2].Skupina) {
+			t.Errorf("seed %d: třetí slot %q", seed, v[2].Skupina)
+		}
+	}
+	if vzacnych == 0 || vzacnych > 40 {
+		t.Errorf("vzácných %d z 60", vzacnych)
+	}
+	// Jen jedna skupina: tři různá témata
+	jen := []NavrhTematu{n("s1", skupinaStyl, 10), n("s2", skupinaStyl, 10), n("s3", skupinaStyl, 10)}
+	if v := vybratNavrhyTemat(jen, "", rand.New(rand.NewSource(1))); len(v) != 3 || v[0].Klic == v[1].Klic || v[1].Klic == v[2].Klic || v[0].Klic == v[2].Klic {
+		t.Errorf("jedna skupina: %+v", v)
 	}
 }

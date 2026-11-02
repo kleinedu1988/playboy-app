@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.4] – 2026-11-02
+
+### Změněno
+- **Pestřejší návrhy témat ve volbě sezóny**: tři návrhy jsou vždy éra nebo kalendář · styl nebo místo · původ, půvab nebo kombinace; zhruba ve třetině sezón je na třetím místě **vzácné** téma (málo soutěžících – objev méně známých modelek). Téma, které ještě neběželo, má větší šanci a štítek **poprvé**; skupina minulé sezóny menší. Téma, ve kterém by soutěžilo přes 70 % pořadí, se nenavrhuje (je to prakticky Klasická).
+
 ## [1.2.3] – 2026-11-02
 
 ### Přidáno

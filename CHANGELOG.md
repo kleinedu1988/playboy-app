@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.11] – 2026-11-02
+
+### Opraveno
+- **Uzavření sezóny jen jednou**: dvojklik na Vyhlásit (nebo dvě okna) už nezapíše Favoritku a Miláčka do kroniky podruhé (ani druhý titul do odznaku Favoritka).
+- **Téma sezóny podle toho, jak sezóna běžela**: skončená sezóna je tematická, jen když se v tématu opravdu porovnávalo – jinak se uzavře jako Klasická. Probíhající sezóna, ve které už jsou souboje v tématu, zůstane tematická, i když tématu mezitím ubude soutěžících; v Porovnat jde dohrát. Dřív se platnost brala podle dnešních fotek, takže body mohly zmizet a sezóna se nemusela nikdy uzavřít.
+- **Období sezón bez mezer** i po přechodu z měsíčních sezón (témata více budoucích měsíců z 1.1.2); první období začne 1. dnem měsíce, zkrácený měsíc má správný název a titul v kronice svůj název sezóny.
+- Klíče témat se ukládají jednotně (souboje, sezóny a návrhy se spolehlivě párují); sezóna s tématem, které už nejde načíst, se jmenuje podle období, ne „Klasická“.
+- Průvodce: smazaná fotka už neshodí uložení ani vrácení (spojený plakát se uloží bez ní); Vrátit obnoví tagy přesně.
+- Volba tématu a délky sezóny se kontroluje i zapisuje najednou (souběžně založené období ji nerozbije).
+
 ## [1.2.10] – 2026-11-02
 
 ### Přidáno

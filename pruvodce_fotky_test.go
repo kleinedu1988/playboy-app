@@ -116,6 +116,15 @@ func TestPruvodceFotek(t *testing.T) {
 	if !slices.Equal(tagy, []string{"akt", "podpatky", "postava", "studio"}) || a.GetPocetFotekKPruvodci() != 2 {
 		t.Errorf("po vrácení: %v, k průvodci %d", tagy, a.GetPocetFotekKPruvodci())
 	}
+	// Smazaná fotka: dávka se uloží bez ní a vrácení ji přeskočí
+	z := a.UlozitPruvodceFotky(ZapisPruvodce{Ids: []int{f2, 999999}, Skupiny: []string{"zaber"}, Tagy: []string{"detail"}, Hotovo: true})
+	if !z.Ok || len(z.Fotky) != 1 {
+		t.Errorf("dávka se smazanou fotkou: %+v", z)
+	}
+	a.db.Exec(`DELETE FROM fotky WHERE id = ?`, f2)
+	if !a.VratitPruvodceFotky(z) {
+		t.Error("vrácení smazané fotky má projít")
+	}
 	b := novaTestovaciApp(t, nil)
 	b.importovat(export)
 	if n := b.GetPocetFotekKPruvodci(); n != 1 {

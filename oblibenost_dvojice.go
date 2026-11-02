@@ -59,12 +59,14 @@ func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 	u.mu.Unlock()
 	// Tematická sezóna: jen soutěžící tématu a opakování podle soubojů v tématu (jinde šlo o jiné fotky)
 	if klic, ok := strings.CutPrefix(okruh, "tema:"); ok {
-		filtr := a.filtrSezony(klic)
-		if filtr == nil {
+		// Soutěžící dnes (i pod hranicí počtu – rozjetá tematická sezóna se dohraje); kanonický klíč
+		t := temaZKlice(klic)
+		if t == nil || t.Klic == "" {
 			return dvojice
 		}
-		modelky = slices.DeleteFunc(slices.Clone(modelky), func(m Modelka) bool { return filtr.soutezici[m.ID] == 0 })
-		porovnani = slices.DeleteFunc(slices.Clone(porovnani), func(p porovnaniZaznam) bool { return p.tema != klic })
+		soutezici, _ := souteziciTematu(t, modelky, a.fotkyProTemata())
+		modelky = slices.DeleteFunc(slices.Clone(modelky), func(m Modelka) bool { return soutezici[m.ID] == 0 })
+		porovnani = slices.DeleteFunc(slices.Clone(porovnani), func(p porovnaniZaznam) bool { return p.tema != t.Klic })
 		okruh = ""
 	}
 

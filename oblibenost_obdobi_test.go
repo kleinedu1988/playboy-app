@@ -92,3 +92,27 @@ func TestDelkaSezony(t *testing.T) {
 		t.Error("neexistující sezóna prošla")
 	}
 }
+
+// Mezera mezi obdobími z úpravy č. 8 (témata dvou budoucích měsíců) se vyplní; první období od začátku měsíce;
+// měsíc zkrácený prvním obdobím má zkrácené okno
+func TestObdobiMezeryAZacatek(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.uc.mu.Lock()
+	db := a.uc.zajistit()
+	db.Exec("INSERT INTO obdobi_sezon (od, do, tema) VALUES ('2026-12-01', '2027-01-01', 'tag:podpatky'), ('2027-02-01', '2027-03-01', '')")
+	a.uc.mu.Unlock()
+	obdobi, o := a.obdobiSezon(den(2026, 11, 2).Add(time.Hour))
+	if len(obdobi) != 4 || !obdobi[0].od.Equal(den(2026, 11, 1)) || !obdobi[2].od.Equal(den(2027, 1, 1)) || !obdobi[2].do.Equal(den(2027, 2, 1)) {
+		t.Fatalf("období: %+v", obdobi)
+	}
+	if !o.od.Equal(den(2026, 11, 1)) {
+		t.Errorf("probíhající: %+v", o)
+	}
+	od, do, _ := oknoSezony("2026-11", []obdobiSezony{{od: den(2026, 11, 15), do: den(2026, 11, 29)}})
+	if !od.Equal(den(2026, 11, 1)) || !do.Equal(den(2026, 11, 15)) {
+		t.Errorf("zkrácený měsíc: %v–%v", od, do)
+	}
+	if n := nazvySezony(den(2026, 11, 1), den(2026, 11, 15), "tag:neexistuje"); n.nazev != "1.–14. listopadu 2026" {
+		t.Errorf("neplatný klíč: %q", n.nazev)
+	}
+}

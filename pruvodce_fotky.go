@@ -6,7 +6,10 @@ package main
 // definuje backend, frontend jen vyhodnocuje podmínky (frontend/src/lib/pruvodce.js). Když přibude krok nebo
 // tag, zvýší se verzePruvodce a fotky prošlé starší verzí se nabídnou znovu (s předvyplněnými tagy).
 
-import "time"
+import (
+	"database/sql"
+	"errors"
+)
 
 const verzePruvodce = 1
 
@@ -158,10 +161,13 @@ func (a *App) UlozitPruvodceFotky(z ZapisPruvodce) PredchoziPruvodce {
 		}
 	}
 	hodnoceni := min(max(z.Hodnoceni, 0), 5)
-	ted := time.Now().Format("2006-01-02 15:04:05")
+	cas := ted()
 	vysledek.Ok = a.vTransakci("uložení průvodce fotky", func(q dotazovac) error {
 		for _, id := range z.Ids {
 			predtim, err := stavFotkyPruvodce(q, id)
+			if errors.Is(err, sql.ErrNoRows) {
+				continue // fotka mezitím smazaná: zbytek dávky (spojený plakát) se uloží
+			}
 			if err != nil {
 				return err
 			}
@@ -175,7 +181,7 @@ func (a *App) UlozitPruvodceFotky(z ZapisPruvodce) PredchoziPruvodce {
 				}
 			}
 			if z.Hotovo {
-				if _, err := q.Exec(`INSERT OR REPLACE INTO fotky_pruvodce (fotka_id, verze, hotovo) VALUES (?, ?, ?)`, id, verzePruvodce, ted); err != nil {
+				if _, err := q.Exec(`INSERT OR REPLACE INTO fotky_pruvodce (fotka_id, verze, hotovo) VALUES (?, ?, ?)`, id, verzePruvodce, cas); err != nil {
 					return err
 				}
 			}
@@ -199,12 +205,19 @@ func stavFotkyPruvodce(q dotazovac, id int) (StavFotkyPruvodce, error) {
 	}
 	for radky.Next() {
 		var t string
-		if radky.Scan(&t) == nil {
-			s.Tagy = append(s.Tagy, t)
+		if err := radky.Scan(&t); err != nil {
+			radky.Close()
+			return s, err
 		}
+		s.Tagy = append(s.Tagy, t)
 	}
 	radky.Close()
-	q.QueryRow(`SELECT verze, hotovo FROM fotky_pruvodce WHERE fotka_id = ?`, id).Scan(&s.Verze, &s.Hotovo)
+	if err := radky.Err(); err != nil {
+		return s, err
+	}
+	if err := q.QueryRow(`SELECT verze, hotovo FROM fotky_pruvodce WHERE fotka_id = ?`, id).Scan(&s.Verze, &s.Hotovo); err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return s, err
+	}
 	return s, nil
 }
 
@@ -215,10 +228,19 @@ func (a *App) VratitPruvodceFotky(p PredchoziPruvodce) bool {
 	}
 	return a.vTransakci("vrácení průvodce fotky", func(q dotazovac) error {
 		for _, f := range p.Fotky {
+			// Fotka mezitím smazaná: nic k vrácení (cizí klíč by jinak shodil celé vrácení)
+			var existuje int
+			if err := q.QueryRow(`SELECT COUNT(*) FROM fotky WHERE id = ?`, f.ID).Scan(&existuje); err != nil {
+				return err
+			}
+			if existuje == 0 {
+				continue
+			}
 			if _, err := q.Exec(`DELETE FROM fotky_tagy WHERE fotka_id = ?`, f.ID); err != nil {
 				return err
 			}
-			for _, t := range platneTagy(f.Tagy) {
+			// Přesně podle snímku (i tagy, které mezitím z katalogu zmizely)
+			for _, t := range f.Tagy {
 				if _, err := q.Exec(`INSERT OR IGNORE INTO fotky_tagy (fotka_id, tag) VALUES (?, ?)`, f.ID, t); err != nil {
 					return err
 				}

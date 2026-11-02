@@ -113,7 +113,19 @@ func TestUzavreniSezony(t *testing.T) {
 		t.Errorf("druhé uzavření: %+v", m)
 	}
 	// Kronika a odznak Favoritky; vrácení porovnání je nesmaže
+	if a.UzavritSezonu(s.Minule[0].Klic, idb) {
+		t.Error("už uzavřená sezóna se uzavřela znovu")
+	}
 	slava := a.GetSinSlavy()
+	favoritek := 0
+	for _, u := range slava.Kronika {
+		if u.Druh == udalostFavoritka {
+			favoritek++
+		}
+	}
+	if favoritek != 1 {
+		t.Errorf("Favoritka v kronice %d×", favoritek)
+	}
 	druhy := map[string]int{}
 	mesic := zacatekMesice(time.Now()).AddDate(0, -1, 0)
 	for _, u := range slava.Kronika {

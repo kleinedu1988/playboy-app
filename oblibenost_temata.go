@@ -11,8 +11,10 @@ package main
 // („tag:prsa+modelka:prsaTyp=Přírodní“), takže jde uložit i téma složené mimo katalog.
 
 import (
+	"slices"
 	"sort"
 	"strings"
+	"time"
 )
 
 var (
@@ -502,10 +504,12 @@ func nazevKliceTematu(klic string) string {
 
 // Porovnání v tématu sezóny (Porovnat v tematickém režimu): jako PorovnatModelky, se zapsaným tématem
 func (a *App) PorovnatModelkyVTematu(modelkaA, modelkaB int, vysledek, tema string) bool {
-	if temaZKlice(tema) == nil {
+	t := temaZKlice(tema)
+	if t == nil {
 		return false
 	}
-	return a.porovnatModelky(modelkaA, modelkaB, vysledek, tema)
+	// Kanonický klíč (souboje se se sezónou párují přesnou shodou)
+	return a.porovnatModelky(modelkaA, modelkaB, vysledek, t.Klic)
 }
 
 // Filtr bodů sezóny: platné téma a jeho soutěžící; nil = Klasická
@@ -525,6 +529,28 @@ func (a *App) filtrSezony(tema string) *filtrSezony {
 	if len(s) < minModelekTematu {
 		return nil
 	}
+	return &filtrSezony{tema: *t, soutezici: s}
+}
+
+// Filtr sezóny v okně [od, do): téma platí, když se v něm v té sezóně opravdu porovnávalo (rozhoduje, jak sezóna
+// běžela, ne dnešní počet soutěžících – ten se dotagováním mění); soutěžící jsou dnešní soutěžící tématu (i pod
+// hranicí počtu). Bez tematických soubojů: probíhající sezóna podle dnešní platnosti tématu, skončená jako Klasická.
+func (a *App) filtrSezonyOkna(tema string, porovnani []porovnaniZaznam, od, do time.Time, probiha bool) *filtrSezony {
+	t := temaZKlice(tema)
+	if t == nil || t.Klic == "" {
+		return nil
+	}
+	vTematu := slices.ContainsFunc(porovnani, func(p porovnaniZaznam) bool {
+		return p.tema == t.Klic && !p.cas.Before(od) && p.cas.Before(do)
+	})
+	if !vTematu {
+		if !probiha {
+			return nil
+		}
+		return a.filtrSezony(t.Klic)
+	}
+	modelky, _ := a.nactiModelky("", false)
+	s, _ := souteziciTematu(t, modelky, a.fotkyProTemata())
 	return &filtrSezony{tema: *t, soutezici: s}
 }
 

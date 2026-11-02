@@ -78,10 +78,22 @@ func (a *App) obdobiSezon(nyni time.Time) ([]obdobiSezony, obdobiSezony) {
 		od := zacatekMesice(nyni)
 		zalozit(obdobiSezony{od: od, do: od.AddDate(0, 1, 0)})
 	}
-	if nyni.Before(obdobi[0].od) { // jen období v budoucnu (téma budoucího měsíce z úpravy č. 8): dnešek do něj
-		zalozit(obdobiSezony{od: zacatekDne(nyni), do: obdobi[0].od})
-		slices.SortFunc(obdobi, func(x, y obdobiSezony) int { return x.od.Compare(y.od) })
+	serazeni := func() { slices.SortFunc(obdobi, func(x, y obdobiSezony) int { return x.od.Compare(y.od) }) }
+	if nyni.Before(obdobi[0].od) { // jen období v budoucnu (téma budoucího měsíce z úpravy č. 8): od začátku měsíce
+		od := zacatekMesice(nyni)
+		if !od.Before(obdobi[0].od) {
+			od = zacatekDne(nyni)
+		}
+		zalozit(obdobiSezony{od: od, do: obdobi[0].od})
+		serazeni()
 	}
+	// Mezery mezi obdobími (víc budoucích měsíců s tématem z úpravy č. 8) se vyplní, ať sezóny jdou bez mezer
+	for i := len(obdobi) - 2; i >= 0; i-- {
+		if obdobi[i].do.Before(obdobi[i+1].od) {
+			zalozit(obdobiSezony{od: obdobi[i].do, do: obdobi[i+1].od})
+		}
+	}
+	serazeni()
 	for !nyni.Before(obdobi[len(obdobi)-1].do) {
 		od := obdobi[len(obdobi)-1].do
 		zalozit(obdobiSezony{od: od, do: od.AddDate(0, 0, vychoziDelkaSezony)})
@@ -99,11 +111,20 @@ func (a *App) obdobiSezon(nyni time.Time) ([]obdobiSezony, obdobiSezony) {
 // délku nejde měnit, když za sezónou už začalo další období.
 func (a *App) SetObdobiSezony(od, tema string, dni int) bool {
 	u := a.uc
-	if u == nil || temaZKlice(tema) == nil || (dni != 0 && !slices.Contains(delkySezon, dni)) {
+	t := temaZKlice(tema)
+	if u == nil || t == nil || (dni != 0 && !slices.Contains(delkySezon, dni)) {
 		return false
 	}
 	nyni := time.Now()
-	obdobi, _ := a.obdobiSezon(nyni)
+	a.obdobiSezon(nyni) // založí chybějící období
+	// Kontrola i zápis pod jedním zámkem (mezitím nesmí vzniknout další období)
+	u.mu.Lock()
+	defer u.mu.Unlock()
+	db := u.zajistit()
+	if db == nil {
+		return false
+	}
+	obdobi := u.nacistObdobi()
 	i := slices.IndexFunc(obdobi, func(o obdobiSezony) bool { return o.klic() == od })
 	if i < 0 || !nyni.Before(obdobi[i].do) {
 		return false
@@ -111,17 +132,12 @@ func (a *App) SetObdobiSezony(od, tema string, dni int) bool {
 	do := obdobi[i].do
 	if dni != 0 {
 		do = obdobi[i].od.AddDate(0, 0, dni)
-		if !do.After(nyni) || (i < len(obdobi)-1 && do != obdobi[i].do) {
+		if !do.After(nyni) || (i < len(obdobi)-1 && !do.Equal(obdobi[i].do)) {
 			return false
 		}
 	}
-	u.mu.Lock()
-	defer u.mu.Unlock()
-	db := u.zajistit()
-	if db == nil {
-		return false
-	}
-	if _, err := db.Exec("UPDATE obdobi_sezon SET tema = ?, do = ?, zvoleno = ? WHERE od = ?", tema, do.Format(formatDne), ted(), od); err != nil {
+	// Kanonický klíč tématu (souboje a sezóny se párují přesnou shodou)
+	if _, err := db.Exec("UPDATE obdobi_sezon SET tema = ?, do = ?, zvoleno = ? WHERE od = ?", t.Klic, do.Format(formatDne), ted(), od); err != nil {
 		varovatUceni("téma sezóny se nepodařilo uložit: %v", err)
 		return false
 	}
@@ -162,8 +178,9 @@ type nazvy struct{ nazev, kratky, obdobi string }
 
 func nazvySezony(od, do time.Time, tema string) nazvy {
 	n := nazvy{nazev: textObdobi(od, do, true), kratky: textObdobi(od, do, false), obdobi: textObdobi(od, do, true)}
-	if tema != "" {
-		n.nazev = nazevKliceTematu(tema)
+	// Neplatný klíč (např. tag, který už v katalogu není) dá název podle období, ne „Klasická“
+	if t := temaZKlice(tema); tema != "" && t != nil {
+		n.nazev = t.Nazev
 		n.kratky = n.nazev
 	}
 	return n
@@ -176,8 +193,8 @@ type sezonaKlic struct {
 	tema   string
 }
 
-// Ukončené sezóny od nejstarší: měsíce před prvním obdobím (nejvýš mesicuZpetKUzavreni zpět od prvního
-// porovnání) a ukončená období
+// Ukončené sezóny od nejstarší: měsíce před prvním obdobím (od prvního porovnání, nejvýš mesicuZpetKUzavreni měsíců
+// zpět od dneška) a ukončená období
 func ukonceneSezony(porovnani []porovnaniZaznam, obdobi []obdobiSezony, nyni time.Time) []sezonaKlic {
 	var vysledek []sezonaKlic
 	if len(obdobi) > 0 && len(porovnani) > 0 {

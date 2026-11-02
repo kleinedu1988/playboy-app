@@ -130,17 +130,17 @@ func (a *App) GetNavrhSezony() NavrhSezony {
 	behla := map[string]bool{}
 	skupinaMinule := ""
 	for i := len(obdobi) - 1; i >= 0; i-- {
-		if !obdobi[i].od.Before(o.od) || obdobi[i].tema == "" {
+		tm := temaZKlice(obdobi[i].tema)
+		if !obdobi[i].od.Before(o.od) || tm == nil || tm.Klic == "" {
 			continue
 		}
-		behla[obdobi[i].tema] = true
+		// Témata posledních zvolených tematických sezón (Klasické se nepočítají)
+		behla[tm.Klic] = true
 		if len(nedavna) < poslednichBezOpak {
-			nedavna[obdobi[i].tema] = true
+			nedavna[tm.Klic] = true
 		}
 		if skupinaMinule == "" {
-			if tm := temaZKlice(obdobi[i].tema); tm != nil {
-				skupinaMinule = tm.Skupina
-			}
+			skupinaMinule = tm.Skupina
 		}
 	}
 	var kandidati []NavrhTematu

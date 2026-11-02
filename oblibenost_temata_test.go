@@ -134,8 +134,17 @@ func TestTemaSezonyVAplikaci(t *testing.T) {
 		t.Error("dvojice v neplatném tématu")
 	}
 
-	// Málo soutěžících: sezóna běží jako Klasická (všechny souboje)
+	// Málo soutěžících dnes, ale v tématu se už porovnávalo: sezóna zůstane tematická (rozhoduje, jak běžela)
 	minModelekTematu = 3
+	s = a.GetSezona()
+	if s.Tema == nil || s.Souboju != 1 {
+		t.Errorf("téma s odehranými souboji: tema %+v, soubojů %d", s.Tema, s.Souboju)
+	}
+	// Bez tematických soubojů a s málo soutěžícími: Klasická (všechny souboje)
+	a.uc.mu.Lock()
+	a.uc.zajistit().Exec(`UPDATE porovnani SET tema = ''`)
+	a.uc.ob.nacteno, a.uc.ob.porovnani, a.uc.ob.model = false, nil, nil
+	a.uc.mu.Unlock()
 	s = a.GetSezona()
 	if s.Tema != nil || s.Souboju != 3 || s.Nazev != s.Obdobi || s.Zvolene != "tag:podpatky" {
 		t.Errorf("Klasická místo tématu: tema %+v, soubojů %d, název %q", s.Tema, s.Souboju, s.Nazev)

@@ -339,7 +339,11 @@ func (a *App) sezonaKUzavreni(porovnani []porovnaniZaznam, poradi map[int]int, e
 		if uzavrene[k.klic] {
 			continue
 		}
-		filtr := a.filtrSezony(k.tema)
+		// Bez jediného souboje v okně se nic nepočítá (a téma se nevyhodnocuje – je to drahé)
+		if pocetSouboju(porovnani, k.od, k.do, nil) == 0 {
+			continue
+		}
+		filtr := a.filtrSezonyOkna(k.tema, porovnani, k.od, k.do, false)
 		souboju := pocetSouboju(porovnani, k.od, k.do, filtr)
 		if souboju == 0 {
 			continue
@@ -376,9 +380,14 @@ func (a *App) zapsatSezonu(do time.Time, s MinulaSezona) bool {
 	}
 	defer tx.Rollback()
 	cas := do.Add(-time.Second).Format("2006-01-02 15:04:05")
-	if _, err := tx.Exec("INSERT OR IGNORE INTO sezony (mesic, tema, favoritka, milacek, body, souboju, uzavreno) VALUES (?, ?, ?, ?, ?, ?, ?)",
-		s.Klic, s.Tema, s.Favoritka, s.Milacek, s.Body, s.Souboju, time.Now().Format("2006-01-02 15:04:05")); err != nil {
+	res, err := tx.Exec("INSERT OR IGNORE INTO sezony (mesic, tema, favoritka, milacek, body, souboju, uzavreno) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		s.Klic, s.Tema, s.Favoritka, s.Milacek, s.Body, s.Souboju, time.Now().Format("2006-01-02 15:04:05"))
+	if err != nil {
 		varovatUceni("sezónu se nepodařilo uzavřít: %v", err)
+		return false
+	}
+	// Už uzavřená sezóna: tituly se do kroniky podruhé nezapíšou
+	if n, err := res.RowsAffected(); err != nil || n != 1 {
 		return false
 	}
 	for _, x := range []struct {
@@ -386,7 +395,10 @@ func (a *App) zapsatSezonu(do time.Time, s MinulaSezona) bool {
 		id   int
 	}{{udalostFavoritka, s.Favoritka}, {udalostMilacek, s.Milacek}} {
 		if x.id > 0 {
-			tx.Exec("INSERT INTO kronika_slavy (cas, porovnani_id, modelka_id, druh, misto, souperka) VALUES (?, 0, ?, ?, 0, 0)", cas, x.id, x.druh)
+			if _, err := tx.Exec("INSERT INTO kronika_slavy (cas, porovnani_id, modelka_id, druh, misto, souperka) VALUES (?, 0, ?, ?, 0, 0)", cas, x.id, x.druh); err != nil {
+				varovatUceni("titul sezóny se nepodařilo zapsat: %v", err)
+				return false
+			}
 		}
 	}
 	return tx.Commit() == nil
@@ -395,7 +407,12 @@ func (a *App) zapsatSezonu(do time.Time, s MinulaSezona) bool {
 // Okno a název uzavřené sezóny podle klíče: měsíc (RRRR-MM) nebo období
 func oknoSezony(klic string, obdobi []obdobiSezony) (time.Time, time.Time, bool) {
 	if m, err := time.ParseInLocation("2006-01", klic, time.Local); err == nil {
-		return m, m.AddDate(0, 1, 0), true
+		do := m.AddDate(0, 1, 0)
+		// Měsíc zkrácený prvním obdobím (stejně jako v ukonceneSezony)
+		if len(obdobi) > 0 && do.After(obdobi[0].od) && m.Before(obdobi[0].od) {
+			do = obdobi[0].od
+		}
+		return m, do, true
 	}
 	for _, o := range obdobi {
 		if o.klic() == klic {
@@ -434,7 +451,7 @@ func (a *App) GetSezona() Sezona {
 		minule = a.uc.nacistSezony()
 		a.uc.mu.Unlock()
 	}
-	filtr := a.filtrSezony(o.tema)
+	filtr := a.filtrSezonyOkna(o.tema, porovnani, od, do, true)
 	if filtr != nil {
 		t := filtr.tema
 		s.Tema, s.Soutezicich = &t, len(filtr.soutezici)
@@ -475,7 +492,15 @@ func (a *App) UzavritSezonu(klic string, milacek int) bool {
 		return false
 	}
 	k := ukonceneSezony(porovnani, obdobi, nyni)[i]
-	filtr := a.filtrSezony(k.tema)
+	a.uc.mu.Lock()
+	for _, m := range a.uc.nacistSezony() {
+		if m.Klic == klic {
+			a.uc.mu.Unlock()
+			return false // už uzavřená (dvojklik, dvě okna vyhlášení)
+		}
+	}
+	a.uc.mu.Unlock()
+	filtr := a.filtrSezonyOkna(k.tema, porovnani, k.od, k.do, false)
 	body := a.bodySezony(porovnani, poradi, existuje, k.od, k.do, filtr)
 	s := MinulaSezona{NazevSezony: NazevSezony{Klic: klic}, Tema: filtr.klic(), Souboju: pocetSouboju(porovnani, k.od, k.do, filtr)}
 	if len(body) > 0 && body[0].Soutezi {

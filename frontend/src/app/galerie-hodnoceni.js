@@ -4,7 +4,8 @@
 // V prohlížeči 1–5 fotku ohodnotí a ta z něj hned vypadne (otevritLightbox s jenNehodnocene). Seznam dodává
 // GetNehodnoceneFotky (jen když je potřeba), počet pro hlavičku Hodnocení GetPocetNehodnocenychFotek; hodnocení
 // fotek kdekoli jinde ho hned upraví (událost hodnoceni-fotek).
-import { GetNehodnoceneFotky, GetPocetNehodnocenychFotek, SetHodnoceni } from './backend';
+import { GetNehodnoceneFotky, GetNepotagovaneFotky, GetPocetNehodnocenychFotek, GetPoctyTagu, SetHodnoceni } from './backend';
+import { historieTagu, nazevTagu, otagovano, vratitTagovani, vykreslitPanel, zacitTagovani } from './tagovani';
 import { htmlOdhadu, htmlSrdicka } from './galerie';
 import { kratceSrdicka } from '../lib/srdicka';
 import { obnovitSrdickaModelky } from '../ui/srdicka';
@@ -80,6 +81,8 @@ export function nacistGalerii(prvek) {
 }
 
 async function nacistGaleriiJednou() {
+    if (pohledHodnotit() === 'tagy') return nacistTagy();
+    nacistPocetBezTagu();
     let fotky = [];
     try {
         fotky = await GetNehodnoceneFotky() || [];
@@ -111,6 +114,7 @@ function modelkyFronty() {
 function vykreslit(fotek) {
     if (!kontejner) return;
     if (pohledHodnotit() === 'modelky') return vykreslitModelky();
+    if (pohledHodnotit() === 'tagy') return vykreslitTagy();
     if (!polozky.length) {
         nastavitHtml(kontejner, `<div class="ob-karta">${htmlPrazdna('Všechny fotky jsou ohodnocené', 'Nové nehodnocené fotky se tu objeví, až je přidáš.', { ikona: 'hvezda' })}</div>`);
         return ukazatVolby();
@@ -173,6 +177,97 @@ function vykreslitListuProhlizece() {
     ukazatVolby();
 }
 
+// ——— Hodnotit › Tagy: fronta fotek bez tagů po albech (tagování v prohlížeči, tagovani.js) ———
+let polozkyTagu = [];
+let pocetBezTagu = -1;
+export const pocetNepotagovanych = () => pocetBezTagu;
+
+async function nacistPocetBezTagu() {
+    try {
+        const n = (await GetPoctyTagu())?.[''] ?? -1;
+        if (n !== pocetBezTagu) {
+            pocetBezTagu = n;
+            poZmenePoctu(pocet);
+        }
+    } catch { /* bez počtu */ }
+}
+
+async function nacistTagy() {
+    let fotky = [];
+    try { fotky = await GetNepotagovaneFotky() || []; } catch { fotky = []; }
+    // Po modelkách a albech, jak přišly (série z jednoho focení za sebou); spojený plakát je jedna položka
+    polozkyTagu = sestavitAlba(fotky).flatMap(a => a.polozky);
+    pocetBezTagu = fotky.length;
+    poZmenePoctu(pocet);
+    vykreslit(pocet);
+}
+
+function vykreslitTagy() {
+    if (!polozkyTagu.length) {
+        nastavitHtml(kontejner, `<div class="volby-v-liste" data-volby-casti="hodnoceni-fotky"><span>Všechny fotky mají tagy</span></div>
+            <div class="ob-karta">${htmlPrazdna('Všechny fotky mají tagy', 'Nové fotky bez tagů se tu objeví, až je přidáš.', { ikona: 'hvezda' })}</div>`);
+        return ukazatVolby();
+    }
+    // Alba fronty: klik začne tagovat od jejich první fotky
+    const alba = [];
+    polozkyTagu.forEach((p, i) => {
+        const klic = `${p.modelkaId}|${p.album}|${p.typ}`;
+        const posledni = alba[alba.length - 1];
+        if (posledni?.klic === klic) posledni.n++;
+        else alba.push({ klic, od: i, n: 1, nazev: `${p.jmenoModelky || ''} · ${p.album}` });
+    });
+    nastavitHtml(kontejner, `
+        <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky">
+            <button type="button" data-tg-start data-stav-klavesa="↵" data-stav-priorita="1" title="Začít tagovat (Enter)">Tagovat</button>
+            <span>${esc(`${sklonovat(pocetBezTagu, 'fotka', 'fotky', 'fotek')} bez tagů · ${sklonovat(alba.length, 'album', 'alba', 'alb')}`)}</span>
+        </div>
+        <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky-tag" data-tg-lista
+            data-stav-napoveda="Z záběr · O odhalení · M místo · P prsa · V vagina · H podpatky · ↵ uložit · 1–5 i srdíčka · . jako minulá · ⇧↵ celé album"></div>
+        <div class="ob-karta gh-dlazdice">
+            <div class="gh-nahledy" aria-label="Na řadě – klik začne tagovat od fotky">${polozkyTagu.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-tg-od="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
+                <button type="button" class="gh-start" data-tg-start title="Prohlížeč s panelem tagů na první fotce fronty (Enter)">🏷 Začít tagovat <kbd>↵</kbd></button>
+            </div>
+            <div class="gh-modelky" aria-label="Alba bez tagů">
+                <small>Album</small>
+                ${alba.slice(0, MODELEK).map(a => `<button type="button" class="gh-modelka" data-tg-od="${a.od}" title="Tagovat od první fotky alba">${esc(a.nazev)}<b>${a.n}</b></button>`).join('')}
+                ${alba.length > MODELEK ? `<span class="gh-dalsi">+ ${esc(sklonovat(alba.length - MODELEK, 'další album', 'další alba', 'dalších alb'))}</span>` : ''}
+            </div>
+        </div>`);
+    ukazatVolby();
+}
+
+// Tagování v prohlížeči od položky fronty; po zavření se fronta načte znovu (až doběhnou zápisy)
+async function otevritTagovani(od = 0) {
+    if (!polozkyTagu.length) return;
+    await zacitTagovani();
+    prohlizetBezZajmu();
+    otevritLightbox(od, false, [...polozkyTagu], { tagovani: true, poZavreni: () => { if (kontejner?.isConnected) nacistTagy(); } });
+    vykreslitPanel();
+}
+
+// Stavová lišta tagování: dílky k další desítce, „Otagováno 3 · zbývá 120“, po uložení „✓ Postava · Akt · Studio“
+// a pak „↶ Vrátit“, za tím klávesy
+let casovacTagu = 0;
+function vykreslitListuTagovani() {
+    const misto = kontejner?.querySelector('[data-tg-lista]');
+    if (!misto) return;
+    if (!stav.lbTagovani) {
+        nastavitHtml(misto, '');
+        return ukazatVolby();
+    }
+    const cil = (Math.floor(otagovano / 10) + 1) * 10;
+    const dilky = Array.from({ length: 10 }, (_, i) => `<i class="${i < otagovano - (cil - 10) ? 'on' : ''}"></i>`).join('');
+    const posledni = historieTagu[historieTagu.length - 1];
+    let vratit = '';
+    if (posledni) {
+        const text = `${posledni.tagy.map(nazevTagu).join(' · ')}${posledni.hodnoceni ? ` ${'♥'.repeat(posledni.hodnoceni)}` : ''}${posledni.polozky.length > 1 ? ` (${posledni.polozky.length} fotek)` : ''}`;
+        const cerstve = Date.now() - posledni.cas < POTVRZENI_MS;
+        vratit = `<button type="button" data-tg-vratit data-stav-priorita="1" data-stav-trida="${cerstve ? 'stav-potvrzeni' : 'stav-akce'}" title="Vrátit poslední uložení (Backspace)">${esc(cerstve ? `✓ ${text} · ↶` : `↶ Vrátit: ${text}`)}</button>`;
+    }
+    nastavitHtml(misto, `${vratit}<span data-stav-html><span class="stav-dilky" aria-hidden="true">${dilky}</span>Otagováno ${otagovano} · zbývá ${stav.lbPolozky.length}</span>`);
+    ukazatVolby();
+}
+
 // Pořadí fotek (Náhodně / Po modelkách) je volba v liště pod hledáním: skrytý řádek nahoře převezme prehled.js
 const ukazatVolby = () => document.dispatchEvent(new CustomEvent('volby-prehledu'));
 
@@ -182,10 +277,16 @@ const ukazatVolby = () => document.dispatchEvent(new CustomEvent('volby-prehledu
 const KLIC_POHLEDU = 'hodnotitPohled';
 const MODELEK_NAJEDNOU = 60;
 const DALSI_PO_MS = 1100;
-export const pohledHodnotit = () => { try { return localStorage.getItem(KLIC_POHLEDU) === 'modelky' ? 'modelky' : 'fotky'; } catch { return 'fotky'; } };
+export const pohledHodnotit = () => {
+    try {
+        const p = localStorage.getItem(KLIC_POHLEDU);
+        return p === 'modelky' || p === 'tagy' ? p : 'fotky';
+    } catch { return 'fotky'; }
+};
 export function nastavitPohledHodnotit(klic) {
     try { localStorage.setItem(KLIC_POHLEDU, klic); } catch { /* jen pro toto spuštění */ }
     relaceModelek = { historie: [], hotove: new Set() };
+    if (klic === 'tagy') return nacistTagy();
     vykreslit(pocet);
     if (klic === 'modelky') zameritDalsi(null);
 }
@@ -316,8 +417,16 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
         polozky = polozky.filter(p => !p.hodnoceni);
         if (!stav.lbJenNehodnocene && kontejner?.isConnected && polozky.length) vykreslit(pocet);
     });
+    // Tagování: panel skupin a stavová lišta pro zobrazenou fotku; potvrzení po chvíli přejde ve Vrátit
+    document.addEventListener('lb-tagovani', () => {
+        vykreslitPanel();
+        vykreslitListuTagovani();
+        clearTimeout(casovacTagu);
+        casovacTagu = setTimeout(vykreslitListuTagovani, POTVRZENI_MS + 50);
+    });
     // Prohlížeč fronty ohodnotil, vrátil, otevřel se nebo zavřel: stavová lišta (potvrzení po chvíli přejde ve Vrátit)
     document.addEventListener('lb-hodnoceni', () => {
+        vykreslitListuTagovani();
         const posledni = stav.lbHistorie[stav.lbHistorie.length - 1];
         if (posledni && !posledni.cas) posledni.cas = Date.now();
         vykreslitListuProhlizece();
@@ -329,7 +438,11 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
         if (!kontejner?.contains(t)) return;
         const ukazka = /** @type {HTMLElement | null} */ (t.closest('[data-gh-ukazka]'));
         const jedna = /** @type {HTMLElement | null} */ (t.closest('[data-gh-modelka]'));
-        if (t.closest('[data-gh-start]')) otevrit(0);
+        const odTagu = /** @type {HTMLElement | null} */ (t.closest('[data-tg-od]'));
+        if (t.closest('[data-tg-start]')) otevritTagovani(0);
+        else if (odTagu) otevritTagovani(Number(odTagu.dataset.tgOd));
+        else if (t.closest('[data-tg-vratit]')) vratitTagovani();
+        else if (t.closest('[data-gh-start]')) otevrit(0);
         else if (t.closest('[data-gh-promitat]')) otevrit(0, true);
         else if (t.closest('[data-gh-vratit]')) lbVratitHodnoceni();
         else if (t.closest('[data-hm-vratit]')) vratitModelku();
@@ -355,10 +468,21 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
     // Na stránce Fotky: Enter začne hodnotit, mezerník promítat (ne při psaní, nad oknem ani na tlačítku)
     document.addEventListener('keydown', (e) => {
         if (pohledHodnotit() === 'modelky') return;
+        if (pohledHodnotit() === 'tagy') {
+            if (e.key !== 'Enter' || e.ctrlKey || e.altKey || e.metaKey || e.repeat || !kontejner?.isConnected || !kontejner.offsetParent
+                || !polozkyTagu.length || stav.zamceno || jeVidet('lightbox') || otevreneOkno()) return;
+            if (/** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select, button, a, [contenteditable]')) return;
+            // Týž Enter nesmí dojít k prohlížeči (uložil by fotku bez tagů)
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            otevritTagovani(0);
+            return;
+        }
         if ((e.key !== 'Enter' && e.key !== ' ') || e.ctrlKey || e.altKey || e.metaKey || e.repeat) return;
         if (!kontejner?.isConnected || !kontejner.offsetParent || !polozky.length || stav.zamceno || jeVidet('lightbox') || otevreneOkno()) return;
         if (/** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select, button, a, [contenteditable]')) return;
         e.preventDefault();
+        e.stopImmediatePropagation();
         otevrit(0, e.key === ' ');
     });
 }

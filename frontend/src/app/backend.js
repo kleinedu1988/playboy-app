@@ -33,6 +33,7 @@ const CTENI = new Set([
     'GetTagyFotek',
     'SetTagyFotek',
     'GetPoctyTagu',
+    'GetNepotagovaneFotky',
     'GetOblibenost',
     'GetPrehled',
     'GetPrehledOblibenosti',
@@ -109,6 +110,7 @@ export const GetKatalogTagu = /** @type {typeof App.GetKatalogTagu} */ (obalit('
 export const GetTagyFotek = /** @type {typeof App.GetTagyFotek} */ (obalit('GetTagyFotek'));
 export const SetTagyFotek = /** @type {typeof App.SetTagyFotek} */ (obalit('SetTagyFotek'));
 export const GetPoctyTagu = /** @type {typeof App.GetPoctyTagu} */ (obalit('GetPoctyTagu'));
+export const GetNepotagovaneFotky = /** @type {typeof App.GetNepotagovaneFotky} */ (obalit('GetNepotagovaneFotky'));
 export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehled'));
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));
 export const GetSablonaObrazku = /** @type {typeof App.GetSablonaObrazku} */ (obalit('GetSablonaObrazku'));

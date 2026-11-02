@@ -126,6 +126,10 @@ export function GetNejlepsiFotky(arg1) {
   return window['go']['main']['App']['GetNejlepsiFotky'](arg1);
 }
 
+export function GetNepotagovaneFotky() {
+  return window['go']['main']['App']['GetNepotagovaneFotky']();
+}
+
 export function GetOblibenost() {
   return window['go']['main']['App']['GetOblibenost']();
 }

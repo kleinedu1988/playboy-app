@@ -185,3 +185,12 @@ func vsechnyTagyFotek(db *sql.DB) map[int][]string {
 	}
 	return vysledek
 }
+
+// Fotky modelek bez jediného tagu (Hodnocení › Hodnotit › Tagy): po modelkách a albech, aby šla série z jednoho
+// focení za sebou (stejné prostředí a oblečení); fotky bez modelky (obálky) ne
+func (a *App) GetNepotagovaneFotky() []Fotografie {
+	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
+		JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
+		WHERE NOT EXISTS (SELECT 1 FROM fotky_tagy t WHERE t.fotka_id = f.id)
+		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true))
+}

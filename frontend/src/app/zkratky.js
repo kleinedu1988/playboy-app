@@ -108,6 +108,10 @@ const CASTI = [
         [k('Mezerník'), 'Promítat nehodnocené fotky'],
         [`${k('1')}–${k('5')}`, 'Modelky: srdíčka zaměřené karty (stejná znovu = půlka), pak se fokus posune na další'],
         [k('Backspace'), 'Modelky: vrátit poslední hodnocení'],
+        [`${k('Z')} ${k('O')} ${k('M')}`, 'Tagy: záběr, odhalení, místo – každý stisk další hodnota (Shift předchozí)'],
+        [`${k('P')} ${k('V')} ${k('H')}`, 'Tagy: prsa, vagina, podpatky (ostatní klikem v panelu)'],
+        [`${k('Enter')}${nebo}${k('1')}–${k('5')}`, 'Tagy: uložit a další (číslice i se srdíčky)'],
+        [`${k('.')}${nebo}${k('Shift', 'Enter')}`, 'Tagy: jako minulá fotka · stejné tagy celému albu'],
     ] },
     { klic: 'ctecka', nazev: 'Čtečka stran', radky: [
         [`${k('←', '→')}${nebo}${k('Mezerník')}`, 'Listovat'],

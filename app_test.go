@@ -3055,6 +3055,9 @@ func TestTagyFotek(t *testing.T) {
 	if len(fotky) != 2 {
 		t.Fatalf("fotek: %d", len(fotky))
 	}
+	if n := len(a.GetNepotagovaneFotky()); n != 2 {
+		t.Errorf("nepotagovaných %d, čekáno 2", n)
+	}
 	f1, f2 := fotky[0].ID, fotky[1].ID
 	if !a.SetTagyFotek([]int{f1, f2}, []string{"postava", "prsa", "neexistuje", "studio"}, nil) {
 		t.Fatal("tagy se neuložily")
@@ -3064,6 +3067,9 @@ func TestTagyFotek(t *testing.T) {
 	tagy := a.GetTagyFotek([]int{f1, f2})
 	if strings.Join(tagy[f1], ",") != "nohy,portret,prsa" || strings.Join(tagy[f2], ",") != "postava,prsa,studio" {
 		t.Fatalf("tagy: %v", tagy)
+	}
+	if n := len(a.GetNepotagovaneFotky()); n != 0 {
+		t.Errorf("nepotagovaných %d, obě fotky mají tagy", n)
 	}
 	if p := a.GetPoctyTagu(); p["prsa"] != 2 || p["portret"] != 1 || p["studio"] != 1 || p[""] != 0 {
 		t.Errorf("počty: %v", p)

@@ -87,6 +87,7 @@ export const stav = {
     // Interval slideshow v milisekundách; jde změnit v nabídce ⋯
     intervalSlideshow: 4000,
     lbPolozky: [],
+    lbTagovani: false, // Hodnotit › Tagy: fronta fotek bez tagů, panel skupin a klávesy (tagovani.js)
     lbJenNehodnocene: false, // Galerie: ohodnocená položka z prohlížeče vypadne a ukáže se další
     lbPoZavreni: null, // co udělat po zavření prohlížeče (Fotky načtou frontu znovu, až doběhnou zápisy)
     lbHistorie: [], // ohodnocené ve frontě nehodnocených (pro Vrátit): { polozka, kde, kdePuvodne, seznam }

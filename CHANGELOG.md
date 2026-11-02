@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.14] – 2026-11-02
+
+### Změněno
+- **Hodnocení › Hodnotit** (dřív Fotky) má dva pohledy, přepínač **Fotky · Modelky** s počty vpravo v hlavičce.
+  - **Modelky**: karty modelek bez srdíček (napřed s nejvyšším odhadem vkusu); 1–5 na zaměřené kartě dá srdíčka (stejná znovu přidá půlku), fokus pak přejde na další. Ve stavové liště postup, „✓ 4½ ♥ Anna“ a pak „↶ Vrátit“ (Backspace).
+- **Údržba už srdíčka modelek neřeší** (zmizela z filtrů, pokroku Sbírky i Po údajích); ve stavové liště Údržby je odkaz „♥ 5 modelek bez srdíček · Hodnotit →“.
+
 ## [1.0.13] – 2026-11-01
 
 ### Změněno

@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.1.0] – 2026-11-02
+
+### Přidáno
+- **Tagy fotek** – základ tematických sezón (krok 1). Pevný seznam 35 tagů v šesti skupinách: **Záběr** (portrét, poprsí, celá postava, detail), **Odhalení** (oblečená, spodní prádlo / plavky, nahoře bez, akt, explicitní akt), **Partie v záběru** (prsa, zadeček, vagina, nohy, chodidla), **Prostředí** (studio, interiér, ložnice, koupelna, příroda, pláž / voda, město), **Oblečení a doplňky** (podpatky, punčochy, podvazky, bikiny, šaty, košile, kostým, latex / kůže) a **Póza** (stojí, sedí, leží, zezadu, mokrá, víc modelek). Záběr, Odhalení a Prostředí mají jen jednu hodnotu. Typ prsou, ochlupení a podobně se berou z údajů modelky.
+- Ve **výběru fotek** tlačítko se štítkem a klávesa **T** otevřou panel tagů: pilulka svítí, když tag mají všechny vybrané fotky, čárkovaně, když jen některé; klik tag přidá všem, u plné ho odebere.
+
+### Změněno
+- **Záloha (YAML) ve verzi 10** zapisuje i tagy fotek; starší zálohy se načtou jako dřív. Databáze dostane novou tabulku – program si před úpravou sám udělá zálohu.
+
 ## [1.0.17] – 2026-11-02
 
 ### Přidáno

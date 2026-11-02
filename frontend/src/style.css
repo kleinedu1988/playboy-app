@@ -17095,6 +17095,16 @@ body.rezim-vyberu #detailView .poster {
     background-color: var(--accent-soft);
 }
 
+.vo-karta:focus-visible,
+.vo-dni:focus-visible,
+.vo-skoro-tema:focus-visible,
+.vs-volba:focus-visible,
+.pr-volba:focus-visible,
+.pr-srdce:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
 .vo-dni:disabled {
     opacity: 0.35;
     cursor: not-allowed;

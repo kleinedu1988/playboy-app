@@ -8,7 +8,7 @@ import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { oznamit } from '../ui/oznameni';
-import { otevreneOkno } from '../ui/dom';
+import { drzetFokus, otevreneOkno } from '../ui/dom';
 import { zvolitSezonu } from './volba-sezony';
 import { nazevSezonyVeVete } from '../lib/slava';
 
@@ -104,5 +104,7 @@ export async function vyhlasitSezonu(u = null) {
         e.stopPropagation();
         zavrit();
     });
-    /** @type {HTMLElement | null} */ (okno.querySelector('[data-vs-uzavrit]'))?.focus();
+    drzetFokus(okno);
+    // Fokus na první kandidátku na Miláčka (Enter by jinak uzavřel sezónu dřív, než si volby všimneš)
+    /** @type {HTMLElement | null} */ (okno.querySelector('[data-milacek], [data-vs-uzavrit]'))?.focus();
 }

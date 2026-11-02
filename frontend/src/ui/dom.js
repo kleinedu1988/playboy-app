@@ -54,3 +54,22 @@ export function srovnatSeznam(kontejner, polozky) {
     });
     stare.forEach(e => e.remove());
 }
+
+// Fokus zůstane v modálním okně: Tab z posledního prvku skočí na první a Shift+Tab naopak (aria-modal sám nestačí)
+export function drzetFokus(okno) {
+    okno.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab') return;
+        const prvky = /** @type {HTMLElement[]} */ ([...okno.querySelectorAll('button:not([disabled]), select, input, [tabindex]:not([tabindex="-1"])')])
+            .filter(p => p.offsetParent !== null);
+        if (!prvky.length) return;
+        const prvni = prvky[0];
+        const posledni = prvky[prvky.length - 1];
+        if (e.shiftKey && document.activeElement === prvni) {
+            e.preventDefault();
+            posledni.focus();
+        } else if (!e.shiftKey && document.activeElement === posledni) {
+            e.preventDefault();
+            prvni.focus();
+        }
+    });
+}

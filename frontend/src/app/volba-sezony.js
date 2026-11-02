@@ -5,12 +5,11 @@
 import { GetNahledyTematu, GetNavrhSezony, GetSezona, GetTemataKOdemceni, SetObdobiSezony } from './backend';
 import { odemknoutTema } from './galerie-hodnoceni';
 import { adresaFotkyVysky } from './porovnani-pasy';
-import { esc, sklonovat } from '../lib/format';
+import { MESICE_GENITIV, esc, sklonovat } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
-import { otevreneOkno } from '../ui/dom';
+import { drzetFokus, otevreneOkno } from '../ui/dom';
 
 const ODLOZENO = 'volbaSezonyOdlozena';
-const GENITIV = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
 
 let okno = null;
 let tikLosu = 0; // běžící animace losu (zavření ani jiná volba ji nesmí nechat doběhnout)
@@ -28,7 +27,7 @@ const odlozit = (klic) => { try { localStorage.setItem(ODLOZENO, klic); } catch 
 function konec(klic, dni) {
     const [r, m, d] = klic.split('-').map(Number);
     const x = new Date(r, m - 1, d + dni - 1);
-    return `${x.getDate()}. ${GENITIV[x.getMonth()]}`;
+    return `${x.getDate()}. ${MESICE_GENITIV[x.getMonth()]}`;
 }
 
 const textTempa = t => `${String(t).replace('.', ',')} za den`;
@@ -147,6 +146,7 @@ export async function zvolitSezonu({ auto = false } = {}) {
         const karta = okno.querySelector('[data-vo-tema="#los"]');
         const t = { ...moznosti[Math.floor(Math.random() * moznosti.length)], los: true };
         const text = karta?.querySelector('.vo-text b');
+        text?.setAttribute('aria-live', 'polite');
         let i = 0;
         clearInterval(tikLosu);
         tikLosu = setInterval(() => {
@@ -213,5 +213,6 @@ export async function zvolitSezonu({ auto = false } = {}) {
         zavrit();
     });
     vykreslit();
+    drzetFokus(okno);
     /** @type {HTMLElement | null} */ (okno.querySelector('[data-vo-tema]'))?.focus();
 }

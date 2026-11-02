@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.16] – 2026-11-02
+
+### Změněno
+- **Rychlejší sezóny a témata**: fotky s tagy a údaji alb pro témata se načtou jednou a pamatují se, dokud se ve sbírce nic nezmění – Síň slávy, volba sezóny, Porovnat v tématu i průvodce je dřív načítaly celé znovu při každém dotazu.
+- **Okna volby a vyhlášení sezóny drží fokus** (Tab neodejde do aplikace pod oknem); prvky s fokusem mají viditelný rámeček; výsledek losu oznámí i čtečka obrazovky.
+- Vyhlášení sezóny začíná fokusem na první kandidátce na Miláčka – Enter tak neuzavře sezónu dřív, než si volby všimneš.
+
 ## [1.2.15] – 2026-11-02
 
 ### Přidáno

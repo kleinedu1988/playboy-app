@@ -27,6 +27,8 @@ import (
 )
 
 type App struct {
+	// Fotky pro témata (všechny) ke snímku sbírky: Síň slávy, volba sezóny a Porovnat je jinak počítaly znovu
+	temataPamet *temataPamet
 	// Kopie aplikace nad spojením s transakcí importu: hromadné zápisy jdou do ní, ne do nové transakce
 	vImportu bool
 	// Připravené příkazy importu (viz pripraveny)

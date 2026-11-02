@@ -143,7 +143,8 @@ func (a *App) GetFotkyKOdemceni(tema string) []Fotografie {
 		return []Fotografie{}
 	}
 	modelky, _ := a.nactiModelky("", false)
-	p := pokrytiTematu(t, modelky, a.fotkyProTemata(), a.proslePruvodcem())
+	vsechny := a.fotkyProTemata()
+	p := pokrytiTematu(t, modelky, vsechny, a.proslePruvodcem())
 	poradi := map[int]int{}
 	for i, k := range p.Kandidatky {
 		poradi[k.ModelkaID] = i + 1
@@ -155,7 +156,7 @@ func (a *App) GetFotkyKOdemceni(tema string) []Fotografie {
 	if len(ids) == 0 {
 		return []Fotografie{}
 	}
-	fotkyModelek := a.fotkyProTemata(ids...)
+	fotkyModelek := vsechny
 	vysledek := []Fotografie{}
 	for _, f := range a.GetFotkyKPruvodci() {
 		ft := fotkyModelek[f.ID]

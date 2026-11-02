@@ -14,6 +14,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -423,8 +424,42 @@ type fotkaTematu struct {
 	album   *albumTematu
 }
 
-// Fotky pro témata; modelky = jen fotky těchto modelek (nil = všechny)
+type temataPamet struct {
+	mu     sync.Mutex
+	snimek *snimek
+	fotky  map[int]*fotkaTematu
+}
+
+// Paměť se zakládá líně (App se kopíruje, např. pro import – kopie sdílí ukazatel)
+var zalozeniPametiTemat sync.Mutex
+
+func (a *App) pametTemat() *temataPamet {
+	zalozeniPametiTemat.Lock()
+	defer zalozeniPametiTemat.Unlock()
+	if a.temataPamet == nil {
+		a.temataPamet = &temataPamet{}
+	}
+	return a.temataPamet
+}
+
+// Fotky pro témata; modelky = jen fotky těchto modelek (nil = všechny). Všechny se pamatují ke snímku sbírky
+// (každý zápis do databáze dá nový snímek, takže paměť nezastará); výsledek se nesmí měnit.
 func (a *App) fotkyProTemata(modelky ...int) map[int]*fotkaTematu {
+	if len(modelky) == 0 {
+		if s := a.snimekVPameti(); s != nil {
+			p := a.pametTemat()
+			p.mu.Lock()
+			defer p.mu.Unlock()
+			if p.snimek != s {
+				p.fotky, p.snimek = a.nacistFotkyProTemata(), s
+			}
+			return p.fotky
+		}
+	}
+	return a.nacistFotkyProTemata(modelky...)
+}
+
+func (a *App) nacistFotkyProTemata(modelky ...int) map[int]*fotkaTematu {
 	fotky := map[int]*fotkaTematu{}
 	alba := a.albaProTemata()
 	dotaz := `SELECT f.id, f.modelka_id, f.album_id FROM fotografie f WHERE f.modelka_id > 0`

@@ -21,6 +21,8 @@ export function pocetSlovAZnaku(text) {
 export const idOdkazuDisku = odkazyDisku;
 
 // Anglické názvy k výběru měsíce („Červen (June)“), americké zdroje píšou čísla anglicky
+// Měsíce ve 2. pádě („15. listopadu“)
+export const MESICE_GENITIV = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
 export const MESICE_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const moznostiMesicu = () => MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m} (${MESICE_EN[i]})</option>`).join('');
 

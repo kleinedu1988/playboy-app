@@ -458,7 +458,7 @@ export function vykreslitPasek() {
             <span class="pr-tecky" aria-hidden="true">${tecky}</span>
             ${cil ? `<span class="pr-cil" title="${esc(`Odemknout téma: soutěží ${cil.soutezici} z ${cil.tema.minModelek} potřebných modelek; ${String(p.jmenoModelky || '').split(' ')[0]} má ${cil.fotek.get(p.modelkaId) ?? 0} z ${cil.tema.minFotek} fotek tématu`)}">🔓 ${esc(cil.tema.ikona || '')} ${esc(cil.tema.nazev)} · ${cil.soutezici}/${cil.tema.minModelek}${cil.fotek.has(p.modelkaId) ? ` · ${esc(String(p.jmenoModelky || '').split(' ')[0])} ${cil.fotek.get(p.modelkaId)}/${cil.tema.minFotek}` : ''}</span>` : ''}
             <span class="pr-napoveda">${esc(napoveda)}</span>
-            <button type="button" class="pr-skryt" data-pr-skryt title="Skrýt průvodce (H)"><kbd>H</kbd></button>
+            <button type="button" class="pr-skryt" data-pr-skryt title="Skrýt průvodce (H)" aria-label="Skrýt průvodce"><kbd>H</kbd></button>
         </div>
         <div class="pr-moznosti">
             <button type="button" class="pr-sipka" data-pr-zpet title="Zpět (Backspace / ←)">‹</button>

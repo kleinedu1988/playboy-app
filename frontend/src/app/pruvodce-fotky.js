@@ -46,7 +46,8 @@ function fotkaVTematu(tagy, tema) {
     return (tema.podminky || []).filter(p => p.druh === 'tag').every(p => p.hodnoty.some(h => t.has(h)));
 }
 
-// Začátek relace (otevření prohlížeče); pokryti = téma k odemčení (nebo null)
+// Začátek relace (otevření prohlížeče); pokryti = téma k odemčení (nebo null). false = kroky se nenačetly
+// (prohlížeč se pak neotevře – bez kroků by 1–5 hodnotilo jako běžný prohlížeč)
 export async function zacitPruvodce(pokryti = null) {
     cil = pokryti ? {
         tema: pokryti, soutezici: pokryti.soutezicich,
@@ -56,11 +57,23 @@ export async function zacitPruvodce(pokryti = null) {
         try { kroky = /** @type {any} */ ((await GetKrokyPruvodce())?.kroky || []); } catch { kroky = []; }
         kroky.forEach(k => k.moznosti.forEach(m => nazvyTagu.set(m.klic, m.nazev)));
     }
+    if (!kroky.length) {
+        oznamit('Kroky průvodce se nepodařilo načíst.');
+        return false;
+    }
     stavy = new Map();
     podleAlba = new Map();
     posledni = null;
     historiePruvodce = [];
     hotovoPruvodce = 0;
+    return true;
+}
+
+// Zápis z prohlížeče: po zavření počká na doběhnutí (fronta se načte až s ním)
+function sledovatZapis(zapis) {
+    stav.lbZapisy.add(zapis);
+    zapis.finally(() => stav.lbZapisy.delete(zapis)).catch(() => {});
+    return zapis;
 }
 
 // Stav zobrazené položky; tagy fotky se napřed načtou (první fotka položky zastupuje spojený plakát)
@@ -121,7 +134,7 @@ async function ulozitHotovou(p, s) {
     const polozky = vyraditZFronty([p]);
     const jen = jenSrdicka;
     const tagy = jen ? [] : [...s.vybrane].filter(t => !s.navrh.has(t));
-    const zaznam = { polozky, tagy, hodnoceni: s.hodnoceni, predchozi: null, cas: Date.now() };
+    const zaznam = { polozky, tagy, hodnoceni: s.hodnoceni, predchozi: null, cas: Date.now(), jen, seznam: stav.lbPolozky, zapis: null };
     historiePruvodce.push(zaznam);
     hotovoPruvodce++;
     if (!jen) {
@@ -133,8 +146,9 @@ async function ulozitHotovou(p, s) {
     const ids = p.fotky.map(f => f.id);
     const predFotek = p.fotky.map(f => Number(f.hodnoceni) || 0);
     let vysledek = null;
+    zaznam.zapis = sledovatZapis(UlozitPruvodceFotky({ ids, skupiny: jen ? [] : zodpovezeneSkupiny(kroky, s), tagy, hodnoceni: s.hodnoceni, hotovo: !jen }));
     try {
-        vysledek = await UlozitPruvodceFotky({ ids, skupiny: jen ? [] : zodpovezeneSkupiny(kroky, s), tagy, hodnoceni: s.hodnoceni, hotovo: !jen });
+        vysledek = await zaznam.zapis;
     } catch { /* oznámí se níž */ }
     if (vysledek?.ok) {
         zaznam.predchozi = vysledek;
@@ -157,8 +171,10 @@ async function preskocit(naKonec = true) {
     const s = stavy.get(p);
     if (s && zodpovezeneSkupiny(kroky, s).length) {
         const tagy = [...s.vybrane].filter(t => !s.navrh.has(t));
-        UlozitPruvodceFotky({ ids: p.fotky.map(f => f.id), skupiny: zodpovezeneSkupiny(kroky, s), tagy, hodnoceni: 0, hotovo: false })
-            .then((v) => { if (v?.ok) p.fotky.forEach(f => tagyFotek.set(f.id, tagy)); })
+        // Tagy hned (fotka se může ukázat znovu dřív, než zápis doběhne); nepovedený zápis se oznámí
+        p.fotky.forEach(f => tagyFotek.set(f.id, tagy));
+        sledovatZapis(UlozitPruvodceFotky({ ids: p.fotky.map(f => f.id), skupiny: zodpovezeneSkupiny(kroky, s), tagy, hodnoceni: 0, hotovo: false }))
+            .then((v) => { if (!v?.ok) oznamit('Rozpracované tagy se nepodařilo uložit.'); })
             .catch(() => oznamit('Rozpracované tagy se nepodařilo uložit.'));
     }
     stavy.delete(p);
@@ -177,11 +193,21 @@ export function ukoncitPruvodce() {
 
 // Vrátit poslední uloženou fotku: předchozí tagy, srdíčka a příznak; fotka zpět na své místo
 export async function vratitPruvodce() {
+    // Záznam se vyjme hned: druhé rychlé Vrátit už vrací předchozí fotku, ne tutéž znovu
     const z = historiePruvodce[historiePruvodce.length - 1];
-    if (!z?.predchozi) return;
+    if (!z) return;
+    historiePruvodce = historiePruvodce.slice(0, -1);
+    const zpetDoHistorie = (text) => {
+        historiePruvodce.push(z);
+        zmena();
+        oznamit(text);
+    };
+    // Zápis ještě běží: počkat na něj
+    if (!z.predchozi && z.zapis) { try { await z.zapis; } catch { /* níž */ } }
+    if (!z.predchozi) return zpetDoHistorie('Fotku zatím nejde vrátit – ještě se ukládá.');
     let ok = false;
     try { ok = await VratitPruvodceFotky(z.predchozi); } catch { ok = false; }
-    if (!ok) return oznamit('Fotku se nepodařilo vrátit.');
+    if (!ok) return zpetDoHistorie('Fotku se nepodařilo vrátit.');
     const p = z.polozky[0]?.polozka;
     if (p) {
         z.predchozi.fotky.forEach((f) => { tagyFotek.set(f.id, f.tagy || []); });
@@ -216,9 +242,14 @@ function vratitDoFronty(z, ukazat) {
     hotovoPruvodce = Math.max(0, hotovoPruvodce - 1);
     if (lightbox.classList.contains('hidden') || !stav.lbPruvodce) return zmena();
     const seznam = stav.lbPolozky;
-    [...z.polozky].sort((a, b) => a.kde - b.kde).forEach(x => seznam.splice(Math.min(x.kde, seznam.length), 0, x.polozka));
+    // Jiná (znovu otevřená) fronta: fotku nevkládat, v té nové už nejspíš je
+    if (seznam !== z.seznam) return zmena();
+    [...z.polozky].filter(x => !seznam.includes(x.polozka)).sort((a, b) => a.kde - b.kde)
+        .forEach(x => seznam.splice(Math.min(x.kde, seznam.length), 0, x.polozka));
     const p = z.polozky[0]?.polozka;
-    if (p) {
+    // Jen srdíčka: stav se postaví znovu ze skutečných tagů fotky (ne prázdný – celý průvodce by je smazal)
+    if (p && z.jen) stavy.delete(p);
+    else if (p) {
         // Znovu s vybranými tagy a srdíčky na posledním kroku
         const s = novyStav(kroky, z.tagy, [], Number(p.hodnoceni) || 0);
         jakoMinula(kroky, s, z.tagy);

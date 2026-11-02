@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.12] – 2026-11-02
+
+### Opraveno
+- Průvodce: Jen srdíčka (J) → Vrátit → zpět na celý průvodce už nesmaže fotce tagy (stav se postaví ze skutečných tagů fotky).
+- Průvodce: dvojí rychlé Vrátit vrátí dvě fotky po sobě, ne jednu fotku dvakrát (fronta se nezdvojí); Vrátit během ukládání počká na zápis.
+- Průvodce: po zavření se fronta načte až po doběhnutí zápisů (i u poslední fotky a rozpracovaných kroků), takže se neukáže fotka, která se právě ukládá; nepovedený zápis rozpracovaných tagů se oznámí.
+- Průvodce: když se nepodaří načíst kroky, oznámí to a prohlížeč neotevře (dřív by 1–5 hodnotilo jako běžný prohlížeč).
+- Porovnat: po zvolení nebo uzavření sezóny přepne téma hned (ne až po přepočtu přehledu); přepnutí T během načítání nesmíchá dvojice obou režimů.
+
 ## [1.2.11] – 2026-11-02
 
 ### Opraveno

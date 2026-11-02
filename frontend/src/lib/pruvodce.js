@@ -61,7 +61,7 @@ export function novyStav(kroky, tagyFotky = [], podleAlba = [], hodnoceni = 0) {
         });
     });
     const s = { krok: 0, vybrane, navrh, potvrzene: new Set(), hodnoceni: hodnoceni > 0 ? hodnoceni : 0, hotovo: false, maSrdicka: hodnoceni > 0 };
-    if (preskocen(kroky[0], vybrane)) s.krok = dalsiKrok(kroky, 0, vybrane);
+    if (kroky.length && preskocen(kroky[0], vybrane)) s.krok = dalsiKrok(kroky, 0, vybrane);
     return s;
 }
 

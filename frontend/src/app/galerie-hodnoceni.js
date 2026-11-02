@@ -275,7 +275,7 @@ async function otevritPruvodceTematu(klic) {
     try { fotky = await GetFotkyKOdemceni(klic) || []; } catch { fotky = []; }
     const fronta = sestavitAlba(fotky).flatMap(a => a.polozky);
     if (!fronta.length) return oznamit('K tomuto tématu teď nejsou fotky k průvodci.');
-    await zacitPruvodce(pokryti);
+    if (!await zacitPruvodce(pokryti)) return;
     prohlizetBezZajmu();
     otevritLightbox(0, false, fronta, { pruvodce: true, poZavreni: () => { if (kontejner?.isConnected) nacistPruvodce(); } });
 }
@@ -283,7 +283,7 @@ async function otevritPruvodceTematu(klic) {
 // Průvodce v prohlížeči od položky fronty; po zavření se fronta načte znovu (až doběhnou zápisy)
 async function otevritPruvodce(od = 0) {
     if (!polozkyPruvodce.length) return;
-    await zacitPruvodce();
+    if (!await zacitPruvodce()) return;
     prohlizetBezZajmu();
     otevritLightbox(od, false, [...polozkyPruvodce], { pruvodce: true, poZavreni: () => { if (kontejner?.isConnected) nacistPruvodce(); } });
 }

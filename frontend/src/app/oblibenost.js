@@ -391,6 +391,8 @@ async function doplnitFrontuJednou() {
         const tema = temaPorovnani();
         temaFronty = tema;
         nove = (await GetDvojiceKPorovnani(DVOJIC_NAJEDNOU, tema ? `tema:${tema}` : '') || []).map(idDvojice).map(d => ({ ...d, tema }));
+        // Režim se během načítání přepnul (T, zvolení tématu): dvojice starého režimu do fronty nepatří
+        if (tema !== temaPorovnani()) nove = [];
     } catch { /* prázdná fronta ukáže prázdný stav */ }
     const videne = new Set(fronta.map(klicDvojice));
     fronta.push(...nove.filter(d => d.a && d.b && d.a !== d.b && modelka(d.a) && modelka(d.b) && !videne.has(klicDvojice(d))));
@@ -441,7 +443,19 @@ function srovnatRezimPorovnani() {
     fronta = fronta.filter(d => serie?.dvojice.has(d) || d.druh === 'sezona');
     zobrazitNavrhPodPasy(null);
     vykreslitDvojici();
-    doplnitFrontu().then(() => vykreslitDvojici());
+    // Běžící doplnění je ze starého režimu (zahodí se): nové až po něm
+    const doplnit = () => doplnitFrontu().then(() => vykreslitDvojici());
+    if (doplnovani) doplnovani.then(doplnit);
+    else doplnit();
+}
+
+// Sezóna se zvolila nebo uzavřela: téma Porovnat podle nové sezóny hned (ne až po přepočtu přehledu)
+async function obnovitSezonuPorovnani() {
+    try { sezonaVolby = await GetSezona(); } catch { return; }
+    sezonaNactena = true;
+    srovnatRezimPorovnani();
+    vykreslitSev(fronta[0]);
+    vykreslitHlavu();
 }
 
 function nastavitPorovnatVTematu(zapnout) {
@@ -1187,6 +1201,7 @@ function vykreslitSerii() {
 // ——— Události ———
 
 export function pripravit() {
+    ['sezona-zvolena', 'sezona-uzavrena'].forEach(u => document.addEventListener(u, obnovitSezonuPorovnani));
     // Uložená část a pohled; dřívější části (Porovnávání, Galerie, Pořadí, tipy, staré Hodnocení) jsou teď pohledy
     // Hodnocení a převedou se jednou natrvalo
     let ulozena = null;

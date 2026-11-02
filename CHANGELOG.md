@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.0.15] – 2026-11-02
+
+### Opraveno
+- **Hodnocení › Pořadí:**
+  - „Nechat“ v Nesedí funguje i po změně srdíček jinde; změna srdíček kdekoli hned odebere zastaralý nesoulad, obnoví počty a pořadí se po chvíli přepočítá.
+  - „⚔ Ověřit porovnáním“ jen u modelky, která nečeká na úroveň ani ji neobhajuje (jinak spustilo souboje o úroveň).
+  - Stavová lišta se obnoví i po „Dát jí“ a „Nechat“; počet čekajících sedí se seznamem Čekají a s „⚔ Rozhodnout N“.
+  - „Dát jí“ ukáže nová srdíčka všude (i v Hodnotit › Modelky).
+  - Při chybě načtení Pořadí vysvětlí, co se stalo, místo prázdné stránky.
+
+### Změněno
+- Pořadí se skládá jen tehdy, když je otevřené, a po stovkách („Zobrazit dalších 100“); řádky mimo obrazovku se nevykreslují – u velké sbírky výrazně rychlejší, i v Porovnat. Náhled v řádku má správný výřez tváře.
+
 ## [1.0.14] – 2026-11-02
 
 ### Změněno

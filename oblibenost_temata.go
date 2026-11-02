@@ -82,6 +82,26 @@ var slovnikTemat = map[string]string{
 	"fotka:album=centerfold":                       "Středová dvoustrana",
 	"fotka:obdobi=1990-1999+tag:bikiny,plaz":       "Léto devadesátých",
 	"fotka:obdobi=1980-1989+tag:podvazky,puncochy": "Osmdesátky v nylonu",
+	// Původ a údaje modelky (od 1.2.2)
+	"modelka:narodnost=cesko,slovensko":                                              "Krásky od nás",
+	"modelka:narodnost=cesko,madarsko,nemecko,polsko,rakousko,slovensko,slovinsko":   "Středoevropský půvab",
+	"modelka:narodnost=dansko,finsko,island,norsko,svedsko":                          "Severská krása",
+	"modelka:narodnost=francie,italie,portugalsko,recko,spanelsko":                   "Středomořský temperament",
+	"modelka:narodnost=argentina,brazilie,chile,kolumbie,kuba,mexiko,peru,venezuela": "Latinský žár",
+	"modelka:narodnost=irsko,velka_britanie":                                         "Britský šarm",
+	"modelka:narodnost=australie,novy_zeland":                                        "Od protinožců",
+	"modelka:narodnost=usa":                                                          "Americký sen",
+	"fotka:edice=CZ+modelka:narodnost=cesko,slovensko":                               "Domácí scéna",
+	"modelka:narodnost=dansko,finsko,island,norsko,svedsko+tag:priroda":              "Severská divočina",
+	"modelka:vlasy=hněd":                                                             "Kaštanová sezóna",
+	"modelka:oci=modr":                                                               "Azurové pohledy",
+	"modelka:oci=zelen":                                                              "Smaragdové oči",
+	"modelka:tetovani=ne":                                                            "Čisté plátno",
+	"modelka:kategorie=pmm":                                                          "Playmates měsíce",
+	"modelka:kategorie=pmr":                                                          "Královny ročníku",
+	"modelka:kategorie=cg":                                                           "Digitální múzy",
+	"modelka:kategorie=obalka":                                                       "Tváře obálek",
+	"modelka:vlasy=blond+tag:plaz":                                                   "Slunce a blond",
 }
 
 // Fráze jednotlivých podmínek na modelku (podmínka na tag má frázi z názvu tagu)
@@ -97,6 +117,15 @@ var slovnikPodminek = map[string]string{
 	"vlasy=hněd":           "brunetky",
 	"tetovani=ano":         "s tetováním",
 	"tetovani=ne":          "bez tetování",
+	"oci=modr":             "modré oči",
+	"oci=zelen":            "zelené oči",
+	"oci=hněd":             "hnědé oči",
+	"piercing=ano":         "s piercingem",
+	"piercing=ne":          "bez piercingu",
+	"kategorie=pmm":        "Playmates měsíce",
+	"kategorie=pmr":        "Playmates roku",
+	"kategorie=cg":         "Cyber Girls",
+	"kategorie=obalka":     "modelky z obálek",
 }
 
 // Katalog témat (pořadí = nabídka); názvy dává slovník
@@ -136,6 +165,25 @@ var katalogTemat = func() []Tema {
 		t(fot("album", "centerfold")),
 		t(fot("obdobi", "1990-1999"), tag("bikiny", "plaz")),
 		t(fot("obdobi", "1980-1989"), tag("podvazky", "puncochy")),
+		t(mod("narodnost", "cesko", "slovensko")),
+		t(mod("narodnost", "cesko", "madarsko", "nemecko", "polsko", "rakousko", "slovensko", "slovinsko")),
+		t(mod("narodnost", "dansko", "finsko", "island", "norsko", "svedsko")),
+		t(mod("narodnost", "francie", "italie", "portugalsko", "recko", "spanelsko")),
+		t(mod("narodnost", "argentina", "brazilie", "chile", "kolumbie", "kuba", "mexiko", "peru", "venezuela")),
+		t(mod("narodnost", "irsko", "velka_britanie")),
+		t(mod("narodnost", "australie", "novy_zeland")),
+		t(mod("narodnost", "usa")),
+		t(fot("edice", "CZ"), mod("narodnost", "cesko", "slovensko")),
+		t(mod("narodnost", "dansko", "finsko", "island", "norsko", "svedsko"), tag("priroda")),
+		t(mod("vlasy", "hněd")),
+		t(mod("oci", "modr")),
+		t(mod("oci", "zelen")),
+		t(mod("tetovani", "ne")),
+		t(mod("kategorie", "pmm")),
+		t(mod("kategorie", "pmr")),
+		t(mod("kategorie", "cg")),
+		t(mod("kategorie", "obalka")),
+		t(mod("vlasy", "blond"), tag("plaz")),
 	}
 }()
 
@@ -173,10 +221,16 @@ func podminkyZKlice(klic string) ([]PodminkaTematu, bool) {
 			podminky = append(podminky, PodminkaTematu{Druh: "tag", Hodnoty: h})
 		case strings.HasPrefix(cast, "modelka:"):
 			k, h, ok := strings.Cut(strings.TrimPrefix(cast, "modelka:"), "=")
-			if !ok || h == "" || (k != "prsaTyp" && k != "ochlupeni" && k != "vlasy" && k != "tetovani") {
+			if !ok || h == "" || !klicePodminekModelky[k] {
 				return nil, false
 			}
-			podminky = append(podminky, PodminkaTematu{Druh: "modelka", Klic: k, Hodnoty: strings.Split(h, ",")})
+			hodnoty := strings.Split(h, ",")
+			for _, x := range hodnoty {
+				if !platnaHodnotaModelky(k, x) {
+					return nil, false
+				}
+			}
+			podminky = append(podminky, PodminkaTematu{Druh: "modelka", Klic: k, Hodnoty: hodnoty})
 		case strings.HasPrefix(cast, "fotka:"):
 			k, h, ok := strings.Cut(strings.TrimPrefix(cast, "fotka:"), "=")
 			hodnoty := strings.Split(h, ",")
@@ -212,6 +266,8 @@ func nazevTematu(podminky []PodminkaTematu) string {
 				nazvy = append(nazvy, f)
 			} else if p.Druh == "fotka" {
 				nazvy = append(nazvy, frazeFotky(p.Klic, h))
+			} else if i, ok := kodyZemi[h]; ok && p.Klic == "narodnost" {
+				nazvy = append(nazvy, tabulkaZemi[i].narodnost)
 			} else {
 				nazvy = append(nazvy, strings.ToLower(h))
 			}
@@ -289,17 +345,7 @@ func (t *Tema) modelkaSplnuje(m *Modelka) bool {
 		}
 		ma := false
 		for _, h := range p.Hodnoty {
-			switch p.Klic {
-			case "prsaTyp":
-				ma = m.PrsaTyp == h
-			case "ochlupeni":
-				ma = m.Ochlupeni == h
-			case "vlasy":
-				ma = h != "" && strings.Contains(strings.ToLower(m.VlasyBarva), strings.ToLower(h))
-			case "tetovani":
-				ma = (h == "ano" && m.Tetovani == 1) || (h == "ne" && m.Tetovani == 0)
-			}
-			if ma {
+			if ma = modelkaMaHodnotu(m, p.Klic, h); ma {
 				break
 			}
 		}

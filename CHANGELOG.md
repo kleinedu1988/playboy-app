@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.2] – 2026-11-02
+
+### Přidáno
+- **Témata sezón podle údajů modelky**: původ – **Krásky od nás**, **Středoevropský půvab**, **Severská krása**, **Středomořský temperament**, **Latinský žár**, **Britský šarm**, **Od protinožců**, **Americký sen** –, kategorie – **Playmates měsíce**, **Královny ročníku** (Playmate roku), **Digitální múzy** (Cyber Girls), **Tváře obálek** –, **Azurové pohledy**, **Smaragdové oči**, **Kaštanová sezóna**, **Čisté plátno** (bez tetování) a kombinace **Domácí scéna**, **Severská divočina**, **Slunce a blond**.
+  - Národnost se pro témata sjednotí podle tabulky zemí („Česká“, „Česko“ i „Czech“ je totéž); modelky s neznámou národností do témat původu nepatří.
+
 ## [1.2.1] – 2026-11-02
 
 ### Přidáno

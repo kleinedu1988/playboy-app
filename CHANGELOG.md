@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.10] – 2026-11-02
+
+### Přidáno
+- **Skoro hratelná témata ve volbě sezóny**: pod nabídkou až tři témata, která průvodce brzy odemkne („🔓 👠 Na podpatcích · chybí 1 modelka · 2 fotky“). Klik volbu sezóny odloží a spustí průvodce rovnou na fotkách, které chybí; po odemčení téma zvolíš tlačítkem ✦ Zvolit téma sezóny v Síni slávy.
+
 ## [1.2.9] – 2026-11-02
 
 ### Přidáno

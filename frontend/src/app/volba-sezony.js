@@ -2,7 +2,8 @@
 // 🎲 los z ostatních platných témat a „Jiné téma“; pod nimi délka 7–30 dní s doporučením podle soutěžících,
 // fotek tématu a tempa soubojů. Otevře se samo, dokud sezóna nemá potvrzenou volbu (po vyhlášení minulé nebo
 // při spuštění); „Později“ ji pro tuto sezónu odloží (zvolit jde i tlačítkem v Síni slávy).
-import { GetNahledyTematu, GetNavrhSezony, GetSezona, SetObdobiSezony } from './backend';
+import { GetNahledyTematu, GetNavrhSezony, GetSezona, GetTemataKOdemceni, SetObdobiSezony } from './backend';
+import { odemknoutTema } from './galerie-hodnoceni';
 import { adresaFotkyVysky } from './porovnani-pasy';
 import { esc, sklonovat } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
@@ -48,7 +49,7 @@ function htmlKarty(t, druh, nahledy) {
     </button>`;
 }
 
-function htmlOkna(n, nahledyTematu) {
+function htmlOkna(n, nahledyTematu, skoro = []) {
     const jine = n.vsechna.filter(t => !n.navrhy.some(x => x.klic === t.klic));
     return `
         <div class="modal-card vo-okno" role="dialog" aria-modal="true" aria-labelledby="voNadpis">
@@ -66,6 +67,9 @@ function htmlOkna(n, nahledyTematu) {
                     ${jine.map(t => `<option value="${esc(t.klic)}" ${t.plati ? '' : 'disabled'} title="${esc(t.popis || '')}">${esc(`${t.ikona || ''} ${t.nazev}`.trim())} · ${esc(t.plati ? `${t.soutezicich} soutěžících` : t.duvod)}</option>`).join('')}
                 </select>
             </label>
+            ${skoro.length ? `<div class="vo-skoro"><small>✦ Skoro hratelná – průvodce je odemkne</small>
+                ${skoro.map(t => `<button type="button" class="vo-skoro-tema" data-vo-odemknout="${esc(t.klic)}" title="${esc(`Chybí ${sklonovat(t.chybiModelek, 'modelka', 'modelky', 'modelek')} – stačí projít průvodcem asi ${sklonovat(t.fotekKOdemceni, 'fotku', 'fotky', 'fotek')}. Volba sezóny se odloží.`)}">🔓 ${esc(`${t.ikona || ''} ${t.nazev}`.trim())} <b>${esc(`chybí ${sklonovat(t.chybiModelek, 'modelka', 'modelky', 'modelek')} · ${sklonovat(t.fotekKOdemceni, 'fotka', 'fotky', 'fotek')}`)}</b></button>`).join('')}
+            </div>` : ''}
             <div class="vo-delka">
                 <p class="vs-stitek">Délka sezóny</p>
                 <div class="vo-delky" role="radiogroup" aria-label="Délka sezóny">
@@ -86,8 +90,9 @@ export async function zvolitSezonu({ auto = false } = {}) {
     if (okno) return;
     let sezona;
     let n;
+    let skoro = [];
     try {
-        [sezona, n] = await Promise.all([GetSezona(), GetNavrhSezony()]);
+        [sezona, n, skoro] = await Promise.all([GetSezona(), GetNavrhSezony(), GetTemataKOdemceni().catch(() => [])]);
     } catch { return; }
     if (!n?.klic || okno || otevreneOkno() || (auto && (sezona?.zvoleno || sezona?.kUzavreni || odlozena(n.klic)))) return;
     const vsechna = [...n.navrhy, n.klasicka];
@@ -100,7 +105,7 @@ export async function zvolitSezonu({ auto = false } = {}) {
     const nahledyTematu = t => Object.fromEntries((t.ukazky || []).map(id => [id, nahledy[`${t.klic}|${id}`]]));
     okno = document.createElement('div');
     okno.className = 'modal-overlay vs-zavoj';
-    okno.innerHTML = htmlOkna(n, nahledyTematu);
+    okno.innerHTML = htmlOkna(n, nahledyTematu, (skoro || []).slice(0, 3));
     document.getElementById('app').append(okno);
 
     let tema = null; // vybrané téma (objekt z návrhu)
@@ -165,6 +170,10 @@ export async function zvolitSezonu({ auto = false } = {}) {
             dni = Number(delka.dataset.voDni);
             rucne = true;
             vykreslit();
+        } else if (cil.closest('[data-vo-odemknout]')) {
+            odlozit(n.klic);
+            zavrit();
+            odemknoutTema(/** @type {HTMLElement} */ (cil.closest('[data-vo-odemknout]')).dataset.voOdemknout);
         } else if (cil.closest('[data-vo-pozdeji]') || cil === okno) {
             odlozit(n.klic);
             zavrit();

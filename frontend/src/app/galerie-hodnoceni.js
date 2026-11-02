@@ -259,6 +259,14 @@ function htmlOdemceni() {
     </div>`;
 }
 
+// Odemknout téma odjinud (volba sezóny): průvodce na fotkách kandidátek, i když stránka Průvodce ještě nebyla otevřená
+export async function odemknoutTema(klic) {
+    if (!kOdemceni.some(t => t.klic === klic)) {
+        try { kOdemceni = await GetTemataKOdemceni() || []; } catch { kOdemceni = []; }
+    }
+    return otevritPruvodceTematu(klic);
+}
+
 // Průvodce jen na fotkách kandidátek tématu (počítá, kdy se téma odemkne)
 async function otevritPruvodceTematu(klic) {
     const pokryti = kOdemceni.find(t => t.klic === klic);

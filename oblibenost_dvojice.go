@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"slices"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -39,7 +41,7 @@ const (
 )
 
 // Dvojice k porovnání vybrané aktivním učením. okruh: "" všechny hodnocené, "stejne" jen stejná úroveň srdíček,
-// "nehodnocene" nehodnocené modelky proti hodnoceným (kotvám).
+// "nehodnocene" nehodnocené modelky proti hodnoceným (kotvám), "tema:<klíč>" jen soutěžící tematické sezóny.
 func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 	dvojice := []DvojicePorovnani{}
 	u := a.uc
@@ -55,6 +57,16 @@ func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 	u.ob.nabidek++
 	semienko := int64(len(porovnani))*7919 + int64(u.ob.nabidek)
 	u.mu.Unlock()
+	// Tematická sezóna: jen soutěžící tématu a opakování podle soubojů v tématu (jinde šlo o jiné fotky)
+	if klic, ok := strings.CutPrefix(okruh, "tema:"); ok {
+		filtr := a.filtrSezony(klic)
+		if filtr == nil {
+			return dvojice
+		}
+		modelky = slices.DeleteFunc(slices.Clone(modelky), func(m Modelka) bool { return filtr.soutezici[m.ID] == 0 })
+		porovnani = slices.DeleteFunc(slices.Clone(porovnani), func(p porovnaniZaznam) bool { return p.tema != klic })
+		okruh = ""
+	}
 
 	dvojice = vybratDvojiceS(modelky, model, porovnani, nabidnute, pocet, okruh, rand.New(rand.NewSource(semienko)), false)
 	if len(dvojice) == 0 && len(porovnani) > 0 {

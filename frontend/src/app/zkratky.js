@@ -60,6 +60,7 @@ const CASTI = [
         [`${k('1')}–${k('5')}${nebo}${k('0')}`, 'Srdíčka zvýrazněné fotce, 0 je zruší'],
         ['klik na fotku', 'Prohlížeč fotek jako u alb (všechny fotky modelky), Esc zpět'],
         [k('S'), 'Přeskočit dvojici'],
+        [k('T'), 'V tematické sezóně přepnout režim: téma sezóny ↔ Klasické'],
         [k('Backspace'), 'Vrátit poslední porovnání'],
         [k('I'), 'Panel vpravo: Tipy, Trendy, Jak počítám (Esc zavře; i ve Fotkách a Pořadí)'],
     ] },

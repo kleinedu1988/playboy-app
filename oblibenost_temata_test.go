@@ -124,6 +124,16 @@ func TestTemaSezonyVAplikaci(t *testing.T) {
 		}
 	}
 
+	// Dvojice v tématu jen ze soutěžících; neplatné téma nic
+	for _, d := range a.GetDvojiceKPorovnani(10, "tema:tag:podpatky") {
+		if d.A == idc || d.B == idc {
+			t.Errorf("dvojice s nesoutěžící: %+v", d)
+		}
+	}
+	if len(a.GetDvojiceKPorovnani(10, "tema:tag:neexistuje")) != 0 {
+		t.Error("dvojice v neplatném tématu")
+	}
+
 	// Málo soutěžících: sezóna běží jako Klasická (všechny souboje)
 	minModelekTematu = 3
 	s = a.GetSezona()

@@ -14,7 +14,7 @@
 // Srdíčka ve stránce obsluhuje galerie.js (data-hodnoceni, modelky z stav.prehledModelky), profil otevírá
 // prehled.js (data-otevrit-modelku).
 import { prohlizetBezZajmu } from './zajem';
-import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, GetSezona, GetSoubojeModelky, PorovnatModelky, SetHodnoceni, VratitPorovnani } from './backend';
+import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, GetSezona, GetNahledyTematu, GetSoubojeModelky, PorovnatModelky, PorovnatModelkyVTematu, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, sklonovat } from '../lib/format';
 import { dnesniPocet, idDvojice, klicNavrhu, kratceSrdicka, pruhySily, skryteNavrhy, skrytNavrh, textModeluVkusu, textSrdicek, vetaNesouladu, zKolika, znakySrdicek } from '../lib/srdicka';
 import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, odkazyHodnoceni, okoliDvojice, poctyCekajicich, posunMista, postupDne, prevestCastOblibenosti, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyZajmu, urovenModelky, vysledekOvereni, vysledekRozhodnuti } from '../lib/oblibenost';
@@ -43,9 +43,16 @@ const TIPU = 12;
 const PRECHOD_MS = 170;
 
 let koren = null;
-let fronta = []; // dvojice na řadě [{ a, b, duvod, druh }]; první je zobrazená
+let fronta = []; // dvojice na řadě [{ a, b, duvod, druh, tema }]; první je zobrazená; tema = klíč tématu sezóny ("" = Klasické)
 const historie = []; // porovnané dvojice pro Vrátit (s výsledkem: d.vysledek)
 let sezonaVolby = null; // probíhající sezóna (GetSezona) pro stavovou lištu: kdo vede a kolik zbývá
+let sezonaNactena = false;
+// Tematický režim Porovnat: v tematické sezóně dvojice jen ze soutěžících, pásy jen s fotkami tématu a souboj se
+// zapíše v tématu (počítá se do sezóny); „Klasické“ porovnává jako mimo sezónu. Volba se pamatuje.
+let porovnatVTematu = (() => { try { return localStorage.getItem('porovnatVTematu') !== '0'; } catch { return true; } })();
+let temaFronty = ''; // téma, se kterým se naposledy doplnila fronta
+const temaPorovnani = () => (porovnatVTematu && sezonaVolby?.tema?.klic) || '';
+const nazevTematuPorovnani = klic => (klic && sezonaVolby?.tema?.klic === klic ? sezonaVolby.tema.nazev : '');
 let zaneprazdneno = false;
 let poradiLimit = 25; // kolik řádků pořadí je ukázaných (Zobrazit dalších 100)
 let data = { oblibenost: null, tipy: [] };
@@ -58,8 +65,10 @@ let serie = null;
 
 // Nejlepší fotky modelek pro galerii obou (id modelky → [{ id, url, album, typ, hodnoceni, rotace }]) a rozpracovaná
 // načtení; fronta je má načtené dopředu, galerie se pak otevře hned
-const nahledy = new Map();
+const nahledy = new Map(); // klíč „téma|id modelky“ (pásy tématu mají jen fotky tématu)
 const nacitaniNahledu = new Map();
+const klicNahledu = (id, tema) => `${tema || ''}|${id}`;
+const nahledyDvojice = (d, id) => nahledy.get(klicNahledu(id, d.tema));
 
 const modelka = id => stav.prehledModelky.get(id);
 const dnes = () => new Date().toISOString().slice(0, 10);
@@ -222,6 +231,7 @@ async function obnovitPrehledJednou() {
         const [oblibenost, tipy, sezona] = await Promise.all([GetOblibenost(), GetMohloByTeLibit(TIPU), GetSezona().catch(() => null)]);
         data = { oblibenost, tipy: tipy || [] };
         sezonaVolby = sezona;
+        sezonaNactena = true;
     } catch {
         nastavitText(cast('info'), 'Oblíbenost se nepodařilo načíst.');
         // Bez dat by Pořadí zůstalo prázdné bez vysvětlení
@@ -233,6 +243,7 @@ async function obnovitPrehledJednou() {
     if (!koren?.isConnected) return;
     nastavitText(cast('info'), textModeluVkusu(data.oblibenost || {}));
     vykreslitPoradi();
+    srovnatRezimPorovnani();
     vykreslitSev(fronta[0]);
     vykreslitTipy();
     vykreslitHlavu();
@@ -371,12 +382,19 @@ function doplnitFrontu() {
 async function doplnitFrontuJednou() {
     let nove = [];
     try {
-        nove = (await GetDvojiceKPorovnani(DVOJIC_NAJEDNOU, '') || []).map(idDvojice);
+        // Před prvním doplněním je potřeba vědět, jestli běží tematická sezóna
+        if (!sezonaNactena) {
+            sezonaVolby = await GetSezona().catch(() => sezonaVolby);
+            sezonaNactena = true;
+        }
+        const tema = temaPorovnani();
+        temaFronty = tema;
+        nove = (await GetDvojiceKPorovnani(DVOJIC_NAJEDNOU, tema ? `tema:${tema}` : '') || []).map(idDvojice).map(d => ({ ...d, tema }));
     } catch { /* prázdná fronta ukáže prázdný stav */ }
     const videne = new Set(fronta.map(klicDvojice));
     fronta.push(...nove.filter(d => d.a && d.b && d.a !== d.b && modelka(d.a) && modelka(d.b) && !videne.has(klicDvojice(d))));
     // Seznamy fotek celé fronty jedním voláním; zobrazená dvojice pak pásy doplní (ne uprostřed přechodu)
-    nacistNahledy(fronta.flatMap(d => [d.a, d.b])).then(() => {
+    nacistNahledyDvojic(fronta).then(() => {
         prednacist();
         if (fronta[0] && !cast('dvojice')?.classList.contains('odchazi')) vykreslitDvojici();
     });
@@ -384,21 +402,52 @@ async function doplnitFrontuJednou() {
 
 // První fotky pásů další dvojice se načtou dopředu, přechod pak nebliká
 function prednacist() {
-    fronta.slice(1, 2).forEach(d => [d.a, d.b].forEach(id => (nahledy.get(id) || []).slice(0, fotekNaObrazovce())
+    fronta.slice(1, 2).forEach(d => [d.a, d.b].forEach(id => (nahledyDvojice(d, id) || []).slice(0, fotekNaObrazovce())
         .forEach(f => { new Image().src = adresaFotkyPasu(f); })));
 }
 
 // Fotky modelek, které ještě nejsou načtené; čeká i na rozpracovaná načtení týchž modelek
-async function nacistNahledy(ids) {
-    const chybi = [...new Set(ids)].filter(id => id && !nahledy.has(id) && !nacitaniNahledu.has(id));
+async function nacistNahledy(ids, tema = '') {
+    const k = id => klicNahledu(id, tema);
+    const chybi = [...new Set(ids)].filter(id => id && !nahledy.has(k(id)) && !nacitaniNahledu.has(k(id)));
     if (chybi.length) {
-        const nacteni = GetNahledyModelek(chybi, NAHLEDU_V_POROVNANI)
-            .then(vysledek => chybi.forEach(id => nahledy.set(id, vysledek?.[id] || [])))
-            .catch(() => chybi.forEach(id => nahledy.set(id, [])))
-            .finally(() => chybi.forEach(id => nacitaniNahledu.delete(id)));
-        chybi.forEach(id => nacitaniNahledu.set(id, nacteni));
+        const nacteni = (tema ? GetNahledyTematu(chybi, NAHLEDU_V_POROVNANI, tema) : GetNahledyModelek(chybi, NAHLEDU_V_POROVNANI))
+            .then(vysledek => chybi.forEach(id => nahledy.set(k(id), vysledek?.[id] || [])))
+            .catch(() => chybi.forEach(id => nahledy.set(k(id), [])))
+            .finally(() => chybi.forEach(id => nacitaniNahledu.delete(k(id))));
+        chybi.forEach(id => nacitaniNahledu.set(k(id), nacteni));
     }
-    await Promise.all([...new Set(ids)].map(id => nacitaniNahledu.get(id)).filter(Boolean));
+    await Promise.all([...new Set(ids)].map(id => nacitaniNahledu.get(k(id))).filter(Boolean));
+}
+
+// Fotky dvojic po tématech (fronta může mít dvojice z obou režimů: série a výzvy zůstávají)
+function nacistNahledyDvojic(seznam) {
+    const podleTematu = new Map();
+    seznam.forEach((d) => {
+        const t = d.tema || '';
+        if (!podleTematu.has(t)) podleTematu.set(t, []);
+        podleTematu.get(t).push(d.a, d.b);
+    });
+    return Promise.all([...podleTematu].map(([t, ids]) => nacistNahledy(ids, t)));
+}
+
+// Přepnutí režimu (volba, nebo začala či skončila tematická sezóna): fronta z druhého režimu se zahodí (série
+// a výzva o trůn zůstanou) a doplní se znovu
+function srovnatRezimPorovnani() {
+    const tema = temaPorovnani();
+    if (tema === temaFronty || !sezonaNactena) return;
+    temaFronty = tema;
+    fronta = fronta.filter(d => serie?.dvojice.has(d) || d.druh === 'sezona');
+    zobrazitNavrhPodPasy(null);
+    vykreslitDvojici();
+    doplnitFrontu().then(() => vykreslitDvojici());
+}
+
+function nastavitPorovnatVTematu(zapnout) {
+    porovnatVTematu = zapnout;
+    try { localStorage.setItem('porovnatVTematu', zapnout ? '1' : '0'); } catch { /* jen pro toto spuštění */ }
+    srovnatRezimPorovnani();
+    vykreslitHlavu();
 }
 
 // ——— Hlavička Hodnocení (jeden panel v hlavičce okna jako Sbírka a profil modelky) ———
@@ -445,9 +494,15 @@ function htmlHlavyHodnoceni() {
             ${skoky ? `<div class="sh-pohledy" role="group" aria-label="Skok na úroveň">${skoky}</div>` : ''}
         </div>`;
     }
-    // Porovnat: jen lišta (pásy mají celou výšku); dnešní postup a sezóna jsou ve stavové liště
+    // Porovnat: jen lišta (pásy mají celou výšku); dnešní postup a sezóna jsou ve stavové liště; v tematické sezóně
+    // vpravo režim: téma sezóny, nebo Klasické
+    const tema = sezonaVolby?.tema;
+    const rezim = tema ? `<div class="sh-pohledy" role="group" aria-label="Režim porovnání">
+            <button type="button" class="${porovnatVTematu ? 'on' : ''}" data-hd-tema="1" aria-pressed="${porovnatVTematu}" title="${esc(`Sezóna ${tema.nazev}: jen soutěžící a fotky tématu, souboje se počítají do sezóny (T přepne)`)}">✦ ${esc(tema.nazev)}</button>
+            <button type="button" class="${porovnatVTematu ? '' : 'on'}" data-hd-tema="0" aria-pressed="${!porovnatVTematu}" title="Všechny modelky a fotky; do tematické sezóny se nepočítá">Klasické</button></div>` : '';
     return `<div class="sh-lista">${htmlCasti}
             <div class="sh-akce hd-kompakt-akce">${htmlRozhodnout}${htmlPanelu}</div>
+            ${rezim}
         </div>`;
 }
 
@@ -520,7 +575,9 @@ function pripravitHlavuHodnoceni() {
         const uroven = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-uroven]'));
         const razeni = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-razeni]'));
         const hodnotit = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-hodnotit]'));
-        if (hodnotit) {
+        const rezimTematu = /** @type {HTMLElement | null} */ (cil.closest('[data-hd-tema]'));
+        if (rezimTematu) nastavitPorovnatVTematu(rezimTematu.dataset.hdTema === '1');
+        else if (hodnotit) {
             nastavitPohledHodnotit(hodnotit.dataset.hdHodnotit);
             obnovitHlavuHodnoceni();
         }
@@ -641,7 +698,9 @@ function vykreslitSev(d) {
     const okoliText = okoli.filter(x => x.typ === 'radek').map(x => `${x.misto}. ${modelka(x.p.modelkaId)?.jmeno || ''}${x.p.ceka ? ` (čeká na ${nazevUrovne(x.p.ceka.uroven)})` : ''}`).join('\n');
     misto.title = [d.duvod, okoliText].filter(Boolean).join('\n\n');
     misto.classList.toggle('souboj', Boolean(souboj));
-    nastavitHtml(misto, `${souboj ? `<b>⚔ ${esc(souboj)}</b>` : d.duvod ? `<span class="ob-sev-duvod">${esc(d.duvod)}</span>` : ''}${mista ? `${souboj || d.duvod ? '<span class="ob-sev-tecka" aria-hidden="true">·</span>' : ''}${mista}` : ''}`);
+    const tema = nazevTematuPorovnani(d.tema);
+    misto.classList.toggle('tema', Boolean(tema));
+    nastavitHtml(misto, `${tema ? `<span class="ob-sev-tema" title="Souboj v tématu sezóny – počítá se do sezóny">✦ ${esc(tema)}</span>` : ''}${souboj ? `<b>⚔ ${esc(souboj)}</b>` : d.duvod ? `<span class="ob-sev-duvod">${esc(d.duvod)}</span>` : ''}${mista ? `${souboj || d.duvod ? '<span class="ob-sev-tecka" aria-hidden="true">·</span>' : ''}${mista}` : ''}`);
 }
 
 // Obnoví počty v pilulkách Oblíbenosti (#pasStranky) a volby pohledu Porovnat (#volbyPrehledu)
@@ -676,10 +735,10 @@ function vykreslitDvojici() {
     misto.dataset.pasy = '';
     // Skóre fotek a úroveň z pořadí (Oblíbenost je počítá v backendu), u modelky bez hodnocených fotek nic
     vykreslitPasy(misto, {
-        a: { modelka: a, fotky: nahledy.get(d.a) || null, celkem: a.pocetFotek || 0, skore: polozkaPoradi(d.a) },
-        b: { modelka: b, fotky: nahledy.get(d.b) || null, celkem: b.pocetFotek || 0, skore: polozkaPoradi(d.b) },
+        a: { modelka: a, fotky: nahledyDvojice(d, d.a) || null, celkem: d.tema ? (nahledyDvojice(d, d.a)?.length || 0) : a.pocetFotek || 0, skore: polozkaPoradi(d.a) },
+        b: { modelka: b, fotky: nahledyDvojice(d, d.b) || null, celkem: d.tema ? (nahledyDvojice(d, d.b)?.length || 0) : b.pocetFotek || 0, skore: polozkaPoradi(d.b) },
     });
-    if (!nahledy.has(d.a) || !nahledy.has(d.b)) nacistNahledy([d.a, d.b]).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
+    if (!nahledyDvojice(d, d.a) || !nahledyDvojice(d, d.b)) nacistNahledy([d.a, d.b], d.tema).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
 }
 
 // Položka pořadí modelky (skóre fotek, úroveň, čekání), nebo null
@@ -946,7 +1005,7 @@ async function vybrat(vysledek) {
     dvojice.dataset.vybrano = vysledek;
     let ok = false;
     try {
-        ok = await PorovnatModelky(d.a, d.b, vysledek);
+        ok = await (d.tema ? PorovnatModelkyVTematu(d.a, d.b, vysledek, d.tema) : PorovnatModelky(d.a, d.b, vysledek));
     } catch { /* oznámí se níž */ }
     if (!ok) {
         delete dvojice.dataset.vybrano;
@@ -1026,13 +1085,13 @@ async function vratit() {
 // první; stejná dvojice čekající ve frontě se nezopakuje
 export function soubojOTrun(vyzyvatelka, vudkyne) {
     if (!modelka(vyzyvatelka) || !modelka(vudkyne)) return;
-    const d = { a: vyzyvatelka, b: vudkyne, duvod: 'Souboj o trůn sezóny', druh: 'sezona' };
+    const d = { a: vyzyvatelka, b: vudkyne, duvod: 'Souboj o trůn sezóny', druh: 'sezona', tema: sezonaVolby?.tema?.klic || '' };
     const ista = x => (x.a === d.a && x.b === d.b) || (x.a === d.b && x.b === d.a);
     fronta = [d, ...fronta.filter(x => !ista(x))];
     zobrazitNavrhPodPasy(null);
     ukazatCastOblibenosti('porovnat');
     vykreslitDvojici();
-    nacistNahledy([d.a, d.b]).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
+    nacistNahledy([d.a, d.b], d.tema).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
 }
 
 // Tlačítko u čekající nebo obhajující modelky v Pořadí: souboje, které jí chybí (GetSoubojeModelky), jdou hned za
@@ -1217,7 +1276,7 @@ export function pripravit() {
         if (e.key === 'Enter' && e.target.closest?.('button, a, [role="tab"]')) return;
         if (e.key === ' ' && e.target.closest?.('button') && koren.contains(e.target)) return;
         const akce = (!zaneprazdneno && klavesaPasu(e, vybrat))
-            || { ArrowDown: () => vybrat('remiza'), ' ': () => vybrat('remiza'), Backspace: vratit, s: preskocit, S: preskocit }[e.key];
+            || { ArrowDown: () => vybrat('remiza'), ' ': () => vybrat('remiza'), Backspace: vratit, s: preskocit, S: preskocit, ...(sezonaVolby?.tema ? { t: () => nastavitPorovnatVTematu(!porovnatVTematu), T: () => nastavitPorovnatVTematu(!porovnatVTematu) } : {}) }[e.key];
         if (!akce) return;
         e.preventDefault();
         akce();
@@ -1228,8 +1287,8 @@ export function pripravit() {
         if (!otevrenoZPorovnani || !lightbox.classList.contains('hidden')) return;
         const id = otevrenoZPorovnani;
         otevrenoZPorovnani = 0;
-        nahledy.delete(id);
-        nacistNahledy([id]).then(() => { if (fronta[0] && (fronta[0].a === id || fronta[0].b === id)) vykreslitDvojici(); });
+        [...nahledy.keys()].filter(k => k.endsWith(`|${id}`)).forEach(k => nahledy.delete(k));
+        nacistNahledy([id], fronta[0]?.tema).then(() => { if (fronta[0] && (fronta[0].a === id || fronta[0].b === id)) vykreslitDvojici(); });
     }).observe(lightbox, { attributes: true, attributeFilter: ['class'] });
 
     // Srdíčka změněná kdekoli: tip se ztlumí jako ohodnocený, nesoulad modelky zmizí z Nesedí (patřil ke starým

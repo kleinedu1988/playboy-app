@@ -11119,6 +11119,15 @@ span.ud-chip {
     font-weight: 600;
 }
 
+.ob-sev-tema {
+    flex: none;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+    font-weight: 600;
+}
+
 .ob-sev-duvod {
     min-width: 0;
     overflow: hidden;

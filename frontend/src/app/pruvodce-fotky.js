@@ -1,0 +1,313 @@
+// Průvodce hodnocením fotky v prohlížeči (Hodnocení › Hodnotit › Průvodce): skleněný pásek pod středem fotky
+// s krokem průvodce (lib/pruvodce.js, kroky z backendu). Číslice 1–9 (i numerická klávesnice) vybírá, 0 = žádná,
+// Enter / → dál, Backspace / ← zpět (na prvním kroku vrátí minulou fotku), Shift+Enter jako minulá fotka a rovnou
+// srdíčka, S přeskočí (potvrzené kroky se zapíšou, fotka jde na konec fronty a nabídne se znovu), H skryje pásek.
+// Srdíčka 1–5 fotku uloží jako prošlou a ukáže další; zápis běží za ní (nepovedený ji vrátí).
+import { GetKrokyPruvodce, GetTagyFotek, UlozitPruvodceFotky, VratitPruvodceFotky } from './backend';
+import { cislice, cisloKlavesy, jakoMinula, novyStav, potvrdit, tlumene, viditelneKroky, vybraneKroku, zadna, zodpovezeneSkupiny, zpet } from '../lib/pruvodce';
+import { stav } from './stav';
+import { lbNaplnitListu, lbZobrazit, lightbox, zavritLightbox } from './prohlizec';
+import { oznamitHodnoceniFotek } from './galerie';
+import { esc } from '../lib/format';
+import { oznamit } from '../ui/oznameni';
+
+const KLIC_SKRYTI = 'pruvodceSkryty';
+
+/** @type {import('../lib/pruvodce').Krok[]} */
+let kroky = [];
+let stavy = new Map(); // položka → stav průvodce
+const tagyFotek = new Map(); // id fotky → tagy (načtené při zobrazení)
+let podleAlba = new Map(); // klíč alba → tagy minulé uložené fotky alba
+let posledni = null; // tagy minulé uložené fotky (Shift+Enter)
+export let historiePruvodce = []; // { polozky: [{ polozka, kde }], tagy, hodnoceni, predchozi, cas }
+export let hotovoPruvodce = 0;
+let pasek = null;
+let skryty = (() => { try { return localStorage.getItem(KLIC_SKRYTI) === '1'; } catch { return false; } })();
+
+const klicAlba = p => `${p.modelkaId}|${p.album}|${p.typ}`;
+const aktualni = () => stav.lbPolozky[stav.lbIndex];
+const zmena = () => document.dispatchEvent(new CustomEvent('lb-pruvodce-zmena'));
+const nazvyTagu = new Map();
+export const nazevTagu = klic => nazvyTagu.get(klic) || klic;
+
+// Začátek relace (otevření prohlížeče)
+export async function zacitPruvodce() {
+    if (!kroky.length) {
+        try { kroky = /** @type {any} */ ((await GetKrokyPruvodce())?.kroky || []); } catch { kroky = []; }
+        kroky.forEach(k => k.moznosti.forEach(m => nazvyTagu.set(m.klic, m.nazev)));
+    }
+    stavy = new Map();
+    podleAlba = new Map();
+    posledni = null;
+    historiePruvodce = [];
+    hotovoPruvodce = 0;
+}
+
+// Stav zobrazené položky; tagy fotky se napřed načtou (první fotka položky zastupuje spojený plakát)
+async function stavPolozky(p) {
+    if (stavy.has(p)) return stavy.get(p);
+    const id = p.fotky[0].id;
+    if (!tagyFotek.has(id)) {
+        let t = [];
+        try { t = (await GetTagyFotek([id]))?.[id] || []; } catch { t = []; }
+        tagyFotek.set(id, t);
+    }
+    if (!stavy.has(p)) stavy.set(p, novyStav(kroky, tagyFotek.get(id), podleAlba.get(klicAlba(p)) || []));
+    return stavy.get(p);
+}
+
+// Zobrazená fotka (událost z prohlížeče): pásek pro její stav
+export async function ukazatPruvodce() {
+    const p = aktualni();
+    if (!stav.lbPruvodce || !p) return vykreslitPasek();
+    await stavPolozky(p);
+    if (aktualni() === p) vykreslitPasek();
+}
+
+// ——— Zápis ———
+
+function vyraditZFronty(cile) {
+    const seznam = stav.lbPolozky;
+    const polozky = cile.map(polozka => ({ polozka, kde: seznam.indexOf(polozka) })).filter(x => x.kde >= 0);
+    [...polozky].sort((a, b) => b.kde - a.kde).forEach(x => seznam.splice(x.kde, 1));
+    return polozky;
+}
+
+function ukazatDalsi(kde) {
+    const seznam = stav.lbPolozky;
+    if (!seznam.length) {
+        zavritLightbox();
+        oznamit('Hotovo – všechny fotky prošly průvodcem.');
+        return;
+    }
+    lbNaplnitListu();
+    lbZobrazit(Math.min(Math.max(kde, 0), seznam.length - 1));
+}
+
+// Fotka prošla průvodcem (srdíčka): vypadne z fronty, zápis běží za ní
+async function ulozitHotovou(p, s) {
+    const kde = stav.lbPolozky.indexOf(p);
+    const polozky = vyraditZFronty([p]);
+    const tagy = [...s.vybrane].filter(t => !s.navrh.has(t));
+    const zaznam = { polozky, tagy, hodnoceni: s.hodnoceni, predchozi: null, cas: Date.now() };
+    historiePruvodce.push(zaznam);
+    hotovoPruvodce++;
+    posledni = tagy;
+    podleAlba.set(klicAlba(p), tagy);
+    ukazatDalsi(kde);
+    zmena();
+    const ids = p.fotky.map(f => f.id);
+    const predFotek = p.fotky.map(f => Number(f.hodnoceni) || 0);
+    let vysledek = null;
+    try {
+        vysledek = await UlozitPruvodceFotky({ ids, skupiny: zodpovezeneSkupiny(kroky, s), tagy, hodnoceni: s.hodnoceni, hotovo: true });
+    } catch { /* oznámí se níž */ }
+    if (vysledek?.ok) {
+        zaznam.predchozi = vysledek;
+        ids.forEach(id => tagyFotek.set(id, tagy));
+        p.hodnoceni = s.hodnoceni;
+        p.fotky.forEach((f) => { f.hodnoceni = s.hodnoceni; });
+        oznamitHodnoceniFotek(predFotek, p.fotky.length, s.hodnoceni);
+        stavy.delete(p);
+        return zmena();
+    }
+    oznamit('Fotku se nepodařilo uložit.');
+    vratitDoFronty(zaznam, false);
+}
+
+// S (a zavření uprostřed): potvrzené kroky se zapíšou, fotka zůstane neprošlá a jde na konec fronty
+async function preskocit(naKonec = true) {
+    const p = aktualni();
+    if (!p) return;
+    const s = stavy.get(p);
+    if (s && zodpovezeneSkupiny(kroky, s).length) {
+        const tagy = [...s.vybrane].filter(t => !s.navrh.has(t));
+        UlozitPruvodceFotky({ ids: p.fotky.map(f => f.id), skupiny: zodpovezeneSkupiny(kroky, s), tagy, hodnoceni: 0, hotovo: false })
+            .then((v) => { if (v?.ok) p.fotky.forEach(f => tagyFotek.set(f.id, tagy)); })
+            .catch(() => oznamit('Rozpracované tagy se nepodařilo uložit.'));
+    }
+    stavy.delete(p);
+    if (!naKonec) return;
+    const kde = stav.lbIndex;
+    vyraditZFronty([p]);
+    stav.lbPolozky.push(p);
+    ukazatDalsi(kde);
+}
+
+// Rozpracovaná fotka při zavření prohlížeče: zapsat potvrzené kroky
+export function ukoncitPruvodce() {
+    if (stav.lbPruvodce) preskocit(false);
+    vykreslitPasek();
+}
+
+// Vrátit poslední uloženou fotku: předchozí tagy, srdíčka a příznak; fotka zpět na své místo
+export async function vratitPruvodce() {
+    const z = historiePruvodce[historiePruvodce.length - 1];
+    if (!z?.predchozi) return;
+    let ok = false;
+    try { ok = await VratitPruvodceFotky(z.predchozi); } catch { ok = false; }
+    if (!ok) return oznamit('Fotku se nepodařilo vrátit.');
+    const p = z.polozky[0]?.polozka;
+    if (p) {
+        z.predchozi.fotky.forEach((f) => { tagyFotek.set(f.id, f.tagy || []); });
+        const pred = z.predchozi.fotky[0]?.hodnoceni || 0;
+        oznamitHodnoceniFotek(p.fotky.map(() => z.hodnoceni), p.fotky.length, pred);
+        p.hodnoceni = pred;
+        p.fotky.forEach((f) => { f.hodnoceni = pred; });
+    }
+    vratitDoFronty(z, true);
+}
+
+function vratitDoFronty(z, ukazat) {
+    historiePruvodce = historiePruvodce.filter(x => x !== z);
+    hotovoPruvodce = Math.max(0, hotovoPruvodce - 1);
+    if (lightbox.classList.contains('hidden') || !stav.lbPruvodce) return zmena();
+    const seznam = stav.lbPolozky;
+    [...z.polozky].sort((a, b) => a.kde - b.kde).forEach(x => seznam.splice(Math.min(x.kde, seznam.length), 0, x.polozka));
+    const p = z.polozky[0]?.polozka;
+    if (p) {
+        // Znovu s vybranými tagy a srdíčky na posledním kroku
+        const s = novyStav(kroky, z.tagy, []);
+        jakoMinula(kroky, s, z.tagy);
+        stavy.set(p, s);
+    }
+    lbNaplnitListu();
+    if (ukazat && p) lbZobrazit(seznam.indexOf(p));
+    zmena();
+}
+
+// ——— Klávesy ———
+
+let blikani = 0;
+function upozornit() {
+    pasek?.classList.add('chybi');
+    clearTimeout(blikani);
+    blikani = setTimeout(() => pasek?.classList.remove('chybi'), 600);
+}
+
+// Klávesy průvodce; true = klávesa patřila průvodci
+export function klavesaPruvodce(e) {
+    if (!stav.lbPruvodce || !kroky.length) return false;
+    const p = aktualni();
+    const s = p && stavy.get(p);
+    if (e.code === 'KeyH' || e.code === 'NumpadMultiply') {
+        prepnoutSkryti();
+        return true;
+    }
+    if (e.code === 'KeyS' || e.code === 'NumpadDivide') {
+        if (!e.repeat) preskocit();
+        return true;
+    }
+    if (!s) return ['Enter', 'NumpadEnter', 'Backspace', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code) || cisloKlavesy(e) !== null;
+    const cislo = cisloKlavesy(e);
+    if (cislo !== null) {
+        if (e.repeat) return true;
+        const v = cislo === 0 ? zadna(kroky, s) : cislice(kroky, s, cislo);
+        if (v === 'hotovo') ulozitHotovou(p, s);
+        else if (v) vykreslitPasek();
+        else upozornit();
+        return true;
+    }
+    if (e.code === 'Enter' || e.code === 'NumpadEnter' || e.code === 'ArrowRight' || e.code === 'NumpadAdd') {
+        if (e.repeat) return true;
+        if (e.shiftKey && posledni) jakoMinula(kroky, s, posledni);
+        else if (potvrdit(kroky, s) === 'chybi') upozornit();
+        vykreslitPasek();
+        return true;
+    }
+    if (e.code === 'Backspace' || e.code === 'ArrowLeft' || e.code === 'NumpadSubtract') {
+        if (!zpet(kroky, s) && !s.potvrzene.size) vratitPruvodce();
+        vykreslitPasek();
+        return true;
+    }
+    // Mezerník by spustil promítání; šipky nahoru a dolů skáčou po albech – v průvodci nic
+    return e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'ArrowDown';
+}
+
+function prepnoutSkryti() {
+    skryty = !skryty;
+    try { localStorage.setItem(KLIC_SKRYTI, skryty ? '1' : '0'); } catch { /* jen pro toto spuštění */ }
+    vykreslitPasek();
+}
+
+// ——— Pásek ———
+
+function pripravitPasek() {
+    if (pasek) return;
+    pasek = document.createElement('div');
+    pasek.id = 'lbPruvodce';
+    pasek.className = 'lb-pruvodce hidden';
+    lightbox.append(pasek);
+    // Klik na pásek nesmí zavřít prohlížeč ani zapnout lupu
+    pasek.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const cil = /** @type {HTMLElement} */ (e.target);
+        const p = aktualni();
+        const s = p && stavy.get(p);
+        if (cil.closest('[data-pr-skryt]')) return prepnoutSkryti();
+        if (!s) return;
+        const volba = /** @type {HTMLElement | null} */ (cil.closest('[data-pr-cislo]'));
+        if (volba) {
+            const v = Number(volba.dataset.prCislo) === 0 ? zadna(kroky, s) : cislice(kroky, s, Number(volba.dataset.prCislo));
+            if (v === 'hotovo') return ulozitHotovou(p, s);
+            if (!v) upozornit();
+        } else if (cil.closest('[data-pr-dal]')) {
+            if (potvrdit(kroky, s) === 'chybi') upozornit();
+        } else if (cil.closest('[data-pr-zpet]')) zpet(kroky, s);
+        else if (cil.closest('[data-pr-preskocit]')) return preskocit();
+        else if (cil.closest('[data-pr-minula]') && posledni) jakoMinula(kroky, s, posledni);
+        else return;
+        vykreslitPasek();
+    });
+}
+
+export function vykreslitPasek() {
+    pripravitPasek();
+    const p = aktualni();
+    const s = p && stavy.get(p);
+    const videt = stav.lbPruvodce && !!s && !lightbox.classList.contains('hidden');
+    pasek.classList.toggle('hidden', !videt);
+    lightbox.classList.toggle('pruvodce-skryty', videt && skryty);
+    if (!videt) return;
+    if (skryty) {
+        pasek.innerHTML = '<button type="button" class="pr-ukazat" data-pr-skryt title="Ukázat průvodce (H)">Průvodce <kbd>H</kbd></button>';
+        pasek.classList.add('skryty');
+        return;
+    }
+    pasek.classList.remove('skryty');
+    const krok = kroky[s.krok];
+    const viditelne = viditelneKroky(kroky, s.vybrane);
+    const poradi = viditelne.indexOf(s.krok) + 1;
+    const tecky = viditelne.map(i => `<i class="${i === s.krok ? 'ted' : s.potvrzene.has(kroky[i].klic) ? 'on' : ''}" title="${esc(kroky[i].nazev)}"></i>`).join('');
+    let moznosti = '';
+    if (krok.typ === 'srdicka') {
+        moznosti = [1, 2, 3, 4, 5].map(n => `<button type="button" class="pr-srdce" data-pr-cislo="${n}" title="${n} (uloží a ukáže další)"><kbd>${n}</kbd>${'♥'.repeat(n)}</button>`).join('');
+    } else {
+        const tlum = tlumene(krok, s.vybrane);
+        moznosti = (krok.povinny ? '' : `<button type="button" class="pr-volba nula ${vybraneKroku(krok, s).length ? '' : 'on'}" data-pr-cislo="0"><kbd>0</kbd>${esc(krok.nula || 'žádná')}</button>`)
+            + krok.moznosti.map((m, i) => {
+                const trida = s.vybrane.has(m.klic) ? (s.navrh.has(m.klic) ? 'navrh' : 'on') : '';
+                return `<button type="button" class="pr-volba ${trida} ${tlum.has(m.klic) ? 'tlumena' : ''}" data-pr-cislo="${i + 1}"><kbd>${i + 1}</kbd>${esc(m.nazev)}</button>`;
+            }).join('');
+    }
+    const navrh = krok.moznosti.some(m => s.navrh.has(m.klic));
+    const napoveda = krok.typ === 'srdicka' ? '1–5 uloží a ukáže další'
+        : krok.typ === 'jeden' ? `číslice vybere a jde dál${navrh ? ' · ↵ převezme z alba' : ''}`
+            : `číslice přepíná · ↵ dál${krok.povinny ? '' : ' · 0 žádná'}${navrh ? ' · obrys = z alba' : ''}`;
+    pasek.innerHTML = `
+        <div class="pr-hlava">
+            <span class="pr-krok">${poradi}/${viditelne.length}</span><b>${esc(krok.nazev)}</b>
+            <span class="pr-tecky" aria-hidden="true">${tecky}</span>
+            <span class="pr-napoveda">${esc(napoveda)}</span>
+            <button type="button" class="pr-skryt" data-pr-skryt title="Skrýt průvodce (H)"><kbd>H</kbd></button>
+        </div>
+        <div class="pr-moznosti">
+            <button type="button" class="pr-sipka" data-pr-zpet title="Zpět (Backspace / ←)">‹</button>
+            ${moznosti}
+            ${krok.typ === 'srdicka' ? '' : '<button type="button" class="pr-sipka" data-pr-dal title="Dál (Enter / →)">›</button>'}
+        </div>
+        <div class="pr-pata">
+            <button type="button" data-pr-preskocit title="Přeskočit fotku – potvrzené kroky se uloží (S)"><kbd>S</kbd> přeskočit</button>
+            ${posledni ? '<button type="button" data-pr-minula title="Tagy jako minulá fotka, pak srdíčka (Shift+Enter)"><kbd>⇧↵</kbd> jako minulá</button>' : ''}
+        </div>`;
+}

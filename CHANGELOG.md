@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.6] – 2026-11-02
+
+### Přidáno
+- **Průvodce hodnocením fotky** (Hodnocení › Hodnotit › **Průvodce**): skleněný pásek pod středem fotky provede tagy krok po kroku – Záběr, Odhalení, Prostředí, Tělo a nohy, Oblečení, Póza a výraz, Styl fotky – a nakonec srdíčka.
+  - Číslice **1–9** vybírá (i na numerické klávesnici a správně i na české klávesnici) – u záběru, odhalení a prostředí rovnou pokračuje, jinde přepíná a **Enter** potvrdí; **0** = žádná u volitelných kroků; **Backspace / ←** zpět (na prvním kroku vrátí minulou fotku); **Shift+Enter** tagy jako minulá fotka a rovnou srdíčka; srdíčka **1–5** fotku uloží a ukáží další.
+  - Prostředí, styl a oblečení se předvyplní podle minulé fotky alba (obrysem, převezme je Enter); u portrétu se tělo přeskočí, nehodící se možnosti jsou ztlumené (čísla se nemění); tečky ukazují postup.
+  - **S** přeskočí – potvrzené kroky se uloží a fotka se nabídne znovu; **H** pásek skryje a ukáže; zavření prohlížeče uloží rozpracované kroky. Ve stavové liště „Hotovo 3 · zbývá 120“ a „↶ Vrátit“.
+
+### Změněno
+- Pohled **Tagy** nahradil Průvodce (dosavadní panel tagů s klávesami Z/O/M… v prohlížeči skončil); pohled Fotky se jmenuje **Jen srdíčka**. Tagy ve výběru fotek (klávesa T) zůstávají.
+
 ## [1.2.5] – 2026-11-02
 
 ### Přidáno

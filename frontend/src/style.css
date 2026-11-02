@@ -13184,91 +13184,214 @@ button.pas-kapsle:focus-visible {
     font-size: 12px;
 }
 
-/* Tagování v prohlížeči (tagovani.js): panel skupin dole nad stavovou lištou; plná pilulka = vybraný tag,
-   obrys = předvyplněný podle minulé fotky alba (uloží se s Enterem) */
-.lb-tagy {
-    position: fixed;
-    right: 0;
-    bottom: 30px;
-    left: 0;
-    z-index: 1500;
-    align-content: flex-start;
-    /* Výška podle obsahu (víc skupin tagů = víc řádků), prohlížeč nad ním se zkrátí o --lbt-vyska */
-    max-height: 45vh;
-    overflow-y: auto;
+/* Průvodce hodnocením fotky (pruvodce-fotky.js): skleněný pásek pod středem fotky – krok, tečky postupu,
+   možnosti s číslicemi (plná = vybraná, obrys = z minulé fotky alba, ztlumená = nehodí se), srdíčka v posledním kroku */
+.lb-pruvodce {
+    position: absolute;
+    top: 70%;
+    left: 50%;
+    z-index: 30;
     display: flex;
-    flex-wrap: wrap;
-    gap: 6px 18px;
-    padding: 12px 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    background-color: rgb(18, 18, 22);
+    flex-direction: column;
+    gap: 8px;
+    width: min(1160px, calc(100% - 48px));
+    padding: 12px 16px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    background-color: rgba(18, 18, 22, 0.55);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    color: var(--text-main);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transform: translate(-50%, -50%);
+    transition: background-color 0.2s, opacity 0.2s;
 }
 
-.lb-tagy.hidden {
+.lb-pruvodce:hover {
+    background-color: rgba(18, 18, 22, 0.82);
+}
+
+.lb-pruvodce.hidden {
     display: none;
 }
 
-.lbt-skupina {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 4px;
+.lb-pruvodce.chybi {
+    animation: pr-chybi 0.5s;
 }
 
-.lbt-nazev {
+@keyframes pr-chybi {
+    20%, 60% { transform: translate(calc(-50% - 6px), -50%); }
+    40%, 80% { transform: translate(calc(-50% + 6px), -50%); }
+}
+
+/* Skrytý průvodce (H): jen malé tlačítko dole */
+.lb-pruvodce.skryty {
+    top: auto;
+    bottom: 16px;
+    width: auto;
+    padding: 4px;
+    transform: translateX(-50%);
+}
+
+.pr-ukazat,
+.pr-skryt {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    margin-right: 2px;
-    color: var(--accent-text);
-    font-size: 10.5px;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-}
-
-.lb-tagy kbd {
-    padding: 0 4px;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    color: var(--text-main);
-    font: inherit;
-    font-size: 10px;
-    letter-spacing: 0;
-}
-
-.lbt-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 3px 9px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    gap: 6px;
+    padding: 4px 10px;
+    border: 0;
     border-radius: 999px;
     background: none;
-    color: var(--text-main);
-    font: inherit;
+    color: var(--text-muted);
     font-size: 12px;
     cursor: pointer;
 }
 
-.lbt-tag:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+.pr-hlava {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
 }
 
-.lbt-tag.on {
+.pr-hlava b {
+    font-size: 15px;
+    letter-spacing: 0.04em;
+}
+
+.pr-krok {
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+}
+
+.pr-tecky {
+    display: inline-flex;
+    gap: 4px;
+}
+
+.pr-tecky i {
+    width: 7px;
+    height: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 50%;
+}
+
+.pr-tecky i.on {
+    border-color: var(--accent);
+    background-color: var(--accent);
+}
+
+.pr-tecky i.ted {
+    border-color: #fff;
+    background-color: #fff;
+}
+
+.pr-napoveda {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.pr-moznosti {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.pr-volba,
+.pr-srdce {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px 6px 6px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--text-main);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.pr-volba:hover,
+.pr-srdce:hover {
+    border-color: rgba(255, 255, 255, 0.45);
+}
+
+.pr-volba.on {
     border-color: var(--accent);
     background-color: var(--accent);
     color: #fff;
 }
 
-.lbt-tag.navrh {
-    border: 1px dashed var(--accent);
-    color: #fff;
+.pr-volba.navrh {
+    border-color: var(--accent);
+    border-style: dashed;
+    background-color: var(--accent-soft);
 }
 
-/* Prohlížeč nad panelem tagů a stavovou lištou (fotka se vejde nad ně) */
-.lightbox.tagovani {
-    bottom: calc(var(--lbt-vyska, 132px) + 30px);
+.pr-volba.nula {
+    color: var(--text-muted);
+}
+
+.pr-volba.nula.on {
+    border-color: rgba(255, 255, 255, 0.45);
+    background-color: rgba(255, 255, 255, 0.12);
+    color: var(--text-main);
+}
+
+.pr-volba.tlumena {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.pr-srdce {
+    color: var(--accent-text);
+    font-size: 16px;
+    letter-spacing: 1px;
+}
+
+.lb-pruvodce kbd {
+    min-width: 20px;
+    padding: 1px 5px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 11px;
+    text-align: center;
+}
+
+.pr-volba.on kbd {
+    border-color: rgba(255, 255, 255, 0.7);
+}
+
+.pr-sipka {
+    padding: 2px 10px;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.pr-pata {
+    display: flex;
+    gap: 14px;
+}
+
+.pr-pata button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
 }
 
 /* Prohlížeč při hodnocení fronty nechá dole místo stavové liště (postup, Vrátit, klávesy) */

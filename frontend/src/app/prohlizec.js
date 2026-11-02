@@ -233,18 +233,18 @@ export function lbZobrazit(index) {
         ? `<span class="lb-jmeno">${esc(polozka.jmenoModelky)}</span><span class="lb-kde">${esc(kde)}</span>`
         : `<span class="lb-jmeno">${esc(kde)}</span>`;
     // Fronta nehodnocených ubývá: ukazuje, kolik zbývá; jinak pořadí fotky
-    lbCounter.innerHTML = stav.lbJenNehodnocene || stav.lbTagovani ? `<small>zbývá</small> ${pocet}` : `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
+    lbCounter.innerHTML = stav.lbJenNehodnocene || stav.lbPruvodce ? `<small>zbývá</small> ${pocet}` : `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
     lbVykreslitSrdicka();
     // Začátky alb jen tam, kde je lišta alb (fronta nehodnocených ji nemá a seznam je dlouhý)
-    if (!stav.lbJenNehodnocene && !stav.lbTagovani) lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
+    if (!stav.lbJenNehodnocene && !stav.lbPruvodce) lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
     lbAktualizovatTlacitka();
 
     // Přednačtení další položky, aby listování neproblikávalo
     dalsi.fotky.forEach(f => { new Image().src = obrazek(f.url, velikostDalsi); });
 
     if (stav.lbCasovac) lbSpustitCasovac();
-    // Tagování: panel skupin a stavová lišta pro zobrazenou fotku (tagovani.js, galerie-hodnoceni.js)
-    if (stav.lbTagovani) document.dispatchEvent(new CustomEvent('lb-tagovani'));
+    // Průvodce: pásek kroků a stavová lišta pro zobrazenou fotku (pruvodce-fotky.js, galerie-hodnoceni.js)
+    if (stav.lbPruvodce) document.dispatchEvent(new CustomEvent('lb-pruvodce'));
 }
 
 export function lbVykreslitSrdicka() {
@@ -346,7 +346,7 @@ export function lbNaplnitListu() {
     const zacatky = lbZacatkyAlb();
     // Kde je každá položka vlastním albem (stěna centerfoldů, covery), pořadí je zamíchané nebo jde o frontu
     // nehodnocených (napříč sbírkou, alba po jedné fotce), lišta nemá smysl
-    const maSmysl = !stav.lbPuvodniPoradi && !stav.lbJenNehodnocene && !stav.lbTagovani && zacatky.length > 1 && zacatky.length <= stav.lbPolozky.length / 2;
+    const maSmysl = !stav.lbPuvodniPoradi && !stav.lbJenNehodnocene && !stav.lbPruvodce && zacatky.length > 1 && zacatky.length <= stav.lbPolozky.length / 2;
     lbLista.naplnit(maSmysl ? zacatky.map((zacatek, i) => ({
         klic: zacatek,
         nazev: nazevAlba(stav.lbPolozky[zacatek].album, stav.lbPolozky[zacatek].typ),
@@ -402,16 +402,16 @@ function ukazatOvladani(zustat = false) {
 }
 
 // jenNehodnocene: Galerie nehodnocených fotek (ohodnocená vypadne); poZavreni se zavolá po zavření prohlížeče
-// tagovani: fronta fotek bez tagů (tagovani.js) – panel skupin, otagovaná fotka vypadne
-export function otevritLightbox(index, slideshow = false, polozky = stav.aktualniPolozky, { jenNehodnocene = false, poZavreni = null, tagovani = false } = {}) {
+// pruvodce: fronta fotek k průvodci (pruvodce-fotky.js) – pásek kroků, prošlá fotka vypadne
+export function otevritLightbox(index, slideshow = false, polozky = stav.aktualniPolozky, { jenNehodnocene = false, poZavreni = null, pruvodce = false } = {}) {
     if (polozky.length === 0) return;
     stav.lbJenNehodnocene = jenNehodnocene;
-    stav.lbTagovani = tagovani;
-    lightbox.classList.toggle('tagovani', tagovani);
+    stav.lbPruvodce = pruvodce;
+    lightbox.classList.toggle('pruvodce', pruvodce);
     stav.lbPoZavreni = poZavreni;
     stav.lbHistorie = [];
     // Hodnocení fronty: prohlížeč nechá dole místo stavové liště (postup, Vrátit, klávesy)
-    lightbox.classList.toggle('hodnoceni', jenNehodnocene || tagovani);
+    lightbox.classList.toggle('hodnoceni', jenNehodnocene || pruvodce);
     stav.lbPuvodniPoradi = null;
     lbShuffle.classList.remove('active');
     stav.lbPolozky = polozky;
@@ -425,6 +425,8 @@ export function otevritLightbox(index, slideshow = false, polozky = stav.aktualn
 }
 
 export function zavritLightbox() {
+    // Rozpracovaná fotka průvodce: potvrzené kroky se zapíšou (pruvodce-fotky.js)
+    if (stav.lbPruvodce) document.dispatchEvent(new CustomEvent('lb-pruvodce-konec'));
     ukoncitProhlizeni();
     lbPrepnoutSlideshow(false);
     lightbox.classList.add('hidden');
@@ -444,11 +446,11 @@ export function zavritLightbox() {
     // Fotky nehodnocených: po zavření se fronta načte znovu, až doběhnou zápisy hodnocení
     const poZavreni = stav.lbPoZavreni;
     const zapisy = [...stav.lbZapisy];
-    const hodnotila = stav.lbJenNehodnocene || stav.lbTagovani;
+    const hodnotila = stav.lbJenNehodnocene || stav.lbPruvodce;
     stav.lbJenNehodnocene = false;
-    stav.lbTagovani = false;
-    lightbox.classList.remove('tagovani');
-    document.getElementById('lbTagy')?.classList.add('hidden');
+    stav.lbPruvodce = false;
+    lightbox.classList.remove('pruvodce', 'pruvodce-skryty');
+    document.getElementById('lbPruvodce')?.classList.add('hidden');
     stav.lbPoZavreni = null;
     stav.lbHistorie = [];
     // Stavová lišta se vrátí stránce

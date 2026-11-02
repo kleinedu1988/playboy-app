@@ -12,7 +12,7 @@ import { nabidnoutVraceni } from './sprava';
 import { vybratHodnotu } from './ulozeni';
 import { otevreneOkno } from '../ui/dom';
 import { otevritPanelTagu, zavritPanelTagu } from './tagy-fotek';
-import { klavesaTagovani } from './tagovani';
+import { klavesaPruvodce } from './pruvodce-fotky';
 
 // Výběr více fotek v profilu, na stránce vydání, ročníku a fotografa a v Nejlepších: Ctrl (Cmd) + klik přidá
 // nebo odebere fotku, Shift + klik vybere úsek, Ctrl+A vybere vše, Delete vybrané odebere
@@ -186,8 +186,8 @@ export function pripravit() {
         // Klávesy prohlížeče neplatí při psaní do pole ani nad otevřeným oknem
         if (lightbox.classList.contains('hidden') || e.ctrlKey || e.altKey || e.metaKey
             || e.target.closest('input, textarea, select') || otevreneOkno()) return;
-        // Tagování má vlastní klávesy (Z, O, M, P, V, H, Enter, 1–5, „.“, Backspace)
-        if (klavesaTagovani(e)) {
+        // Průvodce hodnocením má vlastní klávesy (číslice, Enter, Backspace, šipky, S, H)
+        if (klavesaPruvodce(e)) {
             e.preventDefault();
             return;
         }

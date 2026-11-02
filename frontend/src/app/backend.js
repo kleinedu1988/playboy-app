@@ -37,6 +37,11 @@ const CTENI = new Set([
     'GetTemataSezon',
     'GetNavrhSezony',
     'GetTitulySezonModelky',
+    'GetKrokyPruvodce',
+    'GetFotkyKPruvodci',
+    'GetPocetFotekKPruvodci',
+    'UlozitPruvodceFotky',
+    'VratitPruvodceFotky',
     'SetObdobiSezony',
     'PorovnatModelkyVTematu',
     'GetNahledyTematu',
@@ -120,6 +125,11 @@ export const GetNepotagovaneFotky = /** @type {typeof App.GetNepotagovaneFotky} 
 export const GetTemataSezon = /** @type {typeof App.GetTemataSezon} */ (obalit('GetTemataSezon'));
 export const GetNavrhSezony = /** @type {typeof App.GetNavrhSezony} */ (obalit('GetNavrhSezony'));
 export const GetTitulySezonModelky = /** @type {typeof App.GetTitulySezonModelky} */ (obalit('GetTitulySezonModelky'));
+export const GetKrokyPruvodce = /** @type {typeof App.GetKrokyPruvodce} */ (obalit('GetKrokyPruvodce'));
+export const GetFotkyKPruvodci = /** @type {typeof App.GetFotkyKPruvodci} */ (obalit('GetFotkyKPruvodci'));
+export const GetPocetFotekKPruvodci = /** @type {typeof App.GetPocetFotekKPruvodci} */ (obalit('GetPocetFotekKPruvodci'));
+export const UlozitPruvodceFotky = /** @type {typeof App.UlozitPruvodceFotky} */ (obalit('UlozitPruvodceFotky'));
+export const VratitPruvodceFotky = /** @type {typeof App.VratitPruvodceFotky} */ (obalit('VratitPruvodceFotky'));
 export const SetObdobiSezony = /** @type {typeof App.SetObdobiSezony} */ (obalit('SetObdobiSezony'));
 export const PorovnatModelkyVTematu = /** @type {typeof App.PorovnatModelkyVTematu} */ (obalit('PorovnatModelkyVTematu'));
 export const GetNahledyTematu = /** @type {typeof App.GetNahledyTematu} */ (obalit('GetNahledyTematu'));

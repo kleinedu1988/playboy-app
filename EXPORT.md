@@ -1,7 +1,7 @@
-# Formát exportu (verze 11)
+# Formát exportu (verze 12)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 11** (program 1.2.0 a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 12** (program 1.2.5 a novější).
 
 Od alfy (program 0.50.0) byl formát verze 7 **zmrazený**. Vědomé výjimky v betě jsou dvě: verze 8 přidala
 online pictorialy (typ alba `Pictorial online` s datem nafocení) a verze 9 hodnocení modelky po polovinách
@@ -43,7 +43,7 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 ## Celek
 
 ```yaml
-verze: 11
+verze: 12
 modelky: [...]   # modelky s jejich alby
 covery: [...]    # obálky časopisu, nepatří k modelce
 vydani: [...]    # stav a poznámky k jednotlivým číslům
@@ -99,6 +99,8 @@ a `pridano`, jen když se liší od data přidání alba.
 
 `tagy` (od verze 10): tagy fotky z pevného seznamu, např. `tagy: [postava, akt, prsa, studio]`. Záběr, Odhalení, Prostředí, Barevnost a Světlo mají nejvýš jednu hodnotu. Seznam: záběr `portret`, `poprsi`, `postava`, `detail`; odhalení `oblecena`, `pradlo`, `nahore_bez`, `akt`, `explicitni`; partie `prsa`, `zadecek`, `vagina`, `nohy`, `chodidla`; prostředí `studio`, `interier`, `loznice`, `koupelna`, `priroda`, `plaz`, `bazen`, `mesto`, `auto`; oblečení a doplňky `podpatky`, `puncochy`, `podvazky`, `bikiny`, `saty`, `kosile`, `kostym`, `latex`, `bunny`, `dziny`; póza a situace `stoji`, `sedi`, `lezi`, `zezadu`, `mokra`, `vic_modelek`; barevnost `cernobila`, `tonovana`; světlo `high_key`, `low_key`, `zlata_hodina`, `noc`; výraz `do_kamery`, `usmev`. Tagy `bazen`, `auto`, `bunny`, `dziny` a skupiny barevnost, světlo a výraz přibyly ve verzi 11. Neprázdný seznam při importu nahradí tagy fotky, neznámý tag se přeskočí, prázdný nebo chybějící nic nemění.
 
+`pruvodce` (od verze 12): fotka prošla průvodcem hodnocení (Hodnocení › Hodnotit › Fotky) – číslo verze kroků, např. `pruvodce: 1`. Při importu hodnota větší než 0 fotku označí jako prošlou; chybějící nic nemění.
+
 ## Cover, vydání, výběr
 
 ```yaml
@@ -145,6 +147,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 12 | 1.2.5 | `pruvodce` u fotky: fotka prošla průvodcem hodnocení (číslo verze kroků) |
 | 11 | 1.2.0 | Další tagy fotek: `bazen`, `auto`, `bunny`, `dziny`, barevnost, světlo a výraz (starší program by je tiše zahodil, proto nová verze) |
 | 10 | 1.1.0 | `tagy` u fotky (pevný seznam pro tematické sezóny) |
 | 9 | 0.99.26 | `hodnoceni` modelky po polovinách srdíčka (`3.5`, při importu i `3,5`); hodnocení fotek zůstává celé |

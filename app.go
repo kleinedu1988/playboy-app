@@ -918,6 +918,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceDatumAlba,
 	(*App).migraceHodnoceniPul,
 	(*App).migraceTagyFotek,
+	(*App).migracePruvodceFotek,
 }
 
 func (a *App) migrovat() error {

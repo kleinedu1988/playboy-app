@@ -74,6 +74,10 @@ export function GetDvojiceKPorovnani(arg1, arg2) {
   return window['go']['main']['App']['GetDvojiceKPorovnani'](arg1, arg2);
 }
 
+export function GetFotkyKPruvodci() {
+  return window['go']['main']['App']['GetFotkyKPruvodci']();
+}
+
 export function GetFotkyVyberu(arg1) {
   return window['go']['main']['App']['GetFotkyVyberu'](arg1);
 }
@@ -96,6 +100,10 @@ export function GetKalendar() {
 
 export function GetKatalogTagu() {
   return window['go']['main']['App']['GetKatalogTagu']();
+}
+
+export function GetKrokyPruvodce() {
+  return window['go']['main']['App']['GetKrokyPruvodce']();
 }
 
 export function GetModelky(arg1) {
@@ -144,6 +152,10 @@ export function GetOblibenost() {
 
 export function GetOdznakyModelky(arg1) {
   return window['go']['main']['App']['GetOdznakyModelky'](arg1);
+}
+
+export function GetPocetFotekKPruvodci() {
+  return window['go']['main']['App']['GetPocetFotekKPruvodci']();
 }
 
 export function GetPocetNehodnocenychFotek() {
@@ -430,6 +442,10 @@ export function StavDatabaze() {
   return window['go']['main']['App']['StavDatabaze']();
 }
 
+export function UlozitPruvodceFotky(arg1) {
+  return window['go']['main']['App']['UlozitPruvodceFotky'](arg1);
+}
+
 export function UpdateAlbum(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['UpdateAlbum'](arg1, arg2, arg3, arg4, arg5);
 }
@@ -452,6 +468,10 @@ export function UzavritSezonu(arg1, arg2) {
 
 export function VratitPorovnani(arg1, arg2) {
   return window['go']['main']['App']['VratitPorovnani'](arg1, arg2);
+}
+
+export function VratitPruvodceFotky(arg1) {
+  return window['go']['main']['App']['VratitPruvodceFotky'](arg1);
 }
 
 export function VyberPodleNazvu(arg1) {

@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.5] – 2026-11-02
+
+### Přidáno
+- **Základ průvodce hodnocením fotky** (v rozhraní přijde v další verzi): kroky Záběr, Odhalení, Prostředí, Tělo a nohy, Oblečení, Póza a výraz, Styl fotky a nakonec srdíčka – každý nejvýš 9 možností, volitelné kroky s „0 = žádná“, podmínky (Tělo a nohy se u portrétu přeskočí, nehodící se možnosti se ztlumí) a předvyplnění podle minulé fotky alba.
+  - Program si pamatuje, které fotky prošly průvodcem; přeskočená fotka si nechá tagy z potvrzených kroků a nabídne se znovu. Zápis jde vrátit.
+
+### Změněno
+- **Úprava databáze č. 15 a formát exportu verze 12** (`pruvodce` u fotky). Soubory verze 11 a starší se načtou beze změny; starší program soubor verze 12 odmítne a novější databázi otevře jen pro čtení. Výjimečně v řadě 1.2 (ROADMAP, Pravidlo verzování).
+
 ## [1.2.4] – 2026-11-02
 
 ### Změněno

@@ -39,7 +39,8 @@ Platí pro všechny verze od bety dál (zapsáno 23. 10. 2026, hlídá test `Tes
   (`verze.go`, `wails.json`, `frontend/package.json`) a v kontrolním součtu `package.json.md5`; test hlídá tvar,
   shodu všech míst a datum v changelogu. Rozpracovaný stav může nést příponu `-dev`.
 - **Data:** kompatibilitu nehlídá číslo verze programu, ale verze schématu databáze a formátu exportu (viz „Jak se
-  vydává po 1.0.0“).
+  vydává po 1.0.0“). Úprava schématu nebo exportu obvykle znamená nové MINOR; na přání uživatele může vyjít i jako
+  PATCH v rozběhnuté řadě (průvodce hodnocením fotky: úprava č. 15 a export 12 v 1.2.5).
 - **Značky v gitu** (`vX.Y.Z`) se nedělají; historii nese changelog a commity.
 
 ### Fáze do 1.0.0

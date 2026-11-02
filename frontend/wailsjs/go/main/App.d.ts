@@ -38,6 +38,8 @@ export function GetDuvodOdhadu(arg1:number):Promise<string>;
 
 export function GetDvojiceKPorovnani(arg1:number,arg2:string):Promise<Array<main.DvojicePorovnani>>;
 
+export function GetFotkyKPruvodci():Promise<Array<main.Fotografie>>;
+
 export function GetFotkyVyberu(arg1:number):Promise<Array<main.Fotografie>>;
 
 export function GetFotografieModelky(arg1:number):Promise<Array<main.Fotografie>>;
@@ -49,6 +51,8 @@ export function GetFrontaHodnoceni():Promise<Array<main.PolozkaHodnoceni>>;
 export function GetKalendar():Promise<Array<main.VydaniKalendare>>;
 
 export function GetKatalogTagu():Promise<Array<main.SkupinaTagu>>;
+
+export function GetKrokyPruvodce():Promise<main.KrokyPruvodce>;
 
 export function GetModelky(arg1:string):Promise<Array<main.Modelka>>;
 
@@ -73,6 +77,8 @@ export function GetNepotagovaneFotky():Promise<Array<main.Fotografie>>;
 export function GetOblibenost():Promise<main.StavOblibenosti>;
 
 export function GetOdznakyModelky(arg1:number):Promise<Array<main.OdznakModelky>>;
+
+export function GetPocetFotekKPruvodci():Promise<number>;
 
 export function GetPocetNehodnocenychFotek():Promise<number>;
 
@@ -216,6 +222,8 @@ export function SmazatVyber(arg1:number):Promise<boolean>;
 
 export function StavDatabaze():Promise<string>;
 
+export function UlozitPruvodceFotky(arg1:main.ZapisPruvodce):Promise<main.PredchoziPruvodce>;
+
 export function UpdateAlbum(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
 
 export function UpdateClanek(arg1:main.Clanek):Promise<boolean>;
@@ -227,6 +235,8 @@ export function UpdateModelka(arg1:main.Modelka):Promise<boolean>;
 export function UzavritSezonu(arg1:string,arg2:number):Promise<boolean>;
 
 export function VratitPorovnani(arg1:number,arg2:number):Promise<boolean>;
+
+export function VratitPruvodceFotky(arg1:main.PredchoziPruvodce):Promise<boolean>;
 
 export function VyberPodleNazvu(arg1:string):Promise<number>;
 

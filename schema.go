@@ -241,6 +241,17 @@ func (a *App) migraceHodnoceniPul() error {
 	return nil
 }
 
+// Průvodce hodnocením fotky (pruvodce_fotky.go): fotka prošla všemi kroky dané verze průvodce; smazaná fotka
+// odnese i záznam
+func (a *App) migracePruvodceFotek() error {
+	_, err := a.db.Exec(`CREATE TABLE IF NOT EXISTS fotky_pruvodce (
+		fotka_id INTEGER PRIMARY KEY REFERENCES fotky(id) ON DELETE CASCADE,
+		verze INTEGER NOT NULL,
+		hotovo TEXT NOT NULL
+	) WITHOUT ROWID`)
+	return err
+}
+
 // Tagy fotek z pevného seznamu (tagy_fotek.go); smazaná fotka odnese i své tagy
 func (a *App) migraceTagyFotek() error {
 	for _, krok := range []string{

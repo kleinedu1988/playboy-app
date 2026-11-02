@@ -27,6 +27,8 @@ type exportFotka struct {
 	Pridano string `yaml:"pridano,omitempty"`
 	// Tagy z pevného seznamu (tagy_fotek.go), od verze 10; neprázdný seznam při importu nahradí tagy fotky
 	Tagy []string `yaml:"tagy,omitempty,flow"`
+	// Fotka prošla průvodcem hodnocení této verze (pruvodce_fotky.go), od verze 12; při importu > 0 zapíše
+	Pruvodce int `yaml:"pruvodce,omitempty"`
 }
 
 type exportAlbum struct {
@@ -98,7 +100,7 @@ type exportCover struct {
 }
 
 // Verze formátu exportu, kterou program zapisuje a nejvýš umí načíst; popis je v EXPORT.md
-const verzeExportu = 11
+const verzeExportu = 12
 
 // Odkaz na modelku v exportu (další modelka alba, obálka, výběr): jméno, u jmen, která má víc modelek,
 // doplněné o číslo modelky v hranatých závorkách („Anna [12]“)
@@ -153,7 +155,7 @@ func anoNeZTextu(text string, puvodni int) int {
 }
 
 // Fotky seskupené do alb v pořadí, v jakém přišly z databáze
-func seskupitDoAlb(fotky []Fotografie, odkazy odkazyNaModelky, netykaSe map[int64]string, tagy map[int][]string) []exportAlbum {
+func seskupitDoAlb(fotky []Fotografie, odkazy odkazyNaModelky, netykaSe map[int64]string, tagy map[int][]string, pruvodce map[int]int) []exportAlbum {
 	var alba []exportAlbum
 	kde := map[string]int{}
 	for _, f := range fotky {
@@ -179,7 +181,7 @@ func seskupitDoAlb(fotky []Fotografie, odkazy odkazyNaModelky, netykaSe map[int6
 		alba[i].Spojit = alba[i].Spojit || f.Spojit
 		alba[i].RucniPoradi = alba[i].RucniPoradi || f.Poradi > 0
 		alba[i].Fotky = append(alba[i].Fotky, exportFotka{
-			ID: f.DriveID, Hodnoceni: f.Hodnoceni, Rotace: f.Rotace, Pridano: f.Pridano, Tagy: tagy[f.ID],
+			ID: f.DriveID, Hodnoceni: f.Hodnoceni, Rotace: f.Rotace, Pridano: f.Pridano, Tagy: tagy[f.ID], Pruvodce: pruvodce[f.ID],
 		})
 	}
 	// Datum fotky se zapisuje, jen když se liší od data alba
@@ -226,6 +228,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 	}
 	// Tagy fotek celé sbírky jedním dotazem
 	tagyFotek := vsechnyTagyFotek(a.db)
+	pruvodceFotek := vsechnyPruvodceFotek(a.db)
 	netykaSeAlb := map[int64]string{}
 	if rows, err := a.db.Query("SELECT id, netyka_se FROM alba WHERE COALESCE(netyka_se, '') <> ''"); err == nil {
 		for rows.Next() {
@@ -268,7 +271,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 			Tetovani: anoNeDoTextu(m.Tetovani), Piercing: anoNeDoTextu(m.Piercing),
 			Role: m.Role, Tags: m.Tags, Vystoupeni: m.Vystoupeni, PictorialVydani: m.PictorialVydani,
 			Poznamka: m.Poznamka, Odkazy: m.Odkazy, TitulniFotka: m.CoverID,
-			Alba: seskupitDoAlb(fotky, odkazy, netykaSeAlb, tagyFotek), Cislo: odkazy.cislo(m.ID, m.Jmeno), NetykaSe: m.NetykaSe,
+			Alba: seskupitDoAlb(fotky, odkazy, netykaSeAlb, tagyFotek, pruvodceFotek), Cislo: odkazy.cislo(m.ID, m.Jmeno), NetykaSe: m.NetykaSe,
 		}
 		// Alba bez fotek, která nesou text, fotografa, „netýká se“ nebo další modelky
 		e.Alba = append(e.Alba, prazdnaAlba[m.ID]...)
@@ -289,7 +292,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 		return nil, fmt.Errorf("covery se nepodařilo přečíst: %w", err)
 	}
 	exportovanoFotek += len(covery)
-	for _, album := range seskupitDoAlb(covery, odkazy, netykaSeAlb, tagyFotek) {
+	for _, album := range seskupitDoAlb(covery, odkazy, netykaSeAlb, tagyFotek, pruvodceFotek) {
 		// Cover nemá v exportu datum alba, proto každá fotka nese své
 		for i := range album.Fotky {
 			if album.Fotky[i].Pridano == "" {
@@ -420,6 +423,12 @@ func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *Vysled
 			rotace = CASE WHEN ?2 <> 0 THEN ?2 ELSE rotace END, poradi = COALESCE(?3, poradi) WHERE id = ?4`).Exec(
 			hodnoceni, ((f.Rotace%360)+360)%360, poradi, id); err != nil {
 			a.chyba("import "+kde, err)
+		}
+		// Průvodce: verze > 0 zapíše, že fotka prošla průvodcem (chybějící nic nemění)
+		if f.Pruvodce > 0 {
+			if _, err := a.pripraveny(`INSERT OR REPLACE INTO fotky_pruvodce (fotka_id, verze, hotovo) VALUES (?, ?, ?)`).Exec(id, f.Pruvodce, time.Now().Format("2006-01-02 15:04:05")); err != nil {
+				a.chyba("import "+kde, err)
+			}
 		}
 		// Tagy: neprázdný seznam nahradí tagy fotky (neznámé se přeskočí), prázdný nic nemění
 		if tagy := platneTagy(f.Tagy); len(tagy) > 0 {

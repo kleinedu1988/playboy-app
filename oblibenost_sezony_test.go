@@ -27,7 +27,7 @@ func TestBodySezony(t *testing.T) {
 		{cas: cas(3, 9), id: 3, sekund: 1200},  // 10 → 4, ale strop zájmu = body ze soubojů (1)
 		{cas: cas(4, 9), id: 4, profil: true},  // modelka bez soubojů: zájem nejvýš 0
 	}
-	b := spocitatBodySezony(porovnani, zajem, poradi, existuje, od, do)
+	b := spocitatBodySezony(porovnani, zajem, poradi, existuje, od, do, nil)
 	podle := map[int]BodySezony{}
 	for _, x := range b {
 		podle[x.ModelkaID] = x
@@ -58,7 +58,7 @@ func TestBodySezonyJenSoutezici(t *testing.T) {
 		{cas: cas, a: 1, b: 2, vysledek: "a"}, {cas: cas, a: 1, b: 3, vysledek: "a"},
 		{cas: cas, a: 2, b: 3, vysledek: "a"}, {cas: cas, a: 2, b: 3, vysledek: "remiza"},
 	}
-	b := spocitatBodySezony(porovnani, nil, map[int]int{}, existuje, od, od.AddDate(0, 1, 0))
+	b := spocitatBodySezony(porovnani, nil, map[int]int{}, existuje, od, od.AddDate(0, 1, 0), nil)
 	if b[0].ModelkaID != 2 || b[0].Misto != 1 || b[1].ModelkaID != 3 || b[1].Misto != 2 {
 		t.Errorf("soutěžící napřed: %+v", b)
 	}

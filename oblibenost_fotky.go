@@ -257,7 +257,7 @@ func (a *App) GetNahledyModelek(ids []int, pocet int) map[int][]NahledFotky {
 	if len(chybi) == 0 {
 		return vysledek
 	}
-	spocitane := a.spocitatNahledy(s, chybi, pocet)
+	spocitane := a.spocitatNahledy(s, chybi, pocet, nil)
 	s.mu.Lock()
 	if s.nahledy == nil {
 		s.nahledy = map[int]nahledyModelky{}
@@ -274,7 +274,8 @@ func (a *App) GetNahledyModelek(ids []int, pocet int) map[int][]NahledFotky {
 	return vysledek
 }
 
-func (a *App) spocitatNahledy(s *snimek, ids []int, pocet int) map[int][]NahledFotky {
+// povolit = které fotky smí do náhledů (téma sezóny); nil = všechny
+func (a *App) spocitatNahledy(s *snimek, ids []int, pocet int, povolit func(id int) bool) map[int][]NahledFotky {
 	vysledek := map[int][]NahledFotky{}
 	var alba []any
 	for _, id := range ids {
@@ -295,7 +296,7 @@ func (a *App) spocitatNahledy(s *snimek, ids []int, pocet int) map[int][]NahledF
 		for radky.Next() {
 			var f fotkaNahledu
 			var album int64
-			if radky.Scan(&f.id, &album, &f.drive, &f.rotace, &f.hodnoceni, &f.poradi) == nil {
+			if radky.Scan(&f.id, &album, &f.drive, &f.rotace, &f.hodnoceni, &f.poradi) == nil && (povolit == nil || povolit(f.id)) {
 				fotky[album] = append(fotky[album], f)
 			}
 		}

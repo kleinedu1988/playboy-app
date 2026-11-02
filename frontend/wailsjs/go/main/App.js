@@ -110,6 +110,10 @@ export function GetNahledyModelek(arg1, arg2) {
   return window['go']['main']['App']['GetNahledyModelek'](arg1, arg2);
 }
 
+export function GetNahledyTematu(arg1, arg2, arg3) {
+  return window['go']['main']['App']['GetNahledyTematu'](arg1, arg2, arg3);
+}
+
 export function GetNavrhSrdicek(arg1) {
   return window['go']['main']['App']['GetNavrhSrdicek'](arg1);
 }
@@ -198,6 +202,10 @@ export function GetTagyFotek(arg1) {
   return window['go']['main']['App']['GetTagyFotek'](arg1);
 }
 
+export function GetTemataSezon() {
+  return window['go']['main']['App']['GetTemataSezon']();
+}
+
 export function GetVerze() {
   return window['go']['main']['App']['GetVerze']();
 }
@@ -272,6 +280,10 @@ export function OveritOdkaz(arg1) {
 
 export function PorovnatModelky(arg1, arg2, arg3) {
   return window['go']['main']['App']['PorovnatModelky'](arg1, arg2, arg3);
+}
+
+export function PorovnatModelkyVTematu(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['PorovnatModelkyVTematu'](arg1, arg2, arg3, arg4);
 }
 
 export function PrejmenovatFotografa(arg1, arg2) {
@@ -368,6 +380,10 @@ export function SetStavVydani(arg1, arg2) {
 
 export function SetTagyFotek(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetTagyFotek'](arg1, arg2, arg3);
+}
+
+export function SetTemaSezony(arg1, arg2) {
+  return window['go']['main']['App']['SetTemaSezony'](arg1, arg2);
 }
 
 export function SetTitulniFotka(arg1, arg2) {

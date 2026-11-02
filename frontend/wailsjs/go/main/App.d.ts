@@ -56,6 +56,8 @@ export function GetMohloByTeLibit(arg1:number):Promise<Array<main.OblibenostMode
 
 export function GetNahledyModelek(arg1:Array<number>,arg2:number):Promise<Record<number, Array<main.NahledFotky>>>;
 
+export function GetNahledyTematu(arg1:Array<number>,arg2:number,arg3:string):Promise<Record<number, Array<main.NahledFotky>>>;
+
 export function GetNavrhSrdicek(arg1:number):Promise<main.NavrhSrdicek>;
 
 export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<main.NavrhDoplneni>>;
@@ -100,6 +102,8 @@ export function GetTagy():Promise<Array<string>>;
 
 export function GetTagyFotek(arg1:Array<number>):Promise<Record<number, Array<string>>>;
 
+export function GetTemataSezon():Promise<Array<main.InfoTematu>>;
+
 export function GetVerze():Promise<string>;
 
 export function GetVybery():Promise<Array<main.Vyber>>;
@@ -137,6 +141,8 @@ export function OdmitnoutNavrh(arg1:main.NavrhDoplneni,arg2:boolean):Promise<boo
 export function OveritOdkaz(arg1:string):Promise<number>;
 
 export function PorovnatModelky(arg1:number,arg2:number,arg3:string):Promise<boolean>;
+
+export function PorovnatModelkyVTematu(arg1:number,arg2:number,arg3:string,arg4:string):Promise<boolean>;
 
 export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
 
@@ -185,6 +191,8 @@ export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean)
 export function SetStavVydani(arg1:string,arg2:string):Promise<boolean>;
 
 export function SetTagyFotek(arg1:Array<number>,arg2:Array<string>,arg3:Array<string>):Promise<boolean>;
+
+export function SetTemaSezony(arg1:string,arg2:string):Promise<boolean>;
 
 export function SetTitulniFotka(arg1:number,arg2:number):Promise<boolean>;
 

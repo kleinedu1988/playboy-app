@@ -228,6 +228,62 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class PodminkaTematu {
+	    druh: string;
+	    klic: string;
+	    hodnoty: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new PodminkaTematu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.druh = source["druh"];
+	        this.klic = source["klic"];
+	        this.hodnoty = source["hodnoty"];
+	    }
+	}
+	export class InfoTematu {
+	    klic: string;
+	    nazev: string;
+	    podminky: PodminkaTematu[];
+	    soutezicich: number;
+	    fotek: number;
+	    plati: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new InfoTematu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.podminky = this.convertValues(source["podminky"], PodminkaTematu);
+	        this.soutezicich = source["soutezicich"];
+	        this.fotek = source["fotek"];
+	        this.plati = source["plati"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class PodilVyvoje {
 	    obdobi: number;
 	    pocty: Record<string, number>;
@@ -348,6 +404,7 @@ export namespace main {
 	}
 	export class MinulaSezona {
 	    mesic: string;
+	    tema: string;
 	    favoritka: number;
 	    milacek: number;
 	    body: number;
@@ -360,6 +417,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.mesic = source["mesic"];
+	        this.tema = source["tema"];
 	        this.favoritka = source["favoritka"];
 	        this.milacek = source["milacek"];
 	        this.body = source["body"];
@@ -850,6 +908,7 @@ export namespace main {
 	    }
 	}
 	
+	
 	export class PolozkaHodnoceni {
 	    modelkaId: number;
 	    druh: string;
@@ -1143,8 +1202,43 @@ export namespace main {
 	    }
 	}
 	
+	export class Tema {
+	    klic: string;
+	    nazev: string;
+	    podminky: PodminkaTematu[];
+	
+	    static createFrom(source: any = {}) {
+	        return new Tema(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.podminky = this.convertValues(source["podminky"], PodminkaTematu);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class UzavreniSezony {
 	    mesic: string;
+	    tema: string;
 	    poradi: BodySezony[];
 	    souboju: number;
 	    modelek: number;
@@ -1156,6 +1250,7 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.mesic = source["mesic"];
+	        this.tema = source["tema"];
 	        this.poradi = this.convertValues(source["poradi"], BodySezony);
 	        this.souboju = source["souboju"];
 	        this.modelek = source["modelek"];
@@ -1190,6 +1285,8 @@ export namespace main {
 	    poradi: BodySezony[];
 	    minule: MinulaSezona[];
 	    kUzavreni?: UzavreniSezony;
+	    tema?: Tema;
+	    soutezicich: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Sezona(source);
@@ -1207,6 +1304,8 @@ export namespace main {
 	        this.poradi = this.convertValues(source["poradi"], BodySezony);
 	        this.minule = this.convertValues(source["minule"], MinulaSezona);
 	        this.kUzavreni = this.convertValues(source["kUzavreni"], UzavreniSezony);
+	        this.tema = this.convertValues(source["tema"], Tema);
+	        this.soutezicich = source["soutezicich"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -1592,6 +1691,7 @@ export namespace main {
 		    return a;
 		}
 	}
+	
 	
 	
 	

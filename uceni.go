@@ -130,6 +130,14 @@ var migraceUceni = []string{
 		souboju INTEGER NOT NULL DEFAULT 0,
 		uzavreno TEXT NOT NULL
 	);`,
+	// Úprava č. 8: tematické sezóny (oblibenost_temata.go) – téma měsíce (klíč podmínek, "" = Klasická) a téma,
+	// ve kterém se porovnání odehrálo ("" = mimo téma)
+	`CREATE TABLE temata_sezon (
+		mesic TEXT PRIMARY KEY,
+		tema TEXT NOT NULL,
+		zvoleno TEXT NOT NULL
+	);
+	ALTER TABLE porovnani ADD COLUMN tema TEXT NOT NULL DEFAULT '';`,
 }
 
 // Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti

@@ -111,6 +111,10 @@ type OblibenostModelky struct {
 // Výsledek porovnání: vysledek "a" (víc se líbí A), "b" nebo "remiza". Zapíše se do databáze učení se srdíčky
 // obou modelek v tu chvíli.
 func (a *App) PorovnatModelky(modelkaA, modelkaB int, vysledek string) bool {
+	return a.porovnatModelky(modelkaA, modelkaB, vysledek, "")
+}
+
+func (a *App) porovnatModelky(modelkaA, modelkaB int, vysledek, tema string) bool {
 	u := a.uc
 	if u == nil || modelkaA == modelkaB || (vysledek != "a" && vysledek != "b" && vysledek != "remiza") {
 		return false
@@ -131,7 +135,7 @@ func (a *App) PorovnatModelky(modelkaA, modelkaB int, vysledek string) bool {
 	if len(hodnoceni) != 2 {
 		return false
 	}
-	return u.zapsatPorovnani(modelkaA, modelkaB, vysledek, hodnoceni[modelkaA], hodnoceni[modelkaB])
+	return u.zapsatPorovnani(modelkaA, modelkaB, vysledek, hodnoceni[modelkaA], hodnoceni[modelkaB], tema)
 }
 
 // Vrácení posledního porovnání (smaže ho z databáze učení); false, když žádné není
@@ -308,6 +312,7 @@ type porovnaniZaznam struct {
 	a, b     int
 	vysledek string
 	ha, hb   float64
+	tema     string // téma sezóny, ve kterém se porovnání odehrálo ("" = mimo téma)
 }
 
 // Stav oblíbenosti v databázi učení jedné aplikace
@@ -337,7 +342,7 @@ func (u *uceni) nacistPorovnani() []porovnaniZaznam {
 		return nil
 	}
 	u.ob.nacteno = true
-	radky, err := db.Query("SELECT id, cas, a, b, vysledek, hodnoceni_a, hodnoceni_b FROM porovnani ORDER BY id")
+	radky, err := db.Query("SELECT id, cas, a, b, vysledek, hodnoceni_a, hodnoceni_b, tema FROM porovnani ORDER BY id")
 	if err != nil {
 		return nil
 	}
@@ -345,7 +350,7 @@ func (u *uceni) nacistPorovnani() []porovnaniZaznam {
 	for radky.Next() {
 		var p porovnaniZaznam
 		var cas string
-		if radky.Scan(&p.id, &cas, &p.a, &p.b, &p.vysledek, &p.ha, &p.hb) == nil {
+		if radky.Scan(&p.id, &cas, &p.a, &p.b, &p.vysledek, &p.ha, &p.hb, &p.tema) == nil {
 			p.cas, _ = time.ParseInLocation("2006-01-02 15:04:05", cas, time.Local)
 			u.ob.porovnani = append(u.ob.porovnani, p)
 		}
@@ -353,7 +358,7 @@ func (u *uceni) nacistPorovnani() []porovnaniZaznam {
 	return u.ob.porovnani
 }
 
-func (u *uceni) zapsatPorovnani(a, b int, vysledek string, ha, hb float64) bool {
+func (u *uceni) zapsatPorovnani(a, b int, vysledek string, ha, hb float64, tema string) bool {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 	db := u.zajistit()
@@ -362,7 +367,7 @@ func (u *uceni) zapsatPorovnani(a, b int, vysledek string, ha, hb float64) bool 
 	}
 	porovnani := u.nacistPorovnani()
 	cas := ted()
-	v, err := db.Exec("INSERT INTO porovnani (cas, a, b, vysledek, hodnoceni_a, hodnoceni_b) VALUES (?, ?, ?, ?, ?, ?)", cas, a, b, vysledek, ha, hb)
+	v, err := db.Exec("INSERT INTO porovnani (cas, a, b, vysledek, hodnoceni_a, hodnoceni_b, tema) VALUES (?, ?, ?, ?, ?, ?, ?)", cas, a, b, vysledek, ha, hb, tema)
 	if err != nil {
 		varovatUceni("porovnání se nezapsalo: %v", err)
 		return false
@@ -370,7 +375,7 @@ func (u *uceni) zapsatPorovnani(a, b int, vysledek string, ha, hb float64) bool 
 	id, _ := v.LastInsertId()
 	casT, _ := time.ParseInLocation("2006-01-02 15:04:05", cas, time.Local)
 	u.ob.porovnani = append(append(make([]porovnaniZaznam, 0, len(porovnani)+1), porovnani...),
-		porovnaniZaznam{id: id, cas: casT, a: a, b: b, vysledek: vysledek, ha: ha, hb: hb})
+		porovnaniZaznam{id: id, cas: casT, a: a, b: b, vysledek: vysledek, ha: ha, hb: hb, tema: tema})
 	return true
 }
 

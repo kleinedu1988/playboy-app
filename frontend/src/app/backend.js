@@ -34,6 +34,10 @@ const CTENI = new Set([
     'SetTagyFotek',
     'GetPoctyTagu',
     'GetNepotagovaneFotky',
+    'GetTemataSezon',
+    'SetTemaSezony',
+    'PorovnatModelkyVTematu',
+    'GetNahledyTematu',
     'GetOblibenost',
     'GetPrehled',
     'GetPrehledOblibenosti',
@@ -111,6 +115,10 @@ export const GetTagyFotek = /** @type {typeof App.GetTagyFotek} */ (obalit('GetT
 export const SetTagyFotek = /** @type {typeof App.SetTagyFotek} */ (obalit('SetTagyFotek'));
 export const GetPoctyTagu = /** @type {typeof App.GetPoctyTagu} */ (obalit('GetPoctyTagu'));
 export const GetNepotagovaneFotky = /** @type {typeof App.GetNepotagovaneFotky} */ (obalit('GetNepotagovaneFotky'));
+export const GetTemataSezon = /** @type {typeof App.GetTemataSezon} */ (obalit('GetTemataSezon'));
+export const SetTemaSezony = /** @type {typeof App.SetTemaSezony} */ (obalit('SetTemaSezony'));
+export const PorovnatModelkyVTematu = /** @type {typeof App.PorovnatModelkyVTematu} */ (obalit('PorovnatModelkyVTematu'));
+export const GetNahledyTematu = /** @type {typeof App.GetNahledyTematu} */ (obalit('GetNahledyTematu'));
 export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehled'));
 export const GetPrehledVydani = /** @type {typeof App.GetPrehledVydani} */ (obalit('GetPrehledVydani'));
 export const GetSablonaObrazku = /** @type {typeof App.GetSablonaObrazku} */ (obalit('GetSablonaObrazku'));

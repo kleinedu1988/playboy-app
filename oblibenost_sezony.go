@@ -48,6 +48,7 @@ type BodySezony struct {
 // Uzavřená sezóna (Favoritka 0 = nikdo nesplnil 3 souboje)
 type MinulaSezona struct {
 	Mesic     string `json:"mesic"` // RRRR-MM
+	Tema      string `json:"tema"`  // název tématu ("" = Klasická)
 	Favoritka int    `json:"favoritka"`
 	Milacek   int    `json:"milacek"`
 	Body      int    `json:"body"`
@@ -57,6 +58,7 @@ type MinulaSezona struct {
 // Skončená, ještě neuzavřená sezóna: pořadí k vyhlášení (soutěžící, nejvýš 10)
 type UzavreniSezony struct {
 	Mesic   string       `json:"mesic"`
+	Tema    string       `json:"tema"` // název tématu ("" = Klasická)
 	Poradi  []BodySezony `json:"poradi"`
 	Souboju int          `json:"souboju"`
 	Modelek int          `json:"modelek"`
@@ -73,6 +75,10 @@ type Sezona struct {
 	Poradi    []BodySezony    `json:"poradi"`  // soutěžící podle bodů, pak ostatní s body
 	Minule    []MinulaSezona  `json:"minule"`  // od nejnovější
 	KUzavreni *UzavreniSezony `json:"kUzavreni"`
+	// Téma probíhající sezóny (nil = Klasická; i když uložené téma nemá dost soutěžících) a kolik modelek v něm
+	// soutěží (má dost fotek tématu)
+	Tema        *Tema `json:"tema"`
+	Soutezicich int   `json:"soutezicich"`
 }
 
 type zaznamZajmu struct {
@@ -88,7 +94,8 @@ func zacatekMesice(t time.Time) time.Time {
 
 // Body všech modelek za okno [od, do); poradi = současné místo v pořadí oblíbenosti (0 = mimo pořadí), existuje =
 // modelky ve sbírce. Vrací soutěžící podle bodů (s místy), za nimi ostatní s body.
-func spocitatBodySezony(porovnani []porovnaniZaznam, zajem []zaznamZajmu, poradi map[int]int, existuje map[int]bool, od, do time.Time) []BodySezony {
+// filtr = téma sezóny (nil = Klasická): jen souboje v tématu mezi soutěžícími a zájem soutěžících
+func spocitatBodySezony(porovnani []porovnaniZaznam, zajem []zaznamZajmu, poradi map[int]int, existuje map[int]bool, od, do time.Time, filtr *filtrSezony) []BodySezony {
 	body := map[int]*BodySezony{}
 	zaznam := func(id int) *BodySezony {
 		b := body[id]
@@ -103,7 +110,7 @@ func spocitatBodySezony(porovnani []porovnaniZaznam, zajem []zaznamZajmu, poradi
 		return px > 0 && (py == 0 || px < py)
 	}
 	for _, p := range porovnani {
-		if p.cas.Before(od) || !p.cas.Before(do) || p.a == p.b || !existuje[p.a] || !existuje[p.b] {
+		if p.cas.Before(od) || !p.cas.Before(do) || p.a == p.b || !existuje[p.a] || !existuje[p.b] || !filtr.pocitaSe(p) {
 			continue
 		}
 		a, b := zaznam(p.a), zaznam(p.b)
@@ -136,7 +143,7 @@ func spocitatBodySezony(porovnani []porovnaniZaznam, zajem []zaznamZajmu, poradi
 	profil := map[denModelky]bool{}
 	sekund := map[denModelky]int{}
 	for _, z := range zajem {
-		if z.cas.Before(od) || !z.cas.Before(do) || !existuje[z.id] {
+		if z.cas.Before(od) || !z.cas.Before(do) || !existuje[z.id] || (filtr != nil && filtr.soutezici[z.id] == 0) {
 			continue
 		}
 		k := denModelky{z.id, z.cas.Format("2006-01-02")}
@@ -280,16 +287,35 @@ func (a *App) podkladySezon() ([]porovnaniZaznam, map[int]int, map[int]bool) {
 	return porovnani, model.poradi, existuje
 }
 
-func (a *App) bodySezony(porovnani []porovnaniZaznam, poradi map[int]int, existuje map[int]bool, od, do time.Time) []BodySezony {
+func (a *App) bodySezony(porovnani []porovnaniZaznam, poradi map[int]int, existuje map[int]bool, od, do time.Time, filtr *filtrSezony) []BodySezony {
 	a.uc.mu.Lock()
 	zajem := a.uc.nacistZaznamyZajmu(od, do)
 	a.uc.mu.Unlock()
-	return spocitatBodySezony(porovnani, zajem, poradi, existuje, od, do)
+	return spocitatBodySezony(porovnani, zajem, poradi, existuje, od, do, filtr)
+}
+
+// Souboje sezóny v okně [od, do) (v tématu jen tematické mezi soutěžícími)
+func pocetSouboju(porovnani []porovnaniZaznam, od, do time.Time, filtr *filtrSezony) int {
+	n := 0
+	for _, p := range porovnani {
+		if !p.cas.Before(od) && p.cas.Before(do) && filtr.pocitaSe(p) {
+			n++
+		}
+	}
+	return n
+}
+
+// Téma pro zobrazení: název z filtru (platné téma), jinak Klasická ("")
+func (f *filtrSezony) nazev() string {
+	if f == nil {
+		return ""
+	}
+	return f.tema.Nazev
 }
 
 // Nejstarší skončená neuzavřená sezóna, ve které byly souboje (nejvýš 12 měsíců zpět); sezónu, ve které nikdo
 // nesplnil 3 souboje, uzavře rovnou bez titulu
-func (a *App) sezonaKUzavreni(porovnani []porovnaniZaznam, poradi map[int]int, existuje map[int]bool, uzavrene map[string]bool, nyni time.Time) *UzavreniSezony {
+func (a *App) sezonaKUzavreni(porovnani []porovnaniZaznam, poradi map[int]int, existuje map[int]bool, uzavrene map[string]bool, temata map[string]string, nyni time.Time) *UzavreniSezony {
 	if len(porovnani) == 0 {
 		return nil
 	}
@@ -303,13 +329,9 @@ func (a *App) sezonaKUzavreni(porovnani []porovnaniZaznam, poradi map[int]int, e
 		if uzavrene[klic] {
 			continue
 		}
-		body := a.bodySezony(porovnani, poradi, existuje, mesic, mesic.AddDate(0, 1, 0))
-		souboju := 0
-		for _, p := range porovnani {
-			if !p.cas.Before(mesic) && p.cas.Before(mesic.AddDate(0, 1, 0)) {
-				souboju++
-			}
-		}
+		filtr := a.filtrSezony(klic, temata)
+		body := a.bodySezony(porovnani, poradi, existuje, mesic, mesic.AddDate(0, 1, 0), filtr)
+		souboju := pocetSouboju(porovnani, mesic, mesic.AddDate(0, 1, 0), filtr)
 		if souboju == 0 {
 			continue
 		}
@@ -323,7 +345,7 @@ func (a *App) sezonaKUzavreni(porovnani []porovnaniZaznam, poradi map[int]int, e
 			a.zapsatSezonu(mesic, MinulaSezona{Mesic: klic, Souboju: souboju})
 			continue
 		}
-		return &UzavreniSezony{Mesic: klic, Poradi: soutezici, Souboju: souboju, Modelek: len(body)}
+		return &UzavreniSezony{Mesic: klic, Tema: filtr.nazev(), Poradi: soutezici, Souboju: souboju, Modelek: len(body)}
 	}
 	return nil
 }
@@ -372,29 +394,34 @@ func (a *App) GetSezona() Sezona {
 	porovnani, poradi, existuje := a.podkladySezon()
 	a.uc.mu.Lock()
 	minule := a.uc.nacistSezony()
+	temata := a.uc.nacistTemataSezon()
 	a.uc.mu.Unlock()
 	uzavrene := map[string]bool{}
 	for _, m := range minule {
 		uzavrene[m.Mesic] = true
 	}
-	s.KUzavreni = a.sezonaKUzavreni(porovnani, poradi, existuje, uzavrene, nyni)
+	s.KUzavreni = a.sezonaKUzavreni(porovnani, poradi, existuje, uzavrene, temata, nyni)
 	if s.KUzavreni == nil {
 		// Sezóny uzavřené rovnou bez titulu se ukážou mezi minulými
 		a.uc.mu.Lock()
 		minule = a.uc.nacistSezony()
 		a.uc.mu.Unlock()
 	}
-	s.Poradi = a.bodySezony(porovnani, poradi, existuje, od, nyni.Add(time.Second))
+	filtr := a.filtrSezony(s.Mesic, temata)
+	if filtr != nil {
+		t := filtr.tema
+		s.Tema, s.Soutezicich = &t, len(filtr.soutezici)
+	}
+	s.Poradi = a.bodySezony(porovnani, poradi, existuje, od, nyni.Add(time.Second), filtr)
 	if tyden := nyni.AddDate(0, 0, -7); tyden.After(od) {
-		doplnitTrend(s.Poradi, a.bodySezony(porovnani, poradi, existuje, od, tyden))
+		doplnitTrend(s.Poradi, a.bodySezony(porovnani, poradi, existuje, od, tyden, filtr))
 	}
-	for _, p := range porovnani {
-		if !p.cas.Before(od) {
-			s.Souboju++
-		}
-	}
+	s.Souboju = pocetSouboju(porovnani, od, do, filtr)
 	s.Modelek = len(s.Poradi)
 	for _, m := range minule {
+		if k := temata[m.Mesic]; k != "" {
+			m.Tema = nazevKliceTematu(k)
+		}
 		if m.Favoritka == 0 || existuje[m.Favoritka] {
 			if !existuje[m.Milacek] {
 				m.Milacek = 0
@@ -415,13 +442,12 @@ func (a *App) UzavritSezonu(mesic string, milacek int) bool {
 		return false
 	}
 	porovnani, poradi, existuje := a.podkladySezon()
-	body := a.bodySezony(porovnani, poradi, existuje, zacatek, zacatek.AddDate(0, 1, 0))
-	s := MinulaSezona{Mesic: mesic}
-	for _, p := range porovnani {
-		if !p.cas.Before(zacatek) && p.cas.Before(zacatek.AddDate(0, 1, 0)) {
-			s.Souboju++
-		}
-	}
+	a.uc.mu.Lock()
+	temata := a.uc.nacistTemataSezon()
+	a.uc.mu.Unlock()
+	filtr := a.filtrSezony(mesic, temata)
+	body := a.bodySezony(porovnani, poradi, existuje, zacatek, zacatek.AddDate(0, 1, 0), filtr)
+	s := MinulaSezona{Mesic: mesic, Souboju: pocetSouboju(porovnani, zacatek, zacatek.AddDate(0, 1, 0), filtr)}
 	if len(body) > 0 && body[0].Soutezi {
 		s.Favoritka, s.Body = body[0].ModelkaID, body[0].Body
 	}

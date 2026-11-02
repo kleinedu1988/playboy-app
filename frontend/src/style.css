@@ -11704,6 +11704,42 @@ span.ud-chip {
     cursor: pointer;
 }
 
+/* Tituly sezón před odznaky: ♛ Favoritka (zlatě), ♥ Miláček (růžově) s názvem sezóny */
+.profile-odznaky:not([hidden]) {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+}
+
+.profile-tituly {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.profile-titul {
+    padding: 1px 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.profile-titul.favoritka {
+    border-color: rgba(255, 196, 0, 0.45);
+    color: #ffc400;
+}
+
+.profile-titul.milacek {
+    border-color: rgba(216, 27, 96, 0.5);
+    color: var(--accent-text);
+}
+
 /* Místa 4–10 a legendy: řady přes celou šířku, karty se dělí o místo rovným dílem; v úzkém okně po čtyřech */
 .slava-rada {
     display: grid;

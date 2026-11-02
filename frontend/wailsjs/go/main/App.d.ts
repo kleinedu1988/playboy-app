@@ -106,6 +106,8 @@ export function GetTagyFotek(arg1:Array<number>):Promise<Record<number, Array<st
 
 export function GetTemataSezon():Promise<Array<main.InfoTematu>>;
 
+export function GetTitulySezonModelky(arg1:number):Promise<Array<main.TitulSezony>>;
+
 export function GetVerze():Promise<string>;
 
 export function GetVybery():Promise<Array<main.Vyber>>;

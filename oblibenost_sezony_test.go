@@ -104,6 +104,9 @@ func TestUzavreniSezony(t *testing.T) {
 	if s.KUzavreni != nil || len(s.Minule) != 1 || s.Minule[0].Favoritka != ida || s.Minule[0].Milacek != idc {
 		t.Fatalf("po uzavření: %+v %+v", s.KUzavreni, s.Minule)
 	}
+	if tf, tc := a.GetTitulySezonModelky(ida), a.GetTitulySezonModelky(idc); len(tf) != 1 || tf[0].Druh != udalostFavoritka || len(tc) != 1 || tc[0].Druh != udalostMilacek || tc[0].Nazev == "" || len(a.GetTitulySezonModelky(idb)) != 0 {
+		t.Errorf("tituly: %+v %+v", tf, tc)
+	}
 	// Podruhé se tatáž sezóna nezapíše
 	a.UzavritSezonu(s.Minule[0].Klic, idb)
 	if m := a.GetSezona().Minule; len(m) != 1 || m[0].Milacek != idc {

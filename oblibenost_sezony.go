@@ -15,6 +15,7 @@ package main
 import (
 	"slices"
 	"sort"
+	"strings"
 	"time"
 )
 
@@ -494,5 +495,39 @@ func titulyFavoritky(kronika []zaznamKroniky) map[int][]time.Time {
 			tituly[z.modelka] = append(tituly[z.modelka], z.cas)
 		}
 	}
+	return tituly
+}
+
+// Titul sezóny modelky (profil): Favoritka nebo Miláček uzavřené sezóny
+type TitulSezony struct {
+	NazevSezony
+	Druh string `json:"druh"` // "favoritka" | "milacek"
+}
+
+// Tituly modelky z uzavřených sezón, od nejnovějšího
+func (a *App) GetTitulySezonModelky(modelkaID int) []TitulSezony {
+	tituly := []TitulSezony{}
+	if a.uc == nil || modelkaID <= 0 {
+		return tituly
+	}
+	obdobi, _ := a.obdobiSezon(time.Now())
+	a.uc.mu.Lock()
+	sezony := a.uc.nacistSezony()
+	a.uc.mu.Unlock()
+	for _, m := range sezony {
+		druh := ""
+		switch modelkaID {
+		case m.Favoritka:
+			druh = udalostFavoritka
+		case m.Milacek:
+			druh = udalostMilacek
+		default:
+			continue
+		}
+		if od, do, ok := oknoSezony(m.Klic, obdobi); ok {
+			tituly = append(tituly, TitulSezony{NazevSezony: noveNazevSezony(m.Klic, od, do, m.Tema), Druh: druh})
+		}
+	}
+	slices.SortStableFunc(tituly, func(x, y TitulSezony) int { return strings.Compare(y.Od, x.Od) })
 	return tituly
 }

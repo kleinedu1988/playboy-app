@@ -1818,6 +1818,30 @@ export namespace main {
 	}
 	
 	
+	export class TitulSezony {
+	    klic: string;
+	    nazev: string;
+	    kratky: string;
+	    obdobi: string;
+	    od: string;
+	    do: string;
+	    druh: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TitulSezony(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.kratky = source["kratky"];
+	        this.obdobi = source["obdobi"];
+	        this.od = source["od"];
+	        this.do = source["do"];
+	        this.druh = source["druh"];
+	    }
+	}
 	
 	
 	

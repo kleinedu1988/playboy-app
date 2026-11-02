@@ -210,6 +210,10 @@ export function GetTemataSezon() {
   return window['go']['main']['App']['GetTemataSezon']();
 }
 
+export function GetTitulySezonModelky(arg1) {
+  return window['go']['main']['App']['GetTitulySezonModelky'](arg1);
+}
+
 export function GetVerze() {
   return window['go']['main']['App']['GetVerze']();
 }

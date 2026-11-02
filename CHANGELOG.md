@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.1.6] – 2026-11-02
+
+### Přidáno
+- **Tituly sezón v profilu modelky**: vedle odznaků ♛ Favoritka a ♥ Miláček s názvem sezóny („♛ Na podpatcích“, „♥ říjen 2026“), nejvýš tři nejnovější, celý seznam v bublině; klik otevře kroniku Síně slávy.
+
 ## [1.1.5] – 2026-11-02
 
 ### Opraveno

@@ -3,7 +3,7 @@ import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti } from './oblibenost';
 import { otevritOblibenost } from './prehled';
 import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
-import { GetFotografieModelky, GetOdznakyModelky, SetPoradiFotek } from './backend';
+import { GetFotografieModelky, GetOdznakyModelky, GetTitulySezonModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -166,15 +166,26 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitOdznaky(modelka.id)]);
 }
 
-// Odznaky síně slávy pod pořadím (jen získané); klik otevře Síň slávy
+// Odznaky síně slávy pod pořadím (jen získané) a tituly sezón (♛ Favoritka, ♥ Miláček – název sezóny, nejvýš tři
+// nejnovější); klik otevře Síň slávy (odznaky, resp. kroniku)
+const TITULU_V_PROFILU = 3;
 async function doplnitOdznaky(id) {
     let odznaky = [];
+    let tituly = [];
     try {
-        odznaky = await GetOdznakyModelky(id) || [];
+        [odznaky, tituly] = await Promise.all([GetOdznakyModelky(id), GetTitulySezonModelky(id)]);
     } catch { /* odznaky jsou jen doplněk */ }
+    odznaky ||= [];
+    tituly ||= [];
     const misto = /** @type {HTMLElement | null} */ (profilPruh.querySelector('.profile-odznaky'));
-    if (!misto || stav.aktualniModelka?.id !== id || !odznaky.length) return;
-    misto.innerHTML = `<button type="button" class="profile-odznaky-tlacitko" data-otevrit-oblibenost="slava" data-slava-pohled="odznaky" title="Otevřít odznaky v Síni slávy">${htmlRadyOdznaku(odznaky, 12)}</button>`;
+    if (!misto || stav.aktualniModelka?.id !== id || (!odznaky.length && !tituly.length)) return;
+    const popis = t => `${t.druh === 'favoritka' ? 'Favoritka' : 'Miláček'} sezóny ${t.nazev}${t.nazev !== t.obdobi ? ` (${t.obdobi})` : ''}`;
+    const htmlTitulu = tituly.length
+        ? `<button type="button" class="profile-tituly" data-otevrit-oblibenost="slava" data-slava-pohled="kronika" title="${esc(tituly.map(popis).join('\n'))}">${tituly.slice(0, TITULU_V_PROFILU).map(t =>
+            `<span class="profile-titul ${t.druh}">${t.druh === 'favoritka' ? '♛' : '♥'} ${esc(t.nazev)}</span>`).join('')}${tituly.length > TITULU_V_PROFILU ? `<span class="profile-titul">+${tituly.length - TITULU_V_PROFILU}</span>` : ''}</button>`
+        : '';
+    const htmlOdznaku = odznaky.length ? `<button type="button" class="profile-odznaky-tlacitko" data-otevrit-oblibenost="slava" data-slava-pohled="odznaky" title="Otevřít odznaky v Síni slávy">${htmlRadyOdznaku(odznaky, 12)}</button>` : '';
+    misto.innerHTML = htmlTitulu + htmlOdznaku;
     misto.hidden = false;
 }
 

@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.1.3] – 2026-11-02
+
+### Změněno
+- **Sezóny už nejsou pevné měsíce** (tematické sezóny): sezóna je období o délce 7, 10, 14, 21, 28 nebo 30 dní (výchozí 14) a sezóny jdou za sebou bez mezer. Probíhající listopadová sezóna doběhne do konce měsíce, starší sezóny zůstávají měsíční.
+  - Sezóna se jmenuje podle tématu („Sezóna Na podpatcích“), jinak podle období („2.–15. listopadu 2026“) – v Síni slávy, Minulých sezónách, vyhlášení i stavové liště.
+  - Uzavřená sezóna si pamatuje téma, ve kterém opravdu běžela (při málo soutěžících Klasická).
+  - Volba tématu a délky v rozhraní přijde v dalším kroku.
+- Databáze učení dostala úpravu pro období sezón (témata měsíců z 1.1.2 se převedou na období celého měsíce).
+
 ## [1.1.2] – 2026-11-02
 
 ### Přidáno

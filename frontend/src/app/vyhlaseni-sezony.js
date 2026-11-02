@@ -3,7 +3,6 @@
 // sezóny (nepovinnou). „Uzavřít sezónu“ ji zapíše (kronika, odznak), „Později“ okno zavře a zeptá se příště.
 import { GetSezona, UzavritSezonu } from './backend';
 import { esc, sklonovat } from '../lib/format';
-import { nazevSezony } from '../lib/slava';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -35,7 +34,7 @@ function htmlOkna(u, modelky) {
     }).join('');
     return `
         <div class="modal-card vs-okno" role="dialog" aria-modal="true" aria-labelledby="vsNadpis">
-            <p class="vs-stitek">Sezóna ${esc(nazevSezony(u.mesic))} skončila</p>
+            <p class="vs-stitek">Sezóna ${esc(u.nazev)} skončila${u.nazev !== u.obdobi ? ` <small>${esc(u.obdobi)}</small>` : ''}</p>
             <h2 id="vsNadpis">♛ Favoritkou sezóny je ${esc(f?.jmeno || 'modelka')}</h2>
             <p class="vs-popis">${prvni.body} b. · ${esc(sklonovat(prvni.vyhry, 'výhra', 'výhry', 'výher'))} z ${esc(sklonovat(prvni.souboju, 'souboje', 'soubojů', 'soubojů'))} · v sezóně ${esc(sklonovat(u.souboju, 'souboj', 'souboje', 'soubojů'))}</p>
             <div class="vs-stupne">${trun}</div>
@@ -43,7 +42,7 @@ function htmlOkna(u, modelky) {
             <p class="vs-popis">Modelka, která tě v sezóně nejvíc potěšila, i když bodově nevyhrála.</p>
             <div class="vs-milacek">${kandidatky}</div>` : ''}
             <div class="vs-pata">
-                <span class="vs-popis">Další sezóna už běží – body se počítají od 1. dne měsíce.</span>
+                <span class="vs-popis">Další sezóna už běží – body se počítají od jejího prvního dne.</span>
                 <span><button type="button" class="btn btn-secondary" data-vs-pozdeji>Později</button>
                 <button type="button" class="btn btn-primary" data-vs-uzavrit>Uzavřít sezónu</button></span>
             </div>
@@ -77,10 +76,10 @@ export async function vyhlasitSezonu(u = null) {
         } else if (cil.closest('[data-vs-pozdeji]') || cil === okno) {
             zavrit();
         } else if (cil.closest('[data-vs-uzavrit]')) {
-            const ok = await UzavritSezonu(k.mesic, milacek);
+            const ok = await UzavritSezonu(k.klic, milacek);
             zavrit();
             if (!ok) return oznamit('Sezónu se nepodařilo uzavřít.');
-            oznamit(`Sezóna ${nazevSezony(k.mesic)} je uzavřená a zapsaná do kroniky.`);
+            oznamit(`Sezóna ${k.nazev} je uzavřená a zapsaná do kroniky.`);
             document.dispatchEvent(new CustomEvent('sezona-uzavrena'));
             // Další skončená neuzavřená sezóna (po delší pauze)
             vyhlasitSezonu();

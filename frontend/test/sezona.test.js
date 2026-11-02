@@ -1,12 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nazevSezony, slozeniBodu, textUdalosti, textZbyva, popisOdznaku } from '../src/lib/slava.js';
-
-test('název sezóny', () => {
-    assert.equal(nazevSezony('2026-11'), 'listopad 2026');
-    assert.equal(nazevSezony('2026-10', true), 'X/26');
-    assert.equal(nazevSezony('nesmysl'), '');
-});
+import { slozeniBodu, textUdalosti, textZbyva, popisOdznaku } from '../src/lib/slava.js';
 
 test('kolik zbývá do konce sezóny', () => {
     assert.equal(textZbyva(21, 30), 'zbývá 9 dní');

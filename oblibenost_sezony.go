@@ -1,6 +1,6 @@
 package main
 
-// Sezóny oblíbenosti: každý kalendářní měsíc je sezóna. Modelky v ní sbírají body formy ze soubojů v porovnávání
+// Sezóny oblíbenosti: sezóna je období různé délky, případně s tématem (oblibenost_obdobi.go). Modelky v ní sbírají body formy ze soubojů v porovnávání
 // a ze zájmu (otevřené profily, čas nad fotkami); sílu ani pořadí oblíbenosti to nemění. Body:
 //   - výhra +3, remíza +1, prohra 0; výhra nad silnější (výš v současném pořadí) +2 navíc;
 //   - zájem: den s otevřeným profilem +1, každé 2 minuty nad fotkami +1, nejvýš 4 za den; celkem nejvýš tolik, kolik
@@ -13,6 +13,7 @@ package main
 // porovnání a zájmu s časovým oknem.
 
 import (
+	"slices"
 	"sort"
 	"time"
 )
@@ -45,10 +46,26 @@ type BodySezony struct {
 	Soutezi   bool `json:"soutezi"`
 }
 
+// Pojmenování sezóny: klíč (RRRR-MM-DD prvního dne období, starší měsíční RRRR-MM), plný název (téma, jinak
+// období), krátký do hlaviček (téma, jinak období bez roku) a období („2.–15. listopadu 2026“)
+type NazevSezony struct {
+	Klic   string `json:"klic"`
+	Nazev  string `json:"nazev"`
+	Kratky string `json:"kratky"`
+	Obdobi string `json:"obdobi"`
+	Od     string `json:"od"` // RRRR-MM-DD
+	Do     string `json:"do"` // poslední den sezóny
+}
+
+func noveNazevSezony(klic string, od, do time.Time, tema string) NazevSezony {
+	n := nazvySezony(od, do, tema)
+	return NazevSezony{Klic: klic, Nazev: n.nazev, Kratky: n.kratky, Obdobi: n.obdobi, Od: od.Format(formatDne), Do: do.AddDate(0, 0, -1).Format(formatDne)}
+}
+
 // Uzavřená sezóna (Favoritka 0 = nikdo nesplnil 3 souboje)
 type MinulaSezona struct {
-	Mesic     string `json:"mesic"` // RRRR-MM
-	Tema      string `json:"tema"`  // název tématu ("" = Klasická)
+	NazevSezony
+	Tema      string `json:"tema"` // klíč tématu, ve kterém sezóna běžela ("" = Klasická)
 	Favoritka int    `json:"favoritka"`
 	Milacek   int    `json:"milacek"`
 	Body      int    `json:"body"`
@@ -57,28 +74,28 @@ type MinulaSezona struct {
 
 // Skončená, ještě neuzavřená sezóna: pořadí k vyhlášení (soutěžící, nejvýš 10)
 type UzavreniSezony struct {
-	Mesic   string       `json:"mesic"`
-	Tema    string       `json:"tema"` // název tématu ("" = Klasická)
+	NazevSezony
+	Tema    string       `json:"tema"` // klíč tématu, ve kterém běžela ("" = Klasická)
 	Poradi  []BodySezony `json:"poradi"`
 	Souboju int          `json:"souboju"`
 	Modelek int          `json:"modelek"`
 }
 
 type Sezona struct {
-	Mesic     string          `json:"mesic"` // RRRR-MM
-	Od        string          `json:"od"`    // RRRR-MM-DD
-	Do        string          `json:"do"`    // poslední den sezóny
-	Den       int             `json:"den"`   // kolikátý den sezóny je dnes
-	Dni       int             `json:"dni"`   // dní v sezóně
+	NazevSezony
+	Den       int             `json:"den"` // kolikátý den sezóny je dnes
+	Dni       int             `json:"dni"` // dní v sezóně
 	Souboju   int             `json:"souboju"`
 	Modelek   int             `json:"modelek"` // modelek s body
 	Poradi    []BodySezony    `json:"poradi"`  // soutěžící podle bodů, pak ostatní s body
 	Minule    []MinulaSezona  `json:"minule"`  // od nejnovější
 	KUzavreni *UzavreniSezony `json:"kUzavreni"`
-	// Téma probíhající sezóny (nil = Klasická; i když uložené téma nemá dost soutěžících) a kolik modelek v něm
-	// soutěží (má dost fotek tématu)
-	Tema        *Tema `json:"tema"`
-	Soutezicich int   `json:"soutezicich"`
+	// Téma probíhající sezóny (nil = Klasická; i když zvolené téma nemá dost soutěžících), kolik modelek v něm
+	// soutěží (má dost fotek tématu), zvolené téma (klíč, i neplatné) a délky, které jde zvolit
+	Tema        *Tema  `json:"tema"`
+	Soutezicich int    `json:"soutezicich"`
+	Zvolene     string `json:"zvolene"`
+	MozneDelky  []int  `json:"mozneDelky"`
 }
 
 type zaznamZajmu struct {
@@ -258,7 +275,7 @@ func (u *uceni) nacistSezony() []MinulaSezona {
 	if db == nil {
 		return nil
 	}
-	radky, err := db.Query("SELECT mesic, favoritka, milacek, body, souboju FROM sezony ORDER BY mesic DESC")
+	radky, err := db.Query("SELECT mesic, tema, favoritka, milacek, body, souboju FROM sezony ORDER BY mesic DESC")
 	if err != nil {
 		return nil
 	}
@@ -266,7 +283,7 @@ func (u *uceni) nacistSezony() []MinulaSezona {
 	var vysledek []MinulaSezona
 	for radky.Next() {
 		var s MinulaSezona
-		if radky.Scan(&s.Mesic, &s.Favoritka, &s.Milacek, &s.Body, &s.Souboju) == nil {
+		if radky.Scan(&s.Klic, &s.Tema, &s.Favoritka, &s.Milacek, &s.Body, &s.Souboju) == nil {
 			vysledek = append(vysledek, s)
 		}
 	}
@@ -305,53 +322,45 @@ func pocetSouboju(porovnani []porovnaniZaznam, od, do time.Time, filtr *filtrSez
 	return n
 }
 
-// Téma pro zobrazení: název z filtru (platné téma), jinak Klasická ("")
-func (f *filtrSezony) nazev() string {
+// Klíč tématu, ve kterém sezóna opravdu běží ("" = Klasická, i když zvolené téma nemá dost soutěžících)
+func (f *filtrSezony) klic() string {
 	if f == nil {
 		return ""
 	}
-	return f.tema.Nazev
+	return f.tema.Klic
 }
 
-// Nejstarší skončená neuzavřená sezóna, ve které byly souboje (nejvýš 12 měsíců zpět); sezónu, ve které nikdo
-// nesplnil 3 souboje, uzavře rovnou bez titulu
-func (a *App) sezonaKUzavreni(porovnani []porovnaniZaznam, poradi map[int]int, existuje map[int]bool, uzavrene map[string]bool, temata map[string]string, nyni time.Time) *UzavreniSezony {
-	if len(porovnani) == 0 {
-		return nil
-	}
-	tento := zacatekMesice(nyni)
-	mesic := zacatekMesice(porovnani[0].cas)
-	if nejstarsi := tento.AddDate(0, -mesicuZpetKUzavreni, 0); mesic.Before(nejstarsi) {
-		mesic = nejstarsi
-	}
-	for ; mesic.Before(tento); mesic = mesic.AddDate(0, 1, 0) {
-		klic := mesic.Format("2006-01")
-		if uzavrene[klic] {
+// Nejstarší skončená neuzavřená sezóna, ve které byly souboje; sezónu, ve které nikdo nesplnil 3 souboje, uzavře
+// rovnou bez titulu
+func (a *App) sezonaKUzavreni(porovnani []porovnaniZaznam, poradi map[int]int, existuje map[int]bool, uzavrene map[string]bool, obdobi []obdobiSezony, nyni time.Time) *UzavreniSezony {
+	for _, k := range ukonceneSezony(porovnani, obdobi, nyni) {
+		if uzavrene[k.klic] {
 			continue
 		}
-		filtr := a.filtrSezony(klic, temata)
-		body := a.bodySezony(porovnani, poradi, existuje, mesic, mesic.AddDate(0, 1, 0), filtr)
-		souboju := pocetSouboju(porovnani, mesic, mesic.AddDate(0, 1, 0), filtr)
+		filtr := a.filtrSezony(k.tema)
+		souboju := pocetSouboju(porovnani, k.od, k.do, filtr)
 		if souboju == 0 {
 			continue
 		}
+		body := a.bodySezony(porovnani, poradi, existuje, k.od, k.do, filtr)
 		var soutezici []BodySezony
 		for _, b := range body {
 			if b.Soutezi && len(soutezici) < 10 {
 				soutezici = append(soutezici, b)
 			}
 		}
+		nazev := noveNazevSezony(k.klic, k.od, k.do, filtr.klic())
 		if len(soutezici) == 0 {
-			a.zapsatSezonu(mesic, MinulaSezona{Mesic: klic, Souboju: souboju})
+			a.zapsatSezonu(k.do, MinulaSezona{NazevSezony: nazev, Tema: filtr.klic(), Souboju: souboju})
 			continue
 		}
-		return &UzavreniSezony{Mesic: klic, Tema: filtr.nazev(), Poradi: soutezici, Souboju: souboju, Modelek: len(body)}
+		return &UzavreniSezony{NazevSezony: nazev, Tema: filtr.klic(), Poradi: soutezici, Souboju: souboju, Modelek: len(body)}
 	}
 	return nil
 }
 
-// Zápis uzavřené sezóny; Favoritka a Miláček i do kroniky síně slávy (k poslednímu dni sezóny)
-func (a *App) zapsatSezonu(mesic time.Time, s MinulaSezona) bool {
+// Zápis uzavřené sezóny; Favoritka a Miláček i do kroniky síně slávy (k poslednímu dni sezóny; do = den po něm)
+func (a *App) zapsatSezonu(do time.Time, s MinulaSezona) bool {
 	u := a.uc
 	u.mu.Lock()
 	defer u.mu.Unlock()
@@ -364,9 +373,9 @@ func (a *App) zapsatSezonu(mesic time.Time, s MinulaSezona) bool {
 		return false
 	}
 	defer tx.Rollback()
-	cas := mesic.AddDate(0, 1, 0).Add(-time.Second).Format("2006-01-02 15:04:05")
-	if _, err := tx.Exec("INSERT OR IGNORE INTO sezony (mesic, favoritka, milacek, body, souboju, uzavreno) VALUES (?, ?, ?, ?, ?, ?)",
-		s.Mesic, s.Favoritka, s.Milacek, s.Body, s.Souboju, time.Now().Format("2006-01-02 15:04:05")); err != nil {
+	cas := do.Add(-time.Second).Format("2006-01-02 15:04:05")
+	if _, err := tx.Exec("INSERT OR IGNORE INTO sezony (mesic, tema, favoritka, milacek, body, souboju, uzavreno) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		s.Klic, s.Tema, s.Favoritka, s.Milacek, s.Body, s.Souboju, time.Now().Format("2006-01-02 15:04:05")); err != nil {
 		varovatUceni("sezónu se nepodařilo uzavřít: %v", err)
 		return false
 	}
@@ -381,37 +390,54 @@ func (a *App) zapsatSezonu(mesic time.Time, s MinulaSezona) bool {
 	return tx.Commit() == nil
 }
 
-// Probíhající sezóna (tento měsíc) s průběžným pořadím, uzavřené sezóny a případně skončená sezóna k vyhlášení
+// Okno a název uzavřené sezóny podle klíče: měsíc (RRRR-MM) nebo období
+func oknoSezony(klic string, obdobi []obdobiSezony) (time.Time, time.Time, bool) {
+	if m, err := time.ParseInLocation("2006-01", klic, time.Local); err == nil {
+		return m, m.AddDate(0, 1, 0), true
+	}
+	for _, o := range obdobi {
+		if o.klic() == klic {
+			return o.od, o.do, true
+		}
+	}
+	return time.Time{}, time.Time{}, false
+}
+
+// Probíhající sezóna s průběžným pořadím, uzavřené sezóny a případně skončená sezóna k vyhlášení
 func (a *App) GetSezona() Sezona {
 	nyni := time.Now()
-	od := zacatekMesice(nyni)
-	do := od.AddDate(0, 1, 0)
-	s := Sezona{Mesic: od.Format("2006-01"), Od: od.Format("2006-01-02"), Do: do.AddDate(0, 0, -1).Format("2006-01-02"),
-		Den: nyni.Day(), Dni: do.AddDate(0, 0, -1).Day(), Poradi: []BodySezony{}, Minule: []MinulaSezona{}}
+	s := Sezona{Poradi: []BodySezony{}, Minule: []MinulaSezona{}, MozneDelky: delkySezon}
 	if a.uc == nil {
+		od := zacatekMesice(nyni)
+		s.NazevSezony = noveNazevSezony(od.Format(formatDne), od, od.AddDate(0, 1, 0), "")
 		return s
 	}
+	obdobi, o := a.obdobiSezon(nyni)
+	od, do := o.od, o.do
+	s.Den = int(zacatekDne(nyni).Sub(od).Hours()/24+0.5) + 1
+	s.Dni = o.dni()
+	s.Zvolene = o.tema
 	porovnani, poradi, existuje := a.podkladySezon()
 	a.uc.mu.Lock()
 	minule := a.uc.nacistSezony()
-	temata := a.uc.nacistTemataSezon()
 	a.uc.mu.Unlock()
 	uzavrene := map[string]bool{}
 	for _, m := range minule {
-		uzavrene[m.Mesic] = true
+		uzavrene[m.Klic] = true
 	}
-	s.KUzavreni = a.sezonaKUzavreni(porovnani, poradi, existuje, uzavrene, temata, nyni)
+	s.KUzavreni = a.sezonaKUzavreni(porovnani, poradi, existuje, uzavrene, obdobi, nyni)
 	if s.KUzavreni == nil {
 		// Sezóny uzavřené rovnou bez titulu se ukážou mezi minulými
 		a.uc.mu.Lock()
 		minule = a.uc.nacistSezony()
 		a.uc.mu.Unlock()
 	}
-	filtr := a.filtrSezony(s.Mesic, temata)
+	filtr := a.filtrSezony(o.tema)
 	if filtr != nil {
 		t := filtr.tema
 		s.Tema, s.Soutezicich = &t, len(filtr.soutezici)
 	}
+	s.NazevSezony = noveNazevSezony(o.klic(), od, do, filtr.klic())
 	s.Poradi = a.bodySezony(porovnani, poradi, existuje, od, nyni.Add(time.Second), filtr)
 	if tyden := nyni.AddDate(0, 0, -7); tyden.After(od) {
 		doplnitTrend(s.Poradi, a.bodySezony(porovnani, poradi, existuje, od, tyden, filtr))
@@ -419,9 +445,11 @@ func (a *App) GetSezona() Sezona {
 	s.Souboju = pocetSouboju(porovnani, od, do, filtr)
 	s.Modelek = len(s.Poradi)
 	for _, m := range minule {
-		if k := temata[m.Mesic]; k != "" {
-			m.Tema = nazevKliceTematu(k)
+		mOd, mDo, ok := oknoSezony(m.Klic, obdobi)
+		if !ok {
+			continue
 		}
+		m.NazevSezony = noveNazevSezony(m.Klic, mOd, mDo, m.Tema)
 		if m.Favoritka == 0 || existuje[m.Favoritka] {
 			if !existuje[m.Milacek] {
 				m.Milacek = 0
@@ -432,29 +460,29 @@ func (a *App) GetSezona() Sezona {
 	return s
 }
 
-// Uzavření skončené sezóny z okna vyhlášení: Favoritka podle bodů, Miláček volba uživatele (0 = žádný)
-func (a *App) UzavritSezonu(mesic string, milacek int) bool {
+// Uzavření skončené sezóny z okna vyhlášení (klíč sezóny): Favoritka podle bodů, Miláček volba uživatele (0 = žádný)
+func (a *App) UzavritSezonu(klic string, milacek int) bool {
 	if a.uc == nil {
 		return false
 	}
-	zacatek, err := time.ParseInLocation("2006-01", mesic, time.Local)
-	if err != nil || !zacatek.Before(zacatekMesice(time.Now())) {
+	nyni := time.Now()
+	obdobi, _ := a.obdobiSezon(nyni)
+	porovnani, poradi, existuje := a.podkladySezon()
+	i := slices.IndexFunc(ukonceneSezony(porovnani, obdobi, nyni), func(k sezonaKlic) bool { return k.klic == klic })
+	if i < 0 {
 		return false
 	}
-	porovnani, poradi, existuje := a.podkladySezon()
-	a.uc.mu.Lock()
-	temata := a.uc.nacistTemataSezon()
-	a.uc.mu.Unlock()
-	filtr := a.filtrSezony(mesic, temata)
-	body := a.bodySezony(porovnani, poradi, existuje, zacatek, zacatek.AddDate(0, 1, 0), filtr)
-	s := MinulaSezona{Mesic: mesic, Souboju: pocetSouboju(porovnani, zacatek, zacatek.AddDate(0, 1, 0), filtr)}
+	k := ukonceneSezony(porovnani, obdobi, nyni)[i]
+	filtr := a.filtrSezony(k.tema)
+	body := a.bodySezony(porovnani, poradi, existuje, k.od, k.do, filtr)
+	s := MinulaSezona{NazevSezony: NazevSezony{Klic: klic}, Tema: filtr.klic(), Souboju: pocetSouboju(porovnani, k.od, k.do, filtr)}
 	if len(body) > 0 && body[0].Soutezi {
 		s.Favoritka, s.Body = body[0].ModelkaID, body[0].Body
 	}
 	if existuje[milacek] && milacek != s.Favoritka {
 		s.Milacek = milacek
 	}
-	return a.zapsatSezonu(zacatek, s)
+	return a.zapsatSezonu(k.do, s)
 }
 
 // Časy titulů Favoritky z kroniky (pro odznak); kronika je od nejstarší

@@ -403,7 +403,12 @@ export namespace main {
 		}
 	}
 	export class MinulaSezona {
-	    mesic: string;
+	    klic: string;
+	    nazev: string;
+	    kratky: string;
+	    obdobi: string;
+	    od: string;
+	    do: string;
 	    tema: string;
 	    favoritka: number;
 	    milacek: number;
@@ -416,7 +421,12 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.mesic = source["mesic"];
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.kratky = source["kratky"];
+	        this.obdobi = source["obdobi"];
+	        this.od = source["od"];
+	        this.do = source["do"];
 	        this.tema = source["tema"];
 	        this.favoritka = source["favoritka"];
 	        this.milacek = source["milacek"];
@@ -1237,7 +1247,12 @@ export namespace main {
 		}
 	}
 	export class UzavreniSezony {
-	    mesic: string;
+	    klic: string;
+	    nazev: string;
+	    kratky: string;
+	    obdobi: string;
+	    od: string;
+	    do: string;
 	    tema: string;
 	    poradi: BodySezony[];
 	    souboju: number;
@@ -1249,7 +1264,12 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.mesic = source["mesic"];
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.kratky = source["kratky"];
+	        this.obdobi = source["obdobi"];
+	        this.od = source["od"];
+	        this.do = source["do"];
 	        this.tema = source["tema"];
 	        this.poradi = this.convertValues(source["poradi"], BodySezony);
 	        this.souboju = source["souboju"];
@@ -1275,7 +1295,10 @@ export namespace main {
 		}
 	}
 	export class Sezona {
-	    mesic: string;
+	    klic: string;
+	    nazev: string;
+	    kratky: string;
+	    obdobi: string;
 	    od: string;
 	    do: string;
 	    den: number;
@@ -1287,6 +1310,8 @@ export namespace main {
 	    kUzavreni?: UzavreniSezony;
 	    tema?: Tema;
 	    soutezicich: number;
+	    zvolene: string;
+	    mozneDelky: number[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Sezona(source);
@@ -1294,7 +1319,10 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.mesic = source["mesic"];
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.kratky = source["kratky"];
+	        this.obdobi = source["obdobi"];
 	        this.od = source["od"];
 	        this.do = source["do"];
 	        this.den = source["den"];
@@ -1306,6 +1334,8 @@ export namespace main {
 	        this.kUzavreni = this.convertValues(source["kUzavreni"], UzavreniSezony);
 	        this.tema = this.convertValues(source["tema"], Tema);
 	        this.soutezicich = source["soutezicich"];
+	        this.zvolene = source["zvolene"];
+	        this.mozneDelky = source["mozneDelky"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

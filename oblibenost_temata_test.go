@@ -66,7 +66,7 @@ func TestBodyTematickeSezony(t *testing.T) {
 	}
 }
 
-// Téma měsíce v aplikaci: soutěžící podle tagů, body z tematických soubojů, Klasická při málo soutěžících,
+// Téma sezóny v aplikaci: soutěžící podle tagů, body z tematických soubojů, Klasická při málo soutěžících,
 // náhledy jen fotek tématu
 func TestTemaSezonyVAplikaci(t *testing.T) {
 	puvodniFotek, puvodniModelek := minFotekTematu, minModelekTematu
@@ -86,11 +86,11 @@ func TestTemaSezonyVAplikaci(t *testing.T) {
 	fa, fb := a.GetFotografieModelky(ida), a.GetFotografieModelky(idb)
 	a.SetTagyFotek([]int{fa[0].ID, fb[0].ID}, []string{"podpatky"}, nil)
 
-	mesic := time.Now().Format("2006-01")
-	if a.SetTemaSezony(mesic, "tag:neexistuje") || a.SetTemaSezony("2000-01", "tag:podpatky") {
-		t.Fatal("neplatné téma nebo minulý měsíc prošly")
+	od := a.GetSezona().Klic
+	if a.SetObdobiSezony(od, "tag:neexistuje", 0) || a.SetObdobiSezony("2000-01-01", "tag:podpatky", 0) || a.SetObdobiSezony(od, "tag:podpatky", 5) {
+		t.Fatal("neplatné téma, minulá sezóna nebo délka mimo nabídku prošly")
 	}
-	if !a.SetTemaSezony(mesic, "tag:podpatky") {
+	if !a.SetObdobiSezony(od, "tag:podpatky", 0) {
 		t.Fatal("téma se neuložilo")
 	}
 	if a.PorovnatModelkyVTematu(ida, idb, "a", "tag:neexistuje") {
@@ -101,7 +101,7 @@ func TestTemaSezonyVAplikaci(t *testing.T) {
 	a.PorovnatModelkyVTematu(ida, idc, "a", "tag:podpatky") // Cecílie nesoutěží
 
 	s := a.GetSezona()
-	if s.Tema == nil || s.Tema.Nazev != "Na podpatcích" || s.Soutezicich != 2 || s.Souboju != 1 {
+	if s.Tema == nil || s.Tema.Nazev != "Na podpatcích" || s.Nazev != "Na podpatcích" || s.Zvolene != "tag:podpatky" || s.Soutezicich != 2 || s.Souboju != 1 {
 		t.Fatalf("sezóna s tématem: tema %+v, soutěžících %d, soubojů %d", s.Tema, s.Soutezicich, s.Souboju)
 	}
 	if len(s.Poradi) == 0 || s.Poradi[0].ModelkaID != ida || s.Poradi[0].ZaSouboje != bodyVyhra {
@@ -127,7 +127,7 @@ func TestTemaSezonyVAplikaci(t *testing.T) {
 	// Málo soutěžících: sezóna běží jako Klasická (všechny souboje)
 	minModelekTematu = 3
 	s = a.GetSezona()
-	if s.Tema != nil || s.Souboju != 3 {
-		t.Errorf("Klasická místo tématu: tema %+v, soubojů %d", s.Tema, s.Souboju)
+	if s.Tema != nil || s.Souboju != 3 || s.Nazev != s.Obdobi || s.Zvolene != "tag:podpatky" {
+		t.Errorf("Klasická místo tématu: tema %+v, soubojů %d, název %q", s.Tema, s.Souboju, s.Nazev)
 	}
 }

@@ -4,7 +4,7 @@ package main
 // ochlupení, tetování). V tematické sezóně soutěží jen modelky, které mají aspoň minFotekTematu fotek tématu
 // (a splňují podmínky na modelku); do bodů se počítají jen souboje odehrané v tématu (porovnani.tema) mezi
 // soutěžícími a zájem jen u soutěžících. Když téma nemá aspoň minModelekTematu soutěžících, sezóna běží jako
-// Klasická (bez tématu). Téma měsíce je v tabulce temata_sezon databáze učení (klíč tématu; "" = Klasická).
+// Klasická (bez tématu). Téma sezóny je u jejího období (oblibenost_obdobi.go; klíč tématu, "" = Klasická).
 //
 // Název tématu skládá slovník: přesná kombinace podmínek má vlastní název („Přírodní krása“), jinak se složí
 // z frází jednotlivých podmínek („Podpatky · přírodní prsa“). Klíč tématu je kanonický zápis podmínek
@@ -13,7 +13,6 @@ package main
 import (
 	"sort"
 	"strings"
-	"time"
 )
 
 var (
@@ -345,52 +344,6 @@ func nazevKliceTematu(klic string) string {
 	return "Klasická"
 }
 
-// ——— Téma měsíce (databáze učení, tabulka temata_sezon) ———
-
-func (u *uceni) nacistTemataSezon() map[string]string {
-	vysledek := map[string]string{}
-	db := u.zajistit()
-	if db == nil {
-		return vysledek
-	}
-	radky, err := db.Query("SELECT mesic, tema FROM temata_sezon")
-	if err != nil {
-		return vysledek
-	}
-	defer radky.Close()
-	for radky.Next() {
-		var m, t string
-		if radky.Scan(&m, &t) == nil {
-			vysledek[m] = t
-		}
-	}
-	return vysledek
-}
-
-// Nastaví téma probíhající nebo budoucí sezóny (mesic RRRR-MM, klic "" = Klasická)
-func (a *App) SetTemaSezony(mesic, klic string) bool {
-	u := a.uc
-	if u == nil || temaZKlice(klic) == nil {
-		return false
-	}
-	zacatek, err := time.ParseInLocation("2006-01", mesic, time.Local)
-	if err != nil || zacatek.Before(zacatekMesice(time.Now())) {
-		return false
-	}
-	u.mu.Lock()
-	defer u.mu.Unlock()
-	db := u.zajistit()
-	if db == nil {
-		return false
-	}
-	if _, err := db.Exec("INSERT INTO temata_sezon (mesic, tema, zvoleno) VALUES (?, ?, ?) ON CONFLICT(mesic) DO UPDATE SET tema = excluded.tema, zvoleno = excluded.zvoleno",
-		mesic, klic, ted()); err != nil {
-		varovatUceni("téma sezóny se nepodařilo uložit: %v", err)
-		return false
-	}
-	return true
-}
-
 // Porovnání v tématu sezóny (Porovnat v tematickém režimu): jako PorovnatModelky, se zapsaným tématem
 func (a *App) PorovnatModelkyVTematu(modelkaA, modelkaB int, vysledek, tema string) bool {
 	if temaZKlice(tema) == nil {
@@ -405,9 +358,9 @@ type filtrSezony struct {
 	soutezici map[int]int
 }
 
-// Filtr pro měsíc: uložené téma, pokud má dost soutěžících (jinak Klasická)
-func (a *App) filtrSezony(mesic string, temata map[string]string) *filtrSezony {
-	t := temaZKlice(temata[mesic])
+// Filtr sezóny s tématem (klíč): téma, pokud má dost soutěžících (jinak Klasická = nil)
+func (a *App) filtrSezony(tema string) *filtrSezony {
+	t := temaZKlice(tema)
 	if t == nil || t.Klic == "" {
 		return nil
 	}

@@ -35,7 +35,7 @@ const CTENI = new Set([
     'GetPoctyTagu',
     'GetNepotagovaneFotky',
     'GetTemataSezon',
-    'SetTemaSezony',
+    'SetObdobiSezony',
     'PorovnatModelkyVTematu',
     'GetNahledyTematu',
     'GetOblibenost',
@@ -116,7 +116,7 @@ export const SetTagyFotek = /** @type {typeof App.SetTagyFotek} */ (obalit('SetT
 export const GetPoctyTagu = /** @type {typeof App.GetPoctyTagu} */ (obalit('GetPoctyTagu'));
 export const GetNepotagovaneFotky = /** @type {typeof App.GetNepotagovaneFotky} */ (obalit('GetNepotagovaneFotky'));
 export const GetTemataSezon = /** @type {typeof App.GetTemataSezon} */ (obalit('GetTemataSezon'));
-export const SetTemaSezony = /** @type {typeof App.SetTemaSezony} */ (obalit('SetTemaSezony'));
+export const SetObdobiSezony = /** @type {typeof App.SetObdobiSezony} */ (obalit('SetObdobiSezony'));
 export const PorovnatModelkyVTematu = /** @type {typeof App.PorovnatModelkyVTematu} */ (obalit('PorovnatModelkyVTematu'));
 export const GetNahledyTematu = /** @type {typeof App.GetNahledyTematu} */ (obalit('GetNahledyTematu'));
 export const GetPrehled = /** @type {typeof App.GetPrehled} */ (obalit('GetPrehled'));

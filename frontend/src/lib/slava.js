@@ -103,13 +103,6 @@ export const ODZNAKY = {
 // ——— Sezóny (Síň slávy › Sezóna, oblibenost_sezony.go) ———
 
 // „2026-11“ → „listopad 2026“; kratce → „XI/26“ (štítek na kartě minulé sezóny)
-const RIMSKE = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
-export function nazevSezony(mesic, kratce = false) {
-    const m = /^(\d{4})-(\d{2})$/.exec(String(mesic || ''));
-    if (!m) return '';
-    return kratce ? `${RIMSKE[+m[2] - 1]}/${m[1].slice(2)}` : `${MESICE[+m[2] - 1]} ${m[1]}`;
-}
-
 // Kolik dní do konce sezóny: „poslední den“, „zbývá 1 den“, „zbývá 9 dní“ (den = kolikátý je dnes, dni = délka)
 export function textZbyva(den, dni) {
     const zbyva = Math.max(0, (Number(dni) || 0) - (Number(den) || 0));

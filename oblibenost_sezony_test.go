@@ -97,7 +97,7 @@ func TestUzavreniSezony(t *testing.T) {
 	if s.KUzavreni == nil || len(s.KUzavreni.Poradi) == 0 || s.KUzavreni.Poradi[0].ModelkaID != ida || s.KUzavreni.Souboju != 5 {
 		t.Fatalf("k uzavření: %+v", s.KUzavreni)
 	}
-	if !a.UzavritSezonu(s.KUzavreni.Mesic, idc) {
+	if !a.UzavritSezonu(s.KUzavreni.Klic, idc) {
 		t.Fatal("uzavření")
 	}
 	s = a.GetSezona()
@@ -105,7 +105,7 @@ func TestUzavreniSezony(t *testing.T) {
 		t.Fatalf("po uzavření: %+v %+v", s.KUzavreni, s.Minule)
 	}
 	// Podruhé se tatáž sezóna nezapíše
-	a.UzavritSezonu(s.Minule[0].Mesic, idb)
+	a.UzavritSezonu(s.Minule[0].Klic, idb)
 	if m := a.GetSezona().Minule; len(m) != 1 || m[0].Milacek != idc {
 		t.Errorf("druhé uzavření: %+v", m)
 	}

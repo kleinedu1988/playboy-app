@@ -354,6 +354,10 @@ export function SetNetykaSeAlba(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['SetNetykaSeAlba'](arg1, arg2, arg3, arg4, arg5);
 }
 
+export function SetObdobiSezony(arg1, arg2, arg3) {
+  return window['go']['main']['App']['SetObdobiSezony'](arg1, arg2, arg3);
+}
+
 export function SetPopisAlba(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['SetPopisAlba'](arg1, arg2, arg3, arg4, arg5);
 }
@@ -380,10 +384,6 @@ export function SetStavVydani(arg1, arg2) {
 
 export function SetTagyFotek(arg1, arg2, arg3) {
   return window['go']['main']['App']['SetTagyFotek'](arg1, arg2, arg3);
-}
-
-export function SetTemaSezony(arg1, arg2) {
-  return window['go']['main']['App']['SetTemaSezony'](arg1, arg2);
 }
 
 export function SetTitulniFotka(arg1, arg2) {

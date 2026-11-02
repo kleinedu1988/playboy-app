@@ -178,6 +178,8 @@ export function SetNetykaSe(arg1:number,arg2:string,arg3:boolean):Promise<boolea
 
 export function SetNetykaSeAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5:boolean):Promise<boolean>;
 
+export function SetObdobiSezony(arg1:string,arg2:string,arg3:number):Promise<boolean>;
+
 export function SetPopisAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
 
 export function SetPoradiFotek(arg1:Array<number>):Promise<boolean>;
@@ -191,8 +193,6 @@ export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean)
 export function SetStavVydani(arg1:string,arg2:string):Promise<boolean>;
 
 export function SetTagyFotek(arg1:Array<number>,arg2:Array<string>,arg3:Array<string>):Promise<boolean>;
-
-export function SetTemaSezony(arg1:string,arg2:string):Promise<boolean>;
 
 export function SetTitulniFotka(arg1:number,arg2:number):Promise<boolean>;
 

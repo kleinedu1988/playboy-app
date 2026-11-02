@@ -138,6 +138,17 @@ var migraceUceni = []string{
 		zvoleno TEXT NOT NULL
 	);
 	ALTER TABLE porovnani ADD COLUMN tema TEXT NOT NULL DEFAULT '';`,
+	// Úprava č. 9: sezóny jako období různé délky (oblibenost_obdobi.go) – od (první den, klíč sezóny), do (den po
+	// posledním), téma; témata měsíců z úpravy č. 8 se převedou na období celého měsíce;
+	// uzavřená sezóna si pamatuje téma, ve kterém opravdu běžela
+	`CREATE TABLE obdobi_sezon (
+		od TEXT PRIMARY KEY,
+		do TEXT NOT NULL,
+		tema TEXT NOT NULL DEFAULT '',
+		zvoleno TEXT NOT NULL DEFAULT ''
+	);
+	INSERT INTO obdobi_sezon (od, do, tema, zvoleno) SELECT mesic || '-01', date(mesic || '-01', '+1 month'), tema, zvoleno FROM temata_sezon;
+	ALTER TABLE sezony ADD COLUMN tema TEXT NOT NULL DEFAULT '';`,
 }
 
 // Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti

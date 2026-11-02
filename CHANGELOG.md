@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.1] – 2026-11-02
+
+### Přidáno
+- **Témata sezón podle vydání alba** (bez tagování): éry podle roku vydání – **Swingující šedesátá**, **Návrat do sedmdesátek**, **Lesk osmdesátek**, **Zlatá devadesátá**, **Nové milénium**, **Desátá léta**, **Současná éra** –, **Letní čísla** (červen–srpen), **Vánoční čísla**, **Česká edice**, **Středová dvoustrana** (centerfoldy) a kombinace **Léto devadesátých** a **Osmdesátky v nylonu**. Online alba se řadí podle data nafocení; alba bez vydání do ér nepatří.
+  - V tématu se počítají a v Porovnat ukazují jen fotky z alb, která podmínku splňují.
+
 ## [1.2.0] – 2026-11-02
 
 ### Přidáno

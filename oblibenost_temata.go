@@ -68,6 +68,20 @@ var slovnikTemat = map[string]string{
 	"modelka:ochlupeni=Přírodní+tag:vagina":   "Divoká příroda",
 	"modelka:ochlupeni=Oholené+tag:vagina":    "Hladká sezóna",
 	"modelka:prsaTyp=Přírodní+tag:nahore_bez": "Přírodně nahoře bez",
+	// Éry a kalendář z vydání alba (od 1.2.1)
+	"fotka:obdobi=1960-1969":                       "Swingující šedesátá",
+	"fotka:obdobi=1970-1979":                       "Návrat do sedmdesátek",
+	"fotka:obdobi=1980-1989":                       "Lesk osmdesátek",
+	"fotka:obdobi=1990-1999":                       "Zlatá devadesátá",
+	"fotka:obdobi=2000-2009":                       "Nové milénium",
+	"fotka:obdobi=2010-2019":                       "Desátá léta",
+	"fotka:obdobi=2020-2029":                       "Současná éra",
+	"fotka:mesic=06,07,08":                         "Letní čísla",
+	"fotka:mesic=12":                               "Vánoční čísla",
+	"fotka:edice=CZ":                               "Česká edice",
+	"fotka:album=centerfold":                       "Středová dvoustrana",
+	"fotka:obdobi=1990-1999+tag:bikiny,plaz":       "Léto devadesátých",
+	"fotka:obdobi=1980-1989+tag:podvazky,puncochy": "Osmdesátky v nylonu",
 }
 
 // Fráze jednotlivých podmínek na modelku (podmínka na tag má frázi z názvu tagu)
@@ -92,6 +106,9 @@ var katalogTemat = func() []Tema {
 	mod := func(k string, h ...string) PodminkaTematu {
 		return PodminkaTematu{Druh: "modelka", Klic: k, Hodnoty: h}
 	}
+	fot := func(k string, h ...string) PodminkaTematu {
+		return PodminkaTematu{Druh: "fotka", Klic: k, Hodnoty: h}
+	}
 	return []Tema{
 		t(tag("prsa"), mod("prsaTyp", "Přírodní")),
 		t(tag("prsa"), mod("prsaTyp", "Silikonová")),
@@ -106,6 +123,19 @@ var katalogTemat = func() []Tema {
 		t(mod("vlasy", "zrzav")),
 		t(mod("vlasy", "blond")),
 		t(mod("tetovani", "ano")),
+		t(fot("obdobi", "1960-1969")),
+		t(fot("obdobi", "1970-1979")),
+		t(fot("obdobi", "1980-1989")),
+		t(fot("obdobi", "1990-1999")),
+		t(fot("obdobi", "2000-2009")),
+		t(fot("obdobi", "2010-2019")),
+		t(fot("obdobi", "2020-2029")),
+		t(fot("mesic", "06", "07", "08")),
+		t(fot("mesic", "12")),
+		t(fot("edice", "CZ")),
+		t(fot("album", "centerfold")),
+		t(fot("obdobi", "1990-1999"), tag("bikiny", "plaz")),
+		t(fot("obdobi", "1980-1989"), tag("podvazky", "puncochy")),
 	}
 }()
 
@@ -118,7 +148,7 @@ func klicTematu(podminky []PodminkaTematu) string {
 		if p.Druh == "tag" {
 			casti = append(casti, "tag:"+strings.Join(h, ","))
 		} else {
-			casti = append(casti, "modelka:"+p.Klic+"="+strings.Join(h, ","))
+			casti = append(casti, p.Druh+":"+p.Klic+"="+strings.Join(h, ","))
 		}
 	}
 	sort.Strings(casti)
@@ -147,6 +177,13 @@ func podminkyZKlice(klic string) ([]PodminkaTematu, bool) {
 				return nil, false
 			}
 			podminky = append(podminky, PodminkaTematu{Druh: "modelka", Klic: k, Hodnoty: strings.Split(h, ",")})
+		case strings.HasPrefix(cast, "fotka:"):
+			k, h, ok := strings.Cut(strings.TrimPrefix(cast, "fotka:"), "=")
+			hodnoty := strings.Split(h, ",")
+			if !ok || h == "" || !platnaPodminkaFotky(k, hodnoty) {
+				return nil, false
+			}
+			podminky = append(podminky, PodminkaTematu{Druh: "fotka", Klic: k, Hodnoty: hodnoty})
 		default:
 			return nil, false
 		}
@@ -173,6 +210,8 @@ func nazevTematu(podminky []PodminkaTematu) string {
 		for _, h := range p.Hodnoty {
 			if f, ok := slovnikPodminek[p.Klic+"="+h]; ok {
 				nazvy = append(nazvy, f)
+			} else if p.Druh == "fotka" {
+				nazvy = append(nazvy, frazeFotky(p.Klic, h))
 			} else {
 				nazvy = append(nazvy, strings.ToLower(h))
 			}
@@ -216,22 +255,22 @@ func temaZKlice(klic string) *Tema {
 
 func (t *Tema) maPodminkuNaFotku() bool {
 	for _, p := range t.Podminky {
-		if p.Druh == "tag" {
+		if p.Druh == "tag" || p.Druh == "fotka" {
 			return true
 		}
 	}
 	return false
 }
 
-// Fotka splňuje všechny podmínky na tagy (v každé aspoň jeden z tagů)
-func (t *Tema) fotkaSplnuje(tagy map[string]bool) bool {
+// Fotka splňuje všechny podmínky na tagy a na album (v každé aspoň jedna z hodnot)
+func (t *Tema) fotkaSplnuje(f *fotkaTematu) bool {
 	for _, p := range t.Podminky {
-		if p.Druh != "tag" {
+		if p.Druh != "tag" && p.Druh != "fotka" {
 			continue
 		}
 		ma := false
 		for _, h := range p.Hodnoty {
-			if tagy[h] {
+			if p.Druh == "tag" && f.tagy[h] || p.Druh == "fotka" && f.album.splnuje(p.Klic, h) {
 				ma = true
 				break
 			}
@@ -273,23 +312,38 @@ func (t *Tema) modelkaSplnuje(m *Modelka) bool {
 
 // ——— Pokrytí: fotky tématu po modelkách ———
 
-// Fotky modelek s tagy (id fotky → modelka, tagy); jedním dotazem
+// Fotky modelek s tagy a údaji alba (id fotky → modelka, tagy, album)
 type fotkaTematu struct {
 	modelka int
 	tagy    map[string]bool
+	album   *albumTematu
 }
 
-func (a *App) fotkyProTemata() map[int]*fotkaTematu {
+// Fotky pro témata; modelky = jen fotky těchto modelek (nil = všechny)
+func (a *App) fotkyProTemata(modelky ...int) map[int]*fotkaTematu {
 	fotky := map[int]*fotkaTematu{}
-	radky, err := a.db.Query(`SELECT f.id, f.modelka_id FROM fotografie f WHERE f.modelka_id IS NOT NULL`)
+	alba := a.albaProTemata()
+	dotaz := `SELECT f.id, f.modelka_id, f.album_id FROM fotografie f WHERE f.modelka_id > 0`
+	args := make([]any, len(modelky))
+	for i, id := range modelky {
+		args[i] = id
+	}
+	if len(modelky) > 0 {
+		dotaz += ` AND f.modelka_id IN (?` + strings.Repeat(", ?", len(modelky)-1) + `)`
+	}
+	radky, err := a.db.Query(dotaz, args...)
 	if err != nil {
 		a.chyba("fotky pro témata", err)
 		return fotky
 	}
 	for radky.Next() {
-		var id, m int
-		if radky.Scan(&id, &m) == nil {
-			fotky[id] = &fotkaTematu{modelka: m, tagy: map[string]bool{}}
+		var id, m, album int
+		if radky.Scan(&id, &m, &album) == nil {
+			al := alba[album]
+			if al == nil {
+				al = &albumTematu{}
+			}
+			fotky[id] = &fotkaTematu{modelka: m, tagy: map[string]bool{}, album: al}
 		}
 	}
 	radky.Close()
@@ -308,7 +362,7 @@ func souteziciTematu(t *Tema, modelky []Modelka, fotky map[int]*fotkaTematu) (ma
 	pocet := map[int]int{}
 	fotekCelkem := 0
 	for _, f := range fotky {
-		if t.fotkaSplnuje(f.tagy) {
+		if t.fotkaSplnuje(f) {
 			pocet[f.modelka]++
 		}
 	}
@@ -389,13 +443,13 @@ func (a *App) GetNahledyTematu(ids []int, pocet int, tema string) map[int][]Nahl
 	}
 	pocet = min(max(pocet, 1), maxNahledu)
 	ids = ids[:min(len(ids), 2*maxDvojicNaVolani)]
-	tagy := a.GetTagyFotek(a.idFotekModelek(ids))
+	if len(ids) == 0 {
+		return map[int][]NahledFotky{}
+	}
+	fotky := a.fotkyProTemata(ids...)
 	povolit := func(id int) bool {
-		m := map[string]bool{}
-		for _, tag := range tagy[id] {
-			m[tag] = true
-		}
-		return t.fotkaSplnuje(m)
+		f := fotky[id]
+		return f != nil && t.fotkaSplnuje(f)
 	}
 	vysledek := a.spocitatNahledy(a.snimekSbirky(), ids, pocet, povolit)
 	for _, id := range ids {
@@ -404,28 +458,4 @@ func (a *App) GetNahledyTematu(ids []int, pocet int, tema string) map[int][]Nahl
 		}
 	}
 	return vysledek
-}
-
-// Čísla fotek modelek (jejich alba)
-func (a *App) idFotekModelek(ids []int) []int {
-	var fotky []int
-	if len(ids) == 0 {
-		return fotky
-	}
-	args := make([]any, len(ids))
-	for i, id := range ids {
-		args[i] = id
-	}
-	radky, err := a.db.Query(`SELECT f.id FROM fotografie f WHERE f.modelka_id IN (?`+strings.Repeat(", ?", len(ids)-1)+`)`, args...)
-	if err != nil {
-		return fotky
-	}
-	defer radky.Close()
-	for radky.Next() {
-		var id int
-		if radky.Scan(&id) == nil {
-			fotky = append(fotky, id)
-		}
-	}
-	return fotky
 }

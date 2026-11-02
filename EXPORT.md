@@ -1,7 +1,7 @@
-# Formát exportu (verze 9)
+# Formát exportu (verze 11)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 9** (program 0.99.26 a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 11** (program 1.2.0 a novější).
 
 Od alfy (program 0.50.0) byl formát verze 7 **zmrazený**. Vědomé výjimky v betě jsou dvě: verze 8 přidala
 online pictorialy (typ alba `Pictorial online` s datem nafocení) a verze 9 hodnocení modelky po polovinách
@@ -43,7 +43,7 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 ## Celek
 
 ```yaml
-verze: 10
+verze: 11
 modelky: [...]   # modelky s jejich alby
 covery: [...]    # obálky časopisu, nepatří k modelce
 vydani: [...]    # stav a poznámky k jednotlivým číslům
@@ -97,7 +97,7 @@ určit jednoznačně, import to vypíše a odkaz přeskočí.
 Fotka: `id` (ID souboru na Google Disku nebo odkaz na něj), `hodnoceni` (1–5, jen celá srdíčka), `rotace` (90, 180, 270)
 a `pridano`, jen když se liší od data přidání alba.
 
-`tagy` (od verze 10): tagy fotky z pevného seznamu, např. `tagy: [postava, akt, prsa, studio]`. Záběr, Odhalení a Prostředí mají nejvýš jednu hodnotu. Seznam: záběr `portret`, `poprsi`, `postava`, `detail`; odhalení `oblecena`, `pradlo`, `nahore_bez`, `akt`, `explicitni`; partie `prsa`, `zadecek`, `vagina`, `nohy`, `chodidla`; prostředí `studio`, `interier`, `loznice`, `koupelna`, `priroda`, `plaz`, `mesto`; oblečení a doplňky `podpatky`, `puncochy`, `podvazky`, `bikiny`, `saty`, `kosile`, `kostym`, `latex`; póza `stoji`, `sedi`, `lezi`, `zezadu`, `mokra`, `vic_modelek`. Neprázdný seznam při importu nahradí tagy fotky, neznámý tag se přeskočí, prázdný nebo chybějící nic nemění.
+`tagy` (od verze 10): tagy fotky z pevného seznamu, např. `tagy: [postava, akt, prsa, studio]`. Záběr, Odhalení, Prostředí, Barevnost a Světlo mají nejvýš jednu hodnotu. Seznam: záběr `portret`, `poprsi`, `postava`, `detail`; odhalení `oblecena`, `pradlo`, `nahore_bez`, `akt`, `explicitni`; partie `prsa`, `zadecek`, `vagina`, `nohy`, `chodidla`; prostředí `studio`, `interier`, `loznice`, `koupelna`, `priroda`, `plaz`, `bazen`, `mesto`, `auto`; oblečení a doplňky `podpatky`, `puncochy`, `podvazky`, `bikiny`, `saty`, `kosile`, `kostym`, `latex`, `bunny`, `dziny`; póza a situace `stoji`, `sedi`, `lezi`, `zezadu`, `mokra`, `vic_modelek`; barevnost `cernobila`, `tonovana`; světlo `high_key`, `low_key`, `zlata_hodina`, `noc`; výraz `do_kamery`, `usmev`. Tagy `bazen`, `auto`, `bunny`, `dziny` a skupiny barevnost, světlo a výraz přibyly ve verzi 11. Neprázdný seznam při importu nahradí tagy fotky, neznámý tag se přeskočí, prázdný nebo chybějící nic nemění.
 
 ## Cover, vydání, výběr
 
@@ -145,6 +145,8 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 11 | 1.2.0 | Další tagy fotek: `bazen`, `auto`, `bunny`, `dziny`, barevnost, světlo a výraz (starší program by je tiše zahodil, proto nová verze) |
+| 10 | 1.1.0 | `tagy` u fotky (pevný seznam pro tematické sezóny) |
 | 9 | 0.99.26 | `hodnoceni` modelky po polovinách srdíčka (`3.5`, při importu i `3,5`); hodnocení fotek zůstává celé |
 | 8 | 0.99.9 | Online pictorialy: typ alba `Pictorial online` (bez vydání) a jeho `datum` nafocení |
 | 7 | 0.30.0 | Články čísla: `clanky` u vydání (strana, rubrika, název, autor, modelka, druh, text, skeny) |

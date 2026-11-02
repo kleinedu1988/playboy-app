@@ -13193,7 +13193,8 @@ button.pas-kapsle:focus-visible {
     left: 0;
     z-index: 1500;
     align-content: flex-start;
-    height: 132px;
+    /* Výška podle obsahu (víc skupin tagů = víc řádků), prohlížeč nad ním se zkrátí o --lbt-vyska */
+    max-height: 45vh;
     overflow-y: auto;
     display: flex;
     flex-wrap: wrap;
@@ -13267,7 +13268,7 @@ button.pas-kapsle:focus-visible {
 
 /* Prohlížeč nad panelem tagů a stavovou lištou (fotka se vejde nad ně) */
 .lightbox.tagovani {
-    bottom: 162px;
+    bottom: calc(var(--lbt-vyska, 132px) + 30px);
 }
 
 /* Prohlížeč při hodnocení fronty nechá dole místo stavové liště (postup, Vrátit, klávesy) */

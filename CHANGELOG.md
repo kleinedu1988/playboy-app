@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.0] – 2026-11-02
+
+### Přidáno
+- **Další tagy fotek** (tematické sezóny, krok 2 rozšíření): skupiny **Barevnost** (černobílá, tónovaná / sépie), **Světlo** (světlé high-key, tmavé low-key / noir, zlatá hodina, noc / umělé světlo) a **Výraz** (pohled do kamery, úsměv); do prostředí **bazén** a **auto / motorka**, do oblečení **zaječí uši** a **džíny / denim**. Barevnost a světlo se tagují jen u výrazných fotek.
+  - Rychlé tagování: **B** barevnost a **L** světlo cyklují jako Z/O/M, **K** pohled do kamery a **U** úsměv přepínají; barevnost a světlo se předvyplní podle minulé fotky alba.
+  - Panel tagů v prohlížeči má výšku podle obsahu a prohlížeč nad ním se přizpůsobí.
+
+### Změněno
+- Názvy tagů: „Jiný interiér“, „Pláž / moře“ (bazén má vlastní tag), skupina „Póza a situace“; kódy se nemění.
+- **Formát exportu verze 11** (nové tagy; starší program by je při obnově zálohy tiše zahodil, takže soubor nové verze odmítne). Soubory verze 10 a starší se načtou beze změny.
+
 ## [1.1.6] – 2026-11-02
 
 ### Přidáno

@@ -2813,8 +2813,8 @@ func TestZmrazeniAlfy(t *testing.T) {
 	if len(migrace) != 14 {
 		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 14 (tagy fotek, 1.1.0)", len(migrace))
 	}
-	if verzeExportu != 10 {
-		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 10 (tagy fotek, 1.1.0)", verzeExportu)
+	if verzeExportu != 11 {
+		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 11 (další tagy fotek, 1.2.0)", verzeExportu)
 	}
 }
 

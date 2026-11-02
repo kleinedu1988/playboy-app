@@ -1,8 +1,8 @@
 // Rychlé tagování v prohlížeči (Hodnocení › Hodnotit › Tagy): fronta fotek bez tagů po albech. Panel skupin dole
-// nad stavovou lištou; klávesy: Z záběr, O odhalení, M místo (prostředí) – každý stisk další hodnota, se Shiftem
-// předchozí, za poslední nic; P prsa, V vagina, H podpatky přepínají; Enter uloží a ukáže další, 1–5 uloží
+// nad stavovou lištou; klávesy: Z záběr, O odhalení, M místo (prostředí), B barevnost, L světlo – každý stisk další
+// hodnota, se Shiftem předchozí, za poslední nic; P prsa, V vagina, H podpatky, K pohled do kamery, U úsměv přepínají; Enter uloží a ukáže další, 1–5 uloží
 // i se srdíčky, „.“ tagy jako minulá fotka, Shift+Enter tagy všem zbývajícím fotkám alba, Backspace vrátí. Prostředí,
-// odhalení a záběr se předvyplní podle minulé fotky téhož alba (obrysem; uloží se s Enterem). Ostatní tagy klikem
+// odhalení, záběr, barevnost a světlo se předvyplní podle minulé fotky téhož alba (obrysem; uloží se s Enterem). Ostatní tagy klikem
 // na pilulku. Uložená fotka z fronty vypadne; stavová lišta ukazuje postup a Vrátit (galerie-hodnoceni.js).
 import { SetHodnoceniFotek, SetTagyFotek } from './backend';
 import { katalogTagu } from './tagy-fotek';
@@ -12,9 +12,9 @@ import { oznamitHodnoceniFotek } from './galerie';
 import { esc } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
 
-const CYKLUS = { z: 'zaber', o: 'odhaleni', m: 'prostredi' };
-const PREPINACE = { p: 'prsa', v: 'vagina', h: 'podpatky' };
-const PREDVYPLNIT = ['prostredi', 'odhaleni', 'zaber'];
+const CYKLUS = { z: 'zaber', o: 'odhaleni', m: 'prostredi', b: 'barevnost', l: 'svetlo' };
+const PREPINACE = { p: 'prsa', v: 'vagina', h: 'podpatky', k: 'do_kamery', u: 'usmev' };
+const PREDVYPLNIT = ['prostredi', 'odhaleni', 'zaber', 'barevnost', 'svetlo'];
 
 let katalog = [];
 const skupinaTagu = new Map(); // tag → skupina
@@ -191,8 +191,8 @@ export function klavesaTagovani(e) {
 }
 
 // Panel skupin dole v prohlížeči: pilulky (plná = vybraná, obrys = předvyplněná podle alba), klávesa u skupiny
-const KLAVESA_SKUPINY = { zaber: 'Z', odhaleni: 'O', prostredi: 'M' };
-const KLAVESA_TAGU = { prsa: 'P', vagina: 'V', podpatky: 'H' };
+const KLAVESA_SKUPINY = { zaber: 'Z', odhaleni: 'O', prostredi: 'M', barevnost: 'B', svetlo: 'L' };
+const KLAVESA_TAGU = { prsa: 'P', vagina: 'V', podpatky: 'H', do_kamery: 'K', usmev: 'U' };
 let panel = null;
 export function vykreslitPanel() {
     if (!panel) {
@@ -205,6 +205,9 @@ export function vykreslitPanel() {
             const tag = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest('[data-lbt-tag]'))?.dataset.lbtTag;
             if (tag) prepnout(tag);
         });
+        window.addEventListener('resize', () => {
+            if (!panel.classList.contains('hidden')) document.documentElement.style.setProperty('--lbt-vyska', `${panel.offsetHeight}px`);
+        });
     }
     const p = aktualni();
     panel.classList.toggle('hidden', !stav.lbTagovani || !p);
@@ -213,6 +216,8 @@ export function vykreslitPanel() {
     const n = navrzene.get(p) || new Set();
     panel.innerHTML = katalog.map(sk => `<div class="lbt-skupina"><span class="lbt-nazev">${KLAVESA_SKUPINY[sk.klic] ? `<kbd>${KLAVESA_SKUPINY[sk.klic]}</kbd>` : ''}${esc(sk.nazev)}</span>
         ${sk.tagy.map(t => `<button type="button" class="lbt-tag ${s.has(t.klic) ? (n.has(t.klic) ? 'navrh' : 'on') : ''}" data-lbt-tag="${esc(t.klic)}" title="${esc(KLAVESA_TAGU[t.klic] ? `${t.nazev} (${KLAVESA_TAGU[t.klic]})` : t.nazev)}">${esc(t.nazev)}${KLAVESA_TAGU[t.klic] ? `<kbd>${KLAVESA_TAGU[t.klic]}</kbd>` : ''}</button>`).join('')}</div>`).join('');
+    // Prohlížeč nad panelem se zkrátí o jeho skutečnou výšku (podle šířky okna má panel různě řádků)
+    document.documentElement.style.setProperty('--lbt-vyska', `${panel.offsetHeight}px`);
 }
 
 export const tagyRozpracovane = () => {

@@ -31,13 +31,21 @@ var katalogTagu = []SkupinaTagu{
 	{Klic: "partie", Nazev: "Partie v záběru", Tagy: []TagFotky{
 		{"prsa", "Prsa"}, {"zadecek", "Zadeček"}, {"vagina", "Vagina"}, {"nohy", "Nohy"}, {"chodidla", "Chodidla"}}},
 	{Klic: "prostredi", Nazev: "Prostředí", Vylucna: true, Tagy: []TagFotky{
-		{"studio", "Studio"}, {"interier", "Interiér"}, {"loznice", "Ložnice"}, {"koupelna", "Koupelna"},
-		{"priroda", "Příroda"}, {"plaz", "Pláž / voda"}, {"mesto", "Město"}}},
+		{"studio", "Studio"}, {"interier", "Jiný interiér"}, {"loznice", "Ložnice"}, {"koupelna", "Koupelna"},
+		{"priroda", "Příroda"}, {"plaz", "Pláž / moře"}, {"bazen", "Bazén"}, {"mesto", "Město"}, {"auto", "Auto / motorka"}}},
 	{Klic: "obleceni", Nazev: "Oblečení a doplňky", Tagy: []TagFotky{
 		{"podpatky", "Podpatky"}, {"puncochy", "Punčochy"}, {"podvazky", "Podvazky"}, {"bikiny", "Bikiny"},
-		{"saty", "Šaty"}, {"kosile", "Košile / tričko"}, {"kostym", "Kostým / uniforma"}, {"latex", "Latex / kůže"}}},
-	{Klic: "poza", Nazev: "Póza", Tagy: []TagFotky{
+		{"saty", "Šaty"}, {"kosile", "Košile / tričko"}, {"kostym", "Kostým / uniforma"}, {"latex", "Latex / kůže"},
+		{"bunny", "Zaječí uši"}, {"dziny", "Džíny / denim"}}},
+	{Klic: "poza", Nazev: "Póza a situace", Tagy: []TagFotky{
 		{"stoji", "Stojí"}, {"sedi", "Sedí"}, {"lezi", "Leží"}, {"zezadu", "Zezadu"}, {"mokra", "Mokrá"}, {"vic_modelek", "Víc modelek"}}},
+	// Od 1.2.0 (formát exportu 11): styl fotky – taguje se jen výrazné (barevná fotka a běžné světlo tag nemají)
+	{Klic: "barevnost", Nazev: "Barevnost", Vylucna: true, Tagy: []TagFotky{
+		{"cernobila", "Černobílá"}, {"tonovana", "Tónovaná / sépie"}}},
+	{Klic: "svetlo", Nazev: "Světlo", Vylucna: true, Tagy: []TagFotky{
+		{"high_key", "Světlé (high-key)"}, {"low_key", "Tmavé (low-key / noir)"}, {"zlata_hodina", "Zlatá hodina"}, {"noc", "Noc / umělé světlo"}}},
+	{Klic: "vyraz", Nazev: "Výraz", Tagy: []TagFotky{
+		{"do_kamery", "Pohled do kamery"}, {"usmev", "Úsměv"}}},
 }
 
 // Tag → jeho skupina (pro kontrolu a výlučnost)

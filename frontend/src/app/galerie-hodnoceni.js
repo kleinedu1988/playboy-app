@@ -222,7 +222,7 @@ function vykreslitTagy() {
             <span>${esc(`${sklonovat(pocetBezTagu, 'fotka', 'fotky', 'fotek')} bez tagů · ${sklonovat(alba.length, 'album', 'alba', 'alb')}`)}</span>
         </div>
         <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky-tag" data-tg-lista
-            data-stav-napoveda="Z záběr · O odhalení · M místo · P prsa · V vagina · H podpatky · ↵ uložit · 1–5 i srdíčka · . jako minulá · ⇧↵ celé album"></div>
+            data-stav-napoveda="Z záběr · O odhalení · M místo · B barevnost · L světlo · P prsa · V vagina · H podpatky · K do kamery · U úsměv · ↵ uložit · 1–5 i srdíčka · . jako minulá · ⇧↵ celé album"></div>
         <div class="ob-karta gh-dlazdice">
             <div class="gh-nahledy" aria-label="Na řadě – klik začne tagovat od fotky">${polozkyTagu.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-tg-od="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
                 <button type="button" class="gh-start" data-tg-start title="Prohlížeč s panelem tagů na první fotce fronty (Enter)">🏷 Začít tagovat <kbd>↵</kbd></button>

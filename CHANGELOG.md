@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.15] – 2026-11-02
+
+### Přidáno
+- **Stav tématu sezóny je vidět**: když zvolené téma nemá dost soutěžících a sezóna běží jako Klasická, Síň slávy › Sezóna i stavová lišta ukážou „⚠ Téma „Na podpatcích“ teď nemá dost soutěžících (6 z 8)“ s odkazem **🔓 Odemknout v Průvodci**; sezóna bez tématu nabídne ✦ Zvolit téma.
+- Pohled Sezóna má nad trůnem řádek sezóny: téma s ikonou (nebo Klasická), období, kolik zbývá a počet soutěžících.
+- Pravidla v Síni slávy vysvětlují tematické sezóny (6 fotek tématu, 8 modelek, souboje v režimu tématu).
+- Volba sezóny uprostřed sezóny upozorní, že souboje z předchozích dní se do tematické sezóny nezapočítají.
+- Porovnat v režimu Bez tématu ukáže ve stavové liště, že se souboje do tematické sezóny nepočítají (T přepne).
+
 ## [1.2.14] – 2026-11-02
 
 ### Změněno

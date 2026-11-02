@@ -57,7 +57,7 @@ function htmlOkna(n, nahledyTematu, skoro = []) {
         <div class="modal-card vo-okno" role="dialog" aria-modal="true" aria-labelledby="voNadpis">
             <p class="vs-stitek">Nová sezóna${n.den > 1 ? ` · běží ${n.den}. den` : ''}</p>
             <h2 id="voNadpis">Jaké bude téma sezóny?</h2>
-            <p class="vs-popis">V tématu soutěží jen modelky s dost fotkami tématu a body dávají souboje v Porovnat nad fotkami tématu.</p>
+            <p class="vs-popis">V tématu soutěží modelky s aspoň 6 fotkami tématu (téma jich potřebuje aspoň 8); body dávají souboje v Porovnat v režimu tématu.${n.den > 1 ? ` <b>Souboje ${n.den - 1 === 1 ? 'z prvního dne' : `z prvních ${n.den - 1} dní`} se do tematické sezóny nezapočítají.</b>` : ''}</p>
             <div class="vo-karty">
                 ${n.navrhy.map(t => htmlKarty(t, 'tema', nahledyTematu(t))).join('')}
                 ${htmlKarty(n.klasicka, 'klasicka', nahledyTematu(n.klasicka))}

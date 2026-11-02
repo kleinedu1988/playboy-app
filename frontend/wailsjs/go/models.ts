@@ -1520,6 +1520,26 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class PropadleTema {
+	    klic: string;
+	    nazev: string;
+	    ikona: string;
+	    soutezicich: number;
+	    minModelek: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new PropadleTema(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.ikona = source["ikona"];
+	        this.soutezicich = source["soutezicich"];
+	        this.minModelek = source["minModelek"];
+	    }
+	}
 	export class RadaVyvoje {
 	    klic: string;
 	    nazev: string;
@@ -1695,6 +1715,7 @@ export namespace main {
 	    soutezicich: number;
 	    zvolene: string;
 	    zvoleno: boolean;
+	    propadle?: PropadleTema;
 	    mozneDelky: number[];
 	
 	    static createFrom(source: any = {}) {
@@ -1720,6 +1741,7 @@ export namespace main {
 	        this.soutezicich = source["soutezicich"];
 	        this.zvolene = source["zvolene"];
 	        this.zvoleno = source["zvoleno"];
+	        this.propadle = this.convertValues(source["propadle"], PropadleTema);
 	        this.mozneDelky = source["mozneDelky"];
 	    }
 	

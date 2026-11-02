@@ -97,7 +97,19 @@ type Sezona struct {
 	Soutezicich int    `json:"soutezicich"`
 	Zvolene     string `json:"zvolene"`
 	Zvoleno     bool   `json:"zvoleno"` // téma a délka potvrzené (jinak se nabídne volba)
-	MozneDelky  []int  `json:"mozneDelky"`
+	// Zvolené téma, které teď neplatí (sezóna běží jako Klasická): název, ikona a kolik modelek v něm soutěží z kolika
+	// potřebných – frontend upozorní a nabídne odemčení
+	Propadle   *PropadleTema `json:"propadle"`
+	MozneDelky []int         `json:"mozneDelky"`
+}
+
+// Zvolené téma sezóny, které neplatí (málo soutěžících)
+type PropadleTema struct {
+	Klic        string `json:"klic"`
+	Nazev       string `json:"nazev"`
+	Ikona       string `json:"ikona"`
+	Soutezicich int    `json:"soutezicich"`
+	MinModelek  int    `json:"minModelek"`
 }
 
 type zaznamZajmu struct {
@@ -455,6 +467,13 @@ func (a *App) GetSezona() Sezona {
 	if filtr != nil {
 		t := filtr.tema
 		s.Tema, s.Soutezicich = &t, len(filtr.soutezici)
+	}
+	if filtr == nil && o.tema != "" {
+		if t := temaZKlice(o.tema); t != nil && t.Klic != "" {
+			modelky, _ := a.nactiModelky("", false)
+			soutezici, _ := souteziciTematu(t, modelky, a.fotkyProTemata())
+			s.Propadle = &PropadleTema{Klic: t.Klic, Nazev: t.Nazev, Ikona: t.Ikona, Soutezicich: len(soutezici), MinModelek: minModelekTematu}
+		}
 	}
 	s.NazevSezony = noveNazevSezony(o.klic(), od, do, filtr.klic())
 	s.Poradi = a.bodySezony(porovnani, poradi, existuje, od, nyni.Add(time.Second), filtr)

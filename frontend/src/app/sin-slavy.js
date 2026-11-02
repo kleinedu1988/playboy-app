@@ -9,6 +9,7 @@ import { GetSezona, GetSinSlavy } from './backend';
 import { soubojOTrun } from './oblibenost';
 import { vyhlasitSezonu } from './vyhlaseni-sezony';
 import { zvolitSezonu } from './volba-sezony';
+import { odemknoutTema } from './galerie-hodnoceni';
 import { esc, sklonovat } from '../lib/format';
 import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva, nazevSezonyVeVete } from '../lib/slava';
 import { stav } from './stav';
@@ -174,6 +175,8 @@ function htmlStavuSine() {
     let vpravo = '';
     if (sezona?.kUzavreni) {
         vpravo = `<button type="button" data-sezona-vyhlasit>♛ Sezóna ${esc(nazevSezonyVeVete(sezona.kUzavreni, true))} čeká na vyhlášení · Vyhlásit →</button>`;
+    } else if (sezona?.propadle) {
+        vpravo = `<button type="button" data-sezona-odemknout="${esc(sezona.propadle.klic)}">⚠ Téma „${esc(sezona.propadle.nazev)}“ nemá dost soutěžících (${sezona.propadle.soutezicich}/${sezona.propadle.minModelek}) · Odemknout →</button>`;
     } else if (sezona?.dni && !sezona.zvoleno) {
         vpravo = '<button type="button" data-sezona-zvolit>✦ Sezóna ještě nemá téma · Zvolit →</button>';
     } else if (pohled !== 'kronika') {
@@ -238,14 +241,32 @@ function htmlKartySezony(b, vudkyne, nejvys) {
         </div>`;
 }
 
+// Řádek sezóny nad trůnem: téma s ikonou, období, kolik zbývá, soutěžící; propadlé téma s nabídkou odemčení;
+// sezóna bez zvoleného tématu s nabídkou volby
+function htmlRadkuSezony(sz) {
+    const t = sz.tema;
+    const casti = [
+        t ? `<b>${esc(`${t.ikona || ''} ${t.nazev}`.trim())}</b>` : '<b>Klasická</b>',
+        esc(sz.obdobi || ''),
+        esc(textZbyva(sz.den, sz.dni)),
+        t ? esc(sklonovat(sz.soutezicich, 'soutěžící', 'soutěžící', 'soutěžících')) : '',
+    ].filter(Boolean).join(' · ');
+    const p = sz.propadle;
+    const upozorneni = p
+        ? `<p class="sz-upozorneni">⚠ Téma „${esc(p.nazev)}“ teď nemá dost soutěžících (${p.soutezicich} z ${p.minModelek}) – sezóna běží jako Klasická. <button type="button" class="link" data-sezona-odemknout="${esc(p.klic)}">🔓 Odemknout v Průvodci →</button></p>`
+        : !sz.zvoleno ? '<p class="sz-upozorneni">Sezóna ještě nemá téma. <button type="button" class="link" data-sezona-zvolit>✦ Zvolit téma →</button></p>' : '';
+    return `<div class="sz-radek-sezony">${casti}</div>${upozorneni}`;
+}
+
 function htmlSezony() {
     const sz = sezona;
     if (!sz) return htmlPrazdna('Sezónu se nepodařilo načíst', 'Zkus Síň slávy otevřít znovu.', { ikona: 'hvezda' });
+    const radekSezony = htmlRadkuSezony(sz);
     // Skončená, ještě neuzavřená sezóna (okno vyhlášení se odložilo „Později“)
     const soutezi = sz.poradi.filter(b => b.misto > 0 && modelka(b.modelkaId));
     const nejvys = Math.max(1, ...sz.poradi.map(b => b.body));
     if (!soutezi.length) {
-        return `<div class="sz">${htmlPrazdna('Sezóna teprve začíná', 'Body sbírají modelky za souboje v Porovnat a za zájem. Na trůn se dostane modelka, která má v sezóně aspoň 3 souboje.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' })}</div>`;
+        return `<div class="sz">${radekSezony}${htmlPrazdna('Sezóna teprve začíná', 'Body sbírají modelky za souboje v Porovnat a za zájem. Na trůn se dostane modelka, která má v sezóně aspoň 3 souboje.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' })}</div>`;
     }
     const vudkyne = soutezi[0];
     const trun = [2, 1, 3].map(misto => soutezi.find(b => b.misto === misto)).filter(Boolean);
@@ -257,7 +278,7 @@ function htmlSezony() {
             <span class="sz-m">${b.misto}.</span><img class="sz-av" data-src="${esc(adresaTitulni(m))}" alt="" style="${stylVyrezu(m)}" draggable="false" />
             <span class="sz-jm">${esc(m.jmeno)}</span>${htmlSlozeni(b, nejvys)}<span class="sz-wl" title="výhry – prohry">${b.vyhry}–${b.prohry}</span>${textTrendu(b.trend) || '<span class="trend"></span>'}<b class="sz-b">${b.body}</b></button>`;
     }).join('');
-    return `<div class="sz">
+    return `<div class="sz">${radekSezony}
         <div class="slava-stupne slava-skupina">${trun.map(b => `<div class="slava-stupen misto-${b.misto}">${htmlKartySezony(b, vudkyne, nejvys)}<div class="slava-podstavec" aria-hidden="true">${b.misto}</div></div>`).join('')}</div>
         <div class="sz-mrizka">
             <div class="sz-karta"><h4>Pořadí sezóny</h4>
@@ -360,6 +381,7 @@ function htmlPaneluSlavy() {
             <li><b>+1</b> den s otevřeným profilem, <b>+1</b> za každé 2 minuty nad fotkami – nejvýš 4 denně a nejvýš polovina bodů</li>
             <li>O titul soutěží modelky s aspoň 3 souboji v sezóně</li>
             <li>Sezóna trvá 7 až 30 dní a může mít téma; po jejím konci vyhlásíš <b>Favoritku</b> a můžeš zvolit <b>♥ Miláčka</b> sezóny</li>
+            <li>V tematické sezóně soutěží jen modelky s aspoň 6 fotkami tématu a počítají se jen souboje v Porovnat v režimu tématu; téma potřebuje aspoň 8 takových modelek, jinak sezóna běží jako Klasická (chybějící fotky doplníš v Průvodci)</li>
         </ul>
         <h4>Top 10 a legendy</h4>
         <p class="hz-tichy">Do Top 10 se modelka dostane po 10 porovnáních s výhrou nad některou z Top 20. Bývalé členky Top 10 jsou Legendy; rekordy a odznaky se počítají z kroniky.</p>`;
@@ -405,6 +427,7 @@ function klikSlavy(cil) {
         vykreslit();
     } else if (cil.closest('[data-sezona-vyhlasit]')) vyhlasitSezonu(sezona?.kUzavreni);
     else if (cil.closest('[data-sezona-zvolit]')) zvolitSezonu();
+    else if (cil.closest('[data-sezona-odemknout]')) odemknoutTema(/** @type {HTMLElement} */ (cil.closest('[data-sezona-odemknout]')).dataset.sezonaOdemknout);
     else if (vyzva) soubojOTrun(Number(vyzva.dataset.sezonaVyzvat), Number(vyzva.dataset.sezonaVudkyne));
     else return false;
     return true;
@@ -798,6 +821,10 @@ export function pripravitSinSlavy() {
         }
         if (cil.closest('[data-sezona-zvolit]')) {
             zvolitSezonu();
+            return;
+        }
+        if (cil.closest('[data-sezona-odemknout]')) {
+            odemknoutTema(/** @type {HTMLElement} */ (cil.closest('[data-sezona-odemknout]')).dataset.sezonaOdemknout);
             return;
         }
         // Sezóna: souboj o trůn s vedoucí modelkou v Porovnat

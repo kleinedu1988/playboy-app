@@ -14261,6 +14261,26 @@ button.pas-kapsle:focus-visible {
     text-align: right;
 }
 
+.sz-radek-sezony {
+    margin: 0 0 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.sz-radek-sezony b {
+    color: var(--text-main);
+    font-size: 15px;
+}
+
+.sz-upozorneni {
+    margin: 0 0 12px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 196, 0, 0.35);
+    border-radius: 10px;
+    background-color: rgba(255, 196, 0, 0.08);
+    font-size: 13px;
+}
+
 .sz-pravidla {
     margin: 0;
     padding: 0;

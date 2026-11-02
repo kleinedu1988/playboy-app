@@ -673,7 +673,8 @@ function vykreslitVolbyPorovnat() {
         ['data-ob-preskocit', 'S', 'Přeskočit', 'Přeskočit dvojici (S)']]
         .map(([atr, kl, nazev, tit]) => `<button type="button" ${atr} data-stav-klavesa="${kl}" data-stav-priorita="2" title="${esc(tit)}">${nazev}</button>`).join('') : '';
     const vede = sezonaVolby?.poradi?.find(b => b.misto === 1 && modelka(b.modelkaId));
-    const sezona = sezonaVolby?.dni && vede ? `<span class="stav-sezona"> · ♛ ${esc(krestni(vede.modelkaId))} vede sezónu, ${esc(textZbyva(sezonaVolby.den, sezonaVolby.dni).replace(/^zbývá /, ''))}</span>` : '';
+    const bezTematu = sezonaVolby?.tema && !porovnatVTematu ? `<span class="stav-sezona"> · Bez tématu – do sezóny „${esc(sezonaVolby.tema.nazev)}“ se nepočítá (T)</span>` : '';
+    const sezona = bezTematu || (sezonaVolby?.dni && vede ? `<span class="stav-sezona"> · ♛ ${esc(krestni(vede.modelkaId))} vede sezónu · ještě ${esc(textZbyva(sezonaVolby.den, sezonaVolby.dni).replace(/^zbývá /, ''))}</span>` : '');
     // Deset dílků k další desítce (cíl dne roste po desítkách)
     const dilky = Array.from({ length: 10 }, (_, i) => `<i class="${i < p.hotovo - (p.cil - 10) ? 'on' : ''}"></i>`).join('');
     // Série dní v řadě (backend počítá z historie; dnešní první porovnání ji prodlouží hned, bez přepočtu)

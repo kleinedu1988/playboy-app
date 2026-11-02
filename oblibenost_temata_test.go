@@ -146,6 +146,9 @@ func TestTemaSezonyVAplikaci(t *testing.T) {
 	a.uc.ob.nacteno, a.uc.ob.porovnani, a.uc.ob.model = false, nil, nil
 	a.uc.mu.Unlock()
 	s = a.GetSezona()
+	if s.Propadle == nil || s.Propadle.Klic != "tag:podpatky" || s.Propadle.Soutezicich != 2 || s.Propadle.MinModelek != 3 {
+		t.Errorf("propadlé téma: %+v", s.Propadle)
+	}
 	if s.Tema != nil || s.Souboju != 3 || s.Nazev != s.Obdobi || s.Zvolene != "tag:podpatky" {
 		t.Errorf("Klasická místo tématu: tema %+v, soubojů %d, název %q", s.Tema, s.Souboju, s.Nazev)
 	}

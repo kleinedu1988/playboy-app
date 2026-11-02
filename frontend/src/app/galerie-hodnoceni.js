@@ -4,7 +4,7 @@
 // V prohlížeči 1–5 fotku ohodnotí a ta z něj hned vypadne (otevritLightbox s jenNehodnocene). Seznam dodává
 // GetNehodnoceneFotky (jen když je potřeba), počet pro hlavičku Hodnocení GetPocetNehodnocenychFotek; hodnocení
 // fotek kdekoli jinde ho hned upraví (událost hodnoceni-fotek).
-import { GetFotkyKPruvodci, GetNehodnoceneFotky, GetPocetFotekKPruvodci, GetPocetNehodnocenychFotek, SetHodnoceni } from './backend';
+import { GetFotkyKOdemceni, GetFotkyKPruvodci, GetNehodnoceneFotky, GetPocetFotekKPruvodci, GetPocetNehodnocenychFotek, GetTemataKOdemceni, SetHodnoceni } from './backend';
 import { historiePruvodce, hotovoPruvodce, nazevTagu, ukazatPruvodce, ukoncitPruvodce, vratitPruvodce, vykreslitPasek, zacitPruvodce } from './pruvodce-fotky';
 import { htmlOdhadu, htmlSrdicka } from './galerie';
 import { kratceSrdicka } from '../lib/srdicka';
@@ -192,9 +192,17 @@ async function nacistPocetKPruvodci() {
     } catch { /* bez počtu */ }
 }
 
+// Témata, která průvodce může odemknout (čipy nad frontou; GetTemataKOdemceni)
+let kOdemceni = [];
+const TEMAT_K_ODEMCENI = 6;
+
 async function nacistPruvodce() {
     let fotky = [];
-    try { fotky = await GetFotkyKPruvodci() || []; } catch { fotky = []; }
+    try {
+        [fotky, kOdemceni] = await Promise.all([GetFotkyKPruvodci(), GetTemataKOdemceni().catch(() => [])]);
+    } catch { fotky = []; }
+    fotky ||= [];
+    kOdemceni ||= [];
     // Po modelkách a albech, jak přišly (předvyplnění podle alba); spojený plakát je jedna položka
     polozkyPruvodce = sestavitAlba(fotky).flatMap(a => a.polozky);
     pocetKPruvodci = fotky.length;
@@ -232,8 +240,36 @@ function vykreslitPruvodce() {
                 ${alba.slice(0, MODELEK).map(a => `<button type="button" class="gh-modelka" data-pr-od="${a.od}" title="Začít od první fotky alba">${esc(a.nazev)}<b>${a.n}</b></button>`).join('')}
                 ${alba.length > MODELEK ? `<span class="gh-dalsi">+ ${esc(sklonovat(alba.length - MODELEK, 'další album', 'další alba', 'dalších alb'))}</span>` : ''}
             </div>
+            ${htmlOdemceni()}
         </div>`);
     ukazatVolby();
+}
+
+// Čipy „odemknout téma“: kolik modelek a fotek chybí; klik spustí průvodce jen na fotkách kandidátek
+function htmlOdemceni() {
+    if (!kOdemceni.length) return '';
+    const jmeno = id => String(stav.prehledModelky.get(id)?.jmeno || '').split(' ')[0];
+    return `<div class="gh-modelky gh-odemceni" aria-label="Témata sezón, která průvodce odemkne">
+        <small>Odemknout téma</small>
+        ${kOdemceni.slice(0, TEMAT_K_ODEMCENI).map((t) => {
+            const kdo = t.kandidatky.slice(0, t.chybiModelek).map(k => `${jmeno(k.modelkaId)} ${k.chybi}`).join(', ');
+            const titulek = `${t.nazev}: soutěží ${t.soutezicich} z ${t.minModelek} modelek – chybí ${sklonovat(t.chybiModelek, 'modelka', 'modelky', 'modelek')} (nejblíž: ${kdo} fotek). Průvodce projde jen jejich fotky, které téma můžou dostat.`;
+            return `<button type="button" class="gh-modelka gh-tema" data-pr-tema="${esc(t.klic)}" title="${esc(titulek)}">🔓 ${esc(`${t.ikona || ''} ${t.nazev}`.trim())}<b>chybí ${t.chybiModelek}</b></button>`;
+        }).join('')}
+    </div>`;
+}
+
+// Průvodce jen na fotkách kandidátek tématu (počítá, kdy se téma odemkne)
+async function otevritPruvodceTematu(klic) {
+    const pokryti = kOdemceni.find(t => t.klic === klic);
+    if (!pokryti) return;
+    let fotky = [];
+    try { fotky = await GetFotkyKOdemceni(klic) || []; } catch { fotky = []; }
+    const fronta = sestavitAlba(fotky).flatMap(a => a.polozky);
+    if (!fronta.length) return oznamit('K tomuto tématu teď nejsou fotky k průvodci.');
+    await zacitPruvodce(pokryti);
+    prohlizetBezZajmu();
+    otevritLightbox(0, false, fronta, { pruvodce: true, poZavreni: () => { if (kontejner?.isConnected) nacistPruvodce(); } });
 }
 
 // Průvodce v prohlížeči od položky fronty; po zavření se fronta načte znovu (až doběhnou zápisy)
@@ -447,7 +483,9 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
         const ukazka = /** @type {HTMLElement | null} */ (t.closest('[data-gh-ukazka]'));
         const jedna = /** @type {HTMLElement | null} */ (t.closest('[data-gh-modelka]'));
         const odPruvodce = /** @type {HTMLElement | null} */ (t.closest('[data-pr-od]'));
-        if (t.closest('[data-pr-start]')) otevritPruvodce(0);
+        const tema = /** @type {HTMLElement | null} */ (t.closest('[data-pr-tema]'));
+        if (tema) otevritPruvodceTematu(tema.dataset.prTema);
+        else if (t.closest('[data-pr-start]')) otevritPruvodce(0);
         else if (odPruvodce) otevritPruvodce(Number(odPruvodce.dataset.prOd));
         else if (t.closest('[data-pr-vratit]')) vratitPruvodce();
         else if (t.closest('[data-gh-start]')) otevrit(0);

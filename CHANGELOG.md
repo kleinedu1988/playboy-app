@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.9] – 2026-11-02
+
+### Přidáno
+- **Odemknout téma** (Hodnotit › Průvodce): pod frontou čipy témat sezón, kterým chybí pár soutěžících – „🔓 👠 Na podpatcích · chybí 1“ (v bublině kdo je nejblíž a kolik fotek chybí). Klik spustí průvodce jen na neprošlých fotkách těchto modelek, které téma můžou dostat (nejbližší napřed).
+  - Pásek ukazuje postup tématu („🔓 Na podpatcích · 7/8 · Anna 5/6“), přijde oznámení „Anna teď soutěží…“ a „🔓 Odemčeno téma“; Vrátit postup vrátí.
+  - Počítají se jen témata s podmínkou na tagy (éry a údaje modelky tagováním odemknout nejde).
+
 ## [1.2.8] – 2026-11-02
 
 ### Změněno

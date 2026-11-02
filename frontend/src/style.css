@@ -13271,6 +13271,19 @@ button.pas-kapsle:focus-visible {
     letter-spacing: 0.1em;
 }
 
+.pr-cil {
+    padding: 1px 8px;
+    border-radius: 999px;
+    background-color: rgba(255, 196, 0, 0.16);
+    color: #ffc400;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.gh-tema b {
+    color: #ffc400;
+}
+
 .pr-ma {
     color: var(--accent-text);
     font-size: 12px;

@@ -38,6 +38,8 @@ export function GetDuvodOdhadu(arg1:number):Promise<string>;
 
 export function GetDvojiceKPorovnani(arg1:number,arg2:string):Promise<Array<main.DvojicePorovnani>>;
 
+export function GetFotkyKOdemceni(arg1:string):Promise<Array<main.Fotografie>>;
+
 export function GetFotkyKPruvodci():Promise<Array<main.Fotografie>>;
 
 export function GetFotkyVyberu(arg1:number):Promise<Array<main.Fotografie>>;
@@ -109,6 +111,8 @@ export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
 export function GetTagy():Promise<Array<string>>;
 
 export function GetTagyFotek(arg1:Array<number>):Promise<Record<number, Array<string>>>;
+
+export function GetTemataKOdemceni():Promise<Array<main.PokrytiTematu>>;
 
 export function GetTemataSezon():Promise<Array<main.InfoTematu>>;
 

@@ -74,6 +74,10 @@ export function GetDvojiceKPorovnani(arg1, arg2) {
   return window['go']['main']['App']['GetDvojiceKPorovnani'](arg1, arg2);
 }
 
+export function GetFotkyKOdemceni(arg1) {
+  return window['go']['main']['App']['GetFotkyKOdemceni'](arg1);
+}
+
 export function GetFotkyKPruvodci() {
   return window['go']['main']['App']['GetFotkyKPruvodci']();
 }
@@ -216,6 +220,10 @@ export function GetTagy() {
 
 export function GetTagyFotek(arg1) {
   return window['go']['main']['App']['GetTagyFotek'](arg1);
+}
+
+export function GetTemataKOdemceni() {
+  return window['go']['main']['App']['GetTemataKOdemceni']();
 }
 
 export function GetTemataSezon() {

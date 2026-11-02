@@ -42,6 +42,8 @@ const CTENI = new Set([
     'GetPocetFotekKPruvodci',
     'UlozitPruvodceFotky',
     'VratitPruvodceFotky',
+    'GetTemataKOdemceni',
+    'GetFotkyKOdemceni',
     'SetObdobiSezony',
     'PorovnatModelkyVTematu',
     'GetNahledyTematu',
@@ -130,6 +132,8 @@ export const GetFotkyKPruvodci = /** @type {typeof App.GetFotkyKPruvodci} */ (ob
 export const GetPocetFotekKPruvodci = /** @type {typeof App.GetPocetFotekKPruvodci} */ (obalit('GetPocetFotekKPruvodci'));
 export const UlozitPruvodceFotky = /** @type {typeof App.UlozitPruvodceFotky} */ (obalit('UlozitPruvodceFotky'));
 export const VratitPruvodceFotky = /** @type {typeof App.VratitPruvodceFotky} */ (obalit('VratitPruvodceFotky'));
+export const GetTemataKOdemceni = /** @type {typeof App.GetTemataKOdemceni} */ (obalit('GetTemataKOdemceni'));
+export const GetFotkyKOdemceni = /** @type {typeof App.GetFotkyKOdemceni} */ (obalit('GetFotkyKOdemceni'));
 export const SetObdobiSezony = /** @type {typeof App.SetObdobiSezony} */ (obalit('SetObdobiSezony'));
 export const PorovnatModelkyVTematu = /** @type {typeof App.PorovnatModelkyVTematu} */ (obalit('PorovnatModelkyVTematu'));
 export const GetNahledyTematu = /** @type {typeof App.GetNahledyTematu} */ (obalit('GetNahledyTematu'));

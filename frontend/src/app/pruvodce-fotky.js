@@ -36,8 +36,22 @@ const zmena = () => document.dispatchEvent(new CustomEvent('lb-pruvodce-zmena'))
 const nazvyTagu = new Map();
 export const nazevTagu = klic => nazvyTagu.get(klic) || klic;
 
-// Začátek relace (otevření prohlížeče)
-export async function zacitPruvodce() {
+// Cíl relace „odemknout téma“ (GetTemataKOdemceni): téma, fotky tématu kandidátek a počet soutěžících; po uložení
+// fotky s tagy tématu se počítá, kdy kandidátka začne soutěžit a kdy se téma odemkne
+let cil = null;
+export const cilPruvodce = () => cil;
+
+function fotkaVTematu(tagy, tema) {
+    const t = new Set(tagy);
+    return (tema.podminky || []).filter(p => p.druh === 'tag').every(p => p.hodnoty.some(h => t.has(h)));
+}
+
+// Začátek relace (otevření prohlížeče); pokryti = téma k odemčení (nebo null)
+export async function zacitPruvodce(pokryti = null) {
+    cil = pokryti ? {
+        tema: pokryti, soutezici: pokryti.soutezicich,
+        fotek: new Map((pokryti.kandidatky || []).map(k => [k.modelkaId, k.fotek])),
+    } : null;
     if (!kroky.length) {
         try { kroky = /** @type {any} */ ((await GetKrokyPruvodce())?.kroky || []); } catch { kroky = []; }
         kroky.forEach(k => k.moznosti.forEach(m => nazvyTagu.set(m.klic, m.nazev)));
@@ -125,6 +139,7 @@ async function ulozitHotovou(p, s) {
     if (vysledek?.ok) {
         zaznam.predchozi = vysledek;
         if (!jen) ids.forEach(id => tagyFotek.set(id, tagy));
+        if (!jen) zapocitatCil(p, tagy, zaznam);
         p.hodnoceni = s.hodnoceni;
         p.fotky.forEach((f) => { f.hodnoceni = s.hodnoceni; });
         oznamitHodnoceniFotek(predFotek, p.fotky.length, s.hodnoceni);
@@ -178,8 +193,26 @@ export async function vratitPruvodce() {
     vratitDoFronty(z, true);
 }
 
+// Fotka s tagy tématu přiblížila kandidátku k soutěži: oznámení, když začne soutěžit a když se téma odemkne
+function zapocitatCil(p, tagy, zaznam) {
+    if (!cil || !cil.fotek.has(p.modelkaId) || !fotkaVTematu(tagy, cil.tema)) return;
+    const n = cil.fotek.get(p.modelkaId) + 1;
+    cil.fotek.set(p.modelkaId, n);
+    zaznam.cil = p.modelkaId;
+    if (n !== cil.tema.minFotek) return;
+    cil.soutezici++;
+    zaznam.cilSoutezi = true;
+    const jmeno = String(p.jmenoModelky || 'Modelka').split(' ')[0];
+    if (cil.soutezici === cil.tema.minModelek) oznamit(`🔓 Odemčeno téma ${cil.tema.ikona || ''} „${cil.tema.nazev}“ – můžeš ho zvolit pro sezónu.`);
+    else oznamit(`${jmeno} teď soutěží v „${cil.tema.nazev}“ (${cil.soutezici}/${cil.tema.minModelek} modelek).`);
+}
+
 function vratitDoFronty(z, ukazat) {
     historiePruvodce = historiePruvodce.filter(x => x !== z);
+    if (cil && z.cil) {
+        cil.fotek.set(z.cil, Math.max(0, cil.fotek.get(z.cil) - 1));
+        if (z.cilSoutezi) cil.soutezici--;
+    }
     hotovoPruvodce = Math.max(0, hotovoPruvodce - 1);
     if (lightbox.classList.contains('hidden') || !stav.lbPruvodce) return zmena();
     const seznam = stav.lbPolozky;
@@ -392,6 +425,7 @@ export function vykreslitPasek() {
             <span class="pr-krok">${poradi}/${viditelne.length}</span><b>${esc(krok.nazev)}</b>
             ${s.maSrdicka ? `<span class="pr-ma" title="Fotka už má srdíčka – krok srdíček se přeskočí">${'♥'.repeat(s.hodnoceni)}</span>` : ''}
             <span class="pr-tecky" aria-hidden="true">${tecky}</span>
+            ${cil ? `<span class="pr-cil" title="${esc(`Odemknout téma: soutěží ${cil.soutezici} z ${cil.tema.minModelek} potřebných modelek; ${String(p.jmenoModelky || '').split(' ')[0]} má ${cil.fotek.get(p.modelkaId) ?? 0} z ${cil.tema.minFotek} fotek tématu`)}">🔓 ${esc(cil.tema.ikona || '')} ${esc(cil.tema.nazev)} · ${cil.soutezici}/${cil.tema.minModelek}${cil.fotek.has(p.modelkaId) ? ` · ${esc(String(p.jmenoModelky || '').split(' ')[0])} ${cil.fotek.get(p.modelkaId)}/${cil.tema.minFotek}` : ''}</span>` : ''}
             <span class="pr-napoveda">${esc(napoveda)}</span>
             <button type="button" class="pr-skryt" data-pr-skryt title="Skrýt průvodce (H)"><kbd>H</kbd></button>
         </div>

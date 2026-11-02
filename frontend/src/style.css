@@ -10597,6 +10597,12 @@ span.ud-chip {
     list-style: none;
 }
 
+/* Dlouhé pořadí: řádky mimo obrazovku se nevykreslují (u stovek modelek plynulé rolování) */
+.ob-poradi > li {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 52px;
+}
+
 .ob-radek {
     display: grid;
     grid-template-columns: 30px 32px minmax(0, 1fr) minmax(60px, 34%) 34px;
@@ -11115,15 +11121,6 @@ span.ud-chip {
 }
 
 /* V úzkém sloupci se štítek zalomí (radši o řádek víc než useknuté „podle síly“) */
-.ob-jmeno-radku .ob-ceka {
-    width: fit-content;
-    max-width: 100%;
-    color: var(--text-main);
-    line-height: 1.35;
-    white-space: normal;
-    cursor: help;
-}
-
 .ob-pravidla:empty {
     display: none;
 }

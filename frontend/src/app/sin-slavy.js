@@ -823,9 +823,10 @@ export function pripravitSinSlavy() {
     });
     document.addEventListener('keydown', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
-        // Enter na kartě (vitrína v Top 10, profil v Legendách) nebo trofeji jako klik
+        // Enter na kartě (vitrína v Top 10, profil v Legendách) nebo trofeji jako klik; tlačítko uvnitř karty
+        // (Vyzvat o trůn) má vlastní Enter
         const karta = /** @type {HTMLElement | null} */ (cil?.closest?.('.slava-karta'));
-        if (e.key === 'Enter' && karta && kontejner?.contains(karta)) karta.click();
+        if (e.key === 'Enter' && karta === cil && kontejner?.contains(karta)) karta.click();
         const trofej = /** @type {HTMLElement | null} */ (cil?.closest?.('.trofej'));
         if (e.key === 'Enter' && trofej === cil && kontejner?.contains(trofej)) /** @type {HTMLElement | null} */ (trofej.querySelector('[data-otevrit-modelku]'))?.click();
     });

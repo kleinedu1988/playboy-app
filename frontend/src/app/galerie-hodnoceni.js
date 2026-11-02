@@ -200,7 +200,12 @@ async function nacistPruvodce() {
     let fotky = [];
     try {
         [fotky, kOdemceni] = await Promise.all([GetFotkyKPruvodci(), GetTemataKOdemceni().catch(() => [])]);
-    } catch { fotky = []; }
+    } catch {
+        // Chyba načtení se nesmí tvářit jako „všechny fotky prošly“
+        nastavitHtml(kontejner, '<p class="ob-info">Fotky k průvodci se nepodařilo načíst.</p>');
+        ukazatVolby();
+        return;
+    }
     fotky ||= [];
     kOdemceni ||= [];
     // Po modelkách a albech, jak přišly (předvyplnění podle alba); spojený plakát je jedna položka
@@ -272,7 +277,7 @@ async function otevritPruvodceTematu(klic) {
     const pokryti = kOdemceni.find(t => t.klic === klic);
     if (!pokryti) return;
     let fotky = [];
-    try { fotky = await GetFotkyKOdemceni(klic) || []; } catch { fotky = []; }
+    try { fotky = await GetFotkyKOdemceni(klic) || []; } catch { return oznamit('Fotky k tématu se nepodařilo načíst.'); }
     const fronta = sestavitAlba(fotky).flatMap(a => a.polozky);
     if (!fronta.length) return oznamit('K tomuto tématu teď nejsou fotky k průvodci.');
     if (!await zacitPruvodce(pokryti)) return;

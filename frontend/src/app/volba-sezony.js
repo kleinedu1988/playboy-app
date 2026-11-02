@@ -13,8 +13,10 @@ const ODLOZENO = 'volbaSezonyOdlozena';
 const GENITIV = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
 
 let okno = null;
+let tikLosu = 0; // běžící animace losu (zavření ani jiná volba ji nesmí nechat doběhnout)
 
 function zavrit() {
+    clearInterval(tikLosu);
     okno?.remove();
     okno = null;
 }
@@ -113,6 +115,7 @@ export async function zvolitSezonu({ auto = false } = {}) {
     let rucne = false; // délku uživatel změnil sám
     const najit = klic => n.vsechna.find(t => t.klic === klic) || (klic === '' ? n.klasicka : null);
     const vykreslit = () => {
+        if (!okno) return;
         okno.querySelectorAll('[data-vo-tema]').forEach((k) => {
             const el = /** @type {HTMLElement} */ (k);
             const on = tema && (el.dataset.voTema === tema.klic || (el.dataset.voTema === '#los' && tema.los));
@@ -132,7 +135,8 @@ export async function zvolitSezonu({ auto = false } = {}) {
             : 'Vyber téma – délka se doporučí podle počtu soutěžících, fotek tématu a tvého tempa soubojů.';
         /** @type {HTMLButtonElement} */ (okno.querySelector('[data-vo-zacit]')).disabled = !tema || !dni;
     };
-    const vybrat = (t) => {
+    const vybrat = (t, zLosu = false) => {
+        if (!zLosu) clearInterval(tikLosu);
         tema = t;
         if (!rucne || dni < n.den) dni = Math.max(t.dni, n.delky.find(d => d >= n.den) || t.dni);
         vykreslit();
@@ -144,17 +148,19 @@ export async function zvolitSezonu({ auto = false } = {}) {
         const t = { ...moznosti[Math.floor(Math.random() * moznosti.length)], los: true };
         const text = karta?.querySelector('.vo-text b');
         let i = 0;
-        const tik = setInterval(() => {
+        clearInterval(tikLosu);
+        tikLosu = setInterval(() => {
+            if (!okno) return clearInterval(tikLosu);
             if (text) text.textContent = moznosti[i++ % moznosti.length].nazev;
             if (i > 9) {
-                clearInterval(tik);
+                clearInterval(tikLosu);
                 if (text) text.textContent = `🎲 ${t.nazev}`;
                 karta?.querySelector('small')?.replaceChildren(`${sklonovat(t.soutezicich, 'soutěžící', 'soutěžící', 'soutěžících')} · ${sklonovat(t.fotek, 'fotka', 'fotky', 'fotek')}`);
                 karta?.querySelector('.vo-text')?.insertAdjacentHTML('beforeend', `<em>doporučeno ${t.dni} dní</em>`);
                 karta?.querySelector('.vo-afinita')?.remove();
                 if (t.popis) karta?.querySelector('small')?.insertAdjacentHTML('beforebegin', `<span class="vo-afinita">${esc(t.popis)}</span>`);
                 karta?.querySelector('.vo-text em + em')?.previousElementSibling?.remove();
-                vybrat(t);
+                vybrat(t, true);
             }
         }, 70);
     };
@@ -174,19 +180,29 @@ export async function zvolitSezonu({ auto = false } = {}) {
             odlozit(n.klic);
             zavrit();
             odemknoutTema(/** @type {HTMLElement} */ (cil.closest('[data-vo-odemknout]')).dataset.voOdemknout);
-        } else if (cil.closest('[data-vo-pozdeji]') || cil === okno) {
+        } else if (cil.closest('[data-vo-pozdeji]')) {
+            // Klik mimo okno volbu neodkládá (snadno se klikne omylem) – jen Později nebo Esc
             odlozit(n.klic);
             zavrit();
         } else if (cil.closest('[data-vo-zacit]') && tema && dni) {
-            const ok = await SetObdobiSezony(n.klic, tema.klic, dni);
-            if (!ok) return oznamit('Sezónu se nepodařilo nastavit.');
+            const tlacitko = /** @type {HTMLButtonElement} */ (cil.closest('[data-vo-zacit]'));
+            if (tlacitko.disabled) return;
+            tlacitko.disabled = true; // dvojklik nezapíše dvakrát
+            let ok = false;
+            try { ok = await SetObdobiSezony(n.klic, tema.klic, dni); } catch { ok = false; }
+            if (!ok) {
+                tlacitko.disabled = false;
+                return oznamit('Sezónu se nepodařilo nastavit.');
+            }
             zavrit();
             oznamit(`Sezóna ${tema.klic ? `„${tema.nazev}“` : 'Klasická'} začala – potrvá ${dni} dní, do ${konec(n.klic, dni)}.`);
             document.dispatchEvent(new CustomEvent('sezona-zvolena'));
         }
     });
     okno.querySelector('[data-vo-jine]').addEventListener('change', (e) => {
-        const t = najit(/** @type {HTMLSelectElement} */ (e.target).value);
+        // „—“ = nic nevybírat (ne Klasická)
+        const hodnota = /** @type {HTMLSelectElement} */ (e.target).value;
+        const t = hodnota ? najit(hodnota) : null;
         if (t) vybrat(t);
     });
     okno.addEventListener('keydown', (e) => {

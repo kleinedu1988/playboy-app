@@ -60,7 +60,10 @@ export async function vyhlasitSezonu(u = null) {
     // Nic k vyhlášení: při spuštění a po uzavření poslední nabídne volbu tématu probíhající sezóny
     if (!k?.poradi?.length) return u ? undefined : zvolitSezonu({ auto: true });
     if (okno || otevreneOkno()) return;
-    const modelky = new Map((await vsechnyModelky()).map(x => [x.id, x]));
+    let modelky;
+    try { modelky = new Map((await vsechnyModelky()).map(x => [x.id, x])); } catch { return; }
+    // Kontrola znovu po načtení: mezitím mohlo okno otevřít jiné volání (spuštění i tlačítko v Síni)
+    if (okno || otevreneOkno()) return;
     okno = document.createElement('div');
     okno.className = 'modal-overlay vs-zavoj';
     okno.innerHTML = htmlOkna(k, modelky);
@@ -77,10 +80,15 @@ export async function vyhlasitSezonu(u = null) {
                 b.classList.toggle('on', on);
                 b.setAttribute('aria-pressed', String(on));
             });
-        } else if (cil.closest('[data-vs-pozdeji]') || cil === okno) {
+        } else if (cil.closest('[data-vs-pozdeji]')) {
+            // Klik mimo okno vyhlášení nezavírá (snadno se klikne omylem) – jen Později nebo Esc
             zavrit();
         } else if (cil.closest('[data-vs-uzavrit]')) {
-            const ok = await UzavritSezonu(k.klic, milacek);
+            const tlacitko = /** @type {HTMLButtonElement} */ (cil.closest('[data-vs-uzavrit]'));
+            if (tlacitko.disabled) return;
+            tlacitko.disabled = true; // dvojklik neuzavře dvakrát
+            let ok = false;
+            try { ok = await UzavritSezonu(k.klic, milacek); } catch { ok = false; }
             zavrit();
             if (!ok) return oznamit('Sezónu se nepodařilo uzavřít.');
             oznamit(`Sezóna ${k.nazev} je uzavřená a zapsaná do kroniky.`);

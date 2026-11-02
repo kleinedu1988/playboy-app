@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.13] – 2026-11-02
+
+### Opraveno
+- Volba sezóny: zavření okna během losu už nic neshodí; ručně vybrané téma během animace losu se nepřepíše vylosovaným; „—“ v Jiném tématu nevybere Klasickou; dvojklik na Začít sezónu nezapíše dvakrát a chyba se oznámí.
+- Vyhlášení sezóny: dvojklik na Uzavřít sezónu neuzavře dvakrát; při spuštění a zároveň kliku na Vyhlásit se neotevřou dvě okna.
+- Volba i vyhlášení se zavírají jen tlačítkem Později nebo Esc – klik vedle okna je už omylem nezavře.
+- Síň slávy: Enter na „⚔ Vyzvat o trůn“ už neotevře zároveň profil modelky.
+- Průvodce: chyba načtení fronty se ukáže jako chyba, ne jako „Všechny fotky prošly průvodcem“.
+- Profil: když se nepodaří načíst tituly sezón, odznaky se přesto ukážou.
+
 ## [1.2.12] – 2026-11-02
 
 ### Opraveno

@@ -173,7 +173,10 @@ async function doplnitOdznaky(id) {
     let odznaky = [];
     let tituly = [];
     try {
-        [odznaky, tituly] = await Promise.all([GetOdznakyModelky(id), GetTitulySezonModelky(id)]);
+        // Každé zvlášť: chyba titulů nesmí schovat odznaky
+        const [o, t] = await Promise.allSettled([GetOdznakyModelky(id), GetTitulySezonModelky(id)]);
+        odznaky = o.status === 'fulfilled' ? o.value : [];
+        tituly = t.status === 'fulfilled' ? t.value : [];
     } catch { /* odznaky jsou jen doplněk */ }
     odznaky ||= [];
     tituly ||= [];
@@ -182,7 +185,7 @@ async function doplnitOdznaky(id) {
     const popis = t => `${t.druh === 'favoritka' ? 'Favoritka' : 'Miláček'} sezóny ${t.nazev}${t.nazev !== t.obdobi ? ` (${t.obdobi})` : ''}`;
     const htmlTitulu = tituly.length
         ? `<button type="button" class="profile-tituly" data-otevrit-oblibenost="slava" data-slava-pohled="kronika" title="${esc(tituly.map(popis).join('\n'))}">${tituly.slice(0, TITULU_V_PROFILU).map(t =>
-            `<span class="profile-titul ${t.druh}">${t.druh === 'favoritka' ? '♛' : '♥'} ${esc(t.nazev)}</span>`).join('')}${tituly.length > TITULU_V_PROFILU ? `<span class="profile-titul">+${tituly.length - TITULU_V_PROFILU}</span>` : ''}</button>`
+            `<span class="profile-titul ${esc(t.druh)}">${t.druh === 'favoritka' ? '♛' : '♥'} ${esc(t.nazev)}</span>`).join('')}${tituly.length > TITULU_V_PROFILU ? `<span class="profile-titul">+${tituly.length - TITULU_V_PROFILU}</span>` : ''}</button>`
         : '';
     const htmlOdznaku = odznaky.length ? `<button type="button" class="profile-odznaky-tlacitko" data-otevrit-oblibenost="slava" data-slava-pohled="odznaky" title="Otevřít odznaky v Síni slávy">${htmlRadyOdznaku(odznaky, 12)}</button>` : '';
     misto.innerHTML = htmlTitulu + htmlOdznaku;

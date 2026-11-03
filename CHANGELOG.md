@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.40] – 2026-11-03
+
+### Změněno
+- **Oblíbenost uložená mezi spuštěními**: výsledek modelu oblíbenosti (oblíbenost, pořadí, úrovně Top, odhady srdíček) se ukládá do databáze učení. Když se od minulého spuštění nic nezměnilo (modelky, porovnání, zájem, den), dostane seznam modelek při startu oblíbenost hned a celý model se spočítá na pozadí. Měřeno se sbírkou 3 000 modelek: první načtení modelek po startu ~100 → 13–40 ms. Po jakékoli změně se počítá jako dřív.
+
 ## [1.2.39] – 2026-11-03
 
 ### Změněno

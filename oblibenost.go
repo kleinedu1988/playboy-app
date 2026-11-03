@@ -285,6 +285,23 @@ func (a *App) doplnitOblibenost(modelky []Modelka) {
 	if a.uc == nil || len(modelky) == 0 {
 		return
 	}
+	// Po spuštění (model se v tomto běhu ještě nepočítal): oblíbenost z minulého běhu, pokud se od té doby nic
+	// nezměnilo; model se mezitím spočítá na pozadí pro ostatní pohledy (Hodnocení, tipy)
+	// Jen v okně aplikace (startNaPozadi): výpočet na pozadí čeká zavření programu (uceni.pockat)
+	if a.startNaPozadi {
+		if ulozena := a.ulozenaOblibenost(modelky); ulozena != nil {
+			for i := range modelky {
+				ulozena[modelky[i].ID].doplnit(&modelky[i])
+			}
+			kopie := append([]Modelka(nil), modelky...)
+			a.uc.ukladani.Add(1)
+			go func() {
+				defer a.uc.ukladani.Done()
+				a.modelOblibenosti(kopie)
+			}()
+			return
+		}
+	}
 	model := a.modelOblibenosti(modelky)
 	for i := range modelky {
 		m := &modelky[i]
@@ -501,6 +518,10 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	model := spocitatOblibenostUplne(modelky, porovnani, zajem, vstupOblibenosti{drzitelky: st.drzitelky, prevzate: prevzate, udaje: u.ob.udaje}, nyni)
 	model.nastavitTrend(snimek, den, nyni, potvrzene)
 	model.otisk = otisk
+	// Pro příští spuštění (jen okno aplikace; zápis na pozadí čeká zavření programu)
+	if a.startNaPozadi {
+		ulozitOblibenostModelek(u, modelky, model)
+	}
 	predchozi := u.ob.model
 	u.ob.model = model
 	u.mu.Lock()

@@ -396,14 +396,8 @@ func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []poro
 	if okruh == "" {
 		kandidatiSoub = model.kandidatiSouboju(modelky, vyloucene, vahaModelky, omezitSouboje(model, porovnani, nabidnute))
 	}
-	for _, kandidati := range [][]kandidatDvojice{kandidatiHod, kandidatiNeh} {
-		sort.SliceStable(kandidati, func(i, j int) bool {
-			if kandidati[i].skore != kandidati[j].skore {
-				return kandidati[i].skore > kandidati[j].skore
-			}
-			return klicDvojice(kandidati[i].a, kandidati[i].b)[0] < klicDvojice(kandidati[j].a, kandidati[j].b)[0]
-		})
-	}
+	seraditKandidaty(kandidatiHod)
+	seraditKandidaty(kandidatiNeh)
 	pouzite := map[int]bool{}
 	pouzitelny := func(k kandidatDvojice) bool { return !pouzite[k.a] && !pouzite[k.b] }
 	pridat := func(k kandidatDvojice, duvod string) {
@@ -485,4 +479,38 @@ func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []poro
 		}
 	}
 	return vysledek
+}
+
+// Kandidáti od nejlepšího skóre, při shodě podle menšího čísla modelky dvojice, jinak v původním pořadí (stabilně).
+// Řadí se čísla kandidátů s předpočítanými klíči a pak se kandidáti přeskládají – přesouvat při řazení celé
+// záznamy desítek tisíc kandidátů bylo nejdražší část výběru dvojic.
+func seraditKandidaty(k []kandidatDvojice) {
+	if len(k) < 2 {
+		return
+	}
+	type klic struct {
+		skore float64
+		mensi int
+		i     int32
+	}
+	klice := make([]klic, len(k))
+	for i := range k {
+		klice[i] = klic{k[i].skore, min(k[i].a, k[i].b), int32(i)}
+	}
+	slices.SortFunc(klice, func(x, y klic) int {
+		switch {
+		case x.skore != y.skore:
+			if x.skore > y.skore {
+				return -1
+			}
+			return 1
+		case x.mensi != y.mensi:
+			return x.mensi - y.mensi
+		}
+		return int(x.i - y.i)
+	})
+	puvodni := slices.Clone(k)
+	for i, x := range klice {
+		k[i] = puvodni[x.i]
+	}
 }

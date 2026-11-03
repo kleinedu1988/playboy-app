@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.44] – 2026-11-03
+
+### Změněno
+- **Rychlejší výběr dvojic v Porovnat**: kandidáti dvojic (desítky tisíc) se řadí přes předpočítané klíče místo přesouvání celých záznamů. Pořadí je stejné jako dřív (hlídá test). Se sbírkou 3 000 modelek: výběr dalších dvojic 37 → 26 ms.
+
 ## [1.2.43] – 2026-11-03
 
 ### Změněno

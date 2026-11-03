@@ -7,6 +7,7 @@ import (
 	"math"
 	"math/rand"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -902,6 +903,28 @@ func TestSerieDni(t *testing.T) {
 	for _, p := range pripady {
 		if n, dnes := serieDni(p.casy, ted); n != p.n || dnes != p.dnes {
 			t.Errorf("%s: %d %v, čekáno %d %v", p.nazev, n, dnes, p.n, p.dnes)
+		}
+	}
+}
+
+// Řazení kandidátů dvojic přes klíče dává stejné pořadí jako dřívější stabilní řazení celých záznamů
+func TestSeraditKandidatyJakoDriv(t *testing.T) {
+	r := rand.New(rand.NewSource(7))
+	k := make([]kandidatDvojice, 3000)
+	for i := range k {
+		k[i] = kandidatDvojice{a: r.Intn(200), b: r.Intn(200), skore: float64(r.Intn(40)) / 8, druh: i}
+	}
+	cekam := slices.Clone(k)
+	sort.SliceStable(cekam, func(i, j int) bool {
+		if cekam[i].skore != cekam[j].skore {
+			return cekam[i].skore > cekam[j].skore
+		}
+		return klicDvojice(cekam[i].a, cekam[i].b)[0] < klicDvojice(cekam[j].a, cekam[j].b)[0]
+	})
+	seraditKandidaty(k)
+	for i := range k {
+		if k[i].druh != cekam[i].druh {
+			t.Fatalf("pořadí se liší na %d", i)
 		}
 	}
 }

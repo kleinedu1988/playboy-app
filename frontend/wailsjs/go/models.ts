@@ -2041,6 +2041,7 @@ export namespace main {
 	    vekZnamy: number;
 	    fotografove: PolozkaStatistiky[];
 	    fotografuCelkem: number;
+	    modelkyFotografu: Record<string, Array<number>>;
 	    narodnosti: PolozkaStatistiky[];
 	    narodnostiCelkem: number;
 	    modelekSNarodnosti: number;
@@ -2059,6 +2060,7 @@ export namespace main {
 	        this.vekZnamy = source["vekZnamy"];
 	        this.fotografove = this.convertValues(source["fotografove"], PolozkaStatistiky);
 	        this.fotografuCelkem = source["fotografuCelkem"];
+	        this.modelkyFotografu = source["modelkyFotografu"];
 	        this.narodnosti = this.convertValues(source["narodnosti"], PolozkaStatistiky);
 	        this.narodnostiCelkem = source["narodnostiCelkem"];
 	        this.modelekSNarodnosti = source["modelekSNarodnosti"];

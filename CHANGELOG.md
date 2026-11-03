@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.36] – 2026-11-03
+
+### Změněno
+- **Rychlejší Statistiky**: modelky nejčastějších fotografů (pro výběr v grafu fotografů) posílá backend rovnou jako čísla modelek ve Statistikách, stejným hledáním jako „fotograf:"…"“ v Modelkách. Dřív si okno stahovalo pro každého fotografa celý seznam modelek (~1,7 MB). Měřeno se sbírkou 3 000 modelek: otevření Statistik 460–500 ms → 115–125 ms, přenesená data ~7 MB → 32 kB.
+
 ## [1.2.35] – 2026-11-03
 
 ### Změněno

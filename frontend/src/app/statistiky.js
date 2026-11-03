@@ -5,7 +5,7 @@
 // ukazuje jeho modelky (bez výběru všechny v grafu).
 // Počítá se ze seznamu modelek; nejčastější fotografové jsou z backendu (GetStatistiky) a jejich modelky se
 // dohledají hledáním. SVG grafSloupcu zůstává pro úvod Přehledu.
-import { GetModelky, GetStatistiky } from './backend';
+import { GetStatistiky } from './backend';
 import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
@@ -490,7 +490,8 @@ export async function nacistStatistiky(koren) {
     const [s, modelky] = await Promise.all([GetStatistiky(), vsechnyModelky()]);
     if (!koren.isConnected) return;
     // Výběr zůstává (návrat Zpět ze seznamu modelek do Statistik); ruší ho uživatel nebo změna edice či výskytu
-    data = { s, modelky, fotografove: new Map() };
+    // Modelky nejčastějších fotografů (backend je hledá stejně jako „fotograf:"…"“ v Modelkách)
+    data = { s, modelky, fotografove: new Map(Object.entries(s.modelkyFotografu || {}).map(([jmeno, ids]) => [jmeno, new Set(ids)])) };
     koren.innerHTML = `${htmlKostry()}<div class="graf-bublina hidden"></div>`;
     vykreslit(koren);
     // Při změně šířky se graf v čase překreslí v nové šířce
@@ -501,12 +502,6 @@ export async function nacistStatistiky(koren) {
         sirka = misto.clientWidth;
         if (definice().osa) vykreslit(koren, { jenGraf: true });
     }).observe(misto);
-    // Modelky nejčastějších fotografů (z hledání), pak se graf fotografů doplní
-    const vysledky = await Promise.all(s.fotografove.map(f => GetModelky(`fotograf:"${f.nazev}"`)
-        .then(seznam => /** @type {[string, Set<number>]} */ ([f.nazev, new Set((seznam || []).map(m => m.id))]))));
-    if (!koren.isConnected || data?.s !== s) return;
-    data.fotografove = new Map(vysledky);
-    if (graf === 'fot') vykreslit(koren);
 }
 
 // Index sloupce pod ukazatelem (u kraje grafu nejbližší sloupec)

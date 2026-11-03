@@ -32,8 +32,11 @@ type Statistiky struct {
 	VekNejcastej int                 `json:"vekNejcastejsi"`
 	VekZnamy     int                 `json:"vekZnamy"`
 	// Nejčastější fotografové (podle počtu alb) a národnosti (podle počtu modelek), nejvýše po 8
-	Fotografove        []PolozkaStatistiky `json:"fotografove"`
-	FotografuCelkem    int                 `json:"fotografuCelkem"`
+	Fotografove     []PolozkaStatistiky `json:"fotografove"`
+	FotografuCelkem int                 `json:"fotografuCelkem"`
+	// Modelky nejčastějších fotografů (čísla modelek) stejným hledáním jako „fotograf:"…"“ v Modelkách; graf
+	// fotografů z nich počítá výběr (dřív si rozhraní stahovalo celé seznamy modelek, ~1,7 MB)
+	ModelkyFotografu   map[string][]int    `json:"modelkyFotografu"`
 	Narodnosti         []PolozkaStatistiky `json:"narodnosti"`
 	NarodnostiCelkem   int                 `json:"narodnostiCelkem"`
 	ModelekSNarodnosti int                 `json:"modelekSNarodnosti"`
@@ -199,6 +202,16 @@ func (a *App) GetStatistiky() Statistiky {
 	}
 	s.Fotografove = zebricek(podleJmena, nejviceVZebricku)
 	s.FotografuCelkem = len(podleJmena)
+	s.ModelkyFotografu = map[string][]int{}
+	for _, f := range s.Fotografove {
+		ids := []int{}
+		if modelky, err := a.nactiModelky(`fotograf:"`+f.Nazev+`"`, false); err == nil {
+			for _, m := range modelky {
+				ids = append(ids, m.ID)
+			}
+		}
+		s.ModelkyFotografu[f.Nazev] = ids
+	}
 
 	// Národnosti modelek
 	narodnosti := map[string]int{}

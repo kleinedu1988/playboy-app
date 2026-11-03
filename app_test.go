@@ -3118,3 +3118,27 @@ func TestStartNaPozadi(t *testing.T) {
 	}
 	b.shutdown()
 }
+
+// Modelky nejčastějších fotografů ve Statistikách jsou tytéž, které najde hledání „fotograf:"…"“
+func TestStatistikyModelkyFotografu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Adéla"})
+	a.AddModelka(Modelka{Jmeno: "Bára"})
+	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA)
+	a.AddBulkPhotos(2, "Jiné", "Pictorial", odkazB)
+	a.SetPopisAlba(1, "Album", "Pictorial", "", "Arny Freytag")
+	a.SetPopisAlba(2, "Jiné", "Pictorial", "", "Arny Freytag, Pompeo Posar")
+	s := a.GetStatistiky()
+	for _, f := range s.Fotografove {
+		var cekam []int
+		for _, m := range a.GetModelky(`fotograf:"` + f.Nazev + `"`) {
+			cekam = append(cekam, m.ID)
+		}
+		if fmt.Sprint(s.ModelkyFotografu[f.Nazev]) != fmt.Sprint(cekam) || len(cekam) == 0 {
+			t.Fatalf("%s: %v, hledání %v", f.Nazev, s.ModelkyFotografu[f.Nazev], cekam)
+		}
+	}
+	if len(s.ModelkyFotografu["Arny Freytag"]) != 2 {
+		t.Fatalf("Arny Freytag: %v", s.ModelkyFotografu)
+	}
+}

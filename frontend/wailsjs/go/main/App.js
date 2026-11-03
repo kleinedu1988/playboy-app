@@ -98,6 +98,10 @@ export function GetFrontaHodnoceni() {
   return window['go']['main']['App']['GetFrontaHodnoceni']();
 }
 
+export function GetGalerieNejlepsich(arg1) {
+  return window['go']['main']['App']['GetGalerieNejlepsich'](arg1);
+}
+
 export function GetKalendar() {
   return window['go']['main']['App']['GetKalendar']();
 }

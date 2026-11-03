@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.50] – 2026-11-03
+
+### Přidáno
+- **Galerie (Nejlepší), krok 1 – nová data**: backend umí nejlepší fotky sbírky filtrovat (od kolika srdíček, typ fotky, desetiletí, hledání), řadit (hodnota = srdíčka fotky × oblíbenost modelky, jen srdíčka fotky, nejnovější, náhodně) se střídáním modelek (každá další fotka téže modelky o čtvrt srdíčka níž) a posílat po stránkách zhuštěně. Se sbírkou 27 600 fotek se 4+ srdíčky: první stránka 0,11 MB místo dnešních 12,3 MB, další stránky ~7 ms. Stránka Galerie zatím vypadá jako dřív; nová mřížka bez oddílů přijde v další verzi.
+
 ## [1.2.48] – 2026-11-03
 
 ### Změněno

@@ -50,6 +50,8 @@ export function GetFotografove():Promise<Array<string>>;
 
 export function GetFrontaHodnoceni():Promise<Array<main.PolozkaHodnoceni>>;
 
+export function GetGalerieNejlepsich(arg1:main.DotazNejlepsich):Promise<main.GalerieNejlepsich>;
+
 export function GetKalendar():Promise<Array<main.VydaniKalendare>>;
 
 export function GetKatalogTagu():Promise<Array<main.SkupinaTagu>>;

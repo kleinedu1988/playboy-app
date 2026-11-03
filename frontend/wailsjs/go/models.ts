@@ -194,6 +194,34 @@ export namespace main {
 	        this.edice = source["edice"];
 	    }
 	}
+	export class DotazNejlepsich {
+	    min: number;
+	    typ: string;
+	    dekada: number;
+	    razeni: string;
+	    prokladat: boolean;
+	    seed: number;
+	    hledat: string;
+	    od: number;
+	    pocet: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DotazNejlepsich(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.min = source["min"];
+	        this.typ = source["typ"];
+	        this.dekada = source["dekada"];
+	        this.razeni = source["razeni"];
+	        this.prokladat = source["prokladat"];
+	        this.seed = source["seed"];
+	        this.hledat = source["hledat"];
+	        this.od = source["od"];
+	        this.pocet = source["pocet"];
+	    }
+	}
 	export class DvojicePorovnani {
 	    a: number;
 	    b: number;
@@ -310,6 +338,46 @@ export namespace main {
 	        this.sablona = source["sablona"];
 	        this.fotky = this.convertValues(source["fotky"], FotkaFronty);
 	        this.alba = this.convertValues(source["alba"], AlbumFronty, true);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class GalerieNejlepsich {
+	    sablona: string;
+	    fotky: FotkaFronty[];
+	    alba: Record<number, AlbumFronty>;
+	    celkem: number;
+	    modelek: number;
+	    od: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new GalerieNejlepsich(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sablona = source["sablona"];
+	        this.fotky = this.convertValues(source["fotky"], FotkaFronty);
+	        this.alba = this.convertValues(source["alba"], AlbumFronty, true);
+	        this.celkem = source["celkem"];
+	        this.modelek = source["modelek"];
+	        this.od = source["od"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

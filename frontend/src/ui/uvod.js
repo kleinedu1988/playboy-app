@@ -57,21 +57,33 @@ export function pockatNaNahledy(limit) {
 // načtou na pozadí, aby příště byly v mezipaměti. Se zámkem se profilovky neukládají (úvod je vidět před heslem).
 const KLIC_PROFILOVEK = 'uvodProfilovky';
 const POCET_PROFILOVEK = 14;
+const NEJMENE_PROFILOVEK = 4;
+const KANDIDATU = 24;
+// Uloží se jen fotky, které se opravdu načetly (rozdělaná modelka může mít adresu titulní fotky, ze které nic
+// nepřijde – v kruhu by pak byla jen šedá dlaždice); když se jich načte málo (bez připojení), zůstane minulý výběr
 export function ulozitProfilovkyUvodu(modelky, adresaTitulni) {
-    const sFotkou = modelky.filter(m => m.coverUrl);
+    const sFotkou = modelky.filter(m => m.coverUrl && !adresaTitulni(m).startsWith('data:'));
     for (let i = sFotkou.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [sFotkou[i], sFotkou[j]] = [sFotkou[j], sFotkou[i]];
     }
-    const seznam = sFotkou.slice(0, POCET_PROFILOVEK).map(m => ({
+    const kandidati = sFotkou.slice(0, KANDIDATU).map(m => ({
         u: adresaTitulni(m), x: m.coverX ?? 50, y: m.coverY ?? 50, z: m.coverZoom || 1,
     }));
-    try { localStorage.setItem(KLIC_PROFILOVEK, JSON.stringify(seznam)); } catch { return; }
-    for (const p of seznam) {
+    const overit = p => new Promise((hotovo) => {
         const img = new Image();
         img.decoding = 'async';
+        const konec = ok => () => hotovo(ok && img.naturalWidth > 1 ? p : null);
+        img.onload = konec(true);
+        img.onerror = konec(false);
+        setTimeout(konec(false), 20000);
         img.src = p.u;
-    }
+    });
+    return Promise.all(kandidati.map(overit)).then((vysledky) => {
+        const seznam = vysledky.filter(Boolean).slice(0, POCET_PROFILOVEK);
+        if (seznam.length < NEJMENE_PROFILOVEK) return;
+        try { localStorage.setItem(KLIC_PROFILOVEK, JSON.stringify(seznam)); } catch { /* jen pro toto spuštění */ }
+    });
 }
 export function zapomenoutProfilovkyUvodu() {
     try { localStorage.removeItem(KLIC_PROFILOVEK); } catch { /* nic uloženo */ }

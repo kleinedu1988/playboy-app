@@ -24,7 +24,27 @@
 
     var cislo = function (h, vychozi, od, po) { h = Number(h); return isFinite(h) ? Math.min(Math.max(h, od), po) : vychozi; };
     var nacteno = function () { this.classList.add('nacteno'); };
-    var chyba = function () { this.remove(); };   // zůstane tmavý zástupce karty
+    // Fotka, která se nenačte (od minula smazaná nebo nedostupná): karta dostane jinou ze seznamu; když se nenačte
+    // žádná, vrátí se místo kruhu ikona (šedé dlaždice by se točily naprázdno)
+    var vadne = {};
+    var pocetVadnych = 0;
+    var chyba = function () {
+        var img = this;
+        if (!vadne[img.src]) { vadne[img.src] = true; pocetVadnych++; }
+        if (pocetVadnych >= seznam.length) { vratitIkonu(); return; }
+        for (var n = 0; n < seznam.length; n++) {
+            var dalsi = seznam[(Number(img.dataset.poradi) + 1 + n) % seznam.length];
+            if (!vadne[new URL(dalsi.u, location.href).href]) {
+                img.dataset.poradi = String(seznam.indexOf(dalsi));
+                img.style.setProperty('--x', cislo(dalsi.x, 50, 0, 100) + '%');
+                img.style.setProperty('--y', cislo(dalsi.y, 50, 0, 100) + '%');
+                img.style.setProperty('--z', String(cislo(dalsi.z, 1, 1, 4)));
+                img.src = dalsi.u;
+                return;
+            }
+        }
+        img.remove();   // zůstane tmavý zástupce karty
+    };
 
     var scena = document.createElement('div');
     scena.className = 'uvod-kruh';
@@ -53,6 +73,7 @@
         img.style.setProperty('--x', cislo(p.x, 50, 0, 100) + '%');
         img.style.setProperty('--y', cislo(p.y, 50, 0, 100) + '%');
         img.style.setProperty('--z', String(cislo(p.z, 1, 1, 4)));
+        img.dataset.poradi = String(k % seznam.length);
         img.addEventListener('load', nacteno);
         img.addEventListener('error', chyba);
         img.src = p.u;
@@ -61,6 +82,12 @@
     }
 
     var ikona = uvod.querySelector('.uvod-ikona');
+    var vratitIkonu = function () {
+        if (!scena.parentNode) return;
+        if (ikona) scena.parentNode.replaceChild(ikona, scena); else scena.remove();
+        uvod.classList.remove('s-kruhem');
+        try { localStorage.removeItem('uvodProfilovky'); } catch (e) { /* příště se vybere znovu */ }
+    };
     if (ikona) uvod.replaceChild(scena, ikona); else uvod.insertBefore(scena, uvod.firstChild);
     uvod.classList.add('s-kruhem');
 })();

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.26] – 2026-11-03
+
+### Opraveno
+- **Šedé dlaždice v kruhu úvodu**: do výběru profilovek pro příští spuštění se dostaly i rozdělané modelky, jejichž titulní fotka se nenačte. Teď se uloží jen fotky, které se opravdu načetly (z 24 náhodných kandidátek nejvýš 14; když se jich načte méně než 4, zůstane minulý výběr). Fotku, která se při startu nenačte, nahradí v kruhu jiná ze seznamu; když se nenačte žádná, ukáže se místo kruhu ikona a výběr se při dalším běhu sestaví znovu.
+
 ## [1.2.25] – 2026-11-03
 
 ### Přidáno

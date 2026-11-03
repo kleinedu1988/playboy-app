@@ -124,6 +124,13 @@ func pokrytiTematu(t *Tema, modelky []Modelka, fotky []*fotkaTematu, prosle map[
 // Témata katalogu s podmínkou na tagy, která ještě neplatí, ale průvodce je může odemknout; od nejbližšího
 func (a *App) GetTemataKOdemceni() []PokrytiTematu {
 	vysledek := []PokrytiTematu{}
+	var sTagy []Tema
+	for _, t := range katalogTemat {
+		if t.maPodminkuNaTag() {
+			sTagy = append(sTagy, t)
+		}
+	}
+	a.predpocitatTemata(sTagy, func(t *Tema) { a.pokrytiTematuSbirky(t) })
 	for i := range katalogTemat {
 		t := katalogTemat[i]
 		if !t.maPodminkuNaTag() {
@@ -176,6 +183,27 @@ func (a *App) fotkyKOdemceni(tema string) []Fotografie {
 // Pokrytí tématu nad celou sbírkou (z paměti ke snímku – zápis průvodce dá nový snímek); kandidátky se nesmí měnit
 func (a *App) pokrytiTematuSbirky(t *Tema) PokrytiTematu {
 	return pametTematu(a, t.Klic, func(p *temataPamet) map[string]PokrytiTematu { return p.pokryti }, func() PokrytiTematu {
-		return pokrytiTematu(t, a.modelkyProTemata(), a.seznamFotekProTemata(), a.proslePruvodcem())
+		return pokrytiTematu(t, a.modelkyProTemata(), a.seznamFotekProTemata(), a.proslePruvodcemKeSnimku())
 	})
+}
+
+// Prošlé fotky z paměti ke snímku (zápis průvodce dá nový snímek); mapu volající nesmí měnit
+func (a *App) proslePruvodcemKeSnimku() map[int]bool {
+	s := a.snimekVPameti()
+	if s == nil {
+		return a.proslePruvodcem()
+	}
+	p := a.pametTemat()
+	p.mu.Lock()
+	if p.prosleSnimek == s {
+		v := p.prosle
+		p.mu.Unlock()
+		return v
+	}
+	p.mu.Unlock()
+	v := a.proslePruvodcem()
+	p.mu.Lock()
+	p.prosleSnimek, p.prosle = s, v
+	p.mu.Unlock()
+	return v
 }

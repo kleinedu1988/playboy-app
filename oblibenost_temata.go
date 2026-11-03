@@ -448,6 +448,9 @@ type temataPamet struct {
 	vysledkySnimek *snimek
 	soutez         map[string]vysledekSouteze
 	pokryti        map[string]PokrytiTematu
+	// Fotky prošlé průvodcem ke snímku (pokrytí témat je čte u každého tématu)
+	prosleSnimek *snimek
+	prosle       map[int]bool
 }
 
 type vysledekSouteze struct {

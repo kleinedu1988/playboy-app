@@ -144,6 +144,7 @@ func (a *App) GetNavrhSezony() NavrhSezony {
 		}
 	}
 	var kandidati []NavrhTematu
+	a.predpocitatTemata(katalogTemat, func(t *Tema) { a.souteziciTematuSbirky(t) })
 	for i := range katalogTemat {
 		t := katalogTemat[i]
 		soutezici, fotek := a.souteziciTematuSbirky(&t)

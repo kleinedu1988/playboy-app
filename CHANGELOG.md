@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.37] – 2026-11-03
+
+### Změněno
+- **Témata sezón na více jádrech**: návrh sezóny a témata k odemčení vyhodnocují každé téma souběžně na všech jádrech procesoru a fotky prošlé průvodcem čtou z databáze jednou místo u každého tématu. Měřeno se sbírkou 3 000 modelek na 4 jádrech: návrh sezóny 280–430 → 180–210 ms, témata k odemčení 210–240 → 60–85 ms (volba sezóny, Hodnotit › Průvodce, předpříprava po startu). Výsledky jsou stejné.
+
 ## [1.2.36] – 2026-11-03
 
 ### Změněno

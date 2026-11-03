@@ -67,6 +67,8 @@ const CTENI = new Set([
     'StavDatabaze',
     'VybratSouboryImportu',
     'ExportovatDoSouboru',
+    // Předpříprava jen plní mezipaměti backendu (app/predpriprava.js); změna dat by vyprázdnila mezipaměti okna
+    'Predpripravit',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
     'ZaznamenatZajem',
@@ -93,8 +95,19 @@ const JEN_HODNOCENI = new Set([
 const SLOUCIT = new Set(['GetSezona', 'GetNavrhSezony', 'GetTemataKOdemceni', 'GetSpecialy', 'GetPocetFotekKPruvodci']);
 const probihajici = new Map();
 
+// Počet rozběhnutých volání backendu: předpříprava (app/predpriprava.js) čeká, dokud nějaké běží
+let rozbehnutych = 0;
+export const pocetRozbehnutychVolani = () => rozbehnutych;
+function pocitat(slib) {
+    rozbehnutych++;
+    const konec = () => { rozbehnutych--; };
+    Promise.resolve(slib).then(konec, konec);
+    return slib;
+}
+
 function obalit(jmeno) {
-    const funkce = App[jmeno];
+    const puvodni = App[jmeno];
+    const funkce = (...argumenty) => pocitat(puvodni(...argumenty));
     if (SLOUCIT.has(jmeno)) {
         return (...argumenty) => {
             const klic = `${jmeno}${JSON.stringify(argumenty)}`;
@@ -194,6 +207,7 @@ export const OdebratZVyberu = /** @type {typeof App.OdebratZVyberu} */ (obalit('
 export const OdmitnoutNavrh = /** @type {typeof App.OdmitnoutNavrh} */ (obalit('OdmitnoutNavrh'));
 export const Odemknout = /** @type {typeof App.Odemknout} */ (obalit('Odemknout'));
 export const OveritOdkaz = /** @type {typeof App.OveritOdkaz} */ (obalit('OveritOdkaz'));
+export const Predpripravit = /** @type {typeof App.Predpripravit} */ (obalit('Predpripravit'));
 export const PrejmenovatFotografa = /** @type {typeof App.PrejmenovatFotografa} */ (obalit('PrejmenovatFotografa'));
 export const PrejmenovatTag = /** @type {typeof App.PrejmenovatTag} */ (obalit('PrejmenovatTag'));
 export const PrejmenovatVyber = /** @type {typeof App.PrejmenovatVyber} */ (obalit('PrejmenovatVyber'));

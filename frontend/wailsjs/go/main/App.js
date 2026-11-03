@@ -314,6 +314,10 @@ export function PorovnatModelkyVTematu(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PorovnatModelkyVTematu'](arg1, arg2, arg3, arg4);
 }
 
+export function Predpripravit(arg1) {
+  return window['go']['main']['App']['Predpripravit'](arg1);
+}
+
 export function PrejmenovatFotografa(arg1, arg2) {
   return window['go']['main']['App']['PrejmenovatFotografa'](arg1, arg2);
 }

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.30] – 2026-11-03
+
+### Změněno
+- **Předpříprava po úvodu**: v klidu po spuštění (nic se nenačítá, 0,6 s bez kliknutí či klávesy, okno je vidět) si program po krocích připraví témata sezón, Sbírku, kalendář, texty k hledání a statistiky. První otevření je pak rychlejší: volba sezóny ~1,3 → 0,15 s, Sbírka o 0,3–0,55 s, Čísla, Kalendář a první hledání o 50–75 ms (měřeno se sbírkou 3 000 modelek). Kliknutí během kroku ho nepřeruší, další krok počká. Po změně dat se zneplatněné kroky zopakují až po 5 s klidu (po srdíčku jen témata a texty). Úvod se tím neprodlužuje a nic zastaralého se neukáže – připravuje se jen to, co backend už dřív hlídal proti změnám.
+
 ## [1.2.29] – 2026-11-03
 
 ### Přidáno

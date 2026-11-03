@@ -158,6 +158,8 @@ export function PorovnatModelky(arg1:number,arg2:number,arg3:string):Promise<boo
 
 export function PorovnatModelkyVTematu(arg1:number,arg2:number,arg3:string,arg4:string):Promise<boolean>;
 
+export function Predpripravit(arg1:string):Promise<boolean>;
+
 export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
 
 export function PrejmenovatTag(arg1:string,arg2:string):Promise<number>;

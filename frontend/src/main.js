@@ -37,6 +37,7 @@ import * as zkratky from './app/zkratky';
 import * as editorTextu from './ui/editor-textu';
 import { stats } from './app/prvky';
 import { vyhlasitSezonu } from './app/vyhlaseni-sezony';
+import { spustitPredpripravu } from './app/predpriprava';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
 // když je otevřený, jeho obsluha kláves zastaví ostatní
@@ -115,6 +116,8 @@ StavDatabaze().then((chyba) => {
         if (stav.maZamek) zapomenoutProfilovkyUvodu();
         else vsechnyModelky().then(m => ulozitProfilovkyUvodu(m, obrazky.adresaTitulni)).catch(() => {});
     }, 4000);
+    // Mezipaměti backendu pro další pohledy se připraví v klidu po úvodu (app/predpriprava.js)
+    spustitPredpripravu();
     // Po aktualizaci jednou ukáže, co je nového (až po odemčení a úvodu)
     napoveda.ukazatNovinkyPoAktualizaci();
     // Denní ověření souborů až po prvním vykreslení, ať nebrzdí start

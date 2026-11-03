@@ -195,15 +195,14 @@ func (a *App) proslePruvodcemKeSnimku() map[int]bool {
 	}
 	p := a.pametTemat()
 	p.mu.Lock()
+	defer p.mu.Unlock()
 	if p.prosleSnimek == s {
-		v := p.prosle
-		p.mu.Unlock()
-		return v
+		return p.prosle
 	}
-	p.mu.Unlock()
-	v := a.proslePruvodcem()
-	p.mu.Lock()
-	p.prosleSnimek, p.prosle = s, v
-	p.mu.Unlock()
-	return v
+	// Průvodce se od minula nezměnil (stejný otisk): stačí přenést
+	if ov := a.otiskTematKeSnimku(p, s).vysledku; p.prosle == nil || ov != p.prosleOtisk {
+		p.prosle, p.prosleOtisk = a.proslePruvodcem(), ov
+	}
+	p.prosleSnimek = s
+	return p.prosle
 }

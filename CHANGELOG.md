@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.38] – 2026-11-03
+
+### Změněno
+- **Témata po srdíčku bez přepočtu**: paměť témat sezón (fotky s tagy a albem, soutěžící a pokrytí témat) se po zápisu nezahazuje, když se data témat nezměnila – program si pamatuje otisk fotek, alb, tagů, údajů modelek a průvodce a po srdíčku u fotky nebo souboji paměť jen přenese. Měřeno se sbírkou 3 000 modelek po srdíčku u fotky: návrh sezóny ~480 → 130–220 ms, témata k odemčení 70–120 → ~1 ms. Po změně tagu, alba nebo údaje modelky se témata spočítají znovu jako dřív (hlídá test).
+
 ## [1.2.37] – 2026-11-03
 
 ### Změněno

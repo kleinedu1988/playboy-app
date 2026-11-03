@@ -451,6 +451,13 @@ type temataPamet struct {
 	// Fotky prošlé průvodcem ke snímku (pokrytí témat je čte u každého tématu)
 	prosleSnimek *snimek
 	prosle       map[int]bool
+	// Otisk dat témat ke snímku (temata_otisk.go) a otisky, ke kterým patří fotky a výsledky: shodný otisk
+	// přenese paměť na nový snímek (zápis, který témata nemění – srdíčko)
+	otiskSnimek   *snimek
+	otisk         otiskTemat
+	fotkyOtisk    string
+	vysledkyOtisk string
+	prosleOtisk   string
 }
 
 type vysledekSouteze struct {
@@ -467,7 +474,10 @@ func pametTematu[T any](a *App, klic string, vyber func(p *temataPamet) map[stri
 	p := a.pametTemat()
 	p.mu.Lock()
 	if p.vysledkySnimek != s {
-		p.vysledkySnimek, p.soutez, p.pokryti = s, map[string]vysledekSouteze{}, map[string]PokrytiTematu{}
+		if ov := a.otiskTematKeSnimku(p, s).vysledku; p.soutez == nil || ov != p.vysledkyOtisk {
+			p.soutez, p.pokryti, p.vysledkyOtisk = map[string]vysledekSouteze{}, map[string]PokrytiTematu{}, ov
+		}
+		p.vysledkySnimek = s
 	}
 	if v, ok := vyber(p)[klic]; ok {
 		p.mu.Unlock()
@@ -513,8 +523,11 @@ func (a *App) fotkyProTemata(modelky ...int) map[int]*fotkaTematu {
 			p.mu.Lock()
 			defer p.mu.Unlock()
 			if p.snimek != s {
-				p.fotky, p.snimek = a.nacistFotkyProTemata(), s
-				p.seznam = seznamFotek(p.fotky)
+				if of := a.otiskTematKeSnimku(p, s).fotek; p.fotky == nil || of != p.fotkyOtisk {
+					p.fotky, p.fotkyOtisk = a.nacistFotkyProTemata(), of
+					p.seznam = seznamFotek(p.fotky)
+				}
+				p.snimek = s
 			}
 			return p.fotky
 		}

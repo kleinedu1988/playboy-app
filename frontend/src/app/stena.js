@@ -5,7 +5,7 @@ import { sestavitAlba } from '../lib/alba';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
 import { listaCoveru, listaSteny } from './listy';
-import { VELIKOST_PLAKATU_MALA, nacitatPostupne } from './obrazky';
+import { VELIKOST_PLAKATU_MALA, nacitatPostupne, sledovatDalsi } from './obrazky';
 import { htmlZobrazeniCisel, ukazatPohled } from './navigace';
 import { htmlPlakatu, pripravitPlakat } from './profil';
 import { otevritVydani } from './vydani';
@@ -98,19 +98,67 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
             dekady.get(dekada).push(i);
         });
     }
-    wall.innerHTML = razeni + (maDekady
-        ? [...dekady].map(([dekada, indexy]) => `
-            <section class="wall-dekada" data-cast="${dekada}">
+    // Mřížky (oddíl desetiletí, nebo jedna) se sestaví prázdné a plní po dávkách: prvních PLAKATU_HNED hned,
+    // zbytek v dalších úlohách (dřív se stěna s tisíci centerfoldy skládala najednou přes sekundu)
+    const skupiny = maDekady ? [...dekady] : [[null, stav.stenaPolozky.map((_, i) => i)]];
+    wall.innerHTML = razeni + skupiny.map(([dekada, indexy]) => dekada === null
+        ? '<div class="wall-mrizka"></div>'
+        : `<section class="wall-dekada" data-cast="${dekada}">
                 <h3>${dekada ? `${dekada}–${dekada + 9}` : 'Bez vydání'}<small>${sklonovat(indexy.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</small></h3>
-                <div class="wall-mrizka">${indexy.map(i => htmlPolozky(stav.stenaPolozky[i], i)).join('')}</div>
-            </section>`).join('')
-        : `<div class="wall-mrizka">${stav.stenaPolozky.map(htmlPolozky).join('')}</div>`);
+                <div class="wall-mrizka"></div>
+            </section>`).join('');
     prevestNaVolby(wall.querySelector('.wall-toolbar'));
+    const mrizky = [...wall.querySelectorAll('.wall-mrizka')];
+    dokresleniSteny = { moje, html: htmlPolozky, fronta: skupiny.flatMap(([, indexy], j) => indexy.map(i => [j, i])), mrizky, od: 0 };
+    nacitatPostupne(wall);
+    pridatDavkuSteny(PLAKATU_HNED);
+    naplanovatDavkuSteny();
     listaSteny.naplnit([...dekady].filter(([dekada]) => dekada).map(([dekada, indexy]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet: indexy.length })));
     listaSteny.sledovat();
-    wall.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
-    nacitatPostupne(wall);
 }
+
+// Dokreslování stěny po dávkách (jako galerie): fronta [mřížka, index položky] v pořadí stránky
+const PLAKATU_HNED = 60;
+const PLAKATU_V_DAVCE = 150;
+/** @type {{ moje: number, html: (p: any, i: number) => string, fronta: number[][], mrizky: Element[], od: number } | null} */
+let dokresleniSteny = null;
+
+function pridatDavkuSteny(kolik) {
+    const d = dokresleniSteny;
+    if (!d || d.moje !== stav.cisloNacteni || !d.mrizky[0]?.isConnected) {
+        dokresleniSteny = null;
+        return;
+    }
+    const do_ = Math.min(d.fronta.length, d.od + kolik);
+    // Po mřížkách: souvislé úseky jedné mřížky jedním vložením
+    let i = d.od;
+    while (i < do_) {
+        const j = d.fronta[i][0];
+        let k = i;
+        while (k < do_ && d.fronta[k][0] === j) k++;
+        const pred = d.mrizky[j].childElementCount;
+        d.mrizky[j].insertAdjacentHTML('beforeend', d.fronta.slice(i, k).map(([, idx]) => d.html(stav.stenaPolozky[idx], idx)).join(''));
+        [...d.mrizky[j].children].slice(pred).forEach(f => f.querySelectorAll('.poster').forEach(p => pripravitPlakat(p)));
+        sledovatDalsi(wall, d.mrizky[j]);
+        i = k;
+    }
+    d.od = do_;
+    if (d.od >= d.fronta.length) dokresleniSteny = null;
+}
+
+function naplanovatDavkuSteny() {
+    if (!dokresleniSteny) return;
+    setTimeout(() => {
+        pridatDavkuSteny(PLAKATU_V_DAVCE);
+        naplanovatDavkuSteny();
+    }, 0);
+}
+
+// Stěna celá hned (skok v liště desetiletí, návrat Zpět na místo dole na stránce, fokus na plakátu)
+export function dokreslitStenu() {
+    if (dokresleniSteny) pridatDavkuSteny(Infinity);
+}
+listaSteny.dovykreslit = () => dokreslitStenu();
 
 // Čísla časopisu: každé číslo, ke kterému je ve sbírce cover, centerfold nebo pictorial, jako výtisk s páskou
 // měsíce; bez coveru ztlumený náhled. Chybějící čísla označená „sháním“ nebo „mám výtisk“ jako prázdná dlaždice.

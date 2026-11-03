@@ -95,6 +95,13 @@ export function nacitatPostupne(kontejner, { root = document.querySelector('main
     pozorovatele.set(kontejner, pozorovatel);
 }
 
+// Doplněné obrázky (dávka dokreslování) pod pozorovatelem kontejneru, bez nového projití celého kontejneru
+export function sledovatDalsi(kontejner, cast) {
+    const pozorovatel = pozorovatele.get(kontejner);
+    if (!pozorovatel) return nacitatPostupne(kontejner);
+    cast.querySelectorAll('img[data-src]:not([src])').forEach(img => pozorovatel.observe(img));
+}
+
 // Kontejner, jehož obsah se zahazuje, se přestane hlídat (pozorovatel by jinak držel odpojené obrázky)
 export function prestatNacitat(kontejner) {
     pozorovatele.get(kontejner)?.disconnect();

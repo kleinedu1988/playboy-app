@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.34] – 2026-11-03
+
+### Změněno
+- **Rychlejší Centerfoldy**: stěna centerfoldů se kreslí po dávkách jako galerie – prvních 60 plakátů hned, zbytek v dalších krocích, aniž by okno zamrzlo. Měřeno se sbírkou 3 000 modelek: otevření 1,26–1,45 s (z toho přes sekundu zablokované okno) → 0,22–0,27 s, další otevření 0,77–1,29 s → 0,36–0,38 s. Skok na desetiletí v liště a návrat Zpět na místo dole na stránce dokreslí stěnu celou. Vzhled se nemění.
+
 ## [1.2.33] – 2026-11-03
 
 ### Změněno

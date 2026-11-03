@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.35] – 2026-11-03
+
+### Změněno
+- **Rychlejší Údržba**: řádky zvoleného údaje (Po údajích) se stavějí po dávkách – prvních 40 hned, zbytek v dalších krocích, aniž by okno zamrzlo. Údaj, který chybí stovkám modelek, dřív stavěl všechna pole najednou. Měřeno se sbírkou 3 000 modelek: otevření Sbírky 1,05–1,23 s → 0,53–0,63 s, nejdelší zamrznutí okna 0,67–0,74 s → 0,29–0,36 s. Enter na posledním vykresleném řádku dokreslí zbytek a pokračuje jako dřív.
+
 ## [1.2.34] – 2026-11-03
 
 ### Změněno

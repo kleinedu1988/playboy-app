@@ -149,11 +149,45 @@ function prestavetRadky(u) {
         nastavitHtml(cast('pata'), '<span></span><button type="button" class="btn btn-primary btn-small" data-uu-dalsi-udaj>Další údaj →</button>');
         return;
     }
-    const fragment = document.createDocumentFragment();
-    u.radky.forEach((r, i) => fragment.append(postavitRadek(u, r, i)));
-    seznam.append(fragment);
+    // Prvních RADKU_HNED řádků hned, zbytek po dávkách v dalších úlohách: údaj, který chybí stovkám modelek, by
+    // jinak stavěl všechna pole najednou (u sbírky 3 000 modelek přes sekundu se zamrzlým oknem)
+    dokreslovani = { u, seznam, od: 0 };
+    pridatRadky(RADKU_HNED);
+    naplanovatRadky();
     nastavitHtml(cast('pata'), `<span class="ud-klavesy"><kbd>Enter</kbd> uloží a jde dolů <kbd>Tab</kbd> přeskočí <kbd>Esc</kbd> vrátí hodnotu <kbd>Del</kbd> ${u.druh === 'kontrola' ? 'v pořádku' : u.druh === 'navrh' ? 'odmítne' : 'netýká se'}</span>
         <span>${u.druh === 'pole' ? 'Našeptávání z hodnot ve sbírce' : ''}</span>`);
+}
+
+const RADKU_HNED = 40;
+const RADKU_V_DAVCE = 80;
+/** @type {{ u: any, seznam: HTMLElement, od: number } | null} */
+let dokreslovani = null;
+
+function pridatRadky(kolik) {
+    const d = dokreslovani;
+    if (!d || !d.seznam.isConnected || d.u.klic !== zobrazeny) {
+        dokreslovani = null;
+        return;
+    }
+    const do_ = Math.min(d.u.radky.length, d.od + kolik);
+    const fragment = document.createDocumentFragment();
+    for (let i = d.od; i < do_; i++) fragment.append(postavitRadek(d.u, d.u.radky[i], i));
+    d.seznam.append(fragment);
+    d.od = do_;
+    if (d.od >= d.u.radky.length) dokreslovani = null;
+}
+
+function naplanovatRadky() {
+    if (!dokreslovani) return;
+    setTimeout(() => {
+        pridatRadky(RADKU_V_DAVCE);
+        naplanovatRadky();
+    }, 0);
+}
+
+// Všechny řádky hned (přechod na další řádek, hromadné akce nad řádky na stránce)
+function dokreslitRadky() {
+    if (dokreslovani) pridatRadky(Infinity);
 }
 
 // Nápověda pod jménem: co pomůže údaj doplnit (místo narození k národnosti, míry k velikosti prsou)
@@ -283,6 +317,7 @@ function oznacit(klic, stavRadku) {
 
 // Na další nevyřízený řádek (Enter); za posledním na „Další údaj“
 function naDalsi(klic) {
+    dokreslitRadky();
     const klice = [...cast('radky').querySelectorAll('[data-radek]')].map(p => /** @type {HTMLElement} */ (p).dataset.radek);
     const dalsi = dalsiRadek(klice, new Set([...hotove.keys(), ...ukladane]), klic);
     const cil = dalsi && /** @type {HTMLElement} */ (prvekRadku(dalsi)?.querySelector(FOKUS_RADKU));

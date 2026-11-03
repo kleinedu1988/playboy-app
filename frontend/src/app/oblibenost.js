@@ -891,7 +891,8 @@ const PORADI_DALSICH = 100;
 let poradiZastarale = false;
 const poradiVidet = () => stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'poradi';
 
-function vykreslitPoradi() {
+// pripojitOd = index, od kterého se jen připojí další řádky (Zobrazit dalších 100) – celé pořadí se nepřekresluje
+function vykreslitPoradi(pripojitOd = 0) {
     const o = data.oblibenost;
     const poradi = (o?.poradi || []).filter(p => modelka(p.modelkaId));
     // Panel (Jak počítám, Trendy) je vidět ve všech pohledech
@@ -962,10 +963,23 @@ function vykreslitPoradi() {
         return `<li class="ob-uroven" data-uroven="${uroven}"><span>${uroven ? nazevUrovne(uroven) : 'Mimo Top 100'}</span><small>${!pocet ? 'zatím žádná potvrzená'
             : uroven ? `${sklonovat(pocet, 'potvrzená', 'potvrzené', 'potvrzených')}${pocet < sk.polozky.length ? ` z ${sk.polozky.length}` : ''}` : sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</small></li>`;
     };
+    const htmlDalsich = () => (ukazat.length < poradi.length ? `<button type="button" class="link ob-vse" data-ob-poradi-vse>Zobrazit dalších ${Math.min(PORADI_DALSICH, poradi.length - ukazat.length)} (z ${poradi.length})</button>` : '');
+    const seznam = cast('poradi')?.querySelector('.ob-poradi');
+    if (pripojitOd > 0 && seznam && pripojitOd < ukazat.length) {
+        // Další řádky na konec; oddělovač úseku jen u nového úseku (pokračování posledního bez něj)
+        const predchozi = seskupitPodleUrovni([poradi[pripojitOd - 1]])[0]?.uroven;
+        let i = pripojitOd;
+        seznam.insertAdjacentHTML('beforeend', seskupitPodleUrovni(ukazat.slice(pripojitOd)).map((sk, k) =>
+            (k === 0 && sk.uroven === predchozi ? '' : oddelovac(sk.uroven)) + sk.polozky.map(p => radek(p, i++)).join('')).join(''));
+        cast('poradi').querySelector('[data-ob-poradi-vse]')?.remove();
+        seznam.insertAdjacentHTML('afterend', htmlDalsich());
+        nacitatPostupne(cast('poradi'));
+        return;
+    }
     let i = 0;
     nastavitHtml(cast('poradi'), `<ol class="ob-poradi">${seskupitPodleUrovni(ukazat).map(sk =>
         oddelovac(sk.uroven) + sk.polozky.map(p => radek(p, i++)).join('')).join('')}</ol>
-        ${ukazat.length < poradi.length ? `<button type="button" class="link ob-vse" data-ob-poradi-vse>Zobrazit dalších ${Math.min(PORADI_DALSICH, poradi.length - ukazat.length)} (z ${poradi.length})</button>` : ''}`);
+        ${htmlDalsich()}`);
     nacitatPostupne(cast('poradi'));
 }
 
@@ -1245,7 +1259,11 @@ export function pripravit() {
         else if (e.target.closest('[data-ob-vratit]')) vratit();
         else if (e.target.closest('[data-ob-navrh-ano]')) prijmoutNavrh(e.target.closest('[data-ob-navrh-ano]').dataset.obNavrhAno);
         else if (e.target.closest('[data-ob-navrh-ne]')) odmitnoutNavrh(e.target.closest('[data-ob-navrh-ne]').dataset.obNavrhNe);
-        else if (e.target.closest('[data-ob-poradi-vse]')) { poradiLimit += PORADI_DALSICH; vykreslitPoradi(); }
+        else if (e.target.closest('[data-ob-poradi-vse]')) {
+            const od = poradiLimit;
+            poradiLimit += PORADI_DALSICH;
+            vykreslitPoradi(od);
+        }
         else if (e.target.closest('[data-por-dalsi]')) posunoutVyber(1, e.target.closest('[data-por-dalsi]').dataset.porDalsi === 'ceka' ? rozhoduje : nesedi);
         else if (e.target.closest('[data-por-klavesa]')) akcePoradi(e.target.closest('[data-por-klavesa]').dataset.porKlavesa);
         else if (e.target.closest('[data-ob-porovnavat]')) ukazatCastOblibenosti('porovnat');

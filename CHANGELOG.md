@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.18] – 2026-11-03
+
+### Změněno
+- **Plynulejší rolování**: plovoucí pás stránky (Hodnocení, Síň slávy, Sbírka) se při rolování už nehledá v celé stránce v každém snímku a výšku zapisuje jen při změně – v galerii s tisíci kartami ušetří většinu práce skriptu při rolování.
+- Pořadí: „Zobrazit dalších 100“ jen připojí řádky (dřív se celé pořadí kreslilo znovu, s 1 000+ modelkami 150 ms → 20 ms).
+- Stránka čísla: označování přečtených stran při rolování nejvýš jednou za snímek.
+
+### Opraveno
+- Formátování zdrojového kódu po 1.2.17 (jen vzhled kódu, chování beze změny).
+
 ## [1.2.17] – 2026-11-02
 
 ### Změněno

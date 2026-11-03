@@ -18,17 +18,30 @@ export function pripravitPasy() {
     const hlavni = document.querySelector('main');
     if (!hlavni) return;
     let ceka = false;
+    // Pásy se pamatují: hledat je v celém <main> při každém snímku rolování (desítky tisíc prvků galerie) bylo drahé;
+    // znovu se najdou po překreslení stránky (volby-prehledu) nebo když některý z DOM zmizí
+    /** @type {HTMLElement[] | null} */
+    let pasy = null;
+    let posledniVyska = '';
     const obnovit = () => {
         ceka = false;
-        const horni = hlavni.getBoundingClientRect().top;
+        if (!pasy || pasy.some(p => !p.isConnected)) pasy = /** @type {HTMLElement[]} */ ([...hlavni.querySelectorAll('.plovouci-pas')]);
         let vyska = 0;
-        hlavni.querySelectorAll('.plovouci-pas').forEach((pas) => {
-            if (!pas.getClientRects().length) return;
-            pas.classList.toggle('prilepeny', hlavni.scrollTop > 0 && pas.getBoundingClientRect().top <= horni + 1);
-            vyska = pas.offsetHeight;
-        });
-        // Bez pásu (Modelky, profil…) nic neposouvá; jinak i fokus a skok na prvek (scroll-padding) končí pod pásem
-        hlavni.style.setProperty('--vyska-pasu', `${vyska}px`);
+        if (pasy.length) {
+            const horni = hlavni.getBoundingClientRect().top;
+            pasy.forEach((pas) => {
+                if (!pas.getClientRects().length) return;
+                pas.classList.toggle('prilepeny', hlavni.scrollTop > 0 && pas.getBoundingClientRect().top <= horni + 1);
+                vyska = pas.offsetHeight;
+            });
+        }
+        // Bez pásu (Modelky, profil…) nic neposouvá; jinak i fokus a skok na prvek (scroll-padding) končí pod pásem.
+        // Zapisuje se jen při změně (zápis stylu v každém snímku vynucuje přepočet)
+        const nova = `${vyska}px`;
+        if (nova !== posledniVyska) {
+            posledniVyska = nova;
+            hlavni.style.setProperty('--vyska-pasu', nova);
+        }
     };
     const naplanovat = () => {
         if (ceka) return;
@@ -53,6 +66,9 @@ export function pripravitPasy() {
             .find(t => t.getClientRects().length)?.focus({ preventScroll: true }));
     });
     // Pás se při změně části nebo filtru vykreslí znovu (bez třídy): stav se obnoví hned
-    document.addEventListener('volby-prehledu', naplanovat);
+    document.addEventListener('volby-prehledu', () => {
+        pasy = null;
+        naplanovat();
+    });
     window.addEventListener('resize', naplanovat);
 }

@@ -442,7 +442,16 @@ function oznacitPrecteno() {
 }
 
 export function pripravit() {
-    document.querySelector('main').addEventListener('scroll', oznacitPrecteno, { passive: true });
+    // Nejvýš jednou za snímek (oznacitPrecteno čte rozměry – v každé události scrollu vynucovalo přepočet)
+    let cekaPrecteno = false;
+    document.querySelector('main').addEventListener('scroll', () => {
+        if (cekaPrecteno) return;
+        cekaPrecteno = true;
+        requestAnimationFrame(() => {
+            cekaPrecteno = false;
+            oznacitPrecteno();
+        });
+    }, { passive: true });
     // Okno čísla: volba stavu nastaví skrytý výběr (událost change pozná rozepsané změny), poznámka v editoru textu
     document.getElementById('issueStavVolby').addEventListener('click', (e) => {
         const volba = /** @type {HTMLElement} */ (e.target).closest('[data-stav-cisla]');

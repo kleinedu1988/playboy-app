@@ -626,7 +626,9 @@ func novyHodnotitel(t *Tema, modelky []Modelka) *hodnotitelTematu {
 }
 
 // Modelka fotky splňuje údaje tématu
-func (h *hodnotitelTematu) modelka(id int) bool { return id >= 0 && id < len(h.splnuje) && h.splnuje[id] }
+func (h *hodnotitelTematu) modelka(id int) bool {
+	return id >= 0 && id < len(h.splnuje) && h.splnuje[id]
+}
 
 func (h *hodnotitelTematu) album(f *fotkaTematu) bool {
 	if !h.maAlbum {

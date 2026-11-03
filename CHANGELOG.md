@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.25] – 2026-11-03
+
+### Přidáno
+- **Úvodní obrazovka při spuštění**: okno se otevře hned s úvodem (název, verze, pruh postupu a co se právě připravuje: sbírka, galerie, náhledy, Hodnocení) a program se ukáže až sestavený – galerie i s náhledy první obrazovky, pořadí oblíbenosti a stav sezóny spočítané dopředu (první otevření Hodnocení je okamžité). Místo loga se točí kruh náhodných profilovek modelek, při každém spuštění jiných (výběr se ukládá pro příští start a obrázky se předem načtou); při prvním spuštění je vidět ikona. Se zámkem heslem se profilovky neukazují (úvod je vidět před heslem). Při omezení pohybu v systému je kruh statický. Úvod zmizí nejpozději po 15 s, i kdyby se příprava zasekla; okno s novinkami po aktualizaci přijde až po něm.
+
 ## [1.2.24] – 2026-11-03
 
 ### Změněno

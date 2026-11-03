@@ -2,7 +2,7 @@ import './style.css';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import { oznamit } from './ui/oznameni';
 import { GetOblibenost, GetSezona, GetVerze, MaZamek, StavDatabaze } from './app/backend';
-import { krokUvodu, pockatNaNahledy, skrytUvod, ukazatUvod, verzeUvodu } from './ui/uvod';
+import { krokUvodu, pockatNaNahledy, skrytUvod, ukazatUvod, ulozitProfilovkyUvodu, verzeUvodu, zapomenoutProfilovkyUvodu } from './ui/uvod';
 import { stav } from './app/stav';
 import { nacistSpecialy, vsechnyModelky } from './app/mezipamet';
 import { prepinacRezimu, prepnoutRezim } from './app/navigace';
@@ -109,6 +109,12 @@ StavDatabaze().then((chyba) => {
         clearTimeout(pojistka);
         skrytUvod();
     }
+    // Nový náhodný výběr profilovek pro úvod příštího spuštění, až program doběhne (seznam modelek je už načtený);
+    // se zámkem se neukládají – úvod je vidět dřív než okno s heslem
+    setTimeout(() => {
+        if (stav.maZamek) zapomenoutProfilovkyUvodu();
+        else vsechnyModelky().then(m => ulozitProfilovkyUvodu(m, obrazky.adresaTitulni)).catch(() => {});
+    }, 4000);
     // Po aktualizaci jednou ukáže, co je nového (až po odemčení a úvodu)
     napoveda.ukazatNovinkyPoAktualizaci();
     // Denní ověření souborů až po prvním vykreslení, ať nebrzdí start

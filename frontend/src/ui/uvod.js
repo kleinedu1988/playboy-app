@@ -10,7 +10,8 @@ export function krokUvodu(text, podil) {
     const krok = u.querySelector('.uvod-krok');
     const pruh = /** @type {HTMLElement | null} */ (u.querySelector('.uvod-pruh i'));
     if (krok) krok.textContent = text;
-    if (pruh) pruh.style.width = `${Math.round(Math.min(Math.max(podil, 0.06), 1) * 100)}%`;
+    // posun místo šířky: přechod běží v kompozitoru a nepřepočítává rozvržení pod animovaným kruhem
+    if (pruh) pruh.style.transform = `translateX(${Math.round(Math.min(Math.max(podil, 0.06), 1) * 100) - 100}%)`;
 }
 
 export function verzeUvodu(verze) {
@@ -49,4 +50,29 @@ export function pockatNaNahledy(limit) {
         }))),
         new Promise(hotovo => setTimeout(hotovo, limit)),
     ]);
+}
+
+// Profilovky pro kruh na úvodní obrazovce příštího spuštění (public/uvod-start.js): náhodný výběr modelek s titulní
+// fotkou, adresa přesně jako na kartě galerie (bývá v mezipaměti WebKitu) a výřez titulní fotky. Obrázky se rovnou
+// načtou na pozadí, aby příště byly v mezipaměti. Se zámkem se profilovky neukládají (úvod je vidět před heslem).
+const KLIC_PROFILOVEK = 'uvodProfilovky';
+const POCET_PROFILOVEK = 14;
+export function ulozitProfilovkyUvodu(modelky, adresaTitulni) {
+    const sFotkou = modelky.filter(m => m.coverUrl);
+    for (let i = sFotkou.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sFotkou[i], sFotkou[j]] = [sFotkou[j], sFotkou[i]];
+    }
+    const seznam = sFotkou.slice(0, POCET_PROFILOVEK).map(m => ({
+        u: adresaTitulni(m), x: m.coverX ?? 50, y: m.coverY ?? 50, z: m.coverZoom || 1,
+    }));
+    try { localStorage.setItem(KLIC_PROFILOVEK, JSON.stringify(seznam)); } catch { return; }
+    for (const p of seznam) {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = p.u;
+    }
+}
+export function zapomenoutProfilovkyUvodu() {
+    try { localStorage.removeItem(KLIC_PROFILOVEK); } catch { /* nic uloženo */ }
 }

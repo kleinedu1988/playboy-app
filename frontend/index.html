@@ -6,7 +6,7 @@
     <!-- Pojistka: spustí se jen skripty programu (i kdyby se do stránky dostal cizí kód z dat sbírky) -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'; base-uri 'none'"/>
     <title>Playboy Database</title>
-    <!-- Úvodní obrazovka (src/ui/uvod.js): je vidět hned, ještě než se načtou skripty a styly programu; zmizí,
+    <!-- Úvodní obrazovka (src/ui/uvod.js, kruh profilovek public/uvod-start.js): je vidět hned, ještě než se načtou skripty a styly programu; zmizí,
          až je první pohled sestavený. Styl je tady, protože style.css se načítá se skripty. -->
     <style>
         html, body { margin: 0; background: #0f0f12; }
@@ -15,23 +15,99 @@
             color: #f0f0f5; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; transition: opacity .22s ease;
             --wails-draggable: drag; cursor: default; user-select: none; }
         #uvod.skryty { opacity: 0; pointer-events: none; }
-        #uvod img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 10px 34px rgba(216, 27, 96, .28), 0 4px 14px rgba(0, 0, 0, .5); }
         #uvod h1 { margin: 6px 0 0; font-size: 22px; font-weight: 600; letter-spacing: .2px; }
         #uvod .uvod-verze { margin-top: -10px; font-size: 12px; color: #9a9a9e; min-height: 15px; }
         #uvod .uvod-pruh { width: 220px; height: 3px; margin-top: 18px; border-radius: 3px; background: #2a2a30; overflow: hidden; }
         #uvod .uvod-pruh i { display: block; height: 100%; width: 6%; border-radius: 3px; background: #d81b60; transition: width .3s ease; }
         #uvod .uvod-krok { font-size: 12.5px; color: #9a9a9e; min-height: 16px; }
         @media (prefers-reduced-motion: reduce) { #uvod, #uvod .uvod-pruh i { transition: none; } }
+        /* Úvodní obrazovka – návrh A „kruh“. V aplikaci patří do bloku <style> v index.html (CSP omezuje jen skripty).
+           Profilovky stojí na plášti válce (12 míst po 30°); celý válec se otáčí kolem svislé osy – jediná animace
+           (transform), běží v kompozitoru. Boční fotky se zmenšují perspektivou, natáčejí s válcem, zadní skryje
+           backface-visibility a do stran je pohltí eliptická maska a tmavý závoj (obojí statické). */
+
+        /* Ikona při prvním spuštění (dosud selektor „#uvod img“ – ten by teď zasáhl i profilovky) */
+        #uvod > .uvod-ikona { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 10px 34px rgba(216, 27, 96, .28), 0 4px 14px rgba(0, 0, 0, .5); }
+
+        /* Scéna: perspektiva, měkká eliptická maska (okraje se ztrácejí do pozadí) */
+        #uvod .uvod-kruh { position: relative; width: 680px; max-width: 100vw; height: 250px; margin: -6px 0 -8px;
+            perspective: 760px; perspective-origin: 50% 50%;
+            -webkit-mask-image: radial-gradient(ellipse 300px 160px at 50% 50%, #000 46%, rgba(0, 0, 0, .5) 72%, transparent 100%);
+            mask-image: radial-gradient(ellipse 300px 160px at 50% 50%, #000 46%, rgba(0, 0, 0, .5) 72%, transparent 100%);
+            animation: kruh-objevit .7s ease-out both; }
+        /* růžová záře za přední fotkou */
+        #uvod .uvod-kruh::before { content: ""; position: absolute; left: 50%; top: 50%; width: 360px; height: 240px; margin: -120px 0 0 -180px;
+            background: radial-gradient(ellipse at center, rgba(216, 27, 96, .22) 0%, rgba(216, 27, 96, .07) 45%, transparent 70%); }
+        /* závoj: boční fotky tmavnou podle polohy (= podle úhlu na válci), přední zůstane čistá */
+        #uvod .uvod-kruh::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+            background: linear-gradient(90deg, rgba(15, 15, 18, .85) 18%, rgba(15, 15, 18, .45) 33%, rgba(15, 15, 18, 0) 41%,
+                rgba(15, 15, 18, 0) 59%, rgba(15, 15, 18, .45) 67%, rgba(15, 15, 18, .85) 82%); }
+
+        /* Válec: posunutý o poloměr dozadu, aby přední fotka stála v rovině obrazovky (měřítko 1) */
+        #uvod .kruh { position: absolute; inset: 0; transform-style: preserve-3d; transform: translateZ(-300px);
+            will-change: transform; animation: kruh-otacet 31.2s cubic-bezier(.45, 0, .25, 1) -2.3s infinite; }
+
+        #uvod .kruh-karta { position: absolute; left: 50%; top: 50%; width: 150px; height: 200px; margin: -100px 0 0 -75px;
+            border-radius: 16px; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+            transform: rotateY(calc(var(--i) * 30deg)) translateZ(300px);
+            /* zástupce, dokud se fotka nenačte (nebo když se nenačte vůbec) */
+            background: radial-gradient(ellipse 70% 55% at 50% 34%, #2a1c23 0%, #1b1a20 60%, #16161b 100%);
+            box-shadow: 0 14px 30px rgba(0, 0, 0, .55); }
+        #uvod .kruh-karta img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .5s ease;
+            /* výřez z uloženého seznamu: --x/--y = coverX/coverY (%), --z = coverZoom (jako stylVyrezu) */
+            object-position: var(--x, 50%) var(--y, 50%); transform-origin: var(--x, 50%) var(--y, 50%); transform: scale(var(--z, 1)); }
+        #uvod .kruh-karta img.nacteno { opacity: 1; }
+        /* jemná hrana a lesk */
+        #uvod .kruh-karta::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, .07) inset; background: linear-gradient(180deg, rgba(255, 255, 255, .06), transparent 30%); }
+
+        /* Pruh postupu posouvá transform místo width (layout na hlavním vlákně); vzhled stejný, 220 × 3 px */
+        #uvod .uvod-pruh i { width: 100%; transform: translateX(-94%); transition: transform .3s ease; }
+
+        /* Skrytý úvod (zámek, mizení) animaci zastaví */
+        #uvod.skryty .kruh { animation-play-state: paused; }
+
+        @keyframes kruh-objevit { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+        /* 12 kroků po 30°: v každém se válec rozjede a zpomalí (časování platí pro každý úsek), přední fotka chvíli postojí */
+        @keyframes kruh-otacet {
+            0% { transform: translateZ(-300px) rotateY(0deg); }
+            8.3333% { transform: translateZ(-300px) rotateY(-30deg); }
+            16.6667% { transform: translateZ(-300px) rotateY(-60deg); }
+            25% { transform: translateZ(-300px) rotateY(-90deg); }
+            33.3333% { transform: translateZ(-300px) rotateY(-120deg); }
+            41.6667% { transform: translateZ(-300px) rotateY(-150deg); }
+            50% { transform: translateZ(-300px) rotateY(-180deg); }
+            58.3333% { transform: translateZ(-300px) rotateY(-210deg); }
+            66.6667% { transform: translateZ(-300px) rotateY(-240deg); }
+            75% { transform: translateZ(-300px) rotateY(-270deg); }
+            83.3333% { transform: translateZ(-300px) rotateY(-300deg); }
+            91.6667% { transform: translateZ(-300px) rotateY(-330deg); }
+            100% { transform: translateZ(-300px) rotateY(-360deg); }
+        }
+
+        /* Omezený pohyb: statická řada pěti fotek, prostřední největší (pozice --p, |p| = --a nastaví uvod-start.js) */
+        @media (prefers-reduced-motion: reduce) {
+            #uvod .uvod-kruh { animation: none; }
+            #uvod .uvod-kruh::after { display: none; }
+            #uvod .kruh { animation: none; transform: none; transform-style: flat; will-change: auto; }
+            #uvod .kruh-karta { z-index: calc(10 - var(--a)); opacity: calc(1 - var(--a) * .3);
+                transform: translateX(calc(var(--p) * 112px)) scale(calc(1 - var(--a) * .17)); }
+            #uvod .kruh-karta::after { content: ""; position: absolute; inset: 0; z-index: 2; background: #0f0f12; opacity: calc(var(--a) * .3); }
+            #uvod .kruh-karta.mimo { display: none; }
+            #uvod .kruh-karta img, #uvod .uvod-pruh i { transition: none; }
+        }
     </style>
 </head>
 <body>
 <div id="uvod" role="status" aria-live="polite">
-    <img src="./uvod.png" alt="" draggable="false"/>
+    <img class="uvod-ikona" src="./uvod.png" alt="" draggable="false"/>
     <h1>Playboy Database</h1>
     <div class="uvod-verze"></div>
     <div class="uvod-pruh"><i></i></div>
     <div class="uvod-krok">Otevírám databázi…</div>
 </div>
+<!-- Kruh profilovek z minulého běhu místo ikony; obyčejný skript (CSP nepustí inline), běží před prvním vykreslením -->
+<script src="./uvod-start.js"></script>
 <div id="app"></div>
 <script src="./src/main.js" type="module"></script>
 </body>

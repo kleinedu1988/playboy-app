@@ -2,6 +2,7 @@
 import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
+import { zapomenoutProfilovkyUvodu } from '../ui/uvod';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { vsechnyModelky } from './mezipamet';
@@ -417,6 +418,8 @@ export function pripravit() {
             return;
         }
         stav.maZamek = Boolean(nove);
+        // profilovky modelek se se zámkem na úvodní obrazovce neukazují (ta je vidět před heslem)
+        if (stav.maZamek) zapomenoutProfilovkyUvodu();
         passModal.classList.add('hidden');
         oznamit(stav.maZamek ? 'Heslo je nastavené, vyžádá se při příštím spuštění.' : 'Zámek je zrušený.');
     });

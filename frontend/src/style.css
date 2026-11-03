@@ -17188,3 +17188,53 @@ body.rezim-vyberu #detailView .poster {
 .stav-nahledy:not([hidden]) + .stav-vpravo {
     margin-left: 0;
 }
+
+/* Přehled výkonu (app/vykon.js) */
+.vykon .vykon-start {
+    margin: 0 0 12px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.vykon-tabulka {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.vykon-tabulka th,
+.vykon-tabulka td {
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.vykon-tabulka th:first-child,
+.vykon-tabulka td:first-child {
+    text-align: left;
+}
+
+.vykon-tabulka th {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.vykon h4 {
+    margin: 16px 0 6px;
+    font-size: 13px;
+}
+
+.vykon-pomala {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 12.5px;
+}
+
+.vykon-pomala span {
+    display: inline-block;
+    width: 56px;
+    color: var(--text-muted);
+}

@@ -38,6 +38,7 @@ import * as editorTextu from './ui/editor-textu';
 import { stats } from './app/prvky';
 import { vyhlasitSezonu } from './app/vyhlaseni-sezony';
 import { spustitPredpripravu } from './app/predpriprava';
+import { zaznamenatStart } from './app/vykon';
 import { naplanovatPoStartu as stahovatNahledyPoStartu } from './app/nahledy-pozadi';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
@@ -110,6 +111,7 @@ StavDatabaze().then((chyba) => {
     } finally {
         clearTimeout(pojistka);
         skrytUvod();
+        zaznamenatStart();
     }
     // Nový náhodný výběr profilovek pro úvod příštího spuštění, až program doběhne (seznam modelek je už načtený);
     // se zámkem se neukládají – úvod je vidět dřív než okno s heslem

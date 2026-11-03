@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.47] – 2026-11-03
+
+### Přidáno
+- **Přehled výkonu** (nabídka ⋯ › Nápověda): jak dlouho trval start do zobrazení a všechna volání programu v tomto spuštění – počet, průměr, nejdelší a celkový čas každého volání a seznam pomalých volání (nad 100 ms) s časem od startu. „Kopírovat jako text“ dá přehled do schránky (např. k poslání), „Vynulovat“ začne měřit znovu. Slouží k ověření rychlosti na skutečném počítači; data jsou jen v paměti okna.
+
 ## [1.2.46] – 2026-11-03
 
 ### Změněno

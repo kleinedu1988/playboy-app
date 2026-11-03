@@ -10,6 +10,7 @@ import { stav } from './stav';
 import * as nahledyPozadi from './nahledy-pozadi';
 import { otevritNapovedu, otevritNovinky } from './napoveda';
 import { otevritZkratky } from './zkratky';
+import { otevritVykon } from './vykon';
 import { detailView, issueView, searchInput } from './prvky';
 import { prepnoutRezim } from './navigace';
 import { nacistGalerii } from './galerie';
@@ -338,6 +339,7 @@ export function polozkySpravy() {
         { nadpis: 'Nápověda' },
         { text: 'Nápověda', akce: otevritNapovedu },
         { text: 'Klávesové zkratky (?)', akce: otevritZkratky },
+        { text: 'Přehled výkonu', akce: otevritVykon },
         { text: `Co je nového · verze ${stav.verzeProgramu}`, akce: () => otevritNovinky() },
     ];
 }

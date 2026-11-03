@@ -3,6 +3,7 @@
 // (hlídá to test backend.test.js); pokud jen čte, patří do seznamu CTENI.
 import * as App from '../../wailsjs/go/main/App';
 import { ohlasitZmenuDat } from './udalosti';
+import { zaznamenatVolani } from './vykon';
 
 const CTENI = new Set([
     'GetAlbaFotografa',
@@ -104,16 +105,20 @@ const probihajici = new Map();
 // Počet rozběhnutých volání backendu: předpříprava (app/predpriprava.js) čeká, dokud nějaké běží
 let rozbehnutych = 0;
 export const pocetRozbehnutychVolani = () => rozbehnutych;
-function pocitat(slib) {
+function pocitat(slib, jmeno) {
     rozbehnutych++;
-    const konec = () => { rozbehnutych--; };
+    const zacatek = performance.now();
+    const konec = () => {
+        rozbehnutych--;
+        zaznamenatVolani(jmeno, performance.now() - zacatek);
+    };
     Promise.resolve(slib).then(konec, konec);
     return slib;
 }
 
 function obalit(jmeno) {
     const puvodni = App[jmeno];
-    const funkce = (...argumenty) => pocitat(puvodni(...argumenty));
+    const funkce = (...argumenty) => pocitat(puvodni(...argumenty), jmeno);
     if (SLOUCIT.has(jmeno)) {
         return (...argumenty) => {
             const klic = `${jmeno}${JSON.stringify(argumenty)}`;

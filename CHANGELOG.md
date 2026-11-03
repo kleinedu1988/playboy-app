@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.20] – 2026-11-03
+
+### Změněno
+- **Rychlejší Hodnocení a Síň slávy**: při otevření se už nenačítá a nekreslí celá Sbírka (přehled sbírky, kalendář, stavy čísel, návrhy doplnění a Údržba) – stačí modelky. Sbírka se načte, až když se na ni přepne. Měřeno s 3 000 modelkami: Hodnocení 615 → 275 ms, Síň slávy 370 → 60 ms.
+
 ## [1.2.19] – 2026-11-03
 
 ### Změněno

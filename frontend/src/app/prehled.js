@@ -144,6 +144,26 @@ function zobrazitPanelSbirky() {
 
 export async function nacistPrehled() {
     const moje = ++stav.cisloNacteni;
+    // Hodnocení a Síň slávy potřebují jen modelky: Sbírka (přehled, kalendář, stavy čísel, návrhy, Údržba) se
+    // načte a vykreslí, až když se na ni přepne (dřív se při každém otevření Hodnocení počítala celá)
+    if (stav.prehledSekce === 'oblibenost') {
+        const seznam = await vsechnyModelky();
+        if (moje !== stav.cisloNacteni) return;
+        stav.prehledModelky = new Map(seznam.map(m => [m.id, m]));
+        stav.zrusitUpravuVyrezu = null;
+        ukazatPohled(stats);
+        let obsah = /** @type {HTMLElement} */ (stats.querySelector('.prehled-obsah'));
+        if (!obsah) {
+            stats.innerHTML = KOSTRA;
+            obsah = stats.querySelector('.prehled-obsah');
+        }
+        obsah.dataset.sbirkaNactena = '';
+        obsah.dataset.sekceUkazana = stav.prehledSekce;
+        zobrazitPanelSbirky();
+        obnovitCasti();
+        nacistOblibenost(obsah.querySelector('[data-sekce="oblibenost"]'));
+        return;
+    }
     const [p, seznamModelek, kalendar, stavy] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky(),
         GetKalendar().then(k => k || []), GetStavyVydani().then(s => s || []),
         nacistNavrhy(), nacistUceni()]);
@@ -164,6 +184,7 @@ export async function nacistPrehled() {
         obsah = stats.querySelector('.prehled-obsah');
     }
     obsah.dataset.sekceUkazana = stav.prehledSekce;
+    obsah.dataset.sbirkaNactena = '1';
     const uvod = obsah.querySelector('[data-sekce="uvod"]');
     // Úplnost a čísla sbírky jsou v hlavičce Sbírky (udrzba.js); Mapa čísel nemá volby ani text ve stavové liště
     nastavitHtml(uvod, '<div class="volby-v-liste" data-volby-casti="uvod"></div>' + htmlUvodu({ kalendar, stavy, modelky: seznamModelek }));
@@ -246,8 +267,13 @@ function ukazatCast(klic) {
         localStorage.setItem('prehledSekce', klic);
         if (klic !== 'oblibenost') localStorage.setItem('prehledSekceSpravy', klic);
     } catch { /* jen se nezapamatuje */ }
-    const obsah = stats.querySelector('.prehled-obsah');
+    const obsah = /** @type {HTMLElement | null} */ (stats.querySelector('.prehled-obsah'));
     if (!obsah) return;
+    // Sbírka se ještě nenačetla (Přehled se otevřel rovnou v Hodnocení): načte se teď
+    if (klic !== 'oblibenost' && obsah.dataset.sbirkaNactena !== '1') {
+        document.querySelector('main').scrollTop = 0;
+        return nacistPrehled();
+    }
     obsah.dataset.sekceUkazana = klic;
     obnovitCasti();
     if (klic === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));

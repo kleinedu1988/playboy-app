@@ -8,7 +8,7 @@ import { stav } from './stav';
 import { vybratKliknutim } from './vyber';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { calendar, issueView, searchInput } from './prvky';
-import { BEZ_FOTKY, VELIKOST_NAHLEDU, VELIKOST_PLAKATU, VELIKOST_PLAKATU_MALA } from './obrazky';
+import { BEZ_FOTKY, VELIKOST_NAHLEDU, VELIKOST_PLAKATU, VELIKOST_PLAKATU_MALA, nacitatPostupne } from './obrazky';
 import { ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlSrdickaFotky } from './galerie';
 import { atributyMrizky, htmlPlakatu, htmlPopisuAlba, pripravitPlakat, pripravitPopisy, rozbalitKliknute, zkratitAlba } from './profil';
@@ -116,7 +116,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
                 <div class="photos-grid" ${atributyMrizky(a)}>
                     ${a.polozky.map(p => `
                         <div class="photo-item" data-index="${index(p)}" tabindex="0">
-                            <img src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" loading="lazy" draggable="false" />
+                            <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" draggable="false" />
                             ${htmlSrdickaFotky(p, index(p))}
                                    ${htmlAkciDlazdice()}
                         </div>
@@ -137,6 +137,8 @@ function vykreslitObsahStranky() {
         ...[...document.querySelectorAll('#issueSide [data-album-obsahu]')].map(b => ({ strana: 0, nazev: b.querySelector('.obsah-nazev').textContent, atribut: `data-album-obsahu="${b.dataset.albumObsahu}"` })),
     ]) : '';
     document.getElementById('issueMain').innerHTML = prouzek + stav.vydaniClanky.map(c => htmlClanku(c)).join('') + stav.vydaniHtmlAlb;
+    // Obrázky stránky se načítají postupně podle rolování (vestavěné loading="lazy" začíná ve WebKitGTK pozdě)
+    nacitatPostupne(document.getElementById('issueMain'));
     issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
     pripravitPopisy(issueView);
     zkratitAlba(issueView);
@@ -157,7 +159,7 @@ export function obnovitStranku() {
 // Dlaždice fotky na stránce vydání, ročníku, fotografa a v Nejlepších
 export const htmlDlazdice = (p, index) => `
     <div class="photo-item" data-index="${index}" data-foto-id="${p.fotky[0].id}" tabindex="0">
-        <img src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" loading="lazy" draggable="false" />
+        <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" draggable="false" />
         ${htmlSrdickaFotky(p, index)}
                                    ${htmlAkciDlazdice()}
     </div>`;
@@ -220,10 +222,10 @@ export function vykreslitRocnik(vydani, fotky) {
         const obsah = [cover && 'cover', centerfold && 'centerfold', pictorialu && sklonovat(pictorialu, 'pictorial', 'pictorialy', 'pictorialů')].filter(Boolean).join(' · ');
         return `<button class="rocnik-karta" data-vydani="${esc(klic)}" title="Otevřít ${esc(nazevVydani(klic))}">
             <span class="rocnik-obalka">
-                <img src="${esc(obrazek(hlavni.fotky[0].url, VELIKOST_PLAKATU_MALA))}" alt="" loading="lazy" draggable="false" />
+                <img data-src="${esc(obrazek(hlavni.fotky[0].url, VELIKOST_PLAKATU_MALA))}" alt="" draggable="false" />
                 <span class="rocnik-paska">${esc(paskaCisla(klic) || nazev)}</span>
                 ${stavKlice === 'mam' ? '<span class="rocnik-stav">výtisk</span>' : ''}
-                ${cover && centerfold ? `<span class="rocnik-cf"><img src="${esc(obrazek(centerfold.fotky[0].url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" draggable="false" /></span>` : ''}
+                ${cover && centerfold ? `<span class="rocnik-cf"><img data-src="${esc(obrazek(centerfold.fotky[0].url, VELIKOST_NAHLEDU))}" alt="" draggable="false" /></span>` : ''}
             </span>
             <span class="rocnik-popis"><b>${esc(centerfold?.jmenoModelky || nazev)}</b>${esc(obsah)}</span></button>`;
     };
@@ -252,6 +254,8 @@ export function vykreslitRocnik(vydani, fotky) {
         ${specialy.size ? `<h3 class="rocnik-oddil">Speciály</h3><div class="rocnik-mrizka">${[...specialy].sort(([x], [y]) => x.localeCompare(y)).map(([m, nazev]) => karta(m, nazev)).join('')}</div>` : ''}
         ${naRok.length ? `<h3 class="rocnik-oddil">Celý ročník</h3>${naRok.map(a => htmlAlbaStranky(a, index)).join('')}` : ''}
     `;
+    // Obrázky stránky se načítají postupně podle rolování (vestavěné loading="lazy" začíná ve WebKitGTK pozdě)
+    nacitatPostupne(document.getElementById('issueMain'));
 
     issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
     pripravitPopisy(issueView);
@@ -312,7 +316,7 @@ function vykreslitAlbaFotografa() {
         const paska = paskaCisla(vydani);
         return `<button class="rocnik-karta" data-index="${prvni}" title="${esc(`${a.jmenoModelky} – ${nazevAlba(a.album, a.typ)}`)}">
             <span class="rocnik-obalka">
-                <img src="${esc(obrazek(a.fotky[0].url, VELIKOST_PLAKATU_MALA))}" alt="" loading="lazy" draggable="false" />
+                <img data-src="${esc(obrazek(a.fotky[0].url, VELIKOST_PLAKATU_MALA))}" alt="" draggable="false" />
                 ${paska ? `<span class="rocnik-paska">${esc(paska)}</span>` : ''}
                 ${jeCenterfold(a) ? '' : `<span class="fotograf-pocet">${esc(sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek'))}</span>`}
             </span>
@@ -326,6 +330,8 @@ function vykreslitAlbaFotografa() {
             <span>${esc(sklonovat(alba.length, 'album', 'alba', 'alb'))}</span></div>
         <div class="rocnik-mrizka">${karty}</div>`
         : htmlPrazdna('Zatím žádná alba', 'Alba se fotografovi přiřadí podle jména v poli Fotograf v úpravě alba.');
+    // Obrázky stránky se načítají postupně podle rolování (vestavěné loading="lazy" začíná ve WebKitGTK pozdě)
+    nacitatPostupne(document.getElementById('issueMain'));
     obnovitVolby(issueView);
 }
 

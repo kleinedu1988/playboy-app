@@ -6,6 +6,7 @@ import { stav } from './stav';
 import { zalozitSpecial } from './specialy';
 import { calList, calendar, searchInput } from './prvky';
 import { listaKalendare } from './listy';
+import { nacitatPostupne } from './obrazky';
 import { htmlZobrazeniCisel, ukazatPohled } from './navigace';
 import { NAZVY_STAVU, otevritVydani, upravitVydani } from './vydani';
 import { otevritCoverModal } from './cover';
@@ -87,7 +88,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
             const vytisk = stavCisla.get(klic)?.stav === 'mam';
             return `
                 <button class="cal-cell ${vytisk ? 'mam' : ''}" data-vydani="${klic}" title="${esc(nazevVydani(klic))} – ${esc(popis)}${vytisk ? ' · mám výtisk' : ''}">
-                    <img src="${esc(obrazek(v.nahled, 'w300'))}" loading="lazy" draggable="false" />
+                    <img data-src="${esc(obrazek(v.nahled, 'w300'))}" draggable="false" />
                     <span class="cal-paska">${zkratka}</span>
                     ${vytisk ? '<span class="cal-stav">výtisk</span>' : ''}
                     <span class="cal-linky" aria-hidden="true">
@@ -156,6 +157,8 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         ${radky.join('') || htmlNicNenalezeno('Hledání neodpovídá žádné číslo.')}
     `;
     prevestNaVolby(calList.querySelector('.cal-editions'));
+    // Náhledy čísel se načítají postupně podle rolování (vestavěné loading="lazy" začíná ve WebKitGTK pozdě)
+    nacitatPostupne(calList);
     listaKalendare.sledovat();
 }
 

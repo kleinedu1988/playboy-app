@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.39] – 2026-11-03
+
+### Změněno
+- **Čísla a Kalendář načítají obrázky postupně**: náhledy v Kalendáři, na stránce čísla, ročníku a fotografa se načítají stejně jako v galerii – asi dvě obrazovky dopředu podle rolování a odrolované, ještě nenačtené obrázky se zruší, aby fotky na obrazovce nečekaly ve frontě. Dřív používaly vestavěné líné načítání, které ve WebKitGTK začíná pozdě a odrolované obrázky neruší.
+
 ## [1.2.38] – 2026-11-03
 
 ### Změněno

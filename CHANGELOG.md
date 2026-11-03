@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.48] – 2026-11-03
+
+### Změněno
+- **Nápověda a plán po zrychlení**: nápověda má nový oddíl Rychlost, náhledy a výkon (úvodní obrazovka a příprava po startu, náhledy na disku a jejich stahování na pozadí, limit a mazání mezipaměti, Přehled výkonu). ROADMAP a plán náhledů zapisují, co z bodu 1.6 (Náhledy na disku) už vyšlo v 1.2.28–1.2.32 a co zbývá (okno Náhledy s volbou limitu, záložní adresa obrázků).
+
 ## [1.2.47] – 2026-11-03
 
 ### Přidáno

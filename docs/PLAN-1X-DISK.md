@@ -178,6 +178,11 @@ velké velikosti Go jen propustí bez uložení) – **doporučeno**, protože p
 a CSP `img-src` řešit na jednom místě. Druhá možnost: přepis jen malých velikostí v `obrazek()` – méně kódu,
 ale rozhraní musí znát ID souboru i u titulních fotek.
 
+> **Stav (1.2.47):** server náhledů, úklid s limitem, stahování na pozadí a chování bez připojení jsou hotové
+> v 1.2.28–1.2.32 (`nahledy.go`, `nahledy_pozadi.go`). Rozdíly proti plánu: souběh pro okno 16, na pozadí 3;
+> limit pevně 1 GB bez okna Náhledy; zrušený požadavek stažení nezastaví (Wails v2 předává požadavek bez
+> kontextu), stažený náhled se ale uloží. Záložní adresa a okno Náhledy zůstávají na později.
+
 ### 1.3.0 – Server náhledů (M)
 
 - **Go:** `nahledy.go`, `http.Handler` v `assetserver.Options.Handler` (`main.go`); cesta

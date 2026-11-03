@@ -876,6 +876,12 @@ export const SABLONA_OKNA = `
           <li>Zálohy vznikají denně a před každou hromadnou změnou; obnovení v ⋯ → Obnovit ze zálohy.</li>
           <li>Fotky musí být na Google Disku sdílené „kdokoli s odkazem“.</li>
         </ul>
+        <h4>Rychlost, náhledy a výkon</h4>
+        <ul>
+          <li>Při spuštění se program připraví pod úvodní obrazovkou (kruh náhodných profilovek; se zámkem heslem jen ikona) a ukáže se hotový. Po úvodu si v klidu připraví další pohledy (témata, Sbírka, kalendář, hledání, statistiky).</li>
+          <li>Náhledy z Google Disku (karty, dlaždice, plakáty) se ukládají do <code>~/.cache/playboy-app/nahledy</code> a příště se ukážou hned, i bez připojení. Minutu po startu se na pozadí stáhnou titulní fotky a plakáty celé sbírky – průběh je vpravo ve stavové liště (✕ zastaví) a v ⋯ → Soubory a mezipaměť. Mezipaměť náhledů má limit 1 GB; ⋯ → Vymazat mezipaměť obrázků ji smaže.</li>
+          <li>⋯ → Přehled výkonu ukáže, jak dlouho trval start a volání programu v tomto spuštění; „Kopírovat jako text“ dá přehled do schránky.</li>
+        </ul>
       </div>
       <div class="modal-actions">
         <button type="button" id="helpNewsBtn" class="btn btn-secondary">Co je nového</button>

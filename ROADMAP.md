@@ -187,7 +187,7 @@ do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají n�
 | 1.3 | Google Disk I – přihlášení a výběr fotek do alba | – | 1.1 |
 | 1.4 | Google Disk II – výběr všude, nasdílení, oprava odkazů („Vyměnit soubor“) | 1.3 | 1.2 |
 | 1.5 | Údaje rychleji – vložení datového listu, „jako předchozí“, hodnocení postupně | 1.2 | nové |
-| 1.6 | Náhledy na disku – mezipaměť náhledů, limit, bez připojení, záložní adresa | – | 1.5 |
+| 1.6 | Náhledy na disku – mezipaměť náhledů, limit, bez připojení, záložní adresa (**většina hotová v 1.2.28–1.2.32**, zbývá okno Náhledy s volbou limitu a záložní adresa) | – | 1.5 |
 | 1.7 | Rychlé drobnosti – duplicita, náhled vložených odkazů, zamčení po nečinnosti, listování ročníky a čísly | – | 1.3 |
 | 1.8 | Zálohy a aktualizace – záloha během dne, aktualizace jedním příkazem, upozornění na novou verzi | – | nové |
 | 1.9 | Kvalita dat – sjednocení zápisů, titulní fotka alba, nové úkoly v Údržbě, kontrola při zadávání **[schéma]** | – | 1.6 |
@@ -335,6 +335,11 @@ nestahuje. **Bez změny schématu i exportu.**
 potvrzení; dvacet modelek bez srdíček jde ohodnotit dvaceti klávesami.
 
 ### 1.6 – Náhledy na disku
+
+> **Stav (1.2.47):** podle přání uživatele vydáno předem v řadě 1.2.xxx – server náhledů (1.2.28, 16 souběžně),
+> úklid a limit 1 GB (1.2.29), bez připojení bez čekání (1.2.32), stahování titulních fotek a plakátů na pozadí
+> s průběhem ve stavové liště (1.2.31). Zbývá: okno ⋯ → Náhledy s volbou limitu a odhadem, záložní adresa
+> `drive.google.com/thumbnail`, zrušení stažení po zrušení požadavku (Wails v2 kontext požadavku neruší).
 
 **Cíl:** karty a dlaždice se zobrazí okamžitě i bez internetu. Jen malé náhledy (`w400`, `w600`); velké fotky
 se dál stahují z Disku. Bez změny schématu i exportu.

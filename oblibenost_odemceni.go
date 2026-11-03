@@ -139,7 +139,11 @@ func (a *App) GetTemataKOdemceni() []PokrytiTematu {
 }
 
 // Fronta průvodce pro téma: neprošlé fotky kandidátek (od nejbližší), které splňují podmínky na album
-func (a *App) GetFotkyKOdemceni(tema string) []Fotografie {
+func (a *App) GetFotkyKOdemceni(tema string) FrontaFotek {
+	return zabalitFrontu(a.fotkyKOdemceni(tema))
+}
+
+func (a *App) fotkyKOdemceni(tema string) []Fotografie {
 	t := temaZKlice(tema)
 	if t == nil {
 		return []Fotografie{}
@@ -159,7 +163,7 @@ func (a *App) GetFotkyKOdemceni(tema string) []Fotografie {
 	}
 	fotkyModelek := vsechny
 	vysledek := []Fotografie{}
-	for _, f := range a.GetFotkyKPruvodci() {
+	for _, f := range a.fotkyKPruvodci() {
 		ft := fotkyModelek[f.ID]
 		if poradi[f.ModelkaID] > 0 && ft != nil && t.albumSplnuje(ft) && !t.fotkaSplnuje(ft) {
 			vysledek = append(vysledek, f)

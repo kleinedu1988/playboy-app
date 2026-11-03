@@ -1821,11 +1821,8 @@ func (a *App) GetNejlepsiFotky(minHodnoceni int) []Fotografie {
 
 // Nehodnocené fotky všech modelek (Oblíbenost › Galerie: prohlížení s hodnocením); fotky bez modelky (obálky) ne.
 // Pořadí podle modelky a alba, zamíchá je rozhraní.
-func (a *App) GetNehodnoceneFotky() []Fotografie {
-	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
-		JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
-		WHERE COALESCE(f.hodnoceni, 0) = 0
-		ORDER BY m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true))
+func (a *App) GetNehodnoceneFotky() FrontaFotek {
+	return a.nacistFrontu("nehodnocené fotky", `COALESCE(f.hodnoceni, 0) = 0`)
 }
 
 // Počet nehodnocených fotek (pilulka a hlavička Hodnocení, stavová lišta Fotek) bez načítání celých fotek; stejný

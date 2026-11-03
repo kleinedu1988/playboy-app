@@ -38,9 +38,9 @@ export function GetDuvodOdhadu(arg1:number):Promise<string>;
 
 export function GetDvojiceKPorovnani(arg1:number,arg2:string):Promise<Array<main.DvojicePorovnani>>;
 
-export function GetFotkyKOdemceni(arg1:string):Promise<Array<main.Fotografie>>;
+export function GetFotkyKOdemceni(arg1:string):Promise<main.FrontaFotek>;
 
-export function GetFotkyKPruvodci():Promise<Array<main.Fotografie>>;
+export function GetFotkyKPruvodci():Promise<main.FrontaFotek>;
 
 export function GetFotkyVyberu(arg1:number):Promise<Array<main.Fotografie>>;
 
@@ -70,7 +70,7 @@ export function GetNavrhSrdicek(arg1:number):Promise<main.NavrhSrdicek>;
 
 export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<main.NavrhDoplneni>>;
 
-export function GetNehodnoceneFotky():Promise<Array<main.Fotografie>>;
+export function GetNehodnoceneFotky():Promise<main.FrontaFotek>;
 
 export function GetNejlepsiFotky(arg1:number):Promise<Array<main.Fotografie>>;
 

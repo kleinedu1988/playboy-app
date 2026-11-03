@@ -76,7 +76,7 @@ func TestPruvodceFotek(t *testing.T) {
 	a.AddBulkPhotos(ida, "Album", "Pictorial", odkazA+" "+odkazB)
 	fotky := a.GetFotografieModelky(ida)
 	f1, f2 := fotky[0].ID, fotky[1].ID
-	if n := a.GetPocetFotekKPruvodci(); n != 2 || len(a.GetFotkyKPruvodci()) != 2 {
+	if n := a.GetPocetFotekKPruvodci(); n != 2 || len(a.fotkyKPruvodci()) != 2 {
 		t.Fatalf("na začátku k průvodci %d", n)
 	}
 	a.SetTagyFotek([]int{f1}, []string{"studio", "podpatky"}, nil)
@@ -98,7 +98,7 @@ func TestPruvodceFotek(t *testing.T) {
 	if !hotovo.Ok || !slices.Equal(tagy, []string{"akt", "postava", "studio"}) || a.GetPocetFotekKPruvodci() != 1 {
 		t.Errorf("hotovo: %v, k průvodci %d", tagy, a.GetPocetFotekKPruvodci())
 	}
-	if f := a.GetFotkyKPruvodci(); len(f) != 1 || f[0].ID != f2 {
+	if f := a.fotkyKPruvodci(); len(f) != 1 || f[0].ID != f2 {
 		t.Errorf("fronta: %+v", f)
 	}
 

@@ -34,11 +34,11 @@ func TestTemataKOdemceni(t *testing.T) {
 		podpatky.Kandidatky[0].Chybi != 2 || podpatky.FotekKOdemceni != 2 {
 		t.Errorf("pokrytí podpatků: %+v", podpatky)
 	}
-	f := a.GetFotkyKOdemceni("tag:podpatky")
+	f := a.fotkyKOdemceni("tag:podpatky")
 	if len(f) != 2 || f[0].ModelkaID != idb || f[1].ModelkaID != idb {
 		t.Errorf("fronta k odemčení: %+v", f)
 	}
-	if len(a.GetFotkyKOdemceni("tag:neexistuje")) != 0 {
+	if len(a.fotkyKOdemceni("tag:neexistuje")) != 0 {
 		t.Error("neplatné téma")
 	}
 	// Téma bez tagů (éra) se tagováním neodemkne

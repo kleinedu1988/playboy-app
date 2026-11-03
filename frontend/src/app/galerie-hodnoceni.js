@@ -4,6 +4,7 @@
 // V prohlížeči 1–5 fotku ohodnotí a ta z něj hned vypadne (otevritLightbox s jenNehodnocene). Seznam dodává
 // GetNehodnoceneFotky (jen když je potřeba), počet pro hlavičku Hodnocení GetPocetNehodnocenychFotek; hodnocení
 // fotek kdekoli jinde ho hned upraví (událost hodnoceni-fotek).
+import { rozbalitFrontu } from '../lib/fronta';
 import { GetFotkyKOdemceni, GetFotkyKPruvodci, GetNehodnoceneFotky, GetPocetFotekKPruvodci, GetPocetNehodnocenychFotek, GetTemataKOdemceni, SetHodnoceni } from './backend';
 import { historiePruvodce, hotovoPruvodce, nazevTagu, ukazatPruvodce, ukoncitPruvodce, vratitPruvodce, vykreslitPasek, zacitPruvodce } from './pruvodce-fotky';
 import { htmlOdhadu, htmlSrdicka } from './galerie';
@@ -85,7 +86,7 @@ async function nacistGaleriiJednou() {
     nacistPocetKPruvodci();
     let fotky = [];
     try {
-        fotky = await GetNehodnoceneFotky() || [];
+        fotky = rozbalitFrontu(await GetNehodnoceneFotky());
     } catch {
         nastavitHtml(kontejner, '<p class="ob-info">Nehodnocené fotky se nepodařilo načíst.</p>');
         ukazatVolby();
@@ -199,7 +200,7 @@ const TEMAT_K_ODEMCENI = 6;
 async function nacistPruvodce() {
     let fotky = [];
     try {
-        [fotky, kOdemceni] = await Promise.all([GetFotkyKPruvodci(), GetTemataKOdemceni().catch(() => [])]);
+        [fotky, kOdemceni] = await Promise.all([GetFotkyKPruvodci().then(rozbalitFrontu), GetTemataKOdemceni().catch(() => [])]);
     } catch {
         // Chyba načtení se nesmí tvářit jako „všechny fotky prošly“
         nastavitHtml(kontejner, '<p class="ob-info">Fotky k průvodci se nepodařilo načíst.</p>');
@@ -277,7 +278,7 @@ async function otevritPruvodceTematu(klic) {
     const pokryti = kOdemceni.find(t => t.klic === klic);
     if (!pokryti) return;
     let fotky = [];
-    try { fotky = await GetFotkyKOdemceni(klic) || []; } catch { return oznamit('Fotky k tématu se nepodařilo načíst.'); }
+    try { fotky = rozbalitFrontu(await GetFotkyKOdemceni(klic)); } catch { return oznamit('Fotky k tématu se nepodařilo načíst.'); }
     const fronta = sestavitAlba(fotky).flatMap(a => a.polozky);
     if (!fronta.length) return oznamit('K tomuto tématu teď nejsou fotky k průvodci.');
     if (!await zacitPruvodce(pokryti)) return;

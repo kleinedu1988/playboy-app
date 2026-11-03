@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.23] – 2026-11-03
+
+### Změněno
+- **Rychlejší Hodnotit › Průvodce a Rychle ♥**: fronty fotek posílají údaje alba (modelka, název, popis, fotograf, další modelky) jen jednou za album a adresu obrázku jako šablonu, ne u každé fotky zvlášť; řazení fronty se skládá z alb místo řazení všech fotek v databázi. Měřeno se 150 000 fotkami: fronta průvodce 67 → 14 MB a 1,4 → 0,5 s, nehodnocené fotky 36 → 8 MB a 0,75 → 0,3 s. Pořadí a obsah front se nemění (hlídá test).
+
 ## [1.2.22] – 2026-11-03
 
 ### Změněno

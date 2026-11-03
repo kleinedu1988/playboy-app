@@ -1,5 +1,67 @@
 export namespace main {
 	
+	export class OdkazModelky {
+	    id: number;
+	    jmeno: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OdkazModelky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.jmeno = source["jmeno"];
+	    }
+	}
+	export class AlbumFronty {
+	    modelkaId: number;
+	    jmenoModelky: string;
+	    album: string;
+	    typ: string;
+	    vydani?: string;
+	    spojit?: boolean;
+	    popis?: string;
+	    fotograf?: string;
+	    datumAlba?: string;
+	    dalsiModelky?: OdkazModelky[];
+	
+	    static createFrom(source: any = {}) {
+	        return new AlbumFronty(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmenoModelky = source["jmenoModelky"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	        this.vydani = source["vydani"];
+	        this.spojit = source["spojit"];
+	        this.popis = source["popis"];
+	        this.fotograf = source["fotograf"];
+	        this.datumAlba = source["datumAlba"];
+	        this.dalsiModelky = this.convertValues(source["dalsiModelky"], OdkazModelky);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class BodVyvoje {
 	    obdobi: number;
 	    median: number;
@@ -150,18 +212,24 @@ export namespace main {
 	        this.druh = source["druh"];
 	    }
 	}
-	export class OdkazModelky {
+	export class FotkaFronty {
 	    id: number;
-	    jmeno: string;
+	    albumId: number;
+	    driveId: string;
+	    rotace?: number;
+	    hodnoceni?: number;
 	
 	    static createFrom(source: any = {}) {
-	        return new OdkazModelky(source);
+	        return new FotkaFronty(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
-	        this.jmeno = source["jmeno"];
+	        this.albumId = source["albumId"];
+	        this.driveId = source["driveId"];
+	        this.rotace = source["rotace"];
+	        this.hodnoceni = source["hodnoceni"];
 	    }
 	}
 	export class Fotografie {
@@ -208,6 +276,40 @@ export namespace main {
 	        this.dalsiModelky = this.convertValues(source["dalsiModelky"], OdkazModelky);
 	        this.driveId = source["driveId"];
 	        this.albumId = source["albumId"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class FrontaFotek {
+	    sablona: string;
+	    fotky: FotkaFronty[];
+	    alba: Record<number, AlbumFronty>;
+	
+	    static createFrom(source: any = {}) {
+	        return new FrontaFotek(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sablona = source["sablona"];
+	        this.fotky = this.convertValues(source["fotky"], FotkaFronty);
+	        this.alba = this.convertValues(source["alba"], AlbumFronty, true);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

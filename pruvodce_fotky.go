@@ -97,7 +97,11 @@ func (a *App) GetKrokyPruvodce() KrokyPruvodce {
 }
 
 // Fotky modelek, které ještě neprošly průvodcem aktuální verze: po modelkách a albech (předvyplnění podle alba)
-func (a *App) GetFotkyKPruvodci() []Fotografie {
+func (a *App) GetFotkyKPruvodci() FrontaFotek {
+	return a.nacistFrontu("fotky k průvodci", `NOT EXISTS (SELECT 1 FROM fotky_pruvodce p WHERE p.fotka_id = f.id AND p.verze >= ?)`, verzePruvodce)
+}
+
+func (a *App) fotkyKPruvodci() []Fotografie {
 	return a.doplnitDalsiModelky(a.nacistFotografie(vyberFotografii+`, COALESCE(m.jmeno, '')`+vyberPopisu+` FROM fotografie f
 		JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
 		WHERE NOT EXISTS (SELECT 1 FROM fotky_pruvodce p WHERE p.fotka_id = f.id AND p.verze >= ?)

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.46] – 2026-11-03
+
+### Změněno
+- **Srdíčko bez nového načtení sbírky**: srdíčka u fotky nebo modelky opraví paměť sbírky přímo (počty hodnocených fotek a srdíček alba, srdíčka po albech u jeho modelek, srdíčka modelky), místo aby se celá sbírka načetla z databáze znovu. Se sbírkou 150 000 fotek: po každém srdíčku ~240 ms → pod 0,1 ms. Výsledek je stejný jako po novém načtení (hlídá test); když paměť před zápisem neodpovídala databázi, načte se znovu jako dřív.
+
 ## [1.2.45] – 2026-11-03
 
 ### Změněno

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"hash/fnv"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -231,5 +232,44 @@ func TestAddBulkPhotosMnohoOdkazu(t *testing.T) {
 	// Stejný soubor v jiném albu duplicitou není
 	if v := a.AddBulkPhotos(id, "Jiné", "Pictorial", odkazy[0]); v.Vlozeno != 1 || v.Duplicitni != 0 {
 		t.Errorf("jiné album %+v", v)
+	}
+}
+
+// Srdíčko u fotky i modelky opraví snímek na místě (bez nového načtení) a výsledek je stejný jako po načtení
+func TestOpravaSnimkuPoSrdicku(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Adéla"})
+	a.AddModelka(Modelka{Jmeno: "Bára"})
+	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA+" "+odkazB)
+	a.AddBulkPhotos(2, "1990-05", "Centerfold", "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view")
+	a.PridatModelkuKAlbu(1, "Album", "Pictorial", 2)
+	fotky := a.GetFotografieModelky(1)
+	shodne := func(popis string) {
+		t.Helper()
+		opraveny := a.snimekSbirky()
+		cerstvy := a.nacistSnimek()
+		if !reflect.DeepEqual(opraveny.modelky, cerstvy.modelky) || !reflect.DeepEqual(opraveny.alba, cerstvy.alba) || !reflect.DeepEqual(opraveny.albaModelek, cerstvy.albaModelek) {
+			t.Fatalf("%s: opravený snímek se liší od načteného\n%+v\n%+v", popis, opraveny.albaModelek, cerstvy.albaModelek)
+		}
+	}
+	for _, krok := range []struct {
+		popis string
+		f     func()
+	}{
+		{"srdíčka fotky", func() { a.SetHodnoceniFotek([]int{fotky[0].ID}, 4) }},
+		{"změna srdíček", func() { a.SetHodnoceniFotek([]int{fotky[0].ID, fotky[1].ID}, 5) }},
+		{"zrušení srdíček", func() { a.SetHodnoceniFotek([]int{fotky[1].ID}, 0) }},
+		{"srdíčka modelky", func() { a.SetHodnoceni(2, 3.5) }},
+	} {
+		pred := a.snimekSbirky()
+		krok.f()
+		po := a.pamet.snimek
+		if po == pred || po == nil {
+			t.Fatalf("%s: snímek se neopravil", krok.popis)
+		}
+		shodne(krok.popis)
+		if a.snimekSbirky() != po {
+			t.Fatalf("%s: opravený snímek se zahodil a načetl znovu", krok.popis)
+		}
 	}
 }

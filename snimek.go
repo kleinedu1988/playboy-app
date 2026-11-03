@@ -46,6 +46,7 @@ type albumModelky struct {
 
 // Album modelky se vším, co potřebuje Přehled, kontrola i návrhy (fotograf oříznutý o mezery na krajích)
 type albumSbirky struct {
+	id                      int64
 	modelkaID               int
 	jmeno                   string // jméno modelky
 	nazev, typ              string
@@ -351,7 +352,7 @@ func (a *App) nacistSnimek() *snimek {
 		if al.modelkaID == 0 || !ok {
 			continue
 		}
-		s.alba = append(s.alba, albumSbirky{modelkaID: al.modelkaID, jmeno: jmeno, nazev: al.nazev, typ: al.typ, vydani: al.vydani,
+		s.alba = append(s.alba, albumSbirky{id: al.id, modelkaID: al.modelkaID, jmeno: jmeno, nazev: al.nazev, typ: al.typ, vydani: al.vydani,
 			datum: al.datum, fotograf: strings.Trim(al.fotograf, " "), popis: al.popis, neni: al.neni, fotek: al.fotek,
 			hodnocenych: al.hodnocenych, soucetFotek: al.soucetFotek})
 	}
@@ -593,4 +594,135 @@ func (a *App) aktualizovatVyrezVeSnimku(id int, zoom, x, y float64) {
 	novy.modelky[idx].CoverY = y
 	p.snimek = novy
 	p.verze = verze
+}
+
+// ——— Oprava snímku na místě po srdíčku ———
+// Srdíčko u fotky nebo modelky mění jen pár čísel; místo nového načtení celého snímku (u 150 000 fotek ~0,25 s
+// po každém srdíčku) se opraví zapamatovaný snímek: nový snímek s kopiemi dotčených částí (souběžná čtení drží
+// starý a nesmí vidět zápis uprostřed). Oprava se dělá, jen když snímek před zápisem odpovídal databázi; jinak se
+// snímek načte znovu jako dřív.
+
+// Snímek, který právě odpovídá databázi (před zápisem); nil = nic se opravovat nebude
+func (a *App) snimekProOpravu() *snimek {
+	p := a.pamet
+	if p == nil || a.cestaDb == "" || a.vImportu {
+		return nil
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.snimek == nil || p.spojeni == nil || p.db != a.db || p.snimek.err != nil {
+		return nil
+	}
+	var verze int64
+	if p.spojeni.QueryRowContext(context.Background(), "PRAGMA data_version").Scan(&verze) != nil || verze != p.verze {
+		return nil
+	}
+	return p.snimek
+}
+
+// Po zápisu: opravený snímek místo puvodni (uprava vrátí nil = opravu vzdát, snímek se pak načte znovu)
+func (a *App) opravitSnimek(puvodni *snimek, uprava func(s *snimek) *snimek) {
+	p := a.pamet
+	if puvodni == nil || p == nil {
+		return
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.snimek != puvodni || p.spojeni == nil {
+		return
+	}
+	var verze int64
+	if p.spojeni.QueryRowContext(context.Background(), "PRAGMA data_version").Scan(&verze) != nil {
+		return
+	}
+	if novy := uprava(puvodni); novy != nil {
+		p.snimek, p.verze = novy, verze
+	}
+}
+
+func kopieSnimku(s *snimek) *snimek {
+	return &snimek{modelky: s.modelky, alba: s.alba, sdileneCenterfoldy: s.sdileneCenterfoldy, fotekCoveru: s.fotekCoveru,
+		err: s.err, albaModelek: s.albaModelek, indexModelky: s.indexModelky}
+}
+
+type zmenaSrdicekFotky struct {
+	album       int64
+	stare, nove int
+}
+
+func kosSrdicek(h int) int {
+	return min(h, 5) - 1
+}
+
+// Snímek po změně srdíček fotek: počty alba (Přehled, nehodnocené) a u jeho modelek hodnocené fotky, součet srdíček
+// a srdíčka po albech (oblíbenost, model vkusu)
+func opravitSrdickaFotek(s *snimek, zmeny []zmenaSrdicekFotky) *snimek {
+	novy := kopieSnimku(s)
+	novy.alba = slices.Clone(s.alba)
+	novy.modelky = slices.Clone(s.modelky)
+	novy.albaModelek = maps.Clone(s.albaModelek)
+	poAlbech := map[int64][]zmenaSrdicekFotky{}
+	for _, z := range zmeny {
+		poAlbech[z.album] = append(poAlbech[z.album], z)
+	}
+	najdeno := map[int64]bool{}
+	for i := range novy.alba {
+		for _, z := range poAlbech[novy.alba[i].id] {
+			najdeno[z.album] = true
+			novy.alba[i].hodnocenych += btoi(z.nove > 0) - btoi(z.stare > 0)
+		}
+	}
+	// Album, které snímek mezi alby modelek nemá (obálka, album bez modelky): opravu vzdát
+	for album := range poAlbech {
+		if !najdeno[album] {
+			return nil
+		}
+	}
+	for id, seznam := range s.albaModelek {
+		zmeneno := false
+		var dHodnocenych, dSrdci int
+		for j, al := range seznam {
+			for _, z := range poAlbech[al.id] {
+				if !zmeneno {
+					seznam = slices.Clone(seznam)
+					zmeneno = true
+				}
+				al := &seznam[j]
+				if z.stare > 0 {
+					al.pocty[kosSrdicek(z.stare)]--
+				}
+				if z.nove > 0 {
+					al.pocty[kosSrdicek(z.nove)]++
+				}
+				dHodnocenych += btoi(z.nove > 0) - btoi(z.stare > 0)
+				dSrdci += max(z.nove, 0) - max(z.stare, 0)
+			}
+		}
+		if !zmeneno {
+			continue
+		}
+		novy.albaModelek[id] = seznam
+		idx, ok := s.indexModelky[id]
+		if !ok {
+			continue
+		}
+		m := &novy.modelky[idx]
+		m.fotekHodnocenych += dHodnocenych
+		m.srdciFotek += dSrdci
+		m.srdickaAlb = nil
+		for _, al := range seznam {
+			if al.pocty != (srdickaAlba{}) {
+				m.srdickaAlb = append(m.srdickaAlb, al.pocty)
+			}
+		}
+		m.srdickaAlb = m.srdickaAlb[:len(m.srdickaAlb):len(m.srdickaAlb)]
+	}
+	return novy
+}
+
+func btoi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
 }

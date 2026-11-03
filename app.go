@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"slices"
 
 	"net/http"
 	"net/url"
@@ -1422,6 +1423,21 @@ func (a *App) SetHodnoceni(modelkaID int, hodnoceni float64) bool {
 		return false
 	}
 	var err error
+	pred := a.snimekProOpravu()
+	defer func() {
+		if err == nil && pred != nil {
+			a.opravitSnimek(pred, func(s *snimek) *snimek {
+				idx, ok := s.indexModelky[modelkaID]
+				if !ok || idx < 0 || idx >= len(s.modelky) {
+					return nil
+				}
+				novy := kopieSnimku(s)
+				novy.modelky = slices.Clone(s.modelky)
+				novy.modelky[idx].Hodnoceni = float64(pul) / 2
+				return novy
+			})
+		}
+	}()
 	if a.maSloupec("modelky", "hodnoceni_pul") {
 		_, err = a.pripraveny(`UPDATE modelky SET hodnoceni_pul = ?, hodnoceni = ? WHERE id = ?`).Exec(pul, pul/2, modelkaID)
 	} else {
@@ -1468,14 +1484,28 @@ func (a *App) SetHodnoceniFotek(ids []int, hodnoceni int) bool {
 	if hodnoceni > 5 {
 		hodnoceni = 5
 	}
-	return a.vTransakci("uložení hodnocení fotek", func(tx dotazovac) error {
+	// Snímek sbírky se po zápisu opraví na místě (snimek.go), když před ním odpovídal databázi
+	pred := a.snimekProOpravu()
+	var zmeny []zmenaSrdicekFotky
+	ok := a.vTransakci("uložení hodnocení fotek", func(tx dotazovac) error {
 		for _, id := range ids {
+			if pred != nil {
+				var z zmenaSrdicekFotky
+				if err := tx.QueryRow(`SELECT album_id, COALESCE(hodnoceni, 0) FROM fotky WHERE id = ?`, id).Scan(&z.album, &z.stare); err == nil {
+					z.nove = hodnoceni
+					zmeny = append(zmeny, z)
+				}
+			}
 			if _, err := tx.Exec(`UPDATE fotky SET hodnoceni = ? WHERE id = ?`, hodnoceni, id); err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+	if ok && pred != nil && len(zmeny) == len(ids) {
+		a.opravitSnimek(pred, func(s *snimek) *snimek { return opravitSrdickaFotek(s, zmeny) })
+	}
+	return ok
 }
 
 // Hromadný zápis v jedné transakci: jeden zápis na disk místo jednoho za každou fotku, a buď vše, nebo nic.

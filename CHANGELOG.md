@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.53] – 2026-11-03
+
+### Změněno
+- **Balíček `internal/hledani` a zrychlené vyhledávání a příprava textů**: normalizace textu bez diakritiky, Levenshteinova vzdálenost, příprava vyhledávacích textů u modelek a vyhodnocení dotazu (včetně filtrů s dvojtečkou, porovnání a rozsahů) jsou vyčleněné do samostatného balíčku `internal/hledani` s vlastními jednotkovými testy. Levenshteinova vzdálenost počítá do polí na zásobníku bez alokací na haldě, příprava textů modelky skládá vyhledávací řetězec v jediném `strings.Builder` a předpočítává kategorie i výskyty pro okamžité vyhodnocení filtrů `kategorie:` a `vyskyt:`, a vyhodnocení dotazu ukončuje vnitřní smyčky hned po první shodě a parsuje čtyřciferný rok bez volání `strconv.Atoi`.
+
 ## [1.2.52] – 2026-11-03
 
 ### Změněno

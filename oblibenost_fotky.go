@@ -96,7 +96,7 @@ func spocitatSkoreFotek(modelky []Modelka) (map[int]skoreFotek, parametryFotek) 
 	ctverce, stupne := 0.0, 0
 	for i := range modelky {
 		m := &modelky[i]
-		for _, c := range m.srdickaAlb {
+		for _, c := range m.SrdickaAlb {
 			prumer, k, n, q := skoreAlba(c)
 			if n == 0 {
 				continue

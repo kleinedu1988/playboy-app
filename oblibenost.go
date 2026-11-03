@@ -582,11 +582,11 @@ func otiskModelekOblibenosti(modelky []Modelka) string {
 	for i := range modelky {
 		m := &modelky[i]
 		o.modelka(m)
-		o.cisla(m.fotekHodnocenych, m.srdciFotek, len(m.srdickaAlb))
-		for _, c := range m.srdickaAlb {
+		o.cisla(m.FotekHodnocenych, m.SrdciFotek, len(m.SrdickaAlb))
+		for _, c := range m.SrdickaAlb {
 			o.cisla(c[:]...)
 		}
-		o.text(m.fotografoveAlb)
+		o.text(m.FotografoveAlb)
 	}
 	return o.hex()
 }

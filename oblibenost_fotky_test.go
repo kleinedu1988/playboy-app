@@ -39,7 +39,7 @@ func pozadiFotek(n int, r *rand.Rand) []Modelka {
 			for range 1 + r.Intn(12) {
 				srdicka = append(srdicka, min(max(int(math.Round(album+r.NormFloat64()*0.7)), 1), 5))
 			}
-			m.srdickaAlb = append(m.srdickaAlb, albumFotek(srdicka...))
+			m.SrdickaAlb = append(m.SrdickaAlb, albumFotek(srdicka...))
 		}
 		modelky = append(modelky, m)
 	}
@@ -72,8 +72,8 @@ func TestSkoreAlbaNejlepsiFotky(t *testing.T) {
 func TestSkoreFotekAlbumJedenHlas(t *testing.T) {
 	modelky := pozadiFotek(60, rand.New(rand.NewSource(1)))
 	modelky = append(modelky,
-		Modelka{ID: 1, srdickaAlb: []srdickaAlba{albumStejnych(40, 3), albumStejnych(6, 5)}},
-		Modelka{ID: 2, srdickaAlb: []srdickaAlba{albumStejnych(6, 3), albumStejnych(40, 5)}})
+		Modelka{ID: 1, SrdickaAlb: []srdickaAlba{albumStejnych(40, 3), albumStejnych(6, 5)}},
+		Modelka{ID: 2, SrdickaAlb: []srdickaAlba{albumStejnych(6, 3), albumStejnych(40, 5)}})
 	skore, par := spocitatSkoreFotek(modelky)
 	x, y := skore[1], skore[2]
 	t.Logf("parametry %+v; X %+v; Y %+v", par, x, y)
@@ -89,9 +89,9 @@ func TestSkoreFotekAlbumJedenHlas(t *testing.T) {
 func TestSkoreFotekSmrsteni(t *testing.T) {
 	modelky := pozadiFotek(60, rand.New(rand.NewSource(2)))
 	modelky = append(modelky,
-		Modelka{ID: 1, srdickaAlb: []srdickaAlba{albumFotek(5)}},
-		Modelka{ID: 2, srdickaAlb: []srdickaAlba{albumStejnych(10, 5), albumStejnych(10, 5), albumStejnych(10, 5)}},
-		Modelka{ID: 3, srdickaAlb: []srdickaAlba{albumFotek(1)}})
+		Modelka{ID: 1, SrdickaAlb: []srdickaAlba{albumFotek(5)}},
+		Modelka{ID: 2, SrdickaAlb: []srdickaAlba{albumStejnych(10, 5), albumStejnych(10, 5), albumStejnych(10, 5)}},
+		Modelka{ID: 3, SrdickaAlb: []srdickaAlba{albumFotek(1)}})
 	skore, par := spocitatSkoreFotek(modelky)
 	jedna, tri, slaba := skore[1], skore[2], skore[3]
 	t.Logf("μ %.2f, σ_w² %.2f, τₐ² %.2f, τₘ² %.2f; jedna %+v; tři alba %+v", par.stred, par.rozptylFoto, par.rozptylAlb, par.rozptylModelek, jedna, tri)
@@ -117,8 +117,8 @@ func TestFotkyNeposouvajiOblibenost(t *testing.T) {
 	vyborne := []srdickaAlba{albumStejnych(8, 5), albumStejnych(8, 5), albumStejnych(8, 5)}
 	slabe := []srdickaAlba{albumStejnych(8, 2), albumStejnych(8, 2), albumStejnych(8, 2)}
 	modelky = append(modelky,
-		Modelka{ID: 1, Hodnoceni: 4, srdickaAlb: vyborne},
-		Modelka{ID: 2, Hodnoceni: 4.5, srdickaAlb: slabe},
+		Modelka{ID: 1, Hodnoceni: 4, SrdickaAlb: vyborne},
+		Modelka{ID: 2, Hodnoceni: 4.5, SrdickaAlb: slabe},
 		Modelka{ID: 5, Hodnoceni: 4})
 	model := spocitatOblibenost(modelky, nil, time.Now())
 	ob := model.oblibenost

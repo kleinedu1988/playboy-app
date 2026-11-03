@@ -213,5 +213,5 @@ func TestVykonHlavnichCest(t *testing.T) {
 
 // Každé hledané slovo se musí najít v některém údaji modelky, cílené slovo v daném údaji (viz pripravitHledani)
 func odpovidaHledani(m Modelka, vyhledavani string) bool {
-	return pripravitHledani(vyhledavani).odpovida(&m, nil)
+	return pripravitHledani(vyhledavani).Odpovida(&m, nil)
 }

@@ -15,15 +15,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
-	"unicode"
-	"unicode/utf8"
-
-	"golang.org/x/text/unicode/norm"
 
 	"modernc.org/sqlite"
 
@@ -82,98 +77,6 @@ func (a *App) chyba(kde string, err error) {
 func (a *App) StavDatabaze() string {
 	return a.chybaStartu
 }
-
-type Modelka struct {
-	ID             int    `json:"id"`
-	Jmeno          string `json:"jmeno"`
-	NarozeniDatum  string `json:"narozeniDatum"` // RRRR, RRRR-MM nebo RRRR-MM-DD
-	UmrtiDatum     string `json:"umrtiDatum"`    // ve stejném tvaru; prázdné u žijící nebo neznámé
-	NarozeniMisto  string `json:"narozeniMisto"`
-	Narodnost      string `json:"narodnost"`
-	Etnicita       string `json:"etnicita"`
-	VyskaCm        int    `json:"vyskaCm"`
-	VahaKg         int    `json:"vahaKg"`
-	VlasyBarva     string `json:"vlasyBarva"`
-	OciBarva       string `json:"ociBarva"`
-	Miry           string `json:"miry"` // "Hrudník-Pas-Boky", skládá se z obvodů
-	ObvodHrudnikCm int    `json:"obvodHrudnikCm"`
-	ObvodPasCm     int    `json:"obvodPasCm"`
-	ObvodBokyCm    int    `json:"obvodBokyCm"`
-	VelikostPrsou  string `json:"velikostPrsou"`
-	PrsaTyp        string `json:"prsaTyp"`
-	Ochlupeni      string `json:"ochlupeni"`
-	// Tetování a piercing: 1 = ano, 0 = ne, -1 = neuvedeno
-	Tetovani        int    `json:"tetovani"`
-	Piercing        int    `json:"piercing"`
-	Vystoupeni      string `json:"vystoupeni"`
-	PictorialVydani string `json:"pictorialVydani"` // jedno vydání na řádek
-	Role            string `json:"role"`
-	Tags            string `json:"tags"` // oddělené čárkou
-	CoverURL        string `json:"coverUrl"`
-	CoverID         string `json:"coverId"` // při ukládání Drive ID nebo celý odkaz
-	// Výřez titulní fotky na kartě: přiblížení (1 = bez přiblížení) a poloha v procentech
-	CoverZoom float64 `json:"coverZoom"`
-	CoverX    float64 `json:"coverX"`
-	CoverY    float64 `json:"coverY"`
-	// Počet fotek modelky ve všech albech (jen pro čtení)
-	PocetFotek int `json:"pocetFotek"`
-	// Vydání časopisu, ve kterých modelka je, odvozená z jejích alb a centerfoldů (jen pro čtení)
-	Vydani []string `json:"vydani"`
-
-	DalsiJmena string `json:"dalsiJmena"` // pseudonymy oddělené čárkou
-	Poznamka   string `json:"poznamka"`
-	// 0 = nehodnoceno, 0,5–5 srdíček po polovinách (úprava schématu č. 13)
-	Hodnoceni float64 `json:"hodnoceni"`
-	// Jemné pořadí oblíbenosti pro řazení (jen pro čtení, oblibenost.go): srdíčka upřesněná skóre fotek
-	// a porovnáním dvojic (nejvýš ±0,49, takže o celé srdíčko se pořadí nepřehodí, o půl ano); nehodnocená
-	// porovnávaná modelka má odhad síly z porovnání, ostatní nehodnocené 0
-	Oblibenost float64 `json:"oblibenost"`
-	// Odhad hodnocení modelem vkusu (jen pro čtení): 0,5–5 po polovinách jen u nehodnocené modelky s dost jistým
-	// odhadem, jinak 0
-	OdhadHodnoceni float64 `json:"odhadHodnoceni"`
-	// Potvrzené pořadí oblíbenosti od 1 (0 = mimo pořadí; s prahy úrovní Top N) a o kolik míst stoupla proti snímku před trendDni dny (záporné =
-	// klesla; trendDni 0 = trend zatím není), jen pro čtení (oblibenost_zajem.go)
-	Poradi      int `json:"poradi"`
-	ZmenaPoradi int `json:"zmenaPoradi"`
-	TrendDni    int `json:"trendDni"`
-	// Úroveň Top N, ve které modelka potvrzeně je (10, 20, 50, 100; 0 = mimo top 100), a úroveň, na jejíž potvrzení
-	// čeká (podle síly by tam patřila, ale nesplňuje prahy; 0 = nic), jen pro čtení (oblibenost_urovne.go)
-	UrovenTop int `json:"urovenTop"`
-	CekaNaTop int `json:"cekaNaTop"`
-	// Úroveň, kterou obhajuje proti silnější vyzyvatelce (0 = nic), jen pro čtení
-	ObhajujeTop int `json:"obhajujeTop"`
-
-	// Kdy byla modelka přidána (RRRR-MM-DD HH:MM:SS); prázdné u záznamů starších než tento údaj
-	Pridano string `json:"pridano"`
-
-	// Údaje, které se u modelky nesledují (centerfold neměla…): klíče oddělené čárkou
-	NetykaSe string `json:"netykaSe"`
-	// Odkazy na zdroje údajů (Wikipedie a podobně), jeden na řádek
-	Odkazy string `json:"odkazy"`
-	// Vydání, na jejichž obálce modelka je (jen pro čtení)
-	Obalky []string `json:"obalky"`
-	// Vydání jejích centerfoldů (jen pro čtení); centerfold = kategorie Playmate měsíce
-	Centerfoldy []string `json:"centerfoldy"`
-	// Data nafocení jejích online alb (typ Pictorial online, jen pro čtení); album bez data má prázdný text
-	OnlineAlba []string `json:"onlineAlba"`
-	// Nejvyšší úroveň jejích alb Cyber Girl: „měsíce“, „týdne“ nebo "" (odvozená kategorie, jen pro čtení)
-	CyberGirl string `json:"cyberGirl"`
-	// Pictorial Playmate of the Month (kategorie Playmate měsíce i bez centerfoldu) a rok pictorialu Playmate of the
-	// Year (kategorie Playmate roku; „?“ = album bez roku); odvozené z alb, jen pro čtení
-	PlaymateMesice bool   `json:"playmateMesice"`
-	PlaymateRoku   string `json:"playmateRoku"`
-
-	// Popisy a fotografové alb modelky, jen pro hledání
-	textyAlb       string
-	fotografoveAlb string
-	// Hodnocené fotky modelky a součet jejich srdíček (model vkusu)
-	fotekHodnocenych, srdciFotek int
-	// Počty hodnocených fotek podle srdíček v každém jejím albu s hodnocenými fotkami (skóre fotek)
-	srdickaAlb []srdickaAlba
-}
-
-// Hodnocení modelky v polovinách srdíčka (3,5 → 7)
-func (m Modelka) hodnoceniPul() int { return int(math.Round(m.Hodnoceni * 2)) }
 
 type Fotografie struct {
 	ID        int    `json:"id"`
@@ -260,39 +163,6 @@ func ted() string {
 // Řazení v SQL stejně jako v programu: bez ohledu na velikost písmen a diakritiku (COLLATE BEZDIAKRITIKY zná jen ASCII)
 func init() {
 	sqlite.MustRegisterCollationUtf8("BEZDIAKRITIKY", porovnatBezDiakritiky)
-}
-
-// Porovnání pro COLLATE BEZDIAKRITIKY: dva texty jen z ASCII (většina) bajt po bajtu malými písmeny bez alokace
-// (řazení velkých výsledků volá porovnání statisíckrát); jinak přes zjednodusit
-func porovnatBezDiakritiky(a, b string) int {
-	for i := 0; ; i++ {
-		if i == len(a) || i == len(b) {
-			for j := i; j < len(a); j++ {
-				if a[j] >= utf8.RuneSelf {
-					return strings.Compare(zjednodusit(a), zjednodusit(b))
-				}
-			}
-			for j := i; j < len(b); j++ {
-				if b[j] >= utf8.RuneSelf {
-					return strings.Compare(zjednodusit(a), zjednodusit(b))
-				}
-			}
-			return len(a) - len(b)
-		}
-		x, y := a[i], b[i]
-		if x >= utf8.RuneSelf || y >= utf8.RuneSelf {
-			return strings.Compare(zjednodusit(a), zjednodusit(b))
-		}
-		if 'A' <= x && x <= 'Z' {
-			x += 'a' - 'A'
-		}
-		if 'A' <= y && y <= 'Z' {
-			y += 'a' - 'A'
-		}
-		if x != y {
-			return int(x) - int(y)
-		}
-	}
 }
 
 func NewApp() *App {
@@ -1261,38 +1131,11 @@ func (a *App) nactiModelky(vyhledavani string, sOblibenosti bool) ([]Modelka, er
 	texty := s.textyKHledani()
 	var vysledky []Modelka
 	for i := range vsechny {
-		if h.odpovida(&vsechny[i], &texty[i]) {
+		if h.Odpovida(&vsechny[i], &texty[i]) {
 			vysledky = append(vysledky, vsechny[i])
 		}
 	}
 	return vysledky, s.err
-}
-
-// Písmena, která se na základní tvar nerozkládají sama
-var zvlastniPismena = strings.NewReplacer("ł", "l", "ø", "o", "đ", "d", "ß", "ss", "æ", "ae", "œ", "oe", "þ", "th", "ı", "i")
-
-// Text pro porovnávání a řazení: malá písmena bez diakritiky jakéhokoli jazyka (Zoë = zoe, Ödegaard = odegaard)
-func zjednodusit(text string) string {
-	// Text jen z ASCII (většina jmen a údajů) nemá co rozkládat: stačí malá písmena. Volá se i při každém
-	// porovnání v SQL (COLLATE BEZDIAKRITIKY), proto se vyplatí.
-	ascii := true
-	for i := 0; i < len(text); i++ {
-		if text[i] >= utf8.RuneSelf {
-			ascii = false
-			break
-		}
-	}
-	if ascii {
-		return strings.ToLower(text)
-	}
-	rozlozeny := norm.NFD.String(strings.ToLower(text))
-	bez := strings.Map(func(znak rune) rune {
-		if unicode.Is(unicode.Mn, znak) {
-			return -1
-		}
-		return znak
-	}, rozlozeny)
-	return zvlastniPismena.Replace(bez)
 }
 
 // Hodnoty modelky ve stejném pořadí jako sloupceModelky
@@ -1463,11 +1306,6 @@ func (a *App) sloupecHodnoceni() string {
 		return sloupecHodnoceniPul
 	}
 	return "MIN(MAX(COALESCE(hodnoceni, 0), 0), 5) * 2"
-}
-
-// Hodnocení modelky k zobrazení a do hledání: „3“, „3.5“
-func textHodnoceni(h float64) string {
-	return strconv.FormatFloat(h, 'f', -1, 64)
 }
 
 // Hodnocení fotek 1–5 srdíček (u spojeného plakátu všech jeho stránek najednou); 0 hodnocení ruší

@@ -279,34 +279,34 @@ func harnessVkusu(n int, podilHodnocenych float64, seed int64, nahodnyVkus bool)
 			m.Piercing = map[bool]int{true: 1, false: 0}[piercing]
 		}
 		for _, f := range fotografove {
-			m.fotografoveAlb += jmenaFotografuHarness[f] + "\n"
+			m.FotografoveAlb += jmenaFotografuHarness[f] + "\n"
 		}
 		s.modelky = append(s.modelky, m)
 	}
 	// Kdo je hodnocená (modelky s fotkami o něco častěji) a srdíčka fotek (souvisí s vkusem i s vlastní složkou)
 	for i := range s.modelky {
 		m := &s.modelky[i]
-		hodnocena := r.Float64() < podilHodnocenych*map[bool]float64{true: 1.2, false: 0.8}[m.fotografoveAlb != ""]
+		hodnocena := r.Float64() < podilHodnocenych*map[bool]float64{true: 1.2, false: 0.8}[m.FotografoveAlb != ""]
 		if hodnocena {
 			m.Hodnoceni = s.pravda[m.ID]
 		}
-		if m.fotografoveAlb == "" || r.Float64() >= map[bool]float64{true: 0.5, false: 0.12}[hodnocena] {
+		if m.FotografoveAlb == "" || r.Float64() >= map[bool]float64{true: 0.5, false: 0.12}[hodnocena] {
 			continue
 		}
 		urovenFotek := 3.2 + 0.6*(chut[m.ID]-2.9) + 0.35*r.NormFloat64()
 		if nahodnyVkus {
 			urovenFotek = 3.2 + 0.7*r.NormFloat64()
 		}
-		for range strings.Count(m.fotografoveAlb, "\n") {
+		for range strings.Count(m.FotografoveAlb, "\n") {
 			var c srdickaAlba
 			album := urovenFotek + 0.4*r.NormFloat64()
 			for range 6 + r.Intn(30) {
 				h := int(math.Round(min(max(album+0.9*r.NormFloat64(), 1), 5)))
 				c[h-1]++
-				m.fotekHodnocenych++
-				m.srdciFotek += h
+				m.FotekHodnocenych++
+				m.SrdciFotek += h
 			}
-			m.srdickaAlb = append(m.srdickaAlb, c)
+			m.SrdickaAlb = append(m.SrdickaAlb, c)
 		}
 	}
 	// Porovnání dvojic hodnocených modelek stejné nebo sousední úrovně (polovina počtu hodnocených)
@@ -665,17 +665,17 @@ func TestVkusJenSkupinySFotkami(t *testing.T) {
 	for i := range 400 {
 		m := Modelka{ID: i + 1, Jmeno: fmt.Sprintf("Modelka %03d", i+1), VlasyBarva: vlasyVkus[r.Intn(4)], Etnicita: "kavkazská",
 			Narodnost: "USA", VyskaCm: 160 + r.Intn(20), Vydani: []string{fmt.Sprintf("%d-06", 1960+r.Intn(50))},
-			fotografoveAlb: fotografoveVkus[r.Intn(4)] + "\n", Tetovani: -1, Piercing: -1}
+			FotografoveAlb: fotografoveVkus[r.Intn(4)] + "\n", Tetovani: -1, Piercing: -1}
 		vkus := 1 + 4*r.Float64()
 		if i%2 == 0 {
 			var c srdickaAlba
 			for range 12 {
 				h := int(math.Round(min(max(vkus+0.6*r.NormFloat64(), 1), 5)))
 				c[h-1]++
-				m.fotekHodnocenych++
-				m.srdciFotek += h
+				m.FotekHodnocenych++
+				m.SrdciFotek += h
 			}
-			m.srdickaAlb = []srdickaAlba{c}
+			m.SrdickaAlb = []srdickaAlba{c}
 		}
 		if i < 300 {
 			m.Hodnoceni = min(max(math.Round(vkus+0.3*r.NormFloat64()), 1), 5)
@@ -690,7 +690,7 @@ func TestVkusJenSkupinySFotkami(t *testing.T) {
 	sFotkami, bez := 0, 0
 	for _, m := range modelky[300:] {
 		if _, ok := model.odhad[m.ID]; ok {
-			if m.fotekHodnocenych > 0 {
+			if m.FotekHodnocenych > 0 {
 				sFotkami++
 			} else {
 				bez++

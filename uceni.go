@@ -896,7 +896,7 @@ func (o *otiskovac) hex() string {
 }
 
 func (o *otiskovac) modelka(m *Modelka) {
-	o.cisla(m.ID, m.VyskaCm, m.VahaKg, m.ObvodHrudnikCm, m.ObvodPasCm, m.ObvodBokyCm, m.Tetovani, m.Piercing, m.hodnoceniPul(), m.PocetFotek)
+	o.cisla(m.ID, m.VyskaCm, m.VahaKg, m.ObvodHrudnikCm, m.ObvodPasCm, m.ObvodBokyCm, m.Tetovani, m.Piercing, m.HodnoceniPul(), m.PocetFotek)
 	o.text(m.Jmeno, m.NarozeniDatum, m.UmrtiDatum, m.NarozeniMisto, m.Narodnost, m.Etnicita, m.VlasyBarva, m.OciBarva, m.Miry,
 		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags, m.DalsiJmena, m.Poznamka,
 		m.NetykaSe, m.CyberGirl, m.PlaymateRoku, fmt.Sprint(m.PlaymateMesice), m.CoverID, m.Pridano)

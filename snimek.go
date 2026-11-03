@@ -33,9 +33,6 @@ type souhrnAlba struct {
 	pocty                     srdickaAlba
 }
 
-// Počty hodnocených fotek alba podle srdíček: [0] = 1 srdíčko … [4] = 5 srdíček (skóre fotek v oblibenost_fotky.go)
-type srdickaAlba [5]int
-
 // Album, ve kterém modelka je (vlastní i jako další modelka), pro skóre fotek a náhledy alb v porovnání
 type albumModelky struct {
 	id         int64
@@ -432,15 +429,15 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 			o.playmateMesice, o.playmateRoku = x.playmateMesice, x.playmateRoku
 			o.vydani, o.centerfoldy, o.online = serazeneBezOpakovani(x.vydani), serazeneBezOpakovani(x.centerfoldy), x.online
 			sort.Strings(o.online)
-			m.textyAlb, m.fotografoveAlb = x.texty.String(), x.fotografove.String()
+			m.TextyAlb, m.FotografoveAlb = x.texty.String(), x.fotografove.String()
 			for _, al := range x.alba {
 				if al.pocty != (srdickaAlba{}) {
-					m.srdickaAlb = append(m.srdickaAlb, al.pocty)
+					m.SrdickaAlb = append(m.SrdickaAlb, al.pocty)
 				}
 			}
-			m.srdickaAlb = m.srdickaAlb[:len(m.srdickaAlb):len(m.srdickaAlb)]
+			m.SrdickaAlb = m.SrdickaAlb[:len(m.SrdickaAlb):len(m.SrdickaAlb)]
 		}
-		m.PocetFotek, m.fotekHodnocenych, m.srdciFotek = o.fotek, o.hodnocenych, o.srdci
+		m.PocetFotek, m.FotekHodnocenych, m.SrdciFotek = o.fotek, o.hodnocenych, o.srdci
 		m.Vydani, m.Centerfoldy, m.OnlineAlba = uzavritSeznam(o.vydani), uzavritSeznam(o.centerfoldy), uzavritSeznam(o.online)
 		m.Obalky = uzavritSeznam(obalky[m.ID])
 		m.CyberGirl = o.cyberGirl
@@ -707,15 +704,15 @@ func opravitSrdickaFotek(s *snimek, zmeny []zmenaSrdicekFotky) *snimek {
 			continue
 		}
 		m := &novy.modelky[idx]
-		m.fotekHodnocenych += dHodnocenych
-		m.srdciFotek += dSrdci
-		m.srdickaAlb = nil
+		m.FotekHodnocenych += dHodnocenych
+		m.SrdciFotek += dSrdci
+		m.SrdickaAlb = nil
 		for _, al := range seznam {
 			if al.pocty != (srdickaAlba{}) {
-				m.srdickaAlb = append(m.srdickaAlb, al.pocty)
+				m.SrdickaAlb = append(m.SrdickaAlb, al.pocty)
 			}
 		}
-		m.srdickaAlb = m.srdickaAlb[:len(m.srdickaAlb):len(m.srdickaAlb)]
+		m.SrdickaAlb = m.SrdickaAlb[:len(m.SrdickaAlb):len(m.SrdickaAlb)]
 	}
 	return novy
 }

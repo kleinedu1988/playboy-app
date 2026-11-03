@@ -512,7 +512,7 @@ func sbirkaVkusu(n, hodnocenych int, nahodne bool) []Modelka {
 		fotograf := fotografoveVkus[r.Intn(len(fotografoveVkus))]
 		m := Modelka{ID: i + 1, Jmeno: fmt.Sprintf("Modelka %03d", i), VlasyBarva: vlasy, VyskaCm: 160 + r.Intn(20), VahaKg: 48 + r.Intn(12),
 			Etnicita: "kavkazská", Narodnost: "USA", Vydani: []string{fmt.Sprintf("%d-06", rok)}, Centerfoldy: []string{fmt.Sprintf("%d-06", rok)},
-			fotografoveAlb: fotograf + "\n", Tetovani: -1, Piercing: -1}
+			FotografoveAlb: fotograf + "\n", Tetovani: -1, Piercing: -1}
 		if i < hodnocenych {
 			h := 2.5 + r.NormFloat64()*0.3
 			if vlasy == "blond" {
@@ -549,7 +549,7 @@ func TestModelVkusuOvereni(t *testing.T) {
 	// Blond ze 70. let od Posara má vysoký odhad a důvod to řekne
 	var nejlepsi Modelka
 	for _, m := range modelky[200:] {
-		if m.VlasyBarva == "blond" && strings.HasPrefix(m.Vydani[0], "197") && m.fotografoveAlb == "Pompeo Posar\n" {
+		if m.VlasyBarva == "blond" && strings.HasPrefix(m.Vydani[0], "197") && m.FotografoveAlb == "Pompeo Posar\n" {
 			nejlepsi = m
 		}
 	}
@@ -577,10 +577,10 @@ func TestMohloByTeLibit(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	tx, _ := a.db.Begin()
 	for _, m := range sbirkaVkusu(200, 150, false) {
-		pul := m.hodnoceniPul()
+		pul := m.HodnoceniPul()
 		tx.Exec(`INSERT INTO modelky (id, jmeno, vlasy_barva, etnicita, narodnost, vyska_cm, vaha_kg, hodnoceni_pul, hodnoceni) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			m.ID, m.Jmeno, m.VlasyBarva, m.Etnicita, m.Narodnost, m.VyskaCm, m.VahaKg, pul, pul/2)
-		res, _ := tx.Exec(`INSERT INTO alba (modelka_id, album, typ, vydani, fotograf) VALUES (?, ?, 'Centerfold', ?, ?)`, m.ID, m.Vydani[0], m.Vydani[0], strings.TrimSpace(m.fotografoveAlb))
+		res, _ := tx.Exec(`INSERT INTO alba (modelka_id, album, typ, vydani, fotograf) VALUES (?, ?, 'Centerfold', ?, ?)`, m.ID, m.Vydani[0], m.Vydani[0], strings.TrimSpace(m.FotografoveAlb))
 		album, _ := res.LastInsertId()
 		tx.Exec(`INSERT INTO fotky (album_id, drive_file_id) VALUES (?, ?)`, album, fmt.Sprintf("V%07dxxxxxxxxxxxxxxxxxxxxxxx", m.ID))
 	}
@@ -837,8 +837,8 @@ func TestNesouladJenZPorovnani(t *testing.T) {
 	slabe := []srdickaAlba{albumStejnych(8, 2), albumStejnych(8, 2), albumStejnych(8, 2)}
 	vyborne := []srdickaAlba{albumStejnych(8, 5), albumStejnych(8, 5), albumStejnych(8, 5)}
 	modelky = append(modelky,
-		Modelka{ID: 1, Jmeno: "Slabé fotky", Hodnoceni: 4.5, srdickaAlb: slabe},
-		Modelka{ID: 2, Jmeno: "Výborné fotky", Hodnoceni: 3, srdickaAlb: vyborne},
+		Modelka{ID: 1, Jmeno: "Slabé fotky", Hodnoceni: 4.5, SrdickaAlb: slabe},
+		Modelka{ID: 2, Jmeno: "Výborné fotky", Hodnoceni: 3, SrdickaAlb: vyborne},
 		Modelka{ID: 4, Hodnoceni: 4}, Modelka{ID: 5, Hodnoceni: 4}, Modelka{ID: 6, Hodnoceni: 4})
 	// Samotné fotky nesoulad nezakládají
 	model := spocitatOblibenost(modelky, nil, time.Now())

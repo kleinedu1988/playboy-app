@@ -263,7 +263,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 		fotky := fotkyModelek[m.ID]
 		exportovanoFotek += len(fotky)
 		e := exportModelka{
-			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: hodnoceniUdaje{Pul: m.hodnoceniPul()},
+			Jmeno: m.Jmeno, Pridano: m.Pridano, DalsiJmena: m.DalsiJmena, Hodnoceni: hodnoceniUdaje{Pul: m.HodnoceniPul()},
 			NarozeniDatum: m.NarozeniDatum, UmrtiDatum: m.UmrtiDatum, NarozeniMisto: m.NarozeniMisto, Narodnost: m.Narodnost, Etnicita: m.Etnicita,
 			VyskaCm: cisloUdaje{Hodnota: m.VyskaCm}, VahaKg: cisloUdaje{Hodnota: m.VahaKg}, VlasyBarva: m.VlasyBarva, OciBarva: m.OciBarva,
 			ObvodHrudnikCm: cisloUdaje{Hodnota: m.ObvodHrudnikCm}, ObvodPasCm: cisloUdaje{Hodnota: m.ObvodPasCm}, ObvodBokyCm: cisloUdaje{Hodnota: m.ObvodBokyCm}, Miry: m.Miry,

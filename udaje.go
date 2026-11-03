@@ -109,6 +109,8 @@ func (h hodnoceniUdaje) MarshalYAML() (interface{}, error) {
 	return float64(h.Pul) / 2, nil
 }
 
+var vzorPulSrdicka = regexp.MustCompile(`^[0-5]([.,][05])?$`)
+
 func (h *hodnoceniUdaje) UnmarshalYAML(uzel *yaml.Node) error {
 	text := strings.TrimSpace(uzel.Value)
 	if text == smazatUdaj {
@@ -180,7 +182,7 @@ func nejblizsiKlic(klic string) string {
 	}
 	nejlepsi, vzdalenost, nejednoznacne := "", 99, false
 	for znamy := range znameKlice {
-		d := levenshtein(klic, znamy)
+		d := vzdalenostLevenshtein(klic, znamy)
 		if d < vzdalenost {
 			nejlepsi, vzdalenost, nejednoznacne = znamy, d, false
 		} else if d == vzdalenost {
@@ -188,33 +190,11 @@ func nejblizsiKlic(klic string) string {
 		}
 	}
 	limit := 2
-	if len([]rune(klic)) <= 4 {
+	if len(klic) <= 4 {
 		limit = 1
 	}
 	if vzdalenost > limit || nejednoznacne {
 		return ""
 	}
 	return nejlepsi
-}
-
-func levenshtein(a, b string) int {
-	ra, rb := []rune(a), []rune(b)
-	radek := make([]int, len(rb)+1)
-	for j := range radek {
-		radek[j] = j
-	}
-	for i := 1; i <= len(ra); i++ {
-		predchozi := radek[0]
-		radek[0] = i
-		for j := 1; j <= len(rb); j++ {
-			puvodni := radek[j]
-			cena := 1
-			if ra[i-1] == rb[j-1] {
-				cena = 0
-			}
-			radek[j] = min(radek[j]+1, radek[j-1]+1, predchozi+cena)
-			predchozi = puvodni
-		}
-	}
-	return radek[len(rb)]
 }

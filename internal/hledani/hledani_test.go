@@ -1,11 +1,16 @@
-package main
+package hledani
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 )
+
+func testOdpovidaHledani(m Modelka, vyhledavani string) bool {
+	return Pripravit(vyhledavani).Odpovida(&m, nil)
+}
 
 // Rozbor dotazu: NEBO s hodnotami v uvozovkách, desetinná srdíčka, edice i podle obálek
 func TestHledaniDotazy(t *testing.T) {
@@ -27,10 +32,10 @@ func TestHledaniDotazy(t *testing.T) {
 		{`edice:US rok:1971`, false, true},
 	}
 	for _, p := range pripady {
-		if g := odpovidaHledani(a, p.dotaz); g != p.a {
+		if g := testOdpovidaHledani(a, p.dotaz); g != p.a {
 			t.Errorf("%s: Anna %v, čekáno %v", p.dotaz, g, p.a)
 		}
-		if g := odpovidaHledani(b, p.dotaz); g != p.b {
+		if g := testOdpovidaHledani(b, p.dotaz); g != p.b {
 			t.Errorf("%s: Bára %v, čekáno %v", p.dotaz, g, p.b)
 		}
 	}
@@ -38,7 +43,7 @@ func TestHledaniDotazy(t *testing.T) {
 
 // Shoda s frontendem: stejné dotazy nad stejnými modelkami (testdata/hledani-shoda.json, frontend/test/filtr.test.js)
 func TestHledaniShodaSFrontendem(t *testing.T) {
-	data, err := os.ReadFile("testdata/hledani-shoda.json")
+	data, err := os.ReadFile("../../testdata/hledani-shoda.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,12 +60,34 @@ func TestHledaniShodaSFrontendem(t *testing.T) {
 	for _, d := range shoda.Dotazy {
 		var nalezene []int
 		for _, m := range shoda.Modelky {
-			if odpovidaHledani(m, d.Dotaz) {
+			if testOdpovidaHledani(m, d.Dotaz) {
 				nalezene = append(nalezene, m.ID)
 			}
 		}
 		if fmt.Sprint(nalezene) != fmt.Sprint(d.Najde) {
 			t.Errorf("%s: našlo %v, čekáno %v", d.Dotaz, nalezene, d.Najde)
+		}
+	}
+}
+
+// Rychlá cesta COLLATE BEZDIAKRITIKY dává stejné pořadí jako porovnání zjednodušených textů
+func TestPorovnatBezDiakritiky(t *testing.T) {
+	texty := []string{"", "a", "A", "ab", "Ab", "abc", "b", "Anna", "anna", "Anna Nováková", "Anna Novakova", "Žaneta", "zaneta", "Čestmír",
+		"cestmir", "Zoe", "zoe ", "Z", "_x", "1", "Ann", "Annb", "ANNA", "Éva", "Eva"}
+	znamenko := func(n int) int {
+		switch {
+		case n < 0:
+			return -1
+		case n > 0:
+			return 1
+		}
+		return 0
+	}
+	for _, a := range texty {
+		for _, b := range texty {
+			if x, y := znamenko(PorovnatBezDiakritiky(a, b)), znamenko(strings.Compare(Zjednodusit(a), Zjednodusit(b))); x != y {
+				t.Errorf("%q vs %q: %d, čekáno %d", a, b, x, y)
+			}
 		}
 	}
 }

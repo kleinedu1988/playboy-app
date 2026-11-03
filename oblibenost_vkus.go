@@ -430,7 +430,7 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 		skupiny++
 	}
 	maFotografa := false
-	for _, f := range strings.Split(m.fotografoveAlb, "\n") {
+	for _, f := range strings.Split(m.FotografoveAlb, "\n") {
 		if f = strings.TrimSpace(f); f != "" {
 			pridat("fotograf", klic("fotograf", f), f)
 			maFotografa = true
@@ -456,8 +456,8 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 	if postava.ma[prVyska] || postava.ma[prVaha] || postava.ma[prHrudnik] {
 		skupiny++
 	}
-	if m.fotekHodnocenych >= 2 {
-		u.cis[cvFotky], u.ma[cvFotky] = float64(m.srdciFotek)/float64(m.fotekHodnocenych), true
+	if m.FotekHodnocenych >= 2 {
+		u.cis[cvFotky], u.ma[cvFotky] = float64(m.SrdciFotek)/float64(m.FotekHodnocenych), true
 		skupiny++
 	}
 	u.skupin = skupiny

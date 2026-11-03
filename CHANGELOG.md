@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.21] – 2026-11-03
+
+### Změněno
+- **Chytřejší mezipaměť**: srdíčko, souboj v Porovnat, tagy z průvodce a ověření souborů už nezahazují seznam čísel, speciálů, kalendáře a fotografů – po každém porovnání se tak znovu nenačítají speciály. Stejné souběžné dotazy (stav sezóny, návrh sezóny, témata k odemčení, speciály, počet fotek k průvodci) se sloučí do jednoho volání.
+
+### Opraveno
+- Uložení tagů fotky, krok průvodce, jeho vrácení, volba období sezóny a souboj v tématu se braly jako čtení a nezneplatnily mezipaměť – pohledy pak mohly ukázat stav před změnou.
+
 ## [1.2.20] – 2026-11-03
 
 ### Změněno

@@ -25,8 +25,11 @@ export async function nacistSpecialy() {
     nastavitNazvySpecialu(await GetSpecialy());
 }
 
-poZmeneDat(() => {
-    nacistSpecialy();
+poZmeneDat((rozsah) => {
     modelky = null;
-    stav.stenaData = stav.coveryData = stav.kalendarData = stav.stavyVydaniData = stav.nejlepsiData = null;
+    stav.stenaData = stav.coveryData = stav.nejlepsiData = null;
+    // Hodnocení nemění vydání ani speciály
+    if (rozsah === 'hodnoceni') return;
+    nacistSpecialy();
+    stav.kalendarData = stav.stavyVydaniData = null;
 });

@@ -31,7 +31,6 @@ const CTENI = new Set([
     'GetPocetNehodnocenychFotek',
     'GetKatalogTagu',
     'GetTagyFotek',
-    'SetTagyFotek',
     'GetPoctyTagu',
     'GetNepotagovaneFotky',
     'GetTemataSezon',
@@ -40,12 +39,8 @@ const CTENI = new Set([
     'GetKrokyPruvodce',
     'GetFotkyKPruvodci',
     'GetPocetFotekKPruvodci',
-    'UlozitPruvodceFotky',
-    'VratitPruvodceFotky',
     'GetTemataKOdemceni',
     'GetFotkyKOdemceni',
-    'SetObdobiSezony',
-    'PorovnatModelkyVTematu',
     'GetNahledyTematu',
     'GetOblibenost',
     'GetPrehled',
@@ -77,14 +72,51 @@ const CTENI = new Set([
     'ZaznamenatZajem',
 ]);
 
+// Zápisy, které mění jen hodnocení (srdíčka, souboje, tagy průvodce, ověření souborů): seznamy vydání, speciálů,
+// kalendáře a fotografů zůstanou v mezipaměti (viz poZmeneDat v udalosti.js)
+const JEN_HODNOCENI = new Set([
+    'PorovnatModelky',
+    'PorovnatModelkyVTematu',
+    'VratitPorovnani',
+    'SetHodnoceni',
+    'SetHodnoceniFotek',
+    'SetHodnoceniOdhadem',
+    'SetTagyFotek',
+    'UlozitPruvodceFotky',
+    'VratitPruvodceFotky',
+    'ZkontrolovatDavku',
+    'ZkontrolovatSoubory',
+]);
+
+// Čtení, která si ve stejnou chvíli žádá víc pohledů (stav sezóny chce Porovnat, Síň slávy i vyhlášení naráz):
+// souběžná stejná volání dostanou jednu odpověď. Výsledek nesmí volající měnit na místě.
+const SLOUCIT = new Set(['GetSezona', 'GetNavrhSezony', 'GetTemataKOdemceni', 'GetSpecialy', 'GetPocetFotekKPruvodci']);
+const probihajici = new Map();
+
 function obalit(jmeno) {
     const funkce = App[jmeno];
+    if (SLOUCIT.has(jmeno)) {
+        return (...argumenty) => {
+            const klic = `${jmeno}${JSON.stringify(argumenty)}`;
+            let p = probihajici.get(klic);
+            if (!p) {
+                p = funkce(...argumenty);
+                probihajici.set(klic, p);
+                const uklid = () => { if (probihajici.get(klic) === p) probihajici.delete(klic); };
+                p.then(uklid, uklid);
+            }
+            return p;
+        };
+    }
     if (CTENI.has(jmeno)) return (...argumenty) => funkce(...argumenty);
+    const rozsah = JEN_HODNOCENI.has(jmeno) ? 'hodnoceni' : 'vse';
     return async (...argumenty) => {
         try {
             return await funkce(...argumenty);
         } finally {
-            ohlasitZmenuDat();
+            // Čtení zahájené před zápisem by vrátilo stará data
+            probihajici.clear();
+            ohlasitZmenuDat(rozsah);
         }
     };
 }

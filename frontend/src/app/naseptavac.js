@@ -38,10 +38,11 @@ let kalendar = null;
 let fotografove = null;
 let pametTextu = new WeakMap();
 
-poZmeneDat(() => {
+poZmeneDat((rozsah) => {
+    pametTextu = new WeakMap();
+    if (rozsah === 'hodnoceni') return;
     kalendar = null;
     fotografove = null;
-    pametTextu = new WeakMap();
 });
 
 // Zjištění aktivního slova před textovým kurzorem (toleruje i mezeru za dvojtečkou u filtru, např. „vlasy: blond“)

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.51] – 2026-11-03
+
+### Přidáno
+- **Panel průvodce jde přesunout**: v Hodnotit › Průvodce se panel s tagy přesouvá tažením myší za úchyt ⠿ vlevo v hlavičce (nebo za volné místo hlavičky) a program si polohu pamatuje i po zavření prohlížeče a dalším spuštění. Panel nevyjede z okna; dvojklik na úchyt ho vrátí na výchozí místo pod středem. Ovládání klávesnicí se nemění.
+
 ## [1.2.50] – 2026-11-03
 
 ### Přidáno

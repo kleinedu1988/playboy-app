@@ -368,12 +368,77 @@ function prepnoutSkryti() {
 
 // ——— Pásek ———
 
+// Poloha panelu: střed v podílu šířky a výšky prohlížeče, pamatuje se (přesun tažením za úchyt nebo hlavičku;
+// dvojklik na úchyt vrátí výchozí místo pod středem)
+const KLIC_POLOHY = 'pruvodcePoloha';
+const VYCHOZI_POLOHA = { x: 0.5, y: 0.7 };
+function nacistPolohu() {
+    try {
+        const p = JSON.parse(localStorage.getItem(KLIC_POLOHY) || 'null');
+        if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) return p;
+    } catch { /* výchozí */ }
+    return VYCHOZI_POLOHA;
+}
+function nastavitPolohu({ x, y }) {
+    pasek.style.setProperty('--pr-x', `${(x * 100).toFixed(2)}%`);
+    pasek.style.setProperty('--pr-y', `${(y * 100).toFixed(2)}%`);
+}
+function ulozitPolohu(p) {
+    try {
+        if (p) localStorage.setItem(KLIC_POLOHY, JSON.stringify(p));
+        else localStorage.removeItem(KLIC_POLOHY);
+    } catch { /* jen pro toto spuštění */ }
+}
+// Celý panel zůstane v prohlížeči (i po zmenšení okna)
+function omezitPolohu({ x, y }) {
+    const okno = lightbox.getBoundingClientRect();
+    const r = pasek.getBoundingClientRect();
+    if (!okno.width || !okno.height) return { x, y };
+    const pulX = Math.min(0.5, r.width / 2 / okno.width);
+    const pulY = Math.min(0.5, r.height / 2 / okno.height);
+    return { x: Math.min(Math.max(x, pulX), 1 - pulX), y: Math.min(Math.max(y, pulY), 1 - pulY) };
+}
+function pripravitTazeni() {
+    let tah = null;
+    pasek.addEventListener('pointerdown', (e) => {
+        const cil = /** @type {HTMLElement} */ (e.target);
+        if (e.button !== 0 || pasek.classList.contains('skryty') || !cil.closest('.pr-uchyt, .pr-hlava') || cil.closest('button')) return;
+        const r = pasek.getBoundingClientRect();
+        tah = { dx: e.clientX - (r.left + r.width / 2), dy: e.clientY - (r.top + r.height / 2), id: e.pointerId };
+        pasek.setPointerCapture(e.pointerId);
+        pasek.classList.add('tazeny');
+        e.preventDefault();
+    });
+    pasek.addEventListener('pointermove', (e) => {
+        if (!tah || e.pointerId !== tah.id) return;
+        const okno = lightbox.getBoundingClientRect();
+        nastavitPolohu(omezitPolohu({ x: (e.clientX - tah.dx - okno.left) / okno.width, y: (e.clientY - tah.dy - okno.top) / okno.height }));
+    });
+    const konec = (e) => {
+        if (!tah || e.pointerId !== tah.id) return;
+        tah = null;
+        pasek.classList.remove('tazeny');
+        const okno = lightbox.getBoundingClientRect();
+        const r = pasek.getBoundingClientRect();
+        ulozitPolohu(omezitPolohu({ x: (r.left + r.width / 2 - okno.left) / okno.width, y: (r.top + r.height / 2 - okno.top) / okno.height }));
+    };
+    pasek.addEventListener('pointerup', konec);
+    pasek.addEventListener('pointercancel', konec);
+    pasek.addEventListener('dblclick', (e) => {
+        if (!/** @type {HTMLElement} */ (e.target).closest('.pr-uchyt')) return;
+        ulozitPolohu(null);
+        nastavitPolohu(VYCHOZI_POLOHA);
+    });
+}
+
 function pripravitPasek() {
     if (pasek) return;
     pasek = document.createElement('div');
     pasek.id = 'lbPruvodce';
     pasek.className = 'lb-pruvodce hidden';
     lightbox.append(pasek);
+    nastavitPolohu(nacistPolohu());
+    pripravitTazeni();
     lightbox.addEventListener('mousemove', () => { if (stav.lbPruvodce) probudit(); });
     // Klik na pásek nesmí zavřít prohlížeč ani zapnout lupu
     pasek.addEventListener('click', (e) => {
@@ -431,7 +496,7 @@ export function vykreslitPasek() {
     const prepinacJen = `<button type="button" data-pr-jen title="${jenSrdicka ? 'Zpět na celý průvodce (J)' : 'Jen srdíčka – tagy počkají na průvodce (J)'}"><kbd>J</kbd> ${jenSrdicka ? 'celý průvodce' : 'jen srdíčka'}</button>`;
     if (jenSrdicka) {
         pasek.innerHTML = `
-        <div class="pr-hlava"><span class="pr-krok">♥</span><b>Jen srdíčka</b>
+        <div class="pr-hlava"><span class="pr-uchyt" title="Přesunout tažením · dvojklik vrátí na místo" aria-hidden="true">⠿</span><span class="pr-krok">♥</span><b>Jen srdíčka</b>
             <span class="pr-napoveda">1–5 uloží srdíčka a ukáže další · tagy doplníš v průvodci</span>
             <button type="button" class="pr-skryt" data-pr-skryt title="Skrýt průvodce (H)"><kbd>H</kbd></button></div>
         <div class="pr-moznosti">${[1, 2, 3, 4, 5].map(srdce).join('')}</div>
@@ -461,7 +526,7 @@ export function vykreslitPasek() {
             : `číslice přepíná · ↵ dál${krok.povinny ? '' : ' · 0 žádná'}${navrh ? ' · obrys = z alba' : ''}`;
     pasek.innerHTML = `
         <div class="pr-hlava">
-            <span class="pr-krok">${poradi}/${viditelne.length}</span><b>${esc(krok.nazev)}</b>
+            <span class="pr-uchyt" title="Přesunout tažením · dvojklik vrátí na místo" aria-hidden="true">⠿</span><span class="pr-krok">${poradi}/${viditelne.length}</span><b>${esc(krok.nazev)}</b>
             ${s.maSrdicka ? `<span class="pr-ma" title="Fotka už má srdíčka – krok srdíček se přeskočí">${'♥'.repeat(s.hodnoceni)}</span>` : ''}
             <span class="pr-tecky" aria-hidden="true">${tecky}</span>
             ${cil ? `<span class="pr-cil" title="${esc(`Odemknout téma: soutěží ${cil.soutezici} z ${cil.tema.minModelek} potřebných modelek; ${String(p.jmenoModelky || '').split(' ')[0]} má ${cil.fotek.get(p.modelkaId) ?? 0} z ${cil.tema.minFotek} fotek tématu`)}">🔓 ${esc(cil.tema.ikona || '')} ${esc(cil.tema.nazev)} · ${cil.soutezici}/${cil.tema.minModelek}${cil.fotek.has(p.modelkaId) ? ` · ${esc(String(p.jmenoModelky || '').split(' ')[0])} ${cil.fotek.get(p.modelkaId)}/${cil.tema.minFotek}` : ''}</span>` : ''}

@@ -13188,8 +13188,9 @@ button.pas-kapsle:focus-visible {
    možnosti s číslicemi (plná = vybraná, obrys = z minulé fotky alba, ztlumená = nehodí se), srdíčka v posledním kroku */
 .lb-pruvodce {
     position: absolute;
-    top: 70%;
-    left: 50%;
+    /* Poloha středu panelu (přesun tažením, pruvodce-fotky.js) */
+    top: var(--pr-y, 70%);
+    left: var(--pr-x, 50%);
     z-index: 30;
     display: flex;
     flex-direction: column;
@@ -13232,6 +13233,7 @@ button.pas-kapsle:focus-visible {
 /* Skrytý průvodce (H): jen malé tlačítko dole */
 .lb-pruvodce.skryty {
     top: auto;
+    left: 50%;
     bottom: 16px;
     width: auto;
     padding: 4px;
@@ -13257,6 +13259,33 @@ button.pas-kapsle:focus-visible {
     align-items: center;
     gap: 10px;
     font-size: 13px;
+    cursor: grab;
+    user-select: none;
+}
+
+/* Úchyt pro přesun panelu tažením */
+.pr-uchyt {
+    margin: -4px -2px -4px -6px;
+    padding: 2px 4px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 15px;
+    line-height: 1;
+}
+
+.pr-uchyt:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-main);
+}
+
+.lb-pruvodce.tazeny,
+.lb-pruvodce.tazeny .pr-hlava {
+    cursor: grabbing;
+    transition: none;
+}
+
+.pr-hlava button {
+    cursor: pointer;
 }
 
 .pr-hlava b {

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.54] – 2026-11-03
+
+### Změněno
+- **Balíček `internal/uceni` a optimalizace modelů učení a otisků**: sdílené modely pro texty (`SlovnikHodnot`, Jaro–Winkler, Bayesovské skládání zdrojů), profil postavy (`RegreseObvodu`, `SousedePostavy`), FNV-64a otiskovač a správa databáze učení jsou vyčleněné do samostatného balíčku `internal/uceni`. Přenos databáze učení do paměti běží v jediné transakci s připraveným příkazem místo jednotlivých dotazů, odhad podle nejbližších sousedů řadí kandidáty přímo na zásobníku bez alokací na haldě a počítá váhu s odmocninou jen jednou, lineární regrese nevytváří mapu odlehlých řádků, otisk modelky nevolá `fmt.Sprint` a `GetStavUceni` zjišťuje počet porovnání dotazem `SELECT COUNT(*)` místo načtení celé tabulky do paměti.
+
 ## [1.2.53] – 2026-11-03
 
 ### Změněno

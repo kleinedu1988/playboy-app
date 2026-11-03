@@ -245,7 +245,7 @@ func kontrolovatPostavu(m Modelka, r rozsahyKontroly, pridat pridatNalez) {
 	if m.VyskaCm > 0 && m.VahaKg > 0 {
 		metry := float64(m.VyskaCm) / 100
 		if bmi := float64(m.VahaKg) / (metry * metry); r[prBmi].mimo(bmi) {
-			pridat(m, "ok-bmi", "bmi", "inputVaha", fmt.Sprintf("BMI z výšky a váhy vychází %s – překlep ve výšce nebo váze?", priznaky[prBmi].cislo(bmi)))
+			pridat(m, "ok-bmi", "bmi", "inputVaha", fmt.Sprintf("BMI z výšky a váhy vychází %s – překlep ve výšce nebo váze?", priznaky[prBmi].Cislo(bmi)))
 		}
 	}
 	var chyby []string
@@ -259,7 +259,7 @@ func kontrolovatPostavu(m Modelka, r rozsahyKontroly, pridat pridatNalez) {
 			if r[o.j].naucene {
 				slovo = "ve sbírce obvykle"
 			}
-			chyby = append(chyby, fmt.Sprintf("%s %d cm (%s %s)", priznaky[o.j].nazev, o.h, slovo, r[o.j].text(priznaky[o.j])))
+			chyby = append(chyby, fmt.Sprintf("%s %d cm (%s %s)", priznaky[o.j].Nazev, o.h, slovo, r[o.j].text(priznaky[o.j])))
 		}
 	}
 	if m.ObvodPasCm > 0 && (m.ObvodBokyCm > 0 && m.ObvodPasCm >= m.ObvodBokyCm || m.ObvodHrudnikCm > 0 && m.ObvodPasCm >= m.ObvodHrudnikCm) {

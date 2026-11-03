@@ -566,14 +566,14 @@ func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam, davkaZajmu
 
 func otiskOblibenostiZ(otiskModelek string, porovnani []porovnaniZaznam, davkaZajmu int) string {
 	o := novyOtiskovac()
-	o.text(verzeOblibenosti, time.Now().Format("2006-01-02"), otiskModelek)
-	o.cisla(davkaZajmu)
+	o.Text(verzeOblibenosti, time.Now().Format("2006-01-02"), otiskModelek)
+	o.Cisla(davkaZajmu)
 	posledni := int64(0)
 	if len(porovnani) > 0 {
 		posledni = porovnani[len(porovnani)-1].id
 	}
-	o.cisla(len(porovnani), int(posledni))
-	return o.hex()
+	o.Cisla(len(porovnani), int(posledni))
+	return o.Hex()
 }
 
 // Otisk údajů modelek, ze kterých se oblíbenost počítá (i srdíčka fotek a fotografové)
@@ -581,14 +581,14 @@ func otiskModelekOblibenosti(modelky []Modelka) string {
 	o := novyOtiskovac()
 	for i := range modelky {
 		m := &modelky[i]
-		o.modelka(m)
-		o.cisla(m.FotekHodnocenych, m.SrdciFotek, len(m.SrdickaAlb))
+		o.Modelka(m)
+		o.Cisla(m.FotekHodnocenych, m.SrdciFotek, len(m.SrdickaAlb))
 		for _, c := range m.SrdickaAlb {
-			o.cisla(c[:]...)
+			o.Cisla(c[:]...)
 		}
-		o.text(m.FotografoveAlb)
+		o.Text(m.FotografoveAlb)
 	}
-	return o.hex()
+	return o.Hex()
 }
 
 func spocitatOblibenost(modelky []Modelka, porovnani []porovnaniZaznam, nyni time.Time) *modelOblibenosti {

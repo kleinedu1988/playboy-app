@@ -47,10 +47,10 @@ func (a *App) GetGalerieNejlepsich(d DotazNejlepsich) GalerieNejlepsich {
 	otisk := novyOtiskovac()
 	for _, m := range modelky {
 		oblibenost[m.ID] = m.Oblibenost
-		otisk.cisla(m.ID)
-		otisk.text(strconv.FormatFloat(m.Oblibenost, 'g', -1, 64))
+		otisk.Cisla(m.ID)
+		otisk.Text(strconv.FormatFloat(m.Oblibenost, 'g', -1, 64))
 	}
-	klic := fmt.Sprintf("%p|%s|%d|%s|%d|%s|%v|%d|%s", a.snimekVPameti(), otisk.hex(), d.Min, d.Typ, d.Dekada, d.Razeni, d.Prokladat, d.Seed, d.Hledat)
+	klic := fmt.Sprintf("%p|%s|%d|%s|%d|%s|%v|%d|%s", a.snimekVPameti(), otisk.Hex(), d.Min, d.Typ, d.Dekada, d.Razeni, d.Prokladat, d.Seed, d.Hledat)
 	pametNejlepsich.Lock()
 	fronta, modelek := pametNejlepsich.fronta, pametNejlepsich.modelek
 	nalezeno := pametNejlepsich.klic == klic

@@ -2,183 +2,54 @@ package main
 
 import (
 	"database/sql"
-	"encoding/binary"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	ucenibal "playboy-app/internal/uceni"
 )
 
-// Databáze učení: vlastní soubor SQLite vedle sbírky (playboy.db → playboy-uceni.db). Pamatuje si, co se
-// strojové učení dozvědělo z rozhodnutí uživatele, a mezipaměť naučených výsledků (celkový popis v docs/UCENI.md):
-//
-//   - deník událostí: každé přijetí, odmítnutí a jeho zrušení, oprava navržené hodnoty před uložením,
-//     „V pořádku“ a „Znovu kontrolovat“ u nálezu kontroly a nález, který zmizel opravou údaje;
-//   - odmítnuté hodnoty návrhů (odmítnutí „Kanada“ neblokuje jiné hodnoty téhož údaje);
-//   - zápisy, na které uživatel návrh opravil (jen jiný tvar téže hodnoty, např. „USA“ → „Spojené státy“);
-//   - mezipaměť návrhů a nálezů podle otisku sbírky, aby se Přehled při každém otevření nepočítal znovu.
-//
-// Z deníku se počítá kalibrace zdrojů návrhů a prahy kontroly. Sbírka se databáze učení nikdy netýká: má vlastní
-// číslo schématu (user_version) a úpravy, nezávislé na zmrazeném schématu sbírky. Chybí-li soubor, vznikne;
-// je-li poškozený, odloží se a začne se znovu; nejde-li zapisovat (nebo je z novější verze), učení běží jen
-// v paměti (do zavření programu). Smazání souboru (nebo ZapomenoutUceni) zapomene jen naučené z rozhodnutí;
-// klíče „ok-…“ a „nv-…“ ve sbírce zůstanou. Nic z toho neopouští počítač.
+// Databáze učení: vlastní soubor SQLite vedle sbírky (playboy.db → playboy-ucenibal.db). Pamatuje si, co se
+// strojové učení dozvědělo z rozhodnutí uživatele, a mezipaměť naučených výsledků (celkový popis v docs/UCENI.md).
+// Nízkoúrovňová správa schématu, přenos do paměti, FNV-64a otisk a kalibrace zdrojů jsou v balíčku internal/ucenibal.
 
-// Úpravy schématu databáze učení (jako u sbírky: hotové se nemění, nové se přidávají na konec)
-var migraceUceni = []string{
-	`CREATE TABLE stav (klic TEXT PRIMARY KEY, hodnota TEXT NOT NULL);
-	CREATE TABLE udalosti (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		cas TEXT NOT NULL,
-		druh TEXT NOT NULL,
-		modelka_id INTEGER NOT NULL,
-		album TEXT NOT NULL DEFAULT '',
-		typ TEXT NOT NULL DEFAULT '',
-		pole TEXT NOT NULL,
-		navrh TEXT NOT NULL DEFAULT '',
-		hodnota TEXT NOT NULL DEFAULT '',
-		zdroj TEXT NOT NULL DEFAULT '',
-		jistota REAL NOT NULL DEFAULT 0,
-		jistota_vzorce REAL NOT NULL DEFAULT 0
-	);
-	CREATE INDEX udalosti_druh ON udalosti(druh);
-	CREATE TABLE odmitnute (
-		modelka_id INTEGER NOT NULL,
-		album TEXT NOT NULL,
-		typ TEXT NOT NULL,
-		pole TEXT NOT NULL,
-		klic TEXT NOT NULL,
-		hodnota TEXT NOT NULL,
-		cas TEXT NOT NULL,
-		PRIMARY KEY (modelka_id, album, typ, pole, klic)
-	);
-	CREATE TABLE zapisy (
-		pole TEXT NOT NULL,
-		klic TEXT NOT NULL,
-		zapis TEXT NOT NULL,
-		pocet INTEGER NOT NULL DEFAULT 1,
-		PRIMARY KEY (pole, klic, zapis)
-	);
-	CREATE TABLE mezipamet (druh TEXT PRIMARY KEY, otisk TEXT NOT NULL, data BLOB NOT NULL, cas TEXT NOT NULL);`,
-	// Úprava č. 2: porovnání dvojic modelek „Která se ti líbí víc?“ (oblibenost.go): čas, modelky A a B, výsledek
-	// (a, b, remiza) a jejich srdíčka v tu chvíli (po polovinách)
-	`CREATE TABLE porovnani (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		cas TEXT NOT NULL,
-		a INTEGER NOT NULL,
-		b INTEGER NOT NULL,
-		vysledek TEXT NOT NULL CHECK (vysledek IN ('a', 'b', 'remiza')),
-		hodnoceni_a REAL NOT NULL DEFAULT 0,
-		hodnoceni_b REAL NOT NULL DEFAULT 0
-	);`,
-	// Úprava č. 3: zájem o modelky (oblibenost_zajem.go) – otevření profilu a čas prohlížení jejích fotek – a denní
-	// snímky oblíbenosti (pořadí a trend)
-	`CREATE TABLE zajem (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		cas TEXT NOT NULL,
-		modelka_id INTEGER NOT NULL,
-		druh TEXT NOT NULL CHECK (druh IN ('profil', 'fotky')),
-		sekund INTEGER NOT NULL DEFAULT 0
-	);
-	CREATE INDEX zajem_modelka ON zajem(modelka_id);
-	CREATE TABLE historie_oblibenosti (
-		den TEXT NOT NULL,
-		modelka_id INTEGER NOT NULL,
-		oblibenost REAL NOT NULL,
-		poradi INTEGER NOT NULL,
-		PRIMARY KEY (den, modelka_id)
-	);`,
-	// Úprava č. 4: držitelky úrovní Top N po každém porovnání (oblibenost_urovne.go, obhajoba místa); porovnani_id =
-	// poslední porovnání, po kterém platí (vrácení porovnání vrátí i držitelky), modelka_id 0 = značka stavu
-	`CREATE TABLE drzitelky_urovni (
-		porovnani_id INTEGER NOT NULL,
-		modelka_id INTEGER NOT NULL,
-		uroven INTEGER NOT NULL,
-		PRIMARY KEY (porovnani_id, modelka_id)
-	);`,
-	// Úprava č. 5: kronika síně slávy (oblibenost_slava.go) – vstupy do top 10, výpadky, obhajoby a nové jedničky;
-	// porovnani_id = poslední porovnání v době zápisu (vrácení porovnání smaže i události po něm)
-	`CREATE TABLE kronika_slavy (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		cas TEXT NOT NULL,
-		porovnani_id INTEGER NOT NULL,
-		modelka_id INTEGER NOT NULL,
-		druh TEXT NOT NULL,
-		misto INTEGER NOT NULL DEFAULT 0,
-		souperka INTEGER NOT NULL DEFAULT 0
-	);`,
-	// Úprava č. 6: srdíčka daná přijetím odhadu vkusu v rychlém hodnocení (oblibenost_hodnoceni.go) – model vkusu
-	// se z nich neučí, dokud je nepotvrdí porovnání (jinak by se učil sám ze sebe)
-	`CREATE TABLE prevzate_odhady (
-		modelka_id INTEGER PRIMARY KEY,
-		hodnoceni REAL NOT NULL,
-		cas TEXT NOT NULL
-	);`,
-	// Úprava č. 7: uzavřené sezóny (oblibenost_sezony.go) – měsíc, Favoritka (0 = bez titulu), Miláček (volba
-	// uživatele, 0 = žádný), body Favoritky a počet soubojů v sezóně
-	`CREATE TABLE sezony (
-		mesic TEXT PRIMARY KEY,
-		favoritka INTEGER NOT NULL DEFAULT 0,
-		milacek INTEGER NOT NULL DEFAULT 0,
-		body INTEGER NOT NULL DEFAULT 0,
-		souboju INTEGER NOT NULL DEFAULT 0,
-		uzavreno TEXT NOT NULL
-	);`,
-	// Úprava č. 8: tematické sezóny (oblibenost_temata.go) – téma měsíce (klíč podmínek, "" = Klasická) a téma,
-	// ve kterém se porovnání odehrálo ("" = mimo téma)
-	`CREATE TABLE temata_sezon (
-		mesic TEXT PRIMARY KEY,
-		tema TEXT NOT NULL,
-		zvoleno TEXT NOT NULL
-	);
-	ALTER TABLE porovnani ADD COLUMN tema TEXT NOT NULL DEFAULT '';`,
-	// Úprava č. 9: sezóny jako období různé délky (oblibenost_obdobi.go) – od (první den, klíč sezóny), do (den po
-	// posledním), téma; témata měsíců z úpravy č. 8 se převedou na období celého měsíce;
-	// uzavřená sezóna si pamatuje téma, ve kterém opravdu běžela
-	`CREATE TABLE obdobi_sezon (
-		od TEXT PRIMARY KEY,
-		do TEXT NOT NULL,
-		tema TEXT NOT NULL DEFAULT '',
-		zvoleno TEXT NOT NULL DEFAULT ''
-	);
-	INSERT INTO obdobi_sezon (od, do, tema, zvoleno) SELECT mesic || '-01', date(mesic || '-01', '+1 month'), tema, zvoleno FROM temata_sezon;
-	ALTER TABLE sezony ADD COLUMN tema TEXT NOT NULL DEFAULT '';`,
-}
-
-// Tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti
-// a které ZapomenoutUceni vyprázdní
-var tabulkyUceni = []string{"udalosti", "odmitnute", "zapisy"}
-
-// Oblíbenost (porovnání dvojic, zájem a historie): do paměti se přenesou také, ale zapomínají se zvlášť
-// (ZapomenoutPorovnani)
-var tabulkyPorovnani = []string{"porovnani", "zajem", "historie_oblibenosti", "drzitelky_urovni", "kronika_slavy", "prevzate_odhady", "sezony"}
-
-// Druhy událostí deníku
-const (
-	udalostPrijato       = "prijato"        // návrh přijat beze změny
-	udalostOdmitnuto     = "odmitnuto"      // navržená hodnota odmítnuta
-	udalostZpet          = "zpet"           // odmítnutí zrušeno
-	udalostOpraveno      = "opraveno"       // navržená hodnota před uložením upravena
-	udalostVPoradku      = "v-poradku"      // nález kontroly označen „V pořádku“ (planý poplach)
-	udalostZnovu         = "znovu"          // „V pořádku“ zrušeno
-	udalostNalezOpraveny = "nalez-opraveny" // nález zmizel, protože uživatel údaj modelky opravil
+var (
+	migraceUceni     = ucenibal.MigraceUceni
+	tabulkyUceni     = ucenibal.TabulkyUceni
+	tabulkyPorovnani = ucenibal.TabulkyPorovnani
 )
 
-// Verze výpočtu: změna kódu modelů (jiné výsledky ze stejných údajů) zneplatní uloženou mezipaměť
-const verzeModeluUceni = "uceni-1"
-
-// Kalibrace a prahy
 const (
-	vahaKalibrace     = 8     // předpoklad zdroje váží jako 8 rozhodnutí
-	polocasZapomneni  = 365.0 // dny: starší rozhodnutí váží méně (po roce polovinou)
-	vahaPredpokladuOk = 6.0   // přesnost pravidla kontroly: předpoklad Beta(4, 2), tedy 2/3 nálezů je skutečná chyba
-	pocetZalohUceni   = 5
+	udalostPrijato       = ucenibal.UdalostPrijato
+	udalostOdmitnuto     = ucenibal.UdalostOdmitnuto
+	udalostZpet          = ucenibal.UdalostZpet
+	udalostOpraveno      = ucenibal.UdalostOpraveno
+	udalostVPoradku      = ucenibal.UdalostVPoradku
+	udalostZnovu         = ucenibal.UdalostZnovu
+	udalostNalezOpraveny = ucenibal.UdalostNalezOpraveny
+
+	verzeModeluUceni       = ucenibal.VerzeModeluUceni
+	predponaOtiskuKontroly = ucenibal.PredponaOtiskuKontroly
+
+	vahaKalibrace     = ucenibal.VahaKalibrace
+	polocasZapomneni  = ucenibal.PolocasZapomneni
+	vahaPredpokladuOk = ucenibal.VahaPredpokladuOk
+	pocetZalohUceni   = ucenibal.PocetZalohUceni
+)
+
+type (
+	kalibraceZdroje = ucenibal.KalibraceZdroje
+	udalostUceni    = ucenibal.UdalostUceni
+	otiskovac       = ucenibal.Otiskovac
+	StavUceni       = ucenibal.StavUceni
+	ZdrojUceni      = ucenibal.ZdrojUceni
 )
 
 // Parametry připojení (testy je mohou změnit, např. na soubor jen pro čtení: předpona „file:“ a mode=ro)
@@ -229,9 +100,7 @@ type ulozeneNalezy struct {
 	Modelky map[string]string `json:"modelky"` // ID modelky → otisk jejích údajů
 }
 
-func souborUceni(cestaSbirky string) string {
-	return strings.TrimSuffix(cestaSbirky, ".db") + "-uceni.db"
-}
+func souborUceni(cestaSbirky string) string { return ucenibal.SouborUceni(cestaSbirky) }
 
 func varovatUceni(format string, args ...any) {
 	fmt.Printf("Varování (databáze učení): "+format+"\n", args...)
@@ -244,155 +113,45 @@ func (u *uceni) zajistit() *sql.DB {
 	}
 	u.otevreno = true
 	if u.cestaSbirky == "" {
-		u.db = otevritUceniVPameti(nil)
+		u.db = ucenibal.OtevritUceniVPameti(nil, migraceUceni)
 		return u.db
 	}
 	cesta := souborUceni(u.cestaSbirky)
-	db, err := otevritSouborUceni(cesta)
+	db, err := ucenibal.OtevritSouborUceni(cesta, predponaUceni, dsnUceni, migraceUceni, kontrolaSouboru, ted())
 	if err == nil {
 		u.db, u.cesta = db, cesta
 		u.nacistGeneraci()
 		return u.db
 	}
 	switch e := err.(type) {
-	case chybaUceni:
-		if e.poskozena {
+	case ucenibal.ChybaUceni:
+		if e.Poskozena {
 			// Poškozený soubor se odloží (ne smaže) a začne se znovu
 			odlozena := fmt.Sprintf("%s.poskozena-%s", cesta, time.Now().Format("20060102-150405"))
 			if os.Rename(cesta, odlozena) == nil {
-				varovatUceni("soubor %s je poškozený (%v), odložen jako %s, učení začíná znovu", cesta, e.err, odlozena)
-				if db, err := otevritSouborUceni(cesta); err == nil {
+				varovatUceni("soubor %s je poškozený (%v), odložen jako %s, učení začíná znovu", cesta, e.Err, odlozena)
+				if db, err := ucenibal.OtevritSouborUceni(cesta, predponaUceni, dsnUceni, migraceUceni, kontrolaSouboru, ted()); err == nil {
 					u.db, u.cesta = db, cesta
 					u.nacistGeneraci()
 					return u.db
 				}
 			}
 		}
-		varovatUceni("soubor %s nejde použít (%v), učení běží jen v paměti", cesta, e.err)
-		if e.prenest {
-			u.db = otevritUceniVPameti(e.zdroj)
+		varovatUceni("soubor %s nejde použít (%v), učení běží jen v paměti", cesta, e.Err)
+		if e.Prenest {
+			u.db = ucenibal.OtevritUceniVPameti(e.Zdroj, migraceUceni)
+		}
+		if e.Zdroj != nil {
+			e.Zdroj.Close()
 		}
 	default:
 		varovatUceni("soubor %s nejde otevřít (%v), učení běží jen v paměti", cesta, err)
 	}
-	if e, ok := err.(chybaUceni); ok && e.zdroj != nil {
-		e.zdroj.Close()
-	}
 	if u.db == nil {
-		u.db = otevritUceniVPameti(nil)
+		u.db = ucenibal.OtevritUceniVPameti(nil, migraceUceni)
 	}
 	u.nacistGeneraci()
 	return u.db
-}
-
-// Chyba otevření souboru učení: poškozený, z novější verze nebo jen pro čtení (pak jde naučené přenést do paměti)
-type chybaUceni struct {
-	err       error
-	poskozena bool
-	prenest   bool
-	zdroj     *sql.DB
-}
-
-func (e chybaUceni) Error() string { return e.err.Error() }
-
-func otevritSouborUceni(cesta string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite", predponaUceni+cesta+dsnUceni)
-	if err == nil {
-		err = db.Ping()
-	}
-	if err != nil {
-		if db != nil {
-			db.Close()
-		}
-		if strings.Contains(err.Error(), "not a database") || strings.Contains(err.Error(), "malformed") {
-			return nil, chybaUceni{err: err, poskozena: true}
-		}
-		return nil, err
-	}
-	db.SetMaxOpenConns(1)
-	if stav := kontrolaSouboru(db); stav != "" {
-		db.Close()
-		return nil, chybaUceni{err: fmt.Errorf("%s", stav), poskozena: true}
-	}
-	var verze int
-	if err := db.QueryRow("PRAGMA user_version").Scan(&verze); err != nil {
-		db.Close()
-		return nil, chybaUceni{err: err, poskozena: true}
-	}
-	if verze > len(migraceUceni) {
-		db.Close()
-		return nil, chybaUceni{err: fmt.Errorf("databáze učení je z novější verze (schéma %d, program zná %d)", verze, len(migraceUceni))}
-	}
-	if err := migrovatUceni(db, verze); err != nil {
-		return nil, chybaUceni{err: err, prenest: verze == len(migraceUceni), zdroj: db}
-	}
-	// Zkouška zápisu: soubor jen pro čtení se pozná až teď
-	if _, err := db.Exec("INSERT OR REPLACE INTO stav (klic, hodnota) VALUES ('otevreno', ?)", ted()); err != nil {
-		return nil, chybaUceni{err: err, prenest: true, zdroj: db}
-	}
-	os.Chmod(cesta, 0o600)
-	return db, nil
-}
-
-func migrovatUceni(db *sql.DB, verze int) error {
-	for cislo := verze + 1; cislo <= len(migraceUceni); cislo++ {
-		tx, err := db.Begin()
-		if err != nil {
-			return err
-		}
-		if _, err := tx.Exec(migraceUceni[cislo-1]); err != nil {
-			tx.Rollback()
-			return fmt.Errorf("úprava databáze učení č. %d: %w", cislo, err)
-		}
-		if _, err := tx.Exec(fmt.Sprintf("PRAGMA user_version = %d", cislo)); err != nil {
-			tx.Rollback()
-			return err
-		}
-		if err := tx.Commit(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Databáze učení v paměti; se zdrojem (soubor jen pro čtení) se do ní přenese naučené
-func otevritUceniVPameti(zdroj *sql.DB) *sql.DB {
-	db, err := sql.Open("sqlite", ":memory:")
-	if err != nil {
-		return nil
-	}
-	db.SetMaxOpenConns(1) // každé spojení by mělo vlastní prázdnou paměť
-	if err := migrovatUceni(db, 0); err != nil {
-		db.Close()
-		return nil
-	}
-	if zdroj == nil {
-		return db
-	}
-	for _, tabulka := range append(append([]string(nil), tabulkyUceni...), tabulkyPorovnani...) {
-		radky, err := zdroj.Query("SELECT * FROM " + tabulka)
-		if err != nil {
-			continue
-		}
-		sloupce, _ := radky.Columns()
-		otazniky := strings.TrimSuffix(strings.Repeat("?, ", len(sloupce)), ", ")
-		var hodnoty [][]any
-		for radky.Next() {
-			h := make([]any, len(sloupce))
-			ukazatele := make([]any, len(sloupce))
-			for i := range h {
-				ukazatele[i] = &h[i]
-			}
-			if radky.Scan(ukazatele...) == nil {
-				hodnoty = append(hodnoty, h)
-			}
-		}
-		radky.Close()
-		for _, h := range hodnoty {
-			db.Exec("INSERT OR IGNORE INTO "+tabulka+" ("+strings.Join(sloupce, ", ")+") VALUES ("+otazniky+")", h...)
-		}
-	}
-	return db
 }
 
 func (u *uceni) nacistGeneraci() {
@@ -429,11 +188,10 @@ func (u *uceni) zapsat(druh string, modelka int, album, typ, pole, navrh, hodnot
 
 // Klíč návrhu pro dohledání zdroje a jistoty (modelka, album, typ, údaj, hodnota)
 func klicNavrhuUceni(modelka int, album, typ, pole, hodnota string) string {
-	return fmt.Sprintf("%d\x00%s\x00%s\x00%s\x00%s", modelka, album, typ, pole, klicHodnoty(pole, hodnota))
+	return strconv.Itoa(modelka) + "\x00" + album + "\x00" + typ + "\x00" + pole + "\x00" + klicHodnoty(pole, hodnota)
 }
 
-// Událost návrhu se zdroji a jistotou z posledního výpočtu (rozhraní posílá zpět, co dostalo; na co se
-// spolehnout nedá, se dohledá)
+// Událost návrhu se zdroji a jistotou z posledního výpočtu
 func (a *App) zaznamenatNavrh(druh string, n NavrhDoplneni, vysledna string) {
 	u := a.uc
 	if u == nil {
@@ -448,17 +206,9 @@ func (a *App) zaznamenatNavrh(druh string, n NavrhDoplneni, vysledna string) {
 	u.zapsat(druh, n.ModelkaID, n.Album, n.Typ, n.Pole, strings.TrimSpace(n.Hodnota), strings.TrimSpace(vysledna), zdroj, omezitJistotu(jistota), omezitJistotu(vzorec))
 }
 
-// Jistota z rozhraní do deníku jen v mezích 0–1: nekonečno nebo nesmysl by se přes kalibraci dostal až do
-// přesnosti zdroje a GetStavUceni by nešlo převést na JSON (NaN, Inf)
-func omezitJistotu(p float64) float64 {
-	if math.IsNaN(p) {
-		return 0
-	}
-	return min(1, max(0, p))
-}
+func omezitJistotu(p float64) float64 { return ucenibal.OmezitJistotu(p) }
 
-// Odmítnutí (nebo jeho zrušení) jedné hodnoty údaje; klic "" = celý údaj (uloží se jako „*“). Vrací, kolik
-// odmítnutých hodnot u údaje zbývá (bez databáze učení 0).
+// Odmítnutí (nebo jeho zrušení) jedné hodnoty údaje; klic "" = celý údaj (uloží se jako „*“).
 func (u *uceni) odmitnoutHodnotu(ku klicUdaje, klic, hodnota string, odmitnout bool) int {
 	if u == nil {
 		return 0
@@ -509,12 +259,10 @@ func (a *App) zaznamenatNalez(modelka int, album, typ, klic string, netyka bool)
 }
 
 func klicNalezu(modelka int, album, typ, klic string) string {
-	return fmt.Sprintf("%d\x00%s\x00%s\x00%s", modelka, album, typ, klic)
+	return strconv.Itoa(modelka) + "\x00" + album + "\x00" + typ + "\x00" + klic
 }
 
-// Oprava navržené hodnoty před uložením (rozhraní volá, když uživatel návrh v poli upravil). Liší-li se jen
-// zápis téže hodnoty (stejný klíč, nebo Jaro–Winkler aspoň 0,92), zapamatuje se zápis uživatele a návrh se
-// počítá jako správný; jinak jako špatný. Nezměněná hodnota je přijetí.
+// Oprava navržené hodnoty před uložením (rozhraní volá, když uživatel návrh v poli upravil).
 func (a *App) ZaznamenatOpravu(modelkaID int, pole, puvodniNavrh, novaHodnota string) bool {
 	u, ok := udajeNavrhu[pole]
 	puvodniNavrh, novaHodnota = strings.TrimSpace(puvodniNavrh), strings.TrimSpace(novaHodnota)
@@ -522,10 +270,11 @@ func (a *App) ZaznamenatOpravu(modelkaID int, pole, puvodniNavrh, novaHodnota st
 		return false
 	}
 	n := NavrhDoplneni{ModelkaID: modelkaID, Pole: pole, Hodnota: puvodniNavrh}
+	klicPuvodni := klicHodnoty(pole, puvodniNavrh)
 	// Návrh alba: album se dohledá v posledních návrzích
 	a.uc.mu.Lock()
 	for _, p := range a.uc.posledniNav {
-		if p.ModelkaID == modelkaID && p.Pole == pole && klicHodnoty(pole, p.Hodnota) == klicHodnoty(pole, puvodniNavrh) {
+		if p.ModelkaID == modelkaID && p.Pole == pole && klicHodnoty(pole, p.Hodnota) == klicPuvodni {
 			n = p.NavrhDoplneni
 			break
 		}
@@ -536,7 +285,7 @@ func (a *App) ZaznamenatOpravu(modelkaID int, pole, puvodniNavrh, novaHodnota st
 		return true
 	}
 	if !u.cislo && jenZapis(pole, puvodniNavrh, novaHodnota) {
-		a.uc.zapamatovatZapis(pole, klicHodnoty(pole, puvodniNavrh), novaHodnota)
+		a.uc.zapamatovatZapis(pole, klicPuvodni, novaHodnota)
 	}
 	a.zaznamenatNavrh(udalostOpraveno, n, novaHodnota)
 	return true
@@ -544,8 +293,11 @@ func (a *App) ZaznamenatOpravu(modelkaID int, pole, puvodniNavrh, novaHodnota st
 
 // Dva zápisy téže hodnoty („USA“ a „Americká“, „Arny Freytag“ a „Arnie Freytag“)
 func jenZapis(pole, a, b string) bool {
-	ka, kb := klicHodnoty(pole, a), klicHodnoty(pole, b)
-	return ka == kb || len([]rune(klicTextu(a))) >= minDelkaSlouceni && jaroWinkler(klicTextu(a), klicTextu(b)) >= 0.92
+	if klicHodnoty(pole, a) == klicHodnoty(pole, b) {
+		return true
+	}
+	znakyA := []rune(klicTextu(a))
+	return len(znakyA) >= minDelkaSlouceni && jaroWinklerZnaku(znakyA, []rune(klicTextu(b))) >= 0.92
 }
 
 func (u *uceni) zapamatovatZapis(pole, klic, zapis string) {
@@ -561,56 +313,6 @@ func (u *uceni) zapamatovatZapis(pole, klic, zapis string) {
 
 // ---------------------------------------------------------------------------------------------------------
 // Kalibrace zdrojů návrhů
-//
-// Každý zdroj slibuje jistotu p (vzorec v navrhy.go). Z rozhodnutí uživatele je vidět, jak často jeho návrhy
-// opravdu sedí. Pro zdroj se sečte (s vahou podle stáří, poločas polocasZapomneni) n rozhodnutí, z nich
-// k přijatých, a průměrná slíbená jistota p̄ v okamžiku návrhu. Skutečná úspěšnost se odhadne jako střední
-// hodnota Beta rozdělení s předpokladem, že vzorec má pravdu:
-//
-//	r = (k + w·p̄)/(n + w),   w = vahaKalibrace
-//
-// a jistota každého návrhu zdroje se posune v log-šancích o rozdíl mezi skutečností a slibem:
-//
-//	logit p' = logit p + (logit r − logit p̄)
-//
-// Při málo rozhodnutích je r ≈ p̄ a posun ≈ 0; zdroj, jehož návrhy uživatel stále odmítá, klesne pod práh
-// a přestane se nabízet sám. Posun v log-šancích zachová pořadí návrhů zdroje (silnější zůstane silnější).
-// Izotonická kalibrace po intervalech jistoty by potřebovala stovky rozhodnutí na zdroj; tolik jich sbírka
-// stovek modelek nemá, proto jediný posun na zdroj. Rozhodnutí o jednom návrhu se počítá jednou (poslední
-// platí; zrušené odmítnutí se nepočítá). Oprava jen zápisu se počítá jako přijetí, oprava hodnoty jako odmítnutí.
-// Návrh z více zdrojů se započítá každému z nich.
-type kalibraceZdroje struct {
-	n, prijato, predpoved  float64 // vážené součty
-	prijatych, odmitnutych int     // počty rozhodnutí (pro přehled)
-}
-
-// Odhad skutečné úspěšnosti zdroje (r); bez rozhodnutí předpoklad zdroje
-func (k kalibraceZdroje) presnost(predpoklad float64) float64 {
-	prumer := predpoklad
-	if k.n > 0 {
-		prumer = k.predpoved / k.n
-	}
-	return (k.prijato + vahaKalibrace*prumer) / (k.n + vahaKalibrace)
-}
-
-// Kalibrovaná jistota návrhu; bez rozhodnutí beze změny
-func (k kalibraceZdroje) upravit(p, predpoklad float64) float64 {
-	if k.n <= 0 {
-		return p
-	}
-	prumer := k.predpoved / k.n
-	return zLogitu(logit(p) + logit(k.presnost(predpoklad)) - logit(prumer))
-}
-
-// Událost deníku pro výpočty
-type udalostUceni struct {
-	druh                  string
-	modelka               int
-	album, typ, pole      string
-	navrh, hodnota, zdroj string
-	vzorec                float64
-	cas                   time.Time
-}
 
 func (u *uceni) nacistUdalosti(druhy ...string) []udalostUceni {
 	db := u.zajistit()
@@ -632,19 +334,15 @@ func (u *uceni) nacistUdalosti(druhy ...string) []udalostUceni {
 	for radky.Next() {
 		var e udalostUceni
 		var cas string
-		if radky.Scan(&e.druh, &e.modelka, &e.album, &e.typ, &e.pole, &e.navrh, &e.hodnota, &e.zdroj, &e.vzorec, &cas) == nil {
-			e.cas, _ = time.ParseInLocation("2006-01-02 15:04:05", cas, time.Local)
+		if radky.Scan(&e.Druh, &e.Modelka, &e.Album, &e.Typ, &e.Pole, &e.Navrh, &e.Hodnota, &e.Zdroj, &e.Vzorec, &cas) == nil {
+			e.Cas, _ = time.ParseInLocation("2006-01-02 15:04:05", cas, time.Local)
 			udalosti = append(udalosti, e)
 		}
 	}
 	return udalosti
 }
 
-// Váha rozhodnutí podle stáří: 0,5^(dny/poločas)
-func vahaStari(cas, ted time.Time) float64 {
-	dny := max(0, ted.Sub(cas).Hours()/24)
-	return math.Pow(0.5, dny/polocasZapomneni)
-}
+func vahaStari(cas, ted time.Time) float64 { return ucenibal.VahaStari(cas, ted) }
 
 // Kalibrace všech zdrojů z deníku (volá se se zámkem)
 func (u *uceni) spocitatKalibraci() map[string]*kalibraceZdroje {
@@ -657,24 +355,24 @@ func (u *uceni) spocitatKalibraci() map[string]*kalibraceZdroje {
 	posledni := map[string]rozhodnuti{}
 	var poradi []string
 	for _, e := range u.nacistUdalosti(udalostPrijato, udalostOdmitnuto, udalostZpet, udalostOpraveno) {
-		klic := klicNavrhuUceni(e.modelka, e.album, e.typ, e.pole, e.navrh)
+		klic := klicNavrhuUceni(e.Modelka, e.Album, e.Typ, e.Pole, e.Navrh)
 		if _, ok := posledni[klic]; !ok {
 			poradi = append(poradi, klic)
 		}
-		switch e.druh {
+		switch e.Druh {
 		case udalostZpet:
 			delete(posledni, klic)
 			continue
 		case udalostPrijato:
-			posledni[klic] = rozhodnuti{1, e.zdroj, e.vzorec, e.cas}
+			posledni[klic] = rozhodnuti{1, e.Zdroj, e.Vzorec, e.Cas}
 		case udalostOdmitnuto:
-			posledni[klic] = rozhodnuti{0, e.zdroj, e.vzorec, e.cas}
+			posledni[klic] = rozhodnuti{0, e.Zdroj, e.Vzorec, e.Cas}
 		case udalostOpraveno:
 			y := 0.0
-			if jenZapis(e.pole, e.navrh, e.hodnota) {
+			if jenZapis(e.Pole, e.Navrh, e.Hodnota) {
 				y = 1
 			}
-			posledni[klic] = rozhodnuti{y, e.zdroj, e.vzorec, e.cas}
+			posledni[klic] = rozhodnuti{y, e.Zdroj, e.Vzorec, e.Cas}
 		}
 	}
 	kalibrace := map[string]*kalibraceZdroje{}
@@ -691,13 +389,13 @@ func (u *uceni) spocitatKalibraci() map[string]*kalibraceZdroje {
 				k = &kalibraceZdroje{}
 				kalibrace[z] = k
 			}
-			k.n += w
-			k.prijato += w * r.y
-			k.predpoved += w * r.vzorec
+			k.N += w
+			k.Prijato += w * r.y
+			k.Predpoved += w * r.vzorec
 			if r.y > 0 {
-				k.prijatych++
+				k.Prijatych++
 			} else {
-				k.odmitnutych++
+				k.Odmitnutych++
 			}
 		}
 	}
@@ -757,12 +455,6 @@ func (u *uceni) vstupNavrhu() (*vstupUceni, int64) {
 
 // ---------------------------------------------------------------------------------------------------------
 // Prahy kontroly podle zpětné vazby
-//
-// U pravidla s nastavitelným prahem se z deníku spočítá, kolik jeho nálezů uživatel opravil (nález zmizel
-// změnou údaje modelky, k) a kolik označil „V pořádku“ (f). Přesnost pravidla je (k + 4)/(k + f + 6),
-// tedy předpoklad, že dvě třetiny nálezů jsou skutečné chyby, s vahou šesti nálezů. Klesne-li pod polovinu,
-// pravidlo se zpřísní úměrně t = (0,5 − přesnost)/0,5: rozsah o až 1,5 σ, mez neobvyklé kombinace o až 0,75
-// v kvantilu N(0,1), podobnost jmen o až 0,03. Prahy se jen zpřísňují (přesnost má přednost před úplností).
 
 // Zdroj nálezu → údaje postavy, jejichž rozsah zpřísní
 var rozsahyPravidel = map[string][]int{"vyska": {prVyska}, "vaha": {prVaha}, "bmi": {prBmi}, "vek": {prVek},
@@ -790,13 +482,13 @@ func (u *uceni) spocitatPrahy() prahyKontroly {
 	stav := map[string]bool{} // poslední rozhodnutí u nálezu: true = opraveno, false = V pořádku
 	zdroje := map[string]string{}
 	for _, e := range u.nacistUdalosti(udalostVPoradku, udalostZnovu, udalostNalezOpraveny) {
-		klic := klicNalezu(e.modelka, e.album, e.typ, e.pole) + "\x00" + e.zdroj
-		switch e.druh {
+		klic := klicNalezu(e.Modelka, e.Album, e.Typ, e.Pole) + "\x00" + e.Zdroj
+		switch e.Druh {
 		case udalostZnovu:
 			delete(stav, klic)
 		default:
-			stav[klic] = e.druh == udalostNalezOpraveny
-			zdroje[klic] = e.zdroj
+			stav[klic] = e.Druh == udalostNalezOpraveny
+			zdroje[klic] = e.Zdroj
 		}
 	}
 	opraveno, planych := map[string]float64{}, map[string]float64{}
@@ -824,86 +516,22 @@ func (u *uceni) spocitatPrahy() prahyKontroly {
 
 // ---------------------------------------------------------------------------------------------------------
 // Mezipaměť podle otisku sbírky
-//
-// Otisk je FNV-64a ze všech údajů, ze kterých se návrhy a nálezy počítají: modelky (všechny údaje včetně
-// odvozených vydání a „netýká se“), alba (i počet fotek a součet jejich čísel, takže přidání, přesun nebo
-// odebrání fotky otisk změní), dnešní datum (kontrola počítá s dneškem), verze výpočtu a generace deníku učení.
-// Jakákoli změna dat nebo nové rozhodnutí tak mezipaměť zneplatní samo; jiná invalidace není potřeba.
+
+func novyOtiskovac() otiskovac            { return ucenibal.NovyOtiskovac() }
+func otiskUdajuKontroly(m Modelka) string { return ucenibal.OtiskUdajuKontroly(m) }
 
 func otiskSbirky(druh string, modelky []Modelka, alba []albumSbirky, generace int64) string {
-	o := novyOtiskovac()
-	o.text(verzeModeluUceni, druh, time.Now().Format("2006-01-02"))
-	o.cisla(int(generace))
+	o := ucenibal.NovyOtiskovac()
+	o.Text(verzeModeluUceni, druh, time.Now().Format("2006-01-02"))
+	o.Cisla(int(generace))
 	for i := range modelky {
-		o.modelka(&modelky[i])
+		o.Modelka(&modelky[i])
 	}
 	for _, al := range alba {
-		o.text(al.jmeno, al.nazev, al.typ, al.vydani, al.datum, al.fotograf, al.popis, al.neni)
-		o.cisla(al.modelkaID, al.fotek, al.hodnocenych, int(al.soucetFotek))
+		o.Text(al.jmeno, al.nazev, al.typ, al.vydani, al.datum, al.fotograf, al.popis, al.neni)
+		o.Cisla(al.modelkaID, al.fotek, al.hodnocenych, int(al.soucetFotek))
 	}
-	return o.hex()
-}
-
-// Otisk údajů modelky, ze kterých kontrola hlásí nálezy (pro poznání, že uživatel nález opravil). Bez údajů, které
-// s kontrolou nesouvisejí a mění se často (srdíčka, titulní fotka, tagy, poznámka): jejich změna spolu s nálezem,
-// který zmizel z jiného důvodu (posunutý naučený rozsah), by se jinak zapsala jako oprava. Předpona je verze výpočtu.
-const predponaOtiskuKontroly = "k2:"
-
-func otiskUdajuKontroly(m Modelka) string {
-	m.Hodnoceni, m.CoverID, m.CoverURL, m.Tags, m.Poznamka, m.Pridano = 0, "", "", "", "", ""
-	o := novyOtiskovac()
-	o.modelka(&m)
-	return predponaOtiskuKontroly + o.hex()
-}
-
-// Zápis údajů do otisku bez reflexe (fmt.Sprint všech modelek byl desetkrát pomalejší) a bez alokací: FNV-64a
-// počítaný přímo nad bajty textů, se stejnými hodnotami jako hash/fnv (otisky uložené v mezipaměti platí dál)
-type otiskovac struct{ h uint64 }
-
-const (
-	zakladFNV = 14695981039346656037
-	prvociFNV = 1099511628211
-)
-
-func novyOtiskovac() otiskovac { return otiskovac{h: zakladFNV} }
-
-func (o *otiskovac) text(texty ...string) {
-	h := o.h
-	for _, t := range texty {
-		for i := 0; i < len(t); i++ {
-			h = (h ^ uint64(t[i])) * prvociFNV
-		}
-		h *= prvociFNV // za každým textem bajt 0
-	}
-	o.h = h
-}
-
-func (o *otiskovac) cisla(cisla ...int) {
-	h := o.h
-	for _, c := range cisla {
-		for i := range 8 {
-			h = (h ^ uint64(byte(uint64(c)>>(8*i)))) * prvociFNV
-		}
-	}
-	o.h = h
-}
-
-// Otisk jako šestnáct šestnáctkových číslic (jako hex.EncodeToString(fnv.Sum(nil)))
-func (o *otiskovac) hex() string {
-	var b [8]byte
-	binary.BigEndian.PutUint64(b[:], o.h)
-	return hex.EncodeToString(b[:])
-}
-
-func (o *otiskovac) modelka(m *Modelka) {
-	o.cisla(m.ID, m.VyskaCm, m.VahaKg, m.ObvodHrudnikCm, m.ObvodPasCm, m.ObvodBokyCm, m.Tetovani, m.Piercing, m.HodnoceniPul(), m.PocetFotek)
-	o.text(m.Jmeno, m.NarozeniDatum, m.UmrtiDatum, m.NarozeniMisto, m.Narodnost, m.Etnicita, m.VlasyBarva, m.OciBarva, m.Miry,
-		m.VelikostPrsou, m.PrsaTyp, m.Ochlupeni, m.Vystoupeni, m.PictorialVydani, m.Role, m.Tags, m.DalsiJmena, m.Poznamka,
-		m.NetykaSe, m.CyberGirl, m.PlaymateRoku, fmt.Sprint(m.PlaymateMesice), m.CoverID, m.Pridano)
-	for _, seznam := range [][]string{m.Vydani, m.Centerfoldy, m.Obalky, m.OnlineAlba} {
-		o.cisla(len(seznam))
-		o.text(seznam...)
-	}
+	return o.Hex()
 }
 
 // Výsledek z mezipaměti v souboru (jen se shodným otiskem); volá se se zámkem
@@ -919,8 +547,7 @@ func (u *uceni) nacistMezipamet(druh, otisk string, cil any) bool {
 	return json.Unmarshal(data, cil) == nil
 }
 
-// Uložení do mezipaměti v souboru běží na pozadí (převod na JSON a zápis by zdržely Přehled); volá se se
-// zámkem, data se už nemění. Na dokončení čeká pockat (zavření programu, zapomenutí, testy).
+// Uložení do mezipaměti v souboru běží na pozadí; volá se se zámkem.
 func (u *uceni) ulozitMezipamet(druh, otisk string, data any) {
 	u.ukladani.Add(1)
 	go func() {
@@ -948,8 +575,7 @@ func (u *uceni) pockat() {
 	}
 }
 
-// Zavření při ukončení programu: počká na zápisy na pozadí a databázi zavře se zámkem; volání, která přijdou
-// potom (rozhraní ještě může něco poslat), už nic nezapíšou ani soubor neotevřou znovu
+// Zavření při ukončení programu: počká na zápisy na pozadí a databázi zavře se zámkem
 func (u *uceni) zavrit() {
 	if u == nil {
 		return
@@ -963,8 +589,7 @@ func (u *uceni) zavrit() {
 	u.db, u.zavreno = nil, true
 }
 
-// Sbírka se vrátila do stavu zálohy: nálezy, které tím zmizely, uživatel neopravil. Příští kontrola je proto
-// s předchozími nálezy neporovná (ani s uloženými v souboru) a začne od nového stavu.
+// Sbírka se vrátila do stavu zálohy: nálezy, které tím zmizely, uživatel neopravil.
 func (u *uceni) poObnoveniSbirky() {
 	if u == nil {
 		return
@@ -1017,9 +642,7 @@ func (u *uceni) zapamatovatNavrhy(navrhy []navrhSbirky) {
 	}
 }
 
-// Všechny nálezy kontroly (i označené „V pořádku“) s prahy podle zpětné vazby; z mezipaměti, když se sbírka
-// nezměnila. Nález modelky, který od minula zmizel, protože uživatel změnil její údaje (a ne označením
-// „V pořádku“), se zapíše do deníku jako opravený – z toho se učí prahy.
+// Všechny nálezy kontroly (i označené „V pořádku“) s prahy podle zpětné vazby; z mezipaměti, když se sbírka nezměnila.
 func (a *App) nalezyKontroly(modelky []Modelka, alba []albumSbirky) []PodezrelyUdaj {
 	u := a.uc
 	if u == nil {
@@ -1027,7 +650,6 @@ func (a *App) nalezyKontroly(modelky []Modelka, alba []albumSbirky) []PodezrelyU
 	}
 	u.vypocetNalezu.Lock()
 	defer u.vypocetNalezu.Unlock()
-	// Prahy a generace z jednoho okamžiku: jinak by výsledek s prahy ze starší generace dostal otisk novější
 	prahy, generace := u.prahyAGenerace()
 	otisk := otiskSbirky("kontrola", modelky, alba, generace)
 	u.mu.Lock()
@@ -1035,7 +657,6 @@ func (a *App) nalezyKontroly(modelky []Modelka, alba []albumSbirky) []PodezrelyU
 	bezPorovnani := u.bezPorovnani
 	u.bezPorovnani = false
 	if !predchozi.ma && !bezPorovnani {
-		// Po spuštění: poslední uložené nálezy (s jakýmkoli otiskem) jako výchozí stav pro poznání oprav
 		var ulozene ulozeneNalezy
 		var ulozenyOtisk string
 		if db := u.zajistit(); db != nil {
@@ -1054,28 +675,29 @@ func (a *App) nalezyKontroly(modelky []Modelka, alba []albumSbirky) []PodezrelyU
 	u.mu.Unlock()
 
 	nalezy := a.spocitatNalezy(modelky, alba, prahy)
-	ulozit := ulozeneNalezy{Nalezy: nalezy, Modelky: map[string]string{}}
-	podleID := make(map[int]Modelka, len(modelky))
-	for _, m := range modelky {
-		podleID[m.ID] = m
+	ulozit := ulozeneNalezy{Nalezy: nalezy, Modelky: make(map[string]string, len(nalezy))}
+	podleID := make(map[int]*Modelka, len(modelky))
+	for i := range modelky {
+		podleID[modelky[i].ID] = &modelky[i]
 	}
 	for _, n := range nalezy {
 		if n.Album == "" {
-			ulozit.Modelky[fmt.Sprint(n.ModelkaID)] = otiskUdajuKontroly(podleID[n.ModelkaID])
+			if m := podleID[n.ModelkaID]; m != nil {
+				ulozit.Modelky[strconv.Itoa(n.ModelkaID)] = otiskUdajuKontroly(*m)
+			}
 		}
 	}
 	// Opravené nálezy: byl, už není, modelka existuje a změnila se, a nebyl označen „V pořádku“
 	if predchozi.ma {
-		nyni := map[string]bool{}
+		nyni := make(map[string]bool, len(nalezy))
 		for _, n := range nalezy {
 			nyni[klicNalezu(n.ModelkaID, n.Album, n.Typ, n.Klic)+"\x00"+n.Zdroj] = true
 		}
 		for _, n := range predchozi.data.Nalezy {
-			m, existuje := podleID[n.ModelkaID]
-			// Otisk z dřívější verze (jiný výpočet) se s novým porovnat nedá: oprava se raději nezapíše
-			drivejsi := predchozi.data.Modelky[fmt.Sprint(n.ModelkaID)]
-			if n.Album != "" || n.NetykaSe || !existuje || nyni[klicNalezu(n.ModelkaID, n.Album, n.Typ, n.Klic)+"\x00"+n.Zdroj] ||
-				obsahujeKlic(m.NetykaSe, n.Klic) || !strings.HasPrefix(drivejsi, predponaOtiskuKontroly) || drivejsi == otiskUdajuKontroly(m) {
+			m := podleID[n.ModelkaID]
+			drivejsi := predchozi.data.Modelky[strconv.Itoa(n.ModelkaID)]
+			if n.Album != "" || n.NetykaSe || m == nil || nyni[klicNalezu(n.ModelkaID, n.Album, n.Typ, n.Klic)+"\x00"+n.Zdroj] ||
+				obsahujeKlic(m.NetykaSe, n.Klic) || !strings.HasPrefix(drivejsi, predponaOtiskuKontroly) || drivejsi == otiskUdajuKontroly(*m) {
 				continue
 			}
 			u.zapsat(udalostNalezOpraveny, n.ModelkaID, "", "", n.Klic, n.Popis, "", n.Zdroj, 0, 0)
@@ -1098,31 +720,6 @@ func (u *uceni) zapamatovatNalezy(nalezy []PodezrelyUdaj) {
 
 // ---------------------------------------------------------------------------------------------------------
 // Přehled a zapomenutí
-
-// Stav učení pro okno Údržby
-type StavUceni struct {
-	Soubor    string       `json:"soubor"`   // soubor databáze učení; prázdný = jen v paměti
-	Velikost  int64        `json:"velikost"` // bajtů
-	Udalosti  int          `json:"udalosti"`
-	Prijato   int          `json:"prijato"`
-	Odmitnuto int          `json:"odmitnuto"`
-	Opraveno  int          `json:"opraveno"`
-	Zdroje    []ZdrojUceni `json:"zdroje"`
-	Naposledy string       `json:"naposledy"` // čas poslední události (RRRR-MM-DD HH:MM:SS), prázdný bez událostí
-	// Porovnání dvojic modelek (oblibenost.go); ZapomenoutUceni je nemaže, to dělá ZapomenoutPorovnani
-	Porovnani int `json:"porovnani"`
-}
-
-// Zdroj návrhů v přehledu učení
-type ZdrojUceni struct {
-	Zdroj     string  `json:"zdroj"`
-	Popis     string  `json:"popis"`
-	Navrhu    int     `json:"navrhu"` // současné neodmítnuté návrhy, které zdroj podporuje
-	Prijato   int     `json:"prijato"`
-	Odmitnuto int     `json:"odmitnuto"`
-	Presnost  float64 `json:"presnost"` // kalibrovaná úspěšnost 0–1
-	Aktivni   bool    `json:"aktivni"`  // i nejsilnější návrh zdroje ještě projde prahem
-}
 
 func (a *App) GetStavUceni() StavUceni {
 	stav := StavUceni{Zdroje: []ZdrojUceni{}}
@@ -1154,7 +751,7 @@ func (a *App) GetStavUceni() StavUceni {
 	}
 	db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(druh = ?), 0), COALESCE(SUM(druh = ?), 0), COALESCE(SUM(druh = ?), 0), COALESCE(MAX(cas), '')
 		FROM udalosti`, udalostPrijato, udalostOdmitnuto, udalostOpraveno).Scan(&stav.Udalosti, &stav.Prijato, &stav.Odmitnuto, &stav.Opraveno, &stav.Naposledy)
-	stav.Porovnani = len(u.nacistPorovnani())
+	db.QueryRow("SELECT COUNT(*) FROM porovnani").Scan(&stav.Porovnani)
 	if u.statistiky == nil {
 		u.statistiky = u.spocitatKalibraci()
 	}
@@ -1168,14 +765,13 @@ func (a *App) GetStavUceni() StavUceni {
 		if zn.rodina == "odhad" {
 			prah, strop = minJistotaOdhadu, stropOdhadu
 		}
-		stav.Zdroje = append(stav.Zdroje, ZdrojUceni{Zdroj: z, Popis: zn.popis, Navrhu: pocty[z], Prijato: k.prijatych, Odmitnuto: k.odmitnutych,
-			Presnost: math.Round(k.presnost(zn.predpoklad)*1000) / 1000, Aktivni: k.upravit(strop, zn.predpoklad) >= prah})
+		stav.Zdroje = append(stav.Zdroje, ZdrojUceni{Zdroj: z, Popis: zn.popis, Navrhu: pocty[z], Prijato: k.Prijatych, Odmitnuto: k.Odmitnutych,
+			Presnost: math.Round(k.Presnost(zn.predpoklad)*1000) / 1000, Aktivni: k.Upravit(strop, zn.predpoklad) >= prah})
 	}
 	return stav
 }
 
-// Zapomenutí naučeného: záloha databáze učení do složky záloh (uceni-….db) a její vyprázdnění. Sbírka se
-// nemění (klíče „ok-…“ a „nv-…“ v ní zůstávají).
+// Zapomenutí naučeného: záloha databáze učení do složky záloh (uceni-….db) a její vyprázdnění.
 func (a *App) ZapomenoutUceni() bool {
 	u := a.uc
 	if u == nil {
@@ -1206,8 +802,7 @@ func (a *App) ZapomenoutUceni() bool {
 	return true
 }
 
-// Záloha databáze učení do složky záloh (uceni-….db) před zapomenutím; volá se se zámkem. Učení jen v paměti
-// se nezálohuje.
+// Záloha databáze učení do složky záloh (uceni-….db) před zapomenutím; volá se se zámkem.
 func (a *App) zalohovatUceni(db *sql.DB) bool {
 	if a.uc.cesta == "" {
 		return true

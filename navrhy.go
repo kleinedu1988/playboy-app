@@ -358,7 +358,7 @@ func zapsatNavrh(q dotazovac, n NavrhDoplneni) (bool, error) {
 				j = o.j
 			}
 		}
-		if err != nil || j < 0 || float64(cislo) < priznaky[j].mezOd || float64(cislo) > priznaky[j].mezDo {
+		if err != nil || j < 0 || float64(cislo) < priznaky[j].MezOd || float64(cislo) > priznaky[j].MezDo {
 			return false, nil
 		}
 		ok, err := zapsano(q.Exec("UPDATE modelky SET "+u.sloupec+" = ? WHERE id = ? AND COALESCE("+u.sloupec+", 0) = 0", cislo, n.ModelkaID))
@@ -607,7 +607,7 @@ func vybratZeSkupiny(kandidati []kandidat, indexy []int, predpoklady predpoklady
 	// Kalibrovaná jistota každého kandidáta
 	kalibrovana := map[int]float64{}
 	for _, i := range indexy {
-		kalibrovana[i] = kalibrace[kandidati[i].Zdroj].upravit(kandidati[i].Jistota, zdrojeNavrhu[kandidati[i].Zdroj].predpoklad)
+		kalibrovana[i] = kalibrace[kandidati[i].Zdroj].Upravit(kandidati[i].Jistota, zdrojeNavrhu[kandidati[i].Zdroj].predpoklad)
 	}
 	silnejsi := func(i, j int) bool {
 		if kalibrovana[i] != kalibrovana[j] {
@@ -1012,18 +1012,18 @@ func (r *rejstrikMist) zeme(c castMista, poradi int) int {
 // preferovane = zápisy z oprav uživatele (klíč národnosti → zápis).
 func navrhnoutNarodnosti(modelky []Modelka, preferovane map[string]string, pridat pridatKandidata) {
 	zapisy := novySlovnik()
-	zapisy.preferovane = preferovane
+	zapisy.Preferovane = preferovane
 	for _, m := range modelky {
 		if k := klicNarodnosti(m.Narodnost); k != "" {
-			zapisy.pridat(k, strings.TrimSpace(m.Narodnost))
+			zapisy.Pridat(k, strings.TrimSpace(m.Narodnost))
 		}
 	}
-	zapisy.naucit()
+	zapisy.Naucit()
 	mista := cetnosti{} // část místa → klíč národnosti
 	edice := cetnosti{} // edice čísel → klíč národnosti
 	rejstrik := &rejstrikMist{mezipamet: map[string]int{}}
 	for _, m := range modelky {
-		k := zapisy.klic(klicNarodnosti(m.Narodnost))
+		k := zapisy.Klic(klicNarodnosti(m.Narodnost))
 		if k == "" {
 			continue
 		}
@@ -1031,15 +1031,15 @@ func navrhnoutNarodnosti(modelky []Modelka, preferovane map[string]string, prida
 		for _, c := range castiMista(m.NarozeniMisto) {
 			if !videne[c.klic] {
 				videne[c.klic] = true
-				mista.pridat(c.klic, k)
+				mista.Pridat(c.klic, k)
 			}
 		}
 		if e := edicePrehledu(m); e != "" {
-			edice.pridat(e, k)
+			edice.Pridat(e, k)
 		}
 	}
 	zapisZeme := func(zeme int) (string, bool) {
-		if z := zapisy.zapis("z:" + strconv.Itoa(zeme)); z != "" {
+		if z := zapisy.Zapis("z:" + strconv.Itoa(zeme)); z != "" {
 			return z, true
 		}
 		return tabulkaZemi[zeme].narodnost, false
@@ -1085,7 +1085,7 @@ func navrhnoutNarodnosti(modelky []Modelka, preferovane map[string]string, prida
 			}
 			// Laplaceovo pravidlo: (k + 1)/(n + 2)
 			jistota := (nejK + 1) / (celkem + 2)
-			hodnota, znama := zapisy.zapis(nejKlic), true
+			hodnota, znama := zapisy.Zapis(nejKlic), true
 			if hodnota == "" && nejKlic == klicZeme {
 				hodnota, znama = zapisZeme(zeme)
 			}
@@ -1112,9 +1112,9 @@ func navrhnoutNarodnosti(modelky []Modelka, preferovane map[string]string, prida
 		}
 		// Edice čísel (jen tam, kde má modelka čísla jen jedné edice)
 		if e := edicePrehledu(m); e != "" {
-			klic, k, n := edice.nejcastejsi(e)
+			klic, k, n := edice.Nejcastejsi(e)
 			if jistota := podilSPredpokladem(k, n, 0.5, 2); n >= minModelekEdice && jistota >= prahEdice {
-				hodnota := zapisy.zapis(klic)
+				hodnota := zapisy.Zapis(klic)
 				pridat(m, nil, "narodnost", hodnota, fmt.Sprintf("vyšla jen v edici %s; %d z %d takových modelek sbírky má národnost %s", e, k, n, hodnota),
 					"edice", jistota)
 			}
@@ -1163,24 +1163,24 @@ func navrhnoutVzhled(modelky []Modelka, preferovane map[string]map[string]string
 	tabulky := map[string]cetnosti{}
 	for _, u := range udaje {
 		zapisy[u.pole], tabulky[u.pole] = novySlovnik(), cetnosti{}
-		zapisy[u.pole].preferovane = preferovane[u.pole]
+		zapisy[u.pole].Preferovane = preferovane[u.pole]
 	}
 	for _, m := range modelky {
 		for _, u := range udaje {
 			if h := strings.TrimSpace(u.hodnota(m)); h != "" {
-				zapisy[u.pole].pridat(klicTextu(h), h)
+				zapisy[u.pole].Pridat(klicTextu(h), h)
 			}
 		}
 	}
 	for _, u := range udaje {
-		zapisy[u.pole].naucit()
+		zapisy[u.pole].Naucit()
 	}
 	type podminka struct {
 		klic, popis string
 		minimum     int // nejmenší počet modelek s údajem při podmínce
 	}
 	podminky := func(m Modelka, pole string) []podminka {
-		e, n := zapisy["etnicita"].klic(klicTextu(m.Etnicita)), klicNarodnosti(m.Narodnost)
+		e, n := zapisy["etnicita"].Klic(klicTextu(m.Etnicita)), klicNarodnosti(m.Narodnost)
 		etnicita, narodnost := "etnicita "+strings.TrimSpace(m.Etnicita), "národnost "+strings.TrimSpace(m.Narodnost)
 		var p []podminka
 		if pole == "etnicita" {
@@ -1206,9 +1206,9 @@ func navrhnoutVzhled(modelky []Modelka, preferovane map[string]map[string]string
 			if h == "" {
 				continue
 			}
-			k := zapisy[u.pole].klic(klicTextu(h))
+			k := zapisy[u.pole].Klic(klicTextu(h))
 			for _, p := range podminky(m, u.pole) {
-				tabulky[u.pole].pridat(p.klic, k)
+				tabulky[u.pole].Pridat(p.klic, k)
 			}
 		}
 	}
@@ -1218,12 +1218,12 @@ func navrhnoutVzhled(modelky []Modelka, preferovane map[string]map[string]string
 				continue
 			}
 			for _, p := range podminky(m, u.pole) {
-				klic, k, n := tabulky[u.pole].nejcastejsi(p.klic)
+				klic, k, n := tabulky[u.pole].Nejcastejsi(p.klic)
 				if n < p.minimum {
 					continue
 				}
 				if jistota := podilSPredpokladem(k, n, 0.5, 2); jistota >= prahVzhledu {
-					hodnota := zapisy[u.pole].zapis(klic)
+					hodnota := zapisy[u.pole].Zapis(klic)
 					pridat(m, nil, u.pole, hodnota, fmt.Sprintf("%s: %d z %d modelek sbírky má %s %s", p.popis, k, n, u.slovo, hodnota),
 						"cetnost", min(jistota, stropVzhledu))
 				}
@@ -1284,7 +1284,7 @@ func rozlozitMiry(text string) (rozlozeneMiry, bool) {
 		r.obvody[0] = 0
 	}
 	for i, o := range obvodyNavrhu {
-		if p := priznaky[o.j]; r.obvody[i] != 0 && (float64(r.obvody[i]) < p.mezOd || float64(r.obvody[i]) > p.mezDo) {
+		if p := priznaky[o.j]; r.obvody[i] != 0 && (float64(r.obvody[i]) < p.MezOd || float64(r.obvody[i]) > p.MezDo) {
 			return r, false
 		}
 	}
@@ -1413,7 +1413,7 @@ func navrhnoutMiry(modelky []Modelka, pridat pridatKandidata) {
 			}
 			maska := 0
 			for _, p := range []int{prVyska, prVaha, prHrudnik, prPas, prBoky} {
-				if p != o.j && u.ma[p] {
+				if p != o.j && u.Ma[p] {
 					maska |= 1 << p
 				}
 			}
@@ -1430,20 +1430,20 @@ func navrhnoutMiry(modelky []Modelka, pridat pridatKandidata) {
 				reg = naucitRegresi(udaje, o.j, maska)
 				odhady[klic] = reg
 			}
-			if reg == nil || reg.trefa2 < prahOdhadu {
+			if reg == nil || reg.Trefa2 < prahOdhadu {
 				continue
 			}
-			odhad := reg.odhad(u.x)
-			if p := priznaky[o.j]; float64(odhad) < p.mezOd || float64(odhad) > p.mezDo {
+			odhad := reg.Odhad(u.X)
+			if p := priznaky[o.j]; float64(odhad) < p.MezOd || float64(odhad) > p.MezDo {
 				continue
 			}
 			var zCeho []string
-			for _, p := range reg.prediktory {
-				zCeho = append(zCeho, priznaky[p].nazev+" "+priznaky[p].hodnota(u.x[p]))
+			for _, p := range reg.Prediktory {
+				zCeho = append(zCeho, priznaky[p].Nazev+" "+priznaky[p].Hodnota(u.X[p]))
 			}
 			duvod := fmt.Sprintf("odhad z údajů %s podle %d modelek sbírky (přesně ±1 cm u %d %%, ±2 cm u %d %% z nich)",
-				strings.Join(zCeho, ", "), reg.n, int(math.Round(reg.trefa1*100)), int(math.Round(reg.trefa2*100)))
-			pridat(m, nil, o.pole, strconv.Itoa(odhad), duvod, "regrese", min(stropOdhadu, reg.trefa1))
+				strings.Join(zCeho, ", "), reg.N, int(math.Round(reg.Trefa1*100)), int(math.Round(reg.Trefa2*100)))
+			pridat(m, nil, o.pole, strconv.Itoa(odhad), duvod, "regrese", min(stropOdhadu, reg.Trefa1))
 		}
 	}
 }
@@ -1455,18 +1455,18 @@ func navrhnoutPodleSousedu(m Modelka, u udajePostavy, pole string, cil int, s *s
 	if s == nil {
 		return
 	}
-	hodnota, nejistota, o, ok := s.odhad(u)
-	if !ok || o.trefa2 < prahOdhadu || nejistota > 2*o.typickaNejistota {
+	hodnota, nejistota, o, ok := s.Odhad(u)
+	if !ok || o.Trefa2 < prahOdhadu || nejistota > 2*o.TypickaNejistota {
 		return
 	}
 	odhad := int(math.Round(hodnota))
-	if p := priznaky[cil]; float64(odhad) < p.mezOd || float64(odhad) > p.mezDo {
+	if p := priznaky[cil]; float64(odhad) < p.MezOd || float64(odhad) > p.MezDo {
 		return
 	}
-	jistota := min(stropOdhadu, o.trefa1*min(1, o.typickaNejistota/max(nejistota, 0.01)))
+	jistota := min(stropOdhadu, o.Trefa1*min(1, o.TypickaNejistota/max(nejistota, 0.01)))
 	duvod := fmt.Sprintf("podle %d modelek sbírky s nejpodobnější postavou: %d cm, rozptyl ±%s cm (ověřeno na %d modelkách se stejnými údaji: ±1 cm u %d %%, ±2 cm u %d %%)",
-		pocetSousedu, odhad, strings.Replace(strconv.FormatFloat(nejistota, 'f', 1, 64), ".", ",", 1), o.n,
-		int(math.Round(o.trefa1*100)), int(math.Round(o.trefa2*100)))
+		pocetSousedu, odhad, strings.Replace(strconv.FormatFloat(nejistota, 'f', 1, 64), ".", ",", 1), o.N,
+		int(math.Round(o.Trefa1*100)), int(math.Round(o.Trefa2*100)))
 	pridat(m, nil, pole, strconv.Itoa(odhad), duvod, "podobne", jistota)
 }
 
@@ -1624,14 +1624,14 @@ func jePictorialCisla(al albumNavrhu) bool { return jePictorialCasopisu(al.typ) 
 func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, preferovane map[string]string, pridat pridatKandidata) {
 	// Zápisy fotografů, jak je píše většina sbírky; varianty s překlepem se sjednotí
 	zapisyFotografu := novySlovnik()
-	zapisyFotografu.preferovane = preferovane
+	zapisyFotografu.Preferovane = preferovane
 	for _, al := range alba {
 		if al.fotograf != "" {
-			zapisyFotografu.pridat(klicTextu(al.fotograf), al.fotograf)
+			zapisyFotografu.Pridat(klicTextu(al.fotograf), al.fotograf)
 		}
 	}
-	zapisyFotografu.naucit()
-	klicFotografa := func(f string) string { return zapisyFotografu.klic(klicTextu(f)) }
+	zapisyFotografu.Naucit()
+	klicFotografa := func(f string) string { return zapisyFotografu.Klic(klicTextu(f)) }
 	podleModelky := map[int][]int{}
 	for i, al := range alba {
 		podleModelky[al.modelkaID] = append(podleModelky[al.modelkaID], i)
@@ -1696,7 +1696,7 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, preferovane
 		switch {
 		case jePictorialCisla(al) && al.vydani != "":
 			if v, ok := vydaniZNazvu(al); ok {
-				zNazvu.zapocitat(v == al.vydani)
+				zNazvu.Zapocitat(v == al.vydani)
 			}
 			if c := centerfold(m); c != "" {
 				jiny := false
@@ -1704,22 +1704,22 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, preferovane
 					jiny = jiny || j != i && jePictorialCisla(alba[j]) && alba[j].vydani == c
 				}
 				if !jiny {
-					sCenterfoldem.zapocitat(al.vydani == c)
+					sCenterfoldem.Zapocitat(al.vydani == c)
 				}
 			}
 		case jeOnlineTyp(al.typ) && al.datum != "":
 			if d, _, ok := datumZNazvu(al.nazev, letos); ok {
-				datumOnline.zapocitat(strings.HasPrefix(al.datum, d))
+				datumOnline.Zapocitat(strings.HasPrefix(al.datum, d))
 			}
 		}
 		if al.fotograf != "" {
 			if v := vydaniAlba(al); v != "" {
 				if f, n := jednotnyFotograf(podleModelky[al.modelkaID], i, func(j albumNavrhu) bool { return vydaniAlba(j) == v }); n > 0 {
-					fotografCisla.zapocitat(klicFotografa(f) == klicFotografa(al.fotograf))
+					fotografCisla.Zapocitat(klicFotografa(f) == klicFotografa(al.fotograf))
 				}
 			}
 			if f, n := jednotnyFotograf(podleModelky[al.modelkaID], i, func(albumNavrhu) bool { return true }); n >= 2 {
-				fotografModelky.zapocitat(klicFotografa(f) == klicFotografa(al.fotograf))
+				fotografModelky.Zapocitat(klicFotografa(f) == klicFotografa(al.fotograf))
 			}
 		}
 	}
@@ -1751,14 +1751,14 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, preferovane
 			al := &alba[j]
 			if jePictorialCisla(*al) && al.vydani == "" && !obsahujeKlic(al.neni, "vydani") {
 				if v, ok := vydaniZNazvu(*al); ok {
-					pridat(m, al, "vydaniAlba", v, fmt.Sprintf("název alba „%s“ obsahuje datum%s", al.nazev, zNazvu.text("pictorialů s datem v názvu")),
-						"nazev", zNazvu.jistota(0.85, 6))
+					pridat(m, al, "vydaniAlba", v, fmt.Sprintf("název alba „%s“ obsahuje datum%s", al.nazev, zNazvu.Text("pictorialů s datem v názvu")),
+						"nazev", zNazvu.Jistota(0.85, 6))
 				}
 				if c != "" && bezVydani == 1 && !maPictorialCenterfoldu {
 					// Rok v názvu, který k centerfoldu nesedí, pravidlo vylučuje
 					if r := vzorRoku.FindString(zjednodusit(al.nazev)); r == "" || r == c[:4] {
-						pridat(m, al, "vydaniAlba", c, fmt.Sprintf("pictorial playmate vychází v čísle jejího centerfoldu (%s)%s", c, sCenterfoldem.text("playmate s jedním centerfoldem")),
-							"centerfold", sCenterfoldem.jistota(0.75, 4))
+						pridat(m, al, "vydaniAlba", c, fmt.Sprintf("pictorial playmate vychází v čísle jejího centerfoldu (%s)%s", c, sCenterfoldem.Text("playmate s jedním centerfoldem")),
+							"centerfold", sCenterfoldem.Jistota(0.75, 4))
 					}
 				}
 			}
@@ -1781,23 +1781,23 @@ func navrhnoutAlba(modelky []Modelka, alba []albumNavrhu, letos int, preferovane
 					if presnost == 1 {
 						predpoklad = 0.6
 					}
-					pridat(m, al, "datumAlba", d, fmt.Sprintf("název alba „%s“ obsahuje datum%s", al.nazev, datumOnline.text("online alb s datem v názvu")),
-						"nazev", datumOnline.jistota(predpoklad, 6))
+					pridat(m, al, "datumAlba", d, fmt.Sprintf("název alba „%s“ obsahuje datum%s", al.nazev, datumOnline.Text("online alb s datem v názvu")),
+						"nazev", datumOnline.Jistota(predpoklad, 6))
 				}
 			}
 			if al.fotograf == "" && al.typ != "Cover" {
 				if v := vydaniAlba(*al); v != "" {
 					if f, n := jednotnyFotograf(indexy, j, func(x albumNavrhu) bool { return vydaniAlba(x) == v }); n > 0 {
-						f = zapisyFotografu.zapis(klicFotografa(f))
-						pridat(m, al, "fotografAlba", f, fmt.Sprintf("fotograf jejího alba ze stejného čísla %s%s", v, fotografCisla.text("alb modelek ze stejného čísla")),
-							"cislo", fotografCisla.jistota(0.8, 4))
+						f = zapisyFotografu.Zapis(klicFotografa(f))
+						pridat(m, al, "fotografAlba", f, fmt.Sprintf("fotograf jejího alba ze stejného čísla %s%s", v, fotografCisla.Text("alb modelek ze stejného čísla")),
+							"cislo", fotografCisla.Jistota(0.8, 4))
 						continue
 					}
 				}
 				if f, n := jednotnyFotograf(indexy, j, func(albumNavrhu) bool { return true }); n >= 2 {
-					f = zapisyFotografu.zapis(klicFotografa(f))
-					pridat(m, al, "fotografAlba", f, fmt.Sprintf("všechna její ostatní alba s fotografem (%d) nafotil %s%s", n, f, fotografModelky.text("alb modelek s jednotným fotografem")),
-						"modelka", fotografModelky.jistota(0.5, 2))
+					f = zapisyFotografu.Zapis(klicFotografa(f))
+					pridat(m, al, "fotografAlba", f, fmt.Sprintf("všechna její ostatní alba s fotografem (%d) nafotil %s%s", n, f, fotografModelky.Text("alb modelek s jednotným fotografem")),
+						"modelka", fotografModelky.Jistota(0.5, 2))
 				}
 			}
 		}

@@ -75,7 +75,7 @@ type rozsahyKontroly [pocetPriznaku]rozsah
 func (r rozsah) mimo(x float64) bool { return x < r.od || x > r.do }
 
 // „145–195“
-func (r rozsah) text(p priznak) string { return p.cislo(r.od) + "–" + p.cislo(r.do) }
+func (r rozsah) text(p priznak) string { return p.Cislo(r.od) + "–" + p.Cislo(r.do) }
 
 // Jak se o rozsahu v nálezu mluví
 func (r rozsah) popis() string {
@@ -88,20 +88,20 @@ func (r rozsah) popis() string {
 // Naučený rozsah údaje: medián ± k·σ (robustní, viz robustniOdhad), aspoň minPul na každou stranu a nikdy za rozumné meze; z málo hodnot
 // pevný rozsah. Nakonec se rozšíří o hodnoty potvrzené uživatelem.
 func naucitRozsah(p priznak, hodnoty, potvrzene []float64, k float64) rozsah {
-	r := rozsah{od: p.od, do: p.do}
+	r := rozsah{od: p.Od, do: p.Do}
 	if len(hodnoty) >= minHodnotProUceni {
-		med, sOd, sDo := robustniOdhad(hodnoty, !p.desetiny)
-		od := min(med-k*max(sOd, p.minSigma), med-p.minPul)
-		do := max(med+k*max(sDo, p.minSigma), med+p.minPul)
-		od, do = max(od, p.mezOd), min(do, p.mezDo)
-		if p.desetiny {
+		med, sOd, sDo := robustniOdhad(hodnoty, !p.Desetiny)
+		od := min(med-k*max(sOd, p.MinSigma), med-p.MinPul)
+		do := max(med+k*max(sDo, p.MinSigma), med+p.MinPul)
+		od, do = max(od, p.MezOd), min(do, p.MezDo)
+		if p.Desetiny {
 			od, do = math.Floor(od*10)/10, math.Ceil(do*10)/10
 		} else {
 			od, do = math.Floor(od), math.Ceil(do)
 		}
 		r = rozsah{od: od, do: do, naucene: true}
 	}
-	return rozsiritPodlePotvrzenych(r, potvrzene, p.krok)
+	return rozsiritPodlePotvrzenych(r, potvrzene, p.Krok)
 }
 
 // Učení z rozhodnutí uživatele: hodnoty za hranicí, které uživatel označil „V pořádku“, se projdou od nejbližší.
@@ -179,12 +179,12 @@ func naucitSe(modelky []Modelka, prahy prahyKontroly) uceniSbirky {
 	for i, m := range modelky {
 		x := u.udaje[i]
 		for j := range pocetPriznaku {
-			if !x.ma[j] {
+			if !x.Ma[j] {
 				continue
 			}
-			hodnoty[j] = append(hodnoty[j], x.x[j])
-			if obsahujeKlic(m.NetykaSe, priznaky[j].klic) {
-				potvrzene[j] = append(potvrzene[j], x.x[j])
+			hodnoty[j] = append(hodnoty[j], x.X[j])
+			if obsahujeKlic(m.NetykaSe, priznaky[j].Klic) {
+				potvrzene[j] = append(potvrzene[j], x.X[j])
 			}
 		}
 	}
@@ -215,8 +215,8 @@ func (mp *modelPostavy) zpet(j int, z float64) float64 {
 func (mp *modelPostavy) vektor(id int, u udajePostavy) vektorPostavy {
 	v := vektorPostavy{id: id}
 	for j := range pocetPriznaku {
-		if u.ma[j] && mp.pouzity[j] {
-			v.z[j] = mp.zSkore(j, u.x[j])
+		if u.Ma[j] && mp.pouzity[j] {
+			v.z[j] = mp.zSkore(j, u.X[j])
 			v.maska |= 1 << j
 		}
 	}
@@ -232,9 +232,9 @@ func naucitPostavu(modelky []Modelka, udaje []udajePostavy, hodnoty [pocetPrizna
 		if len(hodnoty[j]) < minHodnotProUceni {
 			continue
 		}
-		med, sOd, sDo := robustniOdhad(hodnoty[j], !p.desetiny)
+		med, sOd, sDo := robustniOdhad(hodnoty[j], !p.Desetiny)
 		mp.pouzity[j] = true
-		mp.med[j], mp.sOd[j], mp.sDo[j] = med, max(sOd, p.minSigma), max(sDo, p.minSigma)
+		mp.med[j], mp.sOd[j], mp.sDo[j] = med, max(sOd, p.MinSigma), max(sDo, p.MinSigma)
 	}
 	vektory := make([]vektorPostavy, 0, len(modelky))
 	pocet := 0
@@ -376,7 +376,7 @@ func mezKombinace(stupnu int, z float64) float64 {
 func postavaMimoRozsahy(m Modelka, u udajePostavy, r rozsahyKontroly) bool {
 	hlaseno := false
 	kontrolovatPostavu(m, r, func(Modelka, string, string, string, string) { hlaseno = true })
-	return hlaseno || u.ma[prVek] && r[prVek].mimo(u.x[prVek])
+	return hlaseno || u.Ma[prVek] && r[prVek].mimo(u.X[prVek])
 }
 
 // Neobvyklá kombinace údajů postavy („ok-neobvykle“): Mahalanobisova vzdálenost od středu sbírky nad mezí.
@@ -416,20 +416,20 @@ func (u uceniSbirky) kontrolovatNeobvykle(modelky []Modelka, pridat pridatNalez)
 				druhy, posun = b, math.Abs(p.p[hlavni][b]*v.z[k])
 			}
 		}
-		x := u.udaje[i].x
+		x := u.udaje[i].X
 		ph := priznaky[h]
-		od := max(ph.mezOd, mp.zpet(h, stred-2*odchylka))
-		do := min(ph.mezDo, mp.zpet(h, stred+2*odchylka))
-		obvykle := ph.cislo(od) + "–" + ph.cislo(do)
-		if ph.jednotka != "" {
-			obvykle += " " + ph.jednotka
+		od := max(ph.MezOd, mp.zpet(h, stred-2*odchylka))
+		do := min(ph.MezDo, mp.zpet(h, stred+2*odchylka))
+		obvykle := ph.Cislo(od) + "–" + ph.Cislo(do)
+		if ph.Jednotka != "" {
+			obvykle += " " + ph.Jednotka
 		}
-		popis := "neobvyklá kombinace údajů: " + ph.nazev + " " + ph.hodnota(x[h])
+		popis := "neobvyklá kombinace údajů: " + ph.Nazev + " " + ph.Hodnota(x[h])
 		if druhy >= 0 {
 			k := p.index[druhy]
-			popis += " " + priznaky[k].pri + " " + priznaky[k].hodnota(x[k])
+			popis += " " + priznaky[k].Pri + " " + priznaky[k].Hodnota(x[k])
 		}
-		pridat(m, "ok-neobvykle", "neobvykle", ph.pole, popis+" (u sbírky obvykle "+obvykle+")")
+		pridat(m, "ok-neobvykle", "neobvykle", ph.Pole, popis+" (u sbírky obvykle "+obvykle+")")
 	}
 }
 

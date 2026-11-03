@@ -440,20 +440,20 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 		skupiny++
 	}
 	postava := priznakyModelky(m)
-	for j, cv := range map[int]int{prVyska: cvVyska, prVaha: cvVaha, prHrudnik: cvHrudnik, prPas: cvPas, prBoky: cvBoky, prBmi: cvBmi} {
-		u.cis[cv], u.ma[cv] = postava.x[j], postava.ma[j]
+	for _, p := range [6][2]int{{prVyska, cvVyska}, {prVaha, cvVaha}, {prHrudnik, cvHrudnik}, {prPas, cvPas}, {prBoky, cvBoky}, {prBmi, cvBmi}} {
+		u.cis[p[1]], u.ma[p[1]] = postava.X[p[0]], postava.Ma[p[0]]
 	}
-	if postava.ma[prPas] && postava.ma[prBoky] {
-		u.cis[cvPomer], u.ma[cvPomer] = postava.x[prPas]/postava.x[prBoky], true
+	if postava.Ma[prPas] && postava.Ma[prBoky] {
+		u.cis[cvPomer], u.ma[cvPomer] = postava.X[prPas]/postava.X[prBoky], true
 	}
-	if postava.ma[prHrudnik] && postava.ma[prPas] {
-		u.cis[cvHrudPas], u.ma[cvHrudPas] = postava.x[prHrudnik]/postava.x[prPas], true
+	if postava.Ma[prHrudnik] && postava.Ma[prPas] {
+		u.cis[cvHrudPas], u.ma[cvHrudPas] = postava.X[prHrudnik]/postava.X[prPas], true
 	}
 	// Věk při prvním vydání (stejný výpočet jako v Údržbě): jen věrohodný (14–60 let)
-	if postava.ma[prVek] && postava.x[prVek] >= 14 && postava.x[prVek] <= 60 {
-		u.cis[cvVek], u.ma[cvVek] = postava.x[prVek], true
+	if postava.Ma[prVek] && postava.X[prVek] >= 14 && postava.X[prVek] <= 60 {
+		u.cis[cvVek], u.ma[cvVek] = postava.X[prVek], true
 	}
-	if postava.ma[prVyska] || postava.ma[prVaha] || postava.ma[prHrudnik] {
+	if postava.Ma[prVyska] || postava.Ma[prVaha] || postava.Ma[prHrudnik] {
 		skupiny++
 	}
 	if m.FotekHodnocenych >= 2 {

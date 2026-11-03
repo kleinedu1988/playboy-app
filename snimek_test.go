@@ -132,9 +132,9 @@ func TestSnimekBezPameti(t *testing.T) {
 // Otisk bez alokací dává stejné hodnoty jako hash/fnv (otisky uložené v mezipaměti učení platí dál)
 func TestOtiskovacJakoFNV(t *testing.T) {
 	o := novyOtiskovac()
-	o.text("uceni-1", "", "Zoë Ödegaard")
-	o.cisla(0, -1, 1<<40, 3000)
-	o.text()
+	o.Text("uceni-1", "", "Zoë Ödegaard")
+	o.Cisla(0, -1, 1<<40, 3000)
+	o.Text()
 	h := fnv.New64a()
 	for _, s := range []string{"uceni-1", "", "Zoë Ödegaard"} {
 		h.Write([]byte(s))
@@ -147,8 +147,8 @@ func TestOtiskovacJakoFNV(t *testing.T) {
 		}
 		h.Write(b[:])
 	}
-	if o.hex() != hex.EncodeToString(h.Sum(nil)) {
-		t.Errorf("otisk %s, hash/fnv %s", o.hex(), hex.EncodeToString(h.Sum(nil)))
+	if o.Hex() != hex.EncodeToString(h.Sum(nil)) {
+		t.Errorf("otisk %s, hash/fnv %s", o.Hex(), hex.EncodeToString(h.Sum(nil)))
 	}
 }
 

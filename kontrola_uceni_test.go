@@ -96,7 +96,7 @@ func TestUceniCisteSbirky(t *testing.T) {
 	u := naucitSe(modelky, vychoziPrahy())
 	for j, r := range u.rozsahy {
 		if !r.naucene && j != prVek {
-			t.Errorf("%s: rozsah se měl naučit: %+v", priznaky[j].nazev, r)
+			t.Errorf("%s: rozsah se měl naučit: %+v", priznaky[j].Nazev, r)
 		}
 	}
 	if r := u.rozsahy[prVyska]; r.od < 140 || r.od > 155 || r.do < 181 || r.do > 200 {
@@ -320,7 +320,7 @@ func TestNoveKliceKontroly(t *testing.T) {
 func vychoziRozsahy() rozsahyKontroly {
 	var r rozsahyKontroly
 	for j, p := range priznaky {
-		r[j] = rozsah{od: p.od, do: p.do}
+		r[j] = rozsah{od: p.Od, do: p.Do}
 	}
 	return r
 }

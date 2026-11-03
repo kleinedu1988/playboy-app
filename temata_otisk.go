@@ -34,7 +34,7 @@ func (a *App) spocitatOtiskTemat(s *snimek) otiskTemat {
 			chyba = true
 			return
 		}
-		o.text(fmt.Sprint(x.Float64, y.Float64, z.Float64))
+		o.Text(fmt.Sprint(x.Float64, y.Float64, z.Float64))
 	}
 	// Fotky: počet a rozmístění do alb
 	cisla(`SELECT COUNT(*), TOTAL(id * 1.0 * album_id), TOTAL(album_id * 1.0 * album_id) FROM fotky`)
@@ -44,7 +44,7 @@ func (a *App) spocitatOtiskTemat(s *snimek) otiskTemat {
 			var tag string
 			var n, soucet, ctverce float64
 			if radky.Scan(&tag, &n, &soucet, &ctverce) == nil {
-				o.text(tag, fmt.Sprint(n, soucet, math.Mod(ctverce, 1e15)))
+				o.Text(tag, fmt.Sprint(n, soucet, math.Mod(ctverce, 1e15)))
 			}
 		}
 		chyba = chyba || radky.Err() != nil
@@ -58,8 +58,8 @@ func (a *App) spocitatOtiskTemat(s *snimek) otiskTemat {
 			var id, modelka int
 			var typ, vydani, datum string
 			if radky.Scan(&id, &modelka, &typ, &vydani, &datum) == nil {
-				o.cisla(id, modelka)
-				o.text(typ, vydani, datum)
+				o.Cisla(id, modelka)
+				o.Text(typ, vydani, datum)
 			}
 		}
 		chyba = chyba || radky.Err() != nil
@@ -67,20 +67,20 @@ func (a *App) spocitatOtiskTemat(s *snimek) otiskTemat {
 	} else {
 		chyba = true
 	}
-	fotek := o.hex()
+	fotek := o.Hex()
 	// Chyba čtení: otisk, který se s ničím neshoduje (paměť se nepřenese)
 	if chyba {
 		fotek = fmt.Sprintf("chyba %p", s)
 	}
 	v := novyOtiskovac()
-	v.text(fotek)
+	v.Text(fotek)
 	for i := range s.modelky {
-		v.modelka(&s.modelky[i])
+		v.Modelka(&s.modelky[i])
 	}
 	var n, soucet float64
 	if err := a.db.QueryRow(`SELECT COUNT(*), TOTAL(fotka_id * 1.0 * verze) FROM fotky_pruvodce`).Scan(&n, &soucet); err != nil {
 		return otiskTemat{fotek, fmt.Sprintf("chyba %p", s)}
 	}
-	v.text(fmt.Sprint(n, soucet))
-	return otiskTemat{fotek, v.hex()}
+	v.Text(fmt.Sprint(n, soucet))
+	return otiskTemat{fotek, v.Hex()}
 }

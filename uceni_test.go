@@ -277,21 +277,21 @@ func TestSpojeniZdroju(t *testing.T) {
 // Kalibrace: bez rozhodnutí beze změny, odmítaný zdroj klesne pod práh, přijímaný stoupne; pořadí návrhů zůstane
 func TestKalibraceZdroje(t *testing.T) {
 	var nic kalibraceZdroje
-	if nic.upravit(0.83, 0.85) != 0.83 || nic.presnost(0.85) != 0.85 {
+	if nic.Upravit(0.83, 0.85) != 0.83 || nic.Presnost(0.85) != 0.85 {
 		t.Error("bez rozhodnutí se jistota mění")
 	}
-	odmitany := kalibraceZdroje{n: 10, prijato: 0, predpoved: 9}
-	if r := odmitany.presnost(0.85); math.Abs(r-7.2/18) > 1e-9 {
+	odmitany := kalibraceZdroje{N: 10, Prijato: 0, Predpoved: 9}
+	if r := odmitany.Presnost(0.85); math.Abs(r-7.2/18) > 1e-9 {
 		t.Errorf("úspěšnost odmítaného zdroje %v, čekám (0 + 8·0,9)/(10 + 8)", r)
 	}
-	if p := odmitany.upravit(0.9, 0.85); math.Abs(p-0.4) > 1e-9 {
+	if p := odmitany.Upravit(0.9, 0.85); math.Abs(p-0.4) > 1e-9 {
 		t.Errorf("kalibrovaná jistota %v, čekám 0,4 (posun v log-šancích o logit 0,4 − logit 0,9)", p)
 	}
-	if odmitany.upravit(0.95, 0.85) >= prahNavrhu || odmitany.upravit(0.95, 0.85) <= odmitany.upravit(0.9, 0.85) {
+	if odmitany.Upravit(0.95, 0.85) >= prahNavrhu || odmitany.Upravit(0.95, 0.85) <= odmitany.Upravit(0.9, 0.85) {
 		t.Error("odmítaný zdroj má klesnout pod práh a zachovat pořadí")
 	}
-	prijimany := kalibraceZdroje{n: 20, prijato: 20, predpoved: 15}
-	if p := prijimany.upravit(0.75, 0.75); p <= 0.75 {
+	prijimany := kalibraceZdroje{N: 20, Prijato: 20, Predpoved: 15}
+	if p := prijimany.Upravit(0.75, 0.75); p <= 0.75 {
 		t.Errorf("přijímaný zdroj: %v", p)
 	}
 	if w := vahaStari(mustCas("2025-01-01 00:00:00"), mustCas("2026-01-01 00:00:00")); math.Abs(w-0.5) > 0.01 {
@@ -430,7 +430,7 @@ func TestZaznamenatOpravu(t *testing.T) {
 	}
 	a.ZaznamenatOpravu(n.ModelkaID, "narodnost", "Česko", "Slovensko")
 	k := a.uc.spocitatKalibraci()["misto"]
-	if k == nil || k.odmitnutych != 1 || k.prijatych != 0 {
+	if k == nil || k.Odmitnutych != 1 || k.Prijatych != 0 {
 		t.Errorf("oprava na jinou hodnotu (poslední rozhodnutí platí): %+v", k)
 	}
 	if jenZapis("narodnost", "USA", "Americká") != true || jenZapis("narodnost", "USA", "Kanada") {
@@ -476,20 +476,20 @@ func TestZpetnaVazbaKontroly(t *testing.T) {
 func TestSlovnikHodnot(t *testing.T) {
 	s := novySlovnik()
 	for range 12 {
-		s.pridat("philippines", "Philippines")
+		s.Pridat("philippines", "Philippines")
 	}
-	s.pridat("phillipines", "Phillipines")
-	s.pridat("kanada", "Kanada")
-	s.pridat("kanady", "Kanady")
-	s.naucit()
-	if s.klic("phillipines") != "philippines" || s.zapis("phillipines") != "Philippines" {
-		t.Errorf("překlep: %q %q", s.klic("phillipines"), s.zapis("phillipines"))
+	s.Pridat("phillipines", "Phillipines")
+	s.Pridat("kanada", "Kanada")
+	s.Pridat("kanady", "Kanady")
+	s.Naucit()
+	if s.Klic("phillipines") != "philippines" || s.Zapis("phillipines") != "Philippines" {
+		t.Errorf("překlep: %q %q", s.Klic("phillipines"), s.Zapis("phillipines"))
 	}
-	if s.klic("kanady") != "kanady" {
+	if s.Klic("kanady") != "kanady" {
 		t.Error("stejně časté tvary se nesjednocují")
 	}
-	s.preferovane = map[string]string{"philippines": "Filipíny"}
-	if s.zapis("philippines") != "Filipíny" {
+	s.Preferovane = map[string]string{"philippines": "Filipíny"}
+	if s.Zapis("philippines") != "Filipíny" {
 		t.Error("zápis uživatele má přednost")
 	}
 }
@@ -521,7 +521,7 @@ func TestNavrhPodleSousedu(t *testing.T) {
 		t.Error("odhad podle sousedů chybí")
 	}
 	s := naucitSousedy(udajeSbirky(modelky), prPas)
-	if o := s.overit(1<<prVyska | 1<<prHrudnik); o != nil && o.trefa2 >= prahOdhadu {
+	if o := s.Overit(1<<prVyska | 1<<prHrudnik); o != nil && o.Trefa2 >= prahOdhadu {
 		t.Errorf("z výšky a hrudníku pas odhadnout nejde, ověření má selhat: %+v", o)
 	}
 }

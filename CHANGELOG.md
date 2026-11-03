@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.41] – 2026-11-03
+
+### Změněno
+- **Průvodce po stránkách**: fronta Hodnotit › Průvodce se načítá po celých albech – prvních asi 600 fotek hned, další stránka se dotáhne sama, když se průvodce blíží konci načtené části, nebo když klikneš na album dál ve frontě. Počet fotek, „zbývá“ a seznam alb jsou dál za celou frontu. Se sbírkou 150 000 fotek: data při otevření 14,3 MB → 0,45 MB, další stránky z paměti backendu pod 1 ms. Stránky navazují podle alb, takže fotky prošlé mezitím průvodcem nic neposunou (hlídá test).
+
 ## [1.2.40] – 2026-11-03
 
 ### Změněno

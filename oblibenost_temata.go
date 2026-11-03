@@ -458,6 +458,9 @@ type temataPamet struct {
 	fotkyOtisk    string
 	vysledkyOtisk string
 	prosleOtisk   string
+	// Fronta průvodce ke snímku (pruvodce_fotky.go GetStrankuPruvodce)
+	pruvodceSnimek *snimek
+	pruvodce       FrontaFotek
 }
 
 type vysledekSouteze struct {

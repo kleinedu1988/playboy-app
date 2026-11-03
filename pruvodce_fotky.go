@@ -281,3 +281,77 @@ func vsechnyPruvodceFotek(q dotazovac) map[int]int {
 	}
 	return v
 }
+
+// Stránka fronty průvodce: celá fronta má u velké sbírky přes 100 000 fotek (~14 MB), okno ji proto bere po
+// albech. nactenaAlba = alba, která okno už má; stránka jsou další celá alba v pořadí fronty (aspoň kolik fotek).
+// Pokračuje se podle alb, ne podle pořadí: fotky prošlé mezitím průvodcem z fronty zmizí a pořadí by se posunulo.
+type StrankaPruvodce struct {
+	FrontaFotek
+	Celkem int  `json:"celkem"` // fotek ve frontě celkem
+	Dalsi  bool `json:"dalsi"`  // fronta má za stránkou další alba
+	// Alba celé fronty v pořadí s počtem fotek (jen u první stránky; Alba k nim má údaje prvních nejvýš 60)
+	Souhrn []SouhrnAlbaFronty `json:"souhrn"`
+}
+
+type SouhrnAlbaFronty struct {
+	AlbumID int64 `json:"albumId"`
+	Pocet   int   `json:"pocet"`
+}
+
+const albSouhrnuSUdaji = 60
+
+func (a *App) GetStrankuPruvodce(nactenaAlba []int64, kolik int) StrankaPruvodce {
+	fronta := a.frontaPruvodceKeSnimku()
+	nactena := make(map[int64]bool, len(nactenaAlba))
+	for _, id := range nactenaAlba {
+		nactena[id] = true
+	}
+	v := StrankaPruvodce{FrontaFotek: FrontaFotek{Sablona: fronta.Sablona, Fotky: []FotkaFronty{}, Alba: map[int64]AlbumFronty{}},
+		Celkem: len(fronta.Fotky), Souhrn: []SouhrnAlbaFronty{}}
+	for _, f := range fronta.Fotky {
+		if nactena[f.AlbumID] {
+			continue
+		}
+		// Stránka končí až na konci alba (spojený plakát se nerozdělí)
+		if len(v.Fotky) >= kolik && f.AlbumID != v.Fotky[len(v.Fotky)-1].AlbumID {
+			v.Dalsi = true
+			break
+		}
+		v.Fotky = append(v.Fotky, f)
+		v.Alba[f.AlbumID] = fronta.Alba[f.AlbumID]
+	}
+	if len(nactenaAlba) == 0 {
+		for _, f := range fronta.Fotky {
+			if n := len(v.Souhrn); n > 0 && v.Souhrn[n-1].AlbumID == f.AlbumID {
+				v.Souhrn[n-1].Pocet++
+				continue
+			}
+			v.Souhrn = append(v.Souhrn, SouhrnAlbaFronty{AlbumID: f.AlbumID, Pocet: 1})
+			if len(v.Souhrn) <= albSouhrnuSUdaji {
+				v.Alba[f.AlbumID] = fronta.Alba[f.AlbumID]
+			}
+		}
+	}
+	return v
+}
+
+// Celá fronta průvodce v paměti ke snímku (další stránky ji nesestavují znovu)
+func (a *App) frontaPruvodceKeSnimku() FrontaFotek {
+	s := a.snimekVPameti()
+	if s == nil {
+		return a.GetFotkyKPruvodci()
+	}
+	p := a.pametTemat()
+	p.mu.Lock()
+	if p.pruvodceSnimek == s {
+		f := p.pruvodce
+		p.mu.Unlock()
+		return f
+	}
+	p.mu.Unlock()
+	f := a.GetFotkyKPruvodci()
+	p.mu.Lock()
+	p.pruvodceSnimek, p.pruvodce = s, f
+	p.mu.Unlock()
+	return f
+}

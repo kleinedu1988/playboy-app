@@ -218,6 +218,10 @@ export function GetStavyVydani() {
   return window['go']['main']['App']['GetStavyVydani']();
 }
 
+export function GetStrankuPruvodce(arg1, arg2) {
+  return window['go']['main']['App']['GetStrankuPruvodce'](arg1, arg2);
+}
+
 export function GetTagy() {
   return window['go']['main']['App']['GetTagy']();
 }

@@ -89,6 +89,10 @@ export const stav = {
     lbPolozky: [],
     lbPruvodce: false, // Hodnotit › Průvodce: fronta neprošlých fotek, pásek kroků a klávesy (pruvodce-fotky.js)
     lbJenNehodnocene: false, // Galerie: ohodnocená položka z prohlížeče vypadne a ukáže se další
+    // Průvodce po stránkách (galerie-hodnoceni.js): dotáhne další stránku fronty do otevřeného prohlížeče, vrací
+    // počet nových položek; null = fronta je celá
+    /** @type {null | (() => Promise<number>)} */
+    lbDotahnout: null,
     lbPoZavreni: null, // co udělat po zavření prohlížeče (Fotky načtou frontu znovu, až doběhnou zápisy)
     lbHistorie: [], // ohodnocené ve frontě nehodnocených (pro Vrátit): { polozka, kde, kdePuvodne, seznam }
     lbZapisy: new Set(), // rozběhlé zápisy hodnocení fotek z prohlížeče (poZavreni počká na ně)

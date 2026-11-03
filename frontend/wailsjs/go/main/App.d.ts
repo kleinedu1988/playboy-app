@@ -110,6 +110,8 @@ export function GetStavUceni():Promise<main.StavUceni>;
 
 export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
 
+export function GetStrankuPruvodce(arg1:Array<number>,arg2:number):Promise<main.StrankaPruvodce>;
+
 export function GetTagy():Promise<Array<string>>;
 
 export function GetTagyFotek(arg1:Array<number>):Promise<Record<number, Array<string>>>;

@@ -94,6 +94,8 @@ async function stavPolozky(p) {
 export async function ukazatPruvodce() {
     const p = aktualni();
     if (!stav.lbPruvodce || !p) return vykreslitPasek();
+    // Fronta po stránkách: další stránka se dotáhne dopředu, než průvodce dojde na konec načtené části
+    if (stav.lbDotahnout && stav.lbIndex >= stav.lbPolozky.length - 50) stav.lbDotahnout();
     // Jen srdíčka: fotky, které srdíčka už mají, se přeskočí (počkají na průvodce kvůli tagům)
     if (jenSrdicka && Number(p.hodnoceni) > 0) {
         const seznam = stav.lbPolozky;
@@ -116,8 +118,14 @@ function vyraditZFronty(cile) {
     return polozky;
 }
 
-function ukazatDalsi(kde) {
+async function ukazatDalsi(kde) {
     const seznam = stav.lbPolozky;
+    // Načtená část fronty došla, za ní je další stránka
+    if (!seznam.length && stav.lbDotahnout && await stav.lbDotahnout() && stav.lbPolozky === seznam && seznam.length) {
+        lbNaplnitListu();
+        lbZobrazit(0);
+        return;
+    }
     if (!seznam.length) {
         zavritLightbox();
         oznamit('Hotovo – všechny fotky prošly průvodcem.');

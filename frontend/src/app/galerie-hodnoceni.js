@@ -5,7 +5,7 @@
 // GetNehodnoceneFotky (jen když je potřeba), počet pro hlavičku Hodnocení GetPocetNehodnocenychFotek; hodnocení
 // fotek kdekoli jinde ho hned upraví (událost hodnoceni-fotek).
 import { rozbalitFrontu } from '../lib/fronta';
-import { GetFotkyKOdemceni, GetFotkyKPruvodci, GetNehodnoceneFotky, GetPocetFotekKPruvodci, GetPocetNehodnocenychFotek, GetTemataKOdemceni, SetHodnoceni } from './backend';
+import { GetFotkyKOdemceni, GetStrankuPruvodce, GetNehodnoceneFotky, GetPocetFotekKPruvodci, GetPocetNehodnocenychFotek, GetTemataKOdemceni, SetHodnoceni } from './backend';
 import { historiePruvodce, hotovoPruvodce, nazevTagu, ukazatPruvodce, ukoncitPruvodce, vratitPruvodce, vykreslitPasek, zacitPruvodce } from './pruvodce-fotky';
 import { htmlOdhadu, htmlSrdicka } from './galerie';
 import { kratceSrdicka } from '../lib/srdicka';
@@ -197,23 +197,63 @@ async function nacistPocetKPruvodci() {
 let kOdemceni = [];
 const TEMAT_K_ODEMCENI = 6;
 
+// Fronta průvodce po stránkách celých alb (GetStrankuPruvodce): celá má u velké sbírky přes 100 000 fotek.
+// Další stránka se dotáhne, když se průvodce blíží konci načtené části, nebo když se klikne na album dál ve frontě.
+const STRANKA_PRUVODCE = 600;
+let strankyPruvodce = { alba: new Set(), dalsi: false, souhrn: [], info: {} };
+let dotahovani = null;
+
 async function nacistPruvodce() {
-    let fotky = [];
+    let stranka;
     try {
-        [fotky, kOdemceni] = await Promise.all([GetFotkyKPruvodci().then(rozbalitFrontu), GetTemataKOdemceni().catch(() => [])]);
+        [stranka, kOdemceni] = await Promise.all([GetStrankuPruvodce([], STRANKA_PRUVODCE), GetTemataKOdemceni().catch(() => [])]);
     } catch {
         // Chyba načtení se nesmí tvářit jako „všechny fotky prošly“
         nastavitHtml(kontejner, '<p class="ob-info">Fotky k průvodci se nepodařilo načíst.</p>');
         ukazatVolby();
         return;
     }
-    fotky ||= [];
     kOdemceni ||= [];
+    const fotky = rozbalitFrontu(stranka);
+    strankyPruvodce = { alba: new Set(fotky.map(f => f.albumId)), dalsi: !!stranka?.dalsi, souhrn: stranka?.souhrn || [], info: stranka?.alba || {} };
+    dotahovani = null;
     // Po modelkách a albech, jak přišly (předvyplnění podle alba); spojený plakát je jedna položka
     polozkyPruvodce = sestavitAlba(fotky).flatMap(a => a.polozky);
-    pocetKPruvodci = fotky.length;
+    pocetKPruvodci = stranka?.celkem ?? fotky.length;
     poZmenePoctu(pocet);
     vykreslit(pocet);
+}
+
+// Další stránka fronty průvodce (souběžná volání sdílejí jedno načtení); vrací nové položky
+function dotahnoutPruvodce() {
+    if (!strankyPruvodce.dalsi) return Promise.resolve([]);
+    dotahovani ??= (async () => {
+        const s = strankyPruvodce;
+        try {
+            const stranka = await GetStrankuPruvodce([...s.alba], STRANKA_PRUVODCE);
+            if (strankyPruvodce !== s) return [];
+            const fotky = rozbalitFrontu(stranka);
+            fotky.forEach(f => s.alba.add(f.albumId));
+            s.dalsi = !!stranka?.dalsi && fotky.length > 0;
+            const nove = sestavitAlba(fotky).flatMap(a => a.polozky);
+            polozkyPruvodce.push(...nove);
+            return nove;
+        } catch {
+            return [];
+        } finally {
+            dotahovani = null;
+        }
+    })();
+    return dotahovani;
+}
+
+// Index první položky alba ve frontě; album dál ve frontě se nejdřív dotáhne
+async function indexAlbaPruvodce(albumId) {
+    for (;;) {
+        const i = polozkyPruvodce.findIndex(p => p.fotky[0]?.albumId === albumId);
+        if (i >= 0 || !strankyPruvodce.dalsi) return i;
+        if (!(await dotahnoutPruvodce()).length) return -1;
+    }
 }
 
 function vykreslitPruvodce() {
@@ -222,14 +262,9 @@ function vykreslitPruvodce() {
             <div class="ob-karta">${htmlPrazdna('Všechny fotky prošly průvodcem', 'Nové fotky se tu objeví, až je přidáš.', { ikona: 'hvezda' })}</div>`);
         return ukazatVolby();
     }
-    // Alba fronty: klik začne od jejich první fotky
-    const alba = [];
-    polozkyPruvodce.forEach((p, i) => {
-        const klic = `${p.modelkaId}|${p.album}|${p.typ}`;
-        const posledni = alba[alba.length - 1];
-        if (posledni?.klic === klic) posledni.n++;
-        else alba.push({ klic, od: i, n: 1, nazev: `${p.jmenoModelky || ''} · ${p.album}` });
-    });
+    // Alba celé fronty (souhrn první stránky): klik začne od jejich první fotky
+    const alba = strankyPruvodce.souhrn.map(x => ({ id: x.albumId, n: x.pocet, info: strankyPruvodce.info[x.albumId] }))
+        .map(x => ({ ...x, nazev: x.info ? `${x.info.jmenoModelky || ''} · ${x.info.album}` : '' }));
     nastavitHtml(kontejner, `
         <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky">
             <button type="button" data-pr-start data-stav-klavesa="↵" data-stav-priorita="1" title="Začít průvodce (Enter)">Začít</button>
@@ -243,7 +278,7 @@ function vykreslitPruvodce() {
             </div>
             <div class="gh-modelky" aria-label="Alba k průvodci">
                 <small>Album</small>
-                ${alba.slice(0, MODELEK).map(a => `<button type="button" class="gh-modelka" data-pr-od="${a.od}" title="Začít od první fotky alba">${esc(a.nazev)}<b>${a.n}</b></button>`).join('')}
+                ${alba.slice(0, MODELEK).map(a => `<button type="button" class="gh-modelka" data-pr-album="${a.id}" title="Začít od první fotky alba">${esc(a.nazev)}<b>${a.n}</b></button>`).join('')}
                 ${alba.length > MODELEK ? `<span class="gh-dalsi">+ ${esc(sklonovat(alba.length - MODELEK, 'další album', 'další alba', 'dalších alb'))}</span>` : ''}
             </div>
             ${htmlOdemceni()}
@@ -291,7 +326,21 @@ async function otevritPruvodce(od = 0) {
     if (!polozkyPruvodce.length) return;
     if (!await zacitPruvodce()) return;
     prohlizetBezZajmu();
-    otevritLightbox(od, false, [...polozkyPruvodce], { pruvodce: true, poZavreni: () => { if (kontejner?.isConnected) nacistPruvodce(); } });
+    const seznam = [...polozkyPruvodce];
+    otevritLightbox(od, false, seznam, { pruvodce: true, poZavreni: () => { if (kontejner?.isConnected) nacistPruvodce(); } });
+    // Další stránky fronty se doplní do otevřeného prohlížeče
+    stav.lbDotahnout = async () => {
+        const nove = await dotahnoutPruvodce();
+        if (stav.lbPolozky !== seznam) return 0;
+        seznam.push(...nove);
+        return nove.length;
+    };
+}
+
+// Zbývá ve frontě: načtené položky, a když se fronta načítá po stránkách, i fotky, které ještě načtené nejsou
+function zbyvaPruvodce() {
+    if (!stav.lbDotahnout || !strankyPruvodce.dalsi) return stav.lbPolozky.length;
+    return Math.max(stav.lbPolozky.length, pocetKPruvodci - hotovoPruvodce);
 }
 
 // Stavová lišta průvodce: dílky k další desítce, „Hotovo 3 · zbývá 120“, po uložení „✓ Postava · Akt ♥♥♥♥“ a pak
@@ -314,7 +363,7 @@ function vykreslitListuPruvodce() {
         const cerstve = Date.now() - posledni.cas < POTVRZENI_MS;
         vratit = `<button type="button" data-pr-vratit data-stav-priorita="1" data-stav-trida="${cerstve ? 'stav-potvrzeni' : 'stav-akce'}" title="Vrátit poslední fotku (Backspace na prvním kroku)">${esc(cerstve ? `✓ ${text} · ↶` : `↶ Vrátit: ${text}`)}</button>`;
     }
-    nastavitHtml(misto, `${vratit}<span data-stav-html><span class="stav-dilky" aria-hidden="true">${dilky}</span>Hotovo ${hotovo} · zbývá ${stav.lbPolozky.length}</span>`);
+    nastavitHtml(misto, `${vratit}<span data-stav-html><span class="stav-dilky" aria-hidden="true">${dilky}</span>Hotovo ${hotovo} · zbývá ${zbyvaPruvodce()}</span>`);
     ukazatVolby();
 }
 
@@ -496,6 +545,11 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
         if (!kontejner?.contains(t)) return;
         const ukazka = /** @type {HTMLElement | null} */ (t.closest('[data-gh-ukazka]'));
         const jedna = /** @type {HTMLElement | null} */ (t.closest('[data-gh-modelka]'));
+        const albumPruvodce = /** @type {HTMLElement | null} */ (t.closest('[data-pr-album]'));
+        if (albumPruvodce) {
+            indexAlbaPruvodce(Number(albumPruvodce.dataset.prAlbum)).then(i => { if (i >= 0) otevritPruvodce(i); });
+            return;
+        }
         const odPruvodce = /** @type {HTMLElement | null} */ (t.closest('[data-pr-od]'));
         const tema = /** @type {HTMLElement | null} */ (t.closest('[data-pr-tema]'));
         if (tema) otevritPruvodceTematu(tema.dataset.prTema);

@@ -70,3 +70,59 @@ func TestNacistFrontuJakoSQL(t *testing.T) {
 		t.Fatalf("fronta průvodce se liší od SQL:\n%+v\n%+v", f, cekam)
 	}
 }
+
+// Stránky průvodce po albech: dohromady celá fronta bez opakování, i když fotky mezitím průvodcem projdou
+func TestStrankyPruvodce(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	for _, j := range []string{"Adéla", "Bára", "Cecílie"} {
+		a.AddModelka(Modelka{Jmeno: j})
+	}
+	odkazy := func(n, od int) string {
+		var v []string
+		for i := 0; i < n; i++ {
+			v = append(v, fmt.Sprintf("https://drive.google.com/file/d/%029d/view", od+i))
+		}
+		return strings.Join(v, " ")
+	}
+	a.AddBulkPhotos(1, "A", "Pictorial", odkazy(3, 100))
+	a.AddBulkPhotos(1, "B", "Pictorial", odkazy(4, 200))
+	a.AddBulkPhotos(2, "A", "Pictorial", odkazy(2, 300))
+	a.AddBulkPhotos(3, "A", "Pictorial", odkazy(5, 400))
+	cela := a.GetFotkyKPruvodci()
+
+	prvni := a.GetStrankuPruvodce(nil, 4)
+	// 3 + 4 fotky: stránka končí až na konci alba, které 4. fotku obsahuje
+	if len(prvni.Fotky) != 7 || !prvni.Dalsi || prvni.Celkem != 14 || len(prvni.Souhrn) != 4 || prvni.Souhrn[1].Pocet != 4 {
+		t.Fatalf("první stránka: %d fotek, další %v, celkem %d, souhrn %+v", len(prvni.Fotky), prvni.Dalsi, prvni.Celkem, prvni.Souhrn)
+	}
+	// Mezitím projde průvodcem fotka z první stránky: další stránka pokračuje dalším albem
+	a.UlozitPruvodceFotky(ZapisPruvodce{Ids: []int{prvni.Fotky[0].ID}, Hotovo: true})
+	nactena := map[int64]bool{}
+	var ids []int
+	for _, f := range prvni.Fotky {
+		nactena[f.AlbumID] = true
+		ids = append(ids, f.ID)
+	}
+	for stranka := prvni; stranka.Dalsi; {
+		var alba []int64
+		for id := range nactena {
+			alba = append(alba, id)
+		}
+		stranka = a.GetStrankuPruvodce(alba, 4)
+		for _, f := range stranka.Fotky {
+			nactena[f.AlbumID] = true
+			ids = append(ids, f.ID)
+		}
+		if len(stranka.Souhrn) != 0 {
+			t.Fatal("souhrn jen u první stránky")
+		}
+	}
+	if len(ids) != len(cela.Fotky) {
+		t.Fatalf("stránky dohromady %d fotek, fronta %d", len(ids), len(cela.Fotky))
+	}
+	for i, f := range cela.Fotky {
+		if ids[i] != f.ID {
+			t.Fatalf("pořadí se liší na %d", i)
+		}
+	}
+}

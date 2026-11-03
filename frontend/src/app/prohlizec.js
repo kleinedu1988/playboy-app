@@ -409,6 +409,7 @@ export function otevritLightbox(index, slideshow = false, polozky = stav.aktualn
     stav.lbPruvodce = pruvodce;
     lightbox.classList.toggle('pruvodce', pruvodce);
     stav.lbPoZavreni = poZavreni;
+    stav.lbDotahnout = null;
     stav.lbHistorie = [];
     // Hodnocení fronty: prohlížeč nechá dole místo stavové liště (postup, Vrátit, klávesy)
     lightbox.classList.toggle('hodnoceni', jenNehodnocene || pruvodce);

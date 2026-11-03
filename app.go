@@ -49,7 +49,21 @@ type App struct {
 	uc *uceni
 	// Poslední snímek sbírky (snimek.go); nil = snímek se nepamatuje (kopie pro import, testy bez NewApp)
 	pamet *pametSbirky
+	// Okno aplikace (ne testy): denní záloha a první snímek sbírky se při startu dělají na pozadí, aby okno
+	// nečekalo; obnovení zálohy a zavření programu na ně počkají (pockatNaPozadi)
+	startNaPozadi bool
+	naPozadi      *sync.WaitGroup
 }
+
+// Počká na práci startu na pozadí (denní záloha, první snímek), než se databáze zavře nebo vymění
+func (a *App) pockatNaPozadi() {
+	if a.naPozadi != nil {
+		a.naPozadi.Wait()
+	}
+}
+
+// Zálohy jdou po jedné (denní záloha na pozadí a záloha před zápisem by si jinak navzájem uklízely soubory)
+var zamekZaloh sync.Mutex
 
 // Chyba se vypíše do konzole a zároveň se ukáže uživateli
 func (a *App) chyba(kde string, err error) {
@@ -370,6 +384,8 @@ const (
 
 // Záloha databáze. Bez úspěšné zálohy se nesmí pokračovat v mazání, proto se chyba nikdy nezamlčí.
 func (a *App) zalohovat(duvod string) error {
+	zamekZaloh.Lock()
+	defer zamekZaloh.Unlock()
 	var zaznamu int
 	if err := a.db.QueryRow("SELECT (SELECT COUNT(*) FROM modelky) + (SELECT COUNT(*) FROM fotografie)").Scan(&zaznamu); err != nil {
 		return fmt.Errorf("nelze zjistit obsah databáze: %w", err)
@@ -518,6 +534,7 @@ func (a *App) prepnoutJenProCteni() {
 }
 
 func (a *App) ObnovitZalohu(soubor string) string {
+	a.pockatNaPozadi()
 	// Jen soubor ze složky záloh, žádná cesta zvenku
 	if soubor != filepath.Base(soubor) || !vzorZalohy.MatchString(soubor) {
 		return "Neplatný název zálohy."
@@ -861,7 +878,23 @@ func (a *App) startup(ctx context.Context) {
 		a.zapnoutWAL()
 	}
 	if a.chybaStartu == "" {
-		a.denniZaloha()
+		if !a.startNaPozadi {
+			a.denniZaloha()
+			return
+		}
+		// Snímek sbírky (modelky, alba) se načte, zatímco se okno teprve načítá; záloha jede vedle něj
+		if a.naPozadi == nil {
+			a.naPozadi = &sync.WaitGroup{}
+		}
+		a.naPozadi.Add(2)
+		go func() {
+			defer a.naPozadi.Done()
+			a.denniZaloha()
+		}()
+		go func() {
+			defer a.naPozadi.Done()
+			a.snimekVPameti()
+		}()
 	}
 }
 
@@ -1129,6 +1162,7 @@ func (a *App) migraceIndexy() error {
 
 // Zavření databáze při ukončení programu
 func (a *App) shutdown() {
+	a.pockatNaPozadi()
 	a.zavritPametSbirky(true)
 	if a.db != nil {
 		a.db.Close()

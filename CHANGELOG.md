@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.22] – 2026-11-03
+
+### Změněno
+- **Rychlejší start**: denní záloha a první načtení sbírky (modelky, alba) běží na pozadí, zatímco se okno teprve načítá – okno na ně nečeká. Názvy speciálů a seznam modelek se načítají souběžně a denní ověření souborů na Disku začne až 5 s po spuštění. Měřeno se sbírkou 3 000 modelek / 150 000 fotek: příprava před otevřením okna při prvním spuštění dne 420 → 205 ms, snímek sbírky (310 ms) se počítá souběžně s načítáním okna. Obnovení zálohy i zavření programu počkají, až záloha na pozadí doběhne.
+
 ## [1.2.21] – 2026-11-03
 
 ### Změněno

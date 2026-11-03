@@ -3099,3 +3099,22 @@ func TestTagyFotek(t *testing.T) {
 		t.Fatalf("tagy po importu: %v", vsech)
 	}
 }
+
+// Okno aplikace dělá denní zálohu a první snímek sbírky na pozadí; zavření programu na ně počká
+func TestStartNaPozadi(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Modelka"})
+	a.shutdown()
+
+	b := NewApp()
+	b.startNaPozadi = true
+	b.startup(context.Background())
+	b.pockatNaPozadi()
+	if denni, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "*-denni.db")); len(denni) != 1 {
+		t.Fatalf("denní zálohy po startu na pozadí: %v", denni)
+	}
+	if s := b.pamet.snimek; s == nil || len(s.modelky) != 1 {
+		t.Fatalf("snímek se při startu nenačetl: %+v", s)
+	}
+	b.shutdown()
+}

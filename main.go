@@ -56,6 +56,7 @@ func main() {
 		},
 		OnStartup: func(ctx context.Context) {
 			app.naChybu = func(zprava string) { runtime.EventsEmit(ctx, "chyba", zprava) }
+			app.startNaPozadi = true
 			app.startup(ctx)
 			if okno.MaPolohu && !okno.Maximalizovane {
 				runtime.WindowSetPosition(ctx, okno.X, okno.Y)

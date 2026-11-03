@@ -3,7 +3,7 @@ import { EventsOn } from '../wailsjs/runtime/runtime';
 import { oznamit } from './ui/oznameni';
 import { MaZamek, StavDatabaze } from './app/backend';
 import { stav } from './app/stav';
-import { nacistSpecialy } from './app/mezipamet';
+import { nacistSpecialy, vsechnyModelky } from './app/mezipamet';
 import { prepinacRezimu, prepnoutRezim } from './app/navigace';
 import { nacistGalerii } from './app/galerie';
 import { kontrolaPoSpusteni, odemknoutPriStartu } from './app/sprava';
@@ -80,13 +80,17 @@ StavDatabaze().then((chyba) => {
     // Po aktualizaci jednou ukáže, co je nového (až po odemčení)
     napoveda.ukazatNovinkyPoAktualizaci();
 
-    await nacistSpecialy();
+    // Názvy speciálů a seznam modelek pro galerii se načítají souběžně
+    const specialy = nacistSpecialy();
+    vsechnyModelky().catch(() => {});
+    await specialy;
     let posledni = null;
     try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
     if (posledni === 'nejlepsi') oblibenost.nastavitNejlepsiVOblibenosti(true);
     if (['kalendar', 'nejlepsi', 'centerfoldy'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
     nacistGalerii();
-    kontrolaPoSpusteni();
+    // Denní ověření souborů až po prvním vykreslení, ať nebrzdí start
+    setTimeout(() => kontrolaPoSpusteni(), 5000);
     // Skončená sezóna oblíbenosti čeká na vyhlášení Favoritky (app/vyhlaseni-sezony.js); až po úvodních oknech
     setTimeout(() => vyhlasitSezonu(), 1500);
 })();

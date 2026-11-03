@@ -22,6 +22,8 @@ var ikona []byte
 func main() {
 	// Create an instance of the app structure
 	app := NewApp()
+	// Obrázky v okně jdou přes místní mezipaměť náhledů (nahledy.go, obsluha v AssetServer níže)
+	nahledyPresMezipamet.Store(true)
 	// Okno se otevře tak, jak bylo naposledy zavřeno
 	okno := nacistStavOkna()
 	stavOkna := options.Normal
@@ -42,6 +44,8 @@ func main() {
 		Frameless: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
+			// Co není mezi soubory rozhraní: náhledy z Disku přes místní mezipaměť (nahledy.go)
+			Handler: novaMezipametNahledu(slozkaNahledu(), adresaNahleduNaDisku),
 		},
 		// Průhledné pozadí kvůli zakulaceným rohům rámečku okna
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},

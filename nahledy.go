@@ -1,0 +1,231 @@
+package main
+
+// Místní mezipaměť náhledů z Google Disku. Okno chce obrázky na adrese /nahled/<ID souboru>/<velikost>; obsluha
+// (assetserver.Options.Handler v main.go – dostane, co není mezi soubory rozhraní) malé velikosti (karta w400,
+// plakát w600) čte ze souboru na disku a napoprvé je stáhne z Disku a uloží, ostatní velikosti jen propustí.
+// Náhled se tak po prvním zobrazení ukáže hned a i bez připojení; WebKit si obrázky z Disku pamatuje jen 24 hodin.
+// Soubory jsou v ~/.cache/<program>/nahledy/<2 znaky ID>/<ID>_<velikost> (složky 0700, soubory 0600 jako databáze).
+// Do databáze náhledy nepatří: zálohy kopírují celý soubor sbírky.
+
+import (
+	"bytes"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
+)
+
+var vzorVelikostiNahledu = regexp.MustCompile(`^[whs][0-9]{1,4}$`)
+
+// Největší náhled, který se ještě uloží (w600 z Disku ~70 kB; obrana proti chybné odpovědi)
+const nejvetsiNahled = 4 << 20
+
+// Souběh stahování pro okno: Disk odpovídá ~250 ms na obrázek, při 16 souběžných se 48 karet načte za ~0,6 s
+const soubehNahledu = 16
+
+var (
+	errNahledNedostupny = errors.New("soubor na Disku není dostupný")         // 403/404/HTML místo obrázku
+	errNahledDocasne    = errors.New("Disk teď neodpovídá, zkusí se později") // výpadek sítě, 429, 5xx
+)
+
+type mezipametNahledu struct {
+	slozka  string
+	adresa  func(id, velikost string) string // adresa na Disku podle šablony
+	klient  *http.Client
+	ukladat map[string]bool // velikosti, které se ukládají na disk
+
+	soubeh      chan struct{}
+	mu          sync.Mutex
+	probihajici map[string]*stahovaniNahledu
+
+	zasahy, stazeno, propusteno, chyby atomic.Int64
+}
+
+type stahovaniNahledu struct {
+	hotovo chan struct{}
+	data   []byte
+	typ    string
+	err    error
+}
+
+// Složka náhledů vedle mezipaměti WebKitu (VymazatMezipamet); prázdná, když domovská složka není známá
+func slozkaNahledu() string {
+	zaklad, err := os.UserCacheDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(zaklad, filepath.Base(os.Args[0]), "nahledy")
+}
+
+func novaMezipametNahledu(slozka string, adresa func(id, velikost string) string) *mezipametNahledu {
+	return &mezipametNahledu{
+		slozka:      slozka,
+		adresa:      adresa,
+		klient:      &http.Client{Timeout: 20 * time.Second},
+		ukladat:     map[string]bool{"w400": true, "w600": true},
+		soubeh:      make(chan struct{}, soubehNahledu),
+		probihajici: map[string]*stahovaniNahledu{},
+	}
+}
+
+// Adresa náhledu na Disku podle šablony obrázků (stejná jako dřív v okně)
+func adresaNahleduNaDisku(id, velikost string) string {
+	return strings.ReplaceAll(adresaObrazkuNaDisku(id), "{velikost}", velikost)
+}
+
+func (m *mezipametNahledu) cesta(id, velikost string) string {
+	return filepath.Join(m.slozka, id[:2], id+"_"+velikost)
+}
+
+func (m *mezipametNahledu) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	casti := strings.Split(strings.TrimPrefix(r.URL.Path, "/nahled/"), "/")
+	if !strings.HasPrefix(r.URL.Path, "/nahled/") || len(casti) != 2 || !jeHoleID(casti[0]) || !vzorVelikostiNahledu.MatchString(casti[1]) {
+		http.NotFound(w, r)
+		return
+	}
+	id, velikost := casti[0], casti[1]
+	if !m.ukladat[velikost] || m.slozka == "" {
+		m.propustit(w, id, velikost)
+		return
+	}
+	if data, err := m.precist(id, velikost); err == nil {
+		m.zasahy.Add(1)
+		m.odpovedet(w, data, http.DetectContentType(data))
+		return
+	}
+	data, typ, err := m.stahnout(id, velikost)
+	switch {
+	case errors.Is(err, errNahledNedostupny):
+		http.Error(w, err.Error(), http.StatusNotFound)
+	case err != nil:
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+	default:
+		m.odpovedet(w, data, typ)
+	}
+}
+
+func (m *mezipametNahledu) odpovedet(w http.ResponseWriter, data []byte, typ string) {
+	w.Header().Set("Content-Type", typ)
+	w.Header().Set("Content-Length", fmt.Sprint(len(data)))
+	// Náhled k ID se nemění
+	w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
+	w.Write(data)
+}
+
+func (m *mezipametNahledu) precist(id, velikost string) ([]byte, error) {
+	p := m.cesta(id, velikost)
+	data, err := os.ReadFile(p)
+	if err != nil {
+		return nil, err
+	}
+	// Čas použití pro úklid nad limitem: obnoví se nejvýš jednou denně (nezávisí na noatime)
+	if info, err := os.Stat(p); err == nil && time.Since(info.ModTime()) > 24*time.Hour {
+		now := time.Now()
+		os.Chtimes(p, now, now)
+	}
+	return data, nil
+}
+
+// Jedno stažení na ID a velikost, i když o ně okno žádá víckrát najednou
+func (m *mezipametNahledu) stahnout(id, velikost string) ([]byte, string, error) {
+	klic := id + "_" + velikost
+	m.mu.Lock()
+	if s, ok := m.probihajici[klic]; ok {
+		m.mu.Unlock()
+		<-s.hotovo
+		return s.data, s.typ, s.err
+	}
+	s := &stahovaniNahledu{hotovo: make(chan struct{})}
+	m.probihajici[klic] = s
+	m.mu.Unlock()
+	defer func() {
+		m.mu.Lock()
+		delete(m.probihajici, klic)
+		m.mu.Unlock()
+		close(s.hotovo)
+	}()
+
+	m.soubeh <- struct{}{}
+	defer func() { <-m.soubeh }()
+
+	s.data, s.typ, s.err = m.zDisku(id, velikost)
+	if s.err == nil {
+		m.stazeno.Add(1)
+		if err := m.ulozit(id, velikost, s.data); err != nil {
+			m.chyby.Add(1) // náhled se ukáže, jen se neuloží
+		}
+	} else {
+		m.chyby.Add(1)
+	}
+	return s.data, s.typ, s.err
+}
+
+func (m *mezipametNahledu) zDisku(id, velikost string) ([]byte, string, error) {
+	resp, err := m.klient.Get(m.adresa(id, velikost))
+	if err != nil {
+		return nil, "", fmt.Errorf("%w: %v", errNahledDocasne, err)
+	}
+	defer resp.Body.Close()
+	typ := resp.Header.Get("Content-Type")
+	switch {
+	case resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500:
+		return nil, "", fmt.Errorf("%w: HTTP %d", errNahledDocasne, resp.StatusCode)
+	case resp.StatusCode != http.StatusOK || !strings.HasPrefix(typ, "image/"):
+		return nil, "", errNahledNedostupny
+	}
+	data, err := io.ReadAll(io.LimitReader(resp.Body, nejvetsiNahled+1))
+	if err != nil {
+		return nil, "", fmt.Errorf("%w: %v", errNahledDocasne, err)
+	}
+	if len(data) > nejvetsiNahled {
+		return nil, "", errNahledNedostupny
+	}
+	return data, typ, nil
+}
+
+// Zápis přes dočasný soubor a přejmenování: žádný napůl zapsaný náhled; soubory 0600, složky 0700
+func (m *mezipametNahledu) ulozit(id, velikost string, data []byte) error {
+	cil := m.cesta(id, velikost)
+	if err := os.MkdirAll(filepath.Dir(cil), 0o700); err != nil {
+		return err
+	}
+	f, err := os.CreateTemp(filepath.Dir(cil), ".tmp-*")
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(f, bytes.NewReader(data)); err != nil {
+		f.Close()
+		os.Remove(f.Name())
+		return err
+	}
+	if err := f.Close(); err != nil {
+		os.Remove(f.Name())
+		return err
+	}
+	return os.Rename(f.Name(), cil) // CreateTemp zakládá soubor s právy 0600
+}
+
+// Velikosti, které se neukládají (w800, w1200, s0): jen se propustí z Disku
+func (m *mezipametNahledu) propustit(w http.ResponseWriter, id, velikost string) {
+	m.propusteno.Add(1)
+	resp, err := m.klient.Get(m.adresa(id, velikost))
+	if err != nil {
+		http.Error(w, "Disk neodpovídá", http.StatusServiceUnavailable)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK || !strings.HasPrefix(resp.Header.Get("Content-Type"), "image/") {
+		http.Error(w, "nedostupné", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
+	w.Header().Set("Cache-Control", "private, max-age=86400")
+	io.Copy(w, resp.Body)
+}

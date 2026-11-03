@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.28] – 2026-11-03
+
+### Přidáno
+- **Náhledy na disku**: náhledy z Google Disku (karty modelek a dlaždice fotek w400, plakáty a obálky w600) se po prvním zobrazení uloží do `~/.cache/playboy-app/nahledy` (jen pro vlastníka, jako databáze) a příště se ukážou hned odtud – i bez připojení a i po delší pauze (mezipaměť okna si obrázky z Disku pamatovala jen 24 hodin, pak je znovu ověřovala na Googlu). Nestažené náhledy se stahují až 16 najednou (dřív 6), takže i první zobrazení je rychlejší. Velké fotky v prohlížeči jdou dál přímo z Disku a neukládají se; kontrola souborů na Disku chodí vždy přímo na Disk. Limit velikosti a úklid přijdou v další verzi.
+
 ## [1.2.27] – 2026-11-03
 
 ### Změněno

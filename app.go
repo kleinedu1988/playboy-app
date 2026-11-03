@@ -643,7 +643,20 @@ const vychoziSablonaObrazku = "https://lh3.googleusercontent.com/d/{id}={velikos
 
 var sablonaObrazku atomic.Value
 
+// Okno aplikace bere obrázky přes místní mezipaměť náhledů (nahledy.go); testy a kopie pro import adresy Disku
+var nahledyPresMezipamet atomic.Bool
+
+// Adresa obrázku pro okno (s {velikost}, doplní ji rozhraní): přes mezipaměť náhledů /nahled/<id>/{velikost},
+// jinak přímo na Disk
 func adresaObrazku(driveID string) string {
+	if nahledyPresMezipamet.Load() && (driveID == "{id}" || jeHoleID(driveID)) {
+		return "/nahled/" + driveID + "/{velikost}"
+	}
+	return adresaObrazkuNaDisku(driveID)
+}
+
+// Adresa obrázku přímo na Disku podle šablony (kontrola souborů, stahování do mezipaměti náhledů, nastavení)
+func adresaObrazkuNaDisku(driveID string) string {
 	sablona, _ := sablonaObrazku.Load().(string)
 	if sablona == "" {
 		sablona = vychoziSablonaObrazku
@@ -652,7 +665,7 @@ func adresaObrazku(driveID string) string {
 }
 
 func (a *App) GetSablonaObrazku() string {
-	return adresaObrazku("{id}")
+	return adresaObrazkuNaDisku("{id}")
 }
 
 // Nová šablona adresy obrázků; musí obsahovat {id}, prázdná vrací výchozí. Před uložením se ověří na jedné fotce
@@ -2110,7 +2123,7 @@ var klientDisku = &http.Client{Timeout: 20 * time.Second}
 
 // Malý náhled stačí; smazaný nebo nesdílený soubor vrací místo obrázku stránku
 func overitSouborNaDisku(driveID string) int {
-	resp, err := klientDisku.Get(strings.ReplaceAll(adresaObrazku(driveID), "{velikost}", "w64"))
+	resp, err := klientDisku.Get(strings.ReplaceAll(adresaObrazkuNaDisku(driveID), "{velikost}", "w64"))
 	if err != nil {
 		return souborNeoveren
 	}

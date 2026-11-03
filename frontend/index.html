@@ -6,8 +6,32 @@
     <!-- Pojistka: spustí se jen skripty programu (i kdyby se do stránky dostal cizí kód z dat sbírky) -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'; base-uri 'none'"/>
     <title>Playboy Database</title>
+    <!-- Úvodní obrazovka (src/ui/uvod.js): je vidět hned, ještě než se načtou skripty a styly programu; zmizí,
+         až je první pohled sestavený. Styl je tady, protože style.css se načítá se skripty. -->
+    <style>
+        html, body { margin: 0; background: #0f0f12; }
+        #uvod { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 14px; background: radial-gradient(ellipse at 50% 38%, #1d1418 0%, #0f0f12 62%);
+            color: #f0f0f5; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; transition: opacity .22s ease;
+            --wails-draggable: drag; cursor: default; user-select: none; }
+        #uvod.skryty { opacity: 0; pointer-events: none; }
+        #uvod img { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 10px 34px rgba(216, 27, 96, .28), 0 4px 14px rgba(0, 0, 0, .5); }
+        #uvod h1 { margin: 6px 0 0; font-size: 22px; font-weight: 600; letter-spacing: .2px; }
+        #uvod .uvod-verze { margin-top: -10px; font-size: 12px; color: #9a9a9e; min-height: 15px; }
+        #uvod .uvod-pruh { width: 220px; height: 3px; margin-top: 18px; border-radius: 3px; background: #2a2a30; overflow: hidden; }
+        #uvod .uvod-pruh i { display: block; height: 100%; width: 6%; border-radius: 3px; background: #d81b60; transition: width .3s ease; }
+        #uvod .uvod-krok { font-size: 12.5px; color: #9a9a9e; min-height: 16px; }
+        @media (prefers-reduced-motion: reduce) { #uvod, #uvod .uvod-pruh i { transition: none; } }
+    </style>
 </head>
 <body>
+<div id="uvod" role="status" aria-live="polite">
+    <img src="./uvod.png" alt="" draggable="false"/>
+    <h1>Playboy Database</h1>
+    <div class="uvod-verze"></div>
+    <div class="uvod-pruh"><i></i></div>
+    <div class="uvod-krok">Otevírám databázi…</div>
+</div>
 <div id="app"></div>
 <script src="./src/main.js" type="module"></script>
 </body>

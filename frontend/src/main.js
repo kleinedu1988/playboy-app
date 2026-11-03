@@ -1,7 +1,8 @@
 import './style.css';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import { oznamit } from './ui/oznameni';
-import { MaZamek, StavDatabaze } from './app/backend';
+import { GetOblibenost, GetSezona, GetVerze, MaZamek, StavDatabaze } from './app/backend';
+import { krokUvodu, pockatNaNahledy, skrytUvod, ukazatUvod, verzeUvodu } from './ui/uvod';
 import { stav } from './app/stav';
 import { nacistSpecialy, vsechnyModelky } from './app/mezipamet';
 import { prepinacRezimu, prepnoutRezim } from './app/navigace';
@@ -73,22 +74,43 @@ StavDatabaze().then((chyba) => {
     if (chyba) oznamit(chyba, { text: 'Rozumím', akce: () => {} });
 });
 
-// Spuštění: nejdřív případný zámek, potom přehled, ve kterém se program naposledy zavřel
+// Spuštění pod úvodní obrazovkou (ui/uvod.js): nejdřív případný zámek, potom přehled, ve kterém se program naposledy
+// zavřel, jeho náhledy a data Hodnocení; úvod zmizí, až je vše připravené
 (async () => {
-    stav.maZamek = await MaZamek();
-    if (stav.maZamek) await odemknoutPriStartu();
-    // Po aktualizaci jednou ukáže, co je nového (až po odemčení)
-    napoveda.ukazatNovinkyPoAktualizaci();
+    // Pojistka: úvod nesmí zůstat viset, ani kdyby se příprava zasekla
+    const pojistka = setTimeout(skrytUvod, 15000);
+    try {
+        GetVerze().then(verzeUvodu).catch(() => {});
+        stav.maZamek = await MaZamek();
+        if (stav.maZamek) {
+            ukazatUvod(false);
+            await odemknoutPriStartu();
+            ukazatUvod(true);
+        }
 
-    // Názvy speciálů a seznam modelek pro galerii se načítají souběžně
-    const specialy = nacistSpecialy();
-    vsechnyModelky().catch(() => {});
-    await specialy;
-    let posledni = null;
-    try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
-    if (posledni === 'nejlepsi') oblibenost.nastavitNejlepsiVOblibenosti(true);
-    if (['kalendar', 'nejlepsi', 'centerfoldy'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
-    nacistGalerii();
+        krokUvodu('Načítám sbírku…', 0.25);
+        // Názvy speciálů a seznam modelek pro galerii se načítají souběžně
+        const specialy = nacistSpecialy();
+        vsechnyModelky().catch(() => {});
+        await specialy;
+
+        krokUvodu('Sestavuji galerii…', 0.5);
+        let posledni = null;
+        try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
+        if (posledni === 'nejlepsi') oblibenost.nastavitNejlepsiVOblibenosti(true);
+        if (['kalendar', 'nejlepsi', 'centerfoldy'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
+        await nacistGalerii().catch(() => {});
+
+        // Hodnocení se připraví dopředu (backend si výpočet pamatuje), mezitím se načtou náhledy první obrazovky
+        krokUvodu('Načítám náhledy a připravuji Hodnocení…', 0.75);
+        const hodnoceni = Promise.all([GetOblibenost(), GetSezona()]).catch(() => {});
+        await Promise.all([pockatNaNahledy(2500), Promise.race([hodnoceni, new Promise(hotovo => setTimeout(hotovo, 2500))])]);
+    } finally {
+        clearTimeout(pojistka);
+        skrytUvod();
+    }
+    // Po aktualizaci jednou ukáže, co je nového (až po odemčení a úvodu)
+    napoveda.ukazatNovinkyPoAktualizaci();
     // Denní ověření souborů až po prvním vykreslení, ať nebrzdí start
     setTimeout(() => kontrolaPoSpusteni(), 5000);
     // Skončená sezóna oblíbenosti čeká na vyhlášení Favoritky (app/vyhlaseni-sezony.js); až po úvodních oknech

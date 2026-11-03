@@ -1677,8 +1677,8 @@ func TestProhlizeniNapricSbirkou(t *testing.T) {
 		t.Fatalf("nejlepší po modelkách: %+v", nej)
 	}
 	// Nehodnocené: jen fotky modelek bez srdíček (obálky ne)
-	if n := a.GetPocetNehodnocenychFotek(); n != len(a.nehodnoceneFotky()) {
-		t.Errorf("počet nehodnocených %d nesedí se seznamem", n)
+	if n := a.GetPocetNehodnocenychFotek(); n != len(a.nehodnoceneFotky()) || n != a.pocetNehodnocenychZDatabaze() {
+		t.Errorf("počet nehodnocených %d nesedí se seznamem ani s databází", n)
 	}
 	if neh := a.nehodnoceneFotky(); len(neh) != 1 || neh[0].ID != fotky[2].ID || neh[0].JmenoModelky != "Bára" {
 		t.Fatalf("nehodnocené: %+v", neh)

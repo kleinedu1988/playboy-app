@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.27] – 2026-11-03
+
+### Změněno
+- **Lehčí start**: automatická kontrola sezóny po spuštění se nejdřív zeptá jen na stav sezóny; návrhy témat a témata k odemčení (asi 0,7 s práce na pozadí) počítá, jen když se okno volby sezóny opravdu ukáže. Kliknutí hned po startu tak už nečeká na zbytečný výpočet.
+- **Rychlejší Hodnocení**: počet nehodnocených fotek (hlavička, pilulka) se bere z paměti sbírky místo dotazu do databáze (35–110 ms → pod 1 ms při každém otevření).
+- **Rychlejší Síň slávy**: nenačítá dvojice k porovnání; načtou se, až se přepne do Hodnocení.
+
 ## [1.2.26] – 2026-11-03
 
 ### Opraveno

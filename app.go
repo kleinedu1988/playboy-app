@@ -1828,6 +1828,18 @@ func (a *App) GetNehodnoceneFotky() FrontaFotek {
 // Počet nehodnocených fotek (pilulka a hlavička Hodnocení, stavová lišta Fotek) bez načítání celých fotek; stejný
 // výběr jako GetNehodnoceneFotky
 func (a *App) GetPocetNehodnocenychFotek() int {
+	// Ze snímku sbírky (alba modelek s počty fotek) bez dotazu do databáze; snímek zneplatní každý zápis
+	if s := a.snimekVPameti(); s != nil && s.err == nil {
+		n := 0
+		for i := range s.alba {
+			n += s.alba[i].fotek - s.alba[i].hodnocenych
+		}
+		return n
+	}
+	return a.pocetNehodnocenychZDatabaze()
+}
+
+func (a *App) pocetNehodnocenychZDatabaze() int {
 	var n int
 	a.db.QueryRow(`SELECT COUNT(*) FROM fotografie f JOIN modelky m ON m.id = f.modelka_id
 		WHERE COALESCE(f.hodnoceni, 0) = 0`).Scan(&n)

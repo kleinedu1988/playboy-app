@@ -118,6 +118,8 @@ function ukazatCastOblibenosti(klic) {
     obnovitPanelHodnoceni();
     if (stav.oblibenostCast === 'slava' && cast('slava')) nacistSinSlavy(cast('slava'));
     if (stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'fotky' && cast('galerie')) nacistGalerii(cast('galerie'));
+    // Ze Síně slávy (otevřené bez fronty dvojic) do Hodnocení: dvojice se načtou teď
+    if (stav.oblibenostCast === 'hodnoceni' && !fronta.length && !doplnovani) doplnitFrontu().then(() => vykreslitDvojici());
     // Pořadí se mezitím přepočítalo: složí se teď; při odchodu z něj se ukázaný počet řádků vrátí na začátek
     if (poradiVidet() && poradiZastarale) vykreslitPoradi();
     if (!poradiVidet()) poradiLimit = PORADI_NAJEDNOU;
@@ -199,7 +201,9 @@ export async function nacistOblibenost(sekce) {
     // Srdíčka fotek se mohla mezitím změnit; fotky se načtou znovu (backend je má v paměti se snímkem sbírky)
     nahledy.clear();
     vykreslitHlavu();
-    await Promise.all([obnovitPrehled(), fronta.length ? null : doplnitFrontu()]);
+    // Síň slávy dvojice k porovnání nepotřebuje: fronta se doplní, až se ukáže Hodnocení (ukazatCastOblibenosti)
+    const slava = stav.oblibenostCast === 'slava';
+    await Promise.all([obnovitPrehled(), fronta.length || slava ? null : doplnitFrontu()]);
     vykreslitDvojici();
 }
 
@@ -437,6 +441,8 @@ function nacistNahledyDvojic(seznam) {
 // Přepnutí režimu (volba, nebo začala či skončila tematická sezóna): fronta z druhého režimu se zahodí (série
 // a výzva o trůn zůstanou) a doplní se znovu
 function srovnatRezimPorovnani() {
+    // Síň slávy bez načtené fronty: dvojice (v režimu sezóny) se načtou až s Hodnocením
+    if (stav.oblibenostCast === 'slava' && !fronta.length && !doplnovani) return;
     const tema = temaPorovnani();
     if (tema === temaFronty || !sezonaNactena) return;
     temaFronty = tema;

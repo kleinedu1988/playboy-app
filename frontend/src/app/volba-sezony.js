@@ -93,7 +93,12 @@ export async function zvolitSezonu({ auto = false } = {}) {
     let n;
     let skoro = [];
     try {
-        [sezona, n, skoro] = await Promise.all([GetSezona(), GetNavrhSezony(), GetTemataKOdemceni().catch(() => [])]);
+        if (auto) {
+            // Při spuštění nejdřív jen stav sezóny; návrh témat (~0,7 s práce backendu) jen když se okno opravdu ukáže
+            sezona = await GetSezona();
+            if (sezona?.zvoleno || sezona?.kUzavreni) return;
+        }
+        [sezona, n, skoro] = await Promise.all([sezona || GetSezona(), GetNavrhSezony(), GetTemataKOdemceni().catch(() => [])]);
     } catch { return; }
     if (!n?.klic || okno || otevreneOkno() || (auto && (sezona?.zvoleno || sezona?.kUzavreni || odlozena(n.klic)))) return;
     const vsechna = [...n.navrhy, n.klasicka];

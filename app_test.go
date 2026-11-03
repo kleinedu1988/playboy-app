@@ -174,7 +174,7 @@ func TestAlbaACenterfoldy(t *testing.T) {
 	a.AddBulkPhotos(id, "2009-11", "Centerfold", odkazA+" "+odkazB)
 	a.AddBulkPhotos(id, "Pictorial", "Pictorial", odkazA)
 
-	centerfoldy := a.GetCenterfoldy()
+	centerfoldy := a.centerfoldy()
 	if len(centerfoldy) != 2 || centerfoldy[0].JmenoModelky != "Modelka" {
 		t.Fatalf("centerfoldy: %+v", centerfoldy)
 	}
@@ -184,7 +184,7 @@ func TestAlbaACenterfoldy(t *testing.T) {
 	a.SetSpojeniAlba(id, "2009-11", "Centerfold", true)
 	a.SetRotaceFotek([]int{centerfoldy[0].ID, centerfoldy[1].ID}, 450)
 	a.AddBulkPhotos(id, "2009-11", "Centerfold", "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view")
-	for _, f := range a.GetCenterfoldy() {
+	for _, f := range a.centerfoldy() {
 		if !f.Spojit || f.Rotace != 90 {
 			t.Fatalf("stránka plakátu má spojit=%v rotace=%d", f.Spojit, f.Rotace)
 		}
@@ -192,7 +192,7 @@ func TestAlbaACenterfoldy(t *testing.T) {
 
 	// Přejmenování alba se týká jen daného typu
 	a.UpdateAlbum(id, "2009-11", "Centerfold", "2010-01", "Centerfold")
-	if len(a.GetCenterfoldy()) != 3 || a.GetCenterfoldy()[0].Album != "2010-01" {
+	if len(a.centerfoldy()) != 3 || a.centerfoldy()[0].Album != "2010-01" {
 		t.Fatal("přejmenování centerfoldu se neprojevilo")
 	}
 
@@ -222,7 +222,7 @@ func TestCovery(t *testing.T) {
 		t.Fatalf("covery mají být od nejnovějšího: %+v", covery)
 	}
 	// Covery nepatří žádné modelce ani mezi centerfoldy
-	if len(a.GetCenterfoldy()) != 0 {
+	if len(a.centerfoldy()) != 0 {
 		t.Fatal("cover se objevil mezi centerfoldy")
 	}
 
@@ -937,7 +937,7 @@ func TestExportAImport(t *testing.T) {
 	a.SetHodnoceniFotek([]int{fotky[0].ID}, 4)
 	a.AddBulkPhotos(id, "2013-05", "Centerfold", odkazA+" "+odkazB)
 	a.SetSpojeniAlba(id, "2013-05", "Centerfold", true)
-	a.SetRotaceFotek([]int{a.GetCenterfoldy()[0].ID, a.GetCenterfoldy()[1].ID}, 90)
+	a.SetRotaceFotek([]int{a.centerfoldy()[0].ID, a.centerfoldy()[1].ID}, 90)
 	a.AddCover("2013-05", odkazA)
 
 	export, err := a.exportovat()
@@ -1785,7 +1785,7 @@ func TestOpravyEtapy7(t *testing.T) {
 	// Řazení v SQL bez ohledu na diakritiku: Émilie před Zoe
 	a.AddBulkPhotos(zoe, "2001-01", "Centerfold", odkazA)
 	a.AddBulkPhotos(emilie, "2002-02", "Centerfold", odkazB)
-	if cf := a.GetCenterfoldy(); cf[0].JmenoModelky != "Émilie" {
+	if cf := a.centerfoldy(); cf[0].JmenoModelky != "Émilie" {
 		t.Fatalf("řazení stěny: %s je první", cf[0].JmenoModelky)
 	}
 

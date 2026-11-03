@@ -1733,7 +1733,13 @@ func (a *App) GetFotografieModelky(modelkaID int) []Fotografie {
 }
 
 // Všechny centerfoldy napříč modelkami pro stěnu plakátů
-func (a *App) GetCenterfoldy() []Fotografie {
+// Stěna centerfoldů: zhuštěná fronta (údaje alba jednou za album, adresa jako šablona) seřazená v Go jako
+// centerfoldy() – dřív ~3,5 MB a řazení všech fotek v SQL s porovnáním jmen bez diakritiky
+func (a *App) GetCenterfoldy() FrontaFotek {
+	return a.nacistFrontu("centerfoldy", `a.typ = 'Centerfold'`)
+}
+
+func (a *App) centerfoldy() []Fotografie {
 	return a.nacistFotografie(vyberFotografii+`, m.jmeno`+vyberPopisu+` FROM fotografie f
 		JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
 		WHERE f.typ = 'Centerfold'

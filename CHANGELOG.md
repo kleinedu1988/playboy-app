@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.43] – 2026-11-03
+
+### Změněno
+- **Menší data pro Centerfoldy**: stěna centerfoldů dostává fotky zhuštěně jako fronty Hodnotit (údaje alba jednou za album, adresa obrázku jako šablona) a řazení skládá backend z alb místo řazení všech fotek v databázi. Se sbírkou 3 000 modelek: data 3,5 MB → 1,1 MB, otevření Centerfoldů 220–270 → ~200 ms. Fotky, pořadí i údaje jsou stejné (hlídá test).
+
 ## [1.2.42] – 2026-11-03
 
 ### Změněno

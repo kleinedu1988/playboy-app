@@ -2,6 +2,7 @@
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
 import { EDICE, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
+import { rozbalitFrontu } from '../lib/fronta';
 import { stav } from './stav';
 import { covers, coversList, searchInput, wall } from './prvky';
 import { listaCoveru, listaSteny } from './listy';
@@ -24,7 +25,7 @@ const RAZENI_STENY = {
 
 export async function nacistStenu(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
-    const fotky = zMezipameti && stav.stenaData ? stav.stenaData : await GetCenterfoldy() || [];
+    const fotky = zMezipameti && stav.stenaData ? stav.stenaData : rozbalitFrontu(await GetCenterfoldy());
     const oblibenost = stav.razeniSteny === 'hodnoceni' ? await oblibenostModelek().catch(() => new Map()) : new Map();
     if (moje !== stav.cisloNacteni) return;
     stav.stenaData = fotky;

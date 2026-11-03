@@ -26,7 +26,7 @@ export function ExportovatDoSouboru():Promise<string>;
 
 export function GetAlbaFotografa(arg1:string):Promise<Array<main.Fotografie>>;
 
-export function GetCenterfoldy():Promise<Array<main.Fotografie>>;
+export function GetCenterfoldy():Promise<main.FrontaFotek>;
 
 export function GetClanky(arg1:string):Promise<Array<main.Clanek>>;
 

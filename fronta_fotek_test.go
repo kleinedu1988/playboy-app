@@ -188,3 +188,25 @@ func TestStrankyNehodnocenych(t *testing.T) {
 		t.Fatalf("modelka: %d / %d", s.Celkem, len(s.Polozky))
 	}
 }
+
+// Stěna centerfoldů ze zhuštěné fronty: stejné fotky ve stejném pořadí a s údaji alba jako dřív z SQL
+func TestCenterfoldyJakoSQL(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	for _, j := range []string{"Žaneta", "adéla", "Ádina"} {
+		a.AddModelka(Modelka{Jmeno: j})
+	}
+	for i, vydani := range []string{"1990-05", "1985-01", "1999-12"} {
+		a.AddBulkPhotos(i+1, vydani, "Centerfold", fmt.Sprintf("https://drive.google.com/file/d/%029d/view https://drive.google.com/file/d/%029d/view", i*10, i*10+1))
+	}
+	a.AddBulkPhotos(1, "Jiné", "Pictorial", "https://drive.google.com/file/d/99999999999999999999999999999/view")
+	a.SetPopisAlba(2, "1985-01", "Centerfold", "popis", "Fotograf")
+	cekam := zabalitFrontu(a.centerfoldy())
+	f := a.GetCenterfoldy()
+	for id, al := range f.Alba {
+		al.DalsiModelky = nil
+		f.Alba[id] = al
+	}
+	if !reflect.DeepEqual(f, cekam) || len(f.Fotky) != 6 {
+		t.Fatalf("centerfoldy se liší od SQL:\n%+v\n%+v", f, cekam)
+	}
+}

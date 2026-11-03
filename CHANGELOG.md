@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.52] – 2026-11-03
+
+### Změněno
+- **Balíček `internal/nahledy` a rychlejší čtení náhledů**: místní mezipaměť náhledů a stahování na pozadí jsou vyčleněné do samostatného balíčku `internal/nahledy` s vlastními jednotkovými testy (bez globálního stavu stahování na pozadí). Čtení uloženého náhledu z disku nepouští druhý systémový dotaz `stat`, rozbor adresy `/nahled/<id>/<velikost>` a ověření velikosti probíhá bez alokací a bez regulárního výrazu, zápis do souboru nealokuje čtečku a výběr položek k předstažení skládá klíč přímo ze struktury místo spojování řetězců.
+
 ## [1.2.51] – 2026-11-03
 
 ### Přidáno

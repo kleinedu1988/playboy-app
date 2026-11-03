@@ -26,6 +26,8 @@ import (
 	"golang.org/x/text/unicode/norm"
 
 	"modernc.org/sqlite"
+
+	"playboy-app/internal/nahledy"
 )
 
 type App struct {
@@ -55,7 +57,7 @@ type App struct {
 	startNaPozadi bool
 	naPozadi      *sync.WaitGroup
 	// Místní mezipaměť náhledů z Disku (nahledy.go); nil v testech a v kopii pro import
-	nahledy *mezipametNahledu
+	nahledy *nahledy.Mezipamet
 }
 
 // Počká na práci startu na pozadí (denní záloha, první snímek), než se databáze zavře nebo vymění
@@ -699,7 +701,7 @@ func (a *App) SetSablonaObrazku(sablona string) string {
 	}
 	// Náhledy ze staré šablony můžou být jiné obrázky (jiný zdroj): stáhnou se znovu
 	if sablona != puvodni {
-		if _, err := a.nahledy.vymazat(); err != nil {
+		if _, err := a.nahledy.Vymazat(); err != nil {
 			a.chyba("vymazání náhledů", err)
 		}
 	}
@@ -1199,15 +1201,7 @@ var vzorHolehoID = regexp.MustCompile(`^[a-zA-Z0-9_-]{25,}$`)
 
 // Celý text je holé ID z Disku (totéž co vzorHolehoID, jen bez regulárního výrazu)
 func jeHoleID(text string) bool {
-	if len(text) < 25 {
-		return false
-	}
-	for i := 0; i < len(text); i++ {
-		if z := text[i]; !(z >= 'a' && z <= 'z' || z >= 'A' && z <= 'Z' || z >= '0' && z <= '9' || z == '_' || z == '-') {
-			return false
-		}
-	}
-	return true
+	return nahledy.JeHoleID(text)
 }
 
 // Vytažení všech Drive ID z jakéhokoliv textu/odkazů
@@ -2221,13 +2215,13 @@ func (a *App) VymazatMezipamet() int64 {
 		return 0
 	}
 	slozka := filepath.Join(zaklad, filepath.Base(os.Args[0]), "WebKitCache")
-	velikost := velikostSlozky(slozka)
+	velikost := nahledy.VelikostSlozky(slozka)
 	if err := os.RemoveAll(slozka); err != nil {
 		a.chyba("vymazání mezipaměti obrázků", err)
 		return 0
 	}
 	// I náhledy uložené na disku (nahledy.go)
-	nahledu, err := a.nahledy.vymazat()
+	nahledu, err := a.nahledy.Vymazat()
 	if err != nil {
 		a.chyba("vymazání náhledů", err)
 	}

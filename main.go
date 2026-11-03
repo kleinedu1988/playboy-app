@@ -9,6 +9,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"playboy-app/internal/nahledy"
 )
 
 //go:embed all:frontend/dist
@@ -24,7 +26,7 @@ func main() {
 	app := NewApp()
 	// Obrázky v okně jdou přes místní mezipaměť náhledů (nahledy.go, obsluha v AssetServer níže)
 	nahledyPresMezipamet.Store(true)
-	app.nahledy = novaMezipametNahledu(slozkaNahledu(), adresaNahleduNaDisku)
+	app.nahledy = nahledy.Nova(nahledy.Slozka(), adresaNahleduNaDisku)
 	// Okno se otevře tak, jak bylo naposledy zavřeno
 	okno := nacistStavOkna()
 	stavOkna := options.Normal

@@ -322,6 +322,9 @@ type oblibenostUceni struct {
 	// Jen jeden výpočet modelu najednou; pořadí zámků: vypocet před mu
 	vypocet sync.Mutex
 	model   *modelOblibenosti
+	// Údaje modelek pro model vkusu (na porovnání nezávisí): drží se, dokud se modelky nezmění (otisk modelek)
+	udajeOtisk string
+	udaje      map[int]udajeVkusu
 	// Naposledy nabídnuté dvojice (jen v paměti) a počet volání výběru (semínko průzkumu)
 	nabidnute [][2]int
 	nabidek   int
@@ -390,7 +393,9 @@ func klicDvojice(a, b int) [2]int {
 // Model oblíbenosti: Bradley–Terry + model vkusu podle otisku
 
 type modelOblibenosti struct {
-	otisk      string
+	otisk string
+	// Připravené údaje modelek pro model vkusu (vstupOblibenosti.udaje); jen pro učení, po něm se nepotřebují
+	udajeVstup map[int]udajeVkusu
 	sila       map[int]float64 // síla modelek s předpokladem (hodnocené, s hodnocenými fotkami a porovnávané)
 	rozptyl    map[int]float64
 	pocet      map[int]int     // porovnání modelky
@@ -476,9 +481,14 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	porovnani := u.nacistPorovnani()
 	zaznamu := u.ob.zaznamuZajmu
 	u.mu.Unlock()
-	otisk := otiskOblibenosti(modelky, porovnani, zaznamu/zaznamuNaPrepocet)
+	otiskM := otiskModelekOblibenosti(modelky)
+	otisk := otiskOblibenostiZ(otiskM, porovnani, zaznamu/zaznamuNaPrepocet)
 	if u.ob.model != nil && u.ob.model.otisk == otisk {
 		return u.ob.model
+	}
+	// Po porovnání se modelky nemění: údaje modelu vkusu se znovu nepřipravují
+	if u.ob.udajeOtisk != otiskM {
+		u.ob.udaje, u.ob.udajeOtisk = pripravitUdajeVkusu(modelky), otiskM
 	}
 	nyni := time.Now()
 	u.mu.Lock()
@@ -488,7 +498,7 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	st := u.nacistStavUrovni(posledni)
 	prevzate := u.nacistPrevzate()
 	u.mu.Unlock()
-	model := spocitatOblibenostUplne(modelky, porovnani, zajem, vstupOblibenosti{drzitelky: st.drzitelky, prevzate: prevzate}, nyni)
+	model := spocitatOblibenostUplne(modelky, porovnani, zajem, vstupOblibenosti{drzitelky: st.drzitelky, prevzate: prevzate, udaje: u.ob.udaje}, nyni)
 	model.nastavitTrend(snimek, den, nyni, potvrzene)
 	model.otisk = otisk
 	predchozi := u.ob.model
@@ -530,14 +540,24 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 // poslední číslo – vrácení i nové porovnání ho změní), dávka zápisů zájmu a dnešní datum (stáří porovnání,
 // zájmu a srovnávací snímek trendu)
 func otiskOblibenosti(modelky []Modelka, porovnani []porovnaniZaznam, davkaZajmu int) string {
+	return otiskOblibenostiZ(otiskModelekOblibenosti(modelky), porovnani, davkaZajmu)
+}
+
+func otiskOblibenostiZ(otiskModelek string, porovnani []porovnaniZaznam, davkaZajmu int) string {
 	o := novyOtiskovac()
-	o.text(verzeOblibenosti, time.Now().Format("2006-01-02"))
+	o.text(verzeOblibenosti, time.Now().Format("2006-01-02"), otiskModelek)
 	o.cisla(davkaZajmu)
 	posledni := int64(0)
 	if len(porovnani) > 0 {
 		posledni = porovnani[len(porovnani)-1].id
 	}
 	o.cisla(len(porovnani), int(posledni))
+	return o.hex()
+}
+
+// Otisk údajů modelek, ze kterých se oblíbenost počítá (i srdíčka fotek a fotografové)
+func otiskModelekOblibenosti(modelky []Modelka) string {
+	o := novyOtiskovac()
 	for i := range modelky {
 		m := &modelky[i]
 		o.modelka(m)
@@ -563,11 +583,13 @@ func spocitatOblibenostSeZajmem(modelky []Modelka, porovnani []porovnaniZaznam, 
 type vstupOblibenosti struct {
 	drzitelky map[int]int
 	prevzate  map[int]float64
+	// Připravené údaje modelek pro model vkusu (pripravitUdajeVkusu ze stejných modelek); nil = připravit
+	udaje map[int]udajeVkusu
 }
 
 // Celý výpočet
 func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zajem stavZajmu, vstup vstupOblibenosti, nyni time.Time) *modelOblibenosti {
-	model := &modelOblibenosti{drzitelky: vstup.drzitelky, prevzate: vstup.prevzate, oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, jenOdhad: map[int]bool{}, zdrojOdhadu: map[int]int{}, porovnani: len(porovnani),
+	model := &modelOblibenosti{drzitelky: vstup.drzitelky, prevzate: vstup.prevzate, udajeVstup: vstup.udaje, oblibenost: map[int]float64{}, odhad: map[int]float64{}, predpoklad: map[int]float64{}, jenOdhad: map[int]bool{}, zdrojOdhadu: map[int]int{}, porovnani: len(porovnani),
 		zajemData: zajem.modelky, zajemOd: zajem.od, vahaZajmu: vysledekZajmu{vaha: vychoziVahaZajmu}}
 	var refZajmu float64
 	model.zajem, refZajmu = miraZajmu(zajem.modelky)

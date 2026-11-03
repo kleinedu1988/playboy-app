@@ -155,7 +155,12 @@ func (model *modelOblibenosti) naucitModelVkusu(modelky []Modelka, porovnani []p
 			}
 		}
 	}
-	udaje := pripravitUdajeVkusu(ucebni)
+	// Údaje nezávisí na srdíčkách (ucebni se od modelek liší jen jimi); připravené se zkopírují, skóre fotek je mění
+	udaje := maps.Clone(model.udajeVstup)
+	if udaje == nil {
+		udaje = pripravitUdajeVkusu(ucebni)
+	}
+	model.udajeVstup = nil
 	doplnitSkoreVkusu(udaje, model.skore)
 	model.vkus = naucitVkus(ucebni, cil, udaje, nast)
 	model.vkusZeSkore = len(model.skore) > 0 && nastaveniVkusuVychozi.fotky != fotkyPrumer

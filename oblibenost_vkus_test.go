@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"reflect"
 	"slices"
 	"sort"
 	"strings"
@@ -727,5 +728,22 @@ func TestUdajeVkusuHrudPasAVek(t *testing.T) {
 	m.NarozeniDatum = "1990-01-01" // „věk“ 7 let: překlep v datu, nepočítá se
 	if u := udajeModelkyVkus(m, klic); u.ma[cvVek] {
 		t.Fatalf("nevěrohodný věk %v", u.cis[cvVek])
+	}
+}
+
+// Připravené údaje modelek (mezipaměť mezi porovnáními) dají stejný model jako příprava při každém výpočtu
+func TestPripraveneUdajeVkusu(t *testing.T) {
+	modelky := sbirkaVkusu(400, 250, false)
+	nyni := time.Now()
+	porovnani := []porovnaniZaznam{{id: 1, a: modelky[0].ID, b: modelky[1].ID, vysledek: "a", ha: modelky[0].Hodnoceni, hb: modelky[1].Hodnoceni}}
+	bez := spocitatOblibenostUplne(modelky, porovnani, stavZajmu{}, vstupOblibenosti{}, nyni)
+	udaje := pripravitUdajeVkusu(modelky)
+	s1 := spocitatOblibenostUplne(modelky, porovnani, stavZajmu{}, vstupOblibenosti{udaje: udaje}, nyni)
+	s2 := spocitatOblibenostUplne(modelky, porovnani, stavZajmu{}, vstupOblibenosti{udaje: udaje}, nyni)
+	if !reflect.DeepEqual(bez.oblibenost, s1.oblibenost) || !reflect.DeepEqual(bez.odhad, s1.odhad) || !reflect.DeepEqual(s1.odhad, s2.odhad) || len(bez.odhad) == 0 {
+		t.Fatalf("odhady se liší: %v / %v / %v", bez.odhad, s1.odhad, s2.odhad)
+	}
+	if !reflect.DeepEqual(udaje, pripravitUdajeVkusu(modelky)) {
+		t.Fatal("výpočet změnil připravené údaje")
 	}
 }

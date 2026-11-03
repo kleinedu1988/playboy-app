@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.24] – 2026-11-03
+
+### Změněno
+- **Rychlejší přepočet po porovnání**: údaje modelek pro model vkusu (vlasy, národnost, fotografové, skóre fotek…) se porovnáním nemění, takže se drží v paměti a znovu se připraví jen po změně modelek. Měřeno s 3 000 modelkami: přepočet pořadí po porovnání 60 → 45 ms. Výsledek je stejný (hlídá test).
+- **Mozaika v profilu**: po načtení obrázku se řady přepočítají jen v albech, kde se obrázek načetl, ne ve všech albech profilu; stejně tak rozbalení či sbalení alba.
+
 ## [1.2.23] – 2026-11-03
 
 ### Změněno

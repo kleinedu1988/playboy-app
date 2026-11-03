@@ -412,11 +412,13 @@ export async function posunoutStranku(album, fotka, smer) {
 }
 
 // Mozaika alb v profilu: řady stejné výšky, šířka dlaždice podle poměru stran fotky (fotka na šířku je širší). Poměr
-// se zjistí po načtení obrázku a zapamatuje (pomerFotky); pak se znovu spočítá, které řady album v náhledu ukáže.
+// se zjistí po načtení obrázku a zapamatuje (pomerFotky); pak se znovu spočítá, které řady ukážou jen alba, ve
+// kterých se obrázek načetl (ostatní alba se nerozbalují a neměří).
 function sledovatMozaiku(mrizka, pohled) {
     if (mrizka.dataset.mozaika) return;
     mrizka.dataset.mozaika = '1';
     let prepocet = 0;
+    const zmenene = new Set();
     mrizka.addEventListener('load', (e) => {
         const img = /** @type {HTMLImageElement} */ (e.target);
         const dlazdice = img?.tagName === 'IMG' ? /** @type {HTMLElement | null} */ (img.parentElement?.closest('.mozaika > .photo-item')) : null;
@@ -424,8 +426,13 @@ function sledovatMozaiku(mrizka, pohled) {
         const pomer = img.naturalWidth / img.naturalHeight;
         dlazdice.style.setProperty('--pomer', pomer.toFixed(3));
         zapamatovatPomer(Number(dlazdice.dataset.fotoId), pomer);
+        if (dlazdice.parentElement) zmenene.add(dlazdice.parentElement);
         clearTimeout(prepocet);
-        prepocet = setTimeout(() => zkratitAlba(pohled), 120);
+        prepocet = setTimeout(() => {
+            const jen = new Set(zmenene);
+            zmenene.clear();
+            zkratitAlba(pohled, jen);
+        }, 120);
     }, true);
 }
 
@@ -449,10 +456,11 @@ export const atributyMrizky = a => `data-klic="${esc(klicAlba(a))}"`;
 // Počty sloupců všech mřížek se zjistí najednou před prvním zápisem (jinak by se po každém albu rozvrhovalo znovu).
 // Mozaiky všech alb se stejně tak nejdřív všechny rozbalí, pak změří a teprve potom zkrátí; střídání zápisu a měření
 // po albech by rozvrhovalo celou stránku znovu za každé album.
-export function zkratitAlba(pohled) {
+// jen = mřížky, které se změnily (načtené obrázky mozaiky); bez něj všechny
+export function zkratitAlba(pohled, jen = null) {
     const mrizky = [...pohled.querySelectorAll('.photos-grid')]
         // Počet sloupců jde zjistit jen u mřížky, která je vidět
-        .filter(mrizka => mrizka.offsetParent)
+        .filter(mrizka => (!jen || jen.has(mrizka)) && mrizka.offsetParent)
         .map(mrizka => ({ mrizka, dlazdice: [...mrizka.children], sloupcu: mrizka.classList.contains('mozaika') ? 0 : getComputedStyle(mrizka).gridTemplateColumns.split(' ').length }));
     // Mozaika nemá sloupce: řady se změří, až jsou vidět všechny dlaždice
     mrizky.forEach(({ dlazdice, sloupcu }) => { if (!sloupcu) dlazdice.forEach(d => d.classList.remove('skryta', 'dalsi')); });
@@ -474,7 +482,7 @@ export function zkratitAlba(pohled) {
 export function prepnoutRozbaleniAlba(mrizka, rozbalit) {
     if (rozbalit) rozbalenaAlba.add(mrizka.dataset.klic);
     else rozbalenaAlba.delete(mrizka.dataset.klic);
-    zkratitAlba(mrizka.parentElement);
+    zkratitAlba(mrizka.parentElement, new Set([mrizka]));
     listaAlb.sledovat();
 }
 

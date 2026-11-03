@@ -93,6 +93,7 @@ export const stav = {
     // počet nových položek; null = fronta je celá
     /** @type {null | (() => Promise<number>)} */
     lbDotahnout: null,
+    lbNenacteno: 0, // položek fronty za načtenými stránkami (počítadlo „zbývá“)
     lbPoZavreni: null, // co udělat po zavření prohlížeče (Fotky načtou frontu znovu, až doběhnou zápisy)
     lbHistorie: [], // ohodnocené ve frontě nehodnocených (pro Vrátit): { polozka, kde, kdePuvodne, seznam }
     lbZapisy: new Set(), // rozběhlé zápisy hodnocení fotek z prohlížeče (poZavreni počká na ně)

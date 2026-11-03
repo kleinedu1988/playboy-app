@@ -126,3 +126,65 @@ func TestStrankyPruvodce(t *testing.T) {
 		}
 	}
 }
+
+// Náhodné pořadí fronty počítá backend stejně jako okno (hodnoty z lib/hodnoceni.js nahodaKlice)
+func TestNahodaKliceJakoOkno(t *testing.T) {
+	for _, x := range []struct {
+		klic, seed int
+		cekam      float64
+	}{{1, 1, 0.9209155989810824}, {123456, 54321, 0.12668296112678945}, {987654321, 99999, 0.4506329158321023}, {42, 0, 0.8236939776688814}, {7, 4294967295, 0.19304829044267535}} {
+		if v := nahodaKlice(x.klic, x.seed); v != x.cekam {
+			t.Errorf("nahodaKlice(%d, %d) = %v, okno %v", x.klic, x.seed, v, x.cekam)
+		}
+	}
+}
+
+// Stránky nehodnocených: dohromady celá fronta sezení v pořadí bez opakování; ohodnocené se vynechají
+func TestStrankyNehodnocenych(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	for _, j := range []string{"Adéla", "Bára", "Cecílie"} {
+		a.AddModelka(Modelka{Jmeno: j})
+	}
+	odkazy := func(n, od int) string {
+		var v []string
+		for i := 0; i < n; i++ {
+			v = append(v, fmt.Sprintf("https://drive.google.com/file/d/%029d/view", od+i))
+		}
+		return strings.Join(v, " ")
+	}
+	a.AddBulkPhotos(1, "A", "Pictorial", odkazy(6, 100))
+	a.AddBulkPhotos(2, "1990-05", "Centerfold", odkazy(3, 200))
+	a.AddBulkPhotos(3, "A", "Pictorial", odkazy(5, 300))
+	for _, razeni := range []string{"nahodne", "modelky"} {
+		prvni := a.GetStrankuNehodnocenych(777, razeni, 0, 0, 4)
+		if prvni.Celkem != 14 || len(prvni.Polozky) != 4 || prvni.Dalsi != 4 || len(prvni.Modelky) != 3 || prvni.Modelky[0].N != 6 {
+			t.Fatalf("%s: první stránka %+v", razeni, prvni)
+		}
+		videno := map[int]bool{}
+		for _, p := range prvni.Polozky {
+			videno[prvni.Fotky[p[0]].ID] = true
+		}
+		// Ohodnocená fotka z další stránky se vynechá
+		dalsiF := a.GetStrankuNehodnocenych(777, razeni, 0, 4, 1)
+		a.SetHodnoceniFotek([]int{dalsiF.Fotky[0].ID}, 3)
+		for od := prvni.Dalsi; od >= 0; {
+			s := a.GetStrankuNehodnocenych(777, razeni, 0, od, 4)
+			for _, p := range s.Polozky {
+				id := s.Fotky[p[0]].ID
+				if videno[id] || id == dalsiF.Fotky[0].ID {
+					t.Fatalf("%s: fotka %d znovu nebo ohodnocená", razeni, id)
+				}
+				videno[id] = true
+			}
+			od = s.Dalsi
+		}
+		if len(videno) != 13 {
+			t.Fatalf("%s: dohromady %d položek", razeni, len(videno))
+		}
+		a.SetHodnoceniFotek([]int{dalsiF.Fotky[0].ID}, 0)
+	}
+	// Jen jedna modelka
+	if s := a.GetStrankuNehodnocenych(777, "nahodne", 3, 0, 10); s.Celkem != 5 || len(s.Polozky) != 5 {
+		t.Fatalf("modelka: %d / %d", s.Celkem, len(s.Polozky))
+	}
+}

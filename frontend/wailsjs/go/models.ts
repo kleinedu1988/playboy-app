@@ -816,6 +816,22 @@ export namespace main {
 	        this.playmateRoku = source["playmateRoku"];
 	    }
 	}
+	export class ModelkaNehodnocenych {
+	    id: number;
+	    jmeno: string;
+	    n: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ModelkaNehodnocenych(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.jmeno = source["jmeno"];
+	        this.n = source["n"];
+	    }
+	}
 	
 	export class NalezClanku {
 	    id: number;
@@ -2245,6 +2261,52 @@ export namespace main {
 	        this.zdroje = this.convertValues(source["zdroje"], ZdrojUceni);
 	        this.naposledy = source["naposledy"];
 	        this.porovnani = source["porovnani"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class StrankaNehodnocenych {
+	    sablona: string;
+	    fotky: FotkaFronty[];
+	    alba: Record<number, AlbumFronty>;
+	    polozky: number[][];
+	    od: number;
+	    dalsi: number;
+	    celkem: number;
+	    fotek: number;
+	    modelky: ModelkaNehodnocenych[];
+	
+	    static createFrom(source: any = {}) {
+	        return new StrankaNehodnocenych(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.sablona = source["sablona"];
+	        this.fotky = this.convertValues(source["fotky"], FotkaFronty);
+	        this.alba = this.convertValues(source["alba"], AlbumFronty, true);
+	        this.polozky = source["polozky"];
+	        this.od = source["od"];
+	        this.dalsi = source["dalsi"];
+	        this.celkem = source["celkem"];
+	        this.fotek = source["fotek"];
+	        this.modelky = this.convertValues(source["modelky"], ModelkaNehodnocenych);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

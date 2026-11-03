@@ -39,6 +39,7 @@ const CTENI = new Set([
     'GetKrokyPruvodce',
     'GetFotkyKPruvodci',
     'GetStrankuPruvodce',
+    'GetStrankuNehodnocenych',
     'GetPocetFotekKPruvodci',
     'GetTemataKOdemceni',
     'GetFotkyKOdemceni',
@@ -181,6 +182,7 @@ export const GetTemataSezon = /** @type {typeof App.GetTemataSezon} */ (obalit('
 export const GetNavrhSezony = /** @type {typeof App.GetNavrhSezony} */ (obalit('GetNavrhSezony'));
 export const GetTitulySezonModelky = /** @type {typeof App.GetTitulySezonModelky} */ (obalit('GetTitulySezonModelky'));
 export const GetKrokyPruvodce = /** @type {typeof App.GetKrokyPruvodce} */ (obalit('GetKrokyPruvodce'));
+export const GetStrankuNehodnocenych = /** @type {typeof App.GetStrankuNehodnocenych} */ (obalit('GetStrankuNehodnocenych'));
 export const GetStrankuPruvodce = /** @type {typeof App.GetStrankuPruvodce} */ (obalit('GetStrankuPruvodce'));
 export const GetFotkyKPruvodci = /** @type {typeof App.GetFotkyKPruvodci} */ (obalit('GetFotkyKPruvodci'));
 export const GetPocetFotekKPruvodci = /** @type {typeof App.GetPocetFotekKPruvodci} */ (obalit('GetPocetFotekKPruvodci'));

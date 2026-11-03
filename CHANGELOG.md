@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.42] – 2026-11-03
+
+### Změněno
+- **Rychle ♥ po stránkách**: fronta nehodnocených fotek se načítá po 400 položkách a prohlížeč si další stránky dotahuje sám, když se blíží konci načtené části. Náhodné pořadí a seskupení (spojený centerfold je jedna položka) teď skládá backend – přesně stejně jako dřív okno (ověřeno na celé frontě 79 886 položek v obou řazeních). Počty, „zbývá“ a štítky modelek jsou dál za celou frontu, štítek modelky načte jen její fotky. Se sbírkou 150 000 fotek: data při otevření 8,4 MB → 0,23 MB, další stránky ~4 ms. Ohodnocené fotky stránky vynechají, takže se nic nepřeskočí ani neopakuje (hlídá test). Počítadlo „zbývá“ v prohlížeči i v Průvodci počítá i fotky za načtenými stránkami.
+
 ## [1.2.41] – 2026-11-03
 
 ### Změněno

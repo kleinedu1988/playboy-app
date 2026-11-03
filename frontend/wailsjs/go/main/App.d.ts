@@ -110,6 +110,8 @@ export function GetStavUceni():Promise<main.StavUceni>;
 
 export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
 
+export function GetStrankuNehodnocenych(arg1:number,arg2:string,arg3:number,arg4:number,arg5:number):Promise<main.StrankaNehodnocenych>;
+
 export function GetStrankuPruvodce(arg1:Array<number>,arg2:number):Promise<main.StrankaPruvodce>;
 
 export function GetTagy():Promise<Array<string>>;

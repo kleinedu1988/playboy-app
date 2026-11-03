@@ -218,6 +218,10 @@ export function GetStavyVydani() {
   return window['go']['main']['App']['GetStavyVydani']();
 }
 
+export function GetStrankuNehodnocenych(arg1, arg2, arg3, arg4, arg5) {
+  return window['go']['main']['App']['GetStrankuNehodnocenych'](arg1, arg2, arg3, arg4, arg5);
+}
+
 export function GetStrankuPruvodce(arg1, arg2) {
   return window['go']['main']['App']['GetStrankuPruvodce'](arg1, arg2);
 }

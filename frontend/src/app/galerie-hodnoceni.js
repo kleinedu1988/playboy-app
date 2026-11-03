@@ -4,18 +4,17 @@
 // V prohlížeči 1–5 fotku ohodnotí a ta z něj hned vypadne (otevritLightbox s jenNehodnocene). Seznam dodává
 // GetNehodnoceneFotky (jen když je potřeba), počet pro hlavičku Hodnocení GetPocetNehodnocenychFotek; hodnocení
 // fotek kdekoli jinde ho hned upraví (událost hodnoceni-fotek).
-import { rozbalitFrontu } from '../lib/fronta';
-import { GetFotkyKOdemceni, GetStrankuPruvodce, GetNehodnoceneFotky, GetPocetFotekKPruvodci, GetPocetNehodnocenychFotek, GetTemataKOdemceni, SetHodnoceni } from './backend';
+import { polozkyStranky, rozbalitFrontu } from '../lib/fronta';
+import { GetFotkyKOdemceni, GetStrankuPruvodce, GetStrankuNehodnocenych, GetPocetFotekKPruvodci, GetPocetNehodnocenychFotek, GetTemataKOdemceni, SetHodnoceni } from './backend';
 import { historiePruvodce, hotovoPruvodce, nazevTagu, ukazatPruvodce, ukoncitPruvodce, vratitPruvodce, vykreslitPasek, zacitPruvodce } from './pruvodce-fotky';
 import { htmlOdhadu, htmlSrdicka } from './galerie';
 import { kratceSrdicka } from '../lib/srdicka';
 import { obnovitSrdickaModelky } from '../ui/srdicka';
 import { oznamit } from '../ui/oznameni';
 import { esc, sklonovat } from '../lib/format';
-import { frontaFotek } from '../lib/hodnoceni';
 import { sestavitAlba } from '../lib/alba';
 import { adresaFotkyVysky } from './porovnani-pasy';
-import { lbVratitHodnoceni, otevritLightbox } from './prohlizec';
+import { lbObnovitPocitadlo, lbVratitHodnoceni, otevritLightbox } from './prohlizec';
 import { prohlizetBezZajmu } from './zajem';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne } from './obrazky';
@@ -81,36 +80,58 @@ export function nacistGalerii(prvek) {
     return nacitani;
 }
 
+// Fronta po stránkách (GetStrankuNehodnocenych): pořadí podle semínka a seskupení dodává backend stejně, jako je
+// dřív skládalo okno; prohlížeč si další stránky dotahuje, když se blíží konci načtené části
+const STRANKA_NEHODNOCENYCH = 400;
+let modelkyNehodnocenych = [];
+let dalsiNehodnocenych = -1;
+let celkemNehodnocenych = 0;
+
 async function nacistGaleriiJednou() {
     if (pohledHodnotit() === 'pruvodce') return nacistPruvodce();
     nacistPocetKPruvodci();
-    let fotky = [];
+    let stranka;
     try {
-        fotky = rozbalitFrontu(await GetNehodnoceneFotky());
+        stranka = await GetStrankuNehodnocenych(SEMINKO, razeni(), 0, 0, STRANKA_NEHODNOCENYCH);
     } catch {
         nastavitHtml(kontejner, '<p class="ob-info">Nehodnocené fotky se nepodařilo načíst.</p>');
         ukazatVolby();
         return;
     }
-    // Položky jako v profilu (spojený plakát je jedna položka), pak stálé pořadí podle semínka
-    polozky = frontaFotek(sestavitAlba(fotky).flatMap(a => a.polozky), { razeni: razeni(), seed: SEMINKO });
-    vykreslit(fotky.length);
-    if (pocet !== fotky.length) {
-        pocet = fotky.length;
+    polozky = polozkyStranky(stranka);
+    modelkyNehodnocenych = stranka?.modelky || [];
+    dalsiNehodnocenych = stranka?.dalsi ?? -1;
+    celkemNehodnocenych = stranka?.celkem ?? polozky.length;
+    const fotek = stranka?.fotek ?? 0;
+    vykreslit(fotek);
+    if (pocet !== fotek) {
+        pocet = fotek;
         poZmenePoctu(pocet);
     }
 }
 
-// Modelky s nejvíc nehodnocenými položkami: [{ id, jmeno, n }]
-function modelkyFronty() {
-    const podle = new Map();
-    polozky.forEach(p => {
-        const x = podle.get(p.modelkaId) || { id: p.modelkaId, jmeno: p.jmenoModelky || '', n: 0 };
-        x.n++;
-        podle.set(p.modelkaId, x);
-    });
-    return [...podle.values()].sort((a, b) => b.n - a.n || a.jmeno.localeCompare(b.jmeno, 'cs'));
+// Prohlížeč nad frontou (celou, nebo jedné modelky): další stránky se doplní do jeho seznamu
+function dotahovatDoProhlizece(seznam, modelka, od, celkem) {
+    let dalsi = od;
+    let bezi = null;
+    stav.lbNenacteno = dalsi < 0 ? 0 : Math.max(0, celkem - seznam.length);
+    lbObnovitPocitadlo();
+    stav.lbDotahnout = () => {
+        if (dalsi < 0) return Promise.resolve(0);
+        bezi ??= GetStrankuNehodnocenych(SEMINKO, razeni(), modelka, dalsi, STRANKA_NEHODNOCENYCH).then((stranka) => {
+            if (stav.lbPolozky !== seznam) return 0;
+            const nove = polozkyStranky(stranka);
+            dalsi = stranka?.dalsi ?? -1;
+            seznam.push(...nove);
+            stav.lbNenacteno = dalsi < 0 ? 0 : Math.max(0, stav.lbNenacteno - nove.length);
+            return nove.length;
+        }).catch(() => 0).finally(() => { bezi = null; });
+        return bezi;
+    };
 }
+
+// Modelky s nejvíc nehodnocenými položkami celé fronty (spočítal backend): [{ id, jmeno, n }]
+const modelkyFronty = () => modelkyNehodnocenych;
 
 function vykreslit(fotek) {
     if (!kontejner) return;
@@ -164,7 +185,7 @@ function vykreslitListuProhlizece() {
         return ukazatVolby();
     }
     const hotovo = stav.lbHistorie.length;
-    const zbyva = stav.lbPolozky.length;
+    const zbyva = stav.lbPolozky.length + (stav.lbNenacteno || 0);
     const cil = (Math.floor(hotovo / 10) + 1) * 10;
     const dilky = Array.from({ length: 10 }, (_, i) => `<i class="${i < hotovo - (cil - 10) ? 'on' : ''}"></i>`).join('');
     const posledni = stav.lbHistorie[hotovo - 1];
@@ -329,10 +350,13 @@ async function otevritPruvodce(od = 0) {
     const seznam = [...polozkyPruvodce];
     otevritLightbox(od, false, seznam, { pruvodce: true, poZavreni: () => { if (kontejner?.isConnected) nacistPruvodce(); } });
     // Další stránky fronty se doplní do otevřeného prohlížeče
+    stav.lbNenacteno = strankyPruvodce.dalsi ? Math.max(0, pocetKPruvodci - seznam.length) : 0;
+    lbObnovitPocitadlo();
     stav.lbDotahnout = async () => {
         const nove = await dotahnoutPruvodce();
         if (stav.lbPolozky !== seznam) return 0;
         seznam.push(...nove);
+        stav.lbNenacteno = strankyPruvodce.dalsi ? Math.max(0, stav.lbNenacteno - nove.length) : 0;
         return nove.length;
     };
 }
@@ -497,11 +521,20 @@ async function vratitModelku() {
 }
 
 
-function otevrit(index = 0, promitat = false, seznam = polozky) {
+function otevrit(index = 0, promitat = false, seznam = polozky, { modelka = 0, dalsi = dalsiNehodnocenych, celkem = celkemNehodnocenych } = {}) {
     if (!seznam.length) return;
     prohlizetBezZajmu();
     // Prohlížeč dostane vlastní kopii: ohodnocené z ní vypadávají, po zavření se seznam načte znovu
-    otevritLightbox(index, promitat, [...seznam], { jenNehodnocene: true, poZavreni: () => { if (kontejner?.isConnected) nacistGalerii(kontejner); } });
+    const kopie = [...seznam];
+    otevritLightbox(index, promitat, kopie, { jenNehodnocene: true, poZavreni: () => { if (kontejner?.isConnected) nacistGalerii(kontejner); } });
+    dotahovatDoProhlizece(kopie, modelka, dalsi, celkem);
+}
+
+// Jen fotky jedné modelky (štítek modelky nad frontou)
+async function otevritModelku(id) {
+    let stranka;
+    try { stranka = await GetStrankuNehodnocenych(SEMINKO, razeni(), id, 0, STRANKA_NEHODNOCENYCH); } catch { return; }
+    otevrit(0, false, polozkyStranky(stranka), { modelka: id, dalsi: stranka?.dalsi ?? -1, celkem: stranka?.celkem ?? 0 });
 }
 
 // Obsluha; volá ji oblibenost.js jednou. zmenaPoctu(n) dostane nový počet nehodnocených fotek.
@@ -561,7 +594,7 @@ export function pripravitGalerii(zmenaPoctu = poZmenePoctu) {
         else if (t.closest('[data-gh-vratit]')) lbVratitHodnoceni();
         else if (t.closest('[data-hm-vratit]')) vratitModelku();
         else if (ukazka) otevrit(Number(ukazka.dataset.ghUkazka));
-        else if (jedna) otevrit(0, false, polozky.filter(p => p.modelkaId === Number(jedna.dataset.ghModelka)));
+        else if (jedna) otevritModelku(Number(jedna.dataset.ghModelka));
     });
     document.addEventListener('hodnoceni-modelky', (e) => {
         const { id, hodnoceni } = /** @type {CustomEvent} */ (e).detail;

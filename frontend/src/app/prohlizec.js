@@ -170,13 +170,33 @@ export async function lbOtocit() {
     await SetRotaceFotek(polozka.fotky.map(f => f.id), polozka.rotace);
 }
 
+// Počítadlo: fronta nehodnocených a průvodce ubývá – kolik zbývá (i za načtenými stránkami); jinak pořadí fotky
+export function lbObnovitPocitadlo() {
+    const pocet = stav.lbPolozky.length;
+    lbCounter.innerHTML = stav.lbJenNehodnocene || stav.lbPruvodce ? `<small>zbývá</small> ${pocet + (stav.lbNenacteno || 0)}` : `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
+}
+
 export function lbZobrazit(index) {
     const pocet = stav.lbPolozky.length;
     if (pocet === 0) {
+        // Fronta po stránkách: načtená část došla, za ní může být další stránka
+        const seznam = stav.lbPolozky;
+        if (stav.lbDotahnout) {
+            stav.lbDotahnout().then((nove) => {
+                if (stav.lbPolozky !== seznam || lightbox.classList.contains('hidden')) return;
+                if (nove && seznam.length) {
+                    lbNaplnitListu();
+                    lbZobrazit(0);
+                } else zavritLightbox();
+            });
+            return;
+        }
         zavritLightbox();
         return;
     }
     stav.lbIndex = (index + pocet) % pocet;
+    // Blízko konce načtené části se dotáhne další stránka fronty
+    if (stav.lbDotahnout && stav.lbIndex >= pocet - 50) stav.lbDotahnout();
     const polozka = stav.lbPolozky[stav.lbIndex];
     sledovatFotku(polozka.fotky?.[0]?.modelkaId || 0);
     const dalsi = stav.lbPolozky[(stav.lbIndex + 1) % pocet];
@@ -233,7 +253,7 @@ export function lbZobrazit(index) {
         ? `<span class="lb-jmeno">${esc(polozka.jmenoModelky)}</span><span class="lb-kde">${esc(kde)}</span>`
         : `<span class="lb-jmeno">${esc(kde)}</span>`;
     // Fronta nehodnocených ubývá: ukazuje, kolik zbývá; jinak pořadí fotky
-    lbCounter.innerHTML = stav.lbJenNehodnocene || stav.lbPruvodce ? `<small>zbývá</small> ${pocet}` : `${stav.lbIndex + 1} <small>/ ${pocet}</small>`;
+    lbObnovitPocitadlo();
     lbVykreslitSrdicka();
     // Začátky alb jen tam, kde je lišta alb (fronta nehodnocených ji nemá a seznam je dlouhý)
     if (!stav.lbJenNehodnocene && !stav.lbPruvodce) lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
@@ -410,6 +430,7 @@ export function otevritLightbox(index, slideshow = false, polozky = stav.aktualn
     lightbox.classList.toggle('pruvodce', pruvodce);
     stav.lbPoZavreni = poZavreni;
     stav.lbDotahnout = null;
+    stav.lbNenacteno = 0;
     stav.lbHistorie = [];
     // Hodnocení fronty: prohlížeč nechá dole místo stavové liště (postup, Vrátit, klávesy)
     lightbox.classList.toggle('hodnoceni', jenNehodnocene || pruvodce);

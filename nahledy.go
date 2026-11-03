@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -51,7 +52,9 @@ type mezipametNahledu struct {
 	soubeh      chan struct{}
 	pozadi      chan struct{} // souběh stahování na pozadí
 	aktivniOkno atomic.Int32  // kolik náhledů právě stahuje okno (pozadí zatím počká)
-	pauzaDo     atomic.Int64  // unix ns: do kdy pozadí čeká (po 429/5xx)
+	pauzaDo     atomic.Int64  // unix ns: do kdy pozadí čeká (po 429/5xx a bez připojení)
+	bezSiteDo   atomic.Int64  // unix ns: do kdy se má za to, že není připojení (okno nečeká na vypršení spojení)
+	zkouska     atomic.Int64  // unix ns: kdy naposledy šel bez připojení jeden požadavek vyzkoušet, jestli se vrátilo
 	mu          sync.Mutex
 	probihajici map[string]*stahovaniNahledu
 
@@ -78,7 +81,7 @@ func novaMezipametNahledu(slozka string, adresa func(id, velikost string) string
 	return &mezipametNahledu{
 		slozka:      slozka,
 		adresa:      adresa,
-		klient:      &http.Client{Timeout: 20 * time.Second},
+		klient:      klientNahledu(),
 		ukladat:     map[string]bool{"w400": true, "w600": true},
 		soubeh:      make(chan struct{}, soubehNahledu),
 		pozadi:      make(chan struct{}, soubehNahleduNaPozadi),
@@ -180,11 +183,52 @@ func (m *mezipametNahledu) stahnout(id, velikost string, soubeh chan struct{}) (
 	return s.data, s.typ, s.err
 }
 
+// Bez připojení: po chybě sítě se dalších 30 s nestahuje (okno hned dostane chybu a ukáže „Nenačteno“, pozadí
+// počká); jednou za 2 s jde jeden požadavek vyzkoušet, jestli se připojení vrátilo, a úspěch omezení zruší
+const (
+	trvaniBezSite = 30 * time.Second
+	zkouskaSite   = 2 * time.Second
+)
+
+func (m *mezipametNahledu) bezSite() bool {
+	ted := time.Now().UnixNano()
+	if ted >= m.bezSiteDo.Load() {
+		return false
+	}
+	posledni := m.zkouska.Load()
+	return ted-posledni < int64(zkouskaSite) || !m.zkouska.CompareAndSwap(posledni, ted)
+}
+
+func (m *mezipametNahledu) chybaSite() {
+	ted := time.Now()
+	do := ted.Add(trvaniBezSite).UnixNano()
+	m.zkouska.Store(ted.UnixNano())
+	m.bezSiteDo.Store(do)
+	if m.pauzaDo.Load() < do {
+		m.pauzaDo.Store(do)
+	}
+}
+
+// Klient s kratšími mezemi pro spojení: bez sítě se nečeká 20 s na každý obrázek
+func klientNahledu() *http.Client {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.DialContext = (&net.Dialer{Timeout: 5 * time.Second, KeepAlive: 30 * time.Second}).DialContext
+	t.TLSHandshakeTimeout = 5 * time.Second
+	t.ResponseHeaderTimeout = 15 * time.Second
+	t.MaxIdleConnsPerHost = soubehNahledu
+	return &http.Client{Timeout: 20 * time.Second, Transport: t}
+}
+
 func (m *mezipametNahledu) zDisku(id, velikost string) ([]byte, string, error) {
+	if m.bezSite() {
+		return nil, "", fmt.Errorf("%w: bez připojení", errNahledDocasne)
+	}
 	resp, err := m.klient.Get(m.adresa(id, velikost))
 	if err != nil {
+		m.chybaSite()
 		return nil, "", fmt.Errorf("%w: %v", errNahledDocasne, err)
 	}
+	m.bezSiteDo.Store(0)
 	defer resp.Body.Close()
 	typ := resp.Header.Get("Content-Type")
 	switch {
@@ -229,11 +273,17 @@ func (m *mezipametNahledu) ulozit(id, velikost string, data []byte) error {
 // Velikosti, které se neukládají (w800, w1200, s0): jen se propustí z Disku
 func (m *mezipametNahledu) propustit(w http.ResponseWriter, id, velikost string) {
 	m.propusteno.Add(1)
+	if m.bezSite() {
+		http.Error(w, "bez připojení", http.StatusServiceUnavailable)
+		return
+	}
 	resp, err := m.klient.Get(m.adresa(id, velikost))
 	if err != nil {
+		m.chybaSite()
 		http.Error(w, "Disk neodpovídá", http.StatusServiceUnavailable)
 		return
 	}
+	m.bezSiteDo.Store(0)
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK || !strings.HasPrefix(resp.Header.Get("Content-Type"), "image/") {
 		http.Error(w, "nedostupné", http.StatusNotFound)

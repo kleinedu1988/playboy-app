@@ -290,3 +290,36 @@ func TestPolozkyKPredstazeni(t *testing.T) {
 		t.Fatal("bez mezipaměti náhledů se stahování nemá spustit")
 	}
 }
+
+// Bez připojení: po chybě sítě okno hned dostane 503 (nečeká na spojení) a po návratu připojení zkušební
+// požadavek omezení zruší
+func TestNahledyBezPripojeni(t *testing.T) {
+	d := &falesnyDiskNahledu{}
+	zivy := httptest.NewServer(d)
+	t.Cleanup(zivy.Close)
+	mrtvy := httptest.NewServer(http.NotFoundHandler())
+	mrtvaAdresa := mrtvy.URL
+	mrtvy.Close()
+	var adresa atomic.Value
+	adresa.Store(mrtvaAdresa)
+	m := novaMezipametNahledu(filepath.Join(t.TempDir(), "nahledy"), func(id, vel string) string { return adresa.Load().(string) + "/d/" + id + "=" + vel })
+	if w := ziskatNahled(m, "/nahled/"+idNahleduA+"/w400"); w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("bez sítě: %d", w.Code)
+	}
+	adresa.Store(zivy.URL)
+	// Hned potom se nezkouší (okno dostane chybu bez čekání), ani když už síť je
+	if w := ziskatNahled(m, "/nahled/"+idNahleduB+"/w400"); w.Code != http.StatusServiceUnavailable || d.pozadavku.Load() != 0 {
+		t.Fatalf("v omezení: %d, na Disk %d", w.Code, d.pozadavku.Load())
+	}
+	if m.pauzaDo.Load() <= time.Now().UnixNano() {
+		t.Fatal("pozadí má bez sítě čekat")
+	}
+	// Po zkušební době projde jeden požadavek a úspěch omezení zruší
+	m.zkouska.Store(time.Now().Add(-zkouskaSite).UnixNano())
+	if w := ziskatNahled(m, "/nahled/"+idNahleduB+"/w400"); w.Code != http.StatusOK {
+		t.Fatalf("zkouška: %d", w.Code)
+	}
+	if w := ziskatNahled(m, "/nahled/"+idNahleduA+"/w400"); w.Code != http.StatusOK || m.bezSiteDo.Load() != 0 {
+		t.Fatalf("po návratu: %d", w.Code)
+	}
+}

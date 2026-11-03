@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.32] – 2026-11-03
+
+### Změněno
+- **Náhledy bez připojení**: když vypadne internet, program to pozná při prvním neúspěšném stažení a dalších 30 s se o stahování nepokouší – chybějící náhled hned ukáže „Nenačteno“ místo čekání na vypršení spojení (dřív až 20 s na každý obrázek) a stahování na pozadí počká. Jednou za 2 s jeden požadavek vyzkouší, jestli se připojení vrátilo; po návratu se nenačtené fotky načtou znovu jako dřív. Náhledy uložené na disku jsou vidět i bez připojení. Spojení s Diskem má kratší mez (5 s na připojení místo 20 s).
+
 ## [1.2.31] – 2026-11-03
 
 ### Přidáno

@@ -4,7 +4,7 @@ import { oznamit } from '../ui/oznameni';
 import { OveritOdkaz } from './backend';
 import { stav } from './stav';
 import { backBtn, best, calendar, calList, covers, coversList, detailView, gallery, issueView, searchInput, stats, wall } from './prvky';
-import { nacistGalerii } from './galerie';
+import { dokreslitGalerii, nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { otevritFotografa, otevritVydani } from './vydani';
 import { zrusitVyber } from './vyber';
@@ -205,6 +205,8 @@ export async function zpet() {
     }
     // Stejné místo stránky, ze kterého se odešlo, a fokus na prvku, ze kterého se odešlo (karta, dlaždice…)
     if (misto) requestAnimationFrame(() => {
+        // Galerie vykreslovaná po dávkách: místo dole na stránce a fokus na kartě potřebují všechny karty
+        if (misto.scroll > 0 || misto.fokus) dokreslitGalerii();
         hlavni.scrollTop = misto.scroll;
         if (misto.fokus) document.querySelector(misto.fokus)?.focus({ preventScroll: true });
     });

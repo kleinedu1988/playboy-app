@@ -177,6 +177,40 @@ const dotazModelek = hledani => [dotazFiltru(), hledani].filter(s => s && s.trim
 
 // Načtení Hlavní Galerie
 // zMezipameti = jen přefiltrovat data načtená minule (psaní do hledání, změna filtru či řazení), nenačítat je znovu z databáze
+// Dokreslování galerie po dávkách (karty za prvními KARET_HNED): stav rozpracovaného vykreslení
+const KARET_HNED = 200;
+const KARET_V_DAVCE = 400;
+/** @type {{ moje: number, modelky: any[], od: number, html: (m: any) => string } | null} */
+let dokresleni = null;
+
+function pridatDavku(vse = false) {
+    const d = dokresleni;
+    if (!d || d.moje !== stav.cisloNacteni) {
+        dokresleni = null;
+        return;
+    }
+    const do_ = vse ? d.modelky.length : Math.min(d.modelky.length, d.od + KARET_V_DAVCE);
+    gallery.insertAdjacentHTML('beforeend', d.modelky.slice(d.od, do_).map(d.html).join(''));
+    d.od = do_;
+    nacitatPostupne(gallery);
+    if (d.od >= d.modelky.length) dokresleni = null;
+}
+
+function naplanovatDavku() {
+    if (!dokresleni) return;
+    setTimeout(() => {
+        pridatDavku();
+        naplanovatDavku();
+    }, 0);
+}
+
+// Galerie celá hned (skok v liště písmen, návrat Zpět na místo dole na stránce, fokus na kartě)
+export function dokreslitGalerii() {
+    if (dokresleni) pridatDavku(true);
+}
+// Skok v liště písmen na část, která ještě není vykreslená
+listaGalerie.dovykreslit = () => dokreslitGalerii();
+
 export async function nacistGalerii(hledani = '', zMezipameti = false) {
     const dotaz = stav.rezim === 'modelky' ? dotazModelek(hledani) : hledani;
     if (stav.rezim === 'centerfoldy') return nacistStenu(dotaz, zMezipameti);
@@ -226,13 +260,8 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
     // značku části (data-cast) dostane první karta každé části rovnou v šabloně
     const maRejstrik = modelky.length >= MODELEK_PRO_PISMENA;
     const casti = new Map();
-    gallery.innerHTML = htmlNastroju(modelky.length, katalog.length) + modelky.map(m => {
-        let atributCasti = '';
-        if (maRejstrik) {
-            const c = castGalerie(m, stav.razeniGalerie);
-            if (!casti.has(c)) atributCasti = ` data-cast="${esc(c)}"`;
-            casti.set(c, (casti.get(c) || 0) + 1);
-        }
+    const htmlKarty = (m) => {
+        const atributCasti = '';
         const styl = stylVyrezu(m);
         return `
         <div class="card" data-id="${m.id}"${atributCasti} tabindex="0" aria-label="${esc(m.jmeno)}">
@@ -247,7 +276,22 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
             </div>
         </div>
     `;
-    }).join('');
+    };
+    // Části lišty se spočítají předem (lišta ukazuje všechna písmena hned, i když karty ještě přibývají)
+    if (maRejstrik) modelky.forEach((m) => { const c = castGalerie(m, stav.razeniGalerie); casti.set(c, (casti.get(c) || 0) + 1); });
+    const prvni = new Set();
+    const htmlKartyCasti = (m) => {
+        if (!maRejstrik) return htmlKarty(m);
+        const c = castGalerie(m, stav.razeniGalerie);
+        const zacatek = !prvni.has(c);
+        prvni.add(c);
+        return htmlKarty(m).replace('<div class="card" data-id=', zacatek ? `<div class="card" data-cast="${esc(c)}" data-id=` : '<div class="card" data-id=');
+    };
+    // Po dávkách: prvních KARET_HNED karet hned (okno je zaplněné), zbytek se přidá v dávkách na pozadí – tisíce
+    // karet najednou blokovaly okno stovky milisekund (start, řazení, hledání, návrat z jiné sekce)
+    gallery.innerHTML = htmlNastroju(modelky.length, katalog.length) + modelky.slice(0, KARET_HNED).map(htmlKartyCasti).join('');
+    dokresleni = { moje, modelky, od: KARET_HNED, html: htmlKartyCasti };
+    naplanovatDavku();
     prevestNaVolby(gallery.querySelector('.gallery-toolbar'));
     nacitatPostupne(gallery);
 

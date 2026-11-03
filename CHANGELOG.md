@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.19] – 2026-11-03
+
+### Změněno
+- **Galerie modelek se vykresluje po dávkách**: prvních 200 karet hned, zbytek na pozadí. S tisíci modelkami se galerie ukáže zhruba dvakrát až čtyřikrát rychleji – při startu, po změně řazení, hledání i při návratu z jiné sekce (měřeno: návrat do Modelek 450–630 → 100–190 ms, změna řazení 470 → 130 ms). Lišta písmen ukazuje všechny části hned; skok na ještě nevykreslenou část a návrat Zpět na místo dole na stránce galerii nejdřív dokreslí.
+
 ## [1.2.18] – 2026-11-03
 
 ### Změněno

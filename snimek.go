@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"database/sql"
+	"maps"
 	"regexp"
+	"runtime"
 	"slices"
 	"sort"
 	"strings"
@@ -99,29 +101,58 @@ func (a *App) nacistSouhrnAlb() ([]souhrnAlba, []vazbaAlba, error) {
 		soucet                    int64
 		podleSrdicek              srdickaAlba
 	}
+	// Počty fotek po albech: dotaz přes všechny fotky (u 150 000 fotek ~0,2 s) se rozdělí podle rozsahů čísel alb
+	// mezi jádra – každá část jde vlastním spojením (čtení se ve WAL neblokují)
+	var odAlba, doAlba sql.NullInt64
+	if err := a.db.QueryRow(`SELECT MIN(album_id), MAX(album_id) FROM fotky`).Scan(&odAlba, &doAlba); err != nil {
+		return nil, nil, err
+	}
+	casti := 1
+	if doAlba.Int64-odAlba.Int64 > 1000 {
+		casti = min(runtime.NumCPU(), 4)
+	}
+	krok := (doAlba.Int64-odAlba.Int64)/int64(casti) + 1
+	vysledky := make([]map[int64]pocty, casti)
+	chyby := make([]error, casti)
+	var cekani sync.WaitGroup
+	for c := range casti {
+		cekani.Add(1)
+		go func() {
+			defer cekani.Done()
+			v := map[int64]pocty{}
+			vysledky[c] = v
+			radky, err := a.db.Query(`SELECT album_id, COUNT(*), SUM(hodnoceni > 0), SUM(MAX(hodnoceni, 0)), SUM(id),
+				SUM(hodnoceni = 1), SUM(hodnoceni = 2), SUM(hodnoceni = 3), SUM(hodnoceni = 4), SUM(hodnoceni >= 5) FROM fotky
+				WHERE album_id BETWEEN ? AND ? GROUP BY album_id`, odAlba.Int64+int64(c)*krok, odAlba.Int64+int64(c+1)*krok-1)
+			if err != nil {
+				chyby[c] = err
+				return
+			}
+			defer radky.Close()
+			for radky.Next() {
+				var id int64
+				var p pocty
+				if err := radky.Scan(&id, &p.fotek, &p.hodnocenych, &p.srdci, &p.soucet, &p.podleSrdicek[0], &p.podleSrdicek[1], &p.podleSrdicek[2],
+					&p.podleSrdicek[3], &p.podleSrdicek[4]); err != nil {
+					chyby[c] = err
+					return
+				}
+				v[id] = p
+			}
+			chyby[c] = radky.Err()
+		}()
+	}
+	cekani.Wait()
 	podleAlba := map[int64]pocty{}
-	radky, err := a.db.Query(`SELECT album_id, COUNT(*), SUM(hodnoceni > 0), SUM(MAX(hodnoceni, 0)), SUM(id),
-		SUM(hodnoceni = 1), SUM(hodnoceni = 2), SUM(hodnoceni = 3), SUM(hodnoceni = 4), SUM(hodnoceni >= 5) FROM fotky GROUP BY album_id`)
-	if err != nil {
-		return nil, nil, err
-	}
-	for radky.Next() {
-		var id int64
-		var p pocty
-		if err := radky.Scan(&id, &p.fotek, &p.hodnocenych, &p.srdci, &p.soucet, &p.podleSrdicek[0], &p.podleSrdicek[1], &p.podleSrdicek[2],
-			&p.podleSrdicek[3], &p.podleSrdicek[4]); err != nil {
-			radky.Close()
-			return nil, nil, err
+	for c := range casti {
+		if chyby[c] != nil {
+			return nil, nil, chyby[c]
 		}
-		podleAlba[id] = p
-	}
-	radky.Close()
-	if err := radky.Err(); err != nil {
-		return nil, nil, err
+		maps.Copy(podleAlba, vysledky[c])
 	}
 
 	var alba []souhrnAlba
-	radky, err = a.db.Query(`SELECT id, COALESCE(modelka_id, 0), album, typ, COALESCE(vydani, ''), COALESCE(datum, ''), COALESCE(popis, ''),
+	radky, err := a.db.Query(`SELECT id, COALESCE(modelka_id, 0), album, typ, COALESCE(vydani, ''), COALESCE(datum, ''), COALESCE(popis, ''),
 		COALESCE(fotograf, ''), COALESCE(netyka_se, '') FROM alba ORDER BY id`)
 	if err != nil {
 		return nil, nil, err

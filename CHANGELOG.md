@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.45] – 2026-11-03
+
+### Změněno
+- **Rychlejší načtení sbírky do paměti**: počty fotek a srdíček po albech (dotaz přes všechny fotky) se počítají souběžně na více jádrech po rozsazích alb. Paměť sbírky se načítá při startu a po každém zápisu; se sbírkou 150 000 fotek 314 → 241 ms.
+
 ## [1.2.44] – 2026-11-03
 
 ### Změněno

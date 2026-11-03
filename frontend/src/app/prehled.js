@@ -23,6 +23,7 @@ import { nacistUceni } from './uceni';
 import * as udrzba from './udrzba';
 import { pohledSlavy } from './sin-slavy';
 import { htmlPilulek, pripravitPasy } from '../ui/pas';
+import { poZmeneDat } from './udalosti';
 
 // Přehled sbírky: úvod (hlavní čísla, mapy edic, co zbývá doplnit), Údržba (udrzba.js), Sháním CZ, Statistiky
 // a hodnocení (Porovnat, Hodnotit fotky, Pořadí).
@@ -142,6 +143,13 @@ function zobrazitPanelSbirky() {
     if (stav.sbirkaPanel === 'statistiky') nacistStatistiky(obsah.querySelector('[data-sekce="statistiky"]'));
 }
 
+// Sbírka vykreslená naposledy pro tato data (generace změn dat a „zobrazit skryté“): při návratu bez změny dat se
+// stránka znovu nesestavuje (dřív 650–770 ms při každém otevření), jen se ukáže; zápis do databáze generaci zvýší
+let generaceDat = 0;
+let vykreslenoPro = '';
+poZmeneDat(() => { generaceDat++; });
+const klicSbirky = () => `${generaceDat}|${stav.prehledSkryte ? 1 : 0}`;
+
 export async function nacistPrehled() {
     const moje = ++stav.cisloNacteni;
     // Hodnocení a Síň slávy potřebují jen modelky: Sbírka (přehled, kalendář, stavy čísel, návrhy, Údržba) se
@@ -157,13 +165,27 @@ export async function nacistPrehled() {
             stats.innerHTML = KOSTRA;
             obsah = stats.querySelector('.prehled-obsah');
         }
-        obsah.dataset.sbirkaNactena = '';
+        // Sbírka vykreslená pro současná data zůstává platná (návrat do ní se nevykresluje znovu)
+        if (vykreslenoPro !== klicSbirky()) obsah.dataset.sbirkaNactena = '';
         obsah.dataset.sekceUkazana = stav.prehledSekce;
         zobrazitPanelSbirky();
         obnovitCasti();
         nacistOblibenost(obsah.querySelector('[data-sekce="oblibenost"]'));
         return;
     }
+    // Data se od posledního vykreslení nezměnila: stránka jen ukáže, co už je sestavené
+    const hotova = /** @type {HTMLElement | null} */ (stats.querySelector('.prehled-obsah'));
+    if (hotova?.dataset.sbirkaNactena === '1' && vykreslenoPro === klicSbirky()) {
+        stav.zrusitUpravuVyrezu = null;
+        ukazatPohled(stats);
+        if (!casti().some(([klic]) => klic === stav.prehledSekce)) stav.prehledSekce = 'udrzba';
+        hotova.dataset.sekceUkazana = stav.prehledSekce;
+        zobrazitPanelSbirky();
+        obnovitCasti();
+        if (stav.prehledSekce === 'oblibenost') nacistOblibenost(hotova.querySelector('[data-sekce="oblibenost"]'));
+        return;
+    }
+    const klic = klicSbirky();
     const [p, seznamModelek, kalendar, stavy] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky(),
         GetKalendar().then(k => k || []), GetStavyVydani().then(s => s || []),
         nacistNavrhy(), nacistUceni()]);
@@ -185,6 +207,7 @@ export async function nacistPrehled() {
     }
     obsah.dataset.sekceUkazana = stav.prehledSekce;
     obsah.dataset.sbirkaNactena = '1';
+    vykreslenoPro = klic;
     const uvod = obsah.querySelector('[data-sekce="uvod"]');
     // Úplnost a čísla sbírky jsou v hlavičce Sbírky (udrzba.js); Mapa čísel nemá volby ani text ve stavové liště
     nastavitHtml(uvod, '<div class="volby-v-liste" data-volby-casti="uvod"></div>' + htmlUvodu({ kalendar, stavy, modelky: seznamModelek }));

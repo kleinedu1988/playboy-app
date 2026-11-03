@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.33] – 2026-11-03
+
+### Změněno
+- **Rychlejší návrat do Sbírky**: když se od posledního zobrazení nic v databázi nezměnilo, Sbírka (Mapa čísel, Údržba, Sháním) se znovu nenačítá ani nesestavuje – jen se ukáže, jak byla (dřív se při každém otevření sestavovala celá, se sbírkou 3 000 modelek 650–770 ms). Po jakékoli změně dat nebo přepnutí „zobrazit skryté“ se sestaví znovu jako dřív. Platí to i pro přechod z Hodnocení a Síně slávy zpět do Sbírky.
+
 ## [1.2.32] – 2026-11-03
 
 ### Změněno

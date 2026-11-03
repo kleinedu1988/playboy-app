@@ -66,6 +66,20 @@ export function otevritKontextovouNabidku(x, y, polozky) {
             contextMenu.appendChild(nadpis);
             return;
         }
+        // Údaj s průběhem (stahování náhledů): text a tenký pruh, bez akce
+        if (p.info) {
+            const info = document.createElement('div');
+            info.className = 'context-info';
+            info.setAttribute('role', 'presentation');
+            const text = document.createElement('span');
+            text.textContent = p.info;
+            const pruh = document.createElement('i');
+            pruh.className = 'context-pruh';
+            pruh.style.setProperty('--podil', String(Math.min(Math.max(p.podil || 0, 0), 1)));
+            info.append(text, pruh);
+            contextMenu.appendChild(info);
+            return;
+        }
         const btn = document.createElement('button');
         btn.className = p.nebezpecne ? 'context-item nebezpecne' : 'context-item';
         btn.setAttribute('role', 'menuitem');

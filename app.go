@@ -1185,6 +1185,7 @@ func (a *App) migraceIndexy() error {
 
 // Zavření databáze při ukončení programu
 func (a *App) shutdown() {
+	a.ZastavitStahovaniNahledu()
 	a.pockatNaPozadi()
 	a.zavritPametSbirky(true)
 	if a.db != nil {

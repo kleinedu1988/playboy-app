@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.31] – 2026-11-03
+
+### Přidáno
+- **Stahování náhledů na pozadí**: minutu po spuštění se v klidu stáhnou na disk titulní fotky všech modelek a pak plakáty centerfoldů a obálky čísel (u 3 000 modelek kolem 4 600 obrázků, 3–6 minut), takže karty a stěny se ukážou hned i napoprvé. Stahují se nejvýš 3 najednou; když okno samo načítá obrázky, pozadí počká, a když Google začne odmítat, udělá pauzu. Co už na disku je, se přeskočí – další starty dotáhnou jen nové. Průběh je vpravo ve stavové liště („⬇ Náhledy 1 240 / 4 600“, ✕ zastaví) a v nabídce ⋯ › Soubory a mezipaměť (průběh, Zastavit / Stáhnout náhledy celé sbírky). Zastavení si program pamatuje, dokud stahování v nabídce znovu nespustíš.
+
 ## [1.2.30] – 2026-11-03
 
 ### Změněno

@@ -104,6 +104,8 @@ export function GetSpecialy():Promise<Array<main.Special>>;
 
 export function GetStatistiky():Promise<main.Statistiky>;
 
+export function GetStavStahovaniNahledu():Promise<main.StavStahovaniNahledu>;
+
 export function GetStavUceni():Promise<main.StavUceni>;
 
 export function GetStavyVydani():Promise<Array<main.VydaniInfo>>;
@@ -226,6 +228,8 @@ export function SlozkaZaloh():Promise<string>;
 
 export function SmazatVyber(arg1:number):Promise<boolean>;
 
+export function SpustitStahovaniNahledu():Promise<boolean>;
+
 export function StavDatabaze():Promise<string>;
 
 export function UlozitPruvodceFotky(arg1:main.ZapisPruvodce):Promise<main.PredchoziPruvodce>;
@@ -255,6 +259,8 @@ export function ZalozitSpecial(arg1:number,arg2:string,arg3:string):Promise<stri
 export function ZapomenoutPorovnani():Promise<boolean>;
 
 export function ZapomenoutUceni():Promise<boolean>;
+
+export function ZastavitStahovaniNahledu():Promise<void>;
 
 export function ZaznamenatOpravu(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
 

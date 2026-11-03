@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -219,4 +220,73 @@ func TestUklidNahleduAplikace(t *testing.T) {
 		t.Fatal("po změně šablony náhled zůstal")
 	}
 	a.SetSablonaObrazku("")
+}
+
+// Stahování na pozadí: projde seznam, co už je na disku přeskočí, nedostupné započítá a podruhé nic nestahuje
+func TestNahledyPredstahnout(t *testing.T) {
+	d := &falesnyDiskNahledu{kod: func(id string) int {
+		if strings.HasSuffix(id, "9") {
+			return http.StatusNotFound
+		}
+		return http.StatusOK
+	}}
+	m, _ := novaTestovaciMezipamet(t, d)
+	var polozky []polozkaNahledu
+	for i := range 30 {
+		polozky = append(polozky, polozkaNahledu{fmt.Sprintf("1Pozadi%025d", i), "w400"})
+	}
+	var hotovo atomic.Int64
+	m.predstahnout(context.Background(), polozky, func() { hotovo.Add(1) })
+	if hotovo.Load() != 30 || d.pozadavku.Load() != 30 {
+		t.Fatalf("zpracováno %d, na Disk %d", hotovo.Load(), d.pozadavku.Load())
+	}
+	hotovo.Store(0)
+	m.predstahnout(context.Background(), polozky, func() { hotovo.Add(1) })
+	if hotovo.Load() != 30 || d.pozadavku.Load() != 33 { // znovu jen 3 nedostupné
+		t.Fatalf("podruhé zpracováno %d, na Disk %d", hotovo.Load(), d.pozadavku.Load())
+	}
+	// Zrušené stahování skončí hned
+	ctx, zrusit := context.WithCancel(context.Background())
+	zrusit()
+	m.predstahnout(ctx, []polozkaNahledu{{fmt.Sprintf("1Zruseno%025d", 1), "w400"}}, func() {})
+	if d.pozadavku.Load() != 33 {
+		t.Fatal("zrušené stahování šlo na Disk")
+	}
+}
+
+// Pozadí počká, dokud okno samo stahuje, a po odmítnutí Diskem (429)
+func TestNahledyPozadiUstoupi(t *testing.T) {
+	m, _ := novaTestovaciMezipamet(t, &falesnyDiskNahledu{})
+	m.aktivniOkno.Add(1)
+	ctx, zrusit := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer zrusit()
+	zacatek := time.Now()
+	m.pockatNaKlid(ctx)
+	if time.Since(zacatek) < 250*time.Millisecond {
+		t.Fatal("pozadí nepočkalo na okno")
+	}
+	m.aktivniOkno.Add(-1)
+	m.pauzaDo.Store(time.Now().Add(time.Hour).UnixNano())
+	ctx2, zrusit2 := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer zrusit2()
+	zacatek = time.Now()
+	m.pockatNaKlid(ctx2)
+	if time.Since(zacatek) < 150*time.Millisecond {
+		t.Fatal("pozadí nepočkalo po odmítnutí")
+	}
+}
+
+// Seznam k předstažení: titulní fotky před plakáty, bez opakování
+func TestPolozkyKPredstazeni(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Modelka", CoverID: odkazB})
+	a.AddBulkPhotos(1, "1990-05", "Centerfold", odkazA)
+	a.AddBulkPhotos(1, "Album", "Pictorial", "https://drive.google.com/file/d/CCCCCCCCCCCCCCCCCCCCCCCCCCCCC/view")
+	p := a.polozkyKPredstazeni()
+	if len(p) != 2 || p[0] != (polozkaNahledu{"BBBBBBBBBBBBBBBBBBBBBBBBBBBBB", "w400"}) || p[1] != (polozkaNahledu{"AAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "w600"}) {
+		t.Fatalf("%+v", p)
+	}
+	if a.SpustitStahovaniNahledu() {
+		t.Fatal("bez mezipaměti náhledů se stahování nemá spustit")
+	}
 }

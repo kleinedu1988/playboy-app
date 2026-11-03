@@ -2163,6 +2163,22 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class StavStahovaniNahledu {
+	    bezi: boolean;
+	    hotovo: number;
+	    celkem: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new StavStahovaniNahledu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bezi = source["bezi"];
+	        this.hotovo = source["hotovo"];
+	        this.celkem = source["celkem"];
+	    }
+	}
 	export class ZdrojUceni {
 	    zdroj: string;
 	    popis: string;

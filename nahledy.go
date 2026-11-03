@@ -9,6 +9,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -33,6 +34,9 @@ const nejvetsiNahled = 4 << 20
 // Souběh stahování pro okno: Disk odpovídá ~250 ms na obrázek, při 16 souběžných se 48 karet načte za ~0,6 s
 const soubehNahledu = 16
 
+// Na pozadí ohleduplně k limitům Googlu: 3 najednou, ~4600 titulních fotek a plakátů sbírky za 3–6 minut
+const soubehNahleduNaPozadi = 3
+
 var (
 	errNahledNedostupny = errors.New("soubor na Disku není dostupný")         // 403/404/HTML místo obrázku
 	errNahledDocasne    = errors.New("Disk teď neodpovídá, zkusí se později") // výpadek sítě, 429, 5xx
@@ -45,6 +49,9 @@ type mezipametNahledu struct {
 	ukladat map[string]bool // velikosti, které se ukládají na disk
 
 	soubeh      chan struct{}
+	pozadi      chan struct{} // souběh stahování na pozadí
+	aktivniOkno atomic.Int32  // kolik náhledů právě stahuje okno (pozadí zatím počká)
+	pauzaDo     atomic.Int64  // unix ns: do kdy pozadí čeká (po 429/5xx)
 	mu          sync.Mutex
 	probihajici map[string]*stahovaniNahledu
 
@@ -74,6 +81,7 @@ func novaMezipametNahledu(slozka string, adresa func(id, velikost string) string
 		klient:      &http.Client{Timeout: 20 * time.Second},
 		ukladat:     map[string]bool{"w400": true, "w600": true},
 		soubeh:      make(chan struct{}, soubehNahledu),
+		pozadi:      make(chan struct{}, soubehNahleduNaPozadi),
 		probihajici: map[string]*stahovaniNahledu{},
 	}
 }
@@ -103,7 +111,9 @@ func (m *mezipametNahledu) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		m.odpovedet(w, data, http.DetectContentType(data))
 		return
 	}
-	data, typ, err := m.stahnout(id, velikost)
+	m.aktivniOkno.Add(1)
+	data, typ, err := m.stahnout(id, velikost, m.soubeh)
+	m.aktivniOkno.Add(-1)
 	switch {
 	case errors.Is(err, errNahledNedostupny):
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -137,7 +147,7 @@ func (m *mezipametNahledu) precist(id, velikost string) ([]byte, error) {
 }
 
 // Jedno stažení na ID a velikost, i když o ně okno žádá víckrát najednou
-func (m *mezipametNahledu) stahnout(id, velikost string) ([]byte, string, error) {
+func (m *mezipametNahledu) stahnout(id, velikost string, soubeh chan struct{}) ([]byte, string, error) {
 	klic := id + "_" + velikost
 	m.mu.Lock()
 	if s, ok := m.probihajici[klic]; ok {
@@ -155,8 +165,8 @@ func (m *mezipametNahledu) stahnout(id, velikost string) ([]byte, string, error)
 		close(s.hotovo)
 	}()
 
-	m.soubeh <- struct{}{}
-	defer func() { <-m.soubeh }()
+	soubeh <- struct{}{}
+	defer func() { <-soubeh }()
 
 	s.data, s.typ, s.err = m.zDisku(id, velikost)
 	if s.err == nil {
@@ -179,6 +189,7 @@ func (m *mezipametNahledu) zDisku(id, velikost string) ([]byte, string, error) {
 	typ := resp.Header.Get("Content-Type")
 	switch {
 	case resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500:
+		m.pauzaDo.Store(time.Now().Add(pauzaPoOdmitnuti(resp)).UnixNano())
 		return nil, "", fmt.Errorf("%w: HTTP %d", errNahledDocasne, resp.StatusCode)
 	case resp.StatusCode != http.StatusOK || !strings.HasPrefix(typ, "image/"):
 		return nil, "", errNahledNedostupny
@@ -325,4 +336,63 @@ func (a *App) uklidNahledu() {
 		filtr = func(id string) bool { return platne[id] }
 	}
 	a.nahledy.uklid(filtr, limitNahledu)
+}
+
+// Pauza stahování na pozadí po odmítnutí Diskem (429/5xx): podle Retry-After, jinak 30 s
+func pauzaPoOdmitnuti(resp *http.Response) time.Duration {
+	if s, err := time.ParseDuration(resp.Header.Get("Retry-After") + "s"); err == nil && s > 0 && s < 10*time.Minute {
+		return s
+	}
+	return 30 * time.Second
+}
+
+type polozkaNahledu struct{ id, velikost string }
+
+// Stažení chybějících náhledů na pozadí v daném pořadí: nejvýš 3 souběžně, ustoupí, dokud okno samo stahuje,
+// a po odmítnutí Diskem počká. hotovo dostane každou zpracovanou položku (stažená, už uložená, nedostupná).
+// Skončí po projití seznamu nebo zrušením ctx.
+func (m *mezipametNahledu) predstahnout(ctx context.Context, polozky []polozkaNahledu, hotovo func()) {
+	var cekani sync.WaitGroup
+	fronta := make(chan polozkaNahledu)
+	for range cap(m.pozadi) {
+		cekani.Add(1)
+		go func() {
+			defer cekani.Done()
+			for p := range fronta {
+				m.pockatNaKlid(ctx)
+				if ctx.Err() != nil {
+					continue
+				}
+				m.stahnout(p.id, p.velikost, m.pozadi)
+				hotovo()
+			}
+		}()
+	}
+	for _, p := range polozky {
+		if ctx.Err() != nil {
+			break
+		}
+		if _, err := os.Stat(m.cesta(p.id, p.velikost)); err == nil {
+			hotovo()
+			continue
+		}
+		select {
+		case fronta <- p:
+		case <-ctx.Done():
+		}
+	}
+	close(fronta)
+	cekani.Wait()
+}
+
+func (m *mezipametNahledu) pockatNaKlid(ctx context.Context) {
+	for ctx.Err() == nil {
+		if m.aktivniOkno.Load() == 0 && time.Now().UnixNano() >= m.pauzaDo.Load() {
+			return
+		}
+		select {
+		case <-time.After(100 * time.Millisecond):
+		case <-ctx.Done():
+		}
+	}
 }

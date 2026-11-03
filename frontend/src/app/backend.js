@@ -69,6 +69,10 @@ const CTENI = new Set([
     'ExportovatDoSouboru',
     // Předpříprava jen plní mezipaměti backendu (app/predpriprava.js); změna dat by vyprázdnila mezipaměti okna
     'Predpripravit',
+    // Stahování náhledů na pozadí jen plní mezipaměť obrázků na disku (app/nahledy-pozadi.js)
+    'SpustitStahovaniNahledu',
+    'ZastavitStahovaniNahledu',
+    'GetStavStahovaniNahledu',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
     'ZaznamenatZajem',
@@ -147,6 +151,9 @@ export const DeleteVse = /** @type {typeof App.DeleteVse} */ (obalit('DeleteVse'
 export const ExportovatDoSouboru = /** @type {typeof App.ExportovatDoSouboru} */ (obalit('ExportovatDoSouboru'));
 export const GetAlbaFotografa = /** @type {typeof App.GetAlbaFotografa} */ (obalit('GetAlbaFotografa'));
 export const GetCenterfoldy = /** @type {typeof App.GetCenterfoldy} */ (obalit('GetCenterfoldy'));
+export const GetStavStahovaniNahledu = /** @type {typeof App.GetStavStahovaniNahledu} */ (obalit('GetStavStahovaniNahledu'));
+export const SpustitStahovaniNahledu = /** @type {typeof App.SpustitStahovaniNahledu} */ (obalit('SpustitStahovaniNahledu'));
+export const ZastavitStahovaniNahledu = /** @type {typeof App.ZastavitStahovaniNahledu} */ (obalit('ZastavitStahovaniNahledu'));
 export const GetStatistiky = /** @type {typeof App.GetStatistiky} */ (obalit('GetStatistiky'));
 export const GetVyvojVCase = /** @type {typeof App.GetVyvojVCase} */ (obalit('GetVyvojVCase'));
 export const GetClanky = /** @type {typeof App.GetClanky} */ (obalit('GetClanky'));

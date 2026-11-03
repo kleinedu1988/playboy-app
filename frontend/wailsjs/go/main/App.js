@@ -206,6 +206,10 @@ export function GetStatistiky() {
   return window['go']['main']['App']['GetStatistiky']();
 }
 
+export function GetStavStahovaniNahledu() {
+  return window['go']['main']['App']['GetStavStahovaniNahledu']();
+}
+
 export function GetStavUceni() {
   return window['go']['main']['App']['GetStavUceni']();
 }
@@ -450,6 +454,10 @@ export function SmazatVyber(arg1) {
   return window['go']['main']['App']['SmazatVyber'](arg1);
 }
 
+export function SpustitStahovaniNahledu() {
+  return window['go']['main']['App']['SpustitStahovaniNahledu']();
+}
+
 export function StavDatabaze() {
   return window['go']['main']['App']['StavDatabaze']();
 }
@@ -508,6 +516,10 @@ export function ZapomenoutPorovnani() {
 
 export function ZapomenoutUceni() {
   return window['go']['main']['App']['ZapomenoutUceni']();
+}
+
+export function ZastavitStahovaniNahledu() {
+  return window['go']['main']['App']['ZastavitStahovaniNahledu']();
 }
 
 export function ZaznamenatOpravu(arg1, arg2, arg3, arg4) {

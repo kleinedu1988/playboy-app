@@ -38,6 +38,7 @@ import * as editorTextu from './ui/editor-textu';
 import { stats } from './app/prvky';
 import { vyhlasitSezonu } from './app/vyhlaseni-sezony';
 import { spustitPredpripravu } from './app/predpriprava';
+import { naplanovatPoStartu as stahovatNahledyPoStartu } from './app/nahledy-pozadi';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
 // když je otevřený, jeho obsluha kláves zastaví ostatní
@@ -118,6 +119,8 @@ StavDatabaze().then((chyba) => {
     }, 4000);
     // Mezipaměti backendu pro další pohledy se připraví v klidu po úvodu (app/predpriprava.js)
     spustitPredpripravu();
+    // Náhledy celé sbírky na disk, minutu po startu v klidu (app/nahledy-pozadi.js)
+    stahovatNahledyPoStartu();
     // Po aktualizaci jednou ukáže, co je nového (až po odemčení a úvodu)
     napoveda.ukazatNovinkyPoAktualizaci();
     // Denní ověření souborů až po prvním vykreslení, ať nebrzdí start

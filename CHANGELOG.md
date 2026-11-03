@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.29] – 2026-11-03
+
+### Přidáno
+- **Úklid náhledů na disku**: minutu po spuštění se v klidu smažou náhledy fotek, které už ve sbírce nejsou, a když mezipaměť přeroste 1 GB, nejdéle nepoužité náhledy (titulní fotky a plakáty celé sbírky zaberou kolem 250 MB). „Vymazat mezipaměť obrázků“ v nabídce ⋯ smaže i náhledy na disku a změna šablony adresy obrázků v nastavení je zahodí (můžou být z jiného zdroje).
+
 ## [1.2.28] – 2026-11-03
 
 ### Přidáno

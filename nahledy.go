@@ -9,13 +9,16 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -228,4 +231,98 @@ func (m *mezipametNahledu) propustit(w http.ResponseWriter, id, velikost string)
 	w.Header().Set("Content-Type", resp.Header.Get("Content-Type"))
 	w.Header().Set("Cache-Control", "private, max-age=86400")
 	io.Copy(w, resp.Body)
+}
+
+// Výchozí limit mezipaměti náhledů na disku; nad ním se mažou nejdéle nepoužité (titulní fotky a plakáty celé sbírky
+// 3000 modelek zaberou ~250 MB, každá prohlédnutá fotka ~40 kB)
+const limitNahledu = 1 << 30
+
+// Úklid: smaže náhledy souborů, které už ve sbírce nejsou (platne), zbytky přerušených zápisů a nad limitem
+// nejdéle nepoužité (podle času změny, precist ho obnovuje). Vrací, kolik souborů a bajtů zůstalo.
+func (m *mezipametNahledu) uklid(platne func(id string) bool, limit int64) (souboru int, bajtu int64) {
+	if m == nil || m.slozka == "" {
+		return 0, 0
+	}
+	type soubor struct {
+		cesta string
+		vel   int64
+		cas   time.Time
+	}
+	var vse []soubor
+	filepath.WalkDir(m.slozka, func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return nil
+		}
+		jmeno := d.Name()
+		id, _, _ := strings.Cut(jmeno, "_")
+		if strings.HasPrefix(jmeno, ".tmp-") || (platne != nil && !platne(id)) {
+			os.Remove(p)
+			return nil
+		}
+		if info, err := d.Info(); err == nil {
+			vse = append(vse, soubor{p, info.Size(), info.ModTime()})
+			bajtu += info.Size()
+		}
+		return nil
+	})
+	sort.Slice(vse, func(i, j int) bool { return vse[i].cas.Before(vse[j].cas) })
+	for i := 0; limit > 0 && bajtu > limit && i < len(vse); i++ {
+		if os.Remove(vse[i].cesta) == nil {
+			bajtu -= vse[i].vel
+			vse[i].vel = -1
+		}
+	}
+	for _, s := range vse {
+		if s.vel >= 0 {
+			souboru++
+		}
+	}
+	return souboru, bajtu
+}
+
+// Smaže všechny náhledy (Vymazat mezipaměť, změna šablony adres); vrací uvolněné bajty
+func (m *mezipametNahledu) vymazat() (int64, error) {
+	if m == nil || m.slozka == "" {
+		return 0, nil
+	}
+	velikost := velikostSlozky(m.slozka)
+	return velikost, os.RemoveAll(m.slozka)
+}
+
+func velikostSlozky(slozka string) int64 {
+	var velikost int64
+	filepath.WalkDir(slozka, func(_ string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			if info, err := d.Info(); err == nil {
+				velikost += info.Size()
+			}
+		}
+		return nil
+	})
+	return velikost
+}
+
+// Úklid náhledů po startu: platná jsou ID fotek a titulních fotek sbírky; když se seznam nepodaří přečíst celý,
+// maže se jen nad limitem (nic platného se nesmaže kvůli chybě čtení)
+func (a *App) uklidNahledu() {
+	if a.nahledy == nil || a.db == nil {
+		return
+	}
+	platne := map[string]bool{}
+	radky, err := a.db.Query(`SELECT drive_file_id FROM fotky UNION SELECT drive_cover_id FROM modelky WHERE COALESCE(drive_cover_id, '') <> ''`)
+	if err == nil {
+		for radky.Next() {
+			var id sql.NullString
+			if radky.Scan(&id) == nil && id.Valid {
+				platne[id.String] = true
+			}
+		}
+		err = radky.Err()
+		radky.Close()
+	}
+	var filtr func(string) bool
+	if err == nil && len(platne) > 0 {
+		filtr = func(id string) bool { return platne[id] }
+	}
+	a.nahledy.uklid(filtr, limitNahledu)
 }

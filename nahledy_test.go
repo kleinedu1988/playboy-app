@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -159,4 +160,63 @@ func TestAdresaObrazkuPresMezipamet(t *testing.T) {
 	if a := adresaNahleduNaDisku(idNahleduA, "w400"); a != "https://lh3.googleusercontent.com/d/"+idNahleduA+"=w400" {
 		t.Fatalf("na Disku: %s", a)
 	}
+}
+
+// Úklid: zbytky zápisů a ID mimo sbírku pryč, nad limitem nejdéle nepoužité; vymazání smaže vše
+func TestNahledUklidAVymazani(t *testing.T) {
+	m, slozka := novaTestovaciMezipamet(t, &falesnyDiskNahledu{})
+	id := func(i int) string { return fmt.Sprintf("1Uklid%026d", i) }
+	for i := range 10 {
+		m.ulozit(id(i), "w400", jpegNahledu)
+		cas := time.Now().Add(time.Duration(i-20) * time.Hour)
+		os.Chtimes(m.cesta(id(i), "w400"), cas, cas)
+	}
+	os.WriteFile(filepath.Join(slozka, id(0)[:2], ".tmp-zbytek"), []byte("x"), 0o600)
+	n, b := m.uklid(func(x string) bool { return x != id(9) }, int64(len(jpegNahledu)*5))
+	if n != 5 || b != int64(len(jpegNahledu)*5) {
+		t.Fatalf("po úklidu %d souborů, %d B", n, b)
+	}
+	for i := range 10 {
+		_, err := os.Stat(m.cesta(id(i), "w400"))
+		if zustal := err == nil; zustal != (i >= 4 && i <= 8) {
+			t.Errorf("náhled %d: zůstal %v", i, zustal)
+		}
+	}
+	if uvolneno, err := m.vymazat(); err != nil || uvolneno != int64(len(jpegNahledu)*5) {
+		t.Fatalf("vymazání: %d %v", uvolneno, err)
+	}
+	if _, err := os.Stat(slozka); !os.IsNotExist(err) {
+		t.Fatal("složka náhledů zůstala")
+	}
+	// Bez mezipaměti (testy, import) nic nepadá
+	var bez *mezipametNahledu
+	bez.uklid(nil, 1)
+	bez.vymazat()
+}
+
+// Úklid po startu nechá náhledy fotek a titulních fotek sbírky, smaže náhledy smazaných fotek
+func TestUklidNahleduAplikace(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Modelka", CoverID: odkazB})
+	a.AddBulkPhotos(1, "Album", "Pictorial", odkazA)
+	m, _ := novaTestovaciMezipamet(t, &falesnyDiskNahledu{})
+	a.nahledy = m
+	idA, idB, ciziID := "AAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBBBBBBBBBBBBBBB", "CCCCCCCCCCCCCCCCCCCCCCCCCCCCC"
+	for _, id := range []string{idA, idB, ciziID} {
+		m.ulozit(id, "w400", jpegNahledu)
+	}
+	a.uklidNahledu()
+	for id, zustat := range map[string]bool{idA: true, idB: true, ciziID: false} {
+		if _, err := os.Stat(m.cesta(id, "w400")); (err == nil) != zustat {
+			t.Errorf("%s: zůstal %v", id, err == nil)
+		}
+	}
+	// Změna šablony adres smaže náhledy (můžou být z jiného zdroje)
+	if chyba := a.SetSablonaObrazku("https://jinde.example/{id}/{velikost}"); chyba != "" {
+		t.Fatal(chyba)
+	}
+	if _, err := os.Stat(m.cesta(idA, "w400")); !os.IsNotExist(err) {
+		t.Fatal("po změně šablony náhled zůstal")
+	}
+	a.SetSablonaObrazku("")
 }

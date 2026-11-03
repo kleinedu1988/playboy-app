@@ -24,6 +24,7 @@ func main() {
 	app := NewApp()
 	// Obrázky v okně jdou přes místní mezipaměť náhledů (nahledy.go, obsluha v AssetServer níže)
 	nahledyPresMezipamet.Store(true)
+	app.nahledy = novaMezipametNahledu(slozkaNahledu(), adresaNahleduNaDisku)
 	// Okno se otevře tak, jak bylo naposledy zavřeno
 	okno := nacistStavOkna()
 	stavOkna := options.Normal
@@ -45,7 +46,7 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 			// Co není mezi soubory rozhraní: náhledy z Disku přes místní mezipaměť (nahledy.go)
-			Handler: novaMezipametNahledu(slozkaNahledu(), adresaNahleduNaDisku),
+			Handler: app.nahledy,
 		},
 		// Průhledné pozadí kvůli zakulaceným rohům rámečku okna
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},

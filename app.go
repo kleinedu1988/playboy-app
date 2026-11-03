@@ -53,6 +53,8 @@ type App struct {
 	// nečekalo; obnovení zálohy a zavření programu na ně počkají (pockatNaPozadi)
 	startNaPozadi bool
 	naPozadi      *sync.WaitGroup
+	// Místní mezipaměť náhledů z Disku (nahledy.go); nil v testech a v kopii pro import
+	nahledy *mezipametNahledu
 }
 
 // Počká na práci startu na pozadí (denní záloha, první snímek), než se databáze zavře nebo vymění
@@ -694,6 +696,12 @@ func (a *App) SetSablonaObrazku(sablona string) string {
 		a.chyba("uložení šablony adresy obrázků", err)
 		return "Šablonu se nepodařilo uložit."
 	}
+	// Náhledy ze staré šablony můžou být jiné obrázky (jiný zdroj): stáhnou se znovu
+	if sablona != puvodni {
+		if _, err := a.nahledy.vymazat(); err != nil {
+			a.chyba("vymazání náhledů", err)
+		}
+	}
 	sablonaObrazku.Store(sablona)
 	return ""
 }
@@ -908,6 +916,8 @@ func (a *App) startup(ctx context.Context) {
 			defer a.naPozadi.Done()
 			a.snimekVPameti()
 		}()
+		// Úklid náhledů v klidu po startu (zavření programu na něj nečeká; čtení po zavření databáze jen selže)
+		time.AfterFunc(time.Minute, a.uklidNahledu)
 	}
 }
 
@@ -2174,19 +2184,17 @@ func (a *App) VymazatMezipamet() int64 {
 		return 0
 	}
 	slozka := filepath.Join(zaklad, filepath.Base(os.Args[0]), "WebKitCache")
-
-	var velikost int64
-	filepath.Walk(slozka, func(_ string, info os.FileInfo, err error) error {
-		if err == nil && !info.IsDir() {
-			velikost += info.Size()
-		}
-		return nil
-	})
+	velikost := velikostSlozky(slozka)
 	if err := os.RemoveAll(slozka); err != nil {
 		a.chyba("vymazání mezipaměti obrázků", err)
 		return 0
 	}
-	return velikost
+	// I náhledy uložené na disku (nahledy.go)
+	nahledu, err := a.nahledy.vymazat()
+	if err != nil {
+		a.chyba("vymazání náhledů", err)
+	}
+	return velikost + nahledu
 }
 
 type NedostupnySoubor struct {

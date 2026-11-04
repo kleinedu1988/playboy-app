@@ -11,7 +11,7 @@ import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { detailView, gallery, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
-import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
+import { VELIKOST_NAHLEDU, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { rezimVyberu, selectionBar, zrusitVyber } from './vyber';
@@ -508,105 +508,18 @@ export function prepnoutUdaje(otevrit = !detailView.classList.contains('udaje-ot
     requestAnimationFrame(() => zkratitAlba(detailView));
 }
 
-// Správa širokoúhlého banneru v záhlaví profilu
-const KLIC_BANNERU = 'playboy_banner_';
-
-/** @returns {{ id?: number, url?: string, pos?: string } | null} */
-export function nacistVlastniBanner(modelkaId) {
-    try {
-        const ulozeno = localStorage.getItem(KLIC_BANNERU + modelkaId);
-        return ulozeno ? JSON.parse(ulozeno) : null;
-    } catch { return null; }
-}
-
-export function nastavitBannerModelky(modelkaId, fotoId, url, pos = 'center 25%') {
-    try {
-        localStorage.setItem(KLIC_BANNERU + modelkaId, JSON.stringify({ id: fotoId, url, pos }));
-    } catch { /* ignorovat */ }
-    if (stav.aktualniModelka?.id === modelkaId) {
-        aktualizovatBannerProfilu(stav.aktualniModelka);
-    }
-}
-
-export function zrusitVlastniBanner(modelkaId) {
-    try {
-        localStorage.removeItem(KLIC_BANNERU + modelkaId);
-    } catch { /* ignorovat */ }
-    if (stav.aktualniModelka?.id === modelkaId) {
-        aktualizovatBannerProfilu(stav.aktualniModelka);
-    }
-}
-
-export function maVlastniBanner(modelkaId) {
-    return Boolean(nacistVlastniBanner(modelkaId));
-}
-
+// Aktualizace fotografie v pozadí záhlaví (titulní fotka modelky s jejím výřezem)
 export function aktualizovatBannerProfilu(modelka) {
     const bannerImg = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerFoto'));
     if (!bannerImg) return;
-    const vlastni = nacistVlastniBanner(modelka.id);
-    const url = vlastni?.url || modelka.coverUrl;
-    if (url) {
-        bannerImg.src = obrazek(url, VELIKOST_PLAKATU);
+    if (modelka.coverUrl) {
+        bannerImg.src = adresaTitulni(modelka, true);
         bannerImg.style.display = 'block';
-        bannerImg.style.objectPosition = vlastni?.pos || 'center 25%';
+        bannerImg.style.cssText = stylVyrezu(modelka);
     } else {
         bannerImg.removeAttribute('src');
         bannerImg.style.display = 'none';
     }
-}
-
-export async function otevritVyberBanneru(modelka) {
-    const modal = document.getElementById('bannerModal');
-    const grid = document.getElementById('bannerGrid');
-    const resetBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('bannerResetBtn'));
-    if (!modal || !grid) return;
-
-    let fotky = [];
-    if (stav.aktualniPolozky?.length && stav.aktualniModelka?.id === modelka.id) {
-        fotky = stav.aktualniPolozky.flatMap(p => p.fotky || []);
-    } else {
-        fotky = (await GetFotografieModelky(modelka.id)) || [];
-    }
-    const videne = new Set();
-    fotky = fotky.filter(f => {
-        if (!f?.id || videne.has(f.id)) return false;
-        videne.add(f.id);
-        return true;
-    });
-
-    const vlastni = nacistVlastniBanner(modelka.id);
-    const aktivniId = vlastni?.id;
-    const aktivniUrl = vlastni?.url || modelka.coverUrl;
-
-    if (resetBtn) {
-        resetBtn.classList.toggle('hidden', !vlastni);
-        resetBtn.onclick = () => {
-            zrusitVlastniBanner(modelka.id);
-            oznamit('Obnovena výchozí fotka záhlaví.');
-            modal.classList.add('hidden');
-        };
-    }
-
-    grid.innerHTML = fotky.length ? fotky.map(f => {
-        const jeAktivni = aktivniId ? f.id === aktivniId : f.url === aktivniUrl;
-        return `<button type="button" class="banner-karta ${jeAktivni ? 'aktivni' : ''}" data-foto-id="${f.id}" data-url="${esc(f.url)}" title="${esc(nazevAlba(f.album, f.typ))}">
-            <img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" draggable="false" />
-            ${jeAktivni ? '<span class="banner-odznak">Záhlaví</span>' : ''}
-        </button>`;
-    }).join('') : '<p class="banner-prazdno">Modelka zatím nemá žádné fotografie.</p>';
-
-    grid.onclick = (e) => {
-        const btn = /** @type {HTMLElement} */ (e.target).closest('[data-foto-id]');
-        if (!btn) return;
-        const fotoId = parseInt(btn.dataset.fotoId || '0');
-        const url = btn.dataset.url || '';
-        nastavitBannerModelky(modelka.id, fotoId, url);
-        oznamit('Fotka záhlaví profilu nastavena.');
-        modal.classList.add('hidden');
-    };
-
-    modal.classList.remove('hidden');
 }
 
 // Úprava výřezu titulní fotky v profilu: na velké fotce v panelu Údaje (panel se otevře); po uložení se obnoví

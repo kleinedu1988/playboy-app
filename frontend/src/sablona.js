@@ -1014,22 +1014,6 @@ export const SABLONA_OKNA = `
     </div>
   </div>
 
-  <!-- Volba fotografie do záhlaví profilu -->
-  <div id="bannerModal" class="modal-overlay hidden">
-    <div class="modal-card banner-modal" role="dialog" aria-modal="true" aria-labelledby="bannerModalNadpis">
-      <div class="modal-head">
-        <h2 id="bannerModalNadpis">Zvolit fotografii do záhlaví</h2>
-        <button type="button" class="modal-close" data-zavrit title="Zavřít" aria-label="Zavřít">&times;</button>
-      </div>
-      <p class="modal-perex">Kliknutím na fotografii ji nastavíš jako širokoúhlý banner na celé ploše záhlaví profilu modelky.</p>
-      <div id="bannerGrid" class="banner-grid"></div>
-      <div class="modal-actions">
-        <button type="button" id="bannerResetBtn" class="btn hidden">Obnovit výchozí fotku</button>
-        <button type="button" class="btn btn-primary" data-zavrit>Zavřít</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Kontextová nabídka (pravé tlačítko) -->
   <div id="contextMenu" class="context-menu hidden"></div>
 `;

@@ -2,72 +2,48 @@ package main
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
-	"strconv"
-	"strings"
 	"time"
+
+	"playboy-app/internal/kontrola"
+	"playboy-app/internal/sbirka"
 )
 
 // Kontrola sbírky pro Údržbu: údaje, které vypadají jako chyba při zadávání. Každé pravidlo hlásí nález s klíčem
 // „ok-…“; když je údaj přesto pravdivý (modelce opravdu bylo 16 let), označí se nález v Údržbě „V pořádku“
 // a klíč se uloží mezi „netýká se“ modelky (nebo alba u nálezu alba). Při dalších kontrolách se pak nehlásí.
-// Každý nález nese i Zdroj, stabilní klíč pravidla (jeden klíč „ok-…“ mívá víc pravidel); podle něj se v databázi
-// učení (uceni.go) počítá, jak často pravidlo trefí skutečnou chybu, a prahy se podle toho upraví.
-// Celkový popis učení je v docs/UCENI.md.
+// Pravidla a učení rozsahů a podobných jmen jsou v balíčku internal/kontrola.
 
-// Údaj, který vypadá jako chyba při zadávání a stojí za kontrolu
-type PodezrelyUdaj struct {
-	ModelkaID int    `json:"modelkaId"`
-	Jmeno     string `json:"jmeno"`
-	Popis     string `json:"popis"`
-	Klic      string `json:"klic"`  // „ok-…“, pod kterým se nález označí jako v pořádku
-	Album     string `json:"album"` // u nálezu alba jeho název a typ (označení patří albu)
-	Typ       string `json:"typ"`
-	Pole      string `json:"pole"`     // pole formuláře modelky, kde se údaj opraví; prázdné = v profilu (alba)
-	NetykaSe  bool   `json:"netykaSe"` // označeno jako v pořádku; v seznamu jen při zobrazení skrytých
-	Zdroj     string `json:"zdroj"`    // stabilní klíč pravidla („vek“, „neobvykle“, „podobne-jmeno“…)
-}
+type PodezrelyUdaj = kontrola.PodezrelyUdaj
+type pridatNalez = kontrola.PridatNalez
 
-// Klíče nálezů: modelky a alba (ukládají se mezi „netýká se“)
 var (
-	kliceKontrolyModelky = map[string]bool{"ok-jmeno": true, "ok-vek": true, "ok-narozeni": true, "ok-umrti": true,
-		"ok-vyska": true, "ok-vaha": true, "ok-bmi": true, "ok-miry": true, "ok-pmoy": true, "ok-cislo": true, "ok-dvojice": true,
-		"ok-neobvykle": true, "ok-podobne-jmeno": true}
-	kliceKontrolyAlba = map[string]bool{"ok-album": true, "ok-vydani-alba": true}
+	kliceKontrolyModelky = kontrola.KliceKontrolyModelky
+	kliceKontrolyAlba    = kontrola.KliceKontrolyAlba
 )
 
-var vzorPlaymateRoku = regexp.MustCompile(`(?i)playmate roku\s*(\d{4})`)
-
-// Rozsahy, mimo které údaj stojí za kontrolu (ne za zákaz: modelky bývají i mimo ně). Platí u malé sbírky;
-// když je údajů dost, nahradí je rozsahy naučené ze sbírky (kontrola_uceni.go).
 const (
-	vekOd, vekDo         = 18, 45
-	vyskaOd, vyskaDo     = 145, 195
-	vahaOd, vahaDo       = 38, 95
-	bmiOd, bmiDo         = 15.0, 30.0
-	hrudnikOd, hrudnikDo = 65, 130
-	pasOd, pasDo         = 45, 100
-	bokyOd, bokyDo       = 65, 130
-	prvniRokCasopisu     = 1953
+	vekOd, vekDo         = kontrola.VekOd, kontrola.VekDo
+	vyskaOd, vyskaDo     = kontrola.VyskaOd, kontrola.VyskaDo
+	vahaOd, vahaDo       = kontrola.VahaOd, kontrola.VahaDo
+	bmiOd, bmiDo         = kontrola.BmiOd, kontrola.BmiDo
+	hrudnikOd, hrudnikDo = kontrola.HrudnikOd, kontrola.HrudnikDo
+	pasOd, pasDo         = kontrola.PasOd, kontrola.PasDo
+	bokyOd, bokyDo       = kontrola.BokyOd, kontrola.BokyDo
+	prvniRokCasopisu     = kontrola.PrvniRokCasopisu
 )
 
-// Nálezy bez označených „V pořádku“, nebo všechny
 func vybratNalezy(vsechny []PodezrelyUdaj, vcetneSkrytych bool) []PodezrelyUdaj {
-	nalezy := []PodezrelyUdaj{}
-	for _, n := range vsechny {
-		if !n.NetykaSe || vcetneSkrytych {
-			nalezy = append(nalezy, n)
-		}
-	}
-	return nalezy
+	return kontrola.VybratNalezy(vsechny, vcetneSkrytych)
 }
 
 // Všechny nálezy sbírky i s označenými „V pořádku“ (s příznakem); výpočet bez mezipaměti (ta je v uceni.go)
 func (a *App) spocitatNalezy(modelky []Modelka, alba []albumSbirky, prahy prahyKontroly) []PodezrelyUdaj {
 	nalezModelky := func(m Modelka, klic, zdroj, pole, popis string) PodezrelyUdaj {
-		return PodezrelyUdaj{ModelkaID: m.ID, Jmeno: m.Jmeno, Popis: popis, Klic: klic, Pole: pole,
-			NetykaSe: obsahujeKlic(m.NetykaSe, klic), Zdroj: zdroj}
+		return PodezrelyUdaj{
+			ModelkaID: m.ID, Jmeno: m.Jmeno, Popis: popis, Klic: klic, Pole: pole,
+			NetykaSe: obsahujeKlic(m.NetykaSe, klic), Zdroj: zdroj,
+		}
 	}
 	nalezy := []PodezrelyUdaj{}
 	pridat := func(m Modelka, klic, zdroj, pole, popis string) {
@@ -89,39 +65,42 @@ func (a *App) spocitatNalezy(modelky []Modelka, alba []albumSbirky, prahy prahyK
 		})
 	}()
 
+	albaBal := albaDoBalicku(alba)
 	kontrolovatModelky(modelky, prahy, pridat)
-	kontrolovatCenterfoldyCisel(modelky, alba, pridat)
+	kontrola.KontrolovatCenterfoldyCisel(modelky, albaBal, pridat)
 
 	// Alba s fotkami: jedna fotka u alba s podobným názvem jako jiné album modelky (překlep), vydání mimo dobu
 	// časopisu. Pořadí podle názvu alba.
-	var sFotkami []albumSbirky
-	for _, al := range alba {
-		if al.fotek > 0 {
+	var sFotkami []sbirka.AlbumSbirky
+	for _, al := range albaBal {
+		if al.Fotek > 0 {
 			sFotkami = append(sFotkami, al)
 		}
 	}
-	sort.SliceStable(sFotkami, func(i, j int) bool { return sFotkami[i].nazev < sFotkami[j].nazev })
-	podleModelky := map[int][]albumSbirky{}
+	sort.SliceStable(sFotkami, func(i, j int) bool { return sFotkami[i].Nazev < sFotkami[j].Nazev })
+	podleModelky := map[int][]sbirka.AlbumSbirky{}
 	for _, al := range sFotkami {
-		podleModelky[al.modelkaID] = append(podleModelky[al.modelkaID], al)
+		podleModelky[al.ModelkaID] = append(podleModelky[al.ModelkaID], al)
 	}
-	pridatAlbu := func(al albumSbirky, klic, zdroj, popis string) {
-		m, ok := podleID[al.modelkaID]
+	pridatAlbu := func(al sbirka.AlbumSbirky, klic, zdroj, popis string) {
+		m, ok := podleID[al.ModelkaID]
 		if !ok {
 			return
 		}
-		nalezy = append(nalezy, PodezrelyUdaj{ModelkaID: m.ID, Jmeno: m.Jmeno, Popis: popis, Klic: klic, Album: al.nazev, Typ: al.typ,
-			NetykaSe: obsahujeKlic(al.neni, klic), Zdroj: zdroj})
+		nalezy = append(nalezy, PodezrelyUdaj{
+			ModelkaID: m.ID, Jmeno: m.Jmeno, Popis: popis, Klic: klic, Album: al.Nazev, Typ: al.Typ,
+			NetykaSe: obsahujeKlic(al.Neni, klic), Zdroj: zdroj,
+		})
 	}
 	letos := time.Now().Year()
 	for _, al := range sFotkami {
-		if al.fotek == 1 && al.typ != "Centerfold" && al.typ != "Cover" {
-			if podobne := podobneAlbum(al, podleModelky[al.modelkaID]); podobne != "" {
-				pridatAlbu(al, "ok-album", "album", fmt.Sprintf("album „%s“ má jen jednu fotku a podobá se albu „%s“ – překlep v názvu?", al.nazev, podobne))
+		if al.Fotek == 1 && al.Typ != "Centerfold" && al.Typ != "Cover" {
+			if podobne := kontrola.PodobneAlbum(al, podleModelky[al.ModelkaID]); podobne != "" {
+				pridatAlbu(al, "ok-album", "album", fmt.Sprintf("album „%s“ má jen jednu fotku a podobá se albu „%s“ – překlep v názvu?", al.Nazev, podobne))
 			}
 		}
-		if rok, _, _, ok := castiVydani(al.vydani); ok && (rok < prvniRokCasopisu || rok > letos) {
-			pridatAlbu(al, "ok-vydani-alba", "vydani-alba", fmt.Sprintf("album „%s“ má vydání %s, mimo roky časopisu (%d–%d)", al.nazev, al.vydani, prvniRokCasopisu, letos))
+		if rok, _, _, ok := castiVydani(al.Vydani); ok && (rok < prvniRokCasopisu || rok > letos) {
+			pridatAlbu(al, "ok-vydani-alba", "vydani-alba", fmt.Sprintf("album „%s“ má vydání %s, mimo roky časopisu (%d–%d)", al.Nazev, al.Vydani, prvniRokCasopisu, letos))
 		}
 	}
 	<-hotovo
@@ -131,8 +110,6 @@ func (a *App) spocitatNalezy(modelky []Modelka, alba []albumSbirky, prahy prahyK
 // Kontroly samotných údajů modelek (bez alb a fotek): pravidla s rozsahy naučenými ze sbírky,
 // neobvyklé kombinace údajů postavy a podobná jména
 func kontrolovatModelky(modelky []Modelka, prahy prahyKontroly, pridat pridatNalez) {
-	// Podobná jména (porovnávají jména mezi sebou, nejdražší kontrola) běží souběžně s ostatními; jen čtou
-	// modelky. Nálezy se předají v pořadí jako dřív: jména, podobná jména, údaje modelek, neobvyklé kombinace.
 	type nalez struct {
 		m                        Modelka
 		klic, zdroj, pole, popis string
@@ -146,18 +123,18 @@ func kontrolovatModelky(modelky []Modelka, prahy prahyKontroly, pridat pridatNal
 	hotovo := make(chan struct{})
 	go func() {
 		defer close(hotovo)
-		kontrolovatPodobnaJmena(modelky, prahy.prahJmen, odlozit(&podobna))
+		kontrolovatPodobnaJmena(modelky, prahy.PrahJmen, odlozit(&podobna))
 	}()
 
 	uceni := naucitSe(modelky, prahy)
-	kontrolovatJmena(modelky, pridat)
+	kontrola.KontrolovatJmena(modelky, pridat)
 	pridatUdaj := odlozit(&udaje)
 	for _, m := range modelky {
-		kontrolovatData(m, uceni.rozsahy, pridatUdaj)
-		kontrolovatPostavu(m, uceni.rozsahy, pridatUdaj)
-		kontrolovatPlaymateRoku(m, pridatUdaj)
+		kontrola.KontrolovatData(m, uceni.Rozsahy, pridatUdaj)
+		kontrola.KontrolovatPostavu(m, uceni.Rozsahy, pridatUdaj)
+		kontrola.KontrolovatPlaymateRoku(m, pridatUdaj)
 	}
-	uceni.kontrolovatNeobvykle(modelky, pridatUdaj)
+	uceni.KontrolovatNeobvykle(modelky, pridatUdaj)
 	<-hotovo
 	for _, seznam := range [][]nalez{podobna, udaje} {
 		for _, n := range seznam {
@@ -166,191 +143,16 @@ func kontrolovatModelky(modelky []Modelka, prahy prahyKontroly, pridat pridatNal
 	}
 }
 
-// Stejné jméno nebo pseudonym u dvou modelek bývá dvakrát založená tatáž
-func kontrolovatJmena(modelky []Modelka, pridat pridatNalez) {
-	podleJmena := map[string]Modelka{}
-	for _, m := range modelky {
-		for _, jmeno := range append([]string{m.Jmeno}, strings.Split(m.DalsiJmena, ",")...) {
-			klic := zjednodusit(strings.TrimSpace(jmeno))
-			if klic == "" {
-				continue
-			}
-			if jina, obsazeno := podleJmena[klic]; obsazeno && jina.ID != m.ID {
-				pridat(m, "ok-jmeno", "jmeno", "inputDalsiJmena", fmt.Sprintf("jméno nebo pseudonym „%s“ má i modelka %s", strings.TrimSpace(jmeno), jina.Jmeno))
-				continue
-			}
-			podleJmena[klic] = m
-		}
-	}
-}
-
-// První měsíční vydání modelky (bez speciálů); prázdné, když žádné nemá
-func prvniVydani(m Modelka) string {
-	prvni := ""
-	for _, v := range m.Vydani {
-		if vzorVydani.MatchString(v) && !jeSpecial(v) && (prvni == "" || v[:7] < prvni[:7]) {
-			prvni = v
-		}
-	}
-	return prvni
-}
-
-// Narození, úmrtí a věk při prvním vydání (rozsah věku z r)
+func prvniVydani(m Modelka) string { return kontrola.PrvniVydani(m) }
+func predData(a, b string) bool    { return kontrola.PredData(a, b) }
 func kontrolovatData(m Modelka, r rozsahyKontroly, pridat pridatNalez) {
-	dnes := time.Now().Format("2006-01-02")
-	narozeni, umrti := strings.TrimSpace(m.NarozeniDatum), strings.TrimSpace(m.UmrtiDatum)
-	prvni := prvniVydani(m)
-	if narozeni != "" {
-		switch {
-		case narozeni > dnes:
-			pridat(m, "ok-narozeni", "narozeni-budoucnost", "inputNarozeniDatum", fmt.Sprintf("datum narození %s je v budoucnosti", narozeni))
-		case narozeni[:min(4, len(narozeni))] < "1900":
-			pridat(m, "ok-narozeni", "narozeni-pred-1900", "inputNarozeniDatum", fmt.Sprintf("datum narození %s je před rokem 1900", narozeni))
-		case prvni != "" && narozeni[:min(7, len(narozeni))] >= prvni[:7]:
-			pridat(m, "ok-narozeni", "narozeni-po-vydani", "inputNarozeniDatum", fmt.Sprintf("datum narození %s není před prvním vydáním (%s)", narozeni, prvni))
-		default:
-			// Věk mimo běžný rozsah ukazuje na překlep v datu narození nebo ve vydání (ale bývá i pravdivý)
-			if vek := vekKVydani(narozeni, prvni); prvni != "" && vek > 0 && r[prVek].mimo(float64(vek)) {
-				pridat(m, "ok-vek", "vek", "inputNarozeniDatum", fmt.Sprintf("věk při prvním vydání (%s) vychází na %d let", prvni, vek))
-			}
-		}
-	}
-	if umrti != "" {
-		switch {
-		case umrti > dnes:
-			pridat(m, "ok-umrti", "umrti-budoucnost", "inputUmrtiDatum", fmt.Sprintf("datum úmrtí %s je v budoucnosti", umrti))
-		case narozeni != "" && predData(umrti, narozeni):
-			pridat(m, "ok-umrti", "umrti-pred-narozenim", "inputUmrtiDatum", fmt.Sprintf("datum úmrtí %s je před narozením (%s)", umrti, narozeni))
-		case prvni != "" && predData(umrti, prvni[:7]):
-			pridat(m, "ok-umrti", "umrti-pred-vydanim", "inputUmrtiDatum", fmt.Sprintf("datum úmrtí %s je před prvním vydáním (%s)", umrti, prvni))
-		}
-	}
+	kontrola.KontrolovatData(m, r, pridat)
 }
-
-// Datum a je jistě před datem b: porovná se na společnou přesnost (úmrtí „1980“ není před vydáním „1980-08“)
-func predData(a, b string) bool {
-	n := min(len(a), len(b))
-	return a[:n] < b[:n]
-}
-
-// Výška, váha, BMI a obvody mimo rozsahy r (pevné nebo naučené ze sbírky); pas širší než boky nebo hrudník
-// bývá prohozené pole
 func kontrolovatPostavu(m Modelka, r rozsahyKontroly, pridat pridatNalez) {
-	if v := r[prVyska]; m.VyskaCm > 0 && v.mimo(float64(m.VyskaCm)) {
-		pridat(m, "ok-vyska", "vyska", "inputVyska", fmt.Sprintf("výška %d cm je mimo %s %s cm", m.VyskaCm, v.popis(), v.text(priznaky[prVyska])))
-	}
-	if v := r[prVaha]; m.VahaKg > 0 && v.mimo(float64(m.VahaKg)) {
-		pridat(m, "ok-vaha", "vaha", "inputVaha", fmt.Sprintf("váha %d kg je mimo %s %s kg", m.VahaKg, v.popis(), v.text(priznaky[prVaha])))
-	}
-	if m.VyskaCm > 0 && m.VahaKg > 0 {
-		metry := float64(m.VyskaCm) / 100
-		if bmi := float64(m.VahaKg) / (metry * metry); r[prBmi].mimo(bmi) {
-			pridat(m, "ok-bmi", "bmi", "inputVaha", fmt.Sprintf("BMI z výšky a váhy vychází %s – překlep ve výšce nebo váze?", priznaky[prBmi].Cislo(bmi)))
-		}
-	}
-	var chyby []string
-	zdroj := "miry"
-	for _, o := range []struct {
-		j int
-		h int
-	}{{prHrudnik, m.ObvodHrudnikCm}, {prPas, m.ObvodPasCm}, {prBoky, m.ObvodBokyCm}} {
-		if o.h > 0 && r[o.j].mimo(float64(o.h)) {
-			slovo := "běžně"
-			if r[o.j].naucene {
-				slovo = "ve sbírce obvykle"
-			}
-			chyby = append(chyby, fmt.Sprintf("%s %d cm (%s %s)", priznaky[o.j].Nazev, o.h, slovo, r[o.j].text(priznaky[o.j])))
-		}
-	}
-	if m.ObvodPasCm > 0 && (m.ObvodBokyCm > 0 && m.ObvodPasCm >= m.ObvodBokyCm || m.ObvodHrudnikCm > 0 && m.ObvodPasCm >= m.ObvodHrudnikCm) {
-		if len(chyby) == 0 {
-			zdroj = "miry-pas"
-		}
-		chyby = append(chyby, fmt.Sprintf("pas %d cm není užší než hrudník a boky (%s) – prohozená pole?", m.ObvodPasCm, m.Miry))
-	}
-	if len(chyby) > 0 {
-		pridat(m, "ok-miry", zdroj, "inputHrudnik", "míry: "+strings.Join(chyby, ", "))
-	}
+	kontrola.KontrolovatPostavu(m, r, pridat)
 }
-
-// Playmate roku se vyhlašuje z playmate dřívějších let: rok před prvním centerfoldem nebo dlouho po něm je podezřelý
 func kontrolovatPlaymateRoku(m Modelka, pridat pridatNalez) {
-	shoda := vzorPlaymateRoku.FindStringSubmatch(m.Role)
-	if shoda == nil {
-		return
-	}
-	rok, _ := strconv.Atoi(shoda[1])
-	prvni := 0
-	for _, v := range m.Centerfoldy {
-		if r, _, _, ok := castiVydani(v); ok && (prvni == 0 || r < prvni) {
-			prvni = r
-		}
-	}
-	switch {
-	case prvni == 0:
-		pridat(m, "ok-pmoy", "pmoy-bez-centerfoldu", "inputRole", fmt.Sprintf("Playmate roku %d bez centerfoldu ve sbírce", rok))
-	case rok < prvni || rok > prvni+3:
-		pridat(m, "ok-pmoy", "pmoy-rok", "inputRole", fmt.Sprintf("Playmate roku %d, ale první centerfold je z roku %d", rok, prvni))
-	}
-}
-
-// Dvě různá centerfoldová alba ve stejném měsíčním čísle bývají špatně zapsané vydání (společný centerfold
-// dvojčat je jedno sdílené album a nehlásí se). Alba jako ze snímku sbírky (všechna alba modelek, snimek.go).
-func kontrolovatCenterfoldyCisel(modelky []Modelka, alba []albumSbirky, pridat pridatNalez) {
-	pocty := map[string]int{}
-	for _, al := range alba {
-		if al.typ == "Centerfold" && al.vydani != "" {
-			pocty[al.vydani]++
-		}
-	}
-	vicekrat := map[string]bool{}
-	for v, n := range pocty {
-		if n > 1 && vzorVydani.MatchString(v) && !jeSpecial(v) {
-			vicekrat[v] = true
-		}
-	}
-	podleCisla := map[string][]Modelka{}
-	for _, m := range modelky {
-		for _, v := range m.Centerfoldy {
-			if vicekrat[v] {
-				podleCisla[v] = append(podleCisla[v], m)
-			}
-		}
-	}
-	cisla := make([]string, 0, len(podleCisla))
-	for v := range podleCisla {
-		cisla = append(cisla, v)
-	}
-	sort.Strings(cisla)
-	for _, v := range cisla {
-		for _, m := range podleCisla[v] {
-			var jine []string
-			for _, j := range podleCisla[v] {
-				if j.ID != m.ID {
-					jine = append(jine, j.Jmeno)
-				}
-			}
-			if len(jine) > 0 {
-				pridat(m, "ok-cislo", "cislo", "", fmt.Sprintf("centerfold čísla %s má i %s – správné vydání?", v, strings.Join(jine, ", ")))
-			}
-		}
-	}
-}
-
-// Jiné album modelky stejného typu s podobným názvem (liší se o pár znaků nebo jeden obsahuje druhý)
-func podobneAlbum(al albumSbirky, alba []albumSbirky) string {
-	nazev := zjednodusit(al.nazev)
-	for _, jine := range alba {
-		if jine.nazev == al.nazev || jine.typ != al.typ {
-			continue
-		}
-		druhy := zjednodusit(jine.nazev)
-		if nazev == druhy || len(nazev) >= 4 && len(druhy) >= 4 && (strings.Contains(nazev, druhy) || strings.Contains(druhy, nazev)) ||
-			vzdalenostLevenshtein(nazev, druhy) <= max(1, min(len(nazev), len(druhy))/6) {
-			return jine.nazev
-		}
-	}
-	return ""
+	kontrola.KontrolovatPlaymateRoku(m, pridat)
 }
 
 // Stejná fotka (soubor na Disku) ve dvou albech jedné modelky mimo cover a centerfold bývá přidaná omylem dvakrát
@@ -387,11 +189,5 @@ func (a *App) kontrolovatDvojiceFotek(podleID map[int]Modelka, pridat pridatNale
 }
 
 func sklonovatSlovo(n int, jedna, dve, pet string) string {
-	switch {
-	case n == 1:
-		return jedna
-	case n > 1 && n < 5:
-		return dve
-	}
-	return pet
+	return kontrola.SklonovatSlovo(n, jedna, dve, pet)
 }

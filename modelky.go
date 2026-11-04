@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"math"
 	"slices"
-	"sort"
 	"strings"
+
+	"playboy-app/internal/sbirka"
 )
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy
@@ -78,26 +79,11 @@ func anoNeDoDatabaze(hodnota int) interface{} {
 
 // Klíče „netýká se": u modelky titulni, zakladni, vzhled, zarazeni, centerfold, hodnoceni; u alba text, vydani
 func prepnoutKlic(seznam, klic string, pridat bool) string {
-	var klice []string
-	for _, k := range strings.Split(seznam, ",") {
-		if k = strings.TrimSpace(k); k != "" && k != klic {
-			klice = append(klice, k)
-		}
-	}
-	if pridat {
-		klice = append(klice, klic)
-	}
-	sort.Strings(klice)
-	return strings.Join(klice, ",")
+	return sbirka.PrepnoutKlic(seznam, klic, pridat)
 }
 
 func obsahujeKlic(seznam, klic string) bool {
-	for _, k := range strings.Split(seznam, ",") {
-		if strings.TrimSpace(k) == klic {
-			return true
-		}
-	}
-	return false
+	return sbirka.ObsahujeKlic(seznam, klic)
 }
 
 func (a *App) SetNetykaSe(modelkaID int, klic string, netyka bool) bool {

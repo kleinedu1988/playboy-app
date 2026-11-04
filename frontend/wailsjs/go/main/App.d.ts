@@ -4,6 +4,7 @@ import {sbirka} from '../models';
 import {hledani} from '../models';
 import {oblibenost} from '../models';
 import {main} from '../models';
+import {kontrola} from '../models';
 import {nahledy} from '../models';
 import {uceni} from '../models';
 
@@ -75,7 +76,7 @@ export function GetNavrhSezony():Promise<main.NavrhSezony>;
 
 export function GetNavrhSrdicek(arg1:number):Promise<main.NavrhSrdicek>;
 
-export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<main.NavrhDoplneni>>;
+export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<kontrola.NavrhDoplneni>>;
 
 export function GetNehodnoceneFotky():Promise<oblibenost.FrontaFotek>;
 
@@ -163,7 +164,7 @@ export function OdebratZVyberu(arg1:number,arg2:Array<number>):Promise<boolean>;
 
 export function Odemknout(arg1:string):Promise<boolean>;
 
-export function OdmitnoutNavrh(arg1:main.NavrhDoplneni,arg2:boolean):Promise<boolean>;
+export function OdmitnoutNavrh(arg1:kontrola.NavrhDoplneni,arg2:boolean):Promise<boolean>;
 
 export function OveritOdkaz(arg1:string):Promise<number>;
 
@@ -187,9 +188,9 @@ export function PridatDoVyberu(arg1:number,arg2:Array<number>):Promise<number>;
 
 export function PridatModelkuKAlbu(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
 
-export function PrijmoutNavrh(arg1:main.NavrhDoplneni):Promise<boolean>;
+export function PrijmoutNavrh(arg1:kontrola.NavrhDoplneni):Promise<boolean>;
 
-export function PrijmoutNavrhy(arg1:Array<main.NavrhDoplneni>):Promise<number>;
+export function PrijmoutNavrhy(arg1:Array<kontrola.NavrhDoplneni>):Promise<number>;
 
 export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):Promise<boolean>;
 

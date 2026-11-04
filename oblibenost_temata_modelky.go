@@ -7,7 +7,7 @@ package main
 import "strings"
 
 // Kód země pro témata z indexu v tabulce zemí
-func kodZeme(i int) string { return strings.ReplaceAll(klicTextu(tabulkaZemi[i].narodnost), " ", "_") }
+func kodZeme(i int) string { return strings.ReplaceAll(klicTextu(tabulkaZemi[i].Narodnost), " ", "_") }
 
 var kodyZemi = func() map[string]int {
 	m := map[string]int{}

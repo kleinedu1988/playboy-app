@@ -111,7 +111,7 @@ func TestDatabazeUceniPoskozenaNovejsiJenProCteni(t *testing.T) {
 	}
 
 	// Odmítnutí do souboru, pak soubor jen pro čtení: odmítnutí platí, nové zápisy jdou do paměti
-	ku := klicUdaje{1, "", "", "narodnost"}
+	ku := klicUdaje{Modelka: 1, Pole: "narodnost"}
 	a.uc.odmitnoutHodnotu(ku, "z:0", "USA", true)
 	a.uc.zapsat(udalostOdmitnuto, 1, "", "", "narodnost", "USA", "", "misto", 0.9, 0.9)
 	restartovatUceni(a)
@@ -119,7 +119,7 @@ func TestDatabazeUceniPoskozenaNovejsiJenProCteni(t *testing.T) {
 	predponaUceni, dsnUceni = "file:", "?mode=ro&_pragma=busy_timeout(3000)"
 	t.Cleanup(func() { predponaUceni, dsnUceni = "", puvodni })
 	vstup, _ := a.uc.vstupNavrhu()
-	if vstup == nil || !vstup.odmitnute[ku]["z:0"] {
+	if vstup == nil || !vstup.Odmitnute[ku]["z:0"] {
 		t.Fatalf("odmítnutí ze souboru jen pro čtení se nepřeneslo: %+v", vstup)
 	}
 	if s := a.GetStavUceni(); s.Soubor != "" || s.Udalosti != 1 {
@@ -208,8 +208,8 @@ func TestOdmitnutiJedneHodnoty(t *testing.T) {
 		opakovat(6, Modelka{Narodnost: "Česká", Vydani: []string{"2012-03-CZ"}}),
 		[]Modelka{{Jmeno: "Z Dallasu", NarozeniMisto: "Dallas, Texas", Vydani: []string{"2013-05-CZ"}, NetykaSe: "nv-narodnost"}},
 	)
-	ku := klicUdaje{7, "", "", "narodnost"}
-	uc := &vstupUceni{odmitnute: map[klicUdaje]map[string]bool{ku: {klicHodnoty("narodnost", "USA"): true}}}
+	ku := klicUdaje{Modelka: 7, Pole: "narodnost"}
+	uc := &vstupUceni{Odmitnute: map[klicUdaje]map[string]bool{ku: {klicHodnoty("narodnost", "USA"): true}}}
 	navrhy := navrhnout(modelky, nil, letosTestu, uc)
 	var odmitnuta, nova *navrhSbirky
 	for i, n := range navrhy {
@@ -461,13 +461,13 @@ func TestZpetnaVazbaKontroly(t *testing.T) {
 	if len(udalostiUceni(t, a)) != 2 {
 		t.Error("oprava nálezu se zapsala dvakrát")
 	}
-	if p := a.uc.prahyKontroly(); p.kRozsahu[prVaha] != kRozsahu || p.kRozsahu[prVyska] != kRozsahu {
+	if p := a.uc.prahyKontroly(); p.KRozsahu[prVaha] != kRozsahu || p.KRozsahu[prVyska] != kRozsahu {
 		t.Errorf("jedno rozhodnutí prahy nemění: %+v", p)
 	}
 	for i := range 6 {
 		a.uc.zapsat(udalostVPoradku, 100+i, "", "", "ok-vaha", "", "", "vaha", 0, 0)
 	}
-	if p := a.uc.prahyKontroly(); p.kRozsahu[prVaha] <= kRozsahu || p.kRozsahu[prVyska] != kRozsahu {
+	if p := a.uc.prahyKontroly(); p.KRozsahu[prVaha] <= kRozsahu || p.KRozsahu[prVyska] != kRozsahu {
 		t.Errorf("opakované „V pořádku“ má zpřísnit jen rozsah váhy: %+v", p)
 	}
 }

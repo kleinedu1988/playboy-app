@@ -322,19 +322,19 @@ func TestNavrhyAlb(t *testing.T) {
 		Modelka{Jmeno: "Stálý fotograf"},
 	)
 	alba := []albumNavrhu{
-		{modelkaID: 1, nazev: "1997-05", typ: "Centerfold", fotograf: "Arny Freytag"},
-		{modelkaID: 1, nazev: "Na pláži", typ: "Pictorial"},
-		{modelkaID: 1, nazev: "Playboy červen 1999", typ: "Pictorial"},
-		{modelkaID: 1, nazev: "Zákulisí", typ: "Pictorial", vydani: "1997-05"},
-		{modelkaID: 2, nazev: "1998-01", typ: "Centerfold"},
-		{modelkaID: 2, nazev: "První", typ: "Pictorial"},
-		{modelkaID: 2, nazev: "Druhý", typ: "Pictorial"},
-		{modelkaID: 3, nazev: "Cyber Girl 2004-06-14", typ: typCGTydne},
-		{modelkaID: 3, nazev: "Web", typ: typOnline},
-		{modelkaID: 4, nazev: "A", typ: "Pictorial", vydani: "2001-01", fotograf: "Stephen Wayda"},
-		{modelkaID: 4, nazev: "B", typ: "Pictorial", vydani: "2002-01", fotograf: "stephen wayda"},
-		{modelkaID: 4, nazev: "C", typ: "Pictorial", vydani: "2003-01", fotograf: "Stephen Wayda"},
-		{modelkaID: 4, nazev: "D", typ: "Pictorial", vydani: "2004-01"},
+		{ModelkaID: 1, Nazev: "1997-05", Typ: "Centerfold", Fotograf: "Arny Freytag"},
+		{ModelkaID: 1, Nazev: "Na pláži", Typ: "Pictorial"},
+		{ModelkaID: 1, Nazev: "Playboy červen 1999", Typ: "Pictorial"},
+		{ModelkaID: 1, Nazev: "Zákulisí", Typ: "Pictorial", Vydani: "1997-05"},
+		{ModelkaID: 2, Nazev: "1998-01", Typ: "Centerfold"},
+		{ModelkaID: 2, Nazev: "První", Typ: "Pictorial"},
+		{ModelkaID: 2, Nazev: "Druhý", Typ: "Pictorial"},
+		{ModelkaID: 3, Nazev: "Cyber Girl 2004-06-14", Typ: typCGTydne},
+		{ModelkaID: 3, Nazev: "Web", Typ: typOnline},
+		{ModelkaID: 4, Nazev: "A", Typ: "Pictorial", Vydani: "2001-01", Fotograf: "Stephen Wayda"},
+		{ModelkaID: 4, Nazev: "B", Typ: "Pictorial", Vydani: "2002-01", Fotograf: "stephen wayda"},
+		{ModelkaID: 4, Nazev: "C", Typ: "Pictorial", Vydani: "2003-01", Fotograf: "Stephen Wayda"},
+		{ModelkaID: 4, Nazev: "D", Typ: "Pictorial", Vydani: "2004-01"},
 	}
 	navrhy := navrhyBezDb(modelky, alba)
 	najit := func(jmeno, album, pole string) (NavrhDoplneni, bool) {
@@ -377,17 +377,17 @@ func TestNavrhyAlb(t *testing.T) {
 	// Centerfold s jediným pictorialem bez vydání; pravidlo ověřené na jiných playmate
 	modelky = sbirkaNavrhu(Modelka{Jmeno: "Nová", Centerfoldy: []string{"2000-02"}}, Modelka{Jmeno: "Stará", Centerfoldy: []string{"1990-03"}})
 	alba = []albumNavrhu{
-		{modelkaID: 1, nazev: "2000-02", typ: "Centerfold"},
-		{modelkaID: 1, nazev: "Na pláži", typ: "Pictorial"},
-		{modelkaID: 2, nazev: "1990-03", typ: "Centerfold"},
-		{modelkaID: 2, nazev: "Pictorial", typ: "Pictorial", vydani: "1990-03"},
+		{ModelkaID: 1, Nazev: "2000-02", Typ: "Centerfold"},
+		{ModelkaID: 1, Nazev: "Na pláži", Typ: "Pictorial"},
+		{ModelkaID: 2, Nazev: "1990-03", Typ: "Centerfold"},
+		{ModelkaID: 2, Nazev: "Pictorial", Typ: "Pictorial", Vydani: "1990-03"},
 	}
 	n, ok := najitNavrh(navrhyBezDb(modelky, alba), "Nová", "vydaniAlba")
 	if !ok || n.Hodnota != "2000-02" || !blizko(n.Jistota, (1+0.75*4)/5.0) || !strings.Contains(n.Duvod, "1 z 1") {
 		t.Errorf("vydání podle centerfoldu: %+v", n)
 	}
 	// Album s „netýká se: vydání“ se nenavrhuje
-	alba[1].neni = "vydani"
+	alba[1].Neni = "vydani"
 	if n, ok := najitNavrh(navrhyBezDb(modelky, alba), "Nová", "vydaniAlba"); ok {
 		t.Errorf("album bez sledovaného vydání: %+v", n)
 	}
@@ -644,14 +644,14 @@ func velkaSbirkaNavrhu(n int) ([]Modelka, []albumNavrhu) {
 		}
 		modelky = append(modelky, m)
 		fotograf := []string{"Arny Freytag", "Pompeo Posar", "Stephen Wayda", ""}[r.IntN(4)]
-		alba = append(alba, albumNavrhu{modelkaID: m.ID, nazev: vydani, typ: "Centerfold", fotograf: fotograf, fotek: 2})
-		pictorial := albumNavrhu{modelkaID: m.ID, nazev: "Pictorial", typ: "Pictorial", fotek: 10}
+		alba = append(alba, albumNavrhu{ModelkaID: m.ID, Nazev: vydani, Typ: "Centerfold", Fotograf: fotograf, Fotek: 2})
+		pictorial := albumNavrhu{ModelkaID: m.ID, Nazev: "Pictorial", Typ: "Pictorial", Fotek: 10}
 		if r.Float64() < 0.6 {
-			pictorial.vydani, pictorial.fotograf = vydani, fotograf
+			pictorial.Vydani, pictorial.Fotograf = vydani, fotograf
 		}
 		alba = append(alba, pictorial)
 		if i%5 == 0 {
-			alba = append(alba, albumNavrhu{modelkaID: m.ID, nazev: fmt.Sprintf("Cyber Girl %d-06-%02d", 2000+i%20, 1+i%28), typ: typCGTydne, fotek: 5})
+			alba = append(alba, albumNavrhu{ModelkaID: m.ID, Nazev: fmt.Sprintf("Cyber Girl %d-06-%02d", 2000+i%20, 1+i%28), Typ: typCGTydne, Fotek: 5})
 		}
 	}
 	return modelky, alba
@@ -692,14 +692,14 @@ func TestNavrhDruhuPictorialu(t *testing.T) {
 		Modelka{Jmeno: "Dva v čísle", Centerfoldy: []string{"2001-02"}},
 	)
 	alba := []albumNavrhu{
-		{modelkaID: 1, nazev: "1997-05", typ: "Centerfold"},
-		{modelkaID: 1, nazev: "Playmate of the Year 1998", typ: "Pictorial", vydani: "1998-06"},
-		{modelkaID: 2, nazev: "1999-03", typ: "Centerfold"},
-		{modelkaID: 2, nazev: "Slunce v Miami", typ: "Pictorial", vydani: "1999-03"},
-		{modelkaID: 2, nazev: "Playmate měsíce: zákulisí", typ: "Pictorial"},
-		{modelkaID: 3, nazev: "2001-02", typ: "Centerfold"},
-		{modelkaID: 3, nazev: "A", typ: "Pictorial", vydani: "2001-02"},
-		{modelkaID: 3, nazev: "B", typ: "Pictorial", vydani: "2001-02"},
+		{ModelkaID: 1, Nazev: "1997-05", Typ: "Centerfold"},
+		{ModelkaID: 1, Nazev: "Playmate of the Year 1998", Typ: "Pictorial", Vydani: "1998-06"},
+		{ModelkaID: 2, Nazev: "1999-03", Typ: "Centerfold"},
+		{ModelkaID: 2, Nazev: "Slunce v Miami", Typ: "Pictorial", Vydani: "1999-03"},
+		{ModelkaID: 2, Nazev: "Playmate měsíce: zákulisí", Typ: "Pictorial"},
+		{ModelkaID: 3, Nazev: "2001-02", Typ: "Centerfold"},
+		{ModelkaID: 3, Nazev: "A", Typ: "Pictorial", Vydani: "2001-02"},
+		{ModelkaID: 3, Nazev: "B", Typ: "Pictorial", Vydani: "2001-02"},
 	}
 	navrhy := navrhyBezDb(modelky, alba)
 	najit := func(jmeno, album string) (NavrhDoplneni, bool) {

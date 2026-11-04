@@ -226,19 +226,19 @@ func (u *uceni) odmitnoutHodnotu(ku klicUdaje, klic, hodnota string, odmitnout b
 	switch {
 	case odmitnout:
 		_, err = db.Exec(`INSERT OR REPLACE INTO odmitnute (modelka_id, album, typ, pole, klic, hodnota, cas) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			ku.modelka, ku.album, ku.typ, ku.pole, klic, hodnota, ted())
+			ku.Modelka, ku.Album, ku.Typ, ku.Pole, klic, hodnota, ted())
 	case klic == "*":
-		_, err = db.Exec(`DELETE FROM odmitnute WHERE modelka_id = ? AND album = ? AND typ = ? AND pole = ?`, ku.modelka, ku.album, ku.typ, ku.pole)
+		_, err = db.Exec(`DELETE FROM odmitnute WHERE modelka_id = ? AND album = ? AND typ = ? AND pole = ?`, ku.Modelka, ku.Album, ku.Typ, ku.Pole)
 	default:
 		_, err = db.Exec(`DELETE FROM odmitnute WHERE modelka_id = ? AND album = ? AND typ = ? AND pole = ? AND klic IN (?, '*')`,
-			ku.modelka, ku.album, ku.typ, ku.pole, klic)
+			ku.Modelka, ku.Album, ku.Typ, ku.Pole, klic)
 	}
 	if err != nil {
 		varovatUceni("odmítnutí se nezapsalo: %v", err)
 	}
 	u.vstup = nil
 	zbyva := 0
-	db.QueryRow(`SELECT COUNT(*) FROM odmitnute WHERE modelka_id = ? AND album = ? AND typ = ? AND pole = ?`, ku.modelka, ku.album, ku.typ, ku.pole).Scan(&zbyva)
+	db.QueryRow(`SELECT COUNT(*) FROM odmitnute WHERE modelka_id = ? AND album = ? AND typ = ? AND pole = ?`, ku.Modelka, ku.Album, ku.Typ, ku.Pole).Scan(&zbyva)
 	return zbyva
 }
 
@@ -284,7 +284,7 @@ func (a *App) ZaznamenatOpravu(modelkaID int, pole, puvodniNavrh, novaHodnota st
 		a.zaznamenatNavrh(udalostPrijato, n, novaHodnota)
 		return true
 	}
-	if !u.cislo && jenZapis(pole, puvodniNavrh, novaHodnota) {
+	if !u.Cislo && jenZapis(pole, puvodniNavrh, novaHodnota) {
 		a.uc.zapamatovatZapis(pole, klicPuvodni, novaHodnota)
 	}
 	a.zaznamenatNavrh(udalostOpraveno, n, novaHodnota)
@@ -416,16 +416,16 @@ func (u *uceni) vstupNavrhu() (*vstupUceni, int64) {
 	if u.vstup != nil && u.vstupGenerace == u.generace {
 		return u.vstup, u.generace
 	}
-	v := &vstupUceni{odmitnute: map[klicUdaje]map[string]bool{}, kalibrace: map[string]kalibraceZdroje{}, zapisy: map[string]map[string]string{}}
+	v := &vstupUceni{Odmitnute: map[klicUdaje]map[string]bool{}, Kalibrace: map[string]kalibraceZdroje{}, Zapisy: map[string]map[string]string{}}
 	if radky, err := db.Query("SELECT modelka_id, album, typ, pole, klic FROM odmitnute"); err == nil {
 		for radky.Next() {
 			var ku klicUdaje
 			var klic string
-			if radky.Scan(&ku.modelka, &ku.album, &ku.typ, &ku.pole, &klic) == nil {
-				if v.odmitnute[ku] == nil {
-					v.odmitnute[ku] = map[string]bool{}
+			if radky.Scan(&ku.Modelka, &ku.Album, &ku.Typ, &ku.Pole, &klic) == nil {
+				if v.Odmitnute[ku] == nil {
+					v.Odmitnute[ku] = map[string]bool{}
 				}
-				v.odmitnute[ku][klic] = true
+				v.Odmitnute[ku][klic] = true
 			}
 		}
 		radky.Close()
@@ -435,10 +435,10 @@ func (u *uceni) vstupNavrhu() (*vstupUceni, int64) {
 		for radky.Next() {
 			var pole, klic, zapis string
 			if radky.Scan(&pole, &klic, &zapis) == nil {
-				if v.zapisy[pole] == nil {
-					v.zapisy[pole] = map[string]string{}
+				if v.Zapisy[pole] == nil {
+					v.Zapisy[pole] = map[string]string{}
 				}
-				v.zapisy[pole][klic] = zapis
+				v.Zapisy[pole][klic] = zapis
 			}
 		}
 		radky.Close()
@@ -447,7 +447,7 @@ func (u *uceni) vstupNavrhu() (*vstupUceni, int64) {
 		u.statistiky = u.spocitatKalibraci()
 	}
 	for z, k := range u.statistiky {
-		v.kalibrace[z] = *k
+		v.Kalibrace[z] = *k
 	}
 	u.vstup, u.vstupGenerace = v, u.generace
 	return v, u.generace
@@ -505,11 +505,11 @@ func (u *uceni) spocitatPrahy() prahyKontroly {
 	}
 	for zdroj, udaje := range rozsahyPravidel {
 		for _, j := range udaje {
-			p.kRozsahu[j] = max(p.kRozsahu[j], kRozsahu+1.5*zprisneni(zdroj))
+			p.KRozsahu[j] = max(p.KRozsahu[j], kRozsahu+1.5*zprisneni(zdroj))
 		}
 	}
-	p.zKombinace += 0.75 * zprisneni("neobvykle")
-	p.prahJmen = min(0.99, p.prahJmen+0.03*zprisneni("podobne-jmeno"))
+	p.ZKombinace += 0.75 * zprisneni("neobvykle")
+	p.PrahJmen = min(0.99, p.PrahJmen+0.03*zprisneni("podobne-jmeno"))
 	u.prahy = &p
 	return p
 }
@@ -762,11 +762,11 @@ func (a *App) GetStavUceni() StavUceni {
 			k = *s
 		}
 		prah, strop := prahNavrhu, stropJistoty
-		if zn.rodina == "odhad" {
+		if zn.Rodina == "odhad" {
 			prah, strop = minJistotaOdhadu, stropOdhadu
 		}
-		stav.Zdroje = append(stav.Zdroje, ZdrojUceni{Zdroj: z, Popis: zn.popis, Navrhu: pocty[z], Prijato: k.Prijatych, Odmitnuto: k.Odmitnutych,
-			Presnost: math.Round(k.Presnost(zn.predpoklad)*1000) / 1000, Aktivni: k.Upravit(strop, zn.predpoklad) >= prah})
+		stav.Zdroje = append(stav.Zdroje, ZdrojUceni{Zdroj: z, Popis: zn.Popis, Navrhu: pocty[z], Prijato: k.Prijatych, Odmitnuto: k.Odmitnutych,
+			Presnost: math.Round(k.Presnost(zn.Predpoklad)*1000) / 1000, Aktivni: k.Upravit(strop, zn.Predpoklad) >= prah})
 	}
 	return stav
 }

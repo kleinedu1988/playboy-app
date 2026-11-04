@@ -115,6 +115,77 @@ export namespace hledani {
 
 }
 
+export namespace kontrola {
+	
+	export class NavrhDoplneni {
+	    modelkaId: number;
+	    jmeno: string;
+	    album: string;
+	    typ: string;
+	    pole: string;
+	    popis: string;
+	    hodnota: string;
+	    jistota: number;
+	    duvod: string;
+	    klic: string;
+	    inputId: string;
+	    odmitnuto: boolean;
+	    zdroj: string;
+	    zdrojPopis: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NavrhDoplneni(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	        this.pole = source["pole"];
+	        this.popis = source["popis"];
+	        this.hodnota = source["hodnota"];
+	        this.jistota = source["jistota"];
+	        this.duvod = source["duvod"];
+	        this.klic = source["klic"];
+	        this.inputId = source["inputId"];
+	        this.odmitnuto = source["odmitnuto"];
+	        this.zdroj = source["zdroj"];
+	        this.zdrojPopis = source["zdrojPopis"];
+	    }
+	}
+	export class PodezrelyUdaj {
+	    modelkaId: number;
+	    jmeno: string;
+	    popis: string;
+	    klic: string;
+	    album: string;
+	    typ: string;
+	    pole: string;
+	    netykaSe: boolean;
+	    zdroj: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PodezrelyUdaj(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.popis = source["popis"];
+	        this.klic = source["klic"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	        this.pole = source["pole"];
+	        this.netykaSe = source["netykaSe"];
+	        this.zdroj = source["zdroj"];
+	    }
+	}
+
+}
+
 export namespace main {
 	
 	export class BodySezony {
@@ -466,44 +537,6 @@ export namespace main {
 	    }
 	}
 	
-	export class NavrhDoplneni {
-	    modelkaId: number;
-	    jmeno: string;
-	    album: string;
-	    typ: string;
-	    pole: string;
-	    popis: string;
-	    hodnota: string;
-	    jistota: number;
-	    duvod: string;
-	    klic: string;
-	    inputId: string;
-	    odmitnuto: boolean;
-	    zdroj: string;
-	    zdrojPopis: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new NavrhDoplneni(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.modelkaId = source["modelkaId"];
-	        this.jmeno = source["jmeno"];
-	        this.album = source["album"];
-	        this.typ = source["typ"];
-	        this.pole = source["pole"];
-	        this.popis = source["popis"];
-	        this.hodnota = source["hodnota"];
-	        this.jistota = source["jistota"];
-	        this.duvod = source["duvod"];
-	        this.klic = source["klic"];
-	        this.inputId = source["inputId"];
-	        this.odmitnuto = source["odmitnuto"];
-	        this.zdroj = source["zdroj"];
-	        this.zdrojPopis = source["zdrojPopis"];
-	    }
-	}
 	export class NavrhTematu {
 	    klic: string;
 	    nazev: string;
@@ -780,34 +813,6 @@ export namespace main {
 	        this.cas = source["cas"];
 	    }
 	}
-	export class PodezrelyUdaj {
-	    modelkaId: number;
-	    jmeno: string;
-	    popis: string;
-	    klic: string;
-	    album: string;
-	    typ: string;
-	    pole: string;
-	    netykaSe: boolean;
-	    zdroj: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new PodezrelyUdaj(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.modelkaId = source["modelkaId"];
-	        this.jmeno = source["jmeno"];
-	        this.popis = source["popis"];
-	        this.klic = source["klic"];
-	        this.album = source["album"];
-	        this.typ = source["typ"];
-	        this.pole = source["pole"];
-	        this.netykaSe = source["netykaSe"];
-	        this.zdroj = source["zdroj"];
-	    }
-	}
 	
 	
 	export class PokrytiTematu {
@@ -1041,7 +1046,7 @@ export namespace main {
 	    vydaniBezCoveru: string[];
 	    vydaniBezCenterfoldu: string[];
 	    rocniky: RocnikPrehledu[];
-	    podezrele: PodezrelyUdaj[];
+	    podezrele: kontrola.PodezrelyUdaj[];
 	    navrhu: number;
 	
 	    static createFrom(source: any = {}) {
@@ -1066,7 +1071,7 @@ export namespace main {
 	        this.vydaniBezCoveru = source["vydaniBezCoveru"];
 	        this.vydaniBezCenterfoldu = source["vydaniBezCenterfoldu"];
 	        this.rocniky = this.convertValues(source["rocniky"], RocnikPrehledu);
-	        this.podezrele = this.convertValues(source["podezrele"], PodezrelyUdaj);
+	        this.podezrele = this.convertValues(source["podezrele"], kontrola.PodezrelyUdaj);
 	        this.navrhu = source["navrhu"];
 	    }
 	

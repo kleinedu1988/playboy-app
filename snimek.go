@@ -10,6 +10,8 @@ import (
 	"sort"
 	"strings"
 	"sync"
+
+	"playboy-app/internal/sbirka"
 )
 
 // Snímek sbírky: modelky a alba (s počty fotek) načtené jedním průchodem databází. Seznam modelek, Přehled,
@@ -467,6 +469,21 @@ func (a *App) modelkyAAlba() ([]Modelka, []albumSbirky, *snimek) {
 		a.chyba("načtení modelek", s.err)
 	}
 	return append([]Modelka(nil), s.modelky...), append([]albumSbirky{}, s.alba...), s
+}
+
+func albaDoBalicku(alba []albumSbirky) []sbirka.AlbumSbirky {
+	vysledek := make([]sbirka.AlbumSbirky, len(alba))
+	for i := range alba {
+		al := &alba[i]
+		vysledek[i] = sbirka.AlbumSbirky{
+			ID: al.id, ModelkaID: al.modelkaID, Jmeno: al.jmeno,
+			Nazev: al.nazev, Typ: al.typ, Vydani: al.vydani,
+			Datum: al.datum, Fotograf: al.fotograf, Popis: al.popis,
+			Neni: al.neni, Fotek: al.fotek, Hodnocenych: al.hodnocenych,
+			SoucetFotek: al.soucetFotek,
+		}
+	}
+	return vysledek
 }
 
 // Paměť posledního snímku; sdílí ji i kopie aplikace pro export

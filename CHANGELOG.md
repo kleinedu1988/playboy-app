@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.57] – 2026-11-04
+
+### Změněno
+- **Balíček `internal/kontrola`, rozdělení `kontrola.go` a optimalizace kontroly údajů i návrhů**: pravidla kontroly podezřelých údajů, statistické učení rozsahů postavy, trigramové a Jaro–Winklerovo porovnání podobných jmen a generování návrhů doplnění chybějících údajů (včetně zeměpisných zkratek, měr a alb) jsou vyčleněné do samostatného balíčku `internal/kontrola`. Původní `kontrola.go` je odlehčena na delegáta a rozdělená na `kontrola.go`, `kontrola_uceni.go` a `kontrola_jmena.go`. Trigramový slovník jmen používá bitově balené 64bitové klíče bez alokací na haldě, párování jmen prochází invertovaný index s rychlou délkou a znakovým bufferem, datum v názvech alb provádí rychlé předfiltrování čtyřčíslí před vyhodnocením regulárních výrazů a hledání fotografů a čísel alb sdružuje klíče v jediném průchodu.
+
 ## [1.2.56] – 2026-11-04
 
 ### Změněno

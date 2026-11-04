@@ -94,23 +94,23 @@ func TestJaroWinkler(t *testing.T) {
 func TestUceniCisteSbirky(t *testing.T) {
 	modelky := umelaSbirka(200)
 	u := naucitSe(modelky, vychoziPrahy())
-	for j, r := range u.rozsahy {
-		if !r.naucene && j != prVek {
+	for j, r := range u.Rozsahy {
+		if !r.Naucene && j != prVek {
 			t.Errorf("%s: rozsah se měl naučit: %+v", priznaky[j].Nazev, r)
 		}
 	}
-	if r := u.rozsahy[prVyska]; r.od < 140 || r.od > 155 || r.do < 181 || r.do > 200 {
+	if r := u.Rozsahy[prVyska]; r.Od < 140 || r.Od > 155 || r.Do < 181 || r.Do > 200 {
 		t.Errorf("výška: %+v", r)
 	}
 	// Pas sbírky je úzký: naučený rozsah je užší než pevný 45–100
-	if r := u.rozsahy[prPas]; r.od <= pasOd || r.do >= pasDo {
+	if r := u.Rozsahy[prPas]; r.Od <= pasOd || r.Do >= pasDo {
 		t.Errorf("pas: %+v", r)
 	}
 	// Dolní mez věku zůstává 18 let i u naučeného rozsahu
-	if r := u.rozsahy[prVek]; r.od != vekOd {
+	if r := u.Rozsahy[prVek]; r.Od != vekOd {
 		t.Errorf("věk: %+v", r)
 	}
-	if u.postava == nil {
+	if u.Postava == nil {
 		t.Fatal("model postavy se měl naučit")
 	}
 	if nalezy := kontrolaModelek(modelky); len(nalezy) != 0 {
@@ -174,10 +174,10 @@ func TestNeobvyklaKombinace(t *testing.T) {
 func TestUceniMaleSbirky(t *testing.T) {
 	modelky := umelaSbirka(20)
 	u := naucitSe(modelky, vychoziPrahy())
-	if u.rozsahy != vychoziRozsahy() {
-		t.Errorf("malá sbírka má mít pevné rozsahy: %+v", u.rozsahy)
+	if u.Rozsahy != vychoziRozsahy() {
+		t.Errorf("malá sbírka má mít pevné rozsahy: %+v", u.Rozsahy)
 	}
-	if u.postava != nil {
+	if u.Postava != nil {
 		t.Error("z malé sbírky se kombinace neučí")
 	}
 	// Pas 80 cm je v pevném rozsahu 45–100, u malé sbírky se tedy nehlásí (u velké by byl mimo naučený rozsah)
@@ -193,8 +193,8 @@ func TestUceniMaleSbirky(t *testing.T) {
 
 // Učení z „V pořádku“: tři potvrzené mladé playmate posunou dolní mez věku, ojedinělá hodnota ne
 func TestUceniZPotvrzeni(t *testing.T) {
-	r := rozsah{od: 18, do: 45}
-	if v := rozsiritPodlePotvrzenych(r, []float64{17, 17, 16, 14, 50}, 1); v.od != 16 || v.do != 45 {
+	r := rozsah{Od: 18, Do: 45}
+	if v := rozsiritPodlePotvrzenych(r, []float64{17, 17, 16, 14, 50}, 1); v.Od != 16 || v.Do != 45 {
 		t.Errorf("souvislá řada 17, 17, 16 má posunout mez na 16 (14 je za mezerou): %+v", v)
 	}
 	if v := rozsiritPodlePotvrzenych(r, []float64{17, 16}, 1); v != r {
@@ -320,7 +320,7 @@ func TestNoveKliceKontroly(t *testing.T) {
 func vychoziRozsahy() rozsahyKontroly {
 	var r rozsahyKontroly
 	for j, p := range priznaky {
-		r[j] = rozsah{od: p.Od, do: p.Do}
+		r[j] = rozsah{Od: p.Od, Do: p.Do}
 	}
 	return r
 }

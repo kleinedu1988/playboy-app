@@ -324,7 +324,7 @@ func nazevTematu(podminky []PodminkaTematu) string {
 			} else if p.Druh == "fotka" {
 				nazvy = append(nazvy, frazeFotky(p.Klic, h))
 			} else if i, ok := kodyZemi[h]; ok && p.Klic == "narodnost" {
-				nazvy = append(nazvy, tabulkaZemi[i].narodnost)
+				nazvy = append(nazvy, tabulkaZemi[i].Narodnost)
 			} else {
 				nazvy = append(nazvy, strings.ToLower(h))
 			}

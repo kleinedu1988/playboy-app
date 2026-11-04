@@ -8,12 +8,73 @@ import (
 	"strings"
 )
 
-const NejviceVZebricku = 8
+const (
+	NejviceVZebricku = 8
+	PrvniRokCasopisu = 1953
+
+	TypOnline   = "Pictorial online"
+	TypCGTydne  = "Cyber Girl týdne"
+	TypCGMesice = "Cyber Girl měsíce"
+	TypPMMesice = "Playmate měsíce"
+	TypPMRoku   = "Playmate roku"
+)
 
 var (
 	VzorVydani     = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?$`)
 	VzorVydaniAlba = regexp.MustCompile(`^\d{4}(-(0[1-9]|1[0-2]|S\d{2}))?(-[A-Z]{2})?$`)
 )
+
+// JePictorialCasopisu vrací true pro obyčejný pictorial časopisu nebo pictorial playmate.
+func JePictorialCasopisu(typ string) bool {
+	return typ == "Pictorial" || typ == TypPMMesice || typ == TypPMRoku
+}
+
+// JeOnlineTyp vrací true pro online album (Pictorial online nebo Cyber Girl týdne či měsíce).
+func JeOnlineTyp(typ string) bool {
+	return typ == TypOnline || typ == TypCGTydne || typ == TypCGMesice
+}
+
+// EdicePodleVydani vrátí edici z vydání (RRRR-MM-ED nebo RRRR-ED); prázdná znamená US.
+func EdicePodleVydani(vydani string) string {
+	if i := strings.LastIndex(vydani, "-"); i > 0 && len(vydani)-i == 3 && vydani[i+1] >= 'A' {
+		return vydani[i+1:]
+	}
+	return ""
+}
+
+// ObsahujeKlic zjistí, zda čárkou oddělený seznam klíčů obsahuje daný klíč (bez alokace řezu).
+func ObsahujeKlic(seznam, klic string) bool {
+	for len(seznam) > 0 {
+		var cast string
+		if i := strings.IndexByte(seznam, ','); i >= 0 {
+			cast = seznam[:i]
+			seznam = seznam[i+1:]
+		} else {
+			cast = seznam
+			seznam = ""
+		}
+		if strings.TrimSpace(cast) == klic {
+			return true
+		}
+	}
+	return false
+}
+
+// PrepnoutKlic přidá nebo odebere klíč v čárkou odděleném seřazeném seznamu.
+func PrepnoutKlic(seznam, klic string, pridat bool) string {
+	var klice []string
+	for _, k := range strings.Split(seznam, ",") {
+		k = strings.TrimSpace(k)
+		if k != "" && k != klic {
+			klice = append(klice, k)
+		}
+	}
+	if pridat {
+		klice = append(klice, klic)
+	}
+	sort.Strings(klice)
+	return strings.Join(klice, ",")
+}
 
 // JeSpecial vrací true, pokud je vydání speciál (RRRR-Snn).
 func JeSpecial(vydani string) bool {

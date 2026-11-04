@@ -28,21 +28,21 @@ func naplnitSbirkuNavrhu(t testing.TB, a *App, n int) {
 		}
 	}
 	for i, al := range alba {
-		vydani := al.vydani
-		if al.typ == "Centerfold" {
-			vydani = al.nazev
+		vydani := al.Vydani
+		if al.Typ == "Centerfold" {
+			vydani = al.Nazev
 		}
 		datum := ""
-		if jeOnlineTyp(al.typ) && i%2 == 0 {
-			datum = al.nazev[len(al.nazev)-10:]
+		if jeOnlineTyp(al.Typ) && i%2 == 0 {
+			datum = al.Nazev[len(al.Nazev)-10:]
 		}
 		res, err := tx.Exec("INSERT INTO alba (modelka_id, album, typ, vydani, fotograf, datum) VALUES (?, ?, ?, ?, NULLIF(?, ''), NULLIF(?, ''))",
-			al.modelkaID, al.nazev, al.typ, vydani, al.fotograf, datum)
+			al.ModelkaID, al.Nazev, al.Typ, vydani, al.Fotograf, datum)
 		if err != nil {
 			t.Fatal(err)
 		}
 		id, _ := res.LastInsertId()
-		for f := range min(al.fotek, 3) {
+		for f := range min(al.Fotek, 3) {
 			if _, err := tx.Exec("INSERT INTO fotky (album_id, drive_file_id) VALUES (?, ?)", id, fmt.Sprintf("U%07d%02dxxxxxxxxxxxxxxxxxxxx", i, f)); err != nil {
 				t.Fatal(err)
 			}

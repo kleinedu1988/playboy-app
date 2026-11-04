@@ -34,16 +34,5 @@ func (a *App) GetStatistiky() Statistiky {
 			Narodnosti:  []PolozkaStatistiky{},
 		}
 	}
-	alba := make([]sbirka.AlbumSbirky, len(s.alba))
-	for i := range s.alba {
-		al := &s.alba[i]
-		alba[i] = sbirka.AlbumSbirky{
-			ID: al.id, ModelkaID: al.modelkaID, Jmeno: al.jmeno,
-			Nazev: al.nazev, Typ: al.typ, Vydani: al.vydani,
-			Datum: al.datum, Fotograf: al.fotograf, Popis: al.popis,
-			Neni: al.neni, Fotek: al.fotek, Hodnocenych: al.hodnocenych,
-			SoucetFotek: al.soucetFotek,
-		}
-	}
-	return sbirka.SpocitatStatistiky(s.modelky, s.indexModelky, s.textyKHledani(), alba, a.GetKalendar())
+	return sbirka.SpocitatStatistiky(s.modelky, s.indexModelky, s.textyKHledani(), albaDoBalicku(s.alba), a.GetKalendar())
 }

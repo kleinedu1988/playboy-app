@@ -14,7 +14,7 @@ import { cekatNaOpravu } from './uceni';
 import { oznamit } from '../ui/oznameni';
 
 // Návrh z backendu; zdroj a jeho popis přidává učení (do vygenerovaných typů přibudou po sloučení s backendem)
-/** @typedef {import('../../wailsjs/go/models').main.NavrhDoplneni} NavrhDoplneni */
+/** @typedef {import('../../wailsjs/go/models').kontrola.NavrhDoplneni} NavrhDoplneni */
 
 /** @type {NavrhDoplneni[]} */
 let navrhy = [];

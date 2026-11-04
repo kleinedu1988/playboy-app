@@ -16199,13 +16199,55 @@ body.rezim-vyberu #detailView .poster {
     font-size: 12.5px;
 }
 
-/* ===== Profil: pruh s modelkou je součástí panelu s drobečky (fotka, jméno, srdíčka, pořadí, odznaky, pásky, akce)
-   a pod ním lišta alb. Po odrolování (.profil-svinuty) se panel plynule zmenší na jeden řádek. ===== */
+/* ===== Profil: záhlaví se širokoúhlou fotografií na pozadí (Hero Banner od drobečků až po lištu alb).
+   Při rolování se panel nezmenšuje a zůstává stabilní nahoře okna. ===== */
 .hlavni-lista:has(> #profilPruh:not(.hidden)) {
+    position: relative;
     flex-wrap: wrap;
     row-gap: 10px;
     padding-top: 10px;
     padding-bottom: 8px;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) > *:not(.profil-banner-pozadi) {
+    position: relative;
+    z-index: 1;
+}
+
+.profil-banner-pozadi {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.profil-banner-pozadi.hidden {
+    display: none;
+}
+
+.profil-banner-foto {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+    filter: brightness(0.72) saturate(1.15);
+    transform: scale(1.02);
+    transition: opacity 0.35s ease;
+}
+
+.profil-banner-prekryv {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(to right, rgba(16, 16, 20, 0.94) 0%, rgba(16, 16, 20, 0.78) 32%, rgba(16, 16, 20, 0.38) 65%, rgba(16, 16, 20, 0.85) 100%),
+        linear-gradient(to bottom, rgba(16, 16, 20, 0.82) 0%, rgba(16, 16, 20, 0.42) 40%, rgba(16, 16, 20, 0.85) 80%, rgba(16, 16, 20, 0.98) 100%);
+    -webkit-backdrop-filter: blur(1.5px);
+    backdrop-filter: blur(1.5px);
 }
 
 .hlavni-lista .logo .nav-drobecek.v-pruhu {
@@ -16230,7 +16272,7 @@ body.rezim-vyberu #detailView .poster {
 .hlavni-lista #profilPruh + #albumNav {
     flex: 1 1 100%;
     padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .hlavni-lista #profilPruh + #albumNav::before {
@@ -16247,79 +16289,97 @@ body.rezim-vyberu #detailView .poster {
     opacity: 0.6;
 }
 
-/* Plynulé zmenšení */
-#profilPruh .pruh-foto,
-#profilPruh .pruh-identita h2,
-#profilPruh .pruh-jmeno .hearts {
-    transition: width 0.2s ease, height 0.2s ease, font-size 0.2s ease;
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .pruh-identita h2 {
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+    font-weight: 400;
 }
 
-.navbar.profil-svinuty .hlavni-lista:has(> #profilPruh:not(.hidden)) {
-    row-gap: 6px;
-    padding-top: 6px;
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba {
+    background-color: rgba(26, 26, 32, 0.65);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.navbar.profil-svinuty .hlavni-lista #profilPruh {
-    display: flex;
-    flex: 1 1 0;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-    padding: 0;
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 
-.navbar.profil-svinuty #profilPruh .pruh-obsah {
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent {
+    background-color: var(--accent);
+    border-color: transparent;
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent:hover {
+    background-color: var(--accent-hover);
+}
+
+/* Modální okno pro výběr fotky do záhlaví */
+.banner-modal {
+    max-width: 680px;
+    width: 90vw;
+}
+
+.banner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 10px;
-    min-width: 0;
+    max-height: 52vh;
+    overflow-y: auto;
+    margin: 16px 0 20px;
+    padding: 4px;
 }
 
-.navbar.profil-svinuty #profilPruh .pruh-foto {
-    width: 26px;
-    height: 32px;
-    border-radius: 8px;
-}
-
-.navbar.profil-svinuty #profilPruh .pruh-identita h2 {
-    font-size: 15px;
-}
-
-.navbar.profil-svinuty #profilPruh .pruh-jmeno .hearts {
-    font-size: 14px;
-}
-
-.navbar.profil-svinuty #profilPruh .pruh-radek,
-.navbar.profil-svinuty #profilPruh .pruh-pasky,
-.navbar.profil-svinuty #profilPruh .volby-pocet {
-    display: none;
-}
-
-.navbar.profil-svinuty #profilPruh .profil-akce {
-    flex-wrap: nowrap;
-    margin: 0 0 0 auto;
+.banner-karta {
+    position: relative;
+    aspect-ratio: 3 / 4;
     padding: 0;
-    border-top: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--bg-card);
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
 }
 
-.navbar.profil-svinuty #profilPruh .profil-akce .volba {
-    height: 28px;
-    padding: 0 9px;
+.banner-karta:hover {
+    border-color: var(--accent);
+    transform: scale(1.03);
 }
 
-.navbar.profil-svinuty #profilPruh .profil-akce .volba:not(.akcent, .cf) b {
-    display: none;
+.banner-karta.aktivni {
+    border-color: var(--accent-text);
+    box-shadow: 0 0 0 2px var(--accent);
 }
 
-.navbar.profil-svinuty .hlavni-lista #profilPruh + #albumNav {
-    padding-top: 4px;
+.banner-karta img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    #profilPruh .pruh-foto,
-    #profilPruh .pruh-identita h2,
-    #profilPruh .pruh-jmeno .hearts {
-        transition: none;
-    }
+.banner-odznak {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 999px;
+    background: var(--accent-text);
+    color: #000;
+    white-space: nowrap;
+}
+
+.banner-prazdno {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-muted);
+    padding: 30px 0;
 }
 
 /* ===== Hlavička Sbírky (app/udrzba.js): jeden panel v hlavičce okna jako u profilu modelky – kruh doplnění, čísla,

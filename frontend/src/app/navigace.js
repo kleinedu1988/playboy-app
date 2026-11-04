@@ -67,11 +67,13 @@ export function ukazatPohled(pohled) {
     if (pohled !== gallery) document.getElementById('galleryNav')?.classList.add('hidden');
     if (pohled !== wall) document.getElementById('wallNav')?.classList.add('hidden');
     // Lišta alb profilu je ve druhém řádku hlavičky; jinde ji nikdo nenaplní, proto se skryje (a režim výběru skončí)
-    document.getElementById('profilPruh')?.classList.toggle('hidden', pohled !== detailView);
+    const vProfilu = pohled === detailView;
+    document.getElementById('profilPruh')?.classList.toggle('hidden', !vProfilu);
+    document.getElementById('profilBannerPozadi')?.classList.toggle('hidden', !vProfilu);
     obnovitHlavuSbirky();
     obnovitHlavuHodnoceni();
-    if (pohled !== detailView) document.querySelector('.navbar')?.classList.remove('profil-svinuty');
-    if (pohled !== detailView) {
+    document.querySelector('.navbar')?.classList.remove('profil-svinuty');
+    if (!vProfilu) {
         document.getElementById('albumNav')?.classList.add('hidden');
         document.body.classList.remove('rezim-vyberu');
     }

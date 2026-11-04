@@ -31,6 +31,11 @@ export const SABLONA_OKNA = `
     </div>
     <!-- Druhý řádek jen pro drobečky (profil, číslo) a podmenu zvolené části; jinak skrytý (style.css) -->
     <div class="hlavni-lista">
+      <!-- Širokoúhlý banner na pozadí záhlaví profilu modelky (od drobečků až po lištu alb) -->
+      <div id="profilBannerPozadi" class="profil-banner-pozadi hidden" aria-hidden="true">
+        <img id="profilBannerFoto" class="profil-banner-foto" src="" alt="" draggable="false" />
+        <div class="profil-banner-prekryv"></div>
+      </div>
       <!-- Cesta zpět z profilu a stránky vydání (drobečky): odkud se přišlo › kde jsem, u profilu šipky na další modelku -->
       <nav class="logo hidden" aria-label="Kde jsem">
         <!-- Zpět s celou cestou, odkud se přišlo (Hodnocení › Pořadí); plní app/navigace.js -->
@@ -1005,6 +1010,22 @@ export const SABLONA_OKNA = `
         <button type="button" class="btn btn-secondary" id="doplnitProfilBtn">Otevřít profil</button>
         <button type="button" class="btn btn-secondary" id="doplnitDalsiBtn">Uložit a další →</button>
         <button type="button" class="btn btn-primary" id="doplnitUlozitBtn">Uložit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Volba fotografie do záhlaví profilu -->
+  <div id="bannerModal" class="modal-overlay hidden">
+    <div class="modal-card banner-modal" role="dialog" aria-modal="true" aria-labelledby="bannerModalNadpis">
+      <div class="modal-head">
+        <h2 id="bannerModalNadpis">Zvolit fotografii do záhlaví</h2>
+        <button type="button" class="modal-close" data-zavrit title="Zavřít" aria-label="Zavřít">&times;</button>
+      </div>
+      <p class="modal-perex">Kliknutím na fotografii ji nastavíš jako širokoúhlý banner na celé ploše záhlaví profilu modelky.</p>
+      <div id="bannerGrid" class="banner-grid"></div>
+      <div class="modal-actions">
+        <button type="button" id="bannerResetBtn" class="btn hidden">Obnovit výchozí fotku</button>
+        <button type="button" class="btn btn-primary" data-zavrit>Zavřít</button>
       </div>
     </div>
   </div>

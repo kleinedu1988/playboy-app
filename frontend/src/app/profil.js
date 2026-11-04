@@ -11,7 +11,7 @@ import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { detailView, gallery, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
-import { VELIKOST_NAHLEDU, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
+import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { rezimVyberu, selectionBar, zrusitVyber } from './vyber';
@@ -133,9 +133,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     }).join('') + ((modelka.onlineAlba || []).length
         ? `<button type="button" class="panel-paska" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
     const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" />`;
-    // Pruh nahoře: jméno se srdíčky, pod ním pořadí a odznaky, vpravo pásky čísel; miniatura otevře údaje
+    // Pruh nahoře: jméno se srdíčky, pod ním pořadí a odznaky, vpravo pásky čísel; celou plochu kryje banner
     profilPruhObsah.innerHTML = `
-        <button type="button" class="pruh-foto" data-udaje title="Údaje modelky (I)">${titulni}</button>
         <div class="pruh-identita">
             <div class="pruh-jmeno">
                 <h2>${esc(modelka.jmeno)}</h2>
@@ -149,6 +148,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         </div>
         ${paskyHtml ? `<div class="pruh-pasky">${paskyHtml}</div>` : ''}
     `;
+    aktualizovatBannerProfilu(modelka);
     // Jméno otevře nabídku modelek seznamu, když se profil otevřel ze seznamu (galerie, pořadí…)
     profilPruhObsah.querySelector('.pruh-identita')?.classList.toggle('s-nabidkou', (stav.seznamProfilu?.length || 0) > 1);
     modelHeader.innerHTML = `
@@ -508,8 +508,109 @@ export function prepnoutUdaje(otevrit = !detailView.classList.contains('udaje-ot
     requestAnimationFrame(() => zkratitAlba(detailView));
 }
 
+// Správa širokoúhlého banneru v záhlaví profilu
+const KLIC_BANNERU = 'playboy_banner_';
+
+/** @returns {{ id?: number, url?: string, pos?: string } | null} */
+export function nacistVlastniBanner(modelkaId) {
+    try {
+        const ulozeno = localStorage.getItem(KLIC_BANNERU + modelkaId);
+        return ulozeno ? JSON.parse(ulozeno) : null;
+    } catch { return null; }
+}
+
+export function nastavitBannerModelky(modelkaId, fotoId, url, pos = 'center 25%') {
+    try {
+        localStorage.setItem(KLIC_BANNERU + modelkaId, JSON.stringify({ id: fotoId, url, pos }));
+    } catch { /* ignorovat */ }
+    if (stav.aktualniModelka?.id === modelkaId) {
+        aktualizovatBannerProfilu(stav.aktualniModelka);
+    }
+}
+
+export function zrusitVlastniBanner(modelkaId) {
+    try {
+        localStorage.removeItem(KLIC_BANNERU + modelkaId);
+    } catch { /* ignorovat */ }
+    if (stav.aktualniModelka?.id === modelkaId) {
+        aktualizovatBannerProfilu(stav.aktualniModelka);
+    }
+}
+
+export function maVlastniBanner(modelkaId) {
+    return Boolean(nacistVlastniBanner(modelkaId));
+}
+
+export function aktualizovatBannerProfilu(modelka) {
+    const bannerImg = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerFoto'));
+    if (!bannerImg) return;
+    const vlastni = nacistVlastniBanner(modelka.id);
+    const url = vlastni?.url || modelka.coverUrl;
+    if (url) {
+        bannerImg.src = obrazek(url, VELIKOST_PLAKATU);
+        bannerImg.style.display = 'block';
+        bannerImg.style.objectPosition = vlastni?.pos || 'center 25%';
+    } else {
+        bannerImg.removeAttribute('src');
+        bannerImg.style.display = 'none';
+    }
+}
+
+export async function otevritVyberBanneru(modelka) {
+    const modal = document.getElementById('bannerModal');
+    const grid = document.getElementById('bannerGrid');
+    const resetBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('bannerResetBtn'));
+    if (!modal || !grid) return;
+
+    let fotky = [];
+    if (stav.aktualniPolozky?.length && stav.aktualniModelka?.id === modelka.id) {
+        fotky = stav.aktualniPolozky.flatMap(p => p.fotky || []);
+    } else {
+        fotky = (await GetFotografieModelky(modelka.id)) || [];
+    }
+    const videne = new Set();
+    fotky = fotky.filter(f => {
+        if (!f?.id || videne.has(f.id)) return false;
+        videne.add(f.id);
+        return true;
+    });
+
+    const vlastni = nacistVlastniBanner(modelka.id);
+    const aktivniId = vlastni?.id;
+    const aktivniUrl = vlastni?.url || modelka.coverUrl;
+
+    if (resetBtn) {
+        resetBtn.classList.toggle('hidden', !vlastni);
+        resetBtn.onclick = () => {
+            zrusitVlastniBanner(modelka.id);
+            oznamit('Obnovena výchozí fotka záhlaví.');
+            modal.classList.add('hidden');
+        };
+    }
+
+    grid.innerHTML = fotky.length ? fotky.map(f => {
+        const jeAktivni = aktivniId ? f.id === aktivniId : f.url === aktivniUrl;
+        return `<button type="button" class="banner-karta ${jeAktivni ? 'aktivni' : ''}" data-foto-id="${f.id}" data-url="${esc(f.url)}" title="${esc(nazevAlba(f.album, f.typ))}">
+            <img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" draggable="false" />
+            ${jeAktivni ? '<span class="banner-odznak">Záhlaví</span>' : ''}
+        </button>`;
+    }).join('') : '<p class="banner-prazdno">Modelka zatím nemá žádné fotografie.</p>';
+
+    grid.onclick = (e) => {
+        const btn = /** @type {HTMLElement} */ (e.target).closest('[data-foto-id]');
+        if (!btn) return;
+        const fotoId = parseInt(btn.dataset.fotoId || '0');
+        const url = btn.dataset.url || '';
+        nastavitBannerModelky(modelka.id, fotoId, url);
+        oznamit('Fotka záhlaví profilu nastavena.');
+        modal.classList.add('hidden');
+    };
+
+    modal.classList.remove('hidden');
+}
+
 // Úprava výřezu titulní fotky v profilu: na velké fotce v panelu Údaje (panel se otevře); po uložení se obnoví
-// i miniatura v pruhu. Rám má při úpravě poměr stran karty v galerii, výřez tak odpovídá tomu, co karta ukáže.
+// i miniatura nebo banner. Rám má při úpravě poměr stran karty v galerii, výřez tak odpovídá tomu, co karta ukáže.
 export function upravitVyrezProfilu() {
     const modelka = stav.aktualniModelka;
     const ram = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.profile-cover-ram'));
@@ -519,8 +620,7 @@ export function upravitVyrezProfilu() {
     upravitVyrez(modelka, {
         karta: ram,
         poUlozeni: () => {
-            const miniatura = /** @type {HTMLElement | null} */ (profilPruhObsah.querySelector('.pruh-foto img'));
-            if (miniatura) miniatura.style.cssText = stylVyrezu(modelka);
+            aktualizovatBannerProfilu(modelka);
         },
     });
 }
@@ -537,17 +637,8 @@ export function pripravit() {
 
     // Lišta alb je ve druhém řádku hlavičky vedle drobečků, jako podmenu ostatních sekcí
     document.getElementById('podmenu').before(listaAlb.nav);
-    // Pruh s modelkou je součástí panelu s drobečky (nad lištou alb): jeden panel profilu v hlavičce. Po odrolování
-    // se panel zmenší na jeden řádek (drobečky, miniatura, jméno, srdíčka, akce) a pod ním zůstane lišta alb.
+    // Pruh s modelkou je součástí panelu s drobečky (nad lištou alb): jeden panel profilu v hlavičce se širokoúhlým bannerem.
     listaAlb.nav.before(profilPruh);
-    const navbar = document.querySelector('.navbar');
-    hlavniOblast.addEventListener('scroll', () => {
-        if (detailView.classList.contains('hidden')) return;
-        const odrolovano = hlavniOblast.scrollTop;
-        // Mezera mezi prahy, aby panel na hranici neblikal
-        if (odrolovano > 60) navbar.classList.add('profil-svinuty');
-        else if (odrolovano < 20) navbar.classList.remove('profil-svinuty');
-    }, { passive: true });
     // Jméno v pruhu u profilu otevřeného ze seznamu otevře nabídku modelek seznamu (jako dřív jméno v drobečcích)
     profilPruhObsah.addEventListener('click', (e) => {
         if (!/** @type {HTMLElement} */ (e.target).closest('.pruh-identita h2')) return;

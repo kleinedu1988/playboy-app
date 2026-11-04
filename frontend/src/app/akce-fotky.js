@@ -8,6 +8,7 @@ import { pridatDoVyberu } from './nejlepsi';
 import { obnovitCoJeVidet, smazatFotku } from './sprava';
 import { SetTitulniFotka } from './backend';
 import { oznamit } from '../ui/oznameni';
+import { nastavitBannerModelky } from './profil';
 import { lightbox, zavritLightbox } from './prohlizec';
 import { kopirovatText, odkazNaDisk } from './ulozeni';
 
@@ -32,13 +33,19 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
                 if (!lightbox.classList.contains('hidden')) zavritLightbox();
                 otevritProfilPodleId(polozka.modelkaId);
             } }] : []),
-        // Titulní fotka jde nastavit z jedné fotky (ne z celého plakátu najednou)
-        ...(proModelku && stranky.length === 1 ? [{ text: 'Nastavit jako titulní fotku', akce: async () => {
-            if (!await SetTitulniFotka(proModelku, prvni.id)) return;
-            oznamit('Titulní fotka změněna. Výřez na kartě se vrátil na výchozí.');
-            if (zProfilu) otevritProfilPodleId(proModelku);
-            else obnovitCoJeVidet();
-        } }] : []),
+        // Fotka záhlaví a titulní fotka jdou nastavit z jedné fotky (ne z celého plakátu najednou)
+        ...(proModelku && stranky.length === 1 ? [
+            { text: 'Nastavit jako fotku záhlaví', akce: () => {
+                nastavitBannerModelky(proModelku, prvni.id, prvni.url);
+                oznamit('Fotka záhlaví profilu nastavena.');
+            } },
+            { text: 'Nastavit jako titulní fotku', akce: async () => {
+                if (!await SetTitulniFotka(proModelku, prvni.id)) return;
+                oznamit('Titulní fotka změněna. Výřez na kartě se vrátil na výchozí.');
+                if (zProfilu) otevritProfilPodleId(proModelku);
+                else obnovitCoJeVidet();
+            } },
+        ] : []),
         { text: 'Přidat do výběru…', akce: () => pridatDoVyberu(stranky.map(f => f.id)) },
         null,
         { text: 'Otevřít na Google Disku', akce: () => BrowserOpenURL(odkazNaDisk(prvni)) },

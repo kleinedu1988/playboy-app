@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.55] – 2026-11-03
+
+### Změněno
+- **Balíček `internal/sbirka`, rozdělení `app.go` a čistě paměťové statistiky a vývoj**: statistiky sbírky, vývoj v čase, katalog a správa tagů fotek i vyhledávání v článcích a textech jsou vyčleněné do samostatného balíčku `internal/sbirka` a původní soubor `app.go` je rozdělený podle oblastí (`modelky.go`, `fotky.go`, `kalendar.go`, `zalohy.go`, `kontrola_souboru.go`). `GetStatistiky` a `GetVyvojVCase` počítají přímo nad paměťovým snímkem sbírky bez dotazů do databáze a bez opakovaného klonování seznamu modelek, oprava snímku po uložení srdíčka nebo výřezu zachovává vypočtené texty hledání, kalendář a náhledy, `SetHodnoceni` si pamatuje přítomnost sloupce `hodnoceni_pul`, `nactiFotografie` nealokuje pole cílů pro každý řádek, `SetTagyFotek` maže ostatní tagy výlučné skupiny jedním příkazem a tvorba úryvku textu článku zpracovává znaky ASCII přímo bez alokací.
+
 ## [1.2.54] – 2026-11-03
 
 ### Změněno

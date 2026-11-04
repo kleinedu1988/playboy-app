@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"playboy-app/internal/sbirka"
 	"sort"
 	"strings"
 	"time"
@@ -14,17 +15,11 @@ import (
 // Album dál určuje jeho hlavní modelka, název a typ (fotky mají tyto tři údaje u sebe). Stálou identitu
 // mu dává řádek v tabulce alba; k němu se váží další modelky alba (alba_modelky).
 
-type OdkazModelky struct {
-	ID    int    `json:"id"`
-	Jmeno string `json:"jmeno"`
-}
-
-// Spouští dotazy v databázi i uvnitř transakce
-type dotazovac interface {
-	Exec(dotaz string, args ...interface{}) (sql.Result, error)
-	Query(dotaz string, args ...interface{}) (*sql.Rows, error)
-	QueryRow(dotaz string, args ...interface{}) *sql.Row
-}
+type OdkazModelky = sbirka.OdkazModelky
+type dotazovac = sbirka.Dotazovac
+type VysledekPresunu = sbirka.VysledekPresunu
+type ObnovaFotky = sbirka.ObnovaFotky
+type VyberFotky = sbirka.VyberFotky
 
 // Úprava č. 3: další modelky alba a stav dostupnosti souborů
 func (a *App) migraceSdilenaAlba() error {
@@ -317,11 +312,6 @@ func (a *App) SloucitAlba(modelkaID int, zAlbum, zTyp, doAlbum, doTyp string) st
 	return ""
 }
 
-type VysledekPresunu struct {
-	Presunuto  int `json:"presunuto"`
-	Duplicitni int `json:"duplicitni"` // v cílovém albu už jsou – zůstaly na místě
-}
-
 // Vybrané fotky do jiného alba (i nového nebo jiné modelky); přebírají jeho vydání a spojení plakátu
 func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) VysledekPresunu {
 	var vysledek VysledekPresunu
@@ -347,8 +337,8 @@ func (a *App) PresunoutFotky(ids []int, modelkaID int, album, typ string) Vysled
 	tx.QueryRow("SELECT spojit, COALESCE((SELECT MAX(rotace) FROM fotky WHERE album_id = alba.id), 0) FROM alba WHERE id = ?", cilID).Scan(&spojit, &rotace)
 	for _, id := range ids {
 		var stejny int
-		tx.QueryRow(`SELECT COUNT(*) FROM fotografie WHERE modelka_id = ? AND album = ? AND typ = ? AND id <> ?
-			AND drive_file_id = (SELECT drive_file_id FROM fotografie WHERE id = ?)`, modelkaID, album, typ, id, id).Scan(&stejny)
+		tx.QueryRow(`SELECT COUNT(*) FROM fotky WHERE album_id = ? AND id <> ?
+			AND drive_file_id = (SELECT drive_file_id FROM fotky WHERE id = ?)`, cilID, id, id).Scan(&stejny)
 		if stejny > 0 {
 			vysledek.Duplicitni++
 			continue
@@ -531,31 +521,6 @@ func sloucitSeznam(prvni, druhy string) string {
 		vysledek = append(vysledek, polozka)
 	}
 	return strings.Join(vysledek, ", ")
-}
-
-// Údaje odebrané fotky, aby ji šlo vrátit (včetně výběrů, dalších modelek a „netýká se" jejího alba)
-type ObnovaFotky struct {
-	Vybery       []VyberFotky `json:"vybery"`
-	DalsiModelky []int        `json:"dalsiModelky"`
-	NetykaSe     string       `json:"netykaSe"`
-	ModelkaID    int          `json:"modelkaId"`
-	Album        string       `json:"album"`
-	Typ          string       `json:"typ"`
-	DriveID      string       `json:"driveId"`
-	Vydani       string       `json:"vydani"`
-	Datum        string       `json:"datum"` // datum nafocení online alba
-	Rotace       int          `json:"rotace"`
-	Spojit       bool         `json:"spojit"`
-	Hodnoceni    int          `json:"hodnoceni"`
-	Poradi       int          `json:"poradi"`
-	Pridano      string       `json:"pridano"`
-	Popis        string       `json:"popis"`
-	Fotograf     string       `json:"fotograf"`
-}
-
-type VyberFotky struct {
-	VyberID int `json:"vyberId"`
-	Poradi  int `json:"poradi"`
 }
 
 // Odebrání fotek s údaji pro Vrátit: vrací všechno, co odebrání ztratí, i to, co frontend nezná

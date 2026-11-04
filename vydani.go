@@ -2,11 +2,16 @@ package main
 
 import (
 	"fmt"
+	"playboy-app/internal/sbirka"
 	"sort"
 	"strings"
 )
 
 // Etapa 6: vydání jako záznam (poznámka, stav, modelka z obálky) a vlastní výběry fotek napříč modelkami.
+
+type VydaniInfo = sbirka.VydaniInfo
+type Vyber = sbirka.Vyber
+type Special = sbirka.Special
 
 // Úprava č. 5: tabulka vydání, výběry fotek a odkazy u modelky
 func (a *App) migraceVydaniAVybery() error {
@@ -52,18 +57,6 @@ func (a *App) migraceVydaniAVybery() error {
 // Stav vydání ve sbírce: prázdný = běžný, „shanim" = chybí a hledám ho, „nezajima" = chybí záměrně,
 // „mam" = mám fyzický výtisk (bez ohledu na to, jestli jsou fotky ve sbírce)
 var stavyVydani = map[string]bool{"": true, "shanim": true, "nezajima": true, "mam": true}
-
-type VydaniInfo struct {
-	Vydani        string `json:"vydani"`
-	Poznamka      string `json:"poznamka"`
-	Stav          string `json:"stav"`
-	ModelkaObalky int    `json:"modelkaObalky"` // 0 = neuvedeno
-	JmenoObalky   string `json:"jmenoObalky"`
-	// Kdo je na obálce, když to není modelka ze sbírky (volný text); s modelkou ze sbírky je prázdný
-	NaObalce string `json:"naObalce"`
-	// Název speciálu (u měsíčního čísla prázdný)
-	Nazev string `json:"nazev"`
-}
 
 func (a *App) GetVydaniInfo(vydani string) VydaniInfo {
 	info := VydaniInfo{Vydani: vydani}
@@ -131,12 +124,6 @@ func (a *App) GetStavyVydani() []VydaniInfo {
 }
 
 // Vlastní výběry fotek
-
-type Vyber struct {
-	ID    int    `json:"id"`
-	Nazev string `json:"nazev"`
-	Pocet int    `json:"pocet"`
-}
 
 func (a *App) GetVybery() []Vyber {
 	vybery := []Vyber{}
@@ -366,11 +353,6 @@ func (a *App) migraceSpecialy() error {
 	}
 	_, err := a.db.Exec("ALTER TABLE vydani ADD COLUMN nazev TEXT")
 	return err
-}
-
-type Special struct {
-	Vydani string `json:"vydani"`
-	Nazev  string `json:"nazev"`
 }
 
 // Všechny speciály: pojmenované u čísla i ty, ke kterým jsou jen alba (třeba ze staršího importu)

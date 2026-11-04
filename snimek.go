@@ -70,24 +70,24 @@ type snimek struct {
 	albaModelek  map[int][]albumModelky
 	indexModelky map[int]int
 
-	hledani sync.Once
-	texty   []textyHledani // texty modelek k hledání ve stejném pořadí jako modelky (při prvním hledání)
-
-	// Kalendář vydání (GetKalendar) spočítaný při prvním volání nad tímto snímkem; nil = ještě není
+	// Texty k hledání, kalendář vydání (GetKalendar) a náhledy modelek (GetNahledyModelek) spočítané při prvním volání nad tímto snímkem
 	mu       sync.Mutex
+	texty    []textyHledani
 	kalendar []VydaniKalendare
-	// Náhledy fotek modelek pro porovnání (GetNahledyModelek) spočítané nad tímto snímkem
-	nahledy map[int]nahledyModelky
+	nahledy  map[int]nahledyModelky
 }
 
 // Texty modelek k hledání; spočítají se jednou pro snímek, další hledání (psaní do pole hledání) je už nepočítá
 func (s *snimek) textyKHledani() []textyHledani {
-	s.hledani.Do(func() {
-		s.texty = make([]textyHledani, len(s.modelky))
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.texty == nil {
+		texty := make([]textyHledani, len(s.modelky))
 		for i := range s.modelky {
-			s.texty[i] = pripravitTexty(&s.modelky[i])
+			texty[i] = pripravitTexty(&s.modelky[i])
 		}
-	})
+		s.texty = texty
+	}
 	return s.texty
 }
 
@@ -581,11 +581,11 @@ func (a *App) aktualizovatVyrezVeSnimku(id int, zoom, x, y float64) {
 	if err := p.spojeni.QueryRowContext(context.Background(), "PRAGMA data_version").Scan(&verze); err != nil {
 		return
 	}
-	// Nový snímek s kopií modelek (souběžná čtení drží starý snímek a nesmí vidět zápis uprostřed kopírování)
-	// (dopočítávané části – texty hledání, kalendář, náhledy – se nad novým snímkem spočítají znovu)
+	// Nový snímek s kopií modelek (souběžná čtení drží starý snímek a nesmí vidět zápis uprostřed kopírování);
+	// texty hledání, kalendář a náhledy na výřezu titulní fotky nezávisí a zůstanou zachované
 	stary := p.snimek
-	novy := &snimek{modelky: slices.Clone(stary.modelky), alba: stary.alba, sdileneCenterfoldy: stary.sdileneCenterfoldy,
-		fotekCoveru: stary.fotekCoveru, err: stary.err, albaModelek: stary.albaModelek, indexModelky: stary.indexModelky}
+	novy := kopieSnimku(stary)
+	novy.modelky = slices.Clone(stary.modelky)
 	novy.modelky[idx].CoverZoom = zoom
 	novy.modelky[idx].CoverX = x
 	novy.modelky[idx].CoverY = y
@@ -638,8 +638,16 @@ func (a *App) opravitSnimek(puvodni *snimek, uprava func(s *snimek) *snimek) {
 }
 
 func kopieSnimku(s *snimek) *snimek {
-	return &snimek{modelky: s.modelky, alba: s.alba, sdileneCenterfoldy: s.sdileneCenterfoldy, fotekCoveru: s.fotekCoveru,
-		err: s.err, albaModelek: s.albaModelek, indexModelky: s.indexModelky}
+	s.mu.Lock()
+	texty := s.texty
+	kalendar := s.kalendar
+	nahledy := s.nahledy
+	s.mu.Unlock()
+	return &snimek{
+		modelky: s.modelky, alba: s.alba, sdileneCenterfoldy: s.sdileneCenterfoldy, fotekCoveru: s.fotekCoveru,
+		err: s.err, albaModelek: s.albaModelek, indexModelky: s.indexModelky,
+		texty: texty, kalendar: kalendar, nahledy: nahledy,
+	}
 }
 
 type zmenaSrdicekFotky struct {

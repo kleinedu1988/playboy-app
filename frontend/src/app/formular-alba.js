@@ -32,7 +32,7 @@ export async function vybratNeboZalozitModelku(jmeno) {
     const najit = async () => (await vsechnyModelky()).filter(m => sjednotit(m.jmeno) === sjednotit(jmeno)).sort((a, b) => b.id - a.id)[0];
     const znama = await najit();
     if (znama) return znama;
-    if (!await AddModelka(/** @type {import('../../wailsjs/go/models').main.Modelka} */ ({ jmeno, tetovani: -1, piercing: -1 }))) {
+    if (!await AddModelka(/** @type {import('../../wailsjs/go/models').hledani.Modelka} */ ({ jmeno, tetovani: -1, piercing: -1 }))) {
         oznamit('Modelku se nepodařilo založit.');
         return null;
     }

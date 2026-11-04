@@ -411,7 +411,7 @@ export function pripravit() {
 
     document.getElementById('quickForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
-        const modelka = /** @type {import('../../wailsjs/go/models').main.Modelka} */ ({ jmeno: document.getElementById('inputQuickJmeno').value.trim(), tetovani: -1, piercing: -1 });
+        const modelka = /** @type {import('../../wailsjs/go/models').hledani.Modelka} */ ({ jmeno: document.getElementById('inputQuickJmeno').value.trim(), tetovani: -1, piercing: -1 });
         if (!modelka.jmeno || !await neniDuplicitni(modelka)) return;
         if (!await AddModelka(modelka)) {
             oznamit('Modelku se nepodařilo uložit do databáze.');

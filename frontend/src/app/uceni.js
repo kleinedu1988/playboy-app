@@ -9,8 +9,8 @@ import { poleModelky, potvrdit } from './formular-modelky';
 import { oznamit } from '../ui/oznameni';
 
 // Typy podle backendu (uceni.go); po sloučení se nahradí main.StavUceni a main.ZdrojUceni z wailsjs/go/models
-/** @typedef {import('../../wailsjs/go/models').main.ZdrojUceni} ZdrojUceni */
-/** @typedef {import('../../wailsjs/go/models').main.StavUceni} StavUceni */
+/** @typedef {import('../../wailsjs/go/models').uceni.ZdrojUceni} ZdrojUceni */
+/** @typedef {import('../../wailsjs/go/models').uceni.StavUceni} StavUceni */
 
 /** @type {StavUceni | null} */
 let stavUceni = null;

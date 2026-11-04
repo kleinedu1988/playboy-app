@@ -2644,13 +2644,13 @@ func TestStatistiky(t *testing.T) {
 		t.Fatalf("desetiletí: %+v", s)
 	}
 	// Věk: Anna 20 (březen 1995, narozena v březnu 1975), Bára 22; Cecílie jen s rokem narození se nepočítá
-	if s.VekZnamy != 2 || s.VekMedian != 21 || len(s.Vek) != 3 || s.Vek[0] != (PolozkaStatistiky{"20", 1}) || s.Vek[1].Pocet != 0 {
+	if s.VekZnamy != 2 || s.VekMedian != 21 || len(s.Vek) != 3 || s.Vek[0] != (PolozkaStatistiky{Nazev: "20", Pocet: 1}) || s.Vek[1].Pocet != 0 {
 		t.Fatalf("věk: %+v", s)
 	}
-	if s.FotografuCelkem != 2 || s.Fotografove[0] != (PolozkaStatistiky{"Arny Freytag", 2}) || s.Fotografove[1].Nazev != "Pompeo Posar" {
+	if s.FotografuCelkem != 2 || s.Fotografove[0] != (PolozkaStatistiky{Nazev: "Arny Freytag", Pocet: 2}) || s.Fotografove[1].Nazev != "Pompeo Posar" {
 		t.Fatalf("fotografové: %+v", s.Fotografove)
 	}
-	if s.NarodnostiCelkem != 2 || s.ModelekSNarodnosti != 3 || s.Narodnosti[0] != (PolozkaStatistiky{"USA", 2}) {
+	if s.NarodnostiCelkem != 2 || s.ModelekSNarodnosti != 3 || s.Narodnosti[0] != (PolozkaStatistiky{Nazev: "USA", Pocet: 2}) {
 		t.Fatalf("národnosti: %+v", s.Narodnosti)
 	}
 	if prazdna := novaTestovaciApp(t, nil).GetStatistiky(); prazdna.Centerfoldu != 0 || prazdna.Desetileti == nil || prazdna.Vek == nil {

@@ -617,7 +617,7 @@ func TestStromyVkusuSouvislost(t *testing.T) {
 	}
 	les := naucitLes(d, y, vse, maxStromu, 7, nil)
 	for _, x := range [][]uint8{{1, 1, 0}, {2, 2, 3}, {1, 2, 1}, {2, 1, 0}} {
-		odhad := les.predikce(x, len(les.stromy))
+		odhad := les.Predikce(x, len(les.Stromy))
 		chce := 2.0
 		if (x[0] == 2) != (x[1] == 2) {
 			chce = 4
@@ -625,8 +625,8 @@ func TestStromyVkusuSouvislost(t *testing.T) {
 		if math.Abs(odhad-chce) > 0.35 {
 			t.Errorf("koše %v: odhad %.2f, chce %.0f", x, odhad, chce)
 		}
-		soucet := les.prispevky(x, func(int, float64) {})
-		les.prispevky(x, func(_ int, c float64) { soucet += c })
+		soucet := les.Prispevky(x, func(int, float64) {})
+		les.Prispevky(x, func(_ int, c float64) { soucet += c })
 		if math.Abs(soucet-odhad) > 1e-9 {
 			t.Errorf("koše %v: součet příspěvků %.6f ≠ odhad %.6f", x, soucet, odhad)
 		}

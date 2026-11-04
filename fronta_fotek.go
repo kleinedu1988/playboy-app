@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"playboy-app/internal/oblibenost"
 	"sort"
 )
 
@@ -10,33 +11,9 @@ import (
 // s ID z Disku, takže fronta posílá alba zvlášť, šablonu jednou a u fotky jen to, co je její (rozbalí je
 // frontend/src/lib/fronta.js zpět na fotky). Ve sbírce se 150 000 fotkami je to místo 67 MB zhruba šestina.
 
-type FotkaFronty struct {
-	ID        int    `json:"id"`
-	AlbumID   int64  `json:"albumId"`
-	DriveID   string `json:"driveId"`
-	Rotace    int    `json:"rotace,omitempty"`
-	Hodnoceni int    `json:"hodnoceni,omitempty"`
-}
-
-type AlbumFronty struct {
-	ModelkaID    int            `json:"modelkaId"`
-	JmenoModelky string         `json:"jmenoModelky"`
-	Album        string         `json:"album"`
-	Typ          string         `json:"typ"`
-	Vydani       string         `json:"vydani,omitempty"`
-	Spojit       bool           `json:"spojit,omitempty"`
-	Popis        string         `json:"popis,omitempty"`
-	Fotograf     string         `json:"fotograf,omitempty"`
-	DatumAlba    string         `json:"datumAlba,omitempty"`
-	DalsiModelky []OdkazModelky `json:"dalsiModelky,omitempty"`
-}
-
-type FrontaFotek struct {
-	Sablona string        `json:"sablona"` // adresa obrázku s {id} místo ID z Disku
-	Fotky   []FotkaFronty `json:"fotky"`   // v pořadí fronty
-	// Alba fotek podle albumId (klíč JSONu je text)
-	Alba map[int64]AlbumFronty `json:"alba"`
-}
+type FotkaFronty = oblibenost.FotkaFronty
+type AlbumFronty = oblibenost.AlbumFronty
+type FrontaFotek = oblibenost.FrontaFotek
 
 func zabalitFrontu(fotky []Fotografie) FrontaFotek {
 	f := FrontaFotek{Sablona: adresaObrazku("{id}"), Fotky: make([]FotkaFronty, 0, len(fotky)), Alba: map[int64]AlbumFronty{}}
@@ -109,21 +86,25 @@ func (a *App) nacistFrontu(kde, podminka string, args ...interface{}) FrontaFote
 		ids = append(ids, id)
 	}
 
-	// Pořadí alb: jméno modelky bez diakritiky, název alba; stejná dvojice (jiný typ, jmenovkyně) má stejné místo
-	// a její fotky se řadí společně podle pořadí v albu, jako v SQL
+	// Pořadí alb: jméno modelky bez diakritiky (předpočítaný klíč, ne v komparátoru), název alba; stejná dvojice
+	// (jiný typ, jmenovkyně) má stejné místo a její fotky se řadí společně podle pořadí v albu, jako v SQL
+	klicJmena := make(map[int64]string, len(ids))
+	for _, id := range ids {
+		klicJmena[id] = zjednodusit(fr.Alba[id].JmenoModelky)
+	}
 	sort.Slice(ids, func(i, j int) bool {
-		x, y := fr.Alba[ids[i]], fr.Alba[ids[j]]
-		if c := porovnatBezDiakritiky(x.JmenoModelky, y.JmenoModelky); c != 0 {
-			return c < 0
+		idX, idY := ids[i], ids[j]
+		if kx, ky := klicJmena[idX], klicJmena[idY]; kx != ky {
+			return kx < ky
 		}
-		return x.Album < y.Album
+		return fr.Alba[idX].Album < fr.Alba[idY].Album
 	})
 	misto := make(map[int64]int, len(ids))
 	for i, id := range ids {
 		if i > 0 {
-			x, y := fr.Alba[ids[i-1]], fr.Alba[id]
-			if porovnatBezDiakritiky(x.JmenoModelky, y.JmenoModelky) == 0 && x.Album == y.Album {
-				misto[id] = misto[ids[i-1]]
+			pred := ids[i-1]
+			if klicJmena[pred] == klicJmena[id] && fr.Alba[pred].Album == fr.Alba[id].Album {
+				misto[id] = misto[pred]
 				continue
 			}
 		}

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.56] – 2026-11-04
+
+### Změněno
+- **Balíček `internal/oblibenost`, rozdělení `oblibenost_vkus.go` a optimalizace oblíbenosti, témat a front**: výpočty oblíbenosti (Bradley–Terry, Choleského rozklad, série dní), regresní stromy modelu vkusu, skóre fotek a datové typy front fotek i galerie Nejlepší jsou vyčleněné do samostatného balíčku `internal/oblibenost` a `oblibenost_vkus.go` je rozdělený na přípravu údajů (`oblibenost_vkus.go`), učení (`oblibenost_vkus_uceni.go`) a skládání důvodu (`oblibenost_vkus_duvod.go`). V Bradley–Terry se Böhningova mez každého uzlu předpočítá jednou před iteracemi, Gramova matice hřebenové regrese se skládá jen v dolním trojúhelníku a doplní symetricky, stavba stromu používá pole na zásobníku a série dní kalendářní čísla místo mapy textů. Fotky pro témata už nealokují mapu tagů u každé ze statisíců fotek a vystačí si s bitovou maskou, pokrytí tématu k odemčení počítá v předem alokovaných polích místo map, čtení snímků historie pro síň slávy neformátuje datum v každém řádku, galerie Nejlepší ověřuje mezipaměť bez kopírování modelek a tisíců převodů čísel na text a řazení front fotek předpočítává zjednodušená jména modelek před řazením.
+
 ## [1.2.55] – 2026-11-03
 
 ### Změněno

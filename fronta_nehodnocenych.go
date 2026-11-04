@@ -8,6 +8,7 @@ package main
 
 import (
 	"encoding/json"
+	"playboy-app/internal/oblibenost"
 	"sort"
 	"strconv"
 	"sync"
@@ -15,10 +16,7 @@ import (
 
 // Stálá náhodná hodnota pro klíč a semínko (0–1); stejný výpočet jako nahodaKlice v lib/hodnoceni.js
 func nahodaKlice(klic int, seed int) float64 {
-	t := uint32(int32(klic))*0x9e3779b1 ^ uint32(int64(seed))*0x85ebca6b
-	t = (t ^ t>>16) * 0x7feb352d
-	t = (t ^ t>>15) * 0x846ca68b
-	return float64(t^t>>16) / 4294967296
+	return oblibenost.NahodaKlice(klic, seed)
 }
 
 type polozkaFronty struct {
@@ -188,11 +186,15 @@ func (a *App) GetStrankuNehodnocenych(seed int, razeni string, modelka int, od i
 			}
 			m.N++
 		}
+		klicJmena := make(map[int]string, len(poradi))
+		for _, m := range poradi {
+			klicJmena[m.ID] = zjednodusit(m.Jmeno)
+		}
 		sort.SliceStable(poradi, func(i, j int) bool {
 			if poradi[i].N != poradi[j].N {
 				return poradi[i].N > poradi[j].N
 			}
-			return porovnatBezDiakritiky(poradi[i].Jmeno, poradi[j].Jmeno) < 0
+			return klicJmena[poradi[i].ID] < klicJmena[poradi[j].ID]
 		})
 		for _, m := range poradi {
 			v.Modelky = append(v.Modelky, *m)

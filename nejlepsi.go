@@ -7,30 +7,15 @@ package main
 
 import (
 	"fmt"
+	"playboy-app/internal/oblibenost"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
-type DotazNejlepsich struct {
-	Min       int    `json:"min"`       // nejméně srdíček fotky (1–5)
-	Typ       string `json:"typ"`       // "", "centerfold", "pictorial", "online", "cover"
-	Dekada    int    `json:"dekada"`    // 0 = všechna desetiletí, jinak např. 1990
-	Razeni    string `json:"razeni"`    // "hodnota" (výchozí), "srdicka", "nejnovejsi", "nahodne"
-	Prokladat bool   `json:"prokladat"` // střídat modelky: každá další fotka téže modelky má hodnotu o čtvrt srdíčka nižší
-	Seed      int    `json:"seed"`      // semínko náhodného řazení
-	Hledat    string `json:"hledat"`    // slova ve jménu modelky, názvu alba, fotografovi nebo popisu
-	Od        int    `json:"od"`
-	Pocet     int    `json:"pocet"` // 0 = vše od Od
-}
-
-type GalerieNejlepsich struct {
-	FrontaFotek
-	Celkem  int `json:"celkem"`  // fotek vyhovujících dotazu
-	Modelek int `json:"modelek"` // různých modelek mezi nimi
-	Od      int `json:"od"`
-}
+type DotazNejlepsich = oblibenost.DotazNejlepsich
+type GalerieNejlepsich = oblibenost.GalerieNejlepsich
 
 // Seřazený výsledek dotazu se drží v paměti (stránky ho jen krájejí); platí ke snímku sbírky a modelu oblíbenosti
 var pametNejlepsich struct {
@@ -40,23 +25,36 @@ var pametNejlepsich struct {
 	modelek int
 }
 
+// Klíč stavu sbírky a oblíbenosti bez kopírování 3 000 modelek a tisíců FormatFloat při každé stránce
+func (a *App) klicStavuNejlepsich() string {
+	s := a.snimekSbirky()
+	var nPorovnani, davka int
+	var posledni int64
+	if u := a.uc; u != nil {
+		u.mu.Lock()
+		p := u.nacistPorovnani()
+		nPorovnani = len(p)
+		posledni = posledniPorovnani(p)
+		davka = u.ob.zaznamuZajmu / zaznamuNaPrepocet
+		u.mu.Unlock()
+	}
+	return fmt.Sprintf("%p|%s|%d|%d|%d", s, time.Now().Format("2006-01-02"), nPorovnani, posledni, davka)
+}
+
 func (a *App) GetGalerieNejlepsich(d DotazNejlepsich) GalerieNejlepsich {
 	d.Min = min(max(d.Min, 1), 5)
-	modelky, _ := a.nactiModelky("", true)
-	oblibenost := make(map[int]float64, len(modelky))
-	otisk := novyOtiskovac()
-	for _, m := range modelky {
-		oblibenost[m.ID] = m.Oblibenost
-		otisk.Cisla(m.ID)
-		otisk.Text(strconv.FormatFloat(m.Oblibenost, 'g', -1, 64))
-	}
-	klic := fmt.Sprintf("%p|%s|%d|%s|%d|%s|%v|%d|%s", a.snimekVPameti(), otisk.Hex(), d.Min, d.Typ, d.Dekada, d.Razeni, d.Prokladat, d.Seed, d.Hledat)
+	klic := fmt.Sprintf("%s|%d|%s|%d|%s|%v|%d|%s", a.klicStavuNejlepsich(), d.Min, d.Typ, d.Dekada, d.Razeni, d.Prokladat, d.Seed, d.Hledat)
 	pametNejlepsich.Lock()
 	fronta, modelek := pametNejlepsich.fronta, pametNejlepsich.modelek
 	nalezeno := pametNejlepsich.klic == klic
 	pametNejlepsich.Unlock()
 	if !nalezeno {
-		fronta, modelek = a.seraditNejlepsi(d, oblibenost)
+		modelky, _ := a.nactiModelky("", true)
+		oblibenostMap := make(map[int]float64, len(modelky))
+		for _, m := range modelky {
+			oblibenostMap[m.ID] = m.Oblibenost
+		}
+		fronta, modelek = a.seraditNejlepsi(d, oblibenostMap)
 		pametNejlepsich.Lock()
 		pametNejlepsich.klic, pametNejlepsich.fronta, pametNejlepsich.modelek = klic, fronta, modelek
 		pametNejlepsich.Unlock()
@@ -76,28 +74,11 @@ func (a *App) GetGalerieNejlepsich(d DotazNejlepsich) GalerieNejlepsich {
 
 // Rok alba pro desetiletí a řazení od nejnovějších: z vydání, jinak z data nafocení (online)
 func rokAlba(al AlbumFronty) int {
-	zdroj := al.Vydani
-	if zdroj == "" {
-		zdroj = al.DatumAlba
-	}
-	if len(zdroj) >= 4 {
-		if r, err := strconv.Atoi(zdroj[:4]); err == nil {
-			return r
-		}
-	}
-	return 0
+	return oblibenost.RokAlba(al)
 }
 
 func skupinaTypu(typ string) string {
-	switch {
-	case typ == "Centerfold":
-		return "centerfold"
-	case typ == "Cover":
-		return "cover"
-	case jeOnlineTyp(typ):
-		return "online"
-	}
-	return "pictorial"
+	return oblibenost.SkupinaTypu(typ, jeOnlineTyp(typ))
 }
 
 func (a *App) seraditNejlepsi(d DotazNejlepsich, oblibenost map[int]float64) (FrontaFotek, int) {

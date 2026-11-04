@@ -73,7 +73,8 @@ func (a *App) proslePruvodcem() map[int]bool {
 
 func pokrytiTematu(t *Tema, modelky []Modelka, fotky []*fotkaTematu, prosle map[int]bool) PokrytiTematu {
 	h := novyHodnotitel(t, modelky)
-	fotek, neznamych := map[int]int{}, map[int]int{}
+	fotek := make([]int, len(h.splnuje))
+	neznamych := make([]int, len(h.splnuje))
 	for _, f := range fotky {
 		id := f.id
 		if !h.modelka(f.modelka) || !h.album(f) {
@@ -89,7 +90,7 @@ func pokrytiTematu(t *Tema, modelky []Modelka, fotky []*fotkaTematu, prosle map[
 	p := PokrytiTematu{InfoTematu: InfoTematu{Tema: *t}, Kandidatky: []KandidatkaTematu{}, MinFotek: minFotekTematu, MinModelek: minModelekTematu}
 	for i := range modelky {
 		m := &modelky[i]
-		if !h.modelky[m.ID] {
+		if !h.modelka(m.ID) {
 			continue
 		}
 		n := fotek[m.ID]

@@ -385,7 +385,7 @@ func (t *Tema) fotkaSplnuje(f *fotkaTematu) bool {
 		}
 		ma := false
 		for _, h := range p.Hodnoty {
-			if p.Druh == "tag" && f.tagy[h] || p.Druh == "fotka" && f.album.splnuje(p.Klic, h) {
+			if p.Druh == "tag" && f.maTag(h) || p.Druh == "fotka" && f.album.splnuje(p.Klic, h) {
 				ma = true
 				break
 			}
@@ -417,13 +417,16 @@ func (t *Tema) modelkaSplnuje(m *Modelka) bool {
 
 // ——— Pokrytí: fotky tématu po modelkách ———
 
-// Fotky modelek s tagy a údaji alba (id fotky → modelka, tagy, album)
+// Fotky modelek s tagy a údaji alba (id fotky → modelka, maska tagů, album)
 type fotkaTematu struct {
 	id      int
 	modelka int
-	tagy    map[string]bool
-	maska   uint64 // tagy jako bity (bitTagu) – rychlá podmínka nad statisíci fotek
+	maska   uint64 // tagy jako bity (bitTagu) – rychlá podmínka nad statisíci fotek bez alokace mapy
 	album   *albumTematu
+}
+
+func (f *fotkaTematu) maTag(tag string) bool {
+	return f.maska&bitTagu[tag] != 0
 }
 
 // Bit tagu v masce fotky (katalog má méně než 64 tagů; test to hlídá)
@@ -592,14 +595,13 @@ func (a *App) nacistFotkyProTemata(modelky ...int) map[int]*fotkaTematu {
 			if al == nil {
 				al = &albumTematu{}
 			}
-			fotky[id] = &fotkaTematu{id: id, modelka: m, tagy: map[string]bool{}, album: al}
+			fotky[id] = &fotkaTematu{id: id, modelka: m, album: al}
 		}
 	}
 	radky.Close()
 	for id, t := range vsechnyTagyFotek(a.db) {
 		if f := fotky[id]; f != nil {
 			for _, tag := range t {
-				f.tagy[tag] = true
 				f.maska |= bitTagu[tag]
 			}
 		}

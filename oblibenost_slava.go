@@ -1,7 +1,7 @@
 package main
 
 import (
-	"math"
+	"playboy-app/internal/oblibenost"
 	"sort"
 	"time"
 )
@@ -314,18 +314,14 @@ type pobytVTop struct {
 // Dny mezi dvěma okamžiky podle kalendáře (včera večer → dnes ráno = 1 den; dřív po celých 24 hodinách, takže
 // jednička od včerejška byla „od dneška“)
 func dniMezi(od, do time.Time) int {
-	if do.Before(od) {
-		return 0
-	}
-	d0 := time.Date(od.Year(), od.Month(), od.Day(), 12, 0, 0, 0, time.Local)
-	d1 := time.Date(do.Year(), do.Month(), do.Day(), 12, 0, 0, 0, time.Local)
-	return int(math.Round(d1.Sub(d0).Hours() / 24))
+	return oblibenost.DniMezi(od, do)
 }
 
 // Denní snímek potvrzeného pořadí z historie oblíbenosti (jen snímky se značkou potvrzeného pořadí)
 type snimekPoradi struct {
-	den    time.Time
-	poradi map[int]int
+	den     time.Time
+	denText string
+	poradi  map[int]int
 }
 
 // Všechny snímky potvrzeného pořadí, od nejstaršího; volá se se zámkem
@@ -341,18 +337,20 @@ func (u *uceni) nacistSnimkyPoradi() []snimekPoradi {
 	defer radky.Close()
 	var v []snimekPoradi
 	potvrzeny := map[string]bool{}
+	posledniDen := ""
 	for radky.Next() {
 		var den string
 		var id, poradi int
 		if radky.Scan(&den, &id, &poradi) != nil {
 			continue
 		}
-		if len(v) == 0 || v[len(v)-1].den.Format("2006-01-02") != den {
+		if len(v) == 0 || posledniDen != den {
 			t, err := time.ParseInLocation("2006-01-02", den, time.Local)
 			if err != nil {
 				continue
 			}
-			v = append(v, snimekPoradi{den: t, poradi: map[int]int{}})
+			posledniDen = den
+			v = append(v, snimekPoradi{den: t, denText: den, poradi: map[int]int{}})
 		}
 		if id == znackaPotvrzenehoPoradi {
 			potvrzeny[den] = poradi == 1
@@ -362,7 +360,7 @@ func (u *uceni) nacistSnimkyPoradi() []snimekPoradi {
 	}
 	vysledek := v[:0]
 	for _, s := range v {
-		if potvrzeny[s.den.Format("2006-01-02")] {
+		if potvrzeny[s.denText] {
 			vysledek = append(vysledek, s)
 		}
 	}

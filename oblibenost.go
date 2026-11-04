@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"math"
+	"playboy-app/internal/oblibenost"
 	"sort"
 	"strings"
 	"sync"
@@ -400,10 +401,7 @@ func (u *uceni) zapsatPorovnani(a, b int, vysledek string, ha, hb float64, tema 
 }
 
 func klicDvojice(a, b int) [2]int {
-	if a > b {
-		a, b = b, a
-	}
-	return [2]int{a, b}
+	return oblibenost.KlicDvojice(a, b)
 }
 
 // ---------------------------------------------------------------------------------------------------------
@@ -765,7 +763,7 @@ type vysledekBT struct {
 }
 
 func spocitatBT(stred, sigma map[int]float64, porovnani []porovnaniZaznam, nyni time.Time) vysledekBT {
-	v := vysledekBT{sila: map[int]float64{}, rozptyl: map[int]float64{}, pocet: map[int]int{}, vyhry: map[int]float64{}}
+	v := oblibenost.VysledekBT{Sila: make(map[int]float64, len(stred)), Rozptyl: make(map[int]float64, len(stred)), Pocet: map[int]int{}, Vyhry: map[int]float64{}}
 	ids := make([]int, 0, len(stred))
 	for id := range stred {
 		ids = append(ids, id)
@@ -778,11 +776,7 @@ func spocitatBT(stred, sigma map[int]float64, porovnani []porovnaniZaznam, nyni 
 		s[i], mu[i] = stred[id], stred[id]
 		prec[i] = 1 / (sigma[id] * sigma[id])
 	}
-	type hrana struct {
-		i, j int
-		y, w float64 // y: výsledek z pohledu i (1 výhra, 0,5 remíza, 0 prohra)
-	}
-	var hrany []hrana
+	var hrany []oblibenost.HranaBT
 	sousede := make([][]int, len(ids))
 	for _, p := range porovnani {
 		i, okA := index[p.a]
@@ -803,49 +797,14 @@ func spocitatBT(stred, sigma map[int]float64, porovnani []porovnaniZaznam, nyni 
 		}
 		sousede[i] = append(sousede[i], len(hrany))
 		sousede[j] = append(sousede[j], len(hrany))
-		hrany = append(hrany, hrana{i, j, y, w})
-		v.pocet[p.a]++
-		v.pocet[p.b]++
-		v.vyhry[p.a] += y
-		v.vyhry[p.b] += 1 - y
+		hrany = append(hrany, oblibenost.HranaBT{I: i, J: j, Y: y, W: w})
+		v.Pocet[p.a]++
+		v.Pocet[p.b]++
+		v.Vyhry[p.a] += y
+		v.Vyhry[p.b] += 1 - y
 	}
-	k := skalaBT
-	for iterace := 0; iterace < maxIteraciBT && len(hrany) > 0; iterace++ {
-		maxZmena := 0.0
-		for x := range ids {
-			if len(sousede[x]) == 0 {
-				continue
-			}
-			g := -prec[x] * (s[x] - mu[x])
-			mez := prec[x]
-			for _, e := range sousede[x] {
-				h := hrany[e]
-				y, jiny := h.y, h.j
-				if h.j == x {
-					y, jiny = 1-h.y, h.i
-				}
-				p := zLogitu(k * (s[x] - s[jiny]))
-				g += h.w * k * (y - p)
-				mez += h.w * k * k / 4
-			}
-			krok := g / mez
-			s[x] += krok
-			maxZmena = max(maxZmena, math.Abs(krok))
-		}
-		if maxZmena < 1e-9 {
-			break
-		}
-	}
-	for x, id := range ids {
-		info := prec[x]
-		for _, e := range sousede[x] {
-			h := hrany[e]
-			p := zLogitu(k * (s[h.i] - s[h.j]))
-			info += h.w * k * k * p * (1 - p)
-		}
-		v.sila[id], v.rozptyl[id] = s[x], 1/info
-	}
-	return v
+	oblibenost.ResitBT(ids, s, mu, prec, hrany, sousede, &v)
+	return vysledekBT{sila: v.Sila, rozptyl: v.Rozptyl, pocet: v.Pocet, vyhry: v.Vyhry}
 }
 
 // Důvod v pořadí oblíbenosti: složky (srdíčka, skóre fotek, porovnání), posun síly proti srdíčkům a případně
@@ -879,104 +838,22 @@ func (m *modelOblibenosti) duvodOblibenosti(x Modelka, odhad string) string {
 // ---------------------------------------------------------------------------------------------------------
 // Pomocné
 
-// Řešení soustavy A·x = b se symetrickou pozitivně definitní A Choleského rozkladem (A se přepíše);
-// nil, když A pozitivně definitní není
 func resitCholesky(a [][]float64, b []float64) []float64 {
-	d := len(a)
-	for i := range d {
-		for j := 0; j <= i; j++ {
-			s := a[i][j]
-			for k := range j {
-				s -= a[i][k] * a[j][k]
-			}
-			if i == j {
-				if s <= 1e-12 {
-					return nil
-				}
-				a[i][i] = math.Sqrt(s)
-			} else {
-				a[i][j] = s / a[j][j]
-			}
-		}
-	}
-	x := make([]float64, d)
-	for i := range d {
-		s := b[i]
-		for k := range i {
-			s -= a[i][k] * x[k]
-		}
-		x[i] = s / a[i][i]
-	}
-	for i := d - 1; i >= 0; i-- {
-		s := x[i]
-		for k := i + 1; k < d; k++ {
-			s -= a[k][i] * x[k]
-		}
-		x[i] = s / a[i][i]
-	}
-	return x
+	return oblibenost.ResitCholesky(a, b)
 }
 
-func zaokrouhlitNaPul(x float64) float64 { return math.Round(x*2) / 2 }
+func zaokrouhlitNaPul(x float64) float64 { return oblibenost.ZaokrouhlitNaPul(x) }
 
-func zaokrouhlit3(x float64) float64 {
-	if math.IsNaN(x) || math.IsInf(x, 0) {
-		return 0
-	}
-	return math.Round(x*1000) / 1000
-}
+func zaokrouhlit3(x float64) float64 { return oblibenost.Zaokrouhlit3(x) }
 
 // „4 srdíčka“, „3½ srdíčka“, „5 srdíček“, „1 srdíčko“, „½ srdíčka“
-func textSrdicek(h float64) string {
-	cela := int(h)
-	pul := h-float64(cela) >= 0.5
-	cislo := fmt.Sprint(cela)
-	switch {
-	case pul && cela == 0:
-		return "½ srdíčka"
-	case pul:
-		return cislo + "½ srdíčka"
-	case cela == 1:
-		return "1 srdíčko"
-	case cela >= 2 && cela <= 4:
-		return cislo + " srdíčka"
-	}
-	return cislo + " srdíček"
-}
+func textSrdicek(h float64) string { return oblibenost.TextSrdicek(h) }
 
 // Sedmý pád: „s 4 srdíčky“, „s 3½ srdíčka“
-func textSrdicek7(h float64) string {
-	cela := int(h)
-	if h-float64(cela) >= 0.5 {
-		if cela == 0 {
-			return "½ srdíčka"
-		}
-		return fmt.Sprintf("%d½ srdíčka", cela)
-	}
-	if cela == 1 {
-		return "1 srdíčkem"
-	}
-	return fmt.Sprintf("%d srdíčky", cela)
-}
+func textSrdicek7(h float64) string { return oblibenost.TextSrdicek7(h) }
 
 // Série dní v řadě s aspoň jedním porovnáním (místní kalendářní dny): počítá se zpět od dneška; když dnes ještě
 // žádné porovnání není, od včerejška (série ještě nepropadla). Vrací délku a zda je v ní dnešek.
 func serieDni(casy []time.Time, ted time.Time) (int, bool) {
-	dny := map[string]bool{}
-	for _, c := range casy {
-		if !c.IsZero() {
-			dny[c.In(ted.Location()).Format("2006-01-02")] = true
-		}
-	}
-	den := ted
-	dnes := dny[den.Format("2006-01-02")]
-	if !dnes {
-		den = den.AddDate(0, 0, -1)
-	}
-	n := 0
-	for dny[den.Format("2006-01-02")] {
-		n++
-		den = den.AddDate(0, 0, -1)
-	}
-	return n, dnes
+	return oblibenost.SerieDni(casy, ted)
 }

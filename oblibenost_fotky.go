@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"playboy-app/internal/oblibenost"
 	"sort"
 	"strings"
 )
@@ -63,26 +64,7 @@ type parametryFotek struct {
 // Průměr k nejlepších hodnocených fotek alba (k = min(5, n − ⌊n/4⌋)), k, počet hodnocených fotek n a jejich
 // součet čtverců odchylek od průměru alba (rozptyl uvnitř alba)
 func skoreAlba(c srdickaAlba) (prumer float64, k, n int, ctverce float64) {
-	soucet := 0
-	for h, pocet := range c {
-		n += pocet
-		soucet += (h + 1) * pocet
-	}
-	if n == 0 {
-		return 0, 0, 0, 0
-	}
-	stred := float64(soucet) / float64(n)
-	for h, pocet := range c {
-		ctverce += float64(pocet) * (float64(h+1) - stred) * (float64(h+1) - stred)
-	}
-	k = min(topFotekAlba, n-n/4)
-	zbyva, vybrano := k, 0
-	for h := 4; h >= 0 && zbyva > 0; h-- {
-		vzit := min(zbyva, c[h])
-		vybrano += vzit * (h + 1)
-		zbyva -= vzit
-	}
-	return float64(vybrano) / float64(k), k, n, ctverce
+	return oblibenost.SkoreAlba(c)
 }
 
 func spocitatSkoreFotek(modelky []Modelka) (map[int]skoreFotek, parametryFotek) {
@@ -182,15 +164,12 @@ func spocitatSkoreFotek(modelky []Modelka) (map[int]skoreFotek, parametryFotek) 
 
 // „4,3“
 func cisloCesky(x float64, mist int) string {
-	return strings.Replace(fmt.Sprintf("%.*f", mist, x), ".", ",", 1)
+	return oblibenost.CisloCesky(x, mist)
 }
 
 // „srdíčka 3,5“, „bez srdíček“
 func textSlozkySrdicek(h float64) string {
-	if h <= 0 {
-		return "bez srdíček"
-	}
-	return "srdíčka " + strings.TrimSuffix(cisloCesky(h, 1), ",0")
+	return oblibenost.TextSlozkySrdicek(h)
 }
 
 // „fotky 4,3 (3 alba, 41 hodnocených fotek)“

@@ -30,7 +30,7 @@ func TestPametTematPrezijeSrdicko(t *testing.T) {
 
 	// Tag fotky: fotky se načtou znovu a tag je vidět
 	a.SetTagyFotek([]int{fotky[0].ID}, []string{"podpatky"}, nil)
-	if f := a.fotkyProTemata()[fotky[0].ID]; f == nil || !f.tagy["podpatky"] {
+	if f := a.fotkyProTemata()[fotky[0].ID]; f == nil || !f.maTag("podpatky") {
 		t.Fatal("po tagu se fotky pro témata nenačetly znovu")
 	}
 	// Údaj modelky: výsledky se zahodí

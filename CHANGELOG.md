@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.58] – 2026-11-04
+
+### Přidáno
+- **Profil modelky se širokoúhlým bannerem**: záhlaví profilu má na pozadí titulní fotku modelky (s jejím výřezem) přes celou šířku, od drobečků po lištu alb; miniatura v pruhu odpadla. Panel se při rolování už nezmenšuje.
+
+### Opraveno
+- **Rozpadlé záhlaví profilu**: lišta alb vyjížděla přes řádek s pořadím a odznaky (zdědila lepivý posun o 32 px) a nebyla přes celou šířku; v užším okně se jméno modelky zúžilo do ztracena a pásky čísel se překrývaly s pořadím. Teď jsou identita, pásky a akce v jednom řádku, v užším okně se pásky a akce zalomí pod jméno, lišta alb je vždy pod nimi. Banner po úpravě výřezu titulní fotky drží správný výřez.
+
 ## [1.2.57] – 2026-11-04
 
 ### Změněno

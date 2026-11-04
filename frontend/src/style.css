@@ -16215,6 +16215,8 @@ body.rezim-vyberu #detailView .poster {
 
 .hlavni-lista:has(> #profilPruh:not(.hidden)) > *:not(.profil-banner-pozadi) {
     position: relative;
+    /* Lišta alb má jinde lepivý záporný posun (top: -32px); v záhlaví profilu by vyjela přes pruh modelky */
+    top: auto;
     z-index: 1;
 }
 
@@ -16255,6 +16257,7 @@ body.rezim-vyberu #detailView .poster {
 .hlavni-lista #profilPruh {
     display: flex;
     flex: 1 1 auto;
+    flex-wrap: wrap;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
@@ -16275,14 +16278,17 @@ body.rezim-vyberu #detailView .poster {
 
 .hlavni-lista #profilPruh .pruh-obsah {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 14px;
+    gap: 8px 14px;
     min-width: 0;
     flex: 1 1 auto;
 }
 
+/* Jméno se nesmí zúžit do ztracena: v užším okně se pásky a akce zalomí pod něj */
 .hlavni-lista #profilPruh .pruh-identita {
     display: flex;
+    flex: 1 1 260px;
     flex-direction: column;
     gap: 3px;
     min-width: 0;
@@ -16358,13 +16364,13 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* Řádek 2 profilu: lišta alb přes celou šířku pod identitou a akcemi */
-.hlavni-lista #profilPruh + #albumNav {
+.hlavni-lista #profilPruh ~ #albumNav {
     flex: 1 1 100%;
     padding-top: 6px;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.hlavni-lista #profilPruh + #albumNav::before {
+.hlavni-lista #profilPruh ~ #albumNav::before {
     display: none;
 }
 

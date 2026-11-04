@@ -514,8 +514,9 @@ export function aktualizovatBannerProfilu(modelka) {
     if (!bannerImg) return;
     if (modelka.coverUrl) {
         bannerImg.src = adresaTitulni(modelka, true);
-        bannerImg.style.display = 'block';
+        // Výřez titulní fotky; cssText přepíše celý styl, proto display až po něm
         bannerImg.style.cssText = stylVyrezu(modelka);
+        bannerImg.style.display = 'block';
     } else {
         bannerImg.removeAttribute('src');
         bannerImg.style.display = 'none';

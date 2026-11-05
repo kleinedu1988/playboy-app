@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.62] – 2026-11-05
+
+### Změněno
+- **Fotka v záhlaví profilu**: místo úzkého pruhu z portrétu (u širokého okna bylo vidět jen čelo) je vpravo ostrá titulní fotka s výřezem jako na kartě v galerii a za ní přes celé záhlaví tatáž fotka rozmazaná.
+
+### Opraveno
+- **Rozložení záhlaví v širokém okně**: drobečky jsou vždy samostatným řádkem nahoře, pod nimi jméno, akce a dole lišta alb (v širokém okně se jméno řadilo vedle drobečků).
+- **Pásky Playmate, Cybergirl a čísel** jsou znovu plně růžové s bílým písmem.
+
 ## [1.2.61] – 2026-11-05
 
 ### Změněno

@@ -35,6 +35,8 @@ export const SABLONA_OKNA = `
       <div id="profilBannerPozadi" class="profil-banner-pozadi hidden" aria-hidden="true">
         <img id="profilBannerFoto" class="profil-banner-foto" src="" alt="" draggable="false" />
         <div class="profil-banner-prekryv"></div>
+        <!-- Ostrá titulní fotka s výřezem karty; široký banner by z portrétu ukázal jen pruh -->
+        <div class="profil-banner-popredi"><img id="profilBannerPopredi" src="" alt="" draggable="false" /></div>
       </div>
       <!-- Cesta zpět z profilu a stránky vydání (drobečky): odkud se přišlo › kde jsem, u profilu šipky na další modelku -->
       <nav class="logo hidden" aria-label="Kde jsem">

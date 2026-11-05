@@ -512,15 +512,23 @@ export function prepnoutUdaje(otevrit = !detailView.classList.contains('udaje-ot
 // Aktualizace fotografie v pozadí záhlaví (titulní fotka modelky s jejím výřezem)
 export function aktualizovatBannerProfilu(modelka) {
     const bannerImg = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerFoto'));
+    const popredi = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerPopredi'));
     if (!bannerImg) return;
     if (modelka.coverUrl) {
-        bannerImg.src = adresaTitulni(modelka, true);
-        // Výřez titulní fotky; cssText přepíše celý styl, proto display až po něm
-        bannerImg.style.cssText = stylVyrezu(modelka);
+        const adresa = adresaTitulni(modelka, true);
+        // Pozadí: celá fotka rozmazaná přes šířku záhlaví
+        bannerImg.src = adresa;
         bannerImg.style.display = 'block';
+        if (popredi) {
+            popredi.src = adresa;
+            // Výřez titulní fotky jako na kartě; cssText přepíše celý styl, proto display až po něm
+            popredi.style.cssText = stylVyrezu(modelka);
+            popredi.style.display = 'block';
+        }
     } else {
         bannerImg.removeAttribute('src');
         bannerImg.style.display = 'none';
+        if (popredi) { popredi.removeAttribute('src'); popredi.style.display = 'none'; }
     }
 }
 

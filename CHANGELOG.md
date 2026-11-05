@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.66] – 2026-11-05
+
+### Změněno
+- **V záhlaví profilu jen jedna fotka**: místo rozmazané kopie přes celou šířku a ostré fotky vpravo je profilová fotka jednou přes celé záhlaví. Její výřez (*Upravit výřez profilové fotky*) se upravuje přímo v širokém záhlaví, takže jde vybrat přesně tu část fotky, která má být vidět.
+
 ## [1.2.65] – 2026-11-05
 
 ### Změněno

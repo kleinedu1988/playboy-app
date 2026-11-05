@@ -512,54 +512,48 @@ export function prepnoutUdaje(otevrit = !detailView.classList.contains('udaje-ot
 // Aktualizace fotografie v pozadí záhlaví (titulní fotka modelky s jejím výřezem)
 export function aktualizovatBannerProfilu(modelka) {
     const bannerImg = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerFoto'));
-    const popredi = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerPopredi'));
     if (!bannerImg) return;
-    // V záhlaví je jen profilová fotka (titulní patří kartě a panelu Údaje); bez ní zůstane záhlaví bez fotky
+    // V záhlaví je jen profilová fotka (jedna přes celou šířku, s vlastním výřezem); titulní patří kartě a panelu
+    // Údaje. Bez profilové fotky zůstane záhlaví bez fotky.
     const id = modelka.id;
     if (stav.profilovaFotka?.modelkaId !== id) {
         stav.profilovaFotka = null;
-        nastavitFotkuBanneru(bannerImg, popredi, '', '');
+        nastavitFotkuBanneru(bannerImg, '', '');
     }
     GetProfilovaFotka(id).then(profilova => {
         if (stav.aktualniModelka?.id !== id) return;
         stav.profilovaFotka = profilova?.url ? { ...profilova, modelkaId: id } : null;
-        nastavitFotkuBanneru(bannerImg, popredi, profilova?.url ? obrazek(profilova.url, VELIKOST_TITULNI) : '',
+        nastavitFotkuBanneru(bannerImg, profilova?.url ? obrazek(profilova.url, VELIKOST_TITULNI) : '',
             profilova?.url ? stylVyrezu(profilova) : '');
     }).catch(() => {});
 }
 
-function nastavitFotkuBanneru(bannerImg, popredi, adresa, styl) {
+function nastavitFotkuBanneru(bannerImg, adresa, styl) {
     if (adresa) {
-        // Pozadí: celá fotka rozmazaná přes šířku záhlaví
         bannerImg.src = adresa;
+        // cssText přepíše celý styl, proto display až po něm
+        bannerImg.style.cssText = styl;
         bannerImg.style.display = 'block';
-        if (popredi) {
-            popredi.src = adresa;
-            // cssText přepíše celý styl, proto display až po něm
-            popredi.style.cssText = styl;
-            popredi.style.display = 'block';
-        }
     } else {
         bannerImg.removeAttribute('src');
         bannerImg.style.display = 'none';
-        if (popredi) { popredi.removeAttribute('src'); popredi.style.display = 'none'; }
     }
 }
 
-// Úprava výřezu profilové fotky přímo v záhlaví: záhlaví se rozbalí a fotka v něm vystoupí nad jméno a akce
+// Úprava výřezu profilové fotky přímo v záhlaví (fotka přes celou šířku): záhlaví se rozbalí a fotka vystoupí nad jméno a akce
 // (.uprava-profilove); tažením posun, kolečkem nebo posuvníkem přiblížení. Titulní fotky se úprava netýká.
 export function upravitVyrezProfilove() {
     const modelka = stav.aktualniModelka;
     const profilova = stav.profilovaFotka;
-    const popredi = /** @type {HTMLElement | null} */ (document.querySelector('.profil-banner-popredi'));
+    const banner = /** @type {HTMLElement | null} */ (document.getElementById('profilBannerPozadi'));
     const lista = document.querySelector('.hlavni-lista');
-    if (!modelka || !profilova || !popredi || !lista) return;
+    if (!modelka || !profilova || !banner || !lista) return;
     hlavniOblast.scrollTop = 0;
     document.querySelector('.navbar')?.classList.remove('profil-svinuty');
     lista.classList.add('uprava-profilove');
     upravitVyrez(modelka, {
-        karta: popredi,
-        ramFotky: popredi,
+        karta: banner,
+        ramFotky: banner,
         vyrezFotky: profilova,
         vychozi: { coverZoom: 1, coverX: 50, coverY: 22 },
         ulozit: (v) => SetProfilovyVyrez(modelka.id, v.coverZoom, v.coverX, v.coverY),

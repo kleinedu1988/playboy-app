@@ -40,7 +40,8 @@ Platí pro všechny verze od bety dál (zapsáno 23. 10. 2026, hlídá test `Tes
   shodu všech míst a datum v changelogu. Rozpracovaný stav může nést příponu `-dev`.
 - **Data:** kompatibilitu nehlídá číslo verze programu, ale verze schématu databáze a formátu exportu (viz „Jak se
   vydává po 1.0.0“). Úprava schématu nebo exportu obvykle znamená nové MINOR; na přání uživatele může vyjít i jako
-  PATCH v rozběhnuté řadě (průvodce hodnocením fotky: úprava č. 15 a export 12 v 1.2.5).
+  PATCH v rozběhnuté řadě (průvodce hodnocením fotky: úprava č. 15 a export 12 v 1.2.5; profilová fotka
+  oddělená od titulní: úprava č. 16 a export 13 v 1.2.65 – viz „Výjimka: profilová fotka“ níže).
 - **Značky v gitu** (`vX.Y.Z`) se nedělají; historii nese changelog a commity.
 
 ### Fáze do 1.0.0
@@ -216,6 +217,18 @@ do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají n�
 | 2.7 | Chytré výběry **[schéma]** | 2.0 | 1.14 |
 | 2.8 | Kvíz „Poznej playmate“ | 2.2 | 1.15 |
 | rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – | |
+
+### Výjimka: profilová fotka (1.2.65, 5. 11. 2026) **[schéma]**
+
+Na přání uživatele vyšla mimo plán jako PATCH v řadě 1.2 (stejně jako průvodce hodnocením fotky v 1.2.5):
+- **Co:** profilová fotka modelky (záhlaví profilu) je oddělená od titulní (karta v galerii, náhledy) a každá má
+  vlastní výřez. Záhlaví ukazuje jen profilovou, karta a panel Údaje jen titulní.
+- **Schéma – úprava č. 16:** sloupce `modelky.profil_fotka_id` (odkaz na `fotky.id`, smazaná fotka ho vynuluje)
+  a `profil_zoom`, `profil_x`, `profil_y`. Úprava přenese profilové fotky, které 1.2.63–1.2.64 dočasně ukládaly
+  mezi nastavení (klíče `profilova:<id>`, `profilova-vyrez:<id>`), a klíče smaže. Starší program databázi
+  ve schématu 16 otevře jen pro čtení.
+- **Export – verze 13:** `profilova_fotka` a `profilovy_vyrez` u modelky (`EXPORT.md`); starší program novější
+  export odmítne. Test zmrazení (`TestZmrazeniAlfy`) hlídá úpravu č. 16 a export 13.
 
 ### Doplňky z revize kódu (23. 10. 2026)
 

@@ -315,6 +315,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceHodnoceniPul,
 	(*App).migraceTagyFotek,
 	(*App).migracePruvodceFotek,
+	(*App).migraceProfilovaFotka,
 }
 
 func (a *App) migrovat() error {

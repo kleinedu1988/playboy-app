@@ -8,7 +8,7 @@
 # - hodnota - (pomlčka) údaj smaže, např. „narodnost: -“; překlep v klíči import opraví a vypíše
 # - řádky začínající # jsou komentáře, import je přeskočí
 
-verze: 12
+verze: 13
 
 modelky:
   # Modelka se všemi údaji
@@ -58,6 +58,13 @@ modelky:
       zoom: 1.5
       poloha_x: 50                          # 0–100 %
       poloha_y: 30
+
+    # Profilová fotka v záhlaví profilu (od verze 13): ID fotky z některého alba modelky; vlastní výřez
+    profilova_fotka: "1CenterfoldStrana1xxxxxxxxxxxxxxxx"
+    profilovy_vyrez:
+      zoom: 1.2
+      poloha_x: 50
+      poloha_y: 20
 
     # Co se modelky netýká (Přehled to nehlásí): titulni, zakladni, vzhled, zarazeni, centerfold, hodnoceni
     netyka_se: "hodnoceni"

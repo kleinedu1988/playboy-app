@@ -514,15 +514,17 @@ export function aktualizovatBannerProfilu(modelka) {
     const bannerImg = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerFoto'));
     const popredi = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerPopredi'));
     if (!bannerImg) return;
-    // Nejdřív titulní (je hned po ruce), profilová ji po načtení nahradí
-    nastavitFotkuBanneru(bannerImg, popredi, modelka.coverUrl ? adresaTitulni(modelka, true) : '', stylVyrezu(modelka));
-    stav.profilovaFotka = null;
+    // V záhlaví je jen profilová fotka (titulní patří kartě a panelu Údaje); bez ní zůstane záhlaví bez fotky
     const id = modelka.id;
+    if (stav.profilovaFotka?.modelkaId !== id) {
+        stav.profilovaFotka = null;
+        nastavitFotkuBanneru(bannerImg, popredi, '', '');
+    }
     GetProfilovaFotka(id).then(profilova => {
-        if (!profilova?.url || stav.aktualniModelka?.id !== id) return;
-        stav.profilovaFotka = profilova;
-        // Profilová fotka má vlastní výřez, oddělený od titulní
-        nastavitFotkuBanneru(bannerImg, popredi, obrazek(profilova.url, VELIKOST_TITULNI), stylVyrezu(profilova));
+        if (stav.aktualniModelka?.id !== id) return;
+        stav.profilovaFotka = profilova?.url ? { ...profilova, modelkaId: id } : null;
+        nastavitFotkuBanneru(bannerImg, popredi, profilova?.url ? obrazek(profilova.url, VELIKOST_TITULNI) : '',
+            profilova?.url ? stylVyrezu(profilova) : '');
     }).catch(() => {});
 }
 
@@ -544,39 +546,36 @@ function nastavitFotkuBanneru(bannerImg, popredi, adresa, styl) {
     }
 }
 
-// Úprava výřezu profilové fotky: v rámu titulní fotky v panelu Údaje (má stejný poměr 3 : 4 jako fotka
-// v záhlaví) se dočasně ukáže profilová; po uložení se obnoví záhlaví
+// Úprava výřezu profilové fotky přímo v záhlaví: záhlaví se rozbalí a fotka v něm vystoupí nad jméno a akce
+// (.uprava-profilove); tažením posun, kolečkem nebo posuvníkem přiblížení. Titulní fotky se úprava netýká.
 export function upravitVyrezProfilove() {
     const modelka = stav.aktualniModelka;
     const profilova = stav.profilovaFotka;
-    const ram = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.profile-cover-ram'));
-    if (!modelka || !profilova || !ram) return;
-    prepnoutUdaje(true);
-    ram.scrollIntoView({ block: 'nearest' });
+    const popredi = /** @type {HTMLElement | null} */ (document.querySelector('.profil-banner-popredi'));
+    const lista = document.querySelector('.hlavni-lista');
+    if (!modelka || !profilova || !popredi || !lista) return;
+    hlavniOblast.scrollTop = 0;
+    document.querySelector('.navbar')?.classList.remove('profil-svinuty');
+    lista.classList.add('uprava-profilove');
     upravitVyrez(modelka, {
-        karta: ram,
-        adresa: obrazek(profilova.url, VELIKOST_TITULNI),
+        karta: popredi,
+        ramFotky: popredi,
         vyrezFotky: profilova,
         vychozi: { coverZoom: 1, coverX: 50, coverY: 22 },
         ulozit: (v) => SetProfilovyVyrez(modelka.id, v.coverZoom, v.coverX, v.coverY),
-        poUlozeni: () => aktualizovatBannerProfilu(modelka),
+        poUkonceni: () => lista.classList.remove('uprava-profilove'),
     });
 }
 
-// Úprava výřezu titulní fotky v profilu: na velké fotce v panelu Údaje (panel se otevře); po uložení se obnoví
-// i miniatura nebo banner. Rám má při úpravě poměr stran karty v galerii, výřez tak odpovídá tomu, co karta ukáže.
+// Úprava výřezu titulní fotky v profilu: na velké fotce v panelu Údaje (panel se otevře). Rám má při úpravě poměr
+// stran karty v galerii, výřez tak odpovídá tomu, co karta ukáže; záhlaví (profilové fotky) se netýká.
 export function upravitVyrezProfilu() {
     const modelka = stav.aktualniModelka;
     const ram = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.profile-cover-ram'));
     if (!modelka || !ram) return;
     prepnoutUdaje(true);
     ram.scrollIntoView({ block: 'nearest' });
-    upravitVyrez(modelka, {
-        karta: ram,
-        poUlozeni: () => {
-            aktualizovatBannerProfilu(modelka);
-        },
-    });
+    upravitVyrez(modelka, { karta: ram });
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů

@@ -1,7 +1,7 @@
-# Formát exportu (verze 12)
+# Formát exportu (verze 13)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 12** (program 1.2.5 a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 13** (program 1.2.65 a novější).
 
 Od alfy (program 0.50.0) byl formát verze 7 **zmrazený**. Vědomé výjimky v betě jsou dvě: verze 8 přidala
 online pictorialy (typ alba `Pictorial online` s datem nafocení) a verze 9 hodnocení modelky po polovinách
@@ -68,6 +68,7 @@ vybery: [...]    # vlastní výběry fotek napříč sbírkou
 | `role` | Kategorie oddělené čárkou: `Playmate měsíce`, `Playmate roku 1998`, `Cyber Girl týdne` / `měsíce` / `roku`, `Coed týdne` / `měsíce`, `Muse`, `Celebrita`, `Modelka obálky`, `Jen ve speciálu`, `Creator`, `Online` (modelka jen na internetu); jiný text zůstane jako vlastní kategorie. Import rozumí i anglickým názvům (Playmate of the Year, Cybergirl of the Month). Playmate měsíce a Modelku obálky program odvodí i sám z centerfoldu a obálky |
 | `vystoupeni`, `pictorial_vydani` | Zařazení |
 | `titulni_fotka`, `vyrez` (`zoom`, `poloha_x`, `poloha_y`) | Titulní fotka a její výřez |
+| `profilova_fotka`, `profilovy_vyrez` (`zoom`, `poloha_x`, `poloha_y`) | Od verze 13: profilová fotka v záhlaví profilu (oddělená od titulní) a její výřez. Musí to být fotka z některého alba modelky (i sdíleného), jinak import ohlásí chybu; `-` profilovou fotku smaže. Výřez chybí, když je výchozí (`zoom: 1`, `poloha_x: 50`, `poloha_y: 22`) |
 | `netyka_se` | Údaje, které se modelky netýkají (Přehled je nehlásí), oddělené čárkou: `titulni`, `zakladni`, `vzhled`, `zarazeni`, `centerfold`, `hodnoceni` |
 | `alba` | Alba, ve kterých je modelka hlavní |
 
@@ -147,6 +148,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 13 | 1.2.65 | `profilova_fotka` a `profilovy_vyrez` u modelky: profilová fotka oddělená od titulní |
 | 12 | 1.2.5 | `pruvodce` u fotky: fotka prošla průvodcem hodnocení (číslo verze kroků) |
 | 11 | 1.2.0 | Další tagy fotek: `bazen`, `auto`, `bunny`, `dziny`, barevnost, světlo a výraz (starší program by je tiše zahodil, proto nová verze) |
 | 10 | 1.1.0 | `tagy` u fotky (pevný seznam pro tematické sezóny) |

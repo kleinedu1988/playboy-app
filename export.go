@@ -89,7 +89,11 @@ type exportModelka struct {
 	Odkazy          string         `yaml:"odkazy,omitempty"`
 	TitulniFotka    string         `yaml:"titulni_fotka,omitempty"`
 	Vyrez           *exportVyrez   `yaml:"vyrez,omitempty"`
-	Alba            []exportAlbum  `yaml:"alba,omitempty"`
+	// Profilová fotka (záhlaví profilu, oddělená od titulní) a její výřez, od verze 13; fotka musí být v některém
+	// albu modelky (i sdíleném), při importu se proto nastaví až po albech
+	ProfilovaFotka string        `yaml:"profilova_fotka,omitempty"`
+	ProfilovyVyrez *exportVyrez  `yaml:"profilovy_vyrez,omitempty"`
+	Alba           []exportAlbum `yaml:"alba,omitempty"`
 }
 
 type exportCover struct {
@@ -100,7 +104,7 @@ type exportCover struct {
 }
 
 // Verze formátu exportu, kterou program zapisuje a nejvýš umí načíst; popis je v EXPORT.md
-const verzeExportu = 12
+const verzeExportu = 13
 
 // Odkaz na modelku v exportu (další modelka alba, obálka, výběr): jméno, u jmen, která má víc modelek,
 // doplněné o číslo modelky v hranatých závorkách („Anna [12]“)
@@ -284,6 +288,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 			nadve := func(hodnota float64) float64 { return math.Round(hodnota*100) / 100 }
 			e.Vyrez = &exportVyrez{Zoom: nadve(m.CoverZoom), X: nadve(m.CoverX), Y: nadve(m.CoverY)}
 		}
+		e.ProfilovaFotka, e.ProfilovyVyrez = a.exportProfiloveFotky(m.ID)
 		data.Modelky = append(data.Modelky, e)
 	}
 
@@ -814,6 +819,14 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 		album     exportAlbum
 	}
 	var sdilena []sdileneAlbum
+	// Profilové fotky až po všech albech (fotka může být ve sdíleném albu jiné modelky)
+	type profilovaZImportu struct {
+		modelkaID int
+		jmeno     string
+		fotka     string
+		vyrez     *exportVyrez
+	}
+	var profilove []profilovaZImportu
 	for _, e := range data.Modelky {
 		jmeno := strings.TrimSpace(e.Jmeno)
 		if jmeno == "" {
@@ -932,6 +945,9 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 			a.importovatAlbum(m.ID, jmeno, album, vysledek)
 			sdilena = append(sdilena, sdileneAlbum{m.ID, album})
 		}
+		if strings.TrimSpace(e.ProfilovaFotka) != "" {
+			profilove = append(profilove, profilovaZImportu{m.ID, jmeno, strings.TrimSpace(e.ProfilovaFotka), e.ProfilovyVyrez})
+		}
 		if poImportuModelky != nil {
 			if err := poImportuModelky(); err != nil {
 				vysledek.Selhalo = fmt.Sprintf("Import selhal, nic se nezměnilo: %v", err)
@@ -957,6 +973,21 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 			} else {
 				vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("album „%s“: další modelku „%s“ nejde jednoznačně určit", s.album.Nazev, odkaz))
 			}
+		}
+	}
+
+	// Profilová fotka: ID z Disku některé fotky v albech modelky; pomlčka ji smaže
+	for _, p := range profilove {
+		if p.fotka == smazatUdaj {
+			a.SetProfilovaFotka(p.modelkaID, 0)
+			continue
+		}
+		if !a.nastavitProfilovouPodleDisku(p.modelkaID, p.fotka) {
+			vysledek.Chyby = append(vysledek.Chyby, p.jmeno+": profilová fotka není v žádném albu modelky")
+			continue
+		}
+		if p.vyrez != nil {
+			a.SetProfilovyVyrez(p.modelkaID, p.vyrez.Zoom, p.vyrez.X, p.vyrez.Y)
 		}
 	}
 

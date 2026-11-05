@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.65] – 2026-11-05
+
+### Změněno
+- **Profilová a titulní fotka úplně oddělené**: záhlaví profilu ukazuje jen profilovou fotku (bez ní zůstane bez fotky), karta v galerii, náhledy a panel Údaje jen titulní. Každá má vlastní výřez: *Upravit výřez titulní fotky* v panelu Údaje, *Upravit výřez profilové fotky* přímo v záhlaví (fotka v něm na dobu úpravy vystoupí nad jméno a akce).
+
+### Databáze a export (výjimka ze zmrazení na přání uživatele)
+- **Úprava schématu č. 16**: profilová fotka a její výřez jsou nově ve sloupcích tabulky modelek (`profil_fotka_id`, `profil_zoom`, `profil_x`, `profil_y`); smazaná fotka profilovou fotku zruší. Profilové fotky uložené v 1.2.63–1.2.64 mezi nastaveními se přenesou. Před úpravou se databáze sama zazálohuje; starší verze programu ji pak otevře jen pro čtení.
+- **Export verze 13**: u modelky přibyly `profilova_fotka` a `profilovy_vyrez` (popis v `EXPORT.md`). Výjimka je zapsaná v `ROADMAP.md` (oddíl „Výjimka: profilová fotka“).
+
 ## [1.2.64] – 2026-11-05
 
 ### Přidáno

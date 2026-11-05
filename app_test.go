@@ -2809,13 +2809,14 @@ func TestVyvojVCase(t *testing.T) {
 // v betě: online pictorialy (typ Pictorial online s datem nafocení) – úprava č. 12 a export verze 8; a druhá,
 // hodnocení modelky po polovinách srdíčka – úprava č. 13 a export verze 9. Po 1.0.0 nová úprava schématu nebo
 // verze exportu znamená novou MINOR verzi: 1.1.0 přidala tagy fotek (úprava č. 14, export verze 10). Výjimka na
-// přání uživatele: průvodce hodnocením fotky (úprava č. 15, export verze 12) vyšel v řadě 1.2 jako 1.2.5.
+// přání uživatele: průvodce hodnocením fotky (úprava č. 15, export verze 12) vyšel v řadě 1.2 jako 1.2.5; profilová
+// fotka oddělená od titulní (úprava č. 16, export verze 13) jako 1.2.65.
 func TestZmrazeniAlfy(t *testing.T) {
-	if len(migrace) != 15 {
-		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 15 (průvodce hodnocením fotky, 1.2.5)", len(migrace))
+	if len(migrace) != 16 {
+		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 16 (profilová fotka, 1.2.65)", len(migrace))
 	}
-	if verzeExportu != 12 {
-		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 12 (průvodce hodnocením fotky, 1.2.5)", verzeExportu)
+	if verzeExportu != 13 {
+		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 13 (profilová fotka, 1.2.65)", verzeExportu)
 	}
 }
 

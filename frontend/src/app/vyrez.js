@@ -11,15 +11,16 @@ import { potvrdit } from './formular-modelky';
 // Úprava výřezu titulní fotky přímo na kartě: tažením posun, kolečkem nebo posuvníkem přiblížení.
 // karta: jiný obal fotky než karta v galerii (titulní fotka v panelu Údaje profilu, app/profil.js); poUlozeni se
 // zavolá po uložení výřezu (profil podle něj obnoví miniaturu v pruhu). Pro jinou fotku než titulní (profilová)
-// adresa je fotka k úpravě, vyrezFotky její výřez, vychozi výchozí výřez a ulozit(vyrez) ho uloží.
-export function upravitVyrez(modelka, { karta = null, poUlozeni = () => {}, adresa = '', vyrezFotky = null,
+// adresa je fotka k úpravě, vyrezFotky její výřez, vychozi výchozí výřez a ulozit(vyrez) ho uloží. ramFotky:
+// rám s fotkou, když jím je sama karta (fotka v záhlaví profilu); poUkonceni se zavolá po uložení i zrušení.
+export function upravitVyrez(modelka, { karta = null, ramFotky = null, poUlozeni = () => {}, poUkonceni = () => {}, adresa = '', vyrezFotky = null,
     vychozi = { coverZoom: 1, coverX: 50, coverY: 50 },
     ulozit = (v) => SetCoverVyrez(modelka.id, v.coverZoom, v.coverX, v.coverY) } = {}) {
     if (stav.zrusitUpravuVyrezu) stav.zrusitUpravuVyrezu();
 
     const card = karta || gallery.querySelector(`.card[data-id="${modelka.id}"]`);
     if (!card) return;
-    const ram = card.querySelector('.card-image-wrap, .profile-cover');
+    const ram = ramFotky || card.querySelector('.card-image-wrap, .profile-cover');
     const img = ram.querySelector('img');
     // Při úpravě se přibližuje až čtyřikrát, karta proto dostane větší obrázek (profil ho má už velký)
     const puvodniAdresa = karta ? img.src : null;
@@ -113,8 +114,9 @@ export function upravitVyrez(modelka, { karta = null, poUlozeni = () => {}, adre
         panel.remove();
         if (puvodniAdresa) img.src = puvodniAdresa;
         else img.src = img.dataset.src = adresaTitulni(modelka);
-        img.style.cssText = stylVyrezu(modelka);
+        img.style.cssText = stylVyrezu(vyrezFotky || modelka);
         stav.zrusitUpravuVyrezu = null;
+        poUkonceni();
         if (meloFokus) /** @type {HTMLElement} */ (card).focus({ preventScroll: true });
     };
     stav.zrusitUpravuVyrezu = ukoncit;

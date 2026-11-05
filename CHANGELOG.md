@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.67] – 2026-11-05
+
+### Opraveno
+- **Úprava výřezu profilové fotky v záhlaví přesouvala celé okno**: záhlaví slouží k přesouvání okna, při úpravě výřezu teď tažení posouvá fotku. Po uložení nebo zrušení úpravy jde okno záhlavím přesouvat jako dřív.
+
 ## [1.2.66] – 2026-11-05
 
 ### Změněno

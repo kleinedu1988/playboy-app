@@ -21,6 +21,7 @@ import { htmlKostryAlb } from '../ui/kostra';
 import { zaznamenatProfil } from './zajem';
 import { upravitVyrez } from './vyrez';
 import { nastavitStav } from '../ui/volby';
+import { otevritLightbox } from './prohlizec';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -586,6 +587,12 @@ export function pripravit() {
 
     // Páska online alb přeskočí na první online album; pořadí v oblíbenosti otevře Hodnocení nebo Síň slávy (jako tlačítko v liště)
     profilPruh.addEventListener('click', (e) => {
+        // Centerfold je v záhlaví okna, mimo stránku profilu: plakát otevře přímo (obsluha dlaždic stránky ho nevidí)
+        const cf = /** @type {HTMLButtonElement | null} */ (e.target.closest('#centerfoldBtn'));
+        if (cf) {
+            if (!cf.disabled && cf.dataset.index) otevritLightbox(parseInt(cf.dataset.index));
+            return;
+        }
         if (e.target.closest('[data-udaje]')) {
             prepnoutUdaje();
             return;

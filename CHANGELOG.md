@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.59] – 2026-11-05
+
+### Změněno
+- **Sjednocený vzhled záhlaví profilu**: všechny prvky nad fotkou v banneru (drobečky, pořadí, pásky čísel, akce) mají jednotný průsvitný vzhled s rozmazaným pozadím a jemným okrajem; banner je světlejší a ztmavený jen pod jménem vlevo a u lišty alb, takže fotka modelky víc vynikne. Tlačítka akcí jsou v samostatném řádku uprostřed; sytě růžová zůstala jen u Přidat fotky a zvoleného alba. Pásky čísel jsou průsvitné s růžovým písmem místo plných růžových pruhů.
+
+### Opraveno
+- **Tlačítko Centerfold v profilu nic nedělalo**: po přesunu akcí do záhlaví okna kliknutí neobsloužil nikdo; teď znovu otevře centerfold v prohlížeči.
+
 ## [1.2.58] – 2026-11-04
 
 ### Přidáno

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.64] – 2026-11-05
+
+### Přidáno
+- **Vlastní výřez profilové fotky**: v nabídce ⋯ profilu je *Upravit výřez profilové fotky* (když modelka profilovou fotku má). Úprava probíhá stejně jako u titulní (tažením posun, kolečkem nebo posuvníkem přiblížení) v rámu fotky v panelu Údaje, kde se po dobu úpravy ukáže profilová fotka. Výřez profilové a titulní fotky jsou na sobě nezávislé; nová profilová fotka svůj starý výřez zruší. Výchozí výřez profilové fotky ukazuje její horní část.
+
 ## [1.2.63] – 2026-11-05
 
 ### Přidáno

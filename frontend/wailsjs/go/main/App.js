@@ -422,6 +422,10 @@ export function SetProfilovaFotka(arg1, arg2) {
   return window['go']['main']['App']['SetProfilovaFotka'](arg1, arg2);
 }
 
+export function SetProfilovyVyrez(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SetProfilovyVyrez'](arg1, arg2, arg3, arg4);
+}
+
 export function SetRotaceFotek(arg1, arg2) {
   return window['go']['main']['App']['SetRotaceFotek'](arg1, arg2);
 }

@@ -3,7 +3,7 @@ import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti } from './oblibenost';
 import { otevritOblibenost } from './prehled';
 import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
-import { GetFotografieModelky, GetOdznakyModelky, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek } from './backend';
+import { GetFotografieModelky, GetOdznakyModelky, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek, SetProfilovyVyrez } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -516,13 +516,13 @@ export function aktualizovatBannerProfilu(modelka) {
     if (!bannerImg) return;
     // Nejdřív titulní (je hned po ruce), profilová ji po načtení nahradí
     nastavitFotkuBanneru(bannerImg, popredi, modelka.coverUrl ? adresaTitulni(modelka, true) : '', stylVyrezu(modelka));
-    stav.profilovaFotka = '';
+    stav.profilovaFotka = null;
     const id = modelka.id;
-    GetProfilovaFotka(id).then(adresa => {
-        if (!adresa || stav.aktualniModelka?.id !== id) return;
-        stav.profilovaFotka = adresa;
-        // Profilová fotka nemá vlastní výřez: v rámečku 3 : 4 je vidět horní část s obličejem
-        nastavitFotkuBanneru(bannerImg, popredi, obrazek(adresa, VELIKOST_TITULNI), 'object-position: 50% 22%;');
+    GetProfilovaFotka(id).then(profilova => {
+        if (!profilova?.url || stav.aktualniModelka?.id !== id) return;
+        stav.profilovaFotka = profilova;
+        // Profilová fotka má vlastní výřez, oddělený od titulní
+        nastavitFotkuBanneru(bannerImg, popredi, obrazek(profilova.url, VELIKOST_TITULNI), stylVyrezu(profilova));
     }).catch(() => {});
 }
 
@@ -542,6 +542,25 @@ function nastavitFotkuBanneru(bannerImg, popredi, adresa, styl) {
         bannerImg.style.display = 'none';
         if (popredi) { popredi.removeAttribute('src'); popredi.style.display = 'none'; }
     }
+}
+
+// Úprava výřezu profilové fotky: v rámu titulní fotky v panelu Údaje (má stejný poměr 3 : 4 jako fotka
+// v záhlaví) se dočasně ukáže profilová; po uložení se obnoví záhlaví
+export function upravitVyrezProfilove() {
+    const modelka = stav.aktualniModelka;
+    const profilova = stav.profilovaFotka;
+    const ram = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.profile-cover-ram'));
+    if (!modelka || !profilova || !ram) return;
+    prepnoutUdaje(true);
+    ram.scrollIntoView({ block: 'nearest' });
+    upravitVyrez(modelka, {
+        karta: ram,
+        adresa: obrazek(profilova.url, VELIKOST_TITULNI),
+        vyrezFotky: profilova,
+        vychozi: { coverZoom: 1, coverX: 50, coverY: 22 },
+        ulozit: (v) => SetProfilovyVyrez(modelka.id, v.coverZoom, v.coverX, v.coverY),
+        poUlozeni: () => aktualizovatBannerProfilu(modelka),
+    });
 }
 
 // Úprava výřezu titulní fotky v profilu: na velké fotce v panelu Údaje (panel se otevře); po uložení se obnoví

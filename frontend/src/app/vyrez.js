@@ -10,8 +10,11 @@ import { potvrdit } from './formular-modelky';
 
 // Úprava výřezu titulní fotky přímo na kartě: tažením posun, kolečkem nebo posuvníkem přiblížení.
 // karta: jiný obal fotky než karta v galerii (titulní fotka v panelu Údaje profilu, app/profil.js); poUlozeni se
-// zavolá po uložení výřezu (profil podle něj obnoví miniaturu v pruhu)
-export function upravitVyrez(modelka, { karta = null, poUlozeni = () => {} } = {}) {
+// zavolá po uložení výřezu (profil podle něj obnoví miniaturu v pruhu). Pro jinou fotku než titulní (profilová)
+// adresa je fotka k úpravě, vyrezFotky její výřez, vychozi výchozí výřez a ulozit(vyrez) ho uloží.
+export function upravitVyrez(modelka, { karta = null, poUlozeni = () => {}, adresa = '', vyrezFotky = null,
+    vychozi = { coverZoom: 1, coverX: 50, coverY: 50 },
+    ulozit = (v) => SetCoverVyrez(modelka.id, v.coverZoom, v.coverX, v.coverY) } = {}) {
     if (stav.zrusitUpravuVyrezu) stav.zrusitUpravuVyrezu();
 
     const card = karta || gallery.querySelector(`.card[data-id="${modelka.id}"]`);
@@ -21,7 +24,9 @@ export function upravitVyrez(modelka, { karta = null, poUlozeni = () => {} } = {
     // Při úpravě se přibližuje až čtyřikrát, karta proto dostane větší obrázek (profil ho má už velký)
     const puvodniAdresa = karta ? img.src : null;
     if (modelka.coverUrl && !karta) img.src = img.dataset.src = obrazek(modelka.coverUrl, VELIKOST_TITULNI);
-    const vyrez = { coverZoom: modelka.coverZoom, coverX: modelka.coverX, coverY: modelka.coverY };
+    if (adresa) img.src = adresa;
+    const zdroj = vyrezFotky || modelka;
+    const vyrez = { coverZoom: zdroj.coverZoom, coverX: zdroj.coverX, coverY: zdroj.coverY };
 
     card.classList.add('editing');
     // Ovládání v plovoucím panelu přímo na fotce; jméno pod fotkou zůstává
@@ -120,13 +125,13 @@ export function upravitVyrez(modelka, { karta = null, poUlozeni = () => {} } = {
         e.stopPropagation();
 
         if (akce === 'reset') {
-            Object.assign(vyrez, { coverZoom: 1, coverX: 50, coverY: 50 });
+            Object.assign(vyrez, vychozi);
             vykreslit();
         } else if (akce === 'zrusit') {
             ukoncit();
         } else if (akce === 'ulozit') {
-            if (await SetCoverVyrez(modelka.id, vyrez.coverZoom, vyrez.coverX, vyrez.coverY)) {
-                Object.assign(modelka, vyrez);
+            if (await ulozit(vyrez)) {
+                Object.assign(zdroj, vyrez);
                 poUlozeni();
             }
             ukoncit();

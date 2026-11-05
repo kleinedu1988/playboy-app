@@ -3,7 +3,7 @@ import { VYCHOZI_EDICE } from '../lib/format';
 // Sdílený stav rozhraní: hodnoty, které čte a mění víc modulů
 export const stav = {
     aktualniModelka: null,
-    profilovaFotka: '', // adresa profilové fotky otevřené modelky (záhlaví profilu); prázdná = záhlaví ukazuje titulní
+    profilovaFotka: null, // profilová fotka otevřené modelky s výřezem ({ url, coverZoom, coverX, coverY }); null = záhlaví ukazuje titulní
     nacteneModelky: [],
     seznamProfilu: null, // id modelek seznamu, ze kterého se otevřel profil (šipky ‹ › a „3 z 22“); null = bez listování
     editovanaModelka: null,

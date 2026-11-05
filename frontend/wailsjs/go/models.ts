@@ -1133,6 +1133,24 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class ProfilovaFotka {
+	    url: string;
+	    coverZoom: number;
+	    coverX: number;
+	    coverY: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new ProfilovaFotka(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.url = source["url"];
+	        this.coverZoom = source["coverZoom"];
+	        this.coverX = source["coverX"];
+	        this.coverY = source["coverY"];
+	    }
+	}
 	export class PropadleTema {
 	    klic: string;
 	    nazev: string;

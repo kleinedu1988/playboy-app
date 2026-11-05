@@ -21,25 +21,37 @@ func TestProfilovaFotka(t *testing.T) {
 	a.AddBulkPhotos(m.ID, "Album", "Pictorial", odkazA)
 	foto := a.GetFotografieModelky(m.ID)[0].ID
 
-	if a.GetProfilovaFotka(m.ID) != "" {
+	if a.GetProfilovaFotka(m.ID) != nil {
 		t.Fatal("modelka bez profilové fotky ji má")
 	}
 	if a.SetProfilovaFotka(cizi.ID, foto) {
 		t.Fatal("cizí fotka se stala profilovou")
 	}
-	if !a.SetProfilovaFotka(m.ID, foto) || !strings.Contains(a.GetProfilovaFotka(m.ID), idA) {
-		t.Fatalf("profilovou fotku se nepodařilo nastavit: %q", a.GetProfilovaFotka(m.ID))
+	if a.SetProfilovyVyrez(m.ID, 2, 30, 40) {
+		t.Fatal("výřez se uložil modelce bez profilové fotky")
 	}
-	// Podruhé (přepis) projde také
 	if !a.SetProfilovaFotka(m.ID, foto) {
-		t.Fatal("opětovné nastavení profilové fotky selhalo")
+		t.Fatal("profilovou fotku se nepodařilo nastavit")
+	}
+	if p := a.GetProfilovaFotka(m.ID); p == nil || !strings.Contains(p.URL, idA) || p.CoverZoom != 1 || p.CoverY != vychoziProfilovaY {
+		t.Fatalf("profilová fotka: %+v", p)
+	}
+	if !a.SetProfilovyVyrez(m.ID, 9, 30, -5) {
+		t.Fatal("výřez profilové fotky se neuložil")
+	}
+	if p := a.GetProfilovaFotka(m.ID); p.CoverZoom != 4 || p.CoverX != 30 || p.CoverY != 0 {
+		t.Fatalf("výřez profilové fotky: %+v", p)
+	}
+	// Podruhé (přepis) projde také a starý výřez zruší
+	if !a.SetProfilovaFotka(m.ID, foto) || a.GetProfilovaFotka(m.ID).CoverZoom != 1 {
+		t.Fatal("opětovné nastavení profilové fotky selhalo nebo nechalo starý výřez")
 	}
 	for _, x := range a.GetModelky("") {
-		if x.ID == m.ID && x.CoverID != "" {
-			t.Fatal("profilová fotka změnila titulní")
+		if x.ID == m.ID && (x.CoverZoom != 1 || x.CoverX != 50) {
+			t.Fatal("výřez profilové fotky změnil výřez titulní")
 		}
 	}
-	if !a.SetProfilovaFotka(m.ID, 0) || a.GetProfilovaFotka(m.ID) != "" {
+	if !a.SetProfilovaFotka(m.ID, 0) || a.GetProfilovaFotka(m.ID) != nil {
 		t.Fatal("profilovou fotku se nepodařilo zrušit")
 	}
 }

@@ -250,6 +250,7 @@ export const SetSpojeniAlba = /** @type {typeof App.SetSpojeniAlba} */ (obalit('
 export const SetStavVydani = /** @type {typeof App.SetStavVydani} */ (obalit('SetStavVydani'));
 export const SetTitulniFotka = /** @type {typeof App.SetTitulniFotka} */ (obalit('SetTitulniFotka'));
 export const SetProfilovaFotka = /** @type {typeof App.SetProfilovaFotka} */ (obalit('SetProfilovaFotka'));
+export const SetProfilovyVyrez = /** @type {typeof App.SetProfilovyVyrez} */ (obalit('SetProfilovyVyrez'));
 export const GetProfilovaFotka = /** @type {typeof App.GetProfilovaFotka} */ (obalit('GetProfilovaFotka'));
 export const SetVydaniAlba = /** @type {typeof App.SetVydaniAlba} */ (obalit('SetVydaniAlba'));
 export const SetVydaniInfo = /** @type {typeof App.SetVydaniInfo} */ (obalit('SetVydaniInfo'));

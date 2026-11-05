@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.61] – 2026-11-05
+
+### Změněno
+- **Nižší záhlaví profilu**: rozbalené záhlaví nahoře na stránce je o třetinu nižší. Drobečky jsou nahoře, jméno a akce pod fotkou a lišta alb dole. Po odrolování se dál svine do kompaktní podoby se sklem.
+
 ## [1.2.60] – 2026-11-05
 
 ### Změněno

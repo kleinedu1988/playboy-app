@@ -17442,15 +17442,15 @@ body.rezim-vyberu #detailView .poster {
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
 
-/* ===== Profil: výchozí stav záhlaví nahoře na stránce – dvojnásobná výška a bez skla, aby byla fotka v banneru
+/* ===== Profil: výchozí stav záhlaví nahoře na stránce – vyšší a bez skla, aby byla fotka v banneru
    vidět; po odrolování (.profil-svinuty, app/profil.js) se plynule zmenší na kompaktní pruh se sklem výše ===== */
 .hlavni-lista #profilPruh {
     transition: margin-top 0.25s ease;
 }
 
 .navbar:not(.profil-svinuty) .hlavni-lista #profilPruh {
-    /* Volné místo nad jménem: banner je zhruba dvakrát vyšší */
-    margin-top: 200px;
+    /* Volné místo nad jménem: drobečky nahoře, jméno, akce a alba dole; banner zhruba o třetinu vyšší než svinutý */
+    margin-top: 62px;
 }
 
 /* Bez skla: prvky jen s textem a stínem přímo na fotce */

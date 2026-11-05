@@ -17441,3 +17441,50 @@ body.rezim-vyberu #detailView .poster {
     color: rgba(240, 240, 245, 0.82);
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
 }
+
+/* ===== Profil: výchozí stav záhlaví nahoře na stránce – dvojnásobná výška a bez skla, aby byla fotka v banneru
+   vidět; po odrolování (.profil-svinuty, app/profil.js) se plynule zmenší na kompaktní pruh se sklem výše ===== */
+.hlavni-lista #profilPruh {
+    transition: margin-top 0.25s ease;
+}
+
+.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh {
+    /* Volné místo nad jménem: banner je zhruba dvakrát vyšší */
+    margin-top: 200px;
+}
+
+/* Bez skla: prvky jen s textem a stínem přímo na fotce */
+.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .pruh-radek > .profile-poradi,
+.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .panel-paska,
+.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .profile-titul,
+.navbar:not(.profil-svinuty) .hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:not(.akcent) {
+    border-color: transparent;
+    background-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9);
+}
+
+.navbar:not(.profil-svinuty) .hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:not(.akcent):hover {
+    background-color: rgba(14, 14, 18, 0.4);
+}
+
+.navbar:not(.profil-svinuty) .hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba svg {
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
+}
+
+/* Fotka bez ztmavení nahoře; tmavne jen dolní část pod jménem, akcemi a lištou alb */
+.navbar:not(.profil-svinuty) .profil-banner-foto {
+    filter: none;
+}
+
+.navbar:not(.profil-svinuty) .profil-banner-prekryv {
+    background: linear-gradient(to bottom, rgba(14, 14, 18, 0.35) 0%, rgba(14, 14, 18, 0) 18%, rgba(14, 14, 18, 0) 45%, rgba(14, 14, 18, 0.55) 72%, rgba(14, 14, 18, 0.92) 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hlavni-lista #profilPruh {
+        transition: none;
+    }
+}

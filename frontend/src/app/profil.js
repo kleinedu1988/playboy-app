@@ -554,6 +554,15 @@ export function pripravit() {
     document.getElementById('podmenu').before(listaAlb.nav);
     // Pruh s modelkou je součástí panelu s drobečky (nad lištou alb): jeden panel profilu v hlavičce se širokoúhlým bannerem.
     listaAlb.nav.before(profilPruh);
+    // Nahoře na stránce je záhlaví vysoké a bez skla (fotka v banneru je vidět); po odrolování se zmenší na
+    // kompaktní pruh se sklem. Mezera mezi prahy, aby záhlaví na hranici neblikalo.
+    const navbar = document.querySelector('.navbar');
+    hlavniOblast.addEventListener('scroll', () => {
+        if (detailView.classList.contains('hidden')) return;
+        const odrolovano = hlavniOblast.scrollTop;
+        if (odrolovano > 60) navbar.classList.add('profil-svinuty');
+        else if (odrolovano < 20) navbar.classList.remove('profil-svinuty');
+    }, { passive: true });
     // Jméno v pruhu u profilu otevřeného ze seznamu otevře nabídku modelek seznamu (jako dřív jméno v drobečcích)
     profilPruhObsah.addEventListener('click', (e) => {
         if (!/** @type {HTMLElement} */ (e.target).closest('.pruh-identita h2')) return;

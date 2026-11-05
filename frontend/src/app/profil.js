@@ -3,7 +3,7 @@ import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti } from './oblibenost';
 import { otevritOblibenost } from './prehled';
 import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
-import { GetFotografieModelky, GetOdznakyModelky, GetTitulySezonModelky, SetPoradiFotek } from './backend';
+import { GetFotografieModelky, GetOdznakyModelky, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -11,7 +11,7 @@ import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { detailView, gallery, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
-import { VELIKOST_NAHLEDU, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
+import { VELIKOST_NAHLEDU, VELIKOST_TITULNI, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { rezimVyberu, selectionBar, zrusitVyber } from './vyber';
@@ -514,15 +514,27 @@ export function aktualizovatBannerProfilu(modelka) {
     const bannerImg = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerFoto'));
     const popredi = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerPopredi'));
     if (!bannerImg) return;
-    if (modelka.coverUrl) {
-        const adresa = adresaTitulni(modelka, true);
+    // Nejdřív titulní (je hned po ruce), profilová ji po načtení nahradí
+    nastavitFotkuBanneru(bannerImg, popredi, modelka.coverUrl ? adresaTitulni(modelka, true) : '', stylVyrezu(modelka));
+    stav.profilovaFotka = '';
+    const id = modelka.id;
+    GetProfilovaFotka(id).then(adresa => {
+        if (!adresa || stav.aktualniModelka?.id !== id) return;
+        stav.profilovaFotka = adresa;
+        // Profilová fotka nemá vlastní výřez: v rámečku 3 : 4 je vidět horní část s obličejem
+        nastavitFotkuBanneru(bannerImg, popredi, obrazek(adresa, VELIKOST_TITULNI), 'object-position: 50% 22%;');
+    }).catch(() => {});
+}
+
+function nastavitFotkuBanneru(bannerImg, popredi, adresa, styl) {
+    if (adresa) {
         // Pozadí: celá fotka rozmazaná přes šířku záhlaví
         bannerImg.src = adresa;
         bannerImg.style.display = 'block';
         if (popredi) {
             popredi.src = adresa;
-            // Výřez titulní fotky jako na kartě; cssText přepíše celý styl, proto display až po něm
-            popredi.style.cssText = stylVyrezu(modelka);
+            // cssText přepíše celý styl, proto display až po něm
+            popredi.style.cssText = styl;
             popredi.style.display = 'block';
         }
     } else {

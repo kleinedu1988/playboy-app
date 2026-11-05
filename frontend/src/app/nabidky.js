@@ -1,11 +1,11 @@
 // Kontextové nabídky pravého tlačítka
 import { contextMenu, otevritKontextovouNabidku, zavritKontextovouNabidku } from '../ui/nabidka';
-import { OdebratModelkuZAlba, OdebratZVyberu, SetSpojeniAlba, ZrusitPoradiAlba } from './backend';
+import { OdebratModelkuZAlba, OdebratZVyberu, SetProfilovaFotka, SetSpojeniAlba, ZrusitPoradiAlba } from './backend';
 import { nazevAlba, nazevVydani, rozlozitVydani } from '../lib/format';
 import { stav } from './stav';
 import { calendar, covers, detailView, issueView, searchInput, wall } from './prvky';
 import { zpet } from './navigace';
-import { nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba, upravitVyrezProfilu } from './profil';
+import { aktualizovatBannerProfilu, nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba, upravitVyrezProfilu } from './profil';
 import { obnovitStranku, otevritVydani, upravitVydani } from './vydani';
 import { nabidkaCisla, nabidkaRoku } from './kalendar';
 import { nacistCovery } from './stena';
@@ -221,6 +221,10 @@ function nabidkaModelky(x, y) {
     const centerfoldy = centerfoldyProfilu();
     otevritKontextovouNabidku(x, y, [
         { text: 'Upravit výřez titulní fotky', akce: upravitVyrezProfilu },
+        ...(stav.profilovaFotka ? [{ text: 'Zrušit profilovou fotku (záhlaví ukáže titulní)', akce: async () => {
+            if (!await SetProfilovaFotka(modelka.id, 0)) return;
+            aktualizovatBannerProfilu(modelka);
+        } }] : []),
         ...(stav.aktualniPolozky.length ? [{ text: 'Promítat všechny fotky', akce: () => otevritLightbox(0, true) }] : []),
         ...centerfoldy.map(a => polozkaCenterfoldu(a, x, y)),
         ...(stav.aktualniPolozky.length ? [rezimVyberu()

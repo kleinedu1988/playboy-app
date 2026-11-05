@@ -100,6 +100,8 @@ export function GetPrehledOblibenosti():Promise<main.PrehledOblibenosti>;
 
 export function GetPrehledVydani():Promise<Array<sbirka.Fotografie>>;
 
+export function GetProfilovaFotka(arg1:number):Promise<string>;
+
 export function GetSablonaObrazku():Promise<string>;
 
 export function GetSezona():Promise<main.Sezona>;
@@ -213,6 +215,8 @@ export function SetObdobiSezony(arg1:string,arg2:string,arg3:number):Promise<boo
 export function SetPopisAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
 
 export function SetPoradiFotek(arg1:Array<number>):Promise<boolean>;
+
+export function SetProfilovaFotka(arg1:number,arg2:number):Promise<boolean>;
 
 export function SetRotaceFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 

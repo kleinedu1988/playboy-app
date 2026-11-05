@@ -6,7 +6,7 @@ import { detailView } from './prvky';
 import { otevritProfilPodleId } from './cover';
 import { pridatDoVyberu } from './nejlepsi';
 import { obnovitCoJeVidet, smazatFotku } from './sprava';
-import { SetTitulniFotka } from './backend';
+import { SetProfilovaFotka, SetTitulniFotka } from './backend';
 import { oznamit } from '../ui/oznameni';
 import { lightbox, zavritLightbox } from './prohlizec';
 import { kopirovatText, odkazNaDisk } from './ulozeni';
@@ -38,6 +38,12 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
             oznamit('Titulní fotka změněna. Výřez na kartě se vrátil na výchozí.');
             if (zProfilu) otevritProfilPodleId(proModelku);
             else obnovitCoJeVidet();
+        } }] : []),
+        // Profilová fotka (záhlaví profilu) je oddělená od titulní (karta v galerii)
+        ...(proModelku && stranky.length === 1 ? [{ text: 'Nastavit jako profilovou fotku', akce: async () => {
+            if (!await SetProfilovaFotka(proModelku, prvni.id)) return;
+            oznamit('Profilová fotka změněna. Titulní fotka na kartě zůstala.');
+            if (zProfilu) otevritProfilPodleId(proModelku);
         } }] : []),
         { text: 'Přidat do výběru…', akce: () => pridatDoVyberu(stranky.map(f => f.id)) },
         null,

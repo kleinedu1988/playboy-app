@@ -186,6 +186,10 @@ export function GetPrehledVydani() {
   return window['go']['main']['App']['GetPrehledVydani']();
 }
 
+export function GetProfilovaFotka(arg1) {
+  return window['go']['main']['App']['GetProfilovaFotka'](arg1);
+}
+
 export function GetSablonaObrazku() {
   return window['go']['main']['App']['GetSablonaObrazku']();
 }
@@ -412,6 +416,10 @@ export function SetPopisAlba(arg1, arg2, arg3, arg4, arg5) {
 
 export function SetPoradiFotek(arg1) {
   return window['go']['main']['App']['SetPoradiFotek'](arg1);
+}
+
+export function SetProfilovaFotka(arg1, arg2) {
+  return window['go']['main']['App']['SetProfilovaFotka'](arg1, arg2);
 }
 
 export function SetRotaceFotek(arg1, arg2) {

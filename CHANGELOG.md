@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.63] – 2026-11-05
+
+### Přidáno
+- **Profilová fotka oddělená od titulní**: v nabídce fotky (pravé tlačítko nebo ⋯ na dlaždici, i v prohlížeči) je nová položka *Nastavit jako profilovou fotku*. Profilová fotka se ukazuje v záhlaví profilu, titulní zůstává na kartě v galerii a v náhledech. Bez profilové fotky ukazuje záhlaví jako dosud titulní; v nabídce ⋯ profilu jde profilová fotka zrušit (*Zrušit profilovou fotku*). Schéma databáze se nemění (údaj je mezi nastaveními).
+
 ## [1.2.62] – 2026-11-05
 
 ### Změněno

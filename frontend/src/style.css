@@ -17560,3 +17560,62 @@ body.rezim-vyberu #detailView .poster {
     bottom: 12px;
     width: 260px;
 }
+
+/* ===== Profil 1.2.68: jméno s pořadím a odznaky dole vlevo nad lištou alb (jako titulek fotky), akce vpravo
+   na stejné úrovni, pásky čísel nahoře vpravo naproti drobečkům; střed záhlaví zůstává fotce ===== */
+.hlavni-lista:has(> #profilPruh:not(.hidden)) > #profilPruh {
+    /* Pásky se umisťují k celému záhlaví, ne k pruhu */
+    position: static;
+    align-items: flex-end;
+    column-gap: 24px;
+}
+
+.hlavni-lista #profilPruh .pruh-identita,
+.hlavni-lista #profilPruh .profil-akce {
+    position: relative;
+    z-index: 1;
+}
+
+.hlavni-lista #profilPruh .pruh-obsah {
+    position: static;
+    flex: 1 1 320px;
+}
+
+/* Řádek se jménem a akcemi je nižší než dřívější dva řádky: víc místa nad ním, záhlaví zůstává stejně vysoké */
+.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh {
+    margin-top: 96px;
+}
+
+.hlavni-lista #profilPruh .profil-akce {
+    flex: 0 1 auto;
+    justify-content: flex-end;
+    margin-left: auto;
+}
+
+.hlavni-lista #profilPruh .pruh-pasky {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    z-index: 1;
+    justify-content: flex-end;
+    max-width: 45%;
+}
+
+.hlavni-lista #profilPruh .pruh-identita {
+    gap: 6px;
+}
+
+.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .pruh-jmeno h2 {
+    font-size: 32px;
+    letter-spacing: 0.1em;
+    line-height: 1.1;
+}
+
+.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .pruh-jmeno .hearts {
+    font-size: 18px;
+}
+
+/* Pořadí bez rámečku, jen text vedle titulů a odznaků */
+.hlavni-lista #profilPruh .pruh-radek > .profile-poradi {
+    padding-left: 0;
+}

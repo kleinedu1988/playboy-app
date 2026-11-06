@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.68] – 2026-11-06
+
+### Změněno
+- **Nové rozložení záhlaví profilu**: jméno se srdíčky, pořadím, tituly a odznaky je dole vlevo nad lištou alb jako titulek fotky (větší písmo), akce jsou vpravo na stejné úrovni a pásky čísel (Playmate, Cybergirl) nahoře vpravo naproti drobečkům. Střed záhlaví tak zůstává volný pro fotku. Po odrolování je záhlaví nižší (jméno i akce v jednom pásu); v úzkém okně se akce zalomí pod jméno.
+
 ## [1.2.67] – 2026-11-05
 
 ### Opraveno

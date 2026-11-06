@@ -56,7 +56,7 @@ export async function doplnitClankyModelky(modelka) {
     if (!udaje) {
         udaje = document.createElement('div');
         udaje.className = 'udaje-modelky';
-        hlavicka.querySelector('.profile-tags').after(udaje);
+        (hlavicka.querySelector('.udaje-hlava') || hlavicka.querySelector('.profile-cover-ram')).after(udaje);
     }
     udaje.insertAdjacentHTML('beforeend', `<section class="udaje-blok udaje-clanky"><h4>Články</h4>
         ${clanky.map(c => `<button type="button" class="profil-clanek" data-clanek-cisla="${esc(c.vydani)}" data-id="${c.id}" title="Otevřít článek v čísle">

@@ -71,9 +71,10 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     // Kategorie a výskyt se odvozují z vydání a alb; spočítají se jednou pro údaje i pro pásky.
     const kategorie = kategorieModelky(modelka);
     const vyskyt = vyskytModelky(modelka);
+    // Kategorie jsou v hlavičce panelu vedle fotky (kdo modelka je), ne mezi řádky Playboy
+    const htmlKategorii = kategorie.map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join('');
     const playboy = [
         ['Vydání', vydani],
-        ['Kategorie', kategorie.map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join(' ')],
         ['Na obálce', (modelka.obalky || []).map(htmlStitkuVydani).join(' ')],
         ['Výskyt', vyskyt ? `<span class="udaje-znamka">${VYSKYT[vyskyt]}</span>` : ''],
     ].filter(([, hodnota]) => hodnota);
@@ -152,17 +153,29 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     aktualizovatBannerProfilu(modelka);
     // Jméno otevře nabídku modelek seznamu, když se profil otevřel ze seznamu (galerie, pořadí…)
     profilPruhObsah.querySelector('.pruh-identita')?.classList.toggle('s-nabidkou', (stav.seznamProfilu?.length || 0) > 1);
+    // Panel Údaje: nahoře velká titulní fotka (jak ji ukazuje karta v galerii), pod ní další jména a kategorie;
+    // dál údaje Playboy, Osobní, Vzhled (a články), text O modelce (markdown), tagy a odkazy. Tagy jsou sbalené
+    // na dva řádky, zbytek rozbalí tlačítko (ukáže se, jen když se nevejdou).
     modelHeader.innerHTML = `
         <div class="profile-cover-ram">
             <div class="profile-cover">${titulni}</div>
             <button type="button" class="vyrez-btn" data-upravit-vyrez title="Upravit výřez titulní fotky (jak ji ukazuje karta v galerii)" aria-label="Upravit výřez titulní fotky"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
         </div>
-        ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
-        <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
+        ${dalsiJmena.length || htmlKategorii ? `<div class="udaje-hlava">
+            ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
+            ${htmlKategorii ? `<div class="udaje-kategorie">${htmlKategorii}</div>` : ''}
+        </div>` : ''}
         ${bloky.length ? `<div class="udaje-modelky">${bloky.join('')}</div>` : ''}
-        ${modelka.poznamka ? `<div class="profile-note">${formatMarkdown(modelka.poznamka)}</div>` : ''}
-        ${htmlOdkazu(modelka.odkazy)}
+        ${modelka.poznamka ? `<section class="udaje-blok udaje-poznamka"><h4>O modelce</h4><div class="profile-note">${formatMarkdown(modelka.poznamka)}</div></section>` : ''}
+        ${tagy.length ? `<section class="udaje-blok udaje-tagy"><h4>Tagy <span class="udaje-pocet">${tagy.length}</span></h4>
+            <div class="profile-tags">${tagy.map(t => `<button class="tag" data-hledat="${esc(t)}" title="Vyhledat modelky s tímto tagem">${esc(t)}</button>`).join('')}</div>
+            <button type="button" class="tagy-rozbalit hidden" data-rozbalit-tagy aria-expanded="false">Všechny tagy</button>
+        </section>` : ''}
+        ${htmlOdkazu(modelka.odkazy) ? `<section class="udaje-blok udaje-odkazy"><h4>Odkazy</h4>${htmlOdkazu(modelka.odkazy)}</section>` : ''}
     `;
+    // Tlačítko rozbalení tagů jen tehdy, když se do dvou řádků nevejdou
+    const poleTagu = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.udaje-tagy .profile-tags'));
+    if (poleTagu) modelHeader.querySelector('[data-rozbalit-tagy]').classList.toggle('hidden', poleTagu.scrollHeight <= poleTagu.clientHeight + 2);
 
     await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitOdznaky(modelka.id)]);
 }
@@ -576,6 +589,14 @@ export function upravitVyrezProfilu() {
 export function pripravit() {
     modelHeader.addEventListener('click', (e) => {
         if (e.target.closest('[data-upravit-vyrez]')) upravitVyrezProfilu();
+        // Tagy: rozbalení a sbalení dlouhého seznamu
+        const rozbalit = /** @type {HTMLElement | null} */ (e.target.closest('[data-rozbalit-tagy]'));
+        if (rozbalit) {
+            const tagy = rozbalit.parentElement.querySelector('.profile-tags');
+            const rozbaleno = tagy.classList.toggle('rozbalene');
+            rozbalit.setAttribute('aria-expanded', String(rozbaleno));
+            rozbalit.textContent = rozbaleno ? 'Méně tagů' : 'Všechny tagy';
+        }
     });
     let otevreneUdaje = false;
     try { otevreneUdaje = localStorage.getItem(KLIC_UDAJU) === '1'; } catch { /* výchozí zavřené */ }
@@ -595,31 +616,6 @@ export function pripravit() {
         if (odrolovano > 60) navbar.classList.add('profil-svinuty');
         else if (odrolovano < 20) navbar.classList.remove('profil-svinuty');
     }, { passive: true });
-    // Holografická karta v záhlaví: duha a odlesk se přelévají podle polohy myši nad záhlavím (style.css,
-    // --holo-x a --holo-y); jednou za snímek, po odjetí myši zpět do klidové polohy. Bez animací (omezení pohybu)
-    // zůstanou v klidu.
-    const banner = document.getElementById('profilBannerPozadi');
-    const lista = banner?.parentElement;
-    if (banner && lista && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        let cekajici = null;
-        lista.addEventListener('pointermove', (e) => {
-            if (banner.classList.contains('hidden') || banner.classList.contains('editing')) return;
-            const rect = banner.getBoundingClientRect();
-            if (!rect.width || !rect.height) return;
-            cekajici = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
-            requestAnimationFrame(() => {
-                if (!cekajici) return;
-                banner.style.setProperty('--holo-x', `${Math.round(Math.min(1, Math.max(0, cekajici.x)) * 100)}%`);
-                banner.style.setProperty('--holo-y', `${Math.round(Math.min(1, Math.max(0, cekajici.y)) * 100)}%`);
-                cekajici = null;
-            });
-        }, { passive: true });
-        lista.addEventListener('pointerleave', () => {
-            cekajici = null;
-            banner.style.removeProperty('--holo-x');
-            banner.style.removeProperty('--holo-y');
-        });
-    }
     // Jméno v pruhu u profilu otevřeného ze seznamu otevře nabídku modelek seznamu (jako dřív jméno v drobečcích)
     profilPruhObsah.addEventListener('click', (e) => {
         if (!/** @type {HTMLElement} */ (e.target).closest('.pruh-identita h2')) return;

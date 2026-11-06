@@ -17620,71 +17620,23 @@ body.rezim-vyberu #detailView .poster {
     padding-left: 0;
 }
 
-/* ===== Profil 1.2.71: záhlaví jako holografická sběratelská karta (inspirace lesklými a zlatými kartami).
-   Vrstvy banneru: fotka, nad ní duhová holografie (::before, prolnutí color-dodge: duha je vidět hlavně ve světlých
-   místech fotky jako fólie), ztmavení kvůli textu, odlesk světla (::after) a zlatý lem dole. Duha a odlesk se
-   při pohybu myši nad záhlavím přelévají (--holo-x, --holo-y z app/profil.js); bez pohybu stojí v klidové poloze.
-   Při úpravě výřezu jsou efekty vypnuté, aby byla vidět skutečná fotka. ===== */
-.profil-banner-pozadi {
-    --holo-x: 30%;
-    --holo-y: 25%;
+/* ===== Profil 1.2.72: fotka v záhlaví v originále – žádné filtry, ztmavení, lesk ani třpytky; čitelnost textu
+   drží jen stín písma. Jméno jednou barvou. Zůstává zlatý lem dole jako rámeček zlaté karty (barvy zlata jsou
+   v proměnných --zlato-*, aby šly použít i jinde). ===== */
+:root {
+    --zlato-tmave: #6e4f1a;
+    --zlato: #c9a046;
+    --zlato-svetle: #f6e3a1;
+    --zlato-lesk: #fff7d6;
+    --zlato-pruh: linear-gradient(90deg, #6e4f1a 0%, #c9a046 18%, #f6e3a1 34%, #fff7d6 42%, #d9b25a 55%, #9c7428 72%, #e8cc7c 88%, #7a5a20 100%);
 }
 
-.profil-banner-pozadi > .profil-banner-foto {
-    z-index: 0;
+#profilBannerFoto {
+    filter: none;
 }
 
-.profil-banner-pozadi::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background:
-        repeating-linear-gradient(115deg,
-            hsl(350, 95%, 72%) 0%,
-            hsl(45, 95%, 68%) 6%,
-            hsl(110, 80%, 66%) 12%,
-            hsl(185, 90%, 66%) 18%,
-            hsl(230, 90%, 72%) 24%,
-            hsl(285, 85%, 72%) 30%,
-            hsl(350, 95%, 72%) 36%);
-    background-size: 260% 260%;
-    background-position: var(--holo-x) var(--holo-y);
-    mix-blend-mode: color-dodge;
-    opacity: 0.34;
-    transition: background-position 0.25s ease-out;
-}
-
-.profil-banner-pozadi > .profil-banner-prekryv {
-    z-index: 2;
-}
-
-/* Odlesk světla na lesklé kartě: měkká bílá skvrna, kterou myš posouvá, a slabý zlatavý závoj */
-.profil-banner-pozadi::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 3;
-    pointer-events: none;
-    background:
-        radial-gradient(ellipse 34% 90% at var(--holo-x) var(--holo-y), rgba(255, 255, 255, 0.30) 0%, rgba(255, 248, 225, 0.10) 40%, transparent 70%),
-        linear-gradient(115deg, rgba(255, 215, 120, 0.08) 0%, transparent 40%, rgba(255, 215, 120, 0.06) 100%);
-    mix-blend-mode: overlay;
-}
-
-/* Třpytky fólie: řídké jasné tečky, které se při pohybu myši posouvají pomaleji než duha */
-.profil-banner-pozadi > .profil-banner-prekryv::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAABsklEQVR42u3dTyttURzGce/I5XJKcXVliMh9W5S6DEQpZuaUP2WiTHgZN5nJyED7/tZYOJxz/Pafz7ee1shy1vfZa519dnTGxgCgnlRV1Uv+/eNdL+AoU35k0zawAwAAb5/TE5HtMrZoTYuNK6FN8iN3TXmxvyJnZXQWJJbQ8vX9iGxpOrkEFoA6bs0ZFhLlR46ZsAMAABjkvWw5cs9Ecgks1L+kxSHMccDkF+WXx9SDlhA/P81m4g4AXHVNO3dvlQAAAPq9eZiLnJaRje8Vf9Xmxc2rOFF+5FIJ3b4I/kReysgGAAAAAHzfh7HyP3HnXVjohLr7l9WLHA55zr8N9LAb+ZlWQtd3QJp8tOMY+x25LiMbr+WsRh7LOOoS2H6nBBYAAEAn7nrKQ6cLJpJLYAFAs4+xBRZyC7hhwQ5oldA1FnILeGIBQN8nRo+EqlqPPGfIL18BowQ0ZqdMsfB5aeWbljaGNNc+o3YAMPorfTKyU8YB5/EHxIOUMIQ5tpWQWyL5AFD/s3ol8sBEcgksAAAA1OTObI+F3AKm2ry4WRV/LGlphHOfKOED+ZF/oywB6Iv/9hhp/5Js+VwAAAAASUVORK5CYII=") repeat;
-    background-size: 96px 96px;
-    background-position: calc(var(--holo-x) * 0.3) calc(var(--holo-y) * 0.3);
-    mix-blend-mode: overlay;
-    opacity: 0.55;
-    transition: background-position 0.25s ease-out;
+#profilBannerPozadi .profil-banner-prekryv {
+    display: none;
 }
 
 .profil-banner-pozadi > .crop-panel {
@@ -17706,34 +17658,159 @@ body.rezim-vyberu #detailView .poster {
     z-index: 2;
     height: 2px;
     pointer-events: none;
-    background: linear-gradient(90deg, #6e4f1a 0%, #c9a046 18%, #f6e3a1 34%, #fff7d6 42%, #d9b25a 55%, #9c7428 72%, #e8cc7c 88%, #7a5a20 100%);
+    background: var(--zlato-pruh);
 }
 
-/* Jméno zlatou fólií */
+/* Jméno jednou barvou; bez ztmavení fotky ho drží čitelné výraznější stín */
 .hlavni-lista #profilPruh .pruh-jmeno h2 {
-    background: linear-gradient(100deg, #c99a3e 0%, #f3dc94 28%, #fff8dc 42%, #e3be63 56%, #b5872f 74%, #f0d58a 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    text-shadow: none;
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.85));
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 12px rgba(0, 0, 0, 0.75);
 }
 
-/* Šipka nabídky modelek u jména zůstává vidět (zlatá fólie dělá písmo průhledným) */
-.hlavni-lista #profilPruh .pruh-identita.s-nabidkou h2::after {
-    color: #e3be63;
-    -webkit-text-fill-color: #e3be63;
+/* ===== Panel Údaje (1.2.72): velká titulní fotka jako dřív, pod ní další jména a kategorie; bloky Playboy,
+   Osobní, Vzhled, Články, O modelce, Tagy a Odkazy se stejnými nadpisy, vše zarovnané vlevo. Tagy sbalené
+   na dva řádky. Text O modelce jako krátký článek: odstavce, mezititulky, seznamy a citace z markdownu. ===== */
+#modelHeader .udaje-hlava {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-top: 14px;
 }
 
-.profil-banner-pozadi.editing::before,
-.profil-banner-pozadi.editing::after,
-.profil-banner-pozadi.editing > .profil-banner-prekryv::after {
+.profile-side #modelHeader .profile-aliases {
+    margin: 0;
+    font-size: 12px;
+    text-align: left;
+    color: var(--text-muted);
+}
+
+#modelHeader .udaje-kategorie {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+#modelHeader .udaje-kategorie .udaje-znamka {
+    padding: 2px 9px;
+    border-color: rgba(216, 27, 96, 0.35);
+    background-color: rgba(216, 27, 96, 0.1);
+    color: var(--accent-text);
+    font-size: 11px;
+}
+
+/* Bloky mimo .udaje-modelky (O modelce, tagy, odkazy) mají stejný nadpis a odsazení jako ostatní */
+.profile-side #modelHeader > .udaje-blok {
+    padding: 10px 0;
+}
+
+.profile-side .udaje-blok h4 .udaje-pocet {
+    order: 2;
+    color: var(--text-muted);
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+/* O modelce: čitelný text bez rámečku, mezititulky růžovými kapitálkami, citace s růžovou linkou */
+.profile-side #modelHeader .udaje-poznamka .profile-note {
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: 13px;
+    line-height: 1.6;
+    color: rgba(240, 240, 245, 0.86);
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note p {
+    margin: 0 0 10px;
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note :is(h3, h4, h5) {
+    display: block;
+    margin: 14px 0 6px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--text-main);
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note h3 {
+    font-size: 15px;
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note h4 {
+    font-size: 13px;
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note h5 {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent-text);
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note :is(h3, h4, h5)::after {
+    content: none;
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note > :first-child {
+    margin-top: 0;
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note :is(ul, ol) {
+    margin: 0 0 10px 18px;
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note li::marker {
+    color: var(--accent-text);
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note blockquote {
+    margin: 8px 0 10px;
+    padding: 4px 0 4px 12px;
+    border-left: 2px solid var(--accent);
+    color: var(--text-main);
+}
+
+.profile-side #modelHeader .udaje-poznamka .profile-note a {
+    color: var(--accent-text);
+}
+
+/* Tagy a odkazy vlevo; tagy nejvýš na dva řádky, dokud se nerozbalí */
+.profile-side #modelHeader .profile-tags,
+.profile-side #modelHeader .profile-links {
+    justify-content: flex-start;
+    gap: 5px;
+    margin: 0;
+    text-align: left;
+}
+
+#modelHeader .profile-tags .tag {
+    padding: 2px 9px;
+    font-size: 11px;
+    line-height: 16px;
+}
+
+#modelHeader .udaje-tagy .profile-tags:not(.rozbalene) {
+    max-height: 47px;
+    overflow: hidden;
+}
+
+#modelHeader .tagy-rozbalit {
+    margin-top: 8px;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--accent-text);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#modelHeader .tagy-rozbalit:hover {
+    text-decoration: underline;
+}
+
+#modelHeader .tagy-rozbalit.hidden {
     display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .profil-banner-pozadi::before,
-    .profil-banner-pozadi::after {
-        transition: none;
-    }
 }

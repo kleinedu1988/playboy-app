@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.72] – 2026-11-06
+
+### Změněno
+- **Záhlaví profilu s fotkou v originále**: fotka v záhlaví už nemá žádné filtry ani úpravy barev (bez holografie, třpytek, odlesku i ztmavení), čitelnost textu drží stín písma. Jméno je jednou barvou. Zůstává zlatý lem dole; jeho barvy jsou ve společných proměnných `--zlato-*`, aby šly použít i jinde.
+- **Přehlednější panel Údaje**: pod velkou titulní fotkou jsou další jména a kategorie jako štítky; bloky Playboy, Osobní, Vzhled, Články, O modelce, Tagy a Odkazy mají jednotné nadpisy a jsou zarovnané vlevo. Tagy zabírají nejvýš dva řádky (s počtem v nadpisu), zbytek rozbalí *Všechny tagy*.
+- **Text O modelce s formátováním**: poznámka modelky se v panelu čte jako krátký článek – mezititulky (`#`, `##`, `###`), tučné písmo a kurzíva, seznamy s růžovými odrážkami a citace s růžovou linkou; bez rámečku a šedého písma.
+
 ## [1.2.71] – 2026-11-06
 
 ### Změněno

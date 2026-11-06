@@ -1,9 +1,14 @@
-# Návrh: Obsah fotek – podobné fotky a hledání podle obsahu (obrazový model SigLIP)
+# Návrh: Obsah fotek – podobné fotky a hledání podle obsahu (obrazový model CLIP ViT-B/32)
 
 Stav k 6. 11. 2026 (verze 1.2.72). **Nic z toho není rozhodnuté.** Návrh přehodnocuje položku z „Nedělat“
 (ROADMAP, [NAVRH-NAPADY.md:638](NAVRH-NAPADY.md), [NAVRH-DOPORUCENI.md:433](NAVRH-DOPORUCENI.md),
 [NAVRH-SITE.md:61](NAVRH-SITE.md)). Po potvrzení rozhodnutí z oddílu 9 se položka v „Nedělat“ přepíše
 a etapy se přenesou do `ROADMAP.md`.
+
+> **Rozhodnuto 6. 11. 2026:** model **CLIP ViT-B/32 int8** místo SigLIP a vektor pro **každou fotku sbírky**
+> (všechna alba všech modelek, dnes 18 045 fotek – ne 64 000, jak počítají starší odhady níže). Model, hash,
+> předzpracování, výkon a kvalita: [MODEL-CLIP-B32.md](MODEL-CLIP-B32.md). Kde níže stojí SigLIP, platí CLIP B/32
+> (512 rozměrů, ~9 MB vektorů, výpočet celé sbírky ~1,5 h).
 
 Pracnost: **S** do 2 hodin, **M** půl dne, **L** den a víc. **[schéma]** = mění databázi nebo export.
 

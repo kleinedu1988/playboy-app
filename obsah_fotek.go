@@ -124,14 +124,13 @@ func (a *App) GetPodobneFotky(fotkaID int) []Fotografie {
 	return a.doplnitDalsiModelky(fotky)
 }
 
-// Návrhy tagů z obsahu jedné fotky; Zpracovano = fotka už má vektor z obrazového modelu (bez něj návrhy nejsou)
+// Návrhy tagů z obsahu jedné fotky; Zpracovano = fotka už má vektor (CLIP) i partie (detektor)
 type NavrhyTaguFotky struct {
 	Zpracovano bool     `json:"zpracovano"`
 	Tagy       []string `json:"tagy"`
 }
 
-// Návrhy tagů z obsahu pro fotky (id fotky → návrhy, od nejjistějšího). Navrhují se jen tagy skupin, ve kterých
-// fotka ještě žádný tag nemá. Bez staženého modelu prázdná mapa.
+// Návrhy tagů z obsahu pro fotky (id fotky → návrhy, od nejjistějšího). Bez staženého modelu prázdná mapa.
 func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 	navrhy := map[int]NavrhyTaguFotky{}
 	if len(ids) == 0 || !a.obsah.Zapnuto() {
@@ -143,23 +142,22 @@ func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 		if a.db.QueryRow(`SELECT drive_file_id FROM fotky WHERE id = ?`, id).Scan(&driveID) != nil {
 			continue
 		}
-		v := a.obsah.Vektor(driveID)
-		n := NavrhyTaguFotky{Zpracovano: v != nil, Tagy: []string{}}
-		navrhy[id] = n
-		if v == nil {
-			continue
-		}
-		obsazene := map[string]bool{}
+		v, partie := a.obsah.Vektor(driveID), a.obsah.Partie(driveID)
+		n := NavrhyTaguFotky{Zpracovano: v != nil && partie != nil, Tagy: []string{}}
+		// Výlučná skupina s tagem (záběr, prostředí…) se nenavrhuje; u ostatních jen tagy, které fotka ještě nemá
+		ma, obsazene := map[string]bool{}, map[string]bool{}
 		for _, t := range maji[id] {
-			if sk := skupinaTagu[t]; sk != nil {
+			ma[t] = true
+			if sk := skupinaTagu[t]; sk != nil && sk.Vylucna {
 				obsazene[sk.Klic] = true
 			}
 		}
-		for _, n := range obsah.NavrhnoutTagy(v) {
-			if sk := skupinaTagu[n.Tag]; sk != nil && !obsazene[sk.Klic] {
-				navrhy[id] = NavrhyTaguFotky{Zpracovano: true, Tagy: append(navrhy[id].Tagy, n.Tag)}
+		for _, x := range obsah.NavrhnoutTagy(v, partie) {
+			if sk := skupinaTagu[x.Tag]; sk != nil && !obsazene[sk.Klic] && !ma[x.Tag] {
+				n.Tagy = append(n.Tagy, x.Tag)
 			}
 		}
+		navrhy[id] = n
 	}
 	return navrhy
 }

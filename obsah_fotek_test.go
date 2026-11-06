@@ -37,6 +37,13 @@ func TestPodobneFotky(t *testing.T) {
 	if err := v.Ulozit(slozka); err != nil {
 		t.Fatal(err)
 	}
+	pa := obsah.NovePartie()
+	for _, id := range []string{idA, idB, idC} {
+		pa.Pridat(id, make([]float32, len(obsah.TridyDetektoru)))
+	}
+	if err := pa.Ulozit(slozka); err != nil {
+		t.Fatal(err)
+	}
 
 	var fotkaA int
 	for _, f := range a.GetFotografieModelky(bara) {

@@ -1,7 +1,7 @@
 package obsah
 
 // Stahování modelu a běhové knihovny pro obsah fotek (docs/NAVRH-OBSAH-FOTEK.md, docs/MODEL-CLIP-B32.md).
-// Soubory jsou velké (89 MB model, 11 MB archiv ONNX Runtime), proto se stahují na vyžádání, po blocích rovnou
+// Soubory jsou velké (89 MB model CLIP, 11 MB archiv ONNX Runtime, 12 MB detektor partií), proto se stahují na vyžádání, po blocích rovnou
 // na disk, s průběhem pro okno a s navázáním po přerušení (hlavička Range). Teprve soubor se shodným SHA-256
 // (vestavěným v programu, pevná verze) dostane konečný název; poškozený soubor se smaže a ONNX Runtime ho
 // nikdy neotevře. Soubory jsou ve složce obsah/ vedle databáze (složky 0700, soubory 0600 jako databáze).
@@ -44,6 +44,14 @@ var Soubory = []Soubor{
 		Hash:     "c849e36a1ef3e22d4ff217b9d1ce4a3cf5b9467b975610913ae959ad5b16bdc9",
 		Velikost: 11413655,
 		Clen:     "onnxruntime-linux-x64-1.31.1/lib/libonnxruntime.so.1.31.1",
+	},
+	{
+		// Detektor partií NudeNet 320n (notAI-tech/NudeNet v3.4, licence AGPL-3.0; oficiální vydání na GitHubu
+		// vyžaduje přihlášení, proto zrcadlo deepghs na Hugging Face, stejná velikost souboru)
+		Nazev:    "nudenet-320n.onnx",
+		Adresa:   "https://huggingface.co/deepghs/nudenet_onnx/resolve/44956a0587943016350c7815f9e0dec089d45cae/320n.onnx",
+		Hash:     "c15d8273adad2d0a92f014cc69ab2d6c311a06777a55545f2c4eb46f51911f0f",
+		Velikost: 12150158,
 	},
 }
 

@@ -1,6 +1,7 @@
 package obsah
 
-// Návrhy tagů fotek z obsahu (zero-shot CLIP): každý tag z katalogu (internal/sbirka) má anglické popisy, jejichž
+// Návrhy tagů fotek z obsahu. Odhalení a partie (prsa, zadeček, klín, chodidla) navrhuje detektor (detektor.go),
+// ostatní zero-shot CLIP: každý tag z katalogu (internal/sbirka) má anglické popisy, jejichž
 // vektory z textové věže CLIP leží ve stejném prostoru jako vektory fotek. Fotka dostane návrh tagu, když je jejímu
 // vektoru popis tagu jasně blíž než ostatní možnosti sady (Záběr, Prostředí, Oblečení…)
 // (pomocná možnost bez tagu: barevná fotka, běžné světlo). Vektory popisů jsou spočítané předem a vestavěné (tagy.bin, generátor
@@ -47,7 +48,6 @@ var bezNavrhu = map[string]bool{
 // (zdvih 1,0–1,8×; spolehlivé tagy 2,5–40×). Poprsí vyhrávalo u 87 % fotek, tónovaná u 19 %.
 var jenMoznost = map[string]bool{
 	"poprsi": true, "lezi": true, "interier": true, "loznice": true, "tonovana": true,
-	"pradlo": true, "nahore_bez": true, "akt": true, "explicitni": true,
 }
 
 // Popisy tagů; po změně spustit generátor (tagy-clip/main.go). Z každé sady se navrhne nejvýš jeden tag: ten, jehož
@@ -143,7 +143,8 @@ func init() {
 	poradi := map[string]int{}
 	for _, p := range PopisyTagu {
 		vt, ok := vektoryTagu[p.Klic]
-		if !ok || bezNavrhu[p.Klic] {
+		// Odhalení rozhoduje detektor (navrhyZDetektoru), CLIP jen mezi oblečenou a prádlem
+		if !ok || bezNavrhu[p.Klic] || p.sada() == "odhaleni" {
 			continue
 		}
 		i, ok := poradi[p.sada()]
@@ -165,30 +166,93 @@ func skalarni(a, b []float32) float32 {
 	return s
 }
 
-// NavrhnoutTagy: tagy, které podle obsahu na fotce asi jsou, od nejjistějšího (z každé sady nejvýš jeden).
-// Vektor fotky délky 1.
-func NavrhnoutTagy(vektor []float32) []NavrhTagu {
-	if len(vektor) != Rozmer {
-		return nil
+// Jistota detektoru, od které je partie na fotce (pod spodní mezí určitě není; mezi nimi se odhalení nenavrhuje)
+const (
+	prahPartie   = 0.45
+	spodniPartie = 0.25
+)
+
+// Partie z detektoru, které jsou tagem
+var tagyPartii = map[string]string{
+	"FEMALE_BREAST_EXPOSED":    "prsa",
+	"BUTTOCKS_EXPOSED":         "zadecek",
+	"FEMALE_GENITALIA_EXPOSED": "vagina",
+	"FEET_EXPOSED":             "chodidla",
+}
+
+func jistotaTridy(partie []float32, trida string) float32 {
+	for i, t := range TridyDetektoru {
+		if t == trida && i < len(partie) {
+			return partie[i]
+		}
 	}
+	return 0
+}
+
+// Odhalení a partie z detektoru: odhalený klín = akt, jinak odhalená prsa = nahoře bez; nic odhaleného (ani
+// napůl jistě) = oblečená, nebo prádlo / plavky podle obsahu (CLIP); explicitní akt detektor neodliší
+func navrhyZDetektoru(vektor, partie []float32) []NavrhTagu {
 	var navrhy []NavrhTagu
-	for _, sada := range sadyTagu {
-		logity := make([]float64, len(sada.klice))
-		nej := 0
-		for i, v := range sada.vektory {
-			logity[i] = float64(skalaCLIP * skalarni(vektor, v))
-			if logity[i] > logity[nej] {
-				nej = i
+	for trida, tag := range tagyPartii {
+		if j := jistotaTridy(partie, trida); j >= prahPartie {
+			navrhy = append(navrhy, NavrhTagu{Tag: tag, Jistota: j})
+		}
+	}
+	klin, prsa := jistotaTridy(partie, "FEMALE_GENITALIA_EXPOSED"), jistotaTridy(partie, "FEMALE_BREAST_EXPOSED")
+	zadek := jistotaTridy(partie, "BUTTOCKS_EXPOSED")
+	switch {
+	case klin >= prahPartie:
+		navrhy = append(navrhy, NavrhTagu{Tag: "akt", Jistota: klin})
+	case prsa >= prahPartie:
+		navrhy = append(navrhy, NavrhTagu{Tag: "nahore_bez", Jistota: prsa})
+	case klin < spodniPartie && prsa < spodniPartie && zadek < spodniPartie && len(vektor) == Rozmer:
+		// Oblečená, nebo prádlo / plavky: rozhodne obsah, jen mezi těmito dvěma
+		o := float64(skalaCLIP * skalarni(vektor, vektoryTagu["oblecena"]))
+		p := float64(skalaCLIP * skalarni(vektor, vektoryTagu["pradlo"]))
+		pp := 1 / (1 + math.Exp(o-p))
+		if pp >= minJistota {
+			navrhy = append(navrhy, NavrhTagu{Tag: "pradlo", Jistota: float32(pp)})
+		} else if 1-pp >= minJistota {
+			navrhy = append(navrhy, NavrhTagu{Tag: "oblecena", Jistota: float32(1 - pp)})
+		}
+	}
+	return navrhy
+}
+
+// NavrhnoutTagy: tagy, které podle obsahu na fotce asi jsou, od nejjistějšího. vektor = CLIP (délka 1), partie =
+// jistoty detektoru (pořadí TridyDetektoru); bez partií se odhalení a partie nenavrhují.
+func NavrhnoutTagy(vektor, partie []float32) []NavrhTagu {
+	var navrhy []NavrhTagu
+	if len(partie) == len(TridyDetektoru) {
+		navrhy = navrhyZDetektoru(vektor, partie)
+	}
+	if len(vektor) == Rozmer {
+		for _, sada := range sadyTagu {
+			logity := make([]float64, len(sada.klice))
+			nej := 0
+			for i, v := range sada.vektory {
+				logity[i] = float64(skalaCLIP * skalarni(vektor, v))
+				if logity[i] > logity[nej] {
+					nej = i
+				}
+			}
+			var soucet float64
+			for _, l := range logity {
+				soucet += math.Exp(l - logity[nej])
+			}
+			if p := 1 / soucet; p >= minJistota && sada.klice[nej][0] != zadnyTag[0] && !jenMoznost[sada.klice[nej]] {
+				navrhy = append(navrhy, NavrhTagu{Tag: sada.klice[nej], Jistota: float32(p)})
 			}
 		}
-		var soucet float64
-		for _, l := range logity {
-			soucet += math.Exp(l - logity[nej])
-		}
-		if p := 1 / soucet; p >= minJistota && sada.klice[nej][0] != zadnyTag[0] && !jenMoznost[sada.klice[nej]] {
-			navrhy = append(navrhy, NavrhTagu{Tag: sada.klice[nej], Jistota: float32(p)})
-		}
 	}
-	sort.SliceStable(navrhy, func(i, j int) bool { return navrhy[i].Jistota > navrhy[j].Jistota })
+	if len(navrhy) == 0 {
+		return nil
+	}
+	sort.SliceStable(navrhy, func(i, j int) bool {
+		if navrhy[i].Jistota != navrhy[j].Jistota {
+			return navrhy[i].Jistota > navrhy[j].Jistota
+		}
+		return navrhy[i].Tag < navrhy[j].Tag
+	})
 	return navrhy
 }

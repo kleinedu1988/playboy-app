@@ -157,3 +157,27 @@ vestavěné, generátor `tagy-clip`). Bez označených fotek (ve sbírce 4) se k
 **Modelky podle fotek** (průměrný vektor fotek modelky, nejbližší hodnocené modelky, k = 20): na 296 hodnocených
 modelkách MAE 0,83 proti 0,91 u průměru, Spearman 0,38. Signál je, ale slabší než u fotek; do „Mohlo by se ti
 líbit“ zatím nezapojeno – nejdřív porovnat s modelem vkusu z údajů (`oblibenost_vkus.go`) na stejných modelkách.
+
+## 8. Detektor partií NudeNet 320n (odhalení a partie)
+
+CLIP odhalení nepozná (oddíl 7: tagy odhalení se chovaly jako šum, uživatel to potvrdil v Průvodci). Odhalení
+a partie proto navrhuje specializovaný detektor.
+
+| Údaj | Hodnota |
+|---|---|
+| Model | NudeNet v3.4 `320n` (YOLOv8n, notAI-tech), 18 tříd (odhalená / zakrytá prsa, klín, zadeček, chodidla, břicho…) |
+| Licence | **AGPL-3.0** (repozitář notAI-tech/NudeNet). Program kód NudeNet neobsahuje, váhy stahuje za běhu. |
+| Zdroj | Oficiální vydání na GitHubu vyžaduje přihlášení → zrcadlo `deepghs/nudenet_onnx`, revize `44956a0587943016350c7815f9e0dec089d45cae`, `320n.onnx` 12 150 158 B (stejná velikost jako oficiální soubor) |
+| SHA-256 | `c15d8273adad2d0a92f014cc69ab2d6c311a06777a55545f2c4eb46f51911f0f` |
+| Vstup | `images` float32 `[1, 3, 320, 320]`: fotka doplněná černou na čtverec (vpravo, dole), zmenšená, RGB / 255 |
+| Výstup | `output0` `[1, 22, 2100]` (4 souřadnice + 18 tříd); pro tagy stačí nejvyšší jistota třídy na fotce |
+| Výkon | 64 ms na fotku (2 vlákna), uloženo 18 B na fotku v `obsah/partie.bin` |
+
+Pravidla (`internal/obsah/tagy.go`): odhalený klín ≥ 0,45 → *akt* + *vagina*; jinak odhalená prsa ≥ 0,45 →
+*nahoře bez*; nic odhaleného ani napůl (< 0,25) → *oblečená*, nebo *prádlo / plavky* podle CLIP (jen mezi těmito
+dvěma); mezi 0,25 a 0,45 se odhalení nenavrhuje. *Prsa*, *zadeček*, *chodidla* při jistotě ≥ 0,45. *Explicitní
+akt* detektor neodliší, nenavrhuje se.
+
+Vzorek 3 645 fotek sbírky: nahoře bez 59 %, akt 15 %, prádlo 10 %, oblečená 2 %; po typech alb Playmate měsíce
+63 % nahoře bez a 24 % akt, centerfoldy 69 % akt. Jediná otagovaná fotka sbírky (akt, prsa) vyšla správně.
+Označené fotky ke skutečnému ověření přesnosti zatím nejsou – měřit znovu, až jich v Průvodci přibude.

@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.5.0] – 2026-11-06
+
+### Přidáno
+- **Odhalení a partie poznává detektor**: obecný obrazový model CLIP nepoznal, jestli je modelka oblečená, v prádle, nahoře bez, nebo nahá – proto se tyto tagy dosud vůbec nenavrhovaly. Nově se stahuje i specializovaný detektor partií NudeNet 320n (12 MB, ověřený SHA-256; licence AGPL-3.0). Úvodní obrazovka ho u stávající instalace stáhne sama a výpočet na pozadí ho doplní ke všem fotkám (64 ms na fotku).
+- Průvodce teď navrhuje **Odhalení** (akt, nahoře bez, prádlo / plavky, oblečená) a **Partie** (prsa, zadeček, vagina, chodidla). Explicitní akt detektor neodliší a nenavrhuje se. Ostatní návrhy (prostředí, oblečení, světlo…) zůstávají z CLIP.
+- U fotky v Průvodci je *◎ zpracovaná*, až má hotový CLIP i detektor. Pravidla a měření v `docs/MODEL-CLIP-B32.md`, oddíl 8.
+
 ## [1.4.1] – 2026-11-06
 
 ### Přidáno

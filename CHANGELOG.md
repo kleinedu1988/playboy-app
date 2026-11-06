@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.7.0] – 2026-11-06
+
+### Přidáno
+- **Průvodce se učí z tvých voleb**: každá fotka, kterou v Průvodci projdeš, je příklad – co jsi zvolil, na fotce je, a co jsi ve stejném kroku nezvolil, na ní není. Program se z nich pro každý tag naučí, jak taguješ ty (nad tím, co o fotce spočítaly obrazové modely), a přeučí se na pozadí po každých 10 fotkách. Naučený tag nahradí dosavadní návrh, až má aspoň 5 příkladů s tagem i bez něj a na ověření rozhoduje lépe než dosavadní návrh – tag po tagu tak návrhy přecházejí na tvůj vkus (i tagy, které obrazové modely samy nepoznají: punčochy, zaječí uši, výraz…).
+- V hlavičce Průvodce je u zpracované fotky *podle tebe N* (kolik návrhů rozhodlo učení) a v nápovědě značky, z kolika fotek se učí a kolik tagů už rozhoduje podle tebe. Popis v `docs/MODEL-CLIP-B32.md`, oddíl 10.
+
 ## [1.6.0] – 2026-11-06
 
 ### Změněno

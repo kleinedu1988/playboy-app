@@ -104,3 +104,28 @@ func TestSeraditFrontuPodleOdhadu(t *testing.T) {
 		}
 	}
 }
+
+// Příklady z Průvodce: jen prošlé fotky, tagy a zodpovězené skupiny (krok přeskočený u portrétu se nepočítá)
+func TestPrikladyTaguZPruvodce(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+	anna := idModelky(t, a, "Anna")
+	a.AddBulkPhotos(anna, "Pláž", "Pictorial", odkazA+" "+odkazB)
+	fotky := a.GetFotografieModelky(anna)
+	var vsechny []string
+	for _, k := range krokyPruvodce {
+		vsechny = append(vsechny, k.Skupiny...)
+	}
+	a.UlozitPruvodceFotky(ZapisPruvodce{Ids: []int{fotky[0].ID}, Skupiny: vsechny, Tagy: []string{"portret", "oblecena", "plaz"}, Hotovo: true})
+	priklady := a.prikladyTaguZPruvodce()
+	if len(priklady) != 1 || priklady[0].ID != fotky[0].DriveID {
+		t.Fatalf("příklady %+v", priklady)
+	}
+	sk := map[string]bool{}
+	for _, s := range priklady[0].Skupiny {
+		sk[s] = true
+	}
+	if !sk["zaber"] || !sk["prostredi"] || sk["partie"] {
+		t.Fatalf("zodpovězené skupiny %v (tělo se u portrétu přeskočí)", priklady[0].Skupiny)
+	}
+}

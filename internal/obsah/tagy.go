@@ -115,6 +115,7 @@ func (p PopisTagu) sada() string {
 type NavrhTagu struct {
 	Tag     string  `json:"tag"`
 	Jistota float32 `json:"jistota"`
+	Naucene bool    `json:"naucene"` // rozhodl tag naučený z voleb v Průvodci (uceni_tagu.go)
 }
 
 // Sady možností s vektory popisů (pořadí podle PopisyTagu)

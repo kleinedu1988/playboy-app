@@ -203,3 +203,18 @@ ověření):
 
 U modelek se srdíčky fotek obsah nic nepřidá (srdíčka fotek říkají víc), u kandidátek bez nich chybu sníží o ~4 %.
 Obsah fotek se přepočítá po dalším spočítaném obsahu nebo po 25 nových hodnoceních fotek (učení ~0,5 s).
+
+## 10. Učení tagů z voleb v Průvodci (6. 11. 2026)
+
+`internal/obsah/uceni_tagu.go`: fotky prošlé Průvodcem (`fotky_pruvodce`, aktuální verze) jsou příklady. Ve skupině,
+kterou krok zodpověděl (krok, který se u fotky nepřeskočil), je zvolený tag „ano“ a ostatní tagy skupiny „ne“.
+Pro každý tag lineární klasifikátor nad týmiž příznaky jako odhad srdíček (CLIP 512 + detektor 18; hřebenová
+regrese na 0/1, jedna matice XᵀX pro všechny tagy, λ ∈ {3, 30, 300} vybere ověření). Modely CLIP a NudeNet se
+nemění.
+
+Naučený tag nahradí výchozí návrh (zero-shot CLIP, pravidla detektoru), když má aspoň 5 příkladů „ano“ i „ne“
+a na 5násobném ověření (souvislé bloky po albech, aby se focení nedělilo) vyváženou přesnost aspoň o 0,02 vyšší
+než výchozí návrhy na týchž fotkách. Naučený tag rozhoduje sám: navrhne, nebo výchozí návrh zruší; ve výlučné
+skupině zůstane nejjistější. Přeučuje se na pozadí po každých 10 prošlých fotkách (1 000 příkladů ~3 s).
+
+Stav 6. 11. 2026: v Průvodci prošlo 10 fotek → zatím nic naučeného; měřit, až jich budou stovky.

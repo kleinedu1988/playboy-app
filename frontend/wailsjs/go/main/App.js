@@ -234,6 +234,10 @@ export function GetStavUceni() {
   return window['go']['main']['App']['GetStavUceni']();
 }
 
+export function GetStavUceniTagu() {
+  return window['go']['main']['App']['GetStavUceniTagu']();
+}
+
 export function GetStavyVydani() {
   return window['go']['main']['App']['GetStavyVydani']();
 }

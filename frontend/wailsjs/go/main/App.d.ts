@@ -125,6 +125,8 @@ export function GetStavStahovaniNahledu():Promise<nahledy.StavStahovani>;
 
 export function GetStavUceni():Promise<uceni.StavUceni>;
 
+export function GetStavUceniTagu():Promise<main.StavUceniTagu>;
+
 export function GetStavyVydani():Promise<Array<sbirka.VydaniInfo>>;
 
 export function GetStrankuNehodnocenych(arg1:number,arg2:string,arg3:number,arg4:number,arg5:number):Promise<main.StrankaNehodnocenych>;

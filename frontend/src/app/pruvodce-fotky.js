@@ -5,7 +5,7 @@
 // J přepne na „jen srdíčka“ (1–5 uloží jen srdíčka, tagy počkají na průvodce). Bez pohybu pásek po chvíli zeslábne.
 // Srdíčka 1–5 fotku uloží jako prošlou a ukáže další; zápis běží za ní (nepovedený ji vrátí). Fotka, která už srdíčka
 // má, krok srdíček přeskočí a uloží se po posledním kroku tagů (srdíčka zůstanou).
-import { GetKrokyPruvodce, GetNavrhyTagu, GetTagyFotek, UlozitPruvodceFotky, VratitPruvodceFotky } from './backend';
+import { GetKrokyPruvodce, GetNavrhyTagu, GetStavUceniTagu, GetTagyFotek, UlozitPruvodceFotky, VratitPruvodceFotky } from './backend';
 import { cislice, cisloKlavesy, jakoMinula, novyStav, potvrdit, predchoziKrok, tlumene, viditelneKroky, vybraneKroku, zadna, zodpovezeneSkupiny, zpet } from '../lib/pruvodce';
 import { stav } from './stav';
 import { lbNaplnitListu, lbZobrazit, lightbox, zavritLightbox } from './prohlizec';
@@ -20,6 +20,8 @@ const KLIC_SKRYTI = 'pruvodceSkryty';
 let kroky = [];
 let stavy = new Map(); // položka → stav průvodce
 const tagyFotek = new Map(); // id fotky → tagy (načtené při zobrazení)
+// Učení tagů z tvých voleb v Průvodci (obsah_fotek.go GetStavUceniTagu): kolik fotek a tagů už podle tebe
+let uceniTagu = { fotek: 0, pouzito: 0 };
 const navrhyObsahu = new Map(); // id fotky → { zpracovano, tagy } z obsahu fotky (app/obsah-fotek.js); bez modelu null
 let podleAlba = new Map(); // klíč alba → tagy minulé uložené fotky alba
 let posledni = null; // tagy minulé uložené fotky (Shift+Enter)
@@ -87,8 +89,11 @@ function htmlObsahu(p) {
         return `<span class="pr-obsah ceka" title="${esc(st.faze === 'stahuje' ? 'Obrazový model se stahuje – pak se spočítá obsah fotek a průvodce začne navrhovat tagy' : 'Obrazový model není stažený, tagy se z obsahu nenavrhují')}">◌ bez modelu</span>`;
     }
     if (n.zpracovano) {
-        const titulek = n.tagy.length ? `Fotka je zpracovaná obrazovým modelem – navrženo: ${n.tagy.length} (obrys)` : 'Fotka je zpracovaná obrazovým modelem – žádný tag si model nebyl jistý';
-        return `<span class="pr-obsah" title="${esc(titulek)}">◎ zpracovaná${n.tagy.length ? ` · ${n.tagy.length}` : ''}</span>`;
+        const uceni = uceniTagu.fotek
+            ? ` Učení z tvých voleb: ${uceniTagu.fotek} fotek z Průvodce, podle tebe už rozhoduje ${uceniTagu.pouzito} tagů${n.naucene ? ` (z návrhů této fotky ${n.naucene})` : ''}.`
+            : ' Průvodce se učí z tvých voleb – čím víc fotek projdeš, tím víc tagů začne navrhovat podle tebe.';
+        const titulek = (n.tagy.length ? `Fotka je zpracovaná obrazovým modelem – navrženo: ${n.tagy.length} (obrys).` : 'Fotka je zpracovaná obrazovým modelem – žádný tag si model nebyl jistý.') + uceni;
+        return `<span class="pr-obsah" title="${esc(titulek)}">◎ zpracovaná${n.tagy.length ? ` · ${n.tagy.length}` : ''}${n.naucene ? ` · podle tebe ${n.naucene}` : ''}</span>`;
     }
     const prubeh = st.faze === 'pocita' && st.celkem ? ` (výpočet ${st.hotovo.toLocaleString('cs-CZ')} / ${st.celkem.toLocaleString('cs-CZ')})` : '';
     return `<span class="pr-obsah ceka" title="${esc(`Fotka ještě není zpracovaná obrazovým modelem, tagy z obsahu se zatím nenavrhují${prubeh}`)}">◌ čeká na zpracování${esc(prubeh)}</span>`;
@@ -104,6 +109,7 @@ async function stavPolozky(p) {
         tagyFotek.set(id, t);
         let n = null;
         try { n = (await GetNavrhyTagu([id]))?.[id] || null; } catch { n = null; }
+        GetStavUceniTagu().then((u) => { if (u) uceniTagu = u; }).catch(() => {});
         navrhyObsahu.set(id, n);
     }
     // Fotka, která už má srdíčka (ohodnocená dřív nebo zvlášť), krok srdíček přeskočí

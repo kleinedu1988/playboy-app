@@ -132,6 +132,7 @@ func (a *App) GetPodobneFotky(fotkaID int) []Fotografie {
 type NavrhyTaguFotky struct {
 	Zpracovano bool     `json:"zpracovano"`
 	Tagy       []string `json:"tagy"`
+	Naucene    int      `json:"naucene"` // kolik z návrhů rozhodly tagy naučené z Průvodce
 }
 
 // Návrhy tagů z obsahu pro fotky (id fotky → návrhy, od nejjistějšího). Bez staženého modelu prázdná mapa.
@@ -141,6 +142,7 @@ func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 		return navrhy
 	}
 	maji := a.GetTagyFotek(ids)
+	uceni := a.uceniTagu()
 	for _, id := range ids {
 		var driveID string
 		if a.db.QueryRow(`SELECT drive_file_id FROM fotky WHERE id = ?`, id).Scan(&driveID) != nil {
@@ -156,9 +158,12 @@ func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 				obsazene[sk.Klic] = true
 			}
 		}
-		for _, x := range obsah.NavrhnoutTagy(v, partie) {
+		for _, x := range uceni.Upravit(driveID, obsah.NavrhnoutTagy(v, partie)) {
 			if sk := skupinaTagu[x.Tag]; sk != nil && !obsazene[sk.Klic] && !ma[x.Tag] {
 				n.Tagy = append(n.Tagy, x.Tag)
+				if x.Naucene {
+					n.Naucene++
+				}
 			}
 		}
 		navrhy[id] = n
@@ -269,4 +274,135 @@ func (a *App) obsahFotekVPameti() (map[int]float64, uint64) {
 		p.obsah = map[int]float64{}
 	}
 	return p.obsah, p.otisk
+}
+
+// Učení tagů z Průvodce (internal/obsah/uceni_tagu.go): přeučí se na pozadí po každých tolika nově prošlých fotkách,
+// mezitím platí minulé naučení (učení trvá až několik sekund)
+const preuceniTaguPo = 10
+
+var uceniTaguPamet struct {
+	sync.Mutex
+	klic  [3]int
+	bezi  bool
+	uceni *obsah.UceniTagu
+}
+
+// Tagy katalogu pro učení
+func tagyProUceni() []obsah.TagUceni {
+	var v []obsah.TagUceni
+	for _, sk := range katalogTagu {
+		for _, t := range sk.Tagy {
+			v = append(v, obsah.TagUceni{Klic: t.Klic, Skupina: sk.Klic, Vylucna: sk.Vylucna})
+		}
+	}
+	return v
+}
+
+// Příklady z Průvodce: fotky, které prošly průvodcem aktuální verze, s tagy a zodpovězenými skupinami (skupiny
+// kroků, které se u fotky nepřeskočily). Soubor ve víc albech jen jednou. Pořadí podle alb (souvislé bloky pro
+// ověření).
+func (a *App) prikladyTaguZPruvodce() []obsah.PrikladTagu {
+	radky, err := a.db.Query(`SELECT f.id, f.drive_file_id FROM fotky f JOIN fotky_pruvodce p ON p.fotka_id = f.id
+		WHERE p.verze >= ? ORDER BY f.album_id, f.id`, verzePruvodce)
+	if err != nil {
+		return nil
+	}
+	type fotka struct {
+		id    int
+		drive string
+	}
+	var fotky []fotka
+	var ids []int
+	for radky.Next() {
+		var f fotka
+		if radky.Scan(&f.id, &f.drive) == nil {
+			fotky = append(fotky, f)
+			ids = append(ids, f.id)
+		}
+	}
+	radky.Close()
+	tagy := a.GetTagyFotek(ids)
+	videne := map[string]bool{}
+	var v []obsah.PrikladTagu
+	for _, f := range fotky {
+		if videne[f.drive] {
+			continue
+		}
+		videne[f.drive] = true
+		ma := map[string]bool{}
+		for _, t := range tagy[f.id] {
+			ma[t] = true
+		}
+		pr := obsah.PrikladTagu{ID: f.drive, Tagy: tagy[f.id]}
+		for _, k := range krokyPruvodce {
+			if k.Preskocit != nil && splnena(*k.Preskocit, ma) {
+				continue
+			}
+			pr.Skupiny = append(pr.Skupiny, k.Skupiny...)
+		}
+		v = append(v, pr)
+	}
+	return v
+}
+
+// Podmínka kroku průvodce nad tagy fotky (stejně jako plati v frontend/src/lib/pruvodce.js)
+func splnena(p PodminkaKroku, ma map[string]bool) bool {
+	je := false
+	for _, t := range p.Tagy {
+		if ma[t] {
+			je = true
+		}
+	}
+	return je != p.Ne
+}
+
+// Naučené tagy (z paměti); když přibylo dost fotek z Průvodce nebo obsahu, přeučí se na pozadí
+func (a *App) uceniTagu() *obsah.UceniTagu {
+	if a.obsah == nil || !a.obsah.Zapnuto() {
+		return nil
+	}
+	var prosle int
+	a.db.QueryRow(`SELECT COUNT(*) FROM fotky_pruvodce WHERE verze >= ?`, verzePruvodce).Scan(&prosle)
+	klic := [3]int{prosle / preuceniTaguPo, a.obsah.Stav().Vektoru / 1000, a.obsah.PocetPartii() / 1000}
+	p := &uceniTaguPamet
+	p.Lock()
+	defer p.Unlock()
+	if (p.klic != klic || p.uceni == nil) && !p.bezi {
+		naucit := func() *obsah.UceniTagu {
+			return a.obsah.NaucitTagy(a.prikladyTaguZPruvodce(), tagyProUceni(), a.vychoziNavrhyTagu)
+		}
+		// Testy (bez okna) učí hned, okno na pozadí
+		if !a.startNaPozadi {
+			p.uceni, p.klic = naucit(), klic
+			return p.uceni
+		}
+		p.bezi = true
+		go func() {
+			u := naucit()
+			p.Lock()
+			p.uceni, p.klic, p.bezi = u, klic, false
+			p.Unlock()
+		}()
+	}
+	return p.uceni
+}
+
+// Výchozí návrhy tagů fotky (CLIP a detektor), bez učení
+func (a *App) vychoziNavrhyTagu(driveID string) []obsah.NavrhTagu {
+	return obsah.NavrhnoutTagy(a.obsah.Vektor(driveID), a.obsah.Partie(driveID))
+}
+
+// Stav učení tagů z Průvodce (pro okno)
+type StavUceniTagu struct {
+	Fotek   int                   `json:"fotek"`   // fotek z Průvodce s obsahem
+	Pouzito int                   `json:"pouzito"` // tagů, které už navrhuje podle tebe
+	Tagy    []obsah.HodnoceniTagu `json:"tagy"`
+}
+
+func (a *App) GetStavUceniTagu() StavUceniTagu {
+	v := StavUceniTagu{Tagy: []obsah.HodnoceniTagu{}}
+	if u := a.uceniTagu(); u != nil {
+		v.Fotek, v.Pouzito, v.Tagy = u.Fotek, u.Pouzito(), u.Tagy
+	}
+	return v
 }

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.69] – 2026-11-06
+
+### Změněno
+- **Záhlaví profilu jako křídový papír**: fotka v záhlaví má tiskový tón (o kousek víc kontrastu, teplá krémová světla), přes ni jemné zrno papíru a slabý pevný saténový odlesk laku vlevo nahoře; pod záhlavím je měkký stín. Nic se nehýbe ani nesleduje myš; fotky v databázi se nemění (jde jen o zobrazení). Při úpravě výřezu jsou efekty vypnuté, aby byla vidět skutečná fotka.
+
 ## [1.2.68] – 2026-11-06
 
 ### Změněno

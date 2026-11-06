@@ -233,6 +233,19 @@ func (s *Sluzba) Partie(id string) []float32 {
 	return p.Jistoty(id)
 }
 
+// PocetPartii: kolik fotek má spočítané partie z detektoru
+func (s *Sluzba) PocetPartii() int {
+	if s == nil {
+		return 0
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.partie == nil {
+		return 0
+	}
+	return s.partie.Pocet()
+}
+
 // Zpracovana: fotka má vektor i partie (návrhy tagů jsou úplné)
 func (s *Sluzba) Zpracovana(id string) bool {
 	return s.Vektor(id) != nil && s.Partie(id) != nil

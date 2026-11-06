@@ -29,7 +29,14 @@ func TestOdhadyFotek(t *testing.T) {
 		}
 		fotky = append(fotky, HodnoceniFotky{ID: id, Album: int64(i % 50), Hodnoceni: h})
 	}
-	odhad := v.OdhadyFotek(fotky)
+	o := odhadnout(v, nil, fotky)
+	if o == nil {
+		t.Fatal("bez odhadu")
+	}
+	odhad := o.Nehodnocene
+	if len(o.Obsah) != 600 {
+		t.Fatalf("čistý odhad má %d fotek", len(o.Obsah))
+	}
 	if len(odhad) != 200 {
 		t.Fatalf("odhadů %d", len(odhad))
 	}
@@ -46,7 +53,7 @@ func TestOdhadyFotek(t *testing.T) {
 	if s := spearmanTest(sk, od); s < 0.8 {
 		t.Fatalf("odhad nepoznal směr: Spearman %.2f", s)
 	}
-	if v.OdhadyFotek(fotky[:100]) != nil {
+	if odhadnout(v, nil, fotky[:100]) != nil {
 		t.Fatal("s málo hodnocenými se nemá odhadovat")
 	}
 }
@@ -71,4 +78,41 @@ func spearmanTest(a, b []float64) float64 {
 		d += (ra[i] - rb[i]) * (ra[i] - rb[i])
 	}
 	return 1 - 6*d/(n*(n*n-1))
+}
+
+// S partiemi (detektor) se odhaduje jen u fotek, které je mají; partie, které srdíčka určují, odhad pozná
+func TestOdhadySPartiemi(t *testing.T) {
+	r := rand.New(rand.NewPCG(9, 10))
+	v, pa := NoveVektory(), NovePartie()
+	var fotky []HodnoceniFotky
+	for i := range 600 {
+		id := fmt.Sprintf("f%03d", i)
+		v.Pridat(id, nahodnyVektor(r))
+		j := make([]float32, len(TridyDetektoru))
+		j[3] = float32(r.Float64()) // prsa: čím jistější, tím víc srdíček
+		h := 0.0
+		if i < 400 {
+			h = 1 + 4*float64(j[3])
+		}
+		if i != 599 {
+			pa.Pridat(id, j)
+		}
+		fotky = append(fotky, HodnoceniFotky{ID: id, Album: int64(i), Hodnoceni: h})
+	}
+	o := odhadnout(v, pa, fotky)
+	if o == nil {
+		t.Fatal("bez odhadu")
+	}
+	if _, ok := o.Nehodnocene["f599"]; ok {
+		t.Fatal("fotka bez partií se nemá odhadovat")
+	}
+	var sk, od []float64
+	for _, f := range fotky[400:599] {
+		sk = append(sk, float64(pa.Jistoty(f.ID)[3]))
+		od = append(od, o.Nehodnocene[f.ID])
+	}
+	// 512 složek šumu proti jedné partii na 400 fotkách: stačí jasná souvislost
+	if s := spearmanTest(sk, od); s < 0.4 {
+		t.Fatalf("odhad nepoznal partie: Spearman %.2f", s)
+	}
 }

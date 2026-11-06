@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.6.0] – 2026-11-06
+
+### Změněno
+- **Odhad srdíček fotek i z detektoru partií**: řazení *Co se ti asi líbí* v Rychle ♥ bere kromě obsahu fotky (CLIP) i to, co detektor na fotce našel (odhalení, partie). Na fotkách cizích modelek mírně přesnější (Spearman 0,44 → 0,46).
+- **„Mohlo by se ti líbit“ s obsahem fotek**: model vkusu má nový údaj *obsah fotek* – jak by se ti podle obrazových modelů líbily fotky modelky. Pomáhá hlavně u nehodnocených modelek bez ohodnocených fotek (na kopii sbírky chyba odhadu 0,726 → 0,698, přesnost 58 → 60 %); kolik mu věřit, rozhoduje ověření modelu vkusu. Údaj se může objevit i v důvodu tipu. Měření v `docs/MODEL-CLIP-B32.md`, oddíl 9.
+
 ## [1.5.0] – 2026-11-06
 
 ### Přidáno

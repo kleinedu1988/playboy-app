@@ -181,3 +181,25 @@ akt* detektor neodliší, nenavrhuje se.
 Vzorek 3 645 fotek sbírky: nahoře bez 59 %, akt 15 %, prádlo 10 %, oblečená 2 %; po typech alb Playmate měsíce
 63 % nahoře bez a 24 % akt, centerfoldy 69 % akt. Jediná otagovaná fotka sbírky (akt, prsa) vyšla správně.
 Označené fotky ke skutečnému ověření přesnosti zatím nejsou – měřit znovu, až jich v Průvodci přibude.
+
+## 9. Obrazové modely v odhadu srdíček a v „Mohlo by se ti líbit“ (6. 11. 2026)
+
+**Odhad srdíček fotek** bere k vektoru CLIP i 18 jistot detektoru partií (hřeben, λ = 100). Na 3 645 fotkách
+s oběma, ověřeno na fotkách cizích modelek (rozdělení podle modelek): CLIP Spearman 0,439 / MAE 0,601,
+CLIP + detektor 0,457 / 0,595. Dokud detektor nemá spočítanou aspoň polovinu fotek s vektorem, odhad bere jen CLIP.
+
+**Obsah fotek modelky** = průměr čistého odhadu srdíček z obsahu jejích fotek (bez odchylky alba, aspoň 3 fotky) je
+nový číselný údaj modelu vkusu (`cvObsah`, vlastní skupina údajů). Samotný proti srdíčkům modelek: Spearman ~0,39
+při stejném počtu fotek u každé modelky (nejlepších 5 fotek vycházelo 0,60, ale jen proto, že oblíbené modelky mají
+ve vzorku víc hodnocených fotek – zkreslení). V modelu vkusu na kopii sbírky (337 hodnocených modelek, 5násobné
+ověření):
+
+| Varianta | CV MAE (průměr 0,931) | Přesnost ± ½ ♥ | Tipů |
+|---|---|---|---|
+| údaje + srdíčka fotek | 0,662 | 0,62 | 105 |
+| + obsah fotek | 0,661 | 0,63 | 129 |
+| údaje bez srdíček fotek (situace nehodnocených kandidátek) | 0,726 | 0,58 | 131 |
+| bez srdíček fotek + obsah fotek | **0,698** | **0,60** | 116 |
+
+U modelek se srdíčky fotek obsah nic nepřidá (srdíčka fotek říkají víc), u kandidátek bez nich chybu sníží o ~4 %.
+Obsah fotek se přepočítá po dalším spočítaném obsahu nebo po 25 nových hodnoceních fotek (učení ~0,5 s).

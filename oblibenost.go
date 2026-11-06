@@ -497,6 +497,11 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	zaznamu := u.ob.zaznamuZajmu
 	u.mu.Unlock()
 	otiskM := otiskModelekOblibenosti(modelky)
+	// Obsah fotek (obrazové modely): mění se s výpočtem obsahu a po větších změnách hodnocení fotek
+	obsahM, otiskObsahu := a.obsahFotekVPameti()
+	if otiskObsahu != 0 {
+		otiskM += fmt.Sprintf("|obsah %x", otiskObsahu)
+	}
 	otisk := otiskOblibenostiZ(otiskM, porovnani, zaznamu/zaznamuNaPrepocet)
 	if u.ob.model != nil && u.ob.model.otisk == otisk {
 		return u.ob.model
@@ -504,6 +509,7 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	// Po porovnání se modelky nemění: údaje modelu vkusu se znovu nepřipravují
 	if u.ob.udajeOtisk != otiskM {
 		u.ob.udaje, u.ob.udajeOtisk = pripravitUdajeVkusu(modelky), otiskM
+		doplnitObsahVkusu(u.ob.udaje, obsahM)
 	}
 	nyni := time.Now()
 	u.mu.Lock()

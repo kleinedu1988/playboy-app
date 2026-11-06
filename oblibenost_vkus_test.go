@@ -747,3 +747,19 @@ func TestPripraveneUdajeVkusu(t *testing.T) {
 		t.Fatal("výpočet změnil připravené údaje")
 	}
 }
+
+// Obsah fotek je vlastní skupina údajů: přidá ji jen modelkám s údaji, podruhé ji nezapočítá
+func TestDoplnitObsahVkusu(t *testing.T) {
+	udaje := map[int]udajeVkusu{1: {skupin: 3}, 2: {skupin: 5}}
+	doplnitObsahVkusu(udaje, map[int]float64{1: 3.5, 9: 2})
+	doplnitObsahVkusu(udaje, map[int]float64{1: 3.7})
+	if u := udaje[1]; !u.ma[cvObsah] || u.cis[cvObsah] != 3.7 || u.skupin != 4 {
+		t.Fatalf("modelka s obsahem: %+v", u)
+	}
+	if u := udaje[2]; u.ma[cvObsah] || u.skupin != 5 {
+		t.Fatalf("modelka bez obsahu: %+v", u)
+	}
+	if _, ok := udaje[9]; ok {
+		t.Fatal("modelka mimo údaje se nemá přidat")
+	}
+}

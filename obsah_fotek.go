@@ -6,8 +6,12 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
+	"hash/fnv"
+	"math"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"playboy-app/internal/obsah"
 )
@@ -162,8 +166,8 @@ func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 	return navrhy
 }
 
-// Odhad srdíček nehodnocených fotek z obsahu (ID souboru → 1–5); nil, když je hodnocených fotek s vektorem málo
-func (a *App) odhadySrdicekFotek() map[string]float64 {
+// Odhady srdíček z obsahu fotek (internal/obsah/odhad.go); nil, když je hodnocených fotek s obsahem málo
+func (a *App) odhadySrdicekFotek() *obsah.Odhady {
 	if !a.obsah.Zapnuto() {
 		return nil
 	}
@@ -180,4 +184,89 @@ func (a *App) odhadySrdicekFotek() map[string]float64 {
 		}
 	}
 	return a.obsah.OdhadyFotek(fotky)
+}
+
+// Nejméně fotek s obsahem, od kolika má modelka údaj „obsah fotek“
+const minFotekObsahu = 3
+
+// Obsah fotek modelek pro model vkusu: průměr čistého odhadu srdíček z obsahu jejích fotek (modelka → 1–5)
+func (a *App) obsahFotekModelek() map[int]float64 {
+	o := a.odhadySrdicekFotek()
+	if o == nil {
+		return nil
+	}
+	radky, err := a.db.Query(`SELECT DISTINCT al.modelka_id, f.drive_file_id FROM fotky f JOIN alba al ON al.id = f.album_id
+		WHERE al.modelka_id IS NOT NULL`)
+	if err != nil {
+		return nil
+	}
+	defer radky.Close()
+	type soucet struct{ s, n float64 }
+	podle := map[int]*soucet{}
+	for radky.Next() {
+		var m int
+		var id string
+		if radky.Scan(&m, &id) != nil {
+			continue
+		}
+		x, ok := o.Obsah[id]
+		if !ok {
+			continue
+		}
+		s := podle[m]
+		if s == nil {
+			s = &soucet{}
+			podle[m] = s
+		}
+		s.s += x
+		s.n++
+	}
+	v := map[int]float64{}
+	for m, s := range podle {
+		if s.n >= minFotekObsahu {
+			v[m] = math.Min(5, math.Max(1, s.s/s.n))
+		}
+	}
+	return v
+}
+
+// Obsah fotek modelek se přepočítá jen po spočítání dalšího obsahu nebo po aspoň tolika nových hodnoceních fotek:
+// naučení odhadu trvá ~0,5 s a oblíbenost se přepočítává po každém hodnocení
+const prepocetObsahuPoHodnocenich = 25
+
+var obsahModelekPamet struct {
+	sync.Mutex
+	klic  [3]int
+	otisk uint64
+	obsah map[int]float64
+}
+
+// Obsah fotek modelek (obsahFotekModelek) z paměti a jeho otisk (0 = žádný)
+func (a *App) obsahFotekVPameti() (map[int]float64, uint64) {
+	if a.obsah == nil || !a.obsah.Zapnuto() {
+		return nil, 0
+	}
+	st := a.obsah.Stav()
+	var hodnocenych int
+	a.db.QueryRow(`SELECT COUNT(*) FROM fotky WHERE hodnoceni > 0`).Scan(&hodnocenych)
+	klic := [3]int{st.Vektoru, a.obsah.PocetPartii(), hodnocenych / prepocetObsahuPoHodnocenich}
+	p := &obsahModelekPamet
+	p.Lock()
+	defer p.Unlock()
+	if p.klic == klic && p.obsah != nil {
+		return p.obsah, p.otisk
+	}
+	p.klic, p.obsah = klic, a.obsahFotekModelek()
+	h := fnv.New64a()
+	for _, x := range klic {
+		fmt.Fprint(h, x, ",")
+	}
+	p.otisk = 0
+	if len(p.obsah) > 0 {
+		p.otisk = h.Sum64()
+	}
+	if p.obsah == nil {
+		p.obsah = map[int]float64{}
+	}
+	return p.obsah, p.otisk
 }

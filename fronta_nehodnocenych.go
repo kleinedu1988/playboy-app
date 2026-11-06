@@ -118,10 +118,11 @@ func seraditFrontu(p []polozkaFronty, razeni string, seed int, odhad map[int]flo
 
 // Odhad srdíček z obsahu podle ID fotky fronty
 func (a *App) odhadPolozekFronty(f FrontaFotek) map[int]float64 {
-	podleSouboru := a.odhadySrdicekFotek()
-	if len(podleSouboru) == 0 {
+	o := a.odhadySrdicekFotek()
+	if o == nil || len(o.Nehodnocene) == 0 {
 		return nil
 	}
+	podleSouboru := o.Nehodnocene
 	v := make(map[int]float64, len(f.Fotky))
 	for _, x := range f.Fotky {
 		if o, ok := podleSouboru[x.DriveID]; ok {
@@ -133,7 +134,8 @@ func (a *App) odhadPolozekFronty(f FrontaFotek) map[int]float64 {
 
 // Lze řadit podle odhadu srdíček z obsahu fotek (dost hodnocených fotek s vektorem)
 func (a *App) MaOdhadSrdicekFotek() bool {
-	return len(a.odhadySrdicekFotek()) > 0
+	o := a.odhadySrdicekFotek()
+	return o != nil && len(o.Nehodnocene) > 0
 }
 
 type StrankaNehodnocenych struct {

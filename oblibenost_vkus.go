@@ -168,6 +168,22 @@ func (model *modelOblibenosti) naucitModelVkusu(modelky []Modelka, porovnani []p
 	}
 }
 
+// Obsah fotek (obrazové modely, obsah_fotek.go) do údajů modelek: vlastní skupina údajů, i u modelky bez
+// hodnocených fotek – proto pomáhá hlavně u nehodnocených kandidátek „Mohlo by se ti líbit“
+func doplnitObsahVkusu(udaje map[int]udajeVkusu, obsah map[int]float64) {
+	for id, x := range obsah {
+		u, ok := udaje[id]
+		if !ok {
+			continue
+		}
+		if !u.ma[cvObsah] {
+			u.skupin++
+		}
+		u.cis[cvObsah], u.ma[cvObsah] = x, true
+		udaje[id] = u
+	}
+}
+
 // Skóre fotek (oblibenost_fotky.go) do údajů modelek; modelka s hodnocenými fotkami má skupinu údajů o fotkách
 func doplnitSkoreVkusu(udaje map[int]udajeVkusu, skore map[int]skoreFotek) {
 	for id, sf := range skore {
@@ -224,6 +240,7 @@ const (
 	cvRok     // rok prvního výskytu
 	cvFotky   // průměr srdíček jejích fotek (aspoň 2 hodnocené)
 	cvSkore   // skóre fotek (oblibenost_fotky.go)
+	cvObsah   // obsah fotek: průměr odhadu srdíček z obsahu jejích fotek (obsah_fotek.go, obrazové modely)
 	pocetCisVkusu
 )
 
@@ -233,7 +250,7 @@ var popisCisVkusu = [pocetCisVkusu]struct {
 }{
 	{"výška", "cm", 0}, {"váha", "kg", 0}, {"hrudník", "cm", 0}, {"pas", "cm", 0}, {"boky", "cm", 0}, {"BMI", "", 1},
 	{"poměr pas/boky", "", 2}, {"poměr hrudník/pas", "", 2}, {"věk", "let", 0}, {"rok", "", 0}, {"srdíčka jejích fotek", "", 1},
-	{"skóre fotek", "", 1},
+	{"skóre fotek", "", 1}, {"obsah fotek", "", 1},
 }
 
 // Které údaje o fotkách model bere

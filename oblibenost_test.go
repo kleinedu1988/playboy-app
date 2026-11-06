@@ -489,8 +489,9 @@ func TestVyberDvojicNejistota(t *testing.T) {
 		porovnani = append(porovnani, porovnaniZaznam{id: int64(k + 1), a: 1, b: 2, vysledek: v})
 	}
 	model := spocitatOblibenost(modelky, porovnani, time.Now())
-	// Bez paměti nedávných porovnání (jen nejistota): první dvojice je z neporovnaných 3 a 4
-	d := vybratDvojice(modelky, model, nil, nil, 1, "", rand.New(rand.NewSource(1)))
+	// Bez paměti nedávných porovnání (jen nejistota): první dvojice je z neporovnaných 3 a 4. Okruh „stejne“:
+	// výchozí výběr losuje i z dalších seznamů (souboje, objevování), tady jde jen o řazení podle nejistoty
+	d := vybratDvojice(modelky, model, nil, nil, 1, "stejne", rand.New(rand.NewSource(1)))
 	if len(d) != 1 || klicDvojice(d[0].A, d[0].B) != [2]int{3, 4} {
 		t.Fatalf("dvojice: %+v", d)
 	}

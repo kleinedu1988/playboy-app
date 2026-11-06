@@ -1061,7 +1061,7 @@ async function vybrat(vysledek) {
     // Souboj na hranici úrovně se přepočte hned (úrovně a štítky v pásech ukážou výsledek), jinak po pěti porovnáních;
     // poslední souboj série „Rozhodnout teď“ přepočte a vyhodnotí dokončení série
     if (serie && !serie.vysledek && !zbyvaSerie()) dokoncitSerii();
-    else if (++porovnanoOdObnoveni >= 5 || d.druh === 'souboj' || d.druh === 'overeni') obnovitPrehled();
+    else if (++porovnanoOdObnoveni >= 5 || d.druh === 'souboj' || d.druh === 'utok' || d.druh === 'overeni') obnovitPrehled();
 }
 
 // Další dvojice s krátkým přechodem: vybraná se rozzáří, obě zmizí, nové se objeví

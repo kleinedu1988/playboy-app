@@ -190,9 +190,11 @@ export function textCekajicich(pocty, celkem = 0) {
 }
 
 // Nadpis souboje nad pásy z dvojice (druh „souboj“) a úrovní obou modelek: „Souboj o Top 10“, u dvojice
-// o potvrzení čekající „O postup do Top 10“; jiná dvojice ''
+// o potvrzení čekající „O postup do Top 10“; útok vyzyvatelky na modelku z top 10 (druh „utok“) „Útok na Top 10“;
+// jiná dvojice ''
 export function nadpisSouboje(dvojice, a = null, b = null) {
     if (dvojice?.druh === 'overeni') return 'Ověření srdíček';
+    if (dvojice?.druh === 'utok') return 'Útok na Top 10';
     if (dvojice?.druh !== 'souboj') return '';
     const duvod = String(dvojice.duvod || '');
     const zDuvodu = Number(duvod.match(/top\s*(\d+)/i)?.[1]) || 0;

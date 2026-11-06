@@ -110,6 +110,7 @@ test('úrovně oblíbenosti: seskupení pořadí, čekající a nadpis souboje',
     assert.equal(textCekajicich([]), '');
 
     assert.equal(nadpisSouboje({ druh: '', duvod: 'Stejná úroveň srdíček' }), '');
+    assert.equal(nadpisSouboje({ druh: 'utok', duvod: 'Útok na top 10: Anna (14. místo) vyzývá Báru (3. místo)' }), 'Útok na Top 10');
     assert.equal(nadpisSouboje({ druh: 'souboj', duvod: 'Souboj o top 10: Anna (11.) proti Báře (10.)' }), 'Souboj o Top 10');
     assert.equal(nadpisSouboje({ druh: 'souboj', duvod: 'Anna čeká na potvrzení do top 10 (5/8 porovnání): proti Báře (10.)' }), 'O postup do Top 10');
     assert.equal(nadpisSouboje({ druh: 'souboj', duvod: 'Obhajoba top 20: Bára (20.) brání místo, Anna (21.) ji silou předstihla – rozhodne jejich souboj' }), 'Obhajoba Top 20');

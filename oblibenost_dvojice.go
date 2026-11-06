@@ -20,7 +20,7 @@ type DvojicePorovnani struct {
 	A     int    `json:"a"`
 	B     int    `json:"b"`
 	Duvod string `json:"duvod"` // proč právě tahle dvojice (česky)
-	Druh  string `json:"druh"`  // "souboj" u soubojů na hranicích top 10/20/50/100, "overeni" u ověření srdíček, jinak ""
+	Druh  string `json:"druh"`  // "souboj" u soubojů na hranicích top 10/20/50/100, "overeni" u ověření srdíček, "utok" u útoku na top 10, jinak ""
 }
 
 // Parametry výběru dvojic
@@ -38,6 +38,18 @@ const (
 	vahaRozpracovane   = 2.5 // už porovnaná, ale ještě bez návrhu srdíček: dotáhnout ji
 	vahaBezOdhadu      = 0.35
 	vahaNesouladu      = 1.6 // modelka, které nesedí srdíčka: další porovnání to ověří
+
+	// Výchozí výběr (1.3.1): kromě běžných dvojic, nehodnocených proti kotvě a soubojů na hranicích ještě
+	// objevování (málo porovnané modelky), dvojice napříč úrovněmi srdíček a útoky na top 10. Podíly jednotlivých
+	// seznamů ve výběru; když seznam dojde, bere se z dalších.
+	podilObjevovani = 0.15 // hodnocené modelky s málo porovnáními (do maxPorovnaniObjevu) proti známé kotvě
+	podilNapric     = 0.2  // hodnocené modelky, jejichž srdíčka se liší o jedno až dvě a půl
+	podilUtoku      = 0.1  // modelka z top 10 proti vyzyvatelce zpoza top 10
+	podilBeznych    = 0.15 // stejná a sousední úroveň (zbytek podílu po ostatních)
+
+	maxPorovnaniObjevu = 2  // objevování: modelka s nejvýš tolika porovnáními
+	sirkaNapric        = 40 // napříč úrovněmi: kandidátky do tolika míst podle síly na každou stranu
+	vyzyvatelekUtoku   = 30 // útok na top 10: vyzyvatelky z míst 11 až 10 + tolik podle síly
 )
 
 // Dvojice k porovnání vybrané aktivním učením. okruh: "" všechny hodnocené, "stejne" jen stejná úroveň srdíček,
@@ -100,6 +112,9 @@ func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 // jednou a modelka častá v posledních porovnáních se tlumí. Asi pětina dvojic je průzkum: náhodná dvojice ze
 // stejné nebo sousední úrovně (semínko z počtu porovnání a volání, takže výsledek je opakovatelný). Pořadí A/B
 // je náhodné, aby levá strana neměla přednost.
+// Od 1.3.1 výchozí výběr losuje každou dvojici z jednoho ze šesti seznamů podle podílů (podilBeznych …
+// podilUtoku): k běžným, nehodnoceným a soubojům přibylo objevování málo porovnaných, dvojice napříč úrovněmi
+// srdíček (o 1 až 2½) a útoky vyzyvatelek na top 10 (docs/UCENI.md, oddíl Výběr dvojic).
 
 type kandidatDvojice struct {
 	a, b    int
@@ -132,11 +147,21 @@ const (
 	dvojiceHranice            // souboj: N. proti N+1. místu
 	dvojiceObhajoba           // souboj: vyzyvatelka proti držitelce, která místo obhajuje
 	dvojiceOvereni            // ověření srdíček: modelka s nesouladem proti úrovni, kam podle něj patří
+	dvojiceObjev              // objevování: málo porovnaná hodnocená modelka proti známé kotvě
+	dvojiceNapric             // napříč úrovněmi: srdíčka se liší o jedno až dvě a půl
+	dvojiceUtok               // útok na top 10: vyzyvatelka zpoza top 10 proti modelce z top 10
 )
 
 // Souboje a ověření srdíček jdou ze zvláštního seznamu (oblibenost_urovne.go) s důvodem z duvodSouboje
 func jeSouboj(druh int) bool {
 	return druh == dvojiceCekajici || druh == dvojiceHranice || druh == dvojiceObhajoba || druh == dvojiceOvereni
+}
+
+func jmenoDvojice(x *Modelka) string {
+	if x.Jmeno == "" {
+		return fmt.Sprintf("modelka č. %d", x.ID)
+	}
+	return x.Jmeno
 }
 
 func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
@@ -171,6 +196,18 @@ func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
 		return fmt.Sprintf("Obě mají %s a pořadí mezi nimi zatím není jisté", textSrdicek(k.x.Hodnoceni))
 	case dvojiceSousedni:
 		return fmt.Sprintf("Sousední úrovně (%s a %s): patří ta s méně srdíčky výš?", nizsi, vyssi)
+	case dvojiceObjev:
+		n := model.pocet[k.x.ID]
+		kolik := "ještě nebyla v žádném porovnání"
+		if n > 0 {
+			kolik = fmt.Sprintf("má zatím jen %d %s", n, sklonovatSlovo(n, "porovnání", "porovnání", "porovnání"))
+		}
+		return fmt.Sprintf("Nová v porovnávání: %s (%s) %s – proti %s (%s), která má pořadí jisté", jmenoDvojice(k.x), textSrdicek(k.x.Hodnoceni), kolik, jmenoDvojice(k.y), textSrdicek(k.y.Hodnoceni))
+	case dvojiceNapric:
+		return fmt.Sprintf("Napříč úrovněmi: %s a %s. Sedí rozdíl srdíček, nebo je ta s méně srdíčky lepší?", nizsi, vyssi)
+	case dvojiceUtok:
+		return fmt.Sprintf("Útok na top 10: %s (%d. místo) vyzývá %s (%d. místo) – v top 10 nemá nikdo místo jisté",
+			jmenoDvojice(k.x), model.mistoSily[k.x.ID], jmenoDvojice(k.y), model.poradi[k.y.ID])
 	}
 	return fmt.Sprintf("Srdíčka se liší o jedno (%s a %s), porovnání ověří hranici", nizsi, vyssi)
 }
@@ -396,6 +433,16 @@ func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []poro
 	if okruh == "" {
 		kandidatiSoub = model.kandidatiSouboju(modelky, vyloucene, vahaModelky, omezitSouboje(model, porovnani, nabidnute))
 	}
+	// Objevování, napříč úrovněmi a útoky na top 10 (jen výchozí okruh)
+	var kandidatiObjev, kandidatiNapric, kandidatiUtok []kandidatDvojice
+	if okruh == "" {
+		kandidatiObjev = kandidatiObjevovani(hodnocene, model, vyloucene, vahaModelky)
+		kandidatiNapric = kandidatiNapricUrovnemi(hodnocene, model, vyloucene, vahaModelky, informace)
+		kandidatiUtok = kandidatiUtokuNaTop(modelky, model, vyloucene, vahaModelky, nahoda)
+		seraditKandidaty(kandidatiObjev)
+		seraditKandidaty(kandidatiNapric)
+		seraditKandidaty(kandidatiUtok)
+	}
 	seraditKandidaty(kandidatiHod)
 	seraditKandidaty(kandidatiNeh)
 	pouzite := map[int]bool{}
@@ -409,6 +456,8 @@ func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []poro
 		d := DvojicePorovnani{A: a, B: b, Duvod: duvod}
 		if k.druh == dvojiceOvereni {
 			d.Druh = "overeni"
+		} else if k.druh == dvojiceUtok {
+			d.Druh = "utok"
 		} else if jeSouboj(k.druh) {
 			d.Druh = "souboj"
 		}
@@ -423,7 +472,8 @@ func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []poro
 		seznamSouboju
 	)
 	dalsi := map[int]int{}
-	vzit := func(kandidati []kandidatDvojice, druh int) bool {
+	// seznam: index seznamu (vlastní ukazatel na dalšího kandidáta), druh: seznamSouboju průzkum nemá
+	vzitZ := func(kandidati []kandidatDvojice, seznam, druh int) bool {
 		if druh != seznamSouboju && nahoda.Float64() < podilPruzkumu {
 			var moznosti []kandidatDvojice
 			for _, k := range kandidati {
@@ -434,31 +484,74 @@ func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []poro
 			if len(moznosti) > 0 {
 				k := moznosti[nahoda.Intn(len(moznosti))]
 				duvod := "Průzkum: náhodná dvojice ze stejné nebo sousední úrovně, aby se pořadí neučilo jen z nejistých"
-				if k.druh == dvojiceNehodnocena {
+				if k.druh != dvojiceStejna && k.druh != dvojiceSousedni {
 					duvod = duvodDvojice(k, model)
 				}
 				pridat(k, duvod)
 				return true
 			}
 		}
-		for dalsi[druh] < len(kandidati) && !pouzitelny(kandidati[dalsi[druh]]) {
-			dalsi[druh]++
+		for dalsi[seznam] < len(kandidati) && !pouzitelny(kandidati[dalsi[seznam]]) {
+			dalsi[seznam]++
 		}
-		if dalsi[druh] >= len(kandidati) {
+		if dalsi[seznam] >= len(kandidati) {
 			return false
 		}
-		pridat(kandidati[dalsi[druh]], duvodDvojice(kandidati[dalsi[druh]], model))
+		pridat(kandidati[dalsi[seznam]], duvodDvojice(kandidati[dalsi[seznam]], model))
 		return true
 	}
-	seznamy := [][]kandidatDvojice{kandidatiHod, kandidatiNeh, kandidatiSoub}
+	vzit := func(kandidati []kandidatDvojice, druh int) bool { return vzitZ(kandidati, druh, druh) }
+	seznamy := [][]kandidatDvojice{kandidatiHod, kandidatiNeh, kandidatiSoub, kandidatiObjev, kandidatiNapric, kandidatiUtok}
+	if okruh == "" {
+		// Výchozí výběr: každá dvojice z jednoho seznamu, vylosovaného podle podílů (jen ze seznamů, které nějaké
+		// kandidáty mají); když vylosovaný seznam nic použitelného nemá, bere se z dalších podle velikosti podílu
+		podily := []float64{podilBeznych, podilNehodnocenych, podilSouboju, podilObjevovani, podilNapric, podilUtoku}
+		for len(vysledek) < pocet {
+			var moznosti []int
+			soucet := 0.0
+			for s, k := range seznamy {
+				if len(k) > 0 && podily[s] > 0 {
+					moznosti = append(moznosti, s)
+					soucet += podily[s]
+				}
+			}
+			if len(moznosti) == 0 {
+				break
+			}
+			los, prvni := nahoda.Float64()*soucet, moznosti[len(moznosti)-1]
+			for _, s := range moznosti {
+				if los < podily[s] {
+					prvni = s
+					break
+				}
+				los -= podily[s]
+			}
+			ostatni := slices.DeleteFunc(slices.Clone(moznosti), func(s int) bool { return s == prvni })
+			sort.SliceStable(ostatni, func(i, j int) bool { return podily[ostatni[i]] > podily[ostatni[j]] })
+			vzato := false
+			for _, s := range append([]int{prvni}, ostatni...) {
+				druh := s
+				if s > seznamSouboju {
+					druh = seznamHodnocenych // nové seznamy mají průzkum jako běžné dvojice
+				}
+				if vzitZ(seznamy[s], s, druh) {
+					vzato = true
+					break
+				}
+			}
+			if !vzato {
+				break
+			}
+		}
+		return vysledek
+	}
+	// Okruhy „stejne“ a „nehodnocene“: jen jejich seznam
 	// Souboje berou z dvojic, které by jinak byly hodnocené, tolik, aby jich bylo podilSouboju ze všech
 	podilSoubojuHodnocenych := podilSouboju
 	if len(kandidatiNeh) > 0 {
 		podilSoubojuHodnocenych /= 1 - podilNehodnocenych
 	}
 	for len(vysledek) < pocet {
-		// Nehodnocené dostanou asi třetinu dvojic (když nějaké jsou), souboje asi 30 % (když nějaké jsou, jinak
-		// zůstanou hodnoceným); když jeden seznam dojde, bere se z dalších
 		nejdriv, potom := seznamHodnocenych, seznamNehodnocenych
 		if len(kandidatiHod) == 0 || (len(kandidatiNeh) > 0 && nahoda.Float64() < podilNehodnocenych) {
 			nejdriv, potom = seznamNehodnocenych, seznamHodnocenych
@@ -513,4 +606,82 @@ func seraditKandidaty(k []kandidatDvojice) {
 	for i, x := range klice {
 		k[i] = puvodni[x.i]
 	}
+}
+
+// Objevování: hodnocená modelka s nejvýš maxPorovnaniObjevu porovnáními proti kotvě – modelce s jistým místem
+// (aspoň 5 porovnání) a silou co nejblíž. Méně porovnaná má přednost. hodnocene jsou seřazené podle síly.
+func kandidatiObjevovani(hodnocene []*Modelka, model *modelOblibenosti, vyloucene map[[2]int]bool, vahaModelky func(*Modelka) float64) []kandidatDvojice {
+	var kandidati []kandidatDvojice
+	for i, x := range hodnocene {
+		n := model.pocet[x.ID]
+		if n > maxPorovnaniObjevu {
+			continue
+		}
+		nalezeno := 0
+		for d := 1; d <= sirkaNapric && nalezeno < 3; d++ {
+			for _, j := range []int{i - d, i + d} {
+				if j < 0 || j >= len(hodnocene) || nalezeno >= 3 {
+					continue
+				}
+				y := hodnocene[j]
+				if model.pocet[y.ID] < 5 || vyloucene[klicDvojice(x.ID, y.ID)] {
+					continue
+				}
+				skore := float64(maxPorovnaniObjevu+1-n) * vahaModelky(x) * vahaModelky(y) / float64(1+nalezeno)
+				kandidati = append(kandidati, kandidatDvojice{a: x.ID, b: y.ID, skore: skore, pruzkum: true, druh: dvojiceObjev, x: x, y: y})
+				nalezeno++
+			}
+		}
+	}
+	return kandidati
+}
+
+// Napříč úrovněmi: hodnocené modelky, jejichž srdíčka se liší o jedno až dvě a půl, mezi sousedkami podle síly
+// (do sirkaNapric míst). Přednost má dvojice, kde síly srdíčkům neodpovídají (výsledek je nejistý), a málo známé
+// modelky; i jasnější dvojice ale dostanou základní váhu, aby se rozdíl srdíček občas ověřil.
+func kandidatiNapricUrovnemi(hodnocene []*Modelka, model *modelOblibenosti, vyloucene map[[2]int]bool, vahaModelky func(*Modelka) float64,
+	informace func(x, y *Modelka, sx, sy float64) float64) []kandidatDvojice {
+	var kandidati []kandidatDvojice
+	for i, x := range hodnocene {
+		for j := i + 1; j < min(len(hodnocene), i+1+sirkaNapric); j++ {
+			y := hodnocene[j]
+			rozdil := math.Abs(x.Hodnoceni - y.Hodnoceni)
+			if rozdil < 1 || rozdil > 2.5 || vyloucene[klicDvojice(x.ID, y.ID)] {
+				continue
+			}
+			zaklad := 0.05 * (model.rozptylModelky(x) + model.rozptylModelky(y))
+			skore := (informace(x, y, model.silaModelky(x), model.silaModelky(y)) + zaklad) * vahaModelky(x) * vahaModelky(y)
+			kandidati = append(kandidati, kandidatDvojice{a: x.ID, b: y.ID, skore: skore, pruzkum: true, druh: dvojiceNapric, x: x, y: y})
+		}
+	}
+	return kandidati
+}
+
+// Útok na top 10: každá modelka z potvrzené top 10 proti vyzyvatelkám zpoza ní (místa 11 až 10 + vyzyvatelekUtoku
+// podle síly). Bližší silou mají přednost, s náhodnou příměsí, aby se vyzyvatelky střídaly; v top 10 tak nemá
+// nikdo místo jisté a každá musí místo občas obhájit.
+func kandidatiUtokuNaTop(modelky []Modelka, model *modelOblibenosti, vyloucene map[[2]int]bool, vahaModelky func(*Modelka) float64, nahoda *rand.Rand) []kandidatDvojice {
+	var top, vyzyvatelky []*Modelka
+	for i := range modelky {
+		x := &modelky[i]
+		if p := model.poradi[x.ID]; p >= 1 && p <= 10 {
+			top = append(top, x)
+		} else if s := model.mistoSily[x.ID]; s > 10 && s <= 10+vyzyvatelekUtoku && model.doSouboje(x) {
+			vyzyvatelky = append(vyzyvatelky, x)
+		}
+	}
+	sort.Slice(top, func(i, j int) bool { return model.poradi[top[i].ID] < model.poradi[top[j].ID] })
+	sort.Slice(vyzyvatelky, func(i, j int) bool { return model.mistoSily[vyzyvatelky[i].ID] < model.mistoSily[vyzyvatelky[j].ID] })
+	var kandidati []kandidatDvojice
+	for _, y := range top {
+		for _, x := range vyzyvatelky {
+			if vyloucene[klicDvojice(x.ID, y.ID)] {
+				continue
+			}
+			blizko := 1 / (1 + 2*math.Abs(model.oblibenost[x.ID]-model.oblibenost[y.ID]))
+			skore := blizko * (0.7 + 0.6*nahoda.Float64()) * vahaModelky(x) * vahaModelky(y)
+			kandidati = append(kandidati, kandidatDvojice{a: x.ID, b: y.ID, skore: skore, pruzkum: true, druh: dvojiceUtok, x: x, y: y})
+		}
+	}
+	return kandidati
 }

@@ -448,6 +448,25 @@ s odhadem vkusu 1, bez něj 0,35. Modelka s nesouladem se srdíčky (níž) má 
 nesoulad dalšími porovnáními potvrdil nebo vyvrátil. Třetí seznam jsou **souboje na hranicích** top 10/20/50/100
 (oddíl Úrovně Top 10/20/50/100): berou asi 30 % všech dvojic (z těch, které by jinak byly hodnocené).
 
+**Od 1.3.1** má výchozí výběr šest seznamů a každá dvojice se bere z jednoho, vylosovaného podle podílů (jen ze
+seznamů, které kandidáty mají; podíly se přepočtou na součet): běžné dvojice stejné a sousední úrovně 0,15,
+nehodnocené proti kotvě 0,33, souboje na hranicích 0,3 a nově:
+- **objevování** 0,15 – hodnocená modelka s nejvýš 2 porovnáními proti kotvě s jistým místem (aspoň 5 porovnání,
+  silou co nejblíž); méně porovnaná má přednost. Důvod: „Nová v porovnávání: Anna (4 srdíčka) ještě nebyla
+  v žádném porovnání – proti Báře (4 srdíčka), která má pořadí jisté“.
+- **napříč úrovněmi** 0,2 – hodnocené modelky, jejichž srdíčka se liší o 1 až 2½, mezi 40 sousedkami podle síly;
+  přednost má dvojice, kde síly srdíčkům neodpovídají (nejistý výsledek), ale i jasnější dostane základní váhu
+  0,05·(Var sᵢ + Var sⱼ), aby se rozdíl srdíček občas ověřil.
+- **útok na top 10** 0,1 – modelka z potvrzené top 10 proti vyzyvatelce z míst 11–40 podle síly; bližší silou
+  mají přednost s náhodnou příměsí (×0,7–1,3), aby se vyzyvatelky střídaly. Druh dvojice `utok`, nad pásy
+  „⚔ Útok na Top 10“. V top 10 tak nemá nikdo místo jisté.
+
+Simulace (`TestSimulaceUrovni`, 6 semínek, 1 500 porovnání) proti 1.3.0: P@10 0,82 → 0,85, P@20 0,78 → 0,78,
+P@50 0,83 → 0,83, skutečná top 10 potvrzená po mediánu 330 → 280 porovnání, změn v top 10 4,3 → 10,2
+(top 10 je víc v ohrožení), výpadků skutečné top 10 1,0 → 1,8. Podíl útoku 0,15 dal výpadků 2,3 (moc), 0,07 jen
+6 změn v top 10 (málo ohrožení). Ve zkušební sbírce (`TestVyberDvojicMix`) má polovina dvojic srdíčka lišící se
+o celé srdíčko a víc.
+
 Nehodnocenou modelku páruje výběr s kotvou, která má **přesně tolik srdíček, kolik vychází její
 odhad** zaokrouhlený na polovinu srdíčka (stejné číslo, jaké ukazuje štítek „odhad“): odhad vkusu, jinak průměr
 sbírky; jakmile je nehodnocená aspoň jednou porovnaná, její síla z porovnání. Výhra tak

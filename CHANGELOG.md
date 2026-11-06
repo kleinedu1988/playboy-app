@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.3.1] – 2026-11-06
+
+### Změněno
+- **Chytřejší výběr dvojic k porovnání**: výchozí porovnávání („Která se ti líbí víc?“) už nepáruje hlavně modelky se stejnými srdíčky. Každá dvojice se losuje z jednoho ze šesti druhů: běžné (stejná a sousední úroveň), nehodnocené proti kotvě, souboje na hranicích top 10/20/50/100 a nově **objevování** (hodnocené modelky s nejvýš dvěma porovnáními proti modelce s jistým místem), **napříč úrovněmi** (srdíčka se liší o jedno až dvě a půl – ověří, jestli rozdíl sedí) a **útok na top 10** (vyzyvatelka z míst 11–40 proti modelce z top 10, nad pásy „⚔ Útok na Top 10“). Zhruba polovina dvojic má teď srdíčka lišící se aspoň o jedno. V simulaci je top 10 víc v ohrožení (změn zhruba 2,4× víc) a přitom přesnější (P@10 0,82 → 0,85), skutečná top 10 se potvrdí rychleji (medián 330 → 280 porovnání). Podrobnosti v docs/UCENI.md, oddíl Výběr dvojic.
+
 ## [1.3.0] – 2026-11-06
 
 ### Přidáno

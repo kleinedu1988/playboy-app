@@ -595,6 +595,31 @@ export function pripravit() {
         if (odrolovano > 60) navbar.classList.add('profil-svinuty');
         else if (odrolovano < 20) navbar.classList.remove('profil-svinuty');
     }, { passive: true });
+    // Holografická karta v záhlaví: duha a odlesk se přelévají podle polohy myši nad záhlavím (style.css,
+    // --holo-x a --holo-y); jednou za snímek, po odjetí myši zpět do klidové polohy. Bez animací (omezení pohybu)
+    // zůstanou v klidu.
+    const banner = document.getElementById('profilBannerPozadi');
+    const lista = banner?.parentElement;
+    if (banner && lista && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        let cekajici = null;
+        lista.addEventListener('pointermove', (e) => {
+            if (banner.classList.contains('hidden') || banner.classList.contains('editing')) return;
+            const rect = banner.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+            cekajici = { x: (e.clientX - rect.left) / rect.width, y: (e.clientY - rect.top) / rect.height };
+            requestAnimationFrame(() => {
+                if (!cekajici) return;
+                banner.style.setProperty('--holo-x', `${Math.round(Math.min(1, Math.max(0, cekajici.x)) * 100)}%`);
+                banner.style.setProperty('--holo-y', `${Math.round(Math.min(1, Math.max(0, cekajici.y)) * 100)}%`);
+                cekajici = null;
+            });
+        }, { passive: true });
+        lista.addEventListener('pointerleave', () => {
+            cekajici = null;
+            banner.style.removeProperty('--holo-x');
+            banner.style.removeProperty('--holo-y');
+        });
+    }
     // Jméno v pruhu u profilu otevřeného ze seznamu otevře nabídku modelek seznamu (jako dřív jméno v drobečcích)
     profilPruhObsah.addEventListener('click', (e) => {
         if (!/** @type {HTMLElement} */ (e.target).closest('.pruh-identita h2')) return;

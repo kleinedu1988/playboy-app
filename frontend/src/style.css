@@ -17620,85 +17620,120 @@ body.rezim-vyberu #detailView .poster {
     padding-left: 0;
 }
 
-/* ===== Profil 1.2.69: záhlaví jako křídový papír. Fotka dostane tiskový tón (o kousek víc kontrastu, teplá světla
-   jako křída, černá jako inkoust), přes ni jemné zrno papíru (malá dlaždice s průhlednými tečkami; SVG šum přes celé
-   záhlaví by WebKitGTK zpomaloval rolování) a pevný saténový odlesk laku vlevo nahoře; pod záhlavím měkký stín.
-   Nic se nehýbe ani nesleduje myš. Při úpravě výřezu jsou efekty vypnuté, aby bylo vidět skutečnou fotku. ===== */
-.navbar:not(.profil-svinuty) .profil-banner-foto {
-    filter: contrast(1.05) sepia(0.07) saturate(1.04);
+/* ===== Profil 1.2.71: záhlaví jako holografická sběratelská karta (inspirace lesklými a zlatými kartami).
+   Vrstvy banneru: fotka, nad ní duhová holografie (::before, prolnutí color-dodge: duha je vidět hlavně ve světlých
+   místech fotky jako fólie), ztmavení kvůli textu, odlesk světla (::after) a zlatý lem dole. Duha a odlesk se
+   při pohybu myši nad záhlavím přelévají (--holo-x, --holo-y z app/profil.js); bez pohybu stojí v klidové poloze.
+   Při úpravě výřezu jsou efekty vypnuté, aby byla vidět skutečná fotka. ===== */
+.profil-banner-pozadi {
+    --holo-x: 30%;
+    --holo-y: 25%;
 }
 
-.navbar.profil-svinuty .profil-banner-foto {
-    filter: brightness(0.86) contrast(1.05) sepia(0.07) saturate(1.08);
-}
-
-.profil-banner-pozadi::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-        radial-gradient(ellipse 60% 120% at 22% 0%, rgba(255, 250, 238, 0.07) 0%, rgba(255, 248, 235, 0.02) 45%, transparent 75%),
-        url("data:image/png;base64,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") repeat;
-    background-size: auto, 64px 64px;
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) {
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
-}
-
-.profil-banner-pozadi.editing::after {
-    display: none;
-}
-
-.navbar .profil-banner-pozadi.editing .profil-banner-foto {
-    filter: none;
-}
-
-/* ===== Profil 1.2.70: méně zrna (zhruba polovina), víc kovového lesku. Pevný šikmý pruh světla jako na lakovaném
-   křídovém archu pod lampou: ostřejší jasný hřbet, kolem něj měkký šampaňský závoj a slabší druhý odraz vpravo;
-   prolnutí „overlay“ zvedá světla a prohlubuje stíny, takže povrch působí kovově, ne zamlženě ===== */
-.profil-banner-pozadi::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background:
-        linear-gradient(112deg,
-            transparent 6%,
-            rgba(255, 240, 214, 0.22) 18%,
-            rgba(255, 255, 255, 0.85) 26%,
-            rgba(255, 244, 222, 0.30) 30%,
-            transparent 40%,
-            transparent 60%,
-            rgba(220, 230, 248, 0.28) 71%,
-            rgba(255, 255, 255, 0.60) 74.5%,
-            transparent 81%),
-        linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 35%, rgba(0, 0, 0, 0.25) 100%);
-    mix-blend-mode: overlay;
-}
-
-/* Vrstvy banneru: fotka, nad ní lesk, ztmavení kvůli textu, zrno; panel úpravy výřezu nahoře */
 .profil-banner-pozadi > .profil-banner-foto {
     z-index: 0;
 }
 
 .profil-banner-pozadi::before {
+    content: '';
+    position: absolute;
+    inset: 0;
     z-index: 1;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(115deg,
+            hsl(350, 95%, 72%) 0%,
+            hsl(45, 95%, 68%) 6%,
+            hsl(110, 80%, 66%) 12%,
+            hsl(185, 90%, 66%) 18%,
+            hsl(230, 90%, 72%) 24%,
+            hsl(285, 85%, 72%) 30%,
+            hsl(350, 95%, 72%) 36%);
+    background-size: 260% 260%;
+    background-position: var(--holo-x) var(--holo-y);
+    mix-blend-mode: color-dodge;
+    opacity: 0.34;
+    transition: background-position 0.25s ease-out;
 }
 
 .profil-banner-pozadi > .profil-banner-prekryv {
     z-index: 2;
 }
 
+/* Odlesk světla na lesklé kartě: měkká bílá skvrna, kterou myš posouvá, a slabý zlatavý závoj */
 .profil-banner-pozadi::after {
+    content: '';
+    position: absolute;
+    inset: 0;
     z-index: 3;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 34% 90% at var(--holo-x) var(--holo-y), rgba(255, 255, 255, 0.30) 0%, rgba(255, 248, 225, 0.10) 40%, transparent 70%),
+        linear-gradient(115deg, rgba(255, 215, 120, 0.08) 0%, transparent 40%, rgba(255, 215, 120, 0.06) 100%);
+    mix-blend-mode: overlay;
+}
+
+/* Třpytky fólie: řídké jasné tečky, které se při pohybu myši posouvají pomaleji než duha */
+.profil-banner-pozadi > .profil-banner-prekryv::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAABsklEQVR42u3dTyttURzGce/I5XJKcXVliMh9W5S6DEQpZuaUP2WiTHgZN5nJyED7/tZYOJxz/Pafz7ee1shy1vfZa519dnTGxgCgnlRV1Uv+/eNdL+AoU35k0zawAwAAb5/TE5HtMrZoTYuNK6FN8iN3TXmxvyJnZXQWJJbQ8vX9iGxpOrkEFoA6bs0ZFhLlR46ZsAMAABjkvWw5cs9Ecgks1L+kxSHMccDkF+WXx9SDlhA/P81m4g4AXHVNO3dvlQAAAPq9eZiLnJaRje8Vf9Xmxc2rOFF+5FIJ3b4I/kReysgGAAAAAHzfh7HyP3HnXVjohLr7l9WLHA55zr8N9LAb+ZlWQtd3QJp8tOMY+x25LiMbr+WsRh7LOOoS2H6nBBYAAEAn7nrKQ6cLJpJLYAFAs4+xBRZyC7hhwQ5oldA1FnILeGIBQN8nRo+EqlqPPGfIL18BowQ0ZqdMsfB5aeWbljaGNNc+o3YAMPorfTKyU8YB5/EHxIOUMIQ5tpWQWyL5AFD/s3ol8sBEcgksAAAA1OTObI+F3AKm2ry4WRV/LGlphHOfKOED+ZF/oywB6Iv/9hhp/5Js+VwAAAAASUVORK5CYII=") repeat;
+    background-size: 96px 96px;
+    background-position: calc(var(--holo-x) * 0.3) calc(var(--holo-y) * 0.3);
+    mix-blend-mode: overlay;
+    opacity: 0.55;
+    transition: background-position 0.25s ease-out;
 }
 
 .profil-banner-pozadi > .crop-panel {
     z-index: 4;
 }
 
-.profil-banner-pozadi.editing::before {
+/* Zlatý lem dole jako rámeček zlaté karty, se světlým odleskem uprostřed */
+.hlavni-lista:has(> #profilPruh:not(.hidden)) {
+    border-bottom-color: transparent;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden))::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    height: 2px;
+    pointer-events: none;
+    background: linear-gradient(90deg, #6e4f1a 0%, #c9a046 18%, #f6e3a1 34%, #fff7d6 42%, #d9b25a 55%, #9c7428 72%, #e8cc7c 88%, #7a5a20 100%);
+}
+
+/* Jméno zlatou fólií */
+.hlavni-lista #profilPruh .pruh-jmeno h2 {
+    background: linear-gradient(100deg, #c99a3e 0%, #f3dc94 28%, #fff8dc 42%, #e3be63 56%, #b5872f 74%, #f0d58a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: none;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.85));
+}
+
+/* Šipka nabídky modelek u jména zůstává vidět (zlatá fólie dělá písmo průhledným) */
+.hlavni-lista #profilPruh .pruh-identita.s-nabidkou h2::after {
+    color: #e3be63;
+    -webkit-text-fill-color: #e3be63;
+}
+
+.profil-banner-pozadi.editing::before,
+.profil-banner-pozadi.editing::after,
+.profil-banner-pozadi.editing > .profil-banner-prekryv::after {
     display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .profil-banner-pozadi::before,
+    .profil-banner-pozadi::after {
+        transition: none;
+    }
 }

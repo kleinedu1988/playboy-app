@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.71] – 2026-11-06
+
+### Změněno
+- **Záhlaví profilu jako holografická sběratelská karta** (místo křídového papíru z 1.2.69–1.2.70): přes fotku je duhová holografie jako u lesklých karet, měkký odlesk světla a řídké třpytky. Při pohybu myši nad záhlavím se duha, odlesk i třpytky přelévají, jako když se karta natáčí pod světlem. Jméno modelky je zlatou fólií a dole vede tenký zlatý lem jako rámeček zlaté karty. Při úpravě výřezu jsou efekty vypnuté; se zapnutým omezením animací v systému zůstane duha v klidu.
+
 ## [1.2.70] – 2026-11-06
 
 ### Změněno

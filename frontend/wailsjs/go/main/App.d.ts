@@ -5,6 +5,7 @@ import {hledani} from '../models';
 import {oblibenost} from '../models';
 import {main} from '../models';
 import {kontrola} from '../models';
+import {obsah} from '../models';
 import {nahledy} from '../models';
 import {uceni} from '../models';
 
@@ -94,6 +95,8 @@ export function GetPocetNehodnocenychFotek():Promise<number>;
 
 export function GetPoctyTagu():Promise<Record<string, number>>;
 
+export function GetPodobneFotky(arg1:number):Promise<Array<sbirka.Fotografie>>;
+
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
 export function GetPrehledOblibenosti():Promise<main.PrehledOblibenosti>;
@@ -113,6 +116,8 @@ export function GetSoubojeModelky(arg1:number):Promise<Array<main.DvojicePorovna
 export function GetSpecialy():Promise<Array<sbirka.Special>>;
 
 export function GetStatistiky():Promise<sbirka.Statistiky>;
+
+export function GetStavObsahu():Promise<obsah.Stav>;
 
 export function GetStavStahovaniNahledu():Promise<nahledy.StavStahovani>;
 
@@ -272,11 +277,17 @@ export function VybratSouboryImportu():Promise<Array<string>>;
 
 export function VymazatMezipamet():Promise<number>;
 
+export function VypnoutObsah():Promise<boolean>;
+
 export function ZalozitSpecial(arg1:number,arg2:string,arg3:string):Promise<string>;
+
+export function ZapnoutObsah():Promise<boolean>;
 
 export function ZapomenoutPorovnani():Promise<boolean>;
 
 export function ZapomenoutUceni():Promise<boolean>;
+
+export function ZastavitObsah():Promise<void>;
 
 export function ZastavitStahovaniNahledu():Promise<void>;
 

@@ -191,6 +191,11 @@ func stahnout(ctx context.Context, adresa, cil, ocekavanyHash string, prubeh fun
 
 ## 8. Etapy
 
+Stav k 6. 11. 2026: kroky 0–1.4 hotové ve verzi **1.3.0** (1.1 v 1.2.73). „Podobné fotky“ se ukazují v prohlížeči
+(48 nejpodobnějších), ne v samostatné galerii; průběh je ve stavové liště a v nabídce ⋯, ne v Nastavení. Výpočet běží
+jedním modelem (2 vlákna) a 3 souběžnými staženími náhledů; nové fotky dopočítá spuštění po startu nebo první „Podobné
+fotky“ u fotky bez vektoru.
+
 | Krok | Obsah | Pracnost |
 |---|---|---|
 | 0 | Ověřit prototypem: `onnxruntime_go` + dlopen v buildu Wails, export SigLIP do ONNX int8, rychlost na tomto počítači, shoda vektorů s referencí v Pythonu (test s pevnou fotkou v `testdata`) | M |

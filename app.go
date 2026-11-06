@@ -15,6 +15,7 @@ import (
 	"modernc.org/sqlite"
 
 	"playboy-app/internal/nahledy"
+	"playboy-app/internal/obsah"
 )
 
 type App struct {
@@ -49,6 +50,8 @@ type App struct {
 	naPozadi      *sync.WaitGroup
 	// Místní mezipaměť náhledů z Disku (nahledy.go); nil v testech a v kopii pro import
 	nahledy *nahledy.Mezipamet
+	// Obsah fotek: model, vektory a podobné fotky (obsah_fotek.go); nil = vypnuto (testy bez startup)
+	obsah *obsah.Sluzba
 }
 
 // Počká na práci startu na pozadí (denní záloha, první snímek), než se databáze zavře nebo vymění
@@ -217,6 +220,7 @@ func (a *App) startup(ctx context.Context) {
 	if a.uc != nil {
 		a.uc.cestaSbirky = a.cestaDb
 	}
+	a.pripravitObsah()
 
 	if a.chybaStartu == "" && a.cestaDb != "" {
 		a.zapnoutWAL()
@@ -471,6 +475,8 @@ func (a *App) migraceIndexy() error {
 
 func (a *App) shutdown() {
 	a.ZastavitStahovaniNahledu()
+	a.obsah.Zastavit()
+	obsah.UkoncitProstredi()
 	a.pockatNaPozadi()
 	a.zavritPametSbirky(true)
 	if a.db != nil {

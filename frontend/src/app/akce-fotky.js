@@ -10,6 +10,7 @@ import { SetProfilovaFotka, SetTitulniFotka } from './backend';
 import { oznamit } from '../ui/oznameni';
 import { lightbox, zavritLightbox } from './prohlizec';
 import { kopirovatText, odkazNaDisk } from './ulozeni';
+import { podobneZapnuto, ukazatPodobne } from './obsah-fotek';
 
 // Tlačítko ⋯ na dlaždici; nabídku otevře nabidky.js
 export const htmlAkciDlazdice = () =>
@@ -46,6 +47,8 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
             if (zProfilu) otevritProfilPodleId(proModelku);
         } }] : []),
         { text: 'Přidat do výběru…', akce: () => pridatDoVyberu(stranky.map(f => f.id)) },
+        // Obsah fotek (app/obsah-fotek.js): fotky, které vypadají podobně
+        ...(podobneZapnuto() ? [{ text: 'Podobné fotky', akce: () => ukazatPodobne(prvni) }] : []),
         null,
         { text: 'Otevřít na Google Disku', akce: () => BrowserOpenURL(odkazNaDisk(prvni)) },
         { text: 'Kopírovat odkaz', akce: () => kopirovatText(odkazNaDisk(prvni)) },

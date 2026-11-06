@@ -1904,6 +1904,35 @@ export namespace oblibenost {
 
 }
 
+export namespace obsah {
+	
+	export class Stav {
+	    faze: string;
+	    stazeno: number;
+	    stahnout: number;
+	    hotovo: number;
+	    celkem: number;
+	    vektoru: number;
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Stav(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.faze = source["faze"];
+	        this.stazeno = source["stazeno"];
+	        this.stahnout = source["stahnout"];
+	        this.hotovo = source["hotovo"];
+	        this.celkem = source["celkem"];
+	        this.vektoru = source["vektoru"];
+	        this.chyba = source["chyba"];
+	    }
+	}
+
+}
+
 export namespace sbirka {
 	
 	export class BodVyvoje {

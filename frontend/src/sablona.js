@@ -145,6 +145,8 @@ export const SABLONA_OKNA = `
   <!-- Stavová lišta dole: vlevo počet, zapnuté filtry (× zruší) a stav části, vpravo upozornění s odkazem; plní ui/volby.js -->
   <footer id="stavovaLista" class="stavova-lista" aria-label="Stav">
     <div class="stav-vlevo" aria-live="polite"></div>
+    <!-- Průběh obsahu fotek: stažení modelu, výpočet (app/obsah-fotek.js) -->
+    <div class="stav-nahledy stav-obsah" hidden></div>
     <!-- Průběh stahování náhledů na pozadí (app/nahledy-pozadi.js) -->
     <div class="stav-nahledy" hidden></div>
     <div class="stav-vpravo"></div>

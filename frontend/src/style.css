@@ -17280,6 +17280,15 @@ body.rezim-vyberu #detailView .poster {
     margin-left: 0;
 }
 
+/* Obsah fotek a náhledy naráz: vpravo vedle sebe (app/obsah-fotek.js) */
+.stav-obsah:not([hidden]) + .stav-nahledy {
+    margin-left: 0;
+}
+
+.stav-obsah:not([hidden]) + .stav-nahledy[hidden] + .stav-vpravo {
+    margin-left: 0;
+}
+
 /* Přehled výkonu (app/vykon.js) */
 .vykon .vykon-start {
     margin: 0 0 12px;

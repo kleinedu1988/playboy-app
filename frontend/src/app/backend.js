@@ -77,6 +77,12 @@ const CTENI = new Set([
     'SpustitStahovaniNahledu',
     'ZastavitStahovaniNahledu',
     'GetStavStahovaniNahledu',
+    // Obsah fotek: model a vektory jsou mimo databázi sbírky, pohledy se jimi nemění (app/obsah-fotek.js)
+    'GetStavObsahu',
+    'GetPodobneFotky',
+    'ZapnoutObsah',
+    'ZastavitObsah',
+    'VypnoutObsah',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
     'ZaznamenatZajem',
@@ -162,6 +168,11 @@ export const GetCenterfoldy = /** @type {typeof App.GetCenterfoldy} */ (obalit('
 export const GetStavStahovaniNahledu = /** @type {typeof App.GetStavStahovaniNahledu} */ (obalit('GetStavStahovaniNahledu'));
 export const SpustitStahovaniNahledu = /** @type {typeof App.SpustitStahovaniNahledu} */ (obalit('SpustitStahovaniNahledu'));
 export const ZastavitStahovaniNahledu = /** @type {typeof App.ZastavitStahovaniNahledu} */ (obalit('ZastavitStahovaniNahledu'));
+export const GetStavObsahu = /** @type {typeof App.GetStavObsahu} */ (obalit('GetStavObsahu'));
+export const GetPodobneFotky = /** @type {typeof App.GetPodobneFotky} */ (obalit('GetPodobneFotky'));
+export const ZapnoutObsah = /** @type {typeof App.ZapnoutObsah} */ (obalit('ZapnoutObsah'));
+export const ZastavitObsah = /** @type {typeof App.ZastavitObsah} */ (obalit('ZastavitObsah'));
+export const VypnoutObsah = /** @type {typeof App.VypnoutObsah} */ (obalit('VypnoutObsah'));
 export const GetStatistiky = /** @type {typeof App.GetStatistiky} */ (obalit('GetStatistiky'));
 export const GetVyvojVCase = /** @type {typeof App.GetVyvojVCase} */ (obalit('GetVyvojVCase'));
 export const GetClanky = /** @type {typeof App.GetClanky} */ (obalit('GetClanky'));

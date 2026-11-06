@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.3.0] – 2026-11-06
+
+### Přidáno
+- **Podobné fotky (obsah fotek, etapa 1)**: v nabídce ⋯ (Soubory a mezipaměť) jde zapnout *Podobné fotky*. Program po potvrzení stáhne obrazový model CLIP ViT-B/32 a ONNX Runtime (~100 MB, ověřené SHA-256) a na pozadí spočítá obsah **každé fotky sbírky** z náhledu w400 (chybějící náhledy se stáhnou ohleduplně jako náhledy na pozadí). Průběh je ve stavové liště (✕ pozastaví) a v nabídce; spočítané se ukládá po 500 fotkách a po přerušení se pokračuje. Pak má každá fotka v akcích (⋯, pravé tlačítko, prohlížeč) položku **Podobné fotky**: prohlížeč ukáže 48 nejpodobnějších fotek sbírky (stejné focení, scéna, téměř stejné snímky), původní fotka je první. Po startu se dopočítají nové fotky. *Vypnout podobné fotky…* smaže model i vektory.
+- Vše běží místně, fotky nikam neodcházejí. Vektory jsou v `obsah/vektory.bin` vedle databáze (~10 MB pro 18 000 fotek), ne v databázi: **beze změny schématu i exportu**. ONNX Runtime se načítá až za běhu, sestavení programu nic nového nepotřebuje.
+- Předzpracování je shodné s měřením v `docs/MODEL-CLIP-B32.md` (celá fotka 224 × 224, CatmullRom); test porovnává vektor s referencí prototypu (`OBSAH_SLOZKA=… go test ./internal/obsah`).
+
 ## [1.2.73] – 2026-11-06
 
 ### Přidáno

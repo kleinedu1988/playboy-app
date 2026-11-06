@@ -482,6 +482,35 @@ func (m *Mezipamet) pockatNaKlid(ctx context.Context) {
 	}
 }
 
+// Nacist vrátí uložený náhled, nebo ho stáhne ohleduplně jako stahování na pozadí (souběh 3, ustoupí oknu,
+// po odmítnutí Diskem počká) a uloží. Pro výpočet obsahu fotek (internal/obsah); bez mezipaměti jen stáhne.
+func (m *Mezipamet) Nacist(ctx context.Context, id, velikost string) ([]byte, error) {
+	if !JeHoleID(id) || !jeVelikostNahledu(velikost) {
+		return nil, errNahledNedostupny
+	}
+	ukladat := m.slozka != "" && m.ukladat[velikost]
+	if ukladat {
+		if data, err := m.precist(id, velikost); err == nil {
+			return data, nil
+		}
+	}
+	m.pockatNaKlid(ctx)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if !ukladat {
+		data, _, err := m.zDisku(id, velikost)
+		return data, err
+	}
+	data, _, err := m.stahnout(id, velikost, m.pozadi)
+	return data, err
+}
+
+// Nedostupny: náhled na Disku není (soubor smazaný nebo bez přístupu), zkoušet znovu nemá smysl
+func Nedostupny(err error) bool {
+	return errors.Is(err, errNahledNedostupny)
+}
+
 // Spustí stahování na pozadí (už běžící nechá běžet); false bez mezipaměti náhledů
 func (m *Mezipamet) SpustitPozadi(nacistPolozky func() []Polozka) bool {
 	if m == nil || m.slozka == "" {

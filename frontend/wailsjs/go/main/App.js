@@ -174,6 +174,10 @@ export function GetPoctyTagu() {
   return window['go']['main']['App']['GetPoctyTagu']();
 }
 
+export function GetPodobneFotky(arg1) {
+  return window['go']['main']['App']['GetPodobneFotky'](arg1);
+}
+
 export function GetPrehled(arg1) {
   return window['go']['main']['App']['GetPrehled'](arg1);
 }
@@ -212,6 +216,10 @@ export function GetSpecialy() {
 
 export function GetStatistiky() {
   return window['go']['main']['App']['GetStatistiky']();
+}
+
+export function GetStavObsahu() {
+  return window['go']['main']['App']['GetStavObsahu']();
 }
 
 export function GetStavStahovaniNahledu() {
@@ -530,8 +538,16 @@ export function VymazatMezipamet() {
   return window['go']['main']['App']['VymazatMezipamet']();
 }
 
+export function VypnoutObsah() {
+  return window['go']['main']['App']['VypnoutObsah']();
+}
+
 export function ZalozitSpecial(arg1, arg2, arg3) {
   return window['go']['main']['App']['ZalozitSpecial'](arg1, arg2, arg3);
+}
+
+export function ZapnoutObsah() {
+  return window['go']['main']['App']['ZapnoutObsah']();
 }
 
 export function ZapomenoutPorovnani() {
@@ -540,6 +556,10 @@ export function ZapomenoutPorovnani() {
 
 export function ZapomenoutUceni() {
   return window['go']['main']['App']['ZapomenoutUceni']();
+}
+
+export function ZastavitObsah() {
+  return window['go']['main']['App']['ZastavitObsah']();
 }
 
 export function ZastavitStahovaniNahledu() {

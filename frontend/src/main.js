@@ -40,6 +40,7 @@ import { vyhlasitSezonu } from './app/vyhlaseni-sezony';
 import { spustitPredpripravu } from './app/predpriprava';
 import { zaznamenatStart } from './app/vykon';
 import { naplanovatPoStartu as stahovatNahledyPoStartu } from './app/nahledy-pozadi';
+import { naplanovatPoStartu as obsahFotekPoStartu } from './app/obsah-fotek';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
 // když je otevřený, jeho obsluha kláves zastaví ostatní
@@ -123,6 +124,8 @@ StavDatabaze().then((chyba) => {
     spustitPredpripravu();
     // Náhledy celé sbírky na disk, minutu po startu v klidu (app/nahledy-pozadi.js)
     stahovatNahledyPoStartu();
+    // Obsah fotek: dopočítá nové fotky, když je zapnutý (app/obsah-fotek.js)
+    obsahFotekPoStartu();
     // Po aktualizaci jednou ukáže, co je nového (až po odemčení a úvodu)
     napoveda.ukazatNovinkyPoAktualizaci();
     // Denní ověření souborů až po prvním vykreslení, ať nebrzdí start

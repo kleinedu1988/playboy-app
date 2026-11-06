@@ -8,6 +8,7 @@ import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import * as nahledyPozadi from './nahledy-pozadi';
+import * as obsahFotek from './obsah-fotek';
 import { otevritNapovedu, otevritNovinky } from './napoveda';
 import { otevritZkratky } from './zkratky';
 import { otevritVykon } from './vykon';
@@ -321,6 +322,7 @@ export function polozkySpravy() {
         { text: `Interval slideshow (${stav.intervalSlideshow / 1000} s)…`, akce: zmenitInterval },
         { nadpis: 'Soubory a mezipaměť' },
         ...nahledyPozadi.polozkyNabidky(),
+        ...obsahFotek.polozkyNabidky(),
         { text: 'Obnovit zobrazení', akce: () => nacistGalerii(searchInput.value) },
         { text: 'Zkontrolovat soubory na Disku', akce: () => zkontrolovatSoubory() },
         { text: 'Vymazat mezipaměť obrázků', akce: vymazatMezipamet },

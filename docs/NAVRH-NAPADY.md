@@ -635,7 +635,7 @@ statistiky přežijí restart i obnovení ze zálohy.
 
 | Co | Proč |
 |---|---|
-| Hledání podle obsahu fotky („na pláži“, „v červeném“) obrazovým modelem (CLIP a podobné) | model stovky MB, běhové prostředí přes cgo nebo GPU, hodiny výpočtu na 64 000 fotek; varianta v cloudu = posílat fotky třetí straně. Shodně s ROADMAP |
+| Hledání podle obsahu fotky („na pláži“, „v červeném“) obrazovým modelem (CLIP a podobné) | model stovky MB, běhové prostředí přes cgo nebo GPU, hodiny výpočtu na 64 000 fotek; varianta v cloudu = posílat fotky třetí straně. Shodně s ROADMAP. **Přehodnoceno 6. 11. 2026:** podobné fotky (CLIP B/32, místně) ve verzi 1.3.0, hledání slovy je etapa 2 – [NAVRH-OBSAH-FOTEK.md](NAVRH-OBSAH-FOTEK.md) |
 | Rozpoznávání obličejů (i pro „podobné modelky“ nebo hledání stejné osoby na fotkách) | už v Nedělat; biometrie, velké modely; otisk obrázku porovnává celý obrázek, ne osobu |
 | Automatický zápis z Wikidat nebo z Wikipedie bez potvrzení | chybné shody a chyby zdroje by tiše přepsaly ruční údaje |
 | Parsování Wikipedie, IAFD, Babepedie, playboy.com | křehké, podmínky služeb, licence, mnoho článků o playmate smazáno; Wikidata CC0 stačí |

@@ -18,6 +18,7 @@ import { otevritLightbox } from './prohlizec';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { htmlClanku, htmlProuzku, otevritEditorClanku } from './clanky';
 import { otevritCtecku } from './ctecka';
+import { otevritCasopis } from './casopis';
 import { htmlPrazdna } from '../ui/prazdno';
 import { obnovitVolby } from '../ui/volby';
 import { upravitText } from '../ui/editor-textu';
@@ -94,7 +95,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
         <p class="cislo-udaje">${stavCisla}${info.jmenoObalky ? `<br>na obálce <button class="link" data-modelka="${info.modelkaObalky}">${esc(info.jmenoObalky)}</button>`
             : info.naObalce ? `<br>na obálce <b>${esc(info.naObalce)}</b>` : ''}${info.stav ? `<br><b>${NAZVY_STAVU[info.stav].toLowerCase()}</b>` : ''}</p>
         ${info.poznamka ? `<div class="profile-note">${formatMarkdown(info.poznamka)}</div>` : ''}
-        <div class="profile-actions"><button class="volba issue-edit" data-upravit-vydani><span aria-hidden="true">✎</span>Upravit číslo…</button></div>
+        <div class="profile-actions"><button class="volba" data-cist-casopis title="Otevřít číslo jako časopis přes celé okno"><span aria-hidden="true">❏</span>Číst jako časopis</button><button class="volba issue-edit" data-upravit-vydani><span aria-hidden="true">✎</span>Upravit číslo…</button></div>
         ${centerfoldy.map((a, i) => `
             <section class="panel-centerfold" data-cast="album-${i}">
                 <h4 class="panel-nadpis">Centerfold</h4>
@@ -504,6 +505,10 @@ export function pripravit() {
     issueView.addEventListener('click', (e) => {
         if (e.target.closest('[data-upravit-vydani]')) {
             upravitVydani(stav.aktualniVydani);
+            return;
+        }
+        if (e.target.closest('[data-cist-casopis]')) {
+            otevritCasopis(stav.aktualniVydani);
             return;
         }
         // Obsah čísla: článek, album čísla, nový článek; v článku úprava, skeny a sousední články

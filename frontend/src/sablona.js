@@ -796,6 +796,22 @@ export const SABLONA_OKNA = `
     <nav id="cteckaPas" class="ctecka-pas"></nav>
   </div>
 
+  <!-- Časopis: číslo složené z dat sbírky jako tištěný časopis přes celé okno (app/casopis.js) -->
+  <div id="casopis" class="modal-overlay casopis hidden" tabindex="-1" role="dialog" aria-label="Časopis">
+    <div class="ctecka-hlava">
+      <span id="casopisNazev" class="ctecka-nazev"></span>
+      <span id="casopisStrany" class="ctecka-strany"></span>
+      <span class="ctecka-mezera"></span>
+      <button type="button" class="ctecka-zavrit" data-zavrit title="Zavřít (Esc)" aria-label="Zavřít">&times;</button>
+    </div>
+    <div class="ctecka-plocha casopis-plocha">
+      <button type="button" class="ctecka-sipka" data-krok-casopisu="-1" title="Předchozí dvojstrana (šipka vlevo)">&#8249;</button>
+      <div id="casopisStul" class="casopis-stul"></div>
+      <button type="button" class="ctecka-sipka" data-krok-casopisu="1" title="Další dvojstrana (šipka vpravo)">&#8250;</button>
+    </div>
+    <nav id="casopisPas" class="ctecka-pas casopis-pas"></nav>
+  </div>
+
   <!-- Krátké oznámení, když je hlavní oznámení obsazené nabídkou akce (Vrátit) -->
   <div id="toastInfo" class="toast toast-info hidden"><span id="toastInfoText"></span></div>
 

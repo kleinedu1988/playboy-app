@@ -30,6 +30,7 @@ import * as napoveda from './app/napoveda';
 import * as doplneni from './app/doplneni';
 import * as clanky from './app/clanky';
 import * as ctecka from './app/ctecka';
+import * as casopis from './app/casopis';
 import * as naseptavac from './app/naseptavac';
 import * as statistiky from './app/statistiky';
 import * as oblibenost from './app/oblibenost';
@@ -68,6 +69,7 @@ doplneni.pripravit();
 clanky.pripravit();
 editorTextu.pripravit();
 ctecka.pripravit();
+casopis.pripravit();
 naseptavac.pripravit();
 statistiky.pripravit(stats);
 

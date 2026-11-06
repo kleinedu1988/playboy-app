@@ -17621,15 +17621,7 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* ===== Profil 1.2.72: fotka v záhlaví v originále – žádné filtry, ztmavení, lesk ani třpytky; čitelnost textu
-   drží jen stín písma. Jméno jednou barvou. Zůstává zlatý lem dole jako rámeček zlaté karty (barvy zlata jsou
-   v proměnných --zlato-*, aby šly použít i jinde). ===== */
-:root {
-    --zlato-tmave: #6e4f1a;
-    --zlato: #c9a046;
-    --zlato-svetle: #f6e3a1;
-    --zlato-lesk: #fff7d6;
-    --zlato-pruh: linear-gradient(90deg, #6e4f1a 0%, #c9a046 18%, #f6e3a1 34%, #fff7d6 42%, #d9b25a 55%, #9c7428 72%, #e8cc7c 88%, #7a5a20 100%);
-}
+   drží jen stín písma. Jméno jednou barvou. Dole tenký lem v růžové barvě aplikace (1.3.0; dřív zlatý). ===== */
 
 #profilBannerFoto {
     filter: none;
@@ -17643,7 +17635,7 @@ body.rezim-vyberu #detailView .poster {
     z-index: 4;
 }
 
-/* Zlatý lem dole jako rámeček zlaté karty, se světlým odleskem uprostřed */
+/* Lem dole v růžové barvě aplikace */
 .hlavni-lista:has(> #profilPruh:not(.hidden)) {
     border-bottom-color: transparent;
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
@@ -17658,7 +17650,7 @@ body.rezim-vyberu #detailView .poster {
     z-index: 2;
     height: 2px;
     pointer-events: none;
-    background: var(--zlato-pruh);
+    background-color: var(--accent);
 }
 
 /* Jméno jednou barvou; bez ztmavení fotky ho drží čitelné výraznější stín */
@@ -17813,4 +17805,541 @@ body.rezim-vyberu #detailView .poster {
 
 #modelHeader .tagy-rozbalit.hidden {
     display: none;
+}
+
+/* ===== Časopis (1.3.0, app/casopis.js): číslo složené z dat jako tištěný časopis přes celé okno. Strany mají
+   pevnou velikost 600 × 800 px (sazba se měří v ní), celá dvojstrana se zvětší podle okna (transform: scale).
+   Krémový papír, hřbet uprostřed se stínem do vazby, tmavé pozadí jako v prohlížeči fotek. ===== */
+#casopis.modal-overlay.casopis {
+    outline: none;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    background: #08080a;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    --cas-papir: #f5f0e6;
+    --cas-inkoust: #1b1916;
+    --cas-sedy: #6d665c;
+    --cas-ruzova: #c2185b;
+    --cas-patkove: Georgia, 'Times New Roman', 'DejaVu Serif', serif;
+}
+
+.casopis-plocha {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* Dvojstrana uprostřed plochy; zvětšení podle okna nastavuje app/casopis.js (--cas-meritko) */
+.casopis-stul {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    transform: translate(-50%, -50%) scale(var(--cas-meritko, 1));
+    transform-origin: center center;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 6px 18px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+}
+
+/* Obálka samostatně vpravo; prázdná levá polovina se nekreslí */
+.casopis-stul.jen-prava,
+.casopis-stul.jen-leva {
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7);
+}
+
+.casopis-stul.jen-prava .cas-strana {
+    margin-left: 0;
+}
+
+.cas-strana,
+.casopis-mereni .cas-strana {
+    position: relative;
+    box-sizing: border-box;
+    flex: none;
+    width: 600px;
+    height: 800px;
+    overflow: hidden;
+    background-color: var(--cas-papir, #f5f0e6);
+    color: var(--cas-inkoust, #1b1916);
+    font-family: var(--cas-patkove, Georgia, serif);
+}
+
+.casopis-mereni {
+    position: fixed;
+    top: 0;
+    left: -10000px;
+    visibility: hidden;
+    pointer-events: none;
+    --cas-papir: #f5f0e6;
+    --cas-inkoust: #1b1916;
+    --cas-sedy: #6d665c;
+    --cas-ruzova: #c2185b;
+    --cas-patkove: Georgia, 'Times New Roman', 'DejaVu Serif', serif;
+}
+
+/* Hřbet: stín do vazby na obou stranách středu */
+.cas-hrbet {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 80px;
+    transform: translateX(-50%);
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.10) 35%, rgba(0, 0, 0, 0.32) 50%, rgba(0, 0, 0, 0.10) 65%, transparent 100%);
+}
+
+.cas-cislo {
+    position: absolute;
+    bottom: 22px;
+    font-size: 11px;
+    color: var(--cas-sedy);
+    letter-spacing: 0.08em;
+}
+
+.casopis-stul > .cas-strana:first-child .cas-cislo {
+    left: 40px;
+}
+
+.casopis-stul > .cas-strana:nth-child(2) .cas-cislo,
+.casopis-stul.jen-prava .cas-cislo {
+    right: 40px;
+}
+
+.cas-zahlavi {
+    display: flex;
+    justify-content: space-between;
+    margin: 26px 40px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(27, 25, 22, 0.25);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cas-sedy);
+}
+
+.cas-foto-plna {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 30%;
+}
+
+/* Obálka */
+.cas-s-obalka-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    background: #111;
+    color: #fff;
+}
+
+.cas-titul {
+    font-family: var(--cas-patkove);
+    font-size: 96px;
+    letter-spacing: 0.06em;
+}
+
+.cas-titul-datum {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #e94c89;
+}
+
+.cas-titul-modelka {
+    font-size: 28px;
+    font-style: italic;
+}
+
+/* Obsah */
+.cas-obsah-nadpis {
+    margin: 40px 40px 24px;
+    font-size: 54px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+}
+
+.cas-obsah {
+    margin: 0 40px;
+    padding: 0;
+    list-style: none;
+}
+
+.cas-obsah li {
+    display: flex;
+    gap: 18px;
+    padding: 9px 0;
+    border-top: 1px solid rgba(27, 25, 22, 0.15);
+    cursor: pointer;
+}
+
+.cas-obsah li:hover .cas-obsah-text {
+    color: var(--cas-ruzova);
+}
+
+.cas-obsah-strana {
+    flex: none;
+    width: 34px;
+    font-size: 22px;
+    color: var(--cas-ruzova);
+}
+
+.cas-obsah-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 17px;
+    line-height: 1.25;
+}
+
+.cas-obsah-rubrika {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--cas-sedy);
+}
+
+/* Článek: první strana s rubrikou, titulkem a autorem, text ve dvou sloupcích; další strany jen se záhlavím */
+.cas-s-clanek {
+    display: flex;
+    flex-direction: column;
+}
+
+.cas-clanek-hlava {
+    margin: 46px 40px 18px;
+}
+
+.cas-clanek-rubrika {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--cas-ruzova);
+}
+
+.cas-clanek-titulek {
+    margin: 10px 0 10px;
+    font-size: 38px;
+    font-weight: 400;
+    line-height: 1.08;
+}
+
+.cas-clanek-autor {
+    font-size: 12px;
+    font-style: italic;
+    color: var(--cas-sedy);
+}
+
+.cas-sloupce {
+    flex: 1;
+    min-height: 0;
+    margin: 18px 40px 58px;
+    column-count: 2;
+    column-gap: 26px;
+    column-fill: auto;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.55;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.cas-sloupce p {
+    margin: 0 0 0.6em;
+    text-indent: 1.2em;
+}
+
+.cas-sloupce p:first-child,
+.cas-sloupce :is(h3, h4, h5) + p,
+.cas-sloupce p.cas-pokracovani {
+    text-indent: 0;
+}
+
+/* Iniciála na začátku článku */
+.cas-s-clanek-prvni .cas-sloupce > p:first-child::first-letter {
+    float: left;
+    margin: 4px 6px 0 0;
+    font-size: 46px;
+    line-height: 0.8;
+    color: var(--cas-ruzova);
+}
+
+.cas-sloupce :is(h3, h4, h5) {
+    margin: 0.8em 0 0.35em;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    break-after: avoid;
+}
+
+.cas-sloupce blockquote {
+    margin: 0.6em 0;
+    padding: 0.2em 0 0.2em 0.8em;
+    border-left: 2px solid var(--cas-ruzova);
+    font-size: 15px;
+    font-style: italic;
+    line-height: 1.35;
+    text-align: left;
+}
+
+.cas-sloupce :is(ul, ol) {
+    margin: 0 0 0.6em 1.2em;
+    padding: 0;
+    text-align: left;
+}
+
+/* Pictorial: otvírák přes celou stranu s titulkem dole, strana s textem a fotkou, dál fotky přes celou stranu */
+.cas-otvirak-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 80px 40px 44px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent);
+    color: #fff;
+}
+
+.cas-otvirak-rubrika {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: #ff7fb0;
+}
+
+.cas-otvirak-text h2 {
+    margin: 8px 0 6px;
+    font-size: 44px;
+    font-weight: 400;
+    line-height: 1.05;
+}
+
+.cas-otvirak-modelka {
+    font-size: 18px;
+    font-style: italic;
+}
+
+.cas-otvirak-foto {
+    margin-top: 6px;
+    font-size: 11px;
+    opacity: 0.8;
+}
+
+.cas-pictorial-text {
+    margin: 26px 40px 0;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+.cas-pictorial-text p {
+    margin: 0 0 0.6em;
+}
+
+.cas-pictorial-foto {
+    position: absolute;
+    left: 40px;
+    right: 40px;
+    bottom: 56px;
+    width: calc(100% - 80px);
+    height: 52%;
+    object-fit: cover;
+    object-position: 50% 30%;
+}
+
+/* Datový list modelky */
+.cas-list-nadpis {
+    margin: 34px 40px 18px;
+    font-size: 40px;
+    font-weight: 400;
+    font-style: italic;
+}
+
+.cas-list-foto {
+    float: right;
+    width: 200px;
+    height: 266px;
+    margin: 0 40px 12px 18px;
+    object-fit: cover;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+    transform: rotate(2deg);
+}
+
+.cas-list {
+    margin: 0 0 0 40px;
+}
+
+.cas-list div {
+    display: flex;
+    gap: 10px;
+    padding: 6px 0;
+    border-bottom: 1px dotted rgba(27, 25, 22, 0.3);
+    font-size: 14px;
+}
+
+.cas-list dt {
+    width: 84px;
+    flex: none;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--cas-sedy);
+    line-height: 20px;
+}
+
+.cas-list dd {
+    margin: 0;
+    font-style: italic;
+}
+
+.cas-list-text {
+    clear: both;
+    margin: 18px 40px 0;
+    max-height: 250px;
+    overflow: hidden;
+    font-size: 12.5px;
+    line-height: 1.55;
+}
+
+/* Výplňová strana (aby centerfold začal vlevo) */
+.cas-vypln {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 10px;
+    background: #141414;
+    color: #fff;
+}
+
+.cas-vypln span {
+    font-size: 72px;
+    letter-spacing: 0.08em;
+}
+
+.cas-vypln small {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #e94c89;
+}
+
+/* Centerfold přes celou dvojstranu: levá strana nese plakát přes obě, pravá je prázdné místo */
+.casopis-stul.s-centerfoldem > .cas-strana.cas-s-centerfold {
+    width: 1200px;
+    background: #0d0d0d;
+}
+
+.casopis-stul.s-centerfoldem > .cas-s-centerfold-prava,
+.casopis-stul.s-centerfoldem > .cas-hrbet {
+    display: none;
+}
+
+.cas-cf-plocha {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cas-centerfold-plakat {
+    display: flex;
+    max-width: 1200px;
+    max-height: 800px;
+}
+
+.cas-centerfold-plakat img {
+    display: block;
+    max-height: 800px;
+    min-width: 0;
+    object-fit: contain;
+}
+
+/* Plakát otočený o 90° / 270° (stránky na výšku tvoří plakát na šířku) */
+.cas-cf-plocha[data-rot="90"] .cas-centerfold-plakat,
+.cas-cf-plocha[data-rot="270"] .cas-centerfold-plakat {
+    max-width: 800px;
+    max-height: 1200px;
+    transform: rotate(90deg);
+}
+
+.cas-cf-plocha[data-rot="270"] .cas-centerfold-plakat {
+    transform: rotate(-90deg);
+}
+
+.cas-cf-plocha[data-rot="90"] .cas-centerfold-plakat img,
+.cas-cf-plocha[data-rot="270"] .cas-centerfold-plakat img {
+    max-height: 1200px;
+    max-width: 800px;
+}
+
+.cas-cf-plocha[data-rot="180"] .cas-centerfold-plakat {
+    transform: rotate(180deg);
+}
+
+/* Pás náhledů dvojstran */
+.casopis-pas button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.casopis-pas button small {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.cas-pas-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 46px;
+    background: #f5f0e6;
+    color: #1b1916;
+    font-family: Georgia, serif;
+    font-size: 16px;
+}
+
+/* Šipky po stranách plochy nad dvojstranou */
+.casopis-plocha > .ctecka-sipka {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    transform: translateY(-50%);
+}
+
+.casopis-plocha > .ctecka-sipka:first-child {
+    left: 16px;
+}
+
+.casopis-plocha > .ctecka-sipka:last-child {
+    right: 16px;
 }

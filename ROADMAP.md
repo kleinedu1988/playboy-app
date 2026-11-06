@@ -218,6 +218,18 @@ do dvou řad; sloupec „Dřív“ uvádí původní číslo (to používají n�
 | 2.8 | Kvíz „Poznej playmate“ | 2.2 | 1.15 |
 | rezerva | Hodnocení kolečkem myši, „mám PDF“ u americké edice **[schéma]** – jen když se ukáže potřeba | – | |
 
+### Téma 1.3 – Časopis (od 1.3.0, 6. 11. 2026)
+
+Na přání uživatele: číslo složené z dat sbírky (alba, přepsané články, údaje modelek) jako tištěný časopis přes
+celé okno, jako fotky v prohlížeči. Bez úprav databáze; celá čísla naskenovaná nejsou, sazba se skládá z dat.
+
+| Verze | Obsah |
+|---|---|
+| **1.3.0 Čtení čísla** | Tlačítko *Číst jako časopis* na stránce čísla. Obálka samostatně vpravo, dál dvojstrany na krémovém papíře se hřbetem: obsah z článků, článek (rubrika, titulek, autor, text ve dvou sloupcích, dlouhý text pokračuje na dalších stranách), pictorial (otvírák, text, fotky přes celou stranu), datový list modelky a centerfold přes dvojstranu. Listování šipkami, klikem a pásem náhledů. Pořadí: články podle strany, pictorial modelky hned za článkem o ní, centerfold uprostřed. |
+| 1.3.1 Sazba | Úvodní odstavec větším písmem, vytažená citace, různé kompozice fotek, záhlaví rubrik. |
+| 1.3.2 Listování | Animace otočení stránky, přiblížení strany, celá obrazovka, zapamatované místo čtení. |
+| 1.3.3 Vlastní pořadí | Ruční posunutí pictorialu nebo článku v čísle (rozhodne se, kam ukládat). |
+
 ### Výjimka: profilová fotka (1.2.65, 5. 11. 2026) **[schéma]**
 
 Na přání uživatele vyšla mimo plán jako PATCH v řadě 1.2 (stejně jako průvodce hodnocením fotky v 1.2.5):

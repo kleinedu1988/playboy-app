@@ -22,6 +22,7 @@ import { zaznamenatProfil } from './zajem';
 import { upravitVyrez } from './vyrez';
 import { nastavitStav } from '../ui/volby';
 import { otevritLightbox } from './prohlizec';
+import { otevritVydani } from './vydani';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -665,6 +666,12 @@ export function pripravit() {
             // Řada odznaků otevře v síni slávy rovnou sbírku odznaků
             if (doOblibenosti.dataset.slavaPohled) nastavitPohledSlavy(doOblibenosti.dataset.slavaPohled);
             otevritOblibenost();
+            return;
+        }
+        // Páska čísla je v záhlaví okna, mimo hlavní plochu (obsluha odkazů na čísla v main ji nevidí)
+        const cislo = /** @type {HTMLElement | null} */ (e.target.closest('[data-vydani]'));
+        if (cislo) {
+            otevritVydani(cislo.dataset.vydani);
             return;
         }
         const paska = e.target.closest('[data-online-album]');

@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.3.0] – 2026-11-06
+
+### Přidáno
+- **Časopis – čtení čísla** (téma 1.3, první krok): na stránce čísla tlačítko *Číst jako časopis* otevře číslo složené z dat sbírky jako tištěný časopis přes celé okno (dvojstrana se zvětší podle okna jako fotka v prohlížeči). Obálka samostatně vpravo (bez coveru typografická), obsah s čísly stran (klik přeskočí na část), články s rubrikou, titulkem, autorem, iniciálou a textem ve dvou sloupcích (dlouhý text pokračuje na dalších stranách, markdown včetně mezititulků a citací), pictorialy (úvodní strana s názvem, text alba, fotky přes celou stranu), datový list modelky a centerfold přes dvojstranu. Krémový papír a hřbet uprostřed. Pořadí: články podle strany, pictorial modelky hned za článkem o ní, centerfold uprostřed. Listování šipkami, PageUp/PageDown, Home/End, klikem na levou či pravou polovinu a pásem náhledů; Esc zavře. Databáze se nemění.
+
+### Změněno
+- **Lem záhlaví profilu v růžové barvě aplikace** místo zlaté; zlaté barvy z 1.2.72 jsou pryč.
+
+### Opraveno
+- **Pásky čísel v záhlaví profilu** (např. „Úno 71“) od přesunu do záhlaví okna neotevíraly číslo; teď ho znovu otevřou.
+
 ## [1.2.72] – 2026-11-06
 
 ### Změněno

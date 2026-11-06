@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.73] – 2026-11-06
+
+### Přidáno
+- **Příprava obsahu fotek (zatím bez rozhraní)**: nový balíček `internal/obsah` stahuje obrazový model CLIP ViT-B/32 (89 MB) a knihovnu ONNX Runtime 1.31.1 (z archivu 11 MB) po blocích rovnou na disk, s průběhem, navázáním po přerušení (hlavička Range) a ověřením SHA-256 vestavěného v programu; poškozený soubor se smaže. Návrh v `docs/NAVRH-OBSAH-FOTEK.md`, zjištění o modelu v `docs/MODEL-CLIP-B32.md`. Program se zatím nemění: nic se nestahuje, dokud funkce nedostane nastavení.
+
 ## [1.2.72] – 2026-11-06
 
 ### Změněno

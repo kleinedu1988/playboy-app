@@ -206,3 +206,36 @@ Verze: nová funkce → nová MINOR (např. 1.3.0 pro etapu 1, další MINOR pro
 3. **Zdroj modelu:** stahovat z Hugging Face (veřejný ONNX export, pevná revize) nebo připravit vlastní export a hostit ho v releases repozitáře (jistota, že soubor nezmizí)?
 4. **Výkon vs. RAM:** souhlas s výpočtem na pozadí ~1,5–3 h a ~300 MB RAM navíc během výpočtu?
 5. **Přepis „Nedělat“:** po schválení upravit ROADMAP, NAVRH-NAPADY a NAVRH-SITE (rozpoznávání obličejů zůstává v „Nedělat“).
+
+**Rozhodnuto 6. 11. 2026:** začít jen obrazovou věží; data v `<složka databáze>/obsah/`; model z Hugging Face
+s pevnou revizí a SHA-256 v programu; nejdřív krok 0 (prototyp).
+
+## 10. Výsledky kroku 0 (prototyp, 6. 11. 2026)
+
+Prototyp: samostatný Go program, `github.com/yalue/onnxruntime_go` v1.38.0, ONNX Runtime 1.31.1 (CPU, načtený
+přes `SetSharedLibraryPath` za běhu), 200 náhledů w400 z mezipaměti programu. Počítač: Intel i7-8565U (4 jádra /
+8 vláken, AVX2 bez VNNI), 7 GB RAM. Kvalita = jak často je nejbližší soused fotky fotkou téže modelky (náhoda 1,1 %).
+
+| Model (export Xenova) | Soubor | Inference / fotka | RSS | Nejbližší = táž modelka | Totéž album | 64 000 fotek |
+|---|---|---|---|---|---|---|
+| SigLIP base 224, int8 | 94 MB | 400–500 ms | 230 MB | **52 %** | **39 %** | ~8–9 h |
+| SigLIP base 224, fp32 | 372 MB | 450–710 ms | 600–1 200 MB | – | – | horší ve všem |
+| **CLIP ViT-B/32, int8, celá fotka** | 89 MB | **100 ms** | 195 MB | 42 % | 35 % | **~2,5 h** |
+| CLIP ViT-B/32, int8, střed čtverce | 89 MB | 90 ms | 198 MB | 38 % | 28 % | ~2,5 h |
+| MobileCLIP S0, fp32 | 46 MB | 86 ms | 160 MB | 32 % | 23 % | ~2,3 h |
+| MobileCLIP S0, int8 | 12 MB | 890 ms | 95 MB | 3 % (rozbitý) | 3 % | nepoužitelné |
+
+Zjištění:
+
+- **ONNX Runtime přes dlopen funguje** bez instalace čehokoli do systému; načtení modelu 0,4–0,5 s.
+- **Víc vláken skoro nepomáhá** (int8: 2 vlákna 497 ms, 4 vlákna 404 ms, 8 vláken 452 ms) → počítat 2 vlákny
+  a nechat počítač volný.
+- **Fotky neořezávat na střed** – portréty přijdou o hlavu nebo nohy; zmenšení celé fotky na čtverec je lepší
+  (CLIP 42 % proti 38 %).
+- Předzpracování v Go (dekódování JPEG + CatmullRom) 40–55 ms → v implementaci rychlejší zmenšení (bilineární).
+- Hledání hrubou silou nad 64 000 vektory: 65–95 ms v neoptimalizované smyčce (mapa, float32); souvislé pole
+  int8 bude pod 30 ms.
+- **SigLIP je nejlepší, ale ~4× pomalejší než CLIP B/32.** CLIP B/32 má navíc hotovou vícejazyčnou textovou věž
+  (`sentence-transformers/clip-ViT-B-32-multilingual-v1`, umí češtinu) pro etapu 2 – u SigLIP by čeština znamenala
+  slovník nebo model o 370 MB.
+- Zbývá ověřit: přidání závislosti do hlavního modulu a `wails build` (cgo už program používá, riziko malé).

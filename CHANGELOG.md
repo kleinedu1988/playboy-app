@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.4.1] – 2026-11-06
+
+### Přidáno
+- **Průvodce ukazuje stav obsahu fotky**: v hlavičce pásku je vidět, jestli je fotka zpracovaná obrazovým modelem (*◎ zpracovaná · 2* = počet navržených tagů s obrysem), nebo na výpočet teprve čeká (*◌ čeká na zpracování* s průběhem výpočtu); bez staženého modelu *◌ bez modelu*. Je tak jasné, proč fotka žádný návrh tagů nemá.
+
 ## [1.4.0] – 2026-11-06
 
 ### Přidáno

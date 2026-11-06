@@ -13319,6 +13319,17 @@ button.pas-kapsle:focus-visible {
     letter-spacing: 1px;
 }
 
+/* Obsah fotky v průvodci: zpracovaná obrazovým modelem, nebo čeká (app/pruvodce-fotky.js) */
+.pr-obsah {
+    color: var(--accent-text);
+    font-size: 11.5px;
+    white-space: nowrap;
+}
+
+.pr-obsah.ceka {
+    color: rgba(255, 255, 255, 0.55);
+}
+
 .pr-tecky {
     display: inline-flex;
     gap: 4px;

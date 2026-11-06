@@ -55,6 +55,19 @@ func TestPodobneFotky(t *testing.T) {
 		t.Fatalf("stav %+v", st)
 	}
 
+	// Návrhy tagů: fotka s vektorem je zpracovaná, bez vektoru čeká
+	var fotkaBez int
+	a.AddBulkPhotos(bara, "Studio", "Pictorial", "DDDDDDDDDDDDDDDDDDDDDDDDDDDDD")
+	for _, f := range a.GetFotografieModelky(bara) {
+		if f.DriveID == "DDDDDDDDDDDDDDDDDDDDDDDDDDDDD" {
+			fotkaBez = f.ID
+		}
+	}
+	navrhy := a.GetNavrhyTagu([]int{fotkaA, fotkaBez})
+	if !navrhy[fotkaA].Zpracovano || navrhy[fotkaBez].Zpracovano || navrhy[fotkaBez].Tagy == nil {
+		t.Fatalf("návrhy %+v", navrhy)
+	}
+
 	if !a.VypnoutObsah() {
 		t.Fatal("vypnutí selhalo")
 	}

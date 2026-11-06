@@ -124,10 +124,16 @@ func (a *App) GetPodobneFotky(fotkaID int) []Fotografie {
 	return a.doplnitDalsiModelky(fotky)
 }
 
-// Návrhy tagů z obsahu pro fotky (id fotky → tagy, od nejjistějšího). Navrhují se jen tagy skupin, ve kterých
-// fotka ještě žádný tag nemá; fotka bez vektoru návrh nemá.
-func (a *App) GetNavrhyTagu(ids []int) map[int][]string {
-	navrhy := map[int][]string{}
+// Návrhy tagů z obsahu jedné fotky; Zpracovano = fotka už má vektor z obrazového modelu (bez něj návrhy nejsou)
+type NavrhyTaguFotky struct {
+	Zpracovano bool     `json:"zpracovano"`
+	Tagy       []string `json:"tagy"`
+}
+
+// Návrhy tagů z obsahu pro fotky (id fotky → návrhy, od nejjistějšího). Navrhují se jen tagy skupin, ve kterých
+// fotka ještě žádný tag nemá. Bez staženého modelu prázdná mapa.
+func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
+	navrhy := map[int]NavrhyTaguFotky{}
 	if len(ids) == 0 || !a.obsah.Zapnuto() {
 		return navrhy
 	}
@@ -138,6 +144,8 @@ func (a *App) GetNavrhyTagu(ids []int) map[int][]string {
 			continue
 		}
 		v := a.obsah.Vektor(driveID)
+		n := NavrhyTaguFotky{Zpracovano: v != nil, Tagy: []string{}}
+		navrhy[id] = n
 		if v == nil {
 			continue
 		}
@@ -149,7 +157,7 @@ func (a *App) GetNavrhyTagu(ids []int) map[int][]string {
 		}
 		for _, n := range obsah.NavrhnoutTagy(v) {
 			if sk := skupinaTagu[n.Tag]; sk != nil && !obsazene[sk.Klic] {
-				navrhy[id] = append(navrhy[id], n.Tag)
+				navrhy[id] = NavrhyTaguFotky{Zpracovano: true, Tagy: append(navrhy[id].Tagy, n.Tag)}
 			}
 		}
 	}

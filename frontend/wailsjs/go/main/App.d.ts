@@ -79,7 +79,7 @@ export function GetNavrhSrdicek(arg1:number):Promise<main.NavrhSrdicek>;
 
 export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<kontrola.NavrhDoplneni>>;
 
-export function GetNavrhyTagu(arg1:Array<number>):Promise<Record<number, Array<string>>>;
+export function GetNavrhyTagu(arg1:Array<number>):Promise<Record<number, main.NavrhyTaguFotky>>;
 
 export function GetNehodnoceneFotky():Promise<oblibenost.FrontaFotek>;
 

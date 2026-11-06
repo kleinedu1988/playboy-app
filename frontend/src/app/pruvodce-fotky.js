@@ -12,6 +12,7 @@ import { lbNaplnitListu, lbZobrazit, lightbox, zavritLightbox } from './prohlize
 import { oznamitHodnoceniFotek } from './galerie';
 import { esc } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
+import { stavObsahuFotek } from './obsah-fotek';
 
 const KLIC_SKRYTI = 'pruvodceSkryty';
 
@@ -19,7 +20,7 @@ const KLIC_SKRYTI = 'pruvodceSkryty';
 let kroky = [];
 let stavy = new Map(); // položka → stav průvodce
 const tagyFotek = new Map(); // id fotky → tagy (načtené při zobrazení)
-const navrhyObsahu = new Map(); // id fotky → návrhy tagů z obsahu fotky (app/obsah-fotek.js)
+const navrhyObsahu = new Map(); // id fotky → { zpracovano, tagy } z obsahu fotky (app/obsah-fotek.js); bez modelu null
 let podleAlba = new Map(); // klíč alba → tagy minulé uložené fotky alba
 let posledni = null; // tagy minulé uložené fotky (Shift+Enter)
 export let historiePruvodce = []; // { polozky: [{ polozka, kde }], tagy, hodnoceni, predchozi, cas }
@@ -77,6 +78,22 @@ function sledovatZapis(zapis) {
     return zapis;
 }
 
+// Značka v hlavičce pásku: je fotka zpracovaná obrazovým modelem (návrhy tagů z obsahu), nebo na výpočet čeká
+function htmlObsahu(p) {
+    const n = navrhyObsahu.get(p.fotky[0].id);
+    if (n === undefined) return '';
+    const st = stavObsahuFotek();
+    if (!n) {
+        return `<span class="pr-obsah ceka" title="${esc(st.faze === 'stahuje' ? 'Obrazový model se stahuje – pak se spočítá obsah fotek a průvodce začne navrhovat tagy' : 'Obrazový model není stažený, tagy se z obsahu nenavrhují')}">◌ bez modelu</span>`;
+    }
+    if (n.zpracovano) {
+        const titulek = n.tagy.length ? `Fotka je zpracovaná obrazovým modelem – navrženo: ${n.tagy.length} (obrys)` : 'Fotka je zpracovaná obrazovým modelem – žádný tag si model nebyl jistý';
+        return `<span class="pr-obsah" title="${esc(titulek)}">◎ zpracovaná${n.tagy.length ? ` · ${n.tagy.length}` : ''}</span>`;
+    }
+    const prubeh = st.faze === 'pocita' && st.celkem ? ` (výpočet ${st.hotovo.toLocaleString('cs-CZ')} / ${st.celkem.toLocaleString('cs-CZ')})` : '';
+    return `<span class="pr-obsah ceka" title="${esc(`Fotka ještě není zpracovaná obrazovým modelem, tagy z obsahu se zatím nenavrhují${prubeh}`)}">◌ čeká na zpracování${esc(prubeh)}</span>`;
+}
+
 // Stav zobrazené položky; tagy fotky se napřed načtou (první fotka položky zastupuje spojený plakát)
 async function stavPolozky(p) {
     if (stavy.has(p)) return stavy.get(p);
@@ -85,12 +102,12 @@ async function stavPolozky(p) {
         let t = [];
         try { t = (await GetTagyFotek([id]))?.[id] || []; } catch { t = []; }
         tagyFotek.set(id, t);
-        let n = [];
-        try { n = (await GetNavrhyTagu([id]))?.[id] || []; } catch { n = []; }
+        let n = null;
+        try { n = (await GetNavrhyTagu([id]))?.[id] || null; } catch { n = null; }
         navrhyObsahu.set(id, n);
     }
     // Fotka, která už má srdíčka (ohodnocená dřív nebo zvlášť), krok srdíček přeskočí
-    if (!stavy.has(p)) stavy.set(p, novyStav(kroky, tagyFotek.get(id), podleAlba.get(klicAlba(p)) || [], Number(p.hodnoceni) || 0, navrhyObsahu.get(id) || []));
+    if (!stavy.has(p)) stavy.set(p, novyStav(kroky, tagyFotek.get(id), podleAlba.get(klicAlba(p)) || [], Number(p.hodnoceni) || 0, navrhyObsahu.get(id)?.tagy || []));
     return stavy.get(p);
 }
 
@@ -533,6 +550,7 @@ export function vykreslitPasek() {
             <span class="pr-uchyt" title="Přesunout tažením · dvojklik vrátí na místo" aria-hidden="true">⠿</span><span class="pr-krok">${poradi}/${viditelne.length}</span><b>${esc(krok.nazev)}</b>
             ${s.maSrdicka ? `<span class="pr-ma" title="Fotka už má srdíčka – krok srdíček se přeskočí">${'♥'.repeat(s.hodnoceni)}</span>` : ''}
             <span class="pr-tecky" aria-hidden="true">${tecky}</span>
+            ${htmlObsahu(p)}
             ${cil ? `<span class="pr-cil" title="${esc(`Odemknout téma: soutěží ${cil.soutezici} z ${cil.tema.minModelek} potřebných modelek; ${String(p.jmenoModelky || '').split(' ')[0]} má ${cil.fotek.get(p.modelkaId) ?? 0} z ${cil.tema.minFotek} fotek tématu`)}">🔓 ${esc(cil.tema.ikona || '')} ${esc(cil.tema.nazev)} · ${cil.soutezici}/${cil.tema.minModelek}${cil.fotek.has(p.modelkaId) ? ` · ${esc(String(p.jmenoModelky || '').split(' ')[0])} ${cil.fotek.get(p.modelkaId)}/${cil.tema.minFotek}` : ''}</span>` : ''}
             <span class="pr-napoveda">${esc(napoveda)}</span>
             <button type="button" class="pr-skryt" data-pr-skryt title="Skrýt průvodce (H)" aria-label="Skrýt průvodce"><kbd>H</kbd></button>

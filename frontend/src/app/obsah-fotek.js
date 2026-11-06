@@ -17,6 +17,8 @@ let casovac = 0;
 // Dost hodnocených fotek s vektorem: Rychle ♥ může řadit „nejdřív, co se ti asi bude líbit“
 let maOdhad = false;
 export const odhadSrdicek = () => maOdhad;
+// Poslední známý stav obsahu fotek (Průvodce ukazuje, jestli je fotka zpracovaná a jak daleko je výpočet)
+export const stavObsahuFotek = () => stavObsahu;
 
 const lista = () => /** @type {HTMLElement | null} */ (document.querySelector('#stavovaLista .stav-obsah'));
 const cislo = n => n.toLocaleString('cs-CZ');

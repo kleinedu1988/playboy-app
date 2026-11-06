@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.2.70] – 2026-11-06
+
+### Změněno
+- **Záhlaví profilu: méně zrna, víc kovového lesku**: zrno papíru je zhruba poloviční a přes fotku vedou dva pevné šikmé pruhy světla jako na lakovaném archu pod lampou (vlevo teplý šampaňský, vpravo chladnější stříbrný). Lesk zvedá světla a prohlubuje stíny, takže povrch působí kovově; nic se nehýbe. Při úpravě výřezu je lesk vypnutý.
+
 ## [1.2.69] – 2026-11-06
 
 ### Změněno

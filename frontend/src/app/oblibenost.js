@@ -32,6 +32,7 @@ import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 import { nacistSinSlavy, obnovitHlavuSlavy, pripravitSinSlavy } from './sin-slavy';
+import { odhadSrdicek } from './obsah-fotek';
 import { hodnotitFotky, nacistGalerii, nacistPocetNehodnocenych, nastavitPohledHodnotit, nastavitRazeniFotek, pocetModelekBezSrdicek, pocetFotekKPruvodci, pohledHodnotit, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
 import { textZbyva } from '../lib/slava';
 
@@ -499,7 +500,8 @@ function htmlHlavyHodnoceni() {
         const prepinac = [['pruvodce', 'Průvodce', pocetFotekKPruvodci()], ['fotky', 'Rychle ♥', fotek], ['modelky', 'Modelky', nModelek]].map(([klic, nazev, n]) =>
             `<button type="button" class="${klic === co ? 'on' : ''}" data-hd-hodnotit="${klic}" aria-pressed="${klic === co}" title="${esc(titulky[klic])}">${nazev}${Number(n) > 0 ? ` <small>${n}</small>` : ''}</button>`).join('');
         const akceFotek = co === 'fotky' ? '<button type="button" class="volba akcent" data-hd-akce="fotky" title="Začít hodnotit (Enter)"><b>♥ Hodnotit ↵</b></button><button type="button" class="volba" data-hd-akce="promitat" title="Promítat nehodnocené (mezerník)"><b>▶ Promítat</b></button><span class="sh-oddelovac" aria-hidden="true"></span>' : '';
-        const razeni = [['nahodne', 'Náhodně'], ['modelky', 'Po modelkách']].map(([klic, nazev]) => tlacitkoPohledu(klic, nazev, razeniFotek(), 'data-hd-razeni')).join('');
+        // Podle obsahu fotek (app/obsah-fotek.js): nejdřív fotky s nejvyšším odhadem srdíček
+        const razeni = [['nahodne', 'Náhodně'], ['modelky', 'Po modelkách'], ...(odhadSrdicek() ? [['odhad', 'Co se ti asi líbí']] : [])].map(([klic, nazev]) => tlacitkoPohledu(klic, nazev, razeniFotek(), 'data-hd-razeni')).join('');
         return `<div class="sh-lista">${htmlCasti}
             <div class="sh-akce hd-kompakt-akce">${akceFotek}${htmlPanelu}</div>
             <div class="sh-pohledy" role="group" aria-label="Co hodnotit">${prepinac}</div>

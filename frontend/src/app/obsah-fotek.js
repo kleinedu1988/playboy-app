@@ -2,7 +2,7 @@
 // která popisují, co je na fotce (scéna, světlo, oblečení, póza). Z vektorů se počítají podobné fotky a návrhy.
 // Úvodní obrazovka zkontroluje model a chybějící stáhne (~100 MB, s průběhem); výpočet vektorů běží potom sám
 // na pozadí (poprvé ~1,5 h), průběh je ve stavové liště (✕ pozastaví do příštího spuštění) a v nabídce ⋯.
-import { GetPodobneFotky, GetStavObsahu, ZapnoutObsah, ZastavitObsah } from './backend';
+import { GetPodobneFotky, GetStavObsahu, MaOdhadSrdicekFotek, ZapnoutObsah, ZastavitObsah } from './backend';
 import { oznamit } from '../ui/oznameni';
 import { otevritLightbox } from './prohlizec';
 
@@ -14,6 +14,9 @@ const OBNOVA = 2000;
 /** @type {{ faze: string, stazeno: number, stahnout: number, hotovo: number, celkem: number, vektoru: number, chyba: string }} */
 let stavObsahu = { faze: 'vypnuto', stazeno: 0, stahnout: 0, hotovo: 0, celkem: 0, vektoru: 0, chyba: '' };
 let casovac = 0;
+// Dost hodnocených fotek s vektorem: Rychle ♥ může řadit „nejdřív, co se ti asi bude líbit“
+let maOdhad = false;
+export const odhadSrdicek = () => maOdhad;
 
 const lista = () => /** @type {HTMLElement | null} */ (document.querySelector('#stavovaLista .stav-obsah'));
 const cislo = n => n.toLocaleString('cs-CZ');
@@ -55,6 +58,7 @@ async function obnovit() {
     const predtim = stavObsahu.faze;
     try { stavObsahu = (await GetStavObsahu()) || stavObsahu; } catch { /* stav zůstane */ }
     vykreslit();
+    if (stavObsahu.vektoru) MaOdhadSrdicekFotek().then((ano) => { maOdhad = Boolean(ano); }).catch(() => {});
     if (bezi(stavObsahu)) casovac = setTimeout(obnovit, OBNOVA);
     else if (stavObsahu.faze === 'chyba' && predtim !== 'chyba') oznamit(`Obsah fotek: ${stavObsahu.chyba}`);
     else if (predtim === 'stahuje' && stavObsahu.faze === 'pripraveno') oznamit('Model obsahu fotek je stažený.');

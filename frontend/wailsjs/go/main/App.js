@@ -142,6 +142,10 @@ export function GetNavrhyDoplneni(arg1) {
   return window['go']['main']['App']['GetNavrhyDoplneni'](arg1);
 }
 
+export function GetNavrhyTagu(arg1) {
+  return window['go']['main']['App']['GetNavrhyTagu'](arg1);
+}
+
 export function GetNehodnoceneFotky() {
   return window['go']['main']['App']['GetNehodnoceneFotky']();
 }
@@ -292,6 +296,10 @@ export function HledatTexty(arg1) {
 
 export function ImportovatSoubory(arg1) {
   return window['go']['main']['App']['ImportovatSoubory'](arg1);
+}
+
+export function MaOdhadSrdicekFotek() {
+  return window['go']['main']['App']['MaOdhadSrdicekFotek']();
 }
 
 export function MaZamek() {

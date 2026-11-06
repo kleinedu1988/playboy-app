@@ -79,6 +79,8 @@ export function GetNavrhSrdicek(arg1:number):Promise<main.NavrhSrdicek>;
 
 export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<kontrola.NavrhDoplneni>>;
 
+export function GetNavrhyTagu(arg1:Array<number>):Promise<Record<number, Array<string>>>;
+
 export function GetNehodnoceneFotky():Promise<oblibenost.FrontaFotek>;
 
 export function GetNejlepsiFotky(arg1:number):Promise<Array<sbirka.Fotografie>>;
@@ -154,6 +156,8 @@ export function HledatClanky(arg1:string):Promise<Array<sbirka.NalezClanku>>;
 export function HledatTexty(arg1:string):Promise<Array<sbirka.NalezTextu>>;
 
 export function ImportovatSoubory(arg1:Array<string>):Promise<main.VysledekImportu>;
+
+export function MaOdhadSrdicekFotek():Promise<boolean>;
 
 export function MaZamek():Promise<boolean>;
 

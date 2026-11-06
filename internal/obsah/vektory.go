@@ -59,6 +59,21 @@ func (v *Vektory) Ma(id string) bool {
 	return ok
 }
 
+// Vektor fotky (z int8 zpět na čísla), nil když ho nemá
+func (v *Vektory) Vektor(id string) []float32 {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	i, ok := v.index[id]
+	if !ok {
+		return nil
+	}
+	x := make([]float32, Rozmer)
+	for k, q := range v.data[i*Rozmer : (i+1)*Rozmer] {
+		x[k] = float32(q) * v.meritka[i]
+	}
+	return x
+}
+
 // Pridat uloží (nebo nahradí) vektor délky 1
 func (v *Vektory) Pridat(id string, vektor []float32) {
 	if len(vektor) != Rozmer || id == "" || len(id) > 255 {
@@ -174,6 +189,16 @@ func NacistVektory(slozka string) (*Vektory, error) {
 		return v, err
 	}
 	defer f.Close()
+	n, err := cistVektory(f)
+	if err != nil {
+		return v, err
+	}
+	return n, nil
+}
+
+// Přečte vektory ze souboru ve formátu vektory.bin; jiný model nebo verze = prázdné vektory bez chyby
+func cistVektory(f io.Reader) (*Vektory, error) {
+	v := NoveVektory()
 	r := bufio.NewReaderSize(f, 1<<16)
 	var hlavicka struct {
 		Znacka [8]byte
@@ -260,6 +285,13 @@ func (v *Vektory) Ulozit(slozka string) error {
 	}
 	v.zmeneno = false
 	return nil
+}
+
+// Zapsat vektory ve formátu vektory.bin (generátor tagů; soubor sbírky ukládá Ulozit)
+func (v *Vektory) Zapsat(f io.Writer) error {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	return v.zapsat(f)
 }
 
 func (v *Vektory) zapsat(f io.Writer) error {

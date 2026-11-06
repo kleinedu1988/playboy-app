@@ -145,7 +145,7 @@ func (m *Model) Vektor(obrazek []byte) ([]float32, error) {
 		return nil, err
 	}
 	v := append([]float32(nil), m.vystup.GetData()...)
-	if !normalizovat(v) {
+	if !Normalizovat(v) {
 		return nil, errors.New("model vrátil nulový vektor")
 	}
 	return v, nil
@@ -166,8 +166,8 @@ func Predzpracovat(img image.Image, cil []float32) {
 	}
 }
 
-// Vydělí vektor jeho délkou; false u nulového nebo neplatného vektoru
-func normalizovat(v []float32) bool {
+// Normalizovat vydělí vektor jeho délkou; false u nulového nebo neplatného vektoru
+func Normalizovat(v []float32) bool {
 	var n float64
 	for _, x := range v {
 		n += float64(x) * float64(x)

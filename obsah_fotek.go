@@ -123,3 +123,55 @@ func (a *App) GetPodobneFotky(fotkaID int) []Fotografie {
 	}
 	return a.doplnitDalsiModelky(fotky)
 }
+
+// Návrhy tagů z obsahu pro fotky (id fotky → tagy, od nejjistějšího). Navrhují se jen tagy skupin, ve kterých
+// fotka ještě žádný tag nemá; fotka bez vektoru návrh nemá.
+func (a *App) GetNavrhyTagu(ids []int) map[int][]string {
+	navrhy := map[int][]string{}
+	if len(ids) == 0 || !a.obsah.Zapnuto() {
+		return navrhy
+	}
+	maji := a.GetTagyFotek(ids)
+	for _, id := range ids {
+		var driveID string
+		if a.db.QueryRow(`SELECT drive_file_id FROM fotky WHERE id = ?`, id).Scan(&driveID) != nil {
+			continue
+		}
+		v := a.obsah.Vektor(driveID)
+		if v == nil {
+			continue
+		}
+		obsazene := map[string]bool{}
+		for _, t := range maji[id] {
+			if sk := skupinaTagu[t]; sk != nil {
+				obsazene[sk.Klic] = true
+			}
+		}
+		for _, n := range obsah.NavrhnoutTagy(v) {
+			if sk := skupinaTagu[n.Tag]; sk != nil && !obsazene[sk.Klic] {
+				navrhy[id] = append(navrhy[id], n.Tag)
+			}
+		}
+	}
+	return navrhy
+}
+
+// Odhad srdíček nehodnocených fotek z obsahu (ID souboru → 1–5); nil, když je hodnocených fotek s vektorem málo
+func (a *App) odhadySrdicekFotek() map[string]float64 {
+	if !a.obsah.Zapnuto() {
+		return nil
+	}
+	radky, err := a.db.Query(`SELECT drive_file_id, MIN(album_id), MAX(hodnoceni) FROM fotky GROUP BY drive_file_id`)
+	if err != nil {
+		return nil
+	}
+	defer radky.Close()
+	var fotky []obsah.HodnoceniFotky
+	for radky.Next() {
+		var f obsah.HodnoceniFotky
+		if radky.Scan(&f.ID, &f.Album, &f.Hodnoceni) == nil {
+			fotky = append(fotky, f)
+		}
+	}
+	return a.obsah.OdhadyFotek(fotky)
+}

@@ -83,6 +83,8 @@ const CTENI = new Set([
     'ZapnoutObsah',
     'ZastavitObsah',
     'VypnoutObsah',
+    'GetNavrhyTagu',
+    'MaOdhadSrdicekFotek',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
     'ZaznamenatZajem',
@@ -173,6 +175,8 @@ export const GetPodobneFotky = /** @type {typeof App.GetPodobneFotky} */ (obalit
 export const ZapnoutObsah = /** @type {typeof App.ZapnoutObsah} */ (obalit('ZapnoutObsah'));
 export const ZastavitObsah = /** @type {typeof App.ZastavitObsah} */ (obalit('ZastavitObsah'));
 export const VypnoutObsah = /** @type {typeof App.VypnoutObsah} */ (obalit('VypnoutObsah'));
+export const GetNavrhyTagu = /** @type {typeof App.GetNavrhyTagu} */ (obalit('GetNavrhyTagu'));
+export const MaOdhadSrdicekFotek = /** @type {typeof App.MaOdhadSrdicekFotek} */ (obalit('MaOdhadSrdicekFotek'));
 export const GetStatistiky = /** @type {typeof App.GetStatistiky} */ (obalit('GetStatistiky'));
 export const GetVyvojVCase = /** @type {typeof App.GetVyvojVCase} */ (obalit('GetVyvojVCase'));
 export const GetClanky = /** @type {typeof App.GetClanky} */ (obalit('GetClanky'));

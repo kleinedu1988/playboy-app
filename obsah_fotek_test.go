@@ -65,3 +65,22 @@ func TestPodobneFotky(t *testing.T) {
 		t.Fatal("model po vypnutí zůstal")
 	}
 }
+
+// Řazení fronty podle odhadu srdíček: od nejvyššího, položky bez odhadu na konci
+func TestSeraditFrontuPodleOdhadu(t *testing.T) {
+	p := []polozkaFronty{{klic: 1}, {klic: 2}, {klic: 3}, {klic: 4}}
+	seraditFrontu(p, "odhad", 7, map[int]float64{1: 1.5, 2: 4.2, 4: 3.1})
+	if p[0].klic != 2 || p[1].klic != 4 || p[2].klic != 1 || p[3].klic != 3 {
+		t.Fatalf("pořadí %+v", p)
+	}
+	// Bez odhadu (málo hodnocených) zamíchaně jako „náhodně“
+	q := []polozkaFronty{{klic: 1}, {klic: 2}, {klic: 3}}
+	r := []polozkaFronty{{klic: 1}, {klic: 2}, {klic: 3}}
+	seraditFrontu(q, "odhad", 7, nil)
+	seraditFrontu(r, "nahodne", 7, nil)
+	for i := range q {
+		if q[i].klic != r[i].klic {
+			t.Fatal("bez odhadu se má řadit náhodně")
+		}
+	}
+}

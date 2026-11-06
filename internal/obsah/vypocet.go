@@ -190,6 +190,23 @@ func (s *Sluzba) Podobne(id string, pocet int) []Shoda {
 	return v.Podobne(id, pocet)
 }
 
+// Vektor fotky (ID souboru na Disku), nil když ho ještě nemá
+func (s *Sluzba) Vektor(id string) []float32 {
+	if s == nil || s.slozka == "" {
+		return nil
+	}
+	s.mu.Lock()
+	if s.vektory == nil && Pripraveno(s.slozka) {
+		s.nacistVektoryZamceno()
+	}
+	v := s.vektory
+	s.mu.Unlock()
+	if v == nil {
+		return nil
+	}
+	return v.Vektor(id)
+}
+
 func (s *Sluzba) nastavit(fn func(st *Stav)) {
 	s.mu.Lock()
 	fn(&s.stav)

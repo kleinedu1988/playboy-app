@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.4.0] – 2026-11-06
+
+### Přidáno
+- **Odhad srdíček z obsahu fotek**: z vektorů hodnocených fotek se program naučí, co se ti na fotkách líbí (hřebenová regrese + odchylka alba), a odhadne srdíčka nehodnocených. Rychle ♥ má nové řazení **Co se ti asi líbí** – nejdřív fotky s nejvyšším odhadem. Na vzorku sbírky seřadil fotky podle tvých srdíček výrazně líp než průměr alba (Spearman 0,58 proti 0,41; z fotek s odhadem ♥2,5+ jich 70 % má ♥3+). Objeví se, až má vektor aspoň 200 hodnocených fotek.
+- **Návrhy tagů z obsahu fotky v Průvodci**: krok bez tagu (a bez návrhu z minulé fotky alba) se předvyplní tagem podle obsahu fotky – obrys = návrh, Enter ho převezme, číslice ho změní. Navrhují se jen tagy, které na vzorku sbírky obstály (prostředí, oblečení, postoj, černobílá, světlo, celá postava); tagy, které obrazový model bez tvých označených fotek neodhadne spolehlivě, se nenavrhují. Vektory popisů tagů jsou vestavěné (`internal/obsah/tagy.bin`, generátor `internal/obsah/tagy-clip`), nic dalšího se nestahuje.
+- Měření v `docs/MODEL-CLIP-B32.md`, oddíl 7.
+
 ## [1.3.1] – 2026-11-06
 
 ### Změněno

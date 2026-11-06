@@ -68,8 +68,23 @@ func klicAlbaFronty(al AlbumFronty) string {
 	return strconv.Itoa(al.ModelkaID) + "\n" + al.Album + "\n" + al.Typ
 }
 
-// Pořadí jako frontaFotek: 'modelky' = modelky v náhodném pořadí, položky každé pohromadě; jinak vše zamíchané
-func seraditFrontu(p []polozkaFronty, razeni string, seed int) {
+// Pořadí jako frontaFotek: 'modelky' = modelky v náhodném pořadí, položky každé pohromadě; 'odhad' = od nejvyššího
+// odhadu srdíček z obsahu fotek (odhad podle ID fotky, bez odhadu na konec zamíchané); jinak vše zamíchané
+func seraditFrontu(p []polozkaFronty, razeni string, seed int, odhad map[int]float64) {
+	if razeni == "odhad" && len(odhad) > 0 {
+		sort.SliceStable(p, func(i, j int) bool {
+			x, okx := odhad[p[i].klic]
+			y, oky := odhad[p[j].klic]
+			if okx != oky {
+				return okx
+			}
+			if x != y {
+				return x > y
+			}
+			return nahodaKlice(p[i].klic, seed) < nahodaKlice(p[j].klic, seed)
+		})
+		return
+	}
 	if razeni != "modelky" {
 		sort.SliceStable(p, func(i, j int) bool {
 			x, y := nahodaKlice(p[i].klic, seed), nahodaKlice(p[j].klic, seed)
@@ -99,6 +114,26 @@ func seraditFrontu(p []polozkaFronty, razeni string, seed int) {
 		poradi[m] = i
 	}
 	sort.SliceStable(p, func(i, j int) bool { return poradi[p[i].modelka] < poradi[p[j].modelka] })
+}
+
+// Odhad srdíček z obsahu podle ID fotky fronty
+func (a *App) odhadPolozekFronty(f FrontaFotek) map[int]float64 {
+	podleSouboru := a.odhadySrdicekFotek()
+	if len(podleSouboru) == 0 {
+		return nil
+	}
+	v := make(map[int]float64, len(f.Fotky))
+	for _, x := range f.Fotky {
+		if o, ok := podleSouboru[x.DriveID]; ok {
+			v[x.ID] = o
+		}
+	}
+	return v
+}
+
+// Lze řadit podle odhadu srdíček z obsahu fotek (dost hodnocených fotek s vektorem)
+func (a *App) MaOdhadSrdicekFotek() bool {
+	return len(a.odhadySrdicekFotek()) > 0
 }
 
 type StrankaNehodnocenych struct {
@@ -139,7 +174,11 @@ func (a *App) GetStrankuNehodnocenych(seed int, razeni string, modelka int, od i
 	if od == 0 && modelka == 0 || s == nil || s.klic != klic {
 		f := a.GetNehodnoceneFotky()
 		p := polozkyFronty(f)
-		seraditFrontu(p, razeni, seed)
+		var odhad map[int]float64
+		if razeni == "odhad" {
+			odhad = a.odhadPolozekFronty(f)
+		}
+		seraditFrontu(p, razeni, seed, odhad)
 		s = &sezeniNehodnocenych{klic: klic, fronta: f, polozky: p}
 		sezeniNehodnocenehoDotazu = s
 	}

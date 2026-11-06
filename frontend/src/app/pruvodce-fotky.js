@@ -5,7 +5,7 @@
 // J přepne na „jen srdíčka“ (1–5 uloží jen srdíčka, tagy počkají na průvodce). Bez pohybu pásek po chvíli zeslábne.
 // Srdíčka 1–5 fotku uloží jako prošlou a ukáže další; zápis běží za ní (nepovedený ji vrátí). Fotka, která už srdíčka
 // má, krok srdíček přeskočí a uloží se po posledním kroku tagů (srdíčka zůstanou).
-import { GetKrokyPruvodce, GetTagyFotek, UlozitPruvodceFotky, VratitPruvodceFotky } from './backend';
+import { GetKrokyPruvodce, GetNavrhyTagu, GetTagyFotek, UlozitPruvodceFotky, VratitPruvodceFotky } from './backend';
 import { cislice, cisloKlavesy, jakoMinula, novyStav, potvrdit, predchoziKrok, tlumene, viditelneKroky, vybraneKroku, zadna, zodpovezeneSkupiny, zpet } from '../lib/pruvodce';
 import { stav } from './stav';
 import { lbNaplnitListu, lbZobrazit, lightbox, zavritLightbox } from './prohlizec';
@@ -19,6 +19,7 @@ const KLIC_SKRYTI = 'pruvodceSkryty';
 let kroky = [];
 let stavy = new Map(); // položka → stav průvodce
 const tagyFotek = new Map(); // id fotky → tagy (načtené při zobrazení)
+const navrhyObsahu = new Map(); // id fotky → návrhy tagů z obsahu fotky (app/obsah-fotek.js)
 let podleAlba = new Map(); // klíč alba → tagy minulé uložené fotky alba
 let posledni = null; // tagy minulé uložené fotky (Shift+Enter)
 export let historiePruvodce = []; // { polozky: [{ polozka, kde }], tagy, hodnoceni, predchozi, cas }
@@ -84,9 +85,12 @@ async function stavPolozky(p) {
         let t = [];
         try { t = (await GetTagyFotek([id]))?.[id] || []; } catch { t = []; }
         tagyFotek.set(id, t);
+        let n = [];
+        try { n = (await GetNavrhyTagu([id]))?.[id] || []; } catch { n = []; }
+        navrhyObsahu.set(id, n);
     }
     // Fotka, která už má srdíčka (ohodnocená dřív nebo zvlášť), krok srdíček přeskočí
-    if (!stavy.has(p)) stavy.set(p, novyStav(kroky, tagyFotek.get(id), podleAlba.get(klicAlba(p)) || [], Number(p.hodnoceni) || 0));
+    if (!stavy.has(p)) stavy.set(p, novyStav(kroky, tagyFotek.get(id), podleAlba.get(klicAlba(p)) || [], Number(p.hodnoceni) || 0, navrhyObsahu.get(id) || []));
     return stavy.get(p);
 }
 
@@ -522,8 +526,8 @@ export function vykreslitPasek() {
     const posledniTagu = s.maSrdicka && viditelne[viditelne.length - 1] === s.krok;
     const napoveda = krok.typ === 'srdicka' ? '1–5 uloží a ukáže další'
         : posledniTagu ? `srdíčka už má – ${krok.typ === 'jeden' ? 'číslice' : '↵'} uloží a ukáže další`
-        : krok.typ === 'jeden' ? `číslice vybere a jde dál${navrh ? ' · ↵ převezme z alba' : ''}`
-            : `číslice přepíná · ↵ dál${krok.povinny ? '' : ' · 0 žádná'}${navrh ? ' · obrys = z alba' : ''}`;
+        : krok.typ === 'jeden' ? `číslice vybere a jde dál${navrh ? ' · ↵ převezme návrh' : ''}`
+            : `číslice přepíná · ↵ dál${krok.povinny ? '' : ' · 0 žádná'}${navrh ? ' · obrys = návrh (z alba nebo z obsahu fotky)' : ''}`;
     pasek.innerHTML = `
         <div class="pr-hlava">
             <span class="pr-uchyt" title="Přesunout tažením · dvojklik vrátí na místo" aria-hidden="true">⠿</span><span class="pr-krok">${poradi}/${viditelne.length}</span><b>${esc(krok.nazev)}</b>

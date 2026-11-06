@@ -32,6 +32,15 @@ test('předvyplnění podle alba jen u kroků bez tagu; Enter ho převezme', () 
     assert.ok(jen.vybrane.has('studio') && !jen.vybrane.has('plaz'));
 });
 
+test('návrh z obsahu fotky: jen u kroků bez tagu a bez návrhu z alba, u výlučného kroku jeden', () => {
+    const s = novyStav(KROKY, [], [], 0, ['postava', 'portret', 'plaz', 'cernobila', 'podpatky']);
+    assert.ok(s.navrh.has('postava') && !s.navrh.has('portret'));
+    assert.ok(s.navrh.has('plaz') && s.navrh.has('cernobila') && s.navrh.has('podpatky'));
+    const zAlba = novyStav(KROKY, ['studio'], ['podpatky'], 0, ['plaz', 'prsa']);
+    assert.ok(!zAlba.vybrane.has('plaz'), 'prostředí už má tag');
+    assert.ok(zAlba.navrh.has('podpatky') && !zAlba.navrh.has('prsa'), 'návrh z alba má přednost');
+});
+
 test('přeskočený krok, ztlumená možnost, vícenásobný výběr a výlučnost uvnitř kroku', () => {
     const s = novyStav(KROKY);
     cislice(KROKY, s, 1); // portrét → Tělo se přeskočí

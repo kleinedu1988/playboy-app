@@ -124,3 +124,36 @@ Ukazatele:
 - **Z 5 nejpodobnějších:** průměrný podíl fotek téže modelky mezi pěti nejpodobnějšími.
 - **Uvnitř modelky:** jen mezi fotkami téže modelky, která má ve vzorku fotky z víc alb – podíl, kdy je
   nejpodobnější fotka ze stejného alba; náhoda = podíl fotek z téhož alba mezi jejími fotkami.
+
+## 7. Použití vektorů v návrzích (měřeno 6. 11. 2026)
+
+Vzorek: 6 446 fotek (všech 4 100 hodnocených + náhodná šestina ostatních), vektory spočítané programem.
+
+**Odhad srdíček fotek** (`internal/obsah/odhad.go`, řazení *Co se ti asi líbí* v Rychle ♥). Pětinásobné křížové
+ověření na 4 100 hodnocených fotkách:
+
+| Odhad | Chyba (MAE) | Pořadí (Spearman) | Z odhadů ♥2,5+ má ♥3+ |
+|---|---|---|---|
+| průměr všech fotek | 0,70 | – | – |
+| průměr ostatních fotek alba | 0,61 | 0,41 | 67 % |
+| průměr ostatních fotek modelky | 0,62 | 0,37 | 67 % |
+| nejbližší sousedé (k = 40, vážení) | 0,61 | 0,45 | – |
+| hřebenová regrese λ = 100 | 0,57 | 0,52 | 78 % |
+| **hřeben λ = 100 + odchylka alba (smrštění 3)** | **0,53** | **0,58** | **70 %** |
+
+Obsah fotky tedy o vkusu říká víc než to, z jakého alba nebo od které modelky fotka je; nejlépe obojí dohromady.
+Bez fotek téže modelky (jen obsah) Spearman 0,33 – vkus se přenáší i na jiné modelky.
+
+**Návrhy tagů** (`internal/obsah/tagy.go`, předvyplnění v Průvodci): zero-shot z textové věže CLIP (vektory popisů
+vestavěné, generátor `tagy-clip`). Bez označených fotek (ve sbírce 4) se kvalita měřila nepřímo:
+
+- černobílá proti sytosti náhledu: z 32 návrhů 32 opravdu šedých (přesnost 100 %), najde 42 % šedých fotek;
+- shoda uvnitř alba (fotky jednoho focení mívají stejné prostředí a oblečení): u fotky s návrhem má návrh i jiná
+  fotka alba 2,6–53× častěji, než odpovídá podílu ve sbírce – pláž 4,7×, bikiny 5,0×, studio 23×, černobílá 27×;
+- tagy se zdvihem 1,0–1,8× (poprsí 87 % fotek, leží, interiér, ložnice, tónovaná, prádlo, nahoře bez, akt) se
+  chovaly jako šum: zůstaly jen jako možnosti sady a nenavrhují se; partie, punčochy, podvazky, zaječí uši, výraz,
+  zezadu, mokrá a víc modelek se zero-shot neodhadnou (u čtvrtiny až poloviny fotek) a nenavrhují se vůbec.
+
+**Modelky podle fotek** (průměrný vektor fotek modelky, nejbližší hodnocené modelky, k = 20): na 296 hodnocených
+modelkách MAE 0,83 proti 0,91 u průměru, Spearman 0,38. Signál je, ale slabší než u fotek; do „Mohlo by se ti
+líbit“ zatím nezapojeno – nejdřív porovnat s modelem vkusu z údajů (`oblibenost_vkus.go`) na stejných modelkách.

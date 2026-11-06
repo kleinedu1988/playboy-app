@@ -14,7 +14,7 @@ func nahodnyVektor(r *rand.Rand) []float32 {
 	for i := range v {
 		v[i] = float32(r.NormFloat64())
 	}
-	normalizovat(v)
+	Normalizovat(v)
 	return v
 }
 
@@ -24,7 +24,7 @@ func blizky(r *rand.Rand, vzor []float32, sum float64) []float32 {
 	for i := range v {
 		v[i] = vzor[i] + float32(r.NormFloat64()*sum)
 	}
-	normalizovat(v)
+	Normalizovat(v)
 	return v
 }
 

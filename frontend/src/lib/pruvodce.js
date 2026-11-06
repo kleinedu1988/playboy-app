@@ -44,18 +44,22 @@ export const viditelneKroky = (kroky, vybrane, maSrdicka = false) => kroky.map((
     .filter(i => !preskocen(kroky[i], vybrane) && !(maSrdicka && kroky[i].typ === 'srdicka'));
 
 /**
- * Nový stav fotky: stávající tagy, u kroků bez tagu předvyplnění z minulé fotky alba (jen tagy, které krok dovolí).
+ * Nový stav fotky: stávající tagy, u kroků bez tagu předvyplnění z minulé fotky alba (jen tagy, které krok dovolí),
+ * jinak návrh z obsahu fotky (podleObsahu, obsah_fotek.go GetNavrhyTagu; u kroku „jeden“ nejvýš jeden tag).
  * Fotka, která už má srdíčka (hodnoceni > 0), krok srdíček přeskočí – po posledním kroku tagů je hotová.
  * @param {Krok[]} kroky @param {string[]} tagyFotky @param {string[]} podleAlba @param {number} hodnoceni
+ * @param {string[]} podleObsahu
  * @returns {StavPruvodce}
  */
-export function novyStav(kroky, tagyFotky = [], podleAlba = [], hodnoceni = 0) {
+export function novyStav(kroky, tagyFotky = [], podleAlba = [], hodnoceni = 0, podleObsahu = []) {
     const vybrane = new Set(tagyFotky);
     const navrh = new Set();
     kroky.forEach((k) => {
         const moznosti = new Set(k.moznosti.map(m => m.klic));
         if ([...vybrane].some(t => moznosti.has(t))) return;
-        podleAlba.filter(t => moznosti.has(t) && (k.predvyplnit || []).includes(t)).forEach((t) => {
+        const zAlba = podleAlba.filter(t => moznosti.has(t) && (k.predvyplnit || []).includes(t));
+        const zObsahu = podleObsahu.filter(t => moznosti.has(t)).slice(0, k.typ === 'jeden' ? 1 : undefined);
+        (zAlba.length ? zAlba : zObsahu).forEach((t) => {
             vybrane.add(t);
             navrh.add(t);
         });

@@ -1,14 +1,14 @@
-// Obsah fotek (obsah_fotek.go, docs/NAVRH-OBSAH-FOTEK.md): obrazový model CLIP spočítá pro každou fotku sbírky vektor
-// a „Podobné fotky“ v akcích fotky pak najdou fotky, které vypadají podobně (stejné focení, scéna, téměř stejné
-// snímky). Zapíná se v nabídce ⋯ stažením modelu (~100 MB); výpočet celé sbírky běží na pozadí (~1,5 h), průběh je
-// ve stavové liště (✕ pozastaví) a v nabídce. Po startu se dopočítají nové fotky, pokud výpočet uživatel nepozastavil.
-import { GetPodobneFotky, GetStavObsahu, VypnoutObsah, ZapnoutObsah, ZastavitObsah } from './backend';
-import { potvrdit } from './formular-modelky';
+// Obsah fotek (obsah_fotek.go, docs/NAVRH-OBSAH-FOTEK.md): obrazový model CLIP dá každé fotce sbírky vektor – čísla,
+// která popisují, co je na fotce (scéna, světlo, oblečení, póza). Z vektorů se počítají podobné fotky a návrhy.
+// Úvodní obrazovka zkontroluje model a chybějící stáhne (~100 MB, s průběhem); výpočet vektorů běží potom sám
+// na pozadí (poprvé ~1,5 h), průběh je ve stavové liště (✕ pozastaví do příštího spuštění) a v nabídce ⋯.
+import { GetPodobneFotky, GetStavObsahu, ZapnoutObsah, ZastavitObsah } from './backend';
 import { oznamit } from '../ui/oznameni';
 import { otevritLightbox } from './prohlizec';
 
-const KLIC_POZASTAVENO = 'obsahFotekPozastaveno';
-const PRODLEVA_PO_STARTU = 90000;
+const PRODLEVA_PO_STARTU = 60000;
+// Na úvodu nabídne pokračovat bez čekání na stažení modelu (stahování pak doběhne na pozadí)
+const NABIDNOUT_PRESKOCENI = 4000;
 const OBNOVA = 2000;
 
 /** @type {{ faze: string, stazeno: number, stahnout: number, hotovo: number, celkem: number, vektoru: number, chyba: string }} */
@@ -19,16 +19,6 @@ const lista = () => /** @type {HTMLElement | null} */ (document.querySelector('#
 const cislo = n => n.toLocaleString('cs-CZ');
 const mb = b => `${Math.round(b / 1e6)} MB`;
 const bezi = s => s.faze === 'stahuje' || s.faze === 'pocita';
-
-function pozastaveno() {
-    try { return localStorage.getItem(KLIC_POZASTAVENO) === '1'; } catch { return false; }
-}
-function nastavitPozastaveno(ano) {
-    try {
-        if (ano) localStorage.setItem(KLIC_POZASTAVENO, '1');
-        else localStorage.removeItem(KLIC_POZASTAVENO);
-    } catch { /* jen pro toto spuštění */ }
-}
 
 // Text a podíl průběhu; null, když nic neběží
 function prubeh(s) {
@@ -71,36 +61,42 @@ async function obnovit() {
 }
 
 async function spustit() {
-    nastavitPozastaveno(false);
     try { if (!(await ZapnoutObsah())) return; } catch { return; }
     obnovit();
 }
 
-async function zapnout() {
-    await obnovit();
-    if (!await potvrdit('Zapnout podobné fotky',
-        `Program stáhne obrazový model CLIP (${mb(stavObsahu.stahnout)}) a na pozadí spočítá obsah každé fotky sbírky – `
-        + 'poprvé asi hodinu a půl, stahují se přitom náhledy fotek. Pak v akcích fotky (⋯) najdeš „Podobné fotky“. '
-        + 'Fotky z počítače nikam neodcházejí, vše běží místně.', 'Stáhnout a zapnout')) return;
-    spustit();
-}
-
 export async function pozastavit() {
-    nastavitPozastaveno(true);
     try { await ZastavitObsah(); } catch { /* doběhne samo */ }
     obnovit();
 }
 
-async function vypnout() {
-    if (!await potvrdit('Vypnout podobné fotky', 'Smaže se stažený model a spočítaný obsah fotek. Zapnout jde znovu kdykoli, výpočet pak poběží od začátku.', 'Vypnout a smazat', { nebezpecne: true })) return;
-    try { await VypnoutObsah(); } catch { /* chybu ohlásí backend */ }
-    obnovit();
-}
-
-// Po startu: zjistí stav a dopočítá nové fotky, pokud je funkce zapnutá a výpočet nebyl pozastavený
-export async function naplanovatPoStartu() {
+// Úvodní obrazovka: chybí-li model, stáhne ho s průběhem v úvodu (po chvíli jde pokračovat bez čekání); se staženým
+// modelem jen naplánuje dopočítání nových fotek. Chyba stažení (bez připojení) start nezastaví, zkusí se příště.
+export async function pripravitVUvodu(krokUvodu, tlacitkoUvodu) {
     await obnovit();
-    if (stavObsahu.faze !== 'vypnuto' && !pozastaveno()) setTimeout(spustit, PRODLEVA_PO_STARTU);
+    if (stavObsahu.faze !== 'vypnuto') {
+        setTimeout(spustit, PRODLEVA_PO_STARTU);
+        return;
+    }
+    krokUvodu('Stahuji model obsahu fotek…', 0.8);
+    try { if (!(await ZapnoutObsah())) return; } catch { return; }
+    let preskoceno = false;
+    const nabidka = setTimeout(() => tlacitkoUvodu('Pokračovat, stáhnout na pozadí').then(() => { preskoceno = true; }), NABIDNOUT_PRESKOCENI);
+    while (!preskoceno) {
+        try { stavObsahu = (await GetStavObsahu()) || stavObsahu; } catch { break; }
+        if (stavObsahu.faze !== 'stahuje') break;
+        if (stavObsahu.stahnout) {
+            krokUvodu(`Stahuji model obsahu fotek ${mb(stavObsahu.stazeno)} / ${mb(stavObsahu.stahnout)}…`, 0.8 + 0.2 * (stavObsahu.stazeno / stavObsahu.stahnout));
+        }
+        await new Promise(hotovo => setTimeout(hotovo, 300));
+    }
+    clearTimeout(nabidka);
+    tlacitkoUvodu('');
+    if (stavObsahu.faze === 'chyba') {
+        krokUvodu('Model obsahu fotek se nepodařilo stáhnout, zkusí se příště', 1);
+        await new Promise(hotovo => setTimeout(hotovo, 1500));
+    }
+    obnovit();
 }
 
 // Položky nabídky ⋯ (Soubory a mezipaměť)
@@ -113,15 +109,13 @@ export function polozkyNabidky() {
             { text: 'Pozastavit obsah fotek', akce: pozastavit },
         ];
     }
-    if (s.faze === 'vypnuto') return [{ text: 'Zapnout podobné fotky…', akce: zapnout }];
-    return [
-        ...(s.vektoru < s.celkem || !s.celkem || s.faze === 'chyba'
-            ? [{ text: s.vektoru ? 'Dopočítat obsah fotek' : 'Spočítat obsah fotek', akce: spustit }] : []),
-        { text: 'Vypnout podobné fotky…', akce: vypnout },
-    ];
+    if (s.faze === 'vypnuto') return [{ text: 'Stáhnout model obsahu fotek', akce: spustit }];
+    return s.vektoru < s.celkem || !s.celkem || s.faze === 'chyba'
+        ? [{ text: s.vektoru ? `Dopočítat obsah fotek (${cislo(s.vektoru)} / ${cislo(s.celkem || s.vektoru)})` : 'Spočítat obsah fotek', akce: spustit }]
+        : [{ info: `◎ Obsah fotek spočítaný: ${cislo(s.vektoru)} fotek` }];
 }
 
-// Akce fotky „Podobné fotky“: jen když je funkce zapnutá
+// Akce fotky „Podobné fotky“: jen se staženým modelem
 export const podobneZapnuto = () => stavObsahu.faze !== 'vypnuto';
 
 // Otevře v prohlížeči fotky podobné dané fotce (vlastní fotka první)

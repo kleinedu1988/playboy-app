@@ -20,6 +20,9 @@
         #uvod .uvod-pruh { width: 220px; height: 3px; margin-top: 18px; border-radius: 3px; background: #2a2a30; overflow: hidden; }
         #uvod .uvod-pruh i { display: block; height: 100%; width: 6%; border-radius: 3px; background: #d81b60; transition: width .3s ease; }
         #uvod .uvod-krok { font-size: 12.5px; color: #9a9a9e; min-height: 16px; }
+        #uvod .uvod-tlacitko { margin-top: 4px; padding: 5px 12px; border: 1px solid #3a3a42; border-radius: 8px; background: none;
+            color: #c8c8cc; font: inherit; font-size: 12.5px; cursor: pointer; }
+        #uvod .uvod-tlacitko:hover, #uvod .uvod-tlacitko:focus-visible { border-color: #d81b60; color: #fff; }
         @media (prefers-reduced-motion: reduce) { #uvod, #uvod .uvod-pruh i { transition: none; } }
         /* Úvodní obrazovka – návrh A „kruh“. V aplikaci patří do bloku <style> v index.html (CSP omezuje jen skripty).
            Profilovky stojí na plášti válce (12 míst po 30°); celý válec se otáčí kolem svislé osy – jediná animace

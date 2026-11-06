@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.3.1] – 2026-11-06
+
+### Změněno
+- **Obsah fotek bez zapínání**: model už se nezapíná v nabídce. Úvodní obrazovka zkontroluje, jestli je model obsahu fotek stažený; když chybí, stáhne ho s průběhem přímo v úvodu (po 4 s nabídne *Pokračovat, stáhnout na pozadí*; bez připojení se start nezdrží a zkusí se příště). Výpočet vektorů všech fotek se pak spustí sám a běží na pozadí (poprvé ~1,5 h); se staženým modelem se minutu po startu dopočítají nové fotky. ✕ ve stavové liště výpočet pozastaví do příštího spuštění. Položky *Zapnout/Vypnout podobné fotky* jsou pryč.
+
 ## [1.3.0] – 2026-11-06
 
 ### Přidáno

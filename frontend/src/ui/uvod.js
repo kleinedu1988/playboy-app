@@ -14,6 +14,19 @@ export function krokUvodu(text, podil) {
     if (pruh) pruh.style.transform = `translateX(${Math.round(Math.min(Math.max(podil, 0.06), 1) * 100) - 100}%)`;
 }
 
+/** Tlačítko pod krokem (např. „Pokračovat bez čekání“); slib se splní kliknutím. Bez textu tlačítko odebere. */
+export function tlacitkoUvodu(text) {
+    const u = uvod();
+    u?.querySelector('.uvod-tlacitko')?.remove();
+    if (!u || !text) return new Promise(() => {});
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'uvod-tlacitko';
+    b.textContent = text;
+    u.append(b);
+    return new Promise(hotovo => b.addEventListener('click', () => { b.remove(); hotovo(); }, { once: true }));
+}
+
 export function verzeUvodu(verze) {
     const v = uvod()?.querySelector('.uvod-verze');
     if (v && verze) v.textContent = `verze ${verze}`;

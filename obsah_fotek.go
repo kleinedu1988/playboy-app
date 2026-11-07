@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 
 	"playboy-app/internal/obsah"
 )
@@ -358,6 +359,15 @@ func splnena(p PodminkaKroku, ma map[string]bool) bool {
 
 // Naučené tagy (z paměti); když přibylo dost fotek z Průvodce nebo obsahu, přeučí se na pozadí
 func (a *App) uceniTagu() *obsah.UceniTagu {
+	return a.uceniTaguZ(false)
+}
+
+// Naučí tagy hned (úvodní obrazovka): počká i na rozběhnuté učení na pozadí
+func (a *App) uceniTaguHned() *obsah.UceniTagu {
+	return a.uceniTaguZ(true)
+}
+
+func (a *App) uceniTaguZ(hned bool) *obsah.UceniTagu {
 	if a.obsah == nil || !a.obsah.Zapnuto() {
 		return nil
 	}
@@ -367,12 +377,17 @@ func (a *App) uceniTagu() *obsah.UceniTagu {
 	p := &uceniTaguPamet
 	p.Lock()
 	defer p.Unlock()
+	for hned && p.bezi {
+		p.Unlock()
+		time.Sleep(50 * time.Millisecond)
+		p.Lock()
+	}
 	if (p.klic != klic || p.uceni == nil) && !p.bezi {
 		naucit := func() *obsah.UceniTagu {
 			return a.obsah.NaucitTagy(a.prikladyTaguZPruvodce(), tagyProUceni(), a.vychoziNavrhyTagu)
 		}
-		// Testy (bez okna) učí hned, okno na pozadí
-		if !a.startNaPozadi {
+		// Testy (bez okna) a úvodní obrazovka učí hned, jinak na pozadí
+		if !a.startNaPozadi || hned {
 			p.uceni, p.klic = naucit(), klic
 			return p.uceni
 		}

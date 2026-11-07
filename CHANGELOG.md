@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.8.0] – 2026-11-07
+
+### Změněno
+- **Propracovaná úvodní obrazovka**: pod pruhem je seznam kroků přípravy – Databáze, Sbírka, Galerie a náhledy, Obrazové modely, Oblíbenost a sezóna, Odhady z obsahu fotek, Mohlo by se ti líbit, Ostatní pohledy – s tím, co právě běží (pulzující tečka), co je hotové (✓) a podrobnostmi (počet modelek, kolik fotek má spočítaný obsah, z kolika fotek Průvodce se učí a kolik tagů už navrhuje podle tebe); dole běží čas přípravy. V nízkém okně zůstane jen pruh.
+- **Program naběhne připravený**: úvod teď počká i na to, co se dřív dělalo až za chodu – náhledy první obrazovky (až 8 s místo 2,5 s), oblíbenost a sezónu (bez časového limitu), odhad srdíček z obsahu fotek a obsah fotek modelek, učení tagů z Průvodce, „Mohlo by se ti líbit“ a mezipaměti Sbírky, Čísel, hledání, Statistik a volby sezóny. Start trvá déle, ale první otevření pohledů už nečeká. Po 6 s jde zbytek *Přeskočit* (doběhne za chodu); nejdéle 60 s, pak úvod zmizí sám.
+
 ## [1.7.0] – 2026-11-06
 
 ### Přidáno

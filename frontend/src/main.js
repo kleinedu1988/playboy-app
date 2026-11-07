@@ -1,8 +1,8 @@
 import './style.css';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import { oznamit } from './ui/oznameni';
-import { GetOblibenost, GetSezona, GetVerze, MaZamek, StavDatabaze } from './app/backend';
-import { krokUvodu, pockatNaNahledy, tlacitkoUvodu, skrytUvod, ukazatUvod, ulozitProfilovkyUvodu, verzeUvodu, zapomenoutProfilovkyUvodu } from './ui/uvod';
+import { GetOblibenost, GetSezona, GetStavUceniTagu, GetVerze, MaZamek, Predpripravit, StavDatabaze } from './app/backend';
+import { krokUvodu, pockatNaNahledy, seznamUvodu, stavUvodu, tlacitkoUvodu, skrytUvod, ukazatUvod, ulozitProfilovkyUvodu, verzeUvodu, zapomenoutProfilovkyUvodu } from './ui/uvod';
 import { stav } from './app/stav';
 import { nacistSpecialy, vsechnyModelky } from './app/mezipamet';
 import { prepinacRezimu, prepnoutRezim } from './app/navigace';
@@ -37,7 +37,7 @@ import * as zkratky from './app/zkratky';
 import * as editorTextu from './ui/editor-textu';
 import { stats } from './app/prvky';
 import { vyhlasitSezonu } from './app/vyhlaseni-sezony';
-import { spustitPredpripravu } from './app/predpriprava';
+import { pripravitVUvodu as pripravitPohledyVUvodu, spustitPredpripravu } from './app/predpriprava';
 import { zaznamenatStart } from './app/vykon';
 import { naplanovatPoStartu as stahovatNahledyPoStartu } from './app/nahledy-pozadi';
 import * as obsahFotek from './app/obsah-fotek';
@@ -78,11 +78,32 @@ StavDatabaze().then((chyba) => {
     if (chyba) oznamit(chyba, { text: 'Rozumím', akce: () => {} });
 });
 
+// Kroky přípravy na úvodní obrazovce
+const KROKY_UVODU = [
+    ['databaze', 'Databáze'], ['sbirka', 'Sbírka'], ['galerie', 'Galerie a náhledy'], ['modely', 'Obrazové modely'],
+    ['hodnoceni', 'Oblíbenost a sezóna'], ['odhady', 'Odhady z obsahu fotek'], ['tipy', 'Mohlo by se ti líbit'],
+    ['pohledy', 'Ostatní pohledy'],
+];
+// Příprava po obrazových modelech smí trvat nejvýš tak dlouho (pak úvod zmizí a zbytek doběhne za chodu);
+// po PRESKOCIT_PO nabídne „Přeskočit přípravu“
+const LIMIT_PRIPRAVY = 60000;
+const PRESKOCIT_PO = 6000;
+const cislo = n => n.toLocaleString('cs-CZ');
+
+// Stav obrazových modelů do seznamu úvodu: [stav, podrobnost]
+function popisModelu(s) {
+    if (s.faze === 'vypnuto') return ['preskoceno', 'nestažené'];
+    if (s.faze === 'chyba') return ['chyba', 'stažení se nepovedlo'];
+    if (s.faze === 'stahuje') return ['hotovo', 'stahují se na pozadí'];
+    if (s.celkem && s.vektoru < s.celkem) return ['hotovo', `obsah ${cislo(s.vektoru)} / ${cislo(s.celkem)} fotek`];
+    return ['hotovo', s.vektoru ? `obsah ${cislo(s.vektoru)} fotek` : 'připravené'];
+}
+
 // Spuštění pod úvodní obrazovkou (ui/uvod.js): nejdřív případný zámek, potom přehled, ve kterém se program naposledy
 // zavřel, jeho náhledy a data Hodnocení; úvod zmizí, až je vše připravené
 (async () => {
     // Pojistka: úvod nesmí zůstat viset, ani kdyby se příprava zasekla
-    const pojistka = setTimeout(skrytUvod, 15000);
+    let pojistka = setTimeout(skrytUvod, 15000);
     try {
         GetVerze().then(verzeUvodu).catch(() => {});
         stav.maZamek = await MaZamek();
@@ -92,29 +113,77 @@ StavDatabaze().then((chyba) => {
             ukazatUvod(true);
         }
 
-        krokUvodu('Načítám sbírku…', 0.25);
-        // Názvy speciálů a seznam modelek pro galerii se načítají souběžně
-        const specialy = nacistSpecialy();
-        vsechnyModelky().catch(() => {});
-        await specialy;
+        // Kroky přípravy jsou vidět na úvodu (ui/uvod.js); program naběhne připravený, i když start trvá déle
+        seznamUvodu(KROKY_UVODU);
+        stavUvodu('databaze', 'hotovo', stav.maZamek ? 'odemčeno' : 'otevřena');
 
-        krokUvodu('Sestavuji galerii…', 0.5);
+        krokUvodu('Načítám sbírku…', 0.12);
+        stavUvodu('sbirka', 'bezi');
+        const specialy = nacistSpecialy();
+        const modelky = await vsechnyModelky().catch(() => []);
+        await specialy;
+        stavUvodu('sbirka', 'hotovo', `${cislo(modelky?.length || 0)} modelek`);
+
+        krokUvodu('Sestavuji galerii…', 0.22);
+        stavUvodu('galerie', 'bezi');
         let posledni = null;
         try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
         if (posledni === 'nejlepsi') oblibenost.nastavitNejlepsiVOblibenosti(true);
         if (['kalendar', 'nejlepsi', 'centerfoldy'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
         await nacistGalerii().catch(() => {});
+        krokUvodu('Načítám náhledy první obrazovky…', 0.3);
+        await pockatNaNahledy(8000);
+        stavUvodu('galerie', 'hotovo');
 
-        // Hodnocení se připraví dopředu (backend si výpočet pamatuje), mezitím se načtou náhledy první obrazovky
-        krokUvodu('Načítám náhledy a připravuji Hodnocení…', 0.75);
-        const hodnoceni = Promise.all([GetOblibenost(), GetSezona()]).catch(() => {});
-        await Promise.all([pockatNaNahledy(2500), Promise.race([hodnoceni, new Promise(hotovo => setTimeout(hotovo, 2500))])]);
-
-        // Obsah fotek: model zkontrolovat, chybějící stáhnout s průběhem; vlastní stahování má průběh i možnost
-        // pokračovat bez čekání, proto už ho nehlídá pojistka úvodu (app/obsah-fotek.js)
+        // Obsah fotek: model zkontrolovat, chybějící stáhnout s průběhem (vlastní tlačítko „pokračovat bez čekání“)
+        krokUvodu('Kontroluji obrazové modely…', 0.4);
+        stavUvodu('modely', 'bezi');
         clearTimeout(pojistka);
-        krokUvodu('Kontroluji model obsahu fotek…', 0.8);
         await obsahFotek.pripravitVUvodu(krokUvodu, tlacitkoUvodu).catch(() => {});
+        stavUvodu('modely', ...popisModelu(obsahFotek.stavObsahuFotek()));
+        pojistka = setTimeout(skrytUvod, LIMIT_PRIPRAVY);
+        // Po čase jde přípravu přeskočit (dokončí se pak za chodu)
+        let nabidkaPreskoceni = 0;
+        const preskocit = new Promise((hotovo) => {
+            nabidkaPreskoceni = setTimeout(() => tlacitkoUvodu('Přeskočit přípravu').then(hotovo), PRESKOCIT_PO);
+        });
+        const preskoceno = { ano: false };
+        preskocit.then(() => { preskoceno.ano = true; });
+        const nebo = slib => Promise.race([slib, preskocit]);
+
+        krokUvodu('Počítám oblíbenost a sezónu…', 0.55);
+        stavUvodu('hodnoceni', 'bezi');
+        await nebo(Promise.all([GetOblibenost(), GetSezona()]).catch(() => {}));
+        stavUvodu('hodnoceni', preskoceno.ano ? 'preskoceno' : 'hotovo');
+
+        if (!preskoceno.ano && obsahFotek.stavObsahuFotek().vektoru) {
+            krokUvodu('Učím se z tvých srdíček a z Průvodce…', 0.65);
+            stavUvodu('odhady', 'bezi');
+            await nebo(Predpripravit('obsah').catch(() => {}));
+            const u = await GetStavUceniTagu().catch(() => null);
+            stavUvodu('odhady', preskoceno.ano ? 'preskoceno' : 'hotovo',
+                u?.fotek ? `z ${cislo(u.fotek)} fotek Průvodce · podle tebe ${u.pouzito} tagů` : 'srdíčka fotek');
+        } else {
+            stavUvodu('odhady', 'preskoceno', preskoceno.ano ? '' : 'bez obsahu fotek');
+        }
+
+        if (!preskoceno.ano) {
+            krokUvodu('Vybírám, co by se ti mohlo líbit…', 0.75);
+            stavUvodu('tipy', 'bezi');
+            await nebo(Predpripravit('oblibenost').catch(() => {}));
+            stavUvodu('tipy', preskoceno.ano ? 'preskoceno' : 'hotovo');
+        } else stavUvodu('tipy', 'preskoceno');
+
+        if (!preskoceno.ano) {
+            stavUvodu('pohledy', 'bezi');
+            await nebo(pripravitPohledyVUvodu((hotovo, celkem) => {
+                krokUvodu(`Připravuji Sbírku, Čísla, hledání a Statistiky… ${hotovo}/${celkem}`, 0.8 + 0.2 * (hotovo / celkem));
+                stavUvodu('pohledy', 'bezi', `${hotovo} / ${celkem}`);
+            }));
+            stavUvodu('pohledy', preskoceno.ano ? 'preskoceno' : 'hotovo');
+        } else stavUvodu('pohledy', 'preskoceno');
+        clearTimeout(nabidkaPreskoceni);
+        tlacitkoUvodu('');
     } finally {
         clearTimeout(pojistka);
         skrytUvod();

@@ -34,13 +34,26 @@ async function dalsi() {
     naplanovat(30);
 }
 
+// Úvodní obrazovka: všechny kroky hned po sobě (úvod na ně počká); naKrok(hotovo, celkem) hlásí průběh.
+// Předpříprava po úvodu pak jen hlídá změny dat.
+const KROKY_UVODU = [...KROKY];
+let vUvodu = false;
+export async function pripravitVUvodu(naKrok = (_h, _c) => {}) {
+    for (const [i, krok] of KROKY_UVODU.entries()) {
+        naKrok(i, KROKY_UVODU.length);
+        try { await Predpripravit(krok); } catch { /* krok se jen nepřipraví */ }
+    }
+    naKrok(KROKY_UVODU.length, KROKY_UVODU.length);
+    vUvodu = true;
+}
+
 export function spustitPredpripravu(prodleva = 1500) {
     if (spustena) return;
     spustena = true;
     for (const typ of ['pointerdown', 'keydown', 'wheel']) {
         addEventListener(typ, () => { posledniVstup = performance.now(); }, { capture: true, passive: true });
     }
-    fronta = [...KROKY];
+    fronta = vUvodu ? [] : [...KROKY];
     naplanovat(prodleva);
     poZmeneDat((rozsah) => {
         const znovu = rozsah === 'hodnoceni' ? PO_HODNOCENI : KROKY;

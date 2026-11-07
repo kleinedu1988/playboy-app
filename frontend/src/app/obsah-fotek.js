@@ -84,7 +84,7 @@ export async function pripravitVUvodu(krokUvodu, tlacitkoUvodu) {
         setTimeout(spustit, PRODLEVA_PO_STARTU);
         return;
     }
-    krokUvodu('Stahuji model obsahu fotek…', 0.8);
+    krokUvodu('Stahuji obrazové modely…', 0.4);
     try { if (!(await ZapnoutObsah())) return; } catch { return; }
     let preskoceno = false;
     const nabidka = setTimeout(() => tlacitkoUvodu('Pokračovat, stáhnout na pozadí').then(() => { preskoceno = true; }), NABIDNOUT_PRESKOCENI);
@@ -92,14 +92,14 @@ export async function pripravitVUvodu(krokUvodu, tlacitkoUvodu) {
         try { stavObsahu = (await GetStavObsahu()) || stavObsahu; } catch { break; }
         if (stavObsahu.faze !== 'stahuje') break;
         if (stavObsahu.stahnout) {
-            krokUvodu(`Stahuji model obsahu fotek ${mb(stavObsahu.stazeno)} / ${mb(stavObsahu.stahnout)}…`, 0.8 + 0.2 * (stavObsahu.stazeno / stavObsahu.stahnout));
+            krokUvodu(`Stahuji obrazové modely ${mb(stavObsahu.stazeno)} / ${mb(stavObsahu.stahnout)}…`, 0.4 + 0.1 * (stavObsahu.stazeno / stavObsahu.stahnout));
         }
         await new Promise(hotovo => setTimeout(hotovo, 300));
     }
     clearTimeout(nabidka);
     tlacitkoUvodu('');
     if (stavObsahu.faze === 'chyba') {
-        krokUvodu('Model obsahu fotek se nepodařilo stáhnout, zkusí se příště', 1);
+        krokUvodu('Obrazové modely se nepodařilo stáhnout, zkusí se příště', 0.5);
         await new Promise(hotovo => setTimeout(hotovo, 1500));
     }
     obnovit();

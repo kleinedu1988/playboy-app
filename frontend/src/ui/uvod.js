@@ -27,6 +27,36 @@ export function tlacitkoUvodu(text) {
     return new Promise(hotovo => b.addEventListener('click', () => { b.remove(); hotovo(); }, { once: true }));
 }
 
+/** Seznam kroků přípravy: [[klíč, název], …]; všechny čekají */
+export function seznamUvodu(kroky) {
+    const ol = uvod()?.querySelector('.uvod-seznam');
+    if (!ol) return;
+    ol.replaceChildren(...kroky.map(([klic, nazev]) => {
+        const li = document.createElement('li');
+        li.className = 'ceka';
+        li.dataset.krok = klic;
+        li.innerHTML = '<span class="z" aria-hidden="true"></span><span class="n"></span><span class="d"></span>';
+        /** @type {HTMLElement} */ (li.querySelector('.n')).textContent = nazev;
+        return li;
+    }));
+    const zacatek = performance.now();
+    const cas = uvod()?.querySelector('.uvod-cas');
+    const tik = () => {
+        if (!cas?.isConnected) return;
+        cas.textContent = `${((performance.now() - zacatek) / 1000).toFixed(1).replace('.', ',')} s`;
+        setTimeout(tik, 100);
+    };
+    tik();
+}
+
+/** Stav kroku: 'ceka' | 'bezi' | 'hotovo' | 'preskoceno' | 'chyba'; detail = podrobnost vpravo (počet, průběh) */
+export function stavUvodu(klic, stavKroku, detail) {
+    const li = uvod()?.querySelector(`.uvod-seznam [data-krok="${klic}"]`);
+    if (!li) return;
+    li.className = stavKroku;
+    if (detail !== undefined) /** @type {HTMLElement} */ (li.querySelector('.d')).textContent = detail;
+}
+
 export function verzeUvodu(verze) {
     const v = uvod()?.querySelector('.uvod-verze');
     if (v && verze) v.textContent = `verze ${verze}`;

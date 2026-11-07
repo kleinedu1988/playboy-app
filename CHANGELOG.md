@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.9.0] – 2026-11-07
+
+### Změněno
+- **Záhlaví profilu jako filmový banner**: nahoře na stránce je záhlaví vysoké ~46 % okna (300–520 px). Ostrá fotka stojí vpravo v celé výšce – fotka na výšku se ukáže celá v rámu 4 : 5 (už se neořezává do širokého pruhu, kde z ní zbylo čelo), na šířku zabere dvě třetiny – a měkce přechází doleva do rozostřené kopie téže fotky a dole do stránky. Modelka bez profilové fotky má v záhlaví titulní fotku, záhlaví už nezůstává prázdné.
+- **Text pohromadě dole vlevo**: nadtitulek s kategoriemi (zlatě), velké jméno se srdíčky, řádek kariéry (roky, počet alb a fotek, pořadí v oblíbenosti, odhad, odznaky) a pod ním pásky čísel; akce vpravo dole, lišta alb pod tím. Dřív byly pásky nahoře vpravo, jméno dole a akce zvlášť.
+- Po odrolování se záhlaví zmenší na kompaktní pruh se jménem a akcemi. V úzkém okně je fotka přes celou šířku za textem. Úprava výřezu profilové fotky se dělá v rámu ostré fotky.
+- Styly záhlaví sjednocené do jednoho bloku (dřív čtyři vrstvy úprav z verzí 1.2.59–1.2.72, které se přepisovaly).
+
 ## [1.8.1] – 2026-11-07
 
 ### Opraveno

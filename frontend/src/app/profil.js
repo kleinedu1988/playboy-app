@@ -135,20 +135,26 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     }).join('') + ((modelka.onlineAlba || []).length
         ? `<button type="button" class="panel-paska" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
     const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" />`;
-    // Pruh nahoře: jméno se srdíčky, pod ním pořadí a odznaky, vpravo pásky čísel; celou plochu kryje banner
+    // Filmový banner: dole vlevo nadtitulek (kategorie), velké jméno se srdíčky, řádek kariéry (roky, alba a fotky
+    // doplní vykreslení alb), pořadí a odznaky, pod tím pásky čísel; celou plochu kryje fotka banneru
+    const roky = platnaVydani.map(v => parseInt(v, 10)).filter(r => r > 1900);
+    const obdobi = roky.length ? (Math.min(...roky) === Math.max(...roky) ? String(roky[0]) : `${Math.min(...roky)}–${Math.max(...roky)}`) : '';
+    const nadtitulek = kategorie.map(k => popisKategorie(k)).filter(Boolean).slice(0, 3).join(' · ');
     profilPruhObsah.innerHTML = `
         <div class="pruh-identita">
+            ${nadtitulek ? `<div class="pruh-nadtitulek">${esc(nadtitulek)}</div>` : ''}
             <div class="pruh-jmeno">
                 <h2>${esc(modelka.jmeno)}</h2>
                 ${htmlSrdicka(modelka)}
             </div>
             <div class="pruh-radek">
+                <span class="pruh-kariera">${obdobi ? `<span>${esc(obdobi)}</span>` : ''}<span class="pruh-pocty"></span></span>
                 ${htmlOdhadu(modelka, 'odhad-profil')}
                 ${htmlPoradi(modelka)}
                 <div class="profile-odznaky" hidden></div>
             </div>
+            ${paskyHtml ? `<div class="pruh-pasky">${paskyHtml}</div>` : ''}
         </div>
-        ${paskyHtml ? `<div class="pruh-pasky">${paskyHtml}</div>` : ''}
     `;
     aktualizovatBannerProfilu(modelka);
     // Jméno otevře nabídku modelek seznamu, když se profil otevřel ze seznamu (galerie, pořadí…)
@@ -379,6 +385,9 @@ export async function nacistFotkyModelky(modelkaId) {
     listaAlb.naplnit(ostatni.map(a => ({ klic: indexAlba.get(a), nazev: nazevAlba(a.album, a.typ), pocet: a.fotky.length })));
     const fotek = stav.aktualniAlba.reduce((s, a) => s + a.fotky.length, 0);
     profilPocet.textContent = fotek ? `${sklonovat(fotek, 'fotka', 'fotky', 'fotek')} · ${sklonovat(stav.aktualniAlba.length, 'album', 'alba', 'alb')}` : '';
+    // Řádek kariéry v banneru: alba a fotky
+    const pocty = profilPruhObsah.querySelector('.pruh-pocty');
+    if (pocty) pocty.textContent = fotek ? `${sklonovat(stav.aktualniAlba.length, 'album', 'alba', 'alb')} · ${sklonovat(fotek, 'fotka', 'fotky', 'fotek')}` : '';
     nastavitStav(profilPocet.textContent);
 
     detailView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
@@ -522,34 +531,41 @@ export function prepnoutUdaje(otevrit = !detailView.classList.contains('udaje-ot
     requestAnimationFrame(() => zkratitAlba(detailView));
 }
 
-// Aktualizace fotografie v pozadí záhlaví (titulní fotka modelky s jejím výřezem)
+// Fotka filmového banneru v záhlaví: profilová fotka s vlastním výřezem, bez ní titulní fotka (jako na kartě),
+// aby záhlaví nezůstalo prázdné. Ostrá fotka je vpravo v celé výšce; fotka na šířku (.na-sirku) zabere dvě třetiny,
+// na výšku se ukáže celá v rámu 4 : 5. Rozostřená kopie vyplní zbytek šířky.
 export function aktualizovatBannerProfilu(modelka) {
     const bannerImg = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerFoto'));
     if (!bannerImg) return;
-    // V záhlaví je jen profilová fotka (jedna přes celou šířku, s vlastním výřezem); titulní patří kartě a panelu
-    // Údaje. Bez profilové fotky zůstane záhlaví bez fotky.
     const id = modelka.id;
     if (stav.profilovaFotka?.modelkaId !== id) {
         stav.profilovaFotka = null;
         nastavitFotkuBanneru(bannerImg, '', '');
     }
+    const titulni = () => modelka.coverUrl ? [adresaTitulni(modelka, true), stylVyrezu(modelka)] : ['', ''];
     GetProfilovaFotka(id).then(profilova => {
         if (stav.aktualniModelka?.id !== id) return;
         stav.profilovaFotka = profilova?.url ? { ...profilova, modelkaId: id } : null;
-        nastavitFotkuBanneru(bannerImg, profilova?.url ? obrazek(profilova.url, VELIKOST_TITULNI) : '',
-            profilova?.url ? stylVyrezu(profilova) : '');
-    }).catch(() => {});
+        const [adresa, styl] = profilova?.url ? [obrazek(profilova.url, VELIKOST_TITULNI), stylVyrezu(profilova)] : titulni();
+        nastavitFotkuBanneru(bannerImg, adresa, styl);
+    }).catch(() => nastavitFotkuBanneru(bannerImg, ...titulni()));
 }
 
 function nastavitFotkuBanneru(bannerImg, adresa, styl) {
+    const pozadi = document.getElementById('profilBannerPozadi');
+    const rozmazane = document.getElementById('profilBannerRozmazane');
+    pozadi?.classList.toggle('bez-fotky', !adresa);
     if (adresa) {
+        bannerImg.onload = () => pozadi?.classList.toggle('na-sirku', bannerImg.naturalWidth > bannerImg.naturalHeight * 1.1);
         bannerImg.src = adresa;
         // cssText přepíše celý styl, proto display až po něm
         bannerImg.style.cssText = styl;
         bannerImg.style.display = 'block';
+        if (rozmazane) rozmazane.style.backgroundImage = `url("${adresa.replace(/"/g, '%22')}")`;
     } else {
         bannerImg.removeAttribute('src');
         bannerImg.style.display = 'none';
+        if (rozmazane) rozmazane.style.backgroundImage = '';
     }
 }
 
@@ -559,14 +575,16 @@ export function upravitVyrezProfilove() {
     const modelka = stav.aktualniModelka;
     const profilova = stav.profilovaFotka;
     const banner = /** @type {HTMLElement | null} */ (document.getElementById('profilBannerPozadi'));
+    const ram = /** @type {HTMLElement | null} */ (document.getElementById('profilBannerRam'));
     const lista = document.querySelector('.hlavni-lista');
-    if (!modelka || !profilova || !banner || !lista) return;
+    if (!modelka || !profilova || !banner || !ram || !lista) return;
     hlavniOblast.scrollTop = 0;
     document.querySelector('.navbar')?.classList.remove('profil-svinuty');
     lista.classList.add('uprava-profilove');
     upravitVyrez(modelka, {
         karta: banner,
-        ramFotky: banner,
+        // Výřez se upravuje v rámu ostré fotky (ten je vidět), ne přes celou šířku banneru
+        ramFotky: ram,
         vyrezFotky: profilova,
         vychozi: { coverZoom: 1, coverX: 50, coverY: 22 },
         ulozit: (v) => SetProfilovyVyrez(modelka.id, v.coverZoom, v.coverX, v.coverY),

@@ -32,8 +32,13 @@ export const SABLONA_OKNA = `
     <!-- Druhý řádek jen pro drobečky (profil, číslo) a podmenu zvolené části; jinak skrytý (style.css) -->
     <div class="hlavni-lista">
       <!-- Širokoúhlý banner na pozadí záhlaví profilu modelky (od drobečků až po lištu alb) -->
+      <!-- Filmový banner: rozostřená kopie fotky vyplní šířku, ostrá fotka vpravo v celé výšce (na výšku bez ořezu
+           do pruhu) a přechází do textu vlevo a do stránky dole -->
       <div id="profilBannerPozadi" class="profil-banner-pozadi hidden" aria-hidden="true">
-        <img id="profilBannerFoto" class="profil-banner-foto" src="" alt="" draggable="false" />
+        <div id="profilBannerRozmazane" class="profil-banner-rozmazane"></div>
+        <div id="profilBannerRam" class="profil-banner-ram">
+          <img id="profilBannerFoto" class="profil-banner-foto" src="" alt="" draggable="false" />
+        </div>
         <div class="profil-banner-prekryv"></div>
       </div>
       <!-- Cesta zpět z profilu a stránky vydání (drobečky): odkud se přišlo › kde jsem, u profilu šipky na další modelku -->

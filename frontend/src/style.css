@@ -16210,180 +16210,6 @@ body.rezim-vyberu #detailView .poster {
     font-size: 12.5px;
 }
 
-/* ===== Profil: záhlaví se širokoúhlou fotografií na pozadí (od drobečků až po lištu alb).
-   Při rolování se panel nezmenšuje a drží stabilní, kompaktní rozvržení. ===== */
-.hlavni-lista:has(> #profilPruh:not(.hidden)) {
-    position: relative;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    row-gap: 8px;
-    padding-top: 8px;
-    padding-bottom: 6px;
-    overflow: hidden;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) > *:not(.profil-banner-pozadi) {
-    position: relative;
-    /* Lišta alb má jinde lepivý záporný posun (top: -32px); v záhlaví profilu by vyjela přes pruh modelky */
-    top: auto;
-    z-index: 1;
-}
-
-.profil-banner-pozadi {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
-}
-
-.profil-banner-pozadi.hidden {
-    display: none;
-}
-
-.profil-banner-foto {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    filter: brightness(0.68) saturate(1.1);
-}
-
-.profil-banner-prekryv {
-    position: absolute;
-    inset: 0;
-    background:
-        linear-gradient(to right, rgba(16, 16, 20, 0.92) 0%, rgba(16, 16, 20, 0.7) 32%, rgba(16, 16, 20, 0.35) 60%, rgba(16, 16, 20, 0.85) 100%),
-        linear-gradient(to bottom, rgba(16, 16, 20, 0.75) 0%, rgba(16, 16, 20, 0.25) 40%, rgba(16, 16, 20, 0.75) 85%, rgba(16, 16, 20, 0.96) 100%);
-}
-
-.hlavni-lista .logo .nav-drobecek.v-pruhu {
-    display: none;
-}
-
-/* Řádek 1 profilu: vedle drobečků navazuje pruh modelky – vlevo identita, vpravo akce a pásky */
-.hlavni-lista #profilPruh {
-    display: flex;
-    flex: 1 1 auto;
-    flex-wrap: wrap;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    min-width: 0;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-    --wails-draggable: no-drag;
-}
-
-.hlavni-lista #profilPruh.hidden {
-    display: none;
-}
-
-.hlavni-lista #profilPruh .pruh-obsah {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 14px;
-    min-width: 0;
-    flex: 1 1 auto;
-}
-
-/* Jméno se nesmí zúžit do ztracena: v užším okně se pásky a akce zalomí pod něj */
-.hlavni-lista #profilPruh .pruh-identita {
-    display: flex;
-    flex: 1 1 260px;
-    flex-direction: column;
-    gap: 3px;
-    min-width: 0;
-}
-
-.hlavni-lista #profilPruh .pruh-jmeno {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-width: 0;
-}
-
-.hlavni-lista #profilPruh .pruh-jmeno h2 {
-    margin: 0;
-    overflow: hidden;
-    font-size: 20px;
-    font-weight: 300;
-    letter-spacing: 0.12em;
-    text-overflow: ellipsis;
-    text-transform: uppercase;
-    white-space: nowrap;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85);
-}
-
-.hlavni-lista #profilPruh .pruh-jmeno .hearts {
-    flex: none;
-    margin: 0;
-    font-size: 16px;
-}
-
-.hlavni-lista #profilPruh .pruh-radek {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px 12px;
-}
-
-.hlavni-lista #profilPruh .pruh-pasky {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 6px;
-    margin-left: auto;
-}
-
-.hlavni-lista #profilPruh .profil-akce {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-wrap: nowrap;
-    margin: 0;
-    padding: 0;
-    border: 0;
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba {
-    background-color: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:hover {
-    background-color: rgba(255, 255, 255, 0.14);
-    border-color: rgba(255, 255, 255, 0.18);
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent {
-    background-color: var(--accent);
-    border-color: transparent;
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent:hover {
-    background-color: var(--accent-hover);
-}
-
-/* Řádek 2 profilu: lišta alb přes celou šířku pod identitou a akcemi */
-.hlavni-lista #profilPruh ~ #albumNav {
-    flex: 1 1 100%;
-    padding-top: 6px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.hlavni-lista #profilPruh ~ #albumNav::before {
-    display: none;
-}
 
 .pruh-identita.s-nabidkou h2 {
     cursor: pointer;
@@ -17350,196 +17176,6 @@ body.rezim-vyberu #detailView .poster {
     color: var(--text-muted);
 }
 
-/* ===== Profil: sjednocený vzhled záhlaví s bannerem (1.2.59). Všechny prvky nad fotkou jsou jednotné průsvitné
-   „sklo“ (tmavé rozmazané pozadí, jemný okraj), aby fotka pod nimi vynikla; sytě růžová zůstává jen hlavní akce
-   (Přidat fotky) a zvolené album. Řádky: drobečky · jméno a pásky · akce uprostřed · lišta alb. ===== */
-.hlavni-lista:has(> #profilPruh:not(.hidden)) {
-    --sklo: rgba(14, 14, 18, 0.42);
-    --sklo-hover: rgba(14, 14, 18, 0.62);
-    --sklo-okraj: rgba(255, 255, 255, 0.16);
-    row-gap: 12px;
-    padding-top: 12px;
-    padding-bottom: 8px;
-}
-
-/* Fotka světlejší a zřetelnější; ztmavení jen pod textem vlevo a k liště alb dole */
-.profil-banner-foto {
-    filter: brightness(0.86) saturate(1.08);
-}
-
-.profil-banner-prekryv {
-    background:
-        linear-gradient(to right, rgba(14, 14, 18, 0.72) 0%, rgba(14, 14, 18, 0.32) 30%, rgba(14, 14, 18, 0.06) 55%, rgba(14, 14, 18, 0.06) 75%, rgba(14, 14, 18, 0.45) 100%),
-        linear-gradient(to bottom, rgba(14, 14, 18, 0.55) 0%, rgba(14, 14, 18, 0) 30%, rgba(14, 14, 18, 0) 62%, rgba(14, 14, 18, 0.88) 100%);
-}
-
-/* Společné sklo: drobečky, pořadí, odznaky, štítky, pásky, akce */
-.hlavni-lista:has(> #profilPruh:not(.hidden)) > .logo,
-.hlavni-lista #profilPruh .pruh-radek > .profile-poradi,
-.hlavni-lista #profilPruh .panel-paska,
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:not(.akcent) {
-    border: 1px solid var(--sklo-okraj);
-    background-color: var(--sklo);
-    color: var(--text-main);
-    -webkit-backdrop-filter: blur(10px) saturate(1.2);
-    backdrop-filter: blur(10px) saturate(1.2);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-}
-
-.hlavni-lista #profilPruh .pruh-radek > .profile-poradi:hover,
-.hlavni-lista #profilPruh .panel-paska:hover,
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:not(.akcent):hover {
-    border-color: rgba(255, 255, 255, 0.3);
-    background-color: var(--sklo-hover);
-}
-
-/* Pásky čísel: sklo s růžovým písmem místo plných růžových pruhů */
-.hlavni-lista #profilPruh .panel-paska {
-    border-radius: 999px;
-    color: var(--accent-text);
-}
-
-/* Jméno nad fotkou čitelné i bez tmavého pruhu */
-.hlavni-lista #profilPruh .pruh-jmeno h2 {
-    font-size: 22px;
-    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9), 0 0 2px rgba(0, 0, 0, 0.8);
-}
-
-.hlavni-lista #profilPruh .pruh-jmeno .hearts {
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
-}
-
-/* Akce samostatným řádkem uprostřed */
-.hlavni-lista #profilPruh .profil-akce {
-    flex: 1 1 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba {
-    height: 32px;
-    padding: 0 14px;
-    border-radius: 999px;
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent,
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent b {
-    color: #fff;
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent {
-    box-shadow: 0 4px 16px rgba(216, 27, 96, 0.35);
-}
-
-/* Tituly sezón a řada odznaků mají vlastní štítky; jejich obaly jsou bez rámu, jen se stínem kvůli čitelnosti */
-.hlavni-lista #profilPruh .profile-odznaky > button {
-    border: 0;
-    background: none;
-    box-shadow: none;
-    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
-}
-
-.hlavni-lista #profilPruh .profile-titul {
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    background-color: var(--sklo);
-}
-
-.hlavni-lista #profilPruh .profil-akce .volby-pocet {
-    margin-left: 6px;
-    color: rgba(240, 240, 245, 0.75);
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
-}
-
-/* Lišta alb na spodním okraji banneru: bez dělicí čáry, neaktivní alba čitelná nad fotkou */
-.hlavni-lista #profilPruh ~ #albumNav {
-    border-top: 0;
-}
-
-.hlavni-lista:has(> #profilPruh:not(.hidden)) .album-nav .chip:not(.active) {
-    color: rgba(240, 240, 245, 0.82);
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
-}
-
-/* ===== Profil: výchozí stav záhlaví nahoře na stránce – vyšší a bez skla, aby byla fotka v banneru
-   vidět; po odrolování (.profil-svinuty, app/profil.js) se plynule zmenší na kompaktní pruh se sklem výše ===== */
-.hlavni-lista #profilPruh {
-    transition: margin-top 0.25s ease;
-}
-
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh {
-    /* Volné místo nad jménem: drobečky nahoře, jméno, akce a alba dole; banner zhruba o třetinu vyšší než svinutý */
-    margin-top: 62px;
-}
-
-/* Bez skla: prvky jen s textem a stínem přímo na fotce */
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .pruh-radek > .profile-poradi,
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .panel-paska,
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .profile-titul,
-.navbar:not(.profil-svinuty) .hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:not(.akcent) {
-    border-color: transparent;
-    background-color: transparent;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: none;
-    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.95), 0 0 2px rgba(0, 0, 0, 0.9);
-}
-
-.navbar:not(.profil-svinuty) .hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:not(.akcent):hover {
-    background-color: rgba(14, 14, 18, 0.4);
-}
-
-.navbar:not(.profil-svinuty) .hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba svg {
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9));
-}
-
-/* Fotka bez ztmavení nahoře; tmavne jen dolní část pod jménem, akcemi a lištou alb */
-.navbar:not(.profil-svinuty) .profil-banner-foto {
-    filter: none;
-}
-
-.navbar:not(.profil-svinuty) .profil-banner-prekryv {
-    background: linear-gradient(to bottom, rgba(14, 14, 18, 0.35) 0%, rgba(14, 14, 18, 0) 18%, rgba(14, 14, 18, 0) 45%, rgba(14, 14, 18, 0.55) 72%, rgba(14, 14, 18, 0.92) 100%);
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .hlavni-lista #profilPruh {
-        transition: none;
-    }
-}
-
-/* ===== Profil 1.2.62: drobečky vždy samostatným řádkem nahoře; pozadí banneru rozmazané, ostrá titulní fotka
-   s výřezem karty vpravo (z portrétu by široký banner ukázal jen čelo); pásky čísel znovu plně růžové ===== */
-.hlavni-lista #profilPruh {
-    flex: 1 1 100%;
-}
-
-.navbar:not(.profil-svinuty) .profil-banner-prekryv,
-.profil-banner-prekryv {
-    background:
-        linear-gradient(to right, rgba(14, 14, 18, 0.55) 0%, rgba(14, 14, 18, 0.15) 45%, rgba(14, 14, 18, 0) 100%),
-        linear-gradient(to bottom, rgba(14, 14, 18, 0.25) 0%, rgba(14, 14, 18, 0) 40%, rgba(14, 14, 18, 0.7) 100%);
-}
-
-/* Pásky (Playmate, Cybergirl, čísla): plné růžové v obou stavech záhlaví */
-.hlavni-lista #profilPruh .panel-paska,
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .panel-paska {
-    border: none;
-    border-radius: 999px;
-    background-color: var(--accent);
-    color: #fff;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    text-shadow: none;
-}
-
-.hlavni-lista #profilPruh .panel-paska:hover,
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .panel-paska:hover {
-    background-color: var(--accent-hover);
-}
-
 /* ===== Úprava výřezu profilové fotky přímo v záhlaví (app/profil.js upravitVyrezProfilove): jedna fotka přes celé
    záhlaví vystoupí nad jméno, akce a lištu alb, ty se na tu dobu schovají; rám má barevný okraj jako karta ===== */
 .hlavni-lista.uprava-profilove > .profil-banner-pozadi {
@@ -17581,68 +17217,11 @@ body.rezim-vyberu #detailView .poster {
     width: 260px;
 }
 
-/* ===== Profil 1.2.68: jméno s pořadím a odznaky dole vlevo nad lištou alb (jako titulek fotky), akce vpravo
-   na stejné úrovni, pásky čísel nahoře vpravo naproti drobečkům; střed záhlaví zůstává fotce ===== */
-.hlavni-lista:has(> #profilPruh:not(.hidden)) > #profilPruh {
-    /* Pásky se umisťují k celému záhlaví, ne k pruhu */
-    position: static;
-    align-items: flex-end;
-    column-gap: 24px;
-}
-
-.hlavni-lista #profilPruh .pruh-identita,
-.hlavni-lista #profilPruh .profil-akce {
-    position: relative;
-    z-index: 1;
-}
-
-.hlavni-lista #profilPruh .pruh-obsah {
-    position: static;
-    flex: 1 1 320px;
-}
-
-/* Řádek se jménem a akcemi je nižší než dřívější dva řádky: víc místa nad ním, záhlaví zůstává stejně vysoké */
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh {
-    margin-top: 96px;
-}
-
-.hlavni-lista #profilPruh .profil-akce {
-    flex: 0 1 auto;
-    justify-content: flex-end;
-    margin-left: auto;
-}
-
-.hlavni-lista #profilPruh .pruh-pasky {
-    position: absolute;
-    top: 14px;
-    right: 16px;
-    z-index: 1;
-    justify-content: flex-end;
-    max-width: 45%;
-}
-
-.hlavni-lista #profilPruh .pruh-identita {
-    gap: 6px;
-}
-
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .pruh-jmeno h2 {
-    font-size: 32px;
-    letter-spacing: 0.1em;
-    line-height: 1.1;
-}
-
-.navbar:not(.profil-svinuty) .hlavni-lista #profilPruh .pruh-jmeno .hearts {
-    font-size: 18px;
-}
-
-/* Pořadí bez rámečku, jen text vedle titulů a odznaků */
-.hlavni-lista #profilPruh .pruh-radek > .profile-poradi {
-    padding-left: 0;
-}
-
-/* ===== Profil 1.2.72: fotka v záhlaví v originále – žádné filtry, ztmavení, lesk ani třpytky; čitelnost textu
-   drží jen stín písma. Jméno jednou barvou. Zůstává zlatý lem dole jako rámeček zlaté karty (barvy zlata jsou
-   v proměnných --zlato-*, aby šly použít i jinde). ===== */
+/* ===== Profil 1.9.0: filmový banner. Záhlaví profilu je vysoký banner (nahoře na stránce ~46 % okna): rozostřená
+   kopie fotky vyplní šířku, ostrá fotka stojí vpravo v celé výšce (na výšku celá v rámu 4 : 5, na šířku dvě třetiny)
+   a měkce přechází do textu vlevo a do stránky dole. Nahoře drobečky, dole vlevo nadtitulek, jméno, srdíčka, kariéra
+   a pásky čísel, vpravo dole akce, pod tím lišta alb. Po odrolování (.profil-svinuty, app/profil.js) se zmenší
+   na kompaktní pruh. ===== */
 :root {
     --zlato-tmave: #6e4f1a;
     --zlato: #c9a046;
@@ -17651,24 +17230,102 @@ body.rezim-vyberu #detailView .poster {
     --zlato-pruh: linear-gradient(90deg, #6e4f1a 0%, #c9a046 18%, #f6e3a1 34%, #fff7d6 42%, #d9b25a 55%, #9c7428 72%, #e8cc7c 88%, #7a5a20 100%);
 }
 
-#profilBannerFoto {
-    filter: none;
+.hlavni-lista:has(> #profilPruh:not(.hidden)) {
+    --vyska-banneru: clamp(300px, 46vh, 520px);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-height: var(--vyska-banneru);
+    padding-top: 10px;
+    padding-bottom: 6px;
+    overflow: hidden;
+    border-bottom: 0;
+    transition: min-height 0.3s ease;
 }
 
-#profilBannerPozadi .profil-banner-prekryv {
+.navbar.profil-svinuty .hlavni-lista:has(> #profilPruh:not(.hidden)) {
+    --vyska-banneru: 0px;
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) > *:not(.profil-banner-pozadi) {
+    position: relative;
+    /* Lišta alb má jinde lepivý záporný posun (top: -32px); v záhlaví profilu by vyjela přes pruh modelky */
+    top: auto;
+    z-index: 1;
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) > .logo {
+    align-self: flex-start;
+}
+
+/* --- Fotka --- */
+.profil-banner-pozadi {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: var(--bg-main);
+}
+
+.profil-banner-pozadi.hidden {
     display: none;
 }
 
-.profil-banner-pozadi > .crop-panel {
-    z-index: 4;
+.profil-banner-rozmazane {
+    position: absolute;
+    inset: -60px;
+    background-position: center 30%;
+    background-size: cover;
+    filter: blur(36px) brightness(0.5) saturate(1.25);
+    transform: translateZ(0);
 }
 
-/* Zlatý lem dole jako rámeček zlaté karty, se světlým odleskem uprostřed */
-.hlavni-lista:has(> #profilPruh:not(.hidden)) {
-    border-bottom-color: transparent;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
+.profil-banner-ram {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    aspect-ratio: 4 / 5;
+    max-width: 72%;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 34%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 34%);
 }
 
+.profil-banner-pozadi.na-sirku .profil-banner-ram {
+    width: 68%;
+    aspect-ratio: auto;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 42%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 42%);
+}
+
+.profil-banner-foto {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: none;
+}
+
+.profil-banner-pozadi.bez-fotky .profil-banner-ram,
+.profil-banner-pozadi.bez-fotky .profil-banner-rozmazane {
+    display: none;
+}
+
+/* Čitelnost textu vlevo, drobečků nahoře a přechod do stránky dole */
+.profil-banner-prekryv {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(to right, rgba(15, 15, 18, 0.78) 0%, rgba(15, 15, 18, 0.5) 30%, rgba(15, 15, 18, 0) 58%),
+        linear-gradient(to bottom, rgba(15, 15, 18, 0.45) 0%, rgba(15, 15, 18, 0) 22%, rgba(15, 15, 18, 0) 50%, rgba(15, 15, 18, 0.7) 80%, var(--bg-main) 100%);
+}
+
+/* Zlatý lem dole */
 .hlavni-lista:has(> #profilPruh:not(.hidden))::after {
     content: '';
     position: absolute;
@@ -17676,15 +17333,275 @@ body.rezim-vyberu #detailView .poster {
     right: 0;
     bottom: 0;
     z-index: 2;
-    height: 2px;
+    height: 1px;
     pointer-events: none;
     background: var(--zlato-pruh);
+    opacity: 0.7;
 }
 
-/* Jméno jednou barvou; bez ztmavení fotky ho drží čitelné výraznější stín */
+/* --- Text a akce --- */
+.hlavni-lista #profilPruh {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 24px;
+    min-width: 0;
+    /* Pruh dole nad lištou alb, nad ním volné místo pro fotku */
+    margin: auto 0 0;
+    padding: 0 22px;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    --wails-draggable: no-drag;
+}
+
+.hlavni-lista #profilPruh.hidden {
+    display: none;
+}
+
+.hlavni-lista #profilPruh .pruh-obsah {
+    display: block;
+    flex: 1 1 380px;
+    min-width: 0;
+}
+
+.hlavni-lista #profilPruh .pruh-identita {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    max-width: min(760px, 62vw);
+}
+
+.hlavni-lista #profilPruh .pruh-nadtitulek {
+    color: var(--zlato-svetle);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+}
+
+.hlavni-lista #profilPruh .pruh-jmeno {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 16px;
+    min-width: 0;
+}
+
 .hlavni-lista #profilPruh .pruh-jmeno h2 {
+    margin: 0;
+    overflow: hidden;
     color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9), 0 2px 12px rgba(0, 0, 0, 0.75);
+    font-size: clamp(28px, 4.2vw, 46px);
+    font-weight: 300;
+    letter-spacing: 0.06em;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.hlavni-lista #profilPruh .pruh-jmeno .hearts {
+    flex: none;
+    margin: 0;
+    font-size: 18px;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8));
+}
+
+.hlavni-lista #profilPruh .pruh-radek {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    color: rgba(240, 240, 245, 0.88);
+    font-size: 13px;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.95);
+}
+
+.hlavni-lista #profilPruh .pruh-kariera {
+    display: inline-flex;
+    gap: 10px;
+    font-variant-numeric: tabular-nums;
+}
+
+.hlavni-lista #profilPruh .pruh-kariera > span:not(:empty) + span:not(:empty)::before {
+    content: '·';
+    margin-right: 10px;
+    opacity: 0.6;
+}
+
+.hlavni-lista #profilPruh .pruh-radek > .profile-poradi {
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    text-shadow: inherit;
+}
+
+.hlavni-lista #profilPruh .profile-odznaky > button {
+    border: 0;
+    background: none;
+    box-shadow: none;
+    filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
+}
+
+/* Pásky čísel: jedna řada pod kariérou, plné růžové */
+.hlavni-lista #profilPruh .pruh-pasky {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+    max-width: none;
+    margin: 4px 0 0;
+}
+
+.hlavni-lista #profilPruh .panel-paska {
+    border: none;
+    border-radius: 999px;
+    background-color: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    text-shadow: none;
+}
+
+.hlavni-lista #profilPruh .panel-paska:hover {
+    background-color: var(--accent-hover);
+}
+
+/* Akce vpravo dole, sklo nad fotkou */
+.hlavni-lista #profilPruh .profil-akce {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 0 auto;
+    padding: 0;
+    border: 0;
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba {
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background-color: rgba(14, 14, 18, 0.45);
+    color: var(--text-main);
+    -webkit-backdrop-filter: blur(10px) saturate(1.2);
+    backdrop-filter: blur(10px) saturate(1.2);
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(14, 14, 18, 0.65);
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent {
+    border-color: transparent;
+    background-color: var(--accent);
+    box-shadow: 0 4px 16px rgba(216, 27, 96, 0.35);
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent,
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent b {
+    color: #fff;
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .profil-akce .volba.akcent:hover {
+    background-color: var(--accent-hover);
+}
+
+.hlavni-lista #profilPruh .profil-akce .volby-pocet {
+    display: none; /* alba a fotky jsou v řádku kariéry */
+}
+
+/* Lišta alb pod pruhem přes celou šířku */
+.hlavni-lista #profilPruh ~ #albumNav {
+    padding: 2px 16px 0;
+    border-top: 0;
+}
+
+.hlavni-lista #profilPruh ~ #albumNav::before {
+    display: none;
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) .album-nav .chip:not(.active) {
+    color: rgba(240, 240, 245, 0.85);
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* --- Svinuté záhlaví po odrolování: jeden řádek se jménem a akcemi, fotka jen jako tmavý pruh --- */
+.navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-nadtitulek,
+.navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-pasky,
+.navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-kariera {
+    display: none;
+}
+
+.navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-jmeno h2 {
+    font-size: 20px;
+    letter-spacing: 0.1em;
+}
+
+.navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-jmeno .hearts {
+    font-size: 15px;
+}
+
+.navbar.profil-svinuty .profil-banner-ram {
+    opacity: 0;
+}
+
+.profil-banner-ram {
+    transition: opacity 0.25s ease;
+}
+
+.navbar.profil-svinuty .profil-banner-prekryv {
+    background: linear-gradient(to right, rgba(15, 15, 18, 0.88) 0%, rgba(15, 15, 18, 0.6) 50%, rgba(15, 15, 18, 0.35) 100%);
+}
+
+/* Úzké okno: fotka přes celou šířku za textem, akce pod jménem */
+@media (max-width: 760px) {
+    .profil-banner-ram,
+    .profil-banner-pozadi.na-sirku .profil-banner-ram {
+        width: 100%;
+        max-width: none;
+        aspect-ratio: auto;
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+
+    .hlavni-lista #profilPruh .pruh-identita {
+        max-width: none;
+    }
+
+    .hlavni-lista #profilPruh .profil-akce {
+        margin-left: 0;
+        justify-content: flex-start;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hlavni-lista:has(> #profilPruh:not(.hidden)) {
+        transition: none;
+    }
+}
+
+/* Úprava výřezu: rám ostré fotky bez přechodu, aby byl vidět celý */
+.profil-banner-pozadi.editing .profil-banner-ram {
+    -webkit-mask-image: none;
+    mask-image: none;
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.profil-banner-pozadi > .crop-panel {
+    z-index: 4;
 }
 
 /* ===== Panel Údaje (1.2.72): velká titulní fotka jako dřív, pod ní další jména a kategorie; bloky Playboy,

@@ -99,6 +99,8 @@ export function GetPoctyTagu():Promise<Record<string, number>>;
 
 export function GetPodobneFotky(arg1:number):Promise<Array<sbirka.Fotografie>>;
 
+export function GetPokrytiOdhadu():Promise<main.PokrytiOdhadu>;
+
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
 export function GetPrehledOblibenosti():Promise<main.PrehledOblibenosti>;
@@ -158,8 +160,6 @@ export function HledatClanky(arg1:string):Promise<Array<sbirka.NalezClanku>>;
 export function HledatTexty(arg1:string):Promise<Array<sbirka.NalezTextu>>;
 
 export function ImportovatSoubory(arg1:Array<string>):Promise<main.VysledekImportu>;
-
-export function MaOdhadSrdicekFotek():Promise<boolean>;
 
 export function MaZamek():Promise<boolean>;
 

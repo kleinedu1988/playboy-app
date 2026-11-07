@@ -2,7 +2,7 @@
 // která popisují, co je na fotce (scéna, světlo, oblečení, póza). Z vektorů se počítají podobné fotky a návrhy.
 // Úvodní obrazovka zkontroluje model a chybějící stáhne (~100 MB, s průběhem); výpočet vektorů běží potom sám
 // na pozadí (poprvé ~1,5 h), průběh je ve stavové liště (✕ pozastaví do příštího spuštění) a v nabídce ⋯.
-import { GetPodobneFotky, GetStavObsahu, MaOdhadSrdicekFotek, ZapnoutObsah, ZastavitObsah } from './backend';
+import { GetPodobneFotky, GetPokrytiOdhadu, GetStavObsahu, ZapnoutObsah, ZastavitObsah } from './backend';
 import { oznamit } from '../ui/oznameni';
 import { otevritLightbox } from './prohlizec';
 
@@ -14,9 +14,16 @@ const OBNOVA = 2000;
 /** @type {{ faze: string, stazeno: number, stahnout: number, hotovo: number, celkem: number, vektoru: number, chyba: string }} */
 let stavObsahu = { faze: 'vypnuto', stazeno: 0, stahnout: 0, hotovo: 0, celkem: 0, vektoru: 0, chyba: '' };
 let casovac = 0;
-// Dost hodnocených fotek s vektorem: Rychle ♥ může řadit „nejdřív, co se ti asi bude líbit“
-let maOdhad = false;
-export const odhadSrdicek = () => maOdhad;
+// Pokrytí odhadem srdíček z obsahu (fronta_nehodnocenych.go GetPokrytiOdhadu): Rychle ♥ nabídne řazení „Co se ti
+// asi líbí“, až má odhad většina nehodnocených fotek
+let pokryti = { odhadnuto: 0, nehodnocenych: 0, nabidnout: false };
+export const odhadSrdicek = () => pokryti.nabidnout;
+export function popisPokryti() {
+    const p = pokryti;
+    if (!p.nehodnocenych) return '';
+    return `Odhad srdíček z obsahu fotek má ${cislo(p.odhadnuto)} z ${cislo(p.nehodnocenych)} nehodnocených fotek`
+        + (p.odhadnuto < p.nehodnocenych ? ' – ostatní jsou na konci v náhodném pořadí' : '');
+}
 // Poslední známý stav obsahu fotek (Průvodce ukazuje, jestli je fotka zpracovaná a jak daleko je výpočet)
 export const stavObsahuFotek = () => stavObsahu;
 
@@ -60,7 +67,7 @@ async function obnovit() {
     const predtim = stavObsahu.faze;
     try { stavObsahu = (await GetStavObsahu()) || stavObsahu; } catch { /* stav zůstane */ }
     vykreslit();
-    if (stavObsahu.vektoru) MaOdhadSrdicekFotek().then((ano) => { maOdhad = Boolean(ano); }).catch(() => {});
+    if (stavObsahu.vektoru) GetPokrytiOdhadu().then((p) => { if (p) pokryti = p; }).catch(() => {});
     if (bezi(stavObsahu)) casovac = setTimeout(obnovit, OBNOVA);
     else if (stavObsahu.faze === 'chyba' && predtim !== 'chyba') oznamit(`Obsah fotek: ${stavObsahu.chyba}`);
     else if (predtim === 'stahuje' && stavObsahu.faze === 'pripraveno') oznamit('Model obsahu fotek je stažený.');

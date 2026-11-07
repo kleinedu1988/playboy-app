@@ -182,6 +182,10 @@ export function GetPodobneFotky(arg1) {
   return window['go']['main']['App']['GetPodobneFotky'](arg1);
 }
 
+export function GetPokrytiOdhadu() {
+  return window['go']['main']['App']['GetPokrytiOdhadu']();
+}
+
 export function GetPrehled(arg1) {
   return window['go']['main']['App']['GetPrehled'](arg1);
 }
@@ -300,10 +304,6 @@ export function HledatTexty(arg1) {
 
 export function ImportovatSoubory(arg1) {
   return window['go']['main']['App']['ImportovatSoubory'](arg1);
-}
-
-export function MaOdhadSrdicekFotek() {
-  return window['go']['main']['App']['MaOdhadSrdicekFotek']();
 }
 
 export function MaZamek() {

@@ -93,7 +93,8 @@ function htmlObsahu(p) {
             ? ` Učení z tvých voleb: ${uceniTagu.fotek} fotek z Průvodce, podle tebe už rozhoduje ${uceniTagu.pouzito} tagů${n.naucene ? ` (z návrhů této fotky ${n.naucene})` : ''}.`
             : ' Průvodce se učí z tvých voleb – čím víc fotek projdeš, tím víc tagů začne navrhovat podle tebe.';
         const titulek = (n.tagy.length ? `Fotka je zpracovaná obrazovým modelem – navrženo: ${n.tagy.length} (obrys).` : 'Fotka je zpracovaná obrazovým modelem – žádný tag si model nebyl jistý.') + uceni;
-        return `<span class="pr-obsah" title="${esc(titulek)}">◎ zpracovaná${n.tagy.length ? ` · ${n.tagy.length}` : ''}${n.naucene ? ` · podle tebe ${n.naucene}` : ''}</span>`;
+        const odhad = n.odhad ? ` Odhad srdíček podle obsahu a tvého vkusu: ${String(n.odhad).replace('.', ',')}.` : (p.hodnoceni ? '' : ' Odhad srdíček zatím není – program se učí z tvých srdíček, až jich bude dost u zpracovaných fotek.');
+        return `<span class="pr-obsah" title="${esc(titulek + odhad)}">◎ zpracovaná${n.tagy.length ? ` · ${n.tagy.length}` : ''}${n.naucene ? ` · podle tebe ${n.naucene}` : ''}${n.odhad ? ` · odhad ♥${String(n.odhad).replace('.', ',')}` : ''}</span>`;
     }
     const prubeh = st.faze === 'pocita' && st.celkem ? ` (výpočet ${st.hotovo.toLocaleString('cs-CZ')} / ${st.celkem.toLocaleString('cs-CZ')})` : '';
     return `<span class="pr-obsah ceka" title="${esc(`Fotka ještě není zpracovaná obrazovým modelem, tagy z obsahu se zatím nenavrhují${prubeh}`)}">◌ čeká na zpracování${esc(prubeh)}</span>`;

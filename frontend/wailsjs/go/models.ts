@@ -815,6 +815,22 @@ export namespace main {
 	}
 	
 	
+	export class PokrytiOdhadu {
+	    odhadnuto: number;
+	    nehodnocenych: number;
+	    nabidnout: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PokrytiOdhadu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.odhadnuto = source["odhadnuto"];
+	        this.nehodnocenych = source["nehodnocenych"];
+	        this.nabidnout = source["nabidnout"];
+	    }
+	}
 	export class PokrytiTematu {
 	    klic: string;
 	    nazev: string;

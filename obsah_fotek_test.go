@@ -129,3 +129,13 @@ func TestPrikladyTaguZPruvodce(t *testing.T) {
 		t.Fatalf("zodpovězené skupiny %v (tělo se u portrétu přeskočí)", priklady[0].Skupiny)
 	}
 }
+
+// Bez obrazových modelů žádné pokrytí odhadem a řazení podle odhadu se nenabídne
+func TestPokrytiOdhaduBezModelu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+	a.AddBulkPhotos(idModelky(t, a, "Anna"), "Album", "Pictorial", odkazA+" "+odkazB)
+	if p := a.GetPokrytiOdhadu(); p.Nehodnocenych != 2 || p.Odhadnuto != 0 || p.Nabidnout {
+		t.Fatalf("pokrytí %+v", p)
+	}
+}

@@ -32,7 +32,7 @@ import { jeVidet, nastavitHtml, nastavitText, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 import { nacistSinSlavy, obnovitHlavuSlavy, pripravitSinSlavy } from './sin-slavy';
-import { odhadSrdicek } from './obsah-fotek';
+import { odhadSrdicek, popisPokryti } from './obsah-fotek';
 import { hodnotitFotky, nacistGalerii, nacistPocetNehodnocenych, nastavitPohledHodnotit, nastavitRazeniFotek, pocetModelekBezSrdicek, pocetFotekKPruvodci, pohledHodnotit, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
 import { textZbyva } from '../lib/slava';
 
@@ -490,8 +490,8 @@ function htmlHlavyHodnoceni() {
     const htmlRozhodnout = cekajici.length
         ? `<button type="button" class="volba akcent" data-hd-akce="rozhodnout" title="${esc(`Souboje, které rozhodnou úroveň – ${modelka(cekajici[0].modelkaId).jmeno} první`)}"><b>⚔ Rozhodnout ${cekajici.length}</b></button><span class="sh-oddelovac" aria-hidden="true"></span>`
         : '';
-    const tlacitkoPohledu = (klic, nazev, zvoleny, atribut) =>
-        `<button type="button" class="${klic === zvoleny ? 'on' : ''}" ${atribut}="${klic}" aria-pressed="${klic === zvoleny}">${nazev}</button>`;
+    const tlacitkoPohledu = (klic, nazev, zvoleny, atribut, titulek = '') =>
+        `<button type="button" class="${klic === zvoleny ? 'on' : ''}" ${atribut}="${klic}" aria-pressed="${klic === zvoleny}"${titulek ? ` title="${esc(titulek)}"` : ''}>${nazev}</button>`;
     // Hodnotit: přepínač Fotky / Modelky (počty v něm), u fotek Hodnotit, Promítat a řazení
     if (stav.hodnoceniPohled === 'fotky') {
         const co = pohledHodnotit();
@@ -501,7 +501,8 @@ function htmlHlavyHodnoceni() {
             `<button type="button" class="${klic === co ? 'on' : ''}" data-hd-hodnotit="${klic}" aria-pressed="${klic === co}" title="${esc(titulky[klic])}">${nazev}${Number(n) > 0 ? ` <small>${n}</small>` : ''}</button>`).join('');
         const akceFotek = co === 'fotky' ? '<button type="button" class="volba akcent" data-hd-akce="fotky" title="Začít hodnotit (Enter)"><b>♥ Hodnotit ↵</b></button><button type="button" class="volba" data-hd-akce="promitat" title="Promítat nehodnocené (mezerník)"><b>▶ Promítat</b></button><span class="sh-oddelovac" aria-hidden="true"></span>' : '';
         // Podle obsahu fotek (app/obsah-fotek.js): nejdřív fotky s nejvyšším odhadem srdíček
-        const razeni = [['nahodne', 'Náhodně'], ['modelky', 'Po modelkách'], ...(odhadSrdicek() ? [['odhad', 'Co se ti asi líbí']] : [])].map(([klic, nazev]) => tlacitkoPohledu(klic, nazev, razeniFotek(), 'data-hd-razeni')).join('');
+        const razeni = [['nahodne', 'Náhodně'], ['modelky', 'Po modelkách'], ...(odhadSrdicek() ? [['odhad', 'Co se ti asi líbí', `Nejdřív fotky s nejvyšším odhadem srdíček – naučeným z tvých srdíček a obsahu fotek. ${popisPokryti()}.`]] : [])]
+            .map(([klic, nazev, titulek]) => tlacitkoPohledu(klic, nazev, razeniFotek(), 'data-hd-razeni', titulek)).join('');
         return `<div class="sh-lista">${htmlCasti}
             <div class="sh-akce hd-kompakt-akce">${akceFotek}${htmlPanelu}</div>
             <div class="sh-pohledy" role="group" aria-label="Co hodnotit">${prepinac}</div>

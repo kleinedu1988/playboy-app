@@ -134,6 +134,7 @@ type NavrhyTaguFotky struct {
 	Zpracovano bool     `json:"zpracovano"`
 	Tagy       []string `json:"tagy"`
 	Naucene    int      `json:"naucene"` // kolik z návrhů rozhodly tagy naučené z Průvodce
+	Odhad      float64  `json:"odhad"`   // odhad srdíček z obsahu (0 = fotka má srdíčka nebo odhad nemá)
 }
 
 // Návrhy tagů z obsahu pro fotky (id fotky → návrhy, od nejjistějšího). Bez staženého modelu prázdná mapa.
@@ -144,6 +145,7 @@ func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 	}
 	maji := a.GetTagyFotek(ids)
 	uceni := a.uceniTagu()
+	odhady := a.odhadySrdicekFotek()
 	for _, id := range ids {
 		var driveID string
 		if a.db.QueryRow(`SELECT drive_file_id FROM fotky WHERE id = ?`, id).Scan(&driveID) != nil {
@@ -151,6 +153,9 @@ func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 		}
 		v, partie := a.obsah.Vektor(driveID), a.obsah.Partie(driveID)
 		n := NavrhyTaguFotky{Zpracovano: v != nil && partie != nil, Tagy: []string{}}
+		if odhady != nil {
+			n.Odhad = math.Round(odhady.Nehodnocene[driveID]*10) / 10
+		}
 		// Výlučná skupina s tagem (záběr, prostředí…) se nenavrhuje; u ostatních jen tagy, které fotka ještě nemá
 		ma, obsazene := map[string]bool{}, map[string]bool{}
 		for _, t := range maji[id] {
@@ -172,11 +177,32 @@ func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 	return navrhy
 }
 
-// Odhady srdíček z obsahu fotek (internal/obsah/odhad.go); nil, když je hodnocených fotek s obsahem málo
+var odhadyPamet struct {
+	sync.Mutex
+	klic   [4]int64
+	odhady *obsah.Odhady
+}
+
+// Odhady srdíček z obsahu fotek (internal/obsah/odhad.go); nil, když je hodnocených fotek s obsahem málo.
+// V paměti, dokud se nezmění hodnocení fotek ani spočítaný obsah (Průvodce se ptá u každé fotky).
 func (a *App) odhadySrdicekFotek() *obsah.Odhady {
 	if !a.obsah.Zapnuto() {
 		return nil
 	}
+	var pocet, soucet int64
+	a.db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(hodnoceni * (id % 9973 + 1)), 0) FROM fotky WHERE hodnoceni > 0`).Scan(&pocet, &soucet)
+	klic := [4]int64{pocet, soucet, int64(a.obsah.Stav().Vektoru), int64(a.obsah.PocetPartii())}
+	p := &odhadyPamet
+	p.Lock()
+	defer p.Unlock()
+	if p.klic == klic && p.odhady != nil {
+		return p.odhady
+	}
+	p.odhady, p.klic = a.spocitatOdhadySrdicek(), klic
+	return p.odhady
+}
+
+func (a *App) spocitatOdhadySrdicek() *obsah.Odhady {
 	radky, err := a.db.Query(`SELECT drive_file_id, MIN(album_id), MAX(hodnoceni) FROM fotky GROUP BY drive_file_id`)
 	if err != nil {
 		return nil

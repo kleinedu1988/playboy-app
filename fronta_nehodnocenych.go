@@ -132,10 +132,25 @@ func (a *App) odhadPolozekFronty(f FrontaFotek) map[int]float64 {
 	return v
 }
 
-// Lze řadit podle odhadu srdíček z obsahu fotek (dost hodnocených fotek s vektorem)
-func (a *App) MaOdhadSrdicekFotek() bool {
-	o := a.odhadySrdicekFotek()
-	return o != nil && len(o.Nehodnocene) > 0
+// Pokrytí odhadem srdíček z obsahu fotek: kolik nehodnocených fotek (souborů) odhad má a kolik jich je.
+// Řazení „Co se ti asi líbí“ se nabídne až od minPokrytiOdhadu – dokud obrazové modely nezpracovaly většinu
+// nehodnocených fotek, byla by fronta z větší části jen zamíchaná.
+type PokrytiOdhadu struct {
+	Odhadnuto     int  `json:"odhadnuto"`
+	Nehodnocenych int  `json:"nehodnocenych"`
+	Nabidnout     bool `json:"nabidnout"` // dost pokrytí pro řazení podle odhadu
+}
+
+const minPokrytiOdhadu = 0.8
+
+func (a *App) GetPokrytiOdhadu() PokrytiOdhadu {
+	var v PokrytiOdhadu
+	a.db.QueryRow(`SELECT COUNT(*) FROM (SELECT drive_file_id FROM fotky GROUP BY drive_file_id HAVING MAX(hodnoceni) = 0)`).Scan(&v.Nehodnocenych)
+	if o := a.odhadySrdicekFotek(); o != nil {
+		v.Odhadnuto = len(o.Nehodnocene)
+	}
+	v.Nabidnout = v.Odhadnuto > 0 && float64(v.Odhadnuto) >= minPokrytiOdhadu*float64(v.Nehodnocenych)
+	return v
 }
 
 type StrankaNehodnocenych struct {

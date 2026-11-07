@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.8.1] – 2026-11-07
+
+### Opraveno
+- **Řazení *Co se ti asi líbí* až s dost odhady**: nabízelo se, jakmile měl obsah spočítaný aspoň 200 hodnocených fotek – výpočet ale jde od nejlépe hodnocených, takže většina nehodnocených fotek odhad ještě neměla a fronta byla z větší části jen zamíchaná. Nově se řazení nabídne, až má odhad aspoň 80 % nehodnocených fotek; nápověda tlačítka říká, kolik fotek odhad má („odhad má 15 100 z 15 100 nehodnocených fotek“).
+- **Odhad u fotky v Průvodci**: značka zpracované fotky ukazuje i *odhad ♥3,4* (odhad srdíček podle obsahu a tvého vkusu); bez odhadu nápověda vysvětlí proč. Odhady jsou v paměti, dokud se nezmění srdíčka fotek nebo spočítaný obsah.
+
 ## [1.8.0] – 2026-11-07
 
 ### Změněno

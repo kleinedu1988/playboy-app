@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.22.0] – 2026-11-08
+
+### Přidáno
+- **Panel kolekcí v Galerii** (tlačítko *▦ Kolekce* v liště vedle *☰ Filtry*): všechny kolekce najednou, ne jen 10 dnešních řad – po skupinách *Pro tebe*, *Čas*, *Objevené styly*, *Barvy a světlo*, *Obsah fotek*, *Vzhled modelek*, *Kariéra*, každá jako dlaždice s fotkou, která se ti z ní asi líbí nejvíc, a počtem fotek. Klik omezí mozaiku na kolekci (znovu klik na zvolenou ji zruší). Otevřený panel se pamatuje.
+- **Uložené výběry**: *+ Uložit tento výběr* uloží pod názvem aktuální kombinaci kolekce, filtrů (srdíčka, typ alba, období, tagy) a řazení; v panelu se pak zapne jedním klikem (★ název, × smaže). Ukládá se v nastavení databáze – schéma ani formát exportu se nemění. Text hledání se do výběru neukládá.
+
 ## [1.21.0] – 2026-11-08
 
 ### Přidáno

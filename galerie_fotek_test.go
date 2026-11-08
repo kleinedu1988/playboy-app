@@ -105,6 +105,32 @@ func TestKolekceGalerie(t *testing.T) {
 	if len(k) > rad {
 		t.Fatalf("řad %d", len(k))
 	}
+	// Panel kolekcí: všechny platné, skupina „tvoje“ první, titulní fotka s ♥5
+	vse := a.GetVsechnyKolekce()
+	if len(vse) < len(k) || vse[0].Skupina != "tvoje" {
+		t.Fatalf("panel kolekcí: %+v", vse)
+	}
+	for _, x := range vse {
+		if x.Klic == "tvoje:5" && (x.Pocet != 10 || x.Fotka.Hodnoceni != 5) {
+			t.Fatalf("♥5 v panelu: %+v", x)
+		}
+	}
+
+	// Uložené výběry: uložit, přepsat stejným názvem, smazat
+	if !a.UlozitVyberGalerie(" Blond ", DotazGalerie{Srdicka: "4", Kolekce: "vzhled:vlasy:blondynky", Kolik: 99}) {
+		t.Fatal("uložení výběru")
+	}
+	a.UlozitVyberGalerie("Jiný", DotazGalerie{Razeni: "nove"})
+	a.UlozitVyberGalerie("blond", DotazGalerie{Srdicka: "5", Kolekce: "vzhled:vlasy:blondynky"})
+	v := a.GetVyberyGalerie()
+	if len(v) != 2 || v[0].Nazev != "blond" || v[0].Dotaz.Srdicka != "5" || v[0].NazevKolekce != "Blondýnky" || v[0].Dotaz.Kolik != 0 {
+		t.Fatalf("výběry %+v", v)
+	}
+	a.SmazatVyberGalerie("blond")
+	a.SmazatVyberGalerie("Jiný")
+	if v := a.GetVyberyGalerie(); len(v) != 0 || a.nastaveni(klicVyberuGalerie) != "" {
+		t.Fatalf("po smazání %+v", v)
+	}
 }
 
 // Věk v době focení: z data narození a čísla, před narozeninami o rok méně

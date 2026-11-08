@@ -576,46 +576,8 @@ func (a *App) GetKolekceGalerie() []KolekceGalerie {
 	if a.db == nil {
 		return v
 	}
-	otisk := a.otiskGalerie()
-	p := &galeriePamet
-	p.Lock()
-	if p.otisk != otisk || p.fotky == nil {
-		p.fotky, p.otisk, p.klic = a.fotkyGalerie(), otisk, ""
-	}
-	fotky := p.fotky
-	p.Unlock()
-
-	nyni := time.Now()
-	den := nyni.Format("2006-01-02")
-	dk := a.dataKolekci(fotky)
-	skore := a.skoreLibi(fotky)
-	type kandidat struct {
-		d       defKolekce
-		indexy  []int
-		hodnota float64
-	}
-	var kandidati []kandidat
-	for _, d := range a.definiceKolekci(fotky, dk, nyni) {
-		var indexy []int
-		for i := range fotky {
-			if d.plati(&fotky[i]) {
-				indexy = append(indexy, i)
-			}
-		}
-		// Moc malá, nebo skoro celá sbírka (např. „nově přidané“ po prvním importu) – nic by neřekla
-		if len(indexy) < minFotekKolekce || float64(len(indexy)) > maxPodilKolekce*float64(len(fotky)) {
-			continue
-		}
-		sort.SliceStable(indexy, func(x, y int) bool { return skore[indexy[x]] > skore[indexy[y]] })
-		// Hodnota: průměr nejlepších fotek × velikost (log) × kontext dne × denní obměna
-		var soucet float64
-		k := min(len(indexy), 20)
-		for _, i := range indexy[:k] {
-			soucet += skore[i]
-		}
-		hodnota := (soucet/float64(k) + 0.5) * math.Log10(float64(len(indexy))+10) * d.kontext * (0.7 + 0.6*nahodaDne(den, d.klic))
-		kandidati = append(kandidati, kandidat{d, indexy, hodnota})
-	}
+	fotky := a.fotkyGalerieVPameti()
+	kandidati := a.kandidatiKolekci(fotky)
 	sort.SliceStable(kandidati, func(i, j int) bool { return kandidati[i].hodnota > kandidati[j].hodnota })
 	zeSkupiny := map[string]int{}
 	for _, k := range kandidati {
@@ -639,6 +601,87 @@ func (a *App) GetKolekceGalerie() []KolekceGalerie {
 		}
 		v = append(v, r)
 	}
+	return v
+}
+
+// Fotky Galerie (z mezipaměti, když se sbírka nezměnila)
+func (a *App) fotkyGalerieVPameti() []fotkaGalerie {
+	otisk := a.otiskGalerie()
+	p := &galeriePamet
+	p.Lock()
+	defer p.Unlock()
+	if p.otisk != otisk || p.fotky == nil {
+		p.fotky, p.otisk, p.klic = a.fotkyGalerie(), otisk, ""
+	}
+	return p.fotky
+}
+
+type kandidatKolekce struct {
+	d       defKolekce
+	indexy  []int // fotky kolekce od té, která se ti asi líbí nejvíc
+	hodnota float64
+}
+
+// Všechny platné kolekce (aspoň 8 fotek, nejvýš 60 % sbírky) s hodnotou pro dnešní výběr řad
+func (a *App) kandidatiKolekci(fotky []fotkaGalerie) []kandidatKolekce {
+	nyni := time.Now()
+	den := nyni.Format("2006-01-02")
+	dk := a.dataKolekci(fotky)
+	skore := a.skoreLibi(fotky)
+	var kandidati []kandidatKolekce
+	for _, d := range a.definiceKolekci(fotky, dk, nyni) {
+		var indexy []int
+		for i := range fotky {
+			if d.plati(&fotky[i]) {
+				indexy = append(indexy, i)
+			}
+		}
+		// Moc malá, nebo skoro celá sbírka (např. „nově přidané“ po prvním importu) – nic by neřekla
+		if len(indexy) < minFotekKolekce || float64(len(indexy)) > maxPodilKolekce*float64(len(fotky)) {
+			continue
+		}
+		sort.SliceStable(indexy, func(x, y int) bool { return skore[indexy[x]] > skore[indexy[y]] })
+		// Hodnota: průměr nejlepších fotek × velikost (log) × kontext dne × denní obměna
+		var soucet float64
+		k := min(len(indexy), 20)
+		for _, i := range indexy[:k] {
+			soucet += skore[i]
+		}
+		hodnota := (soucet/float64(k) + 0.5) * math.Log10(float64(len(indexy))+10) * d.kontext * (0.7 + 0.6*nahodaDne(den, d.klic))
+		kandidati = append(kandidati, kandidatKolekce{d, indexy, hodnota})
+	}
+	return kandidati
+}
+
+// Kolekce v panelu kolekcí: všechny platné, s titulní fotkou (ta, která se ti asi líbí nejvíc)
+type PrehledKolekce struct {
+	Klic    string     `json:"klic"`
+	Nazev   string     `json:"nazev"`
+	Duvod   string     `json:"duvod"`
+	Skupina string     `json:"skupina"`
+	Pocet   int        `json:"pocet"`
+	Fotka   Fotografie `json:"fotka"`
+}
+
+// Pořadí skupin v panelu kolekcí
+var poradiSkupinKolekci = map[string]int{"tvoje": 0, "cas": 1, "styl": 2, "barvy": 3, "obsah": 4, "vzhled": 5, "kariera": 6}
+
+// GetVsechnyKolekce: panel kolekcí v Galerii – všechny kolekce po skupinách, ve skupině od největší
+func (a *App) GetVsechnyKolekce() []PrehledKolekce {
+	v := []PrehledKolekce{}
+	if a.db == nil {
+		return v
+	}
+	fotky := a.fotkyGalerieVPameti()
+	for _, k := range a.kandidatiKolekci(fotky) {
+		v = append(v, PrehledKolekce{Klic: k.d.klic, Nazev: k.d.nazev, Duvod: k.d.duvod, Skupina: k.d.skupina, Pocet: len(k.indexy), Fotka: fotky[k.indexy[0]].f})
+	}
+	sort.SliceStable(v, func(i, j int) bool {
+		if v[i].Skupina != v[j].Skupina {
+			return poradiSkupinKolekci[v[i].Skupina] < poradiSkupinKolekci[v[j].Skupina]
+		}
+		return v[i].Pocet > v[j].Pocet
+	})
 	return v
 }
 

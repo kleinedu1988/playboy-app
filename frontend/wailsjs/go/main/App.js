@@ -298,8 +298,16 @@ export function GetVerze() {
   return window['go']['main']['App']['GetVerze']();
 }
 
+export function GetVsechnyKolekce() {
+  return window['go']['main']['App']['GetVsechnyKolekce']();
+}
+
 export function GetVybery() {
   return window['go']['main']['App']['GetVybery']();
+}
+
+export function GetVyberyGalerie() {
+  return window['go']['main']['App']['GetVyberyGalerie']();
 }
 
 export function GetVydani(arg1) {
@@ -526,6 +534,10 @@ export function SmazatVyber(arg1) {
   return window['go']['main']['App']['SmazatVyber'](arg1);
 }
 
+export function SmazatVyberGalerie(arg1) {
+  return window['go']['main']['App']['SmazatVyberGalerie'](arg1);
+}
+
 export function SpustitStahovaniNahledu() {
   return window['go']['main']['App']['SpustitStahovaniNahledu']();
 }
@@ -536,6 +548,10 @@ export function StavDatabaze() {
 
 export function UlozitPruvodceFotky(arg1) {
   return window['go']['main']['App']['UlozitPruvodceFotky'](arg1);
+}
+
+export function UlozitVyberGalerie(arg1, arg2) {
+  return window['go']['main']['App']['UlozitVyberGalerie'](arg1, arg2);
 }
 
 export function UpdateAlbum(arg1, arg2, arg3, arg4, arg5) {

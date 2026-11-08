@@ -93,6 +93,11 @@ const CTENI = new Set([
     'GetPoradiModelek',
     'GetGalerieFotek',
     'GetKolekceGalerie',
+    'GetVsechnyKolekce',
+    'GetVyberyGalerie',
+    // Uložené výběry Galerie jsou jen nastavení (tabulka nastaveni), data sbírky ani pohledy nemění
+    'UlozitVyberGalerie',
+    'SmazatVyberGalerie',
     'GetStavUceniTagu',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
@@ -194,6 +199,10 @@ export const GetLakadloPorovnani = /** @type {typeof App.GetLakadloPorovnani} */
 export const GetPoradiModelek = /** @type {typeof App.GetPoradiModelek} */ (obalit('GetPoradiModelek'));
 export const GetGalerieFotek = /** @type {typeof App.GetGalerieFotek} */ (obalit('GetGalerieFotek'));
 export const GetKolekceGalerie = /** @type {typeof App.GetKolekceGalerie} */ (obalit('GetKolekceGalerie'));
+export const GetVsechnyKolekce = /** @type {typeof App.GetVsechnyKolekce} */ (obalit('GetVsechnyKolekce'));
+export const GetVyberyGalerie = /** @type {typeof App.GetVyberyGalerie} */ (obalit('GetVyberyGalerie'));
+export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
+export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const PorovnatCtverici = /** @type {typeof App.PorovnatCtverici} */ (obalit('PorovnatCtverici'));
 export const VratitCtverici = /** @type {typeof App.VratitCtverici} */ (obalit('VratitCtverici'));
 export const GetStavUceniTagu = /** @type {typeof App.GetStavUceniTagu} */ (obalit('GetStavUceniTagu'));

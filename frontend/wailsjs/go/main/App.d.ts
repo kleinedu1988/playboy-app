@@ -157,7 +157,11 @@ export function GetTitulySezonModelky(arg1:number):Promise<Array<main.TitulSezon
 
 export function GetVerze():Promise<string>;
 
+export function GetVsechnyKolekce():Promise<Array<main.PrehledKolekce>>;
+
 export function GetVybery():Promise<Array<sbirka.Vyber>>;
+
+export function GetVyberyGalerie():Promise<Array<main.VyberGalerie>>;
 
 export function GetVydani(arg1:string):Promise<Array<sbirka.Fotografie>>;
 
@@ -271,11 +275,15 @@ export function SlozkaZaloh():Promise<string>;
 
 export function SmazatVyber(arg1:number):Promise<boolean>;
 
+export function SmazatVyberGalerie(arg1:string):Promise<boolean>;
+
 export function SpustitStahovaniNahledu():Promise<boolean>;
 
 export function StavDatabaze():Promise<string>;
 
 export function UlozitPruvodceFotky(arg1:main.ZapisPruvodce):Promise<main.PredchoziPruvodce>;
+
+export function UlozitVyberGalerie(arg1:string,arg2:main.DotazGalerie):Promise<boolean>;
 
 export function UpdateAlbum(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string):Promise<boolean>;
 

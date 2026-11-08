@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.16.1] – 2026-11-08
+
+### Změněno
+- **Hero banner Profilů v hlavičce okna**: banner s doporučenou modelkou a lišta ovládání (řazení, Filtry, štítky filtrů) jsou součástí panelu hlavičky pod tlačítky menu – stejně jako záhlaví profilu modelky, ne nad kartami ve stránce. Po odrolování se banner svine a v hlavičce zůstane lišta; nahoře na stránce se zase rozbalí.
+
 ## [1.16.0] – 2026-11-08
 
 ### Změněno

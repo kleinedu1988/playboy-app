@@ -14760,7 +14760,7 @@ button.pas-kapsle:focus-visible {
 }
 
 /* Druhý řádek jen s drobečky nebo podmenu; prázdný se neukazuje */
-.hlavni-lista:not(:has(> .logo:not(.hidden), > .podmenu:not(.hidden), > .sbirka-hlava:not(.hidden))) {
+.hlavni-lista:not(:has(> .logo:not(.hidden), > .podmenu:not(.hidden), > .sbirka-hlava:not(.hidden), > .profily-hlava:not(.hidden))) {
     display: none;
 }
 
@@ -18241,18 +18241,42 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* ===== Profily: hero banner s doporučenou modelkou (app/profily-hero.js) a široká lišta ovládání pod ním ===== */
-.profily-hero {
-    position: relative;
-    grid-column: 1 / -1;
-    min-height: clamp(260px, 38vh, 440px);
-    margin: 0 0 6px;
-    overflow: hidden;
-    border-radius: 22px;
-    background: var(--bg-card);
+/* Hlavička Profilů v hlavičce okna (sablona.js #profilyHlava): banner přes celou šířku pod menu, pod ním lišta */
+.hlavni-lista:has(> .profily-hlava:not(.hidden)) {
+    padding-top: 0;
+    padding-bottom: 0;
 }
 
-.profily-hero:empty {
-    min-height: clamp(260px, 38vh, 440px);
+.profily-hlava {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.profily-hlava.hidden,
+.profily-hero.hidden {
+    display: none;
+}
+
+.profily-hero {
+    position: relative;
+    height: clamp(240px, 34vh, 400px);
+    overflow: hidden;
+    background: var(--bg-main);
+    transition: height 0.3s ease;
+}
+
+.navbar.profily-svinuty .profily-hero {
+    height: 0;
+}
+
+.profily-lista-misto {
+    padding: 10px 18px 8px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .profily-hero { transition: none; }
 }
 
 .ph-rozmazane {
@@ -18287,7 +18311,7 @@ body.rezim-vyberu #detailView .poster {
     inset: 0;
     background:
         linear-gradient(to right, rgba(15, 15, 18, 0.8) 0%, rgba(15, 15, 18, 0.45) 35%, rgba(15, 15, 18, 0) 60%),
-        linear-gradient(to bottom, rgba(15, 15, 18, 0) 55%, rgba(15, 15, 18, 0.6) 100%);
+        linear-gradient(to bottom, rgba(15, 15, 18, 0.35) 0%, rgba(15, 15, 18, 0) 20%, rgba(15, 15, 18, 0) 55%, var(--bg-main) 100%);
 }
 
 .ph-obsah {
@@ -18375,7 +18399,6 @@ body.rezim-vyberu #detailView .poster {
 }
 
 .profily-lista {
-    grid-column: 1 / -1;
     display: flex;
     flex-wrap: wrap;
     align-items: center;

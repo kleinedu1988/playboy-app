@@ -129,6 +129,17 @@ const HTML_UVODU = `
         <p class="uvod-pozn">Data jsou v ~/.local/share/playboy-app; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
     </section>`;
 
+// Hlavička Profilů v hlavičce okna: lišta ovládání a (bez hledání) hero banner s doporučenou modelkou
+function vykreslitHlavuProfilu(htmlListy, sBannerem) {
+    const hlava = document.getElementById('profilyHlava');
+    if (!hlava) return;
+    hlava.classList.toggle('hidden', stav.rezim !== 'modelky');
+    hlava.querySelector('.profily-lista-misto').innerHTML = htmlListy;
+    const hero = /** @type {HTMLElement} */ (hlava.querySelector('.profily-hero'));
+    hero.classList.toggle('hidden', !sBannerem);
+    if (sBannerem && !hero.firstChild) naplnitHero(hero);
+}
+
 // Široká lišta ovládání pod hero bannerem (místo úzké kapsle vpravo nahoře): řazení, Filtry (panel filtru Modelek,
 // app/filtr-modelek.js) a zapnuté filtry jako štítky s křížkem, vpravo počet
 function htmlNastroju(pocet, celkem) {
@@ -253,7 +264,8 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
     }
     if (modelky.length === 0) {
         listaGalerie.naplnit([]);
-        gallery.innerHTML = htmlNastroju(0, katalog.length) + (
+        vykreslitHlavuProfilu(htmlNastroju(0, katalog.length), false);
+        gallery.innerHTML = (
             cistyDotaz ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádná modelka.')
             : htmlPrazdna('Zatím žádné modelky', 'Sbírka začíná první modelkou. Přidej ji a pak k ní vlož fotky z Google Disku.', { tlacitko: { text: 'Přidat modelku', akce: 'pridat-modelku' } }));
         obnovitVolby(gallery);
@@ -293,13 +305,12 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
     };
     // Po dávkách: prvních KARET_HNED karet hned (okno je zaplněné), zbytek se přidá v dávkách na pozadí – tisíce
     // karet najednou blokovaly okno stovky milisekund (start, řazení, hledání, návrat z jiné sekce)
-    // Hero banner s doporučenou modelkou nad lištou (app/profily-hero.js); při hledání ne – výsledky hned nahoře
-    const hero = !cistyDotaz && !hledani.trim() ? '<section class="profily-hero" aria-label="Doporučená modelka"></section>' : '';
-    gallery.innerHTML = hero + htmlNastroju(modelky.length, katalog.length) + modelky.slice(0, KARET_HNED).map(htmlKartyCasti).join('');
+    // Hero banner s doporučenou modelkou a lišta ovládání v hlavičce okna (#profilyHlava); při hledání banner ne
+    vykreslitHlavuProfilu(htmlNastroju(modelky.length, katalog.length), !cistyDotaz && !hledani.trim());
+    gallery.innerHTML = modelky.slice(0, KARET_HNED).map(htmlKartyCasti).join('');
     dokresleni = { moje, modelky, od: KARET_HNED, html: htmlKartyCasti };
     naplanovatDavku();
     obnovitVolby(gallery);
-    if (hero) naplnitHero(gallery.querySelector('.profily-hero'));
     nacitatPostupne(gallery);
 
     if (maRejstrik) {
@@ -315,8 +326,25 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     // Tlačítka úvodu prázdné sbírky
-    // Lišta ovládání Profilů: Filtry (panel pod tlačítkem) a štítky zapnutých filtrů
-    gallery.addEventListener('click', (e) => {
+    // Lišta ovládání Profilů v hlavičce okna: řazení, Filtry (panel pod tlačítkem) a štítky zapnutých filtrů
+    const hlavaProfilu = document.getElementById('profilyHlava');
+    hlavaProfilu?.addEventListener('click', (e) => {
+        const razeni = /** @type {HTMLElement} */ (e.target).closest('[data-razeni-galerie]')?.dataset.razeniGalerie;
+        if (razeni) {
+            stav.razeniGalerie = razeni;
+            try { localStorage.setItem('razeniGalerie', razeni); } catch { /* jen pro toto spuštění */ }
+            nacistGalerii(searchInput.value, true);
+        }
+    });
+    // Po odrolování se banner svine, lišta zůstane (jako záhlaví profilu modelky)
+    const navbar = document.querySelector('.navbar');
+    document.querySelector('main')?.addEventListener('scroll', (e) => {
+        if (gallery.classList.contains('hidden')) return;
+        const odrolovano = /** @type {HTMLElement} */ (e.currentTarget).scrollTop;
+        if (odrolovano > 60) navbar?.classList.add('profily-svinuty');
+        else if (odrolovano < 20) navbar?.classList.remove('profily-svinuty');
+    }, { passive: true });
+    hlavaProfilu?.addEventListener('click', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         const filtry = /** @type {HTMLElement | null} */ (cil.closest('[data-pl-filtry]'));
         if (filtry) {

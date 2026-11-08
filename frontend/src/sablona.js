@@ -31,6 +31,12 @@ export const SABLONA_OKNA = `
     </div>
     <!-- Druhý řádek jen pro drobečky (profil, číslo) a podmenu zvolené části; jinak skrytý (style.css) -->
     <div class="hlavni-lista">
+      <!-- Profily: hero banner s doporučenou modelkou a lišta ovládání (řazení, filtry) v hlavičce okna pod menu
+           (app/profily-hero.js, galerie.js); po odrolování se banner svine a zůstane lišta -->
+      <div id="profilyHlava" class="profily-hlava hidden">
+        <section class="profily-hero" aria-label="Doporučená modelka"></section>
+        <div class="profily-lista-misto"></div>
+      </div>
       <!-- Širokoúhlý banner na pozadí záhlaví profilu modelky (od drobečků až po lištu alb) -->
       <!-- Filmový banner: rozostřená kopie fotky vyplní šířku, ostrá fotka vpravo v celé výšce (na výšku bez ořezu
            do pruhu) a přechází do textu vlevo a do stránky dole -->

@@ -622,7 +622,8 @@ func TestMohloByTeLibit(t *testing.T) {
 			t.Fatalf("tip %d: %+v (hodnocení %v)", i, tip, m.Hodnoceni)
 		}
 	}
-	if !strings.Contains(tipy[0].Duvod, "blond") {
+	// Důvod je věta ze slovníku: blond jako „Blondýnka“ na začátku
+	if !strings.HasPrefix(tipy[0].Duvod, "Blondýnka") || !strings.HasSuffix(tipy[0].Duvod, ".") {
 		t.Fatalf("důvod nejlepšího tipu: %q", tipy[0].Duvod)
 	}
 	// Ohodnocená modelka z tipů zmizí

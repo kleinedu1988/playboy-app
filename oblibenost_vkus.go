@@ -49,10 +49,8 @@ func (a *App) GetMohloByTeLibit(pocet int) []OblibenostModelky {
 	v := model.vkus
 	kandidatky := vybratTipy(modelky, model)
 	for i, k := range kandidatky[:min(pocet, len(kandidatky))] {
-		odhad, duvod := zaokrouhlitNaPul(k.presny), v.textOdhadu(k.m.ID, k.presny, true, true)
-		if v.vysokych >= 5 {
-			duvod += fmt.Sprintf(" (na ověření sedělo %d z %d podobně vysokých odhadů)", v.trefVysokych, v.vysokych)
-		}
+		// Důvod jako věta ze slovníku údajů (oblibenost_vkus_veta.go), ne výčet
+		odhad, duvod := zaokrouhlitNaPul(k.presny), v.vetaTipu(k.m.ID, k.presny)
 		nejistota := v.chybaKose[kosBohatosti(v.udaje[k.m.ID])]
 		if nejistota == 0 {
 			nejistota = v.chybaCV

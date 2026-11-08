@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.26.1] – 2026-11-08
+
+### Změněno
+- **Důvod tipu „Mohlo by se ti líbit“ je věta, ne výčet údajů**: slovník převádí údaje, které odhad zvedají, na fráze ve správném tvaru (vlasy → „Blondýnka“, éra → „z 90. let“, národnost → „z Norska“, role → „byla Playmate měsíce“, výška → „měří 163 cm“, fotograf → „Fotil ji …“) a skladatel z nich složí souvětí: *„Blondýnka z 90. let, která měří 163 cm a má košíček D. Na jejích fotkách je to, co hodnotíš nejvýš. Podobá se modelkám, které se ti líbí: … Takhle vysoké tipy ti zatím sedí zhruba ve 3 ze 4 případů.“* Jako podobné se uvádějí jen modelky za ♥3+; nízký průměr srdíček fotek se do věty nedává (zněl jako důvod proti).
+
 ## [1.26.0] – 2026-11-08
 
 ### Přidáno

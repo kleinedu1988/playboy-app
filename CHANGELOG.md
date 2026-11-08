@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.17.1] – 2026-11-08
+
+### Změněno
+- **Banner Galerie nabízí fotky, ne modelku**: nadpis je album nebo číslo, jméno modelky je menší odkaz na profil pod ním; nadtitulek říká, proč tu fotka je (*Tvoje ♥♥♥♥♥*, *Podle obsahu by se ti mohla líbit*, *Nově přidaná*…). Vpravo dole pás šesti dalších fotek z čela výběru – najetí myší fotku ukáže velkou, klik ji vybere; *Další ↻* posune na další fotku.
+
 ## [1.17.0] – 2026-11-08
 
 ### Změněno

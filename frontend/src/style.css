@@ -18473,3 +18473,69 @@ body.rezim-vyberu #detailView .poster {
         max-width: calc(100% - 36px);
     }
 }
+
+/* Hero Galerie: nadpis je album, modelka menší odkaz; vpravo dole pás dalších fotek (app/galerie-vse.js) */
+.gvh-nadpis {
+    font-size: clamp(24px, 3vw, 38px) !important;
+}
+
+.gvh-modelka {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    color: rgba(240, 240, 245, 0.85);
+    font-size: 14px;
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.95);
+}
+
+.gvh-odkaz {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.gvh-odkaz:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.gvh-pas {
+    position: absolute;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    gap: 8px;
+}
+
+.gvh-mala {
+    width: 64px;
+    height: 86px;
+    padding: 0;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-radius: 10px;
+    background: var(--bg-main);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.gvh-mala:hover {
+    transform: translateY(-3px);
+    border-color: #fff;
+}
+
+.gvh-mala img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (max-width: 1100px) {
+    .gvh-pas { display: none; }
+}

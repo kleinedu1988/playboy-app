@@ -1,5 +1,5 @@
 // Galerie všech fotek napříč modelkami (Modelky › Galerie › Všechny fotky; galerie_fotek.go GetGalerieFotek):
-// nahoře hero banner s fotkou z čela výběru, pod ním široká lišta (zobrazit, řazení, ☰ Filtry, štítky filtrů)
+// nahoře hero banner s fotkami z čela výběru (fotka, ne modelka), pod ním široká lišta (zobrazit, řazení, ☰ Filtry, štítky filtrů)
 // a rozbalovací pás filtrů – srdíčka fotky, typ alba, desetiletí a tagy, u každé hodnoty počet fotek, které zbudou;
 // pak mozaika po stránkách. Výchozí řazení „Co se ti
 // asi líbí“: tvoje srdíčka a u nehodnocených odhad z obsahu fotek, promíchané napříč alby. Dotaz i otevřený panel
@@ -9,7 +9,7 @@ import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
 import { stav } from './stav';
 import { best } from './prvky';
 import { katalogTagu } from './tagy-fotek';
-import { VELIKOST_PLAKATU, nacitatPostupne } from './obrazky';
+import { VELIKOST_NAHLEDU, VELIKOST_PLAKATU, nacitatPostupne } from './obrazky';
 import { htmlNicNenalezeno } from '../ui/prazdno';
 import { otevritLightbox } from './prohlizec';
 import { otevritProfilPodleId } from './cover';
@@ -100,34 +100,57 @@ function htmlStitku() {
     return stitky.map(([sk, h, n]) => `<span class="pl-stitek"><button type="button" data-gv-panel>${esc(n)}</button><button type="button" data-gv="${sk}" data-hodnota="${esc(h)}" aria-label="Zrušit filtr" title="Zrušit filtr">×</button></span>`).join('');
 }
 
-// Hero: jedna z fotek z čela výběru (střídá se, Další ↻), s modelkou a albem
+// Hero: fotka z čela výběru (ne modelka): nadpis je album nebo číslo, modelka je menší odkaz na profil, nadtitulek
+// říká, proč tu fotka je; vpravo dole pás dalších fotek z čela výběru – najetí nebo klik ukáže fotku velkou
 const KLIC_HERO = 'galerieHeroTip';
-async function naplnitHeroGalerie(misto) {
+const FOTEK_V_PASU = 6;
+
+function proc(f) {
+    if (f.hodnoceni > 0) return `Tvoje ${'♥'.repeat(f.hodnoceni)}`;
+    return { libi: 'Podle obsahu by se ti mohla líbit', nove: 'Nově přidaná', nahodne: 'Náhodná fotka', hodnota: 'Z nejlepších' }[dotaz.razeni] || 'Z galerie';
+}
+
+async function naplnitHeroGalerie(misto, index = null) {
     const kandidati = stav.nejlepsiPolozky.slice(0, 30);
     if (!misto || !kandidati.length) return;
-    let i = 0;
-    try { i = (parseInt(localStorage.getItem(KLIC_HERO) || '0', 10) || 0) % kandidati.length; } catch { /* první */ }
+    let i = index ?? 0;
+    if (index === null) {
+        try { i = (parseInt(localStorage.getItem(KLIC_HERO) || '0', 10) || 0) % kandidati.length; } catch { /* první */ }
+    }
     const p = kandidati[i];
     const f = p.fotky[0];
     const adresa = obrazek(f.url, VELIKOST_PLAKATU);
-    const odkud = [nazevAlba(p.album, p.typ), f.vydani && f.vydani !== p.album ? nazevVydani(f.vydani) : ''].filter(Boolean).join(' · ');
-    const srdicka = f.hodnoceni > 0 ? '♥'.repeat(f.hodnoceni) : '';
+    const album = nazevAlba(p.album, p.typ);
+    const vydani = f.vydani && f.vydani !== p.album ? nazevVydani(f.vydani) : '';
+    const pas = Array.from({ length: Math.min(FOTEK_V_PASU, kandidati.length - 1) }, (_, k) => (i + 1 + k) % kandidati.length)
+        .map(j => `<button type="button" class="gvh-mala" data-gvh-ukazat="${j}" title="${esc(`${kandidati[j].jmenoModelky || ''} · ${nazevAlba(kandidati[j].album, kandidati[j].typ)}`)}"><img src="${esc(obrazek(kandidati[j].fotky[0].url, VELIKOST_NAHLEDU))}" alt="" draggable="false" /></button>`).join('');
     misto.innerHTML = `
         <div class="ph-rozmazane" style="background-image:url('${esc(adresa).replace(/'/g, '%27')}')"></div>
         <div class="ph-ram"><img src="${esc(adresa)}" alt="" draggable="false" /></div>
         <div class="ph-prekryv"></div>
         <div class="ph-obsah">
-            <div class="ph-nadtitulek">${esc(RAZENI.find(([k]) => k === dotaz.razeni)?.[1] || 'Galerie')}</div>
-            <h2>${esc(p.jmenoModelky || '')}</h2>
-            ${srdicka ? `<div class="ph-srdicka">${srdicka}</div>` : ''}
-            ${odkud ? `<p class="ph-duvod">${esc(odkud)}</p>` : ''}
+            <div class="ph-nadtitulek">${esc(proc(f))}</div>
+            <h2 class="gvh-nadpis">${esc(album || 'Fotka')}</h2>
+            <div class="gvh-modelka">${p.modelkaId ? `<button type="button" class="gvh-odkaz" data-gvh-profil="${p.modelkaId}" title="Otevřít profil modelky">${esc(p.jmenoModelky || '')}</button>` : ''}${vydani ? `<span>${esc(vydani)}</span>` : ''}</div>
             <div class="ph-akce">
                 <button type="button" class="ph-tlacitko hlavni" data-gvh-otevrit="${i}">Otevřít fotku</button>
-                ${p.modelkaId ? `<button type="button" class="ph-tlacitko" data-gvh-profil="${p.modelkaId}">Profil modelky</button>` : ''}
                 ${podobneZapnuto() ? `<button type="button" class="ph-tlacitko" data-gvh-podobne="${i}">Podobné fotky</button>` : ''}
-                ${kandidati.length > 1 ? '<button type="button" class="ph-tlacitko" data-gvh-dalsi title="Další fotka">Další ↻</button>' : ''}
+                ${kandidati.length > 1 ? `<button type="button" class="ph-tlacitko" data-gvh-ukazat="${(i + 1) % kandidati.length}" title="Další fotka">Další ↻</button>` : ''}
             </div>
-        </div>`;
+        </div>
+        ${pas ? `<div class="gvh-pas" aria-label="Další fotky">${pas}</div>` : ''}`;
+    const ukazat = (j) => {
+        try { localStorage.setItem(KLIC_HERO, String(j)); } catch { /* jen teď */ }
+        naplnitHeroGalerie(misto, j);
+    };
+    // Najetí na malou fotku ji jen ukáže velkou (pás zůstane na místě), odjetí vrátí vybranou; klik ji vybere
+    const velka = /** @type {HTMLImageElement | null} */ (misto.querySelector('.ph-ram img'));
+    misto.onpointerover = (e) => {
+        const mala = /** @type {HTMLElement} */ (e.target).closest?.('.gvh-mala');
+        if (!mala || !velka) return;
+        velka.src = obrazek(kandidati[parseInt(mala.dataset.gvhUkazat, 10)].fotky[0].url, VELIKOST_PLAKATU);
+    };
+    misto.querySelector('.gvh-pas')?.addEventListener('pointerleave', () => { if (velka) velka.src = adresa; });
     misto.onclick = (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         const otevrit = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-otevrit]'));
@@ -136,10 +159,8 @@ async function naplnitHeroGalerie(misto) {
         if (profil) return otevritProfilPodleId(parseInt(profil.dataset.gvhProfil, 10));
         const podobne = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-podobne]'));
         if (podobne) return ukazatPodobne(stav.nejlepsiPolozky[parseInt(podobne.dataset.gvhPodobne, 10)].fotky[0]);
-        if (cil.closest('[data-gvh-dalsi]')) {
-            try { localStorage.setItem(KLIC_HERO, String((i + 1) % kandidati.length)); } catch { /* jen teď */ }
-            naplnitHeroGalerie(misto);
-        }
+        const dalsi = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-ukazat]'));
+        if (dalsi) ukazat(parseInt(dalsi.dataset.gvhUkazat, 10));
     };
 }
 

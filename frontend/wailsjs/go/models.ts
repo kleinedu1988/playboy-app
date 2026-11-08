@@ -246,6 +246,20 @@ export namespace main {
 	        this.drzitelka = source["drzitelka"];
 	    }
 	}
+	export class CtvericePorovnani {
+	    modelky: number[];
+	    duvod: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CtvericePorovnani(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelky = source["modelky"];
+	        this.duvod = source["duvod"];
+	    }
+	}
 	export class DvojicePorovnani {
 	    a: number;
 	    b: number;

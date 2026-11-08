@@ -41,6 +41,8 @@ export function GetClankyModelky(arg1:number):Promise<Array<sbirka.Clanek>>;
 
 export function GetCovery():Promise<Array<sbirka.Fotografie>>;
 
+export function GetCtvericeKPorovnani(arg1:number):Promise<Array<main.CtvericePorovnani>>;
+
 export function GetDuvodOdhadu(arg1:number):Promise<string>;
 
 export function GetDvojiceKPorovnani(arg1:number,arg2:string):Promise<Array<main.DvojicePorovnani>>;
@@ -64,6 +66,8 @@ export function GetKalendar():Promise<Array<sbirka.VydaniKalendare>>;
 export function GetKatalogTagu():Promise<Array<sbirka.SkupinaTagu>>;
 
 export function GetKrokyPruvodce():Promise<main.KrokyPruvodce>;
+
+export function GetLakadloPorovnani():Promise<string>;
 
 export function GetModelky(arg1:string):Promise<Array<hledani.Modelka>>;
 
@@ -100,6 +104,8 @@ export function GetPoctyTagu():Promise<Record<string, number>>;
 export function GetPodobneFotky(arg1:number):Promise<Array<sbirka.Fotografie>>;
 
 export function GetPokrytiOdhadu():Promise<main.PokrytiOdhadu>;
+
+export function GetPoradiModelek(arg1:Array<number>):Promise<Record<number, number>>;
 
 export function GetPrehled(arg1:boolean):Promise<main.Prehled>;
 
@@ -182,6 +188,8 @@ export function Odemknout(arg1:string):Promise<boolean>;
 export function OdmitnoutNavrh(arg1:kontrola.NavrhDoplneni,arg2:boolean):Promise<boolean>;
 
 export function OveritOdkaz(arg1:string):Promise<number>;
+
+export function PorovnatCtverici(arg1:Array<number>,arg2:number):Promise<boolean>;
 
 export function PorovnatModelky(arg1:number,arg2:number,arg3:string):Promise<boolean>;
 
@@ -274,6 +282,8 @@ export function UpdateCover(arg1:number,arg2:string,arg3:string):Promise<boolean
 export function UpdateModelka(arg1:hledani.Modelka):Promise<boolean>;
 
 export function UzavritSezonu(arg1:string,arg2:number):Promise<boolean>;
+
+export function VratitCtverici(arg1:Array<number>,arg2:number):Promise<boolean>;
 
 export function VratitPorovnani(arg1:number,arg2:number):Promise<boolean>;
 

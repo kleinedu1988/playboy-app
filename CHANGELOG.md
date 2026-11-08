@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.13.0] – 2026-11-08
+
+### Přidáno
+- **Dnešní výběr – porovnávání po čtveřicích**: místo nekonečných soubojů dvojic krátká denní dávka 10 voleb (~2 minuty) „Která se ti líbí nejvíc?“ – čtyři modelky vedle sebe, každá s velkou fotkou a dvěma menšími (vybranými podle toho, co se ti podle obsahu fotek asi líbí). Jedna volba zapíše tři porovnání (vítězka proti každé ze tří), takže na stejné zpřesnění pořadí stačí asi třetina kliknutí. Čtveřice skládá výběr dvojic aktivním učením (nejistá a důležitá místa pořadí, nezařazené modelky) doplněný modelkami s nejbližší silou, aby volba byla vyrovnaná. Klávesy 1–4, Backspace vrátí poslední volbu, Esc skončí. Po dávce shrnutí, kdo se v pořadí posunul (klik otevře profil), a *Dalších 10*. Volby se počítají do dnešního postupu a série v Hodnocení.
+- **Kartička po spuštění**: po úvodu se vpravo dole objeví nenápadná nabídka dnešního výběru s konkrétním lákadlem („Kdo bude desátá v Top 10 – A, nebo B?“, „12 nových modelek čeká na zařazení“); jednou denně, dokud není dávka hotová, křížek ji na dnes schová.
+- Dnešní výběr je i v Hodnocení › Porovnat (tlačítko 🎯 s postupem) a v nabídce ⋯.
+
 ## [1.12.2] – 2026-11-08
 
 ### Změněno

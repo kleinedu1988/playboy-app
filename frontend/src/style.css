@@ -17782,3 +17782,328 @@ body.rezim-vyberu #detailView .poster {
 #modelHeader .tagy-rozbalit.hidden {
     display: none;
 }
+
+/* ===== Dnešní výběr (app/dnesni-vyber.js): čtyři modelky vedle sebe, „Která se ti líbí nejvíc?“; kartička
+   s nabídkou po spuštění vpravo dole ===== */
+.dv-pozadi {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(8, 8, 10, 0.78);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.dv-okno {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: min(1280px, 100%);
+    max-height: 100%;
+    padding: 18px 20px 20px;
+    overflow: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    background: var(--bg-card);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+}
+
+.dv-hlava {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.dv-hlava b {
+    font-size: 15px;
+    letter-spacing: 0.04em;
+}
+
+.dv-hlava > span:not(.dv-postup):not(.dv-pocet) {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.dv-postup {
+    flex: 1 1 120px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--border-color);
+    overflow: hidden;
+}
+
+.dv-postup > i {
+    display: block;
+    height: 100%;
+    border-radius: 4px;
+    background: var(--accent);
+    transition: width 0.3s ease;
+}
+
+.dv-pocet {
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.dv-zavrit {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--text-muted);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.dv-zavrit:hover {
+    background: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.dv-tlacitko {
+    height: 30px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.dv-tlacitko:hover {
+    background: var(--panel-hover);
+}
+
+.dv-tlacitko.hlavni {
+    border-color: transparent;
+    background: var(--accent);
+    color: #fff;
+}
+
+.dv-tlacitko.hlavni:hover {
+    background: var(--accent-hover);
+}
+
+.dv-karty {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.dv-karta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px;
+    border: 2px solid transparent;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.dv-karta:hover,
+.dv-karta:focus-visible {
+    transform: translateY(-3px);
+    border-color: rgba(216, 27, 96, 0.55);
+    background: rgba(216, 27, 96, 0.07);
+}
+
+.dv-karta.vybrana {
+    border-color: var(--accent);
+    background: rgba(216, 27, 96, 0.16);
+}
+
+.dv-fotka {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    max-height: 52vh;
+    width: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--bg-main);
+}
+
+.dv-fotka img,
+.dv-male img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.dv-fotka kbd {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    min-width: 24px;
+    padding: 2px 7px;
+    border-radius: 8px;
+    background: rgba(14, 14, 18, 0.7);
+    color: #fff;
+    font: 600 13px/1.4 system-ui, sans-serif;
+    text-align: center;
+}
+
+.dv-male {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: minmax(0, 1fr);
+    gap: 6px;
+    height: clamp(60px, 9vh, 110px);
+    overflow: hidden;
+}
+
+.dv-male img {
+    min-height: 0;
+}
+
+.dv-male img {
+    border-radius: 8px;
+}
+
+.dv-bez-fotky {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.dv-jmeno {
+    overflow: hidden;
+    font-size: 15px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dv-srdicka {
+    color: var(--accent-text);
+    font-size: 12.5px;
+}
+
+.dv-duvod {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    text-align: center;
+}
+
+.dv-prazdno,
+.dv-shrnuti {
+    padding: 28px 8px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.dv-shrnuti ul {
+    display: inline-grid;
+    gap: 6px;
+    margin: 0 0 18px;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.dv-shrnuti li {
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+    color: var(--text-main);
+}
+
+.dv-shrnuti .nahoru {
+    color: #6fcf8b;
+}
+
+.dv-shrnuti .dolu {
+    color: var(--text-muted);
+}
+
+.dv-odkaz {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.dv-odkaz:hover {
+    text-decoration: underline;
+}
+
+.dv-akce {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.dv-karticka {
+    position: fixed;
+    right: 18px;
+    bottom: 42px;
+    z-index: 800;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    width: 300px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    background: rgba(24, 24, 28, 0.92);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+    animation: dv-prijezd 0.35s ease-out both;
+}
+
+.dv-karticka .dv-zavrit {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+}
+
+.dv-karticka .dv-meta {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.dv-karticka p {
+    margin: 2px 0 6px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+@keyframes dv-prijezd {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 760px) {
+    .dv-karty {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dv-karticka { animation: none; }
+    .dv-karta { transition: none; }
+}

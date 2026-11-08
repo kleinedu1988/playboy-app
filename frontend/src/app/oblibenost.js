@@ -33,6 +33,7 @@ import { htmlPrazdna } from '../ui/prazdno';
 import { oznamit } from '../ui/oznameni';
 import { nacistSinSlavy, obnovitHlavuSlavy, pripravitSinSlavy } from './sin-slavy';
 import { odhadSrdicek, popisPokryti } from './obsah-fotek';
+import { dnesVoleb, otevritDnesniVyber } from './dnesni-vyber';
 import { hodnotitFotky, nacistGalerii, nacistPocetNehodnocenych, nastavitPohledHodnotit, nastavitRazeniFotek, pocetModelekBezSrdicek, pocetFotekKPruvodci, pohledHodnotit, pocetNehodnocenych, pripravitGalerii, razeniFotek } from './galerie-hodnoceni';
 import { textZbyva } from '../lib/slava';
 
@@ -524,8 +525,11 @@ function htmlHlavyHodnoceni() {
     const rezim = tema ? `<div class="sh-pohledy" role="group" aria-label="Režim porovnání">
             <button type="button" class="${porovnatVTematu ? 'on' : ''}" data-hd-tema="1" aria-pressed="${porovnatVTematu}" title="${esc(`Sezóna „${tema.nazev}“${tema.popis ? ` – ${tema.popis}` : '.'} Jen soutěžící a fotky tématu, souboje se počítají do sezóny (T přepne).`)}">${esc(tema.ikona || '✦')} ${esc(tema.nazev)}</button>
             <button type="button" class="${porovnatVTematu ? '' : 'on'}" data-hd-tema="0" aria-pressed="${!porovnatVTematu}" title="${esc(`Všechny modelky a fotky – do sezóny „${tema.nazev}“ se nepočítá (T přepne).`)}">Bez tématu</button></div>` : '';
+    // Dnešní výběr (app/dnesni-vyber.js): krátká dávka po čtveřicích, hlavní cesta k porovnávání
+    const voleb = dnesVoleb();
+    const htmlVyberu = `<button type="button" class="volba akcent" data-hd-akce="vyber" title="Dnešní výběr: 10 × nejlepší ze 4 (~2 minuty), jedna volba = 3 porovnání"><b>🎯 Dnešní výběr${voleb ? ` ${Math.min(voleb, 10)}/10` : ''}</b></button><span class="sh-oddelovac" aria-hidden="true"></span>`;
     return `<div class="sh-lista">${htmlCasti}
-            <div class="sh-akce hd-kompakt-akce">${htmlRozhodnout}${htmlPanelu}</div>
+            <div class="sh-akce hd-kompakt-akce">${htmlVyberu}${htmlRozhodnout}${htmlPanelu}</div>
             ${rezim}
         </div>`;
 }
@@ -611,6 +615,8 @@ function pripravitHlavuHodnoceni() {
         else if (akce === 'rozhodnout') {
             const prvni = rozhodujici()[0];
             if (prvni) rozhodnoutTed(prvni.modelkaId);
+        } else if (akce === 'vyber') {
+            otevritDnesniVyber();
         } else if (akce === 'fotky' || akce === 'promitat') {
             if (stav.hodnoceniPohled !== 'fotky') ukazatCastOblibenosti('fotky');
             hodnotitFotky(akce === 'promitat');

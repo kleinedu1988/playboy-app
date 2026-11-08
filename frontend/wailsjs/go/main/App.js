@@ -66,6 +66,10 @@ export function GetCovery() {
   return window['go']['main']['App']['GetCovery']();
 }
 
+export function GetCtvericeKPorovnani(arg1) {
+  return window['go']['main']['App']['GetCtvericeKPorovnani'](arg1);
+}
+
 export function GetDuvodOdhadu(arg1) {
   return window['go']['main']['App']['GetDuvodOdhadu'](arg1);
 }
@@ -112,6 +116,10 @@ export function GetKatalogTagu() {
 
 export function GetKrokyPruvodce() {
   return window['go']['main']['App']['GetKrokyPruvodce']();
+}
+
+export function GetLakadloPorovnani() {
+  return window['go']['main']['App']['GetLakadloPorovnani']();
 }
 
 export function GetModelky(arg1) {
@@ -184,6 +192,10 @@ export function GetPodobneFotky(arg1) {
 
 export function GetPokrytiOdhadu() {
   return window['go']['main']['App']['GetPokrytiOdhadu']();
+}
+
+export function GetPoradiModelek(arg1) {
+  return window['go']['main']['App']['GetPoradiModelek'](arg1);
 }
 
 export function GetPrehled(arg1) {
@@ -348,6 +360,10 @@ export function OdmitnoutNavrh(arg1, arg2) {
 
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
+}
+
+export function PorovnatCtverici(arg1, arg2) {
+  return window['go']['main']['App']['PorovnatCtverici'](arg1, arg2);
 }
 
 export function PorovnatModelky(arg1, arg2, arg3) {
@@ -532,6 +548,10 @@ export function UpdateModelka(arg1) {
 
 export function UzavritSezonu(arg1, arg2) {
   return window['go']['main']['App']['UzavritSezonu'](arg1, arg2);
+}
+
+export function VratitCtverici(arg1, arg2) {
+  return window['go']['main']['App']['VratitCtverici'](arg1, arg2);
 }
 
 export function VratitPorovnani(arg1, arg2) {

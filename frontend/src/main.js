@@ -41,6 +41,7 @@ import { pripravitVUvodu as pripravitPohledyVUvodu, spustitPredpripravu } from '
 import { zaznamenatStart } from './app/vykon';
 import { naplanovatPoStartu as stahovatNahledyPoStartu } from './app/nahledy-pozadi';
 import * as obsahFotek from './app/obsah-fotek';
+import { nabidnoutPoSpusteni as nabidnoutDnesniVyber } from './app/dnesni-vyber';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
 // když je otevřený, jeho obsluha kláves zastaví ostatní
@@ -207,6 +208,8 @@ async function konecUvodu() {
         if (stav.maZamek) zapomenoutProfilovkyUvodu();
         else vsechnyModelky().then(m => ulozitProfilovkyUvodu(m, obrazky.adresaTitulni)).catch(() => {});
     }, 4000);
+    // Dnešní výběr: po úvodu nenápadná kartička s nabídkou krátké dávky porovnávání (app/dnesni-vyber.js)
+    setTimeout(() => nabidnoutDnesniVyber().catch(() => {}), 2500);
     // Mezipaměti backendu pro další pohledy se připraví v klidu po úvodu (app/predpriprava.js)
     spustitPredpripravu();
     // Náhledy celé sbírky na disk, minutu po startu v klidu (app/nahledy-pozadi.js)

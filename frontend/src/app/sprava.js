@@ -9,6 +9,7 @@ import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import * as nahledyPozadi from './nahledy-pozadi';
 import * as obsahFotek from './obsah-fotek';
+import { otevritDnesniVyber } from './dnesni-vyber';
 import { otevritNapovedu, otevritNovinky } from './napoveda';
 import { otevritZkratky } from './zkratky';
 import { otevritVykon } from './vykon';
@@ -319,6 +320,7 @@ export function polozkySpravy() {
     return [
         { nadpis: 'Prohlížení' },
         { text: 'Náhodná modelka', akce: nahodnaModelka },
+        { text: 'Dnešní výběr (nejlepší ze 4)…', akce: otevritDnesniVyber },
         { text: `Interval slideshow (${stav.intervalSlideshow / 1000} s)…`, akce: zmenitInterval },
         { nadpis: 'Soubory a mezipaměť' },
         ...nahledyPozadi.polozkyNabidky(),

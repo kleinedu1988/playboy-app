@@ -87,6 +87,10 @@ const CTENI = new Set([
     'GetPokrytiOdhadu',
     // Okno po úvodní obrazovce dostane uloženou velikost (nastaveni.go); data nemění
     'ObnovitOkno',
+    // Dnešní výběr (app/dnesni-vyber.js): čtveřice, lákadlo a pořadí jen čtou
+    'GetCtvericeKPorovnani',
+    'GetLakadloPorovnani',
+    'GetPoradiModelek',
     'GetStavUceniTagu',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
@@ -98,6 +102,8 @@ const CTENI = new Set([
 const JEN_HODNOCENI = new Set([
     'PorovnatModelky',
     'PorovnatModelkyVTematu',
+    'PorovnatCtverici',
+    'VratitCtverici',
     'VratitPorovnani',
     'SetHodnoceni',
     'SetHodnoceniFotek',
@@ -181,6 +187,11 @@ export const VypnoutObsah = /** @type {typeof App.VypnoutObsah} */ (obalit('Vypn
 export const GetNavrhyTagu = /** @type {typeof App.GetNavrhyTagu} */ (obalit('GetNavrhyTagu'));
 export const GetPokrytiOdhadu = /** @type {typeof App.GetPokrytiOdhadu} */ (obalit('GetPokrytiOdhadu'));
 export const ObnovitOkno = /** @type {typeof App.ObnovitOkno} */ (obalit('ObnovitOkno'));
+export const GetCtvericeKPorovnani = /** @type {typeof App.GetCtvericeKPorovnani} */ (obalit('GetCtvericeKPorovnani'));
+export const GetLakadloPorovnani = /** @type {typeof App.GetLakadloPorovnani} */ (obalit('GetLakadloPorovnani'));
+export const GetPoradiModelek = /** @type {typeof App.GetPoradiModelek} */ (obalit('GetPoradiModelek'));
+export const PorovnatCtverici = /** @type {typeof App.PorovnatCtverici} */ (obalit('PorovnatCtverici'));
+export const VratitCtverici = /** @type {typeof App.VratitCtverici} */ (obalit('VratitCtverici'));
 export const GetStavUceniTagu = /** @type {typeof App.GetStavUceniTagu} */ (obalit('GetStavUceniTagu'));
 export const GetStatistiky = /** @type {typeof App.GetStatistiky} */ (obalit('GetStatistiky'));
 export const GetVyvojVCase = /** @type {typeof App.GetVyvojVCase} */ (obalit('GetVyvojVCase'));

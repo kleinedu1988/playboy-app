@@ -59,7 +59,7 @@ func (a *App) SetProfilovaFotka(modelkaID, fotoID int) bool {
 	if fotoID == 0 {
 		if _, err := a.db.Exec(`UPDATE modelky SET profil_fotka_id = NULL, profil_zoom = NULL, profil_x = NULL, profil_y = NULL
 			WHERE id = ?`, modelkaID); err != nil {
-			a.chyba("zrušení profilové fotky", err)
+			a.chyba("odebrání fotky záhlaví", err)
 			return false
 		}
 		return true
@@ -67,7 +67,7 @@ func (a *App) SetProfilovaFotka(modelkaID, fotoID int) bool {
 	vysledek, err := a.db.Exec(`UPDATE modelky SET profil_fotka_id = ?1, profil_zoom = NULL, profil_x = NULL, profil_y = NULL
 		WHERE id = ?2 AND `+fotkaModelky, fotoID, modelkaID)
 	if err != nil {
-		a.chyba("nastavení profilové fotky", err)
+		a.chyba("nastavení fotky záhlaví", err)
 		return false
 	}
 	zmeneno, _ := vysledek.RowsAffected()
@@ -98,7 +98,7 @@ func (a *App) SetProfilovyVyrez(modelkaID int, zoom, x, y float64) bool {
 	vysledek, err := a.db.Exec(`UPDATE modelky SET profil_zoom = ?, profil_x = ?, profil_y = ?
 		WHERE id = ? AND profil_fotka_id IS NOT NULL`, omezit(zoom, 1, 4), omezit(x, 0, 100), omezit(y, 0, 100), modelkaID)
 	if err != nil {
-		a.chyba("uložení výřezu profilové fotky", err)
+		a.chyba("uložení výřezu fotky záhlaví", err)
 		return false
 	}
 	zmeneno, _ := vysledek.RowsAffected()

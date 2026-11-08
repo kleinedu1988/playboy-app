@@ -7,6 +7,14 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.11.0] – 2026-11-08
+
+### Změněno
+- **Fotka karty a fotka záhlaví** místo „titulní“ a „profilové“: v akcích fotky *Nastavit jako fotku karty* (karta v galerii a panel Údaje) a *Nastavit jako fotku záhlaví* (záhlaví profilu); stejné názvy mají úpravy výřezu a hlášení.
+- **Záhlaví si nepůjčuje fotku karty**: nastavení fotky karty už nemění záhlaví. Modelka bez fotky záhlaví má nižší záhlaví (200 px) bez fotky a v řádku kariéry odkaz *+ fotka záhlaví*, který poradí, jak ji vybrat.
+- **Pravé tlačítko na záhlaví nabízí jen fotku záhlaví** (upravit výřez, odebrat; bez ní návod, jak ji vybrat) a akce s modelkou – výřez fotky karty tam už není. Tlačítko ⋯ ukazuje obě fotky oddělené nadpisy *Fotka záhlaví*, *Fotka karty* a *Modelka*.
+- **Fotka na výšku vyplní záhlaví**: záhlaví se fotce nepřizpůsobuje (dřív portrét zabral jen úzký pruh vpravo); fotka na výšku i na šířku zabere 82 % šířky a přechází do pozadí pod textem, výřez určí, která část je vidět (výchozí nahoře, u obličeje).
+
 ## [1.10.4] – 2026-11-08
 
 ### Změněno

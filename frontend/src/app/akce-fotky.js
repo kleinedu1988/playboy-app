@@ -33,17 +33,17 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
                 if (!lightbox.classList.contains('hidden')) zavritLightbox();
                 otevritProfilPodleId(polozka.modelkaId);
             } }] : []),
-        // Titulní fotka jde nastavit z jedné fotky (ne z celého plakátu najednou)
-        ...(proModelku && stranky.length === 1 ? [{ text: 'Nastavit jako titulní fotku', akce: async () => {
+        // Fotka karty (titulní: karta v galerii a panel Údaje) jde nastavit z jedné fotky, ne z celého plakátu
+        ...(proModelku && stranky.length === 1 ? [{ text: 'Nastavit jako fotku karty', akce: async () => {
             if (!await SetTitulniFotka(proModelku, prvni.id)) return;
-            oznamit('Titulní fotka změněna. Výřez na kartě se vrátil na výchozí.');
+            oznamit('Fotka karty změněna (karta v galerii a panel Údaje). Výřez se vrátil na výchozí, záhlaví profilu zůstalo.');
             if (zProfilu) otevritProfilPodleId(proModelku);
             else obnovitCoJeVidet();
         } }] : []),
-        // Profilová fotka (záhlaví profilu) je oddělená od titulní (karta v galerii)
-        ...(proModelku && stranky.length === 1 ? [{ text: 'Nastavit jako profilovou fotku', akce: async () => {
+        // Fotka záhlaví profilu (v datech profilová) je oddělená od fotky karty
+        ...(proModelku && stranky.length === 1 ? [{ text: 'Nastavit jako fotku záhlaví', akce: async () => {
             if (!await SetProfilovaFotka(proModelku, prvni.id)) return;
-            oznamit('Profilová fotka změněna. Titulní fotka na kartě zůstala.');
+            oznamit('Fotka záhlaví profilu změněna. Fotka karty zůstala.');
             if (zProfilu) otevritProfilPodleId(proModelku);
         } }] : []),
         { text: 'Přidat do výběru…', akce: () => pridatDoVyberu(stranky.map(f => f.id)) },

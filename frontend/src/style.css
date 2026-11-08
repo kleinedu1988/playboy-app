@@ -17249,6 +17249,19 @@ body.rezim-vyberu #detailView .poster {
     --vyska-banneru: 0px;
 }
 
+/* Bez fotky záhlaví: nižší záhlaví, fotku karty si nepůjčuje (odkaz „+ fotka záhlaví“ poradí, jak ji vybrat) */
+.navbar:not(.profil-svinuty) .hlavni-lista:has(> #profilPruh:not(.hidden)):has(> .profil-banner-pozadi.bez-fotky) {
+    --vyska-banneru: 200px;
+}
+
+.hlavni-lista #profilPruh .pruh-fotka-zahlavi {
+    color: rgba(240, 240, 245, 0.55);
+}
+
+.hlavni-lista #profilPruh .pruh-fotka-zahlavi[hidden] {
+    display: none;
+}
+
 .hlavni-lista:has(> #profilPruh:not(.hidden)) > *:not(.profil-banner-pozadi) {
     position: relative;
     /* Lišta alb má jinde lepivý záporný posun (top: -32px); v záhlaví profilu by vyjela přes pruh modelky */
@@ -17285,21 +17298,14 @@ body.rezim-vyberu #detailView .poster {
 }
 
 .profil-banner-ram {
+    /* Fotka záhlaví vyplní záhlaví (na výšku i na šířku – záhlaví se fotce nepřizpůsobuje, výřez určí, co je
+       vidět); přechod do pozadí jen pod textem vlevo */
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
-    aspect-ratio: 4 / 5;
-    max-width: 72%;
-    overflow: hidden;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 34%);
-    mask-image: linear-gradient(to right, transparent 0%, #000 34%);
-}
-
-.profil-banner-pozadi.na-sirku .profil-banner-ram {
-    /* Fotka na šířku zabere skoro celý banner; přechod jen pod textem vlevo, ať nad jménem nezůstává prázdné místo */
     width: 82%;
-    aspect-ratio: auto;
+    overflow: hidden;
     -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 30%);
     mask-image: linear-gradient(to right, transparent 0%, #000 30%);
 }
@@ -17595,11 +17601,8 @@ body.rezim-vyberu #detailView .poster {
 
 /* Úzké okno: fotka přes celou šířku za textem, akce pod jménem */
 @media (max-width: 760px) {
-    .profil-banner-ram,
-    .profil-banner-pozadi.na-sirku .profil-banner-ram {
+    .profil-banner-ram {
         width: 100%;
-        max-width: none;
-        aspect-ratio: auto;
         -webkit-mask-image: none;
         mask-image: none;
     }

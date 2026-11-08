@@ -152,6 +152,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
                 ${htmlOdhadu(modelka, 'odhad-profil')}
                 ${htmlPoradi(modelka)}
                 <div class="profile-odznaky" hidden></div>
+                <button type="button" class="pruh-odkaz pruh-fotka-zahlavi" data-fotka-zahlavi hidden title="Záhlaví zatím nemá vlastní fotku">+ fotka záhlaví</button>
             </div>
         </div>
     `;
@@ -164,7 +165,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     modelHeader.innerHTML = `
         <div class="profile-cover-ram">
             <div class="profile-cover">${titulni}</div>
-            <button type="button" class="vyrez-btn" data-upravit-vyrez title="Upravit výřez titulní fotky (jak ji ukazuje karta v galerii)" aria-label="Upravit výřez titulní fotky"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
+            <button type="button" class="vyrez-btn" data-upravit-vyrez title="Upravit výřez fotky karty (jak ji ukazuje karta v galerii)" aria-label="Upravit výřez fotky karty"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/></svg></button>
         </div>
         ${dalsiJmena.length || htmlKategorii ? `<div class="udaje-hlava">
             ${dalsiJmena.length ? `<p class="profile-aliases">také ${esc(dalsiJmena.join(', '))}</p>` : ''}
@@ -530,9 +531,9 @@ export function prepnoutUdaje(otevrit = !detailView.classList.contains('udaje-ot
     requestAnimationFrame(() => zkratitAlba(detailView));
 }
 
-// Fotka filmového banneru v záhlaví: profilová fotka s vlastním výřezem, bez ní titulní fotka (jako na kartě),
-// aby záhlaví nezůstalo prázdné. Ostrá fotka je vpravo v celé výšce; fotka na šířku (.na-sirku) zabere dvě třetiny,
-// na výšku se ukáže celá v rámu 4 : 5. Rozostřená kopie vyplní zbytek šířky.
+// Fotka záhlaví (v datech profilová) s vlastním výřezem vyplní záhlaví bez ohledu na to, je-li na výšku, nebo
+// na šířku – záhlaví se fotce nepřizpůsobuje, výřez určí, která část je vidět. Fotku karty si záhlaví nepůjčuje:
+// bez fotky záhlaví je nižší a nabídne, jak ji vybrat.
 export function aktualizovatBannerProfilu(modelka) {
     const bannerImg = /** @type {HTMLImageElement | null} */ (document.getElementById('profilBannerFoto'));
     if (!bannerImg) return;
@@ -541,21 +542,23 @@ export function aktualizovatBannerProfilu(modelka) {
         stav.profilovaFotka = null;
         nastavitFotkuBanneru(bannerImg, '', '');
     }
-    const titulni = () => modelka.coverUrl ? [adresaTitulni(modelka, true), stylVyrezu(modelka)] : ['', ''];
     GetProfilovaFotka(id).then(profilova => {
         if (stav.aktualniModelka?.id !== id) return;
         stav.profilovaFotka = profilova?.url ? { ...profilova, modelkaId: id } : null;
-        const [adresa, styl] = profilova?.url ? [obrazek(profilova.url, VELIKOST_TITULNI), stylVyrezu(profilova)] : titulni();
-        nastavitFotkuBanneru(bannerImg, adresa, styl);
-    }).catch(() => nastavitFotkuBanneru(bannerImg, ...titulni()));
+        nastavitFotkuBanneru(bannerImg, profilova?.url ? obrazek(profilova.url, VELIKOST_TITULNI) : '', profilova?.url ? stylVyrezu(profilova) : '');
+    }).catch(() => nastavitFotkuBanneru(bannerImg, '', ''));
 }
+
+// Jak vybrat fotku záhlaví (odkaz v záhlaví bez fotky, nabídka)
+export const navodFotkyZahlavi = () => oznamit('Fotku záhlaví vybereš na kterékoli fotce modelky: pravým tlačítkem nebo ⋯ › Nastavit jako fotku záhlaví. Fotka vyplní celé záhlaví, výřez pak určí, která část je vidět.');
 
 function nastavitFotkuBanneru(bannerImg, adresa, styl) {
     const pozadi = document.getElementById('profilBannerPozadi');
     const rozmazane = document.getElementById('profilBannerRozmazane');
     pozadi?.classList.toggle('bez-fotky', !adresa);
+    const odkaz = /** @type {HTMLElement | null} */ (profilPruhObsah.querySelector('[data-fotka-zahlavi]'));
+    if (odkaz) odkaz.hidden = Boolean(adresa);
     if (adresa) {
-        bannerImg.onload = () => pozadi?.classList.toggle('na-sirku', bannerImg.naturalWidth > bannerImg.naturalHeight * 1.1);
         bannerImg.src = adresa;
         // cssText přepíše celý styl, proto display až po něm
         bannerImg.style.cssText = styl;
@@ -682,6 +685,10 @@ export function pripravit() {
             // Řada odznaků otevře v síni slávy rovnou sbírku odznaků
             if (doOblibenosti.dataset.slavaPohled) nastavitPohledSlavy(doOblibenosti.dataset.slavaPohled);
             otevritOblibenost();
+            return;
+        }
+        if (e.target.closest('[data-fotka-zahlavi]')) {
+            navodFotkyZahlavi();
             return;
         }
         const paska = e.target.closest('[data-online-album]');

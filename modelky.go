@@ -249,7 +249,7 @@ func (a *App) SetCoverVyrez(id int, zoom, x, y float64) bool {
 	z, cx, cy := omezit(zoom, 1, 4), omezit(x, 0, 100), omezit(y, 0, 100)
 	_, err := a.db.Exec(`UPDATE modelky SET cover_zoom = ?, cover_x = ?, cover_y = ? WHERE id = ?`, z, cx, cy, id)
 	if err != nil {
-		a.chyba("uložení výřezu titulní fotky", err)
+		a.chyba("uložení výřezu fotky karty", err)
 		return false
 	}
 	a.aktualizovatVyrezVeSnimku(id, z, cx, cy)
@@ -334,7 +334,7 @@ func (a *App) SetTitulniFotka(modelkaID, fotoID int) bool {
 			WHERE f.id = ?1 AND (f.modelka_id = ?2 OR EXISTS (SELECT 1 FROM alba_modelky am WHERE am.album_id = al.id AND am.modelka_id = ?2)))`,
 		fotoID, modelkaID)
 	if err != nil {
-		a.chyba("nastavení titulní fotky", err)
+		a.chyba("nastavení fotky karty", err)
 		return false
 	}
 	zmeneno, _ := vysledek.RowsAffected()

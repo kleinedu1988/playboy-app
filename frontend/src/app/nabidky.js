@@ -5,7 +5,7 @@ import { nazevAlba, nazevVydani, rozlozitVydani } from '../lib/format';
 import { stav } from './stav';
 import { calendar, covers, detailView, issueView, searchInput, wall } from './prvky';
 import { zpet } from './navigace';
-import { aktualizovatBannerProfilu, nacistFotkyModelky, posunoutStranku, prepnoutRozbaleniAlba, upravitVyrezProfilove, upravitVyrezProfilu } from './profil';
+import { aktualizovatBannerProfilu, nacistFotkyModelky, navodFotkyZahlavi, posunoutStranku, prepnoutRozbaleniAlba, upravitVyrezProfilove, upravitVyrezProfilu } from './profil';
 import { obnovitStranku, otevritVydani, upravitVydani } from './vydani';
 import { nabidkaCisla, nabidkaRoku } from './kalendar';
 import { nacistCovery } from './stena';
@@ -64,7 +64,7 @@ export function otevritNabidku(cil, x, y) {
         polozky = [
             { text: 'Otevřít profil', akce: () => otevritProfilPodleId(modelka.id) },
             { text: 'Upravit modelku…', akce: () => otevritModelModal(modelka) },
-            { text: 'Upravit výřez titulní fotky', akce: () => upravitVyrez(modelka) },
+            { text: 'Upravit výřez fotky karty', akce: () => upravitVyrez(modelka) },
             { text: 'Přidat fotky nebo album…', akce: () => otevritAlbumModal(modelka) },
             null,
             { text: 'Sloučit s jinou modelkou…', akce: () => sloucitModelku(modelka) },
@@ -130,8 +130,8 @@ export function otevritNabidku(cil, x, y) {
         // Jen u čísla s měsícem; ročník a stránka fotografa číslo nejsou
         if (rozlozitVydani(stav.aktualniVydani || '')?.mesic) polozky.push({ text: 'Upravit číslo…', akce: () => upravitVydani(stav.aktualniVydani) });
     } else if (!detailView.classList.contains('hidden')) {
-        // Volné místo v profilu: tytéž akce s modelkou jako ⋯ v kapsli voleb
-        nabidkaModelky(x, y);
+        // Volné místo v profilu: tytéž akce s modelkou jako ⋯ v kapsli voleb; na záhlaví jen fotka záhlaví
+        nabidkaModelky(x, y, Boolean(cil.closest('.hlavni-lista')));
         return;
     } else if (cil.closest('.cislo')) {
         // Číslo časopisu: společná nabídka čísla, s coverem i jeho akce; po označení se stránka Čísla obnoví
@@ -214,18 +214,33 @@ const polozkaCenterfoldu = (album, x, y) => ({
     akce: () => otevritKontextovouNabidku(x, y, polozkyAlba(album, null)),
 });
 
-// Akce s modelkou v pruhu profilu: ⋯ (výřez titulní fotky, promítat, centerfold, vybrat fotky, sloučit, smazat), totéž pravým tlačítkem na volném místě
-function nabidkaModelky(x, y) {
+// Akce s fotkou záhlaví (pravé tlačítko na záhlaví, skupina v ⋯)
+function polozkyFotkyZahlavi(modelka) {
+    return stav.profilovaFotka ? [
+        { text: 'Upravit výřez fotky záhlaví', akce: upravitVyrezProfilove },
+        { text: 'Odebrat fotku záhlaví', akce: async () => {
+            if (!await SetProfilovaFotka(modelka.id, 0)) return;
+            aktualizovatBannerProfilu(modelka);
+        } },
+    ] : [{ text: 'Jak vybrat fotku záhlaví…', akce: navodFotkyZahlavi }];
+}
+
+// Akce s modelkou v pruhu profilu: ⋯ (fotka záhlaví a fotka karty zvlášť, promítat, centerfold, vybrat fotky,
+// sloučit, smazat), totéž pravým tlačítkem na volném místě. Pravé tlačítko přímo na záhlaví (vZahlavi) nabídne
+// z fotek jen fotku záhlaví – fotka karty se upravuje na kartě nebo v panelu Údaje.
+function nabidkaModelky(x, y, vZahlavi = false) {
     const modelka = stav.aktualniModelka;
     if (!modelka) return;
     const centerfoldy = centerfoldyProfilu();
     otevritKontextovouNabidku(x, y, [
-        { text: 'Upravit výřez titulní fotky', akce: upravitVyrezProfilu },
-        ...(stav.profilovaFotka ? [{ text: 'Upravit výřez profilové fotky', akce: upravitVyrezProfilove }] : []),
-        ...(stav.profilovaFotka ? [{ text: 'Zrušit profilovou fotku', akce: async () => {
-            if (!await SetProfilovaFotka(modelka.id, 0)) return;
-            aktualizovatBannerProfilu(modelka);
-        } }] : []),
+        ...(vZahlavi ? polozkyFotkyZahlavi(modelka) : [
+            { nadpis: 'Fotka záhlaví' },
+            ...polozkyFotkyZahlavi(modelka),
+            { nadpis: 'Fotka karty' },
+            { text: 'Upravit výřez fotky karty', akce: upravitVyrezProfilu },
+            { nadpis: 'Modelka' },
+        ]),
+        ...(vZahlavi ? [null] : []),
         ...(stav.aktualniPolozky.length ? [{ text: 'Promítat všechny fotky', akce: () => otevritLightbox(0, true) }] : []),
         ...centerfoldy.map(a => polozkaCenterfoldu(a, x, y)),
         ...(stav.aktualniPolozky.length ? [rezimVyberu()

@@ -18343,8 +18343,9 @@ body.rezim-vyberu #detailView .poster {
 
 .ph-akce {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
+    width: max-content;
     margin-top: 6px;
 }
 
@@ -18358,6 +18359,7 @@ body.rezim-vyberu #detailView .poster {
     font: inherit;
     font-size: 13px;
     font-weight: 600;
+    white-space: nowrap;
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     cursor: pointer;
@@ -18471,6 +18473,11 @@ body.rezim-vyberu #detailView .poster {
         left: 18px;
         bottom: 18px;
         max-width: calc(100% - 36px);
+    }
+
+    .ph-akce {
+        flex-wrap: wrap;
+        width: auto;
     }
 }
 

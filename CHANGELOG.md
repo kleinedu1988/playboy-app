@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.26.2] – 2026-11-08
+
+### Opraveno
+- **Tlačítka v banneru Profilů jsou v jedné řadě**: *🎯 Dnešní výběr* už nepadá na druhý řádek pod *Otevřít profil*, *Další tip* a *✨ Ideální modelka* (na úzkém okně se řada dál zalamuje).
+
 ## [1.26.1] – 2026-11-08
 
 ### Změněno

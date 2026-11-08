@@ -17349,8 +17349,8 @@ body.rezim-vyberu #detailView .poster {
     justify-content: space-between;
     gap: 12px 24px;
     min-width: 0;
-    /* Pruh dole nad lištou alb, nad ním volné místo pro fotku */
-    margin: auto 0 0;
+    /* Pruh dole nad lištou alb, nad ním volné místo pro fotku; od alb oddělený mezerou */
+    margin: auto 0 12px;
     padding: 0 22px;
     border: 0;
     background: none;
@@ -17549,6 +17549,10 @@ body.rezim-vyberu #detailView .poster {
 .navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-nadtitulek,
 .navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-kariera {
     display: none;
+}
+
+.navbar.profil-svinuty .hlavni-lista #profilPruh {
+    margin-bottom: 4px;
 }
 
 .navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-jmeno h2 {

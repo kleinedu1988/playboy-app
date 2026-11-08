@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.10.3] – 2026-11-08
+
+### Změněno
+- **Záhlaví profilu oddělené od lišty alb**: mezi jménem s řádkem kariéry a lištou alb je mezera (22 px místo 10 px), lišta alb už nepůsobí jako součást jména; po odrolování zůstává pruh kompaktní.
+
 ## [1.10.2] – 2026-11-08
 
 ### Změněno

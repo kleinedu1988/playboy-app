@@ -182,6 +182,49 @@ func (a *App) definiceKolekci(fotky []fotkaGalerie, dk *dataKolekce, nyni time.T
 			d, err := time.Parse("2006-01-02", strconv.Itoa(rokNyni)+n[4:10])
 			return err == nil && math.Abs(d.Sub(nyni).Hours()) <= 3.5*24
 		}})
+	// Stejně staré v době focení: věk z data narození a data alba nebo čísla, jeden věk denně (s dost fotkami)
+	vekFotky := func(g *fotkaGalerie) int {
+		n := modelky[g.f.ModelkaID].narozeni
+		datum := g.f.DatumAlba
+		if datum == "" {
+			datum = g.f.Vydani
+		}
+		if len(n) < 4 || len(datum) < 4 {
+			return 0
+		}
+		rn, e1 := strconv.Atoi(n[:4])
+		rf, e2 := strconv.Atoi(datum[:4])
+		if e1 != nil || e2 != nil || rf < rn {
+			return 0
+		}
+		vek := rf - rn
+		// S měsícem narození i focení: před narozeninami o rok méně
+		if len(n) >= 7 && len(datum) >= 7 && datum[4] == '-' && datum[5] != 'S' && datum[5:7] < n[5:7] {
+			vek--
+		}
+		if vek < 18 || vek > 70 {
+			return 0
+		}
+		return vek
+	}
+	poctyVeku := map[int]int{}
+	for i := range fotky {
+		if v := vekFotky(&fotky[i]); v > 0 {
+			poctyVeku[v]++
+		}
+	}
+	var veky []string
+	for v, n := range poctyVeku {
+		if n >= 30 {
+			veky = append(veky, fmt.Sprintf("%02d", v))
+		}
+	}
+	if v := vybratDne(veky, "vek"); v != "" {
+		vek, _ := strconv.Atoi(v)
+		pridat(defKolekce{klic: "cas:vek:" + strconv.Itoa(vek), nazev: fmt.Sprintf("%d let v době focení", vek), skupina: "cas", kontext: 1.2,
+			duvod: "Modelky stejně staré v době focení (z data narození a data alba)",
+			plati: func(g *fotkaGalerie) bool { return vekFotky(g) == vek }})
+	}
 	mesicZpet := nyni.AddDate(0, -1, 0).Format("2006-01-02")
 	pridat(defKolekce{klic: "cas:nove", nazev: "Nově přidané", skupina: "cas", kontext: 1.2, duvod: "Fotky přidané za poslední měsíc",
 		plati: func(g *fotkaGalerie) bool { return g.f.Pridano >= mesicZpet }})

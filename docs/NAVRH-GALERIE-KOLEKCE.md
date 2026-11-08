@@ -1,7 +1,8 @@
 # Návrh: Kolekce v Galerii – sdružené fotky („řady“ jako ve streamovacích službách)
 
-Stav k 8. 11. 2026 (verze 1.17.3). **Nic z toho není rozhodnuté** – návrh sbírá všechny možnosti, rozhodnutí
-v oddílu 7.
+Stav k 8. 11. 2026 (verze 1.18.1). **Rozhodnuto 8. 11. 2026:** postup podle doporučení (oddíl 7, bod 1), 10 řad,
+z původu jen národnost (oblasti, bez etnicity), výročí úmrtí ne, hledání slovy až nakonec. Etapy 1–3 hotové
+v 1.18.0 (+ věk v době focení v 1.18.1).
 
 ## 1. Myšlenka
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
 // Galerie všech fotek: všechny fotky napříč modelkami, filtry, počty v panelu, stránky a promíchání alb
@@ -101,5 +102,24 @@ func TestKolekceGalerie(t *testing.T) {
 	}
 	if len(k) > rad {
 		t.Fatalf("řad %d", len(k))
+	}
+}
+
+// Věk v době focení: z data narození a čísla, před narozeninami o rok méně
+func TestKolekceVekuVDobeFoceni(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	fotky := []fotkaGalerie{{f: Fotografie{ModelkaID: 1, Vydani: "1995-06"}}, {f: Fotografie{ModelkaID: 1, Vydani: "1995-03"}}}
+	dk := &dataKolekce{modelky: map[int]modelkaKolekce{1: {narozeni: "1973-05-10"}}, tagy: map[string]map[string]bool{}}
+	for i := range 40 {
+		fotky = append(fotky, fotkaGalerie{f: Fotografie{ModelkaID: 1, Vydani: "1995-06", ID: 100 + i}})
+	}
+	var vek *defKolekce
+	for _, d := range a.definiceKolekci(fotky, dk, time.Now()) {
+		if strings.HasPrefix(d.klic, "cas:vek:") {
+			vek = &d
+		}
+	}
+	if vek == nil || vek.klic != "cas:vek:22" || !vek.plati(&fotky[0]) || vek.plati(&fotky[1]) {
+		t.Fatalf("věk: %+v", vek)
 	}
 }

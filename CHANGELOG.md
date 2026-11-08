@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.18.1] – 2026-11-08
+
+### Přidáno
+- **Kolekce „N let v době focení“**: modelky stejně staré v době focení – věk z data narození a data alba (jinak čísla), před narozeninami o rok méně; každý den jiný věk (z těch s aspoň 30 fotkami). Výročí úmrtí se jako kolekce nedělá (rozhodnutí 8. 11. 2026).
+
 ## [1.18.0] – 2026-11-08
 
 ### Přidáno

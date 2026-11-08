@@ -297,3 +297,38 @@ func TestPoradiBezOdhaduZFotek(t *testing.T) {
 		t.Fatalf("pořadí: %+v", poradi)
 	}
 }
+
+// S obsahem fotek: nehodnocené podle odhadu z obsahu, album bez hodnocených podle nejlepšího odhadu, z téměř
+// stejných záběrů jen jeden (dokud je z čeho vybírat)
+func TestVyberNahleduSObsahem(t *testing.T) {
+	alba := []albumModelky{
+		{id: 1, nazev: "Online", typ: "Pictorial online", fotek: 3},
+		{id: 2, nazev: "Pictorial", typ: "Pictorial", fotek: 3},
+	}
+	fotky := map[int64][]fotkaNahledu{
+		1: {{id: 10, drive: "a", obsah: 1.5}, {id: 11, drive: "b", obsah: 3.2}, {id: 12, drive: "c", obsah: 3.1}},
+		2: {{id: 20, drive: "d", obsah: 2.0}, {id: 21, drive: "e", obsah: 2.4}, {id: 22, drive: "f", obsah: 1.2}},
+	}
+	// b a c jsou téměř stejný záběr
+	stejne := map[[2]string]bool{{"b", "c"}: true, {"c", "b"}: true}
+	o := &obsahNahledu{podobnost: func(x, y string) float64 {
+		if stejne[[2]string{x, y}] {
+			return 0.97
+		}
+		return 0.5
+	}}
+	cisla := func(n []NahledFotky) []int {
+		var v []int
+		for _, f := range n {
+			v = append(v, f.ID)
+		}
+		return v
+	}
+	if v := cisla(vybratNahledyS(alba, fotky, 3, "", o)); fmt.Sprint(v) != "[11 21 20]" {
+		t.Fatalf("tři náhledy s obsahem: %v", v)
+	}
+	// Všech šest: přeskočený stejný záběr se doplní na konec
+	if v := cisla(vybratNahledyS(alba, fotky, 6, "", o)); len(v) != 6 || v[5] != 12 {
+		t.Fatalf("všechny s obsahem: %v", v)
+	}
+}

@@ -202,13 +202,24 @@ type NahledFotky struct {
 
 type nahledyModelky struct {
 	pocet int
+	obsah uint64 // otisk obsahu fotek, se kterým se náhledy vybraly (po výpočtu dalšího obsahu se vyberou znovu)
 	fotky []NahledFotky
 }
 
 type fotkaNahledu struct {
 	id, rotace, hodnoceni, poradi int
 	drive                         string
+	obsah                         float64 // odhad srdíček z obsahu fotky (obrazové modely); 0 = bez odhadu
 }
+
+// Obsah fotek pro výběr náhledů (obsah_fotek.go): odhad srdíček z obsahu a podobnost dvou fotek; nil = bez modelů
+type obsahNahledu struct {
+	odhad     map[string]float64
+	podobnost func(a, b string) float64
+}
+
+// Téměř stejné záběry (podobnost vektorů obsahu): z nich se do náhledů vezme jen jeden, je-li z čeho vybírat
+const prahStejnehoZaberu = 0.93
 
 const maxNahledu = 24
 
@@ -221,11 +232,12 @@ func (a *App) GetNahledyModelek(ids []int, pocet int) map[int][]NahledFotky {
 	s := a.snimekSbirky()
 	var chybi []int
 	s.mu.Lock()
+	_, otiskObsahu := a.obsahNahleduVPameti()
 	for _, id := range ids {
 		if _, hotovo := vysledek[id]; hotovo {
 			continue
 		}
-		if n, ok := s.nahledy[id]; ok && n.pocet == pocet {
+		if n, ok := s.nahledy[id]; ok && n.pocet == pocet && n.obsah == otiskObsahu {
 			vysledek[id] = n.fotky
 			continue
 		}
@@ -246,7 +258,7 @@ func (a *App) GetNahledyModelek(ids []int, pocet int) map[int][]NahledFotky {
 		if f == nil {
 			f = []NahledFotky{}
 		}
-		s.nahledy[id] = nahledyModelky{pocet, f}
+		s.nahledy[id] = nahledyModelky{pocet, otiskObsahu, f}
 		vysledek[id] = f
 	}
 	s.mu.Unlock()
@@ -281,18 +293,32 @@ func (a *App) spocitatNahledy(s *snimek, ids []int, pocet int, povolit func(id i
 		}
 		radky.Close()
 	}
+	obsahN, _ := a.obsahNahleduVPameti()
+	if obsahN != nil {
+		for al := range fotky {
+			for i := range fotky[al] {
+				fotky[al][i].obsah = obsahN.odhad[fotky[al][i].drive]
+			}
+		}
+	}
 	for _, id := range ids {
 		cover := ""
 		if i, ok := s.indexModelky[id]; ok {
 			cover = s.modelky[i].CoverID
 		}
-		vysledek[id] = vybratNahledy(s.albaModelek[id], fotky, pocet, cover)
+		vysledek[id] = vybratNahledyS(s.albaModelek[id], fotky, pocet, cover, obsahN)
 	}
 	return vysledek
 }
 
 // Výběr náhledů: po kolech přes alba seřazená podle skóre, v albu nejlepší fotky napřed (viz výše)
 func vybratNahledy(alba []albumModelky, fotky map[int64][]fotkaNahledu, pocet int, cover string) []NahledFotky {
+	return vybratNahledyS(alba, fotky, pocet, cover, nil)
+}
+
+// S obsahem fotek: nehodnocené fotky podle odhadu srdíček z obsahu (místo pořadí v albu), alba bez hodnocených
+// fotek podle nejlepšího odhadu a z téměř stejných záběrů jen jeden – souboj ukáže modelku tím, co se ti asi líbí
+func vybratNahledyS(alba []albumModelky, fotky map[int64][]fotkaNahledu, pocet int, cover string, obsahN *obsahNahledu) []NahledFotky {
 	type albumVyberu struct {
 		al    albumModelky
 		skore float64
@@ -314,6 +340,9 @@ func vybratNahledy(alba []albumModelky, fotky map[int64][]fotkaNahledu, pocet in
 			if x.hodnoceni != y.hodnoceni {
 				return x.hodnoceni > y.hodnoceni
 			}
+			if x.obsah != y.obsah {
+				return x.obsah > y.obsah
+			}
 			if (x.poradi > 0) != (y.poradi > 0) {
 				return x.poradi > 0
 			}
@@ -323,6 +352,10 @@ func vybratNahledy(alba []albumModelky, fotky map[int64][]fotkaNahledu, pocet in
 			return x.id < y.id
 		})
 		skore, _, _, _ := skoreAlba(al.pocty)
+		// Album bez hodnocených fotek: nejlepší odhad z obsahu, o trochu níž než stejně hodnocené album
+		if skore == 0 && f[0].obsah > 0 {
+			skore = f[0].obsah - 0.25
+		}
 		serazena = append(serazena, albumVyberu{al, skore, f})
 	}
 	sort.SliceStable(serazena, func(i, j int) bool {
@@ -353,9 +386,36 @@ func vybratNahledy(alba []albumModelky, fotky map[int64][]fotkaNahledu, pocet in
 		if dalsi[i].f.hodnoceni != dalsi[j].f.hodnoceni {
 			return dalsi[i].f.hodnoceni > dalsi[j].f.hodnoceni
 		}
+		if dalsi[i].f.obsah != dalsi[j].f.obsah {
+			return dalsi[i].f.obsah > dalsi[j].f.obsah
+		}
 		return dalsi[i].poradi < dalsi[j].poradi
 	})
-	vybrane := append(prvni[:min(pocet, len(prvni)):min(pocet, len(prvni))], dalsi[:min(max(0, pocet-len(prvni)), len(dalsi))]...)
+	var vybrane []kandidat
+	if obsahN == nil || obsahN.podobnost == nil {
+		vybrane = append(prvni[:min(pocet, len(prvni)):min(pocet, len(prvni))], dalsi[:min(max(0, pocet-len(prvni)), len(dalsi))]...)
+	} else {
+		// Téměř stejný záběr jako už vybraný se přeskočí; když pak fotek chybí, doplní se přeskočené
+		var preskocene []kandidat
+		for _, k := range append(append([]kandidat{}, prvni...), dalsi...) {
+			if len(vybrane) == pocet {
+				break
+			}
+			stejny := false
+			for _, v := range vybrane {
+				if obsahN.podobnost(k.f.drive, v.f.drive) >= prahStejnehoZaberu {
+					stejny = true
+					break
+				}
+			}
+			if stejny {
+				preskocene = append(preskocene, k)
+			} else {
+				vybrane = append(vybrane, k)
+			}
+		}
+		vybrane = append(vybrane, preskocene[:min(len(preskocene), pocet-len(vybrane))]...)
+	}
 	sort.SliceStable(vybrane, func(i, j int) bool { return vybrane[i].f.hodnoceni > vybrane[j].f.hodnoceni })
 	vysledek := make([]NahledFotky, 0, len(vybrane))
 	for _, k := range vybrane {

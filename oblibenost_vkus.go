@@ -520,3 +520,45 @@ func pripravitUdajeVkusu(modelky []Modelka) map[int]udajeVkusu {
 	}
 	return udaje
 }
+
+// Nejméně hodnocených modelek s obsahem fotek, ze kterých se převádí obsah fotek na srdíčka modelky
+const minModelekObsahu = 30
+
+// Úroveň nehodnocených modelek bez odhadu vkusu podle obsahu fotek: obsah (odhad srdíček fotek, jiná stupnice)
+// se převede na srdíčka modelky přímkou naučenou na hodnocených modelkách (nejmenší čtverce), oříznuto na ½–5
+func urovenZObsahu(modelky []Modelka, obsah map[int]float64, model *modelOblibenosti) map[int]float64 {
+	var sx, sy, sxx, sxy, n float64
+	for _, m := range modelky {
+		if x, ok := obsah[m.ID]; ok && m.Hodnoceni > 0 {
+			sx += x
+			sy += m.Hodnoceni
+			sxx += x * x
+			sxy += x * m.Hodnoceni
+			n++
+		}
+	}
+	if n < minModelekObsahu {
+		return nil
+	}
+	rozptyl := sxx - sx*sx/n
+	if rozptyl <= 0 {
+		return nil
+	}
+	b := (sxy - sx*sy/n) / rozptyl
+	if b <= 0 {
+		return nil // obsah se srdíčky nesouvisí: úroveň by nic neříkala
+	}
+	a0 := (sy - b*sx) / n
+	v := map[int]float64{}
+	for _, m := range modelky {
+		x, ok := obsah[m.ID]
+		if !ok || m.Hodnoceni > 0 {
+			continue
+		}
+		if _, maOdhad := model.odhad[m.ID]; maOdhad {
+			continue
+		}
+		v[m.ID] = math.Min(5, math.Max(0.5, a0+b*x))
+	}
+	return v
+}

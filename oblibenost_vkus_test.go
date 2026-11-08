@@ -763,3 +763,27 @@ func TestDoplnitObsahVkusu(t *testing.T) {
 		t.Fatal("modelka mimo údaje se nemá přidat")
 	}
 }
+
+// Úroveň z obsahu fotek: přímka z hodnocených modelek, jen pro nehodnocené bez odhadu vkusu
+func TestUrovenZObsahu(t *testing.T) {
+	var modelky []Modelka
+	obsah := map[int]float64{}
+	for i := range 40 {
+		h := float64(1 + i%5)
+		modelky = append(modelky, Modelka{ID: i + 1, Hodnoceni: h})
+		obsah[i+1] = 1.5 + 0.2*h // obsah roste se srdíčky
+	}
+	modelky = append(modelky, Modelka{ID: 100}, Modelka{ID: 101})
+	obsah[100], obsah[101] = 2.5, 2.5
+	model := &modelOblibenosti{odhad: map[int]float64{101: 3}}
+	u := urovenZObsahu(modelky, obsah, model)
+	if x, ok := u[100]; !ok || x < 4.9 {
+		t.Fatalf("úroveň z obsahu %v", u)
+	}
+	if _, ok := u[101]; ok {
+		t.Fatal("modelka s odhadem vkusu nemá dostat úroveň z obsahu")
+	}
+	if urovenZObsahu(modelky[:10], obsah, model) != nil {
+		t.Fatal("s málo hodnocenými se nepřevádí")
+	}
+}

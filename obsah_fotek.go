@@ -447,3 +447,22 @@ func (a *App) GetStavUceniTagu() StavUceniTagu {
 	}
 	return v
 }
+
+// Obsah fotek pro náhledy v soubojích (oblibenost_fotky.go): čistý odhad srdíček z obsahu a podobnost záběrů;
+// nil bez obrazových modelů. Otisk se mění s hodnocením fotek a spočítaným obsahem.
+func (a *App) obsahNahleduVPameti() (*obsahNahledu, uint64) {
+	if a.obsah == nil || !a.obsah.Zapnuto() {
+		return nil, 0
+	}
+	o := a.odhadySrdicekFotek()
+	odhadyPamet.Lock()
+	klic := odhadyPamet.klic
+	odhadyPamet.Unlock()
+	h := fnv.New64a()
+	fmt.Fprint(h, klic)
+	n := &obsahNahledu{odhad: map[string]float64{}, podobnost: a.obsah.Podobnost}
+	if o != nil {
+		n.odhad = o.Obsah
+	}
+	return n, h.Sum64()
+}

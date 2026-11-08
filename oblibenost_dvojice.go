@@ -38,6 +38,7 @@ const (
 	vahaRozpracovane   = 2.5 // už porovnaná, ale ještě bez návrhu srdíček: dotáhnout ji
 	vahaBezOdhadu      = 0.35
 	vahaNesouladu      = 1.6 // modelka, které nesedí srdíčka: další porovnání to ověří
+	vahaObsahu         = 0.7 // úroveň jen podle obsahu fotek: méně jistá než odhad vkusu, jistější než průměr
 )
 
 // Dvojice k porovnání vybrané aktivním učením. okruh: "" všechny hodnocené, "stejne" jen stejná úroveň srdíček,
@@ -120,6 +121,7 @@ const (
 	urovenPrumer    = iota // bez odhadu: průměr srdíček sbírky
 	urovenVkus             // odhad modelu vkusu
 	urovenPorovnani        // síla z dosavadních porovnání
+	urovenObsah            // bez odhadu vkusu: podle obsahu jejích fotek (obrazové modely, modelOblibenosti.urovenObsahu)
 )
 
 // Druhy kandidátů dvojic (pro důvod)
@@ -155,6 +157,8 @@ func duvodDvojice(k kandidatDvojice, model *modelOblibenosti) string {
 			}
 		case urovenVkus:
 			odkud = fmt.Sprintf("Odhad podle vkusu: %s", textSrdicek(k.uroven))
+		case urovenObsah:
+			odkud = fmt.Sprintf("Podle obsahu jejích fotek vychází na %s", textSrdicek(k.uroven))
 		default:
 			odkud = fmt.Sprintf("Zatím bez odhadu, průměr sbírky je %s", textSrdicek(k.uroven))
 		}
@@ -342,6 +346,8 @@ func vybratDvojiceS(modelky []Modelka, model *modelOblibenosti, porovnani []poro
 			}
 			if zdroj == urovenVkus {
 				vahaX = 1
+			} else if o, ok := model.urovenObsahu[x.ID]; ok && model.pocet[x.ID] == 0 {
+				cil, zdroj, vahaX = o, urovenObsah, vahaObsahu
 			}
 			if model.pocet[x.ID] > 0 {
 				zdroj = urovenPorovnani

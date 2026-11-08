@@ -426,7 +426,9 @@ type modelOblibenosti struct {
 	predpoklad  map[int]float64 // střed předpokladu síly
 	jenOdhad    map[int]bool    // nehodnocená a neporovnaná modelka: oblíbenost jen odhadem vkusu
 	zdrojOdhadu map[int]int     // nehodnocená: odkud je předpoklad síly (urovenVkus, urovenPrumer)
-	vkusZeSkore bool            // model vkusu má mezi příznaky skóre fotek (výchozí nastavení vkusu, ne průměr srdíček fotek)
+	// Nehodnocená bez odhadu vkusu: úroveň podle obsahu jejích fotek (jen pro výběr dvojic k porovnání)
+	urovenObsahu map[int]float64
+	vkusZeSkore  bool // model vkusu má mezi příznaky skóre fotek (výchozí nastavení vkusu, ne průměr srdíček fotek)
 
 	// Zájem (oblibenost_zajem.go): míra zájmu z, záznamy, od kdy se sleduje a naučená váha
 	zajem     map[int]float64
@@ -521,6 +523,7 @@ func (a *App) modelOblibenosti(modelky []Modelka) *modelOblibenosti {
 	u.mu.Unlock()
 	model := spocitatOblibenostUplne(modelky, porovnani, zajem, vstupOblibenosti{drzitelky: st.drzitelky, prevzate: prevzate, udaje: u.ob.udaje}, nyni)
 	model.nastavitTrend(snimek, den, nyni, potvrzene)
+	model.urovenObsahu = urovenZObsahu(modelky, obsahM, model)
 	model.otisk = otisk
 	// Pro příští spuštění (jen okno aplikace; zápis na pozadí čeká zavření programu)
 	if a.startNaPozadi {

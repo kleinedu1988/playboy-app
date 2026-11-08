@@ -74,6 +74,23 @@ func (v *Vektory) Vektor(id string) []float32 {
 	return x
 }
 
+// Podobnost dvou fotek (skalární součin vektorů délky 1); 0, když některá vektor nemá
+func (v *Vektory) Podobnost(a, b string) float64 {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	i, ok1 := v.index[a]
+	j, ok2 := v.index[b]
+	if !ok1 || !ok2 {
+		return 0
+	}
+	var s int32
+	x, y := v.data[i*Rozmer:(i+1)*Rozmer], v.data[j*Rozmer:(j+1)*Rozmer]
+	for k := range x {
+		s += int32(x[k]) * int32(y[k])
+	}
+	return float64(s) * float64(v.meritka[i]) * float64(v.meritka[j])
+}
+
 // Pridat uloží (nebo nahradí) vektor délky 1
 func (v *Vektory) Pridat(id string, vektor []float32) {
 	if len(vektor) != Rozmer || id == "" || len(id) > 255 {

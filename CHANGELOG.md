@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.10.0] – 2026-11-08
+
+### Změněno
+- **Souboje ukazují modelku tím, co se ti asi líbí**: fotky v porovnání se u nehodnocených fotek řadí podle odhadu srdíček z obsahu (dřív podle pořadí v albu), alba bez hodnocených fotek podle nejlepšího odhadu a z téměř stejných záběrů (podobnost obsahu ≥ 0,93) se vezme jen jeden – souboj tak ukáže víc různých focení a póz místo série skoro stejných snímků. Po spočítání dalšího obsahu se náhledy vyberou znovu.
+- **Nehodnocená modelka bez odhadu vkusu** (málo údajů) se do souboje staví na úroveň podle obsahu jejích fotek (převedeno na srdíčka přímkou z hodnocených modelek), ne na průměr sbírky; důvod dvojice to řekne („Podle obsahu jejích fotek vychází na…“). Modelky s odhadem vkusu se to netýká – ten obsah fotek obsahuje od 1.6.0.
+
 ## [1.9.0] – 2026-11-07
 
 ### Změněno

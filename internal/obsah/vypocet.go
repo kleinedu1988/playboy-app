@@ -233,6 +233,20 @@ func (s *Sluzba) Partie(id string) []float32 {
 	return p.Jistoty(id)
 }
 
+// Podobnost dvou fotek (ID souborů) podle vektorů obsahu: 1 = stejná, 0 bez vektoru
+func (s *Sluzba) Podobnost(a, b string) float64 {
+	if s == nil {
+		return 0
+	}
+	s.mu.Lock()
+	v := s.vektory
+	s.mu.Unlock()
+	if v == nil {
+		return 0
+	}
+	return v.Podobnost(a, b)
+}
+
 // PocetPartii: kolik fotek má spočítané partie z detektoru
 func (s *Sluzba) PocetPartii() int {
 	if s == nil {

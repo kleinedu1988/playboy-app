@@ -61,6 +61,30 @@ func ulozitStavOkna(stav StavOkna) error {
 	return os.WriteFile(souborOkna(), data, 0o600)
 }
 
+// Okno úvodní obrazovky: jen na logo, krok, seznam přípravy a tlačítko
+const (
+	sirkaUvodu = 460
+	vyskaUvodu = 580
+)
+
+// ObnovitOkno: konec úvodní obrazovky – okno dostane uloženou velikost a polohu (nebo se maximalizuje). Volá ho
+// okno jednou; další volání (a testy bez okna) nic nedělají.
+func (a *App) ObnovitOkno() {
+	if a.ctx == nil || a.uvod == nil || !a.uvod.bezi.CompareAndSwap(true, false) {
+		return
+	}
+	o := a.uvod.okno
+	runtime.WindowSetSize(a.ctx, o.Sirka, o.Vyska)
+	if o.MaPolohu && !o.Maximalizovane {
+		runtime.WindowSetPosition(a.ctx, o.X, o.Y)
+	} else {
+		runtime.WindowCenter(a.ctx)
+	}
+	if o.Maximalizovane {
+		runtime.WindowMaximise(a.ctx)
+	}
+}
+
 // Zapsání stavu okna těsně před zavřením
 func zapamatovatOkno(ctx context.Context) {
 	stav := nacistStavOkna()

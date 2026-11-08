@@ -167,6 +167,8 @@ export function NastavitHeslo(arg1:string,arg2:string):Promise<boolean>;
 
 export function ObnovitFotky(arg1:Array<sbirka.ObnovaFotky>):Promise<number>;
 
+export function ObnovitOkno():Promise<void>;
+
 export function ObnovitZalohu(arg1:string):Promise<string>;
 
 export function OdebratFotky(arg1:Array<number>):Promise<Array<sbirka.ObnovaFotky>>;

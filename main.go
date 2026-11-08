@@ -27,19 +27,18 @@ func main() {
 	// Obrázky v okně jdou přes místní mezipaměť náhledů (nahledy.go, obsluha v AssetServer níže)
 	nahledyPresMezipamet.Store(true)
 	app.nahledy = nahledy.Nova(nahledy.Slozka(), adresaNahleduNaDisku)
-	// Okno se otevře tak, jak bylo naposledy zavřeno
+	// Úvodní obrazovka je malé okno uprostřed; uloženou velikost a polohu dostane okno až na konci úvodu
+	// (App.ObnovitOkno), tak jak bylo naposledy zavřeno
 	okno := nacistStavOkna()
-	stavOkna := options.Normal
-	if okno.Maximalizovane {
-		stavOkna = options.Maximised
-	}
+	app.uvod = &uvodOkna{okno: okno}
+	app.uvod.bezi.Store(true)
 
 	// Create application with options
 	err := wails.Run(&options.App{
 		Title:            "Playboy Database",
-		Width:            okno.Sirka,
-		Height:           okno.Vyska,
-		WindowStartState: stavOkna,
+		Width:            sirkaUvodu,
+		Height:           vyskaUvodu,
+		WindowStartState: options.Normal,
 		// Okno nejde zmenšit pod jednu kartu modelky v nejmenší velikosti (včetně lišty a okrajů)
 		MinWidth:  280,
 		MinHeight: 420,
@@ -65,12 +64,13 @@ func main() {
 			app.naChybu = func(zprava string) { runtime.EventsEmit(ctx, "chyba", zprava) }
 			app.startNaPozadi = true
 			app.startup(ctx)
-			if okno.MaPolohu && !okno.Maximalizovane {
-				runtime.WindowSetPosition(ctx, okno.X, okno.Y)
-			}
+			runtime.WindowCenter(ctx)
 		},
 		OnBeforeClose: func(ctx context.Context) bool {
-			zapamatovatOkno(ctx)
+			// Zavření během úvodu nesmí uložit malé okno úvodu
+			if !app.uvod.bezi.Load() {
+				zapamatovatOkno(ctx)
+			}
 			return false
 		},
 		OnShutdown: func(ctx context.Context) { app.shutdown() },

@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.12.0] – 2026-11-08
+
+### Změněno
+- **Úvodní obrazovka v malém okně**: program se otevře jako malé okno 460 × 580 px uprostřed obrazovky – jen logo (nebo kruh profilovek, zmenšený), krok, seznam přípravy, čas a tlačítko. Na konci úvodu dostane okno uloženou velikost a polohu (nebo se maximalizuje, jak bylo naposledy); se zámkem už před oknem s heslem. Zavření programu během úvodu malé okno neuloží.
+
 ## [1.11.1] – 2026-11-08
 
 ### Změněno

@@ -318,6 +318,10 @@ export function ObnovitFotky(arg1) {
   return window['go']['main']['App']['ObnovitFotky'](arg1);
 }
 
+export function ObnovitOkno() {
+  return window['go']['main']['App']['ObnovitOkno']();
+}
+
 export function ObnovitZalohu(arg1) {
   return window['go']['main']['App']['ObnovitZalohu'](arg1);
 }

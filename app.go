@@ -52,6 +52,13 @@ type App struct {
 	nahledy *nahledy.Mezipamet
 	// Obsah fotek: model, vektory a podobné fotky (obsah_fotek.go); nil = vypnuto (testy bez startup)
 	obsah *obsah.Sluzba
+	// Úvodní obrazovka v malém okně (main.go): okno dostane uloženou velikost až na jejím konci (ObnovitOkno)
+	uvod *uvodOkna
+}
+
+type uvodOkna struct {
+	bezi atomic.Bool
+	okno StavOkna // uložený stav okna, který dostane po úvodu
 }
 
 // Počká na práci startu na pozadí (denní záloha, první snímek), než se databáze zavře nebo vymění

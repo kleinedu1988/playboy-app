@@ -1,7 +1,7 @@
 import './style.css';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import { oznamit } from './ui/oznameni';
-import { GetOblibenost, GetSezona, GetStavUceniTagu, GetVerze, MaZamek, Predpripravit, StavDatabaze } from './app/backend';
+import { GetOblibenost, GetSezona, GetStavUceniTagu, GetVerze, MaZamek, ObnovitOkno, Predpripravit, StavDatabaze } from './app/backend';
 import { krokUvodu, pockatNaNahledy, seznamUvodu, stavUvodu, tlacitkoUvodu, skrytUvod, ukazatUvod, ulozitProfilovkyUvodu, verzeUvodu, zapomenoutProfilovkyUvodu } from './ui/uvod';
 import { stav } from './app/stav';
 import { nacistSpecialy, vsechnyModelky } from './app/mezipamet';
@@ -101,13 +101,25 @@ function popisModelu(s) {
 
 // Spuštění pod úvodní obrazovkou (ui/uvod.js): nejdřív případný zámek, potom přehled, ve kterém se program naposledy
 // zavřel, jeho náhledy a data Hodnocení; úvod zmizí, až je vše připravené
+// Konec úvodu: malé okno úvodní obrazovky dostane uloženou velikost a polohu (nastaveni.go ObnovitOkno), pak
+// úvod zmizí; volá se jednou (pojistka, konec přípravy)
+let uvodSkoncil = false;
+async function konecUvodu() {
+    if (uvodSkoncil) return;
+    uvodSkoncil = true;
+    await ObnovitOkno().catch(() => {});
+    skrytUvod();
+}
+
 (async () => {
     // Pojistka: úvod nesmí zůstat viset, ani kdyby se příprava zasekla
-    let pojistka = setTimeout(skrytUvod, 15000);
+    let pojistka = setTimeout(konecUvodu, 15000);
     try {
         GetVerze().then(verzeUvodu).catch(() => {});
         stav.maZamek = await MaZamek();
         if (stav.maZamek) {
+            // Okno s heslem potřebuje plné okno, ne malé okno úvodu
+            await ObnovitOkno().catch(() => {});
             ukazatUvod(false);
             await odemknoutPriStartu();
             ukazatUvod(true);
@@ -141,7 +153,7 @@ function popisModelu(s) {
         clearTimeout(pojistka);
         await obsahFotek.pripravitVUvodu(krokUvodu, tlacitkoUvodu).catch(() => {});
         stavUvodu('modely', ...popisModelu(obsahFotek.stavObsahuFotek()));
-        pojistka = setTimeout(skrytUvod, LIMIT_PRIPRAVY);
+        pojistka = setTimeout(konecUvodu, LIMIT_PRIPRAVY);
         // Po čase jde přípravu přeskočit (dokončí se pak za chodu)
         let nabidkaPreskoceni = 0;
         const preskocit = new Promise((hotovo) => {
@@ -186,7 +198,7 @@ function popisModelu(s) {
         tlacitkoUvodu('');
     } finally {
         clearTimeout(pojistka);
-        skrytUvod();
+        await konecUvodu();
         zaznamenatStart();
     }
     // Nový náhodný výběr profilovek pro úvod příštího spuštění, až program doběhne (seznam modelek je už načtený);

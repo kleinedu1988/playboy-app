@@ -11,7 +11,7 @@
     <style>
         html, body { margin: 0; background: #0f0f12; }
         #uvod { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: 14px; background: radial-gradient(ellipse at 50% 38%, #1d1418 0%, #0f0f12 62%);
+            justify-content: center; gap: 10px; background: radial-gradient(ellipse at 50% 38%, #1d1418 0%, #0f0f12 62%);
             color: #f0f0f5; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; transition: opacity .22s ease;
             --wails-draggable: drag; cursor: default; user-select: none; }
         #uvod.skryty { opacity: 0; pointer-events: none; }
@@ -45,9 +45,9 @@
         #uvod .uvod-cas { font-size: 11px; color: #5c5c63; min-height: 14px; font-variant-numeric: tabular-nums; }
         @keyframes uvod-tep { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
         /* Nízké okno: seznam se nevejde, zůstane jen pruh a krok */
-        @media (max-height: 640px) { #uvod .uvod-seznam, #uvod .uvod-cas { display: none; } }
+        @media (max-height: 500px) { #uvod .uvod-seznam, #uvod .uvod-cas { display: none; } }
         @media (prefers-reduced-motion: reduce) { #uvod, #uvod .uvod-pruh i { transition: none; } #uvod .uvod-seznam li.bezi .z::before { animation: none; } }
-        /* Úvodní obrazovka – návrh A „kruh“. V aplikaci patří do bloku <style> v index.html (CSP omezuje jen skripty).
+        /* Úvodní obrazovka – návrh A „kruh“ (zmenšený pro malé okno úvodu 460 × 580 px, nastaveni.go). V aplikaci patří do bloku <style> v index.html (CSP omezuje jen skripty).
            Profilovky stojí na plášti válce (12 míst po 30°); celý válec se otáčí kolem svislé osy – jediná animace
            (transform), běží v kompozitoru. Boční fotky se zmenšují perspektivou, natáčejí s válcem, zadní skryje
            backface-visibility a do stran je pohltí eliptická maska a tmavý závoj (obojí statické). */
@@ -56,13 +56,13 @@
         #uvod > .uvod-ikona { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 10px 34px rgba(216, 27, 96, .28), 0 4px 14px rgba(0, 0, 0, .5); }
 
         /* Scéna: perspektiva, měkká eliptická maska (okraje se ztrácejí do pozadí) */
-        #uvod .uvod-kruh { position: relative; width: 680px; max-width: 100vw; height: 250px; margin: -6px 0 -8px;
-            perspective: 760px; perspective-origin: 50% 50%;
-            -webkit-mask-image: radial-gradient(ellipse 300px 160px at 50% 50%, #000 46%, rgba(0, 0, 0, .5) 72%, transparent 100%);
-            mask-image: radial-gradient(ellipse 300px 160px at 50% 50%, #000 46%, rgba(0, 0, 0, .5) 72%, transparent 100%);
+        #uvod .uvod-kruh { position: relative; width: 460px; max-width: 100vw; height: 180px; margin: -4px 0 -6px;
+            perspective: 550px; perspective-origin: 50% 50%;
+            -webkit-mask-image: radial-gradient(ellipse 216px 115px at 50% 50%, #000 46%, rgba(0, 0, 0, .5) 72%, transparent 100%);
+            mask-image: radial-gradient(ellipse 216px 115px at 50% 50%, #000 46%, rgba(0, 0, 0, .5) 72%, transparent 100%);
             animation: kruh-objevit .7s ease-out both; }
         /* růžová záře za přední fotkou */
-        #uvod .uvod-kruh::before { content: ""; position: absolute; left: 50%; top: 50%; width: 360px; height: 240px; margin: -120px 0 0 -180px;
+        #uvod .uvod-kruh::before { content: ""; position: absolute; left: 50%; top: 50%; width: 260px; height: 173px; margin: -86px 0 0 -130px;
             background: radial-gradient(ellipse at center, rgba(216, 27, 96, .22) 0%, rgba(216, 27, 96, .07) 45%, transparent 70%); }
         /* závoj: boční fotky tmavnou podle polohy (= podle úhlu na válci), přední zůstane čistá */
         #uvod .uvod-kruh::after { content: ""; position: absolute; inset: 0; pointer-events: none;
@@ -70,12 +70,12 @@
                 rgba(15, 15, 18, 0) 59%, rgba(15, 15, 18, .45) 67%, rgba(15, 15, 18, .85) 82%); }
 
         /* Válec: posunutý o poloměr dozadu, aby přední fotka stála v rovině obrazovky (měřítko 1) */
-        #uvod .kruh { position: absolute; inset: 0; transform-style: preserve-3d; transform: translateZ(-300px);
+        #uvod .kruh { position: absolute; inset: 0; transform-style: preserve-3d; transform: translateZ(-216px);
             will-change: transform; animation: kruh-otacet 31.2s cubic-bezier(.45, 0, .25, 1) -2.3s infinite; }
 
-        #uvod .kruh-karta { position: absolute; left: 50%; top: 50%; width: 150px; height: 200px; margin: -100px 0 0 -75px;
+        #uvod .kruh-karta { position: absolute; left: 50%; top: 50%; width: 108px; height: 144px; margin: -72px 0 0 -54px;
             border-radius: 16px; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-            transform: rotateY(calc(var(--i) * 30deg)) translateZ(300px);
+            transform: rotateY(calc(var(--i) * 30deg)) translateZ(216px);
             /* zástupce, dokud se fotka nenačte (nebo když se nenačte vůbec) */
             background: radial-gradient(ellipse 70% 55% at 50% 34%, #2a1c23 0%, #1b1a20 60%, #16161b 100%);
             box-shadow: 0 14px 30px rgba(0, 0, 0, .55); }
@@ -96,19 +96,19 @@
         @keyframes kruh-objevit { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
         /* 12 kroků po 30°: v každém se válec rozjede a zpomalí (časování platí pro každý úsek), přední fotka chvíli postojí */
         @keyframes kruh-otacet {
-            0% { transform: translateZ(-300px) rotateY(0deg); }
-            8.3333% { transform: translateZ(-300px) rotateY(-30deg); }
-            16.6667% { transform: translateZ(-300px) rotateY(-60deg); }
-            25% { transform: translateZ(-300px) rotateY(-90deg); }
-            33.3333% { transform: translateZ(-300px) rotateY(-120deg); }
-            41.6667% { transform: translateZ(-300px) rotateY(-150deg); }
-            50% { transform: translateZ(-300px) rotateY(-180deg); }
-            58.3333% { transform: translateZ(-300px) rotateY(-210deg); }
-            66.6667% { transform: translateZ(-300px) rotateY(-240deg); }
-            75% { transform: translateZ(-300px) rotateY(-270deg); }
-            83.3333% { transform: translateZ(-300px) rotateY(-300deg); }
-            91.6667% { transform: translateZ(-300px) rotateY(-330deg); }
-            100% { transform: translateZ(-300px) rotateY(-360deg); }
+            0% { transform: translateZ(-216px) rotateY(0deg); }
+            8.3333% { transform: translateZ(-216px) rotateY(-30deg); }
+            16.6667% { transform: translateZ(-216px) rotateY(-60deg); }
+            25% { transform: translateZ(-216px) rotateY(-90deg); }
+            33.3333% { transform: translateZ(-216px) rotateY(-120deg); }
+            41.6667% { transform: translateZ(-216px) rotateY(-150deg); }
+            50% { transform: translateZ(-216px) rotateY(-180deg); }
+            58.3333% { transform: translateZ(-216px) rotateY(-210deg); }
+            66.6667% { transform: translateZ(-216px) rotateY(-240deg); }
+            75% { transform: translateZ(-216px) rotateY(-270deg); }
+            83.3333% { transform: translateZ(-216px) rotateY(-300deg); }
+            91.6667% { transform: translateZ(-216px) rotateY(-330deg); }
+            100% { transform: translateZ(-216px) rotateY(-360deg); }
         }
 
         /* Omezený pohyb: statická řada pěti fotek, prostřední největší (pozice --p, |p| = --a nastaví uvod-start.js) */

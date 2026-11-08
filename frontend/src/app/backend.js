@@ -85,6 +85,8 @@ const CTENI = new Set([
     'VypnoutObsah',
     'GetNavrhyTagu',
     'GetPokrytiOdhadu',
+    // Okno po úvodní obrazovce dostane uloženou velikost (nastaveni.go); data nemění
+    'ObnovitOkno',
     'GetStavUceniTagu',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
@@ -178,6 +180,7 @@ export const ZastavitObsah = /** @type {typeof App.ZastavitObsah} */ (obalit('Za
 export const VypnoutObsah = /** @type {typeof App.VypnoutObsah} */ (obalit('VypnoutObsah'));
 export const GetNavrhyTagu = /** @type {typeof App.GetNavrhyTagu} */ (obalit('GetNavrhyTagu'));
 export const GetPokrytiOdhadu = /** @type {typeof App.GetPokrytiOdhadu} */ (obalit('GetPokrytiOdhadu'));
+export const ObnovitOkno = /** @type {typeof App.ObnovitOkno} */ (obalit('ObnovitOkno'));
 export const GetStavUceniTagu = /** @type {typeof App.GetStavUceniTagu} */ (obalit('GetStavUceniTagu'));
 export const GetStatistiky = /** @type {typeof App.GetStatistiky} */ (obalit('GetStatistiky'));
 export const GetVyvojVCase = /** @type {typeof App.GetVyvojVCase} */ (obalit('GetVyvojVCase'));

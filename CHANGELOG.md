@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.10.4] – 2026-11-08
+
+### Změněno
+- **Záhlaví profilu bez prázdných míst**: fotka na šířku zabere 82 % šířky banneru (dřív 68 %) a do pozadí přechází jen pod textem vlevo – nad jménem už nezůstává velká tmavá plocha.
+- **Bez centerfoldu není tlačítko Centerfold** (vypnuté vypadalo skoro jako ostatní akce a zabíralo místo).
+- **Drobeček se jménem modelky neutrálně** (bílý text bez růžového podkladu): jméno je hned pod ním velkým písmem a růžová zůstává hlavní akci a zvolenému albu.
+
 ## [1.10.3] – 2026-11-08
 
 ### Změněno

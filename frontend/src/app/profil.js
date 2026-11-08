@@ -372,7 +372,7 @@ export async function nacistFotkyModelky(modelkaId) {
     // Centerfold je tlačítko v pruhu: otevře plakát v prohlížeči (víc centerfoldů: ↑ ↓ mezi nimi); hvězdička je
     // růžová, když modelka centerfold má, jinak jen bílý obrys a tlačítko je vypnuté
     const prvniCenterfold = centerfoldy[0]?.polozky[0];
-    // Bez centerfoldu zůstává tlačítko vidět, jen vypnuté (hvězdička obrysem)
+    // Bez centerfoldu je tlačítko vypnuté; v záhlaví profilu se pak neukazuje (style.css)
     centerfoldBtn.disabled = !prvniCenterfold;
     centerfoldBtn.dataset.index = prvniCenterfold ? String(indexPolozky.get(prvniCenterfold)) : '';
     centerfoldBtn.querySelector('b').textContent = centerfoldy.length > 1 ? `Centerfoldy ${centerfoldy.length}` : 'Centerfold';

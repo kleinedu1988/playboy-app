@@ -17297,10 +17297,11 @@ body.rezim-vyberu #detailView .poster {
 }
 
 .profil-banner-pozadi.na-sirku .profil-banner-ram {
-    width: 68%;
+    /* Fotka na šířku zabere skoro celý banner; přechod jen pod textem vlevo, ať nad jménem nezůstává prázdné místo */
+    width: 82%;
     aspect-ratio: auto;
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 42%);
-    mask-image: linear-gradient(to right, transparent 0%, #000 42%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 30%);
+    mask-image: linear-gradient(to right, transparent 0%, #000 30%);
 }
 
 .profil-banner-foto {
@@ -17480,6 +17481,22 @@ body.rezim-vyberu #detailView .poster {
     color: var(--zlato-svetle);
     text-decoration: underline;
     text-underline-offset: 3px;
+}
+
+/* Bez centerfoldu tlačítko Centerfold v záhlaví není (vypnuté vypadalo skoro jako ostatní akce) */
+.hlavni-lista #profilPruh .profil-akce .volba.cf:disabled {
+    display: none;
+}
+
+/* Drobeček s jménem modelky v záhlaví profilu neutrálně: jméno je hned pod ním velkým písmem a růžová patří
+   hlavní akci (Přidat fotky) a zvolenému albu */
+.hlavni-lista:has(> #profilPruh:not(.hidden)) > .logo .nav-drobecek {
+    background-color: transparent;
+    color: var(--text-main);
+}
+
+.hlavni-lista:has(> #profilPruh:not(.hidden)) > .logo .nav-drobecek.s-nabidkou:hover {
+    background-color: var(--panel-hover);
 }
 
 /* Akce vpravo dole, sklo nad fotkou */

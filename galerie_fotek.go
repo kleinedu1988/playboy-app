@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Dotaz galerie
@@ -23,6 +24,7 @@ type DotazGalerie struct {
 	Dekady  []string `json:"dekady"`  // „1990“…; prázdné = všechny
 	Modelka int      `json:"modelka"` // jen fotky modelky
 	Text    string   `json:"text"`    // jméno modelky, album, fotograf
+	Kolekce string   `json:"kolekce"` // klíč kolekce (galerie_kolekce.go), „Zobrazit vše“ z řady
 	Seminko int      `json:"seminko"` // náhodné pořadí
 	Od      int      `json:"od"`      // stránka od
 	Kolik   int      `json:"kolik"`   // velikost stránky
@@ -109,7 +111,7 @@ func (a *App) GetGalerieFotek(d DotazGalerie) StrankaGalerie {
 		p.fotky, p.otisk, p.klic = a.fotkyGalerie(), otisk, ""
 	}
 	h := fnv.New64a()
-	fmt.Fprintf(h, "%s|%s|%v|%v|%v|%d|%s|%d", d.Razeni, d.Srdicka, d.Typy, d.Tagy, d.Dekady, d.Modelka, d.Text, d.Seminko)
+	fmt.Fprintf(h, "%s|%s|%v|%v|%v|%d|%s|%d|%s|%s", d.Razeni, d.Srdicka, d.Typy, d.Tagy, d.Dekady, d.Modelka, d.Text, d.Seminko, d.Kolekce, time.Now().Format("2006-01-02"))
 	klic := fmt.Sprintf("%x|%s", h.Sum64(), otisk)
 	if p.klic != klic {
 		p.serazene, p.fasety = a.vybratGalerii(p.fotky, d)
@@ -174,9 +176,13 @@ func obsahuje(seznam []string, hodnota string) bool {
 func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, FasetyGalerie) {
 	text := strings.Fields(zjednodusit(d.Text))
 	fasety := FasetyGalerie{Srdicka: map[string]int{}, Typy: map[string]int{}, Tagy: map[string]int{}, Dekady: map[string]int{}}
+	kolekce, _ := a.filtrKolekce(fotky, d.Kolekce)
 	var vybrane []int
 	for i := range fotky {
 		g := &fotky[i]
+		if kolekce != nil && !kolekce(g) {
+			continue
+		}
 		if vyhovujeGalerii(g, d, text, "") {
 			vybrane = append(vybrane, i)
 		}

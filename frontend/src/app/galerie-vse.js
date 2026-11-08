@@ -4,7 +4,7 @@
 // pak mozaika po stránkách. Výchozí řazení „Co se ti
 // asi líbí“: tvoje srdíčka a u nehodnocených odhad z obsahu fotek, promíchané napříč alby. Dotaz i otevřený panel
 // se pamatují. Text hledání v hlavičce omezuje galerii (jméno modelky, album, fotograf).
-import { GetGalerieFotek } from './backend';
+import { GetGalerieFotek, GetKolekceGalerie } from './backend';
 import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
 import { stav } from './stav';
 import { best } from './prvky';
@@ -45,8 +45,14 @@ const pocetFiltru = () => (dotaz.srdicka ? 1 : 0) + dotaz.typy.length + dotaz.ta
 
 const polozka = f => ({ fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni });
 
+// Kolekce (galerie_kolekce.go): řady pod bannerem a hero přes kolekce; zvolená kolekce („Zobrazit vše“) omezuje
+// mozaiku (nepamatuje se – jen do dalšího přepnutí)
+/** @type {{ klic: string, nazev: string, duvod: string, skupina: string, pocet: number, fotky: any[] }[]} */
+let kolekce = [];
+let zvolenaKolekce = { klic: '', nazev: '' };
+
 async function nacistStranku(od) {
-    const s = await GetGalerieFotek({ ...dotaz, modelka: 0, text, seminko: SEMINKO, od, kolik: STRANKA });
+    const s = await GetGalerieFotek({ ...dotaz, modelka: 0, text, seminko: SEMINKO, od, kolik: STRANKA, kolekce: zvolenaKolekce.klic });
     celkem = s?.celkem || 0;
     fasety = s?.fasety || fasety;
     return (s?.fotky || []).map(polozka);
@@ -58,16 +64,20 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
     poVykresleni = pripravit;
     text = hledani || '';
     const moje = ++stav.cisloNacteni;
-    const polozky = await nacistStranku(0).catch(() => []);
+    // Řady kolekcí jen v čisté galerii (bez hledání, filtrů a zvolené kolekce)
+    const cista = !text.trim() && !pocetFiltru() && !zvolenaKolekce.klic;
+    const [polozky, k] = await Promise.all([nacistStranku(0).catch(() => []), cista ? GetKolekceGalerie().catch(() => []) : Promise.resolve([])]);
     if (moje !== stav.cisloNacteni) return;
+    kolekce = (k || []).filter(r => r.fotky?.length);
     stav.nejlepsiPolozky = polozky;
     const seznam = document.getElementById('bestList');
     best.classList.add('galerie-vse');
-    const filtry = pocetFiltru();
+    const filtry = pocetFiltru() + (zvolenaKolekce.klic ? 1 : 0);
     const razeni = RAZENI.map(([k, n, t]) => `<button class="chip ${dotaz.razeni === k ? 'active' : ''}" data-gv="razeni" data-hodnota="${k}"${t ? ` title="${esc(t)}"` : ''}>${esc(n)}</button>`).join('');
     // Hero banner jen bez hledání (výsledky hledání hned nahoře)
     const hero = polozky.length && !text.trim() ? '<section class="profily-hero gv-hero" aria-label="Fotka z galerie"></section>' : '';
     seznam.innerHTML = `${hero}
+        ${cista && kolekce.length ? `<div class="gv-rady">${kolekce.map(htmlRady).join('')}</div>` : ''}
         <div class="gallery-toolbar profily-lista gv-lista">
             <div class="pl-razeni" role="group" aria-label="Zobrazit">${htmlNastroju}</div>
             <span class="gv-oddelovac" aria-hidden="true"></span>
@@ -88,6 +98,19 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
     stav.lbDotahnout = null;
 }
 
+// Řada kolekce: název, proč, počet, Zobrazit vše a vodorovný pás fotek se šipkami
+function htmlRady(r, n) {
+    const dlazdice = r.fotky.map((f, i) => `<button type="button" class="gv-dlazdice" data-gv-rada="${n}" data-gv-fotka="${i}" title="${esc(`${f.jmenoModelky || ''} · ${nazevAlba(f.album, f.typ)}`)}">
+        <img src="${esc(obrazek(f.url, 'w400'))}" alt="" loading="lazy" draggable="false" />${f.hodnoceni ? `<span class="gv-srd">${'♥'.repeat(f.hodnoceni)}</span>` : ''}</button>`).join('');
+    return `<section class="gv-rada">
+        <div class="gv-rada-hlava"><h3>${esc(r.nazev)}</h3><span class="gv-rada-duvod">${esc(r.duvod)}</span>
+            <button type="button" class="link gv-vse" data-gv-kolekce="${n}">Zobrazit vše (${r.pocet.toLocaleString('cs-CZ')}) ›</button></div>
+        <div class="gv-rada-telo"><button type="button" class="gv-posun vlevo" data-gv-posun="-1" aria-label="Posunout zpět">‹</button>
+            <div class="gv-pas-rady">${dlazdice}</div>
+            <button type="button" class="gv-posun vpravo" data-gv-posun="1" aria-label="Posunout dál">›</button></div>
+    </section>`;
+}
+
 // Štítky zapnutých filtrů s křížkem (v liště)
 function htmlStitku() {
     const srd = SRDICKA.find(([k]) => k === dotaz.srdicka && k);
@@ -97,7 +120,8 @@ function htmlStitku() {
         ...dotaz.dekady.map(d => ['dekady', d, `${d.slice(2)}. léta`]),
         ...dotaz.tagy.map(t => ['tagy', t, nazvyTagu.get(t) || t]),
     ];
-    return stitky.map(([sk, h, n]) => `<span class="pl-stitek"><button type="button" data-gv-panel>${esc(n)}</button><button type="button" data-gv="${sk}" data-hodnota="${esc(h)}" aria-label="Zrušit filtr" title="Zrušit filtr">×</button></span>`).join('');
+    return (zvolenaKolekce.klic ? `<span class="pl-stitek"><button type="button">Kolekce: ${esc(zvolenaKolekce.nazev)}</button><button type="button" data-gv-bez-kolekce aria-label="Zrušit kolekci" title="Zpět na všechny fotky">×</button></span>` : '')
+        + stitky.map(([sk, h, n]) => `<span class="pl-stitek"><button type="button" data-gv-panel>${esc(n)}</button><button type="button" data-gv="${sk}" data-hodnota="${esc(h)}" aria-label="Zrušit filtr" title="Zrušit filtr">×</button></span>`).join('');
 }
 
 // Hero: fotky z čela výběru (ne modelka) jako ve streamovacích službách – nadpis je album nebo číslo, modelka menší
@@ -115,7 +139,9 @@ function proc(f) {
 
 async function naplnitHeroGalerie(misto, index = null) {
     clearTimeout(casovacHero);
-    const kandidati = stav.nejlepsiPolozky.slice(0, FOTEK_V_HERO);
+    // Hero přes kolekce (nejlepší fotka každé řady), bez kolekcí přes fotky z čela výběru
+    const zKolekci = kolekce.length > 1;
+    const kandidati = zKolekci ? kolekce.slice(0, FOTEK_V_HERO).map(r => polozka(r.fotky[0])) : stav.nejlepsiPolozky.slice(0, FOTEK_V_HERO);
     if (!misto || !misto.isConnected || !kandidati.length) return;
     let i = index ?? 0;
     if (index === null) {
@@ -132,11 +158,12 @@ async function naplnitHeroGalerie(misto, index = null) {
         <div class="ph-ram gvh-prolnuti"><img src="${esc(adresa)}" alt="" draggable="false" /></div>
         <div class="ph-prekryv"></div>
         <div class="ph-obsah gvh-prolnuti">
-            <div class="ph-nadtitulek">${esc(proc(f))}</div>
+            <div class="ph-nadtitulek">${esc(zKolekci ? kolekce[i].nazev : proc(f))}</div>
             <h2 class="gvh-nadpis">${esc(album || 'Fotka')}</h2>
             <div class="gvh-modelka">${p.modelkaId ? `<button type="button" class="gvh-odkaz" data-gvh-profil="${p.modelkaId}" title="Otevřít profil modelky">${esc(p.jmenoModelky || '')}</button>` : ''}${vydani ? `<span>${esc(vydani)}</span>` : ''}</div>
             <div class="ph-akce">
-                <button type="button" class="ph-tlacitko hlavni" data-gvh-otevrit="${i}">Otevřít fotku</button>
+                ${zKolekci ? `<button type="button" class="ph-tlacitko hlavni" data-gv-kolekce="${i}">Celá kolekce (${kolekce[i].pocet.toLocaleString('cs-CZ')})</button>` : ''}
+                <button type="button" class="ph-tlacitko ${zKolekci ? '' : 'hlavni'}" data-gvh-otevrit="${i}">Otevřít fotku</button>
                 ${podobneZapnuto() ? `<button type="button" class="ph-tlacitko" data-gvh-podobne="${i}">Podobné fotky</button>` : ''}
             </div>
         </div>
@@ -176,11 +203,11 @@ async function naplnitHeroGalerie(misto, index = null) {
     misto.onclick = (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         const otevrit = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-otevrit]'));
-        if (otevrit) return otevritLightbox(parseInt(otevrit.dataset.gvhOtevrit, 10), false, stav.nejlepsiPolozky);
+        if (otevrit) return otevritLightbox(parseInt(otevrit.dataset.gvhOtevrit, 10), false, kandidati);
         const profil = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-profil]'));
         if (profil) return otevritProfilPodleId(parseInt(profil.dataset.gvhProfil, 10));
         const podobne = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-podobne]'));
-        if (podobne) return ukazatPodobne(stav.nejlepsiPolozky[parseInt(podobne.dataset.gvhPodobne, 10)].fotky[0]);
+        if (podobne) return ukazatPodobne(kandidati[parseInt(podobne.dataset.gvhPodobne, 10)].fotky[0]);
         const carka = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-ukazat]'));
         if (carka) ukazat(parseInt(carka.dataset.gvhUkazat, 10));
     };
@@ -271,6 +298,33 @@ export function pripravitGalerii(nacistZnovu) {
         }
         if (cil.closest('[data-gv-dalsi]')) {
             nacistDalsi();
+            return;
+        }
+        // Řady kolekcí: Zobrazit vše / Celá kolekce, fotka (prohlížeč s fotkami řady), posun pásu
+        const vse = /** @type {HTMLElement | null} */ (cil.closest('[data-gv-kolekce]'));
+        if (vse) {
+            const r = kolekce[parseInt(vse.dataset.gvKolekce, 10)];
+            if (!r) return;
+            zvolenaKolekce = { klic: r.klic, nazev: r.nazev };
+            nacistZnovu();
+            document.querySelector('main')?.scrollTo({ top: 0 });
+            return;
+        }
+        if (cil.closest('[data-gv-bez-kolekce]')) {
+            zvolenaKolekce = { klic: '', nazev: '' };
+            nacistZnovu();
+            return;
+        }
+        const dl = /** @type {HTMLElement | null} */ (cil.closest('[data-gv-rada]'));
+        if (dl) {
+            const r = kolekce[parseInt(dl.dataset.gvRada, 10)];
+            if (r) otevritLightbox(parseInt(dl.dataset.gvFotka, 10), false, r.fotky.map(polozka));
+            return;
+        }
+        const posun = /** @type {HTMLElement | null} */ (cil.closest('[data-gv-posun]'));
+        if (posun) {
+            const pas = posun.parentElement?.querySelector('.gv-pas-rady');
+            pas?.scrollBy({ left: Math.sign(parseInt(posun.dataset.gvPosun, 10)) * pas.clientWidth * 0.85, behavior: 'smooth' });
             return;
         }
         if (cil.closest('[data-gv-zrusit]')) {

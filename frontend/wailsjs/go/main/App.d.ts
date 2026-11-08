@@ -67,6 +67,8 @@ export function GetKalendar():Promise<Array<sbirka.VydaniKalendare>>;
 
 export function GetKatalogTagu():Promise<Array<sbirka.SkupinaTagu>>;
 
+export function GetKolekceGalerie():Promise<Array<main.KolekceGalerie>>;
+
 export function GetKrokyPruvodce():Promise<main.KrokyPruvodce>;
 
 export function GetLakadloPorovnani():Promise<string>;

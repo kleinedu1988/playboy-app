@@ -118,6 +118,10 @@ export function GetKatalogTagu() {
   return window['go']['main']['App']['GetKatalogTagu']();
 }
 
+export function GetKolekceGalerie() {
+  return window['go']['main']['App']['GetKolekceGalerie']();
+}
+
 export function GetKrokyPruvodce() {
   return window['go']['main']['App']['GetKrokyPruvodce']();
 }

@@ -268,6 +268,7 @@ export namespace main {
 	    dekady: string[];
 	    modelka: number;
 	    text: string;
+	    kolekce: string;
 	    seminko: number;
 	    od: number;
 	    kolik: number;
@@ -285,6 +286,7 @@ export namespace main {
 	        this.dekady = source["dekady"];
 	        this.modelka = source["modelka"];
 	        this.text = source["text"];
+	        this.kolekce = source["kolekce"];
 	        this.seminko = source["seminko"];
 	        this.od = source["od"];
 	        this.kolik = source["kolik"];
@@ -405,6 +407,46 @@ export namespace main {
 	        this.chybi = source["chybi"];
 	        this.neznamych = source["neznamych"];
 	    }
+	}
+	export class KolekceGalerie {
+	    klic: string;
+	    nazev: string;
+	    duvod: string;
+	    skupina: string;
+	    pocet: number;
+	    fotky: sbirka.Fotografie[];
+	
+	    static createFrom(source: any = {}) {
+	        return new KolekceGalerie(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.duvod = source["duvod"];
+	        this.skupina = source["skupina"];
+	        this.pocet = source["pocet"];
+	        this.fotky = this.convertValues(source["fotky"], sbirka.Fotografie);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class TlumeniKroku {
 	    moznosti: string[];

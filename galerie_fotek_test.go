@@ -1,6 +1,10 @@
 package main
 
-import "testing"
+import (
+	"fmt"
+	"strings"
+	"testing"
+)
 
 // Galerie všech fotek: všechny fotky napříč modelkami, filtry, počty v panelu, stránky a promíchání alb
 func TestGalerieFotek(t *testing.T) {
@@ -54,5 +58,48 @@ func TestPromichatAlba(t *testing.T) {
 	v := promichatAlba(poradi, fotky)
 	if len(v) != 10 || v[0] != 0 || v[1] != 1 || v[2] != 6 {
 		t.Fatalf("promíchání: %v", v)
+	}
+}
+
+// Kolekce: řady z dat (♥5, oblast původu, vlasy) a filtr „Zobrazit vše“
+func TestKolekceGalerie(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", VlasyBarva: "blond", Narodnost: "Norsko", Tetovani: -1, Piercing: -1})
+	anna := idModelky(t, a, "Anna")
+	var ids []string
+	for i := range 10 {
+		ids = append(ids, fmt.Sprintf("%029d", i))
+	}
+	a.AddBulkPhotos(anna, "Fjord", "Pictorial online", strings.Join(ids, " "))
+	var fotky []int
+	for _, f := range a.GetFotografieModelky(anna) {
+		fotky = append(fotky, f.ID)
+	}
+	a.SetHodnoceniFotek(fotky, 5)
+	// Další modelka, aby kolekce nepokrývaly skoro celou sbírku (ty se neukazují)
+	a.AddModelka(Modelka{Jmeno: "Bára", Tetovani: -1, Piercing: -1})
+	var dalsi []string
+	for i := range 20 {
+		dalsi = append(dalsi, fmt.Sprintf("B%028d", i))
+	}
+	a.AddBulkPhotos(idModelky(t, a, "Bára"), "Město", "Pictorial online", strings.Join(dalsi, " "))
+	k := a.GetKolekceGalerie()
+	nalezene := map[string]KolekceGalerie{}
+	var klice []string
+	for _, r := range k {
+		nalezene[r.Klic] = r
+		klice = append(klice, r.Klic)
+	}
+	if r, ok := nalezene["tvoje:5"]; !ok || r.Pocet != 10 || len(r.Fotky) != 10 {
+		t.Fatalf("kolekce ♥5: %+v (kolekce %v)", r, klice)
+	}
+	if _, ok := nalezene["vzhled:oblast:ze skandinavie"]; !ok {
+		t.Fatalf("oblast původu chybí: %v", klice)
+	}
+	if g := a.GetGalerieFotek(DotazGalerie{Kolik: 50, Kolekce: "vzhled:vlasy:blondynky"}); g.Celkem != 10 {
+		t.Fatalf("Zobrazit vše blondýnky: %d", g.Celkem)
+	}
+	if len(k) > rad {
+		t.Fatalf("řad %d", len(k))
 	}
 }

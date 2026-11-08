@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.18.0] – 2026-11-08
+
+### Přidáno
+- **Kolekce v Galerii (etapa 1 návrhu `docs/NAVRH-GALERIE-KOLEKCE.md`)**: pod bannerem 10 řad sdružených fotek jako ve streamovacích službách – každá s názvem, důvodem, počtem, vodorovným pásem 15 fotek (šipky, klik otevře fotky řady v prohlížeči) a *Zobrazit vše*, které omezí mozaiku na kolekci (štítek *Kolekce: …* s křížkem v liště). Kolekce program skládá sám:
+  - **čas**: tento měsíc v historii, výročí (před 10–50 lety v tomto měsíci), rok a desetiletí dne, narozeniny modelek tento týden, nově přidané;
+  - **vzhled** (údaje modelek): blondýnky, brunetky, černovlásky, zrzky, oblast původu podle národnosti (bez etnicity), tetování, piercing;
+  - **kariéra**: centerfoldy, Playmate roku, online pictorialy, dua a skupiny, fotograf dne;
+  - **tvoje hodnocení**: tvoje ♥5, Top 10, skryté poklady (horních 10 % nehodnocených podle odhadu z obsahu);
+  - **obsah fotek** (tagy i návrhy obrazových modelů): pláž, bazén, studio, koupelna, příroda, auta, bikiny, podpatky, latex, šaty, džíny, zlatá hodina, noir, světlé, černobílé.
+- Každý den se vybere 10 řad podle toho, jak se ti fotky v kolekci asi líbí, velikosti, kalendáře a denní obměny (nejvýš 3 z jedné skupiny); kolekce pod 8 fotek nebo přes 60 % sbírky se neukazují. Fotky v kolekci jsou seřazené jako *Co se ti asi líbí* a promíchané napříč alby.
+- **Banner přes kolekce**: nadtitulek je název kolekce, fotka její nejlepší, tlačítko *Celá kolekce*.
+
 ## [1.17.3] – 2026-11-08
 
 ### Přidáno

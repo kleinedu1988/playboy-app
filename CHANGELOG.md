@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.18.2] – 2026-11-08
+
+### Opraveno
+- **Šipky v banneru Galerie překrývaly text**: levá šipka ležela přes nadtitulek kolekce. Šipky jsou teď dole vpravo u čárek (‹ čárky ›), menší a vidět stále; text vlevo zůstává volný.
+
 ## [1.18.1] – 2026-11-08
 
 ### Přidáno

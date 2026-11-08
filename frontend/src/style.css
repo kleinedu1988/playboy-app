@@ -18576,29 +18576,28 @@ body.rezim-vyberu #detailView .poster {
     .gvh-carka.on i { animation: none; transform: none; }
 }
 
-/* Šipky předchozí / další po stranách banneru Galerie (při najetí myší) */
+/* Šipky předchozí / další dole vpravo u čárek (‹ čárky ›), text vlevo zůstává volný */
+.gvh-carky {
+    align-items: center;
+}
+
 .gvh-sipka {
-    position: absolute;
-    top: 50%;
-    z-index: 2;
-    width: 44px;
-    height: 44px;
-    margin-top: -22px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    width: 30px;
+    height: 30px;
+    margin: 0 4px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 50%;
     background: rgba(14, 14, 18, 0.5);
     color: #fff;
-    font-size: 26px;
+    font-size: 19px;
     line-height: 1;
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
-    opacity: 0;
+    opacity: 0.75;
     cursor: pointer;
     transition: opacity 0.2s ease, background-color 0.15s ease;
 }
-
-.gvh-sipka.vlevo { left: 14px; }
-.gvh-sipka.vpravo { right: 14px; }
 
 .gv-hero:hover .gvh-sipka,
 .gvh-sipka:focus-visible {
@@ -18606,7 +18605,7 @@ body.rezim-vyberu #detailView .poster {
 }
 
 .gvh-sipka:hover {
-    background: rgba(14, 14, 18, 0.8);
+    background: rgba(14, 14, 18, 0.85);
 }
 
 /* ===== Řady kolekcí v Galerii (app/galerie-vse.js, galerie_kolekce.go): jako ve streamovacích službách ===== */

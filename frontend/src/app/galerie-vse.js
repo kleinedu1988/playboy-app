@@ -167,9 +167,10 @@ async function naplnitHeroGalerie(misto, index = null) {
                 ${podobneZapnuto() ? `<button type="button" class="ph-tlacitko" data-gvh-podobne="${i}">Podobné fotky</button>` : ''}
             </div>
         </div>
-        ${carky ? `<div class="gvh-carky" role="group" aria-label="Fotky v banneru">${carky}</div>
-            <button type="button" class="gvh-sipka vlevo" data-gvh-ukazat="${(i - 1 + kandidati.length) % kandidati.length}" aria-label="Předchozí fotka" title="Předchozí fotka (←)">‹</button>
-            <button type="button" class="gvh-sipka vpravo" data-gvh-ukazat="${(i + 1) % kandidati.length}" aria-label="Další fotka" title="Další fotka (→)">›</button>` : ''}`;
+        ${carky ? `<div class="gvh-carky" role="group" aria-label="Fotky v banneru">
+            <button type="button" class="gvh-sipka vlevo" data-gvh-ukazat="${(i - 1 + kandidati.length) % kandidati.length}" aria-label="Předchozí" title="Předchozí (←)">‹</button>
+            ${carky}
+            <button type="button" class="gvh-sipka vpravo" data-gvh-ukazat="${(i + 1) % kandidati.length}" aria-label="Další" title="Další (→)">›</button></div>` : ''}`;
     const ukazat = (j) => {
         try { localStorage.setItem(KLIC_HERO, String(j)); } catch { /* jen teď */ }
         naplnitHeroGalerie(misto, j);

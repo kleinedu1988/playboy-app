@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.12.1] – 2026-11-08
+
+### Opraveno
+- **Srdíčka modelky v záhlaví profilu nešla nastavit**: obsluha kliknutí na srdíčka modelky poslouchala jen v hlavní části okna, ale pruh se jménem a srdíčky je v hlavičce okna. Klik teď funguje i v záhlaví (i ovládání klávesami 1–5, šipky, Home, End na zaměřených srdíčkách); karta v galerii, Oblíbenost i odhad se přepíšou stejně jako dřív.
+
 ## [1.12.0] – 2026-11-08
 
 ### Změněno

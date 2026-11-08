@@ -359,8 +359,9 @@ export function pripravit() {
         nahraditSrdicka(rada, htmlSrdickaFotky(polozka, parseInt(rada.dataset.hodnoceniFotky)), srdicko.dataset.hodnota);
     });
 
-    // Srdíčka modelky (po půlkách) na kartě, v profilu a v Oblíbenosti
-    document.querySelector('main').addEventListener('click', async (e) => {
+    // Srdíčka modelky (po půlkách) na kartě, v profilu a v Oblíbenosti. Na celém dokumentu: srdíčka v záhlaví
+    // profilu jsou v hlavičce okna (pruh profilu je přesunutý do .hlavni-lista), mimo <main>
+    document.addEventListener('click', async (e) => {
         const srdicko = e.target.closest('.hearts-pul[data-hodnoceni] .pulka');
         if (!srdicko) return;
         const rada = srdicko.closest('.hearts');
@@ -384,11 +385,14 @@ export function pripravit() {
         }
     });
 
-    // Zaměřená srdíčka v profilu a v Oblíbenosti: číslice, šipky, Home a End (ui/srdicka.js); šipky tu nelistují modelkami
-    document.querySelector('main').addEventListener('keydown', (e) => {
+    // Zaměřená srdíčka v profilu a v Oblíbenosti: číslice, šipky, Home a End (ui/srdicka.js); šipky tu nelistují modelkami.
+    // V <main> i v hlavičce okna (srdíčka v záhlaví profilu): zastavení tam nepustí klávesu k obsluze dokumentu.
+    const klavesaSrdicek = (e) => {
         const rada = e.target.closest?.('.hearts-pul[data-hodnoceni][role="slider"]');
         if (rada && rada === e.target && klavesaSrdicekModelky(e, rada)) e.stopPropagation();
-    });
+    };
+    document.querySelector('main').addEventListener('keydown', klavesaSrdicek);
+    document.querySelector('.navbar')?.addEventListener('keydown', klavesaSrdicek);
 
     try {
         // Dřívější řazení „Podle oblíbenosti“ je teď součástí řazení podle srdíček

@@ -18864,3 +18864,49 @@ body.rezim-vyberu #detailView .poster {
     font-size: 11px;
     white-space: nowrap;
 }
+
+/* Hledání slovy v Galerii: štítek „V obsahu fotek“ a nabídka stažení textového modelu */
+.gv-slovy {
+    padding: 3px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.gv-nabidka-slov {
+    max-width: 640px;
+    margin: 40px auto;
+    padding: 24px 28px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: var(--bg-card);
+}
+
+.gv-nabidka-slov h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+
+.gv-nabidka-slov p {
+    margin: 0 0 10px;
+    line-height: 1.5;
+}
+
+.gv-nabidka-pozn {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.gv-nabidka-akce {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px;
+}
+
+.gv-nabidka-stav {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}

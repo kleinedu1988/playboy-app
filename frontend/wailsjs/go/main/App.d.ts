@@ -131,6 +131,8 @@ export function GetSpecialy():Promise<Array<sbirka.Special>>;
 
 export function GetStatistiky():Promise<sbirka.Statistiky>;
 
+export function GetStavHledaniSlovy():Promise<obsah.StavTextu>;
+
 export function GetStavObsahu():Promise<obsah.Stav>;
 
 export function GetStavStahovaniNahledu():Promise<nahledy.StavStahovani>;
@@ -310,6 +312,8 @@ export function VymazatMezipamet():Promise<number>;
 export function VypnoutObsah():Promise<boolean>;
 
 export function ZalozitSpecial(arg1:number,arg2:string,arg3:string):Promise<string>;
+
+export function ZapnoutHledaniSlovy():Promise<boolean>;
 
 export function ZapnoutObsah():Promise<boolean>;
 

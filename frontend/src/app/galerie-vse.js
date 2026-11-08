@@ -4,7 +4,7 @@
 // pak mozaika po stránkách. Výchozí řazení „Co se ti
 // asi líbí“: tvoje srdíčka a u nehodnocených odhad z obsahu fotek, promíchané napříč alby. Dotaz i otevřený panel
 // se pamatují. Text hledání v hlavičce omezuje galerii (jméno modelky, album, fotograf).
-import { GetGalerieFotek, GetKolekceGalerie, GetVsechnyKolekce, GetVyberyGalerie, UlozitVyberGalerie, SmazatVyberGalerie, ZaznamenatKolekci } from './backend';
+import { GetGalerieFotek, GetKolekceGalerie, GetVsechnyKolekce, GetVyberyGalerie, UlozitVyberGalerie, SmazatVyberGalerie, ZaznamenatKolekci, GetStavHledaniSlovy, ZapnoutHledaniSlovy } from './backend';
 import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
 import { stav } from './stav';
 import { best } from './prvky';
@@ -67,8 +67,14 @@ let ukladaniVyberu = false;
 // Výběr se dá uložit, když se liší od výchozí galerie
 const lzeUlozit = () => Boolean(pocetFiltru() || zvolenaKolekce.klic || dotaz.razeni !== 'libi');
 
+// Hledání slovy (galerie_slovy.go): text hledaný v obsahu fotek, poznaná modelka, nabídka stažení modelu
+let slovy = { obsahem: false, rozpoznano: '', nabidnout: false };
+let nacistGaleriiZnovu = () => {};
+let casovacSlov = 0;
+
 async function nacistStranku(od) {
     const s = await GetGalerieFotek({ ...dotaz, modelka: 0, text, seminko: SEMINKO, od, kolik: STRANKA, kolekce: zvolenaKolekce.klic });
+    if (od === 0) slovy = { obsahem: Boolean(s?.obsahem), rozpoznano: s?.rozpoznano || '', nabidnout: Boolean(s?.nabidnoutSlovy) };
     celkem = s?.celkem || 0;
     fasety = s?.fasety || fasety;
     return (s?.fotky || []).map(polozka);
@@ -100,6 +106,7 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
             <div class="pl-razeni" role="group" aria-label="Řazení">${razeni}</div>
             <button type="button" class="pl-filtry ${zvolenaKolekce.klic ? 'zapnuto' : ''}" data-gv-kolekce-panel aria-expanded="${kolekceOtevrene()}" title="Všechny kolekce a uložené výběry">▦ Kolekce</button>
             <button type="button" class="pl-filtry ${filtry ? 'zapnuto' : ''}" data-gv-panel aria-expanded="${filtryOtevrene()}">☰ Filtry${filtry ? ` <small>${filtry}</small>` : ''}</button>
+            ${slovy.obsahem ? `<span class="gv-slovy" title="Textu neodpovídá jméno, album ani fotograf – fotky jsou seřazené podle toho, jak obsahem odpovídají popisu">🔎 V obsahu fotek${slovy.rozpoznano ? ` · ${esc(slovy.rozpoznano)}` : ''}</span>` : ''}
             ${htmlStitku()}
             <span class="pl-pocet">${esc(sklonovat(celkem, 'fotka', 'fotky', 'fotek'))}</span>
             ${polozky.length ? '<button type="button" class="pl-filtry" data-nejlepsi-slideshow title="Spustit slideshow">▶ Slideshow</button>' : ''}
@@ -107,10 +114,13 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
         <div class="gv-panel-kolekci ${kolekceOtevrene() ? '' : 'hidden'}"></div>
         <div class="gv-filtry ${filtryOtevrene() ? '' : 'hidden'}"></div>
         ${polozky.length ? '<div class="nejlepsi-mozaika gv-mozaika"></div><button type="button" class="link nejlepsi-dalsi hidden" data-gv-dalsi></button>'
-            : htmlNicNenalezeno(filtry || text ? 'Filtrům ani hledání neodpovídá žádná fotka.' : 'Ve sbírce zatím nejsou fotky.')}`;
+            : slovy.nabidnout ? htmlNabidkySlov()
+                : htmlNicNenalezeno(slovy.obsahem ? `V obsahu fotek jsem k „${text.trim()}“ nic výrazného nenašel. Zkus popis, třeba „zrzavé vlasy na pláži“ nebo „v kuchyni“.`
+                    : filtry || text ? 'Filtrům ani hledání neodpovídá žádná fotka.' : 'Ve sbírce zatím nejsou fotky.')}`;
     pripojit(polozky, 0);
     sledovatKonec();
     vykreslitPanel();
+    if (slovy.nabidnout) sledovatStazeniSlov();
     ukladaniVyberu = false;
     if (kolekceOtevrene()) vykreslitPanelKolekci();
     if (hero) naplnitHeroGalerie(seznam.querySelector('.gv-hero'));
@@ -282,6 +292,7 @@ function sledovatKonec() {
 
 export function prestatSledovatGalerii() {
     clearTimeout(casovacHero);
+    clearTimeout(casovacSlov);
     pozorovatel?.disconnect();
     pozorovatel = null;
     best.classList.remove('galerie-vse');
@@ -328,6 +339,37 @@ async function vykreslitPanelKolekci() {
     panel.querySelector('input')?.focus();
 }
 
+// Nabídka hledání slovy, když textu nic neodpovídá a textový model není stažený
+function htmlNabidkySlov() {
+    return `<div class="gv-nabidka-slov">
+        <h3>Hledat „${esc(text.trim())}“ v obsahu fotek?</h3>
+        <p>Textu neodpovídá žádné jméno, album ani fotograf. S hledáním slovy najdeš fotky podle toho, co je na nich – třeba „v kuchyni“, „červené auto“, „ve sněhu“ nebo „Pamela na pláži“.</p>
+        <p class="gv-nabidka-pozn">Jednou se stáhne český textový model (~274 MB, po převodu zabere 65 MB) a hledání pak běží v počítači bez internetu.</p>
+        <div class="gv-nabidka-akce"><button type="button" class="ph-tlacitko hlavni" data-gv-zapnout-slovy>Zapnout hledání slovy</button><span class="gv-nabidka-stav" aria-live="polite"></span></div>
+    </div>`;
+}
+
+// Průběh stahování textového modelu; po dokončení načte galerii znovu
+async function sledovatStazeniSlov() {
+    clearTimeout(casovacSlov);
+    const misto = document.querySelector('#bestList .gv-nabidka-slov');
+    if (!misto) return;
+    const s = await GetStavHledaniSlovy().catch(() => null);
+    if (!s || !misto.isConnected) return;
+    if (s.pripraveno) return nacistGaleriiZnovu();
+    const stav = misto.querySelector('.gv-nabidka-stav');
+    const tlacitko = /** @type {HTMLButtonElement | null} */ (misto.querySelector('[data-gv-zapnout-slovy]'));
+    if (s.stahuje) {
+        const mb = x => Math.round(x / 1048576);
+        if (stav) stav.textContent = `Stahuji ${mb(s.stazeno)} / ${mb(s.celkem)} MB…`;
+        if (tlacitko) tlacitko.disabled = true;
+        casovacSlov = window.setTimeout(sledovatStazeniSlov, 1000);
+    } else {
+        if (stav) stav.textContent = s.chyba ? `Nepovedlo se: ${s.chyba}` : '';
+        if (tlacitko) tlacitko.disabled = false;
+    }
+}
+
 // Popis uloženého výběru (titulek): kolekce, srdíčka, typy, desetiletí, tagy, řazení
 function popisVyberu(x) {
     const d = x.dotaz || {};
@@ -338,6 +380,7 @@ function popisVyberu(x) {
 
 // Obsluha panelu a stránkování; nacistZnovu = načíst galerii znovu (nejlepsi.js, s textem hledání)
 export function pripravitGalerii(nacistZnovu) {
+    nacistGaleriiZnovu = nacistZnovu;
     best.addEventListener('submit', (e) => {
         const form = /** @type {HTMLElement} */ (e.target).closest('[data-gv-ulozit-form]');
         if (!form) return;
@@ -360,6 +403,10 @@ export function pripravitGalerii(nacistZnovu) {
         }
         if (cil.closest('[data-gv-dalsi]')) {
             nacistDalsi();
+            return;
+        }
+        if (cil.closest('[data-gv-zapnout-slovy]')) {
+            ZapnoutHledaniSlovy().then(() => sledovatStazeniSlov());
             return;
         }
         // Panel kolekcí: otevřít/zavřít, zvolit kolekci, uložené výběry

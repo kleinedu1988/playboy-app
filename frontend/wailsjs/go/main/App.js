@@ -246,6 +246,10 @@ export function GetStatistiky() {
   return window['go']['main']['App']['GetStatistiky']();
 }
 
+export function GetStavHledaniSlovy() {
+  return window['go']['main']['App']['GetStavHledaniSlovy']();
+}
+
 export function GetStavObsahu() {
   return window['go']['main']['App']['GetStavObsahu']();
 }
@@ -604,6 +608,10 @@ export function VypnoutObsah() {
 
 export function ZalozitSpecial(arg1, arg2, arg3) {
   return window['go']['main']['App']['ZalozitSpecial'](arg1, arg2, arg3);
+}
+
+export function ZapnoutHledaniSlovy() {
+  return window['go']['main']['App']['ZapnoutHledaniSlovy']();
 }
 
 export function ZapnoutObsah() {

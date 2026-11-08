@@ -3,7 +3,7 @@
 Stav k 8. 11. 2026 (verze 1.18.1). **Rozhodnuto 8. 11. 2026:** postup podle doporučení (oddíl 7, bod 1), 10 řad,
 z původu jen národnost (oblasti, bez etnicity), výročí úmrtí ne, hledání slovy až nakonec. Etapy 1–3 hotové
 v 1.18.0 (+ věk v době focení v 1.18.1), etapa 4 (reprezentant focení, doporučená alba, mimo bublinu, téměř stejné
-snímky v řadách) v 1.19.0, objevené styly (#1) v 1.20.0, barvy a kvalita snímku (#2) v 1.21.0, panel kolekcí a uložené výběry v 1.22.0, osobní pořadí řad v 1.23.0. Zbývá hledání slovy (bod 5).
+snímky v řadách) v 1.19.0, objevené styly (#1) v 1.20.0, barvy a kvalita snímku (#2) v 1.21.0, panel kolekcí a uložené výběry v 1.22.0, osobní pořadí řad v 1.23.0, hledání slovy (bod 5) v 1.24.0 – návrh je celý hotový.
 
 ## 1. Myšlenka
 

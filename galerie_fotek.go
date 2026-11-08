@@ -43,6 +43,11 @@ type StrankaGalerie struct {
 	Od     int           `json:"od"`
 	Celkem int           `json:"celkem"`
 	Fasety FasetyGalerie `json:"fasety"`
+	// Hledání slovy (galerie_slovy.go): text hledán v obsahu fotek; Rozpoznano = modelka poznaná v textu;
+	// NabidnoutSlovy = textu nic neodpovídá a textový model není stažený
+	Obsahem        bool   `json:"obsahem"`
+	Rozpoznano     string `json:"rozpoznano"`
+	NabidnoutSlovy bool   `json:"nabidnoutSlovy"`
 }
 
 type fotkaGalerie struct {
@@ -59,6 +64,7 @@ var galeriePamet struct {
 	klic     string
 	serazene []int // indexy do fotky pro poslední dotaz
 	fasety   FasetyGalerie
+	slovy    hledaniSlovy
 }
 
 func (a *App) otiskGalerie() string {
@@ -111,13 +117,14 @@ func (a *App) GetGalerieFotek(d DotazGalerie) StrankaGalerie {
 		p.fotky, p.otisk, p.klic = a.fotkyGalerie(), otisk, ""
 	}
 	h := fnv.New64a()
-	fmt.Fprintf(h, "%s|%s|%v|%v|%v|%d|%s|%d|%s|%s", d.Razeni, d.Srdicka, d.Typy, d.Tagy, d.Dekady, d.Modelka, d.Text, d.Seminko, d.Kolekce, time.Now().Format("2006-01-02"))
+	fmt.Fprintf(h, "%s|%s|%v|%v|%v|%d|%s|%d|%s|%s|%v", d.Razeni, d.Srdicka, d.Typy, d.Tagy, d.Dekady, d.Modelka, d.Text, d.Seminko, d.Kolekce, time.Now().Format("2006-01-02"), a.obsah.StavHledaniSlovy().Pripraveno)
 	klic := fmt.Sprintf("%x|%s", h.Sum64(), otisk)
 	if p.klic != klic {
-		p.serazene, p.fasety = a.vybratGalerii(p.fotky, d)
+		p.serazene, p.fasety, p.slovy = a.vybratGalerii(p.fotky, d)
 		p.klic = klic
 	}
 	v.Celkem, v.Fasety = len(p.serazene), p.fasety
+	v.Obsahem, v.Rozpoznano, v.NabidnoutSlovy = p.slovy.podobnost != nil, p.slovy.jmeno, p.slovy.nabidnout
 	for i := d.Od; i < len(p.serazene) && i < d.Od+d.Kolik; i++ {
 		v.Fotky = append(v.Fotky, p.fotky[p.serazene[i]].f)
 	}
@@ -173,8 +180,16 @@ func obsahuje(seznam []string, hodnota string) bool {
 	return false
 }
 
-func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, FasetyGalerie) {
+func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, FasetyGalerie, hledaniSlovy) {
 	text := strings.Fields(zjednodusit(d.Text))
+	// Textu neodpovídá jméno, album ani fotograf → hledat v obsahu fotek (s modelkou poznanou v textu)
+	slovy := a.hledatSlovy(fotky, d.Text, text)
+	if slovy.podobnost != nil {
+		text = nil
+		if slovy.modelka > 0 {
+			d.Modelka = slovy.modelka
+		}
+	}
 	fasety := FasetyGalerie{Srdicka: map[string]int{}, Typy: map[string]int{}, Tagy: map[string]int{}, Dekady: map[string]int{}}
 	kolekce, _ := a.filtrKolekce(fotky, d.Kolekce)
 	var vybrane []int
@@ -209,6 +224,10 @@ func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, Fasety
 		}
 	}
 
+	if slovy.podobnost != nil {
+		return slovy.seradit(vybrane, fotky), fasety, slovy
+	}
+
 	// Klíč řazení
 	skore := make(map[int]float64, len(vybrane))
 	switch d.Razeni {
@@ -220,12 +239,12 @@ func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, Fasety
 			}
 			return x.ID > y.ID
 		})
-		return vybrane, fasety
+		return vybrane, fasety, slovy
 	case "nahodne":
 		sort.SliceStable(vybrane, func(i, j int) bool {
 			return nahodaKlice(fotky[vybrane[i]].f.ID, d.Seminko) < nahodaKlice(fotky[vybrane[j]].f.ID, d.Seminko)
 		})
-		return vybrane, fasety
+		return vybrane, fasety, slovy
 	case "hodnota":
 		modelky, _ := a.nactiModelky("", false)
 		var oblibenost map[int]float64
@@ -261,7 +280,7 @@ func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, Fasety
 		}
 		return nahodaKlice(fotky[vybrane[i]].f.ID, d.Seminko) < nahodaKlice(fotky[vybrane[j]].f.ID, d.Seminko)
 	})
-	return promichatAlba(vybrane, fotky), fasety
+	return promichatAlba(vybrane, fotky), fasety, slovy
 }
 
 // Napříč modelkami: z jednoho alba nejvýš 2 fotky v každých 12 po sobě (jinak by nahoře bylo jedno focení);

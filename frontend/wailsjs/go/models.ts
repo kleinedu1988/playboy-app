@@ -1747,6 +1747,9 @@ export namespace main {
 	    od: number;
 	    celkem: number;
 	    fasety: FasetyGalerie;
+	    obsahem: boolean;
+	    rozpoznano: string;
+	    nabidnoutSlovy: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new StrankaGalerie(source);
@@ -1758,6 +1761,9 @@ export namespace main {
 	        this.od = source["od"];
 	        this.celkem = source["celkem"];
 	        this.fasety = this.convertValues(source["fasety"], FasetyGalerie);
+	        this.obsahem = source["obsahem"];
+	        this.rozpoznano = source["rozpoznano"];
+	        this.nabidnoutSlovy = source["nabidnoutSlovy"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
@@ -2215,6 +2221,26 @@ export namespace obsah {
 	        this.hotovo = source["hotovo"];
 	        this.celkem = source["celkem"];
 	        this.vektoru = source["vektoru"];
+	        this.chyba = source["chyba"];
+	    }
+	}
+	export class StavTextu {
+	    pripraveno: boolean;
+	    stahuje: boolean;
+	    stazeno: number;
+	    celkem: number;
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new StavTextu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.pripraveno = source["pripraveno"];
+	        this.stahuje = source["stahuje"];
+	        this.stazeno = source["stazeno"];
+	        this.celkem = source["celkem"];
 	        this.chyba = source["chyba"];
 	    }
 	}

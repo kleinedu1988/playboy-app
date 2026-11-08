@@ -1,0 +1,610 @@
+package obsah
+
+// Hledání slovy (docs/NAVRH-GALERIE-KOLEKCE.md, bod 5): český text → vektor ve stejném prostoru jako vektory fotek
+// z CLIP ViT-B/32. Textový model je vícejazyčný DistilBERT vydestilovaný na textovou věž CLIP
+// (sentence-transformers/clip-ViT-B-32-multilingual-v1), zúžený na češtinu (slovník 32 768 tokenů, licence MIT):
+// tokeny → 6 vrstev transformeru → průměr přes tokeny → lineární projekce 768 → 512 → délka 1.
+//
+// Model běží přímo v Go (dotaz má pár slov, ~0,1 s): po stažení (~274 MB) se váhy převedou na int8 po řádcích
+// do text-cs-int8.bin (~70 MB) a stažené soubory se smažou. Stahuje se, až když hledání slovy poprvé zapneš.
+
+import (
+	"bufio"
+	"context"
+	"encoding/binary"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"math"
+	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
+	"sync"
+	"unicode"
+)
+
+const (
+	nazevTextu      = "text-cs-int8.bin"
+	nazevTokenizeru = "text-cs-tokenizer.json"
+	znackaTextu     = "PBTEXTCS"
+	verzeTextu      = 1
+	vrstevTextu     = 6
+	dimTextu        = 768
+	hlavTextu       = 12
+	maxTokenu       = 128
+)
+
+// Soubory textového modelu ke stažení (pevná revize na Hugging Face, ověřené hashe)
+var SouboryTextu = []Soubor{
+	{
+		Nazev:    "text-cs.safetensors",
+		Adresa:   "https://huggingface.co/alphaedge-ai/clip-ViT-B-32-multilingual-v1-cs-32768/resolve/44510be281f23377777dae6b62b4ea66b3179181/model.safetensors",
+		Hash:     "1e209d99d485ffb0173dbe2ceaea3ba928c54db846756a5aa19a0c4e8f5e95fe",
+		Velikost: 272362328,
+	},
+	{
+		Nazev:    "text-cs-dense.safetensors",
+		Adresa:   "https://huggingface.co/alphaedge-ai/clip-ViT-B-32-multilingual-v1-cs-32768/resolve/44510be281f23377777dae6b62b4ea66b3179181/2_Dense/model.safetensors",
+		Hash:     "d12568dc7300970a4d3dbb49068ad16cd89b99840b74b026f8e48071e9414f74",
+		Velikost: 1572984,
+	},
+	{
+		Nazev:    nazevTokenizeru,
+		Adresa:   "https://huggingface.co/alphaedge-ai/clip-ViT-B-32-multilingual-v1-cs-32768/resolve/44510be281f23377777dae6b62b4ea66b3179181/tokenizer.json",
+		Hash:     "ea9279a00107f66cd3879d5e9a3ae57e9d6485862b8f80ed286ad4563a18c906",
+		Velikost: 728414,
+	},
+}
+
+// TextPripraven: převedený model i tokenizér na místě
+func TextPripraven(slozka string) bool {
+	for _, n := range []string{nazevTextu, nazevTokenizeru} {
+		if i, err := os.Stat(filepath.Join(slozka, n)); err != nil || i.Size() == 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// VelikostTextu: kolik bajtů se stáhne (pro potvrzení)
+func VelikostTextu() int64 {
+	var n int64
+	for _, s := range SouboryTextu {
+		n += s.Velikost
+	}
+	return n
+}
+
+// PripravitText stáhne chybějící soubory textového modelu, převede váhy na int8 a stažené váhy smaže
+func PripravitText(ctx context.Context, klient *http.Client, slozka string, prubeh func(Prubeh)) error {
+	if TextPripraven(slozka) {
+		return nil
+	}
+	if err := os.MkdirAll(slozka, 0o700); err != nil {
+		return err
+	}
+	var celkem, hotovo int64
+	for _, s := range SouboryTextu {
+		celkem += s.Velikost
+	}
+	for _, s := range SouboryTextu {
+		cil := filepath.Join(slozka, s.Nazev)
+		if _, err := os.Stat(cil); err != nil {
+			zacatek := hotovo
+			err := Stahnout(ctx, klient, s.Adresa, cil, s.Hash, func(h, _ int64) {
+				if prubeh != nil {
+					prubeh(Prubeh{Soubor: s.Nazev, Hotovo: zacatek + h, Celkem: celkem})
+				}
+			})
+			if err != nil {
+				return fmt.Errorf("%s: %w", s.Nazev, err)
+			}
+		}
+		hotovo += s.Velikost
+	}
+	if err := prevestText(filepath.Join(slozka, SouboryTextu[0].Nazev), filepath.Join(slozka, SouboryTextu[1].Nazev), filepath.Join(slozka, nazevTextu)); err != nil {
+		return fmt.Errorf("převod textového modelu: %w", err)
+	}
+	os.Remove(filepath.Join(slozka, SouboryTextu[0].Nazev))
+	os.Remove(filepath.Join(slozka, SouboryTextu[1].Nazev))
+	if prubeh != nil {
+		prubeh(Prubeh{Hotovo: celkem, Celkem: celkem})
+	}
+	return nil
+}
+
+// SmazatText odstraní textový model (i rozstažené zbytky)
+func SmazatText(slozka string) error {
+	var chyba error
+	for _, n := range []string{nazevTextu, nazevTokenizeru, SouboryTextu[0].Nazev, SouboryTextu[1].Nazev,
+		SouboryTextu[0].Nazev + pripona, SouboryTextu[1].Nazev + pripona, nazevTokenizeru + pripona} {
+		if err := os.Remove(filepath.Join(slozka, n)); err != nil && !errors.Is(err, os.ErrNotExist) && chyba == nil {
+			chyba = err
+		}
+	}
+	return chyba
+}
+
+// --- safetensors (jen F32) ---
+
+type tenzor struct {
+	tvar []int
+	data []float32
+}
+
+func cistSafetensors(cesta string) (map[string]tenzor, error) {
+	f, err := os.Open(cesta)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	var n uint64
+	if err := binary.Read(f, binary.LittleEndian, &n); err != nil {
+		return nil, err
+	}
+	if n > 10<<20 {
+		return nil, errors.New("safetensors: nečekaná hlavička")
+	}
+	hlavicka := make([]byte, n)
+	if _, err := io.ReadFull(f, hlavicka); err != nil {
+		return nil, err
+	}
+	var popis map[string]json.RawMessage
+	if err := json.Unmarshal(hlavicka, &popis); err != nil {
+		return nil, err
+	}
+	type info struct {
+		Dtype   string   `json:"dtype"`
+		Shape   []int    `json:"shape"`
+		Offsets [2]int64 `json:"data_offsets"`
+	}
+	v := map[string]tenzor{}
+	for jmeno, raw := range popis {
+		if jmeno == "__metadata__" {
+			continue
+		}
+		var i info
+		if err := json.Unmarshal(raw, &i); err != nil {
+			return nil, err
+		}
+		if i.Dtype != "F32" {
+			return nil, fmt.Errorf("safetensors: %s má typ %s", jmeno, i.Dtype)
+		}
+		pocet := 1
+		for _, d := range i.Shape {
+			pocet *= d
+		}
+		if int64(pocet)*4 != i.Offsets[1]-i.Offsets[0] {
+			return nil, fmt.Errorf("safetensors: %s nesedí velikost", jmeno)
+		}
+		data := make([]float32, pocet)
+		if _, err := f.Seek(8+int64(n)+i.Offsets[0], io.SeekStart); err != nil {
+			return nil, err
+		}
+		if err := binary.Read(bufio.NewReaderSize(f, 1<<20), binary.LittleEndian, data); err != nil {
+			return nil, fmt.Errorf("safetensors: %s: %w", jmeno, err)
+		}
+		v[jmeno] = tenzor{i.Shape, data}
+	}
+	return v, nil
+}
+
+// --- převedený model: matice int8 po řádcích (měřítko na řádek), vektory float32 ---
+
+type maticeInt8 struct {
+	radku, sloupcu int
+	meritka        []float32
+	data           []int8
+}
+
+func naInt8(t tenzor) maticeInt8 {
+	r, s := t.tvar[0], t.tvar[1]
+	m := maticeInt8{r, s, make([]float32, r), make([]int8, r*s)}
+	for i := range r {
+		radek := t.data[i*s : (i+1)*s]
+		var mx float32
+		for _, x := range radek {
+			mx = max(mx, float32(math.Abs(float64(x))))
+		}
+		if mx == 0 {
+			continue
+		}
+		m.meritka[i] = mx / 127
+		for j, x := range radek {
+			m.data[i*s+j] = int8(math.Round(float64(x / m.meritka[i])))
+		}
+	}
+	return m
+}
+
+// Názvy matic a vektorů převedeného modelu (pořadí v souboru)
+func nazvyTextu() (matice, vektory []string) {
+	matice = []string{"embeddings.word_embeddings.weight", "embeddings.position_embeddings.weight"}
+	vektory = []string{"embeddings.LayerNorm.gamma", "embeddings.LayerNorm.beta"}
+	for l := range vrstevTextu {
+		p := fmt.Sprintf("transformer.layer.%d.", l)
+		for _, x := range []string{"attention.q_lin", "attention.k_lin", "attention.v_lin", "attention.out_lin", "ffn.lin1", "ffn.lin2"} {
+			matice = append(matice, p+x+".weight")
+			vektory = append(vektory, p+x+".bias")
+		}
+		for _, x := range []string{"sa_layer_norm", "output_layer_norm"} {
+			vektory = append(vektory, p+x+".weight", p+x+".bias")
+		}
+	}
+	matice = append(matice, "linear.weight")
+	return matice, vektory
+}
+
+func prevestText(model, dense, cil string) error {
+	t, err := cistSafetensors(model)
+	if err != nil {
+		return err
+	}
+	d, err := cistSafetensors(dense)
+	if err != nil {
+		return err
+	}
+	t["linear.weight"] = d["linear.weight"]
+	matice, vektory := nazvyTextu()
+	docasny := cil + ".tmp"
+	f, err := os.OpenFile(docasny, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
+	if err != nil {
+		return err
+	}
+	w := bufio.NewWriterSize(f, 1<<20)
+	binary.Write(w, binary.LittleEndian, []byte(znackaTextu))
+	binary.Write(w, binary.LittleEndian, uint16(verzeTextu))
+	for _, n := range matice {
+		x, ok := t[n]
+		if !ok || len(x.tvar) != 2 {
+			f.Close()
+			os.Remove(docasny)
+			return fmt.Errorf("chybí matice %s", n)
+		}
+		m := naInt8(x)
+		binary.Write(w, binary.LittleEndian, [2]uint32{uint32(m.radku), uint32(m.sloupcu)})
+		binary.Write(w, binary.LittleEndian, m.meritka)
+		binary.Write(w, binary.LittleEndian, m.data)
+	}
+	for _, n := range vektory {
+		x, ok := t[n]
+		if !ok || len(x.tvar) != 1 {
+			f.Close()
+			os.Remove(docasny)
+			return fmt.Errorf("chybí vektor %s", n)
+		}
+		binary.Write(w, binary.LittleEndian, uint32(len(x.data)))
+		binary.Write(w, binary.LittleEndian, x.data)
+	}
+	err = w.Flush()
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err == nil {
+		err = os.Rename(docasny, cil)
+	}
+	if err != nil {
+		os.Remove(docasny)
+	}
+	return err
+}
+
+// TextovyModel: český text → vektor délky 1 v prostoru vektorů fotek
+type TextovyModel struct {
+	matice  map[string]maticeInt8
+	vektory map[string][]float32
+	slovnik map[string]int32
+	unk     int32
+	cls     int32
+	sep     int32
+
+	mu    sync.Mutex
+	pamet map[string][]float32 // posledních dotazů
+}
+
+// OtevritText načte převedený model a tokenizér ze složky obsah/
+func OtevritText(slozka string) (*TextovyModel, error) {
+	f, err := os.Open(filepath.Join(slozka, nazevTextu))
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	r := bufio.NewReaderSize(f, 1<<20)
+	var znacka [8]byte
+	var verze uint16
+	if err := binary.Read(r, binary.LittleEndian, &znacka); err != nil || string(znacka[:]) != znackaTextu {
+		return nil, errors.New("textový model: neznámý soubor")
+	}
+	if binary.Read(r, binary.LittleEndian, &verze) != nil || verze != verzeTextu {
+		return nil, errors.New("textový model: jiná verze")
+	}
+	t := &TextovyModel{matice: map[string]maticeInt8{}, vektory: map[string][]float32{}, pamet: map[string][]float32{}}
+	matice, vektory := nazvyTextu()
+	for _, n := range matice {
+		var rozmer [2]uint32
+		if err := binary.Read(r, binary.LittleEndian, &rozmer); err != nil {
+			return nil, fmt.Errorf("textový model: %s: %w", n, err)
+		}
+		if rozmer[0] > 1<<17 || rozmer[1] > 1<<13 {
+			return nil, fmt.Errorf("textový model: %s: nečekaný rozměr", n)
+		}
+		m := maticeInt8{int(rozmer[0]), int(rozmer[1]), make([]float32, rozmer[0]), make([]int8, int(rozmer[0])*int(rozmer[1]))}
+		if err := binary.Read(r, binary.LittleEndian, m.meritka); err != nil {
+			return nil, err
+		}
+		if err := binary.Read(r, binary.LittleEndian, m.data); err != nil {
+			return nil, err
+		}
+		t.matice[n] = m
+	}
+	for _, n := range vektory {
+		var delka uint32
+		if err := binary.Read(r, binary.LittleEndian, &delka); err != nil || delka > 1<<13 {
+			return nil, fmt.Errorf("textový model: %s", n)
+		}
+		x := make([]float32, delka)
+		if err := binary.Read(r, binary.LittleEndian, x); err != nil {
+			return nil, err
+		}
+		t.vektory[n] = x
+	}
+	if err := t.nacistSlovnik(filepath.Join(slozka, nazevTokenizeru)); err != nil {
+		return nil, err
+	}
+	return t, nil
+}
+
+func (t *TextovyModel) nacistSlovnik(cesta string) error {
+	data, err := os.ReadFile(cesta)
+	if err != nil {
+		return err
+	}
+	var tok struct {
+		Model struct {
+			Vocab map[string]int32 `json:"vocab"`
+		} `json:"model"`
+	}
+	if err := json.Unmarshal(data, &tok); err != nil {
+		return fmt.Errorf("tokenizér: %w", err)
+	}
+	t.slovnik = tok.Model.Vocab
+	var ok1, ok2, ok3 bool
+	t.unk, ok1 = t.slovnik["[UNK]"]
+	t.cls, ok2 = t.slovnik["[CLS]"]
+	t.sep, ok3 = t.slovnik["[SEP]"]
+	if !ok1 || !ok2 || !ok3 || len(t.slovnik) != t.matice["embeddings.word_embeddings.weight"].radku {
+		return errors.New("tokenizér nesedí k modelu")
+	}
+	return nil
+}
+
+// --- tokenizér BERT (bez převodu na malá písmena a bez odstranění diakritiky) + WordPiece ---
+
+func interpunkce(r rune) bool {
+	if (r >= 33 && r <= 47) || (r >= 58 && r <= 64) || (r >= 91 && r <= 96) || (r >= 123 && r <= 126) {
+		return true
+	}
+	return unicode.IsPunct(r)
+}
+
+func cjk(r rune) bool {
+	return (r >= 0x4E00 && r <= 0x9FFF) || (r >= 0x3400 && r <= 0x4DBF) || (r >= 0x20000 && r <= 0x2A6DF) ||
+		(r >= 0x2A700 && r <= 0x2B73F) || (r >= 0x2B740 && r <= 0x2B81F) || (r >= 0x2B820 && r <= 0x2CEAF) ||
+		(r >= 0xF900 && r <= 0xFAFF) || (r >= 0x2F800 && r <= 0x2FA1F)
+}
+
+// Slova po normalizaci a rozdělení (mezery, interpunkce a znaky CJK zvlášť)
+func slovaBert(text string) []string {
+	var slova []string
+	var b strings.Builder
+	konec := func() {
+		if b.Len() > 0 {
+			slova = append(slova, b.String())
+			b.Reset()
+		}
+	}
+	for _, r := range text {
+		switch {
+		case r == 0 || r == 0xFFFD || (unicode.IsControl(r) && r != '\t' && r != '\n' && r != '\r'):
+			continue
+		case unicode.IsSpace(r):
+			konec()
+		case interpunkce(r) || cjk(r):
+			konec()
+			slova = append(slova, string(r))
+		default:
+			b.WriteRune(r)
+		}
+	}
+	konec()
+	return slova
+}
+
+// Tokeny textu: [CLS] … [SEP], nejvýš maxTokenu
+func (t *TextovyModel) Tokeny(text string) []int32 {
+	v := []int32{t.cls}
+	for _, slovo := range slovaBert(text) {
+		r := []rune(slovo)
+		if len(r) > 100 {
+			v = append(v, t.unk)
+			continue
+		}
+		var casti []int32
+		for zacatek := 0; zacatek < len(r); {
+			konec := len(r)
+			nalezeno := int32(-1)
+			for ; konec > zacatek; konec-- {
+				kus := string(r[zacatek:konec])
+				if zacatek > 0 {
+					kus = "##" + kus
+				}
+				if id, ok := t.slovnik[kus]; ok {
+					nalezeno = id
+					break
+				}
+			}
+			if nalezeno < 0 {
+				casti = []int32{t.unk}
+				break
+			}
+			casti = append(casti, nalezeno)
+			zacatek = konec
+		}
+		v = append(v, casti...)
+	}
+	if len(v) > maxTokenu-1 {
+		v = v[:maxTokenu-1]
+	}
+	return append(v, t.sep)
+}
+
+// --- výpočet ---
+
+// y[n×radku] = x[n×sloupcu] · Wᵀ + b, souběžně po řádcích matice
+func (m maticeInt8) nasobit(x []float32, n int, b []float32) []float32 {
+	y := make([]float32, n*m.radku)
+	vlaken := min(runtime.NumCPU(), 8)
+	var wg sync.WaitGroup
+	for c := range vlaken {
+		wg.Go(func() {
+			for j := c * m.radku / vlaken; j < (c+1)*m.radku/vlaken; j++ {
+				w := m.data[j*m.sloupcu : (j+1)*m.sloupcu]
+				for i := range n {
+					xi := x[i*m.sloupcu : (i+1)*m.sloupcu]
+					var s float32
+					for k, q := range w {
+						s += xi[k] * float32(q)
+					}
+					s *= m.meritka[j]
+					if b != nil {
+						s += b[j]
+					}
+					y[i*m.radku+j] = s
+				}
+			}
+		})
+	}
+	wg.Wait()
+	return y
+}
+
+func (m maticeInt8) radek(i int) []float32 {
+	v := make([]float32, m.sloupcu)
+	for k, q := range m.data[i*m.sloupcu : (i+1)*m.sloupcu] {
+		v[k] = float32(q) * m.meritka[i]
+	}
+	return v
+}
+
+func normalizovatVrstvou(x []float32, n int, g, b []float32) {
+	for i := range n {
+		r := x[i*dimTextu : (i+1)*dimTextu]
+		var prumer, rozptyl float64
+		for _, v := range r {
+			prumer += float64(v)
+		}
+		prumer /= dimTextu
+		for _, v := range r {
+			rozptyl += (float64(v) - prumer) * (float64(v) - prumer)
+		}
+		rozptyl /= dimTextu
+		k := 1 / math.Sqrt(rozptyl+1e-12)
+		for j, v := range r {
+			r[j] = float32((float64(v)-prumer)*k)*g[j] + b[j]
+		}
+	}
+}
+
+// Vektor textu délky 1 (512 čísel); nil pro prázdný text
+func (t *TextovyModel) Vektor(text string) []float32 {
+	text = strings.TrimSpace(text)
+	if t == nil || text == "" {
+		return nil
+	}
+	t.mu.Lock()
+	if v, ok := t.pamet[text]; ok {
+		t.mu.Unlock()
+		return v
+	}
+	t.mu.Unlock()
+	tokeny := t.Tokeny(text)
+	n := len(tokeny)
+	slova, pozice := t.matice["embeddings.word_embeddings.weight"], t.matice["embeddings.position_embeddings.weight"]
+	x := make([]float32, n*dimTextu)
+	for i, id := range tokeny {
+		s, p := slova.radek(int(id)), pozice.radek(i)
+		for k := range dimTextu {
+			x[i*dimTextu+k] = s[k] + p[k]
+		}
+	}
+	normalizovatVrstvou(x, n, t.vektory["embeddings.LayerNorm.gamma"], t.vektory["embeddings.LayerNorm.beta"])
+	const dimHlavy = dimTextu / hlavTextu
+	for l := range vrstevTextu {
+		p := fmt.Sprintf("transformer.layer.%d.", l)
+		lin := func(jmeno string, vstup []float32) []float32 {
+			return t.matice[p+jmeno+".weight"].nasobit(vstup, n, t.vektory[p+jmeno+".bias"])
+		}
+		q, k, v := lin("attention.q_lin", x), lin("attention.k_lin", x), lin("attention.v_lin", x)
+		kontext := make([]float32, n*dimTextu)
+		skore := make([]float64, n)
+		for h := range hlavTextu {
+			o := h * dimHlavy
+			for i := range n {
+				nej := math.Inf(-1)
+				for j := range n {
+					var s float32
+					for d := range dimHlavy {
+						s += q[i*dimTextu+o+d] * k[j*dimTextu+o+d]
+					}
+					skore[j] = float64(s) / math.Sqrt(dimHlavy)
+					nej = math.Max(nej, skore[j])
+				}
+				var soucet float64
+				for j := range n {
+					skore[j] = math.Exp(skore[j] - nej)
+					soucet += skore[j]
+				}
+				for j := range n {
+					w := float32(skore[j] / soucet)
+					for d := range dimHlavy {
+						kontext[i*dimTextu+o+d] += w * v[j*dimTextu+o+d]
+					}
+				}
+			}
+		}
+		pozornost := lin("attention.out_lin", kontext)
+		for i := range x {
+			x[i] += pozornost[i]
+		}
+		normalizovatVrstvou(x, n, t.vektory[p+"sa_layer_norm.weight"], t.vektory[p+"sa_layer_norm.bias"])
+		skryta := lin("ffn.lin1", x)
+		for i, a := range skryta {
+			skryta[i] = float32(0.5 * float64(a) * (1 + math.Erf(float64(a)/math.Sqrt2)))
+		}
+		vystup := t.matice[p+"ffn.lin2.weight"].nasobit(skryta, n, t.vektory[p+"ffn.lin2.bias"])
+		for i := range x {
+			x[i] += vystup[i]
+		}
+		normalizovatVrstvou(x, n, t.vektory[p+"output_layer_norm.weight"], t.vektory[p+"output_layer_norm.bias"])
+	}
+	prumer := make([]float32, dimTextu)
+	for i := range n {
+		for k := range dimTextu {
+			prumer[k] += x[i*dimTextu+k] / float32(n)
+		}
+	}
+	vektor := t.matice["linear.weight"].nasobit(prumer, 1, nil)
+	if !Normalizovat(vektor) {
+		return nil
+	}
+	t.mu.Lock()
+	if len(t.pamet) > 200 {
+		t.pamet = map[string][]float32{}
+	}
+	t.pamet[text] = vektor
+	t.mu.Unlock()
+	return vektor
+}

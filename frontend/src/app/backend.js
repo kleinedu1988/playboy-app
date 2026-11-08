@@ -100,6 +100,9 @@ const CTENI = new Set([
     'SmazatVyberGalerie',
     // Zájem o kolekce jen ladí pořadí řad v Galerii (galerie_zajem.go)
     'ZaznamenatKolekci',
+    // Hledání slovy: textový model je mimo databázi sbírky (stejně jako obsah fotek)
+    'GetStavHledaniSlovy',
+    'ZapnoutHledaniSlovy',
     'GetStavUceniTagu',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
@@ -206,6 +209,8 @@ export const GetVyberyGalerie = /** @type {typeof App.GetVyberyGalerie} */ (obal
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));
+export const GetStavHledaniSlovy = /** @type {typeof App.GetStavHledaniSlovy} */ (obalit('GetStavHledaniSlovy'));
+export const ZapnoutHledaniSlovy = /** @type {typeof App.ZapnoutHledaniSlovy} */ (obalit('ZapnoutHledaniSlovy'));
 export const PorovnatCtverici = /** @type {typeof App.PorovnatCtverici} */ (obalit('PorovnatCtverici'));
 export const VratitCtverici = /** @type {typeof App.VratitCtverici} */ (obalit('VratitCtverici'));
 export const GetStavUceniTagu = /** @type {typeof App.GetStavUceniTagu} */ (obalit('GetStavUceniTagu'));

@@ -187,6 +187,9 @@ func (s *Sluzba) Vypnout() error {
 	if e := SmazatVzhled(s.slozka); err == nil {
 		err = e
 	}
+	if e := s.VypnoutHledaniSlovy(); err == nil {
+		err = e
+	}
 	return err
 }
 

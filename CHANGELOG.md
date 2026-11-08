@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.24.0] – 2026-11-08
+
+### Přidáno
+- **Hledání slovy v Galerii (bod 5 návrhu kolekcí)**: když textu v hledání neodpovídá jméno modelky, album ani fotograf, Galerie hledá v obsahu fotek – „v kuchyni“, „červené auto“, „ve sněhu“, „černé punčochy“, „na koni“, „v telefonní budce“. Fotky jsou seřazené podle shody; ukážou se ty, které nad sbírkou výrazně vyčnívají, a nesmysly ani překlepy nevrátí nic. Jméno modelky v textu („Kelley Thompson na posteli“) omezí hledání na její fotky. Hovorová slova pro vlasy („zrzka“, „blondýnka“) se nahradí popisem, kterému model rozumí. V liště je štítek *🔎 V obsahu fotek*.
+- Český textový model (vícejazyčný CLIP zúžený na češtinu, `alphaedge-ai/clip-ViT-B-32-multilingual-v1-cs-32768`, MIT) se stáhne jednou na požádání (*Zapnout hledání slovy*, ~274 MB s průběhem), převede na int8 (65 MB v `obsah/`) a běží přímo v Go bez internetu (~0,1–0,3 s na dotaz). Vypnutí obsahu fotek ho smaže.
+
 ## [1.23.0] – 2026-11-08
 
 ### Přidáno

@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.27.1] – 2026-11-08
+
+### Přidáno
+- **Zlomy v grafech ve Statistikách** (Postřehy, krok 2): program najde roky, kdy se údaj nebo podíl skokem změnil, a řekne to větou – *„Od roku 1985 podíl modelek se silikonovými prsy průkazně vzrostl: z 1 % v letech 1954–1984 na 35 % v letech 1985–2021.“*, *„Od roku 1972 výška průkazně vzrostla: ze 165 cm v letech 1954–1971 na 170 cm v letech 1972–2021.“* V grafu je zlom čárkovaná svislice s rokem a přes období vede čára jejich úrovně (v legendě „úroveň období“). Zlom má přednost před větou o trendu; bublina u ⓘ ukáže všechna období s hodnotami a ověření každého zlomu.
+  - Řada let se rozdělí optimálně (úsek aspoň 5 let a 30 modelek, nejvýš 3 zlomy) s pokutou za každý zlom nakalibrovanou simulací – na řadách bez zlomu najde falešný zlom asi u 2–3 %. Každý zlom se ověří testem sousedních období (Mann–Whitney, u podílu Fisher, oprava Benjamini–Hochberg) a musí být podstatný (stejné prahy jako u trendu); jinak se zahodí.
+
+### Opraveno
+- Hodnoty v postřezích mají pevný počet desetinných míst (poměr pas : boky „0,70“, ne „0,7“); BMI ve větě s jedním desetinným místem.
+
 ## [1.27.0] – 2026-11-08
 
 ### Přidáno

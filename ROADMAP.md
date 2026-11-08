@@ -722,7 +722,7 @@ výpočet v JS (testy výběru jsou funkce rozhraní), žádná p-hodnota v hlav
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | ~~Trend u grafu~~ – hotovo 8. 11. 2026 (1.27.0): `lib/statistika.js` (Kendall, Cochran–Armitage, Theil–Sen, Wilson, pořadí) proti SciPy, věta pod grafem s bublinou | Statistické funkce s testy proti R/SciPy; věta pod grafem v čase („Výška průkazně roste: ze 168 na 173 cm“) s bublinou podrobností | M |
-| 2 | Zlomy | Optimální rozdělení řady let (min. 5 let a 30 modelek, nejvýš 3 zlomy), pokuta kalibrovaná simulací; čárkovaná svislice a úrovně období v grafu, věta „Od roku 1995 roste…“ | M–L |
+| 2 | ~~Zlomy~~ – hotovo 8. 11. 2026 (1.27.1): pokuta c = 2,5 (údaj) a 1,5 (podíl), falešný zlom ~2 %, ověření MW/Fisher + BH | Optimální rozdělení řady let (min. 5 let a 30 modelek, nejvýš 3 zlomy), pokuta kalibrovaná simulací; čárkovaná svislice a úrovně období v grafu, věta „Od roku 1995 roste…“ | M–L |
 | 3 | Výběr proti sbírce | Mann–Whitney, Fisher, oprava BH, prahy podstatnosti (2 cm, 10 bodů), vyloučení příznaků určených výběrem, min. 10 modelek; panel „Výběr má o 4 cm užší pas (60 vs 64 cm)“ | M–L |
 | 4 | Panel napříč grafy | Skóre síla × jistota, nejvýš 5, bez opakování příbuzných příznaků, bez blikání; klik přepne graf (u neobvyklého roku vybere rok); 5 000 modelek < 30 ms | M |
 | 5 | Neobvyklé roky a souvislosti | Rok vybočující ze svého období, Spearman mezi údaji a s hodnocením („souvislost, ne příčina“), standardizace výběru podle desetiletí | M |

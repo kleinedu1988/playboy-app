@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { obdobi, predlozkaZ, trendRady } from '../src/lib/postrehy.js';
+import { obdobi, postrehRady, predlozkaZ, trendRady, zlomyRady } from '../src/lib/postrehy.js';
 
 // Deterministický generátor (mulberry32) a normální rozdělení (Box–Muller)
 function generator(seminko) {
@@ -16,7 +16,7 @@ function generator(seminko) {
     return { nahoda, normalni };
 }
 
-const VYSKA = { druh: 'udaj', nazev: 'Výška', jednotka: 'cm', prah: 2 };
+const VYSKA = { druh: 'udaj', nazev: 'Výška', jednotka: 'cm', prah: 2, rod: 'f' };
 const SILIKON = { druh: 'podil', nazev: 'Silikonová prsa', sKym: 'se silikonovými prsy' };
 
 // Řada let od..do, v každém roce n modelek s hodnotou z funkce (rok, náhoda)
@@ -75,6 +75,7 @@ test('klesající trend a desetinná místa (poměr pas : boky)', () => {
     assert.ok(t);
     assert.equal(t.smer, -1);
     assert.match(t.veta, /^Poměr pas : boky průkazně klesá: z 0,7\d v 70\. letech na 0,\d\d v letech 2000–2009\.$/);
+    assert.match(t.podrobnosti, /polovina modelek 0,\d\d–0,\d\d \(/, 'vždy dvě desetinná místa');
 });
 
 test('průkazný, ale nepodstatný rozdíl (pod prahem) se neukáže', () => {
@@ -112,4 +113,67 @@ test('výpočet na 5 000 modelkách do 30 ms', () => {
     const t0 = performance.now();
     trendRady(VYSKA, sloupce);
     assert.ok(performance.now() - t0 < 30);
+});
+
+test('zasazený zlom podílu 10 % → 45 % v roce 1995 se najde (1993–1997) s úrovněmi ±5 bodů', () => {
+    const { nahoda } = generator(10);
+    const sloupce = rada(1970, 2005, () => 30, rok => nahoda() < (rok < 1995 ? 0.1 : 0.45));
+    const { zlomy, useky } = zlomyRady(SILIKON, sloupce);
+    assert.equal(zlomy.length, 1);
+    assert.ok(Math.abs(zlomy[0].rok - 1995) <= 2, `zlom ${zlomy[0].rok}`);
+    assert.ok(Math.abs(useky[0].hodnota - 10) <= 5 && Math.abs(useky[1].hodnota - 45) <= 5, useky.map(u => u.hodnota).join(' / '));
+    const p = postrehRady(SILIKON, sloupce);
+    assert.equal(p.druh, 'zlom');
+    assert.match(p.veta, /^Od roku 199\d podíl modelek se silikonovými prsy průkazně vzrostl: z \d+ % v letech 1970–199\d na \d+ % v letech 199\d–2005\.$/);
+    assert.match(p.podrobnosti, /Zlom 199\d: Fisherův test sousedních období p < 0,001\./);
+});
+
+test('zlom má přednost před trendem; rod slovesa a BMI velkými písmeny', () => {
+    const { normalni } = generator(11);
+    const skok = rok => Math.round(167 + (rok >= 1990 ? 5 : 0) + normalni() * 4);
+    const p = postrehRady(VYSKA, rada(1960, 2019, () => 20, skok), { vyber: true });
+    assert.equal(p.druh, 'zlom');
+    assert.match(p.veta, /^Od roku 19(8[89]|9[0-2]) výška ve výběru průkazně vzrostla: ze 16\d cm v letech 1960–19\d\d na 17\d cm v letech 19\d\d–2019\.$/);
+    const bmi = { druh: 'udaj', nazev: 'BMI', jednotka: 'kg/m²', desetinna: 1, prah: 0.5, rod: 'n' };
+    const pb = postrehRady(bmi, rada(1960, 2019, () => 20, rok => Math.round((19.5 - (rok >= 1990 ? 1.2 : 0) + normalni() * 1.2) * 10) / 10));
+    assert.match(pb.veta, /^Od roku 19\d\d BMI průkazně kleslo: z 19,\d kg\/m² v letech 1960–19\d\d na 18,\d kg\/m² v letech 19\d\d–2019\.$/);
+});
+
+test('dva zlomy (nahoru a zpět) se oba najdou a bublina zmíní opravu', () => {
+    const { normalni } = generator(12);
+    const p = postrehRady(VYSKA, rada(1960, 2019, () => 25, rok => Math.round(168 + (rok >= 1980 && rok < 2000 ? 5 : 0) + normalni() * 4)));
+    assert.equal(p.zlomy.length, 2, p.zlomy.map(z => z.rok).join(', '));
+    assert.match(p.podrobnosti, /po opravě na 2 zlomy/);
+});
+
+test('řídká data: 3 modelky v roce 1960 nevytvoří zlom; řada bez dat nic nespadne', () => {
+    const { normalni } = generator(13);
+    const sloupce = rada(1960, 2019, rok => (rok === 1960 ? 3 : 15), rok => Math.round((rok === 1960 ? 185 : 170) + normalni() * 4));
+    assert.equal(zlomyRady(VYSKA, sloupce).zlomy.length, 0);
+    assert.deepEqual(zlomyRady(VYSKA, rada(1960, 1980, () => 0, () => 0)).zlomy, []);
+    assert.equal(postrehRady(VYSKA, []), null);
+});
+
+test('nulová simulace zlomů: falešný zlom nejvýš u 5 % ze 200 řad', () => {
+    const { nahoda, normalni } = generator(14);
+    let falesne = 0;
+    for (let i = 0; i < 200; i++) {
+        const pocet = () => 1 + Math.floor(nahoda() * [8, 25, 60][i % 3]);
+        const sloupce = i % 2
+            ? rada(1960, 1960 + 30 + (i % 41), pocet, () => Math.round(170 + normalni() * 5))
+            : rada(1960, 1960 + 30 + (i % 41), pocet, () => nahoda() < 0.3);
+        if (zlomyRady(i % 2 ? VYSKA : SILIKON, sloupce).zlomy.length) falesne++;
+    }
+    console.log(`nulová simulace zlomů: ${falesne} z 200`);
+    assert.ok(falesne <= 10, `falešných ${falesne} z 200`);
+});
+
+test('zlomy na 5 000 modelkách do 30 ms', () => {
+    const { normalni } = generator(15);
+    const sloupce = rada(1953, 2025, () => 69, rok => Math.round(166 + (rok > 1990 ? 3 : 0) + normalni() * 5));
+    postrehRady(VYSKA, sloupce);
+    const t0 = performance.now();
+    postrehRady(VYSKA, sloupce);
+    const ms = performance.now() - t0;
+    assert.ok(ms < 30, `${ms.toFixed(1)} ms`);
 });

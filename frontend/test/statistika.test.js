@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { cochranArmitage, kendallTauB, median, normalniChvost, poradi, theilSen, wilson } from '../src/lib/statistika.js';
+import { benjaminiHochberg, cochranArmitage, fisher, kendallTauB, mannWhitney, median, normalniChvost, poradi, theilSen, wilson } from '../src/lib/statistika.js';
 
 // Referenční hodnoty ze SciPy (testdata/statistika-pripady.py)
 const pripady = JSON.parse(readFileSync(new URL('../../testdata/statistika-pripady.json', import.meta.url), 'utf8'));
@@ -59,4 +59,15 @@ test('Wilsonův interval souhlasí se SciPy', () => {
         blizko(v.horni, horni, `${ano}/${n} horní`);
     }
     assert.equal(wilson(0, 0), null);
+});
+
+test('Mann–Whitney, Fisher a Benjamini–Hochberg souhlasí se SciPy', () => {
+    for (const { a, b, u, p } of pripady.mannWhitney) {
+        const v = mannWhitney(a, b);
+        // SciPy vrací U první skupiny
+        blizko(v.u, u, `U ${a.length}×${b.length}`);
+        blizko(v.p, p, `p ${a.length}×${b.length}`);
+    }
+    for (const { tabulka: [[a, b], [c, d]], p } of pripady.fisher) blizko(fisher(a, b, c, d), p, `Fisher ${a},${b},${c},${d}`);
+    for (const { p, q } of pripady.bh) benjaminiHochberg(p).forEach((x, i) => blizko(x, q[i], `BH ${p}`));
 });

@@ -1,5 +1,6 @@
 // Statistické funkce pro postřehy ve Statistikách (lib/postrehy.js): pořadí se shodami, normální rozdělení,
-// Kendallovo τ_b, Cochranův–Armitageův test trendu podílu, Theilův–Senův sklon a Wilsonův interval podílu.
+// Kendallovo τ_b, Cochranův–Armitageův test trendu podílu, Theilův–Senův sklon a Wilsonův interval podílu, Mannův–Whitneyův
+// a Fisherův test a Benjaminiho–Hochbergova oprava.
 // Bez DOM a bez závislostí; hodnoty hlídá frontend/test/statistika.test.js proti SciPy (testdata/statistika-pripady.json).
 
 const ODMOCNINA_PI = Math.sqrt(Math.PI);
@@ -147,4 +148,65 @@ export function wilson(ano, n, z = 1.959963984540054) {
     const stred = (p + z2 / (2 * n)) / (1 + z2 / n);
     const polovina = z * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / (1 + z2 / n);
     return { dolni: Math.max(0, stred - polovina), horni: Math.min(1, stred + polovina) };
+}
+
+// Mannův–Whitneyův test dvou skupin: normální aproximace s opravou na shody a na spojitost (scipy.stats.mannwhitneyu
+// method='asymptotic', R wilcox.test(correct=TRUE, exact=FALSE)). U je pro první skupinu. Vrací { u, z, p } nebo null.
+export function mannWhitney(a, b) {
+    const n1 = a.length, n2 = b.length, n = n1 + n2;
+    if (!n1 || !n2) return null;
+    const vse = [...a, ...b];
+    const r = poradi(vse);
+    let r1 = 0;
+    for (let i = 0; i < n1; i++) r1 += r[i];
+    const u = r1 - n1 * (n1 + 1) / 2;
+    const serazene = Float64Array.from(vse).sort();
+    let shodyT = 0;
+    for (let i = 0; i < n;) {
+        let j = i + 1;
+        while (j < n && serazene[j] === serazene[i]) j++;
+        const t = j - i;
+        shodyT += t * t * t - t;
+        i = j;
+    }
+    const rozptyl = n1 * n2 / 12 * ((n + 1) - shodyT / (n * (n - 1)));
+    if (!(rozptyl > 0)) return null;
+    const odchylka = u - n1 * n2 / 2;
+    const z = Math.sign(odchylka) * Math.max(0, Math.abs(odchylka) - 0.5) / Math.sqrt(rozptyl);
+    return { u, z, p: pOboustranne(z) };
+}
+
+// ln(k!) pro k = 0…n (tabulka se rozšiřuje podle potřeby)
+const lnFakt = [0];
+function lnFaktorial(k) {
+    for (let i = lnFakt.length; i <= k; i++) lnFakt[i] = lnFakt[i - 1] + Math.log(i);
+    return lnFakt[k];
+}
+
+// Fisherův přesný test tabulky 2×2 [[a, b], [c, d]], oboustranný (součet pravděpodobností tabulek nejvýš tak
+// pravděpodobných jako pozorovaná, s relativní tolerancí 1e-7 jako R a SciPy)
+export function fisher(a, b, c, d) {
+    const r1 = a + b, r2 = c + d, s1 = a + c, n = r1 + r2;
+    if (!r1 || !r2 || !s1 || s1 === n) return 1;
+    const zaklad = lnFaktorial(r1) + lnFaktorial(r2) + lnFaktorial(s1) + lnFaktorial(n - s1) - lnFaktorial(n);
+    const lnP = x => zaklad - lnFaktorial(x) - lnFaktorial(r1 - x) - lnFaktorial(s1 - x) - lnFaktorial(r2 - s1 + x);
+    const pozorovana = lnP(a);
+    let p = 0;
+    for (let x = Math.max(0, s1 - r2); x <= Math.min(r1, s1); x++) {
+        const l = lnP(x);
+        if (l <= pozorovana + 1e-7) p += Math.exp(l);
+    }
+    return Math.min(1, p);
+}
+
+// Benjaminiho–Hochbergova oprava: upravené p (q) ve stejném pořadí jako vstup (R p.adjust(method="BH"))
+export function benjaminiHochberg(p) {
+    const m = p.length, idx = p.map((_, i) => i).sort((x, y) => p[y] - p[x]);
+    const q = new Array(m);
+    let min = 1;
+    idx.forEach((i, k) => {
+        min = Math.min(min, p[i] * m / (m - k));
+        q[i] = min;
+    });
+    return q;
 }

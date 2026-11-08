@@ -12,7 +12,8 @@ import numpy as np
 from scipy import stats
 
 rng = np.random.default_rng(20261108)
-pripady = {"normalniChvost": [], "poradi": [], "kendall": [], "cochranArmitage": [], "theilSen": [], "wilson": []}
+pripady = {"normalniChvost": [], "poradi": [], "kendall": [], "cochranArmitage": [], "theilSen": [], "wilson": [],
+           "mannWhitney": [], "fisher": [], "bh": []}
 
 for z in [-3.0, -1.0, 0.0, 0.5, 1.0, 1.959963984540054, 2.5, 3.3, 4.0, 4.5, 6.0, 8.0]:
     pripady["normalniChvost"].append({"z": z, "p": float(stats.norm.sf(z))})
@@ -60,5 +61,17 @@ for x, y in [([1, 2, 3, 4, 5], [1, 3, 2, 5, 4]), ([1960, 1965, 1970, 1975, 1980,
 for ano, n in [(0, 10), (3, 10), (10, 10), (45, 260), (412, 4120), (1, 1)]:
     ci = stats.binomtest(ano, n).proportion_ci(confidence_level=0.95, method="wilson")
     pripady["wilson"].append({"ano": ano, "n": n, "dolni": float(ci.low), "horni": float(ci.high)})
+
+for a, b in [([1, 2, 3, 4, 5], [6, 7, 8, 9, 10]), ([3, 3, 4, 5, 5, 5], [4, 4, 5, 6, 6, 7, 7]),
+             (np.round(rng.normal(64, 3, 200)).tolist(), np.round(rng.normal(62, 3, 180)).tolist()),
+             (np.round(rng.normal(170, 5, 40)).tolist(), np.round(rng.normal(170, 5, 900)).tolist())]:
+    v = stats.mannwhitneyu(a, b, use_continuity=True, alternative="two-sided", method="asymptotic")
+    pripady["mannWhitney"].append({"a": list(map(float, a)), "b": list(map(float, b)), "u": float(v.statistic), "p": float(v.pvalue)})
+
+for t in [[[3, 1], [1, 3]], [[10, 2], [3, 15]], [[0, 5], [5, 0]], [[45, 215], [41, 371]], [[120, 280], [300, 500]], [[1, 0], [0, 0]]]:
+    pripady["fisher"].append({"tabulka": t, "p": float(stats.fisher_exact(t).pvalue) if sum(map(sum, t)) > 1 else 1.0})
+
+for p in [[0.01, 0.04, 0.03, 0.2], [0.001, 0.5], [0.05]]:
+    pripady["bh"].append({"p": p, "q": stats.false_discovery_control(p, method="bh").tolist()})
 
 print(json.dumps(pripady, ensure_ascii=False, indent=1))

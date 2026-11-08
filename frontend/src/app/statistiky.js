@@ -12,7 +12,7 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
-import { trendRady } from '../lib/postrehy';
+import { postrehRady } from '../lib/postrehy';
 import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 
@@ -47,8 +47,8 @@ export function grafSloupcu(polozky, { sirka = 460, vyska = 190 } = {}) {
 // Nabídka grafů. V čase: osa „rok“ (rok prvního výskytu modelky v časopise – centerfold, obálka nebo pictorial
 // u čísla – ve zvolené edici a druhu výskytu) nebo „mesic“ (měsíc přidání do sbírky);
 // druh pocet (sloupce počtů), udaj (medián a prostřední polovina modelek) nebo podil (procento modelek s vlastností
-// ze známých hodnot). Rozložení: pruhy hodnot. Pro postřeh o trendu (lib/postrehy.js): prah = nejmenší podstatná
-// změna údaje, sKym = podíl „modelek …“ ve větě.
+// ze známých hodnot). Rozložení: pruhy hodnot. Pro postřeh o trendu a zlomu (lib/postrehy.js): prah = nejmenší
+// podstatná změna údaje, sKym = podíl „modelek …“ ve větě, rod = rod názvu („výška vzrostla“, „BMI kleslo“).
 const anoNe = h => h === 1 ? true : h === 0 ? false : null;
 const zHodnot = (text, ano, ne) => {
     const t = String(text || '').trim();
@@ -58,9 +58,9 @@ const GRAFY = [
     { klic: 'cf', skupina: 'pocty', osa: 'rok', druh: 'pocet', nazev: 'Modelky podle roku' },
     { klic: 'prib', skupina: 'pocty', osa: 'mesic', druh: 'pocet', nazev: 'Přibývání sbírky' },
     { klic: 'vek', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Věk při prvním výskytu', jednotka: 'let', prah: 1 },
-    { klic: 'vyska', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Výška', jednotka: 'cm', prah: 2, udaj: m => m.vyskaCm || null },
-    { klic: 'vaha', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Váha', jednotka: 'kg', prah: 2, udaj: m => m.vahaKg || null },
-    { klic: 'bmi', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'BMI', jednotka: 'kg/m²', prah: 0.5,
+    { klic: 'vyska', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Výška', jednotka: 'cm', prah: 2, rod: 'f', udaj: m => m.vyskaCm || null },
+    { klic: 'vaha', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Váha', jednotka: 'kg', prah: 2, rod: 'f', udaj: m => m.vahaKg || null },
+    { klic: 'bmi', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'BMI', jednotka: 'kg/m²', desetinna: 1, prah: 0.5, rod: 'n',
         udaj: m => m.vyskaCm > 0 && m.vahaKg > 0 ? m.vahaKg / (m.vyskaCm / 100) ** 2 : null },
     { klic: 'hrudnik', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod hrudníku', jednotka: 'cm', prah: 2, udaj: m => m.obvodHrudnikCm || null },
     { klic: 'pas', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod pasu', jednotka: 'cm', prah: 2, udaj: m => m.obvodPasCm || null },
@@ -278,6 +278,18 @@ function htmlGrafuVCase(def, sloupce, sirka) {
         .reduce((u, b) => { if (b) u.at(-1).push(b); else if (u.at(-1).length) u.push([]); return u; }, [[]])
         .filter(u => u.length > 1).map(u => `<polyline class="${trida}" points="${u.join(' ')}"/>`).join('');
     casti.push(lomena(caraCelku, 'sp-krivka celek'), lomena(cara, 'sp-krivka'));
+    // Zlom: čárkovaná svislice s rokem nahoře a schodovitá úroveň období (medián nebo podíl úseku)
+    if (postreh?.druh === 'zlom') {
+        const index = rok => rok - sloupce[0].rok;
+        postreh.useky.forEach(u => {
+            const yU = y(Math.min(hi, Math.max(lo, u.hodnota)));
+            casti.push(`<line class="sp-uroven" x1="${x(index(u.odRoku))}" x2="${x(index(u.doRoku) + 1)}" y1="${yU}" y2="${yU}"/>`);
+        });
+        postreh.zlomy.forEach(z => {
+            const xz = x(index(z.rok));
+            casti.push(`<line class="sp-zlom" x1="${xz}" x2="${xz}" y1="${T + 12}" y2="${H - D}"/><text class="graf-popisek sp-zlom-rok" x="${xz}" y="${T + 6}" text-anchor="middle">${z.rok}</text>`);
+        });
+    }
     sloupce.forEach((s, i) => {
         const p = vybrane[i], n = p.length, h = hodnotaSloupce(def, p);
         const kolik = def.druh === 'pocet' ? (def.osa === 'mesic' ? `${pocetModelek(n)} přidáno` : pocetModelek(n))
@@ -397,17 +409,19 @@ function souhrn(def, sloupce, rozlozeni) {
         : `${co} <b>${hodnota(vsechny)}</b> · známé u ${pocetModelek(vsechny.length)} · ${obdobi}`;
 }
 
-// Postřeh o trendu pod grafem v čase podle roku (údaje a podíly): ze stejných sloupců jako graf, při výběru jen
-// modelky výběru (podmínka roku graf nezužuje, jen zvýrazňuje). Bez průkazného a podstatného trendu prázdné.
-function htmlPostrehu(def) {
-    if (def.osa !== 'rok' || def.druh === 'pocet' || !sloupce.length) return '';
+// Postřeh pod grafem v čase podle roku (údaje a podíly): zlom, nebo trend. Ze stejných sloupců jako graf, při výběru
+// jen modelky výběru (podmínka roku graf nezužuje, jen zvýrazňuje). Bez průkazného a podstatného postřehu null.
+function spocitatPostreh(def) {
+    if (def.osa !== 'rok' || def.druh === 'pocet' || !sloupce.length) return null;
     const zuzeno = [...filtry.keys()].some(k => k !== 'rok');
     const rada = sloupce.map(s => ({ rok: s.rok, polozky: zuzeno ? s.polozky.filter(p => vyhovuje(p.m, 'rok')) : s.polozky }));
     const zname = rada.reduce((n, s) => n + s.polozky.length, 0);
     const celkem = data.modelky.filter(m => prvniVyskyt(m) && (!zuzeno || vyhovuje(m, 'rok'))).length;
     const kdy = druhVyskytu === 'online' ? 'rok nafocení prvního online alba' : `rok ${druhVyskytu === 'vse' ? 'prvního výskytu v časopise' : `prvního výskytu – ${DRUHY_VYSKYTU[druhVyskytu].toLowerCase()}`}`;
     const kontext = `Známé u ${cislo(zname, 0)} z ${pocetModelek(celkem)}${zuzeno ? ' výběru' : ''}; ${kdy}${edice === 'vse' ? '' : `, edice ${edice}`}.`;
-    const t = trendRady(def, rada, { vyber: zuzeno, kontext });
+    return postrehRady(def, rada, { vyber: zuzeno, kontext });
+}
+function htmlPostrehu(t) {
     if (!t) return '';
     return `<span class="sp-postreh-ikona" aria-hidden="true">${t.smer > 0 ? '↗' : '↘'}</span><span>${esc(t.veta)}</span>
         <button type="button" class="sp-postreh-info" data-tip="${esc(t.podrobnosti)}" data-tip-siroky aria-label="${esc(`Podrobnosti: ${t.podrobnosti}`)}">ⓘ</button>`;
@@ -435,12 +449,14 @@ function htmlLegendy(def) {
     if (!def.osa) return '';
     const celek = [...filtry.keys()].some(k => k !== klicFiltru(def)) ? '<span><i class="celek"></i>celá sbírka</span>' : '';
     const prumer = `<span><i class="cara"></i>průměr ${def.osa === 'mesic' ? '3 měsíců' : '7 let'}</span>`;
-    if (def.druh === 'udaj') return `<span><i class="bod"></i>medián roku</span><span><i class="pasmo"></i>prostřední polovina modelek</span>${prumer}`;
-    return `<span><i></i>${def.druh === 'podil' ? `${def.ano} (% modelek se známým údajem)` : def.osa === 'mesic' ? 'přidané modelky' : `modelky (${popisVyskytu()})`}</span>${celek}${prumer}`;
+    const uroven = postreh?.druh === 'zlom' ? '<span><i class="uroven"></i>úroveň období</span>' : '';
+    if (def.druh === 'udaj') return `<span><i class="bod"></i>medián roku</span><span><i class="pasmo"></i>prostřední polovina modelek</span>${prumer}${uroven}`;
+    return `<span><i></i>${def.druh === 'podil' ? `${def.ano} (% modelek se známým údajem)` : def.osa === 'mesic' ? 'přidané modelky' : `modelky (${popisVyskytu()})`}</span>${celek}${prumer}${uroven}`;
 }
 
 // Překreslení grafu (při tažení jen graf), případně i seznamu a lišty
 let sloupce = [], rozlozeni = [];
+let postreh = null;              // postřeh zobrazeného grafu (zlom kreslí graf: svislice a úrovně období)
 function vykreslit(koren, { jenGraf = false } = {}) {
     if (!data || !koren.querySelector('[data-sp-graf]')) return;
     const def = definice();
@@ -448,6 +464,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     koren.querySelector('.graf-bublina')?.classList.add('hidden');
     if (!jenGraf) {
         sloupce = def.osa ? radaVCase(def) : [];
+        postreh = spocitatPostreh(def);
         rozlozeni = def.osa ? [] : polozkyRozlozeni(def.klic);
     }
     const fokus = /** @type {HTMLElement} */ (document.activeElement)?.closest?.('[data-hodnota]')?.dataset.hodnota;
@@ -468,9 +485,9 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     ].join(''));
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
-    const postreh = koren.querySelector('[data-sp-postreh]'), htmlP = htmlPostrehu(def);
-    postreh.innerHTML = htmlP;
-    postreh.hidden = !htmlP;
+    const mistoPostrehu = koren.querySelector('[data-sp-postreh]'), htmlP = htmlPostrehu(postreh);
+    mistoPostrehu.innerHTML = htmlP;
+    mistoPostrehu.hidden = !htmlP;
     // Modelky bez čísla (jen online, bez vydání) nemají rok; kolik jich v grafech v čase není, říká nápověda.
     // U druhu Online jsou to modelky bez online alba s datem nafocení.
     const online = druhVyskytu === 'online';

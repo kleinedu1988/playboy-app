@@ -6971,6 +6971,13 @@ textarea {
     background-color: var(--text-main);
 }
 
+.sp-legenda i.uroven {
+    width: 14px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: var(--text-muted);
+}
+
 .sp-graf {
     border-radius: 8px;
     outline: none;
@@ -7033,7 +7040,29 @@ textarea {
     fill: rgba(255, 255, 255, 0.04);
 }
 
-/* Postřeh o trendu pod grafem v čase (lib/postrehy.js); podrobnosti v bublině u ⓘ */
+/* Zlom v grafu v čase: čárkovaná svislice v barvě textu s rokem, úroveň období tenká vodorovná čára */
+.sp-zlom {
+    stroke: var(--text-main);
+    stroke-width: 1;
+    stroke-dasharray: 4 3;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.sp-zlom-rok {
+    fill: var(--text-main);
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.sp-uroven {
+    stroke: var(--text-muted);
+    stroke-width: 2;
+    stroke-linecap: round;
+    pointer-events: none;
+}
+
+/* Postřeh o trendu nebo zlomu pod grafem v čase (lib/postrehy.js); podrobnosti v bublině u ⓘ */
 .sp-postreh {
     display: flex;
     align-items: baseline;

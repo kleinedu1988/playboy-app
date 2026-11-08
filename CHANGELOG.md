@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.23.0] – 2026-11-08
+
+### Přidáno
+- **Osobní pořadí řad kolekcí v Galerii**: program si pamatuje, které kolekce otevíráš (*Zobrazit vše*, *Celá kolekce* v banneru, dlaždice v panelu kolekcí, uložený výběr) a na které fotky v řadách klikáš, a takové kolekce dává výš (až ×1,6), spolu s celou jejich skupinou (až ×1,2 – kdo otevírá styly, uvidí víc stylů). Řada, která se ukazuje víc než 3 dny bez povšimnutí, pomalu klesá (až ×0,7). Zájem vyprchává s poločasem 30 dní. Často otevírané řady mají štítek *★ často otevíráš*.
+- Ukládá se v nastavení databáze (`galerie_zajem`, nejvýš 300 kolekcí) – schéma ani formát exportu se nemění.
+
 ## [1.22.0] – 2026-11-08
 
 ### Přidáno

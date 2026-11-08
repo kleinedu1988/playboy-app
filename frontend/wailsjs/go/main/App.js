@@ -626,6 +626,10 @@ export function ZastavitStahovaniNahledu() {
   return window['go']['main']['App']['ZastavitStahovaniNahledu']();
 }
 
+export function ZaznamenatKolekci(arg1, arg2) {
+  return window['go']['main']['App']['ZaznamenatKolekci'](arg1, arg2);
+}
+
 export function ZaznamenatOpravu(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['ZaznamenatOpravu'](arg1, arg2, arg3, arg4);
 }

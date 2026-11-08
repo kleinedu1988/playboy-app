@@ -28,6 +28,8 @@ type KolekceGalerie struct {
 	Skupina string       `json:"skupina"` // cas, vzhled, kariera, tvoje, obsah
 	Pocet   int          `json:"pocet"`
 	Fotky   []Fotografie `json:"fotky"` // nejlepší fotky do řady
+	// Často ji otevíráš (osobní pořadí řad, galerie_zajem.go)
+	Oblibena bool `json:"oblibena"`
 }
 
 const (
@@ -588,7 +590,7 @@ func (a *App) GetKolekceGalerie() []KolekceGalerie {
 			continue
 		}
 		zeSkupiny[k.d.skupina]++
-		r := KolekceGalerie{Klic: k.d.klic, Nazev: k.d.nazev, Duvod: k.d.duvod, Skupina: k.d.skupina, Pocet: len(k.indexy), Fotky: []Fotografie{}}
+		r := KolekceGalerie{Klic: k.d.klic, Nazev: k.d.nazev, Duvod: k.d.duvod, Skupina: k.d.skupina, Pocet: len(k.indexy), Fotky: []Fotografie{}, Oblibena: k.oblibena}
 		// Téměř stejné snímky (podobnost obsahu ≥ 0,95) v řadě jen jednou
 		for _, i := range promichatAlba(k.indexy, fotky) {
 			if len(r.Fotky) >= fotekVRade {
@@ -601,6 +603,11 @@ func (a *App) GetKolekceGalerie() []KolekceGalerie {
 		}
 		v = append(v, r)
 	}
+	klice := make([]string, len(v))
+	for i, r := range v {
+		klice[i] = r.Klic
+	}
+	a.zaznamenatUkazaneRady(klice, time.Now())
 	return v
 }
 
@@ -617,9 +624,10 @@ func (a *App) fotkyGalerieVPameti() []fotkaGalerie {
 }
 
 type kandidatKolekce struct {
-	d       defKolekce
-	indexy  []int // fotky kolekce od té, která se ti asi líbí nejvíc
-	hodnota float64
+	d        defKolekce
+	indexy   []int // fotky kolekce od té, která se ti asi líbí nejvíc
+	hodnota  float64
+	oblibena bool
 }
 
 // Všechny platné kolekce (aspoň 8 fotek, nejvýš 60 % sbírky) s hodnotou pro dnešní výběr řad
@@ -628,6 +636,7 @@ func (a *App) kandidatiKolekci(fotky []fotkaGalerie) []kandidatKolekce {
 	den := nyni.Format("2006-01-02")
 	dk := a.dataKolekci(fotky)
 	skore := a.skoreLibi(fotky)
+	zajem := a.zajemKolekci(nyni)
 	var kandidati []kandidatKolekce
 	for _, d := range a.definiceKolekci(fotky, dk, nyni) {
 		var indexy []int
@@ -647,8 +656,9 @@ func (a *App) kandidatiKolekci(fotky []fotkaGalerie) []kandidatKolekce {
 		for _, i := range indexy[:k] {
 			soucet += skore[i]
 		}
-		hodnota := (soucet/float64(k) + 0.5) * math.Log10(float64(len(indexy))+10) * d.kontext * (0.7 + 0.6*nahodaDne(den, d.klic))
-		kandidati = append(kandidati, kandidatKolekce{d, indexy, hodnota})
+		// × osobní zájem (kolekce a skupiny, které otevíráš, výš; přehlížené řady níž)
+		hodnota := (soucet/float64(k) + 0.5) * math.Log10(float64(len(indexy))+10) * d.kontext * (0.7 + 0.6*nahodaDne(den, d.klic)) * zajem.nasobitel(d.klic)
+		kandidati = append(kandidati, kandidatKolekce{d, indexy, hodnota, zajem.oblibena(d.klic)})
 	}
 	return kandidati
 }

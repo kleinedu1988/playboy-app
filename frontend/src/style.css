@@ -18853,3 +18853,14 @@ body.rezim-vyberu #detailView .poster {
     opacity: 0.75;
     font-size: 11px;
 }
+
+/* Řada kolekce, kterou často otevíráš (osobní pořadí řad) */
+.gv-rada-oblibena {
+    flex: none;
+    padding: 1px 8px;
+    border: 1px solid var(--accent);
+    border-radius: 999px;
+    color: var(--accent-text);
+    font-size: 11px;
+    white-space: nowrap;
+}

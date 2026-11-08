@@ -321,6 +321,8 @@ export function ZastavitObsah():Promise<void>;
 
 export function ZastavitStahovaniNahledu():Promise<void>;
 
+export function ZaznamenatKolekci(arg1:string,arg2:string):Promise<void>;
+
 export function ZaznamenatOpravu(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
 
 export function ZaznamenatZajem(arg1:number,arg2:string,arg3:number):Promise<boolean>;

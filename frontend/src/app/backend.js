@@ -98,6 +98,8 @@ const CTENI = new Set([
     // Uložené výběry Galerie jsou jen nastavení (tabulka nastaveni), data sbírky ani pohledy nemění
     'UlozitVyberGalerie',
     'SmazatVyberGalerie',
+    // Zájem o kolekce jen ladí pořadí řad v Galerii (galerie_zajem.go)
+    'ZaznamenatKolekci',
     'GetStavUceniTagu',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
@@ -203,6 +205,7 @@ export const GetVsechnyKolekce = /** @type {typeof App.GetVsechnyKolekce} */ (ob
 export const GetVyberyGalerie = /** @type {typeof App.GetVyberyGalerie} */ (obalit('GetVyberyGalerie'));
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
+export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));
 export const PorovnatCtverici = /** @type {typeof App.PorovnatCtverici} */ (obalit('PorovnatCtverici'));
 export const VratitCtverici = /** @type {typeof App.VratitCtverici} */ (obalit('VratitCtverici'));
 export const GetStavUceniTagu = /** @type {typeof App.GetStavUceniTagu} */ (obalit('GetStavUceniTagu'));

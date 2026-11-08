@@ -415,6 +415,7 @@ export namespace main {
 	    skupina: string;
 	    pocet: number;
 	    fotky: sbirka.Fotografie[];
+	    oblibena: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new KolekceGalerie(source);
@@ -428,6 +429,7 @@ export namespace main {
 	        this.skupina = source["skupina"];
 	        this.pocet = source["pocet"];
 	        this.fotky = this.convertValues(source["fotky"], sbirka.Fotografie);
+	        this.oblibena = source["oblibena"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

@@ -4,7 +4,7 @@
 // pak mozaika po stránkách. Výchozí řazení „Co se ti
 // asi líbí“: tvoje srdíčka a u nehodnocených odhad z obsahu fotek, promíchané napříč alby. Dotaz i otevřený panel
 // se pamatují. Text hledání v hlavičce omezuje galerii (jméno modelky, album, fotograf).
-import { GetGalerieFotek, GetKolekceGalerie, GetVsechnyKolekce, GetVyberyGalerie, UlozitVyberGalerie, SmazatVyberGalerie } from './backend';
+import { GetGalerieFotek, GetKolekceGalerie, GetVsechnyKolekce, GetVyberyGalerie, UlozitVyberGalerie, SmazatVyberGalerie, ZaznamenatKolekci } from './backend';
 import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
 import { stav } from './stav';
 import { best } from './prvky';
@@ -47,8 +47,10 @@ const polozka = f => ({ fotky: [f], album: f.album, typ: f.typ, modelkaId: f.mod
 
 // Kolekce (galerie_kolekce.go): řady pod bannerem a hero přes kolekce; zvolená kolekce („Zobrazit vše“) omezuje
 // mozaiku (nepamatuje se – jen do dalšího přepnutí)
-/** @type {{ klic: string, nazev: string, duvod: string, skupina: string, pocet: number, fotky: any[] }[]} */
+/** @type {{ klic: string, nazev: string, duvod: string, skupina: string, pocet: number, fotky: any[], oblibena?: boolean }[]} */
 let kolekce = [];
+// Zájem o kolekci (osobní pořadí řad): otevření celé kolekce, nebo fotka z řady
+const zaznamenat = (klic, akce) => { if (klic) ZaznamenatKolekci(klic, akce).catch(() => {}); };
 let zvolenaKolekce = { klic: '', nazev: '' };
 
 // Panel kolekcí (▦ Kolekce v liště): uložené výběry a všechny kolekce po skupinách jako dlaždice s fotkou;
@@ -121,7 +123,7 @@ function htmlRady(r, n) {
     const dlazdice = r.fotky.map((f, i) => `<button type="button" class="gv-dlazdice" data-gv-rada="${n}" data-gv-fotka="${i}" title="${esc(`${f.jmenoModelky || ''} · ${nazevAlba(f.album, f.typ)}`)}">
         <img src="${esc(obrazek(f.url, 'w400'))}" alt="" loading="lazy" draggable="false" />${f.hodnoceni ? `<span class="gv-srd">${'♥'.repeat(f.hodnoceni)}</span>` : ''}</button>`).join('');
     return `<section class="gv-rada">
-        <div class="gv-rada-hlava"><h3>${esc(r.nazev)}</h3><span class="gv-rada-duvod">${esc(r.duvod)}</span>
+        <div class="gv-rada-hlava"><h3>${esc(r.nazev)}</h3>${r.oblibena ? '<span class="gv-rada-oblibena" title="Tuhle kolekci často otevíráš – proto je výš">★ často otevíráš</span>' : ''}<span class="gv-rada-duvod">${esc(r.duvod)}</span>
             <button type="button" class="link gv-vse" data-gv-kolekce="${n}">Zobrazit vše (${r.pocet.toLocaleString('cs-CZ')}) ›</button></div>
         <div class="gv-rada-telo"><button type="button" class="gv-posun vlevo" data-gv-posun="-1" aria-label="Posunout zpět">‹</button>
             <div class="gv-pas-rady">${dlazdice}</div>
@@ -373,6 +375,7 @@ export function pripravitGalerii(nacistZnovu) {
         if (k) {
             const x = vsechnyKolekce[parseInt(k.dataset.gvK, 10)];
             if (!x) return;
+            if (x.klic !== zvolenaKolekce.klic) zaznamenat(x.klic, 'otevreni');
             zvolenaKolekce = x.klic === zvolenaKolekce.klic ? { klic: '', nazev: '' } : { klic: x.klic, nazev: x.nazev };
             try { localStorage.setItem(KLIC_PANELU_KOLEKCI, '0'); } catch { /* jen teď */ }
             nacistZnovu();
@@ -386,6 +389,7 @@ export function pripravitGalerii(nacistZnovu) {
             const d = x.dotaz || {};
             dotaz = { ...VYCHOZI_DOTAZ, razeni: d.razeni || 'libi', srdicka: d.srdicka || '', typy: d.typy || [], tagy: d.tagy || [], dekady: d.dekady || [] };
             zvolenaKolekce = { klic: d.kolekce || '', nazev: x.nazevKolekce || '' };
+            zaznamenat(zvolenaKolekce.klic, 'otevreni');
             ulozitDotaz();
             try { localStorage.setItem(KLIC_PANELU_KOLEKCI, '0'); } catch { /* jen teď */ }
             nacistZnovu();
@@ -407,6 +411,7 @@ export function pripravitGalerii(nacistZnovu) {
         if (vse) {
             const r = kolekce[parseInt(vse.dataset.gvKolekce, 10)];
             if (!r) return;
+            zaznamenat(r.klic, 'otevreni');
             zvolenaKolekce = { klic: r.klic, nazev: r.nazev };
             nacistZnovu();
             document.querySelector('main')?.scrollTo({ top: 0 });
@@ -420,7 +425,10 @@ export function pripravitGalerii(nacistZnovu) {
         const dl = /** @type {HTMLElement | null} */ (cil.closest('[data-gv-rada]'));
         if (dl) {
             const r = kolekce[parseInt(dl.dataset.gvRada, 10)];
-            if (r) otevritLightbox(parseInt(dl.dataset.gvFotka, 10), false, r.fotky.map(polozka));
+            if (r) {
+                zaznamenat(r.klic, 'fotka');
+                otevritLightbox(parseInt(dl.dataset.gvFotka, 10), false, r.fotky.map(polozka));
+            }
             return;
         }
         const posun = /** @type {HTMLElement | null} */ (cil.closest('[data-gv-posun]'));

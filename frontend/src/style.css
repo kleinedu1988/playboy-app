@@ -17452,33 +17452,34 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* Pásky čísel: jedna řada pod kariérou, plné růžové */
-.hlavni-lista #profilPruh .pruh-pasky {
-    position: static;
-    display: flex;
+/* Čísla časopisu a online jako textové odkazy v řádku kariéry (dřív růžové pásky, splývaly s lištou alb) */
+.hlavni-lista #profilPruh .pruh-cisla {
+    display: inline-flex;
     flex-wrap: wrap;
-    justify-content: flex-start;
-    gap: 6px;
-    max-width: none;
-    margin: 4px 0 0;
+    column-gap: 8px;
 }
 
-/* Pásky jako drobný doplněk pod kariérou, ne výraznější než jméno */
-.hlavni-lista #profilPruh .panel-paska {
-    height: 20px;
-    padding: 0 9px;
-    border: none;
-    border-radius: 999px;
-    background-color: var(--accent);
-    color: #fff;
-    font-size: 10.5px;
-    letter-spacing: 0.06em;
-    line-height: 20px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
-    text-shadow: none;
+.hlavni-lista #profilPruh .pruh-odkaz {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-shadow: inherit;
+    cursor: pointer;
 }
 
-.hlavni-lista #profilPruh .panel-paska:hover {
-    background-color: var(--accent-hover);
+.hlavni-lista #profilPruh .pruh-odkaz + .pruh-odkaz::before {
+    content: ',';
+    margin: 0 4px 0 -8px;
+    color: rgba(240, 240, 245, 0.6);
+}
+
+.hlavni-lista #profilPruh .pruh-odkaz:hover,
+.hlavni-lista #profilPruh .pruh-odkaz:focus-visible {
+    color: var(--zlato-svetle);
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 /* Akce vpravo dole, sklo nad fotkou */
@@ -17546,7 +17547,6 @@ body.rezim-vyberu #detailView .poster {
 
 /* --- Svinuté záhlaví po odrolování: jeden řádek se jménem a akcemi, fotka jen jako tmavý pruh --- */
 .navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-nadtitulek,
-.navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-pasky,
 .navbar.profil-svinuty .hlavni-lista #profilPruh .pruh-kariera {
     display: none;
 }

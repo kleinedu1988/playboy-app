@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.10.2] – 2026-11-08
+
+### Změněno
+- **Čísla časopisu a „Online“ v záhlaví profilu jako text**: růžové pásky pod jménem splývaly s lištou alb a rušily ji. Teď jsou součástí řádku kariéry („1999–2003 · 6 alb · 214 fotek · Playmate · Říj 98, Led 00, Online“) jako textové odkazy – klik dál otevře číslo nebo přejde na online album, při najetí se zlatě podtrhnou.
+
 ## [1.10.1] – 2026-11-08
 
 ### Změněno

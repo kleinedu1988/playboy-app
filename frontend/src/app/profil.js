@@ -131,12 +131,12 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const paskyHtml = platnaVydani.map(v => {
         const role = (v === playmateVydani && jePlaymate) ? 'Playmate · ' : '';
         const popisek = `${role}${paskaCisla(v)}`;
-        return `<button type="button" class="panel-paska" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
+        return `<button type="button" class="pruh-odkaz" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
     }).join('') + ((modelka.onlineAlba || []).length
-        ? `<button type="button" class="panel-paska" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
+        ? `<button type="button" class="pruh-odkaz" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
     const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" />`;
     // Filmový banner: dole vlevo nadtitulek (kategorie), velké jméno se srdíčky, řádek kariéry (roky, alba a fotky
-    // doplní vykreslení alb), pořadí a odznaky, pod tím pásky čísel; celou plochu kryje fotka banneru
+    // doplní vykreslení alb, čísla časopisu a online jako textové odkazy), pořadí a odznaky; celou plochu kryje fotka
     const roky = platnaVydani.map(v => parseInt(v, 10)).filter(r => r > 1900);
     const obdobi = roky.length ? (Math.min(...roky) === Math.max(...roky) ? String(roky[0]) : `${Math.min(...roky)}–${Math.max(...roky)}`) : '';
     const nadtitulek = kategorie.map(k => popisKategorie(k)).filter(Boolean).slice(0, 3).join(' · ');
@@ -148,12 +148,11 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
                 ${htmlSrdicka(modelka)}
             </div>
             <div class="pruh-radek">
-                <span class="pruh-kariera">${obdobi ? `<span>${esc(obdobi)}</span>` : ''}<span class="pruh-pocty"></span></span>
+                <span class="pruh-kariera">${obdobi ? `<span>${esc(obdobi)}</span>` : ''}<span class="pruh-pocty"></span>${paskyHtml ? `<span class="pruh-cisla">${paskyHtml}</span>` : ''}</span>
                 ${htmlOdhadu(modelka, 'odhad-profil')}
                 ${htmlPoradi(modelka)}
                 <div class="profile-odznaky" hidden></div>
             </div>
-            ${paskyHtml ? `<div class="pruh-pasky">${paskyHtml}</div>` : ''}
         </div>
     `;
     aktualizovatBannerProfilu(modelka);

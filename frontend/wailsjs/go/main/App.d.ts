@@ -63,6 +63,8 @@ export function GetGalerieFotek(arg1:main.DotazGalerie):Promise<main.StrankaGale
 
 export function GetGalerieNejlepsich(arg1:oblibenost.DotazNejlepsich):Promise<oblibenost.GalerieNejlepsich>;
 
+export function GetIdealniModelka():Promise<main.IdealniModelka>;
+
 export function GetKalendar():Promise<Array<sbirka.VydaniKalendare>>;
 
 export function GetKatalogTagu():Promise<Array<sbirka.SkupinaTagu>>;

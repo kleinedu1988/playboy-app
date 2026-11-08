@@ -18956,3 +18956,239 @@ body.rezim-vyberu #detailView .poster {
     margin: 0 0 10px;
     padding: 0 2px;
 }
+
+/* ===== Tvoje ideální modelka (app/vkus.js): celostránkové okno ===== */
+.vk-okno {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    overflow-y: auto;
+    background: rgba(8, 8, 11, 0.86);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+.vk-okno.hidden {
+    display: none;
+}
+
+.vk-obsah {
+    max-width: 1100px;
+    margin: 32px auto;
+    padding: 0 24px 40px;
+}
+
+.vk-hlava {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.vk-hlava h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.vk-zavrit {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.vk-uvod,
+.vk-nacita,
+.vk-prazdne {
+    margin: 0 0 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.vk-nacita {
+    margin-top: 40px;
+    text-align: center;
+}
+
+.vk-mrizka {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: 18px;
+}
+
+@media (max-width: 800px) {
+    .vk-mrizka {
+        grid-template-columns: 1fr;
+    }
+}
+
+.vk-karta {
+    padding: 18px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: var(--bg-card);
+}
+
+.vk-karta h3,
+.vk-nejblize h3 {
+    margin: 0 0 12px;
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.vk-karta h3.vk-mijis {
+    margin-top: 18px;
+    color: var(--text-muted);
+}
+
+.vk-radek {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.vk-radek:last-child {
+    border-bottom: 0;
+}
+
+.vk-skupina {
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.vk-seznam {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.vk-vlastnost {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.vk-vlastnost.bez-kolekce {
+    cursor: default;
+}
+
+.vk-vlastnost:not(.bez-kolekce):hover {
+    border-color: var(--accent);
+}
+
+.vk-hodnota {
+    font-weight: 600;
+}
+
+.vk-pomer {
+    color: var(--accent-text);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+.vk-mijis + .vk-seznam .vk-pomer {
+    color: var(--text-muted);
+}
+
+.vk-fotky {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin: 22px 0;
+}
+
+.vk-fotka {
+    position: relative;
+    height: 420px;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 18px;
+    background: #111;
+    cursor: zoom-in;
+}
+
+.vk-fotka img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 25%;
+}
+
+.vk-fotka figcaption {
+    position: absolute;
+    inset: auto 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 40px 18px 16px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+    color: #fff;
+}
+
+.vk-fotka figcaption b {
+    font-size: 16px;
+}
+
+.vk-fotka figcaption span,
+.vk-fotka figcaption small {
+    opacity: 0.8;
+    font-size: 12.5px;
+}
+
+.vk-modelky {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+}
+
+.vk-modelka {
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 14px;
+    background: var(--bg-card);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.vk-modelka img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+}
+
+.vk-modelka span {
+    display: block;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.gv-blok-akce {
+    display: flex;
+    flex: none;
+    gap: 8px;
+}

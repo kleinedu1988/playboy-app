@@ -94,6 +94,7 @@ const CTENI = new Set([
     'GetGalerieFotek',
     'GetKolekceGalerie',
     'GetVsechnyKolekce',
+    'GetIdealniModelka',
     'GetVyberyGalerie',
     // Uložené výběry Galerie jsou jen nastavení (tabulka nastaveni), data sbírky ani pohledy nemění
     'UlozitVyberGalerie',
@@ -205,6 +206,7 @@ export const GetPoradiModelek = /** @type {typeof App.GetPoradiModelek} */ (obal
 export const GetGalerieFotek = /** @type {typeof App.GetGalerieFotek} */ (obalit('GetGalerieFotek'));
 export const GetKolekceGalerie = /** @type {typeof App.GetKolekceGalerie} */ (obalit('GetKolekceGalerie'));
 export const GetVsechnyKolekce = /** @type {typeof App.GetVsechnyKolekce} */ (obalit('GetVsechnyKolekce'));
+export const GetIdealniModelka = /** @type {typeof App.GetIdealniModelka} */ (obalit('GetIdealniModelka'));
 export const GetVyberyGalerie = /** @type {typeof App.GetVyberyGalerie} */ (obalit('GetVyberyGalerie'));
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));

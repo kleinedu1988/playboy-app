@@ -16,6 +16,7 @@ import * as vydani from './app/vydani';
 import * as kalendar from './app/kalendar';
 import * as prehled from './app/prehled';
 import * as nejlepsi from './app/nejlepsi';
+import { pripravitVkus } from './app/vkus';
 import * as cover from './app/cover';
 import * as prohlizec from './app/prohlizec';
 import * as vyber from './app/vyber';
@@ -48,6 +49,7 @@ import { nabidnoutPoSpusteni as nabidnoutDnesniVyber } from './app/dnesni-vyber'
 zkratky.pripravit();
 obrazky.pripravit();
 galerie.pripravit();
+pripravitVkus();
 profil.pripravit();
 stena.pripravit();
 vydani.pripravit();

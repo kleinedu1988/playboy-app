@@ -76,6 +76,7 @@ export async function naplnitHero(misto) {
             <div class="ph-akce">
                 <button type="button" class="ph-tlacitko hlavni" data-ph-profil="${m.id}">Otevřít profil</button>
                 ${seznam.length > 1 ? '<button type="button" class="ph-tlacitko" data-ph-dalsi title="Další doporučená modelka">Další tip ↻</button>' : ''}
+                <button type="button" class="ph-tlacitko" data-otevrit-vkus title="Co z tvých srdíček vyplývá o tvém vkusu">✨ Ideální modelka</button>
                 <button type="button" class="ph-tlacitko" data-ph-vyber title="10 × nejlepší ze 4 (~2 minuty)">🎯 Dnešní výběr${voleb ? ` ${Math.min(voleb, 10)}/10` : ''}</button>
             </div>
         </div>`;

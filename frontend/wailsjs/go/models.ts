@@ -328,6 +328,108 @@ export namespace main {
 	        this.dekady = source["dekady"];
 	    }
 	}
+	export class ModelkaIdealu {
+	    modelkaId: number;
+	    jmeno: string;
+	    shoda: number;
+	    fotka: sbirka.Fotografie;
+	
+	    static createFrom(source: any = {}) {
+	        return new ModelkaIdealu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.shoda = source["shoda"];
+	        this.fotka = this.convertValues(source["fotka"], sbirka.Fotografie);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class VlastnostVkusu {
+	    skupina: string;
+	    hodnota: string;
+	    klic: string;
+	    podil: number;
+	    prumer: number;
+	    pomer: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new VlastnostVkusu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.skupina = source["skupina"];
+	        this.hodnota = source["hodnota"];
+	        this.klic = source["klic"];
+	        this.podil = source["podil"];
+	        this.prumer = source["prumer"];
+	        this.pomer = source["pomer"];
+	    }
+	}
+	export class IdealniModelka {
+	    oblibenych: number;
+	    malo: boolean;
+	    profil: VlastnostVkusu[];
+	    milujes: VlastnostVkusu[];
+	    mijis: VlastnostVkusu[];
+	    nejblize: ModelkaIdealu[];
+	    dokonala?: sbirka.Fotografie;
+	    objev?: sbirka.Fotografie;
+	
+	    static createFrom(source: any = {}) {
+	        return new IdealniModelka(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.oblibenych = source["oblibenych"];
+	        this.malo = source["malo"];
+	        this.profil = this.convertValues(source["profil"], VlastnostVkusu);
+	        this.milujes = this.convertValues(source["milujes"], VlastnostVkusu);
+	        this.mijis = this.convertValues(source["mijis"], VlastnostVkusu);
+	        this.nejblize = this.convertValues(source["nejblize"], ModelkaIdealu);
+	        this.dokonala = this.convertValues(source["dokonala"], sbirka.Fotografie);
+	        this.objev = this.convertValues(source["objev"], sbirka.Fotografie);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class PodminkaTematu {
 	    druh: string;
 	    klic: string;
@@ -626,6 +728,7 @@ export namespace main {
 	        this.souboju = source["souboju"];
 	    }
 	}
+	
 	export class ModelkaNehodnocenych {
 	    id: number;
 	    jmeno: string;
@@ -1895,6 +1998,7 @@ export namespace main {
 	        this.druh = source["druh"];
 	    }
 	}
+	
 	
 	
 	

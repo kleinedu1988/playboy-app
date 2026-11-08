@@ -264,7 +264,7 @@ const HLEDANI_PODLE_REZIMU = {
     centerfoldy: ['Hledat v centerfoldech…', 'Centerfoldy: jméno modelky, vydání (např. březen 1995), fotograf. Více slov zužuje výběr.'],
     covery: ['Hledat v číslech…', 'Čísla: vydání (např. 1995), název, modelka nebo obálka. Více slov zužuje výběr.'],
     kalendar: ['Hledat v číslech…', 'Kalendář: ročníky podle čísla (1975), měsíce i jména modelek a speciálů.'],
-    nejlepsi: ['Hledat v galerii fotek…', 'Galerie nejlepších: jméno modelky, vydání, fotograf. Více slov zužuje výběr.'],
+    nejlepsi: ['Hledat v galerii fotek…', 'Galerie: jméno modelky, album, fotograf – nebo popis toho, co je na fotce („v kuchyni“, „červené auto“, „Pamela na pláži“). Více slov zužuje výběr.'],
     // Na stránkách Hodnocení, Síň slávy a Sbírka hledání najde modelku a otevře její profil (výsledky pod polem)
     prehled: ['Najít modelku…', 'Jméno modelky, číslo nebo článek; Enter otevře první výsledek. Do hledání skočíš klávesami Ctrl+F.'],
 };

@@ -72,6 +72,11 @@ let slovy = { obsahem: false, rozpoznano: '', nabidnout: false };
 let nacistGaleriiZnovu = () => {};
 let casovacSlov = 0;
 
+// Kolekce zvolená zvenku (ideální modelka, app/vkus.js) – platí od příštího načtení Galerie
+export function nastavitKolekciGalerie(klic, nazev) {
+    zvolenaKolekce = { klic, nazev };
+}
+
 async function nacistStranku(od) {
     const s = await GetGalerieFotek({ ...dotaz, modelka: 0, text, seminko: SEMINKO, od, kolik: STRANKA, kolekce: zvolenaKolekce.klic });
     if (od === 0) slovy = { obsahem: Boolean(s?.obsahem), rozpoznano: s?.rozpoznano || '', nabidnout: Boolean(s?.nabidnoutSlovy) };
@@ -101,7 +106,8 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
     seznam.innerHTML = `${hero}
         ${cista && kolekce.length ? `<section class="gv-blok-kolekci" aria-label="Kolekce pro tebe">
             <header class="gv-blok-hlava"><div><h2>Kolekce pro tebe</h2><p>${kolekce.length} řad vybraných na dnešek – mění se každý den a podle toho, co otevíráš</p></div>
-                <button type="button" class="ph-tlacitko" data-gv-kolekce-panel data-gv-k-skok>▦ Všechny kolekce</button></header>
+                <div class="gv-blok-akce"><button type="button" class="ph-tlacitko" data-otevrit-vkus title="Co z tvých srdíček vyplývá o tvém vkusu">✨ Ideální modelka</button>
+                <button type="button" class="ph-tlacitko" data-gv-kolekce-panel data-gv-k-skok>▦ Všechny kolekce</button></div></header>
             <div class="gv-rady">${kolekce.map(htmlRady).join('')}</div></section>
         <header class="gv-blok-hlava gv-hlava-fotek"><div><h2>Všechny fotky</h2><p>Celá sbírka napříč modelkami – řazení, filtry a kolekce v liště</p></div></header>` : ''}
         <div class="gallery-toolbar profily-lista gv-lista">

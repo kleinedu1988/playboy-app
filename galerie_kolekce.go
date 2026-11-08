@@ -186,30 +186,7 @@ func (a *App) definiceKolekci(fotky []fotkaGalerie, dk *dataKolekce, nyni time.T
 			return err == nil && math.Abs(d.Sub(nyni).Hours()) <= 3.5*24
 		}})
 	// Stejně staré v době focení: věk z data narození a data alba nebo čísla, jeden věk denně (s dost fotkami)
-	vekFotky := func(g *fotkaGalerie) int {
-		n := modelky[g.f.ModelkaID].narozeni
-		datum := g.f.DatumAlba
-		if datum == "" {
-			datum = g.f.Vydani
-		}
-		if len(n) < 4 || len(datum) < 4 {
-			return 0
-		}
-		rn, e1 := strconv.Atoi(n[:4])
-		rf, e2 := strconv.Atoi(datum[:4])
-		if e1 != nil || e2 != nil || rf < rn {
-			return 0
-		}
-		vek := rf - rn
-		// S měsícem narození i focení: před narozeninami o rok méně
-		if len(n) >= 7 && len(datum) >= 7 && datum[4] == '-' && datum[5] != 'S' && datum[5:7] < n[5:7] {
-			vek--
-		}
-		if vek < 18 || vek > 70 {
-			return 0
-		}
-		return vek
-	}
+	vekFotky := func(g *fotkaGalerie) int { return vekPriFoceni(modelky[g.f.ModelkaID].narozeni, g.f) }
 	poctyVeku := map[int]int{}
 	for i := range fotky {
 		if v := vekFotky(&fotky[i]); v > 0 {
@@ -760,4 +737,28 @@ func prahyVzhledu(dk *dataKolekce) {
 	if len(barevnaTeplota) > 0 {
 		dk.prahChladne = barevnaTeplota[len(barevnaTeplota)*5/100]
 	}
+}
+
+// Věk modelky v době focení z data narození a data alba (jinak čísla); před narozeninami o rok méně; 0 = nevíme
+func vekPriFoceni(narozeni string, f Fotografie) int {
+	datum := f.DatumAlba
+	if datum == "" {
+		datum = f.Vydani
+	}
+	if len(narozeni) < 4 || len(datum) < 4 {
+		return 0
+	}
+	rn, e1 := strconv.Atoi(narozeni[:4])
+	rf, e2 := strconv.Atoi(datum[:4])
+	if e1 != nil || e2 != nil || rf < rn {
+		return 0
+	}
+	vek := rf - rn
+	if len(narozeni) >= 7 && len(datum) >= 7 && datum[4] == '-' && datum[5] != 'S' && datum[5:7] < narozeni[5:7] {
+		vek--
+	}
+	if vek < 18 || vek > 70 {
+		return 0
+	}
+	return vek
 }

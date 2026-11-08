@@ -110,6 +110,10 @@ export function GetGalerieNejlepsich(arg1) {
   return window['go']['main']['App']['GetGalerieNejlepsich'](arg1);
 }
 
+export function GetIdealniModelka() {
+  return window['go']['main']['App']['GetIdealniModelka']();
+}
+
 export function GetKalendar() {
   return window['go']['main']['App']['GetKalendar']();
 }

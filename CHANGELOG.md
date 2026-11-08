@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.26.0] – 2026-11-08
+
+### Přidáno
+- **✨ Tvoje ideální modelka** (tlačítko v banneru Profilů a v bloku kolekcí Galerie): obrazně složená z fotek, které hodnotíš ♥4+ (♥5 váží dvakrát). U každé vlastnosti je, kolikrát častěji je mezi oblíbenými než v celé sbírce:
+  - **Kdo to je** – vlasy, původ, éra, věk při focení, tetování, piercing, kariéra (jen vyhraněné preference);
+  - **Co miluješ / Co tě míjí** – objevené styly, barvy a obsah fotek nejvíc nad a pod průměrem;
+  - **Tvoje nejtypičtější fotka** (z oblíbených obsahem nejblíž středu vkusu) a **Objev** (nehodnocená, která ti sedí nejvíc);
+  - **Modelky nejblíž tvému ideálu** (průměr jejich 3 nejbližších fotek).
+  Vlastnost s kolekcí otevře kolekci v Galerii, modelka svůj profil, fotka prohlížeč.
+
+### Změněno
+- Nápověda hledání v Galerii zmiňuje i hledání podle obsahu („v kuchyni“, „Pamela na pláži“).
+
 ## [1.25.0] – 2026-11-08
 
 ### Změněno

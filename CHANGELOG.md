@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.12.2] – 2026-11-08
+
+### Změněno
+- **Fotky záhlaví v plném rozlišení na disku**: fotka záhlaví profilu se stahuje do 3 840 px šířky (Disk fotky nezvětšuje, takže je to u naprosté většiny originál) a ukládá se do mezipaměti náhledů na disku (limit souboru 32 MB místo 4 MB). Podruhé je záhlaví ostré hned, i bez připojení. Stahování náhledů na pozadí na konci stáhne i fotky záhlaví všech modelek, které ji mají. Prohlížeč fotek (originály) se nemění.
+
 ## [1.12.1] – 2026-11-08
 
 ### Opraveno

@@ -263,3 +263,11 @@ func TestNahledyBezPripojeni(t *testing.T) {
 		t.Fatalf("po návratu: %d", w.Code)
 	}
 }
+
+// Fotka záhlaví v plném rozlišení se ukládá a smí být větší než náhled
+func TestVelikostZahlavi(t *testing.T) {
+	m := Nova(t.TempDir(), func(id, v string) string { return "" })
+	if !m.ukladat[VelikostZahlavi] || nejvetsiSoubor(VelikostZahlavi) <= nejvetsiSoubor("w400") || !jeVelikostNahledu(VelikostZahlavi) {
+		t.Fatal("velikost záhlaví se má ukládat a mít vyšší limit")
+	}
+}

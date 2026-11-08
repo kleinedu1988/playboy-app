@@ -57,6 +57,9 @@ export function adresaTitulni(modelka, velka = false) {
     return obrazek(modelka.coverUrl, velka || modelka.coverZoom > 1.5 ? VELIKOST_TITULNI : VELIKOST_KARTY);
 }
 export const PLNE_ROZLISENI = 's0';
+// Fotka záhlaví profilu: do 3 840 px šířky originál (Disk nezvětšuje); ukládá se na disk jako náhledy
+// (internal/nahledy VelikostZahlavi), takže je ostrá hned i bez připojení
+export const VELIKOST_ZAHLAVI = 'w3840';
 
 // Adresy obrázků k souborům z vložených odkazů na Disk (náhled v oknech coveru a článku). Šablonu adresy
 // skládá backend a jde změnit v nastavení, proto se pokaždé načte znovu (je to jen přečtení hodnoty).

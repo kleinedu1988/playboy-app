@@ -41,7 +41,8 @@ func (a *App) uklidNahledu() {
 	a.nahledy.Uklid(filtr, nahledy.LimitDisku)
 }
 
-// Náhledy k předstažení v pořadí priority: titulní fotky (karta w400), pak plakáty centerfoldů a obálky (w600)
+// Náhledy k předstažení v pořadí priority: titulní fotky (karta w400), plakáty centerfoldů a obálky (w600),
+// nakonec fotky záhlaví profilů v plném rozlišení
 func (a *App) polozkyKPredstazeni() []nahledy.Polozka {
 	var v []nahledy.Polozka
 	videno := make(map[nahledy.Polozka]bool, 512)
@@ -65,6 +66,8 @@ func (a *App) polozkyKPredstazeni() []nahledy.Polozka {
 	pridat(`SELECT drive_cover_id FROM modelky WHERE COALESCE(drive_cover_id, '') <> '' ORDER BY jmeno`, "w400")
 	pridat(`SELECT f.drive_file_id FROM fotky f JOIN alba a ON a.id = f.album_id
 		WHERE a.typ IN ('Centerfold', 'Cover') ORDER BY a.vydani DESC, f.poradi IS NULL, f.poradi, f.id`, "w600")
+	// Nakonec fotky záhlaví profilů v plném rozlišení (jedna na modelku s fotkou záhlaví)
+	pridat(`SELECT f.drive_file_id FROM modelky m JOIN fotky f ON f.id = m.profil_fotka_id ORDER BY m.jmeno`, nahledy.VelikostZahlavi)
 	return v
 }
 

@@ -11,7 +11,7 @@ import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { detailView, gallery, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
-import { PLNE_ROZLISENI, VELIKOST_NAHLEDU, VELIKOST_TITULNI, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
+import { VELIKOST_ZAHLAVI, VELIKOST_NAHLEDU, VELIKOST_TITULNI, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { rezimVyberu, selectionBar, zrusitVyber } from './vyber';
@@ -546,15 +546,15 @@ export function aktualizovatBannerProfilu(modelka) {
         if (stav.aktualniModelka?.id !== id) return;
         stav.profilovaFotka = profilova?.url ? { ...profilova, modelkaId: id } : null;
         nastavitFotkuBanneru(bannerImg, profilova?.url ? obrazek(profilova.url, VELIKOST_TITULNI) : '', profilova?.url ? stylVyrezu(profilova) : '',
-            profilova?.url ? obrazek(profilova.url, PLNE_ROZLISENI) : '');
+            profilova?.url ? obrazek(profilova.url, VELIKOST_ZAHLAVI) : '');
     }).catch(() => nastavitFotkuBanneru(bannerImg, '', ''));
 }
 
 // Jak vybrat fotku záhlaví (odkaz v záhlaví bez fotky, nabídka)
 export const navodFotkyZahlavi = () => oznamit('Fotku záhlaví vybereš na kterékoli fotce modelky: pravým tlačítkem nebo ⋯ › Nastavit jako fotku záhlaví. Fotka vyplní celé záhlaví, výřez pak určí, která část je vidět.');
 
-// Záhlaví je široké přes celé okno: náhled (w800, z mezipaměti hned) se nahradí originálem v plném rozlišení,
-// jakmile se stáhne; rozostřené pozadí zůstane na náhledu
+// Záhlaví je široké přes celé okno: náhled (w800) se nahradí fotkou v plném rozlišení (VELIKOST_ZAHLAVI, uložená
+// na disku – podruhé je tam hned), jakmile se načte; rozostřené pozadí zůstane na náhledu
 function nastavitFotkuBanneru(bannerImg, adresa, styl, originalAdresa = '') {
     const pozadi = document.getElementById('profilBannerPozadi');
     const rozmazane = document.getElementById('profilBannerRozmazane');

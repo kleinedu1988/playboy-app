@@ -28,6 +28,21 @@ import (
 // Největší náhled, který se ještě uloží (w600 z Disku ~70 kB; obrana proti chybné odpovědi)
 const nejvetsiNahled = 4 << 20
 
+// Fotka záhlaví profilu v plném rozlišení: Disk ji nezvětšuje, takže do 3 840 px šířky je to originál
+// (jednotky MB, výjimečně víc); ukládá se jako náhledy, aby se záhlaví ukázalo ostré hned i bez připojení
+const (
+	VelikostZahlavi = "w3840"
+	nejvetsiZahlavi = 32 << 20
+)
+
+// Největší uložitelný soubor pro velikost
+func nejvetsiSoubor(velikost string) int64 {
+	if velikost == VelikostZahlavi {
+		return nejvetsiZahlavi
+	}
+	return nejvetsiNahled
+}
+
 // Souběh stahování pro okno: Disk odpovídá ~250 ms na obrázek, při 16 souběžných se 48 karet načte za ~0,6 s
 const soubehNahledu = 16
 
@@ -133,7 +148,7 @@ func Nova(slozka string, adresa func(id, velikost string) string) *Mezipamet {
 		slozka:      slozka,
 		adresa:      adresa,
 		klient:      klientNahledu(),
-		ukladat:     map[string]bool{"w400": true, "w600": true},
+		ukladat:     map[string]bool{"w400": true, "w600": true, VelikostZahlavi: true},
 		soubeh:      make(chan struct{}, soubehNahledu),
 		pozadi:      make(chan struct{}, soubehNahleduNaPozadi),
 		probihajici: map[string]*stahovaniNahledu{},
@@ -299,11 +314,12 @@ func (m *Mezipamet) zDisku(id, velikost string) ([]byte, string, error) {
 	case resp.StatusCode != http.StatusOK || !strings.HasPrefix(typ, "image/"):
 		return nil, "", errNahledNedostupny
 	}
-	data, err := io.ReadAll(io.LimitReader(resp.Body, nejvetsiNahled+1))
+	limit := nejvetsiSoubor(velikost)
+	data, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
 	if err != nil {
 		return nil, "", fmt.Errorf("%w: %v", errNahledDocasne, err)
 	}
-	if len(data) > nejvetsiNahled {
+	if int64(len(data)) > limit {
 		return nil, "", errNahledNedostupny
 	}
 	return data, typ, nil

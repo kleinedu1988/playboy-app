@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.16.0] – 2026-11-08
+
+### Změněno
+- **Profily s hero bannerem**: nahoře na Profilech je filmový banner s doporučenou modelkou – střídavě tip *Mohlo by se ti líbit* (s důvodem odhadu) a modelka z tvého Top 10 – velká fotka (fotka záhlaví, jinak fotka karty), jméno, srdíčka nebo odhad a tlačítka *Otevřít profil*, *Další tip ↻* a *🎯 Dnešní výběr*. Každé spuštění začne dalším tipem; při hledání se banner neukazuje. Karty pod ním zůstávají čisté.
+- **Široká lišta ovládání místo kapsle vpravo nahoře**: řazení, tlačítko *☰ Filtry* (panel filtrů pod ním) a zapnuté filtry jako štítky s křížkem (klik na štítek otevře jeho úpravu), vpravo počet modelek.
+
 ## [1.15.1] – 2026-11-08
 
 ### Opraveno

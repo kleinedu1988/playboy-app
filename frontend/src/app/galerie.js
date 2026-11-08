@@ -15,14 +15,15 @@ import { nastavitViditelnostHledani, prepnoutRezim, stylVyrezu, ukazatPohled, za
 import { otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
 import { otevritVydani } from './vydani';
-import { dotazFiltru, obnovitPripnutyPanel } from './filtr-modelek';
+import { dotazFiltru, obnovitPripnutyPanel, otevritPanelFiltru, stitkyFiltru } from './filtr-modelek';
+import { naplnitHero, zapomenoutTipy } from './profily-hero';
 import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
 import { lightbox } from './prohlizec';
 import { trendModelky, urovenModelky } from '../lib/oblibenost';
 import { vybraneDlazdice } from './vyber';
-import { prevestNaVolby } from '../ui/volby';
+import { obnovitVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { htmlSrdicekModelky, klavesaSrdicekModelky, obnovitSrdickaModelky } from '../ui/srdicka';
 import { hodnotaPoKliku, kratceSrdicka, ukazatOdhad } from '../lib/srdicka';
@@ -46,7 +47,7 @@ export function htmlSrdicka(modelka, tabem = true) {
 // Důvody odhadů (id modelky → věta) z posledního načtení Oblíbenosti nebo z prvního najetí na štítek, aby je
 // štítek odhadu ukázal v nápovědě; změna dat je zahodí (model vkusu se přeučí)
 export const duvodyOdhadu = new Map();
-poZmeneDat(() => duvodyOdhadu.clear());
+poZmeneDat(() => { duvodyOdhadu.clear(); zapomenoutTipy(); });
 
 const nadpisOdhadu = duvod => `Odhad podle tvého vkusu, zatím nehodnoceno${duvod ? ` – ${duvod}` : ''}`;
 
@@ -128,13 +129,16 @@ const HTML_UVODU = `
         <p class="uvod-pozn">Data jsou v ~/.local/share/playboy-app; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
     </section>`;
 
-// Řádek voleb nad kartami: řazení a počet. data-filtry-stitky řekne kapsli voleb, aby ukázala tlačítko Filtry
-// s panelem filtru Modelek (app/filtr-modelek.js).
+// Široká lišta ovládání pod hero bannerem (místo úzké kapsle vpravo nahoře): řazení, Filtry (panel filtru Modelek,
+// app/filtr-modelek.js) a zapnuté filtry jako štítky s křížkem, vpravo počet
 function htmlNastroju(pocet, celkem) {
     const razeni = Object.entries(RAZENI_GALERIE).map(([klic, r]) => `
         <button class="chip ${klic === stav.razeniGalerie ? 'active' : ''}" data-razeni-galerie="${klic}" title="Řadit ${r.nazev}">${r.popisek}</button>`).join('');
-    return `<div class="gallery-toolbar" data-filtry-stitky>${razeni}
-        <span>${pocet < celkem ? `${pocet} z ${sklonovat(celkem, 'modelky', 'modelek', 'modelek')}` : sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</span></div>`;
+    const stitky = stitkyFiltru().map((s, i) => `<span class="pl-stitek"><button type="button" data-pl-upravit="${i}" title="Upravit filtr">${esc(s.text)}</button><button type="button" data-pl-zrusit="${i}" aria-label="Zrušit filtr" title="Zrušit filtr">×</button></span>`).join('');
+    return `<div class="gallery-toolbar profily-lista"><div class="pl-razeni" role="group" aria-label="Řazení">${razeni}</div>
+        <button type="button" class="pl-filtry ${stitky ? 'zapnuto' : ''}" data-pl-filtry aria-haspopup="dialog">☰ Filtry${stitky ? ` <small>${stitkyFiltru().length}</small>` : ''}</button>
+        ${stitky}
+        <span class="pl-pocet">${pocet < celkem ? `${pocet} z ${sklonovat(celkem, 'modelky', 'modelek', 'modelek')}` : sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</span></div>`;
 }
 
 // Předchozí a další modelka v pořadí, v jakém jsou v galerii
@@ -252,7 +256,7 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
         gallery.innerHTML = htmlNastroju(0, katalog.length) + (
             cistyDotaz ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádná modelka.')
             : htmlPrazdna('Zatím žádné modelky', 'Sbírka začíná první modelkou. Přidej ji a pak k ní vlož fotky z Google Disku.', { tlacitko: { text: 'Přidat modelku', akce: 'pridat-modelku' } }));
-        prevestNaVolby(gallery.querySelector('.gallery-toolbar'));
+        obnovitVolby(gallery);
         return;
     }
 
@@ -289,10 +293,13 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
     };
     // Po dávkách: prvních KARET_HNED karet hned (okno je zaplněné), zbytek se přidá v dávkách na pozadí – tisíce
     // karet najednou blokovaly okno stovky milisekund (start, řazení, hledání, návrat z jiné sekce)
-    gallery.innerHTML = htmlNastroju(modelky.length, katalog.length) + modelky.slice(0, KARET_HNED).map(htmlKartyCasti).join('');
+    // Hero banner s doporučenou modelkou nad lištou (app/profily-hero.js); při hledání ne – výsledky hned nahoře
+    const hero = !cistyDotaz && !hledani.trim() ? '<section class="profily-hero" aria-label="Doporučená modelka"></section>' : '';
+    gallery.innerHTML = hero + htmlNastroju(modelky.length, katalog.length) + modelky.slice(0, KARET_HNED).map(htmlKartyCasti).join('');
     dokresleni = { moje, modelky, od: KARET_HNED, html: htmlKartyCasti };
     naplanovatDavku();
-    prevestNaVolby(gallery.querySelector('.gallery-toolbar'));
+    obnovitVolby(gallery);
+    if (hero) naplnitHero(gallery.querySelector('.profily-hero'));
     nacitatPostupne(gallery);
 
     if (maRejstrik) {
@@ -308,6 +315,23 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     // Tlačítka úvodu prázdné sbírky
+    // Lišta ovládání Profilů: Filtry (panel pod tlačítkem) a štítky zapnutých filtrů
+    gallery.addEventListener('click', (e) => {
+        const cil = /** @type {HTMLElement} */ (e.target);
+        const filtry = /** @type {HTMLElement | null} */ (cil.closest('[data-pl-filtry]'));
+        if (filtry) {
+            e.stopPropagation();
+            otevritPanelFiltru(filtry);
+            return;
+        }
+        const zrusit = /** @type {HTMLElement | null} */ (cil.closest('[data-pl-zrusit]'));
+        if (zrusit) return stitkyFiltru()[parseInt(zrusit.dataset.plZrusit, 10)]?.zrusit();
+        const upravit = /** @type {HTMLElement | null} */ (cil.closest('[data-pl-upravit]'));
+        if (upravit) {
+            e.stopPropagation();
+            stitkyFiltru()[parseInt(upravit.dataset.plUpravit, 10)]?.upravit();
+        }
+    });
     gallery.addEventListener('click', (e) => {
         const akce = e.target.closest('[data-uvod]')?.dataset.uvod;
         if (akce === 'modelka') otevritRychlePridani();

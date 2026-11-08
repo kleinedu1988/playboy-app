@@ -3,7 +3,7 @@
 // velikost změny z prvního a posledního desetiletí s dost modelkami. Postřeh se ukáže, jen když test projde
 // a změna je prakticky podstatná (práh grafu, u podílu 10 procentních bodů) – raději žádný postřeh než šum.
 // Bez DOM; hodnoty se počítají ze stejných sloupců jako graf (lib/statistika.js má testy proti SciPy).
-import { benjaminiHochberg, cochranArmitage, fisher, kendallTauB, mannWhitney, median, theilSen, wilson } from './statistika.js';
+import { benjaminiHochberg, cochranArmitage, fisher, kendallTauB, mannWhitney, median, pOboustranne, poradi, theilSen, wilson } from './statistika.js';
 
 export const ALFA = 0.05;
 export const MIN_LET = 10;          // let s aspoň jednou modelkou se známým údajem
@@ -13,7 +13,7 @@ export const MIN_V_ROCE = 5;        // modelek v roce, aby se rok počítal do t
 export const PRAH_PODILU = 10;      // procentních bodů
 
 // Pevný počet desetinných míst („0,70“, „18,0“), aby hodnoty v jedné větě a bublině měly stejný tvar
-const cislo = (n, desetinna = 0) => Number(n.toFixed(desetinna)).toLocaleString('cs-CZ', { minimumFractionDigits: desetinna, maximumFractionDigits: desetinna });
+const cislo = (n, desetinna = 0) => Number(n.toFixed(desetinna)).toLocaleString('cs-CZ', { minimumFractionDigits: desetinna, maximumFractionDigits: desetinna }).replace('-', '−');
 
 // Předložka „z“ nebo „ze“ před číslem podle toho, jak se vysloví („ze 168“, „ze 7“, „z 24“)
 export function predlozkaZ(n) {
@@ -272,4 +272,138 @@ export function postrehRady(def, sloupce, { vyber = false, kontext = '' } = {}) 
     const overeni = zlomy.map(z => `Zlom ${z.rok}: ${test} sousedních období${oprava} ${textP(z.q)}.`).join(' ');
     const podrobnosti = `${useky.map(popisUseku).join('. ')}. ${overeni}${kontext ? ` ${kontext}` : ''}`;
     return { druh: 'zlom', smer, veta, podrobnosti, useky, zlomy };
+}
+
+// ── Krok 3: výběr proti sbírce ────────────────────────────────────────────────────────────────────────────────────
+// Výběr se testuje proti zbytku sbírky (nezávislé skupiny), ve větě se ale ukazuje hodnota celé sbírky jako v souhrnu
+// („60 vs 64 cm“). Údaj: Mannův–Whitneyův test z předem spočítaných pořadí, velikost Cliffovo δ; podíl a hodnota
+// rozložení: Fisherův test, velikost Cohenovo h. Oprava BH přes všechny testy jednoho výběru. Postřeh = q ≤ 0,05
+// a podstatný rozdíl (|δ| ≥ 0,2 a rozdíl mediánů ≥ práh; |h| ≥ 0,2 a ≥ 10 procentních bodů).
+export const MIN_VYBER = 10;        // modelek se známým údajem ve výběru i ve zbytku
+export const MIN_ANO = 5;           // u podílu „ano“ v obou skupinách dohromady
+export const MIN_DELTA = 0.2;
+export const MIN_H = 0.2;
+
+// Předpočet příznaku přes celou sbírku (jednou po načtení dat nebo změně edice či výskytu): u údaje známé indexy,
+// pořadí se shodami, oprava rozptylu na shody a pořadí podle hodnoty; u podílu jen hodnoty.
+// priznak: { klic, druh: 'udaj' | 'podil', hodnoty: (number | boolean | null)[], ... text pro větu }
+export function pripravitPriznak(priznak) {
+    const { hodnoty } = priznak;
+    const zname = [];
+    hodnoty.forEach((h, i) => { if (h !== null && h !== undefined) zname.push(i); });
+    if (priznak.druh === 'podil') return { ...priznak, zname, ano: zname.filter(i => hodnoty[i]).length };
+    const cisla = zname.map(i => /** @type {number} */ (hodnoty[i]));
+    const r = poradi(cisla);
+    const poradiModelky = new Float64Array(hodnoty.length);
+    zname.forEach((i, k) => { poradiModelky[i] = r[k]; });
+    const serazene = zname.map((i, k) => k).sort((a, b) => cisla[a] - cisla[b]).map(k => zname[k]);
+    let shodyT = 0;
+    for (let k = 0; k < serazene.length;) {
+        let j = k + 1;
+        while (j < serazene.length && hodnoty[serazene[j]] === hodnoty[serazene[k]]) j++;
+        const t = j - k;
+        shodyT += t * t * t - t;
+        k = j;
+    }
+    return { ...priznak, zname, poradiModelky, serazene, shodyT };
+}
+
+// Kvantil hodnot modelek v pořadí podle hodnoty, které splňují podmínku (lineární interpolace jako v grafu)
+function kvantilMaskou(p, f, vzit, n) {
+    if (!n) return null;
+    const poz = f * (n - 1), dolni = Math.floor(poz), horni = Math.ceil(poz);
+    let k = 0, a = null, b = null;
+    for (const i of p.serazene) {
+        if (!vzit(i)) continue;
+        if (k === dolni) a = p.hodnoty[i];
+        if (k === horni) { b = p.hodnoty[i]; break; }
+        k++;
+    }
+    return a + (b - a) * (poz - dolni);
+}
+
+const silaSlovy = (velikost, meze) => velikost < meze[0] ? 'malý' : velikost < meze[1] ? 'střední' : 'velký';
+
+// Porovnání výběru (maska Uint8Array přes modelky) se zbytkem sbírky pro připravené příznaky.
+// vyloucit: klíče příznaků, které určuje sám výběr (podmínka vlasů vyřadí vlasy i blond).
+// Vrací { maly: true } pro výběr pod MIN_VYBER modelek, jinak { postrehy: [...] } seřazené podle skóre síla × jistota.
+export function rozdilyVyberu(priznaky, maska, { vyloucit = [] } = {}) {
+    const vybrano = maska.reduce((s, x) => s + x, 0);
+    if (vybrano < MIN_VYBER) return { maly: true, postrehy: [] };
+    const kandidati = [];
+    for (const p of priznaky) {
+        if (vyloucit.includes(p.klic) || vyloucit.includes(p.graf)) continue;
+        if (p.druh === 'podil') {
+            let n1 = 0, a1 = 0;
+            for (const i of p.zname) if (maska[i]) { n1++; if (p.hodnoty[i]) a1++; }
+            const n2 = p.zname.length - n1, a2 = p.ano - a1;
+            if (n1 < MIN_VYBER || n2 < MIN_VYBER || p.ano < MIN_ANO) continue;
+            const v = a1 / n1, z = a2 / n2, celek = p.ano / p.zname.length;
+            const h = 2 * Math.asin(Math.sqrt(v)) - 2 * Math.asin(Math.sqrt(z));
+            kandidati.push({ p, n1, n2, a1, a2, v: v * 100, zbytek: z * 100, celek: celek * 100, velikost: h,
+                pVal: fisher(a1, n1 - a1, a2, n2 - a2),
+                podstatny: Math.abs(h) >= MIN_H && Math.abs(v - z) * 100 >= PRAH_PODILU && Math.round(Math.abs(v - celek) * 100) >= 1 });
+        } else {
+            let n1 = 0, r1 = 0;
+            for (const i of p.zname) if (maska[i]) { n1++; r1 += p.poradiModelky[i]; }
+            const n2 = p.zname.length - n1, n = n1 + n2;
+            if (n1 < MIN_VYBER || n2 < MIN_VYBER) continue;
+            const u = r1 - n1 * (n1 + 1) / 2;
+            const rozptyl = n1 * n2 / 12 * ((n + 1) - p.shodyT / (n * (n - 1)));
+            if (!(rozptyl > 0)) continue;
+            const odchylka = u - n1 * n2 / 2;
+            const z = Math.sign(odchylka) * Math.max(0, Math.abs(odchylka) - 0.5) / Math.sqrt(rozptyl);
+            const vMaska = i => maska[i] === 1, zMaska = i => maska[i] !== 1, vse = () => true;
+            const v = kvantilMaskou(p, 0.5, vMaska, n1), zb = kvantilMaskou(p, 0.5, zMaska, n2), celek = kvantilMaskou(p, 0.5, vse, n);
+            const delta = 2 * u / (n1 * n2) - 1;
+            const des = p.desetinna ?? 0;
+            kandidati.push({ p, n1, n2, v, zbytek: zb, celek, velikost: delta, pVal: pOboustranne(z),
+                dolni: kvantilMaskou(p, 0.25, vMaska, n1), horni: kvantilMaskou(p, 0.75, vMaska, n1),
+                celekDolni: kvantilMaskou(p, 0.25, vse, n), celekHorni: kvantilMaskou(p, 0.75, vse, n),
+                podstatny: Math.abs(delta) >= MIN_DELTA && Math.abs(v - zb) >= (p.prah ?? 0)
+                    && Number(Math.abs(v - celek).toFixed(des)) > 0 && Math.sign(v - celek) === Math.sign(delta) });
+        }
+    }
+    const q = benjaminiHochberg(kandidati.map(k => k.pVal));
+    const testu = kandidati.length;
+    const postrehy = kandidati.map((k, i) => ({ ...k, q: q[i] }))
+        .filter(k => k.q <= ALFA && k.podstatny)
+        .map(k => {
+            const sila = k.p.druh === 'podil' ? Math.min(1, Math.abs(k.velikost) / 0.8) : Math.min(1, Math.abs(k.velikost) / 0.5);
+            const jistota = Math.min(1, -Math.log10(Math.max(k.q, 1e-300)) / 4);
+            return { klic: k.p.klic, graf: k.p.graf, skore: sila * jistota, q: k.q, ...textVyberu(k, testu) };
+        })
+        .sort((a, b) => b.skore - a.skore || a.q - b.q);
+    return { maly: false, postrehy, testu };
+}
+
+const roky = n => `${n === 1 ? 'rok' : n >= 2 && n <= 4 ? 'roky' : 'let'}`;
+
+// Věta a bublina rozdílu výběru. Text příznaku: údaj { nazev, jednotka, desetinna, vic: 'je o {d} vyšší',
+// mene: 'je o {d} nižší', bezJednotkyVRozdilu? }, podíl { nazev, sKym: 's tetováním' }
+function textVyberu(k, testu) {
+    const p = k.p, des = p.druh === 'podil' ? 0 : p.desetinna ?? 0;
+    const jednotka = p.druh === 'podil' ? ' %' : p.jednotka ? ` ${p.jednotka}` : '';
+    const hodnota = v => `${cislo(v, des)}${jednotka}`;
+    const oprava = `po opravě na ${testu} ${testu >= 2 && testu <= 4 ? 'testy' : 'testů'} ${textP(k.q)}`;
+    if (p.druh === 'podil') {
+        const vic = k.v > k.celek;
+        return {
+            smer: vic ? 1 : -1,
+            veta: `Ve výběru je ${vic ? 'víc' : 'méně'} modelek ${p.sKym}: ${hodnota(k.v)} (celkem ${hodnota(k.celek)}).`,
+            podrobnosti: `${p.nazev}: výběr ${hodnota(k.v)} (${k.a1} z ${modelek(k.n1)}), celá sbírka ${hodnota(k.celek)}, zbytek ${hodnota(k.zbytek)} (${k.a2} z ${modelek(k.n2)}). `
+                + `Fisherův test, ${oprava}; velikost rozdílu: ${silaSlovy(Math.abs(k.velikost), [0.5, 0.8])} (h = ${cislo(k.velikost, 2)}).`,
+        };
+    }
+    const vic = k.v > k.celek;
+    const d = Number(Math.abs(k.v - k.celek).toFixed(des));
+    const textD = p.jednotka === 'let' ? `${cislo(d, des)} ${roky(d)}` : p.bezJednotkyVRozdilu ? cislo(d, des) : `${cislo(d, des)}${jednotka}`;
+    const sablona = (vic ? p.vic : p.mene).replace('{d}', textD);
+    return {
+        smer: vic ? 1 : -1,
+        veta: `Výběr ${sablona} (${cislo(k.v, des)} vs ${hodnota(k.celek)}).`,
+        podrobnosti: `${p.nazev}: medián výběru ${hodnota(k.v)} (polovina ${cislo(k.dolni, des)}–${hodnota(k.horni)}), celé sbírky ${hodnota(k.celek)} `
+            + `(${cislo(k.celekDolni, des)}–${hodnota(k.celekHorni)}), zbytku ${hodnota(k.zbytek)}. Známé u ${modelek(k.n1)} výběru. `
+            + `Mannův–Whitneyův test, ${oprava}; velikost rozdílu: ${silaSlovy(Math.abs(k.velikost), [0.33, 0.47])} (δ = ${cislo(k.velikost, 2)}).`,
+    };
 }

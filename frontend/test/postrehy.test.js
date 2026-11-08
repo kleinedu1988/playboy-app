@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { obdobi, postrehRady, predlozkaZ, trendRady, zlomyRady } from '../src/lib/postrehy.js';
+import { obdobi, postrehRady, predlozkaZ, pripravitPriznak, rozdilyVyberu, trendRady, zlomyRady } from '../src/lib/postrehy.js';
+import { mannWhitney } from '../src/lib/statistika.js';
 
 // Deterministický generátor (mulberry32) a normální rozdělení (Box–Muller)
 function generator(seminko) {
@@ -176,4 +177,109 @@ test('zlomy na 5 000 modelkách do 30 ms', () => {
     postrehRady(VYSKA, sloupce);
     const ms = performance.now() - t0;
     assert.ok(ms < 30, `${ms.toFixed(1)} ms`);
+});
+
+// Sbírka bez souvislostí: nezávislé údaje, podíly a hodnoty rozložení
+function sbirka(n, seminko) {
+    const { nahoda, normalni } = generator(seminko);
+    const vlasy = ['blond', 'hnědá', 'černá', 'zrzavá'];
+    return Array.from({ length: n }, () => ({
+        pas: nahoda() < 0.15 ? null : Math.round(62 + normalni() * 3),
+        vyska: nahoda() < 0.1 ? null : Math.round(170 + normalni() * 5),
+        vek: Math.round(23 + normalni() * 3),
+        whr: Math.round((0.7 + normalni() * 0.03) * 100) / 100,
+        tetovani: nahoda() < 0.3 ? null : nahoda() < 0.25,
+        silikon: nahoda() < 0.4 ? null : nahoda() < 0.3,
+        vlasy: vlasy[Math.floor(nahoda() ** 1.5 * 4)],
+    }));
+}
+const TEXT = {
+    pas: { druh: 'udaj', nazev: 'Obvod pasu', jednotka: 'cm', prah: 2, vic: 'má o {d} širší pas', mene: 'má o {d} užší pas' },
+    vyska: { druh: 'udaj', nazev: 'Výška', jednotka: 'cm', prah: 2, vic: 'je o {d} vyšší', mene: 'je o {d} nižší' },
+    vek: { druh: 'udaj', nazev: 'Věk při prvním výskytu', jednotka: 'let', prah: 1, vic: 'je při prvním výskytu o {d} starší', mene: 'je při prvním výskytu o {d} mladší' },
+    whr: { druh: 'udaj', nazev: 'Poměr pas : boky', jednotka: '', desetinna: 2, prah: 0.02, bezJednotkyVRozdilu: true, vic: 'má o {d} vyšší poměr pas : boky', mene: 'má o {d} nižší poměr pas : boky' },
+    tetovani: { druh: 'podil', nazev: 'Tetování', sKym: 's tetováním' },
+    silikon: { druh: 'podil', nazev: 'Silikonová prsa', sKym: 'se silikonovými prsy' },
+};
+const priznakySbirky = modelky => [
+    ...Object.entries(TEXT).map(([klic, t]) => pripravitPriznak({ klic, graf: klic, ...t, hodnoty: modelky.map(m => m[klic]) })),
+    ...['blond', 'hnědá', 'černá', 'zrzavá'].map(v => pripravitPriznak({ klic: `vlasy:${v}`, graf: 'vlasy', druh: 'podil', nazev: `Barva vlasů ${v}`,
+        sKym: `s barvou vlasů „${v}“`, hodnoty: modelky.map(m => m.vlasy === v) })),
+];
+
+test('Mann–Whitney z předpočtených pořadí souhlasí s přímým výpočtem', () => {
+    const modelky = sbirka(800, 20);
+    const pas = pripravitPriznak({ klic: 'pas', ...TEXT.pas, hodnoty: modelky.map(m => m.pas) });
+    const { nahoda } = generator(21);
+    const maska = Uint8Array.from(modelky, () => (nahoda() < 0.2 ? 1 : 0));
+    const v = [], z = [];
+    modelky.forEach((m, i) => m.pas !== null && (maska[i] ? v : z).push(m.pas));
+    const primo = mannWhitney(v, z);
+    // Posun o 6 cm ve výběru, aby test prošel a šel porovnat
+    const posunute = modelky.map((m, i) => (m.pas !== null && maska[i] ? { ...m, pas: m.pas - 6 } : m));
+    const r = rozdilyVyberu([pripravitPriznak({ klic: 'pas', ...TEXT.pas, hodnoty: posunute.map(m => m.pas) })], maska);
+    const v2 = [], z2 = [];
+    posunute.forEach((m, i) => m.pas !== null && (maska[i] ? v2 : z2).push(m.pas));
+    assert.equal(r.postrehy.length, 1);
+    assert.ok(Math.abs(r.postrehy[0].q - mannWhitney(v2, z2).p) < 1e-12, 'jeden test: q = p');
+    assert.ok(primo.p > 0.01, 'náhodný výběr bez rozdílu');
+    assert.equal(rozdilyVyberu([pas], maska).postrehy.length, 0);
+});
+
+test('zasazený rozdíl: výběr 200 modelek s pasem o 4 cm užším je první postřeh', () => {
+    const modelky = sbirka(2000, 22);
+    const maska = new Uint8Array(2000);
+    for (let i = 0; i < 200; i++) { maska[i * 10] = 1; if (modelky[i * 10].pas !== null) modelky[i * 10].pas -= 4; }
+    const r = rozdilyVyberu(priznakySbirky(modelky), maska);
+    assert.equal(r.postrehy[0]?.klic, 'pas');
+    assert.match(r.postrehy[0].veta, /^Výběr má o [34] cm užší pas \(5\d vs 6\d cm\)\.$/);
+    assert.match(r.postrehy[0].podrobnosti, /Mannův–Whitneyův test, po opravě na 10 testů p < 0,001; velikost rozdílu: (střední|velký) \(δ = −0,\d\d\)/);
+});
+
+test('rozdíl podílu, vyloučení příznaků určených výběrem a malý výběr', () => {
+    const modelky = sbirka(1500, 23);
+    const maska = Uint8Array.from(modelky, m => (m.vlasy === 'zrzavá' ? 1 : 0));
+    modelky.forEach((m, i) => { if (maska[i] && m.tetovani !== null) m.tetovani = i % 5 < 3; });
+    const r = rozdilyVyberu(priznakySbirky(modelky), maska, { vyloucit: ['vlasy'] });
+    assert.ok(r.postrehy.every(p => p.graf !== 'vlasy'), 'o vlasech nic, výběr je podle vlasů');
+    const tet = r.postrehy.find(p => p.klic === 'tetovani');
+    assert.match(tet.veta, /^Ve výběru je víc modelek s tetováním: \d\d % \(celkem \d\d %\)\.$/);
+    assert.match(tet.podrobnosti, /Fisherův test, po opravě na \d+ testů p < 0,001/);
+    const maly = new Uint8Array(1500); maly.fill(1, 0, 9);
+    assert.deepEqual(rozdilyVyberu(priznakySbirky(modelky), maly), { maly: true, postrehy: [] });
+});
+
+test('věk a poměr: roky ve větě skloňované, poměr bez jednotky', () => {
+    const modelky = sbirka(1500, 24);
+    const maska = Uint8Array.from(modelky, (_, i) => (i % 6 === 0 ? 1 : 0));
+    modelky.forEach((m, i) => { if (maska[i]) { m.vek -= 3; m.whr = Math.round((m.whr + 0.04) * 100) / 100; } });
+    const r = rozdilyVyberu(priznakySbirky(modelky), maska);
+    assert.match(r.postrehy.find(p => p.klic === 'vek').veta, /^Výběr je při prvním výskytu o 3 roky mladší \(20 vs 2\d let\)\.$/);
+    assert.match(r.postrehy.find(p => p.klic === 'whr').veta, /^Výběr má o 0,0\d vyšší poměr pas : boky \(0,7\d vs 0,7\d\)\.$/);
+});
+
+test('nulová simulace výběrů: postřeh nejvýš u 5 % z 500 náhodných výběrů', () => {
+    const modelky = sbirka(3000, 25);
+    const priznaky = priznakySbirky(modelky);
+    const { nahoda } = generator(26);
+    let ukazano = 0;
+    for (let k = 0; k < 500; k++) {
+        const velikost = Math.round(10 * 200 ** nahoda());      // 10–2 000, logaritmicky
+        const maska = new Uint8Array(3000);
+        for (let j = 0; j < velikost; j++) maska[Math.floor(nahoda() * 3000)] = 1;
+        if (rozdilyVyberu(priznaky, maska).postrehy.length) ukazano++;
+    }
+    console.log(`nulová simulace výběrů: ${ukazano} z 500`);
+    assert.ok(ukazano <= 25, `ukázáno ${ukazano} z 500`);
+});
+
+test('přepočet výběru na 5 000 modelkách do 15 ms', () => {
+    const modelky = sbirka(5000, 27);
+    const priznaky = priznakySbirky(modelky);
+    const maska = Uint8Array.from(modelky, (_, i) => (i % 7 === 0 ? 1 : 0));
+    rozdilyVyberu(priznaky, maska);
+    const t0 = performance.now();
+    rozdilyVyberu(priznaky, maska);
+    const ms = performance.now() - t0;
+    assert.ok(ms < 15, `${ms.toFixed(1)} ms`);
 });

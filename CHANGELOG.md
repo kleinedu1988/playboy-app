@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.27.2] – 2026-11-08
+
+### Přidáno
+- **Panel Postřehy: čím se výběr liší od sbírky** (Postřehy ve Statistikách, krok 3): když ve Statistikách vybereš rok, období nebo hodnotu (národnost, barvu vlasů, hodnocení…), nad grafem se ukáže až 5 vět o tom, čím se výběr průkazně liší – *„Ve výběru je víc modelek se silikonovými prsy: 42 % (celkem 14 %).“*, *„Výběr je o 3 cm vyšší (170 vs 167 cm).“*, *„Výběr má o 3 cm užší boky (86 vs 89 cm).“* Klik na větu přepne na graf toho údaje, bublina ukáže výběr, celou sbírku i zbytek, test a velikost rozdílu. Malý výběr (pod 10 modelek) nebo výběr bez rozdílu to řekne jedním šedým řádkem.
+  - Srovnávají se všechny údaje a podíly z grafů a 8 nejčastějších hodnot kategorií, národností, barvy vlasů a očí, hodnocení a výskytu; výběr se testuje proti zbytku sbírky (Mann–Whitney, Fisher) s opravou Benjamini–Hochberg přes všechny testy. Věta jen při podstatném rozdílu (stejné prahy jako u trendu, Cliffovo δ nebo Cohenovo h aspoň 0,2). Co výběr sám určuje, se neříká (výběr podle vlasů nic o vlasech).
+  - Na náhodných výběrech z nezávislé sbírky se postřeh ukáže asi u 3 % z nich; přepočet na 5 000 modelkách pod 15 ms.
+
 ## [1.27.1] – 2026-11-08
 
 ### Přidáno

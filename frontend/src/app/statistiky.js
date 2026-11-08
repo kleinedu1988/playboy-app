@@ -12,7 +12,7 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
-import { postrehRady } from '../lib/postrehy';
+import { postrehRady, pripravitPriznak, rozdilyVyberu } from '../lib/postrehy';
 import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 
@@ -48,7 +48,8 @@ export function grafSloupcu(polozky, { sirka = 460, vyska = 190 } = {}) {
 // u čísla – ve zvolené edici a druhu výskytu) nebo „mesic“ (měsíc přidání do sbírky);
 // druh pocet (sloupce počtů), udaj (medián a prostřední polovina modelek) nebo podil (procento modelek s vlastností
 // ze známých hodnot). Rozložení: pruhy hodnot. Pro postřeh o trendu a zlomu (lib/postrehy.js): prah = nejmenší
-// podstatná změna údaje, sKym = podíl „modelek …“ ve větě, rod = rod názvu („výška vzrostla“, „BMI kleslo“).
+// podstatná změna údaje, sKym = podíl „modelek …“ ve větě, rod = rod názvu („výška vzrostla“, „BMI kleslo“);
+// pro rozdíl výběru vic / mene = věta „Výběr {…}“ s rozdílem {d} („je o 4 cm vyšší“).
 const anoNe = h => h === 1 ? true : h === 0 ? false : null;
 const zHodnot = (text, ano, ne) => {
     const t = String(text || '').trim();
@@ -57,15 +58,23 @@ const zHodnot = (text, ano, ne) => {
 const GRAFY = [
     { klic: 'cf', skupina: 'pocty', osa: 'rok', druh: 'pocet', nazev: 'Modelky podle roku' },
     { klic: 'prib', skupina: 'pocty', osa: 'mesic', druh: 'pocet', nazev: 'Přibývání sbírky' },
-    { klic: 'vek', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Věk při prvním výskytu', jednotka: 'let', prah: 1 },
-    { klic: 'vyska', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Výška', jednotka: 'cm', prah: 2, rod: 'f', udaj: m => m.vyskaCm || null },
-    { klic: 'vaha', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Váha', jednotka: 'kg', prah: 2, rod: 'f', udaj: m => m.vahaKg || null },
+    { klic: 'vek', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Věk při prvním výskytu', jednotka: 'let', prah: 1,
+        vic: 'je při prvním výskytu o {d} starší', mene: 'je při prvním výskytu o {d} mladší' },
+    { klic: 'vyska', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Výška', jednotka: 'cm', prah: 2, rod: 'f', vic: 'je o {d} vyšší', mene: 'je o {d} nižší',
+        udaj: m => m.vyskaCm || null },
+    { klic: 'vaha', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Váha', jednotka: 'kg', prah: 2, rod: 'f', vic: 'je o {d} těžší', mene: 'je o {d} lehčí',
+        udaj: m => m.vahaKg || null },
     { klic: 'bmi', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'BMI', jednotka: 'kg/m²', desetinna: 1, prah: 0.5, rod: 'n',
+        vic: 'má o {d} vyšší BMI', mene: 'má o {d} nižší BMI', bezJednotkyVRozdilu: true,
         udaj: m => m.vyskaCm > 0 && m.vahaKg > 0 ? m.vahaKg / (m.vyskaCm / 100) ** 2 : null },
-    { klic: 'hrudnik', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod hrudníku', jednotka: 'cm', prah: 2, udaj: m => m.obvodHrudnikCm || null },
-    { klic: 'pas', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod pasu', jednotka: 'cm', prah: 2, udaj: m => m.obvodPasCm || null },
-    { klic: 'boky', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod boků', jednotka: 'cm', prah: 2, udaj: m => m.obvodBokyCm || null },
+    { klic: 'hrudnik', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod hrudníku', jednotka: 'cm', prah: 2,
+        vic: 'má o {d} větší obvod hrudníku', mene: 'má o {d} menší obvod hrudníku', udaj: m => m.obvodHrudnikCm || null },
+    { klic: 'pas', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod pasu', jednotka: 'cm', prah: 2,
+        vic: 'má o {d} širší pas', mene: 'má o {d} užší pas', udaj: m => m.obvodPasCm || null },
+    { klic: 'boky', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod boků', jednotka: 'cm', prah: 2,
+        vic: 'má o {d} širší boky', mene: 'má o {d} užší boky', udaj: m => m.obvodBokyCm || null },
     { klic: 'whr', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Poměr pas : boky', jednotka: '', desetinna: 2, prah: 0.02,
+        vic: 'má o {d} vyšší poměr pas : boky', mene: 'má o {d} nižší poměr pas : boky', bezJednotkyVRozdilu: true,
         udaj: m => m.obvodPasCm > 0 && m.obvodBokyCm > 0 ? m.obvodPasCm / m.obvodBokyCm : null },
     { klic: 'blond', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Blond vlasy', ano: 'blond', ne: 'jiné vlasy', sKym: 's blond vlasy',
         podil: m => String(m.vlasyBarva || '').trim() ? /blond|plav/.test(sjednotit(m.vlasyBarva)) : null },
@@ -427,12 +436,57 @@ function htmlPostrehu(t) {
         <button type="button" class="sp-postreh-info" data-tip="${esc(t.podrobnosti)}" data-tip-siroky aria-label="${esc(`Podrobnosti: ${t.podrobnosti}`)}">ⓘ</button>`;
 }
 
+// Postřehy výběru proti zbytku sbírky (lib/postrehy.js rozdilyVyberu): údaje a podíly grafů a nejčastějších 8 hodnot
+// rozložení. Příznaky se připraví jednou pro data, edici a druh výskytu (věk je věk v čísle prvního výskytu).
+// Podmínka výběru vyřadí příznaky, které sama určuje (výběr podle vlasů neříká nic o vlasech).
+const VYLOUCENE_PODMINKOU = { vlasy: ['vlasy', 'blond'] };
+const ROZLOZENI_PRO_VYBER = {
+    kat: n => `z kategorie „${n}“`, nar: n => `s národností „${n}“`, vlasy: n => `s barvou vlasů „${n}“`,
+    oci: n => `s barvou očí „${n}“`, srd: n => n === 'Bez hodnocení' ? 'bez hodnocení' : `s hodnocením ${n}`, vyskyt: n => `s výskytem „${n}“`,
+};
+let priznaky = { klic: '', seznam: [] };
+function priznakyVyberu() {
+    const klic = `${edice}|${druhVyskytu}`;
+    if (priznaky.klic === klic && priznaky.data === data) return priznaky.seznam;
+    const { modelky } = data;
+    const seznam = GRAFY.filter(g => g.druh === 'udaj' || g.druh === 'podil').map(g => pripravitPriznak({
+        ...g, graf: g.klic,
+        hodnoty: modelky.map(m => g.klic === 'vek' ? prvniVyskyt(m)?.vekPresne ?? null : g.druh === 'udaj' ? g.udaj(m) : g.podil(m)),
+    }));
+    const znamy = { nar: m => String(m.narodnost || '').trim(), vlasy: m => String(m.vlasyBarva || '').trim(), oci: m => String(m.ociBarva || '').trim() };
+    Object.entries(ROZLOZENI_PRO_VYBER).forEach(([graf, sKym]) => {
+        const def = GRAFY.find(g => g.klic === graf);
+        [...polozkyRozlozeni(graf)].sort((a, b) => b.pocet - a.pocet).slice(0, 8).forEach(p => seznam.push(pripravitPriznak({
+            klic: `${graf}:${p.hodnota}`, graf, druh: 'podil', nazev: `${def.nazev}: ${p.nazev}`, sKym: sKym(p.nazev),
+            hodnoty: modelky.map(m => (!znamy[graf] || znamy[graf](m) ? p.test(m) : null)),
+        })));
+    });
+    priznaky = { klic, data, seznam };
+    return seznam;
+}
+
+// Panel Postřehy nad grafem: rozdíly výběru (nejvýš 5), klik přepne na graf příznaku. Bez výběru skrytý.
+const NEJVYS_POSTREHU = 5;
+function htmlPostrehuVyberu() {
+    if (!filtry.size || !data.modelky.length) return '';
+    const maska = Uint8Array.from(data.modelky, m => (vyhovuje(m) ? 1 : 0));
+    const vyloucit = [...filtry.keys()].flatMap(k => VYLOUCENE_PODMINKOU[k] ?? [k]);
+    const { maly, postrehy } = rozdilyVyberu(priznakyVyberu(), maska, { vyloucit });
+    const hlava = '<div class="sp-postrehy-hlava"><b>Postřehy</b><span>čím se výběr liší od sbírky</span></div>';
+    if (maly) return `${hlava}<p class="sp-postrehy-prazdno">Výběr je na postřehy příliš malý (méně než 10 modelek).</p>`;
+    if (!postrehy.length) return `${hlava}<p class="sp-postrehy-prazdno">Výběr se od sbírky průkazně neliší.</p>`;
+    return `${hlava}${postrehy.slice(0, NEJVYS_POSTREHU).map(p => `
+        <button type="button" class="sp-postreh-vyberu" data-sp-graf-volba="${esc(p.graf)}" data-tip="${esc(p.podrobnosti)}" data-tip-siroky
+            aria-description="${esc(p.podrobnosti)}"><span class="sp-postreh-ikona" aria-hidden="true">≠</span><span>${esc(p.veta)}</span></button>`).join('')}`;
+}
+
 const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModelky(m).some(c => c.edice === e)));
 
 // Kostra se vykreslí jednou; části se pak překreslují zvlášť. Volby (graf, výskyt, edice, výběr a souhrn) jsou
 // v liště pod hledáním: skrytý řádek štítků převezme ui/volby.js (přes prehled.js)
 function htmlKostry() {
     return `<div class="volby-v-liste" data-volby-casti="statistiky" data-sp-volby></div>
+        <div class="stat-karta sp-postrehy" data-sp-postrehy hidden></div>
         <div class="sp-telo">
             <div class="stat-karta sp-karta">
                 <div class="sp-legenda" data-sp-legenda></div>
@@ -485,6 +539,9 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     ].join(''));
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
+    const panel = koren.querySelector('[data-sp-postrehy]'), htmlV = htmlPostrehuVyberu();
+    panel.innerHTML = htmlV;
+    panel.hidden = !htmlV;
     const mistoPostrehu = koren.querySelector('[data-sp-postreh]'), htmlP = htmlPostrehu(postreh);
     mistoPostrehu.innerHTML = htmlP;
     mistoPostrehu.hidden = !htmlP;

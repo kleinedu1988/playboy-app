@@ -11,7 +11,7 @@ import { stav } from './stav';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { detailView, gallery, issueView } from './prvky';
 import { hlavniOblast, listaAlb, listyStranky } from './listy';
-import { VELIKOST_NAHLEDU, VELIKOST_TITULNI, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
+import { PLNE_ROZLISENI, VELIKOST_NAHLEDU, VELIKOST_TITULNI, adresaTitulni, nacitatPostupne, pomerFotky, zapamatovatPomer } from './obrazky';
 import { stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { htmlOdhadu, htmlSrdicka, htmlSrdickaFotky } from './galerie';
 import { rezimVyberu, selectionBar, zrusitVyber } from './vyber';
@@ -545,14 +545,17 @@ export function aktualizovatBannerProfilu(modelka) {
     GetProfilovaFotka(id).then(profilova => {
         if (stav.aktualniModelka?.id !== id) return;
         stav.profilovaFotka = profilova?.url ? { ...profilova, modelkaId: id } : null;
-        nastavitFotkuBanneru(bannerImg, profilova?.url ? obrazek(profilova.url, VELIKOST_TITULNI) : '', profilova?.url ? stylVyrezu(profilova) : '');
+        nastavitFotkuBanneru(bannerImg, profilova?.url ? obrazek(profilova.url, VELIKOST_TITULNI) : '', profilova?.url ? stylVyrezu(profilova) : '',
+            profilova?.url ? obrazek(profilova.url, PLNE_ROZLISENI) : '');
     }).catch(() => nastavitFotkuBanneru(bannerImg, '', ''));
 }
 
 // Jak vybrat fotku záhlaví (odkaz v záhlaví bez fotky, nabídka)
 export const navodFotkyZahlavi = () => oznamit('Fotku záhlaví vybereš na kterékoli fotce modelky: pravým tlačítkem nebo ⋯ › Nastavit jako fotku záhlaví. Fotka vyplní celé záhlaví, výřez pak určí, která část je vidět.');
 
-function nastavitFotkuBanneru(bannerImg, adresa, styl) {
+// Záhlaví je široké přes celé okno: náhled (w800, z mezipaměti hned) se nahradí originálem v plném rozlišení,
+// jakmile se stáhne; rozostřené pozadí zůstane na náhledu
+function nastavitFotkuBanneru(bannerImg, adresa, styl, originalAdresa = '') {
     const pozadi = document.getElementById('profilBannerPozadi');
     const rozmazane = document.getElementById('profilBannerRozmazane');
     pozadi?.classList.toggle('bez-fotky', !adresa);
@@ -560,6 +563,15 @@ function nastavitFotkuBanneru(bannerImg, adresa, styl) {
     if (odkaz) odkaz.hidden = Boolean(adresa);
     if (adresa) {
         bannerImg.src = adresa;
+        if (originalAdresa && originalAdresa !== adresa) {
+            const original = new Image();
+            original.decoding = 'async';
+            original.onload = () => {
+                // Mezitím se mohl otevřít jiný profil nebo změnit fotka záhlaví
+                if (bannerImg.getAttribute('src') === adresa) bannerImg.src = originalAdresa;
+            };
+            original.src = originalAdresa;
+        }
         // cssText přepíše celý styl, proto display až po něm
         bannerImg.style.cssText = styl;
         bannerImg.style.display = 'block';

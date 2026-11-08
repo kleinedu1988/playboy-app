@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.11.1] – 2026-11-08
+
+### Změněno
+- **Fotka záhlaví v plném rozlišení**: záhlaví ukazovalo náhled 800 px roztažený přes ~1 600 px šířky (měkký, s kompresí). Teď se hned ukáže náhled z mezipaměti a po stažení ho nahradí originál z Disku (=s0); rozostřené pozadí zůstává na náhledu.
+
 ## [1.11.0] – 2026-11-08
 
 ### Změněno

@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.21.0] – 2026-11-08
+
+### Přidáno
+- **Barvy a kvalita snímku (ML #2 návrhu kolekcí)**: obsah fotek nově u každé fotky spočítá z náhledu i její vzhled – podíly 12 odstínů, barevnost, jas, sytost, teplotu barev, kontrast a ostrost (~7 ms na fotku, bez modelu; `obsah/vzhled.bin`, 18 B na fotku). Při prvním spuštění se dopočítá pro celou sbírku na pozadí (náhledy většinou z disku, pár minut); stav obsahu fotek ukazuje průběh.
+- **9 nových kolekcí v Galerii** (skupina „barvy“, nejvýš 3 řady denně): *V červené*, *V modré*, *V zeleni*, *Růžová a fialová*, *Sytě barevné* (mimo tóny pleti), *Teplé tóny* a *Chladné tóny* (5 % nejteplejších / nejchladnějších), *Měkký snový filtr* (soft focus) a *Vzory a textury* (nejvíc jemného detailu). Prahy ověřené na ukázkách z tvé sbírky; žluté (byla to hlavně zeleň na slunci) a pastelové (nespolehlivé) kolekce nejsou.
+
 ## [1.20.0] – 2026-11-08
 
 ### Přidáno

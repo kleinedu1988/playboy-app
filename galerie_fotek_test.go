@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"playboy-app/internal/obsah"
 )
 
 // Galerie všech fotek: všechny fotky napříč modelkami, filtry, počty v panelu, stránky a promíchání alb
@@ -147,5 +149,35 @@ func TestStrojoveUceniKolekci(t *testing.T) {
 	}
 	if !dk.doporucenaAlba[11] || dk.doporucenaAlba[0] || dk.doporucenaAlba[3] {
 		t.Fatalf("doporučená alba %v", dk.doporucenaAlba)
+	}
+}
+
+// Barevné kolekce: červená podle podílu odstínu, teplé tóny podle prahu z rozložení
+func TestKolekceBarev(t *testing.T) {
+	a := &App{}
+	dk := &dataKolekce{modelky: map[int]modelkaKolekce{}, tagy: map[string]map[string]bool{}, vzhled: map[string]obsah.VzhledFotky{}}
+	var fotky []fotkaGalerie
+	for i := range 300 {
+		id := fmt.Sprint("f", i)
+		v := obsah.VzhledFotky{Barevnost: 0.3, Sytost: 0.4, Teplota: float64(i) / 300, Ostrost: 0.7}
+		v.Odstiny[1] = 1
+		if i < 20 {
+			v.Odstiny = [obsah.Odstinu]float64{0: 1}
+			v.Barevnost = 0.5
+		}
+		dk.vzhled[id] = v
+		fotky = append(fotky, fotkaGalerie{f: Fotografie{DriveID: id}})
+	}
+	prahyVzhledu(dk)
+	pocty := map[string]int{}
+	for _, d := range a.definiceKolekci(fotky, dk, time.Now()) {
+		for i := range fotky {
+			if d.plati(&fotky[i]) {
+				pocty[d.klic]++
+			}
+		}
+	}
+	if pocty["barvy:cervena"] != 20 || pocty["barvy:teple"] != 15 {
+		t.Fatalf("počty %v", pocty)
 	}
 }

@@ -314,6 +314,44 @@ func (a *App) definiceKolekci(fotky []fotkaGalerie, dk *dataKolekce, nyni time.T
 			plati: func(g *fotkaGalerie) bool { return dk.stylFotky[g.f.DriveID] == klic }})
 	}
 
+	// --- Barvy a kvalita snímku (počítané z náhledu; prahy ověřené na ukázkách sbírky) ---
+	if len(dk.vzhled) > 0 {
+		barva := func(klic, nazev, duvod string, plati func(v obsah.VzhledFotky) bool) {
+			pridat(defKolekce{klic: "barvy:" + klic, nazev: nazev, skupina: "barvy", kontext: 1, duvod: duvod,
+				plati: func(g *fotkaGalerie) bool {
+					v, ok := dk.vzhled[g.f.DriveID]
+					return ok && plati(v)
+				}})
+		}
+		o := func(v obsah.VzhledFotky, odstiny ...int) float64 {
+			s := 0.0
+			for _, i := range odstiny {
+				s += v.Odstiny[i]
+			}
+			return s * v.Barevnost
+		}
+		barva("cervena", "V červené", "Červená zabírá aspoň čtvrtinu fotky – pozadí, prádlo, pohovka",
+			func(v obsah.VzhledFotky) bool { return o(v, 0)+o(v, 11)/2 >= 0.25 })
+		barva("modra", "V modré", "Modrá a tyrkysová – voda, obloha, modré studio",
+			func(v obsah.VzhledFotky) bool { return o(v, 6, 7, 8) >= 0.12 })
+		barva("zelena", "V zeleni", "Hodně zelené – tráva, listí, zahrady",
+			func(v obsah.VzhledFotky) bool { return o(v, 3, 4, 5) >= 0.05 })
+		barva("ruzova", "Růžová a fialová", "Růžové, purpurové a fialové barvy",
+			func(v obsah.VzhledFotky) bool { return o(v, 9, 10, 11) >= 0.05 })
+		barva("syte", "Sytě barevné", "Výrazné syté barvy mimo tóny pleti",
+			func(v obsah.VzhledFotky) bool { return (1-v.Odstiny[1])*v.Barevnost >= 0.4 })
+		if dk.prahTeple > 0 {
+			barva("teple", "Teplé tóny", "Nejteplejší barvy ve sbírce – zlatá, oranžová, jantarová",
+				func(v obsah.VzhledFotky) bool { return v.Teplota >= dk.prahTeple })
+			barva("chladne", "Chladné tóny", "Nejchladnější barevné fotky – modravé světlo, voda, noc",
+				func(v obsah.VzhledFotky) bool { return v.Sytost >= 0.1 && v.Teplota <= dk.prahChladne })
+			barva("mekke", "Měkký snový filtr", "Nejměkčí fotky – soft focus a snový opar, typicky 70. léta",
+				func(v obsah.VzhledFotky) bool { return v.Ostrost <= dk.prahMekke })
+			barva("textury", "Vzory a textury", "Nejvíc jemného detailu – vzorované látky, tráva, kůra, krajky",
+				func(v obsah.VzhledFotky) bool { return v.Ostrost >= dk.prahTextury })
+		}
+	}
+
 	// --- Obsah fotek (tagy i návrhy obrazových modelů) ---
 	obsahove := []struct{ tag, nazev, duvod string }{
 		{"plaz", "Na pláži", "Pláž a moře"}, {"bazen", "U bazénu", "Bazén"}, {"studio", "Ve studiu", "Studiové fotky"},
@@ -345,6 +383,11 @@ type dataKolekce struct {
 	bublina        map[string]bool   // fotky oblíbených modelek (♥4+), obsahem nejdál od tvých ♥4+ fotek
 	styly          []obsah.Styl      // objevené styly (shluky obsahu s názvem)
 	stylFotky      map[string]string // ID souboru → klíč stylu
+
+	// Barvy a kvalita snímku (obsah/vzhled.go) a prahy z rozložení ve sbírce
+	vzhled                 map[string]obsah.VzhledFotky
+	prahTeple, prahChladne float64 // teplota: horních / dolních 5 % (chladné jen barevné fotky)
+	prahMekke, prahTextury float64 // ostrost na náhledu: dolních / horních 6 %
 }
 
 var kolekcePamet struct {
@@ -358,7 +401,7 @@ func (a *App) dataKolekci(fotky []fotkaGalerie) *dataKolekce {
 	var styly []obsah.Styl
 	if a.obsah != nil {
 		styly = a.obsah.Styly()
-		klic += fmt.Sprint("|", a.obsah.Stav().Vektoru, "|", a.obsah.PocetPartii(), "|", len(styly))
+		klic += fmt.Sprint("|", a.obsah.Stav().Vektoru, "|", a.obsah.PocetPartii(), "|", len(styly), "|", a.obsah.PocetVzhledu())
 	}
 	p := &kolekcePamet
 	p.Lock()
@@ -380,6 +423,10 @@ func (a *App) dataKolekci(fotky []fotkaGalerie) *dataKolekce {
 		}
 	}
 	a.strojoveUceniKolekci(fotky, dk)
+	if a.obsah != nil {
+		dk.vzhled = a.obsah.VzhledFotek()
+		prahyVzhledu(dk)
+	}
 	dk.styly, dk.stylFotky = styly, map[string]string{}
 	for _, st := range styly {
 		for _, id := range st.Fotky {
@@ -636,4 +683,28 @@ func (a *App) stylyFotek() {
 		return
 	}
 	_ = a.obsah.SpocitatStyly() // bez stylů jen nebudou jejich kolekce
+}
+
+// Prahy barevných kolekcí z rozložení ve sbírce (aspoň 200 fotek se vzhledem)
+func prahyVzhledu(dk *dataKolekce) {
+	if len(dk.vzhled) < 200 {
+		return
+	}
+	var teplota, barevnaTeplota, ostrost []float64
+	for _, v := range dk.vzhled {
+		teplota = append(teplota, v.Teplota)
+		ostrost = append(ostrost, v.Ostrost)
+		if v.Sytost >= 0.1 {
+			barevnaTeplota = append(barevnaTeplota, v.Teplota)
+		}
+	}
+	for _, x := range [][]float64{teplota, barevnaTeplota, ostrost} {
+		sort.Float64s(x)
+	}
+	dk.prahTeple = teplota[len(teplota)*95/100]
+	dk.prahMekke, dk.prahTextury = ostrost[len(ostrost)*6/100], ostrost[len(ostrost)*94/100]
+	dk.prahChladne = -1
+	if len(barevnaTeplota) > 0 {
+		dk.prahChladne = barevnaTeplota[len(barevnaTeplota)*5/100]
+	}
 }

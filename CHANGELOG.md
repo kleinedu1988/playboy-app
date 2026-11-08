@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.27.0] – 2026-11-08
+
+### Přidáno
+- **Postřeh o trendu pod grafem ve Statistikách** (téma Postřehy ve Statistikách, krok 1): u grafů údajů a podílů podle roku program sám řekne, jestli údaj skutečně roste nebo klesá – *„↗ Výška průkazně roste: ze 168 cm v 60. letech na 173 cm v letech 2010–2019.“*, *„Podíl modelek s tetováním průkazně roste: z 8 % v 80. letech na 41 % v letech 2010–2019.“* Při výběru jde o modelky výběru („ve výběru“). Bublina u ⓘ ukáže úrovně obou období (prostřední polovinu modelek nebo 95% interval podílu), tempo za 10 let, test a kolik modelek má údaj známý.
+  - Věta se ukáže, jen když trend projde testem na úrovni modelek (Kendallovo τ_b rok × údaj, u podílu Cochranův–Armitageův test; p ≤ 0,05) **a** změna mezi prvním a posledním desetiletím s aspoň 10 modelkami je podstatná (výška, váha a obvody 2 cm/kg, věk 1 rok, BMI 0,5, poměr pas : boky 0,02, podíl 10 procentních bodů). Potřebuje aspoň 10 let a 60 modelek se známým údajem; jinak nic – raději žádný postřeh než náhoda.
+  - Statistické funkce (`lib/statistika.js`) souhlasí se SciPy na sadě případů (`testdata/statistika-pripady.py`); na řadách bez trendu se postřeh v simulaci ukáže u 2–4 % z nich.
+
 ## [1.26.2] – 2026-11-08
 
 ### Opraveno

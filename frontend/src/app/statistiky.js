@@ -12,6 +12,7 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
+import { trendRady } from '../lib/postrehy';
 import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 
@@ -46,7 +47,8 @@ export function grafSloupcu(polozky, { sirka = 460, vyska = 190 } = {}) {
 // Nabídka grafů. V čase: osa „rok“ (rok prvního výskytu modelky v časopise – centerfold, obálka nebo pictorial
 // u čísla – ve zvolené edici a druhu výskytu) nebo „mesic“ (měsíc přidání do sbírky);
 // druh pocet (sloupce počtů), udaj (medián a prostřední polovina modelek) nebo podil (procento modelek s vlastností
-// ze známých hodnot). Rozložení: pruhy hodnot.
+// ze známých hodnot). Rozložení: pruhy hodnot. Pro postřeh o trendu (lib/postrehy.js): prah = nejmenší podstatná
+// změna údaje, sKym = podíl „modelek …“ ve větě.
 const anoNe = h => h === 1 ? true : h === 0 ? false : null;
 const zHodnot = (text, ano, ne) => {
     const t = String(text || '').trim();
@@ -55,24 +57,24 @@ const zHodnot = (text, ano, ne) => {
 const GRAFY = [
     { klic: 'cf', skupina: 'pocty', osa: 'rok', druh: 'pocet', nazev: 'Modelky podle roku' },
     { klic: 'prib', skupina: 'pocty', osa: 'mesic', druh: 'pocet', nazev: 'Přibývání sbírky' },
-    { klic: 'vek', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Věk při prvním výskytu', jednotka: 'let' },
-    { klic: 'vyska', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Výška', jednotka: 'cm', udaj: m => m.vyskaCm || null },
-    { klic: 'vaha', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Váha', jednotka: 'kg', udaj: m => m.vahaKg || null },
-    { klic: 'bmi', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'BMI', jednotka: 'kg/m²',
+    { klic: 'vek', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Věk při prvním výskytu', jednotka: 'let', prah: 1 },
+    { klic: 'vyska', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Výška', jednotka: 'cm', prah: 2, udaj: m => m.vyskaCm || null },
+    { klic: 'vaha', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Váha', jednotka: 'kg', prah: 2, udaj: m => m.vahaKg || null },
+    { klic: 'bmi', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'BMI', jednotka: 'kg/m²', prah: 0.5,
         udaj: m => m.vyskaCm > 0 && m.vahaKg > 0 ? m.vahaKg / (m.vyskaCm / 100) ** 2 : null },
-    { klic: 'hrudnik', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod hrudníku', jednotka: 'cm', udaj: m => m.obvodHrudnikCm || null },
-    { klic: 'pas', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod pasu', jednotka: 'cm', udaj: m => m.obvodPasCm || null },
-    { klic: 'boky', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod boků', jednotka: 'cm', udaj: m => m.obvodBokyCm || null },
-    { klic: 'whr', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Poměr pas : boky', jednotka: '', desetinna: 2,
+    { klic: 'hrudnik', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod hrudníku', jednotka: 'cm', prah: 2, udaj: m => m.obvodHrudnikCm || null },
+    { klic: 'pas', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod pasu', jednotka: 'cm', prah: 2, udaj: m => m.obvodPasCm || null },
+    { klic: 'boky', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Obvod boků', jednotka: 'cm', prah: 2, udaj: m => m.obvodBokyCm || null },
+    { klic: 'whr', skupina: 'udaje', osa: 'rok', druh: 'udaj', nazev: 'Poměr pas : boky', jednotka: '', desetinna: 2, prah: 0.02,
         udaj: m => m.obvodPasCm > 0 && m.obvodBokyCm > 0 ? m.obvodPasCm / m.obvodBokyCm : null },
-    { klic: 'blond', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Blond vlasy', ano: 'blond', ne: 'jiné vlasy',
+    { klic: 'blond', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Blond vlasy', ano: 'blond', ne: 'jiné vlasy', sKym: 's blond vlasy',
         podil: m => String(m.vlasyBarva || '').trim() ? /blond|plav/.test(sjednotit(m.vlasyBarva)) : null },
-    { klic: 'silikon', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Silikonová prsa', ano: 'silikonová', ne: 'přírodní',
+    { klic: 'silikon', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Silikonová prsa', ano: 'silikonová', ne: 'přírodní', sKym: 'se silikonovými prsy',
         podil: m => zHodnot(m.prsaTyp, ['Silikonová'], ['Přírodní']) },
-    { klic: 'oholene', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Oholené ochlupení', ano: 'oholené', ne: 'přírodní nebo zastřižené',
+    { klic: 'oholene', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Oholené ochlupení', ano: 'oholené', ne: 'přírodní nebo zastřižené', sKym: 's oholeným ochlupením',
         podil: m => zHodnot(m.ochlupeni, ['Oholené'], ['Přírodní', 'Zastřižené']) },
-    { klic: 'tetovani', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Tetování', ano: 's tetováním', ne: 'bez tetování', podil: m => anoNe(m.tetovani) },
-    { klic: 'piercing', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Piercing', ano: 's piercingem', ne: 'bez piercingu', podil: m => anoNe(m.piercing) },
+    { klic: 'tetovani', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Tetování', ano: 's tetováním', ne: 'bez tetování', sKym: 's tetováním', podil: m => anoNe(m.tetovani) },
+    { klic: 'piercing', skupina: 'podily', osa: 'rok', druh: 'podil', nazev: 'Piercing', ano: 's piercingem', ne: 'bez piercingu', sKym: 's piercingem', podil: m => anoNe(m.piercing) },
     { klic: 'kat', skupina: 'rozl', nazev: 'Kategorie' },
     { klic: 'nar', skupina: 'rozl', nazev: 'Národnosti' },
     { klic: 'vlasy', skupina: 'rozl', nazev: 'Barva vlasů' },
@@ -395,6 +397,22 @@ function souhrn(def, sloupce, rozlozeni) {
         : `${co} <b>${hodnota(vsechny)}</b> · známé u ${pocetModelek(vsechny.length)} · ${obdobi}`;
 }
 
+// Postřeh o trendu pod grafem v čase podle roku (údaje a podíly): ze stejných sloupců jako graf, při výběru jen
+// modelky výběru (podmínka roku graf nezužuje, jen zvýrazňuje). Bez průkazného a podstatného trendu prázdné.
+function htmlPostrehu(def) {
+    if (def.osa !== 'rok' || def.druh === 'pocet' || !sloupce.length) return '';
+    const zuzeno = [...filtry.keys()].some(k => k !== 'rok');
+    const rada = sloupce.map(s => ({ rok: s.rok, polozky: zuzeno ? s.polozky.filter(p => vyhovuje(p.m, 'rok')) : s.polozky }));
+    const zname = rada.reduce((n, s) => n + s.polozky.length, 0);
+    const celkem = data.modelky.filter(m => prvniVyskyt(m) && (!zuzeno || vyhovuje(m, 'rok'))).length;
+    const kdy = druhVyskytu === 'online' ? 'rok nafocení prvního online alba' : `rok ${druhVyskytu === 'vse' ? 'prvního výskytu v časopise' : `prvního výskytu – ${DRUHY_VYSKYTU[druhVyskytu].toLowerCase()}`}`;
+    const kontext = `Známé u ${cislo(zname, 0)} z ${pocetModelek(celkem)}${zuzeno ? ' výběru' : ''}; ${kdy}${edice === 'vse' ? '' : `, edice ${edice}`}.`;
+    const t = trendRady(def, rada, { vyber: zuzeno, kontext });
+    if (!t) return '';
+    return `<span class="sp-postreh-ikona" aria-hidden="true">${t.smer > 0 ? '↗' : '↘'}</span><span>${esc(t.veta)}</span>
+        <button type="button" class="sp-postreh-info" data-tip="${esc(t.podrobnosti)}" data-tip-siroky aria-label="${esc(`Podrobnosti: ${t.podrobnosti}`)}">ⓘ</button>`;
+}
+
 const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModelky(m).some(c => c.edice === e)));
 
 // Kostra se vykreslí jednou; části se pak překreslují zvlášť. Volby (graf, výskyt, edice, výběr a souhrn) jsou
@@ -405,6 +423,7 @@ function htmlKostry() {
             <div class="stat-karta sp-karta">
                 <div class="sp-legenda" data-sp-legenda></div>
                 <div class="sp-graf" data-sp-graf tabindex="0"></div>
+                <p class="sp-postreh" data-sp-postreh hidden></p>
                 <p class="sp-napoveda" data-sp-napoveda></p>
             </div>
             <div class="stat-karta sp-seznam" data-sp-seznam></div>
@@ -449,6 +468,9 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     ].join(''));
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
+    const postreh = koren.querySelector('[data-sp-postreh]'), htmlP = htmlPostrehu(def);
+    postreh.innerHTML = htmlP;
+    postreh.hidden = !htmlP;
     // Modelky bez čísla (jen online, bez vydání) nemají rok; kolik jich v grafech v čase není, říká nápověda.
     // U druhu Online jsou to modelky bez online alba s datem nafocení.
     const online = druhVyskytu === 'online';
@@ -527,6 +549,7 @@ export function pripravit(stats) {
         if (!cil) return;
         cil.classList.add('aktivni');
         bublina.textContent = cil.dataset.tip;
+        bublina.classList.toggle('siroka', 'tipSiroky' in cil.dataset);
         const okraj = bublina.offsetParent.getBoundingClientRect();
         const x = Math.min(e.clientX - okraj.left + 14, okraj.width - bublina.offsetWidth - 8);
         bublina.style.left = `${x}px`;

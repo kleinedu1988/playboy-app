@@ -713,7 +713,7 @@ fotek stejných alb; stejná data dají stejný výsledek; přepočet 2 000 mode
 **Cíl:** Statistiky samy najdou a česky popíšou, co je ve sbírce průkazné – trend, zlom, čím se liší výběr –
 a zamlčí náhodu. Nejvýš 5 postřehů nad grafem, klik ukáže odpovídající graf. Počítá se v rozhraní
 (`lib/statistika.js`, `lib/postrehy.js`) ze stejných dat a definic jako grafy. **Bez změny schématu i exportu.**
-Každý krok vyjde jako samostatná verze (2.4.0–2.4.4). Rozbor možností: [NAVRH-POSTREHY.md](docs/NAVRH-POSTREHY.md).
+Každý krok vyjde jako samostatná verze (2.4.0–2.4.4; skutečně od 1.27.0). Rozbor možností: [NAVRH-POSTREHY.md](docs/NAVRH-POSTREHY.md).
 
 **Rozhodnutí:** neparametrické testy (Kendall, Cochran–Armitage, Mann–Whitney, Fisher, Spearman) s opravou
 Benjamini–Hochberg a prahem podstatné velikosti; zlomy optimálním rozdělením s minimální délkou úseku 5 let;
@@ -721,7 +721,7 @@ výpočet v JS (testy výběru jsou funkce rozhraní), žádná p-hodnota v hlav
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Trend u grafu | Statistické funkce s testy proti R/SciPy; věta pod grafem v čase („Výška průkazně roste: ze 168 na 173 cm“) s bublinou podrobností | M |
+| 1 | ~~Trend u grafu~~ – hotovo 8. 11. 2026 (1.27.0): `lib/statistika.js` (Kendall, Cochran–Armitage, Theil–Sen, Wilson, pořadí) proti SciPy, věta pod grafem s bublinou | Statistické funkce s testy proti R/SciPy; věta pod grafem v čase („Výška průkazně roste: ze 168 na 173 cm“) s bublinou podrobností | M |
 | 2 | Zlomy | Optimální rozdělení řady let (min. 5 let a 30 modelek, nejvýš 3 zlomy), pokuta kalibrovaná simulací; čárkovaná svislice a úrovně období v grafu, věta „Od roku 1995 roste…“ | M–L |
 | 3 | Výběr proti sbírce | Mann–Whitney, Fisher, oprava BH, prahy podstatnosti (2 cm, 10 bodů), vyloučení příznaků určených výběrem, min. 10 modelek; panel „Výběr má o 4 cm užší pas (60 vs 64 cm)“ | M–L |
 | 4 | Panel napříč grafy | Skóre síla × jistota, nejvýš 5, bez opakování příbuzných příznaků, bez blikání; klik přepne graf (u neobvyklého roku vybere rok); 5 000 modelek < 30 ms | M |

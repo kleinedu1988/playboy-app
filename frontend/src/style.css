@@ -7033,6 +7033,46 @@ textarea {
     fill: rgba(255, 255, 255, 0.04);
 }
 
+/* Postřeh o trendu pod grafem v čase (lib/postrehy.js); podrobnosti v bublině u ⓘ */
+.sp-postreh {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: var(--text-main);
+}
+
+.sp-postreh[hidden] {
+    display: none;
+}
+
+.sp-postreh-ikona {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.sp-postreh-info {
+    padding: 0 2px;
+    border: 0;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: help;
+}
+
+.sp-postreh-info:hover,
+.sp-postreh-info:focus-visible {
+    color: var(--text-main);
+}
+
+.graf-bublina.siroka {
+    width: max-content;
+    max-width: min(440px, 90%);
+    line-height: 1.45;
+    white-space: normal;
+}
+
 .sp-napoveda {
     margin: 10px 0 0;
     font-size: 12px;

@@ -1,19 +1,23 @@
 // Galerie všech fotek napříč modelkami (Modelky › Galerie › Všechny fotky; galerie_fotek.go GetGalerieFotek):
-// jedna mozaika po stránkách a ovládací panel vpravo (jako panel Údaje v profilu modelky) s řazením a filtry –
-// srdíčka fotky, typ alba, desetiletí a tagy, u každé hodnoty počet fotek, které zbudou. Výchozí řazení „Co se ti
+// nahoře hero banner s fotkou z čela výběru, pod ním široká lišta (zobrazit, řazení, ☰ Filtry, štítky filtrů)
+// a rozbalovací pás filtrů – srdíčka fotky, typ alba, desetiletí a tagy, u každé hodnoty počet fotek, které zbudou;
+// pak mozaika po stránkách. Výchozí řazení „Co se ti
 // asi líbí“: tvoje srdíčka a u nehodnocených odhad z obsahu fotek, promíchané napříč alby. Dotaz i otevřený panel
 // se pamatují. Text hledání v hlavičce omezuje galerii (jméno modelky, album, fotograf).
 import { GetGalerieFotek } from './backend';
-import { esc, sklonovat } from '../lib/format';
+import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
 import { stav } from './stav';
 import { best } from './prvky';
 import { katalogTagu } from './tagy-fotek';
-import { nacitatPostupne } from './obrazky';
+import { VELIKOST_PLAKATU, nacitatPostupne } from './obrazky';
 import { htmlNicNenalezeno } from '../ui/prazdno';
+import { otevritLightbox } from './prohlizec';
+import { otevritProfilPodleId } from './cover';
+import { podobneZapnuto, ukazatPodobne } from './obsah-fotek';
 
 const STRANKA = 300;
 const KLIC_DOTAZU = 'galerieDotaz';
-const KLIC_PANELU = 'galeriePanel';
+const KLIC_PANELU = 'galerieFiltryOtevrene';
 const SEMINKO = Date.now() % 100000;
 
 const RAZENI = [['libi', 'Co se ti asi líbí', 'Tvoje srdíčka, u nehodnocených odhad z obsahu fotek; promíchané napříč alby'],
@@ -31,7 +35,9 @@ let pozorovatel = null;
 let vykreslitDlazdici = (_p, _i) => '';
 let poVykresleni = () => {};
 
-const panelOtevreny = () => { try { return localStorage.getItem(KLIC_PANELU) !== '0'; } catch { return true; } };
+// Široký pás filtrů pod lištou (rozbalí ☰ Filtry); pamatuje se, výchozí zavřený
+const filtryOtevrene = () => { try { return localStorage.getItem(KLIC_PANELU) === '1'; } catch { return false; } };
+let nazvyTagu = new Map();
 function ulozitDotaz() {
     try { localStorage.setItem(KLIC_DOTAZU, JSON.stringify(dotaz)); } catch { /* jen pro toto spuštění */ }
 }
@@ -57,21 +63,84 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
     stav.nejlepsiPolozky = polozky;
     const seznam = document.getElementById('bestList');
     best.classList.add('galerie-vse');
-    best.classList.toggle('panel-otevreny', panelOtevreny());
     const filtry = pocetFiltru();
-    seznam.innerHTML = `
-        <div class="best-toolbar">${htmlNastroju}
-            <span>${esc(sklonovat(celkem, 'fotka', 'fotky', 'fotek'))}${filtry ? ` · ${sklonovat(filtry, 'filtr', 'filtry', 'filtrů')}` : ''}</span>
-            <button type="button" class="btn btn-secondary btn-small" data-gv-panel aria-pressed="${panelOtevreny()}" title="Řazení a filtry galerie">☰ Řazení a filtry</button>
-            ${polozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
+    const razeni = RAZENI.map(([k, n, t]) => `<button class="chip ${dotaz.razeni === k ? 'active' : ''}" data-gv="razeni" data-hodnota="${k}"${t ? ` title="${esc(t)}"` : ''}>${esc(n)}</button>`).join('');
+    // Hero banner jen bez hledání (výsledky hledání hned nahoře)
+    const hero = polozky.length && !text.trim() ? '<section class="profily-hero gv-hero" aria-label="Fotka z galerie"></section>' : '';
+    seznam.innerHTML = `${hero}
+        <div class="gallery-toolbar profily-lista gv-lista">
+            <div class="pl-razeni" role="group" aria-label="Zobrazit">${htmlNastroju}</div>
+            <span class="gv-oddelovac" aria-hidden="true"></span>
+            <div class="pl-razeni" role="group" aria-label="Řazení">${razeni}</div>
+            <button type="button" class="pl-filtry ${filtry ? 'zapnuto' : ''}" data-gv-panel aria-expanded="${filtryOtevrene()}">☰ Filtry${filtry ? ` <small>${filtry}</small>` : ''}</button>
+            ${htmlStitku()}
+            <span class="pl-pocet">${esc(sklonovat(celkem, 'fotka', 'fotky', 'fotek'))}</span>
+            ${polozky.length ? '<button type="button" class="pl-filtry" data-nejlepsi-slideshow title="Spustit slideshow">▶ Slideshow</button>' : ''}
+        </div>
+        <div class="gv-filtry ${filtryOtevrene() ? '' : 'hidden'}"></div>
         ${polozky.length ? '<div class="nejlepsi-mozaika gv-mozaika"></div><button type="button" class="link nejlepsi-dalsi hidden" data-gv-dalsi></button>'
-            : htmlNicNenalezeno(filtry || text ? 'Filtrům ani hledání neodpovídá žádná fotka.' : 'Ve sbírce zatím nejsou fotky.')}
-        <aside class="galerie-panel" aria-label="Řazení a filtry galerie"></aside>`;
+            : htmlNicNenalezeno(filtry || text ? 'Filtrům ani hledání neodpovídá žádná fotka.' : 'Ve sbírce zatím nejsou fotky.')}`;
     pripojit(polozky, 0);
     sledovatKonec();
     vykreslitPanel();
+    if (hero) naplnitHeroGalerie(seznam.querySelector('.gv-hero'));
     // V prohlížeči se další stránka dotáhne, než dojde na konec načtené části
     stav.lbDotahnout = null;
+}
+
+// Štítky zapnutých filtrů s křížkem (v liště)
+function htmlStitku() {
+    const srd = SRDICKA.find(([k]) => k === dotaz.srdicka && k);
+    const stitky = [
+        ...(srd ? [['srdicka', dotaz.srdicka, srd[1]]] : []),
+        ...dotaz.typy.map(t => ['typy', t, t]),
+        ...dotaz.dekady.map(d => ['dekady', d, `${d.slice(2)}. léta`]),
+        ...dotaz.tagy.map(t => ['tagy', t, nazvyTagu.get(t) || t]),
+    ];
+    return stitky.map(([sk, h, n]) => `<span class="pl-stitek"><button type="button" data-gv-panel>${esc(n)}</button><button type="button" data-gv="${sk}" data-hodnota="${esc(h)}" aria-label="Zrušit filtr" title="Zrušit filtr">×</button></span>`).join('');
+}
+
+// Hero: jedna z fotek z čela výběru (střídá se, Další ↻), s modelkou a albem
+const KLIC_HERO = 'galerieHeroTip';
+async function naplnitHeroGalerie(misto) {
+    const kandidati = stav.nejlepsiPolozky.slice(0, 30);
+    if (!misto || !kandidati.length) return;
+    let i = 0;
+    try { i = (parseInt(localStorage.getItem(KLIC_HERO) || '0', 10) || 0) % kandidati.length; } catch { /* první */ }
+    const p = kandidati[i];
+    const f = p.fotky[0];
+    const adresa = obrazek(f.url, VELIKOST_PLAKATU);
+    const odkud = [nazevAlba(p.album, p.typ), f.vydani && f.vydani !== p.album ? nazevVydani(f.vydani) : ''].filter(Boolean).join(' · ');
+    const srdicka = f.hodnoceni > 0 ? '♥'.repeat(f.hodnoceni) : '';
+    misto.innerHTML = `
+        <div class="ph-rozmazane" style="background-image:url('${esc(adresa).replace(/'/g, '%27')}')"></div>
+        <div class="ph-ram"><img src="${esc(adresa)}" alt="" draggable="false" /></div>
+        <div class="ph-prekryv"></div>
+        <div class="ph-obsah">
+            <div class="ph-nadtitulek">${esc(RAZENI.find(([k]) => k === dotaz.razeni)?.[1] || 'Galerie')}</div>
+            <h2>${esc(p.jmenoModelky || '')}</h2>
+            ${srdicka ? `<div class="ph-srdicka">${srdicka}</div>` : ''}
+            ${odkud ? `<p class="ph-duvod">${esc(odkud)}</p>` : ''}
+            <div class="ph-akce">
+                <button type="button" class="ph-tlacitko hlavni" data-gvh-otevrit="${i}">Otevřít fotku</button>
+                ${p.modelkaId ? `<button type="button" class="ph-tlacitko" data-gvh-profil="${p.modelkaId}">Profil modelky</button>` : ''}
+                ${podobneZapnuto() ? `<button type="button" class="ph-tlacitko" data-gvh-podobne="${i}">Podobné fotky</button>` : ''}
+                ${kandidati.length > 1 ? '<button type="button" class="ph-tlacitko" data-gvh-dalsi title="Další fotka">Další ↻</button>' : ''}
+            </div>
+        </div>`;
+    misto.onclick = (e) => {
+        const cil = /** @type {HTMLElement} */ (e.target);
+        const otevrit = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-otevrit]'));
+        if (otevrit) return otevritLightbox(parseInt(otevrit.dataset.gvhOtevrit, 10), false, stav.nejlepsiPolozky);
+        const profil = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-profil]'));
+        if (profil) return otevritProfilPodleId(parseInt(profil.dataset.gvhProfil, 10));
+        const podobne = /** @type {HTMLElement | null} */ (cil.closest('[data-gvh-podobne]'));
+        if (podobne) return ukazatPodobne(stav.nejlepsiPolozky[parseInt(podobne.dataset.gvhPodobne, 10)].fotky[0]);
+        if (cil.closest('[data-gvh-dalsi]')) {
+            try { localStorage.setItem(KLIC_HERO, String((i + 1) % kandidati.length)); } catch { /* jen teď */ }
+            naplnitHeroGalerie(misto);
+        }
+    };
 }
 
 function pripojit(polozky, od) {
@@ -110,22 +179,22 @@ function sledovatKonec() {
 export function prestatSledovatGalerii() {
     pozorovatel?.disconnect();
     pozorovatel = null;
-    best.classList.remove('galerie-vse', 'panel-otevreny');
+    best.classList.remove('galerie-vse');
 }
 
 async function vykreslitPanel() {
-    const panel = document.querySelector('#bestList .galerie-panel');
+    const panel = document.querySelector('#bestList .gv-filtry');
     if (!panel) return;
     const katalog = await katalogTagu();
-    const nazevTagu = new Map(katalog.flatMap(sk => sk.tagy.map(t => [t.klic, t.nazev])));
+    nazvyTagu = new Map(katalog.flatMap(sk => sk.tagy.map(t => [t.klic, t.nazev])));
+    const nazevTagu = nazvyTagu;
     const volba = (skupina, hodnota, nazev, pocet, zapnuto, titulek = '') =>
         `<button type="button" class="gv-volba ${zapnuto ? 'on' : ''}" data-gv="${skupina}" data-hodnota="${esc(hodnota)}" aria-pressed="${zapnuto}"${titulek ? ` title="${esc(titulek)}"` : ''}>${esc(nazev)}${pocet !== undefined ? `<small>${pocet}</small>` : ''}</button>`;
     const typy = Object.entries(fasety.typy || {}).sort((a, b) => b[1] - a[1]);
     const dekady = Object.entries(fasety.dekady || {}).sort((a, b) => a[0].localeCompare(b[0]));
     const tagy = katalog.map(sk => ({ sk, tagy: sk.tagy.filter(t => (fasety.tagy || {})[t.klic] || dotaz.tagy.includes(t.klic)) })).filter(x => x.tagy.length);
     panel.innerHTML = `
-        <div class="gv-hlava"><b>Řazení a filtry</b>${pocetFiltru() ? '<button type="button" class="link" data-gv-zrusit>zrušit filtry</button>' : ''}</div>
-        <section><h4>Řazení</h4><div class="gv-volby">${RAZENI.map(([k, n, t]) => volba('razeni', k, n, undefined, dotaz.razeni === k, t)).join('')}</div></section>
+        ${pocetFiltru() ? '<button type="button" class="link gv-zrusit" data-gv-zrusit>zrušit všechny filtry</button>' : ''}
         <section><h4>Srdíčka fotky</h4><div class="gv-volby">${SRDICKA.map(([k, n]) => volba('srdicka', k, n, k ? (fasety.srdicka || {})[k] || 0 : undefined, dotaz.srdicka === k)).join('')}</div></section>
         ${typy.length ? `<section><h4>Typ alba</h4><div class="gv-volby">${typy.map(([k, p]) => volba('typy', k, k, p, dotaz.typy.includes(k))).join('')}</div></section>` : ''}
         ${dekady.length ? `<section><h4>Období</h4><div class="gv-volby">${dekady.map(([k, p]) => volba('dekady', k, `${k.slice(2)}. léta`, p, dotaz.dekady.includes(k))).join('')}</div></section>` : ''}
@@ -137,10 +206,10 @@ export function pripravitGalerii(nacistZnovu) {
     best.addEventListener('click', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         if (cil.closest('[data-gv-panel]')) {
-            const otevrit = !panelOtevreny();
+            const otevrit = !filtryOtevrene();
             try { localStorage.setItem(KLIC_PANELU, otevrit ? '1' : '0'); } catch { /* jen teď */ }
-            best.classList.toggle('panel-otevreny', otevrit);
-            cil.closest('[data-gv-panel]')?.setAttribute('aria-pressed', String(otevrit));
+            document.querySelector('#bestList .gv-filtry')?.classList.toggle('hidden', !otevrit);
+            document.querySelector('#bestList [data-gv-panel].pl-filtry')?.setAttribute('aria-expanded', String(otevrit));
             return;
         }
         if (cil.closest('[data-gv-dalsi]')) {

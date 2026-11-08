@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.17.0] – 2026-11-08
+
+### Změněno
+- **Galerie jako Profily: hero banner a široká lišta**: nahoře banner s jednou z fotek z čela výběru (střídá se, *Další ↻*) – modelka, srdíčka fotky, album – a tlačítka *Otevřít fotku*, *Profil modelky*, *Podobné fotky*. Pod ním široká lišta: Zobrazit (Všechny fotky, ♥3+/4+/5, vlastní výběry), řazení, *☰ Filtry*, štítky zapnutých filtrů s křížkem, počet fotek a *▶ Slideshow*. Úzký panel vpravo a kapsle nahoře jsou pryč.
+- **Filtry jako široký pás pod lištou** (☰ Filtry ho rozbalí, pamatuje se): srdíčka fotky, typ alba, období a tagy po skupinách s počty fotek; *zrušit všechny filtry*. Při hledání se banner neukazuje.
+
 ## [1.16.2] – 2026-11-08
 
 ### Změněno

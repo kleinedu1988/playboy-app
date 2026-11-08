@@ -13,7 +13,7 @@ import { htmlAkciDlazdice } from './akce-fotky';
 import { otevritLightbox } from './prohlizec';
 import { potvrdit } from './formular-modelky';
 import { vybratHodnotu } from './ulozeni';
-import { prevestNaVolby } from '../ui/volby';
+import { obnovitVolby, prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { oblibenostModelek } from './mezipamet';
 import { hodnotaFotky, porovnatFotkyPodleHodnoty, urovenHodnoty } from '../lib/oblibenost';
@@ -41,7 +41,8 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         ukazatPohled(best);
         listaNejlepsich.naplnit([]);
         await nacistVsechnyFotky(dotaz, { htmlNastroju: htmlVolebGalerie(vybery, null), dlazdice: htmlDlazdiceMozaiky, pripravit: pripravitMozaiku });
-        prevestNaVolby(document.querySelector('#bestList .best-toolbar'));
+        // Volby jsou v široké liště stránky, kapsle vpravo nahoře zůstane prázdná
+        obnovitVolby(best);
         return;
     }
     prestatSledovatGalerii();

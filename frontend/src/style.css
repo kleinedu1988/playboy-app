@@ -18116,37 +18116,45 @@ body.rezim-vyberu #detailView .poster {
     .dv-karta { transition: none; }
 }
 
-/* ===== Galerie všech fotek (app/galerie-vse.js): ovládací panel vpravo jako panel Údaje v profilu ===== */
-.galerie-panel {
-    position: fixed;
-    top: calc(var(--pod-hlavickou, 92px) + 12px);
-    right: 16px;
-    bottom: 16px;
-    z-index: 30;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    width: 300px;
-    padding: 14px 16px;
-    overflow-y: auto;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 22px;
-    background-color: rgba(26, 26, 30, 0.88);
-    -webkit-backdrop-filter: blur(18px) saturate(1.3);
-    backdrop-filter: blur(18px) saturate(1.3);
-    transform: translateX(calc(100% + 24px));
-    visibility: hidden;
-    transition: transform 0.22s ease, visibility 0s 0.22s;
+/* ===== Galerie všech fotek (app/galerie-vse.js): hero banner, široká lišta a rozbalovací pás filtrů pod ní ===== */
+#best.galerie-vse .profily-hero {
+    min-height: clamp(260px, 38vh, 440px);
+    margin-bottom: 14px;
 }
 
-#best.panel-otevreny .galerie-panel {
-    transform: none;
-    visibility: visible;
-    transition: transform 0.22s ease;
+.gv-lista {
+    margin-bottom: 10px;
 }
 
-#best.galerie-vse.panel-otevreny #bestList {
-    padding-right: 320px;
+.gv-oddelovac {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.gv-filtry {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px 24px;
+    margin: 0 0 16px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: var(--bg-card);
+}
+
+.gv-filtry.hidden {
+    display: none;
+}
+
+.gv-filtry > section:last-of-type {
+    grid-column: 1 / -1;
+}
+
+.gv-zrusit {
+    grid-column: 1 / -1;
+    justify-self: start;
+    font-size: 12.5px;
 }
 
 .gv-hlava {
@@ -18155,7 +18163,7 @@ body.rezim-vyberu #detailView .poster {
     justify-content: space-between;
 }
 
-.galerie-panel h4 {
+.gv-filtry h4 {
     margin: 0 0 8px;
     color: var(--accent-text);
     font-size: 11px;
@@ -18211,11 +18219,6 @@ body.rezim-vyberu #detailView .poster {
     color: rgba(255, 255, 255, 0.8);
 }
 
-@media (max-width: 900px) {
-    #best.galerie-vse.panel-otevreny #bestList {
-        padding-right: 0;
-    }
-}
 
 /* Připnutý panel filtrů Profilů (app/filtr-modelek.js): vpravo vedle karet jako panel Údaje v profilu */
 .filtr-panel.pripnuty {

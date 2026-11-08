@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.15.1] – 2026-11-08
+
+### Opraveno
+- **Galerie se otevírala ve starém pohledu ♥3+**: dřív uložená volba prahu srdíček měla přednost před novou galerií všech fotek. Jednou se přepne na *Všechny fotky*; ♥3+/4+/5 zůstávají v nabídce, která se teď jmenuje *Zobrazit* (dřív *Srdíčka*, „Všechny fotky“ v ní nebylo poznat).
+- **Mozaika ♥3+ po úrovních ukazovala jen první úroveň**: pod ní visela tlačítka „Zobrazit další fotky“ bez fotek. Každá úroveň teď hned ukáže první dávku.
+
 ## [1.15.0] – 2026-11-08
 
 ### Změněno

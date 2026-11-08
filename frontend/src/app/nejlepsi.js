@@ -100,9 +100,9 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     let od = 0;
     urovne.forEach((pocet, h) => { urovneVykresleni.set(h, { od, pocet, vykresleno: 0 }); od += pocet; });
     sledovatKonce();
-    urovneVykresleni.forEach((u, h, mapa) => {
-        const prvni = h === mapa.keys().next().value;
-        vykreslitUroven(h, Math.max(predtim.get(h)?.vykresleno || 0, prvni ? DAVKA : 0));
+    // Každá úroveň hned první dávku (dřív jen první úroveň a pod ní visela tlačítka „Zobrazit další“ bez fotek)
+    urovneVykresleni.forEach((u, h) => {
+        vykreslitUroven(h, Math.max(predtim.get(h)?.vykresleno || 0, DAVKA));
     });
     listaNejlepsich.naplnit([...urovne].map(([h, pocet]) => ({ klic: `srdicka-${h}`, nazev: h ? '♥'.repeat(h) : '<♥', pocet })));
     listaNejlepsich.sledovat();
@@ -236,7 +236,12 @@ export async function upravitVyber(akce) {
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     // Výchozí jsou všechny fotky (0); dřív uložený práh ♥3–5 zůstává
+    // Dřív uložený práh ♥3–5 se jednou přepne na všechny fotky (galerie všech fotek je od 1.14.0 výchozí)
     try {
+        if (!localStorage.getItem('galerieVsechFotek')) {
+            localStorage.setItem('galerieVsechFotek', '1');
+            localStorage.setItem('nejlepsiMin', '0');
+        }
         const ulozeny = localStorage.getItem('nejlepsiMin');
         stav.nejlepsiMin = ulozeny === null ? 0 : Math.max(0, parseInt(ulozeny) || 0);
     } catch { stav.nejlepsiMin = 0; }

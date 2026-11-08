@@ -11,7 +11,7 @@ const POPISKY = {
     razeniSteny: 'Řazení',
     minHodnoceni: 'Srdíčka',
     stenaMin: 'Srdíčka',
-    nejlepsiMin: 'Srdíčka',
+    nejlepsiMin: 'Zobrazit',
     vyberId: 'Výběr',
     edice: 'Edice',
     ediceCisel: 'Edice',

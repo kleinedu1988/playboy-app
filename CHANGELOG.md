@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.17.2] – 2026-11-08
+
+### Změněno
+- **Banner Galerie jako ve streamovacích službách**: místo pásu náhledů čárky vpravo dole (8 fotek z čela výběru). Banner se každých 8 s plynule prolne na další fotku a aktivní čárka se postupně plní průběhem; najetí myší přepínání zastaví (i průběh), klik na čárku ukáže danou fotku. Když Galerie není vidět, banner nepřepíná.
+
 ## [1.17.1] – 2026-11-08
 
 ### Změněno

@@ -81,9 +81,30 @@ let panel = null;
 let kotvaPanelu = null;
 const stavPanelu = { klic: 'hodnoceni', negace: false, hledat: '', hledatFokus: false };
 
+// Připnutý panel (pamatuje se): ukotvený vpravo vedle karet Profilů jako panel Údaje v profilu, nezavírá se klikem
+// mimo a otevře se sám, kdykoli jsou Profily vidět (obnovitPripnutyPanel)
+const KLIC_PRIPNUTI = 'filtrModelekPripnuty';
+const pripnuty = () => { try { return localStorage.getItem(KLIC_PRIPNUTI) === '1'; } catch { return false; } };
+function nastavitPripnuti(ano) {
+    try { localStorage.setItem(KLIC_PRIPNUTI, ano ? '1' : '0'); } catch { /* jen teď */ }
+    panel?.classList.toggle('pripnuty', ano);
+    document.getElementById('app')?.classList.toggle('filtr-pripnuty', ano && Boolean(panel));
+    if (ano) document.removeEventListener('pointerdown', klikMimo, true);
+    else if (panel) document.addEventListener('pointerdown', klikMimo, true);
+    umistit();
+}
+
+// Po vykreslení Profilů: připnutý panel otevřít, otevřený obnovit (počty podle hledání)
+export function obnovitPripnutyPanel() {
+    if (!aktivni()) return;
+    if (panel) vykreslitPanel();
+    else if (pripnuty()) otevritPanelFiltru();
+}
+
 export function zavritPanelFiltru() {
     panel?.remove();
     panel = null;
+    document.getElementById('app')?.classList.remove('filtr-pripnuty');
     kotvaPanelu?.setAttribute('aria-expanded', 'false');
     document.removeEventListener('pointerdown', klikMimo, true);
 }
@@ -110,12 +131,14 @@ export async function otevritPanelFiltru(kotva = null, klic = null) {
         panel.addEventListener('input', naVstup);
         panel.addEventListener('change', naZmenu);
         panel.addEventListener('keydown', (e) => {
-            if (e.key !== 'Escape') return;
+            if (e.key !== 'Escape' || pripnuty()) return;
             e.stopPropagation();
             zavritPanelFiltru();
             kotvaPanelu?.focus();
         });
-        document.addEventListener('pointerdown', klikMimo, true);
+        if (!pripnuty()) document.addEventListener('pointerdown', klikMimo, true);
+        panel.classList.toggle('pripnuty', pripnuty());
+        document.getElementById('app')?.classList.toggle('filtr-pripnuty', pripnuty());
     }
     kotvaPanelu = tlacitko;
     kotvaPanelu?.setAttribute('aria-expanded', 'true');
@@ -126,6 +149,11 @@ export async function otevritPanelFiltru(kotva = null, klic = null) {
 
 function umistit() {
     if (!panel) return;
+    if (pripnuty()) {
+        panel.style.left = '';
+        panel.style.top = '';
+        return;
+    }
     const r = (kotvaPanelu?.isConnected ? kotvaPanelu : document.getElementById('volbyPrehledu')).getBoundingClientRect();
     const sirka = panel.offsetWidth;
     panel.style.left = `${Math.max(8, Math.min(r.right - sirka, window.innerWidth - sirka - 8))}px`;
@@ -155,6 +183,7 @@ async function vykreslitPanel() {
         <div class="fp-pata">
             <span>${esc(`Zobrazí se ${sklonovat(zbude, 'modelka', 'modelky', 'modelek')}`)}</span>
             ${podminky.length ? `<button type="button" class="link" data-fp-zrusit-vse>Zrušit filtry (${podminky.length})</button>` : ''}
+            <button type="button" class="link" data-fp-pripnout title="${pripnuty() ? 'Panel se zase bude otevírat jen tlačítkem Filtry' : 'Panel zůstane otevřený vpravo vedle karet'}">${pripnuty() ? 'Odepnout' : 'Připnout vedle karet'}</button>
         </div>`;
     const pole = /** @type {HTMLInputElement | null} */ (panel.querySelector('[data-fe-hledat]'));
     if (pole && stavPanelu.hledatFokus) {
@@ -237,6 +266,9 @@ function naKlik(e) {
         nastavit(null);
     } else if (cil.closest('[data-fp-zrusit-vse]')) {
         zrusitFiltrModelek();
+    } else if (cil.closest('[data-fp-pripnout]')) {
+        nastavitPripnuti(!pripnuty());
+        vykreslitPanel();
     }
 }
 

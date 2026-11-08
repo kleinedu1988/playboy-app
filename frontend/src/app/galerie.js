@@ -15,7 +15,7 @@ import { nastavitViditelnostHledani, prepnoutRezim, stylVyrezu, ukazatPohled, za
 import { otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
 import { otevritVydani } from './vydani';
-import { dotazFiltru } from './filtr-modelek';
+import { dotazFiltru, obnovitPripnutyPanel } from './filtr-modelek';
 import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
@@ -260,6 +260,7 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
     // značku části (data-cast) dostane první karta každé části rovnou v šabloně
     const maRejstrik = modelky.length >= MODELEK_PRO_PISMENA;
     const casti = new Map();
+    // Karta jen s tím podstatným: fotka, jméno, srdíčka (u nehodnocené odhad); pořadí a trendy jsou v Hodnocení
     const htmlKarty = (m) => {
         const atributCasti = '';
         const styl = stylVyrezu(m);
@@ -269,10 +270,9 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
                 <img data-src="${esc(adresaTitulni(m))}" alt=""${styl ? ` style="${styl}"` : ''} draggable="false" decoding="async" />
                 ${htmlSrdicka(m, false)}
                 ${htmlOdhadu(m)}
-                ${htmlTopu(m)}
             </div>
             <div class="card-info">
-                <h3 title="${esc(m.jmeno)}"><span class="jmeno-karta">${esc(m.jmeno)}</span>${htmlTrendu(m)}</h3>
+                <h3 title="${esc(m.jmeno)}"><span class="jmeno-karta">${esc(m.jmeno)}</span></h3>
             </div>
         </div>
     `;
@@ -301,6 +301,8 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
     } else {
         listaGalerie.naplnit([]);
     }
+    // Připnutý panel filtrů vedle karet (app/filtr-modelek.js)
+    obnovitPripnutyPanel();
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů

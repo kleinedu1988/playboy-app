@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.15.0] – 2026-11-08
+
+### Změněno
+- **Profily: připnutý panel filtrů**: panel Filtry (srdíčka, edice, kategorie, vlasy, rok vydání…) jde *Připnout vedle karet* – zůstane otevřený vpravo jako panel Údaje v profilu modelky, karty se odsunou, klik mimo ho nezavře a otevře se sám, kdykoli jsou Profily vidět (pamatuje se; *Odepnout* vrátí plovoucí panel pod tlačítkem).
+- **Přehlednější karty modelek**: karta ukazuje jen fotku, jméno, srdíčka a u nehodnocené odhad; odznak Top 10/20 a šipka trendu zmizely (pořadí a trendy jsou v Hodnocení).
+
 ## [1.14.0] – 2026-11-08
 
 ### Přidáno

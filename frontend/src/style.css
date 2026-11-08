@@ -18216,3 +18216,26 @@ body.rezim-vyberu #detailView .poster {
         padding-right: 0;
     }
 }
+
+/* Připnutý panel filtrů Profilů (app/filtr-modelek.js): vpravo vedle karet jako panel Údaje v profilu */
+.filtr-panel.pripnuty {
+    top: calc(var(--pod-hlavickou, 92px) + 12px);
+    right: 16px;
+    bottom: 16px;
+    left: auto;
+    z-index: 30;
+    width: 440px;
+    max-height: none;
+    box-shadow: none;
+    animation: none;
+}
+
+#app.filtr-pripnuty #gallery {
+    padding-right: 460px;
+}
+
+@media (max-width: 1100px) {
+    #app.filtr-pripnuty #gallery {
+        padding-right: 0;
+    }
+}

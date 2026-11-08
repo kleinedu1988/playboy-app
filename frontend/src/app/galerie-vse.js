@@ -140,7 +140,9 @@ async function naplnitHeroGalerie(misto, index = null) {
                 ${podobneZapnuto() ? `<button type="button" class="ph-tlacitko" data-gvh-podobne="${i}">Podobné fotky</button>` : ''}
             </div>
         </div>
-        ${carky ? `<div class="gvh-carky" role="group" aria-label="Fotky v banneru">${carky}</div>` : ''}`;
+        ${carky ? `<div class="gvh-carky" role="group" aria-label="Fotky v banneru">${carky}</div>
+            <button type="button" class="gvh-sipka vlevo" data-gvh-ukazat="${(i - 1 + kandidati.length) % kandidati.length}" aria-label="Předchozí fotka" title="Předchozí fotka (←)">‹</button>
+            <button type="button" class="gvh-sipka vpravo" data-gvh-ukazat="${(i + 1) % kandidati.length}" aria-label="Další fotka" title="Další fotka (→)">›</button>` : ''}`;
     const ukazat = (j) => {
         try { localStorage.setItem(KLIC_HERO, String(j)); } catch { /* jen teď */ }
         naplnitHeroGalerie(misto, j);
@@ -184,6 +186,18 @@ async function naplnitHeroGalerie(misto, index = null) {
     };
     spustit();
 }
+
+// Šipky ← → listují bannerem, když je nad ním myš
+document.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    const hero = document.querySelector('#bestList .gv-hero');
+    if (!hero?.matches(':hover') || e.target.closest?.('input, textarea, select, [contenteditable]')) return;
+    const sipka = /** @type {HTMLElement | null} */ (hero.querySelector(`.gvh-sipka.${e.key === 'ArrowLeft' ? 'vlevo' : 'vpravo'}`));
+    if (!sipka) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    sipka.click();
+}, true);
 
 function pripojit(polozky, od) {
     const mozaika = document.querySelector('#bestList .gv-mozaika');

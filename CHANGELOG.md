@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.17.3] – 2026-11-08
+
+### Přidáno
+- **Listování bannerem Galerie zpět i dopředu**: po stranách banneru šipky ‹ › (ukážou se při najetí myší), s myší nad bannerem i klávesy ← →; posouvají v kruhu přes 8 nabízených fotek.
+
 ## [1.17.2] – 2026-11-08
 
 ### Změněno

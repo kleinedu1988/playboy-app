@@ -18575,3 +18575,36 @@ body.rezim-vyberu #detailView .poster {
     .gvh-prolnuti { animation: none; }
     .gvh-carka.on i { animation: none; transform: none; }
 }
+
+/* Šipky předchozí / další po stranách banneru Galerie (při najetí myší) */
+.gvh-sipka {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    margin-top: -22px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    background: rgba(14, 14, 18, 0.5);
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease, background-color 0.15s ease;
+}
+
+.gvh-sipka.vlevo { left: 14px; }
+.gvh-sipka.vpravo { right: 14px; }
+
+.gv-hero:hover .gvh-sipka,
+.gvh-sipka:focus-visible {
+    opacity: 1;
+}
+
+.gvh-sipka:hover {
+    background: rgba(14, 14, 18, 0.8);
+}

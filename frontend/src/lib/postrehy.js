@@ -42,6 +42,19 @@ const procentniBody = n => {
 const modelek = n => `${cislo(n)} ${n === 1 ? 'modelka' : n >= 2 && n <= 4 ? 'modelky' : 'modelek'}`;
 const textP = p => p < 0.001 ? 'p < 0,001' : `p = ${cislo(p, 3)}`;
 
+// Velikost rozdílu dvou skupin položek a síla 0–1 pro řazení postřehů: údaj Cliffovo δ (síla |δ| / 0,5),
+// podíl Cohenovo h (síla |h| / 0,8). Jistota z p (nebo q po opravě): −log₁₀ p / 4, nejvýš 1.
+export function velikostRozdilu(druh, a, b) {
+    if (druh === 'podil') {
+        const pa = a.filter(x => x.hodnota).length / a.length, pb = b.filter(x => x.hodnota).length / b.length;
+        return 2 * Math.asin(Math.sqrt(pb)) - 2 * Math.asin(Math.sqrt(pa));
+    }
+    const v = mannWhitney(b.map(x => x.hodnota), a.map(x => x.hodnota));
+    return v ? 2 * v.u / (a.length * b.length) - 1 : 0;
+}
+export const skorePostrehu = (druh, velikost, p) =>
+    Math.min(1, Math.abs(velikost) / (druh === 'podil' ? 0.8 : 0.5)) * Math.min(1, -Math.log10(Math.max(p, 1e-300)) / 4);
+
 // Trend řady v čase. def: { druh: 'udaj' | 'podil', nazev, jednotka?, desetinna?, prah? (údaj), sKym? (podíl,
 // „s tetováním“) }; sloupce: [{ rok, polozky: [{ hodnota }] }] (údaj číslo, podíl true/false).
 // volby.vyber: věta řekne „ve výběru“; volby.kontext: věta na konec bublin (edice, druh výskytu, známé údaje).
@@ -110,7 +123,8 @@ export function trendRady(def, sloupce, { vyber = false, kontext = '' } = {}) {
         : ` Tempo asi ${za10 > 0 ? '+' : '−'}${cislo(Math.abs(za10), Math.max(1, des))}${jednotka} za 10 let.`;
     const nazevTestu = podil ? 'Cochranův–Armitageův test' : `Kendallovo τ = ${cislo(test.tau, 2)}`;
     const podrobnosti = `${popisUrovne(od)}. ${popisUrovne(doU)}.${tempo} ${nazevTestu} přes ${modelek(test.n)}, ${textP(test.p)}.${kontext ? ` ${kontext}` : ''}`;
-    return { smer, veta, podrobnosti, test, od, do: doU };
+    const skore = skorePostrehu(def.druh, velikostRozdilu(def.druh, dost[0].polozky, dost.at(-1).polozky), test.p);
+    return { smer, veta, podrobnosti, test, od, do: doU, skore };
 }
 
 // ── Krok 2: zlomy ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -152,25 +166,43 @@ export function rozdelitRadu(def, rada, c = POKUTA[def.druh]) {
         const krok = 10 ** -(def.desetinna ?? 0);
         const prihradky = [...new Set(rada.flatMap(s => s.polozky.map(p => Math.round(p.hodnota / krok))))].sort((x, y) => x - y);
         const K = prihradky.length, index = new Map(prihradky.map((h, i) => [h, i]));
-        const P = new Float64Array((T + 1) * K);
+        // Dvojrozměrné kumulativní součty (roky × přihrádky): CP = počet a CS = součet hodnot v letech před t
+        // s přihrádkou ≤ k. Medián úseku najde binární vyhledávání, L1 odchylka od něj vyjde v konstantním čase.
+        const CP = new Float64Array((T + 1) * K), CS = new Float64Array((T + 1) * K), rok = new Float64Array(K);
         rada.forEach((s, t) => {
-            P.set(P.subarray(t * K, (t + 1) * K), (t + 1) * K);
-            s.polozky.forEach(p => { P[(t + 1) * K + index.get(Math.round(p.hodnota / krok))]++; });
+            rok.fill(0);
+            s.polozky.forEach(p => { rok[index.get(Math.round(p.hodnota / krok))]++; });
+            let c = 0, v = 0;
+            for (let k = 0; k < K; k++) {
+                c += rok[k];
+                v += rok[k] * prihradky[k];
+                CP[(t + 1) * K + k] = CP[t * K + k] + c;
+                CS[(t + 1) * K + k] = CS[t * K + k] + v;
+            }
         });
-        const pocty = new Float64Array(K);
         const odchylka = (a, b) => {
-            let n = 0;
-            for (let k = 0; k < K; k++) { pocty[k] = P[(b + 1) * K + k] - P[a * K + k]; n += pocty[k]; }
-            let kum = 0, m = 0;
-            while (kum + pocty[m] < n / 2) kum += pocty[m++];
-            let s = 0;
-            for (let k = 0; k < K; k++) s += pocty[k] * Math.abs(prihradky[k] - prihradky[m]);
-            return s;
+            const pocet = k => CP[(b + 1) * K + k] - CP[a * K + k], soucet = k => CS[(b + 1) * K + k] - CS[a * K + k];
+            const n = pocet(K - 1);
+            // Nejmenší přihrádka m s kumulativním počtem ≥ n/2 (dolní medián)
+            let lo = 0, hi = K - 1;
+            while (lo < hi) {
+                const mid = (lo + hi) >> 1;
+                if (pocet(mid) >= n / 2) hi = mid; else lo = mid + 1;
+            }
+            const vm = prihradky[lo], cm = pocet(lo), sm = soucet(lo);
+            return vm * cm - sm + (soucet(K - 1) - sm) - vm * (n - cm);
         };
         const meritko = odchylka(0, T - 1) / N;
         if (!meritko) return [];
         naklad = (a, b) => 2 * odchylka(a, b) / meritko;
     }
+    // Náklad každého úseku se spočítá jednou (dynamické programování se na něj ptá pro každý počet zlomů)
+    const spocitano = new Float64Array(T * T).fill(NaN), nakladUseku = naklad;
+    naklad = (a, b) => {
+        const k = a * T + b;
+        if (Number.isNaN(spocitano[k])) spocitano[k] = nakladUseku(a, b);
+        return spocitano[k];
+    };
     const platny = (a, b) => b - a + 1 >= MIN_USEK_LET && pn[b + 1] - pn[a] >= MIN_USEK_MODELEK;
     const beta = c * Math.log(N);
     // nejlepsi[k][j] = nejmenší náklad prvních j+1 let v k+1 úsecích; odkud[k][j] = začátek posledního úseku
@@ -229,7 +261,8 @@ export function zlomyRady(def, sloupce, c = POKUTA[def.druh]) {
                 : mannWhitney(v.polozky.map(x => x.hodnota), u.polozky.map(x => x.hodnota))?.p ?? 1;
         });
         const q = benjaminiHochberg(p);
-        const zlomy = zacatky.map((z, i) => ({ rok: rada[z].rok, p: p[i], q: q[i], zmena: useky[i + 1].hodnota - useky[i].hodnota }));
+        const zlomy = zacatky.map((z, i) => ({ rok: rada[z].rok, p: p[i], q: q[i], zmena: useky[i + 1].hodnota - useky[i].hodnota,
+            velikost: velikostRozdilu(def.druh, useky[i].polozky, useky[i + 1].polozky) }));
         const spatne = zlomy.map((z, i) => ({ i, z })).filter(({ z }) => !(z.q <= ALFA) || Math.abs(z.zmena) < prah);
         if (!spatne.length) return { useky: useky.map(({ polozky, ...u }) => u), zlomy, rada };
         // Zahodí se nejslabší neprůkazný zlom (největší q, při shodě nejmenší změna) a ověří se znovu
@@ -271,7 +304,7 @@ export function postrehRady(def, sloupce, { vyber = false, kontext = '' } = {}) 
     const oprava = zlomy.length > 1 ? `, po opravě na ${zlomy.length} zlomy` : '';
     const overeni = zlomy.map(z => `Zlom ${z.rok}: ${test} sousedních období${oprava} ${textP(z.q)}.`).join(' ');
     const podrobnosti = `${useky.map(popisUseku).join('. ')}. ${overeni}${kontext ? ` ${kontext}` : ''}`;
-    return { druh: 'zlom', smer, veta, podrobnosti, useky, zlomy };
+    return { druh: 'zlom', smer, veta, podrobnosti, useky, zlomy, skore: skorePostrehu(def.druh, zlomy[i].velikost, zlomy[i].q) };
 }
 
 // ── Krok 3: výběr proti sbírce ────────────────────────────────────────────────────────────────────────────────────
@@ -406,4 +439,36 @@ function textVyberu(k, testu) {
             + `(${cislo(k.celekDolni, des)}–${hodnota(k.celekHorni)}), zbytku ${hodnota(k.zbytek)}. Známé u ${modelek(k.n1)} výběru. `
             + `Mannův–Whitneyův test, ${oprava}; velikost rozdílu: ${silaSlovy(Math.abs(k.velikost), [0.33, 0.47])} (δ = ${cislo(k.velikost, 2)}).`,
     };
+}
+
+// ── Krok 4: panel napříč grafy ────────────────────────────────────────────────────────────────────────────────────
+// Kandidáti { id, druh: 'rozdil' | 'zlom' | 'trend', graf, skore, ... } ze všech grafů. Nejvýš 5; ze skupiny příbuzných
+// příznaků jen nejsilnější (a každý graf jednou); druhy mimo hlavní nejvýš 2 (s výběrem jsou hlavní rozdíly výběru).
+// Bez blikání: postřeh, který byl vidět a je dál mezi prvními 7, zůstane na svém místě.
+export const NEJVYS_V_PANELU = 5;
+export const DRZET_DO = 7;
+export const NEJVYS_VEDLEJSICH = 2;
+export const PRIBUZNE = [['pas', 'whr', 'bmi'], ['vyska', 'vaha', 'bmi'], ['vlasy', 'blond'], ['pas', 'boky', 'whr']];
+const pribuzne = (a, b) => a === b || PRIBUZNE.some(sk => sk.includes(a) && sk.includes(b));
+
+export function vybratPostrehy(kandidati, { hlavni = null, predtim = [] } = {}) {
+    const serazeni = [...kandidati].sort((a, b) => Number(b.druh === hlavni) - Number(a.druh === hlavni) || b.skore - a.skore || a.id.localeCompare(b.id));
+    const poradi = [];
+    let vedlejsich = 0;
+    for (const k of serazeni) {
+        if (poradi.some(x => pribuzne(x.graf, k.graf))) continue;
+        if (hlavni && k.druh !== hlavni) {
+            if (vedlejsich >= NEJVYS_VEDLEJSICH) continue;
+            vedlejsich++;
+        }
+        poradi.push(k);
+    }
+    const drzet = new Map(poradi.slice(0, DRZET_DO).map(k => [k.id, k]));
+    const panel = new Array(NEJVYS_V_PANELU).fill(null);
+    // Dřív viditelné zůstanou na svém místě, zbytek se doplní podle pořadí
+    predtim.forEach((id, i) => { if (i < NEJVYS_V_PANELU && drzet.has(id)) panel[i] = drzet.get(id); });
+    const pouzite = new Set(panel.filter(Boolean).map(k => k.id));
+    const zbytek = poradi.filter(k => !pouzite.has(k.id));
+    for (let i = 0; i < NEJVYS_V_PANELU && zbytek.length; i++) if (!panel[i]) panel[i] = zbytek.shift();
+    return panel.filter(Boolean);
 }

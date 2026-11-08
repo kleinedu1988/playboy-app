@@ -76,11 +76,20 @@ function shody(serazene, stejne) {
 export function kendallTauB(x, y) {
     const n = x.length;
     if (n < 3 || y.length !== n) return null;
-    const body = x.map((xi, i) => [xi, y[i]]).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
-    const tx = shody(body, (a, b) => a[0] === b[0]);
-    const txy = shody(body, (a, b) => a[0] === b[0] && a[1] === b[1]).dvojice;
+    // τ_b závisí jen na pořadí: x a y se převedou na pořadí hodnot a zakódují do jednoho čísla, které se seřadí
+    // nativně (bez porovnávací funkce) – řádově rychlejší než řazení dvojic
+    const naPoradi = h => {
+        const ruzne = Float64Array.from(new Set(h)).sort(), mapa = new Map();
+        ruzne.forEach((v, i) => mapa.set(v, i));
+        return { r: Float64Array.from(h, v => mapa.get(v)), K: ruzne.length };
+    };
+    const px = naPoradi(x), py = naPoradi(y);
+    const klice = px.r.map((rx, i) => rx * py.K + py.r[i]).sort();
+    const bx = klice.map(k => Math.floor(k / py.K)), by = klice.map(k => k % py.K);
+    const tx = shody(bx, (a, b) => a === b);
+    const txy = shody(klice, (a, b) => a === b).dvojice;
     // Řazení slučováním podle y; přehození = počet dvojic, které jsou v opačném pořadí
-    let pole = body.map(b => b[1]), pomocne = new Array(n), prehozeni = 0;
+    let pole = by, pomocne = new Float64Array(n), prehozeni = 0;
     for (let sirka = 1; sirka < n; sirka *= 2) {
         for (let zac = 0; zac < n; zac += 2 * sirka) {
             const stred = Math.min(zac + sirka, n), kon = Math.min(zac + 2 * sirka, n);
@@ -155,20 +164,20 @@ export function wilson(ano, n, z = 1.959963984540054) {
 export function mannWhitney(a, b) {
     const n1 = a.length, n2 = b.length, n = n1 + n2;
     if (!n1 || !n2) return null;
-    const vse = [...a, ...b];
-    const r = poradi(vse);
-    let r1 = 0;
-    for (let i = 0; i < n1; i++) r1 += r[i];
-    const u = r1 - n1 * (n1 + 1) / 2;
-    const serazene = Float64Array.from(vse).sort();
-    let shodyT = 0;
-    for (let i = 0; i < n;) {
-        let j = i + 1;
-        while (j < n && serazene[j] === serazene[i]) j++;
-        const t = j - i;
+    // Obě skupiny seřazené zvlášť a sloučené po skupinách shod: průměrné pořadí, součet pořadí první skupiny, shody
+    const sa = Float64Array.from(a).sort(), sb = Float64Array.from(b).sort();
+    let i = 0, j = 0, pred = 0, r1 = 0, shodyT = 0;
+    while (i < n1 || j < n2) {
+        const v = j >= n2 || (i < n1 && sa[i] <= sb[j]) ? sa[i] : sb[j];
+        let ca = 0, cb = 0;
+        while (i < n1 && sa[i] === v) { i++; ca++; }
+        while (j < n2 && sb[j] === v) { j++; cb++; }
+        const t = ca + cb;
+        r1 += ca * (pred + (t + 1) / 2);
         shodyT += t * t * t - t;
-        i = j;
+        pred += t;
     }
+    const u = r1 - n1 * (n1 + 1) / 2;
     const rozptyl = n1 * n2 / 12 * ((n + 1) - shodyT / (n * (n - 1)));
     if (!(rozptyl > 0)) return null;
     const odchylka = u - n1 * n2 / 2;

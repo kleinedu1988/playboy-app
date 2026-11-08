@@ -12,7 +12,7 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
-import { postrehRady, pripravitPriznak, rozdilyVyberu } from '../lib/postrehy';
+import { postrehRady, pripravitPriznak, rozdilyVyberu, vybratPostrehy } from '../lib/postrehy';
 import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 
@@ -355,7 +355,7 @@ function htmlPruhu(def, polozky) {
     const max = Math.max(1, ...polozky.map(p => p.pocet));
     return `<div class="sp-pruhy">${polozky.map(p => {
         const zapnuty = vlastni === p.hodnota;
-        return `<button type="button" class="sp-pruh ${zapnuty ? 'vybrany' : vlastni !== undefined ? 'tlum' : ''}" data-hodnota="${esc(p.hodnota)}" aria-pressed="${zapnuty}"
+        return `<button type="button" class="sp-pruh ${zapnuty ? 'vybrany' : vlastni !== undefined ? 'tlum' : ''}${zvyraznit === p.hodnota ? ' zvyrazneny' : ''}" data-hodnota="${esc(p.hodnota)}" aria-pressed="${zapnuty}"
             data-tip="${esc(`${p.nazev}: ${zuzeno ? `${p.vybrano} z ${pocetModelek(p.pocet)}` : pocetModelek(p.pocet)}`)}">
             <span class="sp-nazev">${esc(p.nazev)}</span>
             <span class="sp-draha">${zuzeno ? `<i class="celek" style="width:${p.pocet / max * 100}%"></i>` : ''}<i style="width:${(zuzeno ? p.vybrano : p.pocet) / max * 100}%"></i></span>
@@ -420,7 +420,7 @@ function souhrn(def, sloupce, rozlozeni) {
 
 // Postřeh pod grafem v čase podle roku (údaje a podíly): zlom, nebo trend. Ze stejných sloupců jako graf, při výběru
 // jen modelky výběru (podmínka roku graf nezužuje, jen zvýrazňuje). Bez průkazného a podstatného postřehu null.
-function spocitatPostreh(def) {
+function spocitatPostreh(def, sloupce) {
     if (def.osa !== 'rok' || def.druh === 'pocet' || !sloupce.length) return null;
     const zuzeno = [...filtry.keys()].some(k => k !== 'rok');
     const rada = sloupce.map(s => ({ rok: s.rok, polozky: zuzeno ? s.polozky.filter(p => vyhovuje(p.m, 'rok')) : s.polozky }));
@@ -466,18 +466,44 @@ function priznakyVyberu() {
 }
 
 // Panel Postřehy nad grafem: rozdíly výběru (nejvýš 5), klik přepne na graf příznaku. Bez výběru skrytý.
-const NEJVYS_POSTREHU = 5;
-function htmlPostrehuVyberu() {
-    if (!filtry.size || !data.modelky.length) return '';
-    const maska = Uint8Array.from(data.modelky, m => (vyhovuje(m) ? 1 : 0));
-    const vyloucit = [...filtry.keys()].flatMap(k => VYLOUCENE_PODMINKOU[k] ?? [k]);
-    const { maly, postrehy } = rozdilyVyberu(priznakyVyberu(), maska, { vyloucit });
-    const hlava = '<div class="sp-postrehy-hlava"><b>Postřehy</b><span>čím se výběr liší od sbírky</span></div>';
-    if (maly) return `${hlava}<p class="sp-postrehy-prazdno">Výběr je na postřehy příliš malý (méně než 10 modelek).</p>`;
-    if (!postrehy.length) return `${hlava}<p class="sp-postrehy-prazdno">Výběr se od sbírky průkazně neliší.</p>`;
-    return `${hlava}${postrehy.slice(0, NEJVYS_POSTREHU).map(p => `
-        <button type="button" class="sp-postreh-vyberu" data-sp-graf-volba="${esc(p.graf)}" data-tip="${esc(p.podrobnosti)}" data-tip-siroky
-            aria-description="${esc(p.podrobnosti)}"><span class="sp-postreh-ikona" aria-hidden="true">≠</span><span>${esc(p.veta)}</span></button>`).join('')}`;
+// Trendy a zlomy všech grafů v čase podle roku; přepočet jen při změně dat, edice, výskytu nebo podmínek mimo rok
+// (podmínka roku grafy nezužuje). Mapa klíč grafu → postřeh nebo null.
+let postrehyGrafu = { klic: '', data: null, mapa: new Map() };
+function postrehyRad() {
+    const klic = [edice, druhVyskytu, ...[...filtry].filter(([k]) => k !== 'rok').map(([k, f]) => `${k}=${f.popis}`)].join('|');
+    if (postrehyGrafu.klic === klic && postrehyGrafu.data === data) return postrehyGrafu.mapa;
+    const mapa = new Map(GRAFY.filter(g => g.osa === 'rok' && (g.druh === 'udaj' || g.druh === 'podil'))
+        .map(g => [g.klic, spocitatPostreh(g, radaVCase(g))]));
+    postrehyGrafu = { klic, data, mapa };
+    return mapa;
+}
+
+// Panel Postřehy nad grafem napříč grafy (lib/postrehy.js vybratPostrehy): bez výběru zlomy a trendy všech grafů,
+// s výběrem přednostně rozdíly výběru (k nim nejvýš 2 zlomy nebo trendy výběru). Klik přepne na graf, u hodnoty
+// rozložení ji v grafu zvýrazní. Postřehy, které byly vidět, drží místo (bez přeskakování při změně výběru).
+let predtimVPanelu = [];
+let zvyraznit = null;            // hodnota rozložení zvýrazněná po kliku na postřeh (bez přidání podmínky)
+function htmlPanelu() {
+    if (!data.modelky.length) return '';
+    const kandidati = [...postrehyRad()].filter(([, p]) => p).map(([graf, p]) => ({ id: `${p.druh}:${graf}`, druh: p.druh, graf, skore: p.skore,
+        veta: p.veta, podrobnosti: p.podrobnosti, ikona: p.smer > 0 ? '↗' : '↘', hodnota: /** @type {string | null} */ (null) }));
+    let zprava = '';
+    if (filtry.size) {
+        const maska = Uint8Array.from(data.modelky, m => (vyhovuje(m) ? 1 : 0));
+        const vyloucit = [...filtry.keys()].flatMap(k => VYLOUCENE_PODMINKOU[k] ?? [k]);
+        const { maly, postrehy } = rozdilyVyberu(priznakyVyberu(), maska, { vyloucit });
+        if (maly) zprava = 'Výběr je na postřehy příliš malý (méně než 10 modelek).';
+        else if (!postrehy.length) zprava = 'Výběr se od sbírky průkazně neliší.';
+        postrehy.forEach(p => kandidati.push({ id: `rozdil:${p.klic}`, druh: 'rozdil', graf: p.graf, skore: p.skore, veta: p.veta,
+            podrobnosti: p.podrobnosti, ikona: '≠', hodnota: p.klic.startsWith(`${p.graf}:`) ? p.klic.slice(p.graf.length + 1) : null }));
+    }
+    const vybrane = vybratPostrehy(kandidati, { hlavni: filtry.size ? 'rozdil' : null, predtim: predtimVPanelu });
+    predtimVPanelu = vybrane.map(k => k.id);
+    if (!vybrane.length && !zprava) return '';
+    const hlava = `<div class="sp-postrehy-hlava"><b>Postřehy</b><span>${filtry.size ? 'čím se výběr liší od sbírky' : 'co je ve sbírce průkazné'}</span></div>`;
+    return `${hlava}${zprava ? `<p class="sp-postrehy-prazdno">${zprava}</p>` : ''}${vybrane.map(p => `
+        <button type="button" class="sp-postreh-vyberu" data-sp-graf-volba="${esc(p.graf)}"${p.hodnota ? ` data-sp-zvyraznit="${esc(p.hodnota)}"` : ''}
+            data-tip="${esc(p.podrobnosti)}" data-tip-siroky aria-description="${esc(p.podrobnosti)}"><span class="sp-postreh-ikona" aria-hidden="true">${p.ikona}</span><span>${esc(p.veta)}</span></button>`).join('')}`;
 }
 
 const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModelky(m).some(c => c.edice === e)));
@@ -518,7 +544,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     koren.querySelector('.graf-bublina')?.classList.add('hidden');
     if (!jenGraf) {
         sloupce = def.osa ? radaVCase(def) : [];
-        postreh = spocitatPostreh(def);
+        postreh = def.osa === 'rok' ? postrehyRad().get(def.klic) ?? null : null;
         rozlozeni = def.osa ? [] : polozkyRozlozeni(def.klic);
     }
     const fokus = /** @type {HTMLElement} */ (document.activeElement)?.closest?.('[data-hodnota]')?.dataset.hodnota;
@@ -539,7 +565,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     ].join(''));
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
-    const panel = koren.querySelector('[data-sp-postrehy]'), htmlV = htmlPostrehuVyberu();
+    const panel = koren.querySelector('[data-sp-postrehy]'), htmlV = htmlPanelu();
     panel.innerHTML = htmlV;
     panel.hidden = !htmlV;
     const mistoPostrehu = koren.querySelector('[data-sp-postreh]'), htmlP = htmlPostrehu(postreh);
@@ -691,6 +717,7 @@ export function pripravit(stats) {
         const volbaGrafu = /** @type {HTMLElement | null} */ (cil.closest('[data-sp-graf-volba]'));
         if (volbaGrafu) {
             graf = volbaGrafu.dataset.spGrafVolba;
+            zvyraznit = volbaGrafu.dataset.spZvyraznit ?? null;
             try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
             zobrazitVse = false;
             vykreslit(koren);

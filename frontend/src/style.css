@@ -7084,6 +7084,12 @@ textarea {
     cursor: pointer;
 }
 
+/* Hodnota rozložení zvýrazněná po kliku na postřeh (bez přidání podmínky výběru) */
+.sp-pruh.zvyrazneny {
+    outline: 1px solid var(--text-muted);
+    outline-offset: -1px;
+}
+
 .sp-postreh-vyberu:hover,
 .sp-postreh-vyberu:focus-visible {
     background-color: var(--panel-hover);

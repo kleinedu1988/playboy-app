@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.27.3] – 2026-11-08
+
+### Přidáno
+- **Panel Postřehy napříč grafy** (Postřehy ve Statistikách, krok 4): panel nad grafem je vidět i bez výběru – ukáže nejvýš 5 nejsilnějších zlomů a trendů ze všech grafů v čase (*„Od roku 1985 podíl modelek se silikonovými prsy průkazně vzrostl…“*, *„Od roku 1972 výška průkazně vzrostla…“*). S výběrem mají přednost rozdíly výběru, k nim nejvýš 2 zlomy nebo trendy výběru.
+  - Řazení podle síly (Cliffovo δ / Cohenovo h) × jistoty (p po opravě); z příbuzných údajů (pas, poměr pas : boky, BMI · výška, váha, BMI · barva vlasů a blond) jen nejsilnější postřeh, každý graf jednou.
+  - Bez přeskakování: postřeh, který byl vidět a zůstává mezi prvními 7, drží své místo i po změně výběru.
+  - Klik na postřeh přepne na jeho graf; u hodnoty rozložení (např. národnost) ji v grafu zvýrazní rámečkem, výběr nezmění.
+
+### Změněno
+- Výpočty postřehů jsou rychlejší: Kendallovo τ a Mannův–Whitneyův test řadí typovaná pole (MW asi 5× rychleji), náklady úseků při hledání zlomů z dvojrozměrných kumulativních součtů. Postřehy všech grafů se přepočítají jen při změně edice, výskytu nebo podmínek výběru mimo rok.
+
 ## [1.27.2] – 2026-11-08
 
 ### Přidáno

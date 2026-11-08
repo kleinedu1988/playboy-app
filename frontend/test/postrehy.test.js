@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { obdobi, postrehRady, predlozkaZ, pripravitPriznak, rozdilyVyberu, trendRady, zlomyRady } from '../src/lib/postrehy.js';
+import { obdobi, postrehRady, predlozkaZ, pripravitPriznak, rozdilyVyberu, trendRady, vybratPostrehy, zlomyRady } from '../src/lib/postrehy.js';
 import { mannWhitney } from '../src/lib/statistika.js';
 
 // Deterministický generátor (mulberry32) a normální rozdělení (Box–Muller)
@@ -282,4 +282,52 @@ test('přepočet výběru na 5 000 modelkách do 15 ms', () => {
     rozdilyVyberu(priznaky, maska);
     const ms = performance.now() - t0;
     assert.ok(ms < 15, `${ms.toFixed(1)} ms`);
+});
+
+const k = (id, druh, graf, skore) => ({ id, druh, graf, skore });
+
+test('panel: nejvýš 5, z příbuzných jen nejsilnější, každý graf jednou', () => {
+    const v = vybratPostrehy([
+        k('zlom:pas', 'zlom', 'pas', 0.9), k('zlom:whr', 'zlom', 'whr', 0.8), k('trend:vyska', 'trend', 'vyska', 0.7),
+        k('trend:vaha', 'trend', 'vaha', 0.6), k('zlom:silikon', 'zlom', 'silikon', 0.5), k('trend:tetovani', 'trend', 'tetovani', 0.4),
+        k('trend:blond', 'trend', 'blond', 0.35), k('zlom:piercing', 'zlom', 'piercing', 0.3), k('trend:vek', 'trend', 'vek', 0.2),
+    ]);
+    assert.deepEqual(v.map(x => x.id), ['zlom:pas', 'trend:vyska', 'zlom:silikon', 'trend:tetovani', 'trend:blond']);
+});
+
+test('panel s výběrem: rozdíly mají přednost, ostatní druhy nejvýš 2', () => {
+    const v = vybratPostrehy([
+        k('zlom:silikon', 'zlom', 'silikon', 0.99), k('trend:vyska', 'trend', 'vyska', 0.95), k('zlom:tetovani', 'zlom', 'tetovani', 0.9),
+        k('rozdil:pas', 'rozdil', 'pas', 0.3), k('rozdil:vlasy:blond', 'rozdil', 'vlasy', 0.2), k('rozdil:blond', 'rozdil', 'blond', 0.1),
+    ], { hlavni: 'rozdil' });
+    assert.deepEqual(v.map(x => x.id), ['rozdil:pas', 'rozdil:vlasy:blond', 'zlom:silikon', 'trend:vyska']);
+});
+
+test('panel bez blikání: viditelný postřeh mezi prvními 7 drží své místo', () => {
+    const kandidati = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((id, i) => k(id, 'trend', id, 1 - i / 10));
+    const predtim = ['f', 'a', 'h', 'b', 'c'];
+    const v = vybratPostrehy(kandidati, { predtim });
+    // f (6.) zůstane na 1. místě, h (8.) vypadne a jeho místo zaujme nejsilnější nezobrazený (d)
+    assert.deepEqual(v.map(x => x.id), ['f', 'a', 'd', 'b', 'c']);
+});
+
+// Návrh počítá s < 30 ms na běžném stroji; testy běží i na pomalejších (vývojový notebook je ~10× pomalejší než
+// desktop), proto rozpočet 100 ms – hlídá, aby se výpočet nezhoršil řádově. V aplikaci se počítá jen při změně
+// edice, výskytu nebo podmínek výběru mimo rok (mezipaměť ve Statistikách).
+test('trendy a zlomy všech 13 grafů na 5 000 modelkách do 100 ms', () => {
+    const { nahoda, normalni } = generator(30);
+    const udaje = [['vek', 23, 3, 1], ['vyska', 170, 5, 2], ['vaha', 54, 4, 2], ['bmi', 19, 1.2, 0.5], ['hrudnik', 89, 4, 2],
+        ['pas', 61, 3, 2], ['boky', 88, 3, 2], ['whr', 0.69, 0.03, 0.02]];
+    const rady = [
+        ...udaje.map(([nazev, stred, sd, prah]) => [{ druh: 'udaj', nazev, prah, desetinna: prah < 1 ? (prah < 0.1 ? 2 : 1) : 0 },
+            rada(1953, 2025, () => 69, rok => Math.round((stred + (rok > 1985 ? sd : 0) + normalni() * sd) * 100) / 100)]),
+        ...['blond', 'silikon', 'oholene', 'tetovani', 'piercing'].map(nazev => [{ druh: 'podil', nazev, sKym: nazev },
+            rada(1953, 2025, () => 69, rok => nahoda() < (rok > 1990 ? 0.4 : 0.2))]),
+    ];
+    rady.forEach(([def, r]) => postrehRady(def, r));
+    const t0 = performance.now();
+    rady.forEach(([def, r]) => postrehRady(def, r));
+    const ms = performance.now() - t0;
+    console.log(`13 grafů: ${ms.toFixed(1)} ms`);
+    assert.ok(ms < 100, `${ms.toFixed(1)} ms`);
 });

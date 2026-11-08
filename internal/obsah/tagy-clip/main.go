@@ -1,7 +1,7 @@
 //go:build ignore
 
-// Generátor vektorů tagů fotek (internal/obsah/tagy.bin) z textové věže CLIP ViT-B/32 – spouští se ručně jen při
-// změně katalogu tagů nebo popisů v tagy.go:
+// Generátor vektorů tagů fotek (internal/obsah/tagy.bin) a popisů stylů (styly.bin, -styly) z textové věže
+// CLIP ViT-B/32 – spouští se ručně jen při změně katalogu tagů nebo popisů v tagy.go a styly.go:
 //
 //	go run ./internal/obsah/tagy-clip -model <složka s text_model.onnx, vocab.json, merges.txt> -lib <libonnxruntime.so>
 //
@@ -26,7 +26,8 @@ import (
 func main() {
 	slozka := flag.String("model", "", "složka s text_model.onnx, vocab.json a merges.txt")
 	lib := flag.String("lib", "", "cesta k libonnxruntime.so")
-	vystup := flag.String("out", "internal/obsah/tagy.bin", "")
+	vystup := flag.String("out", "", "výstup (výchozí internal/obsah/tagy.bin, se -styly internal/obsah/styly.bin)")
+	styly := flag.Bool("styly", false, "popisy stylů (PopisyStylu) místo tagů")
 	ukazat := flag.String("tokeny", "", "jen vypsat tokeny textu (kontrola tokenizéru)")
 	flag.Parse()
 
@@ -72,8 +73,20 @@ func main() {
 	}
 
 	v := obsah.NoveVektory()
-	for _, p := range obsah.PopisyTagu {
-		v.Pridat(p.Klic, prumer(p.Ano))
+	if *styly {
+		for _, p := range obsah.PopisyStylu {
+			v.Pridat(p.Klic, prumer(p.Ano))
+		}
+		if *vystup == "" {
+			*vystup = "internal/obsah/styly.bin"
+		}
+	} else {
+		for _, p := range obsah.PopisyTagu {
+			v.Pridat(p.Klic, prumer(p.Ano))
+		}
+		if *vystup == "" {
+			*vystup = "internal/obsah/tagy.bin"
+		}
 	}
 	f, err := os.Create(*vystup)
 	if err != nil {

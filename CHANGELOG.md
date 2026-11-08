@@ -7,6 +7,13 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.20.0] – 2026-11-08
+
+### Přidáno
+- **Objevené styly (ML #1 návrhu kolekcí)**: program sám rozdělí fotky sbírky podle obsahu do skupin (k-means nad vektory obrazového modelu, ~1 skupina na 300 fotek) a každé dá český název z ~85 popisů stylů (éry, prostředí, oblečení, světlo a nálada, záběr) – ten, který skupinu nejvíc odlišuje od ostatních. Vektory popisů jsou vestavěné (`internal/obsah/styly.bin`, generátor `tagy-clip -styly`), nic se nestahuje.
+- Styly se počítají na úvodní obrazovce (~6 s na 19 000 fotek) jen poprvé a po přibytí 2 % fotek; ukládají se do `obsah/styly.json` vedle vektorů.
+- Styly s aspoň 100 fotkami a dost jistým názvem jsou **kolekcemi v Galerii** (skupina „styl“, nejvýš 3 řady denně) – např. Šedesátky, Černé prádlo, Luxusní ložnice, Slunná pláž, Auta, Neon, Černobílé. Názvy ověřené proti nezávislým návrhům tagů (Auta 82 %, Slunná pláž 58 %, Černobílé 40 % proti 0,7 % ve sbírce).
+
 ## [1.19.0] – 2026-11-08
 
 ### Přidáno

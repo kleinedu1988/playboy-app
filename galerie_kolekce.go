@@ -303,6 +303,17 @@ func (a *App) definiceKolekci(fotky []fotkaGalerie, dk *dataKolekce, nyni time.T
 			plati: func(g *fotkaGalerie) bool { return dk.bublina[g.f.DriveID] }})
 	}
 
+	// --- Objevené styly (shluky obsahu pojmenované obrazovým modelem; jen dost velké a s jistým názvem) ---
+	for _, st := range dk.styly {
+		if st.Shoda < minShodaStylu || len(st.Fotky) < minFotekStylu {
+			continue
+		}
+		klic := st.Klic
+		pridat(defKolekce{klic: "styl:" + klic, nazev: st.Nazev, skupina: "styl", kontext: 1.1,
+			duvod: "Objevený styl – program sám seskupil fotky podobné obsahem",
+			plati: func(g *fotkaGalerie) bool { return dk.stylFotky[g.f.DriveID] == klic }})
+	}
+
 	// --- Obsah fotek (tagy i návrhy obrazových modelů) ---
 	obsahove := []struct{ tag, nazev, duvod string }{
 		{"plaz", "Na pláži", "Pláž a moře"}, {"bazen", "U bazénu", "Bazén"}, {"studio", "Ve studiu", "Studiové fotky"},
@@ -329,9 +340,11 @@ type dataKolekce struct {
 	prahPokladu float64 // odhad, od kterého je nehodnocená fotka „skrytý poklad“ (horních 10 %)
 
 	// Strojové učení nad spočítaným obsahem (etapa 4 návrhu)
-	reprezentant   map[string]bool // nejlepší fotka každého alba (srdíčka, jinak odhad z obsahu)
-	doporucenaAlba map[int64]bool  // alba bez hodnocených fotek s nejvyšším průměrným odhadem (horních 15 %)
-	bublina        map[string]bool // fotky oblíbených modelek (♥4+), obsahem nejdál od tvých ♥4+ fotek
+	reprezentant   map[string]bool   // nejlepší fotka každého alba (srdíčka, jinak odhad z obsahu)
+	doporucenaAlba map[int64]bool    // alba bez hodnocených fotek s nejvyšším průměrným odhadem (horních 15 %)
+	bublina        map[string]bool   // fotky oblíbených modelek (♥4+), obsahem nejdál od tvých ♥4+ fotek
+	styly          []obsah.Styl      // objevené styly (shluky obsahu s názvem)
+	stylFotky      map[string]string // ID souboru → klíč stylu
 }
 
 var kolekcePamet struct {
@@ -342,8 +355,10 @@ var kolekcePamet struct {
 
 func (a *App) dataKolekci(fotky []fotkaGalerie) *dataKolekce {
 	klic := a.otiskGalerie()
+	var styly []obsah.Styl
 	if a.obsah != nil {
-		klic += fmt.Sprint("|", a.obsah.Stav().Vektoru, "|", a.obsah.PocetPartii())
+		styly = a.obsah.Styly()
+		klic += fmt.Sprint("|", a.obsah.Stav().Vektoru, "|", a.obsah.PocetPartii(), "|", len(styly))
 	}
 	p := &kolekcePamet
 	p.Lock()
@@ -365,6 +380,12 @@ func (a *App) dataKolekci(fotky []fotkaGalerie) *dataKolekce {
 		}
 	}
 	a.strojoveUceniKolekci(fotky, dk)
+	dk.styly, dk.stylFotky = styly, map[string]string{}
+	for _, st := range styly {
+		for _, id := range st.Fotky {
+			dk.stylFotky[id] = st.Klic
+		}
+	}
 	p.klic, p.data = klic, dk
 	return dk
 }
@@ -600,4 +621,19 @@ func (a *App) temerStejna(id string, vybrane []Fotografie) bool {
 		}
 	}
 	return false
+}
+
+// Objevený styl je kolekcí jen s dost jistým názvem (podobnost středu a popisu; pod ~0,265 názvy často nesedí –
+// ověřeno proti návrhům tagů) a aspoň 100 fotkami
+const (
+	minShodaStylu = 0.265
+	minFotekStylu = 100
+)
+
+// Objevené styly: spočítat, když chybí nebo jsou zastaralé (na úvodní obrazovce, ~6 s)
+func (a *App) stylyFotek() {
+	if a.obsah == nil || !a.obsah.Zapnuto() || a.obsah.Styly() != nil {
+		return
+	}
+	_ = a.obsah.SpocitatStyly() // bez stylů jen nebudou jejich kolekce
 }

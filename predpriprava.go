@@ -23,7 +23,8 @@ var krokyPredpripravy = map[string]func(a *App){
 	"statistiky": func(a *App) { a.GetStatistiky() },
 	// Obsah fotek (obsah_fotek.go): odhad srdíček fotek (~0,5 s), obsah fotek modelek a učení tagů z Průvodce
 	// (do ~3 s na 1 000 fotek) – na úvodní obrazovce, aby Rychle ♥ a Průvodce nečekaly
-	"obsah": func(a *App) { a.odhadySrdicekFotek(); a.obsahFotekVPameti(); a.uceniTaguHned() },
+	// a objevené styly (shlukování obsahu, ~6 s na 19 000 fotek, jen poprvé a po přibytí 2 % fotek)
+	"obsah": func(a *App) { a.odhadySrdicekFotek(); a.obsahFotekVPameti(); a.uceniTaguHned(); a.stylyFotek() },
 	// Oblíbenost a „Mohlo by se ti líbit“ (model vkusu s obsahem fotek)
 	"oblibenost": func(a *App) { a.GetMohloByTeLibit(12) },
 }

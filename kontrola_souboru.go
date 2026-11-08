@@ -70,13 +70,38 @@ func (a *App) OveritOdkaz(rawLink string) int {
 	return overitSoubor(ids[0])
 }
 
-// Vymazání mezipaměti obrázků, kterou si prohlížeč aplikace ukládá na disk; vrací uvolněné bajty
-func (a *App) VymazatMezipamet() int64 {
+// Mezipaměť obrázků, kterou si webové jádro okna ukládá na disk (sama se nijak neomezuje)
+func slozkaMezipametiWebu() string {
 	zaklad, err := os.UserCacheDir()
 	if err != nil {
+		return ""
+	}
+	return filepath.Join(zaklad, filepath.Base(os.Args[0]), "WebKitCache")
+}
+
+// Nad tímto limitem se mezipaměť webového jádra při spuštění smaže: obrázky v ní jsou z velké části zdvojené
+// náhledy z vlastní mezipaměti (nahledy.go, ta má limit), takže se znovu naplní z disku bez stahování
+const limitMezipametiWebu = 300 << 20
+
+// Při spuštění, ještě před otevřením okna (za běhu by ji webové jádro používalo); vrací uvolněné bajty
+func omezitMezipametWebu() int64 {
+	slozka := slozkaMezipametiWebu()
+	if slozka == "" {
 		return 0
 	}
-	slozka := filepath.Join(zaklad, filepath.Base(os.Args[0]), "WebKitCache")
+	velikost := nahledy.VelikostSlozky(slozka)
+	if velikost <= limitMezipametiWebu || os.RemoveAll(slozka) != nil {
+		return 0
+	}
+	return velikost
+}
+
+// Vymazání mezipaměti obrázků, kterou si prohlížeč aplikace ukládá na disk; vrací uvolněné bajty
+func (a *App) VymazatMezipamet() int64 {
+	slozka := slozkaMezipametiWebu()
+	if slozka == "" {
+		return 0
+	}
 	velikost := nahledy.VelikostSlozky(slozka)
 	if err := os.RemoveAll(slozka); err != nil {
 		a.chyba("vymazání mezipaměti obrázků", err)

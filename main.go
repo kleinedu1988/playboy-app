@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -22,6 +23,11 @@ var assets embed.FS
 var ikona []byte
 
 func main() {
+	// Mezipaměť webového jádra se sama neomezuje (narostla až přes 900 MB) – nad limitem pryč, než se otevře okno
+	if uvolneno := omezitMezipametWebu(); uvolneno > 0 {
+		fmt.Printf("Mezipaměť okna: uvolněno %d MB\n", uvolneno>>20)
+	}
+
 	// Create an instance of the app structure
 	app := NewApp()
 	// Obrázky v okně jdou přes místní mezipaměť náhledů (nahledy.go, obsluha v AssetServer níže)

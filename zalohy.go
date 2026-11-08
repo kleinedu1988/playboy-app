@@ -20,15 +20,20 @@ type Zaloha = sbirka.Zaloha
 // Zálohy jdou po jedné (denní záloha na pozadí a záloha před zápisem by si jinak navzájem uklízely soubory)
 var zamekZaloh sync.Mutex
 
-const pocetZaloh = 20
+// Od každého důvodu (před importem, před migrací…) nejvýš tolik záloh a jen z posledních maxStariZalohy dní;
+// nejnovější záloha každého důvodu zůstane vždy. Záloha má ~10 MB, dřív jich bylo až 20 od každého (přes 50 souborů).
+const (
+	pocetZaloh     = 3
+	maxStariZalohy = 30 // dní
+)
 
 // Název zálohy: playboy-RRRR-MM-DD-HHMMSS.mmm-[pořadí-]důvod.db
 var vzorZalohy = regexp.MustCompile(`^playboy-(\d{4}-\d{2}-\d{2})-\d{6}\.\d{3}-(?:\d+-)?(.+)\.db$`)
 
 const (
 	duvodDenni        = "denni"
-	pocetDennichZaloh = 7
-	pocetTydnuZaloh   = 4
+	pocetDennichZaloh = 5
+	pocetTydnuZaloh   = 3
 )
 
 func slozkaZaloh() string {
@@ -146,8 +151,12 @@ func uklidZaloh() {
 
 	for duvod, zalohy := range podleDuvodu {
 		if duvod != duvodDenni {
-			for _, stara := range zalohy[min(len(zalohy), pocetZaloh):] {
-				os.Remove(stara)
+			hranice := time.Now().AddDate(0, 0, -maxStariZalohy).Format("2006-01-02")
+			for i, zaloha := range zalohy {
+				casti := vzorZalohy.FindStringSubmatch(filepath.Base(zaloha))
+				if i >= pocetZaloh || (i > 0 && casti != nil && casti[1] < hranice) {
+					os.Remove(zaloha)
+				}
 			}
 			continue
 		}

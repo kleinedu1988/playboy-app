@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.24.1] – 2026-11-08
+
+### Změněno
+- **Méně místa na zálohy**: denních záloh zůstává posledních 5 a k nim nejnovější ze 3 dalších týdnů (dřív 7 + 4); od ostatních důvodů (před importem, migrací, smazáním…) nejvýš 3 z posledních 30 dní, nejnovější od každého důvodu vždy (dřív až 20 od každého). U sbírky s 54 zálohami (243 MB) zůstane 24 (~140 MB); úklid proběhne s další zálohou.
+- **Mezipaměť okna má limit**: obrázky, které si webové jádro okna ukládá na disk (`~/.cache/playboy-app/WebKitCache`), se samy neomezovaly a narostly přes 900 MB – jsou to z velké části zdvojené náhledy z vlastní mezipaměti. Nad 300 MB se při spuštění smažou a naplní se znovu z disku bez stahování.
+
 ## [1.24.0] – 2026-11-08
 
 ### Přidáno

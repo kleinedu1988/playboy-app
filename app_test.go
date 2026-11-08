@@ -1157,7 +1157,16 @@ func TestPojistkyZaloh(t *testing.T) {
 		t.Fatalf("po úklidu: import %d, alba %d, denní %d", len(zalohy("*-pred-importem.db")), len(zalohy("*-pred-smazanim-alba.db")), len(zalohy("*-denni.db")))
 	}
 
-	// Denní zálohy: posledních sedm a k nim nejnovější z každého ze čtyř dalších týdnů
+	// Starší než 30 dní pryč, nejnovější záloha důvodu ale zůstane i stará
+	for _, nazev := range []string{"playboy-2025-01-01-120000.000-pred-migraci.db", "playboy-2025-02-01-120000.000-pred-migraci.db", "playboy-2025-03-01-120000.000-pred-sloucenim-modelek.db"} {
+		os.WriteFile(filepath.Join(slozkaZaloh(), nazev), nil, 0o600)
+	}
+	a.zalohovat("pred-migraci")
+	if m, s := zalohy("*-pred-migraci.db"), zalohy("*-pred-sloucenim-modelek.db"); len(m) != 1 || len(s) != 1 || strings.Contains(m[0], "2025") {
+		t.Fatalf("stáří záloh: %v %v", m, s)
+	}
+
+	// Denní zálohy: posledních pět a k nim nejnovější z každého ze tří dalších týdnů
 	for _, soubor := range zalohy("*.db") {
 		os.Remove(soubor)
 	}
@@ -3141,5 +3150,25 @@ func TestStatistikyModelkyFotografu(t *testing.T) {
 	}
 	if len(s.ModelkyFotografu["Arny Freytag"]) != 2 {
 		t.Fatalf("Arny Freytag: %v", s.ModelkyFotografu)
+	}
+}
+
+// Mezipaměť webového jádra: pod limitem zůstane, nad limitem se smaže
+func TestOmezitMezipametWebu(t *testing.T) {
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	slozka := slozkaMezipametiWebu()
+	os.MkdirAll(slozka, 0o700)
+	os.WriteFile(filepath.Join(slozka, "maly"), make([]byte, 1000), 0o600)
+	if omezitMezipametWebu() != 0 {
+		t.Fatal("pod limitem se nemá mazat")
+	}
+	f, _ := os.Create(filepath.Join(slozka, "velky"))
+	f.Truncate(limitMezipametiWebu + 1)
+	f.Close()
+	if omezitMezipametWebu() == 0 {
+		t.Fatal("nad limitem se má smazat")
+	}
+	if _, err := os.Stat(slozka); !os.IsNotExist(err) {
+		t.Fatal("složka zůstala")
 	}
 }

@@ -23,30 +23,22 @@
         #uvod .uvod-tlacitko { margin-top: 4px; padding: 5px 12px; border: 1px solid #3a3a42; border-radius: 8px; background: none;
             color: #c8c8cc; font: inherit; font-size: 12.5px; cursor: pointer; }
         #uvod .uvod-tlacitko:hover, #uvod .uvod-tlacitko:focus-visible { border-color: #d81b60; color: #fff; }
-        /* Seznam kroků přípravy (src/ui/uvod.js seznamUvodu, stavUvodu): stav, název, podrobnost */
-        #uvod .uvod-seznam { display: grid; grid-template-columns: 16px auto minmax(0, 1fr); column-gap: 9px; row-gap: 4px;
-            width: 340px; max-width: calc(100vw - 32px); margin: 2px 0 0; padding: 0; list-style: none; font-size: 12px; }
+        /* Kroky přípravy (src/ui/uvod.js seznamUvodu, stavUvodu): jen řada teček pod pruhem; co se právě děje, říká
+           jeden řádek (.uvod-krok) a pod ním podrobnost posledního kroku (.uvod-detail) – nic se nevypisuje pod sebe */
+        #uvod .uvod-seznam { display: flex; gap: 7px; margin: 2px 0 0; padding: 0; list-style: none; }
         #uvod .uvod-seznam:empty { display: none; }
-        #uvod .uvod-seznam li { display: contents; color: #6f6f76; }
-        #uvod .uvod-seznam li > * { transition: color .25s ease; }
-        #uvod .uvod-seznam .z { text-align: center; }
-        #uvod .uvod-seznam .n { white-space: nowrap; }
-        #uvod .uvod-seznam .d { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #6f6f76; text-align: right; font-variant-numeric: tabular-nums; }
-        #uvod .uvod-seznam li.bezi { color: #f0f0f5; }
-        #uvod .uvod-seznam li.bezi .z::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%;
-            background: #d81b60; animation: uvod-tep 1s ease-in-out infinite; }
-        #uvod .uvod-seznam li.hotovo { color: #b9b9be; }
-        #uvod .uvod-seznam li.hotovo .z::before { content: "✓"; color: #d81b60; }
-        #uvod .uvod-seznam li.preskoceno .z::before { content: "–"; }
-        #uvod .uvod-seznam li.chyba { color: #e0a060; }
-        #uvod .uvod-seznam li.chyba .z::before { content: "!"; }
-        #uvod .uvod-seznam li.ceka .z::before { content: "○"; font-size: 10px; }
-        #uvod .uvod-seznam li.bezi .d, #uvod .uvod-seznam li.hotovo .d { color: #9a9a9e; }
+        #uvod .uvod-seznam li { width: 7px; height: 7px; border-radius: 50%; background: #2f2f36; transition: background-color .25s ease; }
+        #uvod .uvod-seznam li.bezi { background: #d81b60; animation: uvod-tep 1s ease-in-out infinite; }
+        #uvod .uvod-seznam li.hotovo { background: #8c2a50; }
+        #uvod .uvod-seznam li.preskoceno { background: #4a4a52; }
+        #uvod .uvod-seznam li.chyba { background: #e0a060; }
+        #uvod .uvod-detail { width: 340px; max-width: calc(100vw - 32px); min-height: 15px; overflow: hidden; color: #6f6f76;
+            font-size: 11.5px; text-align: center; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
         #uvod .uvod-cas { font-size: 11px; color: #5c5c63; min-height: 14px; font-variant-numeric: tabular-nums; }
         @keyframes uvod-tep { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
-        /* Nízké okno: seznam se nevejde, zůstane jen pruh a krok */
-        @media (max-height: 500px) { #uvod .uvod-seznam, #uvod .uvod-cas { display: none; } }
-        @media (prefers-reduced-motion: reduce) { #uvod, #uvod .uvod-pruh i { transition: none; } #uvod .uvod-seznam li.bezi .z::before { animation: none; } }
+        /* Nízké okno: zůstane jen pruh, tečky a krok */
+        @media (max-height: 500px) { #uvod .uvod-detail, #uvod .uvod-cas { display: none; } }
+        @media (prefers-reduced-motion: reduce) { #uvod, #uvod .uvod-pruh i { transition: none; } #uvod .uvod-seznam li.bezi { animation: none; } }
         /* Úvodní obrazovka – návrh A „kruh“ (zmenšený pro malé okno úvodu 460 × 580 px, nastaveni.go). V aplikaci patří do bloku <style> v index.html (CSP omezuje jen skripty).
            Profilovky stojí na plášti válce (12 míst po 30°); celý válec se otáčí kolem svislé osy – jediná animace
            (transform), běží v kompozitoru. Boční fotky se zmenšují perspektivou, natáčejí s válcem, zadní skryje
@@ -132,6 +124,7 @@
     <div class="uvod-pruh"><i></i></div>
     <div class="uvod-krok">Otevírám databázi…</div>
     <ol class="uvod-seznam" aria-label="Příprava programu"></ol>
+    <div class="uvod-detail"></div>
     <div class="uvod-cas"></div>
 </div>
 <!-- Kruh profilovek z minulého běhu místo ikony; obyčejný skript (CSP nepustí inline), běží před prvním vykreslením -->

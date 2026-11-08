@@ -18910,3 +18910,49 @@ body.rezim-vyberu #detailView .poster {
     color: var(--text-muted);
     font-size: 12.5px;
 }
+
+/* Blok kolekcí pod bannerem Galerie: vlastní plocha s nadpisem, ať je jasné, kde řady kolekcí začínají a končí;
+   mozaika pod ním má nadpis „Všechny fotky“ */
+.gv-blok-kolekci {
+    margin: 18px 0 30px;
+    padding: 18px 20px 22px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 22px;
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(216, 27, 96, 0.09), transparent 55%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01));
+}
+
+.gv-blok-kolekci .gv-rady {
+    margin: 0;
+}
+
+.gv-blok-hlava {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 0 16px;
+}
+
+.gv-blok-hlava h2 {
+    margin: 0;
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.gv-blok-hlava p {
+    margin: 3px 0 0;
+    color: var(--text-muted);
+    font-size: 12.5px;
+}
+
+.gv-blok-hlava .ph-tlacitko {
+    flex: none;
+}
+
+.gv-hlava-fotek {
+    margin: 0 0 10px;
+    padding: 0 2px;
+}

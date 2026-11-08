@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.25.0] – 2026-11-08
+
+### Změněno
+- **Řady kolekcí v Galerii mají vlastní blok**: plocha s nadpisem *Kolekce pro tebe* (kolik řad, že se mění denně a podle toho, co otevíráš) a tlačítkem *▦ Všechny kolekce*, které otevře panel kolekcí a posune k němu; mozaika pod blokem má nadpis *Všechny fotky*. Je jasné, kde řady kolekcí začínají a končí.
+- **Úvodní obrazovka bez výpisu pod sebou**: pod pruhem je jen jeden řádek s tím, co se právě děje, řada teček za kroky přípravy (název v bublině) a podrobnost posledního kroku („✓ Sbírka · 2 100 modelek“), k tomu „5 / 9 · 3,4 s“.
+
+### Přidáno
+- **Kolekce Galerie se připraví na úvodní obrazovce** (nový krok přípravy): data kolekcí, objevené styly a barvy se spočítají předem, první otevření Galerie tak nečeká ~1,5 s.
+
 ## [1.24.1] – 2026-11-08
 
 ### Změněno

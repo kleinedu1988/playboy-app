@@ -99,7 +99,11 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
     // Hero banner jen bez hledání (výsledky hledání hned nahoře)
     const hero = polozky.length && !text.trim() ? '<section class="profily-hero gv-hero" aria-label="Fotka z galerie"></section>' : '';
     seznam.innerHTML = `${hero}
-        ${cista && kolekce.length ? `<div class="gv-rady">${kolekce.map(htmlRady).join('')}</div>` : ''}
+        ${cista && kolekce.length ? `<section class="gv-blok-kolekci" aria-label="Kolekce pro tebe">
+            <header class="gv-blok-hlava"><div><h2>Kolekce pro tebe</h2><p>${kolekce.length} řad vybraných na dnešek – mění se každý den a podle toho, co otevíráš</p></div>
+                <button type="button" class="ph-tlacitko" data-gv-kolekce-panel data-gv-k-skok>▦ Všechny kolekce</button></header>
+            <div class="gv-rady">${kolekce.map(htmlRady).join('')}</div></section>
+        <header class="gv-blok-hlava gv-hlava-fotek"><div><h2>Všechny fotky</h2><p>Celá sbírka napříč modelkami – řazení, filtry a kolekce v liště</p></div></header>` : ''}
         <div class="gallery-toolbar profily-lista gv-lista">
             <div class="pl-razeni" role="group" aria-label="Zobrazit">${htmlNastroju}</div>
             <span class="gv-oddelovac" aria-hidden="true"></span>
@@ -411,11 +415,16 @@ export function pripravitGalerii(nacistZnovu) {
         }
         // Panel kolekcí: otevřít/zavřít, zvolit kolekci, uložené výběry
         if (cil.closest('[data-gv-kolekce-panel]')) {
-            const otevrit = !kolekceOtevrene();
+            const otevrit = cil.closest('[data-gv-k-skok]') ? true : !kolekceOtevrene();
             try { localStorage.setItem(KLIC_PANELU_KOLEKCI, otevrit ? '1' : '0'); } catch { /* jen teď */ }
             document.querySelector('#bestList .gv-panel-kolekci')?.classList.toggle('hidden', !otevrit);
-            document.querySelector('#bestList [data-gv-kolekce-panel]')?.setAttribute('aria-expanded', String(otevrit));
+            document.querySelector('#bestList .gv-lista [data-gv-kolekce-panel]')?.setAttribute('aria-expanded', String(otevrit));
             if (otevrit) vykreslitPanelKolekci();
+            // Z bloku kolekcí nahoře: panel je pod lištou, posunout k němu
+            if (cil.closest('[data-gv-k-skok]')) {
+                const panel = document.querySelector('#bestList .gv-panel-kolekci');
+                if (otevrit) panel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
             return;
         }
         const k = /** @type {HTMLElement | null} */ (cil.closest('[data-gv-k]'));

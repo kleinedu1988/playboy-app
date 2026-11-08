@@ -83,7 +83,7 @@ StavDatabaze().then((chyba) => {
 const KROKY_UVODU = [
     ['databaze', 'Databáze'], ['sbirka', 'Sbírka'], ['galerie', 'Galerie a náhledy'], ['modely', 'Obrazové modely'],
     ['hodnoceni', 'Oblíbenost a sezóna'], ['odhady', 'Odhady z obsahu fotek'], ['tipy', 'Mohlo by se ti líbit'],
-    ['pohledy', 'Ostatní pohledy'],
+    ['kolekce', 'Kolekce Galerie'], ['pohledy', 'Ostatní pohledy'],
 ];
 // Příprava po obrazových modelech smí trvat nejvýš tak dlouho (pak úvod zmizí a zbytek doběhne za chodu);
 // po PRESKOCIT_PO nabídne „Přeskočit přípravu“
@@ -186,6 +186,14 @@ async function konecUvodu() {
             await nebo(Predpripravit('oblibenost').catch(() => {}));
             stavUvodu('tipy', preskoceno.ano ? 'preskoceno' : 'hotovo');
         } else stavUvodu('tipy', 'preskoceno');
+
+        // Kolekce Galerie (řady pod bannerem, styly, barvy): jinak by je počítalo až první otevření Galerie (~1,5 s)
+        if (!preskoceno.ano) {
+            krokUvodu('Skládám kolekce Galerie…', 0.78);
+            stavUvodu('kolekce', 'bezi');
+            await nebo(Predpripravit('kolekce').catch(() => {}));
+            stavUvodu('kolekce', preskoceno.ano ? 'preskoceno' : 'hotovo');
+        } else stavUvodu('kolekce', 'preskoceno');
 
         if (!preskoceno.ano) {
             stavUvodu('pohledy', 'bezi');

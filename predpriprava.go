@@ -25,6 +25,9 @@ var krokyPredpripravy = map[string]func(a *App){
 	// (do ~3 s na 1 000 fotek) – na úvodní obrazovce, aby Rychle ♥ a Průvodce nečekaly
 	// a objevené styly (shlukování obsahu, ~6 s na 19 000 fotek, jen poprvé a po přibytí 2 % fotek)
 	"obsah": func(a *App) { a.odhadySrdicekFotek(); a.obsahFotekVPameti(); a.uceniTaguHned(); a.stylyFotek() },
+	// Kolekce Galerie (galerie_kolekce.go): data kolekcí, objevené styly a barvy (~1,5 s, pak z mezipaměti); bez
+	// GetKolekceGalerie, ta by řady zapsala jako ukázané (osobní pořadí řad)
+	"kolekce": func(a *App) { a.kandidatiKolekci(a.fotkyGalerieVPameti()) },
 	// Oblíbenost a „Mohlo by se ti líbit“ (model vkusu s obsahem fotek)
 	"oblibenost": func(a *App) { a.GetMohloByTeLibit(12) },
 }

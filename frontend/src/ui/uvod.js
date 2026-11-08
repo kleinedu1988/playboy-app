@@ -27,34 +27,46 @@ export function tlacitkoUvodu(text) {
     return new Promise(hotovo => b.addEventListener('click', () => { b.remove(); hotovo(); }, { once: true }));
 }
 
-/** Seznam kroků přípravy: [[klíč, název], …]; všechny čekají */
+/** Kroky přípravy: [[klíč, název], …]; všechny čekají. Na úvodu jsou jen jako řada teček (název v bublině),
+ *  co se právě děje, říká jeden řádek pod pruhem a podrobnost pod ním – výpis se nehromadí pod sebou. */
+const nazvyKroku = new Map();
 export function seznamUvodu(kroky) {
     const ol = uvod()?.querySelector('.uvod-seznam');
     if (!ol) return;
+    nazvyKroku.clear();
     ol.replaceChildren(...kroky.map(([klic, nazev]) => {
+        nazvyKroku.set(klic, nazev);
         const li = document.createElement('li');
         li.className = 'ceka';
         li.dataset.krok = klic;
-        li.innerHTML = '<span class="z" aria-hidden="true"></span><span class="n"></span><span class="d"></span>';
-        /** @type {HTMLElement} */ (li.querySelector('.n')).textContent = nazev;
+        li.title = nazev;
+        li.setAttribute('aria-label', nazev);
         return li;
     }));
     const zacatek = performance.now();
     const cas = uvod()?.querySelector('.uvod-cas');
     const tik = () => {
         if (!cas?.isConnected) return;
-        cas.textContent = `${((performance.now() - zacatek) / 1000).toFixed(1).replace('.', ',')} s`;
+        const hotovych = ol.querySelectorAll('li.hotovo, li.preskoceno, li.chyba').length;
+        cas.textContent = `${hotovych} / ${kroky.length} · ${((performance.now() - zacatek) / 1000).toFixed(1).replace('.', ',')} s`;
         setTimeout(tik, 100);
     };
     tik();
 }
 
-/** Stav kroku: 'ceka' | 'bezi' | 'hotovo' | 'preskoceno' | 'chyba'; detail = podrobnost vpravo (počet, průběh) */
+const ZNACKY = { hotovo: '✓ ', preskoceno: '– ', chyba: '! ', bezi: '' };
+
+/** Stav kroku: 'ceka' | 'bezi' | 'hotovo' | 'preskoceno' | 'chyba'; detail = podrobnost (počet, průběh) */
 export function stavUvodu(klic, stavKroku, detail) {
     const li = uvod()?.querySelector(`.uvod-seznam [data-krok="${klic}"]`);
     if (!li) return;
     li.className = stavKroku;
-    if (detail !== undefined) /** @type {HTMLElement} */ (li.querySelector('.d')).textContent = detail;
+    const nazev = nazvyKroku.get(klic) || '';
+    if (detail !== undefined) li.dataset.detail = detail;
+    const d = li.dataset.detail || (stavKroku === 'preskoceno' ? 'přeskočeno' : '');
+    li.title = d ? `${nazev} · ${d}` : nazev;
+    const radek = uvod()?.querySelector('.uvod-detail');
+    if (radek && stavKroku in ZNACKY) radek.textContent = `${ZNACKY[stavKroku]}${nazev}${d ? ` · ${d}` : ''}`;
 }
 
 export function verzeUvodu(verze) {

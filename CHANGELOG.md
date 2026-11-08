@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.10.1] – 2026-11-08
+
+### Změněno
+- **Záhlaví profilu doladěné podle skutečného vzhledu**: nižší (~40 % okna, nejvýš 460 px místo 46 % a 520 px), takže fotky alb začínají výš; rozostřená kopie fotky vlevo je tmavší a skoro bez barvy (dřív hnědá šmouha), ostrá fotka víc vynikne; pásky čísel menší (Online, Playmate…), aby nepřebíjely jméno.
+
 ## [1.10.0] – 2026-11-08
 
 ### Změněno

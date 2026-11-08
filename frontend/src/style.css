@@ -17932,7 +17932,7 @@ body.rezim-vyberu #detailView .poster {
     position: relative;
     display: block;
     aspect-ratio: 3 / 4;
-    max-height: 52vh;
+    max-height: 46vh;
     width: 100%;
     overflow: hidden;
     border-radius: 12px;
@@ -17945,6 +17945,10 @@ body.rezim-vyberu #detailView .poster {
     width: 100%;
     height: 100%;
     object-fit: cover;
+}
+
+.dv-male img {
+    height: auto;
 }
 
 .dv-fotka kbd {
@@ -17962,19 +17966,23 @@ body.rezim-vyberu #detailView .poster {
 
 .dv-male {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: minmax(0, 1fr);
-    gap: 6px;
-    height: clamp(60px, 9vh, 110px);
-    overflow: hidden;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
 }
 
 .dv-male img {
-    min-height: 0;
+    aspect-ratio: 3 / 4;
+    height: auto;
+    border-radius: 6px;
+    opacity: 0.7;
+    transition: opacity 0.12s ease;
 }
 
-.dv-male img {
-    border-radius: 8px;
+.dv-male img:hover,
+.dv-male img.on {
+    opacity: 1;
+    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline-offset: -2px;
 }
 
 .dv-bez-fotky {

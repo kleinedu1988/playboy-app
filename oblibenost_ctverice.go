@@ -51,6 +51,10 @@ func silaProCtverici(model *modelOblibenosti, id int) (float64, bool) {
 func sestavitCtverice(dvojice []DvojicePorovnani, modelky []Modelka, model *modelOblibenosti, pocet int, r *rand.Rand) []CtvericePorovnani {
 	vysledek := []CtvericePorovnani{}
 	pouzite := map[int]bool{}
+	podleID := make(map[int]*Modelka, len(modelky))
+	for i := range modelky {
+		podleID[modelky[i].ID] = &modelky[i]
+	}
 	// Kandidátky na doplnění: napřed z nabídnutých dvojic (o těch je co rozhodovat), pak celá sbírka s fotkou
 	var zDvojic, ostatni []int
 	videne := map[int]bool{}
@@ -112,7 +116,7 @@ func sestavitCtverice(dvojice []DvojicePorovnani, modelky []Modelka, model *mode
 			continue
 		}
 		r.Shuffle(len(skupina), func(i, j int) { skupina[i], skupina[j] = skupina[j], skupina[i] })
-		vysledek = append(vysledek, CtvericePorovnani{Modelky: skupina, Duvod: d.Duvod})
+		vysledek = append(vysledek, CtvericePorovnani{Modelky: skupina, Duvod: duvodCtverice(skupina, podleID, model)})
 	}
 	return vysledek
 }
@@ -203,4 +207,50 @@ func sklonovatCesky(n int, jedna, dve, pet string) string {
 	default:
 		return fmt.Sprintf("%d %s", n, pet)
 	}
+}
+
+// Proč právě tahle čtveřice (věta pod kartami): co volba rozhodne – zařazení nových modelek, hranici Top N,
+// nebo pořadí modelek se stejnými srdíčky
+func duvodCtverice(skupina []int, podleID map[int]*Modelka, model *modelOblibenosti) string {
+	var nove, hodnocene int
+	srdicka := map[float64]int{}
+	nejlepsiPoradi, nejhorsiPoradi := 0, 0
+	for _, id := range skupina {
+		m := podleID[id]
+		if m == nil {
+			continue
+		}
+		if m.Hodnoceni > 0 {
+			hodnocene++
+			srdicka[m.Hodnoceni]++
+		} else if model.pocet[id] == 0 {
+			nove++
+		}
+		if p := model.poradi[id]; p > 0 {
+			if nejlepsiPoradi == 0 || p < nejlepsiPoradi {
+				nejlepsiPoradi = p
+			}
+			nejhorsiPoradi = max(nejhorsiPoradi, p)
+		}
+	}
+	switch {
+	case nove >= 2:
+		return fmt.Sprintf("Zařazení: %s ještě nemají místo v pořadí – vítězka se posune nahoru, ostatní se usadí níž", sklonovatCesky(nove, "nová modelka", "nové modelky", "nových modelek"))
+	case nove == 1:
+		return "Zařazení nové modelky: volba ukáže, jestli patří k ostatním třem, výš, nebo níž"
+	}
+	for _, hranice := range []int{10, 20, 50, 100} {
+		if nejlepsiPoradi > 0 && nejlepsiPoradi <= hranice && nejhorsiPoradi > hranice {
+			return fmt.Sprintf("Hranice Top %d: modelky od %d. do %d. místa – vítězka má nejblíž k Top %d", hranice, nejlepsiPoradi, nejhorsiPoradi, hranice)
+		}
+	}
+	if len(srdicka) == 1 && hodnocene == len(skupina) {
+		for h := range srdicka {
+			return fmt.Sprintf("Všechny mají %s – která z nich je pro tebe nejvýš?", textSrdicek(h))
+		}
+	}
+	if nejlepsiPoradi > 0 {
+		return fmt.Sprintf("Modelky s podobnou oblibou (%d.–%d. místo) – kterou z nich máš nejradši?", nejlepsiPoradi, nejhorsiPoradi)
+	}
+	return "Modelky s podobnou oblibou – kterou z nich máš nejradši?"
 }

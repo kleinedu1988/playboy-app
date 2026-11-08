@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.13.1] – 2026-11-08
+
+### Změněno
+- **Dnešní výběr: víc fotek každé modelky**: místo tří fotek deset z různých alb (podle toho, co se ti podle obsahu asi líbí; bez titulní fotky karty); najetí myší na malou fotku ji ukáže velkou, takže si modelku prohlédneš dřív, než vybereš. Název alba je v nápovědě malé fotky.
+- **Věta pod kartami pro čtveřici**: místo věty o dvojici („Obě mají…“) říká, o co ve volbě jde – zařazení nových modelek, hranice Top 10/20/50/100 („modelky od 17. do 24. místa – vítězka má nejblíž k Top 20“), všechny se stejnými srdíčky, nebo modelky s podobnou oblibou.
+
 ## [1.13.0] – 2026-11-08
 
 ### Přidáno

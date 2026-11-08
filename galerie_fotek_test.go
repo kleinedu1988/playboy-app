@@ -123,3 +123,29 @@ func TestKolekceVekuVDobeFoceni(t *testing.T) {
 		t.Fatalf("věk: %+v", vek)
 	}
 }
+
+// Reprezentant focení (nejlepší fotka alba) a doporučená alba (bez srdíček, nejvyšší průměrný odhad)
+func TestStrojoveUceniKolekci(t *testing.T) {
+	a := &App{}
+	var fotky []fotkaGalerie
+	odhad := map[string]float64{}
+	for al := range 12 {
+		for k := range 4 {
+			id := fmt.Sprintf("a%02d-%d", al, k)
+			g := fotkaGalerie{f: Fotografie{AlbumID: int64(al), DriveID: id}}
+			if al == 0 && k == 2 {
+				g.f.Hodnoceni = 5
+			}
+			odhad[id] = float64(al)/10 + float64(k)/100
+			fotky = append(fotky, g)
+		}
+	}
+	dk := &dataKolekce{odhad: odhad, modelky: map[int]modelkaKolekce{}}
+	a.strojoveUceniKolekci(fotky, dk)
+	if !dk.reprezentant["a00-2"] || !dk.reprezentant["a05-3"] || dk.reprezentant["a05-1"] {
+		t.Fatalf("reprezentanti %v", dk.reprezentant)
+	}
+	if !dk.doporucenaAlba[11] || dk.doporucenaAlba[0] || dk.doporucenaAlba[3] {
+		t.Fatalf("doporučená alba %v", dk.doporucenaAlba)
+	}
+}

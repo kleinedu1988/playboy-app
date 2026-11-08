@@ -91,6 +91,54 @@ func (v *Vektory) Podobnost(a, b string) float64 {
 	return float64(s) * float64(v.meritka[i]) * float64(v.meritka[j])
 }
 
+// Stred: průměrný vektor fotek (délky 1), nil bez žádné s vektorem – „střed vkusu“ (např. fotky ♥4+)
+func (v *Vektory) Stred(ids []string) []float32 {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	s := make([]float64, Rozmer)
+	n := 0
+	for _, id := range ids {
+		i, ok := v.index[id]
+		if !ok {
+			continue
+		}
+		m := float64(v.meritka[i])
+		for k, q := range v.data[i*Rozmer : (i+1)*Rozmer] {
+			s[k] += float64(q) * m
+		}
+		n++
+	}
+	if n == 0 {
+		return nil
+	}
+	x := make([]float32, Rozmer)
+	for k := range s {
+		x[k] = float32(s[k])
+	}
+	if !Normalizovat(x) {
+		return nil
+	}
+	return x
+}
+
+// PodobnostiKeStredu: podobnost každé fotky s vektorem k danému vektoru (skalární součin)
+func (v *Vektory) PodobnostiKeStredu(stred []float32) map[string]float64 {
+	v.mu.RLock()
+	defer v.mu.RUnlock()
+	vysledek := make(map[string]float64, len(v.ids))
+	if len(stred) != Rozmer {
+		return vysledek
+	}
+	for i, id := range v.ids {
+		var s float32
+		for k, q := range v.data[i*Rozmer : (i+1)*Rozmer] {
+			s += float32(q) * stred[k]
+		}
+		vysledek[id] = float64(s * v.meritka[i])
+	}
+	return vysledek
+}
+
 // Pridat uloží (nebo nahradí) vektor délky 1
 func (v *Vektory) Pridat(id string, vektor []float32) {
 	if len(vektor) != Rozmer || id == "" || len(id) > 255 {

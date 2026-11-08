@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.19.0] – 2026-11-08
+
+### Přidáno
+- **Kolekce ze strojového učení (etapa 4 návrhu kolekcí)** nad spočítaným obsahem fotek:
+  - **Nejlepší snímek každého focení** – z každého alba jedna fotka (nejvíc srdíček, jinak nejvyšší odhad z obsahu);
+  - **Focení, která jsi ještě nehodnotil** – alba bez srdíček s nejvyšším průměrným odhadem (horních 15 %), z každého jedna fotka;
+  - **Mimo tvou bublinu** – fotky tvých oblíbených modelek (♥4+), které se obsahem nejvíc liší od tvých ♥4+ fotek (nejvzdálenější pětina od „středu vkusu“).
+- **Téměř stejné snímky v řadách jen jednou**: dva skoro stejné záběry (podobnost obsahu ≥ 0,95, různé ořezy, sousední snímky) se v řadě kolekce neukážou vedle sebe – řada je pestřejší.
+
 ## [1.18.2] – 2026-11-08
 
 ### Opraveno

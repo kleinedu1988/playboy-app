@@ -247,6 +247,27 @@ func (s *Sluzba) Podobnost(a, b string) float64 {
 	return v.Podobnost(a, b)
 }
 
+// PodobnostiKeStredu fotek: střed = průměr vektorů fotek ids; nil bez vektorů
+func (s *Sluzba) PodobnostiKeStredu(ids []string) map[string]float64 {
+	if s == nil {
+		return nil
+	}
+	s.mu.Lock()
+	if s.vektory == nil && Pripraveno(s.slozka) {
+		s.nacistVektoryZamceno()
+	}
+	v := s.vektory
+	s.mu.Unlock()
+	if v == nil {
+		return nil
+	}
+	stred := v.Stred(ids)
+	if stred == nil {
+		return nil
+	}
+	return v.PodobnostiKeStredu(stred)
+}
+
 // PocetPartii: kolik fotek má spočítané partie z detektoru
 func (s *Sluzba) PocetPartii() int {
 	if s == nil {

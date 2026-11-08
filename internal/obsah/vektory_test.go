@@ -140,3 +140,21 @@ func TestVektoryPonechat(t *testing.T) {
 		t.Fatal("nahrazení přidalo záznam")
 	}
 }
+
+// Střed vkusu: fotky blízké středu mají vyšší podobnost než vzdálené
+func TestStredAPodobnosti(t *testing.T) {
+	r := rand.New(rand.NewPCG(21, 22))
+	v := NoveVektory()
+	styl := nahodnyVektor(r)
+	v.Pridat("oblibena1", blizky(r, styl, 0.02))
+	v.Pridat("oblibena2", blizky(r, styl, 0.02))
+	v.Pridat("podobna", blizky(r, styl, 0.03))
+	v.Pridat("jina", nahodnyVektor(r))
+	p := v.PodobnostiKeStredu(v.Stred([]string{"oblibena1", "oblibena2"}))
+	if p["podobna"] < 0.6 || p["jina"] > 0.3 {
+		t.Fatalf("podobnosti %v", p)
+	}
+	if v.Stred([]string{"neni"}) != nil {
+		t.Fatal("bez vektorů nil")
+	}
+}

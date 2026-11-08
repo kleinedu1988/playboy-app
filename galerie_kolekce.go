@@ -49,6 +49,7 @@ type modelkaKolekce struct {
 	vlasy, oblast, narozeni, role string
 	tetovani, piercing            bool
 	poradi                        int
+	hodnoceni                     float64
 }
 
 var nazvyMesicu = []string{"leden", "únor", "březen", "duben", "květen", "červen", "červenec", "srpen", "září", "říjen", "listopad", "prosinec"}
@@ -287,6 +288,21 @@ func (a *App) definiceKolekci(fotky []fotkaGalerie, dk *dataKolekce, nyni time.T
 			plati: func(g *fotkaGalerie) bool { return g.f.Hodnoceni == 0 && dk.odhad[g.f.DriveID] >= dk.prahPokladu }})
 	}
 
+	// --- Strojové učení nad obsahem (etapa 4) ---
+	pridat(defKolekce{klic: "tvoje:foceni", nazev: "Nejlepší snímek každého focení", skupina: "tvoje", kontext: 1.1,
+		duvod: "Z každého alba jedna fotka – s nejvíc srdíčky, jinak s nejvyšším odhadem z obsahu",
+		plati: func(g *fotkaGalerie) bool { return dk.reprezentant[g.f.DriveID] }})
+	if len(dk.doporucenaAlba) > 0 {
+		pridat(defKolekce{klic: "tvoje:alba", nazev: "Focení, která jsi ještě nehodnotil", skupina: "tvoje", kontext: 1.25,
+			duvod: "Alba bez srdíček, která by se ti podle obsahu měla líbit nejvíc – z každého jedna fotka",
+			plati: func(g *fotkaGalerie) bool { return dk.doporucenaAlba[g.f.AlbumID] && dk.reprezentant[g.f.DriveID] }})
+	}
+	if len(dk.bublina) > 0 {
+		pridat(defKolekce{klic: "tvoje:bublina", nazev: "Mimo tvou bublinu", skupina: "tvoje", kontext: 1.15,
+			duvod: "Tvoje oblíbené modelky ve stylu, jaký obvykle nehodnotíš nejvýš",
+			plati: func(g *fotkaGalerie) bool { return dk.bublina[g.f.DriveID] }})
+	}
+
 	// --- Obsah fotek (tagy i návrhy obrazových modelů) ---
 	obsahove := []struct{ tag, nazev, duvod string }{
 		{"plaz", "Na pláži", "Pláž a moře"}, {"bazen", "U bazénu", "Bazén"}, {"studio", "Ve studiu", "Studiové fotky"},
@@ -311,6 +327,11 @@ type dataKolekce struct {
 	tagy        map[string]map[string]bool
 	odhad       map[string]float64
 	prahPokladu float64 // odhad, od kterého je nehodnocená fotka „skrytý poklad“ (horních 10 %)
+
+	// Strojové učení nad spočítaným obsahem (etapa 4 návrhu)
+	reprezentant   map[string]bool // nejlepší fotka každého alba (srdíčka, jinak odhad z obsahu)
+	doporucenaAlba map[int64]bool  // alba bez hodnocených fotek s nejvyšším průměrným odhadem (horních 15 %)
+	bublina        map[string]bool // fotky oblíbených modelek (♥4+), obsahem nejdál od tvých ♥4+ fotek
 }
 
 var kolekcePamet struct {
@@ -343,8 +364,96 @@ func (a *App) dataKolekci(fotky []fotkaGalerie) *dataKolekce {
 			dk.prahPokladu = hodnoty[len(hodnoty)*9/10]
 		}
 	}
+	a.strojoveUceniKolekci(fotky, dk)
 	p.klic, p.data = klic, dk
 	return dk
+}
+
+// Kolekce ze strojového učení: reprezentant focení, doporučená alba, mimo tvou bublinu
+func (a *App) strojoveUceniKolekci(fotky []fotkaGalerie, dk *dataKolekce) {
+	dk.reprezentant, dk.doporucenaAlba, dk.bublina = map[string]bool{}, map[int64]bool{}, map[string]bool{}
+	skore := func(g *fotkaGalerie) float64 {
+		if g.f.Hodnoceni > 0 {
+			return float64(g.f.Hodnoceni) + 0.25
+		}
+		return dk.odhad[g.f.DriveID]
+	}
+	type album struct {
+		nej              string
+		nejSkore, soucet float64
+		pocet            int
+		hodnocene        bool
+	}
+	alba := map[int64]*album{}
+	for i := range fotky {
+		g := &fotky[i]
+		al := alba[g.f.AlbumID]
+		if al == nil {
+			al = &album{nejSkore: -1}
+			alba[g.f.AlbumID] = al
+		}
+		if s := skore(g); s > al.nejSkore {
+			al.nej, al.nejSkore = g.f.DriveID, s
+		}
+		al.soucet += dk.odhad[g.f.DriveID]
+		al.pocet++
+		if g.f.Hodnoceni > 0 {
+			al.hodnocene = true
+		}
+	}
+	var prumery []float64
+	for _, al := range alba {
+		if al.nej != "" {
+			dk.reprezentant[al.nej] = true
+		}
+		if !al.hodnocene && al.pocet >= 3 {
+			prumery = append(prumery, al.soucet/float64(al.pocet))
+		}
+	}
+	if len(prumery) >= 10 {
+		sort.Float64s(prumery)
+		prah := prumery[len(prumery)*85/100]
+		for id, al := range alba {
+			if !al.hodnocene && al.pocet >= 3 && al.soucet/float64(al.pocet) >= prah {
+				dk.doporucenaAlba[id] = true
+			}
+		}
+	}
+	// Mimo bublinu: střed vkusu = průměrný obsah tvých ♥4+ fotek; z fotek modelek s ♥4+ ty nejvzdálenější (20 %)
+	if a.obsah == nil || !a.obsah.Zapnuto() {
+		return
+	}
+	var oblibene []string
+	for i := range fotky {
+		if fotky[i].f.Hodnoceni >= 4 {
+			oblibene = append(oblibene, fotky[i].f.DriveID)
+		}
+	}
+	if len(oblibene) < 20 {
+		return
+	}
+	podobnost := a.obsah.PodobnostiKeStredu(oblibene)
+	var kandidati []string
+	var hodnoty []float64
+	for i := range fotky {
+		g := &fotky[i]
+		p, ok := podobnost[g.f.DriveID]
+		if ok && g.f.Hodnoceni < 4 && dk.modelky[g.f.ModelkaID].hodnoceni >= 4 {
+			kandidati = append(kandidati, g.f.DriveID)
+			hodnoty = append(hodnoty, p)
+		}
+	}
+	if len(hodnoty) < 20 {
+		return
+	}
+	serazene := append([]float64(nil), hodnoty...)
+	sort.Float64s(serazene)
+	prah := serazene[len(serazene)/5]
+	for i, id := range kandidati {
+		if hodnoty[i] <= prah {
+			dk.bublina[id] = true
+		}
+	}
 }
 
 func (a *App) spocitatDataKolekci(fotky []fotkaGalerie) (map[int]modelkaKolekce, map[string]map[string]bool) {
@@ -356,7 +465,7 @@ func (a *App) spocitatDataKolekci(fotky []fotkaGalerie) (map[int]modelkaKolekce,
 	modelky := make(map[int]modelkaKolekce, len(seznam))
 	for _, m := range seznam {
 		modelky[m.ID] = modelkaKolekce{vlasy: vlasyKolekce(m.VlasyBarva), oblast: oblastPuvodu(m.Narodnost), narozeni: m.NarozeniDatum,
-			role: m.Role, tetovani: m.Tetovani == 1, piercing: m.Piercing == 1, poradi: poradi[m.ID]}
+			role: m.Role, tetovani: m.Tetovani == 1, piercing: m.Piercing == 1, poradi: poradi[m.ID], hodnoceni: m.Hodnoceni}
 	}
 	tagy := map[string]map[string]bool{}
 	if a.obsah != nil && a.obsah.Zapnuto() {
@@ -450,7 +559,14 @@ func (a *App) GetKolekceGalerie() []KolekceGalerie {
 		}
 		zeSkupiny[k.d.skupina]++
 		r := KolekceGalerie{Klic: k.d.klic, Nazev: k.d.nazev, Duvod: k.d.duvod, Skupina: k.d.skupina, Pocet: len(k.indexy), Fotky: []Fotografie{}}
-		for _, i := range promichatAlba(k.indexy, fotky)[:min(fotekVRade, len(k.indexy))] {
+		// Téměř stejné snímky (podobnost obsahu ≥ 0,95) v řadě jen jednou
+		for _, i := range promichatAlba(k.indexy, fotky) {
+			if len(r.Fotky) >= fotekVRade {
+				break
+			}
+			if a.temerStejna(fotky[i].f.DriveID, r.Fotky) {
+				continue
+			}
 			r.Fotky = append(r.Fotky, fotky[i].f)
 		}
 		v = append(v, r)
@@ -469,4 +585,19 @@ func (a *App) filtrKolekce(fotky []fotkaGalerie, klic string) (func(g *fotkaGale
 		}
 	}
 	return nil, ""
+}
+
+// Téměř stejný snímek jako některý už vybraný (různé ořezy, sousední záběry)
+const prahTemerStejne = 0.95
+
+func (a *App) temerStejna(id string, vybrane []Fotografie) bool {
+	if a.obsah == nil {
+		return false
+	}
+	for _, f := range vybrane {
+		if a.obsah.Podobnost(id, f.DriveID) >= prahTemerStejne {
+			return true
+		}
+	}
+	return false
 }

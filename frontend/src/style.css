@@ -18115,3 +18115,104 @@ body.rezim-vyberu #detailView .poster {
     .dv-karticka { animation: none; }
     .dv-karta { transition: none; }
 }
+
+/* ===== Galerie všech fotek (app/galerie-vse.js): ovládací panel vpravo jako panel Údaje v profilu ===== */
+.galerie-panel {
+    position: fixed;
+    top: calc(var(--pod-hlavickou, 92px) + 12px);
+    right: 16px;
+    bottom: 16px;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 300px;
+    padding: 14px 16px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 22px;
+    background-color: rgba(26, 26, 30, 0.88);
+    -webkit-backdrop-filter: blur(18px) saturate(1.3);
+    backdrop-filter: blur(18px) saturate(1.3);
+    transform: translateX(calc(100% + 24px));
+    visibility: hidden;
+    transition: transform 0.22s ease, visibility 0s 0.22s;
+}
+
+#best.panel-otevreny .galerie-panel {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease;
+}
+
+#best.galerie-vse.panel-otevreny #bestList {
+    padding-right: 320px;
+}
+
+.gv-hlava {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.galerie-panel h4 {
+    margin: 0 0 8px;
+    color: var(--accent-text);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.gv-podnadpis {
+    margin: 8px 0 4px;
+    color: var(--text-muted);
+    font-size: 11.5px;
+}
+
+.gv-volby {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.gv-volba {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.gv-volba small {
+    color: var(--text-muted);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.gv-volba:hover {
+    background: var(--panel-hover);
+}
+
+.gv-volba.on {
+    border-color: transparent;
+    background: var(--accent);
+    color: #fff;
+}
+
+.gv-volba.on small {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 900px) {
+    #best.galerie-vse.panel-otevreny #bestList {
+        padding-right: 0;
+    }
+}

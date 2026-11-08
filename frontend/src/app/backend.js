@@ -91,6 +91,7 @@ const CTENI = new Set([
     'GetCtvericeKPorovnani',
     'GetLakadloPorovnani',
     'GetPoradiModelek',
+    'GetGalerieFotek',
     'GetStavUceniTagu',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
     // neohlašuje, jinak by každé otevření profilu znovu načítalo galerii
@@ -190,6 +191,7 @@ export const ObnovitOkno = /** @type {typeof App.ObnovitOkno} */ (obalit('Obnovi
 export const GetCtvericeKPorovnani = /** @type {typeof App.GetCtvericeKPorovnani} */ (obalit('GetCtvericeKPorovnani'));
 export const GetLakadloPorovnani = /** @type {typeof App.GetLakadloPorovnani} */ (obalit('GetLakadloPorovnani'));
 export const GetPoradiModelek = /** @type {typeof App.GetPoradiModelek} */ (obalit('GetPoradiModelek'));
+export const GetGalerieFotek = /** @type {typeof App.GetGalerieFotek} */ (obalit('GetGalerieFotek'));
 export const PorovnatCtverici = /** @type {typeof App.PorovnatCtverici} */ (obalit('PorovnatCtverici'));
 export const VratitCtverici = /** @type {typeof App.VratitCtverici} */ (obalit('VratitCtverici'));
 export const GetStavUceniTagu = /** @type {typeof App.GetStavUceniTagu} */ (obalit('GetStavUceniTagu'));

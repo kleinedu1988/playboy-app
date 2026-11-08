@@ -17,6 +17,7 @@ import { prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { oblibenostModelek } from './mezipamet';
 import { hodnotaFotky, porovnatFotkyPodleHodnoty, urovenHodnoty } from '../lib/oblibenost';
+import { nacistVsechnyFotky, pripravitGalerii, prestatSledovatGalerii } from './galerie-vse';
 
 // Přidání fotek do vlastního výběru (existujícího, nebo nového podle napsaného názvu)
 export async function pridatDoVyberu(ids) {
@@ -31,7 +32,19 @@ export async function pridatDoVyberu(ids) {
     return true;
 }
 
+// Výchozí pohled Galerie: všechny fotky napříč modelkami s ovládacím panelem (app/galerie-vse.js); ♥3+/4+/5
+// a vlastní výběry jsou dál mozaika po úrovních hodnoty
 export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
+    if (!stav.nejlepsiVyber && stav.nejlepsiMin === 0) {
+        const vybery = await GetVybery().then(v => v || []).catch(() => []);
+        stav.vyberyData = vybery;
+        ukazatPohled(best);
+        listaNejlepsich.naplnit([]);
+        await nacistVsechnyFotky(dotaz, { htmlNastroju: htmlVolebGalerie(vybery, null), dlazdice: htmlDlazdiceMozaiky, pripravit: pripravitMozaiku });
+        prevestNaVolby(document.querySelector('#bestList .best-toolbar'));
+        return;
+    }
+    prestatSledovatGalerii();
     const moje = ++stav.cisloNacteni;
     const [fotky, vybery] = zMezipameti && stav.nejlepsiData ? [stav.nejlepsiData, stav.vyberyData]
         : await Promise.all([(stav.nejlepsiVyber ? GetFotkyVyberu(stav.nejlepsiVyber) : GetNejlepsiFotky(stav.nejlepsiMin)).then(f => f || []), GetVybery().then(v => v || [])]);
@@ -64,9 +77,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
         urovne.set(h, (urovne.get(h) || 0) + 1);
     });
 
-    const prah = [3, 4, 5].map(n => `<button class="chip ${!stav.nejlepsiVyber && n === stav.nejlepsiMin ? 'active' : ''}" data-nejlepsi-min="${n}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')
-        + vybery.map(v => `<button class="chip ${v.id === stav.nejlepsiVyber ? 'active' : ''}" data-vyber-id="${v.id}" title="Vlastní výběr">${esc(v.nazev)}<span>${v.pocet}</span></button>`).join('')
-        + (vyber ? '<button class="link" data-vyber-akce="prejmenovat">přejmenovat</button><button class="link" data-vyber-akce="smazat">smazat výběr</button>' : '');
+    const prah = htmlVolebGalerie(vybery, vyber);
     document.getElementById('bestList').innerHTML = `
         <div class="best-toolbar">${prah}${htmlVarovaniHledani(nepouziteKlice(tokeny, poleFotky({})))}<span title="Pořadí podle hodnoty fotky: srdíčka fotky × srdíčka modelky ÷ 5 – pětisrdíčková fotka pětkové modelky je výš než pětisrdíčková fotka jedničkové">${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')} · podle hodnoty</span>
             ${stav.nejlepsiPolozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
@@ -95,6 +106,14 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     });
     listaNejlepsich.naplnit([...urovne].map(([h, pocet]) => ({ klic: `srdicka-${h}`, nazev: h ? '♥'.repeat(h) : '<♥', pocet })));
     listaNejlepsich.sledovat();
+}
+
+// Volby nad mozaikou: Všechny fotky, ♥3+/4+/5 po úrovních hodnoty a vlastní výběry
+function htmlVolebGalerie(vybery, vyber) {
+    return `<button class="chip ${!stav.nejlepsiVyber && stav.nejlepsiMin === 0 ? 'active' : ''}" data-nejlepsi-min="0" title="Všechny fotky napříč modelkami s řazením a filtry">Všechny fotky</button>`
+        + [3, 4, 5].map(n => `<button class="chip ${!stav.nejlepsiVyber && n === stav.nejlepsiMin ? 'active' : ''}" data-nejlepsi-min="${n}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')
+        + vybery.map(v => `<button class="chip ${v.id === stav.nejlepsiVyber ? 'active' : ''}" data-vyber-id="${v.id}" title="Vlastní výběr">${esc(v.nazev)}<span>${v.pocet}</span></button>`).join('')
+        + (vyber ? '<button class="link" data-vyber-akce="prejmenovat">přejmenovat</button><button class="link" data-vyber-akce="smazat">smazat výběr</button>' : '');
 }
 
 // Poměr stran fotek (podle id) z minulého vykreslení: mozaika pak při překreslení neposkakuje
@@ -216,7 +235,12 @@ export async function upravitVyber(akce) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
-    try { stav.nejlepsiMin = parseInt(localStorage.getItem('nejlepsiMin')) || 4; } catch { /* výchozí 4 */ }
+    // Výchozí jsou všechny fotky (0); dřív uložený práh ♥3–5 zůstává
+    try {
+        const ulozeny = localStorage.getItem('nejlepsiMin');
+        stav.nejlepsiMin = ulozeny === null ? 0 : Math.max(0, parseInt(ulozeny) || 0);
+    } catch { stav.nejlepsiMin = 0; }
+    pripravitGalerii(() => nacistNejlepsi(searchInput.value));
 
     best.addEventListener('click', (e) => {
         const dalsi = e.target.closest('[data-nejlepsi-dalsi]');

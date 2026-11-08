@@ -102,6 +102,10 @@ export function GetFrontaHodnoceni() {
   return window['go']['main']['App']['GetFrontaHodnoceni']();
 }
 
+export function GetGalerieFotek(arg1) {
+  return window['go']['main']['App']['GetGalerieFotek'](arg1);
+}
+
 export function GetGalerieNejlepsich(arg1) {
   return window['go']['main']['App']['GetGalerieNejlepsich'](arg1);
 }

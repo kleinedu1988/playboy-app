@@ -81,7 +81,7 @@ export const stav = {
     // Nejlepší: fotky s aspoň N srdíčky napříč sbírkou, po modelkách; prohlížeč jde přes všechny
     nejlepsiPolozky: [],
     nejlepsiData: null,
-    nejlepsiMin: 4,
+    nejlepsiMin: 0, // 0 = všechny fotky (app/galerie-vse.js), 3–5 = ♥ práh mozaiky po úrovních
     // Otevřený vlastní výběr (id); 0 = ukazují se fotky podle srdíček
     nejlepsiVyber: 0,
     vyberyData: [],

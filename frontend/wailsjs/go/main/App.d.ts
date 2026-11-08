@@ -59,6 +59,8 @@ export function GetFotografove():Promise<Array<string>>;
 
 export function GetFrontaHodnoceni():Promise<Array<main.PolozkaHodnoceni>>;
 
+export function GetGalerieFotek(arg1:main.DotazGalerie):Promise<main.StrankaGalerie>;
+
 export function GetGalerieNejlepsich(arg1:oblibenost.DotazNejlepsich):Promise<oblibenost.GalerieNejlepsich>;
 
 export function GetKalendar():Promise<Array<sbirka.VydaniKalendare>>;

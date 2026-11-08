@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.14.0] – 2026-11-08
+
+### Přidáno
+- **Galerie: všechny fotky napříč modelkami**: Modelky › Galerie ukazuje výchozí volbou *Všechny fotky* celou sbírku (dřív jen fotky ♥3+) jako jednu mozaiku, po stránkách 300 fotek (další se načítají při rolování). Výchozí řazení *Co se ti asi líbí* – tvoje srdíčka a u nehodnocených odhad z obsahu fotek, promíchané napříč alby (z jednoho alba nejvýš 2 fotky z 12 po sobě); dál *Nejlepší* (srdíčka × oblíbenost modelky), *Nejnovější* a *Náhodně*.
+- **Ovládací panel galerie** vpravo (jako panel Údaje v profilu, tlačítko *☰ Řazení a filtry*, pamatuje se): řazení, srdíčka fotky (♥3+/4+/5, bez srdíček), typ alba, období (desetiletí) a tagy po skupinách – u každé hodnoty počet fotek, které zbudou; *zrušit filtry*. Text v hledání omezuje galerii (jméno modelky, album, fotograf). ♥3+/4+/5 po úrovních hodnoty a vlastní výběry zůstávají jako volby nad mozaikou.
+
 ## [1.13.1] – 2026-11-08
 
 ### Změněno

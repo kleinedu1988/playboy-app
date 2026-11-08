@@ -260,6 +260,36 @@ export namespace main {
 	        this.duvod = source["duvod"];
 	    }
 	}
+	export class DotazGalerie {
+	    razeni: string;
+	    srdicka: string;
+	    typy: string[];
+	    tagy: string[];
+	    dekady: string[];
+	    modelka: number;
+	    text: string;
+	    seminko: number;
+	    od: number;
+	    kolik: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DotazGalerie(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.razeni = source["razeni"];
+	        this.srdicka = source["srdicka"];
+	        this.typy = source["typy"];
+	        this.tagy = source["tagy"];
+	        this.dekady = source["dekady"];
+	        this.modelka = source["modelka"];
+	        this.text = source["text"];
+	        this.seminko = source["seminko"];
+	        this.od = source["od"];
+	        this.kolik = source["kolik"];
+	    }
+	}
 	export class DvojicePorovnani {
 	    a: number;
 	    b: number;
@@ -276,6 +306,24 @@ export namespace main {
 	        this.b = source["b"];
 	        this.duvod = source["duvod"];
 	        this.druh = source["druh"];
+	    }
+	}
+	export class FasetyGalerie {
+	    srdicka: Record<string, number>;
+	    typy: Record<string, number>;
+	    tagy: Record<string, number>;
+	    dekady: Record<string, number>;
+	
+	    static createFrom(source: any = {}) {
+	        return new FasetyGalerie(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.srdicka = source["srdicka"];
+	        this.typy = source["typy"];
+	        this.tagy = source["tagy"];
+	        this.dekady = source["dekady"];
 	    }
 	}
 	export class PodminkaTematu {
@@ -1590,6 +1638,42 @@ export namespace main {
 	        this.fotek = source["fotek"];
 	        this.pouzito = source["pouzito"];
 	        this.tagy = this.convertValues(source["tagy"], obsah.HodnoceniTagu);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class StrankaGalerie {
+	    fotky: sbirka.Fotografie[];
+	    od: number;
+	    celkem: number;
+	    fasety: FasetyGalerie;
+	
+	    static createFrom(source: any = {}) {
+	        return new StrankaGalerie(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fotky = this.convertValues(source["fotky"], sbirka.Fotografie);
+	        this.od = source["od"];
+	        this.celkem = source["celkem"];
+	        this.fasety = this.convertValues(source["fasety"], FasetyGalerie);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

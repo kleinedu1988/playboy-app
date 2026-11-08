@@ -321,7 +321,7 @@ function htmlHlavySbirky() {
             <button type="button" class="volba" data-sh-akce="export"><b>Exportovat</b></button>
             <button type="button" class="volba" data-sh-akce="soubory"><b>Zkontrolovat soubory</b></button>
             <span class="sh-oddelovac" aria-hidden="true"></span>
-            ${[['cisla', 'Čísla a sháním'], ['statistiky', 'Statistiky'], ['uceni', 'Učení']].map(([klic, nazev]) =>
+            ${[['cisla', 'Čísla a sháním'], ['uceni', 'Učení']].map(([klic, nazev]) =>
                 `<button type="button" class="volba ${stav.sbirkaPanel === klic ? 'zapnuto' : ''}" data-sh-panel="${klic}" aria-pressed="${stav.sbirkaPanel === klic}" title="Panel vpravo (I)">${nazev}</button>`).join('')}
         </div>
         <div class="sh-lista">
@@ -339,7 +339,7 @@ function htmlZdrojuHlavy(vUdrzbe) {
         `<button type="button" class="sh-zdroj ${z.zdroj === stav.udrzbaZdroj ? 'on' : ''}" data-sh-zdroj="${esc(z.zdroj)}" aria-pressed="${z.zdroj === stav.udrzbaZdroj}">${esc(z.popis)}<small>${z.pocet}</small></button>`).join('')}</span>`;
 }
 
-// Hlavička je vidět v celé Sbírce (Údržba, Mapa čísel, Sháním CZ, Statistiky); volá se po vykreslení Údržby
+// Hlavička je vidět v celé Sbírce (Údržba, Mapa čísel, Sháním CZ); volá se po vykreslení Údržby
 // a po každém přepnutí pohledu nebo části (navigace.js, prehled.js)
 const sbirkaVidet = () => !stats.classList.contains('hidden') && stav.rezim === 'prehled' && stav.prehledSekce !== 'oblibenost';
 export function obnovitHlavuSbirky() {
@@ -368,7 +368,7 @@ function pripravitHlavuSbirky() {
         if (filtr) nastavitFiltr(filtr.dataset.shFiltr);
         else if (zdroj) nastavitFiltr(stav.udrzbaFiltr, zdroj.dataset.shZdroj);
         else if (rezim) nastavitRezim(rezim.dataset.shRezim);
-        // Panel vpravo (Čísla a sháním, Statistiky, Učení) otevře prehled.js; stejné tlačítko ho zavře
+        // Panel vpravo (Čísla a sháním, Učení) otevře prehled.js; stejné tlačítko ho zavře
         else if (panelSbirky) document.dispatchEvent(new CustomEvent('panel-sbirky', { detail: panelSbirky.dataset.shPanel }));
         else if (akce?.dataset.shAkce === 'pridat') {
             e.stopPropagation();

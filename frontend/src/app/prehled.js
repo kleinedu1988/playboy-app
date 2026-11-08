@@ -1,4 +1,4 @@
-// Přehled: stránka Sbírka (úvod, Údržba, Sháním CZ, Statistiky, Porovnat, Hodnotit fotky, Pořadí)
+// Přehled: stránka Sbírka (úvod, Údržba, Sháním CZ, Porovnat, Hodnotit fotky, Pořadí); Statistiky jsou část Modelek
 import { GetKalendar, GetPrehled, GetStavyVydani, SetStavVydani } from './backend';
 import { nacistOblibenost, nastavitCastOblibenosti, nastavitNejlepsiVOblibenosti, obnovitHlavuHodnoceni, ukazatStrankuOblibenosti } from './oblibenost';
 import { nacistNejlepsi } from './nejlepsi';
@@ -7,11 +7,11 @@ import { zrusitHledani } from './naseptavac';
 import { esc, nazevVydani } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
-import { best, calendar, covers, gallery, searchInput, stats, wall } from './prvky';
+import { best, calendar, covers, gallery, searchInput, stats, statistikyView, wall } from './prvky';
 import { prepnoutRezim, ukazatPohled, zvyraznitRezim } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { nabidkaCisla } from './kalendar';
-import { nacistStatistiky } from './statistiky';
+import { otevritStatistiky } from './statistiky-pohled';
 import { htmlShanim, htmlUvodu, shanenaCisla, textShanim } from './prehled-uvod';
 import { otevritVydani } from './vydani';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
@@ -25,20 +25,21 @@ import { pohledSlavy } from './sin-slavy';
 import { htmlPilulek, pripravitPasy } from '../ui/pas';
 import { poZmeneDat } from './udalosti';
 
-// Přehled sbírky: úvod (hlavní čísla, mapy edic, co zbývá doplnit), Údržba (udrzba.js), Sháním CZ, Statistiky
+// Přehled sbírky: úvod (hlavní čísla, mapy edic, co zbývá doplnit), Údržba (udrzba.js), Sháním CZ
 // a hodnocení (Porovnat, Hodnotit fotky, Pořadí).
 // Načtení se při opakování zapisuje na místo: části se přepíšou jen při změně, Údržba po skupinách,
 // takže se stránka neposune a fokus zůstane.
 
-const CASTI_VSE = [['uvod', 'Mapa čísel'], ['udrzba', 'Údržba'], ['oblibenost', 'Oblíbenost'], ['shanim', 'Sháním CZ'], ['statistiky', 'Statistiky']];
+const CASTI_VSE = [['uvod', 'Mapa čísel'], ['udrzba', 'Údržba'], ['oblibenost', 'Oblíbenost'], ['shanim', 'Sháním CZ']];
 const casti = () => CASTI_VSE;
 const pocetVCasti = { udrzba: 0, shanim: 0 };
 
-// Části Modelek v navigační kapsli (#pasStranky): Profily, Galerie
+// Části Modelek v navigační kapsli (#pasStranky): Profily, Galerie, Statistiky
 export function htmlPasuModelek(pohled) {
     const pilulky = [
         { klic: 'profily', nazev: 'Profily', titulek: 'Všechny modelky v databázi, profily a alba', zvolena: pohled === gallery },
         { klic: 'galerie', nazev: 'Galerie', titulek: 'Nejlépe hodnocené modelky, čísla, centerfoldy a fotky', zvolena: pohled === best },
+        { klic: 'statistiky', nazev: 'Statistiky', titulek: 'Grafy sbírky v čase a rozložení, postřehy a výběr modelek', zvolena: pohled === statistikyView },
     ];
     return `<nav class="slava-pohledy" role="tablist" aria-label="Části modelek">${htmlPilulek(pilulky, 'cast-modelek-pas')}</nav>`;
 }
@@ -58,9 +59,9 @@ export function htmlPasuCisel(pohled) {
     return `<nav class="slava-pohledy" role="tablist" aria-label="Části čísel">${htmlPilulek(pilulky, 'cast-cisel-pas')}</nav>`;
 }
 
-// Části Sbírky v navigační kapsli (#pasStranky): Úvod, Údržba, Sháním CZ, Statistiky
+// Části Sbírky v navigační kapsli (#pasStranky): Úvod, Údržba, Sháním CZ
 export function htmlPasuSbirky() {
-    // Sbírka je jedna stránka: části (Údržba, Mapa čísel, Sháním CZ, Statistiky) jsou v její hlavičce (udrzba.js)
+    // Sbírka je jedna stránka: části (Údržba, Mapa čísel, Sháním CZ) jsou v její hlavičce (udrzba.js)
     return '';
 }
 // Obnoví části otevřené sekce (#pasStranky) a přesune je v navigační kapsli hned za zvolenou sekci (Modelky, Čísla,
@@ -70,7 +71,7 @@ export function obnovitPasHlavicky(pohled) {
     if (!misto) return;
     const fokusVPasu = misto.contains(document.activeElement);
     let html = '';
-    if (pohled === gallery || pohled === best) {
+    if (pohled === gallery || pohled === best || pohled === statistikyView) {
         html = htmlPasuModelek(pohled);
     } else if (pohled === covers || pohled === calendar || pohled === wall) {
         html = htmlPasuCisel(pohled);
@@ -80,7 +81,7 @@ export function obnovitPasHlavicky(pohled) {
     nastavitHtml(misto, html);
     misto.classList.toggle('hidden', !html);
     const kapsle = document.getElementById('viewToggle');
-    const selektor = pohled === gallery || pohled === best ? '[data-rezim="modelky"]'
+    const selektor = pohled === gallery || pohled === best || pohled === statistikyView ? '[data-rezim="modelky"]'
         : pohled === covers || pohled === calendar || pohled === wall ? '[data-rezim="covery"]'
             : `[data-sekce="${stav.prehledSekce !== 'oblibenost' ? 'sbirka' : stav.oblibenostCast === 'slava' ? 'slava' : 'hodnoceni'}"]`;
     const zvolena = kapsle?.querySelector(selektor);
@@ -91,8 +92,7 @@ export function obnovitPasHlavicky(pohled) {
 
 // Která volba v liště pod záložkami patří ukázané části: skrytý řádek štítků s data-volby-casti (ui/volby.js)
 function klicVoleb() {
-    // Otevřený panel Sbírky má volby v kapsli nahoře (graf Statistik, Kopírovat seznam u Sháním CZ)
-    if (stav.prehledSekce !== 'oblibenost' && stav.sbirkaPanel === 'statistiky') return 'statistiky';
+    // Otevřený panel Sbírky má volby v kapsli nahoře (Kopírovat seznam u Sháním CZ)
     if (stav.prehledSekce !== 'oblibenost' && stav.sbirkaPanel === 'cisla') return 'shanim';
     if (stav.prehledSekce !== 'oblibenost') return stav.prehledSekce;
     // Prohlížeč fronty nehodnocených fotek má vlastní stavovou lištu (postup, Vrátit; galerie-hodnoceni.js)
@@ -101,11 +101,11 @@ function klicVoleb() {
     return stav.oblibenostCast === 'slava' ? `slava-${pohledSlavy()}` : `hodnoceni-${stav.hodnoceniPohled}`;
 }
 
-// Sbírka: Údržba je obsah stránky, Mapa čísel se Sháním CZ, Statistiky a Učení jsou ve výsuvném panelu vpravo
-// (jako Údaje u profilu modelky); panel ukazuje to, co říká data-panel na .prehled-obsah
-const PANELY_SBIRKY = [['cisla', 'Čísla a sháním'], ['statistiky', 'Statistiky'], ['uceni', 'Učení']];
+// Sbírka: Údržba je obsah stránky, Mapa čísel se Sháním CZ a Učení jsou ve výsuvném panelu vpravo (jako Údaje
+// u profilu modelky); panel ukazuje to, co říká data-panel na .prehled-obsah. Statistiky jsou od 1.28.0 část Modelek.
+const PANELY_SBIRKY = [['cisla', 'Čísla a sháním'], ['uceni', 'Učení']];
 // Dřívější části Sbírky (pilulky, mapa sekcí, odkazy) → panel
-const PANEL_CASTI = { uvod: 'cisla', shanim: 'cisla', statistiky: 'statistiky' };
+const PANEL_CASTI = { uvod: 'cisla', shanim: 'cisla' };
 const KOSTRA = `
         <div class="prehled-obsah">
             <section class="stat-section" data-sekce="udrzba"></section>
@@ -118,8 +118,6 @@ const KOSTRA = `
                 <div class="sbp-telo">
                     <section class="stat-section" data-sekce="shanim"></section>
                     <section class="stat-section" data-sekce="uvod"></section>
-                    <!-- Statistiky se počítají až při prvním zobrazení panelu -->
-                    <section class="stat-section stat-statistiky" data-sekce="statistiky"><p class="prazdno-male">Počítám statistiky…</p></section>
                     <div class="sbp-uceni" data-sbirka-uceni></div>
                 </div>
             </aside>
@@ -140,7 +138,6 @@ function zobrazitPanelSbirky() {
     if (!obsah) return;
     obsah.dataset.panel = stav.prehledSekce === 'oblibenost' ? '' : stav.sbirkaPanel;
     obsah.querySelectorAll('[data-sbirka-panel]').forEach(b => b.setAttribute('aria-selected', String(/** @type {HTMLElement} */ (b).dataset.sbirkaPanel === stav.sbirkaPanel)));
-    if (stav.sbirkaPanel === 'statistiky') nacistStatistiky(obsah.querySelector('[data-sekce="statistiky"]'));
 }
 
 // Sbírka vykreslená naposledy pro tato data (generace změn dat a „zobrazit skryté“): při návratu bez změny dat se
@@ -213,12 +210,6 @@ export async function nacistPrehled() {
     nastavitHtml(uvod, '<div class="volby-v-liste" data-volby-casti="uvod"></div>' + htmlUvodu({ kalendar, stavy, modelky: seznamModelek }));
     nastavitHtml(obsah.querySelector('[data-sekce="shanim"]'), htmlShanim(stavy, seznamModelek));
     udrzba.vykreslit();
-    const sekceStatistik = obsah.querySelector('[data-sekce="statistiky"]');
-    if (stav.sbirkaPanel !== 'statistiky') {
-        // Statistiky se při příštím otevření panelu spočítají znovu (bez smazané značky by nacistStatistiky skončilo hned)
-        sekceStatistik.innerHTML = '<p class="prazdno-male">Počítám statistiky…</p>';
-        delete sekceStatistik.dataset.nacteno;
-    }
     zobrazitPanelSbirky();
     obnovitCasti();
     if (stav.prehledSekce === 'oblibenost') nacistOblibenost(obsah.querySelector('[data-sekce="oblibenost"]'));
@@ -262,12 +253,12 @@ function nastavitHledani() {
 }
 
 // Tlačítko v liště: Hodnocení a Síň slávy (Oblíbenost), nebo Sbírka na naposledy zvolené části (úvod, Údržba,
-// Sháním CZ, Statistiky). Nastaví, co ukáže následující načtení Přehledu (jedno, s čerstvými daty). naMiste: Přehled
+// Sháním CZ). Nastaví, co ukáže následující načtení Přehledu (jedno, s čerstvými daty). naMiste: Přehled
 // je vidět; mezi Hodnocením a Síní slávy se přepne bez nového načtení a vrátí true (načítat už se nemá).
 export function zvolitCastPrehledu(cast, naMiste = false) {
     let klic = 'oblibenost';
     if (cast !== 'oblibenost') {
-        // Sbírka se otevírá v Údržbě (hlavní obsah); Mapa čísel, Sháním a Statistiky jsou z hlavičky Sbírky
+        // Sbírka se otevírá v Údržbě (hlavní obsah); Mapa čísel a Sháním jsou z hlavičky Sbírky
         klic = 'udrzba';
     }
     if (naMiste) {
@@ -299,9 +290,19 @@ function ukazatCast(klic) {
     }
     obsah.dataset.sekceUkazana = klic;
     obnovitCasti();
-    if (klic === 'statistiky') nacistStatistiky(stats.querySelector('[data-sekce="statistiky"]'));
     if (klic === 'oblibenost') nacistOblibenost(stats.querySelector('[data-sekce="oblibenost"]'));
     document.querySelector('main').scrollTop = 0;
+}
+
+// Modelky › Statistiky: z jiného pohledu přepne, v otevřených jen posune nahoru
+function otevritCastStatistiky() {
+    if (stav.rezim === 'statistiky' && !statistikyView.classList.contains('hidden')) {
+        document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+    }
+    nastavitNejlepsiVOblibenosti(false);
+    prepnoutRezim('statistiky');
+    otevritStatistiky();
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
@@ -333,7 +334,7 @@ export function pripravit() {
             nastavitPanelSbirky('');
         }
     }, true);
-    // Části Sbírky (Úvod, Údržba, Sháním CZ, Statistiky, Porovnat, Hodnotit fotky, Pořadí), Modelek (Profily, Galerie, Síň slávy)
+    // Části Sbírky (Úvod, Údržba, Sháním CZ, Porovnat, Hodnotit fotky, Pořadí), Modelek (Profily, Galerie, Statistiky, Síň slávy)
     // a Čísel (Obálky, Kalendář, Centerfoldy) se přepínají pilulkami v kontextové liště (#pasStranky)
     document.addEventListener('click', (e) => {
         // Klik na pilulku Sbírky
@@ -357,8 +358,11 @@ export function pripravit() {
                 } else {
                     ukazatStrankuOblibenosti(klic);
                 }
+            } else if (klic === 'statistiky') {
+                // Statistiky jsou část Modelek (dřívější odkazy a nabídky je otevřou tam)
+                otevritCastStatistiky();
             } else if (PANEL_CASTI[klic]) {
-                // Mapa čísel, Sháním CZ a Statistiky jsou panel Sbírky: otevře se nad Údržbou
+                // Mapa čísel a Sháním CZ jsou panel Sbírky: otevře se nad Údržbou
                 const panel = PANEL_CASTI[klic];
                 if (stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && !stats.classList.contains('hidden')) {
                     if (stav.sbirkaPanel !== panel) nastavitPanelSbirky(panel);
@@ -390,7 +394,7 @@ export function pripravit() {
             return;
         }
 
-        // Klik na pilulku Modelek (Profily, Galerie, Síň slávy)
+        // Klik na pilulku Modelek (Profily, Galerie, Statistiky, Síň slávy)
         const castMod = /** @type {HTMLElement} */ (e.target).closest?.('[data-cast-modelek-pas]');
         if (castMod) {
             const klic = castMod.dataset.castModelekPas;
@@ -409,6 +413,8 @@ export function pripravit() {
                 nastavitNejlepsiVOblibenosti(true);
                 prepnoutRezim('nejlepsi');
                 nacistNejlepsi();
+            } else if (klic === 'statistiky') {
+                otevritCastStatistiky();
             } else if (klic === 'slava') {
                 if (stav.rezim === 'prehled' && stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'slava' && !stats.classList.contains('hidden')) {
                     document.querySelector('main')?.scrollTo({ top: 0, behavior: 'smooth' });
@@ -445,6 +451,9 @@ export function pripravit() {
     });
     try { stav.prehledSekce = localStorage.getItem('prehledSekce') || 'udrzba'; } catch { /* Údržba */ }
     try { stav.sbirkaPanel = localStorage.getItem('sbirkaPanel') || ''; } catch { /* zavřený */ }
+    // Panel Statistiky už ve Sbírce není (Modelky › Statistiky)
+    if (!PANELY_SBIRKY.some(([k]) => k === stav.sbirkaPanel)) stav.sbirkaPanel = '';
+    if (stav.prehledSekce === 'statistiky') stav.prehledSekce = 'udrzba';
     // Dřívější části Sbírky jsou panel vpravo nad Údržbou
     if (PANEL_CASTI[stav.prehledSekce]) {
         stav.sbirkaPanel = PANEL_CASTI[stav.prehledSekce];

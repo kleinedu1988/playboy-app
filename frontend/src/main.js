@@ -36,7 +36,7 @@ import * as statistiky from './app/statistiky';
 import * as oblibenost from './app/oblibenost';
 import * as zkratky from './app/zkratky';
 import * as editorTextu from './ui/editor-textu';
-import { stats } from './app/prvky';
+import { statistikyView } from './app/prvky';
 import { vyhlasitSezonu } from './app/vyhlaseni-sezony';
 import { pripravitVUvodu as pripravitPohledyVUvodu, spustitPredpripravu } from './app/predpriprava';
 import { zaznamenatStart } from './app/vykon';
@@ -73,7 +73,7 @@ clanky.pripravit();
 editorTextu.pripravit();
 ctecka.pripravit();
 naseptavac.pripravit();
-statistiky.pripravit(stats);
+statistiky.pripravit(statistikyView);
 
 // Chyby z backendu se ukazují v okně, ne jen v konzoli
 EventsOn('chyba', (zprava) => oznamit(zprava));
@@ -144,7 +144,7 @@ async function konecUvodu() {
         let posledni = null;
         try { posledni = localStorage.getItem('posledniRezim'); } catch { /* bez úložiště začne galerií */ }
         if (posledni === 'nejlepsi') oblibenost.nastavitNejlepsiVOblibenosti(true);
-        if (['kalendar', 'nejlepsi', 'centerfoldy'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
+        if (['kalendar', 'nejlepsi', 'centerfoldy', 'statistiky'].includes(posledni) || prepinacRezimu.querySelector(`[data-rezim="${posledni}"]`)) prepnoutRezim(posledni);
         await nacistGalerii().catch(() => {});
         krokUvodu('Načítám náhledy první obrazovky…', 0.3);
         await pockatNaNahledy(8000);

@@ -29,7 +29,7 @@ let otevritPrvni = false; // Enter dřív, než doběhlo hledání: po vykreslen
 // Na podstránkách (profil, vydání) a na stránkách Hodnocení, Síň slávy a Sbírka hledání nefiltruje mřížku pod sebou,
 // ale rovnou nachází modelku, číslo, článek nebo fotografa k otevření
 const vPodstrance = () => !detailView.classList.contains('hidden') || !issueView.classList.contains('hidden');
-const jenNajit = () => vPodstrance() || (stav.rezim === 'prehled' && !stats.classList.contains('hidden') && !hledaniVeFronte());
+const jenNajit = () => vPodstrance() || stav.rezim === 'statistiky' || (stav.rezim === 'prehled' && !stats.classList.contains('hidden') && !hledaniVeFronte());
 // Text v poli právě omezuje přehled (galerie, čísla, fronta Údržby…); jinde jen hledá, co otevřít
 export const hledaniFiltruje = () => Boolean(searchInput.value.trim()) && !jenNajit();
 

@@ -70,7 +70,7 @@ const CASTI = [
         [k('I'), 'Panel vpravo: Na dosah, Minulé sezóny, Pravidla'],
     ] },
     { klic: 'udrzba-souhrn', nazev: 'Údržba – Souhrn', radky: [
-        [k('I'), 'Panel vpravo: Čísla a sháním, Statistiky, Učení (Esc zavře)'],
+        [k('I'), 'Panel vpravo ve Sbírce: Čísla a sháním, Učení (Esc zavře)'],
         [k('↑', '↓'), 'Předchozí a další řádek (i položky rozbalené skupiny)'],
         [k('→', '←'), 'Rozbalit a sbalit skupinu'],
         [k('Enter'), 'Hlavní akce: doplnit, opravit, přijmout návrh'],

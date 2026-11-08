@@ -230,11 +230,11 @@ function skocitNaRok(rok) {
 // Nabídka sekcí (klik na zvolenou sekci v navigační kapsli): všechny sekce a jejich části. Část se otevře stejně jako
 // klikem na její pilulku: dočasné tlačítko s jejím atributem obslouží obsluha pilulek (document)
 const CASTI_SEKCI = {
-    modelky: [['cast-modelek-pas', 'profily', 'Profily'], ['cast-modelek-pas', 'galerie', 'Galerie']],
+    modelky: [['cast-modelek-pas', 'profily', 'Profily'], ['cast-modelek-pas', 'galerie', 'Galerie'], ['cast-modelek-pas', 'statistiky', 'Statistiky']],
     covery: [['cast-cisel-pas', 'covery', 'Obálky'], ['cast-cisel-pas', 'kalendar', 'Kalendář'], ['cast-cisel-pas', 'centerfoldy', 'Centerfoldy']],
     hodnoceni: [['zobrazeni-prehledu', 'porovnat', 'Porovnat'], ['zobrazeni-prehledu', 'fotky', 'Hodnotit'], ['zobrazeni-prehledu', 'poradi', 'Pořadí']],
     slava: [['cast-modelek-pas', 'slava', 'Síň slávy']],
-    sbirka: [['zobrazeni-prehledu', 'udrzba', 'Údržba'], ['zobrazeni-prehledu', 'uvod', 'Mapa čísel'], ['zobrazeni-prehledu', 'shanim', 'Sháním CZ'], ['zobrazeni-prehledu', 'statistiky', 'Statistiky']],
+    sbirka: [['zobrazeni-prehledu', 'udrzba', 'Údržba'], ['zobrazeni-prehledu', 'uvod', 'Mapa čísel'], ['zobrazeni-prehledu', 'shanim', 'Sháním CZ']],
 };
 function otevritCast(atribut, klic) {
     const b = document.createElement('button');

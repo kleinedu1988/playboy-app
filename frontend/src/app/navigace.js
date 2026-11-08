@@ -3,7 +3,7 @@ import { esc, nazevVydani, rozlozitVydani, slozitVydani } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
 import { OveritOdkaz } from './backend';
 import { stav } from './stav';
-import { backBtn, best, calendar, calList, covers, coversList, detailView, gallery, issueView, searchInput, stats, wall } from './prvky';
+import { backBtn, best, calendar, calList, covers, coversList, detailView, gallery, issueView, searchInput, stats, statistikyView, wall } from './prvky';
 import { dokreslitGalerii, nacistGalerii } from './galerie';
 import { dokreslitStenu } from './stena';
 import { otevritDetailModelky } from './profil';
@@ -42,7 +42,7 @@ export function ukazatPohled(pohled) {
     if (document.querySelector('.photo-item.vybrana, .poster.vybrana')) zrusitVyber();
     if (pohled !== gallery && stav.zrusitUpravuVyrezu) stav.zrusitUpravuVyrezu();
     uvolnitPozdeji([...OBSAH_PREHLEDU.keys()].filter(p => p !== pohled && !p.classList.contains('hidden')));
-    [gallery, wall, covers, calendar, stats, best, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
+    [gallery, wall, covers, calendar, stats, best, statistikyView, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
     const podstranka = pohled === detailView || pohled === issueView;
     // Zpět je vidět na podstránkách a v přehledu, kam se přešlo hledáním z profilu nebo vydání
     backBtn.classList.toggle('hidden', !podstranka && !historie.length);
@@ -133,12 +133,12 @@ function selektorFokusu() {
 // Historie pro Zpět: kam se vrátit a na jaké místo stránky
 export const historie = [];
 // Kalendář je zobrazení Čísel: Zpět se jmenuje podle záložky
-export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Čísla', covery: 'Čísla', kalendar: 'Čísla', nejlepsi: 'Modelky', prehled: 'Sbírka' };
+export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Čísla', covery: 'Čísla', kalendar: 'Čísla', nejlepsi: 'Modelky', statistiky: 'Modelky', prehled: 'Sbírka' };
 // Části Sbírky (a Hodnocení, Síně slávy) v cestě Zpět; úvod Sbírky je prostě „Sbírka“
 const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy', uvod: 'Mapa čísel', udrzba: 'Údržba', shanim: 'Sháním CZ', statistiky: 'Statistiky' };
 
 // Cesta, kam vede Zpět, stejnými názvy jako navigační kapsle: sekce › část, u podstránky modelka, číslo, fotograf
-const CASTI_REZIMU = { modelky: ['Modelky', 'Profily'], nejlepsi: ['Modelky', 'Galerie'], covery: ['Čísla', 'Obálky'], kalendar: ['Čísla', 'Kalendář'], centerfoldy: ['Čísla', 'Centerfoldy'] };
+const CASTI_REZIMU = { modelky: ['Modelky', 'Profily'], nejlepsi: ['Modelky', 'Galerie'], statistiky: ['Modelky', 'Statistiky'], covery: ['Čísla', 'Obálky'], kalendar: ['Čísla', 'Kalendář'], centerfoldy: ['Čísla', 'Centerfoldy'] };
 const POHLEDY_HODNOCENI = { porovnat: 'Porovnat', fotky: 'Hodnotit', poradi: 'Pořadí' };
 function cestaPrehledu({ sekce, cast, pohled }) {
     if (sekce === 'oblibenost' && cast === 'slava') return ['Síň slávy'];
@@ -265,7 +265,8 @@ const HLEDANI_PODLE_REZIMU = {
     covery: ['Hledat v číslech…', 'Čísla: vydání (např. 1995), název, modelka nebo obálka. Více slov zužuje výběr.'],
     kalendar: ['Hledat v číslech…', 'Kalendář: ročníky podle čísla (1975), měsíce i jména modelek a speciálů.'],
     nejlepsi: ['Hledat v galerii fotek…', 'Galerie: jméno modelky, album, fotograf – nebo popis toho, co je na fotce („v kuchyni“, „červené auto“, „Pamela na pláži“). Více slov zužuje výběr.'],
-    // Na stránkách Hodnocení, Síň slávy a Sbírka hledání najde modelku a otevře její profil (výsledky pod polem)
+    // Ve Statistikách, na stránkách Hodnocení, Síň slávy a Sbírka hledání najde modelku a otevře její profil (výsledky pod polem)
+    statistiky: ['Najít modelku…', 'Jméno modelky, číslo nebo článek; Enter otevře první výsledek. Do hledání skočíš klávesami Ctrl+F.'],
     prehled: ['Najít modelku…', 'Jméno modelky, číslo nebo článek; Enter otevře první výsledek. Do hledání skočíš klávesami Ctrl+F.'],
 };
 
@@ -323,7 +324,7 @@ export function prepnoutRezim(novy) {
     if (novy !== stav.rezim) {
         hledaniPodleRezimu[stav.rezim] = searchInput.value;
         // Na stránkách Přehledu hledání nic nefiltruje, text se tam nepamatuje
-        searchInput.value = novy === 'prehled' ? '' : hledaniPodleRezimu[novy] || '';
+        searchInput.value = novy === 'prehled' || novy === 'statistiky' ? '' : hledaniPodleRezimu[novy] || '';
     }
     // Staré výsledky hledání pod polem (a rozběhnuté hledání) patří předchozímu přehledu
     zrusitHledani();
@@ -350,7 +351,7 @@ export function zvyraznitRezim() {
         // Sbírka (ostatní části Přehledu)
         const vOblibenosti = novy === 'prehled' && stav.prehledSekce === 'oblibenost';
         if (b.dataset.rezim === 'modelky') {
-            zvoleny = novy === 'modelky' || novy === 'nejlepsi';
+            zvoleny = novy === 'modelky' || novy === 'nejlepsi' || novy === 'statistiky';
         } else if (b.dataset.rezim === 'covery') {
             zvoleny = novy === 'covery' || novy === 'kalendar' || novy === 'centerfoldy';
         } else if (b.dataset.sekce === 'slava') {

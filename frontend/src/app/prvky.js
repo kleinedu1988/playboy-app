@@ -20,3 +20,4 @@ export const issueView = document.getElementById('issueView');
 export const calendar = document.getElementById('calendar');
 export const stats = document.getElementById('stats');
 export const best = document.getElementById('best');
+export const statistikyView = document.getElementById('statistikyView');

@@ -6908,7 +6908,7 @@ textarea {
     color: var(--accent-text);
 }
 
-/* ===== Statistiky (Sbírka): graf a vedle něj modelky výběru; graf, výskyt, edice a výběr jsou pod hledáním ===== */
+/* ===== Statistiky (Modelky › Statistiky): graf a vedle něj modelky výběru; graf, výskyt, edice a výběr jsou pod hledáním ===== */
 .stat-statistiky {
     position: relative;
 }
@@ -16839,7 +16839,6 @@ body.rezim-vyberu #detailView .poster {
 
 .prehled-obsah[data-panel="cisla"] .sbp-telo > [data-sekce="shanim"],
 .prehled-obsah[data-panel="cisla"] .sbp-telo > [data-sekce="uvod"],
-.prehled-obsah[data-panel="statistiky"] .sbp-telo > [data-sekce="statistiky"],
 .prehled-obsah[data-panel="uceni"] .sbp-telo > .sbp-uceni {
     display: block;
 }
@@ -18366,6 +18365,25 @@ body.rezim-vyberu #detailView .poster {
     #app.filtr-pripnuty #gallery {
         padding-right: 0;
     }
+}
+
+/* ===== Modelky › Statistiky (app/statistiky-pohled.js): hero s postřehem sbírky, pod ním Postřehy, graf a seznam ===== */
+.statistiky-pohled:not(.hidden) {
+    display: block;
+}
+
+.statistiky-pohled .sh-hero {
+    margin-bottom: 18px;
+}
+
+/* Velká změna postřehu („1 % → 35 %“) pod názvem grafu */
+.sh-cisla {
+    color: #fff;
+    font-size: clamp(22px, 2.6vw, 32px);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
 }
 
 /* ===== Profily: hero banner s doporučenou modelkou (app/profily-hero.js) a široká lišta ovládání pod ním ===== */

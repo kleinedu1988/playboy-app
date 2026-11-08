@@ -92,11 +92,12 @@ export function trendRady(def, sloupce, { vyber = false, kontext = '' } = {}) {
             const ano = d.polozky.filter(p => p.hodnota).length, ci = wilson(ano, k);
             return { ...obdobi(d.roky), n: k, hodnota: ano / k * 100, dolni: ci.dolni * 100, horni: ci.horni * 100 };
         }
-        const h = Float64Array.from(d.polozky, p => p.hodnota).sort();
+        const h = Float64Array.from(d.polozky, p => /** @type {number} */ (p.hodnota)).sort();
         const q = f => { const poz = f * (k - 1), i = Math.floor(poz); return h[i] + ((h[Math.ceil(poz)] ?? h[i]) - h[i]) * (poz - i); };
         return { ...obdobi(d.roky), n: k, hodnota: q(0.5), dolni: q(0.25), horni: q(0.75) };
     };
-    const od = uroven(dost[0]), doU = uroven(dost.at(-1));
+    const od = { ...uroven(dost[0]), odRoku: dost[0].roky[0], doRoku: dost[0].roky.at(-1) };
+    const doU = { ...uroven(dost.at(-1)), odRoku: dost.at(-1).roky[0], doRoku: dost.at(-1).roky.at(-1) };
     const smer = Math.sign(test.z);
     const zmena = doU.hodnota - od.hodnota;
     const prah = podil ? PRAH_PODILU : def.prah ?? 0;
@@ -124,7 +125,8 @@ export function trendRady(def, sloupce, { vyber = false, kontext = '' } = {}) {
     const nazevTestu = podil ? 'Cochranův–Armitageův test' : `Kendallovo τ = ${cislo(test.tau, 2)}`;
     const podrobnosti = `${popisUrovne(od)}. ${popisUrovne(doU)}.${tempo} ${nazevTestu} přes ${modelek(test.n)}, ${textP(test.p)}.${kontext ? ` ${kontext}` : ''}`;
     const skore = skorePostrehu(def.druh, velikostRozdilu(def.druh, dost[0].polozky, dost.at(-1).polozky), test.p);
-    return { smer, veta, podrobnosti, test, od, do: doU, skore };
+    return { smer, veta, podrobnosti, test, od, do: doU, skore,
+        hero: { pred: od, po: doU, text: `${podil ? hodnota(od.hodnota) : cislo(od.hodnota, des)} → ${hodnota(doU.hodnota)}` } };
 }
 
 // ── Krok 2: zlomy ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -304,7 +306,8 @@ export function postrehRady(def, sloupce, { vyber = false, kontext = '' } = {}) 
     const oprava = zlomy.length > 1 ? `, po opravě na ${zlomy.length} zlomy` : '';
     const overeni = zlomy.map(z => `Zlom ${z.rok}: ${test} sousedních období${oprava} ${textP(z.q)}.`).join(' ');
     const podrobnosti = `${useky.map(popisUseku).join('. ')}. ${overeni}${kontext ? ` ${kontext}` : ''}`;
-    return { druh: 'zlom', smer, veta, podrobnosti, useky, zlomy, skore: skorePostrehu(def.druh, zlomy[i].velikost, zlomy[i].q) };
+    return { druh: 'zlom', smer, veta, podrobnosti, useky, zlomy, skore: skorePostrehu(def.druh, zlomy[i].velikost, zlomy[i].q),
+        hero: { pred, po, text: `${podil ? hodnota(pred.hodnota) : cislo(pred.hodnota, des)} → ${hodnota(po.hodnota)}` } };
 }
 
 // ── Krok 3: výběr proti sbírce ────────────────────────────────────────────────────────────────────────────────────

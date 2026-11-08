@@ -5,10 +5,11 @@
 // ukazuje jeho modelky (bez výběru všechny v grafu).
 // Počítá se ze seznamu modelek; nejčastější fotografové jsou z backendu (GetStatistiky) a jejich modelky se
 // dohledají hledáním. SVG grafSloupcu zůstává pro úvod Přehledu.
-import { GetStatistiky } from './backend';
-import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
+import { GetProfilovaFotka, GetStatistiky } from './backend';
+import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
-import { adresaTitulni, nacitatPostupne } from './obrazky';
+import { adresaTitulni, nacitatPostupne, VELIKOST_ZAHLAVI } from './obrazky';
+import { stylVyrezu } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
@@ -420,9 +421,9 @@ function souhrn(def, sloupce, rozlozeni) {
 
 // Postřeh pod grafem v čase podle roku (údaje a podíly): zlom, nebo trend. Ze stejných sloupců jako graf, při výběru
 // jen modelky výběru (podmínka roku graf nezužuje, jen zvýrazňuje). Bez průkazného a podstatného postřehu null.
-function spocitatPostreh(def, sloupce) {
+function spocitatPostreh(def, sloupce, { bezVyberu = false } = {}) {
     if (def.osa !== 'rok' || def.druh === 'pocet' || !sloupce.length) return null;
-    const zuzeno = [...filtry.keys()].some(k => k !== 'rok');
+    const zuzeno = !bezVyberu && [...filtry.keys()].some(k => k !== 'rok');
     const rada = sloupce.map(s => ({ rok: s.rok, polozky: zuzeno ? s.polozky.filter(p => vyhovuje(p.m, 'rok')) : s.polozky }));
     const zname = rada.reduce((n, s) => n + s.polozky.length, 0);
     const celkem = data.modelky.filter(m => prvniVyskyt(m) && (!zuzeno || vyhovuje(m, 'rok'))).length;
@@ -780,4 +781,115 @@ export function pripravit(stats) {
         zobrazitVse = false;
         vykreslit(koren);
     });
+}
+
+// ── Hero Statistik (Modelky › Statistiky, app/statistiky-pohled.js) ──────────────────────────────────────────────
+// Nejsilnější postřehy celé sbírky (bez výběru) se střídají jako u tipů v Profilech (Další postřeh ↻, další otevření
+// začne dalším): název grafu, velká změna („1 % → 35 %“), věta postřehu a na pozadí nejlépe hodnocená modelka
+// z období po změně, která danou vlastnost má (u podílu, který roste, modelka s ní; u údaje kterákoli se známým údajem).
+const KLIC_HERO = 'statistikyHeroPostreh';
+const indexHero = n => { try { return Math.abs(parseInt(localStorage.getItem(KLIC_HERO) || '0', 10) || 0) % Math.max(n, 1); } catch { return 0; } };
+const posunoutHero = n => { try { localStorage.setItem(KLIC_HERO, String((indexHero(n) + 1) % Math.max(n, 1))); } catch { /* jen teď */ } };
+
+function postrehyHero() {
+    const kandidati = GRAFY.filter(g => g.osa === 'rok' && (g.druh === 'udaj' || g.druh === 'podil')).map(g => {
+        const p = spocitatPostreh(g, radaVCase(g), { bezVyberu: true });
+        return p && { ...p, id: `${p.druh}:${g.klic}`, graf: g.klic, def: g };
+    }).filter(Boolean);
+    return vybratPostrehy(kandidati);
+}
+
+// Modelka na fotku hera: první výskyt v období po změně, s titulní fotkou a s vlastností postřehu; nejvýš hodnocená
+function modelkaHero(p) {
+    const { odRoku, doRoku } = p.hero.po;
+    const def = p.def;
+    const vlastnost = m => def.druh === 'podil' ? def.podil(m) === (p.smer > 0)
+        : (def.klic === 'vek' ? prvniVyskyt(m)?.vekPresne : def.udaj(m)) !== null;
+    const vObdobi = data.modelky.filter(m => {
+        const c = prvniVyskyt(m);
+        return c && c.rok >= odRoku && c.rok <= doRoku && m.coverUrl;
+    });
+    const poradi = (a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || (a.poradi || 999) - (b.poradi || 999) || a.id - b.id;
+    return vObdobi.filter(vlastnost).sort(poradi)[0] || vObdobi.sort(poradi)[0] || null;
+}
+
+async function htmlFotkyHero(m) {
+    let adresa = adresaTitulni(m, true), styl = stylVyrezu(m);
+    try {
+        const f = await GetProfilovaFotka(m.id);
+        if (f?.url) { adresa = obrazek(f.url, VELIKOST_ZAHLAVI); styl = stylVyrezu(f); }
+    } catch { /* fotka karty */ }
+    return `<div class="ph-rozmazane" style="background-image:url('${esc(adresa).replace(/'/g, '%27')}')"></div>
+        <div class="ph-ram"><img src="${esc(adresa)}" alt="" style="${esc(styl)}" draggable="false" /></div>
+        <div class="ph-prekryv"></div>`;
+}
+
+let heroPostrehy = null;   // pro data, edici a výskyt, ve kterých se spočítaly
+export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene = false } = {}) {
+    if (!misto || !data) return;
+    const klic = `${edice}|${druhVyskytu}`;
+    // Po překreslení grafu se hero mění jen při změně edice, výskytu nebo dat (jinak by fotka poblikávala)
+    if (jenPriZmene && heroPostrehy?.data === data && heroPostrehy.klic === klic) return;
+    if (znovu || !heroPostrehy || heroPostrehy.data !== data || heroPostrehy.klic !== klic) heroPostrehy = { data, klic, seznam: postrehyHero() };
+    const seznam = heroPostrehy.seznam;
+    if (!seznam.length) {
+        // Bez průkazného postřehu: sbírka v číslech s nejlépe hodnocenou modelkou
+        const m = [...data.modelky].filter(x => x.coverUrl).sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || a.id - b.id)[0];
+        const roky = data.modelky.map(x => prvniVyskyt(x)?.rok).filter(Boolean);
+        if (!m) return misto.remove();
+        const foto = await htmlFotkyHero(m);
+        if (!misto.isConnected) return;
+        misto.innerHTML = `${foto}<div class="ph-obsah"><div class="ph-nadtitulek">Statistiky sbírky</div><h2>Tvoje sbírka</h2>
+            <div class="sh-cisla">${pocetModelek(data.modelky.length)}${roky.length ? ` · ${Math.min(...roky)}–${Math.max(...roky)}` : ''}</div>
+            <p class="ph-duvod">Zatím tu není nic průkazného – postřehy se ukážou, až bude víc modelek se známými údaji.</p></div>`;
+        misto.onclick = null;
+        return;
+    }
+    const i = indexHero(seznam.length), p = seznam[i];
+    const m = modelkaHero(p);
+    const foto = m ? await htmlFotkyHero(m) : '';
+    if (!misto.isConnected) return;
+    misto.innerHTML = `${foto}
+        <div class="ph-obsah">
+            <div class="ph-nadtitulek">Postřeh sbírky${seznam.length > 1 ? ` · ${i + 1} z ${seznam.length}` : ''}</div>
+            <h2>${esc(p.def.nazev)}</h2>
+            <div class="sh-cisla">${esc(p.hero.text)}</div>
+            <p class="ph-duvod">${esc(p.veta)}</p>
+            <div class="ph-akce">
+                <button type="button" class="ph-tlacitko hlavni" data-sh-graf="${esc(p.graf)}">Ukázat v grafu</button>
+                ${seznam.length > 1 ? '<button type="button" class="ph-tlacitko" data-sh-dalsi title="Další postřeh sbírky">Další postřeh ↻</button>' : ''}
+                ${m ? `<button type="button" class="ph-tlacitko" data-sh-modelka="${m.id}" title="Na fotce – otevřít profil">${esc(m.jmeno)} →</button>` : ''}
+            </div>
+        </div>`;
+    misto.onclick = (e) => {
+        const cil = /** @type {HTMLElement} */ (e.target);
+        const tlGraf = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-graf]'));
+        if (tlGraf) {
+            const koren = /** @type {HTMLElement | null} */ (misto.parentElement?.querySelector('.stat-statistiky'));
+            graf = tlGraf.dataset.shGraf;
+            zvyraznit = null;
+            try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
+            if (koren) {
+                vykreslit(koren);
+                koren.querySelector('.sp-telo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            return;
+        }
+        if (cil.closest('[data-sh-dalsi]')) {
+            posunoutHero(seznam.length);
+            naplnitHeroStatistik(misto);
+            return;
+        }
+        const tlModelka = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-modelka]'));
+        if (tlModelka) {
+            const mm = data.modelky.find(x => x.id === parseInt(tlModelka.dataset.shModelka, 10));
+            if (mm) otevritDetailModelky(mm);
+        }
+    };
+}
+
+// Při další návštěvě se Statistiky spočítají z čerstvých dat (výběr zůstává)
+export function zapomenoutStatistiky(koren) {
+    if (koren) delete koren.dataset.nacteno;
+    heroPostrehy = null;
 }

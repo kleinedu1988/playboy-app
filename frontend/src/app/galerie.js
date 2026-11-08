@@ -20,6 +20,7 @@ import { naplnitHero, zapomenoutTipy } from './profily-hero';
 import { nacistKalendar } from './kalendar';
 import { nacistPrehled } from './prehled';
 import { nacistNejlepsi } from './nejlepsi';
+import { otevritStatistiky } from './statistiky-pohled';
 import { lightbox } from './prohlizec';
 import { trendModelky, urovenModelky } from '../lib/oblibenost';
 import { vybraneDlazdice } from './vyber';
@@ -222,6 +223,7 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
     if (stav.rezim === 'kalendar') return nacistKalendar(dotaz, zMezipameti);
     if (stav.rezim === 'prehled') return nacistPrehled();
     if (stav.rezim === 'nejlepsi') return nacistNejlepsi(dotaz, zMezipameti);
+    if (stav.rezim === 'statistiky') return otevritStatistiky();
 
     const moje = ++stav.cisloNacteni;
     const cistyDotaz = dotaz.trim();

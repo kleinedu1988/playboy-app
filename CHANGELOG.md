@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.28.0] – 2026-11-08
+
+### Změněno
+- **Statistiky jsou část Modelek**: Modelky › Profily · Galerie · **Statistiky** (dřív panel vpravo ve Sbírce). Vlastní stránka na celou šířku: nahoře **hero** jako u Profilů a Galerie s nejsilnějším postřehem sbírky – název údaje, velká změna (*„1 % → 35 %“*), věta postřehu a na pozadí nejlépe hodnocená modelka z období po změně, která danou vlastnost má; tlačítka *Ukázat v grafu*, *Další postřeh ↻* (postřehy se střídají i mezi spuštěními) a profil modelky z fotky. Pod ním panel Postřehy, graf a modelky výběru; volby grafu jsou jako dřív v liště pod hledáním, hledání najde modelku.
+- Sbírka má v panelu vpravo už jen *Čísla a sháním* a *Učení*. Dřívější odkazy na Statistiky (nabídka sekcí, uložený panel, poslední otevřené místo) vedou do Modelky › Statistiky.
+
 ## [1.27.3] – 2026-11-08
 
 ### Přidáno

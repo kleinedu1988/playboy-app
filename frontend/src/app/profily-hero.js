@@ -1,4 +1,4 @@
-// Hero banner Profilů v hlavičce okna pod menu (filmový styl jako záhlaví profilu modelky): doporučená modelka – tip „Mohlo by se
+// Hero banner nahoře na Profilech (filmový styl jako záhlaví profilu modelky): doporučená modelka – tip „Mohlo by se
 // ti líbit“ (odhad vkusu s důvodem), nebo některá z tvého Top 10 – s velkou fotkou, jménem, srdíčky a akcemi Otevřít
 // profil, Další tip a Dnešní výběr. Tipy se střídají (Další tip ↻, další spuštění začne dalším). Karty pod ním
 // zůstávají čisté; při rolování banner odjede nahoru.
@@ -46,15 +46,12 @@ export async function naplnitHero(misto) {
     if (!tipy) tipy = await nacistTipy();
     const { seznam, podleId } = tipy;
     if (!seznam.length || !misto.isConnected) {
-        misto.classList.add('hidden');
+        misto.remove();
         return;
     }
     const tip = seznam[indexTipu(seznam.length)];
     const m = podleId.get(tip.id);
-    if (!m) {
-        misto.classList.add('hidden');
-        return;
-    }
+    if (!m) return misto.remove();
     let adresa = adresaTitulni(m, true);
     let styl = stylVyrezu(m);
     try {
@@ -97,6 +94,4 @@ export async function naplnitHero(misto) {
 // Po změně dat (srdíčka, porovnání) se tipy načtou znovu
 export function zapomenoutTipy() {
     tipy = null;
-    const hero = document.querySelector('#profilyHlava .profily-hero');
-    if (hero) hero.innerHTML = '';
 }

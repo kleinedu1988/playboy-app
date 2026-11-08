@@ -43,8 +43,6 @@ export function ukazatPohled(pohled) {
     if (pohled !== gallery && stav.zrusitUpravuVyrezu) stav.zrusitUpravuVyrezu();
     uvolnitPozdeji([...OBSAH_PREHLEDU.keys()].filter(p => p !== pohled && !p.classList.contains('hidden')));
     [gallery, wall, covers, calendar, stats, best, detailView, issueView].forEach(p => p.classList.toggle('hidden', p !== pohled));
-    // Hero banner a lišta Profilů v hlavičce okna jen u Profilů (galerie.js je plní)
-    document.getElementById('profilyHlava')?.classList.toggle('hidden', pohled !== gallery || stav.rezim !== 'modelky');
     const podstranka = pohled === detailView || pohled === issueView;
     // Zpět je vidět na podstránkách a v přehledu, kam se přešlo hledáním z profilu nebo vydání
     backBtn.classList.toggle('hidden', !podstranka && !historie.length);

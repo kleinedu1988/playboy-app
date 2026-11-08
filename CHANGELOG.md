@@ -7,6 +7,11 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.16.2] – 2026-11-08
+
+### Změněno
+- **Hero banner Profilů zpět ve stránce nad kartami** (jako v 1.16.0): verze s bannerem v hlavičce okna (1.16.1) je vrácená.
+
 ## [1.16.1] – 2026-11-08
 
 ### Změněno

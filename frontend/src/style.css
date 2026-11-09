@@ -20552,3 +20552,27 @@ body.rezim-vyberu #detailView .poster {
 .bc-pozn { color: var(--text-muted); }
 .bc-kroky { display: flex; justify-content: space-between; gap: 6px; }
 .bc-kroky .volba { font-size: 12px; }
+
+/* Odkazy [[…]] (app/wiki-odkazy.js, ui/editor-textu-cm.js) */
+.wiki-odkaz { all: unset; color: var(--accent-text); cursor: pointer; border-bottom: 1px dotted currentColor; }
+.wiki-odkaz:hover, .wiki-odkaz:focus-visible { border-bottom-style: solid; }
+.md-odkaz { color: var(--accent-text); }
+.vizitka-odkazu { position: fixed; z-index: 1700; display: flex; gap: 10px; align-items: flex-start; max-width: 320px; padding: 8px 10px; border-radius: 8px;
+  background: var(--bg-modal); border: 1px solid var(--panel-okraj); box-shadow: var(--panel-stin); font-size: 13px; pointer-events: none; }
+.vizitka-odkazu b, .vizitka-odkazu small { display: block; }
+.vizitka-odkazu small { color: var(--text-muted); margin-top: 2px; }
+.vz-foto { width: 64px; height: 86px; object-fit: cover; border-radius: 4px; flex: none; }
+.naseptavac-odkazu { position: fixed; z-index: 1700; list-style: none; margin: 0; padding: 4px; min-width: 220px; max-width: 360px; border-radius: 8px;
+  background: var(--bg-modal); border: 1px solid var(--panel-okraj); box-shadow: var(--panel-stin); font-size: 13px; }
+.naseptavac-odkazu li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 8px; border-radius: 5px; cursor: pointer; }
+.naseptavac-odkazu li small { color: var(--text-muted); white-space: nowrap; }
+.naseptavac-odkazu li.aktivni, .naseptavac-odkazu li:hover { background: var(--accent-soft); }
+
+/* Zmiňováno v… (profil modelky, detail čísla) */
+.udaje-zminky h4 small, .zminky-cisla h4 small { color: var(--text-muted); font-weight: 400; }
+.zminky-cisla { margin-top: 12px; }
+.zminka { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; width: 100%; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.zminka:hover, .zminka:focus-visible { background: var(--panel-hover); }
+.zminka-nazev { font-weight: 500; }
+.zminka-kde { color: var(--text-muted); font-size: 12px; }
+.zminka-uryvek { grid-column: 1 / -1; color: var(--text-muted); font-size: 12px; line-height: 1.4; }

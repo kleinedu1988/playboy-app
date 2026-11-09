@@ -86,6 +86,7 @@ const CTENI = new Set([
     'GetStejneFotky',
     'GetChytreVybery',
     'NajitUdajeModelky',
+    'GetZminky',
     'PlaymatePodleWikipedie',
     'ZkontrolovatOdkazy',
     'GetStavOtisku',
@@ -239,6 +240,7 @@ export const ZmrazitChytryVyber = /** @type {typeof App.ZmrazitChytryVyber} */ (
 export const NajitUdajeModelky = /** @type {typeof App.NajitUdajeModelky} */ (obalit('NajitUdajeModelky'));
 export const UlozitUdajeZeZdroju = /** @type {typeof App.UlozitUdajeZeZdroju} */ (obalit('UlozitUdajeZeZdroju'));
 export const PlaymatePodleWikipedie = /** @type {typeof App.PlaymatePodleWikipedie} */ (obalit('PlaymatePodleWikipedie'));
+export const GetZminky = /** @type {typeof App.GetZminky} */ (obalit('GetZminky'));
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));

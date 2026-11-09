@@ -25,6 +25,7 @@ import { otevritLightbox } from './prohlizec';
 import { podobneModelky } from '../lib/mapa-sbirky';
 import { znakySrdicek } from '../lib/srdicka';
 import { otevritMapuModelky } from './statistiky-pohled';
+import { doplnitZminkyModelky } from './wiki-odkazy';
 import * as zasobnik from './zasobnik';
 import { otevritAlbumModal } from './formular-alba';
 
@@ -192,7 +193,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const poleTagu = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.udaje-tagy .profile-tags'));
     if (poleTagu) modelHeader.querySelector('[data-rozbalit-tagy]').classList.toggle('hidden', poleTagu.scrollHeight <= poleTagu.clientHeight + 2);
 
-    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitOdznaky(modelka.id), doplnitPodobne(modelka.id, moje)]);
+    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka).then(() => doplnitZminkyModelky(modelka)), doplnitOdznaky(modelka.id), doplnitPodobne(modelka.id, moje)]);
 }
 
 // ——— Podobné modelky (lib/mapa-sbirky.js podobneModelky) ———

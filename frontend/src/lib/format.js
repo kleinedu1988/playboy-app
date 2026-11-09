@@ -230,6 +230,12 @@ export function markdownVRadku(text) {
         return `\x00KOD_${kody.length - 1}\x00`;
     });
 
+    // Odkazy [[cíl]] a [[cíl|popisek]] (lib/odkazy.js) – chráněné před dalším formátováním, cíl dohledá app/wiki-odkazy.js
+    out = out.replace(/\[\[([^[\]|\n]+?)(?:\|([^[\]\n]+?))?\]\]/g, (_, cil, popisek) => {
+        kody.push(`<button type="button" class="wiki-odkaz" data-wiki="${cil.trim()}">${(popisek || cil).trim()}</button>`);
+        return `\x00KOD_${kody.length - 1}\x00`;
+    });
+
     // Tučná kurzíva: ***text*** nebo ___text___
     out = out.replace(/\*\*\*(?!\s)(.+?)(?<!\s)\*\*\*/g, '<strong><em>$1</em></strong>');
     out = out.replace(/___(?!\s)(.+?)(?<!\s)___/g, '<strong><em>$1</em></strong>');

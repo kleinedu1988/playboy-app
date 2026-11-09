@@ -24,7 +24,16 @@ function nacist() {
  * @returns {Promise<string|null>}
  */
 export async function upravitText(moznosti = {}) {
-    return (await nacist()).upravitText(moznosti);
+    const m = await nacist();
+    m.nastavitZdrojOdkazu(zdrojOdkazu);
+    return m.upravitText(moznosti);
+}
+
+/** @type {(() => Promise<any>) | null} */
+let zdrojOdkazu = null;
+// Data pro našeptávač odkazů [[…]] (modelky, čísla, fotografové); nastavuje app/wiki-odkazy.js
+export function nastavitZdrojOdkazu(zdroj) {
+    zdrojOdkazu = zdroj;
 }
 
 // Načítání předem; volá ho main.js po načtení všech modulů

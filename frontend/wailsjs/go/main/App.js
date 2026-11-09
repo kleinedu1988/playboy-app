@@ -346,6 +346,10 @@ export function GetVyvojVCase(arg1) {
   return window['go']['main']['App']['GetVyvojVCase'](arg1);
 }
 
+export function GetZminky(arg1, arg2) {
+  return window['go']['main']['App']['GetZminky'](arg1, arg2);
+}
+
 export function HledatClanky(arg1) {
   return window['go']['main']['App']['HledatClanky'](arg1);
 }

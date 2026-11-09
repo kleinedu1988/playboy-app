@@ -2670,6 +2670,32 @@ export namespace main {
 	}
 	
 	
+	export class Zminka {
+	    druh: string;
+	    nazev: string;
+	    modelkaId: number;
+	    vydani: string;
+	    album: string;
+	    typ: string;
+	    clanekId: number;
+	    uryvek: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Zminka(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.druh = source["druh"];
+	        this.nazev = source["nazev"];
+	        this.modelkaId = source["modelkaId"];
+	        this.vydani = source["vydani"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	        this.clanekId = source["clanekId"];
+	        this.uryvek = source["uryvek"];
+	    }
+	}
 	export class ZmrazeniVyberu {
 	    pocet: number;
 	    vyberId: number;

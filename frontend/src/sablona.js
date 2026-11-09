@@ -899,6 +899,7 @@ export const SABLONA_OKNA = `
           <li><strong>Úplnost čísla</strong> v detailu čísla: cover, centerfold, kdo je na obálce, pictorial, obsah a fotky s rychlým doplněním; u amerického měsíčního čísla odkaz „Playmate měsíce podle Wikipedie…“ – ukáže, kdo podle seznamu byla Playmate, zda je ve sbírce, a chybějící přidá přes rychlé okno Nová modelka.</li>
           <li><strong>Fotky čísla</strong>: v detailu čísla nahoře pás všech fotek vydání (cover, centerfold, pictorialy); klik otevře prohlížeč jen pro toto číslo, ▶ Promítat celé číslo.</li>
           <li><strong>Čísla v profilu</strong>: štítky čísel u alb mají malý náhled obálky; po najetí (nebo zaměření klávesnicí) bublina s obálkou, Playmate měsíce, dalšími modelkami sbírky v čísle a přechodem na předchozí a následující číslo téže edice.</li>
+          <li><strong>Odkazy [[…]]</strong> v poznámkách, textech alb a článcích: <code>[[Jméno modelky]]</code>, <code>[[06/1995]]</code> (i <code>[[06/1995 DE]]</code>), <code>[[Fotograf]]</code>, s vlastním popiskem <code>[[06/1995|červnové číslo]]</code>. Po napsání <code>[[</code> editor nabídne modelky, čísla a fotografy (šipky, Enter nebo Tab, Esc). V hotovém textu je odkaz klikací a po najetí ukáže vizitku; neznámé jméno se vyhledá. Profil modelky a detail čísla mají sekci <strong>Zmiňováno v…</strong> se všemi texty, které na ně odkazují.</li>
         </ul>
         <h4>Čísla časopisu</h4>
         <ul>

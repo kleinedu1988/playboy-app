@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.40.0] – 2026-11-09
+
+### Přidáno
+- **Odkazy `[[…]]`** v poznámkách modelek, průvodních textech alb, článcích a poznámkách čísel: `[[Jméno modelky]]`
+  (i další jméno, bez diakritiky), `[[06/1995]]` (i `[[1995-06]]`, `[[06/1995 DE]]`), `[[Fotograf]]` a s popiskem
+  `[[cíl|popisek]]`. V hotovém textu klikací odkaz s vizitkou při najetí (fotka a údaje modelky, obálka a Playmate
+  čísla); neznámý cíl se vyhledá (`frontend/src/lib/odkazy.js`, `frontend/src/app/wiki-odkazy.js`).
+- **Našeptávač v editoru textu** po napsání `[[`: modelky, čísla a fotografové (šipky, Enter / Tab, Esc); odkazy
+  jsou v editoru zvýrazněné.
+- **Zmiňováno v…** v profilu modelky a v detailu čísla: všechna místa, která na ně odkazují, s úryvkem textu
+  a přechodem na modelku, článek nebo číslo (`zminky.go`).
+
 ## [1.39.0] – 2026-11-09
 
 ### Přidáno

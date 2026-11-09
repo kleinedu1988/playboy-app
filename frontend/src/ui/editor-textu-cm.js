@@ -3,12 +3,13 @@
 // Bloky (nadpis, citát, seznamy, perex) se poznávají po řádcích stejně jako ve formatMarkdown, aby editor
 // ukazoval totéž co hotový text; formátování v řádku (tučné, kurzíva…) určuje parser markdownu.
 // Modul s CodeMirrorem je velký (přes polovinu skriptů programu); načítá ho až editor-textu.js při prvním otevření okna.
-import { EditorState, EditorSelection, StateEffect } from '@codemirror/state';
-import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, placeholder } from '@codemirror/view';
+import { EditorState, EditorSelection, Prec, StateEffect } from '@codemirror/state';
+import { Decoration, EditorView, MatchDecorator, ViewPlugin, WidgetType, keymap, placeholder } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, undo } from '@codemirror/commands';
 import { Language, LanguageSupport, defineLanguageFacet, syntaxTree } from '@codemirror/language';
 import { Strikethrough, parser } from '@lezer/markdown';
-import { formatMarkdown, pocetSlovAZnaku, sklonovat } from '../lib/format';
+import { esc, formatMarkdown, pocetSlovAZnaku, sklonovat } from '../lib/format';
+import { navrhyOdkazu } from '../lib/odkazy';
 
 // Jen parser markdownu (bez @codemirror/lang-markdown, který s sebou táhne HTML, CSS a JavaScript pro bloky kódu)
 const markdown = () => new LanguageSupport(new Language(defineLanguageFacet(), parser.configure([Strikethrough]), [], 'markdown'));
@@ -295,7 +296,110 @@ function vytvoritEditor() {
     });
 }
 
+// ——— Odkazy [[…]]: zvýraznění a našeptávač po „[[“ (modelky, čísla, fotografové; data dodá app/wiki-odkazy.js) ———
+
+const odkazy = new MatchDecorator({ regexp: /\[\[[^[\]\n]+?\]\]/g, decoration: Decoration.mark({ class: 'md-odkaz' }) });
+const zvyraznitOdkazy = ViewPlugin.fromClass(class {
+    constructor(view) { this.decorations = odkazy.createDeco(view); }
+    update(u) { this.decorations = odkazy.updateDeco(u, this.decorations); }
+}, { decorations: v => v.decorations });
+
+/** @type {(() => Promise<any>) | null} */
+let zdrojOdkazu = null;
+/** @type {Promise<any> | null} */
+let dataOdkazu = null;
+let naseptavac = null;
+/** @type {{ text: string, popis: string, druh: string }[]} */
+let navrhy = [];
+let vybrany = 0;
+let odkazOd = -1;
+
+export function nastavitZdrojOdkazu(zdroj) {
+    zdrojOdkazu = zdroj;
+}
+
+function schovatNaseptavac() {
+    navrhy = [];
+    odkazOd = -1;
+    naseptavac?.classList.add('hidden');
+}
+
+const naseptavacOtevreny = () => navrhy.length > 0 && !naseptavac?.classList.contains('hidden');
+
+function vykreslitNaseptavac() {
+    naseptavac.innerHTML = navrhy.map((n, i) => `<li role="option" data-i="${i}" class="${i === vybrany ? 'aktivni' : ''}" aria-selected="${i === vybrany}">
+        <span>${esc(n.text)}</span><small>${esc(n.popis)}</small></li>`).join('');
+}
+
+async function zkontrolovatOdkaz(view) {
+    const { head, empty } = view.state.selection.main;
+    const radek = view.state.doc.lineAt(head);
+    const pred = radek.text.slice(0, head - radek.from);
+    const m = empty && zdrojOdkazu ? /\[\[([^[\]|\n]{0,40})$/.exec(pred) : null;
+    if (!m) return schovatNaseptavac();
+    const od = head - m[1].length;
+    dataOdkazu ||= zdrojOdkazu().catch(() => { dataOdkazu = null; return {}; });
+    const data = await dataOdkazu;
+    // Mezitím se psalo dál: platí až novější kontrola
+    if (view.state.selection.main.head !== head) return;
+    navrhy = navrhyOdkazu(m[1], data, 8);
+    if (!navrhy.length) return schovatNaseptavac();
+    if (odkazOd !== od) vybrany = 0;
+    vybrany = Math.min(vybrany, navrhy.length - 1);
+    odkazOd = od;
+    if (!naseptavac) {
+        naseptavac = document.createElement('ul');
+        naseptavac.className = 'naseptavac-odkazu hidden';
+        naseptavac.setAttribute('role', 'listbox');
+        naseptavac.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const li = /** @type {HTMLElement} */ (e.target).closest('[data-i]');
+            if (li && editor) vlozitOdkaz(editor, navrhy[parseInt(/** @type {HTMLElement} */ (li).dataset.i)]);
+        });
+        document.body.append(naseptavac);
+    }
+    vykreslitNaseptavac();
+    naseptavac.classList.remove('hidden');
+    const souradnice = view.coordsAtPos(od - 2);
+    if (souradnice) {
+        const b = naseptavac.getBoundingClientRect();
+        naseptavac.style.left = `${Math.max(8, Math.min(souradnice.left, window.innerWidth - b.width - 8))}px`;
+        naseptavac.style.top = `${souradnice.bottom + b.height + 4 > window.innerHeight ? souradnice.top - b.height - 4 : souradnice.bottom + 4}px`;
+    }
+}
+
+function vlozitOdkaz(view, navrh) {
+    if (!navrh || odkazOd < 0) return;
+    const head = view.state.selection.main.head;
+    const za = view.state.sliceDoc(head, head + 2) === ']]' ? 2 : 0;
+    const vlozit = `${navrh.text}]]`;
+    view.dispatch({ changes: { from: odkazOd, to: head + za, insert: vlozit }, selection: EditorSelection.cursor(odkazOd + vlozit.length), userEvent: 'input.complete' });
+    schovatNaseptavac();
+    view.focus();
+}
+
+// Klávesy našeptávače mají přednost před editorem i před Esc okna
+const klavesyNaseptavace = Prec.highest(EditorView.domEventHandlers({
+    keydown(e, view) {
+        if (!naseptavacOtevreny()) return false;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            vybrany = (vybrany + (e.key === 'ArrowDown' ? 1 : navrhy.length - 1)) % navrhy.length;
+            vykreslitNaseptavac();
+        } else if (e.key === 'Enter' || e.key === 'Tab') {
+            vlozitOdkaz(view, navrhy[vybrany]);
+        } else if (e.key === 'Escape') {
+            schovatNaseptavac();
+        } else return false;
+        e.preventDefault();
+        e.stopPropagation();
+        return true;
+    },
+    blur() { schovatNaseptavac(); return false; },
+}));
+
 const rozsireni = (zastupny = '') => [
+    klavesyNaseptavace,
+    zvyraznitOdkazy,
     history(),
     keymap.of([
         { key: 'Mod-b', run: NASTROJE.tucne },
@@ -311,6 +415,7 @@ const rozsireni = (zastupny = '') => [
     EditorView.updateListener.of(u => {
         if (u.docChanged || u.selectionSet || syntaxTree(u.startState) !== syntaxTree(u.state)) obnovitNastroje(u.state);
         if (u.docChanged) obnovitPocet(u.state);
+        if (u.docChanged || u.selectionSet) zkontrolovatOdkaz(u.view);
     }),
     placeholder(zastupny),
 ];
@@ -352,6 +457,9 @@ export function upravitText({ nadpis = 'Text', text = '', napoveda = '', zastupn
     if (!editor) vytvoritEditor();
     zvyraznitMluvci = mluvci;
     vyreseni?.(null);
+    // Seznam modelek, čísel a fotografů pro našeptávač se načte znovu (až po prvním „[[“)
+    dataOdkazu = null;
+    schovatNaseptavac();
     document.getElementById('textModalTitle').textContent = nadpis;
     document.getElementById('textModalNapoveda').textContent = napoveda;
     editor.setState(EditorState.create({ doc: text, extensions: rozsireni(zastupny), selection: EditorSelection.cursor(text.length) }));
@@ -383,6 +491,7 @@ export function pripravit() {
     });
     // Zavření bez Použít (křížek, Zrušit, Esc) vrátí null
     new MutationObserver(() => {
+        if (okno().classList.contains('hidden')) schovatNaseptavac();
         if (okno().classList.contains('hidden') && vyreseni) {
             vyreseni(null);
             vyreseni = null;

@@ -2,6 +2,7 @@
 import { GetAlbaFotografa, GetClanky, GetStavyVydani, GetVydani, GetVydaniInfo, PlaymatePodleWikipedie, SetVydaniInfo, SetNazevSpecialu } from './backend';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { otevritRychlePridani } from './formular-modelky';
+import { doplnitZminkyCisla } from './wiki-odkazy';
 import { MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
@@ -131,6 +132,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
         : htmlPrazdna('Zatím bez alb', 'Centerfold se k číslu přiřadí měsícem a rokem vydání, pictorial tlačítkem „+ Pictorial“ nahoře.'));
     stav.vydaniHtmlAlb = htmlAlb;
     vykreslitObsahStranky();
+    doplnitZminkyCisla(vydani);
 }
 
 // Úplnost čísla: co ve sbírce k číslu je a co chybí, s rychlým doplněním; u měsíčního amerického čísla

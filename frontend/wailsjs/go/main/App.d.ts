@@ -181,6 +181,8 @@ export function GetVydaniInfo(arg1:string):Promise<sbirka.VydaniInfo>;
 
 export function GetVyvojVCase(arg1:string):Promise<sbirka.VyvojVCase>;
 
+export function GetZminky(arg1:string,arg2:string):Promise<Array<main.Zminka>>;
+
 export function HledatClanky(arg1:string):Promise<Array<sbirka.NalezClanku>>;
 
 export function HledatTexty(arg1:string):Promise<Array<sbirka.NalezTextu>>;

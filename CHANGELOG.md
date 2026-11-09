@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.30.0] – 2026-11-09
+
+### Přidáno
+- **Mapa sbírky ve Statistikách (`frontend/src/lib/mapa-sbirky.js`, `frontend/src/app/statistiky.js`, `frontend/src/style.css`)**:
+  - Nová karta ve Statistikách **Mapa sbírky** (`Graf ▾` → `Rozložení` → `Mapa sbírky`), kde je každá modelka bodem v rovině a blízké body představují podobné modelky podle všech klíčových údajů (robustní z-skóre postavy a věku, masky chybějících údajů, období prvního výskytu, barva vlasů a očí, národnost, kategorie a tělesné příznaky).
+  - Deterministická projekce hlavních komponent (PCA) s pevnou orientací os (starší období vlevo, vyšší postava nahoře), škálováním 1.–99. percentilu na $[-1, 1]$ a uzavřeným ortogonálním Procrustovým zarovnáním (`procrustes2D`) pro stabilitu souřadnic.
+  - Přepínání barevného režimu bodů (Období, Barva vlasů, Kategorie, Hodnocení, Úplnost údajů) s přehlednou legendou, zobrazení modelek s málo vyplněnými údaji jako dutých kroužků, bublina se shrnutím údajů a dvěma nejbližšími sousedy na mapě a Gowerova podobnost se společnými rysy (`gowerPodobnost`).
+  - Interaktivní výběr lasem (`bodVMnohouhelniku`) tažením myší na mapě zúží všechny ostatní grafy i pravý seznam modelek a spočítá postřehy výběru; kliknutí na bod otevře profil modelky.
+
 ## [1.29.0] – 2026-11-09
 
 ### Přidáno

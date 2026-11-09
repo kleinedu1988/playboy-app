@@ -3,11 +3,11 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (9. 11. 2026): verze 1.29.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.29 jsou hotové: mezipaměť náhledů na
+**Stav (9. 11. 2026): verze 1.30.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.30 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
-(1.27–1.29) a hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4).
+(1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4) a Mapa sbírky ve Statistikách (1.30.0).
 
 ---
 

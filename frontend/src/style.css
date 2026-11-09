@@ -7068,6 +7068,45 @@ textarea {
     pointer-events: none;
 }
 
+.sp-graf.mapa {
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+}
+
+.sp-mapa-bod {
+    opacity: 0.78;
+    cursor: pointer;
+    transition: opacity 0.12s ease, r 0.12s ease;
+}
+
+.sp-mapa-bod:hover {
+    opacity: 1;
+    stroke: var(--text-main);
+    stroke-width: 1.5;
+}
+
+.sp-mapa-bod.tlum {
+    opacity: 0.16;
+}
+
+.sp-laso {
+    fill: rgba(216, 27, 96, 0.12);
+    stroke: rgba(216, 27, 96, 0.75);
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+    pointer-events: none;
+}
+
+.sp-legenda i.krouzek {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1.5px solid var(--text-muted);
+}
+
+
 /* Postřeh o trendu nebo zlomu pod grafem v čase (lib/postrehy.js); podrobnosti v bublině u ⓘ */
 .sp-postreh {
     display: flex;

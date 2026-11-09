@@ -14,6 +14,7 @@ import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
 import { neobvykleRoky, postrehRady, pripravitPriznak, rozdilyVyberu, souvislosti, vybratPostrehy } from '../lib/postrehy';
+import { bodVMnohouhelniku, vypocitatMapuSbirky } from '../lib/mapa-sbirky';
 import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 
@@ -92,8 +93,55 @@ const GRAFY = [
     { klic: 'srd', skupina: 'rozl', nazev: 'Hodnocení' },
     { klic: 'vyskyt', skupina: 'rozl', nazev: 'Výskyt (časopis / online)' },
     { klic: 'fot', skupina: 'rozl', nazev: 'Fotografové' },
+    { klic: 'mapa', skupina: 'rozl', druh: 'mapa', nazev: 'Mapa sbírky' },
 ];
 const SKUPINY = { pocty: 'V čase · počty', udaje: 'V čase · údaje', podily: 'V čase · podíly', rozl: 'Rozložení' };
+const BARVY_MAPY = {
+    obdobi: {
+        nazev: 'Období',
+        polozky: [
+            ['1950. léta', '#7986cb'], ['1960. léta', '#64b5f6'], ['1970. léta', '#4dd0e1'],
+            ['1980. léta', '#81c784'], ['1990. léta', '#ffd54f'], ['2000. léta', '#ffb74d'],
+            ['2010. léta', '#ff8a65'], ['2020. léta', '#f06292'], ['Neurčeno', '#757575'],
+        ],
+        hodnota: b => b.dekada,
+    },
+    vlasy: {
+        nazev: 'Barva vlasů',
+        polozky: [
+            ['Blond', '#ffd54f'], ['Hnědé', '#a1887f'], ['Černé', '#b0bec5'],
+            ['Zrzavé', '#ff8a65'], ['Jiné', '#90a4ae'], ['Neurčeno', '#616161'],
+        ],
+        hodnota: b => b.vlasy,
+    },
+    kategorie: {
+        nazev: 'Kategorie',
+        polozky: [
+            ['Playmate měsíce', '#f06292'], ['Playmate roku', '#ffd54f'], ['Modelka obálky', '#64b5f6'],
+            ['Cyber Girl', '#81c784'], ['Celebrita', '#ba68c8'], ['Online', '#4dd0e1'], ['Ostatní', '#757575'],
+        ],
+        hodnota: b => b.kategorie,
+    },
+    srd: {
+        nazev: 'Hodnocení',
+        polozky: [
+            ['5 ♥', '#f06292'], ['4 ♥', '#ffb74d'], ['3 ♥', '#ffd54f'],
+            ['1–2 ♥', '#64b5f6'], ['Bez hodnocení', '#616161'],
+        ],
+        hodnota: b => b.hodnoceni >= 4.5 ? '5 ♥' : b.hodnoceni >= 3.5 ? '4 ♥' : b.hodnoceni >= 2.5 ? '3 ♥' : b.hodnoceni > 0 ? '1–2 ♥' : 'Bez hodnocení',
+    },
+    uplnost: {
+        nazev: 'Úplnost údajů',
+        polozky: [
+            ['Úplné (8–10)', '#81c784'], ['Střední (5–7)', '#ffd54f'], ['Málo údajů (< 5)', '#757575'],
+        ],
+        hodnota: b => b.uplnost >= 8 ? 'Úplné (8–10)' : b.uplnost >= 5 ? 'Střední (5–7)' : 'Málo údajů (< 5)',
+    },
+};
+let barvaMapy = 'obdobi';
+try { if (BARVY_MAPY[localStorage.getItem('barvaMapyStatistik')]) barvaMapy = localStorage.getItem('barvaMapyStatistik'); } catch { /* výchozí barva */ }
+let mapaCache = { data: null, vysledek: null };
+let lasoTah = null; // aktivní tažení lasa na mapě: [{ x, y }, ...] v souřadnicích SVG
 
 // Stav: vybraný graf (pamatuje se), edice a druh výskytu a výběr. Výběr jsou podmínky (klíč → { popis, test, dotaz,
 // ... }) společné všem grafům: rok prvního výskytu („rok“, sdílí ho všechny grafy s osou roků), měsíc přidání
@@ -349,6 +397,44 @@ function polozkyRozlozeni(klic) {
     return seradit ? spocitane.sort((a, b) => b.pocet - a.pocet || a.nazev.localeCompare(b.nazev, 'cs')).slice(0, 15) : spocitane;
 }
 
+function dataMapy() {
+    if (mapaCache.data === data && mapaCache.vysledek) return mapaCache.vysledek;
+    const predchozi = mapaCache.vysledek ? new Map(mapaCache.vysledek.body.map(b => [b.id, b])) : null;
+    const vysledek = vypocitatMapuSbirky(data.modelky, { predchozi });
+    mapaCache = { data, vysledek };
+    return vysledek;
+}
+
+function htmlMapySbirky(sirka) {
+    const { body } = dataMapy();
+    if (!body.length) return '<p class="prazdno-male">Zatím žádná data.</p>';
+    const W = Math.max(320, sirka), H = 360, L = 18, P = 18, T = 18, D = 18;
+    const sx = x => L + (x + 1.15) / 2.3 * (W - L - P);
+    const sy = y => T + (1.15 - y) / 2.3 * (H - T - D);
+    const barevnyRezim = BARVY_MAPY[barvaMapy] || BARVY_MAPY.obdobi;
+    const mapaBarev = new Map(barevnyRezim.polozky);
+    const maFiltry = filtry.size > 0;
+    const r = body.length > 2000 ? 2.4 : 3.4;
+
+    const kruhy = body.map(b => {
+        const cx = sx(b.x).toFixed(1), cy = sy(b.y).toFixed(1);
+        const jeVybrana = !maFiltry || vyhovuje(b.m);
+        const katHodnota = barevnyRezim.hodnota(b);
+        const barva = mapaBarev.get(katHodnota) || '#90a4ae';
+        const tlum = jeVybrana ? '' : ' tlum';
+        const tip = `${b.m.jmeno}${b.popisUdaju ? ` (${b.popisUdaju})` : ''}${b.sousede.length ? ` · sousedé: ${b.sousede.join(', ')}` : ''}`;
+        if (b.maloUdaju) {
+            return `<circle class="sp-mapa-bod${tlum}" data-mapa-id="${b.id}" data-tip="${esc(tip)}" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${barva}" stroke-width="1.5"/>`;
+        }
+        return `<circle class="sp-mapa-bod${tlum}" data-mapa-id="${b.id}" data-tip="${esc(tip)}" cx="${cx}" cy="${cy}" r="${r}" fill="${barva}"/>`;
+    }).join('');
+
+    const lasoHtml = lasoTah && lasoTah.length >= 2
+        ? `<polygon class="sp-laso" points="${lasoTah.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}"/>`
+        : '';
+    return `<svg class="sp-svg" width="${W}" height="${H}" data-mapa-w="${W}" data-mapa-h="${H}" role="img" aria-label="Mapa sbírky">${kruhy}${lasoHtml}</svg>`;
+}
+
 function htmlPruhu(def, polozky) {
     if (!polozky.length) return `<p class="prazdno-male">${graf === 'fot' && !data.fotografove.size ? 'Počítám fotografy…' : 'Zatím žádná data.'}</p>`;
     const zuzeno = [...filtry.keys()].some(k => k !== def.klic);
@@ -406,6 +492,7 @@ function htmlSeznamu(def, sloupce) {
 // Věta vpravo nad grafem: celek, u výběru i hodnota výběru
 function souhrn(def, sloupce, rozlozeni) {
     const ve = (vyber, celkem) => filtry.size ? `<b>${vyber}</b> z ${celkem}` : `<b>${celkem}</b>`;
+    if (def.druh === 'mapa') return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} modelek na mapě`;
     if (!def.osa) return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} modelek · ${rozlozeni.length} ${rozlozeni.length === 1 ? 'hodnota' : rozlozeni.length > 1 && rozlozeni.length < 5 ? 'hodnoty' : 'hodnot'}`;
     const vsechny = sloupce.flatMap(s => s.polozky);
     if (!vsechny.length) return '';
@@ -543,6 +630,10 @@ function htmlKostry() {
 }
 
 function htmlLegendy(def) {
+    if (def.druh === 'mapa') {
+        const rezim = BARVY_MAPY[barvaMapy] || BARVY_MAPY.obdobi;
+        return `${rezim.polozky.map(([nazev, barva]) => `<span><i class="bod" style="background:${barva}"></i>${esc(nazev)}</span>`).join('')}<span><i class="krouzek"></i>málo údajů</span>`;
+    }
     if (!def.osa) return '';
     const celek = [...filtry.keys()].some(k => k !== klicFiltru(def)) ? '<span><i class="celek"></i>celá sbírka</span>' : '';
     const prumer = `<span><i class="cara"></i>průměr ${def.osa === 'mesic' ? '3 měsíců' : '7 let'}</span>`;
@@ -562,14 +653,17 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     if (!jenGraf) {
         sloupce = def.osa ? radaVCase(def) : [];
         postreh = def.osa === 'rok' ? postrehyRad().get(def.klic) ?? null : null;
-        rozlozeni = def.osa ? [] : polozkyRozlozeni(def.klic);
+        rozlozeni = def.osa || def.druh === 'mapa' ? [] : polozkyRozlozeni(def.klic);
     }
     const fokus = /** @type {HTMLElement} */ (document.activeElement)?.closest?.('[data-hodnota]')?.dataset.hodnota;
-    misto.innerHTML = def.osa ? htmlGrafuVCase(def, sloupce, misto.clientWidth) : htmlPruhu(def, rozlozeni);
+    misto.innerHTML = def.druh === 'mapa'
+        ? htmlMapySbirky(misto.clientWidth)
+        : def.osa ? htmlGrafuVCase(def, sloupce, misto.clientWidth) : htmlPruhu(def, rozlozeni);
     misto.classList.toggle('cas', Boolean(def.osa));
+    misto.classList.toggle('mapa', def.druh === 'mapa');
     if (fokus !== undefined) /** @type {HTMLElement} */ (misto.querySelector(`[data-hodnota="${CSS.escape(fokus)}"]`))?.focus({ preventScroll: true });
     if (jenGraf) return;
-    // Volby pod hledáním: Graf ▾ (skupiny za sebou), filtry Výskyt a Edice (u grafů v čase), výběr z grafu jako
+    // Volby pod hledáním: Graf ▾ (skupiny za sebou), filtry Výskyt a Edice (u grafů v čase), barva mapy, výběr z grafu jako
     // zapnutý filtr (× ho zruší) a na konci souhrn
     const ed = ediceVyskytu();
     const stitek = (atribut, klic, nazev, zvoleny) => `<button type="button" class="chip ${zvoleny ? 'active' : ''}" data-${atribut}="${esc(klic)}">${esc(nazev)}</button>`;
@@ -577,6 +671,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
         ...Object.keys(SKUPINY).flatMap(s => GRAFY.filter(g => g.skupina === s).map(g => stitek('sp-graf-volba', g.klic, g.nazev, g.klic === graf))),
         ...(def.osa === 'rok' ? Object.entries(DRUHY_VYSKYTU).map(([k, nazev]) => stitek('sp-druh-volba', k, nazev === 'Vše' ? 'vše' : nazev, k === druhVyskytu)) : []),
         ...(def.osa === 'rok' && ed.length > 1 ? ['vse', ...ed].map(e => stitek('sp-edice-volba', e, e === 'vse' ? 'vše' : e, e === edice)) : []),
+        ...(def.druh === 'mapa' ? Object.entries(BARVY_MAPY).map(([k, b]) => stitek('sp-mapa-barva', k, b.nazev, k === barvaMapy)) : []),
         filtry.size ? `<button type="button" class="chip active" data-sp-vyber="1" data-zrusit-vyber>${esc([...filtry.values()].map(f => f.popis).join(' · '))}</button>` : '',
         `<span>${souhrn(def, sloupce, rozlozeni).replace(/<[^>]+>/g, '')}</span>`,
     ].join(''));
@@ -590,7 +685,9 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     const online = druhVyskytu === 'online';
     const bezCisla = def.osa === 'rok' ? data.modelky.filter(m => !vyskytyModelky(m).some(c => c.druhy.has('online') === online)).length : 0;
     const neni = bezCisla >= 2 && bezCisla <= 4 ? 'nejsou' : 'není';
-    koren.querySelector('[data-sp-napoveda]').textContent = def.osa
+    koren.querySelector('[data-sp-napoveda]').textContent = def.druh === 'mapa'
+        ? 'Jak číst mapu: Blízké body znamenají modelky s podobnými údaji (postava, období, vzhled, kategorie); osy nemají jednotky. Klik na bod otevře profil, tažením myší vybereš oblast (laso) pro ostatní grafy; Esc výběr zruší.'
+        : def.osa
         ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažení myší období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.${!bezCisla ? ''
             : online ? ` Rok je rok nafocení prvního online alba; ${pocetModelek(bezCisla)} bez online alba s datem v grafech v čase ${neni}.`
             : ` Rok je rok prvního výskytu v časopise; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase ${neni}.`}`
@@ -637,7 +734,7 @@ export async function nacistStatistiky(koren) {
     const pozorovatel = new ResizeObserver(() => {
         if (!misto.isConnected || misto.clientWidth === sirka) return;
         sirka = misto.clientWidth;
-        if (definice().osa) vykreslit(koren, { jenGraf: true });
+        if (definice().osa || definice().druh === 'mapa') vykreslit(koren, { jenGraf: true });
     });
     pozorovatel.observe(misto);
     koren._pozorovatelSirky = pozorovatel;
@@ -660,7 +757,7 @@ export function pripravit(stats) {
         // Každá část (úvod, statistiky) má vlastní bublinu
         const bublina = e.target.closest?.('.stat-section')?.querySelector('.graf-bublina');
         if (!bublina) return;
-        const cil = !tah && e.target.closest?.('[data-tip]');
+        const cil = !tah && !lasoTah && e.target.closest?.('[data-tip]');
         bublina.classList.toggle('hidden', !cil);
         stats.querySelectorAll('.graf g.aktivni').forEach(g => g !== cil && g.classList.remove('aktivni'));
         if (!cil) return;
@@ -674,10 +771,29 @@ export function pripravit(stats) {
     });
     stats.addEventListener('mouseleave', () => stats.querySelectorAll('.graf-bublina').forEach(b => b.classList.add('hidden')));
 
-    // Tažení přes sloupce grafu v čase; podmínka se nastaví po puštění
+    // Tažení přes sloupce grafu v čase nebo laso na mapě sbírky; podmínka se nastaví po puštění
     stats.addEventListener('pointerdown', (e) => {
-        const misto = /** @type {HTMLElement} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-sp-graf].cas'));
-        if (!misto || e.button !== 0) return;
+        if (e.button !== 0) return;
+        const cil = /** @type {HTMLElement} */ (e.target);
+        const mistoMapa = /** @type {HTMLElement | null} */ (cil.closest?.('[data-sp-graf].mapa'));
+        if (mistoMapa) {
+            const svg = mistoMapa.querySelector('svg');
+            if (!svg) return;
+            const rect = svg.getBoundingClientRect();
+            const bodCil = /** @type {HTMLElement | null} */ (cil.closest?.('[data-mapa-id]'));
+            e.preventDefault();
+            mistoMapa.focus({ preventScroll: true });
+            mistoMapa.setPointerCapture(e.pointerId);
+            lasoTah = [{
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top,
+                cilId: bodCil ? parseInt(bodCil.dataset.mapaId, 10) : null,
+                posunuto: false,
+            }];
+            return;
+        }
+        const misto = /** @type {HTMLElement} */ (cil.closest?.('[data-sp-graf].cas'));
+        if (!misto) return;
         const i = indexSloupce(misto, e.clientX);
         if (i === null) return;
         e.preventDefault();
@@ -687,6 +803,26 @@ export function pripravit(stats) {
         vykreslit(misto.closest('.stat-statistiky'), { jenGraf: true });
     });
     stats.addEventListener('pointermove', (e) => {
+        if (lasoTah) {
+            const mistoMapa = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-sp-graf].mapa'));
+            const svg = mistoMapa?.querySelector('svg');
+            if (!svg) return;
+            const rect = svg.getBoundingClientRect();
+            const nx = e.clientX - rect.left, ny = e.clientY - rect.top;
+            const start = lasoTah[0];
+            if (!start.posunuto && Math.hypot(nx - start.x, ny - start.y) >= 5) start.posunuto = true;
+            const posledni = lasoTah[lasoTah.length - 1];
+            if (Math.hypot(nx - posledni.x, ny - posledni.y) < 3) return;
+            lasoTah.push({ x: nx, y: ny });
+            let polyEl = svg.querySelector('.sp-laso');
+            if (!polyEl) {
+                polyEl = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polyEl.setAttribute('class', 'sp-laso');
+                svg.appendChild(polyEl);
+            }
+            polyEl.setAttribute('points', lasoTah.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '));
+            return;
+        }
         if (!tah) return;
         const misto = /** @type {HTMLElement} */ (e.target).closest?.('[data-sp-graf]');
         const i = misto && indexSloupce(misto, e.clientX);
@@ -695,6 +831,49 @@ export function pripravit(stats) {
         vykreslit(misto.closest('.stat-statistiky'), { jenGraf: true });
     });
     stats.addEventListener('pointerup', (e) => {
+        if (lasoTah) {
+            const koren = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('.stat-statistiky'));
+            const mistoMapa = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-sp-graf].mapa'));
+            const svg = /** @type {HTMLElement | null} */ (mistoMapa?.querySelector('svg'));
+            const bodyTahu = lasoTah;
+            lasoTah = null;
+            if (!bodyTahu[0].posunuto) {
+                if (bodyTahu[0].cilId && data) {
+                    const m = data.modelky.find(x => x.id === bodyTahu[0].cilId);
+                    if (m) otevritDetailModelky(m);
+                    return;
+                }
+                if (filtry.has('mapa')) {
+                    filtry.delete('mapa');
+                    zobrazitVse = false;
+                    if (koren) vykreslit(koren);
+                }
+                return;
+            }
+            if (svg && bodyTahu.length >= 3 && data) {
+                const W = parseFloat(svg.dataset.mapaW || '320'), H = parseFloat(svg.dataset.mapaH || '360');
+                const L = 18, P = 18, T = 18, D = 18;
+                const poly = bodyTahu.map(p => ({
+                    x: (p.x - L) / (W - L - P) * 2.3 - 1.15,
+                    y: 1.15 - (p.y - T) / (H - T - D) * 2.3,
+                }));
+                const vybraneIds = new Set(
+                    dataMapy().body.filter(b => bodVMnohouhelniku(b.x, b.y, poly)).map(b => b.id)
+                );
+                if (vybraneIds.size > 0) {
+                    filtry.set('mapa', {
+                        popis: `Výběr na mapě (${pocetModelek(vybraneIds.size)})`,
+                        test: m => vybraneIds.has(m.id),
+                        dotaz: null,
+                    });
+                } else {
+                    filtry.delete('mapa');
+                }
+                zobrazitVse = false;
+            }
+            if (koren) vykreslit(koren);
+            return;
+        }
         if (!tah) return;
         const koren = /** @type {HTMLElement} */ (e.target).closest?.('.stat-statistiky');
         const { a, b, predtim } = tah;
@@ -709,8 +888,9 @@ export function pripravit(stats) {
 
     // Přerušené tažení (ztráta zachycení ukazatele, systémové gesto) vrátí výběr, jaký byl před tažením
     ['pointercancel', 'lostpointercapture'].forEach(udalost => stats.addEventListener(udalost, (e) => {
-        if (!tah) return;
+        if (!tah && !lasoTah) return;
         tah = null;
+        lasoTah = null;
         const koren = /** @type {HTMLElement} */ (e.target).closest?.('.stat-statistiky');
         if (koren) vykreslit(koren, { jenGraf: true });
     }));
@@ -737,6 +917,13 @@ export function pripravit(stats) {
             zvyraznit = volbaGrafu.dataset.spZvyraznit ?? null;
             try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
             zobrazitVse = false;
+            vykreslit(koren);
+            return;
+        }
+        const volbaBarvyMapy = /** @type {HTMLElement | null} */ (cil.closest('[data-sp-mapa-barva]'));
+        if (volbaBarvyMapy) {
+            barvaMapy = volbaBarvyMapy.dataset.spMapaBarva;
+            try { localStorage.setItem('barvaMapyStatistik', barvaMapy); } catch { /* jen pro toto spuštění */ }
             vykreslit(koren);
             return;
         }
@@ -990,4 +1177,5 @@ export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene =
 export function zapomenoutStatistiky(koren) {
     if (koren) delete koren.dataset.nacteno;
     heroPostrehy = null;
+    mapaCache = { data: null, vysledek: null };
 }

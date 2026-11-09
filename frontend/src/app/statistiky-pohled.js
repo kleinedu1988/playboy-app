@@ -28,7 +28,8 @@ export async function otevritStatistiky() {
     await nacistStatistiky(sekce());
     if (stav.rezim !== 'statistiky') return;
     obnovitVolby(statistikyView);
-    await naplnitHeroStatistik(hero());
+    // Hero se doplní na pozadí (jako u Profilů): start ani přepnutí na jeho fotku nečekají
+    naplnitHeroStatistik(hero());
 }
 
 // Statistiky po překreslení (změna grafu, výběru) oznámí nové volby: lišta je převezme, když je pohled vidět

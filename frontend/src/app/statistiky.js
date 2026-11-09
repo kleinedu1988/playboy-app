@@ -8,7 +8,7 @@
 import { GetProfilovaFotka, GetStatistiky } from './backend';
 import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
-import { adresaTitulni, nacitatPostupne, VELIKOST_ZAHLAVI } from './obrazky';
+import { adresaTitulni, nacitatPostupne, VELIKOST_TITULNI, VELIKOST_ZAHLAVI } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
@@ -470,11 +470,22 @@ function priznakyVyberu() {
 // Trendy a zlomy všech grafů v čase podle roku; přepočet jen při změně dat, edice, výskytu nebo podmínek mimo rok
 // (podmínka roku grafy nezužuje). Mapa klíč grafu → postřeh nebo null.
 let postrehyGrafu = { klic: '', data: null, mapa: new Map() };
+// Celá sbírka (bez podmínek mimo rok) má mapu zvlášť: sdílí ji hero a panel bez výběru, takže se nepočítá dvakrát
+let postrehySbirky = { klic: '', data: null, mapa: new Map() };
+const GRAFY_POSTREHU = () => GRAFY.filter(g => g.osa === 'rok' && (g.druh === 'udaj' || g.druh === 'podil'));
+function postrehyCeleSbirky() {
+    const klic = `${edice}|${druhVyskytu}`;
+    if (postrehySbirky.klic !== klic || postrehySbirky.data !== data) {
+        postrehySbirky = { klic, data, mapa: new Map(GRAFY_POSTREHU().map(g => [g.klic, spocitatPostreh(g, radaVCase(g), { bezVyberu: true })])) };
+    }
+    return postrehySbirky.mapa;
+}
 function postrehyRad() {
-    const klic = [edice, druhVyskytu, ...[...filtry].filter(([k]) => k !== 'rok').map(([k, f]) => `${k}=${f.popis}`)].join('|');
+    const podminky = [...filtry].filter(([k]) => k !== 'rok');
+    if (!podminky.length) return postrehyCeleSbirky();
+    const klic = [edice, druhVyskytu, ...podminky.map(([k, f]) => `${k}=${f.popis}`)].join('|');
     if (postrehyGrafu.klic === klic && postrehyGrafu.data === data) return postrehyGrafu.mapa;
-    const mapa = new Map(GRAFY.filter(g => g.osa === 'rok' && (g.druh === 'udaj' || g.druh === 'podil'))
-        .map(g => [g.klic, spocitatPostreh(g, radaVCase(g))]));
+    const mapa = new Map(GRAFY_POSTREHU().map(g => [g.klic, spocitatPostreh(g, radaVCase(g))]));
     postrehyGrafu = { klic, data, mapa };
     return mapa;
 }
@@ -792,8 +803,9 @@ const indexHero = n => { try { return Math.abs(parseInt(localStorage.getItem(KLI
 const posunoutHero = n => { try { localStorage.setItem(KLIC_HERO, String((indexHero(n) + 1) % Math.max(n, 1))); } catch { /* jen teď */ } };
 
 function postrehyHero() {
-    const kandidati = GRAFY.filter(g => g.osa === 'rok' && (g.druh === 'udaj' || g.druh === 'podil')).map(g => {
-        const p = spocitatPostreh(g, radaVCase(g), { bezVyberu: true });
+    const mapa = postrehyCeleSbirky();
+    const kandidati = GRAFY_POSTREHU().map(g => {
+        const p = mapa.get(g.klic);
         return p && { ...p, id: `${p.druh}:${g.klic}`, graf: g.klic, def: g };
     }).filter(Boolean);
     return vybratPostrehy(kandidati);
@@ -813,15 +825,27 @@ function modelkaHero(p) {
     return vObdobi.filter(vlastnost).sort(poradi)[0] || vObdobi.sort(poradi)[0] || null;
 }
 
-async function htmlFotkyHero(m) {
-    let adresa = adresaTitulni(m, true), styl = stylVyrezu(m);
+// Fotka hera: nejdřív náhled (bývá v mezipaměti), plné rozlišení záhlaví (3840 px, poprvé ze sítě) se vymění až
+// po načtení (nahraditFotkuHero) – úvod ani přepnutí na Statistiky na velkou fotku nečekají
+async function fotkaHero(m) {
+    let nahled = adresaTitulni(m, true), plna = '', styl = stylVyrezu(m);
     try {
         const f = await GetProfilovaFotka(m.id);
-        if (f?.url) { adresa = obrazek(f.url, VELIKOST_ZAHLAVI); styl = stylVyrezu(f); }
+        if (f?.url) { nahled = obrazek(f.url, VELIKOST_TITULNI); plna = obrazek(f.url, VELIKOST_ZAHLAVI); styl = stylVyrezu(f); }
     } catch { /* fotka karty */ }
-    return `<div class="ph-rozmazane" style="background-image:url('${esc(adresa).replace(/'/g, '%27')}')"></div>
-        <div class="ph-ram"><img src="${esc(adresa)}" alt="" style="${esc(styl)}" draggable="false" /></div>
-        <div class="ph-prekryv"></div>`;
+    return { plna, html: `<div class="ph-rozmazane" style="background-image:url('${esc(nahled).replace(/'/g, '%27')}')"></div>
+        <div class="ph-ram"><img src="${esc(nahled)}" alt="" style="${esc(styl)}" draggable="false" /></div>
+        <div class="ph-prekryv"></div>` };
+}
+function nahraditFotkuHero(misto, plna) {
+    const img = /** @type {HTMLImageElement | null} */ (misto.querySelector('.ph-ram img'));
+    if (!plna || !img || img.getAttribute('src') === plna) return;
+    const nahled = img.getAttribute('src');
+    const velka = new Image();
+    velka.decoding = 'async';
+    // Mezitím mohl přijít jiný postřeh (jiná fotka)
+    velka.onload = () => { if (img.isConnected && img.getAttribute('src') === nahled) img.src = plna; };
+    velka.src = plna;
 }
 
 let heroPostrehy = null;   // pro data, edici a výskyt, ve kterých se spočítaly
@@ -829,7 +853,8 @@ export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene =
     if (!misto || !data) return;
     const klic = `${edice}|${druhVyskytu}`;
     // Po překreslení grafu se hero mění jen při změně edice, výskytu nebo dat (jinak by fotka poblikávala)
-    if (jenPriZmene && heroPostrehy?.data === data && heroPostrehy.klic === klic) return;
+    // (první naplnění dělá otevření pohledu; překreslení grafu při něm hero nevykresluje podruhé)
+    if (jenPriZmene && (!heroPostrehy || (heroPostrehy.data === data && heroPostrehy.klic === klic))) return;
     if (znovu || !heroPostrehy || heroPostrehy.data !== data || heroPostrehy.klic !== klic) heroPostrehy = { data, klic, seznam: postrehyHero() };
     const seznam = heroPostrehy.seznam;
     if (!seznam.length) {
@@ -837,19 +862,20 @@ export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene =
         const m = [...data.modelky].filter(x => x.coverUrl).sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || a.id - b.id)[0];
         const roky = data.modelky.map(x => prvniVyskyt(x)?.rok).filter(Boolean);
         if (!m) return misto.remove();
-        const foto = await htmlFotkyHero(m);
+        const foto = await fotkaHero(m);
         if (!misto.isConnected) return;
-        misto.innerHTML = `${foto}<div class="ph-obsah"><div class="ph-nadtitulek">Statistiky sbírky</div><h2>Tvoje sbírka</h2>
+        misto.innerHTML = `${foto.html}<div class="ph-obsah"><div class="ph-nadtitulek">Statistiky sbírky</div><h2>Tvoje sbírka</h2>
             <div class="sh-cisla">${pocetModelek(data.modelky.length)}${roky.length ? ` · ${Math.min(...roky)}–${Math.max(...roky)}` : ''}</div>
             <p class="ph-duvod">Zatím tu není nic průkazného – postřehy se ukážou, až bude víc modelek se známými údaji.</p></div>`;
         misto.onclick = null;
+        nahraditFotkuHero(misto, foto.plna);
         return;
     }
     const i = indexHero(seznam.length), p = seznam[i];
     const m = modelkaHero(p);
-    const foto = m ? await htmlFotkyHero(m) : '';
+    const foto = m ? await fotkaHero(m) : { html: '', plna: '' };
     if (!misto.isConnected) return;
-    misto.innerHTML = `${foto}
+    misto.innerHTML = `${foto.html}
         <div class="ph-obsah">
             <div class="ph-nadtitulek">Postřeh sbírky${seznam.length > 1 ? ` · ${i + 1} z ${seznam.length}` : ''}</div>
             <h2>${esc(p.def.nazev)}</h2>
@@ -861,6 +887,7 @@ export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene =
                 ${m ? `<button type="button" class="ph-tlacitko" data-sh-modelka="${m.id}" title="Na fotce – otevřít profil">${esc(m.jmeno)} →</button>` : ''}
             </div>
         </div>`;
+    nahraditFotkuHero(misto, foto.plna);
     misto.onclick = (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         const tlGraf = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-graf]'));

@@ -7,6 +7,12 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.28.1] – 2026-11-09
+
+### Opraveno
+- **Pomalý start, když byl program naposledy zavřený ve Statistikách**: úvodní obrazovka čekala na fotku hera v plném rozlišení (3 840 px), u nové modelky poprvé ze sítě – až 8 s navíc. Hero se teď doplní na pozadí (jako u Profilů), nejdřív s náhledem (800 px), a ostrá fotka se vymění, až se načte.
+- Hero Statistik se při otevření vykresloval dvakrát (dvě stejná načtení fotky) a postřehy všech grafů se počítaly dvakrát (pro hero a pro panel); teď jednou.
+
 ## [1.28.0] – 2026-11-08
 
 ### Změněno

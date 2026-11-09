@@ -170,6 +170,10 @@ export function GetNavrhyTagu(arg1) {
   return window['go']['main']['App']['GetNavrhyTagu'](arg1);
 }
 
+export function GetNavrhyZWebu() {
+  return window['go']['main']['App']['GetNavrhyZWebu']();
+}
+
 export function GetNehodnoceneFotky() {
   return window['go']['main']['App']['GetNehodnoceneFotky']();
 }
@@ -268,6 +272,10 @@ export function GetStavObsahu() {
 
 export function GetStavOtisku() {
   return window['go']['main']['App']['GetStavOtisku']();
+}
+
+export function GetStavPruchoduWebem() {
+  return window['go']['main']['App']['GetStavPruchoduWebem']();
 }
 
 export function GetStavStahovaniNahledu() {
@@ -410,6 +418,10 @@ export function OdmitnoutNavrh(arg1, arg2) {
   return window['go']['main']['App']['OdmitnoutNavrh'](arg1, arg2);
 }
 
+export function OdmitnoutNavrhyZWebu(arg1, arg2) {
+  return window['go']['main']['App']['OdmitnoutNavrhyZWebu'](arg1, arg2);
+}
+
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
 }
@@ -420,6 +432,10 @@ export function OznacitRuzneFotky(arg1) {
 
 export function PlaymatePodleWikipedie(arg1) {
   return window['go']['main']['App']['PlaymatePodleWikipedie'](arg1);
+}
+
+export function PocetOdmitnutychZWebu() {
+  return window['go']['main']['App']['PocetOdmitnutychZWebu']();
 }
 
 export function PorovnatCtverici(arg1, arg2) {
@@ -450,6 +466,10 @@ export function PrejmenovatVyber(arg1, arg2) {
   return window['go']['main']['App']['PrejmenovatVyber'](arg1, arg2);
 }
 
+export function PrerusitPruchodWebem() {
+  return window['go']['main']['App']['PrerusitPruchodWebem']();
+}
+
 export function PresunoutAlbum(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PresunoutAlbum'](arg1, arg2, arg3, arg4);
 }
@@ -476,6 +496,10 @@ export function PrijmoutNavrh(arg1) {
 
 export function PrijmoutNavrhy(arg1) {
   return window['go']['main']['App']['PrijmoutNavrhy'](arg1);
+}
+
+export function PrijmoutNavrhyZWebu(arg1) {
+  return window['go']['main']['App']['PrijmoutNavrhyZWebu'](arg1);
 }
 
 export function RocnikPodleWikipedie(arg1) {
@@ -604,6 +628,10 @@ export function SmazatVyberGalerie(arg1) {
 
 export function SpustitOtisky() {
   return window['go']['main']['App']['SpustitOtisky']();
+}
+
+export function SpustitPruchodWebem(arg1, arg2) {
+  return window['go']['main']['App']['SpustitPruchodWebem'](arg1, arg2);
 }
 
 export function SpustitStahovaniNahledu() {
@@ -740,6 +768,10 @@ export function ZkontrolovatSoubory() {
 
 export function ZmrazitChytryVyber(arg1) {
   return window['go']['main']['App']['ZmrazitChytryVyber'](arg1);
+}
+
+export function ZrusitOdmitnutiZWebu() {
+  return window['go']['main']['App']['ZrusitOdmitnutiZWebu']();
 }
 
 export function ZrusitPoradiAlba(arg1, arg2, arg3) {

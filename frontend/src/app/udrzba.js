@@ -27,6 +27,7 @@ import * as uceni from './uceni';
 import * as fokus from './udrzba-fokus';
 import * as poUdajich from './udrzba-udaje';
 import * as stejne from './udrzba-stejne';
+import * as zWebu from './udrzba-web';
 import { exportovatData, importovatData, prejmenovatVeSbirce, zkontrolovatSoubory } from './sprava';
 import * as zdravi from './zdravi';
 import { otevritRychlePridani } from './formular-modelky';
@@ -51,6 +52,7 @@ const REZIMY = [
     ['udaje', 'Po údajích', 'Jeden údaj, všechny modelky, kterým chybí: píšeš rovnou do řádků, Enter uloží a jde dolů'],
     ['modelky', 'Po modelkách', 'Jedna modelka a všechny její úkoly na jedné kartě, vpravo fronta'],
     ['stejne', 'Stejné fotky', 'Tatáž fotka ve sbírce víckrát (jiný soubor, přeuložená nebo zmenšená kopie): nechat jednu, nebo označit jako v pořádku'],
+    ['web', 'Z webu', 'Průchod sbírkou proti Wikidatům, Wikipedii a Boobpedii; rozdíly přijmout po jednom, po údaji nebo po zdroji, nebo odmítnout'],
     ['souhrn', 'Souhrn', 'Pokrok sbírky, co se program naučil a celá fronta s filtry'],
 ];
 const KOSTRA = `
@@ -60,6 +62,7 @@ const KOSTRA = `
         <div class="ud-rezim-obsah hidden" data-ud="udaje"></div>
         <div class="ud-fokus hidden" data-ud="fokus"></div>
         <div class="ud-stejne hidden" data-ud="stejne"></div>
+        <div class="ud-web hidden" data-ud="web"></div>
         <div class="ud-souhrn hidden" data-ud="souhrn">
         <div class="ud-hlava">
             <section class="ud-karta ud-pokrok" data-ud="pokrok" aria-label="Pokrok sbírky"></section>
@@ -116,6 +119,7 @@ export function nastavitData({ p, stavy }) {
     data = { p, stavy };
     // Sbírka se mohla změnit (smazané nebo přesunuté fotky): Stejné fotky se načtou znovu, až budou vidět
     stejne.zastarat();
+    zWebu.zastarat();
     return prepocitat();
 }
 
@@ -403,7 +407,7 @@ export function vykreslit() {
     if (!model || !zajistitKostru()) return;
     obnovitHlavuSbirky();
     nastavitHtml(cast('rezimy'), htmlVoleb());
-    ['udaje', 'fokus', 'stejne', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', stejne: 'stejne', souhrn: 'souhrn' }[stav.udrzbaRezim]));
+    ['udaje', 'fokus', 'stejne', 'web', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', stejne: 'stejne', web: 'web', souhrn: 'souhrn' }[stav.udrzbaRezim]));
     if (stav.udrzbaRezim === 'udaje') {
         poUdajich.zobrazit(cast('udaje'));
         poUdajich.vykreslit();
@@ -412,6 +416,8 @@ export function vykreslit() {
         else fokus.vykreslit();
     } else if (stav.udrzbaRezim === 'stejne') {
         stejne.zobrazit(cast('stejne'));
+    } else if (stav.udrzbaRezim === 'web') {
+        zWebu.zobrazit(cast('web'));
     } else {
         nastavitHtml(cast('pokrok'), htmlPokroku());
         zdravi.vykreslit(cast('zdravi'), { vse: model.pocty.vse, kKontrole: model.kKontrole, navrhu: model.navrhu });
@@ -882,6 +888,7 @@ export function pripravit(nacistPrehled) {
         nastavitRezim(rezim);
     });
     stejne.pripravit({ viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'stejne', poZmene: () => nacist() });
+    zWebu.pripravit({ viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'web', poZmene: () => nacist() });
     try { stav.udrzbaRazeni = localStorage.getItem('udrzbaRazeni') || 'priorita'; } catch { /* výchozí */ }
     try { stav.udrzbaRezim = localStorage.getItem('udrzbaRezim') || 'udaje'; } catch { /* Po údajích */ }
     if (!REZIMY.some(([k]) => k === stav.udrzbaRezim)) stav.udrzbaRezim = 'udaje';

@@ -93,6 +93,8 @@ export function GetNavrhyDoplneni(arg1:boolean):Promise<Array<kontrola.NavrhDopl
 
 export function GetNavrhyTagu(arg1:Array<number>):Promise<Record<number, main.NavrhyTaguFotky>>;
 
+export function GetNavrhyZWebu():Promise<Array<main.NavrhZWebu>>;
+
 export function GetNehodnoceneFotky():Promise<oblibenost.FrontaFotek>;
 
 export function GetNejlepsiFotky(arg1:number):Promise<Array<sbirka.Fotografie>>;
@@ -142,6 +144,8 @@ export function GetStavHledaniSlovy():Promise<obsah.StavTextu>;
 export function GetStavObsahu():Promise<obsah.Stav>;
 
 export function GetStavOtisku():Promise<main.StavOtisku>;
+
+export function GetStavPruchoduWebem():Promise<main.StavPruchoduWebem>;
 
 export function GetStavStahovaniNahledu():Promise<nahledy.StavStahovani>;
 
@@ -213,11 +217,15 @@ export function Odemknout(arg1:string):Promise<boolean>;
 
 export function OdmitnoutNavrh(arg1:kontrola.NavrhDoplneni,arg2:boolean):Promise<boolean>;
 
+export function OdmitnoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>,arg2:boolean):Promise<boolean>;
+
 export function OveritOdkaz(arg1:string):Promise<number>;
 
 export function OznacitRuzneFotky(arg1:Array<string>):Promise<boolean>;
 
 export function PlaymatePodleWikipedie(arg1:string):Promise<main.PlaymatePodleWikipedie>;
+
+export function PocetOdmitnutychZWebu():Promise<number>;
 
 export function PorovnatCtverici(arg1:Array<number>,arg2:number):Promise<boolean>;
 
@@ -233,6 +241,8 @@ export function PrejmenovatTag(arg1:string,arg2:string):Promise<number>;
 
 export function PrejmenovatVyber(arg1:number,arg2:string):Promise<boolean>;
 
+export function PrerusitPruchodWebem():Promise<void>;
+
 export function PresunoutAlbum(arg1:number,arg2:string,arg3:string,arg4:number):Promise<string>;
 
 export function PresunoutFotky(arg1:Array<number>,arg2:number,arg3:string,arg4:string):Promise<sbirka.VysledekPresunu>;
@@ -246,6 +256,8 @@ export function PrijmoutJmenoZWikipedie(arg1:number,arg2:string,arg3:boolean):Pr
 export function PrijmoutNavrh(arg1:kontrola.NavrhDoplneni):Promise<boolean>;
 
 export function PrijmoutNavrhy(arg1:Array<kontrola.NavrhDoplneni>):Promise<number>;
+
+export function PrijmoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>):Promise<number>;
 
 export function RocnikPodleWikipedie(arg1:number):Promise<main.RocnikWikipedie>;
 
@@ -310,6 +322,8 @@ export function SmazatVyber(arg1:number):Promise<boolean>;
 export function SmazatVyberGalerie(arg1:string):Promise<boolean>;
 
 export function SpustitOtisky():Promise<boolean>;
+
+export function SpustitPruchodWebem(arg1:boolean,arg2:boolean):Promise<boolean>;
 
 export function SpustitStahovaniNahledu():Promise<boolean>;
 
@@ -378,6 +392,8 @@ export function ZkontrolovatOdkazy(arg1:string):Promise<main.KontrolaOdkazu>;
 export function ZkontrolovatSoubory():Promise<sbirka.KontrolaSouboru>;
 
 export function ZmrazitChytryVyber(arg1:string):Promise<main.ZmrazeniVyberu>;
+
+export function ZrusitOdmitnutiZWebu():Promise<boolean>;
 
 export function ZrusitPoradiAlba(arg1:number,arg2:string,arg3:string):Promise<boolean>;
 

@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.44.0] – 2026-11-09
+
+### Přidáno
+- **Údržba › Z webu**: „Projít sbírku na webu…“ projde všechny modelky (nebo jen ty s chybějícími údaji) proti
+  Wikidatům, Wikipedii a Boobpedii na pozadí, jeden dotaz za sekundu na server. Průběh je vidět, průchod jde přerušit
+  a dokončit i po restartu (stav v tabulce `nastaveni`) (`pruchod_webem.go`, `frontend/src/app/udrzba-web.js`).
+- Rozdíly proti zdrojům čekají ve frontě po modelkách se stávající hodnotou, návrhem a odkazem na zdroj.
+  Přijímají se po jednom (Doplnit / Opravit), u modelky „přijmout vše“, nebo filtrem po údaji či zdroji
+  „Přijmout zobrazené“ – hromadně jen jednoznačné (zdroje se na hodnotě shodují) a předtím se vytvoří záloha.
+  Přijatý údaj zapíše i odkaz na zdroj.
+- Opravy už vyplněných údajů jsou skryté za volbou „i opravy vyplněných“; odmítnuté hodnoty se pamatují,
+  znovu se nenabízí ani v dalším průchodu a jde je vrátit. Nic se nezapíše bez potvrzení.
+
 ## [1.43.0] – 2026-11-09
 
 ### Přidáno

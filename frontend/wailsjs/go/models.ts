@@ -1249,6 +1249,34 @@ export namespace main {
 	}
 	
 	
+	export class NavrhZWebu {
+	    modelkaId: number;
+	    jmeno: string;
+	    pole: string;
+	    nazev: string;
+	    stavajici: string;
+	    hodnota: string;
+	    zdroj: string;
+	    zdrojNazev: string;
+	    url: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NavrhZWebu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.pole = source["pole"];
+	        this.nazev = source["nazev"];
+	        this.stavajici = source["stavajici"];
+	        this.hodnota = source["hodnota"];
+	        this.zdroj = source["zdroj"];
+	        this.zdrojNazev = source["zdrojNazev"];
+	        this.url = source["url"];
+	    }
+	}
 	
 	export class ObhajobaUrovne {
 	    uroven: number;
@@ -2512,6 +2540,36 @@ export namespace main {
 	        this.hotovo = source["hotovo"];
 	        this.celkem = source["celkem"];
 	        this.chybne = source["chybne"];
+	    }
+	}
+	export class StavPruchoduWebem {
+	    bezi: boolean;
+	    celkem: number;
+	    hotovo: number;
+	    chyb: number;
+	    zbyva: number;
+	    aktualni: string;
+	    jenChybejici: boolean;
+	    zacatek: string;
+	    konec: string;
+	    navrhu: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new StavPruchoduWebem(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.bezi = source["bezi"];
+	        this.celkem = source["celkem"];
+	        this.hotovo = source["hotovo"];
+	        this.chyb = source["chyb"];
+	        this.zbyva = source["zbyva"];
+	        this.aktualni = source["aktualni"];
+	        this.jenChybejici = source["jenChybejici"];
+	        this.zacatek = source["zacatek"];
+	        this.konec = source["konec"];
+	        this.navrhu = source["navrhu"];
 	    }
 	}
 	export class StavUceniTagu {

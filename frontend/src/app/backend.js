@@ -90,6 +90,14 @@ const CTENI = new Set([
     'GetZdraviSbirky',
     'RozdilZalohy',
     'RocnikPodleWikipedie',
+    'GetNavrhyZWebu',
+    'GetStavPruchoduWebem',
+    'PocetOdmitnutychZWebu',
+    // Průchod webem a odmítnutí mění jen stav v nastavení, ne sbírku
+    'SpustitPruchodWebem',
+    'PrerusitPruchodWebem',
+    'OdmitnoutNavrhyZWebu',
+    'ZrusitOdmitnutiZWebu',
     'PlaymatePodleWikipedie',
     'ZkontrolovatOdkazy',
     'GetStavOtisku',
@@ -248,6 +256,14 @@ export const GetZdraviSbirky = /** @type {typeof App.GetZdraviSbirky} */ (obalit
 export const RozdilZalohy = /** @type {typeof App.RozdilZalohy} */ (obalit('RozdilZalohy'));
 export const RocnikPodleWikipedie = /** @type {typeof App.RocnikPodleWikipedie} */ (obalit('RocnikPodleWikipedie'));
 export const PrijmoutJmenoZWikipedie = /** @type {typeof App.PrijmoutJmenoZWikipedie} */ (obalit('PrijmoutJmenoZWikipedie'));
+export const SpustitPruchodWebem = /** @type {typeof App.SpustitPruchodWebem} */ (obalit('SpustitPruchodWebem'));
+export const PrerusitPruchodWebem = /** @type {typeof App.PrerusitPruchodWebem} */ (obalit('PrerusitPruchodWebem'));
+export const GetStavPruchoduWebem = /** @type {typeof App.GetStavPruchoduWebem} */ (obalit('GetStavPruchoduWebem'));
+export const GetNavrhyZWebu = /** @type {typeof App.GetNavrhyZWebu} */ (obalit('GetNavrhyZWebu'));
+export const PrijmoutNavrhyZWebu = /** @type {typeof App.PrijmoutNavrhyZWebu} */ (obalit('PrijmoutNavrhyZWebu'));
+export const OdmitnoutNavrhyZWebu = /** @type {typeof App.OdmitnoutNavrhyZWebu} */ (obalit('OdmitnoutNavrhyZWebu'));
+export const PocetOdmitnutychZWebu = /** @type {typeof App.PocetOdmitnutychZWebu} */ (obalit('PocetOdmitnutychZWebu'));
+export const ZrusitOdmitnutiZWebu = /** @type {typeof App.ZrusitOdmitnutiZWebu} */ (obalit('ZrusitOdmitnutiZWebu'));
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));

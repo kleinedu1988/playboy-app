@@ -20664,3 +20664,25 @@ body.rezim-vyberu #detailView .poster {
 .rw-stav { color: var(--text-muted); margin-right: 4px; }
 .uvod-rok-wiki { all: unset; cursor: pointer; }
 .uvod-rok-wiki:hover, .uvod-rok-wiki:focus-visible { color: var(--accent-text); text-decoration: underline; }
+
+/* Údržba › Z webu (app/udrzba-web.js); stav a pruh převzaté ze Stejných fotek (.us-stav) */
+.uw-stav { flex-wrap: wrap; }
+.uw-tlacitka { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.uw-volba { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: var(--text-muted); cursor: pointer; }
+.uw-filtry { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; }
+.uw-filtry select { padding: 5px 8px; }
+.uw-mezera { flex: 1; }
+.uw-seznam { display: flex; flex-direction: column; gap: 10px; }
+.uw-modelka { border: 1px solid var(--panel-okraj); border-radius: 10px; padding: 10px 12px; background: var(--bg-modal); }
+.uw-modelka header { display: flex; gap: 12px; align-items: baseline; margin-bottom: 6px; }
+.uw-modelka ul { list-style: none; margin: 0; padding: 0; }
+.uw-navrh { display: grid; grid-template-columns: 130px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 5px 0; border-top: 1px solid var(--panel-okraj); font-size: 13px; }
+.uw-pole { color: var(--text-muted); }
+.uw-hodnota s { color: var(--text-muted); }
+.uw-navrh.oprava .uw-hodnota b { color: var(--accent-text); }
+.uw-zdroj { font-size: 12px; white-space: nowrap; }
+.uw-akce { display: flex; gap: 6px; }
+.uw-pata { margin-top: 12px; }
+@media (max-width: 700px) {
+    .uw-navrh { grid-template-columns: 1fr; gap: 4px; }
+}

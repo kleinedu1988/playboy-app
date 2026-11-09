@@ -54,6 +54,8 @@ type App struct {
 	obsah *obsah.Sluzba
 	// Perceptuální otisky fotek pro Stejné fotky (otisky.go); vznikají při prvním použití
 	otiskyFotek *otiskyFotek
+	// Průchod sbírkou na webu (pruchod_webem.go)
+	pruchod *pruchodWebem
 	// Úvodní obrazovka v malém okně (main.go): okno dostane uloženou velikost až na jejím konci (ObnovitOkno)
 	uvod *uvodOkna
 }
@@ -487,6 +489,7 @@ func (a *App) migraceIndexy() error {
 func (a *App) shutdown() {
 	a.ZastavitStahovaniNahledu()
 	a.zastavitOtisky()
+	a.PrerusitPruchodWebem()
 	a.obsah.Zastavit()
 	obsah.UkoncitProstredi()
 	a.pockatNaPozadi()

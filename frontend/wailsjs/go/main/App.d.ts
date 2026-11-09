@@ -109,6 +109,8 @@ export function GetPoctyTagu():Promise<Record<string, number>>;
 
 export function GetPodobneFotky(arg1:number):Promise<Array<sbirka.Fotografie>>;
 
+export function GetPodobnostObsahu(arg1:number):Promise<main.PodobnostObsahu>;
+
 export function GetPokrytiOdhadu():Promise<main.PokrytiOdhadu>;
 
 export function GetPoradiModelek(arg1:Array<number>):Promise<Record<number, number>>;

@@ -1024,6 +1024,22 @@ export namespace main {
 	}
 	
 	
+	export class PodobnostObsahu {
+	    fotek: number;
+	    naFotkach: Record<number, number>;
+	    fotografove: Record<number, Array<string>>;
+	
+	    static createFrom(source: any = {}) {
+	        return new PodobnostObsahu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fotek = source["fotek"];
+	        this.naFotkach = source["naFotkach"];
+	        this.fotografove = source["fotografove"];
+	    }
+	}
 	export class PokrytiOdhadu {
 	    odhadnuto: number;
 	    nehodnocenych: number;

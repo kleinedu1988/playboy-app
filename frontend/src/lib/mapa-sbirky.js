@@ -418,18 +418,45 @@ function dataProPodobnost(modelky) {
     return cachePodobnosti;
 }
 
-// Nejpodobnější modelky k zadané modelce (směs Gowerovy podobnosti a 8-D kódu + lidsky čitelné důvody z Gowera)
-export function podobneModelky(modelkaId, modelky, { pocet = 5 } = {}) {
+// Zkrácené jméno fotografa do důvodu („Stephen Wayda“ → „S. Wayda“)
+const kratkeJmeno = j => {
+    const casti = String(j).trim().split(/\s+/);
+    return casti.length > 1 ? `${casti[0][0]}. ${casti.slice(1).join(' ')}` : casti[0];
+};
+
+// Kolik z podobnosti dá režim „Na fotkách“ fotkám (zbytek údaje) a o kolik zvedne podobnost společný fotograf
+const VAHA_FOTEK = 0.65;
+const BONUS_FOTOGRAFA = 0.04;
+
+// Nejpodobnější modelky k zadané modelce: směs Gowerovy podobnosti a 8-D kódu a lidsky čitelné důvody (společný
+// fotograf napřed, pak rysy z Gowera). obsah = GetPodobnostObsahu (podobnost středů fotek a společní fotografové,
+// null bez něj); rezim 'fotky' přimíchá vizuální příbuznost z fotek (VAHA_FOTEK, kosinus středů přeškálovaný na
+// rozpětí mezi kandidáty) a ukáže jen modelky, u kterých je spočítaná; 'udaje' jen údaje.
+export function podobneModelky(modelkaId, modelky, { pocet = 5, obsah = null, rezim = 'udaje' } = {}) {
     if (!modelky || modelky.length < 2) return [];
     const { zaklad, kod8, jistota } = dataProPodobnost(modelky);
     const idx = zaklad.findIndex(z => z.m.id === modelkaId);
     if (idx < 0) return [];
     const z1 = zaklad[idx];
     const c1 = idx * 8;
+    const naFotkach = obsah?.naFotkach || {};
+    const fotografove = obsah?.fotografove || {};
+    const sFotkami = rezim === 'fotky' && Object.keys(naFotkach).length > 0;
+    // Kosinus středů fotek bývá u všech modelek vysoko (podobné focení); rozhoduje poloha mezi kandidáty
+    let minF = Infinity, maxF = -Infinity;
+    if (sFotkami) {
+        for (const h of Object.values(naFotkach)) {
+            if (h < minF) minF = h;
+            if (h > maxF) maxF = h;
+        }
+    }
+    const rozpetiF = maxF - minF || 1;
     const vysledky = [];
     for (let j = 0; j < zaklad.length; j++) {
         if (j === idx) continue;
         const z2 = zaklad[j];
+        const foto = naFotkach[z2.m.id];
+        if (sFotkami && foto === undefined) continue;
         const { podobnost: gower, duvody } = gowerPodobnost(z1, z2);
         const c2 = j * 8;
         let dot = 0;
@@ -439,12 +466,22 @@ export function podobneModelky(modelkaId, modelky, { pocet = 5 } = {}) {
         // váha kódu se ještě násobí jistotou slabšího z obou vektorů (u modelek blízko středu je kosinus šum)
         const vahaGower = z1.uplnost >= 4 && z2.uplnost >= 4 ? 0.75 : 0.4;
         const vahaKodu = (1 - vahaGower) * Math.min(jistota[idx], jistota[j]);
-        const celkova = (vahaGower * gower + vahaKodu * kos) / (vahaGower + vahaKodu);
+        let celkova = (vahaGower * gower + vahaKodu * kos) / (vahaGower + vahaKodu);
+        const spolecni = fotografove[z2.m.id] || [];
+        if (spolecni.length) celkova = Math.min(1, celkova + BONUS_FOTOGRAFA);
+        const fotoNorm = foto === undefined ? null : (foto - minF) / rozpetiF;
+        if (sFotkami) celkova = (1 - VAHA_FOTEK) * celkova + VAHA_FOTEK * fotoNorm;
+        const textyDuvodu = [
+            ...(sFotkami && fotoNorm >= 0.75 ? ['podobné fotky'] : []),
+            ...(spolecni.length ? [`foto ${spolecni.slice(0, 2).map(kratkeJmeno).join(', ')}`] : []),
+            ...duvody,
+        ];
         vysledky.push({
             id: z2.m.id,
             m: z2.m,
             podobnost: celkova,
-            duvody,
+            naFotkach: foto ?? null,
+            duvody: [...new Set(textyDuvodu)].slice(0, 3),
         });
     }
     vysledky.sort((a, b) => b.podobnost - a.podobnost || (b.m.hodnoceni || 0) - (a.m.hodnoceni || 0) || a.id - b.id);

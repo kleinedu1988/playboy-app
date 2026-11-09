@@ -1,9 +1,9 @@
 // Profil modelky: alba, texty, plakáty, ruční pořadí fotek a zkrácená alba
 import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
-import { nastavitCastOblibenosti } from './oblibenost';
+import { nastavitCastOblibenosti, porovnatNaZacatku } from './oblibenost';
 import { otevritOblibenost } from './prehled';
 import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
-import { GetFotografieModelky, GetOdznakyModelky, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek, SetProfilovyVyrez } from './backend';
+import { GetFotografieModelky, GetOdznakyModelky, GetPodobnostObsahu, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek, SetProfilovyVyrez } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -118,7 +118,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
 
     const tagy = modelka.tags.split(',').map(t => t.trim()).filter(Boolean);
     const dalsiJmena = modelka.dalsiJmena.split(',').map(j => j.trim()).filter(Boolean);
-    const podobne = podobneModelky(modelka.id, vsechny, { pocet: 5 });
+    podobneProfilu = { id: modelka.id, vsechny, obsah: null };
+    const podobne = htmlPodobnych();
 
     // Pásky v rohu fotky: štítek za každé číslo (rok i měsíc), ve kterém se modelka objevila
     const vsechnaVydani = [
@@ -183,19 +184,57 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
             <button type="button" class="tagy-rozbalit hidden" data-rozbalit-tagy aria-expanded="false">Všechny tagy</button>
         </section>` : ''}
         ${htmlOdkazu(modelka.odkazy) ? `<section class="udaje-blok udaje-odkazy"><h4>Odkazy</h4>${htmlOdkazu(modelka.odkazy)}</section>` : ''}
-        ${podobne.length ? `<section class="udaje-blok udaje-podobne">
-            <h4>Podobné modelky <button type="button" class="link udaje-na-mape" data-na-mape="${modelka.id}" title="Zobrazit modelku a její okolí na Mapě sbírky ve Statistikách">Na mapě →</button></h4>
-            <div class="podobne-seznam">${podobne.map(p => `<button type="button" class="podobna-polozka" data-modelka="${p.id}" title="Otevřít profil ${esc(p.m.jmeno)}">
-                <span class="podobna-hlava"><span class="podobna-jmeno">${esc(p.m.jmeno)}</span>${p.m.hodnoceni ? `<span class="podobna-srd">${znakySrdicek(p.m.hodnoceni)}</span>` : ''}</span>
-                ${p.duvody.length ? `<span class="podobna-duvody">${esc(p.duvody.join(' · '))}</span>` : ''}
-            </button>`).join('')}</div>
-        </section>` : ''}
+        ${podobne ? `<section class="udaje-blok udaje-podobne" data-podobne>${podobne}</section>` : ''}
     `;
     // Tlačítko rozbalení tagů jen tehdy, když se do dvou řádků nevejdou
     const poleTagu = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.udaje-tagy .profile-tags'));
     if (poleTagu) modelHeader.querySelector('[data-rozbalit-tagy]').classList.toggle('hidden', poleTagu.scrollHeight <= poleTagu.clientHeight + 2);
 
-    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitOdznaky(modelka.id)]);
+    await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka), doplnitOdznaky(modelka.id), doplnitPodobne(modelka.id, moje)]);
+}
+
+// ——— Podobné modelky (lib/mapa-sbirky.js podobneModelky) ———
+// Napřed z údajů (hned), po odpovědi backendu (GetPodobnostObsahu) i se společnými fotografy a s přepínačem
+// Údaje / Na fotkách, když má modelka dost fotek s vektorem obsahu. Zvolený režim se pamatuje.
+const KLIC_REZIMU_PODOBNYCH = 'podobneModelkyRezim';
+let rezimPodobnych = (() => { try { return localStorage.getItem(KLIC_REZIMU_PODOBNYCH) === 'fotky' ? 'fotky' : 'udaje'; } catch { return 'udaje'; } })();
+let podobneProfilu = { id: 0, vsechny: [], obsah: null };
+
+const lzeNaFotkach = obsah => Boolean(obsah?.fotek >= 3 && Object.keys(obsah.naFotkach || {}).length);
+
+function htmlPodobnych() {
+    const { id, vsechny, obsah } = podobneProfilu;
+    const naFotkach = lzeNaFotkach(obsah);
+    const rezim = naFotkach ? rezimPodobnych : 'udaje';
+    const podobne = podobneModelky(id, vsechny, { pocet: 5, obsah, rezim });
+    if (!podobne.length) return '';
+    const prepinac = naFotkach ? `<div class="podobne-rezim" role="group" aria-label="Podobné podle">${[['udaje', 'Údaje', 'Podobné postavou, údaji a obdobím'], ['fotky', 'Na fotkách', 'Přimíchá vizuální podobnost fotek (obsah fotek)']].map(([k, n, t]) =>
+        `<button type="button" class="${k === rezim ? 'on' : ''}" data-podobne-rezim="${k}" aria-pressed="${k === rezim}" title="${t}">${n}</button>`).join('')}</div>` : '';
+    return `<h4>Podobné modelky <button type="button" class="link udaje-na-mape" data-na-mape="${id}" title="Zobrazit modelku a její okolí na Mapě sbírky ve Statistikách">Na mapě →</button></h4>
+        ${prepinac}
+        <div class="podobne-seznam">${podobne.map(p => `<div class="podobna-polozka">
+            <button type="button" class="podobna-otevrit" data-modelka="${p.id}" title="Otevřít profil ${esc(p.m.jmeno)}">
+                <span class="podobna-hlava"><span class="podobna-jmeno">${esc(p.m.jmeno)}</span>${p.m.hodnoceni ? `<span class="podobna-srd">${znakySrdicek(p.m.hodnoceni)}</span>` : ''}</span>
+                ${p.duvody.length ? `<span class="podobna-duvody">${esc(p.duvody.join(' · '))}</span>` : ''}
+            </button>
+            <button type="button" class="podobna-porovnat" data-porovnat-s="${p.id}" title="Porovnat s touto: obě modelky vedle sebe v Hodnocení › Porovnat" aria-label="Porovnat s ${esc(p.m.jmeno)}">⚔</button>
+        </div>`).join('')}</div>`;
+}
+
+function prekreslitPodobne() {
+    const misto = /** @type {HTMLElement | null} */ (modelHeader.querySelector('[data-podobne]'));
+    if (!misto) return;
+    const html = htmlPodobnych();
+    misto.innerHTML = html;
+    misto.hidden = !html;
+}
+
+async function doplnitPodobne(id, moje) {
+    let obsah = null;
+    try { obsah = await GetPodobnostObsahu(id); } catch { return; }
+    if (moje !== stav.cisloNacteni || podobneProfilu.id !== id) return;
+    podobneProfilu.obsah = obsah;
+    prekreslitPodobne();
 }
 
 // Odznaky síně slávy pod pořadím (jen získané) a tituly sezón (♛ Favoritka, ♥ Miláček – název sezóny, nejvýš tři
@@ -636,6 +675,27 @@ export function pripravit() {
         const naMape = /** @type {HTMLElement | null} */ (e.target.closest('[data-na-mape]'));
         if (naMape) {
             otevritMapuModelky(parseInt(naMape.dataset.naMape, 10));
+            return;
+        }
+        const rezim = /** @type {HTMLElement | null} */ (e.target.closest('[data-podobne-rezim]'));
+        if (rezim) {
+            rezimPodobnych = rezim.dataset.podobneRezim === 'fotky' ? 'fotky' : 'udaje';
+            try { localStorage.setItem(KLIC_REZIMU_PODOBNYCH, rezimPodobnych); } catch { /* jen pro toto spuštění */ }
+            prekreslitPodobne();
+            /** @type {HTMLElement | null} */ (modelHeader.querySelector(`[data-podobne-rezim="${rezimPodobnych}"]`))?.focus();
+            return;
+        }
+        // ⚔ u podobné modelky: dvojice jde do Hodnocení › Porovnat jako první (obsluha data-zobrazeni-prehledu
+        // v prehled.js Porovnat otevře, ať je Hodnocení načtené, nebo ne)
+        const porovnat = /** @type {HTMLElement | null} */ (e.target.closest('[data-porovnat-s]'));
+        if (porovnat) {
+            porovnatNaZacatku(podobneProfilu.id, parseInt(porovnat.dataset.porovnatS, 10));
+            const b = document.createElement('button');
+            b.hidden = true;
+            b.dataset.zobrazeniPrehledu = 'porovnat';
+            document.querySelector('main')?.append(b);
+            b.click();
+            b.remove();
             return;
         }
         // Tagy: rozbalení a sbalení dlouhého seznamu

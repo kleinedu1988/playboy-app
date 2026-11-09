@@ -3,11 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (9. 11. 2026): verze 1.31.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.31 jsou hotové: mezipaměť náhledů na
+**Stav (9. 11. 2026): verze 1.32.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.32 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
-(1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4) Mapa sbírky ve Statistikách (1.30.0) a Síň slávy jako část Modelek s hero záhlavím (1.31.0).
+(1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
+Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
+příbuzností z fotek a porovnáním (1.32.0).
 
 ---
 
@@ -58,14 +60,14 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 | 13 | 0.90–0.91 | ✅ Hotovo | Beta – kandidát na vydání | Ověření v reálném provozu, profilový ořez z fotky (0.91.0) |
 | **1.0** | **1.0.0** | **✅ Hotovo** | **První stabilní vydání** | Spolehlivá, otestovaná a zdokumentovaná verze |
 | **1.6–1.29** | **1.6–1.29** | **✅ Hotovo** | **Náhledy, Obsah fotek, Postřehy, Dnešní výběr** | Disková cache náhledů, CLIP + NudeNet + CZ textový model, odhady srdíček a tagů, styly, kolekce, Ideální modelka, Dnešní výběr, Postřehy 1–5 |
-| **Etapa A** | **1.30–1.33** | 📋 Plán | **Prohloubení práce s modely, fotkami a Statistikami** | Mapa sbírky (PCA / autoenkodér), Stejné a podobné fotky, Křivky a srovnání období, Podobné modelky s vysvětlením |
-| **Etapa B** | **1.34–1.37** | 📋 Plán | **Rychlé plnění sbírky a chytré hledání** | Rychlé přidávání a zásobník fotek, Průvodce přidáním čísla, Chytré hledání se zápisem a našeptáváním, Chytré výběry |
-| **Etapa C** | **1.38–1.42** | 📋 Plán | **Spolupráce s Google Diskem a obohacení obsahu** | Google Disk v aplikaci, Vkládání z Disku, Úplnost sbírky a Wikidata, Propojení čísla a modelky, Bohatý text a obousměrné odkazy |
-| **Etapa D** | **1.43–1.46** | 📋 Plán | **Prohlížení, údržba a zábava** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy, Kvíz „Poznej playmate“, Rozšířené tiskové sestavy |
+| **Etapa A** | **1.30–1.34** | 🚧 Probíhá | **Prohloubení práce s modely, fotkami a Statistikami** | Mapa sbírky (PCA / autoenkodér), Síň slávy v Modelkách, Podobné modelky s vysvětlením, Stejné a podobné fotky, Křivky a srovnání období |
+| **Etapa B** | **1.35–1.38** | 📋 Plán | **Rychlé plnění sbírky a chytré hledání** | Rychlé přidávání a zásobník fotek, Průvodce přidáním čísla, Chytré hledání se zápisem a našeptáváním, Chytré výběry |
+| **Etapa C** | **1.39–1.43** | 📋 Plán | **Spolupráce s Google Diskem a obohacení obsahu** | Google Disk v aplikaci, Vkládání z Disku, Úplnost sbírky a Wikidata, Propojení čísla a modelky, Bohatý text a obousměrné odkazy |
+| **Etapa D** | **1.44–1.47** | 📋 Plán | **Prohlížení, údržba a zábava** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy, Kvíz „Poznej playmate“, Rozšířené tiskové sestavy |
 
 ---
 
-## Dokončeno v řadě 1.0–1.29 ✅
+## Dokončeno v řadě 1.0–1.32 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -92,15 +94,18 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
   - Inkrementální zápis `vektory.bin`, hodnotové mapy `[18]uint8` bez pointerů pro GC, streamování náhledů přes `http.ServeContent`, připravené SQL dotazy (`sql.Stmt`).
   - Odstranění $O(N^2)$ přepojování `IntersectionObserver`u, `w400` náhledy v rozmazaném pozadí místo 4K textur, úklid časovačů a pozorovatelů.
 
+- **1.30 – Mapa sbírky ve Statistikách** (`frontend/src/lib/mapa-sbirky.js`): PCA s pevnou orientací os, Procrustovo zarovnání, barevné režimy, laso jako výběr pro ostatní grafy. Zbývá z plánu: autoenkodér, `<canvas>` nad 2 000 bodů, míra posunu a „Přepočítat od začátku“.
+- **1.31 – Síň slávy v Modelkách s hero záhlavím a první Podobné modelky**: Síň slávy jako část Modelek s herem a lepivým pásem pohledů, pás karet součástí hera ve Statistikách i Síni, Podobné modelky v profilu s důvody a „Na mapě →“, legenda Mapy sbírky jako rychlý výběr.
+- **1.32 – Podobné modelky s vysvětlením a vizuální příbuzností** (`podobne_modelky.go`, `frontend/src/lib/mapa-sbirky.js`): společný fotograf v důvodech, přepínač Údaje / Na fotkách (kosinová podobnost středů vektorů obsahu fotek, aspoň 3 fotky s vektorem), ⚔ Porovnat s touto do Hodnocení › Porovnat.
 ---
 
-## Plán dalšího rozvoje (1.30–1.46)
+## Plán dalšího rozvoje (1.30–1.47)
 
 Pořadí etap navazuje na to, co je v aplikaci čerstvě vybudované (vektory obsahu fotek, statistické jádro a postřehy), a postupně přechází ke zrychlení každodenního plnění sbírky, chytrému hledání a propojení s Google Diskem a Wikidaty.
 
 ---
 
-### Etapa A – Prohloubení práce s modely, fotkami a Statistikami (1.30–1.33)
+### Etapa A – Prohloubení práce s modely, fotkami a Statistikami (1.30–1.34)
 
 Tato etapa přímo zhodnocuje připravené statistické jádro (`statistika.js`, `postrehy.js`), chytré učení (`kontrola_uceni.go`) a obrazové vektory (`internal/obsah`). Nevyžaduje žádnou změnu schématu databáze ani formátu exportu.
 
@@ -117,30 +122,14 @@ Tato etapa přímo zhodnocuje připravené statistické jádro (`statistika.js`,
 
 **Hotovo, když:** mapa se ukáže do 100 ms, laso plynule filtruje Statistiky, po přidání 30 modelek se staré body posunou o < 3 % a stejná data dají vždy stejnou mapu.
 
-#### 1.31 – Stejné a podobné fotky v Údržbě (perceptuální otisky + CLIP)
+#### 1.31 – Síň slávy v Modelkách s hero záhlavím a první Podobné modelky ✅ (9. 11. 2026)
 
-**Cíl:** najít v Údržbě stejnou fotku nahranou na Google Disk víckrát (s jiným ID) i téměř shodné záběry ze stejného focení. Využije kombinaci rychlého obrazového otisku (dHash + pHash z náhledů `w400`) pro přesné a oříznuté kopie a existujících CLIP vektorů (`internal/obsah`) pro vizuálně téměř totožné záběry. Bez změny schématu i exportu (`~/.cache/playboy-app/otisky.bin`).
+Mimo původní plán: Síň slávy se přesunula mezi části Modelek (Profily · Galerie · Statistiky · Síň slávy) a dostala hero
+záhlaví jako Profily a Statistiky; pás karet je ve Statistikách i v Síni součástí hera. Z 1.30 přibyla legenda Mapy sbírky
+jako rychlý výběr, „Na mapě →“ v profilu a 8-D kód jako doplněk Gowerovy podobnosti, z 1.32 blok Podobné modelky
+v profilu s důvody podobnosti.
 
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Perceptuální otisky `otisky.go` | 64bitový dHash + pHash v čistém Go počítaný při průchodu náhledů (nebo dávkově na pozadí s respektem k `pockatNaKlid`), binární uložení v cache | S–M |
-| 2 | Skupiny duplicit v Údržbě | Filtr v Údržbě „Stejné fotky“: seskupení podle Hammingovy vzdálenosti otisků a kosinové podobnosti CLIP vektorů ($\ge 0{,}985$), porovnání vedle sebe (rozlišení, srdíčka, tagy, typ), „Odebrat duplicitní“ s „Vrátit“, „V pořádku (nejsou stejné)“ v `nastaveni` | M |
-| 3 | Kontrola při vkládání | Při přidávání nových fotek okamžité upozornění, pokud otisk odpovídá již uložené fotce u modelky nebo v čísle | S |
-
-**Hotovo, když:** přeuložená nebo mírně oříznutá kopie fotky se v Údržbě spáruje do skupiny, porovnání umožní jedním klikem nechat kvalitnější kus a potvrzené výjimky se znovu nehlásí.
-
-#### 1.32 – Křivky v čase a srovnání dvou období ve Statistikách
-
-**Cíl:** na grafech v čase nabídnout hladkou křivku trendu (LOESS / klouzavý medián s pásmem kvartilů Q1–Q3) a umožnit přímé srovnání dvou libovolných období (např. 70. léta vs 90. léta) vedle sebe s využitím testů z `postrehy.js`.
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Pásmo Q1–Q3 a hladká křivka | Přepínač nad grafem v čase „Sloupce / Křivka a rozpětí“: medián vyhlazený v okně a stínované pásmo 25.–75. percentilu (pro podíly Wilsonův 95% interval spolehlivosti) | M |
-| 2 | Srovnání období A vs B | Režim „Porovnat období“ ve Statistikách: výběr dvou rozsahů let (nebo předvoleb desetiletí) a automatický výpis průkazných rozdílů mezi obdobími A a B (Mann–Whitney, Fisher, Benjamini–Hochberg) | M |
-
-**Hotovo, když:** uživatel jedním klikem přepne sloupcový graf na křivku s kvartilovým pásmem a může porovnat libovolná dvě desetiletí se statisticky podloženým shrnutím rozdílů.
-
-#### 1.33 – Podobné modelky s vysvětlením a vizuální příbuzností
+#### 1.32 – Podobné modelky s vysvětlením a vizuální příbuzností ✅ (9. 11. 2026)
 
 **Cíl:** rozšířit sekci „Podobné modelky“ v detailu profilu o lidsky čitelné důvody podobnosti a o volitelné přimíchání vizuální podobnosti z fotek (průměrný CLIP vektor a vzhled modelky z `internal/obsah`).
 
@@ -152,13 +141,36 @@ Tato etapa přímo zhodnocuje připravené statistické jádro (`statistika.js`,
 
 **Hotovo, když:** každá karta podobné modelky jasně říká, v čem jsou si blízké, a při spočítaném obsahu fotek lze hledat i vizuálně podobné modelky.
 
+#### 1.33 – Stejné a podobné fotky v Údržbě (perceptuální otisky + CLIP)
+
+**Cíl:** najít v Údržbě stejnou fotku nahranou na Google Disk víckrát (s jiným ID) i téměř shodné záběry ze stejného focení. Využije kombinaci rychlého obrazového otisku (dHash + pHash z náhledů `w400`) pro přesné a oříznuté kopie a existujících CLIP vektorů (`internal/obsah`) pro vizuálně téměř totožné záběry. Bez změny schématu i exportu (`~/.cache/playboy-app/otisky.bin`).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Perceptuální otisky `otisky.go` | 64bitový dHash + pHash v čistém Go počítaný při průchodu náhledů (nebo dávkově na pozadí s respektem k `pockatNaKlid`), binární uložení v cache | S–M |
+| 2 | Skupiny duplicit v Údržbě | Filtr v Údržbě „Stejné fotky“: seskupení podle Hammingovy vzdálenosti otisků a kosinové podobnosti CLIP vektorů ($\ge 0{,}985$), porovnání vedle sebe (rozlišení, srdíčka, tagy, typ), „Odebrat duplicitní“ s „Vrátit“, „V pořádku (nejsou stejné)“ v `nastaveni` | M |
+| 3 | Kontrola při vkládání | Při přidávání nových fotek okamžité upozornění, pokud otisk odpovídá již uložené fotce u modelky nebo v čísle | S |
+
+**Hotovo, když:** přeuložená nebo mírně oříznutá kopie fotky se v Údržbě spáruje do skupiny, porovnání umožní jedním klikem nechat kvalitnější kus a potvrzené výjimky se znovu nehlásí.
+
+#### 1.34 – Křivky v čase a srovnání dvou období ve Statistikách
+
+**Cíl:** na grafech v čase nabídnout hladkou křivku trendu (LOESS / klouzavý medián s pásmem kvartilů Q1–Q3) a umožnit přímé srovnání dvou libovolných období (např. 70. léta vs 90. léta) vedle sebe s využitím testů z `postrehy.js`.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Pásmo Q1–Q3 a hladká křivka | Přepínač nad grafem v čase „Sloupce / Křivka a rozpětí“: medián vyhlazený v okně a stínované pásmo 25.–75. percentilu (pro podíly Wilsonův 95% interval spolehlivosti) | M |
+| 2 | Srovnání období A vs B | Režim „Porovnat období“ ve Statistikách: výběr dvou rozsahů let (nebo předvoleb desetiletí) a automatický výpis průkazných rozdílů mezi obdobími A a B (Mann–Whitney, Fisher, Benjamini–Hochberg) | M |
+
+**Hotovo, když:** uživatel jedním klikem přepne sloupcový graf na křivku s kvartilovým pásmem a může porovnat libovolná dvě desetiletí se statisticky podloženým shrnutím rozdílů.
+
 ---
 
-### Etapa B – Rychlé plnění sbírky a chytré hledání (1.34–1.37)
+### Etapa B – Rychlé plnění sbírky a chytré hledání (1.35–1.38)
 
 Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové modelky a nových fotek na minimum a zpřístupnit chytré dotazy napříč celou aplikací.
 
-#### 1.34 – Rychlé přidávání a zásobník fotek
+#### 1.35 – Rychlé přidávání a zásobník fotek
 
 **Cíl:** zadat novou modelku s fotkami a výskytem v jednom okně na pár kláves a mít v detailu modelky trvalý „zásobník“ na průběžné odkládání odkazů na fotky.
 
@@ -170,7 +182,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** nová modelka s číslem a 10 fotkami je uložená bez přepínání pohledů a rozpracovaný zásobník odkazů se při překliknutí jinam neztratí.
 
-#### 1.35 – Průvodce přidáním celého čísla
+#### 1.36 – Průvodce přidáním celého čísla
 
 **Cíl:** přidat celé číslo časopisu (obálka, Playmate měsíce, další modelky na obálce a v čísle, rozhovor, fotky) v jednom souvislém průvodci se živou kontrolou úplnosti a tlačítkem „Vrátit přidání“.
 
@@ -182,7 +194,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** celé číslo s obálkou, Playmate měsíce, rozhovorem a fotkami vznikne v jednom okně bez překlikávání a lze ho jedním klikem vrátit.
 
-#### 1.36 – Chytré hledání se zápisem a našeptáváním
+#### 1.37 – Chytré hledání se zápisem a našeptáváním
 
 **Cíl:** rozšířit vyhledávací pole v Galerii modelek, Galerii fotek a v `Ctrl+K` o přirozené české výrazy s čísly, obdobími, hodnocením a vlastnostmi (`výška > 175`, `pas <= 60`, `90. léta`, `pmoy`, `česká edice`, `5*`, `bez fotek`), s rozkladem na odznaky pod polem a našeptáváním.
 
@@ -194,7 +206,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** dotaz `blond výška > 175 90. léta 4*+` okamžitě vyfiltruje modelky, ukáže 4 srozumitelné čipy pod polem a každou podmínku lze jedním klikem odebrat.
 
-#### 1.37 – Chytré výběry fotek a modelek
+#### 1.38 – Chytré výběry fotek a modelek
 
 **Cíl:** uložit libovolný filtr nebo chytrý dotaz (včetně sémantického hledání podle obsahu fotek a tagů) jako živý „Chytrý výběr“ s ikonou ⚡, který se automaticky aktualizuje s každou novou modelkou či fotkou.
 *(Pozn.: Lze uložit do tabulky `nastaveni` pod klíčem `chytre_vybery` a při exportu do pole v `nastaveni`, takže nevyžaduje změnu schématu DB č. 12 ani formátu exportu č. 8!)*
@@ -208,9 +220,9 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 ---
 
-### Etapa C – Spolupráce s Google Diskem a obohacení obsahu (1.38–1.42)
+### Etapa C – Spolupráce s Google Diskem a obohacení obsahu (1.39–1.43)
 
-#### 1.38 – Google Disk v aplikaci (OAuth 2.0 + prohlížeč složek)
+#### 1.39 – Google Disk v aplikaci (OAuth 2.0 + prohlížeč složek)
 
 **Cíl:** volitelné přihlášení ke Google Disku (`golang.org/x/oauth2`, rozsah `drive.readonly` / `drive.file`) s prohlížením vlastní složky Playboy přímo v okně programu, bez nutnosti ručně kopírovat odkazy z prohlížeče. Návrh v [NAVRH-GOOGLE-DISK.md](docs/NAVRH-GOOGLE-DISK.md).
 
@@ -221,9 +233,9 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** přihlášený uživatel vidí své složky na Disku přímo v programu a pozná, které fotky už v databázi jsou.
 
-#### 1.39 – Vkládání fotek a obálek přímo z Disku
+#### 1.40 – Vkládání fotek a obálek přímo z Disku
 
-**Cíl:** napojit prohlížeč Google Disku (1.38) na zásobník fotek v detailu modelky, na obálku čísla a na hromadný import složky.
+**Cíl:** napojit prohlížeč Google Disku (1.39) na zásobník fotek v detailu modelky, na obálku čísla a na hromadný import složky.
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
@@ -232,7 +244,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** fotky celé modelky nebo čísla lze vybrat z Disku v jednom okně bez kopírování URL adres.
 
-#### 1.40 – Úplnost sbírky a doplnění z Wikidat (na vyžádání)
+#### 1.41 – Úplnost sbírky a doplnění z Wikidat (na vyžádání)
 
 **Cíl:** v detailu čísla ukázat „Co ještě chybí k úplnosti“ a v detailu modelky nabídnout tlačítko „Doplnit z Wikidat…“, které najde chybějící údaje (datum/místo narození, výšku, barvu vlasů/očí) a předloží je uživateli k potvrzení položku po položce.
 
@@ -244,7 +256,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** kliknutí na „Doplnit z Wikidat…“ u modelky nabídne nalezené chybějící údaje s odkazem na zdroj a uloží jen zaškrtnuté položky.
 
-#### 1.41 – Propojení čísla a modelky při čtení
+#### 1.42 – Propojení čísla a modelky při čtení
 
 **Cíl:** propojit detail čísla a profil modelky tak, aby z čísla byly přímo vidět fotky z toho vydání a z profilu modelky šlo procházet její čísla s obálkami a sousedními vydáními.
 
@@ -255,7 +267,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** z detailu čísla lze rovnou prohlížet všechny fotky vydání a v profilu modelky jsou u výskytů živé obálky s kontextem čísla.
 
-#### 1.42 – Bohatý text a obousměrné odkazy (`[[Jméno]]`, `[[MM/RRRR]]`)
+#### 1.43 – Bohatý text a obousměrné odkazy (`[[Jméno]]`, `[[MM/RRRR]]`)
 
 **Cíl:** pohodlná lišta pro formátování poznámek a životopisů s živým náhledem a obousměrné propojování záznamů pomocí `[[Jméno modelky]]`, `[[06/1995]]` nebo `[[Fotograf]]` s přehledem „Zmiňována v…“.
 
@@ -269,9 +281,9 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 ---
 
-### Etapa D – Prohlížení, údržba a zábava (1.43–1.46)
+### Etapa D – Prohlížení, údržba a zábava (1.44–1.47)
 
-#### 1.43 – Režim čtení a prezentace čísla
+#### 1.44 – Režim čtení a prezentace čísla
 
 **Cíl:** prohlédnout si celé číslo nebo profil modelky jako čistou redakční dvoustranu v celoobrazovkovém režimu (obálka → Playmate měsíce → další modelky → rozhovor a články → fotky) s volitelným automatickým posunem.
 
@@ -282,7 +294,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** celé číslo lze projít od obálky po poslední fotku pouze mezerníkem nebo nechat běžet jako prezentaci.
 
-#### 1.44 – Zdraví sbírky, připomínka zálohy a porovnání se zálohou
+#### 1.45 – Zdraví sbírky, připomínka zálohy a porovnání se zálohou
 
 **Cíl:** v Údržbě ukázat souhrnnou kartu „Zdraví sbírky“, upozornit na zastaralou zálohu a před obnovením ze zálohy přesně vypsat, co by se změnilo (rozdíl oproti současné databázi).
 
@@ -293,7 +305,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** uživatel před obnovením zálohy přesně vidí seznam rozdílů a v Údržbě má na jednom místě přehled o technickém stavu celé sbírky.
 
-#### 1.45 – Kvíz „Poznej playmate“
+#### 1.46 – Kvíz „Poznej playmate“
 
 **Cíl:** odlehčená znalostní hra nad vlastní sbírkou přímo v aplikaci (statistiky a Leitnerovy krabičky uložené v `nastaveni`, bez změny schématu DB).
 
@@ -304,7 +316,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** deset otázek lze odehrát čistě z klávesnice, po hře se zobrazí přehled chyb s proklikem na profily a statistiky přežijí restart.
 
-#### 1.46 – Rozšířené tiskové sestavy (katalog chybějících čísel a kapesní seznam)
+#### 1.47 – Rozšířené tiskové sestavy (katalog chybějících čísel a kapesní seznam)
 
 **Cíl:** vylepšit tiskové výstupy pro reálné použití v terénu (antikvariáty, burzy): kapesní seznam sháněných čísel na jednu stránku A4 a tiskový arch ročníku s obálkami.
 
@@ -329,12 +341,12 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 - Dvě modelky stejného jména se liší datem narození; data narození a úmrtí RRRR, RRRR-MM nebo RRRR-MM-DD;
   hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý klíč (0.18.0–0.30.0).
 - Vzhled: střídmý, jeden růžový akcent, písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1).
-- Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.38–1.39).
+- Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.39–1.40).
 - Malé náhledy smí program ukládat na disk jako mezipaměť (1.6); originály a velké fotky zůstávají jen na Disku.
 - 1.0.0 po 14 dnech používání bety bez nové chyby (21. 10. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
   každý krok a opravu v tématu; MAJOR = velký milník, kompatibilitu dat hlídá verze schématu a exportu.
-- Editor textů (1.42): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
-- Wikidata (1.40) jen na kliknutí a s potvrzením každého údaje.
+- Editor textů (1.43): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
+- Wikidata (1.41) jen na kliknutí a s potvrzením každého údaje.
 
 ## Nedělat
 

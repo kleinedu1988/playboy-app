@@ -7,6 +7,17 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.32.0] – 2026-11-09
+
+### Přidáno
+- **Podobné modelky na fotkách (`podobne_modelky.go`, `GetPodobnostObsahu`)**: vizuální příbuznost modelek jako kosinová podobnost středů vektorů obsahu (CLIP) jejich fotek (jen z aspoň 3 fotek s vektorem, fotky sdíleného alba se počítají všem jeho modelkám); středy se drží v paměti, dokud se nezmění fotky, alba, fotografové ani počet vektorů.
+- **Přepínač Údaje / Na fotkách v profilu › Podobné modelky** (`frontend/src/lib/mapa-sbirky.js`, `frontend/src/app/profil.js`): režim Na fotkách z 65 % rozhoduje podobnost fotek (přeškálovaná na rozpětí mezi kandidáty) a ukazuje jen modelky se spočítanými fotkami; nejbližší mají důvod „podobné fotky“. Přepínač se ukáže, jen když modelka má dost fotek s vektorem, a režim se pamatuje.
+- **Společný fotograf jako důvod podobnosti** („foto S. Wayda“, i jiný zápis jména, alba s víc fotografy a sdílená alba); podobnost mírně zvedne.
+- **⚔ Porovnat s touto**: dvojice jde do Hodnocení › Porovnat jako první, ať je Hodnocení načtené, nebo ne.
+
+### Změněno
+- Roadmapa přečíslovaná po 1.31 (Síň slávy mimo plán): Podobné modelky 1.32, Stejné a podobné fotky 1.33, Křivky 1.34, etapy B–D 1.35–1.47.
+
 ## [1.31.0] – 2026-11-09
 
 ### Přidáno

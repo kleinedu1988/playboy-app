@@ -120,6 +120,11 @@ function ukazatCastOblibenosti(klic) {
     obnovitPanelHodnoceni();
     if (stav.oblibenostCast === 'slava' && cast('slava')) nacistSinSlavy(cast('slava'));
     if (stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'fotky' && cast('galerie')) nacistGalerii(cast('galerie'));
+    // Dvojice z profilu (Podobné modelky) jde první
+    if (stav.oblibenostCast === 'hodnoceni' && stav.hodnoceniPohled === 'porovnat' && vlozitDvojiciNaZacatek()) {
+        zobrazitNavrhPodPasy(null);
+        vykreslitDvojici();
+    }
     // Ze Síně slávy (otevřené bez fronty dvojic) do Hodnocení: dvojice se načtou teď
     if (stav.oblibenostCast === 'hodnoceni' && !fronta.length && !doplnovani) doplnitFrontu().then(() => vykreslitDvojici());
     // Pořadí se mezitím přepočítalo: složí se teď; při odchodu z něj se ukázaný počet řádků vrátí na začátek
@@ -206,6 +211,7 @@ export async function nacistOblibenost(sekce) {
     // Síň slávy dvojice k porovnání nepotřebuje: fronta se doplní, až se ukáže Hodnocení (ukazatCastOblibenosti)
     const slava = stav.oblibenostCast === 'slava';
     await Promise.all([obnovitPrehled(), fronta.length || slava ? null : doplnitFrontu()]);
+    if (!slava && stav.hodnoceniPohled === 'porovnat' && vlozitDvojiciNaZacatek()) zobrazitNavrhPodPasy(null);
     vykreslitDvojici();
 }
 
@@ -1123,6 +1129,24 @@ async function vratit() {
     zobrazitNavrhPodPasy(null);
     vykreslitDvojici();
     obnovitPrehled();
+}
+
+// ——— Dvojice zvenku (profil › Podobné modelky › ⚔) ———
+// Dvojice se poznamená a půjde do Porovnat jako první, až se Porovnat ukáže (je-li Hodnocení načtené) nebo načte;
+// stejná dvojice čekající ve frontě se nezopakuje
+let dvojiceNaZacatek = null;
+export function porovnatNaZacatku(a, b, duvod = 'Podobné modelky') {
+    dvojiceNaZacatek = { a, b, duvod, druh: '', tema: '' };
+}
+function vlozitDvojiciNaZacatek() {
+    const d = dvojiceNaZacatek;
+    if (!d) return false;
+    dvojiceNaZacatek = null;
+    if (!modelka(d.a) || !modelka(d.b)) return false;
+    const ista = x => (x.a === d.a && x.b === d.b) || (x.a === d.b && x.b === d.a);
+    fronta = [d, ...fronta.filter(x => !ista(x))];
+    nacistNahledy([d.a, d.b]).then(() => { if (fronta[0] === d) vykreslitDvojici(); });
+    return true;
 }
 
 // ——— Rozhodnout teď ———

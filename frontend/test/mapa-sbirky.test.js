@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
     bodVMnohouhelniku,
     gowerPodobnost,
+    podobneModelky,
     pripravitPriznakyMapy,
     procrustes2D,
     skupinaVlasu,
@@ -240,4 +241,31 @@ test('vypocitatMapuSbirky: výkon pro 500 modelek', () => {
     const trvani = performance.now() - t0;
     assert.equal(res.body.length, 500);
     assert.ok(trvani < 500, `Výpočet mapy pro 500 modelek trval ${trvani.toFixed(1)} ms`);
+});
+
+test('podobneModelky: společný fotograf v důvodech, režim Na fotkách přimíchá podobnost fotek', () => {
+    const modelky = [
+        vytvorModelku(1),
+        vytvorModelku(2, { vyskaCm: 171 }),
+        vytvorModelku(3, { vyskaCm: 160, vahaKg: 48, vlasyBarva: 'Černé', narodnost: 'Kanada', vydani: ['1972-03'], centerfoldy: ['1972-03'] }),
+        vytvorModelku(4, { vyskaCm: 182, vahaKg: 62, vlasyBarva: 'Hnědé', vydani: ['2010-01'], centerfoldy: ['2010-01'] }),
+    ];
+    const udaje = podobneModelky(1, modelky, { pocet: 3 });
+    assert.equal(udaje[0].id, 2, 'podle údajů je nejblíž téměř shodná modelka');
+    assert.ok(!udaje.some(p => p.id === 1), 'sama sebe nenabízí');
+
+    const obsah = { fotek: 5, naFotkach: { 2: 0.70, 3: 0.95, 4: 0.80 }, fotografove: { 4: ['Stephen Wayda'] } };
+    const sFotografem = podobneModelky(1, modelky, { pocet: 3, obsah, rezim: 'udaje' });
+    const ctyrka = sFotografem.find(p => p.id === 4);
+    assert.equal(ctyrka.duvody[0], 'foto S. Wayda', 'společný fotograf je první důvod');
+    assert.ok(ctyrka.podobnost > udaje.find(p => p.id === 4).podobnost, 'společný fotograf podobnost zvedne');
+
+    const naFotkach = podobneModelky(1, modelky, { pocet: 3, obsah, rezim: 'fotky' });
+    assert.equal(naFotkach[0].id, 3, 'na fotkách vede modelka s nejpodobnějšími fotkami');
+    assert.equal(naFotkach[0].duvody[0], 'podobné fotky');
+
+    // Bez spočítaných fotek se režim Na fotkách chová jako Údaje a modelky bez středu fotek v něm nejsou
+    assert.deepEqual(podobneModelky(1, modelky, { pocet: 3, obsah: { fotek: 0, naFotkach: {}, fotografove: {} }, rezim: 'fotky' }).map(p => p.id), udaje.map(p => p.id));
+    const castecne = podobneModelky(1, modelky, { pocet: 3, obsah: { fotek: 5, naFotkach: { 3: 0.9 }, fotografove: {} }, rezim: 'fotky' });
+    assert.deepEqual(castecne.map(p => p.id), [3]);
 });

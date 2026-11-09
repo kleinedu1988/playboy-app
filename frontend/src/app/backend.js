@@ -82,6 +82,7 @@ const CTENI = new Set([
     // Obsah fotek: model a vektory jsou mimo databázi sbírky, pohledy se jimi nemění (app/obsah-fotek.js)
     'GetStavObsahu',
     'GetPodobneFotky',
+    'GetPodobnostObsahu',
     'ZapnoutObsah',
     'ZastavitObsah',
     'VypnoutObsah',
@@ -196,6 +197,7 @@ export const SpustitStahovaniNahledu = /** @type {typeof App.SpustitStahovaniNah
 export const ZastavitStahovaniNahledu = /** @type {typeof App.ZastavitStahovaniNahledu} */ (obalit('ZastavitStahovaniNahledu'));
 export const GetStavObsahu = /** @type {typeof App.GetStavObsahu} */ (obalit('GetStavObsahu'));
 export const GetPodobneFotky = /** @type {typeof App.GetPodobneFotky} */ (obalit('GetPodobneFotky'));
+export const GetPodobnostObsahu = /** @type {typeof App.GetPodobnostObsahu} */ (obalit('GetPodobnostObsahu'));
 export const ZapnoutObsah = /** @type {typeof App.ZapnoutObsah} */ (obalit('ZapnoutObsah'));
 export const ZastavitObsah = /** @type {typeof App.ZastavitObsah} */ (obalit('ZastavitObsah'));
 export const VypnoutObsah = /** @type {typeof App.VypnoutObsah} */ (obalit('VypnoutObsah'));

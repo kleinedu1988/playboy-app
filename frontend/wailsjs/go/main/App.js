@@ -202,6 +202,10 @@ export function GetPodobneFotky(arg1) {
   return window['go']['main']['App']['GetPodobneFotky'](arg1);
 }
 
+export function GetPodobnostObsahu(arg1) {
+  return window['go']['main']['App']['GetPodobnostObsahu'](arg1);
+}
+
 export function GetPokrytiOdhadu() {
   return window['go']['main']['App']['GetPokrytiOdhadu']();
 }

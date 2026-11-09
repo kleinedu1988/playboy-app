@@ -1,6 +1,6 @@
 // Statistické funkce pro postřehy ve Statistikách (lib/postrehy.js): pořadí se shodami, normální rozdělení,
-// Kendallovo τ_b, Cochranův–Armitageův test trendu podílu, Theilův–Senův sklon a Wilsonův interval podílu, Mannův–Whitneyův
-// a Fisherův test a Benjaminiho–Hochbergova oprava.
+// Kendallovo τ_b, Spearmanovo ρ, Cochranův–Armitageův test trendu podílu, Theilův–Senův sklon a Wilsonův interval podílu,
+// Mannův–Whitneyův a Fisherův test a Benjaminiho–Hochbergova oprava.
 // Bez DOM a bez závislostí; hodnoty hlídá frontend/test/statistika.test.js proti SciPy (testdata/statistika-pripady.json).
 
 const ODMOCNINA_PI = Math.sqrt(Math.PI);
@@ -75,26 +75,70 @@ function shodyAUnikatni(s) {
     return { dvojice, trojice, rozptyl, K };
 }
 
+// Převede číselnou řadu v na celočíselná pořadí 0…K−1 se započtením shod (dvojice, trojice, rozptyl).
+// Pokud jsou hodnoty celočíselné násobky 0,01 v malém rozsahu (roky, míry, BMI, WHR), použije přímé O(n) přihrádky
+// bez řazení a binárního vyhledávání; jinak seřadí Float64Array v O(n log n).
+function stlacitHodnoty(v) {
+    const n = v.length;
+    const r = new Int32Array(n);
+    let min = Infinity, max = -Infinity, presne = true;
+    for (let i = 0; i < n; i++) {
+        const s = v[i] * 100, zaokr = Math.round(s);
+        if (Math.abs(s - zaokr) > 1e-5) { presne = false; break; }
+        r[i] = zaokr;
+        if (zaokr < min) min = zaokr;
+        if (zaokr > max) max = zaokr;
+    }
+    if (presne && max - min <= 16384) {
+        const rozsah = max - min + 1;
+        if (rozsah < 2) return null;
+        const pocty = new Int32Array(rozsah);
+        for (let i = 0; i < n; i++) {
+            const idx = r[i] - min;
+            r[i] = idx;
+            pocty[idx]++;
+        }
+        let dvojice = 0, trojice = 0, rozptyl = 0, K = 0;
+        for (let d = 0; d < rozsah; d++) {
+            const t = pocty[d];
+            if (!t) continue;
+            if (t > 1) {
+                dvojice += t * (t - 1) / 2;
+                trojice += t * (t - 1) * (t - 2);
+                rozptyl += t * (t - 1) * (2 * t + 5);
+            }
+            pocty[d] = K++;
+        }
+        if (K < 2) return null;
+        for (let i = 0; i < n; i++) r[i] = pocty[r[i]];
+        return { r, K, dvojice, trojice, rozptyl };
+    }
+    const sv = new Float64Array(n);
+    for (let i = 0; i < n; i++) sv[i] = v[i];
+    sv.sort();
+    const tv = shodyAUnikatni(sv), K = tv.K;
+    if (K < 2) return null;
+    for (let i = 0; i < n; i++) {
+        const val = v[i];
+        let lo = 0, hi = K - 1;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (sv[mid] < val) lo = mid + 1; else hi = mid;
+        }
+        r[i] = lo;
+    }
+    return { r, K, dvojice: tv.dvojice, trojice: tv.trojice, rozptyl: tv.rozptyl };
+}
+
 // Kendallovo τ_b mezi x a y s opravou na shody a normální aproximací (scipy.stats.kendalltau, method='asymptotic').
-// Knightův algoritmus O(n log n): seskupit podle x, spočítat přehození v y pomocí Fenwickova stromu.
+// Knightův algoritmus: seskupit podle x, spočítat přehození v y pomocí Fenwickova stromu.
 // Vrací { tau, z, p, n } nebo null, když je některá řada konstantní nebo dvojic je méně než 3.
 export function kendallTauB(x, y) {
     const n = x.length;
     if (n < 3 || y.length !== n) return null;
-    const sy = Float64Array.from(y).sort();
-    const ty = shodyAUnikatni(sy), Ky = ty.K;
-    if (Ky < 2) return null;
-
-    const ry = new Int32Array(n);
-    for (let i = 0; i < n; i++) {
-        const vy = y[i];
-        let lo = 0, hi = Ky - 1;
-        while (lo < hi) {
-            const mid = (lo + hi) >> 1;
-            if (sy[mid] < vy) lo = mid + 1; else hi = mid;
-        }
-        ry[i] = lo;
-    }
+    const ty = stlacitHodnoty(y);
+    if (!ty) return null;
+    const ry = ty.r, Ky = ty.K;
 
     let serazenoX = true;
     for (let i = 1; i < n; i++) {
@@ -140,24 +184,14 @@ export function kendallTauB(x, y) {
         }
         if (Kx < 2) return null;
     } else {
-        const sx = Float64Array.from(x).sort();
-        const tx = shodyAUnikatni(sx), Kx = tx.K;
-        if (Kx < 2) return null;
-        txDvojice = tx.dvojice; txTrojice = tx.trojice; txRozptyl = tx.rozptyl;
+        const sx = stlacitHodnoty(x);
+        if (!sx) return null;
+        const rx = sx.r, Kx = sx.K;
+        txDvojice = sx.dvojice; txTrojice = sx.trojice; txRozptyl = sx.rozptyl;
         const poctyX = new Int32Array(Kx + 1);
-        const rx = new Int32Array(n);
-        for (let i = 0; i < n; i++) {
-            const vx = x[i];
-            let lo = 0, hi = Kx - 1;
-            while (lo < hi) {
-                const mid = (lo + hi) >> 1;
-                if (sx[mid] < vx) lo = mid + 1; else hi = mid;
-            }
-            rx[i] = lo;
-            poctyX[lo + 1]++;
-        }
+        for (let i = 0; i < n; i++) poctyX[rx[i] + 1]++;
         for (let g = 1; g <= Kx; g++) poctyX[g] += poctyX[g - 1];
-        const hranice = Int32Array.from(poctyX);
+        const hranice = new Int32Array(poctyX);
         const ryPodleX = new Int32Array(n);
         for (let i = 0; i < n; i++) ryPodleX[poctyX[rx[i]]++] = ry[i];
         for (let g = 0; g < Kx; g++) {
@@ -302,4 +336,80 @@ export function benjaminiHochberg(p) {
         q[i] = min;
     });
     return q;
+}
+
+// Lanczosova aproximace ln Γ(z) s přesností ~1e-15 pro z > 0
+const LANCZOS_KOEF = [
+    0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313,
+    -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7,
+];
+function lnGamma(z) {
+    let x = LANCZOS_KOEF[0];
+    for (let i = 1; i < LANCZOS_KOEF.length; i++) x += LANCZOS_KOEF[i] / (z + i - 1);
+    const t = z + 6.5;
+    return 0.5 * Math.log(2 * Math.PI) + (z - 0.5) * Math.log(t) - t + Math.log(x);
+}
+
+// Řetězový zlomek pro neúplnou beta funkci I_x(a, b) (Lentzův algoritmus)
+function betaZlomek(x, a, b) {
+    const male = 1e-300, qab = a + b, qap = a + 1, qam = a - 1;
+    let c = 1, d = 1 - qab * x / qap;
+    if (Math.abs(d) < male) d = male;
+    d = 1 / d;
+    let h = d;
+    for (let m = 1; m <= 200; m++) {
+        const m2 = 2 * m;
+        let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+        d = 1 + aa * d; if (Math.abs(d) < male) d = male;
+        c = 1 + aa / c; if (Math.abs(c) < male) c = male;
+        d = 1 / d; h *= d * c;
+        aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+        d = 1 + aa * d; if (Math.abs(d) < male) d = male;
+        c = 1 + aa / c; if (Math.abs(c) < male) c = male;
+        d = 1 / d;
+        const del = d * c;
+        h *= del;
+        if (Math.abs(del - 1) < 1e-15) break;
+    }
+    return h;
+}
+
+// Regularizovaná neúplná beta funkce I_x(a, b)
+function neupBeta(x, a, b) {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const pred = Math.exp(lnGamma(a + b) - lnGamma(a) - lnGamma(b) + a * Math.log(x) + b * Math.log(1 - x));
+    return x < (a + 1) / (a + b + 2)
+        ? pred * betaZlomek(x, a, b) / a
+        : 1 - pred * betaZlomek(1 - x, b, a) / b;
+}
+
+// Oboustranná p-hodnota Studentova t-rozdělení se stupni volnosti df = n - 2
+function studentOboustranne(t, df) {
+    if (!Number.isFinite(t)) return 0;
+    if (t === 0) return 1;
+    const x = df / (df + t * t);
+    return Math.min(1, Math.max(0, neupBeta(x, df / 2, 0.5)));
+}
+
+// Spearmanova pořadová korelace ρ se shodami (průměrná pořadí) a oboustranná p-hodnota přes Studentovo t
+// (shodné se scipy.stats.spearmanr). Vrací { rho, p } nebo null, pokud má řada < 3 body nebo nulový rozptyl.
+export function spearman(x, y, predpoctene = false) {
+    const n = x.length;
+    if (n < 3 || y.length !== n) return null;
+    const rx = predpoctene ? x : poradi(x);
+    const ry = predpoctene ? y : poradi(y);
+    const stred = (n + 1) / 2;
+    let sxy = 0, sxx = 0, syy = 0;
+    for (let i = 0; i < n; i++) {
+        const dx = rx[i] - stred, dy = ry[i] - stred;
+        sxy += dx * dy;
+        sxx += dx * dx;
+        syy += dy * dy;
+    }
+    if (!(sxx > 0 && syy > 0)) return null;
+    const rho = Math.max(-1, Math.min(1, sxy / Math.sqrt(sxx * syy)));
+    if (Math.abs(rho) >= 1) return { rho: Math.sign(rho), p: 0 };
+    const t = rho * Math.sqrt((n - 2) / ((1 - rho) * (1 + rho)));
+    return { rho, p: studentOboustranne(t, n - 2) };
 }

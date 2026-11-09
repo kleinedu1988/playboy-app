@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.29.0] – 2026-11-09
+
+### Přidáno
+- **Postřehy ve Statistikách – neobvyklé roky, souvislosti a standardizace podle desetiletí (`frontend/src/lib/statistika.js`, `frontend/src/lib/postrehy.js`, `frontend/src/app/statistiky.js`)**:
+  - Doplněna Spearmanova pořadová korelace $\rho$ se shodami a oboustrannou $p$-hodnotou přes Studentovo $t$-rozdělení (`spearman`).
+  - Hledání neobvyklých roků (`neobvykleRoky`), které s aspoň 8 modelkami průkazně a podstatně vybočují ze zbytku svého období mezi zlomy (Fisherův přesný test a Cohenovo $h$ pro podíly, Mannův–Whitneyův test a Cliffovo $\delta$ pro údaje, Benjaminiho–Hochbergova oprava přes testované roky); kliknutí v záhlaví Statistik přepne na graf a rovnou vybere daný rok.
+  - Hledání průkazných souvislostí mezi číselnými vlastnostmi a hodnocením modelek (`souvislosti`, $|\rho| \ge 0{,}3$, $n \ge 30$, oprava BH) s automatickým vyloučením matematicky odvozených dvojic (BMI s výškou/váhou, poměr pas : boky s pasem/boky) a jasným upozorněním, že souvislost neznamená příčinu.
+  - Přímá standardizace rozdílů výběru podle desetiletí (`jeVysvetlenoDobou`): pokud je rozdíl vybrané skupiny oproti sbírce vysvětlen dobou, ze které vybrané modelky pocházejí, bublina podrobností na to upozorní.
+- **Aktualizace plánu vývoje (`ROADMAP.md`)**: zaznamenány dokončené milníky `1.0–1.29` a rozpracován podrobný plán etap A–D (`1.30–1.46`).
+
 ## [1.28.4] – 2026-11-09
 
 ### Změněno

@@ -3,7 +3,7 @@
 // velikost změny z prvního a posledního desetiletí s dost modelkami. Postřeh se ukáže, jen když test projde
 // a změna je prakticky podstatná (práh grafu, u podílu 10 procentních bodů) – raději žádný postřeh než šum.
 // Bez DOM; hodnoty se počítají ze stejných sloupců jako graf (lib/statistika.js má testy proti SciPy).
-import { benjaminiHochberg, cochranArmitage, fisher, kendallTauB, mannWhitney, median, pOboustranne, poradi, theilSen, wilson } from './statistika.js';
+import { benjaminiHochberg, cochranArmitage, fisher, kendallTauB, mannWhitney, median, pOboustranne, poradi, spearman, theilSen, wilson } from './statistika.js';
 
 export const ALFA = 0.05;
 export const MIN_LET = 10;          // let s aspoň jednou modelkou se známým údajem
@@ -306,14 +306,29 @@ export function rozdelitRadu(def, rada, c = POKUTA[def.druh]) {
 
 // Úroveň úseku: podíl s Wilsonovým intervalem, nebo medián s prostřední polovinou modelek
 function urovenUseku(def, rada, a, b) {
-    const polozky = rada.slice(a, b + 1).flatMap(s => s.polozky);
-    const roky = rada.slice(a, b + 1).filter(s => s.polozky.length).map(s => s.rok);
-    const k = polozky.length, zaklad = { ...obdobi(roky), a, b, odRoku: rada[a].rok, doRoku: rada[b].rok, n: k, polozky };
+    const roky = [];
+    let k = 0;
+    for (let t = a; t <= b; t++) {
+        const d = rada[t].polozky.length;
+        if (d) { roky.push(rada[t].rok); k += d; }
+    }
+    const zaklad = { ...obdobi(roky), a, b, odRoku: rada[a].rok, doRoku: rada[b].rok, n: k };
     if (def.druh === 'podil') {
-        const ano = polozky.filter(p => p.hodnota).length, ci = wilson(ano, k);
+        let ano = 0;
+        for (let t = a; t <= b; t++) {
+            const pol = rada[t].polozky;
+            for (let i = 0; i < pol.length; i++) if (pol[i].hodnota) ano++;
+        }
+        const ci = wilson(ano, k);
         return { ...zaklad, ano, serazene: new Float64Array(0), hodnota: ano / k * 100, dolni: ci.dolni * 100, horni: ci.horni * 100 };
     }
-    const h = Float64Array.from(polozky, p => p.hodnota).sort();
+    const h = new Float64Array(k);
+    let pos = 0;
+    for (let t = a; t <= b; t++) {
+        const pol = rada[t].polozky;
+        for (let i = 0; i < pol.length; i++) h[pos++] = pol[i].hodnota;
+    }
+    h.sort();
     const q = f => { const poz = f * (k - 1), i = Math.floor(poz); return h[i] + ((h[Math.ceil(poz)] ?? h[i]) - h[i]) * (poz - i); };
     return { ...zaklad, ano: 0, serazene: h, hodnota: q(0.5), dolni: q(0.25), horni: q(0.75) };
 }
@@ -347,7 +362,7 @@ export function zlomyRady(def, sloupce, c = POKUTA[def.druh]) {
         const zlomy = zacatky.map((z, i) => ({ rok: rada[z].rok, p: p[i], q: q[i], zmena: useky[i + 1].hodnota - useky[i].hodnota,
             velikost: testy[i].velikost }));
         const spatne = zlomy.map((z, i) => ({ i, z })).filter(({ z }) => !(z.q <= ALFA) || Math.abs(z.zmena) < prah);
-        if (!spatne.length) return { useky: useky.map(({ polozky, serazene, ...u }) => u), zlomy, rada };
+        if (!spatne.length) return { useky: useky.map(({ serazene, ...u }) => u), zlomy, rada };
         // Zahodí se nejslabší neprůkazný zlom (největší q, při shodě nejmenší změna) a ověří se znovu
         const nejhorsi = spatne.sort((x, y) => y.z.q - x.z.q || Math.abs(x.z.zmena) - Math.abs(y.z.zmena))[0];
         zacatky = zacatky.filter((_, i) => i !== nejhorsi.i);
@@ -403,12 +418,40 @@ export const MIN_H = 0.2;
 
 // Předpočet příznaku přes celou sbírku (jednou po načtení dat nebo změně edice či výskytu): u údaje známé indexy,
 // pořadí se shodami, oprava rozptylu na shody a pořadí podle hodnoty; u podílu jen hodnoty.
-// priznak: { klic, druh: 'udaj' | 'podil', hodnoty: (number | boolean | null)[], ... text pro větu }
+// Pokud je předáno desetileti (pole desetiletí modelek, např. 1990), předpočítá se i střední hodnota každého desetiletí
+// pro přímou standardizaci podle doby u rozdílů výběru.
+// priznak: { klic, druh: 'udaj' | 'podil', hodnoty: (number | boolean | null)[], desetileti?: (number | null)[], ... }
+const kvantilPole = (ser, f) => {
+    const poz = f * (ser.length - 1), i = Math.floor(poz);
+    return ser[i] + ((ser[Math.ceil(poz)] ?? ser[i]) - ser[i]) * (poz - i);
+};
+
 export function pripravitPriznak(priznak) {
-    const { hodnoty } = priznak;
+    const { hodnoty, desetileti } = priznak;
     const zname = [];
     hodnoty.forEach((h, i) => { if (h !== null && h !== undefined) zname.push(i); });
-    if (priznak.druh === 'podil') return { ...priznak, zname, ano: zname.filter(i => hodnoty[i]).length };
+    let stredDesetileti = null;
+    if (desetileti) {
+        const skupiny = new Map();
+        for (const i of zname) {
+            const d = desetileti[i];
+            if (!d) continue;
+            let s = skupiny.get(d);
+            if (!s) { s = []; skupiny.set(d, s); }
+            s.push(hodnoty[i]);
+        }
+        stredDesetileti = new Map();
+        for (const [d, polozky] of skupiny) {
+            if (polozky.length < 3) continue;
+            if (priznak.druh === 'podil') {
+                stredDesetileti.set(d, polozky.filter(Boolean).length / polozky.length * 100);
+            } else {
+                const ser = Float64Array.from(polozky).sort();
+                stredDesetileti.set(d, kvantilPole(ser, 0.5));
+            }
+        }
+    }
+    if (priznak.druh === 'podil') return { ...priznak, zname, ano: zname.filter(i => hodnoty[i]).length, stredDesetileti };
     const cisla = zname.map(i => /** @type {number} */ (hodnoty[i]));
     const r = poradi(cisla);
     const poradiModelky = new Float64Array(hodnoty.length);
@@ -422,7 +465,32 @@ export function pripravitPriznak(priznak) {
         shodyT += t * t * t - t;
         k = j;
     }
-    return { ...priznak, zname, poradiModelky, serazene, shodyT };
+    return { ...priznak, zname, poradiModelky, serazene, shodyT, stredDesetileti };
+}
+
+// Přímá standardizace podle desetiletí: zjistí, zda je pozorovaný rozdíl výběru vysvětlen dobou (desetiletími),
+// ze které vybrané modelky pocházejí. Vrací true, pokud po převážení sbírky věkovým složením výběru klesne rozdíl
+// pod polovinu prahu podstatnosti.
+function jeVysvetlenoDobou(p, maska, hodnotaVyberu, desetileti) {
+    const dekady = desetileti || p.desetileti;
+    if (!dekady) return false;
+    let stredy = p.stredDesetileti;
+    if (!stredy) {
+        stredy = pripravitPriznak({ ...p, desetileti: dekady }).stredDesetileti;
+    }
+    if (!stredy || stredy.size < 2) return false;
+    let vaha = 0, ocekavano = 0;
+    for (const i of p.zname) {
+        if (!maska[i]) continue;
+        const c = stredy.get(dekady[i]);
+        if (c === undefined) continue;
+        vaha++;
+        ocekavano += c;
+    }
+    if (vaha < MIN_VYBER) return false;
+    const ocekavanaHodnota = ocekavano / vaha;
+    const prah = p.druh === 'podil' ? PRAH_PODILU : (p.prah ?? 0);
+    return Math.abs(hodnotaVyberu - ocekavanaHodnota) < prah / 2;
 }
 
 // Kvantil hodnot modelek v pořadí podle hodnoty, které splňují podmínku (lineární interpolace jako v grafu)
@@ -444,7 +512,7 @@ const silaSlovy = (velikost, meze) => velikost < meze[0] ? 'malý' : velikost < 
 // Porovnání výběru (maska Uint8Array přes modelky) se zbytkem sbírky pro připravené příznaky.
 // vyloucit: klíče příznaků, které určuje sám výběr (podmínka vlasů vyřadí vlasy i blond).
 // Vrací { maly: true } pro výběr pod MIN_VYBER modelek, jinak { postrehy: [...] } seřazené podle skóre síla × jistota.
-export function rozdilyVyberu(priznaky, maska, { vyloucit = [] } = {}) {
+export function rozdilyVyberu(priznaky, maska, { vyloucit = [], desetileti = null } = {}) {
     const vybrano = maska.reduce((s, x) => s + x, 0);
     if (vybrano < MIN_VYBER) return { maly: true, postrehy: [] };
     const kandidati = [];
@@ -483,12 +551,16 @@ export function rozdilyVyberu(priznaky, maska, { vyloucit = [] } = {}) {
     }
     const q = benjaminiHochberg(kandidati.map(k => k.pVal));
     const testu = kandidati.length;
+    const kontrolovatDobu = !vyloucit.includes('rok');
     const postrehy = kandidati.map((k, i) => ({ ...k, q: q[i] }))
         .filter(k => k.q <= ALFA && k.podstatny)
         .map(k => {
             const sila = k.p.druh === 'podil' ? Math.min(1, Math.abs(k.velikost) / 0.8) : Math.min(1, Math.abs(k.velikost) / 0.5);
             const jistota = Math.min(1, -Math.log10(Math.max(k.q, 1e-300)) / 4);
-            return { klic: k.p.klic, graf: k.p.graf, skore: sila * jistota, q: k.q, ...textVyberu(k, testu) };
+            const vysvetlenoDobou = kontrolovatDobu && jeVysvetlenoDobou(k.p, maska, k.v, desetileti);
+            const t = textVyberu(k, testu);
+            if (vysvetlenoDobou) t.podrobnosti += ' Rozdíl odpovídá době, ze které výběr pochází.';
+            return { klic: k.p.klic, graf: k.p.graf, skore: sila * jistota, q: k.q, vysvetlenoDobou, ...t };
         })
         .sort((a, b) => b.skore - a.skore || a.q - b.q);
     return { maly: false, postrehy, testu };
@@ -540,7 +612,10 @@ export function vybratPostrehy(kandidati, { hlavni = null, predtim = [] } = {}) 
     const poradi = [];
     let vedlejsich = 0;
     for (const k of serazeni) {
-        if (poradi.some(x => pribuzne(x.graf, k.graf))) continue;
+        if (poradi.some(x => pribuzne(x.graf, k.graf)
+            || (k.druhyGraf && pribuzne(x.graf, k.druhyGraf))
+            || (x.druhyGraf && pribuzne(x.druhyGraf, k.graf)))) continue;
+        if ((k.druh === 'rok' || k.druh === 'souvislost') && poradi.some(x => x.druh === k.druh)) continue;
         if (hlavni && k.druh !== hlavni) {
             if (vedlejsich >= NEJVYS_VEDLEJSICH) continue;
             vedlejsich++;
@@ -555,4 +630,246 @@ export function vybratPostrehy(kandidati, { hlavni = null, predtim = [] } = {}) 
     const zbytek = poradi.filter(k => !pouzite.has(k.id));
     for (let i = 0; i < NEJVYS_V_PANELU && zbytek.length; i++) if (!panel[i]) panel[i] = zbytek.shift();
     return panel.filter(Boolean);
+}
+
+// ── Krok 5: neobvyklé roky a souvislosti ──────────────────────────────────────────────────────────────────────────
+export const MIN_ROK_VYBOCENI = 8;  // modelek v roce, aby šlo testovat vybočení roku ze svého úseku
+export const MIN_SOUVISLOST_N = 30; // modelek s oběma známými údaji pro Spearmanovu korelaci
+export const MIN_RHO = 0.3;         // minimální |ρ| pro prakticky podstatnou souvislost
+
+// Neobvyklé roky v časové řadě: porovnává každý rok s aspoň MIN_ROK_VYBOCENI modelkami oproti zbytku jeho úseku
+// (mezi zlomy, nebo celé řady, pokud zlomy nejsou). Oprava BH přes všechny testované roky řady.
+// Vrací pole postřehů { id, druh: 'rok', klic, graf, rok, smer, p, q, velikost, skore, veta, podrobnosti, hero }.
+export function neobvykleRoky(def, sloupce, { vyber = false, useky: predpocteneUseky = null } = {}) {
+    if (def.druh !== 'udaj' && def.druh !== 'podil') return [];
+    const rada = oriznout(sloupce);
+    if (!rada.length) return [];
+    const useky = predpocteneUseky && predpocteneUseky.length
+        ? predpocteneUseky
+        : zlomyRady(def, sloupce).useky;
+    const platneUseky = useky.length ? useky : [{ a: 0, b: rada.length - 1 }];
+    const podil = def.druh === 'podil';
+    const des = podil ? 0 : def.desetinna ?? 0;
+    const jednotka = podil ? ' %' : def.jednotka ? ` ${def.jednotka}` : '';
+    const hodnota = v => `${cislo(v, des)}${jednotka}`;
+    const klic = def.klic || def.graf || def.nazev;
+    const graf = def.graf || def.klic || def.nazev;
+
+    const kandidati = [];
+    for (const u of platneUseky) {
+        const odIdx = u.a ?? u.od ?? 0, doIdx = u.b ?? u.do ?? (rada.length - 1);
+        const sloupceUseku = rada.slice(odIdx, doIdx + 1).filter(s => s.polozky.length);
+        const nUseku = sloupceUseku.reduce((s, x) => s + x.polozky.length, 0);
+        if (nUseku < MIN_USEK_MODELEK + MIN_ROK_VYBOCENI) continue;
+        const obd = obdobi(sloupceUseku.map(s => s.rok));
+        const aUseku = podil
+            ? sloupceUseku.reduce((s, x) => s + x.polozky.filter(p => p.hodnota).length, 0)
+            : 0;
+
+        for (const s of sloupceUseku) {
+            const n1 = s.polozky.length, n2 = nUseku - n1;
+            if (n1 < MIN_ROK_VYBOCENI || n2 < MIN_USEK_MODELEK) continue;
+            if (podil) {
+                const a1 = s.polozky.filter(p => p.hodnota).length, a2 = aUseku - a1;
+                const p1 = a1 / n1, p2 = a2 / n2;
+                const h = 2 * Math.asin(Math.sqrt(p1)) - 2 * Math.asin(Math.sqrt(p2));
+                const rozdil = (p1 - p2) * 100;
+                const p = fisher(a1, n1 - a1, a2, n2 - a2);
+                kandidati.push({
+                    rok: s.rok, n1, n2, hodnotaRoku: p1 * 100, hodnotaUseku: p2 * 100,
+                    velikost: h, rozdil, p, obd,
+                    podstatny: Math.abs(h) >= MIN_H && Math.abs(rozdil) >= PRAH_PODILU,
+                });
+            } else {
+                const v1 = Float64Array.from(s.polozky, p => p.hodnota).sort();
+                const v2 = new Float64Array(n2);
+                let idx = 0;
+                for (const iny of sloupceUseku) {
+                    if (iny.rok === s.rok) continue;
+                    for (const p of iny.polozky) v2[idx++] = p.hodnota;
+                }
+                v2.sort();
+                const mw = mannWhitney(v1, v2, true);
+                if (!mw) continue;
+                const m1 = kvantilPole(v1, 0.5), m2 = kvantilPole(v2, 0.5);
+                const delta = 2 * mw.u / (n1 * n2) - 1;
+                const rozdil = m1 - m2;
+                kandidati.push({
+                    rok: s.rok, n1, n2, hodnotaRoku: m1, hodnotaUseku: m2,
+                    velikost: delta, rozdil, p: mw.p, obd,
+                    podstatny: Math.abs(delta) >= MIN_DELTA && Math.abs(rozdil) >= (def.prah ?? 0)
+                        && Math.sign(rozdil) === Math.sign(delta),
+                });
+            }
+        }
+    }
+    if (!kandidati.length) return [];
+    const q = benjaminiHochberg(kandidati.map(k => k.p));
+    const testu = kandidati.length;
+    const rokySlovo = testu === 1 ? 'rok' : testu <= 4 ? 'roky' : 'roků';
+    const co = `${podmetMale(def)}${vyber ? ' ve výběru' : ''}`;
+    return kandidati.map((k, i) => ({ ...k, q: q[i] }))
+        .filter(k => k.q <= ALFA && k.podstatny)
+        .map(k => {
+            const smer = Math.sign(k.rozdil);
+            const aText = podil ? hodnota(k.hodnotaRoku) : cislo(k.hodnotaRoku, des);
+            const bText = hodnota(k.hodnotaUseku);
+            const veta = `Rok ${k.rok} vybočuje: ${co} (${aText} vs ${bText} ${k.obd.veta}, ${modelek(k.n1)}).`;
+            const test = podil ? 'Fisherův test' : 'Mannův–Whitneyův test';
+            const znacka = podil ? 'h' : 'δ';
+            const meze = podil ? [0.5, 0.8] : [0.33, 0.47];
+            const podrobnosti = `${def.nazev} v roce ${k.rok}: ${hodnota(k.hodnotaRoku)} (${modelek(k.n1)}), `
+                + `zbytek období ${k.obd.popisek}: ${bText} (${modelek(k.n2)}). `
+                + `${test}, po opravě na ${testu} ${rokySlovo} ${textP(k.q)}; `
+                + `velikost rozdílu: ${silaSlovy(Math.abs(k.velikost), meze)} (${znacka} = ${cislo(k.velikost, 2)}).`;
+            return {
+                id: `rok:${klic}:${k.rok}`, druh: 'rok', klic, graf, rok: k.rok, smer,
+                p: k.p, q: k.q, velikost: k.velikost,
+                skore: skorePostrehu(def.druh, k.velikost, k.q) * 0.85,
+                veta, podrobnosti,
+                hero: { text: `${k.rok}: ${aText} vs ${bText}` },
+            };
+        })
+        .sort((a, b) => b.skore - a.skore || a.q - b.q);
+}
+
+// Výchozí definice číselných vlastností modelek pro hledání souvislostí (Spearmanovo ρ)
+export const VLASTNOSTI_SOUVISLOSTI = [
+    {
+        klic: 'hodnoceni', graf: 'vyska', nazev: 'Hodnocení',
+        skupina: 'Výš hodnocené modelky',
+        kladna: 'vyšší hodnocení', zaporna: 'nižší hodnocení',
+        cist: m => (m.hodnoceni > 0 ? m.hodnoceni : null),
+    },
+    {
+        klic: 'vek', graf: 'vek', nazev: 'Věk při prvním výskytu',
+        skupina: 'Starší modelky při prvním výskytu',
+        kladna: 'vyšší věk při prvním výskytu', zaporna: 'nižší věk při prvním výskytu',
+        cist: m => (Number.isFinite(m.vek) && m.vek > 0 ? m.vek : null),
+    },
+    {
+        klic: 'vyska', graf: 'vyska', nazev: 'Výška',
+        skupina: 'Vyšší modelky',
+        kladna: 'vyšší postavu', zaporna: 'menší výšku',
+        cist: m => (m.vyska > 0 ? m.vyska : null),
+    },
+    {
+        klic: 'vaha', graf: 'vaha', nazev: 'Váha',
+        skupina: 'Těžší modelky',
+        kladna: 'vyšší váhu', zaporna: 'nižší váhu',
+        cist: m => (m.vaha > 0 ? m.vaha : null),
+    },
+    {
+        klic: 'bmi', graf: 'bmi', nazev: 'BMI',
+        skupina: 'Modelky s vyšším BMI',
+        kladna: 'vyšší BMI', zaporna: 'nižší BMI',
+        cist: m => (m.bmi > 0 ? m.bmi : (m.vyska > 0 && m.vaha > 0 ? Math.round((m.vaha / ((m.vyska / 100) ** 2)) * 10) / 10 : null)),
+    },
+    {
+        klic: 'hrudnik', graf: 'hrudnik', nazev: 'Obvod hrudníku',
+        skupina: 'Modelky s větším obvodem hrudníku',
+        kladna: 'větší obvod hrudníku', zaporna: 'menší obvod hrudníku',
+        cist: m => (m.hrudnik > 0 ? m.hrudnik : null),
+    },
+    {
+        klic: 'pas', graf: 'pas', nazev: 'Obvod pasu',
+        skupina: 'Modelky se širším pasem',
+        kladna: 'širší pas', zaporna: 'užší pas',
+        cist: m => (m.pas > 0 ? m.pas : null),
+    },
+    {
+        klic: 'boky', graf: 'boky', nazev: 'Obvod boků',
+        skupina: 'Modelky se širšími boky',
+        kladna: 'širší boky', zaporna: 'užší boky',
+        cist: m => (m.boky > 0 ? m.boky : null),
+    },
+    {
+        klic: 'whr', graf: 'whr', nazev: 'Poměr pas : boky',
+        skupina: 'Modelky s vyšším poměrem pas : boky',
+        kladna: 'větší poměr pas : boky', zaporna: 'menší poměr pas : boky',
+        cist: m => (m.whr > 0 ? m.whr : (m.pas > 0 && m.boky > 0 ? Math.round((m.pas / m.boky) * 100) / 100 : null)),
+    },
+];
+
+// Matematicky odvozené dvojice (BMI z výšky a váhy, WHR z pasu a boků) se netestují nikdy
+const ODVOZENE_DVOJICE = new Set(['bmi:vyska', 'vyska:bmi', 'bmi:vaha', 'vaha:bmi', 'whr:pas', 'pas:whr', 'whr:boky', 'boky:whr']);
+// Samozřejmé tělesné proporce se ve výchozím přehledu přeskakují, aby nezabíraly místo zajímavým zjištěním
+const OCEKAVANE_DVOJICE = new Set([
+    'vyska:vaha', 'vaha:vyska', 'pas:boky', 'boky:pas', 'hrudnik:vaha', 'vaha:hrudnik',
+    'vaha:pas', 'pas:vaha', 'vaha:boky', 'boky:vaha', 'hrudnik:pas', 'pas:hrudnik', 'hrudnik:boky', 'boky:hrudnik',
+]);
+
+// Souvislosti mezi dvojicemi číselných vlastností modelek (Spearmanovo ρ, |ρ| ≥ 0,3, n ≥ 30, BH oprava q ≤ 0,05).
+// Vrací seřazené postřehy { id, druh: 'souvislost', klic, graf, druhyGraf, smer, rho, p, q, n, skore, veta, podrobnosti, hero }.
+export function souvislosti(modelky, { vyber = false, vlastnosti = VLASTNOSTI_SOUVISLOSTI, vsechnyDvojice = false } = {}) {
+    if (!modelky || modelky.length < MIN_SOUVISLOST_N) return [];
+    const m = modelky.length;
+    const sloupce = vlastnosti.map(v => {
+        const pole = new Float64Array(m);
+        for (let i = 0; i < m; i++) {
+            const h = v.cist(modelky[i]);
+            pole[i] = h !== null && h !== undefined && Number.isFinite(h) ? h : NaN;
+        }
+        return { def: v, pole };
+    });
+
+    const kandidati = [];
+    for (let i = 0; i < sloupce.length; i++) {
+        const a = sloupce[i];
+        for (let j = i + 1; j < sloupce.length; j++) {
+            const b = sloupce[j];
+            const parKlic = `${a.def.klic}:${b.def.klic}`;
+            if (ODVOZENE_DVOJICE.has(parKlic)) continue;
+            if (!vsechnyDvojice && OCEKAVANE_DVOJICE.has(parKlic)) continue;
+            const x = [], y = [];
+            for (let k = 0; k < m; k++) {
+                const vx = a.pole[k], vy = b.pole[k];
+                if (!Number.isNaN(vx) && !Number.isNaN(vy)) {
+                    x.push(vx);
+                    y.push(vy);
+                }
+            }
+            if (x.length < MIN_SOUVISLOST_N) continue;
+            const sp = spearman(x, y);
+            if (!sp) continue;
+            kandidati.push({ a: a.def, b: b.def, n: x.length, rho: sp.rho, p: sp.p });
+        }
+    }
+    if (!kandidati.length) return [];
+    const q = benjaminiHochberg(kandidati.map(k => k.p));
+    const testu = kandidati.length;
+    const dvojicSlovo = testu === 1 ? 'dvojici' : testu <= 4 ? 'dvojice' : 'dvojic';
+
+    return kandidati.map((k, i) => ({ ...k, q: q[i] }))
+        .filter(k => k.q <= ALFA && Math.abs(k.rho) >= MIN_RHO)
+        .map(k => {
+            const smer = Math.sign(k.rho);
+            const vlastnost = smer > 0 ? k.b.kladna : k.b.zaporna;
+            const veta = `${k.a.skupina}${vyber ? ' ve výběru' : ''} mívají ${vlastnost} (souvislost, ne příčina).`;
+            const podrobnosti = `${k.a.nazev} × ${k.b.nazev}: Spearmanovo ρ = ${cislo(k.rho, 2)} přes ${modelek(k.n)}, `
+                + `po opravě na ${testu} ${dvojicSlovo} ${textP(k.q)}; `
+                + `velikost souvislosti: ${silaSlovy(Math.abs(k.rho), [0.4, 0.6])} (|ρ| = ${cislo(Math.abs(k.rho), 2)}). `
+                + `Souvislost neznamená příčinu.`;
+            const graf = k.a.klic === 'hodnoceni' ? k.b.graf : k.a.graf;
+            const druhyGraf = k.a.klic === 'hodnoceni' ? null : k.b.graf;
+            const sila = Math.min(1, Math.abs(k.rho) / 0.6);
+            const jistota = Math.min(1, -Math.log10(Math.max(k.q, 1e-300)) / 4);
+            return {
+                id: `souvislost:${k.a.klic}:${k.b.klic}`,
+                druh: 'souvislost',
+                klic: `${k.a.klic}:${k.b.klic}`,
+                graf,
+                druhyGraf,
+                smer,
+                rho: k.rho,
+                p: k.p,
+                q: k.q,
+                n: k.n,
+                skore: sila * jistota * 0.85,
+                veta,
+                podrobnosti,
+                hero: { text: `ρ = ${cislo(k.rho, 2)}` },
+            };
+        })
+        .sort((a, b) => b.skore - a.skore || a.q - b.q);
 }

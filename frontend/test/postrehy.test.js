@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { obdobi, postrehRady, predlozkaZ, pripravitPriznak, rozdilyVyberu, trendRady, vybratPostrehy, zlomyRady } from '../src/lib/postrehy.js';
+import { neobvykleRoky, obdobi, postrehRady, predlozkaZ, pripravitPriznak, rozdilyVyberu, souvislosti, trendRady, vybratPostrehy, zlomyRady } from '../src/lib/postrehy.js';
 import { mannWhitney } from '../src/lib/statistika.js';
 
 // Deterministický generátor (mulberry32) a normální rozdělení (Box–Muller)
@@ -330,4 +330,70 @@ test('trendy a zlomy všech 13 grafů na 5 000 modelkách do 100 ms', () => {
     const ms = performance.now() - t0;
     console.log(`13 grafů: ${ms.toFixed(1)} ms`);
     assert.ok(ms < 100, `${ms.toFixed(1)} ms`);
+});
+
+test('neobvyklý rok: vybočující rok uvnitř úseku se najde, řídký rok (< 8 modelek) ne', () => {
+    const { nahoda, normalni } = generator(40);
+    const sloupcePodil = rada(1990, 2005, rok => (rok === 1993 ? 5 : 25), rok => {
+        if (rok === 1993) return true; // jen 5 modelek -> nesmí se hlásit
+        if (rok === 1998) return nahoda() < 0.85;
+        return nahoda() < 0.2;
+    });
+    const rokyP = neobvykleRoky({ klic: 'silikon', ...SILIKON }, sloupcePodil);
+    assert.equal(rokyP.length, 1);
+    assert.equal(rokyP[0].rok, 1998);
+    assert.equal(rokyP[0].druh, 'rok');
+    assert.match(rokyP[0].veta, /^Rok 1998 vybočuje: podíl modelek se silikonovými prsy \(\d+ % vs \d+ % v letech 1990–2005, 25 modelek\)\.$/);
+    assert.match(rokyP[0].podrobnosti, /Fisherův test, po opravě na 15 roků/);
+
+    const sloupceUdaj = rada(1970, 1989, () => 20, rok => Math.round((rok === 1978 ? 177 : 169) + normalni() * 3));
+    const rokyU = neobvykleRoky({ klic: 'vyska', ...VYSKA }, sloupceUdaj);
+    assert.equal(rokyU[0]?.rok, 1978);
+    assert.match(rokyU[0].veta, /^Rok 1978 vybočuje: výška \(17\d vs 16\d cm v letech 1970–1989, 20 modelek\)\.$/);
+    assert.match(rokyU[0].podrobnosti, /Mannův–Whitneyův test, po opravě na 20 roků/);
+});
+
+test('souvislosti: zasazená souvislost hodnocení a poměru pas : boky se najde, odvozené dvojice se vyloučí', () => {
+    const { nahoda, normalni } = generator(41);
+    const modelky = Array.from({ length: 300 }, () => {
+        const hodnoceni = 1 + Math.floor(nahoda() * 5);
+        const vyska = Math.round(168 + normalni() * 5);
+        const vaha = Math.round(52 + (vyska - 168) * 0.6 + normalni() * 2);
+        const pas = Math.round(64 - hodnoceni * 1.2 + normalni() * 1.5);
+        const boky = Math.round(89 + normalni() * 2);
+        return {
+            hodnoceni,
+            vyska,
+            vaha,
+            bmi: Math.round((vaha / ((vyska / 100) ** 2)) * 10) / 10,
+            pas,
+            boky,
+            whr: Math.round((pas / boky) * 100) / 100,
+        };
+    });
+    const nalezene = souvislosti(modelky);
+    assert.ok(nalezene.length >= 1);
+    assert.ok(nalezene.every(s => !['bmi:vyska', 'vyska:bmi', 'bmi:vaha', 'vaha:bmi', 'whr:pas', 'pas:whr', 'whr:boky', 'boky:whr', 'vyska:vaha'].includes(s.klic)),
+        'odvozené a samozřejmé dvojice jsou vyloučené');
+    const whrPostreh = nalezene.find(s => s.klic === 'hodnoceni:whr');
+    assert.ok(whrPostreh, 'souvislost hodnocení a WHR se má najít');
+    assert.equal(whrPostreh.veta, 'Výš hodnocené modelky mívají menší poměr pas : boky (souvislost, ne příčina).');
+    assert.match(whrPostreh.podrobnosti, /Spearmanovo ρ = −0,\d\d přes 300 modelek/);
+    assert.match(whrPostreh.podrobnosti, /Souvislost neznamená příčinu\.$/);
+
+    // Nezávislá sbírka nemá žádné falešné souvislosti
+    assert.equal(souvislosti(sbirka(400, 42)).length, 0);
+});
+
+test('standardizace podle desetiletí: rozdíl výběru vysvětlený dobou dostane poznámku do bubliny', () => {
+    const { nahoda } = generator(43);
+    const desetileti = Array.from({ length: 1000 }, (_, i) => (i < 500 ? 1970 : 2000));
+    const hodnoty = desetileti.map(d => nahoda() < (d === 1970 ? 0.05 : 0.55));
+    const priznak = pripravitPriznak({ klic: 'silikon', graf: 'silikon', ...SILIKON, hodnoty, desetileti });
+    // Výběr (např. podle fotografa) tvořený převážně modelkami z let 2000–2009, jejichž podíl 55 % přesně odpovídá 2000s
+    const maska = Uint8Array.from(desetileti, (d, i) => (d === 2000 && i % 5 === 0 ? 1 : 0));
+    const r = rozdilyVyberu([priznak], maska);
+    assert.equal(r.postrehy.length, 1);
+    assert.equal(r.postrehy[0].vysvetlenoDobou, true);
+    assert.match(r.postrehy[0].podrobnosti, /Rozdíl odpovídá době, ze které výběr pochází\.$/);
 });

@@ -13,7 +13,7 @@ import { stylVyrezu } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
-import { postrehRady, pripravitPriznak, rozdilyVyberu, vybratPostrehy } from '../lib/postrehy';
+import { neobvykleRoky, postrehRady, pripravitPriznak, rozdilyVyberu, souvislosti, vybratPostrehy } from '../lib/postrehy';
 import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 
@@ -450,15 +450,19 @@ function priznakyVyberu() {
     const klic = `${edice}|${druhVyskytu}`;
     if (priznaky.klic === klic && priznaky.data === data) return priznaky.seznam;
     const { modelky } = data;
+    const desetileti = modelky.map(m => {
+        const r = prvniVyskyt(m)?.rok;
+        return r ? Math.floor(r / 10) * 10 : null;
+    });
     const seznam = GRAFY.filter(g => g.druh === 'udaj' || g.druh === 'podil').map(g => pripravitPriznak({
-        ...g, graf: g.klic,
+        ...g, graf: g.klic, desetileti,
         hodnoty: modelky.map(m => g.klic === 'vek' ? prvniVyskyt(m)?.vekPresne ?? null : g.druh === 'udaj' ? g.udaj(m) : g.podil(m)),
     }));
     const znamy = { nar: m => String(m.narodnost || '').trim(), vlasy: m => String(m.vlasyBarva || '').trim(), oci: m => String(m.ociBarva || '').trim() };
     Object.entries(ROZLOZENI_PRO_VYBER).forEach(([graf, sKym]) => {
         const def = GRAFY.find(g => g.klic === graf);
         [...polozkyRozlozeni(graf)].sort((a, b) => b.pocet - a.pocet).slice(0, 8).forEach(p => seznam.push(pripravitPriznak({
-            klic: `${graf}:${p.hodnota}`, graf, druh: 'podil', nazev: `${def.nazev}: ${p.nazev}`, sKym: sKym(p.nazev),
+            klic: `${graf}:${p.hodnota}`, graf, druh: 'podil', nazev: `${def.nazev}: ${p.nazev}`, sKym: sKym(p.nazev), desetileti,
             hodnoty: modelky.map(m => (!znamy[graf] || znamy[graf](m) ? p.test(m) : null)),
         })));
     });
@@ -494,14 +498,25 @@ function postrehyRad() {
 // nejvýš 2 zlomy nebo trendy výběru. Postřehy, které byly vidět, drží místo (bez přeskakování při změně výběru).
 let predtimVeVyberu = [];
 let zvyraznit = null;            // hodnota rozložení zvýrazněná po kliku na postřeh (bez přidání podmínky)
+// Modelka obohacená o přesný věk při prvním výskytu pro výpočet souvislostí
+const modelkaProSouvislosti = m => ({ ...m, vek: prvniVyskyt(m)?.vekPresne ?? null });
+
 function postrehyVyberu() {
-    const kandidati = [...postrehyRad()].filter(([, p]) => p).map(([graf, p]) => ({ id: `${p.druh}:${graf}`, druh: p.druh, graf, skore: p.skore,
-        veta: p.veta, podrobnosti: p.podrobnosti, ikona: p.smer > 0 ? '↗' : '↘', hodnota: /** @type {string | null} */ (null) }));
+    const kandidati = [...postrehyRad()].filter(([, p]) => p).map(([graf, p]) => ({ id: `${p.druh}:${graf}`, druh: p.druh, graf,
+        druhyGraf: /** @type {string | null} */ (null), skore: p.skore,
+        veta: p.veta, podrobnosti: p.podrobnosti, ikona: p.smer > 0 ? '↗' : '↘', hodnota: /** @type {string | null} */ (null), rok: /** @type {number | null} */ (null) }));
     const maska = Uint8Array.from(data.modelky, m => (vyhovuje(m) ? 1 : 0));
     const vyloucit = [...filtry.keys()].flatMap(k => VYLOUCENE_PODMINKOU[k] ?? [k]);
     const { maly, postrehy } = rozdilyVyberu(priznakyVyberu(), maska, { vyloucit });
-    postrehy.forEach(p => kandidati.push({ id: `rozdil:${p.klic}`, druh: 'rozdil', graf: p.graf, skore: p.skore, veta: p.veta,
-        podrobnosti: p.podrobnosti, ikona: '≠', hodnota: p.klic.startsWith(`${p.graf}:`) ? p.klic.slice(p.graf.length + 1) : null }));
+    postrehy.forEach(p => kandidati.push({ id: `rozdil:${p.klic}`, druh: 'rozdil', graf: p.graf, druhyGraf: null, skore: p.skore, veta: p.veta,
+        podrobnosti: p.podrobnosti, ikona: '≠', hodnota: p.klic.startsWith(`${p.graf}:`) ? p.klic.slice(p.graf.length + 1) : null, rok: null }));
+    if (!maly) {
+        const vybraneModelky = data.modelky.filter((_, i) => maska[i]).map(modelkaProSouvislosti);
+        souvislosti(vybraneModelky, { vyber: true }).forEach(s => kandidati.push({
+            id: s.id, druh: 'souvislost', graf: s.graf, druhyGraf: s.druhyGraf, skore: s.skore,
+            veta: s.veta, podrobnosti: s.podrobnosti, ikona: '∼', hodnota: null, rok: null,
+        }));
+    }
     const vybrane = vybratPostrehy(kandidati, { hlavni: 'rozdil', predtim: predtimVeVyberu });
     predtimVeVyberu = vybrane.map(k => k.id);
     const zprava = maly ? 'Výběr je na postřehy příliš malý (méně než 10 modelek).'
@@ -794,24 +809,40 @@ const nastavitIndexHero = i => { try { localStorage.setItem(KLIC_HERO, String(i)
 
 function postrehyHero() {
     const mapa = postrehyCeleSbirky();
-    const kandidati = GRAFY_POSTREHU().map(g => {
+    const kandidati = [];
+    for (const g of GRAFY_POSTREHU()) {
         const p = mapa.get(g.klic);
-        return p && { ...p, id: `${p.druh}:${g.klic}`, graf: g.klic, def: g };
-    }).filter(Boolean);
+        if (p) kandidati.push({ ...p, id: `${p.druh}:${g.klic}`, graf: g.klic, def: g });
+        const r = neobvykleRoky(g, radaVCase(g), { useky: p?.useky })[0];
+        if (r) kandidati.push({ ...r, def: g });
+    }
+    const vsechnyProSouv = data.modelky.map(modelkaProSouvislosti);
+    for (const s of souvislosti(vsechnyProSouv)) {
+        const g = GRAFY.find(x => x.klic === s.graf) || GRAFY[0];
+        kandidati.push({ ...s, def: g });
+    }
     return vybratPostrehy(kandidati);
 }
 
-// Modelka na fotku hera: první výskyt v období po změně, s titulní fotkou a s vlastností postřehu; nejvýš hodnocená
+// Modelka na fotku hera: první výskyt v období po změně (nebo ve vybočujícím roce), s titulní fotkou a s vlastností postřehu; nejvýš hodnocená
 function modelkaHero(p) {
-    const { odRoku, doRoku } = p.hero.po;
+    const poradi = (a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || (a.poradi || 999) - (b.poradi || 999) || a.id - b.id;
     const def = p.def;
     const vlastnost = m => def.druh === 'podil' ? def.podil(m) === (p.smer > 0)
-        : (def.klic === 'vek' ? prvniVyskyt(m)?.vekPresne : def.udaj(m)) !== null;
+        : (def.klic === 'vek' ? prvniVyskyt(m)?.vekPresne : def.udaj?.(m)) !== null;
+    if (p.druh === 'rok' && p.rok) {
+        const vRoce = data.modelky.filter(m => prvniVyskyt(m)?.rok === p.rok && m.coverUrl);
+        return vRoce.filter(vlastnost).sort(poradi)[0] || vRoce.sort(poradi)[0] || null;
+    }
+    if (p.druh === 'souvislost' || !p.hero?.po) {
+        const sFotkou = data.modelky.filter(m => m.coverUrl);
+        return sFotkou.filter(vlastnost).sort(poradi)[0] || sFotkou.sort(poradi)[0] || null;
+    }
+    const { odRoku, doRoku } = p.hero.po;
     const vObdobi = data.modelky.filter(m => {
         const c = prvniVyskyt(m);
         return c && c.rok >= odRoku && c.rok <= doRoku && m.coverUrl;
     });
-    const poradi = (a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || (a.poradi || 999) - (b.poradi || 999) || a.id - b.id;
     return vObdobi.filter(vlastnost).sort(poradi)[0] || vObdobi.sort(poradi)[0] || null;
 }
 
@@ -851,10 +882,11 @@ function htmlPasuHero(seznam, i) {
                 <span class="sh-karta-veta">${esc(p.veta)}</span></button>`).join('')}`;
     }
     if (seznam.length < 2) return '';
+    const ikonaKarty = p => p.druh === 'rok' ? '◆' : p.druh === 'souvislost' ? '∼' : p.smer > 0 ? '↗' : '↘';
     return `<div class="sh-pas-hlava"><b>Postřehy sbírky</b><span>co je ve sbírce průkazné · klik ukáže postřeh nahoře</span></div>
         ${seznam.map((p, k) => `<button type="button" class="sh-karta${k === i ? ' zvolena' : ''}" data-sh-index="${k}" aria-pressed="${k === i}"
             data-tip="${esc(p.podrobnosti)}" data-tip-siroky aria-description="${esc(p.podrobnosti)}">
-            <span class="sh-karta-graf"><i aria-hidden="true">${p.smer > 0 ? '↗' : '↘'}</i>${esc(p.def.nazev)}</span>
+            <span class="sh-karta-graf"><i aria-hidden="true">${ikonaKarty(p)}</i>${esc(p.def.nazev)}</span>
             <span class="sh-karta-zmena">${esc(p.hero.text)}</span>
             <span class="sh-karta-veta">${esc(p.veta)}</span></button>`).join('')}`;
 }
@@ -866,13 +898,19 @@ function obnovitPasHero(misto, stavHero = heroPostrehy) {
     pas.hidden = !html;
 }
 
-// Přepne graf pod herem (a případně zvýrazní hodnotu rozložení) a posune na něj
-function ukazatGraf(misto, klicGrafu, hodnota = null) {
+// Přepne graf pod herem (a případně zvýrazní hodnotu rozložení nebo vybere rok) a posune na něj
+function ukazatGraf(misto, klicGrafu, hodnota = null, rok = null) {
     const koren = /** @type {HTMLElement | null} */ (misto.parentElement?.querySelector('.stat-statistiky'));
     graf = klicGrafu;
     zvyraznit = hodnota;
     try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
     if (koren) {
+        if (rok) {
+            const def = definice();
+            sloupce = def.osa ? radaVCase(def) : [];
+            const idx = sloupce.findIndex(s => s.rok === rok);
+            if (idx >= 0) nastavitRozsah(def, idx, idx);
+        }
         vykreslit(koren);
         koren.querySelector('.sp-telo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -920,7 +958,7 @@ export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene =
                     <div class="sh-zmena">${esc(p.hero.text)}</div>
                     <p class="ph-duvod">${esc(p.veta)}</p>
                     <div class="ph-akce">
-                        <button type="button" class="ph-tlacitko hlavni" data-sh-graf="${esc(p.graf)}">Ukázat v grafu</button>
+                        <button type="button" class="ph-tlacitko hlavni" data-sh-graf="${esc(p.graf)}"${p.rok ? ` data-sh-rok="${p.rok}"` : ''}>Ukázat v grafu</button>
                         ${m ? `<button type="button" class="ph-tlacitko" data-sh-modelka="${m.id}" title="Na fotce – otevřít profil">${esc(m.jmeno)} →</button>` : ''}
                     </div>
                 </div>
@@ -931,7 +969,7 @@ export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene =
     misto.onclick = (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         const tlGraf = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-graf]'));
-        if (tlGraf) return ukazatGraf(misto, tlGraf.dataset.shGraf, tlGraf.dataset.shZvyraznit ?? null);
+        if (tlGraf) return ukazatGraf(misto, tlGraf.dataset.shGraf, tlGraf.dataset.shZvyraznit ?? null, tlGraf.dataset.shRok ? parseInt(tlGraf.dataset.shRok, 10) : null);
         const karta = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-index]'));
         if (karta) {
             const k = parseInt(karta.dataset.shIndex, 10);

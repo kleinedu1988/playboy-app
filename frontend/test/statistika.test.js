@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { benjaminiHochberg, cochranArmitage, fisher, kendallTauB, mannWhitney, median, normalniChvost, poradi, theilSen, wilson } from '../src/lib/statistika.js';
+import { benjaminiHochberg, cochranArmitage, fisher, kendallTauB, mannWhitney, median, normalniChvost, poradi, spearman, theilSen, wilson } from '../src/lib/statistika.js';
 
 // Referenční hodnoty ze SciPy (testdata/statistika-pripady.py)
 const pripady = JSON.parse(readFileSync(new URL('../../testdata/statistika-pripady.json', import.meta.url), 'utf8'));
@@ -70,4 +70,19 @@ test('Mann–Whitney, Fisher a Benjamini–Hochberg souhlasí se SciPy', () => {
     }
     for (const { tabulka: [[a, b], [c, d]], p } of pripady.fisher) blizko(fisher(a, b, c, d), p, `Fisher ${a},${b},${c},${d}`);
     for (const { p, q } of pripady.bh) benjaminiHochberg(p).forEach((x, i) => blizko(x, q[i], `BH ${p}`));
+});
+
+test('Spearmanovo ρ a p-hodnota přes Studentovo t (včetně shod)', () => {
+    const v1 = spearman([1, 2, 3, 4, 5], [2, 1, 4, 3, 5]);
+    blizko(v1.rho, 0.8, 'ρ bez shod');
+    blizko(v1.p, 1 - (2 / Math.PI) * (Math.atan(4 / 3) + 12 / 25), 'p pro df = 3');
+
+    const v2 = spearman([1, 1, 2, 2, 3, 3, 4, 4, 5, 5], [3, 1, 3, 2, 5, 4, 4, 6, 6, 5]);
+    blizko(v2.rho, 69 / Math.sqrt(6440), 'ρ se shodami');
+    blizko(v2.p, 0.0014215551472517936, 'p pro df = 8');
+
+    assert.deepEqual(spearman([1, 2, 3], [10, 20, 30]), { rho: 1, p: 0 });
+    assert.deepEqual(spearman([1, 2, 3], [30, 20, 10]), { rho: -1, p: 0 });
+    assert.equal(spearman([1, 2, 3], [5, 5, 5]), null, 'konstantní řada nemá ρ');
+    assert.equal(spearman([1, 2], [3, 4]), null, 'méně než 3 body');
 });

@@ -346,6 +346,10 @@ export function GetVyvojVCase(arg1) {
   return window['go']['main']['App']['GetVyvojVCase'](arg1);
 }
 
+export function GetZdraviSbirky() {
+  return window['go']['main']['App']['GetZdraviSbirky']();
+}
+
 export function GetZminky(arg1, arg2) {
   return window['go']['main']['App']['GetZminky'](arg1, arg2);
 }
@@ -468,6 +472,10 @@ export function PrijmoutNavrh(arg1) {
 
 export function PrijmoutNavrhy(arg1) {
   return window['go']['main']['App']['PrijmoutNavrhy'](arg1);
+}
+
+export function RozdilZalohy(arg1) {
+  return window['go']['main']['App']['RozdilZalohy'](arg1);
 }
 
 export function SetCoverVyrez(arg1, arg2, arg3, arg4) {

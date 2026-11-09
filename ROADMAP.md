@@ -3,13 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (9. 11. 2026): verze 1.41.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.41 jsou hotové: mezipaměť náhledů na
+**Stav (9. 11. 2026): verze 1.42.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.42 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
 (1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
 Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
-příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) a režim čtení s prezentací čísla (1.41.0).
+příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) a zdraví sbírky s rozdílem před obnovením zálohy (1.42.0).
 
 ---
 
@@ -63,12 +63,12 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 | **Etapa A** | **1.30–1.34** | **✅ Hotovo** | **Prohloubení práce s modely, fotkami a Statistikami** | Mapa sbírky (PCA / autoenkodér), Síň slávy v Modelkách, Podobné modelky s vysvětlením, Stejné a podobné fotky, Křivky a srovnání období |
 | **Etapa B** | **1.35–1.37** | **✅ Hotovo** | **Rychlé plnění sbírky a chytré hledání** | Rychlé přidávání a zásobník fotek, Chytré hledání se zápisem a našeptáváním, Chytré výběry (Průvodce přidáním čísla odložen do etapy D) |
 | **Etapa C** | **1.38–1.40** | ✅ Hotovo | **Obohacení obsahu** | Úplnost sbírky a Wikidata, Propojení čísla a modelky, Bohatý text a obousměrné odkazy |
-| **Etapa D** | **1.41–1.44** | 🚧 1.41 hotová | **Prohlížení, údržba a zábava** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy, Kvíz „Poznej playmate“, Rozšířené tiskové sestavy |
+| **Etapa D** | **1.41–1.44** | 🚧 1.41–1.42 hotové | **Prohlížení, údržba a zábava** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy, Kvíz „Poznej playmate“, Rozšířené tiskové sestavy |
 | **Etapa E** | **1.45–1.47** | ⏸ Odloženo | **Průvodce číslem a Google Disk** | Průvodce přidáním celého čísla, Google Disk v aplikaci, Vkládání z Disku |
 
 ---
 
-## Dokončeno v řadě 1.0–1.41 ✅
+## Dokončeno v řadě 1.0–1.42 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -107,6 +107,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.39 – Propojení čísla a modelky při čtení** (`frontend/src/app/kontext-cisla.js`, `lib/kontext-cisla.js`, `app/vydani.js`): pás všech fotek čísla v detailu čísla s prohlížečem jen pro číslo a Promítat; v profilu náhledy obálek u štítků čísel a bublina s obálkou, Playmate měsíce, dalšími modelkami v čísle a předchozím/následujícím číslem téže edice.
 - **1.40 – Obousměrné odkazy `[[…]]`** (`zminky.go`, `frontend/src/lib/odkazy.js`, `app/wiki-odkazy.js`, `ui/editor-textu-cm.js`): `[[Jméno]]`, `[[06/1995]]`, `[[Fotograf]]` i `[[cíl|popisek]]` v poznámkách, textech alb, článcích a poznámkách čísel; našeptávač po `[[` v editoru, zvýraznění v editoru, klikací odkaz s vizitkou, sekce „Zmiňováno v…“ v profilu i v detailu čísla. Lišta editoru (Ctrl+B/I, nadpis, odrážky, citace) a Náhled už existovaly.
 - **1.41 – Režim čtení a prezentace čísla** (`frontend/src/lib/casopis.js`, `app/casopis.js`): Jako časopis v detailu čísla a Časopis v profilu – přes celou obrazovku obálka → Playmate měsíce → další modelky → články → fotky (profil: úvod → články → alba), redakční dvoustrany s patkovým písmem; šipky, mezerník, Home/End, klik, Esc; prezentace 3 / 5 / 10 s s prolínáním a Ken Burns k výřezu portrétu, lišta mizí v klidu.
+- **1.42 – Zdraví sbírky a porovnání se zálohou** (`zdravi_sbirky.go`, `frontend/src/app/zdravi.js`, `app/sprava.js`): karta Zdraví sbírky v Údržbě › Souhrn (zálohy, export s připomínkou po 14 dnech a ≥ 20 změnách, ověření souborů, mezipaměti a obsah fotek, úkoly); před obnovením zálohy rozdíl nanečisto po tabulkách (přibude / zmizí / změní se s příklady a změněnými sloupci). Datum posledního exportu v nastavení, schéma beze změny.
 ---
 
 ## Plán dalšího rozvoje (1.30–1.47)
@@ -270,7 +271,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** celé číslo lze projít od obálky po poslední fotku pouze mezerníkem nebo nechat běžet jako prezentaci.
 
-#### 1.42 – Zdraví sbírky, připomínka zálohy a porovnání se zálohou
+#### 1.42 – Zdraví sbírky, připomínka zálohy a porovnání se zálohou ✅ (9. 11. 2026)
 
 **Cíl:** v Údržbě ukázat souhrnnou kartu „Zdraví sbírky“, upozornit na zastaralou zálohu a před obnovením ze zálohy přesně vypsat, co by se změnilo (rozdíl oproti současné databázi).
 

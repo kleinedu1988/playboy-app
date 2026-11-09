@@ -28,6 +28,7 @@ import * as fokus from './udrzba-fokus';
 import * as poUdajich from './udrzba-udaje';
 import * as stejne from './udrzba-stejne';
 import { exportovatData, importovatData, prejmenovatVeSbirce, zkontrolovatSoubory } from './sprava';
+import * as zdravi from './zdravi';
 import { otevritRychlePridani } from './formular-modelky';
 
 // Skupin na stránku; další se přidají při doscrollování na konec (nebo tlačítkem)
@@ -64,6 +65,7 @@ const KOSTRA = `
             <section class="ud-karta ud-pokrok" data-ud="pokrok" aria-label="Pokrok sbírky"></section>
             <section class="ud-karta ud-uceni hidden" data-ud="uceni" aria-label="Co se program naučil"></section>
         </div>
+        <section class="ud-karta ud-zdravi" data-ud="zdravi" aria-label="Zdraví sbírky"></section>
         <div class="ud-telo" data-ud="seznam">
             <nav class="ud-bok" data-ud="bok" aria-label="Co ukázat"></nav>
             <div class="ud-hlavni">
@@ -412,6 +414,7 @@ export function vykreslit() {
         stejne.zobrazit(cast('stejne'));
     } else {
         nastavitHtml(cast('pokrok'), htmlPokroku());
+        zdravi.vykreslit(cast('zdravi'), { vse: model.pocty.vse, kKontrole: model.kKontrole, navrhu: model.navrhu });
         const htmlU = uceni.htmlUceni({ rozbaleno: uceniRozbaleno, zdroj: stav.udrzbaFiltr === 'navrhy' ? stav.udrzbaZdroj : '' });
         // Co se program naučil je v panelu Sbírky (záložka Učení), ne nad frontou
         const panelUceni = /** @type {HTMLElement | null} */ (stats.querySelector('[data-sbirka-uceni]'));

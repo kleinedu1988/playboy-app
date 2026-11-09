@@ -7,6 +7,19 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.42.0] – 2026-11-09
+
+### Přidáno
+- **Zdraví sbírky** v Údržbě › Souhrn: poslední záloha, počet a velikost záloh; export do souboru (jediná záloha mimo
+  počítač) s jemnou připomínkou, když je starší než 14 dní (nebo žádný) a od té doby přibylo aspoň 20 změn; poslední
+  ověření souborů na Disku, ověřené a nedostupné fotky; velikost náhledů, mezipaměti prohlížeče, databáze a obsahu
+  fotek se stavem modelu; počet úkolů k doplnění. Rychlé akce Zálohy…, Exportovat…, Zkontrolovat
+  (`zdravi_sbirky.go`, `frontend/src/app/zdravi.js`).
+- **Rozdíl před obnovením zálohy**: Obnovit… napřed nanečisto porovná zálohu se současnou databází – modelky, čísla,
+  alba, fotky a články, které přibudou, zmizí nebo se změní, s příklady a u změn i se změněnými údaji; teprve pak
+  Obnovit tento stav. Porovnání zvládne i zálohu se starším schématem (srovnává společné sloupce).
+- Datum posledního exportu se ukládá do nastavení (`posledni_export`).
+
 ## [1.41.0] – 2026-11-09
 
 ### Přidáno

@@ -1049,6 +1049,8 @@ func (a *App) ExportovatDoSouboru() string {
 		a.chyba("export", err)
 		return ""
 	}
+	// Připomínka zálohy v Údržbě (zdravi_sbirky.go) počítá dny od posledního exportu
+	a.ulozitNastaveni("posledni_export", time.Now().Format("2006-01-02"))
 	return cesta
 }
 

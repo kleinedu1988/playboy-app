@@ -636,6 +636,26 @@ export namespace main {
 	        this.neznamych = source["neznamych"];
 	    }
 	}
+	export class KategorieRozdilu {
+	    nazev: string;
+	    pribude: number;
+	    ubude: number;
+	    zmeni: number;
+	    priklady: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new KategorieRozdilu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.nazev = source["nazev"];
+	        this.pribude = source["pribude"];
+	        this.ubude = source["ubude"];
+	        this.zmeni = source["zmeni"];
+	        this.priklady = source["priklady"];
+	    }
+	}
 	export class KolekceGalerie {
 	    klic: string;
 	    nazev: string;
@@ -1813,6 +1833,40 @@ export namespace main {
 	    }
 	}
 	
+	export class RozdilZalohy {
+	    kategorie: KategorieRozdilu[];
+	    celkem: number;
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RozdilZalohy(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.kategorie = this.convertValues(source["kategorie"], KategorieRozdilu);
+	        this.celkem = source["celkem"];
+	        this.chyba = source["chyba"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class Tema {
 	    klic: string;
 	    nazev: string;
@@ -2667,6 +2721,68 @@ export namespace main {
 	        this.hodnoceni = source["hodnoceni"];
 	        this.hotovo = source["hotovo"];
 	    }
+	}
+	export class ZdraviSbirky {
+	    posledniZaloha: string;
+	    duvodZalohy: string;
+	    pocetZaloh: number;
+	    velikostZaloh: number;
+	    posledniExport: string;
+	    dniOdExportu: number;
+	    zmenOdExportu: number;
+	    pripomenoutExport: boolean;
+	    posledniKontrola: string;
+	    overenych: number;
+	    nedostupnych: number;
+	    fotek: number;
+	    velikostDatabaze: number;
+	    velikostNahledu: number;
+	    velikostWebu: number;
+	    velikostObsahu: number;
+	    obsah: obsah.Stav;
+	
+	    static createFrom(source: any = {}) {
+	        return new ZdraviSbirky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.posledniZaloha = source["posledniZaloha"];
+	        this.duvodZalohy = source["duvodZalohy"];
+	        this.pocetZaloh = source["pocetZaloh"];
+	        this.velikostZaloh = source["velikostZaloh"];
+	        this.posledniExport = source["posledniExport"];
+	        this.dniOdExportu = source["dniOdExportu"];
+	        this.zmenOdExportu = source["zmenOdExportu"];
+	        this.pripomenoutExport = source["pripomenoutExport"];
+	        this.posledniKontrola = source["posledniKontrola"];
+	        this.overenych = source["overenych"];
+	        this.nedostupnych = source["nedostupnych"];
+	        this.fotek = source["fotek"];
+	        this.velikostDatabaze = source["velikostDatabaze"];
+	        this.velikostNahledu = source["velikostNahledu"];
+	        this.velikostWebu = source["velikostWebu"];
+	        this.velikostObsahu = source["velikostObsahu"];
+	        this.obsah = this.convertValues(source["obsah"], obsah.Stav);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	
 	

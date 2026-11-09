@@ -1,5 +1,5 @@
 // Kontrola Disku, export a import, heslo, zálohy a nabídka ⋯
-import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
+import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
 import { zapomenoutProfilovkyUvodu } from '../ui/uvod';
@@ -372,6 +372,18 @@ export const NAZVY_ZALOH = {
 export const backupModal = document.getElementById('backupModal');
 export const casZalohy = z => `${formatDatum(z.cas.slice(0, 10))} ${z.cas.slice(11, 16)}`;
 
+// Výpis rozdílů před obnovením: po kategoriích kolik přibude, zmizí a změní se, s příklady
+export function htmlRozdiluZalohy(r) {
+    if (!r) return '<p class="pass-hint">Zálohu se nepodařilo porovnat.</p>';
+    if (r.chyba && !r.kategorie?.length) return `<p class="pass-hint">${esc(r.chyba)}</p>`;
+    if (!r.celkem) return '<p class="pass-hint">Záloha je stejná jako současná databáze – obnovení by nic nezměnilo.</p>';
+    const pocty = k => [k.pribude ? `<span class="rz-plus">+${k.pribude} přibude</span>` : '', k.ubude ? `<span class="rz-minus">−${k.ubude} zmizí</span>` : '',
+        k.zmeni ? `<span class="rz-zmena">~${k.zmeni} změní se</span>` : ''].filter(Boolean).join(' ');
+    return `<p class="rz-uvod">Obnovením by se změnilo:</p><ul class="rz-seznam">${r.kategorie.filter(k => k.pribude || k.ubude || k.zmeni).map(k => `
+        <li><b>${esc(k.nazev)}</b> ${pocty(k)}${k.priklady?.length ? `<small>${k.priklady.map(p => esc(p)).join('<br>')}${k.pribude + k.ubude + k.zmeni > k.priklady.length ? '<br>…' : ''}</small>` : ''}</li>`).join('')}</ul>
+        ${r.chyba ? `<p class="pass-hint">Část nejde porovnat: ${esc(r.chyba)}</p>` : ''}`;
+}
+
 export async function otevritZalohy() {
     const zalohy = await SeznamZaloh() || [];
     document.getElementById('backupModalText').textContent = zalohy.length
@@ -381,7 +393,8 @@ export async function otevritZalohy() {
         <li>
             <strong>${esc(casZalohy(z))}</strong>
             <span>${esc(NAZVY_ZALOH[z.duvod] || z.duvod)} · ${z.poskozena ? 'nejde přečíst' : `modelek ${z.modelek}, fotek ${z.fotek}`}</span>
-            <button class="btn btn-secondary btn-small" data-obnovit="${esc(z.soubor)}" data-popis="${esc(casZalohy(z))}" ${z.poskozena ? 'disabled' : ''}>Obnovit</button>
+            <button class="btn btn-secondary btn-small" data-rozdil="${esc(z.soubor)}" data-popis="${esc(casZalohy(z))}" ${z.poskozena ? 'disabled' : ''} title="Napřed ukáže, co by se obnovením změnilo">Obnovit…</button>
+            <div class="rozdil-zalohy hidden"></div>
         </li>`).join('');
     backupModal.classList.remove('hidden');
 }
@@ -469,6 +482,23 @@ export function pripravit() {
         e.stopPropagation();
         const misto = tlacitko.getBoundingClientRect();
         tlacitko.parentElement.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: misto.left, clientY: misto.bottom + 4 }));
+    });
+
+    // Napřed rozdíl nanečisto (co přibude, ubude, změní se), teprve z něj obnovení
+    document.getElementById('backupModalList').addEventListener('click', async (e) => {
+        const ukazat = e.target.closest('[data-rozdil]');
+        if (!ukazat || ukazat.disabled) return;
+        const misto = ukazat.parentElement.querySelector('.rozdil-zalohy');
+        if (!misto.classList.contains('hidden')) {
+            misto.classList.add('hidden');
+            return;
+        }
+        ukazat.disabled = true;
+        misto.innerHTML = '<p class="pass-hint">Porovnávám zálohu se současnou databází…</p>';
+        misto.classList.remove('hidden');
+        const r = await RozdilZalohy(ukazat.dataset.rozdil).catch(() => null);
+        ukazat.disabled = false;
+        misto.innerHTML = htmlRozdiluZalohy(r) + `<div class="rozdil-akce"><button class="btn btn-danger btn-small" data-obnovit="${esc(ukazat.dataset.rozdil)}" data-popis="${esc(ukazat.dataset.popis)}"${r && !r.chyba && !r.celkem ? ' disabled' : ''}>Obnovit tento stav</button></div>`;
     });
 
     document.getElementById('backupModalList').addEventListener('click', async (e) => {

@@ -181,6 +181,8 @@ export function GetVydaniInfo(arg1:string):Promise<sbirka.VydaniInfo>;
 
 export function GetVyvojVCase(arg1:string):Promise<sbirka.VyvojVCase>;
 
+export function GetZdraviSbirky():Promise<main.ZdraviSbirky>;
+
 export function GetZminky(arg1:string,arg2:string):Promise<Array<main.Zminka>>;
 
 export function HledatClanky(arg1:string):Promise<Array<sbirka.NalezClanku>>;
@@ -242,6 +244,8 @@ export function PridatModelkuKAlbu(arg1:number,arg2:string,arg3:string,arg4:numb
 export function PrijmoutNavrh(arg1:kontrola.NavrhDoplneni):Promise<boolean>;
 
 export function PrijmoutNavrhy(arg1:Array<kontrola.NavrhDoplneni>):Promise<number>;
+
+export function RozdilZalohy(arg1:string):Promise<main.RozdilZalohy>;
 
 export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):Promise<boolean>;
 

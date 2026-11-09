@@ -466,6 +466,136 @@ var (
 	vzorRokMesicHledani = regexp.MustCompile(`^\s*\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?\s*$`)
 )
 
+// Je klíč příkazu známý hledání (vlasy:, vyska:, pas: …)? Galerie fotek podle toho odliší příkazy od textu.
+func JeZnamyKlic(klic string) bool {
+	k := Zjednodusit(klic)
+	return klicePoleHledani[k] || klicDesetinnychPoli[k]
+}
+
+// Číselná pole s desetinnou hodnotou (chytré hledání: pas > 60, bmi < 18,5, věk < 21, bez fotek)
+var klicDesetinnychPoli = map[string]bool{"pas": true, "hrudnik": true, "boky": true, "bmi": true, "whr": true, "vek": true, "fotek": true}
+
+// Hodnota číselného pole modelky; false = údaj chybí (obvod 0, bez výšky nebo váhy, bez narození či čísla)
+func DesetinnaHodnota(m *Modelka, klic string) (float64, bool) {
+	switch klic {
+	case "pas":
+		return float64(m.ObvodPasCm), m.ObvodPasCm > 0
+	case "hrudnik":
+		return float64(m.ObvodHrudnikCm), m.ObvodHrudnikCm > 0
+	case "boky":
+		return float64(m.ObvodBokyCm), m.ObvodBokyCm > 0
+	case "bmi":
+		if m.VyskaCm <= 0 || m.VahaKg <= 0 {
+			return 0, false
+		}
+		v := float64(m.VyskaCm) / 100
+		return float64(m.VahaKg) / (v * v), true
+	case "whr":
+		if m.ObvodPasCm <= 0 || m.ObvodBokyCm <= 0 {
+			return 0, false
+		}
+		return float64(m.ObvodPasCm) / float64(m.ObvodBokyCm), true
+	case "vek":
+		vek, ok := VekVPrvnimCisle(m)
+		return float64(vek), ok
+	case "fotek":
+		return float64(m.PocetFotek), true
+	}
+	return 0, false
+}
+
+// Věk modelky v jejím nejstarším čísle (rok a měsíc vydání proti roku a měsíci narození)
+func VekVPrvnimCisle(m *Modelka) (int, bool) {
+	rokN, ok := rychlyRok4(m.NarozeniDatum)
+	if !ok {
+		return 0, false
+	}
+	prvni := ""
+	for _, v := range m.Vydani {
+		if _, ok := rychlyRok4(v); ok && (prvni == "" || v < prvni) {
+			prvni = v
+		}
+	}
+	if prvni == "" {
+		return 0, false
+	}
+	rokV, _ := rychlyRok4(prvni)
+	vek := rokV - rokN
+	mesic := func(text string) int {
+		if len(text) >= 7 && text[4] == '-' && text[5] >= '0' && text[5] <= '1' {
+			if n, err := strconv.Atoi(text[5:7]); err == nil && n >= 1 && n <= 12 {
+				return n
+			}
+		}
+		return 0
+	}
+	if mv, mn := mesic(prvni), mesic(m.NarozeniDatum); mv > 0 && mn > 0 && mv < mn {
+		vek--
+	}
+	return vek, vek > 10 && vek < 100
+}
+
+var vzorDesetinnehoCisla = regexp.MustCompile(`^\d+(?:[.,]\d+)?$`)
+
+// Desetinný filtr: porovnání (>=60, <18,5), rozsah (60..65, 60-65, 0,65-0,72) nebo přesná hodnota
+func parsovatDesetinnyFiltr(hodnota string) (op string, od, do float64, ok bool) {
+	h := strings.ReplaceAll(strings.TrimSpace(hodnota), " ", "")
+	cislo := func(text string) (float64, bool) {
+		if !vzorDesetinnehoCisla.MatchString(text) {
+			return 0, false
+		}
+		x, err := strconv.ParseFloat(strings.Replace(text, ",", ".", 1), 64)
+		return x, err == nil
+	}
+	for _, o := range []string{">=", "<=", "==", ">", "<", "="} {
+		if strings.HasPrefix(h, o) {
+			x, ok := cislo(h[len(o):])
+			if o == "==" {
+				o = "="
+			}
+			return o, x, 0, ok
+		}
+	}
+	for _, oddelovac := range []string{"..", "-"} {
+		if a, b, ma := strings.Cut(h, oddelovac); ma {
+			x, ok1 := cislo(a)
+			y, ok2 := cislo(b)
+			if ok1 && ok2 {
+				return "..", math.Min(x, y), math.Max(x, y), true
+			}
+		}
+	}
+	x, ok := cislo(h)
+	return "=", x, 0, ok
+}
+
+func vyhovujeDesetinne(x float64, op string, od, do float64) bool {
+	const eps = 1e-9
+	switch op {
+	case ">=":
+		return x >= od-eps
+	case "<=":
+		return x <= od+eps
+	case ">":
+		return x > od+eps
+	case "<":
+		return x < od-eps
+	case "..":
+		return x >= od-eps && x <= do+eps
+	}
+	// Přesná hodnota s přesností zadaného čísla (bmi:18 = 18,0–18,99…, whr:0,7 = 0,70–0,79…)
+	return x >= od-eps && x < od+presnost(od)
+}
+
+func presnost(x float64) float64 {
+	for _, p := range []float64{1, 0.1, 0.01, 0.001} {
+		if math.Abs(x/p-math.Round(x/p)) < 1e-6 {
+			return p
+		}
+	}
+	return 0.0001
+}
+
 // Rozpoznání numerického filtru: op (">=", "<=", ">", "<", "=", ".."), numOd, numDo
 func parsovatNumerickyFiltr(hodnota string) (op string, numOd, numDo int, ok bool) {
 	h := strings.TrimSpace(hodnota)
@@ -780,6 +910,7 @@ const (
 	hledatCislo              // vyska:, vaha:, rok:, narozena: s číselným filtrem
 	hledatPole               // známé pole
 	hledatNeznamePole        // neznámé pole: „klic:hodnota“ jako obyčejný text
+	hledatDesetinne          // pas:, hrudnik:, boky:, bmi:, whr:, vek:, fotek: s číselným filtrem (i desetinným)
 )
 
 // Jedno slovo dotazu rozebrané předem
@@ -793,6 +924,7 @@ type podminkaHledani struct {
 	slova    [][]string // slova každé varianty pro překlepy; nil = překlepy se nezkoušejí
 	op       string     // číselný filtr
 	od, do   int
+	odF, doF float64 // desetinný filtr (hledatDesetinne)
 	meze     []filtrHodnoceni
 }
 
@@ -896,6 +1028,14 @@ func Pripravit(vyhledavani string) Dotaz {
 			if !zname {
 				p.jehla = p.klic + ":" + hodnotaZjedn
 			}
+		case klicDesetinnychPoli[p.klic]:
+			// Obvody, BMI, poměr pas : boky, věk v prvním čísle a počet fotek: pas:<=60, bmi:<18,5, whr:0,65-0,72
+			op, od, do, ok := parsovatDesetinnyFiltr(hodnota)
+			if !ok {
+				p.druh, p.jehla = hledatNeznamePole, p.klic+":"+hodnotaZjedn
+				break
+			}
+			p.druh, p.op, p.odF, p.doF = hledatDesetinne, op, od, do
 		case ok && (p.klic == "vyska" || p.klic == "vaha" || rokNeboNarozena):
 			p.druh, p.op, p.od, p.do = hledatCislo, op, numOd, numDo
 		case klicePoleHledani[p.klic]:
@@ -1006,6 +1146,10 @@ func (h Dotaz) Odpovida(m *Modelka, t *Texty) bool {
 			}
 		case hledatNeznamePole:
 			shoda = strings.Contains(texty().udaje, p.jehla)
+		case hledatDesetinne:
+			if x, zname := DesetinnaHodnota(m, p.klic); zname {
+				shoda = vyhovujeDesetinne(x, p.op, p.odF, p.doF)
+			}
 		}
 		if shoda == p.negace {
 			return false

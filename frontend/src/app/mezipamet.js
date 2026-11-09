@@ -15,6 +15,11 @@ export async function vsechnyModelky() {
     return (await modelky).slice();
 }
 
+// Modelky podle id (chytré hledání ve fotkách: vlasy:, vyska:, pas: … platí pro modelku fotky)
+export async function modelkyPodleId() {
+    return new Map((await vsechnyModelky()).map(m => [m.id, m]));
+}
+
 // Oblíbenost modelek podle id (řazení fotek se stejnými srdíčky v Nejlepších a na stěně)
 export async function oblibenostModelek() {
     return new Map((await vsechnyModelky()).map(m => [m.id, m.oblibenost || 0]));

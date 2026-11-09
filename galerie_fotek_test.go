@@ -207,3 +207,29 @@ func TestKolekceBarev(t *testing.T) {
 		t.Fatalf("počty %v", pocty)
 	}
 }
+
+// Chytré hledání v galerii: příkazy vzhledu platí pro modelku, srdíčka a rok pro fotku, zbytek je text
+func TestGalerieFotekPrikazy(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", VlasyBarva: "blond", VyskaCm: 178, Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Bára", VlasyBarva: "černá", VyskaCm: 165, Tetovani: -1, Piercing: -1})
+	anna, bara := idModelky(t, a, "Anna"), idModelky(t, a, "Bára")
+	a.AddBulkPhotos(anna, "Pláž", "Pictorial", odkazA+" "+odkazB)
+	a.AddBulkPhotos(bara, "Studio", "Pictorial", "CCCCCCCCCCCCCCCCCCCCCCCCCCCCC")
+	fotkyAnny := a.GetFotografieModelky(anna)
+	a.SetHodnoceniFotek([]int{fotkyAnny[0].ID}, 5)
+	for _, p := range []struct {
+		text  string
+		pocet int
+	}{
+		{"vlasy:blond", 2}, {"vyska:>175", 2}, {"vyska:<170", 1}, {"-vlasy:blond", 1},
+		{"vlasy:blond srdicka:>=4", 1}, {"srdicka:5", 1}, {"vlasy:blond studio", 0}, {"vyska:>170 plaz", 2},
+	} {
+		if g := a.GetGalerieFotek(DotazGalerie{Kolik: 50, Text: p.text}); g.Celkem != p.pocet {
+			t.Errorf("%q: %d fotek, chci %d", p.text, g.Celkem, p.pocet)
+		}
+	}
+	if prikazy, zbytek := rozdelitPrikazyGalerie(`Anna vlasy:blond neco:x -tag:"a b"`); len(prikazy) != 2 || zbytek != "Anna  neco:x" {
+		t.Fatalf("rozdělení: %q %q", prikazy, zbytek)
+	}
+}

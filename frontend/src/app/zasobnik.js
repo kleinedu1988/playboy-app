@@ -1,4 +1,4 @@
-// Zásobník odkazů v profilu modelky (nad alby): průběžně sem odkládáš odkazy na fotky z Disku – vložením (Ctrl+V
+// Zásobník odkazů v profilu modelky (na konci stránky pod alby): průběžně sem odkládáš odkazy na fotky z Disku – vložením (Ctrl+V
 // kdekoli v profilu), přetažením textu z prohlížeče nebo psaním. Ukazuje, kolik odkazů je platných a které fotky
 // už ve sbírce jsou; Ctrl+Enter (nebo Přidat) vloží nové do zvoleného alba, „Nové album…“ je předá do okna alba.
 // Rozepsaný text každé modelky se pamatuje (i po přepnutí jinam a po restartu), dokud se nevloží nebo nevyprázdní.
@@ -63,7 +63,7 @@ export function pripravit(funkce) {
                 <kbd class="zas-klavesa">Ctrl+Enter</kbd>
             </div>
         </div>`;
-    mrizka.before(prvek);
+    mrizka.after(prvek);
     kontrola = sledovatOdkazy(pole(), prvek.querySelector('[data-zas-kontrola]'), { poZmene: obnovitTlacitko });
 
     pole().addEventListener('input', () => {
@@ -126,6 +126,8 @@ function pripsat(text) {
     p.value = p.value.trim() ? `${p.value.trimEnd()}\n${t}` : t;
     p.dispatchEvent(new Event('input', { bubbles: true }));
     nastavitOtevreni(true);
+    // Zásobník je na konci profilu: po vložení či přetažení se ukáže
+    prvek.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     kontrola.zkontrolovat();
 }
 

@@ -4,6 +4,7 @@
 // pak mozaika po stránkách. Výchozí řazení „Co se ti
 // asi líbí“: tvoje srdíčka a u nehodnocených odhad z obsahu fotek, promíchané napříč alby. Dotaz i otevřený panel
 // se pamatují. Text hledání v hlavičce omezuje galerii (jméno modelky, album, fotograf).
+import { prevest } from '../lib/hledani-dotaz';
 import { GetGalerieFotek, GetKolekceGalerie, GetVsechnyKolekce, GetVyberyGalerie, UlozitVyberGalerie, SmazatVyberGalerie, ZaznamenatKolekci, GetStavHledaniSlovy, ZapnoutHledaniSlovy } from './backend';
 import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
 import { stav } from './stav';
@@ -89,7 +90,7 @@ async function nacistStranku(od) {
 export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, pripravit }) {
     vykreslitDlazdici = dlazdice;
     poVykresleni = pripravit;
-    text = hledani || '';
+    text = prevest(hledani || '');
     const moje = ++stav.cisloNacteni;
     // Řady kolekcí jen v čisté galerii (bez hledání, filtrů a zvolené kolekce)
     const cista = !text.trim() && !pocetFiltru() && !zvolenaKolekce.klic;

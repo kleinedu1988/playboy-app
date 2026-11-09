@@ -9,10 +9,13 @@ package main
 import (
 	"fmt"
 	"hash/fnv"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
 	"time"
+
+	"playboy-app/internal/hledani"
 )
 
 // Dotaz galerie
@@ -181,6 +184,11 @@ func obsahuje(seznam []string, hodnota string) bool {
 }
 
 func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, FasetyGalerie, hledaniSlovy) {
+	// Příkazy chytrého hledání (vlasy:blond vyska:>175 srdicka:>=4 rok:1990-1999): srdíčka, rok a edice platí pro
+	// fotku (její vydání), ostatní pro její modelku; zbylý text hledá jako dřív
+	prikazy, zbytek := rozdelitPrikazyGalerie(d.Text)
+	d.Text = zbytek
+	filtrPrikazu := a.filtrPrikazuGalerie(prikazy)
 	text := strings.Fields(zjednodusit(d.Text))
 	// Textu neodpovídá jméno, album ani fotograf → hledat v obsahu fotek (s modelkou poznanou v textu)
 	slovy := a.hledatSlovy(fotky, d.Text, text)
@@ -196,6 +204,10 @@ func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, Fasety
 	for i := range fotky {
 		g := &fotky[i]
 		if kolekce != nil && !kolekce(g) {
+			continue
+		}
+		// Indexy jdou do sdílené paměti galerie, proto se fotky nevyřazují ze seznamu, jen přeskočí
+		if filtrPrikazu != nil && !filtrPrikazu(&g.f) {
 			continue
 		}
 		if vyhovujeGalerii(g, d, text, "") {
@@ -324,4 +336,61 @@ func promichatAlba(serazene []int, fotky []fotkaGalerie) []int {
 		}
 	}
 	return append(vysledek, odlozene...)
+}
+
+var vzorPrikazuGalerie = regexp.MustCompile(`(?:^|\s)([-!]?([\p{L}]+):\s*(?:(?:>=|<=|==|>|<|=)\s*\d+(?:[.,]\d+)?|(?:"[^"]*"|[^\s",:]+)(?:\s*,\s*(?:"[^"]*"|[^\s",:]+))*))`)
+
+// Text galerie → příkazy hledání (známé klíče) a zbylý text
+func rozdelitPrikazyGalerie(text string) (prikazy []string, zbytek string) {
+	zbytek = vzorPrikazuGalerie.ReplaceAllStringFunc(text, func(cast string) string {
+		s := vzorPrikazuGalerie.FindStringSubmatch(cast)
+		if !hledani.JeZnamyKlic(s[2]) {
+			return cast
+		}
+		prikazy = append(prikazy, s[1])
+		return " "
+	})
+	return prikazy, strings.TrimSpace(zbytek)
+}
+
+// Klíče, které se v galerii posuzují podle fotky, ne podle modelky
+var klicePodleFotky = map[string]bool{"srdicka": true, "hodnoceni": true, "rok": true, "edice": true, "vydani": true}
+
+// Filtr fotek podle příkazů; nil = žádné příkazy
+func (a *App) filtrPrikazuGalerie(prikazy []string) func(f *Fotografie) bool {
+	if len(prikazy) == 0 {
+		return nil
+	}
+	var proFotku, proModelku []string
+	for _, p := range prikazy {
+		klic := zjednodusit(strings.TrimLeft(p[:strings.Index(p, ":")], "-!"))
+		if klicePodleFotky[klic] {
+			proFotku = append(proFotku, p)
+		} else {
+			proModelku = append(proModelku, p)
+		}
+	}
+	var modelky map[int]bool
+	if len(proModelku) > 0 {
+		nalezene, _ := a.nactiModelky(strings.Join(proModelku, " "), false)
+		modelky = make(map[int]bool, len(nalezene))
+		for _, m := range nalezene {
+			modelky[m.ID] = true
+		}
+	}
+	dotazFotky := hledani.Pripravit(strings.Join(proFotku, " "))
+	return func(f *Fotografie) bool {
+		if modelky != nil && !modelky[f.ModelkaID] {
+			return false
+		}
+		if len(dotazFotky) == 0 {
+			return true
+		}
+		// Fotka jako „modelka“ s jedním vydáním a svými srdíčky
+		m := Modelka{Hodnoceni: float64(f.Hodnoceni)}
+		if f.Vydani != "" {
+			m.Vydani = []string{f.Vydani}
+		}
+		return dotazFotky.Odpovida(&m, nil)
+	}
 }

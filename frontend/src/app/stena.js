@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { EDICE, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { EDICE, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, poleCisla, poleFotky, poleModelkyFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { rozbalitFrontu } from '../lib/fronta';
 import { stav } from './stav';
@@ -13,7 +13,8 @@ import { otevritVydani } from './vydani';
 import { prevestNaVolby } from '../ui/volby';
 import { nastavitEdiciKalendare } from './kalendar';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
-import { oblibenostModelek } from './mezipamet';
+import { modelkyPodleId, oblibenostModelek } from './mezipamet';
+import { prevest } from '../lib/hledani-dotaz';
 import { porovnatFotkyPodleHodnoty } from '../lib/oblibenost';
 
 const RAZENI_STENY = {
@@ -32,7 +33,11 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(wall);
 
-    const tokeny = rozlozitDotaz(dotaz);
+    const tokeny = rozlozitDotaz(prevest(dotaz));
+    // Příkazy vzhledu a měr (vlasy:blond, vyska:>175) se posuzují podle modelky fotky
+    const katalog = tokeny.some(t => t.klic && !(t.klic in poleFotky({}))) ? await modelkyPodleId() : null;
+    if (moje !== stav.cisloNacteni) return;
+    const poleSModelkou = f => ({ ...poleModelkyFotky(katalog?.get(f.modelkaId) || (katalog ? {} : null)), ...poleFotky(f) });
     const vyhovuje = f => {
         if (stav.stenaEdice !== 'vse' && rozlozitVydani(f.album)?.edice !== stav.stenaEdice) return false;
         return vyhovujeHledani([
@@ -41,7 +46,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
             nazevAlba(f.album, f.typ),
             f.fotograf || '',
             f.popis || '',
-        ], tokeny, poleFotky(f));
+        ], tokeny, poleSModelkou(f));
     };
     stav.stenaPolozky = sestavitAlba(fotky.filter(vyhovuje)).flatMap(a => a.polozky).filter(p => {
         if (stav.stenaMin === -1) return !p.hodnoceni;
@@ -65,7 +70,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
         ${[1, 2, 3, 4, 5].map(n => `<button class="chip ${stav.stenaMin === n ? 'active' : ''}" data-stena-min="${n}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')}
         <button class="chip ${stav.stenaMin === -1 ? 'active' : ''}" data-stena-min="-1">Bez &#9829;</button>
         ${['vse', ...EDICE].map(e => `<button class="chip ${stav.stenaEdice === e ? 'active' : ''}" data-edice-steny="${e}">${e === 'vse' ? 'vše' : e}</button>`).join('')}
-        ${htmlVarovaniHledani(nepouziteKlice(tokeny, poleFotky({})))}
+        ${htmlVarovaniHledani(nepouziteKlice(tokeny, { ...poleModelkyFotky({}), ...poleFotky({}) }))}
         <span>${sklonovat(stav.stenaPolozky.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</span></div>`;
     if (stav.stenaPolozky.length === 0) {
         listaSteny.naplnit([]);
@@ -191,7 +196,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
         }
     });
 
-    const tokeny = rozlozitDotaz(dotaz);
+    const tokeny = rozlozitDotaz(prevest(dotaz));
     const vyhovuje = k => {
         if (stav.cislaZobrazit === 'cover' && !k.cover) return false;
         if (stav.cislaZobrazit === 'bezCoveru' && (k.cover || k.chybi)) return false;

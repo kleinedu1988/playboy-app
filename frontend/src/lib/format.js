@@ -568,13 +568,16 @@ export function rozlozitDotaz(dotaz) {
 // centerfoldů), slovo s takovým klíčem nic neomezuje; neznámý klíč se hledá jako text „klic:hodnota“.
 const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'kategorie', 'vyskyt', 'fotograf',
     'rok', 'vydani', 'narozena', 'edice', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
-    'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela', 'nafoceno']);
+    'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela', 'nafoceno', 'pas', 'hrudnik', 'boky', 'bmi', 'whr', 'vek', 'fotek']);
 const jeCislo = text => /^[\d.\-]+$/.test(text);
-const CISELNA_POLE = new Set(['rok', 'narozena', 'vyska', 'vaha', 'hodnoceni', 'srdicka']);
+const CISELNA_POLE = new Set(['rok', 'narozena', 'vyska', 'vaha', 'hodnoceni', 'srdicka', 'pas', 'hrudnik', 'boky', 'bmi', 'whr', 'vek', 'fotek']);
+// Pole s desetinnou hodnotou (chytré hledání, internal/hledani DesetinnaHodnota): přesná hodnota s přesností zadaného čísla
+const DESETINNA_POLE = new Set(['pas', 'hrudnik', 'boky', 'bmi', 'whr', 'vek', 'fotek']);
 
 // Číslo z textu vyhovuje rozsahu (1970..1979, 1970-1979) nebo porovnání (>=1970, >175); null = hodnota není číselná.
 // Bez cíleného pole se porovnávají jen čtyřmístné roky, v cíleném poli všechna čísla.
-function vyhovujeCislu(hodnota, texty, cilene, roky = false) {
+function vyhovujeCislu(hodnota, texty, cilene, roky = false, desetinne = false) {
+    if (desetinne) return vyhovujeDesetinnemu(hodnota, texty);
     const rozsah = cilene && !roky ? /^(\d+)\s*(?:\.\.|-)\s*(\d+)$/.exec(hodnota) : /^(\d{4})\s*(?:\.\.|-)\s*(\d{4})$/.exec(hodnota);
     const porovnani = cilene ? /^(>=|<=|>|<|==|=)\s*(\d+)$/.exec(hodnota) : /^(>=|<=|>|<|==|=)\s*(\d{4})$/.exec(hodnota);
     if (!rozsah && !porovnani) return null;
@@ -586,6 +589,35 @@ function vyhovujeCislu(hodnota, texty, cilene, roky = false) {
     const [, op, cil] = porovnani;
     return cisla.some(c => op === '>=' ? c >= +cil : op === '<=' ? c <= +cil : op === '>' ? c > +cil : op === '<' ? c < +cil : c === +cil);
 }
+
+// Desetinné pole (bmi:<18,5, whr:0,65-0,72, pas:60) stejně jako backend (parsovatDesetinnyFiltr); prázdný údaj nevyhovuje
+function vyhovujeDesetinnemu(hodnota, texty) {
+    const h = String(hodnota || '').replace(/\s+/g, '');
+    const cislo = t => /^\d+(?:[.,]\d+)?$/.test(t) ? parseFloat(t.replace(',', '.')) : null;
+    const x = texty[0] === '' || texty[0] === undefined ? null : parseFloat(texty[0]);
+    if (x === null || Number.isNaN(x)) return false;
+    const eps = 1e-9;
+    const op = ['>=', '<=', '==', '>', '<', '='].find(o => h.startsWith(o));
+    if (op) {
+        const n = cislo(h.slice(op.length));
+        if (n === null) return null;
+        return op === '>=' ? x >= n - eps : op === '<=' ? x <= n + eps : op === '>' ? x > n + eps : op === '<' ? x < n - eps : presne(x, n);
+    }
+    for (const oddelovac of ['..', '-']) {
+        const casti = h.split(oddelovac);
+        if (casti.length === 2 && cislo(casti[0]) !== null && cislo(casti[1]) !== null) {
+            const [od, po] = [cislo(casti[0]), cislo(casti[1])].sort((a, b) => a - b);
+            return x >= od - eps && x <= po + eps;
+        }
+    }
+    const n = cislo(h);
+    return n === null ? null : presne(x, n);
+}
+// Přesná hodnota s přesností zadaného čísla: 18 = 18,0–18,99…, 0,7 = 0,70–0,79…
+const presne = (x, n) => {
+    const p = [1, 0.1, 0.01, 0.001].find(q => Math.abs(n / q - Math.round(n / q)) < 1e-6) ?? 0.0001;
+    return x >= n - 1e-9 && x < n + p;
+};
 
 // Filtr srdíček stejně jako backend (hledani.go, parsovatFiltrHodnoceni), v polovinách srdíčka: hodnoceni:4 (přesně 4),
 // hodnoceni:3,5 (3½), hodnoceni:>=3,5, hodnoceni:3..4, hodnoceni:3,4 (3 nebo 4); null = hodnota není srdíčková
@@ -624,6 +656,37 @@ export function poleFotky(f) {
         edice: rozlozitVydani(vydani)?.edice || '', hodnoceni: f.hodnoceni ? String(f.hodnoceni) : '', srdicka: f.hodnoceni ? String(f.hodnoceni) : '',
         nafoceno: f.datumAlba || '',
     };
+}
+
+// Údaje modelky pro cílené hledání ve fotkách (stěna, Nejlepší): vzhled, míry, příznaky, kategorie a věk v prvním
+// čísle stejně jako backend (internal/hledani hodnotaPole, DesetinnaHodnota); m = modelka fotky, nebo nic
+export function poleModelkyFotky(m) {
+    if (!m) return {};
+    const anoNe = h => (h === 1 ? 'ano yes' : h === 0 ? 'ne no' : '');
+    const kladne = n => (n > 0 ? String(n) : '');
+    const bmi = m.vyskaCm > 0 && m.vahaKg > 0 ? String(m.vahaKg / (m.vyskaCm / 100) ** 2) : '';
+    const whr = m.obvodPasCm > 0 && m.obvodBokyCm > 0 ? String(m.obvodPasCm / m.obvodBokyCm) : '';
+    return {
+        vlasy: m.vlasyBarva || '', oci: m.ociBarva || '', narodnost: m.narodnost || '', prsa: `${m.velikostPrsou || ''} ${m.prsaTyp || ''}`.trim(),
+        ochlupeni: m.ochlupeni || '', tetovani: anoNe(m.tetovani), piercing: anoNe(m.piercing), kategorie: kategorieModelky(m).map(k => k.nazev).join(', '),
+        vyska: kladne(m.vyskaCm), vaha: kladne(m.vahaKg), pas: kladne(m.obvodPasCm), hrudnik: kladne(m.obvodHrudnikCm), boky: kladne(m.obvodBokyCm),
+        bmi, whr, vek: String(vekVPrvnimCisle(m) ?? ''), fotek: String(m.pocetFotek ?? 0),
+    };
+}
+// Jen číselné údaje modelky (obvody, BMI, poměr pas : boky, věk v prvním čísle, počet fotek) pro panel Filtry
+export const poleCiselModelky = m => {
+    const { pas, hrudnik, boky, bmi, whr, vek, fotek } = poleModelkyFotky(m);
+    return { pas, hrudnik, boky, bmi, whr, vek, fotek };
+};
+// Věk v nejstarším čísle (jako backend VekVPrvnimCisle); null bez narození nebo čísla
+export function vekVPrvnimCisle(m) {
+    const n = /^(\d{4})(?:-(\d{2}))?/.exec(m?.narozeniDatum || '');
+    const prvni = (m?.vydani || []).filter(v => /^\d{4}/.test(v)).sort()[0];
+    if (!n || !prvni) return null;
+    const v = /^(\d{4})(?:-(\d{2}))?/.exec(prvni);
+    let vek = Number(v[1]) - Number(n[1]);
+    if (n[2] && v[2] && Number(v[2]) < Number(n[2])) vek--;
+    return vek > 10 && vek < 100 ? vek : null;
 }
 
 // Cílené příkazy dotazu, které pohled nezná (vlasy: na Číslech): nic neomezují, pohled to ve stavové liště řekne.
@@ -687,7 +750,7 @@ export function vyhovujeHledani(texty, tokeny, pole = {}) {
         }
         // Čísla se porovnávají jen v číselných polích; vydani:1975-01 je text, u roků rozsah jen se čtyřmístnými mezemi
         const cilene = kde !== vse;
-        let shoda = cilene && !CISELNA_POLE.has(t.klic) ? null : vyhovujeCislu(t.hodnota, kde, cilene, t.klic === 'rok' || t.klic === 'narozena');
+        let shoda = cilene && !CISELNA_POLE.has(t.klic) ? null : vyhovujeCislu(t.hodnota, kde, cilene, t.klic === 'rok' || t.klic === 'narozena', cilene && DESETINNA_POLE.has(t.klic));
         if (shoda === null) {
             shoda = hledane.some(v => kde.some(txt => txt.includes(v))
                 || (!t.negace && !jeCislo(v) && proPreklepy.some(txt => odpovidaTextFuzzy(txt, v))));
@@ -765,6 +828,13 @@ export const PRIKAZY = [
     { klic: 'obalka:', popis: 'Obálka čísla' },
     { klic: 'jmeno:', popis: 'Jméno nebo pseudonym' },
     { klic: 'poznamka:', popis: 'Poznámka' },
+    { klic: 'pas:', popis: 'Obvod pasu v cm (<=60)' },
+    { klic: 'hrudnik:', popis: 'Obvod hrudníku v cm' },
+    { klic: 'boky:', popis: 'Obvod boků v cm' },
+    { klic: 'bmi:', popis: 'BMI (<18,5, 18..20)' },
+    { klic: 'whr:', popis: 'Poměr pas : boky (<0,7)' },
+    { klic: 'vek:', popis: 'Věk v prvním čísle (<21, 18-20)' },
+    { klic: 'fotek:', popis: 'Počet fotek (0 = bez fotek, >50)' },
 ];
 
 

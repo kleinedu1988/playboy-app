@@ -91,3 +91,33 @@ func TestPorovnatBezDiakritiky(t *testing.T) {
 		}
 	}
 }
+
+// Chytré hledání: obvody, BMI, poměr pas : boky, věk v prvním čísle a počet fotek, i s desetinnou čárkou
+func TestDesetinnaPole(t *testing.T) {
+	m := &Modelka{VyskaCm: 170, VahaKg: 52, ObvodHrudnikCm: 90, ObvodPasCm: 60, ObvodBokyCm: 88, NarozeniDatum: "1975-08-02",
+		Vydani: []string{"1999-01", "1997-05-CZ"}, PocetFotek: 0}
+	bez := &Modelka{PocetFotek: 3}
+	pripady := []struct {
+		dotaz      string
+		m, bezUdaj bool
+	}{
+		{"pas:<=60", true, false}, {"pas:>60", false, false}, {"hrudnik:85-95", true, false}, {"boky:88", true, false},
+		{"bmi:<18", true, false}, {"bmi:17..18", true, false}, {"bmi:17,9", true, false}, {"bmi:18", false, false},
+		{"whr:<0,7", true, false}, {"whr:0,68", true, false}, {"whr:0.6-0.65", false, false},
+		{"vek:21", true, false}, {"vek:<22", true, false}, {"vek:>21", false, false},
+		{"fotek:0", true, false}, {"fotek:>0", false, true}, {"-fotek:0", false, true},
+	}
+	for _, p := range pripady {
+		h := Pripravit(p.dotaz)
+		if got := h.Odpovida(m, nil); got != p.m {
+			t.Errorf("%s: modelka %v, chci %v", p.dotaz, got, p.m)
+		}
+		if got := h.Odpovida(bez, nil); got != p.bezUdaj {
+			t.Errorf("%s: bez údajů %v, chci %v", p.dotaz, got, p.bezUdaj)
+		}
+	}
+	// Věk: narozena v srpnu, první číslo v květnu 1997 → 21 let
+	if v, ok := VekVPrvnimCisle(m); !ok || v != 21 {
+		t.Fatalf("věk v prvním čísle %d %v", v, ok)
+	}
+}

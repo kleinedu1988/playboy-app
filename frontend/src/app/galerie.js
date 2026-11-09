@@ -1,4 +1,5 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
+import { prevest } from '../lib/hledani-dotaz';
 import { GetDuvodOdhadu, GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
 import { contextMenu, otevritKontextovouNabidku } from '../ui/nabidka';
 import { bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, seraditModelky, sklonovat } from '../lib/format';
@@ -178,7 +179,8 @@ poZmeneDat(() => {
 });
 
 // Dotaz Modelek pro backend: příkazy filtru z panelu Filtry (app/filtr-modelek.js) a text hledání
-const dotazModelek = hledani => [dotazFiltru(), hledani].filter(s => s && s.trim()).join(' ');
+// Přirozené výrazy (výška > 175, 90. léta, 4*+) se převedou na příkazy (lib/hledani-dotaz.js)
+const dotazModelek = hledani => [dotazFiltru(), prevest(hledani)].filter(s => s && s.trim()).join(' ');
 
 // Načtení Hlavní Galerie
 // zMezipameti = jen přefiltrovat data načtená minule (psaní do hledání, změna filtru či řazení), nenačítat je znovu z databáze

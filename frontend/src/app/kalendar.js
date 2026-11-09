@@ -1,5 +1,6 @@
 // Kalendář vydání po rocích a měsících
 import { GetKalendar, GetStavyVydani, GetVydani, SetStavVydani } from './backend';
+import { prevest } from '../lib/hledani-dotaz';
 import { EDICE, MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
@@ -38,7 +39,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
         if (casti?.mesic && casti.edice === stav.kalendarEdice) vydani.set(k.vydani, k);
     });
 
-    const tokeny = rozlozitDotaz(dotaz);
+    const tokeny = rozlozitDotaz(prevest(dotaz));
     const prepinacEdic = pocet => `<div class="cal-editions">${htmlZobrazeniCisel('kalendar')}${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}${htmlVarovaniHledani(nepouziteKlice(tokeny, poleCisla('')))}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
     if (vydani.size === 0) {
         listaKalendare.naplnit([]);

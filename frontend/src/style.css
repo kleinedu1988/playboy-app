@@ -20315,7 +20315,7 @@ body.rezim-vyberu #detailView .poster {
 }
 
 .zasobnik {
-    margin: 0 0 14px;
+    margin: 18px 0 8px;
     border: 1px dashed var(--panel-okraj);
     border-radius: 14px;
     transition: border-color 0.15s, background-color 0.15s;
@@ -20432,3 +20432,45 @@ body.rezim-vyberu #detailView .poster {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* Čipy chytrého hledání pod polem hledání (app/hledani-cipy.js) */
+.hledani-cipy {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    max-width: 640px;
+    margin-top: 6px;
+}
+.hledani-cipy[hidden] { display: none; }
+.hc-cip {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 4px 2px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.07);
+    color: inherit;
+    font-size: 12px;
+    line-height: 20px;
+    white-space: nowrap;
+}
+.hc-cip.hc-ne { text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.35); }
+.hc-cip.hc-srdicka, .hc-cip.hc-hodnoceni { border-color: rgba(255, 92, 122, 0.45); }
+.hc-cip.hc-rok { border-color: rgba(120, 170, 255, 0.45); }
+.hc-cip button {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    opacity: 0.6;
+    font-size: 15px;
+    line-height: 1;
+    cursor: pointer;
+}
+.hc-cip button:hover, .hc-cip button:focus-visible { opacity: 1; background-color: rgba(255, 255, 255, 0.12); }

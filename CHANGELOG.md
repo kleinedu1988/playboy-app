@@ -7,6 +7,25 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.36.0] – 2026-11-09
+
+### Přidáno
+- **Chytré hledání:** pole hledání rozumí českým výrazům – `blond`, `brunetka`, `zrzka`, `modré oči`, `výška > 175`, `pas <= 60`,
+  `bmi < 18,5`, `whr < 0,7`, `mladší než 21` (věk v prvním čísle), `výška 170 až 180`, `90. léta`, `devadesátá léta`, `1995–1999`,
+  `česká edice`, `pmoy`, `pmom`, `cyber girl`, `4*+`, `5*`, `♥ 3,5+`, `s tetováním`, `bez tetování`, `bez fotek`, `bez srdíček`;
+  mínus výraz vyloučí (`-blond`). Převod platí v Modelkách, panelu Filtry, Galerii fotek, na stěně, v Nejlepších, Kalendáři,
+  Číslech i v našeptávači (`frontend/src/lib/hledani-dotaz.js`).
+- **Čipy pod polem hledání:** každá rozpoznaná podmínka (i ručně psaný příkaz) má čip (`Výška > 175 cm`, `1990–1999`, `♥ 4+`),
+  × ji jedním klikem z textu odebere (`app/hledani-cipy.js`).
+- **Našeptávač:** skupina Chytré výrazy podle psaného slova, `Tab` doplní zvolený nebo první výraz, příkaz či hodnotu.
+- **Nové příkazy hledání:** `pas:`, `hrudnik:`, `boky:`, `bmi:`, `whr:`, `vek:` (věk v prvním čísle) a `fotek:` (počet fotek),
+  i s desetinnou čárkou a rozsahy; v backendu (`internal/hledani`) i ve frontendu stejně.
+- **Příkazy v Galerii fotek:** vzhled a míry platí pro modelku fotky, srdíčka, rok a edice pro fotku (`galerie_fotek.go`);
+  stěna a Nejlepší posuzují vzhled a míry podle modelky fotky.
+
+### Změněno
+- Zásobník odkazů je na konci profilu pod alby; po vložení nebo přetažení odkazů se sám ukáže.
+
 ## [1.35.0] – 2026-11-09
 
 ### Přidáno

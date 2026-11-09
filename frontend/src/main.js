@@ -32,6 +32,7 @@ import * as doplneni from './app/doplneni';
 import * as clanky from './app/clanky';
 import * as ctecka from './app/ctecka';
 import * as naseptavac from './app/naseptavac';
+import * as hledaniCipy from './app/hledani-cipy';
 import * as statistiky from './app/statistiky';
 import * as oblibenost from './app/oblibenost';
 import * as zkratky from './app/zkratky';
@@ -49,6 +50,7 @@ import { nabidnoutPoSpusteni as nabidnoutDnesniVyber } from './app/dnesni-vyber'
 zkratky.pripravit();
 obrazky.pripravit();
 galerie.pripravit();
+hledaniCipy.pripravit();
 pripravitVkus();
 profil.pripravit();
 stena.pripravit();

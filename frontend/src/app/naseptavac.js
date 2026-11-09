@@ -1,4 +1,5 @@
 // Rychlé výsledky pod hledáním odkudkoli: příkazy vyhledávání, hodnoty filtrů, modelky, články, čísla a fotografové
+import { navrhnoutVyrazy, prevest } from '../lib/hledani-dotaz';
 import { GetFotografove, GetKalendar, HledatClanky } from './backend';
 import { PRIKAZY, bezDiakritiky, esc, kategorieModelky, nazevVydani, obrazek, paskaCisla, poleCisla, popisKategorie, rozlozitDotaz, sklonovat, vyhovujeHledani } from '../lib/format';
 import { poZmeneDat } from './udalosti';
@@ -251,11 +252,12 @@ async function hledat() {
     const cisteSlovo = negPrefix ? slovoPred.slice(1) : slovoPred;
     const idxDvojtecka = cisteSlovo.indexOf(':');
 
-    const tokeny = rozlozitDotaz(trimDotaz);
+    const tokeny = rozlozitDotaz(prevest(trimDotaz));
     const slova = tokeny.filter(t => !t.negace && !t.klic).flatMap(t => t.varianty);
     const hledatEntity = (jenNajit() || (idxDvojtecka < 0 && !tokeny.some(t => t.klic))) && trimDotaz.length >= 2;
 
     let moznostiPrikazu = [];
+    let moznostiVyrazu = [];
     let moznostiHodnot = [];
     let klicHodnot = '';
     let predCarkou = '';
@@ -281,6 +283,8 @@ async function hledat() {
         moznostiHodnot = ziskatMoznostiHodnot(klicHodnot, filtrHodnoty, modelky, seznamFotografu);
     } else if (cisteSlovo.length >= 1) {
         moznostiPrikazu = ziskatMoznostiPrikazu(slovoPred);
+        // Chytré výrazy (výška > , 90. léta, česká edice, 4*+); vložený výraz se hned převede na podmínku
+        moznostiVyrazu = navrhnoutVyrazy(slovoPred, 5);
     }
 
     const obalka = new Map(cisla.map(k => [k.vydani, k.nahled]));
@@ -353,6 +357,15 @@ async function hledat() {
     };
 
     const sekce = [
+        vytvorSkupinu('Chytré výrazy', moznostiVyrazu, 'vlozit', 'naseptavac-prikazy', v => ({
+            akce: () => nahraditAktivniSlovo(v.vyraz, !v.vyraz.endsWith(' ')),
+            html: `
+            <span class="naseptavac-nahled-ikona">✦</span>
+            <span class="naseptavac-text">
+                <span class="naseptavac-nazev"><code class="naseptavac-kod">${esc(v.vyraz.trim())}</code></span>
+                <span class="naseptavac-kde">${esc(v.popis)}</span>
+            </span>`,
+        })),
         vytvorSkupinu('Příkazy vyhledávání', moznostiPrikazu, 'vlozit', 'naseptavac-prikazy', p => ({
             akce: () => nahraditAktivniSlovo(p.prikaz, false),
             html: `
@@ -540,6 +553,12 @@ export function pripravit() {
                 zavritNaseptavac();
                 searchInput.blur();
             }
+        } else if (e.key === 'Tab' && !e.shiftKey && !naseptavac.classList.contains('hidden')) {
+            // Tab doplní zvolený (jinak první) výraz, příkaz nebo hodnotu filtru
+            const i = vybrana >= 0 && polozky[vybrana]?.druh === 'vlozit' ? vybrana : polozky.findIndex(p => p.druh === 'vlozit');
+            if (i < 0) return;
+            e.preventDefault();
+            otevrit(i);
         } else if (e.key === 'Escape') {
             // Esc zavře jen výsledky; profil ani stránka čísla se nezavřou
             e.stopPropagation();

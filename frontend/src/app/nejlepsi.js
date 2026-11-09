@@ -1,7 +1,7 @@
 // Nejlepší fotky a vlastní výběry
 import { GetFotkyVyberu, GetNejlepsiFotky, GetVybery, PrejmenovatVyber, PridatDoVyberu, SmazatVyber, VyberPodleNazvu } from './backend';
 import { oznamit } from '../ui/oznameni';
-import { bezDiakritiky, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, obrazek, poleFotky, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { bezDiakritiky, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, obrazek, poleFotky, poleModelkyFotky, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { stav } from './stav';
 import { vybratKliknutim } from './vyber';
 import { best, searchInput } from './prvky';
@@ -15,7 +15,8 @@ import { potvrdit } from './formular-modelky';
 import { vybratHodnotu } from './ulozeni';
 import { obnovitVolby, prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
-import { oblibenostModelek } from './mezipamet';
+import { modelkyPodleId, oblibenostModelek } from './mezipamet';
+import { prevest } from '../lib/hledani-dotaz';
 import { hodnotaFotky, porovnatFotkyPodleHodnoty, urovenHodnoty } from '../lib/oblibenost';
 import { nacistVsechnyFotky, pripravitGalerii, prestatSledovatGalerii } from './galerie-vse';
 
@@ -58,14 +59,17 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     stav.zrusitUpravuVyrezu = null;
     ukazatPohled(best);
 
-    const tokeny = rozlozitDotaz(dotaz);
+    const tokeny = rozlozitDotaz(prevest(dotaz));
+    // Příkazy vzhledu a měr (vlasy:blond, vyska:>175) se posuzují podle modelky fotky
+    const katalog = tokeny.some(t => t.klic && !(t.klic in poleFotky({}))) ? await modelkyPodleId() : null;
+    if (moje !== stav.cisloNacteni) return;
     const vyhovuje = f => vyhovujeHledani([
         f.jmenoModelky,
         f.album,
         nazevAlba(f.album, f.typ),
         f.fotograf || '',
         f.popis || '',
-    ], tokeny, poleFotky(f));
+    ], tokeny, { ...poleModelkyFotky(katalog?.get(f.modelkaId) || (katalog ? {} : null)), ...poleFotky(f) });
     stav.nejlepsiPolozky = fotky.filter(vyhovuje).map(f => ({
         fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni,
     })).sort(porovnatFotkyPodleHodnoty(oblibenost));
@@ -80,7 +84,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
 
     const prah = htmlVolebGalerie(vybery, vyber);
     document.getElementById('bestList').innerHTML = `
-        <div class="best-toolbar">${prah}${htmlVarovaniHledani(nepouziteKlice(tokeny, poleFotky({})))}<span title="Pořadí podle hodnoty fotky: srdíčka fotky × srdíčka modelky ÷ 5 – pětisrdíčková fotka pětkové modelky je výš než pětisrdíčková fotka jedničkové">${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')} · podle hodnoty</span>
+        <div class="best-toolbar">${prah}${htmlVarovaniHledani(nepouziteKlice(tokeny, { ...poleModelkyFotky({}), ...poleFotky({}) }))}<span title="Pořadí podle hodnoty fotky: srdíčka fotky × srdíčka modelky ÷ 5 – pětisrdíčková fotka pětkové modelky je výš než pětisrdíčková fotka jedničkové">${sklonovat(stav.nejlepsiPolozky.length, 'fotka', 'fotky', 'fotek')} · podle hodnoty</span>
             ${stav.nejlepsiPolozky.length ? '<button class="btn btn-secondary btn-small" data-nejlepsi-slideshow>Spustit slideshow</button>' : ''}</div>
         ${stav.nejlepsiPolozky.length ? [...urovne.keys()].map(h => `
             <section class="nejlepsi-uroven" data-uroven="${h}" data-cast="srdicka-${h}">

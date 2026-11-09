@@ -2,7 +2,8 @@
 // Vlasy, Rok vydání…), vpravo editor zvoleného: je / není, zaškrtávání hodnot s počtem modelek, které zbudou, u čísel
 // předvolby a rozsah od–do. Podmínky jsou model filtru (lib/filtr.js, lib/dimenze.js); do backendu jdou jako příkazy
 // dotazu spolu s textem hledání (galerie.js, dotazModelek), hledání samo zůstává obyčejným polem. Filtr se pamatuje.
-import { bezDiakritiky, esc, sklonovat } from '../lib/format';
+import { prevest } from '../lib/hledani-dotaz';
+import { bezDiakritiky, esc, poleCiselModelky, sklonovat } from '../lib/format';
 import { fasety, parsovat, serializovat, vyhodnotit } from '../lib/filtr';
 import { DIMENZE_MODELEK, textyModelky } from '../lib/dimenze';
 import { vsechnyModelky } from './mezipamet';
@@ -165,9 +166,9 @@ async function vykreslitPanel() {
     const modelky = await vsechnyModelky();
     if (!panel) return;
     // Počty s textem hledání a ostatními filtry; hledání může obsahovat i příkazy (vlasy:blond)
-    const hledani = parsovat(searchInput.value, DIMENZE_MODELEK);
+    const hledani = parsovat(prevest(searchInput.value), DIMENZE_MODELEK);
     const filtr = { podminky: [...podminky, ...hledani.podminky], volne: hledani.volne };
-    const zbude = modelky.filter(m => vyhodnotit(m, filtr, DIMENZE_MODELEK, textyModelky)).length;
+    const zbude = modelky.filter(m => vyhodnotit(m, filtr, DIMENZE_MODELEK, textyModelky, '', poleCiselModelky)).length;
 
     const seznam = DIMENZE_MODELEK.map(d => {
         const zapnute = podminky.filter(p => p.klic === d.klic);
@@ -210,7 +211,7 @@ function htmlEditoru(modelky, filtr) {
     }
     if (d.typ === 'text') {
         // Počty bez podmínky tohoto filtru (fasety): kolik modelek by s hodnotou zbylo
-        const pocty = fasety(modelky, filtr, DIMENZE_MODELEK, textyModelky, klic);
+        const pocty = fasety(modelky, filtr, DIMENZE_MODELEK, textyModelky, klic, poleCiselModelky);
         const zvolene = new Set((p?.hodnoty || []).map(bezDiakritiky));
         const hledane = bezDiakritiky(stavPanelu.hledat);
         const hodnoty = [...(p?.hodnoty || []).filter(h => !pocty.some(x => bezDiakritiky(x.hodnota) === bezDiakritiky(h))).map(h => ({ hodnota: h, pocet: 0 })), ...pocty]

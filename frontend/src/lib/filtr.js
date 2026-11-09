@@ -64,24 +64,25 @@ function splnuje(polozka, p, d) {
 }
 
 // Vyhovuje položka filtru? krome = klíč dimenze, která se vynechá (počty u jejích hodnot, fasety)
-export function vyhodnotit(polozka, filtr, dimenze, texty, krome = '') {
+// pole(položka) = údaje pro cílená volná slova, která nejsou dimenzí (pas:<=60, bmi:<18,5 – lib/format.js poleCiselModelky)
+export function vyhodnotit(polozka, filtr, dimenze, texty, krome = '', pole = null) {
     for (const p of filtr.podminky) {
         if (p.klic === krome) continue;
         const d = najitDimenzi(dimenze, p.klic);
         if (!d) continue;
         if (splnuje(polozka, p, d) === p.negace) return false;
     }
-    return !filtr.volne.length || vyhovujeHledani(texty(polozka), filtr.volne);
+    return !filtr.volne.length || vyhovujeHledani(texty(polozka), filtr.volne, pole ? pole(polozka) : {});
 }
 
 // Počty u hodnot jedné dimenze (fasety): kolik položek by zůstalo s ostatními podmínkami, kdyby se vybrala tato
 // hodnota. Seřazeno od nejčastější; hodnoty se slučují bez ohledu na velikost písmen a diakritiku.
-export function fasety(polozky, filtr, dimenze, texty, klic) {
+export function fasety(polozky, filtr, dimenze, texty, klic, pole = null) {
     const d = najitDimenzi(dimenze, klic);
     if (!d) return [];
     const pocty = new Map();
     for (const polozka of polozky) {
-        if (!vyhodnotit(polozka, filtr, dimenze, texty, d.klic)) continue;
+        if (!vyhodnotit(polozka, filtr, dimenze, texty, d.klic, pole)) continue;
         for (const h of new Set(d.hodnoty(polozka))) {
             const k = bezDiakritiky(h);
             const z = pocty.get(k) || { hodnota: h, pocet: 0 };

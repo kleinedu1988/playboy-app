@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.28.2] – 2026-11-09
+
+### Změněno
+- **Statistiky: jen hero, rozšířený o pás postřehů.** Panel Postřehy pod herem je pryč (opakoval totéž co hero). Hero má pod scénou s fotkou pás karet se všemi průkaznými postřehy sbírky (graf, změna „0,65 → 0,68“, věta); zvolený je zvýrazněný a klik na kartu dá postřeh nahoru (místo tlačítka *Další postřeh ↻*). S výběrem pás ukáže, čím se výběr průkazně liší od sbírky; klik přepne graf a u hodnoty rozložení ji zvýrazní.
+
+### Opraveno
+- **Statistiky se přepočítávaly pořád dokola** (a brzdily start i celý program): načtení fotky záhlaví (`GetProfilovaFotka`) se počítalo jako zápis do databáze, takže každé vykreslení hera ohlásilo změnu dat a ta Statistiky přepočítala znovu. Teď je to čtení; u Profilů to zbytečně zahazovalo mezipaměti a spouštělo předpřípravu po každém heru.
+- Otevřené Statistiky se po sérii zápisů přepočítají jednou, až po chvíli klidu; starší rozpracované vykreslení hera nepřepíše novější.
+- Čísla v hlavičce Sbírky a Síně slávy byla od 1.28.0 velká a bílá (styl hera Statistik používal stejný název třídy).
+
 ## [1.28.1] – 2026-11-09
 
 ### Opraveno

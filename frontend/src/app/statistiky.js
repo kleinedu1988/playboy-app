@@ -490,32 +490,23 @@ function postrehyRad() {
     return mapa;
 }
 
-// Panel Postřehy nad grafem napříč grafy (lib/postrehy.js vybratPostrehy): bez výběru zlomy a trendy všech grafů,
-// s výběrem přednostně rozdíly výběru (k nim nejvýš 2 zlomy nebo trendy výběru). Klik přepne na graf, u hodnoty
-// rozložení ji v grafu zvýrazní. Postřehy, které byly vidět, drží místo (bez přeskakování při změně výběru).
-let predtimVPanelu = [];
+// Postřehy výběru do pásu hera (lib/postrehy.js vybratPostrehy): přednostně čím se výběr liší od sbírky, k tomu
+// nejvýš 2 zlomy nebo trendy výběru. Postřehy, které byly vidět, drží místo (bez přeskakování při změně výběru).
+let predtimVeVyberu = [];
 let zvyraznit = null;            // hodnota rozložení zvýrazněná po kliku na postřeh (bez přidání podmínky)
-function htmlPanelu() {
-    if (!data.modelky.length) return '';
+function postrehyVyberu() {
     const kandidati = [...postrehyRad()].filter(([, p]) => p).map(([graf, p]) => ({ id: `${p.druh}:${graf}`, druh: p.druh, graf, skore: p.skore,
         veta: p.veta, podrobnosti: p.podrobnosti, ikona: p.smer > 0 ? '↗' : '↘', hodnota: /** @type {string | null} */ (null) }));
-    let zprava = '';
-    if (filtry.size) {
-        const maska = Uint8Array.from(data.modelky, m => (vyhovuje(m) ? 1 : 0));
-        const vyloucit = [...filtry.keys()].flatMap(k => VYLOUCENE_PODMINKOU[k] ?? [k]);
-        const { maly, postrehy } = rozdilyVyberu(priznakyVyberu(), maska, { vyloucit });
-        if (maly) zprava = 'Výběr je na postřehy příliš malý (méně než 10 modelek).';
-        else if (!postrehy.length) zprava = 'Výběr se od sbírky průkazně neliší.';
-        postrehy.forEach(p => kandidati.push({ id: `rozdil:${p.klic}`, druh: 'rozdil', graf: p.graf, skore: p.skore, veta: p.veta,
-            podrobnosti: p.podrobnosti, ikona: '≠', hodnota: p.klic.startsWith(`${p.graf}:`) ? p.klic.slice(p.graf.length + 1) : null }));
-    }
-    const vybrane = vybratPostrehy(kandidati, { hlavni: filtry.size ? 'rozdil' : null, predtim: predtimVPanelu });
-    predtimVPanelu = vybrane.map(k => k.id);
-    if (!vybrane.length && !zprava) return '';
-    const hlava = `<div class="sp-postrehy-hlava"><b>Postřehy</b><span>${filtry.size ? 'čím se výběr liší od sbírky' : 'co je ve sbírce průkazné'}</span></div>`;
-    return `${hlava}${zprava ? `<p class="sp-postrehy-prazdno">${zprava}</p>` : ''}${vybrane.map(p => `
-        <button type="button" class="sp-postreh-vyberu" data-sp-graf-volba="${esc(p.graf)}"${p.hodnota ? ` data-sp-zvyraznit="${esc(p.hodnota)}"` : ''}
-            data-tip="${esc(p.podrobnosti)}" data-tip-siroky aria-description="${esc(p.podrobnosti)}"><span class="sp-postreh-ikona" aria-hidden="true">${p.ikona}</span><span>${esc(p.veta)}</span></button>`).join('')}`;
+    const maska = Uint8Array.from(data.modelky, m => (vyhovuje(m) ? 1 : 0));
+    const vyloucit = [...filtry.keys()].flatMap(k => VYLOUCENE_PODMINKOU[k] ?? [k]);
+    const { maly, postrehy } = rozdilyVyberu(priznakyVyberu(), maska, { vyloucit });
+    postrehy.forEach(p => kandidati.push({ id: `rozdil:${p.klic}`, druh: 'rozdil', graf: p.graf, skore: p.skore, veta: p.veta,
+        podrobnosti: p.podrobnosti, ikona: '≠', hodnota: p.klic.startsWith(`${p.graf}:`) ? p.klic.slice(p.graf.length + 1) : null }));
+    const vybrane = vybratPostrehy(kandidati, { hlavni: 'rozdil', predtim: predtimVeVyberu });
+    predtimVeVyberu = vybrane.map(k => k.id);
+    const zprava = maly ? 'Výběr je na postřehy příliš malý (méně než 10 modelek).'
+        : !postrehy.length ? 'Výběr se od sbírky průkazně neliší.' : '';
+    return { vybrane, zprava };
 }
 
 const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModelky(m).some(c => c.edice === e)));
@@ -524,7 +515,6 @@ const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModel
 // v liště pod hledáním: skrytý řádek štítků převezme ui/volby.js (přes prehled.js)
 function htmlKostry() {
     return `<div class="volby-v-liste" data-volby-casti="statistiky" data-sp-volby></div>
-        <div class="stat-karta sp-postrehy" data-sp-postrehy hidden></div>
         <div class="sp-telo">
             <div class="stat-karta sp-karta">
                 <div class="sp-legenda" data-sp-legenda></div>
@@ -577,9 +567,6 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     ].join(''));
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
     koren.querySelector('[data-sp-legenda]').innerHTML = !def.osa || sloupce.length ? htmlLegendy(def) : '';
-    const panel = koren.querySelector('[data-sp-postrehy]'), htmlV = htmlPanelu();
-    panel.innerHTML = htmlV;
-    panel.hidden = !htmlV;
     const mistoPostrehu = koren.querySelector('[data-sp-postreh]'), htmlP = htmlPostrehu(postreh);
     mistoPostrehu.innerHTML = htmlP;
     mistoPostrehu.hidden = !htmlP;
@@ -800,7 +787,7 @@ export function pripravit(stats) {
 // z období po změně, která danou vlastnost má (u podílu, který roste, modelka s ní; u údaje kterákoli se známým údajem).
 const KLIC_HERO = 'statistikyHeroPostreh';
 const indexHero = n => { try { return Math.abs(parseInt(localStorage.getItem(KLIC_HERO) || '0', 10) || 0) % Math.max(n, 1); } catch { return 0; } };
-const posunoutHero = n => { try { localStorage.setItem(KLIC_HERO, String((indexHero(n) + 1) % Math.max(n, 1))); } catch { /* jen teď */ } };
+const nastavitIndexHero = i => { try { localStorage.setItem(KLIC_HERO, String(i)); } catch { /* jen teď */ } };
 
 function postrehyHero() {
     const mapa = postrehyCeleSbirky();
@@ -833,8 +820,7 @@ async function fotkaHero(m) {
         const f = await GetProfilovaFotka(m.id);
         if (f?.url) { nahled = obrazek(f.url, VELIKOST_TITULNI); plna = obrazek(f.url, VELIKOST_ZAHLAVI); styl = stylVyrezu(f); }
     } catch { /* fotka karty */ }
-    return { plna, html: `<div class="ph-rozmazane" style="background-image:url('${esc(nahled).replace(/'/g, '%27')}')"></div>
-        <div class="ph-ram"><img src="${esc(nahled)}" alt="" style="${esc(styl)}" draggable="false" /></div>
+    return { plna, nahled, html: `<div class="ph-ram"><img src="${esc(nahled)}" alt="" style="${esc(styl)}" draggable="false" /></div>
         <div class="ph-prekryv"></div>` };
 }
 function nahraditFotkuHero(misto, plna) {
@@ -848,62 +834,106 @@ function nahraditFotkuHero(misto, plna) {
     velka.src = plna;
 }
 
-let heroPostrehy = null;   // pro data, edici a výskyt, ve kterých se spočítaly
+// Pás karet pod scénou hera. Bez výběru všechny postřehy sbírky (zvolený je zvýrazněný, klik ho dá do hera);
+// s výběrem čím se výběr liší od sbírky a jeho zlomy či trendy (klik přepne graf, hodnotu rozložení zvýrazní).
+function htmlPasuHero(seznam, i) {
+    if (filtry.size) {
+        const { vybrane, zprava } = postrehyVyberu();
+        const popis = [...filtry.values()].map(f => f.popis).join(' · ');
+        return `<div class="sh-pas-hlava"><b>Výběr</b><span>${esc(popis)}</span><span>· čím se liší od sbírky</span></div>
+            ${zprava ? `<p class="sh-pas-prazdno">${zprava}</p>` : ''}
+            ${vybrane.map(p => `<button type="button" class="sh-karta" data-sh-graf="${esc(p.graf)}"${p.hodnota ? ` data-sh-zvyraznit="${esc(p.hodnota)}"` : ''}
+                data-tip="${esc(p.podrobnosti)}" data-tip-siroky aria-description="${esc(p.podrobnosti)}">
+                <span class="sh-karta-graf"><i aria-hidden="true">${p.ikona}</i>${esc(GRAFY.find(g => g.klic === p.graf)?.nazev || '')}</span>
+                <span class="sh-karta-veta">${esc(p.veta)}</span></button>`).join('')}`;
+    }
+    if (seznam.length < 2) return '';
+    return `<div class="sh-pas-hlava"><b>Postřehy sbírky</b><span>co je ve sbírce průkazné · klik ukáže postřeh nahoře</span></div>
+        ${seznam.map((p, k) => `<button type="button" class="sh-karta${k === i ? ' zvolena' : ''}" data-sh-index="${k}" aria-pressed="${k === i}"
+            data-tip="${esc(p.podrobnosti)}" data-tip-siroky aria-description="${esc(p.podrobnosti)}">
+            <span class="sh-karta-graf"><i aria-hidden="true">${p.smer > 0 ? '↗' : '↘'}</i>${esc(p.def.nazev)}</span>
+            <span class="sh-karta-zmena">${esc(p.hero.text)}</span>
+            <span class="sh-karta-veta">${esc(p.veta)}</span></button>`).join('')}`;
+}
+function obnovitPasHero(misto, stavHero = heroPostrehy) {
+    const pas = misto.querySelector('[data-sh-pas]');
+    if (!pas || !stavHero) return;
+    const html = htmlPasuHero(stavHero.seznam, stavHero.index);
+    pas.innerHTML = html;
+    pas.hidden = !html;
+}
+
+// Přepne graf pod herem (a případně zvýrazní hodnotu rozložení) a posune na něj
+function ukazatGraf(misto, klicGrafu, hodnota = null) {
+    const koren = /** @type {HTMLElement | null} */ (misto.parentElement?.querySelector('.stat-statistiky'));
+    graf = klicGrafu;
+    zvyraznit = hodnota;
+    try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
+    if (koren) {
+        vykreslit(koren);
+        koren.querySelector('.sp-telo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+let volaniHero = 0;       // pořadí naplnění hera: dokreslí jen poslední
+let heroPostrehy = null;   // { data, klic, seznam, index } – pro data, edici a výskyt, ve kterých se spočítaly
 export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene = false } = {}) {
     if (!misto || !data) return;
     const klic = `${edice}|${druhVyskytu}`;
-    // Po překreslení grafu se hero mění jen při změně edice, výskytu nebo dat (jinak by fotka poblikávala)
-    // (první naplnění dělá otevření pohledu; překreslení grafu při něm hero nevykresluje podruhé)
-    if (jenPriZmene && (!heroPostrehy || (heroPostrehy.data === data && heroPostrehy.klic === klic))) return;
-    if (znovu || !heroPostrehy || heroPostrehy.data !== data || heroPostrehy.klic !== klic) heroPostrehy = { data, klic, seznam: postrehyHero() };
-    const seznam = heroPostrehy.seznam;
+    // Po překreslení grafu (změna výběru) se obnoví jen pás karet; scéna s fotkou se mění při změně edice, výskytu
+    // nebo dat (jinak by fotka poblikávala). První naplnění dělá otevření pohledu.
+    if (jenPriZmene && !heroPostrehy) return;
+    if (jenPriZmene && heroPostrehy.data === data && heroPostrehy.klic === klic) return obnovitPasHero(misto);
+    if (znovu || !heroPostrehy || heroPostrehy.data !== data || heroPostrehy.klic !== klic) heroPostrehy = { data, klic, seznam: postrehyHero(), index: 0 };
+    // Během čekání na fotku mohlo přijít novější naplnění (nová data, jiný postřeh): staré pak nic nevykreslí
+    const stavHero = heroPostrehy;
+    const volani = ++volaniHero;
+    const prekonano = () => !misto.isConnected || heroPostrehy !== stavHero || volani !== volaniHero;
+    const seznam = stavHero.seznam;
+    const pas = '<div class="sh-pas" data-sh-pas hidden></div>';
     if (!seznam.length) {
         // Bez průkazného postřehu: sbírka v číslech s nejlépe hodnocenou modelkou
         const m = [...data.modelky].filter(x => x.coverUrl).sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || a.id - b.id)[0];
         const roky = data.modelky.map(x => prvniVyskyt(x)?.rok).filter(Boolean);
         if (!m) return misto.remove();
         const foto = await fotkaHero(m);
-        if (!misto.isConnected) return;
-        misto.innerHTML = `${foto.html}<div class="ph-obsah"><div class="ph-nadtitulek">Statistiky sbírky</div><h2>Tvoje sbírka</h2>
-            <div class="sh-cisla">${pocetModelek(data.modelky.length)}${roky.length ? ` · ${Math.min(...roky)}–${Math.max(...roky)}` : ''}</div>
-            <p class="ph-duvod">Zatím tu není nic průkazného – postřehy se ukážou, až bude víc modelek se známými údaji.</p></div>`;
-        misto.onclick = null;
+        if (prekonano()) return;
+        misto.innerHTML = `<div class="ph-rozmazane" style="background-image:url('${esc(foto.nahled).replace(/'/g, '%27')}')"></div>
+            <div class="sh-scena">${foto.html}<div class="ph-obsah"><div class="ph-nadtitulek">Statistiky sbírky</div><h2>Tvoje sbírka</h2>
+            <div class="sh-zmena">${pocetModelek(data.modelky.length)}${roky.length ? ` · ${Math.min(...roky)}–${Math.max(...roky)}` : ''}</div>
+            <p class="ph-duvod">Zatím tu není nic průkazného – postřehy se ukážou, až bude víc modelek se známými údaji.</p></div></div>${pas}`;
         nahraditFotkuHero(misto, foto.plna);
-        return;
+    } else {
+        const i = indexHero(seznam.length), p = seznam[i];
+        stavHero.index = i;
+        const m = modelkaHero(p);
+        const foto = m ? await fotkaHero(m) : { html: '', plna: '', nahled: '' };
+        if (prekonano()) return;
+        misto.innerHTML = `${foto.nahled ? `<div class="ph-rozmazane" style="background-image:url('${esc(foto.nahled).replace(/'/g, '%27')}')"></div>` : ''}
+            <div class="sh-scena">${foto.html}
+                <div class="ph-obsah">
+                    <div class="ph-nadtitulek">Postřeh sbírky${seznam.length > 1 ? ` · ${i + 1} z ${seznam.length}` : ''}</div>
+                    <h2>${esc(p.def.nazev)}</h2>
+                    <div class="sh-zmena">${esc(p.hero.text)}</div>
+                    <p class="ph-duvod">${esc(p.veta)}</p>
+                    <div class="ph-akce">
+                        <button type="button" class="ph-tlacitko hlavni" data-sh-graf="${esc(p.graf)}">Ukázat v grafu</button>
+                        ${m ? `<button type="button" class="ph-tlacitko" data-sh-modelka="${m.id}" title="Na fotce – otevřít profil">${esc(m.jmeno)} →</button>` : ''}
+                    </div>
+                </div>
+            </div>${pas}`;
+        nahraditFotkuHero(misto, foto.plna);
     }
-    const i = indexHero(seznam.length), p = seznam[i];
-    const m = modelkaHero(p);
-    const foto = m ? await fotkaHero(m) : { html: '', plna: '' };
-    if (!misto.isConnected) return;
-    misto.innerHTML = `${foto.html}
-        <div class="ph-obsah">
-            <div class="ph-nadtitulek">Postřeh sbírky${seznam.length > 1 ? ` · ${i + 1} z ${seznam.length}` : ''}</div>
-            <h2>${esc(p.def.nazev)}</h2>
-            <div class="sh-cisla">${esc(p.hero.text)}</div>
-            <p class="ph-duvod">${esc(p.veta)}</p>
-            <div class="ph-akce">
-                <button type="button" class="ph-tlacitko hlavni" data-sh-graf="${esc(p.graf)}">Ukázat v grafu</button>
-                ${seznam.length > 1 ? '<button type="button" class="ph-tlacitko" data-sh-dalsi title="Další postřeh sbírky">Další postřeh ↻</button>' : ''}
-                ${m ? `<button type="button" class="ph-tlacitko" data-sh-modelka="${m.id}" title="Na fotce – otevřít profil">${esc(m.jmeno)} →</button>` : ''}
-            </div>
-        </div>`;
-    nahraditFotkuHero(misto, foto.plna);
+    obnovitPasHero(misto, stavHero);
     misto.onclick = (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         const tlGraf = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-graf]'));
-        if (tlGraf) {
-            const koren = /** @type {HTMLElement | null} */ (misto.parentElement?.querySelector('.stat-statistiky'));
-            graf = tlGraf.dataset.shGraf;
-            zvyraznit = null;
-            try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
-            if (koren) {
-                vykreslit(koren);
-                koren.querySelector('.sp-telo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-            return;
-        }
-        if (cil.closest('[data-sh-dalsi]')) {
-            posunoutHero(seznam.length);
+        if (tlGraf) return ukazatGraf(misto, tlGraf.dataset.shGraf, tlGraf.dataset.shZvyraznit ?? null);
+        const karta = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-index]'));
+        if (karta) {
+            const k = parseInt(karta.dataset.shIndex, 10);
+            if (k === heroPostrehy?.index) return;
+            nastavitIndexHero(k);
             naplnitHeroStatistik(misto);
             return;
         }

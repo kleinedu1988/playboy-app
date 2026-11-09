@@ -7040,60 +7040,10 @@ textarea {
     fill: rgba(255, 255, 255, 0.04);
 }
 
-/* Panel Postřehy nad grafem: čím se výběr liší od sbírky (lib/postrehy.js rozdilyVyberu); řádek přepne graf */
-.sp-postrehy {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-bottom: 14px;
-    padding: 12px 14px;
-}
-
-.sp-postrehy[hidden] {
-    display: none;
-}
-
-.sp-postrehy-hlava {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    margin-bottom: 4px;
-    font-size: 13px;
-}
-
-.sp-postrehy-hlava span,
-.sp-postrehy-prazdno {
-    margin: 0;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.sp-postreh-vyberu {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    padding: 5px 8px;
-    margin: 0 -8px;
-    border: 0;
-    border-radius: 8px;
-    background: none;
-    color: var(--text-main);
-    font: inherit;
-    font-size: 13px;
-    text-align: left;
-    cursor: pointer;
-}
-
 /* Hodnota rozložení zvýrazněná po kliku na postřeh (bez přidání podmínky výběru) */
 .sp-pruh.zvyrazneny {
     outline: 1px solid var(--text-muted);
     outline-offset: -1px;
-}
-
-.sp-postreh-vyberu:hover,
-.sp-postreh-vyberu:focus-visible {
-    background-color: var(--panel-hover);
-    outline: none;
 }
 
 /* Zlom v grafu v čase: čárkovaná svislice v barvě textu s rokem, úroveň období tenká vodorovná čára */
@@ -18367,23 +18317,139 @@ body.rezim-vyberu #detailView .poster {
     }
 }
 
-/* ===== Modelky › Statistiky (app/statistiky-pohled.js): hero s postřehem sbírky, pod ním Postřehy, graf a seznam ===== */
+/* ===== Modelky › Statistiky (app/statistiky-pohled.js): hero s postřehy sbírky (scéna s fotkou, pod ní pás karet),
+   pod ním graf a seznam ===== */
 .statistiky-pohled:not(.hidden) {
     display: block;
 }
 
 .statistiky-pohled .sh-hero {
+    min-height: 0;
     margin-bottom: 18px;
 }
 
+.statistiky-pohled .sh-hero:empty {
+    min-height: clamp(260px, 38vh, 440px);
+}
+
+/* Scéna: fotka vpravo, postřeh vlevo dole (jako hero Profilů) */
+.sh-scena {
+    position: relative;
+    min-height: clamp(260px, 38vh, 440px);
+}
+
 /* Velká změna postřehu („1 % → 35 %“) pod názvem grafu */
-.sh-cisla {
+.sh-zmena {
     color: #fff;
     font-size: clamp(22px, 2.6vw, 32px);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
     text-shadow: 0 2px 14px rgba(0, 0, 0, 0.85);
+}
+
+/* Pás karet: postřehy sbírky (zvolený zvýrazněný), s výběrem čím se výběr liší od sbírky */
+.sh-pas {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+    padding: 14px 20px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(12, 12, 16, 0.35);
+}
+
+.sh-pas[hidden] {
+    display: none;
+}
+
+.sh-pas-hlava {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 10px;
+    color: rgba(240, 240, 245, 0.6);
+    font-size: 12px;
+}
+
+.sh-pas-hlava b {
+    color: var(--zlato-svetle, #f6e3a1);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
+.sh-pas-hlava span:first-of-type {
+    color: #fff;
+}
+
+.sh-pas-prazdno {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: rgba(240, 240, 245, 0.7);
+    font-size: 13px;
+}
+
+.sh-karta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.sh-karta:hover,
+.sh-karta:focus-visible {
+    border-color: rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+    outline: none;
+}
+
+.sh-karta.zvolena {
+    border-color: var(--accent);
+    background: rgba(216, 27, 96, 0.14);
+}
+
+.sh-karta-graf {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    color: rgba(240, 240, 245, 0.65);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.sh-karta-graf i {
+    color: var(--accent-text);
+    font-style: normal;
+}
+
+.sh-karta-zmena {
+    font-size: 17px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.sh-karta-veta {
+    display: -webkit-box;
+    overflow: hidden;
+    color: rgba(240, 240, 245, 0.78);
+    font-size: 12px;
+    line-height: 1.4;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
 }
 
 /* ===== Profily: hero banner s doporučenou modelkou (app/profily-hero.js) a široká lišta ovládání pod ním ===== */

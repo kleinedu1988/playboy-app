@@ -54,6 +54,8 @@ const CTENI = new Set([
     'GetSinSlavy',
     'GetSezona',
     'GetOdznakyModelky',
+    // Fotka záhlaví (hero Profilů a Statistik, profil): jen čte; jako zápis by ve Statistikách točila přepočet dokola
+    'GetProfilovaFotka',
     'GetSoubojeModelky',
     'GetSpecialy',
     'GetStavUceni',

@@ -1,5 +1,6 @@
 // Modelky › Statistiky: vlastní pohled vedle Profilů a Galerie (dřív panel vpravo ve Sbírce). Nahoře hero s
-// nejsilnějším postřehem sbírky (statistiky.js naplnitHeroStatistik), pod ním panel Postřehy, graf a modelky výběru.
+// postřehem sbírky a pásem karet (statistiky.js naplnitHeroStatistik; s výběrem čím se liší od sbírky), pod ním graf
+// a modelky výběru.
 // Volby grafu (Graf ▾, Výskyt, Edice, výběr) jsou jako jinde v liště pod hledáním.
 import { statistikyView } from './prvky';
 import { stav } from './stav';
@@ -12,11 +13,16 @@ import { poZmeneDat } from './udalosti';
 const sekce = () => /** @type {HTMLElement | null} */ (statistikyView.querySelector('.stat-statistiky'));
 const hero = () => /** @type {HTMLElement | null} */ (statistikyView.querySelector('.sh-hero'));
 
-// Po zápisu do databáze se při dalším otevření spočítá znovu (otevřený pohled hned)
+// Po zápisu do databáze se při dalším otevření spočítá znovu; otevřený pohled až po chvíli klidu, aby série zápisů
+// (srdíčka, import) nepřepočítávala Statistiky po každém
 let zastarale = false;
+let casovacZmeny = 0;
 poZmeneDat(() => {
     zastarale = true;
-    if (stav.rezim === 'statistiky' && !statistikyView.classList.contains('hidden')) otevritStatistiky();
+    clearTimeout(casovacZmeny);
+    casovacZmeny = setTimeout(() => {
+        if (zastarale && stav.rezim === 'statistiky' && !statistikyView.classList.contains('hidden')) otevritStatistiky();
+    }, 800);
 });
 
 export async function otevritStatistiky() {

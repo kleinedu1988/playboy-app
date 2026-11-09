@@ -84,6 +84,7 @@ const CTENI = new Set([
     'GetPodobneFotky',
     'GetPodobnostObsahu',
     'GetStejneFotky',
+    'GetChytreVybery',
     'ZkontrolovatOdkazy',
     'GetStavOtisku',
     // Otisky fotek a výjimky Stejných fotek jsou mimo data sbírky (soubor otisků, nastavení); Údržba se obnoví sama
@@ -229,6 +230,10 @@ export const GetKolekceGalerie = /** @type {typeof App.GetKolekceGalerie} */ (ob
 export const GetVsechnyKolekce = /** @type {typeof App.GetVsechnyKolekce} */ (obalit('GetVsechnyKolekce'));
 export const GetIdealniModelka = /** @type {typeof App.GetIdealniModelka} */ (obalit('GetIdealniModelka'));
 export const GetVyberyGalerie = /** @type {typeof App.GetVyberyGalerie} */ (obalit('GetVyberyGalerie'));
+export const GetChytreVybery = /** @type {typeof App.GetChytreVybery} */ (obalit('GetChytreVybery'));
+export const UlozitChytryVyber = /** @type {typeof App.UlozitChytryVyber} */ (obalit('UlozitChytryVyber'));
+export const SmazatChytryVyber = /** @type {typeof App.SmazatChytryVyber} */ (obalit('SmazatChytryVyber'));
+export const ZmrazitChytryVyber = /** @type {typeof App.ZmrazitChytryVyber} */ (obalit('ZmrazitChytryVyber'));
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));

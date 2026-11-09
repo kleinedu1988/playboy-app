@@ -54,6 +54,10 @@ export function GetCenterfoldy() {
   return window['go']['main']['App']['GetCenterfoldy']();
 }
 
+export function GetChytreVybery(arg1) {
+  return window['go']['main']['App']['GetChytreVybery'](arg1);
+}
+
 export function GetClanky(arg1) {
   return window['go']['main']['App']['GetClanky'](arg1);
 }
@@ -558,6 +562,10 @@ export function SlozkaZaloh() {
   return window['go']['main']['App']['SlozkaZaloh']();
 }
 
+export function SmazatChytryVyber(arg1) {
+  return window['go']['main']['App']['SmazatChytryVyber'](arg1);
+}
+
 export function SmazatVyber(arg1) {
   return window['go']['main']['App']['SmazatVyber'](arg1);
 }
@@ -576,6 +584,10 @@ export function SpustitStahovaniNahledu() {
 
 export function StavDatabaze() {
   return window['go']['main']['App']['StavDatabaze']();
+}
+
+export function UlozitChytryVyber(arg1) {
+  return window['go']['main']['App']['UlozitChytryVyber'](arg1);
 }
 
 export function UlozitPruvodceFotky(arg1) {
@@ -692,6 +704,10 @@ export function ZkontrolovatOdkazy(arg1) {
 
 export function ZkontrolovatSoubory() {
   return window['go']['main']['App']['ZkontrolovatSoubory']();
+}
+
+export function ZmrazitChytryVyber(arg1) {
+  return window['go']['main']['App']['ZmrazitChytryVyber'](arg1);
 }
 
 export function ZrusitPoradiAlba(arg1, arg2, arg3) {

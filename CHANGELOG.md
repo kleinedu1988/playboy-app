@@ -7,6 +7,21 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.37.0] – 2026-11-09
+
+### Přidáno
+- **Chytré výběry ⚡:** hledání a filtr Modelek, nebo hledání, filtry, kolekce a řazení Galerie fotek se dají uložit jako
+  pojmenovaný živý výběr s popisem („⚡ Uložit jako chytrý výběr…“). Ukládají se podmínky, ne položky: nová modelka nebo
+  fotka, která jim vyhoví, je ve výběru hned (`chytre_vybery.go`, `frontend/src/app/chytre-vybery.js`).
+- Čipy ⚡ s počtem v liště Modelek, ve volbách Všech fotek a v panelu Kolekce (čip zapnutého výběru svítí), karta Chytré
+  výběry s náhledy v Přehledu; klik výběr zapne, ✎ otevře okno s podmínkami, převzetím aktuálních podmínek, zmrazením
+  (fotky do běžného výběru v Nejlepších, modelky do tagu) a smazáním.
+- Export a import chytré výběry zachovají v nepovinné části `nastaveni`; schéma databáze (úprava č. 16) ani verze
+  exportu (13) se nemění, starší program část přeskočí.
+
+### Změněno
+- Dřívější Uložené výběry Galerie fotek se při prvním spuštění převedou na chytré výběry fotek.
+
 ## [1.36.0] – 2026-11-09
 
 ### Přidáno

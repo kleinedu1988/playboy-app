@@ -246,6 +246,76 @@ export namespace main {
 	        this.drzitelka = source["drzitelka"];
 	    }
 	}
+	export class PodminkyGalerie {
+	    razeni?: string;
+	    srdicka?: string;
+	    typy?: string[];
+	    tagy?: string[];
+	    dekady?: string[];
+	    kolekce?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PodminkyGalerie(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.razeni = source["razeni"];
+	        this.srdicka = source["srdicka"];
+	        this.typy = source["typy"];
+	        this.tagy = source["tagy"];
+	        this.dekady = source["dekady"];
+	        this.kolekce = source["kolekce"];
+	    }
+	}
+	export class ChytryVyber {
+	    id: string;
+	    nazev: string;
+	    popis?: string;
+	    druh: string;
+	    zapis?: string;
+	    text?: string;
+	    filtr?: string;
+	    galerie: PodminkyGalerie;
+	    nazevKolekce?: string;
+	    vytvoreno?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ChytryVyber(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.nazev = source["nazev"];
+	        this.popis = source["popis"];
+	        this.druh = source["druh"];
+	        this.zapis = source["zapis"];
+	        this.text = source["text"];
+	        this.filtr = source["filtr"];
+	        this.galerie = this.convertValues(source["galerie"], PodminkyGalerie);
+	        this.nazevKolekce = source["nazevKolekce"];
+	        this.vytvoreno = source["vytvoreno"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class CtvericePorovnani {
 	    modelky: number[];
 	    duvod: string;
@@ -1163,6 +1233,7 @@ export namespace main {
 	}
 	
 	
+	
 	export class PodobnostObsahu {
 	    fotek: number;
 	    naFotkach: Record<number, number>;
@@ -2044,6 +2115,60 @@ export namespace main {
 	        this.pocet = source["pocet"];
 	    }
 	}
+	export class StavChytrehoVyberu {
+	    id: string;
+	    nazev: string;
+	    popis?: string;
+	    druh: string;
+	    zapis?: string;
+	    text?: string;
+	    filtr?: string;
+	    galerie: PodminkyGalerie;
+	    nazevKolekce?: string;
+	    vytvoreno?: string;
+	    pocet: number;
+	    fotky: sbirka.Fotografie[];
+	    modelky: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new StavChytrehoVyberu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.nazev = source["nazev"];
+	        this.popis = source["popis"];
+	        this.druh = source["druh"];
+	        this.zapis = source["zapis"];
+	        this.text = source["text"];
+	        this.filtr = source["filtr"];
+	        this.galerie = this.convertValues(source["galerie"], PodminkyGalerie);
+	        this.nazevKolekce = source["nazevKolekce"];
+	        this.vytvoreno = source["vytvoreno"];
+	        this.pocet = source["pocet"];
+	        this.fotky = this.convertValues(source["fotky"], sbirka.Fotografie);
+	        this.modelky = source["modelky"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	
 	export class UrovenTop {
 	    uroven: number;
@@ -2413,6 +2538,23 @@ export namespace main {
 	        this.tagy = source["tagy"];
 	        this.hodnoceni = source["hodnoceni"];
 	        this.hotovo = source["hotovo"];
+	    }
+	}
+	
+	export class ZmrazeniVyberu {
+	    pocet: number;
+	    vyberId: number;
+	    tag: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ZmrazeniVyberu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.pocet = source["pocet"];
+	        this.vyberId = source["vyberId"];
+	        this.tag = source["tag"];
 	    }
 	}
 

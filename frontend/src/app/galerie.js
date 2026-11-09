@@ -140,6 +140,7 @@ function htmlNastroju(pocet, celkem) {
     return `<div class="gallery-toolbar profily-lista"><div class="pl-razeni" role="group" aria-label="Řazení">${razeni}</div>
         <button type="button" class="pl-filtry ${stitky ? 'zapnuto' : ''}" data-pl-filtry aria-haspopup="dialog">☰ Filtry${stitky ? ` <small>${stitkyFiltru().length}</small>` : ''}</button>
         ${stitky}
+        <span class="cv-misto" data-cv-druh="modelky"></span>
         <span class="pl-pocet">${pocet < celkem ? `${pocet} z ${sklonovat(celkem, 'modelky', 'modelek', 'modelek')}` : sklonovat(pocet, 'modelka', 'modelky', 'modelek')}</span></div>`;
 }
 

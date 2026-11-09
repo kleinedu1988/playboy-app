@@ -114,6 +114,7 @@ export function htmlUvodu({ kalendar, stavy, modelky }) {
             ${mapaUs}
             ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
         </div>` : ''}
+        <div class="uvod-karta uvod-radek cv-prehled" data-cv-prehled hidden></div>
         <div class="uvod-karta uvod-radek">
             <h4>Naposledy přidané</h4>
             ${naposledy.length ? `<div class="uvod-naposledy">${naposledy.map(m => `

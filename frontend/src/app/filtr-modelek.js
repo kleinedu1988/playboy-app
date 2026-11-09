@@ -26,6 +26,12 @@ try {
 // Příkazy filtru, které se k textu hledání přidají v dotazu galerie
 export const dotazFiltru = () => (aktivni() ? podminky.map(textPodminky).join(' ') : '');
 export const pocetFiltru = () => (aktivni() ? podminky.length : 0);
+// Filtr jako text bez ohledu na otevřený přehled (chytré výběry, app/chytre-vybery.js)
+export const textFiltru = () => podminky.map(textPodminky).join(' ');
+export function nastavitFiltrModelek(text) {
+    podminky = parsovat(text || '', DIMENZE_MODELEK).podminky;
+    zmeneno();
+}
 
 function zmeneno() {
     try { localStorage.setItem(KLIC_ULOZENI, podminky.map(textPodminky).join(' ')); } catch { /* jen pro toto spuštění */ }

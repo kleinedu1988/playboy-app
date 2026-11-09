@@ -120,7 +120,9 @@ function htmlVolebGalerie(vybery, vyber) {
     return `<button class="chip ${!stav.nejlepsiVyber && stav.nejlepsiMin === 0 ? 'active' : ''}" data-nejlepsi-min="0" title="Všechny fotky napříč modelkami s řazením a filtry">Všechny fotky</button>`
         + [3, 4, 5].map(n => `<button class="chip ${!stav.nejlepsiVyber && n === stav.nejlepsiMin ? 'active' : ''}" data-nejlepsi-min="${n}">&#9829; ${n}${n < 5 ? '+' : ''}</button>`).join('')
         + vybery.map(v => `<button class="chip ${v.id === stav.nejlepsiVyber ? 'active' : ''}" data-vyber-id="${v.id}" title="Vlastní výběr">${esc(v.nazev)}<span>${v.pocet}</span></button>`).join('')
-        + (vyber ? '<button class="link" data-vyber-akce="prejmenovat">přejmenovat</button><button class="link" data-vyber-akce="smazat">smazat výběr</button>' : '');
+        + (vyber ? '<button class="link" data-vyber-akce="prejmenovat">přejmenovat</button><button class="link" data-vyber-akce="smazat">smazat výběr</button>' : '')
+        // Chytré výběry ⚡ fotek (app/chytre-vybery.js) – patří ke Všem fotkám
+        + '<span class="cv-misto" data-cv-druh="fotky"></span>';
 }
 
 // Poměr stran fotek (podle id) z minulého vykreslení: mozaika pak při překreslení neposkakuje

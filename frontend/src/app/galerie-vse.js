@@ -5,7 +5,7 @@
 // asi líbí“: tvoje srdíčka a u nehodnocených odhad z obsahu fotek, promíchané napříč alby. Dotaz i otevřený panel
 // se pamatují. Text hledání v hlavičce omezuje galerii (jméno modelky, album, fotograf).
 import { prevest } from '../lib/hledani-dotaz';
-import { GetGalerieFotek, GetKolekceGalerie, GetVsechnyKolekce, GetVyberyGalerie, UlozitVyberGalerie, SmazatVyberGalerie, ZaznamenatKolekci, GetStavHledaniSlovy, ZapnoutHledaniSlovy } from './backend';
+import { GetGalerieFotek, GetKolekceGalerie, GetVsechnyKolekce, ZaznamenatKolekci, GetStavHledaniSlovy, ZapnoutHledaniSlovy } from './backend';
 import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
 import { stav } from './stav';
 import { best } from './prvky';
@@ -62,9 +62,6 @@ const SKUPINY_KOLEKCI = { tvoje: 'Pro tebe', cas: 'Čas', styl: 'Objevené styly
 const VYCHOZI_DOTAZ = { razeni: 'libi', srdicka: '', typy: [], tagy: [], dekady: [] };
 /** @type {{ klic: string, nazev: string, duvod: string, skupina: string, pocet: number, fotka: any }[]} */
 let vsechnyKolekce = [];
-/** @type {{ nazev: string, nazevKolekce: string, dotaz: any }[]} */
-let vybery = [];
-let ukladaniVyberu = false;
 // Výběr se dá uložit, když se liší od výchozí galerie
 const lzeUlozit = () => Boolean(pocetFiltru() || zvolenaKolekce.klic || dotaz.razeni !== 'libi');
 
@@ -72,6 +69,15 @@ const lzeUlozit = () => Boolean(pocetFiltru() || zvolenaKolekce.klic || dotaz.ra
 let slovy = { obsahem: false, rozpoznano: '', nabidnout: false };
 let nacistGaleriiZnovu = () => {};
 let casovacSlov = 0;
+
+// Podmínky galerie pro chytrý výběr (app/chytre-vybery.js): řazení, filtry a zvolená kolekce
+export const podminkyGalerie = () => ({ razeni: dotaz.razeni, srdicka: dotaz.srdicka, typy: [...dotaz.typy], tagy: [...dotaz.tagy], dekady: [...dotaz.dekady], kolekce: zvolenaKolekce.klic });
+export const lzeUlozitGalerii = () => lzeUlozit();
+export function nastavitPodminkyGalerie(g = {}, nazevKolekce = '') {
+    dotaz = { ...VYCHOZI_DOTAZ, razeni: g.razeni || 'libi', srdicka: g.srdicka || '', typy: g.typy || [], tagy: g.tagy || [], dekady: g.dekady || [] };
+    zvolenaKolekce = { klic: g.kolekce || '', nazev: nazevKolekce || '' };
+    ulozitDotaz();
+}
 
 // Kolekce zvolená zvenku (ideální modelka, app/vkus.js) – platí od příštího načtení Galerie
 export function nastavitKolekciGalerie(klic, nazev) {
@@ -133,7 +139,6 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
     sledovatKonec();
     vykreslitPanel();
     if (slovy.nabidnout) sledovatStazeniSlov();
-    ukladaniVyberu = false;
     if (kolekceOtevrene()) vykreslitPanelKolekci();
     if (hero) naplnitHeroGalerie(seznam.querySelector('.gv-hero'));
     // V prohlížeči se další stránka dotáhne, než dojde na konec načtené části
@@ -334,22 +339,16 @@ async function vykreslitPanelKolekci() {
     const panel = document.querySelector('#bestList .gv-panel-kolekci');
     if (!panel) return;
     if (!vsechnyKolekce.length) panel.innerHTML = '<p class="gv-k-nacita">Načítám kolekce…</p>';
-    const [k, v] = await Promise.all([GetVsechnyKolekce().catch(() => []), GetVyberyGalerie().catch(() => [])]);
-    vsechnyKolekce = k || [];
-    vybery = v || [];
+    vsechnyKolekce = (await GetVsechnyKolekce().catch(() => [])) || [];
     if (!panel.isConnected) return;
     const skupiny = Object.entries(SKUPINY_KOLEKCI).map(([sk, nazev]) => ({ nazev, k: vsechnyKolekce.map((x, i) => ({ ...x, i })).filter(x => x.skupina === sk) })).filter(x => x.k.length);
     const dlazdice = x => `<button type="button" class="gv-k-dlazdice ${x.klic === zvolenaKolekce.klic ? 'on' : ''}" data-gv-k="${x.i}" title="${esc(x.duvod)}">
         <img src="${esc(obrazek(x.fotka?.url || '', 'w400'))}" alt="" loading="lazy" decoding="async" draggable="false" />
         <span class="gv-k-text"><b>${esc(x.nazev)}</b><small>${x.pocet.toLocaleString('cs-CZ')}</small></span></button>`;
-    const ulozene = vybery.map((x, i) => `<span class="pl-stitek"><button type="button" data-gv-vyber="${i}" title="${esc(popisVyberu(x))}">★ ${esc(x.nazev)}</button><button type="button" data-gv-smazat-vyber="${i}" aria-label="Smazat výběr" title="Smazat uložený výběr">×</button></span>`).join('');
-    const ulozit = ukladaniVyberu
-        ? `<form class="gv-ulozit-form" data-gv-ulozit-form><input type="text" maxlength="60" placeholder="Název výběru" aria-label="Název výběru" required /><button type="submit" class="ph-tlacitko hlavni">Uložit</button><button type="button" class="link" data-gv-ulozit-zrusit>zrušit</button></form>`
-        : `<button type="button" class="link" data-gv-ulozit ${lzeUlozit() ? '' : 'disabled title="Nejdřív zvol kolekci, filtry nebo řazení"'}>+ Uložit tento výběr</button>`;
+    // Chytré výběry ⚡ (app/chytre-vybery.js) – dřívější Uložené výběry se do nich převedly
     panel.innerHTML = `
-        <section class="gv-vybery"><h4>Uložené výběry</h4><div class="gv-volby">${ulozene || '<span class="gv-k-prazdne">Zatím žádné – zvol kolekci, filtry nebo řazení a ulož si je.</span>'}${ulozit}</div></section>
+        <section class="gv-vybery"><h4>Chytré výběry ⚡</h4><div class="gv-volby cv-misto" data-cv-druh="fotky" data-cv-velke></div></section>
         ${skupiny.map(s => `<section><h4>${esc(s.nazev)}</h4><div class="gv-k-mrizka">${s.k.map(dlazdice).join('')}</div></section>`).join('')}`;
-    panel.querySelector('input')?.focus();
 }
 
 // Nabídka hledání slovy, když textu nic neodpovídá a textový model není stažený
@@ -383,28 +382,9 @@ async function sledovatStazeniSlov() {
     }
 }
 
-// Popis uloženého výběru (titulek): kolekce, srdíčka, typy, desetiletí, tagy, řazení
-function popisVyberu(x) {
-    const d = x.dotaz || {};
-    return [x.nazevKolekce && `Kolekce: ${x.nazevKolekce}`, d.srdicka && SRDICKA.find(([k]) => k === d.srdicka)?.[1], ...(d.typy || []),
-        ...(d.dekady || []).map(k => `${k.slice(2)}. léta`), ...(d.tagy || []).map(t => nazvyTagu.get(t) || t),
-        d.razeni && d.razeni !== 'libi' && RAZENI.find(([k]) => k === d.razeni)?.[1]].filter(Boolean).join(' · ');
-}
-
 // Obsluha panelu a stránkování; nacistZnovu = načíst galerii znovu (nejlepsi.js, s textem hledání)
 export function pripravitGalerii(nacistZnovu) {
     nacistGaleriiZnovu = nacistZnovu;
-    best.addEventListener('submit', (e) => {
-        const form = /** @type {HTMLElement} */ (e.target).closest('[data-gv-ulozit-form]');
-        if (!form) return;
-        e.preventDefault();
-        const nazev = /** @type {HTMLInputElement} */ (form.querySelector('input')).value.trim();
-        if (!nazev) return;
-        UlozitVyberGalerie(nazev, { ...dotaz, modelka: 0, text: '', seminko: 0, od: 0, kolik: 0, kolekce: zvolenaKolekce.klic }).then(() => {
-            ukladaniVyberu = false;
-            vykreslitPanelKolekci();
-        });
-    });
     best.addEventListener('click', (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);
         if (cil.closest('[data-gv-panel]')) {
@@ -445,30 +425,6 @@ export function pripravitGalerii(nacistZnovu) {
             try { localStorage.setItem(KLIC_PANELU_KOLEKCI, '0'); } catch { /* jen teď */ }
             nacistZnovu();
             document.querySelector('main')?.scrollTo({ top: 0 });
-            return;
-        }
-        const vyber = /** @type {HTMLElement | null} */ (cil.closest('[data-gv-vyber]'));
-        if (vyber) {
-            const x = vybery[parseInt(vyber.dataset.gvVyber, 10)];
-            if (!x) return;
-            const d = x.dotaz || {};
-            dotaz = { ...VYCHOZI_DOTAZ, razeni: d.razeni || 'libi', srdicka: d.srdicka || '', typy: d.typy || [], tagy: d.tagy || [], dekady: d.dekady || [] };
-            zvolenaKolekce = { klic: d.kolekce || '', nazev: x.nazevKolekce || '' };
-            zaznamenat(zvolenaKolekce.klic, 'otevreni');
-            ulozitDotaz();
-            try { localStorage.setItem(KLIC_PANELU_KOLEKCI, '0'); } catch { /* jen teď */ }
-            nacistZnovu();
-            return;
-        }
-        const smazat = /** @type {HTMLElement | null} */ (cil.closest('[data-gv-smazat-vyber]'));
-        if (smazat) {
-            const x = vybery[parseInt(smazat.dataset.gvSmazatVyber, 10)];
-            if (x) SmazatVyberGalerie(x.nazev).then(vykreslitPanelKolekci);
-            return;
-        }
-        if (cil.closest('[data-gv-ulozit]') || cil.closest('[data-gv-ulozit-zrusit]')) {
-            ukladaniVyberu = Boolean(cil.closest('[data-gv-ulozit]'));
-            vykreslitPanelKolekci();
             return;
         }
         // Řady kolekcí: Zobrazit vše / Celá kolekce, fotka (prohlížeč s fotkami řady), posun pásu

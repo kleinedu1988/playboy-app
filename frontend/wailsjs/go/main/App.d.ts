@@ -35,6 +35,8 @@ export function GetAlbaFotografa(arg1:string):Promise<Array<sbirka.Fotografie>>;
 
 export function GetCenterfoldy():Promise<oblibenost.FrontaFotek>;
 
+export function GetChytreVybery(arg1:string):Promise<Array<main.StavChytrehoVyberu>>;
+
 export function GetClanky(arg1:string):Promise<Array<sbirka.Clanek>>;
 
 export function GetClankyModelky(arg1:number):Promise<Array<sbirka.Clanek>>;
@@ -287,6 +289,8 @@ export function SloucitStejneFotky(arg1:string,arg2:Array<string>):Promise<main.
 
 export function SlozkaZaloh():Promise<string>;
 
+export function SmazatChytryVyber(arg1:string):Promise<boolean>;
+
 export function SmazatVyber(arg1:number):Promise<boolean>;
 
 export function SmazatVyberGalerie(arg1:string):Promise<boolean>;
@@ -296,6 +300,8 @@ export function SpustitOtisky():Promise<boolean>;
 export function SpustitStahovaniNahledu():Promise<boolean>;
 
 export function StavDatabaze():Promise<string>;
+
+export function UlozitChytryVyber(arg1:main.ChytryVyber):Promise<main.ChytryVyber>;
 
 export function UlozitPruvodceFotky(arg1:main.ZapisPruvodce):Promise<main.PredchoziPruvodce>;
 
@@ -354,6 +360,8 @@ export function ZkontrolovatNoveFotky(arg1:string):Promise<Array<main.NalezStejn
 export function ZkontrolovatOdkazy(arg1:string):Promise<main.KontrolaOdkazu>;
 
 export function ZkontrolovatSoubory():Promise<sbirka.KontrolaSouboru>;
+
+export function ZmrazitChytryVyber(arg1:string):Promise<main.ZmrazeniVyberu>;
 
 export function ZrusitPoradiAlba(arg1:number,arg2:string,arg3:string):Promise<boolean>;
 

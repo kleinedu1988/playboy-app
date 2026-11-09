@@ -133,6 +133,8 @@ type exportDat struct {
 	Covery  []exportCover   `yaml:"covery,omitempty"`
 	Vydani  []exportVydani  `yaml:"vydani,omitempty"`
 	Vybery  []exportVyberu  `yaml:"vybery,omitempty"`
+	// Nepovinné nastavení (chytré výběry, chytre_vybery.go); starší program část přeskočí, verze formátu se nemění
+	Nastaveni *exportNastaveni `yaml:"nastaveni,omitempty"`
 	// Opravené a přeskočené klíče ze souboru (do souboru se nezapisuje)
 	Opravy []string `yaml:"-"`
 }
@@ -312,6 +314,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 		jmena[m.ID] = m.Jmeno
 	}
 	data.Vydani, data.Vybery = a.exportovatVydaniAVybery(odkazy, jmena)
+	data.Nastaveni = a.exportovatNastaveni()
 
 	// Kontrola úplnosti proti databázi: fotky modelek a covery časopisů
 	var modelekVDb, fotekVDb int
@@ -562,7 +565,7 @@ var vzorRadkuHodnoty = regexp.MustCompile(`^(\s*(?:- )?[A-Za-z_]+):[ \t]+(.+?)[ 
 // Klíče formátu exportu (podle značek yaml ve strukturách); řádek „Zdroj: Wikipedie“ uvnitř textu klíčem není
 var znameKlice = func() map[string]bool {
 	klice := map[string]bool{}
-	for _, v := range []interface{}{exportDat{}, exportModelka{}, exportAlbum{}, exportFotka{}, exportVyrez{}, exportCover{}, exportVydani{}, exportVyberu{}, exportFotkyVyberu{}, exportClanek{}} {
+	for _, v := range []interface{}{exportDat{}, exportModelka{}, exportAlbum{}, exportFotka{}, exportVyrez{}, exportCover{}, exportVydani{}, exportVyberu{}, exportFotkyVyberu{}, exportClanek{}, exportNastaveni{}, ChytryVyber{}, PodminkyGalerie{}} {
 		t := reflect.TypeOf(v)
 		for i := 0; i < t.NumField(); i++ {
 			if nazev := strings.Split(t.Field(i).Tag.Get("yaml"), ",")[0]; nazev != "" {
@@ -646,7 +649,7 @@ func nacistDokumentPresne(text string) (exportDat, error) {
 	opravitKlice(&koren, &opravy)
 
 	errCely := koren.Decode(&data)
-	if errCely == nil && (len(data.Modelky) > 0 || len(data.Covery) > 0 || len(data.Vydani) > 0 || len(data.Vybery) > 0) {
+	if errCely == nil && (len(data.Modelky) > 0 || len(data.Covery) > 0 || len(data.Vydani) > 0 || len(data.Vybery) > 0 || data.Nastaveni != nil) {
 		data.Opravy = opravy
 		return data, nil
 	}
@@ -686,6 +689,12 @@ func slozitSoubory(soubory map[string][]byte, poradi []string) (exportDat, error
 			celek.Covery = append(celek.Covery, data.Covery...)
 			celek.Vydani = append(celek.Vydani, data.Vydani...)
 			celek.Vybery = append(celek.Vybery, data.Vybery...)
+			if data.Nastaveni != nil {
+				if celek.Nastaveni == nil {
+					celek.Nastaveni = &exportNastaveni{}
+				}
+				celek.Nastaveni.ChytreVybery = append(celek.Nastaveni.ChytreVybery, data.Nastaveni.ChytreVybery...)
+			}
 			for _, oprava := range data.Opravy {
 				celek.Opravy = append(celek.Opravy, fmt.Sprintf("%s, %s", kratky, oprava))
 			}
@@ -1005,6 +1014,7 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 
 	// Vydání a výběry až po modelkách a fotkách, na které odkazují
 	a.importovatVydaniAVybery(data.Vydani, data.Vybery, idPodleOdkazu, vysledek)
+	a.importovatNastaveni(data.Nastaveni)
 }
 
 // Testy jím mohou import uprostřed shodit a ověřit, že se nic nezměnilo

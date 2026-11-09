@@ -8,7 +8,7 @@ import { best, searchInput } from './prvky';
 import { listaNejlepsich } from './listy';
 import { historie, prepnoutRezim, ukazatPohled } from './navigace';
 import { htmlSrdickaFotky, nacistGalerii } from './galerie';
-import { VELIKOST_NAHLEDU, nacitatPostupne } from './obrazky';
+import { VELIKOST_NAHLEDU, nacitatPostupne, sledovatDalsi } from './obrazky';
 import { htmlAkciDlazdice } from './akce-fotky';
 import { otevritLightbox } from './prohlizec';
 import { potvrdit } from './formular-modelky';
@@ -100,6 +100,8 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
     urovneVykresleni = new Map();
     let od = 0;
     urovne.forEach((pocet, h) => { urovneVykresleni.set(h, { od, pocet, vykresleno: 0 }); od += pocet; });
+    const seznam = document.getElementById('bestList');
+    nacitatPostupne(seznam);
     sledovatKonce();
     // Každá úroveň hned první dávku (dřív jen první úroveň a pod ní visela tlačítka „Zobrazit další“ bez fotek)
     urovneVykresleni.forEach((u, h) => {
@@ -141,7 +143,7 @@ function vykreslitUroven(h, pocet) {
             .map((p, i) => htmlDlazdiceMozaiky(p, u.od + u.vykresleno + i)).join(''));
         u.vykresleno = cil;
         pripravitMozaiku();
-        nacitatPostupne(document.getElementById('bestList'));
+        sledovatDalsi(document.getElementById('bestList'), oddil);
     }
     const dalsi = oddil.querySelector('.nejlepsi-dalsi');
     const zbyva = u.pocet - u.vykresleno;
@@ -172,6 +174,7 @@ function sledovatKonce() {
 export function prestatSledovatKonce() {
     pozorovatelKoncu?.disconnect();
     pozorovatelKoncu = null;
+    prestatSledovatGalerii();
 }
 
 // Lišta úrovní srdíček: úroveň bez vykreslených fotek dostane před skokem první dávku

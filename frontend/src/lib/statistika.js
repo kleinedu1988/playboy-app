@@ -55,65 +55,143 @@ export function poradi(hodnoty) {
     return vysledek;
 }
 
-// Součty přes skupiny shod v seřazeném poli: Σ t(t−1)/2, Σ t(t−1)(t−2), Σ t(t−1)(2t+5)
-function shody(serazene, stejne) {
-    let dvojice = 0, trojice = 0, rozptyl = 0;
-    for (let i = 0; i < serazene.length;) {
+// Součty přes skupiny shod v seřazeném poli a zhuštění unikátních hodnot na začátek pole
+function shodyAUnikatni(s) {
+    let dvojice = 0, trojice = 0, rozptyl = 0, K = 0;
+    const n = s.length;
+    for (let i = 0; i < n;) {
+        const v = s[i];
         let j = i + 1;
-        while (j < serazene.length && stejne(serazene[j], serazene[i])) j++;
+        while (j < n && s[j] === v) j++;
         const t = j - i;
-        dvojice += t * (t - 1) / 2;
-        trojice += t * (t - 1) * (t - 2);
-        rozptyl += t * (t - 1) * (2 * t + 5);
+        if (t > 1) {
+            dvojice += t * (t - 1) / 2;
+            trojice += t * (t - 1) * (t - 2);
+            rozptyl += t * (t - 1) * (2 * t + 5);
+        }
+        s[K++] = v;
         i = j;
     }
-    return { dvojice, trojice, rozptyl };
+    return { dvojice, trojice, rozptyl, K };
 }
 
 // Kendallovo τ_b mezi x a y s opravou na shody a normální aproximací (scipy.stats.kendalltau, method='asymptotic').
-// Knightův algoritmus O(n log n): seřadit podle (x, y), spočítat přehození při řazení podle y.
+// Knightův algoritmus O(n log n): seskupit podle x, spočítat přehození v y pomocí Fenwickova stromu.
 // Vrací { tau, z, p, n } nebo null, když je některá řada konstantní nebo dvojic je méně než 3.
 export function kendallTauB(x, y) {
     const n = x.length;
     if (n < 3 || y.length !== n) return null;
-    // τ_b závisí jen na pořadí: x a y se převedou na pořadí hodnot a zakódují do jednoho čísla, které se seřadí
-    // nativně (bez porovnávací funkce) – řádově rychlejší než řazení dvojic
-    const naPoradi = h => {
-        const ruzne = Float64Array.from(new Set(h)).sort(), mapa = new Map();
-        ruzne.forEach((v, i) => mapa.set(v, i));
-        return { r: Float64Array.from(h, v => mapa.get(v)), K: ruzne.length };
-    };
-    const px = naPoradi(x), py = naPoradi(y);
-    const klice = px.r.map((rx, i) => rx * py.K + py.r[i]).sort();
-    const bx = klice.map(k => Math.floor(k / py.K)), by = klice.map(k => k % py.K);
-    const tx = shody(bx, (a, b) => a === b);
-    const txy = shody(klice, (a, b) => a === b).dvojice;
-    // Řazení slučováním podle y; přehození = počet dvojic, které jsou v opačném pořadí
-    let pole = by, pomocne = new Float64Array(n), prehozeni = 0;
-    for (let sirka = 1; sirka < n; sirka *= 2) {
-        for (let zac = 0; zac < n; zac += 2 * sirka) {
-            const stred = Math.min(zac + sirka, n), kon = Math.min(zac + 2 * sirka, n);
-            let i = zac, j = stred, k = zac;
-            while (i < stred && j < kon) {
-                if (pole[j] < pole[i]) {
-                    prehozeni += stred - i;
-                    pomocne[k++] = pole[j++];
-                } else pomocne[k++] = pole[i++];
-            }
-            while (i < stred) pomocne[k++] = pole[i++];
-            while (j < kon) pomocne[k++] = pole[j++];
+    const sy = Float64Array.from(y).sort();
+    const ty = shodyAUnikatni(sy), Ky = ty.K;
+    if (Ky < 2) return null;
+
+    const ry = new Int32Array(n);
+    for (let i = 0; i < n; i++) {
+        const vy = y[i];
+        let lo = 0, hi = Ky - 1;
+        while (lo < hi) {
+            const mid = (lo + hi) >> 1;
+            if (sy[mid] < vy) lo = mid + 1; else hi = mid;
         }
-        [pole, pomocne] = [pomocne, pole];
+        ry[i] = lo;
     }
-    const ty = shody(pole, (a, b) => a === b);
+
+    let serazenoX = true;
+    for (let i = 1; i < n; i++) {
+        if (x[i] < x[i - 1]) { serazenoX = false; break; }
+    }
+
+    let txDvojice = 0, txTrojice = 0, txRozptyl = 0, txy = 0, prehozeni = 0;
+    const bit = new Int32Array(Ky + 1);
+    const pocetY = new Int32Array(Ky);
+
+    if (serazenoX) {
+        let Kx = 0;
+        for (let i = 0; i < n;) {
+            const vx = x[i];
+            let j = i + 1;
+            while (j < n && x[j] === vx) j++;
+            const t = j - i;
+            Kx++;
+            if (t > 1) {
+                txDvojice += t * (t - 1) / 2;
+                txTrojice += t * (t - 1) * (t - 2);
+                txRozptyl += t * (t - 1) * (2 * t + 5);
+                for (let k = i; k < j; k++) {
+                    const r = ry[k];
+                    txy += pocetY[r]++;
+                    let mensiNeboRovno = 0;
+                    for (let idx = r + 1; idx > 0; idx &= idx - 1) mensiNeboRovno += bit[idx];
+                    prehozeni += i - mensiNeboRovno;
+                }
+                for (let k = i; k < j; k++) {
+                    const r = ry[k];
+                    pocetY[r] = 0;
+                    for (let idx = r + 1; idx <= Ky; idx += idx & -idx) bit[idx]++;
+                }
+            } else {
+                const r = ry[i];
+                let mensiNeboRovno = 0;
+                for (let idx = r + 1; idx > 0; idx &= idx - 1) mensiNeboRovno += bit[idx];
+                prehozeni += i - mensiNeboRovno;
+                for (let idx = r + 1; idx <= Ky; idx += idx & -idx) bit[idx]++;
+            }
+            i = j;
+        }
+        if (Kx < 2) return null;
+    } else {
+        const sx = Float64Array.from(x).sort();
+        const tx = shodyAUnikatni(sx), Kx = tx.K;
+        if (Kx < 2) return null;
+        txDvojice = tx.dvojice; txTrojice = tx.trojice; txRozptyl = tx.rozptyl;
+        const poctyX = new Int32Array(Kx + 1);
+        const rx = new Int32Array(n);
+        for (let i = 0; i < n; i++) {
+            const vx = x[i];
+            let lo = 0, hi = Kx - 1;
+            while (lo < hi) {
+                const mid = (lo + hi) >> 1;
+                if (sx[mid] < vx) lo = mid + 1; else hi = mid;
+            }
+            rx[i] = lo;
+            poctyX[lo + 1]++;
+        }
+        for (let g = 1; g <= Kx; g++) poctyX[g] += poctyX[g - 1];
+        const hranice = Int32Array.from(poctyX);
+        const ryPodleX = new Int32Array(n);
+        for (let i = 0; i < n; i++) ryPodleX[poctyX[rx[i]]++] = ry[i];
+        for (let g = 0; g < Kx; g++) {
+            const i = hranice[g], j = hranice[g + 1], t = j - i;
+            if (t > 1) {
+                for (let k = i; k < j; k++) {
+                    const r = ryPodleX[k];
+                    txy += pocetY[r]++;
+                    let mensiNeboRovno = 0;
+                    for (let idx = r + 1; idx > 0; idx &= idx - 1) mensiNeboRovno += bit[idx];
+                    prehozeni += i - mensiNeboRovno;
+                }
+                for (let k = i; k < j; k++) {
+                    const r = ryPodleX[k];
+                    pocetY[r] = 0;
+                    for (let idx = r + 1; idx <= Ky; idx += idx & -idx) bit[idx]++;
+                }
+            } else if (t === 1) {
+                const r = ryPodleX[i];
+                let mensiNeboRovno = 0;
+                for (let idx = r + 1; idx > 0; idx &= idx - 1) mensiNeboRovno += bit[idx];
+                prehozeni += i - mensiNeboRovno;
+                for (let idx = r + 1; idx <= Ky; idx += idx & -idx) bit[idx]++;
+            }
+        }
+    }
     const n0 = n * (n - 1) / 2;
-    const rozdil = n0 - tx.dvojice - ty.dvojice + txy - 2 * prehozeni;   // souhlasné − nesouhlasné
-    const jmenovatel = Math.sqrt((n0 - tx.dvojice) * (n0 - ty.dvojice));
+    const rozdil = n0 - txDvojice - ty.dvojice + txy - 2 * prehozeni;   // souhlasné − nesouhlasné
+    const jmenovatel = Math.sqrt((n0 - txDvojice) * (n0 - ty.dvojice));
     if (!jmenovatel) return null;
     const m = n * (n - 1);
-    const rozptyl = (m * (2 * n + 5) - tx.rozptyl - ty.rozptyl) / 18
-        + 2 * tx.dvojice * ty.dvojice / m
-        + tx.trojice * ty.trojice / (9 * m * (n - 2));
+    const rozptyl = (m * (2 * n + 5) - txRozptyl - ty.rozptyl) / 18
+        + 2 * txDvojice * ty.dvojice / m
+        + txTrojice * ty.trojice / (9 * m * (n - 2));
     const z = rozdil / Math.sqrt(rozptyl);
     return { tau: rozdil / jmenovatel, z, p: pOboustranne(z), n };
 }
@@ -161,11 +239,11 @@ export function wilson(ano, n, z = 1.959963984540054) {
 
 // Mannův–Whitneyův test dvou skupin: normální aproximace s opravou na shody a na spojitost (scipy.stats.mannwhitneyu
 // method='asymptotic', R wilcox.test(correct=TRUE, exact=FALSE)). U je pro první skupinu. Vrací { u, z, p } nebo null.
-export function mannWhitney(a, b) {
+export function mannWhitney(a, b, serazene = false) {
     const n1 = a.length, n2 = b.length, n = n1 + n2;
     if (!n1 || !n2) return null;
     // Obě skupiny seřazené zvlášť a sloučené po skupinách shod: průměrné pořadí, součet pořadí první skupiny, shody
-    const sa = Float64Array.from(a).sort(), sb = Float64Array.from(b).sort();
+    const sa = serazene ? a : Float64Array.from(a).sort(), sb = serazene ? b : Float64Array.from(b).sort();
     let i = 0, j = 0, pred = 0, r1 = 0, shodyT = 0;
     while (i < n1 || j < n2) {
         const v = j >= n2 || (i < n1 && sa[i] <= sb[j]) ? sa[i] : sb[j];

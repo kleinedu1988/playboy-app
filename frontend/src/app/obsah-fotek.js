@@ -14,6 +14,7 @@ const OBNOVA = 2000;
 /** @type {{ faze: string, stazeno: number, stahnout: number, hotovo: number, celkem: number, vektoru: number, chyba: string }} */
 let stavObsahu = { faze: 'vypnuto', stazeno: 0, stahnout: 0, hotovo: 0, celkem: 0, vektoru: 0, chyba: '' };
 let casovac = 0;
+let posledniKrokPokryti = -1;
 // Pokrytí odhadem srdíček z obsahu (fronta_nehodnocenych.go GetPokrytiOdhadu): Rychle ♥ nabídne řazení „Co se ti
 // asi líbí“, až má odhad většina nehodnocených fotek
 let pokryti = { odhadnuto: 0, nehodnocenych: 0, nabidnout: false };
@@ -67,7 +68,11 @@ async function obnovit() {
     const predtim = stavObsahu.faze;
     try { stavObsahu = (await GetStavObsahu()) || stavObsahu; } catch { /* stav zůstane */ }
     vykreslit();
-    if (stavObsahu.vektoru) GetPokrytiOdhadu().then((p) => { if (p) pokryti = p; }).catch(() => {});
+    const krok = stavObsahu.faze === 'pocita' ? Math.floor((stavObsahu.vektoru || 0) / 250) : -1;
+    if (stavObsahu.vektoru && (!pokryti.nehodnocenych || stavObsahu.faze !== 'pocita' || krok !== posledniKrokPokryti)) {
+        posledniKrokPokryti = krok;
+        GetPokrytiOdhadu().then((p) => { if (p) pokryti = p; }).catch(() => {});
+    }
     if (bezi(stavObsahu)) casovac = setTimeout(obnovit, OBNOVA);
     else if (stavObsahu.faze === 'chyba' && predtim !== 'chyba') oznamit(`Obsah fotek: ${stavObsahu.chyba}`);
     else if (predtim === 'stahuje' && stavObsahu.faze === 'pripraveno') oznamit('Model obsahu fotek je stažený.');

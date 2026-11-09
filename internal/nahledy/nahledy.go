@@ -170,18 +170,17 @@ func (m *Mezipamet) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if !m.ukladat[velikost] || m.slozka == "" {
-		m.propustit(w, id, velikost)
-		return
-	}
-	if data, err := m.precist(id, velikost); err == nil {
-		m.zasahy.Add(1)
-		m.odpovedet(w, data, http.DetectContentType(data))
-		return
-	}
 	m.aktivniOkno.Add(1)
+	defer m.aktivniOkno.Add(-1)
+	if !m.ukladat[velikost] || m.slozka == "" {
+		m.propustit(w, r, id, velikost)
+		return
+	}
+	if m.odpovedetZeSouboru(w, id, velikost) {
+		m.zasahy.Add(1)
+		return
+	}
 	data, typ, err := m.stahnout(id, velikost, m.soubeh)
-	m.aktivniOkno.Add(-1)
 	switch {
 	case errors.Is(err, errNahledNedostupny):
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -198,6 +197,35 @@ func (m *Mezipamet) odpovedet(w http.ResponseWriter, data []byte, typ string) {
 	// Náhled k ID se nemění
 	w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
 	w.Write(data)
+}
+
+func (m *Mezipamet) odpovedetZeSouboru(w http.ResponseWriter, id, velikost string) bool {
+	p := m.Cesta(id, velikost)
+	f, err := os.Open(p)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil || info.Size() == 0 {
+		return false
+	}
+	var hlava [512]byte
+	n, err := io.ReadFull(f, hlava[:])
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
+		return false
+	}
+	if time.Since(info.ModTime()) > 24*time.Hour {
+		now := time.Now()
+		os.Chtimes(p, now, now)
+	}
+	w.Header().Set("Content-Type", http.DetectContentType(hlava[:n]))
+	w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
+	w.Header().Set("Cache-Control", "private, max-age=31536000, immutable")
+	if _, err := w.Write(hlava[:n]); err == nil && int64(n) < info.Size() {
+		io.Copy(w, f)
+	}
+	return true
 }
 
 func (m *Mezipamet) precist(id, velikost string) ([]byte, error) {
@@ -247,7 +275,7 @@ func (m *Mezipamet) stahnout(id, velikost string, soubeh chan struct{}) ([]byte,
 	soubeh <- struct{}{}
 	defer func() { <-soubeh }()
 
-	s.data, s.typ, s.err = m.zDisku(id, velikost)
+	s.data, s.typ, s.err = m.zDisku(context.Background(), id, velikost)
 	if s.err == nil {
 		m.stazeno.Add(1)
 		if err := m.Ulozit(id, velikost, s.data); err != nil {
@@ -295,13 +323,19 @@ func klientNahledu() *http.Client {
 	return &http.Client{Timeout: 20 * time.Second, Transport: t}
 }
 
-func (m *Mezipamet) zDisku(id, velikost string) ([]byte, string, error) {
+func (m *Mezipamet) zDisku(ctx context.Context, id, velikost string) ([]byte, string, error) {
 	if m.bezSite() {
 		return nil, "", fmt.Errorf("%w: bez připojení", errNahledDocasne)
 	}
-	resp, err := m.klient.Get(m.adresa(id, velikost))
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, m.adresa(id, velikost), nil)
 	if err != nil {
-		m.chybaSite()
+		return nil, "", fmt.Errorf("%w: %v", errNahledDocasne, err)
+	}
+	resp, err := m.klient.Do(req)
+	if err != nil {
+		if ctx.Err() == nil {
+			m.chybaSite()
+		}
 		return nil, "", fmt.Errorf("%w: %v", errNahledDocasne, err)
 	}
 	m.bezSiteDo.Store(0)
@@ -348,15 +382,22 @@ func (m *Mezipamet) Ulozit(id, velikost string, data []byte) error {
 }
 
 // Velikosti, které se neukládají (w800, w1200, s0): jen se propustí z Disku
-func (m *Mezipamet) propustit(w http.ResponseWriter, id, velikost string) {
+func (m *Mezipamet) propustit(w http.ResponseWriter, r *http.Request, id, velikost string) {
 	m.propusteno.Add(1)
 	if m.bezSite() {
 		http.Error(w, "bez připojení", http.StatusServiceUnavailable)
 		return
 	}
-	resp, err := m.klient.Get(m.adresa(id, velikost))
+	req, err := http.NewRequestWithContext(r.Context(), http.MethodGet, m.adresa(id, velikost), nil)
 	if err != nil {
-		m.chybaSite()
+		http.Error(w, "Disk neodpovídá", http.StatusServiceUnavailable)
+		return
+	}
+	resp, err := m.klient.Do(req)
+	if err != nil {
+		if r.Context().Err() == nil {
+			m.chybaSite()
+		}
 		http.Error(w, "Disk neodpovídá", http.StatusServiceUnavailable)
 		return
 	}
@@ -504,18 +545,18 @@ func (m *Mezipamet) Nacist(ctx context.Context, id, velikost string) ([]byte, er
 	if !JeHoleID(id) || !jeVelikostNahledu(velikost) {
 		return nil, errNahledNedostupny
 	}
+	m.pockatNaKlid(ctx)
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	ukladat := m.slozka != "" && m.ukladat[velikost]
 	if ukladat {
 		if data, err := m.precist(id, velikost); err == nil {
 			return data, nil
 		}
 	}
-	m.pockatNaKlid(ctx)
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
 	if !ukladat {
-		data, _, err := m.zDisku(id, velikost)
+		data, _, err := m.zDisku(ctx, id, velikost)
 		return data, err
 	}
 	data, _, err := m.stahnout(id, velikost, m.pozadi)

@@ -66,6 +66,8 @@ export async function zacitPruvodce(pokryti = null) {
         return false;
     }
     stavy = new Map();
+    tagyFotek.clear();
+    navrhyObsahu.clear();
     podleAlba = new Map();
     posledni = null;
     historiePruvodce = [];

@@ -7,6 +7,24 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.28.3] – 2026-11-09
+
+### Opraveno
+- **Výrazně nižší spotřeba CPU a RAM při výpočtu obsahu a učení**:
+  - Během počítání vektorů fotek se přestala každé 2 sekundy od nuly přeučovat hřebenová regrese (Cholesky 531 × 531) přes všechny fotky; zjištění pokrytí v `GetPokrytiOdhadu` již odhady nepřepočítává a klíč mezipaměti odhadů a paměti příznaků se během běžícího výpočtu kvantuje po dávkách.
+  - Každý JPEG náhled se při výpočtu obsahu dekóduje pouze jednou místo třikrát (společný `image.Image` pro CLIP, NudeNet i rozbor vzhledu) a předzpracování používá předalokované `image.RGBA` buffery bez mezipaměťového čtverce plného rozlišení.
+  - Výpočet obsahu ustupuje aktivnímu oknu (`pockatNaKlid`) i tehdy, když jsou náhledy již v diskové mezipaměti.
+  - Český jazykový model (`TextovyModel`) se po 5 minutách nečinnosti automaticky uvolní z RAM (~75 MB), převod `.safetensors` čte tenzory proudově po jednom bez 400MB špičky, násobení int8 matic recykluje pracovní buffery a škáluje počet gorutin podle délky dotazu.
+  - Mapy partií a vzhledu používají hodnotová pole `[18]uint8` (nula pointerů pro GC) a `spocitatDataKolekci` čte příznaky dávkově přes `ProjitObsah` bez 38 000 zamčení mutexu a alokací sliců.
+- **Svižnější vykreslování, rolování a uvolňování paměti v rozhraní**:
+  - Odstraněno kvadratické $O(N^2)$ přepojování `IntersectionObserver` při dávkovém vykreslování karet a fotek v Galerii a Profilech (`sledovatDalsi` se `WeakSet` místo opakovaného `nacitatPostupne`).
+  - Rozmazané pozadí záhlaví (`.ph-rozmazane` s `blur(40px)`) používá malý náhled `w400` místo 4K `w3840` textury; při opuštění Galerie fotek se zastaví časovač střídání záhlaví a odpojí pozorovatel mozaiky.
+  - Odstraněny vnořené `backdrop-filter: blur(...)` nad již rozmazanými plochami a animace `min-height` záhlaví profilu, které brzdily rolování ve WebKit2GTK; doplněn debounce hledání v panelu filtrů, odpojování `ResizeObserver` ve Statistikách a čištění map v průvodci fotek.
+- **Rychlejší obsluha náhledů, SQLite a statistických postřehů**:
+  - HTTP server náhledů (`ServeHTTP`) proudově odesílá soubory z disku (`io.Copy`) bez alokace celých 4K souborů na haldě Go.
+  - Odstraněn duplicitní průchod Bradleyho–Terryho modelu v `spocitatOblibenostUplne` a neporovnané modelky se vynechávají z iterací; sloučen N+1 dotaz v `GetNavrhyTagu` a doplněny paměťové pragmy pro `uceni.db`.
+  - Zrychlen výpočet Kendallova $\tau_b$ (Fenwickův strom bez řazení dvojic v JS) a hledání zlomů a trendů ve Statistikách (sdílený `Intl.NumberFormat` a seřazené úseky).
+
 ## [1.28.2] – 2026-11-09
 
 ### Změněno

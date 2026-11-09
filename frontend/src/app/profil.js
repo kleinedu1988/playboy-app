@@ -134,7 +134,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         return `<button type="button" class="pruh-odkaz" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
     }).join('') + ((modelka.onlineAlba || []).length
         ? `<button type="button" class="pruh-odkaz" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
-    const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" draggable="false" />`;
+    const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" decoding="async" draggable="false" />`;
     // Filmový banner: dole vlevo nadtitulek (kategorie), velké jméno se srdíčky, řádek kariéry (roky, alba a fotky
     // doplní vykreslení alb, čísla časopisu a online jako textové odkazy), pořadí a odznaky; celou plochu kryje fotka
     const roky = platnaVydani.map(v => parseInt(v, 10)).filter(r => r > 1900);
@@ -260,7 +260,7 @@ export function htmlPlakatu(polozka, velikost, atributy = '', line = false) {
     return `
         <div class="poster" data-rot="${polozka.rotace}" ${atributy} ${atributy.includes('data-index') ? 'tabindex="0"' : ''}>
             <div class="poster-inner">
-                ${polozka.fotky.map(f => `<img ${line ? 'data-src' : 'src'}="${esc(obrazek(f.url, velikost))}" data-foto-id="${f.id}" draggable="false" ${line ? 'decoding="async"' : ''} />`).join('')}
+                ${polozka.fotky.map(f => `<img ${line ? 'data-src' : 'src'}="${esc(obrazek(f.url, velikost))}" data-foto-id="${f.id}" draggable="false" decoding="async" />`).join('')}
             </div>
             ${htmlAkciDlazdice()}
         </div>

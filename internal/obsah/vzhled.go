@@ -125,8 +125,8 @@ func vzhledObrazku(img image.Image) VzhledFotky {
 	return vz
 }
 
-func (vz VzhledFotky) bajty() []uint8 {
-	b := make([]uint8, delkaVzhledu)
+func (vz VzhledFotky) bajty() [delkaVzhledu]uint8 {
+	var b [delkaVzhledu]uint8
 	for i, x := range vz.Odstiny {
 		b[i] = bajt(x)
 	}
@@ -138,7 +138,7 @@ func (vz VzhledFotky) bajty() []uint8 {
 
 func bajt(x float64) uint8 { return uint8(min(max(x, 0), 1)*255 + 0.5) }
 
-func vzhledZBajtu(b []uint8) VzhledFotky {
+func vzhledZBajtu(b [delkaVzhledu]uint8) VzhledFotky {
 	var vz VzhledFotky
 	for i := range vz.Odstiny {
 		vz.Odstiny[i] = float64(b[i]) / 255
@@ -152,11 +152,11 @@ func vzhledZBajtu(b []uint8) VzhledFotky {
 // Vzhled fotek v paměti
 type Vzhled struct {
 	mu      sync.RWMutex
-	m       map[string][]uint8
+	m       map[string][delkaVzhledu]uint8
 	zmeneno bool
 }
 
-func NovyVzhled() *Vzhled { return &Vzhled{m: map[string][]uint8{}} }
+func NovyVzhled() *Vzhled { return &Vzhled{m: map[string][delkaVzhledu]uint8{}} }
 
 func (v *Vzhled) Ma(id string) bool {
 	v.mu.RLock()
@@ -247,12 +247,12 @@ func NacistVzhled(slozka string) (*Vzhled, error) {
 	idBuf := make([]byte, 255)
 	for i := range int(h.Pocet) {
 		delka, err := r.ReadByte()
-		b := make([]uint8, delkaVzhledu)
+		var b [delkaVzhledu]uint8
 		if err == nil {
 			_, err = io.ReadFull(r, idBuf[:delka])
 		}
 		if err == nil {
-			_, err = io.ReadFull(r, b)
+			_, err = io.ReadFull(r, b[:])
 		}
 		if err != nil {
 			return NovyVzhled(), fmt.Errorf("vzhled: záznam %d: %w", i, err)
@@ -284,7 +284,7 @@ func (v *Vzhled) Ulozit(slozka string) error {
 	for id, b := range v.m {
 		w.WriteByte(byte(len(id)))
 		w.WriteString(id)
-		w.Write(b)
+		w.Write(b[:])
 	}
 	err = w.Flush()
 	if err == nil {

@@ -28,11 +28,11 @@ var hashDetektoru = Soubory[2].Hash
 // Partie fotek v paměti
 type Partie struct {
 	mu      sync.RWMutex
-	m       map[string][]uint8
+	m       map[string][TridDetektoru]uint8
 	zmeneno bool
 }
 
-func NovePartie() *Partie { return &Partie{m: map[string][]uint8{}} }
+func NovePartie() *Partie { return &Partie{m: map[string][TridDetektoru]uint8{}} }
 
 func (p *Partie) Ma(id string) bool {
 	p.mu.RLock()
@@ -49,10 +49,10 @@ func (p *Partie) Pocet() int {
 
 // Pridat uloží jistoty tříd (0–1, pořadí TridyDetektoru)
 func (p *Partie) Pridat(id string, jistoty []float32) {
-	if len(jistoty) != len(TridyDetektoru) || id == "" || len(id) > 255 {
+	if len(jistoty) != TridDetektoru || id == "" || len(id) > 255 {
 		return
 	}
-	b := make([]uint8, len(jistoty))
+	var b [TridDetektoru]uint8
 	for i, x := range jistoty {
 		b[i] = uint8(min(max(x, 0), 1)*255 + 0.5)
 	}
@@ -88,7 +88,7 @@ func (p *Partie) Ponechat(platne func(id string) bool) {
 	}
 }
 
-// NacistPartie: chybějící soubor nebo jiný detektor = prázdné, poškozený = chyba a prázdné
+// NacistPartie: chybějící soubor nebo jiný detektor = prázdné, poškozený = chyba a prázdnné
 func NacistPartie(slozka string) (*Partie, error) {
 	p := NovePartie()
 	f, err := os.Open(filepath.Join(slozka, nazevPartii))
@@ -113,7 +113,7 @@ func NacistPartie(slozka string) (*Partie, error) {
 	if string(h.Znacka[:]) != znackaPartii {
 		return p, errors.New("partie: neznámý soubor")
 	}
-	if h.Verze != verzePartii || int(h.Trid) != len(TridyDetektoru) || string(h.Hash[:]) != hashDetektoru {
+	if h.Verze != verzePartii || int(h.Trid) != TridDetektoru || string(h.Hash[:]) != hashDetektoru {
 		return p, nil
 	}
 	if h.Pocet > 10_000_000 {
@@ -122,12 +122,12 @@ func NacistPartie(slozka string) (*Partie, error) {
 	idBuf := make([]byte, 255)
 	for i := range int(h.Pocet) {
 		delka, err := r.ReadByte()
-		b := make([]uint8, len(TridyDetektoru))
+		var b [TridDetektoru]uint8
 		if err == nil {
 			_, err = io.ReadFull(r, idBuf[:delka])
 		}
 		if err == nil {
-			_, err = io.ReadFull(r, b)
+			_, err = io.ReadFull(r, b[:])
 		}
 		if err != nil {
 			return NovePartie(), fmt.Errorf("partie: záznam %d: %w", i, err)
@@ -155,13 +155,13 @@ func (p *Partie) Ulozit(slozka string) error {
 	w := bufio.NewWriterSize(f, 1<<16)
 	var hash [64]byte
 	copy(hash[:], hashDetektoru)
-	for _, x := range []any{[]byte(znackaPartii), uint16(verzePartii), uint16(len(TridyDetektoru)), hash, uint32(len(p.m))} {
+	for _, x := range []any{[]byte(znackaPartii), uint16(verzePartii), uint16(TridDetektoru), hash, uint32(len(p.m))} {
 		binary.Write(w, binary.LittleEndian, x)
 	}
 	for id, b := range p.m {
 		w.WriteByte(byte(len(id)))
 		w.WriteString(id)
-		w.Write(b)
+		w.Write(b[:])
 	}
 	err = w.Flush()
 	if err == nil {

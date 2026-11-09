@@ -146,9 +146,26 @@ func (a *App) GetNavrhyTagu(ids []int) map[int]NavrhyTaguFotky {
 	maji := a.GetTagyFotek(ids)
 	uceni := a.uceniTagu()
 	odhady := a.odhadySrdicekFotek()
+	otazniky := make([]string, len(ids))
+	args := make([]any, len(ids))
+	for i, id := range ids {
+		otazniky[i] = "?"
+		args[i] = id
+	}
+	drivePodleID := make(map[int]string, len(ids))
+	if radky, err := a.db.Query(`SELECT id, drive_file_id FROM fotky WHERE id IN (`+strings.Join(otazniky, ",")+`)`, args...); err == nil {
+		for radky.Next() {
+			var id int
+			var driveID string
+			if radky.Scan(&id, &driveID) == nil {
+				drivePodleID[id] = driveID
+			}
+		}
+		radky.Close()
+	}
 	for _, id := range ids {
-		var driveID string
-		if a.db.QueryRow(`SELECT drive_file_id FROM fotky WHERE id = ?`, id).Scan(&driveID) != nil {
+		driveID, ok := drivePodleID[id]
+		if !ok {
 			continue
 		}
 		v, partie := a.obsah.Vektor(driveID), a.obsah.Partie(driveID)
@@ -185,13 +202,20 @@ var odhadyPamet struct {
 
 // Odhady srdíček z obsahu fotek (internal/obsah/odhad.go); nil, když je hodnocených fotek s obsahem málo.
 // V paměti, dokud se nezmění hodnocení fotek ani spočítaný obsah (Průvodce se ptá u každé fotky).
+// Během běžícího výpočtu na pozadí se počet vektorů a partií v klíči zaokrouhluje po 250 fotkách,
+// aby se hřebenová regrese (Cholesky 531×531) nepřeučovala každé 2 sekundy.
 func (a *App) odhadySrdicekFotek() *obsah.Odhady {
 	if !a.obsah.Zapnuto() {
 		return nil
 	}
 	var pocet, soucet int64
 	a.db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(hodnoceni * (id % 9973 + 1)), 0) FROM fotky WHERE hodnoceni > 0`).Scan(&pocet, &soucet)
-	klic := [4]int64{pocet, soucet, int64(a.obsah.Stav().Vektoru), int64(a.obsah.PocetPartii())}
+	st := a.obsah.Stav()
+	vektoru, partii := int64(st.Vektoru), int64(a.obsah.PocetPartii())
+	if st.Faze == obsah.FazePocita {
+		vektoru, partii = -1-(vektoru/250), -1-(partii/250)
+	}
+	klic := [4]int64{pocet, soucet, vektoru, partii}
 	p := &odhadyPamet
 	p.Lock()
 	defer p.Unlock()
@@ -281,7 +305,11 @@ func (a *App) obsahFotekVPameti() (map[int]float64, uint64) {
 	st := a.obsah.Stav()
 	var hodnocenych int
 	a.db.QueryRow(`SELECT COUNT(*) FROM fotky WHERE hodnoceni > 0`).Scan(&hodnocenych)
-	klic := [3]int{st.Vektoru, a.obsah.PocetPartii(), hodnocenych / prepocetObsahuPoHodnocenich}
+	vektoru, partii := st.Vektoru, a.obsah.PocetPartii()
+	if st.Faze == obsah.FazePocita {
+		vektoru, partii = -1-(vektoru/250), -1-(partii/250)
+	}
+	klic := [3]int{vektoru, partii, hodnocenych / prepocetObsahuPoHodnocenich}
 	p := &obsahModelekPamet
 	p.Lock()
 	defer p.Unlock()

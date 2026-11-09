@@ -618,11 +618,14 @@ export async function nacistStatistiky(koren) {
     // Při změně šířky se graf v čase překreslí v nové šířce
     const misto = koren.querySelector('[data-sp-graf]');
     let sirka = misto.clientWidth;
-    new ResizeObserver(() => {
+    koren._pozorovatelSirky?.disconnect();
+    const pozorovatel = new ResizeObserver(() => {
         if (!misto.isConnected || misto.clientWidth === sirka) return;
         sirka = misto.clientWidth;
         if (definice().osa) vykreslit(koren, { jenGraf: true });
-    }).observe(misto);
+    });
+    pozorovatel.observe(misto);
+    koren._pozorovatelSirky = pozorovatel;
 }
 
 // Index sloupce pod ukazatelem (u kraje grafu nejbližší sloupec)

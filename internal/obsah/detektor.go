@@ -10,13 +10,15 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/draw"
 	"path/filepath"
 	"sync"
 
 	ort "github.com/yalue/onnxruntime_go"
 	xdraw "golang.org/x/image/draw"
 )
+
+// Počet tříd výstupu detektoru NudeNet
+const TridDetektoru = 18
 
 // Třídy NudeNet v pořadí výstupu modelu
 var TridyDetektoru = []string{
@@ -37,6 +39,7 @@ type Detektor struct {
 	sezeni *ort.AdvancedSession
 	vstup  *ort.Tensor[float32]
 	vystup *ort.Tensor[float32]
+	rgba   *image.RGBA
 }
 
 // OtevritDetektor načte model detektoru ze složky obsah/ (knihovnu ONNX Runtime sdílí s CLIP)
@@ -51,7 +54,7 @@ func OtevritDetektor(slozka, soubor string) (*Detektor, error) {
 	defer opt.Destroy()
 	opt.SetIntraOpNumThreads(vlaken)
 	opt.SetInterOpNumThreads(1)
-	d := &Detektor{}
+	d := &Detektor{rgba: image.NewRGBA(image.Rect(0, 0, stranaDetektoru, stranaDetektoru))}
 	if d.vstup, err = ort.NewTensor(ort.NewShape(1, 3, stranaDetektoru, stranaDetektoru), make([]float32, 3*stranaDetektoru*stranaDetektoru)); err == nil {
 		d.vystup, err = ort.NewEmptyTensor[float32](ort.NewShape(1, int64(4+len(TridyDetektoru)), kotevDetektoru))
 	}
@@ -85,7 +88,7 @@ func (d *Detektor) Zavrit() {
 			v.Destroy()
 		}
 	}
-	d.sezeni, d.vstup, d.vystup = nil, nil, nil
+	d.sezeni, d.vstup, d.vystup, d.rgba = nil, nil, nil, nil
 }
 
 // Partie: nejvyšší jistota každé třídy na fotce (0–1, pořadí TridyDetektoru)
@@ -94,12 +97,17 @@ func (d *Detektor) Partie(obrazek []byte) ([]float32, error) {
 	if err != nil {
 		return nil, fmt.Errorf("obrázek: %w", err)
 	}
+	return d.PartieObrazku(img)
+}
+
+// PartieObrazku: nejvyšší jistota každé třídy na již dekódovaném obrázku (0–1, pořadí TridyDetektoru)
+func (d *Detektor) PartieObrazku(img image.Image) ([]float32, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if d.sezeni == nil {
 		return nil, errors.New("detektor je zavřený")
 	}
-	predzpracovatDetektor(img, d.vstup.GetData())
+	predzpracovatDetektorDo(img, d.rgba, d.vstup.GetData())
 	if err := d.sezeni.Run(); err != nil {
 		return nil, err
 	}
@@ -115,12 +123,19 @@ func (d *Detektor) Partie(obrazek []byte) ([]float32, error) {
 }
 
 func predzpracovatDetektor(img image.Image, cil []float32) {
+	predzpracovatDetektorDo(img, image.NewRGBA(image.Rect(0, 0, stranaDetektoru, stranaDetektoru)), cil)
+}
+
+func predzpracovatDetektorDo(img image.Image, m *image.RGBA, cil []float32) {
 	b := img.Bounds()
 	k := max(b.Dx(), b.Dy())
-	ctverec := image.NewRGBA(image.Rect(0, 0, k, k))
-	draw.Draw(ctverec, image.Rect(0, 0, b.Dx(), b.Dy()), img, b.Min, draw.Src)
-	m := image.NewRGBA(image.Rect(0, 0, stranaDetektoru, stranaDetektoru))
-	xdraw.BiLinear.Scale(m, m.Bounds(), ctverec, ctverec.Bounds(), xdraw.Src, nil)
+	if k <= 0 {
+		clear(cil)
+		return
+	}
+	clear(m.Pix)
+	cilRect := image.Rect(0, 0, max(1, b.Dx()*stranaDetektoru/k), max(1, b.Dy()*stranaDetektoru/k))
+	xdraw.BiLinear.Scale(m, cilRect, img, b, xdraw.Src, nil)
 	const plocha = stranaDetektoru * stranaDetektoru
 	for p := range plocha {
 		i := p * 4

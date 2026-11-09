@@ -9,7 +9,7 @@ import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
 import { stav } from './stav';
 import { best } from './prvky';
 import { katalogTagu } from './tagy-fotek';
-import { VELIKOST_PLAKATU, nacitatPostupne } from './obrazky';
+import { VELIKOST_KARTY, VELIKOST_PLAKATU, nacitatPostupne, sledovatDalsi } from './obrazky';
 import { htmlNicNenalezeno } from '../ui/prazdno';
 import { otevritLightbox } from './prohlizec';
 import { otevritProfilPodleId } from './cover';
@@ -127,6 +127,7 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
             : slovy.nabidnout ? htmlNabidkySlov()
                 : htmlNicNenalezeno(slovy.obsahem ? `V obsahu fotek jsem k „${text.trim()}“ nic výrazného nenašel. Zkus popis, třeba „zrzavé vlasy na pláži“ nebo „v kuchyni“.`
                     : filtry || text ? 'Filtrům ani hledání neodpovídá žádná fotka.' : 'Ve sbírce zatím nejsou fotky.')}`;
+    nacitatPostupne(seznam);
     pripojit(polozky, 0);
     sledovatKonec();
     vykreslitPanel();
@@ -141,7 +142,7 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
 // Řada kolekce: název, proč, počet, Zobrazit vše a vodorovný pás fotek se šipkami
 function htmlRady(r, n) {
     const dlazdice = r.fotky.map((f, i) => `<button type="button" class="gv-dlazdice" data-gv-rada="${n}" data-gv-fotka="${i}" title="${esc(`${f.jmenoModelky || ''} · ${nazevAlba(f.album, f.typ)}`)}">
-        <img src="${esc(obrazek(f.url, 'w400'))}" alt="" loading="lazy" draggable="false" />${f.hodnoceni ? `<span class="gv-srd">${'♥'.repeat(f.hodnoceni)}</span>` : ''}</button>`).join('');
+        <img src="${esc(obrazek(f.url, 'w400'))}" alt="" loading="lazy" decoding="async" draggable="false" />${f.hodnoceni ? `<span class="gv-srd">${'♥'.repeat(f.hodnoceni)}</span>` : ''}</button>`).join('');
     return `<section class="gv-rada">
         <div class="gv-rada-hlava"><h3>${esc(r.nazev)}</h3>${r.oblibena ? '<span class="gv-rada-oblibena" title="Tuhle kolekci často otevíráš – proto je výš">★ často otevíráš</span>' : ''}<span class="gv-rada-duvod">${esc(r.duvod)}</span>
             <button type="button" class="link gv-vse" data-gv-kolekce="${n}">Zobrazit vše (${r.pocet.toLocaleString('cs-CZ')}) ›</button></div>
@@ -190,12 +191,13 @@ async function naplnitHeroGalerie(misto, index = null) {
     const p = kandidati[i];
     const f = p.fotky[0];
     const adresa = obrazek(f.url, VELIKOST_PLAKATU);
+    const rozmazana = obrazek(f.url, VELIKOST_KARTY);
     const album = nazevAlba(p.album, p.typ);
     const vydani = f.vydani && f.vydani !== p.album ? nazevVydani(f.vydani) : '';
     const carky = kandidati.length > 1 ? kandidati.map((k, j) => `<button type="button" class="gvh-carka ${j === i ? 'on' : ''}" data-gvh-ukazat="${j}" aria-label="${esc(`Fotka ${j + 1}: ${k.jmenoModelky || ''}`)}" title="${esc(`${k.jmenoModelky || ''} · ${nazevAlba(k.album, k.typ)}`)}"><i style="animation-duration:${PRODLEVA_HERO}ms"></i></button>`).join('') : '';
     misto.innerHTML = `
-        <div class="ph-rozmazane" style="background-image:url('${esc(adresa).replace(/'/g, '%27')}')"></div>
-        <div class="ph-ram gvh-prolnuti"><img src="${esc(adresa)}" alt="" draggable="false" /></div>
+        <div class="ph-rozmazane" style="background-image:url('${esc(rozmazana).replace(/'/g, '%27')}')"></div>
+        <div class="ph-ram gvh-prolnuti"><img src="${esc(adresa)}" alt="" decoding="async" draggable="false" /></div>
         <div class="ph-prekryv"></div>
         <div class="ph-obsah gvh-prolnuti">
             <div class="ph-nadtitulek">${esc(zKolekci ? kolekce[i].nazev : proc(f))}</div>
@@ -272,7 +274,7 @@ function pripojit(polozky, od) {
     if (!mozaika) return;
     mozaika.insertAdjacentHTML('beforeend', polozky.map((p, i) => vykreslitDlazdici(p, od + i)).join(''));
     poVykresleni();
-    nacitatPostupne(document.getElementById('bestList'));
+    sledovatDalsi(document.getElementById('bestList'), mozaika);
     const dalsi = /** @type {HTMLElement | null} */ (document.querySelector('#bestList [data-gv-dalsi]'));
     if (dalsi) {
         const zbyva = celkem - stav.nejlepsiPolozky.length;
@@ -337,7 +339,7 @@ async function vykreslitPanelKolekci() {
     if (!panel.isConnected) return;
     const skupiny = Object.entries(SKUPINY_KOLEKCI).map(([sk, nazev]) => ({ nazev, k: vsechnyKolekce.map((x, i) => ({ ...x, i })).filter(x => x.skupina === sk) })).filter(x => x.k.length);
     const dlazdice = x => `<button type="button" class="gv-k-dlazdice ${x.klic === zvolenaKolekce.klic ? 'on' : ''}" data-gv-k="${x.i}" title="${esc(x.duvod)}">
-        <img src="${esc(obrazek(x.fotka?.url || '', 'w400'))}" alt="" loading="lazy" draggable="false" />
+        <img src="${esc(obrazek(x.fotka?.url || '', 'w400'))}" alt="" loading="lazy" decoding="async" draggable="false" />
         <span class="gv-k-text"><b>${esc(x.nazev)}</b><small>${x.pocet.toLocaleString('cs-CZ')}</small></span></button>`;
     const ulozene = vybery.map((x, i) => `<span class="pl-stitek"><button type="button" data-gv-vyber="${i}" title="${esc(popisVyberu(x))}">★ ${esc(x.nazev)}</button><button type="button" data-gv-smazat-vyber="${i}" aria-label="Smazat výběr" title="Smazat uložený výběr">×</button></span>`).join('');
     const ulozit = ukladaniVyberu

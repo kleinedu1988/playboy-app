@@ -82,7 +82,8 @@ const pozorovatele = new WeakMap();
  * @param {{ root?: Element|null, rootMargin?: string }} [moznosti]
  */
 export function nacitatPostupne(kontejner, { root = document.querySelector('main'), rootMargin = '1500px 0px' } = {}) {
-    pozorovatele.get(kontejner)?.disconnect();
+    pozorovatele.get(kontejner)?.pozorovatel.disconnect();
+    const sledovane = new WeakSet();
     const pozorovatel = new IntersectionObserver(zaznamy => zaznamy.forEach(z => {
         const img = /** @type {HTMLImageElement} */ (z.target);
         if (z.isIntersecting) {
@@ -94,20 +95,28 @@ export function nacitatPostupne(kontejner, { root = document.querySelector('main
             else pozorovatel.unobserve(img);
         }
     }), { root, rootMargin });
-    kontejner.querySelectorAll('img[data-src]').forEach(img => pozorovatel.observe(img));
-    pozorovatele.set(kontejner, pozorovatel);
+    kontejner.querySelectorAll('img[data-src]').forEach(img => {
+        sledovane.add(img);
+        pozorovatel.observe(img);
+    });
+    pozorovatele.set(kontejner, { pozorovatel, sledovane });
 }
 
 // Doplněné obrázky (dávka dokreslování) pod pozorovatelem kontejneru, bez nového projití celého kontejneru
-export function sledovatDalsi(kontejner, cast) {
-    const pozorovatel = pozorovatele.get(kontejner);
-    if (!pozorovatel) return nacitatPostupne(kontejner);
-    cast.querySelectorAll('img[data-src]:not([src])').forEach(img => pozorovatel.observe(img));
+export function sledovatDalsi(kontejner, cast = kontejner) {
+    const zaznam = pozorovatele.get(kontejner);
+    if (!zaznam) return nacitatPostupne(kontejner);
+    cast.querySelectorAll('img[data-src]:not([src])').forEach(img => {
+        if (!zaznam.sledovane.has(img)) {
+            zaznam.sledovane.add(img);
+            zaznam.pozorovatel.observe(img);
+        }
+    });
 }
 
 // Kontejner, jehož obsah se zahazuje, se přestane hlídat (pozorovatel by jinak držel odpojené obrázky)
 export function prestatNacitat(kontejner) {
-    pozorovatele.get(kontejner)?.disconnect();
+    pozorovatele.get(kontejner)?.pozorovatel.disconnect();
     pozorovatele.delete(kontejner);
 }
 

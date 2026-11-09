@@ -10,7 +10,7 @@ import { importovatData, otevritHeslo } from './sprava';
 import { otevritNapovedu } from './napoveda';
 import { detailView, gallery, searchInput } from './prvky';
 import { listaGalerie } from './listy';
-import { adresaTitulni, nacitatPostupne } from './obrazky';
+import { adresaTitulni, nacitatPostupne, sledovatDalsi } from './obrazky';
 import { nastavitViditelnostHledani, prepnoutRezim, stylVyrezu, ukazatPohled, zapamatovatMisto } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { nacistCovery, nacistStenu } from './stena';
@@ -197,7 +197,7 @@ function pridatDavku(vse = false) {
     const do_ = vse ? d.modelky.length : Math.min(d.modelky.length, d.od + KARET_V_DAVCE);
     gallery.insertAdjacentHTML('beforeend', d.modelky.slice(d.od, do_).map(d.html).join(''));
     d.od = do_;
-    nacitatPostupne(gallery);
+    sledovatDalsi(gallery);
     if (d.od >= d.modelky.length) dokresleni = null;
 }
 

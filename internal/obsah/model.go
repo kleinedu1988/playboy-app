@@ -78,6 +78,7 @@ type Model struct {
 	sezeni *ort.DynamicAdvancedSession
 	vstup  *ort.Tensor[float32]
 	vystup *ort.Tensor[float32]
+	rgba   *image.RGBA
 }
 
 // OtevritModel načte knihovnu a model ze složky obsah/ (soubory podle Soubory)
@@ -96,7 +97,7 @@ func OtevritModel(slozka string) (*Model, error) {
 	if err := opt.SetInterOpNumThreads(1); err != nil {
 		return nil, err
 	}
-	m := &Model{}
+	m := &Model{rgba: image.NewRGBA(image.Rect(0, 0, strana, strana))}
 	m.sezeni, err = ort.NewDynamicAdvancedSession(filepath.Join(slozka, Soubory[0].Nazev), []string{"pixel_values"}, []string{"image_embeds"}, opt)
 	if err != nil {
 		return nil, fmt.Errorf("model: %w", err)
@@ -126,7 +127,7 @@ func (m *Model) Zavrit() {
 	if m.sezeni != nil {
 		m.sezeni.Destroy()
 	}
-	m.sezeni, m.vstup, m.vystup = nil, nil, nil
+	m.sezeni, m.vstup, m.vystup, m.rgba = nil, nil, nil, nil
 }
 
 // Vektor obrázku (JPEG, PNG, GIF, WebP) délky 1
@@ -135,12 +136,17 @@ func (m *Model) Vektor(obrazek []byte) ([]float32, error) {
 	if err != nil {
 		return nil, fmt.Errorf("obrázek: %w", err)
 	}
+	return m.VektorObrazku(img)
+}
+
+// VektorObrazku spočítá vektor již dekódovaného obrázku délky 1
+func (m *Model) VektorObrazku(img image.Image) ([]float32, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.sezeni == nil {
 		return nil, errors.New("model je zavřený")
 	}
-	Predzpracovat(img, m.vstup.GetData())
+	predzpracovatDo(img, m.rgba, m.vstup.GetData())
 	if err := m.sezeni.Run([]ort.Value{m.vstup}, []ort.Value{m.vystup}); err != nil {
 		return nil, err
 	}
@@ -155,7 +161,10 @@ func (m *Model) Vektor(obrazek []byte) ([]float32, error) {
 // zmenšení je rychlejší o ~20 ms, ale vektory se od změřených liší) a zapíše normalizované kanály CHW do cil
 // (3 × 224 × 224 čísel)
 func Predzpracovat(img image.Image, cil []float32) {
-	m := image.NewRGBA(image.Rect(0, 0, strana, strana))
+	predzpracovatDo(img, image.NewRGBA(image.Rect(0, 0, strana, strana)), cil)
+}
+
+func predzpracovatDo(img image.Image, m *image.RGBA, cil []float32) {
 	draw.CatmullRom.Scale(m, m.Bounds(), img, img.Bounds(), draw.Src, nil)
 	const plocha = strana * strana
 	for p := range plocha {

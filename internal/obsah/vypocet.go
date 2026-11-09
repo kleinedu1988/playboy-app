@@ -7,9 +7,11 @@ package obsah
 // Model (~200 MB paměti) je otevřený jen během výpočtu; hledání podobných ho nepotřebuje.
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"image"
 	"net/http"
 	"sync"
 )
@@ -165,6 +167,7 @@ func (s *Sluzba) Zastavit() {
 		zrusit()
 		<-konec
 	}
+	s.zastavitHledaniSlovy()
 }
 
 // Vypnout zastaví běh a smaže model, knihovnu i vektory (uvolní ~110 MB a vektory)
@@ -324,7 +327,66 @@ func (s *Sluzba) PocetPartii() int {
 
 // Zpracovana: fotka má vektor i partie (návrhy tagů jsou úplné)
 func (s *Sluzba) Zpracovana(id string) bool {
-	return s.Vektor(id) != nil && s.Partie(id) != nil
+	if s == nil || s.slozka == "" {
+		return false
+	}
+	s.mu.Lock()
+	if (s.vektory == nil || s.partie == nil) && Pripraveno(s.slozka) {
+		s.nacistVektoryZamceno()
+	}
+	v, p := s.vektory, s.partie
+	s.mu.Unlock()
+	return v != nil && p != nil && v.Ma(id) && p.Ma(id)
+}
+
+// ProjitObsah zavolá fn pro každou fotku z ids, která má vektor nebo partie.
+// Řezy vektor a partie sdílejí vyrovnávací paměť mezi voláními (platí jen během volání fn).
+func (s *Sluzba) ProjitObsah(ids []string, fn func(id string, vektor, partie []float32)) {
+	if s == nil || s.slozka == "" || len(ids) == 0 {
+		return
+	}
+	s.mu.Lock()
+	if (s.vektory == nil || s.partie == nil) && Pripraveno(s.slozka) {
+		s.nacistVektoryZamceno()
+	}
+	v, p := s.vektory, s.partie
+	s.mu.Unlock()
+	if v == nil && p == nil {
+		return
+	}
+	if v != nil {
+		v.mu.RLock()
+		defer v.mu.RUnlock()
+	}
+	if p != nil {
+		p.mu.RLock()
+		defer p.mu.RUnlock()
+	}
+	var vBuf [Rozmer]float32
+	var pBuf [TridDetektoru]float32
+	for _, id := range ids {
+		var vek, par []float32
+		if v != nil {
+			if i, ok := v.index[id]; ok {
+				m := v.meritka[i]
+				for k, q := range v.data[i*Rozmer : (i+1)*Rozmer] {
+					vBuf[k] = float32(q) * m
+				}
+				vek = vBuf[:]
+			}
+		}
+		if p != nil {
+			if b, ok := p.m[id]; ok {
+				for k, q := range b {
+					pBuf[k] = float32(q) / 255
+				}
+				par = pBuf[:]
+			}
+		}
+		if vek != nil || par != nil {
+			fn(id, vek, par)
+		}
+	}
 }
 
 func (s *Sluzba) nastavit(fn func(st *Stav)) {
@@ -455,24 +517,27 @@ func (s *Sluzba) spocitat(ctx context.Context, m *Model, d *Detektor, v *Vektory
 		if n.data == nil {
 			continue
 		}
-		var err error
-		if !v.Ma(n.id) {
+		potrebaV := !v.Ma(n.id)
+		potrebaPa := !pa.Ma(n.id)
+		potrebaVz := !vz.Ma(n.id)
+		if !potrebaV && !potrebaPa && !potrebaVz {
+			continue
+		}
+		img, _, err := image.Decode(bytes.NewReader(n.data))
+		if err == nil && potrebaV {
 			var vektor []float32
-			if vektor, err = m.Vektor(n.data); err == nil {
+			if vektor, err = m.VektorObrazku(img); err == nil {
 				v.Pridat(n.id, vektor)
 			}
 		}
-		if err == nil && !pa.Ma(n.id) {
+		if err == nil && potrebaPa {
 			var jistoty []float32
-			if jistoty, err = d.Partie(n.data); err == nil {
+			if jistoty, err = d.PartieObrazku(img); err == nil {
 				pa.Pridat(n.id, jistoty)
 			}
 		}
-		if err == nil && !vz.Ma(n.id) {
-			var x VzhledFotky
-			if x, err = SpocitatVzhled(n.data); err == nil {
-				vz.Pridat(n.id, x)
-			}
+		if err == nil && potrebaVz {
+			vz.Pridat(n.id, vzhledObrazku(img))
 		}
 		if err != nil {
 			// Jednotlivý nečitelný obrázek výpočet nezastaví; když selhává skoro všechno, je chyba v modelu

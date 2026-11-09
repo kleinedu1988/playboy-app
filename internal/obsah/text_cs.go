@@ -135,61 +135,84 @@ type tenzor struct {
 	data []float32
 }
 
-func cistSafetensors(cesta string) (map[string]tenzor, error) {
+type tenzorInfo struct {
+	Dtype   string   `json:"dtype"`
+	Shape   []int    `json:"shape"`
+	Offsets [2]int64 `json:"data_offsets"`
+}
+
+type cteckaSafetensors struct {
+	f       *os.File
+	zacatek int64
+	tenzory map[string]tenzorInfo
+}
+
+func otevritSafetensors(cesta string) (*cteckaSafetensors, error) {
 	f, err := os.Open(cesta)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
 	var n uint64
 	if err := binary.Read(f, binary.LittleEndian, &n); err != nil {
+		f.Close()
 		return nil, err
 	}
 	if n > 10<<20 {
+		f.Close()
 		return nil, errors.New("safetensors: nečekaná hlavička")
 	}
 	hlavicka := make([]byte, n)
 	if _, err := io.ReadFull(f, hlavicka); err != nil {
+		f.Close()
 		return nil, err
 	}
 	var popis map[string]json.RawMessage
 	if err := json.Unmarshal(hlavicka, &popis); err != nil {
+		f.Close()
 		return nil, err
 	}
-	type info struct {
-		Dtype   string   `json:"dtype"`
-		Shape   []int    `json:"shape"`
-		Offsets [2]int64 `json:"data_offsets"`
-	}
-	v := map[string]tenzor{}
+	tenzory := make(map[string]tenzorInfo, len(popis))
 	for jmeno, raw := range popis {
 		if jmeno == "__metadata__" {
 			continue
 		}
-		var i info
+		var i tenzorInfo
 		if err := json.Unmarshal(raw, &i); err != nil {
+			f.Close()
 			return nil, err
 		}
-		if i.Dtype != "F32" {
-			return nil, fmt.Errorf("safetensors: %s má typ %s", jmeno, i.Dtype)
-		}
-		pocet := 1
-		for _, d := range i.Shape {
-			pocet *= d
-		}
-		if int64(pocet)*4 != i.Offsets[1]-i.Offsets[0] {
-			return nil, fmt.Errorf("safetensors: %s nesedí velikost", jmeno)
-		}
-		data := make([]float32, pocet)
-		if _, err := f.Seek(8+int64(n)+i.Offsets[0], io.SeekStart); err != nil {
-			return nil, err
-		}
-		if err := binary.Read(bufio.NewReaderSize(f, 1<<20), binary.LittleEndian, data); err != nil {
-			return nil, fmt.Errorf("safetensors: %s: %w", jmeno, err)
-		}
-		v[jmeno] = tenzor{i.Shape, data}
+		tenzory[jmeno] = i
 	}
-	return v, nil
+	return &cteckaSafetensors{f: f, zacatek: 8 + int64(n), tenzory: tenzory}, nil
+}
+
+func (c *cteckaSafetensors) zavrit() error {
+	return c.f.Close()
+}
+
+func (c *cteckaSafetensors) cist(jmeno string) (tenzor, bool, error) {
+	i, ok := c.tenzory[jmeno]
+	if !ok {
+		return tenzor{}, false, nil
+	}
+	if i.Dtype != "F32" {
+		return tenzor{}, true, fmt.Errorf("safetensors: %s má typ %s", jmeno, i.Dtype)
+	}
+	pocet := 1
+	for _, d := range i.Shape {
+		pocet *= d
+	}
+	if int64(pocet)*4 != i.Offsets[1]-i.Offsets[0] {
+		return tenzor{}, true, fmt.Errorf("safetensors: %s nesedí velikost", jmeno)
+	}
+	data := make([]float32, pocet)
+	if _, err := c.f.Seek(c.zacatek+i.Offsets[0], io.SeekStart); err != nil {
+		return tenzor{}, true, err
+	}
+	if err := binary.Read(bufio.NewReaderSize(c.f, 1<<20), binary.LittleEndian, data); err != nil {
+		return tenzor{}, true, fmt.Errorf("safetensors: %s: %w", jmeno, err)
+	}
+	return tenzor{i.Shape, data}, true, nil
 }
 
 // --- převedený model: matice int8 po řádcích (měřítko na řádek), vektory float32 ---
@@ -239,15 +262,22 @@ func nazvyTextu() (matice, vektory []string) {
 }
 
 func prevestText(model, dense, cil string) error {
-	t, err := cistSafetensors(model)
+	t, err := otevritSafetensors(model)
 	if err != nil {
 		return err
 	}
-	d, err := cistSafetensors(dense)
+	defer t.zavrit()
+	d, err := otevritSafetensors(dense)
 	if err != nil {
 		return err
 	}
-	t["linear.weight"] = d["linear.weight"]
+	defer d.zavrit()
+	nacti := func(jmeno string) (tenzor, bool, error) {
+		if jmeno == "linear.weight" {
+			return d.cist(jmeno)
+		}
+		return t.cist(jmeno)
+	}
 	matice, vektory := nazvyTextu()
 	docasny := cil + ".tmp"
 	f, err := os.OpenFile(docasny, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o600)
@@ -258,7 +288,12 @@ func prevestText(model, dense, cil string) error {
 	binary.Write(w, binary.LittleEndian, []byte(znackaTextu))
 	binary.Write(w, binary.LittleEndian, uint16(verzeTextu))
 	for _, n := range matice {
-		x, ok := t[n]
+		x, ok, err := nacti(n)
+		if err != nil {
+			f.Close()
+			os.Remove(docasny)
+			return err
+		}
 		if !ok || len(x.tvar) != 2 {
 			f.Close()
 			os.Remove(docasny)
@@ -270,7 +305,12 @@ func prevestText(model, dense, cil string) error {
 		binary.Write(w, binary.LittleEndian, m.data)
 	}
 	for _, n := range vektory {
-		x, ok := t[n]
+		x, ok, err := nacti(n)
+		if err != nil {
+			f.Close()
+			os.Remove(docasny)
+			return err
+		}
 		if !ok || len(x.tvar) != 1 {
 			f.Close()
 			os.Remove(docasny)
@@ -465,8 +505,34 @@ func (t *TextovyModel) Tokeny(text string) []int32 {
 
 // y[n×radku] = x[n×sloupcu] · Wᵀ + b, souběžně po řádcích matice
 func (m maticeInt8) nasobit(x []float32, n int, b []float32) []float32 {
-	y := make([]float32, n*m.radku)
-	vlaken := min(runtime.NumCPU(), 8)
+	return m.nasobitDo(nil, x, n, b)
+}
+
+func (m maticeInt8) nasobitDo(y, x []float32, n int, b []float32) []float32 {
+	if cap(y) < n*m.radku {
+		y = make([]float32, n*m.radku)
+	} else {
+		y = y[:n*m.radku]
+	}
+	vlaken := min(runtime.NumCPU(), 8, max(1, n*m.radku/1024))
+	if vlaken <= 1 {
+		for j := range m.radku {
+			w := m.data[j*m.sloupcu : (j+1)*m.sloupcu]
+			for i := range n {
+				xi := x[i*m.sloupcu : (i+1)*m.sloupcu]
+				var s float32
+				for k, q := range w {
+					s += xi[k] * float32(q)
+				}
+				s *= m.meritka[j]
+				if b != nil {
+					s += b[j]
+				}
+				y[i*m.radku+j] = s
+			}
+		}
+		return y
+	}
 	var wg sync.WaitGroup
 	for c := range vlaken {
 		wg.Go(func() {
@@ -491,12 +557,11 @@ func (m maticeInt8) nasobit(x []float32, n int, b []float32) []float32 {
 	return y
 }
 
-func (m maticeInt8) radek(i int) []float32 {
-	v := make([]float32, m.sloupcu)
+func (m maticeInt8) pridatRadek(i int, cil []float32) {
+	mer := m.meritka[i]
 	for k, q := range m.data[i*m.sloupcu : (i+1)*m.sloupcu] {
-		v[k] = float32(q) * m.meritka[i]
+		cil[k] += float32(q) * mer
 	}
-	return v
 }
 
 func normalizovatVrstvou(x []float32, n int, g, b []float32) {
@@ -535,21 +600,24 @@ func (t *TextovyModel) Vektor(text string) []float32 {
 	slova, pozice := t.matice["embeddings.word_embeddings.weight"], t.matice["embeddings.position_embeddings.weight"]
 	x := make([]float32, n*dimTextu)
 	for i, id := range tokeny {
-		s, p := slova.radek(int(id)), pozice.radek(i)
-		for k := range dimTextu {
-			x[i*dimTextu+k] = s[k] + p[k]
-		}
+		radek := x[i*dimTextu : (i+1)*dimTextu]
+		slova.pridatRadek(int(id), radek)
+		pozice.pridatRadek(i, radek)
 	}
 	normalizovatVrstvou(x, n, t.vektory["embeddings.LayerNorm.gamma"], t.vektory["embeddings.LayerNorm.beta"])
 	const dimHlavy = dimTextu / hlavTextu
+	var q, k, v, pozornost, skryta, vystup []float32
+	kontext := make([]float32, n*dimTextu)
+	skore := make([]float64, n)
 	for l := range vrstevTextu {
 		p := fmt.Sprintf("transformer.layer.%d.", l)
-		lin := func(jmeno string, vstup []float32) []float32 {
-			return t.matice[p+jmeno+".weight"].nasobit(vstup, n, t.vektory[p+jmeno+".bias"])
+		lin := func(cil []float32, jmeno string, vstup []float32) []float32 {
+			return t.matice[p+jmeno+".weight"].nasobitDo(cil, vstup, n, t.vektory[p+jmeno+".bias"])
 		}
-		q, k, v := lin("attention.q_lin", x), lin("attention.k_lin", x), lin("attention.v_lin", x)
-		kontext := make([]float32, n*dimTextu)
-		skore := make([]float64, n)
+		q = lin(q, "attention.q_lin", x)
+		k = lin(k, "attention.k_lin", x)
+		v = lin(v, "attention.v_lin", x)
+		clear(kontext)
 		for h := range hlavTextu {
 			o := h * dimHlavy
 			for i := range n {
@@ -575,16 +643,16 @@ func (t *TextovyModel) Vektor(text string) []float32 {
 				}
 			}
 		}
-		pozornost := lin("attention.out_lin", kontext)
+		pozornost = lin(pozornost, "attention.out_lin", kontext)
 		for i := range x {
 			x[i] += pozornost[i]
 		}
 		normalizovatVrstvou(x, n, t.vektory[p+"sa_layer_norm.weight"], t.vektory[p+"sa_layer_norm.bias"])
-		skryta := lin("ffn.lin1", x)
+		skryta = lin(skryta, "ffn.lin1", x)
 		for i, a := range skryta {
 			skryta[i] = float32(0.5 * float64(a) * (1 + math.Erf(float64(a)/math.Sqrt2)))
 		}
-		vystup := t.matice[p+"ffn.lin2.weight"].nasobit(skryta, n, t.vektory[p+"ffn.lin2.bias"])
+		vystup = t.matice[p+"ffn.lin2.weight"].nasobitDo(vystup, skryta, n, t.vektory[p+"ffn.lin2.bias"])
 		for i := range x {
 			x[i] += vystup[i]
 		}

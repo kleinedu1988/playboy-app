@@ -13,7 +13,15 @@ export const MIN_V_ROCE = 5;        // modelek v roce, aby se rok počítal do t
 export const PRAH_PODILU = 10;      // procentních bodů
 
 // Pevný počet desetinných míst („0,70“, „18,0“), aby hodnoty v jedné větě a bublině měly stejný tvar
-const cislo = (n, desetinna = 0) => Number(n.toFixed(desetinna)).toLocaleString('cs-CZ', { minimumFractionDigits: desetinna, maximumFractionDigits: desetinna }).replace('-', '−');
+const formatyCisel = new Map();
+const cislo = (n, desetinna = 0) => {
+    let fmt = formatyCisel.get(desetinna);
+    if (!fmt) {
+        fmt = new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: desetinna, maximumFractionDigits: desetinna });
+        formatyCisel.set(desetinna, fmt);
+    }
+    return fmt.format(Number(n.toFixed(desetinna))).replace('-', '−');
+};
 
 // Předložka „z“ nebo „ze“ před číslem podle toho, jak se vysloví („ze 168“, „ze 7“, „z 24“)
 export function predlozkaZ(n) {
@@ -70,34 +78,52 @@ export function trendRady(def, sloupce, { vyber = false, kontext = '' } = {}) {
     if (podil) {
         test = cochranArmitage(sDaty.map(s => ({ x: s.rok, n: s.polozky.length, ano: s.polozky.filter(p => p.hodnota).length })));
     } else {
-        const x = [], y = [];
-        sDaty.forEach(s => s.polozky.forEach(p => { x.push(s.rok); y.push(p.hodnota); }));
+        const x = new Float64Array(n), y = new Float64Array(n);
+        let pos = 0;
+        for (let i = 0; i < sDaty.length; i++) {
+            const rok = sDaty[i].rok, pol = sDaty[i].polozky;
+            for (let j = 0; j < pol.length; j++) {
+                x[pos] = rok;
+                y[pos++] = pol[j].hodnota;
+            }
+        }
         test = kendallTauB(x, y);
     }
     if (!test || !(test.p <= ALFA)) return null;
 
     // Úrovně v prvním a posledním desetiletí s dost modelkami
     const dekady = new Map();
-    sDaty.forEach(s => {
-        const d = Math.floor(s.rok / 10) * 10;
-        if (!dekady.has(d)) dekady.set(d, { roky: [], polozky: [] });
-        dekady.get(d).roky.push(s.rok);
-        dekady.get(d).polozky.push(...s.polozky);
-    });
-    const dost = [...dekady.values()].filter(d => d.polozky.length >= MIN_V_OBDOBI);
+    for (let i = 0; i < sDaty.length; i++) {
+        const s = sDaty[i], d = Math.floor(s.rok / 10) * 10;
+        let zaznam = dekady.get(d);
+        if (!zaznam) {
+            zaznam = { roky: [], sloupce: [], n: 0 };
+            dekady.set(d, zaznam);
+        }
+        zaznam.roky.push(s.rok);
+        zaznam.sloupce.push(s.polozky);
+        zaznam.n += s.polozky.length;
+    }
+    const dost = [...dekady.values()].filter(d => d.n >= MIN_V_OBDOBI);
     if (dost.length < 2) return null;
     const uroven = d => {
-        const k = d.polozky.length;
+        const k = d.n;
         if (podil) {
-            const ano = d.polozky.filter(p => p.hodnota).length, ci = wilson(ano, k);
-            return { ...obdobi(d.roky), n: k, hodnota: ano / k * 100, dolni: ci.dolni * 100, horni: ci.horni * 100 };
+            let ano = 0;
+            for (const pol of d.sloupce) for (let i = 0; i < pol.length; i++) if (pol[i].hodnota) ano++;
+            const ci = wilson(ano, k);
+            return { zaklad: { ...obdobi(d.roky), n: k, hodnota: ano / k * 100, dolni: ci.dolni * 100, horni: ci.horni * 100 }, ano };
         }
-        const h = Float64Array.from(d.polozky, p => /** @type {number} */ (p.hodnota)).sort();
+        const h = new Float64Array(k);
+        let pos = 0;
+        for (const pol of d.sloupce) for (let i = 0; i < pol.length; i++) h[pos++] = pol[i].hodnota;
+        h.sort();
         const q = f => { const poz = f * (k - 1), i = Math.floor(poz); return h[i] + ((h[Math.ceil(poz)] ?? h[i]) - h[i]) * (poz - i); };
-        return { ...obdobi(d.roky), n: k, hodnota: q(0.5), dolni: q(0.25), horni: q(0.75) };
+        return { zaklad: { ...obdobi(d.roky), n: k, hodnota: q(0.5), dolni: q(0.25), horni: q(0.75) }, serazene: h };
     };
-    const od = { ...uroven(dost[0]), odRoku: dost[0].roky[0], doRoku: dost[0].roky.at(-1) };
-    const doU = { ...uroven(dost.at(-1)), odRoku: dost.at(-1).roky[0], doRoku: dost.at(-1).roky.at(-1) };
+    const uOd = uroven(dost[0]), uDo = uroven(dost.at(-1));
+    const od = { ...uOd.zaklad, odRoku: dost[0].roky[0], doRoku: dost[0].roky.at(-1) };
+    const doU = { ...uDo.zaklad, odRoku: dost.at(-1).roky[0], doRoku: dost.at(-1).roky.at(-1) };
     const smer = Math.sign(test.z);
     const zmena = doU.hodnota - od.hodnota;
     const prah = podil ? PRAH_PODILU : def.prah ?? 0;
@@ -117,14 +143,17 @@ export function trendRady(def, sloupce, { vyber = false, kontext = '' } = {}) {
     const roky = sDaty.filter(s => s.polozky.length >= MIN_V_ROCE);
     const sklon = roky.length >= 3 ? theilSen(roky.map(s => s.rok), roky.map(s => podil
         ? s.polozky.filter(p => p.hodnota).length / s.polozky.length * 100
-        : median(s.polozky.map(p => p.hodnota)))) : null;
+        : median(Float64Array.from(s.polozky, p => p.hodnota)))) : null;
     const za10 = sklon === null ? null : sklon * 10;
     const tempo = za10 === null || Number(za10.toFixed(podil ? 0 : Math.max(1, des))) === 0 ? ''
         : podil ? ` Tempo asi ${za10 > 0 ? '+' : '−'}${cislo(Math.abs(za10))} ${procentniBody(Math.round(za10))} za 10 let.`
         : ` Tempo asi ${za10 > 0 ? '+' : '−'}${cislo(Math.abs(za10), Math.max(1, des))}${jednotka} za 10 let.`;
     const nazevTestu = podil ? 'Cochranův–Armitageův test' : `Kendallovo τ = ${cislo(test.tau, 2)}`;
     const podrobnosti = `${popisUrovne(od)}. ${popisUrovne(doU)}.${tempo} ${nazevTestu} přes ${modelek(test.n)}, ${textP(test.p)}.${kontext ? ` ${kontext}` : ''}`;
-    const skore = skorePostrehu(def.druh, velikostRozdilu(def.druh, dost[0].polozky, dost.at(-1).polozky), test.p);
+    const velikost = podil
+        ? 2 * Math.asin(Math.sqrt(uDo.ano / doU.n)) - 2 * Math.asin(Math.sqrt(uOd.ano / od.n))
+        : (() => { const v = mannWhitney(uDo.serazene, uOd.serazene, true); return v ? 2 * v.u / (od.n * doU.n) - 1 : 0; })();
+    const skore = skorePostrehu(def.druh, velikost, test.p);
     return { smer, veta, podrobnosti, test, od, do: doU, skore,
         hero: { pred: od, po: doU, text: `${podil ? hodnota(od.hodnota) : cislo(od.hodnota, des)} → ${hodnota(doU.hodnota)}` } };
 }
@@ -166,33 +195,56 @@ export function rozdelitRadu(def, rada, c = POKUTA[def.druh]) {
     } else {
         // Hodnoty v přihrádkách po kroku zobrazení (1 cm, 0,1 BMI, 0,01 poměru); kumulativní počty po letech
         const krok = 10 ** -(def.desetinna ?? 0);
-        const prihradky = [...new Set(rada.flatMap(s => s.polozky.map(p => Math.round(p.hodnota / krok))))].sort((x, y) => x - y);
-        const K = prihradky.length, index = new Map(prihradky.map((h, i) => [h, i]));
+        const vse = new Float64Array(N);
+        let pos = 0;
+        for (let t = 0; t < T; t++) {
+            const pol = rada[t].polozky;
+            for (let i = 0; i < pol.length; i++) vse[pos++] = Math.round(pol[i].hodnota / krok);
+        }
+        const serazeneVse = Float64Array.from(vse).sort();
+        let K = 0;
+        for (let i = 0; i < N; i++) {
+            if (i === 0 || serazeneVse[i] !== serazeneVse[i - 1]) serazeneVse[K++] = serazeneVse[i];
+        }
+        const prihradky = serazeneVse.subarray(0, K);
         // Dvojrozměrné kumulativní součty (roky × přihrádky): CP = počet a CS = součet hodnot v letech před t
         // s přihrádkou ≤ k. Medián úseku najde binární vyhledávání, L1 odchylka od něj vyjde v konstantním čase.
         const CP = new Float64Array((T + 1) * K), CS = new Float64Array((T + 1) * K), rok = new Float64Array(K);
-        rada.forEach((s, t) => {
+        pos = 0;
+        for (let t = 0; t < T; t++) {
             rok.fill(0);
-            s.polozky.forEach(p => { rok[index.get(Math.round(p.hodnota / krok))]++; });
+            const delka = rada[t].polozky.length;
+            for (let i = 0; i < delka; i++) {
+                const val = vse[pos++];
+                let lo = 0, hi = K - 1;
+                while (lo < hi) {
+                    const mid = (lo + hi) >> 1;
+                    if (prihradky[mid] < val) lo = mid + 1; else hi = mid;
+                }
+                rok[lo]++;
+            }
             let c = 0, v = 0;
+            const radekPred = t * K, radek = (t + 1) * K;
             for (let k = 0; k < K; k++) {
                 c += rok[k];
                 v += rok[k] * prihradky[k];
-                CP[(t + 1) * K + k] = CP[t * K + k] + c;
-                CS[(t + 1) * K + k] = CS[t * K + k] + v;
+                CP[radek + k] = CP[radekPred + k] + c;
+                CS[radek + k] = CS[radekPred + k] + v;
             }
-        });
+        }
         const odchylka = (a, b) => {
-            const pocet = k => CP[(b + 1) * K + k] - CP[a * K + k], soucet = k => CS[(b + 1) * K + k] - CS[a * K + k];
-            const n = pocet(K - 1);
+            const rA = a * K, rB = (b + 1) * K;
+            const n = CP[rB + K - 1] - CP[rA + K - 1];
+            const pul = n / 2;
             // Nejmenší přihrádka m s kumulativním počtem ≥ n/2 (dolní medián)
             let lo = 0, hi = K - 1;
             while (lo < hi) {
                 const mid = (lo + hi) >> 1;
-                if (pocet(mid) >= n / 2) hi = mid; else lo = mid + 1;
+                if (CP[rB + mid] - CP[rA + mid] >= pul) hi = mid; else lo = mid + 1;
             }
-            const vm = prihradky[lo], cm = pocet(lo), sm = soucet(lo);
-            return vm * cm - sm + (soucet(K - 1) - sm) - vm * (n - cm);
+            const vm = prihradky[lo], cm = CP[rB + lo] - CP[rA + lo], sm = CS[rB + lo] - CS[rA + lo];
+            const sCelkem = CS[rB + K - 1] - CS[rA + K - 1];
+            return vm * cm - sm + (sCelkem - sm) - vm * (n - cm);
         };
         const meritko = odchylka(0, T - 1) / N;
         if (!meritko) return [];
@@ -209,16 +261,20 @@ export function rozdelitRadu(def, rada, c = POKUTA[def.druh]) {
     const beta = c * Math.log(N);
     // nejlepsi[k][j] = nejmenší náklad prvních j+1 let v k+1 úsecích; odkud[k][j] = začátek posledního úseku
     const nejlepsi = [], odkud = [];
-    nejlepsi[0] = Array.from({ length: T }, (_, j) => platny(0, j) ? naklad(0, j) : Infinity);
-    odkud[0] = new Array(T).fill(0);
+    nejlepsi[0] = Float64Array.from({ length: T }, (_, j) => platny(0, j) ? naklad(0, j) : Infinity);
+    odkud[0] = new Int32Array(T);
     for (let k = 1; k <= MAX_ZLOMU; k++) {
-        nejlepsi[k] = new Array(T).fill(Infinity);
-        odkud[k] = new Array(T).fill(-1);
-        for (let j = 0; j < T; j++) {
-            for (let i = 1; i <= j; i++) {
-                if (nejlepsi[k - 1][i - 1] === Infinity || !platny(i, j)) continue;
-                const v = nejlepsi[k - 1][i - 1] + naklad(i, j);
-                if (v < nejlepsi[k][j]) { nejlepsi[k][j] = v; odkud[k][j] = i; }
+        const nejK = new Float64Array(T).fill(Infinity), nejPred = nejlepsi[k - 1];
+        const odkK = new Int32Array(T).fill(-1);
+        nejlepsi[k] = nejK;
+        odkud[k] = odkK;
+        for (let j = (k + 1) * MIN_USEK_LET - 1; j < T; j++) {
+            const maxI = j - MIN_USEK_LET + 1;
+            for (let i = k * MIN_USEK_LET; i <= maxI; i++) {
+                const pred = nejPred[i - 1];
+                if (pred === Infinity || pn[j + 1] - pn[i] < MIN_USEK_MODELEK) continue;
+                const v = pred + naklad(i, j);
+                if (v < nejK[j]) { nejK[j] = v; odkK[j] = i; }
             }
         }
     }
@@ -240,11 +296,11 @@ function urovenUseku(def, rada, a, b) {
     const k = polozky.length, zaklad = { ...obdobi(roky), a, b, odRoku: rada[a].rok, doRoku: rada[b].rok, n: k, polozky };
     if (def.druh === 'podil') {
         const ano = polozky.filter(p => p.hodnota).length, ci = wilson(ano, k);
-        return { ...zaklad, ano, hodnota: ano / k * 100, dolni: ci.dolni * 100, horni: ci.horni * 100 };
+        return { ...zaklad, ano, serazene: new Float64Array(0), hodnota: ano / k * 100, dolni: ci.dolni * 100, horni: ci.horni * 100 };
     }
     const h = Float64Array.from(polozky, p => p.hodnota).sort();
     const q = f => { const poz = f * (k - 1), i = Math.floor(poz); return h[i] + ((h[Math.ceil(poz)] ?? h[i]) - h[i]) * (poz - i); };
-    return { ...zaklad, ano: 0, hodnota: q(0.5), dolni: q(0.25), horni: q(0.75) };
+    return { ...zaklad, ano: 0, serazene: h, hodnota: q(0.5), dolni: q(0.25), horni: q(0.75) };
 }
 
 // Zlomy řady ověřené testem a prahem: { useky, zlomy: [{ rok, p, q, zmena }] }; bez zlomu zlomy prázdné
@@ -254,19 +310,29 @@ export function zlomyRady(def, sloupce, c = POKUTA[def.druh]) {
     let zacatky = rozdelitRadu(def, rada, c);
     const prah = def.druh === 'podil' ? PRAH_PODILU : def.prah ?? 0;
     for (;;) {
+        if (!zacatky.length) return { useky: [], zlomy: [], rada };
         const meze = [0, ...zacatky, rada.length];
         const useky = meze.slice(0, -1).map((a, i) => urovenUseku(def, rada, a, meze[i + 1] - 1));
-        const p = useky.slice(1).map((u, i) => {
+        const testy = useky.slice(1).map((u, i) => {
             const v = useky[i];
-            return def.druh === 'podil'
-                ? fisher(v.ano, v.n - v.ano, u.ano, u.n - u.ano)
-                : mannWhitney(v.polozky.map(x => x.hodnota), u.polozky.map(x => x.hodnota))?.p ?? 1;
+            if (def.druh === 'podil') {
+                return {
+                    p: fisher(v.ano, v.n - v.ano, u.ano, u.n - u.ano),
+                    velikost: 2 * Math.asin(Math.sqrt(u.ano / u.n)) - 2 * Math.asin(Math.sqrt(v.ano / v.n)),
+                };
+            }
+            const mw = mannWhitney(u.serazene, v.serazene, true);
+            return {
+                p: mw?.p ?? 1,
+                velikost: mw ? 2 * mw.u / (v.n * u.n) - 1 : 0,
+            };
         });
+        const p = testy.map(t => t.p);
         const q = benjaminiHochberg(p);
         const zlomy = zacatky.map((z, i) => ({ rok: rada[z].rok, p: p[i], q: q[i], zmena: useky[i + 1].hodnota - useky[i].hodnota,
-            velikost: velikostRozdilu(def.druh, useky[i].polozky, useky[i + 1].polozky) }));
+            velikost: testy[i].velikost }));
         const spatne = zlomy.map((z, i) => ({ i, z })).filter(({ z }) => !(z.q <= ALFA) || Math.abs(z.zmena) < prah);
-        if (!spatne.length) return { useky: useky.map(({ polozky, ...u }) => u), zlomy, rada };
+        if (!spatne.length) return { useky: useky.map(({ polozky, serazene, ...u }) => u), zlomy, rada };
         // Zahodí se nejslabší neprůkazný zlom (největší q, při shodě nejmenší změna) a ověří se znovu
         const nejhorsi = spatne.sort((x, y) => y.z.q - x.z.q || Math.abs(x.z.zmena) - Math.abs(y.z.zmena))[0];
         zacatky = zacatky.filter((_, i) => i !== nejhorsi.i);

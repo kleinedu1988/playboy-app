@@ -111,7 +111,7 @@ func vybratTipy(modelky []Modelka, model *modelOblibenosti) []tipVkusu {
 
 // Model vkusu do modelu oblíbenosti: cíl ze srdíček upřesněných porovnáním (Bradley–Terry s předpokladem jen ze
 // srdíček), údaje modelek včetně skóre fotek a odhady platného modelu
-func (model *modelOblibenosti) naucitModelVkusu(modelky []Modelka, porovnani []porovnaniZaznam, stredSrdicka, sigmaSrdicka map[int]float64, nyni time.Time) {
+func (model *modelOblibenosti) naucitModelVkusu(modelky []Modelka, porovnani []porovnaniZaznam, stredSrdicka, sigmaSrdicka map[int]float64, nyni time.Time) *vysledekBT {
 	// Model vkusu se učí na srdíčkách upřesněných porovnáním bez skóre fotek: fotky jsou mezi jeho údaji, v cíli by
 	// se počítaly podruhé.
 	cil := map[int]float64{}
@@ -164,6 +164,7 @@ func (model *modelOblibenosti) naucitModelVkusu(modelky []Modelka, porovnani []p
 	if v := model.vkus; v != nil && v.platny {
 		maps.Copy(model.odhad, v.odhady)
 	}
+	return btSrdicka
 }
 
 // Obsah fotek (obrazové modely, obsah_fotek.go) do údajů modelek: vlastní skupina údajů, i u modelky bez

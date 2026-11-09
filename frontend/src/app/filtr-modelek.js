@@ -272,12 +272,15 @@ function naKlik(e) {
     }
 }
 
+let casovacHledani = 0;
+
 function naVstup(e) {
     const cil = /** @type {HTMLInputElement} */ (e.target);
     if (!cil.matches('[data-fe-hledat]')) return;
     stavPanelu.hledat = cil.value;
     stavPanelu.hledatFokus = true;
-    vykreslitPanel();
+    clearTimeout(casovacHledani);
+    casovacHledani = window.setTimeout(vykreslitPanel, 120);
 }
 
 function naZmenu(e) {

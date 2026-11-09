@@ -7,7 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 )
+
+// Po jaké době nečinnosti se textový model (~75 MB) uvolní z paměti
+const dobaUdrzeniTextu = 5 * time.Minute
 
 // Stav hledání slovy
 type StavTextu struct {
@@ -19,9 +23,12 @@ type StavTextu struct {
 }
 
 type textSluzby struct {
-	mu    sync.Mutex
-	model *TextovyModel
-	stav  StavTextu
+	mu      sync.Mutex
+	model   *TextovyModel
+	stav    StavTextu
+	zrusit  context.CancelFunc
+	konec   chan struct{}
+	casovac *time.Timer
 }
 
 var texty sync.Map // složka → *textSluzby (Sluzba nemá pole, ať se nemění její inicializace)
@@ -58,22 +65,50 @@ func (s *Sluzba) ZapnoutHledaniSlovy() bool {
 	if t.stav.Stahuje || TextPripraven(s.slozka) {
 		return true
 	}
+	ctx, zrusit := context.WithCancel(context.Background())
+	konec := make(chan struct{})
+	t.zrusit = zrusit
+	t.konec = konec
 	t.stav = StavTextu{Stahuje: true, Celkem: VelikostTextu()}
 	go func() {
-		err := PripravitText(context.Background(), s.klient, s.slozka, func(p Prubeh) {
+		defer close(konec)
+		err := PripravitText(ctx, s.klient, s.slozka, func(p Prubeh) {
 			t.mu.Lock()
 			t.stav.Stazeno, t.stav.Celkem = p.Hotovo, p.Celkem
 			t.mu.Unlock()
 		})
 		t.mu.Lock()
 		defer t.mu.Unlock()
+		t.zrusit = nil
 		t.stav.Stahuje = false
-		if err != nil {
+		if err != nil && !errors.Is(err, context.Canceled) {
 			t.stav.Chyba = err.Error()
 			fmt.Printf("Hledání slovy: %v\n", err)
 		}
 	}()
 	return true
+}
+
+func (s *Sluzba) zastavitHledaniSlovy() {
+	if s == nil || s.slozka == "" {
+		return
+	}
+	v, ok := texty.Load(s.slozka)
+	if !ok {
+		return
+	}
+	t := v.(*textSluzby)
+	t.mu.Lock()
+	zrusit, konec := t.zrusit, t.konec
+	if t.casovac != nil {
+		t.casovac.Stop()
+		t.casovac = nil
+	}
+	t.mu.Unlock()
+	if zrusit != nil {
+		zrusit()
+		<-konec
+	}
 }
 
 // VypnoutHledaniSlovy smaže textový model
@@ -86,6 +121,10 @@ func (s *Sluzba) VypnoutHledaniSlovy() error {
 	defer t.mu.Unlock()
 	if t.stav.Stahuje {
 		return errors.New("textový model se právě stahuje")
+	}
+	if t.casovac != nil {
+		t.casovac.Stop()
+		t.casovac = nil
 	}
 	t.model, t.stav = nil, StavTextu{}
 	return SmazatText(s.slozka)
@@ -106,6 +145,16 @@ func (s *Sluzba) VektorTextu(dotaz string) []float32 {
 			return nil
 		}
 		t.model = m
+	}
+	if t.casovac != nil {
+		t.casovac.Reset(dobaUdrzeniTextu)
+	} else {
+		t.casovac = time.AfterFunc(dobaUdrzeniTextu, func() {
+			t.mu.Lock()
+			t.model = nil
+			t.casovac = nil
+			t.mu.Unlock()
+		})
 	}
 	m := t.model
 	t.mu.Unlock()

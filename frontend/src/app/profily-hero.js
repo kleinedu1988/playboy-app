@@ -5,7 +5,7 @@
 import { GetMohloByTeLibit, GetProfilovaFotka } from './backend';
 import { vsechnyModelky } from './mezipamet';
 import { esc, obrazek } from '../lib/format';
-import { adresaTitulni, VELIKOST_ZAHLAVI } from './obrazky';
+import { adresaTitulni, VELIKOST_KARTY, VELIKOST_ZAHLAVI } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { otevritProfilPodleId } from './cover';
 import { otevritDnesniVyber, dnesVoleb } from './dnesni-vyber';
@@ -53,11 +53,13 @@ export async function naplnitHero(misto) {
     const m = podleId.get(tip.id);
     if (!m) return misto.remove();
     let adresa = adresaTitulni(m, true);
+    let rozmazana = adresaTitulni(m, false);
     let styl = stylVyrezu(m);
     try {
         const p = await GetProfilovaFotka(m.id);
         if (p?.url) {
             adresa = obrazek(p.url, VELIKOST_ZAHLAVI);
+            rozmazana = obrazek(p.url, VELIKOST_KARTY);
             styl = stylVyrezu(p);
         }
     } catch { /* fotka karty */ }
@@ -65,8 +67,8 @@ export async function naplnitHero(misto) {
     const srdicka = m.hodnoceni > 0 ? '♥'.repeat(Math.round(m.hodnoceni)) : m.odhadHodnoceni ? `odhad ${String(m.odhadHodnoceni).replace('.', ',')} ♥` : '';
     const voleb = dnesVoleb();
     misto.innerHTML = `
-        <div class="ph-rozmazane" style="background-image:url('${esc(adresa).replace(/'/g, '%27')}')"></div>
-        <div class="ph-ram"><img src="${esc(adresa)}" alt="" style="${esc(styl)}" draggable="false" /></div>
+        <div class="ph-rozmazane" style="background-image:url('${esc(rozmazana).replace(/'/g, '%27')}')"></div>
+        <div class="ph-ram"><img src="${esc(adresa)}" alt="" style="${esc(styl)}" decoding="async" draggable="false" /></div>
         <div class="ph-prekryv"></div>
         <div class="ph-obsah">
             <div class="ph-nadtitulek">${esc(tip.nadtitulek)}</div>

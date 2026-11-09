@@ -54,7 +54,7 @@ type (
 
 // Parametry připojení (testy je mohou změnit, např. na soubor jen pro čtení: předpona „file:“ a mode=ro)
 // synchronous NORMAL: při výpadku proudu se může ztratit poslední zápis, ne poškodit soubor; učení není sbírka
-var predponaUceni, dsnUceni = "", "?_pragma=busy_timeout(3000)&_pragma=synchronous(NORMAL)"
+var predponaUceni, dsnUceni = "", "?_pragma=busy_timeout(3000)&_pragma=synchronous(NORMAL)&_pragma=temp_store(MEMORY)&_pragma=cache_size(-8000)"
 
 // Stav databáze učení jedné aplikace (sdílí ho i kopie App při exportu; App importu ho nemá)
 type uceni struct {

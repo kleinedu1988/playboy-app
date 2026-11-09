@@ -516,18 +516,20 @@ func (a *App) spocitatDataKolekci(fotky []fotkaGalerie) (map[int]modelkaKolekce,
 	}
 	tagy := map[string]map[string]bool{}
 	if a.obsah != nil && a.obsah.Zapnuto() {
+		ids := make([]string, len(fotky))
 		for i := range fotky {
-			id := fotky[i].f.DriveID
-			v, p := a.obsah.Vektor(id), a.obsah.Partie(id)
-			if v == nil && p == nil {
-				continue
+			ids[i] = fotky[i].f.DriveID
+		}
+		a.obsah.ProjitObsah(ids, func(id string, v, p []float32) {
+			if _, ok := tagy[id]; ok {
+				return
 			}
 			m := map[string]bool{}
 			for _, n := range obsah.NavrhnoutTagy(v, p) {
 				m[n.Tag] = true
 			}
 			tagy[id] = m
-		}
+		})
 	}
 	return modelky, tagy
 }

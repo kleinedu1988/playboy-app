@@ -689,7 +689,7 @@ func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zaj
 			}
 		}
 	}
-	model.naucitModelVkusu(modelky, porovnani, stredSrdicka, sigmaSrdicka, nyni)
+	btSrdicka := model.naucitModelVkusu(modelky, porovnani, stredSrdicka, sigmaSrdicka, nyni)
 
 	// Předpoklady síly (jeden zdroj pro pořadí, galerii, výběr dvojic i návrhy): hodnocená ze srdíček; nehodnocená
 	// z odhadu vkusu (nejistota = chyba ověření skupiny), jinak (jen porovnávaná) z průměru sbírky. K tomu posun zájmem.
@@ -716,7 +716,35 @@ func spocitatOblibenostUplne(modelky []Modelka, porovnani []porovnaniZaznam, zaj
 		stred[id] += model.vahaZajmu.vaha * model.zajem[id]
 	}
 	maps.Copy(model.predpoklad, stred)
-	bt := spocitatBT(stred, sigma, porovnani, nyni)
+	stejnePredpoklady := btSrdicka != nil
+	if stejnePredpoklady {
+		for id := range btSrdicka.pocet {
+			if stred[id] != stredSrdicka[id] || sigma[id] != sigmaSrdicka[id] {
+				stejnePredpoklady = false
+				break
+			}
+		}
+	}
+	var bt vysledekBT
+	if stejnePredpoklady {
+		bt = vysledekBT{
+			sila:    make(map[int]float64, len(stred)),
+			rozptyl: make(map[int]float64, len(stred)),
+			pocet:   btSrdicka.pocet,
+			vyhry:   btSrdicka.vyhry,
+		}
+		for id, mu := range stred {
+			if btSrdicka.pocet[id] > 0 {
+				bt.sila[id] = btSrdicka.sila[id]
+				bt.rozptyl[id] = btSrdicka.rozptyl[id]
+			} else {
+				bt.sila[id] = mu
+				bt.rozptyl[id] = sigma[id] * sigma[id]
+			}
+		}
+	} else {
+		bt = spocitatBT(stred, sigma, porovnani, nyni)
+	}
 	model.sila, model.rozptyl, model.pocet, model.vyhry = bt.sila, bt.rozptyl, bt.pocet, bt.vyhry
 	for _, m := range modelky {
 		s, ok := bt.sila[m.ID]
@@ -773,9 +801,31 @@ type vysledekBT struct {
 
 func spocitatBT(stred, sigma map[int]float64, porovnani []porovnaniZaznam, nyni time.Time) vysledekBT {
 	v := oblibenost.VysledekBT{Sila: make(map[int]float64, len(stred)), Rozptyl: make(map[int]float64, len(stred)), Pocet: map[int]int{}, Vyhry: map[int]float64{}}
-	ids := make([]int, 0, len(stred))
-	for id := range stred {
-		ids = append(ids, id)
+	porovnavana := map[int]bool{}
+	for _, p := range porovnani {
+		if p.a == p.b {
+			continue
+		}
+		if _, okA := stred[p.a]; !okA {
+			continue
+		}
+		if _, okB := stred[p.b]; !okB {
+			continue
+		}
+		porovnavana[p.a] = true
+		porovnavana[p.b] = true
+	}
+	ids := make([]int, 0, len(porovnavana))
+	for id, mu := range stred {
+		if porovnavana[id] {
+			ids = append(ids, id)
+		} else {
+			v.Sila[id] = mu
+			v.Rozptyl[id] = sigma[id] * sigma[id]
+		}
+	}
+	if len(ids) == 0 {
+		return vysledekBT{sila: v.Sila, rozptyl: v.Rozptyl, pocet: v.Pocet, vyhry: v.Vyhry}
 	}
 	sort.Ints(ids)
 	index := make(map[int]int, len(ids))

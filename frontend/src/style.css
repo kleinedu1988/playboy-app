@@ -20576,3 +20576,54 @@ body.rezim-vyberu #detailView .poster {
 .zminka-nazev { font-weight: 500; }
 .zminka-kde { color: var(--text-muted); font-size: 12px; }
 .zminka-uryvek { grid-column: 1 / -1; color: var(--text-muted); font-size: 12px; line-height: 1.4; }
+
+/* Režim čtení – číslo a profil jako časopis (app/casopis.js) */
+.casopis { position: fixed; inset: 0; z-index: 1800; background: #0b0b0d; color: #f2efe9; outline: none; overflow: hidden; }
+.casopis.klid { cursor: none; }
+.cs-scena { position: absolute; inset: 0; }
+.cs-strana { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 4vh 5vw; opacity: 0; transition: opacity 0.7s ease; }
+.cs-strana.vidi { opacity: 1; }
+.cs-strana.odchazi { opacity: 0; }
+.cs-fotky { height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; gap: 0; }
+.cs-fotky img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; box-shadow: 0 10px 40px rgb(0 0 0 / 0.5); }
+.cs-fotky.vic img { max-width: calc(100% / 2); }
+.cs-fotky img.otocena { max-width: 92vh; max-height: 90vw; }
+.cs-fotky.kb { animation: cs-kb var(--kb-t, 6s) linear both; transform-origin: var(--kb-x, 50%) var(--kb-y, 35%); }
+.cs-fotky.kb.kb-ven { animation-name: cs-kb-ven; }
+@keyframes cs-kb { from { transform: scale(1); } to { transform: scale(1.08); } }
+@keyframes cs-kb-ven { from { transform: scale(1.08); } to { transform: scale(1); } }
+.cs-obalka, .cs-cela { height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 1.2vh; }
+.cs-obalka .cs-fotky, .cs-cela .cs-fotky { flex: 1; min-height: 0; }
+.cs-titulek { display: flex; gap: 14px; align-items: baseline; font-family: Georgia, 'Times New Roman', serif; letter-spacing: 0.04em; }
+.cs-titulek b { font-size: 20px; font-weight: 400; text-transform: uppercase; }
+.cs-titulek span, .cs-popisek { color: #a9a49b; font-size: 14px; font-style: italic; font-family: Georgia, serif; }
+.cs-dvoustrana { display: grid; grid-template-columns: minmax(280px, 1fr) 1.3fr; gap: 5vw; width: 100%; height: 100%; align-items: center; }
+.cs-sloupec { max-height: 100%; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, #000 85%, transparent); mask-image: linear-gradient(to bottom, #000 85%, transparent); padding-bottom: 4vh; }
+.cs-obraz { height: 100%; min-height: 0; }
+.cs-nadtitulek { text-transform: uppercase; letter-spacing: 0.25em; font-size: 12px; color: var(--accent-text); margin-bottom: 1.5vh; }
+.casopis h1 { font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: clamp(34px, 5vw, 72px); line-height: 1.02; margin: 0 0 3vh; }
+.casopis h2 { font-family: Georgia, serif; font-weight: 400; font-size: 26px; margin: 0 0 2vh; }
+.cs-udaje { display: grid; grid-template-columns: auto 1fr; gap: 6px 18px; margin: 0 0 3vh; font-size: 14px; }
+.cs-udaje dt { color: #a9a49b; text-transform: uppercase; letter-spacing: 0.12em; font-size: 11px; padding-top: 2px; }
+.cs-udaje dd { margin: 0; }
+.cs-text, .cs-sloupce { font-family: Georgia, 'Times New Roman', serif; font-size: 17px; line-height: 1.6; color: #e6e1d8; }
+.cs-text p:first-child::first-letter { font-size: 3.2em; float: left; line-height: 0.9; margin: 4px 8px 0 0; color: var(--accent-text); }
+.cs-clanek { width: min(1100px, 100%); max-height: 100%; overflow: hidden; }
+.cs-sloupce { column-count: 2; column-gap: 48px; column-fill: auto; height: 70vh; }
+.cs-autor { color: #a9a49b; font-style: italic; margin: -1vh 0 3vh; font-family: Georgia, serif; }
+.cs-lista { position: absolute; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: 14px; padding: 10px 18px; font-size: 13px;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.7), transparent); transition: opacity 0.4s; z-index: 2; }
+.cs-nazev { font-weight: 600; letter-spacing: 0.04em; }
+.cs-oddil, .cs-pocet { color: #a9a49b; }
+.cs-ovladani { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+.cs-intervaly { display: inline-flex; gap: 2px; }
+.cs-tlacitko { background: rgb(255 255 255 / 0.08); color: inherit; border: 1px solid rgb(255 255 255 / 0.14); border-radius: 6px; padding: 4px 10px; font: inherit; cursor: pointer; }
+.cs-tlacitko:hover:not(:disabled), .cs-tlacitko:focus-visible { background: rgb(255 255 255 / 0.16); }
+.cs-tlacitko.active { background: var(--accent-soft); border-color: var(--accent); }
+.cs-tlacitko:disabled { opacity: 0.35; cursor: default; }
+.cs-postup { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: rgb(255 255 255 / 0.08); transition: opacity 0.4s; }
+.cs-postup span { display: block; height: 100%; background: var(--accent); transition: width 0.4s; }
+.casopis.klid .cs-lista { opacity: 0; pointer-events: none; }
+.casopis.klid .cs-postup { opacity: 0.5; }
+@media (max-width: 900px) { .cs-dvoustrana { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .cs-sloupce { column-count: 1; } }
+@media (prefers-reduced-motion: reduce) { .cs-strana { transition-duration: 0.15s; } .cs-fotky.kb { animation: none; } }

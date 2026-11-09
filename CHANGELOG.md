@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.41.0] – 2026-11-09
+
+### Přidáno
+- **Režim čtení**: tlačítko Jako časopis v detailu čísla a Časopis v profilu modelky otevře obsah přes celou obrazovku
+  jako redakční dvoustrany – číslo v pořadí obálka → Playmate měsíce (údaje, průvodní text, fotograf) → další modelky →
+  články (dlouhé na víc stran, ve dvou sloupcích, se skeny) → zbylé fotky; profil v pořadí úvod s titulní fotkou
+  a poznámkou → články → alba (`frontend/src/lib/casopis.js`, `frontend/src/app/casopis.js`).
+- Ovládání šipkami, mezerníkem (Shift+mezerník zpět), PageUp/PageDown, Home/End a klikem (levá třetina zpět); Esc
+  zavře a vrátí okno z celé obrazovky. Lišta a kurzor zmizí, když se myš nehýbe; dole proužek postupu.
+- **Prezentace** (P nebo tlačítko): listuje po 3 / 5 / 10 s (zapamatuje se), s prolínáním a pomalým přiblížením či
+  oddálením fotky (Ken Burns) k místu výřezu portrétu; při omezeném pohybu v systému bez animace.
+
 ## [1.40.0] – 2026-11-09
 
 ### Přidáno

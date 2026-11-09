@@ -97,7 +97,8 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
         <p class="cislo-udaje">${stavCisla}${info.jmenoObalky ? `<br>na obálce <button class="link" data-modelka="${info.modelkaObalky}">${esc(info.jmenoObalky)}</button>`
             : info.naObalce ? `<br>na obálce <b>${esc(info.naObalce)}</b>` : ''}${info.stav ? `<br><b>${NAZVY_STAVU[info.stav].toLowerCase()}</b>` : ''}</p>
         ${info.poznamka ? `<div class="profile-note">${formatMarkdown(info.poznamka)}</div>` : ''}
-        <div class="profile-actions"><button class="volba issue-edit" data-upravit-vydani><span aria-hidden="true">✎</span>Upravit číslo…</button></div>
+        <div class="profile-actions"><button class="volba issue-edit" data-upravit-vydani><span aria-hidden="true">✎</span>Upravit číslo…</button>
+            <button class="volba" data-casopis-cisla title="Prohlédnout číslo jako časopis přes celou obrazovku: obálka, Playmate, další modelky, články, fotky"><span aria-hidden="true">❏</span>Jako časopis</button></div>
         ${htmlUplnosti(vydani, { cover: coveryVydani.length > 0, centerfoldy, pictorialu: ostatni.length, fotek: fotky.length, info, clanku: stav.vydaniClanky.length })}
         ${centerfoldy.map((a, i) => `
             <section class="panel-centerfold" data-cast="album-${i}">

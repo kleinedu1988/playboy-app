@@ -7,6 +7,24 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.38.0] – 2026-11-09
+
+### Přidáno
+- **Doplnit z webu** (tlačítko Z webu v profilu): údaje modelky z Wikidat, Wikipedie (infobox v seznamu Playmate jejího
+  měsíce) a Boobpedie – narození a úmrtí, místo, národnost, etnicita, výška, váha, míry, velikost a typ prsou, vlasy, oči,
+  ochlupení. Hodnoty se převedou do podoby sbírky (česky, cm, kg, evropská velikost prsou: 36DD → 80E), okno ukáže jen
+  údaje, které chybí nebo se liší, s volbou „ponechat“ nebo hodnoty ze zdroje; zapíše se jen zvolené a použité zdroje
+  přibudou do odkazů modelky (`zdroje_udaju.go`, `frontend/src/app/zdroje-udaju.js`).
+- Osoba se ověřuje: povolání Playboy Playmate a rok narození (Wikidata, i přes odkaz na článek Wikipedie), jméno v seznamu
+  Playmate jejího měsíce (Wikipedie), rok narození a měsíc Playmate (Boobpedia); jmenovkyně se nepoužije.
+- **Úplnost čísla** v detailu čísla: cover, centerfold, kdo je na obálce, pictorial, obsah a fotky s rychlým doplněním;
+  u amerického měsíčního čísla Playmate měsíce podle Wikipedie, zda je ve sbírce, a přidání chybějící přes rychlé okno
+  Nová modelka (předvyplněné jméno a číslo).
+- Na internet se program ptá jen na kliknutí, nejvýš jednou za sekundu na server, odpovědi drží hodinu v paměti.
+
+### Opraveno
+- Test vyprchání zájmu o kolekce padal podle denní doby (večer).
+
 ## [1.37.0] – 2026-11-09
 
 ### Přidáno

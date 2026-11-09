@@ -955,6 +955,114 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class NavrhUdaje {
+	    zdroj: string;
+	    hodnota: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NavrhUdaje(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.zdroj = source["zdroj"];
+	        this.hodnota = source["hodnota"];
+	    }
+	}
+	export class PoleZeZdroju {
+	    klic: string;
+	    nazev: string;
+	    stavajici: string;
+	    navrhy: NavrhUdaje[];
+	
+	    static createFrom(source: any = {}) {
+	        return new PoleZeZdroju(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.stavajici = source["stavajici"];
+	        this.navrhy = this.convertValues(source["navrhy"], NavrhUdaje);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class ZdrojUdaju {
+	    klic: string;
+	    nazev: string;
+	    url: string;
+	    stav: string;
+	    poznamka: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ZdrojUdaju(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.url = source["url"];
+	        this.stav = source["stav"];
+	        this.poznamka = source["poznamka"];
+	    }
+	}
+	export class NalezUdaju {
+	    modelkaId: number;
+	    jmeno: string;
+	    zdroje: ZdrojUdaju[];
+	    pole: PoleZeZdroju[];
+	    souhlasi: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new NalezUdaju(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.zdroje = this.convertValues(source["zdroje"], ZdrojUdaju);
+	        this.pole = this.convertValues(source["pole"], PoleZeZdroju);
+	        this.souhlasi = source["souhlasi"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class NavrhTematu {
 	    klic: string;
 	    nazev: string;
@@ -1121,6 +1229,7 @@ export namespace main {
 	}
 	
 	
+	
 	export class ObhajobaUrovne {
 	    uroven: number;
 	    vyzyvatelka: number;
@@ -1231,6 +1340,24 @@ export namespace main {
 	        this.cas = source["cas"];
 	    }
 	}
+	export class PlaymatePodleWikipedie {
+	    jmeno: string;
+	    url: string;
+	    modelkaId: number;
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PlaymatePodleWikipedie(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.jmeno = source["jmeno"];
+	        this.url = source["url"];
+	        this.modelkaId = source["modelkaId"];
+	        this.chyba = source["chyba"];
+	    }
+	}
 	
 	
 	
@@ -1322,6 +1449,7 @@ export namespace main {
 		    return a;
 		}
 	}
+	
 	export class PolozkaHodnoceni {
 	    modelkaId: number;
 	    druh: string;
@@ -2540,6 +2668,7 @@ export namespace main {
 	        this.hotovo = source["hotovo"];
 	    }
 	}
+	
 	
 	export class ZmrazeniVyberu {
 	    pocet: number;

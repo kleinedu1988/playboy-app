@@ -362,6 +362,10 @@ export function MaZamek() {
   return window['go']['main']['App']['MaZamek']();
 }
 
+export function NajitUdajeModelky(arg1) {
+  return window['go']['main']['App']['NajitUdajeModelky'](arg1);
+}
+
 export function NastavitHeslo(arg1, arg2) {
   return window['go']['main']['App']['NastavitHeslo'](arg1, arg2);
 }
@@ -404,6 +408,10 @@ export function OveritOdkaz(arg1) {
 
 export function OznacitRuzneFotky(arg1) {
   return window['go']['main']['App']['OznacitRuzneFotky'](arg1);
+}
+
+export function PlaymatePodleWikipedie(arg1) {
+  return window['go']['main']['App']['PlaymatePodleWikipedie'](arg1);
 }
 
 export function PorovnatCtverici(arg1, arg2) {
@@ -592,6 +600,10 @@ export function UlozitChytryVyber(arg1) {
 
 export function UlozitPruvodceFotky(arg1) {
   return window['go']['main']['App']['UlozitPruvodceFotky'](arg1);
+}
+
+export function UlozitUdajeZeZdroju(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UlozitUdajeZeZdroju'](arg1, arg2, arg3);
 }
 
 export function UlozitVyberGalerie(arg1, arg2) {

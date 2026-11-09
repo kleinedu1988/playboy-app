@@ -189,6 +189,8 @@ export function ImportovatSoubory(arg1:Array<string>):Promise<main.VysledekImpor
 
 export function MaZamek():Promise<boolean>;
 
+export function NajitUdajeModelky(arg1:number):Promise<main.NalezUdaju>;
+
 export function NastavitHeslo(arg1:string,arg2:string):Promise<boolean>;
 
 export function ObnovitFotky(arg1:Array<sbirka.ObnovaFotky>):Promise<number>;
@@ -210,6 +212,8 @@ export function OdmitnoutNavrh(arg1:kontrola.NavrhDoplneni,arg2:boolean):Promise
 export function OveritOdkaz(arg1:string):Promise<number>;
 
 export function OznacitRuzneFotky(arg1:Array<string>):Promise<boolean>;
+
+export function PlaymatePodleWikipedie(arg1:string):Promise<main.PlaymatePodleWikipedie>;
 
 export function PorovnatCtverici(arg1:Array<number>,arg2:number):Promise<boolean>;
 
@@ -304,6 +308,8 @@ export function StavDatabaze():Promise<string>;
 export function UlozitChytryVyber(arg1:main.ChytryVyber):Promise<main.ChytryVyber>;
 
 export function UlozitPruvodceFotky(arg1:main.ZapisPruvodce):Promise<main.PredchoziPruvodce>;
+
+export function UlozitUdajeZeZdroju(arg1:number,arg2:Record<string, string>,arg3:Array<string>):Promise<boolean>;
 
 export function UlozitVyberGalerie(arg1:string,arg2:main.DotazGalerie):Promise<boolean>;
 

@@ -30,10 +30,13 @@ let posledniCislo = null;
 let kontrolaRychla = null;
 const hodnotaPole = id => /** @type {HTMLInputElement} */ (document.getElementById(id)).value.trim();
 
-export function otevritRychlePridani() {
+// predvyplnit = { jmeno, cislo: { rok, mesic, edice, typ } } (úplnost čísla: Playmate měsíce, která ve sbírce chybí);
+// nabídky volají funkci i s událostí, ta se přeskočí
+export function otevritRychlePridani(predvyplnit = null) {
+    const p = predvyplnit && typeof predvyplnit.jmeno === 'string' ? predvyplnit : null;
     document.getElementById('quickForm').reset();
     ['quickJmenoInfo', 'quickNarozeniInfo', 'quickNarodnostInfo'].forEach(id => napoveda(id, ''));
-    const c = posledniCislo || { rok: '', mesic: '', edice: stav.kalendarEdice, typ: 'Centerfold' };
+    const c = p?.cislo || posledniCislo || { rok: '', mesic: '', edice: stav.kalendarEdice, typ: 'Centerfold' };
     /** @type {HTMLInputElement} */ (document.getElementById('inputQuickRok')).value = c.rok;
     /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickMesic')).value = c.mesic;
     /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickEdice')).value = c.edice;
@@ -41,7 +44,12 @@ export function otevritRychlePridani() {
     document.getElementById('inputQuickNarodnost').dataset.odhad = '1';
     kontrolaRychla?.obnovit();
     quickModal.classList.remove('hidden');
-    document.getElementById('inputQuickJmeno').focus();
+    const jmeno = /** @type {HTMLInputElement} */ (document.getElementById('inputQuickJmeno'));
+    if (p) {
+        jmeno.value = p.jmeno;
+        jmeno.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    jmeno.focus();
     vsechnyModelky().then(m => {
         modelkySbirky = m;
         const narodnosti = [...new Set(m.map(x => String(x.narodnost || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'cs'));

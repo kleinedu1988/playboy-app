@@ -20501,3 +20501,29 @@ body.rezim-vyberu #detailView .poster {
 .cv-prevzit span { color: var(--text-muted); }
 .cv-dalsi { display: flex; gap: 8px; margin-bottom: 12px; }
 .cv-smazat { margin-left: auto; color: var(--danger-text); }
+
+/* Úplnost čísla v detailu čísla (app/vydani.js) */
+.uplnost-cisla { list-style: none; margin: 4px 0 8px; padding: 0; font-size: 13px; }
+.uplnost-cisla li { display: flex; align-items: baseline; gap: 6px; padding: 2px 0; }
+.uplnost-cisla li > span { width: 14px; flex: none; text-align: center; }
+.uplnost-cisla li.hotovo > span { color: #5fbf7f; }
+.uplnost-cisla li.chybi { color: var(--text-muted); }
+.uplnost-wiki { font-size: 13px; margin-bottom: 10px; line-height: 1.8; }
+.uplnost-wiki small { color: var(--text-muted); }
+
+/* Doplnit z webu (app/zdroje-udaju.js) */
+.zu-karta { max-width: 760px; }
+.zu-zdroje { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.zu-zdroj { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.zu-zdroj small { color: var(--text-muted); flex-basis: 100%; padding-left: 22px; }
+.zu-stav { width: 14px; text-align: center; }
+.zu-nalezeno .zu-stav { color: #5fbf7f; }
+.zu-chyba .zu-stav, .zu-jina .zu-stav { color: var(--danger-text); }
+.zu-tabulka { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 10px; }
+.zu-tabulka th, .zu-tabulka td { padding: 6px 8px; border-bottom: 1px solid var(--panel-okraj); text-align: left; vertical-align: top; }
+.zu-tabulka thead th { font-weight: 500; color: var(--text-muted); font-size: 12px; }
+.zu-tabulka tbody th { font-weight: 500; white-space: nowrap; }
+.zu-volba { display: flex; align-items: baseline; gap: 6px; padding: 2px 0; cursor: pointer; }
+.zu-volba small { color: var(--text-muted); margin-left: 6px; }
+.zu-hodnota { font-variant-numeric: tabular-nums; }
+.zu-souhlasi, .zu-nic, .zu-nacita { font-size: 13px; color: var(--text-muted); }

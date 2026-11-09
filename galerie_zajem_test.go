@@ -25,8 +25,10 @@ func TestZajemKolekci(t *testing.T) {
 	if n := z.nasobitel("cas:mesic"); n != 1 {
 		t.Fatalf("jiná skupina %v", n)
 	}
-	// Za 60 dní (dva poločasy) jen čtvrtina bodů
-	if b := z.data["styl:retro60"].bodyK(nyni.AddDate(0, 0, 60)); b < 0.55 || b > 0.6 {
+	// Za 60 dní (dva poločasy) jen čtvrtina bodů; den záznamu se počítá od půlnoci, proto poledne (večer by
+	// uplynulo o hodiny víc a test by padal podle denní doby)
+	poledne := time.Date(nyni.Year(), nyni.Month(), nyni.Day(), 12, 0, 0, 0, nyni.Location())
+	if b := z.data["styl:retro60"].bodyK(poledne.AddDate(0, 0, 60)); b < 0.55 || b > 0.6 {
 		t.Fatalf("vyprchání %v", b)
 	}
 	// Řada ukázaná 10 různých dní bez zájmu klesne

@@ -85,6 +85,8 @@ const CTENI = new Set([
     'GetPodobnostObsahu',
     'GetStejneFotky',
     'GetChytreVybery',
+    'NajitUdajeModelky',
+    'PlaymatePodleWikipedie',
     'ZkontrolovatOdkazy',
     'GetStavOtisku',
     // Otisky fotek a výjimky Stejných fotek jsou mimo data sbírky (soubor otisků, nastavení); Údržba se obnoví sama
@@ -234,6 +236,9 @@ export const GetChytreVybery = /** @type {typeof App.GetChytreVybery} */ (obalit
 export const UlozitChytryVyber = /** @type {typeof App.UlozitChytryVyber} */ (obalit('UlozitChytryVyber'));
 export const SmazatChytryVyber = /** @type {typeof App.SmazatChytryVyber} */ (obalit('SmazatChytryVyber'));
 export const ZmrazitChytryVyber = /** @type {typeof App.ZmrazitChytryVyber} */ (obalit('ZmrazitChytryVyber'));
+export const NajitUdajeModelky = /** @type {typeof App.NajitUdajeModelky} */ (obalit('NajitUdajeModelky'));
+export const UlozitUdajeZeZdroju = /** @type {typeof App.UlozitUdajeZeZdroju} */ (obalit('UlozitUdajeZeZdroju'));
+export const PlaymatePodleWikipedie = /** @type {typeof App.PlaymatePodleWikipedie} */ (obalit('PlaymatePodleWikipedie'));
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));

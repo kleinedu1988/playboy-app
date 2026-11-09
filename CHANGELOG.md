@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.39.0] – 2026-11-09
+
+### Přidáno
+- **Pás fotek čísla** v detailu čísla: všechny fotky vydání (cover, centerfold, pictorialy) v jedné vodorovné řadě v pořadí
+  prohlížeče; klik otevře prohlížeč jen pro toto číslo, tlačítko Promítat promítá celé číslo.
+- **Kontext čísla v profilu**: štítky čísel u alb a v údajích modelky mají malý náhled obálky; po najetí myší nebo zaměření
+  klávesnicí bublina s obálkou, Playmate měsíce, dalšími modelkami sbírky v čísle (s rolí centerfold / obálka / pictorial)
+  a přechodem na předchozí a následující měsíční číslo téže edice (`frontend/src/app/kontext-cisla.js`,
+  `frontend/src/lib/kontext-cisla.js`).
+
 ## [1.38.0] – 2026-11-09
 
 ### Přidáno

@@ -3,13 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (9. 11. 2026): verze 1.38.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.38 jsou hotové: mezipaměť náhledů na
+**Stav (9. 11. 2026): verze 1.39.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.39 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
 (1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
 Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
-příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) a doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0).
+příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) a propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0).
 
 ---
 
@@ -62,13 +62,13 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 | **1.6–1.29** | **1.6–1.29** | **✅ Hotovo** | **Náhledy, Obsah fotek, Postřehy, Dnešní výběr** | Disková cache náhledů, CLIP + NudeNet + CZ textový model, odhady srdíček a tagů, styly, kolekce, Ideální modelka, Dnešní výběr, Postřehy 1–5 |
 | **Etapa A** | **1.30–1.34** | **✅ Hotovo** | **Prohloubení práce s modely, fotkami a Statistikami** | Mapa sbírky (PCA / autoenkodér), Síň slávy v Modelkách, Podobné modelky s vysvětlením, Stejné a podobné fotky, Křivky a srovnání období |
 | **Etapa B** | **1.35–1.37** | **✅ Hotovo** | **Rychlé plnění sbírky a chytré hledání** | Rychlé přidávání a zásobník fotek, Chytré hledání se zápisem a našeptáváním, Chytré výběry (Průvodce přidáním čísla odložen do etapy D) |
-| **Etapa C** | **1.38–1.40** | 📋 Plán | **Obohacení obsahu** | Úplnost sbírky a Wikidata, Propojení čísla a modelky, Bohatý text a obousměrné odkazy |
+| **Etapa C** | **1.38–1.40** | 🚧 1.38–1.39 hotové | **Obohacení obsahu** | Úplnost sbírky a Wikidata, Propojení čísla a modelky, Bohatý text a obousměrné odkazy |
 | **Etapa D** | **1.41–1.44** | 📋 Plán | **Prohlížení, údržba a zábava** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy, Kvíz „Poznej playmate“, Rozšířené tiskové sestavy |
 | **Etapa E** | **1.45–1.47** | ⏸ Odloženo | **Průvodce číslem a Google Disk** | Průvodce přidáním celého čísla, Google Disk v aplikaci, Vkládání z Disku |
 
 ---
 
-## Dokončeno v řadě 1.0–1.38 ✅
+## Dokončeno v řadě 1.0–1.39 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -104,6 +104,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.36 – Chytré hledání se zápisem a našeptáváním** (`frontend/src/lib/hledani-dotaz.js`, `app/hledani-cipy.js`, `internal/hledani`, `galerie_fotek.go`): české výrazy (`blond`, `výška > 175`, `pas <= 60`, `90. léta`, `česká edice`, `pmoy`, `4*+`, `bez fotek`) se převedou na příkazy ve všech pohledech, čipy s × pod polem, chytré výrazy v našeptávači s `Tab`, nové příkazy `pas: hrudnik: boky: bmi: whr: vek: fotek:`, příkazy i v Galerii fotek; zásobník odkazů přesunut na konec profilu.
 - **1.37 – Chytré výběry fotek a modelek** (`chytre_vybery.go`, `frontend/src/app/chytre-vybery.js`): živé uložené podmínky (hledání, filtr Modelek, filtry, kolekce a řazení Galerie fotek) s počty a náhledy, čipy ⚡ v Modelkách, Všech fotkách a panelu Kolekce, karta v Přehledu, úprava a převzetí podmínek, zmrazení do výběru fotek nebo tagu modelek; v nastaveni (`chytre_vybery`) a v nepovinné části `nastaveni` exportu – schéma (č. 16) ani verze exportu (13) se nemění; Uložené výběry Galerie převedeny.
 - **1.38 – Úplnost sbírky a doplnění z Wikidat, Wikipedie a Boobpedie** (`zdroje_udaju.go`, `frontend/src/app/zdroje-udaju.js`, `app/vydani.js`): tlačítko Z webu v profilu – údaje ze tří zdrojů (ověření osoby podle povolání Playmate, roku narození a měsíce centerfoldu), převod do podoby sbírky (česky, cm, kg, evropská velikost prsou), okno jen s odlišnými údaji a volbou zdroje, zápis jen zvoleného s odkazem na zdroj; Úplnost v detailu čísla s rychlým doplněním a Playmate měsíce podle Wikipedie (chybějící přes rychlé okno). Dotazy jen na kliknutí, 1/s na server, mezipaměť hodina.
+- **1.39 – Propojení čísla a modelky při čtení** (`frontend/src/app/kontext-cisla.js`, `lib/kontext-cisla.js`, `app/vydani.js`): pás všech fotek čísla v detailu čísla s prohlížečem jen pro číslo a Promítat; v profilu náhledy obálek u štítků čísel a bublina s obálkou, Playmate měsíce, dalšími modelkami v čísle a předchozím/následujícím číslem téže edice.
 ---
 
 ## Plán dalšího rozvoje (1.30–1.47)
@@ -229,7 +230,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 **Hotovo, když:** kliknutí na „Doplnit z Wikidat…“ u modelky nabídne nalezené chybějící údaje s odkazem na zdroj a uloží jen zaškrtnuté položky.
 
-#### 1.39 – Propojení čísla a modelky při čtení
+#### 1.39 – Propojení čísla a modelky při čtení ✅ (9. 11. 2026)
 
 **Cíl:** propojit detail čísla a profil modelky tak, aby z čísla byly přímo vidět fotky z toho vydání a z profilu modelky šlo procházet její čísla s obálkami a sousedními vydáními.
 

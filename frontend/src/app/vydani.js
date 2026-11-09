@@ -176,13 +176,27 @@ function vykreslitObsahStranky() {
         ...stav.vydaniClanky.map(c => ({ strana: c.strana, nazev: c.nazev, atribut: `data-clanek="${c.id}"` })),
         ...[...document.querySelectorAll('#issueSide [data-album-obsahu]')].map(b => ({ strana: 0, nazev: b.querySelector('.obsah-nazev').textContent, atribut: `data-album-obsahu="${b.dataset.albumObsahu}"` })),
     ]) : '';
-    document.getElementById('issueMain').innerHTML = prouzek + stav.vydaniClanky.map(c => htmlClanku(c)).join('') + stav.vydaniHtmlAlb;
+    document.getElementById('issueMain').innerHTML = htmlPasuFotek() + prouzek + stav.vydaniClanky.map(c => htmlClanku(c)).join('') + stav.vydaniHtmlAlb;
     // Obrázky stránky se načítají postupně podle rolování (vestavěné loading="lazy" začíná ve WebKitGTK pozdě)
     nacitatPostupne(document.getElementById('issueMain'));
+    const pas = issueView.querySelector('.pas-fotek-rada');
+    if (pas) nacitatPostupne(/** @type {HTMLElement} */ (pas), { root: /** @type {HTMLElement} */ (pas), rootMargin: '0px 1200px' });
     issueView.querySelectorAll('.poster').forEach(p => pripravitPlakat(p));
     pripravitPopisy(issueView);
     zkratitAlba(issueView);
     requestAnimationFrame(oznacitPrecteno);
+}
+
+// Pás všech fotek čísla (cover, centerfold, pictorialy) v pořadí prohlížeče; klik otevře prohlížeč jen pro toto číslo
+function htmlPasuFotek() {
+    const polozky = stav.vydaniPolozky || [];
+    if (polozky.length < 2) return '';
+    const dlazdice = polozky.map((p, i) => `<button type="button" class="pas-fotka" data-index="${i}" title="${esc(`${p.jmenoModelky} · ${p.typ}`)}">
+        <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" alt="" draggable="false" /></button>`).join('');
+    return `<section class="pas-fotek" aria-label="Fotky čísla">
+        <div class="pas-fotek-hlava"><b>Fotky čísla</b> <small>${sklonovat(polozky.length, 'fotka', 'fotky', 'fotek')}</small>
+            <button type="button" class="volba" data-promitat-cislo title="Promítat všechny fotky čísla"><span aria-hidden="true">▶</span>Promítat</button></div>
+        <div class="pas-fotek-rada">${dlazdice}</div></section>`;
 }
 
 // Posun na článek (pod sebou s ostatními)
@@ -551,6 +565,10 @@ export function pripravit() {
         const wikiOdkaz = e.target.closest('[data-wiki-odkaz]');
         if (wikiOdkaz) {
             BrowserOpenURL(wikiOdkaz.dataset.wikiOdkaz);
+            return;
+        }
+        if (e.target.closest('[data-promitat-cislo]')) {
+            if (stav.vydaniPolozky?.length) otevritLightbox(0, true, stav.vydaniPolozky);
             return;
         }
         const nova = e.target.closest('[data-nova-playmate]');

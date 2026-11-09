@@ -10,6 +10,10 @@ import { nacistFotkyModelky } from './profil';
 import { albumModal } from './okno';
 import { otevritDeleteModal } from './formular-modelky';
 import { pripojitVyberSpecialu } from './specialy';
+import { sledovatOdkazy } from './kontrola-odkazu';
+
+// Kontrola odkazů okna alba (které fotky už ve sbírce jsou); ulozeni.js z ní bere, co vložit
+export let kontrolaAlba = null;
 
 // Formulář alba slouží pro přidání fotek (album = null) i úpravu alba ({ album, typ })
 // Přidání centerfoldu ze stěny plakátů: modelka se jen vybere ze seznamu už zadaných
@@ -223,6 +227,7 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
         });
         document.getElementById('inputAlbumModelka').value = modelka?.jmeno || '';
     }
+    kontrolaAlba?.obnovit();
     albumModal.classList.remove('hidden');
     const prvni = moznosti.vyberModelky ? 'inputAlbumModelka' : moznosti.typ ? (moznosti.typ === 'Centerfold' ? 'selectAlbumMesic' : 'inputAlbumName') : '';
     (prvni ? document.getElementById(prvni) : document.querySelector('#albumTypGroup [data-kde].active'))?.focus();
@@ -266,6 +271,7 @@ export function smazatAlbum(album, pocet) {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    kontrolaAlba = sledovatOdkazy(/** @type {HTMLTextAreaElement} */ (document.getElementById('inputBulkLinks')), document.getElementById('albumKontrolaOdkazu'));
     obnovitSpecialyAlba = pripojitVyberSpecialu('selectAlbumSpecial', 'inputAlbumRok', 'selectAlbumEdice');
 
     // Šipky ve skupině voleb vyberou předchozí nebo další volbu (jako přepínače), Home a End první a poslední.

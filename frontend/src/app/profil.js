@@ -25,6 +25,8 @@ import { otevritLightbox } from './prohlizec';
 import { podobneModelky } from '../lib/mapa-sbirky';
 import { znakySrdicek } from '../lib/srdicka';
 import { otevritMapuModelky } from './statistiky-pohled';
+import * as zasobnik from './zasobnik';
+import { otevritAlbumModal } from './formular-alba';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -447,6 +449,7 @@ export async function nacistFotkyModelky(modelkaId) {
     sledovatMozaiku(photosGrid, detailView);
     zkratitAlba(detailView);
     listaAlb.sledovat();
+    zasobnik.zobrazitProModelku();
 }
 
 function zrusitZnackyVlozeni() {
@@ -670,6 +673,17 @@ export function upravitVyrezProfilu() {
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
+    // Zásobník odkazů nad alby; „Nové album…“ předá odkazy do okna alba
+    zasobnik.pripravit({
+        nacistFotky: nacistFotkyModelky,
+        otevritAlbum: (modelka, odkazy) => {
+            otevritAlbumModal(modelka);
+            const pole = /** @type {HTMLTextAreaElement} */ (document.getElementById('inputBulkLinks'));
+            pole.value = odkazy;
+            pole.dispatchEvent(new Event('input', { bubbles: true }));
+            document.getElementById('inputAlbumName')?.focus();
+        },
+    });
     modelHeader.addEventListener('click', (e) => {
         if (e.target.closest('[data-upravit-vyrez]')) upravitVyrezProfilu();
         const naMape = /** @type {HTMLElement | null} */ (e.target.closest('[data-na-mape]'));

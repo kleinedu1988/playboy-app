@@ -1,7 +1,7 @@
 // Údržba › Stejné fotky: skupiny souborů, které vypadají jako tatáž fotka (stejne_fotky.go). Soubory skupiny jsou
 // vedle sebe s místy ve sbírce, srdíčky a tagy; „Nechat vybranou“ ostatní soubory sloučí do vybraného (jde vrátit),
 // „V pořádku“ skupinu přestane hlásit (jde vrátit). Otisky fotek se počítají na pozadí; dokud běží, stav se obnovuje.
-import { GetStavOtisku, GetStejneFotky, OznacitRuzneFotky, SloucitStejneFotky, SpustitOtisky, VratitSlouceniStejnych, ZrusitRuzneFotky } from './backend';
+import { ZkontrolovatNoveFotky, GetStavOtisku, GetStejneFotky, OznacitRuzneFotky, SloucitStejneFotky, SpustitOtisky, VratitSlouceniStejnych, ZrusitRuzneFotky } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
 import { nastavitHtml } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
@@ -207,4 +207,16 @@ export function otevritStejneFotky() {
     try { localStorage.setItem('udrzbaRezim', 'stejne'); } catch { /* jen pro toto spuštění */ }
     zastarale = true;
     document.dispatchEvent(new CustomEvent('otevrit-rezim-udrzby', { detail: 'stejne' }));
+}
+
+// Po vložení fotek: otisky nových souborů proti sbírce (na pozadí, náhledy se stahují); shoda nabídne Stejné fotky
+export async function upozornitNaStejne(links) {
+    const nalezy = await ZkontrolovatNoveFotky(links) || [];
+    if (!nalezy.length) return;
+    const f = nalezy[0].existujici;
+    const kde = `${f.jmenoModelky || 'bez modelky'}, ${f.album}`;
+    const text = nalezy.length === 1
+        ? `Nově vložená fotka už ve sbírce nejspíš je (${kde}).`
+        : `${nalezy.length} nově vložených fotek už ve sbírce nejspíš je (např. ${kde}).`;
+    oznamit(text, { text: 'Ukázat', akce: otevritStejneFotky });
 }

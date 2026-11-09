@@ -1,8 +1,8 @@
 // Výběrová okna, ukládání formulářů a hledání
 import { esc, jeOnline, obdobiCyberGirl, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
 import { hledaniVeFronte, hledatVeFronte } from './udrzba';
-import { otevritStejneFotky } from './udrzba-stejne';
-import { AddBulkPhotos, AddModelka, ZkontrolovatNoveFotky, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
+import { upozornitNaStejne } from './udrzba-stejne';
+import { AddBulkPhotos, AddModelka, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -20,7 +20,7 @@ import { otevritProfilPodleId } from './cover';
 import { albumModal, modelModal } from './okno';
 import { neniDuplicitni } from './vyrez';
 import { deleteModal, otevritModelModal, poleModelky, potvrdit, ukazatZalozku, zameritPole, zavritDeleteModal } from './formular-modelky';
-import { obnovitNahledAlba, vybratNeboZalozitModelku } from './formular-alba';
+import { kontrolaAlba, obnovitNahledAlba, vybratNeboZalozitModelku } from './formular-alba';
 import { jeVidet, otevreneOkno } from '../ui/dom';
 
 // Výběr nebo zadání jedné hodnoty s našeptáváním; vrací napsaný text, nebo null po zrušení
@@ -256,9 +256,18 @@ export function pripravit() {
             return;
         }
         if (links.trim()) {
-            const vysledek = await AddBulkPhotos(modelka.id, album, typ, links);
+            // Fotky, které už ve sbírce jsou, se vloží, jen když to uživatel zaškrtne (kontrola-odkazu.js)
+            const kontrola = await kontrolaAlba.zkontrolovat();
+            const ids = await kontrolaAlba.idsKVlozeni();
+            const preskoceno = kontrola.ids.length - ids.length;
+            if (!ids.length && preskoceno) {
+                oznamit(`${preskoceno === 1 ? 'Fotka už ve sbírce je' : 'Všechny fotky už ve sbírce jsou'}. Pro vložení zaškrtni „Vložit i ty, které už ve sbírce jsou“.`);
+                return;
+            }
+            const vysledek = await AddBulkPhotos(modelka.id, album, typ, ids.length ? ids.join(' ') : links);
+            vysledek.duplicitni += preskoceno;
             oznamitVlozeni(vysledek, 'fotek');
-            if (vysledek.vlozeno) upozornitNaStejne(links);
+            if (vysledek.vlozeno) upozornitNaStejne(ids.join(' '));
             // Nové album bez jediné uložené fotky: okno zůstane otevřené i s vyplněným textem, ať jde odkazy opravit
             if (!stav.editovaneAlbum && vysledek.vlozeno === 0 && !vysledek.duplicitni) return;
         }
@@ -284,6 +293,7 @@ export function pripravit() {
         if (e.submitter?.name === 'dalsi' && !stav.editovaneAlbum) {
             // Další album téže modelky: modelka, typ, fotograf a vydání zůstávají, vyprázdní se jen název, odkazy a text
             ['inputAlbumName', 'inputBulkLinks', 'inputAlbumPopis'].forEach(id => { document.getElementById(id).value = ''; });
+            kontrolaAlba.obnovit();
             obnovitNahledAlba();
             delete albumModal.dataset.zmeneno;
             document.getElementById(typ === 'Centerfold' ? 'inputBulkLinks' : 'inputAlbumName').focus();
@@ -327,14 +337,3 @@ export function pripravit() {
     });
 }
 
-// Po vložení fotek: otisky nových souborů proti sbírce (na pozadí, náhledy se stahují); shoda nabídne Stejné fotky
-async function upozornitNaStejne(links) {
-    const nalezy = await ZkontrolovatNoveFotky(links) || [];
-    if (!nalezy.length) return;
-    const f = nalezy[0].existujici;
-    const kde = `${f.jmenoModelky || 'bez modelky'}, ${f.album}`;
-    const text = nalezy.length === 1
-        ? `Nově vložená fotka už ve sbírce nejspíš je (${kde}).`
-        : `${nalezy.length} nově vložených fotek už ve sbírce nejspíš je (např. ${kde}).`;
-    oznamit(text, { text: 'Ukázat', akce: otevritStejneFotky });
-}

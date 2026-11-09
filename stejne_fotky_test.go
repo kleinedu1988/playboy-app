@@ -234,3 +234,21 @@ func TestStejneFotkyPodleObsahu(t *testing.T) {
 		t.Fatalf("skupiny %+v", skupiny)
 	}
 }
+
+// Kontrola odkazů: platné soubory bez opakování, nové a už uložené s místy; odkaz na složku se pozná
+func TestZkontrolovatOdkazy(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+	anna := idModelky(t, a, "Anna")
+	a.AddBulkPhotos(anna, "Pláž", "Pictorial", soubor("A"))
+	k := a.ZkontrolovatOdkazy("https://drive.google.com/file/d/" + soubor("A") + "/view " + soubor("B") + " " + soubor("A") + " https://drive.google.com/drive/folders/x")
+	if len(k.Ids) != 2 || len(k.Nove) != 1 || k.Nove[0] != soubor("B") || !k.Slozka {
+		t.Fatalf("kontrola %+v", k)
+	}
+	if len(k.Existujici) != 1 || k.Existujici[0].Mista[0].JmenoModelky != "Anna" || k.Existujici[0].Mista[0].Album != "Pláž" {
+		t.Fatalf("existující %+v", k.Existujici)
+	}
+	if k := a.ZkontrolovatOdkazy("nic"); len(k.Ids) != 0 || k.Ids == nil {
+		t.Fatalf("prázdná kontrola %+v", k)
+	}
+}

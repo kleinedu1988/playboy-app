@@ -351,6 +351,8 @@ export function ZkontrolovatDavku():Promise<sbirka.KontrolaSouboru>;
 
 export function ZkontrolovatNoveFotky(arg1:string):Promise<Array<main.NalezStejne>>;
 
+export function ZkontrolovatOdkazy(arg1:string):Promise<main.KontrolaOdkazu>;
+
 export function ZkontrolovatSoubory():Promise<sbirka.KontrolaSouboru>;
 
 export function ZrusitPoradiAlba(arg1:number,arg2:string,arg3:string):Promise<boolean>;

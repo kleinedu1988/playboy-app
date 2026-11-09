@@ -7,6 +7,16 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.35.0] – 2026-11-09
+
+### Přidáno
+- **Zásobník odkazů v profilu (`frontend/src/app/zasobnik.js`)**: pruh nad alby, kam se průběžně odkládají odkazy na fotky z Google Disku – <kbd>Ctrl</kbd>+<kbd>V</kbd> kdekoli v profilu mimo pole, přetažení odkazu nebo textu z prohlížeče, psaní. Ukazuje počet platných odkazů a fotky, které už ve sbírce jsou; <kbd>Ctrl</kbd>+<kbd>Enter</kbd> nebo Přidat vloží nové do zvoleného alba, „Nové album…“ je předá do okna alba. Rozepsaný text i zvolené album se pamatují pro každou modelku (i po restartu).
+- **Fotky, které už ve sbírce jsou, před vložením (`rychle_pridani.go` `ZkontrolovatOdkazy`, `frontend/src/app/kontrola-odkazu.js`)**: v zásobníku, v okně alba i v rychlém okně živý výpis s náhledem, modelkou a albem; vloží se jen nové fotky, pokud uživatel nezaškrtne „Vložit i ty, které už ve sbírce jsou“. Odkaz na složku Disku se ohlásí hned.
+- **Rychlé okno Nová modelka (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> odkudkoli)**: jméno, první výskyt (rok, měsíc, edice, Centerfold / Pictorial), narození jako datum, rok nebo věk v čísle (`lib/rychle-pridani.js` z něj spočítá rok narození; nápověda ukáže obvyklý věk z té doby), národnost předvyplněná odhadem z edice a doby (jen zřetelně nejčastější) a odkazy na fotky; fotky s číslem se uloží jako jeho centerfold nebo pictorial s vydáním. <kbd>Enter</kbd> / <kbd>Ctrl</kbd>+<kbd>Enter</kbd> uloží a otevře profil, „Uložit a další“ nechá číslo vyplněné pro další modelku.
+
+### Změněno
+- Upozornění na stejné fotky po vložení (`upozornitNaStejne`) je v `udrzba-stejne.js` a používá ho okno alba, zásobník i rychlé okno; kontroluje jen opravdu vložené soubory.
+
 ## [1.34.0] – 2026-11-09
 
 ### Přidáno

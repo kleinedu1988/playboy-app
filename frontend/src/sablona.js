@@ -176,10 +176,43 @@ export const SABLONA_OKNA = `
           <!-- Živá kontrola, zda modelka se stejným jménem nebo pseudonymem už ve sbírce není -->
           <small id="quickJmenoInfo" class="field-hint" aria-live="polite"></small>
         </div>
-        <p id="quickNapoveda" class="quick-napoveda">Enter přidá modelku a otevře její profil, kde se přidají fotky a údaje.</p>
+        <!-- První výskyt, narození a národnost: číslo časopisu uloží album s fotkami (app/formular-modelky.js) -->
+        <div class="quick-radek">
+          <div class="form-group">
+            <label for="inputQuickRok">První výskyt</label>
+            <div class="quick-cislo">
+              <input type="number" id="inputQuickRok" min="1953" max="2100" placeholder="rok" inputmode="numeric" aria-label="Rok čísla" />
+              <select id="selectQuickMesic" aria-label="Měsíc čísla"></select>
+              <select id="selectQuickEdice" aria-label="Edice"></select>
+              <select id="selectQuickTyp" aria-label="Druh výskytu"><option value="Centerfold">Centerfold</option><option value="Pictorial">Pictorial</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="quick-radek dva">
+          <div class="form-group">
+            <label for="inputQuickNarozeni">Narození nebo věk</label>
+            <input type="text" id="inputQuickNarozeni" autocomplete="off" placeholder="RRRR-MM-DD, rok nebo věk v čísle" aria-describedby="quickNarozeniInfo" />
+            <small id="quickNarozeniInfo" class="field-hint" aria-live="polite"></small>
+          </div>
+          <div class="form-group">
+            <label for="inputQuickNarodnost">Národnost</label>
+            <input type="text" id="inputQuickNarodnost" autocomplete="off" list="seznamQuickNarodnosti" aria-describedby="quickNarodnostInfo" />
+            <datalist id="seznamQuickNarodnosti"></datalist>
+            <small id="quickNarodnostInfo" class="field-hint" aria-live="polite"></small>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="inputQuickOdkazy">Fotky z Google Disku</label>
+          <textarea id="inputQuickOdkazy" rows="3" spellcheck="false" placeholder="Odkazy na fotky (nepovinné; s číslem se uloží jako jeho centerfold nebo pictorial)"></textarea>
+          <div id="quickKontrolaOdkazu" class="kontrola-odkazu" aria-live="polite" hidden></div>
+        </div>
+        <p id="quickNapoveda" class="quick-napoveda">Ctrl+Enter uloží a otevře profil, „Uložit a další“ nechá číslo vyplněné pro další modelku.</p>
         <div class="modal-actions modal-actions-split">
           <button type="button" id="quickMoreBtn" class="btn btn-secondary">Vyplnit další údaje…</button>
-          <button type="submit" class="btn btn-primary">Přidat</button>
+          <span class="quick-ulozit">
+            <button type="submit" name="dalsi" class="btn btn-secondary">Uložit a další</button>
+            <button type="submit" class="btn btn-primary">Uložit</button>
+          </span>
         </div>
       </form>
     </div>
@@ -465,6 +498,8 @@ export const SABLONA_OKNA = `
             <label id="bulkLinksLabel" for="inputBulkLinks">Vlož odkazy z Google Disku (libovolné množství)</label>
             <textarea id="inputBulkLinks" rows="4" placeholder="Vlož zkopírované odkazy z Disku (i více naráz)…" required></textarea>
             <small id="albumPocetOdkazu" class="album-tip"></small>
+            <!-- Které fotky už ve sbírce jsou (app/kontrola-odkazu.js); vloží se jen nové -->
+            <div id="albumKontrolaOdkazu" class="kontrola-odkazu" aria-live="polite" hidden></div>
           </div>
           <!-- Průvodní text se píše ve společném okně s formátováním (ui/editor-textu.js); hodnota je ve skrytém poli -->
           <div class="form-group">
@@ -833,6 +868,8 @@ export const SABLONA_OKNA = `
           <li><strong>Filtry v Modelkách</strong>: tlačítko <strong>Filtry</strong> v kapsli vpravo nahoře otevře panel – vlevo filtry (Srdíčka, Edice, Kategorie, Výskyt, Vlasy, Oči, Národnost, Tagy, Rok vydání, Rok narození, Výška, Váha, Tetování, Piercing), vpravo zvolený: <strong>je / není</strong>, hodnoty se zaškrtávají (číslo říká, kolik modelek s ostatními filtry a hledáním zbude), u roků a výšky předvolby a rozsah od–do. Dole je, kolik modelek se zobrazí, a Zrušit filtry. Zapnuté filtry jsou štítky ve stavové liště (klik otevře panel, × zruší); program si je pamatuje i po restartu. Hledání nahoře zůstává obyčejným polem (příkazy jako <code>vlasy:blond</code> v něm fungují dál).</li>
           <li><strong>Volby přehledu</strong> pod hledáním: <strong>⇅ řazení ▾</strong>, tlačítko <strong>Filtry</strong> (panel se srdíčky, edicí, kategorií, výskytem…; číslo v odznaku je počet zapnutých filtrů) a zapnuté filtry jako štítky, které <strong>×</strong> zruší; <strong>Zrušit filtry</strong> v panelu zruší všechny. V Nejlepších je vedle srdíček <strong>Výběr ▾</strong> a <strong>▶</strong> spustí slideshow. <strong>Rejstřík</strong> písmen nebo roků se ukáže u pravého okraje při rolování nebo po najetí myší.</li>
           <li><strong>Profil modelky</strong>: nahoře je jeden panel – drobečky, fotka, jméno (u profilu ze seznamu klik na jméno ▾ nabídne další modelky seznamu), srdíčka, pořadí, odznaky, pásky čísel, řádek akcí a lišta alb; po odrolování se panel plynule zmenší na jeden řádek a lišta alb zůstane pod ním. Pod panelem jsou alba přes celou šířku. Lišta alb je ve druhém řádku vedle drobečků. Akce jsou ve spodním řádku pruhu: <strong>★ Centerfold</strong> otevře centerfold v prohlížeči (jeho akce jsou na pravém tlačítku a v ⋯), <strong>Údaje</strong> (nebo <kbd>I</kbd>, klik na miniaturu) vysune panel s údaji, články a odkazy a program si pamatuje, jestli ho necháš otevřený; dál Upravit, Přidat fotky, Promítat a ⋯ (<strong>výřez titulní fotky</strong> – úprava přímo na velké fotce v panelu Údaje, jde i tlačítkem v jejím rohu –, promítat, centerfold, <strong>vybrat fotky</strong> – klik pak fotky vybírá, <kbd>Esc</kbd> ukončí –, sloučit, smazat). <kbd>←</kbd> <kbd>→</kbd> předchozí a další modelka, <kbd>Alt</kbd>+<kbd>←</kbd> nebo <kbd>Esc</kbd> zpět.</li>
+          <li><strong>Zásobník odkazů</strong> nad alby profilu: sem průběžně odkládáš odkazy na fotky z Google Disku – <kbd>Ctrl</kbd>+<kbd>V</kbd> kdekoli v profilu mimo pole, přetažení odkazu nebo označeného textu z prohlížeče, nebo psaní. Ukazuje počet platných odkazů a které fotky už ve sbírce jsou (s náhledem, modelkou a albem); vloží se jen nové, pokud nezaškrtneš „Vložit i ty, které už ve sbírce jsou“. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> nebo Přidat je vloží do zvoleného alba, „Nové album…“ je předá do okna alba. Rozepsaný zásobník si každá modelka pamatuje i po přepnutí jinam a po restartu. Stejnou kontrolu má i okno alba.</li>
+          <li><strong>Nová modelka</strong> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd> odkudkoli, nebo + › Přidat modelku): jméno, první výskyt (rok, měsíc, edice, Centerfold nebo Pictorial), narození – datum, rok, nebo věk v čísle (z něj se spočítá rok narození; v nápovědě je obvyklý věk modelek z té doby) –, národnost (předvyplní se odhad podle edice a doby, když je zřetelný) a odkazy na fotky s kontrolou, které už ve sbírce jsou. Fotky s číslem se uloží jako jeho centerfold nebo pictorial, bez čísla jako album Fotky. <kbd>Enter</kbd> nebo <kbd>Ctrl</kbd>+<kbd>Enter</kbd> uloží a otevře profil; „Uložit a další“ nechá číslo vyplněné a připraví okno pro další modelku.</li>
           <li>Klávesa <kbd>?</kbd> kdekoli (i v prohlížeči fotek a ve čtečce stran) ukáže přehled všech klávesových zkratek.</li>
           <li>Klik na štítek čísla, rok v kalendáři nebo „Foto:“ u alba otevře stránku čísla, ročníku nebo fotografa.</li>
         </ul>

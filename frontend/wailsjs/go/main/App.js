@@ -686,6 +686,10 @@ export function ZkontrolovatNoveFotky(arg1) {
   return window['go']['main']['App']['ZkontrolovatNoveFotky'](arg1);
 }
 
+export function ZkontrolovatOdkazy(arg1) {
+  return window['go']['main']['App']['ZkontrolovatOdkazy'](arg1);
+}
+
 export function ZkontrolovatSoubory() {
   return window['go']['main']['App']['ZkontrolovatSoubory']();
 }

@@ -14,6 +14,7 @@ const CASTI = [
         [k('Ctrl', 'F'), 'Hledat'],
         [`${k('Ctrl', '1')}–${k('4')}`, 'Sekce Modelky, Čísla, Hodnocení, Sbírka (klik na zvolenou sekci otevře mapu všech částí)'],
         [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět (z profilu, čísla)'],
+        [k('Ctrl', 'Shift', 'N'), 'Nová modelka (jméno, první výskyt, narození, národnost a fotky v jednom okně)'],
         [k('?'), 'Klávesové zkratky'],
         [k('Esc'), 'Zavřít okno, zpět'],
         [k('Ctrl', 'Enter'), 'Uložit modelku (i v Doplnit modelku), použít text v editoru'],
@@ -35,6 +36,8 @@ const CASTI = [
         [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět'],
         [k('I'), 'Panel Údaje (otevřít, zavřít)'],
         [k('T'), 'Tagy vybraných fotek'],
+        [k('Ctrl', 'V'), 'Odkazy na fotky z Disku do zásobníku nad alby (mimo pole)'],
+        [k('Ctrl', 'Enter'), 'V zásobníku: přidat fotky do zvoleného alba'],
         [k('Esc'), 'V režimu Vybrat: ukončit výběr'],
     ] },
     { klic: 'udrzba-udaje', nazev: 'Údržba – Po údajích', radky: [

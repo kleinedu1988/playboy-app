@@ -3,13 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (9. 11. 2026): verze 1.34.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.34 jsou hotové: mezipaměť náhledů na
+**Stav (9. 11. 2026): verze 1.35.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.35 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
 (1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
 Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
-příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) a křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0).
+příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) a zásobník odkazů s rychlým oknem Nová modelka (1.35.0).
 
 ---
 
@@ -61,13 +61,13 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 | **1.0** | **1.0.0** | **✅ Hotovo** | **První stabilní vydání** | Spolehlivá, otestovaná a zdokumentovaná verze |
 | **1.6–1.29** | **1.6–1.29** | **✅ Hotovo** | **Náhledy, Obsah fotek, Postřehy, Dnešní výběr** | Disková cache náhledů, CLIP + NudeNet + CZ textový model, odhady srdíček a tagů, styly, kolekce, Ideální modelka, Dnešní výběr, Postřehy 1–5 |
 | **Etapa A** | **1.30–1.34** | **✅ Hotovo** | **Prohloubení práce s modely, fotkami a Statistikami** | Mapa sbírky (PCA / autoenkodér), Síň slávy v Modelkách, Podobné modelky s vysvětlením, Stejné a podobné fotky, Křivky a srovnání období |
-| **Etapa B** | **1.35–1.38** | 📋 Plán | **Rychlé plnění sbírky a chytré hledání** | Rychlé přidávání a zásobník fotek, Průvodce přidáním čísla, Chytré hledání se zápisem a našeptáváním, Chytré výběry |
+| **Etapa B** | **1.35–1.38** | 🚧 Probíhá | **Rychlé plnění sbírky a chytré hledání** | Rychlé přidávání a zásobník fotek, Průvodce přidáním čísla, Chytré hledání se zápisem a našeptáváním, Chytré výběry |
 | **Etapa C** | **1.39–1.43** | 📋 Plán | **Spolupráce s Google Diskem a obohacení obsahu** | Google Disk v aplikaci, Vkládání z Disku, Úplnost sbírky a Wikidata, Propojení čísla a modelky, Bohatý text a obousměrné odkazy |
 | **Etapa D** | **1.44–1.47** | 📋 Plán | **Prohlížení, údržba a zábava** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy, Kvíz „Poznej playmate“, Rozšířené tiskové sestavy |
 
 ---
 
-## Dokončeno v řadě 1.0–1.34 ✅
+## Dokončeno v řadě 1.0–1.35 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -99,6 +99,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.32 – Podobné modelky s vysvětlením a vizuální příbuzností** (`podobne_modelky.go`, `frontend/src/lib/mapa-sbirky.js`): společný fotograf v důvodech, přepínač Údaje / Na fotkách (kosinová podobnost středů vektorů obsahu fotek, aspoň 3 fotky s vektorem), ⚔ Porovnat s touto do Hodnocení › Porovnat.
 - **1.33 – Stejné a podobné fotky v Údržbě** (`otisky.go`, `stejne_fotky.go`, `frontend/src/app/udrzba-stejne.js`): dHash a pHash z náhledů w400 na pozadí (`otisky.bin` v mezipaměti), skupiny podle otisků v celé sbírce a podle vektoru obsahu (≥ 0,985) u fotek téže modelky, režim Údržby Stejné fotky se srovnáním vedle sebe, sloučením (kopie se odebere nebo vymění soubor, srdíčka a tagy přejdou) a výjimkami „V pořádku“, obojí s Vrátit; upozornění po vložení fotek.
 - **1.34 – Křivky v čase a srovnání dvou období** (`frontend/src/lib/krivky.js`, `lib/postrehy.js` `porovnatObdobi`, `app/statistiky.js`): přepínač Sloupce / Křivka a rozpětí (klouzavý medián s pásmem Q1–Q3, u podílů Wilsonův 95% interval), graf Porovnat období s předvolbami desetiletí i vlastními roky, průkaznými rozdíly (Mann–Whitney, Fisher, BH) a tabulkou všech údajů.
+- **1.35 – Rychlé přidávání a zásobník fotek** (`rychle_pridani.go`, `frontend/src/app/zasobnik.js`, `app/kontrola-odkazu.js`, `lib/rychle-pridani.js`): zásobník odkazů nad alby profilu (Ctrl+V, přetažení, Ctrl+Enter, pamatuje se pro každou modelku), kontrola fotek, které už ve sbírce jsou, před vložením (zásobník, okno alba, rychlé okno), rychlé okno Ctrl+Shift+N s prvním výskytem, narozením nebo věkem, odhadem národnosti a fotkami, „Uložit a další“.
 ---
 
 ## Plán dalšího rozvoje (1.30–1.47)
@@ -172,7 +173,7 @@ v profilu s důvody podobnosti.
 
 Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové modelky a nových fotek na minimum a zpřístupnit chytré dotazy napříč celou aplikací.
 
-#### 1.35 – Rychlé přidávání a zásobník fotek
+#### 1.35 – Rychlé přidávání a zásobník fotek ✅ (9. 11. 2026)
 
 **Cíl:** zadat novou modelku s fotkami a výskytem v jednom okně na pár kláves a mít v detailu modelky trvalý „zásobník“ na průběžné odkládání odkazů na fotky.
 

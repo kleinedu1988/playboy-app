@@ -1,19 +1,23 @@
 // Rychlé přidání modelky, formulář modelky a potvrzení mazání
 import { jednou, oznamit } from '../ui/oznameni';
-import { AddModelka, DeleteModelka, DeleteVse, SlozkaZaloh } from './backend';
-import { esc, formatDatum, formatMarkdown, odvozeneKategorie, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
+import { AddBulkPhotos, AddModelka, DeleteModelka, DeleteVse, SetVydaniAlba, SlozkaZaloh } from './backend';
+import { EDICE, MESICE, esc, formatDatum, nazevVydani, slozitVydani, formatMarkdown, odvozeneKategorie, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
 import { pripojitVyberKategorii } from '../ui/kategorie';
 import { upravitText } from '../ui/editor-textu';
 import { nastavitHtml, nastavitText } from '../ui/dom';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
-import { searchInput } from './prvky';
+import { detailView, searchInput } from './prvky';
 import { prepnoutRezim } from './navigace';
 import { nacistGalerii } from './galerie';
 import { otevritDetailModelky } from './profil';
 import { modelModal } from './okno';
 import { neniDuplicitni } from './vyrez';
 import { SKUPINY_UDAJU } from '../lib/udrzba';
+import { obvyklyVek, odhadNarodnosti, prevestNarozeni } from '../lib/rychle-pridani';
+import { sledovatOdkazy } from './kontrola-odkazu';
+import { upozornitNaStejne } from './udrzba-stejne';
+import { otevreneOkno } from '../ui/dom';
 
 // Rychlé přidání: jen jméno, po uložení se rovnou otevře profil, kde se doplní fotky a údaje
 export const quickModal = document.getElementById('quickModal');
@@ -21,13 +25,53 @@ export const quickModal = document.getElementById('quickModal');
 // Modelky sbírky pro živou kontrolu jména (načtou se při otevření okna)
 let modelkySbirky = [];
 
+// Číslo prvního výskytu zůstává mezi otevřeními okna (několik modelek z jednoho čísla nebo ročníku za sebou)
+let posledniCislo = null;
+let kontrolaRychla = null;
+const hodnotaPole = id => /** @type {HTMLInputElement} */ (document.getElementById(id)).value.trim();
+
 export function otevritRychlePridani() {
     document.getElementById('quickForm').reset();
-    document.getElementById('quickJmenoInfo').textContent = '';
+    ['quickJmenoInfo', 'quickNarozeniInfo', 'quickNarodnostInfo'].forEach(id => napoveda(id, ''));
+    const c = posledniCislo || { rok: '', mesic: '', edice: stav.kalendarEdice, typ: 'Centerfold' };
+    /** @type {HTMLInputElement} */ (document.getElementById('inputQuickRok')).value = c.rok;
+    /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickMesic')).value = c.mesic;
+    /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickEdice')).value = c.edice;
+    /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickTyp')).value = c.typ;
+    document.getElementById('inputQuickNarodnost').dataset.odhad = '1';
+    kontrolaRychla?.obnovit();
     quickModal.classList.remove('hidden');
     document.getElementById('inputQuickJmeno').focus();
-    vsechnyModelky().then(m => { modelkySbirky = m; });
+    vsechnyModelky().then(m => {
+        modelkySbirky = m;
+        const narodnosti = [...new Set(m.map(x => String(x.narodnost || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'cs'));
+        document.getElementById('seznamQuickNarodnosti').innerHTML = narodnosti.map(n => `<option value="${esc(n)}"></option>`).join('');
+        obnovitOdhadyRychle();
+    });
 }
+
+// Odhad národnosti (předvyplní se, dokud ji uživatel nepřepíše) a obvyklý věk podle čísla prvního výskytu
+function obnovitOdhadyRychle() {
+    const rok = parseInt(hodnotaPole('inputQuickRok')) || 0, edice = hodnotaPole('selectQuickEdice');
+    const pole = /** @type {HTMLInputElement} */ (document.getElementById('inputQuickNarodnost'));
+    const odhad = odhadNarodnosti(modelkySbirky, edice, rok);
+    if (pole.dataset.odhad) pole.value = odhad?.narodnost || '';
+    napoveda('quickNarodnostInfo', odhad && pole.value === odhad.narodnost
+        ? `Odhad z čísla: ${Math.round(odhad.podil * 100)} % modelek edice ${edice}${rok ? ' z té doby' : ''}.` : '');
+    const vek = obvyklyVek(modelkySbirky, edice, rok);
+    const narozeni = prevestNarozeni(hodnotaPole('inputQuickNarozeni'), rok);
+    /** @type {HTMLInputElement} */ (document.getElementById('inputQuickNarozeni')).placeholder = vek ? `RRRR-MM-DD, rok nebo věk (obvykle ${vek})` : 'RRRR-MM-DD, rok nebo věk v čísle';
+    napoveda('quickNarozeniInfo', narozeni.chyba && hodnotaPole('inputQuickNarozeni').length > 1 ? narozeni.chyba
+        : narozeni.vek ? `Narozena asi ${narozeni.datum} (${narozeni.vek} let v čísle ${rok}).` : '', Boolean(narozeni.chyba));
+}
+
+// Ctrl+Shift+N odkudkoli (mimo otevřené okno a zamčený program)
+document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || !e.shiftKey || e.altKey || e.code !== 'KeyN' || e.repeat) return;
+    if (stav.zamceno || otevreneOkno()) return;
+    e.preventDefault();
+    otevritRychlePridani();
+});
 
 // Modelka sbírky se stejným jménem nebo pseudonymem (stejné porovnání jako při ukládání, viz vyrez.js)
 function stejnaModelka(jmeno, dalsiJmena = '', bezId = 0) {
@@ -409,22 +453,95 @@ export function pripravit() {
         pole.dispatchEvent(new Event('input', { bubbles: true }));
     };
 
+    // Výběry čísla a odhady
+    document.getElementById('selectQuickMesic').innerHTML = '<option value="">měsíc</option>' + MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('');
+    document.getElementById('selectQuickEdice').innerHTML = EDICE.map(e => `<option value="${e}">${e}</option>`).join('');
+    ['inputQuickRok', 'selectQuickEdice', 'inputQuickNarozeni'].forEach(id => document.getElementById(id).addEventListener('input', obnovitOdhadyRychle));
+    document.getElementById('inputQuickNarodnost').addEventListener('input', (e) => {
+        const pole = /** @type {HTMLInputElement} */ (e.target);
+        if (pole.value.trim()) delete pole.dataset.odhad;
+        else pole.dataset.odhad = '1';
+        obnovitOdhadyRychle();
+    });
+    kontrolaRychla = sledovatOdkazy(/** @type {HTMLTextAreaElement} */ (document.getElementById('inputQuickOdkazy')), document.getElementById('quickKontrolaOdkazu'));
+    // Ctrl+Enter kdekoli v okně (a Enter v jednořádkovém poli) uloží a otevře profil; Enter v poli odkazů dělá
+    // nový řádek. Bez toho by Enter spustil první tlačítko formuláře, tedy „Uložit a další“.
+    quickModal.addEventListener('keydown', (e) => {
+        const vPoli = /** @type {HTMLElement} */ (e.target).tagName === 'INPUT' && !e.isComposing;
+        if (e.key !== 'Enter' || !(e.ctrlKey || e.metaKey || vPoli) || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        /** @type {HTMLFormElement} */ (document.getElementById('quickForm')).requestSubmit(/** @type {HTMLButtonElement} */ (quickModal.querySelector('button[type="submit"]:not([name])')));
+    });
+
     document.getElementById('quickForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
-        const modelka = /** @type {import('../../wailsjs/go/models').hledani.Modelka} */ ({ jmeno: document.getElementById('inputQuickJmeno').value.trim(), tetovani: -1, piercing: -1 });
+        const dalsi = /** @type {HTMLButtonElement | null} */ (/** @type {SubmitEvent} */ (e).submitter)?.name === 'dalsi';
+        const rok = parseInt(hodnotaPole('inputQuickRok')) || 0;
+        const mesic = hodnotaPole('selectQuickMesic'), edice = hodnotaPole('selectQuickEdice'), typ = hodnotaPole('selectQuickTyp');
+        const narozeni = prevestNarozeni(hodnotaPole('inputQuickNarozeni'), rok);
+        if (narozeni.chyba) {
+            napoveda('quickNarozeniInfo', narozeni.chyba, true);
+            document.getElementById('inputQuickNarozeni').focus();
+            return;
+        }
+        if (rok && (rok < 1953 || rok > new Date().getFullYear() + 1)) {
+            oznamit('Rok prvního výskytu nevypadá správně.');
+            document.getElementById('inputQuickRok').focus();
+            return;
+        }
+        if (rok && typ === 'Centerfold' && !mesic) {
+            oznamit('Centerfold potřebuje měsíc čísla.');
+            document.getElementById('selectQuickMesic').focus();
+            return;
+        }
+        const odkazy = hodnotaPole('inputQuickOdkazy');
+        const kontrola = odkazy ? await kontrolaRychla.zkontrolovat() : null;
+        const ids = odkazy ? await kontrolaRychla.idsKVlozeni() : [];
+        const modelka = /** @type {import('../../wailsjs/go/models').hledani.Modelka} */ ({ jmeno: hodnotaPole('inputQuickJmeno'),
+            narozeniDatum: narozeni.datum, narodnost: hodnotaPole('inputQuickNarodnost'), tetovani: -1, piercing: -1 });
         if (!modelka.jmeno || !await neniDuplicitni(modelka)) return;
         if (!await AddModelka(modelka)) {
             oznamit('Modelku se nepodařilo uložit do databáze.');
             return;
         }
-        quickModal.classList.add('hidden');
-
         // Nově přidaná modelka má nejvyšší ID
         const nova = (await vsechnyModelky()).reduce((a, b) => (a && a.id > b.id ? a : b), null);
-        if (nova) {
-            prepnoutRezim('modelky');
-            otevritDetailModelky(nova);
+        if (!nova) return;
+        posledniCislo = { rok: rok ? String(rok) : '', mesic, edice, typ };
+
+        // Fotky: s číslem jako jeho centerfold nebo pictorial, bez čísla album Fotky
+        let vlozeno = 0;
+        if (ids.length) {
+            const vydani = rok ? slozitVydani(String(rok), mesic, edice) : '';
+            const typAlba = vydani ? typ : 'Pictorial';
+            const album = !vydani ? 'Fotky' : typAlba === 'Centerfold' ? vydani : nazevVydani(vydani);
+            const vysledek = await AddBulkPhotos(nova.id, album, typAlba, ids.join(' '));
+            vlozeno = vysledek.vlozeno;
+            if (vydani && typAlba !== 'Centerfold' && vlozeno) await SetVydaniAlba(nova.id, album, typAlba, vydani);
+            if (vlozeno) upozornitNaStejne(ids.join(' '));
+            if (vysledek.nedostupne) oznamit(`${sklonovat(vysledek.nedostupne, 'odkaz nefunguje', 'odkazy nefungují', 'odkazů nefunguje')} (smazané nebo nesdílené soubory) – neuloženy.`);
+        } else if (kontrola?.ids.length) {
+            oznamit('Fotky už ve sbírce jsou, nevložily se. Pro vložení zaškrtni „Vložit i ty, které už ve sbírce jsou“.');
         }
+        const ulozeno = `Uložena ${nova.jmeno}${vlozeno ? ` s ${sklonovat(vlozeno, 'fotkou', 'fotkami', 'fotkami')}` : ''}${rok && !vlozeno ? ' (číslo se uloží s fotkami)' : ''}.`;
+
+        if (dalsi) {
+            // Další modelka: číslo, edice a druh zůstanou, ostatní se vyprázdní
+            ['inputQuickJmeno', 'inputQuickNarozeni', 'inputQuickOdkazy', 'inputQuickNarodnost'].forEach(id => { /** @type {HTMLInputElement} */ (document.getElementById(id)).value = ''; });
+            document.getElementById('inputQuickNarodnost').dataset.odhad = '1';
+            ['quickJmenoInfo', 'quickNarozeniInfo'].forEach(id => napoveda(id, ''));
+            kontrolaRychla.obnovit();
+            modelkySbirky = await vsechnyModelky();
+            obnovitOdhadyRychle();
+            document.getElementById('inputQuickJmeno').focus();
+            oznamit(ulozeno);
+            if (stav.rezim === 'modelky' && detailView.classList.contains('hidden')) nacistGalerii(searchInput.value);
+            return;
+        }
+        quickModal.classList.add('hidden');
+        if (vlozeno || rok) oznamit(ulozeno);
+        prepnoutRezim('modelky');
+        otevritDetailModelky(nova);
     });
 
     // Míry z amerických zdrojů se po opuštění pole převedou na centimetry a kilogramy

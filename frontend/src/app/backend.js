@@ -84,6 +84,7 @@ const CTENI = new Set([
     'GetPodobneFotky',
     'GetPodobnostObsahu',
     'GetStejneFotky',
+    'ZkontrolovatOdkazy',
     'GetStavOtisku',
     // Otisky fotek a výjimky Stejných fotek jsou mimo data sbírky (soubor otisků, nastavení); Údržba se obnoví sama
     'SpustitOtisky',
@@ -206,6 +207,7 @@ export const GetStavObsahu = /** @type {typeof App.GetStavObsahu} */ (obalit('Ge
 export const GetPodobneFotky = /** @type {typeof App.GetPodobneFotky} */ (obalit('GetPodobneFotky'));
 export const GetPodobnostObsahu = /** @type {typeof App.GetPodobnostObsahu} */ (obalit('GetPodobnostObsahu'));
 export const GetStejneFotky = /** @type {typeof App.GetStejneFotky} */ (obalit('GetStejneFotky'));
+export const ZkontrolovatOdkazy = /** @type {typeof App.ZkontrolovatOdkazy} */ (obalit('ZkontrolovatOdkazy'));
 export const GetStavOtisku = /** @type {typeof App.GetStavOtisku} */ (obalit('GetStavOtisku'));
 export const SpustitOtisky = /** @type {typeof App.SpustitOtisky} */ (obalit('SpustitOtisky'));
 export const ZkontrolovatNoveFotky = /** @type {typeof App.ZkontrolovatNoveFotky} */ (obalit('ZkontrolovatNoveFotky'));

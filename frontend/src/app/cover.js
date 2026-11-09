@@ -244,7 +244,7 @@ function otevritCast(atribut, klic) {
 // Pohledy částí, které je mají (třetí úroveň): v mapě sekcí pod svou částí; otevřou část rovnou na tom pohledu
 const POHLEDY_CASTI = {
     slava: { atribut: 'sl-pohled', pohledy: [['top', 'Top 10'], ['legendy', 'Legendy'], ['odznaky', 'Odznaky'], ['rekordy', 'Rekordy'], ['kronika', 'Kronika'], ['sezona', 'Sezóna']], aktualni: () => pohledSlavy(), nastavit: k => nastavitPohledSlavy(k) },
-    udrzba: { atribut: 'ud-rezim', pohledy: [['udaje', 'Po údajích'], ['modelky', 'Po modelkách'], ['souhrn', 'Souhrn']], aktualni: () => stav.udrzbaRezim, nastavit: (k) => { stav.udrzbaRezim = k; try { localStorage.setItem('udrzbaRezim', k); } catch { /* jen pro toto spuštění */ } } },
+    udrzba: { atribut: 'ud-rezim', pohledy: [['udaje', 'Po údajích'], ['modelky', 'Po modelkách'], ['stejne', 'Stejné fotky'], ['souhrn', 'Souhrn']], aktualni: () => stav.udrzbaRezim, nastavit: (k) => { stav.udrzbaRezim = k; try { localStorage.setItem('udrzbaRezim', k); } catch { /* jen pro toto spuštění */ } } },
 };
 
 // Po otevření části přepne pohled jejím přepínačem, jakmile se přepínač objeví (nejvýš asi 2 s)

@@ -26,6 +26,7 @@ import * as navrhy from './navrhy';
 import * as uceni from './uceni';
 import * as fokus from './udrzba-fokus';
 import * as poUdajich from './udrzba-udaje';
+import * as stejne from './udrzba-stejne';
 import { exportovatData, importovatData, prejmenovatVeSbirce, zkontrolovatSoubory } from './sprava';
 import { otevritRychlePridani } from './formular-modelky';
 
@@ -48,6 +49,7 @@ const druhOdlozeni = (x, s) => s.druh === 'vydani' ? 'cislo' : x.druh;
 const REZIMY = [
     ['udaje', 'Po údajích', 'Jeden údaj, všechny modelky, kterým chybí: píšeš rovnou do řádků, Enter uloží a jde dolů'],
     ['modelky', 'Po modelkách', 'Jedna modelka a všechny její úkoly na jedné kartě, vpravo fronta'],
+    ['stejne', 'Stejné fotky', 'Tatáž fotka ve sbírce víckrát (jiný soubor, přeuložená nebo zmenšená kopie): nechat jednu, nebo označit jako v pořádku'],
     ['souhrn', 'Souhrn', 'Pokrok sbírky, co se program naučil a celá fronta s filtry'],
 ];
 const KOSTRA = `
@@ -56,6 +58,7 @@ const KOSTRA = `
         <div class="volby-v-liste" data-volby-casti="udrzba" data-ud="rezimy" data-stitek="Sbírka" data-nadpis="Údržba"></div>
         <div class="ud-rezim-obsah hidden" data-ud="udaje"></div>
         <div class="ud-fokus hidden" data-ud="fokus"></div>
+        <div class="ud-stejne hidden" data-ud="stejne"></div>
         <div class="ud-souhrn hidden" data-ud="souhrn">
         <div class="ud-hlava">
             <section class="ud-karta ud-pokrok" data-ud="pokrok" aria-label="Pokrok sbírky"></section>
@@ -109,6 +112,8 @@ function podtitulekSkupiny(s) {
 // Data z načtení Přehledu; přepočítá frontu (a řádky pro Doplnit modelku a „Uložit a další“)
 export function nastavitData({ p, stavy }) {
     data = { p, stavy };
+    // Sbírka se mohla změnit (smazané nebo přesunuté fotky): Stejné fotky se načtou znovu, až budou vidět
+    stejne.zastarat();
     return prepocitat();
 }
 
@@ -396,13 +401,15 @@ export function vykreslit() {
     if (!model || !zajistitKostru()) return;
     obnovitHlavuSbirky();
     nastavitHtml(cast('rezimy'), htmlVoleb());
-    ['udaje', 'fokus', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', souhrn: 'souhrn' }[stav.udrzbaRezim]));
+    ['udaje', 'fokus', 'stejne', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', stejne: 'stejne', souhrn: 'souhrn' }[stav.udrzbaRezim]));
     if (stav.udrzbaRezim === 'udaje') {
         poUdajich.zobrazit(cast('udaje'));
         poUdajich.vykreslit();
     } else if (stav.udrzbaRezim === 'modelky') {
         if (!fokus.otevreny()) fokus.otevrit(cast('fokus'), '', { zamerit: false });
         else fokus.vykreslit();
+    } else if (stav.udrzbaRezim === 'stejne') {
+        stejne.zobrazit(cast('stejne'));
     } else {
         nastavitHtml(cast('pokrok'), htmlPokroku());
         const htmlU = uceni.htmlUceni({ rozbaleno: uceniRozbaleno, zdroj: stav.udrzbaFiltr === 'navrhy' ? stav.udrzbaZdroj : '' });
@@ -860,6 +867,18 @@ export function pripravit(nacistPrehled) {
             if (seznam && data) data.p[seznam] = (data.p[seznam] || []).filter(x => !jeTo(x));
             poZmene();
         } });
+    // Upozornění na stejné fotky po vložení (ulozeni.js): Sbírka › Údržba v režimu Stejné fotky
+    document.addEventListener('otevrit-rezim-udrzby', (e) => {
+        const rezim = /** @type {CustomEvent} */ (e).detail;
+        const tlacitko = document.createElement('button');
+        tlacitko.hidden = true;
+        tlacitko.dataset.zobrazeniPrehledu = 'udrzba';
+        document.body.append(tlacitko);
+        tlacitko.click();
+        tlacitko.remove();
+        nastavitRezim(rezim);
+    });
+    stejne.pripravit({ viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'stejne', poZmene: () => nacist() });
     try { stav.udrzbaRazeni = localStorage.getItem('udrzbaRazeni') || 'priorita'; } catch { /* výchozí */ }
     try { stav.udrzbaRezim = localStorage.getItem('udrzbaRezim') || 'udaje'; } catch { /* Po údajích */ }
     if (!REZIMY.some(([k]) => k === stav.udrzbaRezim)) stav.udrzbaRezim = 'udaje';

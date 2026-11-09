@@ -523,45 +523,52 @@ func sloucitSeznam(prvni, druhy string) string {
 	return strings.Join(vysledek, ", ")
 }
 
+// Údaje fotky pro Vrátit (OdebratFotky, sloučení stejných fotek); false = fotka neexistuje
+func (a *App) obnovaFotky(id int) (ObnovaFotky, bool) {
+	var o ObnovaFotky
+	var spojit, poradi int
+	err := a.db.QueryRow(`SELECT f.modelka_id, f.album, f.typ, f.drive_file_id, COALESCE(f.vydani, ''), COALESCE(f.rotace, 0), COALESCE(f.spojit, 0),
+			COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0), COALESCE(f.pridano, ''), COALESCE(al.popis, ''), COALESCE(al.fotograf, ''), COALESCE(al.netyka_se, ''),
+			COALESCE(al.datum, '')
+		FROM fotografie f LEFT JOIN alba al ON al.id = f.album_id WHERE f.id = ?`, id).
+		Scan(&o.ModelkaID, &o.Album, &o.Typ, &o.DriveID, &o.Vydani, &o.Rotace, &spojit, &o.Hodnoceni, &poradi, &o.Pridano, &o.Popis, &o.Fotograf, &o.NetykaSe, &o.Datum)
+	if err != nil {
+		return o, false
+	}
+	o.Spojit, o.Poradi = spojit == 1, poradi
+	o.Vybery = []VyberFotky{}
+	if rows, err := a.db.Query("SELECT vyber_id, COALESCE(poradi, 0) FROM vybery_fotky WHERE fotografie_id = ?", id); err == nil {
+		for rows.Next() {
+			var v VyberFotky
+			if rows.Scan(&v.VyberID, &v.Poradi) == nil {
+				o.Vybery = append(o.Vybery, v)
+			}
+		}
+		rows.Close()
+	}
+	o.DalsiModelky = []int{}
+	if rows, err := a.db.Query(`SELECT am.modelka_id FROM alba_modelky am JOIN alba al ON al.id = am.album_id
+		WHERE al.modelka_id = ? AND al.album = ? AND al.typ = ?`, o.ModelkaID, o.Album, o.Typ); err == nil {
+		for rows.Next() {
+			var m int
+			if rows.Scan(&m) == nil {
+				o.DalsiModelky = append(o.DalsiModelky, m)
+			}
+		}
+		rows.Close()
+	}
+	return o, true
+}
+
 // Odebrání fotek s údaji pro Vrátit: vrací všechno, co odebrání ztratí, i to, co frontend nezná
 // (členství ve výběrech, další modelky a „netýká se" alba, které s poslední fotkou zmizí).
 // Víc fotek najednou se odebírá se zálohou předem.
 func (a *App) OdebratFotky(ids []int) []ObnovaFotky {
 	obnova := []ObnovaFotky{}
 	for _, id := range ids {
-		var o ObnovaFotky
-		var spojit, poradi int
-		err := a.db.QueryRow(`SELECT f.modelka_id, f.album, f.typ, f.drive_file_id, COALESCE(f.vydani, ''), COALESCE(f.rotace, 0), COALESCE(f.spojit, 0),
-				COALESCE(f.hodnoceni, 0), COALESCE(f.poradi, 0), COALESCE(f.pridano, ''), COALESCE(al.popis, ''), COALESCE(al.fotograf, ''), COALESCE(al.netyka_se, ''),
-				COALESCE(al.datum, '')
-			FROM fotografie f LEFT JOIN alba al ON al.id = f.album_id WHERE f.id = ?`, id).
-			Scan(&o.ModelkaID, &o.Album, &o.Typ, &o.DriveID, &o.Vydani, &o.Rotace, &spojit, &o.Hodnoceni, &poradi, &o.Pridano, &o.Popis, &o.Fotograf, &o.NetykaSe, &o.Datum)
-		if err != nil {
-			continue
+		if o, ok := a.obnovaFotky(id); ok {
+			obnova = append(obnova, o)
 		}
-		o.Spojit, o.Poradi = spojit == 1, poradi
-		o.Vybery = []VyberFotky{}
-		if rows, err := a.db.Query("SELECT vyber_id, COALESCE(poradi, 0) FROM vybery_fotky WHERE fotografie_id = ?", id); err == nil {
-			for rows.Next() {
-				var v VyberFotky
-				if rows.Scan(&v.VyberID, &v.Poradi) == nil {
-					o.Vybery = append(o.Vybery, v)
-				}
-			}
-			rows.Close()
-		}
-		o.DalsiModelky = []int{}
-		if rows, err := a.db.Query(`SELECT am.modelka_id FROM alba_modelky am JOIN alba al ON al.id = am.album_id
-			WHERE al.modelka_id = ? AND al.album = ? AND al.typ = ?`, o.ModelkaID, o.Album, o.Typ); err == nil {
-			for rows.Next() {
-				var m int
-				if rows.Scan(&m) == nil {
-					o.DalsiModelky = append(o.DalsiModelky, m)
-				}
-			}
-			rows.Close()
-		}
-		obnova = append(obnova, o)
 	}
 	var ok bool
 	if len(ids) == 1 {

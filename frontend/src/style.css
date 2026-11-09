@@ -19806,3 +19806,217 @@ body.rezim-vyberu #detailView .poster {
     flex: none;
     gap: 8px;
 }
+
+/* ——— Údržba › Stejné fotky (app/udrzba-stejne.js) ——— */
+.us {
+    display: grid;
+    gap: 16px;
+    max-width: 1180px;
+}
+
+.us-stav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow: hidden;
+    padding: 10px 14px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 12px;
+    background-color: var(--panel-bg);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.us-stav p {
+    flex: 1;
+    margin: 0;
+}
+
+.us-pruh {
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent) var(--hotovo), transparent var(--hotovo));
+}
+
+.us-stav.bezi .us-pruh {
+    animation: us-pulz 1.6s ease-in-out infinite;
+}
+
+@keyframes us-pulz {
+    50% { opacity: 0.45; }
+}
+
+.us-uvod {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.us-seznam {
+    display: grid;
+    gap: 14px;
+}
+
+.us-skupina {
+    border: 1px solid var(--panel-okraj);
+    border-radius: 18px;
+    background-color: var(--panel-bg);
+    box-shadow: var(--panel-stin);
+    overflow: hidden;
+}
+
+.us-hlava {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--panel-okraj);
+}
+
+.us-duvod {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    background-color: var(--panel-hover);
+}
+
+.us-stejna {
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.us-temer {
+    background-color: rgba(255, 193, 7, 0.14);
+    color: #ffc107;
+}
+
+.us-pocet {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.us-soubory {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    padding: 14px 16px;
+}
+
+.us-soubor {
+    display: grid;
+    gap: 8px;
+    align-content: start;
+    margin: 0;
+}
+
+.us-nahled {
+    position: relative;
+    display: block;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--bg-card);
+    cursor: pointer;
+    transition: border-color 0.15s, opacity 0.15s;
+}
+
+.us-nahled img {
+    display: block;
+    width: 100%;
+    height: 280px;
+    object-fit: contain;
+}
+
+.us-soubor:not(.nechat) .us-nahled {
+    opacity: 0.72;
+}
+
+.us-soubor:not(.nechat) .us-nahled:hover {
+    opacity: 1;
+    border-color: var(--panel-okraj);
+}
+
+.us-soubor.nechat .us-nahled {
+    border-color: var(--accent);
+}
+
+.us-znacka {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    padding: 2px 9px;
+    border-radius: 999px;
+    background-color: rgba(0, 0, 0, 0.65);
+    color: var(--text-main);
+    font-size: 0.75rem;
+}
+
+.us-soubor.nechat .us-znacka {
+    background-color: var(--accent);
+}
+
+.us-mista {
+    display: grid;
+    gap: 3px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.85rem;
+}
+
+.us-mista li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+}
+
+.us-modelka {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.us-modelka:hover {
+    color: var(--accent-text);
+}
+
+.us-album {
+    color: var(--text-muted);
+}
+
+.us-album em {
+    font-style: normal;
+    opacity: 0.8;
+}
+
+.us-srd {
+    color: var(--accent-text);
+    font-size: 0.75rem;
+}
+
+.us-udaje {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+}
+
+.us-udaje a {
+    color: inherit;
+}
+
+.us-akce {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 16px 14px;
+}

@@ -139,6 +139,8 @@ export function GetStavHledaniSlovy():Promise<obsah.StavTextu>;
 
 export function GetStavObsahu():Promise<obsah.Stav>;
 
+export function GetStavOtisku():Promise<main.StavOtisku>;
+
 export function GetStavStahovaniNahledu():Promise<nahledy.StavStahovani>;
 
 export function GetStavUceni():Promise<uceni.StavUceni>;
@@ -146,6 +148,8 @@ export function GetStavUceni():Promise<uceni.StavUceni>;
 export function GetStavUceniTagu():Promise<main.StavUceniTagu>;
 
 export function GetStavyVydani():Promise<Array<sbirka.VydaniInfo>>;
+
+export function GetStejneFotky():Promise<Array<main.SkupinaStejnych>>;
 
 export function GetStrankuNehodnocenych(arg1:number,arg2:string,arg3:number,arg4:number,arg5:number):Promise<main.StrankaNehodnocenych>;
 
@@ -202,6 +206,8 @@ export function Odemknout(arg1:string):Promise<boolean>;
 export function OdmitnoutNavrh(arg1:kontrola.NavrhDoplneni,arg2:boolean):Promise<boolean>;
 
 export function OveritOdkaz(arg1:string):Promise<number>;
+
+export function OznacitRuzneFotky(arg1:Array<string>):Promise<boolean>;
 
 export function PorovnatCtverici(arg1:Array<number>,arg2:number):Promise<boolean>;
 
@@ -277,11 +283,15 @@ export function SloucitAlba(arg1:number,arg2:string,arg3:string,arg4:string,arg5
 
 export function SloucitModelky(arg1:number,arg2:number):Promise<string>;
 
+export function SloucitStejneFotky(arg1:string,arg2:Array<string>):Promise<main.SlouceniStejnych>;
+
 export function SlozkaZaloh():Promise<string>;
 
 export function SmazatVyber(arg1:number):Promise<boolean>;
 
 export function SmazatVyberGalerie(arg1:string):Promise<boolean>;
+
+export function SpustitOtisky():Promise<boolean>;
 
 export function SpustitStahovaniNahledu():Promise<boolean>;
 
@@ -306,6 +316,8 @@ export function VratitCtverici(arg1:Array<number>,arg2:number):Promise<boolean>;
 export function VratitPorovnani(arg1:number,arg2:number):Promise<boolean>;
 
 export function VratitPruvodceFotky(arg1:main.PredchoziPruvodce):Promise<boolean>;
+
+export function VratitSlouceniStejnych(arg1:main.SlouceniStejnych):Promise<boolean>;
 
 export function VyberPodleNazvu(arg1:string):Promise<number>;
 
@@ -337,6 +349,10 @@ export function ZaznamenatZajem(arg1:number,arg2:string,arg3:number):Promise<boo
 
 export function ZkontrolovatDavku():Promise<sbirka.KontrolaSouboru>;
 
+export function ZkontrolovatNoveFotky(arg1:string):Promise<Array<main.NalezStejne>>;
+
 export function ZkontrolovatSoubory():Promise<sbirka.KontrolaSouboru>;
 
 export function ZrusitPoradiAlba(arg1:number,arg2:string,arg3:string):Promise<boolean>;
+
+export function ZrusitRuzneFotky(arg1:Array<string>):Promise<boolean>;

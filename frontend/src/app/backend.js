@@ -83,6 +83,13 @@ const CTENI = new Set([
     'GetStavObsahu',
     'GetPodobneFotky',
     'GetPodobnostObsahu',
+    'GetStejneFotky',
+    'GetStavOtisku',
+    // Otisky fotek a výjimky Stejných fotek jsou mimo data sbírky (soubor otisků, nastavení); Údržba se obnoví sama
+    'SpustitOtisky',
+    'ZkontrolovatNoveFotky',
+    'OznacitRuzneFotky',
+    'ZrusitRuzneFotky',
     'ZapnoutObsah',
     'ZastavitObsah',
     'VypnoutObsah',
@@ -198,6 +205,14 @@ export const ZastavitStahovaniNahledu = /** @type {typeof App.ZastavitStahovaniN
 export const GetStavObsahu = /** @type {typeof App.GetStavObsahu} */ (obalit('GetStavObsahu'));
 export const GetPodobneFotky = /** @type {typeof App.GetPodobneFotky} */ (obalit('GetPodobneFotky'));
 export const GetPodobnostObsahu = /** @type {typeof App.GetPodobnostObsahu} */ (obalit('GetPodobnostObsahu'));
+export const GetStejneFotky = /** @type {typeof App.GetStejneFotky} */ (obalit('GetStejneFotky'));
+export const GetStavOtisku = /** @type {typeof App.GetStavOtisku} */ (obalit('GetStavOtisku'));
+export const SpustitOtisky = /** @type {typeof App.SpustitOtisky} */ (obalit('SpustitOtisky'));
+export const ZkontrolovatNoveFotky = /** @type {typeof App.ZkontrolovatNoveFotky} */ (obalit('ZkontrolovatNoveFotky'));
+export const OznacitRuzneFotky = /** @type {typeof App.OznacitRuzneFotky} */ (obalit('OznacitRuzneFotky'));
+export const ZrusitRuzneFotky = /** @type {typeof App.ZrusitRuzneFotky} */ (obalit('ZrusitRuzneFotky'));
+export const SloucitStejneFotky = /** @type {typeof App.SloucitStejneFotky} */ (obalit('SloucitStejneFotky'));
+export const VratitSlouceniStejnych = /** @type {typeof App.VratitSlouceniStejnych} */ (obalit('VratitSlouceniStejnych'));
 export const ZapnoutObsah = /** @type {typeof App.ZapnoutObsah} */ (obalit('ZapnoutObsah'));
 export const ZastavitObsah = /** @type {typeof App.ZastavitObsah} */ (obalit('ZastavitObsah'));
 export const VypnoutObsah = /** @type {typeof App.VypnoutObsah} */ (obalit('VypnoutObsah'));

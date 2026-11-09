@@ -262,6 +262,10 @@ export function GetStavObsahu() {
   return window['go']['main']['App']['GetStavObsahu']();
 }
 
+export function GetStavOtisku() {
+  return window['go']['main']['App']['GetStavOtisku']();
+}
+
 export function GetStavStahovaniNahledu() {
   return window['go']['main']['App']['GetStavStahovaniNahledu']();
 }
@@ -276,6 +280,10 @@ export function GetStavUceniTagu() {
 
 export function GetStavyVydani() {
   return window['go']['main']['App']['GetStavyVydani']();
+}
+
+export function GetStejneFotky() {
+  return window['go']['main']['App']['GetStejneFotky']();
 }
 
 export function GetStrankuNehodnocenych(arg1, arg2, arg3, arg4, arg5) {
@@ -388,6 +396,10 @@ export function OdmitnoutNavrh(arg1, arg2) {
 
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
+}
+
+export function OznacitRuzneFotky(arg1) {
+  return window['go']['main']['App']['OznacitRuzneFotky'](arg1);
 }
 
 export function PorovnatCtverici(arg1, arg2) {
@@ -538,6 +550,10 @@ export function SloucitModelky(arg1, arg2) {
   return window['go']['main']['App']['SloucitModelky'](arg1, arg2);
 }
 
+export function SloucitStejneFotky(arg1, arg2) {
+  return window['go']['main']['App']['SloucitStejneFotky'](arg1, arg2);
+}
+
 export function SlozkaZaloh() {
   return window['go']['main']['App']['SlozkaZaloh']();
 }
@@ -548,6 +564,10 @@ export function SmazatVyber(arg1) {
 
 export function SmazatVyberGalerie(arg1) {
   return window['go']['main']['App']['SmazatVyberGalerie'](arg1);
+}
+
+export function SpustitOtisky() {
+  return window['go']['main']['App']['SpustitOtisky']();
 }
 
 export function SpustitStahovaniNahledu() {
@@ -596,6 +616,10 @@ export function VratitPorovnani(arg1, arg2) {
 
 export function VratitPruvodceFotky(arg1) {
   return window['go']['main']['App']['VratitPruvodceFotky'](arg1);
+}
+
+export function VratitSlouceniStejnych(arg1) {
+  return window['go']['main']['App']['VratitSlouceniStejnych'](arg1);
 }
 
 export function VyberPodleNazvu(arg1) {
@@ -658,10 +682,18 @@ export function ZkontrolovatDavku() {
   return window['go']['main']['App']['ZkontrolovatDavku']();
 }
 
+export function ZkontrolovatNoveFotky(arg1) {
+  return window['go']['main']['App']['ZkontrolovatNoveFotky'](arg1);
+}
+
 export function ZkontrolovatSoubory() {
   return window['go']['main']['App']['ZkontrolovatSoubory']();
 }
 
 export function ZrusitPoradiAlba(arg1, arg2, arg3) {
   return window['go']['main']['App']['ZrusitPoradiAlba'](arg1, arg2, arg3);
+}
+
+export function ZrusitRuzneFotky(arg1) {
+  return window['go']['main']['App']['ZrusitRuzneFotky'](arg1);
 }

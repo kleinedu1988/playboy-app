@@ -1,7 +1,8 @@
 // Výběrová okna, ukládání formulářů a hledání
 import { esc, jeOnline, obdobiCyberGirl, platneDatum, prevestVahu, prevestVysku, sjednotit, slozitVydani, udajChybi } from '../lib/format';
 import { hledaniVeFronte, hledatVeFronte } from './udrzba';
-import { AddBulkPhotos, AddModelka, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
+import { otevritStejneFotky } from './udrzba-stejne';
+import { AddBulkPhotos, AddModelka, ZkontrolovatNoveFotky, SetDatumAlba, SetPopisAlba, SetVydaniAlba, UpdateAlbum, UpdateModelka } from './backend';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -257,6 +258,7 @@ export function pripravit() {
         if (links.trim()) {
             const vysledek = await AddBulkPhotos(modelka.id, album, typ, links);
             oznamitVlozeni(vysledek, 'fotek');
+            if (vysledek.vlozeno) upozornitNaStejne(links);
             // Nové album bez jediné uložené fotky: okno zůstane otevřené i s vyplněným textem, ať jde odkazy opravit
             if (!stav.editovaneAlbum && vysledek.vlozeno === 0 && !vysledek.duplicitni) return;
         }
@@ -323,4 +325,16 @@ export function pripravit() {
             else if (hledaniVeFronte()) hledatVeFronte(searchInput.value);
         }, 180);
     });
+}
+
+// Po vložení fotek: otisky nových souborů proti sbírce (na pozadí, náhledy se stahují); shoda nabídne Stejné fotky
+async function upozornitNaStejne(links) {
+    const nalezy = await ZkontrolovatNoveFotky(links) || [];
+    if (!nalezy.length) return;
+    const f = nalezy[0].existujici;
+    const kde = `${f.jmenoModelky || 'bez modelky'}, ${f.album}`;
+    const text = nalezy.length === 1
+        ? `Nově vložená fotka už ve sbírce nejspíš je (${kde}).`
+        : `${nalezy.length} nově vložených fotek už ve sbírce nejspíš je (např. ${kde}).`;
+    oznamit(text, { text: 'Ukázat', akce: otevritStejneFotky });
 }

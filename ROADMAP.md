@@ -3,13 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (9. 11. 2026): verze 1.32.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.32 jsou hotové: mezipaměť náhledů na
+**Stav (9. 11. 2026): verze 1.33.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.33 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
 (1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
 Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
-příbuzností z fotek a porovnáním (1.32.0).
+příbuzností z fotek a porovnáním (1.32.0) a Stejné fotky v Údržbě s perceptuálními otisky (1.33.0).
 
 ---
 
@@ -67,7 +67,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 
 ---
 
-## Dokončeno v řadě 1.0–1.32 ✅
+## Dokončeno v řadě 1.0–1.33 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -97,6 +97,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.30 – Mapa sbírky ve Statistikách** (`frontend/src/lib/mapa-sbirky.js`): PCA s pevnou orientací os, Procrustovo zarovnání, barevné režimy, laso jako výběr pro ostatní grafy. Zbývá z plánu: autoenkodér, `<canvas>` nad 2 000 bodů, míra posunu a „Přepočítat od začátku“.
 - **1.31 – Síň slávy v Modelkách s hero záhlavím a první Podobné modelky**: Síň slávy jako část Modelek s herem a lepivým pásem pohledů, pás karet součástí hera ve Statistikách i Síni, Podobné modelky v profilu s důvody a „Na mapě →“, legenda Mapy sbírky jako rychlý výběr.
 - **1.32 – Podobné modelky s vysvětlením a vizuální příbuzností** (`podobne_modelky.go`, `frontend/src/lib/mapa-sbirky.js`): společný fotograf v důvodech, přepínač Údaje / Na fotkách (kosinová podobnost středů vektorů obsahu fotek, aspoň 3 fotky s vektorem), ⚔ Porovnat s touto do Hodnocení › Porovnat.
+- **1.33 – Stejné a podobné fotky v Údržbě** (`otisky.go`, `stejne_fotky.go`, `frontend/src/app/udrzba-stejne.js`): dHash a pHash z náhledů w400 na pozadí (`otisky.bin` v mezipaměti), skupiny podle otisků v celé sbírce a podle vektoru obsahu (≥ 0,985) u fotek téže modelky, režim Údržby Stejné fotky se srovnáním vedle sebe, sloučením (kopie se odebere nebo vymění soubor, srdíčka a tagy přejdou) a výjimkami „V pořádku“, obojí s Vrátit; upozornění po vložení fotek.
 ---
 
 ## Plán dalšího rozvoje (1.30–1.47)
@@ -141,7 +142,7 @@ v profilu s důvody podobnosti.
 
 **Hotovo, když:** každá karta podobné modelky jasně říká, v čem jsou si blízké, a při spočítaném obsahu fotek lze hledat i vizuálně podobné modelky.
 
-#### 1.33 – Stejné a podobné fotky v Údržbě (perceptuální otisky + CLIP)
+#### 1.33 – Stejné a podobné fotky v Údržbě (perceptuální otisky + CLIP) ✅ (9. 11. 2026)
 
 **Cíl:** najít v Údržbě stejnou fotku nahranou na Google Disk víckrát (s jiným ID) i téměř shodné záběry ze stejného focení. Využije kombinaci rychlého obrazového otisku (dHash + pHash z náhledů `w400`) pro přesné a oříznuté kopie a existujících CLIP vektorů (`internal/obsah`) pro vizuálně téměř totožné záběry. Bez změny schématu i exportu (`~/.cache/playboy-app/otisky.bin`).
 

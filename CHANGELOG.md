@@ -7,6 +7,18 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.33.0] – 2026-11-09
+
+### Přidáno
+- **Perceptuální otisky fotek (`otisky.go`)**: 64bitový dHash a pHash (DCT 32 × 32) v čistém Go z náhledů w400; počítají se na pozadí tři minuty po startu (náhledy ustupují oknu jako stahování na pozadí) a ukládají do `otisky.bin` vedle mezipaměti náhledů, průběžně po 200 fotkách a při zavření programu. Databáze sbírky ani export se nemění.
+- **Údržba › Stejné fotky (`stejne_fotky.go`, `frontend/src/app/udrzba-stejne.js`)**: čtvrtý režim Údržby se skupinami souborů, které vypadají jako tatáž fotka – podle otisků v celé sbírce (stejná / skoro stejná) a podle vektoru obsahu ≥ 0,985 u fotek téže modelky (velmi podobná). Soubory skupiny jsou vedle sebe s modelkou, albem, typem, vydáním, srdíčky, tagy a odkazem na plné rozlišení; předvybraný k ponechání je soubor s víc srdíčky, tagy a místy.
+- **Nechat vybranou**: v albu, kde ponechaný soubor už je, se kopie odebere a její srdíčka (vyšší) a tagy přejdou na ponechanou fotku; v ostatních albech se jen vymění soubor, takže album o fotku nepřijde. Se zálohou předem a s Vrátit (vrátí záměny, srdíčka, tagy i odebrané fotky s tagy).
+- **V pořádku (nejsou stejné)**: dvojice souborů se uloží do nastavení a skupina se už nehlásí; jde vrátit.
+- **Upozornění po vložení fotek**: otisky nových souborů se porovnají se sbírkou a shoda nabídne v oznámení „Ukázat“ (Údržba › Stejné fotky).
+
+### Změněno
+- `OdebratFotky` sbírá údaje pro Vrátit ve sdílené funkci `obnovaFotky` (používá ji i sloučení stejných fotek).
+
 ## [1.32.0] – 2026-11-09
 
 ### Přidáno

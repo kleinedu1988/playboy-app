@@ -52,6 +52,8 @@ type App struct {
 	nahledy *nahledy.Mezipamet
 	// Obsah fotek: model, vektory a podobné fotky (obsah_fotek.go); nil = vypnuto (testy bez startup)
 	obsah *obsah.Sluzba
+	// Perceptuální otisky fotek pro Stejné fotky (otisky.go); vznikají při prvním použití
+	otiskyFotek *otiskyFotek
 	// Úvodní obrazovka v malém okně (main.go): okno dostane uloženou velikost až na jejím konci (ObnovitOkno)
 	uvod *uvodOkna
 }
@@ -250,6 +252,8 @@ func (a *App) startup(ctx context.Context) {
 			a.snimekVPameti()
 		}()
 		time.AfterFunc(time.Minute, a.uklidNahledu)
+		// Otisky fotek pro Údržbu › Stejné fotky: na pozadí, až se program rozběhne (náhledy ustupují oknu)
+		time.AfterFunc(3*time.Minute, func() { a.SpustitOtisky() })
 	}
 }
 
@@ -482,6 +486,7 @@ func (a *App) migraceIndexy() error {
 
 func (a *App) shutdown() {
 	a.ZastavitStahovaniNahledu()
+	a.zastavitOtisky()
 	a.obsah.Zastavit()
 	obsah.UkoncitProstredi()
 	a.pockatNaPozadi()

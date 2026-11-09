@@ -4,8 +4,8 @@
 // Volby grafu (Graf ▾, Výskyt, Edice, výběr) jsou jako jinde v liště pod hledáním.
 import { statistikyView } from './prvky';
 import { stav } from './stav';
-import { ukazatPohled } from './navigace';
-import { nacistStatistiky, naplnitHeroStatistik, zapomenoutStatistiky } from './statistiky';
+import { prepnoutRezim, ukazatPohled } from './navigace';
+import { nacistStatistiky, naplnitHeroStatistik, nastavitModelkuNaMape, zapomenoutStatistiky } from './statistiky';
 import { obnovitVolby } from '../ui/volby';
 import { obnovitPasHlavicky } from './prehled';
 import { poZmeneDat } from './udalosti';
@@ -36,6 +36,14 @@ export async function otevritStatistiky() {
     obnovitVolby(statistikyView);
     // Hero se doplní na pozadí (jako u Profilů): start ani přepnutí na jeho fotku nečekají
     naplnitHeroStatistik(hero());
+}
+
+// Otevře Statistiky rovnou na Mapě sbírky se zvýrazněnou modelkou (z profilu modelky „Na mapě →“)
+export async function otevritMapuModelky(modelkaId) {
+    nastavitModelkuNaMape(modelkaId, sekce());
+    prepnoutRezim('statistiky');
+    await otevritStatistiky();
+    sekce()?.querySelector('.sp-telo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // Statistiky po překreslení (změna grafu, výběru) oznámí nové volby: lišta je převezme, když je pohled vidět

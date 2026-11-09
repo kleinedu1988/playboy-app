@@ -22,6 +22,9 @@ import { zaznamenatProfil } from './zajem';
 import { upravitVyrez } from './vyrez';
 import { nastavitStav } from '../ui/volby';
 import { otevritLightbox } from './prohlizec';
+import { podobneModelky } from '../lib/mapa-sbirky';
+import { znakySrdicek } from '../lib/srdicka';
+import { otevritMapuModelky } from './statistiky-pohled';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -46,7 +49,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     // Opožděná odpověď přehledu, ze kterého se sem přišlo, už profil nesmí přepsat
     const moje = ++stav.cisloNacteni;
     // Galerie a historie drží objekty z doby načtení; po úpravě by profil i formulář ukázaly staré údaje
-    modelka = (await vsechnyModelky()).find(m => m.id === modelka.id) || modelka;
+    const vsechny = await vsechnyModelky();
+    modelka = vsechny.find(m => m.id === modelka.id) || modelka;
     // Mezitím otevřený jiný pohled má přednost
     if (moje !== stav.cisloNacteni) return;
     if (!bezHistorie) zapamatovatMisto({ modelka });
@@ -114,6 +118,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
 
     const tagy = modelka.tags.split(',').map(t => t.trim()).filter(Boolean);
     const dalsiJmena = modelka.dalsiJmena.split(',').map(j => j.trim()).filter(Boolean);
+    const podobne = podobneModelky(modelka.id, vsechny, { pocet: 5 });
 
     // Pásky v rohu fotky: štítek za každé číslo (rok i měsíc), ve kterém se modelka objevila
     const vsechnaVydani = [
@@ -178,6 +183,13 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
             <button type="button" class="tagy-rozbalit hidden" data-rozbalit-tagy aria-expanded="false">Všechny tagy</button>
         </section>` : ''}
         ${htmlOdkazu(modelka.odkazy) ? `<section class="udaje-blok udaje-odkazy"><h4>Odkazy</h4>${htmlOdkazu(modelka.odkazy)}</section>` : ''}
+        ${podobne.length ? `<section class="udaje-blok udaje-podobne">
+            <h4>Podobné modelky <button type="button" class="link udaje-na-mape" data-na-mape="${modelka.id}" title="Zobrazit modelku a její okolí na Mapě sbírky ve Statistikách">Na mapě →</button></h4>
+            <div class="podobne-seznam">${podobne.map(p => `<button type="button" class="podobna-polozka" data-modelka="${p.id}" title="Otevřít profil ${esc(p.m.jmeno)}">
+                <span class="podobna-hlava"><span class="podobna-jmeno">${esc(p.m.jmeno)}</span>${p.m.hodnoceni ? `<span class="podobna-srd">${znakySrdicek(p.m.hodnoceni)}</span>` : ''}</span>
+                ${p.duvody.length ? `<span class="podobna-duvody">${esc(p.duvody.join(' · '))}</span>` : ''}
+            </button>`).join('')}</div>
+        </section>` : ''}
     `;
     // Tlačítko rozbalení tagů jen tehdy, když se do dvou řádků nevejdou
     const poleTagu = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.udaje-tagy .profile-tags'));
@@ -621,6 +633,11 @@ export function upravitVyrezProfilu() {
 export function pripravit() {
     modelHeader.addEventListener('click', (e) => {
         if (e.target.closest('[data-upravit-vyrez]')) upravitVyrezProfilu();
+        const naMape = /** @type {HTMLElement | null} */ (e.target.closest('[data-na-mape]'));
+        if (naMape) {
+            otevritMapuModelky(parseInt(naMape.dataset.naMape, 10));
+            return;
+        }
         // Tagy: rozbalení a sbalení dlouhého seznamu
         const rozbalit = /** @type {HTMLElement | null} */ (e.target.closest('[data-rozbalit-tagy]'));
         if (rozbalit) {

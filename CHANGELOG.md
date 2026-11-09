@@ -7,6 +7,22 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.31.0] – 2026-11-09
+
+### Přidáno
+- **Podobné modelky v profilu (`frontend/src/lib/mapa-sbirky.js`, `frontend/src/app/profil.js`)**: v panelu Údajů pět nejpodobnějších modelek s důvody podobnosti (směs Gowerovy podobnosti a 8-D kódu z PCA, váha kódu podle jistoty vektoru) a odkaz „Na mapě →“, který otevře Mapu sbírky se zvýrazněnou modelkou.
+- **Mapa sbírky**: kategorie v legendě jsou tlačítka, klik vyfiltruje body dané barvy; Gowerova podobnost počítá i věk v 1. čísle, typ prsou a tetování.
+- **Ikony pilulek Profily, Galerie a Centerfoldy (`frontend/src/ui/volby.js`)**: v úzké kapsli mají všechny části ikonu.
+
+### Změněno
+- **Síň slávy je část Modelek** (Profily · Galerie · Statistiky · Síň slávy): samostatné tlačítko v kapsli zmizelo, sekce jsou čtyři a Sbírka má zkratku <kbd>Ctrl</kbd>+<kbd>4</kbd>; mapa sekcí, nápověda a zkratky jsou upravené.
+- **Hero záhlaví Síně slávy (`frontend/src/app/sin-slavy.js`)** místo hlavičky v záhlaví okna: jednička Top 10 na velké fotce s ♛, dny na trůnu, věta o sezóně a akce (Vitrína, Vyhlásit / Zvolit téma, Vyzvat o trůn, Profil); pod herem lepivý pás pohledů s panely a filtrem Kroniky. Hero se při přepnutí pohledu nepřekresluje.
+- **Pás karet je součástí hera** ve Statistikách i Síni slávy: fotka jde až pod karty, karty jsou „kapitoly“ s linkou nahoře (zvolený postřeh plná linka, v Síni postup sezóny a odznaku).
+
+### Opraveno
+- Gowerova podobnost nepočítá rok, vlasy, oči a národnost dvakrát (i bez opakovaných důvodů).
+- Mezipaměť podobnosti se opravdu použije (seznam modelek chodí jako nová kopie pole), zvýraznění na mapě se po běžném vstupu do Statistik ruší a filtr z legendy se ptá aktuální mapy.
+
 ## [1.30.0] – 2026-11-09
 
 ### Přidáno

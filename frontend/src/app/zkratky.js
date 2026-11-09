@@ -12,7 +12,7 @@ const nebo = '<span class="zkratky-nebo">/</span>';
 const CASTI = [
     { klic: 'vse', nazev: 'Kdekoli', radky: [
         [k('Ctrl', 'F'), 'Hledat'],
-        [`${k('Ctrl', '1')}–${k('5')}`, 'Sekce Modelky, Čísla, Hodnocení, Síň slávy, Sbírka (klik na zvolenou sekci otevře mapu všech částí)'],
+        [`${k('Ctrl', '1')}–${k('4')}`, 'Sekce Modelky, Čísla, Hodnocení, Sbírka (klik na zvolenou sekci otevře mapu všech částí)'],
         [`${k('Alt', '←')}${nebo}${k('Esc')}`, 'Zpět (z profilu, čísla)'],
         [k('?'), 'Klávesové zkratky'],
         [k('Esc'), 'Zavřít okno, zpět'],
@@ -21,7 +21,7 @@ const CASTI = [
         [`${k('1')}–${k('5')}${nebo}${k('0')}`, 'Srdíčka zaměřené karty nebo fotky, zrušit'],
         [`${k('3')} ${k('3')}`, 'U modelky stejná číslice znovu přidá půlku (3½; u pětky 4½)'],
         [k('←', '→'), 'Zaměřená srdíčka modelky po půlce (profil, Hodnocení)'],
-        [k('←', '→'), 'Části stránky, když je zaměřená pilulka pásu (Hodnocení, Síň slávy, Sbírka) nebo volba pod hledáním'],
+        [k('←', '→'), 'Části stránky, když je zaměřená pilulka pásu (Modelky, Síň slávy, Sbírka) nebo volba pod hledáním'],
         [k('←', '↑', '→', '↓'), 'Pohyb v mapě edice (Sbírka › panel Čísla a sháním)'],
         [`${k('Shift', 'F10')}`, 'Nabídka akcí (jako pravé tlačítko)'],
     ] },

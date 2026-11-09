@@ -142,6 +142,20 @@ let barvaMapy = 'obdobi';
 try { if (BARVY_MAPY[localStorage.getItem('barvaMapyStatistik')]) barvaMapy = localStorage.getItem('barvaMapyStatistik'); } catch { /* výchozí barva */ }
 let mapaCache = { data: null, vysledek: null };
 let lasoTah = null; // aktivní tažení lasa na mapě: [{ x, y }, ...] v souřadnicích SVG
+let zvyraznenaModelkaMapy = null;
+
+// Přepne graf Statistik na Mapu sbírky a zvýrazní na ní zadanou modelku (volá profil modelky „Na mapě →“)
+export function nastavitModelkuNaMape(modelkaId, koren = null) {
+    graf = 'mapa';
+    zvyraznenaModelkaMapy = modelkaId;
+    try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
+    if (koren && koren.dataset.nacteno) vykreslit(koren);
+}
+
+// Zvýraznění z profilu platí jen pro tu jednu návštěvu mapy; běžný vstup do Statistik ho ruší
+export function zrusitModelkuNaMape() {
+    zvyraznenaModelkaMapy = null;
+}
 
 // Stav: vybraný graf (pamatuje se), edice a druh výskytu a výběr. Výběr jsou podmínky (klíč → { popis, test, dotaz,
 // ... }) společné všem grafům: rok prvního výskytu („rok“, sdílí ho všechny grafy s osou roků), měsíc přidání
@@ -405,6 +419,18 @@ function dataMapy() {
     return vysledek;
 }
 
+// Bod mapy podle id modelky; rejstřík se staví jednou pro každý výpočet mapy
+const rejstrikyMapy = new WeakMap();
+function bodMapy(id) {
+    const vysledek = dataMapy();
+    let rejstrik = rejstrikyMapy.get(vysledek);
+    if (!rejstrik) {
+        rejstrik = new Map(vysledek.body.map(b => [b.id, b]));
+        rejstrikyMapy.set(vysledek, rejstrik);
+    }
+    return rejstrik.get(id);
+}
+
 function htmlMapySbirky(sirka) {
     const { body } = dataMapy();
     if (!body.length) return '<p class="prazdno-male">Zatím žádná data.</p>';
@@ -416,23 +442,29 @@ function htmlMapySbirky(sirka) {
     const maFiltry = filtry.size > 0;
     const r = body.length > 2000 ? 2.4 : 3.4;
 
+    let kruhZvyraznene = '';
     const kruhy = body.map(b => {
         const cx = sx(b.x).toFixed(1), cy = sy(b.y).toFixed(1);
-        const jeVybrana = !maFiltry || vyhovuje(b.m);
+        const jeZvyraznena = zvyraznenaModelkaMapy === b.id;
+        const jeVybrana = !maFiltry || vyhovuje(b.m) || jeZvyraznena;
         const katHodnota = barevnyRezim.hodnota(b);
-        const barva = mapaBarev.get(katHodnota) || '#90a4ae';
+        const barva = jeZvyraznena ? BARVA : (mapaBarev.get(katHodnota) || '#90a4ae');
         const tlum = jeVybrana ? '' : ' tlum';
+        const polomer = jeZvyraznena ? r + 1.6 : r;
         const tip = `${b.m.jmeno}${b.popisUdaju ? ` (${b.popisUdaju})` : ''}${b.sousede.length ? ` · sousedé: ${b.sousede.join(', ')}` : ''}`;
-        if (b.maloUdaju) {
-            return `<circle class="sp-mapa-bod${tlum}" data-mapa-id="${b.id}" data-tip="${esc(tip)}" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${barva}" stroke-width="1.5"/>`;
+        if (jeZvyraznena) {
+            kruhZvyraznene = `<circle class="sp-mapa-zvyraznena" cx="${cx}" cy="${cy}" r="${(r + 5).toFixed(1)}" fill="none" stroke="${BARVA}" stroke-width="2" pointer-events="none"/>`;
         }
-        return `<circle class="sp-mapa-bod${tlum}" data-mapa-id="${b.id}" data-tip="${esc(tip)}" cx="${cx}" cy="${cy}" r="${r}" fill="${barva}"/>`;
+        if (b.maloUdaju && !jeZvyraznena) {
+            return `<circle class="sp-mapa-bod${tlum}" data-mapa-id="${b.id}" data-tip="${esc(tip)}" cx="${cx}" cy="${cy}" r="${polomer}" fill="none" stroke="${barva}" stroke-width="1.5"/>`;
+        }
+        return `<circle class="sp-mapa-bod${tlum}" data-mapa-id="${b.id}" data-tip="${esc(tip)}" cx="${cx}" cy="${cy}" r="${polomer}" fill="${barva}"/>`;
     }).join('');
 
     const lasoHtml = lasoTah && lasoTah.length >= 2
         ? `<polygon class="sp-laso" points="${lasoTah.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}"/>`
         : '';
-    return `<svg class="sp-svg" width="${W}" height="${H}" data-mapa-w="${W}" data-mapa-h="${H}" role="img" aria-label="Mapa sbírky">${kruhy}${lasoHtml}</svg>`;
+    return `<svg class="sp-svg" width="${W}" height="${H}" data-mapa-w="${W}" data-mapa-h="${H}" role="img" aria-label="Mapa sbírky">${kruhy}${kruhZvyraznene}${lasoHtml}</svg>`;
 }
 
 function htmlPruhu(def, polozky) {
@@ -632,7 +664,12 @@ function htmlKostry() {
 function htmlLegendy(def) {
     if (def.druh === 'mapa') {
         const rezim = BARVY_MAPY[barvaMapy] || BARVY_MAPY.obdobi;
-        return `${rezim.polozky.map(([nazev, barva]) => `<span><i class="bod" style="background:${barva}"></i>${esc(nazev)}</span>`).join('')}<span><i class="krouzek"></i>málo údajů</span>`;
+        const aktivniKat = filtry.get('mapa')?.hodnota || '';
+        return `${rezim.polozky.map(([nazev, barva]) => {
+            const klicKat = `${barvaMapy}:${nazev}`;
+            const zapnuto = aktivniKat === klicKat;
+            return `<button type="button" class="sp-legenda-volba${zapnuto ? ' aktivni' : ''}" data-sp-mapa-kategorie="${esc(nazev)}" aria-pressed="${zapnuto}" title="Kliknutím vyfiltrovat na mapě"><i class="bod" style="background:${barva}"></i>${esc(nazev)}</button>`;
+        }).join('')}<span><i class="krouzek"></i>málo údajů</span>`;
     }
     if (!def.osa) return '';
     const celek = [...filtry.keys()].some(k => k !== klicFiltru(def)) ? '<span><i class="celek"></i>celá sbírka</span>' : '';
@@ -914,6 +951,7 @@ export function pripravit(stats) {
         const volbaGrafu = /** @type {HTMLElement | null} */ (cil.closest('[data-sp-graf-volba]'));
         if (volbaGrafu) {
             graf = volbaGrafu.dataset.spGrafVolba;
+            zvyraznenaModelkaMapy = null;
             zvyraznit = volbaGrafu.dataset.spZvyraznit ?? null;
             try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
             zobrazitVse = false;
@@ -927,6 +965,29 @@ export function pripravit(stats) {
             vykreslit(koren);
             return;
         }
+        const volbaKatMapy = /** @type {HTMLElement | null} */ (cil.closest('[data-sp-mapa-kategorie]'));
+        if (volbaKatMapy) {
+            const nazevKat = volbaKatMapy.dataset.spMapaKategorie;
+            const klicKat = `${barvaMapy}:${nazevKat}`;
+            if (filtry.get('mapa')?.hodnota === klicKat) {
+                filtry.delete('mapa');
+            } else {
+                const rezim = BARVY_MAPY[barvaMapy] || BARVY_MAPY.obdobi;
+                // Test se ptá aktuální mapy (po změně dat i nově přidané modelky), ne seznamu z doby kliknutí
+                filtry.set('mapa', {
+                    hodnota: klicKat,
+                    popis: `${rezim.nazev}: ${nazevKat}`,
+                    test: m => {
+                        const bod = bodMapy(m.id);
+                        return !!bod && rezim.hodnota(bod) === nazevKat;
+                    },
+                    dotaz: null,
+                });
+            }
+            zobrazitVse = false;
+            vykreslit(koren);
+            return;
+        }
         const volbaEdice = cil.closest('[data-sp-edice-volba]');
         const volbaDruhu = cil.closest('[data-sp-druh-volba]');
         const pruh = cil.closest('.sp-pruh[data-hodnota]');
@@ -935,8 +996,10 @@ export function pripravit(stats) {
             vykreslit(koren);
             return;
         }
-        if (cil.closest('[data-zrusit-vyber]')) filtry.clear();
-        else if (volbaEdice || volbaDruhu) {
+        if (cil.closest('[data-zrusit-vyber]')) {
+            filtry.clear();
+            zvyraznenaModelkaMapy = null;
+        } else if (volbaEdice || volbaDruhu) {
             // Výběr roku platí pro edici a druh výskytu, ve kterých vznikl; s jejich změnou se zruší
             if (volbaEdice) edice = volbaEdice.dataset.spEdiceVolba;
             else druhVyskytu = volbaDruhu.dataset.spDruhVolba;
@@ -1063,19 +1126,19 @@ function htmlPasuHero(seznam, i) {
         const popis = [...filtry.values()].map(f => f.popis).join(' · ');
         return `<div class="sh-pas-hlava"><b>Výběr</b><span>${esc(popis)}</span><span>· čím se liší od sbírky</span></div>
             ${zprava ? `<p class="sh-pas-prazdno">${zprava}</p>` : ''}
-            ${vybrane.map(p => `<button type="button" class="sh-karta" data-sh-graf="${esc(p.graf)}"${p.hodnota ? ` data-sh-zvyraznit="${esc(p.hodnota)}"` : ''}
+            <div class="sh-karty">${vybrane.map(p => `<button type="button" class="sh-karta" data-sh-graf="${esc(p.graf)}"${p.hodnota ? ` data-sh-zvyraznit="${esc(p.hodnota)}"` : ''}
                 data-tip="${esc(p.podrobnosti)}" data-tip-siroky aria-description="${esc(p.podrobnosti)}">
                 <span class="sh-karta-graf"><i aria-hidden="true">${p.ikona}</i>${esc(GRAFY.find(g => g.klic === p.graf)?.nazev || '')}</span>
-                <span class="sh-karta-veta">${esc(p.veta)}</span></button>`).join('')}`;
+                <span class="sh-karta-veta">${esc(p.veta)}</span></button>`).join('')}</div>`;
     }
     if (seznam.length < 2) return '';
     const ikonaKarty = p => p.druh === 'rok' ? '◆' : p.druh === 'souvislost' ? '∼' : p.smer > 0 ? '↗' : '↘';
     return `<div class="sh-pas-hlava"><b>Postřehy sbírky</b><span>co je ve sbírce průkazné · klik ukáže postřeh nahoře</span></div>
-        ${seznam.map((p, k) => `<button type="button" class="sh-karta${k === i ? ' zvolena' : ''}" data-sh-index="${k}" aria-pressed="${k === i}"
+        <div class="sh-karty">${seznam.map((p, k) => `<button type="button" class="sh-karta${k === i ? ' zvolena' : ''}" data-sh-index="${k}" aria-pressed="${k === i}"
             data-tip="${esc(p.podrobnosti)}" data-tip-siroky aria-description="${esc(p.podrobnosti)}">
             <span class="sh-karta-graf"><i aria-hidden="true">${ikonaKarty(p)}</i>${esc(p.def.nazev)}</span>
             <span class="sh-karta-zmena">${esc(p.hero.text)}</span>
-            <span class="sh-karta-veta">${esc(p.veta)}</span></button>`).join('')}`;
+            <span class="sh-karta-veta">${esc(p.veta)}</span></button>`).join('')}</div>`;
 }
 function obnovitPasHero(misto, stavHero = heroPostrehy) {
     const pas = misto.querySelector('[data-sh-pas]');

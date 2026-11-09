@@ -23,13 +23,13 @@ test('okna jsou přímo v kostře okna', () => {
 // (#volbyPrehledu) a tlačítka okna (.window-controls); ve druhém řádku (.hlavni-lista) jsou drobečky (.logo), pilulky
 // podčástí (#pasStranky) a vpravo přepínač lupy (#searchToggleBtn) s akcemi (#addBtn, #menuBtn); ve třetím řádku
 // (#hledaniRadek) je uprostřed kapsle hledat (.nav-controls, #searchInput)
-test('hlavička: navigační kapsle s pěti sekcemi, volby a akce v řádku okna, podmenu pod ní', () => {
+test('hlavička: navigační kapsle se čtyřmi sekcemi (Síň slávy je část Modelek), volby a akce v řádku okna, podmenu pod ní', () => {
     const zdroj = readFileSync(new URL('../src/sablona.js', import.meta.url), 'utf8');
     const titulek = zdroj.match(/<div class="titulek-okna">([\s\S]*)<div class="hlavni-lista">/);
     assert.ok(titulek, '.titulek-okna před .hlavni-lista');
     const zalozky = [...titulek[1].matchAll(/data-rezim="([^"]+)"/g)].map(m => m[1]);
-    assert.deepEqual(zalozky, ['modelky', 'covery', 'prehled', 'prehled', 'prehled']);
-    assert.deepEqual([...titulek[1].matchAll(/data-sekce="([^"]+)"/g)].map(m => m[1]), ['hodnoceni', 'slava', 'sbirka']);
+    assert.deepEqual(zalozky, ['modelky', 'covery', 'prehled', 'prehled']);
+    assert.deepEqual([...titulek[1].matchAll(/data-sekce="([^"]+)"/g)].map(m => m[1]), ['hodnoceni', 'sbirka']);
     assert.match(titulek[1], /id="searchToggleBtn"/);
     assert.match(titulek[1], /id="addBtn"/);
     assert.match(titulek[1], /id="menuBtn"/);

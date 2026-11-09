@@ -347,15 +347,13 @@ export function zvyraznitRezim() {
     const novy = stav.rezim;
     prepinacRezimu.querySelectorAll('[data-rezim]').forEach((b) => {
         let zvoleny = false;
-        // Sekce: Modelky (profily, galerie), Čísla (obálky, kalendář, centerfoldy), Hodnocení (Oblíbenost i Síň slávy),
-        // Sbírka (ostatní části Přehledu)
+        // Sekce: Modelky (profily, galerie, statistiky, Síň slávy), Čísla (obálky, kalendář, centerfoldy), Hodnocení
+        // (Porovnat, Hodnotit, Pořadí), Sbírka (ostatní části Přehledu). Síň slávy je uvnitř část Oblíbenosti 'slava'.
         const vOblibenosti = novy === 'prehled' && stav.prehledSekce === 'oblibenost';
         if (b.dataset.rezim === 'modelky') {
-            zvoleny = novy === 'modelky' || novy === 'nejlepsi' || novy === 'statistiky';
+            zvoleny = novy === 'modelky' || novy === 'nejlepsi' || novy === 'statistiky' || (vOblibenosti && stav.oblibenostCast === 'slava');
         } else if (b.dataset.rezim === 'covery') {
             zvoleny = novy === 'covery' || novy === 'kalendar' || novy === 'centerfoldy';
-        } else if (b.dataset.sekce === 'slava') {
-            zvoleny = vOblibenosti && stav.oblibenostCast === 'slava';
         } else if (b.dataset.sekce === 'hodnoceni') {
             zvoleny = vOblibenosti && stav.oblibenostCast !== 'slava';
         } else if (b.dataset.rezim === 'prehled') {

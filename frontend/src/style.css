@@ -7106,6 +7106,54 @@ textarea {
     border: 1.5px solid var(--text-muted);
 }
 
+/* Mapa sbírky: kategorie v legendě jsou tlačítka, klik vyfiltruje body dané barvy */
+.sp-legenda {
+    flex-wrap: wrap;
+}
+
+.sp-legenda-volba {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: -2px -6px;
+    padding: 2px 6px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.sp-legenda-volba:hover {
+    color: var(--text-main);
+    background-color: var(--panel-hover);
+}
+
+.sp-legenda-volba.aktivni {
+    color: var(--text-main);
+    border-color: var(--accent);
+    background-color: var(--accent-soft);
+}
+
+.sp-legenda-volba:focus-visible {
+    outline: 2px solid var(--accent-text);
+    outline-offset: 1px;
+}
+
+/* Modelka zvýrazněná z profilu („Na mapě →“) */
+.sp-mapa-zvyraznena {
+    animation: sp-mapa-tep 1.6s ease-in-out 3;
+}
+
+@keyframes sp-mapa-tep {
+    50% { stroke-opacity: 0.25; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sp-mapa-zvyraznena { animation: none; }
+}
+
 
 /* Postřeh o trendu nebo zlomu pod grafem v čase (lib/postrehy.js); podrobnosti v bublině u ⓘ */
 .sp-postreh {
@@ -13875,80 +13923,82 @@ button.pas-kapsle:focus-visible {
     background-color: rgba(216, 27, 96, 0.18);
 }
 
-/* ===== Hlavička Síně slávy (sin-slavy.js): fotka jedničky s ♛ místo kruhu, jinak styly hlavičky Sbírky ===== */
-.sl-foto {
-    position: relative;
-    flex: none;
-    width: 76px;
-    height: 76px;
-    padding: 0;
-    border: 2px solid rgba(255, 196, 0, 0.75);
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.05);
-    cursor: pointer;
-    transition: width 0.2s ease, height 0.2s ease;
+/* ===== Modelky › Síň slávy (sin-slavy.js): hero s jedničkou na trůnu, pás karet a lepivý pás pohledů ===== */
+.sl-hero {
+    min-height: 0;
+    margin-bottom: 18px;
 }
 
-.sl-foto img {
+.sl-hero:empty {
+    min-height: clamp(260px, 38vh, 440px);
+}
+
+/* Bez fotky (trůn je volný) zůstane jen tmavá plocha s textem */
+.sl-scena:not(:has(.ph-ram)) {
+    min-height: 200px;
+}
+
+.sl-trun {
+    color: #ffd54f;
+    font-size: clamp(18px, 2vw, 24px);
+}
+
+/* Postup v kartě Sezóna a Na dosah */
+.sl-karta-pruh {
     display: block;
-    width: 100%;
+    height: 4px;
+    margin: 2px 0;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.sl-karta-pruh i {
+    display: block;
     height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-    transform: none !important;
+    border-radius: inherit;
+    background: var(--accent);
 }
 
-.sl-foto span {
-    position: absolute;
-    top: -9px;
-    right: -4px;
-    color: #ffc400;
-    font-size: 20px;
-    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+.sl-pas-vpravo {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px 14px;
 }
 
-.sl-foto.prazdna {
-    display: grid;
-    place-items: center;
-    cursor: default;
+.sl-filtry-kroniky,
+.sl-panely {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
-.sl-foto.prazdna span {
-    position: static;
+/* Filtr Kroniky a panely zůstávají i v přilepeném pásu (dlouhou kroniku jde filtrovat odrolovanou) */
+.plovouci-pas.prilepeny .sl-pas-vpravo {
+    visibility: visible;
+    opacity: 1;
 }
 
-.navbar.slava-svinuta .sl-foto {
-    width: 34px;
-    height: 34px;
+.plovouci-pas .sl-pas-vpravo {
+    overflow: visible;
+    white-space: normal;
 }
 
-.navbar.slava-svinuta .sl-foto span {
-    top: -7px;
-    right: -6px;
-    font-size: 13px;
-}
-
-.slava-hlava .sh-akce .volba small {
-    margin-left: 6px;
-    opacity: 0.75;
-}
-
-.slava-hlava .sh-pohledy:empty {
-    display: none;
-}
-
-.slava-hlava .sh-pohledy small {
+.sl-filtry-kroniky small {
+    margin-left: 4px;
     opacity: 0.7;
 }
 
 /* Panel Síně slávy vpravo (I): Na dosah, Minulé sezóny, Pravidla */
-.slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > .sl-panel {
+.slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > .sl-panel-misto > .sl-panel {
     transform: none;
     visibility: visible;
     transition: transform 0.22s ease;
 }
 
-.slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > .slava-obsah {
+.slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > :is(.slava-obsah, .sl-lista) {
     margin-right: calc(min(440px, 40vw) + 16px);
 }
 
@@ -14025,7 +14075,7 @@ button.pas-kapsle:focus-visible {
         width: auto;
     }
 
-    .slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > .slava-obsah {
+    .slava:is([data-sl-panel="dosah"], [data-sl-panel="minule"], [data-sl-panel="pravidla"]) > :is(.slava-obsah, .sl-lista) {
         margin-right: 0;
     }
 }
@@ -16604,57 +16654,57 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* Svinutí po odrolování */
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-obsah {
+.navbar.sbirka-svinuta .sh-obsah {
     gap: 12px;
     padding: 0;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-kruh {
+.navbar.sbirka-svinuta .sh-kruh {
     width: 34px;
     height: 34px;
     background: radial-gradient(closest-side, rgb(26, 26, 30) 74%, transparent 75% 100%), conic-gradient(var(--accent) calc(var(--p) * 1%), rgba(255, 255, 255, 0.1) 0);
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-kruh b {
+.navbar.sbirka-svinuta .sh-kruh b {
     font-size: 9.5px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-kruh small,
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-oblasti,
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-cisla span:not(.sh-ukoly) {
+.navbar.sbirka-svinuta .sh-kruh small,
+.navbar.sbirka-svinuta .sh-oblasti,
+.navbar.sbirka-svinuta .sh-cisla span:not(.sh-ukoly) {
     display: none;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-identita {
+.navbar.sbirka-svinuta .sh-identita {
     flex-direction: row;
     align-items: center;
     gap: 12px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-identita h2 {
+.navbar.sbirka-svinuta .sh-identita h2 {
     font-size: 15px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sbirka-hlava {
+.navbar.sbirka-svinuta .sbirka-hlava {
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
     row-gap: 6px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-akce {
+.navbar.sbirka-svinuta .sh-akce {
     flex-wrap: nowrap;
     margin-left: auto;
     padding-top: 0;
     border-top: 0;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-akce .volba {
+.navbar.sbirka-svinuta .sh-akce .volba {
     height: 28px;
     padding: 0 9px;
 }
 
-:is(.navbar.sbirka-svinuta, .navbar.slava-svinuta) .sh-lista {
+.navbar.sbirka-svinuta .sh-lista {
     flex: 1 1 100%;
     padding-top: 4px;
 }
@@ -17777,6 +17827,76 @@ body.rezim-vyberu #detailView .poster {
     padding: 10px 0;
 }
 
+/* Podobné modelky: nejbližší sousedé z Mapy sbírky s důvody podobnosti */
+.profile-side .udaje-blok h4 .udaje-na-mape {
+    order: 2;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.podobne-seznam {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.podobna-polozka {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin: 0 -8px;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-main);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.podobna-polozka:hover {
+    background-color: var(--panel-hover);
+}
+
+.podobna-polozka:focus-visible {
+    outline: 2px solid var(--accent-text);
+    outline-offset: -2px;
+}
+
+.podobna-hlava {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.podobna-jmeno {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.podobna-polozka:hover .podobna-jmeno {
+    color: var(--accent-text);
+}
+
+.podobna-srd {
+    flex-shrink: 0;
+    color: var(--accent-text);
+    font-size: 11px;
+}
+
+.podobna-duvody {
+    color: var(--text-muted);
+    font-size: 11.5px;
+    line-height: 1.35;
+}
+
 .profile-side .udaje-blok h4 .udaje-pocet {
     order: 2;
     color: var(--text-muted);
@@ -18482,6 +18602,185 @@ body.rezim-vyberu #detailView .poster {
     line-height: 1.4;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
+}
+
+/* Pás karet je součást hera (Statistiky, Síň slávy): fotka, rozmazané pozadí a překryv jdou přes celé hero až pod
+   karty, text scény stojí nad nimi a karty jsou skleněné dlaždice v jedné řadě (víc karet se posouvá do strany) */
+.sh-hero {
+    display: flex;
+    flex-direction: column;
+}
+
+.sh-hero .sh-scena {
+    position: static;
+    display: flex;
+    flex: 1;
+    align-items: flex-end;
+    min-height: clamp(220px, 30vh, 360px);
+    padding: 32px 32px 18px;
+}
+
+.sh-hero .ph-obsah {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    z-index: 1;
+}
+
+.sh-hero .ph-prekryv {
+    background:
+        linear-gradient(to right, rgba(15, 15, 18, 0.8) 0%, rgba(15, 15, 18, 0.45) 35%, rgba(15, 15, 18, 0) 60%),
+        linear-gradient(to bottom, rgba(15, 15, 18, 0) 35%, rgba(15, 15, 18, 0.88) 100%);
+}
+
+.sh-hero .sh-pas {
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 32px 22px;
+    border-top: 0;
+    background: none;
+}
+
+.sh-hero .sh-pas[hidden] {
+    display: none;
+}
+
+.sh-hero .sh-pas-hlava,
+.sh-hero .sh-pas-prazdno {
+    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.9);
+}
+
+.sh-karty {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Karty v heru jsou „kapitoly“ na fotce jako čárky v heru Galerie: bez rámečku a pozadí, nahoře tenká linka
+   (zvolený postřeh ji má plnou, v Síni slávy ukazuje postup sezóny či odznaku), popisek zlatými kapitálkami jako
+   nadtitulek hera, hodnota bíle a věta tlumeně */
+.sh-hero .sh-karta {
+    position: relative;
+    flex: 0 0 clamp(190px, 21%, 250px);
+    gap: 3px;
+    padding: 14px 0 2px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
+    scroll-snap-align: start;
+}
+
+.sh-hero .sh-karta::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.22);
+    transition: background-color 0.15s ease;
+}
+
+.sh-hero .sh-karta:hover,
+.sh-hero .sh-karta:focus-visible {
+    border: 0;
+    background: none;
+}
+
+.sh-hero .sh-karta:hover::before,
+.sh-hero .sh-karta:focus-visible::before {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+.sh-hero .sh-karta:focus-visible {
+    outline: 2px solid var(--accent-text);
+    outline-offset: 4px;
+    border-radius: 4px;
+}
+
+.sh-hero .sh-karta.zvolena {
+    border: 0;
+    background: none;
+}
+
+.sh-hero .sh-karta.zvolena::before {
+    background: #fff;
+}
+
+.sh-hero .sh-karta-graf {
+    color: var(--zlato-svetle, #f6e3a1);
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+}
+
+.sh-hero .sh-karta-graf i {
+    color: inherit;
+}
+
+.sh-hero .sh-karta-zmena {
+    color: #fff;
+}
+
+.sh-hero .sh-karta:not(.zvolena) .sh-karta-zmena {
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.sh-hero .sh-karta-veta {
+    color: rgba(240, 240, 245, 0.7);
+    -webkit-line-clamp: 2;
+}
+
+/* Postup (Síň slávy: sezóna, na dosah) je přímo linka kapitoly */
+.sh-hero .sl-karta-pruh {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    margin: 0;
+    border-radius: 3px;
+    background: none;
+}
+
+.sh-hero .sl-karta-pruh i {
+    background: var(--accent-text);
+}
+
+/* Hlavička pásu (Statistiky) jako nadtitulek hera, bez vlastního řádku navíc */
+.sh-hero .sh-pas-hlava b {
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+}
+
+.sh-hero .sh-pas-hlava {
+    gap: 4px 10px;
+    font-size: 11.5px;
+}
+
+.sh-hero .sh-karty {
+    gap: 22px;
+}
+
+@media (max-width: 760px) {
+    .sh-hero .sh-scena {
+        padding: 18px 18px 14px;
+    }
+
+    .sh-hero .sh-pas {
+        padding: 0 18px 16px;
+    }
+
+    .sh-hero .sh-karta {
+        flex-basis: 78%;
+    }
 }
 
 /* ===== Profily: hero banner s doporučenou modelkou (app/profily-hero.js) a široká lišta ovládání pod ním ===== */

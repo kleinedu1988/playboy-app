@@ -254,6 +254,7 @@ export function gowerPodobnost(z1, z2) {
         vaha += 1.0;
         if (z1.narodnost === z2.narodnost) { soucet += 1.0; duvody.push({ shoda: 0.85, text: z1.narodnost }); }
     }
+    pridatCislo(z1.vek, z2.vek, 18, 0.7, v1 => `${Math.round(v1)} let v 1. čísle`);
     const spolKat = z1.kat.filter(k => z2.kat.includes(k));
     const sjednoceniKat = new Set([...z1.kat, ...z2.kat]).size;
     if (sjednoceniKat > 0) {
@@ -262,13 +263,28 @@ export function gowerPodobnost(z1, z2) {
         vaha += 1.4;
         if (spolKat.length) duvody.push({ shoda: 0.75 + 0.2 * jacc, text: spolKat[0] });
     }
+    const prsa1 = String(z1.m.prsaTyp || '').trim(), prsa2 = String(z2.m.prsaTyp || '').trim();
+    if (prsa1 && prsa2) {
+        vaha += 0.4;
+        if (prsa1 === prsa2) {
+            soucet += 0.4;
+            if (prsa1 === 'Silikonová') duvody.push({ shoda: 0.72, text: 'silikonová prsa' });
+        }
+    }
+    if ((z1.m.tetovani === 0 || z1.m.tetovani === 1) && (z2.m.tetovani === 0 || z2.m.tetovani === 1)) {
+        vaha += 0.3;
+        if (z1.m.tetovani === z2.m.tetovani) {
+            soucet += 0.3;
+            if (z1.m.tetovani === 1) duvody.push({ shoda: 0.74, text: 'tetování' });
+        }
+    }
     const podobnost = vaha > 0 ? soucet / vaha : 0;
     duvody.sort((a, b) => b.shoda - a.shoda);
     return { podobnost, duvody: duvody.slice(0, 3).map(d => d.text) };
 }
 
-// Mocninná metoda pro nalezení dvou hlavních vlastních vektorů kovarianční matice D × D
-function pcaDveOsy(matice, n, D) {
+// Mocninná metoda s Hotellingovou deflací pro nalezení K hlavních komponent kovarianční matice D × D
+function pcaOsy(matice, n, D, pocetOs = 2) {
     const kov = new Float64Array(D * D);
     for (let i = 0; i < n; i++) {
         const radek = i * D;
@@ -317,19 +333,28 @@ function pcaDveOsy(matice, n, D) {
         return { v, lambda };
     };
 
-    const p1 = new Float64Array(D);
-    for (let j = 0; j < D; j++) p1[j] = ((j * 7 + 3) % 13) - 6;
-    const { v: v1, lambda: l1 } = vlastniVektor(kov, p1);
-
-    // Hotellingova deflace pro druhou komponentu
-    const kov2 = new Float64Array(kov);
-    for (let a = 0; a < D; a++) {
-        for (let b = 0; b < D; b++) kov2[a * D + b] -= l1 * v1[a] * v1[b];
+    const k = Math.min(pocetOs, D);
+    const vektory = [];
+    const kovPrac = new Float64Array(kov);
+    for (let c = 0; c < k; c++) {
+        const poc = new Float64Array(D);
+        const prvocislo = 7 + c * 4;
+        const mod = 13 + c * 2;
+        for (let j = 0; j < D; j++) poc[j] = ((j * prvocislo + 3 + c) % mod) - (mod >> 1);
+        const { v, lambda } = vlastniVektor(kovPrac, poc);
+        vektory.push(v);
+        if (c + 1 < k) {
+            for (let a = 0; a < D; a++) {
+                const lv = lambda * v[a];
+                for (let b = 0; b < D; b++) kovPrac[a * D + b] -= lv * v[b];
+            }
+        }
     }
-    const p2 = new Float64Array(D);
-    for (let j = 0; j < D; j++) p2[j] = ((j * 11 + 5) % 17) - 8;
-    const { v: v2 } = vlastniVektor(kov2, p2);
+    return vektory;
+}
 
+function pcaDveOsy(matice, n, D) {
+    const [v1, v2] = pcaOsy(matice, n, D, 2);
     const x = new Float64Array(n), y = new Float64Array(n);
     for (let i = 0; i < n; i++) {
         const radek = i * D;
@@ -343,6 +368,87 @@ function pcaDveOsy(matice, n, D) {
         y[i] = sy;
     }
     return { x, y };
+}
+
+// 8-D jednotkově normovaný kód příznaků pro kosinovou podobnost (doplněk Gowerovy podobnosti u řídkých údajů).
+// Vedle směru vrací i jistotu 0..1 podle délky vektoru před normováním: modelka s málo údaji leží blízko středu
+// (chybějící údaje jsou nuly po vycentrování) a její směr je skoro náhodný, takže kosinu u ní nelze věřit.
+function spocitatKod8(matice, n, D) {
+    const osy = pcaOsy(matice, n, D, 8);
+    const k = osy.length;
+    const kod8 = new Float64Array(n * 8);
+    const normy = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+        const radek = i * D;
+        const cil = i * 8;
+        let norma = 0;
+        for (let c = 0; c < k; c++) {
+            const v = osy[c];
+            let s = 0;
+            for (let j = 0; j < D; j++) s += matice[radek + j] * v[j];
+            kod8[cil + c] = s;
+            norma += s * s;
+        }
+        norma = Math.sqrt(norma);
+        normy[i] = norma;
+        for (let c = 0; c < k; c++) kod8[cil + c] /= norma || 1;
+    }
+    const serazene = Array.from(normy).sort((a, b) => a - b);
+    const median = serazene[Math.floor(n / 2)] || 1;
+    const jistota = new Float64Array(n);
+    for (let i = 0; i < n; i++) jistota[i] = Math.min(1, normy[i] / median);
+    return { kod8, jistota };
+}
+
+let cachePodobnosti = { modelky: null, zaklad: null, kod8: null, jistota: null };
+
+// Seznam modelek chodí z mezipaměti pokaždé jako nová kopie pole (slice), ale se stejnými objekty;
+// po změně dat přijdou nové objekty. Proto se porovnávají prvky, ne samotné pole.
+function stejneModelky(a, b) {
+    if (!a || a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+}
+
+function dataProPodobnost(modelky) {
+    if (cachePodobnosti.zaklad && stejneModelky(cachePodobnosti.modelky, modelky)) return cachePodobnosti;
+    const { zaklad, matice, n, D } = pripravitPriznakyMapy(modelky);
+    const { kod8, jistota } = spocitatKod8(matice, n, D);
+    cachePodobnosti = { modelky: modelky.slice(), zaklad, kod8, jistota };
+    return cachePodobnosti;
+}
+
+// Nejpodobnější modelky k zadané modelce (směs Gowerovy podobnosti a 8-D kódu + lidsky čitelné důvody z Gowera)
+export function podobneModelky(modelkaId, modelky, { pocet = 5 } = {}) {
+    if (!modelky || modelky.length < 2) return [];
+    const { zaklad, kod8, jistota } = dataProPodobnost(modelky);
+    const idx = zaklad.findIndex(z => z.m.id === modelkaId);
+    if (idx < 0) return [];
+    const z1 = zaklad[idx];
+    const c1 = idx * 8;
+    const vysledky = [];
+    for (let j = 0; j < zaklad.length; j++) {
+        if (j === idx) continue;
+        const z2 = zaklad[j];
+        const { podobnost: gower, duvody } = gowerPodobnost(z1, z2);
+        const c2 = j * 8;
+        let dot = 0;
+        for (let k = 0; k < 8; k++) dot += kod8[c1 + k] * kod8[c2 + k];
+        const kos = Math.max(0, Math.min(1, (dot + 1) / 2));
+        // U modelek s málo vyplněnými údaji (< 4) má větší váhu 8-D kód, jinak převažuje Gowerova podobnost;
+        // váha kódu se ještě násobí jistotou slabšího z obou vektorů (u modelek blízko středu je kosinus šum)
+        const vahaGower = z1.uplnost >= 4 && z2.uplnost >= 4 ? 0.75 : 0.4;
+        const vahaKodu = (1 - vahaGower) * Math.min(jistota[idx], jistota[j]);
+        const celkova = (vahaGower * gower + vahaKodu * kos) / (vahaGower + vahaKodu);
+        vysledky.push({
+            id: z2.m.id,
+            m: z2.m,
+            podobnost: celkova,
+            duvody,
+        });
+    }
+    vysledky.sort((a, b) => b.podobnost - a.podobnost || (b.m.hodnoceni || 0) - (a.m.hodnoceni || 0) || a.id - b.id);
+    return vysledky.slice(0, pocet);
 }
 
 // Pevná orientace os: starší období vlevo (x roste s rokem), vyšší postava nahoře (y roste s výškou)

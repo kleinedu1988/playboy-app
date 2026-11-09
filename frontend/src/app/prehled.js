@@ -12,6 +12,7 @@ import { prepnoutRezim, ukazatPohled, zvyraznitRezim } from './navigace';
 import { otevritDetailModelky } from './profil';
 import { nabidkaCisla } from './kalendar';
 import { otevritStatistiky } from './statistiky-pohled';
+import { zrusitModelkuNaMape } from './statistiky';
 import { htmlShanim, htmlUvodu, shanenaCisla, textShanim } from './prehled-uvod';
 import { otevritVydani } from './vydani';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
@@ -34,17 +35,21 @@ const CASTI_VSE = [['uvod', 'Mapa čísel'], ['udrzba', 'Údržba'], ['oblibenos
 const casti = () => CASTI_VSE;
 const pocetVCasti = { udrzba: 0, shanim: 0 };
 
-// Části Modelek v navigační kapsli (#pasStranky): Profily, Galerie, Statistiky
+// Síň slávy je část Modelek, ale vykresluje se na stránce Přehledu jako část Oblíbenosti 'slava'
+const jeSinSlavy = pohled => pohled === stats && stav.prehledSekce === 'oblibenost' && stav.oblibenostCast === 'slava';
+
+// Části Modelek v navigační kapsli (#pasStranky): Profily, Galerie, Statistiky, Síň slávy
 export function htmlPasuModelek(pohled) {
     const pilulky = [
         { klic: 'profily', nazev: 'Profily', titulek: 'Všechny modelky v databázi, profily a alba', zvolena: pohled === gallery },
         { klic: 'galerie', nazev: 'Galerie', titulek: 'Nejlépe hodnocené modelky, čísla, centerfoldy a fotky', zvolena: pohled === best },
         { klic: 'statistiky', nazev: 'Statistiky', titulek: 'Grafy sbírky v čase a rozložení, postřehy a výběr modelek', zvolena: pohled === statistikyView },
+        { klic: 'slava', nazev: 'Síň slávy', titulek: 'Top 10, sezóny, legendy, odznaky, rekordy a kronika', zvolena: jeSinSlavy(pohled) },
     ];
     return `<nav class="slava-pohledy" role="tablist" aria-label="Části modelek">${htmlPilulek(pilulky, 'cast-modelek-pas')}</nav>`;
 }
 
-// Hodnocení má části v liště své hlavičky (oblibenost.js), Síň slávy je vlastní sekce: v kapsli nic
+// Hodnocení má části v liště své hlavičky (oblibenost.js): v kapsli nic
 export function htmlPasuHodnoceni() {
     return '';
 }
@@ -71,7 +76,7 @@ export function obnovitPasHlavicky(pohled) {
     if (!misto) return;
     const fokusVPasu = misto.contains(document.activeElement);
     let html = '';
-    if (pohled === gallery || pohled === best || pohled === statistikyView) {
+    if (pohled === gallery || pohled === best || pohled === statistikyView || jeSinSlavy(pohled)) {
         html = htmlPasuModelek(pohled);
     } else if (pohled === covers || pohled === calendar || pohled === wall) {
         html = htmlPasuCisel(pohled);
@@ -81,9 +86,9 @@ export function obnovitPasHlavicky(pohled) {
     nastavitHtml(misto, html);
     misto.classList.toggle('hidden', !html);
     const kapsle = document.getElementById('viewToggle');
-    const selektor = pohled === gallery || pohled === best || pohled === statistikyView ? '[data-rezim="modelky"]'
+    const selektor = pohled === gallery || pohled === best || pohled === statistikyView || jeSinSlavy(pohled) ? '[data-rezim="modelky"]'
         : pohled === covers || pohled === calendar || pohled === wall ? '[data-rezim="covery"]'
-            : `[data-sekce="${stav.prehledSekce !== 'oblibenost' ? 'sbirka' : stav.oblibenostCast === 'slava' ? 'slava' : 'hodnoceni'}"]`;
+            : `[data-sekce="${stav.prehledSekce !== 'oblibenost' ? 'sbirka' : 'hodnoceni'}"]`;
     const zvolena = kapsle?.querySelector(selektor);
     if (zvolena && html && misto.previousElementSibling !== zvolena) zvolena.after(misto);
     kapsle?.classList.toggle('rozbalena', Boolean(html));
@@ -301,6 +306,7 @@ function otevritCastStatistiky() {
         return;
     }
     nastavitNejlepsiVOblibenosti(false);
+    zrusitModelkuNaMape();
     prepnoutRezim('statistiky');
     otevritStatistiky();
 }

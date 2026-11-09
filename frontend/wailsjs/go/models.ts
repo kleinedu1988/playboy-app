@@ -1810,6 +1810,32 @@ export namespace main {
 	        this.minModelek = source["minModelek"];
 	    }
 	}
+	export class RadekRocniku {
+	    mesic: number;
+	    vydani: string;
+	    jmeno: string;
+	    url: string;
+	    stav: string;
+	    modelkaId: number;
+	    jmenoSbirky: string;
+	    vydaniSbirky: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new RadekRocniku(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mesic = source["mesic"];
+	        this.vydani = source["vydani"];
+	        this.jmeno = source["jmeno"];
+	        this.url = source["url"];
+	        this.stav = source["stav"];
+	        this.modelkaId = source["modelkaId"];
+	        this.jmenoSbirky = source["jmenoSbirky"];
+	        this.vydaniSbirky = source["vydaniSbirky"];
+	    }
+	}
 	export class RekordSlavy {
 	    druh: string;
 	    modelkaId: number;
@@ -1833,6 +1859,44 @@ export namespace main {
 	    }
 	}
 	
+	export class RocnikWikipedie {
+	    rok: number;
+	    radky: RadekRocniku[];
+	    shod: number;
+	    chyba: string;
+	    zdroje: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new RocnikWikipedie(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rok = source["rok"];
+	        this.radky = this.convertValues(source["radky"], RadekRocniku);
+	        this.shod = source["shod"];
+	        this.chyba = source["chyba"];
+	        this.zdroje = source["zdroje"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class RozdilZalohy {
 	    kategorie: KategorieRozdilu[];
 	    celkem: number;

@@ -1,7 +1,7 @@
 // Mapa čísel Sbírky (dřív Úvod): mapa české edice (vlastní výtisky), mapa americké edice (úplnost dat) a naposledy
 // přidané modelky. Česká edice se sbírá fyzicky, americká jen jako data (PDF),
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
-import { MESICE, RADY_EDIC, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
+import { MESICE, RADY_EDIC, VYCHOZI_EDICE, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
 import { adresaTitulni } from './obrazky';
 
 // Mapy začínají prvním číslem edice (RADY_EDIC); měsíce mimo měsíční řadu jsou v nich prázdné
@@ -40,7 +40,8 @@ function htmlMapy(roky, stavCisla) {
     });
     return `<div class="uvod-mapa">${[...dekady].map(([dekada, rokyDekady]) => `
         <div class="uvod-dekada"><h5>${dekada}–${dekada + 9}</h5>
-            ${rokyDekady.map(r => `<div class="uvod-rok"><span>${r.rok}</span>${r.mesice.map(m => {
+            ${rokyDekady.map(r => `<div class="uvod-rok"><span>${rozlozitVydani(r.mesice[0]?.klic)?.edice === VYCHOZI_EDICE
+                ? `<button type="button" class="uvod-rok-wiki" data-rocnik-wiki="${r.rok}" title="Ročník ${r.rok} podle Wikipedie…">${r.rok}</button>` : r.rok}</span>${r.mesice.map(m => {
                 const [stavPole, popis] = stavCisla(m);
                 // Měsíc před prvním číslem edice (x) není číslo, nedá se otevřít ani označit
                 // Do mapy vede Tab jen jednou (první číslo), dál se chodí šipkami

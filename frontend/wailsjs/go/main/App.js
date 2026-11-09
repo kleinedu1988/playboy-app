@@ -466,12 +466,20 @@ export function PridatModelkuKAlbu(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PridatModelkuKAlbu'](arg1, arg2, arg3, arg4);
 }
 
+export function PrijmoutJmenoZWikipedie(arg1, arg2, arg3) {
+  return window['go']['main']['App']['PrijmoutJmenoZWikipedie'](arg1, arg2, arg3);
+}
+
 export function PrijmoutNavrh(arg1) {
   return window['go']['main']['App']['PrijmoutNavrh'](arg1);
 }
 
 export function PrijmoutNavrhy(arg1) {
   return window['go']['main']['App']['PrijmoutNavrhy'](arg1);
+}
+
+export function RocnikPodleWikipedie(arg1) {
+  return window['go']['main']['App']['RocnikPodleWikipedie'](arg1);
 }
 
 export function RozdilZalohy(arg1) {

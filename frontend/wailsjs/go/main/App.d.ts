@@ -241,9 +241,13 @@ export function PridatDoVyberu(arg1:number,arg2:Array<number>):Promise<number>;
 
 export function PridatModelkuKAlbu(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
 
+export function PrijmoutJmenoZWikipedie(arg1:number,arg2:string,arg3:boolean):Promise<boolean>;
+
 export function PrijmoutNavrh(arg1:kontrola.NavrhDoplneni):Promise<boolean>;
 
 export function PrijmoutNavrhy(arg1:Array<kontrola.NavrhDoplneni>):Promise<number>;
+
+export function RocnikPodleWikipedie(arg1:number):Promise<main.RocnikWikipedie>;
 
 export function RozdilZalohy(arg1:string):Promise<main.RozdilZalohy>;
 

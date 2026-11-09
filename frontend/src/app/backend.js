@@ -89,6 +89,7 @@ const CTENI = new Set([
     'GetZminky',
     'GetZdraviSbirky',
     'RozdilZalohy',
+    'RocnikPodleWikipedie',
     'PlaymatePodleWikipedie',
     'ZkontrolovatOdkazy',
     'GetStavOtisku',
@@ -245,6 +246,8 @@ export const PlaymatePodleWikipedie = /** @type {typeof App.PlaymatePodleWikiped
 export const GetZminky = /** @type {typeof App.GetZminky} */ (obalit('GetZminky'));
 export const GetZdraviSbirky = /** @type {typeof App.GetZdraviSbirky} */ (obalit('GetZdraviSbirky'));
 export const RozdilZalohy = /** @type {typeof App.RozdilZalohy} */ (obalit('RozdilZalohy'));
+export const RocnikPodleWikipedie = /** @type {typeof App.RocnikPodleWikipedie} */ (obalit('RocnikPodleWikipedie'));
+export const PrijmoutJmenoZWikipedie = /** @type {typeof App.PrijmoutJmenoZWikipedie} */ (obalit('PrijmoutJmenoZWikipedie'));
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));

@@ -30,13 +30,26 @@ let posledniCislo = null;
 let kontrolaRychla = null;
 const hodnotaPole = id => /** @type {HTMLInputElement} */ (document.getElementById(id)).value.trim();
 
+// Fronta rychlého přidávání (Ročník podle Wikipedie): po uložení se otevře další s předvyplněným jménem a číslem
+/** @type {{ jmeno: string, cislo?: any }[]} */
+let frontaRychle = [];
+
+export function otevritFrontuRychlehoPridani(polozky) {
+    frontaRychle = [...polozky];
+    const prvni = frontaRychle.shift();
+    if (prvni) otevritRychlePridani(prvni, true);
+}
+
 // predvyplnit = { jmeno, cislo: { rok, mesic, edice, typ } } (úplnost čísla: Playmate měsíce, která ve sbírce chybí);
 // nabídky volají funkci i s událostí, ta se přeskočí
-export function otevritRychlePridani(predvyplnit = null) {
+export function otevritRychlePridani(predvyplnit = null, zFronty = false) {
     const p = predvyplnit && typeof predvyplnit.jmeno === 'string' ? predvyplnit : null;
+    if (!zFronty) frontaRychle = [];
     document.getElementById('quickForm').reset();
     ['quickJmenoInfo', 'quickNarozeniInfo', 'quickNarodnostInfo'].forEach(id => napoveda(id, ''));
-    const c = p?.cislo || posledniCislo || { rok: '', mesic: '', edice: stav.kalendarEdice, typ: 'Centerfold' };
+    // Předvyplněná modelka bez čísla (Playmate roku z Ročníku podle Wikipedie) nepřebírá poslední číslo
+    const prazdne = { rok: '', mesic: '', edice: stav.kalendarEdice, typ: 'Centerfold' };
+    const c = p ? p.cislo || prazdne : posledniCislo || prazdne;
     /** @type {HTMLInputElement} */ (document.getElementById('inputQuickRok')).value = c.rok;
     /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickMesic')).value = c.mesic;
     /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickEdice')).value = c.edice;
@@ -49,7 +62,9 @@ export function otevritRychlePridani(predvyplnit = null) {
         jmeno.value = p.jmeno;
         jmeno.dispatchEvent(new Event('input', { bubbles: true }));
     }
-    jmeno.focus();
+    if (zFronty) oznamit(frontaRychle.length ? `Ročník podle Wikipedie – po ní ještě ${frontaRychle.length}: ${frontaRychle.map(x => x.jmeno).slice(0, 3).join(', ')}${frontaRychle.length > 3 ? '…' : ''}` : 'Ročník podle Wikipedie – poslední z vybraných.');
+    // Ve frontě se odkazy na fotky vkládají jako první (jméno a číslo jsou hotové)
+    (zFronty ? /** @type {HTMLElement} */ (document.getElementById('inputQuickOdkazy')) : jmeno).focus();
     vsechnyModelky().then(m => {
         modelkySbirky = m;
         const narodnosti = [...new Set(m.map(x => String(x.narodnost || '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'cs'));
@@ -532,6 +547,14 @@ export function pripravit() {
             oznamit('Fotky už ve sbírce jsou, nevložily se. Pro vložení zaškrtni „Vložit i ty, které už ve sbírce jsou“.');
         }
         const ulozeno = `Uložena ${nova.jmeno}${vlozeno ? ` s ${sklonovat(vlozeno, 'fotkou', 'fotkami', 'fotkami')}` : ''}${rok && !vlozeno ? ' (číslo se uloží s fotkami)' : ''}.`;
+
+        // Fronta z Ročníku podle Wikipedie: rovnou další
+        if (frontaRychle.length) {
+            oznamit(ulozeno);
+            otevritRychlePridani(frontaRychle.shift(), true);
+            if (stav.rezim === 'modelky' && detailView.classList.contains('hidden')) nacistGalerii(searchInput.value);
+            return;
+        }
 
         if (dalsi) {
             // Další modelka: číslo, edice a druh zůstanou, ostatní se vyprázdní

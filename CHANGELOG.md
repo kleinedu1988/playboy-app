@@ -7,6 +7,23 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.43.0] – 2026-11-09
+
+### Přidáno
+- **Ročník podle Wikipedie**: Playmate všech měsíců ze seznamu „List of Playboy Playmates of RRRR“ (i víc Playmate
+  v jednom měsíci) a Playmate roku proti sbírce. U každé stav ve sbírce / chybí / podobné jméno (překlep) / v čísle
+  je jiná / jiný měsíc / bez centerfoldu (u Playmate roku bez alba Playmate roku), s odkazem na zdroj
+  (`rocnik_wikipedie.go`, `frontend/src/app/rocnik-wiki.js`).
+- Chybějící Playmate (zaškrtnuté) se přidají jedna po druhé rychlým oknem Nová modelka s předvyplněným jménem
+  a číslem; po uložení se rovnou otevře další.
+- U podobného jména jde jméno z Wikipedie převzít (dosavadní přejde do dalších jmen), nebo jen přidat jako další jméno.
+- Otevírá se z kontextové nabídky roku v Kalendáři, tlačítkem na stránce ročníku a klikem na rok v americké mapě sbírky.
+
+### Změněno
+- Roadmapa: nové etapy E Kvalita dat ve velkém (1.43–1.45), F Přehledy a pohodlí (1.46–1.48) a G Sbírka výtisků
+  (1.49–1.52, včetně tiskových sestav přesunutých z 1.43); kvíz, průvodce číslem a Google Disk odloženy do etapy H
+  (1.53–1.56). Etapa D je uzavřená verzemi 1.41–1.42.
+
 ## [1.42.0] – 2026-11-09
 
 ### Přidáno

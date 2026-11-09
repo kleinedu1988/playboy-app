@@ -1,4 +1,5 @@
 // Kalendář vydání po rocích a měsících
+import { otevritRocnikWiki } from './rocnik-wiki';
 import { GetKalendar, GetStavyVydani, GetVydani, SetStavVydani } from './backend';
 import { prevest } from '../lib/hledani-dotaz';
 import { EDICE, MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
@@ -220,6 +221,8 @@ export function nabidkaRoku(klic, x, y) {
         { text: 'Otevřít ročník', akce: () => otevritVydani(klic) },
         { text: 'Přidat pictorial k ročníku', akce: () => pridatPictorial(klic) },
         { text: `Nový speciál roku ${rok}…`, akce: async () => { if (await zalozitSpecial(rok, edice)) obnovitKalendar(); } },
+        // Seznamy Playmate na Wikipedii jsou jen pro americkou edici
+        ...(edice === VYCHOZI_EDICE ? [{ text: 'Ročník podle Wikipedie…', akce: () => otevritRocnikWiki(rok) }] : []),
     ]);
 }
 

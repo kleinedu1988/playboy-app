@@ -20650,3 +20650,17 @@ body.rezim-vyberu #detailView .poster {
 .rz-seznam .rz-minus { color: var(--danger-text); }
 .rz-seznam .rz-zmena { color: #e0a526; }
 .rozdil-akce { margin-top: 8px; display: flex; justify-content: flex-end; }
+
+/* Ročník podle Wikipedie (app/rocnik-wiki.js) */
+.rw-karta { max-width: 820px; }
+.rw-souhrn { margin: 0 0 10px; font-size: 14px; }
+.rw-tabulka { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 10px; }
+.rw-tabulka th, .rw-tabulka td { padding: 6px 8px; border-bottom: 1px solid var(--panel-okraj); text-align: left; vertical-align: baseline; }
+.rw-tabulka th { font-weight: 500; white-space: nowrap; color: var(--text-muted); }
+.rw-vyber { width: 22px; }
+.rw-znak { display: inline-block; width: 18px; text-align: center; margin-right: 4px; color: var(--text-muted); }
+.rw-shoda .rw-znak { color: #5fbf7f; }
+.rw-chybi .rw-znak, .rw-preklep .rw-znak, .rw-jine-jmeno .rw-znak { color: #e0a526; }
+.rw-stav { color: var(--text-muted); margin-right: 4px; }
+.uvod-rok-wiki { all: unset; cursor: pointer; }
+.uvod-rok-wiki:hover, .uvod-rok-wiki:focus-visible { color: var(--accent-text); text-decoration: underline; }

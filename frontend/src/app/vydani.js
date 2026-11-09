@@ -304,7 +304,8 @@ export function vykreslitRocnik(vydani, fotky) {
             ${[[pocet('Cover'), 'coverů'], [pocet('Centerfold'), 'centerfoldů'], [pocet('Pictorial'), 'pictorialů']]
                 .map(([n, popis]) => `<div><strong>${n}</strong><span>${popis}</span></div>`).join('')}
         </div>
-        <div class="rocnik-akce"><button class="volba" data-pridat="pictorial"><span aria-hidden="true">+</span>Pictorial k ročníku</button></div>
+        <div class="rocnik-akce"><button class="volba" data-pridat="pictorial"><span aria-hidden="true">+</span>Pictorial k ročníku</button>
+            ${casti.edice === VYCHOZI_EDICE ? `<button class="volba" data-rocnik-wiki="${esc(casti.rok)}" title="Porovnat Playmate měsíců a Playmate roku se seznamem na Wikipedii"><span aria-hidden="true">W</span>Podle Wikipedie…</button>` : ''}</div>
     `;
     document.getElementById('issueMain').innerHTML = `
         <div class="rocnik-mrizka">${MESICE.map((nazev, i) => karta(String(i + 1).padStart(2, '0'), nazev)).join('')}</div>

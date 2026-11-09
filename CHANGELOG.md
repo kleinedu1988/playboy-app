@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.28.4] – 2026-11-09
+
+### Změněno
+- **Rychlejší výpočet a nižší alokace v jazykovém a obrazovém modelu (`internal/obsah`)**:
+  - Předzpracování snímků pro CLIP (`predzpracovatDo`) a NudeNet (`predzpracovatDetektorDo`) nahrazuje statisíce plovoucích dělení na každý snímek předpočítanými převodními tabulkami `uint8 → float32` a přímým zápisem do kanálů R, G, B.
+  - Český jazykový model (`TextovyModel`) přistupuje k vrstvám transformeru přímo přes typované pole struktur bez běhového skládání názvů tenzorů (`fmt.Sprintf`) a mapových vyhledávání, recykluje pracovní matice aktivací přes `sync.Pool`, rozbaluje vnitřní smyčku skalárního součinu `int8` 4× a při WordPiece tokenizaci krájí UTF-8 řetězce přímo nad zásobníkovými poli bez alokací `[]rune` a `"##" + kus`.
+  - Učení tagů z Průvodce (`naucitTagy`) skládá matici $X^T X$ pouze jednou po 5 částech místo 15–18× opakovaného přepočítávání přes všechny příklady, vynechává křížové ověření u tagů s méně než 5 kladnými či zápornými příklady, předpočítává pravé strany $X_{\text{uc}}^T y$ a čte výchozí návrhy přímo ze zamčených polí na zásobníku.
+  - Návrhy tagů (`NavrhnoutTagy`, `navrhyZDetektoru`) čtou třídy detektoru přes pevné indexy bez lineárního prohledávání řetězců a počítají logity na zásobníku bez 228 000 alokací při průchodu sbírkou; skalární součiny ve `Vektory`, `Shlukovat` a Choleskyho rozkladu jsou 4× rozbalené a klíč mezipaměti kolekcí (`dataKolekci`) během aktivního výpočtu obsahu kvantuje počty po dávkách.
+
 ## [1.28.3] – 2026-11-09
 
 ### Opraveno

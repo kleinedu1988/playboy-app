@@ -31,11 +31,20 @@ const strana = 224
 // Vlákna ONNX Runtime pro jeden výpočet: víc skoro nezrychlí (MODEL-CLIP-B32.md, oddíl 2) a počítač zůstane volný
 const vlaken = 2
 
-// Normalizace CLIP po kanálech RGB
+// Normalizace CLIP po kanálech RGB a předpočtená tabulka pro hodnoty bajtů 0–255
 var (
-	prumer   = [3]float32{0.48145466, 0.4578275, 0.40821073}
-	odchylka = [3]float32{0.26862954, 0.26130258, 0.27577711}
+	prumer      = [3]float32{0.48145466, 0.4578275, 0.40821073}
+	odchylka    = [3]float32{0.26862954, 0.26130258, 0.27577711}
+	tabulkaCLIP [3][256]float32
 )
+
+func init() {
+	for c := range 3 {
+		for b := range 256 {
+			tabulkaCLIP[c][b] = (float32(b)/255 - prumer[c]) / odchylka[c]
+		}
+	}
+}
 
 // ErrBezKnihovny: ONNX Runtime se nepodařilo načíst (chybí nebo je pro jiný systém)
 var ErrBezKnihovny = errors.New("knihovnu ONNX Runtime se nepodařilo načíst")
@@ -167,11 +176,14 @@ func Predzpracovat(img image.Image, cil []float32) {
 func predzpracovatDo(img image.Image, m *image.RGBA, cil []float32) {
 	draw.CatmullRom.Scale(m, m.Bounds(), img, img.Bounds(), draw.Src, nil)
 	const plocha = strana * strana
+	pix := m.Pix[:plocha*4]
+	r, g, b := cil[:plocha], cil[plocha:2*plocha], cil[2*plocha:3*plocha]
+	tr, tg, tb := &tabulkaCLIP[0], &tabulkaCLIP[1], &tabulkaCLIP[2]
 	for p := range plocha {
 		i := p * 4
-		for c := range 3 {
-			cil[c*plocha+p] = (float32(m.Pix[i+c])/255 - prumer[c]) / odchylka[c]
-		}
+		r[p] = tr[pix[i]]
+		g[p] = tg[pix[i+1]]
+		b[p] = tb[pix[i+2]]
 	}
 }
 

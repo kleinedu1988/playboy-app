@@ -204,41 +204,68 @@ func naucit(p priznaky, fotky []HodnoceniFotky, hodnocene []int) []float64 {
 			}
 		}
 	}
-	for q := 1; q < d; q++ {
-		a[q*d+q] += lambdaOdhadu
+	if !rozlozitCholeskyV(a, d, lambdaOdhadu, 1e-9) {
+		return nil
 	}
-	a[0] += 1e-9
+	return vyresitCholesky(a, b, d)
+}
+
+// Choleskyho rozklad matice a (dolní trojúhelník d × d) na místě s přičtením lambda na diagonálu (od indexu 1) a posun0 na a[0]
+func rozlozitCholeskyV(a []float64, d int, lambda, posun0 float64) bool {
+	for q := 1; q < d; q++ {
+		a[q*d+q] += lambda
+	}
+	a[0] += posun0
 	for q := range d {
+		radekQ := a[q*d : q*d+q+1]
 		for k := 0; k <= q; k++ {
-			s := a[q*d+k]
-			for l := range k {
-				s -= a[q*d+l] * a[k*d+l]
+			radekK := a[k*d : k*d+k+1]
+			var s0, s1, s2, s3 float64
+			l := 0
+			for ; l+3 < k; l += 4 {
+				s0 += radekQ[l] * radekK[l]
+				s1 += radekQ[l+1] * radekK[l+1]
+				s2 += radekQ[l+2] * radekK[l+2]
+				s3 += radekQ[l+3] * radekK[l+3]
+			}
+			s := radekQ[k] - ((s0 + s1) + (s2 + s3))
+			for ; l < k; l++ {
+				s -= radekQ[l] * radekK[l]
 			}
 			if q == k {
 				if s <= 0 {
-					return nil
+					return false
 				}
-				a[q*d+q] = math.Sqrt(s)
+				radekQ[q] = math.Sqrt(s)
 			} else {
-				a[q*d+k] = s / a[k*d+k]
+				radekQ[k] = s / radekK[k]
 			}
 		}
 	}
+	return true
+}
+
+// Řešení soustavy (LLᵀ) w = b z rozložené Choleskyho matice ch (d × d)
+func vyresitCholesky(ch, b []float64, d int) []float64 {
+	if len(ch) == 0 {
+		return nil
+	}
 	z := make([]float64, d)
 	for q := range d {
+		radekQ := ch[q*d : q*d+q+1]
 		s := b[q]
 		for l := range q {
-			s -= a[q*d+l] * z[l]
+			s -= radekQ[l] * z[l]
 		}
-		z[q] = s / a[q*d+q]
+		z[q] = s / radekQ[q]
 	}
 	w := make([]float64, d)
 	for q := d - 1; q >= 0; q-- {
 		s := z[q]
 		for l := q + 1; l < d; l++ {
-			s -= a[l*d+q] * w[l]
+			s -= ch[l*d+q] * w[l]
 		}
-		w[q] = s / a[q*d+q]
+		w[q] = s / ch[q*d+q]
 	}
 	return w
 }

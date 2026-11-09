@@ -74,19 +74,23 @@ export function trendRady(def, sloupce, { vyber = false, kontext = '' } = {}) {
     if (sDaty.length < MIN_LET || n < MIN_MODELEK) return null;
 
     const podil = def.druh === 'podil';
-    let test;
+    let test, y;
+    const zacatky = new Int32Array(sDaty.length + 1);
     if (podil) {
         test = cochranArmitage(sDaty.map(s => ({ x: s.rok, n: s.polozky.length, ano: s.polozky.filter(p => p.hodnota).length })));
     } else {
-        const x = new Float64Array(n), y = new Float64Array(n);
+        const x = new Float64Array(n);
+        y = new Float64Array(n);
         let pos = 0;
         for (let i = 0; i < sDaty.length; i++) {
+            zacatky[i] = pos;
             const rok = sDaty[i].rok, pol = sDaty[i].polozky;
             for (let j = 0; j < pol.length; j++) {
                 x[pos] = rok;
                 y[pos++] = pol[j].hodnota;
             }
         }
+        zacatky[sDaty.length] = pos;
         test = kendallTauB(x, y);
     }
     if (!test || !(test.p <= ALFA)) return null;
@@ -140,10 +144,21 @@ export function trendRady(def, sloupce, { vyber = false, kontext = '' } = {}) {
     const popisUrovne = u => podil
         ? `${u.popisek}: ${hodnota(u.hodnota)} (${cislo(u.dolni)}–${cislo(u.horni)} %, ${modelek(u.n)})`
         : `${u.popisek}: ${hodnota(u.hodnota)}, polovina modelek ${cislo(u.dolni, des)}–${hodnota(u.horni)} (${modelek(u.n)})`;
-    const roky = sDaty.filter(s => s.polozky.length >= MIN_V_ROCE);
-    const sklon = roky.length >= 3 ? theilSen(roky.map(s => s.rok), roky.map(s => podil
-        ? s.polozky.filter(p => p.hodnota).length / s.polozky.length * 100
-        : median(Float64Array.from(s.polozky, p => p.hodnota)))) : null;
+    const rokyX = [], rokyY = [];
+    for (let i = 0; i < sDaty.length; i++) {
+        const s = sDaty[i], delka = s.polozky.length;
+        if (delka < MIN_V_ROCE) continue;
+        rokyX.push(s.rok);
+        if (podil) {
+            let ano = 0;
+            for (let j = 0; j < delka; j++) if (s.polozky[j].hodnota) ano++;
+            rokyY.push(ano / delka * 100);
+        } else {
+            const sub = y.subarray(zacatky[i], zacatky[i + 1]).sort(), p = delka >> 1;
+            rokyY.push(delka % 2 ? sub[p] : (sub[p - 1] + sub[p]) / 2);
+        }
+    }
+    const sklon = rokyX.length >= 3 ? theilSen(rokyX, rokyY) : null;
     const za10 = sklon === null ? null : sklon * 10;
     const tempo = za10 === null || Number(za10.toFixed(podil ? 0 : Math.max(1, des))) === 0 ? ''
         : podil ? ` Tempo asi ${za10 > 0 ? '+' : '−'}${cislo(Math.abs(za10))} ${procentniBody(Math.round(za10))} za 10 let.`

@@ -221,11 +221,17 @@ export function median(cisla) {
 
 // Theilův–Senův sklon: medián sklonů všech dvojic bodů s různým x (jako scipy.stats.theilslopes)
 export function theilSen(x, y) {
-    const sklony = [];
-    for (let i = 0; i < x.length; i++) {
-        for (let j = i + 1; j < x.length; j++) if (x[j] !== x[i]) sklony.push((y[j] - y[i]) / (x[j] - x[i]));
+    const m = x.length;
+    if (m < 2) return null;
+    const sklony = new Float64Array(m * (m - 1) / 2);
+    let k = 0;
+    for (let i = 0; i < m; i++) {
+        const xi = x[i], yi = y[i];
+        for (let j = i + 1; j < m; j++) if (x[j] !== xi) sklony[k++] = (y[j] - yi) / (x[j] - xi);
     }
-    return median(sklony);
+    if (!k) return null;
+    const s = sklony.subarray(0, k).sort(), p = k >> 1;
+    return k % 2 ? s[p] : (s[p - 1] + s[p]) / 2;
 }
 
 // Wilsonův interval podílu ano/n (výchozí 95 %); { dolni, horni } v rozsahu 0–1, null pro n = 0

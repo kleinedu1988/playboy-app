@@ -380,7 +380,14 @@ func (a *App) dataKolekci(fotky []fotkaGalerie) *dataKolekce {
 	var styly []obsah.Styl
 	if a.obsah != nil {
 		styly = a.obsah.Styly()
-		klic += fmt.Sprint("|", a.obsah.Stav().Vektoru, "|", a.obsah.PocetPartii(), "|", len(styly), "|", a.obsah.PocetVzhledu())
+		st := a.obsah.Stav()
+		vektoru, partii, vzhledu := st.Vektoru, a.obsah.PocetPartii(), a.obsah.PocetVzhledu()
+		if st.Faze == obsah.FazePocita {
+			vektoru /= 250
+			partii /= 250
+			vzhledu /= 250
+		}
+		klic += fmt.Sprint("|", vektoru, "|", partii, "|", len(styly), "|", vzhledu)
 	}
 	p := &kolekcePamet
 	p.Lock()

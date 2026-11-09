@@ -11,7 +11,6 @@ package obsah
 // S přibývajícími fotkami z Průvodce tak program přechází tag po tagu na to, jak taguje uživatel.
 
 import (
-	"math"
 	"sort"
 	"sync"
 )
@@ -132,8 +131,12 @@ func naucitTagy(v *Vektory, pa *Partie, priklady []PrikladTagu, tagy []TagUceni,
 
 	// Cíle: 1 = tag, 0 = skupina zodpovězená bez tagu, -1 = nevíme (skupina nezodpovězená)
 	cile := map[string][]float64{}
+	vhodne := map[string]bool{}
+	poctyAno := map[string]int{}
+	poctyNe := map[string]int{}
 	for _, t := range tagy {
 		c := make([]float64, n)
+		var ano, ne int
 		for i, pr := range pouzite {
 			c[i] = -1
 			for _, s := range pr.Skupiny {
@@ -146,50 +149,133 @@ func naucitTagy(v *Vektory, pa *Partie, priklady []PrikladTagu, tagy []TagUceni,
 					c[i] = 1
 				}
 			}
+			switch c[i] {
+			case 1:
+				ano++
+			case 0:
+				ne++
+			}
 		}
 		cile[t.Klic] = c
+		poctyAno[t.Klic] = ano
+		poctyNe[t.Klic] = ne
+		if ano >= minPrikladuUceni && ne >= minPrikladuUceni {
+			vhodne[t.Klic] = true
+		}
 	}
 	vych := make([]map[string]bool, n)
+	var vBuf [Rozmer]float32
+	var pBuf [TridDetektoru]float32
 	for i, pr := range pouzite {
 		vych[i] = map[string]bool{}
-		for _, x := range vychozi(pr.ID) {
+		var navrhy []NavrhTagu
+		if vychozi != nil {
+			navrhy = vychozi(pr.ID)
+		} else {
+			var vs, ps []float32
+			if idx, ok := v.index[pr.ID]; ok {
+				m := v.meritka[idx]
+				for k, q := range v.data[idx*Rozmer : (idx+1)*Rozmer] {
+					vBuf[k] = float32(q) * m
+				}
+				vs = vBuf[:]
+			}
+			if pa != nil {
+				if b, ok := pa.m[pr.ID]; ok {
+					for k, q := range b {
+						pBuf[k] = float32(q) / 255
+					}
+					ps = pBuf[:]
+				}
+			}
+			navrhy = NavrhnoutTagy(vs, ps)
+		}
+		for _, x := range navrhy {
 			vych[i][x.Tag] = true
 		}
 	}
 
 	// Křížové ověření: části podle pořadí příkladů (fotky téhož alba jsou v Průvodci za sebou → různé části by
-	// sdílely focení; proto souvislé bloky, ne střídání)
+	// sdílely focení; proto souvislé bloky, ne střídání).
+	// Místo 15–18× opakovaného skládání XᵀX přes příklady spočítáme XᵀX jednou pro každou z 5 částí, součtem
+	// získáme plnou matici XᵀX a pro trénovací část c jen odečteme část c.
 	cast := func(i int) int { return i * castiUceni / n }
+	var castXtX [castiUceni][]float64
+	plnaXtX := make([]float64, d*d)
+	if len(vhodne) > 0 {
+		for c := range castiUceni {
+			castXtX[c] = make([]float64, d*d)
+		}
+		for i, r := range X {
+			mat := castXtX[cast(i)]
+			for q := range d {
+				rq := r[q]
+				if rq == 0 {
+					continue
+				}
+				radek := mat[q*d : q*d+q+1]
+				for k := range radek {
+					radek[k] += rq * r[k]
+				}
+			}
+		}
+		for c := range castiUceni {
+			for j, val := range castXtX[c] {
+				plnaXtX[j] += val
+			}
+		}
+	}
+
 	predikce := map[string]map[float64][]float64{} // tag → λ → výstup na ověření
 	for _, t := range tagy {
+		if !vhodne[t.Klic] {
+			continue
+		}
 		predikce[t.Klic] = map[float64][]float64{}
 		for _, l := range lambdyUceni {
 			predikce[t.Klic][l] = make([]float64, n)
 		}
 	}
-	for c := range castiUceni {
-		var uc []int
-		for i := range n {
-			if cast(i) != c {
-				uc = append(uc, i)
+	if len(vhodne) > 0 {
+		ucXtX := make([]float64, d*d)
+		for c := range castiUceni {
+			var uc []int
+			for i := range n {
+				if cast(i) != c {
+					uc = append(uc, i)
+				}
 			}
-		}
-		if len(uc) == 0 {
-			continue
-		}
-		for _, l := range lambdyUceni {
-			ch := cholesky(X, uc, d, l)
-			if ch == nil {
+			if len(uc) == 0 {
 				continue
 			}
+			for j := range plnaXtX {
+				ucXtX[j] = plnaXtX[j] - castXtX[c][j]
+			}
+			// Pravé strany X_ucᵀ y pro vhodné tagy spočítáme jednou pro danou část c (nezávisí na λ)
+			praveStrany := map[string][]float64{}
 			for _, t := range tagy {
-				w := vyresit(ch, X, uc, cile[t.Klic], d)
-				if w == nil {
+				if !vhodne[t.Klic] {
 					continue
 				}
-				for i := range n {
-					if cast(i) == c {
-						predikce[t.Klic][l][i] = skalar(w, X[i])
+				praveStrany[t.Klic] = pravaStrana(X, uc, cile[t.Klic], d)
+			}
+			for _, l := range lambdyUceni {
+				ch := choleskyZMatice(ucXtX, d, l)
+				if ch == nil {
+					continue
+				}
+				for _, t := range tagy {
+					if !vhodne[t.Klic] {
+						continue
+					}
+					w := vyresitCholesky(ch, praveStrany[t.Klic], d)
+					if w == nil {
+						continue
+					}
+					for i := range n {
+						if cast(i) == c {
+							predikce[t.Klic][l][i] = skalar(w, X[i])
+						}
 					}
 				}
 			}
@@ -201,18 +287,10 @@ func naucitTagy(v *Vektory, pa *Partie, priklady []PrikladTagu, tagy []TagUceni,
 	}
 	plne := map[float64][]float64{}
 	for _, t := range tagy {
-		h := &HodnoceniTagu{Tag: t.Klic}
+		h := &HodnoceniTagu{Tag: t.Klic, Ano: poctyAno[t.Klic], Ne: poctyNe[t.Klic]}
 		c := cile[t.Klic]
-		for _, y := range c {
-			switch y {
-			case 1:
-				h.Ano++
-			case 0:
-				h.Ne++
-			}
-		}
 		h.Vychozi = vyvazena(c, func(i int) bool { return vych[i][t.Klic] })
-		if h.Ano >= minPrikladuUceni && h.Ne >= minPrikladuUceni {
+		if vhodne[t.Klic] {
 			for _, l := range lambdyUceni {
 				pr := predikce[t.Klic][l]
 				if b := vyvazena(c, func(i int) bool { return pr[i] >= prahUceni }); b > h.Naucene || h.lambda == 0 {
@@ -222,9 +300,9 @@ func naucitTagy(v *Vektory, pa *Partie, priklady []PrikladTagu, tagy []TagUceni,
 			h.Pouzito = h.Naucene >= h.Vychozi+minZlepseniUceni
 			if h.Pouzito {
 				if plne[h.lambda] == nil {
-					plne[h.lambda] = cholesky(X, vsechny, d, h.lambda)
+					plne[h.lambda] = choleskyZMatice(plnaXtX, d, h.lambda)
 				}
-				h.vahy = vyresit(plne[h.lambda], X, vsechny, c, d)
+				h.vahy = vyresitCholesky(plne[h.lambda], pravaStrana(X, vsechny, c, d), d)
 				h.Pouzito = h.vahy != nil
 			}
 		}
@@ -261,58 +339,34 @@ func vyvazena(c []float64, ano func(i int) bool) float64 {
 }
 
 func skalar(w, x []float64) float64 {
-	s := 0.0
-	for k, v := range x {
-		s += w[k] * v
+	var s0, s1, s2, s3 float64
+	n := len(x)
+	k := 0
+	for ; k+3 < n; k += 4 {
+		s0 += w[k] * x[k]
+		s1 += w[k+1] * x[k+1]
+		s2 += w[k+2] * x[k+2]
+		s3 += w[k+3] * x[k+3]
+	}
+	s := (s0 + s1) + (s2 + s3)
+	for ; k < n; k++ {
+		s += w[k] * x[k]
 	}
 	return s
 }
 
-// Choleskyho rozklad XᵀX + λI (bez trestu posunu) nad vybranými řádky
-func cholesky(X [][]float64, radky []int, d int, lambda float64) []float64 {
-	a := make([]float64, d*d)
-	for _, i := range radky {
-		r := X[i]
-		for q := range d {
-			rq := r[q]
-			if rq == 0 {
-				continue
-			}
-			radek := a[q*d : q*d+q+1]
-			for k := range radek {
-				radek[k] += rq * r[k]
-			}
-		}
-	}
-	for q := 1; q < d; q++ {
-		a[q*d+q] += lambda
-	}
-	a[0] += 1e-6
-	for q := range d {
-		for k := 0; k <= q; k++ {
-			s := a[q*d+k]
-			for l := range k {
-				s -= a[q*d+l] * a[k*d+l]
-			}
-			if q == k {
-				if s <= 0 {
-					return nil
-				}
-				a[q*d+q] = math.Sqrt(s)
-			} else {
-				a[q*d+k] = s / a[k*d+k]
-			}
-		}
+// Choleskyho rozklad předpočítané matice XᵀX + λI (bez trestu posunu)
+func choleskyZMatice(xtx []float64, d int, lambda float64) []float64 {
+	a := make([]float64, len(xtx))
+	copy(a, xtx)
+	if !rozlozitCholeskyV(a, d, lambda, 1e-6) {
+		return nil
 	}
 	return a
 }
 
-// Řešení pro cíl y (jen řádky se známým cílem 0/1; neznámé se berou jako 0 – rozklad je společný pro všechny
-// tagy, proto se neznámé nevynechávají; u výlučných skupin je fotka bez zodpovězené skupiny vzácná)
-func vyresit(ch []float64, X [][]float64, radky []int, y []float64, d int) []float64 {
-	if ch == nil {
-		return nil
-	}
+// Pravá strana Xᵀy pro cíl y (jen řádky se známým cílem 1; ostatní jsou 0)
+func pravaStrana(X [][]float64, radky []int, y []float64, d int) []float64 {
 	b := make([]float64, d)
 	for _, i := range radky {
 		if y[i] != 1 {
@@ -322,23 +376,7 @@ func vyresit(ch []float64, X [][]float64, radky []int, y []float64, d int) []flo
 			b[k] += v
 		}
 	}
-	z := make([]float64, d)
-	for q := range d {
-		s := b[q]
-		for l := range q {
-			s -= ch[q*d+l] * z[l]
-		}
-		z[q] = s / ch[q*d+q]
-	}
-	w := make([]float64, d)
-	for q := d - 1; q >= 0; q-- {
-		s := z[q]
-		for l := q + 1; l < d; l++ {
-			s -= ch[l*d+q] * w[l]
-		}
-		w[q] = s / ch[q*d+q]
-	}
-	return w
+	return b
 }
 
 // Upravit výchozí návrhy fotky podle naučených tagů: naučený tag rozhodne sám (navrhne, nebo návrh zruší);

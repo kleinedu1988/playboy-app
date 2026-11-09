@@ -33,6 +33,14 @@ const (
 	kotevDetektoru  = 2100 // 40² + 20² + 10² míst mřížky YOLOv8 při 320 × 320
 )
 
+var tabulkaDetektoru [256]float32
+
+func init() {
+	for b := range 256 {
+		tabulkaDetektoru[b] = float32(b) / 255
+	}
+}
+
 // Detektor partií; jeden výpočet najednou
 type Detektor struct {
 	mu     sync.Mutex
@@ -137,10 +145,12 @@ func predzpracovatDetektorDo(img image.Image, m *image.RGBA, cil []float32) {
 	cilRect := image.Rect(0, 0, max(1, b.Dx()*stranaDetektoru/k), max(1, b.Dy()*stranaDetektoru/k))
 	xdraw.BiLinear.Scale(m, cilRect, img, b, xdraw.Src, nil)
 	const plocha = stranaDetektoru * stranaDetektoru
+	pix := m.Pix[:plocha*4]
+	cr, cg, cb := cil[:plocha], cil[plocha:2*plocha], cil[2*plocha:3*plocha]
 	for p := range plocha {
 		i := p * 4
-		for c := range 3 {
-			cil[c*plocha+p] = float32(m.Pix[i+c]) / 255
-		}
+		cr[p] = tabulkaDetektoru[pix[i]]
+		cg[p] = tabulkaDetektoru[pix[i+1]]
+		cb[p] = tabulkaDetektoru[pix[i+2]]
 	}
 }

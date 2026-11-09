@@ -24,6 +24,7 @@ import (
 	"strings"
 	"sync"
 	"unicode"
+	"unicode/utf8"
 )
 
 const (
@@ -332,14 +333,21 @@ func prevestText(model, dense, cil string) error {
 	return err
 }
 
+type vrstvaTextu struct {
+	qW, kW, vW, outW, ffn1W, ffn2W                         maticeInt8
+	qB, kB, vB, outB, ffn1B, ffn2B                         []float32
+	saNormG, saNormB, outNormG, outNormB                   []float32
+}
+
 // TextovyModel: český text → vektor délky 1 v prostoru vektorů fotek
 type TextovyModel struct {
-	matice  map[string]maticeInt8
-	vektory map[string][]float32
-	slovnik map[string]int32
-	unk     int32
-	cls     int32
-	sep     int32
+	slova, pozice, projekce maticeInt8
+	embNormG, embNormB      []float32
+	vrstvy                  [vrstevTextu]vrstvaTextu
+	slovnik                 map[string]int32
+	unk                     int32
+	cls                     int32
+	sep                     int32
 
 	mu    sync.Mutex
 	pamet map[string][]float32 // posledních dotazů
@@ -361,7 +369,8 @@ func OtevritText(slozka string) (*TextovyModel, error) {
 	if binary.Read(r, binary.LittleEndian, &verze) != nil || verze != verzeTextu {
 		return nil, errors.New("textový model: jiná verze")
 	}
-	t := &TextovyModel{matice: map[string]maticeInt8{}, vektory: map[string][]float32{}, pamet: map[string][]float32{}}
+	maticeMapa := map[string]maticeInt8{}
+	vektoryMapa := map[string][]float32{}
 	matice, vektory := nazvyTextu()
 	for _, n := range matice {
 		var rozmer [2]uint32
@@ -378,7 +387,7 @@ func OtevritText(slozka string) (*TextovyModel, error) {
 		if err := binary.Read(r, binary.LittleEndian, m.data); err != nil {
 			return nil, err
 		}
-		t.matice[n] = m
+		maticeMapa[n] = m
 	}
 	for _, n := range vektory {
 		var delka uint32
@@ -389,7 +398,36 @@ func OtevritText(slozka string) (*TextovyModel, error) {
 		if err := binary.Read(r, binary.LittleEndian, x); err != nil {
 			return nil, err
 		}
-		t.vektory[n] = x
+		vektoryMapa[n] = x
+	}
+	t := &TextovyModel{
+		slova:    maticeMapa["embeddings.word_embeddings.weight"],
+		pozice:   maticeMapa["embeddings.position_embeddings.weight"],
+		projekce: maticeMapa["linear.weight"],
+		embNormG: vektoryMapa["embeddings.LayerNorm.gamma"],
+		embNormB: vektoryMapa["embeddings.LayerNorm.beta"],
+		pamet:    map[string][]float32{},
+	}
+	for l := range vrstevTextu {
+		p := fmt.Sprintf("transformer.layer.%d.", l)
+		t.vrstvy[l] = vrstvaTextu{
+			qW:       maticeMapa[p+"attention.q_lin.weight"],
+			qB:       vektoryMapa[p+"attention.q_lin.bias"],
+			kW:       maticeMapa[p+"attention.k_lin.weight"],
+			kB:       vektoryMapa[p+"attention.k_lin.bias"],
+			vW:       maticeMapa[p+"attention.v_lin.weight"],
+			vB:       vektoryMapa[p+"attention.v_lin.bias"],
+			outW:     maticeMapa[p+"attention.out_lin.weight"],
+			outB:     vektoryMapa[p+"attention.out_lin.bias"],
+			saNormG:  vektoryMapa[p+"sa_layer_norm.weight"],
+			saNormB:  vektoryMapa[p+"sa_layer_norm.bias"],
+			ffn1W:    maticeMapa[p+"ffn.lin1.weight"],
+			ffn1B:    vektoryMapa[p+"ffn.lin1.bias"],
+			ffn2W:    maticeMapa[p+"ffn.lin2.weight"],
+			ffn2B:    vektoryMapa[p+"ffn.lin2.bias"],
+			outNormG: vektoryMapa[p+"output_layer_norm.weight"],
+			outNormB: vektoryMapa[p+"output_layer_norm.bias"],
+		}
 	}
 	if err := t.nacistSlovnik(filepath.Join(slozka, nazevTokenizeru)); err != nil {
 		return nil, err
@@ -415,7 +453,7 @@ func (t *TextovyModel) nacistSlovnik(cesta string) error {
 	t.unk, ok1 = t.slovnik["[UNK]"]
 	t.cls, ok2 = t.slovnik["[CLS]"]
 	t.sep, ok3 = t.slovnik["[SEP]"]
-	if !ok1 || !ok2 || !ok3 || len(t.slovnik) != t.matice["embeddings.word_embeddings.weight"].radku {
+	if !ok1 || !ok2 || !ok3 || len(t.slovnik) != t.slova.radku {
 		return errors.New("tokenizér nesedí k modelu")
 	}
 	return nil
@@ -465,43 +503,75 @@ func slovaBert(text string) []string {
 
 // Tokeny textu: [CLS] … [SEP], nejvýš maxTokenu
 func (t *TextovyModel) Tokeny(text string) []int32 {
-	v := []int32{t.cls}
+	v := make([]int32, 1, 16)
+	v[0] = t.cls
+	var hranice [101]int
+	var castiBuf [100]int32
+	var podretezec [404]byte
+	podretezec[0], podretezec[1] = '#', '#'
 	for _, slovo := range slovaBert(text) {
-		r := []rune(slovo)
-		if len(r) > 100 {
+		if utf8.RuneCountInString(slovo) > 100 {
 			v = append(v, t.unk)
 			continue
 		}
-		var casti []int32
-		for zacatek := 0; zacatek < len(r); {
-			konec := len(r)
+		nRun := 0
+		for i := range slovo {
+			hranice[nRun] = i
+			nRun++
+		}
+		hranice[nRun] = len(slovo)
+		casti := castiBuf[:0]
+		for zacatek := 0; zacatek < nRun; {
+			konec := nRun
 			nalezeno := int32(-1)
 			for ; konec > zacatek; konec-- {
-				kus := string(r[zacatek:konec])
-				if zacatek > 0 {
-					kus = "##" + kus
-				}
-				if id, ok := t.slovnik[kus]; ok {
-					nalezeno = id
-					break
+				usek := slovo[hranice[zacatek]:hranice[konec]]
+				if zacatek == 0 {
+					if id, ok := t.slovnik[usek]; ok {
+						nalezeno = id
+						break
+					}
+				} else {
+					n := 2 + copy(podretezec[2:], usek)
+					if id, ok := t.slovnik[string(podretezec[:n])]; ok {
+						nalezeno = id
+						break
+					}
 				}
 			}
 			if nalezeno < 0 {
-				casti = []int32{t.unk}
+				casti = append(castiBuf[:0], t.unk)
 				break
 			}
 			casti = append(casti, nalezeno)
 			zacatek = konec
 		}
 		v = append(v, casti...)
-	}
-	if len(v) > maxTokenu-1 {
-		v = v[:maxTokenu-1]
+		if len(v) >= maxTokenu-1 {
+			v = v[:maxTokenu-1]
+			break
+		}
 	}
 	return append(v, t.sep)
 }
 
 // --- výpočet ---
+
+func skalarInt8(xi []float32, w []int8) float32 {
+	var s0, s1, s2, s3 float32
+	k := 0
+	for ; k+3 < len(w); k += 4 {
+		s0 += xi[k] * float32(w[k])
+		s1 += xi[k+1] * float32(w[k+1])
+		s2 += xi[k+2] * float32(w[k+2])
+		s3 += xi[k+3] * float32(w[k+3])
+	}
+	s := (s0 + s1) + (s2 + s3)
+	for ; k < len(w); k++ {
+		s += xi[k] * float32(w[k])
+	}
+	return s
+}
 
 // y[n×radku] = x[n×sloupcu] · Wᵀ + b, souběžně po řádcích matice
 func (m maticeInt8) nasobit(x []float32, n int, b []float32) []float32 {
@@ -518,17 +588,14 @@ func (m maticeInt8) nasobitDo(y, x []float32, n int, b []float32) []float32 {
 	if vlaken <= 1 {
 		for j := range m.radku {
 			w := m.data[j*m.sloupcu : (j+1)*m.sloupcu]
+			mer := m.meritka[j]
+			var bj float32
+			if b != nil {
+				bj = b[j]
+			}
 			for i := range n {
 				xi := x[i*m.sloupcu : (i+1)*m.sloupcu]
-				var s float32
-				for k, q := range w {
-					s += xi[k] * float32(q)
-				}
-				s *= m.meritka[j]
-				if b != nil {
-					s += b[j]
-				}
-				y[i*m.radku+j] = s
+				y[i*m.radku+j] = skalarInt8(xi, w)*mer + bj
 			}
 		}
 		return y
@@ -538,17 +605,14 @@ func (m maticeInt8) nasobitDo(y, x []float32, n int, b []float32) []float32 {
 		wg.Go(func() {
 			for j := c * m.radku / vlaken; j < (c+1)*m.radku/vlaken; j++ {
 				w := m.data[j*m.sloupcu : (j+1)*m.sloupcu]
+				mer := m.meritka[j]
+				var bj float32
+				if b != nil {
+					bj = b[j]
+				}
 				for i := range n {
 					xi := x[i*m.sloupcu : (i+1)*m.sloupcu]
-					var s float32
-					for k, q := range w {
-						s += xi[k] * float32(q)
-					}
-					s *= m.meritka[j]
-					if b != nil {
-						s += b[j]
-					}
-					y[i*m.radku+j] = s
+					y[i*m.radku+j] = skalarInt8(xi, w)*mer + bj
 				}
 			}
 		})
@@ -573,7 +637,8 @@ func normalizovatVrstvou(x []float32, n int, g, b []float32) {
 		}
 		prumer /= dimTextu
 		for _, v := range r {
-			rozptyl += (float64(v) - prumer) * (float64(v) - prumer)
+			d := float64(v) - prumer
+			rozptyl += d * d
 		}
 		rozptyl /= dimTextu
 		k := 1 / math.Sqrt(rozptyl+1e-12)
@@ -581,6 +646,36 @@ func normalizovatVrstvou(x []float32, n int, g, b []float32) {
 			r[j] = float32((float64(v)-prumer)*k)*g[j] + b[j]
 		}
 	}
+}
+
+type pracovniText struct {
+	x, q, k, v, pozornost, kontext, skryta, vystup []float32
+	skore                                          []float64
+}
+
+var textPracovniPool = sync.Pool{
+	New: func() any {
+		return &pracovniText{
+			x:         make([]float32, 0, 16*dimTextu),
+			q:         make([]float32, 0, 16*dimTextu),
+			k:         make([]float32, 0, 16*dimTextu),
+			v:         make([]float32, 0, 16*dimTextu),
+			pozornost: make([]float32, 0, 16*dimTextu),
+			kontext:   make([]float32, 0, 16*dimTextu),
+			skryta:    make([]float32, 0, 16*4*dimTextu),
+			vystup:    make([]float32, 0, 16*dimTextu),
+			skore:     make([]float64, 0, 16),
+		}
+	},
+}
+
+func zajistitFloat32(s []float32, n int) []float32 {
+	if cap(s) < n {
+		return make([]float32, n)
+	}
+	s = s[:n]
+	clear(s)
+	return s
 }
 
 // Vektor textu délky 1 (512 čísel); nil pro prázdný text
@@ -592,79 +687,95 @@ func (t *TextovyModel) Vektor(text string) []float32 {
 	t.mu.Lock()
 	if v, ok := t.pamet[text]; ok {
 		t.mu.Unlock()
-		return v
+		return append([]float32(nil), v...)
 	}
 	t.mu.Unlock()
 	tokeny := t.Tokeny(text)
 	n := len(tokeny)
-	slova, pozice := t.matice["embeddings.word_embeddings.weight"], t.matice["embeddings.position_embeddings.weight"]
-	x := make([]float32, n*dimTextu)
+	buf := textPracovniPool.Get().(*pracovniText)
+	defer textPracovniPool.Put(buf)
+	x := zajistitFloat32(buf.x, n*dimTextu)
+	kontext := zajistitFloat32(buf.kontext, n*dimTextu)
+	if cap(buf.skore) < n {
+		buf.skore = make([]float64, n)
+	}
+	skore := buf.skore[:n]
 	for i, id := range tokeny {
 		radek := x[i*dimTextu : (i+1)*dimTextu]
-		slova.pridatRadek(int(id), radek)
-		pozice.pridatRadek(i, radek)
+		t.slova.pridatRadek(int(id), radek)
+		t.pozice.pridatRadek(i, radek)
 	}
-	normalizovatVrstvou(x, n, t.vektory["embeddings.LayerNorm.gamma"], t.vektory["embeddings.LayerNorm.beta"])
+	normalizovatVrstvou(x, n, t.embNormG, t.embNormB)
 	const dimHlavy = dimTextu / hlavTextu
-	var q, k, v, pozornost, skryta, vystup []float32
-	kontext := make([]float32, n*dimTextu)
-	skore := make([]float64, n)
+	const meritkoHlavy = 1.0 / 8.0 // 1 / √dimHlavy (dimHlavy = 64)
+	q, k, v := buf.q, buf.k, buf.v
+	pozornost, skryta, vystup := buf.pozornost, buf.skryta, buf.vystup
 	for l := range vrstevTextu {
-		p := fmt.Sprintf("transformer.layer.%d.", l)
-		lin := func(cil []float32, jmeno string, vstup []float32) []float32 {
-			return t.matice[p+jmeno+".weight"].nasobitDo(cil, vstup, n, t.vektory[p+jmeno+".bias"])
-		}
-		q = lin(q, "attention.q_lin", x)
-		k = lin(k, "attention.k_lin", x)
-		v = lin(v, "attention.v_lin", x)
+		vr := &t.vrstvy[l]
+		q = vr.qW.nasobitDo(q, x, n, vr.qB)
+		k = vr.kW.nasobitDo(k, x, n, vr.kB)
+		v = vr.vW.nasobitDo(v, x, n, vr.vB)
 		clear(kontext)
 		for h := range hlavTextu {
 			o := h * dimHlavy
 			for i := range n {
+				qi := q[i*dimTextu+o : i*dimTextu+o+dimHlavy]
 				nej := math.Inf(-1)
 				for j := range n {
+					kj := k[j*dimTextu+o : j*dimTextu+o+dimHlavy]
 					var s float32
 					for d := range dimHlavy {
-						s += q[i*dimTextu+o+d] * k[j*dimTextu+o+d]
+						s += qi[d] * kj[d]
 					}
-					skore[j] = float64(s) / math.Sqrt(dimHlavy)
-					nej = math.Max(nej, skore[j])
+					sk := float64(s) * meritkoHlavy
+					skore[j] = sk
+					if sk > nej {
+						nej = sk
+					}
 				}
 				var soucet float64
 				for j := range n {
-					skore[j] = math.Exp(skore[j] - nej)
-					soucet += skore[j]
+					e := math.Exp(skore[j] - nej)
+					skore[j] = e
+					soucet += e
 				}
+				ki := kontext[i*dimTextu+o : i*dimTextu+o+dimHlavy]
+				invSoucet := 1 / soucet
 				for j := range n {
-					w := float32(skore[j] / soucet)
+					w := float32(skore[j] * invSoucet)
+					vj := v[j*dimTextu+o : j*dimTextu+o+dimHlavy]
 					for d := range dimHlavy {
-						kontext[i*dimTextu+o+d] += w * v[j*dimTextu+o+d]
+						ki[d] += w * vj[d]
 					}
 				}
 			}
 		}
-		pozornost = lin(pozornost, "attention.out_lin", kontext)
+		pozornost = vr.outW.nasobitDo(pozornost, kontext, n, vr.outB)
 		for i := range x {
 			x[i] += pozornost[i]
 		}
-		normalizovatVrstvou(x, n, t.vektory[p+"sa_layer_norm.weight"], t.vektory[p+"sa_layer_norm.bias"])
-		skryta = lin(skryta, "ffn.lin1", x)
+		normalizovatVrstvou(x, n, vr.saNormG, vr.saNormB)
+		skryta = vr.ffn1W.nasobitDo(skryta, x, n, vr.ffn1B)
 		for i, a := range skryta {
 			skryta[i] = float32(0.5 * float64(a) * (1 + math.Erf(float64(a)/math.Sqrt2)))
 		}
-		vystup = t.matice[p+"ffn.lin2.weight"].nasobitDo(vystup, skryta, n, t.vektory[p+"ffn.lin2.bias"])
+		vystup = vr.ffn2W.nasobitDo(vystup, skryta, n, vr.ffn2B)
 		for i := range x {
 			x[i] += vystup[i]
 		}
-		normalizovatVrstvou(x, n, t.vektory[p+"output_layer_norm.weight"], t.vektory[p+"output_layer_norm.bias"])
+		normalizovatVrstvou(x, n, vr.outNormG, vr.outNormB)
 	}
-	prumer := make([]float32, dimTextu)
+	buf.x, buf.q, buf.k, buf.v = x, q, k, v
+	buf.pozornost, buf.kontext, buf.skryta, buf.vystup = pozornost, kontext, skryta, vystup
+	var prumer [dimTextu]float32
+	invN := 1 / float32(n)
 	for i := range n {
-		for k := range dimTextu {
-			prumer[k] += x[i*dimTextu+k] / float32(n)
+		xi := x[i*dimTextu : (i+1)*dimTextu]
+		for d := range dimTextu {
+			prumer[d] += xi[d] * invN
 		}
 	}
-	vektor := t.matice["linear.weight"].nasobit(prumer, 1, nil)
+	vektor := t.projekce.nasobit(prumer[:], 1, nil)
 	if !Normalizovat(vektor) {
 		return nil
 	}
@@ -674,5 +785,5 @@ func (t *TextovyModel) Vektor(text string) []float32 {
 	}
 	t.pamet[text] = vektor
 	t.mu.Unlock()
-	return vektor
+	return append([]float32(nil), vektor...)
 }

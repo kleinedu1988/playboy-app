@@ -438,7 +438,7 @@ func (a *App) uceniTaguZ(hned bool) *obsah.UceniTagu {
 	}
 	if (p.klic != klic || p.uceni == nil) && !p.bezi {
 		naucit := func() *obsah.UceniTagu {
-			return a.obsah.NaucitTagy(a.prikladyTaguZPruvodce(), tagyProUceni(), a.vychoziNavrhyTagu)
+			return a.obsah.NaucitTagy(a.prikladyTaguZPruvodce(), tagyProUceni(), nil)
 		}
 		// Testy (bez okna) a úvodní obrazovka učí hned, jinak na pozadí
 		if !a.startNaPozadi || hned {

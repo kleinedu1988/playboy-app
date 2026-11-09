@@ -83,12 +83,15 @@ func (v *Vektory) Podobnost(a, b string) float64 {
 	if !ok1 || !ok2 {
 		return 0
 	}
-	var s int32
 	x, y := v.data[i*Rozmer:(i+1)*Rozmer], v.data[j*Rozmer:(j+1)*Rozmer]
-	for k := range x {
-		s += int32(x[k]) * int32(y[k])
+	var s0, s1, s2, s3 int32
+	for k := 0; k < Rozmer; k += 4 {
+		s0 += int32(x[k]) * int32(y[k])
+		s1 += int32(x[k+1]) * int32(y[k+1])
+		s2 += int32(x[k+2]) * int32(y[k+2])
+		s3 += int32(x[k+3]) * int32(y[k+3])
 	}
-	return float64(s) * float64(v.meritka[i]) * float64(v.meritka[j])
+	return float64(s0+s1+s2+s3) * float64(v.meritka[i]) * float64(v.meritka[j])
 }
 
 // Stred: průměrný vektor fotek (délky 1), nil bez žádné s vektorem – „střed vkusu“ (např. fotky ♥4+)
@@ -130,11 +133,15 @@ func (v *Vektory) PodobnostiKeStredu(stred []float32) map[string]float64 {
 		return vysledek
 	}
 	for i, id := range v.ids {
-		var s float32
-		for k, q := range v.data[i*Rozmer : (i+1)*Rozmer] {
-			s += float32(q) * stred[k]
+		radek := v.data[i*Rozmer : (i+1)*Rozmer]
+		var s0, s1, s2, s3 float32
+		for k := 0; k < Rozmer; k += 4 {
+			s0 += float32(radek[k]) * stred[k]
+			s1 += float32(radek[k+1]) * stred[k+1]
+			s2 += float32(radek[k+2]) * stred[k+2]
+			s3 += float32(radek[k+3]) * stred[k+3]
 		}
-		vysledek[id] = float64(s * v.meritka[i])
+		vysledek[id] = float64(((s0 + s1) + (s2 + s3)) * v.meritka[i])
 	}
 	return vysledek
 }
@@ -215,11 +222,14 @@ func (v *Vektory) Podobne(id string, pocet int) []Shoda {
 	nej := make([]Shoda, 0, pocet+1)
 	for j := range v.ids {
 		radek := v.data[j*Rozmer : (j+1)*Rozmer]
-		var s int32
-		for k, x := range dotaz {
-			s += int32(x) * int32(radek[k])
+		var s0, s1, s2, s3 int32
+		for k := 0; k < Rozmer; k += 4 {
+			s0 += int32(dotaz[k]) * int32(radek[k])
+			s1 += int32(dotaz[k+1]) * int32(radek[k+1])
+			s2 += int32(dotaz[k+2]) * int32(radek[k+2])
+			s3 += int32(dotaz[k+3]) * int32(radek[k+3])
 		}
-		p := float32(s) * md * v.meritka[j]
+		p := float32(s0+s1+s2+s3) * md * v.meritka[j]
 		if len(nej) == pocet && p <= nej[pocet-1].Podobnost {
 			continue
 		}

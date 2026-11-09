@@ -127,7 +127,11 @@ type sadaTagu struct {
 var sadyTagu []sadaTagu
 
 // Vektory popisů podle klíče (test)
-var vektoryTagu = map[string][]float32{}
+var (
+	vektoryTagu    = map[string][]float32{}
+	vektorOblecena []float32
+	vektorPradlo   []float32
+)
 
 func init() {
 	v, err := cistVektory(bytes.NewReader(tagyBin))
@@ -141,6 +145,8 @@ func init() {
 		}
 		vektoryTagu[id] = radek
 	}
+	vektorOblecena = vektoryTagu["oblecena"]
+	vektorPradlo = vektoryTagu["pradlo"]
 	poradi := map[string]int{}
 	for _, p := range PopisyTagu {
 		vt, ok := vektoryTagu[p.Klic]
@@ -160,9 +166,18 @@ func init() {
 }
 
 func skalarni(a, b []float32) float32 {
-	var s float32
-	for i := range a {
-		s += a[i] * b[i]
+	var s0, s1, s2, s3 float32
+	n := len(a)
+	k := 0
+	for ; k+3 < n; k += 4 {
+		s0 += a[k] * b[k]
+		s1 += a[k+1] * b[k+1]
+		s2 += a[k+2] * b[k+2]
+		s3 += a[k+3] * b[k+3]
+	}
+	s := (s0 + s1) + (s2 + s3)
+	for ; k < n; k++ {
+		s += a[k] * b[k]
 	}
 	return s
 }
@@ -171,36 +186,34 @@ func skalarni(a, b []float32) float32 {
 const (
 	prahPartie   = 0.45
 	spodniPartie = 0.25
+
+	idxZadek    = 2 // BUTTOCKS_EXPOSED
+	idxPrsa     = 3 // FEMALE_BREAST_EXPOSED
+	idxKlin     = 4 // FEMALE_GENITALIA_EXPOSED
+	idxChodidla = 7 // FEET_EXPOSED
 )
 
-// Partie z detektoru, které jsou tagem
-var tagyPartii = map[string]string{
-	"FEMALE_BREAST_EXPOSED":    "prsa",
-	"BUTTOCKS_EXPOSED":         "zadecek",
-	"FEMALE_GENITALIA_EXPOSED": "vagina",
-	"FEET_EXPOSED":             "chodidla",
-}
-
-func jistotaTridy(partie []float32, trida string) float32 {
-	for i, t := range TridyDetektoru {
-		if t == trida && i < len(partie) {
-			return partie[i]
-		}
-	}
-	return 0
+// Partie z detektoru, které jsou tagem (pevné indexy v TridyDetektoru)
+var prehledTaguPartii = [4]struct {
+	idx int
+	tag string
+}{
+	{idxPrsa, "prsa"},
+	{idxZadek, "zadecek"},
+	{idxKlin, "vagina"},
+	{idxChodidla, "chodidla"},
 }
 
 // Odhalení a partie z detektoru: odhalený klín = akt, jinak odhalená prsa = nahoře bez; nic odhaleného (ani
 // napůl jistě) = oblečená, nebo prádlo / plavky podle obsahu (CLIP); explicitní akt detektor neodliší
 func navrhyZDetektoru(vektor, partie []float32) []NavrhTagu {
 	var navrhy []NavrhTagu
-	for trida, tag := range tagyPartii {
-		if j := jistotaTridy(partie, trida); j >= prahPartie {
-			navrhy = append(navrhy, NavrhTagu{Tag: tag, Jistota: j})
+	for _, tp := range prehledTaguPartii {
+		if j := partie[tp.idx]; j >= prahPartie {
+			navrhy = append(navrhy, NavrhTagu{Tag: tp.tag, Jistota: j})
 		}
 	}
-	klin, prsa := jistotaTridy(partie, "FEMALE_GENITALIA_EXPOSED"), jistotaTridy(partie, "FEMALE_BREAST_EXPOSED")
-	zadek := jistotaTridy(partie, "BUTTOCKS_EXPOSED")
+	klin, prsa, zadek := partie[idxKlin], partie[idxPrsa], partie[idxZadek]
 	switch {
 	case klin >= prahPartie:
 		navrhy = append(navrhy, NavrhTagu{Tag: "akt", Jistota: klin})
@@ -208,8 +221,8 @@ func navrhyZDetektoru(vektor, partie []float32) []NavrhTagu {
 		navrhy = append(navrhy, NavrhTagu{Tag: "nahore_bez", Jistota: prsa})
 	case klin < spodniPartie && prsa < spodniPartie && zadek < spodniPartie && len(vektor) == Rozmer:
 		// Oblečená, nebo prádlo / plavky: rozhodne obsah, jen mezi těmito dvěma
-		o := float64(skalaCLIP * skalarni(vektor, vektoryTagu["oblecena"]))
-		p := float64(skalaCLIP * skalarni(vektor, vektoryTagu["pradlo"]))
+		o := float64(skalaCLIP * skalarni(vektor, vektorOblecena))
+		p := float64(skalaCLIP * skalarni(vektor, vektorPradlo))
 		pp := 1 / (1 + math.Exp(o-p))
 		if pp >= minJistota {
 			navrhy = append(navrhy, NavrhTagu{Tag: "pradlo", Jistota: float32(pp)})
@@ -224,12 +237,13 @@ func navrhyZDetektoru(vektor, partie []float32) []NavrhTagu {
 // jistoty detektoru (pořadí TridyDetektoru); bez partií se odhalení a partie nenavrhují.
 func NavrhnoutTagy(vektor, partie []float32) []NavrhTagu {
 	var navrhy []NavrhTagu
-	if len(partie) == len(TridyDetektoru) {
+	if len(partie) == TridDetektoru {
 		navrhy = navrhyZDetektoru(vektor, partie)
 	}
 	if len(vektor) == Rozmer {
+		var logityBuf [16]float64
 		for _, sada := range sadyTagu {
-			logity := make([]float64, len(sada.klice))
+			logity := logityBuf[:len(sada.klice)]
 			nej := 0
 			for i, v := range sada.vektory {
 				logity[i] = float64(skalaCLIP * skalarni(vektor, v))

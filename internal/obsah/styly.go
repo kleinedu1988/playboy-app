@@ -168,13 +168,7 @@ func (v *Vektory) Shlukovat(k, iteraci int) (prirazeni []int, stredy [][]float32
 	}
 	r := rand.New(rand.NewPCG(7, 11))
 	radek := func(i int) []float32 { return x[i*Rozmer : (i+1)*Rozmer] }
-	podobnost := func(a, b []float32) float32 {
-		var s float32
-		for j := range a {
-			s += a[j] * b[j]
-		}
-		return s
-	}
+	podobnost := skalarni
 	// k-means++: další střed s pravděpodobností úměrnou vzdálenosti od nejbližšího
 	stredy = [][]float32{append([]float32(nil), radek(r.IntN(n))...)}
 	vzdal := make([]float64, n)
@@ -201,6 +195,10 @@ func (v *Vektory) Shlukovat(k, iteraci int) (prirazeni []int, stredy [][]float32
 		}
 	}
 	prirazeni = make([]int, n)
+	nove := make([][]float32, k)
+	for s := range nove {
+		nove[s] = make([]float32, Rozmer)
+	}
 	for range iteraci {
 		zmeneno := 0
 		var mu sync.Mutex
@@ -227,9 +225,8 @@ func (v *Vektory) Shlukovat(k, iteraci int) (prirazeni []int, stredy [][]float32
 			})
 		}
 		wg.Wait()
-		nove := make([][]float32, k)
 		for s := range nove {
-			nove[s] = make([]float32, Rozmer)
+			clear(nove[s])
 		}
 		for i := range n {
 			st := nove[prirazeni[i]]
@@ -239,10 +236,10 @@ func (v *Vektory) Shlukovat(k, iteraci int) (prirazeni []int, stredy [][]float32
 		}
 		for s := range nove {
 			if !Normalizovat(nove[s]) {
-				nove[s] = stredy[s] // prázdný shluk si nechá střed
+				copy(nove[s], stredy[s]) // prázdný shluk si nechá střed
 			}
 		}
-		stredy = nove
+		stredy, nove = nove, stredy
 		if zmeneno < n/1000 {
 			break
 		}

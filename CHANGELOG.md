@@ -7,6 +7,15 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.34.0] – 2026-11-09
+
+### Přidáno
+- **Křivka a rozpětí u grafů v čase (`frontend/src/lib/krivky.js`, `frontend/src/app/statistiky.js`)**: přepínač Sloupce / Křivka a rozpětí v legendě grafu. Údaje: medián z okna sedmi let (u přibývání tří měsíců) se stínovaným pásmem 25.–75. percentilu z hodnot všech modelek okna; podíly: podíl okna s Wilsonovým 95% intervalem spolehlivosti; počty: průměr okna s plochou. Okno s méně než pěti modelkami křivku přeruší, bublina u roku ukáže hodnotu, rozpětí a počet modelek okna. Volba se pamatuje.
+- **Porovnat období (graf ve skupině Srovnání)**: dvě období A a B podle roku prvního výskytu (edice a druh výskytu jako u grafů v čase, ostatní podmínky výběru platí) – předvolby desetiletí s počty modelek a vlastní roky od–do. Pod nimi průkazné a podstatné rozdíly mezi obdobími (`porovnatObdobi` v `lib/postrehy.js`: Mann–Whitney u údajů, Fisher u podílů a nejčastějších hodnot rozložení, oprava Benjamini–Hochberg) větou s podrobnostmi v bublině a rozbalovací tabulka všech porovnaných údajů s hodnotami obou období, počty modelek a q; klik na údaj otevře jeho graf. Seznam vpravo ukazuje modelky obou období.
+
+### Změněno
+- `rozdilyVyberu` vrací i tabulku všech testovaných příznaků a umí věty srovnání dvou skupin.
+
 ## [1.33.0] – 2026-11-09
 
 ### Přidáno

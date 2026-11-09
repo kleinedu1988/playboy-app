@@ -512,7 +512,7 @@ const silaSlovy = (velikost, meze) => velikost < meze[0] ? 'malý' : velikost < 
 // Porovnání výběru (maska Uint8Array přes modelky) se zbytkem sbírky pro připravené příznaky.
 // vyloucit: klíče příznaků, které určuje sám výběr (podmínka vlasů vyřadí vlasy i blond).
 // Vrací { maly: true } pro výběr pod MIN_VYBER modelek, jinak { postrehy: [...] } seřazené podle skóre síla × jistota.
-export function rozdilyVyberu(priznaky, maska, { vyloucit = [], desetileti = null } = {}) {
+export function rozdilyVyberu(priznaky, maska, { vyloucit = [], desetileti = null, srovnani = null } = {}) {
     const vybrano = maska.reduce((s, x) => s + x, 0);
     if (vybrano < MIN_VYBER) return { maly: true, postrehy: [] };
     const kandidati = [];
@@ -558,12 +558,16 @@ export function rozdilyVyberu(priznaky, maska, { vyloucit = [], desetileti = nul
             const sila = k.p.druh === 'podil' ? Math.min(1, Math.abs(k.velikost) / 0.8) : Math.min(1, Math.abs(k.velikost) / 0.5);
             const jistota = Math.min(1, -Math.log10(Math.max(k.q, 1e-300)) / 4);
             const vysvetlenoDobou = kontrolovatDobu && jeVysvetlenoDobou(k.p, maska, k.v, desetileti);
-            const t = textVyberu(k, testu);
+            const t = srovnani ? textSrovnani(k, testu, srovnani) : textVyberu(k, testu);
             if (vysvetlenoDobou) t.podrobnosti += ' Rozdíl odpovídá době, ze které výběr pochází.';
             return { klic: k.p.klic, graf: k.p.graf, skore: sila * jistota, q: k.q, vysvetlenoDobou, ...t };
         })
         .sort((a, b) => b.skore - a.skore || a.q - b.q);
-    return { maly: false, postrehy, testu };
+    // Všechny testované příznaky (tabulka srovnání období): hodnoty obou skupin, q a jestli je rozdíl postřeh
+    const tabulka = kandidati.map((k, i) => ({ klic: k.p.klic, graf: k.p.graf, nazev: k.p.nazev, druh: k.p.druh, desetinna: k.p.desetinna ?? 0,
+        jednotka: k.p.druh === 'podil' ? '%' : k.p.jednotka || '', a: k.v, b: k.zbytek, na: k.n1, nb: k.n2, q: q[i], velikost: k.velikost,
+        prukazny: q[i] <= ALFA && k.podstatny }));
+    return { maly: false, postrehy, testu, tabulka };
 }
 
 const roky = n => `${n === 1 ? 'rok' : n >= 2 && n <= 4 ? 'roky' : 'let'}`;
@@ -593,6 +597,46 @@ function textVyberu(k, testu) {
         veta: `Výběr ${sablona} (${cislo(k.v, des)} vs ${hodnota(k.celek)}).`,
         podrobnosti: `${p.nazev}: medián výběru ${hodnota(k.v)} (polovina ${cislo(k.dolni, des)}–${hodnota(k.horni)}), celé sbírky ${hodnota(k.celek)} `
             + `(${cislo(k.celekDolni, des)}–${hodnota(k.celekHorni)}), zbytku ${hodnota(k.zbytek)}. Známé u ${modelek(k.n1)} výběru. `
+            + `Mannův–Whitneyův test, ${oprava}; velikost rozdílu: ${silaSlovy(Math.abs(k.velikost), [0.33, 0.47])} (δ = ${cislo(k.velikost, 2)}).`,
+    };
+}
+
+// ── Srovnání dvou období (Statistiky › Porovnat období) ───────────────────────────────────────────────────────────
+// Modelky období A proti modelkám období B (ostatní se nepočítají): příznaky se připraví znovu jen z modelek obou
+// období a otestují stejně jako výběr proti zbytku (Mann–Whitney, Fisher, Benjamini–Hochberg), jen věty mluví
+// o obdobích a hodnotě druhého období. obdobi: pole přes modelky, 1 = A, 2 = B, 0 = ani jedno.
+export function porovnatObdobi(priznaky, obdobi, nazvy, { vyloucit = [] } = {}) {
+    const omezene = priznaky.map(p => pripravitPriznak({ ...p, desetileti: undefined, stredDesetileti: undefined,
+        hodnoty: p.hodnoty.map((h, i) => (obdobi[i] ? h : null)) }));
+    const maska = Uint8Array.from(obdobi, x => (x === 1 ? 1 : 0));
+    let na = 0, nb = 0;
+    for (const x of obdobi) { if (x === 1) na++; else if (x === 2) nb++; }
+    if (na < MIN_VYBER || nb < MIN_VYBER) return { maly: true, postrehy: [], tabulka: [], na, nb };
+    return { ...rozdilyVyberu(omezene, maska, { vyloucit: ['rok', ...vyloucit], srovnani: nazvy }), na, nb };
+}
+
+function textSrovnani(k, testu, { a, b }) {
+    const p = k.p, des = p.druh === 'podil' ? 0 : p.desetinna ?? 0;
+    const jednotka = p.druh === 'podil' ? ' %' : p.jednotka ? ` ${p.jednotka}` : '';
+    const hodnota = v => `${cislo(v, des)}${jednotka}`;
+    const oprava = `po opravě na ${testu} ${testu >= 2 && testu <= 4 ? 'testy' : 'testů'} ${textP(k.q)}`;
+    const vic = k.v > k.zbytek;
+    if (p.druh === 'podil') {
+        return {
+            smer: vic ? 1 : -1,
+            veta: `${a}: ${vic ? 'víc' : 'méně'} modelek ${p.sKym} – ${hodnota(k.v)} proti ${hodnota(k.zbytek)} (${b}).`,
+            podrobnosti: `${p.nazev}: ${a} ${hodnota(k.v)} (${k.a1} z ${modelek(k.n1)}), ${b} ${hodnota(k.zbytek)} (${k.a2} z ${modelek(k.n2)}). `
+                + `Fisherův test, ${oprava}; velikost rozdílu: ${silaSlovy(Math.abs(k.velikost), [0.5, 0.8])} (h = ${cislo(k.velikost, 2)}).`,
+        };
+    }
+    const d = Number(Math.abs(k.v - k.zbytek).toFixed(des));
+    const textD = p.jednotka === 'let' ? `${cislo(d, des)} ${roky(d)}` : p.bezJednotkyVRozdilu ? cislo(d, des) : `${cislo(d, des)}${jednotka}`;
+    const sablona = (vic ? p.vic : p.mene).replace('{d}', textD);
+    return {
+        smer: vic ? 1 : -1,
+        veta: `${a}: modelka ${sablona} (medián ${cislo(k.v, des)} vs ${hodnota(k.zbytek)}).`,
+        podrobnosti: `${p.nazev}: medián ${a} ${hodnota(k.v)} (polovina ${cislo(k.dolni, des)}–${hodnota(k.horni)}, ${modelek(k.n1)}), `
+            + `${b} ${hodnota(k.zbytek)} (${modelek(k.n2)}). `
             + `Mannův–Whitneyův test, ${oprava}; velikost rozdílu: ${silaSlovy(Math.abs(k.velikost), [0.33, 0.47])} (δ = ${cislo(k.velikost, 2)}).`,
     };
 }

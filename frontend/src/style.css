@@ -20020,3 +20020,228 @@ body.rezim-vyberu #detailView .poster {
     gap: 8px;
     padding: 10px 16px 14px;
 }
+
+/* ——— Statistiky: Křivka a rozpětí, Porovnat období (app/statistiky.js, lib/krivky.js) ——— */
+.sp-legenda {
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.sp-zobrazeni {
+    display: inline-flex;
+    gap: 0;
+    margin-right: 4px;
+    padding: 2px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 999px;
+}
+
+.sp-zobrazeni button {
+    padding: 2px 10px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    cursor: pointer;
+}
+
+.sp-zobrazeni button:hover {
+    color: var(--text-main);
+}
+
+.sp-zobrazeni button.on {
+    background-color: var(--accent-soft);
+    color: var(--accent-text);
+}
+
+.sp-rozpeti {
+    fill: rgba(216, 27, 96, 0.22);
+    pointer-events: none;
+}
+
+.sp-rozpeti.celek {
+    fill: rgba(255, 255, 255, 0.05);
+}
+
+.sp-krivka.hladka {
+    stroke: var(--accent-text);
+    stroke-width: 2.5;
+}
+
+.sp-krivka.hladka.celek {
+    stroke: var(--text-muted);
+    stroke-width: 1.5;
+}
+
+.sp-graf.obdobi {
+    cursor: auto;
+}
+
+.so {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: start;
+    gap: 12px;
+}
+
+.so-vs {
+    align-self: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.so-obdobi {
+    min-width: 0;
+    margin: 0;
+    padding: 10px 12px 12px;
+    border: 1px solid var(--panel-okraj);
+    border-radius: 12px;
+}
+
+.so-obdobi legend {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0 6px;
+    font-size: 14px;
+}
+
+.so-obdobi legend b {
+    color: var(--accent-text);
+}
+
+.so-b legend b {
+    color: #64b5f6;
+}
+
+.so-obdobi legend small {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.so-desetileti {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.so-roky {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.so-roky input {
+    width: 72px;
+    margin-left: 4px;
+    padding: 3px 6px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    font: inherit;
+}
+
+.so-zprava {
+    margin: 16px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.so-shrnuti h3 {
+    margin: 18px 0 8px;
+    font-size: 14px;
+}
+
+.so-postrehy {
+    display: grid;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+}
+
+.so-postrehy li {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.so-tabulka {
+    margin-top: 14px;
+    font-size: 12.5px;
+}
+
+.so-tabulka summary {
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.so-tabulka table {
+    width: 100%;
+    margin-top: 8px;
+    border-collapse: collapse;
+}
+
+.so-tabulka th,
+.so-tabulka td {
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--panel-okraj);
+    text-align: right;
+    font-weight: normal;
+    white-space: nowrap;
+}
+
+.so-tabulka th[scope="row"],
+.so-tabulka thead th:first-child {
+    text-align: left;
+    white-space: normal;
+}
+
+.so-tabulka thead th {
+    color: var(--text-muted);
+}
+
+.so-tabulka td small {
+    margin-left: 4px;
+    color: var(--text-muted);
+    font-size: 10.5px;
+}
+
+.so-tabulka tr.prukazny td,
+.so-tabulka tr.prukazny th {
+    color: var(--text-main);
+}
+
+.so-tabulka tbody tr:not(.prukazny) {
+    color: var(--text-muted);
+}
+
+.so-tabulka .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.so-tabulka .link:hover {
+    color: var(--accent-text);
+}
+
+.so-q {
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+    .so {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

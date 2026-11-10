@@ -1362,6 +1362,32 @@ export namespace main {
 	    }
 	}
 	
+	export class NovaVerze {
+	    zapnuto: boolean;
+	    mozna: boolean;
+	    verze: string;
+	    novejsi: boolean;
+	    klon: string;
+	    prikaz: string;
+	    kontrola: string;
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NovaVerze(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.zapnuto = source["zapnuto"];
+	        this.mozna = source["mozna"];
+	        this.verze = source["verze"];
+	        this.novejsi = source["novejsi"];
+	        this.klon = source["klon"];
+	        this.prikaz = source["prikaz"];
+	        this.kontrola = source["kontrola"];
+	        this.chyba = source["chyba"];
+	    }
+	}
 	export class ObhajobaUrovne {
 	    uroven: number;
 	    vyzyvatelka: number;

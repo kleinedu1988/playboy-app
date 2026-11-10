@@ -95,6 +95,11 @@ const CTENI = new Set([
     'PocetOdmitnutychZWebu',
     'GetStavOtoceni',
     'GetRokVeSbirce',
+    // Kontrola nové verze pracuje jen s gitem klonu programu a nastavením
+    'GetNovaVerze',
+    'GetChangelogNoveVerze',
+    'ZkontrolovatNovouVerzi',
+    'NastavitKontroluVerze',
     // Kapesní katalog čte sbírku a zapisuje jen do zvolené složky
     'GetPodkladyKatalogu',
     'GetNahledyKatalogu',
@@ -276,6 +281,10 @@ export const PrijmoutNavrhyZWebu = /** @type {typeof App.PrijmoutNavrhyZWebu} */
 export const OdmitnoutNavrhyZWebu = /** @type {typeof App.OdmitnoutNavrhyZWebu} */ (obalit('OdmitnoutNavrhyZWebu'));
 export const PocetOdmitnutychZWebu = /** @type {typeof App.PocetOdmitnutychZWebu} */ (obalit('PocetOdmitnutychZWebu'));
 export const ZrusitOdmitnutiZWebu = /** @type {typeof App.ZrusitOdmitnutiZWebu} */ (obalit('ZrusitOdmitnutiZWebu'));
+export const GetNovaVerze = /** @type {typeof App.GetNovaVerze} */ (obalit('GetNovaVerze'));
+export const GetChangelogNoveVerze = /** @type {typeof App.GetChangelogNoveVerze} */ (obalit('GetChangelogNoveVerze'));
+export const ZkontrolovatNovouVerzi = /** @type {typeof App.ZkontrolovatNovouVerzi} */ (obalit('ZkontrolovatNovouVerzi'));
+export const NastavitKontroluVerze = /** @type {typeof App.NastavitKontroluVerze} */ (obalit('NastavitKontroluVerze'));
 export const GetPodkladyKatalogu = /** @type {typeof App.GetPodkladyKatalogu} */ (obalit('GetPodkladyKatalogu'));
 export const GetNahledyKatalogu = /** @type {typeof App.GetNahledyKatalogu} */ (obalit('GetNahledyKatalogu'));
 export const UlozitKatalog = /** @type {typeof App.UlozitKatalog} */ (obalit('UlozitKatalog'));

@@ -7,7 +7,20 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
-## [1.47.0] – 2026-11-10
+## [1.48.0] – 2026-11-10
+
+### Přidáno
+- **Upozornění na novou verzi** (`aktualizace.go`, `frontend/src/app/nova-verze.js`): `instalovat.sh` předá při
+  sestavení cestu ke klonu programu. Minutu po startu (nejvýš jednou denně) program spustí v tom klonu `git fetch`
+  bez dotazu na heslo a s limitem 15 s, přečte verzi a CHANGELOG vzdálené větve a novější verzi oznámí – jedno
+  oznámení za den – s tlačítkem Co je nového: změny od tvé verze a příkaz k aktualizaci s kopírováním. Nic se
+  nestahuje do sbírky ani neinstaluje samo a pracovní soubory klonu zůstanou beze změny; bez gitu, bez klonu
+  nebo bez sítě program mlčí.
+- ⋯ › Nápověda: **Zkontrolovat novou verzi** (hned, s výsledkem) a **Hledat novou verzi každý den** (vypnutí
+  a zapnutí denní kontroly).
+- Funguje od první instalace přes `./instalovat.sh` po této verzi (starší sestavení klon neznají).
+
+
 
 ### Přidáno
 - **Kapesní katalog do telefonu** (⋯ › Zálohy a data; `kapesni_katalog.go`, `frontend/src/lib/kapesni-katalog.js`,

@@ -71,7 +71,8 @@ if [ "${1:-}" != "--bez-sestaveni" ]; then
         echo "  go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0" >&2
         exit 1
     fi
-    wails build -tags webkit2_41
+    # Cesta ke klonu: program v něm jednou denně zkontroluje, jestli nevyšla nová verze (aktualizace.go)
+    wails build -tags webkit2_41 -ldflags "-X main.slozkaZdroje=$PWD"
 fi
 if [ ! -x "build/bin/$NAZEV" ]; then
     echo "Chybí build/bin/$NAZEV – nejdřív program sestav (wails build)." >&2

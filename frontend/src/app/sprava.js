@@ -1,6 +1,7 @@
 // Kontrola Disku, export a import, heslo, zálohy a nabídka ⋯
 import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
 import { otevritKapesniKatalog } from './kapesni-katalog';
+import * as novaVerze from './nova-verze';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
 import { zapomenoutProfilovkyUvodu } from '../ui/uvod';
@@ -347,6 +348,7 @@ export function polozkySpravy() {
         { text: 'Klávesové zkratky (?)', akce: otevritZkratky },
         { text: 'Přehled výkonu', akce: otevritVykon },
         { text: `Co je nového · verze ${stav.verzeProgramu}`, akce: () => otevritNovinky() },
+        ...novaVerze.polozkyNabidky(),
     ];
 }
 

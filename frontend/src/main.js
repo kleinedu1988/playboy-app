@@ -52,6 +52,7 @@ import { zaznamenatStart } from './app/vykon';
 import { naplanovatPoStartu as stahovatNahledyPoStartu } from './app/nahledy-pozadi';
 import * as obsahFotek from './app/obsah-fotek';
 import { nabidnoutPoSpusteni as nabidnoutDnesniVyber } from './app/dnesni-vyber';
+import { naplanovatPoStartu as hlidatNovouVerzi } from './app/nova-verze';
 
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
 // když je otevřený, jeho obsluha kláves zastaví ostatní
@@ -244,6 +245,8 @@ async function konecUvodu() {
     stahovatNahledyPoStartu();
     // Po aktualizaci jednou ukáže, co je nového (až po odemčení a úvodu)
     napoveda.ukazatNovinkyPoAktualizaci();
+    // Nová verze ve vlastním klonu programu: minutu po startu, nejvýš jednou denně (app/nova-verze.js)
+    hlidatNovouVerzi();
     // Denní ověření souborů až po prvním vykreslení, ať nebrzdí start
     setTimeout(() => kontrolaPoSpusteni(), 5000);
     // Skončená sezóna oblíbenosti čeká na vyhlášení Favoritky (app/vyhlaseni-sezony.js); až po úvodních oknech

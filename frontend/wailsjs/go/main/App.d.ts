@@ -35,6 +35,8 @@ export function GetAlbaFotografa(arg1:string):Promise<Array<sbirka.Fotografie>>;
 
 export function GetCenterfoldy():Promise<oblibenost.FrontaFotek>;
 
+export function GetChangelogNoveVerze():Promise<string>;
+
 export function GetChytreVybery(arg1:string):Promise<Array<main.StavChytrehoVyberu>>;
 
 export function GetClanky(arg1:string):Promise<Array<sbirka.Clanek>>;
@@ -102,6 +104,8 @@ export function GetNehodnoceneFotky():Promise<oblibenost.FrontaFotek>;
 export function GetNejlepsiFotky(arg1:number):Promise<Array<sbirka.Fotografie>>;
 
 export function GetNepotagovaneFotky():Promise<Array<sbirka.Fotografie>>;
+
+export function GetNovaVerze():Promise<main.NovaVerze>;
 
 export function GetOblibenost():Promise<main.StavOblibenosti>;
 
@@ -212,6 +216,8 @@ export function MaZamek():Promise<boolean>;
 export function NajitUdajeModelky(arg1:number):Promise<main.NalezUdaju>;
 
 export function NastavitHeslo(arg1:string,arg2:string):Promise<boolean>;
+
+export function NastavitKontroluVerze(arg1:boolean):Promise<boolean>;
 
 export function NavrhnoutVyrezy(arg1:Array<number>):Promise<Array<main.NavrhVyrezu>>;
 
@@ -410,6 +416,8 @@ export function ZaznamenatZajem(arg1:number,arg2:string,arg3:number):Promise<boo
 export function ZkontrolovatDavku():Promise<sbirka.KontrolaSouboru>;
 
 export function ZkontrolovatNoveFotky(arg1:string):Promise<Array<main.NalezStejne>>;
+
+export function ZkontrolovatNovouVerzi(arg1:boolean):Promise<main.NovaVerze>;
 
 export function ZkontrolovatOdkazy(arg1:string):Promise<main.KontrolaOdkazu>;
 

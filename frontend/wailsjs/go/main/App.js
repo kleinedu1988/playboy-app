@@ -54,6 +54,10 @@ export function GetCenterfoldy() {
   return window['go']['main']['App']['GetCenterfoldy']();
 }
 
+export function GetChangelogNoveVerze() {
+  return window['go']['main']['App']['GetChangelogNoveVerze']();
+}
+
 export function GetChytreVybery(arg1) {
   return window['go']['main']['App']['GetChytreVybery'](arg1);
 }
@@ -188,6 +192,10 @@ export function GetNejlepsiFotky(arg1) {
 
 export function GetNepotagovaneFotky() {
   return window['go']['main']['App']['GetNepotagovaneFotky']();
+}
+
+export function GetNovaVerze() {
+  return window['go']['main']['App']['GetNovaVerze']();
 }
 
 export function GetOblibenost() {
@@ -408,6 +416,10 @@ export function NajitUdajeModelky(arg1) {
 
 export function NastavitHeslo(arg1, arg2) {
   return window['go']['main']['App']['NastavitHeslo'](arg1, arg2);
+}
+
+export function NastavitKontroluVerze(arg1) {
+  return window['go']['main']['App']['NastavitKontroluVerze'](arg1);
 }
 
 export function NavrhnoutVyrezy(arg1) {
@@ -804,6 +816,10 @@ export function ZkontrolovatDavku() {
 
 export function ZkontrolovatNoveFotky(arg1) {
   return window['go']['main']['App']['ZkontrolovatNoveFotky'](arg1);
+}
+
+export function ZkontrolovatNovouVerzi(arg1) {
+  return window['go']['main']['App']['ZkontrolovatNovouVerzi'](arg1);
 }
 
 export function ZkontrolovatOdkazy(arg1) {

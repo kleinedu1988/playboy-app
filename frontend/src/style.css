@@ -20769,3 +20769,9 @@ body.rezim-vyberu #detailView .poster {
 .kk-rozsah small { color: var(--text-muted); }
 .kk-velikost { min-height: 1.4em; font-size: 13px; color: var(--text-muted); }
 .kk-velikost b { color: var(--text-main); }
+
+/* Nová verze v okně Co je nového (app/nova-verze.js) */
+.nv-aktualizace { margin-bottom: 18px; padding: 12px 14px; border: 1px solid var(--panel-okraj); border-radius: 10px; background: var(--accent-soft); }
+.nv-aktualizace p { margin: 0 0 8px; }
+.nv-prikaz { margin: 0 0 8px; padding: 8px 10px; border-radius: 8px; background: var(--bg-main); overflow-x: auto; font-size: 13px; }
+.nv-aktualizace .pass-hint { margin: 8px 0 0; }

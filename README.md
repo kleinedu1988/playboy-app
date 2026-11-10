@@ -79,7 +79,9 @@ git pull                         # stáhne nejnovější verzi
 Instaluje se jen do domovské složky, bez sudo: program do `~/.local/bin/playboy-app`, ikona do
 `~/.local/share/icons/hicolor/` (256x256 a 512x512), položka „Playboy Database“ do `~/.local/share/applications/`.
 Databáze se při prvním startu nové verze sama upraví (před úpravou se uloží záloha). Po aktualizaci se
-jednou ukáže okno „Co je nového“.
+jednou ukáže okno „Co je nového“. Program nainstalovaný přes `instalovat.sh` si pamatuje tuto složku a jednou
+denně v ní zkontroluje (`git fetch`), jestli nevyšla nová verze; oznámí ji i s příkazem k aktualizaci, nic
+neinstaluje sám. Vypnout jde v ⋯ › Hledat novou verzi každý den.
 
 **Přenos na jiný počítač:** program zavřít (při zavření se deník změn zapíše do databáze a soubory `-wal` a `-shm` zmizí), zkopírovat celou složku `~/.local/share/playboy-app` (databáze,
 zálohy, stav okna) na stejné místo na novém počítači a tam program nainstalovat. Heslo, pokud je nastavené,

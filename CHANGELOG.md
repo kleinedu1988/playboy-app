@@ -6,6 +6,13 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.018] – 2026-11-10
+
+### Změněno
+- **Stěna Centerfoldů podle časopisu:** volba v liště se jmenuje „Časopis“ a nabízí Playboy (výchozí, jako dřív
+  „vše“), Playboy US a CZ, Penthouse, Penthouse US a UK, Hustler, další časopisy z tabulky a Všechny časopisy
+  (`moznostiSteny` a `naSteneCenterfoldu` ve `format.js`). Stěna Penthouse ukáže jen Pet of the Month.
+
 ## [0.02.017] – 2026-11-10
 
 ### Přidáno

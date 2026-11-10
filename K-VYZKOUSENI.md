@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.018 – Stěna Centerfoldů podle časopisu
+
+- [ ] **Kritérium hotovo:** Modelky › Centerfoldy › „Časopis: Penthouse“: jen centerfoldy Penthouse (Pet of the
+      Month); „Penthouse UK“ jen britské.
+- [ ] Výchozí „Playboy“ ukazuje totéž co dřív „vše“; Playboy US a CZ jako dřív US a CZ.
+- [ ] „Všechny časopisy“: Playboy i Penthouse dohromady, řazení podle čísla funguje.
+- [ ] Hustler (jedna edice) má v nabídce jen jednu položku „Hustler“.
+
 ## 0.02.017 – Mapa čísel pro každý časopis
 
 - [ ] **Kritérium hotovo:** Sbírka › Mapa čísel: pod americkou edicí karta „Penthouse US · archiv dat“ 1969–2018;

@@ -77,12 +77,27 @@ export function rozlozitVydani(text) {
 // dokud nebudou podle časopisu (0.02.016–0.02.018); neplatný klíč není číslo žádného časopisu
 export const jeCisloPlayboye = klic => rozlozitVydani(klic)?.casopis === VYCHOZI_CASOPIS;
 
-// Patří centerfold na stěnu Centerfoldů se zvolenou edicí („vse“, „US“, „CZ“)? Jen Playboy; album, které není
-// číslem (staré pojmenování), jen ve „vše“ jako dřív
-export function naSteneCenterfoldu(album, edice) {
+// Patří centerfold na stěnu Centerfoldů se zvolenou volbou (0.02.018)? „vse“ = celý Playboy (výchozí, jako dřív),
+// „vsechny“ = všechny časopisy, „c:PH“ = celý časopis, jinak řada („US“, „CZ“, „PH/UK“). Album, které není číslem
+// (staré pojmenování), je jen ve „vse“ a „vsechny“.
+export function naSteneCenterfoldu(album, volba) {
     const v = rozlozitVydani(album);
-    if (v && v.casopis !== VYCHOZI_CASOPIS) return false;
-    return edice === 'vse' || v?.edice === edice;
+    if (volba === 'vsechny') return true;
+    if (volba === 'vse') return !v || v.casopis === VYCHOZI_CASOPIS;
+    if (volba.startsWith('c:')) return v?.casopis === volba.slice(2);
+    return v?.edice === volba;
+}
+
+// Volby stěny Centerfoldů: časopis (Playboy = „vse“), u časopisu s víc edicemi i jednotlivé edice, nakonec
+// Všechny časopisy; bez načtené tabulky časopisů jen Playboy jako dřív
+export function moznostiSteny() {
+    const seznam = casopisy.size ? [...casopisy.values()] : [{ klic: VYCHOZI_CASOPIS, nazev: 'Playboy', edice: EDICE }];
+    const v = seznam.flatMap(c => {
+        const edice = c.edice?.length ? c.edice : [VYCHOZI_EDICE];
+        return [{ hodnota: c.klic === VYCHOZI_CASOPIS ? 'vse' : `c:${c.klic}`, nazev: c.nazev },
+            ...(edice.length > 1 ? edice.map(zeme => ({ hodnota: radaVydani(zeme, c.klic), nazev: `${c.nazev} ${zeme}` })) : [])];
+    });
+    return seznam.length > 1 ? [...v, { hodnota: 'vsechny', nazev: 'Všechny časopisy' }] : v;
 }
 
 // Klíč z roku, měsíce (nebo Snn, '' = ročník) a řady („US“, „CZ“, „PH/UK“)

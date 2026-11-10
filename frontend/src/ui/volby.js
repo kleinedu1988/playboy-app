@@ -17,7 +17,7 @@ const POPISKY = {
     edice: 'Časopis a edice',
     ediceCisel: 'Časopis a edice',
     ediceModelek: 'Edice',
-    ediceSteny: 'Edice',
+    ediceSteny: 'Časopis',
     zobrazeniCisel: 'Zobrazení',
     roleModelek: 'Kategorie',
     vyskytModelek: 'Výskyt',

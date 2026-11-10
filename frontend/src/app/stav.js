@@ -34,7 +34,7 @@ export const stav = {
     // Stěna centerfoldů napříč všemi modelkami
     stenaData: null,
     razeniSteny: 'jmeno', // 'jmeno', 'vydani' (od nejstarších), 'nejnovejsi' (od nejnovějších), 'hodnoceni' (podle srdíček)
-    stenaEdice: 'vse', // filtr edice na stěně centerfoldů: 'vse', 'US', 'CZ'
+    stenaEdice: 'vse', // stěna centerfoldů: 'vse' (Playboy), 'vsechny', 'c:PH' nebo řada 'US', 'CZ', 'PH/UK' (moznostiSteny)
     stenaMin: 0, // filtr srdíček na stěně centerfoldů: 0 = vše, 1..5 = aspoň N, -1 = bez srdíček
     // Stránka Čísla: [kalendář, stavy čísel, covery]
     coveryData: null,

@@ -88,3 +88,23 @@ test('Kalendář podle časopisu: platné řady a jejich názvy (0.02.016)', asy
     assert.deepEqual(['US', 'CZ', 'PH/UK'].map(nazevVolbyRady), ['Playboy US', 'Playboy CZ', 'Penthouse UK']);
     nastavitCasopisy([]);
 });
+
+test('stěna Centerfoldů podle časopisu (0.02.018)', async () => {
+    const { moznostiSteny, naSteneCenterfoldu } = await import('../src/lib/format.js');
+    // Bez tabulky časopisů jen Playboy
+    assert.deepEqual(moznostiSteny().map(m => m.hodnota), ['vse', 'US', 'CZ']);
+    nastavitCasopisy(CASOPISY);
+    assert.deepEqual(moznostiSteny().map(m => [m.hodnota, m.nazev]), [
+        ['vse', 'Playboy'], ['US', 'Playboy US'], ['CZ', 'Playboy CZ'],
+        ['c:PH', 'Penthouse'], ['PH/US', 'Penthouse US'], ['PH/UK', 'Penthouse UK'],
+        ['c:HU', 'Hustler'], ['c:OU', 'Oui'], ['vsechny', 'Všechny časopisy'],
+    ]);
+    const alba = ['1985-09', '2012-03-CZ', '1985-09@PH', '1986-03-UK@PH', '1990-01@HU', 'Staré album'];
+    const na = volba => alba.filter(a => naSteneCenterfoldu(a, volba));
+    assert.deepEqual(na('vse'), ['1985-09', '2012-03-CZ', 'Staré album']);
+    assert.deepEqual(na('c:PH'), ['1985-09@PH', '1986-03-UK@PH']);
+    assert.deepEqual(na('PH/UK'), ['1986-03-UK@PH']);
+    assert.deepEqual(na('US'), ['1985-09']);
+    assert.deepEqual(na('vsechny'), alba);
+    nastavitCasopisy([]);
+});

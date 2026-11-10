@@ -22,3 +22,17 @@ test('platnyVzhled: neplatné hodnoty se vrátí na výchozí, platné zůstanou
     assert.deepEqual(v.karta, { srdicka: false, rok: false, fotek: true });
     assert.equal(platnyVzhled({ hustota: 'jina' }).hustota, 'pohodlna');
 });
+
+test('platnyVzhled 1.50: pohyb, prohlížeč, start a záhlaví jen z povolených hodnot', () => {
+    const v = platnyVzhled({ pohyb: 'zadny', prohlizec: { pozadi: 'rozmazane', ovladani: 'nikdy', pas: true }, start: 'posledni', zahlavi: 'nizke' });
+    assert.equal(v.pohyb, 'zadny');
+    assert.deepEqual(v.prohlizec, { pozadi: 'rozmazane', ovladani: 'pohyb', pas: true });
+    assert.equal(v.start, 'posledni');
+    assert.equal(v.zahlavi, 'vysoke');
+});
+
+test('platnyVzhled 1.50: pořadí karet Přehledu bez cizích a dvojitých, chybějící na konec', () => {
+    const v = platnyVzhled({ prehled: { poradi: ['naposledy', 'xx', 'cz', 'naposledy'], skryte: ['us', 'xx'] } });
+    assert.deepEqual(v.prehled.poradi, ['naposledy', 'cz', 'us', 'vybery']);
+    assert.deepEqual(v.prehled.skryte, ['us']);
+});

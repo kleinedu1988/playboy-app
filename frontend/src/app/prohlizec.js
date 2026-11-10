@@ -15,11 +15,18 @@ import { obnovitStranku, otevritFotografa, otevritVydani } from './vydani';
 import { nacistNejlepsi } from './nejlepsi';
 import { otevritProfilPodleId } from './cover';
 import { sledovatFotku, ukoncitProhlizeni } from './zajem';
+import { vzhled } from '../ui/vzhled';
 
 // Prohlížeč fotek: šipky vlevo a vpravo listují, nahoru a dolů (PgUp, PgDn) skáčou mezi alby,
 // mezerník spouští slideshow, F rozkládá plakát, R otáčí, Esc zavírá
 export const lightbox = document.getElementById('lightbox');
 export const lbStage = document.getElementById('lbStage');
+// Filmový pás náhledů dole (⋯ › Vzhled › Prohlížeč fotek, 1.50): okolí zobrazené fotky, klik na ni přejde
+const lbPas = document.createElement('div');
+lbPas.className = 'lb-pas';
+lbPas.setAttribute('aria-hidden', 'true');
+lightbox.append(lbPas);
+const PAS_OKOLI = 12;
 export const lbProgress = document.getElementById('lbProgress');
 export const lbZoomBtn = document.getElementById('lbZoom');
 export const lbFillBtn = document.getElementById('lbFill');
@@ -258,6 +265,9 @@ export function lbZobrazit(index) {
     // Začátky alb jen tam, kde je lišta alb (fronta nehodnocených ji nemá a seznam je dlouhý)
     if (!stav.lbJenNehodnocene && !stav.lbPruvodce) lbLista.oznacit(lbZacatkyAlb().filter(i => i <= stav.lbIndex).pop());
     lbAktualizovatTlacitka();
+    lbVykreslitPas();
+    // Rozmazané pozadí (volba prohlížeče): náhled zobrazené fotky přes celé okno
+    lightbox.style.setProperty('--lb-pozadi', `url("${obrazek(polozka.fotky[0].url, VELIKOST_NAHLEDU)}")`);
 
     // Přednačtení další položky, aby listování neproblikávalo
     dalsi.fotky.forEach(f => { new Image().src = obrazek(f.url, velikostDalsi); });
@@ -265,6 +275,20 @@ export function lbZobrazit(index) {
     if (stav.lbCasovac) lbSpustitCasovac();
     // Průvodce: pásek kroků a stavová lišta pro zobrazenou fotku (pruvodce-fotky.js, galerie-hodnoceni.js)
     if (stav.lbPruvodce) document.dispatchEvent(new CustomEvent('lb-pruvodce'));
+}
+
+function lbVykreslitPas() {
+    if (!vzhled().prohlizec.pas || stav.lbPolozky.length < 2) { lbPas.innerHTML = ''; return; }
+    const pocet = stav.lbPolozky.length;
+    const od = Math.max(0, Math.min(stav.lbIndex - PAS_OKOLI, pocet - 2 * PAS_OKOLI - 1));
+    const do_ = Math.min(pocet, od + 2 * PAS_OKOLI + 1);
+    let html = '';
+    for (let i = od; i < do_; i++) {
+        const f = stav.lbPolozky[i].fotky[0];
+        html += `<button type="button" tabindex="-1" data-lb-pas="${i}"${i === stav.lbIndex ? ' class="aktivni"' : ''}><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" draggable="false" /></button>`;
+    }
+    lbPas.innerHTML = html;
+    lbPas.querySelector('.aktivni')?.scrollIntoView({ inline: 'center', block: 'nearest' });
 }
 
 export function lbVykreslitSrdicka() {
@@ -483,8 +507,14 @@ export function zavritLightbox() {
 // Obsluha událostí; volá ji main.js po načtení všech modulů
 export function pripravit() {
     lightbox.addEventListener('mousemove', (e) => {
-        ukazatOvladani(Boolean(e.target.closest('.lightbox-top, .album-nav')));
+        ukazatOvladani(Boolean(e.target.closest('.lightbox-top, .album-nav, .lb-pas')));
     });
+    lbPas.addEventListener('click', (e) => {
+        const b = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest('[data-lb-pas]'));
+        if (b) { e.stopPropagation(); lbZobrazit(parseInt(b.dataset.lbPas)); }
+    });
+    // Změna voleb prohlížeče při otevřeném prohlížeči
+    window.addEventListener('vzhled-zmenen', () => { if (!lightbox.classList.contains('hidden')) lbVykreslitPas(); });
     // Ovládání klávesnicí (Tab do panelu) ho také ukáže
     lightbox.addEventListener('focusin', (e) => {
         // Jen zaměření z klávesnice; fokus, který prohlížeč nastaví sám při otevření, ovládání nedrží

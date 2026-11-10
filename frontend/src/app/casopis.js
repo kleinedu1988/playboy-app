@@ -10,6 +10,7 @@ import { sestavitAlba } from '../lib/alba';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { oznamit } from '../ui/oznameni';
+import { omezitPohyb } from '../ui/vzhled';
 
 const VELIKOST_STRANY = 'w2000';
 const PROLNUTI_MS = 700;
@@ -93,7 +94,7 @@ function htmlFotek(s, kenBurns) {
 }
 
 function htmlStrany(s) {
-    const kb = bezi && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const kb = bezi && !omezitPohyb();
     const udaje = s.udaje?.length ? `<dl class="cs-udaje">${s.udaje.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : '';
     switch (s.druh) {
         case 'obalka':

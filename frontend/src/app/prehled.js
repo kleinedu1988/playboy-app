@@ -25,6 +25,7 @@ import * as udrzba from './udrzba';
 import { pohledSlavy } from './sin-slavy';
 import { htmlPilulek, pripravitPasy } from '../ui/pas';
 import { poZmeneDat } from './udalosti';
+import { vzhled } from '../ui/vzhled';
 
 // Přehled sbírky: úvod (hlavní čísla, mapy edic, co zbývá doplnit), Údržba (udrzba.js), Sháním CZ
 // a hodnocení (Porovnat, Hodnotit fotky, Pořadí).
@@ -150,7 +151,8 @@ function zobrazitPanelSbirky() {
 let generaceDat = 0;
 let vykreslenoPro = '';
 poZmeneDat(() => { generaceDat++; });
-const klicSbirky = () => `${generaceDat}|${stav.prehledSkryte ? 1 : 0}`;
+// Karty Mapy čísel z ⋯ › Vzhled jsou součástí klíče: po jejich změně se Sbírka při příštím zobrazení překreslí
+const klicSbirky = () => `${generaceDat}|${stav.prehledSkryte ? 1 : 0}|${JSON.stringify(vzhled().prehled)}`;
 
 export async function nacistPrehled() {
     const moje = ++stav.cisloNacteni;

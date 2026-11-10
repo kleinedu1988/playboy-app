@@ -28,6 +28,7 @@ import { otevritMapuModelky } from './statistiky-pohled';
 import { doplnitZminkyModelky } from './wiki-odkazy';
 import * as zasobnik from './zasobnik';
 import { otevritAlbumModal } from './formular-alba';
+import { vzhled } from '../ui/vzhled';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -737,9 +738,18 @@ export function pripravit() {
     hlavniOblast.addEventListener('scroll', () => {
         if (detailView.classList.contains('hidden')) return;
         const odrolovano = hlavniOblast.scrollTop;
-        if (odrolovano > 60) navbar.classList.add('profil-svinuty');
+        // Záhlaví z ⋯ › Vzhled: Vysoké se svine po odrolování, Pevné zůstane vysoké, Jen pruh je svinuté stále
+        const zahlavi = vzhled().zahlavi;
+        if (zahlavi !== 'vysoke') navbar.classList.toggle('profil-svinuty', zahlavi === 'pruh');
+        else if (odrolovano > 60) navbar.classList.add('profil-svinuty');
         else if (odrolovano < 20) navbar.classList.remove('profil-svinuty');
     }, { passive: true });
+    // Změna záhlaví v ⋯ › Vzhled při otevřeném profilu
+    window.addEventListener('vzhled-zmenen', () => {
+        if (detailView.classList.contains('hidden')) return;
+        const zahlavi = vzhled().zahlavi;
+        navbar.classList.toggle('profil-svinuty', zahlavi === 'pruh' || (zahlavi === 'vysoke' && hlavniOblast.scrollTop > 60));
+    });
     // Jméno v pruhu u profilu otevřeného ze seznamu otevře nabídku modelek seznamu (jako dřív jméno v drobečcích)
     profilPruhObsah.addEventListener('click', (e) => {
         if (!/** @type {HTMLElement} */ (e.target).closest('.pruh-identita h2')) return;

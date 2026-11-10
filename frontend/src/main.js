@@ -236,6 +236,8 @@ async function konecUvodu() {
         await konecUvodu();
         zaznamenatStart();
     }
+    // Sekce po startu z ⋯ › Vzhled (Modelky, Čísla, Sbírka nebo poslední)
+    vzhledOkno.otevritSekciPoStartu();
     // Nový náhodný výběr profilovek pro úvod příštího spuštění, až program doběhne (seznam modelek je už načtený);
     // se zámkem se neukládají – úvod je vidět dřív než okno s heslem
     setTimeout(() => {

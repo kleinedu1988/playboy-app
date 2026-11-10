@@ -7,11 +7,20 @@
 export const PRIBLIZENI = { min: 0.9, max: 1.5, krok: 0.1 };
 export const VELIKOSTI = /** @type {const} */ (['s', 'm', 'l']);
 export const POHLEDY_KARET = /** @type {const} */ (['modelky', 'fotky', 'steny']);
+// 1.50: pohyb, prohlížeč fotek, karty Přehledu (Sbírka), sekce po startu a záhlaví profilu
+export const POHYBY = /** @type {const} */ (['plny', 'omezeny', 'zadny']);
+export const POZADI_PROHLIZECE = /** @type {const} */ (['tmave', 'cerne', 'rozmazane']);
+export const OVLADANI_PROHLIZECE = /** @type {const} */ (['pohyb', 'trvale']);
+export const KARTY_PREHLEDU = /** @type {const} */ (['cz', 'us', 'vybery', 'naposledy']);
+export const STARTY = /** @type {const} */ (['modelky', 'cisla', 'sbirka', 'posledni']);
+export const ZAHLAVI = /** @type {const} */ (['vysoke', 'pevne', 'pruh']);
 
-/** @typedef {{ priblizeni: number, hustota: 'pohodlna' | 'kompaktni', karty: Record<string, string>, karta: { srdicka: boolean, rok: boolean, fotek: boolean } }} Vzhled */
+/** @typedef {{ priblizeni: number, hustota: 'pohodlna' | 'kompaktni', karty: Record<string, string>, karta: { srdicka: boolean, rok: boolean, fotek: boolean },
+ *   pohyb: string, prohlizec: { pozadi: string, ovladani: string, pas: boolean }, prehled: { poradi: string[], skryte: string[] }, start: string, zahlavi: string }} Vzhled */
 
 /** @returns {Vzhled} */
-export const vychozi = () => ({ priblizeni: 1, hustota: 'pohodlna', karty: { modelky: 'm', fotky: 'm', steny: 'm' }, karta: { srdicka: true, rok: false, fotek: false } });
+export const vychozi = () => ({ priblizeni: 1, hustota: 'pohodlna', karty: { modelky: 'm', fotky: 'm', steny: 'm' }, karta: { srdicka: true, rok: false, fotek: false },
+    pohyb: 'plny', prohlizec: { pozadi: 'tmave', ovladani: 'pohyb', pas: false }, prehled: { poradi: [...KARTY_PREHLEDU], skryte: [] }, start: 'modelky', zahlavi: 'vysoke' });
 
 /**
  * Uložené volby doplněné výchozími; neplatné hodnoty se vrátí na výchozí
@@ -26,6 +35,16 @@ export function platnyVzhled(ulozene) {
     if (ulozene.hustota === 'kompaktni') v.hustota = 'kompaktni';
     for (const k of POHLEDY_KARET) if (VELIKOSTI.includes(ulozene.karty?.[k])) v.karty[k] = ulozene.karty[k];
     for (const k of /** @type {const} */ (['srdicka', 'rok', 'fotek'])) if (typeof ulozene.karta?.[k] === 'boolean') v.karta[k] = ulozene.karta[k];
+    if (POHYBY.includes(ulozene.pohyb)) v.pohyb = ulozene.pohyb;
+    if (POZADI_PROHLIZECE.includes(ulozene.prohlizec?.pozadi)) v.prohlizec.pozadi = ulozene.prohlizec.pozadi;
+    if (OVLADANI_PROHLIZECE.includes(ulozene.prohlizec?.ovladani)) v.prohlizec.ovladani = ulozene.prohlizec.ovladani;
+    if (typeof ulozene.prohlizec?.pas === 'boolean') v.prohlizec.pas = ulozene.prohlizec.pas;
+    // Pořadí karet Přehledu: uložené známé karty, chybějící (nové) na konec; skryté jen známé
+    const poradi = Array.isArray(ulozene.prehled?.poradi) ? ulozene.prehled.poradi.filter((k, i, a) => KARTY_PREHLEDU.includes(k) && a.indexOf(k) === i) : [];
+    v.prehled.poradi = [...poradi, ...KARTY_PREHLEDU.filter(k => !poradi.includes(k))];
+    if (Array.isArray(ulozene.prehled?.skryte)) v.prehled.skryte = KARTY_PREHLEDU.filter(k => ulozene.prehled.skryte.includes(k));
+    if (STARTY.includes(ulozene.start)) v.start = ulozene.start;
+    if (ZAHLAVI.includes(ulozene.zahlavi)) v.zahlavi = ulozene.zahlavi;
     return v;
 }
 
@@ -36,6 +55,19 @@ export const priblizeni = () => aktualni.priblizeni;
 
 // Souřadnice z getBoundingClientRect / události (zvětšené přiblížením) na hodnotu pro style.left / top
 export const naCss = (px) => px / aktualni.priblizeni;
+
+// Omezit pohyb: volba Omezený / Žádný, nebo (u Plného) systémové omezení animací
+export const omezitPohyb = () => aktualni.pohyb !== 'plny' || matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Plynulé posouvání (scrollTo / scrollBy / scrollIntoView s behavior: 'smooth') je při omezeném pohybu okamžité.
+// Jedno místo místo úprav ve všech pohledech, které posouvají.
+function hlidatPlynulePosouvani() {
+    const bezPlynuleho = (a) => (a && typeof a === 'object' && a.behavior === 'smooth' && omezitPohyb() ? { ...a, behavior: 'auto' } : a);
+    for (const nazev of /** @type {const} */ (['scrollTo', 'scrollBy', 'scrollIntoView'])) {
+        const puvodni = Element.prototype[nazev];
+        Element.prototype[nazev] = function (...args) { return puvodni.apply(this, args.length === 1 ? [bezPlynuleho(args[0])] : args); };
+    }
+}
 
 function nacist() {
     try { return platnyVzhled(JSON.parse(localStorage.getItem('vzhled') || 'null')); } catch { return vychozi(); }
@@ -53,13 +85,20 @@ export function pouzit(v = aktualni) {
     koren.toggleAttribute('data-karta-bez-srdicek', !aktualni.karta.srdicka);
     koren.toggleAttribute('data-karta-rok', aktualni.karta.rok);
     koren.toggleAttribute('data-karta-fotek', aktualni.karta.fotek);
+    koren.dataset.pohyb = aktualni.pohyb;
+    koren.dataset.prohlizecPozadi = aktualni.prohlizec.pozadi;
+    koren.dataset.prohlizecOvladani = aktualni.prohlizec.ovladani;
+    koren.toggleAttribute('data-prohlizec-pas', aktualni.prohlizec.pas);
+    koren.dataset.zahlavi = aktualni.zahlavi;
+    window.dispatchEvent(new CustomEvent('vzhled-zmenen'));
     // Pohledy, které počítají rozložení z rozměrů (mapa, grafy), se překreslí
     window.dispatchEvent(new Event('resize'));
 }
 
 /** Uloží a projeví změnu */
 export function zmenit(zmena) {
-    const v = platnyVzhled({ ...aktualni, ...zmena, karty: { ...aktualni.karty, ...(zmena.karty || {}) }, karta: { ...aktualni.karta, ...(zmena.karta || {}) } });
+    const v = platnyVzhled({ ...aktualni, ...zmena, karty: { ...aktualni.karty, ...(zmena.karty || {}) }, karta: { ...aktualni.karta, ...(zmena.karta || {}) },
+        prohlizec: { ...aktualni.prohlizec, ...(zmena.prohlizec || {}) }, prehled: { ...aktualni.prehled, ...(zmena.prehled || {}) } });
     try { localStorage.setItem('vzhled', JSON.stringify(v)); } catch { /* jen pro toto spuštění */ }
     pouzit(v);
     return v;
@@ -67,5 +106,6 @@ export function zmenit(zmena) {
 
 // Při načtení modulu (před prvním vykreslením): uložený vzhled hned
 export function pripravit() {
+    hlidatPlynulePosouvani();
     pouzit(nacist());
 }

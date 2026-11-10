@@ -7,6 +7,24 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.50.0] – 2026-11-10
+
+### Přidáno
+- Okno **⋯ › Vzhled** má další volby:
+  - **Pohyb a efekty**: Plné / Omezené / Žádné. Omezené odpovídá systémovému omezení animací a v režimu čtení
+    vypne Ken Burns. Žádné vypne všechny animace a přechody. Při omezeném pohybu se plynulé posouvání
+    stránky mění na okamžité.
+  - **Prohlížeč fotek**: pozadí tmavé, černé nebo rozmazaná zobrazená fotka; ovládání a údaje fotky po pohybu
+    myši nebo trvale; volitelný **filmový pás** náhledů okolních fotek dole, kliknutím se přejde na fotku.
+  - **Po startu otevřít**: Modelky, Čísla, Sbírku nebo poslední sekci.
+  - **Záhlaví profilu**: Vysoké, které se po odrolování svine (jako dosud) / Vysoké stále / Jen pruh.
+  - **Karty Mapy čísel** (Sbírka): česká edice, americká edice, chytré výběry a naposledy přidané jde skrýt
+    a přeskládat šipkami.
+
+### Známé
+- Karty se přeskládávají šipkami v okně Vzhled, ne tažením na stránce. Karty Dnešní výběr, Fotka dne a Zdraví
+  sbírky z návrhu roadmapy na Mapě čísel nejsou, takže je volby nenabízejí.
+
 ## [1.49.0] – 2026-11-10
 
 ### Přidáno

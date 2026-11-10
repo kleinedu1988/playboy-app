@@ -3,6 +3,7 @@
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
 import { MESICE, RADY_EDIC, VYCHOZI_EDICE, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
 import { adresaTitulni } from './obrazky';
+import { vzhled } from '../ui/vzhled';
 
 // Mapy začínají prvním číslem edice (RADY_EDIC); měsíce mimo měsíční řadu jsou v nich prázdné
 const PRVNI_ROK_CZ = parseInt(RADY_EDIC.CZ.od);
@@ -103,25 +104,32 @@ export function htmlUvodu({ kalendar, stavy, modelky }) {
 
     const naposledy = [...modelky].filter(m => m.pridano).sort((a, b) => b.pridano.localeCompare(a.pridano)).slice(0, NAPOSLEDY);
 
-    return `
+    // Karty v pořadí a výběru z ⋯ › Vzhled (1.50)
+    const karty = {
+        cz: `
         <div class="uvod-karta">
             <h4>Česká edice · moje výtisky<small>${esc(`${poctyCz.m} z ${vydanychCz} vydaných · sháním ${poctyCz.s}`)} · ${cz[0].rok}–${letos} · klik otevře číslo, pravým tlačítkem stav</small></h4>
             ${mapaCz}
             ${legenda({ m: poctyCz.m, s: poctyCz.s, n: poctyCz.n, c: poctyCz.c }, STAVY_CZ)}
-        </div>
-        ${mapaUs ? `
+        </div>`,
+        us: mapaUs ? `
         <div class="uvod-karta">
             <h4>Americká edice · archiv dat<small>${esc(`kompletních ${poctyUs.k} z ${vydanychUs}`)} · ${odUs}–${doUs} · kompletní = cover, centerfold i pictorial</small></h4>
             ${mapaUs}
             ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
-        </div>` : ''}
-        <div class="uvod-karta uvod-radek cv-prehled" data-cv-prehled hidden></div>
+        </div>` : '',
+        vybery: '<div class="uvod-karta uvod-radek cv-prehled" data-cv-prehled hidden></div>',
+        naposledy: `
         <div class="uvod-karta uvod-radek">
             <h4>Naposledy přidané</h4>
             ${naposledy.length ? `<div class="uvod-naposledy">${naposledy.map(m => `
                 <button type="button" data-otevrit-modelku="${m.id}"><img src="${esc(adresaTitulni(m))}" alt="" loading="lazy" draggable="false" />${esc(m.jmeno)}<small>${esc(formatDatum(m.pridano.slice(0, 10)))}</small></button>`).join('')}</div>`
                 : '<p class="prazdno-male">Zatím žádné modelky.</p>'}
-        </div>
+        </div>`,
+    };
+    const { poradi, skryte } = vzhled().prehled;
+    const viditelne = poradi.filter(k => !skryte.includes(k)).map(k => karty[k]).join('');
+    return `${viditelne || '<p class="prazdno-male">Všechny karty Přehledu jsou skryté – zapni je v ⋯ › Vzhled.</p>'}
         <div class="graf-bublina hidden"></div>`;
 }
 

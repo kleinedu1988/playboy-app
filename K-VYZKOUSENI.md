@@ -5,6 +5,22 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 1.50.0 – Klid, pohyb a vlastní Přehled
+
+- [ ] **Pohyb Žádné**: projít všechny sekce, profil, prohlížeč fotek (slideshow), režim čtení, Dnešní výběr,
+      nabídky a okna – nic se nehýbe ani neprolíná a nic se kvůli tomu nezasekne (okno, které by čekalo
+      na konec animace).
+- [ ] **Pohyb Omezené**: v režimu čtení bez Ken Burns, posouvání na místo (např. skok na album) je okamžité.
+- [ ] Prohlížeč fotek, pozadí **Rozmazaná fotka**: rozmazaná fotka se mění s listováním a nebrzdí ho.
+- [ ] Prohlížeč, **ovládání Trvale**: horní lišta a lišta alb zůstanou vidět i bez pohybu myši.
+- [ ] **Filmový pás**: náhledy dole, zvýrazněná aktuální fotka uprostřed, kliknutí přejde na fotku; lišta alb
+      je nad pásem; při lupě a v hodnocení nehodnocených pás není.
+- [ ] **Po startu otevřít** Čísla / Sbírku / Poslední sekci: po restartu se otevře správná sekce (i se zámkem
+      po odemčení).
+- [ ] **Záhlaví profilu** Jen pruh: profil se otevře rovnou se svinutým záhlavím; Vysoké stále se nesvine ani
+      po odrolování; úprava výřezu fotky záhlaví funguje ve všech třech volbách.
+- [ ] **Karty Mapy čísel**: skrytí a přeskládání se v Sbírce › Mapa čísel projeví po zavření okna Vzhled.
+
 ## 1.49.0 – Přiblížení, hustota a karty
 
 Přiblížení je CSS `zoom` na celé stránce (Wails na Linuxu jiné nemá). Ve skrytém WebKitGTK jsem ověřil, že okna

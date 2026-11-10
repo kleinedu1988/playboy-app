@@ -19,6 +19,7 @@ import { obnovitHlavuSbirky } from './udrzba';
 import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti, obnovitHlavuHodnoceni } from './oblibenost';
 import { obnovitPasHlavicky } from './prehled';
+import { vzhled } from '../ui/vzhled';
 
 // Přehledy se seznamy (galerie, stěna, čísla, kalendář, nejlepší) se při každém zobrazení vykreslují celé znovu.
 // Skryté by jen držely tisíce karet a fotek, které zpomalují každou další akci (úklid paměti, hledání v dokumentu,
@@ -72,7 +73,8 @@ export function ukazatPohled(pohled) {
     document.getElementById('profilBannerPozadi')?.classList.toggle('hidden', !vProfilu);
     obnovitHlavuSbirky();
     obnovitHlavuHodnoceni();
-    document.querySelector('.navbar')?.classList.remove('profil-svinuty');
+    // Záhlaví profilu „Jen pruh“ (⋯ › Vzhled) je svinuté hned od otevření
+    document.querySelector('.navbar')?.classList.toggle('profil-svinuty', vProfilu && vzhled().zahlavi === 'pruh');
     if (!vProfilu) {
         document.getElementById('albumNav')?.classList.add('hidden');
         document.body.classList.remove('rezim-vyberu');

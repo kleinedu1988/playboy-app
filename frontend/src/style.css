@@ -20820,3 +20820,84 @@ body.rezim-vyberu #detailView .poster {
 .vz-volby input[type="checkbox"] { accent-color: var(--accent); }
 .vz-hodnota { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
 @media (max-width: 600px) { .vz-radek { grid-template-columns: 1fr; gap: 6px; } }
+
+/* Pohyb (⋯ › Vzhled, 1.50). Omezený = stejná pravidla jako při systémovém omezení animací (bloky
+   prefers-reduced-motion výše, zopakované pro volbu); Žádný vypne všechny animace a přechody. */
+:root[data-pohyb="omezeny"] .sp-mapa-zvyraznena { animation: none; }
+:root[data-pohyb="omezeny"] .context-menu,
+:root[data-pohyb="omezeny"] .volby-panel,
+:root[data-pohyb="omezeny"] .hledani-radek { animation: none; }
+:root[data-pohyb="omezeny"] .kostra i,
+:root[data-pohyb="omezeny"] .kostra b { animation: none; }
+:root[data-pohyb="omezeny"] .zkratky { animation: none; }
+:root[data-pohyb="omezeny"] .vs-stupen { animation: none; }
+:root[data-pohyb="omezeny"] #profileSide.profile-side,
+:root[data-pohyb="omezeny"] #detailView.udaje-otevrene #profileSide.profile-side { transition: none; }
+:root[data-pohyb="omezeny"] .sh-kruh,
+:root[data-pohyb="omezeny"] .sh-identita h2 { transition: none; }
+:root[data-pohyb="omezeny"] .sbirka-panel,
+:root[data-pohyb="omezeny"] .prehled-obsah:is([data-panel="cisla"], [data-panel="statistiky"], [data-panel="uceni"]) > .sbirka-panel { transition: none; }
+:root[data-pohyb="omezeny"] .hlavni-lista:has(> #profilPruh:not(.hidden)) { transition: none; }
+:root[data-pohyb="omezeny"] .dv-karticka { animation: none; }
+:root[data-pohyb="omezeny"] .dv-karta { transition: none; }
+:root[data-pohyb="omezeny"] .gvh-prolnuti { animation: none; }
+:root[data-pohyb="omezeny"] .gvh-carka.on i { animation: none; transform: none; }
+:root[data-pohyb="omezeny"] .cs-strana { transition-duration: 0.15s; }
+:root[data-pohyb="omezeny"] .cs-fotky.kb { animation: none; }
+:root[data-pohyb="zadny"] *,
+:root[data-pohyb="zadny"] *::before,
+:root[data-pohyb="zadny"] *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+}
+
+/* Prohlížeč fotek (⋯ › Vzhled, 1.50): pozadí, ovládání trvale a filmový pás náhledů */
+:root[data-prohlizec-pozadi="cerne"] .lightbox { background-color: #000; }
+:root[data-prohlizec-pozadi="rozmazane"] .lightbox { background-color: #08080a; }
+:root[data-prohlizec-pozadi="rozmazane"] .lightbox::before {
+    content: '';
+    position: absolute;
+    inset: -60px;
+    background: var(--lb-pozadi, none) center / cover no-repeat;
+    filter: blur(40px) brightness(0.45) saturate(1.2);
+    pointer-events: none;
+}
+:root[data-prohlizec-ovladani="trvale"] .lightbox:not(.ovladani) .lightbox-top,
+:root[data-prohlizec-ovladani="trvale"] .lightbox:not(.ovladani) .album-nav { opacity: 1; pointer-events: auto; }
+.lb-pas { display: none; }
+:root[data-prohlizec-pas] .lb-pas {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    justify-content: safe center;
+    gap: 4px;
+    padding: 8px 12px;
+    overflow: hidden;
+    background: linear-gradient(transparent, rgba(8, 8, 10, 0.85));
+    transition: opacity 0.25s;
+}
+:root[data-prohlizec-pas]:not([data-prohlizec-ovladani="trvale"]) .lightbox:not(.ovladani) .lb-pas { opacity: 0; pointer-events: none; }
+.lightbox.zoomed .lb-pas, .lightbox.hodnoceni .lb-pas { display: none !important; }
+.lb-pas:empty { display: none !important; }
+.lb-pas button { flex: none; width: 52px; height: 52px; padding: 0; border: 2px solid transparent; border-radius: 6px; overflow: hidden; background: #111; cursor: pointer; opacity: 0.6; }
+.lb-pas button:hover { opacity: 1; }
+.lb-pas button.aktivni { border-color: var(--accent); opacity: 1; }
+.lb-pas img { width: 100%; height: 100%; object-fit: cover; display: block; }
+:root[data-prohlizec-pas] .lightbox:not(.zoomed):not(.hodnoceni) .album-nav { bottom: 84px; }
+.vz-karta { max-height: calc(var(--vh) - 48px); display: flex; flex-direction: column; }
+.vz-karta [data-vz-obsah] { overflow-y: auto; min-height: 0; }
+.vz-oddil { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--panel-okraj); font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.vz-karty-prehledu { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.vz-karty-prehledu li { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+.vz-karty-prehledu label { flex: 1; display: flex; gap: 6px; align-items: center; }
+.vz-karty-prehledu input { accent-color: var(--accent); }
+.vz-karty-prehledu button { width: 26px; height: 26px; border: 1px solid var(--panel-okraj); border-radius: 6px; background: none; color: var(--text-main); cursor: pointer; }
+.vz-karty-prehledu button:disabled { opacity: 0.3; cursor: default; }
+.vz-oddil + .vz-radek { border-top: 0; }

@@ -2,7 +2,7 @@
 import { otevritRocnikWiki } from './rocnik-wiki';
 import { GetKalendar, GetStavyVydani, GetVydani, SetStavVydani } from './backend';
 import { prevest } from '../lib/hledani-dotaz';
-import { EDICE, MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
+import { EDICE, MESICE, VYCHOZI_EDICE, nazevRady, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
 import { zalozitSpecial } from './specialy';
@@ -217,7 +217,7 @@ export async function nabidkaCisla(klic, x, y, { navic = [], poZmene = obnovitKa
 export function nabidkaRoku(klic, x, y) {
     const { rok, edice } = rozlozitVydani(klic);
     otevritKontextovouNabidku(x, y, [
-        { nadpis: `Ročník ${rok}${edice !== VYCHOZI_EDICE ? ` · ${edice}` : ''}` },
+        { nadpis: `Ročník ${rok}${edice !== VYCHOZI_EDICE ? ` · ${nazevRady(edice)}` : ''}` },
         { text: 'Otevřít ročník', akce: () => otevritVydani(klic) },
         { text: 'Přidat pictorial k ročníku', akce: () => pridatPictorial(klic) },
         { text: `Nový speciál roku ${rok}…`, akce: async () => { if (await zalozitSpecial(rok, edice)) obnovitKalendar(); } },

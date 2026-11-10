@@ -156,3 +156,26 @@ func TestPictorialJinehoCasopisu(t *testing.T) {
 		}
 	}
 }
+
+// Číslo Penthouse je v seznamu čísel a centerfoldů modelky (profil z něj otevírá stránku čísla, 0.02.006)
+func TestCisloJinehoCasopisuVProfilu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Pet", Tetovani: -1, Piercing: -1})
+	id := a.GetModelky("")[0].ID
+	a.AddBulkPhotos(id, "1985-09@PH", "Centerfold", "https://drive.google.com/file/d/PPPPPPPPPPPPPPPPPPPPPPPPPPPPP/view")
+	m := a.GetModelky("")[0]
+	ma := func(seznam []string) bool {
+		for _, v := range seznam {
+			if v == "1985-09@PH" {
+				return true
+			}
+		}
+		return false
+	}
+	if !ma(m.Vydani) || !ma(m.Centerfoldy) {
+		t.Fatalf("vydání %v, centerfoldy %v", m.Vydani, m.Centerfoldy)
+	}
+	if f := a.GetVydani("1985-09@PH"); len(f) != 1 || f[0].ModelkaID != id {
+		t.Fatalf("stránka čísla: %+v", f)
+	}
+}

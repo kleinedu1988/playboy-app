@@ -187,7 +187,7 @@ export const SABLONA_OKNA = `
             <div class="quick-cislo">
               <input type="number" id="inputQuickRok" min="1953" max="2100" placeholder="rok" inputmode="numeric" aria-label="Rok čísla" />
               <select id="selectQuickMesic" aria-label="Měsíc čísla"></select>
-              <select id="selectQuickEdice" aria-label="Edice"></select>
+              <select id="selectQuickEdice" aria-label="Časopis a edice"></select>
               <select id="selectQuickTyp" aria-label="Druh výskytu"><option value="Centerfold">Centerfold</option><option value="Pictorial">Pictorial</option></select>
             </div>
           </div>

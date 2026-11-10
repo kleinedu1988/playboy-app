@@ -1,7 +1,8 @@
 // Rychlé přidání modelky, formulář modelky a potvrzení mazání
 import { jednou, oznamit } from '../ui/oznameni';
 import { AddBulkPhotos, AddModelka, DeleteModelka, DeleteVse, SetVydaniAlba, SlozkaZaloh } from './backend';
-import { EDICE, MESICE, esc, formatDatum, nazevVydani, slozitVydani, formatMarkdown, odvozeneKategorie, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
+import { MESICE, esc, nazevRady, formatDatum, nazevVydani, slozitVydani, formatMarkdown, odvozeneKategorie, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
+import { nastavitRadu, vychoziRada, zapamatovatRadu } from './rady';
 import { pripojitVyberKategorii } from '../ui/kategorie';
 import { upravitText } from '../ui/editor-textu';
 import { nastavitHtml, nastavitText } from '../ui/dom';
@@ -48,11 +49,11 @@ export function otevritRychlePridani(predvyplnit = null, zFronty = false) {
     document.getElementById('quickForm').reset();
     ['quickJmenoInfo', 'quickNarozeniInfo', 'quickNarodnostInfo'].forEach(id => napoveda(id, ''));
     // Předvyplněná modelka bez čísla (Playmate roku z Ročníku podle Wikipedie) nepřebírá poslední číslo
-    const prazdne = { rok: '', mesic: '', edice: stav.kalendarEdice, typ: 'Centerfold' };
+    const prazdne = { rok: '', mesic: '', edice: vychoziRada(), typ: 'Centerfold' };
     const c = p ? p.cislo || prazdne : posledniCislo || prazdne;
     /** @type {HTMLInputElement} */ (document.getElementById('inputQuickRok')).value = c.rok;
     /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickMesic')).value = c.mesic;
-    /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickEdice')).value = c.edice;
+    nastavitRadu(document.getElementById('selectQuickEdice'), c.edice);
     /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickTyp')).value = c.typ;
     document.getElementById('inputQuickNarodnost').dataset.odhad = '1';
     kontrolaRychla?.obnovit();
@@ -80,7 +81,7 @@ function obnovitOdhadyRychle() {
     const odhad = odhadNarodnosti(modelkySbirky, edice, rok);
     if (pole.dataset.odhad) pole.value = odhad?.narodnost || '';
     napoveda('quickNarodnostInfo', odhad && pole.value === odhad.narodnost
-        ? `Odhad z čísla: ${Math.round(odhad.podil * 100)} % modelek edice ${edice}${rok ? ' z té doby' : ''}.` : '');
+        ? `Odhad z čísla: ${Math.round(odhad.podil * 100)} % modelek ${edice.includes('/') ? nazevRady(edice) : `edice ${edice}`}${rok ? ' z té doby' : ''}.` : '');
     const vek = obvyklyVek(modelkySbirky, edice, rok);
     const narozeni = prevestNarozeni(hodnotaPole('inputQuickNarozeni'), rok);
     /** @type {HTMLInputElement} */ (document.getElementById('inputQuickNarozeni')).placeholder = vek ? `RRRR-MM-DD, rok nebo věk (obvykle ${vek})` : 'RRRR-MM-DD, rok nebo věk v čísle';
@@ -478,7 +479,7 @@ export function pripravit() {
 
     // Výběry čísla a odhady
     document.getElementById('selectQuickMesic').innerHTML = '<option value="">měsíc</option>' + MESICE.map((m, i) => `<option value="${String(i + 1).padStart(2, '0')}">${m}</option>`).join('');
-    document.getElementById('selectQuickEdice').innerHTML = EDICE.map(e => `<option value="${e}">${e}</option>`).join('');
+    nastavitRadu(document.getElementById('selectQuickEdice'), 'US');
     ['inputQuickRok', 'selectQuickEdice', 'inputQuickNarozeni'].forEach(id => document.getElementById(id).addEventListener('input', obnovitOdhadyRychle));
     document.getElementById('inputQuickNarodnost').addEventListener('input', (e) => {
         const pole = /** @type {HTMLInputElement} */ (e.target);
@@ -531,6 +532,7 @@ export function pripravit() {
         const nova = (await vsechnyModelky()).reduce((a, b) => (a && a.id > b.id ? a : b), null);
         if (!nova) return;
         posledniCislo = { rok: rok ? String(rok) : '', mesic, edice, typ };
+        if (rok) zapamatovatRadu(edice);
 
         // Fotky: s číslem jako jeho centerfold nebo pictorial, bez čísla album Fotky
         let vlozeno = 0;

@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.006 – Rychlé přidání a stránka čísla jiného časopisu
+
+- [ ] **Kritérium hotovo:** v profilu modelky s centerfoldem Penthouse 09/1985 klik na číslo otevře stránku
+      „Září 1985 · Penthouse“; úplnost čísla nenabízí „Playmate měsíce podle Wikipedie“.
+- [ ] Drobeček „Ročník 1985 · Penthouse“ otevře ročník Penthouse (jen jeho čísla, chybějící měsíce s +).
+- [ ] Ctrl+Shift+N: volba „Časopis a edice“ v řádku čísla; nová modelka s Penthouse US 10/1985 dostane centerfold
+      „Říjen 1985 · Penthouse“; další otevření nabídne Penthouse.
+- [ ] Upravit číslo… u Penthouse: název v záhlaví, stav „Mám výtisk / Sháním“ se nenabízí (jen CZ).
+
 ## 0.02.005 – Volba „Časopis a edice“ (Hotovo, když: Penthouse 09/1985)
 
 - [ ] **Kritérium hotovo:** u modelky přidej album typu Centerfold, Září 1985, **Penthouse US**, s odkazem na fotku;

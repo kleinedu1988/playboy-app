@@ -6,6 +6,14 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.006] – 2026-11-10
+
+### Přidáno
+- **Rychlé přidání modelky** (Ctrl+Shift+N) má volbu „Časopis a edice“ jako okno alba; pamatuje si ji
+  a odhad národnosti počítá z modelek téhož časopisu („% modelek Penthouse“).
+- **Stránka čísla a ročníku jiného časopisu** z profilu modelky: nadpis ročníku, drobeček „Ročník 1985 · Penthouse“
+  a nabídka ročníku s názvem časopisu. Kalendář a Mapa čísel jiné časopisy zatím neukazují (0.03).
+
 ## [0.02.005] – 2026-11-10
 
 ### Přidáno

@@ -3,7 +3,7 @@ import { GetAlbaFotografa, GetClanky, GetStavyVydani, GetVydani, GetVydaniInfo, 
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { otevritRychlePridani } from './formular-modelky';
 import { doplnitZminkyCisla } from './wiki-odkazy';
-import { MESICE, VYCHOZI_EDICE, ciselRocniku, cisloNevyslo, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
+import { MESICE, VYCHOZI_EDICE, nazevRady, ciselRocniku, cisloNevyslo, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -297,7 +297,7 @@ export function vykreslitRocnik(vydani, fotky) {
     const index = p => indexy.get(p);
 
     document.getElementById('issueSide').innerHTML = `
-        <div class="rocnik-nadpis">Ročník${casti.edice !== VYCHOZI_EDICE ? ` · ${esc(casti.edice)}` : ''}</div>
+        <div class="rocnik-nadpis">Ročník${casti.edice !== VYCHOZI_EDICE ? ` · ${esc(nazevRady(casti.edice))}` : ''}</div>
         <div class="rocnik-rok">${esc(casti.rok)}</div>
         <div class="prehled-pruh"><span>Čísel ve sbírce</span><b>${ciselRocniku(casti.rok, casti.edice) ? `${cisel} z ${ciselRocniku(casti.rok, casti.edice)}` : cisel}</b><div><i style="width:${Math.min(100, Math.round(cisel / Math.max(1, ciselRocniku(casti.rok, casti.edice)) * 100))}%"></i></div></div>
         <div class="prehled-cisla rocnik-cisla">

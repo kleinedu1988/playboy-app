@@ -1,5 +1,5 @@
 // Přepínání pohledů, historie pro Zpět a společné pomocné funkce
-import { esc, nazevVydani, rozlozitVydani, slozitVydani } from '../lib/format';
+import { esc, nazevRady, nazevVydani, rozlozitVydani, slozitVydani } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
 import { OveritOdkaz } from './backend';
 import { stav } from './stav';
@@ -114,7 +114,8 @@ function ukazatDrobecek(pohled) {
     const klicRocniku = casti?.mesic ? slozitVydani(casti.rok, '', casti.edice) : '';
     rocnik.classList.toggle('hidden', !klicRocniku);
     rocnik.dataset.vydani = klicRocniku;
-    rocnik.textContent = klicRocniku ? `Ročník ${casti.rok}` : '';
+    const rada = casti && casti.edice !== 'US' && casti.edice !== 'CZ' ? ` · ${nazevRady(casti.edice)}` : '';
+    rocnik.textContent = klicRocniku ? `Ročník ${casti.rok}${rada}` : '';
     rocnik.title = klicRocniku ? `Celý ročník ${casti.rok}` : '';
     const seznam = stav.seznamProfilu || [];
     const index = pohled === detailView ? seznam.indexOf(stav.aktualniModelka?.id) : -1;

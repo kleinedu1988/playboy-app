@@ -578,6 +578,22 @@ export function kategorieModelky(modelka) {
     return zapsane.sort((a, b) => poradi(a) - poradi(b));
 }
 
+// Kategorie k zobrazení v profilu (0.02.010): odvozená „Playmate měsíce“ jen za centerfold Playboye; centerfold jiného
+// časopisu přidá jeho titul („Pet of the Month“). Hledání a filtry zatím berou kategorieModelky (0.02.012).
+export function kategorieKZobrazeni(modelka) {
+    const kategorie = kategorieModelky(modelka);
+    const cf = modelka.centerfoldy || [];
+    const jine = [...new Set(cf.map(v => rozlozitVydani(v)?.casopis).filter(c => c && c !== VYCHOZI_CASOPIS))];
+    if (!jine.length) return kategorie;
+    const playboy = cf.some(jeCisloPlayboye) || Boolean(modelka.playmateMesice);
+    const tituly = jine.map(c => ({ nazev: titulCasopisu(c), detail: '', zbytek: '', vlastni: false, odvozena: true }))
+        .filter(t => !kategorie.some(k => k.nazev === t.nazev));
+    const i = kategorie.findIndex(k => k.nazev === TYP_PM_MESICE && k.odvozena);
+    const v = kategorie.filter((k, j) => playboy || j !== i);
+    v.splice(i >= 0 ? (playboy ? i + 1 : i) : 0, 0, ...tituly);
+    return v;
+}
+
 // Míry z amerických zdrojů. Samotné číslo se bere v centimetrech či kilogramech; null = nerozpoznáno.
 // Výška: 5'7", 5′7″, 5 ft 7 in, 170 cm
 export function prevestVysku(text) {

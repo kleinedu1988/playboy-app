@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.010 – Titul v profilu
+
+- [ ] **Kritérium hotovo:** profil modelky jen s centerfoldem Penthouse 09/1985: v kategoriích „Pet of the Month“,
+      na pásce čísla „Pet · Zář 85 · PH“, slovo „Playmate“ nikde v profilu.
+- [ ] Modelka s centerfoldem Playboye i Penthouse: kategorie „Playmate měsíce“ i „Pet of the Month“, páska
+      „Playmate · …“ u čísla Playboye a „Pet · …“ u Penthouse.
+- [ ] Profil Playmate jen z Playboye vypadá jako dřív.
+- [ ] Najetí na štítek čísla Penthouse: v bublině řádek „Pet“ místo „Playmate“.
+- [ ] Stránka čísla Penthouse › Jako časopis: nadtitulek „Pet of the Month · Září 1985 · Penthouse“.
+
 ## 0.02.009 – Tituly podle časopisu
 
 - [ ] Nic viditelného: funkce titulů je ověřená testy, rozhraní ji použije od 0.02.010. Stačí, že se program

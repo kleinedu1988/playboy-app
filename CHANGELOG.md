@@ -6,6 +6,15 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.010] – 2026-11-10
+
+### Změněno
+- **Titul podle časopisu v profilu:** modelka s centerfoldem Penthouse má v kategoriích **Pet of the Month** místo
+  „Playmate měsíce“ (Hustler: Honey of the Month); modelka z Playboye i Penthouse má obě. Páska čísla v pruhu
+  profilu: „Pet · Zář 85 · PH“; „Playmate“ jen u čísla Playboye (`kategorieKZobrazeni` ve `format.js`).
+- Bublina čísla (najetí na štítek čísla) a režim Jako časopis píšou titul časopisu čísla.
+- Ručně zapsaná kategorie „Playmate měsíce“ zůstává. Hledání a filtry kategorií se upraví v 0.02.012.
+
 ## [0.02.009] – 2026-11-10
 
 ### Přidáno

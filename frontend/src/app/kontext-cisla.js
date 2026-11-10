@@ -2,7 +2,7 @@
 // (nebo zaměření klávesnicí) bublinu – obálka, Playmate měsíce, další modelky v čísle a přechod na předchozí
 // a následující číslo téže edice. Bublina leží v <main>, takže klik na číslo či modelku obslouží prohlizec.js.
 import { GetKalendar } from './backend';
-import { esc, nazevVydani, obrazek } from '../lib/format';
+import { esc, nazevVydani, obrazek, titulCisla } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { modelkyVCisle, sousedniCisla } from '../lib/kontext-cisla';
@@ -55,7 +55,7 @@ async function ukazatBublinu(stitek) {
         bublina.addEventListener('click', () => zavritBublinu());
         document.querySelector('main').append(bublina);
     }
-    const playmate = k?.modelka ? `<div class="bc-radek"><span>Playmate</span><b>${esc(k.modelka)}</b></div>` : '';
+    const playmate = k?.modelka ? `<div class="bc-radek"><span>${esc(titulCisla(vydani, 'kratky'))}</span><b>${esc(k.modelka)}</b></div>` : '';
     const dalsiModelky = ostatni.length
         ? `<div class="bc-radek"><span>V čísle</span><span class="bc-modelky">${ostatni.slice(0, 8).map(m => `<button class="chip" data-modelka="${m.id}" title="${esc(m.role.join(', '))}">${esc(m.jmeno)}</button>`).join(' ')}${ostatni.length > 8 ? ` <small>+${ostatni.length - 8}</small>` : ''}</span></div>` : '';
     const krok = (v, sipka, popis) => v

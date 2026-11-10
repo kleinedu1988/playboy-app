@@ -4,7 +4,7 @@
 //   uvod    – dvoustrana: vlevo nadpis, údaje a text, vpravo fotka (Playmate, modelka pictorialu, profil, album)
 //   clanek  – text článku (dlouhý se dělí na víc stran po odstavcích)
 //   foto    – fotka přes celou stranu (spojený centerfold jako víc fotek vedle sebe)
-import { formatDatum, nazevAlba, nazevVydani } from './format.js';
+import { formatDatum, nazevAlba, nazevVydani, titulCisla } from './format.js';
 
 /** @typedef {{ url: string, rotace: number }} FotoStrany */
 /** @typedef {{ druh: 'obalka' | 'uvod' | 'clanek' | 'foto', oddil: string, fotky: FotoStrany[], nadpis?: string, nadtitulek?: string,
@@ -79,7 +79,7 @@ export function stranyCisla({ vydani, alba, clanky = [], modelky = [], info = nu
         strany.push({ druh: 'uvod', oddil, fotky: fotkyPolozky(p), nadtitulek, nadpis: a.jmenoModelky || m?.jmeno || nazevAlba(a.album, a.typ),
             udaje: udajeModelky(m), text: a.popis || '', popisek: a.fotograf ? `Foto ${a.fotograf}` : '' });
     };
-    centerfoldy.forEach(a => uvod(a, `Playmate měsíce · ${nazev}`, 'Playmate měsíce'));
+    centerfoldy.forEach(a => uvod(a, `${titulCisla(vydani)} · ${nazev}`, titulCisla(vydani)));
     ostatni.forEach(a => uvod(a, a.typ === 'Pictorial' ? 'Pictorial' : a.typ, 'Další modelky'));
     [...clanky].sort((x, y) => (x.strana || 999) - (y.strana || 999)).forEach(c => strany.push(...stranyClanku(c, 'Články')));
     for (const a of [...covery, ...centerfoldy, ...ostatni]) for (const p of a.polozky) {

@@ -39,3 +39,16 @@ test('časopis bez titulu a bez načtené tabulky', () => {
     assert.equal(titulCisla('1985-09', 'kratky'), 'Playmate');
     assert.equal(titulCisla('1985-09@PH'), 'Modelka měsíce');
 });
+
+test('kategorie v profilu: Pet of the Month místo Playmate měsíce, obě u modelky ze dvou časopisů', async () => {
+    const { kategorieKZobrazeni } = await import('../src/lib/format.js');
+    nastavitCasopisy(CASOPISY);
+    const nazvy = m => kategorieKZobrazeni(m).map(k => k.nazev);
+    assert.deepEqual(nazvy({ centerfoldy: ['1985-09@PH'] }), ['Pet of the Month']);
+    assert.deepEqual(nazvy({ centerfoldy: ['1985-09@PH', '1987-02-UK@PH', '1990-01@HU'] }), ['Pet of the Month', 'Honey of the Month']);
+    assert.deepEqual(nazvy({ centerfoldy: ['1987-02', '1985-09@PH'] }), ['Playmate měsíce', 'Pet of the Month']);
+    assert.deepEqual(nazvy({ centerfoldy: ['1987-02'] }), ['Playmate měsíce']);
+    // Ručně zapsaná Playmate měsíce zůstane i u modelky jen s Penthouse
+    assert.ok(nazvy({ role: 'Playmate měsíce', centerfoldy: ['1985-09@PH'] }).includes('Playmate měsíce'));
+    nastavitCasopisy([]);
+});

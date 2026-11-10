@@ -2,7 +2,7 @@
 import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti, porovnatNaZacatku } from './oblibenost';
 import { otevritOblibenost } from './prehled';
-import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
+import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieKZobrazeni, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, GetOdznakyModelky, GetPodobnostObsahu, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek, SetProfilovyVyrez } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -77,7 +77,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
 
     // Údaje ve třech blocích: Playboy (nejdůležitější pro sbírku), Osobní, Vzhled; prázdné části se nezobrazí.
     // Kategorie a výskyt se odvozují z vydání a alb; spočítají se jednou pro údaje i pro pásky.
-    const kategorie = kategorieModelky(modelka);
+    const kategorie = kategorieKZobrazeni(modelka);
     const vyskyt = vyskytModelky(modelka);
     // Kategorie jsou v hlavičce panelu vedle fotky (kdo modelka je), ne mezi řádky Playboy
     const htmlKategorii = kategorie.map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join('');
@@ -133,13 +133,17 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
         ...String(modelka.pictorialVydani || '').split('\n'),
     ].map(v => (v || '').trim()).filter(Boolean);
     const platnaVydani = [...new Set(vsechnaVydani)].filter(v => paskaCisla(v)).sort((a, b) => a.localeCompare(b));
+    // Titul na pásce: u Playboye „Playmate“ jako dřív (první měsíční číslo), u centerfoldu jiného časopisu
+    // jeho titul („Pet · Zář 85 · PH“)
     const jePlaymate = kategorie.some(k => k.nazev === 'Playmate měsíce');
-    const playmateVydani = (rozlozitVydani(modelka.vystoupeni)?.mesic && platnaVydani.includes(modelka.vystoupeni))
+    const cislaPlayboye = platnaVydani.filter(jeCisloPlayboye);
+    const playmateVydani = (rozlozitVydani(modelka.vystoupeni)?.mesic && cislaPlayboye.includes(modelka.vystoupeni))
         ? modelka.vystoupeni
-        : platnaVydani.find(v => rozlozitVydani(v)?.mesic);
+        : cislaPlayboye.find(v => rozlozitVydani(v)?.mesic);
+    const centerfoldyJinde = new Set((modelka.centerfoldy || []).filter(v => !jeCisloPlayboye(v)));
 
     const paskyHtml = platnaVydani.map(v => {
-        const role = (v === playmateVydani && jePlaymate) ? 'Playmate · ' : '';
+        const role = centerfoldyJinde.has(v) ? `${titulCisla(v, 'kratky')} · ` : (v === playmateVydani && jePlaymate) ? 'Playmate · ' : '';
         const popisek = `${role}${paskaCisla(v)}`;
         return `<button type="button" class="pruh-odkaz" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
     }).join('') + ((modelka.onlineAlba || []).length

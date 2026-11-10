@@ -7,12 +7,14 @@ import { stav } from './stav';
 import { htmlStitkuRad, nazevVolbyRady } from './rady';
 import { covers, coversList, searchInput, wall } from './prvky';
 import { listaCoveru, listaSteny } from './listy';
-import { VELIKOST_PLAKATU_MALA, nacitatPostupne, sledovatDalsi } from './obrazky';
+import { VELIKOST_PLAKATU_MALA, VELIKOST_TITULNI, VELIKOST_ZAHLAVI, nacitatPostupne, sledovatDalsi } from './obrazky';
 import { htmlZobrazeniCisel, ukazatPohled } from './navigace';
 import { htmlPlakatu, pripravitPlakat } from './profil';
 import { otevritVydani } from './vydani';
 import { prevestNaVolby } from '../ui/volby';
-import { nastavitEdiciKalendare } from './kalendar';
+import { nacistPlnouObalku, nastavitEdiciKalendare } from './kalendar';
+import { poctyObalek, poradiObalekHero } from '../lib/hero-obalek';
+import { predLety } from '../lib/hero-kalendare';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { modelkyPodleId, oblibenostModelek } from './mezipamet';
 import { prevest } from '../lib/hledani-dotaz';
@@ -173,6 +175,44 @@ const ZOBRAZIT_CISLA = { vse: 'vše', cover: 's coverem', bezCoveru: 'bez coveru
 // Pořadí v roce: měsíce, speciály, celý ročník
 const poradiVRoce = v => !v.mesic ? 'Z' : v.mesic.startsWith('S') ? `T${v.mesic}` : v.mesic;
 
+// Hero Obálek (0.02.024, jako Kalendář): obálka zvolené řady – výročí čísla, jinak nejlépe hodnocená – s počty
+// obálek a akcemi; Další ↻ střídá v pořadí poradiObalekHero, změna řady začne znovu
+let posunHeroObalek = 0;
+function htmlHeroObalek(coveryFotky, cisla, stavCisla) {
+    const poradi = poradiObalekHero(coveryFotky, stav.kalendarEdice);
+    if (!poradi.length) return '';
+    const o = poradi[((posunHeroObalek % poradi.length) + poradi.length) % poradi.length];
+    const p = poctyObalek(cisla.filter(k => !k.chybi), stav.kalendarEdice);
+    const k = cisla.find(x => x.vydani === o.vydani);
+    // Kdo je na obálce (údaj čísla), jinak centerfold čísla – to nemusí být modelka z obálky
+    const kdo = stavCisla.get(o.vydani)?.naObalce || '';
+    const leta = new Date().getFullYear() - parseInt(o.vydani.slice(0, 4), 10);
+    const vety = [
+        o.vyroci ? `Vyšlo ${predLety(leta)}.` : '',
+        kdo ? `Na obálce ${kdo}.` : k?.modelka ? `Centerfold ${k.modelka}.` : '',
+        o.hodnoceni ? `${'♥'.repeat(o.hodnoceni)}` : '',
+        p.chybi ? `V ${sklonovat(p.rocniku, 'rozpracovaném ročníku', 'rozpracovaných ročnících', 'rozpracovaných ročnících')} chybí ${sklonovat(p.chybi, 'obálka', 'obálky', 'obálek')}.` : 'Rozpracované ročníky mají všechny obálky.',
+    ].filter(Boolean);
+    const nahled = obrazek(o.url, VELIKOST_TITULNI), plna = obrazek(o.url, VELIKOST_ZAHLAVI);
+    return `<section class="profily-hero sh-hero kal-hero" aria-label="Obálka ${esc(nazevVydani(o.vydani))}">
+        <div class="ph-rozmazane" style="background-image:url('${esc(nahled).replace(/'/g, '%27')}')"></div>
+        <div class="sh-scena">
+            <div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}" alt="" draggable="false" /></div><div class="ph-prekryv"></div>
+            <div class="ph-obsah">
+                <div class="ph-nadtitulek">${esc(nazevVolbyRady(stav.kalendarEdice))} · ${o.vyroci ? 'výročí obálky' : o.hodnoceni ? 'nejlépe hodnocené obálky' : 'obálky'}${poradi.length > 1 ? ` · ${((posunHeroObalek % poradi.length) + poradi.length) % poradi.length + 1} z ${poradi.length}` : ''}</div>
+                <h2>${esc(nazevVydani(o.vydani))}</h2>
+                <div class="sh-zmena">${sklonovat(p.sCoverem, 'obálka', 'obálky', 'obálek')}</div>
+                <p class="ph-duvod">${esc(vety.join(' '))}</p>
+                <div class="ph-akce">
+                    <button type="button" class="ph-tlacitko hlavni" data-vydani="${esc(o.vydani)}">Otevřít číslo</button>
+                    ${p.chybi ? '<button type="button" class="ph-tlacitko" data-ho-chybi title="Ukázat jen čísla bez coveru a chybějící">Bez obálky</button>' : ''}
+                    ${poradi.length > 1 ? '<button type="button" class="ph-tlacitko" data-ho-dalsi title="Další obálka">Další ↻</button>' : ''}
+                </div>
+            </div>
+        </div>
+    </section>`;
+}
+
 export async function nacistCovery(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
     const [kalendar, stavy, coveryFotky] = zMezipameti && stav.coveryData ? stav.coveryData
@@ -253,7 +293,8 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
     };
 
     listaCoveru.naplnit([...rocniky].map(([rok, l]) => ({ klic: rok, nazev: rok, pocet: l.filter(k => !k.chybi).length })));
-    coversList.innerHTML = volby + [...rocniky].map(([rok, l]) => {
+    const hero = tokeny.length ? '' : htmlHeroObalek(coveryFotky, cisla, stavCisla);
+    coversList.innerHTML = hero + volby + [...rocniky].map(([rok, l]) => {
         const mesicnich = l.filter(k => !k.chybi && /^\d\d$/.test(k.casti.mesic) && !cisloNevyslo(k.vydani)).length;
         return `
             <section class="rocnik-cisel" data-cast="${esc(rok)}">
@@ -262,6 +303,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
             </section>`;
     }).join('');
     prevestNaVolby(coversList.querySelector('.cisla-volby'));
+    nacistPlnouObalku(coversList);
     nacitatPostupne(coversList);
     listaCoveru.sledovat();
 }
@@ -298,7 +340,15 @@ export function pripravit() {
     covers.addEventListener('click', (e) => {
         const edice = e.target.closest('[data-edice-cisel]');
         const zobrazit = e.target.closest('[data-zobrazit-cisla]');
-        if (edice) {
+        if (e.target.closest('[data-ho-dalsi]')) {
+            posunHeroObalek++;
+            nacistCovery(searchInput.value, true);
+        } else if (e.target.closest('[data-ho-chybi]')) {
+            stav.cislaZobrazit = 'bezCoveru';
+            try { localStorage.setItem('cislaZobrazit', stav.cislaZobrazit); } catch { /* jen se nezapamatuje */ }
+            nacistCovery(searchInput.value, true);
+        } else if (edice) {
+            posunHeroObalek = 0;
             nastavitEdiciKalendare(edice.dataset.ediceCisel);
             nacistCovery(searchInput.value, true);
         } else if (zobrazit) {

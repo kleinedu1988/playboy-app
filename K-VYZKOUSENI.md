@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.024 – Hero Obálek
+
+- [ ] **Kritérium hotovo:** Čísla › Obálky: hero se střídá (Další ↻, „2 z N“) a po přepnutí na Penthouse ukazuje
+      jen jeho obálky.
+- [ ] V listopadu napřed listopadové obálky dřívějších let („Vyšlo před N lety“), pak podle srdíček.
+- [ ] „Na obálce …“ z údaje čísla; bez něj „Centerfold …“.
+- [ ] Počet chybějících obálek v rozpracovaných ročnících sedí; Bez obálky přepne zobrazení na „bez coveru“.
+- [ ] Při hledání hero zmizí.
+
 ## 0.02.023 – Hero Kalendáře
 
 - [ ] **Kritérium hotovo:** Kalendář › Penthouse US: hero s ročníkem, obálkou a úplností („9 z 12 čísel“).

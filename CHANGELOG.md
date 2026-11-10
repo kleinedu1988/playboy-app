@@ -6,6 +6,14 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.024] – 2026-11-10
+
+### Přidáno
+- **Hero Obálek** (jako Kalendář): obálka zvolené řady – napřed čísla z tohoto měsíce dřívějších let (výročí),
+  pak nejlépe hodnocené obálky – s počtem obálek, kdo je na obálce (jinak centerfold čísla), srdíčky a počtem
+  chybějících obálek v rozpracovaných ročnících. Akce Otevřít číslo, Bez obálky (přepne zobrazení na čísla bez
+  coveru) a Další ↻ („3 z 120“). Při hledání se neukazuje (`lib/hero-obalek.js`).
+
 ## [0.02.023] – 2026-11-10
 
 ### Přidáno

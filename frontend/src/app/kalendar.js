@@ -62,9 +62,9 @@ function htmlHeroKalendare(vydani) {
         </div>
     </section>`;
 }
-// Plná obálka do hera po načtení náhledu (jako hero Statistik)
-function nacistPlnouObalku() {
-    const img = /** @type {HTMLImageElement | null} */ (calList.querySelector('.kal-hero .ph-ram img'));
+// Plná obálka do hera po načtení náhledu (jako hero Statistik); i pro hero Obálek (stena.js)
+export function nacistPlnouObalku(koren = calList) {
+    const img = /** @type {HTMLImageElement | null} */ (koren.querySelector('.kal-hero .ph-ram img'));
     const plna = img?.dataset.plna;
     if (!img || !plna) return;
     const velka = new Image();

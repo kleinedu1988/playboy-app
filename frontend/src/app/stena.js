@@ -4,6 +4,7 @@ import { EDICE, naSteneCenterfoldu, bezDiakritiky, ciselRocniku, cisloNevyslo, e
 import { sestavitAlba } from '../lib/alba';
 import { rozbalitFrontu } from '../lib/fronta';
 import { stav } from './stav';
+import { htmlStitkuRad, nazevVolbyRady } from './rady';
 import { covers, coversList, searchInput, wall } from './prvky';
 import { listaCoveru, listaSteny } from './listy';
 import { VELIKOST_PLAKATU_MALA, nacitatPostupne, sledovatDalsi } from './obrazky';
@@ -214,7 +215,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
 
     const volby = `<div class="cisla-volby">
         ${htmlZobrazeniCisel('obalky')}
-        ${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice-cisel="${e}">${e}</button>`).join('')}
+        ${htmlStitkuRad('data-edice-cisel')}
         ${Object.entries(ZOBRAZIT_CISLA).map(([klic, nazev]) => `<button class="chip ${klic === stav.cislaZobrazit ? 'active' : ''}" data-zobrazit-cisla="${klic}">${nazev}</button>`).join('')}
         ${htmlVarovaniHledani(nepouziteKlice(tokeny, poleCisla('')))}
         <span>${stav.cislaZobrazit === 'chybi' ? sklonovat(vybrana.length, 'chybějící číslo', 'chybějící čísla', 'chybějících čísel') : sklonovat(vybrana.filter(k => !k.chybi).length, 'číslo', 'čísla', 'čísel')}</span></div>`;
@@ -222,7 +223,7 @@ export async function nacistCovery(dotaz = '', zMezipameti = false) {
     if (vybrana.length === 0) {
         listaCoveru.naplnit([]);
         coversList.innerHTML = volby + (cisla.length ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádné číslo.')
-            : htmlPrazdna(`Edice ${stav.kalendarEdice} je prázdná`, 'Čísla se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.', { ikona: 'kalendar', tlacitko: { text: 'Přidat…', akce: 'pridat' } }));
+            : htmlPrazdna(`${nazevVolbyRady(stav.kalendarEdice)}: zatím žádné číslo`, 'Čísla se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.', { ikona: 'kalendar', tlacitko: { text: 'Přidat…', akce: 'pridat' } }));
         prevestNaVolby(coversList.querySelector('.cisla-volby'));
         return;
     }

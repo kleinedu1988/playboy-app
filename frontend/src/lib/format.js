@@ -140,6 +140,13 @@ export function moznostiRad() {
     return seznam.flatMap(c => (c.edice?.length ? c.edice : [VYCHOZI_EDICE]).map(zeme => ({ hodnota: radaVydani(zeme, c.klic), nazev: `${c.nazev} ${zeme}` })));
 }
 
+// Řada zobrazená v Kalendáři a Obálkách (0.02.016): platná je řada z tabulky časopisů; před jejím načtením stačí
+// tvar, aby se uložená volba z minula nezahodila
+export const platnaRadaKalendare = rada => /^([A-Z]{2}|[A-Z]{2}\/[A-Z]{2})$/.test(rada || '') && (!casopisy.size || moznostiRad().some(m => m.hodnota === rada));
+
+// Název řady ve volbě a v prázdném stavu: „Playboy US“, „Penthouse UK“
+export const nazevVolbyRady = rada => moznostiRad().find(m => m.hodnota === rada)?.nazev || nazevRady(rada);
+
 // Přípona časopisu a edice k názvu čísla: '' u Playboye US, „ · CZ“, u jiného časopisu „ · Penthouse“ /
 // „ · Penthouse UK“; kratce (páska) se zkratkou „ · PH“ / „ · PH UK“
 function priponaRady(v, kratce = false) {

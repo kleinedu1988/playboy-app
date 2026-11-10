@@ -78,3 +78,13 @@ test('kategorie z pictorialů jiných časopisů (backend titulyJinde) a jejich 
     assert.deepEqual(kategorieModelky(obe).map(k => k.nazev), ['Playmate měsíce', 'Playmate roku', 'Pet of the Month', 'Modelka obálky']);
     nastavitCasopisy([]);
 });
+
+test('Kalendář podle časopisu: platné řady a jejich názvy (0.02.016)', async () => {
+    const { platnaRadaKalendare, nazevVolbyRady } = await import('../src/lib/format.js');
+    // Před načtením časopisů platí každá řada ve správném tvaru (uložená volba z minula se nezahodí)
+    assert.deepEqual(['US', 'CZ', 'PH/US', 'xx', 'PH-US', ''].map(platnaRadaKalendare), [true, true, true, false, false, false]);
+    nastavitCasopisy(CASOPISY);
+    assert.deepEqual(['US', 'PH/UK', 'HU/US', 'HU/UK', 'OU/US'].map(platnaRadaKalendare), [true, true, true, false, true]);
+    assert.deepEqual(['US', 'CZ', 'PH/UK'].map(nazevVolbyRady), ['Playboy US', 'Playboy CZ', 'Penthouse UK']);
+    nastavitCasopisy([]);
+});

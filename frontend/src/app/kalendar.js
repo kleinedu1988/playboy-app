@@ -2,9 +2,10 @@
 import { otevritRocnikWiki } from './rocnik-wiki';
 import { GetKalendar, GetStavyVydani, GetVydani, SetStavVydani } from './backend';
 import { prevest } from '../lib/hledani-dotaz';
-import { EDICE, MESICE, VYCHOZI_EDICE, nazevRady, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
+import { MESICE, VYCHOZI_EDICE, nazevRady, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
+import { htmlStitkuRad, nazevVolbyRady, platnaRadaKalendare } from './rady';
 import { zalozitSpecial } from './specialy';
 import { calList, calendar, searchInput } from './prvky';
 import { listaKalendare } from './listy';
@@ -41,10 +42,10 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     });
 
     const tokeny = rozlozitDotaz(prevest(dotaz));
-    const prepinacEdic = pocet => `<div class="cal-editions">${htmlZobrazeniCisel('kalendar')}${EDICE.map(e => `<button class="chip ${e === stav.kalendarEdice ? 'active' : ''}" data-edice="${e}">${e}</button>`).join('')}${htmlVarovaniHledani(nepouziteKlice(tokeny, poleCisla('')))}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
+    const prepinacEdic = pocet => `<div class="cal-editions">${htmlZobrazeniCisel('kalendar')}${htmlStitkuRad('data-edice')}${htmlVarovaniHledani(nepouziteKlice(tokeny, poleCisla('')))}<span>${sklonovat(pocet, 'číslo', 'čísla', 'čísel')}</span></div>`;
     if (vydani.size === 0) {
         listaKalendare.naplnit([]);
-        calList.innerHTML = prepinacEdic(0) + htmlPrazdna(`Edice ${stav.kalendarEdice} je prázdná`, 'Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.', { ikona: 'kalendar', tlacitko: { text: 'Přidat…', akce: 'pridat' } });
+        calList.innerHTML = prepinacEdic(0) + htmlPrazdna(`${nazevVolbyRady(stav.kalendarEdice)}: zatím žádné číslo`, 'Kalendář se naplní covery, centerfoldy a pictorialy, které mají měsíc a rok vydání.', { ikona: 'kalendar', tlacitko: { text: 'Přidat…', akce: 'pridat' } });
         prevestNaVolby(calList.querySelector('.cal-editions'));
         return;
     }
@@ -165,7 +166,7 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
 }
 
 export function nastavitEdiciKalendare(edice) {
-    if (!EDICE.includes(edice)) return;
+    if (!platnaRadaKalendare(edice)) return;
     stav.kalendarEdice = edice;
     try { localStorage.setItem('kalendarEdice', edice); } catch { /* jen se nezapamatuje */ }
 }
@@ -324,7 +325,7 @@ export function pripravit() {
     // Kliknutí nebo nové vykreslení listování ukončí
     calendar.addEventListener('mousedown', zastavitListovani, true);
 
-    try { stav.kalendarEdice = EDICE.includes(localStorage.getItem('kalendarEdice')) ? localStorage.getItem('kalendarEdice') : VYCHOZI_EDICE; } catch { /* výchozí edice */ }
+    try { stav.kalendarEdice = platnaRadaKalendare(localStorage.getItem('kalendarEdice')) ? localStorage.getItem('kalendarEdice') : VYCHOZI_EDICE; } catch { /* výchozí edice */ }
 
     calendar.addEventListener('click', (e) => {
         const mezera = e.target.closest('[data-mezera]');

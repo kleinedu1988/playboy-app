@@ -6,6 +6,15 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.016] – 2026-11-10
+
+### Změněno
+- **Kalendář a Obálky podle časopisu:** volba v liště se jmenuje „Časopis a edice“ a nabízí všechny řady z tabulky
+  časopisů (Playboy US, Playboy CZ, Penthouse US, Penthouse UK, Hustler US…); zvolená se pamatuje jako dřív
+  edice. Kalendář Penthouse ukáže zadaná čísla, chybějící měsíce s + a „nevyšlo“ podle řady Penthouse.
+- Nové album, cover a rychlé přidání nabídnou časopis zobrazený v Kalendáři, dokud se neuloží jiný.
+- Prázdný stav: „Penthouse US: zatím žádné číslo“.
+
 ## [0.02.015] – 2026-11-10
 
 ### Přidáno

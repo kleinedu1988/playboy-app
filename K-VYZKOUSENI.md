@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.016 – Kalendář podle časopisu
+
+- [ ] **Kritérium hotovo:** Čísla › Kalendář › „Časopis a edice: Penthouse US“: ukáže Penthouse 09/1985 a v roce
+      1985 ostatní měsíce jako chybějící s +; klik na + nabídne přidání čísla Penthouse.
+- [ ] Volba se pamatuje po restartu; přepnutí zpět na Playboy US ukáže Kalendář jako dřív.
+- [ ] Obálky (Čísla › Obálky) mají stejnou volbu; „Chybějící“ u Penthouse počítá podle řady Penthouse.
+- [ ] Penthouse UK bez čísel: „Penthouse UK: zatím žádné číslo“ s tlačítkem Přidat….
+- [ ] Nabídka ročníku Penthouse (klik na rok): bez „Ročník podle Wikipedie…“, s „Nový speciál…“.
+- [ ] Po přepnutí Kalendáře na Penthouse nabídne nové album Penthouse US (dokud se neuloží jiný časopis).
+
 ## 0.02.015 – Řady Penthouse a Hustleru
 
 - [ ] **Kritérium hotovo:** ročník Penthouse 1969 (drobeček „Ročník 1969 · Penthouse“ u čísla 09/1969): leden až

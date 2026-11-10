@@ -23,6 +23,17 @@ export function vychoziRada() {
     return stav.kalendarEdice;
 }
 
+// Kalendář a Obálky podle časopisu (0.02.016): zobrazená řada je stav.kalendarEdice („US“, „CZ“, „PH/US“…);
+// platnost a název řady jsou v lib/format.js (platnaRadaKalendare, nazevVolbyRady)
+export { nazevVolbyRady, platnaRadaKalendare } from '../lib/format';
+
+/** Štítky řad pro volbu „Časopis a edice“ v Kalendáři a Obálkách (atribut: data-edice / data-edice-cisel) */
+export function htmlStitkuRad(atribut) {
+    const moznosti = moznostiRad();
+    if (!moznosti.some(m => m.hodnota === stav.kalendarEdice)) moznosti.push({ hodnota: stav.kalendarEdice, nazev: nazevRady(stav.kalendarEdice) });
+    return moznosti.map(m => `<button class="chip ${m.hodnota === stav.kalendarEdice ? 'active' : ''}" ${atribut}="${esc(m.hodnota)}">${esc(m.nazev)}</button>`).join('');
+}
+
 export function zapamatovatRadu(rada) {
     try { localStorage.setItem(KLIC, rada); } catch { /* jen pro toto spuštění */ }
 }

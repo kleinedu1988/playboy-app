@@ -6,6 +6,15 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.026] – 2026-11-10
+
+### Přidáno
+- **Kariéra v profilu napříč časopisy:** modelka s číslem jiného časopisu má v záhlaví profilu místo kategorií
+  souhrn s roky, časopisy podle prvního čísla („Pet of the Month 1985 · Playmate 1987 · Playmate roku 1989“;
+  bez titulu „Obálka Hustler 1990“ nebo „Penthouse 1986“). Blok údajů se pak jmenuje „Časopisy“.
+- Čísla jiného časopisu v pásce záhlaví (podtržení) a ve štítcích Vydání / Na obálce (lem) mají barvu časopisu ze
+  Správy › Časopisy. Modelka jen z Playboye beze změny.
+
 ## [0.02.025] – 2026-11-10
 
 ### Přidáno

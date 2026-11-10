@@ -605,6 +605,45 @@ function titulyJindeModelky(modelka) {
     return v;
 }
 
+// Barva časopisu z tabulky časopisů („#d81b60“); neznámý nebo bez barvy ''
+export const barvaCasopisu = klic => casopisy.get(klic || VYCHOZI_CASOPIS)?.barva || '';
+
+/**
+ * Souhrn kariéry napříč časopisy (0.02.026), časopisy podle prvního čísla: „Pet of the Month 1985 · Playmate 1987,
+ * 1988 · Playmate roku 1989“.
+ * Za každý časopis tituly s roky (centerfold měsíce, modelka roku), bez titulu obálka nebo jen rok čísla. Modelka
+ * jen z Playboye dostane '' (profil zůstane jako dřív).
+ */
+export function souhrnKariery(modelka) {
+    const vse = [...(modelka.vydani || []), ...(modelka.obalky || []), ...(modelka.centerfoldy || []), modelka.vystoupeni || '',
+        ...String(modelka.pictorialVydani || '').split('\n')].map(v => v.trim()).filter(v => rozlozitVydani(v));
+    const casopisyM = [...new Set(vse.map(v => rozlozitVydani(v).casopis))];
+    if (!casopisyM.some(c => c !== VYCHOZI_CASOPIS)) return '';
+    const poradi = [...casopisy.keys()];
+    const pozice = k => (k === VYCHOZI_CASOPIS ? -1 : poradi.includes(k) ? poradi.indexOf(k) : poradi.length);
+    const roky = seznam => [...new Set(seznam.map(v => v.slice(0, 4)))].sort().join(', ');
+    const zCasopisu = (seznam, c) => (seznam || []).filter(v => rozlozitVydani(v)?.casopis === c);
+    const tituly = titulyJindeModelky(modelka);
+    const casti = [];
+    // Časopisy chronologicky podle prvního čísla, při shodě v pořadí tabulky
+    const prvni = c => vse.filter(v => rozlozitVydani(v).casopis === c).map(v => v.slice(0, 4)).sort()[0];
+    for (const c of casopisyM.sort((a, b) => prvni(a).localeCompare(prvni(b)) || pozice(a) - pozice(b))) {
+        const nazev = casopisy.get(c)?.nazev || (c === VYCHOZI_CASOPIS ? 'Playboy' : c);
+        const cf = zCasopisu(modelka.centerfoldy, c);
+        const vlastni = [];
+        if (cf.length) vlastni.push(`${c === VYCHOZI_CASOPIS ? 'Playmate' : titulCasopisu(c)} ${roky(cf)}`);
+        if (c === VYCHOZI_CASOPIS && modelka.playmateRoku) vlastni.push(`Playmate roku${/^\d{4}$/.test(modelka.playmateRoku) ? ` ${modelka.playmateRoku}` : ''}`);
+        const roku = c === VYCHOZI_CASOPIS ? null : tituly.find(t => t.nazev === titulCasopisu(c, 'roku'));
+        if (roku) vlastni.push(`${roku.nazev}${roku.rok ? ` ${roku.rok}` : ''}`);
+        if (!vlastni.length) {
+            const obalky = zCasopisu(modelka.obalky, c);
+            vlastni.push(obalky.length ? `Obálka ${nazev} ${roky(obalky)}` : `${nazev} ${roky(vse.filter(v => rozlozitVydani(v).casopis === c))}`);
+        }
+        casti.push(...vlastni);
+    }
+    return casti.join(' · ');
+}
+
 export function odvozeneKategorie(modelka) {
     return [
         (modelka.centerfoldy || []).some(jeCisloPlayboye) || modelka.playmateMesice ? 'Playmate měsíce' : '',

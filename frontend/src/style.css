@@ -21051,3 +21051,14 @@ body.rezim-vyberu #detailView .poster {
 .kal-hero .ph-ram img {
     object-position: center top;
 }
+
+/* Čísla jiného časopisu v profilu barvou časopisu (0.02.026): podtržení v pásce záhlaví, lem štítku v údajích */
+.hlavni-lista #profilPruh .pruh-odkaz.jiny-casopis {
+    text-decoration: underline 2px var(--casopis);
+    text-underline-offset: 4px;
+}
+
+.udaje-stitky .chip.jiny-casopis {
+    border-color: var(--casopis);
+    box-shadow: inset 3px 0 0 var(--casopis);
+}

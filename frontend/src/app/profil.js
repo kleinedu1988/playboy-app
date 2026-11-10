@@ -2,7 +2,7 @@
 import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti, porovnatNaZacatku } from './oblibenost';
 import { otevritOblibenost } from './prehled';
-import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
+import { VYSKYT, barvaCasopisu, souhrnKariery, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, GetOdznakyModelky, GetPodobnostObsahu, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek, SetProfilovyVyrez } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -40,7 +40,13 @@ const photosGrid = document.getElementById('photosGrid');
 const profilPocet = document.getElementById('profilPocet');
 
 // Štítek čísla časopisu; klik ho otevře (obsluha data-vydani v prohlizec.js)
-const htmlStitkuVydani = v => `<button class="chip" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`;
+// Číslo jiného časopisu má barvu časopisu (0.02.026); Playboy beze změny
+const stylCasopisu = v => {
+    const c = rozlozitVydani(v)?.casopis;
+    const barva = c && !jeCisloPlayboye(v) ? barvaCasopisu(c) : '';
+    return barva ? ` jiny-casopis" style="--casopis: ${esc(barva)}` : '';
+};
+const htmlStitkuVydani = v => `<button class="chip${stylCasopisu(v)}" data-vydani="${esc(v)}" title="Otevřít číslo">${esc(nazevVydani(v))}</button>`;
 
 // Otevření profilu modelky s fotogalerií
 // seznam: id modelek, mezi kterými listují šipky ‹ › (pořadí, Top 10…); bez něj z galerie Modelky její karty,
@@ -110,7 +116,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const znamky = [modelka.tetovani === 1 ? 'Tetování' : '', modelka.piercing === 1 ? 'Piercing' : ''].filter(Boolean);
 
     const bloky = [
-        playboy.length ? `<section class="udaje-blok"><h4>Playboy</h4>
+        playboy.length ? `<section class="udaje-blok"><h4>${souhrnKariery(modelka) ? 'Časopisy' : 'Playboy'}</h4>
             ${playboy.map(([nazev, hodnota]) => `<div class="udaje-radek"><span class="udaje-popis">${nazev}</span><div class="udaje-stitky">${hodnota}</div></div>`).join('')}
         </section>` : '',
         osobni.length ? `<section class="udaje-blok"><h4>Osobní</h4>${osobni.map(veta => `<p class="udaje-veta">${veta}</p>`).join('')}</section>` : '',
@@ -145,7 +151,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const paskyHtml = platnaVydani.map(v => {
         const role = centerfoldyJinde.has(v) ? `${titulCisla(v, 'kratky')} · ` : (v === playmateVydani && jePlaymate) ? 'Playmate · ' : '';
         const popisek = `${role}${paskaCisla(v)}`;
-        return `<button type="button" class="pruh-odkaz" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
+        return `<button type="button" class="pruh-odkaz${stylCasopisu(v)}" data-vydani="${esc(v)}" title="Otevřít číslo ${esc(nazevVydani(v))}">${esc(popisek)}</button>`;
     }).join('') + ((modelka.onlineAlba || []).length
         ? `<button type="button" class="pruh-odkaz" data-online-album title="Přejít na online album">${esc(paskaOnline(modelka))}</button>` : '');
     const titulni = `<img src="${esc(adresaTitulni(modelka, true))}" alt="${esc(modelka.jmeno)}" style="${stylVyrezu(modelka)}" decoding="async" draggable="false" />`;
@@ -153,7 +159,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     // doplní vykreslení alb, čísla časopisu a online jako textové odkazy), pořadí a odznaky; celou plochu kryje fotka
     const roky = platnaVydani.map(v => parseInt(v, 10)).filter(r => r > 1900);
     const obdobi = roky.length ? (Math.min(...roky) === Math.max(...roky) ? String(roky[0]) : `${Math.min(...roky)}–${Math.max(...roky)}`) : '';
-    const nadtitulek = kategorie.map(k => popisKategorie(k)).filter(Boolean).slice(0, 3).join(' · ');
+    // Modelka z víc časopisů: nadtitulek je souhrn kariéry s roky („Pet of the Month 1985 · Playmate 1987“)
+    const nadtitulek = souhrnKariery(modelka) || kategorie.map(k => popisKategorie(k)).filter(Boolean).slice(0, 3).join(' · ');
     profilPruhObsah.innerHTML = `
         <div class="pruh-identita">
             ${nadtitulek ? `<div class="pruh-nadtitulek">${esc(nadtitulek)}</div>` : ''}

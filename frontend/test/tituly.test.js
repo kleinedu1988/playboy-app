@@ -170,3 +170,15 @@ test('Údržba a texty podle časopisu (0.02.022)', async () => {
     assert.equal(titulCenterfoldu({ centerfoldy: [] }), 'Playmate');
     nastavitCasopisy([]);
 });
+
+test('souhrn kariéry napříč časopisy v profilu (0.02.026)', async () => {
+    const { souhrnKariery, barvaCasopisu } = await import('../src/lib/format.js');
+    nastavitCasopisy(CASOPISY);
+    assert.equal(souhrnKariery({ centerfoldy: ['1987-02', '1988-05'], vydani: ['1987-02'] }), '');
+    assert.equal(souhrnKariery({ centerfoldy: ['1985-09@PH', '1987-02'], vydani: ['1985-09@PH', '1987-02'], playmateRoku: '1989' }),
+        'Pet of the Month 1985 · Playmate 1987 · Playmate roku 1989');
+    assert.equal(souhrnKariery({ vydani: ['1987-02'], obalky: ['1990-01@HU'], centerfoldy: [] }), 'Playboy 1987 · Obálka Hustler 1990');
+    assert.equal(souhrnKariery({ vydani: ['1986-03-UK@PH'], titulyJinde: [{ nazev: 'Pet of the Year', rok: '1986' }] }), 'Pet of the Year 1986');
+    nastavitCasopisy([]);
+    assert.equal(barvaCasopisu('PH'), '');
+});

@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.026 – Kariéra v profilu napříč časopisy
+
+- [ ] **Kritérium hotovo:** profil modelky s číslem Playboye i Penthouse ukáže obě čísla (páska v záhlaví i Vydání).
+- [ ] Nadtitulek záhlaví: „Pet of the Month 1985 · Playmate 1987“ (podle prvního čísla); modelka jen z Playboye
+      má kategorie jako dřív.
+- [ ] Čísla Penthouse podtržená / olemovaná barvou časopisu – je barva na tmavém záhlaví dost vidět?
+- [ ] Blok údajů se u takové modelky jmenuje „Časopisy“, u Playboye „Playboy“.
+
 ## 0.02.025 – Hero stěny Centerfoldů
 
 - [ ] **Kritérium hotovo:** Centerfoldy › Časopis: Penthouse – v hero Pet of the Month („Pet of the Month · Září

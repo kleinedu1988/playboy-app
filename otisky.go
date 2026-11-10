@@ -431,3 +431,8 @@ func (a *App) pocitatOtisky(ctx context.Context) {
 		o.mu.Unlock()
 	}
 }
+
+// PozastavitOtisky: zastaví výpočet otisků (panel Na pozadí v Údržbě); spočítané zůstanou, příště se pokračuje
+func (a *App) PozastavitOtisky() {
+	a.zastavitOtisky()
+}

@@ -145,6 +145,8 @@ export function GetSezona():Promise<main.Sezona>;
 
 export function GetSinSlavy():Promise<main.SinSlavy>;
 
+export function GetSlabeFotky():Promise<Array<main.SlabaFotka>>;
+
 export function GetSoubojeModelky(arg1:number):Promise<Array<main.DvojicePorovnani>>;
 
 export function GetSpecialy():Promise<Array<sbirka.Special>>;
@@ -152,6 +154,8 @@ export function GetSpecialy():Promise<Array<sbirka.Special>>;
 export function GetStatistiky():Promise<sbirka.Statistiky>;
 
 export function GetStavHledaniSlovy():Promise<obsah.StavTextu>;
+
+export function GetStavKvality():Promise<main.StavKvality>;
 
 export function GetStavObsahu():Promise<obsah.Stav>;
 
@@ -241,6 +245,8 @@ export function OdmitnoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>,arg2:boolean):P
 
 export function OveritOdkaz(arg1:string):Promise<number>;
 
+export function OznacitKvalituVPoradku(arg1:Array<string>,arg2:boolean):Promise<boolean>;
+
 export function OznacitOtoceniVPoradku(arg1:Array<string>,arg2:boolean):Promise<boolean>;
 
 export function OznacitRuzneFotky(arg1:Array<string>):Promise<boolean>;
@@ -257,6 +263,8 @@ export function PorovnatModelky(arg1:number,arg2:number,arg3:string):Promise<boo
 
 export function PorovnatModelkyVTematu(arg1:number,arg2:number,arg3:string,arg4:string):Promise<boolean>;
 
+export function PozastavitOtisky():Promise<void>;
+
 export function Predpripravit(arg1:string):Promise<boolean>;
 
 export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
@@ -264,6 +272,8 @@ export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
 export function PrejmenovatTag(arg1:string,arg2:string):Promise<number>;
 
 export function PrejmenovatVyber(arg1:number,arg2:string):Promise<boolean>;
+
+export function PrerusitKontroluKvality():Promise<void>;
 
 export function PrerusitKontroluOtoceni():Promise<void>;
 
@@ -346,6 +356,8 @@ export function SmazatChytryVyber(arg1:string):Promise<boolean>;
 export function SmazatVyber(arg1:number):Promise<boolean>;
 
 export function SmazatVyberGalerie(arg1:string):Promise<boolean>;
+
+export function SpustitKontroluKvality():Promise<boolean>;
 
 export function SpustitKontroluOtoceni():Promise<boolean>;
 

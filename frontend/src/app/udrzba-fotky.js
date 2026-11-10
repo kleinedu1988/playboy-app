@@ -1,7 +1,9 @@
 // Údržba › Otočené a výřezy (otocene_fotky.go): fotky na boku nebo vzhůru nohama (kontrola na pozadí z vektorů
 // CLIP otočených náhledů, potřebuje Obsah fotek) s otočením jedním klikem, a titulní fotky s výchozím výřezem,
-// kterým jde výřez navrhnout z detekce postavy. Nic se neotočí ani neuloží bez kliknutí.
-import { GetOtoceneFotky, GetStavOtoceni, GetTitulniBezVyrezu, NavrhnoutVyrezy, OznacitOtoceniVPoradku, OznacitVyrezVychozi, PrerusitKontroluOtoceni, SetCoverVyrez, SetRotaceFotek, SpustitKontroluOtoceni } from './backend';
+// kterým jde výřez navrhnout z detekce postavy. Kvalita fotek (kvalita_fotek.go, 1.51): malé, rozmazané, přepálené
+// a tmavé fotky z náhledů; když je ve sbírce stejná fotka v lepší kvalitě, „Vyměnit za lepší“ ji nechá místo slabé
+// (sloučení stejných fotek, jde vrátit). Nic se neotočí, nevymění ani neuloží bez kliknutí.
+import { GetOtoceneFotky, GetSlabeFotky, GetStavKvality, GetStavOtoceni, GetTitulniBezVyrezu, NavrhnoutVyrezy, OznacitKvalituVPoradku, OznacitOtoceniVPoradku, OznacitVyrezVychozi, PrerusitKontroluKvality, PrerusitKontroluOtoceni, SetCoverVyrez, SetRotaceFotek, SloucitStejneFotky, SpustitKontroluKvality, SpustitKontroluOtoceni, VratitSlouceniStejnych } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
 import { nastavitHtml } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
@@ -23,6 +25,11 @@ let navrhuje = false;
 let zobrazitOtocenych = 48;
 let casovac = null;
 let zastarale = false;
+/** @type {any[] | null} */
+let slabe = null;
+/** @type {any} */
+let stavKvality = null;
+let zobrazitSlabych = 24;
 
 const DAVKA_VYREZU = 24;
 
@@ -43,8 +50,10 @@ export function zastarat() {
 
 async function nacist() {
     zastarale = false;
-    const [o, st, bez] = await Promise.all([GetOtoceneFotky(), GetStavOtoceni(), GetTitulniBezVyrezu()]);
+    const [o, st, bez, sl, sk] = await Promise.all([GetOtoceneFotky(), GetStavOtoceni(), GetTitulniBezVyrezu(), GetSlabeFotky(), GetStavKvality()]);
     otocene = o || [];
+    slabe = sl || [];
+    stavKvality = sk;
     stavOtoceni = st;
     bezVyrezu = bez || [];
     const ids = new Set(bezVyrezu.map(m => m.modelkaId));
@@ -55,7 +64,7 @@ async function nacist() {
 
 function hlidat() {
     clearTimeout(casovac);
-    if (!stavOtoceni?.bezi) return;
+    if (!stavOtoceni?.bezi && !stavKvality?.bezi) return;
     casovac = setTimeout(async () => {
         if (!api.viditelna()) { hlidat(); return; }
         await nacist();
@@ -124,6 +133,69 @@ function htmlVyrezu(m) {
         </figcaption></figure>`;
 }
 
+const POPISY_PROBLEMU = { male: 'malé rozlišení', rozmazane: 'rozmazaná', prepalene: 'přepálená', tmave: 'tmavá' };
+
+function htmlStavuKvality() {
+    const st = stavKvality;
+    if (!st) return '';
+    if (!st.mozna) return '<p class="prazdno-male">Kontrola kvality čte náhledy z mezipaměti náhledů, která tu není k dispozici.</p>';
+    const zbyva = Math.max(0, st.fotek - st.zkontrolovano);
+    const procento = st.celkem ? Math.floor(st.hotovo / st.celkem * 100) : 0;
+    let text, tlacitko = '';
+    if (st.bezi) {
+        text = `Měřím kvalitu fotek: ${st.hotovo} z ${st.celkem} (${procento} %).`;
+        tlacitko = '<button type="button" class="btn btn-secondary btn-small" data-uk-prerusit>Přerušit</button>';
+    } else {
+        text = st.zkontrolovano
+            ? `Změřeno ${st.zkontrolovano.toLocaleString('cs-CZ')} z ${st.fotek.toLocaleString('cs-CZ')} fotek${zbyva ? `, ${zbyva.toLocaleString('cs-CZ')} ještě ne` : ''}.${st.chyba ? ` Poslední běh skončil chybou: ${esc(st.chyba)}` : ''}`
+            : 'Kontrola projde náhledy fotek a najde malé, rozmazané, přepálené a příliš tmavé. Obsah fotek nepotřebuje; chybějící náhledy stáhne.';
+        if (zbyva) tlacitko = `<button type="button" class="btn btn-primary btn-small" data-uk-spustit>${st.zkontrolovano ? 'Změřit zbylé' : 'Zkontrolovat kvalitu'}</button>`;
+    }
+    return `<div class="us-stav${st.bezi ? ' bezi' : ''}" role="status">${st.bezi ? `<span class="us-pruh" style="--hotovo:${procento}%"></span>` : ''}<p>${text}</p>${tlacitko}</div>`;
+}
+
+function htmlSlabe(f, i) {
+    const m = f.mereni;
+    const udaje = `náhled ${m.w} × ${m.h} · ostrost ${Math.round(m.o)} · jas ${Math.round(m.j)}`;
+    return `<figure class="uf-otocena uk-slaba">
+        <div class="uf-dvojice">
+            <span class="uf-ram" title="${esc(udaje)}"><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" decoding="async" draggable="false" /></span>
+            ${f.lepsi ? `<span class="uf-sipka" aria-hidden="true">→</span><span class="uf-ram navrh" title="Stejná fotka ve sbírce v lepší kvalitě"><img src="${esc(obrazek(f.lepsiUrl, VELIKOST_NAHLEDU))}" alt="" loading="lazy" decoding="async" draggable="false" /></span>` : ''}
+        </div>
+        <figcaption>
+            <button type="button" class="us-modelka" data-uf-profil="${f.modelkaId}">${esc(f.jmeno || 'Bez modelky')}</button>
+            <span class="us-album">${esc(f.album)}${f.hodnoceni ? ` · ${'♥'.repeat(Math.round(f.hodnoceni))}` : ''}</span>
+            <span class="uf-jistota uf-nizka">${f.problemy.map(p => POPISY_PROBLEMU[p] || p).join(' · ')}</span>
+            <span class="uf-akce">
+                ${f.lepsi ? `<button type="button" class="btn btn-primary btn-small" data-uk-vymenit="${i}" title="Nechat lepší stejnou fotku a slabou ve sbírce nahradit (srdíčka a tagy přejdou)">Vyměnit za lepší</button>` : ''}
+                <button type="button" class="btn btn-secondary btn-small" data-uk-poradku="${i}" title="Fotka je schválně taková, už se nebude hlásit">V pořádku</button>
+            </span>
+        </figcaption></figure>`;
+}
+
+function htmlSekceKvality() {
+    if (slabe === null) return '';
+    const vidim = slabe.slice(0, zobrazitSlabych);
+    const sLepsi = slabe.filter(f => f.lepsi).length;
+    return `<section class="uf-sekce"><h4>Kvalita fotek${slabe.length ? ` <small>${slabe.length}</small>` : ''}</h4>${htmlStavuKvality()}
+        ${slabe.length ? `<p class="us-uvod">Nahoře fotky, které ve sbírce mají stejnou fotku v lepší kvalitě${sLepsi ? ` (${sLepsi})` : ''}, pak podle srdíček. Prahy jsou zatím odhad – co je schválně měkké nebo tmavé, označ V pořádku.</p>
+            <div class="uf-mrizka">${vidim.map(htmlSlabe).join('')}</div>
+            ${slabe.length > vidim.length ? `<button type="button" class="btn btn-secondary btn-small" data-uk-dalsi>Ukázat dalších ${Math.min(24, slabe.length - vidim.length)}</button>` : ''}`
+            : stavKvality?.zkontrolovano ? '<p class="prazdno-male">Žádná změřená fotka nevypadá slabě.</p>' : ''}</section>`;
+}
+
+async function vymenit(f) {
+    const v = await SloucitStejneFotky(f.lepsi, [f.driveId]).catch(() => null);
+    if (!v || v.chyba) { oznamit('Fotku se nepodařilo vyměnit.'); return; }
+    oznamit('Fotka vyměněna za lepší stejnou.', { text: 'Vrátit', akce: async () => {
+        if (!await VratitSlouceniStejnych(v)) oznamit('Výměnu se nepodařilo vrátit.');
+        api.poZmene();
+        await nacist();
+    } });
+    api.poZmene();
+    await nacist();
+}
+
 export function vykreslit() {
     if (!kontejner) return;
     if (otocene === null) {
@@ -148,7 +220,7 @@ export function vykreslit() {
             </div>
             <div class="uf-mrizka">${[...bezVyrezu.filter(m => navrhy.has(m.modelkaId)), ...bezNavrhu.slice(0, Math.max(0, 12 - navrhy.size))].map(htmlVyrezu).join('')}</div>`
             : '<p class="prazdno-male">Všechny titulní fotky mají výřez, nebo jim výchozí sedí.</p>'}</section>`;
-    nastavitHtml(kontejner, `<div class="us uf">${sekceOtocene}${sekceVyrez}</div>`);
+    nastavitHtml(kontejner, `<div class="us uf">${sekceOtocene}${htmlSekceKvality()}${sekceVyrez}</div>`);
     if (!kontejner.dataset.ufObsluha) {
         kontejner.dataset.ufObsluha = '1';
         kontejner.addEventListener('click', klik);
@@ -205,6 +277,23 @@ async function klik(e) {
         if (!await OznacitOtoceniVPoradku([f.driveId], true)) return;
         oznamit('Fotka se už nebude hlásit.', { text: 'Vrátit', akce: async () => { await OznacitOtoceniVPoradku([f.driveId], false); await nacist(); } });
         await nacist();
+    } else if (data('data-uk-spustit')) {
+        if (!await SpustitKontroluKvality()) oznamit('Kontrolu kvality nejde spustit: už běží, nebo není co měřit.');
+        await nacist();
+    } else if (data('data-uk-prerusit')) {
+        await PrerusitKontroluKvality();
+        oznamit('Kontrola kvality přerušena; změřené fotky zůstanou.');
+        await nacist();
+    } else if ((p = data('data-uk-vymenit'))) {
+        await vymenit(slabe[parseInt(p.dataset.ukVymenit)]);
+    } else if ((p = data('data-uk-poradku'))) {
+        const f = slabe[parseInt(p.dataset.ukPoradku)];
+        if (!await OznacitKvalituVPoradku([f.driveId], true)) return;
+        oznamit('Fotka se už nebude hlásit.', { text: 'Vrátit', akce: async () => { await OznacitKvalituVPoradku([f.driveId], false); await nacist(); } });
+        await nacist();
+    } else if (data('data-uk-dalsi')) {
+        zobrazitSlabych += 24;
+        vykreslit();
     } else if (data('data-uf-dalsi')) {
         zobrazitOtocenych += 48;
         vykreslit();

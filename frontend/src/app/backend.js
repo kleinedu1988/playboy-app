@@ -110,6 +110,12 @@ const CTENI = new Set([
     // Kontrola otočení a „v pořádku“ mění jen soubor obsahu a nastavení, ne sbírku
     'SpustitKontroluOtoceni',
     'PrerusitKontroluOtoceni',
+    // Kvalita fotek: měření jde do souboru vedle mezipaměti náhledů, ne do sbírky
+    'GetStavKvality',
+    'PozastavitOtisky',
+    'GetSlabeFotky',
+    'SpustitKontroluKvality',
+    'PrerusitKontroluKvality',
     // Průchod webem a odmítnutí mění jen stav v nastavení, ne sbírku
     'SpustitPruchodWebem',
     'PrerusitPruchodWebem',
@@ -242,6 +248,7 @@ export const GetStejneFotky = /** @type {typeof App.GetStejneFotky} */ (obalit('
 export const ZkontrolovatOdkazy = /** @type {typeof App.ZkontrolovatOdkazy} */ (obalit('ZkontrolovatOdkazy'));
 export const GetStavOtisku = /** @type {typeof App.GetStavOtisku} */ (obalit('GetStavOtisku'));
 export const SpustitOtisky = /** @type {typeof App.SpustitOtisky} */ (obalit('SpustitOtisky'));
+export const PozastavitOtisky = /** @type {typeof App.PozastavitOtisky} */ (obalit('PozastavitOtisky'));
 export const ZkontrolovatNoveFotky = /** @type {typeof App.ZkontrolovatNoveFotky} */ (obalit('ZkontrolovatNoveFotky'));
 export const OznacitRuzneFotky = /** @type {typeof App.OznacitRuzneFotky} */ (obalit('OznacitRuzneFotky'));
 export const ZrusitRuzneFotky = /** @type {typeof App.ZrusitRuzneFotky} */ (obalit('ZrusitRuzneFotky'));
@@ -294,6 +301,11 @@ export const SpustitKontroluOtoceni = /** @type {typeof App.SpustitKontroluOtoce
 export const PrerusitKontroluOtoceni = /** @type {typeof App.PrerusitKontroluOtoceni} */ (obalit('PrerusitKontroluOtoceni'));
 export const GetOtoceneFotky = /** @type {typeof App.GetOtoceneFotky} */ (obalit('GetOtoceneFotky'));
 export const OznacitOtoceniVPoradku = /** @type {typeof App.OznacitOtoceniVPoradku} */ (obalit('OznacitOtoceniVPoradku'));
+export const GetStavKvality = /** @type {typeof App.GetStavKvality} */ (obalit('GetStavKvality'));
+export const GetSlabeFotky = /** @type {typeof App.GetSlabeFotky} */ (obalit('GetSlabeFotky'));
+export const SpustitKontroluKvality = /** @type {typeof App.SpustitKontroluKvality} */ (obalit('SpustitKontroluKvality'));
+export const PrerusitKontroluKvality = /** @type {typeof App.PrerusitKontroluKvality} */ (obalit('PrerusitKontroluKvality'));
+export const OznacitKvalituVPoradku = /** @type {typeof App.OznacitKvalituVPoradku} */ (obalit('OznacitKvalituVPoradku'));
 export const NavrhnoutVyrezy = /** @type {typeof App.NavrhnoutVyrezy} */ (obalit('NavrhnoutVyrezy'));
 export const GetTitulniBezVyrezu = /** @type {typeof App.GetTitulniBezVyrezu} */ (obalit('GetTitulniBezVyrezu'));
 export const OznacitVyrezVychozi = /** @type {typeof App.OznacitVyrezVychozi} */ (obalit('OznacitVyrezVychozi'));

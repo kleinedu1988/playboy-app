@@ -274,6 +274,10 @@ export function GetSinSlavy() {
   return window['go']['main']['App']['GetSinSlavy']();
 }
 
+export function GetSlabeFotky() {
+  return window['go']['main']['App']['GetSlabeFotky']();
+}
+
 export function GetSoubojeModelky(arg1) {
   return window['go']['main']['App']['GetSoubojeModelky'](arg1);
 }
@@ -288,6 +292,10 @@ export function GetStatistiky() {
 
 export function GetStavHledaniSlovy() {
   return window['go']['main']['App']['GetStavHledaniSlovy']();
+}
+
+export function GetStavKvality() {
+  return window['go']['main']['App']['GetStavKvality']();
 }
 
 export function GetStavObsahu() {
@@ -466,6 +474,10 @@ export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
 }
 
+export function OznacitKvalituVPoradku(arg1, arg2) {
+  return window['go']['main']['App']['OznacitKvalituVPoradku'](arg1, arg2);
+}
+
 export function OznacitOtoceniVPoradku(arg1, arg2) {
   return window['go']['main']['App']['OznacitOtoceniVPoradku'](arg1, arg2);
 }
@@ -498,6 +510,10 @@ export function PorovnatModelkyVTematu(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PorovnatModelkyVTematu'](arg1, arg2, arg3, arg4);
 }
 
+export function PozastavitOtisky() {
+  return window['go']['main']['App']['PozastavitOtisky']();
+}
+
 export function Predpripravit(arg1) {
   return window['go']['main']['App']['Predpripravit'](arg1);
 }
@@ -512,6 +528,10 @@ export function PrejmenovatTag(arg1, arg2) {
 
 export function PrejmenovatVyber(arg1, arg2) {
   return window['go']['main']['App']['PrejmenovatVyber'](arg1, arg2);
+}
+
+export function PrerusitKontroluKvality() {
+  return window['go']['main']['App']['PrerusitKontroluKvality']();
 }
 
 export function PrerusitKontroluOtoceni() {
@@ -676,6 +696,10 @@ export function SmazatVyber(arg1) {
 
 export function SmazatVyberGalerie(arg1) {
   return window['go']['main']['App']['SmazatVyberGalerie'](arg1);
+}
+
+export function SpustitKontroluKvality() {
+  return window['go']['main']['App']['SpustitKontroluKvality']();
 }
 
 export function SpustitKontroluOtoceni() {

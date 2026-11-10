@@ -7,6 +7,29 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.51.0] – 2026-11-10
+
+### Přidáno
+- **Údržba › Dnes** (`frontend/src/app/udrzba-dnes.js`, `frontend/src/lib/udrzba-dnes.js`), nový výchozí režim Údržby:
+  - **pokrok dne**: kolik úkolů dnes ubylo z cíle 30 (asi 15 minut); přidané modelky pokrok nesnižují;
+  - **série dní** s prací;
+  - **nejcennější modelky a čísla** z fronty, kliknutí je otevře Po modelkách;
+  - **rychlé dávky** s počty: otočené fotky, výměny za lepší, Z webu a výřezy;
+  - **panel Na pozadí**: náhledy, obsah fotek, otisky, otočení, kvalita a průchod webem s průběhem
+    a tlačítky Spustit / Pozastavit; připomínka, když je průchod webem starší než 60 dní (spouští se dál jen
+    ručně v režimu Z webu).
+- **Kvalita fotek** (`kvalita_fotek.go`, Údržba › Otočené, kvalita a výřezy): kontrola na pozadí změří z náhledu
+  w400 ostrost (rozptyl Laplaciánu), přepálené a tmavé body, jas a rozměr náhledu a ukáže fotky malé,
+  rozmazané, přepálené nebo tmavé. Když má slabá fotka ve sbírce stejnou fotku (shodný otisk) v lepší
+  kvalitě, nabídne **Vyměnit za lepší** – sloučení stejných fotek, které jde vrátit. „V pořádku“ fotku přestane
+  hlásit. Výsledky jsou v `kvalita.json` vedle mezipaměti náhledů, Obsah fotek není potřeba.
+- `PozastavitOtisky` pro panel Na pozadí.
+
+### Známé
+- Prahy kvality (ostrost 12, přepálené 30 %, tmavé 60 % při jasu pod 40) jsou odhad; doladí se na vzorku sbírky.
+- Jednotná lišta výběru „Přijmout zobrazené“ s rozdílem nanečisto ve všech režimech (bod 2 roadmapy) zatím
+  chybí; panel Na pozadí neumí měnit pořadí úloh.
+
 ## [1.50.0] – 2026-11-10
 
 ### Přidáno

@@ -5,6 +5,22 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 1.51.0 – Údržba Dnes a kvalita fotek
+
+Vzhled režimu Dnes jsem neviděl ani ve skrytém WebKitu (potřebuje data sbírky) – projít pozorně.
+
+- [ ] Údržba se otevře v režimu **Dnes** (kdo měl zapamatovaný jiný režim, zůstane v něm).
+- [ ] Pokrok dne: po vyřízení pár úkolů (doplnit údaj, přijmout návrh) číslo naroste; přidání modelky ho nesníží;
+      zítra začne od nuly a série ukáže 2 dny.
+- [ ] Klik na modelku v „Nejcennější ve frontě“ otevře Po modelkách přímo na ní; rychlé dávky přepnou režim.
+- [ ] Panel **Na pozadí**: stavy odpovídají; Spustit / Pozastavit u náhledů, obsahu, otisků, otočení a kvality
+      funguje a průběh se sám obnovuje; připomínka průchodu webem (ještě neproběhl / starší 60 dní).
+- [ ] **Kvalita fotek**: „Zkontrolovat kvalitu“ doběhne (u celé sbírky může stahovat chybějící náhledy).
+      Projít aspoň 50 hlášených fotek a spočítat, kolik je opravdu slabých – podle toho doladit prahy v
+      `kvalita_fotek.go` (rozmazané 12, přepálené 0,30, tmavé 0,60 + jas 40). Staré měkké fotky ze 70. let
+      se možná budou hlásit jako rozmazané.
+- [ ] **Vyměnit za lepší**: v albu zůstane lepší soubor, srdíčka a tagy přejdou, Vrátit vrátí původní.
+
 ## 1.50.0 – Klid, pohyb a vlastní Přehled
 
 - [ ] **Pohyb Žádné**: projít všechny sekce, profil, prohlížeč fotek (slideshow), režim čtení, Dnešní výběr,

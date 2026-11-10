@@ -20901,3 +20901,31 @@ body.rezim-vyberu #detailView .poster {
 .vz-karty-prehledu button { width: 26px; height: 26px; border: 1px solid var(--panel-okraj); border-radius: 6px; background: none; color: var(--text-main); cursor: pointer; }
 .vz-karty-prehledu button:disabled { opacity: 0.3; cursor: default; }
 .vz-oddil + .vz-radek { border-top: 0; }
+
+/* Údržba › Dnes (app/udrzba-dnes.js, 1.51) */
+.udd { display: grid; gap: 14px; max-width: 980px; }
+.udd-pokrok { display: grid; gap: 8px; padding: 14px 18px; }
+.udd-cisla { display: flex; align-items: baseline; gap: 10px; }
+.udd-cisla b { font-size: 30px; font-variant-numeric: tabular-nums; }
+.udd-cisla span, .udd-serie { color: var(--text-muted); font-size: 13px; margin: 0; }
+.udd-pruh { display: block; height: 6px; border-radius: 999px; background: linear-gradient(90deg, var(--accent) var(--hotovo), rgba(255, 255, 255, 0.08) var(--hotovo)); }
+.udd-ukoly, .udd-pozadi { padding: 12px 16px; }
+.udd-ukoly h4, .udd-pozadi h4 { margin: 4px 0 8px; font-size: 13px; color: var(--text-muted); font-weight: 600; }
+.udd-ukoly h4 small { font-weight: 400; margin-left: 6px; }
+.udd-seznam { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 2px; }
+.udd-ukol { width: 100%; display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 7px 10px; border: 0; border-radius: 8px; background: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.udd-ukol:hover, .udd-ukol:focus-visible { background: rgba(255, 255, 255, 0.05); }
+.udd-ukol b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.udd-ukol span { color: var(--text-muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.udd-ukol small { color: var(--text-muted); }
+.udd-davky { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.udd-davka { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--panel-okraj); border-radius: 10px; background: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.udd-davka:hover, .udd-davka:focus-visible { border-color: var(--accent); }
+.udd-davka b { font-size: 20px; }
+.udd-davka small { color: var(--text-muted); font-size: 12px; }
+.udd-ulohy { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.udd-uloha { display: grid; grid-template-columns: 180px minmax(0, 1fr) auto; gap: 12px; align-items: center; min-height: 32px; font-size: 13px; }
+.udd-uloha.bezi .udd-nazev::after { content: ' ●'; color: var(--accent); }
+.udd-text { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.udd-pripominka { margin: 0 0 8px; font-size: 13px; color: var(--zlato-svetle); }
+@media (max-width: 640px) { .udd-ukol, .udd-uloha { grid-template-columns: 1fr; gap: 2px; } }

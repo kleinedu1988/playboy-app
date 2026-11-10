@@ -75,7 +75,7 @@ export const stav = {
     udrzbaZdroj: '', // zdroj návrhů nebo nálezů kontroly ve filtru ('' = všechny)
     udrzbaHledat: '', // hledání jména modelky nebo čísla v Údržbě
     udrzbaRazeni: 'priorita', // řazení fronty: 'priorita', 'chybi', 'oblibenost' nebo 'jmeno'
-    udrzbaRezim: 'udaje', // režim Údržby: 'udaje' (Po údajích), 'modelky' (Po modelkách), 'stejne', 'fotky' (Otočené a výřezy), 'web' (Z webu), 'souhrn'
+    udrzbaRezim: 'dnes', // režim Údržby: 'dnes' (Dnes, 1.51), 'udaje' (Po údajích), 'modelky' (Po modelkách), 'stejne', 'fotky' (Otočené a výřezy), 'web' (Z webu), 'souhrn'
     udrzbaUdaj: '', // údaj na kartě Po údajích (narodnost, titulni, kontrola…)
     udrzbaFiltrModelek: 'vse', // filtr fronty Po modelkách (filtr Souhrnu, nebo u:<údaj>)
     // Nejlepší: fotky s aspoň N srdíčky napříč sbírkou, po modelkách; prohlížeč jde přes všechny

@@ -8,7 +8,7 @@
 // stránka se neposune a fokus zůstane), klávesnice, nabídky a akce.
 import { GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
 import { esc, nazevVydani, sklonovat } from '../lib/format';
-import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
+import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, souhrnFronty, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
 import { stav } from './stav';
 import { searchInput, stats } from './prvky';
 import { nastavitViditelnostHledani } from './navigace';
@@ -29,6 +29,7 @@ import * as poUdajich from './udrzba-udaje';
 import * as stejne from './udrzba-stejne';
 import * as zWebu from './udrzba-web';
 import * as fotkyUd from './udrzba-fotky';
+import * as dnesUd from './udrzba-dnes';
 import { exportovatData, importovatData, prejmenovatVeSbirce, zkontrolovatSoubory } from './sprava';
 import * as zdravi from './zdravi';
 import { otevritRychlePridani } from './formular-modelky';
@@ -50,10 +51,11 @@ const ODLOZENI = {
 const druhOdlozeni = (x, s) => s.druh === 'vydani' ? 'cislo' : x.druh;
 // Režimy Údržby: [klíč, název, popis do nápovědy]
 const REZIMY = [
+    ['dnes', 'Dnes', 'Krátká dávka toho nejcennějšího napříč režimy (asi 30 úkolů ≈ 15 minut), pokrok dne a co běží na pozadí'],
     ['udaje', 'Po údajích', 'Jeden údaj, všechny modelky, kterým chybí: píšeš rovnou do řádků, Enter uloží a jde dolů'],
     ['modelky', 'Po modelkách', 'Jedna modelka a všechny její úkoly na jedné kartě, vpravo fronta'],
     ['stejne', 'Stejné fotky', 'Tatáž fotka ve sbírce víckrát (jiný soubor, přeuložená nebo zmenšená kopie): nechat jednu, nebo označit jako v pořádku'],
-    ['fotky', 'Otočené a výřezy', 'Fotky na boku nebo vzhůru nohama (otočit jedním klikem) a titulní fotky s výchozím výřezem (navrhnout výřez z postavy)'],
+    ['fotky', 'Otočené, kvalita a výřezy', 'Fotky na boku nebo vzhůru nohama (otočit jedním klikem), malé, rozmazané, přepálené a tmavé fotky (vyměnit za lepší stejnou) a titulní fotky s výchozím výřezem (navrhnout výřez z postavy)'],
     ['web', 'Z webu', 'Průchod sbírkou proti Wikidatům, Wikipedii a Boobpedii; rozdíly přijmout po jednom, po údaji nebo po zdroji, nebo odmítnout'],
     ['souhrn', 'Souhrn', 'Pokrok sbírky, co se program naučil a celá fronta s filtry'],
 ];
@@ -61,6 +63,7 @@ const KOSTRA = `
     <div class="ud" data-ud-kostra>
         <!-- Režim (Po údajích, Po modelkách, Souhrn) je zobrazení v liště pod hledáním, jako Obálky / Kalendář u Čísel -->
         <div class="volby-v-liste" data-volby-casti="udrzba" data-ud="rezimy" data-stitek="Sbírka" data-nadpis="Údržba"></div>
+        <div class="ud-dnes hidden" data-ud="dnes"></div>
         <div class="ud-rezim-obsah hidden" data-ud="udaje"></div>
         <div class="ud-fokus hidden" data-ud="fokus"></div>
         <div class="ud-stejne hidden" data-ud="stejne"></div>
@@ -124,6 +127,7 @@ export function nastavitData({ p, stavy }) {
     stejne.zastarat();
     zWebu.zastarat();
     fotkyUd.zastarat();
+    dnesUd.zastarat();
     return prepocitat();
 }
 
@@ -411,8 +415,10 @@ export function vykreslit() {
     if (!model || !zajistitKostru()) return;
     obnovitHlavuSbirky();
     nastavitHtml(cast('rezimy'), htmlVoleb());
-    ['udaje', 'fokus', 'stejne', 'fotky', 'web', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { udaje: 'udaje', modelky: 'fokus', stejne: 'stejne', fotky: 'fotky', web: 'web', souhrn: 'souhrn' }[stav.udrzbaRezim]));
-    if (stav.udrzbaRezim === 'udaje') {
+    ['dnes', 'udaje', 'fokus', 'stejne', 'fotky', 'web', 'souhrn'].forEach(jmeno => cast(jmeno).classList.toggle('hidden', jmeno !== { dnes: 'dnes', udaje: 'udaje', modelky: 'fokus', stejne: 'stejne', fotky: 'fotky', web: 'web', souhrn: 'souhrn' }[stav.udrzbaRezim]));
+    if (stav.udrzbaRezim === 'dnes') {
+        dnesUd.zobrazit(cast('dnes'));
+    } else if (stav.udrzbaRezim === 'udaje') {
         poUdajich.zobrazit(cast('udaje'));
         poUdajich.vykreslit();
     } else if (stav.udrzbaRezim === 'modelky') {
@@ -895,9 +901,17 @@ export function pripravit(nacistPrehled) {
     });
     stejne.pripravit({ viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'stejne', poZmene: () => nacist() });
     fotkyUd.pripravit({ viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'fotky', poZmene: () => nacist() });
+    dnesUd.pripravit({
+        viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'dnes',
+        model: () => model,
+        otevritSkupinu: klic => nastavitRezim('modelky', klic),
+        rezim: r => nastavitRezim(r),
+        popisSkupiny: s => souhrnFronty(s.polozky),
+    });
     zWebu.pripravit({ viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'web', poZmene: () => nacist() });
     try { stav.udrzbaRazeni = localStorage.getItem('udrzbaRazeni') || 'priorita'; } catch { /* výchozí */ }
-    try { stav.udrzbaRezim = localStorage.getItem('udrzbaRezim') || 'udaje'; } catch { /* Po údajích */ }
+    try { stav.udrzbaRezim = localStorage.getItem('udrzbaRezim') || 'dnes'; } catch { /* Dnes */ }
+    if (!REZIMY.some(([k]) => k === stav.udrzbaRezim)) stav.udrzbaRezim = 'dnes';
     if (!REZIMY.some(([k]) => k === stav.udrzbaRezim)) stav.udrzbaRezim = 'udaje';
 
     pripravitHlavuSbirky();

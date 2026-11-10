@@ -58,6 +58,7 @@ type App struct {
 	pruchod *pruchodWebem
 	// Kontrola otočených fotek (otocene_fotky.go)
 	otoceni *kontrolaOtoceni
+	kvalita *kontrolaKvality
 	// Úvodní obrazovka v malém okně (main.go): okno dostane uloženou velikost až na jejím konci (ObnovitOkno)
 	uvod *uvodOkna
 }
@@ -493,6 +494,7 @@ func (a *App) shutdown() {
 	a.zastavitOtisky()
 	a.PrerusitPruchodWebem()
 	a.PrerusitKontroluOtoceni()
+	a.PrerusitKontroluKvality()
 	a.obsah.Zastavit()
 	obsah.UkoncitProstredi()
 	a.pockatNaPozadi()

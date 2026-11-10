@@ -906,6 +906,28 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class Mereni {
+	    o: number;
+	    s: number;
+	    t: number;
+	    j: number;
+	    w: number;
+	    h: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Mereni(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.o = source["o"];
+	        this.s = source["s"];
+	        this.t = source["t"];
+	        this.j = source["j"];
+	        this.w = source["w"];
+	        this.h = source["h"];
+	    }
+	}
 	export class MesicRoku {
 	    fotek: number;
 	    alb: number;
@@ -2528,6 +2550,56 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class SlabaFotka {
+	    driveId: string;
+	    fotkyIds: number[];
+	    url: string;
+	    problemy: string[];
+	    mereni: Mereni;
+	    modelkaId: number;
+	    jmeno: string;
+	    album: string;
+	    hodnoceni: number;
+	    lepsi: string;
+	    lepsiUrl: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SlabaFotka(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.driveId = source["driveId"];
+	        this.fotkyIds = source["fotkyIds"];
+	        this.url = source["url"];
+	        this.problemy = source["problemy"];
+	        this.mereni = this.convertValues(source["mereni"], Mereni);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.album = source["album"];
+	        this.hodnoceni = source["hodnoceni"];
+	        this.lepsi = source["lepsi"];
+	        this.lepsiUrl = source["lepsiUrl"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	
 	export class TagyOdebraneFotky {
 	    modelkaId: number;
@@ -2687,6 +2759,30 @@ export namespace main {
 		}
 	}
 	
+	export class StavKvality {
+	    mozna: boolean;
+	    bezi: boolean;
+	    hotovo: number;
+	    celkem: number;
+	    zkontrolovano: number;
+	    fotek: number;
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new StavKvality(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mozna = source["mozna"];
+	        this.bezi = source["bezi"];
+	        this.hotovo = source["hotovo"];
+	        this.celkem = source["celkem"];
+	        this.zkontrolovano = source["zkontrolovano"];
+	        this.fotek = source["fotek"];
+	        this.chyba = source["chyba"];
+	    }
+	}
 	export class UrovenTop {
 	    uroven: number;
 	    potrebaPorovnani: number;

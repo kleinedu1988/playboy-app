@@ -13,7 +13,7 @@ import (
 	"math"
 	"sort"
 
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 )
 
 //go:embed tagy.bin

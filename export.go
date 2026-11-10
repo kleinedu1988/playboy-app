@@ -332,7 +332,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	hlavicka := "# Playboy Database – export " + time.Now().Format("2006-01-02 15:04") + "\n" +
+	hlavicka := "# " + NazevProgramu + " – export " + time.Now().Format("2006-01-02 15:04") + "\n" +
 		"# Import údaje doplňuje a opravuje; prázdný nebo chybějící údaj ponechá, smaže jen údaj s hodnotou „-“. Modelky, alba ani fotky nemaže.\n\n"
 	return append([]byte(hlavicka), yamlData...), nil
 }
@@ -1026,7 +1026,7 @@ var filtrYaml = []runtime.FileFilter{{DisplayName: "YAML (*.yaml, *.yml)", Patte
 func (a *App) ExportovatDoSouboru() string {
 	cesta, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
 		Title:           "Exportovat sbírku",
-		DefaultFilename: "playboy-" + time.Now().Format("2006-01-02") + ".yaml",
+		DefaultFilename: slozkaProgramu + "-" + time.Now().Format("2006-01-02") + ".yaml",
 		Filters:         filtrYaml,
 	})
 	if err != nil {

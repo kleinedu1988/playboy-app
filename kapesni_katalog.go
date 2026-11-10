@@ -16,7 +16,7 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"playboy-app/internal/nahledy"
+	"pinup-katalog/internal/nahledy"
 )
 
 const velikostNahleduKatalogu = "w400"

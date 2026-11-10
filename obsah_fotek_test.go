@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 // Vektor délky 1 se dvěma složkami (stačí na pořadí podobnosti)

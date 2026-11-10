@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 	"regexp"
 	"sort"
 	"strings"

@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"playboy-app/internal/oblibenost"
+	"pinup-katalog/internal/oblibenost"
 	"sort"
 )
 

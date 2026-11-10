@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 )
 
 func TestSlovnikHodnot(t *testing.T) {

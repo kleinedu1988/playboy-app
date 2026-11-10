@@ -14,7 +14,7 @@ import (
 	"strings"
 	"testing"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 // Umělá „fotka“: plynulé přechody a pár ploch, podle semínka jiná

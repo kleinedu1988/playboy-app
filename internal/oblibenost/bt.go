@@ -2,7 +2,7 @@ package oblibenost
 
 import (
 	"math"
-	"playboy-app/internal/uceni"
+	"pinup-katalog/internal/uceni"
 	"sort"
 	"time"
 )

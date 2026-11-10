@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 )
 
 // Snímek sbírky: modelky a alba (s počty fotek) načtené jedním průchodem databází. Seznam modelek, Přehled,

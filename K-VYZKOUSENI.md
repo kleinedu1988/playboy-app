@@ -5,6 +5,24 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.1.0 – Pinup Katalog (přejmenování)
+
+Program se jmenuje Pinup Katalog a verze začínají znovu; oddíly níže (1.xx) jsou z Playboy Database.
+Před zkoušením **zavři Playboy Database** (běžící stará verze přesun odloží).
+
+- [ ] `git pull` není potřeba (je to místní commit), stačí `./instalovat.sh`: v nabídce aplikací je
+      „Pinup Katalog“ s ikonou a „Playboy Database“ zmizela.
+- [ ] Po prvním spuštění je sbírka celá: modelky, hodnocení, zálohy (⋯ › Obnovit ze zálohy ukáže staré zálohy).
+- [ ] Nastavení okna přežilo (Vzhled, zapamatovaná sekce, historie hledání, Mapa sbírky) – je v localStorage,
+      který se přesunul se složkou.
+- [ ] `~/.local/share/playboy-app` a `~/.cache/playboy-app` už neexistují, místo nich `pinup-katalog`; náhledy
+      se nestahují znovu.
+- [ ] Po startu se ukáže „Co je nového · verze 0.1.0“ (jen jednou).
+- [ ] Název okna, úvodní obrazovka a Alt+Tab ukazují Pinup Katalog; okno se spáruje s ikonou v panelu.
+- [ ] ⋯ › Zkontrolovat novou verzi: dokud na GitHubu není 0.1.0, napíše „Ve vzdáleném repozitáři se nepodařilo
+      najít verzi programu“ (stará řada 1.53 se za novější nebere); po push „Máš nejnovější verzi“.
+- [ ] Export sbírky nabídne název `pinup-katalog-RRRR-MM-DD.yaml` a import staršího exportu funguje.
+
 ## 1.53.0 – Statistiky, mapa a vkus 2
 
 Graf Můj vkus v čase ani kartu Objevit jsem neviděl vykreslené (potřebují data sbírky) – projít pozorně.

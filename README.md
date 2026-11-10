@@ -1,10 +1,10 @@
-# Playboy Database
+# Pinup Katalog
 
 Desktopová aplikace (Wails v2: Go + Vanilla JS) pro osobní katalog modelek, alb, centerfoldů,
-coverů a čísel časopisu Playboy. Fotky se neukládají do aplikace, načítají se z Google Disku podle odkazu.
+coverů a čísel časopisů. Do verze 1.53.0 se jmenovala **Playboy Database** a sbírala jen Playboy; od 0.1.0 se
+postupně rozšiřuje na další časopisy (Penthouse, Hustler…), plán je v [ROADMAP.md](ROADMAP.md). Fotky se neukládají do aplikace, načítají se z Google Disku podle odkazu.
 
-**Stav: beta (řada 0.90.x).** Program je použitelný na skutečné sbírce. Funkce, texty, schéma databáze (úprava
-č. 13, hodnocení modelek po polovinách srdíčka) a formát exportu (verze 9) jsou zmrazené; do vydání 1.0.0 přibývají jen opravy chyb. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md),
+**Stav: verze 0.1.0** – přejmenování a začátek přechodu na víc časopisů; všechny funkce Playboy Database 1.53.0 zůstávají. Plán dalších verzí je v [ROADMAP.md](ROADMAP.md),
 změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 
 ## Co program umí
@@ -40,7 +40,7 @@ změny v [CHANGELOG.md](CHANGELOG.md), formát exportu v [EXPORT.md](EXPORT.md).
 
 ```
 wails dev                    # vývoj s automatickým obnovením
-wails build                  # výsledný program v build/bin/playboy-app
+wails build                  # výsledný program v build/bin/pinup-katalog
 ./zkontrolovat.sh            # všechny kontroly najednou (sestavení rozhraní, testy, typy, gofmt, vet)
 cd frontend && npm install && npm run build   # na čerstvém klonu před go test (program vkládá frontend/dist)
 go test ./...                # testy backendu (nepotřebují síť)
@@ -72,18 +72,23 @@ skript vypíše, co doinstalovat. Program se pak spouští z nabídky aplikací.
 ```
 git pull                         # stáhne nejnovější verzi
 ./instalovat.sh                  # sestaví program a nainstaluje ho do nabídky aplikací (i aktualizace)
-./instalovat.sh --bez-sestaveni  # nainstaluje už sestavený build/bin/playboy-app
+./instalovat.sh --bez-sestaveni  # nainstaluje už sestavený build/bin/pinup-katalog
 ./instalovat.sh --odinstalovat   # odebere program; data a zálohy zůstanou
 ```
 
-Instaluje se jen do domovské složky, bez sudo: program do `~/.local/bin/playboy-app`, ikona do
-`~/.local/share/icons/hicolor/` (256x256 a 512x512), položka „Playboy Database“ do `~/.local/share/applications/`.
+Instaluje se jen do domovské složky, bez sudo: program do `~/.local/bin/pinup-katalog`, ikona do
+`~/.local/share/icons/hicolor/` (256x256 a 512x512), položka „Pinup Katalog“ do `~/.local/share/applications/`.
 Databáze se při prvním startu nové verze sama upraví (před úpravou se uloží záloha). Po aktualizaci se
 jednou ukáže okno „Co je nového“. Program nainstalovaný přes `instalovat.sh` si pamatuje tuto složku a jednou
 denně v ní zkontroluje (`git fetch`), jestli nevyšla nová verze; oznámí ji i s příkazem k aktualizaci, nic
 neinstaluje sám. Vypnout jde v ⋯ › Hledat novou verzi každý den.
 
-**Přenos na jiný počítač:** program zavřít (při zavření se deník změn zapíše do databáze a soubory `-wal` a `-shm` zmizí), zkopírovat celou složku `~/.local/share/playboy-app` (databáze,
+**Přechod z Playboy Database (1.53.0 a starší):** stačí `git pull` a `./instalovat.sh`. Instalace odebere starý
+program z nabídky a nový při prvním spuštění přesune data z `~/.local/share/playboy-app` a mezipaměť z
+`~/.cache/playboy-app` do složek `pinup-katalog` (nastavení okna, hodnocení i zálohy zůstanou). Soubory databáze
+se dál jmenují `playboy.db` a `playboy-uceni.db`.
+
+**Přenos na jiný počítač:** program zavřít (při zavření se deník změn zapíše do databáze a soubory `-wal` a `-shm` zmizí), zkopírovat celou složku `~/.local/share/pinup-katalog` (databáze,
 zálohy, stav okna) na stejné místo na novém počítači a tam program nainstalovat. Heslo, pokud je nastavené,
 platí dál. Mezipaměť obrázků se nepřenáší, vytvoří se znovu.
 
@@ -91,9 +96,9 @@ platí dál. Mezipaměť obrázků se nepřenáší, vytvoří se znovu.
 
 | Co | Kde |
 |---|---|
-| Databáze (za běhu programu i deník změn `playboy.db-wal` a `playboy.db-shm`) | `~/.local/share/playboy-app/playboy.db` |
-| Zálohy: denní při spuštění (7 denních a 4 týdenní) a před každou hromadnou změnou (20 od každého druhu) | `~/.local/share/playboy-app/zalohy/` |
-| Velikost a stav okna při posledním zavření | `~/.local/share/playboy-app/okno.json` |
+| Databáze (za běhu programu i deník změn `playboy.db-wal` a `playboy.db-shm`) | `~/.local/share/pinup-katalog/playboy.db` |
+| Zálohy: denní při spuštění (7 denních a 4 týdenní) a před každou hromadnou změnou (20 od každého druhu) | `~/.local/share/pinup-katalog/zalohy/` |
+| Velikost a stav okna při posledním zavření | `~/.local/share/pinup-katalog/okno.json` |
 | Mezipaměť obrázků | `~/.cache/<název programu>/WebKitCache` |
 
 Soubory na Disku musí být sdílené „kdokoli s odkazem“, aplikace se k Disku nepřihlašuje.
@@ -107,7 +112,7 @@ Heslo se nastaví v ⋯ → „Nastavit heslo…“. Zámek chrání rozhraní; 
 zůstávají na Disku sdílené odkazem. Zapomenuté heslo se zruší smazáním jeho otisku z databáze:
 
 ```
-sqlite3 ~/.local/share/playboy-app/playboy.db "DELETE FROM nastaveni WHERE klic = 'heslo'"
+sqlite3 ~/.local/share/pinup-katalog/playboy.db "DELETE FROM nastaveni WHERE klic = 'heslo'"
 ```
 
 ## Čísla a edice

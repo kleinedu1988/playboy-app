@@ -47,7 +47,7 @@ func TestKontrolaNoveVerze(t *testing.T) {
 		}
 	}
 	zapsat := func(verze string) {
-		os.WriteFile(filepath.Join(prace, "verze.go"), []byte("package main\n\nconst Verze = \""+verze+"\"\n"), 0o644)
+		os.WriteFile(filepath.Join(prace, "verze.go"), []byte("package main\n\nconst Verze = \""+verze+"\"\nconst NazevProgramu = \"Pinup Katalog\"\n"), 0o644)
 		os.WriteFile(filepath.Join(prace, "CHANGELOG.md"), []byte("# Changelog\n\n## ["+verze+"] – 2026-11-11\n\n### Přidáno\n- Novinka\n"), 0o644)
 		spustit(prace, "add", ".")
 		spustit(prace, "commit", "-q", "-m", verze)
@@ -84,5 +84,15 @@ func TestKontrolaNoveVerze(t *testing.T) {
 	a.ulozitNastaveni(klicPosledniKontroly, "")
 	if n := a.ZkontrolovatNovouVerzi(false); n.Zapnuto || n.Kontrola != "" {
 		t.Fatalf("vypnutá: %+v", n)
+	}
+}
+
+// Vzdálená větev se starou řadou Playboy Database (1.53.0 bez NazevProgramu) není pro 0.x novější verze
+func TestStaraRadaNeniNovejsi(t *testing.T) {
+	if vzorNazvu.MatchString("package main\n\nconst Verze = \"1.53.0\"\n") {
+		t.Fatal("stará řada bez názvu se nemá brát")
+	}
+	if !vzorNazvu.MatchString("const Verze = \"0.2.0\"\nconst NazevProgramu = \"Pinup Katalog\"\n") {
+		t.Fatal("nová řada se má brát")
 	}
 }

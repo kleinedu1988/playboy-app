@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 // Podobnost z obsahu: střed fotek jen s aspoň třemi vektory, kosinová podobnost středů, společní fotografové

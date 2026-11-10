@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	ucenibal "playboy-app/internal/uceni"
+	ucenibal "pinup-katalog/internal/uceni"
 )
 
 // Databáze učení: vlastní soubor SQLite vedle sbírky (playboy.db → playboy-ucenibal.db). Pamatuje si, co se

@@ -6,7 +6,7 @@ import (
 	"database/sql"
 	"strings"
 
-	"playboy-app/internal/nahledy"
+	"pinup-katalog/internal/nahledy"
 )
 
 type StavStahovaniNahledu = nahledy.StavStahovani

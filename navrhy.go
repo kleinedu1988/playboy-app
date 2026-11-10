@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"playboy-app/internal/kontrola"
+	"pinup-katalog/internal/kontrola"
 )
 
 // Návrhy doplnění chybějících údajů pro Údržbu (celkový popis učení v docs/UCENI.md).

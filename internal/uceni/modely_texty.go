@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 )
 
 // Sdílené statistické nástroje strojového učení pro texty, pravděpodobnosti a četnosti (celkový popis v docs/UCENI.md).

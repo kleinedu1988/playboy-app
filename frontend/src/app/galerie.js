@@ -121,7 +121,7 @@ export function oznamitHodnoceniFotek(pred, pocet, nove) {
 
 const HTML_UVODU = `
     <section class="uvod">
-        <h2>Vítej v Playboy Database</h2>
+        <h2>Vítej v Pinup Katalogu</h2>
         <p>Katalog sbírky: modelky, alba fotek, centerfoldy, covery a čísla časopisu. Fotky zůstávají na Google
             Disku, program si pamatuje jen odkazy a údaje.</p>
         <ol>
@@ -136,7 +136,7 @@ const HTML_UVODU = `
             <button class="btn btn-secondary" data-uvod="heslo">Nastavit heslo…</button>
             <button class="btn btn-secondary" data-uvod="napoveda">Nápověda (?)</button>
         </div>
-        <p class="uvod-pozn">Data jsou v ~/.local/share/playboy-app; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
+        <p class="uvod-pozn">Data jsou v ~/.local/share/pinup-katalog; zálohy vznikají samy denně a před každou hromadnou změnou.</p>
     </section>`;
 
 // Široká lišta ovládání pod hero bannerem (místo úzké kapsle vpravo nahoře): řazení, Filtry (panel filtru Modelek,

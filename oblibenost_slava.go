@@ -1,7 +1,7 @@
 package main
 
 import (
-	"playboy-app/internal/oblibenost"
+	"pinup-katalog/internal/oblibenost"
 	"sort"
 	"time"
 )

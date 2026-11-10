@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"playboy-app/internal/kontrola"
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/kontrola"
+	"pinup-katalog/internal/sbirka"
 )
 
 // Kontrola sbírky pro Údržbu: údaje, které vypadají jako chyba při zadávání. Každé pravidlo hlásí nález s klíčem

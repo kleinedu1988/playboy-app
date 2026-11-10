@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 // Galerie všech fotek: všechny fotky napříč modelkami, filtry, počty v panelu, stránky a promíchání alb

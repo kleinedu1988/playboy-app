@@ -2,15 +2,18 @@
 # Instalace programu do domovské složky (bez sudo): spustitelný soubor, ikona a položka v nabídce aplikací.
 #
 #   ./instalovat.sh                  sestaví program a nainstaluje ho (stejně i aktualizace)
-#   ./instalovat.sh --bez-sestaveni  nainstaluje už sestavený build/bin/playboy-app
+#   ./instalovat.sh --bez-sestaveni  nainstaluje už sestavený build/bin/pinup-katalog
 #   ./instalovat.sh --odinstalovat   odebere program z nabídky i ze ~/.local/bin; data a zálohy zůstanou
 #   ./instalovat.sh --napoveda       vypíše tento přehled
 #
-# Data sbírky jsou zvlášť v ~/.local/share/playboy-app a instalace ani odinstalace na ně nesahá.
+# Data sbírky jsou zvlášť v ~/.local/share/pinup-katalog a instalace ani odinstalace na ně nesahá.
+# Do 1.53.0 se program jmenoval Playboy Database (playboy-app): instalace starý program z nabídky odebere,
+# jeho data přesune nový program sám při prvním spuštění.
 set -euo pipefail
 
 cd "$(dirname "$0")"
-NAZEV=playboy-app
+NAZEV=pinup-katalog
+STARY=playboy-app
 BIN="$HOME/.local/bin/$NAZEV"
 IKONA="$HOME/.local/share/icons/hicolor/256x256/apps/$NAZEV.png"
 IKONA_512="$HOME/.local/share/icons/hicolor/512x512/apps/$NAZEV.png"
@@ -29,6 +32,13 @@ case "${1:-}" in
         exit 2 ;;
 esac
 
+# Program pod starým názvem (spustitelný soubor, ikony a položka nabídky); data nechá
+odebrat_stary() {
+    rm -f "$HOME/.local/bin/$STARY" "$HOME/.local/share/applications/$STARY.desktop" \
+        "$HOME/.local/share/icons/hicolor/256x256/apps/$STARY.png" "$HOME/.local/share/icons/hicolor/512x512/apps/$STARY.png" \
+        "$HOME/.local/share/icons/hicolor/scalable/apps/$STARY.svg"
+}
+
 obnovit_nabidku() {
     command -v update-desktop-database >/dev/null && update-desktop-database -q "$HOME/.local/share/applications" || true
     command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q -t "$HOME/.local/share/icons/hicolor" 2>/dev/null || true
@@ -36,6 +46,7 @@ obnovit_nabidku() {
 
 if [ "${1:-}" = "--odinstalovat" ]; then
     rm -f "$BIN" "$IKONA" "$IKONA_512" "$IKONA_SVG" "$POLOZKA"
+    odebrat_stary
     obnovit_nabidku
     echo "Program je odinstalovaný. Data a zálohy zůstaly v ~/.local/share/$NAZEV."
     exit 0
@@ -95,19 +106,20 @@ for velikost in 256 512; do
     fi
 done
 rm -f "$IKONA_SVG"
+odebrat_stary
 cat > "$POLOZKA" <<EOF
 [Desktop Entry]
 Type=Application
-Name=Playboy Database
-Comment=Katalog sbírky: modelky, alba, čísla časopisu
+Name=Pinup Katalog
+Comment=Katalog sbírky: modelky, alba, čísla časopisů
 Exec="$BIN"
 Icon=$NAZEV
 Terminal=false
 Categories=Graphics;Viewer;
-Keywords=katalog;sbírka;časopis;modelky;centerfold;playboy;
+Keywords=katalog;sbírka;časopis;modelky;pinup;centerfold;playboy;penthouse;hustler;
 StartupWMClass=$NAZEV
 EOF
 obnovit_nabidku
 
 echo "Nainstalováno: $BIN"
-echo "Program je v nabídce aplikací jako „Playboy Database“."
+echo "Program je v nabídce aplikací jako „Pinup Katalog“."

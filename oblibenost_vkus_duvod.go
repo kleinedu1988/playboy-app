@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
-	"playboy-app/internal/oblibenost"
+	"pinup-katalog/internal/oblibenost"
 	"sort"
 	"strconv"
 	"strings"

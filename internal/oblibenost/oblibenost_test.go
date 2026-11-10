@@ -2,7 +2,7 @@ package oblibenost
 
 import (
 	"math"
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 	"testing"
 	"time"
 )

@@ -1,4 +1,4 @@
-module playboy-app
+module pinup-katalog
 
 go 1.26.0
 

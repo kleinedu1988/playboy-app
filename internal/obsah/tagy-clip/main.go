@@ -20,7 +20,7 @@ import (
 
 	ort "github.com/yalue/onnxruntime_go"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 func main() {

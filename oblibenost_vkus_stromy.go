@@ -1,6 +1,6 @@
 package main
 
-import "playboy-app/internal/oblibenost"
+import "pinup-katalog/internal/oblibenost"
 
 // Gradientní posilování mělkých regresních stromů pro model vkusu (oblibenost_vkus.go), čistě v Go
 // (implementace v internal/oblibenost/stromy.go).

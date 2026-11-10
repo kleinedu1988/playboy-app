@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 	"strings"
 )
 

@@ -27,7 +27,7 @@ import (
 
 	_ "golang.org/x/image/webp"
 
-	"playboy-app/internal/nahledy"
+	"pinup-katalog/internal/nahledy"
 )
 
 // Otisk fotky: rozdílový (dHash, 9 × 8 jasů, soused vpravo světlejší) a frekvenční (pHash, nejnižší frekvence

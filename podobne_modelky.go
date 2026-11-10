@@ -13,7 +13,7 @@ import (
 	"strings"
 	"sync"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 const minFotekStredu = 3

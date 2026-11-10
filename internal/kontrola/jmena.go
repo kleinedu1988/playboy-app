@@ -3,8 +3,8 @@ package kontrola
 import (
 	"fmt"
 	"math"
-	"playboy-app/internal/hledani"
-	"playboy-app/internal/uceni"
+	"pinup-katalog/internal/hledani"
+	"pinup-katalog/internal/uceni"
 	"sort"
 	"strconv"
 	"strings"

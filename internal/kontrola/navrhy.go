@@ -8,9 +8,9 @@ import (
 	"strings"
 	"sync"
 
-	"playboy-app/internal/hledani"
-	"playboy-app/internal/sbirka"
-	"playboy-app/internal/uceni"
+	"pinup-katalog/internal/hledani"
+	"pinup-katalog/internal/sbirka"
+	"pinup-katalog/internal/uceni"
 )
 
 // Návrh hodnoty chybějícího údaje modelky nebo alba

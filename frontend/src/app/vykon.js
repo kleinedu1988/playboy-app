@@ -36,7 +36,7 @@ function radky() {
 }
 
 function text() {
-    const r = [`Playboy Database – přehled výkonu (${new Date().toLocaleString('cs-CZ')})`, `Start do zobrazení: ${ms(start)}`, '',
+    const r = [`Pinup Katalog – přehled výkonu (${new Date().toLocaleString('cs-CZ')})`, `Start do zobrazení: ${ms(start)}`, '',
         'Volání: počet · průměr · nejdéle · celkem'];
     radky().forEach(([j, x]) => r.push(`${j}: ${x.n} · ${ms(x.soucet / x.n)} · ${ms(x.max)} · ${ms(x.soucet)}`));
     if (pomala.length) {

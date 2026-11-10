@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 )
 
 // Sloupce tabulky modelky (kromě id a jmeno) a jejich typy

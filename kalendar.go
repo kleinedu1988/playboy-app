@@ -1,6 +1,6 @@
 package main
 
-import "playboy-app/internal/sbirka"
+import "pinup-katalog/internal/sbirka"
 
 type VydaniKalendare = sbirka.VydaniKalendare
 

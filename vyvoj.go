@@ -1,6 +1,6 @@
 package main
 
-import "playboy-app/internal/sbirka"
+import "pinup-katalog/internal/sbirka"
 
 // Vývoj modelek v čase pro Statistiky: věk v době centerfoldu, postava (i BMI a poměr pasu a boků) a podíly
 // (vlasy, ochlupení, prsa, tetování) po desetiletích (tabulka) a po pětiletích (graf).

@@ -3,7 +3,7 @@ package kontrola
 import (
 	"testing"
 
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 )
 
 func TestPripravitJmenoAPodobnost(t *testing.T) {

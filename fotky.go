@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 	"sort"
 	"strings"
 )

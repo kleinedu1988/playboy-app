@@ -9,7 +9,7 @@ package main
 import (
 	"sync"
 
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 )
 
 var shodyFotekPamet struct {

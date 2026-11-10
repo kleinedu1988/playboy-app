@@ -14,7 +14,7 @@ import (
 	"sort"
 	"strings"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 const (

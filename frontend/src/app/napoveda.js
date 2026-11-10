@@ -2,7 +2,7 @@
 // kterou uživatel viděl naposledy. Novinky se berou z CHANGELOG.md vloženého při sestavení programu; je to samostatný
 // kousek skriptu (přes 100 kB textu), který se načte až s oknem novinek, ne při každém startu.
 import { GetVerze } from './backend';
-import { novinkyMezi, telaNaHtml } from '../lib/changelog';
+import { novinkyMezi, porovnatVerze, telaNaHtml } from '../lib/changelog';
 import { sklonovat } from '../lib/format';
 
 export const helpModal = document.getElementById('helpModal');
@@ -38,7 +38,10 @@ export async function ukazatNovinkyPoAktualizaci() {
     let videna = null;
     try { videna = localStorage.getItem('videnaVerze'); } catch { return; }
     try { localStorage.setItem('videnaVerze', verze); } catch { /* příště znovu */ }
-    if (videna && videna !== verze && novinkyMezi(await nacistChangelog(), videna, verze).length) otevritNovinky(videna);
+    if (!videna || videna === verze) return;
+    // Po přejmenování na Pinup Katalog (0.1.0) je viděná verze ze staré řady 1.x vyšší: ukázat nejnovější změny
+    if (porovnatVerze(videna, verze) > 0) return otevritNovinky();
+    if (novinkyMezi(await nacistChangelog(), videna, verze).length) otevritNovinky(videna);
 }
 
 export function pripravit() {

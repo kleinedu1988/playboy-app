@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 )
 
 // Profil postavy: údaje (výška, váha, obvody, BMI, věk), robustní odhad středu a rozptylu, lineární

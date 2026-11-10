@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 	"sort"
 	"strings"
 	"time"

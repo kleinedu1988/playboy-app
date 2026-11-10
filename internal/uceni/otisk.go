@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 )
 
 // Verze výpočtu: změna kódu modelů (jiné výsledky ze stejných údajů) zneplatní uloženou mezipaměť

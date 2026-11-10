@@ -6,9 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"playboy-app/internal/hledani"
-	"playboy-app/internal/sbirka"
-	"playboy-app/internal/uceni"
+	"pinup-katalog/internal/hledani"
+	"pinup-katalog/internal/sbirka"
+	"pinup-katalog/internal/uceni"
 )
 
 // Země: výchozí zápis národnosti, názvy (místa narození) a další tvary národnosti; vše zjednodušené (KlicTextu)

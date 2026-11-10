@@ -1,7 +1,7 @@
 package sbirka
 
 import (
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 	"sort"
 	"strings"
 	"unicode/utf8"

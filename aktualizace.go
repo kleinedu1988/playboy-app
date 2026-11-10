@@ -24,14 +24,16 @@ var slozkaZdroje string
 
 const (
 	klicKontrolyVerze    = "kontrola_verze"
-	klicPosledniKontroly = "kontrola_verze_cas"
-	klicNalezeneVerze    = "kontrola_verze_nalezena"
-	kontrolaVerzePo      = 24 * time.Hour
-	limitGitu            = 15 * time.Second
+	klicPosledniKontroly = "kontrola_verze_cas_pk"
+	// Od přejmenování (0.1.0) nové klíče: uložená verze ze staré řady 1.x by se brala jako novější
+	klicNalezeneVerze = "kontrola_verze_nalezena_pk"
+	kontrolaVerzePo   = 24 * time.Hour
+	limitGitu         = 15 * time.Second
 )
 
 var (
 	vzorVerze      = regexp.MustCompile(`const Verze = "([0-9]+\.[0-9]+\.[0-9]+[^"]*)"`)
+	vzorNazvu      = regexp.MustCompile(`const NazevProgramu = "`)
 	zamekAktualiz  sync.Mutex
 	pametChangelog struct {
 		verze, text string
@@ -167,7 +169,8 @@ func cistVzdalenouVerzi(ctx context.Context, klon string) (string, string) {
 		return "", ""
 	}
 	m := vzorVerze.FindStringSubmatch(zdroj)
-	if m == nil {
+	// Vzdálená větev ještě se starou řadou Playboy Database (1.x před přejmenováním) není novější verze
+	if m == nil || !vzorNazvu.MatchString(zdroj) {
 		return "", ""
 	}
 	changelog, _ := git(ctx, klon, "show", ref+":CHANGELOG.md")

@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"playboy-app/internal/hledani"
-	"playboy-app/internal/uceni"
+	"pinup-katalog/internal/hledani"
+	"pinup-katalog/internal/uceni"
 )
 
 // „90-60-90“, „36-24-36“, „34C-24-35“, „90 x 60 x 90 cm“

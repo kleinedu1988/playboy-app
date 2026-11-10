@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -14,8 +13,8 @@ import (
 
 	"modernc.org/sqlite"
 
-	"playboy-app/internal/nahledy"
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/nahledy"
+	"pinup-katalog/internal/obsah"
 )
 
 type App struct {
@@ -106,16 +105,6 @@ func (a *App) maSloupec(tabulka, sloupec string) bool {
 	var pocet int
 	a.pripraveny(`SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?`).QueryRow(tabulka, sloupec).Scan(&pocet)
 	return pocet > 0
-}
-
-// Data aplikace mají pevné místo nezávislé na tom, odkud se aplikace spouští
-func slozkaDat() string {
-	zaklad := os.Getenv("XDG_DATA_HOME")
-	if zaklad == "" {
-		domov, _ := os.UserHomeDir()
-		zaklad = filepath.Join(domov, ".local", "share")
-	}
-	return filepath.Join(zaklad, "playboy-app")
 }
 
 // Databáze, které program nerozumí nebo je poškozená, se otevře znovu jen pro čtení

@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 )
 
 // Tagy fotek: pevný seznam (ne volný text) kvůli tematickým sezónám a filtrům.

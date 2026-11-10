@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 )
 
 // Dotaz galerie

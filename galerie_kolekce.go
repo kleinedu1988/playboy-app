@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 // Řada kolekce pro Galerii

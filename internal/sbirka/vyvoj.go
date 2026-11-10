@@ -2,7 +2,7 @@ package sbirka
 
 import (
 	"math"
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 	"sort"
 	"strings"
 )

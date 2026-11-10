@@ -2,7 +2,7 @@ package oblibenost
 
 import (
 	"fmt"
-	"playboy-app/internal/hledani"
+	"pinup-katalog/internal/hledani"
 )
 
 const (

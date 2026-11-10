@@ -3,7 +3,7 @@ package obsah
 import (
 	"testing"
 
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 )
 
 // Každý tag katalogu má popis i vestavěný vektor (po změně katalogu nebo popisů spustit generátor tagy-clip)

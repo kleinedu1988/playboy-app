@@ -2,7 +2,7 @@ package main
 
 // Napojení vyhledávání, normalizace textu a typu Modelka z balíčku internal/hledani.
 
-import "playboy-app/internal/hledani"
+import "pinup-katalog/internal/hledani"
 
 type Modelka = hledani.Modelka
 type srdickaAlba = hledani.SrdickaAlba

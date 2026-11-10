@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"playboy-app/internal/nahledy"
+	"pinup-katalog/internal/nahledy"
 )
 
 const idNahleduA = "1NBcNnN7_8cRTDcAvZYHTwSD7XqGDx-cd"

@@ -1,7 +1,7 @@
 package oblibenost
 
 import (
-	"playboy-app/internal/sbirka"
+	"pinup-katalog/internal/sbirka"
 	"strconv"
 )
 

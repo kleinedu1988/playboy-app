@@ -1,6 +1,6 @@
 package main
 
-import "playboy-app/internal/kontrola"
+import "pinup-katalog/internal/kontrola"
 
 // Kontrola podobných jmen a prohozených slov pomocí trigramového slovníku v balíčku internal/kontrola.
 

@@ -11,7 +11,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/linux"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"playboy-app/internal/nahledy"
+	"pinup-katalog/internal/nahledy"
 )
 
 //go:embed all:frontend/dist
@@ -23,6 +23,10 @@ var assets embed.FS
 var ikona []byte
 
 func main() {
+	// Přejmenování (0.1.0): staré složky Playboy Database na nové místo, než je cokoli otevře
+	for _, zprava := range presunoutStareSlozky() {
+		fmt.Println(zprava)
+	}
 	// Mezipaměť webového jádra se sama neomezuje (narostla až přes 900 MB) – nad limitem pryč, než se otevře okno
 	if uvolneno := omezitMezipametWebu(); uvolneno > 0 {
 		fmt.Printf("Mezipaměť okna: uvolněno %d MB\n", uvolneno>>20)
@@ -41,7 +45,7 @@ func main() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:            "Playboy Database",
+		Title:            NazevProgramu,
 		Width:            sirkaUvodu,
 		Height:           vyskaUvodu,
 		WindowStartState: options.Normal,
@@ -61,7 +65,7 @@ func main() {
 			WindowIsTranslucent: true,
 			Icon:                ikona,
 			// Stejný název jako StartupWMClass v položce nabídky: okno se spáruje s ní a s její ikonou
-			ProgramName: "playboy-app",
+			ProgramName: slozkaProgramu,
 			Messages: &linux.Messages{
 				WebKit2GTKMinRequired: "Program potřebuje WebKit2GTK %s nebo novější.",
 			},

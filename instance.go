@@ -9,5 +9,5 @@ import (
 // databází se nepovolí, vývojové sestavení vedle hotového programu ano.
 func idInstance() string {
 	otisk := sha256.Sum256([]byte(slozkaDat()))
-	return "playboy-app-" + druhSestaveni + "-" + hex.EncodeToString(otisk[:6])
+	return slozkaProgramu + "-" + druhSestaveni + "-" + hex.EncodeToString(otisk[:6])
 }

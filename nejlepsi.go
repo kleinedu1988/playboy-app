@@ -7,7 +7,7 @@ package main
 
 import (
 	"fmt"
-	"playboy-app/internal/oblibenost"
+	"pinup-katalog/internal/oblibenost"
 	"sort"
 	"strings"
 	"sync"

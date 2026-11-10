@@ -1,4 +1,4 @@
-# Pravidla projektu Playboy Database
+# Pravidla projektu Pinup Katalog (dřív Playboy Database)
 
 ## Autonomie a schvalování změn
 - **Úpravy prováděj přímo a autonomně bez nutnosti předchozího potvrzení uživatelem.** Uživatel výslovně udělil souhlas k provádění změn kódu, oprav a vylepšení rovnou.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"math"
-	"playboy-app/internal/oblibenost"
+	"pinup-katalog/internal/oblibenost"
 	"sort"
 	"strings"
 	"sync"

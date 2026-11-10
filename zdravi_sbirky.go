@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"playboy-app/internal/nahledy"
+	"pinup-katalog/internal/nahledy"
 	"sort"
 	"strings"
 	"sync"

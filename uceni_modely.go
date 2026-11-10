@@ -3,7 +3,7 @@ package main
 import (
 	"math/bits"
 
-	ucenibal "playboy-app/internal/uceni"
+	ucenibal "pinup-katalog/internal/uceni"
 )
 
 // Napojení sdílených statistických nástrojů strojového učení z balíčku internal/uceni.

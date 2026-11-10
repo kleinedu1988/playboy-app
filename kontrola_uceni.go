@@ -1,6 +1,6 @@
 package main
 
-import "playboy-app/internal/kontrola"
+import "pinup-katalog/internal/kontrola"
 
 // Učení rozsahů údajů a modelu neobvyklých kombinací postavy deleguje do balíčku internal/kontrola.
 

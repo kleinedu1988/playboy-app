@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"playboy-app/internal/nahledy"
+	"pinup-katalog/internal/nahledy"
 )
 
 // Kritérium: podklady čísla mají první fotku obálky před centerfoldem, jména podle typu alba a stav výtisku;

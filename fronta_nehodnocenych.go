@@ -8,7 +8,7 @@ package main
 
 import (
 	"encoding/json"
-	"playboy-app/internal/oblibenost"
+	"pinup-katalog/internal/oblibenost"
 	"sort"
 	"strconv"
 	"sync"

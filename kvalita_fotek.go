@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"playboy-app/internal/nahledy"
+	"pinup-katalog/internal/nahledy"
 )
 
 const (

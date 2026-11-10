@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"playboy-app/internal/obsah"
+	"pinup-katalog/internal/obsah"
 )
 
 type StavObsahu = obsah.Stav

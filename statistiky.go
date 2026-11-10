@@ -1,6 +1,6 @@
 package main
 
-import "playboy-app/internal/sbirka"
+import "pinup-katalog/internal/sbirka"
 
 // Statistiky sbírky pro Přehled: centerfoldy a čísla podle desetiletí, věk v době centerfoldu, nejčastější
 // fotografové a národnosti, srovnání edic.

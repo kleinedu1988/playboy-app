@@ -2,9 +2,9 @@ package kontrola
 
 import (
 	"fmt"
-	"playboy-app/internal/hledani"
-	"playboy-app/internal/sbirka"
-	"playboy-app/internal/uceni"
+	"pinup-katalog/internal/hledani"
+	"pinup-katalog/internal/sbirka"
+	"pinup-katalog/internal/uceni"
 	"regexp"
 	"sort"
 	"strconv"

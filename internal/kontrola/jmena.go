@@ -218,7 +218,7 @@ func KontrolovatPodobnaJmena(modelky []hledani.Modelka, prah float64, pridat Pri
 	var jmena []JmenoKPorovnani
 	for i, m := range modelky {
 		videna := map[string]bool{}
-		for _, jmeno := range append([]string{m.Jmeno}, strings.Split(m.DalsiJmena, ",")...) {
+		for _, jmeno := range append([]string{m.Jmeno}, hledani.DalsiJmena(m.DalsiJmena)...) {
 			j := PripravitJmeno(jmeno, i, slovnik)
 			if j.Text == "" || videna[j.Text] {
 				continue

@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.027 – Přezdívky podle časopisu
+
+- [ ] **Kritérium hotovo:** Upravit modelku › Další jména „Jane Doe @PH“ → po uložení v profilu „také Jane Doe
+      (Penthouse)“ a v exportu `dalsi_jmena: Jane Doe @PH`.
+- [ ] Zápis „jane doe@ph“ se při uložení sjednotí na „jane doe @PH“.
+- [ ] Přidání nové modelky se jménem „Jane Doe“ upozorní, že už existuje (přezdívka bez přípony).
+- [ ] `[[Jane Doe]]` v textu odkáže na modelku.
+
 ## 0.02.026 – Kariéra v profilu napříč časopisy
 
 - [ ] **Kritérium hotovo:** profil modelky s číslem Playboye i Penthouse ukáže obě čísla (páska v záhlaví i Vydání).

@@ -1,7 +1,7 @@
 // Rychlé přidání modelky, formulář modelky a potvrzení mazání
 import { jednou, oznamit } from '../ui/oznameni';
 import { AddBulkPhotos, AddModelka, DeleteModelka, DeleteVse, SetVydaniAlba, SlozkaZaloh } from './backend';
-import { MESICE, esc, nazevRady, formatDatum, nazevVydani, slozitVydani, formatMarkdown, odvozeneKategorie, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
+import { MESICE, dalsiJmenaModelky, esc, nazevRady, formatDatum, nazevVydani, slozitVydani, formatMarkdown, odvozeneKategorie, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
 import { nastavitRadu, vychoziRada, zapamatovatRadu } from './rady';
 import { pripojitVyberKategorii } from '../ui/kategorie';
 import { upravitText } from '../ui/editor-textu';
@@ -99,7 +99,7 @@ document.addEventListener('keydown', (e) => {
 
 // Modelka sbírky se stejným jménem nebo pseudonymem (stejné porovnání jako při ukládání, viz vyrez.js)
 function stejnaModelka(jmeno, dalsiJmena = '', bezId = 0) {
-    const jmena = (j, d) => [j, ...(d || '').split(',')].map(sjednotit).filter(Boolean);
+    const jmena = (j, d) => [j, ...dalsiJmenaModelky(d).map(x => x.jmeno)].map(sjednotit).filter(Boolean);
     const hledana = jmena(jmeno, dalsiJmena);
     if (!hledana.length) return null;
     return modelkySbirky.find(m => m.id !== bezId && jmena(m.jmeno, m.dalsiJmena).some(j => hledana.includes(j))) || null;

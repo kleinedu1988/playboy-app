@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"pinup-katalog/internal/hledani"
 	"regexp"
 	"strconv"
 	"strings"
@@ -220,7 +221,7 @@ func (a *App) PrijmoutJmenoZWikipedie(id int, jmeno string, prejmenovat bool) bo
 	dalsi := strings.Split(m.DalsiJmena, ",")
 	pridat := func(j string) {
 		for _, d := range dalsi {
-			if zjednodusit(strings.TrimSpace(d)) == zjednodusit(j) {
+			if bez, _ := hledani.RozdelitJmeno(d); zjednodusit(bez) == zjednodusit(j) {
 				return
 			}
 		}

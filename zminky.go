@@ -6,6 +6,7 @@ package main
 
 import (
 	"fmt"
+	"pinup-katalog/internal/hledani"
 	"regexp"
 	"strconv"
 	"strings"
@@ -57,7 +58,7 @@ func modelkaZOdkazu(text string, modelky []Modelka) int {
 		}
 	}
 	for i := range modelky {
-		for _, d := range strings.Split(modelky[i].DalsiJmena, ",") {
+		for _, d := range hledani.DalsiJmena(modelky[i].DalsiJmena) {
 			if zjednodusit(strings.TrimSpace(d)) == j {
 				return modelky[i].ID
 			}

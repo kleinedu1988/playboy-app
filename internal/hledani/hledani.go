@@ -214,6 +214,43 @@ func RozdelitCasopis(v string) (zaklad, casopis string) {
 	return v, ""
 }
 
+// Další jméno s časopisem (0.02.027): „Jane Doe @PH“ = pod tímto jménem vyšla v Penthouse. RozdelitJmeno vrátí
+// jméno bez přípony a klíč časopisu ("" = bez časopisu); přípona se pozná jako mezera, @ a dvě písmena na konci.
+func RozdelitJmeno(s string) (jmeno, casopis string) {
+	s = strings.TrimSpace(s)
+	if i := strings.LastIndex(s, "@"); i > 0 && len(s)-i == 3 && velkePismeno(s[i+1]&^0x20) && velkePismeno(s[i+2]&^0x20) {
+		return strings.TrimSpace(s[:i]), strings.ToUpper(s[i+1:])
+	}
+	return s, ""
+}
+
+// DalsiJmena: jména z pole Další jména bez přípon časopisu a prázdných položek (porovnávání jmen)
+func DalsiJmena(pole string) []string {
+	var v []string
+	for _, d := range strings.Split(pole, ",") {
+		if j, _ := RozdelitJmeno(d); j != "" {
+			v = append(v, j)
+		}
+	}
+	return v
+}
+
+// NormalizovatDalsiJmena: „jane doe@ph, Ann“ → „jane doe @PH, Ann“ (jednotný zápis přípony při ukládání)
+func NormalizovatDalsiJmena(pole string) string {
+	var v []string
+	for _, d := range strings.Split(pole, ",") {
+		j, c := RozdelitJmeno(d)
+		if j == "" {
+			continue
+		}
+		if c != "" {
+			j += " @" + c
+		}
+		v = append(v, j)
+	}
+	return strings.Join(v, ", ")
+}
+
 // RadaVydani: edice (země, "" = US) s časopisem ("" = Playboy) → „US“, „CZ“, „PH/US“, „PH/UK“
 func RadaVydani(edice, casopis string) string {
 	if edice == "" {

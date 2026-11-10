@@ -182,3 +182,12 @@ test('souhrn kariéry napříč časopisy v profilu (0.02.026)', async () => {
     nastavitCasopisy([]);
     assert.equal(barvaCasopisu('PH'), '');
 });
+
+test('další jména s časopisem (0.02.027)', async () => {
+    const { dalsiJmenaModelky, popisDalsihoJmena } = await import('../src/lib/format.js');
+    nastavitCasopisy(CASOPISY);
+    const d = dalsiJmenaModelky('Jane Doe @PH, Ann,  , Kate@hu, mail@example.com');
+    assert.deepEqual(d, [{ jmeno: 'Jane Doe', casopis: 'PH' }, { jmeno: 'Ann', casopis: '' }, { jmeno: 'Kate', casopis: 'HU' }, { jmeno: 'mail@example.com', casopis: '' }]);
+    assert.deepEqual(d.map(popisDalsihoJmena), ['Jane Doe (Penthouse)', 'Ann', 'Kate (Hustler)', 'mail@example.com']);
+    nastavitCasopisy([]);
+});

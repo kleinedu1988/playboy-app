@@ -347,3 +347,23 @@ func TestVkusTitulyJinde(t *testing.T) {
 		t.Error("centerfold Penthouse není centerfold Playboye")
 	}
 }
+
+// Další jména s časopisem (0.02.027): normalizace při uložení, export a porovnávání bez přípony
+func TestPrezdivkyCasopisu(t *testing.T) {
+	if s := hledani.NormalizovatDalsiJmena(" Jane Doe@ph , Ann,, Kate @HU "); s != "Jane Doe @PH, Ann, Kate @HU" {
+		t.Errorf("normalizace: %q", s)
+	}
+	if j := strings.Join(hledani.DalsiJmena("Jane Doe @PH, Ann"), "|"); j != "Jane Doe|Ann" {
+		t.Errorf("jména: %q", j)
+	}
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Sylvie", DalsiJmena: "Jane Doe@ph", Tetovani: -1, Piercing: -1})
+	m := a.GetModelky("")[0]
+	if m.DalsiJmena != "Jane Doe @PH" {
+		t.Fatalf("uloženo: %q", m.DalsiJmena)
+	}
+	data, err := a.exportovat()
+	if err != nil || !strings.Contains(string(data), "dalsi_jmena: Jane Doe @PH") {
+		t.Errorf("přezdívka chybí v exportu (%v)", err)
+	}
+}

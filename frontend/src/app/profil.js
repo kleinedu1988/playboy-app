@@ -2,7 +2,7 @@
 import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti, porovnatNaZacatku } from './oblibenost';
 import { otevritOblibenost } from './prehled';
-import { VYSKYT, barvaCasopisu, souhrnKariery, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
+import { VYSKYT, barvaCasopisu, dalsiJmenaModelky, popisDalsihoJmena, souhrnKariery, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, GetOdznakyModelky, GetPodobnostObsahu, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek, SetProfilovyVyrez } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -127,7 +127,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     ].filter(Boolean);
 
     const tagy = modelka.tags.split(',').map(t => t.trim()).filter(Boolean);
-    const dalsiJmena = modelka.dalsiJmena.split(',').map(j => j.trim()).filter(Boolean);
+    const dalsiJmena = dalsiJmenaModelky(modelka.dalsiJmena).map(popisDalsihoJmena);
     podobneProfilu = { id: modelka.id, vsechny, obsah: null };
     const podobne = htmlPodobnych();
 

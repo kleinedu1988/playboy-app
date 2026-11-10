@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"pinup-katalog/internal/hledani"
 	"slices"
 	"strings"
 
@@ -167,6 +168,7 @@ func hodnotyModelky(m Modelka) []interface{} {
 		coverID = ids[0]
 	}
 
+	m.DalsiJmena = hledani.NormalizovatDalsiJmena(m.DalsiJmena)
 	m.PrsaTyp, _ = volbaZNabidky(m.PrsaTyp, moznostiPrsaTyp)
 	m.Ochlupeni, _ = volbaZNabidky(m.Ochlupeni, moznostiOchlupeni)
 

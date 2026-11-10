@@ -605,6 +605,18 @@ function titulyJindeModelky(modelka) {
     return v;
 }
 
+// Další jména s časopisem (0.02.027, v Go hledani.RozdelitJmeno): „Jane Doe @PH“ = pod tímto jménem vyšla
+// v Penthouse. Vrací [{ jmeno, casopis }] bez prázdných; casopis '' = jméno bez časopisu.
+export function dalsiJmenaModelky(pole) {
+    return String(pole || '').split(',').map(d => {
+        const s = d.trim();
+        const m = /^(.*\S)\s*@([A-Za-z]{2})$/.exec(s);
+        return m ? { jmeno: m[1].trim(), casopis: m[2].toUpperCase() } : { jmeno: s, casopis: '' };
+    }).filter(d => d.jmeno);
+}
+// „Jane Doe (Penthouse)“ do textu profilu
+export const popisDalsihoJmena = d => (d.casopis ? `${d.jmeno} (${nazevCasopisu(d.casopis)})` : d.jmeno);
+
 // Barva časopisu z tabulky časopisů („#d81b60“); neznámý nebo bez barvy ''
 export const barvaCasopisu = klic => casopisy.get(klic || VYCHOZI_CASOPIS)?.barva || '';
 

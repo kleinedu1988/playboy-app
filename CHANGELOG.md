@@ -6,6 +6,15 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.027] – 2026-11-10
+
+### Přidáno
+- **Přezdívky podle časopisu:** v poli Další jména jde ke jménu připsat časopis, pod kterým modelka vyšla jinak
+  („Jane Doe @PH“). Při uložení se zápis sjednotí („jane doe@ph“ → „jane doe @PH“), v profilu se ukáže
+  „také Jane Doe (Penthouse)“; je v exportu jako dosud (pole `dalsi_jmena`, beze změny schématu i formátu exportu).
+- Porovnávání jmen (stejná modelka při přidání, kontrola podobných jmen, `[[odkazy]]`, Doplnit z webu, Ročník
+  podle Wikipedie) bere přezdívku bez přípony časopisu.
+
 ## [0.02.026] – 2026-11-10
 
 ### Přidáno

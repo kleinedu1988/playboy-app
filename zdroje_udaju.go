@@ -14,6 +14,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"pinup-katalog/internal/hledani"
 	"regexp"
 	"sort"
 	"strconv"
@@ -703,7 +704,7 @@ func stejneJmeno(m *Modelka, jmeno string) bool {
 	if j == "" {
 		return false
 	}
-	kandidati := append([]string{m.Jmeno}, strings.Split(m.DalsiJmena, ",")...)
+	kandidati := append([]string{m.Jmeno}, hledani.DalsiJmena(m.DalsiJmena)...)
 	for _, k := range kandidati {
 		k = zjednodusit(strings.TrimSpace(k))
 		if k == "" {
@@ -1155,7 +1156,7 @@ func udajeZBoobpedie(m *Modelka) (ZdrojUdaju, udajeZdroje) {
 		stranky = append(stranky, t)
 	}
 	stranky = append(stranky, m.Jmeno)
-	for _, j := range strings.Split(m.DalsiJmena, ",") {
+	for _, j := range hledani.DalsiJmena(m.DalsiJmena) {
 		if j = strings.TrimSpace(j); j != "" {
 			stranky = append(stranky, j)
 		}

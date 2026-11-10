@@ -1,5 +1,5 @@
 // Úprava výřezu titulní fotky
-import { obrazek, sjednotit } from '../lib/format';
+import { dalsiJmenaModelky, obrazek, sjednotit } from '../lib/format';
 import { NavrhnoutVyrezy, SetCoverVyrez } from './backend';
 import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -152,7 +152,7 @@ export function upravitVyrez(modelka, { karta = null, ramFotky = null, poUlozeni
 
 // Stejná modelka se nemá omylem založit dvakrát; vrací, zda se má pokračovat
 export async function neniDuplicitni(modelka) {
-    const jmena = m => [m.jmeno, ...(m.dalsiJmena || '').split(',')].map(sjednotit).filter(Boolean);
+    const jmena = m => [m.jmeno, ...dalsiJmenaModelky(m.dalsiJmena).map(x => x.jmeno)].map(sjednotit).filter(Boolean);
     const nova = jmena(modelka);
     const stejna = (await vsechnyModelky()).find(m => jmena(m).some(j => nova.includes(j)));
     return !stejna || potvrdit('Modelka už existuje', `V databázi už je modelka „${stejna.jmeno}“ se stejným jménem nebo pseudonymem. Opravdu přidat další?`, 'Přesto přidat');

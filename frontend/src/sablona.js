@@ -252,7 +252,7 @@ export const SABLONA_OKNA = `
               </div>
               <div class="form-group siroke">
                 <label for="inputDalsiJmena">Další jména a pseudonymy</label>
-                <input type="text" id="inputDalsiJmena" autocomplete="off" placeholder="oddělené čárkou" />
+                <input type="text" id="inputDalsiJmena" autocomplete="off" placeholder="oddělené čárkou; jméno z jiného časopisu: Jane Doe @PH" title="Jméno, pod kterým vyšla v jiném časopise, se zkratkou časopisu na konci (Jane Doe @PH = v Penthouse)" />
               </div>
               <div class="form-group">
                 <label for="inputNarozeniDatum">Datum narození</label>

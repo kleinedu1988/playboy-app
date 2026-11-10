@@ -74,8 +74,8 @@ export function rozlozitVydani(text) {
     return { rok: casti[1], mesic: casti[2] || '', edice: radaVydani(zeme, casopis), zeme, casopis };
 }
 
-// Je klíč číslem Playboye? Pohledy Playboye (stěna Centerfoldů, kapesní katalog, dokončené ročníky) ukazují do 0.03
-// jen ty; neplatný klíč není číslo žádného časopisu
+// Je klíč číslem Playboye? Pohledy Playboye (stěna Centerfoldů, kapesní katalog, dokončené ročníky) ukazují jen ty,
+// dokud nebudou podle časopisu (0.02.016–0.02.018); neplatný klíč není číslo žádného časopisu
 export const jeCisloPlayboye = klic => rozlozitVydani(klic)?.casopis === VYCHOZI_CASOPIS;
 
 // Patří centerfold na stěnu Centerfoldů se zvolenou edicí („vse“, „US“, „CZ“)? Jen Playboy; album, které není

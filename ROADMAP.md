@@ -9,8 +9,8 @@ v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmap
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
-Honey); časopisy jde spravovat v ⋯ › Časopisy…. Etapa 0.02 je hotová, další na řadě je **0.03.001 – Řady čísel
-jako data**.
+Honey); časopisy jde spravovat v ⋯ › Časopisy…. Další na řadě je **0.02.014 – Řady čísel jako data** (etapa 0.02
+pokračuje řadami čísel a pohledy podle časopisu).
 
 ---
 
@@ -43,7 +43,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.09** | 🚧 0.01, 0.02 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.08** | 🚧 0.01 hotová, 0.02.001–0.02.013 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -51,7 +51,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 
 ---
 
-## Etapa U – Univerzální katalog (0.01–0.09)
+## Etapa U – Univerzální katalog (0.01–0.08)
 
 **Cíl:** jedna modelka = jeden profil s celou kariérou, ať vyšla v Playboyi, Penthouse, Hustleru nebo jinde. Časopis
 je nový údaj čísla vedle edice (edice = země vydání: US, CZ, UK…). Playboy zůstává výchozí, takže stávající data
@@ -75,7 +75,10 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 | 0.01.000 ✅ | Pinup Katalog (okno, nabídka, nápověda, export, Go modul), přesun dat a mezipaměti (`prejmenovani.go`), `instalovat.sh` odebere starý program, kontrola nové verze ignoruje starou řadu, starý plán a changelog v `docs/archiv/` |
 | 0.01.001 ✅ | Verze s pevnou šířkou X.XX.XXX (`zobrazitVerzi`) |
 
-#### 0.02 – Časopis jako údaj čísla ✅ (10. 11. 2026)
+#### 0.02 – Časopis jako údaj čísla, řady čísel a pohledy podle časopisu
+
+Kroky 0.02.014–0.02.019 byly původně samostatná etapa 0.03 (Řady čísel a Mapa čísel pro každý časopis); na přání
+zůstávají pod 0.02 a další etapy se posunuly o jedno číslo (dřívější 0.04 je 0.03 atd.).
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
@@ -87,87 +90,82 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 | 0.02.006 ✅ | **Rychlé přidání a okno Číslo:** stejná volba v rychlém přidání modelky; okno a stránka čísla jiného časopisu (bez kalendáře a mapy) | Penthouse 09/1985 jde otevřít z profilu modelky |
 | 0.02.007 ✅ | **Playboy pohledy beze změny:** projít Kalendář, Mapu čísel, Centerfoldy, kapesní katalog, Rok ve sbírce, úplnost čísla a Statistiky; čísla jiných časopisů v nich nejsou, test na každý | záloha sbírky před a po 0.02 – žádný rozdíl v Číslech a Statistikách |
 | 0.02.008 ✅ | **Export a import [export 14]:** časopisy a čísla s `@` v exportu, EXPORT.md; starší export = Playboy | export → import vrátí stejnou sbírku (test) |
-| 0.02.009 ✅ | **Tituly podle časopisu** (předřazeno z 0.04.001 na přání): `titulCasopisu` / `titulCisla` ve `format.js` – Playmate měsíce / roku, Pet of the Month / Year, Honey of the Month / Year a krátký titul (Playmate, Pet, Honey) z tabulky časopisů | test pro všechny tři časopisy |
+| 0.02.009 ✅ | **Tituly podle časopisu** (předřazeno z etapy Pojmy podle časopisu na přání): `titulCasopisu` / `titulCisla` ve `format.js` – Playmate měsíce / roku, Pet of the Month / Year, Honey of the Month / Year a krátký titul (Playmate, Pet, Honey) z tabulky časopisů | test pro všechny tři časopisy |
 | 0.02.010 ✅ | **Profil a karty modelky:** štítek titulu podle časopisu čísla („Pet · Září 1985 · Penthouse“) | u Pet of the Month není nikde „Playmate“ v profilu |
 | 0.02.011 ✅ | **Typy alb:** „Playmate měsíce / roku“ v okně alba podle zvoleného časopisu (Pet of the Month…) | okno alba Penthouse nabízí Pet of the Month |
 | 0.02.012 ✅ | **Kategorie a filtry:** odvozená kategorie podle časopisu centerfoldu (Pet of the Month místo Playmate měsíce), fasety galerie a hledání `kategorie:` | filtr „Pet of the Month“ funguje; modelka jen z Penthouse není Playmate |
 | 0.02.013 ✅ | **Správa časopisů** v ⋯ › Časopisy…: přidat, přejmenovat, barva, edice, názvy modelky měsíce a roku; smazat jen nepoužitý | nový časopis (např. Oui) jde přidat a hned vybrat v okně alba |
+| 0.02.014 | **Řady čísel jako data:** `RADY_EDIC` a `NEVYSLA_CISLA` do jednoho datového souboru podle řady; Playboy převedený beze změny chování | testy řad Playboye projdou beze změny |
+| 0.02.015 | **Řady Penthouse a Hustler:** Penthouse US od 09/1969, UK od 1965, Hustler od 07/1974 (z Wikipedie, s poznámkou zdroje) | `cisloNevyslo` a `ciselRocniku` fungují pro Penthouse |
+| 0.02.016 | **Kalendář podle časopisu:** přepínač časopisu vedle edice, pamatuje se | Kalendář Penthouse ukáže zadaná čísla a díry |
+| 0.02.017 | **Mapa čísel:** karta pro každý časopis, který ve sbírce je, skrývání a pořadí v ⋯ › Vzhled | úplnost Penthouse i Playboye zvlášť |
+| 0.02.018 | **Centerfoldy (stěna) podle časopisu** | stěna Pet of the Month Penthouse |
+| 0.02.019 | **Hledání:** `casopis:penthouse`, zkratky `pb`/`ph`/`hu`, čip a našeptávání; chytré výběry | `casopis:penthouse 80. léta` najde správné modelky |
 
-#### 0.03 – Řady čísel a Mapa čísel pro každý časopis
+#### 0.03 – Pojmy podle časopisu
 
-| Verze | Krok | Hotovo, když |
-|---|---|---|
-| 0.03.001 | **Řady čísel jako data:** `RADY_EDIC` a `NEVYSLA_CISLA` do jednoho datového souboru podle řady; Playboy převedený beze změny chování | testy řad Playboye projdou beze změny |
-| 0.03.002 | **Řady Penthouse a Hustler:** Penthouse US od 09/1969, UK od 1965, Hustler od 07/1974 (z Wikipedie, s poznámkou zdroje) | `cisloNevyslo` a `ciselRocniku` fungují pro Penthouse |
-| 0.03.003 | **Kalendář podle časopisu:** přepínač časopisu vedle edice, pamatuje se | Kalendář Penthouse ukáže zadaná čísla a díry |
-| 0.03.004 | **Mapa čísel:** karta pro každý časopis, který ve sbírce je, skrývání a pořadí v ⋯ › Vzhled | úplnost Penthouse i Playboye zvlášť |
-| 0.03.005 | **Centerfoldy (stěna) podle časopisu** | stěna Pet of the Month Penthouse |
-| 0.03.006 | **Hledání:** `casopis:penthouse`, zkratky `pb`/`ph`/`hu`, čip a našeptávání; chytré výběry | `casopis:penthouse 80. léta` najde správné modelky |
-
-#### 0.04 – Pojmy podle časopisu
-
-| Verze | Krok | Hotovo, když |
-|---|---|---|
 Tituly (funkce, profil, typy alb, kategorie a filtry) se předřadily do 0.02.009–0.02.012.
 
-| 0.04.001 | **Statistiky a Postřehy:** texty podle časopisu, Playboy beze změny | žádný „Playmate“ u dat Penthouse |
-| 0.04.002 | **Síň slávy, sezóny, Rok ve sbírce:** přes všechny časopisy s filtrem časopisu | Síň slávy jde přepnout na Penthouse |
-| 0.04.003 | **Zbylé texty:** nápověda, prázdné stavy, úvod, kvíz/průvodce zmínky; seznam zbylých výskytů „Playmate“ jen tam, kde jde opravdu o Playboy | `grep` výskytů projde ručně s poznámkou |
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.03.001 | **Statistiky a Postřehy:** texty podle časopisu, Playboy beze změny | žádný „Playmate“ u dat Penthouse |
+| 0.03.002 | **Síň slávy, sezóny, Rok ve sbírce:** přes všechny časopisy s filtrem časopisu | Síň slávy jde přepnout na Penthouse |
+| 0.03.003 | **Zbylé texty:** nápověda, prázdné stavy, úvod, kvíz/průvodce zmínky; seznam zbylých výskytů „Playmate“ jen tam, kde jde opravdu o Playboy | `grep` výskytů projde ručně s poznámkou |
 
-#### 0.05 – Profil napříč časopisy a slučování modelek
+#### 0.04 – Profil napříč časopisy a slučování modelek
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.05.001 | **Kariéra v profilu:** čísla a časová osa modelky barvou časopisu, souhrn „Pet of the Month 1985 · Playmate 1987“ | profil modelky ze dvou časopisů ukáže obě čísla |
-| 0.05.002 | **Přezdívky [schéma]:** víc jmen u modelky (jiné jméno v jiném časopise) | přezdívka se uloží a je v exportu |
-| 0.05.003 | **Hledání podle přezdívek** v hledání, našeptávači, `[[odkazech]]` a zásobníku odkazů | modelka se najde pod kterýmkoli jménem |
-| 0.05.004 | **Kandidáti na sloučení:** úkol Údržby ze stejného jména / přezdívky a data narození | na vzorku žádný falešný kandidát se stejným jménem a jiným datem |
-| 0.05.005 | **Vizuální podobnost v návrhu:** CLIP a otisky (PD 1.32–1.33) jako důvod a pořadí kandidátů | návrh ukáže důvody |
-| 0.05.006 | **Sloučení:** rozdíl nanečisto, převod alb, fotek, hodnocení a porovnání, Vrátit (PD 1.51.1); nikdy automaticky | sloučení a Vrátit vrátí obě modelky beze ztráty (test) |
+| 0.04.001 | **Kariéra v profilu:** čísla a časová osa modelky barvou časopisu, souhrn „Pet of the Month 1985 · Playmate 1987“ | profil modelky ze dvou časopisů ukáže obě čísla |
+| 0.04.002 | **Přezdívky [schéma]:** víc jmen u modelky (jiné jméno v jiném časopise) | přezdívka se uloží a je v exportu |
+| 0.04.003 | **Hledání podle přezdívek** v hledání, našeptávači, `[[odkazech]]` a zásobníku odkazů | modelka se najde pod kterýmkoli jménem |
+| 0.04.004 | **Kandidáti na sloučení:** úkol Údržby ze stejného jména / přezdívky a data narození | na vzorku žádný falešný kandidát se stejným jménem a jiným datem |
+| 0.04.005 | **Vizuální podobnost v návrhu:** CLIP a otisky (PD 1.32–1.33) jako důvod a pořadí kandidátů | návrh ukáže důvody |
+| 0.04.006 | **Sloučení:** rozdíl nanečisto, převod alb, fotek, hodnocení a porovnání, Vrátit (PD 1.51.1); nikdy automaticky | sloučení a Vrátit vrátí obě modelky beze ztráty (test) |
 
-#### 0.06 – Fotky z PDF **[rozhodnutí před 0.06.001]**
+#### 0.05 – Fotky z PDF **[rozhodnutí před 0.05.001]**
 
 **Rozhodnout předem:** fotky jsou dnes jen odkazy na Google Disk (Nedělat: místní kopie v plné velikosti). Stránky
 z PDF buď nahrát na Disk (pravidlo zůstává), nebo nový druh zdroje „soubor na disku“ (změna pravidla).
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.06.001 | **Otevřít PDF:** náhledy stránek (pdf.js v rozhraní, bez nové závislosti v Go), listování a lupa | 200stránkové číslo se otevře do 5 s |
-| 0.06.002 | **Označit stránky:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
-| 0.06.003 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |
-| 0.06.004 | **Uložení stránek** podle rozhodnutí (export do složky pro Disk, nebo místní zdroj se zálohou a kontrolou souborů PD 1.42) | fotky se zobrazí i po restartu |
-| 0.06.005 | **Návrh rozdělení:** kde začíná pictorial a kde je centerfold (rozložení stránky, obsah fotek PD 1.24) | návrh sedí na 3 zkušebních číslech |
+| 0.05.001 | **Otevřít PDF:** náhledy stránek (pdf.js v rozhraní, bez nové závislosti v Go), listování a lupa | 200stránkové číslo se otevře do 5 s |
+| 0.05.002 | **Označit stránky:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
+| 0.05.003 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |
+| 0.05.004 | **Uložení stránek** podle rozhodnutí (export do složky pro Disk, nebo místní zdroj se zálohou a kontrolou souborů PD 1.42) | fotky se zobrazí i po restartu |
+| 0.05.005 | **Návrh rozdělení:** kde začíná pictorial a kde je centerfold (rozložení stránky, obsah fotek PD 1.24) | návrh sedí na 3 zkušebních číslech |
 
-#### 0.07 – Údaje z webu pro další časopisy
-
-| Verze | Krok | Hotovo, když |
-|---|---|---|
-| 0.07.001 | **Penthouse Pets z Wikipedie:** seznam po letech jako návrhy (jen na kliknutí, s potvrzením) | ročník Penthouse ukáže, kdo byla Pet of the Month |
-| 0.07.002 | **Hustler Honeys** stejně | totéž pro Hustler |
-| 0.07.003 | **Wikidata:** ocenění Pet / Honey jako návrhy údajů modelky | návrh se objeví ve frontě Údržby |
-| 0.07.004 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
-| 0.07.005 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
-
-#### 0.08 – Vkus, odhady a Statistiky napříč časopisy
+#### 0.06 – Údaje z webu pro další časopisy
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.08.001 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
-| 0.08.002 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
-| 0.08.003 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
-| 0.08.004 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
-| 0.08.005 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
-| 0.08.006 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
+| 0.06.001 | **Penthouse Pets z Wikipedie:** seznam po letech jako návrhy (jen na kliknutí, s potvrzením) | ročník Penthouse ukáže, kdo byla Pet of the Month |
+| 0.06.002 | **Hustler Honeys** stejně | totéž pro Hustler |
+| 0.06.003 | **Wikidata:** ocenění Pet / Honey jako návrhy údajů modelky | návrh se objeví ve frontě Údržby |
+| 0.06.004 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
+| 0.06.005 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
 
-#### 0.09 – Dotažení a beta
+#### 0.07 – Vkus, odhady a Statistiky napříč časopisy
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.09.001 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
-| 0.09.002 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
-| 0.09.003 | **Ikona programu** | nová ikona v nabídce a panelu |
-| 0.09.004 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
-| 0.09.005+ | **Beta:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
+| 0.07.001 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
+| 0.07.002 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
+| 0.07.003 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
+| 0.07.004 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
+| 0.07.005 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
+| 0.07.006 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
+
+#### 0.08 – Dotažení a beta
+
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.08.001 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
+| 0.08.002 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
+| 0.08.003 | **Ikona programu** | nová ikona v nabídce a panelu |
+| 0.08.004 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
+| 0.08.005+ | **Beta:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
 
 ---
 

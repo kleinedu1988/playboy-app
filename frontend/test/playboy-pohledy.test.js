@@ -1,5 +1,5 @@
 // Pohledy Playboye beze změny (0.02.007): čísla jiných časopisů do nich nepatří, dokud nebudou pohledy podle
-// časopisu (0.03). Kalendář, Obálky, Mapa čísel, sousední čísla a speciály filtrují podle řady „US“ / „CZ“;
+// časopisu (0.02.016–0.02.018). Kalendář, Obálky, Mapa čísel, sousední čísla a speciály filtrují podle řady „US“ / „CZ“;
 // stěna Centerfoldů, kapesní katalog a dokončené ročníky jen čísla Playboye.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

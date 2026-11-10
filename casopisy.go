@@ -3,7 +3,8 @@ package main
 // Časopisy (Pinup Katalog 0.02.003, ROADMAP etapa U): tabulka `casopisy` (úprava schématu č. 17). Klíč je
 // dvoupísmenná zkratka, která se píše na konec klíče čísla („1985-09@PH“, hledani.RozdelitCasopis); Playboy (PB)
 // je výchozí a do klíče se nepíše. Edice = země vydání, ve kterých časopis vycházel; první je výchozí (bez přípony).
-// Názvy „modelky měsíce“ a „roku“ použijí texty rozhraní od 0.04. Správa (přidat, upravit) přijde v 0.02.009.
+// Názvy „modelky měsíce“ a „roku“ jsou tituly modelky (Pet of the Month, 0.02.009–0.02.012); správa časopisů
+// (UlozitCasopis, SmazatCasopis) je od 0.02.013.
 
 import (
 	"fmt"

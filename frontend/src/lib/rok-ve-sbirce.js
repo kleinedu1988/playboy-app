@@ -30,7 +30,7 @@ export function dokonceneRocniky(modelky, rok) {
     for (const m of modelky) {
         for (const c of m.centerfoldy || []) {
             const v = rozlozitVydani(c);
-            // Jen Playboy: řady čísel jiných časopisů program zná až od 0.03, „celý ročník“ by u nich nesouhlasil
+            // Jen Playboy: řady čísel jiných časopisů program zná až od 0.02.015, „celý ročník“ by u nich nesouhlasil
             if (!v || v.casopis !== 'PB' || !/^\d\d$/.test(v.mesic)) continue;
             const klic = `${v.edice}|${v.rok}`;
             if (!rocniky.has(klic)) rocniky.set(klic, new Map());

@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.005 – Volba „Časopis a edice“ (Hotovo, když: Penthouse 09/1985)
+
+- [ ] **Kritérium hotovo:** u modelky přidej album typu Centerfold, Září 1985, **Penthouse US**, s odkazem na fotku;
+      uloží se a v profilu se jmenuje „Září 1985 · Penthouse“.
+- [ ] Cover Penthouse 09/1985 jde přidat; v Kalendáři (Playboy US) se **neukáže**.
+- [ ] Pictorial přiřazený k Penthouse UK 03/1986 se uloží; speciál „Nový speciál…“ pro Penthouse vznikne.
+- [ ] Další nové album nabídne Penthouse US (pamatuje se), Playboy alba se zadávají jako dřív.
+- [ ] Okno alba a coveru: řádek měsíc · rok · časopis se vejde i v úzkém okně.
+
 ## 0.02.004 – Názvy čísel podle časopisu
 
 - [ ] Odkaz `[[09/1985@PH]]` v poznámce teď ukazuje „Září 1985 · Penthouse“ (dřív „· PH“).

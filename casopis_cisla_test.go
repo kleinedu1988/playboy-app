@@ -143,3 +143,16 @@ func TestTabulkaCasopisu(t *testing.T) {
 		t.Error("centerfold Hustleru se má uložit")
 	}
 }
+
+// Pictorial jde přiřadit k číslu jiného časopisu, jen když časopis a edici zná tabulka (0.02.005)
+func TestPictorialJinehoCasopisu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Pet", Tetovani: -1, Piercing: -1})
+	id := a.GetModelky("")[0].ID
+	a.AddBulkPhotos(id, "Pláž", "Pictorial", "https://drive.google.com/file/d/PPPPPPPPPPPPPPPPPPPPPPPPPPPPP/view")
+	for vydani, cekano := range map[string]bool{"1985-09@PH": true, "1986-03-UK@PH": true, "1985@PH": true, "1985-09@XY": false, "1985-09-UK@HU": false, "1985-09": true} {
+		if a.SetVydaniAlba(id, "Pláž", "Pictorial", vydani) != cekano {
+			t.Errorf("SetVydaniAlba(%q) = %v", vydani, !cekano)
+		}
+	}
+}

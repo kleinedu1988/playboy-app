@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rozlozitVydani, slozitVydani, nazevVydani, nazevAlba, nastavitCasopisy, nazevCasopisu, nazevRady, paskaCisla, prevestVysku, prevestVahu, rozlozitMiry } from '../src/lib/format.js';
+import { rozlozitVydani, slozitVydani, nazevVydani, nazevAlba, nastavitCasopisy, nazevCasopisu, nazevRady, paskaCisla, moznostiRad, prevestVysku, prevestVahu, rozlozitMiry } from '../src/lib/format.js';
 
 test('vydání jiného časopisu: klíč s @, řada a zpětné složení (0.02.002)', () => {
     assert.deepEqual(rozlozitVydani('1985-09@PH'), { rok: '1985', mesic: '09', edice: 'PH/US', zeme: 'US', casopis: 'PH' });
@@ -28,6 +28,13 @@ test('vydání jiného časopisu: klíč s @, řada a zpětné složení (0.02.0
     assert.equal(nazevRady('CZ'), 'CZ');
     assert.equal(nazevRady('US'), 'US');
     assert.equal(nazevCasopisu('XY'), 'XY');
+    // Volby „Časopis a edice“ (0.02.005): v pořadí časopisů a jejich edic, hodnota je řada
+    nastavitCasopisy([{ klic: 'PB', nazev: 'Playboy', edice: ['US', 'CZ'] }, { klic: 'PH', nazev: 'Penthouse', edice: ['US', 'UK'] }, { klic: 'HU', nazev: 'Hustler', edice: [] }]);
+    assert.deepEqual(moznostiRad(), [{ hodnota: 'US', nazev: 'Playboy US' }, { hodnota: 'CZ', nazev: 'Playboy CZ' },
+        { hodnota: 'PH/US', nazev: 'Penthouse US' }, { hodnota: 'PH/UK', nazev: 'Penthouse UK' }, { hodnota: 'HU/US', nazev: 'Hustler US' }]);
+    for (const { hodnota } of moznostiRad()) assert.equal(rozlozitVydani(slozitVydani('1985', '09', hodnota)).edice, hodnota);
+    nastavitCasopisy([]);
+    assert.deepEqual(moznostiRad().map(m => m.hodnota), ['US', 'CZ']);
     // Playboy beze změny
     assert.equal(nazevVydani('2009-11'), 'Listopad 2009');
     assert.equal(nazevVydani('2009-11-CZ'), 'Listopad 2009 · CZ');

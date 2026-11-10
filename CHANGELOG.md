@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.005] – 2026-11-10
+
+### Přidáno
+- **Volba „Časopis a edice“** v okně alba a coveru (dřív „Edice“): Playboy US, Playboy CZ, Penthouse US,
+  Penthouse UK, Hustler US – podle tabulky časopisů (`app/rady.js`, `moznostiRad` ve `format.js`). Poprvé tak jde
+  zadat číslo jiného časopisu, např. centerfold Penthouse 09/1985 (Pet of the Month). Speciály fungují i pro jiné
+  časopisy. Nové album nebo cover nabídne naposledy uložený časopis a edici.
+
+### Změněno
+- Pictorial jde přiřadit k číslu jiného časopisu jen s časopisem a edicí z tabulky (`SetVydaniAlba`).
+- Třetí sloupec řádku „měsíc · rok · edice“ je širší, aby se vešel název časopisu.
+
 ## [0.02.004] – 2026-11-10
 
 ### Přidáno

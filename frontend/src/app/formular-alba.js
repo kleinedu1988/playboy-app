@@ -11,6 +11,7 @@ import { albumModal } from './okno';
 import { otevritDeleteModal } from './formular-modelky';
 import { pripojitVyberSpecialu } from './specialy';
 import { sledovatOdkazy } from './kontrola-odkazu';
+import { nastavitRadu, vychoziRada } from './rady';
 
 // Kontrola odkazů okna alba (které fotky už ve sbírce jsou); ulozeni.js z ní bere, co vložit
 export let kontrolaAlba = null;
@@ -210,7 +211,7 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     if (moznosti.typ) typ = moznosti.typ;
     const vydani = rozlozitVydani(album ? (album.vydani || (album.typ === 'Centerfold' ? album.album : '')) : moznosti.vydani);
     document.getElementById('inputAlbumRok').value = vydani?.rok || '';
-    document.getElementById('selectAlbumEdice').value = vydani?.edice || stav.kalendarEdice;
+    nastavitRadu(document.getElementById('selectAlbumEdice'), vydani?.edice || vychoziRada());
     cisloAlba = vydani?.mesic?.startsWith('S') ? 'special' : 'mesic';
     obnovitSpecialyAlba(cisloAlba === 'special' ? vydani.mesic : '');
     document.getElementById('selectAlbumMesic').value = cisloAlba === 'mesic' ? vydani?.mesic || '' : '';
@@ -242,7 +243,7 @@ export function predvyplnitVydaniAlba(vydani) {
     cisloAlba = v.mesic.startsWith('S') ? 'special' : 'mesic';
     if (kdeAlba !== 'casopis') nastavitTypAlba(druhyAlba('casopis').some(([h]) => h === typ) ? typ : 'Pictorial', 'casopis');
     document.getElementById('inputAlbumRok').value = v.rok;
-    document.getElementById('selectAlbumEdice').value = v.edice;
+    nastavitRadu(document.getElementById('selectAlbumEdice'), v.edice);
     obnovitSpecialyAlba(cisloAlba === 'special' ? v.mesic : '');
     document.getElementById('selectAlbumMesic').value = cisloAlba === 'mesic' ? v.mesic : '';
     prepnoutPoleAlba();

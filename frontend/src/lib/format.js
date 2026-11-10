@@ -100,6 +100,13 @@ export function nazevRady(rada) {
     return `${nazevCasopisu(casopis)}${zeme !== VYCHOZI_EDICE ? ` ${zeme}` : ''}`;
 }
 
+// Volby „Časopis a edice“ do okna alba a coveru: [{ hodnota: řada, nazev }] v pořadí časopisů a jejich edic
+// („Playboy US“, „Playboy CZ“, „Penthouse US“…); bez načtených časopisů jen edice Playboye
+export function moznostiRad() {
+    const seznam = casopisy.size ? [...casopisy.values()] : [{ klic: VYCHOZI_CASOPIS, nazev: 'Playboy', edice: EDICE }];
+    return seznam.flatMap(c => (c.edice?.length ? c.edice : [VYCHOZI_EDICE]).map(zeme => ({ hodnota: radaVydani(zeme, c.klic), nazev: `${c.nazev} ${zeme}` })));
+}
+
 // Přípona časopisu a edice k názvu čísla: '' u Playboye US, „ · CZ“, u jiného časopisu „ · Penthouse“ /
 // „ · Penthouse UK“; kratce (páska) se zkratkou „ · PH“ / „ · PH UK“
 function priponaRady(v, kratce = false) {

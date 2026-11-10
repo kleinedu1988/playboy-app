@@ -3452,7 +3452,7 @@ body.razeni .photo-item {
 
 /* Řádek formuláře se třemi poli: měsíc, rok, edice */
 .form-row-3 {
-    grid-template-columns: 1.4fr 1fr 80px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1.1fr);
 }
 
 /* Když se typ obsahu nevybírá, fotograf zabere celý řádek */
@@ -6058,7 +6058,7 @@ textarea {
 }
 
 .cislo-okno .form-row-3 {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) 80px;
+    grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1.1fr);
 }
 
 .cislo-okno .album-pole {

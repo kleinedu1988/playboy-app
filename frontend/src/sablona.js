@@ -485,7 +485,7 @@ export const SABLONA_OKNA = `
               <input type="number" id="inputAlbumRok" min="1953" max="2100" placeholder="RRRR" />
             </div>
             <div class="form-group">
-              <label for="selectAlbumEdice">Edice</label>
+              <label for="selectAlbumEdice">Časopis a edice</label>
               <select id="selectAlbumEdice">${EDICE.map(e => `<option>${e}</option>`).join('')}</select>
             </div>
           </div>
@@ -561,7 +561,7 @@ export const SABLONA_OKNA = `
               <input type="number" id="inputCoverRok" min="1953" max="2100" placeholder="RRRR" required />
             </div>
             <div class="form-group">
-              <label for="selectCoverEdice">Edice</label>
+              <label for="selectCoverEdice">Časopis a edice</label>
               <select id="selectCoverEdice">${EDICE.map(e => `<option>${e}</option>`).join('')}</select>
             </div>
           </div>

@@ -349,7 +349,7 @@ func (a *App) ZrusitPoradiAlba(modelkaID int, album, typ string) bool {
 
 // Přiřazení alba (typicky pictorialu) k vydání časopisu; prázdné vydání přiřazení ruší
 func (a *App) SetVydaniAlba(modelkaID int, album, typ, vydani string) bool {
-	if vydani != "" && (!vzorVydaniAlba.MatchString(vydani) || jeOnlineTyp(typ)) {
+	if vydani != "" && (!vzorVydaniAlba.MatchString(vydani) || jeOnlineTyp(typ) || !a.znamaRada(edicePodleVydani(vydani))) {
 		return false
 	}
 	_, err := a.pripraveny("UPDATE alba SET vydani = ? WHERE COALESCE(modelka_id, 0) = ? AND album = ? AND typ = ? AND typ NOT IN ('Centerfold', 'Cover', ?, ?, ?)").Exec(

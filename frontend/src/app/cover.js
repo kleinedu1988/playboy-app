@@ -18,6 +18,7 @@ import { zavritOkno } from './ulozeni';
 import { VELIKOST_PLAKATU_MALA, adresyOdkazu } from './obrazky';
 import { jeVidet, otevreneOkno } from '../ui/dom';
 import { naCss } from '../ui/vzhled';
+import { nastavitRadu, vychoziRada, zapamatovatRadu } from './rady';
 
 // Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -91,8 +92,8 @@ export function otevritCoverModal(polozka = null, predvyplnitVydani = '') {
 
     const vydani = rozlozitVydani(polozka ? polozka.album : predvyplnitVydani);
     if (vydani?.mesic) document.getElementById('inputCoverRok').value = vydani.rok;
-    // Bez předvyplněného vydání se nabídne edice zobrazená v kalendáři
-    document.getElementById('selectCoverEdice').value = vydani?.edice || stav.kalendarEdice;
+    // Bez předvyplněného vydání naposledy uložený časopis a edice, jinak edice zobrazená v kalendáři
+    nastavitRadu(document.getElementById('selectCoverEdice'), vydani?.edice || vychoziRada());
     const special = Boolean(vydani?.mesic?.startsWith('S'));
     obnovitSpecialyCoveru(special ? vydani.mesic : '');
     document.getElementById('selectCoverMesic').value = special ? '' : vydani?.mesic || '';
@@ -127,6 +128,7 @@ export function pripravit() {
     document.getElementById('coverForm').onsubmit = jednou(async (e) => {
         e.preventDefault();
         const vydani = slozitVydani(document.getElementById('inputCoverRok').value, vyberCislaCoveru().value, document.getElementById('selectCoverEdice').value);
+        zapamatovatRadu(document.getElementById('selectCoverEdice').value);
         const odkaz = document.getElementById('inputCoverLink').value;
         if (jeOdkazNaSlozku(odkaz)) return;
 

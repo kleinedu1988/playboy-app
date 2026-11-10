@@ -22,6 +22,7 @@ import { neniDuplicitni } from './vyrez';
 import { deleteModal, otevritModelModal, poleModelky, potvrdit, ukazatZalozku, zameritPole, zavritDeleteModal } from './formular-modelky';
 import { kontrolaAlba, obnovitNahledAlba, vybratNeboZalozitModelku } from './formular-alba';
 import { jeVidet, otevreneOkno } from '../ui/dom';
+import { zapamatovatRadu } from './rady';
 
 // Výběr nebo zadání jedné hodnoty s našeptáváním; vrací napsaný text, nebo null po zrušení
 export const pickModal = document.getElementById('pickModal');
@@ -249,6 +250,7 @@ export function pripravit() {
         }
         const modelka = stav.modelkaAlba;
         const vydani = slozitVydani(rok, mesic, document.getElementById('selectAlbumEdice').value);
+        if (vydani) zapamatovatRadu(document.getElementById('selectAlbumEdice').value);
         const album = typ === 'Centerfold' ? vydani : document.getElementById('inputAlbumName').value.trim();
 
         if (stav.editovaneAlbum && !await UpdateAlbum(modelka.id, stav.editovaneAlbum.album, stav.editovaneAlbum.typ, album, typ)) {

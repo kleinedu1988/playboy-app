@@ -2,6 +2,7 @@
 import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
 import { otevritKapesniKatalog } from './kapesni-katalog';
 import * as novaVerze from './nova-verze';
+import { otevritVzhled } from './vzhled';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
 import { zapomenoutProfilovkyUvodu } from '../ui/uvod';
@@ -324,6 +325,7 @@ export function polozkySpravy() {
         { text: 'Náhodná modelka', akce: nahodnaModelka },
         { text: 'Dnešní výběr (nejlepší ze 4)…', akce: otevritDnesniVyber },
         { text: `Interval slideshow (${stav.intervalSlideshow / 1000} s)…`, akce: zmenitInterval },
+        { text: 'Vzhled…', akce: otevritVzhled },
         { nadpis: 'Soubory a mezipaměť' },
         ...nahledyPozadi.polozkyNabidky(),
         ...obsahFotek.polozkyNabidky(),

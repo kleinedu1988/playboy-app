@@ -9,6 +9,7 @@ import { DIMENZE_MODELEK, textyModelky } from '../lib/dimenze';
 import { vsechnyModelky } from './mezipamet';
 import { searchInput } from './prvky';
 import { stav } from './stav';
+import { naCss } from '../ui/vzhled';
 
 const KLIC_ULOZENI = 'filtrModelek';
 let podminky = []; // { klic, negace, hodnoty[], vyraz }
@@ -163,8 +164,8 @@ function umistit() {
     }
     const r = (kotvaPanelu?.isConnected ? kotvaPanelu : document.getElementById('volbyPrehledu')).getBoundingClientRect();
     const sirka = panel.offsetWidth;
-    panel.style.left = `${Math.max(8, Math.min(r.right - sirka, window.innerWidth - sirka - 8))}px`;
-    panel.style.top = `${r.bottom + 8}px`;
+    panel.style.left = `${naCss(Math.max(8, Math.min(r.right - sirka, window.innerWidth - sirka - 8)))}px`;
+    panel.style.top = `${naCss(r.bottom + 8)}px`;
 }
 
 async function vykreslitPanel() {

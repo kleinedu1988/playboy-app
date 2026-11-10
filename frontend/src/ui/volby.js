@@ -5,6 +5,7 @@
 import { esc } from '../lib/format';
 import { otevritKontextovouNabidku, zavritKontextovouNabidku } from './nabidka';
 import { otevritPanelFiltru, pocetFiltru, stitkyFiltru, zrusitFiltrModelek } from '../app/filtr-modelek';
+import { naCss } from './vzhled';
 
 const POPISKY = {
     razeniGalerie: 'Řazení',
@@ -528,8 +529,8 @@ function umistitPanel() {
     const r = lista.getBoundingClientRect();
     const sirka = panelFiltru.offsetWidth;
     const levo = Math.min(Math.max(8, r.left + r.width / 2 - sirka / 2), window.innerWidth - sirka - 8);
-    panelFiltru.style.left = `${levo}px`;
-    panelFiltru.style.top = `${r.bottom + 10}px`;
+    panelFiltru.style.left = `${naCss(levo)}px`;
+    panelFiltru.style.top = `${naCss(r.bottom + 10)}px`;
 }
 
 function nastavitPocet(pocet = '') {

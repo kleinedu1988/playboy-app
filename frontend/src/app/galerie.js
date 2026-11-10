@@ -42,6 +42,13 @@ export function htmlSrdicek(hodnoceni, atribut, tabem = true) {
 }
 
 // Srdíčka modelky po půlkách; na kartě (tabem = false) bez zastávky Tabu, hodnotí zaměřená karta klávesami
+// Volitelné údaje na kartě (⋯ › Vzhled): rok prvního čísla a počet fotek; ukazuje je jen style.css podle voleb
+const rokPrvnihoCisla = m => Math.min(...[...(m.vydani || []), ...(m.centerfoldy || []), ...(m.obalky || [])].map(v => parseInt(String(v).slice(0, 4))).filter(r => r > 1900)) || 0;
+function htmlUdajuKarty(m) {
+    const rok = rokPrvnihoCisla(m);
+    return `<small class="karta-udaje"><span class="ku-rok">${Number.isFinite(rok) && rok ? rok : ''}</span><span class="ku-fotek">${sklonovat(m.pocetFotek || 0, 'fotka', 'fotky', 'fotek')}</span></small>`;
+}
+
 export function htmlSrdicka(modelka, tabem = true) {
     return htmlSrdicekModelky(modelka.hodnoceni, `data-hodnoceni="${modelka.id}"`, { tabem, popis: `Hodnocení – ${esc(modelka.jmeno)}` });
 }
@@ -281,7 +288,7 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
                 ${htmlOdhadu(m)}
             </div>
             <div class="card-info">
-                <h3 title="${esc(m.jmeno)}"><span class="jmeno-karta">${esc(m.jmeno)}</span></h3>
+                <h3 title="${esc(m.jmeno)}"><span class="jmeno-karta">${esc(m.jmeno)}</span>${htmlUdajuKarty(m)}</h3>
             </div>
         </div>
     `;

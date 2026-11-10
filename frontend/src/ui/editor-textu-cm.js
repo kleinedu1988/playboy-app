@@ -10,6 +10,7 @@ import { Language, LanguageSupport, defineLanguageFacet, syntaxTree } from '@cod
 import { Strikethrough, parser } from '@lezer/markdown';
 import { esc, formatMarkdown, pocetSlovAZnaku, sklonovat } from '../lib/format';
 import { navrhyOdkazu } from '../lib/odkazy';
+import { naCss } from './vzhled';
 
 // Jen parser markdownu (bez @codemirror/lang-markdown, který s sebou táhne HTML, CSS a JavaScript pro bloky kódu)
 const markdown = () => new LanguageSupport(new Language(defineLanguageFacet(), parser.configure([Strikethrough]), [], 'markdown'));
@@ -363,8 +364,8 @@ async function zkontrolovatOdkaz(view) {
     const souradnice = view.coordsAtPos(od - 2);
     if (souradnice) {
         const b = naseptavac.getBoundingClientRect();
-        naseptavac.style.left = `${Math.max(8, Math.min(souradnice.left, window.innerWidth - b.width - 8))}px`;
-        naseptavac.style.top = `${souradnice.bottom + b.height + 4 > window.innerHeight ? souradnice.top - b.height - 4 : souradnice.bottom + 4}px`;
+        naseptavac.style.left = `${naCss(Math.max(8, Math.min(souradnice.left, window.innerWidth - b.width - 8)))}px`;
+        naseptavac.style.top = `${naCss(souradnice.bottom + b.height + 4 > window.innerHeight ? souradnice.top - b.height - 4 : souradnice.bottom + 4)}px`;
     }
 }
 

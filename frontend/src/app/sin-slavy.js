@@ -21,6 +21,7 @@ import { htmlSrdicka, htmlTrendu } from './galerie';
 import { jeVidet, nastavitHtml, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna, htmlPrazdnaMala } from '../ui/prazdno';
 import { htmlPasu } from '../ui/pas';
+import { naCss } from '../ui/vzhled';
 
 let kontejner = null;
 let data = null;
@@ -832,8 +833,8 @@ function ukazatBublinu(prvek) {
     const r = prvek.getBoundingClientRect();
     const b = bublina.getBoundingClientRect();
     const nahore = r.top - b.height - 10 >= 8;
-    bublina.style.top = `${nahore ? r.top - b.height - 10 : r.bottom + 10}px`;
-    bublina.style.left = `${Math.max(8, Math.min(window.innerWidth - b.width - 8, r.left + r.width / 2 - b.width / 2))}px`;
+    bublina.style.top = `${naCss(nahore ? r.top - b.height - 10 : r.bottom + 10)}px`;
+    bublina.style.left = `${naCss(Math.max(8, Math.min(window.innerWidth - b.width - 8, r.left + r.width / 2 - b.width / 2)))}px`;
 }
 const skrytBublinu = () => bublina?.classList.remove('viditelna');
 

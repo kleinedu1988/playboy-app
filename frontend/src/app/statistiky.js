@@ -18,6 +18,7 @@ import { useky, vyhlazenaRada } from '../lib/krivky';
 import { bodVMnohouhelniku, vypocitatMapuSbirky } from '../lib/mapa-sbirky';
 import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
+import { naCss } from '../ui/vzhled';
 
 const BARVA = '#d81b60';
 // Výroční přehled (app/rok-ve-sbirce.js poslouchá data-rok-ve-sbirce): v heru vedle akcí postřehu
@@ -956,8 +957,8 @@ export function pripravit(stats) {
         bublina.classList.toggle('siroka', 'tipSiroky' in cil.dataset);
         const okraj = bublina.offsetParent.getBoundingClientRect();
         const x = Math.min(e.clientX - okraj.left + 14, okraj.width - bublina.offsetWidth - 8);
-        bublina.style.left = `${x}px`;
-        bublina.style.top = `${e.clientY - okraj.top + 16}px`;
+        bublina.style.left = `${naCss(x)}px`;
+        bublina.style.top = `${naCss(e.clientY - okraj.top + 16)}px`;
     });
     stats.addEventListener('mouseleave', () => stats.querySelectorAll('.graf-bublina').forEach(b => b.classList.add('hidden')));
 

@@ -12,6 +12,7 @@ import { otevritFotografa, otevritVydani } from './vydani';
 import { otevritClanek } from './clanky';
 import { hledatHodnotu } from './galerie';
 import { nastavitZdrojOdkazu } from '../ui/editor-textu';
+import { naCss } from '../ui/vzhled';
 
 /** @type {Promise<string[]> | null} */
 let fotografove = null;
@@ -76,8 +77,8 @@ async function ukazatVizitku(odkaz) {
     vizitka.classList.remove('hidden');
     const r = odkaz.getBoundingClientRect();
     const b = vizitka.getBoundingClientRect();
-    vizitka.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - b.width - 8))}px`;
-    vizitka.style.top = `${r.bottom + 6 + b.height > window.innerHeight ? Math.max(8, r.top - 6 - b.height) : r.bottom + 6}px`;
+    vizitka.style.left = `${naCss(Math.max(8, Math.min(r.left, window.innerWidth - b.width - 8)))}px`;
+    vizitka.style.top = `${naCss(r.bottom + 6 + b.height > window.innerHeight ? Math.max(8, r.top - 6 - b.height) : r.bottom + 6)}px`;
 }
 
 // ——— Zmiňováno v… ———

@@ -7,6 +7,22 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.49.0] – 2026-11-10
+
+### Přidáno
+- **Okno Vzhled** (⋯ › Vzhled…; `frontend/src/ui/vzhled.js`, `frontend/src/app/vzhled.js`): volby se projeví hned
+  a tlačítko Výchozí je vrátí. Ukládají se v okně (localStorage) jako ostatní volby zobrazení, ne do sbírky.
+- **Přiblížení rozhraní** 90–150 %: posuvník v okně Vzhled, `Ctrl` + `+` / `-` (na české klávesnici numerické)
+  a `Ctrl` + `0`. Je to CSS `zoom` na celé stránce; výšky oken počítají s přiblížením (`--vh`, `--vw` místo
+  `100vh`, `100vw`) a plovoucí nabídky a bubliny umístěné podle myši se přepočítají (`naCss`).
+- **Hustota** Pohodlná / Kompaktní: menší okraje mřížek a nižší řádky Údržby a tabulek.
+- **Velikost karet** Malé / Střední / Velké zvlášť pro karty modelek, mozaiku Všech fotek a Centerfoldy.
+- **Co ukazuje karta modelky**: srdíčka (lze skrýt), rok prvního čísla a počet fotek vedle jména.
+- `K-VYZKOUSENI.md`: seznam toho, co je potřeba vyzkoušet v programu (od 1.45).
+
+### Známé
+- Kalendář velikost karet zatím nemá a okno Vzhled nejde otevřít z `Ctrl+K` (hledání umí jen filtry).
+
 ## [1.48.0] – 2026-11-10
 
 ### Přidáno

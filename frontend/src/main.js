@@ -1,4 +1,5 @@
 import './style.css';
+import * as vzhledVolby from './ui/vzhled';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import { oznamit } from './ui/oznameni';
 import { GetOblibenost, GetSezona, GetStavUceniTagu, GetVerze, MaZamek, ObnovitOkno, Predpripravit, StavDatabaze } from './app/backend';
@@ -41,6 +42,7 @@ import * as casopis from './app/casopis';
 import * as zdravi from './app/zdravi';
 import * as rocnikWiki from './app/rocnik-wiki';
 import * as rokVeSbirce from './app/rok-ve-sbirce';
+import * as vzhledOkno from './app/vzhled';
 import * as statistiky from './app/statistiky';
 import * as oblibenost from './app/oblibenost';
 import * as zkratky from './app/zkratky';
@@ -54,9 +56,12 @@ import * as obsahFotek from './app/obsah-fotek';
 import { nabidnoutPoSpusteni as nabidnoutDnesniVyber } from './app/dnesni-vyber';
 import { naplanovatPoStartu as hlidatNovouVerzi } from './app/nova-verze';
 
+// Uložený vzhled (přiblížení, hustota, karty) dřív, než se cokoli vykreslí
+vzhledVolby.pripravit();
 // Obsluha událostí se registruje v pořadí, v jakém byla v původním souboru. Přehled zkratek je první:
 // když je otevřený, jeho obsluha kláves zastaví ostatní
 zkratky.pripravit();
+vzhledOkno.pripravit();
 obrazky.pripravit();
 galerie.pripravit();
 hledaniCipy.pripravit();

@@ -22,6 +22,10 @@
     --text-muted: #9a9a9e;
     --border-color: #2a2a30;
     color-scheme: dark;
+    /* Výška a šířka okna v jednotkách stránky: při přiblížení (zoom na kořeni, ui/vzhled.js) by 100vh a 100vw
+       vyšly o přiblížení větší a okna by přetekla; proto se všude místo nich používají tyto */
+    --vh: calc(100vh / var(--priblizeni, 1));
+    --vw: calc(100vw / var(--priblizeni, 1));
 }
 
 /* Posuvníky: tenký průsvitný proužek bez dráhy, po najetí myší zesílí a zesvětlí, při tažení růžový.
@@ -728,8 +732,8 @@ main {
 
 .gallery-grid {
     display: grid;
-    /* Karty vyplní celou šířku (aspoň 200 px); poměr stran je pevný, nepřizpůsobuje se fotce */
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    /* Karty vyplní celou šířku (aspoň 200 px, velikost v ⋯ › Vzhled); poměr stran je pevný, nepřizpůsobuje se fotce */
+    grid-template-columns: repeat(auto-fill, minmax(var(--karta-modelky, 200px), 1fr));
     gap: 24px;
     align-items: start;
 }
@@ -1018,7 +1022,7 @@ main {
     position: relative;
     display: flex;
     flex-direction: column;
-    width: min(860px, calc(100vw - 32px));
+    width: min(860px, calc(var(--vw) - 32px));
     max-height: calc(100% - 32px);
     padding: 0;
     overflow: hidden;
@@ -1378,7 +1382,7 @@ main {
 .modal-card.text-okno {
     display: flex;
     flex-direction: column;
-    width: min(760px, calc(100vw - 32px));
+    width: min(760px, calc(var(--vw) - 32px));
     max-height: calc(100% - 32px);
 }
 
@@ -1726,7 +1730,7 @@ input:focus, select:focus, textarea:focus {
    Okno má pevnou výšku, roluje jen sloupec s poli; tlačítka zůstávají dole */
 .modal-card.modelka-okno {
     position: relative;
-    width: min(940px, calc(100vw - 32px));
+    width: min(940px, calc(var(--vw) - 32px));
     height: min(680px, calc(100% - 32px));
     padding: 0;
     overflow: hidden;
@@ -3146,7 +3150,7 @@ button.tag:hover {
     align-items: stretch;
     gap: 2px;
     width: 52px;
-    max-height: calc(100vh - var(--pod-hlavickou, 92px) - 16px);
+    max-height: calc(var(--vh) - var(--pod-hlavickou, 92px) - 16px);
     margin: 0;
     padding: 6px 4px;
     border: none;
@@ -4109,8 +4113,8 @@ body.razeni .photo-item {
 .volby-panel {
     position: fixed;
     z-index: 2000;
-    width: min(440px, calc(100vw - 16px));
-    max-height: calc(100vh - 120px);
+    width: min(440px, calc(var(--vw) - 16px));
+    max-height: calc(var(--vh) - 120px);
     overflow-y: auto;
     padding: 16px 18px 12px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -5572,7 +5576,7 @@ textarea {
 #issueView:not(.hidden) #issueSide {
     position: sticky;
     top: 0;
-    max-height: calc(100vh - 150px);
+    max-height: calc(var(--vh) - 150px);
     overflow-y: auto;
     overscroll-behavior: contain;
 }
@@ -5946,7 +5950,7 @@ textarea {
 
 /* Okna coveru a čísla časopisu: rozložení okna alba (vlevo volby a náhled obálky, vpravo pole) */
 .modal-card.cislo-okno {
-    width: min(720px, calc(100vw - 32px));
+    width: min(720px, calc(var(--vw) - 32px));
     max-height: calc(100% - 32px);
     overflow-y: auto;
 }
@@ -6325,7 +6329,7 @@ textarea {
 .naseptavac {
     position: static;
     width: 100%;
-    max-height: min(520px, calc(100vh - 140px));
+    max-height: min(520px, calc(var(--vh) - 140px));
     overflow-y: auto;
     margin-top: 6px;
     padding: 6px 4px 6px;
@@ -6738,8 +6742,8 @@ textarea {
 }
 
 .nejlepsi-mozaika .photo-item {
-    flex: var(--pomer) 1 calc(var(--pomer) * 230px);
-    height: 230px;
+    flex: var(--pomer) 1 calc(var(--pomer) * var(--rada-fotek, 230px));
+    height: var(--rada-fotek, 230px);
     border-radius: 12px;
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
 }
@@ -6790,7 +6794,7 @@ textarea {
 /* ===== Stěna centerfoldů: tisk v lehkém rámu (pasparta), páska vydání přes rám, pod ním jméno a vydání ===== */
 .wall-mrizka {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(var(--karta-steny, 200px), 1fr));
     gap: 26px 20px;
     align-items: start;
 }
@@ -7449,7 +7453,7 @@ textarea {
 .context-menu {
     min-width: 230px;
     /* Dlouhá nabídka (⋯) se v nízkém okně roluje */
-    max-height: calc(100vh - 8px);
+    max-height: calc(var(--vh) - 8px);
     overflow-y: auto;
     padding: 8px;
     border-color: rgba(255, 255, 255, 0.12);
@@ -7970,7 +7974,7 @@ textarea {
 
 .zkratky {
     width: min(860px, 100%);
-    max-height: calc(100vh - 48px);
+    max-height: calc(var(--vh) - 48px);
     overflow-y: auto;
     padding: 22px 26px 16px;
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -9073,7 +9077,7 @@ textarea {
 .ud-bok {
     position: sticky;
     top: 8px;
-    max-height: calc(100vh - 120px);
+    max-height: calc(var(--vh) - 120px);
     overflow-y: auto;
     padding: 12px 10px;
     border: 1px solid var(--panel-okraj);
@@ -9430,7 +9434,7 @@ textarea {
 .uf-fronta-seznam {
     display: grid;
     gap: 2px;
-    max-height: calc(100vh - 200px);
+    max-height: calc(var(--vh) - 200px);
     overflow-y: auto;
 }
 
@@ -10427,7 +10431,7 @@ span.ud-chip {
 .ob-porovnani {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - var(--pod-hlavickou, 92px) - 72px);
+    height: calc(var(--vh) - var(--pod-hlavickou, 92px) - 72px);
     min-height: 420px;
 }
 
@@ -13841,7 +13845,7 @@ button.pas-kapsle:focus-visible {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    width: min(640px, calc(100vw - 32px));
+    width: min(640px, calc(var(--vw) - 32px));
     max-height: 70vh;
     padding: 14px 16px;
     overflow-y: auto;
@@ -14548,7 +14552,7 @@ button.pas-kapsle:focus-visible {
 }
 
 .vs-okno {
-    width: min(760px, calc(100vw - 48px));
+    width: min(760px, calc(var(--vw) - 48px));
     padding: 26px 30px;
     /* Stupně přesahují přes okraj okna (prostorový dojem) */
     overflow: visible;
@@ -15773,7 +15777,7 @@ body.rezim-vyberu #detailView .poster {
 .mapa-sekci {
     position: fixed;
     z-index: 3000;
-    width: min(880px, calc(100vw - 16px));
+    width: min(880px, calc(var(--vw) - 16px));
     padding: 18px 20px 12px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 20px;
@@ -16107,8 +16111,8 @@ body.rezim-vyberu #detailView .poster {
     z-index: 3000;
     display: flex;
     flex-direction: column;
-    width: min(640px, calc(100vw - 16px));
-    max-height: min(560px, calc(100vh - 120px));
+    width: min(640px, calc(var(--vw) - 16px));
+    max-height: min(560px, calc(var(--vh) - 120px));
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 18px;
     background-color: rgba(26, 26, 30, 0.94);
@@ -16929,8 +16933,8 @@ body.rezim-vyberu #detailView .poster {
 
 /* Okno volby sezóny (téma a délka): karty témat s koláží ukázkových fotek tématu, pod nimi délka */
 .vo-okno {
-    width: min(980px, calc(100vw - 48px));
-    max-height: calc(100vh - 48px);
+    width: min(980px, calc(var(--vw) - 48px));
+    max-height: calc(var(--vh) - 48px);
     padding: 26px 30px;
     overflow-y: auto;
 }
@@ -20708,7 +20712,7 @@ body.rezim-vyberu #detailView .poster {
 .uf-lista { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 /* Rok ve sbírce (app/rok-ve-sbirce.js) */
-.rs-karta { width: min(960px, calc(100vw - 32px)); max-width: none; max-height: calc(100vh - 48px); display: flex; flex-direction: column; }
+.rs-karta { width: min(960px, calc(var(--vw) - 32px)); max-width: none; max-height: calc(var(--vh) - 48px); display: flex; flex-direction: column; }
 .rs-karta .modal-header { gap: 12px; }
 .rs-karta .modal-header h3 { flex: 1; }
 .rs-rok { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
@@ -20761,7 +20765,7 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* Kapesní katalog (app/kapesni-katalog.js) */
-.kk-karta { width: min(560px, calc(100vw - 32px)); }
+.kk-karta { width: min(560px, calc(var(--vw) - 32px)); }
 .kk-rozsahy { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
 .kk-rozsah { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--panel-okraj); border-radius: 10px; cursor: pointer; }
 .kk-rozsah:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
@@ -20775,3 +20779,44 @@ body.rezim-vyberu #detailView .poster {
 .nv-aktualizace p { margin: 0 0 8px; }
 .nv-prikaz { margin: 0 0 8px; padding: 8px 10px; border-radius: 8px; background: var(--bg-main); overflow-x: auto; font-size: 13px; }
 .nv-aktualizace .pass-hint { margin: 8px 0 0; }
+
+/* Vzhled (ui/vzhled.js, okno app/vzhled.js): velikost karet po pohledech, hustota a obsah karty modelky */
+:root[data-karty-modelky="s"] { --karta-modelky: 150px; }
+:root[data-karty-modelky="l"] { --karta-modelky: 270px; }
+:root[data-karty-fotky="s"] { --rada-fotek: 170px; }
+:root[data-karty-fotky="l"] { --rada-fotek: 310px; }
+:root[data-karty-steny="s"] { --karta-steny: 150px; }
+:root[data-karty-steny="l"] { --karta-steny: 280px; }
+:root[data-karty-modelky="s"] .card-info { padding: 8px 10px; }
+:root[data-karty-modelky="s"] .card-info h3 { font-size: 13px; }
+
+:root[data-hustota="kompaktni"] main { padding: 18px 20px; }
+:root[data-hustota="kompaktni"] .gallery-grid { gap: 14px; }
+:root[data-hustota="kompaktni"] .wall-mrizka { gap: 16px 12px; }
+:root[data-hustota="kompaktni"] .nejlepsi-mozaika { gap: 6px; }
+:root[data-hustota="kompaktni"] .card-info { padding: 7px 12px; }
+:root[data-hustota="kompaktni"] .ud-radek { padding-top: 4px; padding-bottom: 4px; gap: 8px; }
+:root[data-hustota="kompaktni"] .ud-polozka { padding-top: 3px; padding-bottom: 3px; }
+:root[data-hustota="kompaktni"] .uu-radek { padding-top: 4px; padding-bottom: 4px; }
+:root[data-hustota="kompaktni"] .rw-tabulka th, :root[data-hustota="kompaktni"] .rw-tabulka td { padding: 3px 6px; }
+
+.karta-udaje { display: none; margin-left: 6px; flex: none; font-size: 12px; font-weight: 400; color: var(--text-muted); }
+.karta-udaje > span { display: none; }
+:root[data-karta-rok] .karta-udaje, :root[data-karta-fotek] .karta-udaje { display: inline; }
+:root[data-karta-rok] .karta-udaje .ku-rok, :root[data-karta-fotek] .karta-udaje .ku-fotek { display: inline; }
+:root[data-karta-rok][data-karta-fotek] .karta-udaje .ku-rok:not(:empty) + .ku-fotek::before { content: ' · '; }
+:root[data-karta-bez-srdicek] .card > .card-image-wrap > .hearts { display: none; }
+
+/* Okno Vzhled */
+.vz-karta { width: min(560px, calc(var(--vw) - 32px)); }
+.vz-radek { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--panel-okraj); }
+.vz-radek:first-of-type { border-top: 0; }
+.vz-popis { font-size: 13px; color: var(--text-muted); }
+.vz-volby { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.vz-volby button { padding: 5px 12px; border-radius: 999px; border: 1px solid var(--panel-okraj); background: none; color: var(--text-main); font: inherit; font-size: 13px; cursor: pointer; }
+.vz-volby button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.vz-volby input[type="range"] { flex: 1; accent-color: var(--accent); }
+.vz-volby label { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+.vz-volby input[type="checkbox"] { accent-color: var(--accent); }
+.vz-hodnota { min-width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 600px) { .vz-radek { grid-template-columns: 1fr; gap: 6px; } }

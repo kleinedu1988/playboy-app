@@ -7,6 +7,7 @@ import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { modelkyVCisle, sousedniCisla } from '../lib/kontext-cisla';
 import { VELIKOST_NAHLEDU } from './obrazky';
+import { naCss } from '../ui/vzhled';
 
 /** @type {Promise<any[]> | null} */
 let kalendar = null;
@@ -73,8 +74,8 @@ async function ukazatBublinu(stitek) {
     const b = bublina.getBoundingClientRect();
     const vlevo = Math.max(8, Math.min(r.left, window.innerWidth - b.width - 8));
     const nahore = r.bottom + 6 + b.height > window.innerHeight ? Math.max(8, r.top - 6 - b.height) : r.bottom + 6;
-    bublina.style.left = `${vlevo}px`;
-    bublina.style.top = `${nahore}px`;
+    bublina.style.left = `${naCss(vlevo)}px`;
+    bublina.style.top = `${naCss(nahore)}px`;
 }
 
 function naplanovat(stitek) {

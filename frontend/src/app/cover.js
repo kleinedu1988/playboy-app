@@ -17,6 +17,7 @@ import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
 import { zavritOkno } from './ulozeni';
 import { VELIKOST_PLAKATU_MALA, adresyOdkazu } from './obrazky';
 import { jeVidet, otevreneOkno } from '../ui/dom';
+import { naCss } from '../ui/vzhled';
 
 // Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -293,8 +294,8 @@ function otevritNabidkuSekci(tlacitko) {
     mapa.setAttribute('aria-label', 'Mapa sekcí');
     mapa.innerHTML = `<div class="mapa-mrizka">${sloupce}</div><p class="mapa-tip">Klik na zvolenou sekci otevře tuto mapu · Ctrl+1–4 sekce · Esc zavře</p>`;
     const r = tlacitko.getBoundingClientRect();
-    mapa.style.left = `${Math.max(8, r.left)}px`;
-    mapa.style.top = `${r.bottom + 8}px`;
+    mapa.style.left = `${naCss(Math.max(8, r.left))}px`;
+    mapa.style.top = `${naCss(r.bottom + 8)}px`;
     document.getElementById('app').append(mapa);
     mapa.addEventListener('click', (e) => {
         const volba = /** @type {HTMLElement | null} */ (e.target.closest('[data-mapa-cast]'));

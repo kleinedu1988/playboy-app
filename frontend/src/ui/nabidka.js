@@ -1,5 +1,6 @@
 // Kontextová nabídka (pravé tlačítko, tlačítka ⋯ a +). Prvek existuje až po vložení kostry okna.
 // Ovládá se i klávesnicí: šipky, Home, End, Enter; Esc ji zavře a fokus se vrátí tam, kde byl.
+import { naCss } from './vzhled';
 export let contextMenu = null;
 let fokusPredOtevrenim = null;
 
@@ -97,7 +98,7 @@ export function otevritKontextovouNabidku(x, y, polozky) {
     contextMenu.classList.remove('hidden');
     const sirka = contextMenu.offsetWidth;
     const vyska = contextMenu.offsetHeight;
-    contextMenu.style.left = Math.max(4, Math.min(x, window.innerWidth - sirka - 4)) + 'px';
-    contextMenu.style.top = Math.max(4, Math.min(y, window.innerHeight - vyska - 4)) + 'px';
+    contextMenu.style.left = naCss(Math.max(4, Math.min(x, window.innerWidth - sirka - 4))) + 'px';
+    contextMenu.style.top = naCss(Math.max(4, Math.min(y, window.innerHeight - vyska - 4))) + 'px';
     contextMenu.querySelector('.context-item')?.focus({ preventScroll: true });
 }

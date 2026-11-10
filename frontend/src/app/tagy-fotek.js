@@ -4,6 +4,7 @@
 import { GetKatalogTagu, GetTagyFotek, SetTagyFotek } from './backend';
 import { esc } from '../lib/format';
 import { oznamit } from '../ui/oznameni';
+import { naCss } from '../ui/vzhled';
 
 let katalog = null;
 export async function katalogTagu() {
@@ -68,7 +69,7 @@ export async function otevritPanelTagu(fotky, kotva) {
     document.getElementById('app').append(panel);
     vykreslit();
     const r = kotva.getBoundingClientRect();
-    panel.style.left = `${Math.max(8, Math.min(window.innerWidth - panel.offsetWidth - 8, r.left + r.width / 2 - panel.offsetWidth / 2))}px`;
+    panel.style.left = `${naCss(Math.max(8, Math.min(window.innerWidth - panel.offsetWidth - 8, r.left + r.width / 2 - panel.offsetWidth / 2)))}px`;
     panel.style.bottom = `${window.innerHeight - r.top + 10}px`;
     panel.addEventListener('click', async (e) => {
         const cil = /** @type {HTMLElement} */ (e.target);

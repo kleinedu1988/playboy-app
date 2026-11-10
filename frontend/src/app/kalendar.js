@@ -9,7 +9,8 @@ import { htmlStitkuRad, nazevVolbyRady, platnaRadaKalendare } from './rady';
 import { zalozitSpecial } from './specialy';
 import { calList, calendar, searchInput } from './prvky';
 import { listaKalendare } from './listy';
-import { nacitatPostupne } from './obrazky';
+import { VELIKOST_TITULNI, VELIKOST_ZAHLAVI, nacitatPostupne } from './obrazky';
+import { predLety, uplnostRocniku, vybratRocnik } from '../lib/hero-kalendare';
 import { htmlZobrazeniCisel, ukazatPohled } from './navigace';
 import { NAZVY_STAVU, otevritVydani, upravitVydani } from './vydani';
 import { otevritCoverModal } from './cover';
@@ -19,6 +20,58 @@ import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 
 // Kalendář vydání: roky × měsíce jako časová osa obálek. Prázdná políčka ukazují, co ve sbírce chybí.
 export const ZKRATKY_MESICU = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
+
+// Hero nahoře (0.02.023, jako Profily a Statistiky): ročník zvolené řady s obálkou, úplností a akcemi.
+// Posun = kolikátý ročník v pořadí (Další ročník); změna řady začne znovu výročím.
+let posunHero = 0;
+function htmlHeroKalendare(vydani) {
+    const vyber = vybratRocnik(vydani, stav.kalendarEdice, new Date(), posunHero);
+    if (!vyber) return '';
+    const { rok, vyroci } = vyber;
+    const u = uplnostRocniku(vydani, rok, stav.kalendarEdice);
+    // Fotka: obálka čísla výročí, jinak první číslo ročníku s náhledem (napřed s coverem)
+    const cislaRoku = [...vydani.entries()].filter(([k, v]) => k.startsWith(`${rok}-`) && v.nahled);
+    const [klicFotky, v] = (vyroci && vydani.get(vyroci)?.nahled ? [vyroci, vydani.get(vyroci)] : null)
+        || cislaRoku.find(([, x]) => x.cover) || cislaRoku[0] || ['', null];
+    const nahled = v ? obrazek(v.nahled, VELIKOST_TITULNI) : '';
+    const plna = v ? obrazek(v.nahled, VELIKOST_ZAHLAVI) : '';
+    const leta = new Date().getFullYear() - rok;
+    const cfVyroci = vyroci && vydani.get(vyroci)?.modelka;
+    const vety = [
+        vyroci ? `${nazevVydani(vyroci)} vyšlo ${predLety(leta)}${cfVyroci ? ` – centerfold ${cfVyroci}` : ''}.` : '',
+        `Kompletních (cover, centerfold i pictorial) ${u.kompletni} · cover ${u.cover} · centerfold ${u.centerfold} · pictorial ${u.pictorial}.`,
+        u.chybi.length ? `Chybí: ${u.chybi.map(k => ZKRATKY_MESICU[parseInt(k.slice(5, 7), 10) - 1]).join(', ')}.` : 'Ročník má všechna vyšlá čísla.',
+    ].filter(Boolean);
+    const otevrit = vyroci || slozitVydani(String(rok), '', stav.kalendarEdice);
+    return `<section class="profily-hero sh-hero kal-hero" aria-label="Ročník ${rok}">
+        ${nahled ? `<div class="ph-rozmazane" style="background-image:url('${esc(nahled).replace(/'/g, '%27')}')"></div>` : ''}
+        <div class="sh-scena">
+            ${nahled ? `<div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}" alt="${esc(klicFotky ? nazevVydani(klicFotky) : '')}" draggable="false" /></div><div class="ph-prekryv"></div>` : ''}
+            <div class="ph-obsah">
+                <div class="ph-nadtitulek">${esc(nazevVolbyRady(stav.kalendarEdice))} · ${vyroci ? 'výročí čísla' : 'ročník'}</div>
+                <h2>Ročník ${rok}</h2>
+                <div class="sh-zmena">${u.mame} z ${sklonovat(u.cisel, 'čísla', 'čísel', 'čísel')}</div>
+                <p class="ph-duvod">${esc(vety.join(' '))}</p>
+                <div class="ph-akce">
+                    <button type="button" class="ph-tlacitko hlavni" data-vydani="${esc(otevrit)}">${vyroci ? 'Otevřít číslo' : 'Otevřít ročník'}</button>
+                    <button type="button" class="ph-tlacitko" data-kh-rok="${rok}">Ukázat v kalendáři</button>
+                    ${u.chybi.length ? `<button type="button" class="ph-tlacitko" data-prazdne="${esc(u.chybi[0])}" title="Přidat první chybějící číslo ročníku">Doplnit chybějící (${u.chybi.length})</button>` : ''}
+                    ${vyber.pocet > 1 ? '<button type="button" class="ph-tlacitko" data-kh-dalsi title="Další ročník">Další ročník ↻</button>' : ''}
+                </div>
+            </div>
+        </div>
+    </section>`;
+}
+// Plná obálka do hera po načtení náhledu (jako hero Statistik)
+function nacistPlnouObalku() {
+    const img = /** @type {HTMLImageElement | null} */ (calList.querySelector('.kal-hero .ph-ram img'));
+    const plna = img?.dataset.plna;
+    if (!img || !plna) return;
+    const velka = new Image();
+    velka.decoding = 'async';
+    velka.onload = () => { if (img.isConnected) img.src = plna; };
+    velka.src = plna;
+}
 
 export async function nacistKalendar(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
@@ -155,11 +208,12 @@ export async function nacistKalendar(dotaz = '', zMezipameti = false) {
 
     const celkemVydani = rokyKalendare.reduce((soucet, r) => soucet + r.obsazeno + r.obsazenoSpecialu, 0);
     listaKalendare.naplnit([...desetileti].map(([dekada, pocet]) => ({ klic: dekada, nazev: `${dekada}–${dekada + 9}`, pocet })));
-    calList.innerHTML = prepinacEdic(celkemVydani) + `
+    calList.innerHTML = (hledat ? '' : htmlHeroKalendare(vydani)) + prepinacEdic(celkemVydani) + `
         <p class="cal-legend">Linky na obálce zleva: <i></i> cover <i></i> centerfold <i></i> pictorial. Prázdné políčko = číslo ve sbírce chybí.</p>
         ${radky.join('') || htmlNicNenalezeno('Hledání neodpovídá žádné číslo.')}
     `;
     prevestNaVolby(calList.querySelector('.cal-editions'));
+    nacistPlnouObalku();
     // Náhledy čísel se načítají postupně podle rolování (vestavěné loading="lazy" začíná ve WebKitGTK pozdě)
     nacitatPostupne(calList);
     listaKalendare.sledovat();
@@ -334,8 +388,19 @@ export function pripravit() {
             nacistKalendar(searchInput.value, true);
             return;
         }
+        if (e.target.closest('[data-kh-dalsi]')) {
+            posunHero++;
+            nacistKalendar(searchInput.value, true);
+            return;
+        }
+        const naRok = e.target.closest('[data-kh-rok]');
+        if (naRok) {
+            calList.querySelector(`.cal-year[data-rok="${naRok.dataset.khRok}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            return;
+        }
         const edice = e.target.closest('[data-edice]');
         if (edice) {
+            posunHero = 0;
             nastavitEdiciKalendare(edice.dataset.edice);
             nacistKalendar(searchInput.value, true);
             return;

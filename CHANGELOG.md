@@ -6,6 +6,14 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.023] – 2026-11-10
+
+### Přidáno
+- **Hero Kalendáře** (jako Profily a Statistiky): nahoře ročník zvolené řady s obálkou čísla, počtem čísel
+  („9 z 12 čísel“), úplností (kompletní, cover, centerfold, pictorial) a chybějícími měsíci. Napřed ročník, jehož
+  číslo z tohoto měsíce je ve sbírce („Listopad 1990 vyšlo před 36 lety – centerfold …“). Akce Otevřít číslo /
+  ročník, Ukázat v kalendáři, Doplnit chybějící a Další ročník ↻. Při hledání se neukazuje (`lib/hero-kalendare.js`).
+
 ## [0.02.022] – 2026-11-10
 
 ### Opraveno

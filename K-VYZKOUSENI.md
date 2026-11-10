@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.023 – Hero Kalendáře
+
+- [ ] **Kritérium hotovo:** Kalendář › Penthouse US: hero s ročníkem, obálkou a úplností („9 z 12 čísel“).
+- [ ] V listopadu napřed ročník s listopadovým číslem ve sbírce („… vyšlo před N lety – centerfold …“).
+- [ ] Obálka je celá (název časopisu nahoře vidět), vlevo plynule přechází; plná velikost se načte po náhledu.
+- [ ] Otevřít číslo / ročník, Ukázat v kalendáři (posune na rok), Doplnit chybějící (nabídka přidání čísla),
+      Další ročník ↻ (dokola); přepnutí řady začne znovu výročím.
+- [ ] Při hledání hero zmizí; při rolování odjede nahoru.
+
 ## 0.02.022 – Zbylé texty podle časopisu
 
 - [ ] **Kritérium hotovo:** projít `docs/VYSKYTY-PLAYMATE.md` – souhlasíš, že zbylé výskyty jsou opravdu Playboy?

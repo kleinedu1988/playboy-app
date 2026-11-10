@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.025 – Hero stěny Centerfoldů
+
+- [ ] **Kritérium hotovo:** Centerfoldy › Časopis: Penthouse – v hero Pet of the Month („Pet of the Month · Září
+      1985 · Penthouse“), Další ↻ střídá jen Penthouse.
+- [ ] V listopadu napřed listopadové centerfoldy („centerfold dne“, „Vyšel před N lety“), pak podle srdíček.
+- [ ] Fotka v rámu 3 : 4 – vypadá centerfold dobře (není moc oříznutý)? Otočené fotky v hero nejsou.
+- [ ] Profil, Otevřít číslo; klik na hero neotevře prohlížeč stěny.
+- [ ] Při hledání hero zmizí.
+
 ## 0.02.024 – Hero Obálek
 
 - [ ] **Kritérium hotovo:** Čísla › Obálky: hero se střídá (Další ↻, „2 z N“) a po přepnutí na Penthouse ukazuje

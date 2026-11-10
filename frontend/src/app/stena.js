@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { moznostiSteny, naSteneCenterfoldu, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, plocheTokeny, poleCisla, poleFotky, poleModelkyFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { moznostiSteny, naSteneCenterfoldu, titulCisla, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, plocheTokeny, poleCisla, poleFotky, poleModelkyFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { rozbalitFrontu } from '../lib/fronta';
 import { stav } from './stav';
@@ -13,7 +13,7 @@ import { htmlPlakatu, pripravitPlakat } from './profil';
 import { otevritVydani } from './vydani';
 import { prevestNaVolby } from '../ui/volby';
 import { nacistPlnouObalku, nastavitEdiciKalendare } from './kalendar';
-import { poctyObalek, poradiObalekHero } from '../lib/hero-obalek';
+import { poctyObalek, poradiCenterfolduHero, poradiObalekHero } from '../lib/hero-obalek';
 import { predLety } from '../lib/hero-kalendare';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { modelkyPodleId, oblibenostModelek } from './mezipamet';
@@ -26,6 +26,41 @@ const RAZENI_STENY = {
     nejnovejsi: 'Od nejnovějších',
     hodnoceni: 'Podle srdíček',
 };
+
+// Hero stěny (0.02.025, jako Kalendář a Obálky): centerfold zvolené volby stěny – výročí čísla, jinak nejlépe
+// hodnocený – se jménem, titulem podle časopisu a srdíčky; Další ↻ střídá, změna volby začne znovu
+let posunHeroSteny = 0;
+function htmlHeroSteny(fotky) {
+    const poradi = poradiCenterfolduHero(fotky, album => naSteneCenterfoldu(album, stav.stenaEdice));
+    if (!poradi.length) return '';
+    const i = ((posunHeroSteny % poradi.length) + poradi.length) % poradi.length;
+    const f = poradi[i];
+    const volba = moznostiSteny().find(m => m.hodnota === stav.stenaEdice)?.nazev || 'Centerfoldy';
+    const leta = new Date().getFullYear() - parseInt(f.album.slice(0, 4), 10);
+    const vety = [
+        f.vyroci ? `Vyšel ${predLety(leta)}.` : '',
+        f.hodnoceni ? '♥'.repeat(f.hodnoceni) : '',
+        f.fotograf ? `Foto ${f.fotograf}.` : '',
+    ].filter(Boolean);
+    const nahled = obrazek(f.url, VELIKOST_TITULNI), plna = obrazek(f.url, VELIKOST_ZAHLAVI);
+    return `<section class="profily-hero sh-hero kal-hero" aria-label="Centerfold ${esc(f.jmenoModelky || '')}">
+        <div class="ph-rozmazane" style="background-image:url('${esc(nahled).replace(/'/g, '%27')}')"></div>
+        <div class="sh-scena">
+            <div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}" alt="" draggable="false" /></div><div class="ph-prekryv"></div>
+            <div class="ph-obsah">
+                <div class="ph-nadtitulek">${esc(volba)} · ${f.vyroci ? 'centerfold dne' : f.hodnoceni ? 'nejlépe hodnocené centerfoldy' : 'centerfoldy'}${poradi.length > 1 ? ` · ${i + 1} z ${poradi.length}` : ''}</div>
+                <h2>${esc(f.jmenoModelky || '')}</h2>
+                <div class="sh-zmena">${esc(`${titulCisla(f.album)} · ${nazevVydani(f.album)}`)}</div>
+                ${vety.length ? `<p class="ph-duvod">${esc(vety.join(' '))}</p>` : ''}
+                <div class="ph-akce">
+                    ${f.modelkaId ? `<button type="button" class="ph-tlacitko hlavni" data-modelka="${f.modelkaId}">Profil</button>` : ''}
+                    <button type="button" class="ph-tlacitko${f.modelkaId ? '' : ' hlavni'}" data-vydani="${esc(f.album)}">Otevřít číslo</button>
+                    ${poradi.length > 1 ? '<button type="button" class="ph-tlacitko" data-hs-dalsi title="Další centerfold">Další ↻</button>' : ''}
+                </div>
+            </div>
+        </div>
+    </section>`;
+}
 
 export async function nacistStenu(dotaz = '', zMezipameti = false) {
     const moje = ++stav.cisloNacteni;
@@ -110,13 +145,14 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     // Mřížky (oddíl desetiletí, nebo jedna) se sestaví prázdné a plní po dávkách: prvních PLAKATU_HNED hned,
     // zbytek v dalších úlohách (dřív se stěna s tisíci centerfoldy skládala najednou přes sekundu)
     const skupiny = maDekady ? [...dekady] : [[null, stav.stenaPolozky.map((_, i) => i)]];
-    wall.innerHTML = razeni + skupiny.map(([dekada, indexy]) => dekada === null
+    wall.innerHTML = (tokeny.length ? '' : htmlHeroSteny(fotky)) + razeni + skupiny.map(([dekada, indexy]) => dekada === null
         ? '<div class="wall-mrizka"></div>'
         : `<section class="wall-dekada" data-cast="${dekada}">
                 <h3>${dekada ? `${dekada}–${dekada + 9}` : 'Bez vydání'}<small>${sklonovat(indexy.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</small></h3>
                 <div class="wall-mrizka"></div>
             </section>`).join('');
     prevestNaVolby(wall.querySelector('.wall-toolbar'));
+    nacistPlnouObalku(wall);
     const mrizky = [...wall.querySelectorAll('.wall-mrizka')];
     dokresleniSteny = { moje, html: htmlPolozky, fronta: skupiny.flatMap(([, indexy], j) => indexy.map(i => [j, i])), mrizky, od: 0 };
     nacitatPostupne(wall);
@@ -320,7 +356,11 @@ export function pripravit() {
         const razeni = e.target.closest('[data-razeni-steny]');
         const minimum = e.target.closest('[data-stena-min]');
         const edice = e.target.closest('[data-edice-steny]');
-        if (razeni) {
+        if (e.target.closest('[data-hs-dalsi]')) {
+            e.stopPropagation();
+            posunHeroSteny++;
+            nacistStenu(searchInput.value, true);
+        } else if (razeni) {
             e.stopPropagation();
             stav.razeniSteny = razeni.dataset.razeniSteny;
             try { localStorage.setItem('razeniSteny', stav.razeniSteny); } catch { /* jen se nezapamatuje */ }
@@ -333,6 +373,7 @@ export function pripravit() {
         } else if (edice) {
             e.stopPropagation();
             stav.stenaEdice = edice.dataset.ediceSteny;
+            posunHeroSteny = 0;
             nacistStenu(searchInput.value, true);
         }
     }, true);

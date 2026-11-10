@@ -37,3 +37,24 @@ export function poctyObalek(cisla, rada) {
     const vysla = roky.reduce((s, r) => s + ciselRocniku(r, rada), 0);
     return { sCoverem, chybi: Math.max(0, vysla - sCoverem), rocniku: roky.length };
 }
+
+/**
+ * Centerfoldy pro hero stěny (0.02.025): plati(album) = patří do zvolené volby stěny. Napřed výročí (číslo
+ * z dnešního měsíce dřívějších let), pak nejvýš hodnocené, při shodě novější; jedno číslo a modelka jednou.
+ * Otočené fotky (rotace) vynechá – hero je ukazuje bez otočení.
+ * @param {any[]} fotky @param {(album: string) => boolean} plati @param {Date} [dnes]
+ */
+export function poradiCenterfolduHero(fotky, plati, dnes = new Date()) {
+    const mesic = String(dnes.getMonth() + 1).padStart(2, '0');
+    const nejlepsi = new Map();
+    for (const f of fotky) {
+        const v = rozlozitVydani(f.album);
+        if (!v || !f.url || f.rotace || !plati(f.album)) continue;
+        const klic = `${f.album}|${f.modelkaId}`;
+        const dosud = nejlepsi.get(klic);
+        if (!dosud || (f.hodnoceni || 0) > (dosud.hodnoceni || 0)) {
+            nejlepsi.set(klic, { ...f, hodnoceni: f.hodnoceni || 0, vyroci: v.mesic === mesic && parseInt(v.rok, 10) < dnes.getFullYear() });
+        }
+    }
+    return [...nejlepsi.values()].sort((a, b) => Number(b.vyroci) - Number(a.vyroci) || b.hodnoceni - a.hodnoceni || b.album.localeCompare(a.album));
+}

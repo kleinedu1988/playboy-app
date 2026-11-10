@@ -6,6 +6,14 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.025] – 2026-11-10
+
+### Přidáno
+- **Hero stěny Centerfoldů** (jako Kalendář a Obálky): centerfold zvolené volby stěny (Playboy, Penthouse, Všechny
+  časopisy…) – napřed čísla z tohoto měsíce dřívějších let (centerfold dne), pak nejlépe hodnocené – se jménem,
+  titulem podle časopisu a číslem („Pet of the Month · Září 1985 · Penthouse“), srdíčky a fotografem. Akce Profil,
+  Otevřít číslo a Další ↻. Otočené fotky hero vynechá; při hledání se neukazuje.
+
 ## [0.02.024] – 2026-11-10
 
 ### Přidáno

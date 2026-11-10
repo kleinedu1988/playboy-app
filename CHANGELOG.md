@@ -6,6 +6,17 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.029] – 2026-11-10
+
+### Přidáno
+- **Kandidáti na sloučení** v Údržbě › Ke kontrole (zdroj „kandidát na sloučení“): dvě modelky se stejným jménem
+  nebo přezdívkou, jejichž data narození si neodporují („nejspíš tatáž modelka jako … – stejné datum narození,
+  čísla z různých časopisů – sloučit?“). Jiné datum narození kandidáta vylučuje; bez data jen u různých časopisů.
+  Takovou dvojici už nehlásí i „ok-jmeno“. Sloučení samo je 0.02.031.
+
+### Opraveno
+- Kontrola stejných jmen porovnávala přezdívky i s příponou časopisu („Jane Doe @PH“).
+
 ## [0.02.028] – 2026-11-10
 
 ### Opraveno

@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.029 – Kandidáti na sloučení
+
+- [ ] **Kritérium hotovo:** dvě modelky „Jane Doe“ se stejným datem narození (Playboy a Penthouse) → Údržba › Ke
+      kontrole „nejspíš tatáž modelka jako …“; s jiným datem narození kandidátem nejsou.
+- [ ] Filtr podle zdroje „kandidát na sloučení“ ukáže jen tyto nálezy; „V pořádku“ nález skryje.
+- [ ] Na skutečné sbírce: žádný falešný kandidát se stejným jménem a jiným datem.
+
 ## 0.02.028 – Hledání podle přezdívek
 
 - [ ] **Kritérium hotovo:** modelka s přezdívkou „Jane Doe @PH“ se najde hledáním „jane“, `jmeno:"jane doe"`

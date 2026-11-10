@@ -29,7 +29,7 @@ type PodezrelyUdaj struct {
 var (
 	KliceKontrolyModelky = map[string]bool{"ok-jmeno": true, "ok-vek": true, "ok-narozeni": true, "ok-umrti": true,
 		"ok-vyska": true, "ok-vaha": true, "ok-bmi": true, "ok-miry": true, "ok-pmoy": true, "ok-cislo": true, "ok-dvojice": true,
-		"ok-neobvykle": true, "ok-podobne-jmeno": true}
+		"ok-neobvykle": true, "ok-podobne-jmeno": true, "ok-slouceni": true}
 	KliceKontrolyAlba = map[string]bool{"ok-album": true, "ok-vydani-alba": true}
 )
 
@@ -64,12 +64,16 @@ func VybratNalezy(vsechny []PodezrelyUdaj, vcetneSkrytych bool) []PodezrelyUdaj 
 func KontrolovatJmena(modelky []hledani.Modelka, pridat PridatNalez) {
 	podleJmena := map[string]hledani.Modelka{}
 	for _, m := range modelky {
-		for _, jmeno := range append([]string{m.Jmeno}, strings.Split(m.DalsiJmena, ",")...) {
+		for _, jmeno := range append([]string{m.Jmeno}, hledani.DalsiJmena(m.DalsiJmena)...) {
 			klic := hledani.Zjednodusit(strings.TrimSpace(jmeno))
 			if klic == "" {
 				continue
 			}
 			if jina, obsazeno := podleJmena[klic]; obsazeno && jina.ID != m.ID {
+				// Kandidáta na sloučení hlásí „ok-slouceni“ (0.02.029) s důvody; dvojí nález by byl navíc
+				if _, _, kandidat := KandidatNaSlouceni(jina, m); kandidat {
+					continue
+				}
 				pridat(m, "ok-jmeno", "jmeno", "inputDalsiJmena", fmt.Sprintf("jméno nebo pseudonym „%s“ má i modelka %s", strings.TrimSpace(jmeno), jina.Jmeno))
 				continue
 			}

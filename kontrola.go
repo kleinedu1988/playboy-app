@@ -128,6 +128,7 @@ func kontrolovatModelky(modelky []Modelka, prahy prahyKontroly, pridat pridatNal
 
 	uceni := naucitSe(modelky, prahy)
 	kontrola.KontrolovatJmena(modelky, pridat)
+	kontrola.KontrolovatSlouceni(modelky, pridat)
 	pridatUdaj := odlozit(&udaje)
 	for _, m := range modelky {
 		kontrola.KontrolovatData(m, uceni.Rozsahy, pridatUdaj)

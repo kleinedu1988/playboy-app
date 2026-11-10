@@ -21,7 +21,7 @@ const ZDROJE_KONTROLY = {
     vek: 'věk při vydání', 'umrti-budoucnost': 'úmrtí v budoucnosti', 'umrti-pred-narozenim': 'úmrtí před narozením',
     'umrti-pred-vydanim': 'úmrtí před vydáním', vyska: 'výška', vaha: 'váha', bmi: 'BMI', miry: 'míry', 'miry-pas': 'pas a boky',
     'pmoy-bez-centerfoldu': 'Playmate roku bez centerfoldu', 'pmoy-rok': 'rok Playmate roku', cislo: 'dva centerfoldy v čísle',
-    dvojice: 'stejná fotka ve dvou albech', neobvykle: 'neobvyklá kombinace údajů', 'podobne-jmeno': 'podobná jména',
+    dvojice: 'stejná fotka ve dvou albech', neobvykle: 'neobvyklá kombinace údajů', 'podobne-jmeno': 'podobná jména', slouceni: 'kandidát na sloučení',
     album: 'album s jednou fotkou', 'vydani-alba': 'vydání alba',
 };
 export const popisZdroje = zdroj => stavUceni?.zdroje?.find(z => z.zdroj === zdroj)?.popis || ZDROJE_KONTROLY[zdroj] || zdroj;

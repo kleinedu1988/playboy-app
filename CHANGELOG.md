@@ -6,6 +6,16 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.021] – 2026-11-10
+
+### Přidáno
+- **Síň slávy podle časopisu:** v liště pohledů volba „Všechny časopisy / Playboy / Penthouse / …“ (jen když má
+  sbírka modelky aspoň dvou časopisů; pamatuje se). Zúží Top 10, Legendy, Odznaky, Rekordy, Kroniku i pořadí
+  Sezóny na modelky s číslem nebo obálkou daného časopisu; místa zůstávají celková.
+
+### Změněno
+- **Rok ve sbírce** počítá dokončené ročníky všech časopisů („Ročník 1985 Penthouse US je celý“), dřív jen Playboy.
+
 ## [0.02.020] – 2026-11-10
 
 ### Změněno

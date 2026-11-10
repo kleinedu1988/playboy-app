@@ -12,8 +12,8 @@ import { soubojOTrun } from './oblibenost';
 import { vyhlasitSezonu } from './vyhlaseni-sezony';
 import { zvolitSezonu } from './volba-sezony';
 import { odemknoutTema } from './galerie-hodnoceni';
-import { esc, obrazek, sklonovat } from '../lib/format';
-import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva, nazevSezonyVeVete } from '../lib/slava';
+import { casopisyModelky, casopisyVeSbirce, esc, obrazek, sklonovat } from '../lib/format';
+import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva, nazevSezonyVeVete, zuzitSezonu, zuzitSinSlavy } from '../lib/slava';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne, VELIKOST_ZAHLAVI } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -26,6 +26,18 @@ import { naCss } from '../ui/vzhled';
 let kontejner = null;
 let data = null;
 let sezona = null; // probíhající sezóna (GetSezona, oblibenost_sezony.go)
+// Volba časopisu (0.02.021): '' = všechny; data a sezona jsou zúžené, celkové v surova / surovaSezona
+let surova = null;
+let surovaSezona = null;
+let casopisSlavy = (() => { try { return localStorage.getItem('slavaCasopis') || ''; } catch { return ''; } })();
+const moznostiCasopisu = () => casopisyVeSbirce([...stav.prehledModelky.values()]);
+function zuzit() {
+    if (casopisSlavy && !moznostiCasopisu().some(c => c.klic === casopisSlavy)) casopisSlavy = '';
+    const plati = id => !casopisSlavy || casopisyModelky(stav.prehledModelky.get(id)).has(casopisSlavy);
+    data = surova && casopisSlavy ? zuzitSinSlavy(surova, plati) : surova;
+    sezona = casopisSlavy ? zuzitSezonu(surovaSezona, plati) : surovaSezona;
+}
+const nazevCasopisuSlavy = () => moznostiCasopisu().find(c => c.klic === casopisSlavy)?.nazev || '';
 
 const modelka = id => stav.prehledModelky.get(id);
 const jmeno = id => modelka(id)?.jmeno || '';
@@ -67,7 +79,8 @@ let filtrKroniky = 'vse';
 export async function nacistSinSlavy(prvek) {
     kontejner = prvek;
     try {
-        [data, sezona] = await Promise.all([GetSinSlavy(), GetSezona()]);
+        [surova, surovaSezona] = await Promise.all([GetSinSlavy(), GetSezona()]);
+        zuzit();
     } catch {
         nastavitHtml(kontejner, '<p class="ob-info">Síň slávy se nepodařilo načíst.</p>');
         return;
@@ -210,6 +223,7 @@ function htmlTop(rekordy, odznaky) {
     const zbytek = data.vitrina.filter(x => !stupne.includes(x));
     const ostatni = zbytek.map(x => htmlKarty(x, rekordy.get(x.modelkaId), false, odznaky.get(x.modelkaId))).join('');
     const top = htmlStupnu + (ostatni ? `<div class="slava-karty slava-rada slava-skupina ${zbytek.length >= 6 ? 'husta' : ''}" style="--karet: ${zbytek.length}">${ostatni}</div>${misto}` : '');
+    if (!top && casopisSlavy) return htmlPrazdna(`Z časopisu ${nazevCasopisuSlavy()} teď nikdo v Top 10 není`, 'Místa v Top 10 jsou celé sbírky; volba časopisu ukáže jen jeho modelky.', { ikona: 'hvezda' });
     if (!top) return htmlPrazdna('Top 10 je zatím prázdná', 'Do Top 10 se dostane modelka po 10 porovnáních s výhrou nad některou z Top 20.', { ikona: 'hvezda', odkaz: '<button type="button" class="link" data-ob-porovnavat>Porovnat →</button>' });
     return top;
 }
@@ -386,6 +400,14 @@ function htmlHeroSlavy() {
     return `${scena}<div class="sh-pas sl-pas"><div class="sh-karty">${karty}</div></div>`;
 }
 
+// Volba časopisu: jen když jsou ve sbírce modelky aspoň dvou časopisů
+function htmlVolbyCasopisu() {
+    const moznosti = moznostiCasopisu();
+    if (moznosti.length < 2) return '';
+    const tlacitko = (klic, nazev) => `<button type="button" class="volba ${klic === casopisSlavy ? 'zapnuto' : ''}" data-sl-casopis="${esc(klic)}" aria-pressed="${klic === casopisSlavy}">${esc(nazev)}</button>`;
+    return `<div class="sl-filtry-kroniky" role="group" aria-label="Časopis">${tlacitko('', 'Všechny časopisy')}${moznosti.map(c => tlacitko(c.klic, c.nazev)).join('')}</div>`;
+}
+
 // Lepivý pás pod herem: pohledy síně vlevo, vpravo filtr Kroniky (jen v Kronice) a tlačítka panelu
 function htmlListySlavy() {
     const nazvy = new Map(POHLEDY.map(([k, n]) => /** @type {[string, string]} */ ([k, n])));
@@ -398,7 +420,7 @@ function htmlListySlavy() {
         popis: 'Pohledy Síně slávy',
         atribut: 'sl-pohled',
         pilulky: POHLEDY_V_LISTE.map(klic => ({ klic, nazev: nazvy.get(klic), zvolena: klic === pohled })),
-        vpravo: `<div class="pas-info sl-pas-vpravo">${filtryKroniky ? `<div class="sl-filtry-kroniky" role="group" aria-label="Filtr kroniky">${filtryKroniky}</div>` : ''}<div class="sl-panely">${panely}</div></div>`,
+        vpravo: `<div class="pas-info sl-pas-vpravo">${htmlVolbyCasopisu()}${filtryKroniky ? `<div class="sl-filtry-kroniky" role="group" aria-label="Filtr kroniky">${filtryKroniky}</div>` : ''}<div class="sl-panely">${panely}</div></div>`,
     });
 }
 
@@ -468,6 +490,7 @@ function klikSlavy(cil) {
     const panel = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-panel]'));
     const naPohled = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-pohled]'));
     const filtr = /** @type {HTMLElement | null} */ (cil.closest('[data-kronika-filtr]'));
+    const casopis = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-casopis]'));
     const vyzva = /** @type {HTMLElement | null} */ (cil.closest('[data-sezona-vyzvat]'));
     if (cil.closest('[data-sl-panel-zavrit]')) nastavitPanelSlavy('');
     else if (panel) {
@@ -475,6 +498,11 @@ function klikSlavy(cil) {
     } else if (naPohled) prepnoutPohled(naPohled.dataset.slPohled, naPohled.getAttribute('role') === 'tab');
     else if (filtr) {
         filtrKroniky = filtr.dataset.kronikaFiltr || 'vse';
+        vykreslit();
+    } else if (casopis) {
+        casopisSlavy = casopis.dataset.slCasopis || '';
+        try { localStorage.setItem('slavaCasopis', casopisSlavy); } catch { /* jen pro toto spuštění */ }
+        zuzit();
         vykreslit();
     } else if (cil.closest('[data-sezona-vyhlasit]')) vyhlasitSezonu(sezona?.kUzavreni);
     else if (cil.closest('[data-sezona-zvolit]')) zvolitSezonu();

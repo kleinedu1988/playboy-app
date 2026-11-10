@@ -3,6 +3,15 @@
 // s jménem v prvním pádě.
 import { esc, sklonovat } from './format.js';
 
+// Síň slávy zúžená na modelky jednoho časopisu (0.02.021): plati(id) = modelka má číslo v časopise. Místa zůstávají
+// celková (Top 10 celé sbírky), kronika ponechá začátek kroniky a události vybraných modelek.
+export function zuzitSinSlavy(data, plati) {
+    const jejich = x => plati(x.modelkaId);
+    return { ...data, vitrina: data.vitrina.filter(jejich), legendy: data.legendy.filter(jejich), rekordy: data.rekordy.filter(jejich),
+        odznaky: (data.odznaky || []).filter(jejich), kronika: (data.kronika || []).filter(u => u.druh === 'zacatek' || plati(u.modelkaId)) };
+}
+export const zuzitSezonu = (sezona, plati) => (sezona?.poradi ? { ...sezona, poradi: sezona.poradi.filter(b => plati(b.modelkaId)) } : sezona);
+
 const MESICE = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
 
 // „RRRR-MM-DD HH:MM:SS“ → Date (místní čas); neplatné null

@@ -3,7 +3,7 @@
 // Otevírá se tlačítkem „Rok ve sbírce →“ v heru Statistik; Jako časopis ho projde v režimu čtení, Tisk ho
 // vytiskne nebo uloží do PDF.
 import { GetRokVeSbirce } from './backend';
-import { MESICE, esc, nazevVydani, obrazek, sklonovat } from '../lib/format';
+import { MESICE, esc, nazevVydani, obrazek, priponaRocniku, sklonovat } from '../lib/format';
 import { cislaRoku, denCesky, dokonceneRocniky, nejaktivnejsiMesic, noveModelky, protiLoni, stranyRoku } from '../lib/rok-ve-sbirce';
 import { textSrdicek } from '../lib/srdicka';
 import { drzetFokus } from '../ui/dom';
@@ -105,7 +105,7 @@ function htmlModelek() {
 
 function htmlDokonceno() {
     const radky = [
-        ...rocniky.map(r => `<li>Ročník <b>${r.rocnik}</b>${r.edice !== 'US' ? ` ${esc(r.edice)}` : ''} je celý – ${sklonovat(r.cisel, 'centerfold', 'centerfoldy', 'centerfoldů')}, poslední přibyla ${esc(r.posledni)}</li>`),
+        ...rocniky.map(r => `<li>Ročník <b>${r.rocnik}</b>${esc(priponaRocniku(r.edice))} je celý – ${sklonovat(r.cisel, 'centerfold', 'centerfoldy', 'centerfoldů')}, poslední přibyla ${esc(r.posledni)}</li>`),
         ...data.sezony.filter(s => s.favoritka).map(s => `<li>${esc(s.nazev || s.klic)}: Favoritka <button type="button" class="link" data-rs-profil="${s.favoritka}">${esc(jmena.get(s.favoritka) || '?')}</button>${s.milacek && jmena.get(s.milacek) ? `, Miláček <button type="button" class="link" data-rs-profil="${s.milacek}">${esc(jmena.get(s.milacek))}</button>` : ''}</li>`),
     ];
     const cisla = data.novaCisla.length ? `<p class="rs-cisla">Nová čísla: ${data.novaCisla.slice(0, 40).map(c => `<button type="button" class="link" data-rs-cislo="${esc(c)}">${esc(nazevVydani(c))}</button>`).join(', ')}${data.novaCisla.length > 40 ? ` a ${data.novaCisla.length - 40} dalších` : ''}</p>` : '';

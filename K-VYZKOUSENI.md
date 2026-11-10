@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.021 – Síň slávy a Rok ve sbírce přes časopisy
+
+- [ ] **Kritérium hotovo:** Síň slávy › volba „Penthouse“ v liště: Top 10 jen s modelkami Penthouse (s celkovým
+      místem), Legendy, Odznaky, Rekordy a Kronika také.
+- [ ] Žádná modelka Penthouse v Top 10 → hláška „Z časopisu Penthouse teď nikdo v Top 10 není“.
+- [ ] Hero (trůn) při volbě časopisu: co ukáže, když jednička celé sbírky z časopisu není? (možná k doladění)
+- [ ] Sezóna: pořadí jen modelek zvoleného časopisu; vyhlášení sezóny se volbou nemění.
+- [ ] Volba se pamatuje po restartu; se sbírkou jen z Playboye se neukáže.
+- [ ] Rok ve sbírce: celý ročník Penthouse dokončený letos → „Ročník 1985 Penthouse US je celý“.
+
 ## 0.02.020 – Statistiky a Postřehy podle časopisu
 
 - [ ] **Kritérium hotovo:** se sbírkou s Penthouse nikde ve Statistikách „Playmate“ u modelky jen z Penthouse

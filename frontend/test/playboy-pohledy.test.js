@@ -40,13 +40,13 @@ test('kapesní katalog bez čísel jiných časopisů', () => {
     assert.ok(polozkyKatalogu(podklady, 'vse', '2011-08').some(p => p.v === '1985-09'));
 });
 
-test('dokončené ročníky jen Playboye', () => {
+test('dokončené ročníky všech časopisů, Playboy první (od 0.02.021, dřív jen Playboy)', () => {
     const rok = new Date().getFullYear();
     const mesice = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
     const modelky = mesice.map((m, i) => ({ jmeno: `Pet ${i}`, pridano: `${rok}-01-0${(i % 9) + 1}`, centerfoldy: [`1985-${m}@PH`] }));
-    assert.deepEqual(dokonceneRocniky(modelky, rok), []);
+    assert.deepEqual(dokonceneRocniky(modelky, rok).map(r => [r.edice, r.rocnik]), [['PH/US', 1985]]);
     const playboy = mesice.map((m, i) => ({ jmeno: `PM ${i}`, pridano: `${rok}-01-0${(i % 9) + 1}`, centerfoldy: [`1985-${m}`] }));
-    assert.deepEqual(dokonceneRocniky([...modelky, ...playboy], rok).map(r => [r.edice, r.rocnik]), [['US', 1985]]);
+    assert.deepEqual(dokonceneRocniky([...modelky, ...playboy], rok).map(r => [r.edice, r.rocnik]), [['US', 1985], ['PH/US', 1985]]);
 });
 
 test('sousední čísla a speciály zůstávají v řadě čísla', () => {

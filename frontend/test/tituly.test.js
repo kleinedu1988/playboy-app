@@ -139,3 +139,25 @@ test('Statistiky podle časopisu: texty a barva titulů jiných časopisů (0.02
     nastavitCasopisy([]);
     assert.equal(jeTitulJinehoCasopisu('Pet of the Month'), false);
 });
+
+test('Síň slávy a Rok ve sbírce přes všechny časopisy (0.02.021)', async () => {
+    const { casopisyModelky, casopisyVeSbirce, priponaRocniku } = await import('../src/lib/format.js');
+    const { zuzitSinSlavy, zuzitSezonu } = await import('../src/lib/slava.js');
+    const { dokonceneRocniky } = await import('../src/lib/rok-ve-sbirce.js');
+    nastavitCasopisy(CASOPISY);
+    const modelky = [{ id: 1, vydani: ['1985-09'] }, { id: 2, obalky: ['1987-02@PH'] }, { id: 3, vydani: ['1990-01@HU', '1991-01'] }];
+    assert.deepEqual([...casopisyModelky(modelky[2])], ['HU', 'PB']);
+    assert.deepEqual(casopisyVeSbirce(modelky).map(c => c.nazev), ['Playboy', 'Penthouse', 'Hustler']);
+    assert.deepEqual(['US', 'CZ', 'PH/UK'].map(priponaRocniku), ['', ' CZ', ' Penthouse UK']);
+    const ph = id => id === 2;
+    const data = { vitrina: [{ modelkaId: 1, misto: 1 }, { modelkaId: 2, misto: 4 }], legendy: [{ modelkaId: 3 }], rekordy: [{ modelkaId: 2 }],
+        odznaky: [{ modelkaId: 1 }], kronika: [{ druh: 'zacatek', modelkaId: 0 }, { druh: 'vstup', modelkaId: 2 }, { druh: 'vstup', modelkaId: 1 }] };
+    const z = zuzitSinSlavy(data, ph);
+    assert.deepEqual(z.vitrina, [{ modelkaId: 2, misto: 4 }]);
+    assert.deepEqual([z.legendy.length, z.rekordy.length, z.odznaky.length, z.kronika.length], [0, 1, 0, 2]);
+    assert.deepEqual(zuzitSezonu({ poradi: [{ modelkaId: 1 }, { modelkaId: 2 }] }, ph).poradi, [{ modelkaId: 2 }]);
+    // Celý ročník Penthouse US 1985 přidaný letos
+    const pets = Array.from({ length: 12 }, (_, i) => ({ jmeno: `Pet ${i + 1}`, pridano: '2026-03-01', centerfoldy: [`1985-${String(i + 1).padStart(2, '0')}@PH`] }));
+    assert.deepEqual(dokonceneRocniky(pets, 2026).map(r => [r.rocnik, r.edice, r.cisel]), [[1985, 'PH/US', 12]]);
+    nastavitCasopisy([]);
+});

@@ -1,7 +1,7 @@
 // Rok ve sbírce (app/rok-ve-sbirce.js): co se dá z modelek spočítat v okně – nové modelky roku, dokončené ročníky,
 // nejaktivnější měsíc – a strany režimu čtení (lib/casopis.js) z celého přehledu. Fotky, alba, čísla, dny práce
 // a nejlepší fotky počítá backend (rok_ve_sbirce.go).
-import { EDICE, MESICE, ciselRocniku, nazevVydani, rozlozitVydani, sklonovat } from './format.js';
+import { MESICE, ciselRocniku, priponaRocniku, nazevVydani, rozlozitVydani, sklonovat } from './format.js';
 import { udajeModelky } from './casopis.js';
 
 const rokTextu = t => parseInt(String(t || '').slice(0, 4)) || 0;
@@ -18,7 +18,8 @@ export function noveModelky(modelky, rok) {
 }
 
 /**
- * Ročníky edic, které mají centerfold ve všech vyšlých měsících a poslední chybějící Playmate přibyla v roce
+ * Ročníky řad (Playboy US a CZ, Penthouse US…), které mají centerfold ve všech vyšlých měsících a poslední chybějící
+ * modelka přibyla v roce
  * (podle data přidání modelky). Od nejstaršího ročníku.
  * @param {any[]} modelky
  * @param {number} rok
@@ -30,8 +31,8 @@ export function dokonceneRocniky(modelky, rok) {
     for (const m of modelky) {
         for (const c of m.centerfoldy || []) {
             const v = rozlozitVydani(c);
-            // Jen Playboy: Rok ve sbírce napříč časopisy je krok 0.02.021 (řady jiných časopisů už program zná)
-            if (!v || v.casopis !== 'PB' || !/^\d\d$/.test(v.mesic)) continue;
+            // Všechny časopisy (0.02.021): ročník řady („PH/US“) se počítá podle jejích vyšlých čísel
+            if (!v || !/^\d\d$/.test(v.mesic)) continue;
             const klic = `${v.edice}|${v.rok}`;
             if (!rocniky.has(klic)) rocniky.set(klic, new Map());
             const mesice = rocniky.get(klic);
@@ -49,7 +50,9 @@ export function dokonceneRocniky(modelky, rok) {
         const posledni = [...mesice.values()].reduce((a, b) => (b.pridano > a.pridano ? b : a));
         if (rokTextu(posledni.pridano) === rok) vysledek.push({ edice, rocnik: parseInt(r), cisel, posledni: posledni.jmeno });
     }
-    return vysledek.sort((a, b) => a.rocnik - b.rocnik || EDICE.indexOf(a.edice) - EDICE.indexOf(b.edice));
+    // Playboy US, CZ, pak řady jiných časopisů abecedně
+    const poradiRady = e => (e === 'US' ? '0' : e === 'CZ' ? '1' : `2${e}`);
+    return vysledek.sort((a, b) => a.rocnik - b.rocnik || poradiRady(a.edice).localeCompare(poradiRady(b.edice)));
 }
 
 /**
@@ -123,7 +126,7 @@ export function stranyRoku({ data, nove, rocniky, jmenaSezon = new Map() }) {
         nej >= 0 && `Nejvíc práce: **${MESICE[nej].toLowerCase()}** (${sklonovat(data.mesice[nej].fotek, 'fotka', 'fotky', 'fotek')}).`,
         data.serie?.dni > 1 && `Nejdelší série: **${sklonovat(data.serie.dni, 'den', 'dny', 'dní')} v řadě** (${denCesky(data.serie.od)} – ${denCesky(data.serie.do)}).`,
         data.fotek5 && `Pět srdíček dostalo ${sklonovat(data.fotek5, 'nová fotka', 'nové fotky', 'nových fotek')}.`,
-        rocniky.length && `Dokončené ročníky: ${rocniky.map(r => `${r.rocnik}${r.edice !== 'US' ? ` ${r.edice}` : ''}`).join(', ')}.`,
+        rocniky.length && `Dokončené ročníky: ${rocniky.map(r => `${r.rocnik}${priponaRocniku(r.edice)}`).join(', ')}.`,
     ].filter(Boolean);
     strany.push({ druh: 'uvod', oddil: 'Rok v číslech', fotky: data.nejlepsi[1] ? [fotka(data.nejlepsi[1])] : [], nadtitulek: `Rok ${rok}`,
         nadpis: 'Rok v číslech', udaje: cislaRoku(data, nove), text: vety.join('\n\n') });
@@ -139,7 +142,7 @@ export function stranyRoku({ data, nove, rocniky, jmenaSezon = new Map() }) {
             popisek: [f.jmeno, f.vydani ? nazevVydani(f.vydani) : f.album, '♥'.repeat(f.hodnoceni)].filter(Boolean).join(' · ') });
     }
     const zaver = [
-        ...rocniky.map(r => `- Ročník **${r.rocnik}**${r.edice !== 'US' ? ` (${r.edice})` : ''} je celý – ${sklonovat(r.cisel, 'centerfold', 'centerfoldy', 'centerfoldů')}, poslední přibyla ${r.posledni}.`),
+        ...rocniky.map(r => `- Ročník **${r.rocnik}**${priponaRocniku(r.edice)} je celý – ${sklonovat(r.cisel, 'centerfold', 'centerfoldy', 'centerfoldů')}, poslední přibyla ${r.posledni}.`),
         ...(data.sezony || []).filter(s => s.favoritka).map(s => `- ${s.nazev || s.kratky || s.klic}: Favoritka **${jmenaSezon.get(s.favoritka) || '?'}**${s.milacek && jmenaSezon.get(s.milacek) ? `, Miláček ${jmenaSezon.get(s.milacek)}` : ''}.`),
     ];
     if (zaver.length) strany.push({ druh: 'clanek', oddil: 'Dokončeno', fotky: [], nadtitulek: `Rok ${rok}`, nadpis: 'Dokončeno a vyhlášeno', autor: '', text: zaver.join('\n'), perex: false, pokracovani: false });

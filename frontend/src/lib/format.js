@@ -172,6 +172,21 @@ export const platnaRadaKalendare = rada => /^([A-Z]{2}|[A-Z]{2}\/[A-Z]{2})$/.tes
 // Název řady ve volbě a v prázdném stavu: „Playboy US“, „Penthouse UK“
 export const nazevVolbyRady = rada => moznostiRad().find(m => m.hodnota === rada)?.nazev || nazevRady(rada);
 
+// Přípona ročníku řady do vět („Ročník 1985 CZ“, „Ročník 1985 Penthouse US“); u Playboye US nic (0.02.021)
+export const priponaRocniku = rada => (rada === VYCHOZI_EDICE ? '' : rada.includes('/') ? ` ${nazevVolbyRady(rada)}` : ` ${rada}`);
+
+// Časopisy čísel a obálek modelky (klíče „PB“, „PH“…) a časopisy celé sbírky v pořadí tabulky časopisů (0.02.021)
+export const casopisyModelky = m => new Set([...(m?.vydani || []), ...(m?.obalky || []), ...(m?.centerfoldy || [])]
+    .map(v => rozlozitVydani(v)?.casopis).filter(Boolean));
+export function casopisyVeSbirce(modelky) {
+    const vse = new Set();
+    for (const m of modelky) casopisyModelky(m).forEach(c => vse.add(c));
+    const poradi = [...casopisy.keys()];
+    const pozice = k => (poradi.includes(k) ? poradi.indexOf(k) : k === VYCHOZI_CASOPIS ? -1 : poradi.length);
+    return [...vse].sort((a, b) => pozice(a) - pozice(b) || a.localeCompare(b))
+        .map(klic => ({ klic, nazev: casopisy.get(klic)?.nazev || (klic === VYCHOZI_CASOPIS ? 'Playboy' : klic) }));
+}
+
 // Přípona časopisu a edice k názvu čísla: '' u Playboye US, „ · CZ“, u jiného časopisu „ · Penthouse“ /
 // „ · Penthouse UK“; kratce (páska) se zkratkou „ · PH“ / „ · PH UK“
 function priponaRady(v, kratce = false) {

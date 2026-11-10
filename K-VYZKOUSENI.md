@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.004 – Názvy čísel podle časopisu
+
+- [ ] Odkaz `[[09/1985@PH]]` v poznámce teď ukazuje „Září 1985 · Penthouse“ (dřív „· PH“).
+- [ ] Názvy a pásky čísel Playboye všude beze změny (dlaždice Čísel, profil, Kalendář, speciály).
+
 ## 0.02.003 – Tabulka časopisů (úprava databáze č. 17)
 
 - [ ] Po instalaci a prvním spuštění: program se otevře normálně, sbírka je celá a v ⋯ › Obnovit ze zálohy

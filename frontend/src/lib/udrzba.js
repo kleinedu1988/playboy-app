@@ -2,7 +2,7 @@
 // jednu frontu skupin (modelka nebo číslo) s položkami (chybějící údaj, nález kontroly, návrh), spočítá jejich
 // prioritu, pokrok sbírky po oblastech a počty pro filtry; pro režim Po údajích ji přeskládá po jednotlivých údajích.
 // Jen čisté funkce – testuje je test/udrzba.test.js.
-import { VYCHOZI_EDICE, kategorieModelky, nazevAlba, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
+import { VYCHOZI_EDICE, kategorieModelky, nazevAlba, nazevRady, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
 
 // Údaje modelky, které Údržba hlídá, po skupinách shodných s částmi formuláře: [vlastnost, název, pole formuláře].
 // Další jména a poznámka se nehlídají, většina modelek je mít nemusí.
@@ -250,7 +250,7 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
             priorita: VAHY_UKOLU[filtr], uroven: urovenPriority(VAHY_UKOLU[filtr]) });
         if (co.cover) cislo('cover', 'cover', 'cover', 'chybí obálka čísla', 'Bez coveru je číslo v Číslech a v kalendáři prázdné');
         if (co.centerfold) cislo('centerfold', 'cfcisla', 'centerfold', 'chybí centerfold čísla', 'Číslo nemá Playmate – přidej jí centerfold');
-        skupiny.push({ klic: klicSkupiny, druh: 'vydani', vydani: v, jmeno: nazevVydani(v), podtitulek: `číslo · ${rozlozitVydani(v)?.edice || VYCHOZI_EDICE}`, polozky });
+        skupiny.push({ klic: klicSkupiny, druh: 'vydani', vydani: v, jmeno: nazevVydani(v), podtitulek: `číslo · ${nazevRady(rozlozitVydani(v)?.edice || VYCHOZI_EDICE)}`, polozky });
     });
 
     // Priorita skupiny: nejcennější položka a k tomu zlomek ostatních (víc práce na jednom místě se vyplatí)

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rozlozitVydani, slozitVydani, nazevVydani, nazevAlba, prevestVysku, prevestVahu, rozlozitMiry } from '../src/lib/format.js';
+import { rozlozitVydani, slozitVydani, nazevVydani, nazevAlba, nastavitCasopisy, nazevCasopisu, nazevRady, paskaCisla, prevestVysku, prevestVahu, rozlozitMiry } from '../src/lib/format.js';
 
 test('vydání jiného časopisu: klíč s @, řada a zpětné složení (0.02.002)', () => {
     assert.deepEqual(rozlozitVydani('1985-09@PH'), { rok: '1985', mesic: '09', edice: 'PH/US', zeme: 'US', casopis: 'PH' });
@@ -14,11 +14,26 @@ test('vydání jiného časopisu: klíč s @, řada a zpětné složení (0.02.0
     }
     assert.equal(slozitVydani('1985', '09', 'PH/US'), '1985-09@PH');
     assert.equal(slozitVydani('1985', '', 'PH/UK'), '1985-UK@PH');
+    // Bez načtených časopisů zkratka, s nimi název (0.02.004)
+    nastavitCasopisy([]);
     assert.equal(nazevVydani('1985-09@PH'), 'Září 1985 · PH');
-    assert.equal(nazevVydani('1986-03-UK@PH'), 'Březen 1986 · PH UK');
+    nastavitCasopisy([{ klic: 'PB', nazev: 'Playboy' }, { klic: 'PH', nazev: 'Penthouse' }, { klic: 'HU', nazev: 'Hustler' }]);
+    assert.equal(nazevVydani('1985-09@PH'), 'Září 1985 · Penthouse');
+    assert.equal(nazevVydani('1986-03-UK@PH'), 'Březen 1986 · Penthouse UK');
+    assert.equal(nazevVydani('1985@HU'), '1985 · Hustler');
+    assert.equal(paskaCisla('1985-09@PH'), 'Zář 85 · PH');
+    assert.equal(paskaCisla('1985@PH'), 'Ročník 85 · PH');
+    assert.equal(nazevRady('PH/UK'), 'Penthouse UK');
+    assert.equal(nazevRady('HU/US'), 'Hustler');
+    assert.equal(nazevRady('CZ'), 'CZ');
+    assert.equal(nazevRady('US'), 'US');
+    assert.equal(nazevCasopisu('XY'), 'XY');
     // Playboy beze změny
     assert.equal(nazevVydani('2009-11'), 'Listopad 2009');
     assert.equal(nazevVydani('2009-11-CZ'), 'Listopad 2009 · CZ');
+    assert.equal(paskaCisla('2009-11'), 'Lis 09');
+    assert.equal(paskaCisla('2009-11-CZ'), 'Lis 09 · CZ');
+    assert.equal(nazevVydani('2012'), '2012');
 });
 
 test('vydání s edicí', () => {

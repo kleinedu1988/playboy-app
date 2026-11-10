@@ -1,6 +1,6 @@
 // Mezipaměť dat, která sdílí víc pohledů. Po každém zápisu do databáze se zahodí (viz backend.js).
-import { GetModelky, GetSpecialy } from './backend';
-import { nastavitNazvySpecialu } from '../lib/format';
+import { GetCasopisy, GetModelky, GetSpecialy } from './backend';
+import { nastavitCasopisy, nastavitNazvySpecialu } from '../lib/format';
 import { poZmeneDat } from './udalosti';
 import { stav } from './stav';
 
@@ -25,9 +25,11 @@ export async function oblibenostModelek() {
     return new Map((await vsechnyModelky()).map(m => [m.id, m.oblibenost || 0]));
 }
 
-// Názvy speciálů pro nazevVydani; po změně dat se načtou znovu
+// Názvy speciálů a časopisů pro nazevVydani; po změně dat se načtou znovu
 export async function nacistSpecialy() {
-    nastavitNazvySpecialu(await GetSpecialy());
+    const [specialy, casopisy] = await Promise.all([GetSpecialy(), GetCasopisy().catch(() => [])]);
+    nastavitNazvySpecialu(specialy);
+    nastavitCasopisy(casopisy);
 }
 
 poZmeneDat((rozsah) => {

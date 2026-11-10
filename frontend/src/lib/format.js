@@ -81,10 +81,29 @@ export function slozitVydani(rok, mesic, edice) {
     return [rok, mesic, zeme !== VYCHOZI_EDICE ? zeme : ''].filter(Boolean).join('-') + (casopis !== VYCHOZI_CASOPIS ? `@${casopis}` : '');
 }
 
-// Přípona časopisu a edice k názvu čísla: '' u Playboye US, „ · CZ“, u jiného časopisu „ · PH“ / „ · PH UK“
-// (od 0.02.004 název časopisu)
-function priponaRady(v) {
-    if (v.casopis !== VYCHOZI_CASOPIS) return ` · ${v.casopis}${v.zeme !== VYCHOZI_EDICE ? ` ${v.zeme}` : ''}`;
+// Časopisy z tabulky (casopisy.go) podle klíče; plní je rozhraní z backendu (mezipamet.js) jako názvy speciálů
+const casopisy = new Map();
+
+/** @param {{ klic: string, nazev: string, barva?: string, edice?: string[], modelkaMesice?: string, modelkaRoku?: string }[]} seznam */
+export function nastavitCasopisy(seznam) {
+    casopisy.clear();
+    (seznam || []).forEach(c => casopisy.set(c.klic, c));
+}
+
+// Název časopisu podle klíče („PH“ → „Penthouse“); neznámý klíč zůstane zkratkou
+export const nazevCasopisu = klic => casopisy.get(klic)?.nazev || klic || '';
+
+// Název řady: „US“, „CZ“ (Playboy jako dřív), „Penthouse“, „Penthouse UK“
+export function nazevRady(rada) {
+    const { casopis, zeme } = rozlozitRadu(rada);
+    if (casopis === VYCHOZI_CASOPIS) return zeme;
+    return `${nazevCasopisu(casopis)}${zeme !== VYCHOZI_EDICE ? ` ${zeme}` : ''}`;
+}
+
+// Přípona časopisu a edice k názvu čísla: '' u Playboye US, „ · CZ“, u jiného časopisu „ · Penthouse“ /
+// „ · Penthouse UK“; kratce (páska) se zkratkou „ · PH“ / „ · PH UK“
+function priponaRady(v, kratce = false) {
+    if (v.casopis !== VYCHOZI_CASOPIS) return ` · ${kratce ? v.casopis : nazevCasopisu(v.casopis)}${v.zeme !== VYCHOZI_EDICE ? ` ${v.zeme}` : ''}`;
     return v.zeme !== VYCHOZI_EDICE ? ` · ${v.zeme}` : '';
 }
 
@@ -125,7 +144,7 @@ export function paskaCisla(vydani) {
     const v = rozlozitVydani(vydani);
     if (!v) return '';
     const rok = v.rok.slice(2);
-    const edice = priponaRady(v);
+    const edice = priponaRady(v, true);
     if (!v.mesic) return `Ročník ${rok}${edice}`;
     if (v.mesic.startsWith('S')) return `Speciál ${rok}${edice}`;
     return `${ZKRATKY_PASKY[parseInt(v.mesic) - 1]} ${rok}${edice}`;

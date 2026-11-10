@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.012 – Kategorie a filtry podle časopisu
+
+- [ ] **Kritérium hotovo:** hledání `kategorie:"pet of the month"` najde modelku s centerfoldem Penthouse;
+      `kategorie:"playmate mesice"` ji nenajde.
+- [ ] Modelka jen s pictorialem Pet of the Month (bez centerfoldu): v profilu „Pet of the Month“, žádná Playmate.
+- [ ] Pictorial Pet of the Year u čísla Penthouse 1986: kategorie „Pet of the Year 1986“.
+- [ ] Galerie › filtr Kategorie nabízí Pet of the Month s počtem modelek; Statistiky › Kategorie ji ukazují.
+- [ ] Úprava modelky: odvozené kategorie (šedé) ukazují Pet of the Month.
+- [ ] Playmate jen z Playboye: kategorie, hledání `pmom` a filtry jako dřív.
+
 ## 0.02.011 – Typy alb podle časopisu
 
 - [ ] **Kritérium hotovo:** okno alba, Časopis a edice = Penthouse US: druhy „Pictorial · Pet of the Month ·

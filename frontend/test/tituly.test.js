@@ -41,9 +41,9 @@ test('časopis bez titulu a bez načtené tabulky', () => {
 });
 
 test('kategorie v profilu: Pet of the Month místo Playmate měsíce, obě u modelky ze dvou časopisů', async () => {
-    const { kategorieKZobrazeni } = await import('../src/lib/format.js');
+    const { kategorieModelky } = await import('../src/lib/format.js');
     nastavitCasopisy(CASOPISY);
-    const nazvy = m => kategorieKZobrazeni(m).map(k => k.nazev);
+    const nazvy = m => kategorieModelky(m).map(k => k.nazev);
     assert.deepEqual(nazvy({ centerfoldy: ['1985-09@PH'] }), ['Pet of the Month']);
     assert.deepEqual(nazvy({ centerfoldy: ['1985-09@PH', '1987-02-UK@PH', '1990-01@HU'] }), ['Pet of the Month', 'Honey of the Month']);
     assert.deepEqual(nazvy({ centerfoldy: ['1987-02', '1985-09@PH'] }), ['Playmate měsíce', 'Pet of the Month']);
@@ -63,5 +63,18 @@ test('typy alb podle časopisu: Pet of the Month v okně alba a v popisu alba', 
     assert.equal(popisTypuAlba(TYP_PM_MESICE, '', '1985-09'), 'Pictorial Playmate měsíce');
     assert.equal(popisTypuAlba(TYP_PM_MESICE, ''), 'Pictorial Playmate měsíce');
     assert.equal(popisTypuAlba(TYP_PM_ROKU, '', '1986-S01-UK@PH'), 'Pictorial Pet of the Year');
+    nastavitCasopisy([]);
+});
+
+test('kategorie z pictorialů jiných časopisů (backend titulyJinde) a jejich pořadí', async () => {
+    const { kategorieModelky, odvozeneKategorie } = await import('../src/lib/format.js');
+    nastavitCasopisy(CASOPISY);
+    // Pictorial Pet of the Month a Pet of the Year 1986 (bez centerfoldu): žádná Playmate
+    const pet = { centerfoldy: [], playmateMesice: false, playmateRoku: '', titulyJinde: [{ nazev: 'Pet of the Month' }, { nazev: 'Pet of the Year', rok: '1986' }] };
+    assert.deepEqual(odvozeneKategorie(pet), ['Pet of the Month', 'Pet of the Year']);
+    assert.deepEqual(kategorieModelky(pet).map(k => [k.nazev, k.detail]), [['Pet of the Month', ''], ['Pet of the Year', '1986']]);
+    // Playmate roku i Pet: tituly Playboye první, Modelka obálky za nimi
+    const obe = { centerfoldy: ['1985-09'], playmateRoku: '1986', obalky: ['1986-06'], titulyJinde: [{ nazev: 'Pet of the Month' }] };
+    assert.deepEqual(kategorieModelky(obe).map(k => k.nazev), ['Playmate měsíce', 'Playmate roku', 'Pet of the Month', 'Modelka obálky']);
     nastavitCasopisy([]);
 });

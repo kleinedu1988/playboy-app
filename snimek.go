@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"pinup-katalog/internal/hledani"
 	"pinup-katalog/internal/sbirka"
 )
 
@@ -200,8 +201,11 @@ type odvozeneZAlb struct {
 	cyberGirl                   string
 	playmateMesice              bool
 	playmateRoku                string
-	texty, fotografove          strings.Builder
-	alba                        []albumModelky // alba s fotkami (skóre fotek, náhledy)
+	// Jiné časopisy než Playboy: klíče časopisů s modelkou měsíce, rok modelky roku podle časopisu (0.02.012)
+	mesiceJinde        []string
+	rokyJinde          map[string]string
+	texty, fotografove strings.Builder
+	alba               []albumModelky // alba s fotkami (skóre fotek, náhledy)
 }
 
 // Seřazený seznam bez opakování
@@ -252,17 +256,37 @@ func (a *App) nacistSnimek() *snimek {
 			if al.vydani != "" {
 				o.vydani = append(o.vydani, al.vydani)
 			}
-			if al.typ == "Centerfold" {
-				v := al.vydani
-				if v == "" {
-					v = al.nazev
-				}
-				o.centerfoldy = append(o.centerfoldy, v)
+			cislo := al.vydani
+			if cislo == "" {
+				cislo = al.nazev
 			}
-			switch al.typ {
-			case typPMMesice:
+			_, casopis := hledani.RozdelitCasopis(cislo)
+			jinde := casopis != "" && casopis != hledani.VychoziCasopis
+			if al.typ == "Centerfold" {
+				o.centerfoldy = append(o.centerfoldy, cislo)
+				if jinde && !slices.Contains(o.mesiceJinde, casopis) {
+					o.mesiceJinde = append(o.mesiceJinde, casopis)
+				}
+			}
+			switch {
+			case jinde && al.typ == typPMMesice:
+				if !slices.Contains(o.mesiceJinde, casopis) {
+					o.mesiceJinde = append(o.mesiceJinde, casopis)
+				}
+			case jinde && al.typ == typPMRoku:
+				rok := vzorRokuAlba.FindString(al.vydani)
+				if rok == "" {
+					rok = "?"
+				}
+				if o.rokyJinde == nil {
+					o.rokyJinde = map[string]string{}
+				}
+				if r := o.rokyJinde[casopis]; r == "" || r == "?" {
+					o.rokyJinde[casopis] = rok
+				}
+			case al.typ == typPMMesice:
 				o.playmateMesice = true
-			case typPMRoku:
+			case al.typ == typPMRoku:
 				// Rok čísla s pictorialem, jinak rok z názvu alba („Playmate of the Year 1998“)
 				rok := vzorRokuAlba.FindString(al.vydani)
 				if rok == "" {
@@ -374,6 +398,7 @@ func (a *App) nacistSnimek() *snimek {
 // Řádky tabulky modelek doplněné o údaje z alb a obálek, v pořadí tabulky. Vrací i jména všech modelek (i těch,
 // jejichž řádek se nepodařilo celý přečíst; jejich alba v seznamu alb zůstávají) a první chybu.
 func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int][]string) ([]Modelka, map[int]string, error) {
+	tituly := a.titulyCasopisu()
 	// Starší řádky mohou mít ve sloupcích NULL
 	vyber := []string{"id", "jmeno"}
 	for _, s := range sloupceModelky {
@@ -429,6 +454,7 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 		if x := odvozene[m.ID]; x != nil {
 			o.fotek, o.hodnocenych, o.srdci, o.cyberGirl = x.fotek, x.hodnocenych, x.srdci, x.cyberGirl
 			o.playmateMesice, o.playmateRoku = x.playmateMesice, x.playmateRoku
+			o.mesiceJinde, o.rokyJinde = x.mesiceJinde, x.rokyJinde
 			o.vydani, o.centerfoldy, o.online = serazeneBezOpakovani(x.vydani), serazeneBezOpakovani(x.centerfoldy), x.online
 			sort.Strings(o.online)
 			m.TextyAlb, m.FotografoveAlb = x.texty.String(), x.fotografove.String()
@@ -444,6 +470,7 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 		m.Obalky = uzavritSeznam(obalky[m.ID])
 		m.CyberGirl = o.cyberGirl
 		m.PlaymateMesice, m.PlaymateRoku = o.playmateMesice, o.playmateRoku
+		m.TitulyJinde = titulyJinde(tituly, o.mesiceJinde, o.rokyJinde)
 		modelky = append(modelky, m)
 	}
 	if err := rows.Err(); err != nil && prvniChyba == nil {

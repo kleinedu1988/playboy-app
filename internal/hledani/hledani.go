@@ -93,6 +93,10 @@ type Modelka struct {
 	// Year (kategorie Playmate roku; „?“ = album bez roku); odvozené z alb, jen pro čtení
 	PlaymateMesice bool   `json:"playmateMesice"`
 	PlaymateRoku   string `json:"playmateRoku"`
+	// Od 0.02.012 se Playmate (PlaymateMesice, PlaymateRoku) odvozuje jen z čísel Playboye; tituly z jiných časopisů
+	// (centerfold nebo pictorial modelky měsíce / roku) jsou tady s názvem z tabulky časopisů: „Pet of the Month“,
+	// „Pet of the Year“ s rokem („?“ = bez roku); jen pro čtení
+	TitulyJinde []TitulCasopisu `json:"titulyJinde"`
 
 	// Popisy a fotografové alb modelky, jen pro hledání
 	TextyAlb       string `json:"-"`
@@ -375,13 +379,37 @@ func hodnotaPole(m *Modelka, klic string) string {
 	return ""
 }
 
+// Titul modelky v jiném časopise než Playboy (odvozená kategorie)
+type TitulCasopisu struct {
+	Nazev string `json:"nazev"`
+	Rok   string `json:"rok,omitempty"`
+}
+
+// Má modelka centerfold v Playboyi (číslo bez „@“)
+func CenterfoldPlayboye(m *Modelka) bool {
+	for _, v := range m.Centerfoldy {
+		if _, c := RozdelitCasopis(v); c == "" || c == VychoziCasopis {
+			return true
+		}
+	}
+	return false
+}
+
 // Kategorie: zapsané v poli role a odvozené z centerfoldu, alba Cyber Girl týdne či měsíce a obálky
 // (frontend/src/lib/format.js, KATEGORIE a odvozeneKategorie); obyčejné online album kategorii nedává
 func kategorieKHledani(m *Modelka) string {
 	var b strings.Builder
 	b.WriteString(m.Role)
-	if len(m.Centerfoldy) > 0 || m.PlaymateMesice {
+	if CenterfoldPlayboye(m) || m.PlaymateMesice {
 		b.WriteString(", Playmate měsíce")
+	}
+	for _, t := range m.TitulyJinde {
+		b.WriteString(", ")
+		b.WriteString(t.Nazev)
+		if t.Rok != "" && t.Rok != "?" {
+			b.WriteString(" ")
+			b.WriteString(t.Rok)
+		}
 	}
 	if m.PlaymateRoku != "" {
 		b.WriteString(", Playmate roku ")

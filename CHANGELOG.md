@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.012] – 2026-11-10
+
+### Změněno
+- **Kategorie podle časopisu:** „Playmate měsíce“ a „Playmate roku“ se odvozují jen z čísel Playboye. Centerfold
+  nebo pictorial modelky měsíce Penthouse dá kategorii **Pet of the Month**, pictorial modelky roku **Pet of the
+  Year** s rokem (Hustler: Honey of the Month / Year). Názvy jsou z tabulky časopisů (snímek sbírky,
+  `titulyJinde` u modelky).
+- Hledání `kategorie:"pet of the month"` (v Go i v rozhraní), fasety galerie, Statistiky podle kategorie
+  a výběr kategorií v úpravě modelky znají tituly jiných časopisů; řadí se hned za tituly Playboye.
+- Modelka jen z Penthouse už není „Playmate měsíce“ (ani z pictorialu Pet of the Month, omezení z 0.02.011).
+  `kategorieKZobrazeni` z 0.02.010 nahradily přímo odvozené kategorie.
+
 ## [0.02.011] – 2026-11-10
 
 ### Změněno

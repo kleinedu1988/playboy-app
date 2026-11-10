@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"pinup-katalog/internal/hledani"
 	"pinup-katalog/internal/sbirka"
 	uc "pinup-katalog/internal/uceni"
+	"strings"
 	"testing"
 )
 
@@ -201,5 +203,45 @@ func TestPictorialPetOfTheMonth(t *testing.T) {
 	}
 	if f := a.GetVydani("1985-09@PH"); len(f) != 1 {
 		t.Fatalf("číslo Penthouse: %d fotek", len(f))
+	}
+}
+
+// Kategorie podle časopisu (0.02.012): Penthouse dá Pet of the Month / Year, ne Playmate; hledání kategorie: najde
+func TestKategoriePetOfTheMonth(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Pet", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Playmate", Tetovani: -1, Piercing: -1})
+	var pet, pm int
+	for _, m := range a.GetModelky("") {
+		if m.Jmeno == "Pet" {
+			pet = m.ID
+		} else {
+			pm = m.ID
+		}
+	}
+	odkaz := func(z string) string { return "https://drive.google.com/file/d/" + strings.Repeat(z, 29) + "/view" }
+	a.AddBulkPhotos(pet, "1985-09@PH", "Centerfold", odkaz("P"))
+	a.AddBulkPhotos(pet, "Pet roku", "Playmate roku", odkaz("R"))
+	a.SetVydaniAlba(pet, "Pet roku", "Playmate roku", "1986-S01@PH")
+	a.AddBulkPhotos(pm, "1987-02", "Centerfold", odkaz("M"))
+	m := modelkaPodleJmena(t, a, "Pet")
+	if m.PlaymateMesice || m.PlaymateRoku != "" || fmt.Sprint(m.TitulyJinde) != "[{Pet of the Month } {Pet of the Year 1986}]" {
+		t.Fatalf("tituly: mesice %v, roku %q, jinde %v", m.PlaymateMesice, m.PlaymateRoku, m.TitulyJinde)
+	}
+	jmena := func(dotaz string) string {
+		var v []string
+		for _, x := range a.GetModelky(dotaz) {
+			v = append(v, x.Jmeno)
+		}
+		return strings.Join(v, ",")
+	}
+	if j := jmena(`kategorie:"pet of the month"`); j != "Pet" {
+		t.Fatalf("kategorie Pet of the Month: %q", j)
+	}
+	if j := jmena(`kategorie:"playmate mesice"`); j != "Playmate" {
+		t.Fatalf("kategorie Playmate měsíce: %q", j)
+	}
+	if j := jmena(`kategorie:"pet of the year"`); j != "Pet" {
+		t.Fatalf("kategorie Pet of the Year: %q", j)
 	}
 }

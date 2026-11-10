@@ -546,13 +546,24 @@ export function rozlozitKategorie(text) {
 export const popisKategorie = k => [k.nazev, k.detail, k.zbytek].filter(Boolean).join(' ');
 export const slozitKategorie = seznam => seznam.map(popisKategorie).join(', ');
 
-// Kategorie odvozené z dat: centerfold nebo pictorial Playmate of the Month = Playmate měsíce, pictorial Playmate
-// of the Year = Playmate roku, obálka = Modelka obálky, album Cyber Girl týdne nebo měsíce = Cyber Girl (obyčejný
-// Pictorial online kategorii nedává)
+// Kategorie odvozené z dat: centerfold Playboye nebo pictorial Playmate of the Month = Playmate měsíce, pictorial
+// Playmate of the Year = Playmate roku, obálka = Modelka obálky, album Cyber Girl týdne nebo měsíce = Cyber Girl
+// (obyčejný Pictorial online kategorii nedává). Jiný časopis dá svůj titul (0.02.012): centerfold a pictorial
+// modelky měsíce Penthouse = Pet of the Month, modelky roku = Pet of the Year (backend titulyJinde)
+function titulyJindeModelky(modelka) {
+    const v = [...(modelka.titulyJinde || [])];
+    for (const c of new Set((modelka.centerfoldy || []).map(x => rozlozitVydani(x)?.casopis).filter(c => c && c !== VYCHOZI_CASOPIS))) {
+        const nazev = titulCasopisu(c);
+        if (!v.some(t => t.nazev === nazev)) v.push({ nazev, rok: '' });
+    }
+    return v;
+}
+
 export function odvozeneKategorie(modelka) {
     return [
-        (modelka.centerfoldy || []).length || modelka.playmateMesice ? 'Playmate měsíce' : '',
+        (modelka.centerfoldy || []).some(jeCisloPlayboye) || modelka.playmateMesice ? 'Playmate měsíce' : '',
         modelka.playmateRoku ? 'Playmate roku' : '',
+        ...titulyJindeModelky(modelka).map(t => t.nazev),
         modelka.cyberGirl ? 'Cyber Girl' : '',
         (modelka.obalky || []).length ? 'Modelka obálky' : '',
     ].filter(Boolean);
@@ -583,28 +594,20 @@ export function vyskytModelky(modelka) {
 export function kategorieModelky(modelka) {
     const zapsane = rozlozitKategorie(modelka.role);
     odvozeneKategorie(modelka).forEach(nazev => {
+        const rokJinde = titulyJindeModelky(modelka).find(t => t.nazev === nazev)?.rok;
         const detail = nazev === 'Cyber Girl' ? modelka.cyberGirl || ''
-            : nazev === 'Playmate roku' && modelka.playmateRoku !== '?' ? modelka.playmateRoku || '' : '';
+            : nazev === 'Playmate roku' && modelka.playmateRoku !== '?' ? modelka.playmateRoku || ''
+                : rokJinde && rokJinde !== '?' ? rokJinde : '';
         if (!zapsane.some(k => k.nazev === nazev)) zapsane.push({ nazev, detail, zbytek: '', vlastni: false, odvozena: true });
     });
-    const poradi = k => k.vlastni ? KATEGORIE.length : KATEGORIE.findIndex(z => z.nazev === k.nazev);
+    // Titul jiného časopisu (Pet of the Month) hned za tituly Playboye
+    const zaPlaymate = KATEGORIE.findIndex(z => z.nazev === 'Playmate roku') + 0.5;
+    const poradi = k => {
+        if (k.vlastni) return KATEGORIE.length;
+        const i = KATEGORIE.findIndex(z => z.nazev === k.nazev);
+        return i >= 0 ? i : k.odvozena ? zaPlaymate : KATEGORIE.length;
+    };
     return zapsane.sort((a, b) => poradi(a) - poradi(b));
-}
-
-// Kategorie k zobrazení v profilu (0.02.010): odvozená „Playmate měsíce“ jen za centerfold Playboye; centerfold jiného
-// časopisu přidá jeho titul („Pet of the Month“). Hledání a filtry zatím berou kategorieModelky (0.02.012).
-export function kategorieKZobrazeni(modelka) {
-    const kategorie = kategorieModelky(modelka);
-    const cf = modelka.centerfoldy || [];
-    const jine = [...new Set(cf.map(v => rozlozitVydani(v)?.casopis).filter(c => c && c !== VYCHOZI_CASOPIS))];
-    if (!jine.length) return kategorie;
-    const playboy = cf.some(jeCisloPlayboye) || Boolean(modelka.playmateMesice);
-    const tituly = jine.map(c => ({ nazev: titulCasopisu(c), detail: '', zbytek: '', vlastni: false, odvozena: true }))
-        .filter(t => !kategorie.some(k => k.nazev === t.nazev));
-    const i = kategorie.findIndex(k => k.nazev === TYP_PM_MESICE && k.odvozena);
-    const v = kategorie.filter((k, j) => playboy || j !== i);
-    v.splice(i >= 0 ? (playboy ? i + 1 : i) : 0, 0, ...tituly);
-    return v;
 }
 
 // Míry z amerických zdrojů. Samotné číslo se bere v centimetrech či kilogramech; null = nerozpoznáno.

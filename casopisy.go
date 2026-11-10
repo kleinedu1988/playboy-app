@@ -6,6 +6,7 @@ package main
 // Názvy „modelky měsíce“ a „roku“ použijí texty rozhraní od 0.04. Správa (přidat, upravit) přijde v 0.02.009.
 
 import (
+	"slices"
 	"strings"
 
 	"pinup-katalog/internal/hledani"
@@ -95,4 +96,36 @@ func (a *App) znamaRada(rada string) bool {
 		}
 	}
 	return false
+}
+
+// Tituly modelky měsíce a roku podle klíče časopisu (snímek sbírky, kategorie „Pet of the Month“); časopis bez
+// titulu dostane obecný jako v rozhraní (titulCasopisu ve format.js)
+func (a *App) titulyCasopisu() map[string][2]string {
+	v := map[string][2]string{}
+	for _, c := range a.GetCasopisy() {
+		v[c.Klic] = [2]string{c.ModelkaMesice, c.ModelkaRoku}
+	}
+	return v
+}
+
+func titulyJinde(tituly map[string][2]string, mesice []string, roky map[string]string) []hledani.TitulCasopisu {
+	v := []hledani.TitulCasopisu{}
+	nazev := func(casopis string, i int, obecny string) string {
+		if t := strings.TrimSpace(tituly[casopis][i]); t != "" {
+			return t
+		}
+		return obecny
+	}
+	for _, c := range mesice {
+		v = append(v, hledani.TitulCasopisu{Nazev: nazev(c, 0, "Modelka měsíce")})
+	}
+	klice := make([]string, 0, len(roky))
+	for c := range roky {
+		klice = append(klice, c)
+	}
+	slices.Sort(klice)
+	for _, c := range klice {
+		v = append(v, hledani.TitulCasopisu{Nazev: nazev(c, 1, "Modelka roku"), Rok: roky[c]})
+	}
+	return v
 }

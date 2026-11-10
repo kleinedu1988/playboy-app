@@ -5,11 +5,11 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.02.011** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (10. 11. 2026): verze 0.02.012** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
-Export (verze 14) nese časopisy a profil i okno alba píšou titul modelky podle časopisu (Playmate, Pet, Honey). Další
-na řadě je **0.02.012 – Kategorie a filtry podle časopisu**.
+Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
+Honey). Další na řadě je **0.02.013 – Správa časopisů**.
 
 ---
 
@@ -89,7 +89,7 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 | 0.02.009 ✅ | **Tituly podle časopisu** (předřazeno z 0.04.001 na přání): `titulCasopisu` / `titulCisla` ve `format.js` – Playmate měsíce / roku, Pet of the Month / Year, Honey of the Month / Year a krátký titul (Playmate, Pet, Honey) z tabulky časopisů | test pro všechny tři časopisy |
 | 0.02.010 ✅ | **Profil a karty modelky:** štítek titulu podle časopisu čísla („Pet · Září 1985 · Penthouse“) | u Pet of the Month není nikde „Playmate“ v profilu |
 | 0.02.011 ✅ | **Typy alb:** „Playmate měsíce / roku“ v okně alba podle zvoleného časopisu (Pet of the Month…) | okno alba Penthouse nabízí Pet of the Month |
-| 0.02.012 | **Kategorie a filtry:** odvozená kategorie podle časopisu centerfoldu (Pet of the Month místo Playmate měsíce), fasety galerie a hledání `kategorie:` | filtr „Pet of the Month“ funguje; modelka jen z Penthouse není Playmate |
+| 0.02.012 ✅ | **Kategorie a filtry:** odvozená kategorie podle časopisu centerfoldu (Pet of the Month místo Playmate měsíce), fasety galerie a hledání `kategorie:` | filtr „Pet of the Month“ funguje; modelka jen z Penthouse není Playmate |
 | 0.02.013 | **Správa časopisů** v ⋯ › Nastavení: přidat, přejmenovat, barva, edice, názvy modelky měsíce a roku; smazat jen nepoužitý | nový časopis (např. Oui) jde přidat a hned vybrat v okně alba |
 
 #### 0.03 – Řady čísel a Mapa čísel pro každý časopis

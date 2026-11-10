@@ -2,7 +2,7 @@
 import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti, porovnatNaZacatku } from './oblibenost';
 import { otevritOblibenost } from './prehled';
-import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieKZobrazeni, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
+import { VYSKYT, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, GetOdznakyModelky, GetPodobnostObsahu, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek, SetProfilovyVyrez } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -77,7 +77,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
 
     // Údaje ve třech blocích: Playboy (nejdůležitější pro sbírku), Osobní, Vzhled; prázdné části se nezobrazí.
     // Kategorie a výskyt se odvozují z vydání a alb; spočítají se jednou pro údaje i pro pásky.
-    const kategorie = kategorieKZobrazeni(modelka);
+    const kategorie = kategorieModelky(modelka);
     const vyskyt = vyskytModelky(modelka);
     // Kategorie jsou v hlavičce panelu vedle fotky (kdo modelka je), ne mezi řádky Playboy
     const htmlKategorii = kategorie.map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join('');

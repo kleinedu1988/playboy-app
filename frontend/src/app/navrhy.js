@@ -8,10 +8,11 @@ import { MEZ_JISTE, hodnotaNavrhu, idNavrhu, nazevNavrhu, zalozkaPole } from '..
 import { stav } from './stav';
 import { vsechnyModelky } from './mezipamet';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
-import { otevritModelModal, poleModelky, potvrdit, predvyplnitPole, ukazatZalozku, zameritPole } from './formular-modelky';
+import { otevritModelModal, poleModelky, predvyplnitPole, ukazatZalozku, zameritPole } from './formular-modelky';
 import { nastavitTypAlba, otevritAlbumModal, predvyplnitVydaniAlba } from './formular-alba';
 import { cekatNaOpravu } from './uceni';
 import { oznamit } from '../ui/oznameni';
+import { potvrditRozdil } from '../ui/hromadne';
 
 // Návrh z backendu; zdroj a jeho popis přidává učení (do vygenerovaných typů přibudou po sloučení s backendem)
 /** @typedef {import('../../wailsjs/go/models').kontrola.NavrhDoplneni} NavrhDoplneni */
@@ -170,10 +171,14 @@ export async function prijmoutVice(seznam, nadpis = 'Přijmout návrhy?') {
     if (seznam.length === 1) return await prijmout(seznam[0]) ? seznam : [];
     const modelek = new Set(seznam.map(n => n.modelkaId)).size;
     const nejistych = seznam.filter(n => n.jistota < MEZ_JISTE).length;
-    if (!await potvrdit(nadpis,
-        `Uloží se ${sklonovat(seznam.length, 'údaj', 'údaje', 'údajů')} u ${sklonovat(modelek, 'modelky', 'modelek', 'modelek')}: ${souhrnPoli(seznam)}.`
-        + (nejistych ? ` ${nejistych === 1 ? 'Jeden z nich není jistý' : nejistych < 5 ? `${nejistych} z nich nejsou jisté` : `${nejistych} z nich není jistých`} (pod 90 %).` : '')
-        + ' Před uložením se udělá záloha – celé přijetí jde vrátit přes ⋯ → Obnovit ze zálohy; jednotlivé údaje jdou opravit ve formuláři.', `Přijmout ${seznam.length}`)) return [];
+    if (!await potvrditRozdil({
+        nadpis: nadpis.replace(/\?$/, ''),
+        souhrn: `Uloží se ${sklonovat(seznam.length, 'údaj', 'údaje', 'údajů')} u ${sklonovat(modelek, 'modelky', 'modelek', 'modelek')}: ${souhrnPoli(seznam)}.`
+            + (nejistych ? ` ${nejistych === 1 ? 'Jeden z nich není jistý' : nejistych < 5 ? `${nejistych} z nich nejsou jisté` : `${nejistych} z nich není jistých`} (pod 90 %).` : ''),
+        radky: seznam.map(n => ({ kdo: n.album ? `${n.jmeno} · ${n.album}` : n.jmeno, co: nazevNavrhu(n), pred: '', po: `${hodnotaNavrhu(n)} (${Math.round(n.jistota * 100)} %)` })),
+        tlacitko: `Přijmout ${seznam.length}`,
+        poznamka: 'Nic se nezmění, dokud nepotvrdíš. Před uložením se udělá záloha – celé přijetí jde vrátit přes ⋯ → Obnovit ze zálohy; jednotlivé údaje jdou opravit ve formuláři.',
+    })) return [];
     const prijate = await ulozit(seznam);
     poZmene('');
     oznamit(prijate.length === seznam.length ? `${doplneno(prijate.length)}.`
@@ -191,8 +196,13 @@ export async function odmitnoutVice(seznam) {
     seznam = seznam.filter(n => !n.odmitnuto);
     if (!seznam.length) return;
     if (seznam.length === 1) return odmitnout(seznam[0]);
-    if (!await potvrdit('Odmítnout návrhy?', `Odmítne se ${nNavrhu(seznam.length)}: ${souhrnPoli(seznam)}. Tyhle hodnoty se už nebudou nabízet; vrátit to jde hned v oznámení nebo přes „zobrazit i odmítnuté“.`,
-        `Odmítnout ${seznam.length}`, { nebezpecne: true })) return;
+    if (!await potvrditRozdil({
+        nadpis: 'Odmítnout návrhy',
+        souhrn: `Odmítne se ${nNavrhu(seznam.length)}: ${souhrnPoli(seznam)}. Tyhle hodnoty se už nebudou nabízet.`,
+        radky: seznam.map(n => ({ kdo: n.album ? `${n.jmeno} · ${n.album}` : n.jmeno, co: nazevNavrhu(n), pred: hodnotaNavrhu(n), po: 'odmítnuto' })),
+        tlacitko: `Odmítnout ${seznam.length}`,
+        poznamka: 'Údaje ve sbírce se nezmění. Vrátit to jde hned v oznámení nebo přes „zobrazit i odmítnuté“.',
+    })) return;
     const zmenene = await nastavitOdmitnuti(seznam);
     if (!zmenene.length) return;
     poZmene('');

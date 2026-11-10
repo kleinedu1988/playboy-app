@@ -574,6 +574,10 @@ export function PrijmoutNavrhyZWebu(arg1) {
   return window['go']['main']['App']['PrijmoutNavrhyZWebu'](arg1);
 }
 
+export function PrijmoutNavrhyZWebuVratitelne(arg1) {
+  return window['go']['main']['App']['PrijmoutNavrhyZWebuVratitelne'](arg1);
+}
+
 export function RocnikPodleWikipedie(arg1) {
   return window['go']['main']['App']['RocnikPodleWikipedie'](arg1);
 }
@@ -768,6 +772,10 @@ export function VratitCtverici(arg1, arg2) {
 
 export function VratitPorovnani(arg1, arg2) {
   return window['go']['main']['App']['VratitPorovnani'](arg1, arg2);
+}
+
+export function VratitPrijetiZWebu(arg1) {
+  return window['go']['main']['App']['VratitPrijetiZWebu'](arg1);
 }
 
 export function VratitPruvodceFotky(arg1) {

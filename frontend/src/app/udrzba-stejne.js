@@ -7,6 +7,7 @@ import { nastavitHtml } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
 import { PLNE_ROZLISENI, VELIKOST_NAHLEDU } from './obrazky';
 import { otevritProfilPodleId } from './cover';
+import { htmlListyVyberu, potvrditRozdil } from '../ui/hromadne';
 
 /** @type {{ viditelna: () => boolean, poZmene: () => void }} */
 let api = { viditelna: () => false, poZmene: () => {} };
@@ -134,7 +135,11 @@ export function vykreslit() {
     const uvod = skupiny.length
         ? `<p class="us-uvod">${esc(sklonovat(skupiny.length, 'skupina vypadá', 'skupiny vypadají', 'skupin vypadá'))} jako tatáž fotka. Klikem na náhled vyber soubor, který zůstane; v albech, kde je jen kopie, se soubor vymění a fotka v albu zůstane.</p>`
         : `<p class="prazdno-male">${stavOtisku?.hotovo ? 'Žádné stejné fotky. Sbírka je bez kopií.' : 'Zatím nejsou spočítané otisky fotek, stejné kopie se ještě nedají najít.'}</p>`;
-    nastavitHtml(kontejner, `<div class="us">${htmlStavu()}${uvod}<div class="us-seznam">${skupiny.map(htmlSkupiny).join('')}</div></div>`);
+    const jiste = skupiny.filter(sk => sk.duvod === 'stejna');
+    const lista = skupiny.length ? htmlListyVyberu({ pocet: skupiny.length, jednotky: ['skupina', 'skupiny', 'skupin'], popis: `${jiste.length} jistě stejných`, akce: [
+        jiste.length && { text: `Sloučit jistě stejné (${jiste.length})`, atribut: 'data-us-sloucit-jiste', hlavni: true, titulek: 'Jen skupiny se skoro shodnými otisky; v každé zůstane vybraný (nebo navržený) soubor. Předtím ukáže rozdíl.' },
+    ] }) : '';
+    nastavitHtml(kontejner, `<div class="us">${htmlStavu()}${uvod}${lista}<div class="us-seznam">${skupiny.map(htmlSkupiny).join('')}</div></div>`);
     if (!kontejner.dataset.usObsluha) {
         kontejner.dataset.usObsluha = '1';
         kontejner.addEventListener('click', klik);
@@ -149,7 +154,9 @@ async function klik(e) {
     const sloucit = /** @type {HTMLElement | null} */ (cil.closest('[data-us-sloucit]'));
     const poradku = /** @type {HTMLElement | null} */ (cil.closest('[data-us-poradku]'));
     const modelka = /** @type {HTMLElement | null} */ (cil.closest('[data-us-modelka]'));
-    if (cil.closest('[data-us-spustit]')) {
+    if (cil.closest('[data-us-sloucit-jiste]')) {
+        await sloucitJiste();
+    } else if (cil.closest('[data-us-spustit]')) {
         if (await SpustitOtisky()) {
             stavOtisku = await GetStavOtisku();
             vykreslit();
@@ -193,6 +200,36 @@ async function klik(e) {
     } else if (modelka) {
         otevritProfilPodleId(Number(modelka.dataset.usModelka));
     }
+}
+
+const ponechanySoubor = sk => vybrane.get(sk.klic) || sk.soubory.find(s => s.ponechat)?.driveId || sk.soubory[0].driveId;
+const popisSouboru = s => `${s.fotky[0]?.jmenoModelky || 'bez modelky'} · ${s.fotky[0]?.album || ''}`;
+
+async function sloucitJiste() {
+    const seznam = (skupiny || []).filter(sk => sk.duvod === 'stejna');
+    if (!seznam.length) return;
+    const radky = seznam.flatMap(sk => {
+        const nechat = sk.soubory.find(s => s.driveId === ponechanySoubor(sk));
+        return sk.soubory.filter(s => s !== nechat).map(s => ({ kdo: popisSouboru(s), co: s.fotky.length > 1 ? `kopie ve ${s.fotky.length} albech` : 'kopie', pred: 'tento soubor', po: `soubor z ${popisSouboru(nechat)}` }));
+    });
+    if (!await potvrditRozdil({
+        nadpis: 'Sloučit jistě stejné fotky',
+        souhrn: `${sklonovat(seznam.length, 'skupina', 'skupiny', 'skupin')}: v každé zůstane jeden soubor, kopie se ve sbírce nahradí (srdíčka a tagy přejdou). Soubory na Disku zůstanou.`,
+        radky, tlacitko: `Sloučit ${seznam.length}`,
+    })) return;
+    const hotove = [];
+    for (const sk of seznam) {
+        const ponechat = ponechanySoubor(sk);
+        const v = await SloucitStejneFotky(ponechat, sk.soubory.map(s => s.driveId).filter(id => id !== ponechat)).catch(() => null);
+        if (v && !v.chyba) { hotove.push(v); odebratSkupinu(sk.klic); }
+    }
+    if (!hotove.length) { oznamit('Fotky se nepodařilo sloučit.'); return; }
+    oznamit(`Sloučeno ${sklonovat(hotove.length, 'skupina', 'skupiny', 'skupin')}${hotove.length < seznam.length ? ` (${seznam.length - hotove.length} se nepovedlo)` : ''}. Soubory na Google Disku zůstaly.`, { text: 'Vrátit', akce: async () => {
+        for (const v of [...hotove].reverse()) await VratitSlouceniStejnych(v);
+        api.poZmene();
+        zastarat();
+    } });
+    api.poZmene();
 }
 
 function odebratSkupinu(klic) {

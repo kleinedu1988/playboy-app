@@ -385,3 +385,56 @@ func (a *App) PocetOdmitnutychZWebu() int {
 func (a *App) ZrusitOdmitnutiZWebu() bool {
 	return a.ulozitNastaveni(klicOdmitnutychZWebu, "") == nil
 }
+
+// PrijetiZWebu: výsledek hromadného přijetí s tím, co je potřeba k vrácení (původní záznamy modelek a návrhy)
+type PrijetiZWebu struct {
+	Zapsano int          `json:"zapsano"`
+	Puvodni []Modelka    `json:"puvodni"`
+	Navrhy  []NavrhZWebu `json:"navrhy"`
+}
+
+// PrijmoutNavrhyZWebuVratitelne: jako PrijmoutNavrhyZWebu, ale vrátí původní záznamy dotčených modelek,
+// aby šlo přijetí vrátit (Údržba › Z webu › Přijmout zobrazené, 1.51.1)
+func (a *App) PrijmoutNavrhyZWebuVratitelne(navrhy []NavrhZWebu) PrijetiZWebu {
+	v := PrijetiZWebu{Puvodni: []Modelka{}, Navrhy: navrhy}
+	videno := map[int]bool{}
+	for _, n := range navrhy {
+		if videno[n.ModelkaID] {
+			continue
+		}
+		videno[n.ModelkaID] = true
+		if m, ok := a.modelkaPodleID(n.ModelkaID); ok {
+			v.Puvodni = append(v.Puvodni, m)
+		}
+	}
+	v.Zapsano = a.PrijmoutNavrhyZWebu(navrhy)
+	return v
+}
+
+// VratitPrijetiZWebu: vrátí údaje modelek do stavu před přijetím a návrhy vrátí do fronty
+func (a *App) VratitPrijetiZWebu(p PrijetiZWebu) bool {
+	ok := true
+	for _, m := range p.Puvodni {
+		// Titulní fotka se neměnila; prázdná ponechá stávající
+		m.CoverID = ""
+		if !a.UpdateModelka(m) {
+			ok = false
+		}
+	}
+	zamekNavrhuZWebu.Lock()
+	var vse []NavrhZWebu
+	a.nacistJSONNastaveni(klicNavrhuZWebu, &vse)
+	mame := map[string]bool{}
+	for _, n := range vse {
+		mame[klicOdmitnutiZWebu(n.ModelkaID, n.Pole, n.Hodnota)] = true
+	}
+	for _, n := range p.Navrhy {
+		if k := klicOdmitnutiZWebu(n.ModelkaID, n.Pole, n.Hodnota); !mame[k] {
+			mame[k] = true
+			vse = append(vse, n)
+		}
+	}
+	a.ulozitJSONNastaveni(klicNavrhuZWebu, vse)
+	zamekNavrhuZWebu.Unlock()
+	return ok
+}

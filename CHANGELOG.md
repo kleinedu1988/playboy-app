@@ -7,6 +7,25 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.51.1] – 2026-11-10
+
+### Přidáno
+- **Hromadně jednotně v Údržbě** (`frontend/src/ui/hromadne.js`):
+  - Ve všech režimech s hromadnou akcí je stejná lišta výběru „Zobrazeno N“ s akcemi nad zobrazenými.
+  - Před provedením se otevře okno s **rozdílem nanečisto**: u každé položky kde, co, teď → potom.
+  - Kde to jde, nabídne pak oznámení **Vrátit**.
+- Napojeno:
+  - Z webu: Přijmout / Odmítnout zobrazené. Přijetí jde nově vrátit (`PrijmoutNavrhyZWebuVratitelne`,
+    `VratitPrijetiZWebu`: původní údaje modelek i návrhy ve frontě).
+  - Otočené: Otočit zobrazené.
+  - Výřezy: Použít zobrazené návrhy.
+  - Kvalita: Vyměnit zobrazené za lepší a Zobrazené v pořádku (obojí nové).
+  - Stejné fotky: Sloučit jistě stejné (nové).
+  - Fronta a Návrhy: přijetí a odmítnutí více návrhů, Netýká se / V pořádku / Nezajímá mě celému výběru.
+
+### Známé
+- Hromadné přijetí návrhů doplnění (Fronta › Návrhy) jde dál vrátit jen obnovením zálohy, ne z oznámení.
+
 ## [1.51.0] – 2026-11-10
 
 ### Přidáno

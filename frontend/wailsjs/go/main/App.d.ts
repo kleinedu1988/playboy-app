@@ -295,6 +295,8 @@ export function PrijmoutNavrhy(arg1:Array<kontrola.NavrhDoplneni>):Promise<numbe
 
 export function PrijmoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>):Promise<number>;
 
+export function PrijmoutNavrhyZWebuVratitelne(arg1:Array<main.NavrhZWebu>):Promise<main.PrijetiZWebu>;
+
 export function RocnikPodleWikipedie(arg1:number):Promise<main.RocnikWikipedie>;
 
 export function RozdilZalohy(arg1:string):Promise<main.RozdilZalohy>;
@@ -392,6 +394,8 @@ export function UzavritSezonu(arg1:string,arg2:number):Promise<boolean>;
 export function VratitCtverici(arg1:Array<number>,arg2:number):Promise<boolean>;
 
 export function VratitPorovnani(arg1:number,arg2:number):Promise<boolean>;
+
+export function VratitPrijetiZWebu(arg1:main.PrijetiZWebu):Promise<boolean>;
 
 export function VratitPruvodceFotky(arg1:main.PredchoziPruvodce):Promise<boolean>;
 

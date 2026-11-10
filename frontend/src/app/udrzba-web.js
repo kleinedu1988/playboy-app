@@ -2,7 +2,8 @@
 // (1 dotaz za sekundu na server, jde přerušit a dokončit i po restartu) a fronta rozdílů proti zdrojům.
 // Návrhy se přijímají po jednom, po modelce, nebo hromadně po údaji či zdroji (filtr + „Přijmout zobrazené“);
 // odmítnuté se pamatují a znovu se nenabízí. Nic se nezapíše bez kliknutí.
-import { GetNavrhyZWebu, GetStavPruchoduWebem, OdmitnoutNavrhyZWebu, PocetOdmitnutychZWebu, PrerusitPruchodWebem, PrijmoutNavrhyZWebu, SpustitPruchodWebem, ZrusitOdmitnutiZWebu } from './backend';
+import { GetNavrhyZWebu, GetStavPruchoduWebem, OdmitnoutNavrhyZWebu, PocetOdmitnutychZWebu, PrerusitPruchodWebem, PrijmoutNavrhyZWebuVratitelne, SpustitPruchodWebem, VratitPrijetiZWebu, ZrusitOdmitnutiZWebu } from './backend';
+import { htmlListyVyberu, potvrditRozdil } from '../ui/hromadne';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { esc, formatDatum, sklonovat } from '../lib/format';
 import { nastavitHtml } from '../ui/dom';
@@ -112,10 +113,11 @@ function htmlFiltru() {
         ${select('pole', filtr.pole, 'Všechny údaje', moznosti('pole', 'nazev'))}
         ${select('zdroj', filtr.zdroj, 'Všechny zdroje', moznosti('zdroj', 'zdrojNazev'))}
         <label class="uw-volba" title="Návrhy, které mění už vyplněný údaj (zdroj uvádí jinou hodnotu)"><input type="checkbox" data-uw-opravy ${filtr.opravy ? 'checked' : ''} /> i opravy vyplněných (${opravPocet})</label>
-        <span class="uw-mezera"></span>
-        ${hromadne.length ? `<button type="button" class="btn btn-primary btn-small" data-uw-prijmout-zobrazene title="Jen jednoznačné: kde zdroje nenavrhují pro tentýž údaj různé hodnoty">Přijmout zobrazené (${hromadne.length})</button>` : ''}
-        ${zobr.length ? `<button type="button" class="btn btn-secondary btn-small" data-uw-odmitnout-zobrazene>Odmítnout zobrazené</button>` : ''}
-    </div>`;
+    </div>
+    ${zobr.length ? htmlListyVyberu({ pocet: zobr.length, jednotky: ['návrh', 'návrhy', 'návrhů'], popis: hromadne.length < zobr.length ? `${hromadne.length} jednoznačných` : '', akce: [
+        hromadne.length && { text: `Přijmout zobrazené (${hromadne.length})`, atribut: 'data-uw-prijmout-zobrazene', hlavni: true, titulek: 'Jen jednoznačné: kde zdroje nenavrhují pro tentýž údaj různé hodnoty. Předtím ukáže rozdíl.' },
+        { text: 'Odmítnout zobrazené', atribut: 'data-uw-odmitnout-zobrazene' },
+    ] }) : ''}`;
 }
 
 function htmlNavrhu(n, i) {
@@ -175,11 +177,20 @@ function zmena(e) {
 async function prijmout(seznam, potvrzeni = false) {
     if (!seznam.length) return;
     const modelek = new Set(seznam.map(n => n.modelkaId)).size;
-    if (potvrzeni && !await potvrdit('Přijmout návrhy z webu',
-        `Zapíše se ${sklonovat(seznam.length, 'údaj', 'údaje', 'údajů')} u ${sklonovat(modelek, 'modelky', 'modelek', 'modelek')}${seznam.some(n => n.stavajici) ? ' (včetně přepsání vyplněných)' : ''}. Předtím se vytvoří záloha.`, 'Přijmout')) return;
-    const zapsano = await PrijmoutNavrhyZWebu(seznam);
-    if (!zapsano) { oznamit('Návrhy se nepodařilo zapsat.'); return; }
-    oznamit(seznam.length === 1 ? `${seznam[0].jmeno}: ${seznam[0].nazev} ${seznam[0].stavajici ? 'opraveno' : 'doplněno'}.` : `Zapsáno u ${sklonovat(zapsano, 'modelky', 'modelek', 'modelek')}.`);
+    if (potvrzeni && !await potvrditRozdil({
+        nadpis: 'Přijmout návrhy z webu',
+        souhrn: `Zapíše se ${sklonovat(seznam.length, 'údaj', 'údaje', 'údajů')} u ${sklonovat(modelek, 'modelky', 'modelek', 'modelek')}${seznam.some(n => n.stavajici) ? ', včetně přepsání vyplněných' : ''}. Předtím se vytvoří záloha.`,
+        radky: seznam.map(n => ({ kdo: n.jmeno, co: n.nazev, pred: n.stavajici ? hodnotaKUkazani(n.pole, n.stavajici) : '', po: hodnotaKUkazani(n.pole, n.hodnota) })),
+        tlacitko: `Přijmout ${seznam.length}`,
+    })) return;
+    const v = await PrijmoutNavrhyZWebuVratitelne(seznam).catch(() => null);
+    if (!v?.zapsano) { oznamit('Návrhy se nepodařilo zapsat.'); return; }
+    const text = seznam.length === 1 ? `${seznam[0].jmeno}: ${seznam[0].nazev} ${seznam[0].stavajici ? 'opraveno' : 'doplněno'}.` : `Zapsáno u ${sklonovat(v.zapsano, 'modelky', 'modelek', 'modelek')}.`;
+    oznamit(text, { text: 'Vrátit', akce: async () => {
+        if (!await VratitPrijetiZWebu(v)) oznamit('Některé údaje se nepodařilo vrátit.');
+        api.poZmene();
+        await nacist();
+    } });
     api.poZmene();
     await nacist();
 }
@@ -224,7 +235,12 @@ async function klik(e) {
         await prijmout(jednoznacne(zobrazene()), true);
     } else if (data('data-uw-odmitnout-zobrazene')) {
         const seznam = zobrazene();
-        if (seznam.length > 1 && !await potvrdit('Odmítnout návrhy z webu', `Odmítne se ${sklonovat(seznam.length, 'návrh', 'návrhy', 'návrhů')}; tyto hodnoty se už nenabídnou.`, 'Odmítnout')) return;
+        if (seznam.length > 1 && !await potvrditRozdil({
+            nadpis: 'Odmítnout návrhy z webu',
+            souhrn: `Odmítne se ${sklonovat(seznam.length, 'návrh', 'návrhy', 'návrhů')}; tyto hodnoty se už nenabídnou. Údaje ve sbírce zůstanou, jak jsou.`,
+            radky: seznam.map(n => ({ kdo: n.jmeno, co: n.nazev, pred: hodnotaKUkazani(n.pole, n.hodnota), po: 'odmítnuto' })),
+            tlacitko: `Odmítnout ${seznam.length}`,
+        })) return;
         await odmitnout(seznam);
     } else if (data('data-uw-zrusit-odmitnuti')) {
         await ZrusitOdmitnutiZWebu();

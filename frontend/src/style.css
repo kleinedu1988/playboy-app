@@ -20929,3 +20929,18 @@ body.rezim-vyberu #detailView .poster {
 .udd-text { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .udd-pripominka { margin: 0 0 8px; font-size: 13px; color: var(--zlato-svetle); }
 @media (max-width: 640px) { .udd-ukol, .udd-uloha { grid-template-columns: 1fr; gap: 2px; } }
+
+/* Hromadně jednotně (ui/hromadne.js, 1.51.1): lišta výběru a rozdíl nanečisto */
+.hv-lista { position: sticky; top: 0; z-index: 3; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin: 0 0 12px; padding: 8px 12px; border: 1px solid var(--panel-okraj); border-radius: 12px; background: var(--bg-card); font-size: 13px; }
+.hv-pocet { color: var(--text-muted); }
+.hv-pocet b { color: var(--text-main); font-weight: 600; }
+.hv-akce { display: flex; flex-wrap: wrap; gap: 6px; }
+.hv-karta { width: min(820px, calc(var(--vw) - 32px)); max-height: calc(var(--vh) - 48px); display: flex; flex-direction: column; }
+.hv-rozdil { overflow: auto; min-height: 0; border: 1px solid var(--panel-okraj); border-radius: 10px; }
+.hv-tabulka { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hv-tabulka th { position: sticky; top: 0; background: var(--bg-card); text-align: left; font-weight: 600; color: var(--text-muted); }
+.hv-tabulka th, .hv-tabulka td { padding: 5px 10px; border-bottom: 1px solid var(--panel-okraj); vertical-align: top; }
+.hv-pred { color: var(--text-muted); text-decoration: line-through; text-decoration-color: rgba(255, 255, 255, 0.25); }
+.hv-po { color: var(--text-main); }
+.hv-souhrn { margin: 0 0 10px; }
+.hv-karta > .pass-hint { margin: 10px 0 0; }

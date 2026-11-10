@@ -16,7 +16,7 @@ import { jeVidet, nastavitHtml, otevreneOkno, srovnatSeznam } from '../ui/dom';
 import { BEZ_FOTKY, adresaTitulni } from './obrazky';
 import { nacistFotkyModelky, otevritDetailModelky } from './profil';
 import { otevritCoverModal } from './cover';
-import { otevritModelModal, potvrdit, ukazatZalozku, zameritPole } from './formular-modelky';
+import { otevritModelModal, ukazatZalozku, zameritPole } from './formular-modelky';
 import { otevritAlbumModal, pridatCenterfold } from './formular-alba';
 import { otevritDoplneni } from './doplneni';
 import { otevritVydani } from './vydani';
@@ -33,6 +33,7 @@ import * as dnesUd from './udrzba-dnes';
 import { exportovatData, importovatData, prejmenovatVeSbirce, zkontrolovatSoubory } from './sprava';
 import * as zdravi from './zdravi';
 import { otevritRychlePridani } from './formular-modelky';
+import { potvrditRozdil } from '../ui/hromadne';
 
 // Skupin na stránku; další se přidají při doscrollování na konec (nebo tlačítkem)
 const STRANKA = 60;
@@ -794,9 +795,13 @@ async function odlozitVse(polozky) {
         kontrola: 'Nálezy se přestanou hlásit a kontrola se z toho poučí.',
         cislo: 'Čísla dostanou stav „nezajímá mě“; čísla označená „mám výtisk“ nebo „sháním“ zůstanou, jak jsou.',
     }[druh];
-    if (!await potvrdit(`${nazev} – ${polozky.length} ${polozky.length === 1 ? 'položka' : polozky.length < 5 ? 'položky' : 'položek'}?`,
-        `Týká se ${kde} ve výběru${stav.udrzbaHledat ? ` (hledání „${stav.udrzbaHledat}“)` : ''}. ${vysvetleni} Vrátit to jde hned v oznámení, nebo později přes „Vyřízené“ → „${vratit}“.`,
-        `${nazev} (${polozky.length})`, { nebezpecne: true })) return;
+    if (!await potvrditRozdil({
+        nadpis: `${nazev} – ${polozky.length} ${polozky.length === 1 ? 'položka' : polozky.length < 5 ? 'položky' : 'položek'}`,
+        souhrn: `Týká se ${kde} ve výběru${stav.udrzbaHledat ? ` (hledání „${stav.udrzbaHledat}“)` : ''}. ${vysvetleni}`,
+        radky: polozky.map(({ x, s }) => ({ kdo: s.jmeno, co: x.pole, pred: druh === 'kontrola' ? 'hlášeno ke kontrole' : druh === 'cislo' ? 'sledované' : 'chybí', po: ODLOZENI[druh][2] })),
+        tlacitko: `${nazev} (${polozky.length})`,
+        poznamka: `Nic se nezmění, dokud nepotvrdíš. Vrátit to jde hned v oznámení, nebo později přes „Vyřízené“ → „${vratit}“.`,
+    })) return;
     const hotove = [];
     for (const p of polozky) {
         try {

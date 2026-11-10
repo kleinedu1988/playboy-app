@@ -10,6 +10,7 @@ import { oznamit } from '../ui/oznameni';
 import { VELIKOST_NAHLEDU } from './obrazky';
 import { otevritProfilPodleId } from './cover';
 import { stylVyrezu } from './navigace';
+import { htmlListyVyberu, potvrditRozdil } from '../ui/hromadne';
 
 /** @type {{ viditelna: () => boolean, poZmene: () => void }} */
 let api = { viditelna: () => false, poZmene: () => {} };
@@ -179,6 +180,10 @@ function htmlSekceKvality() {
     const sLepsi = slabe.filter(f => f.lepsi).length;
     return `<section class="uf-sekce"><h4>Kvalita fotek${slabe.length ? ` <small>${slabe.length}</small>` : ''}</h4>${htmlStavuKvality()}
         ${slabe.length ? `<p class="us-uvod">Nahoře fotky, které ve sbírce mají stejnou fotku v lepší kvalitě${sLepsi ? ` (${sLepsi})` : ''}, pak podle srdíček. Prahy jsou zatím odhad – co je schválně měkké nebo tmavé, označ V pořádku.</p>
+            ${htmlListyVyberu({ pocet: vidim.length, jednotky: ['fotka', 'fotky', 'fotek'], popis: slabe.length > vidim.length ? `z ${slabe.length}` : '', akce: [
+                vidim.some(f => f.lepsi) && { text: `Vyměnit zobrazené za lepší (${vidim.filter(f => f.lepsi).length})`, atribut: 'data-uk-vymenit-vse', hlavni: true },
+                { text: 'Zobrazené v pořádku', atribut: 'data-uk-poradku-vse' },
+            ] })}
             <div class="uf-mrizka">${vidim.map(htmlSlabe).join('')}</div>
             ${slabe.length > vidim.length ? `<button type="button" class="btn btn-secondary btn-small" data-uk-dalsi>Ukázat dalších ${Math.min(24, slabe.length - vidim.length)}</button>` : ''}`
             : stavKvality?.zkontrolovano ? '<p class="prazdno-male">Žádná změřená fotka nevypadá slabě.</p>' : ''}</section>`;
@@ -196,6 +201,24 @@ async function vymenit(f) {
     await nacist();
 }
 
+async function vymenitVse(seznam) {
+    const hotove = [];
+    for (const f of seznam) {
+        const v = await SloucitStejneFotky(f.lepsi, [f.driveId]).catch(() => null);
+        if (v && !v.chyba) hotove.push(v);
+    }
+    if (!hotove.length) { oznamit('Fotky se nepodařilo vyměnit.'); return; }
+    oznamit(`Vyměněno ${sklonovat(hotove.length, 'fotka', 'fotky', 'fotek')} za lepší${hotove.length < seznam.length ? ` (${seznam.length - hotove.length} se nepovedlo)` : ''}.`, { text: 'Vrátit', akce: async () => {
+        let ok = true;
+        for (const v of [...hotove].reverse()) if (!await VratitSlouceniStejnych(v)) ok = false;
+        if (!ok) oznamit('Některé výměny se nepodařilo vrátit.');
+        api.poZmene();
+        await nacist();
+    } });
+    api.poZmene();
+    await nacist();
+}
+
 export function vykreslit() {
     if (!kontejner) return;
     if (otocene === null) {
@@ -204,8 +227,8 @@ export function vykreslit() {
     }
     const vidim = otocene.slice(0, zobrazitOtocenych);
     const sekceOtocene = `<section class="uf-sekce"><h4>Otočené fotky${otocene.length ? ` <small>${otocene.length}</small>` : ''}</h4>${htmlStavu()}
-        ${otocene.length ? `<p class="us-uvod">Seřazené od nejjistějších. Vlevo fotka, jak je teď, vpravo po otočení. Otočení platí pro fotku ve všech albech a jde kdykoli změnit v prohlížeči (R).
-            <button type="button" class="link" data-uf-otocit-vse>Otočit všech ${vidim.length} zobrazených</button></p>
+        ${otocene.length ? `<p class="us-uvod">Seřazené od nejjistějších. Vlevo fotka, jak je teď, vpravo po otočení. Otočení platí pro fotku ve všech albech a jde kdykoli změnit v prohlížeči (R).</p>
+            ${htmlListyVyberu({ pocet: vidim.length, jednotky: ['fotka', 'fotky', 'fotek'], popis: otocene.length > vidim.length ? `z ${otocene.length}` : '', akce: [{ text: 'Otočit zobrazené', atribut: 'data-uf-otocit-vse', hlavni: true }] })}
             <div class="uf-mrizka">${vidim.map(htmlOtocene).join('')}</div>
             ${otocene.length > vidim.length ? `<button type="button" class="btn btn-secondary btn-small" data-uf-dalsi>Ukázat dalších ${Math.min(48, otocene.length - vidim.length)}</button>` : ''}`
             : stavOtoceni?.zkontrolovano ? '<p class="prazdno-male">Žádná zkontrolovaná fotka nevypadá otočeně.</p>' : ''}</section>`;
@@ -214,10 +237,10 @@ export function vykreslit() {
     const sekceVyrez = `<section class="uf-sekce"><h4>Titulní fotky s výchozím výřezem${bezVyrezu.length ? ` <small>${bezVyrezu.length}</small>` : ''}</h4>
         ${bezVyrezu.length ? `<p class="us-uvod">Výřez se navrhne z toho, kde detektor na fotce najde postavu a obličej (kdo to je, nepozná). Výřez jde vždycky doladit tažením na kartě.</p>
             <div class="uf-lista">
-                ${stavOtoceni?.zapnuto && bezNavrhu.length ? `<button type="button" class="btn btn-primary btn-small" data-uf-navrhnout ${navrhuje ? 'disabled' : ''}>${navrhuje ? 'Navrhuji…' : `Navrhnout výřez ${Math.min(DAVKA_VYREZU, bezNavrhu.length)} dalším`}</button>` : ''}
+                ${stavOtoceni?.zapnuto && bezNavrhu.length ? `<button type="button" class="btn btn-secondary btn-small" data-uf-navrhnout ${navrhuje ? 'disabled' : ''}>${navrhuje ? 'Navrhuji…' : `Navrhnout výřez ${Math.min(DAVKA_VYREZU, bezNavrhu.length)} dalším`}</button>` : ''}
                 ${!stavOtoceni?.zapnuto ? '<span class="pass-hint">Návrh výřezu potřebuje zapnutý Obsah fotek.</span>' : ''}
-                ${navrzene.length > 1 ? `<button type="button" class="btn btn-secondary btn-small" data-uf-pouzit-vse>Použít všech ${navrzene.length} navržených</button>` : ''}
             </div>
+            ${navrzene.length ? htmlListyVyberu({ pocet: navrzene.length, jednotky: ['navržený výřez', 'navržené výřezy', 'navržených výřezů'], akce: [{ text: 'Použít zobrazené návrhy', atribut: 'data-uf-pouzit-vse', hlavni: true }] }) : ''}
             <div class="uf-mrizka">${[...bezVyrezu.filter(m => navrhy.has(m.modelkaId)), ...bezNavrhu.slice(0, Math.max(0, 12 - navrhy.size))].map(htmlVyrezu).join('')}</div>`
             : '<p class="prazdno-male">Všechny titulní fotky mají výřez, nebo jim výchozí sedí.</p>'}</section>`;
     nastavitHtml(kontejner, `<div class="us uf">${sekceOtocene}${htmlSekceKvality()}${sekceVyrez}</div>`);
@@ -271,7 +294,14 @@ async function klik(e) {
     } else if ((p = data('data-uf-otocit'))) {
         await otocit([otocene[parseInt(p.dataset.ufOtocit)]]);
     } else if (data('data-uf-otocit-vse')) {
-        await otocit(otocene.slice(0, zobrazitOtocenych));
+        const seznam = otocene.slice(0, zobrazitOtocenych);
+        if (!await potvrditRozdil({
+            nadpis: 'Otočit zobrazené fotky',
+            souhrn: `Otočí se ${sklonovat(seznam.length, 'fotka', 'fotky', 'fotek')} (ve všech albech, kde jsou).`,
+            radky: seznam.map(f => ({ kdo: f.jmeno || 'Bez modelky', co: f.album, pred: `${f.rotace}°`, po: `${f.navrh}° (${smer(krok(f))})` })),
+            tlacitko: `Otočit ${seznam.length}`,
+        })) return;
+        await otocit(seznam);
     } else if ((p = data('data-uf-poradku'))) {
         const f = otocene[parseInt(p.dataset.ufPoradku)];
         if (!await OznacitOtoceniVPoradku([f.driveId], true)) return;
@@ -290,6 +320,27 @@ async function klik(e) {
         const f = slabe[parseInt(p.dataset.ukPoradku)];
         if (!await OznacitKvalituVPoradku([f.driveId], true)) return;
         oznamit('Fotka se už nebude hlásit.', { text: 'Vrátit', akce: async () => { await OznacitKvalituVPoradku([f.driveId], false); await nacist(); } });
+        await nacist();
+    } else if (data('data-uk-vymenit-vse')) {
+        const seznam = slabe.slice(0, zobrazitSlabych).filter(f => f.lepsi);
+        if (!await potvrditRozdil({
+            nadpis: 'Vyměnit slabé fotky za lepší',
+            souhrn: `${sklonovat(seznam.length, 'slabá fotka se nahradí', 'slabé fotky se nahradí', 'slabých fotek se nahradí')} stejnou fotkou v lepší kvalitě, která už ve sbírce je; srdíčka a tagy přejdou. Soubory na Disku zůstanou.`,
+            radky: seznam.map(f => ({ kdo: f.jmeno || 'Bez modelky', co: f.album, pred: `${f.problemy.map(p => POPISY_PROBLEMU[p] || p).join(', ')} · ${f.mereni.w} × ${f.mereni.h}`, po: 'lepší stejná fotka' })),
+            tlacitko: `Vyměnit ${seznam.length}`,
+        })) return;
+        await vymenitVse(seznam);
+    } else if (data('data-uk-poradku-vse')) {
+        const seznam = slabe.slice(0, zobrazitSlabych);
+        if (!await potvrditRozdil({
+            nadpis: 'Zobrazené fotky v pořádku',
+            souhrn: `${sklonovat(seznam.length, 'fotka se přestane', 'fotky se přestanou', 'fotek se přestane')} hlásit jako slabá. Ve sbírce se nic nezmění.`,
+            radky: seznam.map(f => ({ kdo: f.jmeno || 'Bez modelky', co: f.album, pred: f.problemy.map(p => POPISY_PROBLEMU[p] || p).join(', '), po: 'v pořádku' })),
+            tlacitko: `Označit ${seznam.length}`,
+        })) return;
+        const ids = seznam.map(f => f.driveId);
+        if (!await OznacitKvalituVPoradku(ids, true)) return;
+        oznamit(`${sklonovat(ids.length, 'fotka se už nebude hlásit', 'fotky se už nebudou hlásit', 'fotek se už nebude hlásit')}.`, { text: 'Vrátit', akce: async () => { await OznacitKvalituVPoradku(ids, false); await nacist(); } });
         await nacist();
     } else if (data('data-uk-dalsi')) {
         zobrazitSlabych += 24;
@@ -313,7 +364,15 @@ async function klik(e) {
     } else if ((p = data('data-uf-pouzit'))) {
         await pouzitVyrezy([Number(p.dataset.ufPouzit)]);
     } else if (data('data-uf-pouzit-vse')) {
-        await pouzitVyrezy(bezVyrezu.filter(m => navrhy.get(m.modelkaId)?.ok).map(m => m.modelkaId));
+        const seznam = bezVyrezu.filter(m => navrhy.get(m.modelkaId)?.ok);
+        const popis = n => `přiblížení ${n.zoom.toFixed(2).replace('.', ',')} · střed ${Math.round(n.x)} %, ${Math.round(n.y)} %`;
+        if (!await potvrditRozdil({
+            nadpis: 'Použít navržené výřezy',
+            souhrn: `Výřez titulní fotky se uloží u ${sklonovat(seznam.length, 'modelky', 'modelek', 'modelek')}.`,
+            radky: seznam.map(m => ({ kdo: m.jmeno, co: 'výřez titulní fotky', pred: 'výchozí', po: popis(navrhy.get(m.modelkaId)) })),
+            tlacitko: `Použít ${seznam.length}`,
+        })) return;
+        await pouzitVyrezy(seznam.map(m => m.modelkaId));
     } else if ((p = data('data-uf-vychozi'))) {
         const id = Number(p.dataset.ufVychozi);
         if (!await OznacitVyrezVychozi([id], true)) return;

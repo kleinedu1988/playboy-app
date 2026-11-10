@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 1.51.1 – Hromadně s rozdílem nanečisto
+
+- [ ] Lišta „Zobrazeno N“ je ve všech režimech na stejném místě a při posouvání zůstává nahoře.
+- [ ] Z webu › Přijmout zobrazené: okno ukáže všechny řádky (teď → potom), Zrušit nic nezmění, po přijetí
+      Vrátit vrátí údaje modelek i návrhy do fronty.
+- [ ] Otočit zobrazené, Použít zobrazené návrhy výřezů, Vyměnit zobrazené za lepší, Sloučit jistě stejné:
+      rozdíl odpovídá, Vrátit vrátí všechno.
+- [ ] Fronta: hromadné Netýká se / V pořádku a přijetí jistých návrhů ukáže rozdíl; Esc okno zavře bez akce.
+
 ## 1.51.0 – Údržba Dnes a kvalita fotek
 
 Vzhled režimu Dnes jsem neviděl ani ve skrytém WebKitu (potřebuje data sbírky) – projít pozorně.

@@ -115,6 +115,23 @@ func TestPruchodWebem(t *testing.T) {
 	if a.PocetOdmitnutychZWebu() != 1 || !a.ZrusitOdmitnutiZWebu() || a.PocetOdmitnutychZWebu() != 0 {
 		t.Fatal("zrušení odmítnutí")
 	}
+	// Vratitelné přijetí: Vrátit obnoví údaje i návrhy ve frontě
+	predVracenim := a.GetNavrhyZWebu()
+	annaPred, _ := a.modelkaPodleID(anna)
+	p := a.PrijmoutNavrhyZWebuVratitelne(predVracenim)
+	if p.Zapsano != 2 || len(p.Puvodni) != 2 || len(a.GetNavrhyZWebu()) != 0 {
+		t.Fatalf("vratitelné přijetí: %+v, zbývá %d", p, len(a.GetNavrhyZWebu()))
+	}
+	if !a.VratitPrijetiZWebu(p) {
+		t.Fatal("vrácení přijetí")
+	}
+	annaPo, _ := a.modelkaPodleID(anna)
+	if annaPo.NarozeniDatum != annaPred.NarozeniDatum || annaPo.VyskaCm != annaPred.VyskaCm || annaPo.Odkazy != annaPred.Odkazy {
+		t.Fatalf("po vrácení: %+v, předtím %+v", annaPo, annaPred)
+	}
+	if len(a.GetNavrhyZWebu()) != len(predVracenim) {
+		t.Fatalf("po vrácení návrhů %d, předtím %d", len(a.GetNavrhyZWebu()), len(predVracenim))
+	}
 	// Hromadné přijetí víc modelek dělá zálohu
 	pred := len(a.SeznamZaloh())
 	if a.PrijmoutNavrhyZWebu(a.GetNavrhyZWebu()) != 2 || len(a.SeznamZaloh()) != pred+1 {

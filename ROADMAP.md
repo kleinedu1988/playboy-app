@@ -3,7 +3,7 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (10. 11. 2026): verze 1.51.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.51 jsou hotové: mezipaměť náhledů na
+**Stav (10. 11. 2026): verze 1.51.1** – etapy 0–13, milník 1.0.0 a verze 1.1–1.51 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
@@ -121,7 +121,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.48 – Upozornění na novou verzi** (`aktualizace.go`, `frontend/src/app/nova-verze.js`, `instalovat.sh`): cesta ke klonu předaná při sestavení, jednou denně `git fetch` bez hesla s limitem, verze a CHANGELOG vzdálené větve, oznámení s Co je nového a příkazem k aktualizaci; ⋯ › Zkontrolovat novou verzi a vypnutí denní kontroly.
 - **1.49 – Přiblížení, hustota a karty** (`frontend/src/ui/vzhled.js`, `frontend/src/app/vzhled.js`): okno ⋯ › Vzhled s živými změnami a Výchozí; přiblížení 90–150 % (CSS zoom, `--vh`/`--vw`, přepočet plovoucích prvků), hustota Pohodlná / Kompaktní, velikost karet S/M/L pro modelky, Všechny fotky a Centerfoldy, údaje na kartě modelky. Kalendář a zkratka v `Ctrl+K` zbývají.
 - **1.50 – Klid, pohyb a vlastní Přehled** (`frontend/src/ui/vzhled.js`, `frontend/src/app/vzhled.js`, `prohlizec.js`, `prehled-uvod.js`): pohyb Plné / Omezené / Žádné, pozadí a ovládání prohlížeče fotek s filmovým pásem, sekce po startu, záhlaví profilu, pořadí a skrytí karet Mapy čísel.
-- **1.51 – Údržba jako jedna fronta** (`frontend/src/app/udrzba-dnes.js`, `kvalita_fotek.go`): režim Dnes (pokrok dne, série, nejcennější úkoly, rychlé dávky, panel Na pozadí), kvalita fotek z náhledů s výměnou za lepší stejnou; jednotná hromadná lišta zbývá na 1.51.1.
+- **1.51 – Údržba jako jedna fronta** (`frontend/src/app/udrzba-dnes.js`, `kvalita_fotek.go`): režim Dnes (pokrok dne, série, nejcennější úkoly, rychlé dávky, panel Na pozadí), kvalita fotek z náhledů s výměnou za lepší stejnou; v 1.51.1 jednotná lišta výběru s rozdílem nanečisto a Vrátit.
 ---
 
 ## Plán dalšího rozvoje (1.30–1.63)
@@ -420,7 +420,7 @@ Funkce z řady 1.24–1.45 rozšířit tam, kde se při používání ukázaly m
 
 #### 1.51 – Údržba jako jedna fronta ✅ (10. 11. 2026)
 
-Hotové body 1, 3 a 4: režim Dnes s pokrokem dne, sérií, nejcennějšími úkoly a rychlými dávkami; panel Na pozadí (bez měnění pořadí úloh) s připomínkou starého průchodu webem; Kvalita fotek s Vyměnit za lepší. **Zbývá bod 2** (jednotná lišta výběru s rozdílem nanečisto ve všech režimech) – další krok 1.51.1. Prahy kvality jsou neověřené (`K-VYZKOUSENI.md`).
+Hotové body 1, 3 a 4: režim Dnes s pokrokem dne, sérií, nejcennějšími úkoly a rychlými dávkami; panel Na pozadí (bez měnění pořadí úloh) s připomínkou starého průchodu webem; Kvalita fotek s Vyměnit za lepší. Bod 2 doplnila **1.51.1**: jednotná lišta výběru a rozdíl nanečisto ve všech režimech (Vrátit z oznámení všude kromě hromadného přijetí návrhů doplnění, které vrací záloha). Prahy kvality jsou neověřené (`K-VYZKOUSENI.md`).
 
 **Cíl:** nepřepínat mezi sedmi režimy Údržby, ale dostat krátkou dávku toho nejcennějšího a vyřídit ji hromadně a bezpečně.
 

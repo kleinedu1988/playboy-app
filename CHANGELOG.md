@@ -21,7 +21,7 @@ Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 ### Změněno
 - **Statistiky a Postřehy podle časopisu:** když jsou ve sbírce čísla jiného časopisu, texty grafů v čase
   a Postřehy říkají „rok prvního výskytu v Playboyi“ místo „v časopise“ (Statistiky počítají zatím jen Playboy,
-  filtr časopisu je 0.02.042). Se samotným Playboyem beze změny.
+  filtr časopisu je 0.02.045). Se samotným Playboyem beze změny.
 - Mapa sbírky obarvená kategorií má barvu „Titul jiného časopisu“ (Pet of the Month, Honey of the Month…);
   dřív takové modelky byly šedé bez položky v legendě. Rozložení Kategorie už tituly ukazuje podle časopisu.
 

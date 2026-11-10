@@ -6,6 +6,17 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.007] – 2026-11-10
+
+### Změněno
+- **Pohledy Playboye beze změny:** čísla jiných časopisů se neukážou na stěně Centerfoldů (ani ve volbě „vše“),
+  v kapesním katalogu, v dokončených ročnících Roku ve sbírce ani ve Statistikách (desetiletí, první výskyt
+  modelky). Kalendář, Obálky, Mapa čísel, sousední čísla a speciály je vynechávají už podle řady (`US`/`CZ`).
+  Nové `jeCisloPlayboye` a `naSteneCenterfoldu` ve `format.js`; pohledy podle časopisu přijdou v 0.03.
+
+### Testy
+- `test/playboy-pohledy.test.js` (pohled po pohledu) a `TestDesetiletiJenPlayboy`.
+
 ## [0.02.006] – 2026-11-10
 
 ### Přidáno

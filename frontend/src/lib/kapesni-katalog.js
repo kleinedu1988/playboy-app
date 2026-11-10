@@ -41,7 +41,8 @@ export function polozkyKatalogu(podklady, rozsah, dnes) {
     const polozky = [];
     for (const p of podle.values()) {
         const v = rozlozitVydani(p.vydani);
-        if (!v) continue;
+        // Kapesní katalog je sbírka výtisků Playboye; jiné časopisy do něj nepatří
+        if (!v || v.casopis !== 'PB') continue;
         if (rozsah === 'cz' && v.edice !== 'CZ') continue;
         if (rozsah === 'shanim' && p.stav !== 'shanim') continue;
         const obalka = [...(p.obalka || [])];

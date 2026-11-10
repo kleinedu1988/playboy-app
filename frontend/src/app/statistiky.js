@@ -9,7 +9,7 @@ import { GetProfilovaFotka, GetStatistiky, GetVkusVCase, UlozitSouborGrafu } fro
 import { csv, nazevSouboru, pngGrafu } from '../lib/graf-ven';
 import { oznamit } from '../ui/oznameni';
 import { radaPodilu, vkusVCase } from '../lib/vkus-v-case';
-import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
+import { EDICE, MESICE, jeCisloPlayboye, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne, VELIKOST_TITULNI, VELIKOST_ZAHLAVI } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -216,7 +216,8 @@ function vyskytyModelky(m) {
         const cf = new Set(m.centerfoldy || []), obalky = new Set(m.obalky || []);
         const vCasopise = [...new Set([...(m.vydani || []), ...cf, ...obalky])].map(v => {
             const casti = rozlozitVydani(v);
-            if (!casti) return null;
+            // Statistiky zatím jen Playboye (výskyty v jiných časopisech by ve volbě „vše“ posunuly první výskyt)
+            if (!casti || !jeCisloPlayboye(v)) return null;
             const druhy = new Set([cf.has(v) && 'centerfold', obalky.has(v) && 'obalka', !cf.has(v) && !obalky.has(v) && 'pictorial'].filter(Boolean));
             return { v, edice: casti.edice, rok: parseInt(casti.rok), druhy, vekPresne: vekVLetech(m.narozeniDatum, v) };
         });

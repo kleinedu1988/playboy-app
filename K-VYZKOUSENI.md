@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.007 – Pohledy Playboye beze změny
+
+S centerfoldem Penthouse 09/1985 ve sbírce (z 0.02.005):
+- [ ] Kalendář a Obálky (US i CZ) a Mapa čísel: září 1985 ukazuje jen Playboy, Penthouse nikde.
+- [ ] Centerfoldy (stěna) ve volbě „vše“, US i CZ: fotka Penthouse tam není.
+- [ ] Kapesní katalog (vše / CZ / sháním): žádné číslo Penthouse.
+- [ ] Statistiky: desetiletí 1980 počítají stejně jako předtím; modelka jen s Penthouse v grafech roku není.
+- [ ] Rok ve sbírce: dokončené ročníky jen Playboye.
+- [ ] Stránka čísla Playboy 09/1985: Předchozí/Další vedou na 08 a 10/1985 Playboye.
+
 ## 0.02.006 – Rychlé přidání a stránka čísla jiného časopisu
 
 - [ ] **Kritérium hotovo:** v profilu modelky s centerfoldem Penthouse 09/1985 klik na číslo otevře stránku

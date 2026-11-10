@@ -179,3 +179,12 @@ func TestCisloJinehoCasopisuVProfilu(t *testing.T) {
 		t.Fatalf("stránka čísla: %+v", f)
 	}
 }
+
+// Desetiletí ve Statistikách počítají jen čísla Playboye (0.02.007)
+func TestDesetiletiJenPlayboy(t *testing.T) {
+	kal := []sbirka.VydaniKalendare{{Vydani: "1985-09"}, {Vydani: "1985-09@PH"}, {Vydani: "1986-03-UK@PH"}, {Vydani: "1985-10-CZ"}}
+	s := sbirka.SpocitatStatistiky(nil, map[int]int{}, nil, nil, kal)
+	if len(s.Desetileti) != 1 || s.Desetileti[0].Cisla != 2 || s.Desetileti[0].Edice["US"] != 1 || s.Desetileti[0].Edice["CZ"] != 1 {
+		t.Fatalf("desetiletí: %+v", s.Desetileti)
+	}
+}

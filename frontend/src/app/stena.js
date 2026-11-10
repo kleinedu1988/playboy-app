@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { EDICE, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, plocheTokeny, poleCisla, poleFotky, poleModelkyFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { EDICE, naSteneCenterfoldu, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, plocheTokeny, poleCisla, poleFotky, poleModelkyFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { rozbalitFrontu } from '../lib/fronta';
 import { stav } from './stav';
@@ -39,7 +39,7 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
     if (moje !== stav.cisloNacteni) return;
     const poleSModelkou = f => ({ ...poleModelkyFotky(katalog?.get(f.modelkaId) || (katalog ? {} : null)), ...poleFotky(f) });
     const vyhovuje = f => {
-        if (stav.stenaEdice !== 'vse' && rozlozitVydani(f.album)?.edice !== stav.stenaEdice) return false;
+        if (!naSteneCenterfoldu(f.album, stav.stenaEdice)) return false;
         return vyhovujeHledani([
             f.jmenoModelky,
             f.album,

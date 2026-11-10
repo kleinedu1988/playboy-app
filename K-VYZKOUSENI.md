@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.011 – Typy alb podle časopisu
+
+- [ ] **Kritérium hotovo:** okno alba, Časopis a edice = Penthouse US: druhy „Pictorial · Pet of the Month ·
+      Pet of the Year · Centerfold“; přepnutí na Playboy US vrátí „Playmate of the Month / Year“.
+- [ ] Zvolený druh zůstane zvolený i po přepnutí časopisu (Pet of the Month → Playmate of the Month).
+- [ ] Album „Pet of the Month“ k Penthouse 09/1985 se uloží; v profilu pod názvem „Pictorial Pet of the Month“.
+- [ ] Ze stránky čísla Penthouse › přidat pictorial: okno rovnou nabízí Pet of the Month.
+- [ ] Známé omezení do 0.02.012: modelka s pictorialem Pet of the Month dostane v kategoriích i „Playmate měsíce“.
+
 ## 0.02.010 – Titul v profilu
 
 - [ ] **Kritérium hotovo:** profil modelky jen s centerfoldem Penthouse 09/1985: v kategoriích „Pet of the Month“,

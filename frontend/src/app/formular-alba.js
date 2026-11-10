@@ -1,7 +1,7 @@
 // Okno alba a centerfoldu
 import { oznamit } from '../ui/oznameni';
 import { AddModelka, DeleteAlbum, GetFotografove, GetSablonaObrazku } from './backend';
-import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, TYP_PM_MESICE, TYP_PM_ROKU, esc, formatMarkdown, jeOnline, nazevAlba, nazevVydani, obdobiCyberGirl, obrazek, odkazyDisku, popisTypuAlba, rozlozitVydani, sjednotit, sklonovat, slozitVydani } from '../lib/format';
+import { TYP_CG_MESICE, TYP_CG_TYDNE, TYP_ONLINE, TYP_PM_MESICE, TYP_PM_ROKU, esc, formatMarkdown, jeOnline, nazevAlba, nazevVydani, obdobiCyberGirl, obrazek, odkazyDisku, popisDruhuCasopisu, popisTypuAlba, rozlozitRadu, rozlozitVydani, sjednotit, sklonovat, slozitVydani } from '../lib/format';
 import { upravitText } from '../ui/editor-textu';
 import { nastavitHtml, nastavitText } from '../ui/dom';
 import { vsechnyModelky } from './mezipamet';
@@ -50,7 +50,8 @@ let obnovitSpecialyAlba = (_vybrat) => {};
 // Typ alba ve dvou krocích: kde vyšlo a druh. Časopis a Nikde jsou obojí typ Pictorial, Nikde jen bez čísla.
 // Typ, který nabídka nezná (starší Cover…), se nabídne jako další druh u časopisu.
 const DRUHY_ALBA = {
-    casopis: [['Pictorial', 'Pictorial'], [TYP_PM_MESICE, 'Playmate of the Month'], [TYP_PM_ROKU, 'Playmate of the Year'], ['Centerfold', 'Centerfold']],
+    // Popisky modelky měsíce a roku podle zvoleného časopisu (druhyAlba), Pet of the Month u Penthouse
+    casopis: [['Pictorial', 'Pictorial'], [TYP_PM_MESICE, ''], [TYP_PM_ROKU, ''], ['Centerfold', 'Centerfold']],
     online: [[TYP_ONLINE, 'Pictorial'], [TYP_CG_TYDNE, 'Cyber Girl of the Week'], [TYP_CG_MESICE, 'Cyber Girl of the Month']],
     nikde: [['Pictorial', 'Pictorial bez čísla']],
 };
@@ -58,7 +59,8 @@ let kdeAlba = 'casopis';
 // Číslo časopisu: řádné měsíční, nebo speciál (vlastní výběr se speciály zvoleného roku a edice)
 let cisloAlba = 'mesic';
 
-const druhyAlba = kde => [...DRUHY_ALBA[kde], ...(kde === 'casopis'
+const casopisAlba = () => rozlozitRadu(/** @type {HTMLSelectElement} */ (document.getElementById('selectAlbumEdice')).value).casopis;
+const druhyAlba = kde => [...DRUHY_ALBA[kde].map(([h, p]) => [h, p || popisDruhuCasopisu(h, casopisAlba())]), ...(kde === 'casopis'
     ? [...document.querySelectorAll('#selectTyp [data-puvodni]')].map(o => [o.value, o.value]) : [])];
 
 // Volby ve skupině jsou přepínače (role radio): zvolená je zaměřitelná Tabem, ostatní jen šipkami
@@ -126,7 +128,7 @@ export function obnovitNahledAlba() {
     const vydani = sCislem && /^\d{4}$/.test(hodnota('inputAlbumRok')) ? slozitVydani(hodnota('inputAlbumRok'), hodnota(vyberCisla), hodnota('selectAlbumEdice')) : '';
     const datum = jeOnline(typ) ? hodnota('inputAlbumDatum') : '';
     nastavitText(document.getElementById('albumNahledNazev'), typ === 'Centerfold' ? 'Centerfold' : hodnota('inputAlbumName') || 'Bez názvu');
-    nastavitText(document.getElementById('albumNahledPopis'), [popisTypuAlba(typ, datum), vydani && nazevVydani(vydani)].filter(Boolean).join(' · '));
+    nastavitText(document.getElementById('albumNahledPopis'), [popisTypuAlba(typ, datum, vydani), vydani && nazevVydani(vydani)].filter(Boolean).join(' · '));
 
     const odkazy = odkazyDisku(hodnota('inputBulkLinks'));
     const pocet = odkazy.length;
@@ -244,6 +246,7 @@ export function predvyplnitVydaniAlba(vydani) {
     if (kdeAlba !== 'casopis') nastavitTypAlba(druhyAlba('casopis').some(([h]) => h === typ) ? typ : 'Pictorial', 'casopis');
     document.getElementById('inputAlbumRok').value = v.rok;
     nastavitRadu(document.getElementById('selectAlbumEdice'), v.edice);
+    nastavitTypAlba(/** @type {HTMLSelectElement} */ (document.getElementById('selectTyp')).value);
     obnovitSpecialyAlba(cisloAlba === 'special' ? v.mesic : '');
     document.getElementById('selectAlbumMesic').value = cisloAlba === 'mesic' ? v.mesic : '';
     prepnoutPoleAlba();
@@ -309,6 +312,8 @@ export function pripravit() {
     document.getElementById('inputAlbumDatum').addEventListener('input', ukazatTyden);
     document.getElementById('addAlbumForm').addEventListener('input', obnovitNahledAlba);
     document.getElementById('addAlbumForm').addEventListener('change', obnovitNahledAlba);
+    // Jiný časopis: popisky Playmate / Pet / Honey of the Month se překreslí
+    document.getElementById('selectAlbumEdice').addEventListener('change', () => nastavitTypAlba(/** @type {HTMLSelectElement} */ (document.getElementById('selectTyp')).value));
 
     // Průvodní text ve společném okně s formátováním; změna se ohlásí jako úprava formuláře
     document.getElementById('albumPopisBtn').addEventListener('click', async () => {

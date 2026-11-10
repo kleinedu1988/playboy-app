@@ -265,6 +265,15 @@ export const jeOnline = typ => typ === TYP_ONLINE || typ === TYP_CG_TYDNE || typ
 export const TYP_PM_MESICE = 'Playmate měsíce';
 export const TYP_PM_ROKU = 'Playmate roku';
 
+// Popisek volby typu v okně alba podle časopisu (0.02.011): Playboy „Playmate of the Month / Year“, Penthouse
+// „Pet of the Month / Year“; uložený typ zůstává TYP_PM_MESICE / TYP_PM_ROKU (role modelky měsíce / roku)
+export function popisDruhuCasopisu(typ, casopis = VYCHOZI_CASOPIS) {
+    const roku = typ === TYP_PM_ROKU;
+    if (typ !== TYP_PM_MESICE && !roku) return typ;
+    if (!casopis || casopis === VYCHOZI_CASOPIS) return roku ? 'Playmate of the Year' : 'Playmate of the Month';
+    return titulCasopisu(casopis, roku ? 'roku' : 'mesice');
+}
+
 // Období ocenění Cyber Girl z data nafocení: „24. týden 2004“, „červen 2004“; bez potřebné přesnosti ''
 export function obdobiCyberGirl(typ, datum) {
     if (typ === TYP_CG_TYDNE) {
@@ -289,10 +298,14 @@ export function tydenRoku(datum) {
 // Typ alba v hlavičce; online album s datem nafocení: „Pictorial online · nafoceno červen 2004“,
 // Cyber Girl týdne s celým datem: „Cyber Girl týdne · 24. týden 2004 (nafoceno 12. 6. 2004)“,
 // Cyber Girl měsíce: „Cyber Girl měsíce · červen 2004“ (s celým datem i „(nafoceno …)“)
-export function popisTypuAlba(typ, datum) {
+// Pictorial modelky měsíce / roku čísla jiného časopisu: „Pictorial Pet of the Month“ (vydani = číslo alba)
+export function popisTypuAlba(typ, datum, vydani = '') {
     const obdobi = obdobiCyberGirl(typ, datum);
     if (obdobi) return `${typ} · ${obdobi}${/^\d{4}-\d{2}-\d{2}$/.test(datum) ? ` (nafoceno ${formatDatum(datum)})` : ''}`;
-    if (typ === TYP_PM_MESICE || typ === TYP_PM_ROKU) return `Pictorial ${typ}`;
+    if (typ === TYP_PM_MESICE || typ === TYP_PM_ROKU) {
+        const casopis = rozlozitVydani(vydani)?.casopis || VYCHOZI_CASOPIS;
+        return `Pictorial ${casopis === VYCHOZI_CASOPIS ? typ : titulCasopisu(casopis, typ === TYP_PM_ROKU ? 'roku' : 'mesice')}`;
+    }
     return jeOnline(typ) && datum ? `${typ} · nafoceno ${formatDatum(datum)}` : typ;
 }
 

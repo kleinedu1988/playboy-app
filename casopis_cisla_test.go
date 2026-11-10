@@ -188,3 +188,18 @@ func TestDesetiletiJenPlayboy(t *testing.T) {
 		t.Fatalf("desetiletí: %+v", s.Desetileti)
 	}
 }
+
+// Pictorial modelky měsíce a roku (v okně alba Pet of the Month / Year) k číslu Penthouse se uloží (0.02.011)
+func TestPictorialPetOfTheMonth(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Pet", Tetovani: -1, Piercing: -1})
+	id := a.GetModelky("")[0].ID
+	a.AddBulkPhotos(id, "Pet měsíce", "Playmate měsíce", "https://drive.google.com/file/d/MMMMMMMMMMMMMMMMMMMMMMMMMMMMM/view")
+	a.AddBulkPhotos(id, "Pet roku", "Playmate roku", "https://drive.google.com/file/d/RRRRRRRRRRRRRRRRRRRRRRRRRRRRR/view")
+	if !a.SetVydaniAlba(id, "Pet měsíce", "Playmate měsíce", "1985-09@PH") || !a.SetVydaniAlba(id, "Pet roku", "Playmate roku", "1986-S01-UK@PH") {
+		t.Fatal("pictorial Pet of the Month / Year se k číslu Penthouse neuložil")
+	}
+	if f := a.GetVydani("1985-09@PH"); len(f) != 1 {
+		t.Fatalf("číslo Penthouse: %d fotek", len(f))
+	}
+}

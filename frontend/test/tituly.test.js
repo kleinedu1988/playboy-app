@@ -52,3 +52,16 @@ test('kategorie v profilu: Pet of the Month místo Playmate měsíce, obě u mod
     assert.ok(nazvy({ role: 'Playmate měsíce', centerfoldy: ['1985-09@PH'] }).includes('Playmate měsíce'));
     nastavitCasopisy([]);
 });
+
+test('typy alb podle časopisu: Pet of the Month v okně alba a v popisu alba', async () => {
+    const { popisDruhuCasopisu, popisTypuAlba, TYP_PM_MESICE, TYP_PM_ROKU } = await import('../src/lib/format.js');
+    nastavitCasopisy(CASOPISY);
+    assert.deepEqual([popisDruhuCasopisu(TYP_PM_MESICE), popisDruhuCasopisu(TYP_PM_ROKU, 'PB')], ['Playmate of the Month', 'Playmate of the Year']);
+    assert.deepEqual([popisDruhuCasopisu(TYP_PM_MESICE, 'PH'), popisDruhuCasopisu(TYP_PM_ROKU, 'PH')], ['Pet of the Month', 'Pet of the Year']);
+    assert.equal(popisDruhuCasopisu(TYP_PM_MESICE, 'HU'), 'Honey of the Month');
+    assert.equal(popisDruhuCasopisu('Pictorial', 'PH'), 'Pictorial');
+    assert.equal(popisTypuAlba(TYP_PM_MESICE, '', '1985-09'), 'Pictorial Playmate měsíce');
+    assert.equal(popisTypuAlba(TYP_PM_MESICE, ''), 'Pictorial Playmate měsíce');
+    assert.equal(popisTypuAlba(TYP_PM_ROKU, '', '1986-S01-UK@PH'), 'Pictorial Pet of the Year');
+    nastavitCasopisy([]);
+});

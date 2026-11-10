@@ -6,6 +6,15 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.011] – 2026-11-10
+
+### Změněno
+- **Typy alb podle časopisu:** okno alba nabízí u Penthouse „Pet of the Month“ a „Pet of the Year“, u Hustleru
+  „Honey of the Month / Year“, u Playboye jako dřív „Playmate of the Month / Year“. Popisky se překreslí při změně
+  „Časopis a edice“ i při předvyplnění čísla. Uložený typ alba zůstává stejný (role modelky měsíce / roku), takže
+  export, hledání i starší data platí dál (`popisDruhuCasopisu` ve `format.js`).
+- Popis alba v profilu a v náhledu okna: „Pictorial Pet of the Month“ u čísla Penthouse.
+
 ## [0.02.010] – 2026-11-10
 
 ### Změněno

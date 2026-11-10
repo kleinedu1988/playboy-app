@@ -401,7 +401,7 @@ export async function nacistFotkyModelky(modelkaId) {
             <section class="album" data-album="${indexAlba.get(a)}" data-cast="${indexAlba.get(a)}"${jeOnline(a.typ) ? ' data-online' : ''}>
                 <div class="album-header">
                     <h4>${esc(nazevAlba(a.album, a.typ))}</h4>
-                    <span>${esc(popisTypuAlba(a.typ, a.datumAlba))} · ${popis}</span>
+                    <span>${esc(popisTypuAlba(a.typ, a.datumAlba, a.vydani))} · ${popis}</span>
                     ${a.vydani ? htmlStitkuVydani(a.vydani) : ''}
                     ${htmlSpoluModelek(a)}
                     <button class="album-more" data-nabidka-alba title="Akce alba (také pravým tlačítkem)">&#8943;</button>

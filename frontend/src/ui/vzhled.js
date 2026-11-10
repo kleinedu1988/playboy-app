@@ -12,6 +12,23 @@ export const POHYBY = /** @type {const} */ (['plny', 'omezeny', 'zadny']);
 export const POZADI_PROHLIZECE = /** @type {const} */ (['tmave', 'cerne', 'rozmazane']);
 export const OVLADANI_PROHLIZECE = /** @type {const} */ (['pohyb', 'trvale']);
 export const KARTY_PREHLEDU = /** @type {const} */ (['cz', 'us', 'vybery', 'objevit', 'naposledy']);
+// Mapa čísel jiného časopisu (0.02.017): karta „rada:PH/US“ pro každou řadu z tabulky časopisů mimo Playboy
+export const KARTA_RADY = 'rada:';
+const jeKartaRady = k => typeof k === 'string' && /^rada:[A-Z]{2}\/[A-Z]{2}$/.test(k);
+const znamaKarta = k => KARTY_PREHLEDU.includes(k) || jeKartaRady(k);
+
+/**
+ * Pořadí karet Mapy čísel včetně map řad (dalsi = klíče „rada:…“): uložené pořadí, řady, které v něm ještě nejsou,
+ * hned za americkou edicí
+ * @param {string[]} poradi @param {string[]} dalsi
+ */
+export function poradiKaret(poradi, dalsi) {
+    const v = [...poradi];
+    const nove = dalsi.filter(k => !v.includes(k));
+    const i = v.indexOf('us');
+    v.splice(i >= 0 ? i + 1 : v.length, 0, ...nove);
+    return v;
+}
 export const STARTY = /** @type {const} */ (['modelky', 'cisla', 'sbirka', 'posledni']);
 export const ZAHLAVI = /** @type {const} */ (['vysoke', 'pevne', 'pruh']);
 
@@ -40,9 +57,9 @@ export function platnyVzhled(ulozene) {
     if (OVLADANI_PROHLIZECE.includes(ulozene.prohlizec?.ovladani)) v.prohlizec.ovladani = ulozene.prohlizec.ovladani;
     if (typeof ulozene.prohlizec?.pas === 'boolean') v.prohlizec.pas = ulozene.prohlizec.pas;
     // Pořadí karet Přehledu: uložené známé karty, chybějící (nové) na konec; skryté jen známé
-    const poradi = Array.isArray(ulozene.prehled?.poradi) ? ulozene.prehled.poradi.filter((k, i, a) => KARTY_PREHLEDU.includes(k) && a.indexOf(k) === i) : [];
+    const poradi = Array.isArray(ulozene.prehled?.poradi) ? ulozene.prehled.poradi.filter((k, i, a) => znamaKarta(k) && a.indexOf(k) === i) : [];
     v.prehled.poradi = [...poradi, ...KARTY_PREHLEDU.filter(k => !poradi.includes(k))];
-    if (Array.isArray(ulozene.prehled?.skryte)) v.prehled.skryte = KARTY_PREHLEDU.filter(k => ulozene.prehled.skryte.includes(k));
+    if (Array.isArray(ulozene.prehled?.skryte)) v.prehled.skryte = ulozene.prehled.skryte.filter((k, i, a) => znamaKarta(k) && a.indexOf(k) === i);
     if (STARTY.includes(ulozene.start)) v.start = ulozene.start;
     if (ZAHLAVI.includes(ulozene.zahlavi)) v.zahlavi = ulozene.zahlavi;
     return v;

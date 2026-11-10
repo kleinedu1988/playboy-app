@@ -36,3 +36,13 @@ test('platnyVzhled 1.50: pořadí karet Přehledu bez cizích a dvojitých, chyb
     assert.deepEqual(v.prehled.poradi, ['naposledy', 'cz', 'us', 'vybery', 'objevit']);
     assert.deepEqual(v.prehled.skryte, ['us']);
 });
+
+test('karty Mapy čísel jiných časopisů (0.02.017): uložené pořadí, nové řady za americkou edicí', async () => {
+    const { platnyVzhled, poradiKaret } = await import('../src/ui/vzhled.js');
+    const v = platnyVzhled({ prehled: { poradi: ['rada:PH/US', 'cz', 'rada:xx', 'us'], skryte: ['rada:HU/US', 'rada:x'] } });
+    assert.deepEqual(v.prehled.poradi, ['rada:PH/US', 'cz', 'us', 'vybery', 'objevit', 'naposledy']);
+    assert.deepEqual(v.prehled.skryte, ['rada:HU/US']);
+    assert.deepEqual(poradiKaret(v.prehled.poradi, ['rada:PH/US', 'rada:PH/UK', 'rada:HU/US']),
+        ['rada:PH/US', 'cz', 'us', 'rada:PH/UK', 'rada:HU/US', 'vybery', 'objevit', 'naposledy']);
+    assert.deepEqual(poradiKaret(['cz', 'us', 'vybery'], []), ['cz', 'us', 'vybery']);
+});

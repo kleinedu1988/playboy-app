@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.017 – Mapa čísel pro každý časopis
+
+- [ ] **Kritérium hotovo:** Sbírka › Mapa čísel: pod americkou edicí karta „Penthouse US · archiv dat“ 1969–2018;
+      09/1985 kompletní nebo částečné podle obsahu, klik otevře číslo, prázdné políčko nabídne přidání.
+- [ ] Česká a americká edice Playboye vypadají jako dřív; úplnost Penthouse a Playboye se počítá zvlášť.
+- [ ] Penthouse UK a Hustler bez čísel ve sbírce kartu nemají.
+- [ ] ⋯ › Vzhled › Karty Mapy čísel: Penthouse US, Penthouse UK, Hustler US jde skrýt a posunout; pořadí vydrží
+      restart.
+
 ## 0.02.016 – Kalendář podle časopisu
 
 - [ ] **Kritérium hotovo:** Čísla › Kalendář › „Časopis a edice: Penthouse US“: ukáže Penthouse 09/1985 a v roce

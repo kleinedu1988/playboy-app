@@ -6,6 +6,14 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.017] – 2026-11-10
+
+### Přidáno
+- **Mapa čísel pro každý časopis:** Sbírka › Mapa čísel má kartu „Penthouse US · archiv dat“ (a další řady
+  z tabulky časopisů), jakmile sbírka má číslo té řady: úplnost od prvního čísla řady (Penthouse US 1969–2018),
+  kompletní / částečné / chybí, měsíce mimo řadu prázdné. Americká edice Playboye používá stejnou kartu beze změny.
+- ⋯ › Vzhled › Karty Mapy čísel: mapy jiných časopisů jde skrýt a posouvat; nová řada se zařadí za americkou edici.
+
 ## [0.02.016] – 2026-11-10
 
 ### Změněno

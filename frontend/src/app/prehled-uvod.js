@@ -1,14 +1,17 @@
 // Mapa čísel Sbírky (dřív Úvod): mapa české edice (vlastní výtisky), mapa americké edice (úplnost dat) a naposledy
 // přidané modelky. Česká edice se sbírá fyzicky, americká jen jako data (PDF),
 // proto má každá mapa jiné stavy. Políčko je jedno měsíční číslo; klik ho otevře, prázdné nabídne přidání.
-import { MESICE, RADY_EDIC, VYCHOZI_EDICE, cisloNevyslo, esc, formatDatum, nazevVydani, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
+import { MESICE, RADY_EDIC, VYCHOZI_CASOPIS, VYCHOZI_EDICE, cisloNevyslo, esc, formatDatum, moznostiRad, nazevVolbyRady, nazevVydani, rozlozitRadu, rozlozitVydani, sklonovat, slozitVydani } from '../lib/format';
+import { RADY_CISEL } from '../lib/rady-cisel';
 import { adresaTitulni } from './obrazky';
-import { vzhled } from '../ui/vzhled';
+import { KARTA_RADY, poradiKaret, vzhled } from '../ui/vzhled';
 
-// Mapy začínají prvním číslem edice (RADY_EDIC); měsíce mimo měsíční řadu jsou v nich prázdné
+// Mapy začínají prvním číslem edice (RADY_EDIC, u jiných časopisů RADY_CISEL); měsíce mimo měsíční řadu jsou
+// v nich prázdné
 const PRVNI_ROK_CZ = parseInt(RADY_EDIC.CZ.od);
-const PRVNI_ROK_US = parseInt(RADY_EDIC.US.od);
-const POSLEDNI_ROK_US = parseInt(RADY_EDIC.US.do);
+
+// Řady jiných časopisů než Playboy z tabulky časopisů (karty „rada:PH/US“, 0.02.017)
+export const radyJinychCasopisu = () => moznostiRad().map(m => m.hodnota).filter(r => rozlozitRadu(r).casopis !== VYCHOZI_CASOPIS);
 // Naposledy přidaných modelek na úvodu
 const NAPOSLEDY = 6;
 
@@ -85,21 +88,32 @@ export function htmlUvodu({ kalendar, stavy, modelky }) {
     };
     const mapaCz = htmlMapy(cz, stavCz);
 
-    // Americká edice: úplnost dat od prvního do posledního roku ve sbírce
-    const rokyUs = rokyEdice('US');
-    const poctyUs = { k: 0, p: 0, n: 0, c: 0, b: 0, x: 0 };
-    const stavUs = m => {
-        const s = cisloNevyslo(m.klic) && !m.data && !stavPodleKlice.get(m.klic) ? 'x' : budouci(m.klic) ? 'b' : stavPodleKlice.get(m.klic) === 'nezajima' ? 'n'
-            : m.data?.cover && m.data?.centerfold && m.data?.pictorial ? 'k' : m.data ? 'p' : 'c';
-        poctyUs[s]++;
-        const obsah = obsahCisla(m.data);
-        return [s, STAVY_US[s] + (obsah && s === 'p' ? ` · ${obsah}` : '')];
+    // Archiv dat řady (americká edice Playboye, Penthouse, Hustler…): úplnost od prvního čísla řady do posledního
+    // (nebo do letoška), případně i čísla ve sbírce mimo řadu; jen když sbírka nějaké číslo řady má
+    const kartaArchivu = (rada, nadpis) => {
+        const roky = rokyEdice(rada);
+        if (!roky.length) return '';
+        const pocty = { k: 0, p: 0, n: 0, c: 0, b: 0, x: 0 };
+        const stavCisla = m => {
+            const s = cisloNevyslo(m.klic) && !m.data && !stavPodleKlice.get(m.klic) ? 'x' : budouci(m.klic) ? 'b' : stavPodleKlice.get(m.klic) === 'nezajima' ? 'n'
+                : m.data?.cover && m.data?.centerfold && m.data?.pictorial ? 'k' : m.data ? 'p' : 'c';
+            pocty[s]++;
+            const obsah = obsahCisla(m.data);
+            return [s, STAVY_US[s] + (obsah && s === 'p' ? ` · ${obsah}` : '')];
+        };
+        const radaCisel = RADY_CISEL[rada];
+        const od = Math.min(radaCisel ? parseInt(radaCisel.od) : Infinity, ...roky);
+        const do_ = Math.min(letos, Math.max(radaCisel?.do ? parseInt(radaCisel.do) : radaCisel ? letos : 0, ...roky));
+        const mapa = htmlMapy(cislaEdice(rada, od, do_, podleKlice), stavCisla);
+        const vydanych = pocty.k + pocty.p + pocty.n + pocty.c;
+        return `
+        <div class="uvod-karta">
+            <h4>${esc(nadpis)} · archiv dat<small>${esc(`kompletních ${pocty.k} z ${vydanych}`)} · ${od}–${do_} · kompletní = cover, centerfold i pictorial</small></h4>
+            ${mapa}
+            ${legenda({ k: pocty.k, p: pocty.p, n: pocty.n, c: pocty.c }, STAVY_US)}
+        </div>`;
     };
-    // Celá měsíční řada 1953–2020 (a případná dřívější nebo pozdější čísla ve sbírce), když sbírka nějaké US číslo má
-    const odUs = Math.min(PRVNI_ROK_US, ...rokyUs), doUs = Math.min(letos, Math.max(POSLEDNI_ROK_US, ...rokyUs));
-    const mapaUs = rokyUs.length ? htmlMapy(cislaEdice('US', odUs, doUs, podleKlice), stavUs) : '';
     const vydanychCz = poctyCz.m + poctyCz.s + poctyCz.n + poctyCz.c;
-    const vydanychUs = poctyUs.k + poctyUs.p + poctyUs.n + poctyUs.c;
 
 
     const naposledy = [...modelky].filter(m => m.pridano).sort((a, b) => b.pridano.localeCompare(a.pridano)).slice(0, NAPOSLEDY);
@@ -112,12 +126,8 @@ export function htmlUvodu({ kalendar, stavy, modelky }) {
             ${mapaCz}
             ${legenda({ m: poctyCz.m, s: poctyCz.s, n: poctyCz.n, c: poctyCz.c }, STAVY_CZ)}
         </div>`,
-        us: mapaUs ? `
-        <div class="uvod-karta">
-            <h4>Americká edice · archiv dat<small>${esc(`kompletních ${poctyUs.k} z ${vydanychUs}`)} · ${odUs}–${doUs} · kompletní = cover, centerfold i pictorial</small></h4>
-            ${mapaUs}
-            ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
-        </div>` : '',
+        us: kartaArchivu('US', 'Americká edice'),
+        ...Object.fromEntries(radyJinychCasopisu().map(r => [KARTA_RADY + r, kartaArchivu(r, nazevVolbyRady(r))])),
         vybery: '<div class="uvod-karta uvod-radek cv-prehled" data-cv-prehled hidden></div>',
         objevit: '<div class="uvod-karta uvod-radek ob-karta" data-objevit hidden></div>',
         naposledy: `
@@ -129,7 +139,7 @@ export function htmlUvodu({ kalendar, stavy, modelky }) {
         </div>`,
     };
     const { poradi, skryte } = vzhled().prehled;
-    const viditelne = poradi.filter(k => !skryte.includes(k)).map(k => karty[k]).join('');
+    const viditelne = poradiKaret(poradi, radyJinychCasopisu().map(r => KARTA_RADY + r)).filter(k => !skryte.includes(k)).map(k => karty[k] || '').join('');
     return `${viditelne || '<p class="prazdno-male">Všechny karty Přehledu jsou skryté – zapni je v ⋯ › Vzhled.</p>'}
         <div class="graf-bublina hidden"></div>`;
 }

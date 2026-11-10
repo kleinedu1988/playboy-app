@@ -1,7 +1,9 @@
 // Okno Vzhled (⋯ › Vzhled…, ROADMAP 1.49–1.50): přiblížení, hustota, velikost karet po pohledech, co ukazuje karta
 // modelky, pohyb, prohlížeč fotek, sekce po startu, záhlaví profilu a karty Mapy čísel, s živým náhledem (změna se projeví hned) a tlačítkem Výchozí. Ctrl + plus / minus / 0 mění přiblížení
 // odkudkoli. Volby drží ui/vzhled.js.
-import { KARTY_PREHLEDU, PRIBLIZENI, POHLEDY_KARET, vychozi, vzhled, zmenit } from '../ui/vzhled';
+import { KARTA_RADY, PRIBLIZENI, POHLEDY_KARET, poradiKaret, vychozi, vzhled, zmenit } from '../ui/vzhled';
+import { nazevVolbyRady } from '../lib/format';
+import { radyJinychCasopisu } from './prehled-uvod';
 import { drzetFokus } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
 
@@ -11,11 +13,16 @@ const POPISY_POHLEDU = { modelky: 'Karty modelek', fotky: 'Všechny fotky', sten
 const POPISY_VELIKOSTI = { s: 'Malé', m: 'Střední', l: 'Velké' };
 const procenta = p => `${Math.round(p * 100)} %`;
 const POPISY_KARET_PREHLEDU = { cz: 'Česká edice', us: 'Americká edice', vybery: 'Chytré výběry', objevit: 'Objevit', naposledy: 'Naposledy přidané' };
+// Karty map jiných časopisů (0.02.017): „Penthouse US“; ukáže se jen, když sbírka má číslo té řady
+const popisKarty = k => POPISY_KARET_PREHLEDU[k] || (k.startsWith(KARTA_RADY) ? nazevVolbyRady(k.slice(KARTA_RADY.length)) : k);
+// Všechny karty v pořadí: uložené a mapy řad z tabulky časopisů, které v pořadí ještě nejsou
+const vsechnyKarty = () => poradiKaret(vzhled().prehled.poradi, radyJinychCasopisu().map(r => KARTA_RADY + r));
 // Pořadí tlačítek sekcí v hlavní nabídce (#viewToggle): Modelky, Čísla, Hodnocení, Sbírka
 const SEKCE_STARTU = { modelky: 0, cisla: 1, sbirka: 3 };
 
 function htmlObsahu() {
     const v = vzhled();
+    const karty = vsechnyKarty();
     const prepinac = (atribut, hodnoty, zvolena) => hodnoty.map(([k, text]) =>
         `<button type="button" ${atribut}="${k}" aria-pressed="${k === zvolena}">${text}</button>`).join('');
     return `
@@ -45,9 +52,9 @@ function htmlObsahu() {
         <div class="vz-radek"><span class="vz-popis">Záhlaví profilu</span><div class="vz-volby" role="group" aria-label="Záhlaví profilu">
             ${prepinac('data-vz-zahlavi', [['vysoke', 'Vysoké, svine se'], ['pevne', 'Vysoké stále'], ['pruh', 'Jen pruh']], v.zahlavi)}</div></div>
         <div class="vz-radek"><span class="vz-popis">Karty Mapy čísel<br><small>Sbírka › Mapa čísel</small></span><ol class="vz-karty-prehledu">
-            ${v.prehled.poradi.map((k, i) => `<li><label><input type="checkbox" data-vz-prehled-karta="${k}"${v.prehled.skryte.includes(k) ? '' : ' checked'} /> ${POPISY_KARET_PREHLEDU[k]}</label>
-                <button type="button" data-vz-posun="${k}" data-smer="-1" aria-label="${POPISY_KARET_PREHLEDU[k]} výš"${i === 0 ? ' disabled' : ''}>↑</button>
-                <button type="button" data-vz-posun="${k}" data-smer="1" aria-label="${POPISY_KARET_PREHLEDU[k]} níž"${i === KARTY_PREHLEDU.length - 1 ? ' disabled' : ''}>↓</button></li>`).join('')}</ol></div>`;
+            ${karty.map((k, i) => `<li><label><input type="checkbox" data-vz-prehled-karta="${k}"${v.prehled.skryte.includes(k) ? '' : ' checked'} /> ${popisKarty(k)}</label>
+                <button type="button" data-vz-posun="${k}" data-smer="-1" aria-label="${popisKarty(k)} výš"${i === 0 ? ' disabled' : ''}>↑</button>
+                <button type="button" data-vz-posun="${k}" data-smer="1" aria-label="${popisKarty(k)} níž"${i === karty.length - 1 ? ' disabled' : ''}>↓</button></li>`).join('')}</ol></div>`;
 }
 
 function vytvoritOkno() {
@@ -91,7 +98,7 @@ function vytvoritOkno() {
         else if (b.dataset.vzStart) zmenit({ start: b.dataset.vzStart });
         else if (b.dataset.vzZahlavi) zmenit({ zahlavi: b.dataset.vzZahlavi });
         else if (b.dataset.vzPosun) {
-            const poradi = [...vzhled().prehled.poradi];
+            const poradi = vsechnyKarty();
             const i = poradi.indexOf(b.dataset.vzPosun), j = i + Number(b.dataset.smer);
             if (j < 0 || j >= poradi.length) return;
             [poradi[i], poradi[j]] = [poradi[j], poradi[i]];

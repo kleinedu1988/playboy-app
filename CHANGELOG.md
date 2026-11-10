@@ -20,6 +20,10 @@ Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změno
 - **Co ukazuje karta modelky**: srdíčka (lze skrýt), rok prvního čísla a počet fotek vedle jména.
 - `K-VYZKOUSENI.md`: seznam toho, co je potřeba vyzkoušet v programu (od 1.45).
 
+### Změněno
+- Roadmapa: světlý motiv a kontrast přeskočen a odložen do etapy J (1.63); další verze se posouvají o jednu
+  (Klid, pohyb a vlastní Přehled 1.50, etapa H 1.51–1.54, výtisky 1.55–1.58, odložené 1.59–1.63).
+
 ### Známé
 - Kalendář velikost karet zatím nemá a okno Vzhled nejde otevřít z `Ctrl+K` (hledání umí jen filtry).
 

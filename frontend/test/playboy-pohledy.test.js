@@ -16,10 +16,10 @@ test('řada čísla jiného časopisu není žádná edice Playboye (Kalendář,
         assert.equal(jeCisloPlayboye(klic), false, klic);
     }
     for (const klic of ['1985-09', '2012-03-CZ', '1995-S01', '1985']) assert.equal(jeCisloPlayboye(klic), true, klic);
-    // Řada Playboye beze změny: číslo z 03/1955 nevyšlo, ročník 1955 měl 11 čísel; u jiného časopisu řada zatím není
+    // Řada Playboye beze změny: číslo z 03/1955 nevyšlo, ročník 1955 měl 11 čísel; Penthouse má svou řadu (0.02.015)
     assert.equal(cisloNevyslo('1955-03'), true);
     assert.equal(ciselRocniku(1955, 'US'), 11);
-    assert.equal(cisloNevyslo('1955-03@PH'), false);
+    assert.equal(cisloNevyslo('1975-03@PH'), false);
 });
 
 test('stěna Centerfoldů jen s Playboyem i ve volbě „vše“', () => {

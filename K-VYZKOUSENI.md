@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.015 – Řady Penthouse a Hustleru
+
+- [ ] **Kritérium hotovo:** ročník Penthouse 1969 (drobeček „Ročník 1969 · Penthouse“ u čísla 09/1969): leden až
+      srpen „nevyšlo“, září až prosinec jako chybějící s +, „Čísel ve sbírce … z 4“.
+- [ ] Ročník Penthouse 1985: 12 měsíců, Penthouse UK 1965: od března.
+- [ ] Zkontroluj na svých výtiscích, jestli data řad sedí (hlavně konec Penthouse US a UK); oprava je jen
+      v `frontend/src/lib/rady-cisel.js`.
+
 ## 0.02.014 – Řady čísel jako data
 
 - [ ] Nic nového k vidění: Kalendář US (03/1955 „nevyšlo“, ročník 1953 jen prosinec, konec 03/2020), Kalendář CZ

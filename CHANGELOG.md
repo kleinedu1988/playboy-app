@@ -6,6 +6,16 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.015] – 2026-11-10
+
+### Přidáno
+- **Řady čísel Penthouse a Hustleru** v `lib/rady-cisel.js` (z Wikipedie, odkaz u každé řady): Penthouse US
+  09/1969–2018, Penthouse UK 03/1965–1999, Hustler od 07/1974. Ročník Penthouse ukáže měsíce před prvním číslem
+  jako „nevyšlo“ a „X z Y čísel“ počítá podle řady.
+- Konce řad jsou zapsané spíš později: Penthouse US měl od 2009 jen 11 a od 2017 10 čísel ročně a v letech
+  2019–2023 vycházel jednou za dva měsíce; které měsíce chyběly, zdroj neuvádí, proto se v ročníku mohou ukázat
+  jako chybějící. Konec britské edice zdroj uvádí jednou 1998, jednou 1999.
+
 ## [0.02.014] – 2026-11-10
 
 ### Změněno

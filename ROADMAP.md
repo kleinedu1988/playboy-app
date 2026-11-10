@@ -5,12 +5,12 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.02.014** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (10. 11. 2026): verze 0.02.015** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
-Honey); časopisy jde spravovat v ⋯ › Časopisy…. Řady čísel jsou data podle řady (`lib/rady-cisel.js`). Další na řadě je
-**0.02.015 – Řady Penthouse a Hustler**.
+Honey); časopisy jde spravovat v ⋯ › Časopisy…. Řady čísel jsou data podle řady (`lib/rady-cisel.js`) i pro Penthouse a Hustler. Další na
+řadě je **0.02.016 – Kalendář podle časopisu**.
 
 ---
 
@@ -43,7 +43,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.08** | 🚧 0.01 hotová, 0.02.001–0.02.014 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.08** | 🚧 0.01 hotová, 0.02.001–0.02.015 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -96,7 +96,7 @@ zůstávají pod 0.02 a další etapy se posunuly o jedno číslo (dřívější
 | 0.02.012 ✅ | **Kategorie a filtry:** odvozená kategorie podle časopisu centerfoldu (Pet of the Month místo Playmate měsíce), fasety galerie a hledání `kategorie:` | filtr „Pet of the Month“ funguje; modelka jen z Penthouse není Playmate |
 | 0.02.013 ✅ | **Správa časopisů** v ⋯ › Časopisy…: přidat, přejmenovat, barva, edice, názvy modelky měsíce a roku; smazat jen nepoužitý | nový časopis (např. Oui) jde přidat a hned vybrat v okně alba |
 | 0.02.014 ✅ | **Řady čísel jako data:** `RADY_EDIC` a `NEVYSLA_CISLA` do jednoho datového souboru podle řady; Playboy převedený beze změny chování | testy řad Playboye projdou beze změny |
-| 0.02.015 | **Řady Penthouse a Hustler:** Penthouse US od 09/1969, UK od 1965, Hustler od 07/1974 (z Wikipedie, s poznámkou zdroje) | `cisloNevyslo` a `ciselRocniku` fungují pro Penthouse |
+| 0.02.015 ✅ | **Řady Penthouse a Hustler:** Penthouse US od 09/1969, UK od 1965, Hustler od 07/1974 (z Wikipedie, s poznámkou zdroje) | `cisloNevyslo` a `ciselRocniku` fungují pro Penthouse |
 | 0.02.016 | **Kalendář podle časopisu:** přepínač časopisu vedle edice, pamatuje se | Kalendář Penthouse ukáže zadaná čísla a díry |
 | 0.02.017 | **Mapa čísel:** karta pro každý časopis, který ve sbírce je, skrývání a pořadí v ⋯ › Vzhled | úplnost Penthouse i Playboye zvlášť |
 | 0.02.018 | **Centerfoldy (stěna) podle časopisu** | stěna Pet of the Month Penthouse |

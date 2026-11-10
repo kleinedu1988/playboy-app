@@ -25,7 +25,7 @@ test('každý měsíc 1950–2030 v obou edicích Playboye stejně jako dřív',
 test('speciál, ročník a řada bez dat nejsou „nevyšlo“', () => {
     assert.equal(cisloNevyslo('1950-S01'), false);
     assert.equal(cisloNevyslo('1950'), false);
-    assert.equal(cisloNevyslo('1950-01@PH'), false);
+    assert.equal(cisloNevyslo('1950-01@OU'), false);
 });
 
 test('data řad mají správný tvar', () => {
@@ -36,4 +36,14 @@ test('data řad mají správný tvar', () => {
         assert.ok(d.nevysla.every(m => /^\d{4}-\d{2}$/.test(m) && m >= d.od && (!d.do || m <= d.do)), rada);
         assert.ok(d.zdroj, rada);
     }
+});
+
+test('řady Penthouse a Hustleru (0.02.015)', () => {
+    // Penthouse US od 09/1969 do 2018, UK od 03/1965 do 1999, Hustler od 07/1974 bez konce
+    assert.deepEqual([cisloNevyslo('1969-08@PH'), cisloNevyslo('1969-09@PH'), cisloNevyslo('2018-12@PH'), cisloNevyslo('2019-01@PH')], [true, false, false, true]);
+    assert.deepEqual([ciselRocniku(1969, 'PH/US'), ciselRocniku(1985, 'PH/US'), ciselRocniku(1965, 'PH/UK'), ciselRocniku(2000, 'PH/UK')], [4, 12, 10, 0]);
+    assert.deepEqual([cisloNevyslo('1974-06@HU'), ciselRocniku(1974, 'HU/US'), ciselRocniku(2030, 'HU/US')], [true, 6, 12]);
+    // Klíč UK edice
+    assert.equal(cisloNevyslo('1965-02-UK@PH'), true);
+    assert.equal(cisloNevyslo('1965-03-UK@PH'), false);
 });

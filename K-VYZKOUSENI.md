@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.009 – Tituly podle časopisu
+
+- [ ] Nic viditelného: funkce titulů je ověřená testy, rozhraní ji použije od 0.02.010. Stačí, že se program
+      spustí a Playboy vypadá jako dřív.
+
 ## 0.02.008 – Export a import verze 14
 
 - [ ] **Kritérium hotovo:** ⋯ › Exportovat; v souboru je `verze: 14`, oddíl `casopisy` a číslo `1985-09@PH`.

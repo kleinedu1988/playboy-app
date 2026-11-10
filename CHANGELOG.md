@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.009] – 2026-11-10
+
+### Přidáno
+- **Tituly modelky podle časopisu:** `titulCasopisu(klic, druh)` a `titulCisla(vydani, druh)` ve `format.js`
+  vrátí titul měsíce, roku nebo krátký titul z tabulky časopisů – Playboy: Playmate měsíce / roku (Playmate),
+  Penthouse: Pet of the Month / Year (Pet), Hustler: Honey of the Month / Year (Honey). Časopis bez titulu dostane
+  „Modelka měsíce / roku“. Rozhraní je začne používat od 0.02.010 (`test/tituly.test.js`).
+
+### Změněno
+- ROADMAP: tituly (profil, typy alb, kategorie a filtry) předřazené z etapy 0.04 jako 0.02.010–0.02.012,
+  správa časopisů se posunula na 0.02.013.
+
 ## [0.02.008] – 2026-11-10
 
 ### Přidáno

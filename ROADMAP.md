@@ -5,10 +5,11 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.02.004** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (10. 11. 2026): verze 0.02.009** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
-Export (verze 14) nese časopisy. Další na řadě je **0.02.009 – Správa časopisů**.
+Export (verze 14) nese časopisy a program zná titul modelky podle časopisu (Playmate, Pet, Honey). Další na řadě
+je **0.02.010 – Štítek titulu v profilu a na kartách**.
 
 ---
 
@@ -85,7 +86,11 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 | 0.02.006 ✅ | **Rychlé přidání a okno Číslo:** stejná volba v rychlém přidání modelky; okno a stránka čísla jiného časopisu (bez kalendáře a mapy) | Penthouse 09/1985 jde otevřít z profilu modelky |
 | 0.02.007 ✅ | **Playboy pohledy beze změny:** projít Kalendář, Mapu čísel, Centerfoldy, kapesní katalog, Rok ve sbírce, úplnost čísla a Statistiky; čísla jiných časopisů v nich nejsou, test na každý | záloha sbírky před a po 0.02 – žádný rozdíl v Číslech a Statistikách |
 | 0.02.008 ✅ | **Export a import [export 14]:** časopisy a čísla s `@` v exportu, EXPORT.md; starší export = Playboy | export → import vrátí stejnou sbírku (test) |
-| 0.02.009 | **Správa časopisů** v ⋯ › Nastavení: přidat, přejmenovat, barva, edice, názvy modelky měsíce a roku; smazat jen nepoužitý | nový časopis (např. Oui) jde přidat a hned vybrat v okně alba |
+| 0.02.009 ✅ | **Tituly podle časopisu** (předřazeno z 0.04.001 na přání): `titulCasopisu` / `titulCisla` ve `format.js` – Playmate měsíce / roku, Pet of the Month / Year, Honey of the Month / Year a krátký titul (Playmate, Pet, Honey) z tabulky časopisů | test pro všechny tři časopisy |
+| 0.02.010 | **Profil a karty modelky:** štítek titulu podle časopisu čísla („Pet · Září 1985 · Penthouse“) | u Pet of the Month není nikde „Playmate“ v profilu |
+| 0.02.011 | **Typy alb:** „Playmate měsíce / roku“ v okně alba podle zvoleného časopisu (Pet of the Month…) | okno alba Penthouse nabízí Pet of the Month |
+| 0.02.012 | **Kategorie a filtry:** odvozená kategorie podle časopisu centerfoldu (Pet of the Month místo Playmate měsíce), fasety galerie a hledání `kategorie:` | filtr „Pet of the Month“ funguje; modelka jen z Penthouse není Playmate |
+| 0.02.013 | **Správa časopisů** v ⋯ › Nastavení: přidat, přejmenovat, barva, edice, názvy modelky měsíce a roku; smazat jen nepoužitý | nový časopis (např. Oui) jde přidat a hned vybrat v okně alba |
 
 #### 0.03 – Řady čísel a Mapa čísel pro každý časopis
 
@@ -102,13 +107,11 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.04.001 | **Názvy rolí:** funkce „modelka měsíce / roku“ podle časopisu čísla (Playmate, Pet of the Month, Honey; PMOY, Pet of the Year) s testy | test pro všechny tři časopisy |
-| 0.04.002 | **Profil a karty modelky:** štítek role podle časopisu | u Pet of the Month není nikde „Playmate“ v profilu |
-| 0.04.003 | **Typy alb:** „Playmate měsíce / roku“ v okně alba podle zvoleného časopisu | okno alba Penthouse nabízí Pet of the Month |
-| 0.04.004 | **Galerie a filtry:** kategorie a fasety (Playmate → modelka měsíce s rozpadem podle časopisu) | filtr „Pet of the Month“ funguje |
-| 0.04.005 | **Statistiky a Postřehy:** texty podle časopisu, Playboy beze změny | žádný „Playmate“ u dat Penthouse |
-| 0.04.006 | **Síň slávy, sezóny, Rok ve sbírce:** přes všechny časopisy s filtrem časopisu | Síň slávy jde přepnout na Penthouse |
-| 0.04.007 | **Zbylé texty:** nápověda, prázdné stavy, úvod, kvíz/průvodce zmínky; seznam zbylých výskytů „Playmate“ jen tam, kde jde opravdu o Playboy | `grep` výskytů projde ručně s poznámkou |
+Tituly (funkce, profil, typy alb, kategorie a filtry) se předřadily do 0.02.009–0.02.012.
+
+| 0.04.001 | **Statistiky a Postřehy:** texty podle časopisu, Playboy beze změny | žádný „Playmate“ u dat Penthouse |
+| 0.04.002 | **Síň slávy, sezóny, Rok ve sbírce:** přes všechny časopisy s filtrem časopisu | Síň slávy jde přepnout na Penthouse |
+| 0.04.003 | **Zbylé texty:** nápověda, prázdné stavy, úvod, kvíz/průvodce zmínky; seznam zbylých výskytů „Playmate“ jen tam, kde jde opravdu o Playboy | `grep` výskytů projde ručně s poznámkou |
 
 #### 0.05 – Profil napříč časopisy a slučování modelek
 

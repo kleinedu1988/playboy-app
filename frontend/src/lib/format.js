@@ -105,6 +105,28 @@ export function nastavitCasopisy(seznam) {
 // Název časopisu podle klíče („PH“ → „Penthouse“); neznámý klíč zůstane zkratkou
 export const nazevCasopisu = klic => casopisy.get(klic)?.nazev || klic || '';
 
+// Tituly modelky čísla podle časopisu (0.02.009): Playboy má Playmate, Penthouse Pet, Hustler Honey. Z tabulky
+// časopisů (modelkaMesice, modelkaRoku); bez načtené tabulky nebo bez vyplněného titulu Playboy, resp. obecný titul.
+// druh: 'mesice' („Pet of the Month“), 'roku' („Pet of the Year“), 'kratky' („Pet“ – první slovo titulu měsíce,
+// do štítků a vět jako „Playmate · Září 1985“)
+const TITULY_PLAYBOYE = { mesice: 'Playmate měsíce', roku: 'Playmate roku' };
+const OBECNE_TITULY = { mesice: 'Modelka měsíce', roku: 'Modelka roku' };
+
+/** @param {string} klic @param {'mesice' | 'roku' | 'kratky'} [druh] */
+export function titulCasopisu(klic, druh = 'mesice') {
+    const k = klic || VYCHOZI_CASOPIS;
+    const c = casopisy.get(k);
+    const vychozi = k === VYCHOZI_CASOPIS ? TITULY_PLAYBOYE : OBECNE_TITULY;
+    const mesice = c?.modelkaMesice?.trim() || vychozi.mesice;
+    if (druh === 'roku') return c?.modelkaRoku?.trim() || vychozi.roku;
+    if (druh === 'kratky') return mesice === OBECNE_TITULY.mesice ? 'Modelka' : mesice.split(/\s+/)[0];
+    return mesice;
+}
+
+// Titul podle čísla („1985-09@PH“ → „Pet of the Month“); album, které není číslem, je Playboy
+/** @param {string} vydani @param {'mesice' | 'roku' | 'kratky'} [druh] */
+export const titulCisla = (vydani, druh = 'mesice') => titulCasopisu(rozlozitVydani(vydani)?.casopis || VYCHOZI_CASOPIS, druh);
+
 // Název řady: „US“, „CZ“ (Playboy jako dřív), „Penthouse“, „Penthouse UK“
 export function nazevRady(rada) {
     const { casopis, zeme } = rozlozitRadu(rada);

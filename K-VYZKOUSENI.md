@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.014 – Řady čísel jako data
+
+- [ ] Nic nového k vidění: Kalendář US (03/1955 „nevyšlo“, ročník 1953 jen prosinec, konec 03/2020), Kalendář CZ
+      (od 07/2011), Mapa čísel a kapesní katalog vypadají jako dřív.
+
 ## 0.02.013 – Správa časopisů
 
 - [ ] **Kritérium hotovo:** ⋯ › Časopisy… › + Nový časopis: Oui, zkratka OU, edice „US, FR“, Girl of the Month →

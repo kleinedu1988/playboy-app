@@ -6,9 +6,13 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
-## [Nevydáno]
+## [0.02.014] – 2026-11-10
 
 ### Změněno
+- **Řady čísel jako data:** od kdy do kdy edice vycházela a která čísla nevyšla je v `lib/rady-cisel.js` podle
+  řady (`US`, `CZ`, později `PH/US`…), s poznámkou zdroje. `cisloNevyslo` a `ciselRocniku` z něj čtou; Playboy se
+  chová přesně jako dřív (test na každý měsíc 1950–2030 v obou edicích). `NEVYSLA_CISLA` zaniklo, nevyšlá čísla
+  jsou u řady.
 - ROADMAP: etapa 0.02 pokračuje. Kroky dřívější etapy 0.03 (řady čísel Penthouse a Hustleru, Kalendář, Mapa čísel,
   stěna a hledání podle časopisu) jsou 0.02.014–0.02.019, další etapy se posunuly o jedno číslo (Pojmy podle
   časopisu jsou 0.03, Dotažení a beta 0.08). Odkazy „0.03“ ve starších záznamech níže míří na původní číslování.

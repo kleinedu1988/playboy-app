@@ -1,5 +1,6 @@
 // Čisté funkce pro texty a data: nesahají na stránku ani na backend, proto jdou testovat samostatně
 import { porovnatOblibenost, znakySrdicek } from './srdicka.js';
+import { RADY_CISEL } from './rady-cisel.js';
 
 export const MESICE = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
 // Různé soubory Disku ve vloženém textu: odkazy (file/d/…, id=…) i holá ID; stejně jako parseDriveIDs v app.go
@@ -30,19 +31,17 @@ export const moznostiMesicu = () => MESICE.map((m, i) => `<option value="${Strin
 export const EDICE = ['US', 'CZ'];
 export const VYCHOZI_EDICE = 'US';
 
-// Měsíční řady edic. Americká: od 12/1953 (první číslo, Marilyn Monroe) do 03/2020 (Spring 2020, poslední
-// pravidelné číslo); od 2025 vychází jen jako ročenka a čtvrtletník a ta čísla se evidují jako speciály.
-// Česká: od 07/2011. Mimo řadu jsou ještě jednotlivá čísla, která nevyšla (americké z března 1955).
-// Měsíc mimo řadu se v kalendáři, ročníku a mapě edice neukazuje jako chybějící a nedá se přidat ani označit.
-export const RADY_EDIC = { US: { od: '1953-12', do: '2020-03' }, CZ: { od: '2011-07', do: '' } };
-export const NEVYSLA_CISLA = new Set(['1955-03']);
+// Měsíční řady čísel jsou data podle řady v rady-cisel.js (0.02.014): od, do a čísla, která nevyšla. Měsíc mimo
+// řadu se v kalendáři, ročníku a mapě edice neukazuje jako chybějící a nedá se přidat ani označit.
+// RADY_EDIC (od, do podle edice Playboye) zůstává pro mapy a kapesní katalog.
+export const RADY_EDIC = Object.fromEntries(EDICE.map(e => [e, { od: RADY_CISEL[e].od, do: RADY_CISEL[e].do }]));
 export function cisloNevyslo(klic) {
     const v = rozlozitVydani(klic);
     if (!v || !/^\d\d$/.test(v.mesic)) return false;
-    if (NEVYSLA_CISLA.has(klic)) return true;
-    const rada = RADY_EDIC[v.edice];
+    const rada = RADY_CISEL[v.edice];
+    if (!rada) return false;
     const mesic = `${v.rok}-${v.mesic}`;
-    return Boolean(rada && (mesic < rada.od || (rada.do && mesic > rada.do)));
+    return mesic < rada.od || Boolean(rada.do && mesic > rada.do) || rada.nevysla.includes(mesic);
 }
 // Kolik měsíčních čísel ročník edice měl (12 bez těch, která nevyšla)
 export function ciselRocniku(rok, edice) {

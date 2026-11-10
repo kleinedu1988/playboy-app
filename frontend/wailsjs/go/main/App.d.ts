@@ -365,6 +365,8 @@ export function SloucitStejneFotky(arg1:string,arg2:Array<string>):Promise<main.
 
 export function SlozkaZaloh():Promise<string>;
 
+export function SmazatCasopis(arg1:string):Promise<string>;
+
 export function SmazatChytryVyber(arg1:string):Promise<boolean>;
 
 export function SmazatVyber(arg1:number):Promise<boolean>;
@@ -382,6 +384,8 @@ export function SpustitPruchodWebem(arg1:boolean,arg2:boolean):Promise<boolean>;
 export function SpustitStahovaniNahledu():Promise<boolean>;
 
 export function StavDatabaze():Promise<string>;
+
+export function UlozitCasopis(arg1:main.Casopis,arg2:boolean):Promise<string>;
 
 export function UlozitChytryVyber(arg1:main.ChytryVyber):Promise<main.ChytryVyber>;
 

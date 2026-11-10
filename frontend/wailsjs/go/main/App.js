@@ -714,6 +714,10 @@ export function SlozkaZaloh() {
   return window['go']['main']['App']['SlozkaZaloh']();
 }
 
+export function SmazatCasopis(arg1) {
+  return window['go']['main']['App']['SmazatCasopis'](arg1);
+}
+
 export function SmazatChytryVyber(arg1) {
   return window['go']['main']['App']['SmazatChytryVyber'](arg1);
 }
@@ -748,6 +752,10 @@ export function SpustitStahovaniNahledu() {
 
 export function StavDatabaze() {
   return window['go']['main']['App']['StavDatabaze']();
+}
+
+export function UlozitCasopis(arg1, arg2) {
+  return window['go']['main']['App']['UlozitCasopis'](arg1, arg2);
 }
 
 export function UlozitChytryVyber(arg1) {

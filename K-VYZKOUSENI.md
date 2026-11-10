@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.013 – Správa časopisů
+
+- [ ] **Kritérium hotovo:** ⋯ › Časopisy… › + Nový časopis: Oui, zkratka OU, edice „US, FR“, Girl of the Month →
+      Přidat; v okně alba je hned „Oui US“ a „Oui FR“ a album k Oui FR 05/1980 se uloží.
+- [ ] Úprava Penthouse: změna barvy a titulu se uloží; ubrat edici UK, když má sbírka číslo Penthouse UK, nejde
+      (hláška).
+- [ ] Smazat Penthouse s čísly ve sbírce nejde; nepoužitý Hustler smazat jde (s potvrzením).
+- [ ] Playboy: tlačítko Smazat chybí, edice nejdou měnit, název a tituly ano.
+- [ ] Okno v úzkém okně programu: seznam i formulář se posouvají uvnitř, nic nepřetéká.
+
 ## 0.02.012 – Kategorie a filtry podle časopisu
 
 - [ ] **Kritérium hotovo:** hledání `kategorie:"pet of the month"` najde modelku s centerfoldem Penthouse;

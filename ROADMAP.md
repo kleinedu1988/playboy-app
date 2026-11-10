@@ -5,11 +5,12 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.02.012** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (10. 11. 2026): verze 0.02.013** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
-Honey). Další na řadě je **0.02.013 – Správa časopisů**.
+Honey); časopisy jde spravovat v ⋯ › Časopisy…. Etapa 0.02 je hotová, další na řadě je **0.03.001 – Řady čísel
+jako data**.
 
 ---
 
@@ -42,7 +43,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.09** | 🚧 0.01, 0.02.001–0.02.008 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.09** | 🚧 0.01, 0.02 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -74,7 +75,7 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 | 0.01.000 ✅ | Pinup Katalog (okno, nabídka, nápověda, export, Go modul), přesun dat a mezipaměti (`prejmenovani.go`), `instalovat.sh` odebere starý program, kontrola nové verze ignoruje starou řadu, starý plán a changelog v `docs/archiv/` |
 | 0.01.001 ✅ | Verze s pevnou šířkou X.XX.XXX (`zobrazitVerzi`) |
 
-#### 0.02 – Časopis jako údaj čísla
+#### 0.02 – Časopis jako údaj čísla ✅ (10. 11. 2026)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
@@ -90,7 +91,7 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 | 0.02.010 ✅ | **Profil a karty modelky:** štítek titulu podle časopisu čísla („Pet · Září 1985 · Penthouse“) | u Pet of the Month není nikde „Playmate“ v profilu |
 | 0.02.011 ✅ | **Typy alb:** „Playmate měsíce / roku“ v okně alba podle zvoleného časopisu (Pet of the Month…) | okno alba Penthouse nabízí Pet of the Month |
 | 0.02.012 ✅ | **Kategorie a filtry:** odvozená kategorie podle časopisu centerfoldu (Pet of the Month místo Playmate měsíce), fasety galerie a hledání `kategorie:` | filtr „Pet of the Month“ funguje; modelka jen z Penthouse není Playmate |
-| 0.02.013 | **Správa časopisů** v ⋯ › Nastavení: přidat, přejmenovat, barva, edice, názvy modelky měsíce a roku; smazat jen nepoužitý | nový časopis (např. Oui) jde přidat a hned vybrat v okně alba |
+| 0.02.013 ✅ | **Správa časopisů** v ⋯ › Časopisy…: přidat, přejmenovat, barva, edice, názvy modelky měsíce a roku; smazat jen nepoužitý | nový časopis (např. Oui) jde přidat a hned vybrat v okně alba |
 
 #### 0.03 – Řady čísel a Mapa čísel pro každý časopis
 

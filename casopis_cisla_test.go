@@ -245,3 +245,57 @@ func TestKategoriePetOfTheMonth(t *testing.T) {
 		t.Fatalf("kategorie Pet of the Year: %q", j)
 	}
 }
+
+// Správa časopisů (0.02.013): nový časopis jde hned použít, použitou edici ani časopis s čísly nejde ubrat
+func TestSpravaCasopisu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	if e := a.UlozitCasopis(Casopis{Klic: "ou", Nazev: "Oui", Barva: "#00897b", Edice: []string{"us", "FR"}, ModelkaMesice: "Girl of the Month"}, true); e != "" {
+		t.Fatal(e)
+	}
+	if e := a.UlozitCasopis(Casopis{Klic: "OU", Nazev: "Oui", Edice: []string{"US"}}, true); e == "" {
+		t.Fatal("druhý časopis se stejnou zkratkou se založil")
+	}
+	for _, c := range []Casopis{{Klic: "O", Nazev: "X", Edice: []string{"US"}}, {Klic: "OX", Nazev: " ", Edice: []string{"US"}},
+		{Klic: "OX", Nazev: "X", Edice: []string{"USA"}}, {Klic: "OX", Nazev: "X", Barva: "zelená", Edice: []string{"US"}}, {Klic: "OX", Nazev: "X"}} {
+		if e := a.UlozitCasopis(c, true); e == "" {
+			t.Fatalf("neplatný časopis %+v se uložil", c)
+		}
+	}
+	c := a.GetCasopisy()
+	if len(c) != 4 || c[3].Klic != "OU" || fmt.Sprint(c[3].Edice) != "[US FR]" || c[3].Poradi != 4 {
+		t.Fatalf("časopisy: %+v", c)
+	}
+	// Nový časopis jde hned použít v albu
+	a.AddModelka(Modelka{Jmeno: "Oui", Tetovani: -1, Piercing: -1})
+	id := a.GetModelky("")[0].ID
+	a.AddBulkPhotos(id, "Paříž", "Pictorial", "https://drive.google.com/file/d/OOOOOOOOOOOOOOOOOOOOOOOOOOOOO/view")
+	if !a.SetVydaniAlba(id, "Paříž", "Pictorial", "1980-05-FR@OU") {
+		t.Fatal("album k číslu nového časopisu se neuložilo")
+	}
+	if e := a.UlozitCasopis(Casopis{Klic: "OU", Nazev: "Oui!", Edice: []string{"US"}}, false); !strings.Contains(e, "FR") {
+		t.Fatalf("použitá edice FR šla ubrat: %q", e)
+	}
+	if e := a.UlozitCasopis(Casopis{Klic: "OU", Nazev: "Oui!", Edice: []string{"FR", "UK"}}, false); e != "" {
+		t.Fatal(e)
+	}
+	if e := a.SmazatCasopis("OU"); e == "" {
+		t.Fatal("časopis s čísly se smazal")
+	}
+	if e := a.SmazatCasopis("PB"); e == "" {
+		t.Fatal("Playboy se smazal")
+	}
+	// Playboy: název a tituly jdou změnit, edice zůstanou
+	if e := a.UlozitCasopis(Casopis{Klic: "PB", Nazev: "Playboy", Edice: []string{"US"}, ModelkaMesice: "Playmate měsíce", ModelkaRoku: "Playmate roku"}, false); e != "" {
+		t.Fatal(e)
+	}
+	if fmt.Sprint(a.GetCasopisy()[0].Edice) != "[US CZ]" {
+		t.Fatalf("edice Playboye: %v", a.GetCasopisy()[0].Edice)
+	}
+	// Nepoužitý časopis jde smazat
+	if e := a.SmazatCasopis("HU"); e != "" {
+		t.Fatal(e)
+	}
+	if len(a.GetCasopisy()) != 3 {
+		t.Fatal("Hustler se nesmazal")
+	}
+}

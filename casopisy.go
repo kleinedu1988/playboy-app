@@ -6,6 +6,7 @@ package main
 // Názvy „modelky měsíce“ a „roku“ použijí texty rozhraní od 0.04. Správa (přidat, upravit) přijde v 0.02.009.
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 
@@ -128,4 +129,116 @@ func titulyJinde(tituly map[string][2]string, mesice []string, roky map[string]s
 		v = append(v, hledani.TitulCasopisu{Nazev: nazev(c, 1, "Modelka roku"), Rok: roky[c]})
 	}
 	return v
+}
+
+// Řady („US“, „CZ“, „PH/US“) všech čísel ve sbírce: alba (název centerfoldu a coveru, vydání pictorialu)
+// a údaje čísel. Správa časopisů podle nich nedovolí smazat časopis ani ubrat edici, která se používá.
+func (a *App) pouziteRady() map[string]bool {
+	v := map[string]bool{}
+	radky, err := a.db.Query(`SELECT album FROM alba WHERE typ IN ('Centerfold', 'Cover')
+		UNION SELECT vydani FROM alba WHERE COALESCE(vydani, '') != '' UNION SELECT vydani FROM vydani`)
+	if err != nil {
+		a.chyba("použité řady čísel", err)
+		return v
+	}
+	defer radky.Close()
+	for radky.Next() {
+		var klic string
+		if radky.Scan(&klic) == nil && klic != "" {
+			v[edicePodleVydani(klic)] = true
+		}
+	}
+	return v
+}
+
+// Uloží časopis ze správy časopisů (0.02.013); novy = zakládá se (klíč nesmí existovat). Vrací chybu k zobrazení,
+// "" = uloženo. Klíč se nemění (je v klíčích čísel), edici, která má čísla, nejde ubrat; Playboy má edice
+// pevné (US, CZ).
+func (a *App) UlozitCasopis(c Casopis, novy bool) string {
+	klic := strings.ToUpper(strings.TrimSpace(c.Klic))
+	nazev := strings.TrimSpace(c.Nazev)
+	barva := strings.TrimSpace(c.Barva)
+	switch {
+	case !vzorKliceCasopisu.MatchString(klic):
+		return "Zkratka časopisu musí být dvě písmena bez diakritiky (např. OU)."
+	case nazev == "":
+		return "Časopis musí mít název."
+	case barva != "" && !vzorBarvy.MatchString(barva):
+		return "Barva musí být ve tvaru #rrggbb."
+	}
+	var ulozene string
+	existuje := a.db.QueryRow(`SELECT edice FROM casopisy WHERE klic = ?`, klic).Scan(&ulozene) == nil
+	if novy && existuje {
+		return fmt.Sprintf("Časopis se zkratkou %s už je.", klic)
+	}
+	if !novy && !existuje {
+		return fmt.Sprintf("Časopis %s není v tabulce.", klic)
+	}
+	edice := []string{}
+	for _, e := range c.Edice {
+		e = strings.ToUpper(strings.TrimSpace(e))
+		if e == "" || slices.Contains(edice, e) {
+			continue
+		}
+		if !vzorZemeEdice.MatchString(e) {
+			return fmt.Sprintf("Edice „%s“ není dvoupísmenná zkratka země (US, UK, FR).", e)
+		}
+		edice = append(edice, e)
+	}
+	if klic == hledani.VychoziCasopis {
+		edice = strings.Split(ulozene, ",")
+	} else {
+		if len(edice) == 0 {
+			return "Časopis musí mít aspoň jednu edici (zemi vydání)."
+		}
+		pouzite := a.pouziteRady()
+		for _, e := range strings.Split(ulozene, ",") {
+			if e = strings.TrimSpace(e); e != "" && !slices.Contains(edice, e) && pouzite[hledani.RadaVydani(e, klic)] {
+				return fmt.Sprintf("Edici %s nejde ubrat, sbírka má čísla %s %s.", e, nazev, e)
+			}
+		}
+	}
+	poradi := c.Poradi
+	if novy && poradi <= 0 {
+		a.db.QueryRow(`SELECT COALESCE(MAX(poradi), 0) + 1 FROM casopisy`).Scan(&poradi)
+	}
+	var err error
+	if novy {
+		_, err = a.db.Exec(`INSERT INTO casopisy (klic, nazev, barva, edice, modelka_mesice, modelka_roku, poradi) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+			klic, nazev, barva, strings.Join(edice, ","), strings.TrimSpace(c.ModelkaMesice), strings.TrimSpace(c.ModelkaRoku), poradi)
+	} else {
+		_, err = a.db.Exec(`UPDATE casopisy SET nazev = ?, barva = ?, edice = ?, modelka_mesice = ?, modelka_roku = ?,
+			poradi = CASE WHEN ? > 0 THEN ? ELSE poradi END WHERE klic = ?`,
+			nazev, barva, strings.Join(edice, ","), strings.TrimSpace(c.ModelkaMesice), strings.TrimSpace(c.ModelkaRoku), poradi, poradi, klic)
+	}
+	if err != nil {
+		a.chyba("uložení časopisu", err)
+		return "Časopis se nepodařilo uložit."
+	}
+	return ""
+}
+
+// Smaže časopis, který nemá ve sbírce žádné číslo; Playboy smazat nejde. "" = smazáno.
+func (a *App) SmazatCasopis(klic string) string {
+	if klic == hledani.VychoziCasopis {
+		return "Playboy je výchozí časopis, smazat ho nejde."
+	}
+	for rada := range a.pouziteRady() {
+		if strings.HasPrefix(rada, klic+"/") {
+			return fmt.Sprintf("Časopis %s má ve sbírce čísla, smazat ho nejde.", nazevCasopisu(a, klic))
+		}
+	}
+	if _, err := a.db.Exec(`DELETE FROM casopisy WHERE klic = ?`, klic); err != nil {
+		a.chyba("smazání časopisu", err)
+		return "Časopis se nepodařilo smazat."
+	}
+	return ""
+}
+
+func nazevCasopisu(a *App, klic string) string {
+	var nazev string
+	if a.db.QueryRow(`SELECT nazev FROM casopisy WHERE klic = ?`, klic).Scan(&nazev) != nil {
+		return klic
+	}
+	return nazev
 }

@@ -3,6 +3,7 @@ import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFot
 import { otevritKapesniKatalog } from './kapesni-katalog';
 import * as novaVerze from './nova-verze';
 import { otevritVzhled } from './vzhled';
+import { otevritCasopisy } from './sprava-casopisu';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
 import { zapomenoutProfilovkyUvodu } from '../ui/uvod';
@@ -326,6 +327,7 @@ export function polozkySpravy() {
         { text: 'Dnešní výběr (nejlepší ze 4)…', akce: otevritDnesniVyber },
         { text: `Interval slideshow (${stav.intervalSlideshow / 1000} s)…`, akce: zmenitInterval },
         { text: 'Vzhled…', akce: otevritVzhled },
+        { text: 'Časopisy…', akce: otevritCasopisy },
         { nadpis: 'Soubory a mezipaměť' },
         ...nahledyPozadi.polozkyNabidky(),
         ...obsahFotek.polozkyNabidky(),

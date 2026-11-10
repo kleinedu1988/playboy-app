@@ -6,6 +6,16 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.013] – 2026-11-10
+
+### Přidáno
+- **Správa časopisů** (⋯ › Časopisy…, `app/sprava-casopisu.js`): seznam časopisů s barvou, edicemi a tituly;
+  nový časopis (název, zkratka, barva, edice, titul modelky měsíce a roku), úprava a smazání. Nový časopis je hned
+  ve volbě „Časopis a edice“.
+- Backend `UlozitCasopis` a `SmazatCasopis` (`casopisy.go`): zkratka se po založení nemění; edici, která má
+  ve sbírce čísla, nejde ubrat; smazat jde jen časopis bez čísel; Playboy smazat nejde a jeho edice (US, CZ)
+  zůstávají pevné, název a tituly jdou změnit.
+
 ## [0.02.012] – 2026-11-10
 
 ### Změněno

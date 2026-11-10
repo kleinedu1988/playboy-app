@@ -10,7 +10,7 @@ import { bezDiakritiky, rozdelitNebo, vyjmoutZavorky } from './format.js';
 // Názvy klíčů do čipů (i pro ručně psané příkazy)
 const NAZVY = {
     vyska: 'Výška', vaha: 'Váha', pas: 'Pas', hrudnik: 'Hrudník', boky: 'Boky', bmi: 'BMI', whr: 'Pas : boky', vek: 'Věk v 1. čísle',
-    fotek: 'Fotek', rok: 'Rok', narozena: 'Narozena', edice: 'Edice', kategorie: 'Kategorie', role: 'Kategorie', vlasy: 'Vlasy', oci: 'Oči',
+    fotek: 'Fotek', rok: 'Rok', narozena: 'Narozena', edice: 'Edice', casopis: 'Časopis', kategorie: 'Kategorie', role: 'Kategorie', vlasy: 'Vlasy', oci: 'Oči',
     narodnost: 'Národnost', tag: 'Tag', tagy: 'Tag', fotograf: 'Fotograf', hodnoceni: 'Srdíčka', srdicka: 'Srdíčka', tetovani: 'Tetování',
     foto: 'Na fotkách', obsah: 'Na fotkách', piercing: 'Piercing', prsa: 'Prsa', ochlupeni: 'Ochlupení', vyskyt: 'Výskyt', obalka: 'Obálka', jmeno: 'Jméno', nafoceno: 'Nafoceno',
 };
@@ -30,6 +30,10 @@ const DESETILETI_SLOVY = { padesata: 1950, sedesata: 1960, sedmdesata: 1970, osm
 const SLOVNIK = [
     ['ceska edice|edice cz|cz edice|ceske vydani', 'edice:CZ', 'Edice CZ', 'edice'],
     ['americka edice|edice us|us edice|americke vydani', 'edice:US', 'Edice US', 'edice'],
+    // Časopisy (0.02.019): zkratky a názvy jiných časopisů; samotné „playboy“ zůstává textem (bývá v poznámkách)
+    ['pb', 'casopis:pb', 'Časopis: Playboy', 'casopis'],
+    ['ph|penthouse', 'casopis:ph', 'Časopis: Penthouse', 'casopis'],
+    ['hu|hustler', 'casopis:hu', 'Časopis: Hustler', 'casopis'],
     ['pmoy|playmate roku|playmate of the year', 'kategorie:"playmate roku","playmate of the year"', 'Playmate roku', 'kategorie'],
     ['pmom|playmate mesice|playmate of the month', 'kategorie:"playmate mesice"', 'Playmate měsíce', 'kategorie'],
     ['cyber girl|cybergirl|cyber girls', 'kategorie:cyber', 'Cyber Girl', 'kategorie'],
@@ -204,7 +208,7 @@ export const NAVRHY_VYRAZU = [
     ['mladší než ', 'Věk v prvním čísle'], ['starší než ', 'Věk v prvním čísle'], ['vyšší než ', 'Výška v cm'], ['nižší než ', 'Výška v cm'],
     ['50. léta', '1950–1959'], ['60. léta', '1960–1969'], ['70. léta', '1970–1979'], ['80. léta', '1980–1989'], ['90. léta', '1990–1999'],
     ['2000–2009', 'Rozsah let vydání'], ['2010–2019', 'Rozsah let vydání'],
-    ['česká edice', 'Jen česká edice'], ['americká edice', 'Jen americká edice'], ['pmoy', 'Playmate roku'], ['pmom', 'Playmate měsíce'],
+    ['česká edice', 'Jen česká edice'], ['americká edice', 'Jen americká edice'], ['penthouse', 'Časopis Penthouse (ph)'], ['hustler', 'Časopis Hustler (hu)'], ['pmoy', 'Playmate roku'], ['pmom', 'Playmate měsíce'],
     ['cyber girl', 'Kategorie Cyber Girl'], ['blond', 'Vlasy: blond'], ['brunetka', 'Vlasy: hnědé'], ['zrzka', 'Vlasy: zrzavé'], ['černovláska', 'Vlasy: černé'],
     ['modré oči', 'Oči'], ['zelené oči', 'Oči'], ['hnědé oči', 'Oči'], ['s tetováním', 'Tetování'], ['bez tetování', 'Tetování'],
     ['s piercingem', 'Piercing'], ['silikonová prsa', 'Prsa'], ['přírodní prsa', 'Prsa'], ['bez fotek', 'Modelky bez fotek'],

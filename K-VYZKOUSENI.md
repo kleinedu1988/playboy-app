@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.019 – Hledání podle časopisu
+
+- [ ] **Kritérium hotovo:** v Modelkách `casopis:penthouse 80. léta` najde modelky s číslem Penthouse z 80. let.
+- [ ] `ph` a `hustler` v poli hledání ukážou čip „Časopis: Penthouse / Hustler“; `playboy` hledá text jako dřív.
+- [ ] `-casopis:penthouse` vynechá modelky s číslem Penthouse; modelka z Playboye i Penthouse se najde pod oběma.
+- [ ] Na stěně Centerfoldů (Všechny časopisy), v Kalendáři a Obálkách filtruje `casopis:ph`.
+- [ ] Našeptávač: po `cas` nabídne `casopis:`, po `casopis:` časopisy s počtem modelek.
+- [ ] Chytrý výběr uložený s `casopis:penthouse` funguje po restartu.
+
 ## 0.02.018 – Stěna Centerfoldů podle časopisu
 
 - [ ] **Kritérium hotovo:** Modelky › Centerfoldy › „Časopis: Penthouse“: jen centerfoldy Penthouse (Pet of the

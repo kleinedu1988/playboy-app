@@ -3,7 +3,7 @@ import { navrhnoutVyrazy, prevest } from '../lib/hledani-dotaz';
 import { odebratDotaz, podobneDotazy, pridatDotaz } from '../lib/historie-hledani';
 import { ulozitDotaz } from './chytre-vybery';
 import { GetFotografove, GetKalendar, HledatClanky } from './backend';
-import { PRIKAZY, bezDiakritiky, esc, kategorieModelky, nazevVydani, obrazek, paskaCisla, poleCisla, popisKategorie, rozlozitDotaz, sklonovat, vyhovujeHledani } from '../lib/format';
+import { PRIKAZY, bezDiakritiky, esc, kategorieModelky, nazevCasopisu, nazevVydani, rozlozitVydani, obrazek, paskaCisla, poleCisla, popisKategorie, rozlozitDotaz, sklonovat, vyhovujeHledani } from '../lib/format';
 import { poZmeneDat } from './udalosti';
 import { vsechnyModelky } from './mezipamet';
 import { detailView, issueView, searchInput, stats } from './prvky';
@@ -143,6 +143,10 @@ function ziskatMoznostiHodnot(klic, filtr, modelky, seznamFotografu = []) {
         ['US', 'CZ'].filter(e => !f || e.toLowerCase().includes(f)).forEach(e => {
             vysledky.push({ hodnota: e, popis: `Edice ${e}` });
         });
+    } else if (klic === 'casopis') {
+        // Časopisy z tabulky s počtem modelek, které v nich mají číslo (0.02.019)
+        vysledky.push(...hodnotySPocty(modelky, m => [...new Set([...(m.vydani || []), ...(m.obalky || [])]
+            .map(v => rozlozitVydani(v)?.casopis).filter(Boolean))].map(c => nazevCasopisu(c).toLowerCase()), f, false));
     } else if (klic === 'vyskyt') {
         [['casopis', 'V časopise'], ['online', 'Jen online (na internetu)'], ['neurceno', 'Neurčeno']].filter(([v]) => !f || v.includes(f)).forEach(([v, popis]) => {
             vysledky.push({ hodnota: v, popis });

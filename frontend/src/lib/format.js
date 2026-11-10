@@ -777,7 +777,7 @@ function rozlozitSlova(d) {
 // Klíče cíleného hledání, které zná backend (hledání modelek). Pohled, který daný údaj nemá (vlasy na stěně
 // centerfoldů), slovo s takovým klíčem nic neomezuje; neznámý klíč se hledá jako text „klic:hodnota“.
 const ZNAME_KLICE = new Set(['foto', 'obsah', 'jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'kategorie', 'vyskyt', 'fotograf',
-    'rok', 'vydani', 'narozena', 'edice', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
+    'rok', 'vydani', 'narozena', 'edice', 'casopis', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
     'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela', 'nafoceno', 'pas', 'hrudnik', 'boky', 'bmi', 'whr', 'vek', 'fotek']);
 const jeCislo = text => /^[\d.\-]+$/.test(text);
 const CISELNA_POLE = new Set(['rok', 'narozena', 'vyska', 'vaha', 'hodnoceni', 'srdicka', 'pas', 'hrudnik', 'boky', 'bmi', 'whr', 'vek', 'fotek']);
@@ -857,13 +857,20 @@ export function filtrHodnoceni(hodnota) {
 export const vyhovujeSrdickum = (n, filtry) => filtry.some(({ op, od, do: po }) => op === '>=' ? n >= od : op === '<=' ? n <= od
     : op === '>' ? n > od : op === '<' ? n < od : op === '..' ? n >= od && n <= po : n === od);
 
+// Časopis čísla pro hledání casopis: (0.02.019): název a zkratka („penthouse ph“); album, které není číslem, nic
+export function textCasopisu(vydani) {
+    const c = rozlozitVydani(vydani)?.casopis;
+    if (!c) return '';
+    return `${nazevCasopisu(c) === c && c === VYCHOZI_CASOPIS ? 'Playboy' : nazevCasopisu(c)} ${c}`;
+}
+
 // Údaje fotky pro cílené hledání (stěna centerfoldů, Nejlepší): jméno, fotograf, vydání, rok, edice, srdíčka
 // a datum nafocení online alba
 export function poleFotky(f) {
     const vydani = f.vydani || (rozlozitVydani(f.album) ? f.album : '');
     return {
         jmeno: f.jmenoModelky || '', fotograf: f.fotograf || '', vydani, rok: vydani.slice(0, 4),
-        edice: rozlozitVydani(vydani)?.edice || '', hodnoceni: f.hodnoceni ? String(f.hodnoceni) : '', srdicka: f.hodnoceni ? String(f.hodnoceni) : '',
+        edice: rozlozitVydani(vydani)?.edice || '', casopis: textCasopisu(vydani), hodnoceni: f.hodnoceni ? String(f.hodnoceni) : '', srdicka: f.hodnoceni ? String(f.hodnoceni) : '',
         nafoceno: f.datumAlba || '',
     };
 }
@@ -911,7 +918,7 @@ export const htmlVarovaniHledani = (klice) => klice.length
     ? `<button type="button" class="volby-varovani" title="Tento přehled údaj nezná, příkaz se tu přeskočí">⚠ ${esc(klice.join(' '))} tady nefiltruje</button>` : '';
 
 // Údaje čísla časopisu pro cílené hledání (Čísla, Kalendář, našeptávač)
-export const poleCisla = (vydani, modelka = '') => ({ jmeno: modelka, vydani, rok: vydani.slice(0, 4), edice: rozlozitVydani(vydani)?.edice || '' });
+export const poleCisla = (vydani, modelka = '') => ({ jmeno: modelka, vydani, rok: vydani.slice(0, 4), edice: rozlozitVydani(vydani)?.edice || '', casopis: textCasopisu(vydani) });
 
 // Ověří, zda texty položky odpovídají tokenům hledání: AND mezi tokeny, OR přes čárku, negace -, rozsahy a porovnání čísel.
 // pole = údaje pro cílené hledání ({ jmeno, fotograf, rok, … }); slovo s klíčem se hledá jen v daném údaji,
@@ -1036,6 +1043,7 @@ export const PRIKAZY = [
     { klic: 'hodnoceni:', popis: 'Hodnocení (1–5 i půlky 3,5; >=4)' },
     { klic: 'srdicka:', popis: 'Hodnocení srdíčky (5, >=4)' },
     { klic: 'narodnost:', popis: 'Národnost modelky' },
+    { klic: 'casopis:', popis: 'Časopis (playboy, penthouse, hustler nebo pb, ph, hu)' },
     { klic: 'edice:', popis: 'Edice časopisu (US, CZ)' },
     { klic: 'narozena:', popis: 'Rok nebo datum narození' },
     { klic: 'misto:', popis: 'Místo narození' },

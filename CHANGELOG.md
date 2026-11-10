@@ -6,6 +6,16 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.019] – 2026-11-10
+
+### Přidáno
+- **Hledání podle časopisu:** `casopis:penthouse` (i `casopis:ph`, `casopis:playboy`, `casopis:pb`) v hledání
+  modelek (Go, `TextCasopisu`), na stěně Centerfoldů, v Kalendáři a Obálkách; funguje s negací
+  (`-casopis:penthouse`), s ostatními podmínkami a v chytrých výběrech.
+- Zkratky `pb`, `ph`, `hu` a slova `penthouse`, `hustler` se v chytrém hledání převedou na čip „Časopis: …“
+  (`ph 80. léta`); samotné „playboy“ zůstává hledaným textem. Našeptávač nabízí `casopis:` a po něm časopisy
+  s počtem modelek.
+
 ## [0.02.018] – 2026-11-10
 
 ### Změněno

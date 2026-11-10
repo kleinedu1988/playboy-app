@@ -399,6 +399,10 @@ func (a *App) nacistSnimek() *snimek {
 // jejichž řádek se nepodařilo celý přečíst; jejich alba v seznamu alb zůstávají) a první chybu.
 func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int][]string) ([]Modelka, map[int]string, error) {
 	tituly := a.titulyCasopisu()
+	nazvyCasopisu := map[string]string{}
+	for _, c := range a.GetCasopisy() {
+		nazvyCasopisu[c.Klic] = c.Nazev
+	}
 	// Starší řádky mohou mít ve sloupcích NULL
 	vyber := []string{"id", "jmeno"}
 	for _, s := range sloupceModelky {
@@ -471,6 +475,7 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 		m.CyberGirl = o.cyberGirl
 		m.PlaymateMesice, m.PlaymateRoku = o.playmateMesice, o.playmateRoku
 		m.TitulyJinde = titulyJinde(tituly, o.mesiceJinde, o.rokyJinde)
+		m.CasopisyHledani = hledani.TextCasopisu(append(append([]string{}, m.Vydani...), m.Obalky...), nazvyCasopisu)
 		modelky = append(modelky, m)
 	}
 	if err := rows.Err(); err != nil && prvniChyba == nil {

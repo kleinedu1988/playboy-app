@@ -5,6 +5,7 @@ import (
 	"pinup-katalog/internal/hledani"
 	"pinup-katalog/internal/sbirka"
 	uc "pinup-katalog/internal/uceni"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -297,5 +298,38 @@ func TestSpravaCasopisu(t *testing.T) {
 	}
 	if len(a.GetCasopisy()) != 3 {
 		t.Fatal("Hustler se nesmazal")
+	}
+}
+
+// Hledání casopis: (0.02.019): název i zkratka, modelka ze dvou časopisů se najde pod oběma
+func TestHledaniCasopis(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	for _, j := range []string{"Pet", "Playmate", "Obě"} {
+		a.AddModelka(Modelka{Jmeno: j, Tetovani: -1, Piercing: -1})
+	}
+	id := map[string]int{}
+	for _, m := range a.GetModelky("") {
+		id[m.Jmeno] = m.ID
+	}
+	odkaz := func(z string) string { return "https://drive.google.com/file/d/" + strings.Repeat(z, 29) + "/view" }
+	a.AddBulkPhotos(id["Pet"], "1985-09@PH", "Centerfold", odkaz("P"))
+	a.AddBulkPhotos(id["Playmate"], "1987-02", "Centerfold", odkaz("M"))
+	a.AddBulkPhotos(id["Obě"], "1988-04", "Centerfold", odkaz("O"))
+	a.AddBulkPhotos(id["Obě"], "1990-01-UK@PH", "Centerfold", odkaz("U"))
+	jmena := func(dotaz string) string {
+		var v []string
+		for _, x := range a.GetModelky(dotaz) {
+			v = append(v, x.Jmeno)
+		}
+		sort.Strings(v)
+		return strings.Join(v, ",")
+	}
+	for dotaz, chci := range map[string]string{
+		"casopis:penthouse": "Obě,Pet", "casopis:ph": "Obě,Pet", "casopis:playboy": "Obě,Playmate", "casopis:pb": "Obě,Playmate",
+		"casopis:hustler": "", "-casopis:penthouse": "Playmate", "casopis:penthouse rok:1985": "Pet",
+	} {
+		if j := jmena(dotaz); j != chci {
+			t.Errorf("%s: %q, chci %q", dotaz, j, chci)
+		}
 	}
 }

@@ -97,6 +97,8 @@ type Modelka struct {
 	// (centerfold nebo pictorial modelky měsíce / roku) jsou tady s názvem z tabulky časopisů: „Pet of the Month“,
 	// „Pet of the Year“ s rokem („?“ = bez roku); jen pro čtení
 	TitulyJinde []TitulCasopisu `json:"titulyJinde"`
+	// Časopisy jejích čísel a obálek pro hledání casopis: („playboy pb penthouse ph“, 0.02.019)
+	CasopisyHledani string `json:"-"`
 
 	// Popisy a fotografové alb modelky, jen pro hledání
 	TextyAlb       string `json:"-"`
@@ -282,7 +284,7 @@ func jePlatnyZakladVydani(v string) bool {
 // Pole pro cílené hledání („vlasy:blond", „fotograf:\"arny freytag\"", „rok:1975"); hodnota se hledá jen v daném údaji
 var klicePoleHledani = map[string]bool{
 	"jmeno": true, "vlasy": true, "oci": true, "narodnost": true, "etnicita": true, "misto": true, "tag": true, "tagy": true,
-	"role": true, "kategorie": true, "vyskyt": true, "fotograf": true, "rok": true, "vydani": true, "narozena": true, "edice": true,
+	"role": true, "kategorie": true, "vyskyt": true, "fotograf": true, "rok": true, "vydani": true, "narozena": true, "edice": true, "casopis": true,
 	"prsa": true, "ochlupeni": true, "poznamka": true, "vyska": true, "vaha": true, "miry": true, "hodnoceni": true, "srdicka": true,
 	"tetovani": true, "piercing": true, "obalka": true, "obalky": true, "umrti": true, "zemrela": true, "nafoceno": true,
 }
@@ -343,6 +345,8 @@ func hodnotaPole(m *Modelka, klic string) string {
 			return strings.Join(roky, " ")
 		}
 		return strings.Join(edice, " ")
+	case "casopis":
+		return m.CasopisyHledani
 	case "vydani":
 		return strings.Join(m.Vydani, " ")
 	case "narozena":
@@ -383,6 +387,35 @@ func hodnotaPole(m *Modelka, klic string) string {
 type TitulCasopisu struct {
 	Nazev string `json:"nazev"`
 	Rok   string `json:"rok,omitempty"`
+}
+
+// Text časopisů čísel pro hledání casopis:: název a zkratka každého časopisu jednou („playboy pb penthouse ph“);
+// nazvy = klíč časopisu → název z tabulky časopisů
+func TextCasopisu(cisla []string, nazvy map[string]string) string {
+	videne := map[string]bool{}
+	var b strings.Builder
+	for _, v := range cisla {
+		if len(v) < 4 {
+			continue
+		}
+		_, c := RozdelitCasopis(v)
+		if c == "" {
+			c = VychoziCasopis
+		}
+		if videne[c] {
+			continue
+		}
+		videne[c] = true
+		nazev := nazvy[c]
+		if nazev == "" && c == VychoziCasopis {
+			nazev = "Playboy"
+		}
+		if b.Len() > 0 {
+			b.WriteByte(' ')
+		}
+		b.WriteString(strings.TrimSpace(nazev + " " + c))
+	}
+	return b.String()
 }
 
 // Má modelka centerfold v Playboyi (číslo bez „@“)

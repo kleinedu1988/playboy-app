@@ -108,3 +108,20 @@ test('stěna Centerfoldů podle časopisu (0.02.018)', async () => {
     assert.deepEqual(na('vsechny'), alba);
     nastavitCasopisy([]);
 });
+
+test('hledání casopis: v pohledech čísel a fotek, zkratky ph / hu / pb (0.02.019)', async () => {
+    const { poleCisla, poleFotky, rozlozitDotaz, vyhovujeHledani } = await import('../src/lib/format.js');
+    const { prevest, rozpoznat } = await import('../src/lib/hledani-dotaz.js');
+    nastavitCasopisy(CASOPISY);
+    assert.equal(poleCisla('1985-09@PH').casopis, 'Penthouse PH');
+    assert.equal(poleCisla('1985-09').casopis, 'Playboy PB');
+    assert.equal(poleFotky({ album: '1990-01@HU' }).casopis, 'Hustler HU');
+    const najde = (dotaz, vydani) => vyhovujeHledani([vydani], rozlozitDotaz(prevest(dotaz)), poleCisla(vydani));
+    assert.deepEqual(['casopis:penthouse', 'ph', 'penthouse 1985', 'pb', '-casopis:ph'].map(d => najde(d, '1985-09@PH')), [true, true, true, false, false]);
+    assert.deepEqual(['casopis:playboy', 'pb', 'hustler'].map(d => najde(d, '1985-09')), [true, true, false]);
+    assert.equal(prevest('ph 80. léta'), 'casopis:ph rok:1980-1989');
+    assert.deepEqual(rozpoznat('hustler').map(c => c.popis), ['Časopis: Hustler']);
+    // Samotné slovo playboy zůstává textem
+    assert.equal(prevest('playboy'), 'playboy');
+    nastavitCasopisy([]);
+});

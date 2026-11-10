@@ -1,7 +1,7 @@
 // Rozměry filtru (dimenze): co se dá u položky filtrovat, jak se jmenuje příkaz v hledání a jaké hodnoty položka má.
 // Používá je model filtru (lib/filtr.js) pro vyhodnocení, počty u hodnot (fasety) a štítky. Klíče a aliasy odpovídají
 // příkazům hledání v backendu (hledani.go, klicePoleHledani), aby text dotazu znamenal všude totéž.
-import { kategorieModelky, rozlozitVydani, vyskytModelky } from './format.js';
+import { dalsiJmenaModelky, kategorieModelky, rozlozitVydani, vyskytModelky } from './format.js';
 
 // typ: 'text' (hledá se část textu: vlasy:blond najde i „strawberry blond“), 'cislo' (porovnání a rozsahy),
 // 'srdicka' (po polovinách), 'anone' (ano / ne); hodnoty(m) = hodnoty položky k zobrazení (fasety, štítky)
@@ -30,4 +30,4 @@ export const DIMENZE_MODELEK = [
 ];
 
 // Volný text dotazu (bez příkazu) se hledá ve jménu, pseudonymech a v hodnotách všech dimenzí
-export const textyModelky = m => [m.jmeno, m.dalsiJmena, ...DIMENZE_MODELEK.flatMap(d => d.hodnoty(m))];
+export const textyModelky = m => [m.jmeno, dalsiJmenaModelky(m.dalsiJmena).map(d => d.jmeno).join(', '), ...DIMENZE_MODELEK.flatMap(d => d.hodnoty(m))];

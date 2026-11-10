@@ -345,7 +345,7 @@ func hodnotaPole(m *Modelka, klic string) string {
 	}
 	switch klic {
 	case "jmeno":
-		return m.Jmeno + "\n" + m.DalsiJmena
+		return m.Jmeno + "\n" + strings.Join(DalsiJmena(m.DalsiJmena), "\n")
 	case "vlasy":
 		return m.VlasyBarva
 	case "oci":
@@ -552,7 +552,7 @@ func PripravitTexty(m *Modelka) Texty {
 	zapsat(m.PictorialVydani)
 	zapsat(m.Role)
 	zapsat(m.Tags)
-	zapsat(m.DalsiJmena)
+	zapsat(strings.Join(DalsiJmena(m.DalsiJmena), ", "))
 	zapsat(m.Poznamka)
 	zapsatSeznam(m.Vydani)
 	zapsatSeznam(m.Obalky)
@@ -582,7 +582,7 @@ func PripravitTexty(m *Modelka) Texty {
 	}
 	jmena := m.Jmeno
 	if m.DalsiJmena != "" {
-		jmena += " " + m.DalsiJmena
+		jmena += " " + strings.Join(DalsiJmena(m.DalsiJmena), " ")
 	}
 	return Texty{
 		udaje:          Zjednodusit(b.String()),

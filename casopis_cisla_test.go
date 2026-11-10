@@ -367,3 +367,14 @@ func TestPrezdivkyCasopisu(t *testing.T) {
 		t.Errorf("přezdívka chybí v exportu (%v)", err)
 	}
 }
+
+// Hledání podle přezdívky s časopisem (0.02.028): jméno se najde, přípona časopisu se jako text nehledá
+func TestHledaniPrezdivky(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Sylvie", DalsiJmena: "Jane Doe @PH", Tetovani: -1, Piercing: -1})
+	for dotaz, chci := range map[string]int{"jane": 1, `jmeno:"jane doe"`: 1, "jmeno:sylvie": 1, "@ph": 0} {
+		if n := len(a.GetModelky(dotaz)); n != chci {
+			t.Errorf("%s: %d, chci %d", dotaz, n, chci)
+		}
+	}
+}

@@ -1,7 +1,7 @@
 // Odkazy [[…]] v textech sbírky (zminky.go dělá totéž na straně Go): [[Jméno modelky]], [[06/1995]] (i [[1995-06]],
 // [[06/1995 DE]], jiný časopis [[09/1985@PH]], [[09/1985 UK@PH]], [[1985-09@PH]]), [[Fotograf]], volitelně
 // s popiskem [[cíl|popisek]]
-import { MESICE, bezDiakritiky, nazevVydani, rozlozitVydani } from './format.js';
+import { MESICE, bezDiakritiky, dalsiJmenaModelky, nazevVydani, popisDalsihoJmena, rozlozitVydani } from './format.js';
 
 export const VZOR_ODKAZU = /\[\[([^[\]|\n]+?)(?:\|([^[\]\n]+?))?\]\]/g;
 
@@ -43,7 +43,7 @@ export function cilOdkazu(text, modelky = [], fotografove = []) {
     if (vydani) return { druh: 'vydani', vydani };
     const j = jednoduse(text);
     const m = modelky.find(x => jednoduse(x.jmeno) === j)
-        || modelky.find(x => String(x.dalsiJmena || '').split(',').some(d => jednoduse(d) === j && j));
+        || modelky.find(x => dalsiJmenaModelky(x.dalsiJmena).some(d => jednoduse(d.jmeno) === j && j));
     if (m) return { druh: 'modelka', id: m.id };
     const f = fotografove.find(x => jednoduse(x) === j);
     if (f) return { druh: 'fotograf', jmeno: f };
@@ -61,7 +61,11 @@ export function navrhyOdkazu(slovo, { modelky = [], vydani = [], fotografove = [
     const zacina = t => jednoduse(t).split(/[\s-]+/).some(cast => cast.startsWith(s)) || jednoduse(t).startsWith(s);
     for (const m of modelky) {
         if (zacina(m.jmeno)) v.push({ text: m.jmeno, popis: 'modelka', druh: 'modelka', p: jednoduse(m.jmeno).startsWith(s) ? 0 : 1 });
-        else if (String(m.dalsiJmena || '').split(',').some(d => d.trim() && zacina(d))) v.push({ text: m.jmeno, popis: `modelka (${m.dalsiJmena})`, druh: 'modelka', p: 2 });
+        else {
+            // Přezdívka (0.02.028): „modelka · jako Jane Doe (Penthouse)“
+            const d = dalsiJmenaModelky(m.dalsiJmena).find(x => zacina(x.jmeno));
+            if (d) v.push({ text: m.jmeno, popis: `modelka · jako ${popisDalsihoJmena(d)}`, druh: 'modelka', p: 2 });
+        }
     }
     if (/\d/.test(s) || MESICE.some(m => jednoduse(m).startsWith(s.split(' ')[0]))) {
         for (const klic of vydani) {

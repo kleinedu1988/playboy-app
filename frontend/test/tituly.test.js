@@ -191,3 +191,14 @@ test('další jména s časopisem (0.02.027)', async () => {
     assert.deepEqual(d.map(popisDalsihoJmena), ['Jane Doe (Penthouse)', 'Ann', 'Kate (Hustler)', 'mail@example.com']);
     nastavitCasopisy([]);
 });
+
+test('odkazy [[…]] a návrhy podle přezdívky s časopisem (0.02.028)', async () => {
+    const { cilOdkazu, navrhyOdkazu } = await import('../src/lib/odkazy.js');
+    nastavitCasopisy(CASOPISY);
+    const modelky = [{ id: 7, jmeno: 'Sylvie Novak', dalsiJmena: 'Jane Doe @PH, Ann' }];
+    assert.deepEqual(cilOdkazu('Jane Doe', modelky), { druh: 'modelka', id: 7 });
+    assert.deepEqual(cilOdkazu('ann', modelky), { druh: 'modelka', id: 7 });
+    assert.equal(cilOdkazu('Jane Doe @PH', modelky).druh, 'hledat');
+    assert.deepEqual(navrhyOdkazu('jan', { modelky }).map(n => [n.text, n.popis]), [['Sylvie Novak', 'modelka · jako Jane Doe (Penthouse)']]);
+    nastavitCasopisy([]);
+});

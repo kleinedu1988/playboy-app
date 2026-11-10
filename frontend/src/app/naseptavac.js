@@ -3,7 +3,7 @@ import { navrhnoutVyrazy, prevest } from '../lib/hledani-dotaz';
 import { odebratDotaz, podobneDotazy, pridatDotaz } from '../lib/historie-hledani';
 import { ulozitDotaz } from './chytre-vybery';
 import { GetFotografove, GetKalendar, HledatClanky } from './backend';
-import { PRIKAZY, bezDiakritiky, esc, kategorieModelky, nazevCasopisu, nazevVydani, rozlozitVydani, obrazek, paskaCisla, poleCisla, popisKategorie, rozlozitDotaz, sklonovat, vyhovujeHledani } from '../lib/format';
+import { PRIKAZY, bezDiakritiky, dalsiJmenaModelky, popisDalsihoJmena, esc, kategorieModelky, nazevCasopisu, nazevVydani, rozlozitVydani, obrazek, paskaCisla, poleCisla, popisKategorie, rozlozitDotaz, sklonovat, vyhovujeHledani } from '../lib/format';
 import { poZmeneDat } from './udalosti';
 import { vsechnyModelky } from './mezipamet';
 import { detailView, issueView, searchInput, stats } from './prvky';
@@ -230,12 +230,21 @@ export function zavritNaseptavac() {
     vybrana = -1;
 }
 
+// Přezdívky bez přípony časopisu (0.02.028) a ta, které dotaz odpovídá (modelka se našla pod jiným jménem)
+const jmenaPrezdivek = m => dalsiJmenaModelky(m.dalsiJmena).map(d => d.jmeno).join(' ');
+function prezdivkaVDotazu(m, slova) {
+    const s = (slova || []).map(x => bezDiakritiky(x).toLowerCase()).filter(Boolean);
+    if (!s.length || s.every(x => bezDiakritiky(m.jmeno).toLowerCase().includes(x))) return '';
+    const d = dalsiJmenaModelky(m.dalsiJmena).find(x => s.every(w => bezDiakritiky(x.jmeno).toLowerCase().includes(w)));
+    return d ? popisDalsihoJmena(d) : '';
+}
+
 function ziskejTextModelky(m) {
     let t = pametTextu.get(m);
     if (!t) {
         t = [
             m.jmeno,
-            m.dalsiJmena,
+            dalsiJmenaModelky(m.dalsiJmena).map(d => d.jmeno).join(' '),
             kategorieModelky(m).map(popisKategorie).join(' '),
             m.narodnost,
             m.etnicita,
@@ -318,11 +327,11 @@ async function hledat() {
         const cistyDotaz = bezDiakritiky(trimDotaz).toLowerCase();
         nalezeneModelky = modelky
             // Všechna slova musí platit (i vylučovaná); překlepy se tolerují jen ve jméně
-            .filter(m => vyhovujeHledani([ziskejTextModelky(m)], tokeny, { jmeno: `${m.jmeno} ${m.dalsiJmena || ''}` }))
+            .filter(m => vyhovujeHledani([ziskejTextModelky(m)], tokeny, { jmeno: `${m.jmeno} ${jmenaPrezdivek(m)}` }))
             .map(m => {
                 const jmenoN = bezDiakritiky(m.jmeno).toLowerCase();
                 const zacina = jmenoN.startsWith(cistyDotaz) || jmenoN.split(/\s+/).some(cast => cast.startsWith(cistyDotaz));
-                const vJmene = zacina || vyhovujeHledani([m.jmeno, m.dalsiJmena], tokeny, { jmeno: `${m.jmeno} ${m.dalsiJmena || ''}` });
+                const vJmene = zacina || vyhovujeHledani([m.jmeno, jmenaPrezdivek(m)], tokeny, { jmeno: `${m.jmeno} ${jmenaPrezdivek(m)}` });
                 return { m, zacina, vJmene };
             })
             .sort((a, b) => (a.zacina !== b.zacina ? (a.zacina ? -1 : 1)
@@ -414,7 +423,7 @@ async function hledat() {
             ${nahled(adresaTitulni(m), 'kulaty')}
             <span class="naseptavac-text">
                 <span class="naseptavac-nazev">${zvyraznit(m.jmeno, slova)}</span>
-                <span class="naseptavac-kde">${detailModelky(m)}</span>
+                <span class="naseptavac-kde">${prezdivkaVDotazu(m, slova) ? `jako ${esc(prezdivkaVDotazu(m, slova))} · ` : ''}${detailModelky(m)}</span>
             </span>`,
         })),
         vytvorSkupinu('Čísla', nalezenaCisla, 'otevrit', '', k => ({

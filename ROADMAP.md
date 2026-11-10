@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.02.027** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (10. 11. 2026): verze 0.02.028** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -13,7 +13,8 @@ Honey); časopisy jde spravovat v ⋯ › Časopisy…. Řady čísel jsou data 
 a Obálky jdou přepnout na jiný časopis, Mapa čísel má kartu pro každý časopis, stěna Centerfoldů volbu časopisu a hledání zná
 `casopis:`. Statistiky, Postřehy, Síň slávy a zbylé texty mluví podle časopisu; Kalendář, Obálky a Centerfoldy
 mají hero. Profil ukazuje kariéru napříč časopisy a přezdívky podle
-časopisu. Další na řadě je **0.02.028 – Hledání podle přezdívek**.
+časopisu. Modelka se najde pod
+kteroukoli přezdívkou. Další na řadě je **0.02.029 – Kandidáti na sloučení**.
 
 ---
 
@@ -46,7 +47,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.027 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.028 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -134,7 +135,7 @@ nadpis, pár čísel a akce; při rolování odjede nahoru) a pod ním širokou 
 |---|---|---|
 | 0.02.026 ✅ | **Kariéra v profilu:** čísla a časová osa modelky barvou časopisu, souhrn „Pet of the Month 1985 · Playmate 1987“ | profil modelky ze dvou časopisů ukáže obě čísla |
 | 0.02.027 ✅ | **Přezdívky:** víc jmen u modelky (jiné jméno v jiném časopise); rozhodnuto 10. 11. 2026: v poli Další jména jako „Jane Doe @PH“, bez úpravy schématu | přezdívka se uloží a je v exportu |
-| 0.02.028 | **Hledání podle přezdívek** v hledání, našeptávači, `[[odkazech]]` a zásobníku odkazů | modelka se najde pod kterýmkoli jménem |
+| 0.02.028 ✅ | **Hledání podle přezdívek** v hledání, našeptávači, `[[odkazech]]` a zásobníku odkazů | modelka se najde pod kterýmkoli jménem |
 | 0.02.029 | **Kandidáti na sloučení:** úkol Údržby ze stejného jména / přezdívky a data narození | na vzorku žádný falešný kandidát se stejným jménem a jiným datem |
 | 0.02.030 | **Vizuální podobnost v návrhu:** CLIP a otisky (PD 1.32–1.33) jako důvod a pořadí kandidátů | návrh ukáže důvody |
 | 0.02.031 | **Sloučení:** rozdíl nanečisto, převod alb, fotek, hodnocení a porovnání, Vrátit (PD 1.51.1); nikdy automaticky | sloučení a Vrátit vrátí obě modelky beze ztráty (test) |

@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.028 – Hledání podle přezdívek
+
+- [ ] **Kritérium hotovo:** modelka s přezdívkou „Jane Doe @PH“ se najde hledáním „jane“, `jmeno:"jane doe"`
+      i pod svým jménem.
+- [ ] Našeptávač: po „jane“ modelka s řádkem „jako Jane Doe (Penthouse) · …“.
+- [ ] `[[Jane Doe]]` v poznámce odkáže na modelku; po „[[jan“ návrh „modelka · jako Jane Doe (Penthouse)“.
+- [ ] Hledání „@ph“ přezdívku nenajde (přípona není text).
+
 ## 0.02.027 – Přezdívky podle časopisu
 
 - [ ] **Kritérium hotovo:** Upravit modelku › Další jména „Jane Doe @PH“ → po uložení v profilu „také Jane Doe

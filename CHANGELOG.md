@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.028] – 2026-11-10
+
+### Opraveno
+- Odkaz `[[Jane Doe]]` vede na modelku s přezdívkou „Jane Doe @PH“ (od 0.02.027 přípona časopisu porovnání
+  rozbíjela).
+
+### Změněno
+- **Hledání podle přezdívek:** hledání, našeptávač, `[[odkazy]]` a filtry galerie berou přezdívky bez přípony
+  časopisu (`@PH` se jako text nehledá). Našeptávač u modelky nalezené pod jiným jménem ukáže „jako Jane Doe
+  (Penthouse) · …“, návrh odkazu „modelka · jako Jane Doe (Penthouse)“.
+- Zásobník odkazů je u konkrétní modelky a jména nehledá; rozpoznání odkazů z webů časopisů je 0.02.040.
+
 ## [0.02.027] – 2026-11-10
 
 ### Přidáno

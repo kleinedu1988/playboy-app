@@ -7,7 +7,23 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
-## [1.45.0] – 2026-11-10
+## [1.46.0] – 2026-11-10
+
+### Přidáno
+- **Rok ve sbírce** (`rok_ve_sbirce.go`, `frontend/src/lib/rok-ve-sbirce.js`, `frontend/src/app/rok-ve-sbirce.js`):
+  tlačítko „Rok ve sbírce →“ v heru Statistik otevře výroční přehled s volbou roku (bez volby letošní, a když se
+  letos ještě nepracovalo, poslední rok s prací). Ukáže přibylé modelky, alba, fotky a čísla (podle data přidání;
+  album a číslo se počítá do roku své první fotky) se srovnáním s loňskem, kolik nových fotek už má srdíčka a kolik
+  pět, dny práce a nejdelší sérii dní v řadě (přidání fotek a modelek, porovnání v Hodnocení, zápisy Údržby),
+  sloupce po měsících s nejaktivnějším měsícem, nejlépe hodnocené nové fotky (nejvýš dvě od jedné modelky), nové
+  modelky podle hodnocení, ročníky dokončené v tom roce (všechny vyšlé měsíce s centerfoldem, poslední přibyl
+  v roce) a vyhlášené sezóny s Favoritkou a Miláčkem. Klik na fotku nebo modelku otevře profil, na číslo detail čísla.
+- **Jako časopis**: přehled roku v režimu čtení – obálka s nejlepší fotkou roku, rok v číslech, nové modelky,
+  nejlepší fotky a strana Dokončeno a vyhlášeno; prezentace, prolínání a Ken Burns jako u čísla.
+- **Tisk / PDF**: přehled roku se vytiskne nebo uloží do PDF systémovým dialogem tisku, na bílém papíře bez
+  ostatního obsahu okna.
+
+
 
 ### Přidáno
 - **Údržba › Otočené a výřezy** (`otocene_fotky.go`, `internal/obsah/otoceni.go`, `frontend/src/app/udrzba-fotky.js`):

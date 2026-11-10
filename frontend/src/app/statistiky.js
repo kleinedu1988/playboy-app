@@ -20,6 +20,8 @@ import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 
 const BARVA = '#d81b60';
+// Výroční přehled (app/rok-ve-sbirce.js poslouchá data-rok-ve-sbirce): v heru vedle akcí postřehu
+const TLACITKO_ROKU = '<button type="button" class="ph-tlacitko" data-rok-ve-sbirce title="Výroční přehled: co přibylo, co se líbilo a co se dokončilo">Rok ve sbírce →</button>';
 
 const cislo = (n, desetinna = 1) => Number(n.toFixed(desetinna)).toLocaleString('cs-CZ', { maximumFractionDigits: desetinna });
 const pocetModelek = n => sklonovat(n, 'modelka', 'modelky', 'modelek');
@@ -1376,7 +1378,8 @@ export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene =
         misto.innerHTML = `<div class="ph-rozmazane" style="background-image:url('${esc(foto.nahled).replace(/'/g, '%27')}')"></div>
             <div class="sh-scena">${foto.html}<div class="ph-obsah"><div class="ph-nadtitulek">Statistiky sbírky</div><h2>Tvoje sbírka</h2>
             <div class="sh-zmena">${pocetModelek(data.modelky.length)}${roky.length ? ` · ${Math.min(...roky)}–${Math.max(...roky)}` : ''}</div>
-            <p class="ph-duvod">Zatím tu není nic průkazného – postřehy se ukážou, až bude víc modelek se známými údaji.</p></div></div>${pas}`;
+            <p class="ph-duvod">Zatím tu není nic průkazného – postřehy se ukážou, až bude víc modelek se známými údaji.</p>
+            <div class="ph-akce">${TLACITKO_ROKU}</div></div></div>${pas}`;
         nahraditFotkuHero(misto, foto.plna);
     } else {
         const i = indexHero(seznam.length), p = seznam[i];
@@ -1394,6 +1397,7 @@ export async function naplnitHeroStatistik(misto, { znovu = false, jenPriZmene =
                     <div class="ph-akce">
                         <button type="button" class="ph-tlacitko hlavni" data-sh-graf="${esc(p.graf)}"${p.rok ? ` data-sh-rok="${p.rok}"` : ''}>Ukázat v grafu</button>
                         ${m ? `<button type="button" class="ph-tlacitko" data-sh-modelka="${m.id}" title="Na fotce – otevřít profil">${esc(m.jmeno)} →</button>` : ''}
+                        ${TLACITKO_ROKU}
                     </div>
                 </div>
             </div>${pas}`;

@@ -242,6 +242,10 @@ export function GetProfilovaFotka(arg1) {
   return window['go']['main']['App']['GetProfilovaFotka'](arg1);
 }
 
+export function GetRokVeSbirce(arg1) {
+  return window['go']['main']['App']['GetRokVeSbirce'](arg1);
+}
+
 export function GetSablonaObrazku() {
   return window['go']['main']['App']['GetSablonaObrazku']();
 }

@@ -242,6 +242,11 @@ export async function otevritProfil(modelka = stav.aktualniModelka) {
     otevrit(stranyProfilu({ modelka, titulni: modelka.coverUrl ? obrazek(modelka.coverUrl, VELIKOST_STRANY) : '', alba, clanky }), modelka.jmeno);
 }
 
+// Libovolné strany (Rok ve sbírce): stejné okno, ovládání i prezentace
+export function otevritStrany(noveStrany, titul) {
+    return otevrit(noveStrany, titul);
+}
+
 export function pripravit() {
     document.addEventListener('click', (e) => {
         const t = /** @type {HTMLElement} */ (e.target);

@@ -20706,3 +20706,56 @@ body.rezim-vyberu #detailView .poster {
 .uf-duvod { color: var(--text-muted); }
 .uf-akce { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
 .uf-lista { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* Rok ve sbírce (app/rok-ve-sbirce.js) */
+.rs-karta { width: min(960px, calc(100vw - 32px)); max-width: none; max-height: calc(100vh - 48px); display: flex; flex-direction: column; }
+.rs-karta .modal-header { gap: 12px; }
+.rs-karta .modal-header h3 { flex: 1; }
+.rs-rok { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+.rs-obsah { overflow-y: auto; min-height: 120px; padding-right: 4px; }
+.rs-dlazdice-rada { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.rs-dlazdice { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--panel-okraj); border-radius: 12px; background: var(--bg-card); }
+.rs-dlazdice b { font-size: 26px; font-weight: 600; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.rs-dlazdice span { font-size: 13px; color: var(--text-muted); }
+.rs-dlazdice small { font-size: 11px; color: var(--text-muted); }
+.rs-veta { margin: 0 0 18px; font-size: 14px; }
+.rs-sekce { margin-bottom: 22px; }
+.rs-sekce h4 { margin: 0 0 10px; }
+.rs-sekce h4 small { color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+.rs-mesice { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; height: 110px; align-items: end; }
+.rs-mesic { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+.rs-sloupec { width: 100%; max-width: 34px; min-height: 2px; border-radius: 4px 4px 0 0; background: var(--accent-soft); }
+.rs-mesic.nej .rs-sloupec { background: var(--accent); }
+.rs-mesic small { font-size: 11px; color: var(--text-muted); }
+.rs-fotky { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.rs-fotka { position: relative; padding: 0; border: 0; border-radius: 8px; overflow: hidden; aspect-ratio: 3 / 4; background: var(--bg-main); cursor: pointer; }
+.rs-fotka img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rs-fotka span { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 8px 6px; font-size: 12px; color: #fff; text-align: left; background: linear-gradient(transparent, rgba(0, 0, 0, 0.75)); }
+.rs-modelky { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.rs-modelka { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 0; border: 0; background: none; color: inherit; text-align: left; cursor: pointer; }
+.rs-portret { aspect-ratio: 3 / 4; border-radius: 8px; overflow: hidden; background: var(--bg-card); }
+.rs-portret img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rs-jmeno { font-size: 13px; }
+.rs-modelka small { font-size: 11px; color: var(--text-muted); }
+.rs-modelka:focus-visible .rs-portret, .rs-fotka:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
+.rs-dokonceno { margin: 0 0 10px; padding-left: 18px; font-size: 14px; line-height: 1.6; }
+.rs-cisla { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+@media (max-width: 700px) {
+    .rs-mesice { gap: 2px; }
+    .rs-mesic small { font-size: 9px; }
+}
+
+/* Tisk přehledu roku: jen obsah okna, na bílém papíře */
+@media print {
+    body.tisk-roku > *:not(#rokVeSbirceModal) { display: none !important; }
+    body.tisk-roku #rokVeSbirceModal { position: static; background: none; padding: 0; display: block; }
+    body.tisk-roku .rs-karta { width: auto; max-height: none; border: 0; background: #fff; color: #111; box-shadow: none; padding: 0; }
+    body.tisk-roku .rs-obsah { overflow: visible; }
+    body.tisk-roku .modal-actions, body.tisk-roku .close-btn, body.tisk-roku .rs-rok { display: none !important; }
+    body.tisk-roku .rs-dlazdice { background: #fff; border-color: #ccc; }
+    body.tisk-roku .rs-dlazdice span, body.tisk-roku .rs-dlazdice small, body.tisk-roku .rs-mesic small, body.tisk-roku .rs-modelka small, body.tisk-roku .rs-cisla, body.tisk-roku .rs-sekce h4 small { color: #555; }
+    body.tisk-roku .rs-sekce { break-inside: avoid; }
+    body.tisk-roku .link { color: #111; text-decoration: none; }
+    body.tisk-roku .rs-sloupec { background: #f2b6cc; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    body.tisk-roku .rs-mesic.nej .rs-sloupec { background: var(--accent); }
+}

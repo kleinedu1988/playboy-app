@@ -94,6 +94,7 @@ const CTENI = new Set([
     'GetStavPruchoduWebem',
     'PocetOdmitnutychZWebu',
     'GetStavOtoceni',
+    'GetRokVeSbirce',
     'GetOtoceneFotky',
     'GetTitulniBezVyrezu',
     'NavrhnoutVyrezy',
@@ -271,6 +272,7 @@ export const PrijmoutNavrhyZWebu = /** @type {typeof App.PrijmoutNavrhyZWebu} */
 export const OdmitnoutNavrhyZWebu = /** @type {typeof App.OdmitnoutNavrhyZWebu} */ (obalit('OdmitnoutNavrhyZWebu'));
 export const PocetOdmitnutychZWebu = /** @type {typeof App.PocetOdmitnutychZWebu} */ (obalit('PocetOdmitnutychZWebu'));
 export const ZrusitOdmitnutiZWebu = /** @type {typeof App.ZrusitOdmitnutiZWebu} */ (obalit('ZrusitOdmitnutiZWebu'));
+export const GetRokVeSbirce = /** @type {typeof App.GetRokVeSbirce} */ (obalit('GetRokVeSbirce'));
 export const GetStavOtoceni = /** @type {typeof App.GetStavOtoceni} */ (obalit('GetStavOtoceni'));
 export const SpustitKontroluOtoceni = /** @type {typeof App.SpustitKontroluOtoceni} */ (obalit('SpustitKontroluOtoceni'));
 export const PrerusitKontroluOtoceni = /** @type {typeof App.PrerusitKontroluOtoceni} */ (obalit('PrerusitKontroluOtoceni'));

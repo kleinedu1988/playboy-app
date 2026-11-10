@@ -3,13 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (10. 11. 2026): verze 1.45.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.45 jsou hotové: mezipaměť náhledů na
+**Stav (10. 11. 2026): verze 1.46.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.46 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
 (1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
 Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
-příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) zdraví sbírky s rozdílem před obnovením zálohy (1.42.0; etapa D je hotová) ročník podle Wikipedie (1.43.0), návrhy z webu ve frontě Údržby (1.44.0) a otočené fotky s návrhem výřezu (1.45.0; etapa E je hotová).
+příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) zdraví sbírky s rozdílem před obnovením zálohy (1.42.0; etapa D je hotová) ročník podle Wikipedie (1.43.0), návrhy z webu ve frontě Údržby (1.44.0), otočené fotky s návrhem výřezu (1.45.0; etapa E je hotová) a rok ve sbírce (1.46.0).
 
 ---
 
@@ -65,7 +65,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 | **Etapa C** | **1.38–1.40** | ✅ Hotovo | **Obohacení obsahu** | Úplnost sbírky a Wikidata, Propojení čísla a modelky, Bohatý text a obousměrné odkazy |
 | **Etapa D** | **1.41–1.42** | ✅ Hotovo | **Prohlížení a údržba** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy (tiskové sestavy přesunuty do etapy I) |
 | **Etapa E** | **1.43–1.45** | ✅ Hotovo | **Kvalita dat ve velkém** | Ročník podle Wikipedie, Návrhy z webu ve frontě Údržby, Otočené fotky a návrh výřezu |
-| **Etapa F** | **1.46–1.48** | 📋 Plán | **Přehledy a pohodlí** | Rok ve sbírce, Kapesní katalog offline, Upozornění na novou verzi |
+| **Etapa F** | **1.46–1.48** | 🚧 1.46 hotová | **Přehledy a pohodlí** | Rok ve sbírce, Kapesní katalog offline, Upozornění na novou verzi |
 | **Etapa G** | **1.49–1.51** | 📋 Plán | **Vzhled a čitelnost** | Přiblížení, hustota a karty, Světlý motiv a kontrast, Klid a vlastní Přehled |
 | **Etapa H** | **1.52–1.55** | 📋 Plán | **Návrat k hotovým funkcím** | Údržba jako jedna fronta, Hledání a výběry 2, Statistiky a vkus 2, Prohlížení a časopis 2 |
 | **Etapa I** | **1.56–1.59** | 📋 Plán | **Sbírka výtisků** | Evidence výtisků české edice, Výdaje a hodnota sbírky, Rozšířené tiskové sestavy, Burza a výměny |
@@ -73,7 +73,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 
 ---
 
-## Dokončeno v řadě 1.0–1.45 ✅
+## Dokončeno v řadě 1.0–1.46 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -116,6 +116,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.43 – Ročník podle Wikipedie** (`rocnik_wikipedie.go`, `frontend/src/app/rocnik-wiki.js`): Playmate měsíců (i víc v jednom měsíci) a Playmate roku proti sbírce se stavy shoda / chybí / překlep / jiné jméno / jiný měsíc / bez centerfoldu; chybějící do fronty rychlého okna Nová modelka, převzetí jména z Wikipedie s potvrzením. Z Kalendáře, stránky ročníku a americké mapy sbírky.
 - **1.44 – Návrhy z webu ve frontě Údržby** (`pruchod_webem.go`, `frontend/src/app/udrzba-web.js`): režim Údržby Z webu – průchod sbírkou na pozadí (1 dotaz/s na server, přerušení, pokračování po restartu, stav v `nastaveni`), fronta rozdílů se zdrojem a odkazem, přijetí po jednom / po modelce / po údaji či zdroji (jen jednoznačné, se zálohou), odmítnuté se pamatují.
 - **1.45 – Otočené fotky a návrh výřezu** (`otocene_fotky.go`, `internal/obsah/otoceni.go`, `frontend/src/app/udrzba-fotky.js`): režim Údržby Otočené a výřezy – kontrola otočení na pozadí z vektorů CLIP otočených náhledů proti středu sbírky (`obsah/otoceni.json`, přerušení a pokračování), otočení jedním klikem nebo V pořádku, s Vrátit; návrh výřezu titulní fotky 3 : 4 z detekce postavy NudeNet v okně výřezu (Navrhnout) i hromadně v Údržbě. Práh otočení se doladí v 1.45.x po ověření na vzorku.
+- **1.46 – Rok ve sbírce** (`rok_ve_sbirce.go`, `frontend/src/lib/rok-ve-sbirce.js`, `app/rok-ve-sbirce.js`): výroční přehled z hera Statistik – přibylé modelky, alba, fotky a čísla se srovnáním s loňskem, měsíce, dny práce a nejdelší série, nejlepší nové fotky a modelky, dokončené ročníky a vyhlášené sezóny; Jako časopis v režimu čtení a Tisk / PDF.
 ---
 
 ## Plán dalšího rozvoje (1.30–1.63)
@@ -334,7 +335,7 @@ na kliknutí, na pozadí s možností přerušit a s potvrzením každého údaj
 
 ### Etapa F – Přehledy a pohodlí (1.46–1.48)
 
-#### 1.46 – Rok ve sbírce
+#### 1.46 – Rok ve sbírce ✅ (10. 11. 2026)
 
 **Cíl:** výroční přehled odvedené práce a objevů – co přibylo, co se líbilo a co se dokončilo.
 
@@ -465,7 +466,7 @@ Funkce z řady 1.24–1.45 rozšířit tam, kde se při používání ukázaly m
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Časopis z čehokoli | Režim čtení pro ročník, chytrý výběr, sezónu a Síň slávy (pořadí jako stránky), Rok ve sbírce (1.46) přejde na stejný základ | M |
+| 1 | Časopis z čehokoli | Režim čtení pro ročník, chytrý výběr, sezónu a Síň slávy (pořadí jako stránky) přes `otevritStrany` jako Rok ve sbírce (1.46) | M |
 | 2 | Dvoustrany podle výřezů | Rozvržení stran podle návrhu výřezu (1.45), aby postava nebyla pod textem; dvě fotky na šířku vedle sebe | S–M |
 | 3 | Dvě fotky vedle sebe | V prohlížeči porovnání dvou fotek se sdílenou lupou a posunem; z prohlížeče „Nastavit jako titulní / profilovou“ rovnou s návrhem výřezu | M |
 | 4 | Návrh titulní a profilové | Pro modelky bez nich návrh z vkusu, kvality (1.52) a výřezu (1.45) jako úkol Údržby | S |

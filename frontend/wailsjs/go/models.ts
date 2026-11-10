@@ -454,6 +454,34 @@ export namespace main {
 	        this.dekady = source["dekady"];
 	    }
 	}
+	export class FotkaRoku {
+	    fotkaId: number;
+	    url: string;
+	    rotace: number;
+	    hodnoceni: number;
+	    modelkaId: number;
+	    jmeno: string;
+	    album: string;
+	    typ: string;
+	    vydani: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new FotkaRoku(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fotkaId = source["fotkaId"];
+	        this.url = source["url"];
+	        this.rotace = source["rotace"];
+	        this.hodnoceni = source["hodnoceni"];
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.album = source["album"];
+	        this.typ = source["typ"];
+	        this.vydani = source["vydani"];
+	    }
+	}
 	export class ModelkaIdealu {
 	    modelkaId: number;
 	    jmeno: string;
@@ -877,6 +905,24 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	export class MesicRoku {
+	    fotek: number;
+	    alb: number;
+	    modelek: number;
+	    dnu: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new MesicRoku(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.fotek = source["fotek"];
+	        this.alb = source["alb"];
+	        this.modelek = source["modelek"];
+	        this.dnu = source["dnu"];
+	    }
 	}
 	export class MinulaSezona {
 	    klic: string;
@@ -1975,6 +2021,84 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class SerieRoku {
+	    dni: number;
+	    od: string;
+	    do: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SerieRoku(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.dni = source["dni"];
+	        this.od = source["od"];
+	        this.do = source["do"];
+	    }
+	}
+	export class RokVeSbirce {
+	    rok: number;
+	    roky: number[];
+	    fotek: number;
+	    alb: number;
+	    cisel: number;
+	    hodnocenych: number;
+	    fotek5: number;
+	    mesice: MesicRoku[];
+	    dnuPrace: number;
+	    serie: SerieRoku;
+	    souboju: number;
+	    zapisu: number;
+	    nejlepsi: FotkaRoku[];
+	    novaCisla: string[];
+	    sezony: MinulaSezona[];
+	    fotekLoni: number;
+	    modelekLoni: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new RokVeSbirce(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.rok = source["rok"];
+	        this.roky = source["roky"];
+	        this.fotek = source["fotek"];
+	        this.alb = source["alb"];
+	        this.cisel = source["cisel"];
+	        this.hodnocenych = source["hodnocenych"];
+	        this.fotek5 = source["fotek5"];
+	        this.mesice = this.convertValues(source["mesice"], MesicRoku);
+	        this.dnuPrace = source["dnuPrace"];
+	        this.serie = this.convertValues(source["serie"], SerieRoku);
+	        this.souboju = source["souboju"];
+	        this.zapisu = source["zapisu"];
+	        this.nejlepsi = this.convertValues(source["nejlepsi"], FotkaRoku);
+	        this.novaCisla = source["novaCisla"];
+	        this.sezony = this.convertValues(source["sezony"], MinulaSezona);
+	        this.fotekLoni = source["fotekLoni"];
+	        this.modelekLoni = source["modelekLoni"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class RozdilZalohy {
 	    kategorie: KategorieRozdilu[];
 	    celkem: number;
@@ -2009,6 +2133,7 @@ export namespace main {
 		    return a;
 		}
 	}
+	
 	export class Tema {
 	    klic: string;
 	    nazev: string;

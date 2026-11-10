@@ -129,6 +129,8 @@ export function GetPrehledVydani():Promise<Array<sbirka.Fotografie>>;
 
 export function GetProfilovaFotka(arg1:number):Promise<main.ProfilovaFotka>;
 
+export function GetRokVeSbirce(arg1:number):Promise<main.RokVeSbirce>;
+
 export function GetSablonaObrazku():Promise<string>;
 
 export function GetSezona():Promise<main.Sezona>;

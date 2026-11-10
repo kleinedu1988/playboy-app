@@ -125,3 +125,17 @@ test('hledání casopis: v pohledech čísel a fotek, zkratky ph / hu / pb (0.02
     assert.equal(prevest('playboy'), 'playboy');
     nastavitCasopisy([]);
 });
+
+test('Statistiky podle časopisu: texty a barva titulů jiných časopisů (0.02.020)', async () => {
+    const { jeTitulJinehoCasopisu, maJineCasopisy, vCasopiseStatistik } = await import('../src/lib/format.js');
+    const playboy = [{ vydani: ['1985-09'], obalky: ['1986-01'] }];
+    const obe = [...playboy, { vydani: [], obalky: ['1987-02@PH'] }];
+    assert.equal(maJineCasopisy(playboy), false);
+    assert.equal(vCasopiseStatistik(playboy), 'v časopise');
+    assert.equal(maJineCasopisy(obe), true);
+    assert.equal(vCasopiseStatistik(obe), 'v Playboyi');
+    nastavitCasopisy(CASOPISY);
+    assert.deepEqual(['Pet of the Month', 'Pet of the Year', 'Playmate měsíce', 'Celebrita'].map(jeTitulJinehoCasopisu), [true, true, false, false]);
+    nastavitCasopisy([]);
+    assert.equal(jeTitulJinehoCasopisu('Pet of the Month'), false);
+});

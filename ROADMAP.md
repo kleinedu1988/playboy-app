@@ -5,13 +5,14 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.02.019** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (10. 11. 2026): verze 0.02.020** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
 Honey); časopisy jde spravovat v ⋯ › Časopisy…. Řady čísel jsou data podle řady (`lib/rady-cisel.js`) i pro Penthouse a Hustler; Kalendář
 a Obálky jdou přepnout na jiný časopis, Mapa čísel má kartu pro každý časopis, stěna Centerfoldů volbu časopisu a hledání zná
-`casopis:`. Další na řadě je **0.02.020 – Statistiky a Postřehy podle časopisu**.
+`casopis:`. Statistiky a Postřehy mluví podle časopisu. Další na řadě je **0.02.021 – Síň slávy, sezóny,
+Rok ve sbírce**.
 
 ---
 
@@ -44,7 +45,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.019 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.020 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -79,7 +80,7 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 #### 0.02 – Časopis jako údaj čísla, řady čísel a pohledy podle časopisu
 
 Na přání se celá zbývající etapa U čísluje pod 0.02: kroky 0.02.014–0.02.019 byly původně etapa 0.03 (Řady čísel
-a Mapa čísel), od 0.02.020 pokračují dřívější etapy 0.03–0.08 (v nadpisech je jejich původní číslo). Po betě
+a Mapa čísel), od 0.02.020 pokračují dřívější etapy 0.03–0.08 (v nadpisech je jejich původní číslo). Po alfě
 přijde 1.00.000.
 
 | Verze | Krok | Hotovo, když |
@@ -110,7 +111,7 @@ Tituly (funkce, profil, typy alb, kategorie a filtry) se předřadily do 0.02.00
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.020 | **Statistiky a Postřehy:** texty podle časopisu, Playboy beze změny | žádný „Playmate“ u dat Penthouse |
+| 0.02.020 ✅ | **Statistiky a Postřehy:** texty podle časopisu, Playboy beze změny | žádný „Playmate“ u dat Penthouse |
 | 0.02.021 | **Síň slávy, sezóny, Rok ve sbírce:** přes všechny časopisy s filtrem časopisu | Síň slávy jde přepnout na Penthouse |
 | 0.02.022 | **Zbylé texty:** nápověda, prázdné stavy, úvod, kvíz/průvodce zmínky; seznam zbylých výskytů „Playmate“ jen tam, kde jde opravdu o Playboy | `grep` výskytů projde ručně s poznámkou |
 
@@ -159,7 +160,7 @@ z PDF buď nahrát na Disk (pravidlo zůstává), nebo nový druh zdroje „soub
 | 0.02.043 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
 | 0.02.044 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
 
-#### Dotažení a beta (0.02.045–0.02.049+, dříve etapa 0.08)
+#### Dotažení a alfa (0.02.045–0.02.049+, dříve etapa 0.08)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
@@ -167,7 +168,7 @@ z PDF buď nahrát na Disk (pravidlo zůstává), nebo nový druh zdroje „soub
 | 0.02.046 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
 | 0.02.047 | **Ikona programu** | nová ikona v nabídce a panelu |
 | 0.02.048 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
-| 0.02.049+ | **Beta:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
+| 0.02.049+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
 
 ---
 
@@ -322,7 +323,7 @@ Na přání uživatele odložené na konec plánu (kvíz z PD 1.43, průvodce č
   je režim čtení PD 1.41). Potvrzeno 10. 11. 2026 při plánu etapy G.
 - Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (PD 1.61–PD 1.62).
 - Malé náhledy smí program ukládat na disk jako mezipaměť (PD 1.6); originály a velké fotky zůstávají jen na Disku.
-- 1.0.0 po 14 dnech používání bety bez nové chyby (21. 10. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
+- 1.0.0 po 14 dnech používání alfy bez nové chyby (21. 10. 2026; místo bety alfa od 10. 11. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
   každý krok a opravu v tématu; MAJOR = velký milník, kompatibilitu dat hlídá verze schématu a exportu.
 - Editor textů (PD 1.40): vlastní lišta nad markdownem s náhledem, žádná knihovna editoru.
 - Wikidata, Wikipedie a Boobpedia (PD 1.38) jen na kliknutí a s potvrzením každého údaje; Babepedia ani jiné weby bez API se nečtou.

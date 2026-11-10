@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.020 – Statistiky a Postřehy podle časopisu
+
+- [ ] **Kritérium hotovo:** se sbírkou s Penthouse nikde ve Statistikách „Playmate“ u modelky jen z Penthouse
+      (Rozložení Kategorie ukáže „Pet of the Month“).
+- [ ] Graf v čase (Výška) – nápověda a Postřeh říkají „rok prvního výskytu v Playboyi“; bez jiného časopisu
+      „v časopise“ jako dřív.
+- [ ] Mapa sbírky › barva Kategorie: Pet of the Month oranžově s položkou „Titul jiného časopisu“ v legendě.
+
 ## 0.02.019 – Hledání podle časopisu
 
 - [ ] **Kritérium hotovo:** v Modelkách `casopis:penthouse 80. léta` najde modelky s číslem Penthouse z 80. let.

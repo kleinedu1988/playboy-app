@@ -9,7 +9,7 @@ import { GetProfilovaFotka, GetStatistiky, GetVkusVCase, UlozitSouborGrafu } fro
 import { csv, nazevSouboru, pngGrafu } from '../lib/graf-ven';
 import { oznamit } from '../ui/oznameni';
 import { radaPodilu, vkusVCase } from '../lib/vkus-v-case';
-import { EDICE, MESICE, jeCisloPlayboye, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
+import { EDICE, MESICE, jeCisloPlayboye, jeTitulJinehoCasopisu, vCasopiseStatistik, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne, VELIKOST_TITULNI, VELIKOST_ZAHLAVI } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -141,9 +141,10 @@ const BARVY_MAPY = {
         nazev: 'Kategorie',
         polozky: [
             ['Playmate měsíce', '#f06292'], ['Playmate roku', '#ffd54f'], ['Modelka obálky', '#64b5f6'],
-            ['Cyber Girl', '#81c784'], ['Celebrita', '#ba68c8'], ['Online', '#4dd0e1'], ['Ostatní', '#757575'],
+            ['Cyber Girl', '#81c784'], ['Celebrita', '#ba68c8'], ['Online', '#4dd0e1'], ['Titul jiného časopisu', '#ff8a65'], ['Ostatní', '#757575'],
         ],
-        hodnota: b => b.kategorie,
+        // Pet of the Month, Honey of the Month… jednou barvou (barva podle časopisu až 0.02.044)
+        hodnota: b => jeTitulJinehoCasopisu(b.kategorie) ? 'Titul jiného časopisu' : b.kategorie,
     },
     srd: {
         nazev: 'Hodnocení',
@@ -322,7 +323,7 @@ function rozsahVyberu(def, sloupce) {
 // Graf v čase jako SVG v přesné šířce karty (písmo zůstává stejně velké); neviditelné cíle nesou bublinu a index.
 // Při výběru z jiných grafů: jasně modelky výběru, tlumeně celá sbírka a její křivka čárkovaně.
 function htmlGrafuVCase(def, sloupce, sirka) {
-    if (!sloupce.length) return `<p class="prazdno-male">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s výskytem v časopise chybí.`}</p>`;
+    if (!sloupce.length) return `<p class="prazdno-male">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s výskytem ${vCasopiseStatistik(data.modelky)} chybí.`}</p>`;
     const zuzeno = [...filtry.keys()].some(k => k !== klicFiltru(def));
     const vybrane = sloupce.map(s => zuzeno ? s.polozky.filter(p => vyhovuje(p.m, klicFiltru(def))) : s.polozky);
     const W = Math.max(320, sirka), H = 360, L = 46, P = 10, T = 14, D = 26;
@@ -659,7 +660,7 @@ function spocitatPostreh(def, sloupce, { bezVyberu = false } = {}) {
     const rada = sloupce.map(s => ({ rok: s.rok, polozky: zuzeno ? s.polozky.filter(p => vyhovuje(p.m, 'rok')) : s.polozky }));
     const zname = rada.reduce((n, s) => n + s.polozky.length, 0);
     const celkem = data.modelky.filter(m => prvniVyskyt(m) && (!zuzeno || vyhovuje(m, 'rok'))).length;
-    const kdy = druhVyskytu === 'online' ? 'rok nafocení prvního online alba' : `rok ${druhVyskytu === 'vse' ? 'prvního výskytu v časopise' : `prvního výskytu – ${DRUHY_VYSKYTU[druhVyskytu].toLowerCase()}`}`;
+    const kdy = druhVyskytu === 'online' ? 'rok nafocení prvního online alba' : `rok ${druhVyskytu === 'vse' ? `prvního výskytu ${vCasopiseStatistik(data.modelky)}` : `prvního výskytu – ${DRUHY_VYSKYTU[druhVyskytu].toLowerCase()}`}`;
     const kontext = `Známé u ${cislo(zname, 0)} z ${pocetModelek(celkem)}${zuzeno ? ' výběru' : ''}; ${kdy}${edice === 'vse' ? '' : `, edice ${edice}`}.`;
     return postrehRady(def, rada, { vyber: zuzeno, kontext });
 }
@@ -1056,7 +1057,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
         : def.osa
         ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažení myší období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.${!bezCisla ? ''
             : online ? ` Rok je rok nafocení prvního online alba; ${pocetModelek(bezCisla)} bez online alba s datem v grafech v čase ${neni}.`
-            : ` Rok je rok prvního výskytu v časopise; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase ${neni}.`}`
+            : ` Rok je rok prvního výskytu ${vCasopiseStatistik(data.modelky)}; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase ${neni}.`}`
         : 'Klik na řádek vybere hodnotu, další klik ji zruší. Výběr platí pro všechny grafy: přepni graf a uvidíš jen vybrané modelky.';
     const seznam = koren.querySelector('[data-sp-seznam]');
     const fokusSeznamu = seznam.contains(document.activeElement);

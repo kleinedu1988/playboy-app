@@ -126,6 +126,16 @@ export const nazevCasopisu = klic => casopisy.get(klic)?.nazev || klic || '';
 const TITULY_PLAYBOYE = { mesice: 'Playmate měsíce', roku: 'Playmate roku' };
 const OBECNE_TITULY = { mesice: 'Modelka měsíce', roku: 'Modelka roku' };
 
+// Má některá modelka číslo nebo obálku jiného časopisu než Playboy? Statistiky je zatím nepočítají (filtr časopisu
+// 0.02.042), texty pak místo „v časopise“ řeknou „v Playboyi“ (0.02.020)
+export const maJineCasopisy = modelky => modelky.some(m => [...(m.vydani || []), ...(m.obalky || [])]
+    .some(v => { const c = rozlozitVydani(v)?.casopis; return !!c && c !== VYCHOZI_CASOPIS; }));
+export const vCasopiseStatistik = modelky => (maJineCasopisy(modelky) ? 'v Playboyi' : 'v časopise');
+
+// Je název kategorie titulem jiného časopisu než Playboy („Pet of the Month“, „Honey of the Year“)?
+export const jeTitulJinehoCasopisu = nazev => [...casopisy.keys()].some(k => k !== VYCHOZI_CASOPIS
+    && (titulCasopisu(k, 'mesice') === nazev || titulCasopisu(k, 'roku') === nazev));
+
 /** @param {string} klic @param {'mesice' | 'roku' | 'kratky'} [druh] */
 export function titulCasopisu(klic, druh = 'mesice') {
     const k = klic || VYCHOZI_CASOPIS;

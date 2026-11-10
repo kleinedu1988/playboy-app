@@ -2825,8 +2825,8 @@ func TestZmrazeniAlfy(t *testing.T) {
 	if len(migrace) != 17 {
 		t.Errorf("úprav schématu je %d, schéma je na úpravě č. 17 (tabulka časopisů, Pinup Katalog 0.02.003); novou úpravu ohlásit v ROADMAP", len(migrace))
 	}
-	if verzeExportu != 13 {
-		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 13 (profilová fotka, 1.2.65)", verzeExportu)
+	if verzeExportu != 14 {
+		t.Errorf("verze exportu je %d, formát exportu je na verzi 14 (časopisy, Pinup Katalog 0.02.008)", verzeExportu)
 	}
 }
 

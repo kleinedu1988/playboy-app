@@ -6,6 +6,19 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.008] – 2026-11-10
+
+### Přidáno
+- **Export verze 14:** nový oddíl `casopisy` (klíč, název, barva, edice, tituly modelky měsíce a roku, pořadí)
+  a čísla jiných časopisů s `@` u alb, coverů a vydání (`1985-09@PH`, `1986-03-UK@PH`). Import časopisy načte jako
+  první (`export_casopisy.go`), aby prošla alba jejich čísel. Časopis podle klíče založí nebo upraví,
+  edice jen přidává a chybný klíč, barvu či edici ohlásí.
+- EXPORT.md: oddíl Časopis a řádek historie formátu; vzor-exportu.yaml s Penthouse.
+
+### Změněno
+- Starší export (verze 13 a nižší, i z Playboy Database) se načte jako dřív: čísla bez `@` jsou Playboy.
+  Starší program soubor verze 14 odmítne celý („z novější verze programu“).
+
 ## [0.02.007] – 2026-11-10
 
 ### Změněno

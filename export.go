@@ -104,7 +104,7 @@ type exportCover struct {
 }
 
 // Verze formátu exportu, kterou program zapisuje a nejvýš umí načíst; popis je v EXPORT.md
-const verzeExportu = 13
+const verzeExportu = 14
 
 // Odkaz na modelku v exportu (další modelka alba, obálka, výběr): jméno, u jmen, která má víc modelek,
 // doplněné o číslo modelky v hranatých závorkách („Anna [12]“)
@@ -128,11 +128,13 @@ func (o odkazyNaModelky) cislo(id int, jmeno string) int {
 var vzorOdkazuSCislem = regexp.MustCompile(`^(.*\S)\s*\[(\d+)\]$`)
 
 type exportDat struct {
-	Verze   int             `yaml:"verze"`
-	Modelky []exportModelka `yaml:"modelky"`
-	Covery  []exportCover   `yaml:"covery,omitempty"`
-	Vydani  []exportVydani  `yaml:"vydani,omitempty"`
-	Vybery  []exportVyberu  `yaml:"vybery,omitempty"`
+	Verze int `yaml:"verze"`
+	// Od verze 14 (Pinup Katalog 0.02.008): tabulka časopisů; starší soubor ji nemá a čísla bez „@“ jsou Playboy
+	Casopisy []exportCasopis `yaml:"casopisy,omitempty"`
+	Modelky  []exportModelka `yaml:"modelky"`
+	Covery   []exportCover   `yaml:"covery,omitempty"`
+	Vydani   []exportVydani  `yaml:"vydani,omitempty"`
+	Vybery   []exportVyberu  `yaml:"vybery,omitempty"`
 	// Nepovinné nastavení (chytré výběry, chytre_vybery.go); starší program část přeskočí, verze formátu se nemění
 	Nastaveni *exportNastaveni `yaml:"nastaveni,omitempty"`
 	// Opravené a přeskočené klíče ze souboru (do souboru se nezapisuje)
@@ -313,6 +315,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 	for _, m := range modelky {
 		jmena[m.ID] = m.Jmeno
 	}
+	data.Casopisy = a.exportovatCasopisy()
 	data.Vydani, data.Vybery = a.exportovatVydaniAVybery(odkazy, jmena)
 	data.Nastaveni = a.exportovatNastaveni()
 
@@ -565,7 +568,7 @@ var vzorRadkuHodnoty = regexp.MustCompile(`^(\s*(?:- )?[A-Za-z_]+):[ \t]+(.+?)[ 
 // Klíče formátu exportu (podle značek yaml ve strukturách); řádek „Zdroj: Wikipedie“ uvnitř textu klíčem není
 var znameKlice = func() map[string]bool {
 	klice := map[string]bool{}
-	for _, v := range []interface{}{exportDat{}, exportModelka{}, exportAlbum{}, exportFotka{}, exportVyrez{}, exportCover{}, exportVydani{}, exportVyberu{}, exportFotkyVyberu{}, exportClanek{}, exportNastaveni{}, ChytryVyber{}, PodminkyGalerie{}} {
+	for _, v := range []interface{}{exportDat{}, exportCasopis{}, exportModelka{}, exportAlbum{}, exportFotka{}, exportVyrez{}, exportCover{}, exportVydani{}, exportVyberu{}, exportFotkyVyberu{}, exportClanek{}, exportNastaveni{}, ChytryVyber{}, PodminkyGalerie{}} {
 		t := reflect.TypeOf(v)
 		for i := 0; i < t.NumField(); i++ {
 			if nazev := strings.Split(t.Field(i).Tag.Get("yaml"), ",")[0]; nazev != "" {
@@ -649,7 +652,7 @@ func nacistDokumentPresne(text string) (exportDat, error) {
 	opravitKlice(&koren, &opravy)
 
 	errCely := koren.Decode(&data)
-	if errCely == nil && (len(data.Modelky) > 0 || len(data.Covery) > 0 || len(data.Vydani) > 0 || len(data.Vybery) > 0 || data.Nastaveni != nil) {
+	if errCely == nil && (len(data.Modelky) > 0 || len(data.Casopisy) > 0 || len(data.Covery) > 0 || len(data.Vydani) > 0 || len(data.Vybery) > 0 || data.Nastaveni != nil) {
 		data.Opravy = opravy
 		return data, nil
 	}
@@ -685,6 +688,7 @@ func slozitSoubory(soubory map[string][]byte, poradi []string) (exportDat, error
 			if data.Verze > verzeExportu {
 				return celek, fmt.Errorf("Soubor „%s“ je z novější verze programu (formát %d, tato verze umí nejvýš %d). Nic se nenačetlo; aktualizuj program.", kratky, data.Verze, verzeExportu)
 			}
+			celek.Casopisy = append(celek.Casopisy, data.Casopisy...)
 			celek.Modelky = append(celek.Modelky, data.Modelky...)
 			celek.Covery = append(celek.Covery, data.Covery...)
 			celek.Vydani = append(celek.Vydani, data.Vydani...)
@@ -762,6 +766,8 @@ func (a *App) importovatCelek(data exportDat) VysledekImportu {
 
 // Vlastní import do databáze aplikace (u importu do souboru je to spojení s transakcí)
 func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
+	// Časopisy první: alba a covery jiných časopisů se ověřují podle tabulky (znamaRada)
+	a.importovatCasopisy(data.Casopisy, vysledek)
 	// Modelky se párují podle jména bez ohledu na velikost písmen a diakritiku. Jména, která má víc modelek,
 	// rozhodne číslo modelky ze souboru; každá modelka v databázi se spáruje nejvýš jednou.
 	podleJmena := map[string][]Modelka{}
@@ -1003,7 +1009,7 @@ func (a *App) importovatData(data exportDat, vysledek *VysledekImportu) {
 	for _, c := range data.Covery {
 		vydani := strings.TrimSpace(c.Vydani)
 		if !vzorVydani.MatchString(vydani) {
-			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("cover: vydání „%s“ není ve tvaru RRRR-MM nebo RRRR-Snn (s příponou edice, např. 2011-07-CZ)", vydani))
+			vysledek.Chyby = append(vysledek.Chyby, fmt.Sprintf("cover: vydání „%s“ není ve tvaru RRRR-MM nebo RRRR-Snn (s příponou edice a časopisu, např. 2011-07-CZ, 1985-09@PH)", vydani))
 			continue
 		}
 		a.importovatFotky(0, exportAlbum{Nazev: vydani, Typ: "Cover", Fotky: c.Fotky, RucniPoradi: c.RucniPoradi}, vysledek, "cover "+vydani)

@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.008 – Export a import verze 14
+
+- [ ] **Kritérium hotovo:** ⋯ › Exportovat; v souboru je `verze: 14`, oddíl `casopisy` a číslo `1985-09@PH`.
+- [ ] Ten soubor načti importem do čisté sbírky (nebo po záloze): centerfold Penthouse 09/1985 je u modelky,
+      cover čísla na stránce čísla, stav a poznámka čísla zůstaly.
+- [ ] Starý export z Playboy Database (verze 13) se načte bez chyb; všechna čísla jsou Playboy.
+- [ ] Ručně upravený export s `casopisy: - {klic: OU, nazev: Oui, edice: [US, FR]}` založí časopis Oui;
+      v okně alba pak nabídka „Oui US“ a „Oui FR“.
+
 ## 0.02.007 – Pohledy Playboye beze změny
 
 S centerfoldem Penthouse 09/1985 ve sbírce (z 0.02.005):

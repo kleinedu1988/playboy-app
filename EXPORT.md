@@ -1,7 +1,8 @@
-# Formát exportu (verze 13)
+# Formát exportu (verze 14)
 
 Export (nabídka ⋯ → Exportovat) uloží celou sbírku do jednoho souboru YAML, který jde číst a upravovat
-v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 13** (program 1.2.65 a novější).
+v textovém editoru a znovu načíst importem. Tento popis platí pro **formát verze 14** (Pinup Katalog 0.02.008 a novější).
+Soubory starších verzí (i z programu Playboy Database) jdou načíst dál: nemají časopisy a všechna jejich čísla jsou Playboy.
 
 Od alfy (program 0.50.0) byl formát verze 7 **zmrazený**. Vědomé výjimky v betě jsou dvě: verze 8 přidala
 online pictorialy (typ alba `Pictorial online` s datem nafocení) a verze 9 hodnocení modelky po polovinách
@@ -43,7 +44,8 @@ Vzorový soubor se všemi klíči a komentáři je [vzor-exportu.yaml](vzor-expo
 ## Celek
 
 ```yaml
-verze: 12
+verze: 14
+casopisy: [...]  # časopisy (Playboy, Penthouse, Hustler…), od verze 14
 modelky: [...]   # modelky s jejich alby
 covery: [...]    # obálky časopisu, nepatří k modelce
 vydani: [...]    # stav a poznámky k jednotlivým číslům
@@ -102,11 +104,29 @@ a `pridano`, jen když se liší od data přidání alba.
 
 `pruvodce` (od verze 12): fotka prošla průvodcem hodnocení (Hodnocení › Hodnotit › Fotky) – číslo verze kroků, např. `pruvodce: 1`. Při importu hodnota větší než 0 fotku označí jako prošlou; chybějící nic nemění.
 
+## Časopis
+
+```yaml
+casopisy:
+  - klic: PH              # dvě velká písmena; píše se na konec klíče čísla: 1985-09@PH
+    nazev: Penthouse
+    barva: '#7e57c2'      # nepovinné, #rrggbb
+    edice: [US, UK]       # země vydání, první je výchozí (bez přípony): 1985-09@PH, 1986-03-UK@PH
+    modelka_mesice: Pet of the Month   # nepovinné
+    modelka_roku: Pet of the Year      # nepovinné
+    poradi: 2             # nepovinné, pořadí v nabídkách
+```
+
+Import časopis podle klíče založí, nebo přepíše jeho údaje; prázdný údaj nechá původní. Edice se jen přidávají,
+žádnou, kterou sbírka už má, import neubere. Playboy (`PB`) je výchozí a do klíče čísla se nepíše (`1985-09`);
+jeho edice (`US`, `CZ`) určuje program. Číslo jiného časopisu musí mít časopis i edici v tabulce (výchozí
+Playboy, Penthouse a Hustler v ní jsou vždy).
+
 ## Cover, vydání, výběr
 
 ```yaml
 covery:
-  - vydani: 2014-02       # RRRR-MM nebo RRRR-MM-CZ
+  - vydani: 2014-02       # RRRR-MM nebo RRRR-MM-CZ; jiný časopis s „@“: 1985-09@PH, 1986-03-UK@PH
     spojit: true          # nepovinné
     rucni_poradi: true    # nepovinné
     fotky: [{id: ...}]
@@ -141,13 +161,14 @@ vybery:
 ## Uzavřené výčty
 
 U `prsa_typ` a `ochlupeni` nezáleží na velikosti písmen, uloží se v tvaru z nabídky formuláře; jiná
-hodnota se ohlásí a stávající údaj zůstane. Hodnoty `typ` alba, edice (`US` bez přípony, `CZ`), `stav` čísla a klíče `netyka_se` jsou pevné. Další
+hodnota se ohlásí a stávající údaj zůstane. Hodnoty `typ` alba, edice Playboye (`US` bez přípony, `CZ`), `stav` čísla a klíče `netyka_se` jsou pevné. Další
 verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 ## Historie formátu
 
 | Verze | Program | Změna |
 |---|---|---|
+| 14 | Pinup Katalog 0.02.008 | `casopisy` (klíč, název, barva, edice, tituly, pořadí) a čísla jiných časopisů s `@` (`1985-09@PH`, `1986-03-UK@PH`) u alb, coverů a vydání |
 | 13 | 1.2.65 | `profilova_fotka` a `profilovy_vyrez` u modelky: profilová fotka oddělená od titulní |
 | 12 | 1.2.5 | `pruvodce` u fotky: fotka prošla průvodcem hodnocení (číslo verze kroků) |
 | 11 | 1.2.0 | Další tagy fotek: `bazen`, `auto`, `bunny`, `dziny`, barevnost, světlo a výraz (starší program by je tiše zahodil, proto nová verze) |

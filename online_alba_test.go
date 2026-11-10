@@ -303,8 +303,8 @@ func TestExportOnlineAlb(t *testing.T) {
 	}
 
 	// Novější formát se odmítne celý
-	if v := b.importovat([]byte("verze: 14\nmodelky:\n  - jmeno: Novější\n")); !strings.Contains(v.Selhalo, "z novější verze programu (formát 14, tato verze umí nejvýš 13)") {
-		t.Fatalf("formát 11: %+v", v)
+	if v := b.importovat([]byte("verze: 15\nmodelky:\n  - jmeno: Novější\n")); !strings.Contains(v.Selhalo, "z novější verze programu (formát 15, tato verze umí nejvýš 14)") {
+		t.Fatalf("formát 15: %+v", v)
 	}
 
 	// Export verze 7 (bez online alb) se načte jako dřív

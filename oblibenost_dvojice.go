@@ -42,7 +42,8 @@ const (
 )
 
 // Dvojice k porovnání vybrané aktivním učením. okruh: "" všechny hodnocené, "stejne" jen stejná úroveň srdíček,
-// "nehodnocene" nehodnocené modelky proti hodnoceným (kotvám), "tema:<klíč>" jen soutěžící tematické sezóny.
+// "nehodnocene" nehodnocené modelky proti hodnoceným (kotvám), "tema:<klíč>" jen soutěžící tematické sezóny,
+// "vyber:<id>" jen modelky chytrého výběru.
 func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 	dvojice := []DvojicePorovnani{}
 	u := a.uc
@@ -58,6 +59,15 @@ func (a *App) GetDvojiceKPorovnani(pocet int, okruh string) []DvojicePorovnani {
 	u.ob.nabidek++
 	semienko := int64(len(porovnani))*7919 + int64(u.ob.nabidek)
 	u.mu.Unlock()
+	// Chytrý výběr modelek (Dnešní výběr z výběru ⚡): jen jeho modelky, porovnání ze všech
+	if id, ok := strings.CutPrefix(okruh, "vyber:"); ok {
+		clenky := a.modelkyVyberu(id)
+		if len(clenky) < 2 {
+			return dvojice
+		}
+		modelky = slices.DeleteFunc(slices.Clone(modelky), func(m Modelka) bool { return !clenky[m.ID] })
+		okruh = ""
+	}
 	// Tematická sezóna: jen soutěžící tématu a opakování podle soubojů v tématu (jinde šlo o jiné fotky)
 	if klic, ok := strings.CutPrefix(okruh, "tema:"); ok {
 		// Soutěžící dnes (i pod hranicí počtu – rozjetá tematická sezóna se dohraje); kanonický klíč

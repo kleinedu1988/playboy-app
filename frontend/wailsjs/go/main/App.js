@@ -74,8 +74,8 @@ export function GetCovery() {
   return window['go']['main']['App']['GetCovery']();
 }
 
-export function GetCtvericeKPorovnani(arg1) {
-  return window['go']['main']['App']['GetCtvericeKPorovnani'](arg1);
+export function GetCtvericeKPorovnani(arg1, arg2) {
+  return window['go']['main']['App']['GetCtvericeKPorovnani'](arg1, arg2);
 }
 
 export function GetDuvodOdhadu(arg1) {
@@ -96,6 +96,10 @@ export function GetFotkyKPruvodci() {
 
 export function GetFotkyVyberu(arg1) {
   return window['go']['main']['App']['GetFotkyVyberu'](arg1);
+}
+
+export function GetFotoHledaniDostupne() {
+  return window['go']['main']['App']['GetFotoHledaniDostupne']();
 }
 
 export function GetFotografieModelky(arg1) {
@@ -200,6 +204,10 @@ export function GetNovaVerze() {
 
 export function GetOblibenost() {
   return window['go']['main']['App']['GetOblibenost']();
+}
+
+export function GetObsahChytrehoVyberu(arg1, arg2) {
+  return window['go']['main']['App']['GetObsahChytrehoVyberu'](arg1, arg2);
 }
 
 export function GetOdznakyModelky(arg1) {
@@ -484,6 +492,10 @@ export function OznacitOtoceniVPoradku(arg1, arg2) {
 
 export function OznacitRuzneFotky(arg1) {
   return window['go']['main']['App']['OznacitRuzneFotky'](arg1);
+}
+
+export function OznacitVyberVideny(arg1) {
+  return window['go']['main']['App']['OznacitVyberVideny'](arg1);
 }
 
 export function OznacitVyrezVychozi(arg1, arg2) {

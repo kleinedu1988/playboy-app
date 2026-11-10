@@ -57,6 +57,8 @@ type StavChytrehoVyberu struct {
 	Pocet   int          `json:"pocet"`
 	Fotky   []Fotografie `json:"fotky"`   // náhled (fotky)
 	Modelky []int        `json:"modelky"` // náhled (modelky, od nejvíc srdíček)
+	// Položky, které přibyly od posledního otevření výběru (1.52); při prvním vyhodnocení 0
+	Nove int `json:"nove"`
 }
 
 func noveIDVyberu() string {
@@ -124,25 +126,118 @@ func (v ChytryVyber) dotazGalerie() DotazGalerie {
 	return DotazGalerie{Razeni: g.Razeni, Srdicka: g.Srdicka, Typy: g.Typy, Tagy: g.Tagy, Dekady: g.Dekady, Kolekce: g.Kolekce, Text: v.Text}
 }
 
-// Počet a prvních nahled položek (fotky v pořadí galerie, modelky od nejvíc srdíček)
+// Počet a prvních nahled položek (fotky v pořadí galerie, modelky od nejvíc srdíček) a kolik přibylo od minula
 func (a *App) vyhodnotitChytryVyber(v ChytryVyber, nahled int) StavChytrehoVyberu {
 	s := StavChytrehoVyberu{ChytryVyber: v, Fotky: []Fotografie{}, Modelky: []int{}}
+	ids := a.idsChytrehoVyberu(v, nahled, &s)
+	videno, ok := a.videnoVyberu(v.ID)
+	if !ok {
+		// Výběr ještě nikdy nepočítal: všechno teď je „viděné“
+		a.ulozitVidenoVyberu(v.ID, ids)
+		return s
+	}
+	for _, id := range ids {
+		if !videno[id] {
+			s.Nove++
+		}
+	}
+	return s
+}
+
+// ID všech položek výběru; do s doplní počet a náhled
+func (a *App) idsChytrehoVyberu(v ChytryVyber, nahled int, s *StavChytrehoVyberu) []int {
+	var ids []int
 	switch v.Druh {
 	case DruhVyberuFotky:
 		fotky, poradi := a.fotkyChytrehoVyberu(v)
 		s.Pocet = len(poradi)
-		for i := 0; i < len(poradi) && i < nahled; i++ {
-			s.Fotky = append(s.Fotky, fotky[poradi[i]].f)
+		for i, p := range poradi {
+			ids = append(ids, fotky[p].f.ID)
+			if i < nahled {
+				s.Fotky = append(s.Fotky, fotky[p].f)
+			}
 		}
 	case DruhVyberuModelky:
 		modelky := a.modelkyChytrehoVyberu(v)
 		s.Pocet = len(modelky)
 		sort.SliceStable(modelky, func(i, j int) bool { return modelky[i].Hodnoceni > modelky[j].Hodnoceni })
-		for i := 0; i < len(modelky) && i < nahled; i++ {
-			s.Modelky = append(s.Modelky, modelky[i].ID)
+		for i, m := range modelky {
+			ids = append(ids, m.ID)
+			if i < nahled {
+				s.Modelky = append(s.Modelky, m.ID)
+			}
 		}
 	}
-	return s
+	return ids
+}
+
+const predponaVidenoVyberu = "chytry_vyber_videno:"
+
+// Položky výběru při posledním otevření; false = ještě nezapsané
+func (a *App) videnoVyberu(id string) (map[int]bool, bool) {
+	text := a.nastaveni(predponaVidenoVyberu + id)
+	if text == "" {
+		return nil, false
+	}
+	var ids []int
+	if json.Unmarshal([]byte(text), &ids) != nil {
+		return nil, false
+	}
+	m := make(map[int]bool, len(ids))
+	for _, x := range ids {
+		m[x] = true
+	}
+	return m, true
+}
+
+func (a *App) ulozitVidenoVyberu(id string, ids []int) {
+	if id == "" || a.db == nil {
+		return
+	}
+	if ids == nil {
+		ids = []int{}
+	}
+	if data, err := json.Marshal(ids); err == nil {
+		_ = a.ulozitNastaveni(predponaVidenoVyberu+id, string(data))
+	}
+}
+
+// Otevření výběru: co v něm teď je, je od teď viděné (odznak +N zmizí)
+func (a *App) OznacitVyberVideny(id string) {
+	for _, v := range a.chytreVybery() {
+		if v.ID == id {
+			var s StavChytrehoVyberu
+			a.ulozitVidenoVyberu(id, a.idsChytrehoVyberu(v, 0, &s))
+			return
+		}
+	}
+}
+
+// Výběr s náhledem až nejvic položek (Časopis, prezentace)
+func (a *App) GetObsahChytrehoVyberu(id string, nejvic int) StavChytrehoVyberu {
+	nejvic = min(max(nejvic, 1), 500)
+	for _, v := range a.chytreVybery() {
+		if v.ID == id {
+			s := StavChytrehoVyberu{ChytryVyber: v, Fotky: []Fotografie{}, Modelky: []int{}}
+			a.idsChytrehoVyberu(v, nejvic, &s)
+			return s
+		}
+	}
+	return StavChytrehoVyberu{Fotky: []Fotografie{}, Modelky: []int{}}
+}
+
+// Modelky výběru (okruh Dnešního výběru „vyber:<id>“); nil = výběr neexistuje
+func (a *App) modelkyVyberu(id string) map[int]bool {
+	for _, v := range a.chytreVybery() {
+		if v.ID == id && v.Druh == DruhVyberuModelky {
+			m := map[int]bool{}
+			for _, x := range a.modelkyChytrehoVyberu(v) {
+				m[x.ID] = true
+			}
+			return m
+		}
+	}
+	return nil
 }
 
 // Fotky galerie a pořadí vyhovujících; sdílenou paměť galerie čte, ale nemění (posledni dotaz Galerie zůstane)
@@ -222,6 +317,9 @@ func (a *App) SmazatChytryVyber(id string) bool {
 			continue
 		}
 		seznam = append(seznam, x)
+	}
+	if nalezen {
+		_ = a.ulozitNastaveni(predponaVidenoVyberu+id, "")
 	}
 	return nalezen && a.ulozitChytreVybery(seznam)
 }

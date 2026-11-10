@@ -5,6 +5,20 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 1.52.0 – Hledání a výběry 2
+
+- [ ] **Kritérium hotovo:** `foto:"bazén" výška > 175` v Galerii modelek najde správné modelky (otevřít pár profilů a
+      podívat se, jestli bazén na fotkách opravdu mají). Kolik nalezených je omylem? Podle toho doladit práh.
+- [ ] Bez zapnutého obsahu fotek: `foto:"…"` nic neomezí a jednou se ukáže oznámení.
+- [ ] `blond nebo zrzka`, `(70. léta | 80. léta) výška > 175`, `-(blond | zrzka)` najdou totéž v Modelkách,
+      Centerfoldech a Kalendáři; pod polem je srozumitelná věta „Hledám: …“.
+- [ ] Panel Filtry s dotazem se závorkami: štítky a počty dávají smysl, zápis se nerozbije.
+- [ ] Historie: klik do prázdného pole ukáže poslední dotazy, šipky + Enter dotaz vloží, Shift+Delete ho smaže,
+      vydrží restart.
+- [ ] `Ctrl+S` v poli hledání uloží dotaz jako výběr ⚡ (oznámení s Upravit), nekoliduje s ničím jiným.
+- [ ] Výběr ⚡: po přidání modelky, která podmínkám vyhoví, ukáže „+1“; klik na výběr ohlásí přírůstek a odznak zmizí.
+- [ ] Okno výběru (✎): Jako časopis, Prezentace (listuje sama), Dnešní výběr porovnává jen modelky výběru.
+
 ## 1.51.1 – Hromadně s rozdílem nanečisto
 
 - [ ] Lišta „Zobrazeno N“ je ve všech režimech na stejném místě a při posouvání zůstává nahoře.

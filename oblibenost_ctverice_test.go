@@ -14,7 +14,7 @@ func TestCtverice(t *testing.T) {
 		a.AddModelka(Modelka{Jmeno: j, Tetovani: -1, Piercing: -1})
 		a.SetHodnoceni(idModelky(t, a, j), h)
 	}
-	ctverice := a.GetCtvericeKPorovnani(3)
+	ctverice := a.GetCtvericeKPorovnani(3, "")
 	if len(ctverice) == 0 {
 		t.Fatal("žádná čtveřice")
 	}

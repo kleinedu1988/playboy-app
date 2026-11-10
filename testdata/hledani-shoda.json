@@ -250,6 +250,42 @@
         2,
         4
       ]
+    },
+    {
+      "dotaz": "vlasy:blond | vlasy:zrzava",
+      "najde": [
+        1,
+        3,
+        4
+      ]
+    },
+    {
+      "dotaz": "(rok:1970..1979 | rok:1990..1999) tetovani:ano",
+      "najde": [
+        1
+      ]
+    },
+    {
+      "dotaz": "-(narodnost:usa | narodnost:kanada)",
+      "najde": [
+        1
+      ]
+    },
+    {
+      "dotaz": "vlasy:blond | hodnoceni:4",
+      "najde": [
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "dotaz": "(vlasy:blond | vlasy:cerna) (narodnost:usa | edice:CZ)",
+      "najde": [
+        1,
+        2,
+        4
+      ]
     }
   ]
 }

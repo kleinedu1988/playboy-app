@@ -1,6 +1,7 @@
 // Galerie modelek, srdíčka, filtr hodnocení a krokování mezi modelkami
 import { prevest } from '../lib/hledani-dotaz';
-import { GetDuvodOdhadu, GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
+import { GetDuvodOdhadu, GetFotoHledaniDostupne, GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
+import { oznamit } from '../ui/oznameni';
 import { contextMenu, otevritKontextovouNabidku } from '../ui/nabidka';
 import { bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, seraditModelky, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
@@ -226,6 +227,15 @@ export function dokreslitGalerii() {
 // Skok v liště písmen na část, která ještě není vykreslená
 listaGalerie.dovykreslit = () => dokreslitGalerii();
 
+// foto:"…" bez obsahu fotek nic neomezuje: řekne to jednou za spuštění
+let upozornenoNaFoto = false;
+async function upozornitNaFoto(dotaz) {
+    if (upozornenoNaFoto || !dotaz) return;
+    if (await GetFotoHledaniDostupne().catch(() => true)) return;
+    upozornenoNaFoto = true;
+    oznamit('foto:"…" hledá v obsahu fotek – zapni Obsah fotek a hledání slovy (Všechny fotky › hledání slovy). Do té doby nic neomezuje.');
+}
+
 export async function nacistGalerii(hledani = '', zMezipameti = false) {
     const dotaz = stav.rezim === 'modelky' ? dotazModelek(hledani) : hledani;
     if (stav.rezim === 'centerfoldy') return nacistStenu(dotaz, zMezipameti);
@@ -250,8 +260,12 @@ export async function nacistGalerii(hledani = '', zMezipameti = false) {
     }
     if (moje !== stav.cisloNacteni) return;
 
-    // Zvolené řazení (stabilní: při shodě zůstává pořadí podle jména z backendu)
-    const modelky = seraditModelky(vsechny, stav.razeniGalerie);
+    // Zvolené řazení (stabilní: při shodě zůstává pořadí podle jména z backendu); s foto:"…" podle shody fotek
+    const sFoto = /(^|[\s(|])(foto|obsah):/i.test(cistyDotaz);
+    if (sFoto) upozornitNaFoto(cistyDotaz);
+    const modelky = sFoto && vsechny.some(m => m.shodaFotek)
+        ? [...vsechny].sort((a, b) => (b.shodaFotek || 0) - (a.shodaFotek || 0))
+        : seraditModelky(vsechny, stav.razeniGalerie);
     stav.nacteneModelky = modelky;
     modelkyKaret = new Map(modelky.map(m => [m.id, m]));
     stav.zrusitUpravuVyrezu?.();

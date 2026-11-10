@@ -524,11 +524,75 @@ export function rozlozitMiry(text) {
     return { hrudnik: naCm(m[1]), pas: naCm(m[3]), boky: naCm(m[4]), velikost: m[2] ? `${m[1]}${m[2].toUpperCase()}` : '' };
 }
 
-// Token hledání pro frontendové filtrování (podporuje negaci -, čárku jako OR, rozsah let, mezeru za dvojtečkou a neuzavřené uvozovky)
+// Svislítko na nejvyšší úrovni (mimo uvozovky a závorky) dělí dotaz na alternativy (stejně jako hledani.go rozdelitNebo)
+export function rozdelitNebo(s) {
+    const casti = [];
+    let hloubka = 0, uvozovky = false, od = 0;
+    for (let i = 0; i < s.length; i++) {
+        const z = s[i];
+        if (z === '"') uvozovky = !uvozovky;
+        else if (uvozovky) continue;
+        else if (z === '(') hloubka++;
+        else if (z === ')') { if (hloubka > 0) hloubka--; }
+        else if (z === '|' && hloubka === 0) { casti.push(s.slice(od, i)); od = i + 1; }
+    }
+    casti.push(s.slice(od));
+    return casti;
+}
+
+// Závorky na nejvyšší úrovni (i s - nebo ! před nimi) se vyjmou jako skupiny; neuzavřená sahá do konce
+export function vyjmoutZavorky(s) {
+    let zbytek = '';
+    const skupiny = [];
+    let uvozovky = false;
+    for (let i = 0; i < s.length; i++) {
+        const z = s[i];
+        if (z === '"') uvozovky = !uvozovky;
+        if (uvozovky || z !== '(') { zbytek += z; continue; }
+        let negace = false;
+        const t = zbytek.replace(/ +$/, '');
+        if (/(^|\s)[-!]$/.test(t)) { negace = true; zbytek = t.slice(0, -1); }
+        let hloubka = 1, uvnitr = false, j = i + 1;
+        for (; j < s.length && hloubka > 0; j++) {
+            if (s[j] === '"') uvnitr = !uvnitr;
+            else if (uvnitr) continue;
+            else if (s[j] === '(') hloubka++;
+            else if (s[j] === ')') hloubka--;
+        }
+        skupiny.push({ negace, text: s.slice(i + 1, hloubka === 0 ? j - 1 : j) });
+        zbytek += ' ';
+        i = j - 1;
+    }
+    return { zbytek, skupiny };
+}
+
+// Token hledání pro frontendové filtrování (podporuje negaci -, čárku jako OR, rozsah let, mezeru za dvojtečkou a neuzavřené uvozovky).
+// Svislítko a závorky (blond | zrzava, (rok:1970-1979 | rok:1980-1989) vyska:>175) dají token se skupinou:
+// skupina = alternativy (každá je seznam tokenů, stačí jedna), text = původní zápis pro panel filtrů.
 export function rozlozitDotaz(dotaz) {
     let d = String(dotaz || '').trim();
     if (!d) return [];
     if ((d.match(/"/g) || []).length % 2 !== 0) d += '"';
+    const alternativy = rozdelitNebo(d);
+    if (alternativy.length > 1) {
+        const skupina = alternativy.map(a => rozlozitDotaz(a)).filter(t => t.length);
+        if (!skupina.length) return [];
+        if (skupina.length === 1) return skupina[0];
+        return [tokenSkupiny(false, skupina, d)];
+    }
+    const { zbytek, skupiny } = vyjmoutZavorky(d);
+    const tokeny = rozlozitSlova(zbytek);
+    for (const z of skupiny) {
+        const vnitrek = rozlozitDotaz(z.text);
+        if (vnitrek.length) tokeny.push(tokenSkupiny(z.negace, [vnitrek], `${z.negace ? '-' : ''}(${z.text.trim()})`));
+    }
+    return tokeny;
+}
+const tokenSkupiny = (negace, skupina, text) => ({ negace, klic: '', hodnota: '', varianty: [], surove: [], skupina, text });
+// Všechny tokeny i uvnitř skupin (které příkazy dotaz používá)
+export const plocheTokeny = tokeny => tokeny.flatMap(t => t.skupina ? [t, ...t.skupina.flatMap(plocheTokeny)] : [t]);
+
+function rozlozitSlova(d) {
     // Stejný vzor jako backend (hledani.go, vzorSlovaHledani): klíč s hodnotou (porovnání čísla i desetinného,
     // seznam NEBO přes čárku, každá hodnota i v uvozovkách), fráze v uvozovkách, samostatné slovo
     const vzor = /(-|!)?([\p{L}]+):\s*((?:>=|<=|==|>|<|=)\s*\d+(?:[.,]\d+)?|(?:"[^"]*"|[^\s",:]+)(?:\s*,\s*(?:"[^"]*"|[^\s",:]+))*)?|(-|!)?"([^"]*)"|(\S+)/gu;
@@ -572,7 +636,7 @@ export function rozlozitDotaz(dotaz) {
 
 // Klíče cíleného hledání, které zná backend (hledání modelek). Pohled, který daný údaj nemá (vlasy na stěně
 // centerfoldů), slovo s takovým klíčem nic neomezuje; neznámý klíč se hledá jako text „klic:hodnota“.
-const ZNAME_KLICE = new Set(['jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'kategorie', 'vyskyt', 'fotograf',
+const ZNAME_KLICE = new Set(['foto', 'obsah', 'jmeno', 'vlasy', 'oci', 'narodnost', 'etnicita', 'misto', 'tag', 'tagy', 'role', 'kategorie', 'vyskyt', 'fotograf',
     'rok', 'vydani', 'narozena', 'edice', 'prsa', 'ochlupeni', 'poznamka', 'vyska', 'vaha', 'miry', 'hodnoceni', 'srdicka',
     'tetovani', 'piercing', 'obalka', 'obalky', 'umrti', 'zemrela', 'nafoceno', 'pas', 'hrudnik', 'boky', 'bmi', 'whr', 'vek', 'fotek']);
 const jeCislo = text => /^[\d.\-]+$/.test(text);
@@ -700,7 +764,7 @@ export function vekVPrvnimCisle(m) {
 export function nepouziteKlice(tokeny, pole) {
     const zna = new Set(Object.keys(pole));
     if (zna.has('hodnoceni')) zna.add('srdicka');
-    return [...new Set(tokeny.filter(t => t.klic && ZNAME_KLICE.has(t.klic) && !zna.has(t.klic)).map(t => `${t.klic}:`))];
+    return [...new Set(plocheTokeny(tokeny).filter(t => t.klic && ZNAME_KLICE.has(t.klic) && !zna.has(t.klic)).map(t => `${t.klic}:`))];
 }
 // Varování do řádku voleb (ui/volby.js ho přesune vpravo do stavové lišty)
 export const htmlVarovaniHledani = (klice) => klice.length
@@ -720,6 +784,14 @@ export function vyhovujeHledani(texty, tokeny, pole = {}) {
     const udaje = Object.fromEntries(Object.entries(pole).map(([k, v]) => [k, bezDiakritiky(v || '')]));
     const jmenaAFotografove = 'jmeno' in udaje || 'fotograf' in udaje ? [udaje.jmeno, udaje.fotograf].filter(Boolean) : vse;
     for (const t of tokeny) {
+        if (t.skupina) {
+            let shoda = t.skupina.some(alt => vyhovujeHledani(texty, alt, pole));
+            if (t.negace) shoda = !shoda;
+            if (!shoda) return false;
+            continue;
+        }
+        // Obsah fotek slovy umí jen backend (Galerie modelek); jinde podmínka nic neomezuje
+        if ((t.klic === 'foto' || t.klic === 'obsah') && !(t.klic in pole)) continue;
         let kde = vse;
         let proPreklepy = jmenaAFotografove;
         let hledane = t.varianty;
@@ -820,6 +892,7 @@ export const PRIKAZY = [
     { klic: 'vyskyt:', popis: 'Výskyt: casopis, online (jen na internetu), neurceno' },
     { klic: 'nafoceno:', popis: 'Kdy bylo online album nafoceno (2004, 2004-06)' },
     { klic: 'fotograf:', popis: 'Jméno fotografa' },
+    { klic: 'foto:', popis: 'Co je na fotkách, slovy (foto:"na pláži v bílém"); řadí podle shody' },
     { klic: 'hodnoceni:', popis: 'Hodnocení (1–5 i půlky 3,5; >=4)' },
     { klic: 'srdicka:', popis: 'Hodnocení srdíčky (5, >=4)' },
     { klic: 'narodnost:', popis: 'Národnost modelky' },

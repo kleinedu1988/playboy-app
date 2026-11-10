@@ -7,6 +7,22 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.52.0] – 2026-11-10
+
+### Přidáno
+- **NEBO a závorky v hledání** (`internal/hledani/hledani.go`, `frontend/src/lib/format.js`):
+  - `blond | zrzka`, `(70. léta | 80. léta) výška > 175`, `-(…)` vyloučí celou skupinu; česky stačí slovo „nebo“.
+  - Stejně v backendu i ve frontendu (společný test `testdata/hledani-shoda.json`).
+  - Pod polem hledání věta „Hledám: …“ u složeného dotazu.
+- **`foto:"na pláži v bílém"` v Galerii modelek** (`hledani_foto.go`): modelky, které mají fotku odpovídající textu
+  (český textový model, stejný práh jako hledání slovy), seřazené podle shody. Bez obsahu fotek podmínka nic
+  neomezuje a program to jednou řekne.
+- **Historie hledání**: posledních 20 dotazů v našeptávači při prázdném poli, při psaní „Dříve hledané“;
+  Shift+Delete smaže, **Ctrl+S** uloží zvýrazněný nebo psaný dotaz jako chytrý výběr ⚡.
+- **Výběry s novinkami** (`chytre_vybery.go`): odznak „+N“ u čipů a karet ⚡, co přibylo od posledního otevření;
+  v okně výběru **Jako časopis**, **Prezentace** a **Dnešní výběr** jen z modelek výběru (`GetCtvericeKPorovnani`
+  má nově okruh, `vyber:<id>`).
+
 ## [1.51.1] – 2026-11-10
 
 ### Přidáno

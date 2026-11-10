@@ -1,5 +1,7 @@
 // Rychlé výsledky pod hledáním odkudkoli: příkazy vyhledávání, hodnoty filtrů, modelky, články, čísla a fotografové
 import { navrhnoutVyrazy, prevest } from '../lib/hledani-dotaz';
+import { odebratDotaz, podobneDotazy, pridatDotaz } from '../lib/historie-hledani';
+import { ulozitDotaz } from './chytre-vybery';
 import { GetFotografove, GetKalendar, HledatClanky } from './backend';
 import { PRIKAZY, bezDiakritiky, esc, kategorieModelky, nazevVydani, obrazek, paskaCisla, poleCisla, popisKategorie, rozlozitDotaz, sklonovat, vyhovujeHledani } from '../lib/format';
 import { poZmeneDat } from './udalosti';
@@ -26,6 +28,18 @@ let casovac = 0;
 let polozky = [];
 let vybrana = -1;
 let otevritPrvni = false; // Enter dřív, než doběhlo hledání: po vykreslení se otevře první výsledek
+
+// Historie hledání (1.52): posledních 20 dotazů v localStorage; při prázdném poli se ukáže celá, při psaní podobné
+let historie = (() => { try { const h = JSON.parse(localStorage.getItem('historieHledani') || '[]'); return Array.isArray(h) ? h.filter(x => typeof x === 'string') : []; } catch { return []; } })();
+function ulozitHistorii(h) {
+    historie = h;
+    try { localStorage.setItem('historieHledani', JSON.stringify(h)); } catch { /* jen pro toto spuštění */ }
+}
+const zapamatovatDotaz = () => { if (!searchInput.disabled && !hledaniVeFronte()) ulozitHistorii(pridatDotaz(historie, searchInput.value)); };
+const polozkaHistorie = d => ({
+    akce: () => { searchInput.value = d; searchInput.dispatchEvent(new Event('input', { bubbles: true })); },
+    html: `<span class="naseptavac-nahled-ikona">↺</span><span class="naseptavac-text"><span class="naseptavac-nazev">${esc(d)}</span></span>`,
+});
 
 // Na podstránkách (profil, vydání) a na stránkách Hodnocení, Síň slávy a Sbírka hledání nefiltruje mřížku pod sebou,
 // ale rovnou nachází modelku, číslo, článek nebo fotografa k otevření
@@ -245,7 +259,8 @@ async function hledat() {
     const moje = ++cisloHledani;
 
     // V Souhrnu Údržby hledání filtruje frontu, výsledky pod polem by překážely
-    if (!trimDotaz || searchInput.disabled || hledaniVeFronte()) return zavritNaseptavac();
+    if (searchInput.disabled || hledaniVeFronte()) return zavritNaseptavac();
+    if (!trimDotaz) return ukazatHistorii();
 
     const { slovoPred } = ziskatAktivniSlovo();
     const negPrefix = (slovoPred.startsWith('-') || slovoPred.startsWith('!')) ? slovoPred[0] : '';
@@ -340,7 +355,7 @@ async function hledat() {
         const skupinaIdx = pocetSloupcu++;
         const obsah = seznam.map((prvek, radekIdx) => {
             const { akce, html } = vykresliPolozku(prvek);
-            polozky.push({ akce, druh, skupina: skupinaIdx, radek: radekIdx });
+            polozky.push({ akce, druh, skupina: skupinaIdx, radek: radekIdx, dotaz: nazev === 'Dříve hledané' ? prvek : undefined });
             return `<button type="button" class="naseptavac-polozka" data-polozka="${polozky.length - 1}" role="option">${html}</button>`;
         }).join('');
         return `<section class="naseptavac-skupina ${trida}"><h5><span>${esc(nazev)}</span><span class="naseptavac-pocet">${seznam.length}</span></h5><div class="naseptavac-seznam">${obsah}</div></section>`;
@@ -357,6 +372,7 @@ async function hledat() {
     };
 
     const sekce = [
+        vytvorSkupinu('Dříve hledané', podobneDotazy(historie, trimDotaz, 3), 'vlozit', 'naseptavac-prikazy', polozkaHistorie),
         vytvorSkupinu('Chytré výrazy', moznostiVyrazu, 'vlozit', 'naseptavac-prikazy', v => ({
             akce: () => nahraditAktivniSlovo(v.vyraz, !v.vyraz.endsWith(' ')),
             html: `
@@ -436,10 +452,27 @@ async function hledat() {
     }
     const viceSloupcu = sekce.length > 1;
     naseptavac.classList.toggle('uzky', !viceSloupcu);
-    naseptavac.innerHTML = `<div class="naseptavac-mrizka">${sekce.join('')}</div><div class="naseptavac-pata">↑↓${viceSloupcu ? ' ←→' : ''} vybrat · Enter ${jenNajit() ? 'otevřít první' : 'vložit/otevřít'} · Esc zavřít</div>`;
+    naseptavac.innerHTML = `<div class="naseptavac-mrizka">${sekce.join('')}</div><div class="naseptavac-pata">↑↓${viceSloupcu ? ' ←→' : ''} vybrat · Enter ${jenNajit() ? 'otevřít první' : 'vložit/otevřít'} · Ctrl+S uložit jako ⚡ výběr · Esc zavřít</div>`;
     naseptavac.classList.remove('hidden');
     zavoj.classList.remove('hidden');
     if (prvni) otevrit(0);
+}
+
+// Prázdné pole: posledních 20 dotazů (Enter vloží, Shift+Delete smaže z historie, Ctrl+S uloží jako výběr)
+function ukazatHistorii() {
+    if (!historie.length || document.activeElement !== searchInput) return zavritNaseptavac();
+    polozky = [];
+    const obsah = historie.map((d, radek) => {
+        const { akce, html } = polozkaHistorie(d);
+        polozky.push({ akce, druh: 'vlozit', skupina: 0, radek, dotaz: d });
+        return `<button type="button" class="naseptavac-polozka" data-polozka="${polozky.length - 1}" role="option">${html}</button>`;
+    }).join('');
+    vybrana = -1;
+    naseptavac.classList.add('uzky');
+    naseptavac.innerHTML = `<div class="naseptavac-mrizka"><section class="naseptavac-skupina naseptavac-prikazy"><h5><span>Naposledy hledané</span><span class="naseptavac-pocet">${historie.length}</span></h5><div class="naseptavac-seznam">${obsah}</div></section></div>
+        <div class="naseptavac-pata">↑↓ vybrat · Enter hledat · Shift+Delete smazat z historie · Ctrl+S uložit jako ⚡ výběr · Esc zavřít</div>`;
+    naseptavac.classList.remove('hidden');
+    zavoj.classList.remove('hidden');
 }
 
 // Přepnutí přehledu nebo stránky: staré výsledky ani rozběhnuté hledání už neplatí
@@ -482,17 +515,31 @@ export function pripravit() {
         clearTimeout(casovac);
         casovac = setTimeout(hledat, 120);
     });
-    searchInput.addEventListener('focus', () => {
-        if (searchInput.value.trim().length >= 1) hledat();
-    });
+    searchInput.addEventListener('focus', () => hledat());
     // Zavření (blur, Esc) zruší i čekající hledání, jinak by se výsledky po chvíli znovu otevřely
     searchInput.addEventListener('blur', () => {
+        zapamatovatDotaz();
         clearTimeout(casovac);
         cisloHledani++;
         zavritNaseptavac();
     });
 
     searchInput.addEventListener('keydown', (e) => {
+        // Ctrl+S: zvýrazněný dotaz z historie, jinak psaný, jako chytrý výběr ⚡
+        if (e.key.toLowerCase() === 's' && (e.ctrlKey || e.metaKey) && !e.altKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            const d = polozky[vybrana]?.dotaz || searchInput.value.trim();
+            if (d) { ulozitHistorii(pridatDotaz(historie, d)); ulozitDotaz(d); }
+            return;
+        }
+        if (e.key === 'Delete' && e.shiftKey && polozky[vybrana]?.dotaz && !naseptavac.classList.contains('hidden')) {
+            e.preventDefault();
+            ulozitHistorii(odebratDotaz(historie, polozky[vybrana].dotaz));
+            hledat();
+            return;
+        }
+        if (e.key === 'Enter') zapamatovatDotaz();
         // Esc zruší i hledání, které ještě nedoběhlo (výsledky se ještě neukázaly)
         if (e.key === 'Escape') {
             clearTimeout(casovac);

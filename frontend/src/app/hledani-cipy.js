@@ -1,7 +1,7 @@
 // Čipy chytrého hledání pod polem hledání: každá rozpoznaná podmínka textu (blond → Vlasy: blond, výška > 175 →
 // Výška > 175 cm, 90. léta → 1990–1999, 4*+ → ♥ 4+, i ručně psané příkazy vlasy:blond) má čip, × ji z textu
-// odebere a hledání se hned obnoví. Rozpoznávání je v lib/hledani-dotaz.js.
-import { rozpoznat, odebrat } from '../lib/hledani-dotaz';
+// odebere a hledání se hned obnoví. Složený dotaz (nebo, závorky, foto:) má navíc větu „Hledám: …“ (1.52). Rozpoznávání je v lib/hledani-dotaz.js.
+import { rozpoznat, odebrat, vetaDotazu } from '../lib/hledani-dotaz';
 import { esc } from '../lib/format';
 import { searchInput } from './prvky';
 
@@ -14,8 +14,9 @@ function vykreslit() {
     if (text === posledniText) return;
     posledniText = text;
     casti = rozpoznat(text);
-    prvek.hidden = !casti.length;
-    prvek.innerHTML = casti.map((c, i) => `<span class="hc-cip hc-${esc(c.druh)}${c.prikaz.startsWith('-') ? ' hc-ne' : ''}" title="${esc(`${c.text} → ${c.prikaz}`)}">
+    const veta = vetaDotazu(text);
+    prvek.hidden = !casti.length && !veta;
+    prvek.innerHTML = (veta ? `<span class="hc-veta">${esc(veta)}</span>` : '') + casti.map((c, i) => `<span class="hc-cip hc-${esc(c.druh)}${c.prikaz.startsWith('-') ? ' hc-ne' : ''}" title="${esc(`${c.text} → ${c.prikaz}`)}">
             ${esc(c.popis)}<button type="button" data-hc-odebrat="${i}" aria-label="Odebrat ${esc(c.popis)}">×</button></span>`).join('');
 }
 

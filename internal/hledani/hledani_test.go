@@ -121,3 +121,56 @@ func TestDesetinnaPole(t *testing.T) {
 		t.Fatalf("věk v prvním čísle %d %v", v, ok)
 	}
 }
+
+func TestNeboAZavorky(t *testing.T) {
+	anna := Modelka{ID: 1, Jmeno: "Anna", VlasyBarva: "blond", VyskaCm: 178, Vydani: []string{"1975-03"}}
+	bara := Modelka{ID: 2, Jmeno: "Bára", VlasyBarva: "zrzavá", VyskaCm: 165, Vydani: []string{"1986-07"}}
+	cecil := Modelka{ID: 3, Jmeno: "Cecílie", VlasyBarva: "černá", VyskaCm: 180, Vydani: []string{"1995-01"}}
+	najdi := func(dotaz string) string {
+		h := Pripravit(dotaz)
+		v := ""
+		for _, m := range []Modelka{anna, bara, cecil} {
+			if h.Odpovida(&m, nil) {
+				v += m.Jmeno[:1]
+			}
+		}
+		return v
+	}
+	pripady := map[string]string{
+		"vlasy:blond | vlasy:zrz":                       "AB",
+		"(rok:1970-1979 | rok:1980-1989) vyska:>175":    "A",
+		"(rok:1970-1979 | rok:1990-1999) vyska:>175":    "AC",
+		"-(vlasy:blond | vlasy:zrz)":                    "C",
+		"vlasy:blond |":                                 "A",
+		"(rok:1980-1989":                                "B",
+		`jmeno:"Anna | Bára"`:                           "",
+		"vyska:>170 (vlasy:cern | jmeno:anna) rok:1995": "C",
+	}
+	for dotaz, cekam := range pripady {
+		if v := najdi(dotaz); v != cekam {
+			t.Errorf("%q: %q, čekám %q", dotaz, v, cekam)
+		}
+	}
+}
+
+func TestFotoVDotazu(t *testing.T) {
+	anna := Modelka{ID: 1, Jmeno: "Anna"}
+	bara := Modelka{ID: 2, Jmeno: "Bára"}
+	h := Pripravit(`foto:"na pláži" | jmeno:bara`)
+	if texty := h.TextyFotek(); len(texty) != 1 || texty[0] != "na pláži" {
+		t.Fatalf("texty foto: %v", texty)
+	}
+	// Bez shod (obsah fotek není): foto: neomezuje, alternativa jmeno: dál platí
+	if !Pripravit(`foto:"na pláži"`).Odpovida(&anna, nil) {
+		t.Fatal("foto: bez shod má neomezovat")
+	}
+	h.NastavitShodyFotek("na pláži", map[int]float64{1: 4.2})
+	if !h.Odpovida(&anna, nil) || !h.Odpovida(&bara, nil) {
+		t.Fatal("anna podle fotek, bára podle jména")
+	}
+	h2 := Pripravit(`foto:"na pláži"`)
+	h2.NastavitShodyFotek("na pláži", map[int]float64{1: 4.2})
+	if !h2.Odpovida(&anna, nil) || h2.Odpovida(&bara, nil) {
+		t.Fatal("foto: má najít jen annu")
+	}
+}

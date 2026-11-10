@@ -142,10 +142,12 @@ func (a *App) nactiModelky(vyhledavani string, sOblibenosti bool) ([]Modelka, er
 	if len(h) == 0 {
 		return vsechny, s.err
 	}
+	shodyFotek := a.doplnitShodyFotek(h)
 	texty := s.textyKHledani()
 	var vysledky []Modelka
 	for i := range vsechny {
 		if h.Odpovida(&vsechny[i], &texty[i]) {
+			vsechny[i].ShodaFotek = shodyFotek[vsechny[i].ID]
 			vysledky = append(vysledky, vsechny[i])
 		}
 	}

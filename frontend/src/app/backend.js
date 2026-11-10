@@ -85,6 +85,7 @@ const CTENI = new Set([
     'GetPodobnostObsahu',
     'GetStejneFotky',
     'GetChytreVybery',
+    'GetObsahChytrehoVyberu',
     'NajitUdajeModelky',
     'GetZminky',
     'GetZdraviSbirky',
@@ -152,6 +153,7 @@ const CTENI = new Set([
     'ZaznamenatKolekci',
     // Hledání slovy: textový model je mimo databázi sbírky (stejně jako obsah fotek)
     'GetStavHledaniSlovy',
+    'GetFotoHledaniDostupne',
     'ZapnoutHledaniSlovy',
     'GetStavUceniTagu',
     // Zápis zájmu (otevření profilu, prohlížení fotek) jde jen do databáze učení a pohledy nemění: změnu dat
@@ -269,6 +271,8 @@ export const GetVsechnyKolekce = /** @type {typeof App.GetVsechnyKolekce} */ (ob
 export const GetIdealniModelka = /** @type {typeof App.GetIdealniModelka} */ (obalit('GetIdealniModelka'));
 export const GetVyberyGalerie = /** @type {typeof App.GetVyberyGalerie} */ (obalit('GetVyberyGalerie'));
 export const GetChytreVybery = /** @type {typeof App.GetChytreVybery} */ (obalit('GetChytreVybery'));
+export const GetObsahChytrehoVyberu = /** @type {typeof App.GetObsahChytrehoVyberu} */ (obalit('GetObsahChytrehoVyberu'));
+export const OznacitVyberVideny = /** @type {typeof App.OznacitVyberVideny} */ (obalit('OznacitVyberVideny'));
 export const UlozitChytryVyber = /** @type {typeof App.UlozitChytryVyber} */ (obalit('UlozitChytryVyber'));
 export const SmazatChytryVyber = /** @type {typeof App.SmazatChytryVyber} */ (obalit('SmazatChytryVyber'));
 export const ZmrazitChytryVyber = /** @type {typeof App.ZmrazitChytryVyber} */ (obalit('ZmrazitChytryVyber'));
@@ -315,6 +319,7 @@ export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));
 export const GetStavHledaniSlovy = /** @type {typeof App.GetStavHledaniSlovy} */ (obalit('GetStavHledaniSlovy'));
+export const GetFotoHledaniDostupne = /** @type {typeof App.GetFotoHledaniDostupne} */ (obalit('GetFotoHledaniDostupne'));
 export const ZapnoutHledaniSlovy = /** @type {typeof App.ZapnoutHledaniSlovy} */ (obalit('ZapnoutHledaniSlovy'));
 export const PorovnatCtverici = /** @type {typeof App.PorovnatCtverici} */ (obalit('PorovnatCtverici'));
 export const VratitCtverici = /** @type {typeof App.VratitCtverici} */ (obalit('VratitCtverici'));

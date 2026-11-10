@@ -3,13 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (10. 11. 2026): verze 1.51.1** – etapy 0–13, milník 1.0.0 a verze 1.1–1.51 jsou hotové: mezipaměť náhledů na
+**Stav (10. 11. 2026): verze 1.52.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.52 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
 (1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
 Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
-příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) zdraví sbírky s rozdílem před obnovením zálohy (1.42.0; etapa D je hotová) ročník podle Wikipedie (1.43.0), návrhy z webu ve frontě Údržby (1.44.0), otočené fotky s návrhem výřezu (1.45.0; etapa E je hotová) rok ve sbírce (1.46.0) kapesní katalog do telefonu (1.47.0) a upozornění na novou verzi (1.48.0; etapa F je hotová) přiblížení, hustota a karty (1.49.0) a klid, pohyb a vlastní Přehled (1.50.0; etapa G je hotová) a Údržba Dnes s kvalitou fotek (1.51.0).
+příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) zdraví sbírky s rozdílem před obnovením zálohy (1.42.0; etapa D je hotová) ročník podle Wikipedie (1.43.0), návrhy z webu ve frontě Údržby (1.44.0), otočené fotky s návrhem výřezu (1.45.0; etapa E je hotová) rok ve sbírce (1.46.0) kapesní katalog do telefonu (1.47.0) a upozornění na novou verzi (1.48.0; etapa F je hotová) přiblížení, hustota a karty (1.49.0) a klid, pohyb a vlastní Přehled (1.50.0; etapa G je hotová) Údržba Dnes s kvalitou fotek (1.51.0) a hledání s NEBO, foto: a výběry s novinkami (1.52.0).
 
 ---
 
@@ -67,13 +67,13 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 | **Etapa E** | **1.43–1.45** | ✅ Hotovo | **Kvalita dat ve velkém** | Ročník podle Wikipedie, Návrhy z webu ve frontě Údržby, Otočené fotky a návrh výřezu |
 | **Etapa F** | **1.46–1.48** | ✅ Hotovo | **Přehledy a pohodlí** | Rok ve sbírce, Kapesní katalog offline, Upozornění na novou verzi |
 | **Etapa G** | **1.49–1.50** | ✅ Hotovo | **Vzhled a čitelnost** | Přiblížení, hustota a karty, Klid a vlastní Přehled (Světlý motiv odložen do etapy J) |
-| **Etapa H** | **1.51–1.54** | 🚧 1.51 hotová | **Návrat k hotovým funkcím** | Údržba jako jedna fronta, Hledání a výběry 2, Statistiky a vkus 2, Prohlížení a časopis 2 |
+| **Etapa H** | **1.51–1.54** | 🚧 1.51–1.52 hotové | **Návrat k hotovým funkcím** | Údržba jako jedna fronta, Hledání a výběry 2, Statistiky a vkus 2, Prohlížení a časopis 2 |
 | **Etapa I** | **1.55–1.58** | 📋 Plán | **Sbírka výtisků** | Evidence výtisků české edice, Výdaje a hodnota sbírky, Rozšířené tiskové sestavy, Burza a výměny |
 | **Etapa J** | **1.59–1.63** | ⏸ Odloženo | **Kvíz, průvodce číslem, Google Disk a světlý motiv** | Kvíz „Poznej playmate“, Průvodce přidáním celého čísla, Google Disk v aplikaci, Vkládání z Disku, Světlý motiv a kontrast |
 
 ---
 
-## Dokončeno v řadě 1.0–1.51 ✅
+## Dokončeno v řadě 1.0–1.52 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -122,6 +122,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.49 – Přiblížení, hustota a karty** (`frontend/src/ui/vzhled.js`, `frontend/src/app/vzhled.js`): okno ⋯ › Vzhled s živými změnami a Výchozí; přiblížení 90–150 % (CSS zoom, `--vh`/`--vw`, přepočet plovoucích prvků), hustota Pohodlná / Kompaktní, velikost karet S/M/L pro modelky, Všechny fotky a Centerfoldy, údaje na kartě modelky. Kalendář a zkratka v `Ctrl+K` zbývají.
 - **1.50 – Klid, pohyb a vlastní Přehled** (`frontend/src/ui/vzhled.js`, `frontend/src/app/vzhled.js`, `prohlizec.js`, `prehled-uvod.js`): pohyb Plné / Omezené / Žádné, pozadí a ovládání prohlížeče fotek s filmovým pásem, sekce po startu, záhlaví profilu, pořadí a skrytí karet Mapy čísel.
 - **1.51 – Údržba jako jedna fronta** (`frontend/src/app/udrzba-dnes.js`, `kvalita_fotek.go`): režim Dnes (pokrok dne, série, nejcennější úkoly, rychlé dávky, panel Na pozadí), kvalita fotek z náhledů s výměnou za lepší stejnou; v 1.51.1 jednotná lišta výběru s rozdílem nanečisto a Vrátit.
+- **1.52 – Hledání a výběry 2** (`internal/hledani/hledani.go`, `hledani_foto.go`, `frontend/src/lib/historie-hledani.js`, `chytre_vybery.go`): NEBO (`|`, slovo „nebo“) a závorky v hledání v Go i ve frontendu s větou „Hledám: …“, `foto:"…"` v Galerii modelek (řazení podle shody fotek), historie posledních 20 dotazů v našeptávači s `Ctrl+S` jako chytrý výběr, odznak „+N od minula“ u výběrů ⚡ a výběr jako Časopis, prezentace a Dnešní výběr.
 ---
 
 ## Plán dalšího rozvoje (1.30–1.63)
@@ -433,7 +434,9 @@ Hotové body 1, 3 a 4: režim Dnes s pokrokem dne, sérií, nejcennějšími úk
 
 **Hotovo, když:** „Dnes v Údržbě“ jde projít z klávesnice za 15 minut a každá hromadná akce ukáže předem přesný rozdíl a jde vrátit.
 
-#### 1.52 – Hledání a výběry 2
+#### 1.52 – Hledání a výběry 2 ✅ (10. 11. 2026)
+
+Hotovo vše. `Ctrl+K` program nemá – `foto:` a „nebo“ jsou v našeptávači hledání (`Ctrl+F`). „+N od minula“ počítá položky, které ve výběru při posledním otevření nebyly (i modelky, které podmínkám nově vyhověly). Práh shody `foto:` je převzatý z hledání slovy ve Všech fotkách a v Galerii modelek je neověřený (`K-VYZKOUSENI.md`).
 
 **Cíl:** chytré hledání (1.36) a chytré výběry (1.37) rozšířit o hledání obsahu slovy, složitější podmínky a novinky.
 

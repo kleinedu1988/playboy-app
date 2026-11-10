@@ -52,6 +52,7 @@ export namespace hledani {
 	    cyberGirl: string;
 	    playmateMesice: boolean;
 	    playmateRoku: string;
+	    shodaFotek?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new Modelka(source);
@@ -110,6 +111,7 @@ export namespace hledani {
 	        this.cyberGirl = source["cyberGirl"];
 	        this.playmateMesice = source["playmateMesice"];
 	        this.playmateRoku = source["playmateRoku"];
+	        this.shodaFotek = source["shodaFotek"];
 	    }
 	}
 
@@ -2752,6 +2754,7 @@ export namespace main {
 	    pocet: number;
 	    fotky: sbirka.Fotografie[];
 	    modelky: number[];
+	    nove: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new StavChytrehoVyberu(source);
@@ -2772,6 +2775,7 @@ export namespace main {
 	        this.pocet = source["pocet"];
 	        this.fotky = this.convertValues(source["fotky"], sbirka.Fotografie);
 	        this.modelky = source["modelky"];
+	        this.nove = source["nove"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

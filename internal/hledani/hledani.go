@@ -102,6 +102,8 @@ type Modelka struct {
 	SrdciFotek       int `json:"-"`
 	// Počty hodnocených fotek podle srdíček v každém jejím albu s hodnocenými fotkami (skóre fotek)
 	SrdickaAlb []SrdickaAlba `json:"-"`
+	// Shoda fotek modelky s foto:"…" v dotazu (vyčnívání nad průměr sbírky); 0 = dotaz foto: nemá
+	ShodaFotek float64 `json:"shodaFotek,omitempty"`
 }
 
 // Hodnocení modelky v polovinách srdíčka (3,5 → 7)
@@ -911,6 +913,8 @@ const (
 	hledatPole               // známé pole
 	hledatNeznamePole        // neznámé pole: „klic:hodnota“ jako obyčejný text
 	hledatDesetinne          // pas:, hrudnik:, boky:, bmi:, whr:, vek:, fotek: s číselným filtrem (i desetinným)
+	hledatSkupina            // (…) nebo a | b: stačí jedna z alternativ (každá je celý dotaz)
+	hledatFoto               // foto:"na pláži" – obsah fotek slovy; shody doplní volající (NastavitShodyFotek)
 )
 
 // Jedno slovo dotazu rozebrané předem
@@ -926,6 +930,9 @@ type podminkaHledani struct {
 	od, do   int
 	odF, doF float64 // desetinný filtr (hledatDesetinne)
 	meze     []filtrHodnoceni
+	nebo     []Dotaz         // alternativy skupiny (hledatSkupina)
+	text     string          // původní text foto: (s diakritikou pro textový model)
+	shody    map[int]float64 // foto: modelky s odpovídajícími fotkami; nil = zatím nevyhodnoceno (neomezuje)
 }
 
 // Rozebraný dotaz; prázdný = odpovídá každá modelka
@@ -950,13 +957,150 @@ func slovaVariant(varianty []string) [][]string {
 	return slova
 }
 
+// Svislítko na nejvyšší úrovni (mimo uvozovky a závorky) dělí dotaz na alternativy
+func rozdelitNebo(s string) []string {
+	var casti []string
+	hloubka, uvozovky, od := 0, false, 0
+	for i, z := range s {
+		switch {
+		case z == '"':
+			uvozovky = !uvozovky
+		case uvozovky:
+		case z == '(':
+			hloubka++
+		case z == ')':
+			if hloubka > 0 {
+				hloubka--
+			}
+		case z == '|' && hloubka == 0:
+			casti = append(casti, s[od:i])
+			od = i + 1
+		}
+	}
+	return append(casti, s[od:])
+}
+
+type zavorka struct {
+	negace bool
+	text   string
+}
+
+// Závorky na nejvyšší úrovni (i s - nebo ! před nimi) se vyjmou jako skupiny; neuzavřená sahá do konce dotazu
+func vyjmoutZavorky(s string) (string, []zavorka) {
+	var zbytek strings.Builder
+	var skupiny []zavorka
+	uvozovky := false
+	b := []byte(s)
+	for i := 0; i < len(b); i++ {
+		z := b[i]
+		if z == '"' {
+			uvozovky = !uvozovky
+		}
+		if uvozovky || z != '(' {
+			zbytek.WriteByte(z)
+			continue
+		}
+		negace := false
+		if t := strings.TrimRight(zbytek.String(), " "); strings.HasSuffix(t, "-") || strings.HasSuffix(t, "!") {
+			if p := len(t) - 1; p == 0 || t[p-1] == ' ' {
+				negace = true
+				obsah := t[:p]
+				zbytek.Reset()
+				zbytek.WriteString(obsah)
+			}
+		}
+		hloubka, uvnitr, j := 1, false, i+1
+		for ; j < len(b) && hloubka > 0; j++ {
+			switch {
+			case b[j] == '"':
+				uvnitr = !uvnitr
+			case uvnitr:
+			case b[j] == '(':
+				hloubka++
+			case b[j] == ')':
+				hloubka--
+			}
+		}
+		konec := j
+		if hloubka == 0 {
+			konec = j - 1
+		}
+		skupiny = append(skupiny, zavorka{negace: negace, text: s[i+1 : konec]})
+		zbytek.WriteByte(' ')
+		i = j - 1
+	}
+	return zbytek.String(), skupiny
+}
+
 // Rozbor dotazu: negace (-tag:), čárka jako OR (vlasy:blond,zrzava), numerické porovnání (>175, 1970..1979),
-// neuzavřené uvozovky; slovo, které nic neomezuje (prázdná hodnota, samá čárka), se vynechá
+// neuzavřené uvozovky; slovo, které nic neomezuje (prázdná hodnota, samá čárka), se vynechá.
+// Svislítko je NEBO mezi celými podmínkami (blond | zrzava, rok:1970-1979 | rok:1980-1989) a závorky je
+// seskupují: (rok:1970-1979 | rok:1980-1989) vyska:>175. foto:"…" hledá v obsahu fotek (shody doplní volající).
 func Pripravit(vyhledavani string) Dotaz {
 	// Pokud je v dotazu lichý počet uvozovek (uživatel píše uvozovku a ještě ji neuzavřel), pomyslně ji uzavřeme na konci
 	if strings.Count(vyhledavani, "\"")%2 != 0 {
 		vyhledavani += "\""
 	}
+	if alternativy := rozdelitNebo(vyhledavani); len(alternativy) > 1 {
+		p := podminkaHledani{druh: hledatSkupina}
+		for _, a := range alternativy {
+			d := Pripravit(a)
+			if len(d) == 0 {
+				// Prázdná alternativa (píše se další): nic neomezuje, ostatní se zatím neberou jako podmínka
+				continue
+			}
+			p.nebo = append(p.nebo, d)
+		}
+		if len(p.nebo) == 0 {
+			return nil
+		}
+		if len(p.nebo) == 1 {
+			return p.nebo[0]
+		}
+		return Dotaz{p}
+	}
+	zbytek, zavorky := vyjmoutZavorky(vyhledavani)
+	h := pripravitSlova(zbytek)
+	for _, z := range zavorky {
+		if d := Pripravit(z.text); len(d) > 0 {
+			h = append(h, podminkaHledani{druh: hledatSkupina, negace: z.negace, nebo: []Dotaz{d}})
+		}
+	}
+	return h
+}
+
+// TextyFotek: texty všech foto:"…" v dotazu (i ve skupinách), každý jednou
+func (h Dotaz) TextyFotek() []string {
+	var v []string
+	videno := map[string]bool{}
+	h.prochazet(func(p *podminkaHledani) {
+		if p.druh == hledatFoto && !videno[p.text] {
+			videno[p.text] = true
+			v = append(v, p.text)
+		}
+	})
+	return v
+}
+
+// NastavitShodyFotek: modelky, jejichž fotky odpovídají textu foto:"…" (id → síla shody)
+func (h Dotaz) NastavitShodyFotek(text string, shody map[int]float64) {
+	h.prochazet(func(p *podminkaHledani) {
+		if p.druh == hledatFoto && p.text == text {
+			p.shody = shody
+		}
+	})
+}
+
+func (h Dotaz) prochazet(f func(p *podminkaHledani)) {
+	for i := range h {
+		f(&h[i])
+		for _, d := range h[i].nebo {
+			d.prochazet(f)
+		}
+	}
+}
+
+func pripravitSlova(vyhledavani string) Dotaz {
 	var h Dotaz
 	for _, casti := range vzorSlovaHledani.FindAllStringSubmatch(vyhledavani, -1) {
 		var negace bool
@@ -1001,6 +1145,11 @@ func Pripravit(vyhledavani string) Dotaz {
 			continue
 		}
 		p.klic = Zjednodusit(klic)
+		if p.klic == "foto" || p.klic == "obsah" {
+			p.druh, p.text = hledatFoto, strings.TrimSpace(hodnota)
+			h = append(h, p)
+			continue
+		}
 		op, numOd, numDo, ok := parsovatNumerickyFiltr(hodnota)
 		rokNeboNarozena := p.klic == "rok" || p.klic == "narozena"
 		// Rok kratší než čtyři číslice (rok:197) je začátek roku, ne přesný rok: hledá se jako text
@@ -1150,6 +1299,18 @@ func (h Dotaz) Odpovida(m *Modelka, t *Texty) bool {
 			if x, zname := DesetinnaHodnota(m, p.klic); zname {
 				shoda = vyhovujeDesetinne(x, p.op, p.odF, p.doF)
 			}
+		case hledatSkupina:
+			for _, d := range p.nebo {
+				if d.Odpovida(m, texty()) {
+					shoda = true
+					break
+				}
+			}
+		case hledatFoto:
+			if p.shody == nil {
+				continue // obsah fotek není k dispozici: neomezuje (ani s negací; okno to řekne)
+			}
+			_, shoda = p.shody[m.ID]
 		}
 		if shoda == p.negace {
 			return false

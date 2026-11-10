@@ -45,7 +45,7 @@ export function GetClankyModelky(arg1:number):Promise<Array<sbirka.Clanek>>;
 
 export function GetCovery():Promise<Array<sbirka.Fotografie>>;
 
-export function GetCtvericeKPorovnani(arg1:number):Promise<Array<main.CtvericePorovnani>>;
+export function GetCtvericeKPorovnani(arg1:number,arg2:string):Promise<Array<main.CtvericePorovnani>>;
 
 export function GetDuvodOdhadu(arg1:number):Promise<string>;
 
@@ -56,6 +56,8 @@ export function GetFotkyKOdemceni(arg1:string):Promise<oblibenost.FrontaFotek>;
 export function GetFotkyKPruvodci():Promise<oblibenost.FrontaFotek>;
 
 export function GetFotkyVyberu(arg1:number):Promise<Array<sbirka.Fotografie>>;
+
+export function GetFotoHledaniDostupne():Promise<boolean>;
 
 export function GetFotografieModelky(arg1:number):Promise<Array<sbirka.Fotografie>>;
 
@@ -108,6 +110,8 @@ export function GetNepotagovaneFotky():Promise<Array<sbirka.Fotografie>>;
 export function GetNovaVerze():Promise<main.NovaVerze>;
 
 export function GetOblibenost():Promise<main.StavOblibenosti>;
+
+export function GetObsahChytrehoVyberu(arg1:string,arg2:number):Promise<main.StavChytrehoVyberu>;
 
 export function GetOdznakyModelky(arg1:number):Promise<Array<main.OdznakModelky>>;
 
@@ -250,6 +254,8 @@ export function OznacitKvalituVPoradku(arg1:Array<string>,arg2:boolean):Promise<
 export function OznacitOtoceniVPoradku(arg1:Array<string>,arg2:boolean):Promise<boolean>;
 
 export function OznacitRuzneFotky(arg1:Array<string>):Promise<boolean>;
+
+export function OznacitVyberVideny(arg1:string):Promise<void>;
 
 export function OznacitVyrezVychozi(arg1:Array<number>,arg2:boolean):Promise<boolean>;
 

@@ -39,11 +39,12 @@ const nahledy = new Map();
 let poradiPred = new Map();
 let voleb = 0;
 let zamek = false;
+let okruh = ''; // '' = všechny, vyber:<id> = jen modelky chytrého výběru (1.52)
 
 async function doplnit() {
     if (fronta.length >= 3) return;
     let nove = [];
-    try { nove = await GetCtvericeKPorovnani(DAVKA) || []; } catch { nove = []; }
+    try { nove = await GetCtvericeKPorovnani(DAVKA, okruh) || []; } catch { nove = []; }
     fronta.push(...nove);
     const ids = [...new Set(nove.flatMap(c => c.modelky))].filter(id => !nahledy.has(id));
     if (ids.length) {
@@ -163,10 +164,13 @@ function klavesa(e) {
     }
 }
 
-// Otevře dnešní výběr (kartička po spuštění, nabídka ⋯)
-export async function otevritDnesniVyber() {
+// Otevře dnešní výběr (kartička po spuštění, nabídka ⋯); zOkruhu = vyber:<id> porovnává jen modelky výběru ⚡
+export async function otevritDnesniVyber(zOkruhu = '') {
     schovatKarticku();
     if (okno) return;
+    const novyOkruh = typeof zOkruhu === 'string' ? zOkruhu : '';
+    if (novyOkruh !== okruh) fronta.length = 0;
+    okruh = novyOkruh;
     const pozadi = document.createElement('div');
     pozadi.className = 'dv-pozadi';
     pozadi.innerHTML = '<div class="dv-okno" role="dialog" aria-label="Dnešní výběr"><div class="dv-prazdno">Připravuji čtveřice…</div></div>';

@@ -70,3 +70,34 @@ test('Desetinná pole ve frontendu stejně jako v backendu (TestDesetinnaPole)',
     assert.ok(!vyhovujeHledani([], rozlozitDotaz('pas:<70'), poleModelkyFotky({ obvodPasCm: 0 })));
     assert.ok(vyhovujeHledani([], rozlozitDotaz(prevest('blond výška > 165 pas <= 60')), pole));
 });
+
+test('nebo a závorky: převod, věta a vyhodnocení', async () => {
+    const { prevest, vetaDotazu, neboNaSvislitko } = await import('../src/lib/hledani-dotaz.js');
+    const { rozlozitDotaz, vyhovujeHledani } = await import('../src/lib/format.js');
+    assert.equal(prevest('(70. léta | 80. léta) výška > 175'), '(rok:1970-1979 | rok:1980-1989) vyska:>175');
+    assert.equal(prevest('blond nebo zrzka'), 'vlasy:blond | vlasy:zrz,rus,rys,red,auburn');
+    assert.equal(neboNaSvislitko('jmeno:"Anna nebo Bára" nebo x'), 'jmeno:"Anna nebo Bára" | x');
+    assert.equal(vetaDotazu('blond'), '');
+    assert.equal(vetaDotazu('blond nebo zrzka'), 'Hledám: Vlasy: blond nebo Vlasy: zrzavé');
+    assert.equal(vetaDotazu('-(blond | zrzka) Anna'), 'Hledám: „Anna“ a ne (Vlasy: blond nebo Vlasy: zrzavé)');
+    assert.match(vetaDotazu('foto:"na pláži"'), /Na fotkách: na pláži/);
+    const pole = r => ({ rok: String(r) });
+    const t = rozlozitDotaz('rok:1975 | rok:1985');
+    assert.equal(t.length, 1);
+    assert.ok(t[0].skupina);
+    assert.equal(vyhovujeHledani(['x'], t, pole(1975)), true);
+    assert.equal(vyhovujeHledani(['x'], t, pole(1995)), false);
+    assert.equal(vyhovujeHledani(['x'], rozlozitDotaz('-(rok:1975 | rok:1985)'), pole(1995)), true);
+    // foto: jinde než v Galerii modelek nic neomezuje
+    assert.equal(vyhovujeHledani(['x'], rozlozitDotaz('foto:"na pláži"'), pole(1995)), true);
+});
+
+test('chytrý výběr jako časopis', async () => {
+    const { stranyVyberu } = await import('../src/lib/casopis.js');
+    const s = stranyVyberu({ nazev: 'Blond', modelky: [{ jmeno: 'Anna', coverUrl: 'a' }, { jmeno: 'Bez fotky' }, undefined],
+        fotky: [{ url: 'f', rotace: 90, jmenoModelky: 'Bára' }], obrazek: u => `/${u}` });
+    assert.equal(s.length, 2);
+    assert.equal(s[0].nadpis, 'Anna');
+    assert.equal(s[0].fotky[0].url, '/a');
+    assert.deepEqual(s[1].fotky[0], { url: '/f', rotace: 90 });
+});

@@ -1,7 +1,7 @@
 // Nejlepší fotky a vlastní výběry
 import { GetFotkyVyberu, GetNejlepsiFotky, GetVybery, PrejmenovatVyber, PridatDoVyberu, SmazatVyber, VyberPodleNazvu } from './backend';
 import { oznamit } from '../ui/oznameni';
-import { bezDiakritiky, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, obrazek, poleFotky, poleModelkyFotky, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { bezDiakritiky, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, obrazek, plocheTokeny, poleFotky, poleModelkyFotky, rozlozitDotaz, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { stav } from './stav';
 import { vybratKliknutim } from './vyber';
 import { best, searchInput } from './prvky';
@@ -61,7 +61,7 @@ export async function nacistNejlepsi(dotaz = '', zMezipameti = false) {
 
     const tokeny = rozlozitDotaz(prevest(dotaz));
     // Příkazy vzhledu a měr (vlasy:blond, vyska:>175) se posuzují podle modelky fotky
-    const katalog = tokeny.some(t => t.klic && !(t.klic in poleFotky({}))) ? await modelkyPodleId() : null;
+    const katalog = plocheTokeny(tokeny).some(t => t.klic && !(t.klic in poleFotky({}))) ? await modelkyPodleId() : null;
     if (moje !== stav.cisloNacteni) return;
     const vyhovuje = f => vyhovujeHledani([
         f.jmenoModelky,

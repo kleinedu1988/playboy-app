@@ -22,13 +22,13 @@ type CtvericePorovnani struct {
 const velikostCtverice = 4
 
 // Čtveřice k porovnání (nejvýš pocet); prázdné, když na porovnání není dost modelek
-func (a *App) GetCtvericeKPorovnani(pocet int) []CtvericePorovnani {
+func (a *App) GetCtvericeKPorovnani(pocet int, okruh string) []CtvericePorovnani {
 	vysledek := []CtvericePorovnani{}
 	if a.uc == nil {
 		return vysledek
 	}
 	pocet = min(max(pocet, 1), 20)
-	dvojice := a.GetDvojiceKPorovnani(min(pocet*velikostCtverice, maxDvojicNaVolani), "")
+	dvojice := a.GetDvojiceKPorovnani(min(pocet*velikostCtverice, maxDvojicNaVolani), okruh)
 	if len(dvojice) == 0 {
 		return vysledek
 	}

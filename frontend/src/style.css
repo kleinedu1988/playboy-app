@@ -20944,3 +20944,21 @@ body.rezim-vyberu #detailView .poster {
 .hv-po { color: var(--text-main); }
 .hv-souhrn { margin: 0 0 10px; }
 .hv-karta > .pass-hint { margin: 10px 0 0; }
+
+/* Věta složeného dotazu (1.52) */
+.hc-veta {
+    flex-basis: 100%;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* Přírůstek chytrého výběru od minula (1.52) */
+.cv-nove {
+    font-style: normal;
+    font-size: 0.72em;
+    font-weight: 600;
+    color: var(--accent);
+    margin-left: 6px;
+}

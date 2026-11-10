@@ -243,9 +243,10 @@ export async function otevritProfil(modelka = stav.aktualniModelka) {
     otevrit(stranyProfilu({ modelka, titulni: modelka.coverUrl ? obrazek(modelka.coverUrl, VELIKOST_STRANY) : '', alba, clanky }), modelka.jmeno);
 }
 
-// Libovolné strany (Rok ve sbírce): stejné okno, ovládání i prezentace
-export function otevritStrany(noveStrany, titul) {
-    return otevrit(noveStrany, titul);
+// Libovolné strany (Rok ve sbírce, chytrý výběr): stejné okno, ovládání i prezentace; prezentace = rovnou spustit
+export async function otevritStrany(noveStrany, titul, { prezentace = false } = {}) {
+    await otevrit(noveStrany, titul);
+    if (prezentace && noveStrany.length > 1 && !bezi) prepnoutPrezentaci();
 }
 
 export function pripravit() {

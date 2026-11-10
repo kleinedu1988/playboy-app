@@ -3,8 +3,12 @@
 // počítají z aktuálních dat. Čipy ⚡ se vykreslují do míst [data-cv-druh] (lišta Modelek, volby Galerie fotek, panel
 // kolekcí) a karta do [data-cv-prehled] v Přehledu; místa plní MutationObserver, takže pohledy jen vloží značku.
 // Klik na čip výběr zapne, ✎ otevře okno: název, popis, převzetí aktuálních podmínek, zmrazení, smazání.
-import { GetChytreVybery, SmazatChytryVyber, UlozitChytryVyber, ZmrazitChytryVyber } from './backend';
+import { GetChytreVybery, GetObsahChytrehoVyberu, OznacitVyberVideny, SmazatChytryVyber, UlozitChytryVyber, ZmrazitChytryVyber } from './backend';
+import { stranyVyberu } from '../lib/casopis';
+import { otevritStrany } from './casopis';
+import { otevritDnesniVyber } from './dnesni-vyber';
 import { esc, obrazek, sklonovat } from '../lib/format';
+import { nazevZDotazu } from '../lib/historie-hledani';
 import { prevest, rozpoznat } from '../lib/hledani-dotaz';
 import { stav } from './stav';
 import { searchInput } from './prvky';
@@ -103,6 +107,28 @@ export async function pouzit(v) {
         await nacistNejlepsi(searchInput.value);
     }
     document.querySelector('main')?.scrollTo({ top: 0 });
+    oznacitVideny(v);
+}
+
+// Otevřený výběr: co v něm teď je, je viděné; přírůstek od minula se jednou řekne
+function oznacitVideny(v) {
+    if (!v.nove) return;
+    const fotky = v.druh === 'fotky';
+    oznamit(`Ve výběru „${v.nazev}“ ${sklonovat(v.nove, fotky ? 'přibyla fotka' : 'přibyla modelka', fotky ? 'přibyly fotky' : 'přibyly modelky', fotky ? 'přibylo fotek' : 'přibylo modelek')} od minula.`);
+    OznacitVyberVideny(v.id).then(obnovit).catch(() => {});
+}
+
+const NEJVIC_STRAN = 200;
+// Výběr jako časopis nebo prezentace (modelky: titulní fotka a údaje, fotky: celé strany)
+async function otevritJakoCasopis(v, prezentace = false) {
+    const [obsah, katalog] = await Promise.all([GetObsahChytrehoVyberu(v.id, NEJVIC_STRAN), vsechnyModelky()]);
+    const podleId = new Map(katalog.map(m => [m.id, m]));
+    const strany = stranyVyberu({ nazev: v.nazev, modelky: (obsah?.modelky || []).map(id => podleId.get(id)), fotky: obsah?.fotky || [],
+        obrazek: u => obrazek(u, 'w2000') });
+    if (!strany.length) return oznamit(`Ve výběru „${v.nazev}“ zatím nejsou ${v.druh === 'fotky' ? 'fotky' : 'modelky s titulní fotkou'}.`);
+    await otevritStrany(strany, `⚡ ${v.nazev}`, { prezentace });
+    if ((obsah?.pocet || 0) > NEJVIC_STRAN) oznamit(`Ukazuji prvních ${NEJVIC_STRAN} z ${obsah.pocet.toLocaleString('cs-CZ')}.`);
+    oznacitVideny(v);
 }
 
 // ——— Čipy a karta v Přehledu ———
@@ -111,7 +137,8 @@ function htmlCipu(vybery, druh, velke) {
     const a = aktualni(druh);
     const cipy = vybery.filter(v => v.druh === druh).map(v => {
         const titulek = [v.popis, popisPodminek(v).join(' · ')].filter(Boolean).join('\n');
-        return `<span class="pl-stitek cv-cip ${shoda(v, a) ? 'on' : ''}"><button type="button" data-cv-pouzit="${esc(v.id)}" title="${esc(titulek)}">⚡ ${esc(v.nazev)}<small>${(v.pocet || 0).toLocaleString('cs-CZ')}</small></button><button type="button" data-cv-upravit="${esc(v.id)}" aria-label="Upravit chytrý výběr" title="Upravit, zmrazit nebo smazat">✎</button></span>`;
+        const nove = v.nove ? `<em class="cv-nove" title="Přibylo od posledního otevření">+${v.nove.toLocaleString('cs-CZ')}</em>` : '';
+        return `<span class="pl-stitek cv-cip ${shoda(v, a) ? 'on' : ''}"><button type="button" data-cv-pouzit="${esc(v.id)}" title="${esc(titulek)}">⚡ ${esc(v.nazev)}<small>${(v.pocet || 0).toLocaleString('cs-CZ')}</small>${nove}</button><button type="button" data-cv-upravit="${esc(v.id)}" aria-label="Upravit chytrý výběr" title="Upravit, zmrazit nebo smazat">✎</button></span>`;
     }).join('');
     const ulozit = `<button type="button" class="link cv-ulozit" data-cv-ulozit="${druh}" ${lzeUlozit(druh) ? '' : `disabled title="Nejdřív zadej hledání${druh === 'modelky' ? ' nebo filtr' : ', filtry, kolekci nebo řazení'}"`}>⚡ Uložit jako chytrý výběr…</button>`;
     if (velke && !cipy) return `<span class="gv-k-prazdne">Zatím žádné – nastav hledání, filtry, kolekci nebo řazení a ulož je jako chytrý výběr; nové fotky, které podmínkám vyhoví, v něm budou samy.</span>${ulozit}`;
@@ -126,7 +153,7 @@ async function htmlPrehledu(vybery) {
     return `<h4>Chytré výběry ⚡<small>živé výběry – nové modelky a fotky se v nich objeví samy</small></h4>
         <div class="cv-dlazdice">${vybery.map(v => `<button type="button" class="cv-dlazdice-polozka" data-cv-pouzit="${esc(v.id)}" title="${esc(popisPodminek(v).join(' · '))}">
             <span class="cv-nahledy ${v.druh}">${nahledy(v) || '<span class="cv-bez">⚡</span>'}</span>
-            <b>⚡ ${esc(v.nazev)}</b><small>${esc(sklonovat(v.pocet || 0, v.druh === 'fotky' ? 'fotka' : 'modelka', v.druh === 'fotky' ? 'fotky' : 'modelky', v.druh === 'fotky' ? 'fotek' : 'modelek'))}${v.popis ? ` · ${esc(v.popis)}` : ''}</small></button>`).join('')}</div>`;
+            <b>⚡ ${esc(v.nazev)}${v.nove ? ` <em class="cv-nove">+${v.nove.toLocaleString('cs-CZ')} od minula</em>` : ''}</b><small>${esc(sklonovat(v.pocet || 0, v.druh === 'fotky' ? 'fotka' : 'modelka', v.druh === 'fotky' ? 'fotky' : 'modelky', v.druh === 'fotky' ? 'fotek' : 'modelek'))}${v.popis ? ` · ${esc(v.popis)}` : ''}</small></button>`).join('')}</div>`;
 }
 
 async function naplnitVse() {
@@ -175,6 +202,9 @@ function vytvoritOkno() {
             <div class="cv-podminky" data-cv-podminky></div>
             <label class="cv-prevzit" data-cv-prevzit-misto hidden><input type="checkbox" data-cv-prevzit /> Převzít aktuální podmínky <span data-cv-aktualni></span></label>
             <div class="cv-dalsi" data-cv-dalsi hidden>
+                <button type="button" class="btn btn-secondary btn-small" data-cv-casopis title="Projít výběr v režimu čtení">Jako časopis</button>
+                <button type="button" class="btn btn-secondary btn-small" data-cv-prezentace title="Režim čtení s automatickým listováním">Prezentace</button>
+                <button type="button" class="btn btn-secondary btn-small" data-cv-dnesni title="Porovnávání po čtveřicích jen z modelek výběru">Dnešní výběr</button>
                 <button type="button" class="btn btn-secondary btn-small" data-cv-zmrazit></button>
                 <button type="button" class="btn btn-secondary btn-small cv-smazat" data-cv-smazat>Smazat</button>
             </div>
@@ -208,6 +238,15 @@ function vytvoritOkno() {
         await SmazatChytryVyber(v.id);
         okno.classList.add('hidden');
         obnovit();
+    });
+    okno.querySelector('[data-cv-casopis]').addEventListener('click', () => { const v = upravovany.v; if (v) { okno.classList.add('hidden'); otevritJakoCasopis(v); } });
+    okno.querySelector('[data-cv-prezentace]').addEventListener('click', () => { const v = upravovany.v; if (v) { okno.classList.add('hidden'); otevritJakoCasopis(v, true); } });
+    okno.querySelector('[data-cv-dnesni]').addEventListener('click', () => {
+        const v = upravovany.v;
+        if (!v) return;
+        if ((v.pocet || 0) < 4) return oznamit('Na Dnešní výběr musí mít výběr aspoň 4 modelky.');
+        okno.classList.add('hidden');
+        otevritDnesniVyber(`vyber:${v.id}`);
     });
     okno.querySelector('[data-cv-zmrazit]').addEventListener('click', async () => {
         const v = upravovany.v;
@@ -246,9 +285,22 @@ function otevritOkno(druh, v = null) {
     okno.querySelector('[data-cv-aktualni]').textContent = lzePrevzit ? `(${popisPodminek(aktualni(druh)).join(' · ') || 'bez podmínek'})` : '';
     /** @type {HTMLElement} */ (okno.querySelector('[data-cv-dalsi]')).hidden = !v;
     okno.querySelector('[data-cv-zmrazit]').textContent = druh === 'fotky' ? 'Zmrazit do běžného výběru' : 'Zmrazit do tagu';
+    /** @type {HTMLElement} */ (okno.querySelector('[data-cv-dnesni]')).hidden = druh !== 'modelky';
     vykreslitPodminky();
     okno.classList.remove('hidden');
     /** @type {HTMLInputElement} */ (okno.querySelector('#cvNazev')).focus();
+}
+
+// Dotaz z historie hledání jednou zkratkou (Ctrl+S v našeptávači) jako chytrý výběr modelek
+export async function ulozitDotaz(zapis) {
+    const z = String(zapis || '').trim();
+    if (!z) return;
+    const vybery = await nacist().catch(() => []);
+    const nazev = nazevZDotazu(z, vybery.filter(v => v.druh === 'modelky').map(v => v.nazev));
+    const v = await UlozitChytryVyber(/** @type {any} */ ({ id: '', nazev, druh: 'modelky', zapis: z, text: prevest(z).trim(), filtr: '' })).catch(() => null);
+    if (!v?.id) return oznamit('Dotaz se nepodařilo uložit jako chytrý výběr.');
+    obnovit();
+    oznamit(`Dotaz je uložený jako chytrý výběr ⚡ „${nazev}“.`, { text: 'Upravit', akce: () => otevritOkno('modelky', /** @type {Vyber} */ (v)) });
 }
 
 export function pripravit() {

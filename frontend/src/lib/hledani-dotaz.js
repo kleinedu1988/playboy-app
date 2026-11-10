@@ -3,7 +3,7 @@
 // umí backend (internal/hledani) i frontend (lib/format.js). Bezstavové: rozpoznat() vrací části textu s pozicí,
 // příkazem a popisem čipu, prevest() celý text s nahrazenými částmi. Příkazy klic:hodnota a fráze v uvozovkách se
 // nepřekládají, jen se popíšou čipem.
-import { bezDiakritiky } from './format.js';
+import { bezDiakritiky, rozdelitNebo, vyjmoutZavorky } from './format.js';
 
 /** @typedef {{ od: number, do: number, text: string, prikaz: string, popis: string, druh: string }} CastDotazu */
 
@@ -12,7 +12,7 @@ const NAZVY = {
     vyska: 'Výška', vaha: 'Váha', pas: 'Pas', hrudnik: 'Hrudník', boky: 'Boky', bmi: 'BMI', whr: 'Pas : boky', vek: 'Věk v 1. čísle',
     fotek: 'Fotek', rok: 'Rok', narozena: 'Narozena', edice: 'Edice', kategorie: 'Kategorie', role: 'Kategorie', vlasy: 'Vlasy', oci: 'Oči',
     narodnost: 'Národnost', tag: 'Tag', tagy: 'Tag', fotograf: 'Fotograf', hodnoceni: 'Srdíčka', srdicka: 'Srdíčka', tetovani: 'Tetování',
-    piercing: 'Piercing', prsa: 'Prsa', ochlupeni: 'Ochlupení', vyskyt: 'Výskyt', obalka: 'Obálka', jmeno: 'Jméno', nafoceno: 'Nafoceno',
+    foto: 'Na fotkách', obsah: 'Na fotkách', piercing: 'Piercing', prsa: 'Prsa', ochlupeni: 'Ochlupení', vyskyt: 'Výskyt', obalka: 'Obálka', jmeno: 'Jméno', nafoceno: 'Nafoceno',
 };
 const JEDNOTKY = { vyska: 'cm', vaha: 'kg', pas: 'cm', hrudnik: 'cm', boky: 'cm', vek: 'let' };
 
@@ -168,8 +168,17 @@ export function rozpoznat(text) {
     return casti.sort((a, b) => a.od - b.od);
 }
 
+// Samostatné slovo „nebo“ mimo uvozovky → svislítko (blond nebo zrzka = blond | zrzka); na začátku či konci nic nespojuje
+export function neboNaSvislitko(text) {
+    return String(text || '').split(/("[^"]*"?)/).map((cast, i) => i % 2 ? cast
+        : cast.replace(/(^|\s)nebo(?=\s|$)/giu, (_, mezera) => `${mezera}|`)).join('');
+}
+
 // Text dotazu s rozpoznanými výrazy nahrazenými příkazy (pro backend a filtrování ve frontendu)
 export function prevest(text) {
+    return neboNaSvislitko(prevestVyrazy(text));
+}
+function prevestVyrazy(text) {
     const puvodni = String(text || '');
     const casti = rozpoznat(puvodni);
     if (!casti.length) return puvodni;
@@ -199,6 +208,7 @@ export const NAVRHY_VYRAZU = [
     ['cyber girl', 'Kategorie Cyber Girl'], ['blond', 'Vlasy: blond'], ['brunetka', 'Vlasy: hnědé'], ['zrzka', 'Vlasy: zrzavé'], ['černovláska', 'Vlasy: černé'],
     ['modré oči', 'Oči'], ['zelené oči', 'Oči'], ['hnědé oči', 'Oči'], ['s tetováním', 'Tetování'], ['bez tetování', 'Tetování'],
     ['s piercingem', 'Piercing'], ['silikonová prsa', 'Prsa'], ['přírodní prsa', 'Prsa'], ['bez fotek', 'Modelky bez fotek'],
+    ['foto:"', 'Co je na fotkách, slovy: foto:"na pláži"'], ['nebo', 'Jedna z podmínek: blond nebo zrzka (také |)'],
     ['4*+', 'Aspoň 4 srdíčka'], ['5*', 'Přesně 5 srdíček'], ['bez srdíček', 'Nehodnocené'],
 ];
 export function navrhnoutVyrazy(slovo, nejvic = 6) {
@@ -208,4 +218,41 @@ export function navrhnoutVyrazy(slovo, nejvic = 6) {
         const v = bezDiakritiky(vyraz);
         return v.startsWith(s) && v.trim() !== s;
     }).slice(0, nejvic).map(([vyraz, popis]) => ({ vyraz, popis }));
+}
+
+// Věta pod polem hledání pro složený dotaz (nebo, závorky, foto:): „Hledám: (1970–1979 nebo 1980–1989) a Výška > 175 cm“.
+// Prázdný řetězec, když dotaz složený není (stačí čipy).
+export function vetaDotazu(text) {
+    const t = neboNaSvislitko(String(text || ''));
+    if (!/[|(]/.test(t) && !/(^|\s)-?(foto|obsah):/i.test(t)) return '';
+    const veta = popsatCast(t);
+    return veta ? `Hledám: ${veta}` : '';
+}
+function popsatCast(text) {
+    const alternativy = rozdelitNebo(text).map(a => popsatCast1(a)).filter(Boolean);
+    return alternativy.join(' nebo ');
+}
+function popsatCast1(text) {
+    const { zbytek, skupiny } = vyjmoutZavorky(text);
+    const casti = rozpoznat(zbytek);
+    const popisy = [];
+    let pozice = 0;
+    const volna = (usek) => {
+        for (const slovo of usek.match(/-?"[^"]*"?|\S+/g) || []) {
+            const ne = /^[-!]/.test(slovo);
+            const ciste = slovo.replace(/^[-!]/, '').replace(/"/g, '').trim();
+            if (ciste) popisy.push(`${ne ? 'ne ' : ''}„${ciste}“`);
+        }
+    };
+    for (const c of casti) {
+        volna(zbytek.slice(pozice, c.od));
+        popisy.push(c.popis.replace(/^Ne: /, 'ne '));
+        pozice = c.do;
+    }
+    volna(zbytek.slice(pozice));
+    for (const z of skupiny) {
+        const vnitrek = popsatCast(z.text);
+        if (vnitrek) popisy.push(`${z.negace ? 'ne ' : ''}(${vnitrek})`);
+    }
+    return popisy.join(' a ');
 }

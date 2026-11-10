@@ -9,10 +9,13 @@ const najitDimenzi = (dimenze, klic) => dimenze.find(d => d.klic === klic || d.a
 
 // Text dotazu → filtr. Příkaz, který dimenze neznají, zůstane volným slovem (hledá se jako text, jako v backendu).
 export function parsovat(text, dimenze) {
+    return rozdelitTokeny(rozlozitDotaz(text), dimenze);
+}
+function rozdelitTokeny(tokeny, dimenze) {
     const podminky = [];
     const volne = [];
-    for (const t of rozlozitDotaz(text)) {
-        const d = t.klic && najitDimenzi(dimenze, t.klic);
+    for (const t of tokeny) {
+        const d = t.klic && !t.skupina && najitDimenzi(dimenze, t.klic);
         if (d) podminky.push({ klic: d.klic, negace: t.negace, hodnoty: t.surove, vyraz: t.surove.join(',') });
         else volne.push(t);
     }
@@ -23,7 +26,7 @@ export function parsovat(text, dimenze) {
 const doTextu = h => /[\s,":]/.test(h) ? `"${h.replace(/"/g, '')}"` : h;
 export function serializovat({ podminky = [], volne = [] }) {
     const casti = podminky.map(p => `${p.negace ? '-' : ''}${p.klic}:${p.vyraz && !p.hodnoty?.length ? p.vyraz : p.hodnoty.map(doTextu).join(',')}`);
-    for (const t of volne) casti.push(`${t.negace ? '-' : ''}${t.klic ? `${t.klic}:` : ''}${doTextu(t.hodnota)}`);
+    for (const t of volne) casti.push(t.skupina ? t.text : `${t.negace ? '-' : ''}${t.klic ? `${t.klic}:` : ''}${doTextu(t.hodnota)}`);
     return casti.join(' ');
 }
 
@@ -72,7 +75,14 @@ export function vyhodnotit(polozka, filtr, dimenze, texty, krome = '', pole = nu
         if (!d) continue;
         if (splnuje(polozka, p, d) === p.negace) return false;
     }
-    return !filtr.volne.length || vyhovujeHledani(texty(polozka), filtr.volne, pole ? pole(polozka) : {});
+    const volne = filtr.volne.filter(t => !t.skupina);
+    // Skupina (a | b, závorky): každá alternativa je vlastní filtr se stejnými dimenzemi
+    for (const t of filtr.volne) {
+        if (!t.skupina) continue;
+        const shoda = t.skupina.some(alt => vyhodnotit(polozka, rozdelitTokeny(alt, dimenze), dimenze, texty, krome, pole));
+        if (shoda === t.negace) return false;
+    }
+    return !volne.length || vyhovujeHledani(texty(polozka), volne, pole ? pole(polozka) : {});
 }
 
 // Počty u hodnot jedné dimenze (fasety): kolik položek by zůstalo s ostatními podmínkami, kdyby se vybrala tato

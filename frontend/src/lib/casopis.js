@@ -114,3 +114,20 @@ export function stranyProfilu({ modelka, titulni = '', alba, clanky = [] }) {
 // Interval prezentace: 3 / 5 / 10 s, jinak vypnuto (0)
 export const INTERVALY = [0, 3, 5, 10];
 export const platnyInterval = s => (INTERVALY.includes(Number(s)) ? Number(s) : 0);
+
+// Chytrý výběr jako časopis (1.52): modelka = úvodní strana s titulní fotkou a údaji, fotka = celá strana.
+// obrazek(url) = adresa velké fotky
+export function stranyVyberu({ nazev, modelky = [], fotky = [], obrazek = u => u }) {
+    /** @type {Strana[]} */
+    const strany = [];
+    for (const m of modelky) {
+        if (!m?.coverUrl) continue;
+        strany.push({ druh: 'uvod', oddil: nazev, fotky: [{ url: obrazek(m.coverUrl), rotace: 0 }], nadtitulek: nazev, nadpis: m.jmeno,
+            udaje: udajeModelky(m), text: '', vyrez: { x: m.coverX ?? 50, y: m.coverY ?? 50 } });
+    }
+    for (const f of fotky) {
+        if (!f?.url) continue;
+        strany.push({ druh: 'foto', oddil: nazev, fotky: [{ url: obrazek(f.url), rotace: f.rotace || 0 }], popisek: f.jmenoModelky || '' });
+    }
+    return strany;
+}

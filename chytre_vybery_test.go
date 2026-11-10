@@ -94,3 +94,34 @@ func TestPrevodVyberuGalerie(t *testing.T) {
 		t.Fatal("převod se opakoval")
 	}
 }
+
+// Odznak +N: co přibylo od posledního otevření; otevření ho vynuluje; Dnešní výběr jen z modelek výběru
+func TestNovinkyVyberu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", VlasyBarva: "blond", Tetovani: -1, Piercing: -1})
+	v := a.UlozitChytryVyber(ChytryVyber{Nazev: "Blond", Druh: DruhVyberuModelky, Text: "vlasy:blond"})
+	nove := func() int { return a.GetChytreVybery(DruhVyberuModelky)[0].Nove }
+	if n := nove(); n != 0 {
+		t.Fatalf("hned po uložení: %d", n)
+	}
+	a.AddModelka(Modelka{Jmeno: "Bára", VlasyBarva: "blond", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Cecílie", VlasyBarva: "blond", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Dana", VlasyBarva: "černá", Tetovani: -1, Piercing: -1})
+	if n := nove(); n != 2 {
+		t.Fatalf("přibyly dvě blond: %d", n)
+	}
+	a.OznacitVyberVideny(v.ID)
+	if n := nove(); n != 0 {
+		t.Fatalf("po otevření: %d", n)
+	}
+	if s := a.GetObsahChytrehoVyberu(v.ID, 100); s.Pocet != 3 || len(s.Modelky) != 3 {
+		t.Fatalf("obsah: %+v", s)
+	}
+	dana := idModelky(t, a, "Dana")
+	if m := a.modelkyVyberu(v.ID); len(m) != 3 || m[dana] {
+		t.Fatalf("modelky výběru: %v", m)
+	}
+	if !a.SmazatChytryVyber(v.ID) || a.nastaveni(predponaVidenoVyberu+v.ID) != "" {
+		t.Fatal("smazání má uklidit i viděné")
+	}
+}

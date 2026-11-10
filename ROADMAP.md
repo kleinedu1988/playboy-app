@@ -6,8 +6,8 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
 **Stav (10. 11. 2026): verze 0.01.001** – program přejmenovaný, verzování začíná znovu. Všechno z Playboy Database
-1.53.0 funguje dál; data se při prvním spuštění sama přesunou do nových složek. Další na řadě je 0.2 – Časopis
-jako údaj čísla.
+1.53.0 funguje dál; data se při prvním spuštění sama přesunou do nových složek. Další na řadě je **0.02.001 – Klíč
+čísla s časopisem v Go**.
 
 ---
 
@@ -17,13 +17,17 @@ Formát **X.XX.XXX** = `MAJOR.MINOR.PATCH` s pevnou šířkou: MAJOR jedna čís
 (000–999), např. `0.02.003`, `1.00.000`. Bez čtvrté části. Tak se verze píše v programu, v CHANGELOG.md, v této
 roadmapě a v K-VYZKOUSENI.md. V `verze.go`, `wails.json` a `package.json` je stejná verze zapsaná bez nul na začátku
 (`0.2.3`), protože SemVer, npm a Wails nuly nepřijmou; převod dělá `zobrazitVerzi` (test `TestVerzeSouhlasi`).
-Kroky plánu níže (0.2, 0.3…) jsou MINOR, tedy verze 0.02.000, 0.03.000…
+**Malé kroky:** každá verze PATCH (`0.02.001`, `0.02.002`…) je jeden malý krok – pár hodin práce, samostatně
+vydatelný, s vlastním „Hotovo, když“ a oddílem v K-VYZKOUSENI.md. Skupina kroků jednoho tématu je MINOR (`0.02`);
+její `.000` se nevydává, první vydaná verze tématu je `.001`. Krok, který by vyšel větší, se před začátkem rozdělí.
+Opravy chyb dostanou další volné číslo PATCH v tématu, které se zrovna dělá.
 
-- **0.x.y – přechod na víc časopisů:** MINOR = krok přechodu z plánu níže, PATCH = dílčí krok nebo oprava.
-- **1.00.000 – první vydání Pinup Katalogu:** přechod hotový (etapa U), ověřený na sbírce se dvěma časopisy.
-- **1.x.y po 1.0:** MINOR = téma z plánu, PATCH = krok v tématu nebo oprava; MAJOR = velký milník.
+- **0.xx.xxx – přechod na víc časopisů** (etapa U): MINOR = téma přechodu, PATCH = krok.
+- **1.00.000 – první vydání Pinup Katalogu:** přechod hotový, ověřený na sbírce se dvěma časopisy.
+- **1.xx.xxx po 1.0:** MINOR = téma z plánu, PATCH = krok; MAJOR = velký milník.
 - Kompatibilitu dat dál hlídá číslo úpravy schématu DB a verze exportu (`TestZmrazeniAlfy`), ne verze programu.
-  Číslování úprav schématu a verzí exportu pokračuje z Playboy Database (nezačíná znovu).
+  Číslování úprav schématu a verzí exportu pokračuje z Playboy Database (nezačíná znovu). Krok se změnou
+  schématu nebo exportu je označený **[schéma]** / **[export]** a dělá jen ji.
 
 Verze se drží synchronně v: `verze.go`, `wails.json`, `frontend/package.json`, `frontend/package-lock.json`,
 `frontend/package.json.md5` a `CHANGELOG.md`. Kontrola nové verze (`aktualizace.go`) bere jen vzdálenou větev,
@@ -36,117 +40,129 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.1–0.9** | 🚧 0.1 hotová | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
-| **1.0** | **1.0.0** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
-| **H** | **1.1** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
-| **I** | **1.2–1.5** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
-| **J** | **1.6–1.10** | ⏸ Odloženo | **Kvíz, průvodce číslem, Google Disk a světlý motiv** | PD 1.59–1.63 |
+| **U** | **0.01–0.09** | 🚧 0.01 hotová | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
+| **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
+| **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
+| **J** | **1.06–1.10** | ⏸ Odloženo | **Kvíz, průvodce číslem, Google Disk a světlý motiv** | PD 1.59–1.63 |
 
 ---
 
-## Etapa U – Univerzální katalog (0.1–0.9)
+## Etapa U – Univerzální katalog (0.01–0.09)
 
 **Cíl:** jedna modelka = jeden profil s celou kariérou, ať vyšla v Playboyi, Penthouse, Hustleru nebo jinde. Časopis
 je nový údaj čísla vedle edice (edice = země vydání: US, CZ, UK…). Playboy zůstává výchozí, takže stávající data
-se nemění a nic se nerozbije; každý krok je samostatně použitelný.
+se nemění; po každém kroku program funguje celý.
 
-Výchozí stav (zjištěno 10. 11. 2026): vydání je text `RRRR-MM[-EDICE]` (`rozlozitVydani` v
-`frontend/src/lib/format.js`), edici zná ~30 souborů a ~100 míst v Go, pojmy Playboye (Playmate, PMOY, centerfold)
-jsou v kódu ~370× – většinou jen popisky. Řady čísel (`RADY_EDIC`, `NEVYSLA_CISLA`) a zdroje z webu (Wikidata,
-Wikipedie, Boobpedia) jsou nastavené jen na Playboy.
+**Výchozí stav (zjištěno 10. 11. 2026):** vydání je text `RRRR-MM[-EDICE]` (`rozlozitVydani` ve
+`frontend/src/lib/format.js`, v Go `sbirka.CastiVydani`, `uceni.CastiVydani`, `hledani.JePlatneVydani`,
+`rozlozitRocnik`, `edicePodleVydani`, `zminky.go`). Rozkládá se na ~60 místech v JS a ~30 v Go; pohledy podle
+edice porovnávají `edice === 'US' | 'CZ'`. Pojmy Playboye (Playmate, PMOY) jsou v kódu ~370× – většinou popisky.
 
-#### 0.1 – Přejmenování a nové verzování ✅ (10. 11. 2026)
+**Návrh klíče:** `RRRR-MM[-EDICE][@ČASOPIS]`, např. `1985-09@PH`, `1986-03-UK@PH`; bez `@` = Playboy. Rozklad vrací
+navíc `casopis` a `zeme` a pole `edice` u jiného časopisu než Playboy obsahuje **řadu** `PH/US`. Pohledy, které
+porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (Kalendář, Mapa čísel, Centerfoldy, sousední
+čísla) a `slozitVydani` z řady složí klíč zpátky. Volba „Edice“ ve formulářích se změní na „Časopis a edice“
+(Playboy US, Playboy CZ, Penthouse US…) se stejnou hodnotou.
 
-| # | Co | Jak |
+#### 0.01 – Přejmenování a nové verzování ✅ (10. 11. 2026)
+
+| Verze | Krok |
+|---|---|
+| 0.01.000 ✅ | Pinup Katalog (okno, nabídka, nápověda, export, Go modul), přesun dat a mezipaměti (`prejmenovani.go`), `instalovat.sh` odebere starý program, kontrola nové verze ignoruje starou řadu, starý plán a changelog v `docs/archiv/` |
+| 0.01.001 ✅ | Verze s pevnou šířkou X.XX.XXX (`zobrazitVerzi`) |
+
+#### 0.02 – Časopis jako údaj čísla
+
+| Verze | Krok | Hotovo, když |
 |---|---|---|
-| 1 | Název | Pinup Katalog v okně, nabídce aplikací, nápovědě, exportu; Go modul `pinup-katalog` |
-| 2 | Přesun dat | `prejmenovani.go`: při prvním spuštění `~/.local/share/playboy-app` → `pinup-katalog` (včetně localStorage okna) a `~/.cache/playboy-app` → `pinup-katalog`; když běží stará verze nebo přesun selže, zůstává stará složka |
-| 3 | Instalace | `instalovat.sh` instaluje `pinup-katalog` a odebere starý program z nabídky (data nechá) |
-| 4 | Verzování | 0.1.0; starý plán a changelog archivované; kontrola nové verze nepovažuje starou řadu 1.x za novější; „Co je nového“ se po přechodu ukáže |
+| 0.02.001 | **Klíč čísla s časopisem v Go:** `JePlatneVydani`, `VzorVydani`, `VzorVydaniAlba`, `CastiVydani` (sbirka i uceni), `EdicePodleVydani`, `rozlozitRocnik` přijmou `@XX` a vrátí řadu `PH/US`; jedna sdílená funkce `RozdelitCasopis` v `internal/hledani` | testy na všechny tvary klíče; všechny stávající testy projdou beze změny |
+| 0.02.002 | **Klíč čísla v rozhraní:** `rozlozitVydani` / `slozitVydani` s časopisem a řadou, `odkazy.js` a `zminky.go` (`[[09/1985 PH]]`) | testy v `test/format.test.js`; klíč projde rozložením a složením beze změny |
+| 0.02.003 | **Tabulka časopisů [schéma č. 17]:** `casopisy` (klíč, název, zkratka, barva, edice, „modelka měsíce“, „modelka roku“, pořadí); Playboy, Penthouse a Hustler předvyplněné; `GetCasopisy` | stará databáze se převede se zálohou; `TestZmrazeniAlfy` hlídá č. 17 |
+| 0.02.004 | **Názvy čísel:** registr časopisů v rozhraní (jako názvy speciálů); `nazevVydani` → „Září 1985 · Penthouse“, páska „Zář 85 · PH“, nabídka čísel a hledání `vydani:` | Playboy čísla vypadají přesně jako dřív (test) |
+| 0.02.005 | **Volba „Časopis a edice“** v okně alba a coveru: možnosti z tabulky časopisů, výchozí Playboy US, pamatuje poslední | jde uložit album Penthouse 09/1985 typu Centerfold |
+| 0.02.006 | **Rychlé přidání a okno Číslo:** stejná volba v rychlém přidání modelky; okno a stránka čísla jiného časopisu (bez kalendáře a mapy) | Penthouse 09/1985 jde otevřít z profilu modelky |
+| 0.02.007 | **Playboy pohledy beze změny:** projít Kalendář, Mapu čísel, Centerfoldy, kapesní katalog, Rok ve sbírce, úplnost čísla a Statistiky; čísla jiných časopisů v nich nejsou, test na každý | záloha sbírky před a po 0.02 – žádný rozdíl v Číslech a Statistikách |
+| 0.02.008 | **Export a import [export 14]:** časopisy a čísla s `@` v exportu, EXPORT.md; starší export = Playboy | export → import vrátí stejnou sbírku (test) |
+| 0.02.009 | **Správa časopisů** v ⋯ › Nastavení: přidat, přejmenovat, barva, edice, názvy modelky měsíce a roku; smazat jen nepoužitý | nový časopis (např. Oui) jde přidat a hned vybrat v okně alba |
 
-#### 0.2 – Časopis jako údaj čísla **[schéma]**
+#### 0.03 – Řady čísel a Mapa čísel pro každý časopis
 
-**Cíl:** program ví, ve kterém časopise číslo vyšlo; u Playboye se nic nemění.
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.03.001 | **Řady čísel jako data:** `RADY_EDIC` a `NEVYSLA_CISLA` do jednoho datového souboru podle řady; Playboy převedený beze změny chování | testy řad Playboye projdou beze změny |
+| 0.03.002 | **Řady Penthouse a Hustler:** Penthouse US od 09/1969, UK od 1965, Hustler od 07/1974 (z Wikipedie, s poznámkou zdroje) | `cisloNevyslo` a `ciselRocniku` fungují pro Penthouse |
+| 0.03.003 | **Kalendář podle časopisu:** přepínač časopisu vedle edice, pamatuje se | Kalendář Penthouse ukáže zadaná čísla a díry |
+| 0.03.004 | **Mapa čísel:** karta pro každý časopis, který ve sbírce je, skrývání a pořadí v ⋯ › Vzhled | úplnost Penthouse i Playboye zvlášť |
+| 0.03.005 | **Centerfoldy (stěna) podle časopisu** | stěna Pet of the Month Penthouse |
+| 0.03.006 | **Hledání:** `casopis:penthouse`, zkratky `pb`/`ph`/`hu`, čip a našeptávání; chytré výběry | `casopis:penthouse 80. léta` najde správné modelky |
 
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Tabulka časopisů | `casopisy` (klíč `PB`, `PH`, `HU`…, název, krátký název, barva, název „modelky měsíce“ a „modelky roku“: Playmate / Pet of the Month / Honey, PMOY / Pet of the Year); Playboy, Penthouse a Hustler předvyplněné, další jde přidat | M |
-| 2 | Klíč vydání | Rozšířit na `RRRR-MM[-EDICE][@ČASOPIS]`; bez `@` = Playboy, takže všechna stávající data platí beze změny; `rozlozitVydani` / `slozitVydani` a obdoba v Go vrací i časopis; testy na všechny tvary | M |
-| 3 | Schéma a export | Ohlášená úprava schématu (`cisla`, `alba.vydani`, speciály) a nová verze exportu; import starších exportů = Playboy; `TestZmrazeniAlfy` | M |
-| 4 | Zadávání | Výběr časopisu v okně čísla, alba a coveru (pamatuje si poslední); bez výběru Playboy | S |
+#### 0.04 – Pojmy podle časopisu
 
-**Hotovo, když:** jde zadat číslo Penthouse 09/1985 s Pet of the Month a stávající sbírka po převodu vypadá i počítá
-se přesně jako před ním (porovnání zálohy před a po: žádný rozdíl).
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.04.001 | **Názvy rolí:** funkce „modelka měsíce / roku“ podle časopisu čísla (Playmate, Pet of the Month, Honey; PMOY, Pet of the Year) s testy | test pro všechny tři časopisy |
+| 0.04.002 | **Profil a karty modelky:** štítek role podle časopisu | u Pet of the Month není nikde „Playmate“ v profilu |
+| 0.04.003 | **Typy alb:** „Playmate měsíce / roku“ v okně alba podle zvoleného časopisu | okno alba Penthouse nabízí Pet of the Month |
+| 0.04.004 | **Galerie a filtry:** kategorie a fasety (Playmate → modelka měsíce s rozpadem podle časopisu) | filtr „Pet of the Month“ funguje |
+| 0.04.005 | **Statistiky a Postřehy:** texty podle časopisu, Playboy beze změny | žádný „Playmate“ u dat Penthouse |
+| 0.04.006 | **Síň slávy, sezóny, Rok ve sbírce:** přes všechny časopisy s filtrem časopisu | Síň slávy jde přepnout na Penthouse |
+| 0.04.007 | **Zbylé texty:** nápověda, prázdné stavy, úvod, kvíz/průvodce zmínky; seznam zbylých výskytů „Playmate“ jen tam, kde jde opravdu o Playboy | `grep` výskytů projde ručně s poznámkou |
 
-#### 0.3 – Řady čísel a Mapa čísel pro každý časopis
+#### 0.05 – Profil napříč časopisy a slučování modelek
 
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Řady čísel | `RADY_EDIC` → řady podle časopisu a edice (Penthouse US od 09/1969, UK od 1965, Hustler od 07/1974…), nevyšlá čísla a speciály zvlášť; data řad v jednom souboru, ne v kódu | S–M |
-| 2 | Mapa čísel a Kalendář | Přepínač časopisu (a „vše“); úplnost a „mám / sháním“ podle časopisu; karty Přehledu pro každý sbíraný časopis | M |
-| 3 | Hledání | `casopis:penthouse`, `pet`, `honey` v chytrém hledání (PD 1.36) a chytrých výběrech | S |
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.05.001 | **Kariéra v profilu:** čísla a časová osa modelky barvou časopisu, souhrn „Pet of the Month 1985 · Playmate 1987“ | profil modelky ze dvou časopisů ukáže obě čísla |
+| 0.05.002 | **Přezdívky [schéma]:** víc jmen u modelky (jiné jméno v jiném časopise) | přezdívka se uloží a je v exportu |
+| 0.05.003 | **Hledání podle přezdívek** v hledání, našeptávači, `[[odkazech]]` a zásobníku odkazů | modelka se najde pod kterýmkoli jménem |
+| 0.05.004 | **Kandidáti na sloučení:** úkol Údržby ze stejného jména / přezdívky a data narození | na vzorku žádný falešný kandidát se stejným jménem a jiným datem |
+| 0.05.005 | **Vizuální podobnost v návrhu:** CLIP a otisky (PD 1.32–1.33) jako důvod a pořadí kandidátů | návrh ukáže důvody |
+| 0.05.006 | **Sloučení:** rozdíl nanečisto, převod alb, fotek, hodnocení a porovnání, Vrátit (PD 1.51.1); nikdy automaticky | sloučení a Vrátit vrátí obě modelky beze ztráty (test) |
 
-**Hotovo, když:** Mapa čísel ukáže úplnost Penthouse i Playboye zvlášť a `casopis:penthouse 80. léta` najde správné modelky.
+#### 0.06 – Fotky z PDF **[rozhodnutí před 0.06.001]**
 
-#### 0.4 – Pojmy podle časopisu
+**Rozhodnout předem:** fotky jsou dnes jen odkazy na Google Disk (Nedělat: místní kopie v plné velikosti). Stránky
+z PDF buď nahrát na Disk (pravidlo zůstává), nebo nový druh zdroje „soubor na disku“ (změna pravidla).
 
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Role modelky v čísle | „Playmate měsíce / roku“ zobecnit na „modelka měsíce / roku“ s názvem z tabulky časopisů; centerfold, cover a pictorial zůstávají obecné | M |
-| 2 | Texty rozhraní | Projít ~370 výskytů Playmate/PMOY/Playboy: obecný text, nebo název podle časopisu; nápověda a prázdné stavy | M |
-| 3 | Síň slávy, sezóny, Rok ve sbírce | Fungují přes všechny časopisy, s filtrem časopisu | S–M |
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.06.001 | **Otevřít PDF:** náhledy stránek (pdf.js v rozhraní, bez nové závislosti v Go), listování a lupa | 200stránkové číslo se otevře do 5 s |
+| 0.06.002 | **Označit stránky:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
+| 0.06.003 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |
+| 0.06.004 | **Uložení stránek** podle rozhodnutí (export do složky pro Disk, nebo místní zdroj se zálohou a kontrolou souborů PD 1.42) | fotky se zobrazí i po restartu |
+| 0.06.005 | **Návrh rozdělení:** kde začíná pictorial a kde je centerfold (rozložení stránky, obsah fotek PD 1.24) | návrh sedí na 3 zkušebních číslech |
 
-**Hotovo, když:** v rozhraní není nikde „Playmate“ u modelky, která byla jen Pet of the Month.
+#### 0.07 – Údaje z webu pro další časopisy
 
-#### 0.5 – Profil napříč časopisy a slučování modelek
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.07.001 | **Penthouse Pets z Wikipedie:** seznam po letech jako návrhy (jen na kliknutí, s potvrzením) | ročník Penthouse ukáže, kdo byla Pet of the Month |
+| 0.07.002 | **Hustler Honeys** stejně | totéž pro Hustler |
+| 0.07.003 | **Wikidata:** ocenění Pet / Honey jako návrhy údajů modelky | návrh se objeví ve frontě Údržby |
+| 0.07.004 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
+| 0.07.005 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
 
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Kariéra v profilu | Časová osa a čísla modelky podle časopisů (barva časopisu), „Pet of the Month 1985 · Playmate 1987“ | S–M |
-| 2 | Návrh sloučení | Úkol Údržby: stejné jméno / přezdívka + datum narození + vizuální podobnost (CLIP, PD 1.32–1.33) → návrh sloučit dva profily; sloučení s rozdílem nanečisto a Vrátit (PD 1.51.1); nikdy automaticky | M |
-| 3 | Přezdívky | Modelky v jiných časopisech vystupovaly pod jiným jménem: více jmen u modelky, hledání podle všech | S |
+#### 0.08 – Vkus, odhady a Statistiky napříč časopisy
 
-**Hotovo, když:** modelka z Penthouse i Playboye má jeden profil s oběma čísly a návrh sloučení nenavrhne dvě různé
-modelky se stejným jménem (ověřit na vzorku).
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.08.001 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
+| 0.08.002 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
+| 0.08.003 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
+| 0.08.004 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
+| 0.08.005 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
+| 0.08.006 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
 
-#### 0.6 – Fotky z PDF a z místních souborů **[rozhodnutí]**
+#### 0.09 – Dotažení a beta
 
-**Rozhodnout předem:** fotky jsou dnes jen odkazy na Google Disk (Nedělat: místní kopie v plné velikosti). Stránky z PDF
-potřebují buď nahrát na Disk (zůstává pravidlo), nebo nový druh zdroje „soubor na disku“ (změna pravidla).
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Import čísla z PDF | Vybrat PDF, stránky jako náhledy (pdf.js v rozhraní, bez nové závislosti v Go), označit obálku, centerfold a stránky pictorialů a přiřadit je modelkám a albům | M–L |
-| 2 | Uložení stránek | Podle rozhodnutí: export stránek do složky pro nahrání na Disk, nebo místní zdroj fotek se zálohou a kontrolou souborů (PD 1.42) | M |
-| 3 | Rozpoznání | Návrh, kde začíná pictorial a kde je centerfold (rozložení stránky, obsah fotek PD 1.24) | S–M |
-
-**Hotovo, když:** číslo Penthouse z PDF je za 10 minut v katalogu s obálkou, Pet of the Month a jejími fotkami.
-
-#### 0.7 – Údaje z webu pro další časopisy
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Wikidata a Wikipedie | Seznamy Penthouse Pets a Hustler Honeys (Wikipedie, Wikidata „ocenění“) jako zdroj řad a návrhů údajů; jen na kliknutí s potvrzením (Rozhodnuto) | M |
-| 2 | Zásobník odkazů | Rozpoznat odkazy z webů časopisů v zásobníku (PD 1.35) a předvyplnit časopis a číslo; přihlášení k placeným webům program nedělá a obsah za přihlášením nečte | S |
-
-**Hotovo, když:** úplnost čísla (PD 1.38) funguje i pro Penthouse.
-
-#### 0.8 – Vkus, odhady a Statistiky napříč časopisy
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Časopis jako vlastnost | Model vkusu, odhady, podobné modelky a Objevit (PD 1.53) s časopisem jako vlastností; Můj vkus v čase umí „víc ti teď sedí Penthouse“ | S–M |
-| 2 | Statistiky | Filtr a barva podle časopisu ve všech grafech, srovnání časopisů (výška, období, styl), Mapa sbírky obarvená časopisem | M |
-
-**Hotovo, když:** Statistiky ukážou průkazný rozdíl mezi časopisy, pokud v datech je.
-
-#### 0.9 – Dotažení a beta
-
-| # | Co | Jak | Prac. |
-|---|---|---|---|
-| 1 | Zbytky starého názvu | Názvy souborů `playboy.db` → `katalog.db` (s přesunem a zálohou), klíče v localStorage, export, kapesní katalog, ikona programu | S–M |
-| 2 | Repozitář | Přejmenovat repozitář na GitHubu (přesměrování adres funguje), README, `instalovat.sh` | S |
-| 3 | Beta | Používání se dvěma časopisy, opravy jen nalezených chyb; pak 1.0.0 | – |
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.09.001 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
+| 0.09.002 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
+| 0.09.003 | **Ikona programu** | nová ikona v nabídce a panelu |
+| 0.09.004 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
+| 0.09.005+ | **Beta:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
 
 ---
 
@@ -155,119 +171,119 @@ potřebují buď nahrát na Disk (zůstává pravidlo), nebo nový druh zdroje �
 Nedokončená část plánu PD 1.54–PD 1.63, přečíslovaná. Kde se týká Playboye (Playmate, česká edice), při převzetí
 zohlednit časopis z etapy U.
 
-#### 1.1 – Prohlížení a časopis 2
+#### 1.01 – Prohlížení a časopis 2
 
 **Cíl:** režim čtení (PD 1.41) a prohlížeč fotek použít na víc míst a lépe využít výřezy z PD 1.45.
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Časopis z čehokoli | Režim čtení pro ročník, chytrý výběr, sezónu a Síň slávy (pořadí jako stránky) přes `otevritStrany` jako Rok ve sbírce (PD 1.46) | M |
-| 2 | Dvoustrany podle výřezů | Rozvržení stran podle návrhu výřezu (PD 1.45), aby postava nebyla pod textem; dvě fotky na šířku vedle sebe | S–M |
-| 3 | Dvě fotky vedle sebe | V prohlížeči porovnání dvou fotek se sdílenou lupou a posunem; z prohlížeče „Nastavit jako titulní / profilovou“ rovnou s návrhem výřezu | M |
-| 4 | Návrh titulní a profilové | Pro modelky bez nich návrh z vkusu, kvality (PD 1.51) a výřezu (PD 1.45) jako úkol Údržby | S |
+| 1.01.001 | Časopis z čehokoli | Režim čtení pro ročník, chytrý výběr, sezónu a Síň slávy (pořadí jako stránky) přes `otevritStrany` jako Rok ve sbírce (PD 1.46) | M |
+| 1.01.002 | Dvoustrany podle výřezů | Rozvržení stran podle návrhu výřezu (PD 1.45), aby postava nebyla pod textem; dvě fotky na šířku vedle sebe | S–M |
+| 1.01.003 | Dvě fotky vedle sebe | V prohlížeči porovnání dvou fotek se sdílenou lupou a posunem; z prohlížeče „Nastavit jako titulní / profilovou“ rovnou s návrhem výřezu | M |
+| 1.01.004 | Návrh titulní a profilové | Pro modelky bez nich návrh z vkusu, kvality (PD 1.51) a výřezu (PD 1.45) jako úkol Údržby | S |
 
 **Hotovo, když:** jde promítat libovolný chytrý výběr jako časopis a modelky bez titulní fotky mají návrh na jeden klik.
 
 ---
 
-### Etapa I – Sbírka výtisků (1.2–1.5)
+### Etapa I – Sbírka výtisků (1.02–1.05)
 
 Česká edice se sbírá fyzicky (Rozhodnuto: výtisky jen u CZ; po přechodu rozhodnout, jestli i u dalších časopisů, např. Penthouse v PDF ne). Dnes program ví jen „mám / sháním“; tato etapa doplní,
 v jakém stavu výtisk je, kolik stál a co jde vyměnit, a končí tiskovými sestavami (PD 1.57, přesunuto z PD 1.43) a burzou; kapesní katalog (PD 1.47) pak ukáže i stav výtisku.
 
-#### 1.2 – Evidence výtisků české edice **[schéma]**
+#### 1.02 – Evidence výtisků české edice **[schéma]**
 
 **Cíl:** u každého čísla české edice zapsat stav a původ výtisku tak rychle, jako se dnes přepíná „mám / sháním“.
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Údaje výtisku | Stav (jako nový / velmi dobrý / dobrý / poškozený), chybí plakát nebo strany, počet kusů, cena, kde a kdy koupeno, poznámka; ohlášená úprava schématu č. 17 (tabulka `vytisky` s klíčem vydání) a export 14, převod ze sloupce `stav` beze ztráty | M |
-| 2 | Rychlý zápis | V detailu čísla karta Výtisk, v Kalendáři klávesy pro stav; „Koupeno dnes za…“ jedním polem (cena a místo se pamatují z minula, našeptávač míst) | S–M |
-| 3 | Hledání a filtry | Příkazy `vytisk:poškozený`, `cena:>200`, `koupeno:2026`, `kusu:>1`; čipy chytrého hledání (PD 1.36) a chytré výběry (PD 1.37) | S |
+| 1.02.001 | Údaje výtisku | Stav (jako nový / velmi dobrý / dobrý / poškozený), chybí plakát nebo strany, počet kusů, cena, kde a kdy koupeno, poznámka; další volná úprava schématu (tabulka `vytisky` s klíčem vydání) a verze exportu (č. 17 a export 14 bere 0.02), převod ze sloupce `stav` beze ztráty | M |
+| 1.02.002 | Rychlý zápis | V detailu čísla karta Výtisk, v Kalendáři klávesy pro stav; „Koupeno dnes za…“ jedním polem (cena a místo se pamatují z minula, našeptávač míst) | S–M |
+| 1.02.003 | Hledání a filtry | Příkazy `vytisk:poškozený`, `cena:>200`, `koupeno:2026`, `kusu:>1`; čipy chytrého hledání (PD 1.36) a chytré výběry (PD 1.37) | S |
 
 **Hotovo, když:** koupené číslo jde zapsat i se stavem a cenou do 10 s a hledání `vytisk:poškozený` najde výtisky k výměně za lepší.
 
-#### 1.3 – Výdaje a hodnota sbírky
+#### 1.03 – Výdaje a hodnota sbírky
 
 **Cíl:** vědět, kolik sbírka stála, kolik ještě bude stát a kde se nakupuje nejlépe.
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Karta Výtisky ve Statistikách | Utraceno celkem a po letech nákupu, průměrná cena čísla podle ročníku vydání, místa nákupu s průměrnou cenou, nejdražší kusy; křivky s rozpětím (PD 1.34) | S–M |
-| 2 | Odhad do kompletu | Kolik čísel chybí a odhad ceny zbytku z průměrů daného období (medián, ne průměr; málo dat = rozpětí); u ročníku „do kompletu chybí 3 čísla, asi 450 Kč“ | S |
+| 1.03.001 | Karta Výtisky ve Statistikách | Utraceno celkem a po letech nákupu, průměrná cena čísla podle ročníku vydání, místa nákupu s průměrnou cenou, nejdražší kusy; křivky s rozpětím (PD 1.34) | S–M |
+| 1.03.002 | Odhad do kompletu | Kolik čísel chybí a odhad ceny zbytku z průměrů daného období (medián, ne průměr; málo dat = rozpětí); u ročníku „do kompletu chybí 3 čísla, asi 450 Kč“ | S |
 
 **Hotovo, když:** Statistiky ukážou výdaje po letech a u každého neúplného ročníku odhad, kolik stojí ho dokončit.
 
-#### 1.4 – Rozšířené tiskové sestavy (katalog chybějících čísel a kapesní seznam; přesunuto z PD 1.43)
+#### 1.04 – Rozšířené tiskové sestavy (katalog chybějících čísel a kapesní seznam; přesunuto z PD 1.43)
 
 **Cíl:** vylepšit tiskové výstupy pro reálné použití v terénu (antikvariáty, burzy): kapesní seznam sháněných čísel na jednu stránku A4 a tiskový arch ročníku s obálkami.
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Kapesní seznam „Sháním“ na 1× A4 | Kompaktní vícesloupcový tiskový výstup všech chybějících a sháněných čísel CZ/US edice se zaškrtávacími políčky a poznámkou o Playmate měsíce | S |
-| 2 | Tiskový přehled ročníku s obálkami | Přehledová stránka vybraného ročníku (12 obálek + Playmate měsíce + stav ve sbírce) optimalizovaná pro tisk do PDF | S |
+| 1.04.001 | Kapesní seznam „Sháním“ na 1× A4 | Kompaktní vícesloupcový tiskový výstup všech chybějících a sháněných čísel CZ/US edice se zaškrtávacími políčky a poznámkou o Playmate měsíce | S |
+| 1.04.002 | Tiskový přehled ročníku s obálkami | Přehledová stránka vybraného ročníku (12 obálek + Playmate měsíce + stav ve sbírce) optimalizovaná pro tisk do PDF | S |
 
 **Hotovo, když:** z Časopisů nebo Mapy sbírky lze jedním klikem vytisknout kompaktní seznam sháněných čísel na jednu stránku.
 
-#### 1.5 – Burza a výměny
+#### 1.05 – Burza a výměny
 
 **Cíl:** připravit se na burzu nebo inzerát jedním klikem: co nabízím (duplikáty, horší kusy) a co sháním.
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Nabízím / Sháním | Seznam duplikátů (kusů > 1) a výtisků k výměně za lepší stav, vedle sháněných čísel; text ke zkopírování do inzerátu (prostý text i markdown) | S |
-| 2 | Tisk pro burzu | Rozšíření kapesního seznamu z PD 1.57 o sloupec „nabízím“ a cenový strop u sháněných čísel | S |
+| 1.05.001 | Nabízím / Sháním | Seznam duplikátů (kusů > 1) a výtisků k výměně za lepší stav, vedle sháněných čísel; text ke zkopírování do inzerátu (prostý text i markdown) | S |
+| 1.05.002 | Tisk pro burzu | Rozšíření kapesního seznamu z PD 1.57 o sloupec „nabízím“ a cenový strop u sháněných čísel | S |
 
 **Hotovo, když:** jedním klikem vznikne text inzerátu „Nabízím / Sháním“ a tiskový arch na burzu.
 
 ---
 
-### Etapa J – Odložené: Kvíz, průvodce číslem, Google Disk a světlý motiv (1.6–1.10)
+### Etapa J – Odložené: Kvíz, průvodce číslem, Google Disk a světlý motiv (1.06–1.10)
 
 Na přání uživatele odložené na konec plánu (kvíz z PD 1.43, průvodce číslem z PD 1.36 a PD 1.38, Google Disk z PD 1.38–PD 1.39); vkládání z Disku stojí na prohlížeči Disku, proto jdou spolu.
 
-#### 1.6 – Kvíz „Poznej modelku“ (odloženo z PD 1.43)
+#### 1.06 – Kvíz „Poznej modelku“ (odloženo z PD 1.43)
 
 **Cíl:** odlehčená znalostní hra nad vlastní sbírkou přímo v aplikaci (statistiky a Leitnerovy krabičky uložené v `nastaveni`, bez změny schématu DB).
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Hra „Kdo je to?“ a „Který rok / číslo?“ | Titulní fotka nebo obálka a 4 možnosti (lehká = náhodné, těžká = podobné modelky ze stejného desetiletí), ovládání klávesami `1`–`4`, `Enter`, `Esc` | M |
-| 2 | Skóre, série a opakování chyb | Evidence úspěšnosti a nejdelší série v `nastaveni`, po hře přehled chyb s proklikem na profil, častější zařazování modelek, které uživatel plete | S |
+| 1.06.001 | Hra „Kdo je to?“ a „Který rok / číslo?“ | Titulní fotka nebo obálka a 4 možnosti (lehká = náhodné, těžká = podobné modelky ze stejného desetiletí), ovládání klávesami `1`–`4`, `Enter`, `Esc` | M |
+| 1.06.002 | Skóre, série a opakování chyb | Evidence úspěšnosti a nejdelší série v `nastaveni`, po hře přehled chyb s proklikem na profil, častější zařazování modelek, které uživatel plete | S |
 
 **Hotovo, když:** deset otázek lze odehrát čistě z klávesnice, po hře se zobrazí přehled chyb s proklikem na profily a statistiky přežijí restart.
 
-#### 1.7 – Průvodce přidáním celého čísla (odloženo z PD 1.36 a PD 1.38)
+#### 1.07 – Průvodce přidáním celého čísla (odloženo z PD 1.36 a PD 1.38)
 
 **Cíl:** přidat celé číslo časopisu (obálka, Playmate měsíce, další modelky na obálce a v čísle, rozhovor, fotky) v jednom souvislém průvodci se živou kontrolou úplnosti a tlačítkem „Vrátit přidání“.
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Průvodce číslem | Kroky: 1. Základ a obálka → 2. Playmate měsíce (výběr existující nebo inline vytvoření nové) → 3. Další modelky a rozhovor → 4. Shrnutí s kontrolou úplnosti | M–L |
-| 2 | Odhad dalšího chybějícího čísla | Tlačítko „+ Přidat další chybějící“ v Časopisech a v Mapě sbírky rovnou předvyplní nejbližší chybějící měsíc a rok | S |
-| 3 | Cílené „Vrátit přidání“ | Po uložení průvodce lišta s možností vrátit celé právě přidané číslo (včetně nově vytvořených záznamů z tohoto kroku) | M |
+| 1.07.001 | Průvodce číslem | Kroky: 1. Základ a obálka → 2. Playmate měsíce (výběr existující nebo inline vytvoření nové) → 3. Další modelky a rozhovor → 4. Shrnutí s kontrolou úplnosti | M–L |
+| 1.07.002 | Odhad dalšího chybějícího čísla | Tlačítko „+ Přidat další chybějící“ v Časopisech a v Mapě sbírky rovnou předvyplní nejbližší chybějící měsíc a rok | S |
+| 1.07.003 | Cílené „Vrátit přidání“ | Po uložení průvodce lišta s možností vrátit celé právě přidané číslo (včetně nově vytvořených záznamů z tohoto kroku) | M |
 
 **Hotovo, když:** celé číslo s obálkou, Playmate měsíce, rozhovorem a fotkami vznikne v jednom okně bez překlikávání a lze ho jedním klikem vrátit.
 
-#### 1.8 – Google Disk v aplikaci (OAuth 2.0 + prohlížeč složek)
+#### 1.08 – Google Disk v aplikaci (OAuth 2.0 + prohlížeč složek)
 
 **Cíl:** volitelné přihlášení ke Google Disku (`golang.org/x/oauth2`, rozsah `drive.readonly` / `drive.file`) s prohlížením vlastní složky Playboy přímo v okně programu, bez nutnosti ručně kopírovat odkazy z prohlížeče. Návrh v [NAVRH-GOOGLE-DISK.md](docs/NAVRH-GOOGLE-DISK.md).
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Přihlášení a správa přístupu | OAuth 2.0 se systémovým prohlížečem a návratem na `127.0.0.1`, uložení tokenu s právy `0600`, kořenová složka a odhlášení v Nastavení | M |
-| 2 | Prohlížeč složek a fotek | Strom složek, drobečková cesta, hledání složky, mřížka náhledů s indikací „už je v databázi“ | M |
+| 1.08.001 | Přihlášení a správa přístupu | OAuth 2.0 se systémovým prohlížečem a návratem na `127.0.0.1`, uložení tokenu s právy `0600`, kořenová složka a odhlášení v Nastavení | M |
+| 1.08.002 | Prohlížeč složek a fotek | Strom složek, drobečková cesta, hledání složky, mřížka náhledů s indikací „už je v databázi“ | M |
 
 **Hotovo, když:** přihlášený uživatel vidí své složky na Disku přímo v programu a pozná, které fotky už v databázi jsou.
 
-#### 1.9 – Vkládání fotek a obálek přímo z Disku
+#### 1.09 – Vkládání fotek a obálek přímo z Disku
 
 **Cíl:** napojit prohlížeč Google Disku (PD 1.61) na zásobník fotek v detailu modelky, na obálku čísla a na hromadný import složky.
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Výběr pro modelku a obálku | Tlačítko „Vybrat z Disku…“ u fotek modelky, v průvodci číslem a u obálky; automatické předvyplnění hledání jménem modelky nebo číslem vydání | M |
-| 2 | Chytré zařazení celé složky | Načtení složky s návrhem rozdělení (1. fotka = obálka / titulní, další = běžné fotky), přeskočení již evidovaných fotek | S–M |
+| 1.09.001 | Výběr pro modelku a obálku | Tlačítko „Vybrat z Disku…“ u fotek modelky, v průvodci číslem a u obálky; automatické předvyplnění hledání jménem modelky nebo číslem vydání | M |
+| 1.09.002 | Chytré zařazení celé složky | Načtení složky s návrhem rozdělení (1. fotka = obálka / titulní, další = běžné fotky), přeskočení již evidovaných fotek | S–M |
 
 **Hotovo, když:** fotky celé modelky nebo čísla lze vybrat z Disku v jednom okně bez kopírování URL adres.
 
@@ -275,11 +291,11 @@ Na přání uživatele odložené na konec plánu (kvíz z PD 1.43, průvodce č
 
 **Cíl:** volitelný světlý motiv pro práci ve dne a vyšší kontrast, se stejným růžovým akcentem.
 
-| # | Co | Jak | Prac. |
+| Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Barvy jen přes proměnné | Převést ~740 natvrdo zapsaných barev ve `style.css` na proměnné (`--povrch-*`, `--text-*`, `--cara-*`, `--stin-*`); test, který hlídá, aby nové natvrdo zapsané barvy nepřibývaly | M–L |
-| 2 | Světlý motiv | Tmavý (výchozí) / Světlý / Podle systému (`prefers-color-scheme`); růžový akcent s ověřeným kontrastem 4,5 : 1 na obou pozadích, zlaté prvky (`--zlato-*`) se pro světlé pozadí jen ztmaví; prohlížeč fotek, režim čtení a promítání zůstávají vždy tmavé | M |
-| 3 | Vyšší kontrast | Silnější tlumený text, okraje a tlustší rámeček fokusu; navazuje na popisky pro čtečku (R18) | S |
+| 1.10.001 | Barvy jen přes proměnné | Převést ~740 natvrdo zapsaných barev ve `style.css` na proměnné (`--povrch-*`, `--text-*`, `--cara-*`, `--stin-*`); test, který hlídá, aby nové natvrdo zapsané barvy nepřibývaly | M–L |
+| 1.10.002 | Světlý motiv | Tmavý (výchozí) / Světlý / Podle systému (`prefers-color-scheme`); růžový akcent s ověřeným kontrastem 4,5 : 1 na obou pozadích, zlaté prvky (`--zlato-*`) se pro světlé pozadí jen ztmaví; prohlížeč fotek, režim čtení a promítání zůstávají vždy tmavé | M |
+| 1.10.003 | Vyšší kontrast | Silnější tlumený text, okraje a tlustší rámeček fokusu; navazuje na popisky pro čtečku (R18) | S |
 
 **Hotovo, když:** všechny pohledy ve světlém motivu projdou kontrolou kontrastu WCAG AA a motiv se přepne bez restartu.
 

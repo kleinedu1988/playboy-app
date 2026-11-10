@@ -30,7 +30,7 @@ export function dokonceneRocniky(modelky, rok) {
     for (const m of modelky) {
         for (const c of m.centerfoldy || []) {
             const v = rozlozitVydani(c);
-            // Jen Playboy: Rok ve sbírce napříč časopisy je krok 0.03.002 (řady jiných časopisů už program zná)
+            // Jen Playboy: Rok ve sbírce napříč časopisy je krok 0.02.021 (řady jiných časopisů už program zná)
             if (!v || v.casopis !== 'PB' || !/^\d\d$/.test(v.mesic)) continue;
             const klic = `${v.edice}|${v.rok}`;
             if (!rocniky.has(klic)) rocniky.set(klic, new Map());

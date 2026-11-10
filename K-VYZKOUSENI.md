@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.022 – Zbylé texty podle časopisu
+
+- [ ] **Kritérium hotovo:** projít `docs/VYSKYTY-PLAYMATE.md` – souhlasíš, že zbylé výskyty jsou opravdu Playboy?
+- [ ] Údržba u modelky jen s centerfoldem Penthouse bez data narození: „Pet bez data narození…“.
+- [ ] Údržba u čísla Penthouse bez centerfoldu: „Číslo nemá Pet – přidej jí centerfold“.
+- [ ] Vkus („Můj vkus“, důvody odhadu) u Pet: „byla Pet of the Month“, ne „byla Playmate měsíce“.
+- [ ] Číslo Penthouse › Jako časopis: titulek bez „Playboy ·“.
+- [ ] Bublina odkazu `[[Pet]]` v textu: „Pet Září 1985 · Penthouse“.
+
 ## 0.02.021 – Síň slávy a Rok ve sbírce přes časopisy
 
 - [ ] **Kritérium hotovo:** Síň slávy › volba „Penthouse“ v liště: Top 10 jen s modelkami Penthouse (s celkovým

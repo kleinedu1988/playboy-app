@@ -2,7 +2,7 @@
 // jednu frontu skupin (modelka nebo číslo) s položkami (chybějící údaj, nález kontroly, návrh), spočítá jejich
 // prioritu, pokrok sbírky po oblastech a počty pro filtry; pro režim Po údajích ji přeskládá po jednotlivých údajích.
 // Jen čisté funkce – testuje je test/udrzba.test.js.
-import { VYCHOZI_EDICE, kategorieModelky, nazevAlba, nazevRady, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
+import { VYCHOZI_EDICE, jeCisloPlayboye, kategorieModelky, titulCisla, nazevAlba, nazevRady, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
 
 // Údaje modelky, které Údržba hlídá, po skupinách shodných s částmi formuláře: [vlastnost, název, pole formuláře].
 // Další jména a poznámka se nehlídají, většina modelek je mít nemusí.
@@ -45,7 +45,7 @@ export const nazevPoleFormulare = pole => SKUPINY_UDAJU.flatMap(s => s.udaje).fi
 // modelek a čísel, u Kontroly a Návrhů počet položek.
 export const OBLASTI_FILTRU = [
     { nazev: 'Fronta', filtry: [
-        ['vse', 'Vše', 'Nahoře to, co sbírce přinese nejvíc: Playmate bez data narození, titulní fotky, údaje ke kontrole'],
+        ['vse', 'Vše', 'Nahoře to, co sbírce přinese nejvíc: modelky s centerfoldem bez data narození, titulní fotky, údaje ke kontrole'],
         ['navrhy', '✦ Návrhy', 'Odhadnuto z tvé sbírky; nejjistější a nejcennější první'],
         ['kontrola', '⚠ Ke kontrole', 'Údaje, které vypadají jako překlep; když je údaj pravdivý, dej „V pořádku“ – kontrola se z toho učí'],
     ] },
@@ -97,6 +97,12 @@ const VAHA_NALEZU = 9;
 export const urovenPriority = p => p >= 12 ? 'vysoka' : p >= 5 ? 'stredni' : 'nizka';
 export const NAZVY_PRIORIT = { vysoka: 'vysoká priorita', stredni: 'střední priorita', nizka: 'nízká priorita' };
 
+// Krátký titul modelky s centerfoldem (0.02.022): „Playmate“ u Playboye (i bez čísla), jinak titul časopisu jejího
+// centerfoldu („Pet“, „Honey“)
+export function titulCenterfoldu(m) {
+    const cf = m?.centerfoldy || [];
+    return !cf.length || cf.some(jeCisloPlayboye) ? 'Playmate' : titulCisla(cf[0], 'kratky');
+}
 export const jePlaymate = m => Boolean((m?.centerfoldy || []).length) || /playmate/i.test(m?.role || '');
 // Jak moc na modelce ve sbírce záleží: Playmate a modelky obálky víc, srdíčka trochu
 export function vyznamModelky(m) {
@@ -208,7 +214,7 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
                 pridat({ id: `udaje:${klic}`, druh: 'ukol', filtr: 'udaje', akce: 'udaje', netykaKlic: klic, skupinaUdaju: i, chybejici,
                     pole: nazev, hodnota: chybejici.length === s.udaje.length ? `chybí vše (${s.udaje.length})` : `chybí ${vyctem(nazvy, 4)}`,
                     souhrn: chybejici.length === s.udaje.length ? `${nazev} – vše` : chybejici.length <= 3 ? nazvy.join(', ') : `${nazev} (${chybejici.length} z ${s.udaje.length})`,
-                    duvod: bezNarozeni ? 'Playmate bez data narození – nejde spočítat věk při centerfoldu' : '',
+                    duvod: bezNarozeni ? `${titulCenterfoldu(m)} bez data narození – nejde spočítat věk při centerfoldu` : '',
                     netyka: nt.has(klic) }, vahaUdaju(chybejici, playmate));
             });
             // Srdíčka modelek nejsou úkol Údržby: hodnotí se v Hodnocení › Hodnotit › Modelky
@@ -249,7 +255,7 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
         const cislo = (id, filtr, pole, hodnota, duvod) => polozky.push({ id, klic: `${klicSkupiny}|${id}`, druh: 'ukol', filtr, akce: id, pole, hodnota, duvod, netyka: false,
             priorita: VAHY_UKOLU[filtr], uroven: urovenPriority(VAHY_UKOLU[filtr]) });
         if (co.cover) cislo('cover', 'cover', 'cover', 'chybí obálka čísla', 'Bez coveru je číslo v Číslech a v kalendáři prázdné');
-        if (co.centerfold) cislo('centerfold', 'cfcisla', 'centerfold', 'chybí centerfold čísla', 'Číslo nemá Playmate – přidej jí centerfold');
+        if (co.centerfold) cislo('centerfold', 'cfcisla', 'centerfold', 'chybí centerfold čísla', `Číslo nemá ${titulCisla(v, 'kratky')} – přidej jí centerfold`);
         skupiny.push({ klic: klicSkupiny, druh: 'vydani', vydani: v, jmeno: nazevVydani(v), podtitulek: `číslo · ${nazevRady(rozlozitVydani(v)?.edice || VYCHOZI_EDICE)}`, polozky });
     });
 

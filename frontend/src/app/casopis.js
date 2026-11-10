@@ -4,7 +4,7 @@
 // s prolínáním a pomalým přiblížením fotky (Ken Burns) k místu výřezu portrétu; při omezeném pohybu bez něj.
 import { GetClanky, GetClankyModelky, GetVydani, GetVydaniInfo } from './backend';
 import { WindowFullscreen, WindowIsFullscreen, WindowUnfullscreen } from '../../wailsjs/runtime/runtime';
-import { esc, formatMarkdown, nazevVydani, obrazek } from '../lib/format';
+import { esc, formatMarkdown, jeCisloPlayboye, nazevVydani, obrazek } from '../lib/format';
 import { INTERVALY, platnyInterval, stranyCisla, stranyProfilu } from '../lib/casopis';
 import { sestavitAlba } from '../lib/alba';
 import { vsechnyModelky } from './mezipamet';
@@ -233,7 +233,7 @@ export async function otevritCislo(vydani = stav.aktualniVydani) {
     if (!vydani) return;
     const [fotky, info, clanky, modelky] = await Promise.all([GetVydani(vydani).then(f => f || []), GetVydaniInfo(vydani).catch(() => null),
         GetClanky(vydani).then(c => c || []), vsechnyModelky()]);
-    otevrit(stranyCisla({ vydani, alba: sestavitAlba(fotky), clanky, modelky, info }), `Playboy · ${nazevVydani(vydani)}`);
+    otevrit(stranyCisla({ vydani, alba: sestavitAlba(fotky), clanky, modelky, info }), jeCisloPlayboye(vydani) ? `Playboy · ${nazevVydani(vydani)}` : nazevVydani(vydani));
 }
 
 export async function otevritProfil(modelka = stav.aktualniModelka) {

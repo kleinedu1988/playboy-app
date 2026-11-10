@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.022] – 2026-11-10
+
+### Opraveno
+- **Vkus u jiných časopisů:** centerfold Penthouse už model vkusu nepočítá jako „Playmate měsíce“; vlastností je
+  titul časopisu (věta „byla Pet of the Month“). Obálka jiného časopisu už není „byla na obálce Playboye“.
+
+### Změněno
+- **Zbylé texty podle časopisu:** Údržba („Pet bez data narození“, „Číslo nemá Pet – přidej jí centerfold“),
+  bublina odkazu `[[…]]`, titulek Jako časopis u čísla jiného časopisu, popis tlačítka a nápověda (tituly jiných
+  časopisů; funkce Wikipedie označené jako jen pro Playboy).
+- Seznam zbylých výskytů „Playmate“ a „Playboy“ s důvodem: `docs/VYSKYTY-PLAYMATE.md`.
+
 ## [0.02.021] – 2026-11-10
 
 ### Přidáno

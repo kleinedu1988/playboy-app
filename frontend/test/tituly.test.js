@@ -161,3 +161,12 @@ test('Síň slávy a Rok ve sbírce přes všechny časopisy (0.02.021)', async 
     assert.deepEqual(dokonceneRocniky(pets, 2026).map(r => [r.rocnik, r.edice, r.cisel]), [[1985, 'PH/US', 12]]);
     nastavitCasopisy([]);
 });
+
+test('Údržba a texty podle časopisu (0.02.022)', async () => {
+    const { titulCenterfoldu } = await import('../src/lib/udrzba.js');
+    nastavitCasopisy(CASOPISY);
+    assert.equal(titulCenterfoldu({ centerfoldy: ['1985-09@PH'] }), 'Pet');
+    assert.equal(titulCenterfoldu({ centerfoldy: ['1985-09@PH', '1986-01'] }), 'Playmate');
+    assert.equal(titulCenterfoldu({ centerfoldy: [] }), 'Playmate');
+    nastavitCasopisy([]);
+});

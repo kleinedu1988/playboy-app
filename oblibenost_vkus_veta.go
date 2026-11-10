@@ -129,6 +129,9 @@ func frazeRole(role string) string {
 		return "byla Cyber Girl"
 	case r == "model" || r == "modelka":
 		return ""
+	case strings.HasSuffix(r, "of the month") || strings.HasSuffix(r, "of the year") || strings.HasSuffix(r, " mesice") || strings.HasSuffix(r, " roku"):
+		// Titul jiného časopisu („Pet of the Month“, 0.02.022)
+		return "byla " + strings.TrimSpace(role)
 	}
 	return "je " + strings.TrimSpace(role)
 }

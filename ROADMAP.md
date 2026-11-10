@@ -5,14 +5,14 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.02.021** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (10. 11. 2026): verze 0.02.022** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
 Honey); časopisy jde spravovat v ⋯ › Časopisy…. Řady čísel jsou data podle řady (`lib/rady-cisel.js`) i pro Penthouse a Hustler; Kalendář
 a Obálky jdou přepnout na jiný časopis, Mapa čísel má kartu pro každý časopis, stěna Centerfoldů volbu časopisu a hledání zná
-`casopis:`. Statistiky a Postřehy mluví podle časopisu, Síň slávy jde přepnout na časopis. Další na řadě
-je **0.02.022 – Zbylé texty**.
+`casopis:`. Statistiky, Postřehy, Síň slávy a zbylé texty mluví podle časopisu. Další na řadě je
+**0.02.023 – Kalendář ve stylu hero**.
 
 ---
 
@@ -45,7 +45,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.021 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.022 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -113,7 +113,7 @@ Tituly (funkce, profil, typy alb, kategorie a filtry) se předřadily do 0.02.00
 |---|---|---|
 | 0.02.020 ✅ | **Statistiky a Postřehy:** texty podle časopisu, Playboy beze změny | žádný „Playmate“ u dat Penthouse |
 | 0.02.021 ✅ | **Síň slávy, sezóny, Rok ve sbírce:** přes všechny časopisy s filtrem časopisu | Síň slávy jde přepnout na Penthouse |
-| 0.02.022 | **Zbylé texty:** nápověda, prázdné stavy, úvod, kvíz/průvodce zmínky; seznam zbylých výskytů „Playmate“ jen tam, kde jde opravdu o Playboy | `grep` výskytů projde ručně s poznámkou |
+| 0.02.022 ✅ | **Zbylé texty:** nápověda, prázdné stavy, úvod, kvíz/průvodce zmínky; seznam zbylých výskytů „Playmate“ jen tam, kde jde opravdu o Playboy | `grep` výskytů projde ručně s poznámkou |
 
 #### Stránky Čísel ve stylu hero (0.02.023–0.02.025, přidáno 10. 11. 2026)
 

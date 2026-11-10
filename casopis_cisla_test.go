@@ -333,3 +333,17 @@ func TestHledaniCasopis(t *testing.T) {
 		}
 	}
 }
+
+// Vkus u jiných časopisů (0.02.022): Pet není „Playmate měsíce“, obálka Penthouse není „obálka Playboye“
+func TestVkusTitulyJinde(t *testing.T) {
+	if f := frazeRole("Pet of the Month"); f != "byla Pet of the Month" {
+		t.Errorf("fráze titulu: %q", f)
+	}
+	if obalkaPlayboye([]string{"1987-02@PH"}) || !obalkaPlayboye([]string{"1987-02@PH", "1988-01"}) {
+		t.Error("obálka Playboye")
+	}
+	pet := Modelka{Centerfoldy: []string{"1985-09@PH"}}
+	if hledani.CenterfoldPlayboye(&pet) {
+		t.Error("centerfold Penthouse není centerfold Playboye")
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"math"
+	"pinup-katalog/internal/hledani"
 	"pinup-katalog/internal/oblibenost"
 	"regexp"
 	"sort"
@@ -421,8 +422,12 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 		skupiny++
 	}
 	kategorie := strings.Split(m.Role, ",")
-	if len(m.Centerfoldy) > 0 || m.PlaymateMesice {
+	// Playmate měsíce jen z centerfoldu Playboye; tituly jiných časopisů jako vlastní kategorie (0.02.022)
+	if hledani.CenterfoldPlayboye(&m) || m.PlaymateMesice {
 		kategorie = append(kategorie, "Playmate měsíce")
+	}
+	for _, t := range m.TitulyJinde {
+		kategorie = append(kategorie, t.Nazev)
 	}
 	if m.PlaymateRoku != "" && !maPlaymateRoku(m.Role) {
 		kategorie = append(kategorie, "Playmate roku")
@@ -430,7 +435,7 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 	if m.CyberGirl != "" {
 		kategorie = append(kategorie, "Cyber Girl "+m.CyberGirl)
 	}
-	if len(m.Obalky) > 0 {
+	if obalkaPlayboye(m.Obalky) {
 		kategorie = append(kategorie, "Modelka obálky")
 	}
 	maKategorii := false
@@ -560,4 +565,15 @@ func urovenZObsahu(modelky []Modelka, obsah map[int]float64, model *modelObliben
 		v[m.ID] = math.Min(5, math.Max(0.5, a0+b*x))
 	}
 	return v
+}
+
+// Má modelka obálku Playboye? Věta vkusu „byla na obálce Playboye“ (0.02.022); obálky jiných časopisů jsou časopis
+// jako vlastnost vkusu (0.02.042 Vkus, odhady a Statistiky napříč časopisy)
+func obalkaPlayboye(obalky []string) bool {
+	for _, v := range obalky {
+		if _, c := hledani.RozdelitCasopis(v); c == "" || c == hledani.VychoziCasopis {
+			return true
+		}
+	}
+	return false
 }

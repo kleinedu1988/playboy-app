@@ -2,7 +2,7 @@
 // po najetí myší vizitka; v profilu modelky a v detailu čísla sekce „Zmiňováno v…“ se všemi texty, které na ně
 // odkazují; editor textu dostává návrhy pro našeptávač po napsání „[[“.
 import { GetFotografove, GetKalendar, GetZminky } from './backend';
-import { esc, nazevAlba, nazevVydani, obrazek, sklonovat } from '../lib/format';
+import { esc, nazevAlba, nazevVydani, obrazek, sklonovat, titulCisla } from '../lib/format';
 import { cilOdkazu } from '../lib/odkazy';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
@@ -53,14 +53,14 @@ async function ukazatVizitku(odkaz) {
     if (c.druh === 'modelka') {
         const m = (await vsechnyModelky()).find(x => x.id === c.id);
         if (!m) return;
-        const udaje = [m.narozeniDatum ? `* ${m.narozeniDatum.slice(0, 4)}` : '', m.narodnost, (m.vydani || [])[0] ? `Playmate ${nazevVydani(m.vydani[0])}` : '']
+        const udaje = [m.narozeniDatum ? `* ${m.narozeniDatum.slice(0, 4)}` : '', m.narodnost, (m.vydani || [])[0] ? `${titulCisla(m.vydani[0], 'kratky')} ${nazevVydani(m.vydani[0])}` : '']
             .filter(Boolean).join(' · ');
         html = `<img class="vz-foto" src="${esc(adresaTitulni(m))}" alt="" draggable="false" />
             <div><b>${esc(m.jmeno)}</b>${udaje ? `<small>${esc(udaje)}</small>` : ''}<small>${sklonovat(m.pocetFotek || 0, 'fotka', 'fotky', 'fotek')}</small></div>`;
     } else if (c.druh === 'vydani') {
         const k = (await nacistKalendar()).find(x => x.vydani === c.vydani);
         html = `${k?.nahled ? `<img class="vz-foto" src="${esc(obrazek(k.nahled, VELIKOST_NAHLEDU))}" alt="" draggable="false" />` : ''}
-            <div><b>${esc(nazevVydani(c.vydani))}</b>${k?.modelka ? `<small>Playmate: ${esc(k.modelka)}</small>` : ''}${!k ? '<small>Ve sbírce zatím bez coveru a centerfoldu.</small>' : ''}</div>`;
+            <div><b>${esc(nazevVydani(c.vydani))}</b>${k?.modelka ? `<small>${esc(titulCisla(c.vydani, 'kratky'))}: ${esc(k.modelka)}</small>` : ''}${!k ? '<small>Ve sbírce zatím bez coveru a centerfoldu.</small>' : ''}</div>`;
     } else if (c.druh === 'fotograf') {
         html = `<div><b>${esc(c.jmeno)}</b><small>fotograf · klik otevře jeho alba</small></div>`;
     } else {

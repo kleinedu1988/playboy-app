@@ -376,17 +376,23 @@ func (a *App) GetSpecialy() []Special {
 	return specialy
 }
 
-// Nový speciál v roce a edici (prázdná edice = US); vrací jeho klíč, při chybě prázdný text
+// Nový speciál v roce a edici (prázdná edice = US; u jiného časopisu řada „PH/US“); vrací jeho klíč, při chybě
+// prázdný text
 func (a *App) ZalozitSpecial(rok int, edice, nazev string) string {
 	nazev = strings.TrimSpace(nazev)
 	if edice == "US" {
 		edice = ""
 	}
-	if nazev == "" || rok < 1953 || rok > 2100 || (edice != "" && !dalsiEdice[edice]) {
+	if nazev == "" || rok < 1953 || rok > 2100 || !platnaRada(edice) {
 		return ""
 	}
 	pripona := ""
-	if edice != "" {
+	if casopis, zeme, jiny := strings.Cut(edice, "/"); jiny {
+		if zeme != "US" {
+			pripona = "-" + zeme
+		}
+		pripona += "@" + casopis
+	} else if edice != "" {
 		pripona = "-" + edice
 	}
 	obsazena := map[string]bool{}

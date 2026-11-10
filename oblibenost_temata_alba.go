@@ -111,7 +111,7 @@ func platnaPodminkaFotky(klic string, hodnoty []string) bool {
 			n, err := strconv.Atoi(h)
 			ok = err == nil && len(h) == 2 && n >= 1 && n <= 12
 		case "edice":
-			ok = h == "US" || dalsiEdice[h]
+			ok = platnaRada(h)
 		case "album":
 			for _, k := range kodyAlb {
 				ok = ok || k == h

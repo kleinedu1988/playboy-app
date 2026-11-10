@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"pinup-katalog/internal/hledani"
+	"pinup-katalog/internal/sbirka"
+	"regexp"
 	"strings"
 )
 
@@ -46,8 +49,10 @@ func jeOnlineTyp(typ string) bool { return typ == typOnline || typ == typCGTydne
 var (
 	// Typy alb; cover časopisu je album bez modelky, Pictorial online je pictorial jen na webu (bez vydání, s datem)
 	typyAlb = map[string]bool{"Pictorial": true, "Centerfold": true, "Cover": true, typOnline: true, typCGTydne: true, typCGMesice: true, typPMMesice: true, typPMRoku: true}
-	// Edice kromě výchozí US (ta se do vydání nepíše)
+	// Edice Playboye kromě výchozí US (ta se do vydání nepíše)
 	dalsiEdice = map[string]bool{"CZ": true}
+	// Edice (země) čísel jiných časopisů (0.02.001: zatím libovolná dvě velká písmena; omezí je tabulka časopisů)
+	vzorZemeEdice = regexp.MustCompile(`^[A-Z]{2}$`)
 	// Klíče „netýká se" u modelky a u alba
 	klicNetykaSeModelky = map[string]bool{"titulni": true, "zakladni": true, "vzhled": true, "zarazeni": true, "centerfold": true, "hodnoceni": true}
 	klicNetykaSeAlba    = map[string]bool{"text": true, "vydani": true}
@@ -73,12 +78,17 @@ func volbaZNabidky(hodnota string, moznosti []string) (string, bool) {
 	return hodnota, false
 }
 
-// Edice z vydání (RRRR-MM-ED nebo RRRR-ED); prázdná znamená US
-func edicePodleVydani(vydani string) string {
-	if i := strings.LastIndex(vydani, "-"); i > 0 && len(vydani)-i == 3 && vydani[i+1] >= 'A' {
-		return vydani[i+1:]
+// Platná řada čísla: Playboy US ("" nebo „US“) a další edice Playboye, u jiného časopisu „PH/US“, „PH/UK“…
+func platnaRada(rada string) bool {
+	if casopis, zeme, ok := strings.Cut(rada, "/"); ok {
+		return vzorZemeEdice.MatchString(casopis) && casopis != hledani.VychoziCasopis && vzorZemeEdice.MatchString(zeme)
 	}
-	return ""
+	return rada == "" || rada == "US" || dalsiEdice[rada]
+}
+
+// Edice z vydání (RRRR-MM-ED nebo RRRR-ED); prázdná znamená Playboy US, u jiného časopisu řada „PH/US“
+func edicePodleVydani(vydani string) string {
+	return sbirka.EdicePodleVydani(vydani)
 }
 
 // Jedno pravidlo pro klíč alba při zápisu i importu
@@ -95,7 +105,7 @@ func (a *App) overitKlicAlba(modelkaID int, album, typ string) error {
 	case (typ == "Centerfold" || typ == "Cover") && !vzorVydani.MatchString(album):
 		return fmt.Errorf("název centerfoldu a coveru musí být vydání ve tvaru RRRR-MM nebo RRRR-Snn (s příponou edice, např. 2011-07-CZ)")
 	}
-	if e := edicePodleVydani(album); (typ == "Centerfold" || typ == "Cover") && e != "" && !dalsiEdice[e] {
+	if e := edicePodleVydani(album); (typ == "Centerfold" || typ == "Cover") && !platnaRada(e) {
 		return fmt.Errorf("neznámá edice „%s“", e)
 	}
 	return nil

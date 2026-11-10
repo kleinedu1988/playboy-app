@@ -112,8 +112,10 @@ func CastiVydani(vydani string) (rok, mesic int, edice string, ok bool) {
 	if !hledani.JePlatneVydani(vydani) {
 		return 0, 0, "", false
 	}
+	vydani, casopis := hledani.RozdelitCasopis(vydani)
 	rok = int(vydani[0]-'0')*1000 + int(vydani[1]-'0')*100 + int(vydani[2]-'0')*10 + int(vydani[3]-'0')
 	edice = "US"
+	defer func() { edice = hledani.RadaVydani(edice, casopis) }()
 	if len(vydani) >= 7 {
 		if vydani[5] >= '0' && vydani[5] <= '1' {
 			mesic = int(vydani[5]-'0')*10 + int(vydani[6]-'0')

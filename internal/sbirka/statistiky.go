@@ -20,8 +20,9 @@ const (
 )
 
 var (
-	VzorVydani     = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?$`)
-	VzorVydaniAlba = regexp.MustCompile(`^\d{4}(-(0[1-9]|1[0-2]|S\d{2}))?(-[A-Z]{2})?$`)
+	// Volitelný časopis na konci (@PH; bez něj Playboy, „@PB“ se nepíše) – hledani.RozdelitCasopis
+	VzorVydani     = regexp.MustCompile(`^\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?(@([A-OQ-Z][A-Z]|P[AC-Z]))?$`)
+	VzorVydaniAlba = regexp.MustCompile(`^\d{4}(-(0[1-9]|1[0-2]|S\d{2}))?(-[A-Z]{2})?(@([A-OQ-Z][A-Z]|P[AC-Z]))?$`)
 )
 
 // JePictorialCasopisu vrací true pro obyčejný pictorial časopisu nebo pictorial playmate.
@@ -34,12 +35,14 @@ func JeOnlineTyp(typ string) bool {
 	return typ == TypOnline || typ == TypCGTydne || typ == TypCGMesice
 }
 
-// EdicePodleVydani vrátí edici z vydání (RRRR-MM-ED nebo RRRR-ED); prázdná znamená US.
+// EdicePodleVydani vrátí edici z vydání (RRRR-MM-ED nebo RRRR-ED); prázdná znamená Playboy US. U jiného časopisu
+// vrací řadu („1985-09@PH“ → „PH/US“), viz hledani.RadaVydani.
 func EdicePodleVydani(vydani string) string {
-	if i := strings.LastIndex(vydani, "-"); i > 0 && len(vydani)-i == 3 && vydani[i+1] >= 'A' {
-		return vydani[i+1:]
+	zaklad, casopis := hledani.RozdelitCasopis(vydani)
+	if casopis != "" {
+		return hledani.RadaVydani(hledani.EdiceKlice(zaklad), casopis)
 	}
-	return ""
+	return hledani.EdiceKlice(zaklad)
 }
 
 // ObsahujeKlic zjistí, zda čárkou oddělený seznam klíčů obsahuje daný klíč (bez alokace řezu).
@@ -99,11 +102,14 @@ func rychlyRokMesic(s string) (rok, mesic int, ok bool) {
 	return rok, mesic, true
 }
 
-// CastiVydani vrátí rok, měsíc a edici vydání (bez přípony = US); měsíc 0 u ročníku a speciálu.
+// CastiVydani vrátí rok, měsíc a edici vydání (bez přípony = US); měsíc 0 u ročníku a speciálu. U jiného časopisu
+// než Playboy je edice řada („PH/US“).
 func CastiVydani(vydani string) (rok, mesic int, edice string, ok bool) {
 	if !VzorVydaniAlba.MatchString(vydani) {
 		return 0, 0, "", false
 	}
+	vydani, casopis := hledani.RozdelitCasopis(vydani)
+	defer func() { edice = hledani.RadaVydani(edice, casopis) }()
 	rok = int(vydani[0]-'0')*1000 + int(vydani[1]-'0')*100 + int(vydani[2]-'0')*10 + int(vydani[3]-'0')
 	edice = "US"
 	zbytek := vydani[4:]

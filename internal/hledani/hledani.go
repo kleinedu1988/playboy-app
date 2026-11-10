@@ -192,8 +192,55 @@ func PorovnatBezDiakritiky(a, b string) int {
 	}
 }
 
-// Ověří, zda řetězec odpovídá tvaru vydání časopisu ^\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?$ bez regulárního výrazu
+// Časopis čísla (Pinup Katalog 0.02): klíč RRRR-MM[-EDICE][@ČASOPIS], např. „1985-09@PH“, „1986-03-UK@PH“.
+// Bez přípony je to Playboy (VychoziCasopis), proto se „@PB“ nepíše a klíč s ním není platný. Edice je země vydání
+// v rámci časopisu; „řada“ (RadaVydani) je edice i s časopisem: u Playboye „US“ / „CZ“ jako dřív, jinak „PH/US“.
+// Pohledy, které porovnávají edici s „US“ nebo „CZ“, tak čísla jiných časopisů samy vynechají.
+const VychoziCasopis = "PB"
+
+func velkePismeno(b byte) bool { return b >= 'A' && b <= 'Z' }
+
+// RozdelitCasopis: „1985-09-UK@PH“ → „1985-09-UK“, „PH“; bez přípony časopisu vrací celý klíč a ""
+func RozdelitCasopis(v string) (zaklad, casopis string) {
+	if n := len(v); n >= 3 && v[n-3] == '@' && velkePismeno(v[n-2]) && velkePismeno(v[n-1]) {
+		return v[:n-3], v[n-2:]
+	}
+	return v, ""
+}
+
+// RadaVydani: edice (země, "" = US) s časopisem ("" = Playboy) → „US“, „CZ“, „PH/US“, „PH/UK“
+func RadaVydani(edice, casopis string) string {
+	if edice == "" {
+		edice = "US"
+	}
+	if casopis == "" || casopis == VychoziCasopis {
+		return edice
+	}
+	return casopis + "/" + edice
+}
+
+// EdiceKlice: dvoupísmenná edice na konci klíče bez časopisu („1995-07-CZ“ → „CZ“), jinak ""
+func EdiceKlice(zaklad string) string {
+	if n := len(zaklad); n > 4 && zaklad[n-3] == '-' && velkePismeno(zaklad[n-2]) && velkePismeno(zaklad[n-1]) {
+		return zaklad[n-2:]
+	}
+	return ""
+}
+
+// RadaKlice: řada čísla z celého klíče („1985-09@PH“ → „PH/US“, „2012-03-CZ“ → „CZ“)
+func RadaKlice(v string) string {
+	zaklad, casopis := RozdelitCasopis(v)
+	return RadaVydani(EdiceKlice(zaklad), casopis)
+}
+
+// Ověří, zda řetězec odpovídá tvaru vydání časopisu ^\d{4}-(0[1-9]|1[0-2]|S\d{2})(-[A-Z]{2})?(@[A-Z]{2})?$ bez
+// regulárního výrazu; „@PB“ (výchozí časopis) se nepíše
 func JePlatneVydani(v string) bool {
+	zaklad, casopis := RozdelitCasopis(v)
+	return casopis != VychoziCasopis && jePlatnyZakladVydani(zaklad)
+}
+
+func jePlatnyZakladVydani(v string) bool {
 	if len(v) < 7 || v[4] != '-' {
 		return false
 	}
@@ -286,11 +333,7 @@ func hodnotaPole(m *Modelka, klic string) string {
 				continue
 			}
 			roky = append(roky, v[:4])
-			if len(v) > 4 && v[len(v)-3] == '-' && v[len(v)-2] >= 'A' {
-				edice = append(edice, v[len(v)-2:])
-			} else {
-				edice = append(edice, "US")
-			}
+			edice = append(edice, RadaKlice(v))
 		}
 		if klic == "rok" {
 			return strings.Join(roky, " ")

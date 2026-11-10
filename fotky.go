@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"pinup-katalog/internal/hledani"
 	"pinup-katalog/internal/sbirka"
 	"sort"
 	"strings"
@@ -176,11 +177,15 @@ func (a *App) GetVydani(vydani string) []Fotografie {
 		return nil
 	}
 	podminka, args := vydaniFotky+" = ?", []interface{}{vydani}
-	if rok, edice, jenRocnik := rozlozitRocnik(vydani); jenRocnik {
+	if rok, edice, casopis, jenRocnik := rozlozitRocnik(vydani); jenRocnik {
 		vzor, vzorSpecialu := rok+"-[0-1][0-9]", rok+"-S[0-9][0-9]"
 		if edice != "" {
 			vzor += "-" + edice
 			vzorSpecialu += "-" + edice
+		}
+		if casopis != "" {
+			vzor += "@" + casopis
+			vzorSpecialu += "@" + casopis
 		}
 		podminka, args = "("+vydaniFotky+" = ? OR "+vydaniFotky+" GLOB ? OR "+vydaniFotky+" GLOB ?)", []interface{}{vydani, vzor, vzorSpecialu}
 	}
@@ -190,15 +195,17 @@ func (a *App) GetVydani(vydani string) []Fotografie {
 		ORDER BY `+vydaniFotky+`, m.jmeno COLLATE BEZDIAKRITIKY, f.album, `+razeniFotek, true, true, args...))
 }
 
-// „1975" → 1975, "", true; „1975-CZ" → 1975, "CZ", true; vydání s měsícem → false
-func rozlozitRocnik(vydani string) (rok, edice string, jenRocnik bool) {
-	if len(vydani) == 4 {
-		return vydani, "", true
+// „1975" → 1975, "", "", true; „1975-CZ" → 1975, "CZ", "", true; „1975-UK@PH" → 1975, "UK", "PH", true;
+// vydání s měsícem → false
+func rozlozitRocnik(vydani string) (rok, edice, casopis string, jenRocnik bool) {
+	zaklad, casopis := hledani.RozdelitCasopis(vydani)
+	if len(zaklad) == 4 {
+		return zaklad, "", casopis, true
 	}
-	if len(vydani) == 7 && vydani[4] == '-' && vydani[5] >= 'A' {
-		return vydani[:4], vydani[5:], true
+	if len(zaklad) == 7 && zaklad[4] == '-' && zaklad[5] >= 'A' {
+		return zaklad[:4], zaklad[5:], casopis, true
 	}
-	return "", "", false
+	return "", "", "", false
 }
 
 // Fotky s aspoň minHodnoceni srdíčky napříč sbírkou, po modelkách od nejlépe hodnocených

@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.001 – Klíč čísla s časopisem (jen jádro)
+
+V okně se nic nového neukazuje (výběr časopisu přijde v 0.02.005); jde jen o to, že Playboy funguje jako dřív.
+
+- [ ] Kalendář, Mapa čísel, stránka čísla i celého ročníku (klik na rok v Kalendáři) ukazují stejná čísla jako dřív.
+- [ ] Založení speciálu (okno alba nebo coveru › Speciál › Nový) funguje pro US i CZ.
+- [ ] Hledání `edice:cz` najde stejné modelky jako dřív.
+
 ## 0.01.001 – Pinup Katalog (přejmenování a verze X.XX.XXX)
 
 Program se jmenuje Pinup Katalog a verze začínají znovu; oddíly níže (1.xx) jsou z Playboy Database.

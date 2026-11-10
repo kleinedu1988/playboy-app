@@ -56,6 +56,8 @@ type App struct {
 	otiskyFotek *otiskyFotek
 	// Průchod sbírkou na webu (pruchod_webem.go)
 	pruchod *pruchodWebem
+	// Kontrola otočených fotek (otocene_fotky.go)
+	otoceni *kontrolaOtoceni
 	// Úvodní obrazovka v malém okně (main.go): okno dostane uloženou velikost až na jejím konci (ObnovitOkno)
 	uvod *uvodOkna
 }
@@ -490,6 +492,7 @@ func (a *App) shutdown() {
 	a.ZastavitStahovaniNahledu()
 	a.zastavitOtisky()
 	a.PrerusitPruchodWebem()
+	a.PrerusitKontroluOtoceni()
 	a.obsah.Zastavit()
 	obsah.UkoncitProstredi()
 	a.pockatNaPozadi()

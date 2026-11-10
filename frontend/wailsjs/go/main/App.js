@@ -194,6 +194,10 @@ export function GetOdznakyModelky(arg1) {
   return window['go']['main']['App']['GetOdznakyModelky'](arg1);
 }
 
+export function GetOtoceneFotky() {
+  return window['go']['main']['App']['GetOtoceneFotky']();
+}
+
 export function GetPocetFotekKPruvodci() {
   return window['go']['main']['App']['GetPocetFotekKPruvodci']();
 }
@@ -274,6 +278,10 @@ export function GetStavOtisku() {
   return window['go']['main']['App']['GetStavOtisku']();
 }
 
+export function GetStavOtoceni() {
+  return window['go']['main']['App']['GetStavOtoceni']();
+}
+
 export function GetStavPruchoduWebem() {
   return window['go']['main']['App']['GetStavPruchoduWebem']();
 }
@@ -320,6 +328,10 @@ export function GetTemataKOdemceni() {
 
 export function GetTemataSezon() {
   return window['go']['main']['App']['GetTemataSezon']();
+}
+
+export function GetTitulniBezVyrezu() {
+  return window['go']['main']['App']['GetTitulniBezVyrezu']();
 }
 
 export function GetTitulySezonModelky(arg1) {
@@ -386,6 +398,10 @@ export function NastavitHeslo(arg1, arg2) {
   return window['go']['main']['App']['NastavitHeslo'](arg1, arg2);
 }
 
+export function NavrhnoutVyrezy(arg1) {
+  return window['go']['main']['App']['NavrhnoutVyrezy'](arg1);
+}
+
 export function ObnovitFotky(arg1) {
   return window['go']['main']['App']['ObnovitFotky'](arg1);
 }
@@ -426,8 +442,16 @@ export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
 }
 
+export function OznacitOtoceniVPoradku(arg1, arg2) {
+  return window['go']['main']['App']['OznacitOtoceniVPoradku'](arg1, arg2);
+}
+
 export function OznacitRuzneFotky(arg1) {
   return window['go']['main']['App']['OznacitRuzneFotky'](arg1);
+}
+
+export function OznacitVyrezVychozi(arg1, arg2) {
+  return window['go']['main']['App']['OznacitVyrezVychozi'](arg1, arg2);
 }
 
 export function PlaymatePodleWikipedie(arg1) {
@@ -464,6 +488,10 @@ export function PrejmenovatTag(arg1, arg2) {
 
 export function PrejmenovatVyber(arg1, arg2) {
   return window['go']['main']['App']['PrejmenovatVyber'](arg1, arg2);
+}
+
+export function PrerusitKontroluOtoceni() {
+  return window['go']['main']['App']['PrerusitKontroluOtoceni']();
 }
 
 export function PrerusitPruchodWebem() {
@@ -624,6 +652,10 @@ export function SmazatVyber(arg1) {
 
 export function SmazatVyberGalerie(arg1) {
   return window['go']['main']['App']['SmazatVyberGalerie'](arg1);
+}
+
+export function SpustitKontroluOtoceni() {
+  return window['go']['main']['App']['SpustitKontroluOtoceni']();
 }
 
 export function SpustitOtisky() {

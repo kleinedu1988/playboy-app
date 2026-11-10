@@ -1,6 +1,7 @@
 // Úprava výřezu titulní fotky
 import { obrazek, sjednotit } from '../lib/format';
-import { SetCoverVyrez } from './backend';
+import { NavrhnoutVyrezy, SetCoverVyrez } from './backend';
+import { oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { gallery } from './prvky';
@@ -38,6 +39,7 @@ export function upravitVyrez(modelka, { karta = null, ramFotky = null, poUlozeni
     panel.innerHTML = `
         <input type="range" class="crop-zoom" min="1" max="4" step="0.01" title="Přiblížení" />
         <div class="crop-tlacitka">
+            ${adresa ? '' : `<button type="button" class="panel-btn" data-akce="navrhnout" title="Navrhnout výřez podle postavy na fotce (potřebuje Obsah fotek)">${ik('<path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/>')}</button>`}
             <button type="button" class="panel-btn" data-akce="reset" title="Výchozí výřez">${ik('<path d="M4 12a8 8 0 1 0 2.3-5.7"/><path d="M4 4v5h5"/>')}</button>
             <button type="button" class="panel-btn" data-akce="zrusit" title="Zrušit (Esc)">${ik('<path d="M6 6l12 12M18 6L6 18"/>')}</button>
             <button type="button" class="panel-btn crop-ulozit" data-akce="ulozit" title="Uložit výřez">${ik('<path d="M5 12l5 5 9-10"/>')}</button>
@@ -126,7 +128,13 @@ export function upravitVyrez(modelka, { karta = null, ramFotky = null, poUlozeni
         if (!akce) return;
         e.stopPropagation();
 
-        if (akce === 'reset') {
+        if (akce === 'navrhnout') {
+            const [n] = await NavrhnoutVyrezy([modelka.id]) || [];
+            if (!n?.ok) { oznamit(n?.duvod || 'Výřez se nepodařilo navrhnout.'); return; }
+            Object.assign(vyrez, { coverZoom: n.zoom, coverX: n.x, coverY: n.y });
+            vykreslit();
+            oznamit('Výřez navržen podle postavy – ulož ho, nebo dolaď tažením.');
+        } else if (akce === 'reset') {
             Object.assign(vyrez, vychozi);
             vykreslit();
         } else if (akce === 'zrusit') {

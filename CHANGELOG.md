@@ -7,6 +7,27 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.45.0] – 2026-11-10
+
+### Přidáno
+- **Údržba › Otočené a výřezy** (`otocene_fotky.go`, `internal/obsah/otoceni.go`, `frontend/src/app/udrzba-fotky.js`):
+  „Zkontrolovat otočení“ projde na pozadí fotky s vektorem obsahu (potřebuje Obsah fotek). Ke každé fotce spočítá
+  vektory CLIP náhledu otočeného o 90°, 180° a 270° a porovná všechny čtyři orientace se středem sbírky; výsledky
+  se uloží do `obsah/otoceni.json`, takže kontrola jde přerušit a příště pokračuje. Fotky, u kterých jiná orientace
+  sedí výrazně lépe než současná, jsou vedle sebe „teď“ a „po otočení“: Otočit (i všechny zobrazené najednou)
+  nebo V pořádku (fotka je tak schválně, už se nehlásí); obojí jde vrátit.
+- **Návrh výřezu titulní fotky**: detektor NudeNet najde na náhledu postavu a obličej (kdo to je, nepozná) a navrhne
+  výřez pro kartu 3 : 4. V okně výřezu je tlačítko Navrhnout; v Údržbě seznam titulních fotek s výchozím výřezem
+  s návrhem vedle výchozího, Použít (i všech navržených) nebo Nechat výchozí. Nic se neotočí ani neuloží bez kliknutí.
+- Vypnutí Obsahu fotek zastaví kontrolu otočení a smaže i její výsledky.
+- Roadmapa: nové etapy G Vzhled a čitelnost (1.49–1.51: přiblížení, hustota a karty, světlý motiv a kontrast, klid
+  a vlastní Přehled) a H Návrat k hotovým funkcím (1.52–1.55: Údržba jako jedna fronta, hledání a výběry 2,
+  statistiky a vkus 2, prohlížení a časopis 2); výtisky jsou etapa I (1.56–1.59), odložené etapa J (1.60–1.63).
+  Decentní zlatá zůstává jako doplněk vzhledu vedle růžového akcentu.
+
+### Známé
+- Práh hlášení otočení (`prahOtoceni = 0,02`) ještě není ověřený na vzorku 50 fotek; doladí se v opravné verzi 1.45.x.
+
 ## [1.44.0] – 2026-11-09
 
 ### Přidáno

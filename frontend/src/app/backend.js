@@ -93,6 +93,13 @@ const CTENI = new Set([
     'GetNavrhyZWebu',
     'GetStavPruchoduWebem',
     'PocetOdmitnutychZWebu',
+    'GetStavOtoceni',
+    'GetOtoceneFotky',
+    'GetTitulniBezVyrezu',
+    'NavrhnoutVyrezy',
+    // Kontrola otočení a „v pořádku“ mění jen soubor obsahu a nastavení, ne sbírku
+    'SpustitKontroluOtoceni',
+    'PrerusitKontroluOtoceni',
     // Průchod webem a odmítnutí mění jen stav v nastavení, ne sbírku
     'SpustitPruchodWebem',
     'PrerusitPruchodWebem',
@@ -264,6 +271,14 @@ export const PrijmoutNavrhyZWebu = /** @type {typeof App.PrijmoutNavrhyZWebu} */
 export const OdmitnoutNavrhyZWebu = /** @type {typeof App.OdmitnoutNavrhyZWebu} */ (obalit('OdmitnoutNavrhyZWebu'));
 export const PocetOdmitnutychZWebu = /** @type {typeof App.PocetOdmitnutychZWebu} */ (obalit('PocetOdmitnutychZWebu'));
 export const ZrusitOdmitnutiZWebu = /** @type {typeof App.ZrusitOdmitnutiZWebu} */ (obalit('ZrusitOdmitnutiZWebu'));
+export const GetStavOtoceni = /** @type {typeof App.GetStavOtoceni} */ (obalit('GetStavOtoceni'));
+export const SpustitKontroluOtoceni = /** @type {typeof App.SpustitKontroluOtoceni} */ (obalit('SpustitKontroluOtoceni'));
+export const PrerusitKontroluOtoceni = /** @type {typeof App.PrerusitKontroluOtoceni} */ (obalit('PrerusitKontroluOtoceni'));
+export const GetOtoceneFotky = /** @type {typeof App.GetOtoceneFotky} */ (obalit('GetOtoceneFotky'));
+export const OznacitOtoceniVPoradku = /** @type {typeof App.OznacitOtoceniVPoradku} */ (obalit('OznacitOtoceniVPoradku'));
+export const NavrhnoutVyrezy = /** @type {typeof App.NavrhnoutVyrezy} */ (obalit('NavrhnoutVyrezy'));
+export const GetTitulniBezVyrezu = /** @type {typeof App.GetTitulniBezVyrezu} */ (obalit('GetTitulniBezVyrezu'));
+export const OznacitVyrezVychozi = /** @type {typeof App.OznacitVyrezVychozi} */ (obalit('OznacitVyrezVychozi'));
 export const UlozitVyberGalerie = /** @type {typeof App.UlozitVyberGalerie} */ (obalit('UlozitVyberGalerie'));
 export const SmazatVyberGalerie = /** @type {typeof App.SmazatVyberGalerie} */ (obalit('SmazatVyberGalerie'));
 export const ZaznamenatKolekci = /** @type {typeof App.ZaznamenatKolekci} */ (obalit('ZaznamenatKolekci'));

@@ -1249,6 +1249,28 @@ export namespace main {
 	}
 	
 	
+	export class NavrhVyrezu {
+	    modelkaId: number;
+	    ok: boolean;
+	    zoom: number;
+	    x: number;
+	    y: number;
+	    duvod: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new NavrhVyrezu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.ok = source["ok"];
+	        this.zoom = source["zoom"];
+	        this.x = source["x"];
+	        this.y = source["y"];
+	        this.duvod = source["duvod"];
+	    }
+	}
 	export class NavrhZWebu {
 	    modelkaId: number;
 	    jmeno: string;
@@ -1386,6 +1408,34 @@ export namespace main {
 	        this.dalsi = source["dalsi"];
 	        this.souperka = source["souperka"];
 	        this.cas = source["cas"];
+	    }
+	}
+	export class OtocenaFotka {
+	    driveId: string;
+	    fotkyIds: number[];
+	    url: string;
+	    rotace: number;
+	    navrh: number;
+	    rozdil: number;
+	    modelkaId: number;
+	    jmeno: string;
+	    album: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new OtocenaFotka(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.driveId = source["driveId"];
+	        this.fotkyIds = source["fotkyIds"];
+	        this.url = source["url"];
+	        this.rotace = source["rotace"];
+	        this.navrh = source["navrh"];
+	        this.rozdil = source["rozdil"];
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.album = source["album"];
 	    }
 	}
 	export class PlaymatePodleWikipedie {
@@ -2542,6 +2592,30 @@ export namespace main {
 	        this.chybne = source["chybne"];
 	    }
 	}
+	export class StavOtoceni {
+	    zapnuto: boolean;
+	    bezi: boolean;
+	    hotovo: number;
+	    celkem: number;
+	    zkontrolovano: number;
+	    fotek: number;
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new StavOtoceni(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.zapnuto = source["zapnuto"];
+	        this.bezi = source["bezi"];
+	        this.hotovo = source["hotovo"];
+	        this.celkem = source["celkem"];
+	        this.zkontrolovano = source["zkontrolovano"];
+	        this.fotek = source["fotek"];
+	        this.chyba = source["chyba"];
+	    }
+	}
 	export class StavPruchoduWebem {
 	    bezi: boolean;
 	    celkem: number;
@@ -2759,6 +2833,22 @@ export namespace main {
 	        this.od = source["od"];
 	        this.do = source["do"];
 	        this.druh = source["druh"];
+	    }
+	}
+	export class TitulniBezVyrezu {
+	    modelkaId: number;
+	    jmeno: string;
+	    url: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new TitulniBezVyrezu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.modelkaId = source["modelkaId"];
+	        this.jmeno = source["jmeno"];
+	        this.url = source["url"];
 	    }
 	}
 	

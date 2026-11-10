@@ -3,13 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (9. 11. 2026): verze 1.44.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.44 jsou hotové: mezipaměť náhledů na
+**Stav (10. 11. 2026): verze 1.45.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.45 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
 (1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
 Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
-příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) zdraví sbírky s rozdílem před obnovením zálohy (1.42.0; etapa D je hotová) ročník podle Wikipedie (1.43.0) a návrhy z webu ve frontě Údržby (1.44.0).
+příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) zdraví sbírky s rozdílem před obnovením zálohy (1.42.0; etapa D je hotová) ročník podle Wikipedie (1.43.0), návrhy z webu ve frontě Údržby (1.44.0) a otočené fotky s návrhem výřezu (1.45.0; etapa E je hotová).
 
 ---
 
@@ -61,17 +61,19 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 | **1.0** | **1.0.0** | **✅ Hotovo** | **První stabilní vydání** | Spolehlivá, otestovaná a zdokumentovaná verze |
 | **1.6–1.29** | **1.6–1.29** | **✅ Hotovo** | **Náhledy, Obsah fotek, Postřehy, Dnešní výběr** | Disková cache náhledů, CLIP + NudeNet + CZ textový model, odhady srdíček a tagů, styly, kolekce, Ideální modelka, Dnešní výběr, Postřehy 1–5 |
 | **Etapa A** | **1.30–1.34** | **✅ Hotovo** | **Prohloubení práce s modely, fotkami a Statistikami** | Mapa sbírky (PCA / autoenkodér), Síň slávy v Modelkách, Podobné modelky s vysvětlením, Stejné a podobné fotky, Křivky a srovnání období |
-| **Etapa B** | **1.35–1.37** | **✅ Hotovo** | **Rychlé plnění sbírky a chytré hledání** | Rychlé přidávání a zásobník fotek, Chytré hledání se zápisem a našeptáváním, Chytré výběry (Průvodce přidáním čísla odložen do etapy H) |
+| **Etapa B** | **1.35–1.37** | **✅ Hotovo** | **Rychlé plnění sbírky a chytré hledání** | Rychlé přidávání a zásobník fotek, Chytré hledání se zápisem a našeptáváním, Chytré výběry (Průvodce přidáním čísla odložen do etapy J) |
 | **Etapa C** | **1.38–1.40** | ✅ Hotovo | **Obohacení obsahu** | Úplnost sbírky a Wikidata, Propojení čísla a modelky, Bohatý text a obousměrné odkazy |
-| **Etapa D** | **1.41–1.42** | ✅ Hotovo | **Prohlížení a údržba** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy (tiskové sestavy přesunuty do etapy G) |
-| **Etapa E** | **1.43–1.45** | 🚧 1.43–1.44 hotové | **Kvalita dat ve velkém** | Ročník podle Wikipedie, Návrhy z webu ve frontě Údržby, Otočené fotky a návrh výřezu |
+| **Etapa D** | **1.41–1.42** | ✅ Hotovo | **Prohlížení a údržba** | Režim čtení a prezentace čísla, Zdraví sbírky a zálohy (tiskové sestavy přesunuty do etapy I) |
+| **Etapa E** | **1.43–1.45** | ✅ Hotovo | **Kvalita dat ve velkém** | Ročník podle Wikipedie, Návrhy z webu ve frontě Údržby, Otočené fotky a návrh výřezu |
 | **Etapa F** | **1.46–1.48** | 📋 Plán | **Přehledy a pohodlí** | Rok ve sbírce, Kapesní katalog offline, Upozornění na novou verzi |
-| **Etapa G** | **1.49–1.52** | 📋 Plán | **Sbírka výtisků** | Evidence výtisků české edice, Výdaje a hodnota sbírky, Rozšířené tiskové sestavy, Burza a výměny |
-| **Etapa H** | **1.53–1.56** | ⏸ Odloženo | **Kvíz, průvodce číslem a Google Disk** | Kvíz „Poznej playmate“, Průvodce přidáním celého čísla, Google Disk v aplikaci, Vkládání z Disku |
+| **Etapa G** | **1.49–1.51** | 📋 Plán | **Vzhled a čitelnost** | Přiblížení, hustota a karty, Světlý motiv a kontrast, Klid a vlastní Přehled |
+| **Etapa H** | **1.52–1.55** | 📋 Plán | **Návrat k hotovým funkcím** | Údržba jako jedna fronta, Hledání a výběry 2, Statistiky a vkus 2, Prohlížení a časopis 2 |
+| **Etapa I** | **1.56–1.59** | 📋 Plán | **Sbírka výtisků** | Evidence výtisků české edice, Výdaje a hodnota sbírky, Rozšířené tiskové sestavy, Burza a výměny |
+| **Etapa J** | **1.60–1.63** | ⏸ Odloženo | **Kvíz, průvodce číslem a Google Disk** | Kvíz „Poznej playmate“, Průvodce přidáním celého čísla, Google Disk v aplikaci, Vkládání z Disku |
 
 ---
 
-## Dokončeno v řadě 1.0–1.44 ✅
+## Dokončeno v řadě 1.0–1.45 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -113,9 +115,10 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.42 – Zdraví sbírky a porovnání se zálohou** (`zdravi_sbirky.go`, `frontend/src/app/zdravi.js`, `app/sprava.js`): karta Zdraví sbírky v Údržbě › Souhrn (zálohy, export s připomínkou po 14 dnech a ≥ 20 změnách, ověření souborů, mezipaměti a obsah fotek, úkoly); před obnovením zálohy rozdíl nanečisto po tabulkách (přibude / zmizí / změní se s příklady a změněnými sloupci). Datum posledního exportu v nastavení, schéma beze změny.
 - **1.43 – Ročník podle Wikipedie** (`rocnik_wikipedie.go`, `frontend/src/app/rocnik-wiki.js`): Playmate měsíců (i víc v jednom měsíci) a Playmate roku proti sbírce se stavy shoda / chybí / překlep / jiné jméno / jiný měsíc / bez centerfoldu; chybějící do fronty rychlého okna Nová modelka, převzetí jména z Wikipedie s potvrzením. Z Kalendáře, stránky ročníku a americké mapy sbírky.
 - **1.44 – Návrhy z webu ve frontě Údržby** (`pruchod_webem.go`, `frontend/src/app/udrzba-web.js`): režim Údržby Z webu – průchod sbírkou na pozadí (1 dotaz/s na server, přerušení, pokračování po restartu, stav v `nastaveni`), fronta rozdílů se zdrojem a odkazem, přijetí po jednom / po modelce / po údaji či zdroji (jen jednoznačné, se zálohou), odmítnuté se pamatují.
+- **1.45 – Otočené fotky a návrh výřezu** (`otocene_fotky.go`, `internal/obsah/otoceni.go`, `frontend/src/app/udrzba-fotky.js`): režim Údržby Otočené a výřezy – kontrola otočení na pozadí z vektorů CLIP otočených náhledů proti středu sbírky (`obsah/otoceni.json`, přerušení a pokračování), otočení jedním klikem nebo V pořádku, s Vrátit; návrh výřezu titulní fotky 3 : 4 z detekce postavy NudeNet v okně výřezu (Navrhnout) i hromadně v Údržbě. Práh otočení se doladí v 1.45.x po ověření na vzorku.
 ---
 
-## Plán dalšího rozvoje (1.30–1.56)
+## Plán dalšího rozvoje (1.30–1.63)
 
 Pořadí etap navazuje na to, co je v aplikaci čerstvě vybudované (vektory obsahu fotek, statistické jádro a postřehy), a postupně přechází ke zrychlení každodenního plnění sbírky, chytrému hledání a propojení s Google Diskem a Wikidaty.
 
@@ -289,7 +292,7 @@ Cílem etapy je zkrátit čas potřebný k zadání nového čísla, nové model
 
 ---
 
-### Etapa E – Kvalita dat ve velkém (1.43–1.45)
+### Etapa E – Kvalita dat ve velkém (1.43–1.45) ✅
 
 Navazuje na doplnění z webu (1.38) a obsah fotek (1.24): místo jedné modelky celý ročník nebo celá sbírka – vždy
 na kliknutí, na pozadí s možností přerušit a s potvrzením každého údaje (Nedělat: nic se nezapíše samo).
@@ -316,7 +319,7 @@ na kliknutí, na pozadí s možností přerušit a s potvrzením každého údaj
 
 **Hotovo, když:** po jednom průchodu jsou všechny rozdíly proti zdrojům ve frontě Údržby a nic se nezapsalo bez potvrzení.
 
-#### 1.45 – Otočené fotky a návrh výřezu
+#### 1.45 – Otočené fotky a návrh výřezu ✅ (10. 11. 2026)
 
 **Cíl:** najít fotky na boku nebo vzhůru nohama a navrhnout výřez titulní fotky z obsahu fotek (bez rozpoznávání obličejů).
 
@@ -348,7 +351,7 @@ na kliknutí, na pozadí s možností přerušit a s potvrzením každého údaj
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
-| 1 | Export do složky | Statický HTML katalog (jeden soubor + náhledy w400 z mezipaměti náhledů, žádné plné fotky): čísla, Playmate, mám / sháním (po etapě G i stav výtisku), hledání v prohlížeči telefonu | M |
+| 1 | Export do složky | Statický HTML katalog (jeden soubor + náhledy w400 z mezipaměti náhledů, žádné plné fotky): čísla, Playmate, mám / sháním (po etapě I i stav výtisku), hledání v prohlížeči telefonu | M |
 | 2 | Jen podmnožina | Volba: celá sbírka / jen česká edice / jen sháněná čísla; velikost před exportem | S |
 
 **Hotovo, když:** složku lze nahrát do telefonu a v prohlížeči bez sítě najít, jestli číslo mám nebo sháním.
@@ -366,12 +369,117 @@ na kliknutí, na pozadí s možností přerušit a s potvrzením každého údaj
 
 ---
 
-### Etapa G – Sbírka výtisků (1.49–1.52)
+### Etapa G – Vzhled a čitelnost (1.49–1.51)
+
+Nové volby vzhledu drží Rozhodnuto „střídmý vzhled, jeden růžový akcent, decentní zlatá jako doplněk, písmo aplikace“: mění velikost, hustotu,
+světlost a pohyb, ne styl. Všechny jsou na jednom místě v ⋯ → Vzhled, ukládají se v `nastaveni` (nepovinná část
+exportu). Schéma ani export se nemění.
+
+#### 1.49 – Přiblížení, hustota a karty
+
+**Cíl:** pohodlné čtení při dlouhé práci a víc informací na obrazovce tam, kde je potřeba (návrh R17 v `docs/PLAN-1X-ROZSIRENI.md`).
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Přiblížení rozhraní | `Ctrl` + `+` / `-` / `0` a posuvník 90–150 % (`zoom` na kořenovém prvku, WebKitGTK ho podporuje); projít snímky mřížek, plakátů, hera a úzkého okna při 150 % | S–M |
+| 2 | Hustota | Pohodlná / Kompaktní: mezery a výšky řádků jako proměnné (`--mezera-*`, `--radek-*`); v kompaktní Údržbě, seznamech a tabulkách Statistik víc řádků na obrazovku | S–M |
+| 3 | Velikost a obsah karet | Galerie modelek, Všechny fotky, Centerfoldy a Kalendář: velikost S / M / L a co karta ukazuje (jméno, rok, srdíčka, počet fotek, edice, stav výtisku); platí pro každý pohled zvlášť | M |
+| 4 | Okno Vzhled | Všechny volby etapy G na jednom místě s živým náhledem a tlačítkem Výchozí; zkratka v `Ctrl+K` | S |
+
+**Hotovo, když:** rozhraní jde zvětšit na 150 % bez rozbitých mřížek a kompaktní Údržba ukáže na stejné obrazovce aspoň o 30 % víc řádků.
+
+#### 1.50 – Světlý motiv a kontrast
+
+**Cíl:** volitelný světlý motiv pro práci ve dne a vyšší kontrast, se stejným růžovým akcentem.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Barvy jen přes proměnné | Převést ~740 natvrdo zapsaných barev ve `style.css` na proměnné (`--povrch-*`, `--text-*`, `--cara-*`, `--stin-*`); test, který hlídá, aby nové natvrdo zapsané barvy nepřibývaly | M–L |
+| 2 | Světlý motiv | Tmavý (výchozí) / Světlý / Podle systému (`prefers-color-scheme`); růžový akcent s ověřeným kontrastem 4,5 : 1 na obou pozadích, zlaté prvky (`--zlato-*`) se pro světlé pozadí jen ztmaví; prohlížeč fotek, režim čtení a promítání zůstávají vždy tmavé | M |
+| 3 | Vyšší kontrast | Silnější tlumený text, okraje a tlustší rámeček fokusu; navazuje na popisky pro čtečku (R18) | S |
+
+**Hotovo, když:** všechny pohledy ve světlém motivu projdou kontrolou kontrastu WCAG AA a motiv se přepne bez restartu.
+
+#### 1.51 – Klid, pohyb a vlastní Přehled
+
+**Cíl:** nastavit si, jak moc se rozhraní hýbe, jak vypadá prohlížeč fotek a co je na Přehledu.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Pohyb a efekty | Plné / Omezené / Žádné: přechody pohledů, Ken Burns, točící se úvod, prolínání, sbalování záhlaví; „Omezené“ = dnešní chování při systémovém omezení animací | S |
+| 2 | Prohlížeč fotek | Pozadí rozmazané / černé / tmavě šedé; údaje fotky (srdíčka, tagy, číslo, album) trvale / po najetí / nikdy; volitelný filmový pás náhledů dole | S–M |
+| 3 | Vlastní Přehled | Karty Přehledu (Dnešní výběr, Fotka dne, sezóna, chytré výběry ⚡, Zdraví sbírky, naposledy přidané) přeskládat tažením a skrýt; pohled po startu: Přehled / poslední pohled / Galerie | M |
+| 4 | Záhlaví profilu | Vysoké / nízké / jen pruh a volba, zda se při rolování svine; výřez portrétu zůstává jeden | S |
+
+**Hotovo, když:** volby přežijí restart a „Žádné“ vypne všechny animace v programu (ověřeno procházením všech pohledů).
+
+---
+
+### Etapa H – Návrat k hotovým funkcím (1.52–1.55)
+
+Funkce z řady 1.24–1.45 rozšířit tam, kde se při používání ukázaly mezery, a dodělat zbytky z plánu (Mapa sbírky 1.30).
+Žádná nová velká oblast. Schéma ani export se nemění, nová data jsou v `nastaveni` a v mezipaměti.
+
+#### 1.52 – Údržba jako jedna fronta
+
+**Cíl:** nepřepínat mezi sedmi režimy Údržby, ale dostat krátkou dávku toho nejcennějšího a vyřídit ji hromadně a bezpečně.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Dnes v Údržbě | Souhrn napříč režimy (Kontrola, Návrhy, Z webu, Stejné fotky, Otočené, výřezy) seřazený podle hodnoty: „15 minut práce“ = asi 30 úkolů, pokrok dne a série dní | M |
+| 2 | Hromadně s náhledem | Ve všech režimech stejná lišta výběru, „Přijmout zobrazené“ s rozdílem nanečisto (jako u záloh v 1.42) a Vrátit | M |
+| 3 | Panel Na pozadí | Otisky, obsah fotek, otočení, průchod webem a náhledy pod jedním panelem s průběhem, pořadím a pozastavením; připomínka „průchod webem je starý 60 dní“ (spuštění dál jen na kliknutí) | S–M |
+| 4 | Kvalita fotek | Z náhledů w400: malé rozlišení, rozmazané (rozptyl Laplaciánu), přepálené nebo podexponované; úkol „Vyměnit za lepší“ s nabídkou podobné fotky ve vyšší kvalitě, když ve sbírce je (1.33) | M |
+
+**Hotovo, když:** „Dnes v Údržbě“ jde projít z klávesnice za 15 minut a každá hromadná akce ukáže předem přesný rozdíl a jde vrátit.
+
+#### 1.53 – Hledání a výběry 2
+
+**Cíl:** chytré hledání (1.36) a chytré výběry (1.37) rozšířit o hledání obsahu slovy, složitější podmínky a novinky.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Obsah slovy všude | `foto:"na pláži v bílém"` přes český textový model (1.24) i v Galerii modelek (modelky, které takové fotky mají, seřazené podle shody) a v `Ctrl+K` | M |
+| 2 | Nebo mezi příkazy a závorky | `(70. léta | 80. léta) výška > 175`, `blond | zrzavá` napříč příkazy (dnes jen čárkou uvnitř jednoho); pod polem věta „hledám modelky, které…“ | M |
+| 3 | Výběry s novinkami | U výběru ⚡ odznak „+4 od minula“, výběr jako zdroj Časopisu (1.41), prezentace a Dnešního výběru | S–M |
+| 4 | Historie hledání | Posledních 20 dotazů v našeptávači, oblíbený dotaz jednou zkratkou jako chytrý výběr | S |
+
+**Hotovo, když:** `foto:"bazén" výška > 175` v Galerii modelek najde správné modelky a výběr ⚡ ukáže, co přibylo od posledního otevření.
+
+#### 1.54 – Statistiky, mapa a vkus 2
+
+**Cíl:** dodělat Mapu sbírky a ukázat, jak se v čase mění vlastní vkus.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Dokončit Mapu sbírky | Zbytky z 1.30: `<canvas>` nad 2 000 bodů, míra posunu pod mapou, „Přepočítat od začátku“; autoenkodér jen tehdy, když zachová sousedy lépe než PCA | M |
+| 2 | Můj vkus v čase | Jak se mění srdíčka a oblíbené styly po měsících hodnocení; postřehy „letos se ti víc líbí…“ / „méně než dřív…“ s testy z `postrehy.js` | M |
+| 3 | Objevit | Modelky a alba s nejvyšším odhadem srdíček, které ještě nemají hodnocení, s důvodem (podobné modelky 1.32 + vkus); karta v Přehledu | S–M |
+| 4 | Graf ven | Graf nebo tabulku Statistik uložit jako PNG nebo CSV a vytisknout | S |
+
+**Hotovo, když:** mapa s 3 000 modelkami se posouvá plynule a Statistiky ukážou aspoň jeden průkazný posun vkusu, pokud v datech je.
+
+#### 1.55 – Prohlížení a časopis 2
+
+**Cíl:** režim čtení (1.41) a prohlížeč fotek použít na víc míst a lépe využít výřezy z 1.45.
+
+| # | Co | Jak | Prac. |
+|---|---|---|---|
+| 1 | Časopis z čehokoli | Režim čtení pro ročník, chytrý výběr, sezónu a Síň slávy (pořadí jako stránky), Rok ve sbírce (1.46) přejde na stejný základ | M |
+| 2 | Dvoustrany podle výřezů | Rozvržení stran podle návrhu výřezu (1.45), aby postava nebyla pod textem; dvě fotky na šířku vedle sebe | S–M |
+| 3 | Dvě fotky vedle sebe | V prohlížeči porovnání dvou fotek se sdílenou lupou a posunem; z prohlížeče „Nastavit jako titulní / profilovou“ rovnou s návrhem výřezu | M |
+| 4 | Návrh titulní a profilové | Pro modelky bez nich návrh z vkusu, kvality (1.52) a výřezu (1.45) jako úkol Údržby | S |
+
+**Hotovo, když:** jde promítat libovolný chytrý výběr jako časopis a modelky bez titulní fotky mají návrh na jeden klik.
+
+---
+
+### Etapa I – Sbírka výtisků (1.56–1.59)
 
 Česká edice se sbírá fyzicky (Rozhodnuto: výtisky jen u CZ). Dnes program ví jen „mám / sháním“; tato etapa doplní,
-v jakém stavu výtisk je, kolik stál a co jde vyměnit, a končí tiskovými sestavami (1.51, přesunuto z 1.43) a burzou; kapesní katalog (1.47) pak ukáže i stav výtisku.
+v jakém stavu výtisk je, kolik stál a co jde vyměnit, a končí tiskovými sestavami (1.58, přesunuto z 1.43) a burzou; kapesní katalog (1.47) pak ukáže i stav výtisku.
 
-#### 1.49 – Evidence výtisků české edice **[schéma]**
+#### 1.56 – Evidence výtisků české edice **[schéma]**
 
 **Cíl:** u každého čísla české edice zapsat stav a původ výtisku tak rychle, jako se dnes přepíná „mám / sháním“.
 
@@ -383,7 +491,7 @@ v jakém stavu výtisk je, kolik stál a co jde vyměnit, a končí tiskovými s
 
 **Hotovo, když:** koupené číslo jde zapsat i se stavem a cenou do 10 s a hledání `vytisk:poškozený` najde výtisky k výměně za lepší.
 
-#### 1.50 – Výdaje a hodnota sbírky
+#### 1.57 – Výdaje a hodnota sbírky
 
 **Cíl:** vědět, kolik sbírka stála, kolik ještě bude stát a kde se nakupuje nejlépe.
 
@@ -394,7 +502,7 @@ v jakém stavu výtisk je, kolik stál a co jde vyměnit, a končí tiskovými s
 
 **Hotovo, když:** Statistiky ukážou výdaje po letech a u každého neúplného ročníku odhad, kolik stojí ho dokončit.
 
-#### 1.51 – Rozšířené tiskové sestavy (katalog chybějících čísel a kapesní seznam; přesunuto z 1.43)
+#### 1.58 – Rozšířené tiskové sestavy (katalog chybějících čísel a kapesní seznam; přesunuto z 1.43)
 
 **Cíl:** vylepšit tiskové výstupy pro reálné použití v terénu (antikvariáty, burzy): kapesní seznam sháněných čísel na jednu stránku A4 a tiskový arch ročníku s obálkami.
 
@@ -405,24 +513,24 @@ v jakém stavu výtisk je, kolik stál a co jde vyměnit, a končí tiskovými s
 
 **Hotovo, když:** z Časopisů nebo Mapy sbírky lze jedním klikem vytisknout kompaktní seznam sháněných čísel na jednu stránku.
 
-#### 1.52 – Burza a výměny
+#### 1.59 – Burza a výměny
 
 **Cíl:** připravit se na burzu nebo inzerát jedním klikem: co nabízím (duplikáty, horší kusy) a co sháním.
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
 | 1 | Nabízím / Sháním | Seznam duplikátů (kusů > 1) a výtisků k výměně za lepší stav, vedle sháněných čísel; text ke zkopírování do inzerátu (prostý text i markdown) | S |
-| 2 | Tisk pro burzu | Rozšíření kapesního seznamu z 1.51 o sloupec „nabízím“ a cenový strop u sháněných čísel | S |
+| 2 | Tisk pro burzu | Rozšíření kapesního seznamu z 1.58 o sloupec „nabízím“ a cenový strop u sháněných čísel | S |
 
 **Hotovo, když:** jedním klikem vznikne text inzerátu „Nabízím / Sháním“ a tiskový arch na burzu.
 
 ---
 
-### Etapa H – Odložené: Kvíz, průvodce číslem a Google Disk (1.53–1.56)
+### Etapa J – Odložené: Kvíz, průvodce číslem a Google Disk (1.60–1.63)
 
 Na přání uživatele odložené na konec plánu (kvíz z 1.43, průvodce číslem z 1.36 a 1.38, Google Disk z 1.38–1.39); vkládání z Disku stojí na prohlížeči Disku, proto jdou spolu.
 
-#### 1.53 – Kvíz „Poznej playmate“ (odloženo z 1.43)
+#### 1.60 – Kvíz „Poznej playmate“ (odloženo z 1.43)
 
 **Cíl:** odlehčená znalostní hra nad vlastní sbírkou přímo v aplikaci (statistiky a Leitnerovy krabičky uložené v `nastaveni`, bez změny schématu DB).
 
@@ -433,7 +541,7 @@ Na přání uživatele odložené na konec plánu (kvíz z 1.43, průvodce čís
 
 **Hotovo, když:** deset otázek lze odehrát čistě z klávesnice, po hře se zobrazí přehled chyb s proklikem na profily a statistiky přežijí restart.
 
-#### 1.54 – Průvodce přidáním celého čísla (odloženo z 1.36 a 1.38)
+#### 1.61 – Průvodce přidáním celého čísla (odloženo z 1.36 a 1.38)
 
 **Cíl:** přidat celé číslo časopisu (obálka, Playmate měsíce, další modelky na obálce a v čísle, rozhovor, fotky) v jednom souvislém průvodci se živou kontrolou úplnosti a tlačítkem „Vrátit přidání“.
 
@@ -445,7 +553,7 @@ Na přání uživatele odložené na konec plánu (kvíz z 1.43, průvodce čís
 
 **Hotovo, když:** celé číslo s obálkou, Playmate měsíce, rozhovorem a fotkami vznikne v jednom okně bez překlikávání a lze ho jedním klikem vrátit.
 
-#### 1.55 – Google Disk v aplikaci (OAuth 2.0 + prohlížeč složek)
+#### 1.62 – Google Disk v aplikaci (OAuth 2.0 + prohlížeč složek)
 
 **Cíl:** volitelné přihlášení ke Google Disku (`golang.org/x/oauth2`, rozsah `drive.readonly` / `drive.file`) s prohlížením vlastní složky Playboy přímo v okně programu, bez nutnosti ručně kopírovat odkazy z prohlížeče. Návrh v [NAVRH-GOOGLE-DISK.md](docs/NAVRH-GOOGLE-DISK.md).
 
@@ -456,9 +564,9 @@ Na přání uživatele odložené na konec plánu (kvíz z 1.43, průvodce čís
 
 **Hotovo, když:** přihlášený uživatel vidí své složky na Disku přímo v programu a pozná, které fotky už v databázi jsou.
 
-#### 1.56 – Vkládání fotek a obálek přímo z Disku
+#### 1.63 – Vkládání fotek a obálek přímo z Disku
 
-**Cíl:** napojit prohlížeč Google Disku (1.55) na zásobník fotek v detailu modelky, na obálku čísla a na hromadný import složky.
+**Cíl:** napojit prohlížeč Google Disku (1.62) na zásobník fotek v detailu modelky, na obálku čísla a na hromadný import složky.
 
 | # | Co | Jak | Prac. |
 |---|---|---|---|
@@ -480,8 +588,10 @@ Na přání uživatele odložené na konec plánu (kvíz z 1.43, průvodce čís
   čísla, která nevyšla, jsou v `NEVYSLA_CISLA` (americké z března 1955, 0.51.7).
 - Dvě modelky stejného jména se liší datem narození; data narození a úmrtí RRRR, RRRR-MM nebo RRRR-MM-DD;
   hodnota „-“ v importu údaj smaže; překlep v klíči souboru se opraví na nejbližší známý klíč (0.18.0–0.30.0).
-- Vzhled: střídmý, jeden růžový akcent, písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1).
-- Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.55–1.56).
+- Vzhled: střídmý, jeden růžový akcent a decentní zlatá jako doplněk (proměnné `--zlato-*`, např. lem záhlaví profilu;
+  ne jako druhý akcent tlačítek a voleb), písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1; výjimkou
+  je režim čtení 1.41). Potvrzeno 10. 11. 2026 při plánu etapy G.
+- Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (1.62–1.63).
 - Malé náhledy smí program ukládat na disk jako mezipaměť (1.6); originály a velké fotky zůstávají jen na Disku.
 - 1.0.0 po 14 dnech používání bety bez nové chyby (21. 10. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
   každý krok a opravu v tématu; MAJOR = velký milník, kompatibilitu dat hlídá verze schématu a exportu.

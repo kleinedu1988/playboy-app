@@ -105,6 +105,8 @@ export function GetOblibenost():Promise<main.StavOblibenosti>;
 
 export function GetOdznakyModelky(arg1:number):Promise<Array<main.OdznakModelky>>;
 
+export function GetOtoceneFotky():Promise<Array<main.OtocenaFotka>>;
+
 export function GetPocetFotekKPruvodci():Promise<number>;
 
 export function GetPocetNehodnocenychFotek():Promise<number>;
@@ -145,6 +147,8 @@ export function GetStavObsahu():Promise<obsah.Stav>;
 
 export function GetStavOtisku():Promise<main.StavOtisku>;
 
+export function GetStavOtoceni():Promise<main.StavOtoceni>;
+
 export function GetStavPruchoduWebem():Promise<main.StavPruchoduWebem>;
 
 export function GetStavStahovaniNahledu():Promise<nahledy.StavStahovani>;
@@ -168,6 +172,8 @@ export function GetTagyFotek(arg1:Array<number>):Promise<Record<number, Array<st
 export function GetTemataKOdemceni():Promise<Array<main.PokrytiTematu>>;
 
 export function GetTemataSezon():Promise<Array<main.InfoTematu>>;
+
+export function GetTitulniBezVyrezu():Promise<Array<main.TitulniBezVyrezu>>;
 
 export function GetTitulySezonModelky(arg1:number):Promise<Array<main.TitulSezony>>;
 
@@ -201,6 +207,8 @@ export function NajitUdajeModelky(arg1:number):Promise<main.NalezUdaju>;
 
 export function NastavitHeslo(arg1:string,arg2:string):Promise<boolean>;
 
+export function NavrhnoutVyrezy(arg1:Array<number>):Promise<Array<main.NavrhVyrezu>>;
+
 export function ObnovitFotky(arg1:Array<sbirka.ObnovaFotky>):Promise<number>;
 
 export function ObnovitOkno():Promise<void>;
@@ -221,7 +229,11 @@ export function OdmitnoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>,arg2:boolean):P
 
 export function OveritOdkaz(arg1:string):Promise<number>;
 
+export function OznacitOtoceniVPoradku(arg1:Array<string>,arg2:boolean):Promise<boolean>;
+
 export function OznacitRuzneFotky(arg1:Array<string>):Promise<boolean>;
+
+export function OznacitVyrezVychozi(arg1:Array<number>,arg2:boolean):Promise<boolean>;
 
 export function PlaymatePodleWikipedie(arg1:string):Promise<main.PlaymatePodleWikipedie>;
 
@@ -240,6 +252,8 @@ export function PrejmenovatFotografa(arg1:string,arg2:string):Promise<number>;
 export function PrejmenovatTag(arg1:string,arg2:string):Promise<number>;
 
 export function PrejmenovatVyber(arg1:number,arg2:string):Promise<boolean>;
+
+export function PrerusitKontroluOtoceni():Promise<void>;
 
 export function PrerusitPruchodWebem():Promise<void>;
 
@@ -320,6 +334,8 @@ export function SmazatChytryVyber(arg1:string):Promise<boolean>;
 export function SmazatVyber(arg1:number):Promise<boolean>;
 
 export function SmazatVyberGalerie(arg1:string):Promise<boolean>;
+
+export function SpustitKontroluOtoceni():Promise<boolean>;
 
 export function SpustitOtisky():Promise<boolean>;
 

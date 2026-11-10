@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math"
+	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -81,6 +82,12 @@ func (a *App) ZastavitObsah() {
 
 // Vypne obsah fotek a smaže model i vektory
 func (a *App) VypnoutObsah() bool {
+	// Kontrola otočení stojí na vektorech: zastaví se a její výsledky se smažou s nimi
+	a.PrerusitKontroluOtoceni()
+	if f := a.souborOtoceni(); f != "" {
+		os.Remove(f)
+		a.otoceni = nil
+	}
 	if err := a.obsah.Vypnout(); err != nil {
 		a.chyba("smazání dat obsahu fotek", err)
 		return false

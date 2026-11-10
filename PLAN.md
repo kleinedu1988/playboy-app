@@ -38,7 +38,8 @@ databáze přešla do režimu WAL (0.51.0), karty, plakáty a mozaika se při ry
 
 - Pevná lišta filtrů nad galerií a boční panel s filtry; filtry jsou v panelu pod tlačítkem Filtry v liště voleb.
 - Alba jako sbalené dlaždice v profilu modelky.
-- Patkové a dekorativní písmo, zlatá barva, ručně psané prvky – vzhled zůstává střídmý.
+- Patkové a dekorativní písmo, výrazná zlatá (zlatá fólie, zlato jako druhý akcent), ručně psané prvky – vzhled
+  zůstává střídmý. Decentní zlatá jako doplněk (`--zlato-*`, lem záhlaví profilu) zůstává (10. 11. 2026).
   Výjimkou je ikona programu (0.51.21, vybraná uživatelem): barevná retro ilustrace patří jen do nabídky
   aplikací a okna, rozhraní programu dál zůstává střídmé s jednou růžovou barvou.
 - Zůstává závislost na Google Disku: fotky musí být sdílené „kdokoli s odkazem“ a bez připojení se nenačtou

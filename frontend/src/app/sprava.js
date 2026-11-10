@@ -1,5 +1,6 @@
 // Kontrola Disku, export a import, heslo, zálohy a nabídka ⋯
 import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
+import { otevritKapesniKatalog } from './kapesni-katalog';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
 import { zapomenoutProfilovkyUvodu } from '../ui/uvod';
@@ -332,6 +333,7 @@ export function polozkySpravy() {
         { text: 'Obnovit ze zálohy…', akce: otevritZalohy },
         { text: 'Otevřít složku se zálohami', akce: async () => BrowserOpenURL('file://' + await SlozkaZaloh()) },
         { text: 'Exportovat sbírku (YAML)…', akce: exportovatData },
+        { text: 'Kapesní katalog do telefonu…', akce: otevritKapesniKatalog },
         { text: 'Importovat (YAML nebo Markdown)…', akce: importovatData },
         { nadpis: 'Nastavení' },
         { text: 'Adresa obrázků…', akce: zmenitSablonuObrazku },

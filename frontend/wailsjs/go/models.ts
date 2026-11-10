@@ -975,6 +975,22 @@ export namespace main {
 	    }
 	}
 	
+	export class NahledyKatalogu {
+	    ulozenych: number;
+	    chybi: number;
+	    bajtu: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new NahledyKatalogu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.ulozenych = source["ulozenych"];
+	        this.chybi = source["chybi"];
+	        this.bajtu = source["bajtu"];
+	    }
+	}
 	export class NahrazeniSouboru {
 	    fotkaId: number;
 	    puvodni: string;
@@ -1500,6 +1516,32 @@ export namespace main {
 	        this.url = source["url"];
 	        this.modelkaId = source["modelkaId"];
 	        this.chyba = source["chyba"];
+	    }
+	}
+	export class PodkladCisla {
+	    vydani: string;
+	    driveId: string;
+	    playmate: string[];
+	    obalka: string[];
+	    dalsi: string[];
+	    stav: string;
+	    nazev: string;
+	    naObalce: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PodkladCisla(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.vydani = source["vydani"];
+	        this.driveId = source["driveId"];
+	        this.playmate = source["playmate"];
+	        this.obalka = source["obalka"];
+	        this.dalsi = source["dalsi"];
+	        this.stav = source["stav"];
+	        this.nazev = source["nazev"];
+	        this.naObalce = source["naObalce"];
 	    }
 	}
 	
@@ -3037,6 +3079,26 @@ export namespace main {
 	        this.chyby = source["chyby"];
 	        this.opravy = source["opravy"];
 	        this.selhalo = source["selhalo"];
+	    }
+	}
+	export class VysledekKatalogu {
+	    slozka: string;
+	    nahledu: number;
+	    chybi: number;
+	    bajtu: number;
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new VysledekKatalogu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.slozka = source["slozka"];
+	        this.nahledu = source["nahledu"];
+	        this.chybi = source["chybi"];
+	        this.bajtu = source["bajtu"];
+	        this.chyba = source["chyba"];
 	    }
 	}
 	export class ZapisPruvodce {

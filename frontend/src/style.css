@@ -20759,3 +20759,13 @@ body.rezim-vyberu #detailView .poster {
     body.tisk-roku .rs-sloupec { background: #f2b6cc; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
     body.tisk-roku .rs-mesic.nej .rs-sloupec { background: var(--accent); }
 }
+
+/* Kapesní katalog (app/kapesni-katalog.js) */
+.kk-karta { width: min(560px, calc(100vw - 32px)); }
+.kk-rozsahy { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.kk-rozsah { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--panel-okraj); border-radius: 10px; cursor: pointer; }
+.kk-rozsah:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.kk-rozsah input { margin-top: 3px; accent-color: var(--accent); }
+.kk-rozsah small { color: var(--text-muted); }
+.kk-velikost { min-height: 1.4em; font-size: 13px; color: var(--text-muted); }
+.kk-velikost b { color: var(--text-main); }

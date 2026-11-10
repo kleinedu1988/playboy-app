@@ -146,6 +146,10 @@ export function GetMohloByTeLibit(arg1) {
   return window['go']['main']['App']['GetMohloByTeLibit'](arg1);
 }
 
+export function GetNahledyKatalogu(arg1) {
+  return window['go']['main']['App']['GetNahledyKatalogu'](arg1);
+}
+
 export function GetNahledyModelek(arg1, arg2) {
   return window['go']['main']['App']['GetNahledyModelek'](arg1, arg2);
 }
@@ -208,6 +212,10 @@ export function GetPocetNehodnocenychFotek() {
 
 export function GetPoctyTagu() {
   return window['go']['main']['App']['GetPoctyTagu']();
+}
+
+export function GetPodkladyKatalogu() {
+  return window['go']['main']['App']['GetPodkladyKatalogu']();
 }
 
 export function GetPodobneFotky(arg1) {
@@ -680,6 +688,10 @@ export function StavDatabaze() {
 
 export function UlozitChytryVyber(arg1) {
   return window['go']['main']['App']['UlozitChytryVyber'](arg1);
+}
+
+export function UlozitKatalog(arg1, arg2) {
+  return window['go']['main']['App']['UlozitKatalog'](arg1, arg2);
 }
 
 export function UlozitPruvodceFotky(arg1) {

@@ -7,7 +7,20 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
-## [1.46.0] – 2026-11-10
+## [1.47.0] – 2026-11-10
+
+### Přidáno
+- **Kapesní katalog do telefonu** (⋯ › Zálohy a data; `kapesni_katalog.go`, `frontend/src/lib/kapesni-katalog.js`,
+  `frontend/src/app/kapesni-katalog.js`): uloží do zvolené složky novou složku `playboy-katalog-RRRR-MM-DD`
+  s jednou stránkou `index.html` a malými náhledy obálek (w400) zkopírovanými z mezipaměti náhledů – plné fotky se
+  nekopírují a nic se nestahuje. Stránka funguje v prohlížeči telefonu bez připojení: čísla po edicích a ročnících
+  s obálkou, Playmate, modelkami na obálce a dalšími, stav výtisku (mám / sháním / chybí), hledání bez diakritiky
+  (jméno, rok, „06/1995“) a filtr podle stavu; světlá i tmavá podle telefonu.
+- Rozsah: celá sbírka (všechna čísla s daty a celá česká edice), jen česká edice (od 07/2011 do dneška, i chybějící
+  čísla) nebo jen sháněná čísla; před uložením počty mám / sháním / chybí a odhad velikosti. Náhled, který
+  v mezipaměti není, nahradí prázdný rámeček (okno řekne kolik). Starší katalog téhož dne se nepřepíše.
+
+
 
 ### Přidáno
 - **Rok ve sbírce** (`rok_ve_sbirce.go`, `frontend/src/lib/rok-ve-sbirce.js`, `frontend/src/app/rok-ve-sbirce.js`):

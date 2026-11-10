@@ -81,6 +81,8 @@ export function GetModelky(arg1:string):Promise<Array<hledani.Modelka>>;
 
 export function GetMohloByTeLibit(arg1:number):Promise<Array<main.OblibenostModelky>>;
 
+export function GetNahledyKatalogu(arg1:Array<string>):Promise<main.NahledyKatalogu>;
+
 export function GetNahledyModelek(arg1:Array<number>,arg2:number):Promise<Record<number, Array<main.NahledFotky>>>;
 
 export function GetNahledyTematu(arg1:Array<number>,arg2:number,arg3:string):Promise<Record<number, Array<main.NahledFotky>>>;
@@ -112,6 +114,8 @@ export function GetPocetFotekKPruvodci():Promise<number>;
 export function GetPocetNehodnocenychFotek():Promise<number>;
 
 export function GetPoctyTagu():Promise<Record<string, number>>;
+
+export function GetPodkladyKatalogu():Promise<Array<main.PodkladCisla>>;
 
 export function GetPodobneFotky(arg1:number):Promise<Array<sbirka.Fotografie>>;
 
@@ -348,6 +352,8 @@ export function SpustitStahovaniNahledu():Promise<boolean>;
 export function StavDatabaze():Promise<string>;
 
 export function UlozitChytryVyber(arg1:main.ChytryVyber):Promise<main.ChytryVyber>;
+
+export function UlozitKatalog(arg1:string,arg2:Array<string>):Promise<main.VysledekKatalogu>;
 
 export function UlozitPruvodceFotky(arg1:main.ZapisPruvodce):Promise<main.PredchoziPruvodce>;
 

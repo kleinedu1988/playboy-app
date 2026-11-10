@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.002 – Klíč čísla v rozhraní
+
+Číslo jiného časopisu zatím nejde zadat v okně (přijde v 0.02.005); zkoušet jde jen odkaz v textu.
+
+- [ ] Do poznámky modelky napiš `[[09/1985@PH]]`: odkaz se ukáže jako číslo (klik otevře zatím prázdnou stránku
+      čísla „Září 1985 · PH“) a nerozbije se.
+- [ ] Odkazy `[[06/1995]]` a `[[06/2012 CZ]]` fungují jako dřív, „Zmiňováno v…“ u čísla taky.
+- [ ] Názvy čísel Playboye všude beze změny (Listopad 2009, Listopad 2009 · CZ, speciály).
+
 ## 0.02.001 – Klíč čísla s časopisem (jen jádro)
 
 V okně se nic nového neukazuje (výběr časopisu přijde v 0.02.005); jde jen o to, že Playboy funguje jako dřív.

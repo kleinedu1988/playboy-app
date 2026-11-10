@@ -7,7 +7,12 @@ const modelky = [{ id: 1, jmeno: 'Anna Testová', dalsiJmena: 'Anička, Ann T.' 
 
 test('Číslo z odkazu ve všech zápisech, zpět jako MM/RRRR', () => {
     for (const [text, v] of [['06/1995', '1995-06'], ['6/1995', '1995-06'], ['06/1995 DE', '1995-06-DE'], ['1995-06', '1995-06'],
-        ['1995-06-cz', '1995-06-CZ'], ['1995-S01', '1995-S01'], ['13/1995', ''], ['1995', ''], ['Anna', '']]) assert.equal(vydaniZOdkazu(text), v, text);
+        ['1995-06-cz', '1995-06-CZ'], ['1995-S01', '1995-S01'], ['13/1995', ''], ['1995', ''], ['Anna', ''],
+        ['09/1985@PH', '1985-09@PH'], ['09/1985 @ ph', '1985-09@PH'], ['09/1985 UK@PH', '1985-09-UK@PH'], ['1985-09@PH', '1985-09@PH'],
+        ['1985-09-UK@PH', '1985-09-UK@PH'], ['09/1985@PB', '1985-09'], ['1985-S01@HU', '1985-S01@HU']]) assert.equal(vydaniZOdkazu(text), v, text);
+    assert.equal(odkazNaVydani('1985-09@PH'), '09/1985@PH');
+    assert.equal(odkazNaVydani('1985-09-UK@PH'), '09/1985 UK@PH');
+    for (const v of ['1985-09@PH', '1985-09-UK@PH', '1995-06-DE', '1995-06']) assert.equal(vydaniZOdkazu(odkazNaVydani(v)), v, v);
     assert.equal(odkazNaVydani('1995-06'), '06/1995');
     assert.equal(odkazNaVydani('1995-06-DE'), '06/1995 DE');
     assert.equal(odkazNaVydani('1995-S01'), '1995-S01');

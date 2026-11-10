@@ -2,7 +2,7 @@ package main
 
 // Obousměrné odkazy: v textech sbírky (poznámka modelky, průvodní text alba, článek, poznámka čísla) odkazuje
 // [[Jméno modelky]], [[06/1995]] (i [[1995-06]], [[06/1995 DE]]) nebo [[Fotograf]], volitelně s popiskem
-// [[cíl|popisek]]. GetZminky najde všechna místa, která na modelku nebo číslo odkazují („Zmiňováno v…“).
+// [[cíl|popisek]]; číslo jiného časopisu [[09/1985@PH]], [[09/1985 UK@PH]], [[1985-09@PH]]. GetZminky najde všechna místa, která na modelku nebo číslo odkazují („Zmiňováno v…“).
 
 import (
 	"fmt"
@@ -13,33 +13,36 @@ import (
 
 var (
 	vzorOdkazuTextu  = regexp.MustCompile(`\[\[([^\[\]|\n]+?)(?:\|([^\[\]\n]+?))?\]\]`)
-	vzorOdkazuMesic  = regexp.MustCompile(`^(\d{1,2})\s*/\s*(\d{4})(?:[\s-]+([A-Za-z]{2}))?$`)
-	vzorOdkazuVydani = regexp.MustCompile(`^(\d{4})-(\d{2}|S\d{2})(?:-([A-Za-z]{2}))?$`)
+	vzorOdkazuMesic  = regexp.MustCompile(`^(\d{1,2})\s*/\s*(\d{4})(?:[\s-]+([A-Za-z]{2}))?(?:\s*@\s*([A-Za-z]{2}))?$`)
+	vzorOdkazuVydani = regexp.MustCompile(`^(\d{4})-(\d{2}|S\d{2})(?:-([A-Za-z]{2}))?(?:@([A-Za-z]{2}))?$`)
 )
 
 // Klíč vydání z odkazu („06/1995“ → „1995-06“, „06/1995 DE“ → „1995-06-DE“); "" = není číslo
 func vydaniZOdkazu(text string) string {
 	t := strings.TrimSpace(text)
-	var rok, mesic, edice string
+	var rok, mesic, edice, casopis string
 	if s := vzorOdkazuMesic.FindStringSubmatch(t); s != nil {
 		m, _ := strconv.Atoi(s[1])
 		if m < 1 || m > 12 {
 			return ""
 		}
-		rok, mesic, edice = s[2], fmt.Sprintf("%02d", m), s[3]
+		rok, mesic, edice, casopis = s[2], fmt.Sprintf("%02d", m), s[3], s[4]
 	} else if s := vzorOdkazuVydani.FindStringSubmatch(t); s != nil {
-		rok, mesic, edice = s[1], s[2], s[3]
+		rok, mesic, edice, casopis = s[1], s[2], s[3], s[4]
 		if m, err := strconv.Atoi(mesic); err == nil && (m < 1 || m > 12) {
 			return ""
 		}
 	} else {
 		return ""
 	}
-	edice = strings.ToUpper(edice)
-	if edice == "" || edice == "US" {
-		return rok + "-" + mesic
+	klic := rok + "-" + mesic
+	if edice = strings.ToUpper(edice); edice != "" && edice != "US" {
+		klic += "-" + edice
 	}
-	return rok + "-" + mesic + "-" + edice
+	if casopis = strings.ToUpper(casopis); casopis != "" && casopis != "PB" {
+		klic += "@" + casopis
+	}
+	return klic
 }
 
 // Modelka podle jména nebo dalšího jména (bez diakritiky a velikosti písmen)

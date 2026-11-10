@@ -5,8 +5,8 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.02.001** – program přejmenovaný, verzování začíná znovu; jádro v Go zná klíč čísla
-s časopisem (`1985-09@PH`). Další na řadě je **0.02.002 – Klíč čísla v rozhraní**.
+**Stav (10. 11. 2026): verze 0.02.002** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+čísla s časopisem (`1985-09@PH`). Další na řadě je **0.02.003 – Tabulka časopisů**.
 
 ---
 
@@ -39,7 +39,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.09** | 🚧 0.01, 0.02.001 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.09** | 🚧 0.01, 0.02.001–0.02.002 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -76,7 +76,7 @@ porovnávají `edice === 'US'`, tak čísla jiných časopisů samy vynechají (
 | Verze | Krok | Hotovo, když |
 |---|---|---|
 | 0.02.001 ✅ | **Klíč čísla s časopisem v Go:** `JePlatneVydani`, `VzorVydani`, `VzorVydaniAlba`, `CastiVydani` (sbirka i uceni), `EdicePodleVydani`, `rozlozitRocnik` přijmou `@XX` a vrátí řadu `PH/US`; jedna sdílená funkce `RozdelitCasopis` v `internal/hledani`; navíc kontrola edice při ukládání alba a `ZalozitSpecial` | testy na všechny tvary klíče; všechny stávající testy projdou beze změny |
-| 0.02.002 | **Klíč čísla v rozhraní:** `rozlozitVydani` / `slozitVydani` s časopisem a řadou, `odkazy.js` a `zminky.go` (`[[09/1985 PH]]`) | testy v `test/format.test.js`; klíč projde rozložením a složením beze změny |
+| 0.02.002 ✅ | **Klíč čísla v rozhraní:** `rozlozitVydani` / `slozitVydani` s časopisem a řadou, `odkazy.js` a `zminky.go` (`[[09/1985@PH]]`, `[[09/1985 UK@PH]]`; „PH“ za lomítkem by se pletlo s edicí) | testy v `test/etapa2.test.js` a `test/odkazy.test.js`; klíč projde rozložením a složením beze změny |
 | 0.02.003 | **Tabulka časopisů [schéma č. 17]:** `casopisy` (klíč, název, zkratka, barva, edice, „modelka měsíce“, „modelka roku“, pořadí); Playboy, Penthouse a Hustler předvyplněné; `GetCasopisy` | stará databáze se převede se zálohou; `TestZmrazeniAlfy` hlídá č. 17 |
 | 0.02.004 | **Názvy čísel:** registr časopisů v rozhraní (jako názvy speciálů); `nazevVydani` → „Září 1985 · Penthouse“, páska „Zář 85 · PH“, nabídka čísel a hledání `vydani:` | Playboy čísla vypadají přesně jako dřív (test) |
 | 0.02.005 | **Volba „Časopis a edice“** v okně alba a coveru: možnosti z tabulky časopisů, výchozí Playboy US, pamatuje poslední | jde uložit album Penthouse 09/1985 typu Centerfold |

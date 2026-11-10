@@ -49,16 +49,43 @@ export function ciselRocniku(rok, edice) {
     return 12 - MESICE.filter((_, i) => cisloNevyslo(slozitVydani(String(rok), String(i + 1).padStart(2, '0'), edice))).length;
 }
 
-// „2009-11-CZ" → { rok: '2009', mesic: '11', edice: 'CZ' }; ročník bez měsíce má mesic ''; neplatné → null.
-// Speciál (zvláštní číslo mimo měsíční řadu) má místo měsíce pořadí v roce: „1995-S01" → mesic 'S01'.
-export function rozlozitVydani(text) {
-    const casti = /^(\d{4})(?:-(0[1-9]|1[0-2]|S\d{2}))?(?:-([A-Z]{2}))?$/.exec(text || '');
-    return casti ? { rok: casti[1], mesic: casti[2] || '', edice: casti[3] || VYCHOZI_EDICE } : null;
+// Časopis čísla (0.02, v Go hledani.RozdelitCasopis): klíč RRRR-MM[-EDICE][@ČASOPIS], např. „1985-09@PH“,
+// „1986-03-UK@PH“; bez přípony Playboy, „@PB“ se nepíše. Edice je země vydání; „řada“ je edice i s časopisem –
+// u Playboye „US“ / „CZ“ jako dřív, jinak „PH/US“. Pole `edice` z rozlozitVydani je řada, takže pohledy, které ji
+// porovnávají s „US“ nebo „CZ“, čísla jiných časopisů samy vynechají, a slozitVydani z ní klíč složí zpátky.
+export const VYCHOZI_CASOPIS = 'PB';
+
+// Řada ze země a časopisu: („US“, „PB“) → „US“, („UK“, „PH“) → „PH/UK“
+export const radaVydani = (zeme, casopis = VYCHOZI_CASOPIS) => (!casopis || casopis === VYCHOZI_CASOPIS ? zeme || VYCHOZI_EDICE : `${casopis}/${zeme || VYCHOZI_EDICE}`);
+
+// Řada na časopis a zemi: „PH/UK“ → { casopis: 'PH', zeme: 'UK' }, „CZ“ → { casopis: 'PB', zeme: 'CZ' }
+export function rozlozitRadu(rada) {
+    const m = /^([A-Z]{2})\/([A-Z]{2})$/.exec(rada || '');
+    return m ? { casopis: m[1], zeme: m[2] } : { casopis: VYCHOZI_CASOPIS, zeme: rada || VYCHOZI_EDICE };
 }
 
+// „2009-11-CZ" → { rok: '2009', mesic: '11', edice: 'CZ', zeme: 'CZ', casopis: 'PB' }; ročník bez měsíce má mesic '';
+// neplatné → null. Speciál (zvláštní číslo mimo měsíční řadu) má místo měsíce pořadí v roce: „1995-S01" → mesic 'S01'.
+// Jiný časopis: „1986-03-UK@PH" → { …, edice: 'PH/UK', zeme: 'UK', casopis: 'PH' }.
+export function rozlozitVydani(text) {
+    const casti = /^(\d{4})(?:-(0[1-9]|1[0-2]|S\d{2}))?(?:-([A-Z]{2}))?(?:@([A-Z]{2}))?$/.exec(text || '');
+    if (!casti || casti[4] === VYCHOZI_CASOPIS) return null;
+    const zeme = casti[3] || VYCHOZI_EDICE, casopis = casti[4] || VYCHOZI_CASOPIS;
+    return { rok: casti[1], mesic: casti[2] || '', edice: radaVydani(zeme, casopis), zeme, casopis };
+}
+
+// Klíč z roku, měsíce (nebo Snn, '' = ročník) a řady („US“, „CZ“, „PH/UK“)
 export function slozitVydani(rok, mesic, edice) {
     if (!rok) return '';
-    return [rok, mesic, edice && edice !== VYCHOZI_EDICE ? edice : ''].filter(Boolean).join('-');
+    const { casopis, zeme } = rozlozitRadu(edice);
+    return [rok, mesic, zeme !== VYCHOZI_EDICE ? zeme : ''].filter(Boolean).join('-') + (casopis !== VYCHOZI_CASOPIS ? `@${casopis}` : '');
+}
+
+// Přípona časopisu a edice k názvu čísla: '' u Playboye US, „ · CZ“, u jiného časopisu „ · PH“ / „ · PH UK“
+// (od 0.02.004 název časopisu)
+function priponaRady(v) {
+    if (v.casopis !== VYCHOZI_CASOPIS) return ` · ${v.casopis}${v.zeme !== VYCHOZI_EDICE ? ` ${v.zeme}` : ''}`;
+    return v.zeme !== VYCHOZI_EDICE ? ` · ${v.zeme}` : '';
 }
 
 // Názvy speciálů podle klíče; plní je rozhraní z backendu (mezipamet.js)
@@ -89,7 +116,7 @@ function nazevCasti(vydani, v) {
 export function nazevVydani(vydani) {
     const v = rozlozitVydani(vydani);
     if (!v) return vydani;
-    return (v.mesic ? `${nazevCasti(vydani, v)} ${v.rok}` : v.rok) + (v.edice !== VYCHOZI_EDICE ? ` · ${v.edice}` : '');
+    return (v.mesic ? `${nazevCasti(vydani, v)} ${v.rok}` : v.rok) + priponaRady(v);
 }
 
 // Páska čísla (dlaždice Čísel, levý panel profilu a čísla): „BŘE 95“, u speciálu „SPECIÁL 95“, u ročníku „ROČNÍK 95“, u jiné edice „… · CZ“
@@ -98,7 +125,7 @@ export function paskaCisla(vydani) {
     const v = rozlozitVydani(vydani);
     if (!v) return '';
     const rok = v.rok.slice(2);
-    const edice = v.edice && v.edice !== VYCHOZI_EDICE ? ` · ${v.edice}` : '';
+    const edice = priponaRady(v);
     if (!v.mesic) return `Ročník ${rok}${edice}`;
     if (v.mesic.startsWith('S')) return `Speciál ${rok}${edice}`;
     return `${ZKRATKY_PASKY[parseInt(v.mesic) - 1]} ${rok}${edice}`;

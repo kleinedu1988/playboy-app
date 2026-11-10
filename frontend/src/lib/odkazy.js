@@ -1,34 +1,37 @@
 // Odkazy [[…]] v textech sbírky (zminky.go dělá totéž na straně Go): [[Jméno modelky]], [[06/1995]] (i [[1995-06]],
-// [[06/1995 DE]]), [[Fotograf]], volitelně s popiskem [[cíl|popisek]]
+// [[06/1995 DE]], jiný časopis [[09/1985@PH]], [[09/1985 UK@PH]], [[1985-09@PH]]), [[Fotograf]], volitelně
+// s popiskem [[cíl|popisek]]
 import { MESICE, bezDiakritiky, nazevVydani, rozlozitVydani } from './format.js';
 
 export const VZOR_ODKAZU = /\[\[([^[\]|\n]+?)(?:\|([^[\]\n]+?))?\]\]/g;
 
 const jednoduse = t => bezDiakritiky(String(t || '')).toLowerCase().replace(/\s+/g, ' ').trim();
 
-// Klíč vydání z odkazu („06/1995“ → „1995-06“, „06/1995 DE“ → „1995-06-DE“); '' = není číslo
+// Klíč vydání z odkazu („06/1995“ → „1995-06“, „06/1995 DE“ → „1995-06-DE“, „09/1985 UK@PH“ → „1985-09-UK@PH“);
+// '' = není číslo
 export function vydaniZOdkazu(text) {
     const t = String(text || '').trim();
-    let rok, mesic, edice;
-    let s = /^(\d{1,2})\s*\/\s*(\d{4})(?:[\s-]+([A-Za-z]{2}))?$/.exec(t);
+    let rok, mesic, edice, casopis;
+    let s = /^(\d{1,2})\s*\/\s*(\d{4})(?:[\s-]+([A-Za-z]{2}))?(?:\s*@\s*([A-Za-z]{2}))?$/.exec(t);
     if (s) {
         const m = parseInt(s[1]);
         if (m < 1 || m > 12) return '';
-        [rok, mesic, edice] = [s[2], String(m).padStart(2, '0'), s[3]];
-    } else if ((s = /^(\d{4})-(\d{2}|S\d{2})(?:-([A-Za-z]{2}))?$/.exec(t))) {
-        [rok, mesic, edice] = [s[1], s[2], s[3]];
+        [rok, mesic, edice, casopis] = [s[2], String(m).padStart(2, '0'), s[3], s[4]];
+    } else if ((s = /^(\d{4})-(\d{2}|S\d{2})(?:-([A-Za-z]{2}))?(?:@([A-Za-z]{2}))?$/.exec(t))) {
+        [rok, mesic, edice, casopis] = [s[1], s[2], s[3], s[4]];
         const m = parseInt(mesic);
         if (!mesic.startsWith('S') && (m < 1 || m > 12)) return '';
     } else return '';
     edice = (edice || '').toUpperCase();
-    return !edice || edice === 'US' ? `${rok}-${mesic}` : `${rok}-${mesic}-${edice}`;
+    casopis = (casopis || '').toUpperCase();
+    return `${rok}-${mesic}${!edice || edice === 'US' ? '' : `-${edice}`}${!casopis || casopis === 'PB' ? '' : `@${casopis}`}`;
 }
 
 // Zápis čísla v odkazu: „1995-06“ → „06/1995“, „1995-06-DE“ → „06/1995 DE“ (speciál zůstane jako klíč)
 export function odkazNaVydani(vydani) {
     const c = rozlozitVydani(vydani);
     if (!c || !/^\d{2}$/.test(c.mesic)) return vydani;
-    return `${c.mesic}/${c.rok}${c.edice !== 'US' ? ` ${c.edice}` : ''}`;
+    return `${c.mesic}/${c.rok}${c.zeme !== 'US' ? ` ${c.zeme}` : ''}${c.casopis !== 'PB' ? `@${c.casopis}` : ''}`;
 }
 
 /**

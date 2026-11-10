@@ -2,9 +2,28 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { rozlozitVydani, slozitVydani, nazevVydani, nazevAlba, prevestVysku, prevestVahu, rozlozitMiry } from '../src/lib/format.js';
 
+test('vydání jiného časopisu: klíč s @, řada a zpětné složení (0.02.002)', () => {
+    assert.deepEqual(rozlozitVydani('1985-09@PH'), { rok: '1985', mesic: '09', edice: 'PH/US', zeme: 'US', casopis: 'PH' });
+    assert.deepEqual(rozlozitVydani('1986-03-UK@PH'), { rok: '1986', mesic: '03', edice: 'PH/UK', zeme: 'UK', casopis: 'PH' });
+    assert.deepEqual(rozlozitVydani('1985-S01@HU'), { rok: '1985', mesic: 'S01', edice: 'HU/US', zeme: 'US', casopis: 'HU' });
+    assert.deepEqual(rozlozitVydani('1985@PH'), { rok: '1985', mesic: '', edice: 'PH/US', zeme: 'US', casopis: 'PH' });
+    for (const spatne of ['1985-09@PB', '1985-09@ph', '1985-09@P', '1985-09-@PH', '1985-13@PH']) assert.equal(rozlozitVydani(spatne), null, spatne);
+    for (const klic of ['1985-09@PH', '1986-03-UK@PH', '1985-S01@HU', '1985@PH', '1985-UK@PH', '2009-11-CZ', '2009-11', '2012', '1995-S01-CZ']) {
+        const v = rozlozitVydani(klic);
+        assert.equal(slozitVydani(v.rok, v.mesic, v.edice), klic, klic);
+    }
+    assert.equal(slozitVydani('1985', '09', 'PH/US'), '1985-09@PH');
+    assert.equal(slozitVydani('1985', '', 'PH/UK'), '1985-UK@PH');
+    assert.equal(nazevVydani('1985-09@PH'), 'Září 1985 · PH');
+    assert.equal(nazevVydani('1986-03-UK@PH'), 'Březen 1986 · PH UK');
+    // Playboy beze změny
+    assert.equal(nazevVydani('2009-11'), 'Listopad 2009');
+    assert.equal(nazevVydani('2009-11-CZ'), 'Listopad 2009 · CZ');
+});
+
 test('vydání s edicí', () => {
-    assert.deepEqual(rozlozitVydani('2009-11-CZ'), { rok: '2009', mesic: '11', edice: 'CZ' });
-    assert.deepEqual(rozlozitVydani('2012'), { rok: '2012', mesic: '', edice: 'US' });
+    assert.deepEqual(rozlozitVydani('2009-11-CZ'), { rok: '2009', mesic: '11', edice: 'CZ', zeme: 'CZ', casopis: 'PB' });
+    assert.deepEqual(rozlozitVydani('2012'), { rok: '2012', mesic: '', edice: 'US', zeme: 'US', casopis: 'PB' });
     assert.equal(rozlozitVydani('2009-13'), null);
     assert.equal(slozitVydani('2009', '11', 'US'), '2009-11');
     assert.equal(slozitVydani('2012', '', 'CZ'), '2012-CZ');

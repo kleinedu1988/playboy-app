@@ -78,7 +78,7 @@ test('řazení galerie a části lišty', async () => {
 
 test('speciály: klíč, název a speciály roku', async () => {
     const { rozlozitVydani, slozitVydani, nazevVydani, nastavitNazvySpecialu, specialyRoku, jeSpecial } = await import('../src/lib/format.js');
-    assert.deepEqual(rozlozitVydani('1995-S01-CZ'), { rok: '1995', mesic: 'S01', edice: 'CZ' });
+    assert.deepEqual(rozlozitVydani('1995-S01-CZ'), { rok: '1995', mesic: 'S01', edice: 'CZ', zeme: 'CZ', casopis: 'PB' });
     assert.equal(slozitVydani('1995', 'S02', 'US'), '1995-S02');
     assert.equal(jeSpecial('1995-S02'), true);
     assert.equal(jeSpecial('1995-02'), false);

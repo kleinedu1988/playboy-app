@@ -50,6 +50,10 @@ export function GetAlbaFotografa(arg1) {
   return window['go']['main']['App']['GetAlbaFotografa'](arg1);
 }
 
+export function GetCasopisy() {
+  return window['go']['main']['App']['GetCasopisy']();
+}
+
 export function GetCenterfoldy() {
   return window['go']['main']['App']['GetCenterfoldy']();
 }

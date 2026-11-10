@@ -222,6 +222,30 @@ export namespace main {
 	        this.soutezi = source["soutezi"];
 	    }
 	}
+	export class Casopis {
+	    klic: string;
+	    nazev: string;
+	    barva: string;
+	    edice: string[];
+	    modelkaMesice: string;
+	    modelkaRoku: string;
+	    poradi: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Casopis(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.klic = source["klic"];
+	        this.nazev = source["nazev"];
+	        this.barva = source["barva"];
+	        this.edice = source["edice"];
+	        this.modelkaMesice = source["modelkaMesice"];
+	        this.modelkaRoku = source["modelkaRoku"];
+	        this.poradi = source["poradi"];
+	    }
+	}
 	export class CekaniNaUroven {
 	    uroven: number;
 	    porovnani: number;

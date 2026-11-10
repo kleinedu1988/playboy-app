@@ -87,6 +87,7 @@ const CTENI = new Set([
     'GetChytreVybery',
     'GetVkusVCase',
     'GetObjevit',
+    'GetCasopisy',
     'GetObsahChytrehoVyberu',
     'NajitUdajeModelky',
     'GetZminky',
@@ -275,6 +276,7 @@ export const GetVyberyGalerie = /** @type {typeof App.GetVyberyGalerie} */ (obal
 export const GetChytreVybery = /** @type {typeof App.GetChytreVybery} */ (obalit('GetChytreVybery'));
 export const GetVkusVCase = /** @type {typeof App.GetVkusVCase} */ (obalit('GetVkusVCase'));
 export const GetObjevit = /** @type {typeof App.GetObjevit} */ (obalit('GetObjevit'));
+export const GetCasopisy = /** @type {typeof App.GetCasopisy} */ (obalit('GetCasopisy'));
 export const UlozitSouborGrafu = /** @type {typeof App.UlozitSouborGrafu} */ (obalit('UlozitSouborGrafu'));
 export const GetObsahChytrehoVyberu = /** @type {typeof App.GetObsahChytrehoVyberu} */ (obalit('GetObsahChytrehoVyberu'));
 export const OznacitVyberVideny = /** @type {typeof App.OznacitVyberVideny} */ (obalit('OznacitVyberVideny'));

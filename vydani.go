@@ -383,7 +383,7 @@ func (a *App) ZalozitSpecial(rok int, edice, nazev string) string {
 	if edice == "US" {
 		edice = ""
 	}
-	if nazev == "" || rok < 1953 || rok > 2100 || !platnaRada(edice) {
+	if nazev == "" || rok < 1953 || rok > 2100 || !a.znamaRada(edice) {
 		return ""
 	}
 	pripona := ""

@@ -2822,8 +2822,8 @@ func TestVyvojVCase(t *testing.T) {
 // přání uživatele: průvodce hodnocením fotky (úprava č. 15, export verze 12) vyšel v řadě 1.2 jako 1.2.5; profilová
 // fotka oddělená od titulní (úprava č. 16, export verze 13) jako 1.2.65.
 func TestZmrazeniAlfy(t *testing.T) {
-	if len(migrace) != 16 {
-		t.Errorf("úprav schématu je %d, schéma je zmrazené na úpravě č. 16 (profilová fotka, 1.2.65)", len(migrace))
+	if len(migrace) != 17 {
+		t.Errorf("úprav schématu je %d, schéma je na úpravě č. 17 (tabulka časopisů, Pinup Katalog 0.02.003); novou úpravu ohlásit v ROADMAP", len(migrace))
 	}
 	if verzeExportu != 13 {
 		t.Errorf("verze exportu je %d, formát exportu je zmrazený na verzi 13 (profilová fotka, 1.2.65)", verzeExportu)

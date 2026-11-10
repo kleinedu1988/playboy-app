@@ -111,9 +111,35 @@ func TestCislaRuznychCasopisuOdSebe(t *testing.T) {
 
 func TestSpecialJinehoCasopisu(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
-	for edice, cekano := range map[string]string{"PH/US": "1985-S01@PH", "PH/UK": "1985-S01-UK@PH", "CZ": "1985-S01-CZ", "US": "1985-S01", "PB/US": "", "XX": ""} {
+	for edice, cekano := range map[string]string{"PH/US": "1985-S01@PH", "PH/UK": "1985-S01-UK@PH", "CZ": "1985-S01-CZ", "US": "1985-S01", "PB/US": "", "XX": "",
+		"HU/UK": "", "XY/US": ""} {
 		if klic := a.ZalozitSpecial(1985, edice, "Ročenka"); klic != cekano {
 			t.Errorf("ZalozitSpecial(%q) = %q, čekáno %q", edice, klic, cekano)
 		}
+	}
+}
+
+// Tabulka časopisů (úprava č. 17): Playboy, Penthouse a Hustler předvyplněné; neznámý časopis ani edice neprojde
+func TestTabulkaCasopisu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	c := a.GetCasopisy()
+	if len(c) != 3 || c[0].Klic != "PB" || c[0].Nazev != "Playboy" || c[1].Klic != "PH" || c[1].ModelkaMesice != "Pet of the Month" || c[2].Klic != "HU" {
+		t.Fatalf("předvyplněné časopisy: %+v", c)
+	}
+	if len(c[1].Edice) != 2 || c[1].Edice[0] != "US" || c[1].Edice[1] != "UK" {
+		t.Fatalf("edice Penthouse: %v", c[1].Edice)
+	}
+	for rada, cekano := range map[string]bool{"US": true, "CZ": true, "": true, "PH/US": true, "PH/UK": true, "HU/US": true, "HU/UK": false, "XY/US": false, "PB/US": false, "DE": false} {
+		if a.znamaRada(rada) != cekano {
+			t.Errorf("znamaRada(%q) = %v", rada, !cekano)
+		}
+	}
+	a.AddModelka(Modelka{Jmeno: "Honey", Tetovani: -1, Piercing: -1})
+	id := a.GetModelky("")[0].ID
+	if a.AddBulkPhotos(id, "1985-09-UK@HU", "Centerfold", "https://drive.google.com/file/d/HHHHHHHHHHHHHHHHHHHHHHHHHHHHH/view").Vlozeno != 0 {
+		t.Error("Hustler UK v tabulce není, centerfold se nemá uložit")
+	}
+	if a.AddBulkPhotos(id, "1985-09@HU", "Centerfold", "https://drive.google.com/file/d/HHHHHHHHHHHHHHHHHHHHHHHHHHHHH/view").Vlozeno != 1 {
+		t.Error("centerfold Hustleru se má uložit")
 	}
 }

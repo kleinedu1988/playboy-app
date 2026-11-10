@@ -325,6 +325,7 @@ var migrace = []func(a *App) error{
 	(*App).migraceTagyFotek,
 	(*App).migracePruvodceFotek,
 	(*App).migraceProfilovaFotka,
+	(*App).migraceCasopisy, // 17: tabulka časopisů (Pinup Katalog 0.02.003)
 }
 
 func (a *App) migrovat() error {

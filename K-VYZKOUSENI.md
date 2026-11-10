@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.003 – Tabulka časopisů (úprava databáze č. 17)
+
+- [ ] Po instalaci a prvním spuštění: program se otevře normálně, sbírka je celá a v ⋯ › Obnovit ze zálohy
+      přibyla záloha „Před úpravou“ (pred-migraci) s dnešním datem.
+- [ ] Obnovení starší zálohy (před 0.02.003) funguje – databáze se po obnovení znovu upraví.
+- [ ] (volitelně) `sqlite3 ~/.local/share/pinup-katalog/playboy.db "SELECT * FROM casopisy"` ukáže Playboy,
+      Penthouse a Hustler.
+
 ## 0.02.002 – Klíč čísla v rozhraní
 
 Číslo jiného časopisu zatím nejde zadat v okně (přijde v 0.02.005); zkoušet jde jen odkaz v textu.

@@ -6,6 +6,22 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.003] – 2026-11-10
+
+### Přidáno
+- **Tabulka časopisů** (úprava schématu databáze č. 17, `casopisy.go`): zkratka (klíč v čísle), název, barva,
+  edice (země vydání, první výchozí), názvy „modelky měsíce“ a „modelky roku“ a pořadí. Předvyplněné jsou
+  **Playboy** (PB; US, CZ; Playmate), **Penthouse** (PH; US, UK; Pet of the Month / of the Year) a **Hustler**
+  (HU; US; Honey of the Month / of the Year). `GetCasopisy` pro rozhraní.
+
+### Změněno
+- Centerfold, cover a speciál jiného časopisu projdou jen s časopisem a edicí z tabulky (`znamaRada`; např.
+  Hustler UK ne).
+
+### Přechod
+- Databáze se při prvním spuštění upraví (úprava č. 17, jen nová tabulka); předtím se sama uloží záloha
+  „Před úpravou“. Starší verze programu novou databázi otevře jen pro čtení.
+
 ## [0.02.002] – 2026-11-10
 
 ### Přidáno

@@ -51,7 +51,7 @@ var (
 	typyAlb = map[string]bool{"Pictorial": true, "Centerfold": true, "Cover": true, typOnline: true, typCGTydne: true, typCGMesice: true, typPMMesice: true, typPMRoku: true}
 	// Edice Playboye kromě výchozí US (ta se do vydání nepíše)
 	dalsiEdice = map[string]bool{"CZ": true}
-	// Edice (země) čísel jiných časopisů (0.02.001: zatím libovolná dvě velká písmena; omezí je tabulka časopisů)
+	// Tvar edice (země) a klíče časopisu u čísel jiných časopisů; které jsou známé, říká tabulka časopisů (znamaRada)
 	vzorZemeEdice = regexp.MustCompile(`^[A-Z]{2}$`)
 	// Klíče „netýká se" u modelky a u alba
 	klicNetykaSeModelky = map[string]bool{"titulni": true, "zakladni": true, "vzhled": true, "zarazeni": true, "centerfold": true, "hodnoceni": true}
@@ -105,7 +105,7 @@ func (a *App) overitKlicAlba(modelkaID int, album, typ string) error {
 	case (typ == "Centerfold" || typ == "Cover") && !vzorVydani.MatchString(album):
 		return fmt.Errorf("název centerfoldu a coveru musí být vydání ve tvaru RRRR-MM nebo RRRR-Snn (s příponou edice, např. 2011-07-CZ)")
 	}
-	if e := edicePodleVydani(album); (typ == "Centerfold" || typ == "Cover") && !platnaRada(e) {
+	if e := edicePodleVydani(album); (typ == "Centerfold" || typ == "Cover") && !a.znamaRada(e) {
 		return fmt.Errorf("neznámá edice „%s“", e)
 	}
 	return nil

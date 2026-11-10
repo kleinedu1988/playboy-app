@@ -1598,8 +1598,8 @@ func TestEtapa4Backend(t *testing.T) {
 
 // Verze v programu, ve wails.json, ve frontend/package.json a v changelogu musí souhlasit
 func TestVerzeSouhlasi(t *testing.T) {
-	// Pravidlo verzování (ROADMAP.md): x.xx.xxx – MAJOR jedna číslice, MINOR 0–99, PATCH 0–999, bez nul na začátku;
-	// -dev = rozpracováno
+	// Pravidlo verzování (ROADMAP.md): X.XX.XXX – MAJOR jedna číslice, MINOR 0–99, PATCH 0–999; v kódu a balíčcích
+	// bez nul na začátku (SemVer), v CHANGELOG.md a v programu s pevnou šířkou (zobrazitVerzi); -dev = rozpracováno
 	cisla := strings.TrimSuffix(Verze, "-dev")
 	if !regexp.MustCompile(`^\d\.(0|[1-9]\d?)\.(0|[1-9]\d{0,2})$`).MatchString(cisla) {
 		t.Fatalf("verze %q nemá tvar x.xx.xxx (MAJOR.MINOR.PATCH bez nul na začátku, MINOR 0–99, PATCH 0–999)", Verze)
@@ -1626,11 +1626,12 @@ func TestVerzeSouhlasi(t *testing.T) {
 		t.Errorf("frontend/package-lock.json nemá version %s nahoře i u balíčku", cisla)
 	}
 	changelog := precist("CHANGELOG.md")
-	if !strings.Contains(changelog, "## ["+cisla+"]") {
-		t.Errorf("CHANGELOG.md nemá oddíl pro %s", cisla)
+	siroka := zobrazitVerzi(cisla)
+	if !strings.Contains(changelog, "## ["+siroka+"]") {
+		t.Errorf("CHANGELOG.md nemá oddíl pro %s", siroka)
 	}
 	// Aktuální verze je v changelogu nahoře a je vyšší než předchozí
-	oddily := regexp.MustCompile(`(?m)^## \[(\d+)\.(\d+)\.(\d+)\]`).FindAllStringSubmatch(changelog, 2)
+	oddily := regexp.MustCompile(`(?m)^## \[(\d)\.(\d{2})\.(\d{3})\]`).FindAllStringSubmatch(changelog, 2)
 	if len(oddily) == 2 {
 		cislo := func(o []string) [3]int {
 			var v [3]int
@@ -1640,13 +1641,13 @@ func TestVerzeSouhlasi(t *testing.T) {
 			return v
 		}
 		nova, stara := cislo(oddily[0]), cislo(oddily[1])
-		if oddily[0][0] != "## ["+cisla+"]" || !(nova[0] > stara[0] || nova[0] == stara[0] && (nova[1] > stara[1] || nova[1] == stara[1] && nova[2] > stara[2])) {
-			t.Errorf("CHANGELOG.md: nahoře má být %s a vyšší než předchozí %s.%d.%d", cisla, oddily[1][1], stara[1], stara[2])
+		if oddily[0][0] != "## ["+siroka+"]" || !(nova[0] > stara[0] || nova[0] == stara[0] && (nova[1] > stara[1] || nova[1] == stara[1] && nova[2] > stara[2])) {
+			t.Errorf("CHANGELOG.md: nahoře má být %s a vyšší než předchozí %s.%d.%d", siroka, oddily[1][1], stara[1], stara[2])
 		}
 	}
 	// Vydaná verze (bez -dev) musí mít v changelogu datum
-	if !strings.HasSuffix(Verze, "-dev") && !regexp.MustCompile(`## \[`+regexp.QuoteMeta(cisla)+`\] – \d{4}-\d{2}-\d{2}`).MatchString(changelog) {
-		t.Errorf("vydaná verze %s nemá v CHANGELOG.md datum", cisla)
+	if !strings.HasSuffix(Verze, "-dev") && !regexp.MustCompile(`## \[`+regexp.QuoteMeta(siroka)+`\] – \d{4}-\d{2}-\d{2}`).MatchString(changelog) {
+		t.Errorf("vydaná verze %s nemá v CHANGELOG.md datum", siroka)
 	}
 }
 

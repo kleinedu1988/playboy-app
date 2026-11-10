@@ -117,6 +117,9 @@ func (a *App) stavNoveVerze(klon string) NovaVerze {
 		n.Prikaz = "cd " + strconv.Quote(klon) + " && git pull && ./instalovat.sh"
 	}
 	n.Novejsi = n.Verze != "" && porovnatVerze(n.Verze, Verze) > 0
+	if n.Verze != "" {
+		n.Verze = zobrazitVerzi(n.Verze)
+	}
 	return n
 }
 

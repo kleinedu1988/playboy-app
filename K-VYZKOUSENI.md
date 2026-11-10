@@ -5,7 +5,7 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
-## 0.1.0 – Pinup Katalog (přejmenování)
+## 0.01.001 – Pinup Katalog (přejmenování a verze X.XX.XXX)
 
 Program se jmenuje Pinup Katalog a verze začínají znovu; oddíly níže (1.xx) jsou z Playboy Database.
 Před zkoušením **zavři Playboy Database** (běžící stará verze přesun odloží).
@@ -17,7 +17,8 @@ Před zkoušením **zavři Playboy Database** (běžící stará verze přesun o
       který se přesunul se složkou.
 - [ ] `~/.local/share/playboy-app` a `~/.cache/playboy-app` už neexistují, místo nich `pinup-katalog`; náhledy
       se nestahují znovu.
-- [ ] Po startu se ukáže „Co je nového · verze 0.1.0“ (jen jednou).
+- [ ] Po startu se ukáže „Co je nového · verze 0.01.001“ (jen jednou); verze na úvodní obrazovce a v ⋯ je
+      ve tvaru 0.01.001.
 - [ ] Název okna, úvodní obrazovka a Alt+Tab ukazují Pinup Katalog; okno se spáruje s ikonou v panelu.
 - [ ] ⋯ › Zkontrolovat novou verzi: dokud na GitHubu není 0.1.0, napíše „Ve vzdáleném repozitáři se nepodařilo
       najít verzi programu“ (stará řada 1.53 se za novější nebere); po push „Máš nejnovější verzi“.

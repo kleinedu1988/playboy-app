@@ -1,11 +1,19 @@
 # Changelog
 
 Všechny podstatné změny programu Pinup Katalog. Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/1.1.0/),
-verze mají tvar MAJOR.MINOR.PATCH podle oddílu „Pravidlo verzování“ v [ROADMAP.md](ROADMAP.md).
+verze mají tvar X.XX.XXX (MAJOR.MINOR.PATCH s pevnou šířkou, např. 0.02.003) podle oddílu „Pravidlo verzování“
+v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
-## [0.1.0] – 2026-11-10
+## [0.01.001] – 2026-11-10
+
+### Změněno
+- Verze se v programu a v changelogu píšou s pevnou šířkou **X.XX.XXX** (0.01.001, 0.02.000, 1.00.000): MINOR
+  vždy dvěma, PATCH třemi číslicemi. V `verze.go`, `wails.json` a `package.json` zůstává zápis bez nul (0.1.1),
+  protože jiný npm ani Wails nepřijmou; převod dělá `zobrazitVerzi`.
+
+## [0.01.000] – 2026-11-10
 
 ### Změněno
 - **Playboy Database je teď Pinup Katalog** a číslování verzí začíná znovu od 0.1.0. Modelky zůstávají v centru,

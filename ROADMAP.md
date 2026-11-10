@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (10. 11. 2026): verze 0.1.0** – program přejmenovaný, verzování začíná znovu. Všechno z Playboy Database
+**Stav (10. 11. 2026): verze 0.01.001** – program přejmenovaný, verzování začíná znovu. Všechno z Playboy Database
 1.53.0 funguje dál; data se při prvním spuštění sama přesunou do nových složek. Další na řadě je 0.2 – Časopis
 jako údaj čísla.
 
@@ -13,10 +13,14 @@ jako údaj čísla.
 
 ## Pravidlo verzování
 
-Formát `MAJOR.MINOR.PATCH` (SemVer), jen čísla bez nul na začátku:
+Formát **X.XX.XXX** = `MAJOR.MINOR.PATCH` s pevnou šířkou: MAJOR jedna číslice, MINOR dvě (00–99), PATCH tři
+(000–999), např. `0.02.003`, `1.00.000`. Bez čtvrté části. Tak se verze píše v programu, v CHANGELOG.md, v této
+roadmapě a v K-VYZKOUSENI.md. V `verze.go`, `wails.json` a `package.json` je stejná verze zapsaná bez nul na začátku
+(`0.2.3`), protože SemVer, npm a Wails nuly nepřijmou; převod dělá `zobrazitVerzi` (test `TestVerzeSouhlasi`).
+Kroky plánu níže (0.2, 0.3…) jsou MINOR, tedy verze 0.02.000, 0.03.000…
 
 - **0.x.y – přechod na víc časopisů:** MINOR = krok přechodu z plánu níže, PATCH = dílčí krok nebo oprava.
-- **1.0.0 – první vydání Pinup Katalogu:** přechod hotový (etapa U), ověřený na sbírce se dvěma časopisy.
+- **1.00.000 – první vydání Pinup Katalogu:** přechod hotový (etapa U), ověřený na sbírce se dvěma časopisy.
 - **1.x.y po 1.0:** MINOR = téma z plánu, PATCH = krok v tématu nebo oprava; MAJOR = velký milník.
 - Kompatibilitu dat dál hlídá číslo úpravy schématu DB a verze exportu (`TestZmrazeniAlfy`), ne verze programu.
   Číslování úprav schématu a verzí exportu pokračuje z Playboy Database (nezačíná znovu).

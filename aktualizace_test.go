@@ -61,7 +61,7 @@ func TestKontrolaNoveVerze(t *testing.T) {
 	slozkaZdroje = klon
 
 	n := a.ZkontrolovatNovouVerzi(false)
-	if !n.Mozna || n.Verze != Verze || n.Novejsi || !strings.Contains(n.Prikaz, "git pull") {
+	if !n.Mozna || n.Verze != zobrazitVerzi(Verze) || n.Novejsi || !strings.Contains(n.Prikaz, "git pull") {
 		t.Fatalf("stejná verze: %+v", n)
 	}
 	zapsat("99.0.0")
@@ -70,13 +70,13 @@ func TestKontrolaNoveVerze(t *testing.T) {
 		t.Fatalf("druhá kontrola téhož dne: %+v", n)
 	}
 	n = a.ZkontrolovatNovouVerzi(true)
-	if !n.Novejsi || n.Verze != "99.0.0" || !strings.Contains(a.GetChangelogNoveVerze(), "## [99.0.0]") {
+	if !n.Novejsi || n.Verze != "99.00.000" || !strings.Contains(a.GetChangelogNoveVerze(), "## [99.0.0]") {
 		t.Fatalf("nová verze: %+v", n)
 	}
 	if b, _ := os.ReadFile(filepath.Join(klon, "verze.go")); strings.Contains(string(b), "99.0.0") {
 		t.Fatal("kontrola změnila pracovní soubory klonu")
 	}
-	if g := a.GetNovaVerze(); !g.Novejsi || g.Verze != "99.0.0" {
+	if g := a.GetNovaVerze(); !g.Novejsi || g.Verze != "99.00.000" {
 		t.Fatalf("stav bez sítě: %+v", g)
 	}
 	// Vypnutá kontrola se po startu nespustí, z nabídky ano
@@ -84,6 +84,14 @@ func TestKontrolaNoveVerze(t *testing.T) {
 	a.ulozitNastaveni(klicPosledniKontroly, "")
 	if n := a.ZkontrolovatNovouVerzi(false); n.Zapnuto || n.Kontrola != "" {
 		t.Fatalf("vypnutá: %+v", n)
+	}
+}
+
+func TestZobrazitVerzi(t *testing.T) {
+	for v, cekano := range map[string]string{"0.1.1": "0.01.001", "1.53.0": "1.53.000", "0.2.0-dev": "0.02.000-dev", "9.99.999": "9.99.999", "x": "x"} {
+		if z := zobrazitVerzi(v); z != cekano {
+			t.Errorf("zobrazitVerzi(%q) = %q, čekáno %q", v, z, cekano)
+		}
 	}
 }
 

@@ -7,7 +7,7 @@
 ## Verzování
 - **Každá úprava kódu a chování aplikace musí být verzována.**
 - Při každé úpravě zvedni verzi (PATCH pro opravy/vylepšení bez změny schématu DB či exportu) v:
-  - `verze.go` (`const Verze`)
+  - `verze.go` (`const Verze`, bez nul: 0.2.3; v CHANGELOG.md a v programu s pevnou šířkou X.XX.XXX: 0.02.003)
   - `wails.json` (`info.productVersion`)
   - `frontend/package.json` (`version`)
   - `frontend/package-lock.json` (`version`)

@@ -33,6 +33,6 @@ test('platnyVzhled 1.50: pohyb, prohlížeč, start a záhlaví jen z povolenýc
 
 test('platnyVzhled 1.50: pořadí karet Přehledu bez cizích a dvojitých, chybějící na konec', () => {
     const v = platnyVzhled({ prehled: { poradi: ['naposledy', 'xx', 'cz', 'naposledy'], skryte: ['us', 'xx'] } });
-    assert.deepEqual(v.prehled.poradi, ['naposledy', 'cz', 'us', 'vybery']);
+    assert.deepEqual(v.prehled.poradi, ['naposledy', 'cz', 'us', 'vybery', 'objevit']);
     assert.deepEqual(v.prehled.skryte, ['us']);
 });

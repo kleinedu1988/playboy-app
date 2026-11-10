@@ -11,7 +11,7 @@ export const POHLEDY_KARET = /** @type {const} */ (['modelky', 'fotky', 'steny']
 export const POHYBY = /** @type {const} */ (['plny', 'omezeny', 'zadny']);
 export const POZADI_PROHLIZECE = /** @type {const} */ (['tmave', 'cerne', 'rozmazane']);
 export const OVLADANI_PROHLIZECE = /** @type {const} */ (['pohyb', 'trvale']);
-export const KARTY_PREHLEDU = /** @type {const} */ (['cz', 'us', 'vybery', 'naposledy']);
+export const KARTY_PREHLEDU = /** @type {const} */ (['cz', 'us', 'vybery', 'objevit', 'naposledy']);
 export const STARTY = /** @type {const} */ (['modelky', 'cisla', 'sbirka', 'posledni']);
 export const ZAHLAVI = /** @type {const} */ (['vysoke', 'pevne', 'pruh']);
 

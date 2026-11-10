@@ -280,7 +280,12 @@ func (a *App) SetHodnoceni(modelkaID int, hodnoceni float64) bool {
 	}
 	var err error
 	pred := a.snimekProOpravu()
+	var starePul float64
+	_ = a.db.QueryRow(`SELECT `+a.sloupecHodnoceni()+` FROM modelky WHERE id = ?`, modelkaID).Scan(&starePul)
 	defer func() {
+		if err == nil && starePul != float64(pul) {
+			a.uc.zapsatSrdicka(modelkaID, starePul/2, float64(pul)/2)
+		}
 		if err == nil && pred != nil {
 			a.opravitSnimek(pred, func(s *snimek) *snimek {
 				idx, ok := s.indexModelky[modelkaID]

@@ -1,5 +1,6 @@
 // Testy mapy sbírky (frontend/src/lib/mapa-sbirky.js) podle docs/NAVRH-SITE.md §2.9.
 import assert from 'node:assert/strict';
+import { generator } from '../src/lib/mapa-sit.js';
 import test from 'node:test';
 import {
     bodVMnohouhelniku,
@@ -268,4 +269,37 @@ test('podobneModelky: společný fotograf v důvodech, režim Na fotkách přim�
     assert.deepEqual(podobneModelky(1, modelky, { pocet: 3, obsah: { fotek: 0, naFotkach: {}, fotografove: {} }, rezim: 'fotky' }).map(p => p.id), udaje.map(p => p.id));
     const castecne = podobneModelky(1, modelky, { pocet: 3, obsah: { fotek: 5, naFotkach: { 3: 0.9 }, fotografove: {} }, rezim: 'fotky' });
     assert.deepEqual(castecne.map(p => p.id), [3]);
+});
+
+test('vypocitatMapuSbirky: 3 000 modelek, po přidání 30 se staré body posunou o < 3 % a zarovnají se', () => {
+    // Jako ve sbírce: období táhne postavu a vzhled (pozdější modelky vyšší, štíhlejší, častěji blond)
+    const rnd = generator(42);
+    const vytvor = (i) => {
+        const t = rnd(), s = () => (rnd() - 0.5) * 2;
+        return vytvorModelku(i + 1, {
+            jmeno: `M ${i}`,
+            vyskaCm: Math.round(160 + t * 16 + s() * 3),
+            vahaKg: Math.round(52 + t * 4 + s() * 3),
+            obvodHrudnikCm: Math.round(90 - t * 4 + s() * 2),
+            obvodPasCm: Math.round(58 + t * 3 + s() * 2),
+            obvodBokyCm: Math.round(90 - t * 3 + s() * 2),
+            vydani: [`${1955 + Math.round(t * 65)}-0${1 + (i % 9)}`],
+            centerfoldy: [],
+            vlasyBarva: rnd() < t ? 'Blond' : rnd() < 0.5 ? 'Hnědé' : 'Černé',
+            ociBarva: rnd() < 0.5 ? 'Modré' : 'Hnědé',
+            narodnost: rnd() < 0.8 ? 'USA' : 'Kanada',
+        });
+    };
+    const modelky = Array.from({ length: 3000 }, (_, i) => vytvor(i));
+    const t0 = performance.now();
+    const prvni = vypocitatMapuSbirky(modelky);
+    const trvani = performance.now() - t0;
+    assert.ok(trvani < 3000, `3 000 modelek: ${trvani.toFixed(0)} ms`);
+    assert.ok(prvni.zachovaniSousedu > 0.05 && prvni.zachovaniSousedu <= 1, String(prvni.zachovaniSousedu));
+    const predchozi = new Map(prvni.body.map(b => [b.id, b]));
+    const druha = vypocitatMapuSbirky([...modelky, ...Array.from({ length: 30 }, (_, i) => vytvor(3000 + i))], { predchozi });
+    assert.equal(druha.spolecnych, 3000);
+    assert.ok(druha.posun < 3, `posun ${druha.posun.toFixed(2)} %`);
+    // Stejná data proti sobě: nulový posun
+    assert.ok(vypocitatMapuSbirky(modelky, { predchozi }).posun < 1e-6);
 });

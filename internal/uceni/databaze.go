@@ -128,6 +128,14 @@ var MigraceUceni = []string{
 	);
 	INSERT INTO obdobi_sezon (od, do, tema, zvoleno) SELECT mesic || '-01', date(mesic || '-01', '+1 month'), tema, zvoleno FROM temata_sezon;
 	ALTER TABLE sezony ADD COLUMN tema TEXT NOT NULL DEFAULT '';`,
+	// Úprava č. 10: změny srdíček modelek (vkus_v_case.go) – čas, modelka, srdíčka před a po (Můj vkus v čase)
+	`CREATE TABLE historie_srdicek (
+		cas TEXT NOT NULL,
+		modelka_id INTEGER NOT NULL,
+		pred REAL NOT NULL,
+		po REAL NOT NULL
+	);
+	CREATE INDEX historie_srdicek_cas ON historie_srdicek(cas);`,
 }
 
 // TabulkyUceni jsou tabulky s naučeným z Údržby (bez mezipaměti), které se při čtení souboru jen pro čtení přenesou do paměti

@@ -202,6 +202,10 @@ export function GetNovaVerze() {
   return window['go']['main']['App']['GetNovaVerze']();
 }
 
+export function GetObjevit(arg1) {
+  return window['go']['main']['App']['GetObjevit'](arg1);
+}
+
 export function GetOblibenost() {
   return window['go']['main']['App']['GetOblibenost']();
 }
@@ -376,6 +380,10 @@ export function GetTitulySezonModelky(arg1) {
 
 export function GetVerze() {
   return window['go']['main']['App']['GetVerze']();
+}
+
+export function GetVkusVCase() {
+  return window['go']['main']['App']['GetVkusVCase']();
 }
 
 export function GetVsechnyKolekce() {
@@ -748,6 +756,10 @@ export function UlozitKatalog(arg1, arg2) {
 
 export function UlozitPruvodceFotky(arg1) {
   return window['go']['main']['App']['UlozitPruvodceFotky'](arg1);
+}
+
+export function UlozitSouborGrafu(arg1, arg2) {
+  return window['go']['main']['App']['UlozitSouborGrafu'](arg1, arg2);
 }
 
 export function UlozitUdajeZeZdroju(arg1, arg2, arg3) {

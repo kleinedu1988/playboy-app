@@ -10,7 +10,7 @@ let okno = null;
 const POPISY_POHLEDU = { modelky: 'Karty modelek', fotky: 'Všechny fotky', steny: 'Centerfoldy' };
 const POPISY_VELIKOSTI = { s: 'Malé', m: 'Střední', l: 'Velké' };
 const procenta = p => `${Math.round(p * 100)} %`;
-const POPISY_KARET_PREHLEDU = { cz: 'Česká edice', us: 'Americká edice', vybery: 'Chytré výběry', naposledy: 'Naposledy přidané' };
+const POPISY_KARET_PREHLEDU = { cz: 'Česká edice', us: 'Americká edice', vybery: 'Chytré výběry', objevit: 'Objevit', naposledy: 'Naposledy přidané' };
 // Pořadí tlačítek sekcí v hlavní nabídce (#viewToggle): Modelky, Čísla, Hodnocení, Sbírka
 const SEKCE_STARTU = { modelky: 0, cisla: 1, sbirka: 3 };
 

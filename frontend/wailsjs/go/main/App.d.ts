@@ -109,6 +109,8 @@ export function GetNepotagovaneFotky():Promise<Array<sbirka.Fotografie>>;
 
 export function GetNovaVerze():Promise<main.NovaVerze>;
 
+export function GetObjevit(arg1:number):Promise<main.Objevit>;
+
 export function GetOblibenost():Promise<main.StavOblibenosti>;
 
 export function GetObsahChytrehoVyberu(arg1:string,arg2:number):Promise<main.StavChytrehoVyberu>;
@@ -196,6 +198,8 @@ export function GetTitulniBezVyrezu():Promise<Array<main.TitulniBezVyrezu>>;
 export function GetTitulySezonModelky(arg1:number):Promise<Array<main.TitulSezony>>;
 
 export function GetVerze():Promise<string>;
+
+export function GetVkusVCase():Promise<main.VkusVCase>;
 
 export function GetVsechnyKolekce():Promise<Array<main.PrehledKolekce>>;
 
@@ -382,6 +386,8 @@ export function UlozitChytryVyber(arg1:main.ChytryVyber):Promise<main.ChytryVybe
 export function UlozitKatalog(arg1:string,arg2:Array<string>):Promise<main.VysledekKatalogu>;
 
 export function UlozitPruvodceFotky(arg1:main.ZapisPruvodce):Promise<main.PredchoziPruvodce>;
+
+export function UlozitSouborGrafu(arg1:string,arg2:string):Promise<string>;
 
 export function UlozitUdajeZeZdroju(arg1:number,arg2:Record<string, string>,arg3:Array<string>):Promise<boolean>;
 

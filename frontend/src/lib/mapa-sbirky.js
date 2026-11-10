@@ -5,6 +5,7 @@
 // Pevná orientace os (starší období vlevo, vyšší postava nahoře), Procrustovo zarovnání, Gowerova podobnost
 // se společnými rysy a test bodu v mnohoúhelníku pro laso.
 import { kategorieModelky, rozlozitVydani, sjednotit } from './format.js';
+import { sousedePriznaku, zachovaniSousedu } from './mapa-sit.js';
 
 // První rok výskytu a věk modelky v tom čísle (nebo online albu)
 function prvniRokAVek(m) {
@@ -100,9 +101,22 @@ export function uplnostModelky(m, rok = null) {
 }
 
 // Příprava matic příznaků (N × D) a pomocných údajů modelek pro Mapu sbírky
+// Údaje modelky pro mapu jsou drahé (kategorie, diakritika): mezipaměť podle objektu modelky (po změně dat přijde nový)
+const zakladModelek = new WeakMap();
 export function pripravitPriznakyMapy(modelky) {
     const n = modelky.length;
     const zaklad = modelky.map(m => {
+        const ulozeny = zakladModelek.get(m);
+        if (ulozeny) return ulozeny;
+        const z = zakladModelky(m);
+        zakladModelek.set(m, z);
+        return z;
+    });
+    return priznakyZeZakladu(zaklad, n);
+}
+
+function zakladModelky(m) {
+    {
         const { rok, vek } = m._rok !== undefined ? { rok: m._rok, vek: m._vek ?? null } : prvniRokAVek(m);
         const vyska = m.vyskaCm > 0 ? m.vyskaCm : null;
         const vaha = m.vahaKg > 0 ? m.vahaKg : null;
@@ -117,7 +131,10 @@ export function pripravitPriznakyMapy(modelky) {
         const kat = kategorieModelky(m).map(k => k.nazev);
         const uplnost = uplnostModelky(m, rok);
         return { m, rok, vek, vyska, vaha, hrudnik, pas, boky, bmi, whr, vlasy, oci, narodnost, kat, uplnost };
-    });
+    }
+}
+
+function priznakyZeZakladu(zaklad, n) {
 
     /** @type {Array<[string, number]>} */
     const klicePostavy = [
@@ -568,7 +585,7 @@ export function procrustes2D(noveX, noveY, stareX, stareY) {
             yVys[i] = ry;
             chyba += (rx - stareX[i]) ** 2 + (ry - stareY[i]) ** 2;
         }
-        return { x: xVys, y: yVys, chyba };
+        return { x: xVys, y: yVys, chyba, transformace: { meritko, r00, r01, r10, r11, mx1, my1, mx2, my2 } };
     });
     const nej = kandidati[0].chyba <= kandidati[1].chyba ? kandidati[0] : kandidati[1];
     const vzdalenosti = new Float64Array(n);
@@ -576,7 +593,17 @@ export function procrustes2D(noveX, noveY, stareX, stareY) {
     vzdalenosti.sort();
     // Průměr mapy [−1, 1] × [−1, 1] je 2; medián posunu v % průměru mapy
     const posun = kvantilSerazenych(vzdalenosti, 0.5) / 2 * 100;
-    return { x: nej.x, y: nej.y, posun };
+    return { x: nej.x, y: nej.y, posun, transformace: nej.transformace };
+}
+
+// Zarovnání z procrustes2D na všechny body (i nové, které v referenci nebyly); na místě
+export function pouzitTransformaci(t, x, y) {
+    if (!t) return;
+    for (let i = 0; i < x.length; i++) {
+        const x1 = x[i] - t.mx1, y1 = y[i] - t.my1;
+        x[i] = Math.max(-1.15, Math.min(1.15, t.meritko * (x1 * t.r00 + y1 * t.r10) + t.mx2));
+        y[i] = Math.max(-1.15, Math.min(1.15, t.meritko * (x1 * t.r01 + y1 * t.r11) + t.my2));
+    }
 }
 
 // Test, zda bod (x, y) leží uvnitř mnohoúhelníku [{ x, y }, ...] (paprsková metoda)
@@ -592,39 +619,63 @@ export function bodVMnohouhelniku(x, y, polygon) {
     return uvnitr;
 }
 
-// Výpočet celé Mapy sbírky: 2-D souřadnice, sousedé na mapě, zachování sousedů a popisky bodů
-export function vypocitatMapuSbirky(modelky, { predchozi = null } = {}) {
+// Výpočet celé Mapy sbírky: 2-D souřadnice, sousedé na mapě, zachování sousedů a popisky bodů.
+// predchozi = Map id → { x, y } minulé mapy: nová se na ni zarovná (Procrustes), aby body zůstaly na místě, a posun
+// je medián posunu společných bodů v % průměru mapy. kody = { x, y } z autoenkodéru (lib/mapa-sit.js) místo PCA.
+// ref = sousedé v prostoru příznaků (sousedePriznaku), jinak se spočítají.
+export function vypocitatMapuSbirky(modelky, { predchozi = null, kody = null, ref = null, meritSousedy = true } = {}) {
     const n = modelky.length;
-    if (!n) return { body: [], model: 'pca', zachovaniSousedu: 0, posun: 0 };
+    if (!n) return { body: [], model: 'pca', zachovaniSousedu: 0, posun: 0, spolecnych: 0, priznaky: null, ref: null };
     const { zaklad, matice, D } = pripravitPriznakyMapy(modelky);
-    let { x, y } = pcaDveOsy(matice, n, D);
+    const vychozi = kody && kody.x.length === n ? { x: Float64Array.from(kody.x), y: Float64Array.from(kody.y) } : pcaDveOsy(matice, n, D);
+    const { x, y } = vychozi;
     orientovatASkalovat(x, y, zaklad);
 
-    let posun = 0;
+    let posun = 0, spolecnych = 0;
     if (predchozi && predchozi.size >= 10) {
-        const spolIdx = [], sx = [], sy = [], nx = [], ny = [];
+        const sx = [], sy = [], nx = [], ny = [];
         for (let i = 0; i < n; i++) {
             const st = predchozi.get(modelky[i].id);
             if (!st) continue;
-            spolIdx.push(i);
             sx.push(st.x); sy.push(st.y);
             nx.push(x[i]); ny.push(y[i]);
         }
-        if (spolIdx.length >= 10) {
+        spolecnych = sx.length;
+        if (spolecnych >= 10) {
             const zar = procrustes2D(nx, ny, sx, sy);
             posun = zar.posun;
+            pouzitTransformaci(zar.transformace, x, y);
         }
     }
+    // Zachování sousedů je pomalejší (stovky ms u 3 000 modelek): meritSousedy = false ho nechá na později
+    const sousedeRef = ref || (meritSousedy ? sousedePriznaku(matice, n, D) : null);
+    const zachovani = sousedeRef ? zachovaniSousedu(sousedeRef, x, y) : null;
 
-    // Pro každý bod najdeme 2 nejbližší sousedy na mapě a spočítáme míru zachování sousedů na vzorku
+    // Pro každý bod 2 nejbližší sousedé na mapě (mřížka: hledá se v okolních buňkách, dokud nejsou jistě nejbližší)
+    const BUNEK = Math.max(1, Math.round(Math.sqrt(n / 2)));
+    const bunka = v => Math.max(0, Math.min(BUNEK - 1, Math.floor((v + 1.16) / 2.32 * BUNEK)));
+    const mrizka = Array.from({ length: BUNEK * BUNEK }, () => []);
+    for (let j = 0; j < n; j++) mrizka[bunka(y[j]) * BUNEK + bunka(x[j])].push(j);
+    const velikost = 2.32 / BUNEK;
     const body = zaklad.map((z, i) => {
         const xi = x[i], yi = y[i];
+        const bx = bunka(xi), by = bunka(yi);
         let nej1 = -1, nej2 = -1, d1 = Infinity, d2 = Infinity;
-        for (let j = 0; j < n; j++) {
-            if (i === j) continue;
-            const d = (x[j] - xi) ** 2 + (y[j] - yi) ** 2;
-            if (d < d1) { d2 = d1; nej2 = nej1; d1 = d; nej1 = j; }
-            else if (d < d2) { d2 = d; nej2 = j; }
+        for (let r = 0; r < BUNEK; r++) {
+            // Prstenec buněk ve vzdálenosti r; po něm jsou sousedé blíž než cokoli dál
+            for (let cy = by - r; cy <= by + r; cy++) {
+                if (cy < 0 || cy >= BUNEK) continue;
+                for (let cx = bx - r; cx <= bx + r; cx++) {
+                    if (cx < 0 || cx >= BUNEK || (Math.abs(cx - bx) !== r && Math.abs(cy - by) !== r)) continue;
+                    for (const j of mrizka[cy * BUNEK + cx]) {
+                        if (i === j) continue;
+                        const d = (x[j] - xi) ** 2 + (y[j] - yi) ** 2;
+                        if (d < d1) { d2 = d1; nej2 = nej1; d1 = d; nej1 = j; }
+                        else if (d < d2) { d2 = d; nej2 = j; }
+                    }
+                }
+            }
+            if (nej2 >= 0 && d2 <= (r * velikost) ** 2) break;
         }
         const sousede = [nej1, nej2].filter(j => j >= 0).map(j => zaklad[j].m.jmeno);
         const casti = [];
@@ -651,5 +702,5 @@ export function vypocitatMapuSbirky(modelky, { predchozi = null } = {}) {
         };
     });
 
-    return { body, model: 'pca', posun };
+    return { body, model: kody ? 'autoenkoder' : 'pca', posun, spolecnych, zachovaniSousedu: zachovani, priznaky: { matice, n, D }, ref: sousedeRef };
 }

@@ -5,7 +5,10 @@
 // ukazuje jeho modelky (bez výběru všechny v grafu).
 // Počítá se ze seznamu modelek; nejčastější fotografové jsou z backendu (GetStatistiky) a jejich modelky se
 // dohledají hledáním. SVG grafSloupcu zůstává pro úvod Přehledu.
-import { GetProfilovaFotka, GetStatistiky } from './backend';
+import { GetProfilovaFotka, GetStatistiky, GetVkusVCase, UlozitSouborGrafu } from './backend';
+import { csv, nazevSouboru, pngGrafu } from '../lib/graf-ven';
+import { oznamit } from '../ui/oznameni';
+import { radaPodilu, vkusVCase } from '../lib/vkus-v-case';
 import { EDICE, MESICE, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne, VELIKOST_TITULNI, VELIKOST_ZAHLAVI } from './obrazky';
@@ -15,7 +18,9 @@ import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
 import { neobvykleRoky, porovnatObdobi, postrehRady, pripravitPriznak, rozdilyVyberu, souvislosti, vybratPostrehy } from '../lib/postrehy';
 import { useky, vyhlazenaRada } from '../lib/krivky';
-import { bodVMnohouhelniku, vypocitatMapuSbirky } from '../lib/mapa-sbirky';
+import { bodVMnohouhelniku } from '../lib/mapa-sbirky';
+import { vypocitatMapu, zapomenoutMapu, zlepsitNaPozadi } from './mapa-uceni';
+import { PRAH_PLATNA, bodNaMiste, htmlPlatna, nakreslit, pripravitKresbu } from './mapa-platno';
 import { nastavitHtml } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
 import { naCss } from '../ui/vzhled';
@@ -99,6 +104,7 @@ const GRAFY = [
     { klic: 'fot', skupina: 'rozl', nazev: 'Fotografové' },
     { klic: 'mapa', skupina: 'rozl', druh: 'mapa', nazev: 'Mapa sbírky' },
     { klic: 'obdobi', skupina: 'srov', druh: 'obdobi', nazev: 'Porovnat období' },
+    { klic: 'vkus', skupina: 'srov', druh: 'vkus', nazev: 'Můj vkus v čase' },
 ];
 const SKUPINY = { pocty: 'V čase · počty', udaje: 'V čase · údaje', podily: 'V čase · podíly', rozl: 'Rozložení', srov: 'Srovnání' };
 
@@ -469,9 +475,37 @@ function polozkyRozlozeni(klic) {
 function dataMapy() {
     if (mapaCache.data === data && mapaCache.vysledek) return mapaCache.vysledek;
     const predchozi = mapaCache.vysledek ? new Map(mapaCache.vysledek.body.map(b => [b.id, b])) : null;
-    const vysledek = vypocitatMapuSbirky(data.modelky, { predchozi });
+    const vysledek = vypocitatMapu(data.modelky, predchozi);
+    const proData = data;
     mapaCache = { data, vysledek };
+    // Zachování sousedů a autoenkodér na pozadí (mapa se ukáže hned)
+    zlepsitNaPozadi(data.modelky, vysledek, {
+        zmena: () => prekreslitPatuMapy(),
+        hotovo: (nova) => {
+            if (mapaCache.data !== proData) return;
+            mapaCache = { data: proData, vysledek: nova };
+            if (graf === 'mapa' && !lasoTah) {
+                const koren = /** @type {HTMLElement | null} */ (document.querySelector('.stat-statistiky'));
+                if (koren?.isConnected) vykreslit(koren, { jenGraf: true });
+            }
+        },
+    });
     return vysledek;
+}
+
+// Řádek pod mapou: model, posun proti minulé mapě, zachování sousedů, průběh autoenkodéru a Přepočítat od začátku
+function htmlPatyMapy(v) {
+    const pct = x => `${Math.round(x * 100)} %`;
+    const casti = [v.model === 'autoenkoder' ? 'Model: autoenkodér' : 'Model: PCA'];
+    if (v.spolecnych >= 10) casti.push(`Posun proti minulé mapě ${v.posun.toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} %${v.novych > 0 ? ` (nových ${v.novych})` : ''}`);
+    if (v.zachovaniSousedu != null) casti.push(`Zachovaní sousedé ${pct(v.zachovaniSousedu)}`);
+    if (v.uciSe) casti.push(`Zkouším autoenkodér… ${v.epocha || 0}/40`);
+    else if (v.zachAe != null && v.model === 'pca') casti.push(`Autoenkodér ${pct(v.zachAe)} – nestačí, zůstává PCA`);
+    return `<div class="sp-mapa-pata" title="Zachovaní sousedé: kolik z 10 nejpodobnějších modelek (podle všech údajů) je i na mapě mezi 10 nejbližšími. Autoenkodér se použije, když je aspoň o 5 bodů lepší než PCA.">${casti.map(c => `<span>${esc(c)}</span>`).join('')}<button type="button" class="link" data-sp-mapa-znovu title="Zapomenout uloženou mapu a spočítat ji znovu s pevnou orientací os">Přepočítat od začátku</button></div>`;
+}
+function prekreslitPatuMapy() {
+    const pata = document.querySelector('.sp-graf.mapa .sp-mapa-pata');
+    if (pata && mapaCache.vysledek) pata.outerHTML = htmlPatyMapy(mapaCache.vysledek);
 }
 
 // Bod mapy podle id modelky; rejstřík se staví jednou pro každý výpočet mapy
@@ -487,7 +521,10 @@ function bodMapy(id) {
 }
 
 function htmlMapySbirky(sirka) {
-    const { body } = dataMapy();
+    const vysledek = dataMapy();
+    const { body } = vysledek;
+    const platno = body.length > PRAH_PLATNA;
+    const kresba = [];
     if (!body.length) return '<p class="prazdno-male">Zatím žádná data.</p>';
     const W = Math.max(320, sirka), H = 360, L = 18, P = 18, T = 18, D = 18;
     const sx = x => L + (x + 1.15) / 2.3 * (W - L - P);
@@ -510,6 +547,10 @@ function htmlMapySbirky(sirka) {
         if (jeZvyraznena) {
             kruhZvyraznene = `<circle class="sp-mapa-zvyraznena" cx="${cx}" cy="${cy}" r="${(r + 5).toFixed(1)}" fill="none" stroke="${BARVA}" stroke-width="2" pointer-events="none"/>`;
         }
+        if (platno) {
+            kresba.push({ cx: +cx, cy: +cy, r: polomer, barva, dute: b.maloUdaju && !jeZvyraznena, tlum: !jeVybrana, id: b.id, tip });
+            return '';
+        }
         if (b.maloUdaju && !jeZvyraznena) {
             return `<circle class="sp-mapa-bod${tlum}" data-mapa-id="${b.id}" data-tip="${esc(tip)}" cx="${cx}" cy="${cy}" r="${polomer}" fill="none" stroke="${barva}" stroke-width="1.5"/>`;
         }
@@ -519,7 +560,11 @@ function htmlMapySbirky(sirka) {
     const lasoHtml = lasoTah && lasoTah.length >= 2
         ? `<polygon class="sp-laso" points="${lasoTah.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')}"/>`
         : '';
-    return `<svg class="sp-svg" width="${W}" height="${H}" data-mapa-w="${W}" data-mapa-h="${H}" role="img" aria-label="Mapa sbírky">${kruhy}${kruhZvyraznene}${lasoHtml}</svg>`;
+    if (platno) {
+        pripravitKresbu(W, H, kresba);
+        return htmlPlatna(W, H, `${kruhZvyraznene}${lasoHtml}`) + htmlPatyMapy(vysledek);
+    }
+    return `<svg class="sp-svg" width="${W}" height="${H}" data-mapa-w="${W}" data-mapa-h="${H}" role="img" aria-label="Mapa sbírky">${kruhy}${kruhZvyraznene}${lasoHtml}</svg>${htmlPatyMapy(vysledek)}`;
 }
 
 function htmlPruhu(def, polozky) {
@@ -586,6 +631,7 @@ function htmlSeznamu(def, sloupce) {
 function souhrn(def, sloupce, rozlozeni) {
     const ve = (vyber, celkem) => filtry.size ? `<b>${vyber}</b> z ${celkem}` : `<b>${celkem}</b>`;
     if (def.druh === 'mapa') return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} modelek na mapě`;
+    if (def.druh === 'vkus') return vkusData ? `<b>${(vkusData.porovnani || []).length.toLocaleString('cs-CZ')}</b> soubojů` : '';
     if (def.druh === 'obdobi') {
         const c = clenstviObdobi();
         const n = strana => c.reduce((x, y) => x + (y === strana ? 1 : 0), 0);
@@ -744,6 +790,128 @@ function vysledekSrovnani() {
 }
 const hodnotaTabulky = (r, v) => v === null || v === undefined ? '–' : `${cislo(v, r.druh === 'podil' ? 0 : r.desetinna)}${r.jednotka ? (r.jednotka === '%' ? ' %' : ` ${r.jednotka}`) : ''}`;
 
+// ——— Graf ven (1.53, lib/graf-ven.js): čísla zvoleného grafu jako tabulka, obrázek a tisk ———
+function tabulkaGrafu(def, misto) {
+    if (def.druh === 'mapa') {
+        const rezim = BARVY_MAPY[barvaMapy] || BARVY_MAPY.obdobi;
+        return [['Modelka', 'x', 'y', rezim.nazev, 'Ve výběru'], ...dataMapy().body.map(b => [b.m.jmeno, b.x, b.y, rezim.hodnota(b), !filtry.size || vyhovuje(b.m) ? 'ano' : 'ne'])];
+    }
+    if (def.druh === 'vkus') {
+        if (!vkusData) return [];
+        const v = vypocitanyVkus();
+        const proc = x => (x === null ? null : Math.round(x * 1000) / 10);
+        return [['Vlastnost', 'Dřív – výher %', 'Dřív – soubojů', 'Poslední rok – výher %', 'Poslední rok – soubojů', 'Průkazný posun'],
+            ...v.radky.map(r => [r.kdo, proc(r.podilDriv), r.nD, proc(r.podilLetos), r.nL, v.postrehy.some(p => p.klic === r.klic) ? 'ano' : ''])];
+    }
+    if (def.druh === 'obdobi') {
+        return [...misto.querySelectorAll('table tr')].map(tr => [...tr.querySelectorAll('th, td')].map(b => b.textContent.trim().replace(/\s+/g, ' ')));
+    }
+    if (def.osa) {
+        const hlava = [def.osa === 'mesic' ? 'Měsíc' : 'Rok', 'Modelek'];
+        if (def.druh === 'udaj') hlava.push(`Medián${def.jednotka ? ` (${def.jednotka})` : ''}`, '25. percentil', '75. percentil');
+        if (def.druh === 'podil') hlava.push(`${def.ano} (%)`);
+        return [hlava, ...sloupce.map(s => {
+            const vybrane = s.polozky.filter(p => vyhovuje(p.m, klicFiltru(def)));
+            const r = [s.nazev, vybrane.length];
+            if (def.druh === 'udaj') { const h = rozsahHodnot(vybrane); r.push(h?.median ?? null, h?.dolni ?? null, h?.horni ?? null); }
+            if (def.druh === 'podil') r.push(vybrane.length ? vybrane.filter(p => p.hodnota).length / vybrane.length * 100 : null);
+            return r;
+        })];
+    }
+    return [['Hodnota', 'Modelek', ...(filtry.size ? ['Ve výběru'] : [])], ...rozlozeni.map(p => [p.nazev, p.pocet, ...(filtry.size ? [p.vybrano] : [])])];
+}
+
+async function grafVen(koren, jak) {
+    const def = definice();
+    const misto = /** @type {HTMLElement} */ (koren.querySelector('[data-sp-graf]'));
+    const nazev = def.nazev + (filtry.size ? ' – výběr' : '');
+    if (jak === 'tisk') {
+        document.body.classList.add('tisk-grafu');
+        const konec = () => { document.body.classList.remove('tisk-grafu'); window.removeEventListener('afterprint', konec); };
+        window.addEventListener('afterprint', konec);
+        try { window.print(); } catch { konec(); oznamit('Tisk se nepodařilo otevřít.'); }
+        return;
+    }
+    let obsah = null;
+    if (jak === 'csv') {
+        const radky = tabulkaGrafu(def, misto);
+        if (radky.length < 2) return oznamit('Tento graf zatím nemá čísla k uložení.');
+        obsah = csv(radky);
+    } else {
+        const pozadi = getComputedStyle(koren.querySelector('.sp-karta') || document.body).backgroundColor;
+        obsah = await pngGrafu(misto, pozadi && pozadi !== 'rgba(0, 0, 0, 0)' ? pozadi : '#141416').catch(() => null);
+        if (!obsah) return oznamit('Tento pohled nemá obrázek grafu – ulož ho jako CSV nebo vytiskni.');
+    }
+    const cesta = await UlozitSouborGrafu(nazevSouboru(nazev, jak), obsah).catch(() => '');
+    if (cesta) oznamit(`Uloženo: ${cesta}`);
+}
+
+// ——— Můj vkus v čase (1.53, lib/vkus-v-case.js): porovnání dvojic a změny srdíček po měsících ———
+let vkusData = null;          // z backendu; null = ještě nenačteno
+let vkusNacita = false;
+let vkusPamet = { data: null, vkus: null, v: null };
+const BARVY_VKUSU = [BARVA, '#64b5f6', '#ffd54f'];
+
+function vypocitanyVkus() {
+    if (vkusPamet.data === data && vkusPamet.vkus === vkusData) return vkusPamet.v;
+    const v = vkusVCase(vkusData, data.modelky);
+    vkusPamet = { data, vkus: vkusData, v };
+    return v;
+}
+
+function htmlVkusu(sirka) {
+    if (!vkusData) {
+        if (!vkusNacita) {
+            vkusNacita = true;
+            GetVkusVCase().then(v => { vkusData = v || { porovnani: [], srdicka: [] }; }).catch(() => { vkusData = { porovnani: [], srdicka: [] }; })
+                .finally(() => {
+                    vkusNacita = false;
+                    const koren = /** @type {HTMLElement | null} */ (document.querySelector('.stat-statistiky'));
+                    if (graf === 'vkus' && koren?.isConnected) vykreslit(koren);
+                });
+        }
+        return '<p class="prazdno-male">Načítám historii porovnání…</p>';
+    }
+    const v = vypocitanyVkus();
+    if (v.souboju < 40) {
+        return `<p class="prazdno-male">Zatím ${v.souboju} porovnání – vkus v čase potřebuje aspoň 40 soubojů v Hodnocení › Porovnat (nebo v Dnešním výběru), nejlépe rozložených přes víc než rok.</p>${htmlSrdicekVCase(v)}`;
+    }
+    const postrehy = v.postrehy.length
+        ? `<ul class="vk-postrehy">${v.postrehy.map(p => `<li class="${p.kladny ? 'vk-vic' : 'vk-mene'}">${esc(p.text)}</li>`).join('')}</ul>`
+        : `<p class="vk-nic">Žádný průkazný posun: za poslední rok vyhrávají modelky se stejnými vlastnostmi jako dřív (porovnáno ${v.radky.filter(r => r.p !== null).length} vlastností, ${v.souboju.toLocaleString('cs-CZ')} soubojů).</p>`;
+    // Graf: podíl výher po měsících – průkazné posuny, jinak nejčastější vlastnosti
+    const kGrafu = [...v.postrehy.map(p => v.radky.find(r => r.klic === p.klic)), ...v.radky].filter((r, i, a) => r && a.indexOf(r) === i).slice(0, 3);
+    const W = Math.max(320, sirka), H = 200, L = 34, P = 10, T = 10, D = 22;
+    const n = v.mesice.length;
+    const sx = i => L + (n <= 1 ? 0.5 : i / (n - 1)) * (W - L - P);
+    const sy = p => T + (1 - p) * (H - T - D);
+    const iHranice = v.mesice.findIndex(m => m > v.hranice.slice(0, 7));
+    const cary = kGrafu.map((r, k) => {
+        const body = radaPodilu(r, v.mesice).map((b, i) => (b.podil === null ? '' : `${sx(i).toFixed(1)},${sy(b.podil).toFixed(1)}`)).filter(Boolean);
+        return body.length ? `<polyline fill="none" stroke="${BARVY_VKUSU[k]}" stroke-width="2" points="${body.join(' ')}"/>` : '';
+    }).join('');
+    const popisky = [0, 0.5, 1].map(p => `<text x="${L - 6}" y="${sy(p) + 4}" text-anchor="end" class="sp-osa-text">${p * 100} %</text>`).join('');
+    const mesicePopis = n ? `<text x="${sx(0)}" y="${H - 6}" class="sp-osa-text">${esc(v.mesice[0])}</text><text x="${sx(n - 1)}" y="${H - 6}" text-anchor="end" class="sp-osa-text">${esc(v.mesice[n - 1])}</text>` : '';
+    const hranice = iHranice > 0 ? `<line x1="${sx(iHranice)}" x2="${sx(iHranice)}" y1="${T}" y2="${H - D}" class="vk-hranice"/><text x="${sx(iHranice) + 4}" y="${T + 10}" class="sp-osa-text">poslední rok</text>` : '';
+    const svg = `<svg class="sp-svg" width="${W}" height="${H}" role="img" aria-label="Podíl vyhraných soubojů po měsících">
+        <line x1="${L}" x2="${W - P}" y1="${sy(0.5)}" y2="${sy(0.5)}" class="vk-pulka"/>${hranice}${popisky}${mesicePopis}${cary}</svg>
+        <div class="vk-legenda">${kGrafu.map((r, k) => `<span><i style="background:${BARVY_VKUSU[k]}"></i>${esc(r.kdo)}</span>`).join('')}<span class="vk-pozn">podíl vyhraných soubojů proti modelkám bez té vlastnosti, měsíce s aspoň 5 souboji</span></div>`;
+    const proc = x => (x === null ? '–' : `${Math.round(x * 100)} %`);
+    const tabulka = `<table class="vk-tabulka"><thead><tr><th>Vlastnost</th><th>Dřív</th><th>Poslední rok</th><th>Posun</th></tr></thead><tbody>${v.radky.slice(0, 12).map(r => {
+        const posun = r.podilLetos !== null && r.podilDriv !== null ? Math.round((r.podilLetos - r.podilDriv) * 100) : null;
+        const pruk = v.postrehy.some(p => p.klic === r.klic);
+        return `<tr class="${pruk ? 'vk-prukazne' : ''}"><td>${esc(r.kdo)}</td><td>${proc(r.podilDriv)} <small>${r.nD}</small></td><td>${proc(r.podilLetos)} <small>${r.nL}</small></td><td>${posun === null ? '–' : `${posun > 0 ? '+' : posun < 0 ? '−' : ''}${Math.abs(posun)} b.`}${pruk ? ' ✦' : ''}</td></tr>`;
+    }).join('')}</tbody></table>`;
+    return `${postrehy}${svg}${tabulka}${htmlSrdicekVCase(v)}`;
+}
+
+function htmlSrdicekVCase(v) {
+    if (!v.srdicka.length) return '<p class="vk-pozn">Změny srdíček modelek se zapisují od verze 1.53 – časem tu bude i jejich vývoj po měsících.</p>';
+    const posledni = v.srdicka.slice(-12).reverse();
+    const pul = x => (x === null ? '–' : x.toLocaleString('cs-CZ', { maximumFractionDigits: 1 }));
+    return `<h5 class="vk-nadpis">Srdíčka po měsících</h5><table class="vk-tabulka"><thead><tr><th>Měsíc</th><th>Nově ohodnocené</th><th>Průměr nových ♥</th><th>Přidáno</th><th>Ubráno</th></tr></thead><tbody>${posledni.map(r => `<tr><td>${esc(r.mesic)}</td><td>${r.nove}</td><td>${pul(r.prumerNovych)}</td><td>${r.pridano}</td><td>${r.ubrano}</td></tr>`).join('')}</tbody></table>`;
+}
+
 function htmlObdobi() {
     const desetileti = desetiletiSbirky();
     if (!desetileti.length) return '<p class="prazdno-male">Zatím žádná data: srovnání potřebuje modelky s rokem prvního výskytu.</p>';
@@ -789,6 +957,7 @@ function htmlKostry() {
     return `<div class="volby-v-liste" data-volby-casti="statistiky" data-sp-volby></div>
         <div class="sp-telo">
             <div class="stat-karta sp-karta">
+                <div class="sp-ven" role="group" aria-label="Graf ven"><button type="button" class="link" data-sp-ven="png" title="Uložit graf jako obrázek PNG">PNG</button><button type="button" class="link" data-sp-ven="csv" title="Uložit čísla grafu jako tabulku CSV (otevře ji Excel i LibreOffice)">CSV</button><button type="button" class="link" data-sp-ven="tisk" title="Vytisknout graf nebo ho uložit do PDF">Tisk</button></div>
                 <div class="sp-legenda" data-sp-legenda></div>
                 <div class="sp-graf" data-sp-graf tabindex="0"></div>
                 <p class="sp-postreh" data-sp-postreh hidden></p>
@@ -800,6 +969,7 @@ function htmlKostry() {
 }
 
 function htmlLegendy(def) {
+    if (def.druh === 'vkus') return '';
     if (def.druh === 'mapa') {
         const rezim = BARVY_MAPY[barvaMapy] || BARVY_MAPY.obdobi;
         const aktivniKat = filtry.get('mapa')?.hodnota || '';
@@ -837,17 +1007,19 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     if (!jenGraf) {
         sloupce = def.osa ? radaVCase(def) : [];
         postreh = def.osa === 'rok' ? postrehyRad().get(def.klic) ?? null : null;
-        rozlozeni = def.osa || def.druh === 'mapa' || def.druh === 'obdobi' ? [] : polozkyRozlozeni(def.klic);
+        rozlozeni = def.osa || def.druh === 'mapa' || def.druh === 'obdobi' || def.druh === 'vkus' ? [] : polozkyRozlozeni(def.klic);
     }
     const fokus = /** @type {HTMLElement} */ (document.activeElement)?.closest?.('[data-hodnota]')?.dataset.hodnota;
     const aktivni = /** @type {HTMLElement} */ (document.activeElement);
     const fokusPole = misto.contains(aktivni) && (aktivni.dataset?.soOd ? `[data-so-od="${aktivni.dataset.soOd}"]` : aktivni.dataset?.soDo ? `[data-so-do="${aktivni.dataset.soDo}"]` : '');
     misto.innerHTML = def.druh === 'obdobi' ? htmlObdobi()
+        : def.druh === 'vkus' ? htmlVkusu(misto.clientWidth)
         : def.druh === 'mapa'
         ? htmlMapySbirky(misto.clientWidth)
         : def.osa ? htmlGrafuVCase(def, sloupce, misto.clientWidth) : htmlPruhu(def, rozlozeni);
     misto.classList.toggle('cas', Boolean(def.osa));
     misto.classList.toggle('mapa', def.druh === 'mapa');
+    if (def.druh === 'mapa') nakreslit(misto);
     if (fokus !== undefined) /** @type {HTMLElement} */ (misto.querySelector(`[data-hodnota="${CSS.escape(fokus)}"]`))?.focus({ preventScroll: true });
     if (fokusPole) /** @type {HTMLElement} */ (misto.querySelector(fokusPole))?.focus({ preventScroll: true });
     misto.classList.toggle('obdobi', def.druh === 'obdobi');
@@ -874,7 +1046,9 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     const online = druhVyskytu === 'online';
     const bezCisla = def.osa === 'rok' ? data.modelky.filter(m => !vyskytyModelky(m).some(c => c.druhy.has('online') === online)).length : 0;
     const neni = bezCisla >= 2 && bezCisla <= 4 ? 'nejsou' : 'není';
-    koren.querySelector('[data-sp-napoveda]').textContent = def.druh === 'obdobi'
+    koren.querySelector('[data-sp-napoveda]').textContent = def.druh === 'vkus'
+        ? 'Z porovnání v Hodnocení: u každé vlastnosti se počítá, jak často vyhraje modelka, která ji má, proti modelce bez ní – za posledních 12 měsíců a dřív. Věta se ukáže, jen když posun projde testem (Fisher s opravou na počet vlastností) a je aspoň 10 procentních bodů. Seznam pod grafem jsou všechny modelky.'
+        : def.druh === 'obdobi'
         ? 'Vyber dvě období (desetiletí, nebo vlastní roky od–do). Modelky se řadí podle roku prvního výskytu ve zvolené edici a druhu; ostatní podmínky výběru platí. Rozdíl je průkazný, když vydrží opravu na počet testů a je i podstatně velký. Klik na údaj v tabulce otevře jeho graf.'
         : def.druh === 'mapa'
         ? 'Jak číst mapu: Blízké body znamenají modelky s podobnými údaji (postava, období, vzhled, kategorie); osy nemají jednotky. Klik na bod otevře profil, tažením myší vybereš oblast (laso) pro ostatní grafy; Esc výběr zruší.'
@@ -948,6 +1122,12 @@ export function pripravit(stats) {
         // Každá část (úvod, statistiky) má vlastní bublinu
         const bublina = e.target.closest?.('.stat-section')?.querySelector('.graf-bublina');
         if (!bublina) return;
+        // Mapa na plátně: bod pod myší najde mřížka, bublina čte data-tip z vrstvy nad plátnem
+        if (e.target.classList?.contains('sp-mapa-vrstva')) {
+            const bod = !lasoTah && bodNaMiste(e.target, e.clientX, e.clientY);
+            if (bod) e.target.dataset.tip = bod.tip; else delete e.target.dataset.tip;
+            e.target.style.cursor = bod ? 'pointer' : '';
+        }
         const cil = !tah && !lasoTah && e.target.closest?.('[data-tip]');
         bublina.classList.toggle('hidden', !cil);
         stats.querySelectorAll('.graf g.aktivni').forEach(g => g !== cil && g.classList.remove('aktivni'));
@@ -972,13 +1152,14 @@ export function pripravit(stats) {
             if (!svg) return;
             const rect = svg.getBoundingClientRect();
             const bodCil = /** @type {HTMLElement | null} */ (cil.closest?.('[data-mapa-id]'));
+            const bodPlatna = bodCil ? null : bodNaMiste(svg, e.clientX, e.clientY);
             e.preventDefault();
             mistoMapa.focus({ preventScroll: true });
             mistoMapa.setPointerCapture(e.pointerId);
             lasoTah = [{
                 x: e.clientX - rect.left,
                 y: e.clientY - rect.top,
-                cilId: bodCil ? parseInt(bodCil.dataset.mapaId, 10) : null,
+                cilId: bodCil ? parseInt(bodCil.dataset.mapaId, 10) : bodPlatna ? bodPlatna.id : null,
                 posunuto: false,
             }];
             return;
@@ -1128,6 +1309,17 @@ export function pripravit(stats) {
             try { localStorage.setItem('grafStatistik', graf); } catch { /* jen pro toto spuštění */ }
             zobrazitVse = false;
             vykreslit(koren);
+            return;
+        }
+        const ven = /** @type {HTMLElement | null} */ (cil.closest('[data-sp-ven]'));
+        if (ven) {
+            grafVen(koren, ven.dataset.spVen);
+            return;
+        }
+        if (cil.closest('[data-sp-mapa-znovu]')) {
+            zapomenoutMapu();
+            mapaCache = { data: null, vysledek: null };
+            vykreslit(koren, { jenGraf: true });
             return;
         }
         const volbaBarvyMapy = /** @type {HTMLElement | null} */ (cil.closest('[data-sp-mapa-barva]'));
@@ -1430,4 +1622,5 @@ export function zapomenoutStatistiky(koren) {
     if (koren) delete koren.dataset.nacteno;
     heroPostrehy = null;
     mapaCache = { data: null, vysledek: null };
+    vkusData = null;
 }

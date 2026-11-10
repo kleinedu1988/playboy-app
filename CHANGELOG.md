@@ -7,6 +7,24 @@ v [ROADMAP.md](ROADMAP.md): MAJOR = milník, MINOR = téma z plánu, PATCH = kro
 
 Verze 0.20–0.29 nebyly vydány: po 0.19.2 následovala rovnou 0.30.0 se změnou schématu i exportu.
 
+## [1.53.0] – 2026-11-10
+
+### Přidáno
+- **Mapa sbírky dokončená** (`frontend/src/lib/mapa-sit.js`, `app/mapa-uceni.js`, `app/mapa-platno.js`):
+  - nad 2 000 modelek se body kreslí do `<canvas>` (laso, bublina a klik fungují dál);
+  - souřadnice se pamatují a nová mapa se na minulou zarovná (Procrustes), pod mapou je posun a počet nových;
+  - zachování sousedů (kolik z 10 nejpodobnějších je i na mapě blízko) a tlačítko **Přepočítat od začátku**;
+  - na pozadí po kouscích lehký autoenkodér; použije se jen tehdy, když zachová sousedy aspoň o 0,05 lépe než PCA;
+  - sousedé bodů přes mřížku a mezipaměť údajů modelek (3 000 modelek bez zaseknutí).
+- **Můj vkus v čase** (Statistiky › Srovnání, `lib/vkus-v-case.js`, `vkus_v_case.go`): u vlastností (barva vlasů,
+  období, postava, prsa, tetování, kategorie) podíl vyhraných porovnání za poslední rok a dřív; věta „Za poslední
+  rok se ti víc líbí…“ / „…méně než dřív“ jen po Fisherově testu s opravou Benjamini–Hochberg a posunu ≥ 10 bodů;
+  graf po měsících, tabulka a srdíčka po měsících.
+- **Historie srdíček**: změny srdíček modelek se zapisují do databáze učení (úprava č. 10, `historie_srdicek`).
+- **Objevit** (karta v Přehledu, `objevit.go`): modelky bez srdíček s nejvyšším odhadem a důvodem (vkus, podobné
+  modelky) a nehodnocená alba s nejvyšším odhadem z obsahu fotek; v ⋯ › Vzhled jde skrýt a přesunout.
+- **Graf ven** (`lib/graf-ven.js`, `graf_ven.go`): u grafu Statistik PNG, CSV (středník, desetinná čárka) a Tisk.
+
 ## [1.52.0] – 2026-11-10
 
 ### Přidáno

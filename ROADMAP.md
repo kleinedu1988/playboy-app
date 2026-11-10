@@ -3,13 +3,13 @@
 Přehled vývoje od první verze k hotové aplikaci a dál k verzím 1.x.
 Podrobnosti k dokončeným změnám jsou v `CHANGELOG.md`, pracovní úkoly a opravy v `PLAN.md`.
 
-**Stav (10. 11. 2026): verze 1.52.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.52 jsou hotové: mezipaměť náhledů na
+**Stav (10. 11. 2026): verze 1.53.0** – etapy 0–13, milník 1.0.0 a verze 1.1–1.53 jsou hotové: mezipaměť náhledů na
 disku (1.6), online pictorialy a články (1.23), tematické sezóny a průvodce (1.16–1.18), obsah fotek s lokálními
 modely CLIP + NudeNet + českým textovým modelem (1.24), odhad hodnocení, vizuální styly, automatické kolekce v
 Galerii, Ideální modelka, Dnešní výběr (1.26), Postřehy ve Statistikách vč. neobvyklých roků a souvislostí
 (1.27–1.29), hloubková optimalizace modelů, vykreslování a paměti (1.28.3–1.28.4), Mapa sbírky ve Statistikách (1.30.0)
 Síň slávy jako část Modelek s hero záhlavím (1.31.0) a Podobné modelky s vysvětlením, vizuální
-příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) zdraví sbírky s rozdílem před obnovením zálohy (1.42.0; etapa D je hotová) ročník podle Wikipedie (1.43.0), návrhy z webu ve frontě Údržby (1.44.0), otočené fotky s návrhem výřezu (1.45.0; etapa E je hotová) rok ve sbírce (1.46.0) kapesní katalog do telefonu (1.47.0) a upozornění na novou verzi (1.48.0; etapa F je hotová) přiblížení, hustota a karty (1.49.0) a klid, pohyb a vlastní Přehled (1.50.0; etapa G je hotová) Údržba Dnes s kvalitou fotek (1.51.0) a hledání s NEBO, foto: a výběry s novinkami (1.52.0).
+příbuzností z fotek a porovnáním (1.32.0) Stejné fotky v Údržbě s perceptuálními otisky (1.33.0) křivky s rozpětím a srovnání dvou období ve Statistikách (1.34.0) zásobník odkazů s rychlým oknem Nová modelka (1.35.0) chytré hledání s českými výrazy, čipy a našeptáváním (1.36.0) živé chytré výběry ⚡ (1.37.0) doplnění údajů z Wikidat, Wikipedie a Boobpedie s úplností čísla (1.38.0) propojení čísla a modelky – pás fotek čísla a kontext čísel v profilu (1.39.0) obousměrné odkazy [[…]] se „Zmiňováno v…“ (1.40.0; etapa C je hotová) režim čtení s prezentací čísla (1.41.0) zdraví sbírky s rozdílem před obnovením zálohy (1.42.0; etapa D je hotová) ročník podle Wikipedie (1.43.0), návrhy z webu ve frontě Údržby (1.44.0), otočené fotky s návrhem výřezu (1.45.0; etapa E je hotová) rok ve sbírce (1.46.0) kapesní katalog do telefonu (1.47.0) a upozornění na novou verzi (1.48.0; etapa F je hotová) přiblížení, hustota a karty (1.49.0) a klid, pohyb a vlastní Přehled (1.50.0; etapa G je hotová) Údržba Dnes s kvalitou fotek (1.51.0), hledání s NEBO, foto: a výběry s novinkami (1.52.0) a Mapa sbírky na plátně, Můj vkus v čase, Objevit a Graf ven (1.53.0).
 
 ---
 
@@ -67,13 +67,13 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 | **Etapa E** | **1.43–1.45** | ✅ Hotovo | **Kvalita dat ve velkém** | Ročník podle Wikipedie, Návrhy z webu ve frontě Údržby, Otočené fotky a návrh výřezu |
 | **Etapa F** | **1.46–1.48** | ✅ Hotovo | **Přehledy a pohodlí** | Rok ve sbírce, Kapesní katalog offline, Upozornění na novou verzi |
 | **Etapa G** | **1.49–1.50** | ✅ Hotovo | **Vzhled a čitelnost** | Přiblížení, hustota a karty, Klid a vlastní Přehled (Světlý motiv odložen do etapy J) |
-| **Etapa H** | **1.51–1.54** | 🚧 1.51–1.52 hotové | **Návrat k hotovým funkcím** | Údržba jako jedna fronta, Hledání a výběry 2, Statistiky a vkus 2, Prohlížení a časopis 2 |
+| **Etapa H** | **1.51–1.54** | 🚧 1.51–1.53 hotové | **Návrat k hotovým funkcím** | Údržba jako jedna fronta, Hledání a výběry 2, Statistiky a vkus 2, Prohlížení a časopis 2 |
 | **Etapa I** | **1.55–1.58** | 📋 Plán | **Sbírka výtisků** | Evidence výtisků české edice, Výdaje a hodnota sbírky, Rozšířené tiskové sestavy, Burza a výměny |
 | **Etapa J** | **1.59–1.63** | ⏸ Odloženo | **Kvíz, průvodce číslem, Google Disk a světlý motiv** | Kvíz „Poznej playmate“, Průvodce přidáním celého čísla, Google Disk v aplikaci, Vkládání z Disku, Světlý motiv a kontrast |
 
 ---
 
-## Dokončeno v řadě 1.0–1.52 ✅
+## Dokončeno v řadě 1.0–1.53 ✅
 
 - **1.0.0 – První stabilní vydání** (22. 10. 2026): dokončení alfy (0.80.x) a bety (0.90.x–0.91.1).
 - **1.6 – Rychlé načítání fotek (mezipaměť náhledů)** (`internal/nahledy`): lokální disková mezipaměť (`w400`, `w1600`, `w3840`), rozpočet místa (výchozí 2 GB, LRU uvolňování), stahování na pozadí s ohledem na aktivitu okna, zotavení při výpadku sítě / HTTP 429, záložní tvary adres Google Drive.
@@ -100,7 +100,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
   - Inkrementální zápis `vektory.bin`, hodnotové mapy `[18]uint8` bez pointerů pro GC, streamování náhledů přes `http.ServeContent`, připravené SQL dotazy (`sql.Stmt`).
   - Odstranění $O(N^2)$ přepojování `IntersectionObserver`u, `w400` náhledy v rozmazaném pozadí místo 4K textur, úklid časovačů a pozorovatelů.
 
-- **1.30 – Mapa sbírky ve Statistikách** (`frontend/src/lib/mapa-sbirky.js`): PCA s pevnou orientací os, Procrustovo zarovnání, barevné režimy, laso jako výběr pro ostatní grafy. Zbývá z plánu: autoenkodér, `<canvas>` nad 2 000 bodů, míra posunu a „Přepočítat od začátku“.
+- **1.30 – Mapa sbírky ve Statistikách** (`frontend/src/lib/mapa-sbirky.js`): PCA s pevnou orientací os, Procrustovo zarovnání, barevné režimy, laso jako výběr pro ostatní grafy. Zbytek plánu (autoenkodér, `<canvas>` nad 2 000 bodů, míra posunu a „Přepočítat od začátku“) doplnila 1.53.
 - **1.31 – Síň slávy v Modelkách s hero záhlavím a první Podobné modelky**: Síň slávy jako část Modelek s herem a lepivým pásem pohledů, pás karet součástí hera ve Statistikách i Síni, Podobné modelky v profilu s důvody a „Na mapě →“, legenda Mapy sbírky jako rychlý výběr.
 - **1.32 – Podobné modelky s vysvětlením a vizuální příbuzností** (`podobne_modelky.go`, `frontend/src/lib/mapa-sbirky.js`): společný fotograf v důvodech, přepínač Údaje / Na fotkách (kosinová podobnost středů vektorů obsahu fotek, aspoň 3 fotky s vektorem), ⚔ Porovnat s touto do Hodnocení › Porovnat.
 - **1.33 – Stejné a podobné fotky v Údržbě** (`otisky.go`, `stejne_fotky.go`, `frontend/src/app/udrzba-stejne.js`): dHash a pHash z náhledů w400 na pozadí (`otisky.bin` v mezipaměti), skupiny podle otisků v celé sbírce a podle vektoru obsahu (≥ 0,985) u fotek téže modelky, režim Údržby Stejné fotky se srovnáním vedle sebe, sloučením (kopie se odebere nebo vymění soubor, srdíčka a tagy přejdou) a výjimkami „V pořádku“, obojí s Vrátit; upozornění po vložení fotek.
@@ -123,6 +123,7 @@ výřez `PortretX`/`PortretY`/`PortretS`). Schéma zůstalo na úpravě č. 11 a
 - **1.50 – Klid, pohyb a vlastní Přehled** (`frontend/src/ui/vzhled.js`, `frontend/src/app/vzhled.js`, `prohlizec.js`, `prehled-uvod.js`): pohyb Plné / Omezené / Žádné, pozadí a ovládání prohlížeče fotek s filmovým pásem, sekce po startu, záhlaví profilu, pořadí a skrytí karet Mapy čísel.
 - **1.51 – Údržba jako jedna fronta** (`frontend/src/app/udrzba-dnes.js`, `kvalita_fotek.go`): režim Dnes (pokrok dne, série, nejcennější úkoly, rychlé dávky, panel Na pozadí), kvalita fotek z náhledů s výměnou za lepší stejnou; v 1.51.1 jednotná lišta výběru s rozdílem nanečisto a Vrátit.
 - **1.52 – Hledání a výběry 2** (`internal/hledani/hledani.go`, `hledani_foto.go`, `frontend/src/lib/historie-hledani.js`, `chytre_vybery.go`): NEBO (`|`, slovo „nebo“) a závorky v hledání v Go i ve frontendu s větou „Hledám: …“, `foto:"…"` v Galerii modelek (řazení podle shody fotek), historie posledních 20 dotazů v našeptávači s `Ctrl+S` jako chytrý výběr, odznak „+N od minula“ u výběrů ⚡ a výběr jako Časopis, prezentace a Dnešní výběr.
+- **1.53 – Statistiky, mapa a vkus 2** (`frontend/src/lib/mapa-sit.js`, `app/mapa-uceni.js`, `app/mapa-platno.js`, `lib/vkus-v-case.js`, `vkus_v_case.go`, `objevit.go`, `graf_ven.go`): Mapa sbírky na `<canvas>` nad 2 000 bodů, zarovnaná na uloženou minulou mapu s posunem, zachováním sousedů a „Přepočítat od začátku“, autoenkodér na pozadí jen když zachová sousedy o 0,05 lépe; Můj vkus v čase z porovnání (Fisher + BH) a historie srdíček; karta Objevit v Přehledu; graf jako PNG, CSV a tisk.
 ---
 
 ## Plán dalšího rozvoje (1.30–1.63)
@@ -449,7 +450,9 @@ Hotovo vše. `Ctrl+K` program nemá – `foto:` a „nebo“ jsou v našeptáva�
 
 **Hotovo, když:** `foto:"bazén" výška > 175` v Galerii modelek najde správné modelky a výběr ⚡ ukáže, co přibylo od posledního otevření.
 
-#### 1.53 – Statistiky, mapa a vkus 2
+#### 1.53 – Statistiky, mapa a vkus 2 ✅ (10. 11. 2026)
+
+Hotovo vše. Historie srdíček se dřív neukládala: vkus v čase se počítá z porovnání dvojic (mají celou historii) a změny srdíček se zapisují od 1.53 (databáze učení, úprava č. 10). Autoenkodér na syntetických datech zachoval sousedy hůř než PCA (0,21 proti 0,28), takže se na nich nepoužije; jak dopadne na skutečné sbírce, ukáže řádek pod mapou. Tip alba v Objevit otevře profil modelky (skok přímo na album program nemá).
 
 **Cíl:** dodělat Mapu sbírky a ukázat, jak se v čase mění vlastní vkus.
 

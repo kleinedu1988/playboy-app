@@ -119,6 +119,7 @@ export function htmlUvodu({ kalendar, stavy, modelky }) {
             ${legenda({ k: poctyUs.k, p: poctyUs.p, n: poctyUs.n, c: poctyUs.c }, STAVY_US)}
         </div>` : '',
         vybery: '<div class="uvod-karta uvod-radek cv-prehled" data-cv-prehled hidden></div>',
+        objevit: '<div class="uvod-karta uvod-radek ob-karta" data-objevit hidden></div>',
         naposledy: `
         <div class="uvod-karta uvod-radek">
             <h4>Naposledy přidané</h4>

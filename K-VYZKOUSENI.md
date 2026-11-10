@@ -5,6 +5,23 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 1.53.0 – Statistiky, mapa a vkus 2
+
+Graf Můj vkus v čase ani kartu Objevit jsem neviděl vykreslené (potřebují data sbírky) – projít pozorně.
+
+- [ ] **Kritérium hotovo:** Mapa sbírky s celou sbírkou se otevře bez zaseknutí, posouvání stránky i bublina nad
+      body jsou plynulé (nad 2 000 modelek je to plátno); laso a klik na bod fungují jako dřív.
+- [ ] Pod mapou: model, posun (po přidání pár modelek malý), „Zachovaní sousedé“ se doplní po chvíli,
+      „Zkouším autoenkodér… n/40“ doběhne a napíše výsledek; okno se mezitím nezasekává.
+- [ ] **Přepočítat od začátku** mapu spočítá znovu s pevnou orientací (starší vlevo, vyšší nahoře).
+- [ ] **Můj vkus v čase** (Statistiky › Srovnání): věty, graf po měsících a tabulka dávají smysl; při málo
+      porovnáních srozumitelná hláška. Ukáže aspoň jeden průkazný posun, pokud v datech je?
+- [ ] Změna srdíček modelky se od teď zapíše: po pár změnách je v tabulce „Srdíčka po měsících“.
+- [ ] Karta **Objevit** v Přehledu: modelky s odhadem a důvodem v bublině, alba (s obsahem fotek), klik otevře
+      profil; v ⋯ › Vzhled jde skrýt a přesunout.
+- [ ] **PNG**, **CSV**, **Tisk** u grafu: PNG vypadá jako graf (i mapa na plátně), CSV se otevře v LibreOffice
+      s čárkami v číslech, tisk ukáže jen graf.
+
 ## 1.52.0 – Hledání a výběry 2
 
 - [ ] **Kritérium hotovo:** `foto:"bazén" výška > 175` v Galerii modelek najde správné modelky (otevřít pár profilů a

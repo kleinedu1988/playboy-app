@@ -194,7 +194,7 @@ func SpocitatStatistiky(
 	}
 
 	for _, k := range kalendar {
-		// Desetiletí čísel jen Playboye (řada jiného časopisu má lomítko, „PH/US“); Statistiky podle časopisu až 0.02.066
+		// Desetiletí čísel jen Playboye (řada jiného časopisu má lomítko, „PH/US“); Statistiky podle časopisu až 0.02.069
 		if rok, mesic, edice, ok := CastiVydani(k.Vydani); ok && mesic > 0 && !strings.Contains(edice, "/") {
 			d := dekada(rok)
 			d.Cisla++

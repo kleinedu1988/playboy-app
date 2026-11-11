@@ -6,6 +6,25 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.051] – 2026-11-11
+
+### Změněno
+- **Tvar podle místa (Chytrý výřez náhledů, krok 3):** výřez se řídí skutečným poměrem rámu. Dlaždice a úzký rám
+  hera vedle textu (Kalendář, Centerfoldy, Obálky: 3 : 4) mají obličej uprostřed a kousek pod horní hranou. Široký
+  rám (od 1,6 : 1) nechá nad obličejem víc místa, aby byl vidět i trup. Široký banner s textem vlevo (hero Galerie)
+  posune postavu doprava od textu.
+- Výřez dostaly hero Kalendáře, Centerfoldů, Obálek a Galerie. U Kalendáře a Obálek se ID souboru bere z adresy
+  obrázku (`idZAdresy`).
+
+### Plán
+- ROADMAP: nový blok **Explicitní fotky zvlášť** (0.02.054–0.02.056, přání uživatele). Sex a lesbické fotky
+  (hlavně Penthouse a Hustler) budou ve výchozím stavu jen ve vlastní řadě Galerie, ne mezi pózovacími. PDF
+  a další kroky se posunuly o 3 (Označit stránky = 0.02.057, alfa 0.02.076+).
+
+### Ověřeno
+- Snímky herů na kopii sbírky (střed proti výřezu): v heru Galerie je vidět celý obličej (dřív useknuté čelo),
+  v heru Kalendáře celá postava i s nohama; centerfold zůstal stejně dobrý jako dřív.
+
 ## [0.02.050] – 2026-11-11
 
 ### Změněno

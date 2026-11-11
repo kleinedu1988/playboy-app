@@ -19,6 +19,7 @@ import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { modelkyPodleId, oblibenostModelek } from './mezipamet';
 import { prevest } from '../lib/hledani-dotaz';
 import { porovnatFotkyPodleHodnoty } from '../lib/oblibenost';
+import { atributVyrezu, idZAdresy } from './vyrez-nahledu';
 
 const RAZENI_STENY = {
     jmeno: 'Podle jména',
@@ -46,7 +47,7 @@ function htmlHeroSteny(fotky) {
     return `<section class="profily-hero sh-hero kal-hero" aria-label="Centerfold ${esc(f.jmenoModelky || '')}">
         <div class="ph-rozmazane" style="background-image:url('${esc(nahled).replace(/'/g, '%27')}')"></div>
         <div class="sh-scena">
-            <div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}" alt="" draggable="false" /></div><div class="ph-prekryv"></div>
+            <div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}"${atributVyrezu(f, 'hero')} alt="" draggable="false" /></div><div class="ph-prekryv"></div>
             <div class="ph-obsah">
                 <div class="ph-nadtitulek">${esc(volba)} · ${f.vyroci ? 'centerfold dne' : f.hodnoceni ? 'nejlépe hodnocené centerfoldy' : 'centerfoldy'}${poradi.length > 1 ? ` · ${i + 1} z ${poradi.length}` : ''}</div>
                 <h2>${esc(f.jmenoModelky || '')}</h2>
@@ -237,7 +238,7 @@ function htmlHeroObalek(coveryFotky, cisla, stavCisla) {
     return `<section class="profily-hero sh-hero kal-hero" aria-label="Obálka ${esc(nazevVydani(o.vydani))}">
         <div class="ph-rozmazane" style="background-image:url('${esc(nahled).replace(/'/g, '%27')}')"></div>
         <div class="sh-scena">
-            <div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}" alt="" draggable="false" /></div><div class="ph-prekryv"></div>
+            <div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}"${atributVyrezu({ driveId: idZAdresy(o.url) }, 'hero')} alt="" draggable="false" /></div><div class="ph-prekryv"></div>
             <div class="ph-obsah">
                 <div class="ph-nadtitulek">${esc(nazevVolbyRady(stav.kalendarEdice))} · ${o.vyroci ? 'výročí obálky' : o.hodnoceni ? 'nejlépe hodnocené obálky' : 'obálky'}${poradi.length > 1 ? ` · ${((posunHeroObalek % poradi.length) + poradi.length) % poradi.length + 1} z ${poradi.length}` : ''}</div>
                 <h2>${esc(nazevVydani(o.vydani))}</h2>

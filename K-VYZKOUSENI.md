@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.051 – Tvar podle místa
+
+- [ ] Hero Galerie: postava vpravo od textu, obličej celý; hero Kalendáře, Centerfoldů a Obálek: hlava ani nohy zbytečně useknuté.
+
 ## 0.02.050 – Náhledy podle výřezu
 
 - [ ] Program se zase normálně ukládá (žádná hláška „databáze je z novější verze“).

@@ -204,7 +204,7 @@ async function naplnitHeroGalerie(misto, index = null) {
     const carky = kandidati.length > 1 ? kandidati.map((k, j) => `<button type="button" class="gvh-carka ${j === i ? 'on' : ''}" data-gvh-ukazat="${j}" aria-label="${esc(`Fotka ${j + 1}: ${k.jmenoModelky || ''}`)}" title="${esc(`${k.jmenoModelky || ''} · ${nazevAlba(k.album, k.typ)}`)}"><i style="animation-duration:${PRODLEVA_HERO}ms"></i></button>`).join('') : '';
     misto.innerHTML = `
         <div class="ph-rozmazane" style="background-image:url('${esc(rozmazana).replace(/'/g, '%27')}')"></div>
-        <div class="ph-ram gvh-prolnuti"><img src="${esc(adresa)}" alt="" decoding="async" draggable="false" /></div>
+        <div class="ph-ram gvh-prolnuti"><img src="${esc(adresa)}"${atributVyrezu({ ...f, rotace: p.rotace }, 'hero')} alt="" decoding="async" draggable="false" /></div>
         <div class="ph-prekryv"></div>
         <div class="ph-obsah gvh-prolnuti">
             <div class="ph-nadtitulek">${esc(zKolekci ? kolekce[i].nazev : proc(f))}</div>

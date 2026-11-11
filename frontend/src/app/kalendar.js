@@ -17,6 +17,7 @@ import { otevritCoverModal } from './cover';
 import { pridatCenterfold, pridatPictorial } from './formular-alba';
 import { prevestNaVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
+import { atributVyrezu, idZAdresy } from './vyrez-nahledu';
 
 // Kalendář vydání: roky × měsíce jako časová osa obálek. Prázdná políčka ukazují, co ve sbírce chybí.
 export const ZKRATKY_MESICU = ['Led', 'Úno', 'Bře', 'Dub', 'Kvě', 'Čvn', 'Čvc', 'Srp', 'Zář', 'Říj', 'Lis', 'Pro'];
@@ -48,7 +49,7 @@ function htmlHeroKalendare(vydani) {
     return `<section class="profily-hero sh-hero kal-hero" aria-label="Ročník ${rok}">
         ${nahled ? `<div class="ph-rozmazane" style="background-image:url('${esc(nahled).replace(/'/g, '%27')}')"></div>` : ''}
         <div class="sh-scena">
-            ${nahled ? `<div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}" alt="${esc(klicFotky ? nazevVydani(klicFotky) : '')}" draggable="false" /></div><div class="ph-prekryv"></div>` : ''}
+            ${nahled ? `<div class="ph-ram"><img src="${esc(nahled)}" data-plna="${esc(plna)}"${atributVyrezu({ driveId: idZAdresy(v.nahled) }, 'hero')} alt="${esc(klicFotky ? nazevVydani(klicFotky) : '')}" draggable="false" /></div><div class="ph-prekryv"></div>` : ''}
             <div class="ph-obsah">
                 <div class="ph-nadtitulek">${esc(nazevVolbyRady(stav.kalendarEdice))} · ${vyroci ? 'výročí čísla' : 'ročník'}</div>
                 <h2>Ročník ${rok}</h2>

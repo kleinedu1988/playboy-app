@@ -17,7 +17,8 @@ function pouzit(/** @type {HTMLImageElement} */ img) {
     if (!v || !img.naturalWidth || !img.naturalHeight) return;
     const sirka = img.clientWidth, vyska = img.clientHeight;
     if (!sirka || !vyska) return;
-    const poloha = cssPolohy(polohaNahledu(v, img.naturalWidth / img.naturalHeight, sirka / vyska));
+    const tvar = img.dataset.vyrezTvar === 'hero' ? 'hero' : 'dlazdice';
+    const poloha = cssPolohy(polohaNahledu(v, img.naturalWidth / img.naturalHeight, sirka / vyska, tvar));
     if (img.style.objectPosition !== poloha) img.style.objectPosition = poloha;
 }
 
@@ -70,6 +71,8 @@ export function pripravit() {
     projit(document);
 }
 
-// Atribut ořezaného náhledu do šablony pohledu: otočená fotka (rotace) ho nedostane
-export const atributVyrezu = (/** @type {{ driveId?: string, rotace?: number } | null | undefined} */ f) =>
-    (f?.driveId && !f.rotace ? ` data-vyrez="${String(f.driveId).replace(/[^\w-]/g, '')}"` : '');
+// Atribut ořezaného náhledu do šablony pohledu: otočená fotka (rotace) ho nedostane; tvar 'hero' pro banner
+export const atributVyrezu = (/** @type {{ driveId?: string, rotace?: number } | null | undefined} */ f, tvar = '') =>
+    (f?.driveId && !f.rotace ? ` data-vyrez="${String(f.driveId).replace(/[^\w-]/g, '')}"${tvar ? ` data-vyrez-tvar="${tvar}"` : ''}` : '');
+
+export { idZAdresy } from '../lib/vyrez-nahledu';

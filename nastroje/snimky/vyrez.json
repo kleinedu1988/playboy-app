@@ -71,6 +71,66 @@
    "nazev": "mozaika-stred",
    "js": "(()=>{let n=0;document.querySelectorAll('img[data-vyrez]').forEach(i=>{if(i.style.objectPosition){i.style.objectPosition='';n++}});return 'střed '+n})()",
    "cekat": 800
+  },
+  {
+   "nazev": "gal",
+   "js": "(()=>{const b=[...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Galerie\")[0];if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 7000
+  },
+  {
+   "nazev": "gal-nahoru",
+   "js": "(()=>{document.querySelector('main')?.scrollTo(0,0);return 'ok'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "gal-stav",
+   "js": "(()=>{const h=[...document.querySelectorAll('.profily-hero')].find(e=>e.getClientRects().length);const i=h&&h.querySelector('.ph-ram img');if(!i)return 'bez hera';return JSON.stringify({vyrez:i.dataset.vyrez||'',tvar:i.dataset.vyrezTvar||'',poloha:i.style.objectPosition||'(css) '+getComputedStyle(i).objectPosition,obr:i.naturalWidth+'x'+i.naturalHeight,ram:i.clientWidth+'x'+i.clientHeight})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "gal-stred",
+   "js": "(()=>{const h=[...document.querySelectorAll('.profily-hero')].find(e=>e.getClientRects().length);const i=h&&h.querySelector('.ph-ram img');if(!i)return 'bez';const p=i.style.objectPosition;i.style.objectPosition='';delete i.dataset.vyrez;return 'bylo '+p})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "kal",
+   "js": "(()=>{const vid=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden';const najit=()=>[...document.querySelectorAll('button, a, [role=menuitem]')].find(b=>vid(b)&&b.textContent.trim()===\"Kalend\\u00e1\\u0159\");let p=najit();if(p){p.click();return 'přímo'}const n=[...document.querySelectorAll('button')].find(b=>vid(b)&&b.textContent.trim()==='Modelky');n?.click();setTimeout(()=>{najit()?.click()},700);return 'přes mapu'})()",
+   "cekat": 7000
+  },
+  {
+   "nazev": "kal-nahoru",
+   "js": "(()=>{document.querySelector('main')?.scrollTo(0,0);return 'ok'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "kal-stav",
+   "js": "(()=>{const h=[...document.querySelectorAll('.profily-hero')].find(e=>e.getClientRects().length);const i=h&&h.querySelector('.ph-ram img');if(!i)return 'bez hera';return JSON.stringify({vyrez:i.dataset.vyrez||'',tvar:i.dataset.vyrezTvar||'',poloha:i.style.objectPosition||'(css) '+getComputedStyle(i).objectPosition,obr:i.naturalWidth+'x'+i.naturalHeight,ram:i.clientWidth+'x'+i.clientHeight})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "kal-stred",
+   "js": "(()=>{const h=[...document.querySelectorAll('.profily-hero')].find(e=>e.getClientRects().length);const i=h&&h.querySelector('.ph-ram img');if(!i)return 'bez';const p=i.style.objectPosition;i.style.objectPosition='';delete i.dataset.vyrez;return 'bylo '+p})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "cf",
+   "js": "(()=>{const b=[...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Centerfoldy\")[0];if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 7000
+  },
+  {
+   "nazev": "cf-nahoru",
+   "js": "(()=>{document.querySelector('main')?.scrollTo(0,0);return 'ok'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "cf-stav",
+   "js": "(()=>{const h=[...document.querySelectorAll('.profily-hero')].find(e=>e.getClientRects().length);const i=h&&h.querySelector('.ph-ram img');if(!i)return 'bez hera';return JSON.stringify({vyrez:i.dataset.vyrez||'',tvar:i.dataset.vyrezTvar||'',poloha:i.style.objectPosition||'(css) '+getComputedStyle(i).objectPosition,obr:i.naturalWidth+'x'+i.naturalHeight,ram:i.clientWidth+'x'+i.clientHeight})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "cf-stred",
+   "js": "(()=>{const h=[...document.querySelectorAll('.profily-hero')].find(e=>e.getClientRects().length);const i=h&&h.querySelector('.ph-ram img');if(!i)return 'bez';const p=i.style.objectPosition;i.style.objectPosition='';delete i.dataset.vyrez;return 'bylo '+p})()",
+   "cekat": 800
   }
  ]
 }

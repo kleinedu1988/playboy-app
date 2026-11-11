@@ -36,3 +36,25 @@ test('postava se vejde: na střed okna; posun se omezí na okraj obrázku', () =
     const vlevo = polohaNahledu({ postava: [0.0, 0.2, 0.1, 0.8] }, 4 / 3, 1);
     assert.equal(vlevo.x, 0);
 });
+
+test('hero (0.02.051): fotka na šířku – postava vpravo od textu, svislá fotka – obličej níž než v dlaždici', () => {
+    // Fotka 3:2 v banneru 4:1: vodorovně se nic neořízne, svisle je vidět 37,5 % výšky
+    const v = { postava: [0.3, 0.1, 0.6, 0.95], oblicej: [0.4, 0.1, 0.5, 0.25] };
+    const dl = polohaNahledu(v, 1.5, 4, 'dlazdice'), hero = polohaNahledu(v, 1.5, 4, 'hero');
+    assert.ok(hero.y <= dl.y, `v heru víc místa nad obličejem: ${hero.y} vs ${dl.y}`);
+    const f = 1.5 / 4, zacatek = (hero.y / 100) * (1 - f);
+    assert.ok(zacatek <= 0.1 && zacatek + f >= 0.25, 'obličej celý v okně');
+    // Panorama 3:1 v banneru 2:1 → hero posune okno doleva (postava vpravo od textu)
+    const s = { postava: [0.1, 0.2, 0.9, 0.9], oblicej: [0.45, 0.2, 0.55, 0.35] };
+    const d1 = polohaNahledu(s, 3, 2, 'dlazdice'), h1 = polohaNahledu(s, 3, 2, 'hero');
+    assert.ok(h1.x < d1.x, `obličej v heru vpravo od středu: ${h1.x} vs ${d1.x}`);
+    // Úzký rám hera vedle textu (Kalendář, Centerfoldy: 3:4) se chová jako dlaždice
+    assert.deepEqual(polohaNahledu(v, 2 / 3, 3 / 4, 'hero'), polohaNahledu(v, 2 / 3, 3 / 4, 'dlazdice'));
+});
+
+test('ID souboru z adresy obrázku', async () => {
+    const { idZAdresy } = await import('../src/lib/vyrez-nahledu.js');
+    assert.equal(idZAdresy('/nahled/1AbC_def-GHIjkl/{velikost}'), '1AbC_def-GHIjkl');
+    assert.equal(idZAdresy('https://lh3.googleusercontent.com/d/1AbC_def-GHIjkl={velikost}'), '1AbC_def-GHIjkl');
+    assert.equal(idZAdresy(''), '');
+});

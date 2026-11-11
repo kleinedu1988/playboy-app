@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.045 – Údržba a Statistiky
+
+- [ ] Údržba › Po modelkách: modelka jen s Pet of the Month bez data narození má důvod „Pet bez data narození…“.
+- [ ] Modelka s „Playmate“ jen v poli Role (bez centerfoldu a pictorialu) už nemá vyšší prioritu úkolů.
+- [ ] Návrh druhu alba u pictorialu „Pet of the Month …“ píše Pet of the Month.
+
 ## 0.02.044 – Hodnocení a Síň slávy
 
 - [ ] Síň slávy › Penthouse: hero „nejvýš v pořadí“ s Ilse Hasek a velkou fotkou; zpět Všechny časopisy → jednička.

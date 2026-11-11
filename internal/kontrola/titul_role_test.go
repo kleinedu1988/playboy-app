@@ -34,3 +34,22 @@ func TestCisloZUdajuRokNazvu(t *testing.T) {
 		t.Error("množné číslo")
 	}
 }
+
+// Texty návrhů a kontrol podle časopisu (0.02.045): Pet of the Month z názvu, číslo Penthouse bez „playmate“
+func TestTitulyNavrhuPodleCasopisu(t *testing.T) {
+	if s := titulZNazvu(hledani.Zjednodusit("Pet of the Month November 1969"), "Month"); s != "Pet of the Month" {
+		t.Errorf("Pet: %q", s)
+	}
+	if s := titulZNazvu(hledani.Zjednodusit("Playmate of the Year 1966"), "Year"); s != "Playmate of the Year" {
+		t.Errorf("Playmate: %q", s)
+	}
+	if modelkaMesiceCisla("1969-11@PH") != "modelky měsíce" || modelkaMesiceCisla("1975-01") != "playmate měsíce" {
+		t.Error("modelka měsíce čísla")
+	}
+	// Playmate roku 1972 s centerfoldem jen v Penthouse: „bez centerfoldu ve sbírce“, ne „první centerfold 1969“
+	var nalez string
+	KontrolovatPlaymateRoku(hledani.Modelka{Role: "Playmate roku 1972", Centerfoldy: []string{"1969-11@PH"}}, func(_ hledani.Modelka, _, zdroj, _, _ string) { nalez = zdroj })
+	if nalez != "pmoy-bez-centerfoldu" {
+		t.Errorf("Playmate roku s centerfoldem Penthouse: %q", nalez)
+	}
+}

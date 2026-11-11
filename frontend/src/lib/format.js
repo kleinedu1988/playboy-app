@@ -630,7 +630,7 @@ export const slozitKategorie = seznam => seznam.map(popisKategorie).join(', ');
 // Playmate of the Year = Playmate roku, obálka = Modelka obálky, album Cyber Girl týdne nebo měsíce = Cyber Girl
 // (obyčejný Pictorial online kategorii nedává). Jiný časopis dá svůj titul (0.02.012): centerfold a pictorial
 // modelky měsíce Penthouse = Pet of the Month, modelky roku = Pet of the Year (backend titulyJinde)
-function titulyJindeModelky(modelka) {
+export function titulyJindeModelky(modelka) {
     const v = [...(modelka.titulyJinde || [])];
     for (const c of new Set((modelka.centerfoldy || []).map(x => rozlozitVydani(x)?.casopis).filter(c => c && c !== VYCHOZI_CASOPIS))) {
         const nazev = titulCasopisu(c);

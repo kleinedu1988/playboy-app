@@ -2,7 +2,7 @@
 // jednu frontu skupin (modelka nebo číslo) s položkami (chybějící údaj, nález kontroly, návrh), spočítá jejich
 // prioritu, pokrok sbírky po oblastech a počty pro filtry; pro režim Po údajích ji přeskládá po jednotlivých údajích.
 // Jen čisté funkce – testuje je test/udrzba.test.js.
-import { TYP_PM_MESICE, TYP_PM_ROKU, VYCHOZI_EDICE, jeCisloPlayboye, kategorieModelky, titulCisla, nazevAlba, nazevRady, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
+import { TYP_PM_MESICE, TYP_PM_ROKU, VYCHOZI_EDICE, jeCisloPlayboye, titulyJindeModelky, kategorieModelky, titulCisla, nazevAlba, nazevRady, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
 
 // Údaje modelky, které Údržba hlídá, po skupinách shodných s částmi formuláře: [vlastnost, název, pole formuláře].
 // Další jména a poznámka se nehlídají, většina modelek je mít nemusí.
@@ -100,18 +100,23 @@ const VAHA_NALEZU = 9;
 export const urovenPriority = p => p >= 12 ? 'vysoka' : p >= 5 ? 'stredni' : 'nizka';
 export const NAZVY_PRIORIT = { vysoka: 'vysoká priorita', stredni: 'střední priorita', nizka: 'nízká priorita' };
 
-// Krátký titul modelky s centerfoldem (0.02.022): „Playmate“ u Playboye (i bez čísla), jinak titul časopisu jejího
-// centerfoldu („Pet“, „Honey“)
+// Krátký titul modelky (0.02.022, od 0.02.045 jen z galerií): „Playmate“ u centerfoldu nebo titulu Playboye,
+// jinak titul časopisu jejího centerfoldu nebo pictorialu („Pet“, „Honey“)
 export function titulCenterfoldu(m) {
     const cf = m?.centerfoldy || [];
-    return !cf.length || cf.some(jeCisloPlayboye) ? 'Playmate' : titulCisla(cf[0], 'kratky');
+    if (cf.some(jeCisloPlayboye) || (!cf.length && (m?.playmateMesice || m?.playmateRoku))) return 'Playmate';
+    if (cf.length) return titulCisla(cf[0], 'kratky');
+    const jinde = titulyJindeModelky(m || {})[0]?.nazev;
+    return jinde ? jinde.split(/\s+/)[0] : 'Modelka';
 }
-export const jePlaymate = m => Boolean((m?.centerfoldy || []).length) || /playmate/i.test(m?.role || '');
+// Modelka s titulem z galerií (centerfold, pictorial modelky měsíce či roku kteréhokoli časopisu); dřív i „Playmate“
+// v poli Role, tituly se ale berou jen z galerií (0.02.034, Údržba od 0.02.045)
+export const maTitulModelky = m => Boolean((m?.centerfoldy || []).length || m?.playmateMesice || m?.playmateRoku || titulyJindeModelky(m || {}).length);
 // Jak moc na modelce ve sbírce záleží: Playmate a modelky obálky víc, srdíčka trochu
 export function vyznamModelky(m) {
     if (!m) return 1;
     // Oblíbenost (srdíčka upřesněná fotkami, porovnáním a zájmem), bez ní srdíčka: údaje oblíbených se doplňují dřív
-    return 1 + (jePlaymate(m) ? 0.8 : 0) + ((m.obalky || []).length ? 0.3 : 0) + Math.max(0, m.oblibenost || m.hodnoceni || 0) * 0.08;
+    return 1 + (maTitulModelky(m) ? 0.8 : 0) + ((m.obalky || []).length ? 0.3 : 0) + Math.max(0, m.oblibenost || m.hodnoceni || 0) * 0.08;
 }
 
 // Pod jménem v řádku: kategorie a první číslo modelky
@@ -189,7 +194,7 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
         const r = radky.get(id);
         const klicSkupiny = `m:${id}`;
         const vyznam = vyznamModelky(m);
-        const playmate = jePlaymate(m);
+        const playmate = maTitulModelky(m);
         const polozky = [];
         const pridat = (polozka, vahaPolozky) => {
             if (polozka.netyka && !skryte) return;

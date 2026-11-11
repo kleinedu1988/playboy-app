@@ -22,7 +22,7 @@ Opravené v 0.02.022 jsou na konci. Ostatní zůstávají, protože jde opravdu 
 ## Zůstává – vnitřní názvy
 
 `TypPMMesice` / `TypPMRoku` („Playmate měsíce“ / „Playmate roku“ jako typ alba v databázi), `PlaymatePodleWikipedie`,
-`jePlaymate` v Údržbě (= modelka s centerfoldem), `mapa-sbirky.js` rysy kategorií. Typ alba je obecná role, popisek
+`maTitulModelky` v Údržbě (= modelka s titulem z galerií, od 0.02.045), `mapa-sbirky.js` rysy kategorií. Typ alba je obecná role, popisek
 se bere podle časopisu (`titulCisla`, `popisDruhuCasopisu`).
 
 ## Opraveno v 0.02.022

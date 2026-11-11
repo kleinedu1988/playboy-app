@@ -178,6 +178,10 @@ func KontrolovatPlaymateRoku(m hledani.Modelka, pridat PridatNalez) {
 	rok, _ := strconv.Atoi(shoda[1])
 	prvni := 0
 	for _, v := range m.Centerfoldy {
+		// Playmate roku je titul Playboye: centerfold Penthouse (Pet) se nepočítá (0.02.045)
+		if _, c := hledani.RozdelitCasopis(v); c != "" && c != hledani.VychoziCasopis {
+			continue
+		}
 		if r, _, _, ok := sbirka.CastiVydani(v); ok && (prvni == 0 || r < prvni) {
 			prvni = r
 		}

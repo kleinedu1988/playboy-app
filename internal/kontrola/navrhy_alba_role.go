@@ -318,7 +318,7 @@ func NavrhnoutAlba(modelky []hledani.Modelka, alba []AlbumNavrhu, letos int, pre
 				if c != "" && bezVydani == 1 && !maPictorialCenterfoldu {
 					// Rok v názvu, který k centerfoldu nesedí, pravidlo vylučuje
 					if r := VzorRoku.FindString(hledani.Zjednodusit(al.Nazev)); r == "" || r == c[:4] {
-						pridat(m, al, "vydaniAlba", c, fmt.Sprintf("pictorial playmate vychází v čísle jejího centerfoldu (%s)%s", c, sCenterfoldem.Text("playmate s jedním centerfoldem")),
+						pridat(m, al, "vydaniAlba", c, fmt.Sprintf("pictorial modelky vychází v čísle jejího centerfoldu (%s)%s", c, sCenterfoldem.Text("modelek s jedním centerfoldem")),
 							"centerfold", sCenterfoldem.Jistota(0.75, 4))
 					}
 				}
@@ -329,11 +329,11 @@ func NavrhnoutAlba(modelky []hledani.Modelka, alba []AlbumNavrhu, letos int, pre
 				nazev := hledani.Zjednodusit(al.Nazev)
 				switch {
 				case VzorPictorialuPMOY.MatchString(nazev):
-					pridat(m, al, "typAlba", sbirka.TypPMRoku, fmt.Sprintf("název alba „%s“ uvádí Playmate of the Year", al.Nazev), "nazev", 0.92)
+					pridat(m, al, "typAlba", sbirka.TypPMRoku, fmt.Sprintf("název alba „%s“ uvádí %s", al.Nazev, titulZNazvu(nazev, "Year")), "nazev", 0.92)
 				case VzorPictorialuPMOM.MatchString(nazev):
-					pridat(m, al, "typAlba", sbirka.TypPMMesice, fmt.Sprintf("název alba „%s“ uvádí Playmate of the Month", al.Nazev), "nazev", 0.9)
+					pridat(m, al, "typAlba", sbirka.TypPMMesice, fmt.Sprintf("název alba „%s“ uvádí %s", al.Nazev, titulZNazvu(nazev, "Month")), "nazev", 0.9)
 				case al.Vydani != "" && slices.Contains(m.Centerfoldy, al.Vydani) && pictorialuVCisle(indexy, al.Vydani) == 1:
-					pridat(m, al, "typAlba", sbirka.TypPMMesice, fmt.Sprintf("pictorial vyšel v čísle jejího centerfoldu (%s) – pictorial playmate měsíce", al.Vydani), "centerfold", 0.8)
+					pridat(m, al, "typAlba", sbirka.TypPMMesice, fmt.Sprintf("pictorial vyšel v čísle jejího centerfoldu (%s) – pictorial %s", al.Vydani, modelkaMesiceCisla(al.Vydani)), "centerfold", 0.8)
 				case titulZRole && obycejnych == j:
 					pridat(m, al, "typAlba", sbirka.TypPMMesice, "titul modelky měsíce je zapsaný jen v Roli a tohle je její jediný pictorial – titul se bere z alba", "role", 0.75)
 				}
@@ -365,4 +365,22 @@ func NavrhnoutAlba(modelky []hledani.Modelka, alba []AlbumNavrhu, letos int, pre
 			}
 		}
 	}
+}
+
+// Titul z názvu alba, jak ho název píše (0.02.045): „Pet of the Month“, „Playmate of the Year“, ne vždy Playmate
+func titulZNazvu(zjednoduseny, obdobi string) string {
+	for _, slovo := range []string{"pet", "honey", "playmate"} {
+		if strings.Contains(zjednoduseny, slovo) {
+			return strings.ToUpper(slovo[:1]) + slovo[1:] + " of the " + obdobi
+		}
+	}
+	return "titul modelky " + map[string]string{"Month": "měsíce", "Year": "roku"}[obdobi]
+}
+
+// Modelka měsíce čísla: „playmate měsíce“ jen u Playboye, jinak obecně (Pet of the Month Penthouse, 0.02.045)
+func modelkaMesiceCisla(vydani string) string {
+	if _, c := hledani.RozdelitCasopis(vydani); c != "" && c != hledani.VychoziCasopis {
+		return "modelky měsíce"
+	}
+	return "playmate měsíce"
 }

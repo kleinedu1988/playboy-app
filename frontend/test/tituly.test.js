@@ -170,7 +170,12 @@ test('Údržba a texty podle časopisu (0.02.022)', async () => {
     nastavitCasopisy(CASOPISY);
     assert.equal(titulCenterfoldu({ centerfoldy: ['1985-09@PH'] }), 'Pet');
     assert.equal(titulCenterfoldu({ centerfoldy: ['1985-09@PH', '1986-01'] }), 'Playmate');
-    assert.equal(titulCenterfoldu({ centerfoldy: [] }), 'Playmate');
+    // Od 0.02.045 jen z galerií: bez centerfoldu a titulu „Modelka“, s pictorialem Playmate of the Month „Playmate“
+    assert.equal(titulCenterfoldu({ centerfoldy: [] }), 'Modelka');
+    assert.equal(titulCenterfoldu({ playmateMesice: true }), 'Playmate');
+    const { maTitulModelky } = await import('../src/lib/udrzba.js');
+    assert.equal(maTitulModelky({ role: 'Playmate, Model' }), false);
+    assert.equal(maTitulModelky({ centerfoldy: ['1969-11@PH'] }), true);
     nastavitCasopisy([]);
 });
 

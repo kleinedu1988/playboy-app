@@ -6,6 +6,22 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.045] – 2026-11-11
+
+### Opraveno
+- **Údržba bere titul jen z galerií:** priorita úkolů a „… bez data narození“ už nečtou „Playmate“ z pole Role.
+  Modelka s titulem je ta s centerfoldem nebo pictorialem modelky měsíce či roku kteréhokoli časopisu (Pet, Honey).
+  Krátký titul je „Playmate“ jen u Playboye, jinak titul časopisu, bez titulu „Modelka“.
+- **Kontrola Playmate roku** nepočítá centerfold Penthouse jako první centerfold Playboye.
+- **Návrhy druhu alba** píšou titul z názvu alba („název alba uvádí Pet of the Month“, ne vždy Playmate) a u čísla
+  jiného časopisu „pictorial modelky měsíce“; návrh čísla pictorialu píše „pictorial modelky“, ne „playmate“.
+
+### Ověřeno
+- Údržba (Dnes, Po údajích, Po modelkách) a Statistiky na snímcích 1280 a 1920 px (úloha
+  `nastroje/snimky/udrzba.json`): nic za oknem, Pet nikde jako Playmate. Dlouhé texty nálezů se v řádku zkracují,
+  celý text je v bublině.
+- Snímkovací WebKit má dočasné úložiště, takže každý běh začíná v Profilech a nezůstane v posledním pohledu.
+
 ## [0.02.044] – 2026-11-11
 
 ### Opraveno

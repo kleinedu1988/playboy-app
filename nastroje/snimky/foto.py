@@ -11,7 +11,8 @@ for sirka, vyska in uloha['velikosti']:
         kroky.append((sirka, vyska, k))
 stav = {'i': 0}
 w = Gtk.OffscreenWindow()
-v = WebKit2.WebView()
+# Dočasný kontext: localStorage se mezi běhy nepamatuje, každý běh začíná stejně (Profily)
+v = WebKit2.WebView.new_with_context(WebKit2.WebContext.new_ephemeral())
 nast = v.get_settings(); nast.set_enable_developer_extras(True)
 w.add(v)
 def js(kod, hotovo=None):

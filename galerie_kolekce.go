@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"math"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -625,13 +626,18 @@ func (a *App) kandidatiKolekci(fotky []fotkaGalerie) []kandidatKolekce {
 	skore := a.skoreLibi(fotky)
 	zajem := a.zajemKolekci(nyni)
 	var kandidati []kandidatKolekce
+	clenove := clenoveKolekci(fotky, dk, den)
 	for _, d := range a.definiceKolekci(fotky, dk, nyni) {
-		var indexy []int
-		for i := range fotky {
-			if d.plati(&fotky[i]) {
-				indexy = append(indexy, i)
+		indexy, znamo := clenove.get(d.klic)
+		if !znamo {
+			for i := range fotky {
+				if d.plati(&fotky[i]) {
+					indexy = append(indexy, i)
+				}
 			}
+			clenove.set(d.klic, indexy)
 		}
+		indexy = slices.Clone(indexy)
 		// Moc malá, nebo skoro celá sbírka (např. „nově přidané“ po prvním importu) – nic by neřekla
 		if len(indexy) < minFotekKolekce || float64(len(indexy)) > maxPodilKolekce*float64(len(fotky)) {
 			continue
@@ -771,4 +777,48 @@ func vekPriFoceni(narozeni string, f Fotografie) int {
 		return 0
 	}
 	return vek
+}
+
+// Členové kolekcí (0.02.047): podmínka kolekce závisí jen na fotkách Galerie, datech kolekcí a dnešním dni, takže
+// se přes všech ~23 000 fotek vyhodnocuje jednou a další otevření Galerie (a panel kolekcí) vezme hotové indexy.
+// Obě vstupní struktury mají vlastní mezipaměť podle otisku sbírky; změní se sbírka, změní se i ony.
+type pametClenu struct {
+	sync.Mutex
+	fotky *fotkaGalerie
+	pocet int
+	dk    *dataKolekce
+	den   string
+	klice map[string][]int
+}
+
+var clenyKolekci pametClenu
+
+// Mapa členů pro tyto vstupy; zápis do mapy, kterou mezitím jiné volání nahradilo, už nikoho neovlivní
+type mapaClenu map[string][]int
+
+func clenoveKolekci(fotky []fotkaGalerie, dk *dataKolekce, den string) mapaClenu {
+	p := &clenyKolekci
+	p.Lock()
+	defer p.Unlock()
+	var prvni *fotkaGalerie
+	if len(fotky) > 0 {
+		prvni = &fotky[0]
+	}
+	if p.klice == nil || p.fotky != prvni || p.pocet != len(fotky) || p.dk != dk || p.den != den {
+		p.fotky, p.pocet, p.dk, p.den, p.klice = prvni, len(fotky), dk, den, map[string][]int{}
+	}
+	return p.klice
+}
+
+func (m mapaClenu) get(klic string) ([]int, bool) {
+	clenyKolekci.Lock()
+	defer clenyKolekci.Unlock()
+	v, ok := m[klic]
+	return v, ok
+}
+
+func (m mapaClenu) set(klic string, indexy []int) {
+	clenyKolekci.Lock()
+	defer clenyKolekci.Unlock()
+	m[klic] = indexy
 }

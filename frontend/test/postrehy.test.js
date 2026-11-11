@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { nejlepsiCas } from './mereni.js';
 import { neobvykleRoky, obdobi, postrehRady, predlozkaZ, pripravitPriznak, rozdilyVyberu, souvislosti, trendRady, vybratPostrehy, zlomyRady } from '../src/lib/postrehy.js';
 import { mannWhitney } from '../src/lib/statistika.js';
 
@@ -110,10 +111,8 @@ test('nulová simulace: bez trendu se postřeh ukáže nejvýš u 5 % řad', () 
 test('výpočet na 5 000 modelkách do 30 ms', () => {
     const { normalni } = generator(6);
     const sloupce = rada(1953, 2025, () => 69, rok => Math.round(166 + (rok - 1953) * 0.08 + normalni() * 5));
-    trendRady(VYSKA, sloupce);
-    const t0 = performance.now();
-    trendRady(VYSKA, sloupce);
-    assert.ok(performance.now() - t0 < 30);
+    const { ms } = nejlepsiCas(() => trendRady(VYSKA, sloupce));
+    assert.ok(ms < 30, `${ms.toFixed(1)} ms`);
 });
 
 test('zasazený zlom podílu 10 % → 45 % v roce 1995 se najde (1993–1997) s úrovněmi ±5 bodů', () => {
@@ -172,10 +171,7 @@ test('nulová simulace zlomů: falešný zlom nejvýš u 5 % ze 200 řad', () =>
 test('zlomy na 5 000 modelkách do 30 ms', () => {
     const { normalni } = generator(15);
     const sloupce = rada(1953, 2025, () => 69, rok => Math.round(166 + (rok > 1990 ? 3 : 0) + normalni() * 5));
-    postrehRady(VYSKA, sloupce);
-    const t0 = performance.now();
-    postrehRady(VYSKA, sloupce);
-    const ms = performance.now() - t0;
+    const { ms } = nejlepsiCas(() => postrehRady(VYSKA, sloupce));
     assert.ok(ms < 30, `${ms.toFixed(1)} ms`);
 });
 
@@ -277,10 +273,7 @@ test('přepočet výběru na 5 000 modelkách do 15 ms', () => {
     const modelky = sbirka(5000, 27);
     const priznaky = priznakySbirky(modelky);
     const maska = Uint8Array.from(modelky, (_, i) => (i % 7 === 0 ? 1 : 0));
-    rozdilyVyberu(priznaky, maska);
-    const t0 = performance.now();
-    rozdilyVyberu(priznaky, maska);
-    const ms = performance.now() - t0;
+    const { ms } = nejlepsiCas(() => rozdilyVyberu(priznaky, maska));
     assert.ok(ms < 15, `${ms.toFixed(1)} ms`);
 });
 
@@ -324,10 +317,7 @@ test('trendy a zlomy všech 13 grafů na 5 000 modelkách do 100 ms', () => {
         ...['blond', 'silikon', 'oholene', 'tetovani', 'piercing'].map(nazev => [{ druh: 'podil', nazev, sKym: nazev },
             rada(1953, 2025, () => 69, rok => nahoda() < (rok > 1990 ? 0.4 : 0.2))]),
     ];
-    rady.forEach(([def, r]) => postrehRady(def, r));
-    const t0 = performance.now();
-    rady.forEach(([def, r]) => postrehRady(def, r));
-    const ms = performance.now() - t0;
+    const { ms } = nejlepsiCas(() => rady.forEach(([def, r]) => postrehRady(def, r)));
     console.log(`13 grafů: ${ms.toFixed(1)} ms`);
     assert.ok(ms < 100, `${ms.toFixed(1)} ms`);
 });

@@ -6,6 +6,27 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.047] – 2026-11-11
+
+### Zrychleno
+- **Galerie:** řady kolekcí si pamatují, které fotky do kolekce patří (podmínka přes ~23 000 fotek se vyhodnotí
+  jednou za den a změnu sbírky). Opakované otevření Galerie: kolekce 150–390 ms → ~57 ms; první obsah Galerie
+  na kopii sbírky po 0,22 s místo 0,62 s.
+- **Kolekce Galerie v předpřípravě v klidu** (i po hodnocení, které mění otisk sbírky), nejen na úvodní obrazovce.
+- **Profil:** kalendář pro odkazy `[[…]]` a kontext čísel se načte jednou (souběžná volání `GetKalendar` se slučují).
+
+### Testy
+- Výkonové testy (Kendallovo τ_b, trendy a zlomy, rozdíly výběru, Mapa sbírky) měří nejlepší z několika běhů po
+  zahřátí (`test/mereni.js`); souběh testovacích souborů je už nezhazuje. Frontendové i výkonové testy Go prošly
+  10× za sebou.
+- Úloha snímkovače `nastroje/snimky/vykon.json` měří přepnutí pohledů: čas do vykreslení, změny DOM, volání
+  backendu a zablokování hlavního vlákna.
+
+### Zjištěno
+- Volání backendu při otevření profilu trvají v Go dohromady 35–70 ms; zbytek čekání je vykreslování v okně.
+  Snímkovač kreslí softwarově, takže časy kreslení velkých fotek z něj nejsou spolehlivé – změřit na skutečném
+  počítači (⋯ › Nápověda › Přehled výkonu).
+
 ## [0.02.046] – 2026-11-11
 
 ### Opraveno

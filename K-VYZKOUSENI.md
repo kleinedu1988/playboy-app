@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.047 – Výkon vykreslování
+
+- [ ] Galerie: druhé a další otevření řad kolekcí je znatelně rychlejší; po hodnocení fotky (a chvíli klidu) také.
+- [ ] Otevření profilu na skutečném počítači: ⋯ › Nápověda › Přehled výkonu – `GetKalendar` jen jednou na profil.
+- [ ] Na skutečném počítači porovnat plynulost profilu a Galerie (snímkovač kreslí softwarově, časy kreslení z něj
+  nejsou spolehlivé).
+
 ## 0.02.046 – Stejná data ve všech pohledech
 
 - [ ] Hledání `casopis:ph` najde i modelku, která má Penthouse jen v textovém vydání pictorialu (profil ukazuje

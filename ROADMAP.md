@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (11. 11. 2026): verze 0.02.046** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (11. 11. 2026): verze 0.02.047** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (PDF, web, vkus napříč časopisy) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.047 – Výkon vykreslování** (snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
+**0.02.048 – Prohlížeč PDF ve WebKitGTK** (snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
 
 ---
 
@@ -54,7 +54,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.046 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.047 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -168,7 +168,7 @@ nesedí, opraví; nahlášené chyby z používání mají přednost před pořa
 | 0.02.044 ✅ | **Hodnocení a Síň slávy:** hero s filtrem časopisu (trůn), porovnání, štítky odhadu | filtr časopisu nikdy neukáže prázdný hero |
 | 0.02.045 ✅ | **Údržba a Statistiky:** rozložení, texty a grafy s modelkami jiných časopisů | žádný graf ani úkol nepočítá Pet jako Playmate |
 | 0.02.046 ✅ | **Stejná data ve všech pohledech:** tatáž modelka má stejné časopisy, tituly a čísla v profilu, kartě, hledání, kalendáři, stěně a statistikách | test na vzorové sbírce s Playboyem, Penthouse a Hustlerem |
-| 0.02.047 | **Výkon vykreslování:** Mapa sbírky (výkonový test občas 500 ms), první vykreslení galerie a profilu, přepínání stránek | výkonové testy projdou 10× za sebou |
+| 0.02.047 ✅ | **Výkon vykreslování:** Mapa sbírky (výkonový test občas 500 ms), první vykreslení galerie a profilu, přepínání stránek | výkonové testy projdou 10× za sebou |
 | 0.02.048 | **Prohlížeč PDF ve WebKitGTK** ověřit a doladit (worker, rychlost, vzhled) | 200stránkové číslo do 5 s |
 
 #### Fotky z PDF (0.02.035–0.02.052, dříve etapa 0.05)
@@ -350,6 +350,26 @@ Na přání uživatele odložené na konec plánu (kvíz z PD 1.43, průvodce č
 | 1.10.003 | Vyšší kontrast | Silnější tlumený text, okraje a tlustší rámeček fokusu; navazuje na popisky pro čtečku (R18) | S |
 
 **Hotovo, když:** všechny pohledy ve světlém motivu projdou kontrolou kontrastu WCAG AA a motiv se přepne bez restartu.
+
+---
+
+## Nápady k zařazení
+
+### Chytrý výřez všech náhledů (nápad uživatele 11. 11. 2026)
+
+Tlačítko **Automatický výřez** u titulní fotky (detektor postavy, `NavrhnoutVyrezy` v `otocene_fotky.go`) rozšířit na
+všechny ořezané náhledy: dlaždice Galerie a řad kolekcí, mozaika alb v profilu, stěna Centerfoldů, hero pohledů,
+karty Síně slávy a Porovnat. Dnes se ořezávají na střed (`object-fit: cover`), takže hlava nebo postava bývá useknutá.
+
+| Krok | Obsah | Hotovo, když |
+|---|---|---|
+| a | **Výřez fotky v databázi:** bod zájmu (střed postavy či obličeje) a doporučené přiblížení pro každou fotku, počítané v pozadí po dávkách jako obsah fotek; ruční výřez má přednost | sloupec/tabulka výřezů, výpočet 23 000 fotek v pozadí bez sekání |
+| b | **Náhledy podle výřezu:** `object-position` z bodu zájmu u všech ořezaných náhledů (jedna pomocná funkce místo stylu v každém pohledu) | v Galerii a mozaice profilu není useknutá hlava |
+| c | **Tvar podle místa:** na výšku, na šířku a čtverec – hero a široké řady posunou výřez jinak než úzká dlaždice | hero Kalendáře a Centerfoldů ukazuje postavu, ne pozadí |
+| d | **Úprava ručně:** v prohlížeči fotek „Upravit výřez náhledu“ (táhnout bod zájmu), Údržba › Výřezy pro fotky, kde detektor nic nenašel nebo si není jistý | ruční výřez se projeví ve všech pohledech |
+| e | **Zpětná kontrola:** snímky obrazovek pohledů před a po, žádný náhled horší než střed | snímkovač porovná úlohou |
+
+Zařadit po etapě Ladění (rozhodne uživatel: před PDF, nebo za ně).
 
 ---
 

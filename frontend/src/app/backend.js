@@ -184,7 +184,8 @@ const JEN_HODNOCENI = new Set([
 
 // Čtení, která si ve stejnou chvíli žádá víc pohledů (stav sezóny chce Porovnat, Síň slávy i vyhlášení naráz):
 // souběžná stejná volání dostanou jednu odpověď. Výsledek nesmí volající měnit na místě.
-const SLOUCIT = new Set(['GetSezona', 'GetNavrhSezony', 'GetTemataKOdemceni', 'GetSpecialy', 'GetPocetFotekKPruvodci']);
+// GetKalendar (0.02.047): profil ho chce naráz pro odkazy [[…]] i kontext čísel
+const SLOUCIT = new Set(['GetSezona', 'GetNavrhSezony', 'GetTemataKOdemceni', 'GetSpecialy', 'GetPocetFotekKPruvodci', 'GetKalendar']);
 const probihajici = new Map();
 
 // Počet rozběhnutých volání backendu: předpříprava (app/predpriprava.js) čeká, dokud nějaké běží

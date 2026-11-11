@@ -7,9 +7,11 @@
 import { pocetRozbehnutychVolani, Predpripravit } from './backend';
 import { poZmeneDat } from './udalosti';
 
-const KROKY = ['temata', 'sbirka', 'kalendar', 'texty', 'statistiky'];
-// Po hodnocení (srdíčka, souboje, tagy) se mění témata a snímek sbírky, údaje Sbírky a kalendář ne
-const PO_HODNOCENI = ['temata', 'texty'];
+// Kolekce Galerie (0.02.047): úvodní obrazovka je připraví, hodnocení ale změní otisk sbírky a první otevření
+// Galerie by pak počítalo data kolekcí znovu (~0,6 s)
+const KROKY = ['temata', 'sbirka', 'kalendar', 'texty', 'statistiky', 'kolekce'];
+// Po hodnocení (srdíčka, souboje, tagy) se mění témata, snímek sbírky a kolekce Galerie, údaje Sbírky a kalendář ne
+const PO_HODNOCENI = ['temata', 'texty', 'kolekce'];
 const KLID = 600;
 const KLID_PO_ZAPISU = 5000;
 

@@ -1,5 +1,6 @@
 // Testy mapy sbírky (frontend/src/lib/mapa-sbirky.js) podle docs/NAVRH-SITE.md §2.9.
 import assert from 'node:assert/strict';
+import { nejlepsiCas } from './mereni.js';
 import { generator } from '../src/lib/mapa-sit.js';
 import test from 'node:test';
 import {
@@ -237,9 +238,7 @@ test('vypocitatMapuSbirky: výkon pro 500 modelek', () => {
         ociBarva: ['Modré', 'Hnědé', 'Zelené', 'Šedé'][i % 4],
         narodnost: ['USA', 'Kanada', 'Velká Británie', 'Česko'][i % 4],
     }));
-    const t0 = performance.now();
-    const res = vypocitatMapuSbirky(modelky);
-    const trvani = performance.now() - t0;
+    const { ms: trvani, vysledek: res } = nejlepsiCas(() => vypocitatMapuSbirky(modelky), 3);
     assert.equal(res.body.length, 500);
     assert.ok(trvani < 500, `Výpočet mapy pro 500 modelek trval ${trvani.toFixed(1)} ms`);
 });

@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { nejlepsiCas } from './mereni.js';
 import { readFileSync } from 'node:fs';
 import { benjaminiHochberg, cochranArmitage, fisher, kendallTauB, mannWhitney, median, normalniChvost, poradi, spearman, theilSen, wilson } from '../src/lib/statistika.js';
 
@@ -31,10 +32,8 @@ test('Kendallovo τ_b a p souhlasí se SciPy (shody, 1 500 modelek)', () => {
 test('Kendallovo τ_b na 5 000 bodech do 30 ms (po zahřátí)', () => {
     const x = Array.from({ length: 5000 }, (_, i) => 1950 + (i * 7919) % 75);
     const y = x.map((r, i) => 160 + (r - 1950) * 0.1 + ((i * 104729) % 17));
-    kendallTauB(x, y);
-    const t = performance.now();
-    kendallTauB(x, y);
-    assert.ok(performance.now() - t < 30);
+    const { ms } = nejlepsiCas(() => kendallTauB(x, y));
+    assert.ok(ms < 30, `${ms.toFixed(1)} ms`);
 });
 
 test('Cochranův–Armitageův test souhlasí s N·r² (R prop.trend.test)', () => {

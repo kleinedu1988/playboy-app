@@ -1,0 +1,96 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "cekani",
+   "js": "(()=>'čekám')()",
+   "cekat": 2000
+  },
+  {
+   "nazev": "obal",
+   "js": "(()=>{const A=window.go.main.App;window.__v=[];window.go.main.App=new Proxy({},{get:(_,j)=>(...a)=>{const t=performance.now();const p=A[j](...a);Promise.resolve(p).then(()=>window.__v.push([j,Math.round(t-(window.__t0||0)),Math.round(performance.now()-t)]),()=>{});return p}});return 'obaleno'})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "galerie",
+   "js": "(()=>{const b=([...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Galerie\")[0]);if(!b)return 'bez';window.__v=[];const t0=performance.now();window.__t0=t0;const mz=[];const mo=new MutationObserver(r=>{mz.push([Math.round(performance.now()-t0),r.length])});mo.observe(document.querySelector('main')||document.body,{subtree:true,childList:true});window.__mez=[];let tp=performance.now();const hb=setInterval(()=>{const n=performance.now();if(n-tp>40)window.__mez.push([Math.round(tp-t0),Math.round(n-tp)]);tp=n},5);setTimeout(()=>clearInterval(hb),5000);b.click();const t1=performance.now();requestAnimationFrame(()=>requestAnimationFrame(()=>{window.__p=performance.now()-t0}));window.__m={sync:Math.round(t1-t0)};setTimeout(()=>{mo.disconnect();window.__m.paint=Math.round(window.__p);window.__m.dom=mz.slice(0,15);window.__m.mezery=window.__mez.slice(0,12);window.__m.volani=window.__v.filter(v=>v[2]>15).slice(0,15)},5500);return 'ok'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "galerie-cas",
+   "js": "(()=>JSON.stringify(window.__m))()",
+   "cekat": 100
+  },
+  {
+   "nazev": "profily",
+   "js": "(()=>{const b=([...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Profily\")[0]);if(!b)return 'bez';window.__v=[];const t0=performance.now();window.__t0=t0;const mz=[];const mo=new MutationObserver(r=>{mz.push([Math.round(performance.now()-t0),r.length])});mo.observe(document.querySelector('main')||document.body,{subtree:true,childList:true});window.__mez=[];let tp=performance.now();const hb=setInterval(()=>{const n=performance.now();if(n-tp>40)window.__mez.push([Math.round(tp-t0),Math.round(n-tp)]);tp=n},5);setTimeout(()=>clearInterval(hb),5000);b.click();const t1=performance.now();requestAnimationFrame(()=>requestAnimationFrame(()=>{window.__p=performance.now()-t0}));window.__m={sync:Math.round(t1-t0)};setTimeout(()=>{mo.disconnect();window.__m.paint=Math.round(window.__p);window.__m.dom=mz.slice(0,15);window.__m.mezery=window.__mez.slice(0,12);window.__m.volani=window.__v.filter(v=>v[2]>15).slice(0,15)},5500);return 'ok'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "profily-cas",
+   "js": "(()=>JSON.stringify(window.__m))()",
+   "cekat": 100
+  },
+  {
+   "nazev": "statistiky",
+   "js": "(()=>{const b=([...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Statistiky\")[0]);if(!b)return 'bez';window.__v=[];const t0=performance.now();window.__t0=t0;const mz=[];const mo=new MutationObserver(r=>{mz.push([Math.round(performance.now()-t0),r.length])});mo.observe(document.querySelector('main')||document.body,{subtree:true,childList:true});window.__mez=[];let tp=performance.now();const hb=setInterval(()=>{const n=performance.now();if(n-tp>40)window.__mez.push([Math.round(tp-t0),Math.round(n-tp)]);tp=n},5);setTimeout(()=>clearInterval(hb),5000);b.click();const t1=performance.now();requestAnimationFrame(()=>requestAnimationFrame(()=>{window.__p=performance.now()-t0}));window.__m={sync:Math.round(t1-t0)};setTimeout(()=>{mo.disconnect();window.__m.paint=Math.round(window.__p);window.__m.dom=mz.slice(0,15);window.__m.mezery=window.__mez.slice(0,12);window.__m.volani=window.__v.filter(v=>v[2]>15).slice(0,15)},5500);return 'ok'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "statistiky-cas",
+   "js": "(()=>JSON.stringify(window.__m))()",
+   "cekat": 100
+  },
+  {
+   "nazev": "slava",
+   "js": "(()=>{const b=([...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"S\\u00ed\\u0148 sl\\u00e1vy\")[0]);if(!b)return 'bez';window.__v=[];const t0=performance.now();window.__t0=t0;const mz=[];const mo=new MutationObserver(r=>{mz.push([Math.round(performance.now()-t0),r.length])});mo.observe(document.querySelector('main')||document.body,{subtree:true,childList:true});window.__mez=[];let tp=performance.now();const hb=setInterval(()=>{const n=performance.now();if(n-tp>40)window.__mez.push([Math.round(tp-t0),Math.round(n-tp)]);tp=n},5);setTimeout(()=>clearInterval(hb),5000);b.click();const t1=performance.now();requestAnimationFrame(()=>requestAnimationFrame(()=>{window.__p=performance.now()-t0}));window.__m={sync:Math.round(t1-t0)};setTimeout(()=>{mo.disconnect();window.__m.paint=Math.round(window.__p);window.__m.dom=mz.slice(0,15);window.__m.mezery=window.__mez.slice(0,12);window.__m.volani=window.__v.filter(v=>v[2]>15).slice(0,15)},5500);return 'ok'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "slava-cas",
+   "js": "(()=>JSON.stringify(window.__m))()",
+   "cekat": 100
+  },
+  {
+   "nazev": "galerie2",
+   "js": "(()=>{const b=([...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Galerie\")[0]);if(!b)return 'bez';window.__v=[];const t0=performance.now();window.__t0=t0;const mz=[];const mo=new MutationObserver(r=>{mz.push([Math.round(performance.now()-t0),r.length])});mo.observe(document.querySelector('main')||document.body,{subtree:true,childList:true});window.__mez=[];let tp=performance.now();const hb=setInterval(()=>{const n=performance.now();if(n-tp>40)window.__mez.push([Math.round(tp-t0),Math.round(n-tp)]);tp=n},5);setTimeout(()=>clearInterval(hb),5000);b.click();const t1=performance.now();requestAnimationFrame(()=>requestAnimationFrame(()=>{window.__p=performance.now()-t0}));window.__m={sync:Math.round(t1-t0)};setTimeout(()=>{mo.disconnect();window.__m.paint=Math.round(window.__p);window.__m.dom=mz.slice(0,15);window.__m.mezery=window.__mez.slice(0,12);window.__m.volani=window.__v.filter(v=>v[2]>15).slice(0,15)},5500);return 'ok'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "galerie2-cas",
+   "js": "(()=>JSON.stringify(window.__m))()",
+   "cekat": 100
+  },
+  {
+   "nazev": "profil",
+   "js": "(()=>{const b=([...document.querySelectorAll('[data-id], [data-modelka]')].filter(e=>e.getClientRects().length&&e.getBoundingClientRect().top>150)[0]);if(!b)return 'bez';window.__v=[];const t0=performance.now();window.__t0=t0;const mz=[];const mo=new MutationObserver(r=>{mz.push([Math.round(performance.now()-t0),r.length])});mo.observe(document.querySelector('main')||document.body,{subtree:true,childList:true});window.__mez=[];let tp=performance.now();const hb=setInterval(()=>{const n=performance.now();if(n-tp>40)window.__mez.push([Math.round(tp-t0),Math.round(n-tp)]);tp=n},5);setTimeout(()=>clearInterval(hb),5000);b.click();const t1=performance.now();requestAnimationFrame(()=>requestAnimationFrame(()=>{window.__p=performance.now()-t0}));window.__m={sync:Math.round(t1-t0)};setTimeout(()=>{mo.disconnect();window.__m.paint=Math.round(window.__p);window.__m.dom=mz.slice(0,15);window.__m.mezery=window.__mez.slice(0,12);window.__m.volani=window.__v.filter(v=>v[2]>15).slice(0,15)},5500);return 'ok'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "profil-cas",
+   "js": "(()=>JSON.stringify(window.__m))()",
+   "cekat": 100
+  }
+ ]
+}

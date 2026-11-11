@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (11. 11. 2026): verze 0.02.036** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (11. 11. 2026): verze 0.02.037** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (PDF, web, vkus napříč časopisy) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.037 – Kontrolní seznam po obrazovkách**.
+**0.02.038 – Tituly všude z galerií** (kontrolní seznam po obrazovkách je hotový v `K-VYZKOUSENI.md`).
 
 ---
 
@@ -54,7 +54,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.036 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.037 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -158,8 +158,8 @@ nesedí, opraví; nahlášené chyby z používání mají přednost před pořa
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.037 | **Kontrolní seznam po obrazovkách:** 213 neověřených bodů K-VYZKOUSENI projít – co jde, ověřit testem nebo snímkem, zbytek seskupit podle obrazovek do krátkého seznamu k proklikání | seznam do 40 bodů po obrazovkách, ověřené odškrtnuté |
-| 0.02.038 | **Tituly všude z galerií:** kategorie ve filtrech, hledání `kategorie:`, kartách galerie, Statistikách a Údržbě stejně jako štítky profilu (0.02.034); z Role jen profese | modelka s „PMOTM“ jen v Roli nemá titul nikde, titul z galerie má všude (test) |
+| 0.02.037 ✅ | **Kontrolní seznam po obrazovkách:** 213 neověřených bodů K-VYZKOUSENI projít – co jde, ověřit testem nebo snímkem, zbytek seskupit podle obrazovek do krátkého seznamu k proklikání | seznam do 40 bodů po obrazovkách, ověřené odškrtnuté |
+| 0.02.038 | **Tituly všude z galerií:** kategorie ve filtrech, hledání `kategorie:`, kartách galerie, Statistikách a Údržbě stejně jako štítky profilu (0.02.034); z Role jen profese; online album s časopisem (Jenna Sativa: online z webu Penthouse) | modelka s „PMOTM“ jen v Roli nemá titul nikde, titul z galerie má všude (test) |
 | 0.02.039 | **Data do pořádku v Údržbě:** návrhy „doplnit číslo albu“ (z údajů modelky, 0.02.036) a „titul z Role pryč“ hromadně s rozdílem nanečisto a Vrátit | Heide Mann má po jednom potvrzení album 1970-10@PH |
 | 0.02.040 | **Napojení odhadů srdíček:** proč modelka nemá odhad (nápověda štítku a Hodnocení), stav analýzy obsahu fotek, kolik modelek čeká na galerii | v Hodnocení je vidět, kolik modelek čeká na galerii nebo analýzu |
 | 0.02.041 | **Profil:** hero, štítky, blok Časopisy, alba s číslem a časopisem, panel Údaje, časová osa | 5 vzorových modelek bez přetékajícího textu a prázdných míst (snímky 1280 a 1920 px) |

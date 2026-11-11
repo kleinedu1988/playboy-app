@@ -6,6 +6,17 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.037] – 2026-11-11
+
+### Změněno
+- **Kontrolní seznam po obrazovkách:** 213 neověřených bodů z `K-VYZKOUSENI.md` (verze 1.45–0.02.036) je shrnuto
+  do 39 bodů podle obrazovek (Profil, Galerie, Čísla, Okno alba, Hodnocení, Údržba, Statistiky, Správa, Vzhled);
+  podrobné body jsou v `docs/archiv/K-VYZKOUSENI-DO-0.02.036.md`.
+- Ověřeno na kopii sbírky: přesun dat po přejmenování, tabulka časopisů, žádný falešný kandidát na sloučení, štítky
+  vzorových modelek, platný model vkusu; body „Playboy jako dřív“ kryjí testy.
+- Zjištěno pro další kroky: online alba Penthouse se počítají jako Playboy (Jenna Sativa), 56 nehodnocených modelek
+  s fotkami bez odhadu, pseudonym u dvou modelek, nestálé výkonové testy.
+
 ## [0.02.036] – 2026-11-11
 
 ### Opraveno

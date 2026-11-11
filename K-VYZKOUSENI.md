@@ -1,446 +1,137 @@
 # K vyzkoušení
 
 Co jde ověřit jen v opravdovém programu (testy a sestavení prošly, ale okno, tisk ani síť se automaticky nezkouší).
-Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přidávají nahoru.
+Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přidávají nahoru nad kontrolní seznam.
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
-## 0.02.036 – Album bez čísla podle údajů modelky
-
-- [ ] **Kritérium hotovo:** Heide Mann – „Penthouse 1970 · Pet of the Month · Modelka“, ne Playboy / Playmate.
-- [ ] Jenna Sativa (Penthouse duben 2016) – štítky a nadtitulek s Penthouse.
-- [ ] V Údržbě jsou tato alba dál „bez vydání“; po výběru čísla v okně alba platí číslo z okna.
-
-## 0.02.035 – Otevřít PDF čísla
-
-- [ ] **Kritérium hotovo:** 200stránkové PDF čísla (⋯ › Otevřít PDF čísla…) se otevře do 5 s (čas ukáže oznámení).
-- [ ] Listování šipkami a PageUp/PageDown, dvoustrany 2–3, 4–5…, Home/End, náhledy vlevo se dokreslují při posunu.
-- [ ] Lupa +/−, 0 a Ctrl + kolečko; ve zvětšení jde stranou posouvat.
-- [ ] Pdf.js funguje ve WebKitGTK (worker se načte; když ne, oznámení „se nepodařilo otevřít“).
-
-## 0.02.034 – Jednotné štítky profilu
-
-- [ ] **Kritérium hotovo:** Buffy Tyler „Playboy 2000 · Playmate měsíce · Modelka“, Ulla Lindstrom „Penthouse 1969 ·
-      Pet of the Month · Modelka · Herečka · Tanečnice“, Ali Rose „Playboy 2014 · Pictorial · Online · Modelka“.
-- [ ] Štítek časopisu, role a profese jsou na pohled odlišené (plný, obrys, tlumený).
-- [ ] Modelka s albem Cyber Girl má „Cyber Girl měsíce/týdne“ místo „Online“.
-- [ ] Chybí ti titul, který jsi měl jen v Roli (např. PMOTM ZA u Ali Rose)? Pak chybí album s typem Playmate měsíce.
-
-## 0.02.033 – Sloučení modelek s náhledem a Vrátit
-
-- [ ] **Kritérium hotovo:** sloučit dvě modelky (profil › ⋯ › Sloučit s jinou modelkou) a pak Vrátit v oznámení –
-      obě jsou zpět se svými alby, fotkami, srdíčky a porovnáními (v pořadí oblíbenosti i Síni slávy).
-- [ ] Okno rozdílu nanečisto je čitelné (alba, doplněné a ponechané údaje, další jméno, porovnání).
-- [ ] Údržba › Ke kontrole: kandidát na sloučení má tlačítko „Sloučit“ a otevře rozdíl rovnou pro dvojici.
-- [ ] Sloučení Pet Penthouse do Playmate Playboye přidá „Jméno @PH“ do Dalších jmen.
-- [ ] Vrátit po přidání fotky k modelce odmítne s vysvětlením.
-
-## 0.02.032 – Vydání z importu podle alb
-
-- [ ] **Kritérium hotovo:** Ulla Lindstrom (Pet of the Month 1969-11 Penthouse) – nadtitulek profilu jen
-      „Penthouse 1969“ (bez „Playboy 1969“), pod jménem číslo jednou („Lis 69 · PH“).
-- [ ] Ve Statistikách a Kalendáři Playboye se Ulla Lindstrom neobjeví v listopadu 1969.
-- [ ] Upravit → Uložit zapíše opravené vydání (`1969-11@PH`) i do databáze.
-
-## 0.02.031 – Odhad srdíček až po první galerii
-
-- [ ] **Kritérium hotovo:** nově přidaná modelka bez fotek nemá v seznamu ani profilu štítek „odhad“ a není
-      v „Mohlo by se ti líbit“.
-- [ ] Po nahrání galerie a doběhnutí analýzy obsahu fotek se jí odhad objeví (i bez hodnocených fotek).
-- [ ] Kolik modelek odhad ztratilo – nechybí odhady tam, kde fotky jsou (analýza obsahu musí být spuštěná)?
-- [ ] Důvod odhadu dál uvádí podobné hodnocené modelky („podobně jako …“).
-
-## 0.02.030 – Vizuální podobnost u kandidátů na sloučení
-
-- [ ] **Kritérium hotovo:** kandidát na sloučení v Údržbě ukáže důvody z fotek („podobné fotky (88 %)“, „stejná
-      fotka u obou“), když jsou.
-- [ ] Je práh 85 % pro „podobné fotky“ rozumný (neukazuje se skoro u každé dvojice)?
-- [ ] Kandidáti se stejnou fotkou jsou v Ke kontrole výš než ostatní.
-- [ ] Kontrola nezpomalila (otisky a středy se berou z mezipaměti).
-
-## 0.02.029 – Kandidáti na sloučení
-
-- [ ] **Kritérium hotovo:** dvě modelky „Jane Doe“ se stejným datem narození (Playboy a Penthouse) → Údržba › Ke
-      kontrole „nejspíš tatáž modelka jako …“; s jiným datem narození kandidátem nejsou.
-- [ ] Filtr podle zdroje „kandidát na sloučení“ ukáže jen tyto nálezy; „V pořádku“ nález skryje.
-- [ ] Na skutečné sbírce: žádný falešný kandidát se stejným jménem a jiným datem.
-
-## 0.02.028 – Hledání podle přezdívek
-
-- [ ] **Kritérium hotovo:** modelka s přezdívkou „Jane Doe @PH“ se najde hledáním „jane“, `jmeno:"jane doe"`
-      i pod svým jménem.
-- [ ] Našeptávač: po „jane“ modelka s řádkem „jako Jane Doe (Penthouse) · …“.
-- [ ] `[[Jane Doe]]` v poznámce odkáže na modelku; po „[[jan“ návrh „modelka · jako Jane Doe (Penthouse)“.
-- [ ] Hledání „@ph“ přezdívku nenajde (přípona není text).
-
-## 0.02.027 – Přezdívky podle časopisu
-
-- [ ] **Kritérium hotovo:** Upravit modelku › Další jména „Jane Doe @PH“ → po uložení v profilu „také Jane Doe
-      (Penthouse)“ a v exportu `dalsi_jmena: Jane Doe @PH`.
-- [ ] Zápis „jane doe@ph“ se při uložení sjednotí na „jane doe @PH“.
-- [ ] Přidání nové modelky se jménem „Jane Doe“ upozorní, že už existuje (přezdívka bez přípony).
-- [ ] `[[Jane Doe]]` v textu odkáže na modelku.
-
-## 0.02.026 – Kariéra v profilu napříč časopisy
-
-- [ ] **Kritérium hotovo:** profil modelky s číslem Playboye i Penthouse ukáže obě čísla (páska v záhlaví i Vydání).
-- [ ] Nadtitulek záhlaví: „Pet of the Month 1985 · Playmate 1987“ (podle prvního čísla); modelka jen z Playboye
-      má kategorie jako dřív.
-- [ ] Čísla Penthouse podtržená / olemovaná barvou časopisu – je barva na tmavém záhlaví dost vidět?
-- [ ] Blok údajů se u takové modelky jmenuje „Časopisy“, u Playboye „Playboy“.
-
-## 0.02.025 – Hero stěny Centerfoldů
-
-- [ ] **Kritérium hotovo:** Centerfoldy › Časopis: Penthouse – v hero Pet of the Month („Pet of the Month · Září
-      1985 · Penthouse“), Další ↻ střídá jen Penthouse.
-- [ ] V listopadu napřed listopadové centerfoldy („centerfold dne“, „Vyšel před N lety“), pak podle srdíček.
-- [ ] Fotka v rámu 3 : 4 – vypadá centerfold dobře (není moc oříznutý)? Otočené fotky v hero nejsou.
-- [ ] Profil, Otevřít číslo; klik na hero neotevře prohlížeč stěny.
-- [ ] Při hledání hero zmizí.
-
-## 0.02.024 – Hero Obálek
-
-- [ ] **Kritérium hotovo:** Čísla › Obálky: hero se střídá (Další ↻, „2 z N“) a po přepnutí na Penthouse ukazuje
-      jen jeho obálky.
-- [ ] V listopadu napřed listopadové obálky dřívějších let („Vyšlo před N lety“), pak podle srdíček.
-- [ ] „Na obálce …“ z údaje čísla; bez něj „Centerfold …“.
-- [ ] Počet chybějících obálek v rozpracovaných ročnících sedí; Bez obálky přepne zobrazení na „bez coveru“.
-- [ ] Při hledání hero zmizí.
-
-## 0.02.023 – Hero Kalendáře
-
-- [ ] **Kritérium hotovo:** Kalendář › Penthouse US: hero s ročníkem, obálkou a úplností („9 z 12 čísel“).
-- [ ] V listopadu napřed ročník s listopadovým číslem ve sbírce („… vyšlo před N lety – centerfold …“).
-- [ ] Obálka je celá (název časopisu nahoře vidět), vlevo plynule přechází; plná velikost se načte po náhledu.
-- [ ] Otevřít číslo / ročník, Ukázat v kalendáři (posune na rok), Doplnit chybějící (nabídka přidání čísla),
-      Další ročník ↻ (dokola); přepnutí řady začne znovu výročím.
-- [ ] Při hledání hero zmizí; při rolování odjede nahoru.
-
-## 0.02.022 – Zbylé texty podle časopisu
-
-- [ ] **Kritérium hotovo:** projít `docs/VYSKYTY-PLAYMATE.md` – souhlasíš, že zbylé výskyty jsou opravdu Playboy?
-- [ ] Údržba u modelky jen s centerfoldem Penthouse bez data narození: „Pet bez data narození…“.
-- [ ] Údržba u čísla Penthouse bez centerfoldu: „Číslo nemá Pet – přidej jí centerfold“.
-- [ ] Vkus („Můj vkus“, důvody odhadu) u Pet: „byla Pet of the Month“, ne „byla Playmate měsíce“.
-- [ ] Číslo Penthouse › Jako časopis: titulek bez „Playboy ·“.
-- [ ] Bublina odkazu `[[Pet]]` v textu: „Pet Září 1985 · Penthouse“.
-
-## 0.02.021 – Síň slávy a Rok ve sbírce přes časopisy
-
-- [ ] **Kritérium hotovo:** Síň slávy › volba „Penthouse“ v liště: Top 10 jen s modelkami Penthouse (s celkovým
-      místem), Legendy, Odznaky, Rekordy a Kronika také.
-- [ ] Žádná modelka Penthouse v Top 10 → hláška „Z časopisu Penthouse teď nikdo v Top 10 není“.
-- [ ] Hero (trůn) při volbě časopisu: co ukáže, když jednička celé sbírky z časopisu není? (možná k doladění)
-- [ ] Sezóna: pořadí jen modelek zvoleného časopisu; vyhlášení sezóny se volbou nemění.
-- [ ] Volba se pamatuje po restartu; se sbírkou jen z Playboye se neukáže.
-- [ ] Rok ve sbírce: celý ročník Penthouse dokončený letos → „Ročník 1985 Penthouse US je celý“.
-
-## 0.02.020 – Statistiky a Postřehy podle časopisu
-
-- [ ] **Kritérium hotovo:** se sbírkou s Penthouse nikde ve Statistikách „Playmate“ u modelky jen z Penthouse
-      (Rozložení Kategorie ukáže „Pet of the Month“).
-- [ ] Graf v čase (Výška) – nápověda a Postřeh říkají „rok prvního výskytu v Playboyi“; bez jiného časopisu
-      „v časopise“ jako dřív.
-- [ ] Mapa sbírky › barva Kategorie: Pet of the Month oranžově s položkou „Titul jiného časopisu“ v legendě.
-
-## 0.02.019 – Hledání podle časopisu
-
-- [ ] **Kritérium hotovo:** v Modelkách `casopis:penthouse 80. léta` najde modelky s číslem Penthouse z 80. let.
-- [ ] `ph` a `hustler` v poli hledání ukážou čip „Časopis: Penthouse / Hustler“; `playboy` hledá text jako dřív.
-- [ ] `-casopis:penthouse` vynechá modelky s číslem Penthouse; modelka z Playboye i Penthouse se najde pod oběma.
-- [ ] Na stěně Centerfoldů (Všechny časopisy), v Kalendáři a Obálkách filtruje `casopis:ph`.
-- [ ] Našeptávač: po `cas` nabídne `casopis:`, po `casopis:` časopisy s počtem modelek.
-- [ ] Chytrý výběr uložený s `casopis:penthouse` funguje po restartu.
-
-## 0.02.018 – Stěna Centerfoldů podle časopisu
-
-- [ ] **Kritérium hotovo:** Modelky › Centerfoldy › „Časopis: Penthouse“: jen centerfoldy Penthouse (Pet of the
-      Month); „Penthouse UK“ jen britské.
-- [ ] Výchozí „Playboy“ ukazuje totéž co dřív „vše“; Playboy US a CZ jako dřív US a CZ.
-- [ ] „Všechny časopisy“: Playboy i Penthouse dohromady, řazení podle čísla funguje.
-- [ ] Hustler (jedna edice) má v nabídce jen jednu položku „Hustler“.
-
-## 0.02.017 – Mapa čísel pro každý časopis
-
-- [ ] **Kritérium hotovo:** Sbírka › Mapa čísel: pod americkou edicí karta „Penthouse US · archiv dat“ 1969–2018;
-      09/1985 kompletní nebo částečné podle obsahu, klik otevře číslo, prázdné políčko nabídne přidání.
-- [ ] Česká a americká edice Playboye vypadají jako dřív; úplnost Penthouse a Playboye se počítá zvlášť.
-- [ ] Penthouse UK a Hustler bez čísel ve sbírce kartu nemají.
-- [ ] ⋯ › Vzhled › Karty Mapy čísel: Penthouse US, Penthouse UK, Hustler US jde skrýt a posunout; pořadí vydrží
-      restart.
-
-## 0.02.016 – Kalendář podle časopisu
-
-- [ ] **Kritérium hotovo:** Čísla › Kalendář › „Časopis a edice: Penthouse US“: ukáže Penthouse 09/1985 a v roce
-      1985 ostatní měsíce jako chybějící s +; klik na + nabídne přidání čísla Penthouse.
-- [ ] Volba se pamatuje po restartu; přepnutí zpět na Playboy US ukáže Kalendář jako dřív.
-- [ ] Obálky (Čísla › Obálky) mají stejnou volbu; „Chybějící“ u Penthouse počítá podle řady Penthouse.
-- [ ] Penthouse UK bez čísel: „Penthouse UK: zatím žádné číslo“ s tlačítkem Přidat….
-- [ ] Nabídka ročníku Penthouse (klik na rok): bez „Ročník podle Wikipedie…“, s „Nový speciál…“.
-- [ ] Po přepnutí Kalendáře na Penthouse nabídne nové album Penthouse US (dokud se neuloží jiný časopis).
-
-## 0.02.015 – Řady Penthouse a Hustleru
-
-- [ ] **Kritérium hotovo:** ročník Penthouse 1969 (drobeček „Ročník 1969 · Penthouse“ u čísla 09/1969): leden až
-      srpen „nevyšlo“, září až prosinec jako chybějící s +, „Čísel ve sbírce … z 4“.
-- [ ] Ročník Penthouse 1985: 12 měsíců, Penthouse UK 1965: od března.
-- [ ] Zkontroluj na svých výtiscích, jestli data řad sedí (hlavně konec Penthouse US a UK); oprava je jen
-      v `frontend/src/lib/rady-cisel.js`.
-
-## 0.02.014 – Řady čísel jako data
-
-- [ ] Nic nového k vidění: Kalendář US (03/1955 „nevyšlo“, ročník 1953 jen prosinec, konec 03/2020), Kalendář CZ
-      (od 07/2011), Mapa čísel a kapesní katalog vypadají jako dřív.
-
-## 0.02.013 – Správa časopisů
-
-- [ ] **Kritérium hotovo:** ⋯ › Časopisy… › + Nový časopis: Oui, zkratka OU, edice „US, FR“, Girl of the Month →
-      Přidat; v okně alba je hned „Oui US“ a „Oui FR“ a album k Oui FR 05/1980 se uloží.
-- [ ] Úprava Penthouse: změna barvy a titulu se uloží; ubrat edici UK, když má sbírka číslo Penthouse UK, nejde
-      (hláška).
-- [ ] Smazat Penthouse s čísly ve sbírce nejde; nepoužitý Hustler smazat jde (s potvrzením).
-- [ ] Playboy: tlačítko Smazat chybí, edice nejdou měnit, název a tituly ano.
-- [ ] Okno v úzkém okně programu: seznam i formulář se posouvají uvnitř, nic nepřetéká.
-
-## 0.02.012 – Kategorie a filtry podle časopisu
-
-- [ ] **Kritérium hotovo:** hledání `kategorie:"pet of the month"` najde modelku s centerfoldem Penthouse;
-      `kategorie:"playmate mesice"` ji nenajde.
-- [ ] Modelka jen s pictorialem Pet of the Month (bez centerfoldu): v profilu „Pet of the Month“, žádná Playmate.
-- [ ] Pictorial Pet of the Year u čísla Penthouse 1986: kategorie „Pet of the Year 1986“.
-- [ ] Galerie › filtr Kategorie nabízí Pet of the Month s počtem modelek; Statistiky › Kategorie ji ukazují.
-- [ ] Úprava modelky: odvozené kategorie (šedé) ukazují Pet of the Month.
-- [ ] Playmate jen z Playboye: kategorie, hledání `pmom` a filtry jako dřív.
-
-## 0.02.011 – Typy alb podle časopisu
-
-- [ ] **Kritérium hotovo:** okno alba, Časopis a edice = Penthouse US: druhy „Pictorial · Pet of the Month ·
-      Pet of the Year · Centerfold“; přepnutí na Playboy US vrátí „Playmate of the Month / Year“.
-- [ ] Zvolený druh zůstane zvolený i po přepnutí časopisu (Pet of the Month → Playmate of the Month).
-- [ ] Album „Pet of the Month“ k Penthouse 09/1985 se uloží; v profilu pod názvem „Pictorial Pet of the Month“.
-- [ ] Ze stránky čísla Penthouse › přidat pictorial: okno rovnou nabízí Pet of the Month.
-- [ ] Známé omezení do 0.02.012: modelka s pictorialem Pet of the Month dostane v kategoriích i „Playmate měsíce“.
-
-## 0.02.010 – Titul v profilu
-
-- [ ] **Kritérium hotovo:** profil modelky jen s centerfoldem Penthouse 09/1985: v kategoriích „Pet of the Month“,
-      na pásce čísla „Pet · Zář 85 · PH“, slovo „Playmate“ nikde v profilu.
-- [ ] Modelka s centerfoldem Playboye i Penthouse: kategorie „Playmate měsíce“ i „Pet of the Month“, páska
-      „Playmate · …“ u čísla Playboye a „Pet · …“ u Penthouse.
-- [ ] Profil Playmate jen z Playboye vypadá jako dřív.
-- [ ] Najetí na štítek čísla Penthouse: v bublině řádek „Pet“ místo „Playmate“.
-- [ ] Stránka čísla Penthouse › Jako časopis: nadtitulek „Pet of the Month · Září 1985 · Penthouse“.
-
-## 0.02.009 – Tituly podle časopisu
-
-- [ ] Nic viditelného: funkce titulů je ověřená testy, rozhraní ji použije od 0.02.010. Stačí, že se program
-      spustí a Playboy vypadá jako dřív.
-
-## 0.02.008 – Export a import verze 14
-
-- [ ] **Kritérium hotovo:** ⋯ › Exportovat; v souboru je `verze: 14`, oddíl `casopisy` a číslo `1985-09@PH`.
-- [ ] Ten soubor načti importem do čisté sbírky (nebo po záloze): centerfold Penthouse 09/1985 je u modelky,
-      cover čísla na stránce čísla, stav a poznámka čísla zůstaly.
-- [ ] Starý export z Playboy Database (verze 13) se načte bez chyb; všechna čísla jsou Playboy.
-- [ ] Ručně upravený export s `casopisy: - {klic: OU, nazev: Oui, edice: [US, FR]}` založí časopis Oui;
-      v okně alba pak nabídka „Oui US“ a „Oui FR“.
-
-## 0.02.007 – Pohledy Playboye beze změny
-
-S centerfoldem Penthouse 09/1985 ve sbírce (z 0.02.005):
-- [ ] Kalendář a Obálky (US i CZ) a Mapa čísel: září 1985 ukazuje jen Playboy, Penthouse nikde.
-- [ ] Centerfoldy (stěna) ve volbě „vše“, US i CZ: fotka Penthouse tam není.
-- [ ] Kapesní katalog (vše / CZ / sháním): žádné číslo Penthouse.
-- [ ] Statistiky: desetiletí 1980 počítají stejně jako předtím; modelka jen s Penthouse v grafech roku není.
-- [ ] Rok ve sbírce: dokončené ročníky jen Playboye.
-- [ ] Stránka čísla Playboy 09/1985: Předchozí/Další vedou na 08 a 10/1985 Playboye.
-
-## 0.02.006 – Rychlé přidání a stránka čísla jiného časopisu
-
-- [ ] **Kritérium hotovo:** v profilu modelky s centerfoldem Penthouse 09/1985 klik na číslo otevře stránku
-      „Září 1985 · Penthouse“; úplnost čísla nenabízí „Playmate měsíce podle Wikipedie“.
-- [ ] Drobeček „Ročník 1985 · Penthouse“ otevře ročník Penthouse (jen jeho čísla, chybějící měsíce s +).
-- [ ] Ctrl+Shift+N: volba „Časopis a edice“ v řádku čísla; nová modelka s Penthouse US 10/1985 dostane centerfold
-      „Říjen 1985 · Penthouse“; další otevření nabídne Penthouse.
-- [ ] Upravit číslo… u Penthouse: název v záhlaví, stav „Mám výtisk / Sháním“ se nenabízí (jen CZ).
-
-## 0.02.005 – Volba „Časopis a edice“ (Hotovo, když: Penthouse 09/1985)
-
-- [ ] **Kritérium hotovo:** u modelky přidej album typu Centerfold, Září 1985, **Penthouse US**, s odkazem na fotku;
-      uloží se a v profilu se jmenuje „Září 1985 · Penthouse“.
-- [ ] Cover Penthouse 09/1985 jde přidat; v Kalendáři (Playboy US) se **neukáže**.
-- [ ] Pictorial přiřazený k Penthouse UK 03/1986 se uloží; speciál „Nový speciál…“ pro Penthouse vznikne.
-- [ ] Další nové album nabídne Penthouse US (pamatuje se), Playboy alba se zadávají jako dřív.
-- [ ] Okno alba a coveru: řádek měsíc · rok · časopis se vejde i v úzkém okně.
-
-## 0.02.004 – Názvy čísel podle časopisu
-
-- [ ] Odkaz `[[09/1985@PH]]` v poznámce teď ukazuje „Září 1985 · Penthouse“ (dřív „· PH“).
-- [ ] Názvy a pásky čísel Playboye všude beze změny (dlaždice Čísel, profil, Kalendář, speciály).
-
-## 0.02.003 – Tabulka časopisů (úprava databáze č. 17)
-
-- [ ] Po instalaci a prvním spuštění: program se otevře normálně, sbírka je celá a v ⋯ › Obnovit ze zálohy
-      přibyla záloha „Před úpravou“ (pred-migraci) s dnešním datem.
-- [ ] Obnovení starší zálohy (před 0.02.003) funguje – databáze se po obnovení znovu upraví.
-- [ ] (volitelně) `sqlite3 ~/.local/share/pinup-katalog/playboy.db "SELECT * FROM casopisy"` ukáže Playboy,
-      Penthouse a Hustler.
-
-## 0.02.002 – Klíč čísla v rozhraní
-
-Číslo jiného časopisu zatím nejde zadat v okně (přijde v 0.02.005); zkoušet jde jen odkaz v textu.
-
-- [ ] Do poznámky modelky napiš `[[09/1985@PH]]`: odkaz se ukáže jako číslo (klik otevře zatím prázdnou stránku
-      čísla „Září 1985 · PH“) a nerozbije se.
-- [ ] Odkazy `[[06/1995]]` a `[[06/2012 CZ]]` fungují jako dřív, „Zmiňováno v…“ u čísla taky.
-- [ ] Názvy čísel Playboye všude beze změny (Listopad 2009, Listopad 2009 · CZ, speciály).
-
-## 0.02.001 – Klíč čísla s časopisem (jen jádro)
-
-V okně se nic nového neukazuje (výběr časopisu přijde v 0.02.005); jde jen o to, že Playboy funguje jako dřív.
-
-- [ ] Kalendář, Mapa čísel, stránka čísla i celého ročníku (klik na rok v Kalendáři) ukazují stejná čísla jako dřív.
-- [ ] Založení speciálu (okno alba nebo coveru › Speciál › Nový) funguje pro US i CZ.
-- [ ] Hledání `edice:cz` najde stejné modelky jako dřív.
-
-## 0.01.001 – Pinup Katalog (přejmenování a verze X.XX.XXX)
-
-Program se jmenuje Pinup Katalog a verze začínají znovu; oddíly níže (1.xx) jsou z Playboy Database.
-Před zkoušením **zavři Playboy Database** (běžící stará verze přesun odloží).
-
-- [ ] `git pull` není potřeba (je to místní commit), stačí `./instalovat.sh`: v nabídce aplikací je
-      „Pinup Katalog“ s ikonou a „Playboy Database“ zmizela.
-- [ ] Po prvním spuštění je sbírka celá: modelky, hodnocení, zálohy (⋯ › Obnovit ze zálohy ukáže staré zálohy).
-- [ ] Nastavení okna přežilo (Vzhled, zapamatovaná sekce, historie hledání, Mapa sbírky) – je v localStorage,
-      který se přesunul se složkou.
-- [ ] `~/.local/share/playboy-app` a `~/.cache/playboy-app` už neexistují, místo nich `pinup-katalog`; náhledy
-      se nestahují znovu.
-- [ ] Po startu se ukáže „Co je nového · verze 0.01.001“ (jen jednou); verze na úvodní obrazovce a v ⋯ je
-      ve tvaru 0.01.001.
-- [ ] Název okna, úvodní obrazovka a Alt+Tab ukazují Pinup Katalog; okno se spáruje s ikonou v panelu.
-- [ ] ⋯ › Zkontrolovat novou verzi: dokud na GitHubu není 0.1.0, napíše „Ve vzdáleném repozitáři se nepodařilo
-      najít verzi programu“ (stará řada 1.53 se za novější nebere); po push „Máš nejnovější verzi“.
-- [ ] Export sbírky nabídne název `pinup-katalog-RRRR-MM-DD.yaml` a import staršího exportu funguje.
-
-## 1.53.0 – Statistiky, mapa a vkus 2
-
-Graf Můj vkus v čase ani kartu Objevit jsem neviděl vykreslené (potřebují data sbírky) – projít pozorně.
-
-- [ ] **Kritérium hotovo:** Mapa sbírky s celou sbírkou se otevře bez zaseknutí, posouvání stránky i bublina nad
-      body jsou plynulé (nad 2 000 modelek je to plátno); laso a klik na bod fungují jako dřív.
-- [ ] Pod mapou: model, posun (po přidání pár modelek malý), „Zachovaní sousedé“ se doplní po chvíli,
-      „Zkouším autoenkodér… n/40“ doběhne a napíše výsledek; okno se mezitím nezasekává.
-- [ ] **Přepočítat od začátku** mapu spočítá znovu s pevnou orientací (starší vlevo, vyšší nahoře).
-- [ ] **Můj vkus v čase** (Statistiky › Srovnání): věty, graf po měsících a tabulka dávají smysl; při málo
-      porovnáních srozumitelná hláška. Ukáže aspoň jeden průkazný posun, pokud v datech je?
-- [ ] Změna srdíček modelky se od teď zapíše: po pár změnách je v tabulce „Srdíčka po měsících“.
-- [ ] Karta **Objevit** v Přehledu: modelky s odhadem a důvodem v bublině, alba (s obsahem fotek), klik otevře
-      profil; v ⋯ › Vzhled jde skrýt a přesunout.
-- [ ] **PNG**, **CSV**, **Tisk** u grafu: PNG vypadá jako graf (i mapa na plátně), CSV se otevře v LibreOffice
-      s čárkami v číslech, tisk ukáže jen graf.
-
-## 1.52.0 – Hledání a výběry 2
-
-- [ ] **Kritérium hotovo:** `foto:"bazén" výška > 175` v Galerii modelek najde správné modelky (otevřít pár profilů a
-      podívat se, jestli bazén na fotkách opravdu mají). Kolik nalezených je omylem? Podle toho doladit práh.
-- [ ] Bez zapnutého obsahu fotek: `foto:"…"` nic neomezí a jednou se ukáže oznámení.
-- [ ] `blond nebo zrzka`, `(70. léta | 80. léta) výška > 175`, `-(blond | zrzka)` najdou totéž v Modelkách,
-      Centerfoldech a Kalendáři; pod polem je srozumitelná věta „Hledám: …“.
-- [ ] Panel Filtry s dotazem se závorkami: štítky a počty dávají smysl, zápis se nerozbije.
-- [ ] Historie: klik do prázdného pole ukáže poslední dotazy, šipky + Enter dotaz vloží, Shift+Delete ho smaže,
-      vydrží restart.
-- [ ] `Ctrl+S` v poli hledání uloží dotaz jako výběr ⚡ (oznámení s Upravit), nekoliduje s ničím jiným.
-- [ ] Výběr ⚡: po přidání modelky, která podmínkám vyhoví, ukáže „+1“; klik na výběr ohlásí přírůstek a odznak zmizí.
-- [ ] Okno výběru (✎): Jako časopis, Prezentace (listuje sama), Dnešní výběr porovnává jen modelky výběru.
-
-## 1.51.1 – Hromadně s rozdílem nanečisto
-
-- [ ] Lišta „Zobrazeno N“ je ve všech režimech na stejném místě a při posouvání zůstává nahoře.
-- [ ] Z webu › Přijmout zobrazené: okno ukáže všechny řádky (teď → potom), Zrušit nic nezmění, po přijetí
-      Vrátit vrátí údaje modelek i návrhy do fronty.
-- [ ] Otočit zobrazené, Použít zobrazené návrhy výřezů, Vyměnit zobrazené za lepší, Sloučit jistě stejné:
-      rozdíl odpovídá, Vrátit vrátí všechno.
-- [ ] Fronta: hromadné Netýká se / V pořádku a přijetí jistých návrhů ukáže rozdíl; Esc okno zavře bez akce.
-
-## 1.51.0 – Údržba Dnes a kvalita fotek
-
-Vzhled režimu Dnes jsem neviděl ani ve skrytém WebKitu (potřebuje data sbírky) – projít pozorně.
-
-- [ ] Údržba se otevře v režimu **Dnes** (kdo měl zapamatovaný jiný režim, zůstane v něm).
-- [ ] Pokrok dne: po vyřízení pár úkolů (doplnit údaj, přijmout návrh) číslo naroste; přidání modelky ho nesníží;
-      zítra začne od nuly a série ukáže 2 dny.
-- [ ] Klik na modelku v „Nejcennější ve frontě“ otevře Po modelkách přímo na ní; rychlé dávky přepnou režim.
-- [ ] Panel **Na pozadí**: stavy odpovídají; Spustit / Pozastavit u náhledů, obsahu, otisků, otočení a kvality
-      funguje a průběh se sám obnovuje; připomínka průchodu webem (ještě neproběhl / starší 60 dní).
-- [ ] **Kvalita fotek**: „Zkontrolovat kvalitu“ doběhne (u celé sbírky může stahovat chybějící náhledy).
-      Projít aspoň 50 hlášených fotek a spočítat, kolik je opravdu slabých – podle toho doladit prahy v
-      `kvalita_fotek.go` (rozmazané 12, přepálené 0,30, tmavé 0,60 + jas 40). Staré měkké fotky ze 70. let
-      se možná budou hlásit jako rozmazané.
-- [ ] **Vyměnit za lepší**: v albu zůstane lepší soubor, srdíčka a tagy přejdou, Vrátit vrátí původní.
-
-## 1.50.0 – Klid, pohyb a vlastní Přehled
-
-- [ ] **Pohyb Žádné**: projít všechny sekce, profil, prohlížeč fotek (slideshow), režim čtení, Dnešní výběr,
-      nabídky a okna – nic se nehýbe ani neprolíná a nic se kvůli tomu nezasekne (okno, které by čekalo
-      na konec animace).
-- [ ] **Pohyb Omezené**: v režimu čtení bez Ken Burns, posouvání na místo (např. skok na album) je okamžité.
-- [ ] Prohlížeč fotek, pozadí **Rozmazaná fotka**: rozmazaná fotka se mění s listováním a nebrzdí ho.
-- [ ] Prohlížeč, **ovládání Trvale**: horní lišta a lišta alb zůstanou vidět i bez pohybu myši.
-- [ ] **Filmový pás**: náhledy dole, zvýrazněná aktuální fotka uprostřed, kliknutí přejde na fotku; lišta alb
-      je nad pásem; při lupě a v hodnocení nehodnocených pás není.
-- [ ] **Po startu otevřít** Čísla / Sbírku / Poslední sekci: po restartu se otevře správná sekce (i se zámkem
-      po odemčení).
-- [ ] **Záhlaví profilu** Jen pruh: profil se otevře rovnou se svinutým záhlavím; Vysoké stále se nesvine ani
-      po odrolování; úprava výřezu fotky záhlaví funguje ve všech třech volbách.
-- [ ] **Karty Mapy čísel**: skrytí a přeskládání se v Sbírce › Mapa čísel projeví po zavření okna Vzhled.
-
-## 1.49.0 – Přiblížení, hustota a karty
-
-Přiblížení je CSS `zoom` na celé stránce (Wails na Linuxu jiné nemá). Ve skrytém WebKitGTK jsem ověřil, že okna
-s výškou okna se vejdou a že plovoucí nabídky sedí na tlačítko; v celém programu to ověřené není.
-
-- [ ] ⋯ › **Vzhled…** otevře okno; posuvník přiblížení mění velikost hned a ukazuje procenta.
-- [ ] `Ctrl` + numerické `+` / `-` mění přiblížení po 10 % s oznámením, `Ctrl` + `0` vrátí 100 %.
-- [ ] `Ctrl` + `1`…`9` dál přepínají sekce (na české klávesnici je na `1` znak „+“ – nesmí přibližovat).
-- [ ] Při **150 %** projít: Galerie modelek, profil modelky, Všechny fotky, Centerfoldy, Kalendář, Statistiky (grafy,
-      hero, mapa), Údržba, Hodnocení, okna (Nastavení, Rok ve sbírce, Kapesní katalog). Nic nepřetéká mimo okno,
-      mřížky se nerozpadají, okna jdou posouvat.
-- [ ] Při 150 % sedí na místě: pravé tlačítko (kontextová nabídka), panel filtrů, nabídka ⋯ u čipů, bublina
-      odkazu `[[…]]`, bublina čísla, štítky fotek, bubliny grafů ve Statistikách, bublina v Síni slávy,
-      našeptávač v editoru textu, mapa obálky.
-- [ ] Při 150 % funguje tažení (výřez titulní, řazení, laso ve Statistikách) – kurzor drží tažený prvek.
-- [ ] Úzké okno (přes půl obrazovky) při 130–150 %.
-- [ ] **Hustota Kompaktní**: v Údržbě je na stejné obrazovce aspoň o 30 % víc řádků než v Pohodlné
-      (spočítej řádky na jedné obrazovce v obou).
-- [ ] Velikost karet **Malé / Střední / Velké** zvlášť pro Karty modelek, Všechny fotky (výška řady mozaiky)
-      a Centerfoldy.
-- [ ] Na kartě modelky: vypnutí srdíček je skryje; rok prvního čísla a počet fotek se ukážou vedle jména
-      (u modelky bez čísla jen počet fotek). Dlouhé jméno se zkrátí, údaje zůstanou vidět.
-- [ ] **Výchozí** vrátí vše; volby vydrží po restartu programu.
-- [ ] Malé karty modelek: jméno je čitelné.
-
-## 1.48.0 – Nová verze
-
-- [ ] Po reinstalaci přes `./instalovat.sh`: ⋯ › Nápověda › **Zkontrolovat novou verzi** napíše „Máš nejnovější verzi“.
-- [ ] Bez internetu kontrola napíše chybu spojení a program nezamrzne (nejvýš 15 s).
-- [ ] Vypnutí „Hledat novou verzi každý den“ vydrží restart.
-- [ ] (až vyjde další verze v repozitáři) oznámení minutu po startu, okno Co je nového, Kopírovat příkaz.
-
-## 1.47.0 – Kapesní katalog
-
-- [ ] ⋯ › Zálohy a data › Kapesní katalog: počty a velikost u rozsahů odpovídají.
-- [ ] Uložená složka nahraná do **telefonu** se otevře v prohlížeči bez připojení, náhledy obálek se ukážou,
-      hledání a filtr mám / sháním / chybí fungují, světlý i tmavý režim telefonu.
-- [ ] Otevřít složku z oznámení otevře správce souborů.
-
-## 1.46.0 – Rok ve sbírce
-
-- [ ] Statistiky › Rok ve sbírce →: čísla roku odpovídají tvé představě (fotky, modelky, série dní).
-- [ ] **Tisk / PDF** otevře tiskový dialog WebKitGTK a výsledné PDF má rozumné stránky (nic neuříznuté).
-- [ ] **Jako časopis** projde přehled v režimu čtení.
-
-## 1.45.0 – Otočené fotky
-
-- [ ] Údržba › Otočené fotky: projít vzorek aspoň 50 fotek a spočítat, kolik je opravdu otočených. Podle toho
-      se doladí práh `prahOtoceni` (teď 0,02) v opravě 1.45.x.
-- [ ] Návrh výřezu titulní (tlačítko Navrhnout ve výřezu) vybere rozumný výřez.
+## Kontrolní seznam po obrazovkách (0.02.037, 11. 11. 2026)
+
+Shrnutí 213 neověřených bodů z verzí 1.45–0.02.036 do 40 bodů. Číslo v závorce vede na podrobnosti
+v [docs/archiv/K-VYZKOUSENI-DO-0.02.036.md](docs/archiv/K-VYZKOUSENI-DO-0.02.036.md). Vzorové modelky: Buffy Tyler
+(Playboy), Ulla Lindstrom, Heide Mann a Ilse Hasek (Penthouse), Ali Rose (Playboy ZA a online), Jenna Sativa
+(Penthouse a online).
+
+### Profil
+
+- [ ] **Štítky a nadtitulek** vzorových modelek mají strukturu časopis → role → profese a štítky jsou na pohled
+      odlišené: plný, obrys, tlumený (0.02.034, 0.02.036). *Data jsem ověřil, vzhled ne.*
+- [ ] **Pásky čísel a blok Časopisy:** modelka z Playboye i Penthouse ukáže obě čísla s titulem („Pet · Zář 85 · PH“).
+      Barva časopisu je na tmavém záhlaví vidět a bublina čísla má „Pet“ (0.02.010, 0.02.026).
+- [ ] **Přezdívky:** „Jane Doe @PH“ v Dalších jménech → „také Jane Doe (Penthouse)“. Zápis „jane doe@ph“ se sjednotí.
+      Najde se hledáním i našeptávačem a `[[Jane Doe]]` odkáže na modelku (0.02.027, 0.02.028).
+- [ ] **Sloučení:** ⋯ › Sloučit s jinou modelkou → čitelný rozdíl nanečisto → Vrátit vrátí obě modelky i s porovnáními.
+      Po přidání fotky Vrátit odmítne (0.02.033).
+- [ ] **Odhad srdíček:** nová modelka bez fotek nemá „odhad“. Po galerii a analýze obsahu se objeví a důvod uvádí
+      „podobně jako …“ (0.02.031).
+- [ ] **Upravit → Uložit** u Ully Lindstrom zapíše do databáze `1969-11@PH` (0.02.032).
+
+### Galerie a hledání
+
+- [ ] **Časopis v hledání:** `casopis:penthouse 80. léta`, `-casopis:penthouse`, čip po napsání `ph` / `hustler`,
+      našeptávač `casopis:`. Uložený výběr s časopisem vydrží restart (0.02.019).
+- [ ] **Kategorie:** `kategorie:"pet of the month"` najde Pet, ne Playmate. Filtr Kategorie nabízí Pet of the Month
+      s počtem, `pmom` jako dřív (0.02.012).
+- [ ] **Hledání 2:** `foto:"bazén" výška > 175` (kolik nalezených je omylem?). Dál `blond nebo zrzka` a závorky,
+      věta „Hledám: …“, historie dotazů, Ctrl+S uloží výběr ⚡ a „+1“ u výběru (1.52.0).
+- [ ] **Karty modelek:** velikosti Malé/Střední/Velké, vypnutí srdíček, rok a počet fotek u jména. Na malých kartách
+      je jméno čitelné (1.49.0).
+
+### Čísla
+
+- [ ] **Kalendář podle časopisu:** volba Penthouse US, chybějící měsíce s +, „Penthouse UK: zatím žádné číslo“.
+      Volba se pamatuje. Ročník Penthouse 1969 má leden až srpen „nevyšlo“. Sedí řady na tvých výtiscích? (0.02.015, 0.02.016)
+- [ ] **Hero Kalendáře:** obálka celá i s názvem časopisu, výročí v listopadu. Fungují tlačítka (Otevřít, Ukázat
+      v kalendáři, Doplnit chybějící, Další ročník ↻). Při hledání hero zmizí (0.02.023).
+- [ ] **Obálky a jejich hero:** přepnutí na Penthouse ukáže jen jeho obálky, „Na obálce …“ / „Centerfold …“.
+      Počet chybějících sedí (0.02.016, 0.02.024).
+- [ ] **Stěna Centerfoldů:** volby Playboy, Penthouse, Penthouse UK, Všechny časopisy a Hustler. Hero v rámu 3 : 4 není
+      moc oříznutý a Další ↻ střídá jen zvolený časopis (0.02.018, 0.02.025).
+- [ ] **Mapa čísel:** karta „Penthouse US · archiv dat“, úplnost zvlášť. Ve Vzhledu jde kartu skrýt a posunout (0.02.017).
+- [ ] **Stránka čísla Penthouse:** drobeček ročníku, Jako časopis bez „Playboy ·“, Upravit číslo. Odkaz `[[09/1985@PH]]`
+      v textu ukáže „Září 1985 · Penthouse“ (0.02.002–0.02.010, 0.02.022).
+- [ ] **Pohledy Playboye bez Penthouse:** Kalendář, Obálky, Mapa čísel, Kapesní katalog a stěna „Playboy“ neukazují
+      Penthouse. Číslo 09/1985 Playboye listuje na 08 a 10/1985 Playboye (0.02.007).
+
+### Okno alba a rychlé přidání
+
+- [ ] **Okno alba s časopisem:** Penthouse US nabídne Pet of the Month / Year, zvolený druh zůstane i po přepnutí
+      časopisu. Album, cover i speciál Penthouse se uloží. Řádek měsíc · rok · časopis se vejde i v úzkém okně (0.02.005, 0.02.011).
+- [ ] **Rychlé přidání** (Ctrl+Shift+N) s volbou časopisu: nová modelka s Penthouse US 10/1985 dostane centerfold
+      „Říjen 1985 · Penthouse“ (0.02.006).
+
+### Hodnocení a Síň slávy
+
+- [ ] **Síň slávy s volbou časopisu:** Top 10 jen Penthouse s celkovým místem, hláška, když tam nikdo není, sezóna.
+      **Co ukáže trůn?** Volba se pamatuje (0.02.021).
+- [ ] **Rok ve sbírce:** čísla odpovídají, Tisk / PDF bez uříznutí, Jako časopis. Celý ročník Penthouse se ohlásí
+      (1.46.0, 0.02.021).
+
+### Údržba
+
+- [ ] **Kandidáti na sloučení:** tlačítko „Sloučit“, důvody z fotek. Je práh 85 % pro „podobné fotky“ rozumný?
+      Filtr zdroje a „V pořádku“ (0.02.029, 0.02.030, 0.02.033).
+- [ ] **Texty Pet:** „Pet bez data narození…“, „Číslo nemá Pet – přidej jí centerfold“ (0.02.022).
+- [ ] **Režim Dnes a panel Na pozadí:** pokrok dne a série, klik na nejcennější, Spustit / Pozastavit úloh na pozadí
+      (1.51.0).
+- [ ] **Hromadně s rozdílem nanečisto:** Přijmout zobrazené, Otočit zobrazené, Vyměnit za lepší, Sloučit jistě stejné.
+      Rozdíl odpovídá a Vrátit vrátí vše (1.51.1).
+- [ ] **Prahy podle vzorku:** z Kvality fotek a Otočených fotek projdi aspoň 50 fotek a spočítej, kolik je hlášeno
+      omylem (1.45.0, 1.51.0).
+
+### Statistiky
+
+- [ ] **Pet není Playmate:** Rozložení › Kategorie ukáže Pet of the Month. Texty říkají „v Playboyi“. Mapa sbírky
+      má barvu „Titul jiného časopisu“. Vkus říká „byla Pet of the Month“ (0.02.020, 0.02.022).
+- [ ] **Mapa sbírky:** plynulá, autoenkodér doběhne, Přepočítat od začátku. **Můj vkus v čase** a karta **Objevit**
+      dávají smysl. PNG / CSV / Tisk grafu (1.53.0).
+
+### Správa, export a verze
+
+- [ ] **Časopisy…:** nový časopis Oui s edicemi US, FR. Úprava barvy a titulu, mazání jen bez čísel, Playboy bez
+      Smazat. V úzkém okně nic nepřetéká (0.02.013).
+- [ ] **Export a import:** export má `verze: 14`, `casopisy` a `1985-09@PH`. Načte se do čisté sbírky, starý export
+      verze 13 také. Název souboru `pinup-katalog-…yaml` (0.02.008, 0.01.001).
+- [ ] **Obnovení zálohy** starší než 0.02.003 funguje a databáze se znovu upraví (0.02.003).
+- [ ] **Nová verze:** Zkontrolovat novou verzi, bez internetu chyba do 15 s, volba „každý den“ vydrží restart
+      (1.48.0, 0.01.001).
+- [ ] **Kapesní katalog v telefonu:** počty, otevření bez připojení, hledání a filtry, světlý i tmavý režim (1.47.0).
+- [ ] **Po přejmenování:** nastavení okna, historie hledání a zapamatovaná sekce přežily. „Co je nového“ jen jednou.
+      Alt+Tab a panel ukazují Pinup Katalog (0.01.001).
+
+### Vzhled a ovládání
+
+- [ ] **Přiblížení 150 %:** projdi hlavní obrazovky a okna. Bubliny a nabídky sedí na místě, tažení funguje.
+      Ctrl + numerické +/−/0, Ctrl+1…9 nepřibližuje (1.49.0).
+- [ ] **Hustota a pohyb:** Kompaktní má v Údržbě aspoň o 30 % víc řádků. Pohyb Žádné/Omezené nic nezasekne.
+      Výchozí vrátí vše (1.49.0, 1.50.0).
+- [ ] **Prohlížeč fotek:** rozmazané pozadí, ovládání Trvale, filmový pás. Po startu otevřít správnou sekci.
+      Záhlaví profilu Jen pruh / Vysoké (1.50.0).
+- [ ] **PDF čísla:** 200stránkové číslo do 5 s, listování a dvoustrany, náhledy, lupa i Ctrl + kolečko.
+      Ve WebKitGTK se pdf.js načte (0.02.035).
+- [ ] **Text k odsouhlasení:** souhlasíš, že výskyty v `docs/VYSKYTY-PLAYMATE.md` jsou opravdu Playboy? (0.02.022)
+
+### Ověřeno při sestavení seznamu (11. 11. 2026, kopie tvé sbírky, originál beze změny)
+
+- [x] Po přejmenování: `~/.local/share/playboy-app` ani `~/.cache/playboy-app` neexistují, data a mezipaměť jsou
+      v `pinup-katalog`, v nabídce aplikací je `pinup-katalog.desktop` (0.01.001).
+- [x] Tabulka časopisů má Playboy (US, CZ), Penthouse (US, UK) a Hustler (US). Zálohy „pred-migraci“ existují (0.02.003).
+- [x] Na celé sbírce (613 modelek) není žádný kandidát na sloučení se stejným jménem a jiným datem narození (0.02.029).
+- [x] Štítky profilu z dat sbírky: Buffy Tyler „Playboy 2000 · Playmate měsíce · Modelka“, Ulla Lindstrom „Penthouse
+      1969 · Pet of the Month · Modelka · Herečka · Tanečnice“, Heide Mann a Ilse Hasek „Penthouse 1970 · Pet of the
+      Month · Modelka“ (0.02.034, 0.02.036).
+- [x] Model vkusu platí (přesnost 0,63) a odhad má 125 nehodnocených modelek (0.02.031).
+- [x] Body jen o tom, že „Playboy vypadá jako dřív“, ověřují testy: názvy čísel, Kalendář US a CZ, speciály,
+      `edice:cz` (0.02.001, 0.02.002, 0.02.004, 0.02.009, 0.02.014).
+- [x] Přepsané pozdějšími verzemi, nezkouší se: nadtitulek a blok „Playboy“ z 0.02.026 (od 0.02.034 jednotné).
+      Známé omezení 0.02.011 vyřešila verze 0.02.012.
+
+### Zjištěno při ověření (opraví se v etapě Ladění)
+
+- [ ] **Jenna Sativa:** online alba z webu Penthouse se počítají jako Playboy („Playboy 2015 · Online“). Online
+      album zatím nemá časopis → 0.02.038.
+- [ ] **Ali Rose:** „PMOTM (ZA)“ je jen v Roli, album s typem Playmate měsíce chybí. Proto má jen „Pictorial“ → 0.02.039.
+- [ ] **56 nehodnocených modelek s fotkami nemá odhad** (chybí analýza obsahu, nebo jsou v nejisté skupině?) → 0.02.040.
+- [ ] **Pseudonym „Hope Levin“** mají Hope Marie Carlton i Cherie Witter (nález „stejné jméno“ v Údržbě) – ověř, ke které
+      patří.
+- [ ] **Výkonové testy** Mapy sbírky a Kendallova τ občas trvají přes limit → 0.02.047.

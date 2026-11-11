@@ -148,6 +148,9 @@ test('Síň slávy a Rok ve sbírce přes všechny časopisy (0.02.021)', async 
     const modelky = [{ id: 1, vydani: ['1985-09'] }, { id: 2, obalky: ['1987-02@PH'] }, { id: 3, vydani: ['1990-01@HU', '1991-01'] }];
     assert.deepEqual([...casopisyModelky(modelky[2])], ['HU', 'PB']);
     assert.deepEqual(casopisyVeSbirce(modelky).map(c => c.nazev), ['Playboy', 'Penthouse', 'Hustler']);
+    // Jen pictorial čísla a online alba (Carlye Denise): Playboy (0.02.044)
+    assert.deepEqual([...casopisyModelky({ pictorialVydani: '2012-06', onlineAlba: ['2014-03-01'] })], ['PB']);
+    assert.deepEqual([...casopisyModelky({ pictorialVydani: '1970-03@PH' })], ['PH']);
     assert.deepEqual(['US', 'CZ', 'PH/UK'].map(priponaRocniku), ['', ' CZ', ' Penthouse UK']);
     const ph = id => id === 2;
     const data = { vitrina: [{ modelkaId: 1, misto: 1 }, { modelkaId: 2, misto: 4 }], legendy: [{ modelkaId: 3 }], rekordy: [{ modelkaId: 2 }],

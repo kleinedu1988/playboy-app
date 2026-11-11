@@ -10,6 +10,24 @@ export function zuzitSinSlavy(data, plati) {
     return { ...data, vitrina: data.vitrina.filter(jejich), legendy: data.legendy.filter(jejich), rekordy: data.rekordy.filter(jejich),
         odznaky: (data.odznaky || []).filter(jejich), kronika: (data.kronika || []).filter(u => u.druh === 'zacatek' || plati(u.modelkaId)) };
 }
+/**
+ * Kdo patří do hera Síně slávy (0.02.044): jednička Top 10; se zvoleným časopisem, jehož modelka na 1. místě není,
+ * jeho nejvýš umístěná modelka v Top 10, jinak jeho nejvýš v potvrzeném pořadí oblíbenosti, jinak nejvýš
+ * hodnocená – volba časopisu, který ve sbírce je, tak nikdy neukáže prázdný hero.
+ * @param {{ modelkaId: number, misto: number }[]} vitrina (už zúžená na časopis)
+ * @param {Iterable<{ id: number, poradi?: number, hodnoceni?: number, jmeno?: string }>} modelky (už zúžené na časopis)
+ * @returns {{ modelkaId: number, druh: 'jednicka' | 'top' | 'poradi' | 'hodnoceni', misto: number } | null}
+ */
+export function hlavniModelkaSlavy(vitrina, modelky) {
+    const vTopu = [...vitrina].filter(x => x.misto > 0).sort((a, b) => a.misto - b.misto)[0];
+    if (vTopu) return { modelkaId: vTopu.modelkaId, druh: vTopu.misto === 1 ? 'jednicka' : 'top', misto: vTopu.misto };
+    const vse = [...modelky];
+    const podlePoradi = vse.filter(m => Number(m.poradi) > 0).sort((a, b) => a.poradi - b.poradi)[0];
+    if (podlePoradi) return { modelkaId: podlePoradi.id, druh: 'poradi', misto: podlePoradi.poradi };
+    const podleSrdicek = vse.sort((a, b) => (b.hodnoceni || 0) - (a.hodnoceni || 0) || String(a.jmeno || '').localeCompare(String(b.jmeno || ''), 'cs'))[0];
+    return podleSrdicek ? { modelkaId: podleSrdicek.id, druh: 'hodnoceni', misto: 0 } : null;
+}
+
 export const zuzitSezonu = (sezona, plati) => (sezona?.poradi ? { ...sezona, poradi: sezona.poradi.filter(b => plati(b.modelkaId)) } : sezona);
 
 const MESICE = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];

@@ -13,7 +13,7 @@ import { vyhlasitSezonu } from './vyhlaseni-sezony';
 import { zvolitSezonu } from './volba-sezony';
 import { odemknoutTema } from './galerie-hodnoceni';
 import { casopisyModelky, casopisyVeSbirce, esc, obrazek, sklonovat } from '../lib/format';
-import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva, nazevSezonyVeVete, zuzitSezonu, zuzitSinSlavy } from '../lib/slava';
+import { ODZNAKY, PORADI_ODZNAKU, PORADI_REKORDU, STUPNE, ZNAKY_REKORDU, casKroniky, datumKroniky, htmlBublinyOdznaku, htmlBublinyRekordu, kronikaPoMesicich, popisOdznaku, slozeniBodu, textDni, textRekordu, textUdalosti, textZbyva, nazevSezonyVeVete, hlavniModelkaSlavy, zuzitSezonu, zuzitSinSlavy } from '../lib/slava';
 import { stav } from './stav';
 import { adresaTitulni, nacitatPostupne, VELIKOST_ZAHLAVI } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -345,10 +345,22 @@ function nacistFotkuTrunu(m) {
     }).catch(() => { /* zůstane titulní fotka */ });
 }
 
+// Kdo je v heru: jednička Top 10; se zvoleným časopisem bez jedničky jeho nejlepší modelka (0.02.044), aby hero
+// nezůstal prázdný
+function modelkaHera() {
+    const prvni = data.vitrina.find(x => x.misto === 1);
+    const hlavni = !prvni && casopisSlavy
+        ? hlavniModelkaSlavy(data.vitrina, [...stav.prehledModelky.values()].filter(m => casopisyModelky(m).has(casopisSlavy)))
+        : null;
+    return { prvni, hlavni, m1: prvni ? modelka(prvni.modelkaId) : hlavni ? modelka(hlavni.modelkaId) : null };
+}
+
 function htmlHeroSlavy() {
     const krestni = id => jmeno(id).split(' ')[0];
-    const prvni = data.vitrina.find(x => x.misto === 1);
-    const m1 = prvni && modelka(prvni.modelkaId);
+    const { prvni, hlavni, m1 } = modelkaHera();
+    const nadtitulek = prvni ? 'Síň slávy · 1. místo v Top 10'
+        : !hlavni ? 'Síň slávy'
+            : `Síň slávy · ${nazevCasopisuSlavy()} · ${hlavni.druh === 'top' ? `nejvýš v Top 10 (${hlavni.misto}. místo)` : hlavni.druh === 'poradi' ? `nejvýš v pořadí (${hlavni.misto}.)` : 'nejvýš hodnocená'}`;
     const sz = sezona;
     const soutezi = (sz?.poradi || []).filter(b => b.misto > 0 && modelka(b.modelkaId));
     const vede = soutezi[0];
@@ -373,10 +385,10 @@ function htmlHeroSlavy() {
     ].join('');
     const scena = `<div class="sh-scena sl-scena">${foto}
         <div class="ph-obsah">
-            <div class="ph-nadtitulek">Síň slávy${m1 ? ' · 1. místo v Top 10' : ''}</div>
+            <div class="ph-nadtitulek">${esc(nadtitulek)}</div>
             <h2>${m1 ? esc(m1.jmeno) : 'Trůn je volný'}</h2>
             ${naTrunu ? `<div class="sh-zmena sl-trun">${esc(naTrunu)}</div>` : ''}
-            ${veta || !m1 ? `<p class="ph-duvod">${esc(veta || 'Jednička se objeví, až bude Top 10 potvrzená z porovnání.')}</p>` : ''}
+            ${veta || !m1 || hlavni ? `<p class="ph-duvod">${esc([hlavni ? (surova?.vitrina.some(x => x.misto === 1) ? `Na trůnu je modelka jiného časopisu; ${nazevCasopisuSlavy()} tu zastupuje ${m1.jmeno}.` : `Top 10 ještě není potvrzená; z časopisu ${nazevCasopisuSlavy()} vede ${m1.jmeno}.`) : '', veta || (!m1 ? 'Jednička se objeví, až bude Top 10 potvrzená z porovnání.' : '')].filter(Boolean).join(' '))}</p>` : ''}
             ${akce ? `<div class="ph-akce">${akce}</div>` : ''}
         </div>
     </div>`;
@@ -431,8 +443,7 @@ export function obnovitHlavuSlavy() {
     const lista = /** @type {HTMLElement | null} */ (kontejner.querySelector('.sl-lista'));
     if (hero) nastavitHtml(hero, htmlHeroSlavy());
     if (lista) nastavitHtml(lista, htmlListySlavy());
-    const prvni = data.vitrina.find(x => x.misto === 1);
-    nacistFotkuTrunu(prvni && modelka(prvni.modelkaId));
+    nacistFotkuTrunu(modelkaHera().m1);
 }
 
 // Obsah panelu (vykresluje se s pohledem; otevřený říká data-sl-panel na .slava)
@@ -487,7 +498,9 @@ function nastavitPanelSlavy(klic) {
 
 // Akce hlavičky a panelu (hlavička je mimo kontejner Síně)
 function klikSlavy(cil) {
-    const panel = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-panel]'));
+    // Kořen .slava nese data-sl-panel (který panel je otevřený) – ten tlačítkem panelu není; dřív chytil každý klik
+    // v heru a liště, takže volba časopisu, karty hera a filtr Kroniky nic nedělaly (0.02.044)
+    const panel = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-panel]:not(.slava)'));
     const naPohled = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-pohled]'));
     const filtr = /** @type {HTMLElement | null} */ (cil.closest('[data-kronika-filtr]'));
     const casopis = /** @type {HTMLElement | null} */ (cil.closest('[data-sl-casopis]'));

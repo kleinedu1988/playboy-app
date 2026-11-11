@@ -6,6 +6,24 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.044] – 2026-11-11
+
+### Opraveno
+- **Síň slávy › volba časopisu nic nedělala:** kořen síně nese `data-sl-panel` a klik kamkoli v heru a liště se bral
+  jako tlačítko panelu. Teď funguje volba časopisu, karty hera (Sezóna, Legendy, Odznaky, Rekordy) i filtr Kroniky.
+- **Hero se zvoleným časopisem nikdy prázdný:** když jednička Top 10 není z časopisu, ukáže jeho nejvýš umístěnou
+  modelku v Top 10, jinak nejvýš v pořadí, jinak nejvýš hodnocenou („Síň slávy · Penthouse · nejvýš v pořadí (224.)
+  – Ilse Hasek“) i s velkou fotkou.
+- **Časopisy modelky pro filtr** se berou jako nadtitulek profilu (i pictorialy čísel a online alba) – Carlye Denise
+  (jednička, jen pictorial a online) patří do Playboye.
+- **Karty pod herem Síně slávy** se dělí o šířku; při 1280 px se pátá karta (Rekordy) neusekávala za oknem.
+- **Porovnat:** fotky v pásu vyplní výšku karty (pravidlo pásu čísla je zmenšovalo na 120 px a pod nimi zůstávalo
+  prázdné místo); srdíčka nad názvem alba, ne přes něj.
+
+### Ověřeno
+- Síň slávy pro Všechny časopisy, Playboy a Penthouse, Porovnat, Hodnotit a Pořadí na snímcích 1280 a 1920 px
+  (úloha `nastroje/snimky/hodnoceni.json`).
+
 ## [0.02.043] – 2026-11-11
 
 ### Opraveno

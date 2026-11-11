@@ -188,8 +188,16 @@ export const nazevVolbyRady = rada => moznostiRad().find(m => m.hodnota === rada
 export const priponaRocniku = rada => (rada === VYCHOZI_EDICE ? '' : rada.includes('/') ? ` ${nazevVolbyRady(rada)}` : ` ${rada}`);
 
 // Časopisy čísel a obálek modelky (klíče „PB“, „PH“…) a časopisy celé sbírky v pořadí tabulky časopisů (0.02.021)
-export const casopisyModelky = m => new Set([...(m?.vydani || []), ...(m?.obalky || []), ...(m?.centerfoldy || [])]
-    .map(v => rozlozitVydani(v)?.casopis).filter(Boolean));
+// Časopisy modelky stejně jako nadtitulek profilu (0.02.044): čísla, pictorialy čísel i online alba (Playboy) –
+// dřív jen vydání, obálky a centerfoldy, takže modelka jen s pictorialem nebo online do filtru Playboy nepatřila
+// Pamatuje se u objektu modelky (Kronika filtruje tisíce záznamů); nová data z backendu jsou nové objekty
+const casopisyPodleModelky = new WeakMap();
+export function casopisyModelky(m) {
+    if (!m) return new Set();
+    let c = casopisyPodleModelky.get(m);
+    if (!c) casopisyPodleModelky.set(m, c = new Set(karieraPoCasopisech(m).map(s => s.casopis)));
+    return c;
+}
 export function casopisyVeSbirce(modelky) {
     const vse = new Set();
     for (const m of modelky) casopisyModelky(m).forEach(c => vse.add(c));

@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.044 – Hodnocení a Síň slávy
+
+- [ ] Síň slávy › Penthouse: hero „nejvýš v pořadí“ s Ilse Hasek a velkou fotkou; zpět Všechny časopisy → jednička.
+- [ ] Síň slávy: karty pod herem (Legendy, Odznaky, Rekordy) přepnou pohled; v Kronice filtry (Jedničky, Obhajoby…).
+- [ ] Porovnat: velké fotky v pásu přes celou výšku karty, srdíčka nad názvem alba.
+- [ ] Pás fotek na stránce čísla zůstal malý (120 px) jako dřív.
+
 ## 0.02.043 – Stránky Čísel
 
 - [ ] Kalendář › Penthouse US: hero „Ročník 1969 … – Pet of the Month Ulla Lindstrom“ s její fotkou.

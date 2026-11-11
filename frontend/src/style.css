@@ -10730,9 +10730,14 @@ span.ud-chip {
     font-weight: 600;
 }
 
+/* Úzká miniatura v Porovnat: srdíčka nad názvem alba, ne přes něj (0.02.044) */
+.pas-srd:has(+ .pas-album) {
+    bottom: 32px;
+}
+
 .pas-album {
     right: 8px;
-    max-width: 60%;
+    max-width: calc(100% - 16px);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -18771,7 +18776,10 @@ body.rezim-vyberu #detailView .poster {
    nadtitulek hera, hodnota bíle a věta tlumeně */
 .sh-hero .sh-karta {
     position: relative;
-    flex: 0 0 clamp(190px, 21%, 250px);
+    /* Karty se dělí o šířku (5 karet Síně slávy se vejde i při 1280 px, 0.02.044); posun až pod 170 px na kartu */
+    flex: 1 1 0;
+    min-width: 170px;
+    max-width: 250px;
     gap: 3px;
     padding: 14px 0 2px;
     border: 0;
@@ -20569,9 +20577,10 @@ body.rezim-vyberu #detailView .poster {
 .pas-fotek-hlava small { color: var(--text-muted); }
 .pas-fotek-hlava .volba { margin-left: auto; }
 .pas-fotek-rada { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
-.pas-fotka { flex: none; height: 120px; aspect-ratio: 2 / 3; padding: 0; border: 0; border-radius: 4px; overflow: hidden; background: var(--panel-okraj); cursor: zoom-in; scroll-snap-align: start; }
-.pas-fotka img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.pas-fotka:hover, .pas-fotka:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Jen pás čísla: třídu .pas-fotka má i pás fotek v Porovnat, kde to pravidlo zmenšovalo fotky na 120 px (0.02.044) */
+.pas-fotek-rada .pas-fotka { flex: none; height: 120px; aspect-ratio: 2 / 3; padding: 0; border: 0; border-radius: 4px; overflow: hidden; background: var(--panel-okraj); cursor: zoom-in; scroll-snap-align: start; }
+.pas-fotek-rada .pas-fotka img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pas-fotek-rada .pas-fotka:hover, .pas-fotek-rada .pas-fotka:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 /* Kontext čísla v profilu (app/kontext-cisla.js) */
 .stitek-obalka { height: 22px; width: auto; border-radius: 2px; margin: -3px 6px -3px -4px; vertical-align: middle; }

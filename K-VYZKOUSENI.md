@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.036 – Album bez čísla podle údajů modelky
+
+- [ ] **Kritérium hotovo:** Heide Mann – „Penthouse 1970 · Pet of the Month · Modelka“, ne Playboy / Playmate.
+- [ ] Jenna Sativa (Penthouse duben 2016) – štítky a nadtitulek s Penthouse.
+- [ ] V Údržbě jsou tato alba dál „bez vydání“; po výběru čísla v okně alba platí číslo z okna.
+
 ## 0.02.035 – Otevřít PDF čísla
 
 - [ ] **Kritérium hotovo:** 200stránkové PDF čísla (⋯ › Otevřít PDF čísla…) se otevře do 5 s (čas ukáže oznámení).

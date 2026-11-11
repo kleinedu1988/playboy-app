@@ -575,7 +575,7 @@ func urovenZObsahu(modelky []Modelka, obsah map[int]float64, model *modelObliben
 }
 
 // Má modelka obálku Playboye? Věta vkusu „byla na obálce Playboye“ (0.02.022); obálky jiných časopisů jsou časopis
-// jako vlastnost vkusu (0.02.045 Vkus, odhady a Statistiky napříč časopisy)
+// jako vlastnost vkusu (0.02.046 Vkus, odhady a Statistiky napříč časopisy)
 func obalkaPlayboye(obalky []string) bool {
 	for _, v := range obalky {
 		if _, c := hledani.RozdelitCasopis(v); c == "" || c == hledani.VychoziCasopis {

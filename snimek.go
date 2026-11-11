@@ -237,6 +237,26 @@ func (a *App) nacistSnimek() *snimek {
 		return s
 	}
 
+	// Album bez čísla (import, starší zápisy) si vezme jednoznačné číslo z údajů modelky: textové vydání a text
+	// vystoupení s časopisem („Penthouse říjen 1970“ → 1970-10@PH, 0.02.036); jinak by se četlo jako Playboy
+	nazvyCasopisu := map[string]string{}
+	for _, c := range a.GetCasopisy() {
+		nazvyCasopisu[c.Klic] = c.Nazev
+	}
+	cisloZUdaju := map[int]string{}
+	if rows, err := a.db.Query(`SELECT id, COALESCE(vystoupeni, ''), COALESCE(pictorial_vydani, '') FROM modelky`); err == nil {
+		for rows.Next() {
+			var id int
+			var vystoupeni, textova string
+			if rows.Scan(&id, &vystoupeni, &textova) == nil {
+				if c := hledani.JedinoCisloModelky(textova, vystoupeni, nazvyCasopisu); c != "" {
+					cisloZUdaju[id] = c
+				}
+			}
+		}
+		rows.Close()
+	}
+
 	// Údaje odvozené z alb: počty fotek, vydání, centerfoldy a online alba (jen alba s fotkami), texty alb
 	// k hledání (všechna alba); nejdřív vlastní alba, pak alba, kde je modelka další
 	odvozene := map[int]*odvozeneZAlb{}
@@ -253,10 +273,15 @@ func (a *App) nacistSnimek() *snimek {
 			if al.typ != "Cover" {
 				o.alba = append(o.alba, albumModelky{id: al.id, nazev: al.nazev, typ: al.typ, fotek: al.fotek, pocty: al.pocty})
 			}
-			if al.vydani != "" {
-				o.vydani = append(o.vydani, al.vydani)
+			// Číslo z okna alba má přednost; prázdné u alba čísla doplní jednoznačné číslo z údajů modelky
+			vydaniAlba := al.vydani
+			if vydaniAlba == "" && !jeOnlineTyp(al.typ) && al.typ != "Centerfold" && al.typ != "Cover" {
+				vydaniAlba = cisloZUdaju[modelka]
 			}
-			cislo := al.vydani
+			if vydaniAlba != "" {
+				o.vydani = append(o.vydani, vydaniAlba)
+			}
+			cislo := vydaniAlba
 			if cislo == "" {
 				cislo = al.nazev
 			}
@@ -472,7 +497,7 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 		m.PocetFotek, m.FotekHodnocenych, m.SrdciFotek = o.fotek, o.hodnocenych, o.srdci
 		m.Vydani, m.Centerfoldy, m.OnlineAlba = uzavritSeznam(o.vydani), uzavritSeznam(o.centerfoldy), uzavritSeznam(o.online)
 		m.Obalky = uzavritSeznam(obalky[m.ID])
-		m.PictorialVydani = hledani.CasopisPodleAlb(m.PictorialVydani, o.vydani)
+		m.PictorialVydani = hledani.CasopisPodleAlb(hledani.CasopisPodleTextu(m.PictorialVydani, m.Vystoupeni, nazvyCasopisu), o.vydani)
 		m.CyberGirl = o.cyberGirl
 		m.PlaymateMesice, m.PlaymateRoku = o.playmateMesice, o.playmateRoku
 		m.TitulyJinde = titulyJinde(tituly, o.mesiceJinde, o.rokyJinde)

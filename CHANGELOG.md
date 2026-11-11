@@ -6,6 +6,16 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.036] – 2026-11-11
+
+### Opraveno
+- **Modelka jiného časopisu s albem bez čísla už není Playmate Playboye** (nahlášeno u Heide Mann): album bez čísla
+  (import, starší zápisy) si vezme jednoznačné číslo z údajů modelky – textové vydání „1970-10“ a text vystoupení
+  „Penthouse říjen 1970“ dají 1970-10@PH. Profil pak ukáže „Penthouse 1970 · Pet of the Month“. Číslo vybrané
+  v okně alba má vždy přednost; do databáze se nic nezapisuje (album zůstává v Údržbě mezi alby bez vydání).
+- Textové vydání bez časopisu dostane časopis i z textu vystoupení (dřív jen podle alb, 0.02.032).
+- Další kroky ROADMAP posunuté o jedna (Označit stránky je 0.02.037).
+
 ## [0.02.035] – 2026-11-11
 
 ### Přidáno
@@ -15,7 +25,7 @@ Historie do 1.53.0 (program se jmenoval Playboy Database) je v
   D dvoustrana, Esc; Ctrl + kolečko lupa. Oznámení řekne, za kolik sekund se číslo otevřelo.
 - Soubor vybraný v dialogu vydá Go jen pod náhodnou adresou `/pdf/<token>` (jiné soubory z disku okno nepřečte).
 - Rozhodnutí před PDF krokem: stránky z PDF se budou exportovat jako obrázky pro Google Disk, fotky zůstávají
-  odkazy na Disk (0.02.038).
+  odkazy na Disk (0.02.039).
 
 ### Závislosti
 - `pdfjs-dist` 5.7.284 (rozhraní, jen v samostatném balíčku načteném při otevření PDF).
@@ -92,7 +102,7 @@ Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 - **Hledání podle přezdívek:** hledání, našeptávač, `[[odkazy]]` a filtry galerie berou přezdívky bez přípony
   časopisu (`@PH` se jako text nehledá). Našeptávač u modelky nalezené pod jiným jménem ukáže „jako Jane Doe
   (Penthouse) · …“, návrh odkazu „modelka · jako Jane Doe (Penthouse)“.
-- Zásobník odkazů je u konkrétní modelky a jména nehledá; rozpoznání odkazů z webů časopisů je 0.02.043.
+- Zásobník odkazů je u konkrétní modelky a jména nehledá; rozpoznání odkazů z webů časopisů je 0.02.044.
 
 ## [0.02.027] – 2026-11-10
 
@@ -163,7 +173,7 @@ Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 ### Změněno
 - **Statistiky a Postřehy podle časopisu:** když jsou ve sbírce čísla jiného časopisu, texty grafů v čase
   a Postřehy říkají „rok prvního výskytu v Playboyi“ místo „v časopise“ (Statistiky počítají zatím jen Playboy,
-  filtr časopisu je 0.02.048). Se samotným Playboyem beze změny.
+  filtr časopisu je 0.02.049). Se samotným Playboyem beze změny.
 - Mapa sbírky obarvená kategorií má barvu „Titul jiného časopisu“ (Pet of the Month, Honey of the Month…);
   dřív takové modelky byly šedé bez položky v legendě. Rozložení Kategorie už tituly ukazuje podle časopisu.
 

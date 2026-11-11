@@ -39,3 +39,32 @@ func TestCasopisPodleAlb(t *testing.T) {
 		}
 	}
 }
+
+// Číslo z textu vystoupení (0.02.036): Heide Mann „Penthouse říjen 1970“, vydání 1970-10, album bez čísla
+func TestCisloZTextuVystoupeni(t *testing.T) {
+	nazvy := map[string]string{"PB": "Playboy", "PH": "Penthouse", "HU": "Hustler"}
+	if v := CasopisPodleTextu("1970-10", "Penthouse říjen 1970", nazvy); v != "1970-10@PH" {
+		t.Errorf("Heide Mann: %q", v)
+	}
+	if v := CasopisPodleTextu("1970-10", "Playboy říjen 1970", nazvy); v != "1970-10" {
+		t.Errorf("Playboy: %q", v)
+	}
+	if v := CasopisPodleTextu("1970-11", "Penthouse říjen 1970", nazvy); v != "1970-11" {
+		t.Errorf("jiný měsíc: %q", v)
+	}
+	if v := CasopisPodleTextu("2016-04", "Penthouse duben 2016", nazvy); v != "2016-04@PH" {
+		t.Errorf("Jenna Sativa: %q", v)
+	}
+	if v := CasopisPodleTextu("1990-01", "Hustler, Penthouse 1990", nazvy); v != "1990-01" {
+		t.Errorf("dva časopisy: %q", v)
+	}
+	if v := JedinoCisloModelky("1970-10", "Penthouse říjen 1970", nazvy); v != "1970-10@PH" {
+		t.Errorf("jediné číslo: %q", v)
+	}
+	if v := JedinoCisloModelky("", "Penthouse October 1970", nazvy); v != "1970-10@PH" {
+		t.Errorf("z textu: %q", v)
+	}
+	if v := JedinoCisloModelky("1970-10\n1971-02", "Penthouse 1970", nazvy); v != "" {
+		t.Errorf("dvě čísla: %q", v)
+	}
+}

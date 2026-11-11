@@ -393,3 +393,18 @@ func TestSlouceniStejnaFotka(t *testing.T) {
 		t.Errorf("důvody %v, skóre %v", duvody, skore)
 	}
 }
+
+// Album bez čísla a údaje „Penthouse říjen 1970“ (Heide Mann, 0.02.036): titul Pet of the Month, ne Playmate
+func TestAlbumBezCislaZTextu(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Heide Mann", Vystoupeni: "Penthouse říjen 1970", PictorialVydani: "1970-10", Tetovani: -1, Piercing: -1})
+	m := a.GetModelky("")[0]
+	odkaz := "https://drive.google.com/file/d/" + strings.Repeat("H", 29) + "/view"
+	a.AddBulkPhotos(m.ID, "Pet of the Month October 1970", typPMMesice, odkaz)
+	a.db.Exec(`UPDATE alba SET vydani = '' WHERE modelka_id = ?`, m.ID)
+	m = a.GetModelky("")[0]
+	if m.PlaymateMesice || m.PictorialVydani != "1970-10@PH" || strings.Join(m.Vydani, ",") != "1970-10@PH" ||
+		len(m.TitulyJinde) != 1 || m.TitulyJinde[0].Nazev != "Pet of the Month" {
+		t.Fatalf("playmate %v, textová %q, vydání %v, tituly %+v", m.PlaymateMesice, m.PictorialVydani, m.Vydani, m.TitulyJinde)
+	}
+}

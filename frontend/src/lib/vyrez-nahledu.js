@@ -38,12 +38,13 @@ function procento(zacatek, f) {
 
 /**
  * Poloha ořezaného náhledu (object-position v %) pro obrázek s poměrem pomerObrazku v rámu s poměrem pomerRamu
- * @param {{ postava?: number[], oblicej?: number[] } | null | undefined} vyrez
+ * @param {{ postava?: number[], oblicej?: number[], bod?: number[], zoom?: number } | null | undefined} vyrez
  * @param {number} pomerObrazku @param {number} pomerRamu
  * @param {'dlazdice' | 'hero'} [tvar] místo náhledu: dlaždice (výchozí) nebo banner s textem vlevo
  * @returns {{ x: number, y: number }}
  */
 export function polohaNahledu(vyrez, pomerObrazku, pomerRamu, tvar = 'dlazdice') {
+    if (vyrez?.bod?.length === 2 && pomerObrazku > 0 && pomerRamu > 0) return polohaBodu(vyrez.bod, pomerObrazku, pomerRamu);
     const p = vyrez?.postava;
     if (!p || p.length !== 4 || !(pomerObrazku > 0) || !(pomerRamu > 0)) return STRED;
     const o = vyrez.oblicej?.length === 4 ? vyrez.oblicej : null;
@@ -54,6 +55,30 @@ export function polohaNahledu(vyrez, pomerObrazku, pomerRamu, tvar = 'dlazdice')
         x: procento(zacatekOkna(fx, p[0], p[2], o && [o[0], o[2]], false, t), fx),
         y: procento(zacatekOkna(fy, p[1], p[3], o && [o[1], o[3]], true, t), fy),
     };
+}
+
+// Ruční výřez (0.02.057): bod zájmu (podíl strany) doprostřed rámu, u okraje obrázku co nejblíž
+/** @param {number[]} bod @param {number} pomerObrazku @param {number} pomerRamu */
+function polohaBodu([bx, by], pomerObrazku, pomerRamu) {
+    const fx = Math.min(1, pomerRamu / pomerObrazku), fy = Math.min(1, pomerObrazku / pomerRamu);
+    return { x: procento(bx - fx / 2, fx), y: procento(by - fy / 2, fy) };
+}
+
+/**
+ * Přiblížení ručního výřezu: CSS scale a transform-origin tak, aby bod zájmu zůstal na místě (bez přiblížení null)
+ * @param {{ bod?: number[], zoom?: number } | null | undefined} vyrez @param {number} pomerObrazku @param {number} pomerRamu
+ * @returns {{ zoom: number, origin: string } | null}
+ */
+export function priblizeniNahledu(vyrez, pomerObrazku, pomerRamu) {
+    const zoom = Math.min(4, vyrez?.zoom || 1);
+    if (!(zoom > 1.01) || vyrez?.bod?.length !== 2 || !(pomerObrazku > 0) || !(pomerRamu > 0)) return null;
+    const fx = Math.min(1, pomerRamu / pomerObrazku), fy = Math.min(1, pomerObrazku / pomerRamu);
+    const { x, y } = polohaBodu(vyrez.bod, pomerObrazku, pomerRamu);
+    // Kde v rámu bod leží: začátek okna z object-position, pak poloha bodu v okně
+    const misto = (b, f, p) => (f >= 0.999 ? b : (b - (p / 100) * (1 - f)) / f);
+    const ox = Math.round(Math.min(1, Math.max(0, misto(vyrez.bod[0], fx, x))) * 1000) / 10;
+    const oy = Math.round(Math.min(1, Math.max(0, misto(vyrez.bod[1], fy, y))) * 1000) / 10;
+    return { zoom: Math.round(zoom * 100) / 100, origin: `${ox}% ${oy}%` };
 }
 
 /** CSS hodnota object-position; střed vrací prázdný řetězec (výchozí styl) */

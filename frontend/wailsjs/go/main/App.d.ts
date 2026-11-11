@@ -347,6 +347,8 @@ export function SetProfilovyVyrez(arg1:number,arg2:number,arg3:number,arg4:numbe
 
 export function SetRotaceFotek(arg1:Array<number>,arg2:number):Promise<boolean>;
 
+export function SetRucniVyrez(arg1:string,arg2:number,arg3:number,arg4:number):Promise<boolean>;
+
 export function SetSablonaObrazku(arg1:string):Promise<string>;
 
 export function SetSpojeniAlba(arg1:number,arg2:string,arg3:string,arg4:boolean):Promise<boolean>;
@@ -374,6 +376,8 @@ export function SlozkaZaloh():Promise<string>;
 export function SmazatCasopis(arg1:string):Promise<string>;
 
 export function SmazatChytryVyber(arg1:string):Promise<boolean>;
+
+export function SmazatRucniVyrez(arg1:string):Promise<boolean>;
 
 export function SmazatVyber(arg1:number):Promise<boolean>;
 

@@ -8,7 +8,7 @@
 # - hodnota - (pomlčka) údaj smaže, např. „narodnost: -“; překlep v klíči import opraví a vypíše
 # - řádky začínající # jsou komentáře, import je přeskočí
 
-verze: 14
+verze: 15
 
 # Časopisy (od verze 14); stačí vynechat, Playboy, Penthouse a Hustler program zná. Číslo jiného časopisu
 # má na konci „@“ a klíč časopisu: "1985-09@PH", "1986-03-UK@PH"
@@ -107,6 +107,7 @@ modelky:
           - id: "1PlazFotka1xxxxxxxxxxxxxxxxxxxxxxx"
             hodnoceni: 5
             tagy: [postava, nahore_bez, plaz]   # pevný seznam tagů, viz EXPORT.md
+            vyrez: {zoom: 1.2, poloha_x: 45, poloha_y: 25}   # ruční výřez náhledu: bod zájmu v %, přiblížení 1–4
           - id: "https://drive.google.com/file/d/1PlazFotka2xxxxxxxxxxxxxxxxxxxxxxx/view"   # celý odkaz jde také
           - id: "1PlazFotka3xxxxxxxxxxxxxxxxxxxxxxx"
             pridano: "2026-10-15 20:00:00"  # jen když fotka přibyla jindy než album

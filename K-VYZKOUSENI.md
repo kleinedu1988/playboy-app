@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.057 – Ruční výřez fotky [schéma] [export]
+
+- [ ] **Před instalací zavři program.** Po spuštění nové verze se databáze převede na schéma 18; v zálohách je `…-pred-migraci.db`.
+- [ ] Program po převodu běží normálně (žádné „jen pro čtení“), sbírka je celá.
+- [ ] Export sbírky má `verze: 15`; import staršího exportu (14) projde jako dřív.
+- [ ] (Ruční výřez se zatím nedá nastavit v rozhraní – přijde v 0.02.058.)
+
 ## 0.02.056 – Propojení ven a zpět
 
 - [ ] V profilu modelky s chybějícími údaji je pod jménem „N úkolů ve Sbírce“; klik otevře její kartu v Úkolech, Zpět vrátí na profil.

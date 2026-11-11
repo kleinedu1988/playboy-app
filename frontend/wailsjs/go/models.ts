@@ -3549,6 +3549,8 @@ export namespace main {
 	    zdroj: string;
 	    postava?: number[];
 	    oblicej?: number[];
+	    bod?: number[];
+	    zoom?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new VyrezFotky(source);
@@ -3560,6 +3562,8 @@ export namespace main {
 	        this.zdroj = source["zdroj"];
 	        this.postava = source["postava"];
 	        this.oblicej = source["oblicej"];
+	        this.bod = source["bod"];
+	        this.zoom = source["zoom"];
 	    }
 	}
 	export class VysledekImportu {

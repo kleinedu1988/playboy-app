@@ -58,3 +58,17 @@ test('ID souboru z adresy obrázku', async () => {
     assert.equal(idZAdresy('https://lh3.googleusercontent.com/d/1AbC_def-GHIjkl={velikost}'), '1AbC_def-GHIjkl');
     assert.equal(idZAdresy(''), '');
 });
+
+test('ruční výřez: bod zájmu doprostřed rámu, přiblížení kolem bodu (0.02.057)', async () => {
+    const { polohaNahledu, priblizeniNahledu } = await import('../src/lib/vyrez-nahledu.js');
+    // Obrázek na šířku 2:1 v čtvercovém rámu: vidět je polovina šířky; bod vpravo (0.8) → okno 0.55–1 → u okraje 100 %
+    assert.deepEqual(polohaNahledu({ bod: [0.8, 0.5], postava: [0, 0, 0.1, 0.1] }, 2, 1), { x: 100, y: 50 });
+    // Bod 0.5 → okno 0.25–0.75 → 50 %
+    assert.deepEqual(polohaNahledu({ bod: [0.5, 0.3] }, 2, 1), { x: 50, y: 50 });
+    // Na výšku 1:2 ve čtverci: vidět půl výšky, bod nahoře 0.2 → okno 0–0.5 → 0 %
+    assert.deepEqual(polohaNahledu({ bod: [0.5, 0.2] }, 0.5, 1), { x: 50, y: 0 });
+    assert.equal(priblizeniNahledu({ bod: [0.5, 0.5], zoom: 1 }, 2, 1), null);
+    // Bod uprostřed → přiblížení kolem středu rámu; bod u okraje → origin u okraje
+    assert.deepEqual(priblizeniNahledu({ bod: [0.5, 0.5], zoom: 2 }, 2, 1), { zoom: 2, origin: '50% 50%' });
+    assert.deepEqual(priblizeniNahledu({ bod: [0.9, 0.5], zoom: 9 }, 2, 1), { zoom: 4, origin: '80% 50%' });
+});

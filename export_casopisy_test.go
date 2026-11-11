@@ -29,7 +29,7 @@ func TestExportCasopisuTamAZpet(t *testing.T) {
 		t.Fatal(err)
 	}
 	text := string(export)
-	for _, s := range []string{"verze: 14\n", "casopisy:", "klic: OU", "edice: [US, FR]", "1985-09@PH", "1986-03-UK@PH", "1980-05-FR@OU"} {
+	for _, s := range []string{"verze: 15\n", "casopisy:", "klic: OU", "edice: [US, FR]", "1985-09@PH", "1986-03-UK@PH", "1980-05-FR@OU"} {
 		if !strings.Contains(text, s) {
 			t.Fatalf("v exportu chybí %q:\n%s", s, text)
 		}

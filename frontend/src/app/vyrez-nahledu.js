@@ -2,7 +2,7 @@
 // souboru>" (otočené fotky ne – rámečky detektoru platí pro neotočený obrázek). Tady se výřezy načtou po dávkách
 // (GetVyrezyFotek) a po načtení obrázku se mu nastaví object-position podle jeho velikosti a rámu
 // (lib/vyrez-nahledu.js). Bez výřezu (výpočet ještě neběžel, postava nenalezena) zůstane střed.
-import { polohaNahledu, cssPolohy } from '../lib/vyrez-nahledu';
+import { polohaNahledu, cssPolohy, priblizeniNahledu } from '../lib/vyrez-nahledu';
 import { GetVyrezyFotek } from './backend';
 
 /** @type {Map<string, any>} ID souboru → výřez z backendu (i bez postavy); „čeká“ se nepamatuje */
@@ -18,8 +18,23 @@ function pouzit(/** @type {HTMLImageElement} */ img) {
     const sirka = img.clientWidth, vyska = img.clientHeight;
     if (!sirka || !vyska) return;
     const tvar = img.dataset.vyrezTvar === 'hero' ? 'hero' : 'dlazdice';
-    const poloha = cssPolohy(polohaNahledu(v, img.naturalWidth / img.naturalHeight, sirka / vyska, tvar));
+    const pomer = img.naturalWidth / img.naturalHeight;
+    const poloha = cssPolohy(polohaNahledu(v, pomer, sirka / vyska, tvar));
     if (img.style.objectPosition !== poloha) img.style.objectPosition = poloha;
+    // Přiblížení ručního výřezu jen v rámu, který obrázek ořezává (jinak by přetekl přes okolí)
+    const p = priblizeniNahledu(v, pomer, sirka / vyska);
+    const orezava = p && img.parentElement && ['hidden', 'clip'].includes(getComputedStyle(img.parentElement).overflow);
+    const scale = orezava ? String(p.zoom) : '';
+    if (img.style.scale !== scale) {
+        img.style.scale = scale;
+        img.style.transformOrigin = orezava ? p.origin : '';
+    }
+}
+
+// Po uložení nebo smazání ručního výřezu (0.02.058): fotka se načte znovu a náhledy se posunou
+export function obnovitVyrez(/** @type {string} */ id) {
+    vyrezy.delete(id);
+    document.querySelectorAll(`img[data-vyrez="${CSS.escape(id)}"]`).forEach(img => pozadat(/** @type {HTMLImageElement} */ (img)));
 }
 
 async function nacist() {

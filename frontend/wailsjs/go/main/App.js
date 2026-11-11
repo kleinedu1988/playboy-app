@@ -678,6 +678,10 @@ export function SetRotaceFotek(arg1, arg2) {
   return window['go']['main']['App']['SetRotaceFotek'](arg1, arg2);
 }
 
+export function SetRucniVyrez(arg1, arg2, arg3, arg4) {
+  return window['go']['main']['App']['SetRucniVyrez'](arg1, arg2, arg3, arg4);
+}
+
 export function SetSablonaObrazku(arg1) {
   return window['go']['main']['App']['SetSablonaObrazku'](arg1);
 }
@@ -732,6 +736,10 @@ export function SmazatCasopis(arg1) {
 
 export function SmazatChytryVyber(arg1) {
   return window['go']['main']['App']['SmazatChytryVyber'](arg1);
+}
+
+export function SmazatRucniVyrez(arg1) {
+  return window['go']['main']['App']['SmazatRucniVyrez'](arg1);
 }
 
 export function SmazatVyber(arg1) {

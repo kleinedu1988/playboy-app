@@ -104,6 +104,8 @@ a `pridano`, jen když se liší od data přidání alba.
 
 `pruvodce` (od verze 12): fotka prošla průvodcem hodnocení (Hodnocení › Hodnotit › Fotky) – číslo verze kroků, např. `pruvodce: 1`. Při importu hodnota větší než 0 fotku označí jako prošlou; chybějící nic nemění.
 
+`vyrez` (od verze 15): ruční výřez náhledu fotky, např. `vyrez: {zoom: 1.5, poloha_x: 40, poloha_y: 20}`. `poloha_x` a `poloha_y` jsou bod zájmu v % šířky a výšky obrázku (náhled ho dá doprostřed rámu), `zoom` přiblížení 1–4. Platí pro soubor na Disku ve všech albech a má přednost před automatickým výřezem. Při importu se zapíše; chybějící nic nemění. (Výřez titulní fotky u modelky – `vyrez` modelky – je jiný údaj: poloha obrázku v kartě.)
+
 ## Časopis
 
 ```yaml
@@ -168,6 +170,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 15 | Pinup Katalog 0.02.057 | `vyrez` u fotky: ruční výřez náhledu (bod zájmu a přiblížení) podle souboru |
 | 14 | Pinup Katalog 0.02.008 | `casopisy` (klíč, název, barva, edice, tituly, pořadí) a čísla jiných časopisů s `@` (`1985-09@PH`, `1986-03-UK@PH`) u alb, coverů a vydání |
 | 13 | 1.2.65 | `profilova_fotka` a `profilovy_vyrez` u modelky: profilová fotka oddělená od titulní |
 | 12 | 1.2.5 | `pruvodce` u fotky: fotka prošla průvodcem hodnocení (číslo verze kroků) |

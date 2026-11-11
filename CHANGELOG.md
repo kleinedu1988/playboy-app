@@ -6,6 +6,22 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.057] – 2026-11-11
+
+### Přidáno
+- **[schéma] [export] Ruční výřez fotky (Chytrý výřez náhledů):** se souhlasem uživatele úprava schématu č. 18
+  (tabulka `vyrezy_fotek`: bod zájmu v % a přiblížení 1–4 podle souboru na Disku) a export verze 15 (`vyrez`
+  u fotky, popis v EXPORT.md, ukázka ve vzor-exportu.yaml). Ruční výřez platí pro fotku ve všech albech a má
+  přednost před automatickým: náhled dá bod zájmu doprostřed rámu a přiblíží kolem něj (jen v rámu, který
+  obrázek ořezává). Před úpravou schématu se databáze sama zazálohuje (`pred-migraci`).
+- Rozhraní pro zápis (`SetRucniVyrez`, `SmazatRucniVyrez`); úpravu tažením v prohlížeči fotek přidá 0.02.058.
+
+### Ověřeno
+- Test Go: meze, přednost před automatickým, export → import do prázdné sbírky, import bez výřezu ho nesmaže.
+  Test rozhraní: poloha bodu a přiblížení u okraje.
+- Kopie sbírky: schéma 17 → 18 se zálohou před migrací; ruční výřez (90 %, 10 %, 2×) se po novém spuštění
+  projevil v Galerii (dlaždice přiblížená k bodu vpravo nahoře, v rámu).
+
 ## [0.02.056] – 2026-11-11
 
 ### Přidáno

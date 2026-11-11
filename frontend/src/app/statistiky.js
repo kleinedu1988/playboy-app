@@ -143,7 +143,7 @@ const BARVY_MAPY = {
             ['Playmate měsíce', '#f06292'], ['Playmate roku', '#ffd54f'], ['Modelka obálky', '#64b5f6'],
             ['Cyber Girl', '#81c784'], ['Celebrita', '#ba68c8'], ['Online', '#4dd0e1'], ['Titul jiného časopisu', '#ff8a65'], ['Ostatní', '#757575'],
         ],
-        // Pet of the Month, Honey of the Month… jednou barvou (barva podle časopisu až 0.02.063)
+        // Pet of the Month, Honey of the Month… jednou barvou (barva podle časopisu až 0.02.068)
         hodnota: b => jeTitulJinehoCasopisu(b.kategorie) ? 'Titul jiného časopisu' : b.kategorie,
     },
     srd: {

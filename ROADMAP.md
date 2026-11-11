@@ -171,7 +171,22 @@ nesedí, opraví; nahlášené chyby z používání mají přednost před pořa
 | 0.02.047 ✅ | **Výkon vykreslování:** Mapa sbírky (výkonový test občas 500 ms), první vykreslení galerie a profilu, přepínání stránek | výkonové testy projdou 10× za sebou |
 | 0.02.048 | **Prohlížeč PDF ve WebKitGTK** ověřit a doladit (worker, rychlost, vzhled) | 200stránkové číslo do 5 s |
 
-#### Fotky z PDF (0.02.035–0.02.052, dříve etapa 0.05)
+#### Chytrý výřez náhledů (0.02.049–0.02.053, nápad uživatele 11. 11. 2026)
+
+Tlačítko **Automatický výřez** u titulní fotky (detektor postavy, `NavrhnoutVyrezy` v `otocene_fotky.go`) rozšířit na
+všechny ořezané náhledy: dlaždice Galerie a řad kolekcí, mozaika alb v profilu, stěna Centerfoldů, hero pohledů,
+karty Síně slávy a Porovnat. Dnes se ořezávají na střed (`object-fit: cover`), takže hlava nebo postava bývá useknutá.
+Zařazeno před PDF (uživatel 11. 11. 2026); PDF a další kroky posunuté o 5.
+
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.02.049 | **Výřez fotky v databázi:** bod zájmu (střed postavy či obličeje) a doporučené přiblížení pro každou fotku, počítané v pozadí po dávkách jako obsah fotek; ruční výřez má přednost | výřezy 23 000 fotek se spočítají v pozadí bez sekání |
+| 0.02.050 | **Náhledy podle výřezu:** `object-position` z bodu zájmu u všech ořezaných náhledů (jedna pomocná funkce místo stylu v každém pohledu) | v Galerii a mozaice profilu není useknutá hlava |
+| 0.02.051 | **Tvar podle místa:** na výšku, na šířku a čtverec – hero a široké řady posunou výřez jinak než úzká dlaždice | hero Kalendáře a Centerfoldů ukazuje postavu, ne pozadí |
+| 0.02.052 | **Úprava ručně:** v prohlížeči fotek „Upravit výřez náhledu“ (táhnout bod zájmu), Údržba › Výřezy pro fotky, kde detektor nic nenašel nebo si není jistý | ruční výřez se projeví ve všech pohledech |
+| 0.02.053 | **Zpětná kontrola:** snímky obrazovek pohledů před a po, žádný náhled horší než střed | úloha snímkovače porovná před a po |
+
+#### Fotky z PDF (0.02.035–0.02.057, dříve etapa 0.05)
 
 **Rozhodnuto (11. 11. 2026):** stránky z PDF se vyexportují jako obrázky do složky pro Google Disk a po nahrání
 se spárují s odkazy; pravidlo „fotky jsou jen odkazy na Disk“ zůstává (žádný místní zdroj fotek).
@@ -180,41 +195,41 @@ se spárují s odkazy; pravidlo „fotky jsou jen odkazy na Disk“ zůstává (
 |---|---|---|
 | 0.02.035 ✅ | **Otevřít PDF:** náhledy stránek (pdf.js v rozhraní, bez nové závislosti v Go), listování a lupa | 200stránkové číslo se otevře do 5 s |
 | 0.02.036 ✅ | **Album bez čísla podle údajů modelky:** text vystoupení „Penthouse říjen 1970“ a textové vydání dají číslo s časopisem (nahlášená chyba) | Pet Penthouse bez čísla alba není Playmate (test) |
-| 0.02.049 | **Označit stránky:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
-| 0.02.050 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |
-| 0.02.051 | **Uložení stránek:** export do složky pro Google Disk a spárování odkazů po nahrání | fotky se zobrazí i po restartu |
-| 0.02.052 | **Návrh rozdělení:** kde začíná pictorial a kde je centerfold (rozložení stránky, obsah fotek PD 1.24) | návrh sedí na 3 zkušebních číslech |
+| 0.02.054 | **Označit stránky:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
+| 0.02.055 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |
+| 0.02.056 | **Uložení stránek:** export do složky pro Google Disk a spárování odkazů po nahrání | fotky se zobrazí i po restartu |
+| 0.02.057 | **Návrh rozdělení:** kde začíná pictorial a kde je centerfold (rozložení stránky, obsah fotek PD 1.24) | návrh sedí na 3 zkušebních číslech |
 
-#### Údaje z webu pro další časopisy (0.02.053–0.02.057, dříve etapa 0.06)
-
-| Verze | Krok | Hotovo, když |
-|---|---|---|
-| 0.02.053 | **Penthouse Pets z Wikipedie:** seznam po letech jako návrhy (jen na kliknutí, s potvrzením) | ročník Penthouse ukáže, kdo byla Pet of the Month |
-| 0.02.054 | **Hustler Honeys** stejně | totéž pro Hustler |
-| 0.02.055 | **Wikidata:** ocenění Pet / Honey jako návrhy údajů modelky | návrh se objeví ve frontě Údržby |
-| 0.02.056 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
-| 0.02.057 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
-
-#### Vkus, odhady a Statistiky napříč časopisy (0.02.058–0.02.063, dříve etapa 0.07)
+#### Údaje z webu pro další časopisy (0.02.058–0.02.062, dříve etapa 0.06)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.058 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
-| 0.02.059 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
-| 0.02.060 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
-| 0.02.061 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
-| 0.02.062 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
-| 0.02.063 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
+| 0.02.058 | **Penthouse Pets z Wikipedie:** seznam po letech jako návrhy (jen na kliknutí, s potvrzením) | ročník Penthouse ukáže, kdo byla Pet of the Month |
+| 0.02.059 | **Hustler Honeys** stejně | totéž pro Hustler |
+| 0.02.060 | **Wikidata:** ocenění Pet / Honey jako návrhy údajů modelky | návrh se objeví ve frontě Údržby |
+| 0.02.061 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
+| 0.02.062 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
 
-#### Dotažení a alfa (0.02.064–0.02.068+, dříve etapa 0.08)
+#### Vkus, odhady a Statistiky napříč časopisy (0.02.063–0.02.068, dříve etapa 0.07)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.064 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
-| 0.02.065 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
-| 0.02.066 | **Ikona programu** | nová ikona v nabídce a panelu |
-| 0.02.067 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
-| 0.02.068+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
+| 0.02.063 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
+| 0.02.064 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
+| 0.02.065 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
+| 0.02.066 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
+| 0.02.067 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
+| 0.02.068 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
+
+#### Dotažení a alfa (0.02.069–0.02.073+, dříve etapa 0.08)
+
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.02.069 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
+| 0.02.070 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
+| 0.02.071 | **Ikona programu** | nová ikona v nabídce a panelu |
+| 0.02.072 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
+| 0.02.073+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
 
 ---
 
@@ -350,26 +365,6 @@ Na přání uživatele odložené na konec plánu (kvíz z PD 1.43, průvodce č
 | 1.10.003 | Vyšší kontrast | Silnější tlumený text, okraje a tlustší rámeček fokusu; navazuje na popisky pro čtečku (R18) | S |
 
 **Hotovo, když:** všechny pohledy ve světlém motivu projdou kontrolou kontrastu WCAG AA a motiv se přepne bez restartu.
-
----
-
-## Nápady k zařazení
-
-### Chytrý výřez všech náhledů (nápad uživatele 11. 11. 2026)
-
-Tlačítko **Automatický výřez** u titulní fotky (detektor postavy, `NavrhnoutVyrezy` v `otocene_fotky.go`) rozšířit na
-všechny ořezané náhledy: dlaždice Galerie a řad kolekcí, mozaika alb v profilu, stěna Centerfoldů, hero pohledů,
-karty Síně slávy a Porovnat. Dnes se ořezávají na střed (`object-fit: cover`), takže hlava nebo postava bývá useknutá.
-
-| Krok | Obsah | Hotovo, když |
-|---|---|---|
-| a | **Výřez fotky v databázi:** bod zájmu (střed postavy či obličeje) a doporučené přiblížení pro každou fotku, počítané v pozadí po dávkách jako obsah fotek; ruční výřez má přednost | sloupec/tabulka výřezů, výpočet 23 000 fotek v pozadí bez sekání |
-| b | **Náhledy podle výřezu:** `object-position` z bodu zájmu u všech ořezaných náhledů (jedna pomocná funkce místo stylu v každém pohledu) | v Galerii a mozaice profilu není useknutá hlava |
-| c | **Tvar podle místa:** na výšku, na šířku a čtverec – hero a široké řady posunou výřez jinak než úzká dlaždice | hero Kalendáře a Centerfoldů ukazuje postavu, ne pozadí |
-| d | **Úprava ručně:** v prohlížeči fotek „Upravit výřez náhledu“ (táhnout bod zájmu), Údržba › Výřezy pro fotky, kde detektor nic nenašel nebo si není jistý | ruční výřez se projeví ve všech pohledech |
-| e | **Zpětná kontrola:** snímky obrazovek pohledů před a po, žádný náhled horší než střed | snímkovač porovná úlohou |
-
-Zařadit po etapě Ladění (rozhodne uživatel: před PDF, nebo za ně).
 
 ---
 

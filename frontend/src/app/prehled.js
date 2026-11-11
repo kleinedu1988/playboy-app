@@ -233,7 +233,7 @@ export async function nacistPrehled() {
 
     const model = udrzba.nastavitData({ p, stavy });
     // Počty k nabídce částí u tlačítka Přehled
-    pocetVCasti.udrzba = model.pocty.vse;
+    pocetVCasti.udrzba = model.ukolu;
     pocetVCasti.shanim = shanenaCisla(stavy).length;
     if (!casti().some(([klic]) => klic === stav.prehledSekce)) stav.prehledSekce = 'udrzba';
 

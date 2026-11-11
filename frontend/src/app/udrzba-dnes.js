@@ -73,7 +73,7 @@ async function nacistUlohy() {
 }
 
 function htmlPokroku(model) {
-    const otevrenych = model.skupiny.reduce((s, x) => s + x.aktivnich, 0);
+    const otevrenych = model.ukolu;
     const p = pokrokDne(cist('udrzbaDnes', null), dnes(), otevrenych);
     zapsat('udrzbaDnes', p);
     let dny = cist('udrzbaDny', []);
@@ -83,7 +83,7 @@ function htmlPokroku(model) {
     return `<section class="ud-karta udd-pokrok" aria-label="Pokrok dne">
         <div class="udd-cisla"><b>${p.vyrizeno}</b><span>z ${CIL_DNE} úkolů dnes${p.vyrizeno >= CIL_DNE ? ' · hotovo na dnešek ✓' : ' · asi 15 minut práce'}</span></div>
         <span class="udd-pruh" style="--hotovo:${procento}%" role="progressbar" aria-valuemin="0" aria-valuemax="${CIL_DNE}" aria-valuenow="${Math.min(p.vyrizeno, CIL_DNE)}"></span>
-        <p class="udd-serie">${serie ? `Série: ${sklonovat(serie, 'den', 'dny', 'dní')} v řadě` : 'Série začne prvním vyřízeným úkolem.'} · ve frontě ${sklonovat(otevrenych, 'otevřený úkol', 'otevřené úkoly', 'otevřených úkolů')}</p>
+        <p class="udd-serie">${serie ? `Série: ${sklonovat(serie, 'den', 'dny', 'dní')} v řadě` : 'Série začne prvním vyřízeným úkolem.'} · ve frontě ${sklonovat(otevrenych, 'otevřený úkol', 'otevřené úkoly', 'otevřených úkolů').replace(/^\d+/, otevrenych.toLocaleString('cs-CZ'))}</p>
     </section>`;
 }
 

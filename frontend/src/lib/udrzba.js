@@ -321,6 +321,10 @@ export function sestavitUdrzbu({ p, modelky, navrhy = [], skryte = false, odmitn
     const kKontrole = aktivnich(p.podezrele);
     return {
         skupiny, pocty, pokrok, uplnost, podleKlice, radkyModelek,
+        // Jedno počítání úkolů (0.02.054): „úkol“ je všude jedna otevřená položka (údaj, kontrola, návrh…);
+        // sUkoly = modelky a čísla, která mají aspoň jeden (= řádky fronty, pocty.vse)
+        ukolu: skupiny.reduce((soucet, s) => soucet + s.aktivnich, 0),
+        sUkoly: pocty.vse,
         alba: new Map([...radky].map(([id, r]) => [id, { popis: r.bezPopisu, vydani: r.bezVydani }])),
         modelekSChybou: [...radky.values()].filter(r => r.vaha > 0).length,
         // Vyřízené položky ve frontě (jen s „Vyřízené“, jinak je model nemá)

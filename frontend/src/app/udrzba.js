@@ -145,10 +145,15 @@ const frontaPro = klic => stav.prehledRadky.filter(r => !r.netyka.has(klic)
 
 // ——— Vykreslení ———
 
+// Úkoly se všude počítají stejně: jednotlivé otevřené položky; řádků fronty (modelek a čísel) je méně
+const cislo0 = (/** @type {number} */ n) => (n || 0).toLocaleString('cs-CZ');
+export const popisUkolu = () => (model ? `${cislo0(model.ukolu)} ${sklonovat(model.ukolu, 'úkol', 'úkoly', 'úkolů').replace(/^\S+ /, '')} u ${model.sUkoly.toLocaleString('cs-CZ')} ${model.sUkoly === 1 ? 'modelky nebo čísla' : 'modelek a čísel'}` : '');
+export const pocetUkolu = () => model?.ukolu || 0;
+
 // Stav Údržby vpravo v plovoucím pásu Sbírky (prehled.js): úplnost a počty, stejné ve všech režimech
 export function htmlStavu() {
     if (!model) return '';
-    const casti = [sklonovat(model.pocty.vse, 'úkol', 'úkoly', 'úkolů').replace(/^(\d+)/, '<b>$1</b>')];
+    const casti = [sklonovat(model.ukolu, 'úkol', 'úkoly', 'úkolů').replace(/^\d+/, `<b>${cislo0(model.ukolu)}</b>`)];
     if (model.kKontrole) casti.push(`<b>${model.kKontrole}</b> ke kontrole`);
     if (model.navrhu) casti.push(sklonovat(model.navrhu, 'návrh', 'návrhy', 'návrhů').replace(/^(\d+)/, '<b>$1</b>'));
     return `<span class="pas-kapsle pas-info" title="Sbírka doplněná na ${model.uplnost} % (průměr oblastí v Souhrnu)"><b>${model.uplnost} %</b> doplněno · ${casti.join(' · ')}</span>`;
@@ -325,17 +330,17 @@ function htmlHlavySbirky() {
     const vUdrzbe = true;
     const stranka = strankaSbirky(stav);
     const pilulky = vUdrzbe && vSouhrnu() ? OBLASTI_FILTRU.flatMap(o => o.filtry).filter(([klic]) => klic === 'vse' || klic === filtr || model.pocty[klic])
-        .map(([klic, nazev, popis]) => `<button type="button" class="sh-filtr ${klic === filtr ? 'on' : ''}" data-sh-filtr="${klic}"${popis ? ` title="${esc(popis)}"` : ''}>${esc(NAZVY_V_LISTE[klic] || nazev)}<small>${model.pocty[klic] || 0}</small></button>`).join('') : '';
+        .map(([klic, nazev, popis]) => `<button type="button" class="sh-filtr ${klic === filtr ? 'on' : ''}" data-sh-filtr="${klic}"${(klic === 'vse' ? `Řádky fronty: ${popisUkolu()}` : popis) ? ` title="${esc(klic === 'vse' ? `Řádky fronty: ${popisUkolu()}` : popis)}"` : ''}>${esc(NAZVY_V_LISTE[klic] || nazev)}<small>${model.pocty[klic] || 0}</small></button>`).join('') : '';
     return `<div class="sh-obsah">
             <div class="sh-kruh" style="--p:${model.uplnost}" title="Sbírka doplněná na ${model.uplnost} % (průměr oblastí)"><b>${model.uplnost} %</b><small>doplněno</small></div>
             <div class="sh-identita"><h2>Sbírka</h2>
                 <div class="sh-cisla">${cislo(p.modelek, 'modelka', 'modelky', 'modelek')}${cislo(p.alb, 'album', 'alba', 'alb')}${cislo(p.fotek, 'fotka', 'fotky', 'fotek')}${cislo(p.vydani, 'číslo', 'čísla', 'čísel')}
-                    <span class="sh-ukoly"><b>${model.pocty.vse}</b> ${sklonovat(model.pocty.vse, 'úkol', 'úkoly', 'úkolů').replace(/^\S+ /, '')}</span></div></div>
+                    <button type="button" class="sh-ukoly" data-sbirka-stranka="ukoly" title="${esc(popisUkolu())} – otevřít Úkoly"><b>${cislo0(model.ukolu)}</b> ${sklonovat(model.ukolu, 'úkol', 'úkoly', 'úkolů').replace(/^\S+ /, '')}</button></div></div>
             <div class="sh-oblasti">${oblasti}</div>
         </div>
         <div class="sh-akce">
             <nav class="sh-stranky" role="tablist" aria-label="Stránky Sbírky">${STRANKY_SBIRKY.map(x =>
-                `<button type="button" role="tab" class="${x.klic === stranka ? 'on' : ''}" aria-selected="${x.klic === stranka}" data-sbirka-stranka="${x.klic}" title="${esc(x.popis)}">${esc(x.nazev)}</button>`).join('')}</nav>
+                `<button type="button" role="tab" class="${x.klic === stranka ? 'on' : ''}" aria-selected="${x.klic === stranka}" data-sbirka-stranka="${x.klic}" title="${esc(x.klic === 'ukoly' ? `${x.popis}\n${popisUkolu()}` : x.popis)}">${esc(x.nazev)}${x.klic === 'ukoly' && model.ukolu ? ` <small>${cislo0(model.ukolu)}</small>` : ''}</button>`).join('')}</nav>
             <button type="button" class="volba sh-akce-tl" data-sh-akce="nabidka" aria-haspopup="menu" title="Přidat, importovat, exportovat, zkontrolovat soubory"><b>Akce</b> <i aria-hidden="true">▾</i></button>
         </div>
         ${stranka === 'ukoly' ? `<div class="sh-lista">
@@ -427,7 +432,7 @@ export function vykreslit() {
         zWebu.zobrazit(cast('web'));
     } else {
         nastavitHtml(cast('pokrok'), htmlPokroku());
-        zdravi.vykreslit(cast('zdravi'), { vse: model.pocty.vse, kKontrole: model.kKontrole, navrhu: model.navrhu });
+        zdravi.vykreslit(cast('zdravi'), { vse: model.ukolu, kKontrole: model.kKontrole, navrhu: model.navrhu });
         const htmlU = uceni.htmlUceni({ rozbaleno: uceniRozbaleno, zdroj: stav.udrzbaFiltr === 'navrhy' ? stav.udrzbaZdroj : '' });
         cast('uceni').classList.toggle('hidden', !htmlU);
         cast('pokrok').parentElement.classList.toggle('bez-uceni', !htmlU);

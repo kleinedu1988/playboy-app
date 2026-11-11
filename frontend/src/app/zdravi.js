@@ -47,7 +47,7 @@ function htmlKarty(z, ukoly) {
     const obsah = z.obsah || {};
     const mezipamet = radek(`Náhledy ${velikost(z.velikostNahledu)} · prohlížeč ${velikost(z.velikostWebu)}`) + radek(`Databáze ${velikost(z.velikostDatabaze)}`)
         + radek(`Obsah fotek: ${esc(NAZVY_FAZI[obsah.faze] || obsah.faze || '–')}${obsah.celkem ? ` · ${obsah.hotovo.toLocaleString('cs-CZ')} z ${obsah.celkem.toLocaleString('cs-CZ')}` : ''}${z.velikostObsahu ? ` · ${velikost(z.velikostObsahu)}` : ''}`);
-    const nalezy = radek(ukoly.vse ? `<b>${sklonovat(ukoly.vse, 'úkol', 'úkoly', 'úkolů')}</b> k doplnění` : 'Nic k doplnění')
+    const nalezy = radek(ukoly.vse ? `<b>${sklonovat(ukoly.vse, 'úkol', 'úkoly', 'úkolů').replace(/^\d+/, ukoly.vse.toLocaleString('cs-CZ'))}</b> k doplnění` : 'Nic k doplnění')
         + (ukoly.kKontrole ? radek(`${ukoly.kKontrole} ke kontrole`) : '') + (ukoly.navrhu ? radek(sklonovat(ukoly.navrhu, 'návrh', 'návrhy', 'návrhů')) : '');
     return `<h4>Zdraví sbírky</h4><div class="zd-mrizka">
         ${dlazdice('Zálohy', zalohy, '<button type="button" class="link" data-zd="zalohy">Zálohy…</button>')}

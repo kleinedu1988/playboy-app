@@ -6,6 +6,20 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.054] – 2026-11-11
+
+### Opraveno
+- **Jedno počítání úkolů (Přehledná Sbírka, krok 3; nahlášeno):** hlavička Sbírky ukazovala 1 135 úkolů, Přehled
+  2 661. Hlavička počítala modelky a čísla, kterým něco chybí, Přehled jednotlivé úkoly. Teď je „úkol“ všude
+  jedna otevřená položka (údaj, kontrola, návrh…): hlavička, lišta (Úkoly 2 661), Přehled („ve frontě“), mapa
+  sekcí, stavový pás i Zdraví sbírky ukazují stejné číslo s mezerou v tisících. Kolik je to modelek a čísel,
+  řekne popisek („2 661 úkolů u 1 135 modelek a čísel“); filtr Vše ve Frontě v popisku vysvětluje, že počítá
+  řádky fronty.
+- Počet úkolů v hlavičce je odkaz na stránku Úkoly.
+
+### Ověřeno
+- Snímky na kopii sbírky: hlavička, lišta, Přehled i mapa sekcí shodně 2 661; test modelu (3 úkoly u jedné modelky).
+
 ## [0.02.053] – 2026-11-11
 
 ### Změněno

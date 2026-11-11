@@ -181,6 +181,11 @@
    "nazev": "zpet-cisla-poloha",
    "js": "(()=>{const m=document.querySelector('main');const vid=[...document.querySelectorAll('.prehled-obsah > *')].filter(e=>e.getClientRects().length).map(e=>e.className+(e.dataset.sekce?'['+e.dataset.sekce+']':''));return JSON.stringify({scroll:m.scrollTop,vyska:m.scrollHeight,videt:vid,posuvniky:[...document.querySelectorAll('*')].filter(e=>e.scrollHeight>e.clientHeight+5&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)&&e.getClientRects().length).map(e=>e.tagName+'.'+String(e.className).split(' ')[0])})})()",
    "cekat": 100
+  },
+  {
+   "nazev": "mapa-ukoly",
+   "js": "(()=>{const b=[...document.querySelectorAll('.mapa-sekci .mapa-cast')].find(b=>b.textContent.trim().startsWith('Úkoly'));return b?b.textContent.trim():'bez'})()",
+   "cekat": 100
   }
  ]
 }

@@ -31,6 +31,9 @@ test('nález kontroly a návrh patří do skupiny modelky, počty filtrů', () =
     assert.equal(model.skupiny.length, 1);
     assert.deepEqual(model.skupiny[0].polozky.map(x => x.druh).sort(), ['kontrola', 'navrh', 'ukol']);
     assert.equal(model.pocty.vse, 1);
+    // Jedno počítání úkolů (0.02.054): tři úkoly u jedné modelky
+    assert.equal(model.ukolu, 3);
+    assert.equal(model.sUkoly, 1);
     assert.equal(model.pocty.kontrola, 1);
     assert.equal(model.pocty.navrhy, 1);
     assert.equal(model.pocty.udaje, 1);

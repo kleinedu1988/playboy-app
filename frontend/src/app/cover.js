@@ -20,6 +20,7 @@ import { jeVidet, otevreneOkno } from '../ui/dom';
 import { naCss } from '../ui/vzhled';
 import { nastavitRadu, vychoziRada, zapamatovatRadu } from './rady';
 import { REZIMY_UKOLU, STRANKY_SBIRKY, strankaSbirky } from '../lib/stranky-sbirky';
+import { pocetUkolu } from './udrzba';
 
 // Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -295,7 +296,9 @@ function otevritNabidkuSekci(tlacitko) {
             const p = POHLEDY_CASTI[cast];
             const pohledy = p ? `<div class="mapa-pohledy">${p.pohledy.map(([k, n]) =>
                 `<button type="button" class="${je && p.aktualni() === k ? 'zvolena' : ''}" data-mapa-cast="${atribut}:${cast}" data-mapa-pohled="${k}">${n}</button>`).join('')}</div>` : '';
-            return `<button type="button" class="mapa-cast ${je ? (p ? 'v-ni' : 'zvolena') : ''}" data-mapa-cast="${atribut}:${cast}">${nazevCasti}</button>${pohledy}`;
+            // Úkoly s počtem jako v liště Sbírky (stejné počítání, udrzba.js)
+            const pocet = atribut === 'sbirka-stranka' && cast === 'ukoly' && pocetUkolu() ? ` <small>${pocetUkolu().toLocaleString('cs-CZ')}</small>` : '';
+            return `<button type="button" class="mapa-cast ${je ? (p ? 'v-ni' : 'zvolena') : ''}" data-mapa-cast="${atribut}:${cast}">${nazevCasti}${pocet}</button>${pohledy}`;
         }).join('');
         return `<div class="mapa-sloupec"><h4 class="${aktivniSekce ? 'zvolena' : ''}">${nazev}</h4>${casti}</div>`;
     }).join('');

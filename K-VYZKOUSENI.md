@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.054 – Jedno počítání úkolů
+
+- [ ] Hlavička Sbírky, lišta (Úkoly N), Přehled („ve frontě N otevřených úkolů“) a mapa sekcí ukazují stejné N; po vyřízení úkolu klesnou všechny.
+
 ## 0.02.053 – Celé stránky Sbírky
 
 - [ ] Čísla a sháním a Učení se otevřou jako celé stránky (žádný panel vpravo), posouvá se celé okno.

@@ -90,6 +90,10 @@ export function GetDvojiceKPorovnani(arg1, arg2) {
   return window['go']['main']['App']['GetDvojiceKPorovnani'](arg1, arg2);
 }
 
+export function GetFotkyBezVyrezu(arg1) {
+  return window['go']['main']['App']['GetFotkyBezVyrezu'](arg1);
+}
+
 export function GetFotkyKOdemceni(arg1) {
   return window['go']['main']['App']['GetFotkyKOdemceni'](arg1);
 }

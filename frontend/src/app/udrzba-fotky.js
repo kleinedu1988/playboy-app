@@ -3,7 +3,7 @@
 // kterým jde výřez navrhnout z detekce postavy. Kvalita fotek (kvalita_fotek.go, 1.51): malé, rozmazané, přepálené
 // a tmavé fotky z náhledů; když je ve sbírce stejná fotka v lepší kvalitě, „Vyměnit za lepší“ ji nechá místo slabé
 // (sloučení stejných fotek, jde vrátit). Nic se neotočí, nevymění ani neuloží bez kliknutí.
-import { GetOtoceneFotky, GetSlabeFotky, GetStavKvality, GetStavOtoceni, GetTitulniBezVyrezu, NavrhnoutVyrezy, OznacitKvalituVPoradku, OznacitOtoceniVPoradku, OznacitVyrezVychozi, PrerusitKontroluKvality, PrerusitKontroluOtoceni, SetCoverVyrez, SetRotaceFotek, SloucitStejneFotky, SpustitKontroluKvality, SpustitKontroluOtoceni, VratitSlouceniStejnych } from './backend';
+import { GetFotkyBezVyrezu, GetOtoceneFotky, GetSlabeFotky, GetStavKvality, GetStavOtoceni, GetTitulniBezVyrezu, NavrhnoutVyrezy, OznacitKvalituVPoradku, OznacitOtoceniVPoradku, OznacitVyrezVychozi, PrerusitKontroluKvality, PrerusitKontroluOtoceni, SetCoverVyrez, SetRotaceFotek, SloucitStejneFotky, SpustitKontroluKvality, SpustitKontroluOtoceni, VratitSlouceniStejnych } from './backend';
 import { esc, obrazek, sklonovat } from '../lib/format';
 import { nastavitHtml } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
@@ -11,6 +11,7 @@ import { VELIKOST_NAHLEDU } from './obrazky';
 import { otevritProfilPodleId } from './cover';
 import { stylVyrezu } from './navigace';
 import { htmlListyVyberu, potvrditRozdil } from '../ui/hromadne';
+import { upravitVyrezFotky } from './vyrez-fotky';
 
 /** @type {{ viditelna: () => boolean, poZmene: () => void }} */
 let api = { viditelna: () => false, poZmene: () => {} };
@@ -31,6 +32,10 @@ let slabe = null;
 /** @type {any} */
 let stavKvality = null;
 let zobrazitSlabych = 24;
+// Fotky, na kterých detektor postavu nenašel (0.02.058): náhled zůstává na středu, výřez jde nastavit ručně
+/** @type {{ fotky: any[], celkem: number } | null} */
+let bezPostavy = null;
+let zobrazitBezPostavy = 24;
 
 const DAVKA_VYREZU = 24;
 
@@ -51,7 +56,9 @@ export function zastarat() {
 
 async function nacist() {
     zastarale = false;
-    const [o, st, bez, sl, sk] = await Promise.all([GetOtoceneFotky(), GetStavOtoceni(), GetTitulniBezVyrezu(), GetSlabeFotky(), GetStavKvality()]);
+    const [o, st, bez, sl, sk, bp] = await Promise.all([GetOtoceneFotky(), GetStavOtoceni(), GetTitulniBezVyrezu(), GetSlabeFotky(), GetStavKvality(),
+        GetFotkyBezVyrezu(zobrazitBezPostavy).catch(() => null)]);
+    bezPostavy = bp;
     otocene = o || [];
     slabe = sl || [];
     stavKvality = sk;
@@ -189,6 +196,21 @@ function htmlSekceKvality() {
             : stavKvality?.zkontrolovano ? '<p class="prazdno-male">Žádná změřená fotka nevypadá slabě.</p>' : ''}</section>`;
 }
 
+// Výřezy náhledů: fotky bez nalezené postavy, výřez se nastaví ručně v okně (app/vyrez-fotky.js)
+function htmlSekceBezPostavy() {
+    if (!bezPostavy || !stavOtoceni?.zapnuto) return '';
+    const { fotky, celkem } = bezPostavy;
+    return `<section class="ufo-sekce"><h4>Výřezy náhledů${celkem ? ` <small>${celkem.toLocaleString('cs-CZ')}</small>` : ''}</h4>
+        ${celkem ? `<p class="us-uvod">Na těchto fotkách detektor postavu nenašel, náhledy je proto ořezávají na střed. Od nejlépe hodnocených; klik ukáže fotku a nastavíš, co má být v náhledu vidět. Ruční výřez platí ve všech pohledech.</p>
+            <div class="ufo-mrizka ufo-bez-postavy">${fotky.map((f, i) => `<figure class="ufo-vyrez">
+                <button type="button" class="ufo-nahled" data-uv-upravit="${i}" title="Upravit výřez náhledu"><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" data-vyrez="${esc(f.driveId)}" alt="" loading="lazy" decoding="async" draggable="false" /></button>
+                <figcaption><button type="button" class="us-modelka" data-uf-profil="${f.modelkaId}">${esc(f.jmeno || 'Bez modelky')}</button><span class="us-album">${esc(f.album)}</span>
+                    <span class="ufo-akce"><button type="button" class="btn btn-secondary btn-small" data-uv-upravit="${i}">Upravit výřez…</button></span></figcaption>
+            </figure>`).join('')}</div>
+            ${celkem > fotky.length ? `<button type="button" class="btn btn-secondary btn-small" data-uv-dalsi>Ukázat dalších ${Math.min(24, celkem - fotky.length)}</button>` : ''}`
+            : '<p class="prazdno-male">Na všech spočítaných fotkách detektor postavu našel.</p>'}</section>`;
+}
+
 async function vymenit(f) {
     const v = await SloucitStejneFotky(f.lepsi, [f.driveId]).catch(() => null);
     if (!v || v.chyba) { oznamit('Fotku se nepodařilo vyměnit.'); return; }
@@ -243,7 +265,7 @@ export function vykreslit() {
             ${navrzene.length ? htmlListyVyberu({ pocet: navrzene.length, jednotky: ['navržený výřez', 'navržené výřezy', 'navržených výřezů'], akce: [{ text: 'Použít zobrazené návrhy', atribut: 'data-uf-pouzit-vse', hlavni: true }] }) : ''}
             <div class="ufo-mrizka">${[...bezVyrezu.filter(m => navrhy.has(m.modelkaId)), ...bezNavrhu.slice(0, Math.max(0, 12 - navrhy.size))].map(htmlVyrezu).join('')}</div>`
             : '<p class="prazdno-male">Všechny titulní fotky mají výřez, nebo jim výchozí sedí.</p>'}</section>`;
-    nastavitHtml(kontejner, `<div class="us uf">${sekceOtocene}${htmlSekceKvality()}${sekceVyrez}</div>`);
+    nastavitHtml(kontejner, `<div class="us uf">${sekceOtocene}${htmlSekceKvality()}${sekceVyrez}${htmlSekceBezPostavy()}</div>`);
     if (!kontejner.dataset.ufObsluha) {
         kontejner.dataset.ufObsluha = '1';
         kontejner.addEventListener('click', klik);
@@ -284,6 +306,16 @@ async function klik(e) {
     const cil = /** @type {HTMLElement} */ (e.target);
     const data = (atribut) => /** @type {HTMLElement | null} */ (cil.closest(`[${atribut}]`));
     let p;
+    if ((p = data('data-uv-upravit'))) {
+        const f = bezPostavy?.fotky[parseInt(p.dataset.uvUpravit)];
+        if (f) upravitVyrezFotky(f, { poUlozeni: () => nacist() });
+        return;
+    }
+    if (data('data-uv-dalsi')) {
+        zobrazitBezPostavy += 24;
+        await nacist();
+        return;
+    }
     if (data('data-uf-spustit')) {
         if (!await SpustitKontroluOtoceni()) oznamit('Kontrolu nejde spustit: fotky ještě nemají vektory, nebo už běží.');
         await nacist();

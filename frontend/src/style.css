@@ -21413,3 +21413,140 @@ button.udd-nazev {
     text-decoration: underline;
     text-underline-offset: 4px;
 }
+
+/* Výřez náhledu fotky (0.02.058, app/vyrez-fotky.js) */
+.vf-karta {
+    width: min(1040px, calc(var(--vw, 100vw) - 32px));
+    max-width: none;
+}
+
+.vf-napoveda {
+    margin: 0 0 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.vf-telo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 20px;
+    align-items: start;
+}
+
+.vf-fotka {
+    position: relative;
+    justify-self: center;
+    max-width: 100%;
+    line-height: 0;
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+}
+
+.vf-fotka img {
+    display: block;
+    max-width: 100%;
+    max-height: min(62vh, 620px);
+    border-radius: 8px;
+}
+
+.vf-bod {
+    position: absolute;
+    width: 28px;
+    height: 28px;
+    margin: -14px 0 0 -14px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px var(--accent), 0 0 12px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+}
+
+.vf-bod::after {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+
+.vf-nahledy {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+.vf-ram {
+    position: relative;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    background-color: #000;
+}
+
+.vf-ram img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.vf-ram figcaption {
+    position: absolute;
+    left: 6px;
+    bottom: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1.6;
+}
+
+.vf-pas {
+    grid-column: 1 / -1;
+}
+
+.vf-zoom {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.vf-mezera {
+    flex: 1;
+}
+
+@media (max-width: 760px) {
+    .vf-telo {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Údržba › Výřezy náhledů: fotka bez postavy, klik otevře úpravu výřezu */
+.ufo-nahled {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    padding: 0;
+    overflow: hidden;
+    border: 0;
+    border-radius: 6px;
+    background-color: var(--bg-main, #000);
+    cursor: pointer;
+}
+
+.ufo-nahled img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ufo-bez-postavy {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}

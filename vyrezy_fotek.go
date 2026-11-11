@@ -170,3 +170,56 @@ func (a *App) GetStavVyrezu() StavVyrezu {
 	}
 	return s
 }
+
+// FotkaBezVyrezu: fotka, na které detektor postavu nenašel a nemá ruční výřez (náhled zůstává na středu)
+type FotkaBezVyrezu struct {
+	DriveID   string `json:"driveId"`
+	URL       string `json:"url"`
+	ModelkaID int    `json:"modelkaId"`
+	Jmeno     string `json:"jmeno"`
+	Album     string `json:"album"`
+}
+
+type FotkyBezVyrezu struct {
+	Fotky  []FotkaBezVyrezu `json:"fotky"`
+	Celkem int              `json:"celkem"`
+}
+
+// GetFotkyBezVyrezu (0.02.058, Údržba › Otočené a výřezy): fotky bez postavy od nejlépe hodnocených; otočené
+// se vynechají (rámečky detektoru platí pro neotočený obrázek), nejvýš limit
+func (a *App) GetFotkyBezVyrezu(limit int) FotkyBezVyrezu {
+	v := FotkyBezVyrezu{Fotky: []FotkaBezVyrezu{}}
+	if a.db == nil || a.obsah == nil || !a.obsahZapnuty() {
+		return v
+	}
+	rucni := map[string]bool{}
+	for id := range vsechnyRucniVyrezy(a.db) {
+		rucni[id] = true
+	}
+	radky, err := a.db.Query(`SELECT f.drive_file_id, COALESCE(al.modelka_id, 0), COALESCE(m.jmeno, ''), al.album
+		FROM fotky f JOIN alba al ON al.id = f.album_id LEFT JOIN modelky m ON m.id = al.modelka_id
+		WHERE f.nedostupne_od IS NULL AND COALESCE(f.rotace, 0) = 0
+		ORDER BY COALESCE(f.hodnoceni, 0) DESC, f.id`)
+	if err != nil {
+		a.chyba("fotky bez výřezu", err)
+		return v
+	}
+	defer radky.Close()
+	videno := map[string]bool{}
+	for radky.Next() {
+		var f FotkaBezVyrezu
+		if radky.Scan(&f.DriveID, &f.ModelkaID, &f.Jmeno, &f.Album) != nil || videno[f.DriveID] || rucni[f.DriveID] {
+			continue
+		}
+		videno[f.DriveID] = true
+		if r, ok := a.obsah.RamecekFotky(f.DriveID); !ok || r.MaPostavu {
+			continue
+		}
+		v.Celkem++
+		if len(v.Fotky) < limit {
+			f.URL = adresaObrazku(f.DriveID)
+			v.Fotky = append(v.Fotky, f)
+		}
+	}
+	return v
+}

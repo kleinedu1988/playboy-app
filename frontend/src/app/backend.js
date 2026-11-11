@@ -148,6 +148,7 @@ const CTENI = new Set([
     'GetKolekceGalerie',
     // Chytrý výřez náhledů (0.02.049)
     'GetVyrezyFotek',
+    'GetFotkyBezVyrezu',
     'GetStavVyrezu',
     'GetVsechnyKolekce',
     'GetIdealniModelka',
@@ -429,6 +430,7 @@ export const SetProfilovaFotka = /** @type {typeof App.SetProfilovaFotka} */ (ob
 export const SetProfilovyVyrez = /** @type {typeof App.SetProfilovyVyrez} */ (obalit('SetProfilovyVyrez'));
 export const SetRucniVyrez = /** @type {typeof App.SetRucniVyrez} */ (obalit('SetRucniVyrez'));
 export const SmazatRucniVyrez = /** @type {typeof App.SmazatRucniVyrez} */ (obalit('SmazatRucniVyrez'));
+export const GetFotkyBezVyrezu = /** @type {typeof App.GetFotkyBezVyrezu} */ (obalit('GetFotkyBezVyrezu'));
 export const GetProfilovaFotka = /** @type {typeof App.GetProfilovaFotka} */ (obalit('GetProfilovaFotka'));
 export const SetVydaniAlba = /** @type {typeof App.SetVydaniAlba} */ (obalit('SetVydaniAlba'));
 export const SetVydaniInfo = /** @type {typeof App.SetVydaniInfo} */ (obalit('SetVydaniInfo'));

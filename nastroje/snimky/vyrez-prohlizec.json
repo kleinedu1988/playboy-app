@@ -1,0 +1,96 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "cekani",
+   "js": "(()=>'čekám')()",
+   "cekat": 2000
+  },
+  {
+   "nazev": "galerie",
+   "js": "(()=>{const b=[...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Galerie\")[0];if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "rady",
+   "js": "(()=>{const r=document.querySelector('.gv-rady');r&&r.scrollIntoView({block:'start'});return r?'ok':'bez'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "y-otevrit",
+   "js": "(()=>{const i=[...document.querySelectorAll('.gv-rady img[data-vyrez]')].filter(i=>i.getClientRects().length)[0];const b=i.closest('button,[data-index],a,.gv-dlazdice')||i;b.click();return b.className})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "y-menu",
+   "js": "(()=>{const b=document.querySelector('#lbMore');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "y-polozky",
+   "js": "[...document.querySelectorAll('#contextMenu button')].map(x=>x.textContent.trim()).join(' | ')",
+   "cekat": 100
+  },
+  {
+   "nazev": "y-vyrez",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.startsWith('Upravit výřez náhledu'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "y-okno",
+   "js": "(()=>{const o=document.getElementById('vyrezFotkyModal');return o&&!o.classList.contains('hidden')?'otevřené, nahoře '+(o===document.getElementById('app').lastElementChild)+', auto '+!o.querySelector('[data-vf-auto]').hidden:'zavřené'})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "y-ulozit",
+   "js": "(()=>{const b=document.querySelector('[data-vf-ulozit]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "y-menu2",
+   "js": "(()=>{const b=document.querySelector('#lbMore');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "y-vyrez2",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.startsWith('Upravit výřez náhledu'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "y-auto-videt",
+   "js": "String(!document.querySelector('#vyrezFotkyModal [data-vf-auto]').hidden)",
+   "cekat": 100
+  },
+  {
+   "nazev": "y-auto",
+   "js": "(()=>{const b=document.querySelector('[data-vf-auto]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "y-konec",
+   "js": "(()=>{const o=document.getElementById('vyrezFotkyModal');return o.classList.contains('hidden')?'zavřeno':'otevřeno'})()",
+   "cekat": 100
+  }
+ ]
+}

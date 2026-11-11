@@ -6,6 +6,23 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.058] – 2026-11-11
+
+### Přidáno
+- **Úprava výřezu ručně (Chytrý výřez náhledů, poslední krok):** v nabídce fotky (⋯ v prohlížeči i pravý klik na
+  dlaždici) „Upravit výřez náhledu…“. Okno ukáže celou fotku s bodem zájmu – klik nebo tažení ho přesune,
+  posuvník přiblíží – a vedle živé náhledy ve třech tvarech rámu (dlaždice, čtverec, široký pás). Bod začíná na
+  ručním výřezu, jinak na obličeji nebo postavě z detektoru. „Uložit výřez“ ho uloží pro fotku ve všech albech
+  a náhledy na obrazovce se hned posunou; „Automaticky“ ruční výřez smaže. Otočené fotky položku nemají.
+- **Údržba › Otočené a výřezy › Výřezy náhledů:** fotky, na kterých detektor postavu nenašel (náhled je na
+  středu), od nejlépe hodnocených po 24; klik otevře úpravu výřezu, uložená fotka ze seznamu zmizí.
+
+### Ověřeno
+- Snímky na kopii sbírky: v Údržbě 190 fotek bez postavy, úprava (bod 30 % / 20 %, přiblížení 1,6×) se uložila
+  a seznam klesl na 189; z prohlížeče: položka v nabídce, okno nad prohlížečem s bodem na obličeji, uložení,
+  znovu otevřené okno nabídlo „Automaticky“ a to výřez smazalo. Zkušební výřezy z kopie smazány.
+- Neověřeno: že žádný náhled není horší než střed – to ukáže až běžné používání (ruční výřez jde vždy vrátit).
+
 ## [0.02.057] – 2026-11-11
 
 ### Přidáno

@@ -5,12 +5,18 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.058 – Úprava výřezu ručně
+
+- [ ] Prohlížeč fotek › ⋯ › Upravit výřez náhledu…: posunutý bod a přiblížení se po uložení projeví na dlaždici v Galerii, v mozaice profilu i na pásu prohlížeče.
+- [ ] „Automaticky“ vrátí náhled na automatický výřez.
+- [ ] Údržba › Otočené a výřezy › Výřezy náhledů: po úpravě fotka ze seznamu zmizí; „Ukázat dalších“ přidá další.
+- [ ] Přiblížený náhled nepřetéká přes okraj dlaždice v žádném pohledu.
+
 ## 0.02.057 – Ruční výřez fotky [schéma] [export]
 
 - [ ] **Před instalací zavři program.** Po spuštění nové verze se databáze převede na schéma 18; v zálohách je `…-pred-migraci.db`.
 - [ ] Program po převodu běží normálně (žádné „jen pro čtení“), sbírka je celá.
 - [ ] Export sbírky má `verze: 15`; import staršího exportu (14) projde jako dřív.
-- [ ] (Ruční výřez se zatím nedá nastavit v rozhraní – přijde v 0.02.058.)
 
 ## 0.02.056 – Propojení ven a zpět
 

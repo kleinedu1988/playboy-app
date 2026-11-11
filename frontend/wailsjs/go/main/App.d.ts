@@ -53,6 +53,8 @@ export function GetDuvodOdhadu(arg1:number):Promise<string>;
 
 export function GetDvojiceKPorovnani(arg1:number,arg2:string):Promise<Array<main.DvojicePorovnani>>;
 
+export function GetFotkyBezVyrezu(arg1:number):Promise<main.FotkyBezVyrezu>;
+
 export function GetFotkyKOdemceni(arg1:string):Promise<oblibenost.FrontaFotek>;
 
 export function GetFotkyKPruvodci():Promise<oblibenost.FrontaFotek>;

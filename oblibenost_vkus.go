@@ -97,7 +97,7 @@ func vybratTipy(modelky []Modelka, model *modelOblibenosti) []tipVkusu {
 		if m.Hodnoceni > 0 {
 			continue
 		}
-		if odhad, ok := v.surove[m.ID]; ok && v.udaje[m.ID].skupin >= minPokrytiVkus && zaokrouhlitNaPul(odhad) >= v.prahVysokych {
+		if odhad, ok := v.surove[m.ID]; ok && v.udaje[m.ID].skupin >= minPokrytiVkus && maFotkyKOdhadu(v.udaje[m.ID]) && zaokrouhlitNaPul(odhad) >= v.prahVysokych {
 			kandidatky = append(kandidatky, tipVkusu{m, odhad})
 		}
 	}
@@ -271,6 +271,13 @@ type nastaveniVkusu struct {
 }
 
 var nastaveniVkusuVychozi = nastaveniVkusu{hreben: true, stromy: true, kose: true, fotky: fotkyObe, vahaStromu: -1, poSkupinach: true}
+
+// Odhad srdíček (seznam, profil, tipy) až po první galerii (0.02.031): modelka musí mít fotky s analýzou obsahu
+// (vektory CLIP, cvObsah) nebo hodnocené fotky. Ze samotných údajů (vlasy, desetiletí…) se dřív odhadovalo
+// i u modelky bez jediné fotky; model se na takových dál učí, jen jim odhad neukáže.
+func maFotkyKOdhadu(u udajeVkusu) bool {
+	return u.ma[cvObsah] || u.ma[cvFotky] || u.ma[cvSkore]
+}
 
 // Skupina modelky podle bohatosti údajů: se srdíčky fotek nebo bez (3 + …), méně než 5, 5–6 a aspoň 7 skupin údajů
 const pocetKosuBohatosti = 6
@@ -568,7 +575,7 @@ func urovenZObsahu(modelky []Modelka, obsah map[int]float64, model *modelObliben
 }
 
 // Má modelka obálku Playboye? Věta vkusu „byla na obálce Playboye“ (0.02.022); obálky jiných časopisů jsou časopis
-// jako vlastnost vkusu (0.02.042 Vkus, odhady a Statistiky napříč časopisy)
+// jako vlastnost vkusu (0.02.043 Vkus, odhady a Statistiky napříč časopisy)
 func obalkaPlayboye(obalky []string) bool {
 	for _, v := range obalky {
 		if _, c := hledani.RozdelitCasopis(v); c == "" || c == hledani.VychoziCasopis {

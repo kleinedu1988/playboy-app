@@ -584,7 +584,7 @@ func naucitVkus(modelky []Modelka, oblibenost map[int]float64, udaje map[int]uda
 		u := udaje[m.ID]
 		odhad := oriznoutSrdicka(v.predikce(u))
 		v.surove[m.ID] = odhad
-		if v.platny && u.skupin >= minPokrytiVkus && (!nast.poSkupinach || v.ukazatKos[kosBohatosti(u)]) {
+		if v.platny && u.skupin >= minPokrytiVkus && maFotkyKOdhadu(u) && (!nast.poSkupinach || v.ukazatKos[kosBohatosti(u)]) {
 			v.odhady[m.ID] = odhad
 		}
 	}

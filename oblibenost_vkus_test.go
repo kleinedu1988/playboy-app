@@ -787,3 +787,43 @@ func TestUrovenZObsahu(t *testing.T) {
 		t.Fatal("s málo hodnocenými se nepřevádí")
 	}
 }
+
+// Odhad srdíček až po první galerii (0.02.031): bez fotek s analýzou obsahu nebo hodnocených fotek žádný odhad
+// ani tip, i když údaje stačí
+func TestOdhadAzPoGalerii(t *testing.T) {
+	modelky := sbirkaVkusu(260, 200, false)
+	bezFotek := map[int]bool{}
+	for i := 200; i < 230; i++ {
+		modelky[i].PocetFotek, modelky[i].FotekHodnocenych, modelky[i].SrdciFotek = 0, 0, 0
+		bezFotek[modelky[i].ID] = true
+	}
+	model := spocitatOblibenost(modelky, nil, time.Now())
+	if model.vkus == nil || !model.vkus.platny {
+		t.Fatal("model vkusu neprošel")
+	}
+	s, bez := 0, 0
+	for id := range model.odhad {
+		if bezFotek[id] {
+			bez++
+		} else if id > 200 {
+			s++
+		}
+	}
+	if bez != 0 || s == 0 {
+		t.Fatalf("odhadů bez fotek %d (chci 0), s fotkami %d", bez, s)
+	}
+	for _, tip := range vybratTipy(modelky, model) {
+		if bezFotek[tip.m.ID] {
+			t.Fatalf("tip bez fotek: %s", tip.m.Jmeno)
+		}
+	}
+	// Analýza obsahu fotek (CLIP) stačí i bez hodnocených fotek
+	var u udajeVkusu
+	if maFotkyKOdhadu(u) {
+		t.Fatal("bez fotek")
+	}
+	u.ma[cvObsah] = true
+	if !maFotkyKOdhadu(u) {
+		t.Fatal("s analýzou obsahu")
+	}
+}

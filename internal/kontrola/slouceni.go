@@ -10,7 +10,7 @@ import (
 // Kandidáti na sloučení (0.02.029): dvě modelky se stejným jménem nebo přezdívkou, jejichž data narození si
 // neodporují – typicky tatáž modelka založená zvlášť pro Playboy a pro Penthouse. Jiné datum narození (v přesnosti,
 // kterou znají obě) kandidáta vylučuje. Bez data u některé z nich je kandidátem jen modelka z jiného časopisu
-// (stejné jméno ve stejném časopise hlásí „ok-jmeno“). Sloučení samo je 0.02.031, tady jen úkol Údržby.
+// (stejné jméno ve stejném časopise hlásí „ok-jmeno“). Sloučení samo je 0.02.032, tady jen úkol Údržby.
 
 // Jména modelky zjednodušená (jméno a další jména bez přípony časopisu)
 func jmenaModelky(m hledani.Modelka) map[string]string {

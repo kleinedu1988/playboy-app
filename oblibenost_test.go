@@ -512,7 +512,9 @@ func sbirkaVkusu(n, hodnocenych int, nahodne bool) []Modelka {
 		fotograf := fotografoveVkus[r.Intn(len(fotografoveVkus))]
 		m := Modelka{ID: i + 1, Jmeno: fmt.Sprintf("Modelka %03d", i), VlasyBarva: vlasy, VyskaCm: 160 + r.Intn(20), VahaKg: 48 + r.Intn(12),
 			Etnicita: "kavkazská", Narodnost: "USA", Vydani: []string{fmt.Sprintf("%d-06", rok)}, Centerfoldy: []string{fmt.Sprintf("%d-06", rok)},
-			FotografoveAlb: fotograf + "\n", Tetovani: -1, Piercing: -1}
+			FotografoveAlb: fotograf + "\n", Tetovani: -1, Piercing: -1,
+			// Galerie s hodnocenými fotkami (bez souvislosti s cílem): odhad až po první galerii (0.02.031)
+			PocetFotek: 4, FotekHodnocenych: 4, SrdciFotek: 8 + i%5}
 		if i < hodnocenych {
 			h := 2.5 + r.NormFloat64()*0.3
 			if vlasy == "blond" {
@@ -582,7 +584,7 @@ func TestMohloByTeLibit(t *testing.T) {
 			m.ID, m.Jmeno, m.VlasyBarva, m.Etnicita, m.Narodnost, m.VyskaCm, m.VahaKg, pul, pul/2)
 		res, _ := tx.Exec(`INSERT INTO alba (modelka_id, album, typ, vydani, fotograf) VALUES (?, ?, 'Centerfold', ?, ?)`, m.ID, m.Vydani[0], m.Vydani[0], strings.TrimSpace(m.FotografoveAlb))
 		album, _ := res.LastInsertId()
-		tx.Exec(`INSERT INTO fotky (album_id, drive_file_id) VALUES (?, ?)`, album, fmt.Sprintf("V%07dxxxxxxxxxxxxxxxxxxxxxxx", m.ID))
+		tx.Exec(`INSERT INTO fotky (album_id, drive_file_id, hodnoceni) VALUES (?, ?, ?)`, album, fmt.Sprintf("V%07dxxxxxxxxxxxxxxxxxxxxxxx", m.ID), 2+m.ID%3)
 	}
 	if err := tx.Commit(); err != nil {
 		t.Fatal(err)

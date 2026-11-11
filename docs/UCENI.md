@@ -743,7 +743,9 @@ a ověření by vycházelo lépe, než model je. Chyba ověření se měří pro
 fotek, nebo bez nich × méně než 5, 5–6, aspoň 7 skupin údajů. Odhad se ukáže (`odhadHodnoceni`, štítek „odhad“)
 jen ve skupině, kde na ověření (aspoň 20 hodnocených, jinak spolu s chudšími skupinami téhož druhu, pak s celým
 druhem) má chybu nejvýš 90 % chyby prostého průměru a přesnost (zaokrouhlený odhad do ± půl srdíčka) aspoň 0,5;
-vždy jen od 30 hodnocených modelek a u modelky s aspoň 4 skupinami údajů. `presnost` v `GetOblibenost` a chyba jsou
+vždy jen od 30 hodnocených modelek a u modelky s aspoň 4 skupinami údajů, která už má galerii: fotky s analýzou
+obsahu (vektory CLIP) nebo hodnocené fotky (od 0.02.031; ze samotných údajů se modelce bez fotek neodhaduje,
+platí i pro „Mohlo by se ti líbit“). `presnost` v `GetOblibenost` a chyba jsou
 z ověření ukázaných skupin. Na umělé sbírce (níže) jsou odhady modelek bez srdíček fotek a s málo údaji horší než
 prostý průměr – dřív se ukazovaly všem.
 

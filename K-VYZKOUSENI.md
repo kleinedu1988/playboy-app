@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.031 – Odhad srdíček až po první galerii
+
+- [ ] **Kritérium hotovo:** nově přidaná modelka bez fotek nemá v seznamu ani profilu štítek „odhad“ a není
+      v „Mohlo by se ti líbit“.
+- [ ] Po nahrání galerie a doběhnutí analýzy obsahu fotek se jí odhad objeví (i bez hodnocených fotek).
+- [ ] Kolik modelek odhad ztratilo – nechybí odhady tam, kde fotky jsou (analýza obsahu musí být spuštěná)?
+- [ ] Důvod odhadu dál uvádí podobné hodnocené modelky („podobně jako …“).
+
 ## 0.02.030 – Vizuální podobnost u kandidátů na sloučení
 
 - [ ] **Kritérium hotovo:** kandidát na sloučení v Údržbě ukáže důvody z fotek („podobné fotky (88 %)“, „stejná

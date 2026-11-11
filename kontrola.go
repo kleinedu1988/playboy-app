@@ -67,6 +67,8 @@ func (a *App) spocitatNalezy(modelky []Modelka, alba []albumSbirky, prahy prahyK
 
 	albaBal := albaDoBalicku(alba)
 	kontrolovatModelky(modelky, prahy, pridat)
+	// Kandidáti na sloučení s vizuálními důvody (fotky, otisky) a v pořadí podle nich (0.02.029–0.02.030)
+	kontrola.KontrolovatSlouceni(modelky, a.vizualniDuvodySlouceni(), pridat)
 	kontrola.KontrolovatCenterfoldyCisel(modelky, albaBal, pridat)
 
 	// Alba s fotkami: jedna fotka u alba s podobným názvem jako jiné album modelky (překlep), vydání mimo dobu
@@ -128,7 +130,6 @@ func kontrolovatModelky(modelky []Modelka, prahy prahyKontroly, pridat pridatNal
 
 	uceni := naucitSe(modelky, prahy)
 	kontrola.KontrolovatJmena(modelky, pridat)
-	kontrola.KontrolovatSlouceni(modelky, pridat)
 	pridatUdaj := odlozit(&udaje)
 	for _, m := range modelky {
 		kontrola.KontrolovatData(m, uceni.Rozsahy, pridatUdaj)

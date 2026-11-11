@@ -111,8 +111,18 @@ func KandidatNaSlouceni(a, b hledani.Modelka) (jmeno string, duvody []string, ok
 	return jmeno, duvody, true
 }
 
-// KontrolovatSlouceni: nález „ok-slouceni“ u novější modelky dvojice (vyšší ID), jednou za dvojici
-func KontrolovatSlouceni(modelky []hledani.Modelka, pridat PridatNalez) {
+// VizualniDuvody: důvody z fotek dvojice (podobné fotky, stejná fotka) a skóre pro pořadí kandidátů (0.02.030)
+type VizualniDuvody func(a, b hledani.Modelka) ([]string, float64)
+
+// KontrolovatSlouceni: nález „ok-slouceni“ u novější modelky dvojice (vyšší ID), jednou za dvojici; s vizualne
+// (může být nil) jsou u nálezu i důvody z fotek a kandidáti jdou od nejsilnějších (víc důvodů, podobnější fotky)
+func KontrolovatSlouceni(modelky []hledani.Modelka, vizualne VizualniDuvody, pridat PridatNalez) {
+	type kandidat struct {
+		a, b   hledani.Modelka
+		duvody []string
+		skore  float64
+	}
+	var kandidati []kandidat
 	podleJmena := map[string][]int{}
 	for i, m := range modelky {
 		for k := range jmenaModelky(m) {
@@ -139,10 +149,19 @@ func KontrolovatSlouceni(modelky []hledani.Modelka, pridat PridatNalez) {
 				}
 				videno[par] = true
 				if _, duvody, ok := KandidatNaSlouceni(a, b); ok {
-					pridat(b, "ok-slouceni", "slouceni", "inputDalsiJmena",
-						fmt.Sprintf("nejspíš tatáž modelka jako %s (id %d): %s – sloučit?", a.Jmeno, a.ID, strings.Join(duvody, ", ")))
+					k := kandidat{a: a, b: b, duvody: duvody, skore: float64(len(duvody))}
+					if vizualne != nil {
+						dalsi, s := vizualne(a, b)
+						k.duvody, k.skore = append(k.duvody, dalsi...), k.skore+float64(len(dalsi))+s
+					}
+					kandidati = append(kandidati, k)
 				}
 			}
 		}
+	}
+	sort.SliceStable(kandidati, func(i, j int) bool { return kandidati[i].skore > kandidati[j].skore })
+	for _, k := range kandidati {
+		pridat(k.b, "ok-slouceni", "slouceni", "inputDalsiJmena",
+			fmt.Sprintf("nejspíš tatáž modelka jako %s (id %d): %s – sloučit?", k.a.Jmeno, k.a.ID, strings.Join(k.duvody, ", ")))
 	}
 }

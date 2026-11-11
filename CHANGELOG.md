@@ -6,6 +6,14 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.030] – 2026-11-11
+
+### Přidáno
+- **Vizuální podobnost u kandidátů na sloučení:** nález uvádí i důvody z fotek – „podobné fotky (88 %)“ (střed
+  vektorů obsahu CLIP obou modelek, od 85 %) a „stejná fotka u obou“ / „skoro stejná fotka u obou“ (stejný soubor
+  nebo otisky jako Údržba › Stejné fotky). Kandidáti jdou od nejsilnějších (víc důvodů, podobnější fotky).
+  Kandidátem se dvojice stává dál jen podle jména a data narození.
+
 ## [0.02.029] – 2026-11-10
 
 ### Přidáno

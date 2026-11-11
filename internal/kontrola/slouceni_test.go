@@ -34,8 +34,10 @@ func TestKandidatiNaSlouceni(t *testing.T) {
 	}
 	// Nález jednou za dvojici, u novější modelky, s důvody
 	var nalezy []string
-	KontrolovatSlouceni([]hledani.Modelka{pripady[0].a, pripady[0].b, m(3, "Jane Doe", "", "1971-07-02")},
-		func(x hledani.Modelka, klic, zdroj, pole, popis string) { nalezy = append(nalezy, x.Jmeno+"#"+klic+"#"+popis) })
+	KontrolovatSlouceni([]hledani.Modelka{pripady[0].a, pripady[0].b, m(3, "Jane Doe", "", "1971-07-02")}, nil,
+		func(x hledani.Modelka, klic, zdroj, pole, popis string) {
+			nalezy = append(nalezy, x.Jmeno+"#"+klic+"#"+popis)
+		})
 	if len(nalezy) != 1 || !strings.Contains(nalezy[0], "ok-slouceni") || !strings.Contains(nalezy[0], "stejné datum narození 1965-03-12") {
 		t.Errorf("nálezy: %v", nalezy)
 	}
@@ -45,5 +47,25 @@ func TestKandidatiNaSlouceni(t *testing.T) {
 		func(x hledani.Modelka, klic, zdroj, pole, popis string) { jmena = append(jmena, klic) })
 	if len(jmena) != 1 {
 		t.Errorf("ok-jmeno: %v", jmena)
+	}
+}
+
+// Vizuální důvody (0.02.030): přidají se k nálezu a silnější kandidát jde první
+func TestSlouceniVizualne(t *testing.T) {
+	m := func(id int, jmeno, narozeni, vydani string) hledani.Modelka {
+		return hledani.Modelka{ID: id, Jmeno: jmeno, NarozeniDatum: narozeni, Vydani: []string{vydani}}
+	}
+	modelky := []hledani.Modelka{m(1, "Ann Lee", "1970-01-01", "1990-01"), m(2, "Ann Lee", "1970-01-01", "1991-01@PH"),
+		m(3, "Kate Moss", "1972-02-02", "1992-01"), m(4, "Kate Moss", "1972-02-02", "1993-01@PH")}
+	vizualne := func(a, b hledani.Modelka) ([]string, float64) {
+		if a.ID == 3 {
+			return []string{"stejná fotka u obou"}, 1.9
+		}
+		return nil, 0.4
+	}
+	var nalezy []string
+	KontrolovatSlouceni(modelky, vizualne, func(x hledani.Modelka, klic, zdroj, pole, popis string) { nalezy = append(nalezy, popis) })
+	if len(nalezy) != 2 || !strings.Contains(nalezy[0], "Kate Moss") || !strings.Contains(nalezy[0], "stejná fotka u obou") {
+		t.Errorf("pořadí a důvody: %v", nalezy)
 	}
 }

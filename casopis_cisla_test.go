@@ -378,3 +378,18 @@ func TestHledaniPrezdivky(t *testing.T) {
 		}
 	}
 }
+
+// Vizuální důvod sloučení z databáze (0.02.030): stejný soubor fotky u obou modelek
+func TestSlouceniStejnaFotka(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Jane Doe", NarozeniDatum: "1965-03-12", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Jane Doe", NarozeniDatum: "1965-03-12", Tetovani: -1, Piercing: -1})
+	m := a.GetModelky("")
+	odkaz := "https://drive.google.com/file/d/" + strings.Repeat("S", 29) + "/view"
+	a.AddBulkPhotos(m[0].ID, "1985-09", "Centerfold", odkaz)
+	a.AddBulkPhotos(m[1].ID, "1986-01@PH", "Centerfold", odkaz)
+	duvody, skore := a.vizualniDuvodySlouceni()(m[0], m[1])
+	if strings.Join(duvody, ",") != "stejná fotka u obou" || skore < 1 {
+		t.Errorf("důvody %v, skóre %v", duvody, skore)
+	}
+}

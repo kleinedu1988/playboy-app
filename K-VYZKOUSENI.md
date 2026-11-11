@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.030 – Vizuální podobnost u kandidátů na sloučení
+
+- [ ] **Kritérium hotovo:** kandidát na sloučení v Údržbě ukáže důvody z fotek („podobné fotky (88 %)“, „stejná
+      fotka u obou“), když jsou.
+- [ ] Je práh 85 % pro „podobné fotky“ rozumný (neukazuje se skoro u každé dvojice)?
+- [ ] Kandidáti se stejnou fotkou jsou v Ke kontrole výš než ostatní.
+- [ ] Kontrola nezpomalila (otisky a středy se berou z mezipaměti).
+
 ## 0.02.029 – Kandidáti na sloučení
 
 - [ ] **Kritérium hotovo:** dvě modelky „Jane Doe“ se stejným datem narození (Playboy a Penthouse) → Údržba › Ke

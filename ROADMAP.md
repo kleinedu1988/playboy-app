@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (11. 11. 2026): verze 0.02.052** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (11. 11. 2026): verze 0.02.053** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (PDF, web, vkus napříč časopisy) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.053 – Celé stránky Sbírky** (Přehledná Sbírka, nahlášeno uživatelem; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
+**0.02.054 – Jedno počítání úkolů** (Přehledná Sbírka, nahlášeno uživatelem; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
 
 ---
 
@@ -54,7 +54,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.052 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.053 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -185,7 +185,7 @@ a vše za ním posunuto o 5.
 | Verze | Krok | Hotovo, když |
 |---|---|---|
 | 0.02.052 ✅ | **Jedna lišta:** záložky Přehled · Úkoly · Čísla a sháním · Učení z jednoho seznamu, ze kterého se kreslí i mapa sekcí a cesta Zpět; akce v tlačítku „Akce ▾“ | lišta, mapa i Zpět používají stejné názvy, nad obsahem je jediná lišta |
-| 0.02.053 | **Celé stránky:** Čísla a sháním a Učení jako stránky místo bočního panelu přes Údržbu; Přehled = dnešní Dnes + ukazatele + Na pozadí | jeden posuvník, stránka si pamatuje, kde jsi byl |
+| 0.02.053 ✅ | **Celé stránky:** Čísla a sháním a Učení jako stránky místo bočního panelu přes Údržbu; Přehled = dnešní Dnes + ukazatele + Na pozadí | jeden posuvník, stránka si pamatuje, kde jsi byl |
 | 0.02.054 | **Jedno počítání úkolů:** stejné číslo v hlavičce, liště, Přehledu a mapě (s vysvětlením řádek × úkol, kde je potřeba) | žádná dvě různá „úkoly“ na jedné obrazovce |
 | 0.02.055 | **Proklik ukazatelů:** Modelky / Alba → Úkoly s filtrem oblasti, Čísla → Čísla a sháním, řádky Na pozadí → příslušný režim, buňka v mapě čísel → číslo a jeho úkoly | každé číslo na Přehledu vede tam, kde se dá vyřešit |
 | 0.02.056 | **Propojení ven a zpět:** z profilu a čísla „N úkolů ve Sbírce“ s filtrem na ně, z úkolu odkaz na profil/číslo a návrat na stejné místo; snímky před a po | z profilu se jedním klikem dostaneš k jeho úkolům a zpět |
@@ -211,6 +211,12 @@ Galerie dnes míchá fotky všech časopisů: explicitnější fotky (Penthouse,
 se objevují mezi pózovacími v řadách kolekcí, v heru i ve Všech fotkách. Mají mít vlastní kategorii.
 **Rozhodnuto (11. 11. 2026):** zařazeno hned po chytrém výřezu (PDF a další kroky posunuté o 3); ve výchozím
 stavu jsou takové fotky **jen ve vlastní řadě**, ne v běžných kolekcích, heru a Všech fotkách.
+**Obrazový model (dotaz uživatele 11. 11. 2026):** dnešní detektor je malý NudeNet 320n (12 MB, vstup 320 px) –
+na celé postavě v pózovací fotce stačí, ale muže nebo druhou ženu v záběru scény může přehlédnout. Krok
+Rozpoznání proto nejdřív změří přesnost se stávajícími modely (detektor + popis scény z CLIP vektorů, které už
+sbírka má – „pár při sexu“, „dvě ženy se líbají“, bez nového modelu). Když na vzorku nevyjde 9 z 10, vloží se za
+něj krok **Větší detektor** (NudeNet 640m, ~4× pomalejší; partie a výřezy se jednou přepočítají v pozadí) a
+další kroky se posunou.
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|

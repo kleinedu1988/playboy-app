@@ -429,16 +429,23 @@ export function vykreslit() {
         nastavitHtml(cast('pokrok'), htmlPokroku());
         zdravi.vykreslit(cast('zdravi'), { vse: model.pocty.vse, kKontrole: model.kKontrole, navrhu: model.navrhu });
         const htmlU = uceni.htmlUceni({ rozbaleno: uceniRozbaleno, zdroj: stav.udrzbaFiltr === 'navrhy' ? stav.udrzbaZdroj : '' });
-        // Co se program naučil je v panelu Sbírky (záložka Učení), ne nad frontou
-        const panelUceni = /** @type {HTMLElement | null} */ (stats.querySelector('[data-sbirka-uceni]'));
-        if (panelUceni) nastavitHtml(panelUceni, htmlU || '<p class="prazdno-male">Program se zatím nic nenaučil. Každé přijetí, odmítnutí a oprava návrhu zpřesní další návrhy.</p>');
         cast('uceni').classList.toggle('hidden', !htmlU);
         cast('pokrok').parentElement.classList.toggle('bez-uceni', !htmlU);
         nastavitHtml(cast('uceni'), htmlU);
         vykreslitSeznam();
     }
+    vykreslitStrankuUceni();
     // Volba režimu v liště pod hledáním (prehled.js)
     document.dispatchEvent(new CustomEvent('volby-prehledu'));
+}
+
+// Stránka Sbírka › Učení (co se program naučil): plní se při každém vykreslení Údržby, v jakémkoli režimu
+// (dřív jen ve Frontě – z Přehledu byla stránka prázdná)
+function vykreslitStrankuUceni() {
+    const misto = /** @type {HTMLElement | null} */ (stats.querySelector('[data-sbirka-uceni]'));
+    if (!misto) return;
+    const htmlU = uceni.htmlUceni({ rozbaleno: uceniRozbaleno, zdroj: stav.udrzbaFiltr === 'navrhy' ? stav.udrzbaZdroj : '' });
+    nastavitHtml(misto, htmlU || '<p class="prazdno-male">Program se zatím nic nenaučil. Každé přijetí, odmítnutí a oprava návrhu zpřesní další návrhy.</p>');
 }
 
 // Volby pod hledáním (skrytý řádek štítků, ui/volby.js): režim; v Souhrnu i řazení fronty a filtr Vyřízené

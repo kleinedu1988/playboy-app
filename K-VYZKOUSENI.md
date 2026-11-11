@@ -5,11 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.053 – Celé stránky Sbírky
+
+- [ ] Čísla a sháním a Učení se otevřou jako celé stránky (žádný panel vpravo), posouvá se celé okno.
+- [ ] Po přepnutí mezi stránkami Sbírky a zpět je stránka odrolovaná tam, kde byla.
+- [ ] Učení ukazuje, co se program naučil, i hned po spuštění (bez návštěvy Fronty).
+
 ## 0.02.052 – Jedna lišta Sbírky
 
 - [ ] Sbírka: lišta Přehled · Úkoly · Čísla a sháním · Učení přepíná správně, Akce ▾ nabídne přidání, import, export a kontrolu souborů.
 - [ ] Mapa sekcí (klik na Sbírku v kapsli) a tlačítko Zpět používají stejné názvy jako lišta.
-- [ ] Klávesa I a Esc u panelu Čísla a sháním / Učení přepnou lištu na Přehled.
 
 ## 0.02.051 – Tvar podle místa
 

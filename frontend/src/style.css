@@ -16647,11 +16647,6 @@ body.rezim-vyberu #detailView .poster {
     margin-left: 0;
 }
 
-/* Panel Sbírky přepíná lišta stránek v hlavičce, vlastní záložky nepotřebuje */
-.sbp-zalozky {
-    visibility: hidden;
-}
-
 .sh-oddelovac {
     width: 1px;
     height: 18px;
@@ -16967,12 +16962,49 @@ body.rezim-vyberu #detailView .poster {
 }
 
 /* V užším panelu jsou karty Statistik a mapy čísel pod sebou; mapy se posouvají do stran */
-.sbp-telo .sp-telo {
+.sbirka-panel:not(.sb-stranka) .sbp-telo .sp-telo {
     grid-template-columns: minmax(0, 1fr);
 }
 
 .sbp-telo .uvod-karta {
     overflow-x: auto;
+}
+
+/* Přehledná Sbírka (0.02.053): Čísla a sháním a Učení jsou celé stránky pod lištou Sbírky – místo Údržby, bez
+   výsuvného panelu, s jedním posuvníkem (hlavní oblast okna) */
+.prehled-obsah[data-sekce-ukazana="udrzba"]:is([data-panel="cisla"], [data-panel="uceni"]) > [data-sekce="udrzba"] {
+    display: none;
+}
+
+.sbirka-panel.sb-stranka,
+.prehled-obsah:is([data-panel="cisla"], [data-panel="statistiky"], [data-panel="uceni"]) > .sbirka-panel.sb-stranka {
+    position: static;
+    display: none;
+    width: auto;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: none;
+    transform: none;
+    visibility: visible;
+    transition: none;
+}
+
+.prehled-obsah[data-sekce-ukazana="udrzba"]:is([data-panel="cisla"], [data-panel="uceni"]) > .sbirka-panel.sb-stranka {
+    display: block;
+}
+
+.sb-stranka .sbp-telo {
+    padding: 0;
+    overflow: visible;
+}
+
+/* Učení na celé šířce: pruhy u popisků, ne na druhém konci okna */
+.sb-stranka .sbp-uceni {
+    max-width: 880px;
+    margin: 24px auto 0;
 }
 
 /* Co se program naučil je v panelu; nad frontou se neopakuje */

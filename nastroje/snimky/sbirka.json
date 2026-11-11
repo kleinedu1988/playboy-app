@@ -121,6 +121,66 @@
    "nazev": "cisla2-lista",
    "js": "(()=>{const h=document.querySelector('.sbirka-hlava:not(.hidden)');if(!h)return 'bez hlavy';return JSON.stringify({stranky:[...h.querySelectorAll('[data-sbirka-stranka]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),rezimy:[...h.querySelectorAll('[data-sh-rezim]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),akce:[...h.querySelectorAll('.volba')].map(b=>b.textContent.trim()),zpet:document.querySelector('#albumNav, .zpet, [data-zpet]')?.textContent.trim().slice(0,60)||''})})()",
    "cekat": 100
+  },
+  {
+   "nazev": "ukoly",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"Úkoly\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "ukoly-rol",
+   "js": "(()=>{const m=document.querySelector('main');m.scrollTop=600;return String(m.scrollTop)})()",
+   "cekat": 500
+  },
+  {
+   "nazev": "ukoly-poloha",
+   "js": "(()=>{const m=document.querySelector('main');const vid=[...document.querySelectorAll('.prehled-obsah > *')].filter(e=>e.getClientRects().length).map(e=>e.className+(e.dataset.sekce?'['+e.dataset.sekce+']':''));return JSON.stringify({scroll:m.scrollTop,vyska:m.scrollHeight,videt:vid,posuvniky:[...document.querySelectorAll('*')].filter(e=>e.scrollHeight>e.clientHeight+5&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)&&e.getClientRects().length).map(e=>e.tagName+'.'+String(e.className).split(' ')[0])})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "cisla",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"Čísla a sháním\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "cisla-poloha",
+   "js": "(()=>{const m=document.querySelector('main');const vid=[...document.querySelectorAll('.prehled-obsah > *')].filter(e=>e.getClientRects().length).map(e=>e.className+(e.dataset.sekce?'['+e.dataset.sekce+']':''));return JSON.stringify({scroll:m.scrollTop,vyska:m.scrollHeight,videt:vid,posuvniky:[...document.querySelectorAll('*')].filter(e=>e.scrollHeight>e.clientHeight+5&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)&&e.getClientRects().length).map(e=>e.tagName+'.'+String(e.className).split(' ')[0])})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "cisla-rol",
+   "js": "(()=>{const m=document.querySelector('main');m.scrollTop=600;return String(m.scrollTop)})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "uceni",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"Učení\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "uceni-poloha",
+   "js": "(()=>{const m=document.querySelector('main');const vid=[...document.querySelectorAll('.prehled-obsah > *')].filter(e=>e.getClientRects().length).map(e=>e.className+(e.dataset.sekce?'['+e.dataset.sekce+']':''));return JSON.stringify({scroll:m.scrollTop,vyska:m.scrollHeight,videt:vid,posuvniky:[...document.querySelectorAll('*')].filter(e=>e.scrollHeight>e.clientHeight+5&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)&&e.getClientRects().length).map(e=>e.tagName+'.'+String(e.className).split(' ')[0])})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "zpet-ukoly",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"Úkoly\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "zpet-ukoly-poloha",
+   "js": "(()=>{const m=document.querySelector('main');const vid=[...document.querySelectorAll('.prehled-obsah > *')].filter(e=>e.getClientRects().length).map(e=>e.className+(e.dataset.sekce?'['+e.dataset.sekce+']':''));return JSON.stringify({scroll:m.scrollTop,vyska:m.scrollHeight,videt:vid,posuvniky:[...document.querySelectorAll('*')].filter(e=>e.scrollHeight>e.clientHeight+5&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)&&e.getClientRects().length).map(e=>e.tagName+'.'+String(e.className).split(' ')[0])})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "zpet-cisla",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"Čísla a sháním\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "zpet-cisla-poloha",
+   "js": "(()=>{const m=document.querySelector('main');const vid=[...document.querySelectorAll('.prehled-obsah > *')].filter(e=>e.getClientRects().length).map(e=>e.className+(e.dataset.sekce?'['+e.dataset.sekce+']':''));return JSON.stringify({scroll:m.scrollTop,vyska:m.scrollHeight,videt:vid,posuvniky:[...document.querySelectorAll('*')].filter(e=>e.scrollHeight>e.clientHeight+5&&/(auto|scroll)/.test(getComputedStyle(e).overflowY)&&e.getClientRects().length).map(e=>e.tagName+'.'+String(e.className).split(' ')[0])})})()",
+   "cekat": 100
   }
  ]
 }

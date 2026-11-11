@@ -6,6 +6,26 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.053] – 2026-11-11
+
+### Změněno
+- **Celé stránky Sbírky (Přehledná Sbírka, krok 2):** Čísla a sháním a Učení jsou celé stránky pod lištou Sbírky
+  místo výsuvného panelu přes Údržbu. Mají jeden posuvník (okna); mapy čísel se roztáhnou na celou šířku.
+  Hlavička panelu s křížkem a klávesy I / Esc pro panel odpadly, stránky přepíná lišta.
+- Každá stránka Sbírky si v rámci spuštění pamatuje, kam byla odrolovaná, a po návratu se tam vrátí.
+
+### Opraveno
+- Učení bylo prázdné, dokud se neotevřel režim Fronta: obsah se plnil jen tam. Teď se vyplní při každém
+  vykreslení, z jakékoli stránky.
+
+### Plán
+- ROADMAP u Explicitních fotek (dotaz uživatele na obrazový model): krok Rozpoznání nejdřív změří přesnost
+  s dnešním detektorem a CLIP popisem scény. Když nevyjde 9 z 10, přibude krok Větší detektor (NudeNet 640m).
+
+### Ověřeno
+- Snímky na kopii sbírky: Čísla a sháním a Učení na celou šířku s jediným posuvníkem; Úkoly odrolované na 600 px
+  → Čísla → Učení → zpět na Úkoly vrátí 600 px, Čísla také.
+
 ## [0.02.052] – 2026-11-11
 
 ### Změněno

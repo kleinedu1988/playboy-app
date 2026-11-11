@@ -38,9 +38,9 @@ export function strankaSbirky(s) {
 }
 
 /**
- * Stav, který ukáže stránku: panel a režim Údržby. Úkoly otevře v naposledy použitém režimu úkolů. Pod panelem
- * (Čísla a sháním, Učení) je Přehled – úzká fronta úkolů vedle panelu se láme (do 0.02.053, kdy z panelů budou
- * celé stránky).
+ * Stav, který ukáže stránku: panel a režim Údržby. Úkoly otevře v naposledy použitém režimu úkolů (pamatuje se
+ * zvlášť, udrzbaRezimUkolu). Čísla a sháním a Učení jsou celé stránky místo Údržby; Údržba pod nimi zůstane
+ * v Přehledu, aby se zbytečně nepřipravovala fronta.
  * @param {string} klic @param {{ udrzbaRezim?: string }} s @param {string} [posledniUkoly]
  * @returns {{ sbirkaPanel: string, udrzbaRezim: string }}
  */

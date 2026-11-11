@@ -494,6 +494,22 @@ func TextCasopisu(cisla []string, nazvy map[string]string) string {
 	return b.String()
 }
 
+// Čísla, podle kterých má modelka časopis (0.02.046, jako frontend/src/lib/format.js karieraPoCasopisech pro profil,
+// kartu a Síň slávy): čísla alb, obálky, centerfoldy a textová vydání pictorialů; online album nebo Cyber Girl
+// přidá Playboy (zástupné číslo „0000“, TextCasopisu bere jen časopis)
+func CislaKariery(m *Modelka) []string {
+	cisla := append(append(append([]string{}, m.Vydani...), m.Obalky...), m.Centerfoldy...)
+	for _, v := range strings.Split(m.PictorialVydani, "\n") {
+		if v = strings.TrimSpace(v); JePlatneVydani(v) {
+			cisla = append(cisla, v)
+		}
+	}
+	if len(m.OnlineAlba) > 0 || m.CyberGirl != "" {
+		cisla = append(cisla, "0000")
+	}
+	return cisla
+}
+
 // Má modelka centerfold v Playboyi (číslo bez „@“)
 func CenterfoldPlayboye(m *Modelka) bool {
 	for _, v := range m.Centerfoldy {

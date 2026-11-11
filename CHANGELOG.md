@@ -6,6 +6,20 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.046] – 2026-11-11
+
+### Opraveno
+- **Hledání `casopis:` bere časopisy jako profil:** dřív jen z čísel alb a obálek. Modelka jen s textovým vydáním
+  pictorialu (např. „1992-03@PH“) nebo s prázdným albem centerfoldu se v profilu ukázala v Penthouse, ale
+  `casopis:ph` ji nenašlo. Teď se počítají i centerfoldy, textová vydání a online alba (Playboy), stejně jako
+  v profilu, na kartě a v Síni slávy (`hledani.CislaKariery`).
+
+### Ověřeno
+- Test na vzorové sbírce s Playboyem, Penthouse a Hustlerem (`stejna_data_test.go`, `stejna-data.test.js`):
+  stejné časopisy v hledání, profilu, kartě a Síni slávy; tituly (Playmate měsíce, Pet of the Month, Honey of the
+  Month) stejně v kategoriích, štítcích profilu, Údržbě a modelce čísla v kalendáři.
+- Statistiky výskytů zůstávají záměrně jen z Playboye (popsáno ve statistiky.js).
+
 ## [0.02.045] – 2026-11-11
 
 ### Opraveno

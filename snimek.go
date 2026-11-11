@@ -537,7 +537,7 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 		m.CyberGirl = o.cyberGirl
 		m.PlaymateMesice, m.PlaymateRoku = o.playmateMesice, o.playmateRoku
 		m.TitulyJinde = titulyJinde(tituly, o.mesiceJinde, o.rokyJinde)
-		m.CasopisyHledani = hledani.TextCasopisu(append(append([]string{}, m.Vydani...), m.Obalky...), nazvyCasopisu)
+		m.CasopisyHledani = hledani.TextCasopisu(hledani.CislaKariery(&m), nazvyCasopisu)
 		modelky = append(modelky, m)
 	}
 	if err := rows.Err(); err != nil && prvniChyba == nil {

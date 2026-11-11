@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.046 – Stejná data ve všech pohledech
+
+- [ ] Hledání `casopis:ph` najde i modelku, která má Penthouse jen v textovém vydání pictorialu (profil ukazuje
+  „Penthouse 1992“); počet výsledků `casopis:pb` / `casopis:ph` sedí s volbou časopisu v Síni slávy.
+
 ## 0.02.045 – Údržba a Statistiky
 
 - [ ] Údržba › Po modelkách: modelka jen s Pet of the Month bez data narození má důvod „Pet bez data narození…“.

@@ -214,6 +214,43 @@ func RozdelitCasopis(v string) (zaklad, casopis string) {
 	return v, ""
 }
 
+// CasopisPodleAlb (0.02.032): starší textová vydání modelky (pictorial_vydani, jedno na řádek, typicky z importu)
+// jsou bez časopisu a čtou se jako Playboy. Vydání bez přípony, které modelka mezi čísly alb má jen u jednoho jiného
+// časopisu („1969-11“ vedle alba „1969-11@PH“) a ne v Playboyi, dostane příponu toho časopisu; jinak beze změny.
+func CasopisPodleAlb(textova string, vydaniAlb []string) string {
+	if strings.TrimSpace(textova) == "" || len(vydaniAlb) == 0 {
+		return textova
+	}
+	jinde := map[string]map[string]bool{}
+	for _, v := range vydaniAlb {
+		zaklad, k := RozdelitCasopis(v)
+		if k == "" {
+			k = VychoziCasopis
+		}
+		if jinde[zaklad] == nil {
+			jinde[zaklad] = map[string]bool{}
+		}
+		jinde[zaklad][k] = true
+	}
+	radky := strings.Split(textova, "\n")
+	zmena := false
+	for i, radek := range radky {
+		v := strings.TrimSpace(radek)
+		if _, k := RozdelitCasopis(v); k != "" || v == "" {
+			continue
+		}
+		if c := jinde[v]; len(c) == 1 && !c[VychoziCasopis] {
+			for k := range c {
+				radky[i], zmena = v+"@"+k, true
+			}
+		}
+	}
+	if !zmena {
+		return textova
+	}
+	return strings.Join(radky, "\n")
+}
+
 // Další jméno s časopisem (0.02.027): „Jane Doe @PH“ = pod tímto jménem vyšla v Penthouse. RozdelitJmeno vrátí
 // jméno bez přípony a klíč časopisu ("" = bez časopisu); přípona se pozná jako mezera, @ a dvě písmena na konci.
 func RozdelitJmeno(s string) (jmeno, casopis string) {

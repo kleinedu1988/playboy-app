@@ -472,6 +472,7 @@ func (a *App) nacistRadkyModelek(odvozene map[int]*odvozeneZAlb, obalky map[int]
 		m.PocetFotek, m.FotekHodnocenych, m.SrdciFotek = o.fotek, o.hodnocenych, o.srdci
 		m.Vydani, m.Centerfoldy, m.OnlineAlba = uzavritSeznam(o.vydani), uzavritSeznam(o.centerfoldy), uzavritSeznam(o.online)
 		m.Obalky = uzavritSeznam(obalky[m.ID])
+		m.PictorialVydani = hledani.CasopisPodleAlb(m.PictorialVydani, o.vydani)
 		m.CyberGirl = o.cyberGirl
 		m.PlaymateMesice, m.PlaymateRoku = o.playmateMesice, o.playmateRoku
 		m.TitulyJinde = titulyJinde(tituly, o.mesiceJinde, o.rokyJinde)

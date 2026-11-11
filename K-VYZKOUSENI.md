@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.032 – Vydání z importu podle alb
+
+- [ ] **Kritérium hotovo:** Ulla Lindstrom (Pet of the Month 1969-11 Penthouse) – nadtitulek profilu jen
+      „Penthouse 1969“ (bez „Playboy 1969“), pod jménem číslo jednou („Lis 69 · PH“).
+- [ ] Ve Statistikách a Kalendáři Playboye se Ulla Lindstrom neobjeví v listopadu 1969.
+- [ ] Upravit → Uložit zapíše opravené vydání (`1969-11@PH`) i do databáze.
+
 ## 0.02.031 – Odhad srdíček až po první galerii
 
 - [ ] **Kritérium hotovo:** nově přidaná modelka bez fotek nemá v seznamu ani profilu štítek „odhad“ a není

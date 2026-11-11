@@ -19,3 +19,23 @@ func TestHledaniRokMesicSCasopisem(t *testing.T) {
 		}
 	}
 }
+
+// Textová vydání bez časopisu podle alb (0.02.032)
+func TestCasopisPodleAlb(t *testing.T) {
+	for _, p := range []struct {
+		text string
+		alba []string
+		chci string
+	}{
+		{"1969-11", []string{"1969-11@PH"}, "1969-11@PH"},
+		{"1969-11", []string{"1969-11@PH", "1969-11"}, "1969-11"},
+		{"1969-11", []string{"1969-11@PH", "1969-11@HU"}, "1969-11"},
+		{"1969-11\n1970-02", []string{"1969-11@PH", "1970-02"}, "1969-11@PH\n1970-02"},
+		{"1969-11@PH", []string{"1969-11@PH"}, "1969-11@PH"},
+		{"1985-09", nil, "1985-09"},
+	} {
+		if v := CasopisPodleAlb(p.text, p.alba); v != p.chci {
+			t.Errorf("%q %v: %q, chci %q", p.text, p.alba, v, p.chci)
+		}
+	}
+}

@@ -8,7 +8,8 @@
 // stránka se neposune a fokus zůstane), klávesnice, nabídky a akce.
 import { GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
 import { esc, nazevVydani, sklonovat } from '../lib/format';
-import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, souhrnFronty, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
+import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, souhrnFronty, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, idCileSlouceni, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
+import { vsechnyModelky } from './mezipamet';
 import { stav } from './stav';
 import { searchInput, stats } from './prvky';
 import { nastavitViditelnostHledani } from './navigace';
@@ -30,7 +31,7 @@ import * as stejne from './udrzba-stejne';
 import * as zWebu from './udrzba-web';
 import * as fotkyUd from './udrzba-fotky';
 import * as dnesUd from './udrzba-dnes';
-import { exportovatData, importovatData, prejmenovatVeSbirce, zkontrolovatSoubory } from './sprava';
+import { exportovatData, importovatData, prejmenovatVeSbirce, sloucitModelku, zkontrolovatSoubory } from './sprava';
 import * as zdravi from './zdravi';
 import { otevritRychlePridani } from './formular-modelky';
 import { potvrditRozdil } from '../ui/hromadne';
@@ -668,6 +669,12 @@ async function hlavniAkce(x, s, zvoleneAlbum = null) {
     } else if (x.akce === 'hodnoceni') {
         otevritDetailModelky(modelka);
     } else if (x.akce === 'opravit') {
+        // Kandidát na sloučení (0.02.033): náhled sloučení této modelky do starší („… jako X (id N)“)
+        const cilSlouceni = idCileSlouceni(x.nalez);
+        if (cilSlouceni) {
+            const cil = (await vsechnyModelky()).find(m => m.id === cilSlouceni);
+            if (cil) return sloucitModelku(cil, modelka);
+        }
         // Údaj se opraví ve formuláři modelky (část a pole nálezu), alba a fotky v profilu
         const pole = x.nalez.pole;
         if (!pole) return otevritDetailModelky(modelka);

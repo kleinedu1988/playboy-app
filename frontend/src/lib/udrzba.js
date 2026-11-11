@@ -345,8 +345,11 @@ export function filtrovatUdrzbu(model, { filtr = 'vse', zdroj = '', hledat = '',
     return vysledek;
 }
 
+// Cílová modelka kandidáta na sloučení (nález „ok-slouceni“: „nejspíš tatáž modelka jako X (id N): …“); 0 = není
+export const idCileSlouceni = nalez => (nalez?.klic === 'ok-slouceni' ? parseInt(/\(id (\d+)\)/.exec(nalez.popis || '')?.[1] || '0', 10) : 0);
+
 // Hlavní akce položky slovy (tlačítko v řádku, nabídka)
-export const textAkce = (x, s) => x.druh === 'navrh' ? 'Přijmout' : x.druh === 'kontrola' ? 'Opravit'
+export const textAkce = (x, s) => x.druh === 'navrh' ? 'Přijmout' : x.druh === 'kontrola' ? (idCileSlouceni(x.nalez) ? 'Sloučit' : 'Opravit')
     : s.druh === 'vydani' ? (x.id === 'cover' ? 'Přidat cover' : 'Přidat centerfold') : 'Doplnit';
 
 const velke = t => t.charAt(0).toUpperCase() + t.slice(1);

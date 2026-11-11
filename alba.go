@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"pinup-katalog/internal/hledani"
 	"pinup-katalog/internal/sbirka"
 	"sort"
 	"strings"
@@ -391,6 +392,12 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 		return "Modelky se nepodařilo sloučit."
 	}
 	defer tx.Rollback()
+	// Stav před sloučením pro Vrátit (0.02.033)
+	pred, err := zachytitPredSloucenim(tx, cilID, zdrojID)
+	if err != nil {
+		a.chyba("sloučení modelek", err)
+		return "Modelky se nepodařilo sloučit."
+	}
 
 	type klicAlba struct{ album, typ string }
 	var alba []klicAlba
@@ -488,7 +495,8 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 	// Odkazy obou modelek bez opakování, jeden na řádek
 	odkazy := strings.Fields(m.Odkazy + "\n" + zdroj.Odkazy)
 	m.Odkazy = strings.ReplaceAll(sloucitSeznam(strings.Join(odkazy, ","), ""), ", ", "\n")
-	m.DalsiJmena = sloucitSeznam(m.DalsiJmena, zdroj.Jmeno+", "+zdroj.DalsiJmena)
+	// Jméno zdrojové s časopisem, když vyšla jen v jiném časopise (0.02.033); stejné jméno se nepřidává
+	m.DalsiJmena = hledani.NormalizovatDalsiJmena(sloucitSeznam(m.DalsiJmena, dalsiJmenoZeSlouceni(*cil, *zdroj)+", "+zdroj.DalsiJmena))
 	if strings.TrimSpace(zdroj.Poznamka) != "" && !strings.Contains(m.Poznamka, zdroj.Poznamka) {
 		m.Poznamka = strings.TrimSpace(m.Poznamka + "\n\n" + zdroj.Poznamka)
 	}
@@ -505,6 +513,13 @@ func (a *App) SloucitModelky(cilID, zdrojID int) string {
 	if zdroj.Hodnoceni > cil.Hodnoceni {
 		a.SetHodnoceni(cilID, zdroj.Hodnoceni)
 	}
+	// Porovnání, zájem a historie srdíček zdrojové přejdou na cílovou
+	if err := a.prevestUceniSlouceni(pred); err != nil {
+		a.chyba("převod porovnání při sloučení", err)
+	}
+	vratitelnaSlouceni.Lock()
+	vratitelnaSlouceni.podleZdroje[zdrojID] = pred
+	vratitelnaSlouceni.Unlock()
 	return ""
 }
 

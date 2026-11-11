@@ -438,6 +438,10 @@ export function MaZamek() {
   return window['go']['main']['App']['MaZamek']();
 }
 
+export function NahledSlouceniModelek(arg1, arg2) {
+  return window['go']['main']['App']['NahledSlouceniModelek'](arg1, arg2);
+}
+
 export function NajitUdajeModelky(arg1) {
   return window['go']['main']['App']['NajitUdajeModelky'](arg1);
 }
@@ -816,6 +820,10 @@ export function VratitPrijetiZWebu(arg1) {
 
 export function VratitPruvodceFotky(arg1) {
   return window['go']['main']['App']['VratitPruvodceFotky'](arg1);
+}
+
+export function VratitSlouceniModelek(arg1, arg2) {
+  return window['go']['main']['App']['VratitSlouceniModelek'](arg1, arg2);
 }
 
 export function VratitSlouceniStejnych(arg1) {

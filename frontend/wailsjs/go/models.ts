@@ -224,6 +224,24 @@ export namespace kontrola {
 
 export namespace main {
 	
+	export class AlbumSlouceni {
+	    nazev: string;
+	    typ: string;
+	    fotek: number;
+	    akce: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new AlbumSlouceni(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.nazev = source["nazev"];
+	        this.typ = source["typ"];
+	        this.fotek = source["fotek"];
+	        this.akce = source["akce"];
+	    }
+	}
 	export class BodySezony {
 	    modelkaId: number;
 	    body: number;
@@ -1057,6 +1075,72 @@ export namespace main {
 	    }
 	}
 	
+	export class UdajSlouceni {
+	    pole: string;
+	    cil: string;
+	    zdroj: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new UdajSlouceni(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.pole = source["pole"];
+	        this.cil = source["cil"];
+	        this.zdroj = source["zdroj"];
+	    }
+	}
+	export class NahledSlouceni {
+	    chyba: string;
+	    cil: string;
+	    zdroj: string;
+	    alba: AlbumSlouceni[];
+	    doplni: UdajSlouceni[];
+	    ponecha: UdajSlouceni[];
+	    dalsiJmeno: string;
+	    srdicka: string;
+	    porovnani: number;
+	    obalek: number;
+	    clanku: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new NahledSlouceni(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.chyba = source["chyba"];
+	        this.cil = source["cil"];
+	        this.zdroj = source["zdroj"];
+	        this.alba = this.convertValues(source["alba"], AlbumSlouceni);
+	        this.doplni = this.convertValues(source["doplni"], UdajSlouceni);
+	        this.ponecha = this.convertValues(source["ponecha"], UdajSlouceni);
+	        this.dalsiJmeno = source["dalsiJmeno"];
+	        this.srdicka = source["srdicka"];
+	        this.porovnani = source["porovnani"];
+	        this.obalek = source["obalek"];
+	        this.clanku = source["clanku"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class NahledyKatalogu {
 	    ulozenych: number;
 	    chybi: number;
@@ -3332,6 +3416,7 @@ export namespace main {
 	        this.url = source["url"];
 	    }
 	}
+	
 	
 	
 	

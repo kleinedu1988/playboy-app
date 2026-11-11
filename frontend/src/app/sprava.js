@@ -1,11 +1,12 @@
 // Kontrola Disku, export a import, heslo, zálohy a nabídka ⋯
-import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, SloucitAlba, SloucitModelky, SlozkaZaloh, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
+import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, NahledSlouceniModelek, SloucitAlba, SloucitModelky, SlozkaZaloh, VratitSlouceniModelek, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
 import { otevritKapesniKatalog } from './kapesni-katalog';
 import * as novaVerze from './nova-verze';
 import { otevritVzhled } from './vzhled';
 import { otevritCasopisy } from './sprava-casopisu';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
+import { potvrditRozdil } from '../ui/hromadne';
 import { zapomenoutProfilovkyUvodu } from '../ui/uvod';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
@@ -231,17 +232,47 @@ export async function sloucitAlbum(album) {
     nacistFotkyModelky(stav.aktualniModelka.id);
 }
 
-// Duplicitní modelka se sloučí do otevřené: alba přejdou, prázdné údaje se doplní
-export async function sloucitModelku(modelka) {
-    const zdroj = await vybratModelku('Sloučit s jinou modelkou', `Vybraná modelka se sloučí do modelky ${modelka.jmeno}: její alba přejdou sem, prázdné údaje se doplní a její jméno se přidá mezi pseudonymy. Před sloučením se uloží záloha.`, 'Vybrat', [modelka.id]);
+// Řádky rozdílu nanečisto ze sloučení (0.02.033): alba, údaje, další jméno, srdíčka, porovnání, obálky, články
+export function radkyNahleduSlouceni(n) {
+    const kdo = n.cil;
+    const radky = [];
+    for (const a of n.alba || []) radky.push({ kdo, co: `album ${nazevAlba(a.nazev, a.typ)} (${a.typ})`, pred: n.zdroj, po: `${a.akce === 'přejde' ? 'přejde sem' : 'sloučí se se stejným albem'} · ${a.fotek} fotek` });
+    for (const u of n.doplni || []) radky.push({ kdo, co: u.pole, pred: '', po: u.zdroj });
+    for (const u of n.ponecha || []) radky.push({ kdo, co: `${u.pole} (u ${n.zdroj} ${u.zdroj})`, pred: u.cil, po: u.cil });
+    if (n.dalsiJmeno) radky.push({ kdo, co: 'další jméno', pred: '', po: n.dalsiJmeno });
+    if (n.srdicka) radky.push({ kdo, co: 'srdíčka', pred: '', po: n.srdicka });
+    if (n.porovnani) radky.push({ kdo, co: 'porovnání', pred: n.zdroj, po: `${n.porovnani} přejde sem` });
+    if (n.obalek) radky.push({ kdo, co: 'obálky', pred: n.zdroj, po: `${n.obalek} přejde sem` });
+    if (n.clanku) radky.push({ kdo, co: 'články', pred: n.zdroj, po: `${n.clanku} přejde sem` });
+    return radky;
+}
+
+// Duplicitní modelka se sloučí do otevřené: rozdíl nanečisto, pak alba přejdou, prázdné údaje se doplní; Vrátit
+// v oznámení (do zavření programu). zdroj = předvybraná modelka (kandidát na sloučení z Údržby).
+export async function sloucitModelku(modelka, zdroj = null) {
+    zdroj ||= await vybratModelku('Sloučit s jinou modelkou', `Vybraná modelka se sloučí do modelky ${modelka.jmeno}. Před sloučením uvidíš, co se změní.`, 'Vybrat', [modelka.id]);
     if (!zdroj) return;
-    if (!await potvrdit('Sloučit modelky', `Sloučit modelku „${zdroj.jmeno}“ do „${modelka.jmeno}“? Modelka „${zdroj.jmeno}“ pak jako samostatná zmizí.`, 'Sloučit', { nebezpecne: true })) return;
+    const nahled = await NahledSlouceniModelek(modelka.id, zdroj.id);
+    if (!nahled || nahled.chyba) {
+        oznamit(nahled?.chyba || 'Náhled sloučení se nepodařilo připravit.');
+        return;
+    }
+    if (!await potvrditRozdil({
+        nadpis: 'Sloučit modelky',
+        souhrn: `„${zdroj.jmeno}“ se sloučí do „${modelka.jmeno}“ a jako samostatná zmizí. Údaje cílové modelky mají přednost.`,
+        radky: radkyNahleduSlouceni(nahled), tlacitko: 'Sloučit',
+        poznamka: 'Nic se nezmění, dokud nepotvrdíš. Před sloučením se uloží záloha; Vrátit v oznámení platí do zavření programu.',
+    })) return;
     const chyba = await SloucitModelky(modelka.id, zdroj.id);
     if (chyba) {
         oznamit(chyba);
         return;
     }
-    oznamit(`Modelka ${zdroj.jmeno} je sloučená do ${modelka.jmeno}.`);
+    oznamit(`Modelka ${zdroj.jmeno} je sloučená do ${modelka.jmeno}.`, { text: 'Vrátit', akce: async () => {
+        const chybaVraceni = await VratitSlouceniModelek(modelka.id, zdroj.id);
+        oznamit(chybaVraceni || `Sloučení je vrácené: ${modelka.jmeno} i ${zdroj.jmeno} jsou zase zvlášť.`);
+        otevritProfilPodleId(modelka.id);
+    } });
     otevritProfilPodleId(modelka.id);
 }
 

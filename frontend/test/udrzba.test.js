@@ -223,3 +223,12 @@ test('další řádek: přeskočí hotové, na konci nic', () => {
     // Neznámý řádek (zmizel): od začátku
     assert.equal(dalsiRadek(klice, new Set(), 'x'), 'a');
 });
+
+test('idCileSlouceni: kandidát na sloučení má akci Sloučit a cílovou modelku z popisu (0.02.033)', async () => {
+    const { idCileSlouceni, textAkce } = await import('../src/lib/udrzba.js');
+    const nalez = { klic: 'ok-slouceni', popis: 'nejspíš tatáž modelka jako Jane Doe (id 12): stejné jméno „Jane Doe“ – sloučit?' };
+    assert.equal(idCileSlouceni(nalez), 12);
+    assert.equal(idCileSlouceni({ klic: 'ok-jmeno', popis: 'x (id 3)' }), 0);
+    assert.equal(textAkce({ druh: 'kontrola', nalez }, {}), 'Sloučit');
+    assert.equal(textAkce({ druh: 'kontrola', nalez: { klic: 'ok-vek' } }, {}), 'Opravit');
+});

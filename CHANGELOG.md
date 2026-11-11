@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.033] – 2026-11-11
+
+### Přidáno
+- **Sloučení modelek s rozdílem nanečisto a Vrátit:** před sloučením okno ukáže, co se změní – alba (přejde, nebo se
+  sloučí se stejným albem), doplněné údaje, údaje, kde zůstane cílová hodnota, další jméno, srdíčka, porovnání,
+  obálky a články. Po sloučení je v oznámení **Vrátit**: obě modelky zpět přesně jako předtím (i s ID, fotkami, tagy,
+  výběry, srdíčky). Vrátit platí do zavření programu a odmítne, když u modelky mezitím přibylo album nebo fotka.
+- Kandidát na sloučení v Údržbě má místo „Opravit“ tlačítko **Sloučit** (rovnou do starší modelky dvojice).
+- Porovnání, zájem, historie srdíček zdrojové modelky přejdou na cílovou (dřív zůstala u smazané modelky);
+  vzájemná porovnání obou modelek se odloží do Vrátit.
+- Jméno zdrojové modelky jde do Dalších jmen s časopisem („Jane Doe @PH“), když vyšla jen v jiném časopise.
+
 ## [0.02.032] – 2026-11-11
 
 ### Opraveno

@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.033 – Sloučení modelek s náhledem a Vrátit
+
+- [ ] **Kritérium hotovo:** sloučit dvě modelky (profil › ⋯ › Sloučit s jinou modelkou) a pak Vrátit v oznámení –
+      obě jsou zpět se svými alby, fotkami, srdíčky a porovnáními (v pořadí oblíbenosti i Síni slávy).
+- [ ] Okno rozdílu nanečisto je čitelné (alba, doplněné a ponechané údaje, další jméno, porovnání).
+- [ ] Údržba › Ke kontrole: kandidát na sloučení má tlačítko „Sloučit“ a otevře rozdíl rovnou pro dvojici.
+- [ ] Sloučení Pet Penthouse do Playmate Playboye přidá „Jméno @PH“ do Dalších jmen.
+- [ ] Vrátit po přidání fotky k modelce odmítne s vysvětlením.
+
 ## 0.02.032 – Vydání z importu podle alb
 
 - [ ] **Kritérium hotovo:** Ulla Lindstrom (Pet of the Month 1969-11 Penthouse) – nadtitulek profilu jen

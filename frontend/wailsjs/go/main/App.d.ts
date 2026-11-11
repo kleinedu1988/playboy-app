@@ -227,6 +227,8 @@ export function ImportovatSoubory(arg1:Array<string>):Promise<main.VysledekImpor
 
 export function MaZamek():Promise<boolean>;
 
+export function NahledSlouceniModelek(arg1:number,arg2:number):Promise<main.NahledSlouceni>;
+
 export function NajitUdajeModelky(arg1:number):Promise<main.NalezUdaju>;
 
 export function NastavitHeslo(arg1:string,arg2:string):Promise<boolean>;
@@ -416,6 +418,8 @@ export function VratitPorovnani(arg1:number,arg2:number):Promise<boolean>;
 export function VratitPrijetiZWebu(arg1:main.PrijetiZWebu):Promise<boolean>;
 
 export function VratitPruvodceFotky(arg1:main.PredchoziPruvodce):Promise<boolean>;
+
+export function VratitSlouceniModelek(arg1:number,arg2:number):Promise<string>;
 
 export function VratitSlouceniStejnych(arg1:main.SlouceniStejnych):Promise<boolean>;
 

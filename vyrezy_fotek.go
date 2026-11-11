@@ -3,7 +3,7 @@ package main
 // Chytrý výřez náhledů (0.02.049): pro každou fotku rámeček postavy a obličeje z detektoru, počítaný v pozadí
 // s obsahem fotek (internal/obsah/vyrezy.go). Výřez pro konkrétní rám (dlaždice, hero, karta) spočítá rozhraní
 // z rámečků a skutečné velikosti obrázku (0.02.050); databáze rozměry fotek nezná. Ruční výřez, který bude mít
-// přednost, přidá 0.02.052 jako úpravu schématu a exportu.
+// přednost, přidá 0.02.057 jako úpravu schématu a exportu.
 
 // VyrezFotky: zdroj "postava" (detektor našel postavu), "bez" (spočítáno, postava nenalezena – zůstane střed)
 // nebo "ceka" (výpočet ji ještě nezpracoval nebo je obsah fotek vypnutý)

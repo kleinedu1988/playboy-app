@@ -8,7 +8,7 @@ Opravené v 0.02.022 jsou na konci. Ostatní zůstávají, protože jde opravdu 
 | Kde | Proč |
 |---|---|
 | `casopisy.go` výchozí řádek tabulky, `hledani.go` název „Playboy“ | výchozí časopis a jeho tituly |
-| `zdroje_udaju.go`, `rocnik_wikipedie.go`, `rocnik-wiki.js`, `vydani.js` (Playmate měsíce podle Wikipedie) | seznamy „List of Playboy Playmates“ na Wikipedii existují jen pro Playboy US; jiné časopisy jsou 0.02.061–0.02.065 |
+| `zdroje_udaju.go`, `rocnik_wikipedie.go`, `rocnik-wiki.js`, `vydani.js` (Playmate měsíce podle Wikipedie) | seznamy „List of Playboy Playmates“ na Wikipedii existují jen pro Playboy US; jiné časopisy jsou 0.02.066–0.02.070 |
 | `internal/kontrola` (Playmate roku bez centerfoldu, název alba „Playmate of the Year“) | kontrola role Playmate roku, ta je jen z Playboye |
 | `kapesni-katalog.js` (lib i app), `prehled-uvod.js` „Playboy CZ – sháním“ | pohledy jen pro Playboy (0.02.007); karta CZ je Playboy CZ |
 | `clanky.js` rubrika „Playboy Interview“, `sablona.js` „Playmate Review“ v příkladech speciálů | skutečné názvy rubrik a speciálů Playboye |

@@ -3,7 +3,7 @@ import { prevest } from '../lib/hledani-dotaz';
 import { GetDuvodOdhadu, GetFotoHledaniDostupne, GetModelky, SetHodnoceni, SetHodnoceniFotek } from './backend';
 import { oznamit } from '../ui/oznameni';
 import { contextMenu, otevritKontextovouNabidku } from '../ui/nabidka';
-import { bezDiakritiky, esc, RAZENI_GALERIE, castGalerie, seraditModelky, sklonovat } from '../lib/format';
+import { VYCHOZI_CASOPIS, barvaCasopisu, bezDiakritiky, esc, nazevCasopisu, prvniCisloModelky, RAZENI_GALERIE, castGalerie, seraditModelky, sklonovat } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { poZmeneDat } from './udalosti';
 import { stav } from './stav';
@@ -44,10 +44,12 @@ export function htmlSrdicek(hodnoceni, atribut, tabem = true) {
 
 // Srdíčka modelky po půlkách; na kartě (tabem = false) bez zastávky Tabu, hodnotí zaměřená karta klávesami
 // Volitelné údaje na kartě (⋯ › Vzhled): rok prvního čísla a počet fotek; ukazuje je jen style.css podle voleb
-const rokPrvnihoCisla = m => Math.min(...[...(m.vydani || []), ...(m.centerfoldy || []), ...(m.obalky || [])].map(v => parseInt(String(v).slice(0, 4))).filter(r => r > 1900)) || 0;
+// Rok prvního vystoupení jako v profilu; u jiného časopisu než Playboy jeho zkratka v barvě časopisu (0.02.042)
 function htmlUdajuKarty(m) {
-    const rok = rokPrvnihoCisla(m);
-    return `<small class="karta-udaje"><span class="ku-rok">${Number.isFinite(rok) && rok ? rok : ''}</span><span class="ku-fotek">${sklonovat(m.pocetFotek || 0, 'fotka', 'fotky', 'fotek')}</span></small>`;
+    const { rok, casopis } = prvniCisloModelky(m);
+    const jinde = rok && casopis && casopis !== VYCHOZI_CASOPIS
+        ? ` <span class="ku-casopis" style="color: ${esc(barvaCasopisu(casopis) || 'inherit')}" title="${esc(nazevCasopisu(casopis))}">${esc(casopis)}</span>` : '';
+    return `<small class="karta-udaje"><span class="ku-rok">${rok || ''}${jinde}</span><span class="ku-fotek">${sklonovat(m.pocetFotek || 0, 'fotka', 'fotky', 'fotek')}</span></small>`;
 }
 
 export function htmlSrdicka(modelka, tabem = true) {

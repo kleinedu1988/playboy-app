@@ -6,6 +6,20 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.042] – 2026-11-11
+
+### Opraveno
+- **Karta modelky:** rok pod jménem (volba „rok na kartě“) je rok prvního vystoupení jako v nadtitulku profilu –
+  i z online alb (Ali Rose 2014, dřív prázdné); u jiného časopisu než Playboy s jeho zkratkou v barvě časopisu
+  („1969 PH“ u Ully Lindstrom), aby karta z Penthouse nevypadala jako Playboy.
+- **Řazení Podle roku a části lišty (desetiletí)** berou rok stejně – modelky jen z Penthouse nebo jen online už
+  nekončí v „Bez vydání“.
+- **Našeptávač:** nadpis „Možnosti filtru Časopis“ místo „casopis“ (i u ostatních klíčů český název).
+
+### Ověřeno
+- Mřížka karet, hledání `casopis:penthouse` (3 karty s „PH“) a prázdný výsledek hledání na snímcích 1280 a 1920 px:
+  nic nepřetéká.
+
 ## [0.02.041] – 2026-11-11
 
 ### Opraveno

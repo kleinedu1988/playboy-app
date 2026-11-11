@@ -253,14 +253,20 @@ export const RAZENI_GALERIE = {
     fotky: { popisek: 'Podle fotek', nazev: 'podle počtu fotek' },
 };
 
-export function prvniRok(modelka) {
-    let min = 0;
-    for (const v of modelka.vydani || []) {
-        const r = parseInt(String(v).slice(0, 4));
-        if (r > 0 && (!min || r < min)) min = r;
+// Rok a časopis prvního vystoupení (0.02.042): stejně jako nadtitulek profilu (karieraPoCasopisech – čísla
+// i online alba), jednotně pro kartu, řazení podle roku a části lišty. Pamatuje se u objektu modelky.
+const prvniVystoupeni = new WeakMap();
+/** @returns {{ rok: number, casopis: string }} */
+export function prvniCisloModelky(modelka) {
+    let v = prvniVystoupeni.get(modelka);
+    if (!v) {
+        const s = karieraPoCasopisech(modelka)[0];
+        v = { rok: parseInt(s?.rok || '', 10) || 0, casopis: s?.casopis || '' };
+        prvniVystoupeni.set(modelka, v);
     }
-    return min;
+    return v;
 }
+export const prvniRok = modelka => prvniCisloModelky(modelka).rok;
 
 export function seraditModelky(modelky, razeni) {
     const vysledek = [...modelky];

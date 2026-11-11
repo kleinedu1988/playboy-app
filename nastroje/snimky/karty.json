@@ -1,0 +1,85 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ],
+  [
+   1920,
+   1080
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "karty",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Modelky')?.click();return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "karty",
+   "js": "(()=>{const p=[...document.querySelectorAll('button, a, [role=menuitem]')].find(b=>b.offsetParent&&b.textContent.trim()==='Profily'&&b.getBoundingClientRect().top>80);if(!p)return 'bez Profily';p.click();return 'profily'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "karty-mereni",
+   "js": "(()=>{const out=[];const W=innerWidth;\nfor(const el of document.querySelectorAll('body *')){const r=el.getBoundingClientRect();if(!r.width||!r.height||r.bottom<0||r.top>innerHeight)continue;\nlet skryty=false;for(let p=el;p;p=p.parentElement){const c=getComputedStyle(p);if(c.visibility==='hidden'||c.opacity==='0'||p.hidden){skryty=true;break}}if(skryty)continue;\nconst cs=getComputedStyle(el);const jm=(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(/\\s+/).slice(0,2).join('.'):el.tagName.toLowerCase());\nif(r.left<W&&r.right>W+1&&el.tagName!=='IMG'&&!/rozmazan|banner-foto/.test(jm))out.push('ZA OKNEM '+jm+' '+Math.round(r.right));\nelse if(el.children.length===0&&el.scrollWidth>el.clientWidth+2&&cs.overflowX!=='visible'&&cs.textOverflow!=='ellipsis'&&el.textContent.trim())out.push('USEKNUTO '+jm+' „'+el.textContent.trim().slice(0,40)+'“');}\nreturn JSON.stringify([...new Set(out)].slice(0,25));})()",
+   "cekat": 200
+  },
+  {
+   "nazev": "karty-seznam",
+   "js": "(()=>{const k=[...document.querySelectorAll('.card .karta-udaje')].slice(0,40).map(e=>e.closest('.card').getAttribute('aria-label')+': '+e.textContent.trim());return JSON.stringify({pocet:document.querySelectorAll('.card').length,karty:k.slice(0,12)})})()",
+   "cekat": 200
+  },
+  {
+   "nazev": "penthouse",
+   "js": "(()=>{document.getElementById('searchToggleBtn')?.click();const i=document.getElementById('searchInput');i.value=\"casopis:penthouse\";i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));return 'hledám'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "penthouse-seznam",
+   "js": "(()=>{const k=[...document.querySelectorAll('.card .karta-udaje')].slice(0,40).map(e=>e.closest('.card').getAttribute('aria-label')+': '+e.textContent.trim());return JSON.stringify({pocet:document.querySelectorAll('.card').length,karty:k.slice(0,12)})})()",
+   "cekat": 200
+  },
+  {
+   "nazev": "penthouse-mereni",
+   "js": "(()=>{const out=[];const W=innerWidth;\nfor(const el of document.querySelectorAll('body *')){const r=el.getBoundingClientRect();if(!r.width||!r.height||r.bottom<0||r.top>innerHeight)continue;\nlet skryty=false;for(let p=el;p;p=p.parentElement){const c=getComputedStyle(p);if(c.visibility==='hidden'||c.opacity==='0'||p.hidden){skryty=true;break}}if(skryty)continue;\nconst cs=getComputedStyle(el);const jm=(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(/\\s+/).slice(0,2).join('.'):el.tagName.toLowerCase());\nif(r.left<W&&r.right>W+1&&el.tagName!=='IMG'&&!/rozmazan|banner-foto/.test(jm))out.push('ZA OKNEM '+jm+' '+Math.round(r.right));\nelse if(el.children.length===0&&el.scrollWidth>el.clientWidth+2&&cs.overflowX!=='visible'&&cs.textOverflow!=='ellipsis'&&el.textContent.trim())out.push('USEKNUTO '+jm+' „'+el.textContent.trim().slice(0,40)+'“');}\nreturn JSON.stringify([...new Set(out)].slice(0,25));})()",
+   "cekat": 200
+  },
+  {
+   "nazev": "nic",
+   "js": "(()=>{document.getElementById('searchToggleBtn')?.click();const i=document.getElementById('searchInput');i.value=\"xyzneexistuje\";i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));return 'hledám'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "nic-mereni",
+   "js": "(()=>{const out=[];const W=innerWidth;\nfor(const el of document.querySelectorAll('body *')){const r=el.getBoundingClientRect();if(!r.width||!r.height||r.bottom<0||r.top>innerHeight)continue;\nlet skryty=false;for(let p=el;p;p=p.parentElement){const c=getComputedStyle(p);if(c.visibility==='hidden'||c.opacity==='0'||p.hidden){skryty=true;break}}if(skryty)continue;\nconst cs=getComputedStyle(el);const jm=(el.className&&typeof el.className==='string'?'.'+el.className.trim().split(/\\s+/).slice(0,2).join('.'):el.tagName.toLowerCase());\nif(r.left<W&&r.right>W+1&&el.tagName!=='IMG'&&!/rozmazan|banner-foto/.test(jm))out.push('ZA OKNEM '+jm+' '+Math.round(r.right));\nelse if(el.children.length===0&&el.scrollWidth>el.clientWidth+2&&cs.overflowX!=='visible'&&cs.textOverflow!=='ellipsis'&&el.textContent.trim())out.push('USEKNUTO '+jm+' „'+el.textContent.trim().slice(0,40)+'“');}\nreturn JSON.stringify([...new Set(out)].slice(0,25));})()",
+   "cekat": 200
+  },
+  {
+   "nazev": "online",
+   "js": "(()=>{document.getElementById('searchToggleBtn')?.click();const i=document.getElementById('searchInput');i.value=\"ali rose\";i.dispatchEvent(new Event('input',{bubbles:true}));i.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));return 'hledám'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "online-seznam",
+   "js": "(()=>{const k=[...document.querySelectorAll('.card .karta-udaje')].slice(0,40).map(e=>e.closest('.card').getAttribute('aria-label')+': '+e.textContent.trim());return JSON.stringify({pocet:document.querySelectorAll('.card').length,karty:k.slice(0,12)})})()",
+   "cekat": 200
+  }
+ ]
+}

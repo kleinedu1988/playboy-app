@@ -1,5 +1,5 @@
 // Rychlé výsledky pod hledáním odkudkoli: příkazy vyhledávání, hodnoty filtrů, modelky, články, čísla a fotografové
-import { navrhnoutVyrazy, prevest } from '../lib/hledani-dotaz';
+import { NAZVY, navrhnoutVyrazy, prevest } from '../lib/hledani-dotaz';
 import { odebratDotaz, podobneDotazy, pridatDotaz } from '../lib/historie-hledani';
 import { ulozitDotaz } from './chytre-vybery';
 import { GetFotografove, GetKalendar, HledatClanky } from './backend';
@@ -404,7 +404,7 @@ async function hledat() {
                 <span class="naseptavac-kde">${esc(p.popis)}</span>
             </span>`,
         })),
-        vytvorSkupinu(`Možnosti filtru ${klicHodnot}`, moznostiHodnot, 'vlozit', 'naseptavac-prikazy', h => {
+        vytvorSkupinu(`Možnosti filtru ${NAZVY[klicHodnot] || klicHodnot}`, moznostiHodnot, 'vlozit', 'naseptavac-prikazy', h => {
             const hodnotaText = /\s/.test(h.hodnota) ? `"${h.hodnota}"` : h.hodnota;
             const celyVyraz = `${negPrefix}${klicHodnot}:${predCarkou}${hodnotaText}`;
             return {

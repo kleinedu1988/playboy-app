@@ -190,3 +190,17 @@ test('štítky pod jménem: časopis a rok, role z galerií, profese z Role (0.0
     nastavitCasopisy([]);
     assert.equal(barvaCasopisu('PH'), '');
 });
+
+test('první vystoupení modelky jednotně pro kartu a řazení (0.02.042)', async () => {
+    const { prvniCisloModelky, prvniRok, seraditModelky } = await import('../src/lib/format.js');
+    nastavitCasopisy(CASOPISY);
+    assert.deepEqual(prvniCisloModelky({ centerfoldy: ['1969-11@PH'], vydani: ['1969-11@PH'] }), { rok: 1969, casopis: 'PH' });
+    // Jen online (Ali Rose): rok prvního online alba, Playboy
+    assert.deepEqual(prvniCisloModelky({ onlineAlba: ['2014-06-02', '2016-09-27'] }), { rok: 2014, casopis: 'PB' });
+    // Playboy i Penthouse: dřívější
+    assert.deepEqual(prvniCisloModelky({ vydani: ['2016-04@PH'], onlineAlba: ['2015-11-08'] }), { rok: 2015, casopis: 'PB' });
+    assert.equal(prvniRok({}), 0);
+    const serazene = seraditModelky([{ jmeno: 'B', onlineAlba: ['2014-01'] }, { jmeno: 'A', vydani: ['1969-11@PH'] }, { jmeno: 'C' }], 'rok');
+    assert.deepEqual(serazene.map(m => m.jmeno), ['A', 'B', 'C']);
+    nastavitCasopisy([]);
+});

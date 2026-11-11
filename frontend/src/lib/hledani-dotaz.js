@@ -7,8 +7,8 @@ import { bezDiakritiky, rozdelitNebo, vyjmoutZavorky } from './format.js';
 
 /** @typedef {{ od: number, do: number, text: string, prikaz: string, popis: string, druh: string }} CastDotazu */
 
-// Názvy klíčů do čipů (i pro ručně psané příkazy)
-const NAZVY = {
+// Názvy klíčů do čipů (i pro ručně psané příkazy) a do nadpisu možností filtru v našeptávači
+export const NAZVY = {
     vyska: 'Výška', vaha: 'Váha', pas: 'Pas', hrudnik: 'Hrudník', boky: 'Boky', bmi: 'BMI', whr: 'Pas : boky', vek: 'Věk v 1. čísle',
     fotek: 'Fotek', rok: 'Rok', narozena: 'Narozena', edice: 'Edice', casopis: 'Časopis', kategorie: 'Kategorie', role: 'Kategorie', vlasy: 'Vlasy', oci: 'Oči',
     narodnost: 'Národnost', tag: 'Tag', tagy: 'Tag', fotograf: 'Fotograf', hodnoceni: 'Srdíčka', srdicka: 'Srdíčka', tetovani: 'Tetování',

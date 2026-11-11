@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.042 – Karty modelek
+
+- [ ] V Galerii zapni „rok na kartě“: Ulla Lindstrom „1969 PH“ (zkratka v barvě Penthouse), Ali Rose „2014“.
+- [ ] Řazení Podle roku: Heide Mann a Ilse Hasek v 70. letech, ne v „Bez vydání“.
+- [ ] Hledání `casopis:` – nadpis nabídky „Možnosti filtru Časopis“.
+
 ## 0.02.041 – Profil
 
 Profily pěti vzorových modelek jsem prošel na snímcích (1280 a 1920 px); v opravdovém okně zbývá:

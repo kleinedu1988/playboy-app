@@ -6,6 +6,23 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.041] – 2026-11-11
+
+### Opraveno
+- **Profil › nadtitulek:** zalomený řádek už nezačíná „·“ (oddělovač drží u předchozí položky) – např. Jenna Sativa
+  při šířce okna 1280 px.
+- **Průvodní texty alb a poznámky:** nadpisy `####` až `######` (texty z webu, Allison Parks „#### NATURAL WONDER“)
+  se vykreslí jako malý nadpis, ne jako text s mřížkami.
+
+### Ověřeno
+- Profily Buffy Tyler, Ulla Lindstrom, Jenna Sativa, Ali Rose a Allison Parks (záhlaví, štítky, pásky čísel,
+  alba, panel Údaje s blokem Časopisy) ve skrytém WebKitGTK při 1280 a 1920 px: nic nepřetéká za okno ani se
+  neuseká (kromě pásu alb, který se posouvá šipkou).
+
+### Pro vývoj
+- `snimky_rozhrani_test.go` (`go test -tags snimky`) a `nastroje/snimky/`: snímky obrazovek programu nad kopií
+  sbírky s měřením přetékajících prvků, pro další kroky ladění.
+
 ## [0.02.040] – 2026-11-11
 
 ### Přidáno

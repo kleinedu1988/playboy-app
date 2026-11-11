@@ -175,6 +175,8 @@ test('formátování markdown bloků: odstavce, odrážky, citace, nadpisy, pere
     // Nadpisy
     const nadpisy = formatMarkdown('# Hlavní\n## Podnadpis\n### Sekce');
     assert.equal(nadpisy, '<h3>Hlavní</h3><h4>Podnadpis</h4><h5>Sekce</h5>');
+    // #### z textů webu (Allison Parks „#### NATURAL WONDER“) je nadpis, ne text
+    assert.equal(formatMarkdown('#### Natural wonder\n###### Malý'), '<h6>Natural wonder</h6><h6>Malý</h6>');
 
     // Článek s perexem a mluvčím
     const clanek = formatMarkdown('Úvodní perex článku s **důrazem**.\n\nPLAYBOY: Jak jste začínala?\nMODELKA: Byla to náhoda.', { perex: true, mluvci: true });

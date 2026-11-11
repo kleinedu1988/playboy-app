@@ -14,7 +14,7 @@ export const pocetOdkazuDisku = text => odkazyDisku(text).length;
 
 // Počet slov a znaků textu v markdownu (patička editoru); značky formátování se nepočítají
 export function pocetSlovAZnaku(text) {
-    const cisty = String(text || '').replace(/^\s*(#{1,3}|>|[-*•–]|\d+\.)\s+/gm, '').replace(/\*\*|__|~~|[*`]/g, '');
+    const cisty = String(text || '').replace(/^\s*(#{1,6}|>|[-*•–]|\d+\.)\s+/gm, '').replace(/\*\*|__|~~|[*`]/g, '');
     return { slov: (cisty.match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu) || []).length, znaku: cisty.replace(/\s/g, '').length };
 }
 
@@ -404,7 +404,7 @@ export function markdownVRadku(text) {
     return out;
 }
 
-// Celý text na HTML: odstavce, nadpisy (# až ###), citace (>), odrážkové (*, -) a číslované (1.) seznamy
+// Celý text na HTML: odstavce, nadpisy (# až ######), citace (>), odrážkové (*, -) a číslované (1.) seznamy
 // perex: první odstavec dostane třídu clanek-perex (pro články)
 // mluvci: začátek řádku ve tvaru „SLOVO:“ (např. PLAYBOY:, HEFNER:) zvýrazní tučně
 export function formatMarkdown(text, { perex = false, mluvci = false } = {}) {
@@ -440,11 +440,11 @@ export function formatMarkdown(text, { perex = false, mluvci = false } = {}) {
             continue;
         }
 
-        // Nadpisy: #, ##, ###
-        const mNadpis = /^(#{1,3})\s+(.*)$/.exec(t);
+        // Nadpisy: #, ##, ###; #### až ###### (texty z webu, 0.02.041) jako nejmenší úroveň
+        const mNadpis = /^(#{1,6})\s+(.*)$/.exec(t);
         if (mNadpis) {
             ukoncit();
-            const u = mNadpis[1].length === 1 ? 3 : mNadpis[1].length === 2 ? 4 : 5;
+            const u = Math.min(6, mNadpis[1].length + 2);
             casti.push(`<h${u}>${markdownVRadku(mNadpis[2])}</h${u}>`);
             continue;
         }

@@ -3003,6 +3003,16 @@ button.tag:hover {
     margin: 0 0 6px 0;
 }
 
+/* Nadpisy v průvodním textu alba (texty z webu mívají „#### NADPIS“, 0.02.041): malé, ne větší než text */
+.album-desc-text :is(h3, h4, h5, h6) {
+    margin: 8px 0 4px;
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
 .album-desc-text p:last-child {
     margin-bottom: 0;
 }
@@ -5792,7 +5802,8 @@ textarea {
 
 .clanek-text h3,
 .clanek-text h4,
-.clanek-text h5 {
+.clanek-text h5,
+.clanek-text h6 {
     margin: 20px 0 10px;
     color: var(--text-main);
     font-weight: 600;
@@ -18012,7 +18023,7 @@ body.rezim-vyberu #detailView .poster {
     margin: 0 0 10px;
 }
 
-.profile-side #modelHeader .udaje-poznamka .profile-note :is(h3, h4, h5) {
+.profile-side #modelHeader .udaje-poznamka .profile-note :is(h3, h4, h5, h6) {
     display: block;
     margin: 14px 0 6px;
     letter-spacing: 0;
@@ -18037,7 +18048,7 @@ body.rezim-vyberu #detailView .poster {
     color: var(--accent-text);
 }
 
-.profile-side #modelHeader .udaje-poznamka .profile-note :is(h3, h4, h5)::after {
+.profile-side #modelHeader .udaje-poznamka .profile-note :is(h3, h4, h5, h6)::after {
     content: none;
 }
 

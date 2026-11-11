@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.041 – Profil
+
+Profily pěti vzorových modelek jsem prošel na snímcích (1280 a 1920 px); v opravdovém okně zbývá:
+- [ ] Jenna Sativa v užším okně: nadtitulek na dva řádky, druhý řádek začíná „Modelka“, ne „·“.
+- [ ] Allison Parks › album Playmate of the Month October 1965: „Natural Wonder“ jako malý nadpis nad textem.
+- [ ] Panel Údaje se vysouvá asi sekundu – nepřipadá ti pomalý?
+
 ## 0.02.040 – Proč chybí odhad srdíček
 
 - [ ] **Kritérium hotovo:** Hodnocení – pod větou o modelu vkusu „Odhad srdíček má … nehodnocených modelek ·

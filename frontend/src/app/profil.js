@@ -163,7 +163,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const obdobi = roky.length ? (Math.min(...roky) === Math.max(...roky) ? String(roky[0]) : `${Math.min(...roky)}–${Math.max(...roky)}`) : '';
     // Modelka z víc časopisů: nadtitulek je souhrn kariéry s roky („Pet of the Month 1985 · Playmate 1987“)
     // Nadtitulek stejnou strukturou: časopis a rok, role v časopise, pak první profese
-    const nadtitulek = [...stitky.filter(s => s.druh !== 'profese'), ...stitky.filter(s => s.druh === 'profese').slice(0, 2)].map(s => s.text).join(' · ');
+    const nadtitulek = [...stitky.filter(s => s.druh !== 'profese'), ...stitky.filter(s => s.druh === 'profese').slice(0, 2)]// Oddělovač drží u předchozí položky: zalomený řádek nezačne „·“ (0.02.041)
+        .map(s => s.text).join('\u00a0· ');
     profilPruhObsah.innerHTML = `
         <div class="pruh-identita">
             ${nadtitulek ? `<div class="pruh-nadtitulek">${esc(nadtitulek)}</div>` : ''}

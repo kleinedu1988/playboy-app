@@ -238,7 +238,7 @@ function prestavetKartu() {
     karta.innerHTML = `
         <header class="uf-hlava">
             ${api.obrazek(s, 'uf-foto')}
-            <div class="uf-jmeno"><h4>${esc(s.jmeno)}</h4>
+            <div class="uf-jmeno"><h4><button type="button" class="link uf-zdroj" data-uf-zdroj title="${s.druh === 'vydani' ? 'Otevřít číslo' : 'Otevřít profil modelky'} (Zpět vrátí sem)">${esc(s.jmeno)}</button></h4>
                 <small>${[api.podtitulek(s), ukoly.length ? sklonovat(ukoly.length, 'úkol', 'úkoly', 'úkolů') : 'vše vyřízeno'].filter(Boolean).map(esc).join(' · ')}</small></div>
             <div class="uf-navigace">
                 <button type="button" class="ud-nastroj" data-uf-predchozi title="Předchozí ve frontě (PageUp, Alt+←)">← Zpět</button>
@@ -470,7 +470,8 @@ function klik(e) {
     const radek = /** @type {HTMLElement} */ (cil.closest('[data-ukol]'));
     const u = radek && ukoly.find(x => x.klic === radek.dataset.ukol);
     const s = skupina;
-    if (cil.closest('[data-uf-ulozit]')) ulozitADalsi();
+    if (cil.closest('[data-uf-zdroj]') && s) zahoditZmeny().then(ok => { if (ok) api.otevritZdroj(s); });
+    else if (cil.closest('[data-uf-ulozit]')) ulozitADalsi();
     else if (cil.closest('[data-uf-predchozi]')) prejit(-1);
     else if (cil.closest('[data-uf-preskocit]')) prejit(1);
     else if (cil.closest('[data-uf-skok]')) prejit(/** @type {HTMLElement} */ (cil.closest('[data-uf-skok]')).dataset.ufSkok);

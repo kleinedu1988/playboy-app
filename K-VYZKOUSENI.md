@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.056 – Propojení ven a zpět
+
+- [ ] V profilu modelky s chybějícími údaji je pod jménem „N úkolů ve Sbírce“; klik otevře její kartu v Úkolech, Zpět vrátí na profil.
+- [ ] Na stránce čísla bez coveru / centerfoldu je pod názvem „N úkoly ve Sbírce“ a vede na kartu čísla.
+- [ ] Jméno na kartě úkolu otevře profil / číslo a Zpět vrátí na stejnou kartu.
+- [ ] Po doplnění údaje v profilu se počet úkolů při dalším otevření profilu sníží.
+
 ## 0.02.055 – Proklik ukazatelů
 
 - [ ] Klik na dlaždici Modelky / Alba / Čísla v hlavičce Sbírky ukáže nabídku a položka otevře správný režim a filtr.

@@ -25,6 +25,7 @@ import { htmlPrazdna } from '../ui/prazdno';
 import { obnovitVolby } from '../ui/volby';
 import { upravitText } from '../ui/editor-textu';
 import { atributVyrezu } from './vyrez-nahledu';
+import { doplnitOdkazy, htmlOdkazuUkolu } from './ukoly-sbirky';
 
 // Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
 export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
@@ -87,6 +88,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
         </div>
         <span class="panel-paska">${esc(paskaCisla(vydani))}</span>
         <h2>${esc(nazevVydani(vydani))}</h2>
+        ${htmlOdkazuUkolu(`v:${vydani}`)}
         <div class="profile-actions pridat-do-cisla">
             <button class="volba" data-pridat="cover"><span aria-hidden="true">+</span>Cover</button>
             <button class="volba" data-pridat="centerfold"><span aria-hidden="true">+</span>Centerfold</button>
@@ -109,6 +111,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
                 ${htmlPopisuAlba(a)}
             </section>`).join('')}
     `;
+    doplnitOdkazy(document.getElementById('issueSide'));
 
     const htmlAlb = [
         ...ostatni.map((a, i) => `

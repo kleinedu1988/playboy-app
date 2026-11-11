@@ -6,10 +6,11 @@
 // štítky a hlavní akci), rozbalený jednotlivé položky – chybějící údaj, nález kontroly, návrh – s jejich akcemi.
 // Data a priority počítá lib/udrzba.js; tady je vykreslení na místě (mění se jen skupiny, které se změnily,
 // stránka se neposune a fokus zůstane), klávesnice, nabídky a akce.
-import { GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
+import { GetPrehled, GetStavyVydani, SetNetykaSe, SetNetykaSeAlba, SetStavVydani } from './backend';
 import { esc, nazevVydani, sklonovat } from '../lib/format';
 import { MEZ_JISTE, NAZVY_PRIORIT, OBLASTI_FILTRU, SKUPINY_UDAJU, filtrovatUdrzbu, podtitulek, procent, sestavitPoUdajich, souhrnFronty, sestavitUdrzbu, slovoJistoty, stitkySkupiny, textAkce, idCileSlouceni, tridaJistoty, udajFiltru, zalozkaPole, zdrojePolozek } from '../lib/udrzba';
 import { vsechnyModelky } from './mezipamet';
+import { poZmeneDat } from './udalosti';
 import { stav } from './stav';
 import { searchInput, stats } from './prvky';
 import { nastavitViditelnostHledani } from './navigace';
@@ -121,6 +122,7 @@ function podtitulekSkupiny(s) {
 // Data z načtení Přehledu; přepočítá frontu (a řádky pro Doplnit modelku a „Uložit a další“)
 export function nastavitData({ p, stavy }) {
     data = { p, stavy };
+    poctyZastarale = false;
     // Sbírka se mohla změnit (smazané nebo přesunuté fotky): Stejné fotky se načtou znovu, až budou vidět
     stejne.zastarat();
     zWebu.zastarat();
@@ -667,6 +669,30 @@ export function otevritNaFiltru(filtr) {
     } else nastavitFiltr(filtr);
 }
 
+// Počty úkolů skupin pro odkazy z profilu a čísla (0.02.056, ukoly-sbirky.js). Fronta je spočítaná, jen když
+// byla Sbírka otevřená; jinak (nebo po změně dat) se data Sbírky načtou na pozadí, bez vykreslení.
+let poctyZastarale = true;
+poZmeneDat(() => { poctyZastarale = true; });
+/** @type {Promise<any> | null} */
+let pripravaPoctu = null;
+export const jeNacteno = () => !!model;
+export async function poctyUkoluSkupin() {
+    if (!model || poctyZastarale) {
+        pripravaPoctu ||= (async () => {
+            const [p, seznam, stavy] = await Promise.all([GetPrehled(stav.prehledSkryte), vsechnyModelky(),
+                GetStavyVydani().then(s => s || []), navrhy.nacistNavrhy()]);
+            // Mezitím ji načetla Sbírka sama
+            if (model && !poctyZastarale) return;
+            if (!udrzbaVidet()) {
+                stav.prehledModelky = new Map(seznam.map(m => [m.id, m]));
+                nastavitData({ p, stavy });
+            }
+        })().finally(() => { pripravaPoctu = null; });
+        await pripravaPoctu;
+    }
+    return new Map((model?.skupiny || []).map(s => [s.klic, s.aktivnich]));
+}
+
 // Proklik do stránky Úkoly (0.02.055): režim, volitelně filtr fronty nebo skupina (modelka „m:id“, číslo „v:klíč“).
 // Z Čísel a sháním / Učení nejdřív zavře stránku (prehled.js), pak přepne režim.
 export function otevritVUkolech(rezim, { filtr = '', klicSkupiny = '' } = {}) {
@@ -954,7 +980,12 @@ export function pripravit(nacistPrehled) {
     nacist = nacistPrehled;
     navrhy.nastavitObnoveni(poZmene);
     uceni.pripravit();
-    const spolecne = { model: () => model, poUdajich: () => udaje, hlavniAkce, odlozit, obrazek: obrazekSkupiny, podtitulek: podtitulekSkupiny, modelka: modelkaSkupiny };
+    const spolecne = { model: () => model, poUdajich: () => udaje, hlavniAkce, odlozit, obrazek: obrazekSkupiny, podtitulek: podtitulekSkupiny, modelka: modelkaSkupiny,
+        // Z karty úkolu na profil nebo číslo (0.02.056); Zpět vrátí na tutéž kartu
+        otevritZdroj: (s) => {
+            if (s.druh === 'vydani') otevritVydani(s.vydani);
+            else if (modelkaSkupiny(s)) otevritDetailModelky(modelkaSkupiny(s));
+        } };
     fokus.pripravit({ ...spolecne, nacist: () => nacist(), viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'modelky' });
     poUdajich.pripravit({ ...spolecne, viditelna: () => udrzbaVidet() && stav.udrzbaRezim === 'udaje',
         // Vyřízené v datech Přehledu (titulní fotka, srdíčka, alba) hned, bez čekání na nové načtení

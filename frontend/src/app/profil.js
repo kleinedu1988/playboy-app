@@ -30,6 +30,7 @@ import * as zasobnik from './zasobnik';
 import { otevritAlbumModal } from './formular-alba';
 import { vzhled } from '../ui/vzhled';
 import { atributVyrezu } from './vyrez-nahledu';
+import { doplnitOdkazy, htmlOdkazuUkolu } from './ukoly-sbirky';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -177,6 +178,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
                 <span class="pruh-kariera">${obdobi ? `<span>${esc(obdobi)}</span>` : ''}<span class="pruh-pocty"></span>${paskyHtml ? `<span class="pruh-cisla">${paskyHtml}</span>` : ''}</span>
                 ${htmlOdhadu(modelka, 'odhad-profil', { bezOdhadu: true })}
                 ${htmlPoradi(modelka)}
+                ${htmlOdkazuUkolu(`m:${modelka.id}`, 'pruh-odkaz')}
                 <div class="profile-odznaky" hidden></div>
                 <button type="button" class="pruh-odkaz pruh-fotka-zahlavi" data-fotka-zahlavi hidden title="Záhlaví zatím nemá vlastní fotku">+ fotka záhlaví</button>
             </div>
@@ -210,6 +212,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const poleTagu = /** @type {HTMLElement | null} */ (modelHeader.querySelector('.udaje-tagy .profile-tags'));
     if (poleTagu) modelHeader.querySelector('[data-rozbalit-tagy]').classList.toggle('hidden', poleTagu.scrollHeight <= poleTagu.clientHeight + 2);
 
+    doplnitOdkazy(profilPruhObsah);
     await Promise.all([nacistFotkyModelky(modelka.id), doplnitClankyModelky(modelka).then(() => doplnitZminkyModelky(modelka)), doplnitOdznaky(modelka.id), doplnitPodobne(modelka.id, moje)]);
 }
 

@@ -6,6 +6,21 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.056] – 2026-11-11
+
+### Přidáno
+- **Propojení ven a zpět (Přehledná Sbírka, krok 5 – poslední):** profil modelky (v řádku pod jménem) a stránka
+  čísla (pod názvem) ukazují „N úkolů ve Sbírce“, když modelka nebo číslo nějaké má. Klik otevře Sbírka › Úkoly
+  › Po modelkách přímo na jejich kartě; Zpět vrátí na profil / číslo.
+- Jméno na kartě úkolu (Po modelkách) otevře profil modelky nebo stránku čísla; Zpět vrátí na tutéž kartu.
+  Rozepsané údaje na kartě se před odchodem potvrdí.
+- Počty úkolů se spočítají na pozadí i bez otevření Sbírky a po změně dat znovu.
+
+### Ověřeno
+- Snímky na kopii sbírky (Sbírka předtím neotevřená): profil Layla Roberts → „21 úkolů ve Sbírce“ → karta Layla
+  Roberts v Po modelkách → Zpět na profil; z karty jménem na profil → Zpět na kartu; Únor 1954: karta → číslo
+  („2 úkoly ve Sbírce“) → Zpět na kartu → číslo → odkaz → karta Únor 1954.
+
 ## [0.02.055] – 2026-11-11
 
 ### Přidáno

@@ -1,0 +1,146 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "t-karta",
+   "js": "(()=>{const c=document.querySelector('.card[aria-label=\"Layla Roberts\"]');if(!c)return 'karta nenalezena';c.scrollIntoView();c.click();return 'klik'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "t-odkaz",
+   "js": "(()=>{const b=document.querySelector('#profilPruh [data-ukoly-sbirky]');return b?(b.hidden?'skryty ':'')+b.textContent+' | '+b.dataset.ukolySbirky:'bez'})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "t-klik",
+   "js": "(()=>{const b=document.querySelector('#profilPruh [data-ukoly-sbirky]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "t-ukoly",
+   "js": "(()=>{const t=s=>(document.querySelector(s)?.textContent||'').replace(/\\s+/g,' ').trim();const vid=id=>!document.getElementById(id)?.classList.contains('hidden');return JSON.stringify({profil:vid('detailView')?t('.pruh-jmeno h2'):'',cislo:vid('issueView')?t('#issueSide h2'):'',stranka:t('.sbirka-hlava:not(.hidden) .sh-stranky .on'),rezim:t('.sbirka-hlava:not(.hidden) [data-sh-rezim].on'),karta:t('.ud-fokus .uf-jmeno h4'),zpet:document.getElementById('backBtn')?.title||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "t-zpet",
+   "js": "(()=>{const b=document.querySelector('#backBtn');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "t-zpet-stav",
+   "js": "(()=>{const t=s=>(document.querySelector(s)?.textContent||'').replace(/\\s+/g,' ').trim();const vid=id=>!document.getElementById(id)?.classList.contains('hidden');return JSON.stringify({profil:vid('detailView')?t('.pruh-jmeno h2'):'',cislo:vid('issueView')?t('#issueSide h2'):'',stranka:t('.sbirka-hlava:not(.hidden) .sh-stranky .on'),rezim:t('.sbirka-hlava:not(.hidden) [data-sh-rezim].on'),karta:t('.ud-fokus .uf-jmeno h4'),zpet:document.getElementById('backBtn')?.title||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "t-klik2",
+   "js": "(()=>{const b=document.querySelector('#profilPruh [data-ukoly-sbirky]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "t-zdroj",
+   "js": "(()=>{const b=document.querySelector('.ud-fokus [data-uf-zdroj]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "t-zdroj-stav",
+   "js": "(()=>{const t=s=>(document.querySelector(s)?.textContent||'').replace(/\\s+/g,' ').trim();const vid=id=>!document.getElementById(id)?.classList.contains('hidden');return JSON.stringify({profil:vid('detailView')?t('.pruh-jmeno h2'):'',cislo:vid('issueView')?t('#issueSide h2'):'',stranka:t('.sbirka-hlava:not(.hidden) .sh-stranky .on'),rezim:t('.sbirka-hlava:not(.hidden) [data-sh-rezim].on'),karta:t('.ud-fokus .uf-jmeno h4'),zpet:document.getElementById('backBtn')?.title||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "t-zdroj-zpet",
+   "js": "(()=>{const b=document.querySelector('#backBtn');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "t-zdroj-zpet-stav",
+   "js": "(()=>{const t=s=>(document.querySelector(s)?.textContent||'').replace(/\\s+/g,' ').trim();const vid=id=>!document.getElementById(id)?.classList.contains('hidden');return JSON.stringify({profil:vid('detailView')?t('.pruh-jmeno h2'):'',cislo:vid('issueView')?t('#issueSide h2'):'',stranka:t('.sbirka-hlava:not(.hidden) .sh-stranky .on'),rezim:t('.sbirka-hlava:not(.hidden) [data-sh-rezim].on'),karta:t('.ud-fokus .uf-jmeno h4'),zpet:document.getElementById('backBtn')?.title||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "p-cisla",
+   "js": "(()=>{const b=document.querySelector('.sh-oblast[data-sh-oblast=\"Čísla\"]');if(!b)return 'bez';b.click();return [...document.querySelectorAll('#contextMenu button')].map(x=>x.textContent.trim()).join(' | ')})()",
+   "cekat": 400
+  },
+  {
+   "nazev": "p-cisla-mapa",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.trim().startsWith('Mapa'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "p-bunka",
+   "js": "(()=>{const b=document.querySelector('.uvod-rok i.p[data-cislo]')||document.querySelector('.uvod-rok i[data-cislo]');if(!b)return 'bez';b.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:300,clientY:300}));return b.dataset.cislo})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "p-bunka-menu",
+   "js": "[...document.querySelectorAll('#contextMenu button')].map(x=>x.textContent.trim()).join(' | ')",
+   "cekat": 100
+  },
+  {
+   "nazev": "p-bunka-ukoly",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.trim().startsWith('Úkoly čísla'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "t-cislo-zdroj",
+   "js": "(()=>{const b=document.querySelector('.ud-fokus [data-uf-zdroj]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "t-cislo-stav",
+   "js": "(()=>{const t=s=>(document.querySelector(s)?.textContent||'').replace(/\\s+/g,' ').trim();const vid=id=>!document.getElementById(id)?.classList.contains('hidden');return JSON.stringify({profil:vid('detailView')?t('.pruh-jmeno h2'):'',cislo:vid('issueView')?t('#issueSide h2'):'',stranka:t('.sbirka-hlava:not(.hidden) .sh-stranky .on'),rezim:t('.sbirka-hlava:not(.hidden) [data-sh-rezim].on'),karta:t('.ud-fokus .uf-jmeno h4'),zpet:document.getElementById('backBtn')?.title||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "t-cislo-odkaz",
+   "js": "(()=>{const b=document.querySelector('#issueSide [data-ukoly-sbirky]');return b?(b.hidden?'skryty ':'')+b.textContent+' | '+b.dataset.ukolySbirky:'bez'})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "t-cislo-zpet",
+   "js": "(()=>{const b=document.querySelector('#backBtn');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "t-cislo-zpet-stav",
+   "js": "(()=>{const t=s=>(document.querySelector(s)?.textContent||'').replace(/\\s+/g,' ').trim();const vid=id=>!document.getElementById(id)?.classList.contains('hidden');return JSON.stringify({profil:vid('detailView')?t('.pruh-jmeno h2'):'',cislo:vid('issueView')?t('#issueSide h2'):'',stranka:t('.sbirka-hlava:not(.hidden) .sh-stranky .on'),rezim:t('.sbirka-hlava:not(.hidden) [data-sh-rezim].on'),karta:t('.ud-fokus .uf-jmeno h4'),zpet:document.getElementById('backBtn')?.title||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "t-cislo-zdroj2",
+   "js": "(()=>{const b=document.querySelector('.ud-fokus [data-uf-zdroj]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "t-cislo-klik",
+   "js": "(()=>{const b=document.querySelector('#issueSide [data-ukoly-sbirky]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "t-cislo-ukoly",
+   "js": "(()=>{const t=s=>(document.querySelector(s)?.textContent||'').replace(/\\s+/g,' ').trim();const vid=id=>!document.getElementById(id)?.classList.contains('hidden');return JSON.stringify({profil:vid('detailView')?t('.pruh-jmeno h2'):'',cislo:vid('issueView')?t('#issueSide h2'):'',stranka:t('.sbirka-hlava:not(.hidden) .sh-stranky .on'),rezim:t('.sbirka-hlava:not(.hidden) [data-sh-rezim].on'),karta:t('.ud-fokus .uf-jmeno h4'),zpet:document.getElementById('backBtn')?.title||''})})()",
+   "cekat": 100
+  }
+ ]
+}

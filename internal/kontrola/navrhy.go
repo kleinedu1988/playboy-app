@@ -65,10 +65,12 @@ var ZdrojeNavrhu = map[string]ZdrojNavrhu{
 	"centerfold": {Popis: "centerfold", Rodina: "centerfold", Predpoklad: 0.75},
 	"cislo":      {Popis: "fotograf čísla", Rodina: "fotograf", Predpoklad: 0.8},
 	"modelka":    {Popis: "fotograf modelky", Rodina: "fotograf", Predpoklad: 0.7},
+	"udaje":      {Popis: "číslo v údajích modelky", Rodina: "udaje", Predpoklad: 0.8},
+	"role":       {Popis: "titul v Roli", Rodina: "role", Predpoklad: 0.75},
 }
 
 // Pořadí zdrojů v důvodu návrhu a v přehledu učení
-var PoradiZdroju = []string{"misto", "edice", "cetnost", "miry", "regrese", "podobne", "text", "nazev", "centerfold", "cislo", "modelka"}
+var PoradiZdroju = []string{"misto", "edice", "cetnost", "miry", "regrese", "podobne", "text", "nazev", "centerfold", "udaje", "role", "cislo", "modelka"}
 
 // Údaj, pro který se návrhy dělají
 type UdajNavrhu struct {
@@ -239,7 +241,6 @@ func Navrhnout(modelky []hledani.Modelka, alba []AlbumNavrhu, letos int, uc *Vst
 		func(pridat PridatKandidata) { NavrhnoutNarodnosti(modelky, zapisy["narodnost"], pridat) },
 		func(pridat PridatKandidata) { NavrhnoutVzhled(modelky, zapisy, pridat) },
 		func(pridat PridatKandidata) { NavrhnoutMiry(modelky, pridat) },
-		func(pridat PridatKandidata) { NavrhnoutPlaymateRoku(modelky, alba, pridat) },
 		func(pridat PridatKandidata) { NavrhnoutAlba(modelky, alba, letos, zapisy["fotografAlba"], pridat) },
 	}
 	podleZdroje := make([][]Kandidat, len(zdroje))

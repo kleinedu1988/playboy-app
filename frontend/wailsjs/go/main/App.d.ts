@@ -413,6 +413,8 @@ export function UzavritSezonu(arg1:string,arg2:number):Promise<boolean>;
 
 export function VratitCtverici(arg1:Array<number>,arg2:number):Promise<boolean>;
 
+export function VratitNavrhy(arg1:Array<kontrola.NavrhDoplneni>):Promise<number>;
+
 export function VratitPorovnani(arg1:number,arg2:number):Promise<boolean>;
 
 export function VratitPrijetiZWebu(arg1:main.PrijetiZWebu):Promise<boolean>;

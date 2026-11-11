@@ -404,6 +404,7 @@ export const PresunoutAlbum = /** @type {typeof App.PresunoutAlbum} */ (obalit('
 export const PresunoutFotky = /** @type {typeof App.PresunoutFotky} */ (obalit('PresunoutFotky'));
 export const PrijmoutNavrh = /** @type {typeof App.PrijmoutNavrh} */ (obalit('PrijmoutNavrh'));
 export const PrijmoutNavrhy = /** @type {typeof App.PrijmoutNavrhy} */ (obalit('PrijmoutNavrhy'));
+export const VratitNavrhy = /** @type {typeof App.VratitNavrhy} */ (obalit('VratitNavrhy'));
 export const PridatDoVyberu = /** @type {typeof App.PridatDoVyberu} */ (obalit('PridatDoVyberu'));
 export const PridatModelkuKAlbu = /** @type {typeof App.PridatModelkuKAlbu} */ (obalit('PridatModelkuKAlbu'));
 export const SetCoverVyrez = /** @type {typeof App.SetCoverVyrez} */ (obalit('SetCoverVyrez'));

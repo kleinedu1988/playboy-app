@@ -6,6 +6,21 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.039] – 2026-11-11
+
+### Přidáno
+- **Údržba › návrh čísla alba z údajů modelky:** pictorial bez čísla dostane jediné číslo z textového vydání
+  a vystoupení modelky, i s časopisem (Heide Mann „1970-10@PH“). Datum z názvu alba převezme časopis z údajů;
+  rok v názvu, který k číslu nesedí, návrh vylučuje.
+- **Návrh typu alba** i pro „Pet / Honey of the Month / Year“ a „Playmates of the Month“ v názvu, a z titulu
+  zapsaného jen v Roli (PMOTM, Penthouse Pet, Hustler Honey), když je to její jediný pictorial.
+- **Vrátit po hromadném přijetí návrhů:** oznámení nabídne Vrátit; čísla, data a fotografové alb se vyprázdní,
+  typ alba se vrátí na Pictorial, údaje modelek také (mezitím ručně změněné zůstanou).
+
+### Změněno
+- Návrh „Playmate roku“ do Role se už nedělá (tituly se od 0.02.038 berou jen z alb). Hodnota návrhu typu alba je
+  popsaná obecně („Pictorial modelky měsíce (Playmate / Pet / Honey of the Month)“).
+
 ## [0.02.038] – 2026-11-11
 
 ### Změněno

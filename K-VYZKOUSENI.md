@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.039 – Data do pořádku v Údržbě
+
+- [ ] **Kritérium hotovo:** Údržba › návrhy: Heide Mann · „Pet of the Month October 1970“ – číslo „Říjen 1970 ·
+      Penthouse“ (99 %). Přijmout → profil ukazuje číslo i po restartu (v databázi `1970-10@PH`).
+- [ ] Hromadně přijmout víc návrhů (např. všechny typy alb, na kopii sbírky jich je 490): okno rozdílu ukazuje
+      u typu „Pictorial → Pictorial modelky měsíce…“, po přijetí Vrátit v oznámení vše vrátí.
+- [ ] Jenna Sativa: návrhy „2016-04 · Penthouse“ a typ „… of the Year“ u „Penthouse Pet of the Year 2017“.
+- [ ] Dolly Read, Mary Collinson, Haley Cummings, Sandra Edwards: návrh typu alba z titulu v Roli (75 %).
+- [ ] Stefanie Knight: album „2017-PMOY-MX“ nedostane číslo 2016-06-MX.
+
 ## 0.02.038 – Tituly všude z galerií
 
 - [ ] **Kritérium hotovo:** Galerie › filtr Kategorie a hledání `kategorie:"playmate mesice"` ukážou stejné modelky
@@ -142,7 +152,8 @@ v [docs/archiv/K-VYZKOUSENI-DO-0.02.036.md](docs/archiv/K-VYZKOUSENI-DO-0.02.036
       Pet of the Month 2016 a Pet of the Year 2017 má jako Pictorial bez čísla (prázdné) → 0.02.039.
 - [ ] **Ali Rose:** „PMOTM (ZA)“ je jen v Roli, album s typem Playmate měsíce chybí. Proto má jen „Pictorial“ → 0.02.039.
 - [ ] **41 modelek má titul jen v Roli** (16 Playmate roku, 10 Pet, 8 Cyber Girl, 6 Playmate měsíce, 1 Honey), např.
-      Claudia Jennings, Angela White, Amber Sym → 0.02.039. U Allison Parks je v Roli překlep „Herčka“.
+      Claudia Jennings, Angela White, Amber Sym. Od 0.02.039 návrh typu alba pomůže tam, kde má jediný pictorial
+      nebo titul v názvu alba; ostatním chybí album s titulem (nahrát ho). U Allison Parks je v Roli překlep „Herčka“.
 - [ ] **56 nehodnocených modelek s fotkami nemá odhad** (chybí analýza obsahu, nebo jsou v nejisté skupině?) → 0.02.040.
 - [ ] **Pseudonym „Hope Levin“** mají Hope Marie Carlton i Cherie Witter (nález „stejné jméno“ v Údržbě) – ověř, ke které
       patří.

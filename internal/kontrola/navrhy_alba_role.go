@@ -17,62 +17,27 @@ import (
 var (
 	VzorPlaymateRokuNavrhu = regexp.MustCompile(`^Playmate roku (19|20)\d{2}$`)
 	VzorPlaymateRokuTextu  = regexp.MustCompile(`\b(?:playmate\s+(?:of\s+the\s+year|roku)|pmoy)\s*[:\-–]?\s*((?:19|20)\d{2})\b|\b((?:19|20)\d{2})\s+playmate\s+of\s+the\s+year\b`)
-	VzorPictorialuPMOY     = regexp.MustCompile(`\b(playmate\s+(of\s+the\s+year|roku)|pmoy)\b`)
-	VzorPictorialuPMOM     = regexp.MustCompile(`\b(playmate\s+(of\s+the\s+month|mesice)|pmom)\b`)
+	// Pet a Honey of the Month / Year (Penthouse, Hustler) od 0.02.039 – typ alba je obecný, popisek podle časopisu
+	VzorPictorialuPMOY = regexp.MustCompile(`\b((playmate|pet|honey)s?\s+(of\s+the\s+year|roku)|pmoy)\b`)
+	VzorPictorialuPMOM = regexp.MustCompile(`\b((playmate|pet|honey)s?\s+(of\s+the\s+month|mesice)|pmom)\b`)
+	// Titul modelky měsíce zapsaný jen v Roli (PMOTM, Penthouse Pet, Hustler Honey); bez zahraničních edic v závorce
+	vzorTituluMesiceVRoli = regexp.MustCompile(`^(pmo[tm]m|playmate( mesice| of the month)?|(penthouse )?pet( of the month)?|(hustler )?honey( of the month)?)$`)
 )
+
+// Role uvádí titul modelky měsíce (0.02.039): jeden ze zápisů v Roli je PMOTM, Penthouse Pet, Hustler Honey…
+func titulMesiceVRoli(role string) bool {
+	for _, kus := range strings.FieldsFunc(role, func(r rune) bool { return r == ',' || r == ';' || r == '\n' }) {
+		if vzorTituluMesiceVRoli.MatchString(strings.Join(strings.Fields(hledani.Zjednodusit(kus)), " ")) {
+			return true
+		}
+	}
+	return false
+}
 
 // Kategorie Playmate roku už je zapsaná (v jakémkoli tvaru, který rozhraní pozná)
 func MaPlaymateRoku(role string) bool {
 	r := uceni.KlicTextu(role)
 	return strings.Contains(r, "playmate roku") || strings.Contains(r, "playmate of the year") || strings.Contains(r, "pmoy")
-}
-
-// Playmate roku z poznámky, tagů, vystoupení nebo názvu alba („Playmate of the Year 1998“), když kategorie
-// zapsaná není. Rok musí sedět k prvnímu centerfoldu (stejně jako kontrola ok-pmoy); bez centerfoldu nižší jistota.
-func NavrhnoutPlaymateRoku(modelky []hledani.Modelka, alba []AlbumNavrhu, pridat PridatKandidata) {
-	nazvyAlb := map[int][]string{}
-	for _, al := range alba {
-		nazvyAlb[al.ModelkaID] = append(nazvyAlb[al.ModelkaID], al.Nazev)
-	}
-	for _, m := range modelky {
-		// Pictorial Playmate of the Year kategorii dává sám (odvozená)
-		if MaPlaymateRoku(m.Role) || m.PlaymateRoku != "" || NeniKNavrhu(m, "role") {
-			continue
-		}
-		roky := map[int]string{}
-		for _, zdroj := range []struct{ nazev, text string }{
-			{"poznámka", m.Poznamka}, {"tagy", m.Tags}, {"vystoupení", m.Vystoupeni}, {"album", strings.Join(nazvyAlb[m.ID], "\n")},
-		} {
-			for _, s := range VzorPlaymateRokuTextu.FindAllStringSubmatch(hledani.Zjednodusit(zdroj.text), -1) {
-				rok, _ := strconv.Atoi(s[1] + s[2])
-				if _, ma := roky[rok]; !ma {
-					roky[rok] = zdroj.nazev
-				}
-			}
-		}
-		if len(roky) != 1 {
-			continue // žádný, nebo více různých roků
-		}
-		for rok, zdroj := range roky {
-			prvni := 0
-			for _, v := range m.Centerfoldy {
-				if r, _, _, ok := sbirka.CastiVydani(v); ok && (prvni == 0 || r < prvni) {
-					prvni = r
-				}
-			}
-			jistota, duvod := 0.92, fmt.Sprintf("%s uvádí Playmate roku %d", zdroj, rok)
-			switch {
-			case prvni == 0:
-				jistota = 0.75
-				duvod += " (centerfold ve sbírce není)"
-			case rok < prvni || rok > prvni+3:
-				continue
-			default:
-				duvod += fmt.Sprintf(", první centerfold %d", prvni)
-			}
-			pridat(m, nil, "role", fmt.Sprintf("Playmate roku %d", rok), duvod, "text", jistota)
-		}
-	}
 }
 
 // Názvy měsíců (zjednodušené, česky i anglicky, i v 2. pádě) → číslo měsíce
@@ -297,25 +262,58 @@ func NavrhnoutAlba(modelky []hledani.Modelka, alba []AlbumNavrhu, letos int, pre
 		}
 		return n
 	}
+	// Ověření čísla z údajů modelky (0.02.039): u pictorialů s číslem, sedí jediné číslo z textového vydání?
+	var zUdaju uceni.Uspesnost
+	cisloUdaju := map[int]string{}
+	for _, m := range modelky {
+		if c := hledani.JedinoCisloModelky(m.PictorialVydani, "", nil); c != "" {
+			cisloUdaju[m.ID] = c
+		}
+	}
+	for _, al := range alba {
+		if c := cisloUdaju[al.ModelkaID]; c != "" && JePictorialCisla(al) && al.Vydani != "" {
+			zUdaju.Zapocitat(al.Vydani == c)
+		}
+	}
 	for _, m := range modelky {
 		indexy := podleModelky[m.ID]
 		c := centerfold(m)
 		bezVydani := 0
+		pictorialu, obycejnych := 0, -1
 		maPictorialCenterfoldu := false
+		maCisloUdaju := false
 		for _, j := range indexy {
 			if al := alba[j]; JePictorialCisla(al) {
 				if al.Vydani == "" && !sbirka.ObsahujeKlic(al.Neni, "vydani") {
 					bezVydani++
 				}
 				maPictorialCenterfoldu = maPictorialCenterfoldu || c != "" && al.Vydani == c
+				maCisloUdaju = maCisloUdaju || al.Vydani != "" && al.Vydani == cisloUdaju[m.ID]
+				pictorialu++
+				if al.Typ == "Pictorial" {
+					obycejnych = j
+				}
 			}
 		}
+		// Titul jen v Roli a žádný z galerií: jediný pictorial časopisu je pictorial modelky měsíce
+		titulZRole := titulMesiceVRoli(m.Role) && len(m.Centerfoldy) == 0 && !m.PlaymateMesice && len(m.TitulyJinde) == 0 &&
+			pictorialu == 1 && obycejnych >= 0
 		for _, j := range indexy {
 			al := &alba[j]
 			if JePictorialCisla(*al) && al.Vydani == "" && !sbirka.ObsahujeKlic(al.Neni, "vydani") {
 				if v := vydaniNazvu[j]; v != "" {
+					// Datum z názvu nezná časopis: když údaje modelky uvádějí totéž číslo jiného časopisu, platí ono
+					if cu := cisloUdaju[m.ID]; cu != "" && strings.SplitN(cu, "@", 2)[0] == v {
+						v = cu
+					}
 					pridat(m, al, "vydaniAlba", v, fmt.Sprintf("název alba „%s“ obsahuje datum%s", al.Nazev, zNazvu.Text("pictorialů s datem v názvu")),
 						"nazev", zNazvu.Jistota(0.85, 6))
+				}
+				// Rok v názvu alba, který k číslu nesedí (2017-PMOY-MX u čísla 2016-06-MX), pravidlo vylučuje
+				rokNazvu := VzorRoku.FindString(hledani.Zjednodusit(al.Nazev))
+				if cu := cisloUdaju[m.ID]; cu != "" && bezVydani == 1 && !maCisloUdaju && cu != c && (rokNazvu == "" || rokNazvu == cu[:4]) {
+					pridat(m, al, "vydaniAlba", cu, fmt.Sprintf("v údajích modelky je jediné číslo %s%s", cu, zUdaju.Text("pictorialů modelek s jedním číslem v údajích")),
+						"udaje", zUdaju.Jistota(0.8, 6))
 				}
 				if c != "" && bezVydani == 1 && !maPictorialCenterfoldu {
 					// Rok v názvu, který k centerfoldu nesedí, pravidlo vylučuje
@@ -336,6 +334,8 @@ func NavrhnoutAlba(modelky []hledani.Modelka, alba []AlbumNavrhu, letos int, pre
 					pridat(m, al, "typAlba", sbirka.TypPMMesice, fmt.Sprintf("název alba „%s“ uvádí Playmate of the Month", al.Nazev), "nazev", 0.9)
 				case al.Vydani != "" && slices.Contains(m.Centerfoldy, al.Vydani) && pictorialuVCisle(indexy, al.Vydani) == 1:
 					pridat(m, al, "typAlba", sbirka.TypPMMesice, fmt.Sprintf("pictorial vyšel v čísle jejího centerfoldu (%s) – pictorial playmate měsíce", al.Vydani), "centerfold", 0.8)
+				case titulZRole && obycejnych == j:
+					pridat(m, al, "typAlba", sbirka.TypPMMesice, "titul modelky měsíce je zapsaný jen v Roli a tohle je její jediný pictorial – titul se bere z alba", "role", 0.75)
 				}
 			}
 			if sbirka.JeOnlineTyp(al.Typ) && al.Datum == "" {

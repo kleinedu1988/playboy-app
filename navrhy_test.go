@@ -261,26 +261,11 @@ func TestNavrhOdhaduObvodu(t *testing.T) {
 	}
 }
 
-// Playmate roku z poznámky nebo tagů, s kontrolou roku proti centerfoldu
-func TestNavrhPlaymateRoku(t *testing.T) {
-	modelky := sbirkaNavrhu(
-		Modelka{Jmeno: "Z poznámky", Poznamka: "Byla Playmate of the Year 1998.", Centerfoldy: []string{"1997-05"}, Role: "Celebrita"},
-		Modelka{Jmeno: "Z tagů", Tags: "pmoy 2001, blond"},
-		Modelka{Jmeno: "Rok nesedí", Poznamka: "Playmate roku 1980", Centerfoldy: []string{"1990-01"}},
-		Modelka{Jmeno: "Už má", Poznamka: "Playmate of the Year 1998", Role: "Playmate roku 1998"},
-		Modelka{Jmeno: "Dva roky", Poznamka: "Playmate of the Year 1998, PMOY 1999"},
-	)
-	navrhy := navrhyBezDb(modelky, nil)
-	if n, ok := najitNavrh(navrhy, "Z poznámky", "role"); !ok || n.Hodnota != "Playmate roku 1998" || !blizko(n.Jistota, 0.92) || n.InputID != "inputRole" {
-		t.Errorf("z poznámky: %+v", n)
-	}
-	if n, ok := najitNavrh(navrhy, "Z tagů", "role"); !ok || n.Hodnota != "Playmate roku 2001" || !blizko(n.Jistota, 0.75) {
-		t.Errorf("z tagů bez centerfoldu: %+v", n)
-	}
-	for _, jmeno := range []string{"Rok nesedí", "Už má", "Dva roky"} {
-		if n, ok := najitNavrh(navrhy, jmeno, "role"); ok {
-			t.Errorf("%s: nečekaný návrh %+v", jmeno, n)
-		}
+// Návrh „Playmate roku“ do Role se od 0.02.039 nedělá: tituly se berou jen z alb (0.02.038)
+func TestNavrhPlaymateRokuDoRoleNeni(t *testing.T) {
+	modelky := sbirkaNavrhu(Modelka{Jmeno: "Z poznámky", Poznamka: "Byla Playmate of the Year 1998.", Centerfoldy: []string{"1997-05"}, Role: "Celebrita"})
+	if n, ok := najitNavrh(navrhyBezDb(modelky, nil), "Z poznámky", "role"); ok {
+		t.Errorf("návrh do Role: %+v", n)
 	}
 }
 
@@ -759,5 +744,73 @@ func TestKategoriePictorialuPlaymate(t *testing.T) {
 	}
 	if v := a.GetModelky("kategorie:\"playmate roku\""); len(v) != 1 || v[0].ID != anna {
 		t.Errorf("hledání kategorie: %+v", v)
+	}
+}
+
+// Číslo alba z údajů modelky a typ pictorialu z titulu v Roli (0.02.039); Heide Mann po jednom potvrzení má album
+// Pet of the Month s číslem 1970-10@PH v databázi
+func TestNavrhyCislaZUdajuATypuZRole(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Heide Mann", Vystoupeni: "Penthouse říjen 1970", PictorialVydani: "1970-10", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Jen Role", Role: "Penthouse Pet, Model", Tetovani: -1, Piercing: -1})
+	heide, role := idModelky(t, a, "Heide Mann"), idModelky(t, a, "Jen Role")
+	a.AddBulkPhotos(heide, "Pet of the Month October 1970", typPMMesice, odkazA)
+	a.db.Exec(`UPDATE alba SET vydani = '' WHERE modelka_id = ?`, heide)
+	a.AddBulkPhotos(role, "Na pláži", "Pictorial", odkazB)
+	// Další alba s čísly, ať má sbírka předpoklad hodnot (jako skutečná sbírka)
+	a.AddModelka(Modelka{Jmeno: "Jiná", Tetovani: -1, Piercing: -1})
+	jina := idModelky(t, a, "Jiná")
+	for i, v := range []string{"1971-01@PH", "1980-05", "1990-07"} {
+		nazev := fmt.Sprintf("Album %d", i)
+		a.AddBulkPhotos(jina, nazev, "Pictorial", "https://drive.google.com/file/d/"+strings.Repeat(string(rune('P'+i)), 29)+"/view")
+		a.SetVydaniAlba(jina, nazev, "Pictorial", v)
+	}
+	navrhy := a.GetNavrhyDoplneni(false)
+	n, ok := najitNavrh(navrhy, "Heide Mann", "vydaniAlba")
+	if !ok || n.Hodnota != "1970-10@PH" || n.Jistota < prahNavrhu {
+		t.Fatalf("číslo z údajů: %+v (%v)", n, ok)
+	}
+	if !a.PrijmoutNavrh(n) {
+		t.Fatal("přijetí čísla alba")
+	}
+	var vydani string
+	a.db.QueryRow(`SELECT vydani FROM alba WHERE modelka_id = ?`, heide).Scan(&vydani)
+	if vydani != "1970-10@PH" {
+		t.Errorf("v databázi %q", vydani)
+	}
+	if _, ok := najitNavrh(a.GetNavrhyDoplneni(false), "Heide Mann", "vydaniAlba"); ok {
+		t.Error("návrh po přijetí zůstal")
+	}
+	if n, ok := najitNavrh(navrhy, "Jen Role", "typAlba"); !ok || n.Hodnota != typPMMesice || n.Jistota < prahNavrhu {
+		t.Errorf("typ z Role: %+v (%v)", n, ok)
+	}
+}
+
+// Hromadně přijaté návrhy jde vrátit (0.02.039): číslo alba zmizí, typ alba se vrátí; mezitím upravený údaj zůstane
+func TestVratitPrijateNavrhy(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna", Tetovani: -1, Piercing: -1})
+	anna := idModelky(t, a, "Anna")
+	a.AddBulkPhotos(anna, "Pictorial", "Pictorial", odkazA)
+	a.AddBulkPhotos(anna, "Druhé", "Pictorial", odkazB)
+	navrhy := []NavrhDoplneni{
+		{ModelkaID: anna, Album: "Pictorial", Typ: "Pictorial", Pole: "vydaniAlba", Klic: "nv-vydaniAlba", Hodnota: "1970-10@PH"},
+		{ModelkaID: anna, Album: "Pictorial", Typ: "Pictorial", Pole: "typAlba", Klic: "nv-typAlba", Hodnota: typPMMesice},
+		{ModelkaID: anna, Album: "Druhé", Typ: "Pictorial", Pole: "vydaniAlba", Klic: "nv-vydaniAlba", Hodnota: "1971-01"},
+		{ModelkaID: anna, Pole: "narodnost", Klic: "nv-narodnost", InputID: "inputNarodnost", Hodnota: "Německo"},
+	}
+	if n := a.PrijmoutNavrhy(navrhy); n != 4 {
+		t.Fatalf("přijato %d", n)
+	}
+	a.db.Exec(`UPDATE alba SET vydani = '1971-02' WHERE album = 'Druhé'`) // mezitím ručně opraveno
+	if n := a.VratitNavrhy(navrhy); n != 3 {
+		t.Errorf("vráceno %d, chci 3", n)
+	}
+	var typ, vydani, druhe, narodnost string
+	a.db.QueryRow(`SELECT typ, vydani FROM alba WHERE album = 'Pictorial'`).Scan(&typ, &vydani)
+	a.db.QueryRow(`SELECT vydani FROM alba WHERE album = 'Druhé'`).Scan(&druhe)
+	a.db.QueryRow(`SELECT COALESCE(narodnost, '') FROM modelky WHERE id = ?`, anna).Scan(&narodnost)
+	if typ != "Pictorial" || vydani != "" || druhe != "1971-02" || narodnost != "" {
+		t.Errorf("po vrácení: typ %q, vydání %q, druhé %q, národnost %q", typ, vydani, druhe, narodnost)
 	}
 }

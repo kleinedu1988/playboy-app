@@ -2,7 +2,7 @@
 // velikost prsou z měr, vydání alba, fotograf…). Návrh jde přijmout (rovnou se uloží), upravit ve formuláři
 // s předvyplněnou hodnotou, nebo odmítnout (tahle hodnota se už nenabízí; se „zobrazit i odmítnuté“ jde vrátit).
 // Tady jsou data a akce; řádky vykresluje Údržba (udrzba.js) stejně jako ostatní položky fronty.
-import { GetNavrhyDoplneni, OdmitnoutNavrh, PrijmoutNavrh, PrijmoutNavrhy, UpdateModelka } from './backend';
+import { GetNavrhyDoplneni, OdmitnoutNavrh, PrijmoutNavrh, PrijmoutNavrhy, UpdateModelka, VratitNavrhy } from './backend';
 import { sklonovat } from '../lib/format';
 import { MEZ_JISTE, hodnotaNavrhu, idNavrhu, nazevNavrhu, zalozkaPole } from '../lib/udrzba';
 import { stav } from './stav';
@@ -175,15 +175,33 @@ export async function prijmoutVice(seznam, nadpis = 'Přijmout návrhy?') {
         nadpis: nadpis.replace(/\?$/, ''),
         souhrn: `Uloží se ${sklonovat(seznam.length, 'údaj', 'údaje', 'údajů')} u ${sklonovat(modelek, 'modelky', 'modelek', 'modelek')}: ${souhrnPoli(seznam)}.`
             + (nejistych ? ` ${nejistych === 1 ? 'Jeden z nich není jistý' : nejistych < 5 ? `${nejistych} z nich nejsou jisté` : `${nejistych} z nich není jistých`} (pod 90 %).` : ''),
-        radky: seznam.map(n => ({ kdo: n.album ? `${n.jmeno} · ${n.album}` : n.jmeno, co: nazevNavrhu(n), pred: '', po: `${hodnotaNavrhu(n)} (${Math.round(n.jistota * 100)} %)` })),
+        radky: seznam.map(n => ({ kdo: n.album ? `${n.jmeno} · ${n.album}` : n.jmeno, co: nazevNavrhu(n), pred: n.pole === 'typAlba' ? n.typ : '', po: `${hodnotaNavrhu(n)} (${Math.round(n.jistota * 100)} %)` })),
         tlacitko: `Přijmout ${seznam.length}`,
-        poznamka: 'Nic se nezmění, dokud nepotvrdíš. Před uložením se udělá záloha – celé přijetí jde vrátit přes ⋯ → Obnovit ze zálohy; jednotlivé údaje jdou opravit ve formuláři.',
+        poznamka: 'Nic se nezmění, dokud nepotvrdíš. Po přijetí jde všechno vrátit tlačítkem Vrátit v oznámení; před uložením se navíc udělá záloha.',
     })) return [];
     const prijate = await ulozit(seznam);
     poZmene('');
     oznamit(prijate.length === seznam.length ? `${doplneno(prijate.length)}.`
-        : `Doplněno ${prijate.length} z ${seznam.length}; zbytek se nepodařilo uložit a zůstal v návrzích.`);
+        : `Doplněno ${prijate.length} z ${seznam.length}; zbytek se nepodařilo uložit a zůstal v návrzích.`,
+    prijate.length ? { text: 'Vrátit', akce: () => vratitPrijate(prijate) } : null);
     return prijate;
+}
+
+// Vrácení hromadného přijetí (0.02.039): údaje se zase vyprázdní, typ alba se vrátí; návrhy se nabídnou znovu
+async function vratitPrijate(prijate) {
+    let vraceno = 0;
+    try {
+        vraceno = await VratitNavrhy(prijate);
+    } catch { /* oznámí se níž */ }
+    for (const n of prijate) {
+        const vlastnost = !n.album && vlastnostPole(n.inputId);
+        const m = vlastnost && stav.prehledModelky.get(n.modelkaId);
+        if (m && vlastnost !== 'role') m[vlastnost] = typeof m[vlastnost] === 'number' ? 0 : '';
+    }
+    await nacistNavrhy();
+    poZmene('');
+    oznamit(vraceno === prijate.length ? `Vráceno ${sklonovat(vraceno, 'údaj', 'údaje', 'údajů')}.`
+        : `Vráceno ${vraceno} z ${prijate.length}; ostatní se mezitím změnily a zůstaly.`);
 }
 
 export const prijmoutUModelky = modelkaId => {

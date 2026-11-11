@@ -810,6 +810,10 @@ export function VratitCtverici(arg1, arg2) {
   return window['go']['main']['App']['VratitCtverici'](arg1, arg2);
 }
 
+export function VratitNavrhy(arg1) {
+  return window['go']['main']['App']['VratitNavrhy'](arg1);
+}
+
 export function VratitPorovnani(arg1, arg2) {
   return window['go']['main']['App']['VratitPorovnani'](arg1, arg2);
 }

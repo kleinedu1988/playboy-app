@@ -2,7 +2,7 @@
 // jednu frontu skupin (modelka nebo číslo) s položkami (chybějící údaj, nález kontroly, návrh), spočítá jejich
 // prioritu, pokrok sbírky po oblastech a počty pro filtry; pro režim Po údajích ji přeskládá po jednotlivých údajích.
 // Jen čisté funkce – testuje je test/udrzba.test.js.
-import { VYCHOZI_EDICE, jeCisloPlayboye, kategorieModelky, titulCisla, nazevAlba, nazevRady, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
+import { TYP_PM_MESICE, TYP_PM_ROKU, VYCHOZI_EDICE, jeCisloPlayboye, kategorieModelky, titulCisla, nazevAlba, nazevRady, nazevVydani, popisKategorie, rozlozitVydani, sjednotit, sklonovat, udajChybi } from './format.js';
 
 // Údaje modelky, které Údržba hlídá, po skupinách shodných s částmi formuláře: [vlastnost, název, pole formuláře].
 // Další jména a poznámka se nehlídají, většina modelek je mít nemusí.
@@ -68,7 +68,10 @@ export const tridaJistoty = j => j >= MEZ_JISTE ? 'jiste' : j >= MEZ_PRAVDEPODOB
 export const idNavrhu = n => [n.modelkaId, n.album, n.typ, n.klic || n.pole, n.hodnota].join('|');
 export const nazevNavrhu = n => n.popis || n.pole;
 // Vydání alba se ukazuje jako název čísla („Červenec 1976“), ostatní hodnoty tak, jak se uloží
-export const hodnotaNavrhu = n => (n.pole === 'vydani' || n.pole === 'vydaniAlba') && rozlozitVydani(n.hodnota) ? nazevVydani(n.hodnota) : String(n.hodnota ?? '');
+// Typ alba je obecná role (0.02.039): návrh nezná časopis alba, popisek proto pro všechny tituly
+const TYPY_NAVRHU = { [TYP_PM_MESICE]: 'Pictorial modelky měsíce (Playmate / Pet / Honey of the Month)', [TYP_PM_ROKU]: 'Pictorial modelky roku (… of the Year)' };
+export const hodnotaNavrhu = n => (n.pole === 'vydani' || n.pole === 'vydaniAlba') && rozlozitVydani(n.hodnota) ? nazevVydani(n.hodnota)
+    : n.pole === 'typAlba' && TYPY_NAVRHU[n.hodnota] ? TYPY_NAVRHU[n.hodnota] : String(n.hodnota ?? '');
 
 // Oprava návrhu po „Upravit…“: text uložené hodnoty pro ZaznamenatOpravu, nebo null, když není co zaznamenat.
 // Prázdné pole (u čísla 0) oprava není – údaj zůstal nevyplněný. Jiný zápis téže hodnoty („Ceska“ → „Česká“)

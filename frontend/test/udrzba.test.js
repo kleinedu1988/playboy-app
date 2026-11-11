@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { FILTRY, OBLASTI_FILTRU, UDAJE, dalsiRadek, filtrovatUdrzbu, idNavrhu, opravaNavrhu, nazevKontroly, prvniUdaj, sestavitPoUdajich, sestavitUdrzbu, souhrnFronty, stitkySkupiny, textAkce, udajFiltru, ukolyFokusu, zalozkaPole, zdrojePolozek } from '../src/lib/udrzba.js';
+import { FILTRY, hodnotaNavrhu, OBLASTI_FILTRU, UDAJE, dalsiRadek, filtrovatUdrzbu, idNavrhu, opravaNavrhu, nazevKontroly, prvniUdaj, sestavitPoUdajich, sestavitUdrzbu, souhrnFronty, stitkySkupiny, textAkce, udajFiltru, ukolyFokusu, zalozkaPole, zdrojePolozek } from '../src/lib/udrzba.js';
 
 // Modelka se všemi hlídanými údaji; jednotlivé testy jí údaje uberou
 const uplna = (id, jmeno, dalsi = {}) => ({
@@ -231,4 +231,10 @@ test('idCileSlouceni: kandidát na sloučení má akci Sloučit a cílovou model
     assert.equal(idCileSlouceni({ klic: 'ok-jmeno', popis: 'x (id 3)' }), 0);
     assert.equal(textAkce({ druh: 'kontrola', nalez }, {}), 'Sloučit');
     assert.equal(textAkce({ druh: 'kontrola', nalez: { klic: 'ok-vek' } }, {}), 'Opravit');
+});
+
+test('hodnota návrhu: číslo alba s časopisem a obecný typ alba (0.02.039)', () => {
+    assert.match(hodnotaNavrhu({ pole: 'vydaniAlba', hodnota: '1970-10@PH' }), /1970/);
+    assert.match(hodnotaNavrhu({ pole: 'typAlba', hodnota: 'Playmate měsíce' }), /Pet/);
+    assert.equal(hodnotaNavrhu({ pole: 'narodnost', hodnota: 'Německo' }), 'Německo');
 });

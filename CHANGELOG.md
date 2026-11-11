@@ -6,6 +6,19 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.034] – 2026-11-11
+
+### Změněno
+- **Jednotná struktura štítků pod jménem pro všechny časopisy:** za každý časopis „Playboy 2000“ / „Penthouse 1969“
+  (rok prvního vydání), pak role v časopise jen z galerií – Playmate měsíce / Pet of the Month / Honey of the Month
+  (centerfold nebo pictorial s tím typem), modelka roku, obálka, jinak „Pictorial“; online alba Playboye „Cyber Girl …“
+  (album Cyber Girl), jinak „Online“. Na konci profese z pole Role: vždy Modelka, pak Herečka, Zpěvačka,
+  Pornoherečka… (anglické názvy česky, „Model“ = Modelka). Nadtitulek profilu má stejnou strukturu.
+- Titulové zápisy v Roli (PMOTM, Penthouse Pet, Centerfold, Playboy Cybergirl…) se v profilu neukazují – titul musí
+  vyplývat z galerie. V poli Role zůstávají, filtry a hledání kategorií je zatím berou dál.
+- Blok v Údajích se jmenuje vždy „Časopisy“ (dřív u modelky jen z Playboye „Playboy“).
+- Další kroky ROADMAP posunuté o jedna (Otevřít PDF je 0.02.035).
+
 ## [0.02.033] – 2026-11-11
 
 ### Přidáno
@@ -65,7 +78,7 @@ Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 - **Hledání podle přezdívek:** hledání, našeptávač, `[[odkazy]]` a filtry galerie berou přezdívky bez přípony
   časopisu (`@PH` se jako text nehledá). Našeptávač u modelky nalezené pod jiným jménem ukáže „jako Jane Doe
   (Penthouse) · …“, návrh odkazu „modelka · jako Jane Doe (Penthouse)“.
-- Zásobník odkazů je u konkrétní modelky a jména nehledá; rozpoznání odkazů z webů časopisů je 0.02.042.
+- Zásobník odkazů je u konkrétní modelky a jména nehledá; rozpoznání odkazů z webů časopisů je 0.02.043.
 
 ## [0.02.027] – 2026-11-10
 
@@ -136,7 +149,7 @@ Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 ### Změněno
 - **Statistiky a Postřehy podle časopisu:** když jsou ve sbírce čísla jiného časopisu, texty grafů v čase
   a Postřehy říkají „rok prvního výskytu v Playboyi“ místo „v časopise“ (Statistiky počítají zatím jen Playboy,
-  filtr časopisu je 0.02.047). Se samotným Playboyem beze změny.
+  filtr časopisu je 0.02.048). Se samotným Playboyem beze změny.
 - Mapa sbírky obarvená kategorií má barvu „Titul jiného časopisu“ (Pet of the Month, Honey of the Month…);
   dřív takové modelky byly šedé bez položky v legendě. Rozložení Kategorie už tituly ukazuje podle časopisu.
 

@@ -17826,6 +17826,19 @@ body.rezim-vyberu #detailView .poster {
     font-size: 11px;
 }
 
+/* Štítky v jednotné struktuře (0.02.034): časopis a rok plně, role v časopise obrysem, profese tlumeně */
+#modelHeader .udaje-kategorie .stitek-casopis {
+    border-color: var(--accent);
+    background-color: rgba(216, 27, 96, 0.22);
+    font-weight: 600;
+}
+
+#modelHeader .udaje-kategorie .stitek-profese {
+    border-color: rgba(255, 255, 255, 0.16);
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+}
+
 /* Bloky mimo .udaje-modelky (O modelce, tagy, odkazy) mají stejný nadpis a odsazení jako ostatní */
 .profile-side #modelHeader > .udaje-blok {
     padding: 10px 0;

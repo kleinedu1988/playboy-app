@@ -2,7 +2,7 @@
 import { htmlRadyOdznaku, nastavitPohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti, porovnatNaZacatku } from './oblibenost';
 import { otevritOblibenost } from './prehled';
-import { VYSKYT, barvaCasopisu, dalsiJmenaModelky, popisDalsihoJmena, souhrnKariery, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
+import { VYSKYT, barvaCasopisu, dalsiJmenaModelky, popisDalsihoJmena, stitkyModelky, odvozeneKategorie, jeOnline, esc, formatDatum, formatMarkdown, kategorieModelky, jeCisloPlayboye, titulCisla, nazevAlba, nazevVydani, obrazek, paskaCisla, popisKategorie, paskaOnline, popisTypuAlba, rozlozitVydani, vekPriVydani, sklonovat, vyskytModelky } from '../lib/format';
 import { GetFotografieModelky, GetOdznakyModelky, GetPodobnostObsahu, GetProfilovaFotka, GetTitulySezonModelky, SetPoradiFotek, SetProfilovyVyrez } from './backend';
 import { klicAlba, novePoradi, sestavitAlba } from '../lib/alba';
 import { oznamit } from '../ui/oznameni';
@@ -86,7 +86,9 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const kategorie = kategorieModelky(modelka);
     const vyskyt = vyskytModelky(modelka);
     // Kategorie jsou v hlavičce panelu vedle fotky (kdo modelka je), ne mezi řádky Playboy
-    const htmlKategorii = kategorie.map(k => `<span class="udaje-znamka"${k.odvozena ? ' title="Odvozeno z dat sbírky"' : ''}>${esc(popisKategorie(k))}</span>`).join('');
+    // Štítky pod jménem: časopis a rok, role z galerií a profese z Role, stejně pro všechny časopisy (0.02.034)
+    const stitky = stitkyModelky(modelka);
+    const htmlKategorii = stitky.map(s => `<span class="udaje-znamka stitek-${s.druh}"${s.druh === 'role' ? ' title="Z galerií modelky"' : ''}>${esc(s.text)}</span>`).join('');
     const playboy = [
         ['Vydání', vydani],
         ['Na obálce', (modelka.obalky || []).map(htmlStitkuVydani).join(' ')],
@@ -116,7 +118,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const znamky = [modelka.tetovani === 1 ? 'Tetování' : '', modelka.piercing === 1 ? 'Piercing' : ''].filter(Boolean);
 
     const bloky = [
-        playboy.length ? `<section class="udaje-blok"><h4>${souhrnKariery(modelka) ? 'Časopisy' : 'Playboy'}</h4>
+        playboy.length ? `<section class="udaje-blok"><h4>Časopisy</h4>
             ${playboy.map(([nazev, hodnota]) => `<div class="udaje-radek"><span class="udaje-popis">${nazev}</span><div class="udaje-stitky">${hodnota}</div></div>`).join('')}
         </section>` : '',
         osobni.length ? `<section class="udaje-blok"><h4>Osobní</h4>${osobni.map(veta => `<p class="udaje-veta">${veta}</p>`).join('')}</section>` : '',
@@ -141,7 +143,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const platnaVydani = [...new Set(vsechnaVydani)].filter(v => paskaCisla(v)).sort((a, b) => a.localeCompare(b));
     // Titul na pásce: u Playboye „Playmate“ jako dřív (první měsíční číslo), u centerfoldu jiného časopisu
     // jeho titul („Pet · Zář 85 · PH“)
-    const jePlaymate = kategorie.some(k => k.nazev === 'Playmate měsíce');
+    const jePlaymate = odvozeneKategorie(modelka).includes('Playmate měsíce'); // titul z galerií, ne z Role (0.02.034)
     const cislaPlayboye = platnaVydani.filter(jeCisloPlayboye);
     const playmateVydani = (rozlozitVydani(modelka.vystoupeni)?.mesic && cislaPlayboye.includes(modelka.vystoupeni))
         ? modelka.vystoupeni
@@ -160,7 +162,8 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
     const roky = platnaVydani.map(v => parseInt(v, 10)).filter(r => r > 1900);
     const obdobi = roky.length ? (Math.min(...roky) === Math.max(...roky) ? String(roky[0]) : `${Math.min(...roky)}–${Math.max(...roky)}`) : '';
     // Modelka z víc časopisů: nadtitulek je souhrn kariéry s roky („Pet of the Month 1985 · Playmate 1987“)
-    const nadtitulek = souhrnKariery(modelka) || kategorie.map(k => popisKategorie(k)).filter(Boolean).slice(0, 3).join(' · ');
+    // Nadtitulek stejnou strukturou: časopis a rok, role v časopise, pak první profese
+    const nadtitulek = [...stitky.filter(s => s.druh !== 'profese'), ...stitky.filter(s => s.druh === 'profese').slice(0, 2)].map(s => s.text).join(' · ');
     profilPruhObsah.innerHTML = `
         <div class="pruh-identita">
             ${nadtitulek ? `<div class="pruh-nadtitulek">${esc(nadtitulek)}</div>` : ''}

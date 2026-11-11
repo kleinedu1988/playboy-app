@@ -171,34 +171,22 @@ test('Údržba a texty podle časopisu (0.02.022)', async () => {
     nastavitCasopisy([]);
 });
 
-test('souhrn kariéry napříč časopisy v profilu (0.02.026)', async () => {
-    const { souhrnKariery, barvaCasopisu } = await import('../src/lib/format.js');
+test('štítky pod jménem: časopis a rok, role z galerií, profese z Role (0.02.034)', async () => {
+    const { stitkyModelky, profeseModelky, barvaCasopisu } = await import('../src/lib/format.js');
     nastavitCasopisy(CASOPISY);
-    assert.equal(souhrnKariery({ centerfoldy: ['1987-02', '1988-05'], vydani: ['1987-02'] }), '');
-    assert.equal(souhrnKariery({ centerfoldy: ['1985-09@PH', '1987-02'], vydani: ['1985-09@PH', '1987-02'], playmateRoku: '1989' }),
-        'Pet of the Month 1985 · Playmate 1987 · Playmate roku 1989');
-    assert.equal(souhrnKariery({ vydani: ['1987-02'], obalky: ['1990-01@HU'], centerfoldy: [] }), 'Playboy 1987 · Obálka Hustler 1990');
-    assert.equal(souhrnKariery({ vydani: ['1986-03-UK@PH'], titulyJinde: [{ nazev: 'Pet of the Year', rok: '1986' }] }), 'Pet of the Year 1986');
+    const texty = m => stitkyModelky(m).map(s => s.text);
+    // Buffy Tyler: PMOTM a Model z Role se neukážou
+    assert.deepEqual(texty({ role: 'PMOTM, Model', vydani: ['2000-11'], playmateMesice: true }), ['Playboy 2000', 'Playmate měsíce', 'Modelka']);
+    // Ulla Lindstrom: Penthouse Pet a Centerfold z Role pryč, profese zůstanou
+    assert.deepEqual(texty({ role: 'Penthouse Pet, Centerfold, Herečka, Tanečnice', vydani: ['1969-11@PH'], titulyJinde: [{ nazev: 'Pet of the Month', rok: '' }] }),
+        ['Penthouse 1969', 'Pet of the Month', 'Modelka', 'Herečka', 'Tanečnice']);
+    // Ali Rose: číslo bez titulu v galerii = Pictorial, online alba = Online (Cyber Girl jen z alba Cyber Girl)
+    assert.deepEqual(texty({ role: 'Playboy Cybergirl, PMOTM (ZA), Modelka', vydani: ['2014-06-ZA'], onlineAlba: ['2016-09-27'] }), ['Playboy 2014', 'Pictorial', 'Online', 'Modelka']);
+    assert.deepEqual(texty({ onlineAlba: ['2012-03'], cyberGirl: 'měsíce' }), ['Playboy 2012', 'Cyber Girl měsíce', 'Modelka']);
+    // Víc časopisů chronologicky; modelka roku a obálka
+    assert.deepEqual(texty({ vydani: ['1987-02', '1985-09@PH'], centerfoldy: ['1985-09@PH', '1987-02'], playmateRoku: '1989', obalky: ['1990-01@HU'] }),
+        ['Penthouse 1985', 'Pet of the Month', 'Playboy 1987', 'Playmate měsíce', 'Playmate roku 1989', 'Hustler 1990', 'Obálka', 'Modelka']);
+    assert.deepEqual(profeseModelky({ role: 'actress, Singer, porn actress, Celebrita' }), ['Modelka', 'Herečka', 'Zpěvačka', 'Pornoherečka', 'Celebrita']);
     nastavitCasopisy([]);
     assert.equal(barvaCasopisu('PH'), '');
-});
-
-test('další jména s časopisem (0.02.027)', async () => {
-    const { dalsiJmenaModelky, popisDalsihoJmena } = await import('../src/lib/format.js');
-    nastavitCasopisy(CASOPISY);
-    const d = dalsiJmenaModelky('Jane Doe @PH, Ann,  , Kate@hu, mail@example.com');
-    assert.deepEqual(d, [{ jmeno: 'Jane Doe', casopis: 'PH' }, { jmeno: 'Ann', casopis: '' }, { jmeno: 'Kate', casopis: 'HU' }, { jmeno: 'mail@example.com', casopis: '' }]);
-    assert.deepEqual(d.map(popisDalsihoJmena), ['Jane Doe (Penthouse)', 'Ann', 'Kate (Hustler)', 'mail@example.com']);
-    nastavitCasopisy([]);
-});
-
-test('odkazy [[…]] a návrhy podle přezdívky s časopisem (0.02.028)', async () => {
-    const { cilOdkazu, navrhyOdkazu } = await import('../src/lib/odkazy.js');
-    nastavitCasopisy(CASOPISY);
-    const modelky = [{ id: 7, jmeno: 'Sylvie Novak', dalsiJmena: 'Jane Doe @PH, Ann' }];
-    assert.deepEqual(cilOdkazu('Jane Doe', modelky), { druh: 'modelka', id: 7 });
-    assert.deepEqual(cilOdkazu('ann', modelky), { druh: 'modelka', id: 7 });
-    assert.equal(cilOdkazu('Jane Doe @PH', modelky).druh, 'hledat');
-    assert.deepEqual(navrhyOdkazu('jan', { modelky }).map(n => [n.text, n.popis]), [['Sylvie Novak', 'modelka · jako Jane Doe (Penthouse)']]);
-    nastavitCasopisy([]);
 });

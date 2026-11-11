@@ -127,7 +127,7 @@ const TITULY_PLAYBOYE = { mesice: 'Playmate měsíce', roku: 'Playmate roku' };
 const OBECNE_TITULY = { mesice: 'Modelka měsíce', roku: 'Modelka roku' };
 
 // Má některá modelka číslo nebo obálku jiného časopisu než Playboy? Statistiky je zatím nepočítají (filtr časopisu
-// 0.02.047), texty pak místo „v časopise“ řeknou „v Playboyi“ (0.02.020)
+// 0.02.048), texty pak místo „v časopise“ řeknou „v Playboyi“ (0.02.020)
 export const maJineCasopisy = modelky => modelky.some(m => [...(m.vydani || []), ...(m.obalky || [])]
     .some(v => { const c = rozlozitVydani(v)?.casopis; return !!c && c !== VYCHOZI_CASOPIS; }));
 export const vCasopiseStatistik = modelky => (maJineCasopisy(modelky) ? 'v Playboyi' : 'v časopise');
@@ -620,40 +620,72 @@ export const popisDalsihoJmena = d => (d.casopis ? `${d.jmeno} (${nazevCasopisu(
 // Barva časopisu z tabulky časopisů („#d81b60“); neznámý nebo bez barvy ''
 export const barvaCasopisu = klic => casopisy.get(klic || VYCHOZI_CASOPIS)?.barva || '';
 
+// Zápis v poli Role, který je titulem nebo místem publikace (PMOTM, Penthouse Pet, Centerfold, Cybergirl, Cover…),
+// ne profesí; tituly se od 0.02.034 berou jen z galerií
+const TITULOVY_ZAPIS = /playmate|\bpmo[mty]|\bpmotm|\bpet\b|\bpets\b|honey|centerfold|cyber ?girl|\bcoed|cover|ob[aá]lk|playboy|penthouse|hustler|\bmuses?\b|creator|online|speci[aá]l|of the (month|year)|měsíce|roku/i;
+const PROFESE_JAKO = { model: 'Modelka', 'modelka': 'Modelka', actress: 'Herečka', singer: 'Zpěvačka', dancer: 'Tanečnice', 'porn actress': 'Pornoherečka', 'adult actress': 'Pornoherečka', 'pornstar': 'Pornoherečka', 'porn star': 'Pornoherečka', celebrity: 'Celebrita', celebrita: 'Celebrita' };
+
 /**
- * Souhrn kariéry napříč časopisy (0.02.026), časopisy podle prvního čísla: „Pet of the Month 1985 · Playmate 1987,
- * 1988 · Playmate roku 1989“.
- * Za každý časopis tituly s roky (centerfold měsíce, modelka roku), bez titulu obálka nebo jen rok čísla. Modelka
- * jen z Playboye dostane '' (profil zůstane jako dřív).
+ * Profese z pole Role (0.02.034): vše, co není titul ani místo publikace; „Model“ → „Modelka“, anglické názvy česky.
+ * Modelka je vždy první (běžná profese každé modelky), další za ní v zapsaném pořadí.
+ * @returns {string[]}
  */
-export function souhrnKariery(modelka) {
-    const vse = [...(modelka.vydani || []), ...(modelka.obalky || []), ...(modelka.centerfoldy || []), modelka.vystoupeni || '',
-        ...String(modelka.pictorialVydani || '').split('\n')].map(v => v.trim()).filter(v => rozlozitVydani(v));
-    const casopisyM = [...new Set(vse.map(v => rozlozitVydani(v).casopis))];
-    if (!casopisyM.some(c => c !== VYCHOZI_CASOPIS)) return '';
-    const poradi = [...casopisy.keys()];
-    const pozice = k => (k === VYCHOZI_CASOPIS ? -1 : poradi.includes(k) ? poradi.indexOf(k) : poradi.length);
-    const roky = seznam => [...new Set(seznam.map(v => v.slice(0, 4)))].sort().join(', ');
-    const zCasopisu = (seznam, c) => (seznam || []).filter(v => rozlozitVydani(v)?.casopis === c);
-    const tituly = titulyJindeModelky(modelka);
-    const casti = [];
-    // Časopisy chronologicky podle prvního čísla, při shodě v pořadí tabulky
-    const prvni = c => vse.filter(v => rozlozitVydani(v).casopis === c).map(v => v.slice(0, 4)).sort()[0];
-    for (const c of casopisyM.sort((a, b) => prvni(a).localeCompare(prvni(b)) || pozice(a) - pozice(b))) {
-        const nazev = casopisy.get(c)?.nazev || (c === VYCHOZI_CASOPIS ? 'Playboy' : c);
-        const cf = zCasopisu(modelka.centerfoldy, c);
-        const vlastni = [];
-        if (cf.length) vlastni.push(`${c === VYCHOZI_CASOPIS ? 'Playmate' : titulCasopisu(c)} ${roky(cf)}`);
-        if (c === VYCHOZI_CASOPIS && modelka.playmateRoku) vlastni.push(`Playmate roku${/^\d{4}$/.test(modelka.playmateRoku) ? ` ${modelka.playmateRoku}` : ''}`);
-        const roku = c === VYCHOZI_CASOPIS ? null : tituly.find(t => t.nazev === titulCasopisu(c, 'roku'));
-        if (roku) vlastni.push(`${roku.nazev}${roku.rok ? ` ${roku.rok}` : ''}`);
-        if (!vlastni.length) {
-            const obalky = zCasopisu(modelka.obalky, c);
-            vlastni.push(obalky.length ? `Obálka ${nazev} ${roky(obalky)}` : `${nazev} ${roky(vse.filter(v => rozlozitVydani(v).casopis === c))}`);
-        }
-        casti.push(...vlastni);
+export function profeseModelky(modelka) {
+    const v = ['Modelka'];
+    for (const kus of String(modelka.role || '').split(/[,;\n]/).map(k => k.trim()).filter(Boolean)) {
+        if (TITULOVY_ZAPIS.test(kus)) continue;
+        const nazev = PROFESE_JAKO[normalizovat(kus)] || velkymPismenem(kus);
+        if (!v.includes(nazev)) v.push(nazev);
     }
-    return casti.join(' · ');
+    return v;
+}
+const velkymPismenem = t => t.charAt(0).toUpperCase() + t.slice(1);
+
+/**
+ * Kariéra po časopisech (0.02.034), jednotně pro všechny: časopis a rok prvního vydání, pak role v časopise jen
+ * z galerií – modelka měsíce (centerfold nebo pictorial s tím typem), modelka roku, obálka; jinak „Pictorial“.
+ * Online alba patří Playboyi: „Cyber Girl …“ (album Cyber Girl), jinak „Online“; modelka jen online dostane skupinu
+ * Playboy s rokem prvního online alba. Časopisy chronologicky podle prvního roku.
+ * @returns {{ casopis: string, nazev: string, rok: string, role: string[] }[]}
+ */
+const nazevCasopisuKariery = c => casopisy.get(c)?.nazev || (c === VYCHOZI_CASOPIS ? 'Playboy' : c);
+export function karieraPoCasopisech(modelka) {
+    const cisla = [...(modelka.vydani || []), ...(modelka.obalky || []), ...(modelka.centerfoldy || []),
+        ...String(modelka.pictorialVydani || '').split('\n')].map(v => v.trim()).filter(v => rozlozitVydani(v));
+    const tituly = titulyJindeModelky(modelka);
+    const vCasopise = (seznam, c) => (seznam || []).filter(v => rozlozitVydani(v)?.casopis === c);
+    const skupiny = [];
+    for (const c of new Set(cisla.map(v => rozlozitVydani(v).casopis))) {
+        const role = [];
+        const pb = c === VYCHOZI_CASOPIS;
+        if (vCasopise(modelka.centerfoldy, c).length || (pb ? modelka.playmateMesice : tituly.some(t => t.nazev === titulCasopisu(c)))) role.push(titulCasopisu(c));
+        const roku = pb ? (modelka.playmateRoku ? `Playmate roku${/^\d{4}$/.test(modelka.playmateRoku) ? ` ${modelka.playmateRoku}` : ''}` : '')
+            : (t => (t ? `${t.nazev}${t.rok && t.rok !== '?' ? ` ${t.rok}` : ''}` : ''))(tituly.find(t => t.nazev === titulCasopisu(c, 'roku')));
+        if (roku) role.push(roku);
+        if (vCasopise(modelka.obalky, c).length) role.push('Obálka');
+        if (!role.length) role.push('Pictorial');
+        skupiny.push({ casopis: c, nazev: nazevCasopisuKariery(c), rok: cisla.filter(v => rozlozitVydani(v).casopis === c).map(v => v.slice(0, 4)).sort()[0], role });
+    }
+    const online = (modelka.onlineAlba || []).map(v => String(v).slice(0, 4)).filter(r => /^\d{4}$/.test(r)).sort();
+    if (online.length || modelka.cyberGirl) {
+        let pb = skupiny.find(s => s.casopis === VYCHOZI_CASOPIS);
+        if (!pb) skupiny.push(pb = { casopis: VYCHOZI_CASOPIS, nazev: nazevCasopisuKariery(VYCHOZI_CASOPIS), rok: online[0] || '', role: [] });
+        pb.role.push(modelka.cyberGirl ? `Cyber Girl ${modelka.cyberGirl}` : 'Online');
+    }
+    return skupiny.sort((a, b) => (a.rok || '9999').localeCompare(b.rok || '9999'));
+}
+
+/**
+ * Štítky pod jménem v profilu (0.02.034), stejně pro všechny časopisy: za každý časopis „Playboy 2000“ a jeho role
+ * (Playmate měsíce, Pet of the Month, Pictorial, Online…), pak profese z pole Role (Modelka, Herečka…).
+ * @returns {{ text: string, druh: 'casopis' | 'role' | 'profese' }[]}
+ */
+export function stitkyModelky(modelka) {
+    return [
+        ...karieraPoCasopisech(modelka).flatMap(s => [{ text: [s.nazev, s.rok].filter(Boolean).join(' '), druh: /** @type {const} */ ('casopis') },
+            ...s.role.map(text => ({ text, druh: /** @type {const} */ ('role') }))]),
+        ...profeseModelky(modelka).map(text => ({ text, druh: /** @type {const} */ ('profese') })),
+    ];
 }
 
 export function odvozeneKategorie(modelka) {

@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.034 – Jednotné štítky profilu
+
+- [ ] **Kritérium hotovo:** Buffy Tyler „Playboy 2000 · Playmate měsíce · Modelka“, Ulla Lindstrom „Penthouse 1969 ·
+      Pet of the Month · Modelka · Herečka · Tanečnice“, Ali Rose „Playboy 2014 · Pictorial · Online · Modelka“.
+- [ ] Štítek časopisu, role a profese jsou na pohled odlišené (plný, obrys, tlumený).
+- [ ] Modelka s albem Cyber Girl má „Cyber Girl měsíce/týdne“ místo „Online“.
+- [ ] Chybí ti titul, který jsi měl jen v Roli (např. PMOTM ZA u Ali Rose)? Pak chybí album s typem Playmate měsíce.
+
 ## 0.02.033 – Sloučení modelek s náhledem a Vrátit
 
 - [ ] **Kritérium hotovo:** sloučit dvě modelky (profil › ⋯ › Sloučit s jinou modelkou) a pak Vrátit v oznámení –

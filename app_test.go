@@ -2939,7 +2939,7 @@ func (a *App) importovat(yamlData []byte) VysledekImportu {
 	return a.importovatCelek(data)
 }
 
-// Kategorie: zapsané v poli role a odvozené z centerfoldu; hledání kategorie: i role: najde obojí
+// Kategorie: tituly z galerií (centerfold), z pole Role jen profese (0.02.038); „Playmate roku“ v Roli titulem není
 func TestKategorieModelek(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
 	a.AddModelka(Modelka{Jmeno: "Celebrita", Role: "Celebrita, Playmate roku 1998", Tetovani: -1, Piercing: -1})
@@ -2969,7 +2969,7 @@ func TestKategorieModelek(t *testing.T) {
 		return vysledek
 	}
 	for dotaz, chci := range map[string]string{
-		"kategorie:playmate":          "Celebrita Centerfold",
+		"kategorie:playmate":          "Centerfold",
 		`kategorie:"playmate měsíce"`: "Centerfold",
 		"kategorie:celebrita":         "Celebrita",
 		"role:celebrita":              "Celebrita",

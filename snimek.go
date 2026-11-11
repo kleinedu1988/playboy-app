@@ -194,6 +194,26 @@ func (a *App) nacistSouhrnAlb() ([]souhrnAlba, []vazbaAlba, error) {
 // Rok (1950–2099) ve vydání nebo názvu alba
 var vzorRokuAlba = regexp.MustCompile(`\b(19[5-9]\d|20\d{2})\b`)
 
+// Pictorial pojmenovaný jako titul („Playmate of the Month October 1965“, „Penthouse Pet of the Year 2017“) nese
+// titul modelky měsíce nebo roku, i když v okně alba zůstal typ Pictorial (0.02.038)
+var (
+	vzorTituluMesice = regexp.MustCompile(`(?i)\b(playmate|pet|honey) of the month\b`)
+	vzorTituluRoku   = regexp.MustCompile(`(?i)\b(playmate|pet|honey) of the year\b`)
+)
+
+func typPodleNazvuAlba(typ, nazev string) string {
+	if typ != "Pictorial" {
+		return typ
+	}
+	switch {
+	case vzorTituluRoku.MatchString(nazev):
+		return typPMRoku
+	case vzorTituluMesice.MatchString(nazev):
+		return typPMMesice
+	}
+	return typ
+}
+
 // Co se o modelce odvodí z jejích alb (vlastních i těch, kde je další modelkou)
 type odvozeneZAlb struct {
 	fotek, hodnocenych, srdci   int
@@ -269,6 +289,22 @@ func (a *App) nacistSnimek() *snimek {
 		o.fotek += al.fotek
 		o.hodnocenych += al.hodnocenych
 		o.srdci += al.srdci
+		if t := typPodleNazvuAlba(al.typ, al.nazev); t != al.typ {
+			kopie := *al
+			kopie.typ = t
+			al = &kopie
+		}
+		if al.fotek == 0 && al.typ == "Centerfold" {
+			// Prázdné album centerfoldu (fotka ještě není nahraná) je titul z okna alba: modelka centerfold má
+			cislo := al.vydani
+			if cislo == "" {
+				cislo = al.nazev
+			}
+			o.centerfoldy = append(o.centerfoldy, cislo)
+			if _, casopis := hledani.RozdelitCasopis(cislo); casopis != "" && casopis != hledani.VychoziCasopis && !slices.Contains(o.mesiceJinde, casopis) {
+				o.mesiceJinde = append(o.mesiceJinde, casopis)
+			}
+		}
 		if al.fotek > 0 {
 			if al.typ != "Cover" {
 				o.alba = append(o.alba, albumModelky{id: al.id, nazev: al.nazev, typ: al.typ, fotek: al.fotek, pocty: al.pocty})

@@ -325,20 +325,22 @@ test('kategorie modelek', () => {
     const m = { role: 'Vlastní, Celebrita', centerfoldy: ['1995-03'], obalky: ['1996-01'] };
     assert.deepEqual(kategorieModelky(m).map(popisKategorie), ['Playmate měsíce', 'Celebrita', 'Modelka obálky', 'Vlastní']);
     assert.equal(kategorieModelky(m)[0].odvozena, true);
-    // Obyčejné online album kategorii nedává, jen album Cyber Girl týdne nebo měsíce
-    assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-06'] }).map(popisKategorie), []);
-    assert.deepEqual(kategorieModelky({ role: 'Coed', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Coed']);
-    assert.deepEqual(kategorieModelky({ role: 'Online', onlineAlba: ['2004-06-12'], cyberGirl: 'týdne' }).map(popisKategorie), ['Cyber Girl týdne', 'Online']);
+    // Online album dává „Online“, album Cyber Girl týdne nebo měsíce „Cyber Girl“; tituly z Role se neberou (0.02.038)
+    assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Online']);
+    assert.deepEqual(kategorieModelky({ role: 'Coed, Herečka', onlineAlba: ['2004-06'] }).map(popisKategorie), ['Online', 'Herečka']);
+    assert.deepEqual(kategorieModelky({ role: 'Online', onlineAlba: ['2004-06-12'], cyberGirl: 'týdne' }).map(popisKategorie), ['Cyber Girl týdne']);
+    assert.deepEqual(kategorieModelky({ role: 'PMOTM, Playmate roku 1999, Cover' }).map(popisKategorie), []);
     assert.deepEqual(kategorieModelky({ role: '', onlineAlba: ['2004-09'], cyberGirl: 'měsíce' }).map(popisKategorie), ['Cyber Girl měsíce']);
     // Pictorial Playmate of the Month a of the Year (rok čísla, bez roku „?“); zapsaná Playmate roku má přednost
     assert.deepEqual(kategorieModelky({ role: '', playmateMesice: true }).map(popisKategorie), ['Playmate měsíce']);
     assert.deepEqual(kategorieModelky({ role: '', centerfoldy: ['1997-05'], playmateRoku: '1998' }).map(popisKategorie), ['Playmate měsíce', 'Playmate roku 1998']);
     assert.deepEqual(kategorieModelky({ role: '', playmateRoku: '?' }).map(popisKategorie), ['Playmate roku']);
-    assert.deepEqual(kategorieModelky({ role: 'Playmate roku 1999', playmateRoku: '1998' }).map(popisKategorie), ['Playmate roku 1999']);
+    assert.deepEqual(kategorieModelky({ role: 'Playmate roku 1999', playmateRoku: '1998' }).map(popisKategorie), ['Playmate roku 1998']);
     // Páska bez data: Cyber Girl má přednost před Online, ostatní online kategorie zatím jako Online
     assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06'] }), 'Online');
     assert.equal(paskaOnline({ role: '', onlineAlba: ['2004-06-12'], cyberGirl: 'týdne' }), 'Cyber Girl');
-    assert.equal(paskaOnline({ role: 'Online, Cyber Girl měsíce', onlineAlba: ['2004'] }), 'Cyber Girl');
+    assert.equal(paskaOnline({ role: 'Online, Cyber Girl měsíce', onlineAlba: ['2004'] }), 'Online'); // jen Role
+    assert.equal(paskaOnline({ role: '', onlineAlba: ['2004'], cyberGirl: 'měsíce' }), 'Cyber Girl');
     assert.equal(paskaOnline({ role: 'Online', onlineAlba: ['2004'] }), 'Online');
     assert.equal(paskaOnline({ role: 'Muse', onlineAlba: [''] }), 'Online');
     // Údržba: kategorie chybí, jen když není zapsaná ani odvozená
@@ -367,10 +369,10 @@ test('počet slov a znaků v editoru textu', async () => {
 test('výskyt modelky: časopis, jen online, neurčeno', () => {
     assert.equal(vyskytModelky({ vydani: ['1995-03'] }), 'casopis');
     assert.equal(vyskytModelky({ obalky: ['1996-S01-CZ'] }), 'casopis');
-    // Ročník bez měsíce (Cybergirl of the Year 2012) není číslo časopisu
-    assert.equal(vyskytModelky({ vydani: ['2012'], role: 'Cybergirl of the Year 2012' }), 'online');
-    assert.equal(vyskytModelky({ role: 'Muse' }), 'online');
-    assert.equal(vyskytModelky({ role: 'Playboy Plus' }), 'online');
+    // Ročník bez měsíce (Cybergirl of the Year 2012) není číslo časopisu; online jen z galerií, ne z Role (0.02.038)
+    assert.equal(vyskytModelky({ vydani: ['2012'], cyberGirl: 'roku' }), 'online');
+    assert.equal(vyskytModelky({ role: 'Muse' }), '');
+    assert.equal(vyskytModelky({ role: 'Playboy Plus' }), '');
     assert.equal(vyskytModelky({ role: 'Cyber Girl', centerfoldy: ['2005-03'] }), 'casopis');
     assert.equal(vyskytModelky({ role: 'Celebrita' }), '');
     assert.equal(vyskytModelky({}), '');

@@ -502,11 +502,11 @@ func CenterfoldPlayboye(m *Modelka) bool {
 	return false
 }
 
-// Kategorie: zapsané v poli role a odvozené z centerfoldu, alba Cyber Girl týdne či měsíce a obálky
-// (frontend/src/lib/format.js, KATEGORIE a odvozeneKategorie); obyčejné online album kategorii nedává
+// Kategorie (od 0.02.038 jako frontend/src/lib/format.js kategorieModelky): tituly jen z galerií – centerfold,
+// pictorial modelky měsíce a roku, album Cyber Girl, obálka, online album (Online) – a profese z pole Role
 func kategorieKHledani(m *Modelka) string {
 	var b strings.Builder
-	b.WriteString(m.Role)
+	b.WriteString(strings.Join(ProfeseZRole(m.Role), ", "))
 	if CenterfoldPlayboye(m) || m.PlaymateMesice {
 		b.WriteString(", Playmate měsíce")
 	}
@@ -529,10 +529,13 @@ func kategorieKHledani(m *Modelka) string {
 	if len(m.Obalky) > 0 {
 		b.WriteString(", Modelka obálky")
 	}
+	if len(m.OnlineAlba) > 0 && m.CyberGirl == "" {
+		b.WriteString(", Online")
+	}
 	return b.String()
 }
 
-// Výskyt: v časopise (číslo s měsícem nebo speciál), jen online (online kategorie nebo online album),
+// Výskyt: v časopise (číslo s měsícem nebo speciál), jen online (online album; od 0.02.038 ne podle Role),
 // jinak neurčeno (frontend/src/lib/format.js, vyskytModelky)
 func vyskytKHledani(m *Modelka) string {
 	for _, seznam := range [3][]string{m.Vydani, m.Obalky, m.Centerfoldy} {
@@ -542,7 +545,7 @@ func vyskytKHledani(m *Modelka) string {
 			}
 		}
 	}
-	if (m.Role != "" && vzorOnlineKategorie.MatchString(m.Role)) || len(m.OnlineAlba) > 0 {
+	if len(m.OnlineAlba) > 0 || m.CyberGirl != "" {
 		return "online"
 	}
 	return "neurceno neurčeno"

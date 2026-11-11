@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.038 – Tituly všude z galerií
+
+- [ ] **Kritérium hotovo:** Galerie › filtr Kategorie a hledání `kategorie:"playmate mesice"` ukážou stejné modelky
+      jako štítky v profilu; modelka s „PMOTM“ jen v Roli (bez alba) tam není.
+- [ ] Allison Parks (prázdné album Centerfold): profil „Playboy 1965 · Playmate měsíce · Playmate roku 1966“.
+- [ ] Statistiky › Rozložení › Kategorie: počty Playmate měsíce a roku odpovídají; přibyla „Online“, zmizely Coed,
+      Muse a „Playboy …“ zapsané jen v Roli.
+- [ ] Galerie › kolekce „Playmate roku“ ukazuje modelky s albem Playmate roku (ne podle Role).
+- [ ] Playboy Bunny zůstává v profilu jako profese.
+
 ## Kontrolní seznam po obrazovkách (0.02.037, 11. 11. 2026)
 
 Shrnutí 213 neověřených bodů z verzí 1.45–0.02.036 do 40 bodů. Číslo v závorce vede na podrobnosti
@@ -128,9 +138,11 @@ v [docs/archiv/K-VYZKOUSENI-DO-0.02.036.md](docs/archiv/K-VYZKOUSENI-DO-0.02.036
 
 ### Zjištěno při ověření (opraví se v etapě Ladění)
 
-- [ ] **Jenna Sativa:** online alba z webu Penthouse se počítají jako Playboy („Playboy 2015 · Online“). Online
-      album zatím nemá časopis → 0.02.038.
+- [x] ~~Jenna Sativa: online alba jako Playboy~~ – omyl: její online alba jsou opravdu Playboy (Cybergirl 2015).
+      Pet of the Month 2016 a Pet of the Year 2017 má jako Pictorial bez čísla (prázdné) → 0.02.039.
 - [ ] **Ali Rose:** „PMOTM (ZA)“ je jen v Roli, album s typem Playmate měsíce chybí. Proto má jen „Pictorial“ → 0.02.039.
+- [ ] **41 modelek má titul jen v Roli** (16 Playmate roku, 10 Pet, 8 Cyber Girl, 6 Playmate měsíce, 1 Honey), např.
+      Claudia Jennings, Angela White, Amber Sym → 0.02.039. U Allison Parks je v Roli překlep „Herčka“.
 - [ ] **56 nehodnocených modelek s fotkami nemá odhad** (chybí analýza obsahu, nebo jsou v nejisté skupině?) → 0.02.040.
 - [ ] **Pseudonym „Hope Levin“** mají Hope Marie Carlton i Cherie Witter (nález „stejné jméno“ v Údržbě) – ověř, ke které
       patří.

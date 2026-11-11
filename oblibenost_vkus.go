@@ -428,15 +428,16 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 		u.cis[cvRok], u.ma[cvRok] = float64(rok), true
 		skupiny++
 	}
-	kategorie := strings.Split(m.Role, ",")
-	// Playmate měsíce jen z centerfoldu Playboye; tituly jiných časopisů jako vlastní kategorie (0.02.022)
+	// Z Role jen profese, tituly z galerií (0.02.038); Playmate měsíce jen z centerfoldu Playboye, tituly jiných
+	// časopisů jako vlastní kategorie (0.02.022)
+	kategorie := hledani.ProfeseZRole(m.Role)
 	if hledani.CenterfoldPlayboye(&m) || m.PlaymateMesice {
 		kategorie = append(kategorie, "Playmate měsíce")
 	}
 	for _, t := range m.TitulyJinde {
 		kategorie = append(kategorie, t.Nazev)
 	}
-	if m.PlaymateRoku != "" && !maPlaymateRoku(m.Role) {
+	if m.PlaymateRoku != "" {
 		kategorie = append(kategorie, "Playmate roku")
 	}
 	if m.CyberGirl != "" {

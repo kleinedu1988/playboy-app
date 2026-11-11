@@ -48,10 +48,11 @@ type defKolekce struct {
 
 // Údaje modelek pro kolekce
 type modelkaKolekce struct {
-	vlasy, oblast, narozeni, role string
-	tetovani, piercing            bool
-	poradi                        int
-	hodnoceni                     float64
+	vlasy, oblast, narozeni string
+	playmateRoku            bool // titul z alba Playmate roku (0.02.038), ne z Role
+	tetovani, piercing      bool
+	poradi                  int
+	hodnoceni               float64
 }
 
 var nazvyMesicu = []string{"leden", "únor", "březen", "duben", "květen", "červen", "červenec", "srpen", "září", "říjen", "listopad", "prosinec"}
@@ -233,7 +234,7 @@ func (a *App) definiceKolekci(fotky []fotkaGalerie, dk *dataKolekce, nyni time.T
 	pridat(defKolekce{klic: "kariera:centerfoldy", nazev: "Centerfoldy", skupina: "kariera", kontext: 1, duvod: "Rozkládací plakáty ze středu čísla",
 		plati: func(g *fotkaGalerie) bool { return g.f.Typ == "Centerfold" }})
 	pridat(defKolekce{klic: "kariera:playmate-roku", nazev: "Playmate roku", skupina: "kariera", kontext: 1.1, duvod: "Modelky s titulem Playmate roku",
-		plati: func(g *fotkaGalerie) bool { return strings.Contains(modelky[g.f.ModelkaID].role, "PMOTY") }})
+		plati: func(g *fotkaGalerie) bool { return modelky[g.f.ModelkaID].playmateRoku }})
 	pridat(defKolekce{klic: "kariera:online", nazev: "Online pictorialy", skupina: "kariera", kontext: 0.9, duvod: "Alba z webu Playboy",
 		plati: func(g *fotkaGalerie) bool { return g.f.Typ == "Pictorial online" }})
 	pridat(defKolekce{klic: "kariera:duo", nazev: "Dua a skupiny", skupina: "kariera", kontext: 1, duvod: "Alba, ve kterých je víc modelek",
@@ -519,7 +520,7 @@ func (a *App) spocitatDataKolekci(fotky []fotkaGalerie) (map[int]modelkaKolekce,
 	modelky := make(map[int]modelkaKolekce, len(seznam))
 	for _, m := range seznam {
 		modelky[m.ID] = modelkaKolekce{vlasy: vlasyKolekce(m.VlasyBarva), oblast: oblastPuvodu(m.Narodnost), narozeni: m.NarozeniDatum,
-			role: m.Role, tetovani: m.Tetovani == 1, piercing: m.Piercing == 1, poradi: poradi[m.ID], hodnoceni: m.Hodnoceni}
+			playmateRoku: m.PlaymateRoku != "", tetovani: m.Tetovani == 1, piercing: m.Piercing == 1, poradi: poradi[m.ID], hodnoceni: m.Hodnoceni}
 	}
 	tagy := map[string]map[string]bool{}
 	if a.obsah != nil && a.obsah.Zapnuto() {

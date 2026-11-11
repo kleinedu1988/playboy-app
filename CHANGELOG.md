@@ -6,6 +6,20 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.038] – 2026-11-11
+
+### Změněno
+- **Tituly všude z galerií:** kategorie ve filtrech Galerie, hledání `kategorie:` a `role:`, Statistikách, Mapě
+  sbírky, Údržbě, kolekcích Galerie a v modelu vkusu se berou stejně jako štítky profilu (0.02.034) – tituly
+  z alb (centerfold, Playmate / Pet of the Month a Year, Cyber Girl, obálka, online album), z pole Role jen profese.
+  Playboy Bunny zůstává profesí (povolání v klubu).
+- Online album dává kategorii „Online“; výskyt „jen online“ jen z online alb, ne ze zápisu v Roli.
+
+### Opraveno
+- **Prázdné album Centerfold** (fotka ještě není nahraná) a pictorial pojmenovaný „Playmate of the Month …“,
+  „Penthouse Pet of the Year …“ dávají titul. Na sbírce tak má titul 321 Playmate měsíce, které ho v profilu
+  od 0.02.034 neměly (např. Allison Parks „Playboy 1965 · Playmate měsíce · Playmate roku 1966“).
+
 ## [0.02.037] – 2026-11-11
 
 ### Změněno

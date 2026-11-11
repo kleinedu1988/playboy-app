@@ -48,8 +48,8 @@ test('kategorie v profilu: Pet of the Month místo Playmate měsíce, obě u mod
     assert.deepEqual(nazvy({ centerfoldy: ['1985-09@PH', '1987-02-UK@PH', '1990-01@HU'] }), ['Pet of the Month', 'Honey of the Month']);
     assert.deepEqual(nazvy({ centerfoldy: ['1987-02', '1985-09@PH'] }), ['Playmate měsíce', 'Pet of the Month']);
     assert.deepEqual(nazvy({ centerfoldy: ['1987-02'] }), ['Playmate měsíce']);
-    // Ručně zapsaná Playmate měsíce zůstane i u modelky jen s Penthouse
-    assert.ok(nazvy({ role: 'Playmate měsíce', centerfoldy: ['1985-09@PH'] }).includes('Playmate měsíce'));
+    // Playmate měsíce jen v Roli se od 0.02.038 nebere (tituly jen z galerií)
+    assert.deepEqual(nazvy({ role: 'Playmate měsíce, Herečka', centerfoldy: ['1985-09@PH'] }), ['Pet of the Month', 'Herečka']);
     nastavitCasopisy([]);
 });
 

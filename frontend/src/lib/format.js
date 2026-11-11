@@ -633,7 +633,7 @@ const PROFESE_JAKO = { model: 'Modelka', 'modelka': 'Modelka', actress: 'Herečk
 export function profeseModelky(modelka) {
     const v = ['Modelka'];
     for (const kus of String(modelka.role || '').split(/[,;\n]/).map(k => k.trim()).filter(Boolean)) {
-        if (TITULOVY_ZAPIS.test(kus)) continue;
+        if (TITULOVY_ZAPIS.test(kus) && !/bunny/i.test(kus)) continue; // Bunny je povolání v klubu, ne titul čísla
         const nazev = PROFESE_JAKO[normalizovat(kus)] || velkymPismenem(kus);
         if (!v.includes(nazev)) v.push(nazev);
     }
@@ -695,13 +695,8 @@ export function odvozeneKategorie(modelka) {
         ...titulyJindeModelky(modelka).map(t => t.nazev),
         modelka.cyberGirl ? 'Cyber Girl' : '',
         (modelka.obalky || []).length ? 'Modelka obálky' : '',
+        (modelka.onlineAlba || []).length && !modelka.cyberGirl ? 'Online' : '',
     ].filter(Boolean);
-}
-
-// První zapsaná online kategorie modelky (Cyber Girl, Coed, Muse…), nebo undefined
-export function onlineKategorie(modelka) {
-    const online = new Set(KATEGORIE.filter(k => k.online).map(k => k.nazev));
-    return rozlozitKategorie(modelka.role).find(k => online.has(k.nazev));
 }
 
 // Páska online alb v rohu fotky, bez data: Cyber Girl má přednost, jinak „Online“ (Coed, Muse… zatím také)
@@ -716,12 +711,14 @@ export const VYSKYT = { casopis: 'V časopise', online: 'Jen online', '': 'Neur�
 export function vyskytModelky(modelka) {
     const cisla = [...(modelka.vydani || []), ...(modelka.obalky || []), ...(modelka.centerfoldy || [])];
     if (cisla.some(v => rozlozitVydani(v)?.mesic)) return 'casopis';
-    return (modelka.onlineAlba || []).length || onlineKategorie(modelka) ? 'online' : '';
+    // Jen z galerií (0.02.038): online album nebo album Cyber Girl, ne zápis v Roli
+    return (modelka.onlineAlba || []).length || modelka.cyberGirl ? 'online' : '';
 }
 
 // Všechny kategorie modelky v pořadí seznamu (vlastní na konci); odvozená má příznak odvozena
+// Od 0.02.038 jednotně se štítky profilu: tituly jen z galerií (odvozené), z Role jen profese
 export function kategorieModelky(modelka) {
-    const zapsane = rozlozitKategorie(modelka.role);
+    const zapsane = rozlozitKategorie(modelka.role).filter(k => !TITULOVY_ZAPIS.test(k.nazev) || /bunny/i.test(k.nazev));
     odvozeneKategorie(modelka).forEach(nazev => {
         const rokJinde = titulyJindeModelky(modelka).find(t => t.nazev === nazev)?.rok;
         const detail = nazev === 'Cyber Girl' ? modelka.cyberGirl || ''

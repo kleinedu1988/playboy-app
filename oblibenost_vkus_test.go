@@ -636,14 +636,18 @@ func TestStromyVkusuSouvislost(t *testing.T) {
 // Kategorie s rokem se počítá bez roku, poměr pas/boky a rok prvního výskytu jsou mezi číselnými údaji
 func TestUdajeVkusuKategorieARok(t *testing.T) {
 	udaje := pripravitUdajeVkusu([]Modelka{
-		{ID: 1, Role: "Playmate roku 1998, Celebrita", Vydani: []string{"1997-05"}, ObvodPasCm: 60, ObvodBokyCm: 90},
-		{ID: 2, Role: "Playmate roku 2003", Vydani: []string{"2002-11"}},
+		{ID: 1, Role: "Playmate roku 1998, Celebrita", PlaymateRoku: "1998", Vydani: []string{"1997-05"}, ObvodPasCm: 60, ObvodBokyCm: 90},
+		{ID: 2, PlaymateRoku: "2003", Vydani: []string{"2002-11"}},
+		{ID: 3, Role: "Playmate roku 2003", Vydani: []string{"2002-11"}}, // titul jen v Roli se nebere (0.02.038)
 	})
 	pmoy := "kategorie=" + klicHodnoty("kategorie", "Playmate roku")
 	for id := 1; id <= 2; id++ {
 		if !slices.Contains(udaje[id].kat, pmoy) {
 			t.Errorf("modelka %d: kategorie %v bez %q", id, udaje[id].kat, pmoy)
 		}
+	}
+	if slices.Contains(udaje[3].kat, pmoy) {
+		t.Errorf("titul jen z Role: %v", udaje[3].kat)
 	}
 	u := udaje[1]
 	if !u.ma[cvRok] || u.cis[cvRok] != 1997 || !u.ma[cvPomer] || math.Abs(u.cis[cvPomer]-2.0/3) > 1e-9 {

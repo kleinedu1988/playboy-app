@@ -408,3 +408,30 @@ func TestAlbumBezCislaZTextu(t *testing.T) {
 		t.Fatalf("playmate %v, textová %q, vydání %v, tituly %+v", m.PlaymateMesice, m.PictorialVydani, m.Vydani, m.TitulyJinde)
 	}
 }
+
+// Titul z prázdného centerfoldu a z pictorialu pojmenovaného jako titul (0.02.038): Allison Parks má prázdné album
+// Centerfold 1965-10 a pictorialy „Playmate of the Month October 1965“ a „Playmate of the Year 1966“
+func TestTitulZPrazdnehoCenterfolduANazvuAlba(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Allison Parks", Role: "PMOTM, PMOTY, Model", Tetovani: -1, Piercing: -1})
+	m := a.GetModelky("")[0]
+	odkaz := func(z string) string { return "https://drive.google.com/file/d/" + strings.Repeat(z, 29) + "/view" }
+	a.AddBulkPhotos(m.ID, "1965-10", "Centerfold", odkaz("C"))
+	a.db.Exec(`DELETE FROM fotky WHERE album_id IN (SELECT id FROM alba WHERE typ = 'Centerfold')`)
+	a.AddBulkPhotos(m.ID, "Playmate of the Month October 1965", "Pictorial", odkaz("M"))
+	a.AddBulkPhotos(m.ID, "Playmate of the Year 1966", "Pictorial", odkaz("R"))
+	a.db.Exec(`UPDATE alba SET vydani = '1966' WHERE album = 'Playmate of the Year 1966'`)
+	m = a.GetModelky("")[0]
+	if strings.Join(m.Centerfoldy, ",") != "1965-10" || !m.PlaymateMesice || m.PlaymateRoku != "1966" {
+		t.Fatalf("centerfoldy %v, měsíce %v, roku %q", m.Centerfoldy, m.PlaymateMesice, m.PlaymateRoku)
+	}
+	for dotaz, chci := range map[string]int{`kategorie:"playmate mesice"`: 1, `kategorie:"playmate roku"`: 1, "kategorie:pmotm": 0} {
+		if n := len(a.GetModelky(dotaz)); n != chci {
+			t.Errorf("%s: %d modelek, chci %d", dotaz, n, chci)
+		}
+	}
+	if typPodleNazvuAlba("Pictorial", "Penthouse Pet of the Year 2017") != typPMRoku || typPodleNazvuAlba("Pictorial", "Beach") != "Pictorial" ||
+		typPodleNazvuAlba("Centerfold", "Playmate of the Month") != "Centerfold" {
+		t.Error("typ podle názvu alba")
+	}
+}

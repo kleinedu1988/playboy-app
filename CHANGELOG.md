@@ -6,6 +6,22 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.048] – 2026-11-11
+
+### Opraveno
+- **Prohlížeč PDF byl průhledný:** okno mělo pozadí z neexistující proměnné `--bg-body`, takže přes něj prosvítal
+  program a lišta PDF se překrývala s jeho navigací. Teď má tmavé pozadí programu.
+
+### Zrychleno
+- **Otevření PDF:** rozměry všech stran se vyžádají od workeru pdf.js naráz, ne jedna po druhé. 200stránkové číslo
+  (21 MB, stránky jako skeny) se ve snímkovači otevře za 1,6 s místo 2,6 s (požadavek do 5 s).
+
+### Ověřeno
+- Ve WebKitGTK 2.54 (snímkovač, úloha `nastroje/snimky/pdf.json`, PDF z proměnné `PDF` místo dialogu): worker pdf.js
+  (`.mjs`) se načte, náhledy stran se kreslí jen viditelné (7 po otevření, po skoku na konec dalších 7),
+  listování dvoustranou a skok na poslední stranu fungují.
+- Etapa Ladění (0.02.037–0.02.048) je hotová; další je Chytrý výřez náhledů.
+
 ## [0.02.047] – 2026-11-11
 
 ### Zrychleno

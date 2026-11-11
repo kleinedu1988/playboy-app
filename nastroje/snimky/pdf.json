@@ -1,0 +1,76 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "cekani",
+   "js": "(()=>'čekám')()",
+   "cekat": 2000
+  },
+  {
+   "nazev": "menu",
+   "js": "(()=>{const p=[...document.querySelectorAll('button, [role=menuitem], li, a')].filter(b=>b.getClientRects().length&&b.textContent.trim()===\"\\u22ef\")[0];if(!p)return 'bez';p.click();return 'ok'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "otevrit",
+   "js": "(()=>{const p=[...document.querySelectorAll('button, [role=menuitem], li, a')].filter(b=>b.getClientRects().length&&b.textContent.trim()===\"Otev\\u0159\\u00edt PDF \\u010d\\u00edsla\\u2026\")[0];if(!p)return 'bez';p.click();return 'ok'})()",
+   "cekat": 1000
+  },
+  {
+   "nazev": "po2s",
+   "js": "(()=>{const o=document.querySelector('.pdf-okno');const ozn=[...document.querySelectorAll('.oznameni, [role=status], .toast, [aria-live]')].map(e=>e.textContent.trim()).filter(t=>/PDF|stran|Otevírám/.test(t)).slice(-3);const zdroje=performance.getEntriesByType('resource').filter(e=>/pdf/.test(e.name)).map(e=>e.name.split('/').pop().slice(0,40)+' '+Math.round(e.duration)+'ms '+Math.round((e.transferSize||e.encodedBodySize||0)/1024)+'kB');const platna=o?[...o.querySelectorAll('.pdf-platno')].map(c=>c.width+'x'+c.height):[];const nahledy=o?[...o.querySelectorAll('.pdf-nahled canvas')].filter(c=>c.width!==300).length:0;return JSON.stringify({okno:o&&!o.classList.contains('hidden'),ozn,zdroje,platna,nahledy})})()",
+   "cekat": 1000
+  },
+  {
+   "nazev": "po5s",
+   "js": "(()=>{const o=document.querySelector('.pdf-okno');const ozn=[...document.querySelectorAll('.oznameni, [role=status], .toast, [aria-live]')].map(e=>e.textContent.trim()).filter(t=>/PDF|stran|Otevírám/.test(t)).slice(-3);const zdroje=performance.getEntriesByType('resource').filter(e=>/pdf/.test(e.name)).map(e=>e.name.split('/').pop().slice(0,40)+' '+Math.round(e.duration)+'ms '+Math.round((e.transferSize||e.encodedBodySize||0)/1024)+'kB');const platna=o?[...o.querySelectorAll('.pdf-platno')].map(c=>c.width+'x'+c.height):[];const nahledy=o?[...o.querySelectorAll('.pdf-nahled canvas')].filter(c=>c.width!==300).length:0;return JSON.stringify({okno:o&&!o.classList.contains('hidden'),ozn,zdroje,platna,nahledy})})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "po10s",
+   "js": "(()=>{const o=document.querySelector('.pdf-okno');const ozn=[...document.querySelectorAll('.oznameni, [role=status], .toast, [aria-live]')].map(e=>e.textContent.trim()).filter(t=>/PDF|stran|Otevírám/.test(t)).slice(-3);const zdroje=performance.getEntriesByType('resource').filter(e=>/pdf/.test(e.name)).map(e=>e.name.split('/').pop().slice(0,40)+' '+Math.round(e.duration)+'ms '+Math.round((e.transferSize||e.encodedBodySize||0)/1024)+'kB');const platna=o?[...o.querySelectorAll('.pdf-platno')].map(c=>c.width+'x'+c.height):[];const nahledy=o?[...o.querySelectorAll('.pdf-nahled canvas')].filter(c=>c.width!==300).length:0;return JSON.stringify({okno:o&&!o.classList.contains('hidden'),ozn,zdroje,platna,nahledy})})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "dal",
+   "js": "(()=>{document.querySelector('[data-pdf-listovat=\"1\"]')?.click();return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "dal-stav",
+   "js": "(()=>{const o=document.querySelector('.pdf-okno');const ozn=[...document.querySelectorAll('.oznameni, [role=status], .toast, [aria-live]')].map(e=>e.textContent.trim()).filter(t=>/PDF|stran|Otevírám/.test(t)).slice(-3);const zdroje=performance.getEntriesByType('resource').filter(e=>/pdf/.test(e.name)).map(e=>e.name.split('/').pop().slice(0,40)+' '+Math.round(e.duration)+'ms '+Math.round((e.transferSize||e.encodedBodySize||0)/1024)+'kB');const platna=o?[...o.querySelectorAll('.pdf-platno')].map(c=>c.width+'x'+c.height):[];const nahledy=o?[...o.querySelectorAll('.pdf-nahled canvas')].filter(c=>c.width!==300).length:0;return JSON.stringify({okno:o&&!o.classList.contains('hidden'),ozn,zdroje,platna,nahledy})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "konec",
+   "js": "(()=>{const o=document.querySelector('.pdf-okno');o.dispatchEvent(new KeyboardEvent('keydown',{key:'End',bubbles:true}));return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "konec-stav",
+   "js": "(()=>{const o=document.querySelector('.pdf-okno');const ozn=[...document.querySelectorAll('.oznameni, [role=status], .toast, [aria-live]')].map(e=>e.textContent.trim()).filter(t=>/PDF|stran|Otevírám/.test(t)).slice(-3);const zdroje=performance.getEntriesByType('resource').filter(e=>/pdf/.test(e.name)).map(e=>e.name.split('/').pop().slice(0,40)+' '+Math.round(e.duration)+'ms '+Math.round((e.transferSize||e.encodedBodySize||0)/1024)+'kB');const platna=o?[...o.querySelectorAll('.pdf-platno')].map(c=>c.width+'x'+c.height):[];const nahledy=o?[...o.querySelectorAll('.pdf-nahled canvas')].filter(c=>c.width!==300).length:0;return JSON.stringify({okno:o&&!o.classList.contains('hidden'),ozn,zdroje,platna,nahledy})})()",
+   "cekat": 100
+  }
+ ]
+}

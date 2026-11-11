@@ -198,12 +198,10 @@ export async function otevritPdfCisla() {
         zavrit();
         dokument = novy;
         nazev = vybrane.nazev;
-        // Rozměry všech stran předem (rychlé, bez kreslení): náhledy mají správnou výšku hned
-        rozmery = [];
-        for (let i = 1; i <= dokument.numPages; i++) {
-            const v = (await dokument.getPage(i)).getViewport({ scale: 1 });
-            rozmery.push({ sirka: v.width, vyska: v.height });
-        }
+        // Rozměry všech stran předem (bez kreslení): náhledy mají správnou výšku hned. Strany se vyžádají naráz
+        // (0.02.048), worker je zpracuje bez čekání na každou odpověď zvlášť
+        rozmery = (await Promise.all(Array.from({ length: dokument.numPages }, (_, i) => dokument.getPage(i + 1))))
+            .map(page => { const v = page.getViewport({ scale: 1 }); return { sirka: v.width, vyska: v.height }; });
     } catch (e) {
         console.warn('PDF', e);
         oznamit(`PDF „${vybrane.nazev}“ se nepodařilo otevřít.`);

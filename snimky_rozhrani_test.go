@@ -53,6 +53,11 @@ func TestSnimkyRozhrani(t *testing.T) {
 		}
 		json.NewDecoder(r.Body).Decode(&pozadavek)
 		odpoved := map[string]any{}
+		// Dialog výběru PDF snímkovač nemá: vrátí soubor z proměnné PDF (prohlížeč PDF čísla, 0.02.048)
+		if pozadavek.M == "VybratPDF" && os.Getenv("PDF") != "" {
+			json.NewEncoder(w).Encode(map[string]any{"v": zaregistrovatPDF(os.Getenv("PDF"))})
+			return
+		}
 		metoda := hodnotaApp.MethodByName(pozadavek.M)
 		if !metoda.IsValid() {
 			odpoved["e"] = "neznámá metoda " + pozadavek.M

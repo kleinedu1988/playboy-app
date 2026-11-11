@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.048 – Prohlížeč PDF ve WebKitGTK
+
+- [ ] ⋯ › Otevřít PDF čísla… se skutečným naskenovaným číslem: tmavé pozadí (nic neprosvítá), čas v oznámení
+  pod 5 s, náhledy vlevo se dokreslují při posouvání.
+- [ ] Ctrl + kolečko a +/− lupa, D dvoustrana, Esc zavře; po zavření program reaguje jako předtím.
+
 ## 0.02.047 – Výkon vykreslování
 
 - [ ] Galerie: druhé a další otevření řad kolekcí je znatelně rychlejší; po hodnocení fotky (a chvíli klidu) také.

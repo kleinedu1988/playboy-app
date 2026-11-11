@@ -21110,7 +21110,8 @@ body.rezim-vyberu #detailView .poster {
     z-index: 1550;
     display: flex;
     flex-direction: column;
-    background-color: var(--bg-body);
+    /* --bg-main (0.02.048): dřív neexistující --bg-body, okno bylo průhledné a prosvítal přes něj program */
+    background-color: var(--bg-main);
     outline: none;
 }
 

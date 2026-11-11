@@ -5,6 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.040 – Proč chybí odhad srdíček
+
+- [ ] **Kritérium hotovo:** Hodnocení – pod větou o modelu vkusu „Odhad srdíček má … nehodnocených modelek ·
+      čeká na galerii: … · čeká na analýzu fotek: …“ (na kopii sbírky 179 / 63 / 2).
+- [ ] Profil nehodnocené modelky bez fotek (např. Abella Danger): štítek „bez odhadu · čeká na galerii“, nápověda
+      po najetí; nevypadá jako srdíčka ani jako odhad.
+- [ ] Jackie Rainbow nebo Jayne Mansfield: „čeká na analýzu fotek“; po doběhnutí analýzy (Údržba › Na pozadí)
+      štítek zmizí a objeví se odhad.
+- [ ] Po prvním spuštění se štítek může ukázat až po přepočtu oblíbenosti (uložená oblíbenost z minulého běhu ho nemá).
+
 ## 0.02.039 – Data do pořádku v Údržbě
 
 - [ ] **Kritérium hotovo:** Údržba › návrhy: Heide Mann · „Pet of the Month October 1970“ – číslo „Říjen 1970 ·
@@ -154,7 +164,8 @@ v [docs/archiv/K-VYZKOUSENI-DO-0.02.036.md](docs/archiv/K-VYZKOUSENI-DO-0.02.036
 - [ ] **41 modelek má titul jen v Roli** (16 Playmate roku, 10 Pet, 8 Cyber Girl, 6 Playmate měsíce, 1 Honey), např.
       Claudia Jennings, Angela White, Amber Sym. Od 0.02.039 návrh typu alba pomůže tam, kde má jediný pictorial
       nebo titul v názvu alba; ostatním chybí album s titulem (nahrát ho). U Allison Parks je v Roli překlep „Herčka“.
-- [ ] **56 nehodnocených modelek s fotkami nemá odhad** (chybí analýza obsahu, nebo jsou v nejisté skupině?) → 0.02.040.
+- [x] ~~56 nehodnocených modelek s fotkami nemá odhad~~ – omyl kopie bez analýzy obsahu; doopravdy čekají na analýzu
+      jen 2 (0.02.040).
 - [ ] **Pseudonym „Hope Levin“** mají Hope Marie Carlton i Cherie Witter (nález „stejné jméno“ v Údržbě) – ověř, ke které
       patří.
 - [ ] **Výkonové testy** Mapy sbírky a Kendallova τ občas trvají přes limit → 0.02.047.

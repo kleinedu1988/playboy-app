@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.040] – 2026-11-11
+
+### Přidáno
+- **Proč modelka nemá odhad srdíček:** profil nehodnocené modelky bez odhadu ukáže tlumený štítek „bez odhadu ·
+  čeká na galerii / na analýzu fotek / málo údajů / nejistý odhad / model se učí“ s vysvětlením v nápovědě.
+- **Hodnocení › souhrn odhadů:** pod větou o modelu vkusu „Odhad srdíček má N nehodnocených modelek · čeká na
+  galerii: … · čeká na analýzu fotek: …“.
+
+### Ověřeno
+- Na kopii sbírky (i s analýzou obsahu): odhad má 179 nehodnocených modelek, 63 čeká na galerii, 2 na analýzu
+  fotek. Číslo 56 „bez odhadu“ z 0.02.037 vzniklo jen tím, že kopie neměla složku analýzy obsahu.
+
 ## [0.02.039] – 2026-11-11
 
 ### Přidáno

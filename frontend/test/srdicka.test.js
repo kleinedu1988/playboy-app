@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dnesniPocet, formatSrdicek, hodnotaPoKlavese, hodnotaPoKliku, hodnotaZPozice, idDvojice, kratceSrdicka, naPulky,
-    porovnatOblibenost, procentaPresnosti, pruhySily, textModeluVkusu, textSrdicek, ukazatOdhad, vyhovujeMinimu, znakySrdicek } from '../src/lib/srdicka.js';
+    porovnatOblibenost, procentaPresnosti, pruhySily, textModeluVkusu, textOdhaduSbirky, textSrdicek, ukazatOdhad, vyhovujeMinimu, znakySrdicek } from '../src/lib/srdicka.js';
 import { castGalerie, seraditModelky } from '../src/lib/format.js';
 
 test('srdíčka po půlkách: zaokrouhlení a české zápisy', () => {
@@ -85,4 +85,11 @@ test('Oblíbenost: věta o modelu, dvojice, dnešní počet a pruhy síly', () =
     assert.deepEqual(p.map(x => x.sirka), [100, 4, 50]);
     assert.deepEqual(p.map(x => x.nejistota), [25, 0, 10]);
     assert.deepEqual(pruhySily([{ sila: 1, nejistota: 0 }]).map(x => x.sirka), [100]);
+});
+
+test('souhrn odhadů srdíček ve sbírce (0.02.040)', () => {
+    assert.equal(textOdhaduSbirky({ sOdhadem: 179, bezOdhadu: { galerie: 63, analyza: 2 } }),
+        'Odhad srdíček má 179 nehodnocených modelek · čeká na galerii: 63 · čeká na analýzu fotek: 2.');
+    assert.equal(textOdhaduSbirky({ sOdhadem: 3, bezOdhadu: {} }), 'Odhad srdíček má 3 nehodnocené modelky.');
+    assert.equal(textOdhaduSbirky({}), '');
 });

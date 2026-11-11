@@ -77,6 +77,9 @@ type StavOblibenosti struct {
 	// včerejškem, když se dnes ještě neporovnávalo (série pak ještě platí); SerieDnes = dnešek už se počítá
 	SerieDni  int  `json:"serieDni"`
 	SerieDnes bool `json:"serieDnes"`
+	// Kolik nehodnocených modelek nemá odhad srdíček a proč (0.02.040): důvod (Modelka.BezOdhadu) → počet
+	BezOdhadu map[string]int `json:"bezOdhadu"`
+	SOdhadem  int            `json:"sOdhadem"` // nehodnocených modelek s odhadem
 }
 
 type OblibenostModelky struct {
@@ -218,7 +221,15 @@ func (a *App) GetOblibenost() StavOblibenosti {
 		stav.Presnost = zaokrouhlit3(v.presnost)
 		stav.Odhady = v.platny
 	}
+	stav.BezOdhadu = map[string]int{}
 	for _, m := range modelky {
+		if m.Hodnoceni <= 0 {
+			if d := model.duvodBezOdhadu(m); d != "" {
+				stav.BezOdhadu[d]++
+			} else {
+				stav.SOdhadem++
+			}
+		}
 		ob := model.oblibenostModelky(&m)
 		if ob <= 0 {
 			continue
@@ -318,6 +329,7 @@ func (a *App) doplnitOblibenost(modelky []Modelka) {
 				m.OdhadHodnoceni = zaokrouhlitNaPul(odhad)
 			}
 		}
+		m.BezOdhadu = model.duvodBezOdhadu(*m)
 	}
 }
 

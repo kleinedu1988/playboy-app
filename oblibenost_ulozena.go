@@ -16,11 +16,13 @@ type oblibenostModelky struct {
 	U  int     `json:"u,omitempty"`  // úroveň Top
 	C  int     `json:"c,omitempty"`  // čeká na úroveň
 	Ob int     `json:"ob,omitempty"` // obhajuje úroveň
+	B  string  `json:"b,omitempty"`  // proč nemá odhad (0.02.040)
 }
 
 func (o oblibenostModelky) doplnit(m *Modelka) {
 	m.Oblibenost, m.OdhadHodnoceni, m.Poradi, m.ZmenaPoradi, m.TrendDni = o.O, o.H, o.P, o.Z, o.T
 	m.UrovenTop, m.CekaNaTop, m.ObhajujeTop = o.U, o.C, o.Ob
+	m.BezOdhadu = o.B
 }
 
 // Volá se se zámkem výpočtu; zápis běží na pozadí
@@ -38,6 +40,7 @@ func ulozitOblibenostModelek(u *uceni, modelky []Modelka, model *modelOblibenost
 				x.H = zaokrouhlitNaPul(odhad)
 			}
 		}
+		x.B = model.duvodBezOdhadu(m)
 		v[m.ID] = x
 	}
 	u.ulozitMezipamet(druhUlozeneOblibenosti, model.otisk, v)

@@ -585,3 +585,47 @@ func obalkaPlayboye(obalky []string) bool {
 	}
 	return false
 }
+
+// Proč nehodnocená modelka nemá odhad srdíček (0.02.040): kód důvodu pro štítek, profil a souhrn v Hodnocení;
+// "" = odhad má. Pořadí odpovídá podmínkám v naucitVkus: platný model, fotky (galerie a analýza), dost údajů,
+// skupina, ve které odhady na ověření sedí.
+const (
+	bezOdhaduModel   = "model"   // model vkusu zatím neprošel ověřením (málo hodnocených modelek)
+	bezOdhaduGalerie = "galerie" // nemá fotky
+	bezOdhaduAnalyza = "analyza" // fotky má, ale analýza obsahu ještě neproběhla a hodnocené fotky nemá
+	bezOdhaduUdaje   = "udaje"   // málo vyplněných údajů (méně než minPokrytiVkus skupin)
+	bezOdhaduSkupina = "skupina" // modelky s podobně bohatými údaji odhad na ověření netrefují
+)
+
+// Důvod u modelky podle celého modelu oblíbenosti (odhad z vkusu i z fotek)
+func (mo *modelOblibenosti) duvodBezOdhadu(m Modelka) string {
+	if m.Hodnoceni > 0 {
+		return ""
+	}
+	if _, ok := mo.odhad[m.ID]; ok && mo.vkus != nil && mo.vkus.platny {
+		return ""
+	}
+	return mo.vkus.duvodBezOdhadu(m)
+}
+
+func (v *modelVkusu) duvodBezOdhadu(m Modelka) string {
+	if m.Hodnoceni > 0 {
+		return ""
+	}
+	if v == nil || !v.platny {
+		return bezOdhaduModel
+	}
+	if _, ok := v.odhady[m.ID]; ok {
+		return ""
+	}
+	u := v.udaje[m.ID]
+	switch {
+	case m.PocetFotek == 0:
+		return bezOdhaduGalerie
+	case !maFotkyKOdhadu(u):
+		return bezOdhaduAnalyza
+	case u.skupin < minPokrytiVkus:
+		return bezOdhaduUdaje
+	}
+	return bezOdhaduSkupina
+}

@@ -29,7 +29,7 @@ import { vybraneDlazdice } from './vyber';
 import { obnovitVolby } from '../ui/volby';
 import { htmlNicNenalezeno, htmlPrazdna } from '../ui/prazdno';
 import { htmlSrdicekModelky, klavesaSrdicekModelky, obnovitSrdickaModelky } from '../ui/srdicka';
-import { hodnotaPoKliku, kratceSrdicka, ukazatOdhad } from '../lib/srdicka';
+import { BEZ_ODHADU, hodnotaPoKliku, kratceSrdicka, ukazatOdhad } from '../lib/srdicka';
 import { otevreneOkno } from '../ui/dom';
 
 // Hodnocení fotky 1–5 srdíček; klik na N-té nastaví N, klik na současné hodnocení ho zruší.
@@ -75,7 +75,10 @@ export function htmlTopu(modelka) {
     return `<span class="top-karta" title="${esc(`Top 10 v oblíbenosti${modelka.poradi > 0 ? ` · ${modelka.poradi}. místo` : ''}`)}">Top 10</span>`;
 }
 
-export function htmlOdhadu(modelka, tridy = '') {
+export function htmlOdhadu(modelka, tridy = '', { bezOdhadu = false } = {}) {
+    // V profilu nehodnocené modelky bez odhadu tlumený štítek s důvodem (0.02.040)
+    const proc = bezOdhadu && !ukazatOdhad(modelka) && BEZ_ODHADU[modelka?.bezOdhadu];
+    if (proc) return `<span class="odhad-chip odhad-chybi ${tridy}" title="${esc(proc.veta)}">bez odhadu · ${esc(proc.kratce)}</span>`;
     if (!ukazatOdhad(modelka)) return '';
     return `<span class="odhad-chip ${tridy}" data-odhad="${modelka.id}" title="${esc(nadpisOdhadu(duvodyOdhadu.get(modelka.id)))}">odhad ${kratceSrdicka(modelka.odhadHodnoceni)}</span>`;
 }

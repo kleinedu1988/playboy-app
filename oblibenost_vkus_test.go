@@ -821,6 +821,23 @@ func TestOdhadAzPoGalerii(t *testing.T) {
 			t.Fatalf("tip bez fotek: %s", tip.m.Jmeno)
 		}
 	}
+	// Důvod chybějícího odhadu (0.02.040): bez fotek „galerie“, s odhadem nic, hodnocená nic
+	for _, m := range modelky {
+		d := model.duvodBezOdhadu(m)
+		_, ma := model.odhad[m.ID]
+		switch {
+		case m.Hodnoceni > 0 && d != "":
+			t.Fatalf("hodnocená %s: %q", m.Jmeno, d)
+		case bezFotek[m.ID] && d != bezOdhaduGalerie:
+			t.Fatalf("bez fotek %s: %q", m.Jmeno, d)
+		case m.Hodnoceni <= 0 && ma && d != "":
+			t.Fatalf("s odhadem %s: %q", m.Jmeno, d)
+		}
+	}
+	var bezVkusu *modelVkusu
+	if bezVkusu.duvodBezOdhadu(Modelka{ID: 1, PocetFotek: 3}) != bezOdhaduModel {
+		t.Fatal("bez modelu vkusu")
+	}
 	// Analýza obsahu fotek (CLIP) stačí i bez hodnocených fotek
 	var u udajeVkusu
 	if maFotkyKOdhadu(u) {

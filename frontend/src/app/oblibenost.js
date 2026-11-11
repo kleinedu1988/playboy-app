@@ -16,7 +16,7 @@
 import { prohlizetBezZajmu } from './zajem';
 import { GetDvojiceKPorovnani, GetFotografieModelky, GetMohloByTeLibit, GetNahledyModelek, GetNavrhSrdicek, GetOblibenost, GetSezona, GetNahledyTematu, GetSoubojeModelky, PorovnatModelky, PorovnatModelkyVTematu, SetHodnoceni, VratitPorovnani } from './backend';
 import { esc, sklonovat } from '../lib/format';
-import { dnesniPocet, idDvojice, klicNavrhu, kratceSrdicka, pruhySily, skryteNavrhy, skrytNavrh, textModeluVkusu, textSrdicek, vetaNesouladu, zKolika, znakySrdicek } from '../lib/srdicka';
+import { dnesniPocet, idDvojice, klicNavrhu, kratceSrdicka, pruhySily, skryteNavrhy, skrytNavrh, textModeluVkusu, textOdhaduSbirky, textSrdicek, vetaNesouladu, zKolika, znakySrdicek } from '../lib/srdicka';
 import { NAHLEDU_V_POROVNANI, bublinaCekani, nadpisSouboje, nazevUrovne, odkazyHodnoceni, okoliDvojice, poctyCekajicich, posunMista, postupDne, prevestCastOblibenosti, seskupitPodleUrovni, stitekObhajoby, stoupajiKlesaji, textCekajicich, textCekani, textPravidelUrovni, textSkoreFotek, textVahyZajmu, urovenModelky, vysledekOvereni, vysledekRozhodnuti } from '../lib/oblibenost';
 import { stav } from './stav';
 import { stats } from './prvky';
@@ -254,7 +254,7 @@ async function obnovitPrehledJednou() {
     oznamitPostup(porovnane, predtim);
     [...(data.oblibenost?.poradi || []), ...data.tipy].forEach(p => { if (p.duvod && p.odhad) duvodyOdhadu.set(p.modelkaId, p.duvod); });
     if (!koren?.isConnected) return;
-    nastavitText(cast('info'), textModeluVkusu(data.oblibenost || {}));
+    nastavitText(cast('info'), [textModeluVkusu(data.oblibenost || {}), textOdhaduSbirky(data.oblibenost || {})].filter(Boolean).join(' '));
     vykreslitPoradi();
     srovnatRezimPorovnani();
     vykreslitSev(fronta[0]);

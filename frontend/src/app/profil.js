@@ -173,7 +173,7 @@ export async function otevritDetailModelky(modelka, { bezHistorie = false, sezna
             </div>
             <div class="pruh-radek">
                 <span class="pruh-kariera">${obdobi ? `<span>${esc(obdobi)}</span>` : ''}<span class="pruh-pocty"></span>${paskyHtml ? `<span class="pruh-cisla">${paskyHtml}</span>` : ''}</span>
-                ${htmlOdhadu(modelka, 'odhad-profil')}
+                ${htmlOdhadu(modelka, 'odhad-profil', { bezOdhadu: true })}
                 ${htmlPoradi(modelka)}
                 <div class="profile-odznaky" hidden></div>
                 <button type="button" class="pruh-odkaz pruh-fotka-zahlavi" data-fotka-zahlavi hidden title="Záhlaví zatím nemá vlastní fotku">+ fotka záhlaví</button>

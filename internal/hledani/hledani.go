@@ -62,6 +62,8 @@ type Modelka struct {
 	// Odhad hodnocení modelem vkusu (jen pro čtení): 0,5–5 po polovinách jen u nehodnocené modelky s dost jistým
 	// odhadem, jinak 0
 	OdhadHodnoceni float64 `json:"odhadHodnoceni"`
+	// Proč nehodnocená modelka odhad nemá (0.02.040): model, galerie, analyza, udaje, skupina; "" = má, nebo je hodnocená
+	BezOdhadu string `json:"bezOdhadu,omitempty"`
 	// Potvrzené pořadí oblíbenosti od 1 (0 = mimo pořadí; s prahy úrovní Top N) a o kolik míst stoupla proti snímku před trendDni dny (záporné =
 	// klesla; trendDni 0 = trend zatím není), jen pro čtení (oblibenost_zajem.go)
 	Poradi      int `json:"poradi"`

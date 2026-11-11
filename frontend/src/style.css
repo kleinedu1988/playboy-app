@@ -10359,6 +10359,13 @@ span.ud-chip {
     cursor: help;
 }
 
+/* Bez odhadu (profil, 0.02.040): ještě tlumenější, ať nevypadá jako hodnota */
+.odhad-chip.odhad-chybi {
+    border-style: dotted;
+    background-color: transparent;
+    opacity: 0.8;
+}
+
 /* Na kartě v levém horním rohu místo srdíček; po najetí myší ustoupí srdíčkům, kterými jde modelku ohodnotit */
 .card .odhad-chip {
     position: absolute;

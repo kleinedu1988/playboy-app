@@ -77,6 +77,28 @@ export const porovnatOblibenost = (a, b) => (b.hodnoceni || 0) - (a.hodnoceni ||
 // Odhad hodnocení se ukazuje jen u nehodnocené modelky; skutečné hodnocení má vždy přednost
 export const ukazatOdhad = modelka => !naPulky(modelka?.hodnoceni) && naPulky(modelka?.odhadHodnoceni) > 0;
 
+// Proč nehodnocená modelka nemá odhad srdíček (0.02.040, Modelka.bezOdhadu z backendu): krátce do štítku, celá
+// věta do nápovědy a souhrnu v Hodnocení
+export const BEZ_ODHADU = {
+    galerie: { kratce: 'čeká na galerii', veta: 'Odhad srdíček se ukáže po nahrání první galerie a analýze jejích fotek.' },
+    analyza: { kratce: 'čeká na analýzu fotek', veta: 'Fotky má, ale analýza obsahu fotek u nich ještě neproběhla (Údržba › Na pozadí › Obsah fotek) a hodnocené fotky nemá.' },
+    udaje: { kratce: 'málo údajů', veta: 'Má málo vyplněných údajů – doplň vzhled, období nebo míry a odhad se ukáže.' },
+    skupina: { kratce: 'nejistý odhad', veta: 'U modelek s takhle bohatými údaji odhad na ověření netrefuje, proto se neukazuje.' },
+    model: { kratce: 'model se učí', veta: 'Model vkusu se ještě učí – ohodnoť víc modelek srdíčky a odhady se ukážou.' },
+};
+
+/**
+ * Souhrn odhadů ve sbírce pro Hodnocení: „Odhad srdíček má 179 nehodnocených modelek · čeká na galerii: 63 ·
+ * čeká na analýzu fotek: 2“; bez dat ""
+ * @param {{ sOdhadem?: number, bezOdhadu?: Record<string, number> }} stav
+ */
+export function textOdhaduSbirky({ sOdhadem = 0, bezOdhadu = {} } = {}) {
+    const casti = Object.keys(BEZ_ODHADU).filter(k => bezOdhadu?.[k] > 0).map(k => `${BEZ_ODHADU[k].kratce}: ${bezOdhadu[k]}`);
+    if (!sOdhadem && !casti.length) return '';
+    const kolik = `${sOdhadem} ${sOdhadem === 1 ? 'nehodnocená modelka' : sOdhadem >= 2 && sOdhadem <= 4 ? 'nehodnocené modelky' : 'nehodnocených modelek'}`;
+    return [`Odhad srdíček má ${kolik}`, ...casti].join(' · ') + '.';
+}
+
 // Procento s celým číslem (přesnost modelu vkusu 0–1 → „72 %“)
 export const procentaPresnosti = presnost => `${Math.round(Math.max(0, Math.min(1, Number(presnost) || 0)) * 100)} %`;
 

@@ -51,6 +51,7 @@ export namespace hledani {
 	    hodnoceni: number;
 	    oblibenost: number;
 	    odhadHodnoceni: number;
+	    bezOdhadu?: string;
 	    poradi: number;
 	    zmenaPoradi: number;
 	    trendDni: number;
@@ -111,6 +112,7 @@ export namespace hledani {
 	        this.hodnoceni = source["hodnoceni"];
 	        this.oblibenost = source["oblibenost"];
 	        this.odhadHodnoceni = source["odhadHodnoceni"];
+	        this.bezOdhadu = source["bezOdhadu"];
 	        this.poradi = source["poradi"];
 	        this.zmenaPoradi = source["zmenaPoradi"];
 	        this.trendDni = source["trendDni"];
@@ -3110,6 +3112,8 @@ export namespace main {
 	    cekajicich: number;
 	    serieDni: number;
 	    serieDnes: boolean;
+	    bezOdhadu: Record<string, number>;
+	    sOdhadem: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new StavOblibenosti(source);
@@ -3133,6 +3137,8 @@ export namespace main {
 	        this.cekajicich = source["cekajicich"];
 	        this.serieDni = source["serieDni"];
 	        this.serieDnes = source["serieDnes"];
+	        this.bezOdhadu = source["bezOdhadu"];
+	        this.sOdhadem = source["sOdhadem"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

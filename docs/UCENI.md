@@ -745,7 +745,9 @@ jen ve skupině, kde na ověření (aspoň 20 hodnocených, jinak spolu s chudš
 druhem) má chybu nejvýš 90 % chyby prostého průměru a přesnost (zaokrouhlený odhad do ± půl srdíčka) aspoň 0,5;
 vždy jen od 30 hodnocených modelek a u modelky s aspoň 4 skupinami údajů, která už má galerii: fotky s analýzou
 obsahu (vektory CLIP) nebo hodnocené fotky (od 0.02.031; ze samotných údajů se modelce bez fotek neodhaduje,
-platí i pro „Mohlo by se ti líbit“). `presnost` v `GetOblibenost` a chyba jsou
+platí i pro „Mohlo by se ti líbit“). Proč odhad chybí, říká `Modelka.bezOdhadu` (model, galerie, analyza, udaje,
+skupina – štítek „bez odhadu“ v profilu) a souhrn `bezOdhadu` / `sOdhadem` v `GetOblibenost` (Hodnocení, od 0.02.040).
+`presnost` v `GetOblibenost` a chyba jsou
 z ověření ukázaných skupin. Na umělé sbírce (níže) jsou odhady modelek bez srdíček fotek a s málo údaji horší než
 prostý průměr – dřív se ukazovaly všem.
 

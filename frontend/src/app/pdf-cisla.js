@@ -1,7 +1,7 @@
 // Prohlížeč PDF čísla (⋯ › Otevřít PDF čísla…, 0.02.035): pdf.js v rozhraní (načte se až při prvním otevření),
 // soubor vybraný v dialogu vydá Go na /pdf/<token> (pdf_cisla.go). Vlevo náhledy stran (kreslí se, až se ukážou),
 // vpravo strana nebo dvoustrana přizpůsobená oknu, lupa. Klávesy: ←/→ a PageUp/PageDown listují, Home/End,
-// +/− lupa, 0 přizpůsobit, D dvoustrana, Esc zavře. Označování stran a export pro Disk jsou další kroky (0.02.037+).
+// +/− lupa, 0 přizpůsobit, D dvoustrana, Esc zavře. Označování stran a export pro Disk jsou další kroky (0.02.049+).
 import { VybratPDF } from './backend';
 import { dalsiLupa, dalsiZobrazeni, meritkoZobrazeni, stranyZobrazeni } from '../lib/pdf-cisla';
 import { drzetFokus } from '../ui/dom';

@@ -35,6 +35,7 @@ import { exportovatData, importovatData, prejmenovatVeSbirce, sloucitModelku, zk
 import * as zdravi from './zdravi';
 import { otevritRychlePridani } from './formular-modelky';
 import { potvrditRozdil } from '../ui/hromadne';
+import { REZIMY_UKOLU, STRANKY_SBIRKY, strankaSbirky } from '../lib/stranky-sbirky';
 
 // Skupin na stránku; další se přidají při doscrollování na konec (nebo tlačítkem)
 const STRANKA = 60;
@@ -51,15 +52,10 @@ const ODLOZENI = {
     cislo: ['Nezajímá mě', 'Znovu sledovat', 'nezajímá mě'],
 };
 const druhOdlozeni = (x, s) => s.druh === 'vydani' ? 'cislo' : x.druh;
-// Režimy Údržby: [klíč, název, popis do nápovědy]
+// Režimy Údržby: Dnes je stránka Přehled, ostatní jsou režimy stránky Úkoly (lib/stranky-sbirky.js)
 const REZIMY = [
-    ['dnes', 'Dnes', 'Krátká dávka toho nejcennějšího napříč režimy (asi 30 úkolů ≈ 15 minut), pokrok dne a co běží na pozadí'],
-    ['udaje', 'Po údajích', 'Jeden údaj, všechny modelky, kterým chybí: píšeš rovnou do řádků, Enter uloží a jde dolů'],
-    ['modelky', 'Po modelkách', 'Jedna modelka a všechny její úkoly na jedné kartě, vpravo fronta'],
-    ['stejne', 'Stejné fotky', 'Tatáž fotka ve sbírce víckrát (jiný soubor, přeuložená nebo zmenšená kopie): nechat jednu, nebo označit jako v pořádku'],
-    ['fotky', 'Otočené, kvalita a výřezy', 'Fotky na boku nebo vzhůru nohama (otočit jedním klikem), malé, rozmazané, přepálené a tmavé fotky (vyměnit za lepší stejnou) a titulní fotky s výchozím výřezem (navrhnout výřez z postavy)'],
-    ['web', 'Z webu', 'Průchod sbírkou proti Wikidatům, Wikipedii a Boobpedii; rozdíly přijmout po jednom, po údaji nebo po zdroji, nebo odmítnout'],
-    ['souhrn', 'Souhrn', 'Pokrok sbírky, co se program naučil a celá fronta s filtry'],
+    ['dnes', 'Přehled', 'Jak je sbírka doplněná, krátká dávka toho nejcennějšího (asi 30 úkolů ≈ 15 minut), pokrok dne a co běží na pozadí'],
+    ...REZIMY_UKOLU,
 ];
 const KOSTRA = `
     <div class="ud" data-ud-kostra>
@@ -327,6 +323,7 @@ function htmlHlavySbirky() {
     // V jedné řadě s oblastí v názvu, aby se Centerfold modelek a čísel nepletl
     const NAZVY_V_LISTE = { text: 'Texty alb', alba: 'Vydání alb', cover: 'Cover čísel', cfcisla: 'Centerfold čísel' };
     const vUdrzbe = true;
+    const stranka = strankaSbirky(stav);
     const pilulky = vUdrzbe && vSouhrnu() ? OBLASTI_FILTRU.flatMap(o => o.filtry).filter(([klic]) => klic === 'vse' || klic === filtr || model.pocty[klic])
         .map(([klic, nazev, popis]) => `<button type="button" class="sh-filtr ${klic === filtr ? 'on' : ''}" data-sh-filtr="${klic}"${popis ? ` title="${esc(popis)}"` : ''}>${esc(NAZVY_V_LISTE[klic] || nazev)}<small>${model.pocty[klic] || 0}</small></button>`).join('') : '';
     return `<div class="sh-obsah">
@@ -337,19 +334,15 @@ function htmlHlavySbirky() {
             <div class="sh-oblasti">${oblasti}</div>
         </div>
         <div class="sh-akce">
-            <button type="button" class="volba akcent" data-sh-akce="pridat" aria-haspopup="menu"><b>+ Přidat</b> <i aria-hidden="true">▾</i></button>
-            <button type="button" class="volba" data-sh-akce="import"><b>Importovat</b></button>
-            <button type="button" class="volba" data-sh-akce="export"><b>Exportovat</b></button>
-            <button type="button" class="volba" data-sh-akce="soubory"><b>Zkontrolovat soubory</b></button>
-            <span class="sh-oddelovac" aria-hidden="true"></span>
-            ${[['cisla', 'Čísla a sháním'], ['uceni', 'Učení']].map(([klic, nazev]) =>
-                `<button type="button" class="volba ${stav.sbirkaPanel === klic ? 'zapnuto' : ''}" data-sh-panel="${klic}" aria-pressed="${stav.sbirkaPanel === klic}" title="Panel vpravo (I)">${nazev}</button>`).join('')}
+            <nav class="sh-stranky" role="tablist" aria-label="Stránky Sbírky">${STRANKY_SBIRKY.map(x =>
+                `<button type="button" role="tab" class="${x.klic === stranka ? 'on' : ''}" aria-selected="${x.klic === stranka}" data-sbirka-stranka="${x.klic}" title="${esc(x.popis)}">${esc(x.nazev)}</button>`).join('')}</nav>
+            <button type="button" class="volba sh-akce-tl" data-sh-akce="nabidka" aria-haspopup="menu" title="Přidat, importovat, exportovat, zkontrolovat soubory"><b>Akce</b> <i aria-hidden="true">▾</i></button>
         </div>
-        <div class="sh-lista">
+        ${stranka === 'ukoly' ? `<div class="sh-lista">
+            <div class="sh-pohledy" role="group" aria-label="Režim úkolů">${REZIMY_UKOLU.map(([klic, nazev, popis]) =>
+                `<button type="button" class="${klic === stav.udrzbaRezim ? 'on' : ''}" data-sh-rezim="${klic}" title="${esc(popis)}">${esc(nazev)}</button>`).join('')}</div>
             <div class="sh-filtry" role="group" aria-label="Co ukázat ve frontě">${pilulky}${htmlZdrojuHlavy(vUdrzbe)}</div>
-            <div class="sh-pohledy" role="group" aria-label="Pohled Údržby">${REZIMY.map(([klic, nazev, popis]) =>
-                `<button type="button" class="${vUdrzbe && klic === stav.udrzbaRezim ? 'on' : ''}" data-sh-rezim="${klic}" title="${esc(popis)}">${esc(klic === 'souhrn' ? 'Fronta' : nazev)}</button>`).join('')}</div>
-        </div>`;
+        </div>` : ''}`;
 }
 
 // Zdroje návrhů nebo nálezů (u filtru Návrhy a Ke kontrole) jako menší pilulky za filtry
@@ -384,24 +377,24 @@ function pripravitHlavuSbirky() {
         const filtr = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-filtr]'));
         const rezim = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-rezim]'));
         const akce = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-akce]'));
-        const panelSbirky = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-panel]'));
         const zdroj = /** @type {HTMLElement | null} */ (cil.closest('[data-sh-zdroj]'));
         if (filtr) nastavitFiltr(filtr.dataset.shFiltr);
         else if (zdroj) nastavitFiltr(stav.udrzbaFiltr, zdroj.dataset.shZdroj);
         else if (rezim) nastavitRezim(rezim.dataset.shRezim);
-        // Panel vpravo (Čísla a sháním, Učení) otevře prehled.js; stejné tlačítko ho zavře
-        else if (panelSbirky) document.dispatchEvent(new CustomEvent('panel-sbirky', { detail: panelSbirky.dataset.shPanel }));
-        else if (akce?.dataset.shAkce === 'pridat') {
+        // Stránky Sbírky (data-sbirka-stranka) přepíná prehled.js obsluhou na dokumentu
+        else if (akce?.dataset.shAkce === 'nabidka') {
             e.stopPropagation();
             const r = akce.getBoundingClientRect();
             otevritKontextovouNabidku(r.left, r.bottom + 6, [
                 { text: 'Přidat modelku…', akce: otevritRychlePridani },
                 { text: 'Přidat centerfold…', akce: () => pridatCenterfold() },
                 { text: 'Přidat cover…', akce: () => otevritCoverModal() },
+                null,
+                { text: 'Importovat…', akce: importovatData },
+                { text: 'Exportovat…', akce: exportovatData },
+                { text: 'Zkontrolovat soubory', akce: zkontrolovatSoubory },
             ]);
-        } else if (akce?.dataset.shAkce === 'import') importovatData();
-        else if (akce?.dataset.shAkce === 'export') exportovatData();
-        else if (akce?.dataset.shAkce === 'soubory') zkontrolovatSoubory();
+        }
     });
     const navbar = document.querySelector('.navbar');
     oblast().addEventListener('scroll', () => {
@@ -479,11 +472,15 @@ export function hledatVeFronte(text) {
 
 // Přepnutí režimu (zapamatuje se); z Po modelkách s rozepsanými změnami se nejdřív zeptá.
 // klicSkupiny: Po modelkách rovnou na této skupině (S nebo ⋯ v Souhrnu).
-async function nastavitRezim(rezim, klicSkupiny = '') {
+export async function nastavitRezim(rezim, klicSkupiny = '') {
     if (!REZIMY.some(([k]) => k === rezim)) return;
     if (rezim !== stav.udrzbaRezim && stav.udrzbaRezim === 'modelky' && !await fokus.zavrit()) return;
     stav.udrzbaRezim = rezim;
-    try { localStorage.setItem('udrzbaRezim', rezim); } catch { /* jen se nezapamatuje */ }
+    try {
+        localStorage.setItem('udrzbaRezim', rezim);
+        // Stránka Úkoly se příště otevře v naposledy použitém režimu úkolů (lib/stranky-sbirky.js)
+        if (rezim !== 'dnes') localStorage.setItem('udrzbaRezimUkolu', rezim);
+    } catch { /* jen se nezapamatuje */ }
     if (!model) return;
     if (rezim === 'modelky') {
         cast('fokus').classList.remove('hidden');
@@ -924,7 +921,6 @@ export function pripravit(nacistPrehled) {
     try { stav.udrzbaRazeni = localStorage.getItem('udrzbaRazeni') || 'priorita'; } catch { /* výchozí */ }
     try { stav.udrzbaRezim = localStorage.getItem('udrzbaRezim') || 'dnes'; } catch { /* Dnes */ }
     if (!REZIMY.some(([k]) => k === stav.udrzbaRezim)) stav.udrzbaRezim = 'dnes';
-    if (!REZIMY.some(([k]) => k === stav.udrzbaRezim)) stav.udrzbaRezim = 'udaje';
 
     pripravitHlavuSbirky();
     stats.addEventListener('pointerdown', () => { mysDole = true; });

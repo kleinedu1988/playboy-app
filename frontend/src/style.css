@@ -16595,6 +16595,63 @@ body.rezim-vyberu #detailView .poster {
     opacity: 0.7;
 }
 
+/* Přehledná Sbírka (0.02.052): jediná lišta stránek (Přehled · Úkoly · Čísla a sháním · Učení), akce v nabídce vpravo */
+.sh-akce {
+    position: relative;
+}
+
+.sh-stranky {
+    display: inline-flex;
+    gap: 2px;
+    margin: 0 auto;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 999px;
+}
+
+.sh-stranky button {
+    height: 30px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.sh-stranky button:hover {
+    background-color: var(--panel-hover);
+    color: var(--text-main);
+}
+
+.sh-stranky button.on,
+.sh-stranky button.on:hover {
+    background-color: var(--accent);
+    color: #fff;
+}
+
+.sh-akce .sh-akce-tl {
+    position: absolute;
+    right: 0;
+}
+
+.navbar.sbirka-svinuta .sh-akce .sh-akce-tl {
+    position: static;
+}
+
+/* Režimy úkolů vlevo, filtry fronty za nimi */
+.sh-lista .sh-pohledy {
+    margin-left: 0;
+}
+
+/* Panel Sbírky přepíná lišta stránek v hlavičce, vlastní záložky nepotřebuje */
+.sbp-zalozky {
+    visibility: hidden;
+}
+
 .sh-oddelovac {
     width: 1px;
     height: 18px;

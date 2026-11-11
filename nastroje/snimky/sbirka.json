@@ -1,0 +1,126 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "sbirka",
+   "js": "(()=>{const b=document.querySelector('#viewToggle [data-sekce=\"sbirka\"]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 7000
+  },
+  {
+   "nazev": "lista",
+   "js": "(()=>{const h=document.querySelector('.sbirka-hlava:not(.hidden)');if(!h)return 'bez hlavy';return JSON.stringify({stranky:[...h.querySelectorAll('[data-sbirka-stranka]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),rezimy:[...h.querySelectorAll('[data-sh-rezim]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),akce:[...h.querySelectorAll('.volba')].map(b=>b.textContent.trim()),zpet:document.querySelector('#albumNav, .zpet, [data-zpet]')?.textContent.trim().slice(0,60)||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "úkoly",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"\\u00dakoly\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "úkoly-lista",
+   "js": "(()=>{const h=document.querySelector('.sbirka-hlava:not(.hidden)');if(!h)return 'bez hlavy';return JSON.stringify({stranky:[...h.querySelectorAll('[data-sbirka-stranka]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),rezimy:[...h.querySelectorAll('[data-sh-rezim]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),akce:[...h.querySelectorAll('.volba')].map(b=>b.textContent.trim()),zpet:document.querySelector('#albumNav, .zpet, [data-zpet]')?.textContent.trim().slice(0,60)||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "čísla",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"\\u010c\\u00edsla a sh\\u00e1n\\u00edm\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "čísla-lista",
+   "js": "(()=>{const h=document.querySelector('.sbirka-hlava:not(.hidden)');if(!h)return 'bez hlavy';return JSON.stringify({stranky:[...h.querySelectorAll('[data-sbirka-stranka]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),rezimy:[...h.querySelectorAll('[data-sh-rezim]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),akce:[...h.querySelectorAll('.volba')].map(b=>b.textContent.trim()),zpet:document.querySelector('#albumNav, .zpet, [data-zpet]')?.textContent.trim().slice(0,60)||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "učení",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"U\\u010den\\u00ed\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "učení-lista",
+   "js": "(()=>{const h=document.querySelector('.sbirka-hlava:not(.hidden)');if(!h)return 'bez hlavy';return JSON.stringify({stranky:[...h.querySelectorAll('[data-sbirka-stranka]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),rezimy:[...h.querySelectorAll('[data-sh-rezim]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),akce:[...h.querySelectorAll('.volba')].map(b=>b.textContent.trim()),zpet:document.querySelector('#albumNav, .zpet, [data-zpet]')?.textContent.trim().slice(0,60)||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "přehled",
+   "js": "(()=>{const b=[...document.querySelectorAll('.sbirka-hlava [data-sbirka-stranka]')].find(b=>b.textContent.trim()===\"P\\u0159ehled\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "přehled-lista",
+   "js": "(()=>{const h=document.querySelector('.sbirka-hlava:not(.hidden)');if(!h)return 'bez hlavy';return JSON.stringify({stranky:[...h.querySelectorAll('[data-sbirka-stranka]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),rezimy:[...h.querySelectorAll('[data-sh-rezim]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),akce:[...h.querySelectorAll('.volba')].map(b=>b.textContent.trim()),zpet:document.querySelector('#albumNav, .zpet, [data-zpet]')?.textContent.trim().slice(0,60)||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "akce",
+   "js": "(()=>{document.querySelector('[data-sh-akce=\"nabidka\"]').click();return [...document.querySelectorAll('.context-menu:not(.hidden) button, .context-menu:not(.hidden) [role=menuitem]')].map(b=>b.textContent.trim()).join(' | ')})()",
+   "cekat": 600
+  },
+  {
+   "nazev": "esc",
+   "js": "(()=>{document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));document.body.click();return 'ok'})()",
+   "cekat": 400
+  },
+  {
+   "nazev": "mapa",
+   "js": "(()=>{const b=document.querySelector('#viewToggle [data-sekce=\"sbirka\"]');b.click();return 'ok'})()",
+   "cekat": 1200
+  },
+  {
+   "nazev": "mapa-stav",
+   "js": "(()=>{const m=document.querySelector('.mapa-sekci');if(!m)return 'bez mapy';const s=[...m.querySelectorAll('.mapa-sloupec')].find(x=>/Sbírka/i.test(x.querySelector('h4').textContent));return JSON.stringify([...s.querySelectorAll('button')].map(b=>(b.classList.contains('zvolena')?'*':b.classList.contains('v-ni')?'>':'')+b.textContent.trim()))})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "mapa-web",
+   "js": "(()=>{const b=[...document.querySelectorAll('.mapa-sekci button')].find(b=>b.textContent.trim()===\"Z webu\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "web-lista",
+   "js": "(()=>{const h=document.querySelector('.sbirka-hlava:not(.hidden)');if(!h)return 'bez hlavy';return JSON.stringify({stranky:[...h.querySelectorAll('[data-sbirka-stranka]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),rezimy:[...h.querySelectorAll('[data-sh-rezim]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),akce:[...h.querySelectorAll('.volba')].map(b=>b.textContent.trim()),zpet:document.querySelector('#albumNav, .zpet, [data-zpet]')?.textContent.trim().slice(0,60)||''})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "profily",
+   "js": "(()=>{document.querySelector('#viewToggle [data-rezim=\"modelky\"]').click();return 'ok'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "mapa2",
+   "js": "(()=>{document.querySelector('#viewToggle [data-rezim=\"modelky\"]').click();return 'ok'})()",
+   "cekat": 1200
+  },
+  {
+   "nazev": "mapa-cisla",
+   "js": "(()=>{const b=[...document.querySelectorAll('.mapa-sekci button')].find(b=>b.textContent.trim()===\"\\u010c\\u00edsla a sh\\u00e1n\\u00edm\");if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "cisla2-lista",
+   "js": "(()=>{const h=document.querySelector('.sbirka-hlava:not(.hidden)');if(!h)return 'bez hlavy';return JSON.stringify({stranky:[...h.querySelectorAll('[data-sbirka-stranka]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),rezimy:[...h.querySelectorAll('[data-sh-rezim]')].map(b=>(b.classList.contains('on')?'*':'')+b.textContent.trim()),akce:[...h.querySelectorAll('.volba')].map(b=>b.textContent.trim()),zpet:document.querySelector('#albumNav, .zpet, [data-zpet]')?.textContent.trim().slice(0,60)||''})})()",
+   "cekat": 100
+  }
+ ]
+}

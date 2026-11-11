@@ -20,6 +20,7 @@ import { nastavitPohledSlavy, pohledSlavy } from './sin-slavy';
 import { nastavitCastOblibenosti, obnovitHlavuHodnoceni } from './oblibenost';
 import { obnovitPasHlavicky } from './prehled';
 import { vzhled } from '../ui/vzhled';
+import { nazevStrankySbirky, strankaSbirky } from '../lib/stranky-sbirky';
 
 // Přehledy se seznamy (galerie, stěna, čísla, kalendář, nejlepší) se při každém zobrazení vykreslují celé znovu.
 // Skryté by jen držely tisíce karet a fotek, které zpomalují každou další akci (úklid paměti, hledání v dokumentu,
@@ -137,17 +138,16 @@ function selektorFokusu() {
 export const historie = [];
 // Kalendář je zobrazení Čísel: Zpět se jmenuje podle záložky
 export const NAZVY_REZIMU = { modelky: 'Modelky', centerfoldy: 'Čísla', covery: 'Čísla', kalendar: 'Čísla', nejlepsi: 'Modelky', statistiky: 'Modelky', prehled: 'Sbírka' };
-// Části Sbírky (a Hodnocení, Síně slávy) v cestě Zpět; úvod Sbírky je prostě „Sbírka“
-const NAZVY_STRANEK = { hodnoceni: 'Hodnocení', slava: 'Síň slávy', uvod: 'Mapa čísel', udrzba: 'Údržba', shanim: 'Sháním CZ', statistiky: 'Statistiky' };
 
 // Cesta, kam vede Zpět, stejnými názvy jako navigační kapsle: sekce › část, u podstránky modelka, číslo, fotograf
 const CASTI_REZIMU = { modelky: ['Modelky', 'Profily'], nejlepsi: ['Modelky', 'Galerie'], statistiky: ['Modelky', 'Statistiky'], covery: ['Čísla', 'Obálky'], kalendar: ['Čísla', 'Kalendář'], centerfoldy: ['Čísla', 'Centerfoldy'] };
 const POHLEDY_HODNOCENI = { porovnat: 'Porovnat', fotky: 'Hodnotit', poradi: 'Pořadí' };
-function cestaPrehledu({ sekce, cast, pohled }) {
+function cestaPrehledu({ sekce, cast, pohled, stranka = '' }) {
     if (sekce === 'oblibenost' && cast === 'slava') return ['Síň slávy'];
     if (sekce === 'oblibenost') return ['Hodnocení', POHLEDY_HODNOCENI[pohled] || 'Porovnat'];
-    // Sbírka je jedna stránka; Údržba je její hlavní obsah, ostatní části se v cestě jmenují
-    return NAZVY_STRANEK[sekce] && sekce !== 'udrzba' ? ['Sbírka', NAZVY_STRANEK[sekce]] : ['Sbírka'];
+    // Sbírka: stránka stejným názvem jako v liště a mapě sekcí (lib/stranky-sbirky.js); dřívější části → stránka
+    if (sekce === 'statistiky') return ['Sbírka', 'Statistiky'];
+    return ['Sbírka', nazevStrankySbirky(stranka || (sekce === 'uvod' || sekce === 'shanim' ? 'cisla' : 'prehled'))];
 }
 export function cestaZpet() {
     const misto = historie[historie.length - 1];
@@ -155,7 +155,7 @@ export function cestaZpet() {
     if (misto?.typ === 'vydani') return [nazevVydani(misto.vydani)];
     if (misto?.typ === 'fotograf') return [misto.jmeno];
     if (misto?.rezim === 'prehled') return cestaPrehledu(misto.prehled);
-    if (!misto && stav.rezim === 'prehled') return cestaPrehledu({ sekce: stav.prehledSekce, cast: stav.oblibenostCast, pohled: stav.hodnoceniPohled });
+    if (!misto && stav.rezim === 'prehled') return cestaPrehledu({ sekce: stav.prehledSekce, cast: stav.oblibenostCast, pohled: stav.hodnoceniPohled, stranka: strankaSbirky(stav) });
     return CASTI_REZIMU[misto?.rezim || stav.rezim] || [NAZVY_REZIMU[misto?.rezim || stav.rezim] || 'Modelky'];
 }
 export const popisZpet = () => cestaZpet().join(' › ');
@@ -167,7 +167,7 @@ export function soucasneMisto() {
     if (!issueView.classList.contains('hidden')) return stav.aktualniFotograf ? { typ: 'fotograf', jmeno: stav.aktualniFotograf, scroll, fokus } : { typ: 'vydani', vydani: stav.aktualniVydani, scroll, fokus };
     // V Přehledu i stránka a část, aby Zpět vrátilo přesně tam (Údržba, Kronika…)
     const prehled = stav.rezim === 'prehled'
-        ? { sekce: stav.prehledSekce, cast: stav.oblibenostCast, pohled: stav.hodnoceniPohled, slava: pohledSlavy() } : null;
+        ? { sekce: stav.prehledSekce, cast: stav.oblibenostCast, pohled: stav.hodnoceniPohled, slava: pohledSlavy(), stranka: strankaSbirky(stav) } : null;
     return { typ: 'prehled', rezim: stav.rezim, prehled, scroll, fokus };
 }
 

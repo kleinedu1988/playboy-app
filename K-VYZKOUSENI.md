@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.052 – Jedna lišta Sbírky
+
+- [ ] Sbírka: lišta Přehled · Úkoly · Čísla a sháním · Učení přepíná správně, Akce ▾ nabídne přidání, import, export a kontrolu souborů.
+- [ ] Mapa sekcí (klik na Sbírku v kapsli) a tlačítko Zpět používají stejné názvy jako lišta.
+- [ ] Klávesa I a Esc u panelu Čísla a sháním / Učení přepnou lištu na Přehled.
+
 ## 0.02.051 – Tvar podle místa
 
 - [ ] Hero Galerie: postava vpravo od textu, obličej celý; hero Kalendáře, Centerfoldů a Obálek: hlava ani nohy zbytečně useknuté.

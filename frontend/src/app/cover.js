@@ -19,6 +19,7 @@ import { VELIKOST_PLAKATU_MALA, adresyOdkazu } from './obrazky';
 import { jeVidet, otevreneOkno } from '../ui/dom';
 import { naCss } from '../ui/vzhled';
 import { nastavitRadu, vychoziRada, zapamatovatRadu } from './rady';
+import { REZIMY_UKOLU, STRANKY_SBIRKY, strankaSbirky } from '../lib/stranky-sbirky';
 
 // Speciály zvoleného roku a edice mají vlastní výběr vedle měsíců
 let obnovitSpecialyCoveru = (_vybrat) => {};
@@ -234,8 +235,10 @@ const CASTI_SEKCI = {
     modelky: [['cast-modelek-pas', 'profily', 'Profily'], ['cast-modelek-pas', 'galerie', 'Galerie'], ['cast-modelek-pas', 'statistiky', 'Statistiky'], ['cast-modelek-pas', 'slava', 'Síň slávy']],
     covery: [['cast-cisel-pas', 'covery', 'Obálky'], ['cast-cisel-pas', 'kalendar', 'Kalendář'], ['cast-cisel-pas', 'centerfoldy', 'Centerfoldy']],
     hodnoceni: [['zobrazeni-prehledu', 'porovnat', 'Porovnat'], ['zobrazeni-prehledu', 'fotky', 'Hodnotit'], ['zobrazeni-prehledu', 'poradi', 'Pořadí']],
-    sbirka: [['zobrazeni-prehledu', 'udrzba', 'Údržba'], ['zobrazeni-prehledu', 'uvod', 'Mapa čísel'], ['zobrazeni-prehledu', 'shanim', 'Sháním CZ']],
+    // Stránky Sbírky ze stejného seznamu jako lišta v její hlavičce (lib/stranky-sbirky.js)
+    sbirka: STRANKY_SBIRKY.map(x => ['sbirka-stranka', x.klic, x.nazev]),
 };
+const naStranceSbirky = (/** @type {string} */ cast) => stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && strankaSbirky(stav) === cast;
 function otevritCast(atribut, klic) {
     const b = document.createElement('button');
     b.hidden = true;
@@ -247,7 +250,13 @@ function otevritCast(atribut, klic) {
 // Pohledy částí, které je mají (třetí úroveň): v mapě sekcí pod svou částí; otevřou část rovnou na tom pohledu
 const POHLEDY_CASTI = {
     slava: { atribut: 'sl-pohled', pohledy: [['top', 'Top 10'], ['legendy', 'Legendy'], ['odznaky', 'Odznaky'], ['rekordy', 'Rekordy'], ['kronika', 'Kronika'], ['sezona', 'Sezóna']], aktualni: () => pohledSlavy(), nastavit: k => nastavitPohledSlavy(k) },
-    udrzba: { atribut: 'ud-rezim', pohledy: [['udaje', 'Po údajích'], ['modelky', 'Po modelkách'], ['stejne', 'Stejné fotky'], ['fotky', 'Otočené a výřezy'], ['web', 'Z webu'], ['souhrn', 'Souhrn']], aktualni: () => stav.udrzbaRezim, nastavit: (k) => { stav.udrzbaRezim = k; try { localStorage.setItem('udrzbaRezim', k); } catch { /* jen pro toto spuštění */ } } },
+    ukoly: {
+        atribut: 'sh-rezim', pohledy: REZIMY_UKOLU.map(([k, n]) => [k, n]), aktualni: () => stav.udrzbaRezim,
+        nastavit: (k) => {
+            stav.udrzbaRezim = k;
+            try { localStorage.setItem('udrzbaRezim', k); localStorage.setItem('udrzbaRezimUkolu', k); } catch { /* jen pro toto spuštění */ }
+        },
+    },
 };
 
 // Po otevření části přepne pohled jejím přepínačem, jakmile se přepínač objeví (nejvýš asi 2 s)
@@ -281,8 +290,8 @@ function otevritNabidkuSekci(tlacitko) {
         const aktivniSekce = sekce.classList.contains('active');
         const nazev = sekce.querySelector('span')?.textContent.trim() || '';
         const casti = (CASTI_SEKCI[klic] || []).map(([atribut, cast, nazevCasti]) => {
-            // Sbírka nemá pilulky částí (jedna stránka s hlavičkou): zvolenou část říká stav Přehledu
-            const je = aktivniSekce && (zvolena ? zvolena.getAttribute(`data-${atribut}`) === cast : klic === 'sbirka' && stav.prehledSekce === cast);
+            // Sbírka nemá pilulky částí v kapsli (lišta je v její hlavičce): zvolenou stránku říká stav
+            const je = aktivniSekce && (zvolena ? zvolena.getAttribute(`data-${atribut}`) === cast : klic === 'sbirka' && naStranceSbirky(cast));
             const p = POHLEDY_CASTI[cast];
             const pohledy = p ? `<div class="mapa-pohledy">${p.pohledy.map(([k, n]) =>
                 `<button type="button" class="${je && p.aktualni() === k ? 'zvolena' : ''}" data-mapa-cast="${atribut}:${cast}" data-mapa-pohled="${k}">${n}</button>`).join('')}</div>` : '';
@@ -307,13 +316,16 @@ function otevritNabidkuSekci(tlacitko) {
         const p = POHLEDY_CASTI[cast];
         zavritMapu();
         const naMiste = (zvolena ? zvolena.getAttribute(`data-${atribut}`) === cast
-            : atribut === 'zobrazeni-prehledu' && stav.rezim === 'prehled' && stav.prehledSekce === cast) && document.querySelector('#viewToggle .active');
+            : atribut === 'sbirka-stranka' ? naStranceSbirky(cast) && !stats.classList.contains('hidden')
+                : atribut === 'zobrazeni-prehledu' && stav.rezim === 'prehled' && stav.prehledSekce === cast) && document.querySelector('#viewToggle .active');
         if (pohled && p && naMiste) {
             // Už otevřená část: přepne pohled jejím přepínačem v záhlaví stránky
             /** @type {HTMLElement | null} */ (document.querySelector(`.volby-v-liste [data-${p.atribut}="${pohled}"], #stats .plovouci-pas [data-${p.atribut}="${pohled}"], .sbirka-hlava:not(.hidden) [data-${p.atribut}="${pohled}"]`))?.click();
             return;
         }
-        if (pohled && p) p.nastavit(pohled);
+        // V otevřené Sbírce přepne režim úkolů až přepínač v hlavičce (dokliknoutPohled), aby se překreslila
+        const sbirkaOtevrena = atribut === 'sbirka-stranka' && stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && !stats.classList.contains('hidden');
+        if (pohled && p && !sbirkaOtevrena) p.nastavit(pohled);
         if (!naMiste) otevritCast(atribut, cast);
         // Pohled, který potřebuje vlastní spuštění (Údržba › Po modelkách), se po načtení části přepne jejím přepínačem
         if (pohled && p) dokliknoutPohled(p.atribut, pohled);

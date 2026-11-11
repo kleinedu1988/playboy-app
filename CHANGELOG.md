@@ -6,6 +6,25 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.052] – 2026-11-11
+
+### Změněno
+- **Jedna lišta Sbírky (Přehledná Sbírka, krok 1; nahlášeno):** pod hlavičkou Sbírky je jediná lišta se čtyřmi
+  stránkami **Přehled · Úkoly · Čísla a sháním · Učení**. Přehled je dřívější Dnes. Úkoly mají pod lištou přepínač
+  režimů (Po údajích, Po modelkách, Stejné fotky, Otočené a výřezy, Z webu, Fronta) a filtry fronty; na ostatních
+  stránkách druhá lišta není.
+- Přidat (modelku, centerfold, cover), Importovat, Exportovat a Zkontrolovat soubory jsou v tlačítku **Akce ▾**
+  vpravo místo řady tlačítek.
+- Lišta, mapa sekcí i cesta Zpět se kreslí z jednoho seznamu (`lib/stranky-sbirky.js`), takže se všude jmenují
+  stejně. Dřív mapa říkala Údržba / Souhrn / Mapa čísel / Sháním CZ a Učení v ní chybělo.
+- Úkoly se otevřou v naposledy použitém režimu. Pod panelem Čísla a sháním / Učení je Přehled, takže se fronta
+  úkolů vedle panelu neláme. Z panelů budou celé stránky v 0.02.053.
+- Nápověda popisuje čtyři stránky.
+
+### Ověřeno
+- Snímky na kopii sbírky (`nastroje/snimky/sbirka.json`): přepnutí všech čtyř stránek, nabídka Akce, mapa sekcí
+  se zvýrazněnou stránkou, skok z mapy na Úkoly › Z webu a z Profilů rovnou na Čísla a sháním.
+
 ## [0.02.051] – 2026-11-11
 
 ### Změněno

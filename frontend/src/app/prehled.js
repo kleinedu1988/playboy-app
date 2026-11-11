@@ -22,6 +22,7 @@ import { obnovitVolby } from '../ui/volby';
 import { nacistNavrhy } from './navrhy';
 import { nacistUceni } from './uceni';
 import * as udrzba from './udrzba';
+import { stavStrankySbirky, strankaSbirky } from '../lib/stranky-sbirky';
 import { pohledSlavy } from './sin-slavy';
 import { htmlPilulek, pripravitPasy } from '../ui/pas';
 import { poZmeneDat } from './udalosti';
@@ -128,6 +129,37 @@ const KOSTRA = `
                 </div>
             </aside>
         </div>`;
+
+// Otevře stránku Sbírky (lib/stranky-sbirky.js): v otevřené Sbírce přepne panel a režim na místě, jinak Sbírku
+// otevře rovnou na ní
+export function otevritStrankuSbirky(klic) {
+    let posledni = '';
+    try { posledni = localStorage.getItem('udrzbaRezimUkolu') || ''; } catch { /* první režim */ }
+    const cil = stavStrankySbirky(klic, stav, posledni);
+    const otevrena = stav.rezim === 'prehled' && stav.prehledSekce === 'udrzba' && !stats.classList.contains('hidden');
+    if (otevrena && strankaSbirky(stav) === klic) return;
+    if (!otevrena) {
+        stav.sbirkaPanel = cil.sbirkaPanel;
+        stav.udrzbaRezim = cil.udrzbaRezim;
+        try {
+            localStorage.setItem('sbirkaPanel', cil.sbirkaPanel);
+            localStorage.setItem('udrzbaRezim', cil.udrzbaRezim);
+        } catch { /* jen se nezapamatuje */ }
+        otevritCastSbirky('udrzba');
+        return;
+    }
+    if (stav.sbirkaPanel !== cil.sbirkaPanel) nastavitPanelSbirky(cil.sbirkaPanel);
+    if (stav.udrzbaRezim !== cil.udrzbaRezim) udrzba.nastavitRezim(cil.udrzbaRezim);
+    else udrzba.obnovitHlavuSbirky();
+}
+function otevritCastSbirky(klic) {
+    const b = document.createElement('button');
+    b.hidden = true;
+    b.dataset.zobrazeniPrehledu = klic;
+    document.body.append(b);
+    b.click();
+    b.remove();
+}
 
 // Otevře, přepne nebo zavře panel Sbírky (klic '' = zavřít; stejný klíč znovu = zavřít); pamatuje se
 export function nastavitPanelSbirky(klic) {
@@ -344,6 +376,11 @@ export function pripravit() {
     }, true);
     // Části Sbírky (Úvod, Údržba, Sháním CZ, Porovnat, Hodnotit fotky, Pořadí), Modelek (Profily, Galerie, Statistiky, Síň slávy)
     // a Čísel (Obálky, Kalendář, Centerfoldy) se přepínají pilulkami v kontextové liště (#pasStranky)
+    // Stránky Sbírky (Přehled, Úkoly, Čísla a sháním, Učení): lišta v hlavičce Sbírky a mapa sekcí
+    document.addEventListener('click', (e) => {
+        const tl = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-sbirka-stranka]'));
+        if (tl) otevritStrankuSbirky(tl.dataset.sbirkaStranka || 'prehled');
+    });
     document.addEventListener('click', (e) => {
         // Klik na pilulku Sbírky
         const volba = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-zobrazeni-prehledu]'));

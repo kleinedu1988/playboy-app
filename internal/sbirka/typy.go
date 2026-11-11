@@ -57,6 +57,11 @@ type VydaniKalendare struct {
 	Pictorial  bool   `json:"pictorial"`
 	Nahled     string `json:"nahled"`  // adresa obrázku: cover, jinak centerfold, jinak pictorial
 	Modelka    string `json:"modelka"` // jméno modelky z centerfoldu
+	// Modelka čísla (0.02.043): z centerfoldu (i bez fotek), jinak z alba s titulem měsíce (Pet of the Month bez
+	// centerfoldu ve sbírce), jinak jediná modelka pictorialů čísla – pro hero Kalendáře a Obálek; Odkud je
+	// „centerfold“, „titul“ nebo „pictorial“
+	ModelkaCisla string `json:"modelkaCisla,omitempty"`
+	ModelkaOdkud string `json:"modelkaOdkud,omitempty"`
 }
 
 // NedostupnySoubor popisuje fotku, jejíž soubor na Google Disku je nedostupný.

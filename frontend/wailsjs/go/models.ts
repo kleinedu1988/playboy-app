@@ -4595,6 +4595,8 @@ export namespace sbirka {
 	    pictorial: boolean;
 	    nahled: string;
 	    modelka: string;
+	    modelkaCisla?: string;
+	    modelkaOdkud?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new VydaniKalendare(source);
@@ -4608,6 +4610,8 @@ export namespace sbirka {
 	        this.pictorial = source["pictorial"];
 	        this.nahled = source["nahled"];
 	        this.modelka = source["modelka"];
+	        this.modelkaCisla = source["modelkaCisla"];
+	        this.modelkaOdkud = source["modelkaOdkud"];
 	    }
 	}
 	export class VysledekPresunu {

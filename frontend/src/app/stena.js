@@ -1,6 +1,6 @@
 // Stěna centerfoldů a čísla časopisu
 import { GetCenterfoldy, GetCovery, GetKalendar, GetStavyVydani } from './backend';
-import { moznostiSteny, naSteneCenterfoldu, titulCisla, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, plocheTokeny, poleCisla, poleFotky, poleModelkyFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
+import { kdoVCisle, moznostiSteny, naSteneCenterfoldu, titulCisla, bezDiakritiky, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevAlba, nepouziteKlice, nazevVydani, obrazek, paskaCisla, plocheTokeny, poleCisla, poleFotky, poleModelkyFotky, rozlozitDotaz, rozlozitVydani, sjednotit, sklonovat, vyhovujeHledani } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { rozbalitFrontu } from '../lib/fronta';
 import { stav } from './stav';
@@ -112,7 +112,11 @@ export async function nacistStenu(dotaz = '', zMezipameti = false) {
         <span>${sklonovat(stav.stenaPolozky.length, 'centerfold', 'centerfoldy', 'centerfoldů')}</span></div>`;
     if (stav.stenaPolozky.length === 0) {
         listaSteny.naplnit([]);
-        wall.innerHTML = razeni + (fotky.length ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádný centerfold.')
+        // Řada bez centerfoldů (Penthouse bez fotek centerfoldu) není výsledek hledání: říct to přímo (0.02.043)
+        const radaPrazdna = fotky.length && !fotky.some(f => naSteneCenterfoldu(f.album, stav.stenaEdice));
+        const volbaSteny = moznostiSteny().find(m => m.hodnota === stav.stenaEdice)?.nazev || '';
+        wall.innerHTML = razeni + (radaPrazdna ? htmlPrazdna(`${volbaSteny}: zatím žádný centerfold`, 'Ve sbírce zatím není fotka centerfoldu z této řady. Pictorialy čísel jsou v Kalendáři a na stránce čísla.', { ikona: 'kalendar' })
+            : fotky.length ? htmlNicNenalezeno('Hledání ani filtrům neodpovídá žádný centerfold.')
             : htmlPrazdna('Zatím žádné centerfoldy', 'Centerfoldy modelek se tu seřadí jako stěna plakátů. Přidávají se tlačítkem + nahoře.', { tlacitko: { text: 'Přidat…', akce: 'pridat' } }));
         prevestNaVolby(wall.querySelector('.wall-toolbar'));
         return;
@@ -225,7 +229,7 @@ function htmlHeroObalek(coveryFotky, cisla, stavCisla) {
     const leta = new Date().getFullYear() - parseInt(o.vydani.slice(0, 4), 10);
     const vety = [
         o.vyroci ? `Vyšlo ${predLety(leta)}.` : '',
-        kdo ? `Na obálce ${kdo}.` : k?.modelka ? `Centerfold ${k.modelka}.` : '',
+        kdo ? `Na obálce ${kdo}.` : (t => (t ? `${t[0].toUpperCase()}${t.slice(1)}.` : ''))(kdoVCisle(k)),
         o.hodnoceni ? `${'♥'.repeat(o.hodnoceni)}` : '',
         p.chybi ? `V ${sklonovat(p.rocniku, 'rozpracovaném ročníku', 'rozpracovaných ročnících', 'rozpracovaných ročnících')} chybí ${sklonovat(p.chybi, 'obálka', 'obálky', 'obálek')}.` : 'Rozpracované ročníky mají všechny obálky.',
     ].filter(Boolean);

@@ -3,7 +3,7 @@ import { GetAlbaFotografa, GetClanky, GetStavyVydani, GetVydani, GetVydaniInfo, 
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { otevritRychlePridani } from './formular-modelky';
 import { doplnitZminkyCisla } from './wiki-odkazy';
-import { MESICE, VYCHOZI_EDICE, nazevRady, ciselRocniku, cisloNevyslo, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
+import { MESICE, VYCHOZI_EDICE, nazevRady, typVCisle, ciselRocniku, cisloNevyslo, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -70,7 +70,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
         </button>`;
     const obsah = [
         ...stav.vydaniClanky.map(c => polozkaObsahu(c.strana, c.rubrika || 'Článek', c.nazev, `data-clanek="${c.id}"`, false)),
-        ...albaObsahu.map((a, i) => polozkaObsahu('', a.typ, a.typ === 'Centerfold' ? a.jmenoModelky : a.album, `data-album-obsahu="${i}"`, false)),
+        ...albaObsahu.map((a, i) => polozkaObsahu('', typVCisle(a.typ, a.vydani), a.typ === 'Centerfold' ? a.jmenoModelky : a.album, `data-album-obsahu="${i}"`, false)),
     ].join('');
     const stavCisla = [
         coveryVydani.length ? 'cover' : 'bez coveru',
@@ -114,7 +114,7 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
             <section class="issue-album" data-cast="album-${centerfoldy.length + i}">
                 <div class="album-header">
                     <h4>${esc(a.album)}</h4>
-                    <span>${esc(a.typ)} · ${sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek')}</span>
+                    <span>${esc(typVCisle(a.typ, a.vydani))} · ${sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek')}</span>
                     ${odkazNaModelku(a)}
                 </div>
                 ${htmlPopisuAlba(a)}
@@ -194,7 +194,7 @@ function vykreslitObsahStranky() {
 function htmlPasuFotek() {
     const polozky = stav.vydaniPolozky || [];
     if (polozky.length < 2) return '';
-    const dlazdice = polozky.map((p, i) => `<button type="button" class="pas-fotka" data-index="${i}" title="${esc(`${p.jmenoModelky} · ${p.typ}`)}">
+    const dlazdice = polozky.map((p, i) => `<button type="button" class="pas-fotka" data-index="${i}" title="${esc(`${p.jmenoModelky} · ${typVCisle(p.typ, p.vydani)}`)}">
         <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" alt="" draggable="false" /></button>`).join('');
     return `<section class="pas-fotek" aria-label="Fotky čísla">
         <div class="pas-fotek-hlava"><b>Fotky čísla</b> <small>${sklonovat(polozky.length, 'fotka', 'fotky', 'fotek')}</small>
@@ -231,7 +231,7 @@ export function htmlAlbaStranky(a, index, { nadpis = nazevAlba(a.album, a.typ), 
         <section class="issue-album">
             <div class="album-header">
                 <h4>${esc(nadpis)}</h4>
-                <span>${esc(a.typ)}${plakat ? '' : ` · ${sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek')}`}</span>
+                <span>${esc(typVCisle(a.typ, vydani))}${plakat ? '' : ` · ${sklonovat(a.fotky.length, 'fotka', 'fotky', 'fotek')}`}</span>
                 ${sVydanim && vydani ? `<button class="chip" data-vydani="${esc(vydani)}" title="Otevřít číslo">${esc(nazevVydani(vydani))}</button>` : ''}
                 ${modelky}
             </div>

@@ -435,3 +435,55 @@ func TestTitulZPrazdnehoCenterfolduANazvuAlba(t *testing.T) {
 		t.Error("typ podle názvu alba")
 	}
 }
+
+// Modelka čísla v kalendáři (0.02.043): z centerfoldu bez fotek nebo z alba s titulem měsíce (hero Kalendáře a Obálek)
+func TestKalendarModelkaCisla(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Lynnda Kimball", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Ulla Lindstrom", Tetovani: -1, Piercing: -1})
+	a.AddModelka(Modelka{Jmeno: "Prázdná", Tetovani: -1, Piercing: -1})
+	id := map[string]int{}
+	for _, m := range a.GetModelky("") {
+		id[m.Jmeno] = m.ID
+	}
+	odkaz := func(z string) string { return "https://drive.google.com/file/d/" + strings.Repeat(z, 29) + "/view" }
+	a.AddBulkPhotos(id["Lynnda Kimball"], "1975-01", "Centerfold", odkaz("C"))
+	a.db.Exec(`DELETE FROM fotky WHERE album_id IN (SELECT id FROM alba WHERE typ = 'Centerfold')`)
+	a.AddBulkPhotos(id["Lynnda Kimball"], "Playmate of the Month January 1975", "Pictorial", odkaz("P"))
+	a.AddBulkPhotos(id["Ulla Lindstrom"], "Pet of the Month November 1969", "Playmate měsíce", odkaz("U"))
+	a.AddBulkPhotos(id["Prázdná"], "1980-02", "Centerfold", odkaz("E"))
+	a.db.Exec(`DELETE FROM fotky WHERE album_id IN (SELECT id FROM alba WHERE album = '1980-02')`)
+	a.db.Exec(`UPDATE alba SET vydani = '1975-01' WHERE album LIKE '%January 1975' OR album = '1975-01'`)
+	a.db.Exec(`UPDATE alba SET vydani = '1969-11@PH' WHERE album LIKE 'Pet of the Month%'`)
+	a.db.Exec(`UPDATE alba SET vydani = '1980-02' WHERE album = '1980-02'`)
+	k := map[string]VydaniKalendare{}
+	for _, v := range a.GetKalendar() {
+		k[v.Vydani] = v
+	}
+	if v := k["1975-01"]; v.Centerfold || !v.Pictorial || v.Modelka != "" || v.ModelkaCisla != "Lynnda Kimball" || v.ModelkaOdkud != "centerfold" {
+		t.Errorf("1975-01: %+v", v)
+	}
+	if v := k["1969-11@PH"]; v.ModelkaCisla != "Ulla Lindstrom" || v.ModelkaOdkud != "titul" {
+		t.Errorf("1969-11@PH: %+v", v)
+	}
+	// Jen pictorialy jedné modelky (Leanna Decker 2012-11): ona; dvou různých: nikdo
+	a.AddBulkPhotos(id["Ulla Lindstrom"], "Rock N' Roll Babe", "Pictorial", odkaz("R"))
+	a.AddBulkPhotos(id["Ulla Lindstrom"], "I Wanna Be Watched", "Pictorial", odkaz("W"))
+	a.AddBulkPhotos(id["Prázdná"], "Druhá", "Pictorial", odkaz("D"))
+	a.db.Exec(`UPDATE alba SET vydani = '2012-11' WHERE album IN ('Rock N'' Roll Babe', 'I Wanna Be Watched')`)
+	a.AddBulkPhotos(id["Ulla Lindstrom"], "Zimní", "Pictorial", odkaz("Z"))
+	a.db.Exec(`UPDATE alba SET vydani = '2013-01' WHERE album IN ('Druhá', 'Zimní')`)
+	k = map[string]VydaniKalendare{}
+	for _, v := range a.GetKalendar() {
+		k[v.Vydani] = v
+	}
+	if v := k["2012-11"]; v.ModelkaCisla != "Ulla Lindstrom" || v.ModelkaOdkud != "pictorial" {
+		t.Errorf("2012-11: %+v", v)
+	}
+	if v := k["2013-01"]; v.ModelkaCisla != "" {
+		t.Errorf("2013-01 se dvěma modelkami: %+v", v)
+	}
+	if _, je := k["1980-02"]; je || len(k) != 4 {
+		t.Errorf("číslo jen s prázdným albem v kalendáři: %+v", k)
+	}
+}

@@ -2,7 +2,7 @@
 import { otevritRocnikWiki } from './rocnik-wiki';
 import { GetKalendar, GetStavyVydani, GetVydani, SetStavVydani } from './backend';
 import { prevest } from '../lib/hledani-dotaz';
-import { MESICE, VYCHOZI_EDICE, nazevRady, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
+import { MESICE, VYCHOZI_EDICE, nazevRady, kdoVCisle, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
 import { htmlStitkuRad, nazevVolbyRady, platnaRadaKalendare } from './rady';
@@ -36,9 +36,11 @@ function htmlHeroKalendare(vydani) {
     const nahled = v ? obrazek(v.nahled, VELIKOST_TITULNI) : '';
     const plna = v ? obrazek(v.nahled, VELIKOST_ZAHLAVI) : '';
     const leta = new Date().getFullYear() - rok;
-    const cfVyroci = vyroci && vydani.get(vyroci)?.modelka;
+    // Modelka čísla výročí: z centerfoldu, jinak z alba s titulem měsíce (0.02.043); časopis je v nadtitulku
+    const kdo = vyroci ? kdoVCisle(vydani.get(vyroci)) : '';
+    const kdoText = kdo ? ` – ${kdo}` : '';
     const vety = [
-        vyroci ? `${nazevVydani(vyroci)} vyšlo ${predLety(leta)}${cfVyroci ? ` – centerfold ${cfVyroci}` : ''}.` : '',
+        vyroci ? `${MESICE[parseInt(vyroci.slice(5, 7), 10) - 1]} ${rok} vyšlo ${predLety(leta)}${kdoText}.` : '',
         `Kompletních (cover, centerfold i pictorial) ${u.kompletni} · cover ${u.cover} · centerfold ${u.centerfold} · pictorial ${u.pictorial}.`,
         u.chybi.length ? `Chybí: ${u.chybi.map(k => ZKRATKY_MESICU[parseInt(k.slice(5, 7), 10) - 1]).join(', ')}.` : 'Ročník má všechna vyšlá čísla.',
     ].filter(Boolean);

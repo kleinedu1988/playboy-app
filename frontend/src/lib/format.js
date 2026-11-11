@@ -151,6 +151,18 @@ export function titulCasopisu(klic, druh = 'mesice') {
 /** @param {string} vydani @param {'mesice' | 'roku' | 'kratky'} [druh] */
 export const titulCisla = (vydani, druh = 'mesice') => titulCasopisu(rozlozitVydani(vydani)?.casopis || VYCHOZI_CASOPIS, druh);
 
+/**
+ * Kdo je v čísle (0.02.043) pro hero Kalendáře a Obálek: „centerfold Jméno“, „Pet of the Month Jméno“ (titul
+ * měsíce bez centerfoldu) nebo „pictorial Jméno“ (jediná modelka čísla); prázdné, když to kalendář neví
+ * @param {{ vydani: string, modelka?: string, modelkaCisla?: string, modelkaOdkud?: string } | null | undefined} cislo
+ */
+export function kdoVCisle(cislo) {
+    const jmeno = cislo?.modelkaCisla || cislo?.modelka || '';
+    if (!jmeno) return '';
+    const odkud = cislo?.modelkaOdkud || (cislo?.modelka ? 'centerfold' : '');
+    return `${odkud === 'titul' ? titulCisla(cislo.vydani) : odkud === 'pictorial' ? 'pictorial' : 'centerfold'} ${jmeno}`;
+}
+
 // Název řady: „US“, „CZ“ (Playboy jako dřív), „Penthouse“, „Penthouse UK“
 export function nazevRady(rada) {
     const { casopis, zeme } = rozlozitRadu(rada);
@@ -359,6 +371,14 @@ export function popisTypuAlba(typ, datum, vydani = '') {
         return `Pictorial ${casopis === VYCHOZI_CASOPIS ? typ : titulCasopisu(casopis, typ === TYP_PM_ROKU ? 'roku' : 'mesice')}`;
     }
     return jeOnline(typ) && datum ? `${typ} · nafoceno ${formatDatum(datum)}` : typ;
+}
+
+// Typ alba na stránce čísla a v obsahu (0.02.043): u jiného časopisu než Playboy titul časopisu („Pet of the
+// Month“ místo „Playmate měsíce“), jinak uložený typ beze změny
+export function typVCisle(typ, vydani = '') {
+    if (typ !== TYP_PM_MESICE && typ !== TYP_PM_ROKU) return typ;
+    const casopis = rozlozitVydani(vydani)?.casopis || VYCHOZI_CASOPIS;
+    return casopis === VYCHOZI_CASOPIS ? typ : titulCasopisu(casopis, typ === TYP_PM_ROKU ? 'roku' : 'mesice');
 }
 
 export function nazevAlba(album, typ) {

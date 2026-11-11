@@ -204,3 +204,24 @@ test('první vystoupení modelky jednotně pro kartu a řazení (0.02.042)', asy
     assert.deepEqual(serazene.map(m => m.jmeno), ['A', 'B', 'C']);
     nastavitCasopisy([]);
 });
+
+test('kdo je v čísle pro hero Kalendáře a Obálek (0.02.043)', async () => {
+    const { kdoVCisle } = await import('../src/lib/format.js');
+    nastavitCasopisy(CASOPISY);
+    assert.equal(kdoVCisle({ vydani: '1996-11', modelka: 'Ulrika Ericsson', modelkaCisla: 'Ulrika Ericsson', modelkaOdkud: 'centerfold' }), 'centerfold Ulrika Ericsson');
+    assert.equal(kdoVCisle({ vydani: '1969-11@PH', modelkaCisla: 'Ulla Lindstrom', modelkaOdkud: 'titul' }), 'Pet of the Month Ulla Lindstrom');
+    assert.equal(kdoVCisle({ vydani: '2012-11', modelkaCisla: 'Leanna Decker', modelkaOdkud: 'pictorial' }), 'pictorial Leanna Decker');
+    assert.equal(kdoVCisle({ vydani: '2013-01' }), '');
+    assert.equal(kdoVCisle(null), '');
+    nastavitCasopisy([]);
+});
+
+test('typ alba na stránce čísla podle časopisu (0.02.043)', async () => {
+    const { typVCisle } = await import('../src/lib/format.js');
+    nastavitCasopisy(CASOPISY);
+    assert.equal(typVCisle('Playmate měsíce', '1969-11@PH'), 'Pet of the Month');
+    assert.equal(typVCisle('Playmate roku', '1970@PH'), 'Pet of the Year');
+    assert.equal(typVCisle('Playmate měsíce', '1975-01'), 'Playmate měsíce');
+    assert.equal(typVCisle('Pictorial', '1969-11@PH'), 'Pictorial');
+    nastavitCasopisy([]);
+});

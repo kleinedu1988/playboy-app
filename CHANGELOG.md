@@ -6,6 +6,21 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.043] – 2026-11-11
+
+### Opraveno
+- **Hero Kalendáře a Obálek ukazuje, kdo je v čísle**, i když číslo nemá centerfold s fotkou: z centerfoldu zapsaného
+  bez fotek, z alba s titulem měsíce, jinak z pictorialů jediné modelky. Penthouse 1969: „Listopad 1969 vyšlo před
+  57 lety – Pet of the Month Ulla Lindstrom“ (dřív bez jména a s opakovaným „· Penthouse“); Obálky Leden 1975:
+  „Playmate měsíce Lynnda Kimball“; Listopad 2012: „pictorial Leanna Decker“.
+- **Stránka čísla Penthouse:** obsah, hlavička alba a nápověda pásu fotek píšou „Pet of the Month“, ne „Playmate měsíce“.
+- **Centerfoldy:** řada bez fotek centerfoldu (Penthouse) ukáže „Penthouse: zatím žádný centerfold“, ne „Hledání ani
+  filtrům neodpovídá“.
+
+### Ověřeno
+- Hero Kalendáře, Obálek a Centerfoldů pro Playboy i Penthouse a stránka čísla Listopad 1969 · Penthouse na snímcích
+  1280 a 1920 px (úloha `nastroje/snimky/cisla.json`).
+
 ## [0.02.042] – 2026-11-11
 
 ### Opraveno

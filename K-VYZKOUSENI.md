@@ -5,6 +5,14 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.043 – Stránky Čísel
+
+- [ ] Kalendář › Penthouse US: hero „Ročník 1969 … – Pet of the Month Ulla Lindstrom“ s její fotkou.
+- [ ] Obálky › Playboy US: u čísla s prázdným centerfoldem (Leden 1975) jméno „Playmate měsíce Lynnda Kimball“.
+- [ ] Číslo Listopad 1969 · Penthouse: v obsahu a u alba „Pet of the Month“.
+- [ ] Centerfoldy › Penthouse: „Penthouse: zatím žádný centerfold“.
+- [ ] Mapa čísel jsem na snímcích neprošel (nepodařilo se do ní dostat skriptem) – projdi obě řady.
+
 ## 0.02.042 – Karty modelek
 
 - [ ] V Galerii zapni „rok na kartě“: Ulla Lindstrom „1969 PH“ (zkratka v barvě Penthouse), Ali Rose „2014“.

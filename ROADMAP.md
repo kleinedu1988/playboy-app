@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (11. 11. 2026): verze 0.02.058** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (11. 11. 2026): verze 0.02.059** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (PDF, web, vkus napříč časopisy) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.059 – Rozpoznání explicitních fotek** (Explicitní fotky zvlášť; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
+**0.02.060 – Větší detektor a druh fotky** (Explicitní fotky zvlášť; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
 
 ---
 
@@ -54,7 +54,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.058 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.059 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -205,7 +205,7 @@ Zařazeno před PDF (uživatel 11. 11. 2026); PDF a další kroky posunuté o 5,
 | 0.02.057 ✅ | **[schéma] [export] Ruční výřez fotky:** tabulka výřezů podle souboru (bod zájmu a přiblížení), v exportu a importu; ruční výřez má přednost před automatickým | export a import zachová ruční výřez |
 | 0.02.058 ✅ | **Úprava ručně a kontrola:** v prohlížeči fotek „Upravit výřez náhledu“ (táhnout bod zájmu), Údržba › Výřezy pro fotky, kde detektor nic nenašel; snímky pohledů před a po | ruční výřez se projeví ve všech pohledech, žádný náhled horší než střed |
 
-#### Explicitní fotky zvlášť (0.02.059–0.02.061, přání uživatele 11. 11. 2026)
+#### Explicitní fotky zvlášť (0.02.059–0.02.062, přání uživatele 11. 11. 2026)
 
 Galerie dnes míchá fotky všech časopisů: explicitnější fotky (Penthouse, Hustler) – sex s mužem a lesbické scény –
 se objevují mezi pózovacími v řadách kolekcí, v heru i ve Všech fotkách. Mají mít vlastní kategorii.
@@ -217,14 +217,22 @@ Rozpoznání proto nejdřív změří přesnost se stávajícími modely (detekt
 sbírka má – „pár při sexu“, „dvě ženy se líbají“, bez nového modelu). Když na vzorku nevyjde 9 z 10, vloží se za
 něj krok **Větší detektor** (NudeNet 640m, ~4× pomalejší; partie a výřezy se jednou přepočítají v pozadí) a
 další kroky se posunou.
+**Změřeno (0.02.059, 11. 11. 2026):** vzorek 300 fotek (200 PH, 100 PB) roztříděný ručně: 3 sex, 13 dvě a víc žen,
+5 sporných. Detektor (muž ≥ 0,5) najde sex 2 ze 3, ale lesbické nepozná vůbec – ukládá jen nejvyšší jistotu
+obličeje, ne počet obličejů; nejvyšší „muže“ v celé sbírce jsou z velké části samotné ženy. Popis scény CLIP
+(práh 0,7) sedí celkově u 96 %, jenže to dělají pózovací fotky: z 298 fotek „víc žen“ ve sbírce je na kontrolním
+listu 50 kusů správně asi 42 (84 %), z 100 fotek „pár při sexu“ jen asi 17 z 50 s mužem. Sex tedy se stávajícími
+modely 9 z 10 nesplní → vložen krok Větší detektor (0.02.060), další kroky posunuté o 1. Nástroj měření:
+`internal/obsah/druh-mereni` (CSV jistot detektoru a podobností s popisy z `popisy.txt`).
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.059 | **Rozpoznání:** druh fotky z detektoru počítaného v pozadí – muž na fotce (obličej či genitálie muže) = sex, dva a víc ženských obličejů = lesbická; jinak pózovací | na vzorku 300 fotek PH a PB sedí druh u 9 z 10 |
-| 0.02.060 | **Galerie zvlášť:** sex a lesbické fotky vypadnou z řad kolekcí, hera a Všech fotek; vlastní řada a kolekce „Páry a lesbické“, filtr k zapnutí | v běžných řadách není žádná fotka s mužem |
-| 0.02.061 | **Ruční oprava:** v prohlížeči „Druh fotky“ (pózovací / lesbická / sex) přebije detektor; Údržba › Druh fotek pro sporné | opravená fotka se přesune do správné řady |
+| 0.02.059 ✅ | **Rozpoznání – měření:** přesnost stávajícího detektoru a popisu scény CLIP na vzorku 300 fotek PH a PB (nástroj druh-mereni) | změřeno: lesbické CLIP ~84 %, sex jen ~35 % → Větší detektor |
+| 0.02.060 | **Větší detektor a druh fotky:** NudeNet 640m (stažení s ověřeným hashem, partie a výřezy se jednou přepočítají v pozadí) a k partiím počet obličejů žen a mužů; druh = muž na fotce → sex, dva a víc ženských obličejů (nebo popis scény „víc žen“) → lesbická, jinak pózovací | na kontrolních listech z druh-mereni sedí sex i lesbické u 9 z 10 nalezených |
+| 0.02.061 | **Galerie zvlášť:** sex a lesbické fotky vypadnou z řad kolekcí, hera a Všech fotek; vlastní řada a kolekce „Páry a lesbické“, filtr k zapnutí | v běžných řadách není žádná fotka s mužem |
+| 0.02.062 | **Ruční oprava:** v prohlížeči „Druh fotky“ (pózovací / lesbická / sex) přebije detektor; Údržba › Druh fotek pro sporné | opravená fotka se přesune do správné řady |
 
-#### Fotky z PDF (0.02.035–0.02.065, dříve etapa 0.05)
+#### Fotky z PDF (0.02.035–0.02.066, dříve etapa 0.05)
 
 **Rozhodnuto (11. 11. 2026):** stránky z PDF se vyexportují jako obrázky do složky pro Google Disk a po nahrání
 se spárují s odkazy; pravidlo „fotky jsou jen odkazy na Disk“ zůstává (žádný místní zdroj fotek).
@@ -233,41 +241,41 @@ se spárují s odkazy; pravidlo „fotky jsou jen odkazy na Disk“ zůstává (
 |---|---|---|
 | 0.02.035 ✅ | **Otevřít PDF:** náhledy stránek (pdf.js v rozhraní, bez nové závislosti v Go), listování a lupa | 200stránkové číslo se otevře do 5 s |
 | 0.02.036 ✅ | **Album bez čísla podle údajů modelky:** text vystoupení „Penthouse říjen 1970“ a textové vydání dají číslo s časopisem (nahlášená chyba) | Pet Penthouse bez čísla alba není Playmate (test) |
-| 0.02.062 | **Označit stránky:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
-| 0.02.063 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |
-| 0.02.064 | **Uložení stránek:** export do složky pro Google Disk a spárování odkazů po nahrání | fotky se zobrazí i po restartu |
-| 0.02.065 | **Návrh rozdělení:** kde začíná pictorial a kde je centerfold (rozložení stránky, obsah fotek PD 1.24) | návrh sedí na 3 zkušebních číslech |
+| 0.02.063 | **Označit stránky:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
+| 0.02.064 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |
+| 0.02.065 | **Uložení stránek:** export do složky pro Google Disk a spárování odkazů po nahrání | fotky se zobrazí i po restartu |
+| 0.02.066 | **Návrh rozdělení:** kde začíná pictorial a kde je centerfold (rozložení stránky, obsah fotek PD 1.24) | návrh sedí na 3 zkušebních číslech |
 
-#### Údaje z webu pro další časopisy (0.02.066–0.02.070, dříve etapa 0.06)
-
-| Verze | Krok | Hotovo, když |
-|---|---|---|
-| 0.02.066 | **Penthouse Pets z Wikipedie:** seznam po letech jako návrhy (jen na kliknutí, s potvrzením) | ročník Penthouse ukáže, kdo byla Pet of the Month |
-| 0.02.067 | **Hustler Honeys** stejně | totéž pro Hustler |
-| 0.02.068 | **Wikidata:** ocenění Pet / Honey jako návrhy údajů modelky | návrh se objeví ve frontě Údržby |
-| 0.02.069 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
-| 0.02.070 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
-
-#### Vkus, odhady a Statistiky napříč časopisy (0.02.071–0.02.076, dříve etapa 0.07)
+#### Údaje z webu pro další časopisy (0.02.067–0.02.071, dříve etapa 0.06)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.071 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
-| 0.02.072 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
-| 0.02.073 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
-| 0.02.074 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
-| 0.02.075 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
-| 0.02.076 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
+| 0.02.067 | **Penthouse Pets z Wikipedie:** seznam po letech jako návrhy (jen na kliknutí, s potvrzením) | ročník Penthouse ukáže, kdo byla Pet of the Month |
+| 0.02.068 | **Hustler Honeys** stejně | totéž pro Hustler |
+| 0.02.069 | **Wikidata:** ocenění Pet / Honey jako návrhy údajů modelky | návrh se objeví ve frontě Údržby |
+| 0.02.070 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
+| 0.02.071 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
 
-#### Dotažení a alfa (0.02.077–0.02.081+, dříve etapa 0.08)
+#### Vkus, odhady a Statistiky napříč časopisy (0.02.072–0.02.077, dříve etapa 0.07)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.077 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
-| 0.02.078 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
-| 0.02.079 | **Ikona programu** | nová ikona v nabídce a panelu |
-| 0.02.080 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
-| 0.02.081+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
+| 0.02.072 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
+| 0.02.073 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
+| 0.02.074 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
+| 0.02.075 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
+| 0.02.076 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
+| 0.02.077 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
+
+#### Dotažení a alfa (0.02.078–0.02.082+, dříve etapa 0.08)
+
+| Verze | Krok | Hotovo, když |
+|---|---|---|
+| 0.02.078 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
+| 0.02.079 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
+| 0.02.080 | **Ikona programu** | nová ikona v nabídce a panelu |
+| 0.02.081 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
+| 0.02.082+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
 
 ---
 

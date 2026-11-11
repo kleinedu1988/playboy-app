@@ -33,3 +33,12 @@ func TestPartieUlozitANacist(t *testing.T) {
 		t.Fatal("partie jiného detektoru se mají zahodit")
 	}
 }
+
+func TestPartieSeznam(t *testing.T) {
+	p := NovePartie()
+	p.Pridat("a", make([]float32, len(TridyDetektoru)))
+	p.Pridat("b", make([]float32, len(TridyDetektoru)))
+	if s := p.Seznam(); len(s) != 2 {
+		t.Fatalf("seznam %v", s)
+	}
+}

@@ -62,6 +62,17 @@ func (p *Partie) Pridat(id string, jistoty []float32) {
 	p.mu.Unlock()
 }
 
+// Seznam ID fotek s partiemi (nástroj měření druhu, druh-mereni)
+func (p *Partie) Seznam() []string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	ids := make([]string, 0, len(p.m))
+	for id := range p.m {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
 // Jistoty tříd fotky (0–1), nil když je nemá
 func (p *Partie) Jistoty(id string) []float32 {
 	p.mu.RLock()

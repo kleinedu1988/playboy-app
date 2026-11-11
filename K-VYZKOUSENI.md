@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.059 – Měření rozpoznání explicitních fotek
+
+- (Nic k vyzkoušení v programu – jen měření a nástroj pro vývoj; výsledek v CHANGELOG a ROADMAP.)
+
 ## 0.02.058 – Úprava výřezu ručně
 
 - [ ] Prohlížeč fotek › ⋯ › Upravit výřez náhledu…: posunutý bod a přiblížení se po uložení projeví na dlaždici v Galerii, v mozaice profilu i na pásu prohlížeče.

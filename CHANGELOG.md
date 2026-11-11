@@ -6,6 +6,22 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.059] – 2026-11-11
+
+### Změřeno (Explicitní fotky zvlášť, krok Rozpoznání)
+- Jak dobře stávající modely poznají druh fotky (pózovací / lesbická / sex) – vzorek 300 fotek (200 Penthouse,
+  100 Playboy) roztříděný ručně a kontrolní listy kandidátů z celé sbírky:
+  - **detektor** (NudeNet 320n): muže na fotce skoro nevidí (nejvyšší jistoty „obličej muže“ mají často samotné
+    ženy) a lesbické nepozná vůbec – ukládá jen nejvyšší jistotu obličeje, ne kolik obličejů na fotce je;
+  - **popis scény z CLIP** (bez nového modelu): fotky „dvě a víc žen“ pozná dobře (~84 % zásahů správně, 298 ve
+    sbírce), „pár při sexu“ špatně (~35 % zásahů má na fotce muže).
+- Podmínka „9 z 10“ pro sex nevyšla, proto se podle plánu vkládá krok **Větší detektor a druh fotky** (0.02.060,
+  NudeNet 640m a počet obličejů); Galerie zvlášť, Ruční oprava, PDF a další kroky se posouvají o 1.
+
+### Přidáno (pro vývoj)
+- Nástroj `internal/obsah/druh-mereni`: CSV jistot detektoru a podobností fotek s popisy scén (`popisy.txt`)
+  pro opakování měření s větším detektorem.
+
 ## [0.02.058] – 2026-11-11
 
 ### Přidáno

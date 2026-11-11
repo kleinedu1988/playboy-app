@@ -146,6 +146,9 @@ const CTENI = new Set([
     'GetPoradiModelek',
     'GetGalerieFotek',
     'GetKolekceGalerie',
+    // Chytrý výřez náhledů (0.02.049)
+    'GetVyrezyFotek',
+    'GetStavVyrezu',
     'GetVsechnyKolekce',
     'GetIdealniModelka',
     'GetVyberyGalerie',
@@ -463,3 +466,5 @@ export const ZaznamenatZajem = /** @type {typeof App.ZaznamenatZajem} */ (obalit
 export const GetMohloByTeLibit = /** @type {typeof App.GetMohloByTeLibit} */ (obalit('GetMohloByTeLibit'));
 export const GetNahledyModelek = /** @type {typeof App.GetNahledyModelek} */ (obalit('GetNahledyModelek'));
 export const GetNavrhSrdicek = /** @type {typeof App.GetNavrhSrdicek} */ (obalit('GetNavrhSrdicek'));
+export const GetVyrezyFotek = /** @type {typeof App.GetVyrezyFotek} */ (obalit('GetVyrezyFotek'));
+export const GetStavVyrezu = /** @type {typeof App.GetStavVyrezu} */ (obalit('GetStavVyrezu'));

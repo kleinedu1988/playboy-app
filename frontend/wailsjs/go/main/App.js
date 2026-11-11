@@ -342,6 +342,10 @@ export function GetStavUceniTagu() {
   return window['go']['main']['App']['GetStavUceniTagu']();
 }
 
+export function GetStavVyrezu() {
+  return window['go']['main']['App']['GetStavVyrezu']();
+}
+
 export function GetStavyVydani() {
   return window['go']['main']['App']['GetStavyVydani']();
 }
@@ -408,6 +412,10 @@ export function GetVydani(arg1) {
 
 export function GetVydaniInfo(arg1) {
   return window['go']['main']['App']['GetVydaniInfo'](arg1);
+}
+
+export function GetVyrezyFotek(arg1) {
+  return window['go']['main']['App']['GetVyrezyFotek'](arg1);
 }
 
 export function GetVyvojVCase(arg1) {

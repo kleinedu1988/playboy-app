@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.049 – Výřez každé fotky
+
+- [ ] Po spuštění se obsah fotek znovu rozběhne (doběhnou výřezy) a za ~10 minut skončí; program mezitím nesekat.
+- [ ] Ve složce dat `obsah/vyrezy.bin` existuje a po restartu se výpočet neopakuje.
+
 ## 0.02.048 – Prohlížeč PDF ve WebKitGTK
 
 - [ ] ⋯ › Otevřít PDF čísla… se skutečným naskenovaným číslem: tmavé pozadí (nic neprosvítá), čas v oznámení

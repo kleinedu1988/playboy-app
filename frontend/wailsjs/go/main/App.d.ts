@@ -179,6 +179,8 @@ export function GetStavUceni():Promise<uceni.StavUceni>;
 
 export function GetStavUceniTagu():Promise<main.StavUceniTagu>;
 
+export function GetStavVyrezu():Promise<main.StavVyrezu>;
+
 export function GetStavyVydani():Promise<Array<sbirka.VydaniInfo>>;
 
 export function GetStejneFotky():Promise<Array<main.SkupinaStejnych>>;
@@ -212,6 +214,8 @@ export function GetVyberyGalerie():Promise<Array<main.VyberGalerie>>;
 export function GetVydani(arg1:string):Promise<Array<sbirka.Fotografie>>;
 
 export function GetVydaniInfo(arg1:string):Promise<sbirka.VydaniInfo>;
+
+export function GetVyrezyFotek(arg1:Array<string>):Promise<Array<main.VyrezFotky>>;
 
 export function GetVyvojVCase(arg1:string):Promise<sbirka.VyvojVCase>;
 

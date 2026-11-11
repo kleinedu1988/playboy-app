@@ -119,7 +119,26 @@ func (d *Detektor) PartieObrazku(img image.Image) ([]float32, error) {
 	if err := d.sezeni.Run(); err != nil {
 		return nil, err
 	}
+	return jistotyZVystupu(d.vystup.GetData()), nil
+}
+
+// PartieABoxy (0.02.049): jistoty tříd i boxy postavy z jednoho běhu detektoru (výpočet obsahu fotek potřebuje obojí)
+func (d *Detektor) PartieABoxy(img image.Image) ([]float32, []Box, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if d.sezeni == nil {
+		return nil, nil, errors.New("detektor je zavřený")
+	}
+	predzpracovatDetektorDo(img, d.rgba, d.vstup.GetData())
+	if err := d.sezeni.Run(); err != nil {
+		return nil, nil, err
+	}
 	out := d.vystup.GetData()
+	b := img.Bounds()
+	return jistotyZVystupu(out), boxyZVystupu(out, kotevDetektoru, b.Dx(), b.Dy()), nil
+}
+
+func jistotyZVystupu(out []float32) []float32 {
 	nej := make([]float32, len(TridyDetektoru))
 	for t := range TridyDetektoru {
 		radek := out[(4+t)*kotevDetektoru : (5+t)*kotevDetektoru]
@@ -127,7 +146,7 @@ func (d *Detektor) PartieObrazku(img image.Image) ([]float32, error) {
 			nej[t] = max(nej[t], x)
 		}
 	}
-	return nej, nil
+	return nej
 }
 
 func predzpracovatDetektor(img image.Image, cil []float32) {

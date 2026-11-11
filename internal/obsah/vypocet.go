@@ -61,6 +61,7 @@ type Sluzba struct {
 	vektory *Vektory
 	partie  *Partie // jistoty partií z detektoru (partie.go), načtené spolu s vektory
 	vzhled  *Vzhled // barvy a kvalita snímku (vzhled.go), načtené spolu s vektory
+	vyrezy  *Vyrezy // rámečky postavy a obličeje (vyrezy.go, 0.02.049), načtené spolu s vektory
 }
 
 func NovaSluzba(slozka string, klient *http.Client, zdroje Zdroje) *Sluzba {
@@ -113,7 +114,11 @@ func (s *Sluzba) nacistVektoryZamceno() {
 	if err != nil {
 		fmt.Printf("Obsah fotek: %v – vzhled se spočítá znovu\n", err)
 	}
-	s.vektory, s.partie, s.vzhled = v, p, vz
+	vy, err := NacistVyrezy(s.slozka)
+	if err != nil {
+		fmt.Printf("Obsah fotek: %v – výřezy se spočítají znovu\n", err)
+	}
+	s.vektory, s.partie, s.vzhled, s.vyrezy = v, p, vz, vy
 }
 
 // Spustit stáhne model (když chybí) a dopočítá vektory fotek bez vektoru; běžící běh nechá běžet.
@@ -178,7 +183,7 @@ func (s *Sluzba) Vypnout() error {
 	s.Zastavit()
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.vektory, s.partie, s.vzhled = nil, nil, nil
+	s.vektory, s.partie, s.vzhled, s.vyrezy = nil, nil, nil, nil
 	s.stav = Stav{}
 	err := Smazat(s.slozka)
 	if e := SmazatVektory(s.slozka); err == nil {
@@ -188,6 +193,9 @@ func (s *Sluzba) Vypnout() error {
 		err = e
 	}
 	if e := SmazatVzhled(s.slozka); err == nil {
+		err = e
+	}
+	if e := SmazatVyrezy(s.slozka); err == nil {
 		err = e
 	}
 	if e := s.VypnoutHledaniSlovy(); err == nil {
@@ -312,6 +320,36 @@ func (s *Sluzba) PocetVzhledu() int {
 	return s.vzhled.Pocet()
 }
 
+// RamecekFotky (0.02.049): rámečky postavy a obličeje fotky z detektoru; ok = false, když ji výpočet ještě nezpracoval
+func (s *Sluzba) RamecekFotky(id string) (RamecekFotky, bool) {
+	if s == nil || s.slozka == "" {
+		return RamecekFotky{}, false
+	}
+	s.mu.Lock()
+	if s.vyrezy == nil && Pripraveno(s.slozka) {
+		s.nacistVektoryZamceno()
+	}
+	vy := s.vyrezy
+	s.mu.Unlock()
+	if vy == nil {
+		return RamecekFotky{}, false
+	}
+	return vy.Ramecek(id)
+}
+
+// PocetVyrezu: kolik fotek má spočítaný výřez (i ty, kde detektor postavu nenašel)
+func (s *Sluzba) PocetVyrezu() int {
+	if s == nil {
+		return 0
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.vyrezy == nil {
+		return 0
+	}
+	return s.vyrezy.Pocet()
+}
+
 // PocetPartii: kolik fotek má spočítané partie z detektoru
 func (s *Sluzba) PocetPartii() int {
 	if s == nil {
@@ -406,10 +444,10 @@ func (s *Sluzba) behat(ctx context.Context) error {
 		}
 	}
 	s.mu.Lock()
-	if s.vektory == nil || s.partie == nil || s.vzhled == nil {
+	if s.vektory == nil || s.partie == nil || s.vzhled == nil || s.vyrezy == nil {
 		s.nacistVektoryZamceno()
 	}
-	v, pa, vz := s.vektory, s.partie, s.vzhled
+	v, pa, vz, vy := s.vektory, s.partie, s.vzhled, s.vyrezy
 	s.mu.Unlock()
 
 	ids, err := s.zdroje.Fotky()
@@ -423,16 +461,17 @@ func (s *Sluzba) behat(ctx context.Context) error {
 			continue
 		}
 		platne[id] = true
-		if !v.Ma(id) || !pa.Ma(id) || !vz.Ma(id) {
+		if !v.Ma(id) || !pa.Ma(id) || !vz.Ma(id) || !vy.Ma(id) {
 			chybi = append(chybi, id)
 		}
 	}
 	v.Ponechat(func(id string) bool { return platne[id] })
 	pa.Ponechat(func(id string) bool { return platne[id] })
 	vz.Ponechat(func(id string) bool { return platne[id] })
+	vy.Ponechat(func(id string) bool { return platne[id] })
 	s.nastavit(func(st *Stav) { st.Faze = FazePocita; st.Celkem = len(platne); st.Hotovo = len(platne) - len(chybi) })
 	if len(chybi) == 0 {
-		return ulozitVse(s.slozka, v, pa, vz)
+		return ulozitVse(s.slozka, v, pa, vz, vy)
 	}
 
 	m, err := OtevritModel(s.slozka)
@@ -445,15 +484,15 @@ func (s *Sluzba) behat(ctx context.Context) error {
 		return err
 	}
 	defer d.Zavrit()
-	err = s.spocitat(ctx, m, d, v, pa, vz, chybi)
-	uerr := ulozitVse(s.slozka, v, pa, vz)
+	err = s.spocitat(ctx, m, d, v, pa, vz, vy, chybi)
+	uerr := ulozitVse(s.slozka, v, pa, vz, vy)
 	if uerr != nil && (err == nil || errors.Is(err, context.Canceled)) {
 		return fmt.Errorf("uložení vektorů: %w", uerr)
 	}
 	return err
 }
 
-func ulozitVse(slozka string, v *Vektory, pa *Partie, vz *Vzhled) error {
+func ulozitVse(slozka string, v *Vektory, pa *Partie, vz *Vzhled, vy *Vyrezy) error {
 	if err := v.Ulozit(slozka); err != nil {
 		return err
 	}
@@ -462,6 +501,9 @@ func ulozitVse(slozka string, v *Vektory, pa *Partie, vz *Vzhled) error {
 	}
 	if err := vz.Ulozit(slozka); err != nil {
 		return fmt.Errorf("uložení vzhledu: %w", err)
+	}
+	if err := vy.Ulozit(slozka); err != nil {
+		return fmt.Errorf("uložení výřezů: %w", err)
 	}
 	return nil
 }
@@ -472,7 +514,7 @@ type nahledFotky struct {
 }
 
 // Náhledy stahuje několik vláken, model počítá jedno (sám používá 2 vlákna)
-func (s *Sluzba) spocitat(ctx context.Context, m *Model, d *Detektor, v *Vektory, pa *Partie, vz *Vzhled, chybi []string) error {
+func (s *Sluzba) spocitat(ctx context.Context, m *Model, d *Detektor, v *Vektory, pa *Partie, vz *Vzhled, vy *Vyrezy, chybi []string) error {
 	ctx, zrusit := context.WithCancel(ctx) // při chybě modelu skončí i stahování náhledů
 	defer zrusit()
 	fronta := make(chan string)
@@ -520,7 +562,8 @@ func (s *Sluzba) spocitat(ctx context.Context, m *Model, d *Detektor, v *Vektory
 		potrebaV := !v.Ma(n.id)
 		potrebaPa := !pa.Ma(n.id)
 		potrebaVz := !vz.Ma(n.id)
-		if !potrebaV && !potrebaPa && !potrebaVz {
+		potrebaVy := !vy.Ma(n.id)
+		if !potrebaV && !potrebaPa && !potrebaVz && !potrebaVy {
 			continue
 		}
 		img, _, err := image.Decode(bytes.NewReader(n.data))
@@ -530,10 +573,15 @@ func (s *Sluzba) spocitat(ctx context.Context, m *Model, d *Detektor, v *Vektory
 				v.Pridat(n.id, vektor)
 			}
 		}
-		if err == nil && potrebaPa {
+		// Partie i výřez z jednoho běhu detektoru; u fotek spočítaných před 0.02.049 doběhne jen výřez
+		if err == nil && (potrebaPa || potrebaVy) {
 			var jistoty []float32
-			if jistoty, err = d.PartieObrazku(img); err == nil {
-				pa.Pridat(n.id, jistoty)
+			var boxy []Box
+			if jistoty, boxy, err = d.PartieABoxy(img); err == nil {
+				if potrebaPa {
+					pa.Pridat(n.id, jistoty)
+				}
+				vy.Pridat(n.id, boxy)
 			}
 		}
 		if err == nil && potrebaVz {
@@ -552,7 +600,7 @@ func (s *Sluzba) spocitat(ctx context.Context, m *Model, d *Detektor, v *Vektory
 		}
 		if odUlozeni++; odUlozeni >= ukladatPo {
 			odUlozeni = 0
-			if err := ulozitVse(s.slozka, v, pa, vz); err != nil {
+			if err := ulozitVse(s.slozka, v, pa, vz, vy); err != nil {
 				return fmt.Errorf("uložení vektorů: %w", err)
 			}
 		}

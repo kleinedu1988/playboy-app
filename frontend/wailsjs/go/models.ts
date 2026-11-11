@@ -3265,6 +3265,22 @@ export namespace main {
 		    return a;
 		}
 	}
+	export class StavVyrezu {
+	    souboru: number;
+	    spocitano: number;
+	    obsahZapnut: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new StavVyrezu(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.souboru = source["souboru"];
+	        this.spocitano = source["spocitano"];
+	        this.obsahZapnut = source["obsahZapnut"];
+	    }
+	}
 	export class StrankaGalerie {
 	    fotky: sbirka.Fotografie[];
 	    od: number;
@@ -3527,6 +3543,24 @@ export namespace main {
 		    }
 		    return a;
 		}
+	}
+	export class VyrezFotky {
+	    driveId: string;
+	    zdroj: string;
+	    postava?: number[];
+	    oblicej?: number[];
+	
+	    static createFrom(source: any = {}) {
+	        return new VyrezFotky(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.driveId = source["driveId"];
+	        this.zdroj = source["zdroj"];
+	        this.postava = source["postava"];
+	        this.oblicej = source["oblicej"];
+	    }
 	}
 	export class VysledekImportu {
 	    noveModelky: number;

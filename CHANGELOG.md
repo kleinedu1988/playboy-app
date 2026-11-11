@@ -6,6 +6,21 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.049] – 2026-11-11
+
+### Přidáno
+- **Výřez každé fotky (Chytrý výřez náhledů, krok 1):** výpočet obsahu fotek v pozadí si u každé fotky uloží
+  rámeček postavy a obličeje z detektoru (`obsah/vyrezy.bin` vedle partií, 9 B na fotku). Partie i výřez dává jeden
+  běh detektoru; fotky spočítané dřív doběhnou jen detektorem (~27 ms na fotku, 23 000 fotek asi 10 minut
+  v pozadí). Smazání obsahu fotek smaže i výřezy.
+- `GetVyrezyFotek(ids)` (rámečky, zdroj postava / bez / čeká) a `GetStavVyrezu()` pro další kroky; náhledy je
+  začnou používat v 0.02.050.
+
+### Ověřeno
+- Na 300 náhledech ze sbírky: postava nalezena u 294, obličej u 284; rámečky zakreslené do náhledů sedí (i fotka
+  na šířku s ležící modelkou).
+- Schéma databáze a export beze změny (ruční výřez je samostatný krok 0.02.052 **[schéma] [export]**).
+
 ## [0.02.048] – 2026-11-11
 
 ### Opraveno

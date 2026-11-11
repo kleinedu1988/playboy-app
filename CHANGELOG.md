@@ -6,6 +6,20 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.035] – 2026-11-11
+
+### Přidáno
+- **Otevřít PDF čísla** (⋯ › Otevřít PDF čísla…): prohlížeč PDF v okně programu (pdf.js, načte se až při prvním
+  otevření). Vlevo náhledy stran (kreslí se, až se ukážou), vpravo strana nebo dvoustrana jako v tištěném časopise
+  (obálka sama, pak 2–3, 4–5…), lupa 50–400 %. Klávesy ←/→, PageUp/PageDown, Home/End, +/−, 0 přizpůsobit,
+  D dvoustrana, Esc; Ctrl + kolečko lupa. Oznámení řekne, za kolik sekund se číslo otevřelo.
+- Soubor vybraný v dialogu vydá Go jen pod náhodnou adresou `/pdf/<token>` (jiné soubory z disku okno nepřečte).
+- Rozhodnutí před PDF krokem: stránky z PDF se budou exportovat jako obrázky pro Google Disk, fotky zůstávají
+  odkazy na Disk (0.02.038).
+
+### Závislosti
+- `pdfjs-dist` 5.7.284 (rozhraní, jen v samostatném balíčku načteném při otevření PDF).
+
 ## [0.02.034] – 2026-11-11
 
 ### Změněno

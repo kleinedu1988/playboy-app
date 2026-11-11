@@ -57,7 +57,7 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 			// Co není mezi soubory rozhraní: náhledy z Disku přes místní mezipaměť (nahledy.go)
-			Handler: app.nahledy,
+			Handler: obsluhaPDF{dalsi: app.nahledy},
 		},
 		// Průhledné pozadí kvůli zakulaceným rohům rámečku okna
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},

@@ -427,6 +427,7 @@ export const SetVydaniAlba = /** @type {typeof App.SetVydaniAlba} */ (obalit('Se
 export const SetVydaniInfo = /** @type {typeof App.SetVydaniInfo} */ (obalit('SetVydaniInfo'));
 export const SeznamZaloh = /** @type {typeof App.SeznamZaloh} */ (obalit('SeznamZaloh'));
 export const SloucitAlba = /** @type {typeof App.SloucitAlba} */ (obalit('SloucitAlba'));
+export const VybratPDF = /** @type {typeof App.VybratPDF} */ (obalit('VybratPDF'));
 export const SloucitModelky = /** @type {typeof App.SloucitModelky} */ (obalit('SloucitModelky'));
 export const NahledSlouceniModelek = /** @type {typeof App.NahledSlouceniModelek} */ (obalit('NahledSlouceniModelek'));
 export const VratitSlouceniModelek = /** @type {typeof App.VratitSlouceniModelek} */ (obalit('VratitSlouceniModelek'));

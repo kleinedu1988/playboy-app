@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.035 – Otevřít PDF čísla
+
+- [ ] **Kritérium hotovo:** 200stránkové PDF čísla (⋯ › Otevřít PDF čísla…) se otevře do 5 s (čas ukáže oznámení).
+- [ ] Listování šipkami a PageUp/PageDown, dvoustrany 2–3, 4–5…, Home/End, náhledy vlevo se dokreslují při posunu.
+- [ ] Lupa +/−, 0 a Ctrl + kolečko; ve zvětšení jde stranou posouvat.
+- [ ] Pdf.js funguje ve WebKitGTK (worker se načte; když ne, oznámení „se nepodařilo otevřít“).
+
 ## 0.02.034 – Jednotné štítky profilu
 
 - [ ] **Kritérium hotovo:** Buffy Tyler „Playboy 2000 · Playmate měsíce · Modelka“, Ulla Lindstrom „Penthouse 1969 ·

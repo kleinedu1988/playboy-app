@@ -21075,3 +21075,112 @@ body.rezim-vyberu #detailView .poster {
     border-color: var(--casopis);
     box-shadow: inset 3px 0 0 var(--casopis);
 }
+
+/* Prohlížeč PDF čísla (0.02.035): přes celé okno nad prohlížečem fotek, pod dialogy a nabídkami */
+.pdf-okno {
+    position: fixed;
+    inset: 0;
+    z-index: 1550;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-body);
+    outline: none;
+}
+
+.pdf-okno.hidden { display: none; }
+
+.pdf-lista {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.pdf-nazev {
+    max-width: 40ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pdf-strana { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.pdf-mezera { flex: 1; }
+.pdf-lupa { min-width: 64px; font-variant-numeric: tabular-nums; }
+.pdf-lista [aria-pressed="true"] { border-color: var(--accent); color: var(--accent-text); }
+
+.pdf-telo {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+}
+
+.pdf-nahledy {
+    width: 148px;
+    flex: none;
+    overflow-y: auto;
+    padding: 8px 10px;
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pdf-nahled {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.pdf-nahled canvas { background: rgba(255, 255, 255, 0.06); }
+.pdf-nahled:hover { border-color: var(--border-color); }
+.pdf-nahled.aktivni { border-color: var(--accent); color: var(--accent-text); }
+
+.pdf-plocha {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    overflow: auto;
+    display: flex;
+}
+
+.pdf-strany {
+    margin: auto;
+    padding: 12px;
+    display: flex;
+    gap: 0;
+}
+
+.pdf-platno { display: block; box-shadow: 0 2px 18px rgba(0, 0, 0, 0.5); background: #fff; }
+
+.pdf-sipka {
+    position: sticky;
+    top: 50%;
+    z-index: 1;
+    align-self: center;
+    width: 40px;
+    height: 64px;
+    flex: none;
+    border: none;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    opacity: 0.5;
+}
+
+.pdf-sipka:hover, .pdf-sipka:focus-visible { opacity: 1; }
+.pdf-sipka-zpet { left: 8px; margin-right: -40px; }
+.pdf-sipka-dal { right: 8px; margin-left: -40px; }
+
+@media (max-width: 640px) {
+    .pdf-nahledy { display: none; }
+}

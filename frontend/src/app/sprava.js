@@ -4,6 +4,7 @@ import { otevritKapesniKatalog } from './kapesni-katalog';
 import * as novaVerze from './nova-verze';
 import { otevritVzhled } from './vzhled';
 import { otevritCasopisy } from './sprava-casopisu';
+import { otevritPdfCisla } from './pdf-cisla';
 import { esc, formatDatum, nazevAlba, sjednotit } from '../lib/format';
 import { jednou, oznamit } from '../ui/oznameni';
 import { potvrditRozdil } from '../ui/hromadne';
@@ -359,6 +360,7 @@ export function polozkySpravy() {
         { text: `Interval slideshow (${stav.intervalSlideshow / 1000} s)…`, akce: zmenitInterval },
         { text: 'Vzhled…', akce: otevritVzhled },
         { text: 'Časopisy…', akce: otevritCasopisy },
+        { text: 'Otevřít PDF čísla…', akce: otevritPdfCisla },
         { nadpis: 'Soubory a mezipaměť' },
         ...nahledyPozadi.polozkyNabidky(),
         ...obsahFotek.polozkyNabidky(),

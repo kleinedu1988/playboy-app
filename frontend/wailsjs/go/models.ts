@@ -1742,6 +1742,22 @@ export namespace main {
 	        this.cas = source["cas"];
 	    }
 	}
+	export class OtevrenePDF {
+	    adresa: string;
+	    nazev: string;
+	    velikost: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new OtevrenePDF(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.adresa = source["adresa"];
+	        this.nazev = source["nazev"];
+	        this.velikost = source["velikost"];
+	    }
+	}
 	export class OtocenaFotka {
 	    driveId: string;
 	    fotkyIds: number[];

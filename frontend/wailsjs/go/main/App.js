@@ -834,6 +834,10 @@ export function VyberPodleNazvu(arg1) {
   return window['go']['main']['App']['VyberPodleNazvu'](arg1);
 }
 
+export function VybratPDF() {
+  return window['go']['main']['App']['VybratPDF']();
+}
+
 export function VybratSouboryImportu() {
   return window['go']['main']['App']['VybratSouboryImportu']();
 }

@@ -425,6 +425,8 @@ export function VratitSlouceniStejnych(arg1:main.SlouceniStejnych):Promise<boole
 
 export function VyberPodleNazvu(arg1:string):Promise<number>;
 
+export function VybratPDF():Promise<main.OtevrenePDF>;
+
 export function VybratSouboryImportu():Promise<Array<string>>;
 
 export function VymazatMezipamet():Promise<number>;

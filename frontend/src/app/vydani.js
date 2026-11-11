@@ -24,6 +24,7 @@ import { otevritCtecku } from './ctecka';
 import { htmlPrazdna } from '../ui/prazdno';
 import { obnovitVolby } from '../ui/volby';
 import { upravitText } from '../ui/editor-textu';
+import { atributVyrezu } from './vyrez-nahledu';
 
 // Stránka vydání: vlevo cover, vpravo centerfold a pictorialy všech modelek z tohoto čísla
 export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
@@ -195,7 +196,7 @@ function htmlPasuFotek() {
     const polozky = stav.vydaniPolozky || [];
     if (polozky.length < 2) return '';
     const dlazdice = polozky.map((p, i) => `<button type="button" class="pas-fotka" data-index="${i}" title="${esc(`${p.jmenoModelky} · ${typVCisle(p.typ, p.vydani)}`)}">
-        <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" alt="" draggable="false" /></button>`).join('');
+        <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}"${atributVyrezu(p.fotky[0])} alt="" draggable="false" /></button>`).join('');
     return `<section class="pas-fotek" aria-label="Fotky čísla">
         <div class="pas-fotek-hlava"><b>Fotky čísla</b> <small>${sklonovat(polozky.length, 'fotka', 'fotky', 'fotek')}</small>
             <button type="button" class="volba" data-promitat-cislo title="Promítat všechny fotky čísla"><span aria-hidden="true">▶</span>Promítat</button></div>

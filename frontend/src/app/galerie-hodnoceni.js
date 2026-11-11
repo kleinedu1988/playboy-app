@@ -21,6 +21,7 @@ import { adresaTitulni, nacitatPostupne } from './obrazky';
 import { stylVyrezu } from './navigace';
 import { jeVidet, nastavitHtml, otevreneOkno } from '../ui/dom';
 import { htmlPrazdna } from '../ui/prazdno';
+import { atributVyrezu } from './vyrez-nahledu';
 
 const KLIC_RAZENI = 'galerieRazeni';
 const NAHLEDU = 5; // velké náhledy v dlaždici
@@ -158,7 +159,7 @@ function vykreslit(fotek) {
             data-stav-napoveda="1–5 srdíčka · → přeskočit · ⌫ vrátit · Esc konec"></div>
         <div class="ob-karta gh-dlazdice">
             <!-- Klik na fotku otevře prohlížeč na ní; tlačítko přes pruh začne od první -->
-            <div class="gh-nahledy" aria-label="Na řadě – klik otevře prohlížeč">${polozky.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-gh-ukazka="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
+            <div class="gh-nahledy" aria-label="Na řadě – klik otevře prohlížeč">${polozky.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-gh-ukazka="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}"${atributVyrezu(p.fotky[0])} alt="" draggable="false" loading="lazy" /></button>`).join('')}
                 <button type="button" class="gh-start" data-gh-start title="Prohlížeč na první fotce fronty (Enter)">♥ Začít hodnotit <kbd>↵</kbd></button>
             </div>
             <div class="gh-modelky" aria-label="Jen fotky jedné modelky">
@@ -294,7 +295,7 @@ function vykreslitPruvodce() {
         <div class="volby-v-liste" data-volby-casti="hodnoceni-fotky-pruvodce" data-pr-lista
             data-stav-napoveda="1–9 volba · 0 žádná · ↵ dál · ⌫ zpět · ⇧↵ jako minulá · S přeskočit · J jen srdíčka · H skrýt"></div>
         <div class="ob-karta gh-dlazdice">
-            <div class="gh-nahledy" aria-label="Na řadě – klik začne od fotky">${polozkyPruvodce.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-pr-od="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}" alt="" draggable="false" loading="lazy" /></button>`).join('')}
+            <div class="gh-nahledy" aria-label="Na řadě – klik začne od fotky">${polozkyPruvodce.slice(0, NAHLEDU).map((p, i) => `<button type="button" class="gh-nahled" data-pr-od="${i}" title="${esc(`${p.jmenoModelky} · ${p.album}`)}"><img src="${esc(adresaFotkyVysky(p.fotky[0], 600))}"${atributVyrezu(p.fotky[0])} alt="" draggable="false" loading="lazy" /></button>`).join('')}
                 <button type="button" class="gh-start" data-pr-start title="Průvodce na první fotce fronty: tagy krok po kroku, nakonec srdíčka (Enter)">✦ Začít průvodce <kbd>↵</kbd></button>
             </div>
             <div class="gh-modelky" aria-label="Alba k průvodci">

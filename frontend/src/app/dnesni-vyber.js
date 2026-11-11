@@ -8,6 +8,7 @@ import { otevritProfilPodleId } from './cover';
 import { esc, obrazek } from '../lib/format';
 import { dnesniPocet } from '../lib/srdicka';
 import { VELIKOST_NAHLEDU } from './obrazky';
+import { atributVyrezu } from './vyrez-nahledu';
 
 const DAVKA = 10;
 // Fotek na modelku: velká a pod ní malé z různých alb; najetí na malou ji ukáže velkou (prohlédnout před volbou)
@@ -62,8 +63,8 @@ async function doplnit() {
 function htmlKarty(id, i) {
     const m = jmena.get(id);
     const fotky = nahledy.get(id) || [];
-    const hlavni = fotky[0] ? `<img class="dv-hlavni" src="${esc(obrazek(fotky[0].url, 'w600'))}" alt="" draggable="false" />` : '<div class="dv-bez-fotky">Bez fotky</div>';
-    const male = fotky.map((f, n) => `<img ${n ? '' : 'class="on" '}src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" data-dv-velka="${esc(obrazek(f.url, 'w600'))}" title="${esc(f.album || '')}" alt="" draggable="false" />`).join('');
+    const hlavni = fotky[0] ? `<img class="dv-hlavni" src="${esc(obrazek(fotky[0].url, 'w600'))}"${atributVyrezu(fotky[0])} alt="" draggable="false" />` : '<div class="dv-bez-fotky">Bez fotky</div>';
+    const male = fotky.map((f, n) => `<img ${n ? '' : 'class="on" '}src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}"${atributVyrezu(f)} data-dv-velka="${esc(obrazek(f.url, 'w600'))}" title="${esc(f.album || '')}" alt="" draggable="false" />`).join('');
     const srdicka = m?.hodnoceni > 0 ? '♥'.repeat(Math.round(m.hodnoceni)) : (m?.odhadHodnoceni ? `odhad ${String(m.odhadHodnoceni).replace('.', ',')}` : 'bez srdíček');
     return `<button type="button" class="dv-karta" data-dv-vyber="${id}" aria-keyshortcuts="${i + 1}">
         <span class="dv-fotka">${hlavni}<kbd>${i + 1}</kbd></span>
@@ -186,7 +187,13 @@ export async function otevritDnesniVyber(zOkruhu = '') {
         if (!mala) return;
         const karta = mala.closest('.dv-karta');
         const velka = /** @type {HTMLImageElement | null} */ (karta?.querySelector('.dv-hlavni'));
-        if (velka && velka.getAttribute('src') !== mala.dataset.dvVelka) velka.src = mala.dataset.dvVelka;
+        if (velka && velka.getAttribute('src') !== mala.dataset.dvVelka) {
+            // Výřez patří fotce: nová fotka si ho vezme z malé (app/vyrez-nahledu.js ho po načtení použije)
+            velka.style.objectPosition = '';
+            if (mala.dataset.vyrez) velka.dataset.vyrez = mala.dataset.vyrez;
+            else delete velka.dataset.vyrez;
+            velka.src = mala.dataset.dvVelka;
+        }
         karta?.querySelectorAll('[data-dv-velka]').forEach(m => m.classList.toggle('on', m === mala));
     });
     okno.addEventListener('click', (e) => {

@@ -29,6 +29,7 @@ import { doplnitZminkyModelky } from './wiki-odkazy';
 import * as zasobnik from './zasobnik';
 import { otevritAlbumModal } from './formular-alba';
 import { vzhled } from '../ui/vzhled';
+import { atributVyrezu } from './vyrez-nahledu';
 
 // Prvky profilu ze šablony; zůstávají stejné, mění se jen jejich obsah. Nahoře pruh s identitou modelky, údaje
 // ve výsuvném panelu vpravo (#profileSide), akce s modelkou ve spodním řádku pruhu (#profileActions).
@@ -422,7 +423,7 @@ export async function nacistFotkyModelky(modelkaId) {
                     ${a.polozky.map(p => {
                         const index = indexPolozky.get(p);
                         return `<div class="photo-item" data-index="${index}" data-foto-id="${p.fotky[0].id}" tabindex="0" style="--pomer: ${pomerFotky(p.fotky[0].id) || 0.75}">
-                                   <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}" decoding="async" draggable="false" />
+                                   <img data-src="${esc(obrazek(p.fotky[0].url, VELIKOST_NAHLEDU))}"${p.fotky.length === 1 ? atributVyrezu({ ...p.fotky[0], rotace: p.rotace }) : ''} decoding="async" draggable="false" />
                                    ${htmlSrdickaFotky(p, index)}
                                    ${htmlAkciDlazdice()}
                                </div>`;

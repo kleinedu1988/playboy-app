@@ -6,6 +6,26 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.050] – 2026-11-11
+
+### Změněno
+- **Náhledy podle výřezu (Chytrý výřez náhledů, krok 2):** ořezané náhledy se posunou tak, aby byla vidět postava
+  a hlavně obličej, místo pevného středu. Platí v řadách kolekcí a panelu kolekcí Galerie, v mozaice alb profilu,
+  v pásu fotek Porovnat, ve frontě Hodnotit, v pásu prohlížeče, v Dnešním výběru, v Ideální modelce a v pásu
+  fotek na stránce čísla. Pohled jen označí obrázek (`data-vyrez`); výřezy po dávkách načte a použije jeden modul
+  (`app/vyrez-nahledu.js`, výpočet v `lib/vyrez-nahledu.js`). Otočené fotky a fotky bez spočítaného výřezu
+  zůstávají na středu.
+
+### Ověřeno
+- Snímky obrazovek na kopii sbírky (střed proti výřezu, úloha `nastroje/snimky/vyrez.json`): v Galerii se
+  posunulo 83 ze 150 dlaždic; ležící modelce a dalším dvěma fotkám je teď vidět obličej. V mozaice profilu se
+  posunulo 10 z 10 dlaždic; dvěma fotkám už střed neuřízne hlavu.
+
+### Opraveno
+- Skutečná databáze zůstala po rozpracované verzi 0.02.049 na úpravě schématu 18 (prázdná tabulka ručních výřezů,
+  která se do vydání nedostala) a program 17 ji otevřel jen pro čtení. Tabulka byla odstraněna a databáze vrácena
+  na úpravu 17 (záloha `zalohy/playboy-2026-11-11-oprava-schema18.db`); v kódu žádná změna.
+
 ## [0.02.049] – 2026-11-11
 
 ### Přidáno

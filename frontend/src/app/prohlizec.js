@@ -16,6 +16,7 @@ import { nacistNejlepsi } from './nejlepsi';
 import { otevritProfilPodleId } from './cover';
 import { sledovatFotku, ukoncitProhlizeni } from './zajem';
 import { vzhled } from '../ui/vzhled';
+import { atributVyrezu } from './vyrez-nahledu';
 
 // Prohlížeč fotek: šipky vlevo a vpravo listují, nahoru a dolů (PgUp, PgDn) skáčou mezi alby,
 // mezerník spouští slideshow, F rozkládá plakát, R otáčí, Esc zavírá
@@ -285,7 +286,7 @@ function lbVykreslitPas() {
     let html = '';
     for (let i = od; i < do_; i++) {
         const f = stav.lbPolozky[i].fotky[0];
-        html += `<button type="button" tabindex="-1" data-lb-pas="${i}"${i === stav.lbIndex ? ' class="aktivni"' : ''}><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" draggable="false" /></button>`;
+        html += `<button type="button" tabindex="-1" data-lb-pas="${i}"${i === stav.lbIndex ? ' class="aktivni"' : ''}><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}"${atributVyrezu(f)} alt="" draggable="false" /></button>`;
     }
     lbPas.innerHTML = html;
     lbPas.querySelector('.aktivni')?.scrollIntoView({ inline: 'center', block: 'nearest' });

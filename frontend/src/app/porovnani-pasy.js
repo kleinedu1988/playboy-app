@@ -18,6 +18,7 @@ import { stylVyrezu } from './navigace';
 import { htmlSrdicka, oznamitHodnoceniFotek } from './galerie';
 import { nastavitHtml, nastavitText } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
+import { atributVyrezu } from './vyrez-nahledu';
 
 const KOSTER = 6; // prázdných míst v pásu, dokud se fotky načítají
 
@@ -94,7 +95,7 @@ function htmlFotek(strana) {
     // První fotky dostanou adresu hned, ostatní až se v pásu přiblíží (nacitatPostupne)
     return fotky.map((f, i) => `
         <button type="button" class="pas-fotka" data-pas-fotka="${i}" aria-label="${esc(popisNahledu(f, i))} – otevřít v prohlížeči">
-            <img ${i < fotekNaSirku ? 'src' : 'data-src'}="${esc(adresaFotkyPasu(f))}" alt="" data-rot="${Number(f.rotace) || 0}" draggable="false" decoding="async" />
+            <img ${i < fotekNaSirku ? 'src' : 'data-src'}="${esc(adresaFotkyPasu(f))}"${atributVyrezu(f)} alt="" data-rot="${Number(f.rotace) || 0}" draggable="false" decoding="async" />
             <span class="pas-srd" data-pas-srd>${srdickaFotky(f.hodnoceni)}</span>
             ${f.album ? `<span class="pas-album">${esc(f.album)}</span>` : ''}
         </button>`).join('');

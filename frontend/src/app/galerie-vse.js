@@ -15,6 +15,7 @@ import { htmlNicNenalezeno } from '../ui/prazdno';
 import { otevritLightbox } from './prohlizec';
 import { otevritProfilPodleId } from './cover';
 import { podobneZapnuto, ukazatPodobne } from './obsah-fotek';
+import { atributVyrezu } from './vyrez-nahledu';
 
 const STRANKA = 300;
 const KLIC_DOTAZU = 'galerieDotaz';
@@ -148,7 +149,7 @@ export async function nacistVsechnyFotky(hledani, { htmlNastroju, dlazdice, prip
 // Řada kolekce: název, proč, počet, Zobrazit vše a vodorovný pás fotek se šipkami
 function htmlRady(r, n) {
     const dlazdice = r.fotky.map((f, i) => `<button type="button" class="gv-dlazdice" data-gv-rada="${n}" data-gv-fotka="${i}" title="${esc(`${f.jmenoModelky || ''} · ${nazevAlba(f.album, f.typ)}`)}">
-        <img src="${esc(obrazek(f.url, 'w400'))}" alt="" loading="lazy" decoding="async" draggable="false" />${f.hodnoceni ? `<span class="gv-srd">${'♥'.repeat(f.hodnoceni)}</span>` : ''}</button>`).join('');
+        <img src="${esc(obrazek(f.url, 'w400'))}"${atributVyrezu(f)} alt="" loading="lazy" decoding="async" draggable="false" />${f.hodnoceni ? `<span class="gv-srd">${'♥'.repeat(f.hodnoceni)}</span>` : ''}</button>`).join('');
     return `<section class="gv-rada">
         <div class="gv-rada-hlava"><h3>${esc(r.nazev)}</h3>${r.oblibena ? '<span class="gv-rada-oblibena" title="Tuhle kolekci často otevíráš – proto je výš">★ často otevíráš</span>' : ''}<span class="gv-rada-duvod">${esc(r.duvod)}</span>
             <button type="button" class="link gv-vse" data-gv-kolekce="${n}">Zobrazit vše (${r.pocet.toLocaleString('cs-CZ')}) ›</button></div>
@@ -343,7 +344,7 @@ async function vykreslitPanelKolekci() {
     if (!panel.isConnected) return;
     const skupiny = Object.entries(SKUPINY_KOLEKCI).map(([sk, nazev]) => ({ nazev, k: vsechnyKolekce.map((x, i) => ({ ...x, i })).filter(x => x.skupina === sk) })).filter(x => x.k.length);
     const dlazdice = x => `<button type="button" class="gv-k-dlazdice ${x.klic === zvolenaKolekce.klic ? 'on' : ''}" data-gv-k="${x.i}" title="${esc(x.duvod)}">
-        <img src="${esc(obrazek(x.fotka?.url || '', 'w400'))}" alt="" loading="lazy" decoding="async" draggable="false" />
+        <img src="${esc(obrazek(x.fotka?.url || '', 'w400'))}"${atributVyrezu(x.fotka)} alt="" loading="lazy" decoding="async" draggable="false" />
         <span class="gv-k-text"><b>${esc(x.nazev)}</b><small>${x.pocet.toLocaleString('cs-CZ')}</small></span></button>`;
     // Chytré výběry ⚡ (app/chytre-vybery.js) – dřívější Uložené výběry se do nich převedly
     panel.innerHTML = `

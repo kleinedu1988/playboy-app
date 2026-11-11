@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.050 – Náhledy podle výřezu
+
+- [ ] Program se zase normálně ukládá (žádná hláška „databáze je z novější verze“).
+- [ ] Po doběhnutí výřezů (0.02.049): v Galerii a v albech profilu nejsou useknuté hlavy, náhledy neposkakují.
+- [ ] Dnešní výběr: po kliknutí na malou fotku je velká fotka správně vyříznutá.
+
 ## 0.02.049 – Výřez každé fotky
 
 - [ ] Po spuštění se obsah fotek znovu rozběhne (doběhnou výřezy) a za ~10 minut skončí; program mezitím nesekat.

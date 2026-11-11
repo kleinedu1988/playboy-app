@@ -12,6 +12,7 @@ import { nacistGalerii } from './galerie';
 import { otevritProfilPodleId } from './cover';
 import { otevritLightbox } from './prohlizec';
 import { nastavitKolekciGalerie } from './galerie-vse';
+import { atributVyrezu } from './vyrez-nahledu';
 
 let okno = null;
 let data = null;
@@ -29,7 +30,7 @@ function htmlVlastnosti(x, i, seznam) {
 function htmlFotky(f, nadpis, popis, klic) {
     if (!f) return '';
     return `<figure class="vk-fotka" data-vk-fotka="${klic}">
-        <img src="${esc(obrazek(f.url, 'w800'))}" alt="" draggable="false" />
+        <img src="${esc(obrazek(f.url, 'w800'))}"${atributVyrezu(f)} alt="" draggable="false" />
         <figcaption><b>${esc(nadpis)}</b><span>${esc(popis)}</span><small>${esc(f.jmenoModelky || '')}</small></figcaption></figure>`;
 }
 
@@ -53,7 +54,7 @@ function vykreslit() {
         </div>
         ${data.dokonala || data.objev ? `<div class="vk-fotky">${htmlFotky(data.dokonala, 'Tvoje nejtypičtější fotka', 'Z tvých oblíbených obsahem nejblíž středu vkusu', 'dokonala')}${htmlFotky(data.objev, 'Objev', 'Nehodnocená fotka, která ti sedí nejvíc', 'objev')}</div>` : ''}
         ${data.nejblize.length ? `<section class="vk-nejblize"><h3>Modelky nejblíž tvému ideálu</h3><div class="vk-modelky">${data.nejblize.map(m => `<button type="button" class="vk-modelka" data-vk-modelka="${m.modelkaId}" title="Otevřít profil">
-            <img src="${esc(obrazek(m.fotka.url, 'w400'))}" alt="" loading="lazy" draggable="false" /><span>${esc(m.jmeno)}</span></button>`).join('')}</div></section>` : ''}`;
+            <img src="${esc(obrazek(m.fotka.url, 'w400'))}"${atributVyrezu(m.fotka)} alt="" loading="lazy" draggable="false" /><span>${esc(m.jmeno)}</span></button>`).join('')}</div></section>` : ''}`;
 }
 
 export async function otevritVkus() {

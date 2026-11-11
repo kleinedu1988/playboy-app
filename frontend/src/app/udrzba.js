@@ -145,6 +145,29 @@ const frontaPro = klic => stav.prehledRadky.filter(r => !r.netyka.has(klic)
 
 // ——— Vykreslení ———
 
+// Nabídka dlaždice oblasti v hlavičce (Modelky, Alba, Čísla): co chybí a kde to doplnit
+function polozkyOblasti(nazev) {
+    const radky = model.pokrok.filter(o => o.skupina === nazev);
+    const polozky = radky.map(o => ({
+        text: `${o.nazev} – ${o.chybi ? `${o.chybi.toLocaleString('cs-CZ')} ${o.jednotka || 'chybí'}${o.jednotka ? ' chybí' : ''}` : 'hotovo'}`,
+        akce: () => otevritFiltr(o.filtr),
+        zakazano: !o.chybi,
+    })).filter(p => !p.zakazano).map(({ text, akce }) => ({ text, akce }));
+    const hlavicka = [{ nadpis: `${nazev} · co doplnit` }];
+    if (nazev === 'Čísla') {
+        return [...hlavicka, { text: 'Mapa čísel a sháněná čísla', akce: () => otevritStranku('cisla') }, ...(polozky.length ? [null, ...polozky] : [])];
+    }
+    return [...hlavicka, ...(polozky.length ? polozky : [{ text: 'Vše doplněno', akce: () => {} }])];
+}
+function otevritStranku(klic) {
+    const b = document.createElement('button');
+    b.hidden = true;
+    b.dataset.sbirkaStranka = klic;
+    document.body.append(b);
+    b.click();
+    b.remove();
+}
+
 // Úkoly se všude počítají stejně: jednotlivé otevřené položky; řádků fronty (modelek a čísel) je méně
 const cislo0 = (/** @type {number} */ n) => (n || 0).toLocaleString('cs-CZ');
 export const popisUkolu = () => (model ? `${cislo0(model.ukolu)} ${sklonovat(model.ukolu, 'úkol', 'úkoly', 'úkolů').replace(/^\S+ /, '')} u ${model.sUkoly.toLocaleString('cs-CZ')} ${model.sUkoly === 1 ? 'modelky nebo čísla' : 'modelek a čísel'}` : '');
@@ -320,8 +343,8 @@ function htmlHlavySbirky() {
         const sObsahem = seznam.filter(o => o.celkem > 0);
         const procento = sObsahem.length ? Math.round(sObsahem.reduce((x, o) => x + o.hotovo / o.celkem, 0) / sObsahem.length * 100) : 100;
         const chybi = seznam.reduce((x, o) => x + o.chybi, 0);
-        return `<div class="sh-oblast" title="${esc(seznam.map(o => `${o.nazev}: ${o.hotovo} z ${o.celkem}`).join('\n'))}">
-            <span>${nazev}</span><b>${procento} %</b><i><em style="width:${procento}%"></em></i><small>${chybi ? `${chybi} chybí` : 'hotovo'}</small></div>`;
+        return `<button type="button" class="sh-oblast" data-sh-oblast="${esc(nazev)}" aria-haspopup="menu" title="${esc(`${seznam.map(o => `${o.nazev}: ${o.hotovo} z ${o.celkem}`).join('\n')}\nKlik ukáže, co doplnit`)}">
+            <span>${nazev}</span><b>${procento} %</b><i><em style="width:${procento}%"></em></i><small>${chybi ? `${chybi.toLocaleString('cs-CZ')} chybí` : 'hotovo'}</small></button>`;
     }).join('');
     const cislo = (n, a, b, c) => `<span><b>${(n || 0).toLocaleString('cs-CZ')}</b> ${sklonovat(n || 0, a, b, c).replace(/^\S+ /, '')}</span>`;
     const filtr = stav.udrzbaFiltr;
@@ -387,7 +410,12 @@ function pripravitHlavuSbirky() {
         else if (zdroj) nastavitFiltr(stav.udrzbaFiltr, zdroj.dataset.shZdroj);
         else if (rezim) nastavitRezim(rezim.dataset.shRezim);
         // Stránky Sbírky (data-sbirka-stranka) přepíná prehled.js obsluhou na dokumentu
-        else if (akce?.dataset.shAkce === 'nabidka') {
+        else if (cil.closest('[data-sh-oblast]')) {
+            e.stopPropagation();
+            const b = /** @type {HTMLElement} */ (cil.closest('[data-sh-oblast]'));
+            const r = b.getBoundingClientRect();
+            otevritKontextovouNabidku(r.left, r.bottom + 6, polozkyOblasti(b.dataset.shOblast || ''));
+        } else if (akce?.dataset.shAkce === 'nabidka') {
             e.stopPropagation();
             const r = akce.getBoundingClientRect();
             otevritKontextovouNabidku(r.left, r.bottom + 6, [
@@ -638,6 +666,31 @@ export function otevritNaFiltru(filtr) {
         nastavitRezim('udaje');
     } else nastavitFiltr(filtr);
 }
+
+// Proklik do stránky Úkoly (0.02.055): režim, volitelně filtr fronty nebo skupina (modelka „m:id“, číslo „v:klíč“).
+// Z Čísel a sháním / Učení nejdřív zavře stránku (prehled.js), pak přepne režim.
+export function otevritVUkolech(rezim, { filtr = '', klicSkupiny = '' } = {}) {
+    if (filtr) {
+        stav.udrzbaFiltr = filtr;
+        stav.udrzbaZdroj = '';
+        stav.prehledLimit = STRANKA;
+    }
+    if (stav.sbirkaPanel) document.dispatchEvent(new CustomEvent('zavrit-stranku-sbirky'));
+    nastavitRezim(rezim, klicSkupiny).then(() => oblast().scrollTo({ top: 0 }));
+}
+
+// Kam vede filtr oblasti: Údaje modelek do Po údajích, ostatní do Fronty s filtrem
+export function otevritFiltr(filtr) {
+    if (filtr === 'udaje') otevritVUkolech('udaje');
+    else otevritVUkolech('souhrn', { filtr });
+}
+
+// Úkoly čísla (nabídka políčka v mapě čísel): kolik jich je a otevření Po modelkách na jeho kartě
+export function ukolyCisla(klic) {
+    const s = model?.skupiny.find(x => x.klic === `v:${klic}`);
+    return s?.aktivnich || 0;
+}
+export const otevritUkolyCisla = klic => otevritVUkolech('modelky', { klicSkupiny: `v:${klic}` });
 
 // Filtr fronty v Souhrnu (boční seznam, pokrok)
 export function nastavitFiltr(filtr, zdroj = '') {

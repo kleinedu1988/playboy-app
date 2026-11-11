@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.055 – Proklik ukazatelů
+
+- [ ] Klik na dlaždici Modelky / Alba / Čísla v hlavičce Sbírky ukáže nabídku a položka otevře správný režim a filtr.
+- [ ] V Úkolech › Po modelkách je zase vidět celá karta (údaje, tlačítka, Uložit a další).
+- [ ] Otočené a výřezy vypadají jako dřív (dlaždice fotek po řadách).
+- [ ] Pravý klik na číslo v mapě → Úkoly čísla otevře jeho kartu; po Přidat cover… se karta posune dál.
+
 ## 0.02.054 – Jedno počítání úkolů
 
 - [ ] Hlavička Sbírky, lišta (Úkoly N), Přehled („ve frontě N otevřených úkolů“) a mapa sekcí ukazují stejné N; po vyřízení úkolu klesnou všechny.

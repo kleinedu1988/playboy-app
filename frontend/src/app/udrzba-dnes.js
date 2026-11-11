@@ -111,8 +111,14 @@ function htmlUkolu(model) {
 }
 
 const procent = (h, c) => (c ? Math.floor(h / c * 100) : 0);
+// Proklik řádku Na pozadí (0.02.055): úloha → režim Úkolů, kde se její výsledek řeší
+const REZIM_ULOHY = { otisky: ['stejne', 'Stejné fotky'], otoceni: ['fotky', 'Otočené a výřezy'], kvalita: ['fotky', 'Otočené a výřezy'], web: ['web', 'Z webu'] };
 function radekUlohy(klic, nazev, { bezi, text, spustit = '', zastavit = '' }) {
-    return `<li class="udd-uloha${bezi ? ' bezi' : ''}"><span class="udd-nazev">${esc(nazev)}</span><span class="udd-text">${text}</span>
+    const cil = REZIM_ULOHY[klic];
+    const jmeno = cil
+        ? `<button type="button" class="udd-nazev link" data-udd-rezim="${cil[0]}" title="Otevřít Úkoly › ${esc(cil[1])}">${esc(nazev)}</button>`
+        : `<span class="udd-nazev">${esc(nazev)}</span>`;
+    return `<li class="udd-uloha${bezi ? ' bezi' : ''}">${jmeno}<span class="udd-text">${text}</span>
         ${bezi && zastavit ? `<button type="button" class="btn btn-secondary btn-small" data-udd-zastavit="${klic}">${esc(zastavit)}</button>` : ''}
         ${!bezi && spustit ? `<button type="button" class="btn btn-secondary btn-small" data-udd-spustit="${klic}">${esc(spustit)}</button>` : ''}</li>`;
 }

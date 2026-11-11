@@ -6,6 +6,26 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.055] – 2026-11-11
+
+### Přidáno
+- **Proklik ukazatelů (Přehledná Sbírka, krok 4):** dlaždice Modelky, Alba a Čísla v hlavičce Sbírky jsou tlačítka.
+  Klik ukáže, co v oblasti chybí (např. Titulní fotka – 65 chybí), a vede tam, kde se to doplní: Údaje do Úkolů
+  › Po údajích, ostatní do Fronty s filtrem oblasti; u Čísel navíc Mapa čísel a sháněná čísla.
+- Řádky Na pozadí v Přehledu (Otisky, Otočení, Kvalita fotek, Průchod webem) otevřou režim Úkolů, kde se jejich
+  výsledek řeší (Stejné fotky, Otočené a výřezy, Z webu).
+- Nabídka políčka v mapě čísel má „Úkoly čísla (N)“: otevře Úkoly › Po modelkách přímo na kartě čísla.
+
+### Opraveno
+- Úkoly › Po modelkách: karta modelky nebo čísla nebyla vidět (zbyl jen malý náhled a fronta uprostřed). Mřížka
+  fotek z režimu Otočené a výřezy měla stejný název třídy a přebíjela rozložení karty – chyba od 1.45.0.
+  Třídy fotek mají vlastní předponu.
+
+### Ověřeno
+- Snímky na kopii sbírky: Modelky › Údaje → Po údajích; Alba › Texty → Fronta s filtrem Texty alb; Čísla › Mapa →
+  Čísla a sháním; Únor 1954 v mapě → Úkoly čísla (2) → karta čísla v Po modelkách; Otisky → Stejné fotky.
+  Karta Po modelkách 846 px + fronta 340 px; Otočené a výřezy dál po čtyřech v řadě.
+
 ## [0.02.054] – 2026-11-11
 
 ### Opraveno

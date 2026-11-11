@@ -20838,25 +20838,25 @@ body.rezim-vyberu #detailView .poster {
     .uw-navrh { grid-template-columns: 1fr; gap: 4px; }
 }
 
-/* Údržba › Otočené a výřezy (app/udrzba-fotky.js) */
-.uf-sekce { margin-bottom: 28px; }
-.uf-sekce h4 { margin: 0 0 10px; }
-.uf-sekce h4 small { color: var(--text-muted); font-weight: 400; margin-left: 6px; }
-.uf-mrizka { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin: 10px 0; }
-.uf-otocena, .uf-vyrez { margin: 0; border: 1px solid var(--panel-okraj); border-radius: 10px; padding: 10px; background: var(--bg-modal); display: flex; flex-direction: column; gap: 8px; }
-.uf-dvojice { display: flex; align-items: center; gap: 6px; justify-content: center; }
-.uf-sipka { color: var(--text-muted); }
-.uf-ram { width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 6px; background: var(--bg-main, #000); }
-.uf-ram img { max-width: 96px; max-height: 96px; object-fit: contain; }
-.uf-ram.navrh, .uf-karta.navrh { outline: 2px solid var(--accent); outline-offset: 1px; }
-.uf-karta { width: 90px; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 6px; background: var(--bg-main, #000); }
-.uf-karta img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.uf-otocena figcaption, .uf-vyrez figcaption { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
-.uf-jistota { color: var(--text-muted); }
-.uf-vysoka { color: var(--accent-text); }
-.uf-duvod { color: var(--text-muted); }
-.uf-akce { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
-.uf-lista { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+/* Údržba › Otočené a výřezy (app/udrzba-fotky.js); předpona ufo- – uf- patří kartě Po modelkách (udrzba-fokus.js) */
+.ufo-sekce { margin-bottom: 28px; }
+.ufo-sekce h4 { margin: 0 0 10px; }
+.ufo-sekce h4 small { color: var(--text-muted); font-weight: 400; margin-left: 6px; }
+.ufo-mrizka { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; margin: 10px 0; }
+.ufo-otocena, .ufo-vyrez { margin: 0; border: 1px solid var(--panel-okraj); border-radius: 10px; padding: 10px; background: var(--bg-modal); display: flex; flex-direction: column; gap: 8px; }
+.ufo-dvojice { display: flex; align-items: center; gap: 6px; justify-content: center; }
+.ufo-sipka { color: var(--text-muted); }
+.ufo-ram { width: 96px; height: 96px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 6px; background: var(--bg-main, #000); }
+.ufo-ram img { max-width: 96px; max-height: 96px; object-fit: contain; }
+.ufo-ram.navrh, .ufo-karta.navrh { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ufo-karta { width: 90px; aspect-ratio: 3 / 4; overflow: hidden; border-radius: 6px; background: var(--bg-main, #000); }
+.ufo-karta img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ufo-otocena figcaption, .ufo-vyrez figcaption { display: flex; flex-direction: column; gap: 4px; font-size: 12px; }
+.ufo-jistota { color: var(--text-muted); }
+.ufo-vysoka { color: var(--accent-text); }
+.ufo-duvod { color: var(--text-muted); }
+.ufo-akce { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.ufo-lista { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
 /* Rok ve sbírce (app/rok-ve-sbirce.js) */
 .rs-karta { width: min(960px, calc(var(--vw) - 32px)); max-width: none; max-height: calc(var(--vh) - 48px); display: flex; flex-direction: column; }
@@ -21325,4 +21325,27 @@ body.rezim-vyberu #detailView .poster {
     margin-left: 6px;
     font-size: 12px;
     opacity: 0.6;
+}
+
+/* Proklik ukazatelů (0.02.055): dlaždice oblastí v hlavičce Sbírky jsou tlačítka s nabídkou */
+button.sh-oblast {
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+button.sh-oblast:hover,
+button.sh-oblast:focus-visible {
+    border-color: rgba(216, 27, 96, 0.55);
+    background-color: rgba(216, 27, 96, 0.08);
+}
+
+button.udd-nazev {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
 }

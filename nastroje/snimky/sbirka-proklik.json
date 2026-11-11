@@ -1,0 +1,136 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "sbirka",
+   "js": "(()=>{const b=document.querySelector('#viewToggle [data-sekce=\"sbirka\"]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 7000
+  },
+  {
+   "nazev": "p-modelky",
+   "js": "(()=>{const b=document.querySelector('.sh-oblast[data-sh-oblast=\"Modelky\"]');if(!b)return 'bez';b.click();return [...document.querySelectorAll('#contextMenu button')].map(x=>x.textContent.trim()).join(' | ')})()",
+   "cekat": 400
+  },
+  {
+   "nazev": "p-modelky-udaje",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.trim().startsWith('Údaje'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "p-modelky-stav",
+   "js": "(()=>{const s=document.querySelector('.sh-stranky .on');const r=document.querySelector('.sh-rezimy .on, [data-sh-rezim].on');const f=document.querySelector('.sh-filtr.on');return JSON.stringify({stranka:s?.textContent.trim(),rezim:r?.textContent.trim(),filtr:f?.textContent.trim()})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "p-alba",
+   "js": "(()=>{const b=document.querySelector('.sh-oblast[data-sh-oblast=\"Alba\"]');if(!b)return 'bez';b.click();return [...document.querySelectorAll('#contextMenu button')].map(x=>x.textContent.trim()).join(' | ')})()",
+   "cekat": 400
+  },
+  {
+   "nazev": "p-alba-texty",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.trim().startsWith('Texty'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "p-alba-stav",
+   "js": "(()=>{const s=document.querySelector('.sh-stranky .on');const r=document.querySelector('.sh-rezimy .on, [data-sh-rezim].on');const f=document.querySelector('.sh-filtr.on');return JSON.stringify({stranka:s?.textContent.trim(),rezim:r?.textContent.trim(),filtr:f?.textContent.trim()})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "p-cisla",
+   "js": "(()=>{const b=document.querySelector('.sh-oblast[data-sh-oblast=\"Čísla\"]');if(!b)return 'bez';b.click();return [...document.querySelectorAll('#contextMenu button')].map(x=>x.textContent.trim()).join(' | ')})()",
+   "cekat": 400
+  },
+  {
+   "nazev": "p-cisla-mapa",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.trim().startsWith('Mapa'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "p-cisla-stav",
+   "js": "(()=>{const s=document.querySelector('.sh-stranky .on');const r=document.querySelector('.sh-rezimy .on, [data-sh-rezim].on');const f=document.querySelector('.sh-filtr.on');return JSON.stringify({stranka:s?.textContent.trim(),rezim:r?.textContent.trim(),filtr:f?.textContent.trim()})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "p-bunka",
+   "js": "(()=>{const b=document.querySelector('.uvod-rok i.p[data-cislo]')||document.querySelector('.uvod-rok i[data-cislo]');if(!b)return 'bez';b.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,clientX:300,clientY:300}));return b.dataset.cislo})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "p-bunka-menu",
+   "js": "[...document.querySelectorAll('#contextMenu button')].map(x=>x.textContent.trim()).join(' | ')",
+   "cekat": 100
+  },
+  {
+   "nazev": "p-bunka-ukoly",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.trim().startsWith('Úkoly čísla'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "p-bunka-stav",
+   "js": "(()=>{const s=document.querySelector('.sh-stranky .on');const r=document.querySelector('.sh-rezimy .on, [data-sh-rezim].on');const f=document.querySelector('.sh-filtr.on');return JSON.stringify({stranka:s?.textContent.trim(),rezim:r?.textContent.trim(),filtr:f?.textContent.trim()})})()+' '+(document.querySelector('.ud-fokus h2, .udf-hlava h2, .ud-fokus-jmeno')?.textContent||'').trim()",
+   "cekat": 100
+  },
+  {
+   "nazev": "p-prehled",
+   "js": "(()=>{document.querySelector('.sh-stranky [data-sbirka-stranka=\"prehled\"]').click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "p-pozadi",
+   "js": "(()=>{const b=document.querySelector('button.udd-nazev[data-udd-rezim=\"stejne\"]')||document.querySelector('button.udd-nazev');if(!b)return 'bez';b.click();return b.dataset.uddRezim})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "p-pozadi-stav",
+   "js": "(()=>{const s=document.querySelector('.sh-stranky .on');const r=document.querySelector('.sh-rezimy .on, [data-sh-rezim].on');const f=document.querySelector('.sh-filtr.on');return JSON.stringify({stranka:s?.textContent.trim(),rezim:r?.textContent.trim(),filtr:f?.textContent.trim()})})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "r-modelky",
+   "js": "(()=>{document.querySelector('.sh-stranky [data-sbirka-stranka=\"ukoly\"]').click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "r-rezim",
+   "js": "(()=>{const b=document.querySelector('[data-sh-rezim=\"modelky\"]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "s-modelka",
+   "js": "(()=>{const g=document.querySelector('.ud-fokus .uf-mrizka');return g?getComputedStyle(g).gridTemplateColumns+' karta '+Math.round(g.firstElementChild.getBoundingClientRect().width):'nic'})()",
+   "cekat": 100
+  },
+  {
+   "nazev": "s-fotky",
+   "js": "(()=>{document.querySelector('[data-sh-rezim=\"fotky\"]').click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "s-fotky-mer",
+   "js": "(()=>{const g=document.querySelector('.ufo-mrizka');return g?getComputedStyle(g).gridTemplateColumns+' polozek '+g.children.length:'nic'})()",
+   "cekat": 100
+  }
+ ]
+}

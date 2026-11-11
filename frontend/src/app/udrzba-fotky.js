@@ -98,17 +98,17 @@ const krok = f => ((f.navrh - f.rotace) % 360 + 360) % 360;
 function htmlOtocene(f, i) {
     const nahled = esc(obrazek(f.url, VELIKOST_NAHLEDU));
     const jistota = f.rozdil >= 0.06 ? 'vysoká' : f.rozdil >= 0.035 ? 'střední' : 'nízká';
-    return `<figure class="uf-otocena">
-        <div class="uf-dvojice">
-            <span class="uf-ram" title="Teď"><img src="${nahled}" alt="" loading="lazy" decoding="async" draggable="false" style="transform: rotate(${f.rotace}deg)" /></span>
-            <span class="uf-sipka" aria-hidden="true">→</span>
-            <span class="uf-ram navrh" title="Po otočení"><img src="${nahled}" alt="" loading="lazy" decoding="async" draggable="false" style="transform: rotate(${f.navrh}deg)" /></span>
+    return `<figure class="ufo-otocena">
+        <div class="ufo-dvojice">
+            <span class="ufo-ram" title="Teď"><img src="${nahled}" alt="" loading="lazy" decoding="async" draggable="false" style="transform: rotate(${f.rotace}deg)" /></span>
+            <span class="ufo-sipka" aria-hidden="true">→</span>
+            <span class="ufo-ram navrh" title="Po otočení"><img src="${nahled}" alt="" loading="lazy" decoding="async" draggable="false" style="transform: rotate(${f.navrh}deg)" /></span>
         </div>
         <figcaption>
             <button type="button" class="us-modelka" data-uf-profil="${f.modelkaId}">${esc(f.jmeno || 'Bez modelky')}</button>
             <span class="us-album">${esc(f.album)}${f.fotkyIds.length > 1 ? ` · ve ${f.fotkyIds.length} albech` : ''}</span>
-            <span class="uf-jistota uf-${jistota}">otočit ${smer(krok(f))} · jistota ${jistota}</span>
-            <span class="uf-akce">
+            <span class="ufo-jistota ufo-${jistota}">otočit ${smer(krok(f))} · jistota ${jistota}</span>
+            <span class="ufo-akce">
                 <button type="button" class="btn btn-primary btn-small" data-uf-otocit="${i}">Otočit</button>
                 <button type="button" class="btn btn-secondary btn-small" data-uf-poradku="${i}" title="Fotka je schválně takhle, už se nebude hlásit">V pořádku</button>
             </span>
@@ -119,15 +119,15 @@ function htmlVyrezu(m) {
     const n = navrhy.get(m.modelkaId);
     const nahled = esc(obrazek(m.url, VELIKOST_NAHLEDU));
     const vyrez = n?.ok ? { coverZoom: n.zoom, coverX: n.x, coverY: n.y } : null;
-    return `<figure class="uf-vyrez">
-        <div class="uf-dvojice">
-            <span class="uf-karta" title="Výchozí výřez"><img src="${nahled}" alt="" loading="lazy" decoding="async" draggable="false" /></span>
-            ${vyrez ? `<span class="uf-sipka" aria-hidden="true">→</span><span class="uf-karta navrh" title="Navržený výřez"><img src="${nahled}" alt="" loading="lazy" decoding="async" draggable="false" style="${stylVyrezu(vyrez)}" /></span>` : ''}
+    return `<figure class="ufo-vyrez">
+        <div class="ufo-dvojice">
+            <span class="ufo-karta" title="Výchozí výřez"><img src="${nahled}" alt="" loading="lazy" decoding="async" draggable="false" /></span>
+            ${vyrez ? `<span class="ufo-sipka" aria-hidden="true">→</span><span class="ufo-karta navrh" title="Navržený výřez"><img src="${nahled}" alt="" loading="lazy" decoding="async" draggable="false" style="${stylVyrezu(vyrez)}" /></span>` : ''}
         </div>
         <figcaption>
             <button type="button" class="us-modelka" data-uf-profil="${m.modelkaId}">${esc(m.jmeno)}</button>
-            ${n && !n.ok ? `<span class="uf-duvod">${esc(n.duvod)}</span>` : ''}
-            <span class="uf-akce">
+            ${n && !n.ok ? `<span class="ufo-duvod">${esc(n.duvod)}</span>` : ''}
+            <span class="ufo-akce">
                 ${vyrez ? `<button type="button" class="btn btn-primary btn-small" data-uf-pouzit="${m.modelkaId}">Použít</button>` : ''}
                 <button type="button" class="btn btn-secondary btn-small" data-uf-vychozi="${m.modelkaId}" title="Výchozí výřez sedí, úkol se už nebude hlásit">Nechat výchozí</button>
             </span>
@@ -158,16 +158,16 @@ function htmlStavuKvality() {
 function htmlSlabe(f, i) {
     const m = f.mereni;
     const udaje = `náhled ${m.w} × ${m.h} · ostrost ${Math.round(m.o)} · jas ${Math.round(m.j)}`;
-    return `<figure class="uf-otocena uk-slaba">
-        <div class="uf-dvojice">
-            <span class="uf-ram" title="${esc(udaje)}"><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" decoding="async" draggable="false" /></span>
-            ${f.lepsi ? `<span class="uf-sipka" aria-hidden="true">→</span><span class="uf-ram navrh" title="Stejná fotka ve sbírce v lepší kvalitě"><img src="${esc(obrazek(f.lepsiUrl, VELIKOST_NAHLEDU))}" alt="" loading="lazy" decoding="async" draggable="false" /></span>` : ''}
+    return `<figure class="ufo-otocena uk-slaba">
+        <div class="ufo-dvojice">
+            <span class="ufo-ram" title="${esc(udaje)}"><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" alt="" loading="lazy" decoding="async" draggable="false" /></span>
+            ${f.lepsi ? `<span class="ufo-sipka" aria-hidden="true">→</span><span class="ufo-ram navrh" title="Stejná fotka ve sbírce v lepší kvalitě"><img src="${esc(obrazek(f.lepsiUrl, VELIKOST_NAHLEDU))}" alt="" loading="lazy" decoding="async" draggable="false" /></span>` : ''}
         </div>
         <figcaption>
             <button type="button" class="us-modelka" data-uf-profil="${f.modelkaId}">${esc(f.jmeno || 'Bez modelky')}</button>
             <span class="us-album">${esc(f.album)}${f.hodnoceni ? ` · ${'♥'.repeat(Math.round(f.hodnoceni))}` : ''}</span>
-            <span class="uf-jistota uf-nizka">${f.problemy.map(p => POPISY_PROBLEMU[p] || p).join(' · ')}</span>
-            <span class="uf-akce">
+            <span class="ufo-jistota ufo-nizka">${f.problemy.map(p => POPISY_PROBLEMU[p] || p).join(' · ')}</span>
+            <span class="ufo-akce">
                 ${f.lepsi ? `<button type="button" class="btn btn-primary btn-small" data-uk-vymenit="${i}" title="Nechat lepší stejnou fotku a slabou ve sbírce nahradit (srdíčka a tagy přejdou)">Vyměnit za lepší</button>` : ''}
                 <button type="button" class="btn btn-secondary btn-small" data-uk-poradku="${i}" title="Fotka je schválně taková, už se nebude hlásit">V pořádku</button>
             </span>
@@ -178,13 +178,13 @@ function htmlSekceKvality() {
     if (slabe === null) return '';
     const vidim = slabe.slice(0, zobrazitSlabych);
     const sLepsi = slabe.filter(f => f.lepsi).length;
-    return `<section class="uf-sekce"><h4>Kvalita fotek${slabe.length ? ` <small>${slabe.length}</small>` : ''}</h4>${htmlStavuKvality()}
+    return `<section class="ufo-sekce"><h4>Kvalita fotek${slabe.length ? ` <small>${slabe.length}</small>` : ''}</h4>${htmlStavuKvality()}
         ${slabe.length ? `<p class="us-uvod">Nahoře fotky, které ve sbírce mají stejnou fotku v lepší kvalitě${sLepsi ? ` (${sLepsi})` : ''}, pak podle srdíček. Prahy jsou zatím odhad – co je schválně měkké nebo tmavé, označ V pořádku.</p>
             ${htmlListyVyberu({ pocet: vidim.length, jednotky: ['fotka', 'fotky', 'fotek'], popis: slabe.length > vidim.length ? `z ${slabe.length}` : '', akce: [
                 vidim.some(f => f.lepsi) && { text: `Vyměnit zobrazené za lepší (${vidim.filter(f => f.lepsi).length})`, atribut: 'data-uk-vymenit-vse', hlavni: true },
                 { text: 'Zobrazené v pořádku', atribut: 'data-uk-poradku-vse' },
             ] })}
-            <div class="uf-mrizka">${vidim.map(htmlSlabe).join('')}</div>
+            <div class="ufo-mrizka">${vidim.map(htmlSlabe).join('')}</div>
             ${slabe.length > vidim.length ? `<button type="button" class="btn btn-secondary btn-small" data-uk-dalsi>Ukázat dalších ${Math.min(24, slabe.length - vidim.length)}</button>` : ''}`
             : stavKvality?.zkontrolovano ? '<p class="prazdno-male">Žádná změřená fotka nevypadá slabě.</p>' : ''}</section>`;
 }
@@ -226,22 +226,22 @@ export function vykreslit() {
         return;
     }
     const vidim = otocene.slice(0, zobrazitOtocenych);
-    const sekceOtocene = `<section class="uf-sekce"><h4>Otočené fotky${otocene.length ? ` <small>${otocene.length}</small>` : ''}</h4>${htmlStavu()}
+    const sekceOtocene = `<section class="ufo-sekce"><h4>Otočené fotky${otocene.length ? ` <small>${otocene.length}</small>` : ''}</h4>${htmlStavu()}
         ${otocene.length ? `<p class="us-uvod">Seřazené od nejjistějších. Vlevo fotka, jak je teď, vpravo po otočení. Otočení platí pro fotku ve všech albech a jde kdykoli změnit v prohlížeči (R).</p>
             ${htmlListyVyberu({ pocet: vidim.length, jednotky: ['fotka', 'fotky', 'fotek'], popis: otocene.length > vidim.length ? `z ${otocene.length}` : '', akce: [{ text: 'Otočit zobrazené', atribut: 'data-uf-otocit-vse', hlavni: true }] })}
-            <div class="uf-mrizka">${vidim.map(htmlOtocene).join('')}</div>
+            <div class="ufo-mrizka">${vidim.map(htmlOtocene).join('')}</div>
             ${otocene.length > vidim.length ? `<button type="button" class="btn btn-secondary btn-small" data-uf-dalsi>Ukázat dalších ${Math.min(48, otocene.length - vidim.length)}</button>` : ''}`
             : stavOtoceni?.zkontrolovano ? '<p class="prazdno-male">Žádná zkontrolovaná fotka nevypadá otočeně.</p>' : ''}</section>`;
     const navrzene = bezVyrezu.filter(m => navrhy.get(m.modelkaId)?.ok);
     const bezNavrhu = bezVyrezu.filter(m => !navrhy.has(m.modelkaId));
-    const sekceVyrez = `<section class="uf-sekce"><h4>Titulní fotky s výchozím výřezem${bezVyrezu.length ? ` <small>${bezVyrezu.length}</small>` : ''}</h4>
+    const sekceVyrez = `<section class="ufo-sekce"><h4>Titulní fotky s výchozím výřezem${bezVyrezu.length ? ` <small>${bezVyrezu.length}</small>` : ''}</h4>
         ${bezVyrezu.length ? `<p class="us-uvod">Výřez se navrhne z toho, kde detektor na fotce najde postavu a obličej (kdo to je, nepozná). Výřez jde vždycky doladit tažením na kartě.</p>
-            <div class="uf-lista">
+            <div class="ufo-lista">
                 ${stavOtoceni?.zapnuto && bezNavrhu.length ? `<button type="button" class="btn btn-secondary btn-small" data-uf-navrhnout ${navrhuje ? 'disabled' : ''}>${navrhuje ? 'Navrhuji…' : `Navrhnout výřez ${Math.min(DAVKA_VYREZU, bezNavrhu.length)} dalším`}</button>` : ''}
                 ${!stavOtoceni?.zapnuto ? '<span class="pass-hint">Návrh výřezu potřebuje zapnutý Obsah fotek.</span>' : ''}
             </div>
             ${navrzene.length ? htmlListyVyberu({ pocet: navrzene.length, jednotky: ['navržený výřez', 'navržené výřezy', 'navržených výřezů'], akce: [{ text: 'Použít zobrazené návrhy', atribut: 'data-uf-pouzit-vse', hlavni: true }] }) : ''}
-            <div class="uf-mrizka">${[...bezVyrezu.filter(m => navrhy.has(m.modelkaId)), ...bezNavrhu.slice(0, Math.max(0, 12 - navrhy.size))].map(htmlVyrezu).join('')}</div>`
+            <div class="ufo-mrizka">${[...bezVyrezu.filter(m => navrhy.has(m.modelkaId)), ...bezNavrhu.slice(0, Math.max(0, 12 - navrhy.size))].map(htmlVyrezu).join('')}</div>`
             : '<p class="prazdno-male">Všechny titulní fotky mají výřez, nebo jim výchozí sedí.</p>'}</section>`;
     nastavitHtml(kontejner, `<div class="us uf">${sekceOtocene}${htmlSekceKvality()}${sekceVyrez}</div>`);
     if (!kontejner.dataset.ufObsluha) {

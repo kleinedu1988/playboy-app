@@ -354,6 +354,8 @@ export function pripravit() {
     document.addEventListener('volby-prehledu', obnovitCasti);
     // Části Sbírky (Úvod, Údržba, Sháním CZ, Porovnat, Hodnotit fotky, Pořadí), Modelek (Profily, Galerie, Statistiky, Síň slávy)
     // a Čísel (Obálky, Kalendář, Centerfoldy) se přepínají pilulkami v kontextové liště (#pasStranky)
+    // Proklik do Úkolů ze stránky Čísla a sháním / Učení (udrzba.js otevritVUkolech) zavře stránku
+    document.addEventListener('zavrit-stranku-sbirky', () => nastavitPanelSbirky(''));
     // Stránky Sbírky (Přehled, Úkoly, Čísla a sháním, Učení): lišta v hlavičce Sbírky a mapa sekcí
     document.addEventListener('click', (e) => {
         const tl = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-sbirka-stranka]'));
@@ -501,7 +503,12 @@ export function pripravit() {
 
     // Mapa sbírky: číslo s daty se otevře, prázdné nabídne přidání; pravé tlačítko nabídne i stav čísla.
     // Naposledy přidaná modelka otevře profil, číslo v seznamu Sháním nabídne „mám výtisk“.
-    const nabidkaCislaPrehledu = (klic, x, y) => nabidkaCisla(klic, x, y, { poZmene: nacistPrehled });
+    // V mapě čísel i úkoly čísla (Sbírka › Úkoly › Po modelkách na jeho kartě), když nějaké má
+    const nabidkaCislaPrehledu = (klic, x, y) => {
+        const n = udrzba.ukolyCisla(klic);
+        const navic = n ? [{ text: `Úkoly čísla (${n})`, akce: () => udrzba.otevritUkolyCisla(klic) }] : [];
+        return nabidkaCisla(klic, x, y, { poZmene: nacistPrehled, navic });
+    };
     stats.addEventListener('click', (e) => {
         const cislo = e.target.closest('[data-cislo]');
         // Srdíčka na kartě (Síň slávy) hodnotí, profil neotevírají

@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.061 – Potvrzení druhu fotky [schéma] [export]
+
+- [ ] Po spuštění proběhne úprava databáze č. 19 (v zálohách „Před úpravou databáze“) a program běží jako dřív.
+- [ ] Údržba › Druh fotek: tlačítko druhu u fotky ji ze seznamu odebere, „Všech N zobrazených“ potvrdí celou stránku, „Vrátit“ to vrátí.
+- [ ] ⋯ › Druh fotky… v prohlížeči i na dlaždici; zatržení po potvrzení, „Nepotvrzený (zrušit)“.
+- [ ] Export obsahuje `druh:` u potvrzených fotek a import ho vrátí.
+
 ## 0.02.060 – Odhad druhu fotky (návrh)
 
 - [ ] Údržba › Otočené a výřezy › Druh fotek: kolik návrhů „Muž na fotce“ a „Víc žen“ je opravdu správně (čekám zhruba 9 z 10).

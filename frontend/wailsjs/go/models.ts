@@ -1638,6 +1638,7 @@ export namespace main {
 	export class NavrhyDruhu {
 	    muz: SkupinaDruhu;
 	    zeny: SkupinaDruhu;
+	    potvrzene: Record<string, number>;
 	
 	    static createFrom(source: any = {}) {
 	        return new NavrhyDruhu(source);
@@ -1647,6 +1648,7 @@ export namespace main {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.muz = this.convertValues(source["muz"], SkupinaDruhu);
 	        this.zeny = this.convertValues(source["zeny"], SkupinaDruhu);
+	        this.potvrzene = source["potvrzene"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

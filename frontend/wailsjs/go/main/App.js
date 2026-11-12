@@ -82,6 +82,10 @@ export function GetCtvericeKPorovnani(arg1, arg2) {
   return window['go']['main']['App']['GetCtvericeKPorovnani'](arg1, arg2);
 }
 
+export function GetDruhFotky(arg1) {
+  return window['go']['main']['App']['GetDruhFotky'](arg1);
+}
+
 export function GetDuvodOdhadu(arg1) {
   return window['go']['main']['App']['GetDuvodOdhadu'](arg1);
 }
@@ -636,6 +640,10 @@ export function SetCoverVyrez(arg1, arg2, arg3, arg4) {
 
 export function SetDatumAlba(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['SetDatumAlba'](arg1, arg2, arg3, arg4);
+}
+
+export function SetDruhFotek(arg1, arg2) {
+  return window['go']['main']['App']['SetDruhFotek'](arg1, arg2);
 }
 
 export function SetHodnoceni(arg1, arg2) {

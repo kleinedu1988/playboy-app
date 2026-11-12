@@ -1,0 +1,81 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "cekani",
+   "js": "(()=>'čekám')()",
+   "cekat": 2000
+  },
+  {
+   "nazev": "galerie",
+   "js": "(()=>{const b=[...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Galerie\")[0];if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "rady",
+   "js": "(()=>{const r=document.querySelector('.gv-rady');r&&r.scrollIntoView({block:'start'});return r?'ok':'bez'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "y-otevrit",
+   "js": "(()=>{const i=[...document.querySelectorAll('.gv-rady img[data-vyrez]')].filter(i=>i.getClientRects().length)[0];const b=i.closest('button,[data-index],a,.gv-dlazdice')||i;b.click();return b.className})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "y-menu",
+   "js": "(()=>{const b=document.querySelector('#lbMore');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "p-menu",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.startsWith('Druh fotky'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "p-volby",
+   "js": "[...document.querySelectorAll('#contextMenu .context-item, #contextMenu .context-nadpis')].map(x=>x.textContent).join(' | ')",
+   "cekat": 100
+  },
+  {
+   "nazev": "p-muz",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.startsWith('Jen s mužem'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2000
+  },
+  {
+   "nazev": "p-menu2",
+   "js": "(()=>{document.querySelector('#lbMore').click();return 'ok'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "p-menu3",
+   "js": "(()=>{const b=[...document.querySelectorAll('#contextMenu button')].find(x=>x.textContent.startsWith('Druh fotky'));if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "p-volby2",
+   "js": "[...document.querySelectorAll('#contextMenu .context-item')].map(x=>x.textContent).join(' | ')",
+   "cekat": 100
+  }
+ ]
+}

@@ -12,6 +12,7 @@ import { lightbox, zavritLightbox } from './prohlizec';
 import { kopirovatText, odkazNaDisk } from './ulozeni';
 import { podobneZapnuto, ukazatPodobne } from './obsah-fotek';
 import { upravitVyrezFotky } from './vyrez-fotky';
+import { nabidkaDruhu } from './druh-fotky';
 
 // Tlačítko ⋯ na dlaždici; nabídku otevře nabidky.js
 export const htmlAkciDlazdice = () =>
@@ -50,6 +51,8 @@ export function akceFotky(polozka, fotka = null, { profil = true, odebrat = true
         { text: 'Přidat do výběru…', akce: () => pridatDoVyberu(stranky.map(f => f.id)) },
         // Ruční výřez náhledu (0.02.058); otočená fotka náhled s výřezem nemá
         ...(stranky.length === 1 && prvni.driveId && !prvni.rotace ? [{ text: 'Upravit výřez náhledu…', akce: () => upravitVyrezFotky(prvni) }] : []),
+        // Potvrzený druh fotky (0.02.061): pózovací, lesbická, sex, s mužem
+        ...(stranky.length === 1 && prvni.driveId ? [{ text: 'Druh fotky…', akce: () => nabidkaDruhu(prvni) }] : []),
         // Obsah fotek (app/obsah-fotek.js): fotky, které vypadají podobně
         ...(podobneZapnuto() ? [{ text: 'Podobné fotky', akce: () => ukazatPodobne(prvni) }] : []),
         null,

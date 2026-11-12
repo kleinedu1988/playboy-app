@@ -150,6 +150,7 @@ const CTENI = new Set([
     'GetVyrezyFotek',
     'GetFotkyBezVyrezu',
     'GetNavrhyDruhu',
+    'GetDruhFotky',
     'GetStavVyrezu',
     'GetVsechnyKolekce',
     'GetIdealniModelka',
@@ -433,6 +434,8 @@ export const SetRucniVyrez = /** @type {typeof App.SetRucniVyrez} */ (obalit('Se
 export const SmazatRucniVyrez = /** @type {typeof App.SmazatRucniVyrez} */ (obalit('SmazatRucniVyrez'));
 export const GetFotkyBezVyrezu = /** @type {typeof App.GetFotkyBezVyrezu} */ (obalit('GetFotkyBezVyrezu'));
 export const GetNavrhyDruhu = /** @type {typeof App.GetNavrhyDruhu} */ (obalit('GetNavrhyDruhu'));
+export const GetDruhFotky = /** @type {typeof App.GetDruhFotky} */ (obalit('GetDruhFotky'));
+export const SetDruhFotek = /** @type {typeof App.SetDruhFotek} */ (obalit('SetDruhFotek'));
 export const GetProfilovaFotka = /** @type {typeof App.GetProfilovaFotka} */ (obalit('GetProfilovaFotka'));
 export const SetVydaniAlba = /** @type {typeof App.SetVydaniAlba} */ (obalit('SetVydaniAlba'));
 export const SetVydaniInfo = /** @type {typeof App.SetVydaniInfo} */ (obalit('SetVydaniInfo'));

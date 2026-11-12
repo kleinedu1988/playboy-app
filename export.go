@@ -32,6 +32,9 @@ type exportFotka struct {
 	// Ruční výřez náhledu (vyrezy_fotek.go), od verze 15: bod zájmu poloha_x/poloha_y v % a přiblížení; platí pro
 	// soubor ve všech albech. Při importu zapíše, chybějící nic nemění.
 	Vyrez *exportVyrez `yaml:"vyrez,omitempty"`
+	// Potvrzený druh fotky (druh_fotek.go), od verze 16: pozovaci, lesbicka, sex nebo muz; platí pro soubor ve
+	// všech albech. Při importu zapíše, chybějící nebo neznámý nic nemění.
+	Druh string `yaml:"druh,omitempty"`
 }
 
 type exportAlbum struct {
@@ -107,7 +110,7 @@ type exportCover struct {
 }
 
 // Verze formátu exportu, kterou program zapisuje a nejvýš umí načíst; popis je v EXPORT.md
-const verzeExportu = 15
+const verzeExportu = 16
 
 // Odkaz na modelku v exportu (další modelka alba, obálka, výběr): jméno, u jmen, která má víc modelek,
 // doplněné o číslo modelky v hranatých závorkách („Anna [12]“)
@@ -166,7 +169,7 @@ func anoNeZTextu(text string, puvodni int) int {
 }
 
 // Fotky seskupené do alb v pořadí, v jakém přišly z databáze
-func seskupitDoAlb(fotky []Fotografie, odkazy odkazyNaModelky, netykaSe map[int64]string, tagy map[int][]string, pruvodce map[int]int, vyrezy map[string]*exportVyrez) []exportAlbum {
+func seskupitDoAlb(fotky []Fotografie, odkazy odkazyNaModelky, netykaSe map[int64]string, tagy map[int][]string, pruvodce map[int]int, vyrezy map[string]*exportVyrez, druhy map[string]string) []exportAlbum {
 	var alba []exportAlbum
 	kde := map[string]int{}
 	for _, f := range fotky {
@@ -192,7 +195,7 @@ func seskupitDoAlb(fotky []Fotografie, odkazy odkazyNaModelky, netykaSe map[int6
 		alba[i].Spojit = alba[i].Spojit || f.Spojit
 		alba[i].RucniPoradi = alba[i].RucniPoradi || f.Poradi > 0
 		alba[i].Fotky = append(alba[i].Fotky, exportFotka{
-			ID: f.DriveID, Hodnoceni: f.Hodnoceni, Rotace: f.Rotace, Pridano: f.Pridano, Tagy: tagy[f.ID], Pruvodce: pruvodce[f.ID], Vyrez: vyrezy[f.DriveID],
+			ID: f.DriveID, Hodnoceni: f.Hodnoceni, Rotace: f.Rotace, Pridano: f.Pridano, Tagy: tagy[f.ID], Pruvodce: pruvodce[f.ID], Vyrez: vyrezy[f.DriveID], Druh: druhy[f.DriveID],
 		})
 	}
 	// Datum fotky se zapisuje, jen když se liší od data alba
@@ -241,6 +244,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 	tagyFotek := vsechnyTagyFotek(a.db)
 	pruvodceFotek := vsechnyPruvodceFotek(a.db)
 	vyrezyFotek := vsechnyRucniVyrezy(a.db)
+	druhyFotek := vsechnyDruhyFotek(a.db)
 	netykaSeAlb := map[int64]string{}
 	if rows, err := a.db.Query("SELECT id, netyka_se FROM alba WHERE COALESCE(netyka_se, '') <> ''"); err == nil {
 		for rows.Next() {
@@ -283,7 +287,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 			Tetovani: anoNeDoTextu(m.Tetovani), Piercing: anoNeDoTextu(m.Piercing),
 			Role: m.Role, Tags: m.Tags, Vystoupeni: m.Vystoupeni, PictorialVydani: m.PictorialVydani,
 			Poznamka: m.Poznamka, Odkazy: m.Odkazy, TitulniFotka: m.CoverID,
-			Alba: seskupitDoAlb(fotky, odkazy, netykaSeAlb, tagyFotek, pruvodceFotek, vyrezyFotek), Cislo: odkazy.cislo(m.ID, m.Jmeno), NetykaSe: m.NetykaSe,
+			Alba: seskupitDoAlb(fotky, odkazy, netykaSeAlb, tagyFotek, pruvodceFotek, vyrezyFotek, druhyFotek), Cislo: odkazy.cislo(m.ID, m.Jmeno), NetykaSe: m.NetykaSe,
 		}
 		// Alba bez fotek, která nesou text, fotografa, „netýká se“ nebo další modelky
 		e.Alba = append(e.Alba, prazdnaAlba[m.ID]...)
@@ -305,7 +309,7 @@ func (a *App) sestavitExport() ([]byte, error) {
 		return nil, fmt.Errorf("covery se nepodařilo přečíst: %w", err)
 	}
 	exportovanoFotek += len(covery)
-	for _, album := range seskupitDoAlb(covery, odkazy, netykaSeAlb, tagyFotek, pruvodceFotek, vyrezyFotek) {
+	for _, album := range seskupitDoAlb(covery, odkazy, netykaSeAlb, tagyFotek, pruvodceFotek, vyrezyFotek, druhyFotek) {
 		// Cover nemá v exportu datum alba, proto každá fotka nese své
 		for i := range album.Fotky {
 			if album.Fotky[i].Pridano == "" {
@@ -452,6 +456,13 @@ func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *Vysled
 					ids[0], naDveMista(x), naDveMista(y), naDveMista(zoom), time.Now().Format("2006-01-02 15:04:05")); err != nil {
 					a.chyba("import "+kde, err)
 				}
+			}
+		}
+		// Potvrzený druh: zapíše (podle souboru); chybějící nebo neznámý nic nemění
+		if druh := platnyDruh(f.Druh); druh != "" {
+			if _, err := a.pripraveny(`INSERT OR REPLACE INTO druhy_fotek (drive_file_id, druh, potvrzeno) VALUES (?, ?, ?)`).Exec(
+				ids[0], druh, time.Now().Format("2006-01-02 15:04:05")); err != nil {
+				a.chyba("import "+kde, err)
 			}
 		}
 		// Tagy: neprázdný seznam nahradí tagy fotky (neznámé se přeskočí), prázdný nic nemění

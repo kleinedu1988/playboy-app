@@ -49,6 +49,8 @@ export function GetCovery():Promise<Array<sbirka.Fotografie>>;
 
 export function GetCtvericeKPorovnani(arg1:number,arg2:string):Promise<Array<main.CtvericePorovnani>>;
 
+export function GetDruhFotky(arg1:string):Promise<string>;
+
 export function GetDuvodOdhadu(arg1:number):Promise<string>;
 
 export function GetDvojiceKPorovnani(arg1:number,arg2:string):Promise<Array<main.DvojicePorovnani>>;
@@ -326,6 +328,8 @@ export function RozdilZalohy(arg1:string):Promise<main.RozdilZalohy>;
 export function SetCoverVyrez(arg1:number,arg2:number,arg3:number,arg4:number):Promise<boolean>;
 
 export function SetDatumAlba(arg1:number,arg2:string,arg3:string,arg4:string):Promise<boolean>;
+
+export function SetDruhFotek(arg1:Array<string>,arg2:string):Promise<number>;
 
 export function SetHodnoceni(arg1:number,arg2:number):Promise<boolean>;
 

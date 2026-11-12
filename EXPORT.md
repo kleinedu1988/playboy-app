@@ -106,6 +106,8 @@ a `pridano`, jen když se liší od data přidání alba.
 
 `vyrez` (od verze 15): ruční výřez náhledu fotky, např. `vyrez: {zoom: 1.5, poloha_x: 40, poloha_y: 20}`. `poloha_x` a `poloha_y` jsou bod zájmu v % šířky a výšky obrázku (náhled ho dá doprostřed rámu), `zoom` přiblížení 1–4. Platí pro soubor na Disku ve všech albech a má přednost před automatickým výřezem. Při importu se zapíše; chybějící nic nemění. (Výřez titulní fotky u modelky – `vyrez` modelky – je jiný údaj: poloha obrázku v kartě.)
 
+`druh` (od verze 16): potvrzený druh fotky – `pozovaci`, `lesbicka`, `sex` nebo `muz` (na fotce je muž, ale nejde o sex: scéna, zákulisí). Platí pro soubor na Disku ve všech albech; nepotvrzená fotka pole nemá (odhad programu se neexportuje). Při importu se zapíše; chybějící nebo neznámý druh nic nemění.
+
 ## Časopis
 
 ```yaml
@@ -170,6 +172,7 @@ verze programu je mohou jen rozšiřovat, existující hodnoty se nemění.
 
 | Verze | Program | Změna |
 |---|---|---|
+| 16 | Pinup Katalog 0.02.061 | `druh` u fotky: potvrzený druh (pózovací, lesbická, sex, s mužem) podle souboru |
 | 15 | Pinup Katalog 0.02.057 | `vyrez` u fotky: ruční výřez náhledu (bod zájmu a přiblížení) podle souboru |
 | 14 | Pinup Katalog 0.02.008 | `casopisy` (klíč, název, barva, edice, tituly, pořadí) a čísla jiných časopisů s `@` (`1985-09@PH`, `1986-03-UK@PH`) u alb, coverů a vydání |
 | 13 | 1.2.65 | `profilova_fotka` a `profilovy_vyrez` u modelky: profilová fotka oddělená od titulní |

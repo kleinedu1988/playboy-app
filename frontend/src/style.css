@@ -21583,3 +21583,40 @@ button.udd-nazev {
     color: #fff;
     font-size: 0.75rem;
 }
+
+/* Potvrzení druhu (0.02.061) */
+.ufo-druh-volby {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.ufo-druh-volby .btn-small {
+    padding: 2px 8px;
+    font-size: 0.75rem;
+}
+
+.ufo-druh-hromadne {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.ufo-druh-vse {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted, #999);
+    font-size: 0.85rem;
+}
+
+.ufo-druh-souhrn {
+    margin: 4px 0 8px;
+    color: var(--text-muted, #999);
+    font-size: 0.85rem;
+}

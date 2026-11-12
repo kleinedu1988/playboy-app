@@ -6,6 +6,25 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.061] – 2026-11-12
+
+### Přidáno
+- **Potvrzený druh fotky** – úprava schématu databáze č. 19 a formát exportu verze 16 (se souhlasem uživatele):
+  pózovací, lesbická, sex, nebo jen s mužem (scéna bez sexu, třeba zákulisí). Platí pro soubor na Disku ve
+  všech albech, v exportu je u fotky pole `druh` (EXPORT.md). Před úpravou databáze se udělá záloha.
+- **Údržba › Otočené a výřezy › Druh fotek:** u každé navržené fotky tlačítka druhu, pod skupinou potvrzení
+  všech zobrazených najednou; potvrzená fotka ze seznamu zmizí, nahoře souhrn potvrzených, vždy jde „Vrátit“.
+- **Nabídka fotky › Druh fotky…** (⋯ v prohlížeči i pravý klik na dlaždici): výběr druhu se zatržením
+  potvrzeného a „Nepotvrzený (zrušit)“.
+
+### Ověřeno
+- Testy: uložení s kontrolou druhu a souboru, export a import tam a zpět, import bez druhu nebo s neznámým druhem
+  potvrzení nesmaže; zmrazení schématu na úpravě 19 a exportu 16.
+- Snímky na kopii sbírky: migrace 18 → 19 se zálohou „před úpravou databáze“; „Sex“ u první fotky (návrhů
+  234 → 233, souhrn „sex 1“), „Všech 24 zobrazených: Lesbická“ (→ 209) a „Vrátit“ (→ 233); v prohlížeči
+  Druh fotky… › Jen s mužem a znovu otevřená nabídka ukáže zatržení. Zkušební potvrzení z kopie smazána.
+- Galerie zatím potvrzené fotky neodděluje – to je další krok.
+
 ## [0.02.060] – 2026-11-12
 
 ### Přidáno

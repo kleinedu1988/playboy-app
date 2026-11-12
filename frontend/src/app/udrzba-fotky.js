@@ -9,6 +9,7 @@ import { nastavitHtml } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
 import { VELIKOST_NAHLEDU } from './obrazky';
 import { otevritProfilPodleId } from './cover';
+import { DRUHY_FOTEK, potvrditDruh } from './druh-fotky';
 import { stylVyrezu } from './navigace';
 import { htmlListyVyberu, potvrditRozdil } from '../ui/hromadne';
 import { upravitVyrezFotky } from './vyrez-fotky';
@@ -37,7 +38,7 @@ let zobrazitSlabych = 24;
 let bezPostavy = null;
 let zobrazitBezPostavy = 24;
 // Druh fotek (0.02.060): návrhy „muž na fotce“ a „víc žen“ z odhadu nad vektory; potvrzení přijde v dalším kroku
-/** @type {{ muz: { fotky: any[], celkem: number }, zeny: { fotky: any[], celkem: number } } | null} */
+/** @type {{ muz: { fotky: any[], celkem: number }, zeny: { fotky: any[], celkem: number }, potvrzene?: Record<string, number> } | null} */
 let druhy = null;
 let zobrazitDruhu = 24;
 
@@ -216,20 +217,30 @@ function htmlSekceBezPostavy() {
             : '<p class="prazdno-male">Na všech spočítaných fotkách detektor postavu našel.</p>'}</section>`;
 }
 
-// Druh fotek: dvě skupiny návrhů, jistota v rohu; jméno vede na profil
+// Druh fotek (0.02.060–0.02.061): dvě skupiny návrhů, jistota v rohu; u každé fotky tlačítka druhu, pod skupinou
+// potvrzení všech zobrazených. Potvrzená fotka ze seznamu zmizí.
+const NABIDKA_DRUHU = { muz: ['sex', 'muz', 'lesbicka', 'pozovaci'], zeny: ['lesbicka', 'pozovaci', 'sex', 'muz'] };
+const kratkyNazev = { pozovaci: 'Pózovací', lesbicka: 'Lesbická', sex: 'Sex', muz: 'Jen s mužem' };
 function htmlSekceDruhu() {
     if (!druhy || !stavOtoceni?.zapnuto) return '';
     const celkem = druhy.muz.celkem + druhy.zeny.celkem;
+    const potvrzeno = Object.values(druhy.potvrzene || {}).reduce((x, y) => x + y, 0);
+    const souhrn = potvrzeno ? `<p class="ufo-druh-souhrn">Potvrzeno: ${DRUHY_FOTEK.filter(([k]) => druhy.potvrzene[k]).map(([k]) => `${kratkyNazev[k].toLowerCase()} ${druhy.potvrzene[k].toLocaleString('cs-CZ')}`).join(' · ')}</p>` : '';
     const skupina = (nazev, s, klic) => (s.celkem ? `<h5 class="ufo-druh-nadpis">${nazev} <small>${s.celkem.toLocaleString('cs-CZ')}</small></h5>
-        <div class="ufo-mrizka ufo-druhy">${s.fotky.map(f => `<figure class="ufo-vyrez">
+        <div class="ufo-mrizka ufo-druhy">${s.fotky.map((f, i) => `<figure class="ufo-vyrez">
             <span class="ufo-nahled"><img src="${esc(obrazek(f.url, VELIKOST_NAHLEDU))}" data-vyrez="${esc(f.driveId)}" alt="" loading="lazy" decoding="async" draggable="false" /><span class="ufo-jistota" title="Jistota odhadu">${Math.round(f.jistota * 100)} %</span></span>
-            <figcaption><button type="button" class="us-modelka" data-uf-profil="${f.modelkaId}">${esc(f.jmeno || 'Bez modelky')}</button><span class="us-album">${esc(f.album)}</span></figcaption>
+            <figcaption><button type="button" class="us-modelka" data-uf-profil="${f.modelkaId}">${esc(f.jmeno || 'Bez modelky')}</button><span class="us-album">${esc(f.album)}</span>
+                <span class="ufo-druh-volby">${NABIDKA_DRUHU[klic].map(d => `<button type="button" class="btn btn-secondary btn-small" data-ud-druh="${d}" data-ud-skupina="${klic}" data-ud-index="${i}">${kratkyNazev[d]}</button>`).join('')}</span></figcaption>
         </figure>`).join('')}</div>
-        ${s.celkem > s.fotky.length ? `<button type="button" class="btn btn-secondary btn-small" data-ud-dalsi="${klic}">Ukázat dalších ${Math.min(24, s.celkem - s.fotky.length)}</button>` : ''}` : '');
-    return `<section class="ufo-sekce"><h4>Druh fotek <small>návrh${celkem ? ` · ${celkem.toLocaleString('cs-CZ')}` : ''}</small></h4>
-        ${celkem ? `<p class="us-uvod">Program odhaduje z obsahu fotky, na kterých je muž (scény s mužem) a na kterých je víc žen. Zatím jen návrh ke kontrole: potvrdit nebo opravit půjde v příští verzi a teprve potvrzené fotky se oddělí od pózovacích.</p>
+        <div class="ufo-druh-hromadne">
+            ${s.celkem > s.fotky.length ? `<button type="button" class="btn btn-secondary btn-small" data-ud-dalsi="${klic}">Ukázat dalších ${Math.min(24, s.celkem - s.fotky.length)}</button>` : ''}
+            <span class="ufo-druh-vse">Všech ${s.fotky.length} zobrazených: ${NABIDKA_DRUHU[klic].slice(0, 2).map(d => `<button type="button" class="btn btn-secondary btn-small" data-ud-vse="${d}" data-ud-skupina="${klic}">${kratkyNazev[d]}</button>`).join('')}</span>
+        </div>` : '');
+    return `<section class="ufo-sekce"><h4>Druh fotek <small>${celkem ? `návrh · ${celkem.toLocaleString('cs-CZ')}` : 'návrh'}</small></h4>
+        ${souhrn}
+        ${celkem ? `<p class="us-uvod">Program odhaduje z obsahu fotky, na kterých je muž a na kterých je víc žen. Potvrď druh tlačítkem u fotky („Jen s mužem“ je scéna bez sexu, třeba zákulisí), potvrzená fotka ze seznamu zmizí. Druh jde změnit i v nabídce fotky (⋯ › Druh fotky…). Oddělení od pózovacích fotek v Galerii přijde v příští verzi.</p>
             ${skupina('Muž na fotce', druhy.muz, 'muz')}${skupina('Víc žen', druhy.zeny, 'zeny')}`
-            : '<p class="prazdno-male">Žádná fotka nevypadá jako scéna s mužem nebo s víc ženami.</p>'}</section>`;
+            : '<p class="prazdno-male">Žádná další fotka nevypadá jako scéna s mužem nebo s víc ženami.</p>'}</section>`;
 }
 
 async function vymenit(f) {
@@ -330,6 +341,16 @@ async function klik(e) {
     if ((p = data('data-uv-upravit'))) {
         const f = bezPostavy?.fotky[parseInt(p.dataset.uvUpravit)];
         if (f) upravitVyrezFotky(f, { poUlozeni: () => nacist() });
+        return;
+    }
+    if ((p = data('data-ud-druh'))) {
+        const f = druhy?.[p.dataset.udSkupina]?.fotky[parseInt(p.dataset.udIndex)];
+        if (f) await potvrditDruh([f.driveId], p.dataset.udDruh, { poZmene: () => nacist() });
+        return;
+    }
+    if ((p = data('data-ud-vse'))) {
+        const ids = (druhy?.[p.dataset.udSkupina]?.fotky || []).map(f => f.driveId);
+        if (ids.length) await potvrditDruh(ids, p.dataset.udVse, { poZmene: () => nacist() });
         return;
     }
     if (data('data-ud-dalsi')) {

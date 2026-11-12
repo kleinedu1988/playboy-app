@@ -2821,13 +2821,14 @@ func TestVyvojVCase(t *testing.T) {
 // verze exportu znamená novou MINOR verzi: 1.1.0 přidala tagy fotek (úprava č. 14, export verze 10). Výjimka na
 // přání uživatele: průvodce hodnocením fotky (úprava č. 15, export verze 12) vyšel v řadě 1.2 jako 1.2.5; profilová
 // fotka oddělená od titulní (úprava č. 16, export verze 13) jako 1.2.65. Pinup Katalog: ruční výřez fotky
-// (úprava č. 18, export verze 15) jako 0.02.057, se souhlasem uživatele.
+// (úprava č. 18, export verze 15) jako 0.02.057, potvrzený druh fotky (úprava č. 19, export verze 16) jako 0.02.061 –
+// obojí se souhlasem uživatele.
 func TestZmrazeniAlfy(t *testing.T) {
-	if len(migrace) != 18 {
-		t.Errorf("úprav schématu je %d, schéma je na úpravě č. 18 (ruční výřez fotky, Pinup Katalog 0.02.057); novou úpravu ohlásit v ROADMAP", len(migrace))
+	if len(migrace) != 19 {
+		t.Errorf("úprav schématu je %d, schéma je na úpravě č. 19 (druh fotky, Pinup Katalog 0.02.061); novou úpravu ohlásit v ROADMAP", len(migrace))
 	}
-	if verzeExportu != 15 {
-		t.Errorf("verze exportu je %d, formát exportu je na verzi 15 (ruční výřez fotky, Pinup Katalog 0.02.057)", verzeExportu)
+	if verzeExportu != 16 {
+		t.Errorf("verze exportu je %d, formát exportu je na verzi 16 (druh fotky, Pinup Katalog 0.02.061)", verzeExportu)
 	}
 }
 

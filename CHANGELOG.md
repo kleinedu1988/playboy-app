@@ -6,6 +6,29 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.074] – 2026-11-12
+
+### Přidáno
+- **Účet Google** (⋯ › Nastavení › Účet Google…): přihlašovací okno ve stylu programu – vlevo panel
+  s burgundským přechodem, zlatým názvem programu a tlačítkem „Přihlásit přes Google“, vpravo velká fotka oblíbené
+  modelky (náhodně z nejlépe hodnocených, chytrý výřez s obličejem) s popiskem „Playmate měsíce · Listopad 2009 —
+  Jméno“; v úzkém okně je fotka přes celé okno a panel průhlednou kartou. Fotka, která se nenačte, se vymění za
+  další; se zámkem sbírky se fotka neukazuje.
+- Přihlášení v systémovém prohlížeči (OAuth 2.0 pro desktop: návrat na `127.0.0.1`, PKCE, ověření `state`);
+  heslo program nevidí. Rozsahy jen `drive.file` (soubory, které program sám vytvoří) a `drive.appdata` (jeho
+  skrytá složka) – k fotkám sbírky přístup nedává. Token je v `~/.config/pinup-katalog/google-token.json` s právy
+  0600; Odhlásit ho smaže a odvolá u Googlu. Čekání jde zrušit (Zrušit, Esc), po 5 minutách vyprší.
+- Okno se při startu ukáže samo, jen když program má přihlašovací údaje (`google-klient.json`), uživatel není
+  přihlášený a nezvolil „Pokračovat bez přihlášení“.
+
+### Ověřeno
+- Test celého přihlášení s místním serverem místo Googlu: adresa autorizace (rozsahy, PKCE S256, návrat na
+  127.0.0.1), výměna kódu s ověřením PKCE, jméno a e-mail z id_token, token s právy 0600, odmítnutí cizího
+  `state`, „Pokračovat bez přihlášení“, odhlášení s odvoláním tokenu.
+- Snímek okna (1280 px) na kopii sbírky: panel, hláška o chybějících údajích s cestou, fotka Kelley Thompson
+  s popiskem. Typy, build a testy prošly.
+- **Neověřeno:** skutečné přihlášení u Googlu (chybí OAuth klient) a úzké rozvržení (snímkovač okno nezúžil).
+
 ## [0.02.073] – 2026-11-12
 
 ### Přidáno

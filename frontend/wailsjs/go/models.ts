@@ -3608,6 +3608,34 @@ export namespace main {
 	    }
 	}
 	
+	export class UcetGoogle {
+	    nastaveno: boolean;
+	    prihlasen: boolean;
+	    email: string;
+	    jmeno: string;
+	    prihlaseno: string;
+	    preskoceno: boolean;
+	    cestaKlienta: string;
+	    slozkaKlienta: string;
+	    probiha: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new UcetGoogle(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.nastaveno = source["nastaveno"];
+	        this.prihlasen = source["prihlasen"];
+	        this.email = source["email"];
+	        this.jmeno = source["jmeno"];
+	        this.prihlaseno = source["prihlaseno"];
+	        this.preskoceno = source["preskoceno"];
+	        this.cestaKlienta = source["cestaKlienta"];
+	        this.slozkaKlienta = source["slozkaKlienta"];
+	        this.probiha = source["probiha"];
+	    }
+	}
 	
 	
 	

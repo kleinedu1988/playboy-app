@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.074 – Účet Google
+
+- [ ] Ulož OAuth klienta (Desktop app) jako `~/.config/pinup-katalog/google-klient.json`, ⋯ › Účet Google… › Přihlásit přes Google: prohlížeč, souhlas, okno ukáže jméno a e-mail.
+- [ ] Odhlásit; po restartu se okno samo ukáže; „Pokračovat bez přihlášení“ ho příště nechá zavřené.
+- [ ] Zúžené okno (pod 820 px): fotka přes celé okno, panel průhlednou kartou.
+- [ ] Zrušit / Esc během čekání na prohlížeč.
+
 ## 0.02.073 – Mapa sbírky obarvená časopisem
 
 - [ ] Statistiky › Mapa sbírky › barva Časopis: Pets jinou barvou, legenda bez časopisů, které ve sbírce nejsou.

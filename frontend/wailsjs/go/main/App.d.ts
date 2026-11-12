@@ -207,6 +207,8 @@ export function GetTitulniBezVyrezu():Promise<Array<main.TitulniBezVyrezu>>;
 
 export function GetTitulySezonModelky(arg1:number):Promise<Array<main.TitulSezony>>;
 
+export function GetUcetGoogle():Promise<main.UcetGoogle>;
+
 export function GetVerze():Promise<string>;
 
 export function GetVkusVCase():Promise<main.VkusVCase>;
@@ -261,6 +263,8 @@ export function OdebratZVyberu(arg1:number,arg2:Array<number>):Promise<boolean>;
 
 export function Odemknout(arg1:string):Promise<boolean>;
 
+export function OdhlasitGoogle():Promise<boolean>;
+
 export function OdmitnoutNavrh(arg1:kontrola.NavrhDoplneni,arg2:boolean):Promise<boolean>;
 
 export function OdmitnoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>,arg2:boolean):Promise<boolean>;
@@ -303,6 +307,8 @@ export function PrerusitKontroluOtoceni():Promise<void>;
 
 export function PrerusitPruchodWebem():Promise<void>;
 
+export function PreskocitPrihlaseniGoogle():Promise<void>;
+
 export function PresunoutAlbum(arg1:number,arg2:string,arg3:string,arg4:number):Promise<string>;
 
 export function PresunoutFotky(arg1:Array<number>,arg2:number,arg3:string,arg4:string):Promise<sbirka.VysledekPresunu>;
@@ -310,6 +316,8 @@ export function PresunoutFotky(arg1:Array<number>,arg2:number,arg3:string,arg4:s
 export function PridatDoVyberu(arg1:number,arg2:Array<number>):Promise<number>;
 
 export function PridatModelkuKAlbu(arg1:number,arg2:string,arg3:string,arg4:number):Promise<boolean>;
+
+export function PrihlasitGoogle():Promise<string>;
 
 export function PrijmoutJmenoZWikipedie(arg1:number,arg2:string,arg3:boolean):Promise<boolean>;
 
@@ -488,5 +496,7 @@ export function ZmrazitChytryVyber(arg1:string):Promise<main.ZmrazeniVyberu>;
 export function ZrusitOdmitnutiZWebu():Promise<boolean>;
 
 export function ZrusitPoradiAlba(arg1:number,arg2:string,arg3:string):Promise<boolean>;
+
+export function ZrusitPrihlaseniGoogle():Promise<void>;
 
 export function ZrusitRuzneFotky(arg1:Array<string>):Promise<boolean>;

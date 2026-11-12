@@ -398,6 +398,10 @@ export function GetTitulySezonModelky(arg1) {
   return window['go']['main']['App']['GetTitulySezonModelky'](arg1);
 }
 
+export function GetUcetGoogle() {
+  return window['go']['main']['App']['GetUcetGoogle']();
+}
+
 export function GetVerze() {
   return window['go']['main']['App']['GetVerze']();
 }
@@ -506,6 +510,10 @@ export function Odemknout(arg1) {
   return window['go']['main']['App']['Odemknout'](arg1);
 }
 
+export function OdhlasitGoogle() {
+  return window['go']['main']['App']['OdhlasitGoogle']();
+}
+
 export function OdmitnoutNavrh(arg1, arg2) {
   return window['go']['main']['App']['OdmitnoutNavrh'](arg1, arg2);
 }
@@ -590,6 +598,10 @@ export function PrerusitPruchodWebem() {
   return window['go']['main']['App']['PrerusitPruchodWebem']();
 }
 
+export function PreskocitPrihlaseniGoogle() {
+  return window['go']['main']['App']['PreskocitPrihlaseniGoogle']();
+}
+
 export function PresunoutAlbum(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PresunoutAlbum'](arg1, arg2, arg3, arg4);
 }
@@ -604,6 +616,10 @@ export function PridatDoVyberu(arg1, arg2) {
 
 export function PridatModelkuKAlbu(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['PridatModelkuKAlbu'](arg1, arg2, arg3, arg4);
+}
+
+export function PrihlasitGoogle() {
+  return window['go']['main']['App']['PrihlasitGoogle']();
 }
 
 export function PrijmoutJmenoZWikipedie(arg1, arg2, arg3) {
@@ -960,6 +976,10 @@ export function ZrusitOdmitnutiZWebu() {
 
 export function ZrusitPoradiAlba(arg1, arg2, arg3) {
   return window['go']['main']['App']['ZrusitPoradiAlba'](arg1, arg2, arg3);
+}
+
+export function ZrusitPrihlaseniGoogle() {
+  return window['go']['main']['App']['ZrusitPrihlaseniGoogle']();
 }
 
 export function ZrusitRuzneFotky(arg1) {

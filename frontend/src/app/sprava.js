@@ -1,4 +1,5 @@
 // Kontrola Disku, export a import, heslo, zálohy a nabídka ⋯
+import * as ucetGoogle from './ucet-google';
 import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, NahledSlouceniModelek, SloucitAlba, SloucitModelky, SlozkaZaloh, VratitSlouceniModelek, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
 import { otevritKapesniKatalog } from './kapesni-katalog';
 import * as novaVerze from './nova-verze';
@@ -374,6 +375,7 @@ export function polozkySpravy() {
         { text: 'Kapesní katalog do telefonu…', akce: otevritKapesniKatalog },
         { text: 'Importovat (YAML nebo Markdown)…', akce: importovatData },
         { nadpis: 'Nastavení' },
+        { text: 'Účet Google…', akce: () => ucetGoogle.otevrit() },
         { text: 'Adresa obrázků…', akce: zmenitSablonuObrazku },
         { text: stav.maZamek ? 'Změnit nebo zrušit heslo…' : 'Nastavit heslo…', akce: otevritHeslo },
         // Nové načtení okna znovu vyžádá heslo

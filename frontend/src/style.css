@@ -21627,3 +21627,224 @@ button.udd-nazev {
     gap: 6px;
     margin: 6px 0 10px;
 }
+
+/* ===== Účet Google (0.02.074, app/ucet-google.js): přihlašovací okno. Vlevo panel s přechodem z akcentní barvy do
+   pozadí, zlatý název programu a přihlášení; vpravo fotka oblíbené modelky s popiskem dole. Úzké okno: fotka přes
+   celé okno, panel průhlednou kartou na ní. ===== */
+.ucet {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: grid;
+    grid-template-columns: minmax(380px, 1fr) 1fr;
+    background: var(--bg-main);
+    color: var(--text-main);
+    animation: ucet-objevit 0.25s ease-out;
+}
+@keyframes ucet-objevit { from { opacity: 0; } to { opacity: 1; } }
+.ucet-panel {
+    position: relative;
+    grid-column: 1;
+    grid-row: 1;
+    display: grid;
+    place-items: center;
+    padding: 48px 32px;
+    background: linear-gradient(135deg, #5c1030 0%, #2c0817 38%, #120a0e 72%, var(--bg-main) 100%);
+    overflow-y: auto;
+}
+.ucet-foto {
+    grid-column: 2;
+    grid-row: 1;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+}
+.ucet-foto img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: ucet-objevit 0.6s ease-out;
+}
+.ucet-popisek {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 10px 24px 12px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.82) 45%);
+    color: #e9e4dc;
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-align: center;
+    text-transform: uppercase;
+}
+.ucet.bez-fotky { grid-template-columns: 1fr; }
+.ucet.bez-fotky .ucet-foto { display: none; }
+.ucet-obsah {
+    width: min(340px, 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+}
+.ucet-ikona {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 12px;
+    border-radius: 16px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+}
+/* Název programu zlatým pruhem jako logo */
+.ucet-znacka {
+    margin-bottom: 22px;
+    background: var(--zlato-pruh, linear-gradient(90deg, #c9a046, #f6e3a1, #c9a046));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+.ucet-nadpis {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 0 0 22px;
+    color: #fff;
+    font-size: 21px;
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.ucet-klic { width: 52px; height: 20px; color: var(--zlato-svetle, #f6e3a1); }
+.ucet-hlavni {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 50px;
+    border: 0;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #e0b95c, #c9a046);
+    color: #1b1206;
+    font: inherit;
+    font-size: 17px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    transition: filter 0.15s, transform 0.15s;
+}
+.ucet-hlavni:hover:not(:disabled) { filter: brightness(1.08); }
+.ucet-hlavni:active:not(:disabled) { transform: translateY(1px); }
+.ucet-hlavni:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.ucet-hlavni:disabled { opacity: 0.45; cursor: not-allowed; }
+.ucet-g { width: 22px; height: 22px; padding: 3px; border-radius: 50%; background: #fff; }
+.ucet-odkaz {
+    margin: 14px auto 0;
+    border: 0;
+    background: none;
+    color: #e9e4dc;
+    font: inherit;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.ucet-odkaz:hover, .ucet-odkaz:focus-visible { color: #fff; text-decoration: underline; }
+.ucet-text, .ucet-drobne { margin: 14px 0 0; color: #cfc8c0; font-size: 13.5px; line-height: 1.5; }
+.ucet-drobne { margin-top: 22px; color: var(--text-muted); font-size: 12px; }
+.ucet-chyba {
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: rgba(198, 40, 40, 0.18);
+    color: var(--danger-text);
+    font-size: 13px;
+}
+.ucet-pozn {
+    margin-top: 18px;
+    padding: 12px 14px;
+    border: 1px solid rgba(246, 227, 161, 0.25);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.28);
+    color: #d8d1c7;
+    font-size: 12.5px;
+    line-height: 1.5;
+    text-align: left;
+}
+.ucet-pozn b { color: var(--zlato-svetle, #f6e3a1); font-weight: 600; }
+.ucet-pozn code {
+    display: block;
+    margin: 6px 0 2px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.4);
+    font-size: 11.5px;
+    word-break: break-all;
+}
+.ucet-pozn .ucet-odkaz { display: block; margin: 8px 0 0; font-size: 11.5px; }
+.ucet-ceka { display: flex; align-items: center; justify-content: center; gap: 10px; color: #fff; font-size: 15px; }
+.ucet-tocka {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    border-top-color: var(--zlato-svetle, #f6e3a1);
+    border-radius: 50%;
+    animation: ucet-tocit 0.9s linear infinite;
+}
+@keyframes ucet-tocit { to { transform: rotate(360deg); } }
+.ucet-kdo { display: flex; align-items: center; justify-content: center; gap: 12px; text-align: left; margin-bottom: 4px; }
+.ucet-kdo small { display: block; color: var(--text-muted); font-size: 12.5px; }
+.ucet-avatar {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 19px;
+}
+.ucet-kdo + .ucet-text + .ucet-hlavni, .ucet-kdo + .ucet-hlavni { margin-top: 20px; }
+.ucet-zavrit {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.3);
+    color: #e9e4dc;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+.ucet-zavrit:hover { background: rgba(0, 0, 0, 0.55); color: #fff; }
+/* Úzké okno: fotka přes celé okno, panel průhlednou kartou */
+@media (max-width: 820px) {
+    .ucet { grid-template-columns: 1fr; }
+    .ucet-foto { grid-column: 1; }
+    .ucet-panel { grid-column: 1; background: none; padding: 24px 16px; }
+    .ucet-obsah {
+        padding: 32px 28px;
+        border-radius: 12px;
+        background: rgba(70, 12, 34, 0.72);
+        -webkit-backdrop-filter: blur(6px);
+        backdrop-filter: blur(6px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    }
+    .ucet.bez-fotky .ucet-panel { background: linear-gradient(135deg, #5c1030 0%, #2c0817 45%, var(--bg-main) 100%); }
+    .ucet-popisek { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ucet, .ucet-foto img { animation: none; }
+    .ucet-tocka { animation-duration: 3s; }
+}

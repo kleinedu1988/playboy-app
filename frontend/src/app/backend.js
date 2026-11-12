@@ -62,6 +62,7 @@ const CTENI = new Set([
     'GetStavyVydani',
     'GetTagy',
     'GetVerze',
+    'GetUcetGoogle',
     'GetVybery',
     'GetVydani',
     'GetVydaniInfo',
@@ -391,6 +392,11 @@ export const GetSoubojeModelky = /** @type {typeof App.GetSoubojeModelky} */ (ob
 export const GetStavyVydani = /** @type {typeof App.GetStavyVydani} */ (obalit('GetStavyVydani'));
 export const GetTagy = /** @type {typeof App.GetTagy} */ (obalit('GetTagy'));
 export const GetVerze = /** @type {typeof App.GetVerze} */ (obalit('GetVerze'));
+export const GetUcetGoogle = /** @type {typeof App.GetUcetGoogle} */ (obalit('GetUcetGoogle'));
+export const PrihlasitGoogle = /** @type {typeof App.PrihlasitGoogle} */ (obalit('PrihlasitGoogle'));
+export const ZrusitPrihlaseniGoogle = /** @type {typeof App.ZrusitPrihlaseniGoogle} */ (obalit('ZrusitPrihlaseniGoogle'));
+export const OdhlasitGoogle = /** @type {typeof App.OdhlasitGoogle} */ (obalit('OdhlasitGoogle'));
+export const PreskocitPrihlaseniGoogle = /** @type {typeof App.PreskocitPrihlaseniGoogle} */ (obalit('PreskocitPrihlaseniGoogle'));
 export const GetVybery = /** @type {typeof App.GetVybery} */ (obalit('GetVybery'));
 export const GetVydani = /** @type {typeof App.GetVydani} */ (obalit('GetVydani'));
 export const GetVydaniInfo = /** @type {typeof App.GetVydaniInfo} */ (obalit('GetVydaniInfo'));

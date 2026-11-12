@@ -24,6 +24,7 @@ import * as cover from './app/cover';
 import * as prohlizec from './app/prohlizec';
 import * as vyber from './app/vyber';
 import * as okno from './app/okno';
+import * as ucetGoogle from './app/ucet-google';
 import * as formularModelky from './app/formular-modelky';
 import * as formularAlba from './app/formular-alba';
 import * as sprava from './app/sprava';
@@ -242,6 +243,9 @@ async function konecUvodu() {
         await konecUvodu();
         zaznamenatStart();
     }
+    // Přihlášení Google (0.02.074): okno se ukáže samo, jen když program přihlašovací údaje má a uživatel ho
+    // neodmítl
+    ucetGoogle.nabidnoutPoStartu().catch(() => {});
     // Sekce po startu z ⋯ › Vzhled (Modelky, Čísla, Sbírka nebo poslední)
     vzhledOkno.otevritSekciPoStartu();
     // Nový náhodný výběr profilovek pro úvod příštího spuštění, až program doběhne (seznam modelek je už načtený);

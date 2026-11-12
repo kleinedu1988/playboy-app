@@ -10,7 +10,7 @@ import (
 
 func TestPorovnatVerze(t *testing.T) {
 	for _, p := range []struct {
-		a, b string
+		a, b     string
 		znamenko int
 	}{{"1.48.0", "1.47.0", 1}, {"1.47.0", "1.47.0", 0}, {"1.9.0", "1.10.0", -1}, {"2.0.0", "1.99.9", 1}, {"1.48.0-rc1", "1.48.0", -1}} {
 		v := porovnatVerze(p.a, p.b)

@@ -2738,7 +2738,7 @@ func TestReviseHledani(t *testing.T) {
 	if _, err := a.db.Exec(`UPDATE alba SET popis = 'nový popis'`); err != nil {
 		t.Fatal(err)
 	}
-	if trvani := time.Since(zacatek); trvani > 3*time.Second {
+	if trvani := time.Since(zacatek); trvani > 3*time.Second*nasobekCasuTestu {
 		t.Errorf("hromadná úprava 3000 alb trvala %v", trvani)
 	}
 	if n := a.HledatTexty("novy popis"); len(n) == 0 {

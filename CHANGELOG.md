@@ -6,6 +6,17 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.090] – 2026-11-12
+
+### Ověřeno
+- **Detektor souběhů:** celá sada testů (`go test -race -short ./...`) i jádro aplikace pro telefon bez jediného
+  souběhu mezi vlákny. Frontend: typy, 233 testů a sestavení v pořádku.
+
+### Opraveno
+- Test `TestReviseHledani` pod detektorem souběhů padal na časovém limitu (SQLite v čistém Go je s ním asi 10×
+  pomalejší); časové limity testů se pod `-race` násobí. Formátování dvou souborů podle `gofmt`. Program samotný
+  se nemění.
+
 ## [0.02.089] – 2026-11-12
 
 ### Změněno

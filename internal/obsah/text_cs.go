@@ -334,9 +334,9 @@ func prevestText(model, dense, cil string) error {
 }
 
 type vrstvaTextu struct {
-	qW, kW, vW, outW, ffn1W, ffn2W                         maticeInt8
-	qB, kB, vB, outB, ffn1B, ffn2B                         []float32
-	saNormG, saNormB, outNormG, outNormB                   []float32
+	qW, kW, vW, outW, ffn1W, ffn2W       maticeInt8
+	qB, kB, vB, outB, ffn1B, ffn2B       []float32
+	saNormG, saNormB, outNormG, outNormB []float32
 }
 
 // TextovyModel: český text → vektor délky 1 v prostoru vektorů fotek

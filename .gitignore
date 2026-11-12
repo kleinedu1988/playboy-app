@@ -10,3 +10,4 @@ frontend/dist
 
 # Program sestavený přímo přes go build (wails build ho dává do build/bin)
 /playboy-app
+/pinup-katalog

@@ -530,6 +530,10 @@ export function OdmitnoutNavrhyZWebu(arg1, arg2) {
   return window['go']['main']['App']['OdmitnoutNavrhyZWebu'](arg1, arg2);
 }
 
+export function OknoPrihlaseni() {
+  return window['go']['main']['App']['OknoPrihlaseni']();
+}
+
 export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
 }

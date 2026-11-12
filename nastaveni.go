@@ -85,6 +85,25 @@ func (a *App) ObnovitOkno() {
 	}
 }
 
+// Okno brány přihlášení Google: menší, uprostřed, jako přihlašovací okna jiných programů
+const (
+	sirkaPrihlaseni = 980
+	vyskaPrihlaseni = 640
+)
+
+// OknoPrihlaseni: brána přihlášení (ucet-google.js) dostane menší okno místo uložené velikosti; příznak úvodu se
+// znovu zapne, takže zavření okna jeho rozměr neuloží a ObnovitOkno po přihlášení vrátí uloženou velikost a polohu
+func (a *App) OknoPrihlaseni() {
+	if a.ctx == nil || a.uvod == nil {
+		return
+	}
+	a.uvod.bezi.Store(true)
+	runtime.WindowUnmaximise(a.ctx)
+	runtime.WindowUnfullscreen(a.ctx)
+	runtime.WindowSetSize(a.ctx, sirkaPrihlaseni, vyskaPrihlaseni)
+	runtime.WindowCenter(a.ctx)
+}
+
 // Zapsání stavu okna těsně před zavřením
 func zapamatovatOkno(ctx context.Context) {
 	stav := nacistStavOkna()

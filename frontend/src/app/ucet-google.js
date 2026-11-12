@@ -26,24 +26,53 @@ let poPrihlaseni = null; // splní slib brány
 const KLIC_G = `<svg class="ucet-g" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>`;
 const KLIC = `<svg class="ucet-klic" viewBox="0 0 64 24" aria-hidden="true"><circle cx="10" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M17 12h41M46 12v7M53 12v5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
 
-// Fotka oblíbené modelky: náhodně z nejlépe hodnocených s profilovou fotkou; popisek „Playmate měsíce · Červen 1985“
-// Fotky, které se nenačetly (soubor nedostupný): zkusí se další kandidátka
-const nenactene = new Set();
+// Fotka oblíbené modelky: náhodně z nejlépe hodnocených, profilová nebo titulní fotka – jen na výšku (panel fotky
+// je vysoký; fotka naležato by se ořízla). Orientace se nikde neukládá, pozná se z načteného náhledu. Popisek
+// „Playmate měsíce · Červen 1985“. Fotky, které se nenačetly nebo jsou naležato, se příště přeskočí.
+const nevhodne = new Set();
+const NA_VYSKU = 1.15; // výška / šířka aspoň
+
+// Načte náhled a vrátí, jestli je na výšku (false i při chybě nebo po 8 s)
+function jeNaVysku(/** @type {string} */ adresa) {
+    return new Promise(splnit => {
+        const img = new Image();
+        const konec = setTimeout(() => splnit(false), 8000);
+        img.onload = () => { clearTimeout(konec); splnit(img.naturalHeight >= img.naturalWidth * NA_VYSKU); };
+        img.onerror = () => { clearTimeout(konec); splnit(false); };
+        img.src = adresa;
+    });
+}
+
 async function vybratFotku() {
     if (stav.maZamek) return null;
     let modelky = [];
     try { modelky = await vsechnyModelky(); } catch { return null; }
     const hodnocene = modelky.filter(m => m.hodnoceni > 0).sort((a, b) => b.hodnoceni - a.hodnoceni);
     const nej = hodnocene.filter(m => m.hodnoceni >= (hodnocene[0]?.hodnoceni || 0) - 0.5);
-    const kandidatky = (nej.length ? nej : modelky).slice().sort(() => Math.random() - 0.5).slice(0, 8);
-    for (const m of kandidatky) {
-        let f = null;
-        try { f = await GetProfilovaFotka(m.id); } catch { /* další */ }
-        if (!f?.url || nenactene.has(f.url)) continue;
+    // Málo nejlepších: i o srdíčko níž
+    const zaklad = nej.length >= 12 ? nej : hodnocene.filter(m => m.hodnoceni >= (hodnocene[0]?.hodnoceni || 0) - 1);
+    const kandidatky = (zaklad.length ? zaklad : modelky).slice().sort(() => Math.random() - 0.5).slice(0, 16);
+    // Profilové fotky najednou, pak náhledy souběžně: vyhraje první načtená fotka na výšku
+    const profily = await Promise.all(kandidatky.map(m => GetProfilovaFotka(m.id).catch(() => null)));
+    const moznosti = kandidatky.flatMap((m, i) => [profily[i]?.url, m.coverUrl].filter(u => u && !nevhodne.has(u)).map(url => ({ m, url })));
+    const vitezka = await new Promise(splnit => {
+        let zbyva = moznosti.length;
+        if (!zbyva) splnit(null);
+        for (const k of moznosti) {
+            jeNaVysku(obrazek(k.url, VELIKOST_TITULNI)).then(ano => {
+                if (ano) splnit(k);
+                else nevhodne.add(k.url);
+                if (--zbyva === 0) splnit(null);
+            });
+        }
+    });
+    if (vitezka) {
+        const { m, url } = vitezka;
+        const nahled = obrazek(url, VELIKOST_TITULNI);
         const titul = kategorieModelky(m).map(k => k.nazev)[0] || '';
         const cislo = (m.centerfoldy || [])[0] || (m.vydani || [])[0] || '';
         const kdy = cislo ? nazevVydani(cislo).replace(/\s*·\s*Playboy$/, '') : '';
-        return { url: f.url, nahled: obrazek(f.url, VELIKOST_TITULNI), plna: obrazek(f.url, VELIKOST_ZAHLAVI), id: idZAdresy(f.url) || idZAdresy(obrazek(f.url, VELIKOST_TITULNI)), jmeno: m.jmeno, popisek: [titul, kdy].filter(Boolean).join(' · ') };
+        return { url, nahled, plna: obrazek(url, VELIKOST_ZAHLAVI), id: idZAdresy(url) || idZAdresy(nahled), jmeno: m.jmeno, popisek: [titul, kdy].filter(Boolean).join(' · ') };
     }
     return null;
 }
@@ -91,7 +120,7 @@ function vykreslit() {
 let pokusu = 0;
 async function zkusitDalsiFotku() {
     if (!okno || !fotka) return;
-    nenactene.add(fotka.url);
+    nevhodne.add(fotka.url);
     fotka = ++pokusu < 3 ? await vybratFotku() : null;
     vykreslit();
 }

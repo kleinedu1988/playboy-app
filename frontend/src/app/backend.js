@@ -143,6 +143,7 @@ const CTENI = new Set([
     'GetPokrytiOdhadu',
     // Okno po úvodní obrazovce dostane uloženou velikost (nastaveni.go); data nemění
     'ObnovitOkno',
+    'OknoPrihlaseni',
     // Dnešní výběr (app/dnesni-vyber.js): čtveřice, lákadlo a pořadí jen čtou
     'GetCtvericeKPorovnani',
     'GetLakadloPorovnani',
@@ -275,6 +276,7 @@ export const VypnoutObsah = /** @type {typeof App.VypnoutObsah} */ (obalit('Vypn
 export const GetNavrhyTagu = /** @type {typeof App.GetNavrhyTagu} */ (obalit('GetNavrhyTagu'));
 export const GetPokrytiOdhadu = /** @type {typeof App.GetPokrytiOdhadu} */ (obalit('GetPokrytiOdhadu'));
 export const ObnovitOkno = /** @type {typeof App.ObnovitOkno} */ (obalit('ObnovitOkno'));
+export const OknoPrihlaseni = /** @type {typeof App.OknoPrihlaseni} */ (obalit('OknoPrihlaseni'));
 export const GetCtvericeKPorovnani = /** @type {typeof App.GetCtvericeKPorovnani} */ (obalit('GetCtvericeKPorovnani'));
 export const GetLakadloPorovnani = /** @type {typeof App.GetLakadloPorovnani} */ (obalit('GetLakadloPorovnani'));
 export const GetPoradiModelek = /** @type {typeof App.GetPoradiModelek} */ (obalit('GetPoradiModelek'));

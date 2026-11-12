@@ -273,6 +273,8 @@ export function OdmitnoutNavrh(arg1:kontrola.NavrhDoplneni,arg2:boolean):Promise
 
 export function OdmitnoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>,arg2:boolean):Promise<boolean>;
 
+export function OknoPrihlaseni():Promise<void>;
+
 export function OveritOdkaz(arg1:string):Promise<number>;
 
 export function OveritUcetGoogle():Promise<string>;

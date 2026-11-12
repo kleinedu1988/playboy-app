@@ -2,7 +2,7 @@ import './style.css';
 import * as vzhledVolby from './ui/vzhled';
 import { EventsOn } from '../wailsjs/runtime/runtime';
 import { oznamit } from './ui/oznameni';
-import { GetOblibenost, GetSezona, GetStavUceniTagu, GetVerze, MaZamek, ObnovitOkno, Predpripravit, StavDatabaze } from './app/backend';
+import { GetOblibenost, GetSezona, GetStavUceniTagu, GetVerze, MaZamek, ObnovitOkno, OknoPrihlaseni, Predpripravit, StavDatabaze } from './app/backend';
 import { krokUvodu, pockatNaNahledy, seznamUvodu, stavUvodu, tlacitkoUvodu, skrytUvod, ukazatUvod, ulozitProfilovkyUvodu, verzeUvodu, zapomenoutProfilovkyUvodu } from './ui/uvod';
 import { stav } from './app/stav';
 import { nacistSpecialy, vsechnyModelky } from './app/mezipamet';
@@ -161,9 +161,11 @@ async function konecUvodu() {
         // Vstup přes Google (0.02.075): bez zapamatovaného přihlášení se sbírka otevře až po přihlášení
         if (await ucetGoogle.potrebaBrany()) {
             clearTimeout(pojistka);
-            await ObnovitOkno().catch(() => {});
+            // Brána v menším okně; po přihlášení okno dostane uloženou velikost
+            await OknoPrihlaseni().catch(() => {});
             ukazatUvod(false);
             await ucetGoogle.otevrit({ brana: true });
+            await ObnovitOkno().catch(() => {});
             ukazatUvod(true);
             pojistka = setTimeout(konecUvodu, 15000);
         }

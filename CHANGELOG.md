@@ -6,6 +6,21 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.080] – 2026-11-12
+
+### Opraveno
+- **Brána přihlášení přes celou obrazovku:** při startu se brána ukázala v uložené, typicky maximalizované velikosti
+  okna. Teď má přihlašovací okno 980 × 640 uprostřed obrazovky a po přihlášení okno dostane uloženou velikost
+  a polohu. Zavření okna během brány jeho malou velikost neuloží.
+- **Fotky naležato v bráně:** fotka se vybírá jen na výšku. Kandidátky jsou profilové i titulní fotky oblíbených
+  modelek, jejich náhledy se načtou souběžně a vyhraje první fotka aspoň o 15 % vyšší než širší. Fotky naležato
+  a nenačtené se při dalším výběru přeskočí.
+
+### Ověřeno
+- Tři snímky brány nad kopií sbírky: pokaždé fotka na výšku (518 × 800, 486 × 720, 1826 × 2739). Typy, testy
+  a build prošly.
+- **Neověřeno:** velikost okna brány (snímkovač běží bez skutečného okna).
+
 ## [0.02.079] – 2026-11-12
 
 ### Změněno

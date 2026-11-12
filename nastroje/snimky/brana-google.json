@@ -17,6 +17,11 @@
    "cekat": 4000
   },
   {
+   "nazev": "b-fotka",
+   "js": "(()=>{const i=document.querySelector('.ucet-foto img');return i?i.naturalWidth+'×'+i.naturalHeight+' '+(i.naturalHeight>i.naturalWidth?'na výšku':'NALEŽATO')+' | '+document.querySelector('.ucet-popisek')?.innerText:'bez fotky'})()",
+   "cekat": 3000
+  },
+  {
    "nazev": "b-esc",
    "js": "(()=>{document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return document.querySelector('.ucet')?'brána zůstala':'brána zavřena!'})()",
    "cekat": 800

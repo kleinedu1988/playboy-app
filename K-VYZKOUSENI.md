@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.080 – Oprava brány přihlášení
+
+- [ ] Po odhlášení a restartu: brána v menším okně uprostřed; po přihlášení se okno roztáhne na obvyklou velikost.
+- [ ] Fotka v bráně je vždy na výšku.
+
 ## 0.02.079 – Zbytky názvu
 
 - [ ] ⋯ › Kapesní katalog do telefonu…: vznikne složka `kapesni-katalog-…`.

@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.073 – Mapa sbírky obarvená časopisem
+
+- [ ] Statistiky › Mapa sbírky › barva Časopis: Pets jinou barvou, legenda bez časopisů, které ve sbírce nejsou.
+
 ## 0.02.072 – Srovnat časopisy
 
 - [ ] Až bude ve sbírce aspoň 10 Pets: Statistiky › Srovnat časopisy ukáže průkazné rozdíly (rok, výška…) a tabulku; CSV tabulky.

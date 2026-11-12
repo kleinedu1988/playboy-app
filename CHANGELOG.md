@@ -6,6 +6,17 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.073] – 2026-11-12
+
+### Přidáno
+- **Mapa sbírky obarvená časopisem:** ve sbírce z víc časopisů má Mapa sbírky barvu „Časopis“ – Playboy, Penthouse,
+  Hustler, jiný časopis, víc časopisů (modelka vyšla ve dvou a víc) a bez čísla. Legenda ukazuje jen hodnoty, které
+  ve sbírce jsou; klik na ni vybere modelky jako u ostatních barev.
+
+### Ověřeno
+- Snímek na kopii sbírky: playmates růžově, 3 Pets modře; legenda Playboy · Penthouse · Bez čísla; klik na
+  Penthouse vybere Heide Mann, Ilse Hasek a Ullu Lindstrom. Typy a build prošly.
+
 ## [0.02.072] – 2026-11-12
 
 ### Přidáno

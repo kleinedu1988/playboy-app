@@ -155,6 +155,20 @@ const BARVY_MAPY = {
         ],
         hodnota: b => b.hodnoceni >= 4.5 ? '5 ♥' : b.hodnoceni >= 3.5 ? '4 ♥' : b.hodnoceni >= 2.5 ? '3 ♥' : b.hodnoceni > 0 ? '1–2 ♥' : 'Bez hodnocení',
     },
+    // Časopis (0.02.073, jen ve sbírce z víc časopisů): kde modelka vyšla (číslo, centerfold, obálka)
+    casopis: {
+        nazev: 'Časopis',
+        polozky: [
+            ['Playboy', '#f06292'], ['Penthouse', '#64b5f6'], ['Hustler', '#ffd54f'], ['Jiný časopis', '#81c784'],
+            ['Víc časopisů', '#ba68c8'], ['Bez čísla', '#616161'],
+        ],
+        hodnota: b => {
+            const jinde = jineCasopisy(b.m), pb = vPlayboyi(b.m);
+            if (jinde.length + (pb ? 1 : 0) > 1) return 'Víc časopisů';
+            if (pb) return 'Playboy';
+            return jinde.length ? { PH: 'Penthouse', HU: 'Hustler' }[jinde[0]] || 'Jiný časopis' : 'Bez čísla';
+        },
+    },
     uplnost: {
         nazev: 'Úplnost údajů',
         polozky: [
@@ -1057,7 +1071,10 @@ function htmlLegendy(def) {
     if (def.druh === 'mapa') {
         const rezim = BARVY_MAPY[barvaMapy] || BARVY_MAPY.obdobi;
         const aktivniKat = filtry.get('mapa')?.hodnota || '';
-        return `${rezim.polozky.map(([nazev, barva]) => {
+        // U časopisu jen hodnoty, které ve sbírce jsou (Hustler bez Hustleru by mátl)
+        const body = mapaCache.vysledek?.body;
+        const pritomne = barvaMapy === 'casopis' && body ? new Set(body.map(b => rezim.hodnota(b))) : null;
+        return `${rezim.polozky.filter(([nazev]) => !pritomne || pritomne.has(nazev)).map(([nazev, barva]) => {
             const klicKat = `${barvaMapy}:${nazev}`;
             const zapnuto = aktivniKat === klicKat;
             return `<button type="button" class="sp-legenda-volba${zapnuto ? ' aktivni' : ''}" data-sp-mapa-kategorie="${esc(nazev)}" aria-pressed="${zapnuto}" title="Kliknutím vyfiltrovat na mapě"><i class="bod" style="background:${barva}"></i>${esc(nazev)}</button>`;
@@ -1119,7 +1136,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
         ...Object.keys(SKUPINY).flatMap(s => GRAFY.filter(g => g.skupina === s && (g.druh !== 'casopisy' || casopisy.length)).map(g => stitek('sp-graf-volba', g.klic, g.nazev, g.klic === graf))),
         ...(def.osa === 'rok' || def.druh === 'obdobi' ? Object.entries(DRUHY_VYSKYTU).map(([k, nazev]) => stitek('sp-druh-volba', k, nazev === 'Vše' ? 'vše' : nazev, k === druhVyskytu)) : []),
         ...((def.osa === 'rok' || def.druh === 'obdobi') && ed.length > 1 ? ['vse', ...ed].map(e => stitek('sp-edice-volba', e, e === 'vse' ? 'vše' : e, e === edice)) : []),
-        ...(def.druh === 'mapa' ? Object.entries(BARVY_MAPY).map(([k, b]) => stitek('sp-mapa-barva', k, b.nazev, k === barvaMapy)) : []),
+        ...(def.druh === 'mapa' ? Object.entries(BARVY_MAPY).filter(([k]) => k !== 'casopis' || casopisy.length).map(([k, b]) => stitek('sp-mapa-barva', k, b.nazev, k === barvaMapy)) : []),
         filtry.size ? `<button type="button" class="chip active" data-sp-vyber="1" data-zrusit-vyber>${esc([...filtry.values()].map(f => f.popis).join(' · '))}</button>` : '',
         `<span>${souhrn(def, sloupce, rozlozeni).replace(/<[^>]+>/g, '')}</span>`,
     ].join(''));

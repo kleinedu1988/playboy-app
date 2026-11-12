@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.070 – Můj vkus v čase s časopisem
+
+- [ ] Až bude ve sbírce aspoň 20 Pets: Statistiky › Můj vkus v čase má řádek „modelky Penthouse“ a při posunu větu.
+
 ## 0.02.069 – Podobné modelky napříč časopisy
 
 - [ ] Profil Pet › Údaje › Podobné modelky: nahoře další Pets s důvodem „Penthouse“; u playmate beze změny.

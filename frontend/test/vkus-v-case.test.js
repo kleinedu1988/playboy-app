@@ -43,3 +43,15 @@ test('srdíčka po měsících', () => {
         { den: '2026-02-01', modelka: 1, pred: 4, po: 4.5 }, { den: '2026-02-02', modelka: 2, pred: 3, po: 2 }]);
     assert.deepEqual(s.map(r => [r.mesic, r.nove, r.pridano, r.ubrano, r.prumerNovych]), [['2026-01', 2, 0, 0, 3.5], ['2026-02', 0, 1, 1, null]]);
 });
+
+test('vkus v čase: časopis jako vlastnost (0.02.070)', () => {
+    const { modelky, porovnani } = data();
+    // Blondýnky jsou z Penthouse: posun k nim je i posun k Penthouse
+    modelky.forEach(m => { if (m.vlasyBarva === 'blond') m.vydani = ['1990-01@PH']; });
+    const v = vkusVCase({ porovnani }, modelky);
+    const ph = v.postrehy.find(p => p.klic === 'casopis:PH');
+    assert.ok(ph?.kladny, JSON.stringify(v.postrehy));
+    assert.match(ph.text, /víc líbí modelky Penthouse/);
+    // Sbírka jen z Playboye vlastnost časopisu nemá
+    assert.ok(!vkusVCase({ porovnani }, data().modelky).radky.some(r => r.klic.startsWith('casopis:')));
+});

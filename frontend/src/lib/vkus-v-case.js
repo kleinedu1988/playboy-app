@@ -4,13 +4,16 @@
 // Postřeh vznikne, jen když rozdíl projde Fisherovým testem po opravě Benjamini–Hochberg (jako postrehy.js)
 // a je aspoň PRAH_POSUNU procentních bodů; raději žádná věta než šum.
 import { benjaminiHochberg, fisher } from './statistika.js';
-import { kategorieModelky } from './format.js';
-import { skupinaVlasu } from './mapa-sbirky.js';
+import { kategorieModelky, nazevCasopisu } from './format.js';
+import { jineCasopisy, skupinaVlasu } from './mapa-sbirky.js';
 import { ALFA } from './postrehy.js';
 
 export const MIN_SOUBOJU = 20;   // soubojů, kde vlastnost má právě jedna z dvojice, v každém období
 export const PRAH_POSUNU = 0.10; // 10 procentních bodů
 export const MIN_V_MESICI = 5;   // soubojů vlastnosti v měsíci, aby měsíc šel do grafu
+
+// Názvy předvyplněných časopisů (i bez načtených časopisů z backendu, např. v testech)
+const NAZVY_CASOPISU = { PH: 'Penthouse', HU: 'Hustler' };
 
 const prvniRok = m => (m.vydani || []).filter(v => /^\d{4}/.test(v)).map(v => Number(v.slice(0, 4))).sort((a, b) => a - b)[0] ?? null;
 
@@ -35,6 +38,12 @@ export function vlastnosti(modelky) {
     const pocty = new Map();
     for (const m of modelky) for (const k of kategorieModelky(m)) pocty.set(k.nazev, (pocty.get(k.nazev) || 0) + 1);
     for (const [nazev, n] of pocty) if (n >= 20) v.push({ klic: `kat:${nazev}`, kdo: nazev, test: m => kategorieModelky(m).some(k => k.nazev === nazev) });
+    // Jiné časopisy než Playboy (0.02.070), které má aspoň 20 modelek: „modelky Penthouse“ proti ostatním
+    const vCasopise = new Map();
+    for (const m of modelky) for (const c of jineCasopisy(m)) vCasopise.set(c, (vCasopise.get(c) || 0) + 1);
+    for (const [c, n] of vCasopise) {
+        if (n >= 20) v.push({ klic: `casopis:${c}`, kdo: `modelky ${NAZVY_CASOPISU[c] || nazevCasopisu(c)}`, test: m => jineCasopisy(m).includes(c) });
+    }
     return v;
 }
 

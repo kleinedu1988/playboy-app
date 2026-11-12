@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.070] – 2026-11-12
+
+### Přidáno
+- **Můj vkus v čase s časopisem:** ve Statistikách › Můj vkus v čase je mezi vlastnostmi i jiný časopis než
+  Playboy, pokud v něm vyšlo aspoň 20 modelek sbírky. Když se posun průkazně ukáže v soubojích, přibude věta
+  „Za poslední rok se ti víc líbí modelky Penthouse…“ (nebo „…líbí méně než dřív“).
+
+### Ověřeno
+- Test: průkazný posun k modelkám Penthouse dá větu; sbírka jen z Playboye vlastnost časopisu nemá. Všech 232
+  JS testů prošlo (časový test mapy jednou selhal jen při souběhu všech testů, samostatně prošel).
+- Na kopii sbírky se nic nemění: modelek Penthouse je méně než 20.
+
 ## [0.02.069] – 2026-11-12
 
 ### Přidáno

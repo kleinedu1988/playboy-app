@@ -6,6 +6,19 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.083] – 2026-11-12
+
+### Opraveno
+- **Dlouhý test modelu vkusu** (`TestVyhodnoceniVkusu`, spouští se jen bez `-short`) padal od 0.02.031. Odhad
+  a tipy se od té verze ukazují až modelce s fotkami, ale umělá sbírka testu galerie neměla – tipů zbylo 7
+  a přesnost nejlepší desítky (P@10 0,45) spadla pod pojistku 0,5. Vyhodnocení teď dá všem modelkám analýzu
+  obsahu fotek se stejnou hodnotou (podmínku splní, o vkusu nic neříká). Program samotný se nemění.
+
+### Ověřeno
+- Příčina dohledána bisekcí: 0.02.030 prochází, 0.02.031 padá. Po opravě metriky blízko stavu před 0.02.031
+  (50 % hodnocených: tipů 168 proti 169, P@10 0,68 proti 0,65, ověření 6/6); náhodný vkus dál nikdy neprojde.
+  Celá sada i s dlouhými testy prošla.
+
 ## [0.02.082] – 2026-11-12
 
 ### Změněno

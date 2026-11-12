@@ -357,7 +357,16 @@ type metrikyVkusu struct {
 func vyhodnotitVkus(s sbirkaHarness) metrikyVkusu {
 	var mt metrikyVkusu
 	zacatek := time.Now()
-	model := spocitatOblibenost(s.modelky, s.porovnani, nyniHarness)
+	// Galerie s analýzou obsahu fotek: od 0.02.031 se odhad a tip ukazují až modelce s fotkami a v programu je má
+	// skoro každá modelka. Tady všem stejná hodnota, takže o vkusu nic neříká (bez ní měl ukázané odhady a tipy
+	// jen zlomek modelek s hodnocenými fotkami a P@10 tipů padala pod práh)
+	udaje := pripravitUdajeVkusu(s.modelky)
+	obsah := make(map[int]float64, len(s.modelky))
+	for _, m := range s.modelky {
+		obsah[m.ID] = 0
+	}
+	doplnitObsahVkusu(udaje, obsah)
+	model := spocitatOblibenostUplne(s.modelky, s.porovnani, stavZajmu{}, vstupOblibenosti{udaje: udaje}, nyniHarness)
 	mt.cas = time.Since(zacatek)
 	v := model.vkus
 	prumer := 0.0

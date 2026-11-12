@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pinup Katalog</title>
+<style>
+  :root { --zlato: #e2bd6a; --text: #f3e9ee; --tlumeny: #b9a3ad; }
+  body { margin: 0; min-height: 100vh; font-family: system-ui, sans-serif; color: var(--text);
+    background: linear-gradient(160deg, #5c1030, #2c0817 55%, #120a0e); display: grid; place-items: center; text-align: center; }
+  h1 { margin: 0 0 6px; color: var(--zlato); letter-spacing: .12em; text-transform: uppercase; font-size: 26px; }
+  p { margin: 4px 16px; color: var(--tlumeny); font-size: 14px; }
+  img { width: 96px; height: 96px; border-radius: 22px; margin-bottom: 18px; }
+</style>
+</head>
+<body>
+  <main>
+    <img src="ikona.png" alt="">
+    <h1>Pinup Katalog</h1>
+    <p>Kostra aplikace pro telefon (0.02.078)</p>
+    <p id="jadro"></p>
+    <p id="cas"></p>
+  </main>
+<script>
+  const most = window.telefon;
+  const jadro = most ? most.jadro() : '';
+  document.getElementById('jadro').textContent = jadro ? `Jádro v Go: ${jadro}` : 'Bez jádra v Go';
+  requestAnimationFrame(() => {
+    const ms = performance.now();
+    document.getElementById('cas').textContent = `Stránka vykreslena za ${Math.round(ms)} ms`;
+    most?.vykresleno(ms);
+  });
+</script>
+</body>
+</html>

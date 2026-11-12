@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (web, vkus napříč časopisy, mobil) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.078 – Kostra Android aplikace [měření]** (Mobil a Google Disk; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
+**0.02.078 – Soubory databáze** (Dotažení a alfa; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
 
 ---
 
@@ -274,7 +274,7 @@ krok „Hustler Honeys“ zrušen, Honey se nabídne jen z Wikidat (0.02.065).
 | 0.02.072 ✅ | **Srovnání časopisů:** Statistiky › Srovnat časopisy – modelky jen z Playboye proti modelkám jen z druhého časopisu, všechny údaje jako Porovnat období a rok prvního výskytu | hotovo: v testu „Playboy: modelka vyšla o 15 let dřív (medián 1983 vs 1998)“; na tvé sbírce až od 10 Pets |
 | 0.02.073 ✅ | **Mapa sbírky** obarvená časopisem: barva Časopis (Playboy, Penthouse, Hustler, jiný, víc časopisů, bez čísla), legenda jen s hodnotami ve sbírce, klik vybere modelky | hotovo: snímek – 3 Pets modře, klik na Penthouse vybere je |
 
-#### Mobilní prohlížeč a záloha na Google Disk (0.02.074–0.02.081, přání uživatele 12. 11. 2026)
+#### Přihlášení a záloha na Google Disk (0.02.074–0.02.077, přání uživatele 12. 11. 2026; aplikace pro telefon přeskočena – viz Možné)
 
 **Cíl:** stránka modelek v telefonu s Androidem – hero banner nahoře a pod ním dlaždice modelek jako v hlavním
 programu, jen ke čtení. Program na PC i telefon se přihlásí stejným účtem Google; PC nahraje na Google Disk zálohu
@@ -295,20 +295,16 @@ Disk) nepotřebují ověření aplikace Googlem. Potřeba: vlastní projekt v Go
 | 0.02.075 ✅ | **Vstup přes Google** (přání uživatele): s přihlašovacími údaji programu je okno účtu vstupní branou – sbírka se otevře až po přihlášení, bez zavření a Esc; přihlášení si program pamatuje, brána po odhlášení nebo odvolání přístupu (ověření obnovovacím tokenem při startu); bez údajů programu brána není | hotovo: snímek brány při startu, Esc ji nezavře; test ověření i odvolání |
 | 0.02.076 ✅ | **Záloha na Google Disk:** denní záloha se po přihlášení nahraje do skryté složky programu na Disku (appDataFolder, posledních 7); v Obnovit ze zálohy oddíl Na Google Disku s Nahrát teď a Stáhnout – stažená záloha se obnoví obvyklou cestou s porovnáním rozdílů | hotovo: test s falešným Diskem (nahrání, úklid na 7, stažení do čistého programu); snímek oddílu po Nahrát teď |
 | 0.02.077 ✅ | **Balíček pro telefon:** výtah sbírky (modelky se stejnými názvy polí jako v programu, srdíčka a oblíbenost, kategorie, titulní a profilová fotka s výřezy jako Drive ID + šablona adresy; explicitní fotky vynechané) jako gzip JSON `telefon-balicek.json.gz` ve skryté složce programu na Disku, nahraný po záloze (i Nahrát teď), nový nahradí starý | hotovo: test 3000 modelek = 52 kB, explicitní titulní fotka vypadne, na Disku zůstane jeden balíček; kopie sbírky (613 modelek) = 52 kB |
-| 0.02.078 | **Kostra Android aplikace [měření]:** sestavení APK (WebView + `gomobile`, porovnat s Fyne), velikost a start | APK se nainstaluje a otevře na telefonu |
-| 0.02.079 | **Přihlášení v telefonu:** stejný účet Google, stažení balíčku, práce bez sítě z posledního stažení | po změně na PC telefon ukáže novou modelku |
-| 0.02.080 | **Stránka modelek v telefonu:** hero banner nahoře, dlaždice modelek s výřezy a srdíčky, hledání jménem | snímek z telefonu odpovídá stránce modelek na PC |
-| 0.02.081 | **Instalace a nové verze:** APK z vydání na GitHubu, telefon nabídne novou verzi | aktualizace bez odinstalace |
 
-#### Dotažení a alfa (0.02.082–0.02.086+, dříve etapa 0.08)
+#### Dotažení a alfa (0.02.078–0.02.082+, dříve etapa 0.08)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.082 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
-| 0.02.083 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
-| 0.02.084 | **Ikona programu** | nová ikona v nabídce a panelu |
-| 0.02.085 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
-| 0.02.086+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
+| 0.02.078 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
+| 0.02.079 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
+| 0.02.080 | **Ikona programu** | nová ikona v nabídce a panelu |
+| 0.02.081 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
+| 0.02.082+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
 
 ---
 
@@ -453,6 +449,7 @@ Nápady, které se udělají, až na ně přijde řada nebo chuť; nemají čís
 
 | Krok | Co | Hotovo, když |
 |---|---|---|
+| Aplikace pro telefon | **Stránka modelek v telefonu s Androidem** (přeskočeno 12. 11. 2026, dříve 0.02.078–0.02.081): přihlášení stejným účtem Google, stažení balíčku pro telefon z Disku (hotový od 0.02.077, nahrává se s každou zálohou), hero a dlaždice jako v programu, instalace a nové verze z GitHubu. Změřeno: kostra ve složce `mobil/` (`sestavit.sh` bez Gradle, SDK a JDK v `~/Android`) – WebView 164 kB, WebView s jádrem v Go (gomobile) 4,3 MB, Fyne 24,7 MB → doporučeno WebView se stejným JS; start na telefonu nezměřen (`mobil/merit.sh`), emulátor se 7 GB RAM spadl | APK se nainstaluje a otevře na telefonu, stránka modelek z balíčku |
 | Barva časopisu | **Barva časopisu v grafech Statistik** (sloupce rozdělené podle časopisu, jako barvy mapy) | ve sbírce s Pets je v grafu vidět jejich podíl |
 | PDF 1 | **Označit stránky PDF:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
 | PDF 2 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |
@@ -474,7 +471,7 @@ Nápady, které se udělají, až na ně přijde řada nebo chuť; nemají čís
   ne jako druhý akcent tlačítek a voleb), písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1; výjimkou
   je režim čtení PD 1.41). Potvrzeno 10. 11. 2026 při plánu etapy G.
 - Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (PD 1.61–PD 1.62).
-  Od 12. 11. 2026 i pro přihlášení, zálohu na Disk a balíček pro telefon (0.02.074–0.02.081), jen rozsahy `drive.file` a `drive.appdata`.
+  Od 12. 11. 2026 i pro přihlášení, zálohu na Disk a balíček pro telefon (0.02.074–0.02.077), jen rozsahy `drive.file` a `drive.appdata`.
 - Malé náhledy smí program ukládat na disk jako mezipaměť (PD 1.6); originály a velké fotky zůstávají jen na Disku.
 - 1.0.0 po 14 dnech používání alfy bez nové chyby (21. 10. 2026; místo bety alfa od 10. 11. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
   každý krok a opravu v tématu; MAJOR = velký milník, kompatibilitu dat hlídá verze schématu a exportu.

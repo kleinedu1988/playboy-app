@@ -4,9 +4,11 @@
 # v pinup-katalog.verze (mimo git); program na PC je při nahrání zálohy nahraje na Disk a aplikace v telefonu
 # nabídne aktualizaci (0.02.088).
 #
-# Podpis: stálý klíč ~/.config/pinup-katalog/telefon.keystore (mimo git; poprvé převzatý z ladicího klíče
-# ~/.android/debug.keystore, kterým byly podepsané verze do 0.02.087, jinak nový). Android novou verzi nainstaluje
-# přes starou jen se stejným klíčem – klíč zálohuj; bez něj je potřeba aplikaci odinstalovat a nainstalovat znovu.
+# Podpis (0.02.089): vlastní klíč ~/.config/pinup-katalog/telefon-podpis.keystore s náhodným heslem
+# v telefon-podpis.heslo (oba mimo git, práva 0600; vzniknou při prvním sestavení). Verze do 0.02.088 byly
+# podepsané ladicím klíčem („Android Debug“), který Play Protect označuje častěji; přechod znamená jednou aplikaci
+# odinstalovat a nainstalovat kabelem. Android novou verzi nainstaluje přes starou jen se stejným klíčem – klíč
+# i heslo zálohuj.
 #
 # Přihlašovací údaje programu se do APK zkopírují z ~/.config/pinup-katalog/google-klient.json (stejné jako na PC;
 # v gitu nejsou). Potřeba: Android SDK (ANDROID_HOME, výchozí ~/Android/Sdk) s platformou, build-tools a NDK;
@@ -33,17 +35,15 @@ KLIENT=${XDG_CONFIG_HOME:-$HOME/.config}/pinup-katalog/google-klient.json
 
 cd "$(dirname "$0")"
 mkdir -p vystup
-KLIC=$(dirname "$KLIENT")/telefon.keystore
+KLIC=$(dirname "$KLIENT")/telefon-podpis.keystore
+HESLO_KLICE=$(dirname "$KLIENT")/telefon-podpis.heslo
 if [ ! -f "$KLIC" ]; then
 	mkdir -p "$(dirname "$KLIC")"
-	if [ -f "$HOME/.android/debug.keystore" ]; then
-		cp "$HOME/.android/debug.keystore" "$KLIC"
-	else
-		keytool -genkeypair -keystore "$KLIC" -storepass android -keypass android -alias androiddebugkey \
-			-keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Pinup Katalog,C=CZ" >/dev/null
-	fi
+	(umask 077 && head -c 24 /dev/urandom | base64 | tr -d '/+=' >"$HESLO_KLICE")
+	keytool -genkeypair -keystore "$KLIC" -storetype PKCS12 -storepass:file "$HESLO_KLICE" -alias pinup-katalog \
+		-keyalg RSA -keysize 4096 -validity 20000 -dname "CN=Pinup Katalog, C=CZ" >/dev/null
 	chmod 600 "$KLIC"
-	echo "Podpisový klíč aplikace: $KLIC (zálohuj ho)"
+	echo "Nový podpisový klíč aplikace: $KLIC a heslo $HESLO_KLICE (zálohuj oba)"
 fi
 
 tmp=$(mktemp -d)
@@ -72,7 +72,7 @@ mkdir -p "$tmp/lib"
 cp -r "$tmp/aar/jni/"* "$tmp/lib/"
 (cd "$tmp" && zip -q -r -0 zaklad.apk lib)
 "$BT/zipalign" -f -p 4 "$tmp/zaklad.apk" "$tmp/zarovnany.apk"
-"$BT/apksigner" sign --ks "$KLIC" --ks-pass pass:android --out vystup/pinup-katalog.apk "$tmp/zarovnany.apk"
+"$BT/apksigner" sign --ks "$KLIC" --ks-pass "file:$HESLO_KLICE" --out vystup/pinup-katalog.apk "$tmp/zarovnany.apk"
 rm -f vystup/pinup-katalog.apk.idsig
 echo "$VERZE" >vystup/pinup-katalog.verze
 echo "pinup-katalog.apk $VERZE: $(du -k vystup/pinup-katalog.apk | cut -f1) kB"

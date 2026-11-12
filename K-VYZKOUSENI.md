@@ -5,11 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.089 – Vlastní podpisový klíč aplikace
+
+- [ ] Po přeinstalaci znovu přihlásit a stáhnout sbírku.
+- [ ] Zálohovat `~/.config/pinup-katalog/telefon-podpis.keystore` a `telefon-podpis.heslo`.
+- [ ] Příští aktualizace (0.2.90 přes Nahrát teď): varuje Play Protect méně, nebo vůbec?
+
 ## 0.02.088 – Nové verze aplikace bez kabelu
 
 - [ ] Na PC nový program (`./instalovat.sh`) a Nahrát teď → v telefonu po ↻ pruh „Nová verze aplikace 0.2.88“.
-- [ ] Aktualizovat: napoprvé povolit instalaci z Pinup Katalogu, pak potvrdit instalaci; aplikace se otevře v nové verzi (účet › verze 0.2.88), přihlášení zůstane.
-- [ ] Zálohovat `~/.config/pinup-katalog/telefon.keystore` (podpisový klíč aplikace).
+- [x] Aktualizovat: napoprvé povolit instalaci z Pinup Katalogu, pak potvrdit instalaci; aplikace se otevře v nové verzi (účet › verze 0.2.88), přihlášení zůstane. Ověřeno 12. 11. 2026 (v telefonu 0.2.88; Play Protect varoval → 0.02.089).
 
 ## 0.02.087 – Hero v telefonu na výšku
 

@@ -6,6 +6,19 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.089] – 2026-11-12
+
+### Změněno
+- **Aplikace pro telefon je podepsaná vlastním klíčem** „Pinup Katalog“ (RSA 4096) místo ladicího „Android Debug“,
+  který Google Play Protect označuje za potenciálně škodlivý častěji – varování se objevilo při první aktualizaci.
+  Klíč `~/.config/pinup-katalog/telefon-podpis.keystore` s náhodným heslem v `telefon-podpis.heslo` (mimo git,
+  práva 0600) vznikne při prvním sestavení; oba soubory je potřeba zálohovat. Přechod znamenal jednou aplikaci
+  odinstalovat a nainstalovat kabelem (přihlášení a stažená sbírka v telefonu se smazaly).
+
+### Ověřeno
+- Aktualizace bez kabelu z 0.02.088: 0.2.87 → 0.2.88 přes Disk prošla.
+- Na telefonu nainstalována 0.2.89 podepsaná novým klíčem.
+
 ## [0.02.088] – 2026-11-12
 
 ### Přidáno

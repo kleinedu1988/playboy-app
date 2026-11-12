@@ -6,6 +6,23 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.064] – 2026-11-12
+
+### Přidáno
+- **Ročník podle Wikipedie pro Penthouse:** v Kalendáři s řadou Penthouse (nabídka roku) a na stránce ročníku
+  Penthouse tlačítko „Podle Wikipedie…“. Porovná Pets měsíců a Pet of the Year se sbírkou (ve sbírce, podobné
+  jméno, jiný měsíc, chybí); chybějící jdou přidat rychlým oknem s předvyplněným jménem a číslem Penthouse.
+  Anglická Wikipedie seznam Pets nemá, zdrojem je italská stránka „Penthouse Pet“. Pet ve sbírce se pozná
+  podle centerfoldu i alba s titulem měsíce v čísle `RRRR-MM@PH`.
+
+### Ověřeno
+- Test s falešnou Wikipedií: shoda (album titulu i centerfold), jiný měsíc, chybí, měsíc mimo seznam, Pet roku;
+  stejný měsíc Playboye se s Penthouse neplete; Hustler hlásí, že seznam nemá. Playboy beze změny (starý test).
+- Parser na skutečném textu stránky: 1985 – 12 Pets, 1992 i Pet of the Year (Jisel), 2025 – 5 měsíců. Italský
+  seznam nemá Pet of the Year 1985, takový řádek pak chybí.
+- Snímky na kopii sbírky (živá Wikipedie): ročník 1985 – 0 z 12, Angela Nicholas ve sbírce bez čísla; ročník
+  1970 – Ilse Hasek a Heide Mann ✓, ostatní k přidání.
+
 ## [0.02.063] – 2026-11-12
 
 ### Přidáno

@@ -321,6 +321,8 @@ export function PrijmoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>):Promise<number>
 
 export function PrijmoutNavrhyZWebuVratitelne(arg1:Array<main.NavrhZWebu>):Promise<main.PrijetiZWebu>;
 
+export function RocnikCasopisuPodleWikipedie(arg1:number,arg2:string):Promise<main.RocnikWikipedie>;
+
 export function RocnikPodleWikipedie(arg1:number):Promise<main.RocnikWikipedie>;
 
 export function RozdilZalohy(arg1:string):Promise<main.RozdilZalohy>;

@@ -94,6 +94,7 @@ const CTENI = new Set([
     'GetZdraviSbirky',
     'RozdilZalohy',
     'RocnikPodleWikipedie',
+    'RocnikCasopisuPodleWikipedie',
     'GetNavrhyZWebu',
     'GetStavPruchoduWebem',
     'PocetOdmitnutychZWebu',
@@ -299,6 +300,7 @@ export const GetZminky = /** @type {typeof App.GetZminky} */ (obalit('GetZminky'
 export const GetZdraviSbirky = /** @type {typeof App.GetZdraviSbirky} */ (obalit('GetZdraviSbirky'));
 export const RozdilZalohy = /** @type {typeof App.RozdilZalohy} */ (obalit('RozdilZalohy'));
 export const RocnikPodleWikipedie = /** @type {typeof App.RocnikPodleWikipedie} */ (obalit('RocnikPodleWikipedie'));
+export const RocnikCasopisuPodleWikipedie = /** @type {typeof App.RocnikCasopisuPodleWikipedie} */ (obalit('RocnikCasopisuPodleWikipedie'));
 export const PrijmoutJmenoZWikipedie = /** @type {typeof App.PrijmoutJmenoZWikipedie} */ (obalit('PrijmoutJmenoZWikipedie'));
 export const SpustitPruchodWebem = /** @type {typeof App.SpustitPruchodWebem} */ (obalit('SpustitPruchodWebem'));
 export const PrerusitPruchodWebem = /** @type {typeof App.PrerusitPruchodWebem} */ (obalit('PrerusitPruchodWebem'));

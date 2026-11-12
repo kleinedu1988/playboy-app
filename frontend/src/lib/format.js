@@ -100,6 +100,11 @@ export function moznostiSteny() {
     return seznam.length > 1 ? [...v, { hodnota: 'vsechny', nazev: 'Všechny časopisy' }] : v;
 }
 
+// Řady, pro které má Wikipedie seznam modelek měsíce (Ročník podle Wikipedie): řada → klíč časopisu pro backend;
+// Playboy US z anglické, Penthouse US z italské Wikipedie (0.02.064)
+export const RADY_WIKIPEDIE = Object.freeze({ US: 'PB', 'PH/US': 'PH' });
+export const maRocnikWiki = (/** @type {string} */ rada) => Object.hasOwn(RADY_WIKIPEDIE, rada);
+
 // Klíč z roku, měsíce (nebo Snn, '' = ročník) a řady („US“, „CZ“, „PH/UK“)
 export function slozitVydani(rok, mesic, edice) {
     if (!rok) return '';

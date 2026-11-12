@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.064 – Penthouse Pets z Wikipedie
+
+- [ ] Kalendář › řada Penthouse › nabídka roku › Ročník podle Wikipedie… ukáže Pets měsíců a Pet of the Year.
+- [ ] Přidání chybějící Pet předvyplní číslo Penthouse (řada Penthouse US), ne Playboy.
+- [ ] Playboy ročník podle Wikipedie funguje jako dřív.
+
 ## 0.02.063 – Učení z potvrzení
 
 - [ ] Po ~20 potvrzeních v Údržbě › Druh fotek ubude chybných návrhů (podobné fotky jako opravené zmizí), správné zůstanou.

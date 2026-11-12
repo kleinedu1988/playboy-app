@@ -2,7 +2,7 @@
 import { otevritRocnikWiki } from './rocnik-wiki';
 import { GetKalendar, GetStavyVydani, GetVydani, SetStavVydani } from './backend';
 import { prevest } from '../lib/hledani-dotaz';
-import { MESICE, VYCHOZI_EDICE, nazevRady, kdoVCisle, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
+import { MESICE, VYCHOZI_EDICE, maRocnikWiki, nazevRady, kdoVCisle, ciselRocniku, cisloNevyslo, esc, htmlVarovaniHledani, nazevVydani, nepouziteKlice, obrazek, poleCisla, rozlozitDotaz, rozlozitVydani, slozitVydani, sklonovat, specialyRoku, vyhovujeHledani } from '../lib/format';
 import { otevritKontextovouNabidku } from '../ui/nabidka';
 import { stav } from './stav';
 import { htmlStitkuRad, nazevVolbyRady, platnaRadaKalendare } from './rady';
@@ -279,8 +279,8 @@ export function nabidkaRoku(klic, x, y) {
         { text: 'Otevřít ročník', akce: () => otevritVydani(klic) },
         { text: 'Přidat pictorial k ročníku', akce: () => pridatPictorial(klic) },
         { text: `Nový speciál roku ${rok}…`, akce: async () => { if (await zalozitSpecial(rok, edice)) obnovitKalendar(); } },
-        // Seznamy Playmate na Wikipedii jsou jen pro americkou edici
-        ...(edice === VYCHOZI_EDICE ? [{ text: 'Ročník podle Wikipedie…', akce: () => otevritRocnikWiki(rok) }] : []),
+        // Seznamy na Wikipedii: Playmate americké edice a Penthouse Pets (0.02.064)
+        ...(maRocnikWiki(edice) ? [{ text: 'Ročník podle Wikipedie…', akce: () => otevritRocnikWiki(rok, edice) }] : []),
     ]);
 }
 

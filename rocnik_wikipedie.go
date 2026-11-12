@@ -3,6 +3,9 @@ package main
 // Ročník podle Wikipedie: Playmate měsíců ze seznamu „List of Playboy Playmates of RRRR“ (všechny infoboxy
 // v oddílech měsíců, některé měsíce mají víc Playmate) a Playmate roku ze seznamu „List of Playboy Playmates of
 // the Year“, porovnané se sbírkou. Jen na kliknutí; zápis (jméno z Wikipedie) jen s potvrzením.
+//
+// Penthouse (0.02.064): anglická Wikipedie seznam Pets nemá (článek smazán), italská má celý seznam „Penthouse
+// Pet“ – oddíl Pet of the Year („* 1985 – Jméno“) a Pet of the Month po rocích („;1985“ a „*Gennaio – Jméno“).
 
 import (
 	"fmt"
@@ -24,11 +27,15 @@ type RadekRocniku struct {
 }
 
 type RocnikWikipedie struct {
-	Rok    int            `json:"rok"`
-	Radky  []RadekRocniku `json:"radky"`
-	Shod   int            `json:"shod"`
-	Chyba  string         `json:"chyba"`
-	Zdroje []string       `json:"zdroje"`
+	Rok     int    `json:"rok"`
+	Casopis string `json:"casopis"` // PB, PH
+	// Tituly modelky měsíce a roku podle časopisu (Playmate of the Month, Pet of the Year…)
+	TitulMesice string         `json:"titulMesice"`
+	TitulRoku   string         `json:"titulRoku"`
+	Radky       []RadekRocniku `json:"radky"`
+	Shod        int            `json:"shod"`
+	Chyba       string         `json:"chyba"`
+	Zdroje      []string       `json:"zdroje"`
 }
 
 const podobnostPreklepu = 0.88
@@ -95,20 +102,71 @@ func jePlaymateRokuZ(m *Modelka, rok int) bool {
 	return strings.Contains(m.PlaymateRoku, strconv.Itoa(rok))
 }
 
-// Porovnání ročníku americké edice se sbírkou
+// Porovnání ročníku americké edice Playboye se sbírkou
 func (a *App) RocnikPodleWikipedie(rok int) RocnikWikipedie {
-	r := RocnikWikipedie{Rok: rok, Radky: []RadekRocniku{}, Zdroje: []string{}}
+	return a.RocnikCasopisuPodleWikipedie(rok, hledani.VychoziCasopis)
+}
+
+// Časopisy, které mají seznam modelek měsíce na Wikipedii (klíč časopisu)
+var rocnikyNaWikipedii = map[string]bool{hledani.VychoziCasopis: true, "PH": true}
+
+// Porovnání ročníku časopisu (americká edice) se sbírkou: PB podle anglické, PH podle italské Wikipedie
+func (a *App) RocnikCasopisuPodleWikipedie(rok int, casopis string) RocnikWikipedie {
+	if casopis == "" {
+		casopis = hledani.VychoziCasopis
+	}
+	r := RocnikWikipedie{Rok: rok, Casopis: casopis, Radky: []RadekRocniku{}, Zdroje: []string{}}
+	tituly := a.titulyCasopisu()[casopis]
+	r.TitulMesice, r.TitulRoku = tituly[0], tituly[1]
+	if !rocnikyNaWikipedii[casopis] {
+		r.Chyba = "Pro tento časopis Wikipedie seznam modelek měsíce nemá."
+		return r
+	}
 	if rok < 1953 || rok > 2030 {
 		r.Chyba = "Neplatný ročník."
 		return r
 	}
-	mesice, adresa, err := playmatyRocniku(rok)
+	var mesice map[int][]string
+	var roku []string
+	var adresa, adresaRoku string
+	var err error
+	klic := func(mesic int) string { return fmt.Sprintf("%d-%02d", rok, mesic) }
+	odkaz := func(mesic int) string { return fmt.Sprintf("%s#%s", adresa, nazvyMesicuEn[mesic]) }
+	// Čísla modelky, ve kterých je modelkou měsíce, a vzor měsíčního čísla časopisu
+	cisla := func(m *Modelka) []string { return m.Centerfoldy }
+	mesicni := vzorCenterfolduUS.MatchString
+	jeRoku := func(m *Modelka) bool { return jePlaymateRokuZ(m, rok) }
+	if casopis == "PH" {
+		mesice, roku, adresa, err = petyPenthouse(rok)
+		adresaRoku = adresa
+		klic = func(mesic int) string { return fmt.Sprintf("%d-%02d@PH", rok, mesic) }
+		odkaz = func(int) string { return adresa }
+		// Pet bývá ve sbírce jako album s titulem měsíce, nejen centerfold
+		cisla = func(m *Modelka) []string { return append(append([]string(nil), m.Centerfoldy...), m.Vydani...) }
+		mesicni = vzorCislaPenthouse.MatchString
+		jeRoku = func(m *Modelka) bool {
+			for _, t := range m.TitulyJinde {
+				if t.Nazev == r.TitulRoku && t.Rok == strconv.Itoa(rok) {
+					return true
+				}
+			}
+			return false
+		}
+	} else {
+		mesice, adresa, err = playmatyRocniku(rok)
+		if err == nil && mesice != nil {
+			// Playmate roku (chyba seznamu ročník nekazí)
+			if jmena, a2, e2 := playmateRokuWikipedie(rok); e2 == nil {
+				roku, adresaRoku = jmena, a2
+			}
+		}
+	}
 	if err != nil {
 		r.Chyba = "Wikipedie neodpovídá: " + err.Error()
 		return r
 	}
 	if mesice == nil {
-		r.Chyba = fmt.Sprintf("Wikipedie nemá seznam Playmate roku %d.", rok)
+		r.Chyba = fmt.Sprintf("Wikipedie nemá seznam %s roku %d.", nazevSeznamu(tituly[0]), rok)
 		return r
 	}
 	r.Zdroje = append(r.Zdroje, adresa)
@@ -122,12 +180,12 @@ func (a *App) RocnikPodleWikipedie(rok int) RocnikWikipedie {
 		return nil
 	}
 	for mesic := 1; mesic <= 12; mesic++ {
-		vydani := fmt.Sprintf("%d-%02d", rok, mesic)
-		url := fmt.Sprintf("%s#%s", adresa, nazvyMesicuEn[mesic])
-		// Centerfoldy sbírky v tomto čísle; každý jde spárovat jen jednou
+		vydani := klic(mesic)
+		url := odkaz(mesic)
+		// Modelky měsíce sbírky v tomto čísle; každá jde spárovat jen jednou
 		var vCisle []*Modelka
 		for i := range modelky {
-			if obsahuje(modelky[i].Centerfoldy, vydani) {
+			if obsahuje(cisla(&modelky[i]), vydani) {
 				vCisle = append(vCisle, &modelky[i])
 			}
 		}
@@ -157,8 +215,8 @@ func (a *App) RocnikPodleWikipedie(rok int) RocnikWikipedie {
 			if m := podleJmena(radek.Jmeno); m != nil {
 				radek.ModelkaID, radek.JmenoSbirky = m.ID, m.Jmeno
 				radek.Stav = "bez-centerfoldu"
-				for _, c := range m.Centerfoldy {
-					if vzorCenterfolduUS.MatchString(c) {
+				for _, c := range cisla(m) {
+					if mesicni(c) {
 						radek.Stav, radek.VydaniSbirky = "jiny-mesic", c
 						break
 					}
@@ -188,15 +246,16 @@ func (a *App) RocnikPodleWikipedie(rok int) RocnikWikipedie {
 			r.Radky = append(r.Radky, radek)
 		}
 	}
-	// Playmate roku (chyba seznamu ročník nekazí)
-	if jmena, adresaPmoy, err := playmateRokuWikipedie(rok); err == nil && len(jmena) > 0 {
-		r.Zdroje = append(r.Zdroje, adresaPmoy)
-		for _, jmeno := range jmena {
-			radek := RadekRocniku{Mesic: 0, Jmeno: jmeno, URL: adresaPmoy, Stav: "chybi"}
+	if len(roku) > 0 {
+		if adresaRoku != adresa {
+			r.Zdroje = append(r.Zdroje, adresaRoku)
+		}
+		for _, jmeno := range roku {
+			radek := RadekRocniku{Mesic: 0, Jmeno: jmeno, URL: adresaRoku, Stav: "chybi"}
 			if m := podleJmena(jmeno); m != nil {
 				radek.ModelkaID, radek.JmenoSbirky = m.ID, m.Jmeno
 				radek.Stav = "bez-oceneni"
-				if jePlaymateRokuZ(m, rok) {
+				if jeRoku(m) {
 					radek.Stav = "shoda"
 				}
 			}
@@ -209,6 +268,78 @@ func (a *App) RocnikPodleWikipedie(rok int) RocnikWikipedie {
 		}
 	}
 	return r
+}
+
+func nazevSeznamu(titul string) string {
+	if t := strings.TrimSuffix(strings.TrimSuffix(titul, " of the Month"), " měsíce"); t != "" {
+		return t
+	}
+	return "modelek měsíce"
+}
+
+// ——— Penthouse Pets z italské Wikipedie ———
+
+var (
+	vzorCislaPenthouse = regexp.MustCompile(`^\d{4}-\d{2}@PH$`)
+	vzorRokuPetu       = regexp.MustCompile(`(?m)^;\s*(\d{4})\b`)
+	vzorPetuMesice     = regexp.MustCompile(`^\*\s*([A-Za-z]+)\s*[–—-]\s*(.+)$`)
+	vzorPetuRoku       = regexp.MustCompile(`(?m)^\*\s*(\d{4})\s*[–—-]\s*(.+)$`)
+	mesiceIt           = map[string]int{"gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4, "maggio": 5, "giugno": 6,
+		"luglio": 7, "agosto": 8, "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12}
+)
+
+const strankaPetu = "Penthouse Pet"
+
+// Pets měsíců (1–12) a Pet of the Year daného roku ze seznamu na italské Wikipedii; mesice nil = rok v seznamu není
+func petyPenthouse(rok int) (map[int][]string, []string, string, error) {
+	text, _, err := wikitextStranky(adresaWikipedieIt, strankaPetu, "")
+	if err != nil || text == "" {
+		return nil, nil, "", err
+	}
+	text = vzorRef.ReplaceAllString(text, "")
+	adresa := webWikipedieIt + strings.ReplaceAll(strankaPetu, " ", "_")
+	var mesice map[int][]string
+	roky := vzorRokuPetu.FindAllStringSubmatchIndex(text, -1)
+	for k, m := range roky {
+		if text[m[2]:m[3]] != strconv.Itoa(rok) {
+			continue
+		}
+		konec := len(text)
+		if k+1 < len(roky) {
+			konec = roky[k+1][0]
+		}
+		oddil := text[m[1]:konec]
+		if n := regexp.MustCompile(`(?m)^==`).FindStringIndex(oddil); n != nil {
+			oddil = oddil[:n[0]]
+		}
+		mesice = map[int][]string{}
+		for _, radek := range strings.Split(oddil, "\n") {
+			s := vzorPetuMesice.FindStringSubmatch(strings.TrimSpace(radek))
+			if s == nil {
+				continue
+			}
+			if mesic := mesiceIt[strings.ToLower(s[1])]; mesic > 0 {
+				if jmeno := vycistitWikitext(s[2]); jmeno != "" {
+					mesice[mesic] = append(mesice[mesic], jmeno)
+				}
+			}
+		}
+		break
+	}
+	// Pet of the Year: oddíl před Pet of the Month
+	var roku []string
+	oddilRoku := text
+	if i := strings.Index(text, "== Pet of the Month"); i >= 0 {
+		oddilRoku = text[:i]
+	}
+	for _, s := range vzorPetuRoku.FindAllStringSubmatch(oddilRoku, -1) {
+		if s[1] == strconv.Itoa(rok) {
+			if jmeno := vycistitWikitext(s[2]); jmeno != "" {
+				roku = append(roku, jmeno)
+			}
+		}
+	}
+	return mesice, roku, adresa, nil
 }
 
 // Jméno z Wikipedie k modelce: přejmenovat (dosavadní jméno přejde do dalších jmen), nebo jen přidat jako další jméno

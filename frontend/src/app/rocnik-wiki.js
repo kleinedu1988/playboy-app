@@ -1,10 +1,10 @@
 // Ročník podle Wikipedie (rocnik_wikipedie.go): Playmate měsíců a Playmate roku proti sbírce. Chybějící jdou
 // přidat jedna po druhé rychlým oknem Nová modelka (jméno a číslo předvyplněné), podobné jméno (překlep) jde
 // s potvrzením převzít z Wikipedie. Otevírá se z kontextové nabídky roku v Kalendáři, ze stránky ročníku
-// a z popisku roku v americké mapě sbírky.
-import { PrijmoutJmenoZWikipedie, RocnikPodleWikipedie } from './backend';
+// a z popisku roku v americké mapě sbírky. Penthouse (0.02.064) podle italské Wikipedie, řada „PH/US“.
+import { PrijmoutJmenoZWikipedie, RocnikCasopisuPodleWikipedie } from './backend';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
-import { MESICE, esc, nazevVydani } from '../lib/format';
+import { MESICE, RADY_WIKIPEDIE, VYCHOZI_EDICE, esc, maRocnikWiki, nazevRady, nazevVydani } from '../lib/format';
 import { drzetFokus } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
 import { otevritFrontuRychlehoPridani } from './formular-modelky';
@@ -13,6 +13,9 @@ import { otevritVydani } from './vydani';
 
 let okno = null;
 let rok = 0;
+// Řada ročníku: „US“ (Playboy) nebo „PH/US“ (Penthouse)
+let rada = VYCHOZI_EDICE;
+
 /** @type {any} */
 let data = null;
 
@@ -22,9 +25,9 @@ const POPISY = {
     'jine-jmeno': ['≠', 'v čísle je jiná'],
     'jiny-mesic': ['↔', 'jiný měsíc'],
     'bez-centerfoldu': ['○', 'bez centerfoldu'],
-    'bez-oceneni': ['○', 'bez alba Playmate roku'],
+    'bez-oceneni': ['○', 'bez alba titulu roku'],
     chybi: ['+', 'chybí'],
-    nenalezeno: ['–', 'seznam nemá infobox'],
+    nenalezeno: ['–', 'seznam měsíc nemá'],
 };
 
 function vytvoritOkno() {
@@ -67,7 +70,7 @@ const zavrit = () => okno.classList.add('hidden');
 
 // Položka fronty rychlého okna: Playmate měsíce s číslem, Playmate roku jen se jménem
 function polozkaFronty(r) {
-    return r.mesic ? { jmeno: r.jmeno, cislo: { rok: String(rok), mesic: String(r.mesic).padStart(2, '0'), edice: 'US', typ: 'Centerfold' } } : { jmeno: r.jmeno };
+    return r.mesic ? { jmeno: r.jmeno, cislo: { rok: String(rok), mesic: String(r.mesic).padStart(2, '0'), edice: rada, typ: 'Centerfold' } } : { jmeno: r.jmeno };
 }
 
 function pridatVybrane() {
@@ -87,13 +90,13 @@ function obnovitTlacitko() {
 function htmlRadku(r, i) {
     const [znak, popis] = POPISY[r.stav] || ['', r.stav];
     const odkaz = (akce, text, titulek = '') => `<button type="button" class="link" data-rw-akce="${akce}" data-i="${i}"${titulek ? ` title="${esc(titulek)}"` : ''}>${text}</button>`;
-    const kdy = r.mesic ? MESICE[r.mesic - 1] : 'Playmate roku';
+    const kdy = r.mesic ? MESICE[r.mesic - 1] : data?.titulRoku || 'Titul roku';
     let detail = '';
     switch (r.stav) {
         case 'shoda': detail = odkaz('profil', 'profil'); break;
         case 'preklep': detail = `ve sbírce <b>${esc(r.jmenoSbirky)}</b> · ${odkaz('prejmenovat', 'přejmenovat podle Wikipedie', 'Dosavadní jméno přejde do dalších jmen')} · ${odkaz('dalsi-jmeno', 'jen přidat jako další jméno')}`; break;
         case 'jine-jmeno': detail = `ve sbírce je v čísle <b>${esc(r.jmenoSbirky)}</b> · ${odkaz('cislo', 'číslo')} · ${odkaz('pridat', 'přidat…')}`; break;
-        case 'jiny-mesic': detail = `ve sbírce má centerfold ${esc(nazevVydani(r.vydaniSbirky))} · ${odkaz('profil', 'profil')}`; break;
+        case 'jiny-mesic': detail = `ve sbírce je v čísle ${esc(nazevVydani(r.vydaniSbirky))} · ${odkaz('profil', 'profil')}`; break;
         case 'bez-centerfoldu': case 'bez-oceneni': detail = `${odkaz('profil', 'profil')}`; break;
         case 'nenalezeno': detail = ''; break;
     }
@@ -106,8 +109,8 @@ function htmlRadku(r, i) {
 
 async function nacist() {
     const obsah = okno.querySelector('[data-rw-obsah]');
-    obsah.innerHTML = '<p class="pass-hint">Načítám seznam Playmate z Wikipedie…</p>';
-    const r = await RocnikPodleWikipedie(rok).catch(() => null);
+    obsah.innerHTML = `<p class="pass-hint">Načítám seznam ${rada === VYCHOZI_EDICE ? 'Playmate' : 'Pets'} z Wikipedie…</p>`;
+    const r = await RocnikCasopisuPodleWikipedie(rok, RADY_WIKIPEDIE[rada] || 'PB').catch(() => null);
     if (okno.classList.contains('hidden')) return;
     if (!r || r.chyba) {
         obsah.innerHTML = `<p class="pass-hint">${esc(r?.chyba || 'Wikipedie neodpovídá – je počítač připojený k internetu?')}</p>`;
@@ -122,11 +125,12 @@ async function nacist() {
     obnovitTlacitko();
 }
 
-export function otevritRocnikWiki(novyRok) {
+export function otevritRocnikWiki(novyRok, novaRada = VYCHOZI_EDICE) {
     rok = parseInt(novyRok) || 0;
-    if (!rok) return;
+    if (!rok || !maRocnikWiki(novaRada)) return;
+    rada = novaRada;
     if (!okno) vytvoritOkno();
-    okno.querySelector('#rwNadpis').textContent = `Ročník ${rok} podle Wikipedie`;
+    okno.querySelector('#rwNadpis').textContent = `Ročník ${rok}${rada !== VYCHOZI_EDICE ? ` · ${nazevRady(rada)}` : ''} podle Wikipedie`;
     data = null;
     obnovitTlacitko();
     okno.classList.remove('hidden');
@@ -138,6 +142,6 @@ export function pripravit() {
         const b = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest?.('[data-rocnik-wiki]'));
         if (!b) return;
         e.stopPropagation();
-        otevritRocnikWiki(b.dataset.rocnikWiki);
+        otevritRocnikWiki(b.dataset.rocnikWiki, b.dataset.rocnikRada || VYCHOZI_EDICE);
     }, true);
 }

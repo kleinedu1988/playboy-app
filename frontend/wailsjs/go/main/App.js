@@ -626,6 +626,10 @@ export function PrijmoutNavrhyZWebuVratitelne(arg1) {
   return window['go']['main']['App']['PrijmoutNavrhyZWebuVratitelne'](arg1);
 }
 
+export function RocnikCasopisuPodleWikipedie(arg1, arg2) {
+  return window['go']['main']['App']['RocnikCasopisuPodleWikipedie'](arg1, arg2);
+}
+
 export function RocnikPodleWikipedie(arg1) {
   return window['go']['main']['App']['RocnikPodleWikipedie'](arg1);
 }

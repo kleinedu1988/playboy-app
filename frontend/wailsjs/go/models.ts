@@ -2509,6 +2509,9 @@ export namespace main {
 	
 	export class RocnikWikipedie {
 	    rok: number;
+	    casopis: string;
+	    titulMesice: string;
+	    titulRoku: string;
 	    radky: RadekRocniku[];
 	    shod: number;
 	    chyba: string;
@@ -2521,6 +2524,9 @@ export namespace main {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.rok = source["rok"];
+	        this.casopis = source["casopis"];
+	        this.titulMesice = source["titulMesice"];
+	        this.titulRoku = source["titulRoku"];
 	        this.radky = this.convertValues(source["radky"], RadekRocniku);
 	        this.shod = source["shod"];
 	        this.chyba = source["chyba"];

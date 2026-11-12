@@ -24,20 +24,23 @@ import (
 )
 
 var (
-	adresaWikidat    = "https://www.wikidata.org/w/api.php"
-	adresaWikipedie  = "https://en.wikipedia.org/w/api.php"
-	adresaBoobpedie  = "https://www.boobpedia.com/wiki/api.php"
-	webWikidat       = "https://www.wikidata.org/wiki/"
-	webWikipedie     = "https://en.wikipedia.org/wiki/"
-	webBoobpedie     = "https://www.boobpedia.com/boobs/"
-	klientZdroju     = &http.Client{Timeout: 15 * time.Second}
-	odstupDotazu     = time.Second
-	uaZdroju         = "PlayboyApp/1.38 (personal collection catalogue; on-demand lookups)"
-	zdrojeMezipamet  = map[string][]byte{}
-	zdrojeCasy       = map[string]time.Time{}
-	zdrojeZamek      sync.Mutex
-	zdrojePosledni   = map[string]time.Time{}
-	zdrojePosledniZa sync.Mutex
+	adresaWikidat   = "https://www.wikidata.org/w/api.php"
+	adresaWikipedie = "https://en.wikipedia.org/w/api.php"
+	adresaBoobpedie = "https://www.boobpedia.com/wiki/api.php"
+	webWikidat      = "https://www.wikidata.org/wiki/"
+	webWikipedie    = "https://en.wikipedia.org/wiki/"
+	// Italská Wikipedie: seznam Penthouse Pets (0.02.064)
+	adresaWikipedieIt = "https://it.wikipedia.org/w/api.php"
+	webWikipedieIt    = "https://it.wikipedia.org/wiki/"
+	webBoobpedie      = "https://www.boobpedia.com/boobs/"
+	klientZdroju      = &http.Client{Timeout: 15 * time.Second}
+	odstupDotazu      = time.Second
+	uaZdroju          = "PlayboyApp/1.38 (personal collection catalogue; on-demand lookups)"
+	zdrojeMezipamet   = map[string][]byte{}
+	zdrojeCasy        = map[string]time.Time{}
+	zdrojeZamek       sync.Mutex
+	zdrojePosledni    = map[string]time.Time{}
+	zdrojePosledniZa  sync.Mutex
 )
 
 const (

@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"pinup-katalog/internal/google"
 )
@@ -188,5 +189,35 @@ func TestNovejsi(t *testing.T) {
 		if novejsi(c.a, c.b) != c.v {
 			t.Errorf("%s > %s: %v", c.a, c.b, !c.v)
 		}
+	}
+}
+
+// Pomalá obnova přístupu u Googlu nesmí blokovat stránku (Stav, Balicek) – zámek se při síti nedrží (0.02.092)
+func TestPomalaObnovaNeblokuje(t *testing.T) {
+	pustit := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/token" {
+			<-pustit
+			json.NewEncoder(w).Encode(map[string]any{"access_token": "pristup", "expires_in": 3600})
+			return
+		}
+		w.WriteHeader(404)
+	}))
+	defer server.Close()
+	defer close(pustit)
+	adresy = google.Adresy{Token: server.URL + "/token", API: server.URL}
+	Nastavit(t.TempDir(), []byte(`{"client_id":"id"}`))
+	ulozitToken(&token{Obnovovaci: "obnova", Email: "a@b.cz"})
+	go Stahnout()
+	time.Sleep(200 * time.Millisecond)
+	hotovo := make(chan string, 1)
+	go func() { hotovo <- Stav() + Balicek() }()
+	select {
+	case s := <-hotovo:
+		if !strings.Contains(s, `"prihlasen":true`) {
+			t.Fatalf("stav: %s", s)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Stav čeká na obnovu přístupu u Googlu")
 	}
 }

@@ -6,6 +6,17 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.092] – 2026-11-12
+
+### Opraveno
+- **Aplikace v telefonu nezamrzne při obnově přístupu ke Googlu.** Jádro drželo zámek i během čekání na Google
+  (přístupový token se obnovuje po hodině), takže stránka mezitím nedostala stav přihlášení ani balíček – při
+  pomalém připojení mohla po startu desítky sekund stát. Zámek se teď při síti nedrží; odhlášení během obnovy
+  její výsledek zahodí.
+
+### Ověřeno
+- Test s pomalým Googlem (před opravou padal), testy jádra s detektorem souběhů.
+
 ## [0.02.091] – 2026-11-12
 
 ### Opraveno

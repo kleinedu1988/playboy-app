@@ -238,18 +238,25 @@ func Odhlasit() {
 	}
 }
 
-// Platný přístupový token (obnoví ho, když vypršel)
+// Platný přístupový token (obnoví ho, když vypršel). Zámek se při čekání na Google nedrží (0.02.092), jinak by
+// stránka (Stav, Balicek) při pomalém připojení zamrzla; souběžné obnovy nevadí, uloží se poslední
 func pristup(ctx context.Context) (string, error) {
 	mu.Lock()
-	defer mu.Unlock()
-	t := nacistToken()
+	t, k := nacistToken(), klient
+	mu.Unlock()
 	if t == nil {
 		return "", errors.New("Nejsi přihlášený ke Googlu")
 	}
 	if t.Pristupovy != "" && time.Until(t.Platnost) > time.Minute {
 		return t.Pristupovy, nil
 	}
-	p, platnost, err := google.Obnovit(ctx, adresy, klient, t.Obnovovaci)
+	p, platnost, err := google.Obnovit(ctx, adresy, k, t.Obnovovaci)
+	mu.Lock()
+	defer mu.Unlock()
+	// Mezitím odhlášeno nebo přihlášeno znovu: výsledek se zahodí
+	if aktualni := nacistToken(); aktualni == nil || aktualni.Obnovovaci != t.Obnovovaci {
+		return "", errors.New("Nejsi přihlášený ke Googlu")
+	}
 	if errors.Is(err, google.ErrOdvolano) {
 		os.Remove(cestaTokenu())
 		return "", errors.New("Přihlášení ke Googlu vypršelo nebo bylo odvoláno – přihlas se znovu")

@@ -1933,6 +1933,7 @@ export namespace main {
 	    }
 	}
 	export class PlaymatePodleWikipedie {
+	    titul: string;
 	    jmeno: string;
 	    url: string;
 	    modelkaId: number;
@@ -1944,6 +1945,7 @@ export namespace main {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.titul = source["titul"];
 	        this.jmeno = source["jmeno"];
 	        this.url = source["url"];
 	        this.modelkaId = source["modelkaId"];

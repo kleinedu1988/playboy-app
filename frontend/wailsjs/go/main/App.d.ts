@@ -227,6 +227,8 @@ export function GetVyrezyFotek(arg1:Array<string>):Promise<Array<main.VyrezFotky
 
 export function GetVyvojVCase(arg1:string):Promise<sbirka.VyvojVCase>;
 
+export function GetZalohyNaDisku():Promise<main.ZalohyNaDisku>;
+
 export function GetZdraviSbirky():Promise<main.ZdraviSbirky>;
 
 export function GetZminky(arg1:string,arg2:string):Promise<Array<main.Zminka>>;
@@ -240,6 +242,8 @@ export function ImportovatSoubory(arg1:Array<string>):Promise<main.VysledekImpor
 export function MaZamek():Promise<boolean>;
 
 export function NahledSlouceniModelek(arg1:number,arg2:number):Promise<main.NahledSlouceni>;
+
+export function NahratZalohuNaDisk():Promise<string>;
 
 export function NajitUdajeModelky(arg1:number):Promise<main.NalezUdaju>;
 
@@ -410,6 +414,8 @@ export function SpustitOtisky():Promise<boolean>;
 export function SpustitPruchodWebem(arg1:boolean,arg2:boolean):Promise<boolean>;
 
 export function SpustitStahovaniNahledu():Promise<boolean>;
+
+export function StahnoutZalohuZDisku(arg1:string):Promise<string>;
 
 export function StavDatabaze():Promise<string>;
 

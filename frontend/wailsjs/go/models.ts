@@ -3789,6 +3789,60 @@ export namespace main {
 	        this.chyba = source["chyba"];
 	    }
 	}
+	export class ZalohaNaDisku {
+	    id: string;
+	    nazev: string;
+	    cas: string;
+	    velikost: number;
+	    mistni: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new ZalohaNaDisku(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.nazev = source["nazev"];
+	        this.cas = source["cas"];
+	        this.velikost = source["velikost"];
+	        this.mistni = source["mistni"];
+	    }
+	}
+	export class ZalohyNaDisku {
+	    prihlasen: boolean;
+	    zalohy: ZalohaNaDisku[];
+	    chyba: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ZalohyNaDisku(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.prihlasen = source["prihlasen"];
+	        this.zalohy = this.convertValues(source["zalohy"], ZalohaNaDisku);
+	        this.chyba = source["chyba"];
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class ZapisPruvodce {
 	    ids: number[];
 	    skupiny: string[];

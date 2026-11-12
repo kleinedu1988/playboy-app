@@ -21850,3 +21850,23 @@ button.udd-nazev {
 }
 /* Brána (0.02.075): bez zavření */
 .ucet.brana .ucet-zavrit { display: none; }
+
+/* Zálohy na Google Disku (0.02.076) */
+.backup-disk {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 2px solid var(--border-color);
+}
+.backup-disk-hlava {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.backup-disk-hlava h4 {
+    margin: 0;
+    font-size: 14px;
+}
+.backup-disk .backup-list {
+    max-height: min(260px, 30vh);
+}

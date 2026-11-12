@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.076 – Záloha na Google Disk
+
+- [ ] Po přihlášení: ⋯ › Obnovit ze zálohy… › Nahrát teď – záloha se objeví v oddílu Na Google Disku (10 MB, chvíli trvá).
+- [ ] Další den po startu se denní záloha nahraje sama.
+- [ ] Na drive.google.com › Nastavení › Spravovat aplikace je Pinup Katalog se skrytými daty (velikost záloh).
+- [ ] Stáhnout zálohu, která není mezi místními (třeba po smazání ze složky záloh), a obnovit ji.
+
 ## 0.02.075 – Vstup přes Google
 
 - [ ] S `google-klient.json`: první start ukáže bránu, po přihlášení se sbírka otevře; další start rovnou bez brány.

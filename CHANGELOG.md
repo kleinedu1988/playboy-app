@@ -6,6 +6,24 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.076] – 2026-11-12
+
+### Přidáno
+- **Záloha na Google Disk:** po přihlášení ke Googlu se denní záloha sama nahraje do skryté složky programu na
+  Disku (appDataFolder – v Disku ji nevidíš a program nevidí nic jiného). Na Disku zůstává posledních sedm denních
+  záloh. Přístupový token se obnovuje sám.
+- ⋯ › Obnovit ze zálohy… má oddíl **Na Google Disku**: seznam záloh s velikostí, **Nahrát teď** (nahraje
+  dnešní denní zálohu hned) a **Stáhnout** u záloh, které nejsou mezi místními. Stažená záloha se ověří a objeví
+  se mezi místními, obnoví se obvyklou cestou (Obnovit… s porovnáním rozdílů) – takže jde obnovit i čistý
+  program po přihlášení.
+- Snímkovač: `FALESNY_DISK=1` nahradí Google i Disk místním serverem.
+
+### Ověřeno
+- Test s falešným Diskem: devět denních záloh se nahraje, zůstane posledních sedm, opakované nahrání nic
+  nepřidá; bez přihlášení se nenahrává nic; stažení do prázdné složky záloh vrátí čitelnou databázi.
+- Snímek: oddíl Na Google Disku po Nahrát teď ukazuje dnešní zálohu (10,9 MB, „je i mezi místními“).
+- **Neověřeno:** skutečný Google Disk.
+
 ## [0.02.075] – 2026-11-12
 
 ### Přidáno

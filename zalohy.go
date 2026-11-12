@@ -185,7 +185,10 @@ func (a *App) denniZaloha() {
 	}
 	if err := a.zalohovat(duvodDenni); err != nil {
 		a.chyba("denní záloha", err)
+		return
 	}
+	// Nová denní záloha i na Google Disk (zaloha_disk.go), je-li uživatel přihlášený
+	go a.zalohaNaDiskNaPozadi()
 }
 
 // Složka se zálohami pro zobrazení v aplikaci

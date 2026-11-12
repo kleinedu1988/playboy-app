@@ -1,6 +1,6 @@
 // Kontrola Disku, export a import, heslo, zálohy a nabídka ⋯
 import * as ucetGoogle from './ucet-google';
-import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, NahledSlouceniModelek, SloucitAlba, SloucitModelky, SlozkaZaloh, VratitSlouceniModelek, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
+import { DeleteFotografie, DeleteFotografieHromadne, ExportovatDoSouboru, GetFotografove, GetZalohyNaDisku, NahratZalohuNaDisk, StahnoutZalohuZDisku, GetSablonaObrazku, GetTagy, GetVerze, ImportovatSoubory, NastavitHeslo, ObnovitFotky, ObnovitZalohu, RozdilZalohy, OdebratFotky, Odemknout, PrejmenovatFotografa, PrejmenovatTag, PresunoutAlbum, PridatModelkuKAlbu, SetSablonaObrazku, SeznamZaloh, NahledSlouceniModelek, SloucitAlba, SloucitModelky, SlozkaZaloh, VratitSlouceniModelek, VybratSouboryImportu, VymazatMezipamet, ZkontrolovatDavku, ZkontrolovatSoubory } from './backend';
 import { otevritKapesniKatalog } from './kapesni-katalog';
 import * as novaVerze from './nova-verze';
 import { otevritVzhled } from './vzhled';
@@ -440,6 +440,30 @@ export async function otevritZalohy() {
             <div class="rozdil-zalohy hidden"></div>
         </li>`).join('');
     backupModal.classList.remove('hidden');
+    vykreslitZalohyNaDisku();
+}
+
+// Zálohy na Google Disku (0.02.076): jen po přihlášení; stažená záloha se objeví mezi místními a obnoví se jako
+// každá jiná (s porovnáním rozdílů)
+async function vykreslitZalohyNaDisku(/** @type {string} */ zprava = '') {
+    const misto = document.getElementById('backupDisk');
+    const v = await GetZalohyNaDisku().catch(() => null);
+    if (!v?.prihlasen) {
+        misto.classList.add('hidden');
+        return;
+    }
+    misto.classList.remove('hidden');
+    const radky = v.zalohy.map(z => `<li>
+            <strong>${esc(casZalohy(z))}</strong>
+            <span>${z.velikost ? `${(z.velikost / 1048576).toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} MB` : ''}${z.mistni ? ' · je i mezi místními' : ''}</span>
+            ${z.mistni ? '<span></span>' : `<button class="btn btn-secondary btn-small" data-stahnout="${esc(z.id)}" title="Stáhne zálohu mezi místní; obnoví se pak tlačítkem Obnovit…">Stáhnout</button>`}
+        </li>`).join('');
+    misto.innerHTML = `<div class="backup-disk-hlava"><h4>Na Google Disku</h4>
+            <button class="btn btn-secondary btn-small" data-nahrat-disk>Nahrát teď</button></div>
+        <p class="pass-hint">${esc(zprava || v.chyba || (v.zalohy.length
+            ? 'Denní záloha se po přihlášení sama nahraje do skryté složky programu na Disku; zůstává posledních sedm.'
+            : 'Na Disku zatím žádná záloha není. Nahraje se sama s denní zálohou, nebo hned tlačítkem Nahrát teď.'))}</p>
+        <ul class="backup-list">${radky}</ul>`;
 }
 
 // Obsluha událostí; volá ji main.js po načtení všech modulů
@@ -525,6 +549,31 @@ export function pripravit() {
         e.stopPropagation();
         const misto = tlacitko.getBoundingClientRect();
         tlacitko.parentElement.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: misto.left, clientY: misto.bottom + 4 }));
+    });
+
+    document.getElementById('backupDisk').addEventListener('click', async (e) => {
+        const nahrat = /** @type {HTMLButtonElement} */ (e.target.closest('[data-nahrat-disk]'));
+        const stahnout = /** @type {HTMLButtonElement} */ (e.target.closest('[data-stahnout]'));
+        if (nahrat && !nahrat.disabled) {
+            nahrat.disabled = true;
+            nahrat.textContent = 'Nahrávám…';
+            const chyba = await NahratZalohuNaDisk().catch(e => String(e));
+            if (chyba) oznamit(chyba);
+            else oznamit('Záloha je na Google Disku.');
+            otevritZalohy();
+        } else if (stahnout && !stahnout.disabled) {
+            stahnout.disabled = true;
+            stahnout.textContent = 'Stahuji…';
+            try {
+                await StahnoutZalohuZDisku(stahnout.dataset.stahnout);
+                oznamit('Záloha z Disku je mezi místními zálohami – obnovíš ji tlačítkem Obnovit….');
+                otevritZalohy();
+            } catch (chyba) {
+                stahnout.disabled = false;
+                stahnout.textContent = 'Stáhnout';
+                vykreslitZalohyNaDisku(`Stažení se nepodařilo: ${chyba}`);
+            }
+        }
     });
 
     // Napřed rozdíl nanečisto (co přibude, ubude, změní se), teprve z něj obnovení

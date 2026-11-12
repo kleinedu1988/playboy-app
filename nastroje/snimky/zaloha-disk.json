@@ -1,0 +1,35 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "kroky": [
+  {
+   "nazev": "d-start",
+   "js": "document.querySelector('.ucet')?'brána!':'bez brány'",
+   "cekat": 9000
+  },
+  {
+   "nazev": "d-menu",
+   "js": "(()=>{const g=document.querySelector('#gallery, .gallery, main');g.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:600,clientY:500}));return 'menu'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "d-zalohy",
+   "js": "(()=>{const vid=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden';const b=[...document.querySelectorAll('button, [role=menuitem], li, div')].find(x=>vid(x)&&x.textContent.trim()==='Obnovit ze zálohy…');b?.click();return b?'otevřeno':'nenalezeno'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "d-nahrat",
+   "js": "(()=>{const b=document.querySelector('[data-nahrat-disk]');b?.click();return b?'nahrávám':'bez oddílu Disku'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "d-po",
+   "js": "(()=>{const d=document.getElementById('backupDisk');return d.className+' | '+d.innerText.replace(/\\n+/g,' | ').slice(0,300)})()",
+   "cekat": 500
+  }
+ ]
+}

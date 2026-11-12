@@ -383,21 +383,28 @@ func (a *App) OveritUcetGoogle() string {
 	if t == nil {
 		return neprihlasenGoogle
 	}
-	klient, err := nacistKlientaGoogle()
-	if err != nil {
-		return bezSpojeniGoogle
-	}
 	ctx, zrusit := context.WithTimeout(context.Background(), 20*time.Second)
 	defer zrusit()
+	v, _ := a.obnovitPristupGoogle(ctx, t)
+	return v
+}
+
+// Nový přístupový token z obnovovacího (výsledek overenoGoogle / odvolanoGoogle / bezSpojeniGoogle); odvolaný
+// přístup token smaže
+func (a *App) obnovitPristupGoogle(ctx context.Context, t *tokenGoogle) (string, string) {
+	klient, err := nacistKlientaGoogle()
+	if err != nil {
+		return bezSpojeniGoogle, ""
+	}
 	form := url.Values{"client_id": {klient.ID}, "client_secret": {klient.Secret}, "refresh_token": {t.Obnovovaci}, "grant_type": {"refresh_token"}}
 	p, err := http.NewRequestWithContext(ctx, http.MethodPost, adresaTokenuGoogle, strings.NewReader(form.Encode()))
 	if err != nil {
-		return bezSpojeniGoogle
+		return bezSpojeniGoogle, ""
 	}
 	p.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	odpoved, err := http.DefaultClient.Do(p)
 	if err != nil {
-		return bezSpojeniGoogle
+		return bezSpojeniGoogle, ""
 	}
 	defer odpoved.Body.Close()
 	var o struct {
@@ -408,14 +415,14 @@ func (a *App) OveritUcetGoogle() string {
 	json.NewDecoder(odpoved.Body).Decode(&o)
 	if o.Chyba == "invalid_grant" || o.Chyba == "unauthorized_client" {
 		os.Remove(cestaTokenuGoogle())
-		return odvolanoGoogle
+		return odvolanoGoogle, ""
 	}
 	if o.Pristupovy == "" {
-		return bezSpojeniGoogle
+		return bezSpojeniGoogle, ""
 	}
 	t.Pristupovy, t.Platnost = o.Pristupovy, time.Now().Add(time.Duration(o.Platnost)*time.Second)
 	if err := ulozitTokenGoogle(t); err != nil {
 		a.chyba("uložení přístupu Google", err)
 	}
-	return overenoGoogle
+	return overenoGoogle, t.Pristupovy
 }

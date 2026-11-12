@@ -70,6 +70,7 @@ const CTENI = new Set([
     'Odemknout',
     'OveritOdkaz',
     'SeznamZaloh',
+    'GetZalohyNaDisku',
     'SlozkaZaloh',
     'StavDatabaze',
     'VybratSouboryImportu',
@@ -448,6 +449,9 @@ export const GetProfilovaFotka = /** @type {typeof App.GetProfilovaFotka} */ (ob
 export const SetVydaniAlba = /** @type {typeof App.SetVydaniAlba} */ (obalit('SetVydaniAlba'));
 export const SetVydaniInfo = /** @type {typeof App.SetVydaniInfo} */ (obalit('SetVydaniInfo'));
 export const SeznamZaloh = /** @type {typeof App.SeznamZaloh} */ (obalit('SeznamZaloh'));
+export const GetZalohyNaDisku = /** @type {typeof App.GetZalohyNaDisku} */ (obalit('GetZalohyNaDisku'));
+export const NahratZalohuNaDisk = /** @type {typeof App.NahratZalohuNaDisk} */ (obalit('NahratZalohuNaDisk'));
+export const StahnoutZalohuZDisku = /** @type {typeof App.StahnoutZalohuZDisku} */ (obalit('StahnoutZalohuZDisku'));
 export const SloucitAlba = /** @type {typeof App.SloucitAlba} */ (obalit('SloucitAlba'));
 export const VybratPDF = /** @type {typeof App.VybratPDF} */ (obalit('VybratPDF'));
 export const SloucitModelky = /** @type {typeof App.SloucitModelky} */ (obalit('SloucitModelky'));

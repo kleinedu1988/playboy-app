@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -33,6 +34,20 @@ window.runtime=new Proxy({},{get:(_,n)=>(...a)=>{if(n==='EventsOnMultiple')retur
 func TestSnimkyRozhrani(t *testing.T) {
 	t.Setenv("XDG_DATA_HOME", os.Getenv("KOPIE"))
 	t.Chdir(t.TempDir())
+	// FALESNY_DISK=1 (0.02.076): Google i Disk nahradí místní server (falesnyDisk ze zaloha_disk_test.go),
+	// obnova tokenu vrátí přístup „pristup“; složku nastavení s tokenem dodá XDG_CONFIG_HOME
+	if os.Getenv("FALESNY_DISK") != "" {
+		disk := &falesnyDisk{soubory: map[string][2]string{}, relace: map[string]string{}}
+		google := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/token" {
+				w.Write([]byte(`{"access_token":"pristup","expires_in":3600}`))
+				return
+			}
+			disk.ServeHTTP(w, r)
+		}))
+		defer google.Close()
+		adresaDriveAPI, adresaTokenuGoogle = google.URL, google.URL+"/token"
+	}
 	a := NewApp()
 	a.startup(context.Background())
 	defer a.shutdown()

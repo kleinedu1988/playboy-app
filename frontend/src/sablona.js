@@ -738,6 +738,7 @@ export const SABLONA_OKNA = `
       </div>
       <p id="backupModalText" class="pass-hint"></p>
       <ul id="backupModalList" class="backup-list"></ul>
+      <div id="backupDisk" class="backup-disk hidden"></div>
       <div class="modal-actions">
         <button class="btn btn-secondary" data-zavrit>Zavřít</button>
       </div>

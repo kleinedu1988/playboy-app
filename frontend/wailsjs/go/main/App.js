@@ -438,6 +438,10 @@ export function GetVyvojVCase(arg1) {
   return window['go']['main']['App']['GetVyvojVCase'](arg1);
 }
 
+export function GetZalohyNaDisku() {
+  return window['go']['main']['App']['GetZalohyNaDisku']();
+}
+
 export function GetZdraviSbirky() {
   return window['go']['main']['App']['GetZdraviSbirky']();
 }
@@ -464,6 +468,10 @@ export function MaZamek() {
 
 export function NahledSlouceniModelek(arg1, arg2) {
   return window['go']['main']['App']['NahledSlouceniModelek'](arg1, arg2);
+}
+
+export function NahratZalohuNaDisk() {
+  return window['go']['main']['App']['NahratZalohuNaDisk']();
 }
 
 export function NajitUdajeModelky(arg1) {
@@ -804,6 +812,10 @@ export function SpustitPruchodWebem(arg1, arg2) {
 
 export function SpustitStahovaniNahledu() {
   return window['go']['main']['App']['SpustitStahovaniNahledu']();
+}
+
+export function StahnoutZalohuZDisku(arg1) {
+  return window['go']['main']['App']['StahnoutZalohuZDisku'](arg1);
 }
 
 export function StavDatabaze() {

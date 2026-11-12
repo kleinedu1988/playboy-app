@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.084 – Chyby Disku česky
+
+- [ ] Když Disk nahrání odmítne, hláška je česky a bez JSONu (vyzkoušet jde třeba nahráním bez připojení k síti nebo po odebrání přístupu programu na myaccount.google.com › Zabezpečení).
+
 ## 0.02.080 – Oprava brány přihlášení
 
 - [ ] Po odhlášení a restartu: brána v menším okně uprostřed; po přihlášení se okno roztáhne na obvyklou velikost.
@@ -25,7 +29,7 @@ Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce prog
 
 ## 0.02.076 – Záloha na Google Disk
 
-- [ ] Po přihlášení: ⋯ › Obnovit ze zálohy… › Nahrát teď – záloha se objeví v oddílu Na Google Disku (10 MB, chvíli trvá).
+- [x] Po přihlášení: ⋯ › Obnovit ze zálohy… › Nahrát teď – záloha se objeví v oddílu Na Google Disku (10 MB, chvíli trvá). Ověřeno 12. 11. 2026 (11,6 MB; předtím bylo potřeba zapnout Google Drive API).
 - [ ] Další den po startu se denní záloha nahraje sama.
 - [ ] Na drive.google.com › Nastavení › Spravovat aplikace je Pinup Katalog se skrytými daty (velikost záloh).
 - [ ] Stáhnout zálohu, která není mezi místními (třeba po smazání ze složky záloh), a obnovit ji.

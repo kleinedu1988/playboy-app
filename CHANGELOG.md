@@ -6,6 +6,19 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.084] – 2026-11-12
+
+### Opraveno
+- **Chyby Google Disku česky.** Když Disk zálohu odmítl, ukázal program surovou odpověď Googlu v JSONu. Teď
+  napíše srozumitelnou větu: u vypnutého Google Drive API, jak ho zapnout, i s adresou stránky; dále plný Disk,
+  chybějící přístup k Disku, vypršelé přihlášení, nenalezený soubor, příliš mnoho požadavků a výpadek Googlu.
+  Ostatní chyby jen krátce, bez JSONu.
+
+### Ověřeno
+- Nahrání zálohy na skutečný Google Disk (uživatel, po zapnutí Drive API v projektu): záloha 11,6 MB se objevila
+  v oddílu Na Google Disku.
+- Test se skutečnou odpovědí Googlu při vypnutém Drive API a s dalšími případy; celá sada i s dlouhými testy prošla.
+
 ## [0.02.083] – 2026-11-12
 
 ### Opraveno

@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (12. 11. 2026): verze 0.02.092** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (12. 11. 2026): verze 0.02.093** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -22,7 +22,7 @@ modelky.
 **Od 12. 11. 2026 alfa podle plánu** (přání uživatele „propracuj roadmapu“): nejdřív ověření všeho neověřeného
 po oblastech (169 otevřených bodů v K-VYZKOUSENI.md), pak druhá vlna aplikace pro telefon a vydání 1.00.000.
 Nahlášené chyby mají dál přednost. Další na řadě je
-**0.02.093 – Tituly v telefonu** (Alfa: ověření, telefon 2 a vydání; snímky obrazovek: `go test -tags snimky`,
+**0.03.001 – Tituly v telefonu** (Alfa: ověření, telefon 2 a vydání; snímky obrazovek: `go test -tags snimky`,
 úlohy v `nastroje/snimky/`).
 
 ---
@@ -56,7 +56,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.092 hotové; alfa podle plánu 0.02.093–0.02.106 | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.03** | 🚧 0.01 a 0.02 hotové (0.02.001–0.02.093); alfa podle plánu 0.03.001–0.03.014 | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -298,7 +298,7 @@ Disk) nepotřebují ověření aplikace Googlem. Potřeba: vlastní projekt v Go
 | 0.02.076 ✅ | **Záloha na Google Disk:** denní záloha se po přihlášení nahraje do skryté složky programu na Disku (appDataFolder, posledních 7); v Obnovit ze zálohy oddíl Na Google Disku s Nahrát teď a Stáhnout – stažená záloha se obnoví obvyklou cestou s porovnáním rozdílů | hotovo: test s falešným Diskem (nahrání, úklid na 7, stažení do čistého programu); snímek oddílu po Nahrát teď |
 | 0.02.077 ✅ | **Balíček pro telefon:** výtah sbírky (modelky se stejnými názvy polí jako v programu, srdíčka a oblíbenost, kategorie, titulní a profilová fotka s výřezy jako Drive ID + šablona adresy; explicitní fotky vynechané) jako gzip JSON `telefon-balicek.json.gz` ve skryté složce programu na Disku, nahraný po záloze (i Nahrát teď), nový nahradí starý | hotovo: test 3000 modelek = 52 kB, explicitní titulní fotka vypadne, na Disku zůstane jeden balíček; kopie sbírky (613 modelek) = 52 kB |
 
-#### Dotažení a alfa (0.02.078–0.02.092, dříve etapa 0.08)
+#### Dotažení a alfa (0.02.078–0.02.093, dříve etapa 0.08)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
@@ -317,8 +317,9 @@ Disk) nepotřebují ověření aplikace Googlem. Potřeba: vlastní projekt v Go
 | 0.02.090 ✅ | **Alfa – kontrola souběhů:** celá sada s detektorem souběhů (`go test -race`, i jádro telefonu) – žádný souběh; `TestReviseHledani` pod detektorem padal na časovém limitu (SQLite v čistém Go je s ním asi 10× pomalejší) → limity se pod `-race` násobí (`nasobekCasuTestu`); `gofmt` dvou souborů; frontend: typy, 233 testů, sestavení | hotovo: `go test -race -short ./...` i jádro telefonu prošly |
 | 0.02.091 ✅ | **Alfa – Zpět v telefonu na Androidu 16:** aplikace pro API 36 už nedostává `onBackPressed` (predictive back), Zpět by zavřel aplikaci místo detailu, galerie nebo prohlížeče; nově `OnBackInvokedCallback` (Android 13+), stránka zavře horní vrstvu, jinak aplikace do pozadí | sestaveno; na telefonu ověřit (adb na Xiaomi stisky kláves nepouští) |
 | 0.02.092 ✅ | **Alfa – telefon nezamrzne při obnově přístupu:** jádro drželo zámek i při čekání na Google (obnova přístupového tokenu po hodině), stránka (stav přihlášení, balíček) mezitím stála – při pomalém připojení až desítky sekund; zámek se teď při síti nedrží, odhlášení během obnovy výsledek zahodí | hotovo: test s pomalým Googlem (napřed padal), jádro s `-race` |
+| 0.02.093 ✅ | **Načítací obrazovka ve vzhledu brány přihlášení** (přání uživatele): okno úvodu stejně velké jako brána (980 × 640, přechod z brány do načítání nic nepřeskládá); vlevo panel s vínovým přechodem, ikona, zlatý název, „Otevírám sbírku“ se zlatými linkami, zlatý pruh a tečky kroků; vpravo dál točící se kruh profilovek, přechod pozadí přes celé okno; bez profilovek (první spuštění, zámek) jen panel | hotovo: snímky 980 × 640 s kruhem i bez něj |
 
-#### Alfa: ověření, telefon 2 a vydání (0.02.093–0.02.106, plán 12. 11. 2026)
+#### Alfa: ověření, telefon 2 a vydání (0.03.001–0.03.014, plán 12. 11. 2026)
 
 **Proč:** K-VYZKOUSENI.md má k 12. 11. 2026 **169 neověřených bodů** a jen 16 ověřených – „používat a opravovat“
 je samo neprojde. Většina jsou věci vidět na obrazovce (karty, profil, Čísla, Sbírka, výřezy, časopisy), které jde
@@ -328,25 +329,25 @@ snímkem; co nesedí, opraví (malá chyba) nebo zapíše jako další krok. Pak
 filtry, oblíbené fotky) a vydání.
 
 **Pravidla alfy:** před každým vydáním i dlouhé testy (`go test` bez `-short`); nahlášená chyba má přednost a dostane
-další volné číslo; počítadlo „14 dní bez nové chyby“ začne po 0.02.106.
+další volné číslo; počítadlo „14 dní bez nové chyby“ začne po 0.03.014.
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.093 | **Tituly v telefonu:** tituly z jiných časopisů (`titulyJinde` = `{nazev, rok}`) místo prázdného řádku „Jinde“; „Playmate“ jen za centerfold Playboye | detail modelky s Pet of the Month ukáže „Pet of the Month 1995“ |
-| 0.02.094 | **Ověření – Profil a karty** (K-VYZKOUSENI 0.02.038, 0.02.040–0.02.042): tituly z galerií, proč chybí odhad, profil, karty modelek | body odškrtnuté se snímky, nebo chyby opravené či zapsané |
-| 0.02.095 | **Ověření – Čísla, Hodnocení a Síň slávy** (0.02.043–0.02.044, 0.02.046) | totéž |
-| 0.02.096 | **Ověření – Sbírka a Údržba** (0.02.039, 0.02.045, 0.02.052–0.02.056) | totéž |
-| 0.02.097 | **Ověření – Výřezy** (0.02.049–0.02.051, 0.02.057–0.02.058) | totéž |
-| 0.02.098 | **Ověření – Explicitní fotky** (0.02.060–0.02.063) | totéž |
-| 0.02.099 | **Ověření – Časopisy** (web, vkus, Statistiky, mapa: 0.02.064–0.02.073) | totéž |
-| 0.02.100 | **Ověření – Kontrolní seznam po obrazovkách** (0.02.037, 43 bodů), co jde snímky | totéž |
-| 0.02.101 | **Ruční ověření před 1.0:** zbylé body, které snímky neověří (okno a jeho velikost, PDF, tisk, síť, Google, telefon), sloučené do jednoho krátkého seznamu nahoře v K-VYZKOUSENI.md, staré oddíly zkrácené | seznam má nejvýš ~30 bodů a každý říká, kde a co kliknout |
-| 0.02.102 | **Telefon – balíček jen po změně:** aplikace stáhne balíček, jen když je na Disku novější (čas změny), v účtu stáří sbírky („z dneška 6:02“) | druhé spuštění nic nestahuje; po Nahrát teď ↻ stáhne |
-| 0.02.103 | **Telefon – filtry:** časopis, titul (Playmate, Pet…), srdíčka, desetiletí – jako na PC, pamatují se | filtr Penthouse ukáže jen modelky z Penthouse |
-| 0.02.104 | **Telefon – oblíbené fotky** [balíček 3]: hodnocení fotek v balíčku, stránka nejlépe hodnocených fotek napříč galeriemi (explicitní jako na PC – jen ve vlastní řadě) | stránka ukáže fotky s 5 srdíčky, klepnutí otevře prohlížeč |
-| 0.02.105 | **Vydání – příprava:** README (instalace programu i aplikace, zálohy, klíče), dlouhé testy a `-race`, kontrola, že K-VYZKOUSENI nemá nic z kroků 0.02.094–0.02.104 neověřeného | vše prošlo, README odpovídá programu |
-| 0.02.106 | **Vydání – zmrazení:** od teď jen opravy; začíná 14 dní používání | – |
-| 1.00.000 | **První vydání Pinup Katalogu:** 14 dní bez nové chyby od 0.02.106, ruční seznam z 0.02.101 ověřený, značka `v1.00.000` v gitu | uživatel potvrdí |
+| 0.03.001 | **Tituly v telefonu:** tituly z jiných časopisů (`titulyJinde` = `{nazev, rok}`) místo prázdného řádku „Jinde“; „Playmate“ jen za centerfold Playboye | detail modelky s Pet of the Month ukáže „Pet of the Month 1995“ |
+| 0.03.002 | **Ověření – Profil a karty** (K-VYZKOUSENI 0.02.038, 0.02.040–0.02.042): tituly z galerií, proč chybí odhad, profil, karty modelek | body odškrtnuté se snímky, nebo chyby opravené či zapsané |
+| 0.03.003 | **Ověření – Čísla, Hodnocení a Síň slávy** (0.02.043–0.02.044, 0.02.046) | totéž |
+| 0.03.004 | **Ověření – Sbírka a Údržba** (0.02.039, 0.02.045, 0.02.052–0.02.056) | totéž |
+| 0.03.005 | **Ověření – Výřezy** (0.02.049–0.02.051, 0.02.057–0.02.058) | totéž |
+| 0.03.006 | **Ověření – Explicitní fotky** (0.02.060–0.02.063) | totéž |
+| 0.03.007 | **Ověření – Časopisy** (web, vkus, Statistiky, mapa: 0.02.064–0.02.073) | totéž |
+| 0.03.008 | **Ověření – Kontrolní seznam po obrazovkách** (0.02.037, 43 bodů), co jde snímky | totéž |
+| 0.03.009 | **Ruční ověření před 1.0:** zbylé body, které snímky neověří (okno a jeho velikost, PDF, tisk, síť, Google, telefon), sloučené do jednoho krátkého seznamu nahoře v K-VYZKOUSENI.md, staré oddíly zkrácené | seznam má nejvýš ~30 bodů a každý říká, kde a co kliknout |
+| 0.03.010 | **Telefon – balíček jen po změně:** aplikace stáhne balíček, jen když je na Disku novější (čas změny), v účtu stáří sbírky („z dneška 6:02“) | druhé spuštění nic nestahuje; po Nahrát teď ↻ stáhne |
+| 0.03.011 | **Telefon – filtry:** časopis, titul (Playmate, Pet…), srdíčka, desetiletí – jako na PC, pamatují se | filtr Penthouse ukáže jen modelky z Penthouse |
+| 0.03.012 | **Telefon – oblíbené fotky** [balíček 3]: hodnocení fotek v balíčku, stránka nejlépe hodnocených fotek napříč galeriemi (explicitní jako na PC – jen ve vlastní řadě) | stránka ukáže fotky s 5 srdíčky, klepnutí otevře prohlížeč |
+| 0.03.013 | **Vydání – příprava:** README (instalace programu i aplikace, zálohy, klíče), dlouhé testy a `-race`, kontrola, že K-VYZKOUSENI nemá nic z kroků 0.03.002–0.03.012 neověřeného | vše prošlo, README odpovídá programu |
+| 0.03.014 | **Vydání – zmrazení:** od teď jen opravy; začíná 14 dní používání | – |
+| 1.00.000 | **První vydání Pinup Katalogu:** 14 dní bez nové chyby od 0.03.014, ruční seznam z 0.03.009 ověřený, značka `v1.00.000` v gitu | uživatel potvrdí |
 
 ---
 
@@ -491,7 +492,7 @@ Nápady, které se udělají, až na ně přijde řada nebo chuť; nemají čís
 
 | Krok | Co | Hotovo, když |
 |---|---|---|
-| Aplikace pro telefon – dál | Hotová stránka modelek 0.02.085, galerie 0.02.086, nové verze bez kabelu 0.02.088; filtry a oblíbené fotky v plánu alfy (0.02.103–0.02.104). Dál možné: **offline náhledy** (fotky uložené v telefonu, galerie i bez internetu – stovky MB), vlastní ikona oznámení, hledání podle údajů | podle potřeby |
+| Aplikace pro telefon – dál | Hotová stránka modelek 0.02.085, galerie 0.02.086, nové verze bez kabelu 0.02.088; filtry a oblíbené fotky v plánu alfy (0.03.011–0.03.012). Dál možné: **offline náhledy** (fotky uložené v telefonu, galerie i bez internetu – stovky MB), vlastní ikona oznámení, hledání podle údajů | podle potřeby |
 | Barva časopisu | **Barva časopisu v grafech Statistik** (sloupce rozdělené podle časopisu, jako barvy mapy) | ve sbírce s Pets je v grafu vidět jejich podíl |
 | PDF 1 | **Označit stránky PDF:** obálka, centerfold, stránky pictorialu; dvoustrana a rozkládací centerfold | označení vydrží zavření okna |
 | PDF 2 | **Přiřadit:** označené stránky k modelce a albu čísla (existující nebo nová modelka) | číslo s Pet of the Month je v katalogu |

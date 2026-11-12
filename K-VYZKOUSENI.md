@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.093 – Načítací obrazovka ve vzhledu brány
+
+- [ ] Spuštění s přihlášením: okno 980 × 640 uprostřed, vlevo zlatý název a pruh, vpravo se točí kruh profilovek; po načtení okno dostane uloženou velikost.
+- [ ] Po odhlášení a novém přihlášení: brána a načítání mají stejné okno, nic neposkočí.
+
 ## 0.02.091 – Zpět v telefonu
 
 - [ ] Na PC nový program a Nahrát teď → v telefonu Aktualizovat na 0.2.91 (zároveň: varuje Play Protect s vlastním klíčem?).

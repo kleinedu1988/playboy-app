@@ -61,10 +61,11 @@ func ulozitStavOkna(stav StavOkna) error {
 	return os.WriteFile(souborOkna(), data, 0o600)
 }
 
-// Okno úvodní obrazovky: jen na logo, krok, seznam přípravy a tlačítko
+// Okno úvodní obrazovky: stejně velké jako brána přihlášení (0.02.093 – úvod má její vzhled, přechod z brány
+// do načítání okno nepřeskládá)
 const (
-	sirkaUvodu = 460
-	vyskaUvodu = 580
+	sirkaUvodu = sirkaPrihlaseni
+	vyskaUvodu = vyskaPrihlaseni
 )
 
 // ObnovitOkno: konec úvodní obrazovky – okno dostane uloženou velikost a polohu (nebo se maximalizuje). Volá ho

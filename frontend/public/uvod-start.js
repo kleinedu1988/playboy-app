@@ -1,12 +1,13 @@
-// Úvodní obrazovka – kruh profilovek (návrh A). Patří do frontend/public/ a načítá se obyčejným <script> hned
+// Úvodní obrazovka – kruh profilovek (návrh A); od 0.02.093 v pravé části úvodu ve vzhledu brány přihlášení
+// (.uvod-foto; bez profilovek má úvod třídu bez-fotky a panel je přes celé okno). Patří do frontend/public/ a načítá se obyčejným <script> hned
 // za <div id="uvod"> (před balíkem programu): CSP „script-src 'self'“ inline skript nepustí, soubor ano.
 // Profilovky jsou z minulého běhu (localStorage „uvodProfilovky“, ukládá je ui/uvod.js po načtení modelek);
-// při prvním spuštění nebo s prázdným seznamem zůstane ikona z index.html.
+// při prvním spuštění nebo s prázdným seznamem zůstane jen panel.
 // Záznam: { u: adresa titulní fotky, x: coverX, y: coverY, z: coverZoom }.
 (function () {
     'use strict';
     var MIST = 12;          // míst na válci (po 30°), musí sedět s @keyframes kruh-otacet
-    var NEJMENE = 4;        // s menším počtem fotek kruh nedává smysl – zůstane ikona
+    var NEJMENE = 4;        // s menším počtem fotek kruh nedává smysl – zůstane jen panel
     var uvod = document.getElementById('uvod');
     if (!uvod) return;
 
@@ -25,7 +26,7 @@
     var cislo = function (h, vychozi, od, po) { h = Number(h); return isFinite(h) ? Math.min(Math.max(h, od), po) : vychozi; };
     var nacteno = function () { this.classList.add('nacteno'); };
     // Fotka, která se nenačte (od minula smazaná nebo nedostupná): karta dostane jinou ze seznamu; když se nenačte
-    // žádná, vrátí se místo kruhu ikona (šedé dlaždice by se točily naprázdno)
+    // žádná, zmizí kruh a zůstane jen panel (šedé dlaždice by se točily naprázdno)
     var vadne = {};
     var pocetVadnych = 0;
     var chyba = function () {
@@ -81,13 +82,15 @@
         kruh.appendChild(karta);
     }
 
-    var ikona = uvod.querySelector('.uvod-ikona');
+    var misto = uvod.querySelector('.uvod-foto') || uvod;
     var vratitIkonu = function () {
         if (!scena.parentNode) return;
-        if (ikona) scena.parentNode.replaceChild(ikona, scena); else scena.remove();
+        scena.remove();
         uvod.classList.remove('s-kruhem');
+        uvod.classList.add('bez-fotky');
         try { localStorage.removeItem('uvodProfilovky'); } catch (e) { /* příště se vybere znovu */ }
     };
-    if (ikona) uvod.replaceChild(scena, ikona); else uvod.insertBefore(scena, uvod.firstChild);
+    misto.appendChild(scena);
     uvod.classList.add('s-kruhem');
+    uvod.classList.remove('bez-fotky');
 })();

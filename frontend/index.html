@@ -6,47 +6,64 @@
     <!-- Pojistka: spustí se jen skripty programu (i kdyby se do stránky dostal cizí kód z dat sbírky) -->
     <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'; base-uri 'none'"/>
     <title>Pinup Katalog</title>
-    <!-- Úvodní obrazovka (src/ui/uvod.js, kruh profilovek public/uvod-start.js): je vidět hned, ještě než se načtou skripty a styly programu; zmizí,
-         až je první pohled sestavený. Styl je tady, protože style.css se načítá se skripty. -->
+    <!-- Úvodní obrazovka (src/ui/uvod.js, fotka public/uvod-start.js): je vidět hned, ještě než se načtou skripty a styly
+         programu; zmizí, až je první pohled sestavený. Styl je tady, protože style.css se načítá se skripty.
+         Vzhled jako brána přihlášení (0.02.093, .ucet ve style.css): vlevo panel s vínovým přechodem, ikona a zlatý
+         název, pod ním postup přípravy; vpravo fotka oblíbené modelky z minulého běhu s popiskem. Okno má stejnou
+         velikost jako brána (nastaveni.go), takže přechod z brány do načítání nic nepřeskládá. -->
     <style>
         html, body { margin: 0; background: #0f0f12; }
-        #uvod { position: fixed; inset: 0; z-index: 2147483000; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; gap: 10px; background: radial-gradient(ellipse at 50% 38%, #1d1418 0%, #0f0f12 62%);
-            color: #f0f0f5; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; transition: opacity .22s ease;
-            --wails-draggable: drag; cursor: default; user-select: none; }
+        #uvod { position: fixed; inset: 0; z-index: 2147483000; display: grid; grid-template-columns: minmax(380px, 1fr) 1fr;
+            background: #0f0f12; color: #f0f0f5; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            transition: opacity .22s ease; --wails-draggable: drag; cursor: default; user-select: none; }
         #uvod.skryty { opacity: 0; pointer-events: none; }
-        #uvod h1 { margin: 6px 0 0; font-size: 22px; font-weight: 600; letter-spacing: .2px; }
-        #uvod .uvod-verze { margin-top: -10px; font-size: 12px; color: #9a9a9e; min-height: 15px; }
-        #uvod .uvod-pruh { width: 220px; height: 3px; margin-top: 18px; border-radius: 3px; background: #2a2a30; overflow: hidden; }
-        #uvod .uvod-pruh i { display: block; height: 100%; width: 6%; border-radius: 3px; background: #d81b60; transition: width .3s ease; }
-        #uvod .uvod-krok { font-size: 12.5px; color: #9a9a9e; min-height: 16px; }
-        #uvod .uvod-tlacitko { margin-top: 4px; padding: 5px 12px; border: 1px solid #3a3a42; border-radius: 8px; background: none;
-            color: #c8c8cc; font: inherit; font-size: 12.5px; cursor: pointer; }
-        #uvod .uvod-tlacitko:hover, #uvod .uvod-tlacitko:focus-visible { border-color: #d81b60; color: #fff; }
-        /* Kroky přípravy (src/ui/uvod.js seznamUvodu, stavUvodu): jen řada teček pod pruhem; co se právě děje, říká
-           jeden řádek (.uvod-krok) a pod ním podrobnost posledního kroku (.uvod-detail) – nic se nevypisuje pod sebe */
+        /* S kruhem jde přechod panelu přes celé okno (kruh leží na stejném pozadí, bez předělu) */
+        #uvod.s-kruhem { background: linear-gradient(120deg, #5c1030 0%, #2c0817 26%, #120a0e 52%, #0f0f12 78%); }
+        #uvod.s-kruhem .uvod-panel { background: none; }
+        #uvod.bez-fotky { grid-template-columns: 1fr; }
+        #uvod.bez-fotky .uvod-foto { display: none; }
+
+        /* Panel: stejný přechod jako .ucet-panel */
+        #uvod .uvod-panel { grid-column: 1; grid-row: 1; display: grid; place-items: center; padding: 48px 32px; overflow: hidden;
+            background: linear-gradient(135deg, #5c1030 0%, #2c0817 38%, #120a0e 72%, #0f0f12 100%); }
+        #uvod .uvod-obsah { width: min(340px, 100%); display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+        #uvod .uvod-ikona { width: 64px; height: 64px; margin-bottom: 2px; border-radius: 16px; box-shadow: 0 6px 24px rgba(0, 0, 0, .5); }
+        /* Název zlatým pruhem jako logo (.ucet-znacka) */
+        #uvod h1 { margin: 0; background: linear-gradient(90deg, #6e4f1a 0%, #c9a046 18%, #f6e3a1 34%, #fff7d6 42%, #d9b25a 55%, #9c7428 72%, #e8cc7c 88%, #7a5a20 100%);
+            -webkit-background-clip: text; background-clip: text; color: transparent; font-size: 34px; font-weight: 600;
+            letter-spacing: .04em; line-height: 1.1; text-transform: uppercase; }
+        /* Nadpis jako „Přihlášení“ (.ucet-nadpis), zlaté linky po stranách */
+        #uvod .uvod-nadpis { display: flex; align-items: center; justify-content: center; gap: 14px; width: 100%; margin: 10px 0 4px;
+            color: #fff; font-size: 18px; font-weight: 300; letter-spacing: .08em; text-transform: uppercase; }
+        #uvod .uvod-nadpis::before, #uvod .uvod-nadpis::after { content: ""; flex: 1; max-width: 48px; height: 1px; background: #c9a046; opacity: .7; }
+        #uvod .uvod-verze { font-size: 11.5px; color: #b9a98a; letter-spacing: .14em; text-transform: uppercase; min-height: 14px; }
+        /* Pruh postupu: zlatý jako tlačítko brány; posouvá ho transform (kompozitor), ne šířka */
+        #uvod .uvod-pruh { width: 100%; height: 4px; margin-top: 14px; border-radius: 4px; background: rgba(255, 255, 255, .09); overflow: hidden; }
+        #uvod .uvod-pruh i { display: block; width: 100%; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #c9a046, #f6e3a1);
+            transform: translateX(-94%); transition: transform .3s ease; }
+        #uvod .uvod-krok { font-size: 13px; color: #e9e4dc; min-height: 17px; }
+        #uvod .uvod-tlacitko { margin-top: 6px; padding: 7px 16px; border: 1px solid rgba(201, 160, 70, .55); border-radius: 6px; background: none;
+            color: #e9e4dc; font: inherit; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+        #uvod .uvod-tlacitko:hover, #uvod .uvod-tlacitko:focus-visible { border-color: #f6e3a1; color: #fff; outline: none; }
+        /* Kroky přípravy (src/ui/uvod.js seznamUvodu, stavUvodu): jen řada teček; co se právě děje, říká jeden řádek
+           (.uvod-krok) a pod ním podrobnost posledního kroku (.uvod-detail) – nic se nevypisuje pod sebe */
         #uvod .uvod-seznam { display: flex; gap: 7px; margin: 2px 0 0; padding: 0; list-style: none; }
         #uvod .uvod-seznam:empty { display: none; }
-        #uvod .uvod-seznam li { width: 7px; height: 7px; border-radius: 50%; background: #2f2f36; transition: background-color .25s ease; }
-        #uvod .uvod-seznam li.bezi { background: #d81b60; animation: uvod-tep 1s ease-in-out infinite; }
-        #uvod .uvod-seznam li.hotovo { background: #8c2a50; }
-        #uvod .uvod-seznam li.preskoceno { background: #4a4a52; }
-        #uvod .uvod-seznam li.chyba { background: #e0a060; }
-        #uvod .uvod-detail { width: 340px; max-width: calc(100vw - 32px); min-height: 15px; overflow: hidden; color: #6f6f76;
-            font-size: 11.5px; text-align: center; text-overflow: ellipsis; white-space: nowrap; font-variant-numeric: tabular-nums; }
-        #uvod .uvod-cas { font-size: 11px; color: #5c5c63; min-height: 14px; font-variant-numeric: tabular-nums; }
+        #uvod .uvod-seznam li { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, .14); transition: background-color .25s ease; }
+        #uvod .uvod-seznam li.bezi { background: #f6e3a1; animation: uvod-tep 1s ease-in-out infinite; }
+        #uvod .uvod-seznam li.hotovo { background: #b08a3a; }
+        #uvod .uvod-seznam li.preskoceno { background: rgba(255, 255, 255, .3); }
+        #uvod .uvod-seznam li.chyba { background: #e07a5a; }
+        #uvod .uvod-detail { width: 100%; min-height: 15px; overflow: hidden; color: #a8949a; font-size: 11.5px; text-overflow: ellipsis;
+            white-space: nowrap; font-variant-numeric: tabular-nums; }
+        #uvod .uvod-cas { font-size: 11px; color: #8a767c; min-height: 14px; font-variant-numeric: tabular-nums; }
         @keyframes uvod-tep { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
-        /* Nízké okno: zůstane jen pruh, tečky a krok */
-        @media (max-height: 500px) { #uvod .uvod-detail, #uvod .uvod-cas { display: none; } }
-        @media (prefers-reduced-motion: reduce) { #uvod, #uvod .uvod-pruh i { transition: none; } #uvod .uvod-seznam li.bezi { animation: none; } }
-        /* Úvodní obrazovka – návrh A „kruh“ (zmenšený pro malé okno úvodu 460 × 580 px, nastaveni.go). V aplikaci patří do bloku <style> v index.html (CSP omezuje jen skripty).
-           Profilovky stojí na plášti válce (12 míst po 30°); celý válec se otáčí kolem svislé osy – jediná animace
-           (transform), běží v kompozitoru. Boční fotky se zmenšují perspektivou, natáčejí s válcem, zadní skryje
-           backface-visibility a do stran je pohltí eliptická maska a tmavý závoj (obojí statické). */
 
-        /* Ikona při prvním spuštění (dosud selektor „#uvod img“ – ten by teď zasáhl i profilovky) */
-        #uvod > .uvod-ikona { width: 96px; height: 96px; border-radius: 22px; box-shadow: 0 10px 34px rgba(216, 27, 96, .28), 0 4px 14px rgba(0, 0, 0, .5); }
-
+        /* Kruh profilovek (návrh A, public/uvod-start.js) na místě fotky brány: vpravo na tmavém pozadí s vínovou září,
+           zvětšený pro vyšší okno. Bez profilovek (první spuštění, zámek) zůstane jen panel přes celé okno. */
+        #uvod .uvod-foto { grid-column: 2; grid-row: 1; position: relative; display: grid; place-items: center; overflow: hidden;
+            background: radial-gradient(ellipse at 50% 50%, rgba(216, 27, 96, .10) 0%, transparent 60%); }
+        #uvod .uvod-foto .uvod-kruh { scale: 1.45; }
         /* Scéna: perspektiva, měkká eliptická maska (okraje se ztrácejí do pozadí) */
         #uvod .uvod-kruh { position: relative; width: 460px; max-width: 100vw; height: 180px; margin: -4px 0 -6px;
             perspective: 550px; perspective-origin: 50% 50%;
@@ -79,9 +96,21 @@
         #uvod .kruh-karta::before { content: ""; position: absolute; inset: 0; z-index: 1; border-radius: inherit; pointer-events: none;
             box-shadow: 0 0 0 1px rgba(255, 255, 255, .07) inset; background: linear-gradient(180deg, rgba(255, 255, 255, .06), transparent 30%); }
 
-        /* Pruh postupu posouvá transform místo width (layout na hlavním vlákně); vzhled stejný, 220 × 3 px */
-        #uvod .uvod-pruh i { width: 100%; transform: translateX(-94%); transition: transform .3s ease; }
-
+        /* Úzké okno: fotka přes celé okno, panel průhlednou kartou (jako brána) */
+        @media (max-width: 820px) {
+            #uvod { grid-template-columns: 1fr; }
+            #uvod .uvod-foto { grid-column: 1; }
+            #uvod:not(.bez-fotky) .uvod-panel { grid-column: 1; background: none; padding: 24px 16px; }
+            #uvod:not(.bez-fotky) .uvod-obsah { padding: 28px 24px; border-radius: 12px; background: rgba(70, 12, 34, .72);
+                -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 12px 40px rgba(0, 0, 0, .5); }
+            #uvod .uvod-foto .uvod-kruh { scale: 1.1; }
+        }
+        /* Nízké okno: zůstane jen pruh, tečky a krok */
+        @media (max-height: 500px) { #uvod .uvod-detail, #uvod .uvod-cas, #uvod .uvod-ikona { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            #uvod, #uvod .uvod-pruh i { transition: none; }
+            #uvod .uvod-seznam li.bezi { animation: none; }
+        }
         /* Skrytý úvod (zámek, mizení) animaci zastaví */
         #uvod.skryty .kruh { animation-play-state: paused; }
 
@@ -117,17 +146,23 @@
     </style>
 </head>
 <body>
-<div id="uvod" role="status" aria-live="polite">
-    <img class="uvod-ikona" src="./uvod.png" alt="" draggable="false"/>
-    <h1>Pinup Katalog</h1>
-    <div class="uvod-verze"></div>
-    <div class="uvod-pruh"><i></i></div>
-    <div class="uvod-krok">Otevírám databázi…</div>
-    <ol class="uvod-seznam" aria-label="Příprava programu"></ol>
-    <div class="uvod-detail"></div>
-    <div class="uvod-cas"></div>
+<div id="uvod" class="bez-fotky" role="status" aria-live="polite">
+    <div class="uvod-foto" aria-hidden="true"></div>
+    <section class="uvod-panel">
+        <div class="uvod-obsah">
+            <img class="uvod-ikona" src="./uvod.png" alt="" draggable="false"/>
+            <h1>Pinup Katalog</h1>
+            <div class="uvod-nadpis">Otevírám sbírku</div>
+            <div class="uvod-verze"></div>
+            <div class="uvod-pruh"><i></i></div>
+            <div class="uvod-krok">Otevírám databázi…</div>
+            <ol class="uvod-seznam" aria-label="Příprava programu"></ol>
+            <div class="uvod-detail"></div>
+            <div class="uvod-cas"></div>
+        </div>
+    </section>
 </div>
-<!-- Kruh profilovek z minulého běhu místo ikony; obyčejný skript (CSP nepustí inline), běží před prvním vykreslením -->
+<!-- Fotka oblíbené modelky z minulého běhu; obyčejný skript (CSP nepustí inline), běží před prvním vykreslením -->
 <script src="./uvod-start.js"></script>
 <div id="app"></div>
 <script src="./src/main.js" type="module"></script>

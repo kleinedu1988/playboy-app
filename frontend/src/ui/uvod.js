@@ -23,7 +23,7 @@ export function tlacitkoUvodu(text) {
     b.type = 'button';
     b.className = 'uvod-tlacitko';
     b.textContent = text;
-    u.append(b);
+    (u.querySelector('.uvod-obsah') || u).append(b);
     return new Promise(hotovo => b.addEventListener('click', () => { b.remove(); hotovo(); }, { once: true }));
 }
 

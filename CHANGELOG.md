@@ -6,6 +6,14 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.093] – 2026-11-12
+
+### Změněno
+- **Načítací obrazovka ve vzhledu přihlašovací brány.** Okno úvodu má stejnou velikost jako brána (980 × 640), takže
+  se po přihlášení nic nepřeskládá. Vlevo panel s vínovým přechodem, ikona, zlatý název Pinup Katalog, nadpis
+  „Otevírám sbírku“, zlatý pruh postupu a tečky kroků; vpravo dál točící se kruh profilovek na stejném pozadí.
+  Bez profilovek (první spuštění, zámek) je panel přes celé okno.
+
 ## [0.02.092] – 2026-11-12
 
 ### Opraveno

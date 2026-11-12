@@ -295,6 +295,10 @@ func (a *App) GetNavrhyZWebu() []NavrhZWebu {
 		if stejnyUdaj(n.Pole, n.Hodnota, n.Stavajici) {
 			continue
 		}
+		if n.Pole == "tituly" {
+			// Tituly se jen doplňují (nejsou oprava): návrh = chybějící, stávající se neukazuje
+			n.Hodnota, n.Stavajici = chybejiciTituly(n.Hodnota, n.Stavajici), ""
+		}
 		v = append(v, n)
 	}
 	return v
@@ -415,6 +419,12 @@ func (a *App) PrijmoutNavrhyZWebuVratitelne(navrhy []NavrhZWebu) PrijetiZWebu {
 func (a *App) VratitPrijetiZWebu(p PrijetiZWebu) bool {
 	ok := true
 	for _, m := range p.Puvodni {
+		// Tituly z ocenění (0.02.065): prázdná alba založená přijetím se smažou
+		for _, n := range p.Navrhy {
+			if n.ModelkaID == m.ID && n.Pole == "tituly" {
+				a.smazatZapsaneTituly(m.ID, n.Hodnota, titulyModelky(&m))
+			}
+		}
 		// Titulní fotka se neměnila; prázdná ponechá stávající
 		m.CoverID = ""
 		if !a.UpdateModelka(m) {

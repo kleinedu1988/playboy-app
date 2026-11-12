@@ -6,6 +6,28 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.065] – 2026-11-12
+
+### Přidáno
+- **Tituly z Wikidat:** ocenění Penthouse Pet (měsíce), Penthouse Pet of the Year a Hustler Honey s datem se
+  nabídnou jako údaj „Tituly (Pet, Honey)“ v okně Doplnit z webu i ve frontě Údržba › Z webu (jako doplnění,
+  jen tituly, které modelka ještě nemá). Přijetí založí prázdný centerfold čísla (`2002-06@PH`) nebo album titulu
+  roku („Pet of the Year 2004“, číslo `2004@PH`); fotky se doplní později. Vrátit v Údržbě založená alba smaže.
+  Ocenění časopisu také pomůže najít správnou osobu na Wikidatech u modelek, které nejsou Playmate.
+- Prázdné album titulu roku jiného časopisu platí jako titul (jako prázdný centerfold).
+
+### Změněno
+- Krok „Hustler Honeys“ zrušen: seznam Honeys nemá žádná Wikipedie a Wikidata mají Honey jen u 3 modelek.
+  Další kroky se posunuly o jedno (mobil 0.02.074–0.02.080, alfa 0.02.085+).
+
+### Ověřeno
+- Test s falešnými Wikidaty: návrh jen chybějících titulů (už zapsaný Pet měsíce se nenabídne, ocenění bez
+  měsíce a neznámé ocenění se vynechají), zápis, opakovaný zápis nezdvojí alba, fronta Údržby jako doplnění,
+  přijetí a Vrátit.
+- Snímek na kopii sbírky (živé zdroje): Doplnit z webu u Victorie Zdrok nabídne „+ Pet of the Month červen 2002,
+  Pet of the Year 2004“ (Wikidata). Uložení v okně na snímku nezkoušeno (kopie zůstala beze změny).
+- Na Wikidatech je 278 Pets měsíce a 31 Pets roku s datem; v kopii sbírky je mezi nimi 8 modelek.
+
 ## [0.02.064] – 2026-11-12
 
 ### Přidáno

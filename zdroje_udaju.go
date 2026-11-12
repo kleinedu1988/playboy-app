@@ -138,6 +138,7 @@ var poleZdroju = []struct{ klic, nazev string }{
 	{"narozeniDatum", "Narození"}, {"narozeniMisto", "Místo narození"}, {"umrtiDatum", "Úmrtí"}, {"narodnost", "Národnost"},
 	{"etnicita", "Etnicita"}, {"vyskaCm", "Výška (cm)"}, {"vahaKg", "Váha (kg)"}, {"miry", "Míry (cm)"}, {"velikostPrsou", "Velikost prsou"},
 	{"prsaTyp", "Prsa"}, {"vlasyBarva", "Vlasy"}, {"ociBarva", "Oči"}, {"ochlupeni", "Ochlupení"},
+	{"tituly", "Tituly (Pet, Honey)"},
 }
 
 func hodnotaPoleModelky(m *Modelka, klic string) string {
@@ -177,6 +178,8 @@ func hodnotaPoleModelky(m *Modelka, klic string) string {
 		return m.OciBarva
 	case "ochlupeni":
 		return m.Ochlupeni
+	case "tituly":
+		return strings.Join(titulyModelky(m), ", ")
 	}
 	return ""
 }
@@ -227,6 +230,13 @@ func (a *App) NajitUdajeModelky(id int) NalezUdaju {
 		souhlasi := false
 		for _, v := range vysledky {
 			h := strings.TrimSpace(v.udaje[p.klic])
+			if p.klic == "tituly" {
+				// Tituly se jen doplňují: návrh obsahuje ty, které modelka ještě nemá
+				if h != "" && chybejiciTituly(h, stavajici) == "" {
+					souhlasi = true
+				}
+				h = chybejiciTituly(h, stavajici)
+			}
 			if h == "" {
 				continue
 			}
@@ -274,6 +284,8 @@ func stejnyUdaj(klic, novy, stary string) bool {
 		return false
 	}
 	switch klic {
+	case "tituly":
+		return chybejiciTituly(novy, stary) == ""
 	case "narozeniDatum", "umrtiDatum":
 		return strings.HasPrefix(stary, novy)
 	case "vyskaCm", "vahaKg":
@@ -362,6 +374,10 @@ func (a *App) UlozitUdajeZeZdroju(id int, hodnoty map[string]string, odkazy []st
 			m.OciBarva = h
 		case "ochlupeni":
 			m.Ochlupeni = h
+		case "tituly":
+			if !a.zapsatTituly(id, h) {
+				return false
+			}
 		}
 	}
 	m.Odkazy = pridatOdkazy(m.Odkazy, odkazy)
@@ -766,7 +782,65 @@ type entitaWikidat struct {
 			} `json:"datavalue"`
 		} `json:"mainsnak"`
 		Rank string `json:"rank"`
+		// Kvalifikátory (u ocenění datum P585)
+		Qualifiers map[string][]struct {
+			Datavalue struct {
+				Value json.RawMessage `json:"value"`
+			} `json:"datavalue"`
+		} `json:"qualifiers"`
 	} `json:"claims"`
+}
+
+// Ocenění na Wikidatech (P166) jako tituly jiných časopisů (0.02.065): Penthouse Pet (měsíce), Penthouse Pet of
+// the Year, Hustler Honey (měsíce). Datum je kvalifikátor „point in time“ (P585).
+var oceneniWikidat = map[string]struct {
+	casopis string
+	roku    bool
+}{
+	"Q100762773": {"PH", false},
+	"Q100765879": {"PH", true},
+	"Q11326351":  {"HU", false},
+}
+
+// Tituly z ocenění jako klíče čísel: „1985-09@PH“ (modelka měsíce), „1986@PH“ (modelka roku); seřazené
+func (e *entitaWikidat) tituly() []string {
+	videne := map[string]bool{}
+	var v []string
+	for _, c := range e.Claims["P166"] {
+		var p struct {
+			ID string `json:"id"`
+		}
+		if c.Rank == "deprecated" || json.Unmarshal(c.Mainsnak.Datavalue.Value, &p) != nil {
+			continue
+		}
+		o, ok := oceneniWikidat[p.ID]
+		if !ok {
+			continue
+		}
+		for _, q := range c.Qualifiers["P585"] {
+			var t struct {
+				Time      string `json:"time"`
+				Precision int    `json:"precision"`
+			}
+			if json.Unmarshal(q.Datavalue.Value, &t) != nil || len(t.Time) < 8 || t.Time[0] != '+' {
+				continue
+			}
+			rok, mesic := t.Time[1:5], t.Time[6:8]
+			klic := ""
+			switch {
+			case o.roku && t.Precision >= 9:
+				klic = rok + "@" + o.casopis
+			case !o.roku && t.Precision >= 10 && mesic != "00":
+				klic = rok + "-" + mesic + "@" + o.casopis
+			}
+			if klic != "" && !videne[klic] {
+				videne[klic] = true
+				v = append(v, klic)
+			}
+		}
+	}
+	sort.Strings(v)
+	return v
 }
 
 func (e *entitaWikidat) stitek() string {
@@ -948,6 +1022,10 @@ func najitWikidata(m *Modelka) (*entitaWikidat, string, error) {
 		if strings.Contains(strings.ToLower(e.popis()), "playmate") {
 			skore += 2
 		}
+		// Pet a Honey (0.02.065): ocenění časopisu stačí jako povolání Playmate
+		if len(e.tituly()) > 0 {
+			skore += 3
+		}
 		if d := e.datum("P569"); rok > 0 && len(d) >= 4 {
 			if d[:4] == strconv.Itoa(rok) {
 				skore += 3
@@ -978,7 +1056,7 @@ func udajeZWikidat(m *Modelka) (ZdrojUdaju, udajeZdroje) {
 		return z, nil
 	}
 	z.Stav, z.URL, z.Poznamka = "nalezeno", webWikidat+e.ID, strings.TrimSpace(e.stitek()+" – "+e.popis())
-	u := udajeZdroje{"narozeniDatum": e.datum("P569"), "umrtiDatum": e.datum("P570")}
+	u := udajeZdroje{"narozeniDatum": e.datum("P569"), "umrtiDatum": e.datum("P570"), "tituly": strings.Join(e.tituly(), ", ")}
 	if cm := e.mnozstvi("P2048", map[string]float64{"Q174728": 1, "Q11573": 100}); cm >= 120 && cm <= 215 {
 		u["vyskaCm"] = strconv.Itoa(int(math.Round(cm)))
 	}
@@ -1287,4 +1365,130 @@ func (a *App) PlaymatePodleWikipedie(vydani string) PlaymatePodleWikipedie {
 		p.ModelkaID = modelky[kandidati[0]].ID
 	}
 	return p
+}
+
+// ——— Tituly jiných časopisů z ocenění (0.02.065) ———
+
+var (
+	vzorKliceTituluMesice = regexp.MustCompile(`^(\d{4})-(\d{2})@([A-Z]{2})$`)
+	vzorKliceTituluRoku   = regexp.MustCompile(`^(\d{4})@([A-Z]{2})$`)
+)
+
+// Titul roku podle časopisu (Pet of the Year) a zpět; z předvyplněných časopisů
+func titulRoku(casopis string) string {
+	for _, c := range vychoziCasopisy {
+		if c.Klic == casopis {
+			return c.ModelkaRoku
+		}
+	}
+	return ""
+}
+
+// Tituly jiných časopisů, které modelka ve sbírce má, jako klíče („1985-09@PH“, „1986@PH“): číslo měsíce, ve
+// kterém je (centerfold, album s titulem měsíce), a titul roku s rokem
+func titulyModelky(m *Modelka) []string {
+	videne := map[string]bool{}
+	var v []string
+	pridat := func(k string) {
+		if !videne[k] {
+			videne[k] = true
+			v = append(v, k)
+		}
+	}
+	for _, c := range append(append([]string(nil), m.Centerfoldy...), m.Vydani...) {
+		if s := vzorKliceTituluMesice.FindStringSubmatch(c); s != nil && s[3] != hledani.VychoziCasopis {
+			pridat(c)
+		}
+	}
+	for _, t := range m.TitulyJinde {
+		if t.Rok == "" || t.Rok == "?" {
+			continue
+		}
+		for _, c := range vychoziCasopisy {
+			if c.Klic != hledani.VychoziCasopis && c.ModelkaRoku == t.Nazev {
+				pridat(t.Rok + "@" + c.Klic)
+			}
+		}
+	}
+	sort.Strings(v)
+	return v
+}
+
+func rozdelitTituly(text string) []string {
+	var v []string
+	for _, k := range strings.Split(text, ",") {
+		if k = strings.TrimSpace(k); k != "" {
+			v = append(v, k)
+		}
+	}
+	return v
+}
+
+// Tituly z návrhu, které ve stávajících chybí (čárkou)
+func chybejiciTituly(navrh, stavajici string) string {
+	ma := map[string]bool{}
+	for _, k := range rozdelitTituly(stavajici) {
+		ma[k] = true
+	}
+	var v []string
+	for _, k := range rozdelitTituly(navrh) {
+		if !ma[k] && (vzorKliceTituluMesice.MatchString(k) || vzorKliceTituluRoku.MatchString(k)) {
+			v = append(v, k)
+		}
+	}
+	return strings.Join(v, ", ")
+}
+
+// Zápis titulů: modelka měsíce = prázdný centerfold čísla (titul z okna alba), modelka roku = album titulu roku
+// s číslem ročníku („Pet of the Year 1986“, 1986@PH); chybějící fotky se doplní později
+func (a *App) zapsatTituly(id int, text string) bool {
+	m, ok := a.modelkaPodleID(id)
+	if !ok {
+		return false
+	}
+	for _, k := range rozdelitTituly(chybejiciTituly(text, strings.Join(titulyModelky(&m), ", "))) {
+		if s := vzorKliceTituluMesice.FindStringSubmatch(k); s != nil {
+			if !a.znamaRada(edicePodleVydani(k)) {
+				continue
+			}
+			if _, err := a.zajistitAlbum(id, k, "Centerfold"); err != nil {
+				a.chyba("zápis titulu", err)
+				return false
+			}
+		} else if s := vzorKliceTituluRoku.FindStringSubmatch(k); s != nil {
+			titul := titulRoku(s[2])
+			if titul == "" || !a.znamaRada(edicePodleVydani(k)) {
+				continue
+			}
+			nazev := titul + " " + s[1]
+			if _, err := a.zajistitAlbum(id, nazev, typPMRoku); err != nil {
+				a.chyba("zápis titulu", err)
+				return false
+			}
+			a.SetVydaniAlba(id, nazev, typPMRoku, k)
+		}
+	}
+	return true
+}
+
+// Vrácení přijetí titulů: smaže prázdná alba titulů z textu, které modelka před přijetím neměla
+func (a *App) smazatZapsaneTituly(id int, text string, predtim []string) {
+	mela := map[string]bool{}
+	for _, k := range predtim {
+		mela[k] = true
+	}
+	for _, k := range rozdelitTituly(text) {
+		if mela[k] {
+			continue
+		}
+		album, typ := k, "Centerfold"
+		if s := vzorKliceTituluRoku.FindStringSubmatch(k); s != nil {
+			album, typ = titulRoku(s[2])+" "+s[1], typPMRoku
+		} else if !vzorKliceTituluMesice.MatchString(k) {
+			continue
+		}
+		if pocetFotekAlba(a.db, id, album, typ) == 0 {
+			a.db.Exec(`DELETE FROM alba WHERE modelka_id = ? AND album = ? AND typ = ?`, id, album, typ)
+		}
+	}
 }

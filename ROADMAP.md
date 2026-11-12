@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (12. 11. 2026): verze 0.02.064** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (12. 11. 2026): verze 0.02.065** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (web, vkus napříč časopisy, mobil) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.065 – Hustler Honeys** (Údaje z webu pro další časopisy; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
+**0.02.066 – Zásobník odkazů** (Údaje z webu pro další časopisy; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
 
 ---
 
@@ -54,7 +54,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.064 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.065 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -251,28 +251,30 @@ v oddílu [Možné](#možné-bez-termínu); otevírání a listování PDF zůst
 | 0.02.035 ✅ | **Otevřít PDF:** náhledy stránek (pdf.js v rozhraní, bez nové závislosti v Go), listování a lupa | 200stránkové číslo se otevře do 5 s |
 | 0.02.036 ✅ | **Album bez čísla podle údajů modelky:** text vystoupení „Penthouse říjen 1970“ a textové vydání dají číslo s časopisem (nahlášená chyba) | Pet Penthouse bez čísla alba není Playmate (test) |
 
-#### Údaje z webu pro další časopisy (0.02.064–0.02.068, dříve etapa 0.06)
+#### Údaje z webu pro další časopisy (0.02.064–0.02.067, dříve etapa 0.06)
+
+**Zjištěno (12. 11. 2026):** seznam Hustler Honeys nemá žádná Wikipedie a Wikidata mají Honey jen u 3 modelek;
+krok „Hustler Honeys“ zrušen, Honey se nabídne jen z Wikidat (0.02.065).
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
 | 0.02.064 ✅ | **Penthouse Pets z Wikipedie:** Ročník podle Wikipedie i pro Penthouse US – anglická Wikipedie seznam nemá, bere se italský „Penthouse Pet“ (Pets měsíců 1969–2025 a Pet of the Year); jen na kliknutí, přidání s potvrzením | hotovo: ročník 1970 ukáže Ilse Hasek a Heide Mann ve sbírce a 10 dalších Pets k přidání |
-| 0.02.065 | **Hustler Honeys** stejně | totéž pro Hustler |
-| 0.02.066 | **Wikidata:** ocenění Pet / Honey jako návrhy údajů modelky | návrh se objeví ve frontě Údržby |
-| 0.02.067 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
-| 0.02.068 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
+| 0.02.065 ✅ | **Wikidata:** ocenění Pet of the Month, Pet of the Year a Honey (s datem) jako návrh „Tituly“ v Doplnit z webu i ve frontě Údržba › Z webu; přijetí založí prázdný centerfold čísla nebo album titulu roku, Vrátit je smaže | hotovo: Victoria Zdrok dostane návrh „Pet of the Month červen 2002, Pet of the Year 2004“ |
+| 0.02.066 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
+| 0.02.067 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
 
-#### Vkus, odhady a Statistiky napříč časopisy (0.02.069–0.02.074, dříve etapa 0.07)
+#### Vkus, odhady a Statistiky napříč časopisy (0.02.068–0.02.073, dříve etapa 0.07)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.069 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
-| 0.02.070 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
-| 0.02.071 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
-| 0.02.072 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
-| 0.02.073 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
-| 0.02.074 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
+| 0.02.068 | **Časopis jako vlastnost** v modelu vkusu a odhadu srdíček | odhad u modelky Penthouse má důvod s časopisem |
+| 0.02.069 | **Podobné modelky a Objevit** napříč časopisy | Objevit nabídne i Penthouse |
+| 0.02.070 | **Můj vkus v čase:** časopis mezi vlastnostmi | věta „víc ti teď sedí Penthouse“, pokud to data ukážou |
+| 0.02.071 | **Filtr a barva časopisu** ve všech grafech Statistik | graf jde omezit na časopis |
+| 0.02.072 | **Srovnání časopisů:** výška, období, styl (jako Porovnat období) | průkazný rozdíl se ukáže, pokud je |
+| 0.02.073 | **Mapa sbírky** obarvená časopisem | barvy podle časopisu |
 
-#### Mobilní prohlížeč a záloha na Google Disk (0.02.075–0.02.081, přání uživatele 12. 11. 2026)
+#### Mobilní prohlížeč a záloha na Google Disk (0.02.074–0.02.080, přání uživatele 12. 11. 2026)
 
 **Cíl:** stránka modelek v telefonu s Androidem – hero banner nahoře a pod ním dlaždice modelek jako v hlavním
 programu, jen ke čtení. Program na PC i telefon se přihlásí stejným účtem Google; PC nahraje na Google Disk zálohu
@@ -285,27 +287,27 @@ Android), Fyne (celé rozhraní v Go) nebo Wails v3 (mobilní verze zatím alfa)
 hlavní program (hero a dlaždice budou vypadat stejně), přihlášení Google přes systémový účet telefonu; Fyne by
 znamenalo nakreslit vzhled znovu. Rozsahy Google `drive.file` a `drive.appdata` (jen soubory programu, ne celý
 Disk) nepotřebují ověření aplikace Googlem. Potřeba: vlastní projekt v Google Cloud s klientem OAuth (návod v kroku
-075) a Android SDK pro sestavení APK.
+074) a Android SDK pro sestavení APK.
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.075 | **Přihlášení Google v programu:** OAuth 2.0 se systémovým prohlížečem a návratem na `127.0.0.1`, rozsahy `drive.file` a `drive.appdata`, token s právy `0600`, odhlášení v Nastavení (dříve 1.08.001) | přihlášení vydrží restart |
-| 0.02.076 | **Záloha na Google Disk:** denní záloha se nahraje i na Disk (posledních 7), obnovení ze zálohy na Disku | obnova na čistém programu ze zálohy z Disku |
-| 0.02.077 | **Balíček pro telefon:** výtah sbírky (modelky, srdíčka, hero, dlaždice s výřezy, odkazy na náhledy; bez explicitních fotek) nahraný na Disk po záloze | balíček celé sbírky do 5 MB (test) |
-| 0.02.078 | **Kostra Android aplikace [měření]:** sestavení APK (WebView + `gomobile`, porovnat s Fyne), velikost a start | APK se nainstaluje a otevře na telefonu |
-| 0.02.079 | **Přihlášení v telefonu:** stejný účet Google, stažení balíčku, práce bez sítě z posledního stažení | po změně na PC telefon ukáže novou modelku |
-| 0.02.080 | **Stránka modelek v telefonu:** hero banner nahoře, dlaždice modelek s výřezy a srdíčky, hledání jménem | snímek z telefonu odpovídá stránce modelek na PC |
-| 0.02.081 | **Instalace a nové verze:** APK z vydání na GitHubu, telefon nabídne novou verzi | aktualizace bez odinstalace |
+| 0.02.074 | **Přihlášení Google v programu:** OAuth 2.0 se systémovým prohlížečem a návratem na `127.0.0.1`, rozsahy `drive.file` a `drive.appdata`, token s právy `0600`, odhlášení v Nastavení (dříve 1.08.001) | přihlášení vydrží restart |
+| 0.02.075 | **Záloha na Google Disk:** denní záloha se nahraje i na Disk (posledních 7), obnovení ze zálohy na Disku | obnova na čistém programu ze zálohy z Disku |
+| 0.02.076 | **Balíček pro telefon:** výtah sbírky (modelky, srdíčka, hero, dlaždice s výřezy, odkazy na náhledy; bez explicitních fotek) nahraný na Disk po záloze | balíček celé sbírky do 5 MB (test) |
+| 0.02.077 | **Kostra Android aplikace [měření]:** sestavení APK (WebView + `gomobile`, porovnat s Fyne), velikost a start | APK se nainstaluje a otevře na telefonu |
+| 0.02.078 | **Přihlášení v telefonu:** stejný účet Google, stažení balíčku, práce bez sítě z posledního stažení | po změně na PC telefon ukáže novou modelku |
+| 0.02.079 | **Stránka modelek v telefonu:** hero banner nahoře, dlaždice modelek s výřezy a srdíčky, hledání jménem | snímek z telefonu odpovídá stránce modelek na PC |
+| 0.02.080 | **Instalace a nové verze:** APK z vydání na GitHubu, telefon nabídne novou verzi | aktualizace bez odinstalace |
 
-#### Dotažení a alfa (0.02.082–0.02.086+, dříve etapa 0.08)
+#### Dotažení a alfa (0.02.081–0.02.085+, dříve etapa 0.08)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
-| 0.02.082 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
-| 0.02.083 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
-| 0.02.084 | **Ikona programu** | nová ikona v nabídce a panelu |
-| 0.02.085 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
-| 0.02.086+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
+| 0.02.081 | **Soubory databáze** `playboy.db` → `katalog.db` (a učení) s přesunem a zálohou | starší zálohy jdou dál obnovit |
+| 0.02.082 | **Zbytky názvu:** klíče localStorage, název zálohy, kapesní katalog | `grep playboy` jen tam, kde jde o časopis |
+| 0.02.083 | **Ikona programu** | nová ikona v nabídce a panelu |
+| 0.02.084 | **Repozitář:** přejmenovat na GitHubu, README, `instalovat.sh` | kontrola nové verze funguje i po přejmenování |
+| 0.02.085+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
 
 ---
 
@@ -414,7 +416,7 @@ Na přání uživatele odložené na konec plánu (kvíz z PD 1.43, průvodce č
 
 | Verze | Co | Jak | Prac. |
 |---|---|---|---|
-| 1.08.001 | Přihlášení a správa přístupu (přesunuto do 0.02.075) | OAuth 2.0 se systémovým prohlížečem a návratem na `127.0.0.1`, uložení tokenu s právy `0600`, kořenová složka a odhlášení v Nastavení | M |
+| 1.08.001 | Přihlášení a správa přístupu (přesunuto do 0.02.074) | OAuth 2.0 se systémovým prohlížečem a návratem na `127.0.0.1`, uložení tokenu s právy `0600`, kořenová složka a odhlášení v Nastavení | M |
 | 1.08.002 | Prohlížeč složek a fotek | Strom složek, drobečková cesta, hledání složky, mřížka náhledů s indikací „už je v databázi“ | M |
 
 **Hotovo, když:** přihlášený uživatel vidí své složky na Disku přímo v programu a pozná, které fotky už v databázi jsou.
@@ -470,7 +472,7 @@ Nápady, které se udělají, až na ně přijde řada nebo chuť; nemají čís
   ne jako druhý akcent tlačítek a voleb), písmo aplikace i v nadpisech (patkové písmo vráceno v 0.34.1; výjimkou
   je režim čtení PD 1.41). Potvrzeno 10. 11. 2026 při plánu etapy G.
 - Google Disk: zobrazování zůstává přes sdílené odkazy, Google API přibude jen pro výběr fotek v programu (PD 1.61–PD 1.62).
-  Od 12. 11. 2026 i pro přihlášení, zálohu na Disk a balíček pro telefon (0.02.075–0.02.081), jen rozsahy `drive.file` a `drive.appdata`.
+  Od 12. 11. 2026 i pro přihlášení, zálohu na Disk a balíček pro telefon (0.02.074–0.02.080), jen rozsahy `drive.file` a `drive.appdata`.
 - Malé náhledy smí program ukládat na disk jako mezipaměť (PD 1.6); originály a velké fotky zůstávají jen na Disku.
 - 1.0.0 po 14 dnech používání alfy bez nové chyby (21. 10. 2026; místo bety alfa od 10. 11. 2026); po 1.0.0 MINOR pro téma z plánu, PATCH pro
   každý krok a opravu v tématu; MAJOR = velký milník, kompatibilitu dat hlídá verze schématu a exportu.
@@ -483,7 +485,7 @@ Nápady, které se udělají, až na ně přijde řada nebo chuť; nemají čís
 ## Nedělat
 
 - Obecné Zpět pro všechny úpravy (deník změn) – denní zálohy, Vrátit u fotek a Vrátit přidání čísla stačí.
-- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz PD 1.6), zálohy na jiný místní disk (záloha na Google Disk ano, 0.02.076).
+- Místní kopie fotek v plné velikosti (malé náhledy jako mezipaměť ano, viz PD 1.6), zálohy na jiný místní disk (záloha na Google Disk ano, 0.02.075).
 - Šifrovanou databázi – zvolen zámek rozhraní.
 - Půlsrdíčka.
 - Zobrazování fotek přes Google API s přihlášením (API jen k výběru fotek); automatický import celé

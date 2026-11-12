@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.065 – Tituly z Wikidat
+
+- [ ] Profil › Doplnit z webu u Pet (např. Victoria Zdrok) → řádek „Tituly (Pet, Honey)“ → Uložit: v profilu přibude Pet of the Month / Pet of the Year.
+- [ ] Údržba › Z webu po průchodu nabídne tituly jako doplnění; Přijmout zobrazené a Vrátit.
+- [ ] Kalendář Penthouse ukáže modelku v čísle z prázdného centerfoldu.
+
 ## 0.02.064 – Penthouse Pets z Wikipedie
 
 - [ ] Kalendář › řada Penthouse › nabídka roku › Ročník podle Wikipedie… ukáže Pets měsíců a Pet of the Year.

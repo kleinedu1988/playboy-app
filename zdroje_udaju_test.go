@@ -77,6 +77,12 @@ func falesneZdroje(t *testing.T) {
 	mnozstvi := func(a, j string) map[string]any {
 		return map[string]any{"mainsnak": map[string]any{"datavalue": map[string]any{"value": map[string]any{"amount": a, "unit": "http://www.wikidata.org/entity/" + j}}}, "rank": "normal"}
 	}
+	// Ocenění s datem v kvalifikátoru P585 (0.02.065)
+	oceneni := func(id, cas string, p int) map[string]any {
+		o := polozka(id)
+		o["qualifiers"] = map[string]any{"P585": []any{map[string]any{"datavalue": map[string]any{"value": map[string]any{"time": cas, "precision": p}}}}}
+		return o
+	}
 	stitky := func(cs, en string) map[string]any {
 		l := map[string]any{"en": map[string]string{"value": en}}
 		if cs != "" {
@@ -87,7 +93,9 @@ func falesneZdroje(t *testing.T) {
 	entity := map[string]any{
 		"Q1": map[string]any{"id": "Q1", "labels": stitky("", "Anna Testová"), "descriptions": map[string]any{"en": map[string]string{"value": "American model and Playboy Playmate"}},
 			"claims": map[string]any{"P106": []any{polozka("Q728711")}, "P569": []any{cas("+1970-05-04T00:00:00Z", 11)}, "P19": []any{polozka("Q10")},
-				"P27": []any{polozka("Q30")}, "P2048": []any{mnozstvi("+1.73", "Q11573")}, "P1884": []any{polozka("Q20")}}},
+				"P27": []any{polozka("Q30")}, "P2048": []any{mnozstvi("+1.73", "Q11573")}, "P1884": []any{polozka("Q20")},
+				"P166": []any{oceneni("Q100762773", "+1990-03-01T00:00:00Z", 10), oceneni("Q100765879", "+1991-01-01T00:00:00Z", 9),
+					oceneni("Q11326351", "+1992-05-01T00:00:00Z", 10), oceneni("Q100762773", "+1993-00-00T00:00:00Z", 9), polozka("Q999")}}},
 		"Q2": map[string]any{"id": "Q2", "labels": stitky("", "Anna Testová"), "descriptions": map[string]any{"en": map[string]string{"value": "Czech painter"}},
 			"claims": map[string]any{"P569": []any{cas("+1890-01-01T00:00:00Z", 9)}}},
 		"Q10": map[string]any{"id": "Q10", "labels": stitky("Dallas", "Dallas"), "claims": map[string]any{"P17": []any{polozka("Q30")}}},
@@ -216,4 +224,64 @@ func TestZdrojeJinaOsoba(t *testing.T) {
 		t.Errorf("pole: %+v", n.Pole)
 	}
 	_ = fmt.Sprint
+}
+
+// Ocenění z Wikidat (0.02.065): Pet of the Month, Pet of the Year a Honey s datem jsou návrh titulů; přijetí
+// založí prázdný centerfold čísla a album titulu roku a modelka pak tituly má (návrh zmizí)
+func TestTitulyZWikidat(t *testing.T) {
+	falesneZdroje(t)
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Anna Testová", NarozeniDatum: "1970", Tetovani: -1, Piercing: -1})
+	id := idModelky(t, a, "Anna Testová")
+	// Pet of the Month 1990-03 už ve sbírce je (album s titulem měsíce)
+	a.AddBulkPhotos(id, "Pet of the Month March 1990", typPMMesice, odkazA)
+	a.SetVydaniAlba(id, "Pet of the Month March 1990", typPMMesice, "1990-03@PH")
+
+	navrh := func() (string, bool) {
+		n := a.NajitUdajeModelky(id)
+		for _, p := range n.Pole {
+			if p.Klic == "tituly" {
+				return p.Navrhy[0].Hodnota, false
+			}
+		}
+		return "", strings.Contains(strings.Join(n.Souhlasi, ","), "Tituly")
+	}
+	h, _ := navrh()
+	// Pet měsíce bez přesného měsíce (1993) se nenabízí, neznámé ocenění také ne
+	if h != "1991@PH, 1992-05@HU" {
+		t.Fatalf("návrh titulů %q", h)
+	}
+	if !a.UlozitUdajeZeZdroju(id, map[string]string{"tituly": h}, nil) {
+		t.Fatal("zápis titulů")
+	}
+	m, _ := a.modelkaPodleID(id)
+	if got := strings.Join(titulyModelky(&m), ", "); got != "1990-03@PH, 1991@PH, 1992-05@HU" {
+		t.Fatalf("tituly po zápisu %q (centerfoldy %v, tituly %v)", got, m.Centerfoldy, m.TitulyJinde)
+	}
+	if h, souhlasi := navrh(); h != "" || !souhlasi {
+		t.Fatalf("po zápisu návrh %q, souhlasí %v", h, souhlasi)
+	}
+	// Fronta Údržby: návrh titulů je doplnění (bez stávající hodnoty); Vrátit smaže založená alba
+	a.nahraditNavrhyZWebu(id, []NavrhZWebu{{ModelkaID: id, Pole: "tituly", Hodnota: "1990-03@PH, 1993-02@PH"}})
+	fronta := a.GetNavrhyZWebu()
+	if len(fronta) != 1 || fronta[0].Hodnota != "1993-02@PH" || fronta[0].Stavajici != "" {
+		t.Fatalf("fronta %+v", fronta)
+	}
+	p := a.PrijmoutNavrhyZWebuVratitelne(fronta)
+	m, _ = a.modelkaPodleID(id)
+	if p.Zapsano != 1 || !strings.Contains(strings.Join(titulyModelky(&m), ","), "1993-02@PH") {
+		t.Fatalf("přijetí z fronty: %+v, tituly %v", p, titulyModelky(&m))
+	}
+	a.VratitPrijetiZWebu(p)
+	m, _ = a.modelkaPodleID(id)
+	if got := strings.Join(titulyModelky(&m), ", "); got != "1990-03@PH, 1991@PH, 1992-05@HU" {
+		t.Fatalf("po vrácení %q", got)
+	}
+	// Zápis znovu nic nezdvojí
+	a.UlozitUdajeZeZdroju(id, map[string]string{"tituly": "1991@PH"}, nil)
+	var alb int
+	a.db.QueryRow(`SELECT COUNT(*) FROM alba WHERE modelka_id = ?`, id).Scan(&alb)
+	if alb != 3 {
+		t.Errorf("alb %d, chci 3", alb)
+	}
 }

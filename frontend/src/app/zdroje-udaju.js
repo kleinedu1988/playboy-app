@@ -3,7 +3,7 @@
 // hodnota z některého zdroje. Prázdný údaj má předvolený první návrh, vyplněný „ponechat“; nic se nezapíše bez
 // Uložit. K odkazům modelky přibudou zdroje, ze kterých se něco převzalo.
 import { NajitUdajeModelky, UlozitUdajeZeZdroju } from './backend';
-import { esc } from '../lib/format';
+import { esc, nazvyTitulu } from '../lib/format';
 import { stav } from './stav';
 import { oznamit } from '../ui/oznameni';
 import { drzetFokus } from '../ui/dom';
@@ -77,12 +77,15 @@ function htmlNalezu(n) {
     const zdroje = n.zdroje.map(z => `<li class="zu-zdroj zu-${z.stav}"><span class="zu-stav" title="${esc(z.stav)}">${STAVY[z.stav] || ''}</span>
         <b>${esc(z.nazev)}</b> ${z.url ? `<button type="button" class="link" data-zu-odkaz="${esc(z.url)}" title="${esc(z.url)}">otevřít</button>` : ''}<small>${esc(z.poznamka || '')}</small></li>`).join('');
     const radky = n.pole.map(p => {
-        const predvolba = p.stavajici ? -1 : 0;
+        // Tituly z ocenění (0.02.065) se k stávajícím přidávají, proto je předvolený návrh
+        const tituly = p.klic === 'tituly';
+        const ukazat = (/** @type {string} */ h) => esc(tituly ? nazvyTitulu(h) : h);
+        const predvolba = p.stavajici && !tituly ? -1 : 0;
         const volba = (hodnota, popis, i, zdroj = '') => `<label class="zu-volba"><input type="radio" name="zu-${esc(p.klic)}" value="${esc(hodnota)}"${zdroj ? ` data-zdroj="${esc(zdroj)}"` : ''}${i === predvolba ? ' checked' : ''} />
             <span>${popis}</span></label>`;
         return `<tr><th scope="row">${esc(p.nazev)}</th>
-            <td>${volba(p.stavajici, p.stavajici ? `<span class="zu-hodnota">${esc(p.stavajici)}</span><small>ponechat</small>` : '<small>nevyplněno – ponechat</small>', -1)}</td>
-            <td>${p.navrhy.map((h, i) => volba(h.hodnota, `<span class="zu-hodnota">${esc(h.hodnota)}</span><small>${esc(NAZVY_ZDROJU[h.zdroj] || h.zdroj)}</small>`, i, h.zdroj)).join('')}</td></tr>`;
+            <td>${volba(p.stavajici, p.stavajici ? `<span class="zu-hodnota">${ukazat(p.stavajici)}</span><small>${tituly ? 'jen tyto' : 'ponechat'}</small>` : '<small>nevyplněno – ponechat</small>', -1)}</td>
+            <td>${p.navrhy.map((h, i) => volba(h.hodnota, `<span class="zu-hodnota">${tituly ? '+ ' : ''}${ukazat(h.hodnota)}</span><small>${esc(NAZVY_ZDROJU[h.zdroj] || h.zdroj)}</small>`, i, h.zdroj)).join('')}</td></tr>`;
     }).join('');
     const souhlasi = n.souhlasi?.length ? `<p class="zu-souhlasi">Se zdroji souhlasí: ${esc(n.souhlasi.join(', '))}.</p>` : '';
     const nic = !n.pole.length ? `<p class="zu-nic">${n.zdroje.some(z => z.stav === 'nalezeno') ? 'Zdroje nemají nic, co by ve sbírce chybělo nebo se lišilo.' : 'Žádný zdroj tuto modelku nenašel. Pomůže odkaz na Wikipedii, Wikidata nebo Boobpedii v jejích odkazech (Upravit).'}</p>` : '';

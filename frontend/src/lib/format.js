@@ -105,6 +105,16 @@ export function moznostiSteny() {
 export const RADY_WIKIPEDIE = Object.freeze({ US: 'PB', 'PH/US': 'PH' });
 export const maRocnikWiki = (/** @type {string} */ rada) => Object.hasOwn(RADY_WIKIPEDIE, rada);
 
+// Tituly z ocenění na Wikidatech (0.02.065): „1990-03@PH“ → „Pet of the Month březen 1990“, „1991@PH“ → „Pet of
+// the Year 1991“; víc titulů čárkou
+export function nazevTitulu(/** @type {string} */ klic) {
+    const r = /^(\d{4})@([A-Z]{2})$/.exec(klic);
+    if (r) return `${titulCasopisu(r[2], 'roku')} ${r[1]}`;
+    const m = /^(\d{4})-(\d{2})@([A-Z]{2})$/.exec(klic);
+    return m ? `${titulCasopisu(m[3])} ${(MESICE[parseInt(m[2]) - 1] || m[2]).toLowerCase()} ${m[1]}` : klic;
+}
+export const nazvyTitulu = (/** @type {string} */ text) => String(text || '').split(',').map(s => s.trim()).filter(Boolean).map(nazevTitulu).join(', ');
+
 // Klíč z roku, měsíce (nebo Snn, '' = ročník) a řady („US“, „CZ“, „PH/UK“)
 export function slozitVydani(rok, mesic, edice) {
     if (!rok) return '';
@@ -132,7 +142,7 @@ const TITULY_PLAYBOYE = { mesice: 'Playmate měsíce', roku: 'Playmate roku' };
 const OBECNE_TITULY = { mesice: 'Modelka měsíce', roku: 'Modelka roku' };
 
 // Má některá modelka číslo nebo obálku jiného časopisu než Playboy? Statistiky je zatím nepočítají (filtr časopisu
-// 0.02.072), texty pak místo „v časopise“ řeknou „v Playboyi“ (0.02.020)
+// 0.02.071), texty pak místo „v časopise“ řeknou „v Playboyi“ (0.02.020)
 export const maJineCasopisy = modelky => modelky.some(m => [...(m.vydani || []), ...(m.obalky || [])]
     .some(v => { const c = rozlozitVydani(v)?.casopis; return !!c && c !== VYCHOZI_CASOPIS; }));
 export const vCasopiseStatistik = modelky => (maJineCasopisy(modelky) ? 'v Playboyi' : 'v časopise');

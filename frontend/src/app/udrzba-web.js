@@ -5,7 +5,7 @@
 import { GetNavrhyZWebu, GetStavPruchoduWebem, OdmitnoutNavrhyZWebu, PocetOdmitnutychZWebu, PrerusitPruchodWebem, PrijmoutNavrhyZWebuVratitelne, SpustitPruchodWebem, VratitPrijetiZWebu, ZrusitOdmitnutiZWebu } from './backend';
 import { htmlListyVyberu, potvrditRozdil } from '../ui/hromadne';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
-import { esc, formatDatum, sklonovat } from '../lib/format';
+import { esc, formatDatum, nazvyTitulu, sklonovat } from '../lib/format';
 import { nastavitHtml } from '../ui/dom';
 import { oznamit } from '../ui/oznameni';
 import { otevritProfilPodleId } from './cover';
@@ -25,7 +25,7 @@ const filtr = { pole: '', zdroj: '', opravy: false };
 let jenChybejici = true;
 
 const DATUMOVA = new Set(['narozeniDatum', 'umrtiDatum']);
-const hodnotaKUkazani = (pole, h) => (h && DATUMOVA.has(pole) ? formatDatum(h) : h);
+const hodnotaKUkazani = (pole, h) => (h && DATUMOVA.has(pole) ? formatDatum(h) : h && pole === 'tituly' ? nazvyTitulu(h) : h);
 
 export function pripravit(funkce) {
     api = { ...api, ...funkce };

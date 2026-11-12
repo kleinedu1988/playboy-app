@@ -305,6 +305,18 @@ func (a *App) nacistSnimek() *snimek {
 				o.mesiceJinde = append(o.mesiceJinde, casopis)
 			}
 		}
+		// Prázdné album titulu roku jiného časopisu (zapsané z ocenění na Wikidatech, 0.02.065) je titul jako
+		// prázdný centerfold
+		if al.fotek == 0 && al.typ == typPMRoku {
+			if _, casopis := hledani.RozdelitCasopis(al.vydani); casopis != "" && casopis != hledani.VychoziCasopis {
+				if o.rokyJinde == nil {
+					o.rokyJinde = map[string]string{}
+				}
+				if rok := vzorRokuAlba.FindString(al.vydani); rok != "" {
+					o.rokyJinde[casopis] = rok
+				}
+			}
+		}
 		if al.fotek > 0 {
 			if al.typ != "Cover" {
 				o.alba = append(o.alba, albumModelky{id: al.id, nazev: al.nazev, typ: al.typ, fotek: al.fotek, pocty: al.pocty})

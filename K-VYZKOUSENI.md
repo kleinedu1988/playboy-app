@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.091 – Zpět v telefonu
+
+- [ ] Na PC nový program a Nahrát teď → v telefonu Aktualizovat na 0.2.91 (zároveň: varuje Play Protect s vlastním klíčem?).
+- [ ] Gesto nebo tlačítko Zpět: prohlížeč fotek → galerie → detail modelky → seznam; na seznamu aplikace do pozadí.
+
 ## 0.02.089 – Vlastní podpisový klíč aplikace
 
 - [ ] Po přeinstalaci znovu přihlásit a stáhnout sbírku.

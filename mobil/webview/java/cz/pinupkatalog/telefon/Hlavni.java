@@ -15,6 +15,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.window.OnBackInvokedDispatcher;
 
 import org.json.JSONObject;
 
@@ -65,6 +66,17 @@ public class Hlavni extends Activity {
         web.addJavascriptInterface(new Most(), "telefon");
         web.loadUrl("file:///android_asset/index.html");
         setContentView(web);
+        // Zpět na Androidu 13+ (0.02.091): od Androidu 16 se onBackPressed u aplikací pro API 36 nevolá vůbec
+        if (Build.VERSION.SDK_INT >= 33) {
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::zpet);
+        }
+    }
+
+    // Zpět: nejdřív stránka (zavře účet, prohlížeč, galerii nebo detail), jinak aplikace do pozadí jako u ostatních
+    private void zpet() {
+        web.evaluateJavascript("window.zpet ? window.zpet() : false", v -> {
+            if (!"true".equals(v)) moveTaskToBack(true);
+        });
     }
 
     static final String INSTALACE = "cz.pinupkatalog.telefon.INSTALACE";
@@ -119,12 +131,10 @@ public class Hlavni extends Activity {
         super.onDestroy();
     }
 
-    // Zpět: nejdřív stránka (zavře detail), jinak aplikace
+    // Zpět do Androidu 12 (od 13 zpet() výše)
     @Override
     public void onBackPressed() {
-        web.evaluateJavascript("window.zpet ? window.zpet() : false", v -> {
-            if (!"true".equals(v)) Hlavni.super.onBackPressed();
-        });
+        zpet();
     }
 
     static void udalost(String nazev, String text) {

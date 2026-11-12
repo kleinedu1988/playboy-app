@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (12. 11. 2026): verze 0.02.090** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (12. 11. 2026): verze 0.02.091** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (web, vkus napříč časopisy, mobil) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.091+ – Alfa** (Dotažení a alfa; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
+**0.02.092+ – Alfa** (Dotažení a alfa; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
 
 ---
 
@@ -54,7 +54,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.090 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.091 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -296,7 +296,7 @@ Disk) nepotřebují ověření aplikace Googlem. Potřeba: vlastní projekt v Go
 | 0.02.076 ✅ | **Záloha na Google Disk:** denní záloha se po přihlášení nahraje do skryté složky programu na Disku (appDataFolder, posledních 7); v Obnovit ze zálohy oddíl Na Google Disku s Nahrát teď a Stáhnout – stažená záloha se obnoví obvyklou cestou s porovnáním rozdílů | hotovo: test s falešným Diskem (nahrání, úklid na 7, stažení do čistého programu); snímek oddílu po Nahrát teď |
 | 0.02.077 ✅ | **Balíček pro telefon:** výtah sbírky (modelky se stejnými názvy polí jako v programu, srdíčka a oblíbenost, kategorie, titulní a profilová fotka s výřezy jako Drive ID + šablona adresy; explicitní fotky vynechané) jako gzip JSON `telefon-balicek.json.gz` ve skryté složce programu na Disku, nahraný po záloze (i Nahrát teď), nový nahradí starý | hotovo: test 3000 modelek = 52 kB, explicitní titulní fotka vypadne, na Disku zůstane jeden balíček; kopie sbírky (613 modelek) = 52 kB |
 
-#### Dotažení a alfa (0.02.078–0.02.091+, dříve etapa 0.08)
+#### Dotažení a alfa (0.02.078–0.02.092+, dříve etapa 0.08)
 
 | Verze | Krok | Hotovo, když |
 |---|---|---|
@@ -313,7 +313,8 @@ Disk) nepotřebují ověření aplikace Googlem. Potřeba: vlastní projekt v Go
 | 0.02.088 ✅ | **Nové verze aplikace bez kabelu:** `mobil/sestavit.sh` zapíše verzi APK; program na PC při nahrání zálohy (i Nahrát teď) nahraje APK na Disk jako `telefon-aplikace-<verze>.apk`, když tam ta verze není, starší smaže; aplikace po stažení sbírky najde novější verzi, ukáže pruh Aktualizovat, stáhne ji a nainstaluje přes systémový instalátor; stálý podpisový klíč `~/.config/pinup-katalog/telefon.keystore` (mimo git, převzatý z ladicího) | test PC (bez APK nic, stejná verze jednou, novější nahradí starší, zálohy zůstanou) a jádra (nejnovější verze, porovnání verzí, stažení); hotovo: na telefonu aktualizace 0.2.87 → 0.2.88 bez kabelu prošla (Play Protect varoval, uživatel nainstaloval) |
 | 0.02.089 ✅ | **Vlastní podpisový klíč aplikace** (Play Protect při aktualizaci označil aplikaci za potenciálně škodlivou; přání uživatele): RSA 4096 „CN=Pinup Katalog“ v `~/.config/pinup-katalog/telefon-podpis.keystore` s náhodným heslem v `telefon-podpis.heslo` (mimo git, 0600), místo ladicího „Android Debug“; jednorázová přeinstalace kabelem | hotovo: APK podepsané novým klíčem, v telefonu odinstalována stará a nainstalována 0.2.89 |
 | 0.02.090 ✅ | **Alfa – kontrola souběhů:** celá sada s detektorem souběhů (`go test -race`, i jádro telefonu) – žádný souběh; `TestReviseHledani` pod detektorem padal na časovém limitu (SQLite v čistém Go je s ním asi 10× pomalejší) → limity se pod `-race` násobí (`nasobekCasuTestu`); `gofmt` dvou souborů; frontend: typy, 233 testů, sestavení | hotovo: `go test -race -short ./...` i jádro telefonu prošly |
-| 0.02.091+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
+| 0.02.091 ✅ | **Alfa – Zpět v telefonu na Androidu 16:** aplikace pro API 36 už nedostává `onBackPressed` (predictive back), Zpět by zavřel aplikaci místo detailu, galerie nebo prohlížeče; nově `OnBackInvokedCallback` (Android 13+), stránka zavře horní vrstvu, jinak aplikace do pozadí | sestaveno; na telefonu ověřit (adb na Xiaomi stisky kláves nepouští) |
+| 0.02.092+ | **Alfa:** používání se dvěma časopisy, jen opravy nalezených chyb | 14 dní bez nové chyby → 1.00.000 |
 
 ---
 

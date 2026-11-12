@@ -6,6 +6,17 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.091] – 2026-11-12
+
+### Opraveno
+- **Zpět v aplikaci pro telefon na Androidu 16.** Aplikace cílí na Android 16 (API 36), kde systém starou
+  událost tlačítka Zpět (`onBackPressed`) už nevolá – gesto Zpět by zavřelo aplikaci místo detailu modelky,
+  galerie nebo prohlížeče fotek. Nově přes `OnBackInvokedCallback` (Android 13+): Zpět zavře horní vrstvu, na
+  hlavní stránce pošle aplikaci do pozadí. Starší Androidy beze změny.
+
+### Ověřeno
+- Sestavení aplikace. Na telefonu zatím ne – Xiaomi přes kabel nepouští simulované stisky kláves.
+
 ## [0.02.090] – 2026-11-12
 
 ### Ověřeno

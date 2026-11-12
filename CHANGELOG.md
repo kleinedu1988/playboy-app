@@ -6,6 +6,13 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.081] – 2026-11-12
+
+### Ověřeno
+- **Ikona programu:** pin-up ikona (od 0.51.21) je všude: v nabídce aplikací (256 a 512 px, stará SVG ikona
+  odstraněná), v okně a panelu (ikona vložená v programu, okno spárované s položkou nabídky přes
+  `StartupWMClass`), pro Windows (`build/windows/icon.ico`). Název „Pinup Katalog“ ve `wails.json`. Beze změny kódu.
+
 ## [0.02.080] – 2026-11-12
 
 ### Opraveno

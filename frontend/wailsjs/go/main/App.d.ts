@@ -271,6 +271,8 @@ export function OdmitnoutNavrhyZWebu(arg1:Array<main.NavrhZWebu>,arg2:boolean):P
 
 export function OveritOdkaz(arg1:string):Promise<number>;
 
+export function OveritUcetGoogle():Promise<string>;
+
 export function OznacitKvalituVPoradku(arg1:Array<string>,arg2:boolean):Promise<boolean>;
 
 export function OznacitOtoceniVPoradku(arg1:Array<string>,arg2:boolean):Promise<boolean>;
@@ -306,8 +308,6 @@ export function PrerusitKontroluKvality():Promise<void>;
 export function PrerusitKontroluOtoceni():Promise<void>;
 
 export function PrerusitPruchodWebem():Promise<void>;
-
-export function PreskocitPrihlaseniGoogle():Promise<void>;
 
 export function PresunoutAlbum(arg1:number,arg2:string,arg3:string,arg4:number):Promise<string>;
 

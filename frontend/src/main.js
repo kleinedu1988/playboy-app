@@ -158,6 +158,15 @@ async function konecUvodu() {
             await odemknoutPriStartu();
             ukazatUvod(true);
         }
+        // Vstup přes Google (0.02.075): bez zapamatovaného přihlášení se sbírka otevře až po přihlášení
+        if (await ucetGoogle.potrebaBrany()) {
+            clearTimeout(pojistka);
+            await ObnovitOkno().catch(() => {});
+            ukazatUvod(false);
+            await ucetGoogle.otevrit({ brana: true });
+            ukazatUvod(true);
+            pojistka = setTimeout(konecUvodu, 15000);
+        }
 
         // Kroky přípravy jsou vidět na úvodu (ui/uvod.js); program naběhne připravený, i když start trvá déle
         seznamUvodu(KROKY_UVODU);
@@ -243,9 +252,8 @@ async function konecUvodu() {
         await konecUvodu();
         zaznamenatStart();
     }
-    // Přihlášení Google (0.02.074): okno se ukáže samo, jen když program přihlašovací údaje má a uživatel ho
-    // neodmítl
-    ucetGoogle.nabidnoutPoStartu().catch(() => {});
+    // Zapamatované přihlášení Google se ověří na pozadí; odvolaný přístup zavře sbírku za bránu (0.02.075)
+    ucetGoogle.overitNaPozadi().catch(() => {});
     // Sekce po startu z ⋯ › Vzhled (Modelky, Čísla, Sbírka nebo poslední)
     vzhledOkno.otevritSekciPoStartu();
     // Nový náhodný výběr profilovek pro úvod příštího spuštění, až program doběhne (seznam modelek je už načtený);

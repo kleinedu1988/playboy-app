@@ -2,7 +2,9 @@
 // (akcentní barva → pozadí), zlatým názvem programu a přihlášením, vpravo velká fotka oblíbené modelky s popiskem
 // dole. V úzkém okně je fotka přes celé okno a panel na ní průhlednou kartou. Heslo program nikdy nevidí –
 // přihlášení probíhá v systémovém prohlížeči (google_ucet.go). Se zámkem sbírky se fotka neukazuje.
-import { GetProfilovaFotka, GetUcetGoogle, OdhlasitGoogle, PreskocitPrihlaseniGoogle, PrihlasitGoogle, ZrusitPrihlaseniGoogle } from './backend';
+// Vstup do programu (0.02.075): s přihlašovacími údaji programu je okno bránou – bez zavření a Esc, sbírka se
+// otevře až po přihlášení; přihlášení si program pamatuje, brána se ukáže po odhlášení nebo odvolání přístupu.
+import { GetProfilovaFotka, GetUcetGoogle, OdhlasitGoogle, OveritUcetGoogle, PrihlasitGoogle, ZrusitPrihlaseniGoogle } from './backend';
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { esc, formatDatum, kategorieModelky, nazevVydani, obrazek } from '../lib/format';
 import { VELIKOST_TITULNI, VELIKOST_ZAHLAVI } from './obrazky';
@@ -17,6 +19,9 @@ let okno = null;
 let ucet = null;
 let chyba = '';
 let fotka = null; // { url, popisek, jmeno }
+let brana = false; // okno je vstupní branou (nejde zavřít bez přihlášení)
+/** @type {((v?: any) => void) | null} */
+let poPrihlaseni = null; // splní slib brány
 
 const KLIC_G = `<svg class="ucet-g" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.9 6.1C12.4 13.7 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.2-13.5-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>`;
 const KLIC = `<svg class="ucet-klic" viewBox="0 0 64 24" aria-hidden="true"><circle cx="10" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M17 12h41M46 12v7M53 12v5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>`;
@@ -56,20 +61,22 @@ function htmlTela() {
                 <span><b>${esc(ucet.jmeno || ucet.email)}</b>${ucet.jmeno && ucet.email ? `<small>${esc(ucet.email)}</small>` : ''}</span></div>
             ${ucet.prihlaseno ? `<p class="ucet-text">Přihlášeno ${esc(formatDatum(ucet.prihlaseno.slice(0, 10)))}.</p>` : ''}
             <button type="button" class="ucet-hlavni" data-ucet="pokracovat">Pokračovat</button>
-            <button type="button" class="ucet-odkaz" data-ucet="odhlasit">Odhlásit</button>`;
+            <button type="button" class="ucet-odkaz" data-ucet="odhlasit">Odhlásit</button>
+            <p class="ucet-drobne">Po odhlášení se sbírka otevře až po novém přihlášení.</p>`;
     }
     const nastaveni = ucet.nastaveno ? '' : `<div class="ucet-pozn"><b>Chybí přihlašovací údaje programu.</b> V Google Cloud Console vytvoř
             OAuth klienta typu <i>Desktop app</i>, stáhni jeho JSON a ulož ho jako<code>${esc(ucet.cestaKlienta)}</code>
             <button type="button" class="ucet-odkaz" data-ucet="slozka">Otevřít složku</button></div>`;
     return `<button type="button" class="ucet-hlavni" data-ucet="prihlasit"${ucet.nastaveno ? '' : ' disabled'}>${KLIC_G}Přihlásit přes Google</button>
-        <button type="button" class="ucet-odkaz" data-ucet="bez">Pokračovat bez přihlášení</button>
         ${nastaveni}
-        <p class="ucet-drobne">Program uvidí jen soubory, které sám vytvoří (zálohy), a svou skrytou složku na Disku –
-            k fotkám sbírky přístup nedostane. Přihlášení je nepovinné.</p>`;
+        <p class="ucet-drobne">${ucet.nastaveno ? 'Do sbírky se vstupuje přes účet Google; přihlášení si program pamatuje, dokud se neodhlásíš. ' : ''}Program
+            uvidí jen soubory, které sám vytvoří (zálohy), a svou skrytou složku na Disku – k fotkám sbírky přístup nedostane.</p>`;
 }
 
 function vykreslit() {
     if (!okno) return;
+    okno.classList.toggle('brana', brana);
+    okno.querySelector('.ucet-nadpis span').textContent = brana ? 'Přihlášení' : 'Účet Google';
     okno.querySelector('[data-ucet-telo]').innerHTML = `${chyba ? `<p class="ucet-chyba" role="alert">${esc(chyba)}</p>` : ''}${htmlTela()}`;
     const misto = okno.querySelector('.ucet-foto');
     misto.innerHTML = fotka
@@ -95,14 +102,21 @@ async function obnovit() {
 }
 
 export function zavrit() {
-    if (!okno) return;
+    if (!okno || brana) return;
     okno.remove();
     okno = null;
     document.removeEventListener('keydown', klavesa, true);
 }
 
 function klavesa(/** @type {KeyboardEvent} */ e) {
-    if (e.key === 'Escape' && okno) {
+    if (!okno) return;
+    // Brána: klávesy nesmí projít k programu za ní
+    if (brana && e.key !== 'Tab' && e.key !== 'Enter' && e.key !== ' ') {
+        e.stopPropagation();
+        if (e.key === 'Escape' && ucet?.probiha) ZrusitPrihlaseniGoogle();
+        return;
+    }
+    if (e.key === 'Escape') {
         e.stopPropagation();
         e.preventDefault();
         if (ucet?.probiha) ZrusitPrihlaseniGoogle();
@@ -120,26 +134,48 @@ async function akce(/** @type {string} */ co) {
             if (!okno) return;
             chyba = z || '';
             await obnovit();
-            if (!z) oznamit(`Přihlášeno ke Googlu${ucet?.email ? ` jako ${ucet.email}` : ''}.`);
+            if (!z) {
+                oznamit(`Přihlášeno ke Googlu${ucet?.email ? ` jako ${ucet.email}` : ''}.`);
+                if (brana) otevritBranu();
+            }
             return;
         }
         case 'zrusit': return ZrusitPrihlaseniGoogle();
         case 'odhlasit':
             await OdhlasitGoogle();
             oznamit('Odhlášeno z Googlu.');
+            // Po odhlášení se sbírka zavře za bránou (s přihlašovacími údaji programu)
+            if (ucet?.nastaveno) brana = true;
             return obnovit();
-        case 'bez':
-            await PreskocitPrihlaseniGoogle();
-            return zavrit();
         case 'pokracovat': return zavrit();
         case 'slozka': return BrowserOpenURL(`file://${ucet.slozkaKlienta}`);
     }
 }
 
-// Otevře okno účtu (z ⋯ › Nastavení › Účet Google, nebo při startu)
-export async function otevrit() {
+// Brána se otevře (přihlášení hotové): okno zmizí a slib brány se splní
+function otevritBranu() {
+    brana = false;
+    zavrit();
+    poPrihlaseni?.();
+    poPrihlaseni = null;
+}
+
+// Otevře okno účtu (z ⋯ › Nastavení › Účet Google); jako brána ({ brana: true }) vrátí slib, který se splní až
+// po přihlášení
+export async function otevrit({ brana: jakoBrana = false, zprava = '' } = {}) {
+    if (jakoBrana) {
+        brana = true;
+        const slib = new Promise(splnit => { poPrihlaseni = splnit; });
+        if (okno) { chyba = zprava; vykreslit(); return slib; }
+        otevritOkno(zprava);
+        return slib;
+    }
     if (okno) return;
-    chyba = '';
+    return otevritOkno('');
+}
+
+async function otevritOkno(/** @type {string} */ zprava) {
+    chyba = zprava;
     pokusu = 0;
     okno = document.createElement('div');
     okno.className = 'ucet';
@@ -176,10 +212,18 @@ export async function otevrit() {
     }
 }
 
-// Po startu: okno se ukáže samo, jen když program přihlašovací údaje má, uživatel není přihlášený a nezvolil
-// „Pokračovat bez přihlášení“
-export async function nabidnoutPoStartu() {
-    let u = null;
-    try { u = await GetUcetGoogle(); } catch { return; }
-    if (u.nastaveno && !u.prihlasen && !u.preskoceno) otevrit();
+// Je při startu potřeba brána? Jen s přihlašovacími údaji programu a bez zapamatovaného přihlášení (bez údajů
+// se přihlásit nedá a sbírka nesmí zůstat zamčená)
+export async function potrebaBrany() {
+    try {
+        const u = await GetUcetGoogle();
+        return u.nastaveno && !u.prihlasen;
+    } catch { return false; }
+}
+
+// Po startu na pozadí: zapamatované přihlášení se ověří u Googlu; odvolaný přístup zavře sbírku za bránu
+export async function overitNaPozadi() {
+    let v = '';
+    try { v = await OveritUcetGoogle(); } catch { return; }
+    if (v === 'odvolano') otevrit({ brana: true, zprava: 'Google přístup programu odvolal nebo přihlášení vypršelo – přihlas se znovu.' });
 }

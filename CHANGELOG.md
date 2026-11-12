@@ -6,6 +6,26 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.075] – 2026-11-12
+
+### Přidáno
+- **Vstup do programu přes Google:** když má program přihlašovací údaje (`google-klient.json`), je přihlašovací
+  okno vstupní branou – při startu se ukáže před otevřením sbírky (po případném hesle), nejde zavřít ani Esc a
+  sbírka se otevře až po přihlášení. Přihlášení si program pamatuje jako jiné aplikace: příště startuje rovnou.
+  Brána se znovu ukáže po Odhlásit (⋯ › Nastavení › Účet Google…) nebo když Google přístup odvolá – zapamatované
+  přihlášení se při startu na pozadí ověří obnovovacím tokenem. Bez připojení zapamatované přihlášení platí dál.
+  Bez přihlašovacích údajů programu brána není (sbírka nesmí zůstat zamčená).
+
+### Odebráno
+- „Pokračovat bez přihlášení“ z verze 0.02.074 (přihlášení je teď vstup).
+
+### Ověřeno
+- Test: ověření zapamatovaného přihlášení obnoví přístup; odvolaný přístup (invalid_grant) token smaže; nové
+  přihlášení po odvolání. Všechny testy, typy a build prošly.
+- Snímek s dočasnou složkou nastavení a falešnými údaji programu: při startu brána „Přihlášení“ s fotkou
+  (Gig Gangel), bez křížku; Esc ji nezavře.
+- **Neověřeno:** skutečné přihlášení u Googlu (čeká na OAuth klienta).
+
 ## [0.02.074] – 2026-11-12
 
 ### Přidáno

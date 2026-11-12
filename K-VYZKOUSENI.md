@@ -5,10 +5,16 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.075 – Vstup přes Google
+
+- [ ] S `google-klient.json`: první start ukáže bránu, po přihlášení se sbírka otevře; další start rovnou bez brány.
+- [ ] ⋯ › Účet Google… › Odhlásit: brána se hned zavře přes sbírku a pustí až po novém přihlášení.
+- [ ] V Google účtu (myaccount.google.com › Zabezpečení › Aplikace třetích stran) odebrat přístup Pinup Katalogu: po startu se brána ukáže s hláškou o odvolání.
+- [ ] Bez internetu: zapamatované přihlášení pustí do sbírky.
+
 ## 0.02.074 – Účet Google
 
 - [ ] Ulož OAuth klienta (Desktop app) jako `~/.config/pinup-katalog/google-klient.json`, ⋯ › Účet Google… › Přihlásit přes Google: prohlížeč, souhlas, okno ukáže jméno a e-mail.
-- [ ] Odhlásit; po restartu se okno samo ukáže; „Pokračovat bez přihlášení“ ho příště nechá zavřené.
 - [ ] Zúžené okno (pod 820 px): fotka přes celé okno, panel průhlednou kartou.
 - [ ] Zrušit / Esc během čekání na prohlížeč.
 

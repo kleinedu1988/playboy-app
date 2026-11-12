@@ -1,0 +1,25 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "kroky": [
+  {
+   "nazev": "b-start",
+   "js": "'ok'",
+   "cekat": 9000
+  },
+  {
+   "nazev": "b-brana",
+   "js": "(()=>{const o=document.querySelector('.ucet');return o?o.className+' | '+o.innerText.replace(/\\n+/g,' | ').slice(0,300):'bez brány'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "b-esc",
+   "js": "(()=>{document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));return document.querySelector('.ucet')?'brána zůstala':'brána zavřena!'})()",
+   "cekat": 800
+  }
+ ]
+}

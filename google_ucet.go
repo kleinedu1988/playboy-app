@@ -7,7 +7,12 @@ package main
 //
 // Přihlašovací údaje programu (OAuth klient typu „Desktop app“ z Google Cloud Console) si uživatel uloží jako
 // ~/.config/pinup-katalog/google-klient.json (soubor stažený z Console); bez něj se přihlásit nedá. Token (obnovovací)
-// je v téže složce v google-token.json s právy 0600. Přihlášení je nepovinné – program funguje i bez něj.
+// je v téže složce v google-token.json s právy 0600.
+//
+// Vstup do programu (0.02.075): s přihlašovacími údaji programu je přihlášení bránou – bez něj se sbírka neotevře.
+// Přihlášení si program pamatuje (jako jiné aplikace); brána se ukáže po odhlášení nebo když Google přístup odvolá
+// (OveritUcetGoogle při startu). Bez připojení zapamatované přihlášení platí dál. Bez přihlašovacích údajů programu
+// brána není (přihlásit se nejde a sbírka nesmí zůstat zamčená).
 
 import (
 	"context"
@@ -79,7 +84,6 @@ type UcetGoogle struct {
 	Email         string `json:"email"`
 	Jmeno         string `json:"jmeno"`
 	Prihlaseno    string `json:"prihlaseno"`    // kdy (RRRR-MM-DD HH:MM:SS)
-	Preskoceno    bool   `json:"preskoceno"`    // uživatel zvolil „Pokračovat bez přihlášení“ (okno se samo neukáže)
 	CestaKlienta  string `json:"cestaKlienta"`  // kam uložit přihlašovací údaje
 	SlozkaKlienta string `json:"slozkaKlienta"` // jejich složka (tlačítko Otevřít složku)
 	Probiha       bool   `json:"probiha"`       // čeká se na návrat z prohlížeče
@@ -92,9 +96,6 @@ var stavGoogle struct {
 
 func cestaKlientaGoogle() string { return filepath.Join(slozkaNastaveniGoogle(), "google-klient.json") }
 func cestaTokenuGoogle() string  { return filepath.Join(slozkaNastaveniGoogle(), "google-token.json") }
-func cestaPreskoceniGoogle() string {
-	return filepath.Join(slozkaNastaveniGoogle(), "google-bez-prihlaseni")
-}
 
 // Přihlašovací údaje programu: soubor z Console ({"installed": {...}}) nebo rovnou {client_id, client_secret}
 func nacistKlientaGoogle() (klientGoogle, error) {
@@ -156,7 +157,6 @@ func (a *App) GetUcetGoogle() UcetGoogle {
 	if t := nacistTokenGoogle(); t != nil {
 		u.Prihlasen, u.Email, u.Jmeno, u.Prihlaseno = true, t.Email, t.Jmeno, t.Prihlaseno
 	}
-	u.Preskoceno = existuje(cestaPreskoceniGoogle())
 	stavGoogle.Lock()
 	u.Probiha = stavGoogle.zrusit != nil
 	stavGoogle.Unlock()
@@ -264,7 +264,6 @@ func (a *App) PrihlasitGoogle() string {
 	if err := ulozitTokenGoogle(t); err != nil {
 		return "Přihlášení se nepodařilo uložit: " + err.Error()
 	}
-	os.Remove(cestaPreskoceniGoogle())
 	return ""
 }
 
@@ -369,9 +368,54 @@ func (a *App) OdhlasitGoogle() bool {
 	return true
 }
 
-// PreskocitPrihlaseniGoogle: „Pokračovat bez přihlášení“ – okno účtu se při startu samo neukáže
-func (a *App) PreskocitPrihlaseniGoogle() {
-	if os.MkdirAll(slozkaNastaveniGoogle(), 0o700) == nil {
-		os.WriteFile(cestaPreskoceniGoogle(), []byte(ted()+"\n"), 0o600)
+// Výsledek ověření zapamatovaného přihlášení
+const (
+	overenoGoogle     = "ok"       // přístupový token obnoven
+	odvolanoGoogle    = "odvolano" // Google přístup odvolal nebo token vypršel – token smazán, brána se zavře
+	bezSpojeniGoogle  = "offline"  // Google nedostupný – zapamatované přihlášení platí dál
+	neprihlasenGoogle = "neprihlasen"
+)
+
+// OveritUcetGoogle (při startu na pozadí): obnoví přístupový token; když ho Google odmítne (invalid_grant), token
+// smaže, aby se brána znovu zavřela
+func (a *App) OveritUcetGoogle() string {
+	t := nacistTokenGoogle()
+	if t == nil {
+		return neprihlasenGoogle
 	}
+	klient, err := nacistKlientaGoogle()
+	if err != nil {
+		return bezSpojeniGoogle
+	}
+	ctx, zrusit := context.WithTimeout(context.Background(), 20*time.Second)
+	defer zrusit()
+	form := url.Values{"client_id": {klient.ID}, "client_secret": {klient.Secret}, "refresh_token": {t.Obnovovaci}, "grant_type": {"refresh_token"}}
+	p, err := http.NewRequestWithContext(ctx, http.MethodPost, adresaTokenuGoogle, strings.NewReader(form.Encode()))
+	if err != nil {
+		return bezSpojeniGoogle
+	}
+	p.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	odpoved, err := http.DefaultClient.Do(p)
+	if err != nil {
+		return bezSpojeniGoogle
+	}
+	defer odpoved.Body.Close()
+	var o struct {
+		Pristupovy string `json:"access_token"`
+		Platnost   int    `json:"expires_in"`
+		Chyba      string `json:"error"`
+	}
+	json.NewDecoder(odpoved.Body).Decode(&o)
+	if o.Chyba == "invalid_grant" || o.Chyba == "unauthorized_client" {
+		os.Remove(cestaTokenuGoogle())
+		return odvolanoGoogle
+	}
+	if o.Pristupovy == "" {
+		return bezSpojeniGoogle
+	}
+	t.Pristupovy, t.Platnost = o.Pristupovy, time.Now().Add(time.Duration(o.Platnost)*time.Second)
+	if err := ulozitTokenGoogle(t); err != nil {
+		a.chyba("uložení přístupu Google", err)
+	}
+	return overenoGoogle
 }

@@ -36,11 +36,21 @@ func TestPrihlaseniGoogle(t *testing.T) {
 	os.WriteFile(filepath.Join(slozka, "google-klient.json"), []byte(`{"installed":{"client_id":"klient-1","client_secret":"tajne"}}`), 0o600)
 
 	var vyzva string
+	odvolanyPristup := false
 	odvolano := make(chan string, 1)
 	google := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		switch r.URL.Path {
 		case "/token":
+			if r.Form.Get("grant_type") == "refresh_token" {
+				if odvolanyPristup || r.Form.Get("refresh_token") != "obnova" {
+					w.WriteHeader(400)
+					io.WriteString(w, `{"error":"invalid_grant"}`)
+					return
+				}
+				io.WriteString(w, `{"access_token":"novy","expires_in":3600}`)
+				return
+			}
 			s := sha256.Sum256([]byte(r.Form.Get("code_verifier")))
 			if r.Form.Get("code") != "kod-42" || base64.RawURLEncoding.EncodeToString(s[:]) != vyzva || r.Form.Get("client_secret") != "tajne" {
 				w.WriteHeader(400)
@@ -74,19 +84,32 @@ func TestPrihlaseniGoogle(t *testing.T) {
 			}
 		}()
 	}
-	a.PreskocitPrihlaseniGoogle()
-	if !a.GetUcetGoogle().Preskoceno {
-		t.Fatal("přeskočení se nezapsalo")
-	}
 	if z := a.PrihlasitGoogle(); z != "" {
 		t.Fatalf("přihlášení: %q", z)
 	}
 	u := a.GetUcetGoogle()
-	if !u.Nastaveno || !u.Prihlasen || u.Email != "modelka@example.com" || u.Jmeno != "Test Uživatel" || u.Preskoceno || u.Probiha {
+	if !u.Nastaveno || !u.Prihlasen || u.Email != "modelka@example.com" || u.Jmeno != "Test Uživatel" || u.Probiha {
 		t.Fatalf("po přihlášení: %+v", u)
 	}
 	if info, err := os.Stat(filepath.Join(slozka, "google-token.json")); err != nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("token: %v %v", info, err)
+	}
+
+	// Zapamatované přihlášení: obnova tokenu projde; odvolaný přístup token smaže (brána se zavře)
+	if v := a.OveritUcetGoogle(); v != "ok" {
+		t.Fatalf("ověření: %q", v)
+	}
+	if !a.GetUcetGoogle().Prihlasen {
+		t.Fatal("po ověření odhlášen")
+	}
+	odvolanyPristup = true
+	if v := a.OveritUcetGoogle(); v != "odvolano" || a.GetUcetGoogle().Prihlasen {
+		t.Fatalf("odvolaný přístup: %q", v)
+	}
+	// Znovu přihlásit pro další části testu
+	odvolanyPristup = false
+	if z := a.PrihlasitGoogle(); z != "" {
+		t.Fatalf("nové přihlášení: %q", z)
 	}
 
 	// Cizí state se odmítne

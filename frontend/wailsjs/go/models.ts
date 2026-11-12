@@ -3614,7 +3614,6 @@ export namespace main {
 	    email: string;
 	    jmeno: string;
 	    prihlaseno: string;
-	    preskoceno: boolean;
 	    cestaKlienta: string;
 	    slozkaKlienta: string;
 	    probiha: boolean;
@@ -3630,7 +3629,6 @@ export namespace main {
 	        this.email = source["email"];
 	        this.jmeno = source["jmeno"];
 	        this.prihlaseno = source["prihlaseno"];
-	        this.preskoceno = source["preskoceno"];
 	        this.cestaKlienta = source["cestaKlienta"];
 	        this.slozkaKlienta = source["slozkaKlienta"];
 	        this.probiha = source["probiha"];

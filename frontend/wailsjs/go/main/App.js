@@ -526,6 +526,10 @@ export function OveritOdkaz(arg1) {
   return window['go']['main']['App']['OveritOdkaz'](arg1);
 }
 
+export function OveritUcetGoogle() {
+  return window['go']['main']['App']['OveritUcetGoogle']();
+}
+
 export function OznacitKvalituVPoradku(arg1, arg2) {
   return window['go']['main']['App']['OznacitKvalituVPoradku'](arg1, arg2);
 }
@@ -596,10 +600,6 @@ export function PrerusitKontroluOtoceni() {
 
 export function PrerusitPruchodWebem() {
   return window['go']['main']['App']['PrerusitPruchodWebem']();
-}
-
-export function PreskocitPrihlaseniGoogle() {
-  return window['go']['main']['App']['PreskocitPrihlaseniGoogle']();
 }
 
 export function PresunoutAlbum(arg1, arg2, arg3, arg4) {

@@ -21848,3 +21848,5 @@ button.udd-nazev {
     .ucet, .ucet-foto img { animation: none; }
     .ucet-tocka { animation-duration: 3s; }
 }
+/* Brána (0.02.075): bez zavření */
+.ucet.brana .ucet-zavrit { display: none; }

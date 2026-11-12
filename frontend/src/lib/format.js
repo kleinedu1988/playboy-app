@@ -127,7 +127,7 @@ const TITULY_PLAYBOYE = { mesice: 'Playmate měsíce', roku: 'Playmate roku' };
 const OBECNE_TITULY = { mesice: 'Modelka měsíce', roku: 'Modelka roku' };
 
 // Má některá modelka číslo nebo obálku jiného časopisu než Playboy? Statistiky je zatím nepočítají (filtr časopisu
-// 0.02.074), texty pak místo „v časopise“ řeknou „v Playboyi“ (0.02.020)
+// 0.02.072), texty pak místo „v časopise“ řeknou „v Playboyi“ (0.02.020)
 export const maJineCasopisy = modelky => modelky.some(m => [...(m.vydani || []), ...(m.obalky || [])]
     .some(v => { const c = rozlozitVydani(v)?.casopis; return !!c && c !== VYCHOZI_CASOPIS; }));
 export const vCasopiseStatistik = modelky => (maJineCasopisy(modelky) ? 'v Playboyi' : 'v časopise');

@@ -120,7 +120,7 @@ func TestRevizeDatZalohaJenProCteni(t *testing.T) {
 	if err := a.zalohovat("test"); err != nil {
 		t.Fatal(err)
 	}
-	zalohy, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-*-test.db"))
+	zalohy, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "katalog-*-test.db"))
 	if len(zalohy) != 1 {
 		t.Fatalf("zálohy: %v", zalohy)
 	}

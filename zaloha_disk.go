@@ -128,7 +128,7 @@ func (a *App) seznamNaDisku(ctx context.Context) ([]ZalohaNaDisku, error) {
 		}
 		z := ZalohaNaDisku{ID: f.ID, Nazev: f.Name}
 		z.Velikost, _ = strconv.ParseInt(f.Size, 10, 64)
-		if cas, err := time.Parse("2006-01-02-150405", f.Name[len("playboy-"):len("playboy-")+17]); err == nil {
+		if cas, err := time.Parse("2006-01-02-150405", klicZalohy(f.Name)[:17]); err == nil {
 			z.Cas = cas.Format("2006-01-02 15:04:05")
 		}
 		if _, err := os.Stat(filepath.Join(slozkaZaloh(), f.Name)); err == nil {
@@ -137,7 +137,7 @@ func (a *App) seznamNaDisku(ctx context.Context) ([]ZalohaNaDisku, error) {
 		v = append(v, z)
 	}
 	// Od nejnovější (název začíná datem a časem)
-	sort.Slice(v, func(i, j int) bool { return v[i].Nazev > v[j].Nazev })
+	sort.Slice(v, func(i, j int) bool { return klicZalohy(v[i].Nazev) > klicZalohy(v[j].Nazev) })
 	return v, nil
 }
 
@@ -237,12 +237,11 @@ func (a *App) uklidNaDisku(ctx context.Context, zalohy []ZalohaNaDisku) error {
 
 // Nejnovější místní denní záloha (název) nebo ""
 func nejnovejsiDenniZaloha() string {
-	soubory, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-*-"+duvodDenni+".db"))
+	soubory := souboryZaloh("*-" + duvodDenni + ".db")
 	if len(soubory) == 0 {
 		return ""
 	}
-	sort.Strings(soubory)
-	return filepath.Base(soubory[len(soubory)-1])
+	return filepath.Base(soubory[0])
 }
 
 // Po denní záloze na pozadí: nahrát ji na Disk, je-li uživatel přihlášený (chyba jen do záznamu)

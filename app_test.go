@@ -358,7 +358,7 @@ func TestPrevzetiStareDatabaze(t *testing.T) {
 	if _, err := os.Stat("playboy.db.presunuta"); err != nil {
 		t.Fatal("chybí pojistná kopie playboy.db.presunuta")
 	}
-	if _, err := os.Stat(filepath.Join(slozkaDat(), "playboy.db")); err != nil {
+	if _, err := os.Stat(cestaSbirky()); err != nil {
 		t.Fatal("databáze není na novém místě")
 	}
 	a.db.Close()

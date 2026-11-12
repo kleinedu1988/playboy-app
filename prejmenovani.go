@@ -3,7 +3,7 @@ package main
 // Přejmenování Playboy Database → Pinup Katalog (0.1.0, 10. 11. 2026). Data, nastavení okna (localStorage
 // webového jádra) i mezipaměť leží ve složkách pojmenovaných podle programu; při prvním spuštění se staré
 // složky přesunou na nové místo. Když přesun nejde (běží stará verze, jiný disk), program dál použije starou
-// složku dat a zkusí to příště. Názvy souborů uvnitř (playboy.db, playboy-uceni.db) zůstávají.
+// složku dat a zkusí to příště. Soubory uvnitř se přejmenovaly až v 0.02.078 (zalohy.go).
 
 import (
 	"fmt"

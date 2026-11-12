@@ -16,7 +16,7 @@ import (
 	ucenibal "pinup-katalog/internal/uceni"
 )
 
-// Databáze učení: vlastní soubor SQLite vedle sbírky (playboy.db → playboy-ucenibal.db). Pamatuje si, co se
+// Databáze učení: vlastní soubor SQLite vedle sbírky (katalog.db → katalog-uceni.db). Pamatuje si, co se
 // strojové učení dozvědělo z rozhodnutí uživatele, a mezipaměť naučených výsledků (celkový popis v docs/UCENI.md).
 // Nízkoúrovňová správa schématu, přenos do paměti, FNV-64a otisk a kalibrace zdrojů jsou v balíčku internal/ucenibal.
 

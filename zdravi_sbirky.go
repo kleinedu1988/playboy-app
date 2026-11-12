@@ -273,8 +273,7 @@ func (a *App) GetZdraviSbirky() ZdraviSbirky {
 	if len(zalohy) > 0 {
 		z.PosledniZaloha, z.DuvodZalohy = zalohy[0].Cas, zalohy[0].Duvod
 	}
-	soubory, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-*.db"))
-	for _, s := range soubory {
+	for _, s := range souboryZaloh("*.db") {
 		z.VelikostZaloh += velikostSouboru(s)
 	}
 

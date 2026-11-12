@@ -6,6 +6,23 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.078] – 2026-11-12
+
+### Změněno
+- **Soubory sbírky přejmenovány:** při prvním startu se `playboy.db` přejmenuje na `katalog.db` a databáze učení
+  `playboy-uceni.db` na `katalog-uceni.db` (i s rozepsaným WAL). Předtím se uloží záloha „Před přejmenováním
+  souborů“. Na starých místech zůstanou odkazy na nové soubory, takže i starší verze programu otevře stejnou
+  sbírku a nezaloží si prázdnou. Když přejmenování nejde, program zůstane u starých názvů a zkusí to příště.
+- Nové zálohy se jmenují `katalog-…db`. Staré `playboy-…db` zůstávají: v Obnovit ze zálohy, v úklidu záloh i na
+  Google Disku se řadí s novými podle času a jdou obnovit jako dřív.
+
+### Ověřeno
+- Test: sbírka s WAL a databází učení se přejmenuje, odkazy vedou na nové soubory a přes odkaz je vidět stejná
+  sbírka; záloha před přejmenováním má všechny modelky; stará záloha `playboy-…` je v seznamu na správném místě a
+  obnoví se, odkaz po obnovení zůstane odkazem. Všechny testy, typy a build prošly.
+- Kopie sbírky: přejmenována, odkazy vytvořené, okno záloh ukazuje novou zálohu (613 modelek, 23 260 fotek)
+  nad staršími `playboy-…`.
+
 ## [0.02.077] – 2026-11-12
 
 ### Přidáno

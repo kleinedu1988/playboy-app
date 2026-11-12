@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.078 – Soubory databáze
+
+- [ ] Po prvním startu je v `~/.local/share/pinup-katalog/` soubor `katalog.db` a `katalog-uceni.db`, `playboy.db` je odkaz; sbírka je celá.
+- [ ] ⋯ › Obnovit ze zálohy…: nahoře „Před přejmenováním souborů“, pod ní starší zálohy.
+
 ## 0.02.077 – Balíček pro telefon
 
 - [ ] Po přihlášení Nahrát teď: oznámení „Záloha i balíček pro telefon jsou na Google Disku.“ (balíček se ověří až telefonem v 0.02.079).

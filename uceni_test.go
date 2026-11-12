@@ -58,7 +58,7 @@ func restartovatUceni(a *App) {
 
 func TestDatabazeUceniVznikneVedleSbirky(t *testing.T) {
 	a := novaTestovaciApp(t, nil)
-	cesta := filepath.Join(slozkaDat(), "playboy-uceni.db")
+	cesta := filepath.Join(slozkaDat(), "katalog-uceni.db")
 	if _, err := os.Stat(cesta); !os.IsNotExist(err) {
 		t.Fatal("databáze učení vznikla dřív, než je potřeba")
 	}

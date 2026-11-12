@@ -1,0 +1,35 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "kroky": [
+  {
+   "nazev": "p-start",
+   "js": "'ok'",
+   "cekat": 9000
+  },
+  {
+   "nazev": "p-pozdeji",
+   "js": "(()=>{const vid=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden';const b=[...document.querySelectorAll('button, [role=menuitem], li, div')].find(x=>vid(x)&&x.textContent.trim()===\"Pozd\\u011bji\");b?.click();return b?'ok':'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "p-menu",
+   "js": "(()=>{document.querySelector('#gallery, .gallery, main').dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:600,clientY:500}));return 'menu'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "p-zalohy",
+   "js": "(()=>{const vid=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden';const b=[...document.querySelectorAll('button, [role=menuitem], li, div')].find(x=>vid(x)&&x.textContent.trim()===\"Obnovit ze z\\u00e1lohy\\u2026\");b?.click();return b?'ok':'nenalezeno'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "p-seznam",
+   "js": "document.getElementById('backupModalList').innerText.replace(/\\n+/g,' | ').replace(/Obnovit…/g,'').slice(0,400)",
+   "cekat": 200
+  }
+ ]
+}

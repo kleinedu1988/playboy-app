@@ -27,8 +27,93 @@ const (
 	maxStariZalohy = 30 // dní
 )
 
-// Název zálohy: playboy-RRRR-MM-DD-HHMMSS.mmm-[pořadí-]důvod.db
-var vzorZalohy = regexp.MustCompile(`^playboy-(\d{4}-\d{2}-\d{2})-\d{6}\.\d{3}-(?:\d+-)?(.+)\.db$`)
+// Název zálohy: katalog-RRRR-MM-DD-HHMMSS.mmm-[pořadí-]důvod.db; zálohy před 0.02.078 mají předponu playboy-
+// a jdou dál obnovit
+var vzorZalohy = regexp.MustCompile(`^(?:playboy|katalog)-(\d{4}-\d{2}-\d{2})-\d{6}\.\d{3}-(?:\d+-)?(.+)\.db$`)
+
+// Soubory sbírky (0.02.078): katalog.db a vedle něj databáze učení katalog-uceni.db (internal/uceni); dřív
+// playboy.db a playboy-uceni.db
+const (
+	nazevSbirky      = "katalog.db"
+	staryNazevSbirky = "playboy.db"
+	predponaZaloh    = "katalog-"
+)
+
+func cestaSbirky() string {
+	return filepath.Join(slozkaDat(), nazevSbirky)
+}
+
+// Čas zálohy z názvu (část za předponou; obě předpony mají stejnou délku, na tom ale nic nestojí)
+func klicZalohy(nazev string) string {
+	nazev = filepath.Base(nazev)
+	if i := strings.IndexByte(nazev, '-'); i >= 0 {
+		return nazev[i+1:]
+	}
+	return nazev
+}
+
+// Zálohy sbírky obou předpon odpovídající vzoru za předponou („*.db“), od nejnovější
+func souboryZaloh(vzor string) []string {
+	var soubory []string
+	for _, predpona := range []string{predponaZaloh, "playboy-"} {
+		nalezene, _ := filepath.Glob(filepath.Join(slozkaZaloh(), predpona+vzor))
+		soubory = append(soubory, nalezene...)
+	}
+	sort.SliceStable(soubory, func(i, j int) bool { return klicZalohy(soubory[i]) > klicZalohy(soubory[j]) })
+	return soubory
+}
+
+// Jednorázové přejmenování souborů sbírky (0.02.078): když katalog.db ještě není a playboy.db je obyčejný
+// soubor, uloží se záloha a sbírka i databáze učení se přejmenují (napřed -wal, pak databáze, aby se nikdy
+// nerozdělily). Na starých místech zůstanou odkazy na nové soubory, aby starší verze programu otevřela stejnou
+// sbírku a nezaložila si prázdnou. Chyba = přejmenování se neprovedlo celé, program zůstane u starých jmen.
+func prejmenovatSouborySbirky() error {
+	stara := filepath.Join(slozkaDat(), staryNazevSbirky)
+	info, err := os.Lstat(stara)
+	if existuje(cestaSbirky()) || err != nil || !info.Mode().IsRegular() {
+		return nil
+	}
+	if err := os.MkdirAll(slozkaZaloh(), 0o700); err != nil {
+		return err
+	}
+	zaloha := filepath.Join(slozkaZaloh(), predponaZaloh+time.Now().Format("2006-01-02-150405.000")+"-pred-prejmenovanim.db")
+	db, err := sql.Open("sqlite", stara)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec("VACUUM INTO '" + strings.ReplaceAll(zaloha, "'", "''") + "'")
+	// Zavření spojení zapíše WAL do databáze
+	db.Close()
+	if err != nil {
+		os.Remove(zaloha)
+		return fmt.Errorf("záloha před přejmenováním: %w", err)
+	}
+	os.Chmod(zaloha, 0o600)
+
+	dvojice := [][2]string{{staryNazevSbirky, nazevSbirky}, {"playboy-uceni.db", "katalog-uceni.db"}}
+	for _, d := range dvojice {
+		z, k := filepath.Join(slozkaDat(), d[0]), filepath.Join(slozkaDat(), d[1])
+		if info, err := os.Lstat(z); err != nil || !info.Mode().IsRegular() || existuje(k) {
+			continue
+		}
+		os.Remove(z + "-shm")
+		if existuje(z + "-wal") {
+			if err := os.Rename(z+"-wal", k+"-wal"); err != nil {
+				return err
+			}
+		}
+		if err := os.Rename(z, k); err != nil {
+			// WAL zpátky k databázi, ke které patří
+			os.Rename(k+"-wal", z+"-wal")
+			return err
+		}
+		if err := os.Symlink(d[1], z); err != nil {
+			fmt.Printf("Odkaz %s → %s se nepodařilo vytvořit: %v\n", z, d[1], err)
+		}
+	}
+	fmt.Printf("Soubory sbírky přejmenovány na %s (záloha %s)\n", nazevSbirky, filepath.Base(zaloha))
+	return nil
+}
 
 const (
 	duvodDenni        = "denni"
@@ -71,14 +156,18 @@ func pripravitDatabazi() (string, error) {
 	if err := os.MkdirAll(slozkaDat(), 0o700); err != nil {
 		return "", err
 	}
-	cil := filepath.Join(slozkaDat(), "playboy.db")
+	if err := prejmenovatSouborySbirky(); err != nil {
+		fmt.Printf("Soubory sbírky se nepodařilo přejmenovat, zůstávají staré názvy: %v\n", err)
+		return filepath.Join(slozkaDat(), staryNazevSbirky), nil
+	}
+	cil := cestaSbirky()
 	if _, err := os.Stat(cil); err == nil {
 		return cil, nil
 	}
 
-	kandidati := []string{"playboy.db"}
+	kandidati := []string{staryNazevSbirky}
 	if program, err := os.Executable(); err == nil {
-		kandidati = append(kandidati, filepath.Join(filepath.Dir(program), "playboy.db"))
+		kandidati = append(kandidati, filepath.Join(filepath.Dir(program), staryNazevSbirky))
 	}
 	for _, stara := range kandidati {
 		if info, err := os.Stat(stara); err != nil || info.IsDir() {
@@ -114,7 +203,7 @@ func (a *App) zalohovat(duvod string) error {
 	}
 
 	// Dvě zálohy ve stejné milisekundě se nesmí přepsat ani srazit
-	zaklad := filepath.Join(slozkaZaloh(), fmt.Sprintf("playboy-%s", time.Now().Format("2006-01-02-150405.000")))
+	zaklad := filepath.Join(slozkaZaloh(), predponaZaloh+time.Now().Format("2006-01-02-150405.000"))
 	cil := fmt.Sprintf("%s-%s.db", zaklad, duvod)
 	for i := 2; ; i++ {
 		if _, err := os.Stat(cil); os.IsNotExist(err) {
@@ -136,9 +225,7 @@ func (a *App) zalohovat(duvod string) error {
 // Každý důvod zálohy má vlastní frontu, aby úklid alb nevytlačil zálohu před importem nebo smazáním databáze.
 // Denních záloh zůstává posledních pocetDennichZaloh a k nim nejnovější z každého z dalších pocetTydnuZaloh týdnů.
 func uklidZaloh() {
-	soubory, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-*.db"))
-	// Od nejnovější
-	sort.Sort(sort.Reverse(sort.StringSlice(soubory)))
+	soubory := souboryZaloh("*.db")
 
 	podleDuvodu := map[string][]string{}
 	for _, soubor := range soubory {
@@ -180,7 +267,7 @@ func uklidZaloh() {
 // Jedna záloha denně při spuštění: pojistka proti chybám, které nejsou smazáním (špatné přejmenování, chybný import)
 func (a *App) denniZaloha() {
 	dnes := time.Now().Format("2006-01-02")
-	if dnesni, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-"+dnes+"-*-"+duvodDenni+".db")); len(dnesni) > 0 {
+	if len(souboryZaloh(dnes+"-*-"+duvodDenni+".db")) > 0 {
 		return
 	}
 	if err := a.zalohovat(duvodDenni); err != nil {
@@ -199,8 +286,7 @@ func (a *App) SlozkaZaloh() string {
 
 // Zálohy od nejnovější, s počty, aby šlo poznat, ke které se vrátit
 func (a *App) SeznamZaloh() []Zaloha {
-	soubory, _ := filepath.Glob(filepath.Join(slozkaZaloh(), "playboy-*.db"))
-	sort.Sort(sort.Reverse(sort.StringSlice(soubory)))
+	soubory := souboryZaloh("*.db")
 
 	zalohy := []Zaloha{}
 	for _, soubor := range soubory {
@@ -210,7 +296,7 @@ func (a *App) SeznamZaloh() []Zaloha {
 			continue
 		}
 		z := Zaloha{Soubor: nazev, Duvod: casti[2]}
-		if cas, err := time.Parse("2006-01-02-150405", nazev[len("playboy-"):len("playboy-")+17]); err == nil {
+		if cas, err := time.Parse("2006-01-02-150405", klicZalohy(nazev)[:17]); err == nil {
 			z.Cas = cas.Format("2006-01-02 15:04:05")
 		}
 		db, err := otevritZalohu(soubor)
@@ -237,7 +323,10 @@ func (a *App) ObnovitZalohu(soubor string) string {
 		return "Neplatný název zálohy."
 	}
 	zaloha := filepath.Join(slozkaZaloh(), soubor)
-	cil := filepath.Join(slozkaDat(), "playboy.db")
+	cil := a.cestaDb
+	if cil == "" {
+		cil = cestaSbirky()
+	}
 	// Záloha mohla mezitím zmizet (úklid záloh po jiné záloze); prázdný soubor by obnovil prázdnou sbírku
 	if info, err := os.Stat(zaloha); err != nil || !info.Mode().IsRegular() || info.Size() == 0 {
 		return "Záloha už neexistuje, databáze zůstala beze změny."

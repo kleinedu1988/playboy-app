@@ -1,0 +1,86 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "cekani",
+   "js": "(()=>'čekám')()",
+   "cekat": 2000
+  },
+  {
+   "nazev": "galerie",
+   "js": "(()=>{const b=[...document.querySelectorAll('button')].filter(b=>b.getClientRects().length&&b.getBoundingClientRect().top<70&&b.textContent.trim()===\"Galerie\")[0];if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "g-rady",
+   "js": "[...document.querySelectorAll('.gv-rada h3')].map(h=>h.textContent).join(' | ')",
+   "cekat": 3000
+  },
+  {
+   "nazev": "g-posledni",
+   "js": "(()=>{const r=[...document.querySelectorAll('.gv-rada')].at(-1);r.scrollIntoView({block:'center'});return r.querySelector('h3').textContent+' – '+r.querySelector('.gv-rada-duvod').textContent+' – dlaždic '+r.querySelectorAll('.gv-dlazdice').length})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "g-pocet",
+   "js": "document.querySelector('.pl-pocet')?.textContent||'bez'",
+   "cekat": 100
+  },
+  {
+   "nazev": "g-panel",
+   "js": "(()=>{const b=document.querySelector('[data-gv-panel].pl-filtry');if(!b)return 'bez';b.scrollIntoView({block:'center'});b.click();return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "g-volby",
+   "js": "(()=>{const s=[...document.querySelectorAll('.gv-filtry section')].find(s=>s.querySelector('h4').textContent==='Páry a lesbické');if(!s)return 'bez';s.scrollIntoView({block:'center'});return [...s.querySelectorAll('.gv-volba')].map(b=>b.textContent+(b.classList.contains('on')?'*':'')).join(' | ')})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "g-jen",
+   "js": "(()=>{const b=document.querySelector('[data-gv=\"explicitni\"][data-hodnota=\"jen\"]');if(!b)return 'bez';b.scrollIntoView({block:'center'});b.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "g-jen-pocet",
+   "js": "(document.querySelector('.pl-pocet')?.textContent||'bez')+' | '+[...document.querySelectorAll('.pl-stitek')].map(s=>s.textContent).join(' ')",
+   "cekat": 100
+  },
+  {
+   "nazev": "g-mozaika",
+   "js": "(()=>{const m=document.querySelector('.gv-mozaika');m&&m.scrollIntoView({block:'start'});return m?'ok':'bez'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "g-zpet",
+   "js": "(()=>{const b=document.querySelector('.pl-stitek [data-gv=\"explicitni\"]');if(!b)return 'bez';b.scrollIntoView({block:'center'});b.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "g-zpet-pocet",
+   "js": "document.querySelector('.pl-pocet')?.textContent||'bez'",
+   "cekat": 100
+  }
+ ]
+}

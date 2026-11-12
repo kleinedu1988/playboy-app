@@ -3,6 +3,7 @@ package main
 import (
 	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -14,6 +15,9 @@ import (
 // Druhy: pozovaci, lesbicka, sex, muz (na fotce je muž, ale nejde o sex – scéna, zákulisí).
 
 var druhyFotek = map[string]bool{"pozovaci": true, "lesbicka": true, "sex": true, "muz": true}
+
+// Počet změn druhu za běhu (otisk Galerie: změna v téže sekundě se v čase potvrzení neprojeví)
+var zmenyDruhu atomic.Int64
 
 func (a *App) migraceDruhFotek() error {
 	_, err := a.db.Exec(`CREATE TABLE IF NOT EXISTS druhy_fotek (
@@ -56,6 +60,7 @@ func (a *App) SetDruhFotek(ids []string, druh string) int {
 	if tx.Commit() != nil {
 		return 0
 	}
+	zmenyDruhu.Add(1)
 	return n
 }
 
@@ -92,6 +97,33 @@ func platnyDruh(druh string) string {
 		return druh
 	}
 	return ""
+}
+
+// Od jaké jistoty odhadu se nepotvrzená fotka v Galerii skryje jako sex nebo lesbická (0.02.062)
+const prahSkrytiDruhu = 0.95
+
+// explicitniFotky (0.02.062, Galerie zvlášť): soubory, které se v běžné Galerii a kolekcích nezobrazí – potvrzený
+// sex nebo lesbická, u nepotvrzených odhad s jistotou ≥ 95 %. Potvrzená pózovací a „jen s mužem“ zůstávají.
+func (a *App) explicitniFotky() map[string]bool {
+	v := map[string]bool{}
+	if a.db == nil {
+		return v
+	}
+	potvrzene := vsechnyDruhyFotek(a.db)
+	for id, druh := range potvrzene {
+		if druh == "sex" || druh == "lesbicka" {
+			v[id] = true
+		}
+	}
+	if a.obsah == nil || !a.obsahZapnuty() {
+		return v
+	}
+	for id, o := range a.obsah.OdhadyDruhu() {
+		if potvrzene[id] == "" && (o.Muz >= prahSkrytiDruhu || o.Zeny >= prahSkrytiDruhu) {
+			v[id] = true
+		}
+	}
+	return v
 }
 
 // Od jaké pravděpodobnosti se fotka navrhne (na kontrolních listech z celé sbírky sedí asi 9 z 10)

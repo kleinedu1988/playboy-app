@@ -28,6 +28,8 @@ type DotazGalerie struct {
 	Modelka int      `json:"modelka"` // jen fotky modelky
 	Text    string   `json:"text"`    // jméno modelky, album, fotograf
 	Kolekce string   `json:"kolekce"` // klíč kolekce (galerie_kolekce.go), „Zobrazit vše“ z řady
+	// Páry a lesbické fotky (0.02.062, druh_fotek.go): "" skryté (výchozí), "i" i s nimi, "jen" jen ony
+	Explicitni string `json:"explicitni"`
 	Seminko int      `json:"seminko"` // náhodné pořadí
 	Od      int      `json:"od"`      // stránka od
 	Kolik   int      `json:"kolik"`   // velikost stránky
@@ -58,6 +60,8 @@ type fotkaGalerie struct {
 	tagy   map[string]bool
 	dekada string
 	hledat string
+	// Sex nebo lesbická scéna (potvrzená, nebo jistý odhad): v běžné galerii a kolekcích se nezobrazí
+	explicitni bool
 }
 
 var galeriePamet struct {
@@ -76,7 +80,15 @@ func (a *App) otiskGalerie() string {
 	a.db.QueryRow(`SELECT COUNT(*) FROM fotky_tagy`).Scan(&tagu)
 	var alba int64
 	a.db.QueryRow(`SELECT COUNT(*) + COALESCE(SUM(LENGTH(album) + LENGTH(typ)), 0) FROM alba`).Scan(&alba)
-	return fmt.Sprint(n, maxID, soucet, tagu, alba)
+	// Potvrzené druhy (čas poslední změny) a odhady z obsahu (přibývají s výpočtem v pozadí)
+	var druhu int64
+	var posledni string
+	a.db.QueryRow(`SELECT COUNT(*), COALESCE(MAX(potvrzeno), '') FROM druhy_fotek`).Scan(&druhu, &posledni)
+	obsahu := 0
+	if a.obsah != nil && a.obsahZapnuty() {
+		obsahu = a.obsah.PocetPartii()
+	}
+	return fmt.Sprint(n, maxID, soucet, tagu, alba, druhu, posledni, obsahu, zmenyDruhu.Load())
 }
 
 func (a *App) fotkyGalerie() []fotkaGalerie {
@@ -84,6 +96,7 @@ func (a *App) fotkyGalerie() []fotkaGalerie {
 		JOIN modelky m ON m.id = f.modelka_id`+pripojeniPopisu+`
 		ORDER BY f.id`, true, true))
 	tagy := vsechnyTagyFotek(a.db)
+	explicitni := a.explicitniFotky()
 	v := make([]fotkaGalerie, 0, len(fotky))
 	videne := map[string]bool{}
 	for _, f := range fotky {
@@ -92,7 +105,7 @@ func (a *App) fotkyGalerie() []fotkaGalerie {
 			continue
 		}
 		videne[f.DriveID] = true
-		g := fotkaGalerie{f: f, tagy: map[string]bool{}}
+		g := fotkaGalerie{f: f, tagy: map[string]bool{}, explicitni: explicitni[f.DriveID]}
 		for _, t := range tagy[f.ID] {
 			g.tagy[t] = true
 		}
@@ -120,7 +133,7 @@ func (a *App) GetGalerieFotek(d DotazGalerie) StrankaGalerie {
 		p.fotky, p.otisk, p.klic = a.fotkyGalerie(), otisk, ""
 	}
 	h := fnv.New64a()
-	fmt.Fprintf(h, "%s|%s|%v|%v|%v|%d|%s|%d|%s|%s|%v", d.Razeni, d.Srdicka, d.Typy, d.Tagy, d.Dekady, d.Modelka, d.Text, d.Seminko, d.Kolekce, time.Now().Format("2006-01-02"), a.obsah.StavHledaniSlovy().Pripraveno)
+	fmt.Fprintf(h, "%s|%s|%v|%v|%v|%d|%s|%d|%s|%s|%v|%s", d.Razeni, d.Srdicka, d.Typy, d.Tagy, d.Dekady, d.Modelka, d.Text, d.Seminko, d.Kolekce, time.Now().Format("2006-01-02"), a.obsah.StavHledaniSlovy().Pripraveno, d.Explicitni)
 	klic := fmt.Sprintf("%x|%s", h.Sum64(), otisk)
 	if p.klic != klic {
 		p.serazene, p.fasety, p.slovy = a.vybratGalerii(p.fotky, d)
@@ -132,6 +145,17 @@ func (a *App) GetGalerieFotek(d DotazGalerie) StrankaGalerie {
 		v.Fotky = append(v.Fotky, p.fotky[p.serazene[i]].f)
 	}
 	return v
+}
+
+// Páry a lesbické fotky: výchozí skryté, s „i“ všechny, s „jen“ jen ony; kolekce Páry a lesbické je ukáže vždy
+func zobrazitDruh(g *fotkaGalerie, d DotazGalerie) bool {
+	switch {
+	case d.Kolekce == klicKolekceExplicitni || d.Explicitni == "i":
+		return true
+	case d.Explicitni == "jen":
+		return g.explicitni
+	}
+	return !g.explicitni
 }
 
 // Filtr jedné fotky; vynechat = dimenze, která se pro počty v panelu nepočítá
@@ -204,6 +228,9 @@ func (a *App) vybratGalerii(fotky []fotkaGalerie, d DotazGalerie) ([]int, Fasety
 	for i := range fotky {
 		g := &fotky[i]
 		if kolekce != nil && !kolekce(g) {
+			continue
+		}
+		if !zobrazitDruh(g, d) {
 			continue
 		}
 		// Indexy jdou do sdílené paměti galerie, proto se fotky nevyřazují ze seznamu, jen přeskočí

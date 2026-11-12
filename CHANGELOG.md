@@ -6,6 +6,24 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.062] – 2026-11-12
+
+### Změněno
+- **Galerie zvlášť:** fotky se sexem a lesbické scény už nejsou v řadách kolekcí, v heru ani ve Všech fotkách.
+  Patří mezi ně potvrzené (sex, lesbická) a nepotvrzené s jistým odhadem (≥ 95 %); potvrzená „pózovací“
+  a „jen s mužem“ zůstávají v běžné galerii.
+- Vlastní řada a kolekce **Páry a lesbické**: v Galerii vždy jako poslední řada (nepočítá se do deseti řad dne,
+  do hera nejde), v panelu Kolekce vlastní skupina; „Zobrazit vše“ ukáže všechny.
+- Ve Filtrech Všech fotek **Páry a lesbické: Skrýt / Ukázat i je / Jen je** (pamatuje se, štítek v liště
+  s křížkem vrátí „Skrýt“).
+
+### Ověřeno
+- Test: potvrzený sex zmizí z galerie, „Jen je“ ukáže jen jej, „Ukázat i je“ obě fotky, kolekce Páry a lesbické
+  jen jej; po změně na „jen s mužem“ se fotka vrátí (i ve stejné sekundě).
+- Snímky na kopii sbírky (bez potvrzení, jen odhady): řady dne + poslední „Páry a lesbické“ (Zobrazit vše 173),
+  filtr Jen je → 173 fotek, křížek štítku → zpět 23 078. V odhadech převažují skupinové pózovací fotky víc žen –
+  ty se podle volby počítají jako lesbické; když nemají být skryté, stačí je v Údržbě potvrdit jako pózovací.
+
 ## [0.02.061] – 2026-11-12
 
 ### Přidáno

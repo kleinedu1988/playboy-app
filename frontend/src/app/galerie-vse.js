@@ -25,9 +25,11 @@ const SEMINKO = Date.now() % 100000;
 const RAZENI = [['libi', 'Co se ti asi líbí', 'Tvoje srdíčka, u nehodnocených odhad z obsahu fotek; promíchané napříč alby'],
     ['hodnota', 'Nejlepší', 'Srdíčka fotky × oblíbenost modelky'], ['nove', 'Nejnovější', 'Naposledy přidané'], ['nahodne', 'Náhodně', '']];
 const SRDICKA = [['', 'Všechny'], ['3', '♥ 3+'], ['4', '♥ 4+'], ['5', '♥ 5'], ['0', 'Bez srdíček']];
+// Páry a lesbické fotky (0.02.062): ve výchozím stavu skryté, mají vlastní řadu a kolekci
+const EXPLICITNI = [['', 'Skrýt', 'Fotky se sexem a lesbické scény jen ve vlastní řadě Páry a lesbické'], ['i', 'Ukázat i je', 'Všechny fotky včetně párů a lesbických'], ['jen', 'Jen je', 'Jen fotky se sexem a lesbické scény']];
 
-/** @type {{ razeni: string, srdicka: string, typy: string[], tagy: string[], dekady: string[] }} */
-let dotaz = { razeni: 'libi', srdicka: '', typy: [], tagy: [], dekady: [] };
+/** @type {{ razeni: string, srdicka: string, typy: string[], tagy: string[], dekady: string[], explicitni: string }} */
+let dotaz = { razeni: 'libi', srdicka: '', typy: [], tagy: [], dekady: [], explicitni: '' };
 try { dotaz = { ...dotaz, ...JSON.parse(localStorage.getItem(KLIC_DOTAZU) || '{}') }; } catch { /* výchozí */ }
 let text = '';
 let celkem = 0;
@@ -43,7 +45,7 @@ let nazvyTagu = new Map();
 function ulozitDotaz() {
     try { localStorage.setItem(KLIC_DOTAZU, JSON.stringify(dotaz)); } catch { /* jen pro toto spuštění */ }
 }
-const pocetFiltru = () => (dotaz.srdicka ? 1 : 0) + dotaz.typy.length + dotaz.tagy.length + dotaz.dekady.length;
+const pocetFiltru = () => (dotaz.srdicka ? 1 : 0) + (dotaz.explicitni ? 1 : 0) + dotaz.typy.length + dotaz.tagy.length + dotaz.dekady.length;
 
 const polozka = f => ({ fotky: [f], album: f.album, typ: f.typ, modelkaId: f.modelkaId, jmenoModelky: f.jmenoModelky, rotace: f.rotace, hodnoceni: f.hodnoceni });
 
@@ -59,8 +61,8 @@ let zvolenaKolekce = { klic: '', nazev: '' };
 // otevřený panel se pamatuje
 const KLIC_PANELU_KOLEKCI = 'galerieKolekceOtevrene';
 const kolekceOtevrene = () => { try { return localStorage.getItem(KLIC_PANELU_KOLEKCI) === '1'; } catch { return false; } };
-const SKUPINY_KOLEKCI = { tvoje: 'Pro tebe', cas: 'Čas', styl: 'Objevené styly', barvy: 'Barvy a světlo', obsah: 'Obsah fotek', vzhled: 'Vzhled modelek', kariera: 'Kariéra' };
-const VYCHOZI_DOTAZ = { razeni: 'libi', srdicka: '', typy: [], tagy: [], dekady: [] };
+const SKUPINY_KOLEKCI = { tvoje: 'Pro tebe', cas: 'Čas', styl: 'Objevené styly', barvy: 'Barvy a světlo', obsah: 'Obsah fotek', vzhled: 'Vzhled modelek', kariera: 'Kariéra', explicitni: 'Páry a lesbické' };
+const VYCHOZI_DOTAZ = { razeni: 'libi', srdicka: '', typy: [], tagy: [], dekady: [], explicitni: '' };
 /** @type {{ klic: string, nazev: string, duvod: string, skupina: string, pocet: number, fotka: any }[]} */
 let vsechnyKolekce = [];
 // Výběr se dá uložit, když se liší od výchozí galerie
@@ -164,6 +166,8 @@ function htmlStitku() {
     const srd = SRDICKA.find(([k]) => k === dotaz.srdicka && k);
     const stitky = [
         ...(srd ? [['srdicka', dotaz.srdicka, srd[1]]] : []),
+        // Křížek vrátí výchozí stav (skryté)
+        ...(dotaz.explicitni ? [['explicitni', '', dotaz.explicitni === 'jen' ? 'Jen páry a lesbické' : 'I páry a lesbické']] : []),
         ...dotaz.typy.map(t => ['typy', t, t]),
         ...dotaz.dekady.map(d => ['dekady', d, `${d.slice(2)}. léta`]),
         ...dotaz.tagy.map(t => ['tagy', t, nazvyTagu.get(t) || t]),
@@ -188,8 +192,10 @@ function proc(f) {
 async function naplnitHeroGalerie(misto, index = null) {
     clearTimeout(casovacHero);
     // Hero přes kolekce (nejlepší fotka každé řady), bez kolekcí přes fotky z čela výběru
-    const zKolekci = kolekce.length > 1;
-    const kandidati = zKolekci ? kolekce.slice(0, FOTEK_V_HERO).map(r => polozka(r.fotky[0])) : stav.nejlepsiPolozky.slice(0, FOTEK_V_HERO);
+    // Řada Páry a lesbické do hera nepatří
+    const rady = kolekce.filter(r => r.skupina !== 'explicitni');
+    const zKolekci = rady.length > 1;
+    const kandidati = zKolekci ? rady.slice(0, FOTEK_V_HERO).map(r => polozka(r.fotky[0])) : stav.nejlepsiPolozky.slice(0, FOTEK_V_HERO);
     if (!misto || !misto.isConnected || !kandidati.length) return;
     let i = index ?? 0;
     if (index === null) {
@@ -331,6 +337,7 @@ async function vykreslitPanel() {
     panel.innerHTML = `
         ${pocetFiltru() ? '<button type="button" class="link gv-zrusit" data-gv-zrusit>zrušit všechny filtry</button>' : ''}
         <section><h4>Srdíčka fotky</h4><div class="gv-volby">${SRDICKA.map(([k, n]) => volba('srdicka', k, n, k ? (fasety.srdicka || {})[k] || 0 : undefined, dotaz.srdicka === k)).join('')}</div></section>
+        <section><h4>Páry a lesbické</h4><div class="gv-volby">${EXPLICITNI.map(([k, n, t]) => volba('explicitni', k, n, undefined, (dotaz.explicitni || '') === k, t)).join('')}</div></section>
         ${typy.length ? `<section><h4>Typ alba</h4><div class="gv-volby">${typy.map(([k, p]) => volba('typy', k, k, p, dotaz.typy.includes(k))).join('')}</div></section>` : ''}
         ${dekady.length ? `<section><h4>Období</h4><div class="gv-volby">${dekady.map(([k, p]) => volba('dekady', k, `${k.slice(2)}. léta`, p, dotaz.dekady.includes(k))).join('')}</div></section>` : ''}
         ${tagy.length ? `<section><h4>Tagy</h4>${tagy.map(x => `<div class="gv-podnadpis">${esc(x.sk.nazev)}</div><div class="gv-volby">${x.tagy.map(t => volba('tagy', t.klic, nazevTagu.get(t.klic) || t.klic, (fasety.tagy || {})[t.klic] || 0, dotaz.tagy.includes(t.klic))).join('')}</div>`).join('')}</section>` : ''}`;
@@ -460,7 +467,7 @@ export function pripravitGalerii(nacistZnovu) {
             return;
         }
         if (cil.closest('[data-gv-zrusit]')) {
-            dotaz = { ...dotaz, srdicka: '', typy: [], tagy: [], dekady: [] };
+            dotaz = { ...dotaz, srdicka: '', typy: [], tagy: [], dekady: [], explicitni: '' };
             ulozitDotaz();
             nacistZnovu();
             return;
@@ -469,7 +476,7 @@ export function pripravitGalerii(nacistZnovu) {
         if (!v) return;
         const skupina = v.dataset.gv;
         const hodnota = v.dataset.hodnota;
-        if (skupina === 'razeni' || skupina === 'srdicka') dotaz[skupina] = hodnota;
+        if (skupina === 'razeni' || skupina === 'srdicka' || skupina === 'explicitni') dotaz[skupina] = hodnota;
         else {
             const seznam = dotaz[skupina];
             dotaz[skupina] = seznam.includes(hodnota) ? seznam.filter(x => x !== hodnota) : [...seznam, hodnota];

@@ -10,7 +10,7 @@ import (
 // a v package.json je bez nul na začátku (SemVer, jinak je npm ani Wails nepřijmou); v programu a v CHANGELOG.md
 // se ukazuje s pevnou šířkou X.XX.XXX (0.1.1 → 0.01.001, zobrazitVerzi). Při vydání se změní tady, ve wails.json
 // (info.productVersion) a ve frontend/package.json a v CHANGELOG.md dostane datum; test hlídá, že spolu souhlasí.
-const Verze = "0.2.61"
+const Verze = "0.2.62"
 
 // Název programu (do 1.53.0 „Playboy Database“, viz prejmenovani.go). Kontrola nové verze podle něj pozná,
 // že vzdálená větev patří k nové řadě verzí (aktualizace.go).

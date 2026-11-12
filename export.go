@@ -464,6 +464,7 @@ func (a *App) importovatFotky(modelkaID int, album exportAlbum, vysledek *Vysled
 				ids[0], druh, time.Now().Format("2006-01-02 15:04:05")); err != nil {
 				a.chyba("import "+kde, err)
 			}
+			zmenyDruhu.Add(1)
 		}
 		// Tagy: neprázdný seznam nahradí tagy fotky (neznámé se přeskočí), prázdný nic nemění
 		if tagy := platneTagy(f.Tagy); len(tagy) > 0 {

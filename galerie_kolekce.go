@@ -33,6 +33,9 @@ type KolekceGalerie struct {
 	Oblibena bool `json:"oblibena"`
 }
 
+// Kolekce Páry a lesbické (0.02.062): fotky se sexem a lesbické scény, jen v této řadě
+const klicKolekceExplicitni = "explicitni"
+
 const (
 	rad             = 10
 	fotekVRade      = 15
@@ -347,6 +350,8 @@ func (a *App) definiceKolekci(fotky []fotkaGalerie, dk *dataKolekce, nyni time.T
 		pridat(defKolekce{klic: "obsah:" + tag, nazev: o.nazev, skupina: "obsah", kontext: 1, duvod: o.duvod + " – podle tagů a obsahu fotek",
 			plati: func(g *fotkaGalerie) bool { return maTag(g, tag) }})
 	}
+	pridat(defKolekce{klicKolekceExplicitni, "Páry a lesbické", "Fotky se sexem a lesbické scény – potvrzené a jisté odhady; v ostatních řadách nejsou", "explicitni", 1,
+		func(g *fotkaGalerie) bool { return g.explicitni }})
 	return defs
 }
 
@@ -570,9 +575,22 @@ func (a *App) GetKolekceGalerie() []KolekceGalerie {
 	kandidati := a.kandidatiKolekci(fotky)
 	sort.SliceStable(kandidati, func(i, j int) bool { return kandidati[i].hodnota > kandidati[j].hodnota })
 	zeSkupiny := map[string]int{}
-	for _, k := range kandidati {
-		if len(v) >= rad {
-			break
+	// Páry a lesbické: vlastní řada vždy na konci, nepočítá se do 10 řad (a nedostane se do hera)
+	var explicitni *kandidatKolekce
+	for i, k := range kandidati {
+		if k.d.klic == klicKolekceExplicitni {
+			explicitni = &kandidati[i]
+		}
+	}
+	if explicitni != nil {
+		kandidati = append(slices.Clone(kandidati), *explicitni)
+	}
+	for n, k := range kandidati {
+		if k.d.klic == klicKolekceExplicitni && n < len(kandidati)-1 {
+			continue
+		}
+		if len(v) >= rad && k.d.klic != klicKolekceExplicitni {
+			continue
 		}
 		if zeSkupiny[k.d.skupina] >= maxRadZeSkupiny {
 			continue
@@ -631,6 +649,10 @@ func (a *App) kandidatiKolekci(fotky []fotkaGalerie) []kandidatKolekce {
 		indexy, znamo := clenove.get(d.klic)
 		if !znamo {
 			for i := range fotky {
+				// Páry a lesbické jen ve vlastní kolekci
+				if fotky[i].explicitni != (d.klic == klicKolekceExplicitni) {
+					continue
+				}
 				if d.plati(&fotky[i]) {
 					indexy = append(indexy, i)
 				}
@@ -667,7 +689,7 @@ type PrehledKolekce struct {
 }
 
 // Pořadí skupin v panelu kolekcí
-var poradiSkupinKolekci = map[string]int{"tvoje": 0, "cas": 1, "styl": 2, "barvy": 3, "obsah": 4, "vzhled": 5, "kariera": 6}
+var poradiSkupinKolekci = map[string]int{"tvoje": 0, "cas": 1, "styl": 2, "barvy": 3, "obsah": 4, "vzhled": 5, "kariera": 6, "explicitni": 7}
 
 // GetVsechnyKolekce: panel kolekcí v Galerii – všechny kolekce po skupinách, ve skupině od největší
 func (a *App) GetVsechnyKolekce() []PrehledKolekce {

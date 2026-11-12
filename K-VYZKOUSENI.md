@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.062 – Galerie zvlášť
+
+- [ ] V řadách Galerie, v heru a ve Všech fotkách není fotka se sexem ani lesbická scéna (potvrzená nebo jistě odhadnutá).
+- [ ] Poslední řada „Páry a lesbické“, „Zobrazit vše“ a skupina v panelu Kolekce.
+- [ ] Filtry › Páry a lesbické: Skrýt / Ukázat i je / Jen je; štítek v liště s křížkem.
+- [ ] Fotka potvrzená v Údržbě jako pózovací se do běžné Galerie vrátí.
+
 ## 0.02.061 – Potvrzení druhu fotky [schéma] [export]
 
 - [ ] Po spuštění proběhne úprava databáze č. 19 (v zálohách „Před úpravou databáze“) a program běží jako dřív.

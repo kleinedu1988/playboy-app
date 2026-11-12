@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sort"
 	"strings"
 	"testing"
 )
@@ -64,5 +65,43 @@ func TestPotvrzenyDruhFotky(t *testing.T) {
 
 	if a.SetDruhFotek([]string{idA}, "") != 1 || a.GetDruhFotky(idA) != "" {
 		t.Fatal("potvrzení se nesmazalo")
+	}
+}
+
+func TestGalerieBezExplicitnichFotek(t *testing.T) {
+	a := novaTestovaciApp(t, nil)
+	a.AddModelka(Modelka{Jmeno: "Galerie Druh", Tetovani: -1, Piercing: -1})
+	m := modelkaPodleJmenaApp(t, a, "Galerie Druh")
+	a.AddBulkPhotos(m.ID, "Album", "Pictorial", odkazA+" "+odkazB)
+	ids := func(d DotazGalerie) string {
+		d.Kolik = 50
+		var v []string
+		for _, f := range a.GetGalerieFotek(d).Fotky {
+			v = append(v, f.DriveID)
+		}
+		sort.Strings(v)
+		return strings.Join(v, ",")
+	}
+	oba := ids(DotazGalerie{})
+	if strings.Count(oba, ",") != 1 {
+		t.Fatalf("bez druhů mají být vidět obě fotky: %q", oba)
+	}
+	a.SetDruhFotek([]string{idA}, "sex")
+	if v := ids(DotazGalerie{}); v != idB {
+		t.Fatalf("potvrzený sex zůstal v galerii: %q", v)
+	}
+	if v := ids(DotazGalerie{Explicitni: "jen"}); v != idA {
+		t.Fatalf("filtr jen páry a lesbické: %q", v)
+	}
+	if v := ids(DotazGalerie{Explicitni: "i"}); v != oba {
+		t.Fatalf("filtr i s nimi: %q", v)
+	}
+	if v := ids(DotazGalerie{Kolekce: klicKolekceExplicitni}); v != idA {
+		t.Fatalf("kolekce Páry a lesbické: %q", v)
+	}
+	// „Jen s mužem“ a pózovací zůstávají v běžné galerii
+	a.SetDruhFotek([]string{idA}, "muz")
+	if v := ids(DotazGalerie{}); v != oba {
+		t.Fatalf("fotka jen s mužem zmizela: %q", v)
 	}
 }

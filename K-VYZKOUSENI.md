@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.068 – Časopis jako vlastnost vkusu
+
+- [ ] Až budou aspoň 3 hodnocené modelky Penthouse: odhad u nehodnocené Pet uvádí v důvodu „Penthouse“, pokud se ti Pets líbí víc či míň než ostatní.
+
 ## 0.02.067 – Úplnost čísla Penthouse
 
 - [ ] Číslo Penthouse › Úplnost › „Pet of the Month podle Wikipedie…“ › přidat… otevře rychlé okno s Penthouse US a číslem.

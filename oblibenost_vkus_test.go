@@ -848,3 +848,64 @@ func TestOdhadAzPoGalerii(t *testing.T) {
 		t.Fatal("s analýzou obsahu")
 	}
 }
+
+// Časopis jako vlastnost (0.02.068): jiný časopis než Playboy je údaj vkusu, samotný Playboy ne; když se líbí
+// modelky Penthouse, odhad u nehodnocené modelky Penthouse má časopis v důvodu
+func TestVkusCasopis(t *testing.T) {
+	udaje := pripravitUdajeVkusu([]Modelka{
+		{ID: 1, Vydani: []string{"1985-09@PH", "1986-01"}},
+		{ID: 2, Vydani: []string{"1985-09"}},
+		{ID: 3, Obalky: []string{"1990-05@HU"}},
+	})
+	if !slices.Contains(udaje[1].kat, "casopis=PH") || slices.ContainsFunc(udaje[2].kat, func(k string) bool { return strings.HasPrefix(k, "casopis=") }) ||
+		!slices.Contains(udaje[3].kat, "casopis=HU") {
+		t.Fatalf("údaje: %v / %v / %v", udaje[1].kat, udaje[2].kat, udaje[3].kat)
+	}
+	if udaje[1].skupin != udaje[2].skupin {
+		t.Errorf("časopis změnil bohatost údajů: %d proti %d", udaje[1].skupin, udaje[2].skupin)
+	}
+
+	r := rand.New(rand.NewSource(7))
+	var modelky []Modelka
+	for i := range 400 {
+		penthouse := i%2 == 0
+		cislo := fmt.Sprintf("%d-06", 1970+r.Intn(40))
+		if penthouse {
+			cislo += "@PH"
+		}
+		m := Modelka{ID: i + 1, Jmeno: fmt.Sprintf("Modelka %03d", i+1), VlasyBarva: vlasyVkus[r.Intn(4)], Etnicita: "kavkazská",
+			Narodnost: "USA", VyskaCm: 160 + r.Intn(20), Vydani: []string{cislo}, Tetovani: -1, Piercing: -1}
+		// Hodnocené fotky (aby odhad šel ukázat) bez souvislosti s časopisem
+		var c srdickaAlba
+		for range 6 {
+			h := 2 + r.Intn(3)
+			c[h-1]++
+			m.FotekHodnocenych++
+			m.SrdciFotek += h
+		}
+		m.SrdickaAlb = []srdickaAlba{c}
+		if i < 320 {
+			zaklad := 1.5
+			if penthouse {
+				zaklad = 4.5
+			}
+			m.Hodnoceni = min(max(math.Round(zaklad+0.4*r.NormFloat64()), 1), 5)
+		}
+		modelky = append(modelky, m)
+	}
+	model := spocitatOblibenost(modelky, nil, nyniHarness)
+	v := model.vkus
+	if !v.platny {
+		t.Fatalf("model neprošel: chyba %.3f, průměr %.3f", v.chybaCV, v.chybaZaklad)
+	}
+	duvod := ""
+	for _, m := range modelky[320:] {
+		if o, ok := model.odhad[m.ID]; ok && o >= 4 && strings.HasSuffix(m.Vydani[0], "@PH") && duvod == "" {
+			duvod = v.textOdhadu(m.ID, o, true, true)
+		}
+	}
+	if !strings.Contains(duvod, "Penthouse") {
+		t.Fatalf("důvod odhadu modelky Penthouse bez časopisu: %q", duvod)
+	}
+	t.Log(duvod)
+}

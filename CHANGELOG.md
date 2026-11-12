@@ -6,6 +6,21 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.068] – 2026-11-12
+
+### Přidáno
+- **Časopis jako vlastnost vkusu:** model vkusu (odhad srdíček, Mohlo by se ti líbit) bere jiné časopisy než
+  Playboy, ve kterých modelka vyšla (číslo, centerfold, obálka), jako její údaj. Důvod odhadu pak může říct
+  „Penthouse“ a věta tipu „vyšla v časopise Penthouse“. Playboy se jako vlastnost nepočítá (měla by ji skoro
+  každá modelka), takže čistě playboyová sbírka se nemění; počet skupin údajů (bohatost) zůstává stejný.
+
+### Ověřeno
+- Test: údaj časopisu u Penthouse a Hustleru, ne u Playboye, bohatost údajů beze změny; ve sbírce, kde se líbí
+  modelky Penthouse, má odhad nehodnocené modelky Penthouse důvod „Odhad 4½ srdíčka: Penthouse; podobně jako…“.
+  Všechny dosavadní testy vkusu beze změny.
+- Na kopii sbírky se zatím nic nemění: modelky Penthouse jsou 2 a žádná hodnocená (vlastnost se počítá až od 3
+  hodnocených).
+
 ## [0.02.067] – 2026-11-12
 
 ### Přidáno

@@ -255,6 +255,8 @@ func (v *modelVkusu) frazeUdaje(u udajeVkusu, klic string) frazeVkusu {
 		return frazeVkusu{}
 	case "fotograf":
 		return frazeVkusu{frVeta, "Fotil ji " + zapis + "."}
+	case "casopis":
+		return frazeVkusu{frKtera, "vyšla v časopise " + zapis}
 	}
 	return frazeVkusu{frKtera, "má " + zapis}
 }

@@ -457,6 +457,16 @@ func udajeModelkyVkus(m Modelka, klic func(pole, text string) string) udajeVkusu
 	if maKategorii {
 		skupiny++
 	}
+	// Časopis jako vlastnost (0.02.068): jiné časopisy než Playboy, ve kterých modelka vyšla (číslo, centerfold,
+	// obálka). Playboy je výchozí – jen podle něj by měla vlastnost každá modelka sbírky a čistě playboyová
+	// sbírka by se nezměnila; skupinu údajů nepřidává (bohatost údajů zůstává stejná)
+	for _, seznam := range [][]string{m.Vydani, m.Centerfoldy, m.Obalky} {
+		for _, v := range seznam {
+			if _, c := hledani.RozdelitCasopis(v); c != "" && c != hledani.VychoziCasopis {
+				pridat("casopis", c, nazevCasopisuVkusu(c))
+			}
+		}
+	}
 	maFotografa := false
 	for _, f := range strings.Split(m.FotografoveAlb, "\n") {
 		if f = strings.TrimSpace(f); f != "" {
@@ -628,4 +638,14 @@ func (v *modelVkusu) duvodBezOdhadu(m Modelka) string {
 		return bezOdhaduUdaje
 	}
 	return bezOdhaduSkupina
+}
+
+// Název časopisu do důvodu odhadu (předvyplněné časopisy; jiný zůstane zkratkou)
+func nazevCasopisuVkusu(klic string) string {
+	for _, c := range vychoziCasopisy {
+		if c.Klic == klic {
+			return c.Nazev
+		}
+	}
+	return klic
 }

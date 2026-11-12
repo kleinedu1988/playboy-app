@@ -35,7 +35,7 @@ var (
 	webBoobpedie      = "https://www.boobpedia.com/boobs/"
 	klientZdroju      = &http.Client{Timeout: 15 * time.Second}
 	odstupDotazu      = time.Second
-	uaZdroju          = "PlayboyApp/1.38 (personal collection catalogue; on-demand lookups)"
+	uaZdroju          = "PinupKatalog/" + Verze + " (personal collection catalogue; on-demand lookups)"
 	zdrojeMezipamet   = map[string][]byte{}
 	zdrojeCasy        = map[string]time.Time{}
 	zdrojeZamek       sync.Mutex

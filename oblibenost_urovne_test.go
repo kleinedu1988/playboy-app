@@ -426,7 +426,7 @@ func simulovatUrovne(semena []int64, body []int, varianta func()) vysledekSimula
 // Simulace (bez -short): 400 modelek (340 hodnocených), po 10 dvojicích z vybratDvojice, odpovědi podle skutečných
 // sil. Měří přesnost prvních 10/20/50 míst ukázaného pořadí, kolik je potvrzených v top 10 a kolik z nich „falešných“
 // (mimo skutečnou top 10), a jak rychle se skutečná top 10 potvrdí. Varianty: bez prahů (dřívější pořadí podle
-// oblíbenosti, bez soubojů), výchozí a bez obhajoby; s PLAYBOY_SIMULACE=vse (16 semínek, asi 8 minut) i prahy bez soubojů,
+// oblíbenosti, bez soubojů), výchozí a bez obhajoby; s PINUP_SIMULACE=vse (16 semínek, asi 8 minut) i prahy bez soubojů,
 // přísnější a mírnější prahy, bez výhry nad top 20, víc nebo méně soubojů a obhajoba na jiných úrovních (tím se prahy
 // a váhy ladily). Výchozí varianta předává držitelky z výpočtu do výpočtu (obhajoba), „bez obhajoby“ ne; obě počítají
 // výpadky z potvrzené top 10.
@@ -434,7 +434,7 @@ func TestSimulaceUrovni(t *testing.T) {
 	if testing.Short() {
 		t.Skip("simulace úrovní se v rychlém běhu nepouští")
 	}
-	vse := os.Getenv("PLAYBOY_SIMULACE") == "vse"
+	vse := os.Getenv("PINUP_SIMULACE") == "vse"
 	semena := []int64{1, 2, 3, 4, 5, 6}
 	if vse {
 		semena = []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}

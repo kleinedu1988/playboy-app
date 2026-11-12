@@ -575,7 +575,7 @@ s pruhem „⚔ Rozhodnout teď: Anna o Top 10 · souboj 2 ze 4“ a ukazatelem 
 vrátí běžný mix); po posledním souboji se pořadí přepočte a pruh řekne výsledek („postoupila do Top 10“, „zatím
 nepostoupila – chybí …“, „obhájila“, „prohrála a vypadla“).
 
-**Simulace** (`TestSimulaceUrovni`, bez `-short`; všechny varianty s `PLAYBOY_SIMULACE=vse`): 400 modelek, skutečná
+**Simulace** (`TestSimulaceUrovni`, bez `-short`; všechny varianty s `PINUP_SIMULACE=vse`): 400 modelek, skutečná
 síla t ~ N(3; 1) (0,3–5,4), 340 hodnocených se srdíčky = t + N(0; 0,3) zaokrouhlené na poloviny, uživatel odpovídá
 podle Bradley–Terry se skutečnými silami na dvojice z `vybratDvojice` (po deseti, model se mezi dávkami přepočítá);
 průměr 16 semínek. P@k = podíl skutečné top k mezi prvními k místy ukázaného pořadí; „falešné“ = potvrzené v top 10

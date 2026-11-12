@@ -175,7 +175,7 @@ func (a *App) zapsatKatalog(kam, html string, ids []string, ted time.Time) Vysle
 	if html == "" {
 		return VysledekKatalogu{Chyba: "katalog je prázdný"}
 	}
-	zaklad := filepath.Join(kam, "playboy-katalog-"+ted.Format("2006-01-02"))
+	zaklad := filepath.Join(kam, "kapesni-katalog-"+ted.Format("2006-01-02"))
 	slozka := zaklad
 	// Starší katalog stejného dne se nepřepíše: nová složka s pořadím
 	for i := 2; ; i++ {

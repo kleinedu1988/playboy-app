@@ -6,6 +6,19 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.079] – 2026-11-12
+
+### Změněno
+- Při dotazech na Wikipedii a Wikidata se program představuje jako `PinupKatalog/<verze>` (dřív `PlayboyApp/1.38`).
+- Kapesní katalog se ukládá do složky `kapesni-katalog-RRRR-MM-DD` (dřív `playboy-katalog-…`); nadpis stránky
+  „Playboy · kapesní katalog“ zůstává, katalog obsahuje čísla Playboye.
+- Proměnná simulace úrovní v testech `PINUP_SIMULACE` (dřív `PLAYBOY_SIMULACE`), komentáře snímkovače s novými
+  názvy souborů. Klíče nastavení okna (localStorage) neutrální už byly.
+
+### Ověřeno
+- `grep playboy` zbývá jen u časopisu (názvy, odkazy, hledání) a u převzetí starých složek a souborů. Všechny
+  testy, typy a build prošly.
+
 ## [0.02.078] – 2026-11-12
 
 ### Změněno

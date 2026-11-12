@@ -45,7 +45,7 @@ func TestKapesniKatalog(t *testing.T) {
 	kam := t.TempDir()
 	den := time.Date(2026, 11, 10, 12, 0, 0, 0, time.Local)
 	v := a.zapsatKatalog(kam, "<!doctype html>katalog", []string{idB, idA}, den)
-	if v.Chyba != "" || v.Slozka != filepath.Join(kam, "playboy-katalog-2026-11-10") || v.Nahledu != 1 || v.Chybi != 1 {
+	if v.Chyba != "" || v.Slozka != filepath.Join(kam, "kapesni-katalog-2026-11-10") || v.Nahledu != 1 || v.Chybi != 1 {
 		t.Fatalf("zápis: %+v", v)
 	}
 	if b, _ := os.ReadFile(filepath.Join(v.Slozka, "n", idB+".jpg")); string(b) != "jpeg" {
@@ -54,7 +54,7 @@ func TestKapesniKatalog(t *testing.T) {
 	if b, _ := os.ReadFile(filepath.Join(v.Slozka, "index.html")); string(b) != "<!doctype html>katalog" {
 		t.Fatal("index.html")
 	}
-	if druhy := a.zapsatKatalog(kam, "x", nil, den); druhy.Slozka != filepath.Join(kam, "playboy-katalog-2026-11-10-2") {
+	if druhy := a.zapsatKatalog(kam, "x", nil, den); druhy.Slozka != filepath.Join(kam, "kapesni-katalog-2026-11-10-2") {
 		t.Fatalf("druhý katalog téhož dne: %+v", druhy)
 	}
 	if a.zapsatKatalog(kam, "", nil, den).Chyba == "" {

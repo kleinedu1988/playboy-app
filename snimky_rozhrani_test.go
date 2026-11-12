@@ -23,8 +23,8 @@ import (
 // podle úlohy nafotí obrazovky a změří přetékající prvky. Nic se nezapisuje do opravdové sbírky.
 //
 //	npm run build --prefix frontend
-//	mkdir -p /tmp/kopie/pinup-katalog && sqlite3 ~/.local/share/pinup-katalog/playboy.db ".backup /tmp/kopie/pinup-katalog/playboy.db"
-//	cp ~/.local/share/pinup-katalog/playboy-uceni.db /tmp/kopie/pinup-katalog/ && cp -r ~/.local/share/pinup-katalog/obsah /tmp/kopie/pinup-katalog/
+//	mkdir -p /tmp/kopie/pinup-katalog && sqlite3 ~/.local/share/pinup-katalog/katalog.db ".backup /tmp/kopie/pinup-katalog/katalog.db"
+//	cp ~/.local/share/pinup-katalog/katalog-uceni.db /tmp/kopie/pinup-katalog/ && cp -r ~/.local/share/pinup-katalog/obsah /tmp/kopie/pinup-katalog/
 //	WEBKIT_DISABLE_DMABUF_RENDERER=1 WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 \
 //	  KOPIE=/tmp/kopie KOREN=$PWD SKRIPT=nastroje/snimky/foto.py ARGS="/tmp/snimky nastroje/snimky/profily.json" \
 //	  go test -tags snimky -run TestSnimkyRozhrani -v .

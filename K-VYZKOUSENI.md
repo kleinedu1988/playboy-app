@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.079 – Zbytky názvu
+
+- [ ] ⋯ › Kapesní katalog do telefonu…: vznikne složka `kapesni-katalog-…`.
+
 ## 0.02.078 – Soubory databáze
 
 - [ ] Po prvním startu je v `~/.local/share/pinup-katalog/` soubor `katalog.db` a `katalog-uceni.db`, `playboy.db` je odkaz; sbírka je celá.

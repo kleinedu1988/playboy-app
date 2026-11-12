@@ -9,7 +9,7 @@ import { GetProfilovaFotka, GetStatistiky, GetVkusVCase, UlozitSouborGrafu } fro
 import { csv, nazevSouboru, pngGrafu } from '../lib/graf-ven';
 import { oznamit } from '../ui/oznameni';
 import { radaPodilu, vkusVCase } from '../lib/vkus-v-case';
-import { EDICE, MESICE, VYCHOZI_CASOPIS, jeTitulJinehoCasopisu, nazevCasopisu, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
+import { EDICE, MESICE, VYCHOZI_CASOPIS, jeCisloPlayboye, jeTitulJinehoCasopisu, nazevCasopisu, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne, VELIKOST_TITULNI, VELIKOST_ZAHLAVI } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -104,6 +104,7 @@ const GRAFY = [
     { klic: 'fot', skupina: 'rozl', nazev: 'Fotografové' },
     { klic: 'mapa', skupina: 'rozl', druh: 'mapa', nazev: 'Mapa sbírky' },
     { klic: 'obdobi', skupina: 'srov', druh: 'obdobi', nazev: 'Porovnat období' },
+    { klic: 'casopisy', skupina: 'srov', druh: 'casopisy', nazev: 'Srovnat časopisy' },
     { klic: 'vkus', skupina: 'srov', druh: 'vkus', nazev: 'Můj vkus v čase' },
 ];
 const SKUPINY = { pocty: 'V čase · počty', udaje: 'V čase · údaje', podily: 'V čase · podíly', rozl: 'Rozložení', srov: 'Srovnání' };
@@ -232,7 +233,7 @@ function vyskytyModelky(m) {
         const vCasopise = [...new Set([...(m.vydani || []), ...cf, ...obalky])].map(v => {
             const casti = rozlozitVydani(v);
             // Jen výskyty ve zvoleném časopise (jinak by ve volbě „vše“ posunuly první výskyt)
-            if (!casti || casti.casopis !== casopisStat) return null;
+            if (!casti || (casopisStat !== '*' && casti.casopis !== casopisStat)) return null;
             const druhy = new Set([cf.has(v) && 'centerfold', obalky.has(v) && 'obalka', !cf.has(v) && !obalky.has(v) && 'pictorial'].filter(Boolean));
             return { v, edice: casti.edice, rok: parseInt(casti.rok), druhy, vekPresne: vekVLetech(m.narozeniDatum, v) };
         });
@@ -601,6 +602,11 @@ function htmlPruhu(def, polozky) {
 
 // Modelky výběru: [{ m, detail }] bez opakování; u grafu v čase z vybraných sloupců (bez výběru ze všech)
 function modelkyVyberu(def, sloupce) {
+    if (def.druh === 'casopisy') {
+        const c = zvolenyCasopisB(), cl = c ? clenstviCasopisu(data.vsechny, c) : [];
+        return data.vsechny.map((m, i) => ({ m, s: cl[i] })).filter(x => x.s).sort((x, y) => y.s - x.s || x.m.jmeno.localeCompare(y.m.jmeno, 'cs')) // B (menší časopis) napřed
+            .map(({ m, s }) => ({ m, detail: s === 1 ? 'A · Playboy' : `B · ${nazevCasopisu(c)}` }));
+    }
     if (def.druh === 'obdobi') {
         const c = clenstviObdobi();
         return data.modelky.map((m, i) => ({ m, s: c[i] })).filter(x => x.s)
@@ -628,7 +634,7 @@ function modelkyVyberu(def, sloupce) {
 function htmlSeznamu(def, sloupce) {
     const seznam = modelkyVyberu(def, sloupce);
     const ukazat = zobrazitVse ? seznam : seznam.slice(0, ZOBRAZIT_NAJEDNOU);
-    const nadpis = def.druh === 'obdobi' ? 'Modelky obou období' : filtry.size ? 'Modelky výběru' : def.osa === 'mesic' ? 'Přidané za dva roky' : def.osa ? 'Celé období' : 'Všechny modelky';
+    const nadpis = def.druh === 'obdobi' ? 'Modelky obou období' : def.druh === 'casopisy' ? 'Modelky obou časopisů' : filtry.size ? 'Modelky výběru' : def.osa === 'mesic' ? 'Přidané za dva roky' : def.osa ? 'Celé období' : 'Všechny modelky';
     const dotazy = [...filtry.values()].map(f => f.dotaz);
     const dotaz = filtry.size && dotazy.every(Boolean) ? dotazy.join(' ') : '';
     return `<div class="sp-seznam-hlava"><b>${nadpis}</b><span>${pocetModelek(seznam.length)}</span></div>
@@ -650,6 +656,12 @@ function souhrn(def, sloupce, rozlozeni) {
     const modelek = celkem => (filtry.size || celkem === 0 || celkem > 4 ? 'modelek' : celkem === 1 ? 'modelka' : 'modelky');
     if (def.druh === 'mapa') return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} ${modelek(data.modelky.length)} na mapě`;
     if (def.druh === 'vkus') return vkusData ? `<b>${(vkusData.porovnani || []).length.toLocaleString('cs-CZ')}</b> soubojů` : '';
+    if (def.druh === 'casopisy') {
+        const c = zvolenyCasopisB();
+        if (!c) return '';
+        const cl = clenstviCasopisu(data.vsechny, c), n = strana => cl.reduce((x, y) => x + (y === strana ? 1 : 0), 0);
+        return `Playboy <b>${n(1)}</b> vs ${esc(nazevCasopisu(c))} <b>${n(2)}</b> modelek`;
+    }
     if (def.druh === 'obdobi') {
         const c = clenstviObdobi();
         const n = strana => c.reduce((x, y) => x + (y === strana ? 1 : 0), 0);
@@ -806,7 +818,41 @@ function vysledekSrovnani() {
     srovnaniPamet = { klic, data, vysledek };
     return vysledek;
 }
-const hodnotaTabulky = (r, v) => v === null || v === undefined ? '–' : `${cislo(v, r.druh === 'podil' ? 0 : r.desetinna)}${r.jednotka ? (r.jednotka === '%' ? ' %' : ` ${r.jednotka}`) : ''}`;
+// ——— Srovnat časopisy (0.02.072) ———
+// Modelky jen z Playboye proti modelkám jen z druhého časopisu (modelky z obou se nepočítají): stejné testy jako
+// Porovnat období, navíc rok prvního výskytu (v kterémkoli časopise). Příznaky se počítají z celé sbírky.
+let casopisB = '';
+const zvolenyCasopisB = () => { const c = casopisyStatistik(); return c.includes(casopisB) ? casopisB : c[0] || ''; };
+const vPlayboyi = m => [...(m.vydani || []), ...(m.centerfoldy || []), ...(m.obalky || [])].some(jeCisloPlayboye);
+function clenstviCasopisu(modelky, c) {
+    return Int8Array.from(modelky, m => {
+        const pb = vPlayboyi(m), jinde = jineCasopisy(m).includes(c);
+        return pb && !jinde ? 1 : jinde && !pb ? 2 : 0;
+    });
+}
+let srovnaniCasopisu = { klic: '', vsechny: null, vysledek: null };
+function vysledekCasopisu(c) {
+    const klic = `${c}|${druhVyskytu}`;
+    if (srovnaniCasopisu.klic === klic && srovnaniCasopisu.vsechny === data.vsechny) return srovnaniCasopisu.vysledek;
+    const ulozeno = { data, casopisStat, edice, priznaky };
+    let vysledek;
+    try {
+        // Příznaky celé sbírky s výskyty ve všech časopisech (dočasně; mezipaměti Statistik se nezmění)
+        casopisStat = '*';
+        edice = 'vse';
+        data = { ...data, modelky: data.vsechny };
+        const rok = pripravitPriznak({ klic: 'rokVyskytu', graf: 'cf', druh: 'udaj', nazev: 'Rok prvního výskytu', jednotka: '',
+            jednotkaRozdilu: 'let', rokovy: true, prah: 3, vic: 'vyšla o {d} později', mene: 'vyšla o {d} dřív',
+            hodnoty: data.modelky.map(m => prvniVyskyt(m)?.rok ?? null) });
+        vysledek = porovnatObdobi([rok, ...priznakyVyberu()], clenstviCasopisu(data.modelky, c), { a: 'Playboy', b: nazevCasopisu(c) });
+    } finally {
+        ({ data, casopisStat, edice, priznaky } = ulozeno);
+    }
+    srovnaniCasopisu = { klic, vsechny: data.vsechny, vysledek };
+    return vysledek;
+}
+
+const hodnotaTabulky = (r, v) => v === null || v === undefined ? '–' : r.rokovy ? String(Math.round(v)) : `${cislo(v, r.druh === 'podil' ? 0 : r.desetinna)}${r.jednotka ? (r.jednotka === '%' ? ' %' : ` ${r.jednotka}`) : ''}`;
 
 // ——— Graf ven (1.53, lib/graf-ven.js): čísla zvoleného grafu jako tabulka, obrázek a tisk ———
 function tabulkaGrafu(def, misto) {
@@ -821,7 +867,7 @@ function tabulkaGrafu(def, misto) {
         return [['Vlastnost', 'Dřív – výher %', 'Dřív – soubojů', 'Poslední rok – výher %', 'Poslední rok – soubojů', 'Průkazný posun'],
             ...v.radky.map(r => [r.kdo, proc(r.podilDriv), r.nD, proc(r.podilLetos), r.nL, v.postrehy.some(p => p.klic === r.klic) ? 'ano' : ''])];
     }
-    if (def.druh === 'obdobi') {
+    if (def.druh === 'obdobi' || def.druh === 'casopisy') {
         return [...misto.querySelectorAll('table tr')].map(tr => [...tr.querySelectorAll('th, td')].map(b => b.textContent.trim().replace(/\s+/g, ' ')));
     }
     if (def.osa) {
@@ -946,25 +992,45 @@ function htmlObdobi() {
     };
     let vysledek;
     if (prekryvObdobi()) vysledek = '<p class="so-zprava">Období se překrývají. Vyber dvě období, která nemají společný rok.</p>';
-    else {
-        const r = vysledekSrovnani();
-        if (r.maly) vysledek = `<p class="so-zprava">Na srovnání je potřeba aspoň 10 modelek v každém období (${esc(nazevObdobi(obdobiSrovnani.a))}: ${r.na}, ${esc(nazevObdobi(obdobiSrovnani.b))}: ${r.nb}).</p>`;
+    else vysledek = htmlVysledkuSrovnani(vysledekSrovnani(), nazevObdobi(obdobiSrovnani.a), nazevObdobi(obdobiSrovnani.b), 'období');
+    return `<div class="so">${strana('a', 1)}<span class="so-vs" aria-hidden="true">vs</span>${strana('b', 2)}</div>${vysledek}`;
+}
+
+// Výsledek srovnání dvou skupin (období, časopisy): věty průkazných rozdílů a tabulka všech údajů
+function htmlVysledkuSrovnani(r, nazevA, nazevB, coSkupina) {
+    let vysledek;
+    {
+        if (r.maly) vysledek = `<p class="so-zprava">Na srovnání je potřeba aspoň 10 modelek v každé skupině (${esc(nazevA)}: ${r.na}, ${esc(nazevB)}: ${r.nb}).</p>`;
         else {
             const prukazne = r.postrehy.length;
             const radky = [...r.tabulka].sort((x, y) => Number(y.prukazny) - Number(x.prukazny) || x.q - y.q).map(t => `
                 <tr class="${t.prukazny ? 'prukazny' : ''}"><th scope="row"><button type="button" class="link" data-sp-graf-volba="${esc(t.graf)}"${t.klic.startsWith(`${t.graf}:`) ? ` data-sp-zvyraznit="${esc(t.klic.slice(t.graf.length + 1))}"` : ''}>${esc(t.nazev)}</button></th>
                 <td>${hodnotaTabulky(t, t.a)}<small>${t.na}</small></td><td>${hodnotaTabulky(t, t.b)}<small>${t.nb}</small></td>
                 <td class="so-q" title="q po opravě Benjamini–Hochberg">${t.prukazny ? '✓ ' : ''}${t.q < 0.001 ? '< 0,001' : cislo(t.q, 3)}</td></tr>`).join('');
-            vysledek = `<div class="so-shrnuti"><h3>${prukazne ? `Průkazné rozdíly: ${prukazne} z ${r.testu} testů` : `Období se průkazně neliší (${r.testu} testů)`}</h3>
+            vysledek = `<div class="so-shrnuti"><h3>${prukazne ? `Průkazné rozdíly: ${prukazne} z ${r.testu} testů` : `${coSkupina === 'období' ? 'Období se' : 'Časopisy se'} průkazně neliší (${r.testu} testů)`}</h3>
                 ${prukazne ? `<ul class="so-postrehy">${r.postrehy.map(p => `<li><span class="sp-postreh-ikona" aria-hidden="true">${p.smer > 0 ? '↗' : '↘'}</span><span>${esc(p.veta)}</span>
                     <button type="button" class="sp-postreh-info" data-tip="${esc(p.podrobnosti)}" data-tip-siroky aria-label="${esc(`Podrobnosti: ${p.podrobnosti}`)}">ⓘ</button></li>`).join('')}</ul>` : ''}</div>
                 <details class="so-tabulka"><summary>Všechny porovnané údaje</summary><table>
-                    <thead><tr><th scope="col">Údaj</th><th scope="col">${esc(nazevObdobi(obdobiSrovnani.a))}</th><th scope="col">${esc(nazevObdobi(obdobiSrovnani.b))}</th><th scope="col">q</th></tr></thead>
+                    <thead><tr><th scope="col">Údaj</th><th scope="col">${esc(nazevA)}</th><th scope="col">${esc(nazevB)}</th><th scope="col">q</th></tr></thead>
                     <tbody>${radky}</tbody></table>
                     <p class="sp-napoveda">Údaje: medián (Mannův–Whitneyův test), podíly: procento modelek se známým údajem (Fisherův test); malé číslo je počet modelek. q je p-hodnota po opravě na počet testů; ✓ = průkazný (q ≤ 0,05) a zároveň podstatný rozdíl.</p></details>`;
         }
     }
-    return `<div class="so">${strana('a', 1)}<span class="so-vs" aria-hidden="true">vs</span>${strana('b', 2)}</div>${vysledek}`;
+    return vysledek;
+}
+
+function htmlCasopisu() {
+    const casopisy = casopisyStatistik();
+    const c = zvolenyCasopisB();
+    if (!c) return '<p class="prazdno-male">Srovnání potřebuje ve sbírce modelky i z jiného časopisu než Playboy.</p>';
+    const clenstvi = clenstviCasopisu(data.vsechny, c);
+    const pocet = strana => clenstvi.reduce((n, x) => n + (x === strana ? 1 : 0), 0);
+    const volba = casopisy.length > 1
+        ? `<div class="so-desetileti">${casopisy.map(k => `<button type="button" class="chip ${k === c ? 'active' : ''}" data-so-casopis="${esc(k)}">${esc(nazevCasopisu(k))}</button>`).join('')}</div>` : '';
+    return `<div class="so"><fieldset class="so-obdobi so-a"><legend><b>A</b> Playboy<small>${pocetModelek(pocet(1))}</small></legend></fieldset>
+        <span class="so-vs" aria-hidden="true">vs</span>
+        <fieldset class="so-obdobi so-b"><legend><b>B</b> ${esc(nazevCasopisu(c))}<small>${pocetModelek(pocet(2))}</small></legend>${volba}</fieldset></div>
+        ${htmlVysledkuSrovnani(vysledekCasopisu(c), 'Playboy', nazevCasopisu(c), 'časopisy')}`;
 }
 
 const ediceVyskytu = () => EDICE.filter(e => data.modelky.some(m => vyskytyModelky(m).some(c => c.edice === e)));
@@ -1025,12 +1091,13 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     if (!jenGraf) {
         sloupce = def.osa ? radaVCase(def) : [];
         postreh = def.osa === 'rok' ? postrehyRad().get(def.klic) ?? null : null;
-        rozlozeni = def.osa || def.druh === 'mapa' || def.druh === 'obdobi' || def.druh === 'vkus' ? [] : polozkyRozlozeni(def.klic);
+        rozlozeni = def.osa || def.druh === 'mapa' || def.druh === 'obdobi' || def.druh === 'casopisy' || def.druh === 'vkus' ? [] : polozkyRozlozeni(def.klic);
     }
     const fokus = /** @type {HTMLElement} */ (document.activeElement)?.closest?.('[data-hodnota]')?.dataset.hodnota;
     const aktivni = /** @type {HTMLElement} */ (document.activeElement);
     const fokusPole = misto.contains(aktivni) && (aktivni.dataset?.soOd ? `[data-so-od="${aktivni.dataset.soOd}"]` : aktivni.dataset?.soDo ? `[data-so-do="${aktivni.dataset.soDo}"]` : '');
     misto.innerHTML = def.druh === 'obdobi' ? htmlObdobi()
+        : def.druh === 'casopisy' ? htmlCasopisu()
         : def.druh === 'vkus' ? htmlVkusu(misto.clientWidth)
         : def.druh === 'mapa'
         ? htmlMapySbirky(misto.clientWidth)
@@ -1040,7 +1107,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     if (def.druh === 'mapa') nakreslit(misto);
     if (fokus !== undefined) /** @type {HTMLElement} */ (misto.querySelector(`[data-hodnota="${CSS.escape(fokus)}"]`))?.focus({ preventScroll: true });
     if (fokusPole) /** @type {HTMLElement} */ (misto.querySelector(fokusPole))?.focus({ preventScroll: true });
-    misto.classList.toggle('obdobi', def.druh === 'obdobi');
+    misto.classList.toggle('obdobi', def.druh === 'obdobi' || def.druh === 'casopisy');
     if (jenGraf) return;
     // Volby pod hledáním: Graf ▾ (skupiny za sebou), filtry Výskyt a Edice (u grafů v čase), barva mapy, výběr z grafu jako
     // zapnutý filtr (× ho zruší) a na konci souhrn
@@ -1049,7 +1116,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     const casopisy = casopisyStatistik();
     nastavitHtml(koren.querySelector('[data-sp-volby]'), [
         ...(casopisy.length ? [VYCHOZI_CASOPIS, ...casopisy].map(c => stitek('sp-casopis-volba', c, nazevCasopisu(c), c === casopisStat)) : []),
-        ...Object.keys(SKUPINY).flatMap(s => GRAFY.filter(g => g.skupina === s).map(g => stitek('sp-graf-volba', g.klic, g.nazev, g.klic === graf))),
+        ...Object.keys(SKUPINY).flatMap(s => GRAFY.filter(g => g.skupina === s && (g.druh !== 'casopisy' || casopisy.length)).map(g => stitek('sp-graf-volba', g.klic, g.nazev, g.klic === graf))),
         ...(def.osa === 'rok' || def.druh === 'obdobi' ? Object.entries(DRUHY_VYSKYTU).map(([k, nazev]) => stitek('sp-druh-volba', k, nazev === 'Vše' ? 'vše' : nazev, k === druhVyskytu)) : []),
         ...((def.osa === 'rok' || def.druh === 'obdobi') && ed.length > 1 ? ['vse', ...ed].map(e => stitek('sp-edice-volba', e, e === 'vse' ? 'vše' : e, e === edice)) : []),
         ...(def.druh === 'mapa' ? Object.entries(BARVY_MAPY).map(([k, b]) => stitek('sp-mapa-barva', k, b.nazev, k === barvaMapy)) : []),
@@ -1068,6 +1135,8 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     const neni = bezCisla >= 2 && bezCisla <= 4 ? 'nejsou' : 'není';
     koren.querySelector('[data-sp-napoveda]').textContent = def.druh === 'vkus'
         ? 'Z porovnání v Hodnocení: u každé vlastnosti se počítá, jak často vyhraje modelka, která ji má, proti modelce bez ní – za posledních 12 měsíců a dřív. Věta se ukáže, jen když posun projde testem (Fisher s opravou na počet vlastností) a je aspoň 10 procentních bodů. Seznam pod grafem jsou všechny modelky.'
+        : def.druh === 'casopisy'
+        ? 'Modelky jen z Playboye proti modelkám jen z druhého časopisu (modelky z obou se nepočítají), testy stejné jako u Porovnat období a navíc rok prvního výskytu. Rozdíl je průkazný, když vydrží opravu na počet testů a je i podstatně velký. Klik na údaj v tabulce otevře jeho graf.'
         : def.druh === 'obdobi'
         ? 'Vyber dvě období (desetiletí, nebo vlastní roky od–do). Modelky se řadí podle roku prvního výskytu ve zvolené edici a druhu; ostatní podmínky výběru platí. Rozdíl je průkazný, když vydrží opravu na počet testů a je i podstatně velký. Klik na údaj v tabulce otevře jeho graf.'
         : def.druh === 'mapa'
@@ -1371,6 +1440,12 @@ export function pripravit(stats) {
                 });
             }
             zobrazitVse = false;
+            vykreslit(koren);
+            return;
+        }
+        const volbaB = /** @type {HTMLElement | null} */ (cil.closest('[data-so-casopis]'));
+        if (volbaB) {
+            casopisB = volbaB.dataset.soCasopis;
             vykreslit(koren);
             return;
         }

@@ -62,3 +62,15 @@ test('Srovnání období: průkazný rozdíl jen mezi obdobími, modelky mimo se
     assert.ok(vety.some(v => v.startsWith('70. léta: víc modelek s tetováním – 50 % proti 10 %')), vety.join(' | '));
     assert.equal(porovnatObdobi(priznaky, Int8Array.from(obdobi.map((x, i) => (x === 2 && i % 8 ? 0 : x))), { a: 'A', b: 'B' }).maly, true);
 });
+
+test('srovnání časopisů (0.02.072): rok prvního výskytu – věta „vyšla o 15 let dřív“ a rok bez mezery', () => {
+    const n = 80;
+    const skupina = Array.from({ length: n }, (_, i) => (i < 40 ? 1 : 2));
+    const rok = pripravitPriznak({ klic: 'rokVyskytu', graf: 'cf', druh: 'udaj', nazev: 'Rok prvního výskytu', jednotka: '',
+        jednotkaRozdilu: 'let', rokovy: true, prah: 3, vic: 'vyšla o {d} později', mene: 'vyšla o {d} dřív',
+        hodnoty: skupina.map((s, i) => (s === 1 ? 1980 : 1995) + (i % 7)) });
+    const r = porovnatObdobi([rok], Int8Array.from(skupina), { a: 'Playboy', b: 'Penthouse' });
+    assert.equal(r.postrehy.length, 1);
+    assert.match(r.postrehy[0].veta, /^Playboy: modelka vyšla o 15 let dřív \(medián 1983 vs 1998\)/);
+    assert.equal(r.tabulka[0].rokovy, true);
+});

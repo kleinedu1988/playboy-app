@@ -6,6 +6,24 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.072] – 2026-11-12
+
+### Přidáno
+- **Srovnat časopisy** (Statistiky › Srovnání, jen ve sbírce z víc časopisů): modelky jen z Playboye (A) proti
+  modelkám jen z druhého časopisu (B, volba časopisu, když je jich víc); modelky z obou se nepočítají. Testují se
+  všechny údaje jako u Porovnat období (Mann–Whitney, Fisher, oprava Benjamini–Hochberg) a navíc rok prvního
+  výskytu („Playboy: modelka vyšla o 15 let dřív (medián 1983 vs 1998)“). Seznam vpravo ukazuje modelky obou
+  skupin, menší časopis napřed; CSV a tisk jako u srovnání období.
+
+### Změněno
+- Výsledek Porovnat období a srovnání časopisů sdílí jedno vykreslení; hláška o málo modelkách mluví o skupinách.
+
+### Ověřeno
+- Test: věta o roce prvního výskytu se správným skloňováním a rokem bez mezery („1983“). 233 JS testů, typy
+  a build prošly.
+- Snímek na kopii sbírky: Playboy 568 vs Penthouse 3 modelky, hláška, že na srovnání je potřeba aspoň 10 v každé
+  skupině.
+
 ## [0.02.071] – 2026-11-12
 
 ### Přidáno

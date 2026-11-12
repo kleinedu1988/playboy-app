@@ -565,7 +565,7 @@ export function rozdilyVyberu(priznaky, maska, { vyloucit = [], desetileti = nul
         .sort((a, b) => b.skore - a.skore || a.q - b.q);
     // Všechny testované příznaky (tabulka srovnání období): hodnoty obou skupin, q a jestli je rozdíl postřeh
     const tabulka = kandidati.map((k, i) => ({ klic: k.p.klic, graf: k.p.graf, nazev: k.p.nazev, druh: k.p.druh, desetinna: k.p.desetinna ?? 0,
-        jednotka: k.p.druh === 'podil' ? '%' : k.p.jednotka || '', a: k.v, b: k.zbytek, na: k.n1, nb: k.n2, q: q[i], velikost: k.velikost,
+        jednotka: k.p.druh === 'podil' ? '%' : k.p.jednotka || '', rokovy: Boolean(k.p.rokovy), a: k.v, b: k.zbytek, na: k.n1, nb: k.n2, q: q[i], velikost: k.velikost,
         prukazny: q[i] <= ALFA && k.podstatny }));
     return { maly: false, postrehy, testu, tabulka };
 }
@@ -590,7 +590,7 @@ function textVyberu(k, testu) {
     }
     const vic = k.v > k.celek;
     const d = Number(Math.abs(k.v - k.celek).toFixed(des));
-    const textD = p.jednotka === 'let' ? `${cislo(d, des)} ${roky(d)}` : p.bezJednotkyVRozdilu ? cislo(d, des) : `${cislo(d, des)}${jednotka}`;
+    const textD = p.jednotka === 'let' || p.jednotkaRozdilu === 'let' ? `${cislo(d, des)} ${roky(d)}` : p.bezJednotkyVRozdilu ? cislo(d, des) : `${cislo(d, des)}${jednotka}`;
     const sablona = (vic ? p.vic : p.mene).replace('{d}', textD);
     return {
         smer: vic ? 1 : -1,
@@ -618,7 +618,9 @@ export function porovnatObdobi(priznaky, obdobi, nazvy, { vyloucit = [] } = {}) 
 function textSrovnani(k, testu, { a, b }) {
     const p = k.p, des = p.druh === 'podil' ? 0 : p.desetinna ?? 0;
     const jednotka = p.druh === 'podil' ? ' %' : p.jednotka ? ` ${p.jednotka}` : '';
-    const hodnota = v => `${cislo(v, des)}${jednotka}`;
+    // Rok (rokovy) bez oddělovače tisíců: „1983“, ne „1 983“
+    const cis = v => (p.rokovy ? String(Math.round(v)) : cislo(v, des));
+    const hodnota = v => `${cis(v)}${jednotka}`;
     const oprava = `po opravě na ${testu} ${testu >= 2 && testu <= 4 ? 'testy' : 'testů'} ${textP(k.q)}`;
     const vic = k.v > k.zbytek;
     if (p.druh === 'podil') {
@@ -630,12 +632,12 @@ function textSrovnani(k, testu, { a, b }) {
         };
     }
     const d = Number(Math.abs(k.v - k.zbytek).toFixed(des));
-    const textD = p.jednotka === 'let' ? `${cislo(d, des)} ${roky(d)}` : p.bezJednotkyVRozdilu ? cislo(d, des) : `${cislo(d, des)}${jednotka}`;
+    const textD = p.jednotka === 'let' || p.jednotkaRozdilu === 'let' ? `${cislo(d, des)} ${roky(d)}` : p.bezJednotkyVRozdilu ? cislo(d, des) : `${cislo(d, des)}${jednotka}`;
     const sablona = (vic ? p.vic : p.mene).replace('{d}', textD);
     return {
         smer: vic ? 1 : -1,
-        veta: `${a}: modelka ${sablona} (medián ${cislo(k.v, des)} vs ${hodnota(k.zbytek)}).`,
-        podrobnosti: `${p.nazev}: medián ${a} ${hodnota(k.v)} (polovina ${cislo(k.dolni, des)}–${hodnota(k.horni)}, ${modelek(k.n1)}), `
+        veta: `${a}: modelka ${sablona} (medián ${cis(k.v)} vs ${hodnota(k.zbytek)}).`,
+        podrobnosti: `${p.nazev}: medián ${a} ${hodnota(k.v)} (polovina ${cis(k.dolni)}–${hodnota(k.horni)}, ${modelek(k.n1)}), `
             + `${b} ${hodnota(k.zbytek)} (${modelek(k.n2)}). `
             + `Mannův–Whitneyův test, ${oprava}; velikost rozdílu: ${silaSlovy(Math.abs(k.velikost), [0.33, 0.47])} (δ = ${cislo(k.velikost, 2)}).`,
     };

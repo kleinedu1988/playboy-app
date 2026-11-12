@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.072 – Srovnat časopisy
+
+- [ ] Až bude ve sbírce aspoň 10 Pets: Statistiky › Srovnat časopisy ukáže průkazné rozdíly (rok, výška…) a tabulku; CSV tabulky.
+- [ ] Porovnat období vypadá a funguje jako dřív (společné vykreslení výsledku).
+
 ## 0.02.071 – Filtr časopisu ve Statistikách
 
 - [ ] Statistiky › Filtry: volba Penthouse omezí grafy na Pets, Playboy vrátí celou sbírku; Mapa sbírky s Penthouse.

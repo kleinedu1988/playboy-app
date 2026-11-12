@@ -1,7 +1,12 @@
 #!/usr/bin/env bash
 # Aplikace pro telefon (0.02.085): WebView se stránkou z assets a jádrem v Go (gomobile bind, mobil/jadro – stejné
-# přihlášení Google a Disk jako program na PC). Bez Gradle. Výstup: mobil/vystup/pinup-katalog.apk (mimo git),
-# podepsaný ladicím klíčem ~/.android/debug.keystore (vznikne sám).
+# přihlášení Google a Disk jako program na PC). Bez Gradle. Výstup: mobil/vystup/pinup-katalog.apk a jeho verze
+# v pinup-katalog.verze (mimo git); program na PC je při nahrání zálohy nahraje na Disk a aplikace v telefonu
+# nabídne aktualizaci (0.02.088).
+#
+# Podpis: stálý klíč ~/.config/pinup-katalog/telefon.keystore (mimo git; poprvé převzatý z ladicího klíče
+# ~/.android/debug.keystore, kterým byly podepsané verze do 0.02.087, jinak nový). Android novou verzi nainstaluje
+# přes starou jen se stejným klíčem – klíč zálohuj; bez něj je potřeba aplikaci odinstalovat a nainstalovat znovu.
 #
 # Přihlašovací údaje programu se do APK zkopírují z ~/.config/pinup-katalog/google-klient.json (stejné jako na PC;
 # v gitu nejsou). Potřeba: Android SDK (ANDROID_HOME, výchozí ~/Android/Sdk) s platformou, build-tools a NDK;
@@ -28,11 +33,17 @@ KLIENT=${XDG_CONFIG_HOME:-$HOME/.config}/pinup-katalog/google-klient.json
 
 cd "$(dirname "$0")"
 mkdir -p vystup
-KLIC=$HOME/.android/debug.keystore
+KLIC=$(dirname "$KLIENT")/telefon.keystore
 if [ ! -f "$KLIC" ]; then
-	mkdir -p "$HOME/.android"
-	keytool -genkeypair -keystore "$KLIC" -storepass android -keypass android -alias androiddebugkey \
-		-keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" >/dev/null
+	mkdir -p "$(dirname "$KLIC")"
+	if [ -f "$HOME/.android/debug.keystore" ]; then
+		cp "$HOME/.android/debug.keystore" "$KLIC"
+	else
+		keytool -genkeypair -keystore "$KLIC" -storepass android -keypass android -alias androiddebugkey \
+			-keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Pinup Katalog,C=CZ" >/dev/null
+	fi
+	chmod 600 "$KLIC"
+	echo "Podpisový klíč aplikace: $KLIC (zálohuj ho)"
 fi
 
 tmp=$(mktemp -d)
@@ -63,6 +74,7 @@ cp -r "$tmp/aar/jni/"* "$tmp/lib/"
 "$BT/zipalign" -f -p 4 "$tmp/zaklad.apk" "$tmp/zarovnany.apk"
 "$BT/apksigner" sign --ks "$KLIC" --ks-pass pass:android --out vystup/pinup-katalog.apk "$tmp/zarovnany.apk"
 rm -f vystup/pinup-katalog.apk.idsig
+echo "$VERZE" >vystup/pinup-katalog.verze
 echo "pinup-katalog.apk $VERZE: $(du -k vystup/pinup-katalog.apk | cut -f1) kB"
 
 if [ "${1:-}" = --instalovat ]; then

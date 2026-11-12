@@ -1,10 +1,14 @@
 package cz.pinupkatalog.telefon;
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.content.Intent;
+import android.content.pm.PackageInstaller;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -15,7 +19,10 @@ import android.webkit.WebViewClient;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 import jadro.Jadro;
 
@@ -60,10 +67,44 @@ public class Hlavni extends Activity {
         setContentView(web);
     }
 
+    static final String INSTALACE = "cz.pinupkatalog.telefon.INSTALACE";
+
     @Override
     protected void onNewIntent(Intent i) {
         super.onNewIntent(i);
         setIntent(i);
+        if (INSTALACE.equals(i.getAction())) vysledekInstalace(i);
+    }
+
+    // Instalace nové verze (0.02.088): APK stažené jádrem → relace systémového instalátoru; uživatel potvrdí
+    // v dialogu systému, po instalaci se aplikace sama restartuje do nové verze
+    void instalovat(File apk) throws Exception {
+        PackageInstaller pi = getPackageManager().getPackageInstaller();
+        PackageInstaller.SessionParams parametry = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
+        int id = pi.createSession(parametry);
+        try (PackageInstaller.Session s = pi.openSession(id)) {
+            try (OutputStream o = s.openWrite("aplikace", 0, apk.length()); InputStream in = new FileInputStream(apk)) {
+                byte[] buf = new byte[65536];
+                for (int n; (n = in.read(buf)) > 0; ) o.write(buf, 0, n);
+                s.fsync(o);
+            }
+            int prizn = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
+            PendingIntent zpet = PendingIntent.getActivity(this, 1, new Intent(this, Hlavni.class).setAction(INSTALACE), prizn);
+            s.commit(zpet.getIntentSender());
+        }
+    }
+
+    private void vysledekInstalace(Intent i) {
+        int stav = i.getIntExtra(PackageInstaller.EXTRA_STATUS, PackageInstaller.STATUS_FAILURE);
+        if (stav == PackageInstaller.STATUS_PENDING_USER_ACTION) {
+            Intent potvrzeni = i.getParcelableExtra(Intent.EXTRA_INTENT);
+            if (potvrzeni != null) startActivity(potvrzeni);
+        } else if (stav == PackageInstaller.STATUS_FAILURE_ABORTED) {
+            udalost("instalace", "Instalace zrušena.");
+        } else if (stav != PackageInstaller.STATUS_SUCCESS) {
+            String text = i.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+            udalost("instalace", "Instalace se nepovedla" + (text == null ? "." : ": " + text));
+        }
     }
 
     @Override
@@ -106,6 +147,35 @@ public class Hlavni extends Activity {
             } catch (Exception e) {
                 return "";
             }
+        }
+
+        // Novější verze aplikace na Disku → událost „verze“ (JSON {verze, id}, nebo "")
+        @JavascriptInterface
+        public void zkontrolovatVerzi() {
+            String moje = verze();
+            new Thread(() -> udalost("verze", Jadro.novaVerze(moje))).start();
+        }
+
+        // Stáhne verzi z Disku a spustí instalaci; chyba → událost „instalace“
+        @JavascriptInterface
+        public void aktualizovat(String id) {
+            if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+                startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())));
+                udalost("instalace", "Povol instalaci aplikací z Pinup Katalogu, vrať se a klepni na Aktualizovat znovu.");
+                return;
+            }
+            new Thread(() -> {
+                File apk = new File(getCacheDir(), "aktualizace.apk");
+                String chyba = Jadro.stahnoutAplikaci(id, apk.getAbsolutePath());
+                if (chyba.isEmpty()) {
+                    try {
+                        instalovat(apk);
+                    } catch (Exception e) {
+                        chyba = "Instalace se nepovedla: " + e.getMessage();
+                    }
+                }
+                udalost("instalace", chyba);
+            }).start();
         }
 
         @JavascriptInterface

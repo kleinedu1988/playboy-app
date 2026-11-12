@@ -6,6 +6,21 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.088] – 2026-11-12
+
+### Přidáno
+- **Nové verze aplikace pro telefon bez kabelu.** Program na PC při nahrání zálohy na Disk (i Nahrát teď) nahraje
+  i sestavenou aplikaci (`mobil/sestavit.sh`), pokud tam ta verze ještě není; starší verzi smaže. Aplikace
+  v telefonu po stažení sbírky najde novější verzi a nabídne ji pruhem **Aktualizovat** – stáhne ji z Disku
+  a nainstaluje přes systémový instalátor (napoprvé Android chce povolit instalaci z Pinup Katalogu).
+- Stálý podpisový klíč aplikace `~/.config/pinup-katalog/telefon.keystore` (mimo git, převzatý z dosavadního
+  ladicího klíče, takže přeinstalace není potřeba). Klíč je potřeba zálohovat.
+
+### Ověřeno
+- Testy: nahrání APK z PC (bez sestaveného nic, stejná verze jednou, novější nahradí starší, zálohy zůstanou),
+  v jádru telefonu nalezení nejnovější verze, porovnání verzí a stažení. Celá sada i s dlouhými testy prošla.
+- Na telefonu nainstalována kabelem verze, která aktualizace hledá; první aktualizace bez kabelu se ověří s touto verzí.
+
 ## [0.02.087] – 2026-11-12
 
 ### Opraveno

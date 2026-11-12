@@ -245,6 +245,10 @@ func (a *App) zalohaNaDiskNaPozadi() {
 	if err := a.nahratBalicekTelefonu(ctx); err != nil {
 		a.chyba("balíček pro telefon na Google Disk", err)
 	}
+	// A nová verze aplikace pro telefon, je-li sestavená (aplikace_telefonu.go)
+	if err := a.nahratAplikaciTelefonu(ctx); err != nil {
+		a.chyba("aplikace pro telefon na Google Disk", err)
+	}
 }
 
 // NahratZalohuNaDisk (tlačítko v okně záloh): nahraje nejnovější denní zálohu hned (dnes žádná → vytvoří ji);
@@ -265,6 +269,9 @@ func (a *App) NahratZalohuNaDisk() string {
 	}
 	if err := a.nahratBalicekTelefonu(ctx); err != nil {
 		return "Záloha je na Disku, balíček pro telefon se nepodařilo nahrát: " + err.Error()
+	}
+	if err := a.nahratAplikaciTelefonu(ctx); err != nil {
+		return "Záloha i balíček jsou na Disku, aplikaci pro telefon se nepodařilo nahrát: " + err.Error()
 	}
 	return ""
 }

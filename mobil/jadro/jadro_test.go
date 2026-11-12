@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
 
@@ -41,6 +42,10 @@ func TestPrihlaseniAStazeni(t *testing.T) {
 			}
 		case r.Header.Get("Authorization") != "Bearer pristup":
 			w.WriteHeader(401)
+		case r.URL.Path == "/drive/v3/files" && strings.Contains(r.URL.Query().Get("q"), predponaAplikace):
+			io.WriteString(w, `{"files":[{"id":"a1","name":"telefon-aplikace-0.2.88.apk"},{"id":"a2","name":"telefon-aplikace-0.2.100.apk"},{"id":"a3","name":"telefon-aplikace-x.apk"}]}`)
+		case r.URL.Path == "/drive/v3/files/a2" && r.URL.Query().Get("alt") == "media":
+			io.WriteString(w, "apk")
 		case r.URL.Path == "/drive/v3/files":
 			if r.URL.Query().Get("spaces") != "appDataFolder" || !strings.Contains(r.URL.Query().Get("q"), nazevBalicku) {
 				w.WriteHeader(400)
@@ -112,6 +117,21 @@ func TestPrihlaseniAStazeni(t *testing.T) {
 		t.Fatalf("balíček: %q", Balicek())
 	}
 
+	// Nová verze aplikace: nejnovější z Disku, jen když je novější než moje; stažení do souboru
+	if v := NovaVerze("0.2.87"); v != `{"id":"a2","verze":"0.2.100"}` {
+		t.Fatalf("nová verze: %q", v)
+	}
+	if v := NovaVerze("0.2.100"); v != "" {
+		t.Fatalf("stejná verze: %q", v)
+	}
+	cil := t.TempDir() + "/aktualizace.apk"
+	if c := StahnoutAplikaci("a2", cil); c != "" {
+		t.Fatal(c)
+	}
+	if data, _ := os.ReadFile(cil); string(data) != "apk" {
+		t.Fatalf("stažená aplikace: %q", data)
+	}
+
 	// Vypršelý přístupový token se obnoví; odvolaný přístup odhlásí, balíček zůstane
 	tok := nacistToken()
 	tok.Pristupovy = ""
@@ -156,5 +176,17 @@ func TestPrihlaseniPreruseno(t *testing.T) {
 	go ZrusitPrihlaseni()
 	if c := DokoncitPrihlaseni(); !strings.Contains(c, "nebylo dokončeno") {
 		t.Fatalf("přerušení: %q", c)
+	}
+}
+
+func TestNovejsi(t *testing.T) {
+	for _, c := range []struct {
+		a, b string
+		v    bool
+	}{{"0.2.88", "0.2.87", true}, {"0.2.100", "0.2.99", true}, {"0.2.87", "0.2.87", false}, {"0.2.8", "0.2.80", false},
+		{"0.3", "0.2.99", true}, {"x", "0.2.1", false}, {"0.2.87.1", "0.2.87", true}} {
+		if novejsi(c.a, c.b) != c.v {
+			t.Errorf("%s > %s: %v", c.a, c.b, !c.v)
+		}
 	}
 }

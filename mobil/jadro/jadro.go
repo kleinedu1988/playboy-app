@@ -19,6 +19,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -340,4 +342,100 @@ func Balicek() string {
 		return ""
 	}
 	return string(data)
+}
+
+// Nové verze aplikace (0.02.088): program na PC nahrává APK do skryté složky na Disku jako
+// telefon-aplikace-<verze>.apk (aplikace_telefonu.go)
+const predponaAplikace = "telefon-aplikace-"
+
+// NovaVerze: JSON {verze, id} novější verze aplikace na Disku než moje, jinak "" (i bez přihlášení nebo spojení)
+func NovaVerze(moje string) string {
+	ctx, zrusit := context.WithTimeout(context.Background(), 30*time.Second)
+	defer zrusit()
+	p, err := pristup(ctx)
+	if err != nil {
+		return ""
+	}
+	q := url.Values{"spaces": {"appDataFolder"}, "pageSize": {"100"}, "fields": {"files(id,name)"},
+		"q": {"name contains '" + predponaAplikace + "'"}}
+	o, err := google.VolatDisk(ctx, p, http.MethodGet, adresy.API+"/drive/v3/files?"+q.Encode(), nil, nil)
+	if err != nil {
+		return ""
+	}
+	defer o.Body.Close()
+	var seznam struct {
+		Files []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"files"`
+	}
+	if json.NewDecoder(o.Body).Decode(&seznam) != nil {
+		return ""
+	}
+	nej, id := moje, ""
+	for _, f := range seznam.Files {
+		v, ok := strings.CutPrefix(f.Name, predponaAplikace)
+		v, ok2 := strings.CutSuffix(v, ".apk")
+		if ok && ok2 && novejsi(v, nej) {
+			nej, id = v, f.ID
+		}
+	}
+	if id == "" {
+		return ""
+	}
+	data, _ := json.Marshal(map[string]string{"verze": nej, "id": id})
+	return string(data)
+}
+
+// a > b pro verze „0.2.88“ (čísla po tečkách; nečíselná verze není novější)
+func novejsi(a, b string) bool {
+	pa, pb := strings.Split(a, "."), strings.Split(b, ".")
+	for i := range max(len(pa), len(pb)) {
+		x, y := 0, 0
+		if i < len(pa) {
+			n, err := strconv.Atoi(pa[i])
+			if err != nil {
+				return false
+			}
+			x = n
+		}
+		if i < len(pb) {
+			y, _ = strconv.Atoi(pb[i])
+		}
+		if x != y {
+			return x > y
+		}
+	}
+	return false
+}
+
+// StahnoutAplikaci stáhne APK z Disku do souboru cil; "" = hotovo, jinak česká chyba
+func StahnoutAplikaci(id, cil string) string {
+	ctx, zrusit := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer zrusit()
+	p, err := pristup(ctx)
+	if err != nil {
+		return err.Error()
+	}
+	o, err := google.VolatDisk(ctx, p, http.MethodGet, adresy.API+"/drive/v3/files/"+url.PathEscape(id)+"?alt=media", nil, nil)
+	if err != nil {
+		return err.Error()
+	}
+	defer o.Body.Close()
+	f, err := os.Create(cil + ".novy")
+	if err != nil {
+		return err.Error()
+	}
+	_, err = io.Copy(f, io.LimitReader(o.Body, 200<<20))
+	if e := f.Close(); err == nil {
+		err = e
+	}
+	if err != nil {
+		os.Remove(cil + ".novy")
+		return "Stažení aplikace se přerušilo: " + err.Error()
+	}
+	if err := os.Rename(cil+".novy", cil); err != nil {
+		return err.Error()
+	}
+	return ""
 }

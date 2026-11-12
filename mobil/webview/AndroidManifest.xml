@@ -7,6 +7,8 @@
     package="cz.pinupkatalog.telefon">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Nové verze aplikace z Disku (0.02.088): instalace přes systémový instalátor, uživatel ji potvrdí -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <application android:label="Pinup Katalog" android:icon="@mipmap/ic_launcher" android:allowBackup="false">
         <activity android:name=".Hlavni" android:exported="true" android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"

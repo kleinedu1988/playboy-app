@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.088 – Nové verze aplikace bez kabelu
+
+- [ ] Na PC nový program (`./instalovat.sh`) a Nahrát teď → v telefonu po ↻ pruh „Nová verze aplikace 0.2.88“.
+- [ ] Aktualizovat: napoprvé povolit instalaci z Pinup Katalogu, pak potvrdit instalaci; aplikace se otevře v nové verzi (účet › verze 0.2.88), přihlášení zůstane.
+- [ ] Zálohovat `~/.config/pinup-katalog/telefon.keystore` (podpisový klíč aplikace).
+
 ## 0.02.087 – Hero v telefonu na výšku
 
 - [x] Hero s titulní fotkou na výšku, hlava není uříznutá – ověřeno 12. 11. 2026.

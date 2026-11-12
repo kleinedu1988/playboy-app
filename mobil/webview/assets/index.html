@@ -39,7 +39,7 @@
   @keyframes toceni { to { transform: rotate(360deg); } }
 
   /* Hero */
-  #hero { position: relative; margin: 14px 16px 6px; border-radius: var(--polomer); overflow: hidden; aspect-ratio: 4 / 5;
+  #hero { position: relative; margin: 14px 16px 6px; border-radius: var(--polomer); overflow: hidden; aspect-ratio: 3 / 4;
     background: var(--panel); }
   #hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   #hero .prekryv { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px;
@@ -249,9 +249,12 @@ function titulni(m, velikost) {
   return m.coverId ? `<img loading="lazy" alt="" src="${esc(obrazek(m.coverId, velikost))}" style="${vyrez(m.coverZoom, m.coverX, m.coverY)}">` : '';
 }
 
-function profilova(m, velikost) {
-  if (m.profilId) return `<img alt="" src="${esc(obrazek(m.profilId, velikost))}" style="${vyrez(m.profilZoom, m.profilX, m.profilY)}">`;
-  return titulni(m, velikost);
+// Velká fotka na výšku (hero, detail): titulní fotka s výřezem z programu – je na výšku jako dlaždice (0.02.087);
+// profilová má výřez pro široký pruh na PC a na výšku by uřízla hlavu, proto jen když titulní chybí
+function velkaFotka(m, velikost) {
+  if (m.coverId) return `<img alt="" src="${esc(obrazek(m.coverId, velikost))}" style="${vyrez(m.coverZoom, m.coverX, m.coverY)}">`;
+  if (m.profilId) return `<img alt="" src="${esc(obrazek(m.profilId, velikost))}">`;
+  return '';
 }
 
 function stitek(m) {
@@ -270,9 +273,9 @@ function popisModelky(m) {
   return casti.join(' · ');
 }
 
-// Hero: náhodná z nejlepších (srdíčka, jinak oblíbenost) s fotkou
+// Hero: náhodná z nejlepších (srdíčka, jinak oblíbenost) s titulní fotkou
 function vybratHero() {
-  const s = balicek.modelky.filter((m) => m.profilId || m.coverId);
+  const s = balicek.modelky.filter((m) => m.coverId);
   if (!s.length) return null;
   const nej = Math.max(...s.map((m) => m.hodnoceni || 0));
   let kandidatky = nej > 0 ? s.filter((m) => (m.hodnoceni || 0) >= nej - 0.5) : [];
@@ -286,7 +289,7 @@ function vykreslitHero() {
   if (!m) { hero.classList.add('hidden'); return; }
   hero.classList.remove('hidden');
   const h = m.hodnoceni > 0 ? `♥ ${srdicka(m.hodnoceni)}` : m.odhadHodnoceni > 0 ? `odhad ${srdicka(m.odhadHodnoceni)} ♥` : '';
-  hero.innerHTML = `${profilova(m, 'w1200')}
+  hero.innerHTML = `${velkaFotka(m, 'w1200')}
     <button class="dalsi" data-dalsi>Další ↻</button>
     <div class="prekryv" data-id="${m.id}">
       <span class="nadtitulek">${m.hodnoceni > 0 ? 'Z tvých nejlepších' : 'Mohlo by se ti líbit'}</span>
@@ -339,7 +342,7 @@ function otevritDetail(id) {
     return `<button class="dlazdice" data-album="${i}">${fotkaImg(al.fotky[0], 'w400')}<span class="typ">${al.fotky.length} fotek</span>
       <span class="jmeno">${esc(n.nazev)}${n.podnazev ? `<small>${esc(n.podnazev)}</small>` : ''}</span></button>`;
   }).join('')}</div>` : '';
-  d.innerHTML = `<div class="fotka"><button class="zavrit" data-zavrit aria-label="Zpět">‹</button>${profilova(m, 'w1200')}</div>
+  d.innerHTML = `<div class="fotka"><button class="zavrit" data-zavrit aria-label="Zpět">‹</button>${velkaFotka(m, 'w1200')}</div>
     <div class="obsah"><h2>${esc(m.jmeno)}</h2>${h ? `<div class="srdicka">${h}</div>` : ''}
     <dl>${radky.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>${galerie}</div>`;
   d.dataset.id = m.id;

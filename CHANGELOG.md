@@ -6,6 +6,15 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.087] – 2026-11-12
+
+### Opraveno
+- **Hero v telefonu** ukazuje titulní fotku na výšku s výřezem nastaveným v programu (poměr 3:4 jako dlaždice).
+  Profilová fotka má výřez pro široký pruh na PC a na výšku uřízla hlavu. Totéž u velké fotky v detailu modelky.
+
+### Ověřeno
+- Na telefonu: hero s celou postavou.
+
 ## [0.02.086] – 2026-11-12
 
 ### Přidáno

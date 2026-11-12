@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.087 – Hero v telefonu na výšku
+
+- [x] Hero s titulní fotkou na výšku, hlava není uříznutá – ověřeno 12. 11. 2026.
+- [ ] Velká fotka v detailu modelky odpovídá výřezu dlaždice.
+
 ## 0.02.086 – Galerie v telefonu
 
 - [x] Detail modelky: dlaždice galerií s typem a počtem fotek – ověřeno 12. 11. 2026.

@@ -1,17 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Kostra telefonu (0.02.078): jedna aktivita s WebView, stránka z assets; bez oprávnění kromě internetu
-     (náhledy fotek z Disku v dalších krocích) -->
+<!-- Aplikace pro telefon (0.02.085): jedna aktivita s WebView a stránkou z assets. Přihlášení Google v prohlížeči
+     telefonu s návratem na zpětnou smyčku (klient „Počítačová aplikace“ jako na PC); služba Prihlaseni drží
+     proces při životě, než se uživatel přihlásí (krátká služba v popředí, bez dalších oprávnění). Po přihlášení
+     prohlížeč otevře pinupkatalog://prihlaseno a vrátí uživatele do aplikace. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cz.pinupkatalog.telefon">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <application android:label="Pinup Katalog" android:icon="@mipmap/ic_launcher" android:allowBackup="false">
-        <activity android:name=".Hlavni" android:exported="true"
-            android:configChanges="orientation|screenSize|keyboardHidden"
+        <activity android:name=".Hlavni" android:exported="true" android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|smallestScreenSize"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="pinupkatalog" android:host="prihlaseno" />
+            </intent-filter>
         </activity>
+        <service android:name=".Prihlaseni" android:exported="false" android:foregroundServiceType="shortService" />
     </application>
 </manifest>

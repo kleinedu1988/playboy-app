@@ -5,6 +5,15 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.085 – Aplikace pro telefon
+
+- [x] Instalace přes USB, přihlášení přes Google, stažení sbírky (751 modelek), hero a dlaždice – ověřeno 12. 11. 2026.
+- [ ] Řazení, hledání, detail modelky (klepnutí na dlaždici, zavření tlačítkem Zpět), tlačítko Další v hero.
+- [ ] Bez připojení (režim letadlo): aplikace ukáže naposledy staženou sbírku.
+- [ ] Po Nahrát teď na PC: v telefonu tlačítko obnovit (↻) stáhne novou sbírku („Sbírka aktualizována.“).
+- [ ] Účet › Odhlásit vrátí přihlašovací obrazovku; nové přihlášení zase stáhne sbírku.
+- [ ] Program na PC: přihlášení, odhlášení a Nahrát teď fungují jako dřív (kód přesunut do společného balíčku).
+
 ## 0.02.084 – Chyby Disku česky
 
 - [ ] Když Disk nahrání odmítne, hláška je česky a bez JSONu (vyzkoušet jde třeba nahráním bez připojení k síti nebo po odebrání přístupu programu na myaccount.google.com › Zabezpečení).

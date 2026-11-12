@@ -21,6 +21,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"pinup-katalog/internal/google"
 )
 
 const pocetZalohNaDisku = 7
@@ -55,91 +57,7 @@ func (a *App) driveVolani(ctx context.Context, metoda, adresa string, telo io.Re
 	if err != nil {
 		return nil, err
 	}
-	p, err := http.NewRequestWithContext(ctx, metoda, adresa, telo)
-	if err != nil {
-		return nil, err
-	}
-	p.Header.Set("Authorization", "Bearer "+pristup)
-	for k, v := range hlavicky {
-		p.Header.Set(k, v)
-	}
-	if delka, ok := hlavicky["Content-Length"]; ok {
-		p.ContentLength, _ = strconv.ParseInt(delka, 10, 64)
-	}
-	o, err := http.DefaultClient.Do(p)
-	if err != nil {
-		return nil, err
-	}
-	if o.StatusCode >= 300 {
-		text, _ := io.ReadAll(io.LimitReader(o.Body, 16<<10))
-		o.Body.Close()
-		return nil, errors.New(chybaDisku(o.StatusCode, text))
-	}
-	return o, nil
-}
-
-// Chyba Disku srozumitelně (0.02.084): místo surové odpovědi Googlu (JSON) česká věta; u vypnutého Drive API
-// i adresa, kde se zapíná
-func chybaDisku(kod int, telo []byte) string {
-	var o struct {
-		Error struct {
-			Message string `json:"message"`
-			Status  string `json:"status"`
-			Errors  []struct {
-				Reason string `json:"reason"`
-			} `json:"errors"`
-			Details []struct {
-				Reason   string            `json:"reason"`
-				Metadata map[string]string `json:"metadata"`
-			} `json:"details"`
-		} `json:"error"`
-	}
-	json.Unmarshal(telo, &o)
-	e := o.Error
-	duvody := map[string]bool{e.Status: true}
-	for _, x := range e.Errors {
-		duvody[x.Reason] = true
-	}
-	aktivace := ""
-	for _, d := range e.Details {
-		duvody[d.Reason] = true
-		if d.Metadata["activationUrl"] != "" {
-			aktivace = d.Metadata["activationUrl"]
-		}
-	}
-	switch {
-	case duvody["accessNotConfigured"] || duvody["SERVICE_DISABLED"]:
-		if aktivace == "" {
-			if i := strings.Index(e.Message, "https://console."); i >= 0 {
-				aktivace = strings.Fields(e.Message[i:])[0]
-			}
-		}
-		t := "Na Disku není zapnuté Google Drive API. Zapni ho ve svém projektu v Google Cloud Console (APIs & Services › Library › Google Drive API › Povolit), počkej pár minut a zkus to znovu."
-		if aktivace != "" {
-			t += " Adresa: " + aktivace
-		}
-		return t
-	case duvody["storageQuotaExceeded"]:
-		return "Google Disk je plný – uvolni na něm místo a zkus to znovu."
-	case duvody["insufficientPermissions"] || duvody["ACCESS_TOKEN_SCOPE_INSUFFICIENT"]:
-		return "Program nemá přístup k Disku. Odhlas se v ⋯ › Účet Google, přihlas se znovu a přístup k Disku povol."
-	case kod == http.StatusUnauthorized:
-		return "Přihlášení ke Googlu vypršelo – přihlas se znovu v ⋯ › Účet Google."
-	case kod == http.StatusNotFound:
-		return "Soubor na Disku nebyl nalezen (mezitím mohl zmizet)."
-	case kod == http.StatusTooManyRequests || duvody["rateLimitExceeded"] || duvody["userRateLimitExceeded"]:
-		return "Google teď odmítá příliš mnoho požadavků, zkus to za chvíli."
-	case kod >= 500:
-		return fmt.Sprintf("Google Disk je teď nedostupný (chyba %d), zkus to za chvíli.", kod)
-	}
-	zprava := strings.TrimSpace(e.Message)
-	if zprava == "" {
-		zprava = http.StatusText(kod)
-	}
-	if r := []rune(zprava); len(r) > 200 {
-		zprava = string(r[:200]) + "…"
-	}
-	return fmt.Sprintf("Disk odpověděl chybou %d: %s", kod, zprava)
+	return google.VolatDisk(ctx, pristup, metoda, adresa, telo, hlavicky)
 }
 
 // ZalohaNaDisku: soubor zálohy ve skryté složce programu na Disku

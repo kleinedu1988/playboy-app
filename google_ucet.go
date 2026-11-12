@@ -16,23 +16,19 @@ package main
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html"
 	"net"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"pinup-katalog/internal/google"
 )
 
 const rozsahyGoogle = "openid email profile https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.appdata"
@@ -62,9 +58,11 @@ var slozkaNastaveniGoogle = func() string {
 	return filepath.Join(zaklad, slozkaProgramu)
 }
 
-type klientGoogle struct {
-	ID     string `json:"client_id"`
-	Secret string `json:"client_secret"`
+type klientGoogle = google.Klient
+
+// Adresy Googlu pro společný balíček (proměnné výše, v testech místní server)
+func adresyGoogle() google.Adresy {
+	return google.Adresy{Autorizace: adresaAutorizaceGoogle, Token: adresaTokenuGoogle, Odvolani: adresaOdvolaniGoogle, API: adresaDriveAPI}
 }
 
 type tokenGoogle struct {
@@ -103,22 +101,9 @@ func nacistKlientaGoogle() (klientGoogle, error) {
 	if err != nil {
 		return klientGoogle{}, err
 	}
-	var obal struct {
-		Installed *klientGoogle `json:"installed"`
-		Web       *klientGoogle `json:"web"`
-		klientGoogle
-	}
-	if err := json.Unmarshal(data, &obal); err != nil {
-		return klientGoogle{}, fmt.Errorf("soubor %s není platný JSON: %w", cestaKlientaGoogle(), err)
-	}
-	k := obal.klientGoogle
-	if obal.Installed != nil {
-		k = *obal.Installed
-	} else if obal.Web != nil {
-		k = *obal.Web
-	}
-	if k.ID == "" {
-		return klientGoogle{}, fmt.Errorf("v souboru %s chybí client_id", cestaKlientaGoogle())
+	k, err := google.KlientZJSON(data)
+	if err != nil {
+		return klientGoogle{}, fmt.Errorf("soubor %s: %w", cestaKlientaGoogle(), err)
 	}
 	return k, nil
 }
@@ -163,13 +148,6 @@ func (a *App) GetUcetGoogle() UcetGoogle {
 	return u
 }
 
-// Náhodný řetězec pro PKCE a state (base64url bez doplnění)
-func nahodnyRetezec(bajtu int) string {
-	b := make([]byte, bajtu)
-	rand.Read(b)
-	return base64.RawURLEncoding.EncodeToString(b)
-}
-
 // PrihlasitGoogle otevře přihlášení v prohlížeči a počká na návrat (nejvýš casNaPrihlaseni); "" = přihlášeno,
 // jinak česká zpráva pro uživatele
 func (a *App) PrihlasitGoogle() string {
@@ -198,10 +176,7 @@ func (a *App) PrihlasitGoogle() string {
 	if err != nil {
 		return "Nepodařilo se připravit návrat z prohlížeče: " + err.Error()
 	}
-	navrat := fmt.Sprintf("http://127.0.0.1:%d", posluchac.Addr().(*net.TCPAddr).Port)
-	overovac := nahodnyRetezec(48)
-	vyzva := sha256.Sum256([]byte(overovac))
-	stavDotazu := nahodnyRetezec(24)
+	prihlaseni := google.NovePrihlaseni(adresyGoogle(), klient, fmt.Sprintf("http://127.0.0.1:%d", posluchac.Addr().(*net.TCPAddr).Port), rozsahyGoogle)
 
 	type vysledekNavratu struct{ kod, chyba string }
 	navraty := make(chan vysledekNavratu, 1)
@@ -210,20 +185,10 @@ func (a *App) PrihlasitGoogle() string {
 			http.NotFound(w, r)
 			return
 		}
-		q := r.URL.Query()
-		v := vysledekNavratu{kod: q.Get("code")}
-		switch {
-		case q.Get("state") != stavDotazu:
-			v = vysledekNavratu{chyba: "Návrat z prohlížeče nepatří k tomuto přihlášení."}
-		case q.Get("error") == "access_denied":
-			v = vysledekNavratu{chyba: "Přihlášení bylo v prohlížeči zrušeno."}
-		case q.Get("error") != "":
-			v = vysledekNavratu{chyba: "Google přihlášení odmítl: " + q.Get("error")}
-		case v.kod == "":
-			v = vysledekNavratu{chyba: "Google nevrátil kód přihlášení."}
-		}
+		var v vysledekNavratu
+		v.kod, v.chyba = prihlaseni.KodZNavratu(r.URL.Query())
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		fmt.Fprint(w, strankaNavratu(v.chyba))
+		fmt.Fprint(w, google.StrankaNavratu(v.chyba, ""))
 		select {
 		case navraty <- v:
 		default:
@@ -232,18 +197,7 @@ func (a *App) PrihlasitGoogle() string {
 	go server.Serve(posluchac)
 	defer server.Close()
 
-	parametry := url.Values{
-		"client_id":             {klient.ID},
-		"redirect_uri":          {navrat},
-		"response_type":         {"code"},
-		"scope":                 {rozsahyGoogle},
-		"code_challenge":        {base64.RawURLEncoding.EncodeToString(vyzva[:])},
-		"code_challenge_method": {"S256"},
-		"state":                 {stavDotazu},
-		"access_type":           {"offline"},
-		"prompt":                {"consent"},
-	}
-	otevritProhlizec(a, adresaAutorizaceGoogle+"?"+parametry.Encode())
+	otevritProhlizec(a, prihlaseni.Adresa)
 
 	var v vysledekNavratu
 	select {
@@ -257,81 +211,16 @@ func (a *App) PrihlasitGoogle() string {
 	if v.chyba != "" {
 		return v.chyba
 	}
-	t, err := vymenitKodGoogle(ctx, klient, v.kod, overovac, navrat)
+	g, err := google.VymenitKod(ctx, adresyGoogle(), klient, prihlaseni, v.kod)
 	if err != nil {
 		return "Přihlášení se nepodařilo dokončit: " + err.Error()
 	}
+	t := &tokenGoogle{Obnovovaci: g.Obnovovaci, Pristupovy: g.Pristupovy, Platnost: g.Platnost, Rozsahy: g.Rozsahy,
+		Email: g.Email, Jmeno: g.Jmeno, Prihlaseno: ted()}
 	if err := ulozitTokenGoogle(t); err != nil {
 		return "Přihlášení se nepodařilo uložit: " + err.Error()
 	}
 	return ""
-}
-
-// Výměna kódu za tokeny; jméno a e-mail z id_token (přišel přímo z Googlu přes TLS, podpis se neověřuje)
-func vymenitKodGoogle(ctx context.Context, k klientGoogle, kod, overovac, navrat string) (*tokenGoogle, error) {
-	form := url.Values{
-		"code":          {kod},
-		"client_id":     {k.ID},
-		"client_secret": {k.Secret},
-		"redirect_uri":  {navrat},
-		"grant_type":    {"authorization_code"},
-		"code_verifier": {overovac},
-	}
-	pozadavek, err := http.NewRequestWithContext(ctx, http.MethodPost, adresaTokenuGoogle, strings.NewReader(form.Encode()))
-	if err != nil {
-		return nil, err
-	}
-	pozadavek.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	odpoved, err := http.DefaultClient.Do(pozadavek)
-	if err != nil {
-		return nil, err
-	}
-	defer odpoved.Body.Close()
-	var o struct {
-		Pristupovy string `json:"access_token"`
-		Obnovovaci string `json:"refresh_token"`
-		Platnost   int    `json:"expires_in"`
-		Rozsahy    string `json:"scope"`
-		IDToken    string `json:"id_token"`
-		Chyba      string `json:"error"`
-		Popis      string `json:"error_description"`
-	}
-	if err := json.NewDecoder(odpoved.Body).Decode(&o); err != nil {
-		return nil, fmt.Errorf("nečitelná odpověď Googlu (HTTP %d)", odpoved.StatusCode)
-	}
-	if o.Chyba != "" || odpoved.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%s %s", o.Chyba, o.Popis)
-	}
-	if o.Obnovovaci == "" {
-		return nil, errors.New("Google nevrátil obnovovací token")
-	}
-	t := &tokenGoogle{Obnovovaci: o.Obnovovaci, Pristupovy: o.Pristupovy, Rozsahy: o.Rozsahy,
-		Platnost: time.Now().Add(time.Duration(o.Platnost) * time.Second), Prihlaseno: ted()}
-	if casti := strings.Split(o.IDToken, "."); len(casti) == 3 {
-		if data, err := base64.RawURLEncoding.DecodeString(casti[1]); err == nil {
-			var id struct {
-				Email string `json:"email"`
-				Jmeno string `json:"name"`
-			}
-			if json.Unmarshal(data, &id) == nil {
-				t.Email, t.Jmeno = id.Email, id.Jmeno
-			}
-		}
-	}
-	return t, nil
-}
-
-// Stránka v prohlížeči po návratu (prohlížeč pak uživatel zavře)
-func strankaNavratu(chyba string) string {
-	nadpis, text := "Přihlášení hotovo", "Můžeš zavřít tuto kartu a vrátit se do Pinup Katalogu."
-	if chyba != "" {
-		nadpis, text = "Přihlášení se nepovedlo", chyba+" Vrať se do Pinup Katalogu a zkus to znovu."
-	}
-	return `<!doctype html><html lang="cs"><head><meta charset="utf-8"><title>Pinup Katalog</title>
-<style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#4a0d1f,#0d0d10 60%);
-color:#f3eee8;font:16px/1.5 system-ui,sans-serif}main{text-align:center;padding:2rem}h1{font-weight:300;letter-spacing:.08em;
-text-transform:uppercase;color:#f0c75e}</style></head><body><main><h1>` + html.EscapeString(nadpis) + `</h1><p>` +
-		html.EscapeString(text) + `</p></main></body></html>`
 }
 
 // ZrusitPrihlaseniGoogle ukončí čekání na návrat z prohlížeče (uživatel si to rozmyslel)
@@ -354,15 +243,7 @@ func (a *App) OdhlasitGoogle() bool {
 		go func() {
 			ctx, zrusit := context.WithTimeout(context.Background(), 10*time.Second)
 			defer zrusit()
-			p, err := http.NewRequestWithContext(ctx, http.MethodPost, adresaOdvolaniGoogle,
-				strings.NewReader(url.Values{"token": {t.Obnovovaci}}.Encode()))
-			if err != nil {
-				return
-			}
-			p.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-			if o, err := http.DefaultClient.Do(p); err == nil {
-				o.Body.Close()
-			}
+			google.Odvolat(ctx, adresyGoogle(), t.Obnovovaci)
 		}()
 	}
 	return true
@@ -396,31 +277,15 @@ func (a *App) obnovitPristupGoogle(ctx context.Context, t *tokenGoogle) (string,
 	if err != nil {
 		return bezSpojeniGoogle, ""
 	}
-	form := url.Values{"client_id": {klient.ID}, "client_secret": {klient.Secret}, "refresh_token": {t.Obnovovaci}, "grant_type": {"refresh_token"}}
-	p, err := http.NewRequestWithContext(ctx, http.MethodPost, adresaTokenuGoogle, strings.NewReader(form.Encode()))
-	if err != nil {
-		return bezSpojeniGoogle, ""
-	}
-	p.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	odpoved, err := http.DefaultClient.Do(p)
-	if err != nil {
-		return bezSpojeniGoogle, ""
-	}
-	defer odpoved.Body.Close()
-	var o struct {
-		Pristupovy string `json:"access_token"`
-		Platnost   int    `json:"expires_in"`
-		Chyba      string `json:"error"`
-	}
-	json.NewDecoder(odpoved.Body).Decode(&o)
-	if o.Chyba == "invalid_grant" || o.Chyba == "unauthorized_client" {
+	pristup, platnost, err := google.Obnovit(ctx, adresyGoogle(), klient, t.Obnovovaci)
+	if errors.Is(err, google.ErrOdvolano) {
 		os.Remove(cestaTokenuGoogle())
 		return odvolanoGoogle, ""
 	}
-	if o.Pristupovy == "" {
+	if err != nil {
 		return bezSpojeniGoogle, ""
 	}
-	t.Pristupovy, t.Platnost = o.Pristupovy, time.Now().Add(time.Duration(o.Platnost)*time.Second)
+	t.Pristupovy, t.Platnost = pristup, platnost
 	if err := ulozitTokenGoogle(t); err != nil {
 		a.chyba("uložení přístupu Google", err)
 	}

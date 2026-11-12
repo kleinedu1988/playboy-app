@@ -6,6 +6,25 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.085] – 2026-11-12
+
+### Přidáno
+- **Aplikace pro telefon s Androidem** (`mobil/`): sbírka v telefonu, jen ke čtení. Přihlášení stejným účtem
+  Google jako na PC (prohlížeč telefonu), stažení balíčku sbírky z Disku (program na PC ho nahrává se zálohou),
+  hero s náhodnou modelkou z nejlepších, hledání, řazení (Oblíbené, Srdíčka, Nově přidané, Podle roku, A–Z),
+  dlaždice s titulními fotkami ve stejném výřezu jako na PC, detail modelky a účet s odhlášením. Sbírka se ukáže
+  i bez připojení (poslední stažená). Sestavení a instalace: `mobil/sestavit.sh --instalovat`.
+- Přihlášení Google a volání Disku jsou nově ve společném balíčku `internal/google` – program na PC i jádro
+  aplikace v Go (`mobil/jadro`, gomobile) používají stejný kód.
+
+### Odstraněno
+- Měřicí varianty kostry telefonu (Fyne, `mobil/merit.sh`); zůstává WebView s jádrem v Go.
+
+### Ověřeno
+- Na telefonu Xiaomi s Androidem 16: instalace přes USB, přihlášení, stažení celé sbírky (751 modelek), hero
+  a dlaždice s fotkami. Testy programu na PC beze změny prošly, jádro telefonu má vlastní testy proti falešnému
+  Googlu a Disku.
+
 ## [0.02.084] – 2026-11-12
 
 ### Opraveno

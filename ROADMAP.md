@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (12. 11. 2026): verze 0.02.065** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (12. 11. 2026): verze 0.02.066** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (web, vkus napříč časopisy, mobil) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.066 – Zásobník odkazů** (Údaje z webu pro další časopisy; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
+**0.02.067 – Úplnost čísla pro další časopisy** (Údaje z webu pro další časopisy; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
 
 ---
 
@@ -54,7 +54,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.065 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.066 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -260,7 +260,7 @@ krok „Hustler Honeys“ zrušen, Honey se nabídne jen z Wikidat (0.02.065).
 |---|---|---|
 | 0.02.064 ✅ | **Penthouse Pets z Wikipedie:** Ročník podle Wikipedie i pro Penthouse US – anglická Wikipedie seznam nemá, bere se italský „Penthouse Pet“ (Pets měsíců 1969–2025 a Pet of the Year); jen na kliknutí, přidání s potvrzením | hotovo: ročník 1970 ukáže Ilse Hasek a Heide Mann ve sbírce a 10 dalších Pets k přidání |
 | 0.02.065 ✅ | **Wikidata:** ocenění Pet of the Month, Pet of the Year a Honey (s datem) jako návrh „Tituly“ v Doplnit z webu i ve frontě Údržba › Z webu; přijetí založí prázdný centerfold čísla nebo album titulu roku, Vrátit je smaže | hotovo: Victoria Zdrok dostane návrh „Pet of the Month červen 2002, Pet of the Year 2004“ |
-| 0.02.066 | **Zásobník odkazů:** rozpozná odkazy z webů časopisů a předvyplní časopis a číslo; obsah za přihlášením se nečte | odkaz Penthouse předvyplní časopis |
+| 0.02.066 ✅ | **Zásobník odkazů:** odkaz na stránku časopisu (penthouse.com, playboy.com, hustler.com, magazine-empire.com…) se pozná jen z adresy (stránka se nestahuje) a předvyplní časopis a číslo v rychlém okně a v novém albu ze zásobníku | hotovo: odkaz penthouse.com „pet-of-the-month-june-2002“ předvyplní Penthouse US, červen 2002 |
 | 0.02.067 | **Úplnost čísla** (PD 1.38) pro další časopisy | úplnost Penthouse čísla |
 
 #### Vkus, odhady a Statistiky napříč časopisy (0.02.068–0.02.073, dříve etapa 0.07)

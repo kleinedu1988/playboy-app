@@ -6,6 +6,24 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.066] – 2026-11-12
+
+### Přidáno
+- **Odkazy z webů časopisů:** adresa stránky Penthouse, Playboye, Hustleru (i poddomény) a archivu
+  magazine-empire.com se pozná podle domény; z adresy se vezme rok, měsíc (2019-06, june, jun) a titul (of the
+  month / of the year). Čte se jen adresa, stránka se nestahuje.
+  - Rychlé okno Nová modelka: vložený odkaz předvyplní časopis a číslo prvního výskytu (jen když rok ještě není
+    vyplněný) a ohlásí to.
+  - Zásobník odkazů v profilu: Ctrl+V přijme i odkaz na stránku časopisu, souhrn ukáže „odkaz z webu: Penthouse,
+    červen 2002“ a „Nové album…“ z něj předvyplní číslo (bez roku aspoň časopis).
+
+### Ověřeno
+- Testy rozpoznání (Penthouse, Playboy US i CZ, Hustler, magazine-empire, odkaz bez roku; Disk, Wikipedie a
+  podobná doména se nerozpoznají) a popisu pro oznámení.
+- Snímky na kopii sbírky: zásobník u Victorie Zdrok ukáže „odkaz z webu: Penthouse, červen 2002 – nové album
+  předvyplní číslo“; rychlé okno po vložení odkazu: rok 2002, měsíc 06, Penthouse US a oznámení.
+- Předvyplnění okna alba ze zásobníku na snímku nezkoušeno (potřebuje platné odkazy na Disk).
+
 ## [0.02.065] – 2026-11-12
 
 ### Přidáno

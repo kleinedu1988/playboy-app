@@ -213,7 +213,7 @@ export function otevritAlbumModal(modelka, album = null, moznosti = {}) {
     if (moznosti.typ) typ = moznosti.typ;
     const vydani = rozlozitVydani(album ? (album.vydani || (album.typ === 'Centerfold' ? album.album : '')) : moznosti.vydani);
     document.getElementById('inputAlbumRok').value = vydani?.rok || '';
-    nastavitRadu(document.getElementById('selectAlbumEdice'), vydani?.edice || vychoziRada());
+    nastavitRadu(document.getElementById('selectAlbumEdice'), vydani?.edice || moznosti.rada || vychoziRada());
     cisloAlba = vydani?.mesic?.startsWith('S') ? 'special' : 'mesic';
     obnovitSpecialyAlba(cisloAlba === 'special' ? vydani.mesic : '');
     document.getElementById('selectAlbumMesic').value = cisloAlba === 'mesic' ? vydani?.mesic || '' : '';

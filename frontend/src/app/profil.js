@@ -697,8 +697,9 @@ export function pripravit() {
     // Zásobník odkazů nad alby; „Nové album…“ předá odkazy do okna alba
     zasobnik.pripravit({
         nacistFotky: nacistFotkyModelky,
-        otevritAlbum: (modelka, odkazy) => {
-            otevritAlbumModal(modelka);
+        // Odkaz z webu časopisu v zásobníku (0.02.066) předvyplní číslo, bez roku aspoň časopis
+        otevritAlbum: (modelka, odkazy, web) => {
+            otevritAlbumModal(modelka, null, { vydani: web?.vydani || '', rada: web?.rada || '' });
             const pole = /** @type {HTMLTextAreaElement} */ (document.getElementById('inputBulkLinks'));
             pole.value = odkazy;
             pole.dispatchEvent(new Event('input', { bubbles: true }));

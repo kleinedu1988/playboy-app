@@ -1,5 +1,6 @@
 // Rychlé přidání modelky, formulář modelky a potvrzení mazání
 import { jednou, oznamit } from '../ui/oznameni';
+import { odkazCasopisu, popisOdkazuCasopisu } from '../lib/odkazy-casopisu';
 import { AddBulkPhotos, AddModelka, DeleteModelka, DeleteVse, SetVydaniAlba, SlozkaZaloh } from './backend';
 import { MESICE, dalsiJmenaModelky, esc, nazevRady, formatDatum, nazevVydani, slozitVydani, formatMarkdown, odvozeneKategorie, platneDatum, prevestVahu, prevestVysku, rozlozitMiry, sjednotit, sklonovat } from '../lib/format';
 import { nastavitRadu, vychoziRada, zapamatovatRadu } from './rady';
@@ -488,6 +489,19 @@ export function pripravit() {
         obnovitOdhadyRychle();
     });
     kontrolaRychla = sledovatOdkazy(/** @type {HTMLTextAreaElement} */ (document.getElementById('inputQuickOdkazy')), document.getElementById('quickKontrolaOdkazu'));
+    // Odkaz na stránku časopisu (0.02.066) předvyplní časopis a číslo, když první výskyt ještě není vyplněný
+    document.getElementById('inputQuickOdkazy').addEventListener('input', (e) => {
+        const pole = /** @type {HTMLTextAreaElement} */ (e.target);
+        const web = odkazCasopisu(pole.value);
+        const rok = /** @type {HTMLInputElement} */ (document.getElementById('inputQuickRok'));
+        if (!web || pole.dataset.webCasopisu === web.url || rok.value) return;
+        pole.dataset.webCasopisu = web.url;
+        nastavitRadu(document.getElementById('selectQuickEdice'), web.rada);
+        if (web.rok) rok.value = web.rok;
+        if (web.mesic) /** @type {HTMLSelectElement} */ (document.getElementById('selectQuickMesic')).value = web.mesic;
+        rok.dispatchEvent(new Event('input', { bubbles: true }));
+        oznamit(`Odkaz z webu (${popisOdkazuCasopisu(web)}): předvyplněn ${web.rok ? 'časopis a číslo' : 'časopis'}.`);
+    });
     // Ctrl+Enter kdekoli v okně (a Enter v jednořádkovém poli) uloží a otevře profil; Enter v poli odkazů dělá
     // nový řádek. Bez toho by Enter spustil první tlačítko formuláře, tedy „Uložit a další“.
     quickModal.addEventListener('keydown', (e) => {

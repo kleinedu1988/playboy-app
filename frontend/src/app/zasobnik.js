@@ -2,8 +2,10 @@
 // kdekoli v profilu), přetažením textu z prohlížeče nebo psaním. Ukazuje, kolik odkazů je platných a které fotky
 // už ve sbírce jsou; Ctrl+Enter (nebo Přidat) vloží nové do zvoleného alba, „Nové album…“ je předá do okna alba.
 // Rozepsaný text každé modelky se pamatuje (i po přepnutí jinam a po restartu), dokud se nevloží nebo nevyprázdní.
+// Odkaz na stránku časopisu (penthouse.com…, 0.02.066) se pozná z adresy a nové album z něj předvyplní časopis a číslo.
 import { AddBulkPhotos } from './backend';
 import { esc, nazevAlba, odkazyDisku, sklonovat } from '../lib/format';
+import { odkazCasopisu, popisOdkazuCasopisu } from '../lib/odkazy-casopisu';
 import { klicAlba } from '../lib/alba';
 import { stav } from './stav';
 import { detailView } from './prvky';
@@ -21,7 +23,7 @@ let kontrola = null;
 let modelkaId = 0;
 let otevreny = false;
 let nacistFotky = async (_id) => {};
-let otevritAlbum = (_modelka, _odkazy) => {};
+let otevritAlbum = (_modelka, _odkazy, _cislo) => {};
 
 /** @returns {Record<string, { text: string, album: string }>} */
 function ulozene() {
@@ -112,7 +114,7 @@ export function pripravit(funkce) {
         if (!modelkaId || detailView.classList.contains('hidden') || otevreneOkno()) return;
         if (/** @type {HTMLElement} */ (e.target).closest?.('input, textarea, select, [contenteditable]')) return;
         const text = e.clipboardData?.getData('text') || '';
-        if (!odkazyDisku(text).length && !/\/folders\//.test(text)) return;
+        if (!odkazyDisku(text).length && !/\/folders\//.test(text) && !odkazCasopisu(text)) return;
         e.preventDefault();
         pripsat(text);
     });
@@ -141,9 +143,11 @@ function nastavitOtevreni(otevrit, { zamerit = false } = {}) {
 
 function obnovitSouhrn() {
     const n = odkazyDisku(pole().value).length;
-    prvek.querySelector('[data-zas-souhrn]').textContent = n
+    const web = odkazCasopisu(pole().value);
+    prvek.querySelector('[data-zas-souhrn]').textContent = (n
         ? `${sklonovat(n, 'odkaz čeká', 'odkazy čekají', 'odkazů čeká')} na vložení`
-        : 'vlož nebo přetáhni odkazy na fotky (Ctrl+V)';
+        : 'vlož nebo přetáhni odkazy na fotky (Ctrl+V)')
+        + (web ? ` · odkaz z webu: ${popisOdkazuCasopisu(web)} – nové album předvyplní ${web.vydani ? 'číslo' : 'časopis'}` : '');
     prvek.classList.toggle('plny', n > 0);
 }
 
@@ -192,8 +196,9 @@ async function pridat() {
     }
     const preskoceno = k.ids.length - ids.length;
     if (vyberAlba().value === NOVE_ALBUM) {
+        const web = odkazCasopisu(pole().value);
         vyprazdnit({ zavrit: false });
-        otevritAlbum(modelka, ids.join('\n'));
+        otevritAlbum(modelka, ids.join('\n'), web);
         return;
     }
     const album = albaModelky().find(a => klicAlba(a) === vyberAlba().value);

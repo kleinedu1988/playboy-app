@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.066 – Odkazy z webů časopisů
+
+- [ ] Zásobník v profilu s odkazy na Disk a odkazem penthouse.com → Nové album… má předvyplněný Penthouse a číslo.
+- [ ] Rychlé okno: vložený odkaz z webu časopisu předvyplní časopis a číslo; vyplněný rok nepřepíše.
+
 ## 0.02.065 – Tituly z Wikidat
 
 - [ ] Profil › Doplnit z webu u Pet (např. Victoria Zdrok) → řádek „Tituly (Pet, Honey)“ → Uložit: v profilu přibude Pet of the Month / Pet of the Year.

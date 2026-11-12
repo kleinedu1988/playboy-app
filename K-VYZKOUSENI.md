@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.060 – Odhad druhu fotky (návrh)
+
+- [ ] Údržba › Otočené a výřezy › Druh fotek: kolik návrhů „Muž na fotce“ a „Víc žen“ je opravdu správně (čekám zhruba 9 z 10).
+- [ ] Sekce se ukáže jen se zapnutým obsahem fotek; klik na jméno otevře profil.
+
 ## 0.02.059 – Měření rozpoznání explicitních fotek
 
 - (Nic k vyzkoušení v programu – jen měření a nástroj pro vývoj; výsledek v CHANGELOG a ROADMAP.)

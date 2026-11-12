@@ -6,6 +6,24 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.060] – 2026-11-12
+
+### Přidáno
+- **Údržba › Otočené a výřezy › Druh fotek (návrh):** program z obsahu fotek odhadne, na kterých je muž (scény
+  s mužem) a na kterých je víc žen, a ukáže je ve dvou skupinách od nejjistějších s jistotou v rohu náhledu.
+  Zatím jen ke kontrole – potvrzení a oddělení od pózovacích fotek přijdou v dalších verzích.
+- Odhad je naučený z ručně roztříděných fotek nad vektory CLIP, které sbírka už má (vestavěné váhy, nic se
+  nestahuje ani nepřepočítává); nástroj `internal/obsah/druh-mereni -ucit` ho umí naučit znovu.
+
+### Změřeno
+- Větší detektor NudeNet 640m nepomohl: muže ve scénách se sexem najde u 3 ze 17 (bývá zády nebo z profilu) a je
+  asi 5× pomalejší – nezapojuje se. Naučený odhad: „víc žen“ ~91 % zásahů správně, „muž na fotce“ ~70 %
+  (křížová validace); na kontrolních listech z celé sbírky při jistotě ≥ 85 % sedí zhruba 9 z 10.
+
+### Ověřeno
+- Snímky na kopii sbírky: sekce „Druh fotek · návrh 234“ (Muž na fotce 55, Víc žen 179), náhledy s jistotou,
+  „Ukázat dalších“ přidá další. Nejjistější „muž na fotce“ jsou často oblečené scény ze zákulisí – proto návrh.
+
 ## [0.02.059] – 2026-11-11
 
 ### Změřeno (Explicitní fotky zvlášť, krok Rozpoznání)

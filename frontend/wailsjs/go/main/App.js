@@ -186,6 +186,10 @@ export function GetNavrhyDoplneni(arg1) {
   return window['go']['main']['App']['GetNavrhyDoplneni'](arg1);
 }
 
+export function GetNavrhyDruhu(arg1) {
+  return window['go']['main']['App']['GetNavrhyDruhu'](arg1);
+}
+
 export function GetNavrhyTagu(arg1) {
   return window['go']['main']['App']['GetNavrhyTagu'](arg1);
 }

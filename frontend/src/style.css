@@ -21550,3 +21550,36 @@ button.udd-nazev {
 .ufo-bez-postavy {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
+
+/* Druh fotek v Údržbě (0.02.060): návrhy s jistotou v rohu náhledu */
+.ufo-druh-nadpis {
+    margin: 14px 0 8px;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.ufo-druh-nadpis small {
+    margin-left: 4px;
+    color: var(--text-muted, #999);
+    font-weight: 400;
+}
+
+.ufo-druhy {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+}
+
+.ufo-druhy .ufo-nahled {
+    position: relative;
+    cursor: default;
+}
+
+.ufo-jistota {
+    position: absolute;
+    right: 6px;
+    bottom: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-size: 0.75rem;
+}

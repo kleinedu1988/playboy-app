@@ -1328,38 +1328,67 @@ func udajeZBoobpedie(m *Modelka) (ZdrojUdaju, udajeZdroje) {
 // ——— Úplnost čísla: Playmate měsíce podle Wikipedie ———
 
 type PlaymatePodleWikipedie struct {
+	// Titul modelky měsíce časopisu čísla (Playmate měsíce, Pet of the Month; 0.02.067)
+	Titul     string `json:"titul"`
 	Jmeno     string `json:"jmeno"`
 	URL       string `json:"url"`
 	ModelkaID int    `json:"modelkaId"` // modelka sbírky toho jména, 0 = ve sbírce není
 	Chyba     string `json:"chyba"`
 }
 
-// Playmate měsíce amerického čísla RRRR-MM podle seznamu na Wikipedii, s modelkou sbírky, pokud tam je
+// Modelka měsíce čísla podle seznamu na Wikipedii, s modelkou sbírky, pokud tam je: Playboy US (RRRR-MM, anglická
+// Wikipedie) a Penthouse US (RRRR-MM@PH, italský seznam Pets, 0.02.067)
 func (a *App) PlaymatePodleWikipedie(vydani string) PlaymatePodleWikipedie {
+	var p PlaymatePodleWikipedie
+	if s := vzorCislaPenthouse.FindStringSubmatch(vydani); s != nil {
+		rok, _ := strconv.Atoi(vydani[:4])
+		mesic, _ := strconv.Atoi(vydani[5:7])
+		p.Titul = a.titulyCasopisu()["PH"][0]
+		mesice, _, adresa, err := petyPenthouse(rok)
+		if err != nil {
+			p.Chyba = err.Error()
+			return p
+		}
+		if len(mesice[mesic]) == 0 {
+			p.Chyba = "italský seznam Pets na Wikipedii tento měsíc nemá"
+			return p
+		}
+		p.Jmeno, p.URL = strings.Join(mesice[mesic], " a "), adresa
+		// Víc Pets v měsíci: modelka sbírky se hledá k první
+		return a.modelkaKPlaymate(p, mesice[mesic][0], vydani)
+	}
 	s := vzorCenterfolduUS.FindStringSubmatch(vydani)
 	if s == nil {
-		return PlaymatePodleWikipedie{Chyba: "jen pro měsíční čísla americké edice"}
+		return PlaymatePodleWikipedie{Chyba: "jen pro měsíční čísla Playboye US a Penthouse US"}
 	}
 	rok, _ := strconv.Atoi(s[1])
 	mesic, _ := strconv.Atoi(s[2])
+	p.Titul = a.titulyCasopisu()[hledani.VychoziCasopis][0]
 	pole, adresa, err := playmateZeSeznamu(rok, mesic)
 	if err != nil {
-		return PlaymatePodleWikipedie{Chyba: err.Error()}
+		p.Chyba = err.Error()
+		return p
 	}
 	if pole == nil {
-		return PlaymatePodleWikipedie{Chyba: "seznam na Wikipedii pro tento měsíc infobox nemá"}
+		p.Chyba = "seznam na Wikipedii pro tento měsíc infobox nemá"
+		return p
 	}
-	p := PlaymatePodleWikipedie{Jmeno: vycistitWikitext(pole["name"]), URL: adresa}
+	p.Jmeno, p.URL = vycistitWikitext(pole["name"]), adresa
+	return a.modelkaKPlaymate(p, p.Jmeno, vydani)
+}
+
+// Modelka sbírky ke jménu z Wikipedie; při více shodách ta, která je v čísle (centerfold, album s titulem)
+func (a *App) modelkaKPlaymate(p PlaymatePodleWikipedie, jmeno, vydani string) PlaymatePodleWikipedie {
 	modelky := a.snimekSbirky().modelky
 	kandidati := make([]int, 0)
 	for i := range modelky {
-		if stejneJmeno(&modelky[i], p.Jmeno) {
+		if stejneJmeno(&modelky[i], jmeno) {
 			kandidati = append(kandidati, i)
 		}
 	}
-	// Při více shodách přednost té, která má centerfold z tohoto čísla
+	vCisle := func(m *Modelka) bool { return obsahuje(m.Centerfoldy, vydani) || obsahuje(m.Vydani, vydani) }
 	sort.SliceStable(kandidati, func(i, j int) bool {
-		return obsahuje(modelky[kandidati[i]].Centerfoldy, vydani) && !obsahuje(modelky[kandidati[j]].Centerfoldy, vydani)
+		return vCisle(&modelky[kandidati[i]]) && !vCisle(&modelky[kandidati[j]])
 	})
 	if len(kandidati) > 0 {
 		p.ModelkaID = modelky[kandidati[0]].ID

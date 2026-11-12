@@ -3,7 +3,7 @@ import { GetAlbaFotografa, GetClanky, GetStavyVydani, GetVydani, GetVydaniInfo, 
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime';
 import { otevritRychlePridani } from './formular-modelky';
 import { doplnitZminkyCisla } from './wiki-odkazy';
-import { MESICE, VYCHOZI_EDICE, maRocnikWiki, nazevRady, typVCisle, ciselRocniku, cisloNevyslo, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
+import { MESICE, VYCHOZI_EDICE, maRocnikWiki, titulCasopisu, nazevRady, typVCisle, ciselRocniku, cisloNevyslo, esc, formatMarkdown, nazevAlba, nazevVydani, obrazek, paskaCisla, rozlozitVydani, sjednotit, slozitVydani, sklonovat, jeSpecial, specialyRoku } from '../lib/format';
 import { sestavitAlba } from '../lib/alba';
 import { jednou, oznamit } from '../ui/oznameni';
 import { vsechnyModelky } from './mezipamet';
@@ -140,8 +140,8 @@ export async function otevritVydani(vydani, { bezHistorie = false } = {}) {
     doplnitZminkyCisla(vydani);
 }
 
-// Úplnost čísla: co ve sbírce k číslu je a co chybí, s rychlým doplněním; u měsíčního amerického čísla
-// Playmate měsíce podle seznamu na Wikipedii (na kliknutí, zdroje_udaju.go)
+// Úplnost čísla: co ve sbírce k číslu je a co chybí, s rychlým doplněním; u měsíčního čísla Playboye US
+// a Penthouse US (0.02.067) modelka měsíce podle seznamu na Wikipedii (na kliknutí, zdroje_udaju.go)
 function htmlUplnosti(vydani, { cover, centerfoldy, pictorialu, fotek, info, clanku }) {
     const casti = rozlozitVydani(vydani);
     const polozka = (hotovo, text, akce = '') => `<li class="${hotovo ? 'hotovo' : 'chybi'}"><span aria-hidden="true">${hotovo ? '✓' : '○'}</span>${text}${!hotovo && akce ? ` ${akce}` : ''}</li>`;
@@ -155,14 +155,15 @@ function htmlUplnosti(vydani, { cover, centerfoldy, pictorialu, fotek, info, cla
         polozka(fotek > 0, sklonovat(fotek, 'fotka', 'fotky', 'fotek')),
     ];
     const hotovo = [cover, centerfoldy.length > 0, naObalce, pictorialu > 0, clanku > 0].filter(Boolean).length;
-    const wiki = casti?.edice === 'US' && /^\d{2}$/.test(casti.mesic || '')
-        ? `<div class="uplnost-wiki" data-uplnost-wiki="${esc(vydani)}"><button class="link" data-playmate-wiki="${esc(vydani)}">Playmate měsíce podle Wikipedie…</button></div>` : '';
+    // Playboy US a Penthouse US (0.02.067) mají seznam modelek měsíce na Wikipedii
+    const wiki = maRocnikWiki(casti?.edice) && /^\d{2}$/.test(casti.mesic || '')
+        ? `<div class="uplnost-wiki" data-uplnost-wiki="${esc(vydani)}"><button class="link" data-playmate-wiki="${esc(vydani)}">${esc(titulCasopisu(casti.casopis))} podle Wikipedie…</button></div>` : '';
     return `<h4 class="panel-nadpis">Úplnost <small>${hotovo} z 5</small></h4><ul class="uplnost-cisla">${seznam.join('')}</ul>${wiki}`;
 }
 
 // Výsledek dotazu na Wikipedii pod seznamem úplnosti
 async function zjistitPlaymateWiki(vydani, misto) {
-    misto.innerHTML = '<small>Hledám v seznamu Playmate na Wikipedii…</small>';
+    misto.innerHTML = '<small>Hledám v seznamu na Wikipedii…</small>';
     const p = await PlaymatePodleWikipedie(vydani).catch(() => null);
     if (!misto.isConnected) return;
     if (!p || p.chyba) {
@@ -170,11 +171,13 @@ async function zjistitPlaymateWiki(vydani, misto) {
         return;
     }
     const odkaz = `<button class="link" data-wiki-odkaz="${esc(p.url)}" title="${esc(p.url)}">Wikipedie</button>`;
-    const vCisle = (stav.vydaniPolozky || []).some(x => x.typ === 'Centerfold' && x.modelkaId === p.modelkaId);
+    // V čísle je jako centerfold, nebo (Pet bez centerfoldu) albem s titulem měsíce
+    const vCisle = (stav.vydaniPolozky || []).some(x => (x.typ === 'Centerfold' || x.typ === 'Playmate měsíce') && x.modelkaId === p.modelkaId);
     const casti = rozlozitVydani(vydani);
+    const titul = esc(p.titul || 'Playmate měsíce');
     misto.innerHTML = p.modelkaId
-        ? `Playmate měsíce: <button class="chip" data-modelka="${p.modelkaId}">${esc(p.jmeno)}</button> ${vCisle ? '✓ centerfold ve sbírce' : '<small>ve sbírce je, centerfold k číslu ale nemá</small>'} · ${odkaz}`
-        : `Playmate měsíce: <b>${esc(p.jmeno)}</b> <small>ve sbírce není</small> <button class="link" data-nova-playmate="${esc(p.jmeno)}" data-rok="${esc(casti?.rok || '')}" data-mesic="${esc(casti?.mesic || '')}">přidat…</button> · ${odkaz}`;
+        ? `${titul}: <button class="chip" data-modelka="${p.modelkaId}">${esc(p.jmeno)}</button> ${vCisle ? '✓ v čísle ve sbírce' : '<small>ve sbírce je, k číslu ale nemá centerfold ani album</small>'} · ${odkaz}`
+        : `${titul}: <b>${esc(p.jmeno)}</b> <small>ve sbírce není</small> <button class="link" data-nova-playmate="${esc(p.jmeno)}" data-rok="${esc(casti?.rok || '')}" data-mesic="${esc(casti?.mesic || '')}" data-rada="${esc(casti?.edice || '')}">přidat…</button> · ${odkaz}`;
 }
 
 // Pravá část stránky čísla: články pod sebou podle stran, za nimi pictorialy; obsah vlevo ukazuje, kde se čte
@@ -581,7 +584,7 @@ export function pripravit() {
         }
         const nova = e.target.closest('[data-nova-playmate]');
         if (nova) {
-            otevritRychlePridani({ jmeno: nova.dataset.novaPlaymate, cislo: { rok: nova.dataset.rok, mesic: nova.dataset.mesic, edice: 'US', typ: 'Centerfold' } });
+            otevritRychlePridani({ jmeno: nova.dataset.novaPlaymate, cislo: { rok: nova.dataset.rok, mesic: nova.dataset.mesic, edice: nova.dataset.rada || 'US', typ: 'Centerfold' } });
             return;
         }
         if (e.target.closest('[data-upravit-vydani]')) {

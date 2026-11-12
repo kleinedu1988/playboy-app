@@ -6,6 +6,20 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.067] – 2026-11-12
+
+### Přidáno
+- **Úplnost čísla Penthouse:** stránka měsíčního čísla Penthouse US nabídne „Pet of the Month podle
+  Wikipedie…“ (italský seznam Pets, jako Ročník v 0.02.064). Pet je „v čísle ve sbírce“ jako centerfold i jako
+  album s titulem měsíce; chybějící jde přidat rychlým oknem s předvyplněnou řadou Penthouse US (dřív by se
+  předvyplnil Playboy). Víc Pets v jednom měsíci se ukáže jako „A a B“. Hustler seznam nemá (0.02.065).
+
+### Ověřeno
+- Test: Pet čísla 01/1985 se najde ve sbírce, 04/1985 chybí, měsíc mimo seznam a britská edice hlásí chybu;
+  Playboy beze změny (starší testy).
+- Snímky na kopii sbírky (živá Wikipedie): Penthouse 03/1970 → „Pet of the Month: Ilse Hasek ✓ v čísle ve
+  sbírce“; 01/1970 → „Katherine Mannering ve sbírce není · přidat…“.
+
 ## [0.02.066] – 2026-11-12
 
 ### Přidáno

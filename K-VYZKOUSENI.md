@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.067 – Úplnost čísla Penthouse
+
+- [ ] Číslo Penthouse › Úplnost › „Pet of the Month podle Wikipedie…“ › přidat… otevře rychlé okno s Penthouse US a číslem.
+
 ## 0.02.066 – Odkazy z webů časopisů
 
 - [ ] Zásobník v profilu s odkazy na Disk a odkazem penthouse.com → Nové album… má předvyplněný Penthouse a číslo.

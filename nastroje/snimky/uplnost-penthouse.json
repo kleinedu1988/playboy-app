@@ -1,0 +1,51 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "kal-pb",
+   "js": "(()=>{const vid=e=>e.getClientRects().length>0&&getComputedStyle(e).visibility!=='hidden';const najit=()=>[...document.querySelectorAll('button, a, [role=menuitem]')].find(b=>vid(b)&&b.textContent.trim()===\"Kalend\\u00e1\\u0159\");let p=najit();if(p){p.click();return 'přímo'}const n=[...document.querySelectorAll('button')].find(b=>vid(b)&&b.textContent.trim()==='Modelky');n?.click();setTimeout(()=>{najit()?.click()},700);return 'přes mapu'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "kal-ph",
+   "js": "(()=>{const b=[...document.querySelectorAll('[data-edice]')].find(b=>b.textContent.trim().startsWith(\"Penthouse\"));if(!b)return 'bez čipu';b.click();document.body.click();return 'ok'})()",
+   "cekat": 4000
+  },
+  {
+   "nazev": "a-otevrit",
+   "js": "(()=>{const h=document.querySelector('.kal-hero');if(!h)return 'bez hera';const b=document.createElement('button');b.dataset.vydani='1970-03@PH';h.append(b);b.click();b.remove();return 'ok'})()",
+   "cekat": 3000
+  },
+  {
+   "nazev": "a-wiki",
+   "js": "(()=>{const b=document.querySelector('[data-playmate-wiki]');if(!b)return 'bez tlačítka: '+(document.querySelector('.uplnost-cisla')?'úplnost ano':'bez úplnosti');const t=b.textContent;b.click();return t})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "a-vysledek",
+   "js": "(()=>{const m=document.querySelector('[data-uplnost-wiki]');m?.scrollIntoView({block:'center'});return m?m.textContent.replace(/\\s+/g,' ').trim():'bez'})()",
+   "cekat": 800
+  }
+ ]
+}

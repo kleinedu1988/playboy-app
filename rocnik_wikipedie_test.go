@@ -165,6 +165,19 @@ func TestRocnikPenthousePodleWikipedie(t *testing.T) {
 		t.Errorf("zdroje %v", r.Zdroje)
 	}
 	_ = id
+	// Úplnost čísla (0.02.067): Pet měsíce čísla Penthouse
+	if p := a.PlaymatePodleWikipedie("1985-01@PH"); p.Jmeno != "Rebecca Testova" || p.ModelkaID == 0 || p.Titul != "Pet of the Month" {
+		t.Errorf("Pet 1985-01: %+v", p)
+	}
+	if p := a.PlaymatePodleWikipedie("1985-04@PH"); p.Jmeno != "Andi Chybi" || p.ModelkaID != 0 {
+		t.Errorf("Pet 1985-04: %+v", p)
+	}
+	if p := a.PlaymatePodleWikipedie("1985-07@PH"); p.Chyba == "" {
+		t.Errorf("měsíc mimo seznam: %+v", p)
+	}
+	if p := a.PlaymatePodleWikipedie("1985-07-UK@PH"); p.Chyba == "" {
+		t.Errorf("britská edice: %+v", p)
+	}
 	if r := a.RocnikCasopisuPodleWikipedie(1960, "PH"); r.Chyba == "" {
 		t.Error("rok mimo seznam")
 	}

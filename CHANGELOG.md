@@ -6,6 +6,18 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.069] – 2026-11-12
+
+### Přidáno
+- **Podobné modelky napříč časopisy:** společný jiný časopis než Playboy (číslo, centerfold, obálka) zvedá
+  podobnost a je první důvod („Penthouse · 1970. léta · …“). Dvojice jen z Playboye se počítá jako dřív.
+- **Objevit:** nabízí modelky všech časopisů; odhad i jeho důvod s časopisem bere z modelu vkusu (0.02.068).
+
+### Ověřeno
+- Test: Pets si jsou podobnější a důvod jmenuje časopis; u dvojice jen z Playboye se podobnost nemění.
+- Snímek na kopii sbírky: u Ilse Hasek jsou mezi podobnými první Heide Mann a Ulla Lindstrom, obě s důvodem
+  „Penthouse“.
+
 ## [0.02.068] – 2026-11-12
 
 ### Přidáno

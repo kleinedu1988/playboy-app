@@ -6,6 +6,7 @@ import test from 'node:test';
 import {
     bodVMnohouhelniku,
     gowerPodobnost,
+    jineCasopisy,
     podobneModelky,
     pripravitPriznakyMapy,
     procrustes2D,
@@ -301,4 +302,22 @@ test('vypocitatMapuSbirky: 3 000 modelek, po přidání 30 se staré body posuno
     assert.ok(druha.posun < 3, `posun ${druha.posun.toFixed(2)} %`);
     // Stejná data proti sobě: nulový posun
     assert.ok(vypocitatMapuSbirky(modelky, { predchozi }).posun < 1e-6);
+});
+
+test('podobneModelky: časopis (0.02.069) – Pets si jsou podobnější, důvod jmenuje časopis; jen Playboy beze změny', () => {
+    assert.deepEqual(jineCasopisy({ vydani: ['1985-09@PH', '1986-01'], obalky: ['1990-05@HU'] }), ['HU', 'PH']);
+    assert.deepEqual(jineCasopisy({ vydani: ['1985-09'], centerfoldy: ['1985-09'] }), []);
+    const zaklad = (prepis = {}) => vytvorModelku(prepis.id, { vydani: ['1985-09'], ...prepis });
+    const modelky = [
+        zaklad({ id: 1, vydani: ['1985-09@PH'] }),
+        zaklad({ id: 2, vydani: ['1985-10'] }),
+        zaklad({ id: 3, vydani: ['1985-10@PH'] }),
+    ];
+    const p = podobneModelky(1, modelky, { pocet: 2 });
+    assert.equal(p[0].id, 3, 'jinak shodné modelky: přednost má ta ze stejného časopisu');
+    assert.ok(p[0].duvody.some(d => d === 'PH' || d === 'Penthouse'), `důvod s časopisem: ${p[0].duvody}`);
+    // Dvojice jen z Playboye: časopis do podobnosti nevstupuje
+    const { zaklad: z } = pripravitPriznakyMapy([zaklad({ id: 4 }), zaklad({ id: 5, vydani: ['1985-10'] })]);
+    const bez = gowerPodobnost(z[0], { ...z[1], casopisy: undefined });
+    assert.equal(gowerPodobnost(z[0], z[1]).podobnost, bez.podobnost);
 });

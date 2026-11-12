@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.069 – Podobné modelky napříč časopisy
+
+- [ ] Profil Pet › Údaje › Podobné modelky: nahoře další Pets s důvodem „Penthouse“; u playmate beze změny.
+- [ ] Objevit v Přehledu nabízí i nehodnocené Pets, až budou mít odhad.
+
 ## 0.02.068 – Časopis jako vlastnost vkusu
 
 - [ ] Až budou aspoň 3 hodnocené modelky Penthouse: odhad u nehodnocené Pet uvádí v důvodu „Penthouse“, pokud se ti Pets líbí víc či míň než ostatní.

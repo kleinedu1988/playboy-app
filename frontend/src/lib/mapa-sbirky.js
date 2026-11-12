@@ -4,7 +4,7 @@
 // a tělesné příznaky (hodnocení srdíčky ani etnicita nejsou vstupem mapy).
 // Pevná orientace os (starší období vlevo, vyšší postava nahoře), Procrustovo zarovnání, Gowerova podobnost
 // se společnými rysy a test bodu v mnohoúhelníku pro laso.
-import { kategorieModelky, rozlozitVydani, sjednotit } from './format.js';
+import { VYCHOZI_CASOPIS, kategorieModelky, nazevCasopisu, rozlozitVydani, sjednotit } from './format.js';
 import { sousedePriznaku, zachovaniSousedu } from './mapa-sit.js';
 
 // První rok výskytu a věk modelky v tom čísle (nebo online albu)
@@ -130,7 +130,8 @@ function zakladModelky(m) {
         const narodnost = String(m.narodnost || '').trim();
         const kat = kategorieModelky(m).map(k => k.nazev);
         const uplnost = uplnostModelky(m, rok);
-        return { m, rok, vek, vyska, vaha, hrudnik, pas, boky, bmi, whr, vlasy, oci, narodnost, kat, uplnost };
+        const casopisy = jineCasopisy(m);
+        return { m, rok, vek, vyska, vaha, hrudnik, pas, boky, bmi, whr, vlasy, oci, narodnost, kat, uplnost, casopisy };
     }
 }
 
@@ -238,6 +239,16 @@ function priznakyZeZakladu(zaklad, n) {
 }
 
 // Gowerova podobnost (0..1, 1 = shodné) a lidsky čitelné společné rysy dvou modelek
+// Jiné časopisy než Playboy, ve kterých modelka vyšla (číslo, centerfold, obálka), seřazené klíče (0.02.069)
+export function jineCasopisy(m) {
+    const v = new Set();
+    for (const k of [...(m.vydani || []), ...(m.centerfoldy || []), ...(m.obalky || [])]) {
+        const c = rozlozitVydani(k)?.casopis;
+        if (c && c !== VYCHOZI_CASOPIS) v.add(c);
+    }
+    return [...v].sort();
+}
+
 export function gowerPodobnost(z1, z2) {
     let soucet = 0, vaha = 0;
     const duvody = [];
@@ -279,6 +290,19 @@ export function gowerPodobnost(z1, z2) {
         soucet += 1.4 * jacc;
         vaha += 1.4;
         if (spolKat.length) duvody.push({ shoda: 0.75 + 0.2 * jacc, text: spolKat[0] });
+    }
+    // Časopis (0.02.069): jen když aspoň jedna z dvojice vyšla jinde než v Playboyi (čistě playboyová sbírka beze
+    // změny); jen Playboy = množina {PB}
+    const c1 = z1.casopisy || [], c2 = z2.casopisy || [];
+    if (c1.length || c2.length) {
+        const m1 = c1.length ? c1 : [VYCHOZI_CASOPIS], m2 = c2.length ? c2 : [VYCHOZI_CASOPIS];
+        const spolecne = m1.filter(c => m2.includes(c));
+        const jacc = spolecne.length / new Set([...m1, ...m2]).size;
+        soucet += 1.0 * jacc;
+        vaha += 1.0;
+        const jinde = spolecne.find(c => c !== VYCHOZI_CASOPIS);
+        // Společný jiný časopis je ve sbírce s převahou Playboye nejvýraznější rys: první důvod
+        if (jinde) duvody.push({ shoda: 1.01, text: nazevCasopisu(jinde) || jinde });
     }
     const prsa1 = String(z1.m.prsaTyp || '').trim(), prsa2 = String(z2.m.prsaTyp || '').trim();
     if (prsa1 && prsa2) {

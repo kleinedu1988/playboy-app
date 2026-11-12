@@ -5,6 +5,10 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.077 – Balíček pro telefon
+
+- [ ] Po přihlášení Nahrát teď: oznámení „Záloha i balíček pro telefon jsou na Google Disku.“ (balíček se ověří až telefonem v 0.02.079).
+
 ## 0.02.076 – Záloha na Google Disk
 
 - [ ] Po přihlášení: ⋯ › Obnovit ze zálohy… › Nahrát teď – záloha se objeví v oddílu Na Google Disku (10 MB, chvíli trvá).

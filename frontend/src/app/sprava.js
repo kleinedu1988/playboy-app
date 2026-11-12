@@ -461,7 +461,7 @@ async function vykreslitZalohyNaDisku(/** @type {string} */ zprava = '') {
     misto.innerHTML = `<div class="backup-disk-hlava"><h4>Na Google Disku</h4>
             <button class="btn btn-secondary btn-small" data-nahrat-disk>Nahrát teď</button></div>
         <p class="pass-hint">${esc(zprava || v.chyba || (v.zalohy.length
-            ? 'Denní záloha se po přihlášení sama nahraje do skryté složky programu na Disku; zůstává posledních sedm.'
+            ? 'Denní záloha se po přihlášení sama nahraje do skryté složky programu na Disku (zůstává posledních sedm) a s ní malý balíček sbírky pro telefon bez explicitních fotek.'
             : 'Na Disku zatím žádná záloha není. Nahraje se sama s denní zálohou, nebo hned tlačítkem Nahrát teď.'))}</p>
         <ul class="backup-list">${radky}</ul>`;
 }
@@ -559,7 +559,7 @@ export function pripravit() {
             nahrat.textContent = 'Nahrávám…';
             const chyba = await NahratZalohuNaDisk().catch(e => String(e));
             if (chyba) oznamit(chyba);
-            else oznamit('Záloha je na Google Disku.');
+            else oznamit('Záloha i balíček pro telefon jsou na Google Disku.');
             otevritZalohy();
         } else if (stahnout && !stahnout.disabled) {
             stahnout.disabled = true;

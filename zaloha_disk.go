@@ -93,7 +93,14 @@ type ZalohyNaDisku struct {
 	Chyba     string          `json:"chyba"`
 }
 
-func (a *App) seznamNaDisku(ctx context.Context) ([]ZalohaNaDisku, error) {
+// Soubor ve skryté složce programu na Disku
+type souborNaDisku struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Size string `json:"size"`
+}
+
+func (a *App) souboryNaDisku(ctx context.Context) ([]souborNaDisku, error) {
 	q := url.Values{"spaces": {"appDataFolder"}, "fields": {"files(id,name,size)"}, "pageSize": {"200"}}
 	o, err := a.driveVolani(ctx, http.MethodGet, adresaDriveAPI+"/drive/v3/files?"+q.Encode(), nil, nil)
 	if err != nil {
@@ -101,17 +108,21 @@ func (a *App) seznamNaDisku(ctx context.Context) ([]ZalohaNaDisku, error) {
 	}
 	defer o.Body.Close()
 	var odpoved struct {
-		Files []struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-			Size string `json:"size"`
-		} `json:"files"`
+		Files []souborNaDisku `json:"files"`
 	}
 	if err := json.NewDecoder(o.Body).Decode(&odpoved); err != nil {
 		return nil, err
 	}
+	return odpoved.Files, nil
+}
+
+func (a *App) seznamNaDisku(ctx context.Context) ([]ZalohaNaDisku, error) {
+	soubory, err := a.souboryNaDisku(ctx)
+	if err != nil {
+		return nil, err
+	}
 	v := []ZalohaNaDisku{}
-	for _, f := range odpoved.Files {
+	for _, f := range soubory {
 		if !vzorZalohy.MatchString(f.Name) {
 			continue
 		}
@@ -166,11 +177,27 @@ func (a *App) nahratZalohu(ctx context.Context, nazev string) error {
 			return a.uklidNaDisku(ctx, stavajici)
 		}
 	}
-	// Obnovitelné nahrání: metadata, pak celý soubor jedním PUT
+	soubor, err := os.Open(cesta)
+	if err != nil {
+		return err
+	}
+	defer soubor.Close()
+	if err := a.nahratNaDisk(ctx, nazev, "application/x-sqlite3", soubor, info.Size()); err != nil {
+		return err
+	}
+	nove, err := a.seznamNaDisku(ctx)
+	if err != nil {
+		return err
+	}
+	return a.uklidNaDisku(ctx, nove)
+}
+
+// Nahraje soubor do skryté složky programu na Disku: obnovitelné nahrání – metadata, pak celý obsah jedním PUT
+func (a *App) nahratNaDisk(ctx context.Context, nazev, typ string, obsah io.Reader, velikost int64) error {
 	meta, _ := json.Marshal(map[string]any{"name": nazev, "parents": []string{"appDataFolder"}})
 	o, err := a.driveVolani(ctx, http.MethodPost, adresaDriveAPI+"/upload/drive/v3/files?uploadType=resumable", strings.NewReader(string(meta)),
-		map[string]string{"Content-Type": "application/json; charset=UTF-8", "X-Upload-Content-Type": "application/x-sqlite3",
-			"X-Upload-Content-Length": strconv.FormatInt(info.Size(), 10)})
+		map[string]string{"Content-Type": "application/json; charset=UTF-8", "X-Upload-Content-Type": typ,
+			"X-Upload-Content-Length": strconv.FormatInt(velikost, 10)})
 	if err != nil {
 		return err
 	}
@@ -179,22 +206,13 @@ func (a *App) nahratZalohu(ctx context.Context, nazev string) error {
 	if kam == "" {
 		return errors.New("Disk nevrátil adresu nahrání")
 	}
-	soubor, err := os.Open(cesta)
-	if err != nil {
-		return err
-	}
-	defer soubor.Close()
-	o, err = a.driveVolani(ctx, http.MethodPut, kam, soubor, map[string]string{"Content-Type": "application/x-sqlite3",
-		"Content-Length": strconv.FormatInt(info.Size(), 10)})
+	o, err = a.driveVolani(ctx, http.MethodPut, kam, obsah, map[string]string{"Content-Type": typ,
+		"Content-Length": strconv.FormatInt(velikost, 10)})
 	if err != nil {
 		return err
 	}
 	o.Body.Close()
-	nove, err := a.seznamNaDisku(ctx)
-	if err != nil {
-		return err
-	}
-	return a.uklidNaDisku(ctx, nove)
+	return nil
 }
 
 // Na Disku zůstane posledních pocetZalohNaDisku denních záloh (ostatní důvody se nenahrávají)
@@ -240,6 +258,11 @@ func (a *App) zalohaNaDiskNaPozadi() {
 	defer zrusit()
 	if err := a.nahratZalohu(ctx, nazev); err != nil {
 		a.chyba("záloha na Google Disk", err)
+		return
+	}
+	// Po záloze i balíček pro telefon (balicek_telefonu.go)
+	if err := a.nahratBalicekTelefonu(ctx); err != nil {
+		a.chyba("balíček pro telefon na Google Disk", err)
 	}
 }
 
@@ -258,6 +281,9 @@ func (a *App) NahratZalohuNaDisk() string {
 	defer zrusit()
 	if err := a.nahratZalohu(ctx, nazev); err != nil {
 		return "Zálohu se nepodařilo nahrát: " + err.Error()
+	}
+	if err := a.nahratBalicekTelefonu(ctx); err != nil {
+		return "Záloha je na Disku, balíček pro telefon se nepodařilo nahrát: " + err.Error()
 	}
 	return ""
 }

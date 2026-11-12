@@ -6,6 +6,22 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.077] – 2026-11-12
+
+### Přidáno
+- **Balíček pro telefon:** po nahrání zálohy na Google Disk (sama s denní zálohou i tlačítkem Nahrát teď) se do
+  skryté složky programu nahraje i malý výtah sbírky `telefon-balicek.json.gz`, ze kterého si telefon (další
+  kroky) složí stránku modelek: jména, srdíčka a oblíbenost, kategorie a tituly, čísla, titulní fotka dlaždice
+  a profilová fotka pro hero banner s výřezy. Fotky jsou jen jako odkazy (Drive ID a šablona adresy), telefon si
+  náhledy stáhne z Disku jako PC. **Explicitní fotky se do balíčku nedostanou** – titulní nebo profilová fotka,
+  která je explicitní (potvrzená nebo jistý odhad, jako v Galerii), se vynechá. Nový balíček nahradí starý.
+
+### Ověřeno
+- Test: 3000 modelek = 52 kB (limit 5 MB), explicitní titulní fotka vypadne, po dvou nahráních je na Disku jeden
+  balíček. Kopie sbírky: 613 modelek, 543 titulních a 98 profilových fotek = 52 kB.
+- Snímek s falešným Diskem: Nahrát teď oznámí „Záloha i balíček pro telefon jsou na Google Disku.“
+- **Neověřeno:** skutečný Google Disk.
+
 ## [0.02.076] – 2026-11-12
 
 ### Přidáno

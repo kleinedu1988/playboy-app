@@ -27,6 +27,11 @@
    "cekat": 6000
   },
   {
+   "nazev": "d-oznameni",
+   "js": "[...document.querySelectorAll('.toast, .oznameni, [role=status]')].map(x=>x.innerText).join(' | ').slice(0,200) || 'bez oznámení'",
+   "cekat": 200
+  },
+  {
    "nazev": "d-po",
    "js": "(()=>{const d=document.getElementById('backupDisk');return d.className+' | '+d.innerText.replace(/\\n+/g,' | ').slice(0,300)})()",
    "cekat": 500

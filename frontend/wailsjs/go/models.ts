@@ -419,6 +419,7 @@ export namespace main {
 	    modelka: number;
 	    text: string;
 	    kolekce: string;
+	    explicitni: string;
 	    seminko: number;
 	    od: number;
 	    kolik: number;
@@ -437,6 +438,7 @@ export namespace main {
 	        this.modelka = source["modelka"];
 	        this.text = source["text"];
 	        this.kolekce = source["kolekce"];
+	        this.explicitni = source["explicitni"];
 	        this.seminko = source["seminko"];
 	        this.od = source["od"];
 	        this.kolik = source["kolik"];
@@ -1639,6 +1641,7 @@ export namespace main {
 	    muz: SkupinaDruhu;
 	    zeny: SkupinaDruhu;
 	    potvrzene: Record<string, number>;
+	    uceno: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new NavrhyDruhu(source);
@@ -1649,6 +1652,7 @@ export namespace main {
 	        this.muz = this.convertValues(source["muz"], SkupinaDruhu);
 	        this.zeny = this.convertValues(source["zeny"], SkupinaDruhu);
 	        this.potvrzene = source["potvrzene"];
+	        this.uceno = source["uceno"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

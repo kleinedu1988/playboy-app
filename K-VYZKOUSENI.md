@@ -5,6 +5,12 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.063 – Učení z potvrzení
+
+- [ ] Po ~20 potvrzeních v Údržbě › Druh fotek ubude chybných návrhů (podobné fotky jako opravené zmizí), správné zůstanou.
+- [ ] Věta „Odhad je doladěný z N potvrzených fotek“ a přepínač „Sporné první“.
+- [ ] Hromadné potvrzení pózovacích nesmaže všechny návrhy (jen podobné).
+
 ## 0.02.062 – Galerie zvlášť
 
 - [ ] V řadách Galerie, v heru a ve Všech fotkách není fotka se sexem ani lesbická scéna (potvrzená nebo jistě odhadnutá).

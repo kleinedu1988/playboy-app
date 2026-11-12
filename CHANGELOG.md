@@ -6,6 +6,31 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.063] – 2026-11-12
+
+### Přidáno
+- **Učení z potvrzení:** potvrzené druhy fotek doladí odhad (muž na fotce: sex a „jen s mužem“ ano, pózovací
+  a lesbická ne; víc žen: lesbická ano, pózovací ne). Učí se z vestavěných vah a drží se jich; kotvou je vzorek
+  sbírky a nejsilnější nepotvrzené návrhy s cílem podle vestavěného odhadu, takže se odhad mění jen tam, kam
+  ukazují potvrzení. Doladěný odhad používají návrhy v Údržbě i skrývání v Galerii.
+- **Údržba › Druh fotek:** „Od nejjistějších / Sporné první“ (sporné = nejméně jisté návrhy) a věta, z kolika
+  potvrzených fotek je odhad doladěný.
+
+### Opraveno (během vývoje)
+- První verze učení brala vzorek sbírky jako „ne“: hromadné potvrzení 24 fotek „víc žen“ jako pózovací pak
+  smazalo všechny návrhy víc žen (179 → 0) a srazilo i „muž na fotce“ (55 → 17). Kotva s cílem z vestavěného
+  odhadu a držení posunu to opravily.
+
+### Ověřeno
+- Test: odhad, který plete pózovací skupinu s kladnou, ji po 20 potvrzeních „ne“ přestane navrhovat a kladnou
+  skupinu ponechá; bez potvrzení zůstanou vestavěné váhy.
+- Snímky na kopii sbírky: 24 potvrzených „pózovací“ z „Víc žen“ → návrhy víc žen 179 → 139 (24 potvrzených a 16
+  podobných), muž na fotce 55 → 53, věta „doladěný z 24 potvrzených fotek“; „Sporné první“ řadí od 85 %.
+  Zkušební potvrzení z kopie smazána.
+- Simulace na mém ručním vzorku (nástroj `druh-mereni -simulace`) je malá – 9 a 5 potvrzení: muž na fotce
+  správné návrhy 4 → 6 při stejných 3 chybných, víc žen beze změny. Že po 20 opravách ubude chybných návrhů,
+  ukáže až používání (K-VYZKOUSENI).
+
 ## [0.02.062] – 2026-11-12
 
 ### Změněno

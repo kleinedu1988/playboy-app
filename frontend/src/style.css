@@ -21620,3 +21620,10 @@ button.udd-nazev {
     color: var(--text-muted, #999);
     font-size: 0.85rem;
 }
+
+.ufo-druh-poradi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 6px 0 10px;
+}

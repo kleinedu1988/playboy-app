@@ -73,19 +73,106 @@ type OdhadDruhu struct {
 	Zeny float64 `json:"zeny"`
 }
 
-// OdhadyDruhu: odhad pro každou fotku s vektorem (bez vektorů nebo vah prázdné)
-func (s *Sluzba) OdhadyDruhu() map[string]OdhadDruhu {
+// VychoziVahyDruhu: vestavěné váhy (nil, když se nenačetly)
+func VychoziVahyDruhu() *[2]VahyDruhu { return vahyDruhu }
+
+// OdhadyDruhu: odhad pro každou fotku s vektorem; vahy nil = vestavěné (bez vektorů nebo vah prázdné)
+func (s *Sluzba) OdhadyDruhu(vahy *[2]VahyDruhu) map[string]OdhadDruhu {
 	v := map[string]OdhadDruhu{}
-	if vahyDruhu == nil {
+	if vahy == nil {
+		vahy = vahyDruhu
+	}
+	if vahy == nil {
 		return v
 	}
-	muz := s.PodobnostiKTextu(vahyDruhu[0].Vahy[:])
-	zeny := s.PodobnostiKTextu(vahyDruhu[1].Vahy[:])
+	muz := s.PodobnostiKTextu(vahy[0].Vahy[:])
+	zeny := s.PodobnostiKTextu(vahy[1].Vahy[:])
 	for id, x := range muz {
 		v[id] = OdhadDruhu{
-			Muz:  sigmoida(x + float64(vahyDruhu[0].Posun)),
-			Zeny: sigmoida(zeny[id] + float64(vahyDruhu[1].Posun)),
+			Muz:  sigmoida(x + float64(vahy[0].Posun)),
+			Zeny: sigmoida(zeny[id] + float64(vahy[1].Posun)),
 		}
 	}
 	return v
+}
+
+// PrikladDruhu: vektor fotky, cíl (1 ano, 0 ne) a váha příkladu (potvrzená fotka 1, slabý vzorek sbírky méně)
+type PrikladDruhu struct {
+	X    []float32
+	T    float64
+	Vaha float64
+}
+
+// Síla L2 k vestavěným vahám při doladění (čím víc, tím méně pár potvrzení odhad posune)
+var SilaVychozichVah = 0.1
+
+// UcitDruh (0.02.063): logistická regrese s vahami tříd. Se start (vestavěné váhy) začne z nich a L2 drží váhy
+// u nich – pár potvrzení odhad jen doladí, nepřeučí; bez start je to učení od nuly (generátor druh.bin).
+func UcitDruh(data []PrikladDruhu, start *VahyDruhu) VahyDruhu {
+	const epoch, krok, skala = 400, 0.5, 10.0
+	l2 := 1e-3
+	w0 := make([]float64, Rozmer)
+	b := 0.0
+	l2b := 0.0 // posun se k výchozímu drží jen při doladění
+	if start != nil {
+		l2b = SilaVychozichVah
+		l2 = SilaVychozichVah
+		for j := range w0 {
+			w0[j] = float64(start.Vahy[j]) / skala
+		}
+		b = float64(start.Posun)
+	}
+	b0 := b
+	w := append([]float64(nil), w0...)
+	kladne, zaporne := 0.0, 0.0
+	for _, p := range data {
+		// Měkký cíl (kotva z výchozího odhadu) se do tříd rozdělí podle své hodnoty
+		kladne += p.T * p.Vaha
+		zaporne += (1 - p.T) * p.Vaha
+	}
+	vahaAno := 1.0
+	if kladne > 0 {
+		vahaAno = zaporne / kladne
+	}
+	vahaAno = min(max(vahaAno, 0.2), 20)
+	g := make([]float64, Rozmer)
+	var n float64
+	for _, p := range data {
+		n += p.Vaha
+	}
+	if n == 0 {
+		if start != nil {
+			return *start
+		}
+		return VahyDruhu{}
+	}
+	for range epoch {
+		clear(g)
+		gb := 0.0
+		for _, p := range data {
+			z := b
+			for j, x := range p.X {
+				z += w[j] * float64(x) * skala
+			}
+			// Váha kladné třídy jen u tvrdých „ano“ (potvrzení); měkké cíle kotvy beze změny
+			d := (sigmoida(z) - p.T) * p.Vaha
+			if p.T == 1 {
+				d *= vahaAno
+			}
+			for j, x := range p.X {
+				g[j] += d * float64(x) * skala
+			}
+			gb += d
+		}
+		for j := range w {
+			w[j] -= krok * (g[j]/n + l2*(w[j]-w0[j]))
+		}
+		b -= krok * (gb/n + l2b*(b-b0))
+	}
+	var m VahyDruhu
+	m.Posun = float32(b)
+	for j := range w {
+		m.Vahy[j] = float32(w[j] * skala)
+	}
+	return m
 }

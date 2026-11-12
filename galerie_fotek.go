@@ -30,9 +30,9 @@ type DotazGalerie struct {
 	Kolekce string   `json:"kolekce"` // klíč kolekce (galerie_kolekce.go), „Zobrazit vše“ z řady
 	// Páry a lesbické fotky (0.02.062, druh_fotek.go): "" skryté (výchozí), "i" i s nimi, "jen" jen ony
 	Explicitni string `json:"explicitni"`
-	Seminko int      `json:"seminko"` // náhodné pořadí
-	Od      int      `json:"od"`      // stránka od
-	Kolik   int      `json:"kolik"`   // velikost stránky
+	Seminko    int    `json:"seminko"` // náhodné pořadí
+	Od         int    `json:"od"`      // stránka od
+	Kolik      int    `json:"kolik"`   // velikost stránky
 }
 
 // Počty pro ovládací panel: kolik fotek by zůstalo s hodnotou (ostatní filtry platí)

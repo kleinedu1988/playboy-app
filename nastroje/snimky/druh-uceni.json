@@ -1,0 +1,81 @@
+{
+ "velikosti": [
+  [
+   1280,
+   800
+  ]
+ ],
+ "start": 25000,
+ "kroky": [
+  {
+   "nazev": "start",
+   "js": "(document.querySelector('#uvod button')||{click(){}}).click(); 'ok'",
+   "cekat": 5000
+  },
+  {
+   "nazev": "zavrit",
+   "js": "(()=>{const tl=t=>[...document.querySelectorAll('button')].find(b=>b.offsetParent&&b.textContent.trim()===t);tl('Později')?.click();document.querySelectorAll('.dnesni-vyber button[aria-label], [class*=dnesni] .zavrit, [aria-label=\"Zavřít\"]').forEach(b=>b.offsetParent&&b.click());document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape'}));return 'ok'})()",
+   "cekat": 1500
+  },
+  {
+   "nazev": "zavrit-dv",
+   "js": "(()=>{const h=[...document.querySelectorAll('*')].find(e=>e.offsetParent&&e.children.length===0&&e.textContent.trim()==='Dnešní výběr');let p=h;for(let i=0;i<5&&p;i++){p=p.parentElement;const b=p&&[...p.querySelectorAll('button')].find(b=>/^[×✕]?$/.test(b.textContent.trim())&&b.offsetParent);if(b){b.click();return 'zavřeno'}}return 'nenalezeno'})()",
+   "cekat": 800
+  },
+  {
+   "nazev": "sbirka",
+   "js": "(()=>{const b=document.querySelector('#viewToggle [data-sekce=\"sbirka\"]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 7000
+  },
+  {
+   "nazev": "x-ukoly",
+   "js": "(()=>{const b=document.querySelector('.sh-stranky [data-sbirka-stranka=\\\"ukoly\\\"]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "x-fotky",
+   "js": "(()=>{const b=document.querySelector('[data-sh-rezim=\\\"fotky\\\"]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 8000
+  },
+  {
+   "nazev": "u-pred",
+   "js": "(()=>{const h=[...document.querySelectorAll('.ufo-sekce h4')].find(h=>h.textContent.startsWith('Druh fotek'));if(!h)return 'bez';h.scrollIntoView();return h.textContent+' | '+(document.querySelector('.ufo-druh-souhrn')?.textContent||'bez souhrnu')+' | '+[...document.querySelectorAll('.ufo-druh-nadpis')].map(x=>x.textContent).join(' | ')})()",
+   "cekat": 2500
+  },
+  {
+   "nazev": "u-jist-pred",
+   "js": "(()=>[...document.querySelectorAll('.ufo-druhy')].map(m=>[...m.querySelectorAll('.ufo-jistota')].slice(0,4).map(x=>x.textContent).join(' ')).join(' || '))()",
+   "cekat": 100
+  },
+  {
+   "nazev": "u-pozovaci",
+   "js": "(()=>{const b=document.querySelector('[data-ud-vse=\"pozovaci\"][data-ud-skupina=\"zeny\"]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 6000
+  },
+  {
+   "nazev": "u-po",
+   "js": "(()=>{const h=[...document.querySelectorAll('.ufo-sekce h4')].find(h=>h.textContent.startsWith('Druh fotek'));if(!h)return 'bez';h.scrollIntoView();return h.textContent+' | '+(document.querySelector('.ufo-druh-souhrn')?.textContent||'bez souhrnu')+' | '+[...document.querySelectorAll('.ufo-druh-nadpis')].map(x=>x.textContent).join(' | ')})()+' | '+(document.querySelectorAll('.ufo-druh-souhrn')[1]?.textContent||'bez učení')",
+   "cekat": 1500
+  },
+  {
+   "nazev": "u-jist-po",
+   "js": "(()=>[...document.querySelectorAll('.ufo-druhy')].map(m=>[...m.querySelectorAll('.ufo-jistota')].slice(0,4).map(x=>x.textContent).join(' ')).join(' || '))()",
+   "cekat": 100
+  },
+  {
+   "nazev": "u-sporne",
+   "js": "(()=>{const b=document.querySelector('[data-ud-poradi=\"1\"]');if(!b)return 'bez';b.click();return 'ok'})()",
+   "cekat": 5000
+  },
+  {
+   "nazev": "u-jist-sporne",
+   "js": "(()=>[...document.querySelectorAll('.ufo-druhy')].map(m=>[...m.querySelectorAll('.ufo-jistota')].slice(0,4).map(x=>x.textContent).join(' ')).join(' || '))()",
+   "cekat": 100
+  },
+  {
+   "nazev": "u-snimek",
+   "js": "(()=>{document.querySelector('.ufo-druh-poradi')?.scrollIntoView({block:'start'});return 'ok'})()",
+   "cekat": 2000
+  }
+ ]
+}

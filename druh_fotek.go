@@ -1,10 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"hash/fnv"
 	"sort"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
+
+	"pinup-katalog/internal/obsah"
 )
 
 // Druh fotky (0.02.060, Explicitní fotky zvlášť): návrhy z odhadu nad vektory CLIP (internal/obsah/druh.go) –
@@ -99,6 +104,136 @@ func platnyDruh(druh string) string {
 	return ""
 }
 
+// Učení z potvrzení (0.02.063): potvrzené fotky doladí vestavěný odhad (obsah.UcitDruh). Muž na fotce: sex
+// a „jen s mužem“ ano, pózovací a lesbická ne. Víc žen: lesbická ano, pózovací ne (u sexu a „s mužem“ neznámo).
+// Kotva: vzorek nepotvrzených fotek sbírky a nejsilnější nepotvrzené návrhy s cílem = vestavěný odhad (ne 0) –
+// odhad se změní jen tam, kam ukazují potvrzení; samé „ne“ ho jinak srazí celý. Naučené váhy se drží v paměti,
+// dokud se potvrzení nezmění.
+const (
+	vzorekSbirkyDruhu   = 300
+	kotvaNavrhuDruhu    = 200 // nejsilnějších nepotvrzených návrhů každé skupiny v kotvě
+	vahaVzorkuDruhu     = 0.3
+	maxPotvrzenychDruhu = 3000
+)
+
+var uceniDruhu struct {
+	sync.Mutex
+	klic  string
+	vahy  *[2]obsah.VahyDruhu
+	pocet int // potvrzených fotek, ze kterých se učilo
+}
+
+// vahyDruhu: váhy odhadu doladěné z potvrzení (nil = vestavěné, když nic potvrzeného není) a počet příkladů
+func (a *App) vahyDruhu() (*[2]obsah.VahyDruhu, int) {
+	if a.db == nil || a.obsah == nil || obsah.VychoziVahyDruhu() == nil {
+		return nil, 0
+	}
+	var n int
+	var posledni string
+	a.db.QueryRow(`SELECT COUNT(*), COALESCE(MAX(potvrzeno), '') FROM druhy_fotek`).Scan(&n, &posledni)
+	klic := fmt.Sprint(n, posledni, zmenyDruhu.Load(), a.obsah.PocetPartii())
+	u := &uceniDruhu
+	u.Lock()
+	defer u.Unlock()
+	if u.klic == klic {
+		return u.vahy, u.pocet
+	}
+	u.klic, u.vahy, u.pocet = klic, nil, 0
+	if n == 0 {
+		return nil, 0
+	}
+	// Potvrzené (nejnovější, nejvýš maxPotvrzenychDruhu) a deterministický vzorek nepotvrzených
+	radky, err := a.db.Query(`SELECT drive_file_id, druh FROM druhy_fotek ORDER BY potvrzeno DESC LIMIT ?`, maxPotvrzenychDruhu)
+	if err != nil {
+		return nil, 0
+	}
+	var muz, zeny []obsah.PrikladDruhu
+	potvrzene := map[string]bool{}
+	for radky.Next() {
+		var id, druh string
+		if radky.Scan(&id, &druh) != nil {
+			continue
+		}
+		potvrzene[id] = true
+		x := a.obsah.Vektor(id)
+		if x == nil {
+			continue
+		}
+		u.pocet++
+		ano := map[bool]float64{true: 1, false: 0}
+		muz = append(muz, obsah.PrikladDruhu{X: x, T: ano[druh == "sex" || druh == "muz"], Vaha: 1})
+		if druh == "lesbicka" || druh == "pozovaci" {
+			zeny = append(zeny, obsah.PrikladDruhu{X: x, T: ano[druh == "lesbicka"], Vaha: 1})
+		}
+	}
+	radky.Close()
+	if u.pocet == 0 {
+		return nil, 0
+	}
+	vychoziOdhady := a.obsah.OdhadyDruhu(nil)
+	kotva := a.vzorekSbirkyDruhu(potvrzene)
+	for _, k := range []func(o obsah.OdhadDruhu) float64{
+		func(o obsah.OdhadDruhu) float64 { return o.Muz }, func(o obsah.OdhadDruhu) float64 { return o.Zeny }} {
+		var nejsilnejsi []string
+		for id := range vychoziOdhady {
+			if !potvrzene[id] {
+				nejsilnejsi = append(nejsilnejsi, id)
+			}
+		}
+		sort.Slice(nejsilnejsi, func(i, j int) bool {
+			pi, pj := k(vychoziOdhady[nejsilnejsi[i]]), k(vychoziOdhady[nejsilnejsi[j]])
+			if pi != pj {
+				return pi > pj
+			}
+			return nejsilnejsi[i] < nejsilnejsi[j]
+		})
+		kotva = append(kotva, nejsilnejsi[:min(len(nejsilnejsi), kotvaNavrhuDruhu)]...)
+	}
+	videno := map[string]bool{}
+	for _, id := range kotva {
+		o, ok := vychoziOdhady[id]
+		x := a.obsah.Vektor(id)
+		if !ok || x == nil || videno[id] {
+			continue
+		}
+		videno[id] = true
+		muz = append(muz, obsah.PrikladDruhu{X: x, T: o.Muz, Vaha: vahaVzorkuDruhu})
+		zeny = append(zeny, obsah.PrikladDruhu{X: x, T: o.Zeny, Vaha: vahaVzorkuDruhu})
+	}
+	vychozi := obsah.VychoziVahyDruhu()
+	u.vahy = &[2]obsah.VahyDruhu{obsah.UcitDruh(muz, &vychozi[0]), obsah.UcitDruh(zeny, &vychozi[1])}
+	return u.vahy, u.pocet
+}
+
+// Vzorek nepotvrzených souborů sbírky, stále stejný (pořadí podle otisku ID)
+func (a *App) vzorekSbirkyDruhu(vynechat map[string]bool) []string {
+	radky, err := a.db.Query(`SELECT DISTINCT drive_file_id FROM fotky WHERE nedostupne_od IS NULL`)
+	if err != nil {
+		return nil
+	}
+	defer radky.Close()
+	type s struct {
+		id string
+		h  uint64
+	}
+	var v []s
+	for radky.Next() {
+		var id string
+		if radky.Scan(&id) != nil || vynechat[id] {
+			continue
+		}
+		h := fnv.New64a()
+		h.Write([]byte(id))
+		v = append(v, s{id, h.Sum64()})
+	}
+	sort.Slice(v, func(i, j int) bool { return v[i].h < v[j].h })
+	ids := make([]string, 0, vzorekSbirkyDruhu)
+	for _, x := range v[:min(len(v), vzorekSbirkyDruhu)] {
+		ids = append(ids, x.id)
+	}
+	return ids
+}
+
 // Od jaké jistoty odhadu se nepotvrzená fotka v Galerii skryje jako sex nebo lesbická (0.02.062)
 const prahSkrytiDruhu = 0.95
 
@@ -118,7 +253,8 @@ func (a *App) explicitniFotky() map[string]bool {
 	if a.obsah == nil || !a.obsahZapnuty() {
 		return v
 	}
-	for id, o := range a.obsah.OdhadyDruhu() {
+	vahy, _ := a.vahyDruhu()
+	for id, o := range a.obsah.OdhadyDruhu(vahy) {
 		if potvrzene[id] == "" && (o.Muz >= prahSkrytiDruhu || o.Zeny >= prahSkrytiDruhu) {
 			v[id] = true
 		}
@@ -148,10 +284,13 @@ type NavrhyDruhu struct {
 	Zeny SkupinaDruhu `json:"zeny"`
 	// Kolik souborů má potvrzený druh (podle druhu)
 	Potvrzene map[string]int `json:"potvrzene"`
+	// Z kolika potvrzených fotek se odhad doladil (0 = vestavěný)
+	Uceno int `json:"uceno"`
 }
 
-// GetNavrhyDruhu: fotky s mužem a s víc ženami podle odhadu, od nejjistějších, v každé skupině nejvýš limit
-func (a *App) GetNavrhyDruhu(limit int) NavrhyDruhu {
+// GetNavrhyDruhu: fotky s mužem a s víc ženami podle odhadu, od nejjistějších (sporne: od nejméně jistých),
+// v každé skupině nejvýš limit
+func (a *App) GetNavrhyDruhu(limit int, sporne bool) NavrhyDruhu {
 	v := NavrhyDruhu{Muz: SkupinaDruhu{Fotky: []FotkaDruhu{}}, Zeny: SkupinaDruhu{Fotky: []FotkaDruhu{}}, Potvrzene: map[string]int{}}
 	if a.db == nil || a.obsah == nil || !a.obsahZapnuty() {
 		return v
@@ -160,7 +299,8 @@ func (a *App) GetNavrhyDruhu(limit int) NavrhyDruhu {
 	for _, d := range potvrzene {
 		v.Potvrzene[d]++
 	}
-	odhady := a.obsah.OdhadyDruhu()
+	vahy, uceno := a.vahyDruhu()
+	odhady := a.obsah.OdhadyDruhu(vahy)
 	if len(odhady) == 0 {
 		return v
 	}
@@ -193,14 +333,18 @@ func (a *App) GetNavrhyDruhu(limit int) NavrhyDruhu {
 			zeny = append(zeny, f)
 		}
 	}
-	potvrzeneV := v.Potvrzene
-	v.Muz, v.Zeny = skupinaDruhu(muz, limit), skupinaDruhu(zeny, limit)
-	v.Potvrzene = potvrzeneV
+	v.Muz, v.Zeny = skupinaDruhu(muz, limit, sporne), skupinaDruhu(zeny, limit, sporne)
+	v.Uceno = uceno
 	return v
 }
 
-func skupinaDruhu(fotky []FotkaDruhu, limit int) SkupinaDruhu {
-	sort.SliceStable(fotky, func(i, j int) bool { return fotky[i].Jistota > fotky[j].Jistota })
+func skupinaDruhu(fotky []FotkaDruhu, limit int, sporne bool) SkupinaDruhu {
+	sort.SliceStable(fotky, func(i, j int) bool {
+		if sporne {
+			return fotky[i].Jistota < fotky[j].Jistota
+		}
+		return fotky[i].Jistota > fotky[j].Jistota
+	})
 	s := SkupinaDruhu{Celkem: len(fotky), Fotky: fotky[:min(len(fotky), max(limit, 0))]}
 	for i := range s.Fotky {
 		s.Fotky[i].URL = adresaObrazku(s.Fotky[i].DriveID)

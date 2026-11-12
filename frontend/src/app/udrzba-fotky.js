@@ -38,9 +38,11 @@ let zobrazitSlabych = 24;
 let bezPostavy = null;
 let zobrazitBezPostavy = 24;
 // Druh fotek (0.02.060): návrhy „muž na fotce“ a „víc žen“ z odhadu nad vektory; potvrzení přijde v dalším kroku
-/** @type {{ muz: { fotky: any[], celkem: number }, zeny: { fotky: any[], celkem: number }, potvrzene?: Record<string, number> } | null} */
+/** @type {{ muz: { fotky: any[], celkem: number }, zeny: { fotky: any[], celkem: number }, potvrzene?: Record<string, number>, uceno?: number } | null} */
 let druhy = null;
 let zobrazitDruhu = 24;
+// Pořadí návrhů (0.02.063): od nejjistějších, nebo sporné (nejméně jisté) první
+let sporneDruhy = false;
 
 const DAVKA_VYREZU = 24;
 
@@ -64,7 +66,7 @@ async function nacist() {
     const [o, st, bez, sl, sk, bp] = await Promise.all([GetOtoceneFotky(), GetStavOtoceni(), GetTitulniBezVyrezu(), GetSlabeFotky(), GetStavKvality(),
         GetFotkyBezVyrezu(zobrazitBezPostavy).catch(() => null)]);
     bezPostavy = bp;
-    druhy = await GetNavrhyDruhu(zobrazitDruhu).catch(() => null);
+    druhy = await GetNavrhyDruhu(zobrazitDruhu, sporneDruhy).catch(() => null);
     otocene = o || [];
     slabe = sl || [];
     stavKvality = sk;
@@ -236,9 +238,11 @@ function htmlSekceDruhu() {
             ${s.celkem > s.fotky.length ? `<button type="button" class="btn btn-secondary btn-small" data-ud-dalsi="${klic}">Ukázat dalších ${Math.min(24, s.celkem - s.fotky.length)}</button>` : ''}
             <span class="ufo-druh-vse">Všech ${s.fotky.length} zobrazených: ${NABIDKA_DRUHU[klic].slice(0, 2).map(d => `<button type="button" class="btn btn-secondary btn-small" data-ud-vse="${d}" data-ud-skupina="${klic}">${kratkyNazev[d]}</button>`).join('')}</span>
         </div>` : '');
+    const uceno = druhy.uceno ? `<p class="ufo-druh-souhrn">Odhad je doladěný z ${sklonovat(druhy.uceno, 'potvrzené fotky', 'potvrzených fotek', 'potvrzených fotek')} – každé potvrzení ho dál zpřesní.</p>` : '';
+    const poradi = celkem ? `<div class="ufo-druh-poradi" role="group" aria-label="Pořadí návrhů">${[[false, 'Od nejjistějších'], [true, 'Sporné první']].map(([k, n]) => `<button type="button" class="gv-volba ${sporneDruhy === k ? 'on' : ''}" data-ud-poradi="${k ? '1' : ''}" aria-pressed="${sporneDruhy === k}">${n}</button>`).join('')}</div>` : '';
     return `<section class="ufo-sekce"><h4>Druh fotek <small>${celkem ? `návrh · ${celkem.toLocaleString('cs-CZ')}` : 'návrh'}</small></h4>
-        ${souhrn}
-        ${celkem ? `<p class="us-uvod">Program odhaduje z obsahu fotky, na kterých je muž a na kterých je víc žen. Potvrď druh tlačítkem u fotky („Jen s mužem“ je scéna bez sexu, třeba zákulisí), potvrzená fotka ze seznamu zmizí. Druh jde změnit i v nabídce fotky (⋯ › Druh fotky…). Oddělení od pózovacích fotek v Galerii přijde v příští verzi.</p>
+        ${souhrn}${uceno}${poradi}
+        ${celkem ? `<p class="us-uvod">Program odhaduje z obsahu fotky, na kterých je muž a na kterých je víc žen. Potvrď druh tlačítkem u fotky („Jen s mužem“ je scéna bez sexu, třeba zákulisí), potvrzená fotka ze seznamu zmizí. Druh jde změnit i v nabídce fotky (⋯ › Druh fotky…). Potvrzené fotky se sexem a lesbické jsou v Galerii jen v řadě Páry a lesbické; „Sporné první“ ukáže fotky, u kterých si odhad není jistý.</p>
             ${skupina('Muž na fotce', druhy.muz, 'muz')}${skupina('Víc žen', druhy.zeny, 'zeny')}`
             : '<p class="prazdno-male">Žádná další fotka nevypadá jako scéna s mužem nebo s víc ženami.</p>'}</section>`;
 }
@@ -351,6 +355,11 @@ async function klik(e) {
     if ((p = data('data-ud-vse'))) {
         const ids = (druhy?.[p.dataset.udSkupina]?.fotky || []).map(f => f.driveId);
         if (ids.length) await potvrditDruh(ids, p.dataset.udVse, { poZmene: () => nacist() });
+        return;
+    }
+    if ((p = data('data-ud-poradi'))) {
+        sporneDruhy = p.dataset.udPoradi === '1';
+        await nacist();
         return;
     }
     if (data('data-ud-dalsi')) {

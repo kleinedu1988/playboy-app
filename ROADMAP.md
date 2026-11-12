@@ -5,7 +5,7 @@ plán a historie jsou v [docs/archiv/ROADMAP-PLAYBOY-DATABASE.md](docs/archiv/RO
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md). Odkazy „ROADMAP 1.xx“
 v komentářích kódu a značka **PD 1.xx** níže míří do archivní roadmapy (verze Playboy Database), ne do nové řady.
 
-**Stav (12. 11. 2026): verze 0.02.062** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
+**Stav (12. 11. 2026): verze 0.02.063** – program přejmenovaný, verzování začíná znovu; jádro v Go i rozhraní znají klíč
 čísla s časopisem (`1985-09@PH`), databáze má tabulku časopisů (úprava č. 17), čísla se jmenují podle časopisu
 a v okně alba, coveru i rychlém přidání jde vybrat časopis; pohledy Playboye čísla jiných časopisů neukazují.
 Export (verze 14) nese časopisy a profil, okno alba, kategorie i hledání znají titul modelky podle časopisu (Playmate, Pet,
@@ -21,7 +21,7 @@ modelky.
 
 **Od 11. 11. 2026 přednost má ladění** (přání uživatele): nové funkce (PDF, web, vkus napříč časopisy) počkají,
 napřed se dotáhne vykreslování, grafika a správné napojení toho, co už je. Další na řadě je
-**0.02.063 – Učení z potvrzení** (Explicitní fotky zvlášť; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
+**0.02.064 – Označit stránky PDF** (Fotky z PDF; snímky obrazovek: `go test -tags snimky`, úlohy v `nastroje/snimky/`).
 
 ---
 
@@ -54,7 +54,7 @@ jejíž `verze.go` má `NazevProgramu` – starou řadu 1.x Playboy Database za 
 | Etapa | Verze | Stav | Název | Hlavní přínos |
 |---|---|---|---|---|
 | PD | 0.1–1.53 | ✅ Hotovo | Playboy Database | Celý dosavadní program (archivní roadmapa) |
-| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.062 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
+| **U** | **0.01–0.02** | 🚧 0.01 hotová, 0.02.001–0.02.063 hotové | **Univerzální katalog** | Modelky v centru, časopis jen jako místo publikace: Playboy, Penthouse, Hustler… |
 | **1.0** | **1.00.000** | 📋 Plán | **První vydání Pinup Katalogu** | Přechod ověřený na skutečné sbírce |
 | **H** | **1.01** | 📋 Plán | **Prohlížení a časopis 2** | Zbytek etapy H z Playboy Database (PD 1.54) |
 | **I** | **1.02–1.05** | 📋 Plán | **Sbírka výtisků** | PD 1.55–1.58 |
@@ -237,7 +237,7 @@ i oblečené scény ze zákulisí – potvrzení rozliší sex od fotky jen s mu
 | 0.02.060 ✅ | **Odhad druhu fotky:** větší detektor 640m změřen a zahozen (muže ve scénách nevidí, 5× pomalejší); místo něj odhad „muž na fotce“ a „víc žen“ naučený z ručně roztříděných fotek nad vektory CLIP (vestavěné váhy `druh.bin`); Údržba › Otočené a výřezy › Druh fotek ukáže návrhy s jistotou | návrhy na kontrolních listech sedí zhruba u 9 z 10 |
 | 0.02.061 ✅ | **[schéma] [export] Potvrzení druhu:** tabulka druhů fotek (pózovací / lesbická / sex / jen s mužem, potvrzeno uživatelem); v Údržbě › Druh fotek potvrdit nebo opravit po jedné i označeným, v prohlížeči fotky „Druh fotky…“ | potvrzený druh vydrží restart, export a import |
 | 0.02.062 ✅ | **Galerie zvlášť:** potvrzené sex a lesbické fotky (a odhady s jistotou ≥ 95 %) vypadnou z řad kolekcí, hera a Všech fotek; vlastní řada a kolekce „Páry a lesbické“, filtr k zapnutí | v běžných řadách není žádná potvrzená fotka se sexem |
-| 0.02.063 | **Učení z potvrzení:** potvrzené a opravené fotky přeučí odhad druhu (jako učení tagů), sporné se nabídnou dřív | po 20 opravách klesne počet chybných návrhů na kontrolním listu |
+| 0.02.063 ✅ | **Učení z potvrzení:** potvrzené a opravené fotky doladí odhad druhu (z vestavěných vah, s kotvou z vestavěného odhadu), „Sporné první“ v Údržbě | hotovo: 24 potvrzených „pózovací“ ubralo i 16 podobných návrhů, ostatní beze změny; ověření na tvých opravách v K-VYZKOUSENI |
 
 #### Fotky z PDF (0.02.035–0.02.067, dříve etapa 0.05)
 

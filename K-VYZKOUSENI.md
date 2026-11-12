@@ -5,6 +5,11 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.071 – Filtr časopisu ve Statistikách
+
+- [ ] Statistiky › Filtry: volba Penthouse omezí grafy na Pets, Playboy vrátí celou sbírku; Mapa sbírky s Penthouse.
+- [ ] Po návratu do Statistik (jiný pohled a zpět) zůstane zvolený časopis.
+
 ## 0.02.070 – Můj vkus v čase s časopisem
 
 - [ ] Až bude ve sbírce aspoň 20 Pets: Statistiky › Můj vkus v čase má řádek „modelky Penthouse“ a při posunu větu.

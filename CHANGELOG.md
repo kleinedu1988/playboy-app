@@ -6,6 +6,25 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.071] – 2026-11-12
+
+### Přidáno
+- **Filtr časopisu ve Statistikách:** ve sbírce z víc časopisů je ve Filtrech volba Playboy / Penthouse / …
+  Playboy (výchozí) ukazuje celou sbírku a výskyty v Playboyi jako dřív; jiný časopis omezí všechny grafy, hero
+  i mapu na jeho modelky a rok prvního výskytu bere z čísel toho časopisu. Výběr a edice se se změnou časopisu
+  zruší; časopis zůstane i po načtení čerstvých dat.
+
+### Opraveno
+- Souhrn grafu skloňuje i malé počty („3 modelky · 1969–1970“, „známé u 3 modelek“) – s filtrem časopisu jsou
+  běžné.
+
+### Ověřeno
+- Snímky na kopii sbírky: Penthouse ukáže 3 Pets (1969–1970) v grafu podle roku i výšky, návrat na Playboy celou
+  sbírku (567 modelek s výškou). Typy, build a 232 JS testů prošly.
+
+### Neuděláno
+- Barva časopisu v grafech (sloupce rozdělené podle časopisu) je přesunutá do Možných.
+
 ## [0.02.070] – 2026-11-12
 
 ### Přidáno

@@ -9,7 +9,7 @@ import { GetProfilovaFotka, GetStatistiky, GetVkusVCase, UlozitSouborGrafu } fro
 import { csv, nazevSouboru, pngGrafu } from '../lib/graf-ven';
 import { oznamit } from '../ui/oznameni';
 import { radaPodilu, vkusVCase } from '../lib/vkus-v-case';
-import { EDICE, MESICE, jeCisloPlayboye, jeTitulJinehoCasopisu, vCasopiseStatistik, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
+import { EDICE, MESICE, VYCHOZI_CASOPIS, jeTitulJinehoCasopisu, nazevCasopisu, VYSKYT, ZKRATKY_PASKY, esc, formatDatum, obrazek, kategorieModelky, nazevVydani, rozlozitVydani, sjednotit, sklonovat, vyskytModelky } from '../lib/format';
 import { vsechnyModelky } from './mezipamet';
 import { adresaTitulni, nacitatPostupne, VELIKOST_TITULNI, VELIKOST_ZAHLAVI } from './obrazky';
 import { stylVyrezu } from './navigace';
@@ -18,7 +18,7 @@ import { hledatHodnotu } from './galerie';
 import { naPulky, textSrdicek, znakySrdicek } from '../lib/srdicka';
 import { neobvykleRoky, porovnatObdobi, postrehRady, pripravitPriznak, rozdilyVyberu, souvislosti, vybratPostrehy } from '../lib/postrehy';
 import { useky, vyhlazenaRada } from '../lib/krivky';
-import { bodVMnohouhelniku } from '../lib/mapa-sbirky';
+import { bodVMnohouhelniku, jineCasopisy } from '../lib/mapa-sbirky';
 import { vypocitatMapu, zapomenoutMapu, zlepsitNaPozadi } from './mapa-uceni';
 import { PRAH_PLATNA, bodNaMiste, htmlPlatna, nakreslit, pripravitKresbu } from './mapa-platno';
 import { nastavitHtml } from '../ui/dom';
@@ -190,6 +190,18 @@ let graf = 'cf';
 try { graf = GRAFY.some(g => g.klic === localStorage.getItem('grafStatistik')) ? localStorage.getItem('grafStatistik') : 'cf'; } catch { /* výchozí graf */ }
 let edice = 'vse';
 let druhVyskytu = 'vse';
+// Časopis Statistik (0.02.071): Playboy (výchozí) = celá sbírka a výskyty v Playboyi jako dřív; jiný časopis =
+// jen jeho modelky a výskyty v něm (data.vsechny je celá sbírka)
+let casopisStat = VYCHOZI_CASOPIS;
+const vCasopiseStatistik = () => (casopisStat !== VYCHOZI_CASOPIS ? `v ${nazevCasopisu(casopisStat)}`
+    : casopisyStatistik().length ? 'v Playboyi' : 'v časopise');
+const casopisyStatistik = () => [...new Set(data.vsechny.flatMap(jineCasopisy))].sort();
+function nastavitCasopis(c) {
+    casopisStat = c;
+    const modelky = c === VYCHOZI_CASOPIS ? data.vsechny : data.vsechny.filter(m => jineCasopisy(m).includes(c));
+    // Nový objekt dat: mezipaměti grafů, mapy a hera (porovnávají data) se přepočítají
+    data = { ...data, modelky };
+}
 // Vše = první výskyt v časopise; Online = první online album s datem nafocení (do Vše se nepočítá)
 const DRUHY_VYSKYTU = { vse: 'Vše', centerfold: 'Centerfold', obalka: 'Obálka', pictorial: 'Pictorial', online: 'Online' };
 const filtry = new Map();
@@ -211,14 +223,16 @@ const vekVLetech = (narozeni, vydani) => {
 };
 // Výskyty modelky v časopise (čísla jejích centerfoldů, obálek a alb) s rokem, edicí, druhy a věkem modelky;
 // k nim online alba s datem nafocení (druh online, bez edice; album bez data na časové ose není)
-const vyskytyCache = new WeakMap();
+const vyskytyPodleCasopisu = new Map();
 function vyskytyModelky(m) {
+    if (!vyskytyPodleCasopisu.has(casopisStat)) vyskytyPodleCasopisu.set(casopisStat, new WeakMap());
+    const vyskytyCache = vyskytyPodleCasopisu.get(casopisStat);
     if (!vyskytyCache.has(m)) {
         const cf = new Set(m.centerfoldy || []), obalky = new Set(m.obalky || []);
         const vCasopise = [...new Set([...(m.vydani || []), ...cf, ...obalky])].map(v => {
             const casti = rozlozitVydani(v);
-            // Statistiky zatím jen Playboye (výskyty v jiných časopisech by ve volbě „vše“ posunuly první výskyt)
-            if (!casti || !jeCisloPlayboye(v)) return null;
+            // Jen výskyty ve zvoleném časopise (jinak by ve volbě „vše“ posunuly první výskyt)
+            if (!casti || casti.casopis !== casopisStat) return null;
             const druhy = new Set([cf.has(v) && 'centerfold', obalky.has(v) && 'obalka', !cf.has(v) && !obalky.has(v) && 'pictorial'].filter(Boolean));
             return { v, edice: casti.edice, rok: parseInt(casti.rok), druhy, vekPresne: vekVLetech(m.narozeniDatum, v) };
         });
@@ -323,7 +337,7 @@ function rozsahVyberu(def, sloupce) {
 // Graf v čase jako SVG v přesné šířce karty (písmo zůstává stejně velké); neviditelné cíle nesou bublinu a index.
 // Při výběru z jiných grafů: jasně modelky výběru, tlumeně celá sbírka a její křivka čárkovaně.
 function htmlGrafuVCase(def, sloupce, sirka) {
-    if (!sloupce.length) return `<p class="prazdno-male">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s výskytem ${vCasopiseStatistik(data.modelky)} chybí.`}</p>`;
+    if (!sloupce.length) return `<p class="prazdno-male">${def.druh === 'pocet' ? 'Zatím žádná data.' : `Údaj „${def.nazev.toLowerCase()}“ zatím u modelek s výskytem ${vCasopiseStatistik()} chybí.`}</p>`;
     const zuzeno = [...filtry.keys()].some(k => k !== klicFiltru(def));
     const vybrane = sloupce.map(s => zuzeno ? s.polozky.filter(p => vyhovuje(p.m, klicFiltru(def))) : s.polozky);
     const W = Math.max(320, sirka), H = 360, L = 46, P = 10, T = 14, D = 26;
@@ -632,24 +646,26 @@ function htmlSeznamu(def, sloupce) {
 // Věta vpravo nad grafem: celek, u výběru i hodnota výběru
 function souhrn(def, sloupce, rozlozeni) {
     const ve = (vyber, celkem) => filtry.size ? `<b>${vyber}</b> z ${celkem}` : `<b>${celkem}</b>`;
-    if (def.druh === 'mapa') return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} modelek na mapě`;
+    // „1 z 3 modelek“, bez výběru „3 modelky“ (u časopisu s málo modelkami)
+    const modelek = celkem => (filtry.size || celkem === 0 || celkem > 4 ? 'modelek' : celkem === 1 ? 'modelka' : 'modelky');
+    if (def.druh === 'mapa') return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} ${modelek(data.modelky.length)} na mapě`;
     if (def.druh === 'vkus') return vkusData ? `<b>${(vkusData.porovnani || []).length.toLocaleString('cs-CZ')}</b> soubojů` : '';
     if (def.druh === 'obdobi') {
         const c = clenstviObdobi();
         const n = strana => c.reduce((x, y) => x + (y === strana ? 1 : 0), 0);
         return `${esc(nazevObdobi(obdobiSrovnani.a))} <b>${n(1)}</b> vs ${esc(nazevObdobi(obdobiSrovnani.b))} <b>${n(2)}</b> modelek`;
     }
-    if (!def.osa) return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} modelek · ${rozlozeni.length} ${rozlozeni.length === 1 ? 'hodnota' : rozlozeni.length > 1 && rozlozeni.length < 5 ? 'hodnoty' : 'hodnot'}`;
+    if (!def.osa) return `${ve(data.modelky.filter(m => vyhovuje(m)).length, data.modelky.length)} ${modelek(data.modelky.length)} · ${rozlozeni.length} ${rozlozeni.length === 1 ? 'hodnota' : rozlozeni.length > 1 && rozlozeni.length < 5 ? 'hodnoty' : 'hodnot'}`;
     const vsechny = sloupce.flatMap(s => s.polozky);
     if (!vsechny.length) return '';
     const rozsah = rozsahVyberu(def, sloupce);
     const vybrane = sloupce.slice(rozsah?.a ?? 0, (rozsah?.b ?? sloupce.length - 1) + 1).flatMap(s => s.polozky).filter(p => vyhovuje(p.m, klicFiltru(def)));
     const obdobi = `${sloupce[0].nazev}–${sloupce.at(-1).nazev}`;
-    if (def.druh === 'pocet') return def.osa === 'mesic' ? `${ve(vybrane.length, vsechny.length)} přidaných za dva roky` : `${ve(vybrane.length, vsechny.length)} modelek · ${obdobi}`;
+    if (def.druh === 'pocet') return def.osa === 'mesic' ? `${ve(vybrane.length, vsechny.length)} přidaných za dva roky` : `${ve(vybrane.length, vsechny.length)} ${modelek(vsechny.length)} · ${obdobi}`;
     const hodnota = polozky => polozky.length ? textHodnoty(def, def.druh === 'podil' ? hodnotaSloupce(def, polozky) : median(polozky.map(p => p.hodnota))) : '–';
     const co = def.druh === 'podil' ? def.ano : 'medián';
     return filtry.size ? `${co} ve výběru <b>${hodnota(vybrane)}</b> (celkem ${hodnota(vsechny)}) · ${pocetModelek(vybrane.length)}`
-        : `${co} <b>${hodnota(vsechny)}</b> · známé u ${pocetModelek(vsechny.length)} · ${obdobi}`;
+        : `${co} <b>${hodnota(vsechny)}</b> · známé u ${sklonovat(vsechny.length, 'modelky', 'modelek', 'modelek')} · ${obdobi}`;
 }
 
 // Postřeh pod grafem v čase podle roku (údaje a podíly): zlom, nebo trend. Ze stejných sloupců jako graf, při výběru
@@ -660,7 +676,7 @@ function spocitatPostreh(def, sloupce, { bezVyberu = false } = {}) {
     const rada = sloupce.map(s => ({ rok: s.rok, polozky: zuzeno ? s.polozky.filter(p => vyhovuje(p.m, 'rok')) : s.polozky }));
     const zname = rada.reduce((n, s) => n + s.polozky.length, 0);
     const celkem = data.modelky.filter(m => prvniVyskyt(m) && (!zuzeno || vyhovuje(m, 'rok'))).length;
-    const kdy = druhVyskytu === 'online' ? 'rok nafocení prvního online alba' : `rok ${druhVyskytu === 'vse' ? `prvního výskytu ${vCasopiseStatistik(data.modelky)}` : `prvního výskytu – ${DRUHY_VYSKYTU[druhVyskytu].toLowerCase()}`}`;
+    const kdy = druhVyskytu === 'online' ? 'rok nafocení prvního online alba' : `rok ${druhVyskytu === 'vse' ? `prvního výskytu ${vCasopiseStatistik()}` : `prvního výskytu – ${DRUHY_VYSKYTU[druhVyskytu].toLowerCase()}`}`;
     const kontext = `Známé u ${cislo(zname, 0)} z ${pocetModelek(celkem)}${zuzeno ? ' výběru' : ''}; ${kdy}${edice === 'vse' ? '' : `, edice ${edice}`}.`;
     return postrehRady(def, rada, { vyber: zuzeno, kontext });
 }
@@ -1030,7 +1046,9 @@ function vykreslit(koren, { jenGraf = false } = {}) {
     // zapnutý filtr (× ho zruší) a na konci souhrn
     const ed = ediceVyskytu();
     const stitek = (atribut, klic, nazev, zvoleny) => `<button type="button" class="chip ${zvoleny ? 'active' : ''}" data-${atribut}="${esc(klic)}">${esc(nazev)}</button>`;
+    const casopisy = casopisyStatistik();
     nastavitHtml(koren.querySelector('[data-sp-volby]'), [
+        ...(casopisy.length ? [VYCHOZI_CASOPIS, ...casopisy].map(c => stitek('sp-casopis-volba', c, nazevCasopisu(c), c === casopisStat)) : []),
         ...Object.keys(SKUPINY).flatMap(s => GRAFY.filter(g => g.skupina === s).map(g => stitek('sp-graf-volba', g.klic, g.nazev, g.klic === graf))),
         ...(def.osa === 'rok' || def.druh === 'obdobi' ? Object.entries(DRUHY_VYSKYTU).map(([k, nazev]) => stitek('sp-druh-volba', k, nazev === 'Vše' ? 'vše' : nazev, k === druhVyskytu)) : []),
         ...((def.osa === 'rok' || def.druh === 'obdobi') && ed.length > 1 ? ['vse', ...ed].map(e => stitek('sp-edice-volba', e, e === 'vse' ? 'vše' : e, e === edice)) : []),
@@ -1057,7 +1075,7 @@ function vykreslit(koren, { jenGraf = false } = {}) {
         : def.osa
         ? `Klik na sloupec vybere ${def.osa === 'mesic' ? 'měsíc' : 'rok'}, tažení myší období. Šipky ← → posouvají výběr, se Shiftem ho rozšíří; Esc výběr zruší. Výběr platí pro všechny grafy.${!bezCisla ? ''
             : online ? ` Rok je rok nafocení prvního online alba; ${pocetModelek(bezCisla)} bez online alba s datem v grafech v čase ${neni}.`
-            : ` Rok je rok prvního výskytu ${vCasopiseStatistik(data.modelky)}; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase ${neni}.`}`
+            : ` Rok je rok prvního výskytu ${vCasopiseStatistik()}; ${pocetModelek(bezCisla)} bez čísla (jen online nebo bez vydání) v grafech v čase ${neni}.`}`
         : 'Klik na řádek vybere hodnotu, další klik ji zruší. Výběr platí pro všechny grafy: přepni graf a uvidíš jen vybrané modelky.';
     const seznam = koren.querySelector('[data-sp-seznam]');
     const fokusSeznamu = seznam.contains(document.activeElement);
@@ -1091,7 +1109,9 @@ export async function nacistStatistiky(koren) {
     if (!koren.isConnected) return;
     // Výběr zůstává (návrat Zpět ze seznamu modelek do Statistik); ruší ho uživatel nebo změna edice či výskytu
     // Modelky nejčastějších fotografů (backend je hledá stejně jako „fotograf:"…"“ v Modelkách)
-    data = { s, modelky, fotografove: new Map(Object.entries(s.modelkyFotografu || {}).map(([jmeno, ids]) => [jmeno, new Set(ids)])) };
+    data = { s, vsechny: modelky, modelky, fotografove: new Map(Object.entries(s.modelkyFotografu || {}).map(([jmeno, ids]) => [jmeno, new Set(ids)])) };
+    // Zvolený časopis platí i po načtení čerstvých dat, pokud ve sbírce ještě je
+    nastavitCasopis(casopisyStatistik().includes(casopisStat) ? casopisStat : VYCHOZI_CASOPIS);
     koren.innerHTML = `${htmlKostry()}<div class="graf-bublina hidden"></div>`;
     vykreslit(koren);
     // Při změně šířky se graf v čase překreslí v nové šířce
@@ -1350,6 +1370,17 @@ export function pripravit(stats) {
                     dotaz: null,
                 });
             }
+            zobrazitVse = false;
+            vykreslit(koren);
+            return;
+        }
+        const volbaCasopisu = /** @type {HTMLElement | null} */ (cil.closest('[data-sp-casopis-volba]'));
+        if (volbaCasopisu) {
+            // Výběr i edice patří k časopisu; s jeho změnou se zruší
+            nastavitCasopis(volbaCasopisu.dataset.spCasopisVolba);
+            filtry.clear();
+            edice = 'vse';
+            zvyraznenaModelkaMapy = null;
             zobrazitVse = false;
             vykreslit(koren);
             return;

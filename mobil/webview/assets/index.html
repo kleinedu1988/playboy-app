@@ -86,6 +86,32 @@
   #detail dt { color: var(--tlumeny); }
   #detail dd { margin: 0; }
 
+  /* Galerie modelky, fotky galerie a prohlížeč (0.02.086) */
+  #detail h3, #album h3 { margin: 26px 0 10px; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--zlato); font-weight: 600; }
+  .galerie { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .galerie .dlazdice .typ { position: absolute; top: 8px; left: 8px; padding: 3px 8px; border-radius: 999px; font-size: 11px;
+    background: rgba(15, 11, 13, .72); color: var(--zlato); }
+  .galerie .dlazdice .jmeno small { display: block; font-weight: 400; color: #d9cfd3; font-size: 12px; margin-top: 2px; }
+  #album { position: fixed; inset: 0; z-index: 12; overflow-y: auto; background: var(--bg); }
+  #album header h1 { font-size: 14px; letter-spacing: .06em; }
+  #album header small { display: block; color: var(--tlumeny); font-size: 12px; letter-spacing: 0; text-transform: none; font-weight: 400; }
+  .fotky { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; padding: 3px 0 32px; }
+  .fotky button { position: relative; aspect-ratio: 3 / 4; overflow: hidden; background: var(--panel); padding: 0; content-visibility: auto;
+    contain-intrinsic-size: 120px 160px; }
+  .fotky img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .otoceno-90 { transform: rotate(90deg) scale(1.34); }
+  .otoceno-180 { transform: rotate(180deg); }
+  .otoceno-270 { transform: rotate(270deg) scale(1.34); }
+  #prohlizec { position: fixed; inset: 0; z-index: 15; background: #000; display: grid; place-items: center; touch-action: pan-y; }
+  #prohlizec img { max-width: 100vw; max-height: 100vh; object-fit: contain; user-select: none; }
+  #prohlizec img.otoceno-90, #prohlizec img.otoceno-270 { max-width: 100vh; max-height: 100vw; transform: rotate(var(--r)); }
+  #prohlizec img.otoceno-90 { --r: 90deg; }
+  #prohlizec img.otoceno-270 { --r: 270deg; }
+  #prohlizec .citac { position: absolute; top: calc(14px + env(safe-area-inset-top)); left: 0; right: 0; text-align: center;
+    color: #d9cfd3; font-size: 13px; pointer-events: none; }
+  #prohlizec .zavrit { position: absolute; top: calc(8px + env(safe-area-inset-top)); left: 8px; width: 42px; height: 42px;
+    border-radius: 50%; background: rgba(0, 0, 0, .5); font-size: 22px; z-index: 2; }
+
   /* Účet */
   #ucet { position: fixed; inset: 0; z-index: 20; display: grid; align-items: end; background: rgba(0, 0, 0, .55); }
   #ucet .list { background: var(--panel); border-radius: 18px 18px 0 0; padding: 22px 20px calc(22px + env(safe-area-inset-bottom)); }
@@ -130,6 +156,8 @@
 </main>
 
 <section id="detail" class="hidden"></section>
+<section id="album" class="hidden"></section>
+<section id="prohlizec" class="hidden"></section>
 <section id="ucet" class="hidden"></section>
 <div id="zprava" class="hidden"></div>
 
@@ -164,6 +192,39 @@ function prvniRok(m) {
   const roky = [...(m.vydani || []), ...(m.titulyJinde || []).map((t) => t.vydani || '')]
     .map((v) => parseInt(String(v).slice(0, 4), 10)).filter((r) => r > 1900);
   return roky.length ? Math.min(...roky) : 0;
+}
+
+const MESICE_DNE = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+const MESICE = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
+
+// Vydání česky: „1995-03“ → „březen 1995“, „1995-S01“ → „speciál 1995“, časopis za zavináčem („@PH“) v závorce
+function vydaniCesky(v) {
+  const [zaklad, casopis] = String(v || '').split('@');
+  const m = /^(\d{4})(?:-(\d{2}|S\d{2}))?(?:-(\d{2}))?/.exec(zaklad);
+  if (!m) return v || '';
+  let t = m[1];
+  if (m[2]?.startsWith('S')) t = `speciál ${m[1]}`;
+  else if (m[2] && m[3]) t = `${parseInt(m[3], 10)}. ${MESICE_DNE[parseInt(m[2], 10) - 1] || m[2]} ${m[1]}`;
+  else if (m[2]) t = `${MESICE[parseInt(m[2], 10) - 1] || m[2]} ${m[1]}`;
+  return casopis ? `${t} (${casopis})` : t;
+}
+
+// Fotka v galerii: „id“ nebo „id:90“ (otočení ve stupních)
+function rozlozitFotku(f) {
+  const [id, r] = f.split(':');
+  return { id, rotace: parseInt(r || '0', 10) };
+}
+
+function fotkaImg(f, velikost, lazy = true) {
+  const { id, rotace } = rozlozitFotku(f);
+  return `<img ${lazy ? 'loading="lazy" ' : ''}alt="" src="${esc(obrazek(id, velikost))}"${rotace ? ` class="otoceno-${rotace}"` : ''}>`;
+}
+
+// Název galerie: u centerfoldu a podobných je název alba vydání – pak jen typ a vydání
+function nazevAlba(al) {
+  const vydani = vydaniCesky(al.vydani || al.datum);
+  const nazev = al.nazev && al.nazev !== al.vydani ? al.nazev : '';
+  return { nazev: nazev || al.typ, podnazev: [nazev ? al.typ : '', vydani].filter(Boolean).join(' · ') };
 }
 
 function vek(m) {
@@ -262,7 +323,7 @@ function otevritDetail(id) {
   const radky = [];
   const rok = prvniRok(m);
   if (rok) radky.push(['Poprvé', rok]);
-  if (m.vydani?.length) radky.push(['Vydání', m.vydani.join(', ')]);
+  if (m.vydani?.length) radky.push(['Vydání', m.vydani.map(vydaniCesky).join(', ')]);
   if (m.playmateRoku) radky.push(['Playmate roku', m.playmateRoku]);
   if (m.cyberGirl) radky.push(['Cyber Girl', m.cyberGirl]);
   for (const t of m.titulyJinde || []) radky.push([t.casopis || 'Jinde', [t.titul, t.vydani].filter(Boolean).join(' ')]);
@@ -272,11 +333,47 @@ function otevritDetail(id) {
   if (m.role) radky.push(['Role', m.role]);
   const h = m.hodnoceni > 0 ? `♥ ${srdicka(m.hodnoceni)}` : m.odhadHodnoceni > 0 ? `odhad ${srdicka(m.odhadHodnoceni)} ♥` : '';
   const d = $('detail');
+  const alba = m.alba || [];
+  const galerie = alba.length ? `<h3>Galerie · ${alba.length}</h3><div class="galerie">${alba.map((al, i) => {
+    const n = nazevAlba(al);
+    return `<button class="dlazdice" data-album="${i}">${fotkaImg(al.fotky[0], 'w400')}<span class="typ">${al.fotky.length} fotek</span>
+      <span class="jmeno">${esc(n.nazev)}${n.podnazev ? `<small>${esc(n.podnazev)}</small>` : ''}</span></button>`;
+  }).join('')}</div>` : '';
   d.innerHTML = `<div class="fotka"><button class="zavrit" data-zavrit aria-label="Zpět">‹</button>${profilova(m, 'w1200')}</div>
     <div class="obsah"><h2>${esc(m.jmeno)}</h2>${h ? `<div class="srdicka">${h}</div>` : ''}
-    <dl>${radky.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl></div>`;
+    <dl>${radky.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('')}</dl>${galerie}</div>`;
+  d.dataset.id = m.id;
   d.scrollTop = 0;
   d.classList.remove('hidden');
+}
+
+// Fotky galerie
+let otevreneAlbum = null;
+function otevritAlbum(m, i) {
+  const al = m.alba?.[i];
+  if (!al) return;
+  otevreneAlbum = al;
+  const n = nazevAlba(al);
+  const a = $('album');
+  a.innerHTML = `<header><button class="ikona" data-zavrit aria-label="Zpět">‹</button>
+      <h1>${esc(n.nazev)}<small>${esc([m.jmeno, n.podnazev, `${al.fotky.length} fotek`].filter(Boolean).join(' · '))}</small></h1></header>
+    <div class="fotky">${al.fotky.map((f, j) => `<button data-foto="${j}">${fotkaImg(f, 'w400')}</button>`).join('')}</div>`;
+  a.scrollTop = 0;
+  a.classList.remove('hidden');
+}
+
+// Prohlížeč fotek: klepnutí vlevo/vpravo nebo tažení prstem = předchozí/další
+let prohlizena = 0;
+function ukazatFotku(j) {
+  const fotky = otevreneAlbum.fotky;
+  prohlizena = (j + fotky.length) % fotky.length;
+  const p = $('prohlizec');
+  p.innerHTML = `<button class="zavrit" data-zavrit aria-label="Zpět">‹</button>
+    <span class="citac">${prohlizena + 1} / ${fotky.length}</span>${fotkaImg(fotky[prohlizena], 'w1600', false)}`;
+  p.classList.remove('hidden');
+  // Další fotka dopředu
+  const dalsi = fotky[(prohlizena + 1) % fotky.length];
+  if (dalsi) new Image().src = obrazek(rozlozitFotku(dalsi).id, 'w1600');
 }
 
 function zprava(text, ms = 5000) {
@@ -356,7 +453,7 @@ window.udalost = (nazev, text) => {
 
 // Zpět (tlačítko telefonu): zavře účet nebo detail; false = ukončit aplikaci
 window.zpet = () => {
-  for (const id of ['ucet', 'detail']) {
+  for (const id of ['ucet', 'prohlizec', 'album', 'detail']) {
     if (!$(id).classList.contains('hidden')) { $(id).classList.add('hidden'); return true; }
   }
   return false;
@@ -385,7 +482,30 @@ $('hero').addEventListener('click', (e) => {
   otevritDetail(heroModelka.id);
 });
 $('detail').addEventListener('click', (e) => {
-  if (e.target.closest('[data-zavrit]')) $('detail').classList.add('hidden');
+  if (e.target.closest('[data-zavrit]')) { $('detail').classList.add('hidden'); return; }
+  const b = e.target.closest('[data-album]');
+  const m = balicek.modelky.find((x) => x.id === Number($('detail').dataset.id));
+  if (b && m) otevritAlbum(m, Number(b.dataset.album));
+});
+$('album').addEventListener('click', (e) => {
+  if (e.target.closest('[data-zavrit]')) { $('album').classList.add('hidden'); return; }
+  const b = e.target.closest('[data-foto]');
+  if (b) ukazatFotku(Number(b.dataset.foto));
+});
+$('prohlizec').addEventListener('click', (e) => {
+  if (e.target.closest('[data-zavrit]')) { $('prohlizec').classList.add('hidden'); return; }
+  ukazatFotku(prohlizena + (e.clientX < window.innerWidth / 3 ? -1 : 1));
+});
+let dotykX = null;
+$('prohlizec').addEventListener('touchstart', (e) => { dotykX = e.touches[0].clientX; }, { passive: true });
+$('prohlizec').addEventListener('touchend', (e) => {
+  if (dotykX === null) return;
+  const dx = e.changedTouches[0].clientX - dotykX;
+  dotykX = null;
+  if (Math.abs(dx) > 50) {
+    e.preventDefault();
+    ukazatFotku(prohlizena + (dx < 0 ? 1 : -1));
+  }
 });
 $('ucetTlacitko').addEventListener('click', () => {
   const s = stav();

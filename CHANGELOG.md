@@ -6,6 +6,23 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.086] – 2026-11-12
+
+### Přidáno
+- **Galerie v telefonu:** klepnutí na modelku ukáže pod údaji dlaždice jejích galerií (typ, vydání nebo datum
+  česky, počet fotek). Galerie se otevře jako mřížka fotek, fotka přes celou obrazovku; další a předchozí přejetím
+  prstem nebo klepnutím vpravo a vlevo, Zpět vrací o úroveň výš.
+- Balíček pro telefon (verze 2) nese galerie modelek: i společná alba, jen dostupné fotky, pořadí a otočení jako
+  na PC. Sbírka uživatele: asi 650 kB.
+
+### Změněno
+- Explicitní fotky jsou v galeriích modelky i v telefonu, stejně jako na PC (rozhodnutí uživatele); titulní fotka
+  dlaždice a hero jsou dál bez nich.
+
+### Ověřeno
+- Na telefonu: dlaždice galerií v detailu modelky (Carlye Denise, 4 galerie). Test balíčku s galeriemi,
+  explicitní a otočenou fotkou; celá sada i s dlouhými testy prošla.
+
 ## [0.02.085] – 2026-11-12
 
 ### Přidáno

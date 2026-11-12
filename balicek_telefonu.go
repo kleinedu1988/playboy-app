@@ -3,8 +3,8 @@ package main
 // Balíček pro telefon (0.02.077): výtah sbírky, ze kterého telefon (0.02.078+) složí stránku modelek – hero banner
 // a dlaždice jako v hlavním programu, jen ke čtení. Pole modelek mají stejné názvy jako Modelka, aby telefon použil
 // stejný JS (kategorie, výřezy titulních fotek). Obrázky jsou jen Drive ID a šablona adresy; telefon si náhledy
-// stáhne z Disku stejně jako PC. Explicitní fotky (explicitniFotky, druh_fotek.go) se do balíčku nedostanou –
-// titulní nebo profilová fotka, která je explicitní, se vynechá. Balíček se nahraje do skryté složky programu na
+// stáhne z Disku stejně jako PC. Explicitní fotky (explicitniFotky, druh_fotek.go) jako na PC: titulní nebo
+// profilová fotka, která je explicitní, se vynechá (dlaždice, hero); v galeriích modelky jsou (0.02.086). Balíček se nahraje do skryté složky programu na
 // Disku (gzip JSON) spolu se zálohou a nahradí předchozí.
 
 import (
@@ -14,6 +14,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"pinup-katalog/internal/hledani"
@@ -21,7 +22,8 @@ import (
 
 const (
 	nazevBalickuTelefonu = "telefon-balicek.json.gz"
-	verzeBalickuTelefonu = 1
+	// 2 (0.02.086): galerie modelek s fotkami
+	verzeBalickuTelefonu = 2
 )
 
 // Modelka v balíčku: jen co potřebuje dlaždice, hero a řazení
@@ -54,6 +56,17 @@ type ModelkaTelefonu struct {
 	ProfilZoom float64 `json:"profilZoom,omitempty"`
 	ProfilX    float64 `json:"profilX,omitempty"`
 	ProfilY    float64 `json:"profilY,omitempty"`
+	// Galerie (0.02.086) v pořadí podle vydání, všechny fotky (i explicitní, jako galerie na PC)
+	Alba []AlbumTelefonu `json:"alba,omitempty"`
+}
+
+// Galerie modelky v balíčku: fotky jako Drive ID, otočená fotka s příponou „:90“ (stupně)
+type AlbumTelefonu struct {
+	Nazev  string   `json:"nazev"`
+	Typ    string   `json:"typ"`
+	Vydani string   `json:"vydani,omitempty"`
+	Datum  string   `json:"datum,omitempty"` // online galerie mají datum místo vydání
+	Fotky  []string `json:"fotky"`
 }
 
 type BalicekTelefonu struct {
@@ -74,6 +87,7 @@ func (a *App) balicekTelefonu() (BalicekTelefonu, error) {
 	}
 	explicitni := a.explicitniFotky()
 	profily := a.profilyModelek()
+	alba := a.albaModelekTelefonu()
 	for _, m := range modelky {
 		t := ModelkaTelefonu{ID: m.ID, Jmeno: m.Jmeno, Hodnoceni: m.Hodnoceni, OdhadHodnoceni: m.OdhadHodnoceni,
 			Oblibenost: zaokrouhlit(m.Oblibenost), Poradi: m.Poradi, Role: m.Role, Vydani: m.Vydani, Centerfoldy: m.Centerfoldy,
@@ -86,6 +100,7 @@ func (a *App) balicekTelefonu() (BalicekTelefonu, error) {
 		if p, ok := profily[m.ID]; ok && !explicitni[p.id] {
 			t.ProfilID, t.ProfilZoom, t.ProfilX, t.ProfilY = p.id, p.zoom, p.x, p.y
 		}
+		t.Alba = alba[m.ID]
 		b.Modelky = append(b.Modelky, t)
 	}
 	return b, nil
@@ -121,6 +136,46 @@ func (a *App) profilyModelek() map[int]profilModelky {
 			p.zoom, p.x, p.y = *z, *x, *y
 		}
 		v[id] = p
+	}
+	return v
+}
+
+// Galerie všech modelek jedním dotazem (i společná alba z alba_modelky); dostupné fotky v pořadí jako v programu
+func (a *App) albaModelekTelefonu() map[int][]AlbumTelefonu {
+	v := map[int][]AlbumTelefonu{}
+	radky, err := a.db.Query(`SELECT x.modelka_id, al.id, al.album, al.typ, al.vydani, COALESCE(al.datum, ''), f.drive_file_id, f.rotace
+		FROM (SELECT id AS album_id, modelka_id FROM alba WHERE modelka_id IS NOT NULL
+			UNION SELECT album_id, modelka_id FROM alba_modelky) x
+		JOIN alba al ON al.id = x.album_id
+		JOIN fotky f ON f.album_id = al.id
+		WHERE f.nedostupne_od IS NULL
+		ORDER BY x.modelka_id, COALESCE(NULLIF(al.vydani, ''), al.datum, ''), al.id, f.poradi IS NULL, f.poradi, f.id`)
+	if err != nil {
+		return v
+	}
+	defer radky.Close()
+	posledni := map[int]int64{}
+	for radky.Next() {
+		var modelka, rotace int
+		var album int64
+		var nazev, typ, vydani, datum, drive string
+		if radky.Scan(&modelka, &album, &nazev, &typ, &vydani, &datum, &drive, &rotace) != nil {
+			continue
+		}
+		ids := parseDriveIDs(drive)
+		if len(ids) == 0 {
+			continue
+		}
+		if posledni[modelka] != album || len(v[modelka]) == 0 {
+			v[modelka] = append(v[modelka], AlbumTelefonu{Nazev: nazev, Typ: typ, Vydani: vydani, Datum: datum})
+			posledni[modelka] = album
+		}
+		foto := ids[0]
+		if rotace%360 != 0 {
+			foto += ":" + strconv.Itoa(((rotace%360)+360)%360)
+		}
+		g := &v[modelka][len(v[modelka])-1]
+		g.Fotky = append(g.Fotky, foto)
 	}
 	return v
 }

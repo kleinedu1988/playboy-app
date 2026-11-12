@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -28,6 +29,16 @@ func TestBalicekTelefonu(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Galerie: jedna explicitní fotka (v galerii zůstane, jako na PC) a jedna otočená (0.02.086)
+	var explFotka, otocena string
+	a.db.QueryRow(`SELECT f.drive_file_id FROM fotky f JOIN alba al ON al.id = f.album_id WHERE al.modelka_id = ? ORDER BY f.id LIMIT 1`, prvni).Scan(&explFotka)
+	a.db.QueryRow(`SELECT f.drive_file_id FROM fotky f JOIN alba al ON al.id = f.album_id WHERE al.modelka_id = ? ORDER BY f.id DESC LIMIT 1`, prvni).Scan(&otocena)
+	if explFotka == "" || otocena == "" || explFotka == otocena {
+		t.Fatalf("testovací fotky: %q %q", explFotka, otocena)
+	}
+	a.db.Exec(`INSERT INTO druhy_fotek (drive_file_id, druh) VALUES (?, 'lesbicka')`, explFotka)
+	a.db.Exec(`UPDATE fotky SET rotace = 90 WHERE drive_file_id = ?`, otocena)
+
 	b, err := a.balicekTelefonu()
 	if err != nil || len(b.Modelky) != 3000 || b.Verze != verzeBalickuTelefonu || b.SablonaObrazku == "" {
 		t.Fatalf("balíček: %d modelek, %v", len(b.Modelky), err)
@@ -43,6 +54,25 @@ func TestBalicekTelefonu(t *testing.T) {
 		if m.ID == prvni && m.CoverID != "" {
 			t.Fatalf("modelka s explicitní titulní fotkou: %+v", m)
 		}
+	}
+	galerii, fotek, explVGalerii := 0, 0, false
+	for _, m := range b.Modelky {
+		for _, al := range m.Alba {
+			galerii++
+			fotek += len(al.Fotky)
+			for _, f := range al.Fotky {
+				explVGalerii = explVGalerii || f == explFotka
+				if strings.HasPrefix(f, otocena) && f != otocena+":90" {
+					t.Fatalf("otočená fotka: %q", f)
+				}
+			}
+		}
+	}
+	var fotekVDb int
+	a.db.QueryRow(`SELECT COUNT(*) FROM fotky`).Scan(&fotekVDb)
+	t.Logf("galerií %d, fotek %d (v databázi %d)", galerii, fotek, fotekVDb)
+	if galerii == 0 || fotek != fotekVDb || !explVGalerii {
+		t.Fatalf("galerií %d, fotek %d z %d", galerii, fotek, fotekVDb)
 	}
 	if profilu < 2900 {
 		t.Fatalf("profilových fotek jen %d", profilu)

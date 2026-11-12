@@ -5,6 +5,13 @@ Hotové body odškrtni `[x]`; co nefunguje, napiš pod bod. Nové verze se přid
 
 Před zkoušením nainstaluj aktuální verzi: `./instalovat.sh` ve složce programu.
 
+## 0.02.086 – Galerie v telefonu
+
+- [x] Detail modelky: dlaždice galerií s typem a počtem fotek – ověřeno 12. 11. 2026.
+- [ ] Online galerie mají datum (např. „15. července 2003“) a řadí se podle něj (po nové instalaci aplikace a Nahrát teď na PC).
+- [ ] Galerie: mřížka fotek; fotka přes celou obrazovku, přejetí a klepnutí vlevo/vpravo, počítadlo; Zpět o úroveň výš.
+- [ ] Otočená fotka se ukáže správně otočená (v mřížce i přes celou obrazovku).
+
 ## 0.02.085 – Aplikace pro telefon
 
 - [x] Instalace přes USB, přihlášení přes Google, stažení sbírky (751 modelek), hero a dlaždice – ověřeno 12. 11. 2026.

@@ -59,15 +59,17 @@ Wails zůstává na verzi 2.16.0, se kterou je program ověřený na Fedoře.
 ```
 sudo dnf install git golang nodejs npm gcc pkgconf-pkg-config gtk3-devel webkit2gtk4.1-devel
 go install github.com/wailsapp/wails/v2/cmd/wails@v2.16.0
-git clone https://github.com/kleinedu1988/playboy-app.git
-cd playboy-app
+git clone https://github.com/kleinedu1988/pinup-katalog.git
+cd pinup-katalog
 ./instalovat.sh
 ```
 
 Wails se nainstaluje do `~/go/bin`; `instalovat.sh` ho tam najde i bez úpravy `PATH`. Když něco chybí,
 skript vypíše, co doinstalovat. Program se pak spouští z nabídky aplikací.
 
-**Aktualizace a další možnosti** (ve složce `playboy-app`):
+**Aktualizace a další možnosti** (ve složce s klonem, `pinup-katalog`; starší klony ve složce `playboy-app` fungují
+dál – repozitář se 12. 11. 2026 přejmenoval a GitHub starou adresu přesměrovává, `git remote set-url origin
+https://github.com/kleinedu1988/pinup-katalog.git` ji přepíše natrvalo):
 
 ```
 git pull                         # stáhne nejnovější verzi
@@ -85,8 +87,8 @@ neinstaluje sám. Vypnout jde v ⋯ › Hledat novou verzi každý den.
 
 **Přechod z Playboy Database (1.53.0 a starší):** stačí `git pull` a `./instalovat.sh`. Instalace odebere starý
 program z nabídky a nový při prvním spuštění přesune data z `~/.local/share/playboy-app` a mezipaměť z
-`~/.cache/playboy-app` do složek `pinup-katalog` (nastavení okna, hodnocení i zálohy zůstanou). Soubory databáze
-se dál jmenují `playboy.db` a `playboy-uceni.db`.
+`~/.cache/playboy-app` do složek `pinup-katalog` (nastavení okna, hodnocení i zálohy zůstanou). Od 0.02.078 se
+soubory databáze jmenují `katalog.db` a `katalog-uceni.db` (přejmenují se samy, na starých místech zůstanou odkazy).
 
 **Přenos na jiný počítač:** program zavřít (při zavření se deník změn zapíše do databáze a soubory `-wal` a `-shm` zmizí), zkopírovat celou složku `~/.local/share/pinup-katalog` (databáze,
 zálohy, stav okna) na stejné místo na novém počítači a tam program nainstalovat. Heslo, pokud je nastavené,
@@ -96,8 +98,10 @@ platí dál. Mezipaměť obrázků se nepřenáší, vytvoří se znovu.
 
 | Co | Kde |
 |---|---|
-| Databáze (za běhu programu i deník změn `playboy.db-wal` a `playboy.db-shm`) | `~/.local/share/pinup-katalog/playboy.db` |
-| Zálohy: denní při spuštění (7 denních a 4 týdenní) a před každou hromadnou změnou (20 od každého druhu) | `~/.local/share/pinup-katalog/zalohy/` |
+| Databáze (za běhu programu i deník změn `katalog.db-wal` a `katalog.db-shm`) | `~/.local/share/pinup-katalog/katalog.db` |
+| Zálohy: denní při spuštění (5 denních a 3 týdenní) a před každou hromadnou změnou (3 od každého druhu z posledních 30 dní); od 0.02.078 `katalog-…db`, starší `playboy-…db` | `~/.local/share/pinup-katalog/zalohy/` |
+| Po přihlášení ke Googlu: posledních 7 denních záloh a balíček pro telefon ve skryté složce programu na Disku | Google Disk (appDataFolder) |
+| Přihlášení Google: přihlašovací údaje programu a uložené přihlášení (práva 0600) | `~/.config/pinup-katalog/google-klient.json`, `google-token.json` |
 | Velikost a stav okna při posledním zavření | `~/.local/share/pinup-katalog/okno.json` |
 | Mezipaměť obrázků | `~/.cache/<název programu>/WebKitCache` |
 
@@ -112,7 +116,7 @@ Heslo se nastaví v ⋯ → „Nastavit heslo…“. Zámek chrání rozhraní; 
 zůstávají na Disku sdílené odkazem. Zapomenuté heslo se zruší smazáním jeho otisku z databáze:
 
 ```
-sqlite3 ~/.local/share/pinup-katalog/playboy.db "DELETE FROM nastaveni WHERE klic = 'heslo'"
+sqlite3 ~/.local/share/pinup-katalog/katalog.db "DELETE FROM nastaveni WHERE klic = 'heslo'"
 ```
 
 ## Čísla a edice

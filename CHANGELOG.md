@@ -6,6 +6,20 @@ v [ROADMAP.md](ROADMAP.md).
 Historie do 1.53.0 (program se jmenoval Playboy Database) je v
 [docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md](docs/archiv/CHANGELOG-PLAYBOY-DATABASE.md).
 
+## [0.02.082] – 2026-11-12
+
+### Změněno
+- **Repozitář přejmenován** na GitHubu na `kleinedu1988/pinup-katalog`. GitHub starou adresu `playboy-app`
+  přesměrovává, takže starší klony fungují dál; `git remote set-url origin
+  https://github.com/kleinedu1988/pinup-katalog.git` ji přepíše natrvalo.
+- README: nová adresa klonu a složka, soubory databáze `katalog.db` (od 0.02.078), správné počty záloh, zálohy na
+  Google Disku a soubory přihlášení Google.
+
+### Ověřeno
+- `git fetch` z nové adresy i kontrola nové verze programu (`ZkontrolovatNovouVerzi`) se s repozitářem spojí; stará
+  adresa přesměrovává. Novou verzi kontrola ohlásí až po pushi – na GitHubu je zatím stará řada Playboy Database
+  (1.28.2), kterou program záměrně za novější nepovažuje.
+
 ## [0.02.081] – 2026-11-12
 
 ### Ověřeno
